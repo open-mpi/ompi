@@ -32,6 +32,7 @@
 
 #include "opal/mca/pstat/pstat.h"
 #include "opal/mca/pstat/base/base.h"
+#include "opal/util/string_copy.h"
 
 #include "pstat_test.h"
 
@@ -84,10 +85,10 @@ static int query(pid_t pid,
 
     if (NULL != stats) {
         gethostname(hostname, sizeof(hostname));
-        strncpy(stats->node, hostname, OPAL_PSTAT_MAX_STRING_LEN);
+        opal_string_copy(stats->node, hostname, OPAL_PSTAT_MAX_STRING_LEN);
 
         stats->pid = pid;
-        strncpy(stats->cmd, "UNKNOWN", OPAL_PSTAT_MAX_STRING_LEN);
+        opal_string_copy(stats->cmd, "UNKNOWN", OPAL_PSTAT_MAX_STRING_LEN);
         stats->state[0] = 'R';
         stats->priority = 2;
         stats->num_threads = 1;

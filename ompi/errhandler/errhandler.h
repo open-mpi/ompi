@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2018 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2015-2016 Intel, Inc. All rights reserved.
  * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
@@ -117,7 +117,7 @@ struct ompi_errhandler_t {
        can be invoked on any MPI object type, so we need callbacks for
        all of three. */
     MPI_Comm_errhandler_function *eh_comm_fn;
-    ompi_file_errhandler_fn *eh_file_fn;
+    ompi_file_errhandler_function *eh_file_fn;
     MPI_Win_errhandler_function *eh_win_fn;
     ompi_errhandler_fortran_handler_fn_t *eh_fort_fn;
 
@@ -193,11 +193,22 @@ struct ompi_request_t;
  * This macro directly invokes the ompi_mpi_errors_are_fatal_handler()
  * when an error occurs because MPI_COMM_WORLD does not exist (because
  * we're before MPI_Init() or after MPI_Finalize()).
+ *
+ * NOTE: The ompi_mpi_state variable is a volatile that is set
+ * atomically in ompi_mpi_init() and ompi_mpi_finalize().  The
+ * appropriate memory barriers are done in those 2 functions such that
+ * we do not need to do a read memory barrier here (in
+ * potentially-performance-critical code paths) before reading the
+ * variable.
  */
-#define OMPI_ERR_INIT_FINALIZE(name) \
-  if( OPAL_UNLIKELY(!ompi_mpi_initialized || ompi_mpi_finalized) ) { \
-    ompi_mpi_errors_are_fatal_comm_handler(NULL, NULL, name); \
-  }
+#define OMPI_ERR_INIT_FINALIZE(name)                                    \
+    {                                                                   \
+        int32_t state = ompi_mpi_state;                                 \
+        if (OPAL_UNLIKELY(state < OMPI_MPI_STATE_INIT_COMPLETED ||      \
+                          state > OMPI_MPI_STATE_FINALIZE_PAST_COMM_SELF_DESTRUCT)) { \
+            ompi_mpi_errors_are_fatal_comm_handler(NULL, NULL, name);   \
+        }                                                               \
+    }
 
 /**
  * This is the macro to invoke to directly invoke an MPI error

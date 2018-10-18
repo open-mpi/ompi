@@ -2,6 +2,7 @@
   Copyright (c) 2011      Mellanox Technologies. All rights reserved.
   Copyright (c) 2015      Research Organization for Information Science
                           and Technology (RIST). All rights reserved.
+  Copyright (c) 2018      Cisco Systems, Inc.  All rights reserved
   $COPYRIGHT$
 
   Additional copyrights may follow
@@ -21,7 +22,7 @@ int mca_coll_hcoll_barrier(struct ompi_communicator_t *comm,
     mca_coll_hcoll_module_t *hcoll_module = (mca_coll_hcoll_module_t*)module;
     HCOL_VERBOSE(20,"RUNNING HCOL BARRIER");
 
-    if (OPAL_UNLIKELY(ompi_mpi_finalize_started)) {
+    if (OPAL_UNLIKELY(ompi_mpi_state >= OMPI_MPI_STATE_FINALIZE_STARTED)) {
         HCOL_VERBOSE(5, "In finalize, reverting to previous barrier");
         goto orig_barrier;
     }

@@ -3,7 +3,7 @@
 ! Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
 ! Copyright (c) 2009-2012 Los Alamos National Security, LLC.
 !                         All rights reserved.
-! Copyright (c) 2017      Research Organization for Information Science
+! Copyright (c) 2017-2018 Research Organization for Information Science
 !                         and Technology (RIST). All rights reserved.
 !
 ! $COPYRIGHT$
@@ -46,6 +46,8 @@
 ! Line 2 of the ignore TKR syntax
 #define OMPI_FORTRAN_IGNORE_TKR_TYPE @OMPI_FORTRAN_IGNORE_TKR_TYPE@
 
+
+#define OMPI_FORTRAN_BUILD_SIZEOF @OMPI_FORTRAN_BUILD_SIZEOF@
 ! Integers
 
 #define OMPI_HAVE_FORTRAN_INTEGER1 @OMPI_HAVE_FORTRAN_INTEGER1@
@@ -103,6 +105,8 @@
 #define OMPI_HAVE_FORTRAN_COMPLEX32 @OMPI_HAVE_FORTRAN_COMPLEX32@
 #define OMPI_KIND_FORTRAN_COMPLEX32 @OMPI_KIND_FORTRAN_COMPLEX32@
 #define OMPI_SIZEOF_FORTRAN_COMPLEX32 @OMPI_SIZEOF_FORTRAN_COMPLEX32@
+
+#define OMPI_ENABLE_MPI1_COMPAT @OMPI_ENABLE_MPI1_COMPAT@
 
 ! Include some post-processing, based on the values from above
 

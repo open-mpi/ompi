@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2015-2016 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2015-2018 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -74,7 +74,7 @@ struct ompi_osc_pt2pt_sync_t {
     int num_peers;
 
     /** number of synchronization messages expected */
-    volatile int32_t sync_expected;
+    opal_atomic_int32_t sync_expected;
 
     /** eager sends are active to all peers in this access epoch */
     volatile bool eager_send_active;

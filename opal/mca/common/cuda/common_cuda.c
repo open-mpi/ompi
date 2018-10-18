@@ -13,6 +13,7 @@
  * Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -37,6 +38,7 @@
 #include "opal/util/show_help.h"
 #include "opal/util/proc.h"
 #include "opal/util/argv.h"
+#include "opal/util/printf.h"
 
 #include "opal/mca/rcache/base/base.h"
 #include "opal/runtime/opal_params.h"
@@ -388,7 +390,7 @@ int mca_common_cuda_stage_one_init(void)
             /* If there's a non-empty search path, prepend it
                to the library filename */
             if (strlen(searchpaths[j]) > 0) {
-                asprintf(&filename, "%s/%s", searchpaths[j], cudalibs[i]);
+                opal_asprintf(&filename, "%s/%s", searchpaths[j], cudalibs[i]);
             } else {
                 filename = strdup(cudalibs[i]);
             }
@@ -429,8 +431,10 @@ int mca_common_cuda_stage_one_init(void)
 
     if (true != stage_one_init_passed) {
         errmsg = opal_argv_join(errmsgs, '\n');
-        opal_show_help("help-mpi-common-cuda.txt", "dlopen failed", true,
-                       errmsg);
+        if (opal_warn_on_missing_libcuda) {
+            opal_show_help("help-mpi-common-cuda.txt", "dlopen failed", true,
+                           errmsg);
+        }
         opal_cuda_support = 0;
     }
     opal_argv_free(errmsgs);

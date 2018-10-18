@@ -10,14 +10,14 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2018 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2006-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2006-2009 University of Houston. All rights reserved.
  * Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
  * Copyright (c) 2012-2013 Inria.  All rights reserved.
- * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2018 Mellanox Technologies Ltd. All rights reserved.
@@ -130,11 +130,7 @@ const char ompi_version_string[] = OMPI_IDENT_STRING;
  * Global variables and symbols for the MPI layer
  */
 
-opal_mutex_t ompi_mpi_bootstrap_mutex = OPAL_MUTEX_STATIC_INIT;
-volatile bool ompi_mpi_init_started = false;
-volatile bool ompi_mpi_initialized = false;
-volatile bool ompi_mpi_finalize_started = false;
-volatile bool ompi_mpi_finalized = false;
+opal_atomic_int32_t ompi_mpi_state = OMPI_MPI_STATE_NOT_INITIALIZED;
 volatile bool ompi_rte_initialized = false;
 
 bool ompi_mpi_thread_multiple = false;
@@ -372,7 +368,8 @@ static void fence_release(int status, void *cbdata)
     OPAL_POST_OBJECT(active);
 }
 
-int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
+int ompi_mpi_init(int argc, char **argv, int requested, int *provided,
+                  bool reinit_ok)
 {
     int ret;
     ompi_proc_t** procs;
@@ -388,27 +385,36 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 
     ompi_hook_base_mpi_init_top(argc, argv, requested, provided);
 
-    /* Ensure that we were not already initialized or finalized.
+    /* Ensure that we were not already initialized or finalized. */
+    int32_t expected = OMPI_MPI_STATE_NOT_INITIALIZED;
+    int32_t desired  = OMPI_MPI_STATE_INIT_STARTED;
+    opal_atomic_wmb();
+    if (!opal_atomic_compare_exchange_strong_32(&ompi_mpi_state, &expected,
+                                                desired)) {
+        // If we failed to atomically transition ompi_mpi_state from
+        // NOT_INITIALIZED to INIT_STARTED, then someone else already
+        // did that, and we should return.
+        if (expected >= OMPI_MPI_STATE_FINALIZE_STARTED) {
+            opal_show_help("help-mpi-runtime.txt",
+                           "mpi_init: already finalized", true);
+            return MPI_ERR_OTHER;
+        } else if (expected >= OMPI_MPI_STATE_INIT_STARTED) {
+            // In some cases (e.g., oshmem_shmem_init()), we may call
+            // ompi_mpi_init() multiple times.  In such cases, just
+            // silently return successfully once the initializing
+            // thread has completed.
+            if (reinit_ok) {
+                while (ompi_mpi_state < OMPI_MPI_STATE_INIT_COMPLETED) {
+                    usleep(1);
+                }
+                return MPI_SUCCESS;
+            }
 
-       This lock is held for the duration of ompi_mpi_init() and
-       ompi_mpi_finalize().  Hence, if we get it, then no other thread
-       is inside the critical section (and we don't have to check the
-       *_started bool variables). */
-    opal_mutex_lock(&ompi_mpi_bootstrap_mutex);
-    if (ompi_mpi_finalized) {
-        opal_show_help("help-mpi-runtime.txt",
-                       "mpi_init: already finalized", true);
-        opal_mutex_unlock(&ompi_mpi_bootstrap_mutex);
-        return MPI_ERR_OTHER;
-    } else if (ompi_mpi_initialized) {
-        opal_show_help("help-mpi-runtime.txt",
-                       "mpi_init: invoked multiple times", true);
-        opal_mutex_unlock(&ompi_mpi_bootstrap_mutex);
-        return MPI_ERR_OTHER;
+            opal_show_help("help-mpi-runtime.txt",
+                           "mpi_init: invoked multiple times", true);
+            return MPI_ERR_OTHER;
+        }
     }
-
-    /* Indicate that we have *started* MPI_INIT* */
-    ompi_mpi_init_started = true;
 
     /* Figure out the final MPI thread levels.  If we were not
        compiled for support for MPI threads, then don't allow
@@ -525,7 +531,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     /* we want to go first */
     OBJ_CONSTRUCT(&info, opal_list_t);
     kv = OBJ_NEW(opal_value_t);
-    kv->key = strdup(OPAL_PMIX_EVENT_ORDER_PREPEND);
+    kv->key = strdup(OPAL_PMIX_EVENT_HDLR_PREPEND);
     opal_list_append(&info, &kv->super);
     /* give it a name so we can distinguish it */
     kv = OBJ_NEW(opal_value_t);
@@ -654,11 +660,17 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     opal_pmix.commit();
     OMPI_TIMING_NEXT("commit");
 #if (OPAL_ENABLE_TIMING)
-    if (OMPI_TIMING_ENABLED && !opal_pmix_base_async_modex && 
+    if (OMPI_TIMING_ENABLED && !opal_pmix_base_async_modex &&
             opal_pmix_collect_all_data) {
-        opal_pmix.fence(NULL, 0);
+        if (OMPI_SUCCESS != (ret = opal_pmix.fence(NULL, 0))) {
+            error = "timing: pmix-barrier-1 failed";
+            goto error;
+        }
         OMPI_TIMING_NEXT("pmix-barrier-1");
-        opal_pmix.fence(NULL, 0);
+        if (OMPI_SUCCESS != (ret = opal_pmix.fence(NULL, 0))) {
+            error = "timing: pmix-barrier-2 failed";
+            goto error;
+        }
         OMPI_TIMING_NEXT("pmix-barrier-2");
     }
 #endif
@@ -681,19 +693,32 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
             background_fence = true;
             active = true;
             OPAL_POST_OBJECT(&active);
-            opal_pmix.fence_nb(NULL, true, fence_release, (void*)&active);
+            if( OMPI_SUCCESS != (ret = opal_pmix.fence_nb(NULL, true,
+                                                    fence_release,
+                                                    (void*)&active))) {
+                error = "opal_pmix.fence_nb() failed";
+                goto error;
+            }
+
         } else if (!opal_pmix_base_async_modex) {
             /* we want to do the modex */
             active = true;
             OPAL_POST_OBJECT(&active);
-            opal_pmix.fence_nb(NULL, opal_pmix_collect_all_data,
-                               fence_release, (void*)&active);
+            if( OMPI_SUCCESS != (ret = opal_pmix.fence_nb(NULL,
+                opal_pmix_collect_all_data, fence_release, (void*)&active))) {
+                error = "opal_pmix.fence_nb() failed";
+                goto error;
+            }
             /* cannot just wait on thread as we need to call opal_progress */
             OMPI_LAZY_WAIT_FOR_COMPLETION(active);
         }
         /* otherwise, we don't want to do the modex, so fall thru */
     } else if (!opal_pmix_base_async_modex || opal_pmix_collect_all_data) {
-        opal_pmix.fence(NULL, opal_pmix_collect_all_data);
+        if( OMPI_SUCCESS != (ret = opal_pmix.fence(NULL,
+                                                opal_pmix_collect_all_data))) {
+            error = "opal_pmix.fence() failed";
+            goto error;
+        }
     }
 
     OMPI_TIMING_NEXT("modex");
@@ -871,11 +896,17 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         if (NULL != opal_pmix.fence_nb) {
             active = true;
             OPAL_POST_OBJECT(&active);
-            opal_pmix.fence_nb(NULL, false,
-                               fence_release, (void*)&active);
+            if (OMPI_SUCCESS != (ret = opal_pmix.fence_nb(NULL, false,
+                               fence_release, (void*)&active))) {
+                error = "opal_pmix.fence_nb() failed";
+                goto error;
+            }
             OMPI_LAZY_WAIT_FOR_COMPLETION(active);
         } else {
-            opal_pmix.fence(NULL, false);
+            if (OMPI_SUCCESS != (ret = opal_pmix.fence(NULL, false))) {
+                error = "opal_pmix.fence() failed";
+                goto error;
+            }
         }
     }
 
@@ -988,7 +1019,6 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
                            "mpi_init:startup:internal-failure", true,
                            "MPI_INIT", "MPI_INIT", error, err_msg, ret);
         }
-        opal_mutex_unlock(&ompi_mpi_bootstrap_mutex);
         ompi_hook_base_mpi_init_error(argc, argv, requested, provided);
         OMPI_TIMING_FINALIZE;
         return ret;
@@ -1010,16 +1040,14 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     opal_hash_table_init(&ompi_mpi_f90_complex_hashtable, FLT_MAX_10_EXP);
 
     /* All done.  Wasn't that simple? */
-
-    ompi_mpi_initialized = true;
+    opal_atomic_wmb();
+    opal_atomic_swap_32(&ompi_mpi_state, OMPI_MPI_STATE_INIT_COMPLETED);
 
     /* Finish last measurement, output results
      * and clear timing structure */
     OMPI_TIMING_NEXT("barrier-finish");
     OMPI_TIMING_OUT;
     OMPI_TIMING_FINALIZE;
-
-    opal_mutex_unlock(&ompi_mpi_bootstrap_mutex);
 
     ompi_hook_base_mpi_init_bottom(argc, argv, requested, provided);
 

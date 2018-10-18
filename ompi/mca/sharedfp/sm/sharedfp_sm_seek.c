@@ -9,8 +9,10 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2013-2016 University of Houston. All rights reserved.
- * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013-2018 University of Houston. All rights reserved.
+ * Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2018      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -31,39 +33,26 @@
 #include <semaphore.h>
 
 int
-mca_sharedfp_sm_seek (mca_io_ompio_file_t *fh,
-                      OMPI_MPI_OFFSET_TYPE offset, int whence)
+mca_sharedfp_sm_seek (ompio_file_t *fh,
+                      OMPI_MPI_OFFSET_TYPE off, int whence)
 {
-    int rank, status=0;
-    OMPI_MPI_OFFSET_TYPE end_position=0;
+    int status=0;
+    OMPI_MPI_OFFSET_TYPE offset, end_position=0;
     int ret = OMPI_SUCCESS;
     struct mca_sharedfp_base_data_t *sh = NULL;
-    mca_sharedfp_base_module_t * shared_fp_base_module = NULL;
     struct mca_sharedfp_sm_data * sm_data = NULL;
     struct mca_sharedfp_sm_offset * sm_offset_ptr = NULL;
 
     if( NULL == fh->f_sharedfp_data ) {
-        if ( mca_sharedfp_sm_verbose ) {
-            opal_output(ompi_sharedfp_base_framework.framework_output,
-                        "sharedfp_sm_seek: opening the shared file pointer\n");
-        }
-        shared_fp_base_module = fh->f_sharedfp;
-
-        ret = shared_fp_base_module->sharedfp_file_open(fh->f_comm,
-                                                        fh->f_filename,
-                                                        fh->f_amode,
-                                                        fh->f_info,
-                                                        fh);
-        if ( OMPI_SUCCESS != ret ) {
-            opal_output(0,"sharedfp_sm_seek - error opening the shared file pointer\n");
-            return ret;
-        }
+        opal_output(ompi_sharedfp_base_framework.framework_output,
+                    "sharedfp_sm_seek: module not initialized \n");
+        return OMPI_ERROR;
     }
 
     sh = fh->f_sharedfp_data;
-    rank = ompi_comm_rank ( sh->comm );
+    offset = off * fh->f_etype_size;
 
-    if( 0 == rank ){
+    if( 0 == fh->f_rank ){
         if ( MPI_SEEK_SET == whence){
             /*no nothing*/
             if ( offset < 0){
@@ -95,7 +84,7 @@ mca_sharedfp_sm_seek (mca_io_ompio_file_t *fh,
         }
         else if( MPI_SEEK_END == whence){
             end_position=0;
-            mca_common_ompio_file_get_size(sh->sharedfh,&end_position);
+            mca_common_ompio_file_get_size(fh,&end_position);
 
             offset = end_position + offset;
             if ( mca_sharedfp_sm_verbose ) {
@@ -123,7 +112,7 @@ mca_sharedfp_sm_seek (mca_io_ompio_file_t *fh,
         /*--------------------*/
         if ( mca_sharedfp_sm_verbose ) {
             opal_output(ompi_sharedfp_base_framework.framework_output,
-                        "sharedfp_sm_seek: Aquiring lock, rank=%d...",rank); fflush(stdout);
+                        "sharedfp_sm_seek: Aquiring lock, rank=%d...",fh->f_rank); fflush(stdout);
         }
 
         /* Aquire an exclusive lock */
@@ -133,12 +122,12 @@ mca_sharedfp_sm_seek (mca_io_ompio_file_t *fh,
 
         if ( mca_sharedfp_sm_verbose ) {
             opal_output(ompi_sharedfp_base_framework.framework_output,
-                        "sharedfp_sm_seek: Success! Acquired sm lock.for rank=%d\n",rank);
+                        "sharedfp_sm_seek: Success! Acquired sm lock.for rank=%d\n",fh->f_rank);
         }
         sm_offset_ptr->offset=offset;
         if ( mca_sharedfp_sm_verbose ) {
             opal_output(ompi_sharedfp_base_framework.framework_output,
-                        "sharedfp_sm_seek: Releasing sm lock...rank=%d",rank); fflush(stdout);
+                        "sharedfp_sm_seek: Releasing sm lock...rank=%d",fh->f_rank); fflush(stdout);
         }
         sem_post(sm_data->mutex);
     }
@@ -146,7 +135,7 @@ mca_sharedfp_sm_seek (mca_io_ompio_file_t *fh,
     /* since we are only letting process 0, update the current pointer
      * all of the other processes need to wait before proceeding.
      */
-    sh->comm->c_coll->coll_barrier ( sh->comm, sh->comm->c_coll->coll_barrier_module );
+    fh->f_comm->c_coll->coll_barrier ( fh->f_comm, fh->f_comm->c_coll->coll_barrier_module );
 
     return ret;
 }

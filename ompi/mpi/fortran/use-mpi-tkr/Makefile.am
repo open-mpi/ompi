@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2018 Cisco Systems, Inc.  All rights reserved
 # Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
 #                         reserved.
 # Copyright (c) 2014-2016 Research Organization for Information Science
@@ -59,10 +59,12 @@ lib_LTLIBRARIES += lib@OMPI_LIBMPI_NAME@_usempi.la
 mpi.lo: mpi.F90
 mpi.lo: mpi-f90-interfaces.h
 mpi.lo: mpi-f90-file-interfaces.h
+mpi.lo: mpi-f90-removed-interfaces.h
 mpi.lo: $(top_builddir)/ompi/mpi/fortran/configure-fortran-output.h
 mpi.lo: mpi-f90-cptr-interfaces.h
 mpi.lo: pmpi-f90-interfaces.h
 mpi.lo: pmpi-f90-file-interfaces.h
+mpi.lo: pmpi-f90-removed-interfaces.h
 mpi.lo: pmpi-f90-cptr-interfaces.h
 
 # Per MPI-3 p610:34-41, if we're building a TKR mpi module, we should
@@ -90,6 +92,7 @@ nodist_lib@OMPI_LIBMPI_NAME@_usempi_la_SOURCES += \
      mpi-tkr-sizeof.h \
      mpi-tkr-sizeof.f90
 endif
+mpi.lo: $(nodist_lib@OMPI_LIBMPI_NAME@_usempi_la_SOURCES)
 
 # Note that we invoke some OPAL functions directly in
 # libmpi_usempi.la, so we need to link in the OPAL library directly
@@ -167,8 +170,10 @@ endif
 EXTRA_DIST = \
      mpi-f90-interfaces.h \
      mpi-f90-file-interfaces.h \
+     mpi-f90-removed-interfaces.h \
      mpi-f90-cptr-interfaces.h \
      pmpi-f90-interfaces.h \
      pmpi-f90-file-interfaces.h \
+     pmpi-f90-removed-interfaces.h \
      pmpi-f90-cptr-interfaces.h
 

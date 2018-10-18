@@ -253,7 +253,7 @@ static int nidmap_create(opal_pointer_array_t *pool, char **regex)
         if (0 == opal_list_get_size(&ndreg->ranges)) {
             if (NULL != ndreg->prefix) {
                 /* solitary node */
-                asprintf(&tmp, "%s", ndreg->prefix);
+                opal_asprintf(&tmp, "%s", ndreg->prefix);
                 opal_argv_append_nosize(&regexargs, tmp);
                 free(tmp);
             }
@@ -262,17 +262,17 @@ static int nidmap_create(opal_pointer_array_t *pool, char **regex)
         }
         /* start the regex for this nodeid with the prefix */
         if (NULL != ndreg->prefix) {
-            asprintf(&tmp, "%s[%d:", ndreg->prefix, ndreg->num_digits);
+            opal_asprintf(&tmp, "%s[%d:", ndreg->prefix, ndreg->num_digits);
         } else {
-            asprintf(&tmp, "[%d:", ndreg->num_digits);
+            opal_asprintf(&tmp, "[%d:", ndreg->num_digits);
         }
         /* add the ranges */
         while (NULL != (itm2 = opal_list_remove_first(&ndreg->ranges))) {
             range = (orte_regex_range_t*)itm2;
             if (1 == range->cnt) {
-                asprintf(&tmp2, "%s%u,", tmp, range->vpid);
+                opal_asprintf(&tmp2, "%s%u,", tmp, range->vpid);
             } else {
-                asprintf(&tmp2, "%s%u-%u,", tmp, range->vpid, range->vpid + range->cnt - 1);
+                opal_asprintf(&tmp2, "%s%u-%u,", tmp, range->vpid, range->vpid + range->cnt - 1);
             }
             free(tmp);
             tmp = tmp2;
@@ -282,7 +282,7 @@ static int nidmap_create(opal_pointer_array_t *pool, char **regex)
         tmp[strlen(tmp)-1] = ']';
         if (NULL != ndreg->suffix) {
             /* add in the suffix, if provided */
-            asprintf(&tmp2, "%s%s", tmp, ndreg->suffix);
+            opal_asprintf(&tmp2, "%s%s", tmp, ndreg->suffix);
             free(tmp);
             tmp = tmp2;
         }
@@ -303,17 +303,17 @@ static int nidmap_create(opal_pointer_array_t *pool, char **regex)
         rng = (orte_regex_range_t*)item;
         if (1 < rng->cnt) {
             if (NULL == tmp) {
-                asprintf(&tmp, "%u(%u)", rng->vpid, rng->cnt);
+                opal_asprintf(&tmp, "%u(%u)", rng->vpid, rng->cnt);
             } else {
-                asprintf(&tmp2, "%s,%u(%u)", tmp, rng->vpid, rng->cnt);
+                opal_asprintf(&tmp2, "%s,%u(%u)", tmp, rng->vpid, rng->cnt);
                 free(tmp);
                 tmp = tmp2;
             }
         } else {
             if (NULL == tmp) {
-                asprintf(&tmp, "%u", rng->vpid);
+                opal_asprintf(&tmp, "%u", rng->vpid);
             } else {
-                asprintf(&tmp2, "%s,%u", tmp, rng->vpid);
+                opal_asprintf(&tmp2, "%s,%u", tmp, rng->vpid);
                 free(tmp);
                 tmp = tmp2;
             }
@@ -323,7 +323,7 @@ static int nidmap_create(opal_pointer_array_t *pool, char **regex)
     OPAL_LIST_DESTRUCT(&dvpids);
 
     /* now concatenate the results into one string */
-    asprintf(&tmp2, "%s@%s", nodenames, tmp);
+    opal_asprintf(&tmp2, "%s@%s", nodenames, tmp);
     free(nodenames);
     free(tmp);
     *regex = tmp2;

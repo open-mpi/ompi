@@ -36,6 +36,7 @@
 #include "ompi/op/op.h"
 #include "ompi/mca/coll/base/coll_base_functions.h"
 #include "coll_base_topo.h"
+#include "coll_base_util.h"
 
 /*******************************************************************************
  * ompi_coll_base_reduce_scatter_intra_nonoverlapping
@@ -463,7 +464,7 @@ ompi_coll_base_reduce_scatter_intra_ring( const void *sbuf, void *rbuf, const in
     char *tmpsend = NULL, *tmprecv = NULL, *accumbuf = NULL, *accumbuf_free = NULL;
     char *inbuf_free[2] = {NULL, NULL}, *inbuf[2] = {NULL, NULL};
     ptrdiff_t extent, max_real_segsize, dsize, gap = 0;
-    ompi_request_t *reqs[2] = {NULL, NULL};
+    ompi_request_t *reqs[2] = {MPI_REQUEST_NULL, MPI_REQUEST_NULL};
 
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
@@ -619,4 +620,278 @@ ompi_coll_base_reduce_scatter_intra_ring( const void *sbuf, void *rbuf, const in
     if (NULL != inbuf_free[0]) free(inbuf_free[0]);
     if (NULL != inbuf_free[1]) free(inbuf_free[1]);
     return ret;
+}
+
+/*
+ * ompi_sum_counts: Returns sum of counts [lo, hi]
+ *                  lo, hi in {0, 1, ..., nprocs_pof2 - 1}
+ */
+static int ompi_sum_counts(const int *counts, int *displs, int nprocs_rem, int lo, int hi)
+{
+    /* Adjust lo and hi for taking into account blocks of excluded processes */
+    lo = (lo < nprocs_rem) ? lo * 2 : lo + nprocs_rem;
+    hi = (hi < nprocs_rem) ? hi * 2 + 1 : hi + nprocs_rem;
+    return displs[hi] + counts[hi] - displs[lo];
+}
+
+/*
+ * ompi_coll_base_reduce_scatter_intra_butterfly
+ *
+ * Function:  Butterfly algorithm for reduce_scatter
+ * Accepts:   Same as MPI_Reduce_scatter
+ * Returns:   MPI_SUCCESS or error code
+ *
+ * Description:  Implements butterfly algorithm for MPI_Reduce_scatter [*].
+ *               The algorithm can be used both by commutative and non-commutative
+ *               operations, for power-of-two and non-power-of-two number of processes.
+ *
+ * [*] J.L. Traff. An improved Algorithm for (non-commutative) Reduce-scatter
+ *     with an Application // Proc. of EuroPVM/MPI, 2005. -- pp. 129-137.
+ *
+ * Time complexity: O(m\lambda + log(p)\alpha + m\beta + m\gamma),
+ *   where m = sum of rcounts[], p = comm_size
+ * Memory requirements (per process): 2 * m * typesize + comm_size
+ *
+ * Example: comm_size=6, nprocs_pof2=4, nprocs_rem=2, rcounts[]=1, sbuf=[0,1,...,5]
+ * Step 1. Reduce the number of processes to 4
+ * rank 0: [0|1|2|3|4|5]: send to 1: vrank -1
+ * rank 1: [0|1|2|3|4|5]: recv from 0, op: vrank 0: [0|2|4|6|8|10]
+ * rank 2: [0|1|2|3|4|5]: send to 3: vrank -1
+ * rank 3: [0|1|2|3|4|5]: recv from 2, op: vrank 1: [0|2|4|6|8|10]
+ * rank 4: [0|1|2|3|4|5]: vrank 2: [0|1|2|3|4|5]
+ * rank 5: [0|1|2|3|4|5]: vrank 3: [0|1|2|3|4|5]
+ *
+ * Step 2. Butterfly. Buffer of 6 elements is divided into 4 blocks.
+ * Round 1 (mask=1, nblocks=2)
+ * 0: vrank -1
+ * 1: vrank  0 [0 2|4 6|8|10]: exch with 1: send [2,3], recv [0,1]: [0 4|8 12|*|*]
+ * 2: vrank -1
+ * 3: vrank  1 [0 2|4 6|8|10]: exch with 0: send [0,1], recv [2,3]: [**|**|16|20]
+ * 4: vrank  2 [0 1|2 3|4|5] : exch with 3: send [2,3], recv [0,1]: [0 2|4 6|*|*]
+ * 5: vrank  3 [0 1|2 3|4|5] : exch with 2: send [0,1], recv [2,3]: [**|**|8|10]
+ *
+ * Round 2 (mask=2, nblocks=1)
+ * 0: vrank -1
+ * 1: vrank  0 [0 4|8 12|*|*]: exch with 2: send [1], recv [0]: [0 6|**|*|*]
+ * 2: vrank -1
+ * 3: vrank  1 [**|**|16|20] : exch with 3: send [3], recv [2]: [**|**|24|*]
+ * 4: vrank  2 [0 2|4 6|*|*] : exch with 0: send [0], recv [1]: [**|12 18|*|*]
+ * 5: vrank  3 [**|**|8|10]  : exch with 1: send [2], recv [3]: [**|**|*|30]
+ *
+ * Step 3. Exchange with remote process according to a mirror permutation:
+ *         mperm(0)=0, mperm(1)=2, mperm(2)=1, mperm(3)=3
+ * 0: vrank -1: recv "0" from process 0
+ * 1: vrank  0 [0 6|**|*|*]: send "0" to 0, copy "6" to rbuf (mperm(0)=0)
+ * 2: vrank -1: recv result "12" from process 4
+ * 3: vrank  1 [**|**|24|*]
+ * 4: vrank  2 [**|12 18|*|*]: send "12" to 2, send "18" to 3, recv "24" from 3
+ * 5: vrank  3 [**|**|*|30]: copy "30" to rbuf (mperm(3)=3)
+ */
+int
+ompi_coll_base_reduce_scatter_intra_butterfly(
+    const void *sbuf, void *rbuf, const int *rcounts, struct ompi_datatype_t *dtype,
+    struct ompi_op_t *op, struct ompi_communicator_t *comm,
+    mca_coll_base_module_t *module)
+{
+    char *tmpbuf[2] = {NULL, NULL}, *psend, *precv;
+    int *displs = NULL, index;
+    ptrdiff_t span, gap, totalcount, extent;
+    int err = MPI_SUCCESS;
+    int comm_size = ompi_comm_size(comm);
+    int rank = ompi_comm_rank(comm);
+
+    OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+                 "coll:base:reduce_scatter_intra_butterfly: rank %d/%d",
+                 rank, comm_size));
+    if (comm_size < 2)
+        return MPI_SUCCESS;
+
+    displs = malloc(sizeof(*displs) * comm_size);
+    if (NULL == displs) {
+        err = OMPI_ERR_OUT_OF_RESOURCE;
+        goto cleanup_and_return;
+    }
+    displs[0] = 0;
+    for (int i = 1; i < comm_size; i++) {
+        displs[i] = displs[i - 1] + rcounts[i - 1];
+    }
+    totalcount = displs[comm_size - 1] + rcounts[comm_size - 1];
+
+    ompi_datatype_type_extent(dtype, &extent);
+    span = opal_datatype_span(&dtype->super, totalcount, &gap);
+    tmpbuf[0] = malloc(span);
+    tmpbuf[1] = malloc(span);
+    if (NULL == tmpbuf[0] || NULL == tmpbuf[1]) {
+        err = OMPI_ERR_OUT_OF_RESOURCE;
+        goto cleanup_and_return;
+    }
+    psend = tmpbuf[0] - gap;
+    precv = tmpbuf[1] - gap;
+
+    if (sbuf != MPI_IN_PLACE) {
+        err = ompi_datatype_copy_content_same_ddt(dtype, totalcount, psend, (char *)sbuf);
+        if (MPI_SUCCESS != err) { goto cleanup_and_return; }
+    } else {
+        err = ompi_datatype_copy_content_same_ddt(dtype, totalcount, psend, rbuf);
+        if (MPI_SUCCESS != err) { goto cleanup_and_return; }
+    }
+
+    /*
+     * Step 1. Reduce the number of processes to the nearest lower power of two
+     * p' = 2^{\floor{\log_2 p}} by removing r = p - p' processes.
+     * In the first 2r processes (ranks 0 to 2r - 1), all the even ranks send
+     * the input vector to their neighbor (rank + 1) and all the odd ranks recv
+     * the input vector and perform local reduction.
+     * The odd ranks (0 to 2r - 1) contain the reduction with the input
+     * vector on their neighbors (the even ranks). The first r odd
+     * processes and the p - 2r last processes are renumbered from
+     * 0 to 2^{\floor{\log_2 p}} - 1. Even ranks do not participate in the
+     * rest of the algorithm.
+     */
+
+    /* Find nearest power-of-two less than or equal to comm_size */
+    int nprocs_pof2 = opal_next_poweroftwo(comm_size);
+    nprocs_pof2 >>= 1;
+    int nprocs_rem = comm_size - nprocs_pof2;
+    int log2_size = opal_cube_dim(nprocs_pof2);
+
+    int vrank = -1;
+    if (rank < 2 * nprocs_rem) {
+        if ((rank % 2) == 0) {
+            /* Even process */
+            err = MCA_PML_CALL(send(psend, totalcount, dtype, rank + 1,
+                                    MCA_COLL_BASE_TAG_REDUCE_SCATTER,
+                                    MCA_PML_BASE_SEND_STANDARD, comm));
+            if (OMPI_SUCCESS != err) { goto cleanup_and_return; }
+            /* This process does not participate in the rest of the algorithm */
+            vrank = -1;
+        } else {
+            /* Odd process */
+            err = MCA_PML_CALL(recv(precv, totalcount, dtype, rank - 1,
+                                    MCA_COLL_BASE_TAG_REDUCE_SCATTER,
+                                    comm, MPI_STATUS_IGNORE));
+            if (OMPI_SUCCESS != err) { goto cleanup_and_return; }
+            ompi_op_reduce(op, precv, psend, totalcount, dtype);
+            /* Adjust rank to be the bottom "remain" ranks */
+            vrank = rank / 2;
+        }
+    } else {
+        /* Adjust rank to show that the bottom "even remain" ranks dropped out */
+        vrank = rank - nprocs_rem;
+    }
+
+    if (vrank != -1) {
+        /*
+         * Now, psend vector of size totalcount is divided into nprocs_pof2 blocks:
+         * block 0:   rcounts[0] and rcounts[1] -- for process 0 and 1
+         * block 1:   rcounts[2] and rcounts[3] -- for process 2 and 3
+         * ...
+         * block r-1: rcounts[2*(r-1)] and rcounts[2*(r-1)+1]
+         * block r:   rcounts[r+r]
+         * block r+1: rcounts[r+r+1]
+         * ...
+         * block nprocs_pof2 - 1: rcounts[r+nprocs_pof2-1]
+         */
+        int nblocks = nprocs_pof2, send_index = 0, recv_index = 0;
+        for (int mask = 1; mask < nprocs_pof2; mask <<= 1) {
+            int vpeer = vrank ^ mask;
+            int peer = (vpeer < nprocs_rem) ? vpeer * 2 + 1 : vpeer + nprocs_rem;
+
+            nblocks /= 2;
+            if ((vrank & mask) == 0) {
+                /* Send the upper half of reduction buffer, recv the lower half */
+                send_index += nblocks;
+            } else {
+                /* Send the upper half of reduction buffer, recv the lower half */
+                recv_index += nblocks;
+            }
+
+            /* Send blocks: [send_index, send_index + nblocks - 1] */
+            int send_count = ompi_sum_counts(rcounts, displs, nprocs_rem,
+                                             send_index, send_index + nblocks - 1);
+            index = (send_index < nprocs_rem) ? 2 * send_index : nprocs_rem + send_index;
+            ptrdiff_t sdispl = displs[index];
+
+            /* Recv blocks: [recv_index, recv_index + nblocks - 1] */
+            int recv_count = ompi_sum_counts(rcounts, displs, nprocs_rem,
+                                             recv_index, recv_index + nblocks - 1);
+            index = (recv_index < nprocs_rem) ? 2 * recv_index : nprocs_rem + recv_index;
+            ptrdiff_t rdispl = displs[index];
+
+            err = ompi_coll_base_sendrecv(psend + (ptrdiff_t)sdispl * extent, send_count,
+                                          dtype, peer, MCA_COLL_BASE_TAG_REDUCE_SCATTER,
+                                          precv + (ptrdiff_t)rdispl * extent, recv_count,
+                                          dtype, peer, MCA_COLL_BASE_TAG_REDUCE_SCATTER,
+                                          comm, MPI_STATUS_IGNORE, rank);
+            if (MPI_SUCCESS != err) { goto cleanup_and_return; }
+
+            if (vrank < vpeer) {
+                /* precv = psend <op> precv */
+                ompi_op_reduce(op, psend + (ptrdiff_t)rdispl * extent,
+                               precv + (ptrdiff_t)rdispl * extent, recv_count, dtype);
+                char *p = psend;
+                psend = precv;
+                precv = p;
+            } else {
+                /* psend = precv <op> psend */
+                ompi_op_reduce(op, precv + (ptrdiff_t)rdispl * extent,
+                               psend + (ptrdiff_t)rdispl * extent, recv_count, dtype);
+            }
+            send_index = recv_index;
+        }
+        /*
+         * psend points to the result block [send_index]
+         * Exchange results with remote process according to a mirror permutation.
+         */
+        int vpeer = ompi_mirror_perm(vrank, log2_size);
+        int peer = (vpeer < nprocs_rem) ? vpeer * 2 + 1 : vpeer + nprocs_rem;
+        index = (send_index < nprocs_rem) ? 2 * send_index : nprocs_rem + send_index;
+
+        if (vpeer < nprocs_rem) {
+            /*
+             * Process has two blocks: for excluded process and own.
+             * Send the first block to excluded process.
+             */
+            err = MCA_PML_CALL(send(psend + (ptrdiff_t)displs[index] * extent,
+                                    rcounts[index], dtype, peer - 1,
+                                    MCA_COLL_BASE_TAG_REDUCE_SCATTER,
+                                    MCA_PML_BASE_SEND_STANDARD, comm));
+            if (MPI_SUCCESS != err) { goto cleanup_and_return; }
+        }
+
+        /* If process has two blocks, then send the second block (own block) */
+        if (vpeer < nprocs_rem)
+            index++;
+        if (vpeer != vrank) {
+            err = ompi_coll_base_sendrecv(psend + (ptrdiff_t)displs[index] * extent,
+                                          rcounts[index], dtype, peer,
+                                          MCA_COLL_BASE_TAG_REDUCE_SCATTER,
+                                          rbuf, rcounts[rank], dtype, peer,
+                                          MCA_COLL_BASE_TAG_REDUCE_SCATTER,
+                                          comm, MPI_STATUS_IGNORE, rank);
+            if (MPI_SUCCESS != err) { goto cleanup_and_return; }
+        } else {
+            err = ompi_datatype_copy_content_same_ddt(dtype, rcounts[rank], rbuf,
+                                                      psend + (ptrdiff_t)displs[rank] * extent);
+            if (MPI_SUCCESS != err) { goto cleanup_and_return; }
+        }
+
+    } else {
+        /* Excluded process: receive result */
+        int vpeer = ompi_mirror_perm((rank + 1) / 2, log2_size);
+        int peer = (vpeer < nprocs_rem) ? vpeer * 2 + 1 : vpeer + nprocs_rem;
+        err = MCA_PML_CALL(recv(rbuf, rcounts[rank], dtype, peer,
+                                MCA_COLL_BASE_TAG_REDUCE_SCATTER, comm,
+                                MPI_STATUS_IGNORE));
+        if (OMPI_SUCCESS != err) { goto cleanup_and_return; }
+    }
+
+cleanup_and_return:
+    if (displs)
+        free(displs);
+    if (tmpbuf[0])
+        free(tmpbuf[0]);
+    if (tmpbuf[1])
+        free(tmpbuf[1]);
+    return err;
 }

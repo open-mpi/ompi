@@ -2,6 +2,7 @@
  * Copyright (c) 2014      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -12,6 +13,8 @@
 #include "oshmem_config.h"
 #include <stdarg.h>
 #include <stdio.h>
+
+#include "opal/util/printf.h"
 
 #include "oshmem/constants.h"
 #include "oshmem/util/oshmem_util.h"
@@ -28,10 +31,10 @@ void oshmem_output_verbose(int level, int output_id, const char* prefix,
 
         va_start(args, format);
 
-        ret = vasprintf(&str, format, args);
+        ret = opal_vasprintf(&str, format, args);
         assert(-1 != ret);
 
-        ret = asprintf(&buff, "%s %s", prefix, str);
+        ret = opal_asprintf(&buff, "%s %s", prefix, str);
         assert(-1 != ret);
 
         opal_output(output_id, buff, file, line, function);
@@ -55,10 +58,10 @@ void oshmem_output(int output_id, const char* prefix, const char* file,
 
     va_start(args, format);
 
-    ret = vasprintf(&str, format, args);
+    ret = opal_vasprintf(&str, format, args);
     assert(-1 != ret);
 
-    ret = asprintf(&buff, "%s %s", prefix, str);
+    ret = opal_asprintf(&buff, "%s %s", prefix, str);
     assert(-1 != ret);
 
     opal_output(output_id, buff, file, line, function);

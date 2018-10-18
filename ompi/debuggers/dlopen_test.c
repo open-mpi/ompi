@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009-2018 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -12,8 +13,10 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #include "opal/runtime/opal.h"
+#include "opal/util/printf.h"
 #include "opal/mca/dl/base/base.h"
 
 #if !OPAL_HAVE_DL_SUPPORT
@@ -118,7 +121,7 @@ static int do_test(void)
        get here, manually prefix the filename with .libs/ and try
        again. */
     char *rel_filename;
-    asprintf(&rel_filename, ".libs/%s", filename);
+    opal_asprintf(&rel_filename, ".libs/%s", filename);
     if (NULL == rel_filename) {
         return 1;
     }

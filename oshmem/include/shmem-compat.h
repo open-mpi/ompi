@@ -1,6 +1,6 @@
 /* oshmem/include/shmem-compat.h. This file contains OpenSHMEM lagacy API  */
 /*
- * Copyright (c) 2014-2015 Mellanox Technologies, Inc.
+ * Copyright (c) 2014-2017 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
  *
@@ -33,11 +33,6 @@ OSHMEM_DECLSPEC  void* shmemalign(size_t align, size_t size);
 OSHMEM_DECLSPEC  void* shrealloc(void *ptr, size_t size);
 OSHMEM_DECLSPEC  void shfree(void* ptr);
 
-OSHMEM_DECLSPEC  void shmem_char_put(char *target, const char *source, size_t len, int pe);
-OSHMEM_DECLSPEC  void shmem_char_get(char *target, const char *source, size_t len, int pe);
-
-OSHMEM_DECLSPEC  void shmem_put(void *target, const void *source, size_t len, int pe);
-OSHMEM_DECLSPEC  void shmem_get(void *target, const void *source, size_t len, int pe);
 OSHMEM_DECLSPEC  void globalexit(int status);
 
 #if defined(c_plusplus) || defined(__cplusplus)

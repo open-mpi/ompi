@@ -12,7 +12,8 @@
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2016      Intel, Inc. All rights reserved.
+ * Copyright (c) 2016-2018 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2018      Cisco Systems, Inc.  All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -27,6 +28,7 @@
 #include <string.h>
 
 #include "opal/util/printf.h"
+#include "opal/util/string_copy.h"
 #include "opal/threads/tsd.h"
 
 #include "orte/mca/errmgr/errmgr.h"
@@ -292,7 +294,7 @@ int orte_util_snprintf_jobid(char *jobid_string, size_t size, const orte_jobid_t
 
     /* check for wildcard value - handle appropriately */
     if (ORTE_JOBID_WILDCARD == jobid) {
-        (void)strncpy(jobid_string, ORTE_SCHEMA_WILDCARD_STRING, size);
+        (void)opal_string_copy(jobid_string, ORTE_SCHEMA_WILDCARD_STRING, size);
     } else {
         rc = snprintf(jobid_string, size, "%ld", (long) jobid);
         if (0 > rc) {
@@ -360,7 +362,7 @@ int orte_util_convert_vpid_to_string(char **vpid_string, const orte_vpid_t vpid)
         return ORTE_SUCCESS;
     }
 
-    if (0 > asprintf(vpid_string, "%ld", (long) vpid)) {
+    if (0 > opal_asprintf(vpid_string, "%ld", (long) vpid)) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
@@ -469,22 +471,22 @@ int orte_util_convert_process_name_to_string(char **name_string,
      * it is passed back to us later
      */
     if (ORTE_JOBID_WILDCARD == name->jobid) {
-        asprintf(&tmp, "%s", ORTE_SCHEMA_WILDCARD_STRING);
+        opal_asprintf(&tmp, "%s", ORTE_SCHEMA_WILDCARD_STRING);
     } else if (ORTE_JOBID_INVALID == name->jobid) {
-        asprintf(&tmp, "%s", ORTE_SCHEMA_INVALID_STRING);
+        opal_asprintf(&tmp, "%s", ORTE_SCHEMA_INVALID_STRING);
     } else {
-        asprintf(&tmp, "%lu", (unsigned long)name->jobid);
+        opal_asprintf(&tmp, "%lu", (unsigned long)name->jobid);
     }
 
     if (ORTE_VPID_WILDCARD == name->vpid) {
-        asprintf(&tmp2, "%s%c%s", tmp, ORTE_SCHEMA_DELIMITER_CHAR, ORTE_SCHEMA_WILDCARD_STRING);
+        opal_asprintf(&tmp2, "%s%c%s", tmp, ORTE_SCHEMA_DELIMITER_CHAR, ORTE_SCHEMA_WILDCARD_STRING);
     } else if (ORTE_VPID_INVALID == name->vpid) {
-        asprintf(&tmp2, "%s%c%s", tmp, ORTE_SCHEMA_DELIMITER_CHAR, ORTE_SCHEMA_INVALID_STRING);
+        opal_asprintf(&tmp2, "%s%c%s", tmp, ORTE_SCHEMA_DELIMITER_CHAR, ORTE_SCHEMA_INVALID_STRING);
     } else {
-        asprintf(&tmp2, "%s%c%lu", tmp, ORTE_SCHEMA_DELIMITER_CHAR, (unsigned long)name->vpid);
+        opal_asprintf(&tmp2, "%s%c%lu", tmp, ORTE_SCHEMA_DELIMITER_CHAR, (unsigned long)name->vpid);
     }
 
-    asprintf(name_string, "%s", tmp2);
+    opal_asprintf(name_string, "%s", tmp2);
 
     free(tmp);
     free(tmp2);
@@ -593,7 +595,7 @@ uint32_t  orte_util_hash_vpid(orte_vpid_t vpid) {
 
 /* sysinfo conversion to and from string */
 int orte_util_convert_string_to_sysinfo(char **cpu_type, char **cpu_model,
-					const char* sysinfo_string)
+                                        const char* sysinfo_string)
 {
     char *temp, *token;
     int return_code=ORTE_SUCCESS;
@@ -634,7 +636,7 @@ int orte_util_convert_string_to_sysinfo(char **cpu_type, char **cpu_model,
 }
 
 int orte_util_convert_sysinfo_to_string(char **sysinfo_string,
-					const char *cpu_type, const char *cpu_model)
+                                        const char *cpu_type, const char *cpu_model)
 {
     char *tmp;
 
@@ -643,15 +645,15 @@ int orte_util_convert_sysinfo_to_string(char **sysinfo_string,
      * it is passed back to us later
      */
     if (NULL == cpu_type) {
-        asprintf(&tmp, "%s", ORTE_SCHEMA_INVALID_STRING);
+        opal_asprintf(&tmp, "%s", ORTE_SCHEMA_INVALID_STRING);
     } else {
-        asprintf(&tmp, "%s", cpu_type);
+        opal_asprintf(&tmp, "%s", cpu_type);
     }
 
     if (NULL == cpu_model) {
-        asprintf(sysinfo_string, "%s%c%s", tmp, ORTE_SCHEMA_DELIMITER_CHAR, ORTE_SCHEMA_INVALID_STRING);
+        opal_asprintf(sysinfo_string, "%s%c%s", tmp, ORTE_SCHEMA_DELIMITER_CHAR, ORTE_SCHEMA_INVALID_STRING);
     } else {
-        asprintf(sysinfo_string, "%s%c%s", tmp, ORTE_SCHEMA_DELIMITER_CHAR, cpu_model);
+        opal_asprintf(sysinfo_string, "%s%c%s", tmp, ORTE_SCHEMA_DELIMITER_CHAR, cpu_model);
     }
     free(tmp);
     return ORTE_SUCCESS;
@@ -668,12 +670,10 @@ char *orte_pretty_print_timing(int64_t secs, int64_t usecs)
     seconds = seconds % 60l;
     if (0 == minutes && 0 == seconds) {
         fsecs = ((float)(secs)*1000000.0 + (float)usecs) / 1000.0;
-        asprintf(&timestring, "%8.2f millisecs", fsecs);
+        opal_asprintf(&timestring, "%8.2f millisecs", fsecs);
     } else {
-        asprintf(&timestring, "%3lu:%02lu min:sec", minutes, seconds);
+        opal_asprintf(&timestring, "%3lu:%02lu min:sec", minutes, seconds);
     }
 
     return timestring;
 }
-
-

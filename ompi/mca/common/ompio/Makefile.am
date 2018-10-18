@@ -9,9 +9,9 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2008-2016 University of Houston. All rights reserved.
+# Copyright (c) 2008-2018 University of Houston. All rights reserved.
 # Copyright (c) 2016      IBM Corporation.  All rights reserved.
-# Copyright (c) 2017      Research Organization for Information Science
+# Copyright (c) 2017-2018 Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 #
 # $COPYRIGHT$
@@ -22,11 +22,15 @@
 #
 
 headers = \
+	common_ompio_aggregators.h \
 	common_ompio_print_queue.h \
+	common_ompio_request.h \
 	common_ompio.h
 
 sources = \
+	common_ompio_aggregators.c \
 	common_ompio_print_queue.c \
+	common_ompio_request.c \
 	common_ompio_file_open.c   \
 	common_ompio_file_view.c   \
 	common_ompio_file_read.c   \
@@ -68,6 +72,11 @@ ompidir = $(ompiincludedir)/ompi/mca/common/ompio
 ompi_HEADERS = $(headers)
 else
 ompidir = $(includedir)
+endif
+
+if OPAL_cuda_support
+headers += common_ompio_cuda.h
+sources += common_ompio_cuda.c
 endif
 
 # These two rules will sym link the "noinst" libtool library filename

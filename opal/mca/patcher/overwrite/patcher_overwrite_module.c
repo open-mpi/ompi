@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2016-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * Copyright (c) 2017      Research Organization for Information Science
@@ -230,6 +230,77 @@ static int mca_patcher_overwrite_apply_patch (mca_patcher_base_patch_t *patch)
     *(unsigned int *) (patch->patch_data + offset + 0) = mtspr (9, gr);   // 9 = CTR
     *(unsigned int *) (patch->patch_data + offset + 4) = bcctr (20, 0, 0);// 20 = always
     patch->patch_data_size = offset + 8;
+    patch->patch_orig = sys_addr;
+
+    mca_base_patcher_patch_apply_binary (patch);
+
+    return OPAL_SUCCESS;
+}
+
+#elif defined(__aarch64__)
+
+/**
+ * @brief Generate a mov immediate instruction
+ *
+ * @param[in] reg   register number (0-31)
+ * @param[in] shift shift amount (0-3) * 16-bits
+ * @param[in] value immediate value
+ */
+static uint32_t mov (unsigned int reg, uint16_t shift, uint16_t value)
+{
+    return (0x1a5 << 23) + ((uint32_t) shift << 21) + ((uint32_t) value << 5) + reg;
+}
+
+/**
+ * @brief Generate a mov immediate with keep instruction
+ *
+ * @param[in] reg   register number (0-31)
+ * @param[in] shift shift amount (0-3) * 16-bits
+ * @param[in] value immediate value
+ */
+static uint32_t movk (unsigned int reg, uint16_t shift, uint16_t value)
+{
+    return (0x1e5 << 23) + ((uint32_t) shift << 21) + ((uint32_t) value << 5) + reg;
+}
+
+static uint32_t br (unsigned int reg)
+{
+    return (0xd61f << 16) + (reg << 5);
+}
+
+static int
+PatchLoadImm(uintptr_t addr, unsigned int reg, uint64_t value)
+{
+    *(uint32_t *) (addr +  0) = mov(reg, 3, value >> 48);
+    *(uint32_t *) (addr +  4) = movk(reg, 2, value >> 32);
+    *(uint32_t *) (addr +  8) = movk(reg, 1, value >> 16);
+    *(uint32_t *) (addr + 12) = movk(reg, 0, value);
+    return 16;
+}
+
+static int mca_patcher_overwrite_apply_patch (mca_patcher_base_patch_t *patch)
+{
+    uintptr_t sys_addr, hook_addr;
+    int offset, rc;
+
+    /* get system function address */
+    sys_addr = mca_patcher_base_addr_text(patch->patch_orig);
+    hook_addr = mca_patcher_base_addr_text(patch->patch_value);
+
+    /* Patch for hook function: */
+    rc = mca_patcher_base_patch_hook (&mca_patcher_overwrite_module, hook_addr);
+    if (OPAL_SUCCESS != rc) {
+        return rc;
+    }
+
+    /* Patch for system function:
+     * generate patch code
+     * r15 is the highest numbered temporary register. I am assuming this one is safe
+     * to use. */
+    const unsigned int gr = 15;
+    offset = PatchLoadImm ((uintptr_t) patch->patch_data, gr, hook_addr);
+    *(uint32_t *) (patch->patch_data + offset) = br(gr);
+    patch->patch_data_size = offset + 4;
     patch->patch_orig = sys_addr;
 
     mca_base_patcher_patch_apply_binary (patch);

@@ -2,6 +2,7 @@
  * Copyright (C) 2001-2011 Mellanox Technologies Ltd. ALL RIGHTS RESERVED.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2018      Cisco Systems, Inc.  All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -264,8 +265,9 @@ int mca_pml_yalla_add_procs(struct ompi_proc_t **procs, size_t nprocs)
 int mca_pml_yalla_del_procs(struct ompi_proc_t **procs, size_t nprocs)
 {
     size_t i;
+    int ret;
 
-    if (ompi_mpi_finalized) {
+    if (ompi_mpi_state >= OMPI_MPI_STATE_FINALIZE_STARTED) {
         PML_YALLA_VERBOSE(3, "%s", "using bulk powerdown");
         mxm_ep_powerdown(ompi_pml_yalla.mxm_ep);
     }
@@ -275,7 +277,9 @@ int mca_pml_yalla_del_procs(struct ompi_proc_t **procs, size_t nprocs)
         PML_YALLA_VERBOSE(2, "disconnected from rank %s", OPAL_NAME_PRINT(procs[i]->super.proc_name));
         procs[i]->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_PML] = NULL;
     }
-    opal_pmix.fence(NULL, 0);
+    if (OMPI_SUCCESS != (ret = opal_pmix.fence(NULL, 0))) {
+        return ret;
+    }
     return OMPI_SUCCESS;
 }
 

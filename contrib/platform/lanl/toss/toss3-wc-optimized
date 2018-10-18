@@ -1,0 +1,21 @@
+# (c) 2013-2018 Los Alamos National Security, LLC. All rights reserved.
+# Open MPI optimized configuration for TOSS/TOSS2 v1.7.x/1.8.x
+
+source ./common
+source ./common-optimized
+
+# Disable components not needed on TOSS Ethernet-connected clusters
+enable_mca_no_build=carto,crs,filem,routed-linear,snapc,pml-dr,pml-crcp2,pml-crcpw,pml-v,pml-example,crcp
+
+# TOSS2 uses slurm
+with_slurm=yes
+with_tm=no
+
+# Enable PMI support for direct launch
+with_pmi=yes
+
+# Enable lustre support in romio
+with_io_romio_flags=--with-file-system=ufs+nfs+lustre
+
+# Do not build ibverbs support
+with_verbs=no

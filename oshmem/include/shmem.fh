@@ -1,6 +1,6 @@
 ! Emacs: -*- mode: fortran; -*-
 !
-!   Copyright (c) 2013      Mellanox Technologies, Inc.
+!   Copyright (c) 2018      Mellanox Technologies, Inc.
 !                           All rights reserved.
 !   Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
 !   $COPYRIGHT$
@@ -17,7 +17,7 @@
       parameter ( SHMEM_MAJOR_VERSION = 1 )
 
       integer SHMEM_MINOR_VERSION
-      parameter ( SHMEM_MINOR_VERSION = 3 )
+      parameter ( SHMEM_MINOR_VERSION = 4 )
 
       integer SHMEM_MAX_NAME_LEN
       parameter ( SHMEM_MAX_NAME_LEN = 256-1 )

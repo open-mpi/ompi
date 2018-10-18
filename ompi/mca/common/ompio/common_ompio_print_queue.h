@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2016 University of Houston. All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -25,9 +25,6 @@
 
 
 #include "mpi.h"
-
-OMPI_DECLSPEC extern int mca_io_ompio_coll_timing_info;
-struct mca_io_ompio_file_t;
 
 #define MCA_COMMON_OMPIO_QUEUESIZE 2048
 
@@ -62,7 +59,7 @@ OMPI_DECLSPEC int mca_common_ompio_full_print_queue( struct mca_common_ompio_pri
 OMPI_DECLSPEC int mca_common_ompio_initialize_print_queue(struct mca_common_ompio_print_queue **q);
 
 OMPI_DECLSPEC int mca_common_ompio_print_time_info( struct mca_common_ompio_print_queue *q,
-                                                    char *name_operation, struct mca_io_ompio_file_t *fh);
+                                                    char *name_operation, struct ompio_file_t *fh);
 
 
 END_C_DECLS

@@ -49,9 +49,97 @@
     } while (_res == 0);
 
 /**
- * Wait for data delivery.
- * Pool on a variable given in addr until it is not equal to value.
+ * Check on a variable given in addr to see it is not equal to value.
  */
+int mca_spml_base_test(void* addr, int cmp, void* value, int datatype, int *out_value)
+{
+    volatile int *int_addr;
+    volatile long *long_addr;
+    volatile short *short_addr;
+    volatile long long *longlong_addr;
+    volatile int32_t *int32_addr;
+    volatile int64_t *int64_addr;
+
+    int int_value;
+    long long_value;
+    short short_value;
+    long long longlong_value;
+    int32_t int32_value;
+    int64_t int64_value;
+
+    ompi_fortran_integer_t *fint_addr, fint_value;
+    ompi_fortran_integer4_t *fint4_addr, fint4_value;
+    ompi_fortran_integer8_t *fint8_addr, fint8_value;
+
+    switch (datatype) {
+
+    /* Int */
+    case SHMEM_INT:
+        int_value = *(int*) value;
+        int_addr = (int*) addr;
+        SPML_BASE_DO_CMP((*out_value), int_addr, cmp, int_value);
+        break;
+
+        /* Short */
+    case SHMEM_SHORT:
+        short_value = *(short*) value;
+        short_addr = (short*) addr;
+        SPML_BASE_DO_CMP((*out_value), short_addr, cmp, short_value);
+        break;
+
+        /* Long */
+    case SHMEM_LONG:
+        long_value = *(long*) value;
+        long_addr = (long*) addr;
+        SPML_BASE_DO_CMP((*out_value), long_addr, cmp, long_value);
+        break;
+
+        /* Long-Long */
+    case SHMEM_LLONG:
+        longlong_value = *(long long*) value;
+        longlong_addr = (long long*) addr;
+        SPML_BASE_DO_CMP((*out_value), longlong_addr, cmp, longlong_value);
+        break;
+
+       /* Int32_t */
+    case SHMEM_INT32_T:
+        int32_value = *(int32_t*) value;
+        int32_addr = (int32_t*) addr;
+        SPML_BASE_DO_CMP((*out_value), int32_addr, cmp, int32_value);
+        break;
+
+       /* Int64_t */
+    case SHMEM_INT64_T:
+        int64_value = *(int64_t*) value;
+        int64_addr = (int64_t*) addr;
+        SPML_BASE_DO_CMP((*out_value), int64_addr, cmp, int64_value);
+        break;
+
+        /*C equivalent of Fortran integer type */
+    case SHMEM_FINT:
+        fint_value = *(ompi_fortran_integer_t *) value;
+        fint_addr = (ompi_fortran_integer_t *) addr;
+        SPML_BASE_DO_CMP((*out_value), fint_addr, cmp, fint_value);
+        break;
+
+        /*C equivalent of Fortran int4 type*/
+    case SHMEM_FINT4:
+        fint4_value = *(ompi_fortran_integer4_t *) value;
+        fint4_addr = (ompi_fortran_integer4_t *) addr;
+        SPML_BASE_DO_CMP((*out_value), fint4_addr, cmp, fint4_value);
+        break;
+
+        /*C equivalent of Fortran int8 type*/
+    case SHMEM_FINT8:
+        fint8_value = *(ompi_fortran_integer8_t *) value;
+        fint8_addr = (ompi_fortran_integer8_t *) addr;
+        SPML_BASE_DO_CMP((*out_value), fint8_addr, cmp, fint8_value);
+        break;
+    }
+
+    return OSHMEM_SUCCESS;
+}
+
 int mca_spml_base_wait(void* addr, int cmp, void* value, int datatype)
 {
     volatile int *int_addr;
@@ -143,6 +231,7 @@ int mca_spml_base_wait(void* addr, int cmp, void* value, int datatype)
     return OSHMEM_SUCCESS;
 }
 
+
 /**
  * Waits for completion of a non-blocking put or get issued by the calling PE.
  * This function waits for completion of a single non-blocking transfer issued by
@@ -153,11 +242,7 @@ int mca_spml_base_wait(void* addr, int cmp, void* value, int datatype)
  */
 int mca_spml_base_wait_nb(void* handle)
 {
-    /* TODO fence is a gag for more accurate code
-     * Use shmem_quiet() (or a function calling shmem_quiet()) or
-     * shmem_wait_nb() to force completion of transfers for non-blocking operations.
-     */
-    MCA_SPML_CALL(fence());
+    MCA_SPML_CALL(quiet(oshmem_ctx_default));
 
     return OSHMEM_SUCCESS;
 }

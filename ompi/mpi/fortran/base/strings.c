@@ -25,8 +25,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "ompi/constants.h"
 #include "opal/util/argv.h"
+#include "opal/util/string_copy.h"
+
+#include "ompi/constants.h"
 #include "ompi/mpi/fortran/base/fortran_base_strings.h"
 
 
@@ -65,9 +67,10 @@ int ompi_fortran_string_f2c(char *fstr, int len, char **cstr)
     /* Copy F77 string into C string and NULL terminate it. */
 
     if (len > 0) {
-        strncpy(*cstr, fstr, len);
+        opal_string_copy(*cstr, fstr, len + 1);
+    } else {
+        (*cstr)[0] = '\0';
     }
-    (*cstr)[len] = '\0';
 
     return OMPI_SUCCESS;
 }
@@ -91,7 +94,7 @@ int ompi_fortran_string_c2f(char *cstr, char *fstr, int len)
 {
     int i;
 
-    strncpy(fstr, cstr, len);
+    opal_string_copy(fstr, cstr, len);
     for (i = strlen(cstr); i < len; ++i) {
         fstr[i] = ' ';
     }

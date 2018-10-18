@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2017 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2014-2018 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -15,13 +15,13 @@
 #include "osc_rdma_types.h"
 #include "osc_rdma_frag.h"
 
-static inline int ompi_osc_rdma_trylock_local (volatile ompi_osc_rdma_lock_t *lock)
+static inline int ompi_osc_rdma_trylock_local (ompi_osc_rdma_atomic_lock_t *lock)
 {
     ompi_osc_rdma_lock_t _tmp_value = 0;
     return !ompi_osc_rdma_lock_compare_exchange (lock, &_tmp_value, OMPI_OSC_RDMA_LOCK_EXCLUSIVE);
 }
 
-static inline void ompi_osc_rdma_unlock_local (volatile ompi_osc_rdma_lock_t *lock)
+static inline void ompi_osc_rdma_unlock_local (ompi_osc_rdma_atomic_lock_t *lock)
 {
     (void) ompi_osc_rdma_lock_add (lock, -OMPI_OSC_RDMA_LOCK_EXCLUSIVE);
 }
@@ -40,13 +40,17 @@ static inline int ompi_osc_rdma_btl_fop (ompi_osc_rdma_module_t *module, struct 
                                          ompi_osc_rdma_pending_op_cb_fn_t cbfunc, void *cbdata, void *cbcontext)
 {
     ompi_osc_rdma_pending_op_t *pending_op;
-    int ret;
+    int ret = OPAL_ERROR;
 
     pending_op = OBJ_NEW(ompi_osc_rdma_pending_op_t);
     assert (NULL != pending_op);
 
     if (wait_for_completion) {
         OBJ_RETAIN(pending_op);
+    } else {
+        /* NTH: need to keep track of pending ops to avoid a potential teardown problem */
+        pending_op->module = module;
+        (void) opal_atomic_fetch_add_32 (&module->pending_ops, 1);
     }
 
     pending_op->op_result = (void *) result;
@@ -128,6 +132,12 @@ static inline int ompi_osc_rdma_btl_op (ompi_osc_rdma_module_t *module, struct m
         pending_op->cbfunc = cbfunc;
         pending_op->cbdata = cbdata;
         pending_op->cbcontext = cbcontext;
+    }
+
+    if (!wait_for_completion) {
+        /* NTH: need to keep track of pending ops to avoid a potential teardown problem */
+        pending_op->module = module;
+        (void) opal_atomic_fetch_add_32 (&module->pending_ops, 1);
     }
 
     /* spin until the btl has accepted the operation */
@@ -256,7 +266,7 @@ static inline int ompi_osc_rdma_lock_release_shared (ompi_osc_rdma_module_t *mod
         return ompi_osc_rdma_lock_btl_op (module, peer, lock, MCA_BTL_ATOMIC_ADD, value, false);
     }
 
-    (void) ompi_osc_rdma_lock_add ((volatile ompi_osc_rdma_lock_t *) lock, value);
+    (void) ompi_osc_rdma_lock_add ((ompi_osc_rdma_atomic_lock_t *) lock, value);
 
     return OMPI_SUCCESS;
 }
@@ -310,14 +320,14 @@ static inline int ompi_osc_rdma_lock_acquire_shared (ompi_osc_rdma_module_t *mod
         } while (1);
     } else {
         do {
-            lock_state = ompi_osc_rdma_lock_add ((volatile ompi_osc_rdma_lock_t *) lock, value);
+            lock_state = ompi_osc_rdma_lock_add ((ompi_osc_rdma_atomic_lock_t *) lock, value);
             OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_DEBUG, "local shared lock incremented. old value 0x%lx",
                              (unsigned long) lock_state);
             if (!(lock_state & check)) {
                 break;
             }
 
-            (void) ompi_osc_rdma_lock_add ((volatile ompi_osc_rdma_lock_t *) lock, -value);
+            (void) ompi_osc_rdma_lock_add ((ompi_osc_rdma_atomic_lock_t *) lock, -value);
             ompi_osc_rdma_progress (module);
         } while (1);
     }
@@ -361,14 +371,14 @@ static inline int ompi_osc_rdma_lock_try_acquire_exclusive (ompi_osc_rdma_module
             OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_DEBUG, "exclusive lock acquired");
         } else {
             OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_DEBUG, "could not acquire exclusive lock. lock state 0x%" PRIx64,
-                             (unsigned long) lock_state);
+                             (uint64_t) lock_state);
         }
 #endif
 
         return lock_state != 0;
     }
 
-    return ompi_osc_rdma_trylock_local ((int64_t *)(intptr_t) lock);
+    return ompi_osc_rdma_trylock_local ((ompi_osc_rdma_atomic_lock_t *)(intptr_t) lock);
 }
 
 /**
@@ -421,7 +431,7 @@ static inline int ompi_osc_rdma_lock_release_exclusive (ompi_osc_rdma_module_t *
             abort ();
         }
     } else {
-        ompi_osc_rdma_unlock_local ((volatile ompi_osc_rdma_lock_t *)(intptr_t) lock);
+        ompi_osc_rdma_unlock_local ((ompi_osc_rdma_atomic_lock_t *)(intptr_t) lock);
     }
 
     OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_DEBUG, "exclusive lock released");

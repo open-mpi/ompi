@@ -5,6 +5,7 @@
  * Copyright (c) 2015      Intel, Inc. All rights reserved.
  *
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -20,6 +21,7 @@
 
 #include "opal_config.h"
 #include "opal/constants.h"
+#include "opal/util/printf.h"
 
 #include "opal/mca/event/event.h"
 #include "libevent2022.h"
@@ -171,7 +173,7 @@ static int libevent2022_register (void)
     ompi_event_module_include = "poll";
 #endif
 
-    asprintf( &help_msg,
+    opal_asprintf( &help_msg,
               "Comma-delimited list of libevent subsystems "
               "to use (%s -- available on your platform)",
               available_eventops );

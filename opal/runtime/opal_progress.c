@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2016 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2006-2018 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -73,13 +73,13 @@ static opal_timer_t event_progress_last_time = 0;
 static opal_timer_t event_progress_delta = 0;
 #else
 /* current count down until we tick the event library */
-static int32_t event_progress_counter = 0;
+static opal_atomic_int32_t event_progress_counter = 0;
 /* reset value for counter when it hits 0 */
 static int32_t event_progress_delta = 0;
 #endif
 /* users of the event library from MPI cause the tick rate to
    be every time */
-static int32_t num_event_users = 0;
+static opal_atomic_int32_t num_event_users = 0;
 
 #if OPAL_ENABLE_DEBUG
 static int debug_output = -1;
@@ -171,9 +171,10 @@ opal_progress_finalize(void)
 
 static int opal_progress_events(void)
 {
+    static opal_atomic_int32_t lock = 0;
     int events = 0;
 
-    if( opal_progress_event_flag != 0 ) {
+    if( opal_progress_event_flag != 0 && !OPAL_THREAD_SWAP_32(&lock, 1) ) {
 #if OPAL_HAVE_WORKING_EVENTOPS
 #if OPAL_PROGRESS_USE_TIMERS
 #if OPAL_PROGRESS_ONLY_USEC_NATIVE
@@ -201,6 +202,7 @@ static int opal_progress_events(void)
 #endif /* OPAL_PROGRESS_USE_TIMERS */
 
 #endif /* OPAL_HAVE_WORKING_EVENTOPS */
+        lock = 0;
     }
 
     return events;
@@ -408,7 +410,7 @@ static int _opal_progress_register (opal_progress_callback_t cb, volatile opal_p
         opal_atomic_wmb ();
 
         /* swap out callback array */
-        old = opal_atomic_swap_ptr (cbs, tmp);
+        old = (opal_progress_callback_t *) opal_atomic_swap_ptr ((opal_atomic_intptr_t *) cbs, (intptr_t) tmp);
 
         opal_atomic_wmb ();
 
@@ -469,7 +471,7 @@ static int _opal_progress_unregister (opal_progress_callback_t cb, volatile opal
     for (size_t i = (size_t) ret ; i < *callback_array_len - 1 ; ++i) {
         /* copy callbacks atomically since another thread may be in
          * opal_progress(). */
-        (void) opal_atomic_swap_ptr (callback_array + i, callback_array[i+1]);
+        (void) opal_atomic_swap_ptr ((opal_atomic_intptr_t *) (callback_array + i), (intptr_t) callback_array[i+1]);
     }
 
     callback_array[*callback_array_len] = fake_cb;

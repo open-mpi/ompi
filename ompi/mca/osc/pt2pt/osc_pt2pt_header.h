@@ -8,7 +8,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2015 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2018 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
@@ -180,7 +180,7 @@ typedef struct ompi_osc_pt2pt_header_flush_ack_t ompi_osc_pt2pt_header_flush_ack
 struct ompi_osc_pt2pt_frag_header_t {
     ompi_osc_pt2pt_header_base_t base;
     uint32_t source; /* rank in window of source process */
-    int32_t num_ops; /* number of operations in this buffer */
+    opal_atomic_int32_t num_ops; /* number of operations in this buffer */
     uint32_t pad; /* ensure the fragment header is a multiple of 8 bytes */
 };
 typedef struct ompi_osc_pt2pt_frag_header_t ompi_osc_pt2pt_frag_header_t;

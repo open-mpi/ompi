@@ -34,6 +34,7 @@
 #include "opal/util/output.h"
 #include "opal/util/proc.h"
 #include "opal/util/show_help.h"
+#include "opal/util/string_copy.h"
 
 #include "pmix1x.h"
 #include "opal/mca/pmix/base/base.h"
@@ -124,7 +125,7 @@ static void pmix1_register_jobid(opal_jobid_t jobid, const char *nspace)
         }
     }
     jptr = OBJ_NEW(opal_pmix1_jobid_trkr_t);
-    (void)strncpy(jptr->nspace, nspace, PMIX_MAX_NSLEN);
+    (void)opal_string_copy(jptr->nspace, nspace, PMIX_MAX_NSLEN);
     jptr->jobid = jobid;
     opal_list_append(&mca_pmix_ext1x_component.jobids, &jptr->super);
 }
@@ -185,6 +186,7 @@ pmix_status_t pmix1_convert_opalrc(int rc)
     case OPAL_ERROR:
         return PMIX_ERROR;
     case OPAL_SUCCESS:
+    case OPAL_OPERATION_SUCCEEDED:
         return PMIX_SUCCESS;
     default:
         return PMIX_ERROR;

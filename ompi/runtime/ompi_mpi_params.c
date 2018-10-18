@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2018 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -74,6 +74,9 @@ bool ompi_async_mpi_finalize = false;
 #define OMPI_ADD_PROCS_CUTOFF_DEFAULT 0
 uint32_t ompi_add_procs_cutoff = OMPI_ADD_PROCS_CUTOFF_DEFAULT;
 bool ompi_mpi_dynamics_enabled = true;
+
+char *ompi_mpi_spc_attach_string = NULL;
+bool ompi_mpi_spc_dump_enabled = false;
 
 static bool show_default_mca_params = false;
 static bool show_file_mca_params = false;
@@ -314,6 +317,22 @@ int ompi_mpi_register_params(void)
         (void) mca_base_var_register_synonym(value, "ompi", "mpi", NULL, "abort_print_stack",
                                       MCA_BASE_VAR_SYN_FLAG_DEPRECATED);
     }
+
+    ompi_mpi_spc_attach_string = NULL;
+    (void) mca_base_var_register("ompi", "mpi", NULL, "spc_attach",
+                                 "A comma delimeted string listing the software-based performance counters (SPCs) to enable.",
+                                 MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                 OPAL_INFO_LVL_4,
+                                 MCA_BASE_VAR_SCOPE_READONLY,
+                                 &ompi_mpi_spc_attach_string);
+
+    ompi_mpi_spc_dump_enabled = false;
+    (void) mca_base_var_register("ompi", "mpi", NULL, "spc_dump_enabled",
+                                 "A boolean value for whether (true) or not (false) to enable dumping SPC counters in MPI_Finalize.",
+                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                 OPAL_INFO_LVL_4,
+                                 MCA_BASE_VAR_SCOPE_READONLY,
+                                 &ompi_mpi_spc_dump_enabled);
 
     return OMPI_SUCCESS;
 }

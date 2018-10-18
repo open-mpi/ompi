@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009-2018 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2014      Mellanox Technologies, Inc.
@@ -270,7 +270,11 @@ int orte_pmix_server_register_nspace(orte_job_t *jdata, bool force)
         kv = OBJ_NEW(opal_value_t);
         kv->key = strdup(OPAL_PMIX_AVAIL_PHYS_MEMORY);
         kv->type = OPAL_UINT64;
+#if HWLOC_API_VERSION < 0x20000
         kv->data.uint64 = machine->memory.total_memory;
+#else
+        kv->data.uint64 = machine->total_memory;
+#endif
         opal_list_append(info, &kv->super);
     }
 

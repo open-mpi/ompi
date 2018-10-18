@@ -19,6 +19,7 @@
  * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -68,6 +69,7 @@
 #include "opal/util/net.h"
 #include "opal/util/fd.h"
 #include "opal/util/show_help.h"
+#include "opal/util/printf.h"
 #include "opal/constants.h"
 #include "opal/mca/btl/btl.h"
 #include "opal/mca/btl/base/base.h"
@@ -278,7 +280,7 @@ static int mca_btl_tcp_component_register(void)
                                     "The minimum port where the TCP BTL will try to bind (default 1024)",
                                     1024, OPAL_INFO_LVL_2, &mca_btl_tcp_component.tcp_port_min);
 
-    asprintf( &message,
+    opal_asprintf( &message,
               "The number of ports where the TCP BTL will try to bind (default %d)."
               " This parameter together with the port min, define a range of ports"
               " where Open MPI will open sockets.",
@@ -291,7 +293,7 @@ static int mca_btl_tcp_component_register(void)
     mca_btl_tcp_param_register_int( "port_min_v6",
                                     "The minimum port where the TCP BTL will try to bind (default 1024)", 1024,
                                     OPAL_INFO_LVL_2, & mca_btl_tcp_component.tcp6_port_min );
-    asprintf( &message,
+    opal_asprintf( &message,
               "The number of ports where the TCP BTL will try to bind (default %d)."
               " This parameter together with the port min, define a range of ports"
               " where Open MPI will open sockets.",
@@ -361,9 +363,9 @@ static int mca_btl_tcp_component_open(void)
 #if OPAL_ENABLE_IPV6
     mca_btl_tcp_component.tcp6_listen_sd = -1;
 #endif
-    mca_btl_tcp_component.tcp_num_btls=0;
+    mca_btl_tcp_component.tcp_num_btls = 0;
     mca_btl_tcp_component.tcp_addr_count = 0;
-    mca_btl_tcp_component.tcp_btls=NULL;
+    mca_btl_tcp_component.tcp_btls = NULL;
 
     /* initialize objects */
     OBJ_CONSTRUCT(&mca_btl_tcp_component.tcp_lock, opal_mutex_t);
@@ -562,10 +564,12 @@ static int mca_btl_tcp_create(int if_kindex, const char* if_name)
             }
         }
 
-#if 0 && OPAL_ENABLE_DEBUG
-        BTL_OUTPUT(("interface %s instance %i: bandwidth %d latency %d\n", if_name, i,
-                    btl->super.btl_bandwidth, btl->super.btl_latency));
-#endif
+        opal_output_verbose(5, opal_btl_base_framework.framework_output,
+                            "btl:tcp: %p: if %s kidx %d cnt %i addr %s %s bw %d lt %d\n",
+                            (void*)btl, if_name, (int) btl->tcp_ifkindex, i,
+                            opal_net_get_hostname((struct sockaddr*)&addr),
+                            (addr.ss_family == AF_INET) ? "IPv4" : "IPv6",
+                            btl->super.btl_bandwidth, btl->super.btl_latency);
     }
     return OPAL_SUCCESS;
 }
@@ -1152,7 +1156,8 @@ static int mca_btl_tcp_component_exchange(void)
 
                  opal_ifindextoname(index, ifn, sizeof(ifn));
                  opal_output_verbose(30, opal_btl_base_framework.framework_output,
-                                     "btl:tcp: examining interface %s", ifn);
+                                     "btl: tcp: component_exchange: examining interface %s",
+                                     ifn);
                  if (OPAL_SUCCESS !=
                      opal_ifindextoaddr(index, (struct sockaddr*) &my_ss,
                                         sizeof (my_ss))) {
@@ -1177,7 +1182,9 @@ static int mca_btl_tcp_component_exchange(void)
                          opal_ifindextokindex (index);
                      current_addr++;
                      opal_output_verbose(30, opal_btl_base_framework.framework_output,
-                                         "btl:tcp: using ipv4 interface %s", ifn);
+                                         "btl: tcp: component_exchange: "
+                                         "%s IPv6 %s", ifn,
+                                         opal_net_get_hostname((struct sockaddr*)&my_ss));
                  } else
 #endif
                  if ((AF_INET == my_ss.ss_family) &&
@@ -1194,7 +1201,9 @@ static int mca_btl_tcp_component_exchange(void)
                          opal_ifindextokindex (index);
                      current_addr++;
                      opal_output_verbose(30, opal_btl_base_framework.framework_output,
-                                         "btl:tcp: using ipv6 interface %s", ifn);
+                                         "btl: tcp: component_exchange: "
+                                         "%s IPv4 %s", ifn,
+                                         opal_net_get_hostname((struct sockaddr*)&my_ss));
                  }
              } /* end of for opal_ifbegin() */
          } /* end of for tcp_num_btls */
@@ -1291,6 +1300,24 @@ mca_btl_base_module_t** mca_btl_tcp_component_init(int *num_btl_modules,
         }
     }
 
+    /* Avoid a race in wire-up when using threads (progess or user)
+       and multiple BTL modules.  The details of the race are in
+       https://github.com/open-mpi/ompi/issues/3035#issuecomment-429500032,
+       but the summary is that the lookup code in
+       component_recv_handler() below assumes that add_procs() is
+       atomic across all active TCP BTL modules, but in multi-threaded
+       code, that isn't guaranteed, because the locking is inside
+       add_procs(), and add_procs() is called once per module.  This
+       isn't a proper fix, but will solve the "dropped connection"
+       problem until we can come up with a more complete fix to how we
+       initialize procs, endpoints, and modules in the TCP BTL. */
+    if (mca_btl_tcp_component.tcp_num_btls > 1 &&
+        (enable_mpi_threads || 0 < mca_btl_tcp_progress_thread_trigger)) {
+        for( i = 0; i < mca_btl_tcp_component.tcp_num_btls; i++) {
+            mca_btl_tcp_component.tcp_btls[i]->super.btl_flags |= MCA_BTL_FLAGS_SINGLE_ADD_PROCS;
+        }
+    }
+
 #if OPAL_CUDA_SUPPORT
     mca_common_cuda_stage_one_init();
 #endif /* OPAL_CUDA_SUPPORT */
@@ -1372,7 +1399,7 @@ static void mca_btl_tcp_component_recv_handler(int sd, short flags, void* user)
 
     /* get the current timeout value so we can reset to it */
     if (0 != getsockopt(sd, SOL_SOCKET, SO_RCVTIMEO, (void*)&save, &rcvtimeo_save_len)) {
-        if (ENOPROTOOPT == errno) {
+        if (ENOPROTOOPT == errno || EOPNOTSUPP == errno) {
             sockopt = false;
         } else {
             opal_show_help("help-mpi-btl-tcp.txt", "socket flag fail",

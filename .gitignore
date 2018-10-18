@@ -135,6 +135,7 @@ examples/oshmem_max_reduction
 examples/oshmem_shmalloc
 examples/oshmem_strided_puts
 examples/oshmem_symmetric_data
+examples/spc_example
 
 ompi/debuggers/*.in
 ompi/debuggers/dlopen_test
@@ -169,17 +170,18 @@ ompi/mca/coll/sm/coll-sm-version.h*
 
 ompi/mca/crcp/ompi_crcp.7
 
-ompi/mca/io/romio314/romio/adio/include/romioconf.h
-ompi/mca/io/romio314/romio/include/mpio.h
-ompi/mca/io/romio314/romio/localdefs
-ompi/mca/io/romio314/romio/test/fcoll_test.f
-ompi/mca/io/romio314/romio/test/fmisc.f
-ompi/mca/io/romio314/romio/test/fperf.f
-ompi/mca/io/romio314/romio/test/large_file.c
-ompi/mca/io/romio314/romio/test/misc.c
-ompi/mca/io/romio314/romio/test/pfcoll_test.f
-ompi/mca/io/romio314/romio/test/runtests
-ompi/mca/io/romio314/romio/util/romioinstall
+ompi/mca/io/romio321/romio/adio/include/romioconf.h
+ompi/mca/io/romio321/romio/include/mpio.h
+ompi/mca/io/romio321/romio/localdefs
+ompi/mca/io/romio321/romio/test/fcoll_test.f
+ompi/mca/io/romio321/romio/test/fmisc.f
+ompi/mca/io/romio321/romio/test/fperf.f
+ompi/mca/io/romio321/romio/test/large_file.c
+ompi/mca/io/romio321/romio/test/misc.c
+ompi/mca/io/romio321/romio/test/pfcoll_test.f
+ompi/mca/io/romio321/romio/test/runtests
+ompi/mca/io/romio321/romio/util/romioinstall
+ompi/mca/io/romio321/romio/test/syshints.c
 
 ompi/mca/osc/monitoring/osc_monitoring_template_gen.h
 
@@ -202,6 +204,8 @@ ompi/mpi/c/profile/p*.c
 ompi/mpi/fortran/configure-fortran-output.h
 ompi/mpi/fortran/mpiext/mpi-ext-module.F90
 ompi/mpi/fortran/mpiext/mpi-f08-ext-module.F90
+ompi/mpi/fortran/mpiext-use-mpi/mpi-ext-module.F90
+ompi/mpi/fortran/mpiext-use-mpi-f08/mpi-f08-ext-module.F90
 
 ompi/mpi/fortran/mpif-h/sizeof_f.f90
 ompi/mpi/fortran/mpif-h/profile/p*.c
@@ -216,6 +220,7 @@ ompi/mpi/fortran/use-mpi-ignore-tkr/mpi-ignore-tkr-interfaces.h
 ompi/mpi/fortran/use-mpi-ignore-tkr/mpi-ignore-tkr-file-interfaces.h
 ompi/mpi/fortran/use-mpi-ignore-tkr/mpi-ignore-tkr-sizeof.f90
 ompi/mpi/fortran/use-mpi-ignore-tkr/mpi-ignore-tkr-sizeof.h
+ompi/mpi/fortran/use-mpi-ignore-tkr/mpi-ignore-tkr-removed-interfaces.h
 
 ompi/mpi/fortran/use-mpi-tkr/fortran_kinds.sh
 ompi/mpi/fortran/use-mpi-tkr/fortran_sizes.h
@@ -244,6 +249,54 @@ ompi/mpiext/example/tests/progress_usempif08
 
 ompi/mpiext/cuda/c/MPIX_Query_cuda_support.3
 ompi/mpiext/cuda/c/mpiext_cuda_c.h
+
+ompi/mpiext/pcollreq/c/MPIX_*.3
+ompi/mpiext/pcollreq/c/profile/pallgather_init.c
+ompi/mpiext/pcollreq/c/profile/pallgatherv_init.c
+ompi/mpiext/pcollreq/c/profile/pallreduce_init.c
+ompi/mpiext/pcollreq/c/profile/palltoall_init.c
+ompi/mpiext/pcollreq/c/profile/palltoallv_init.c
+ompi/mpiext/pcollreq/c/profile/palltoallw_init.c
+ompi/mpiext/pcollreq/c/profile/pbarrier_init.c
+ompi/mpiext/pcollreq/c/profile/pbcast_init.c
+ompi/mpiext/pcollreq/c/profile/pexscan_init.c
+ompi/mpiext/pcollreq/c/profile/pgather_init.c
+ompi/mpiext/pcollreq/c/profile/pgatherv_init.c
+ompi/mpiext/pcollreq/c/profile/pmpiext_pcollreq_c.h
+ompi/mpiext/pcollreq/c/profile/pneighbor_allgather_init.c
+ompi/mpiext/pcollreq/c/profile/pneighbor_allgatherv_init.c
+ompi/mpiext/pcollreq/c/profile/pneighbor_alltoall_init.c
+ompi/mpiext/pcollreq/c/profile/pneighbor_alltoallv_init.c
+ompi/mpiext/pcollreq/c/profile/pneighbor_alltoallw_init.c
+ompi/mpiext/pcollreq/c/profile/preduce_init.c
+ompi/mpiext/pcollreq/c/profile/preduce_scatter_block_init.c
+ompi/mpiext/pcollreq/c/profile/preduce_scatter_init.c
+ompi/mpiext/pcollreq/c/profile/pscan_init.c
+ompi/mpiext/pcollreq/c/profile/pscatter_init.c
+ompi/mpiext/pcollreq/c/profile/pscatterv_init.c
+
+ompi/mpiext/pcollreq/mpif-h/profile/pallgather_init_f.c
+ompi/mpiext/pcollreq/mpif-h/profile/pallgatherv_init_f.c
+ompi/mpiext/pcollreq/mpif-h/profile/pallreduce_init_f.c
+ompi/mpiext/pcollreq/mpif-h/profile/palltoall_init_f.c
+ompi/mpiext/pcollreq/mpif-h/profile/palltoallv_init_f.c
+ompi/mpiext/pcollreq/mpif-h/profile/palltoallw_init_f.c
+ompi/mpiext/pcollreq/mpif-h/profile/pbarrier_init_f.c
+ompi/mpiext/pcollreq/mpif-h/profile/pbcast_init_f.c
+ompi/mpiext/pcollreq/mpif-h/profile/pexscan_init_f.c
+ompi/mpiext/pcollreq/mpif-h/profile/pgather_init_f.c
+ompi/mpiext/pcollreq/mpif-h/profile/pgatherv_init_f.c
+ompi/mpiext/pcollreq/mpif-h/profile/pneighbor_allgather_init_f.c
+ompi/mpiext/pcollreq/mpif-h/profile/pneighbor_allgatherv_init_f.c
+ompi/mpiext/pcollreq/mpif-h/profile/pneighbor_alltoall_init_f.c
+ompi/mpiext/pcollreq/mpif-h/profile/pneighbor_alltoallv_init_f.c
+ompi/mpiext/pcollreq/mpif-h/profile/pneighbor_alltoallw_init_f.c
+ompi/mpiext/pcollreq/mpif-h/profile/preduce_init_f.c
+ompi/mpiext/pcollreq/mpif-h/profile/preduce_scatter_block_init_f.c
+ompi/mpiext/pcollreq/mpif-h/profile/preduce_scatter_init_f.c
+ompi/mpiext/pcollreq/mpif-h/profile/pscan_init_f.c
+ompi/mpiext/pcollreq/mpif-h/profile/pscatter_init_f.c
+ompi/mpiext/pcollreq/mpif-h/profile/pscatterv_init_f.c
 
 ompi/tools/mpisync/mpisync
 ompi/tools/mpisync/mpirun_prof
@@ -338,12 +391,12 @@ opal/mca/pmix/pmix*/pmix/examples/pub
 opal/mca/pmix/pmix*/pmix/examples/server
 opal/mca/pmix/pmix*/pmix/examples/tool
 
-opal/mca/pmix/ext3x/ext3x.c
-opal/mca/pmix/ext3x/ext3x.h
-opal/mca/pmix/ext3x/ext3x_client.c
-opal/mca/pmix/ext3x/ext3x_component.c
-opal/mca/pmix/ext3x/ext3x_server_north.c
-opal/mca/pmix/ext3x/ext3x_server_south.c
+opal/mca/pmix/ext4x/ext4x.c
+opal/mca/pmix/ext4x/ext4x.h
+opal/mca/pmix/ext4x/ext4x_client.c
+opal/mca/pmix/ext4x/ext4x_component.c
+opal/mca/pmix/ext4x/ext4x_server_north.c
+opal/mca/pmix/ext4x/ext4x_server_south.c
 
 opal/tools/opal-checkpoint/opal-checkpoint
 opal/tools/opal-checkpoint/opal-checkpoint.1
@@ -534,8 +587,8 @@ orte/tools/orted/orted
 orte/tools/orted/orted.1
 orte/tools/orterun/orterun
 orte/tools/orterun/orterun.1
-orte/tools/prun/prun
-orte/tools/prun/prun.1
+orte/tools/ompi-prun/ompi-prun
+orte/tools/ompi-prun/ompi-prun.1
 orte/tools/wrappers/ortecc-wrapper-data.txt
 orte/tools/wrappers/ortec++-wrapper-data.txt
 orte/tools/wrappers/ortecc.1
@@ -672,6 +725,8 @@ test/runtime/sigchld
 test/runtime/start_shut
 test/runtime/opal_init_finalize
 test/runtime/orte_init_finalize
+
+test/spc/spc_test
 
 test/threads/opal_condition
 test/threads/opal_thread

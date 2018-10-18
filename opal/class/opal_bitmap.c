@@ -12,7 +12,7 @@
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010-2012 Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -123,7 +123,7 @@ opal_bitmap_set_bit(opal_bitmap_t *bm, int bit)
          out of range. We don't throw any error here, because this is
          valid and we simply expand the bitmap */
 
-        new_size = (int)(((size_t)index / bm->array_size + 1 ) * bm->array_size);
+        new_size = index + 1;
         if( new_size > bm->max_size )
             new_size = bm->max_size;
 

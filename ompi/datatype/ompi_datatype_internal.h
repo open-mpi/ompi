@@ -406,7 +406,7 @@ extern const ompi_datatype_t* ompi_datatype_basicDatatypes[OMPI_DATATYPE_MPI_MAX
     .d_f_to_c_index = -1,                                                            \
     .d_keyhash = NULL,                                                               \
     .args = NULL,                                                                    \
-    .packed_description = NULL,                                                      \
+    .packed_description = 0,                                                         \
     .name = "MPI_" # NAME
 
 #define OMPI_DATATYPE_INITIALIZER_UNAVAILABLE(FLAGS)                                 \

@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2013-2016 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2013-2018 Los Alamos National Security, LLC.  All rights
  *                         reseved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -99,7 +99,7 @@ int ompi_comm_request_schedule_append (ompi_comm_request_t *request, ompi_comm_r
 static int ompi_comm_request_progress (void)
 {
     ompi_comm_request_t *request, *next;
-    static int32_t progressing = 0;
+    static opal_atomic_int32_t progressing = 0;
 
     /* don't allow re-entry */
     if (opal_atomic_swap_32 (&progressing, 1)) {

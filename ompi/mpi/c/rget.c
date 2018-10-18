@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2018 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
@@ -30,6 +30,7 @@
 #include "ompi/win/win.h"
 #include "ompi/mca/osc/osc.h"
 #include "ompi/datatype/ompi_datatype.h"
+#include "ompi/runtime/ompi_spc.h"
 
 #if OMPI_BUILD_MPI_PROFILING
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -47,6 +48,8 @@ int MPI_Rget(void *origin_addr, int origin_count,
              MPI_Datatype target_datatype, MPI_Win win, MPI_Request *request)
 {
     int rc;
+
+    SPC_RECORD(OMPI_SPC_RGET, 1);
 
     if (MPI_PARAM_CHECK) {
         rc = OMPI_SUCCESS;

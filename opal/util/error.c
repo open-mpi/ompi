@@ -16,6 +16,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      FUJITSU LIMITED.  All rights reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -32,8 +33,10 @@
 #include <unistd.h>
 
 #include "opal/util/error.h"
+#include "opal/util/string_copy.h"
 #include "opal/constants.h"
 #include "opal/util/proc.h"
+#include "opal/util/printf.h"
 #include "opal/runtime/opal_params.h"
 
 #define MAX_CONVERTERS 5
@@ -81,7 +84,7 @@ opal_strerror_unknown(int errnum, char **str)
         if (0 != converters[i].init) {
             if (errnum < converters[i].err_base &&
                 errnum > converters[i].err_max) {
-                asprintf(str, "Unknown error: %d (%s error %d)",
+                opal_asprintf(str, "Unknown error: %d (%s error %d)",
                          errnum, converters[i].project,
                          errnum - converters[i].err_base);
                 return OPAL_SUCCESS;
@@ -89,7 +92,7 @@ opal_strerror_unknown(int errnum, char **str)
         }
     }
 
-    asprintf(str, "Unknown error: %d", errnum);
+    opal_asprintf(str, "Unknown error: %d", errnum);
 
     return OPAL_SUCCESS;
 }
@@ -161,7 +164,7 @@ opal_strerror_r(int errnum, char *strerrbuf, size_t buflen)
     if (OPAL_SUCCESS != ret) {
         if (errnum == OPAL_ERR_IN_ERRNO) {
             char *tmp = strerror(errno);
-            strncpy(strerrbuf, tmp, buflen);
+            opal_string_copy(strerrbuf, tmp, buflen);
             return OPAL_SUCCESS;
         } else {
             char *ue_msg;
@@ -197,7 +200,7 @@ opal_error_register(const char *project, int err_base, int err_max,
     for (i = 0 ; i < MAX_CONVERTERS ; ++i) {
         if (0 == converters[i].init) {
             converters[i].init = 1;
-            strncpy(converters[i].project, project, MAX_CONVERTER_PROJECT_LEN);
+            opal_string_copy(converters[i].project, project, MAX_CONVERTER_PROJECT_LEN);
             converters[i].project[MAX_CONVERTER_PROJECT_LEN-1] = '\0';
             converters[i].err_base = err_base;
             converters[i].err_max = err_max;

@@ -9,8 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2013-2016 University of Houston. All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2013-2018 University of Houston. All rights reserved.
+ * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -28,7 +28,7 @@
 #include "ompi/mca/sharedfp/sharedfp.h"
 #include "ompi/mca/sharedfp/base/base.h"
 
-int mca_sharedfp_sm_iwrite(mca_io_ompio_file_t *fh,
+int mca_sharedfp_sm_iwrite(ompio_file_t *fh,
                            const void *buf,
                            int count,
                            ompi_datatype_t *datatype,
@@ -38,41 +38,24 @@ int mca_sharedfp_sm_iwrite(mca_io_ompio_file_t *fh,
      OMPI_MPI_OFFSET_TYPE offset = 0;
      long bytesRequested = 0;
      size_t numofBytes;
-     struct mca_sharedfp_base_data_t *sh = NULL;
-     mca_sharedfp_base_module_t * shared_fp_base_module = NULL;
 
      if( NULL == fh->f_sharedfp_data){
-         if ( mca_sharedfp_sm_verbose ) {
-             opal_output(ompi_sharedfp_base_framework.framework_output,
-			 "sharedfp_sm_iwrite - opening the shared file pointer\n");
-         }
-         shared_fp_base_module = fh->f_sharedfp;
-
-         ret = shared_fp_base_module->sharedfp_file_open(fh->f_comm,
-                                                         fh->f_filename,
-                                                         fh->f_amode,
-                                                         fh->f_info,
-                                                         fh);
-         if ( OMPI_SUCCESS != ret ) {
-             opal_output(0,"sharedfp_sm_iwrite - error opening the shared file pointer\n");
-             return ret;
-         }
-    }
+         opal_output(ompi_sharedfp_base_framework.framework_output,
+                     "sharedfp_sm_iwrite - module not initialized\n");
+         return OMPI_ERROR;
+     }
 
     /* Calculate the number of bytes to write */
      opal_datatype_type_size ( &datatype->super, &numofBytes);
      bytesRequested = count * numofBytes;
-
-     /* Retrieve the shared file data struct */
-     sh = fh->f_sharedfp_data;
 
      if ( mca_sharedfp_sm_verbose ) {
          opal_output(ompi_sharedfp_base_framework.framework_output,
 		     "sharedfp_sm_iwrite: Bytes Requested is %ld\n",bytesRequested);
      }
     /* Request the offset to write bytesRequested bytes */
-     ret = mca_sharedfp_sm_request_position(sh,bytesRequested,&offset);
-     offset /= sh->sharedfh->f_etype_size;
+     ret = mca_sharedfp_sm_request_position(fh,bytesRequested,&offset);
+     offset /= fh->f_etype_size;
 
      if ( -1 != ret ) {
         if ( mca_sharedfp_sm_verbose ) {
@@ -80,14 +63,14 @@ int mca_sharedfp_sm_iwrite(mca_io_ompio_file_t *fh,
 			"sharedfp_sm_iwrite: Offset received is %lld\n",offset);
         }
         /* Write to the file */
-        ret = mca_common_ompio_file_iwrite_at(sh->sharedfh,offset,buf,count,datatype,request);
+        ret = mca_common_ompio_file_iwrite_at(fh,offset,buf,count,datatype,request);
     }
 
     return ret;
 
 }
 
-int mca_sharedfp_sm_write_ordered_begin(mca_io_ompio_file_t *fh,
+int mca_sharedfp_sm_write_ordered_begin(ompio_file_t *fh,
                                         const void *buf,
                                         int count,
                                         struct ompi_datatype_t *datatype)
@@ -101,54 +84,33 @@ int mca_sharedfp_sm_write_ordered_begin(mca_io_ompio_file_t *fh,
     long bytesRequested = 0;
     int recvcnt = 1, sendcnt = 1;
     size_t numofBytes;
-    int rank, size, i;
-    struct mca_sharedfp_base_data_t *sh = NULL;
-    mca_sharedfp_base_module_t * shared_fp_base_module = NULL;
+    int i;
 
     if ( NULL == fh->f_sharedfp_data){
- 	if ( mca_sharedfp_sm_verbose ) {
-	    opal_output(ompi_sharedfp_base_framework.framework_output,
-			"sharedfp_sm_write_ordered_begin: opening the shared file pointer\n");
-	}
-        shared_fp_base_module = fh->f_sharedfp;
-
-        ret = shared_fp_base_module->sharedfp_file_open(fh->f_comm,
-                                                        fh->f_filename,
-                                                        fh->f_amode,
-                                                        fh->f_info,
-                                                        fh);
-        if (  OMPI_SUCCESS != ret ) {
-            opal_output(0,"sharedfp_sm_write_ordered_begin - error opening the shared file pointer\n");
-            return ret;
-        }
+        opal_output(ompi_sharedfp_base_framework.framework_output,
+                    "sharedfp_sm_write_ordered_begin: module not initialized\n");
+        return OMPI_ERROR;
     }
+
     if ( true == fh->f_split_coll_in_use ) {
-        opal_output(0, "Only one split collective I/O operation allowed per file handle at any given point in time!\n");
+        opal_output(0, "Only one split collective I/O operation allowed per file "
+                    "handle at any given point in time!\n");
         return MPI_ERR_REQUEST;
     }
-
-
-
-    /*Retrieve the new communicator*/
-    sh = fh->f_sharedfp_data;
 
     /* Calculate the number of bytes to read*/
     opal_datatype_type_size ( &datatype->super, &numofBytes);
     sendBuff = count * numofBytes;
 
-    /* Get the ranks in the communicator */
-    rank = ompi_comm_rank ( sh->comm );
-    size = ompi_comm_size ( sh->comm );
-
-    if ( 0  == rank ) {
-        buff = (long*)malloc(sizeof(long) * size);
+    if ( 0  == fh->f_rank ) {
+        buff = (long*)malloc(sizeof(long) * fh->f_size);
         if (  NULL == buff )
             return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
-    ret = sh->comm->c_coll->coll_gather ( &sendBuff, sendcnt, OMPI_OFFSET_DATATYPE,
-					 buff, recvcnt, OMPI_OFFSET_DATATYPE, 0,
-					 sh->comm, sh->comm->c_coll->coll_gather_module );
+    ret = fh->f_comm->c_coll->coll_gather ( &sendBuff, sendcnt, OMPI_OFFSET_DATATYPE,
+                                            buff, recvcnt, OMPI_OFFSET_DATATYPE, 0,
+                                            fh->f_comm, fh->f_comm->c_coll->coll_gather_module );
     if( OMPI_SUCCESS != ret){
 	goto exit;
     }
@@ -156,8 +118,8 @@ int mca_sharedfp_sm_write_ordered_begin(mca_io_ompio_file_t *fh,
     /* All the counts are present now in the recvBuff.
     ** The size of recvBuff is sizeof_newComm
     */
-    if (  0 == rank ) {
-        for (i = 0; i < size ; i ++) {
+    if (  0 == fh->f_rank ) {
+        for (i = 0; i < fh->f_size ; i ++) {
 	    bytesRequested += buff[i];
 	    if ( mca_sharedfp_sm_verbose ) {
 		opal_output(ompi_sharedfp_base_framework.framework_output,
@@ -172,7 +134,7 @@ int mca_sharedfp_sm_write_ordered_begin(mca_io_ompio_file_t *fh,
 	** processes at what offset they should read their
 	** share of the data.
 	*/
-        ret = mca_sharedfp_sm_request_position(sh,bytesRequested,&offsetReceived);
+        ret = mca_sharedfp_sm_request_position(fh,bytesRequested,&offsetReceived);
         if( OMPI_SUCCESS != ret){
 	    goto exit;
         }
@@ -182,22 +144,22 @@ int mca_sharedfp_sm_write_ordered_begin(mca_io_ompio_file_t *fh,
 	}
 
         buff[0] += offsetReceived;
-        for (i = 1 ; i < size; i++)  {
+        for (i = 1 ; i < fh->f_size; i++)  {
             buff[i] += buff[i-1];
         }
     }
 
     /* Scatter the results to the other processes*/
-    ret = sh->comm->c_coll->coll_scatter ( buff, sendcnt, OMPI_OFFSET_DATATYPE,
-					  &offsetBuff, recvcnt, OMPI_OFFSET_DATATYPE, 0,
-					  sh->comm, sh->comm->c_coll->coll_scatter_module );
+    ret = fh->f_comm->c_coll->coll_scatter ( buff, sendcnt, OMPI_OFFSET_DATATYPE,
+                                             &offsetBuff, recvcnt, OMPI_OFFSET_DATATYPE, 0,
+                                             fh->f_comm, fh->f_comm->c_coll->coll_scatter_module );
     if( OMPI_SUCCESS != ret){
 	goto exit;
     }
 
     /*Each process now has its own individual offset in recvBUFF*/
     offset = offsetBuff - sendBuff;
-    offset /= sh->sharedfh->f_etype_size;
+    offset /= fh->f_etype_size;
 
     if ( mca_sharedfp_sm_verbose ) {
 	opal_output(ompi_sharedfp_base_framework.framework_output,
@@ -205,7 +167,7 @@ int mca_sharedfp_sm_write_ordered_begin(mca_io_ompio_file_t *fh,
     }
 
     /* read to the file */
-    ret = mca_common_ompio_file_iwrite_at_all(sh->sharedfh,offset,buf,count,datatype,
+    ret = mca_common_ompio_file_iwrite_at_all(fh,offset,buf,count,datatype,
 					   &fh->f_split_coll_req);
     fh->f_split_coll_in_use = true;
 
@@ -218,7 +180,7 @@ exit:
 }
 
 
-int mca_sharedfp_sm_write_ordered_end(mca_io_ompio_file_t *fh,
+int mca_sharedfp_sm_write_ordered_end(ompio_file_t *fh,
                                       const void *buf,
                                       ompi_status_public_t *status)
 {

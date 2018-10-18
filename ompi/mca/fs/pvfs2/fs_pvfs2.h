@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2016 University of Houston. All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
  * $COPYRIGHT$
@@ -46,6 +46,8 @@ extern int mca_fs_pvfs2_IS_INITIALIZED;
 
 BEGIN_C_DECLS
 
+#define OMPIO_PVFS2_MAX_NAME 100
+
 struct mca_fs_pvfs2_s {
     PVFS_credentials credentials;
     PVFS_object_ref object_ref;
@@ -55,11 +57,11 @@ typedef struct mca_fs_pvfs2_s mca_fs_pvfs2;
 int mca_fs_pvfs2_component_init_query(bool enable_progress_threads,
                                         bool enable_mpi_threads);
 struct mca_fs_base_module_1_0_0_t *
-mca_fs_pvfs2_component_file_query (mca_io_ompio_file_t *fh, int *priority);
-int mca_fs_pvfs2_component_file_unquery (mca_io_ompio_file_t *file);
+mca_fs_pvfs2_component_file_query (ompio_file_t *fh, int *priority);
+int mca_fs_pvfs2_component_file_unquery (ompio_file_t *file);
 
-int mca_fs_pvfs2_module_init (mca_io_ompio_file_t *file);
-int mca_fs_pvfs2_module_finalize (mca_io_ompio_file_t *file);
+int mca_fs_pvfs2_module_init (ompio_file_t *file);
+int mca_fs_pvfs2_module_finalize (ompio_file_t *file);
 
 OMPI_MODULE_DECLSPEC extern mca_fs_base_component_2_0_0_t mca_fs_pvfs2_component;
 /*
@@ -72,22 +74,22 @@ int mca_fs_pvfs2_file_open (struct ompi_communicator_t *comm,
                             const char *filename,
                             int amode,
                             struct opal_info_t *info,
-                            mca_io_ompio_file_t *fh);
+                            ompio_file_t *fh);
 
-int mca_fs_pvfs2_file_close (mca_io_ompio_file_t *fh);
+int mca_fs_pvfs2_file_close (ompio_file_t *fh);
 
 int mca_fs_pvfs2_file_delete (char *filename,
                               struct opal_info_t *info);
 
-int mca_fs_pvfs2_file_set_size (mca_io_ompio_file_t *fh,
+int mca_fs_pvfs2_file_set_size (ompio_file_t *fh,
                                 OMPI_MPI_OFFSET_TYPE size);
 
-int mca_fs_pvfs2_file_get_size (mca_io_ompio_file_t *fh,
+int mca_fs_pvfs2_file_get_size (ompio_file_t *fh,
                                 OMPI_MPI_OFFSET_TYPE *size);
 
-int mca_fs_pvfs2_file_sync (mca_io_ompio_file_t *fh);
+int mca_fs_pvfs2_file_sync (ompio_file_t *fh);
 
-int mca_fs_pvfs2_file_seek (mca_io_ompio_file_t *fh,
+int mca_fs_pvfs2_file_seek (ompio_file_t *fh,
                             OMPI_MPI_OFFSET_TYPE offset,
                             int whence);
 /*

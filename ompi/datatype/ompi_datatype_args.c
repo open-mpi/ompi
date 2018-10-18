@@ -45,7 +45,7 @@ __ompi_datatype_create_from_args( int32_t* i, ptrdiff_t * a,
                                   ompi_datatype_t** d, int32_t type );
 
 typedef struct __dt_args {
-    int32_t            ref_count;
+    opal_atomic_int32_t ref_count;
     int32_t            create_type;
     size_t             total_pack_size;
     int32_t            ci;
@@ -104,7 +104,7 @@ typedef struct __dt_args {
         pArgs->total_pack_size = (4 + (IC) + (DC)) * sizeof(int) +      \
             (AC) * sizeof(ptrdiff_t);                                   \
         (PDATA)->args = (void*)pArgs;                                   \
-        (PDATA)->packed_description = NULL;                             \
+        (PDATA)->packed_description = 0;                                \
     } while(0)
 
 
@@ -483,12 +483,12 @@ int ompi_datatype_get_pack_description( ompi_datatype_t* datatype,
 {
     ompi_datatype_args_t* args = (ompi_datatype_args_t*)datatype->args;
     int next_index = OMPI_DATATYPE_MAX_PREDEFINED;
-    void *packed_description = datatype->packed_description;
+    void *packed_description = (void *) datatype->packed_description;
     void* recursive_buffer;
 
     if (NULL == packed_description) {
         void *_tmp_ptr = NULL;
-        if (opal_atomic_compare_exchange_strong_ptr (&datatype->packed_description, (void *) &_tmp_ptr, (void *) 1)) {
+        if (opal_atomic_compare_exchange_strong_ptr (&datatype->packed_description, (intptr_t *) &_tmp_ptr, 1)) {
             if( ompi_datatype_is_predefined(datatype) ) {
                 packed_description = malloc(2 * sizeof(int));
             } else if( NULL == args ) {
@@ -510,10 +510,10 @@ int ompi_datatype_get_pack_description( ompi_datatype_t* datatype,
             }
 
             opal_atomic_wmb ();
-            datatype->packed_description = packed_description;
+            datatype->packed_description = (intptr_t) packed_description;
         } else {
             /* another thread beat us to it */
-            packed_description = datatype->packed_description;
+            packed_description = (void *) datatype->packed_description;
         }
     }
 
@@ -521,11 +521,11 @@ int ompi_datatype_get_pack_description( ompi_datatype_t* datatype,
         struct timespec interval = {.tv_sec = 0, .tv_nsec = 1000};
 
         /* wait until the packed description is updated */
-        while ((void *) 1 == datatype->packed_description) {
+        while (1 == datatype->packed_description) {
             nanosleep (&interval, NULL);
         }
 
-        packed_description = datatype->packed_description;
+        packed_description = (void *) datatype->packed_description;
     }
 
     *packed_buffer = (const void *) packed_description;
@@ -534,7 +534,7 @@ int ompi_datatype_get_pack_description( ompi_datatype_t* datatype,
 
 size_t ompi_datatype_pack_description_length( ompi_datatype_t* datatype )
 {
-    void *packed_description = datatype->packed_description;
+    void *packed_description = (void *) datatype->packed_description;
 
     if( ompi_datatype_is_predefined(datatype) ) {
         return 2 * sizeof(int);
@@ -839,7 +839,9 @@ ompi_datatype_t* ompi_datatype_get_single_predefined_type_from_args( ompi_dataty
                 return NULL;
             }
         }
+#if OMPI_ENABLE_MPI1_COMPAT
         if (current_predef != MPI_LB && current_predef != MPI_UB) {
+#endif
             if( NULL == predef ) {  /* This is the first iteration */
                 predef = current_predef;
             } else {
@@ -853,7 +855,9 @@ ompi_datatype_t* ompi_datatype_get_single_predefined_type_from_args( ompi_dataty
                     return NULL;
                 }
             }
+#if OMPI_ENABLE_MPI1_COMPAT
         }
+#endif
     }
     return predef;
 }

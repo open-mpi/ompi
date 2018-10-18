@@ -3,11 +3,13 @@
 ! Copyright (c) 2010-2012 Cisco Systems, Inc.  All rights reserved.
 ! Copyright (c) 2009-2013 Los Alamos National Security, LLC.
 !               All Rights reserved.
+! Copyright (c) 2018      Research Organization for Information Science
+!                         and Technology (RIST).  All rights reserved.
 ! $COPYRIGHT$
 
 subroutine MPI_Status_set_elements_x_f08(status,datatype,count,ierror)
    use :: mpi_f08_types, only : MPI_Status, MPI_Datatype, MPI_COUNT_KIND
-   use :: mpi_f08, only : ompi_status_set_elements_x_f
+   use :: ompi_mpifh_bindings, only : ompi_status_set_elements_x_f
    implicit none
    TYPE(MPI_Status), INTENT(INOUT) :: status
    TYPE(MPI_Datatype), INTENT(IN) :: datatype

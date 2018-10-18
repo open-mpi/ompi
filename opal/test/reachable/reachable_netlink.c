@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2017 Amazon.com, Inc. or its affiliates.  All Rights
  *                    reserved.
+ * Copyright (c) 2018      Cisco Systems, Inc.  All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -137,7 +138,7 @@ int main(int argc, char **argv)
                 break;
             default:
                 family = "Unknown";
-                strcpy(addr, "Unknown");
+                opal_string_copy(addr, "Unknown", sizeof(addr));
                 break;
         }
 
@@ -165,7 +166,7 @@ int main(int argc, char **argv)
                 break;
             default:
                 family = "Unknown";
-                strcpy(addr, "Unknown");
+                opal_string_copy(addr, "Unknown", sizeof(addr));
                 break;
         }
 

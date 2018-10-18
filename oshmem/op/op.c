@@ -156,6 +156,13 @@ oshmem_op_t* oshmem_op_prod_int16 = NULL;
 oshmem_op_t* oshmem_op_prod_int32 = NULL;
 oshmem_op_t* oshmem_op_prod_int64 = NULL;
 
+/* SWAP */
+oshmem_op_t* oshmem_op_swap_int = NULL;
+oshmem_op_t* oshmem_op_swap_long = NULL;
+oshmem_op_t* oshmem_op_swap_longlong = NULL;
+oshmem_op_t* oshmem_op_swap_int32 = NULL;
+oshmem_op_t* oshmem_op_swap_int64 = NULL;
+
 #define FUNC_OP_CREATE(name, type_name, type, calc)  \
     void oshmem_op_##name##_##type_name##_func(void *in, void *out, int count); \
     void oshmem_op_##name##_##type_name##_func(void *in, void *out, int count) \
@@ -307,6 +314,14 @@ FUNC_OP_CREATE(prod, int16, int16_t, __prod_op)
 FUNC_OP_CREATE(prod, int32, int32_t, __prod_op)
 FUNC_OP_CREATE(prod, int64, int64_t, __prod_op)
 
+/* SWAP */
+#define __swap_op(a, b) (a)
+FUNC_OP_CREATE(swap, int, int, __swap_op)
+FUNC_OP_CREATE(swap, long, long, __swap_op)
+FUNC_OP_CREATE(swap, longlong, long long, __swap_op)
+FUNC_OP_CREATE(swap, int32, int32_t, __swap_op)
+FUNC_OP_CREATE(swap, int64, int64_t, __swap_op)
+
 int oshmem_op_init(void)
 {
 
@@ -439,6 +454,15 @@ int oshmem_op_init(void)
     OBJ_OP_CREATE(prod, int16, int16_t, OSHMEM_OP_PROD, OSHMEM_OP_TYPE_INT16_T);
     OBJ_OP_CREATE(prod, int32, int32_t, OSHMEM_OP_PROD, OSHMEM_OP_TYPE_INT32_T);
     OBJ_OP_CREATE(prod, int64, int64_t, OSHMEM_OP_PROD, OSHMEM_OP_TYPE_INT64_T);
+
+    /* SWAP */
+    /* swap op is not used in reduce operations, let's set ID to invalid
+     * value (will not affect to any collective) */
+    OBJ_OP_CREATE(swap, int, int, OSHMEM_OP_NUMBER, OSHMEM_OP_TYPE_INT);
+    OBJ_OP_CREATE(swap, long, long, OSHMEM_OP_NUMBER, OSHMEM_OP_TYPE_LONG);
+    OBJ_OP_CREATE(swap, longlong, long long, OSHMEM_OP_NUMBER, OSHMEM_OP_TYPE_LLONG);
+    OBJ_OP_CREATE(swap, int32, int32_t, OSHMEM_OP_NUMBER, OSHMEM_OP_TYPE_INT32_T);
+    OBJ_OP_CREATE(swap, int64, int64_t, OSHMEM_OP_NUMBER, OSHMEM_OP_TYPE_INT64_T);
 
     return OSHMEM_SUCCESS;
 }

@@ -12,7 +12,7 @@
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -33,6 +33,7 @@
 #include "orte/types.h"
 
 #include "opal/class/opal_list.h"
+#include "opal/util/printf.h"
 #include "orte/mca/mca.h"
 
 #include "orte/runtime/orte_globals.h"
@@ -71,6 +72,8 @@ typedef struct {
     orte_ranking_policy_t ranking;
     /* device specification for min distance mapping */
     char *device;
+    /* whether or not child jobs should inherit launch directives */
+    bool inherit;
 } orte_rmaps_base_t;
 
 /**
@@ -121,7 +124,8 @@ ORTE_DECLSPEC int orte_rmaps_base_filter_nodes(orte_app_context_t *app,
                                                opal_list_t *nodes,
                                                bool remove);
 
-ORTE_DECLSPEC int orte_rmaps_base_set_mapping_policy(orte_mapping_policy_t *policy,
+ORTE_DECLSPEC int orte_rmaps_base_set_mapping_policy(orte_job_t *jdata,
+                                                     orte_mapping_policy_t *policy,
                                                      char **device, char *spec);
 ORTE_DECLSPEC int orte_rmaps_base_set_ranking_policy(orte_ranking_policy_t *policy,
                                                      orte_mapping_policy_t mapping,

@@ -2,7 +2,7 @@
 # Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
 #                         Corporation.  All rights reserved.
-# Copyright (c) 2004-2015 The University of Tennessee and The University
+# Copyright (c) 2004-2018 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
 # Copyright (c) 2004-2009 High Performance Computing Center Stuttgart,
@@ -22,8 +22,8 @@
 #
 
 # support needs to be first for dependencies
-SUBDIRS = support asm class threads datatype util dss
+SUBDIRS = support asm class threads datatype util dss mpool
 if PROJECT_OMPI
-SUBDIRS += monitoring
+SUBDIRS += monitoring spc
 endif
 DIST_SUBDIRS = event $(SUBDIRS)

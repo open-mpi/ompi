@@ -28,6 +28,7 @@
 #include "ompi/mca/osc/osc.h"
 #include "ompi/mca/osc/base/base.h"
 #include "ompi/mca/osc/base/osc_base_obj_convert.h"
+#include "opal/mca/common/ucx/common_ucx.h"
 
 #include "osc_ucx.h"
 
@@ -59,7 +60,7 @@ static inline void ompi_osc_ucx_handle_incoming_post(ompi_osc_ucx_module_t *modu
 
 int ompi_osc_ucx_fence(int assert, struct ompi_win_t *win) {
     ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t*) win->w_osc_module;
-    ucs_status_t status;
+    int ret;
 
     if (module->epoch_type.access != NONE_EPOCH &&
         module->epoch_type.access != FENCE_EPOCH) {
@@ -73,12 +74,9 @@ int ompi_osc_ucx_fence(int assert, struct ompi_win_t *win) {
     }
 
     if (!(assert & MPI_MODE_NOPRECEDE)) {
-        status = ucp_worker_flush(mca_osc_ucx_component.ucp_worker);
-        if (status != UCS_OK) {
-            opal_output_verbose(1, ompi_osc_base_framework.framework_output,
-                                "%s:%d: ucp_worker_flush failed: %d\n",
-                                __FILE__, __LINE__, status);
-            return OMPI_ERROR;
+        ret = opal_common_ucx_worker_flush(mca_osc_ucx_component.ucp_worker);
+        if (ret != OMPI_SUCCESS) {
+            return ret;
         }
     }
 
@@ -175,12 +173,9 @@ int ompi_osc_ucx_complete(struct ompi_win_t *win) {
 
     module->epoch_type.access = NONE_EPOCH;
 
-    status = ucp_worker_flush(mca_osc_ucx_component.ucp_worker);
-    if (status != UCS_OK) {
-        opal_output_verbose(1, ompi_osc_base_framework.framework_output,
-                            "%s:%d: ucp_worker_flush failed: %d\n",
-                            __FILE__, __LINE__, status);
-        return OMPI_ERROR;
+    ret = opal_common_ucx_worker_flush(mca_osc_ucx_component.ucp_worker);
+    if (ret != OMPI_SUCCESS) {
+        return ret;
     }
     module->global_ops_num = 0;
     memset(module->per_target_ops_nums, 0,
@@ -195,17 +190,10 @@ int ompi_osc_ucx_complete(struct ompi_win_t *win) {
         status = ucp_atomic_post(ep, UCP_ATOMIC_POST_OP_ADD, 1,
                                  sizeof(uint64_t), remote_addr, rkey);
         if (status != UCS_OK) {
-            opal_output_verbose(1, ompi_osc_base_framework.framework_output,
-                                "%s:%d: ucp_atomic_post failed: %d\n",
-                                __FILE__, __LINE__, status);
+            OSC_UCX_VERBOSE(1, "ucp_atomic_post failed: %d", status);
         }
 
-        status = ucp_ep_flush(ep);
-        if (status != UCS_OK) {
-            opal_output_verbose(1, ompi_osc_base_framework.framework_output,
-                                "%s:%d: ucp_ep_flush failed: %d\n",
-                                __FILE__, __LINE__, status);
-        }
+        opal_common_ucx_ep_flush(ep, mca_osc_ucx_component.ucp_worker);
     }
 
     OBJ_RELEASE(module->start_group);
@@ -231,7 +219,6 @@ int ompi_osc_ucx_post(struct ompi_group_t *group, int assert, struct ompi_win_t 
         ompi_group_t *win_group = NULL;
         int *ranks_in_grp = NULL, *ranks_in_win_grp = NULL;
         int myrank = ompi_comm_rank(module->comm);
-        ucs_status_t status;
 
         size = ompi_group_size(module->post_group);
         ranks_in_grp = malloc(sizeof(int) * size);
@@ -259,12 +246,9 @@ int ompi_osc_ucx_post(struct ompi_group_t *group, int assert, struct ompi_win_t 
             uint64_t curr_idx = 0, result = 0;
 
             /* do fop first to get an post index */
-            status = ucp_atomic_fadd64(ep, 1, remote_addr, rkey, &result);
-            if (status != UCS_OK) {
-                opal_output_verbose(1, ompi_osc_base_framework.framework_output,
-                                    "%s:%d: ucp_atomic_fadd64 failed: %d\n",
-                                    __FILE__, __LINE__, status);
-            }
+            opal_common_ucx_atomic_fetch(ep, UCP_ATOMIC_FETCH_OP_FADD, 1,
+                                         &result, sizeof(result),
+                                         remote_addr, rkey, mca_osc_ucx_component.ucp_worker);
 
             curr_idx = result & (OMPI_OSC_UCX_POST_PEER_MAX - 1);
 
@@ -272,13 +256,9 @@ int ompi_osc_ucx_post(struct ompi_group_t *group, int assert, struct ompi_win_t 
 
             /* do cas to send post message */
             do {
-                status = ucp_atomic_cswap64(ep, 0, (uint64_t)myrank + 1,
-                                            remote_addr, rkey, &result);
-                if (status != UCS_OK) {
-                    opal_output_verbose(1, ompi_osc_base_framework.framework_output,
-                                        "%s:%d: ucp_atomic_cswap64 failed: %d\n",
-                                        __FILE__, __LINE__, status);
-                }
+                opal_common_ucx_atomic_cswap(ep, 0, (uint64_t)myrank + 1, &result,
+                                             sizeof(result), remote_addr, rkey,
+                                             mca_osc_ucx_component.ucp_worker);
 
                 if (result == 0)
                     break;

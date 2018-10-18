@@ -1,0 +1,50 @@
+/*
+ * Copyright (c) 2018      Mellanox Technologies, Inc.
+ *                         All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
+#include "oshmem_config.h"
+
+#include "oshmem/constants.h"
+#include "oshmem/include/shmem.h"
+#include "oshmem/include/shmemx.h"
+
+#include "oshmem/runtime/runtime.h"
+#include "oshmem/op/op.h"
+#include "oshmem/mca/atomic/atomic.h"
+
+/*
+ * These routines perform an atomic 'xor' operation.
+ * The atomic 'xor' routines operates 'xor' value to the data at address target on PE pe.
+ * The operation must be completed without the possibility of another process updating
+ * target between the time of the fetch xor the update.
+ */
+#if OSHMEM_PROFILING
+#include "oshmem/include/pshmem.h"
+#pragma weak shmem_uint_atomic_xor      = pshmem_uint_atomic_xor
+#pragma weak shmem_ulong_atomic_xor     = pshmem_ulong_atomic_xor
+#pragma weak shmem_ulonglong_atomic_xor = pshmem_ulonglong_atomic_xor
+#pragma weak shmem_ctx_uint_atomic_xor  = pshmem_ctx_uint_atomic_xor
+#pragma weak shmem_ctx_ulong_atomic_xor = pshmem_ctx_ulong_atomic_xor
+#pragma weak shmem_ctx_ulonglong_atomic_xor = pshmem_ctx_ulonglong_atomic_xor
+#pragma weak shmemx_int32_atomic_xor    = pshmemx_int32_atomic_xor
+#pragma weak shmemx_int64_atomic_xor    = pshmemx_int64_atomic_xor
+#pragma weak shmemx_uint32_atomic_xor   = pshmemx_uint32_atomic_xor
+#pragma weak shmemx_uint64_atomic_xor   = pshmemx_uint64_atomic_xor
+#include "oshmem/shmem/c/profile/defines.h"
+#endif
+
+OSHMEM_TYPE_OP(uint, unsigned int, shmem, xor)
+OSHMEM_TYPE_OP(ulong, unsigned long, shmem, xor)
+OSHMEM_TYPE_OP(ulonglong, unsigned long long, shmem, xor)
+OSHMEM_CTX_TYPE_OP(uint, unsigned int, shmem, xor)
+OSHMEM_CTX_TYPE_OP(ulong, unsigned long, shmem, xor)
+OSHMEM_CTX_TYPE_OP(ulonglong, unsigned long long, shmem, xor)
+OSHMEM_TYPE_OP(int32, int32_t, shmemx, xor)
+OSHMEM_TYPE_OP(int64, int64_t, shmemx, xor)
+OSHMEM_TYPE_OP(uint32, uint32_t, shmemx, xor)
+OSHMEM_TYPE_OP(uint64, uint64_t, shmemx, xor)

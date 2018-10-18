@@ -16,6 +16,9 @@
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
  * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2018      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -31,7 +34,9 @@
 #include <dirent.h>
 
 #include <sys/param.h>
+#ifdef HAVE_SYS_MOUNT_H
 #include <sys/mount.h>
+#endif
 #ifdef HAVE_SYS_STATFS_H
 #include <sys/statfs.h>
 #endif
@@ -42,6 +47,7 @@
 #include "support.h"
 #include "opal/util/path.h"
 #include "opal/util/output.h"
+#include "opal/util/printf.h"
 
 #define DEBUG
 
@@ -123,7 +129,7 @@ void test(char* file, bool expect)
         test_success();
     } else {
         char * msg;
-        asprintf(&msg, "Mismatch: input \"%s\", expected:%d got:%d\n",
+        opal_asprintf(&msg, "Mismatch: input \"%s\", expected:%d got:%d\n",
                  file, expect, !expect);
         test_failure(msg);
         free(msg);

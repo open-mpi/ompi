@@ -36,6 +36,7 @@ BEGIN_C_DECLS
 typedef struct {
   opal_pmix_base_component_t super;
   opal_list_t jobids;
+  opal_list_t values;
   bool native_launch;
 } mca_pmix_ext1x_component_t;
 

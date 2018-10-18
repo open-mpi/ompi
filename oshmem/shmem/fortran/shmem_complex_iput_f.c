@@ -44,7 +44,7 @@ void shmem_complex_iput_f(FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MP
 
     for (i=0; i<length; i++)
     {
-        MCA_SPML_CALL(put((uint8_t*)FPTR_2_VOID_PTR(target) + i * tst_c * complex_type_size,
+        MCA_SPML_CALL(put(oshmem_ctx_default, (uint8_t*)FPTR_2_VOID_PTR(target) + i * tst_c * complex_type_size,
             complex_type_size,
             (uint8_t*)FPTR_2_VOID_PTR(source) + i * sst_c * complex_type_size,
             OMPI_FINT_2_INT(*pe)));

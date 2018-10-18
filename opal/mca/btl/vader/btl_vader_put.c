@@ -134,3 +134,50 @@ int mca_btl_vader_put_knem (mca_btl_base_module_t *btl, mca_btl_base_endpoint_t 
     return OPAL_SUCCESS;
 }
 #endif
+
+static void mca_btl_vader_sc_emu_put_complete (mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpoint,
+                                               mca_btl_base_descriptor_t *desc, int status)
+{
+    mca_btl_vader_frag_t *frag = (mca_btl_vader_frag_t *) desc;
+    void *local_address = frag->rdma.local_address;
+    void *context = frag->rdma.context;
+    void *cbdata = frag->rdma.cbdata;
+    mca_btl_base_rdma_completion_fn_t cbfunc = frag->rdma.cbfunc;
+
+    /* return the fragment first since the callback may call put/get/amo and could use this fragment */
+    MCA_BTL_VADER_FRAG_RETURN(frag);
+
+    cbfunc (btl, endpoint, local_address, NULL, context, cbdata, status);
+}
+
+/**
+ * @brief Provides an emulated put path which uses copy-in copy-out with shared memory buffers
+ */
+int mca_btl_vader_put_sc_emu (mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpoint, void *local_address,
+                              uint64_t remote_address, mca_btl_base_registration_handle_t *local_handle,
+                              mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
+                              int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata)
+{
+    mca_btl_vader_sc_emu_hdr_t *hdr;
+    mca_btl_vader_frag_t *frag;
+
+    if (size > mca_btl_vader.super.btl_put_limit) {
+        return OPAL_ERR_NOT_AVAILABLE;
+    }
+
+    frag = mca_btl_vader_rdma_frag_alloc (btl, endpoint, MCA_BTL_VADER_OP_PUT, 0, 0, 0, order, flags, size,
+                                          local_address, remote_address, cbfunc, cbcontext, cbdata,
+                                          mca_btl_vader_sc_emu_put_complete);
+    if (OPAL_UNLIKELY(NULL == frag)) {
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
+
+    hdr = (mca_btl_vader_sc_emu_hdr_t *) frag->segments[0].seg_addr.pval;
+
+    memcpy ((void *) (hdr + 1), local_address, size);
+
+    /* send is always successful */
+    (void) mca_btl_vader_send (btl, endpoint, &frag->base, MCA_BTL_TAG_VADER);
+
+    return OPAL_SUCCESS;
+}

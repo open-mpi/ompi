@@ -14,7 +14,7 @@
  * Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2017      Research Organization for Information Science
+ * Copyright (c) 2017-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -29,7 +29,7 @@
 #include "ompi/constants.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/mca/fcoll/fcoll.h"
-#include "ompi/mca/io/ompio/io_ompio.h"
+#include "ompi/mca/common/ompio/common_ompio.h"
 #include "ompi/mca/io/io.h"
 #include "opal/mca/base/base.h"
 #include "math.h"
@@ -54,10 +54,10 @@ typedef struct flat_list_node {
 }Flatlist_node;
 
 /* local function declarations  */
-static int two_phase_read_and_exch(mca_io_ompio_file_t *fh,
+static int two_phase_read_and_exch(ompio_file_t *fh,
 				   void *buf,
 				   MPI_Datatype datatype,
-				   mca_io_ompio_access_array_t *others_req,
+				   mca_common_ompio_access_array_t *others_req,
 				   struct iovec *offset_len,
 				   int contig_access_count,
 				   OMPI_MPI_OFFSET_TYPE min_st_offset,
@@ -68,7 +68,7 @@ static int two_phase_read_and_exch(mca_io_ompio_file_t *fh,
 				   size_t *buf_idx, int striping_unit,
 				   int num_io_procs, int *aggregator_list);
 
-static int  two_phase_exchange_data(mca_io_ompio_file_t *fh,
+static int  two_phase_exchange_data(ompio_file_t *fh,
 				    void *buf,
 				    struct iovec *offset_length,
 				    int *send_size, int *start_pos,
@@ -81,14 +81,14 @@ static int  two_phase_exchange_data(mca_io_ompio_file_t *fh,
 				    OMPI_MPI_OFFSET_TYPE *fd_start,
 				    OMPI_MPI_OFFSET_TYPE *fd_end,
 				    Flatlist_node *flat_buf,
-				    mca_io_ompio_access_array_t *others_req,
+				    mca_common_ompio_access_array_t *others_req,
 				    int iter,
 				    size_t *buf_idx, MPI_Aint buftype_extent,
 				    int striping_unit, int num_io_procs,
 				    int *aggregator_list);
 
 
-static void two_phase_fill_user_buffer(mca_io_ompio_file_t *fh,
+static void two_phase_fill_user_buffer(ompio_file_t *fh,
 				       void *buf,
 				       Flatlist_node *flat_buf,
 				       char **recv_buf,
@@ -119,7 +119,7 @@ double read_exch = 0.0, start_rexch = 0.0, end_rexch = 0.0;
 
 
 int
-mca_fcoll_two_phase_file_read_all (mca_io_ompio_file_t *fh,
+mca_fcoll_two_phase_file_read_all (ompio_file_t *fh,
 				   void *buf,
 				   int count,
 				   struct ompi_datatype_t *datatype,
@@ -141,7 +141,7 @@ mca_fcoll_two_phase_file_read_all (mca_io_ompio_file_t *fh,
     OMPI_MPI_OFFSET_TYPE *start_offsets=NULL, *end_offsets=NULL;
     OMPI_MPI_OFFSET_TYPE *fd_start=NULL, *fd_end=NULL, min_st_offset = 0;
     Flatlist_node *flat_buf=NULL;
-    mca_io_ompio_access_array_t *my_req=NULL, *others_req=NULL;
+    mca_common_ompio_access_array_t *my_req=NULL, *others_req=NULL;
 #if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
     mca_common_ompio_print_entry nentry;
 #endif
@@ -150,13 +150,13 @@ mca_fcoll_two_phase_file_read_all (mca_io_ompio_file_t *fh,
 //    }
 
     if (! (fh->f_flags & OMPIO_CONTIGUOUS_MEMORY)) {
-	ret =   fh->f_decode_datatype ((struct mca_io_ompio_file_t *)fh,
-				       datatype,
-				       count,
-				       buf,
-				       &max_data,
-				       &temp_iov,
-				       &iov_count);
+	ret =   mca_common_ompio_decode_datatype ((struct ompio_file_t *)fh,
+				                  datatype,
+				                  count,
+				                  buf,
+				                  &max_data,
+				                  &temp_iov,
+				                  &iov_count);
 	if (OMPI_SUCCESS != ret ){
 	    goto exit;
 	}
@@ -192,14 +192,14 @@ mca_fcoll_two_phase_file_read_all (mca_io_ompio_file_t *fh,
         goto exit;
     }
     if (-1 == two_phase_num_io_procs ){
-	ret = fh->f_set_aggregator_props ((struct mca_io_ompio_file_t *)fh,
-					  two_phase_num_io_procs,
-					  max_data);
+	ret = mca_common_ompio_set_aggregator_props ((struct ompio_file_t *)fh,
+					             two_phase_num_io_procs,
+					             max_data);
 	if (OMPI_SUCCESS != ret){
             goto exit;
 	}
 
-	two_phase_num_io_procs = fh->f_final_num_aggrs;
+	two_phase_num_io_procs = fh->f_num_aggrs;
 
     }
 
@@ -224,7 +224,7 @@ mca_fcoll_two_phase_file_read_all (mca_io_ompio_file_t *fh,
         }
     }        
 
-    ret = fh->f_generate_current_file_view ((struct mca_io_ompio_file_t *)fh,
+    ret = fh->f_generate_current_file_view ((struct ompio_file_t *)fh,
 					    max_data,
 					    &iov,
 					    &local_count);
@@ -528,10 +528,10 @@ exit:
 
 
 
-static int two_phase_read_and_exch(mca_io_ompio_file_t *fh,
+static int two_phase_read_and_exch(ompio_file_t *fh,
 				   void *buf,
 				   MPI_Datatype datatype,
-				   mca_io_ompio_access_array_t *others_req,
+				   mca_common_ompio_access_array_t *others_req,
 				   struct iovec *offset_len,
 				   int contig_access_count,
 				   OMPI_MPI_OFFSET_TYPE min_st_offset,
@@ -579,11 +579,7 @@ static int two_phase_read_and_exch(mca_io_ompio_file_t *fh,
 	}
     }
 
-    two_phase_cycle_buffer_size = fh->f_get_mca_parameter_value ("bytes_per_agg", strlen ("bytes_per_agg"));
-    if ( OMPI_ERR_MAX == two_phase_cycle_buffer_size ) {
-        ret = OMPI_ERROR;
-        goto exit;
-    }
+    two_phase_cycle_buffer_size = fh->f_bytes_per_agg;
     ntimes = (int)((end_loc - st_loc + two_phase_cycle_buffer_size)/
 		   two_phase_cycle_buffer_size);
 
@@ -726,8 +722,8 @@ static int two_phase_read_and_exch(mca_io_ompio_file_t *fh,
 #endif
 
 	    len = size * byte_size;
-	    fh->f_io_array = (mca_io_ompio_io_array_t *)calloc
-		(1,sizeof(mca_io_ompio_io_array_t));
+	    fh->f_io_array = (mca_common_ompio_io_array_t *)calloc
+		(1,sizeof(mca_common_ompio_io_array_t));
 	    if (NULL == fh->f_io_array) {
 		opal_output(1, "OUT OF MEMORY\n");
                 ret = OMPI_ERR_OUT_OF_RESOURCE;
@@ -827,7 +823,7 @@ exit:
 
 }
 
-static int two_phase_exchange_data(mca_io_ompio_file_t *fh,
+static int two_phase_exchange_data(ompio_file_t *fh,
 				   void *buf, struct iovec *offset_len,
 				   int *send_size, int *start_pos, int *recv_size,
 				   int *count, int *partial_send,
@@ -837,7 +833,7 @@ static int two_phase_exchange_data(mca_io_ompio_file_t *fh,
 				   OMPI_MPI_OFFSET_TYPE *fd_start,
 				   OMPI_MPI_OFFSET_TYPE *fd_end,
 				   Flatlist_node *flat_buf,
-				   mca_io_ompio_access_array_t *others_req,
+				   mca_common_ompio_access_array_t *others_req,
 				   int iter, size_t *buf_idx,
 				   MPI_Aint buftype_extent, int striping_unit,
 				   int two_phase_num_io_procs, int *aggregator_list)
@@ -1065,7 +1061,7 @@ exit:
 
 
 
-static void two_phase_fill_user_buffer(mca_io_ompio_file_t *fh,
+static void two_phase_fill_user_buffer(ompio_file_t *fh,
 				       void *buf,
 				       Flatlist_node *flat_buf,
 				       char **recv_buf,

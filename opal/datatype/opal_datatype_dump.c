@@ -12,6 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc. All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2018      Cisco Systems, Inc.  All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -46,7 +47,7 @@ int opal_datatype_contain_basic_datatypes( const opal_datatype_t* pData, char* p
             if( NULL == pData->ptypes ) {
                 index += snprintf( ptr + index, length - index, "%s:* ", opal_datatype_basicDatatypes[i]->name );
             } else {
-                index += snprintf( ptr + index, length - index, "%s:%lu ", opal_datatype_basicDatatypes[i]->name,
+                index += snprintf( ptr + index, length - index, "%s:%" PRIsize_t " ", opal_datatype_basicDatatypes[i]->name,
                                    pData->ptypes[i]);
             }
         }

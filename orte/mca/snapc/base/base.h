@@ -12,6 +12,7 @@
  * Copyright (c) 2007      Evergrid, Inc. All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights reserved.
  *
+ * Copyright (c) 2018      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -24,6 +25,7 @@
 #include "orte_config.h"
 #include "orte/types.h"
 
+#include "opal/util/printf.h"
 
 #include "orte/mca/snapc/snapc.h"
 

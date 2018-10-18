@@ -22,9 +22,7 @@
  * on the remote PE (pe), to the data object at address target on the local PE. These routines
  * return after the data has been copied to address target on the local pe.
  */
-#define SHMEM_TYPE_GET_NB(type_name, type)    \
-    void shmem##type_name##_get_nbi(type *target, const type *source, size_t nelems, int pe) \
-    {                                                               \
+#define DO_SHMEM_TYPE_GET_NB(ctx, type, target, source, nelems, pe) do { \
         int rc = OSHMEM_SUCCESS;                                    \
         size_t size = 0;                                            \
                                                                     \
@@ -34,17 +32,39 @@
                                                                     \
         size = nelems * sizeof(type);                               \
         rc = MCA_SPML_CALL(get_nb(                                  \
+            ctx,                                                    \
             (void *)source,                                         \
             size,                                                   \
             (void *)target,                                         \
             pe, NULL));                                             \
         RUNTIME_CHECK_RC(rc);                                       \
-                                                                    \
+    } while (0)
+
+#define SHMEM_CTX_TYPE_GET_NB(type_name, type)                      \
+    void shmem_ctx##type_name##_get_nbi(shmem_ctx_t ctx, type *target, const type *source, size_t nelems, int pe) \
+    {                                                               \
+        DO_SHMEM_TYPE_GET_NB(ctx, type, target, source, nelems, pe); \
+        return ;                                                    \
+    }
+
+#define SHMEM_TYPE_GET_NB(type_name, type)                          \
+    void shmem##type_name##_get_nbi(type *target, const type *source, size_t nelems, int pe) \
+    {                                                               \
+        DO_SHMEM_TYPE_GET_NB(oshmem_ctx_default, type, target,       \
+                             source, nelems, pe);                   \
         return ;                                                    \
     }
 
 #if OSHMEM_PROFILING
 #include "oshmem/include/pshmem.h"
+#pragma weak shmem_ctx_char_get_nbi = pshmem_ctx_char_get_nbi
+#pragma weak shmem_ctx_short_get_nbi = pshmem_ctx_short_get_nbi
+#pragma weak shmem_ctx_int_get_nbi = pshmem_ctx_int_get_nbi
+#pragma weak shmem_ctx_long_get_nbi = pshmem_ctx_long_get_nbi
+#pragma weak shmem_ctx_longlong_get_nbi = pshmem_ctx_longlong_get_nbi
+#pragma weak shmem_ctx_float_get_nbi = pshmem_ctx_float_get_nbi
+#pragma weak shmem_ctx_double_get_nbi = pshmem_ctx_double_get_nbi
+#pragma weak shmem_ctx_longdouble_get_nbi = pshmem_ctx_longdouble_get_nbi
 #pragma weak shmem_char_get_nbi = pshmem_char_get_nbi
 #pragma weak shmem_short_get_nbi = pshmem_short_get_nbi
 #pragma weak shmem_int_get_nbi = pshmem_int_get_nbi
@@ -53,6 +73,12 @@
 #pragma weak shmem_float_get_nbi = pshmem_float_get_nbi
 #pragma weak shmem_double_get_nbi = pshmem_double_get_nbi
 #pragma weak shmem_longdouble_get_nbi = pshmem_longdouble_get_nbi
+#pragma weak shmem_ctx_get8_nbi = pshmem_ctx_get8_nbi
+#pragma weak shmem_ctx_get16_nbi = pshmem_ctx_get16_nbi
+#pragma weak shmem_ctx_get32_nbi = pshmem_ctx_get32_nbi
+#pragma weak shmem_ctx_get64_nbi = pshmem_ctx_get64_nbi
+#pragma weak shmem_ctx_get128_nbi = pshmem_ctx_get128_nbi
+#pragma weak shmem_ctx_getmem_nbi = pshmem_ctx_getmem_nbi
 #pragma weak shmem_get8_nbi = pshmem_get8_nbi
 #pragma weak shmem_get16_nbi = pshmem_get16_nbi
 #pragma weak shmem_get32_nbi = pshmem_get32_nbi
@@ -62,6 +88,14 @@
 #include "oshmem/shmem/c/profile/defines.h"
 #endif
 
+SHMEM_CTX_TYPE_GET_NB(_char, char)
+SHMEM_CTX_TYPE_GET_NB(_short, short)
+SHMEM_CTX_TYPE_GET_NB(_int, int)
+SHMEM_CTX_TYPE_GET_NB(_long, long)
+SHMEM_CTX_TYPE_GET_NB(_longlong, long long)
+SHMEM_CTX_TYPE_GET_NB(_float, float)
+SHMEM_CTX_TYPE_GET_NB(_double, double)
+SHMEM_CTX_TYPE_GET_NB(_longdouble, long double)
 SHMEM_TYPE_GET_NB(_char, char)
 SHMEM_TYPE_GET_NB(_short, short)
 SHMEM_TYPE_GET_NB(_int, int)
@@ -71,9 +105,7 @@ SHMEM_TYPE_GET_NB(_float, float)
 SHMEM_TYPE_GET_NB(_double, double)
 SHMEM_TYPE_GET_NB(_longdouble, long double)
 
-#define SHMEM_TYPE_GETMEM_NB(name, element_size, prefix)    \
-    void prefix##name##_nbi(void *target, const void *source, size_t nelems, int pe) \
-    {                                                               \
+#define DO_SHMEM_GETMEM_NB(ctx, target, source, element_size, nelems, pe) do { \
         int rc = OSHMEM_SUCCESS;                                    \
         size_t size = 0;                                            \
                                                                     \
@@ -83,15 +115,35 @@ SHMEM_TYPE_GET_NB(_longdouble, long double)
                                                                     \
         size = nelems * element_size;                               \
         rc = MCA_SPML_CALL(get_nb(                                  \
+            ctx,                                                    \
             (void *)source,                                         \
             size,                                                   \
             (void *)target,                                         \
             pe, NULL));                                             \
        RUNTIME_CHECK_RC(rc);                                        \
-                                                                    \
+    } while (0)
+
+#define SHMEM_CTX_TYPE_GETMEM_NB(name, element_size, prefix)        \
+    void prefix##_ctx##name##_nbi(shmem_ctx_t ctx, void *target, const void *source, size_t nelems, int pe) \
+    {                                                               \
+        DO_SHMEM_GETMEM_NB(ctx, target, source, element_size, nelems, pe); \
         return ;                                                    \
     }
 
+#define SHMEM_TYPE_GETMEM_NB(name, element_size, prefix)            \
+    void prefix##name##_nbi(void *target, const void *source, size_t nelems, int pe) \
+    {                                                               \
+        DO_SHMEM_GETMEM_NB(oshmem_ctx_default, target, source,       \
+                           element_size, nelems, pe);               \
+        return ;                                                    \
+    }
+
+SHMEM_CTX_TYPE_GETMEM_NB(_get8, 1, shmem)
+SHMEM_CTX_TYPE_GETMEM_NB(_get16, 2, shmem)
+SHMEM_CTX_TYPE_GETMEM_NB(_get32, 4, shmem)
+SHMEM_CTX_TYPE_GETMEM_NB(_get64, 8, shmem)
+SHMEM_CTX_TYPE_GETMEM_NB(_get128, 16, shmem)
+SHMEM_CTX_TYPE_GETMEM_NB(_getmem, 1, shmem)
 SHMEM_TYPE_GETMEM_NB(_get8, 1, shmem)
 SHMEM_TYPE_GETMEM_NB(_get16, 2, shmem)
 SHMEM_TYPE_GETMEM_NB(_get32, 4, shmem)

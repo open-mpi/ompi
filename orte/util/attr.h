@@ -64,6 +64,7 @@ typedef uint8_t orte_node_flags_t;
 #define ORTE_NODE_FLAG_OVERSUBSCRIBED     0x04   // whether or not this node is oversubscribed
 #define ORTE_NODE_FLAG_MAPPED             0x08   // whether we have been added to the current map
 #define ORTE_NODE_FLAG_SLOTS_GIVEN        0x10   // the number of slots was specified - used only in non-managed environments
+#define ORTE_NODE_NON_USABLE              0x20   // the node is hosting a tool and is NOT to be used for jobs
 
 
 /*** NODE ATTRIBUTE KEYS - never sent anywhere ***/
@@ -100,7 +101,6 @@ typedef uint16_t orte_job_flags_t;
 #define ORTE_JOB_LAUNCH_MSG_SENT        (ORTE_JOB_START_KEY + 1)     // timeval - time launch message was sent
 #define ORTE_JOB_LAUNCH_MSG_RECVD       (ORTE_JOB_START_KEY + 2)     // timeval - time launch message was recvd
 #define ORTE_JOB_MAX_LAUNCH_MSG_RECVD   (ORTE_JOB_START_KEY + 3)     // timeval - max time for launch msg to be received
-#define ORTE_JOB_FILE_MAPS              (ORTE_JOB_START_KEY + 4)     // opal_buffer_t - file maps associates with this job
 #define ORTE_JOB_CKPT_STATE             (ORTE_JOB_START_KEY + 5)     // size_t - ckpt state
 #define ORTE_JOB_SNAPSHOT_REF           (ORTE_JOB_START_KEY + 6)     // string - snapshot reference
 #define ORTE_JOB_SNAPSHOT_LOC           (ORTE_JOB_START_KEY + 7)     // string - snapshot location
@@ -177,6 +177,7 @@ typedef uint16_t orte_proc_flags_t;
 #define ORTE_PROC_FLAG_DATA_IN_SM    0x0800  // modex data has been stored in the local shared memory region
 #define ORTE_PROC_FLAG_DATA_RECVD    0x1000  // modex data for this proc has been received
 #define ORTE_PROC_FLAG_SM_ACCESS     0x2000  // indicate if process can read modex data from shared memory region
+#define ORTE_PROC_FLAG_TOOL          0x4000  // proc is a tool and doesn't count against allocations
 
 /***   PROCESS ATTRIBUTE KEYS   ***/
 #define ORTE_PROC_START_KEY   ORTE_JOB_MAX_KEY

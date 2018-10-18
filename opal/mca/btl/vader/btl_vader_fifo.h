@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Voltaire. All rights reserved.
  * Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2010-2017 Los Alamos National Security, LLC.
+ * Copyright (c) 2010-2018 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
  *
@@ -30,25 +30,24 @@
 #include "btl_vader_endpoint.h"
 #include "btl_vader_frag.h"
 
-#define vader_item_compare_exchange(x, y, z) opal_atomic_compare_exchange_strong_ptr ((volatile void **) (x), (void **) (y), (void *) (z))
+#define vader_item_compare_exchange(x, y, z) opal_atomic_compare_exchange_strong_ptr ((opal_atomic_intptr_t *) (x), (intptr_t *) (y), (intptr_t) (z))
 
 #if SIZEOF_VOID_P == 8
-  #define vader_item_swap(x, y)      opal_atomic_swap_64((volatile int64_t *)(x), (int64_t)(y))
+  #define vader_item_swap(x, y)      opal_atomic_swap_64((opal_atomic_int64_t *)(x), (int64_t)(y))
 
   #define MCA_BTL_VADER_OFFSET_MASK 0xffffffffll
   #define MCA_BTL_VADER_OFFSET_BITS 32
   #define MCA_BTL_VADER_BITNESS     64
-
-  typedef int64_t fifo_value_t;
 #else
-  #define vader_item_swap(x, y)      opal_atomic_swap_32((volatile int32_t *)(x), (int32_t)(y))
+  #define vader_item_swap(x, y)      opal_atomic_swap_32((opal_atomic_int32_t *)(x), (int32_t)(y))
 
   #define MCA_BTL_VADER_OFFSET_MASK 0x00ffffffl
   #define MCA_BTL_VADER_OFFSET_BITS 24
   #define MCA_BTL_VADER_BITNESS     32
-
-  typedef int32_t fifo_value_t;
 #endif
+
+typedef opal_atomic_intptr_t atomic_fifo_value_t;
+typedef intptr_t fifo_value_t;
 
 #define VADER_FIFO_FREE  ((fifo_value_t)-2)
 
@@ -68,9 +67,9 @@
 
 /* lock free fifo */
 typedef struct vader_fifo_t {
-    volatile fifo_value_t fifo_head;
-    volatile fifo_value_t fifo_tail;
-    volatile int32_t      fbox_available;
+    atomic_fifo_value_t fifo_head;
+    atomic_fifo_value_t fifo_tail;
+    opal_atomic_int32_t fbox_available;
 } vader_fifo_t;
 
 /* large enough to ensure the fifo is on its own cache line */
@@ -155,7 +154,11 @@ static inline mca_btl_vader_hdr_t *vader_fifo_read (vader_fifo_t *fifo, struct m
 
 static inline void vader_fifo_init (vader_fifo_t *fifo)
 {
-    fifo->fifo_head = fifo->fifo_tail = VADER_FIFO_FREE;
+    /* due to a compiler bug in Oracle C 5.15 the following line was broken into two. Not
+     * ideal but oh well. See #5814 */
+    /* fifo->fifo_head = fifo->fifo_tail = VADER_FIFO_FREE; */
+    fifo->fifo_head = VADER_FIFO_FREE;
+    fifo->fifo_tail = VADER_FIFO_FREE;
     fifo->fbox_available = mca_btl_vader_component.fbox_max;
     mca_btl_vader_component.my_fifo = fifo;
 }

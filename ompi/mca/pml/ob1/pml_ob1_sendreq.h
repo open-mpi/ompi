@@ -12,8 +12,9 @@
  *                         All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2011-2012 NVIDIA Corporation.  All rights reserved.
- * Copyright (c) 2011-2016 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -45,11 +46,11 @@ struct mca_pml_ob1_send_request_t {
     mca_pml_base_send_request_t req_send;
     mca_bml_base_endpoint_t* req_endpoint;
     opal_ptr_t req_recv;
-    int32_t  req_state;
-    int32_t  req_lock;
+    opal_atomic_int32_t  req_state;
+    opal_atomic_int32_t  req_lock;
     bool     req_throttle_sends;
-    int32_t  req_pipeline_depth;
-    size_t   req_bytes_delivered;
+    opal_atomic_int32_t  req_pipeline_depth;
+    opal_atomic_size_t   req_bytes_delivered;
     uint32_t req_rdma_cnt;
     mca_pml_ob1_send_pending_t req_pending;
     opal_mutex_t req_send_range_lock;
@@ -279,9 +280,8 @@ send_request_pml_complete(mca_pml_ob1_send_request_t *sendreq)
 static inline bool
 send_request_pml_complete_check(mca_pml_ob1_send_request_t *sendreq)
 {
-#if OPAL_ENABLE_MULTI_THREADS
     opal_atomic_rmb();
-#endif
+
     /* if no more events are expected for the request and the whole message is
      * already sent and send fragment scheduling isn't running in another
      * thread then complete the request on PML level. From now on, if user
@@ -466,6 +466,16 @@ mca_pml_ob1_send_request_start_seq (mca_pml_ob1_send_request_t* sendreq, mca_bml
         rc = mca_pml_ob1_send_request_start_btl(sendreq, bml_btl);
         if( OPAL_LIKELY(OMPI_ERR_OUT_OF_RESOURCE != rc) )
             return rc;
+    }
+    if(MCA_PML_BASE_SEND_BUFFERED == sendreq->req_send.req_send_mode &&
+       sendreq->req_send.req_addr == sendreq->req_send.req_base.req_addr) {
+        /* in the buffered mode, the send buffer must be saved to
+         * the attached buffer before returning it to the user */
+        int rc;
+        rc = mca_pml_base_bsend_request_start((ompi_request_t*)sendreq);
+        if(OMPI_SUCCESS != rc){
+            return rc;
+        }
     }
     add_request_to_send_pending(sendreq, MCA_PML_OB1_SEND_PENDING_START, true);
 

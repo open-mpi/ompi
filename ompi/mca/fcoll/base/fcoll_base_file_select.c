@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2017 University of Houston. All rights reserved.
+ * Copyright (c) 2018      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -62,7 +64,7 @@ static OBJ_CLASS_INSTANCE(queried_module_t, opal_list_item_t, NULL, NULL);
  *    their module but were unfortunate to not get selected
  */
 
-int mca_fcoll_base_file_select (struct mca_io_ompio_file_t *file,
+int mca_fcoll_base_file_select (struct ompio_file_t *file,
                                 mca_base_component_t *preferred)
 {
     int priority;
@@ -255,7 +257,7 @@ int mca_fcoll_base_file_select (struct mca_io_ompio_file_t *file,
     return err;
 }
 
-int mca_fcoll_base_query_table (struct mca_io_ompio_file_t *file, char *name)
+int mca_fcoll_base_query_table (struct ompio_file_t *file, char *name)
 {
     if (!strcmp (name, "individual")) {
         if ((int)file->f_cc_size >= file->f_bytes_per_agg &&
@@ -265,6 +267,11 @@ int mca_fcoll_base_query_table (struct mca_io_ompio_file_t *file, char *name)
 	if ( 2 >= (int)file->f_size ){
 	    return 1;
 	}
+    }
+    if (!strcmp (name, "vulcan")) {
+        if ( (LUSTRE != file->f_fstype)) {
+            return 1;
+        }
     }
     if (!strcmp (name, "dynamic")) {
         if ((int)file->f_cc_size < file->f_bytes_per_agg &&
@@ -278,11 +285,18 @@ int mca_fcoll_base_query_table (struct mca_io_ompio_file_t *file, char *name)
         }
     }
     if (!strcmp (name, "two_phase")) {
+#if OPAL_CUDA_SUPPORT
+        /* do not use the two_phase component with CUDA
+           buffers, since the data sieving causes trouble 
+           on unmanaged GPU buffers.
+        */
+#else
         if ((int)file->f_cc_size < file->f_bytes_per_agg &&
             (0 == file->f_stripe_size || file->f_cc_size < file->f_stripe_size) && 
 	    (LUSTRE != file->f_fstype) ) {
             return 1;
         }
+#endif
     }
     return 0;
 }

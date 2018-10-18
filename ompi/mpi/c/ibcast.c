@@ -2,7 +2,7 @@
  * Copyright (c) 2012      Oak Rigde National Laboratory. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2017      The University of Tennessee and The University
+ * Copyright (c) 2017-2018 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * $COPYRIGHT$
@@ -20,6 +20,7 @@
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/memchecker.h"
+#include "ompi/runtime/ompi_spc.h"
 
 #if OMPI_BUILD_MPI_PROFILING
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -35,6 +36,8 @@ int MPI_Ibcast(void *buffer, int count, MPI_Datatype datatype,
               int root, MPI_Comm comm,  MPI_Request *request)
 {
     int err;
+
+    SPC_RECORD(OMPI_SPC_IBCAST, 1);
 
     MEMCHECKER(
         memchecker_datatype(datatype);

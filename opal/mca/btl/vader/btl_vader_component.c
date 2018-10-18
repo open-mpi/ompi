@@ -12,12 +12,13 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Voltaire. All rights reserved.
  * Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2010-2017 Los Alamos National Security, LLC.
+ * Copyright (c) 2010-2018 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -28,6 +29,7 @@
 
 #include "opal/util/output.h"
 #include "opal/util/show_help.h"
+#include "opal/util/printf.h"
 #include "opal/threads/mutex.h"
 #include "opal/mca/btl/base/btl_base_error.h"
 
@@ -68,6 +70,7 @@ static mca_base_var_enum_value_t single_copy_mechanisms[] = {
 #if OPAL_BTL_VADER_HAVE_KNEM
     {.value = MCA_BTL_VADER_KNEM, .string = "knem"},
 #endif
+    {.value = MCA_BTL_VADER_EMUL, .string = "emulated"},
     {.value = MCA_BTL_VADER_NONE, .string = "none"},
     {.value = 0, .string = NULL}
 };
@@ -95,14 +98,6 @@ mca_btl_vader_component_t mca_btl_vader_component = {
     }  /* end super */
 };
 
-static void mca_btl_vader_dummy_rdma (void)
-{
-    /* If a backtrace ends at this function something has gone wrong with
-     * the btl bootstrapping. Check that the btl_get function was set to
-     * something reasonable. */
-    abort ();
-}
-
 static int mca_btl_vader_component_register (void)
 {
     mca_base_var_enum_t *new_enum;
@@ -119,7 +114,7 @@ static int mca_btl_vader_component_register (void)
                                            MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_LOCAL,
                                            &mca_btl_vader_component.vader_free_list_num);
-    mca_btl_vader_component.vader_free_list_max = 4096;
+    mca_btl_vader_component.vader_free_list_max = 512;
     (void) mca_base_component_var_register(&mca_btl_vader_component.super.btl_version,
                                            "free_list_max", "Maximum number of fragments "
                                            "to allocate for shared memory communication.",
@@ -252,19 +247,41 @@ static int mca_btl_vader_component_register (void)
     mca_btl_vader.super.btl_rdma_pipeline_send_length = mca_btl_vader.super.btl_eager_limit;
     mca_btl_vader.super.btl_rdma_pipeline_frag_size   = mca_btl_vader.super.btl_eager_limit;
 
-    mca_btl_vader.super.btl_flags = MCA_BTL_FLAGS_SEND_INPLACE | MCA_BTL_FLAGS_SEND;
+#if OPAL_HAVE_ATOMIC_MATH_64
+    mca_btl_vader.super.btl_flags = MCA_BTL_FLAGS_SEND_INPLACE | MCA_BTL_FLAGS_SEND | MCA_BTL_FLAGS_RDMA |
+        MCA_BTL_FLAGS_ATOMIC_OPS | MCA_BTL_FLAGS_ATOMIC_FOPS;
+
+    mca_btl_vader.super.btl_atomic_flags = MCA_BTL_ATOMIC_SUPPORTS_ADD | MCA_BTL_ATOMIC_SUPPORTS_AND |
+        MCA_BTL_ATOMIC_SUPPORTS_OR | MCA_BTL_ATOMIC_SUPPORTS_XOR | MCA_BTL_ATOMIC_SUPPORTS_CSWAP |
+        MCA_BTL_ATOMIC_SUPPORTS_GLOB | MCA_BTL_ATOMIC_SUPPORTS_SWAP;
+#if OPAL_HAVE_ATOMIC_MATH_32
+    mca_btl_vader.super.btl_atomic_flags |= MCA_BTL_ATOMIC_SUPPORTS_32BIT;
+#endif /* OPAL_HAVE_ATOMIC_MATH_32 */
+
+#if OPAL_HAVE_ATOMIC_MIN_64
+    mca_btl_vader.super.btl_atomic_flags |= MCA_BTL_ATOMIC_SUPPORTS_MIN;
+#endif /* OPAL_HAVE_ATOMIC_MIN_64 */
+
+#if OPAL_HAVE_ATOMIC_MAX_64
+    mca_btl_vader.super.btl_atomic_flags |= MCA_BTL_ATOMIC_SUPPORTS_MAX;
+#endif /* OPAL_HAVE_ATOMIC_MAX_64 */
+
+#else
+    mca_btl_vader.super.btl_flags = MCA_BTL_FLAGS_SEND_INPLACE | MCA_BTL_FLAGS_SEND | MCA_BTL_FLAGS_RDMA;
+#endif /* OPAL_HAVE_ATOMIC_MATH_64 */
 
     if (MCA_BTL_VADER_NONE != mca_btl_vader_component.single_copy_mechanism) {
-        mca_btl_vader.super.btl_flags    |= MCA_BTL_FLAGS_RDMA;
-        /* Single copy mechanisms should provide better bandwidth */
+        /* True single copy mechanisms should provide better bandwidth */
         mca_btl_vader.super.btl_bandwidth = 40000; /* Mbs */
-
-        /* Set dummy values so the RDMA flag doesn't get unset by mca_btl_base_param_verify() */
-        mca_btl_vader.super.btl_get = (mca_btl_base_module_get_fn_t) mca_btl_vader_dummy_rdma;
-        mca_btl_vader.super.btl_put = (mca_btl_base_module_get_fn_t) mca_btl_vader_dummy_rdma;
     } else {
         mca_btl_vader.super.btl_bandwidth = 10000; /* Mbs */
     }
+
+    mca_btl_vader.super.btl_get = mca_btl_vader_get_sc_emu;
+    mca_btl_vader.super.btl_put = mca_btl_vader_put_sc_emu;
+    mca_btl_vader.super.btl_atomic_op = mca_btl_vader_emu_aop;
+    mca_btl_vader.super.btl_atomic_fop = mca_btl_vader_emu_afop;
+    mca_btl_vader.super.btl_atomic_cswap = mca_btl_vader_emu_acswap;
 
     mca_btl_vader.super.btl_latency   = 1;     /* Microsecs */
 
@@ -360,10 +377,16 @@ static void mca_btl_vader_select_next_single_copy_mechanism (void)
         }
     }
 }
+#endif
 
 static void mca_btl_vader_check_single_copy (void)
 {
+#if OPAL_BTL_VADER_HAVE_XPMEM || OPAL_BTL_VADER_HAVE_CMA || OPAL_BTL_VADER_HAVE_KNEM
     int initial_mechanism = mca_btl_vader_component.single_copy_mechanism;
+#endif
+
+    /* single-copy emulation is always used to support AMO's right now */
+    mca_btl_vader_sc_emu_init ();
 
 #if OPAL_BTL_VADER_HAVE_XPMEM
     if (MCA_BTL_VADER_XPMEM == mca_btl_vader_component.single_copy_mechanism) {
@@ -446,8 +469,13 @@ static void mca_btl_vader_check_single_copy (void)
         mca_btl_vader.super.btl_get = NULL;
         mca_btl_vader.super.btl_put = NULL;
     }
+
+    if (MCA_BTL_VADER_EMUL == mca_btl_vader_component.single_copy_mechanism) {
+        /* limit to the maximum fragment size */
+        mca_btl_vader.super.btl_put_limit = mca_btl_vader.super.btl_max_send_size - sizeof (mca_btl_vader_sc_emu_hdr_t);
+        mca_btl_vader.super.btl_get_limit = mca_btl_vader.super.btl_max_send_size - sizeof (mca_btl_vader_sc_emu_hdr_t);
+    }
 }
-#endif
 
 /*
  *  VADER component initialization
@@ -497,14 +525,12 @@ static mca_btl_base_module_t **mca_btl_vader_component_init (int *num_btls,
     component->num_fbox_in_endpoints = 0;
     component->fbox_count = 0;
 
-#if OPAL_BTL_VADER_HAVE_XPMEM || OPAL_BTL_VADER_HAVE_CMA || OPAL_BTL_VADER_HAVE_KNEM
     mca_btl_vader_check_single_copy ();
-#endif
 
     if (MCA_BTL_VADER_XPMEM != mca_btl_vader_component.single_copy_mechanism) {
         char *sm_file;
 
-        rc = asprintf(&sm_file, "%s" OPAL_PATH_SEP "vader_segment.%s.%x.%d", mca_btl_vader_component.backing_directory,
+        rc = opal_asprintf(&sm_file, "%s" OPAL_PATH_SEP "vader_segment.%s.%x.%d", mca_btl_vader_component.backing_directory,
                       opal_process_info.nodename, OPAL_PROC_MY_NAME.jobid, MCA_BTL_VADER_LOCAL_RANK);
         if (0 > rc) {
             free (btls);
@@ -691,7 +717,7 @@ static void mca_btl_vader_progress_endpoints (void)
 
 static int mca_btl_vader_component_progress (void)
 {
-    static int32_t lock = 0;
+    static opal_atomic_int32_t lock = 0;
     int count = 0;
 
     if (opal_using_threads()) {

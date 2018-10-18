@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2018      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -103,7 +104,7 @@ static void *thread_test_exhaust (void *arg) {
 
 static bool check_fifo_consistency (opal_fifo_t *fifo, int expected_count)
 {
-    opal_list_item_t *item;
+    volatile opal_list_item_t *volatile item;
     int count;
 
     for (count = 0, item = fifo->opal_fifo_head.data.item ; item != &fifo->opal_fifo_ghost ;

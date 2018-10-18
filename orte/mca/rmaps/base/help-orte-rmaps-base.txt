@@ -13,7 +13,7 @@
 # Copyright (c) 2011-2015 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2011      Los Alamos National Security, LLC.
 #                         All rights reserved.
-# Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
+# Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -420,3 +420,16 @@ compute node failed:
 
 We cannot continue - please check that the policy is in
 accordance with the actual available hardware.
+#
+[rmaps:insufficient-cpus]
+The request to bind processes to cpus in a provided list
+of logical id's based on their local rank on a node cannot
+be met due to there being more processes on a node than
+available cpus:
+
+  Node:         %s
+  Local rank:   %d
+  Cpu list:     %s
+
+Please adjust either the number of processes per node or
+the list of cpus.

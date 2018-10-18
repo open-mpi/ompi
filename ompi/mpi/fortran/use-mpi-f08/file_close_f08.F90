@@ -3,11 +3,13 @@
 ! Copyright (c) 2010-2012 Cisco Systems, Inc.  All rights reserved.
 ! Copyright (c) 2009-2012 Los Alamos National Security, LLC.
 !               All Rights reserved.
+! Copyright (c) 2018      Research Organization for Information Science
+!                         and Technology (RIST).  All rights reserved.
 ! $COPYRIGHT$
 
 subroutine MPI_File_close_f08(fh,ierror)
    use :: mpi_f08_types, only : MPI_File
-   use :: mpi_f08, only : ompi_file_close_f
+   use :: ompi_mpifh_bindings, only : ompi_file_close_f
    implicit none
    TYPE(MPI_File), INTENT(INOUT) :: fh
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror

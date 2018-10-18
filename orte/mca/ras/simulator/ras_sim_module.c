@@ -249,7 +249,7 @@ static int allocate(orte_job_t *jdata, opal_list_t *nodes)
 
         for (i=0; i < num_nodes; i++) {
             node = OBJ_NEW(orte_node_t);
-            asprintf(&node->name, "%s%0*d", prefix, dig, i);
+            opal_asprintf(&node->name, "%s%0*d", prefix, dig, i);
             node->state = ORTE_NODE_STATE_UP;
             node->slots_inuse = 0;
             if (NULL == max_slot_cnt || NULL == max_slot_cnt[n]) {

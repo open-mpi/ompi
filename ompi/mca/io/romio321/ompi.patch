@@ -1,0 +1,717 @@
+diff --git a/ompi/mca/io/romio321/romio/.config_params b/ompi/mca/io/romio321/romio/.config_params
+index 96f735f..fcc2f91 100644
+--- a/ompi/mca/io/romio321/romio/.config_params
++++ b/ompi/mca/io/romio321/romio/.config_params
+@@ -36,3 +36,4 @@ __sgi_mpi
+ __hp_mpi
+ __cray_mpi
+ __lam_mpi
++__open_mpi
+diff --git a/ompi/mca/io/romio321/romio/Makefile.am b/ompi/mca/io/romio321/romio/Makefile.am
+index b9d4e25..69d7014 100644
+--- a/ompi/mca/io/romio321/romio/Makefile.am
++++ b/ompi/mca/io/romio321/romio/Makefile.am
+@@ -1,9 +1,28 @@
+ # -*- Mode: Makefile; -*-
++# Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
++#                         University Research and Technology
++#                         Corporation.  All rights reserved.
++# Copyright (c) 2004-2005 The University of Tennessee and The University
++#                         of Tennessee Research Foundation.  All rights
++#                         reserved.
++# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
++#                         University of Stuttgart.  All rights reserved.
++# Copyright (c) 2004-2005 The Regents of the University of California.
++#                         All rights reserved.
++# Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
++# $COPYRIGHT$
++#
++# Additional copyrights may follow
++#
++# $HEADER$
+ #
+ # (C) 2011 by Argonne National Laboratory.
+ #     See COPYRIGHT in top-level directory.
+ #
+ 
++# OMPI: include a top level makefile with some options
++include $(top_srcdir)/Makefile.options
++
+ ## TODO: need to write an automakefile that handles two primary cases:
+ ## 1) that ROMIO is being embedded within the MPI library, as in MPICH or Open
+ ##    MPI
+@@ -17,7 +36,6 @@ ACLOCAL_AMFLAGS = -I confdb
+ include_HEADERS = 
+ nodist_include_HEADERS =
+ noinst_HEADERS = 
+-AM_CPPFLAGS =
+ EXTRA_DIST =
+ SUFFIXES = 
+ doc1_src_txt =
+@@ -46,7 +64,9 @@ AM_CPPFLAGS += $(MPI_H_INCLUDE)
+ # handle the "include" directory here
+ AM_CPPFLAGS += -I$(top_builddir)/include -I$(top_srcdir)/include
+ # nodist_ b/c these are created by config.status and should not be distributed
+-nodist_include_HEADERS += include/mpio.h include/mpiof.h
++# Open MPI: do not install mpio.h
++noinst_HEADERS += include/mpio.h
++noinst_HEADERS += include/io_romio_conv.h
+ 
+ # ------------------------------------------------------------------------
+ 
+@@ -63,8 +83,8 @@ EXTRA_DIST += autogen.sh
+ if BUILD_ROMIO_EMBEDDED
+ # Build a libtool convenience library that the enclosing MPI implementation can
+ # use by adding it to the right _LIBADD variable.
+-noinst_LTLIBRARIES = libromio.la
+-libromio_la_SOURCES = $(romio_mpi_sources) $(romio_other_sources) $(glue_sources)
++noinst_LTLIBRARIES = libromio_dist.la
++libromio_dist_la_SOURCES = $(romio_mpi_sources) $(romio_other_sources) $(glue_sources)
+ 
+ ## NOTE: ROMIO's old build system builds a bunch of _foo.o objects that contain
+ ## PMPI_ implementations as well as calls to only other PMPI routines.  In
+diff --git a/ompi/mca/io/romio321/romio/adio/Makefile.mk b/ompi/mca/io/romio321/romio/adio/Makefile.mk
+index 505d518..ffc05cb 100644
+--- a/ompi/mca/io/romio321/romio/adio/Makefile.mk
++++ b/ompi/mca/io/romio321/romio/adio/Makefile.mk
+@@ -20,6 +20,7 @@ noinst_HEADERS +=                      \
+     adio/include/mpipr.h               \
+     adio/include/mpiu_greq.h           \
+     adio/include/nopackage.h           \
++    adio/include/romioconf-undefs.h    \
+     adio/include/mpiu_external32.h     \
+     adio/include/hint_fns.h
+ 
+diff --git a/ompi/mca/io/romio321/romio/adio/common/ad_end.c b/ompi/mca/io/romio321/romio/adio/common/ad_end.c
+index ea4dfeb..066c65c 100644
+--- a/ompi/mca/io/romio321/romio/adio/common/ad_end.c
++++ b/ompi/mca/io/romio321/romio/adio/common/ad_end.c
+@@ -16,7 +16,12 @@ void ADIO_End(int *error_code)
+ 
+     /* if a default errhandler was set on MPI_FILE_NULL then we need to ensure
+      * that our reference to that errhandler is released */
++/* Open MPI: The call to PMPI_File_set_errhandler has to be done in romio/src/io_romio_file_open.c
++   in routine mca_io_romio_file_close()
++*/
++#if 0
+     PMPI_File_set_errhandler(MPI_FILE_NULL, MPI_ERRORS_RETURN);
++#endif
+ 
+ /* delete the flattened datatype list */
+     curr = ADIOI_Flatlist;
+diff --git a/ompi/mca/io/romio321/romio/adio/common/ad_iread_coll.c b/ompi/mca/io/romio321/romio/adio/common/ad_iread_coll.c
+index 2ec23fb..8487c25 100644
+--- a/ompi/mca/io/romio321/romio/adio/common/ad_iread_coll.c
++++ b/ompi/mca/io/romio321/romio/adio/common/ad_iread_coll.c
+@@ -16,6 +16,8 @@
+ #include "mpe.h"
+ #endif
+ 
++#ifdef HAVE_MPI_GREQUEST_EXTENSIONS
++
+ /* ADIOI_GEN_IreadStridedColl */
+ struct ADIOI_GEN_IreadStridedColl_vars {
+     /* requests */
+@@ -1340,3 +1342,4 @@ static int ADIOI_GEN_irc_wait_fn(int count, void **array_of_states,
+     return errcode;
+ }
+ 
++#endif /* HAVE_MPI_GREQUEST_EXTENSIONS */
+diff --git a/ompi/mca/io/romio321/romio/adio/common/ad_iwrite_coll.c b/ompi/mca/io/romio321/romio/adio/common/ad_iwrite_coll.c
+index d275f78..9b27b42 100644
+--- a/ompi/mca/io/romio321/romio/adio/common/ad_iwrite_coll.c
++++ b/ompi/mca/io/romio321/romio/adio/common/ad_iwrite_coll.c
+@@ -13,6 +13,8 @@
+ #include "mpe.h"
+ #endif
+ 
++#ifdef HAVE_MPI_GREQUEST_EXTENSIONS
++
+ /* ADIOI_GEN_IwriteStridedColl */
+ struct ADIOI_GEN_IwriteStridedColl_vars {
+     /* requests */
+@@ -1565,3 +1567,4 @@ static int ADIOI_GEN_iwc_wait_fn(int count, void **array_of_states,
+     return errcode;
+ }
+ 
++#endif /* HAVE_MPI_GREQUEST_EXTENSIONS */
+diff --git a/ompi/mca/io/romio321/romio/adio/include/adioi.h b/ompi/mca/io/romio321/romio/adio/include/adioi.h
+index 0e91ead..13c0f25 100644
+--- a/ompi/mca/io/romio321/romio/adio/include/adioi.h
++++ b/ompi/mca/io/romio321/romio/adio/include/adioi.h
+@@ -440,18 +440,26 @@ void ADIOI_GEN_ReadStridedColl(ADIO_File fd, void *buf, int count,
+                        MPI_Datatype datatype, int file_ptr_type,
+                        ADIO_Offset offset, ADIO_Status *status, int
+                        *error_code);
++#ifdef HAVE_MPI_GREQUEST_EXTENSIONS
+ void ADIOI_GEN_IreadStridedColl(ADIO_File fd, void *buf, int count,
+                        MPI_Datatype datatype, int file_ptr_type,
+                        ADIO_Offset offset, MPI_Request *request,
+                        int *error_code);
++#else
++#define ADIOI_GEN_IreadStridedColl NULL
++#endif
+ void ADIOI_GEN_WriteStridedColl(ADIO_File fd, const void *buf, int count,
+                        MPI_Datatype datatype, int file_ptr_type,
+                        ADIO_Offset offset, ADIO_Status *status, int
+                        *error_code);
++#ifdef HAVE_MPI_GREQUEST_EXTENSIONS
+ void ADIOI_GEN_IwriteStridedColl(ADIO_File fd, const void *buf, int count,
+                        MPI_Datatype datatype, int file_ptr_type,
+                        ADIO_Offset offset, MPI_Request *request,
+                        int *error_code);
++#else
++#define ADIOI_GEN_IwriteStridedColl NULL
++#endif
+ void ADIOI_Calc_my_off_len(ADIO_File fd, int bufcount, MPI_Datatype
+ 			    datatype, int file_ptr_type, ADIO_Offset 
+ 			    offset, ADIO_Offset **offset_list_ptr, ADIO_Offset
+diff --git a/ompi/mca/io/romio321/romio/configure.ac b/ompi/mca/io/romio321/romio/configure.ac
+index 93f8b09..0b85d53 100644
+--- a/ompi/mca/io/romio321/romio/configure.ac
++++ b/ompi/mca/io/romio321/romio/configure.ac
+@@ -3,12 +3,21 @@
+ # autoconf --localdir=../confdb configure.ac
+ # (or wherever the confdb is)
+ #
++# irrelevant / unnecessary in an Open MPI environment, but are
++# harmless and are left here solely for the sake of ease of future
++# patching/importing.
+ AC_PREREQ([2.63])
+ 
+-m4_include([version.m4])
+-dnl 2nd arg is intentionally underquoted
++# Open MPI: Modifications to this file were done on an "let's do the
++# minimum possible" basis, not so that we can skip on the work or
++# provide any less functionality, but more from a perspective that we
++# want to be able to import new versions of ROMIO in as easy a fashion
++# as possible.  Hence, there are some things in this file that are
++# irrelevant / unnecessary in an Open MPI environment, but are
++# harmless and are left here solely for the sake of ease of future
++# patching/importing.
+ AC_INIT([ROMIO],
+-        MPICH_VERSION_m4,
++        [Open MPI],
+         [discuss@mpich.org],
+         [romio],
+         [http://www.mpich.org/])
+@@ -22,7 +31,7 @@ dnl scripts.
+ AC_CONFIG_AUX_DIR([confdb])
+ AC_CONFIG_MACRO_DIR([confdb])
+ 
+-AM_INIT_AUTOMAKE([-Wall -Werror -Wno-portability-recursive foreign 1.12.3 silent-rules subdir-objects])
++AM_INIT_AUTOMAKE([-Wall -Werror -Wno-portability-recursive foreign 1.12 silent-rules subdir-objects])
+ AM_MAINTAINER_MODE([enable])
+ 
+ dnl must come before LT_INIT, which AC_REQUIREs AC_PROG_CC
+@@ -43,12 +52,15 @@ if test -n "$CONFIGURE_ARGS" ; then
+ fi
+ 
+ AC_CONFIG_HEADER(adio/include/romioconf.h)
++# Open MPI: modified AH_TOP
+ AH_TOP([/*
+  *  (C) 2011 by Argonne National Laboratory.
+  *      See COPYRIGHT in top-level directory.
+  */
+ #ifndef ROMIOCONF_H_INCLUDED
+ #define ROMIOCONF_H_INCLUDED
++
++#include "romioconf-undefs.h"
+ ])
+ AH_BOTTOM([
+ /* quash PACKAGE and PACKAGE_* vars, see MPICH top-level configure.ac for
+@@ -58,9 +70,37 @@ AH_BOTTOM([
+ #endif /* !defined(ROMIOCONF_H_INCLUDED) */
+ ])
+ 
++# Open MPI: this configure script doesn't seem to define these
++# anywhere, so just do them manually here because "we know better"
++# (i.e., Open MPI can be hard-wired to these values).
++AC_DEFINE([HAVE_MPI_OFFSET], [1], [Will always be 1 - OMPI has MPI_OFFSET])
++
++# Open MPI: look for top Open MPI directory
++AC_MSG_CHECKING([for Open MPI support files])
++if test -f "$srcdir/../../../../../config/opal_mca.m4"; then
++
++    # This is needed for VPATH builds, so that it will -I the
++    # appropriate include directory (don't know why automake
++    # doesn't do this # automatically).
++
++    OMPI_TOP_SRCDIR='$(top_srcdir)/../../../../..'
++    OMPI_TOP_BUILDDIR='$(top_builddir)/../../../../..'
++    with_mpi="$OMPI_TOP_SRCDIR"
++    AC_MSG_RESULT([in Open MPI source tree -- good])
++    AC_SUBST(OMPI_TOP_SRCDIR)
++    AC_SUBST(OMPI_TOP_BUILDDIR)
++else
++    AC_MSG_RESULT([not found])
++    AC_MSG_WARN([*** Could not find Open MPI support files])
++    AC_MSG_WARN([*** Can only build this version of ROMIO in an Open MPI source tree])
++    AC_MSG_ERROR([*** Cannot continue])
++fi
++
+ dnl
+-NOF77=0
+-NOF90=0
++# Open MPI: disable the f77 and f90 tests, as we provide our own
++# MPI interface and use only the C parts of ROMIO
++NOF77=1
++NOF90=1
+ ARCH=""
+ arch_IRIX=""
+ MPI_IMPL=""
+@@ -95,6 +135,10 @@ AC_ARG_VAR([FROM_OMPI],[set to "yes" if building ROMIO inside of Open MPI])
+ FROM_OMPI=${FROM_OMPI:-no}
+ if test "$FROM_OMPI" = 1 ; then FROM_OMPI=yes ; fi
+ 
++AC_ARG_VAR([FROM_OMPI],[set to "yes" if building ROMIO inside of Open MPI])
++FROM_OMPI=${FROM_OMPI:-no}
++if test "$FROM_OMPI" = 1 ; then FROM_OMPI=yes ; fi
++
+ CFLAGS=${CFLAGS:-""}
+ LL="lld"
+ AR_LOCAL=""
+@@ -120,7 +164,8 @@ ROMIO_TFFLAGS=""
+ NOPROFILE=0
+ MPIRUN=""
+ FORTRAN_TEST=""
+-MAKE=${MAKE:-"make"}
++# Open MPI: This (setting make) is a Bad Thing to do in Automake-based build systems
++# MAKE=${MAKE:-"make"}
+ # foll. needed for f77 test programs
+ F77GETARG="call getarg(i,str)"
+ F77IARGC="iargc()"
+@@ -133,6 +178,18 @@ MPI_OFFSET_KIND2="!"
+ TEST_CC=""
+ TEST_F77=""
+ #
++# Error handlers (not used with MPICH2, which provides its own routines)
++MPIO_EXTRA_OBJECTS="get_errh.o set_errh.o"
++MPIO_EXTRA_TMP_POBJECTS="get_errh.p set_errh.p"
++MPIO_EXTRA_REAL_POBJECTS="_get_errh.o _set_errh.o"
++#
++# Completion routines for MPIO_Requests.  MPI Implementations with
++# generalized requests do not need these
++# ioreq_c2f and ioreq_f2c are not MPIO_Requests; rather, they
++MPIO_REQOBJECTS="iotest.o iotestall.o iotestany.o iotestsome.o iowait.o iowaitall.o iowaitany.o iowaitsome.o ioreq_c2f.o ioreq_f2c.o"
++MPIO_REQ_TMP_POBJECTS="iotest.p iowait.p iowaitall.p iowaitany.p iotestall.p iotestany.p iowaitsome.p iotestsome.p"
++MPIO_REQ_REAL_POBJECTS="_iotest.o _iowait.o _iowaitall.o _iowaitany.o _iotestall.o _iotestany.o _iowaitsome.o _iotestsome.o"
++#
+ known_mpi_impls="mpich_mpi mpich_mpi sgi_mpi hp_mpi cray_mpi lam_mpi open_mpi_mpi"
+ 
+ dnl An m4 macro for use with m4_foreach_w and friends.  You should modify this
+@@ -169,7 +226,7 @@ AC_ARG_ENABLE(f77,
+ AC_ARG_ENABLE(f90,
+ [--enable-f90 - Turn on support for Fortran 90 (default)],,enable_f90=yes)
+ AC_ARG_ENABLE(weak-symbols,
+-[--enable-weak-symbols - Turn on support for weak symbols],,enable_weak_symbols=yes)
++[--enable-weak-symbols - Turn on support for weak symbols],,enable_weak_symbols=no)
+ AC_ARG_ENABLE(debug,
+ [--enable-debug - Build a debugging version],,)
+ AC_ARG_WITH(file-system,[
+@@ -192,9 +249,10 @@ if test "$enable_debug" = "yes" ; then
+     DEBUG=yes
+ fi
+ MPI=$with_mpi
+-if test -n "$with_mpi"; then
+-       CC=$MPI/bin/mpicc
+-fi
++# Open MPI: No!
++#if test -n "$with_mpi"; then
++#       CC=$MPI/bin/mpicc
++#fi
+ 
+ # start with the set of file systems that the user asked for
+ # FILE_SYSTEM=$with_file_system
+@@ -257,6 +315,7 @@ top_build_dir=`pwd`
+ # used in romioinstall
+ AC_SUBST(top_build_dir)
+ 
++# Open MPI: these shouldn't be needed with AM
+ #
+ # Create the "autoconf" style directory names...
+ # Most of these are done for us; add the documentation directories
+@@ -378,8 +437,9 @@ if test "$CC" = "gcc" -a -z "$C_DEBUG_FLAG" ; then
+ fi
+ if test $DEBUG = "yes" ; then
+     CFLAGS="$CFLAGS $C_DEBUG_FLAG"
+-else 
+-    CFLAGS="$CFLAGS $C_OPT_FLAG"
++# Open MPI: don't add optflags - they'll come from the top-level configure
++#else
++#    CFLAGS="$CFLAGS $C_OPT_FLAG"
+ fi
+ # ---------------------------------------------------------------------------
+ # Here go the rest of the tests
+@@ -426,7 +486,8 @@ else
+     F77=":"
+ fi
+ #
+-AC_C_INLINE
++# Open MPI: We already do this test top-level
++dnl AC_C_INLINE
+ 
+ AC_TYPE_SIZE_T
+ AC_TYPE_SSIZE_T
+@@ -649,7 +710,9 @@ AM_CONDITIONAL([BUILD_MPIO_ERRHAN],[false])
+ 
+ # if we don't have weak symbol support, we must build a separate convenience
+ # library in order to provide the "PMPI_" symbols
+-AM_CONDITIONAL([BUILD_PROFILING_LIB],[test "x$HAVE_WEAK_SYMBOLS" = "x0"])
++# Open MPI: Disable the profile library
++#AM_CONDITIONAL([BUILD_PROFILING_LIB],[test "x$HAVE_WEAK_SYMBOLS" = "x0"])
++AM_CONDITIONAL([BUILD_PROFILING_LIB],[false])
+ 
+ # weird: we have conflated "buid ROMIO's versions of the fortran bindings" and
+ # "build ROMIO"s fortran I/O tests". Of course the common situaiton is that we
+@@ -1447,8 +1510,10 @@ if test $FROM_OMPI = yes ; then
+    HAVE_MPI_DARRAY_SUBARRAY="#define HAVE_MPI_DARRAY_SUBARRAY"
+    # Open MPI: see comments in mpi-io/mpioprof.h
+    AC_DEFINE(MPIO_BUILD_PROFILING, 1, [hack to make ROMIO build without profiling])
+-   DEFINE_HAVE_MPI_GREQUEST="#define HAVE_MPI_GREQUEST"
++   DEFINE_HAVE_MPI_GREQUEST="#define HAVE_MPI_GREQUEST 1"
++   DEFINE_HAVE_MPI_GREQUEST_EXTENSIONS="#undef HAVE_MPI_GREQUEST_EXTENSIONS"
+    AC_DEFINE(HAVE_DECL_MPI_COMBINER_HINDEXED_BLOCK, 1, [Define if MPI library provides HINDEXED_BLOCK datatype])
++   AC_DEFINE(HAVE_MPIIO_CONST, 1, Set if MPI-IO prototypes use const qualifier)
+ elif test $FROM_LAM = yes ; then
+    # LAM does have the status set bytes functionality
+    AC_DEFINE(HAVE_STATUS_SET_BYTES,1,[Define if have MPIR_Status_set_bytes])
+@@ -1497,7 +1562,7 @@ elif test $FROM_MPICH = yes ; then
+    DEFINE_HAVE_MPI_GREQUEST_EXTENSIONS="#define HAVE_MPI_GREQUEST_EXTENSIONS 1"
+    AC_DEFINE(HAVE_MPIU_FUNCS,1,[Define if MPICH memory tracing macros defined])
+    AC_DEFINE(HAVE_MPIX_H, 1, [])
+-   AC_DEFINE(HAVE_MPIIO_CONST, const, Set if MPI-IO prototypes use const qualifier)
++   AC_DEFINE(HAVE_MPIIO_CONST, 1, Set if MPI-IO prototypes use const qualifier)
+    AC_DEFINE(HAVE_MPI_TYPE_SIZE_X, 1, [Define if MPI library provides MPI_TYPE_SIZE_X])
+    AC_DEFINE(HAVE_MPI_STATUS_SET_ELEMENTS_X, 1, [Define if MPI library provides MPI_STATUS_SET_ELEMENTS_X])
+    AC_DEFINE(HAVE_DECL_MPI_COMBINER_HINDEXED_BLOCK, 1, [Define if MPI library provides HINDEXED_BLOCK datatype])
+@@ -1620,9 +1685,22 @@ fi
+ echo "setting SYSDEP_INC to $SYSDEP_INC"
+ AC_SUBST(SYSDEP_INC)
+ 
++# Open MPI: use the exact same restrict test that we use in the
++# upper-level Open MPI configure script so that we always get the same
++# #define for "restrict" (there are a small number of files that will
++# end up including both ROMIO's romioconf.h and opal_config.h, so we
++# need to #defines to agree).
+ AC_C_RESTRICT
+ PAC_C_GNU_ATTRIBUTE
+ 
++# Open MPI: we need libtool
++AM_PROG_LIBTOOL
++
++# Open MPI: setup the AM_CONDITIONALs to build the different adio devices
++ m4_foreach([my_fs],
++  [gpfs, gridftp, hfs, lustre, nfs, ntfs, panfs, pfs, pvfs, piofs, pvfs, pvfs2, sfs, testfs, ufs, xfs, zoidfs],
++  [AM_CONDITIONAL(BUILD_[]AS_TR_CPP(my_fs), [test -n "$file_system_]my_fs["])])
++
+ # support gcov test coverage information
+ PAC_ENABLE_COVERAGE
+ 
+@@ -1634,23 +1712,29 @@ echo "setting CFLAGS to $CFLAGS"
+ echo "setting USER_CFLAGS to $USER_CFLAGS"
+ echo "setting USER_FFLAGS to $USER_FFLAGS"
+ 
++# Open MPI: Add on CFLAGS that we figured out up top.  They have
++# makefile macros in them, so we couldn't substitute them until now.
++CFLAGS="$CFLAGS $OMPI_CFLAGS "'-I$(top_builddir)/include'
++#
++# Open MPI - AM doesn't want the following:
++#   VPATH, CC, CPPFLAGS, CFLAGS, AR, RANLIB, F77, MAKE
+ AC_SUBST(ARCH)
+ AC_SUBST(FILE_SYSTEM)
+-AC_SUBST(CC)
+-AC_SUBST(CPPFLAGS)
+-AC_SUBST(CFLAGS)
++#AC_SUBST(CC)
++#AC_SUBST(CPPFLAGS)
++#AC_SUBST(CFLAGS)
+ AC_SUBST(USER_CFLAGS)
+ AC_SUBST(USER_FFLAGS)
+ AC_SUBST(MIPS)
+ AC_SUBST(BITS)
+-AC_SUBST(AR)
++#AC_SUBST(AR)
+ AC_SUBST(AR_FLAGS)
+ AC_SUBST(MPI_INCLUDE_DIR)
+ AC_SUBST(MPI_LIB)
+-AC_SUBST(F77)
++#AC_SUBST(F77)
+ AC_SUBST(NOF77)
+ AC_SUBST(NOPROFILE)
+-AC_SUBST(MAKE)
++#AC_SUBST(MAKE)
+ AC_SUBST(arch_IRIX)
+ AC_SUBST(ROMIO_HOME)
+ AC_SUBST(LIBNAME)
+@@ -1671,6 +1755,7 @@ AC_SUBST(HAVE_MPI_DARRAY_SUBARRAY)
+ AC_SUBST(BUILD_MPI_ARRAY)
+ AC_SUBST(DEFINE_MPI_OFFSET)
+ AC_SUBST(DEFINE_HAVE_MPI_GREQUEST)
++AC_SUBST(DEFINE_HAVE_MPI_GREQUEST_EXTENSIONS)
+ AC_SUBST(MPI_OFFSET_TYPE)
+ AC_SUBST(MPI_FINFO1)
+ AC_SUBST(MPI_FINFO2)
+@@ -1694,24 +1779,25 @@ AC_SUBST(ROMIO_TCPPFLAGS)
+ AC_SUBST(ROMIO_TFFLAGS)
+ AC_SUBST(MPIRUN)
+ AC_SUBST(FORTRAN_TEST)
+-dnl
+-dnl Support shared libraries
+-if test -z "$ENABLE_SHLIB" ; then
+-   ENABLE_SHLIB=none
+-fi
+-AC_SUBST(ENABLE_SHLIB)
+-AC_SUBST(CC_SHL)
+-AC_SUBST(LIBTOOL)
++#dnl
++#dnl Support shared libraries
++#if test -z "$ENABLE_SHLIB" ; then
++#   ENABLE_SHLIB=none
++#fi
++#AC_SUBST(ENABLE_SHLIB)
++#AC_SUBST(CC_SHL)
++#AC_SUBST(LIBTOOL)
++# Open MPI: This is no longer necessary with modern versions of autotools
+ # Remove the .a from the library file name (so that we can use .so or
+ # other appropriate suffix)
+-SHLIBNAME=`echo $LIBNAME | sed 's/\.a$//'`
+-AC_SUBST(SHLIBNAME)
+-dnl
+-if test ! -d adio ; then mkdir adio ; fi
+-if test ! -d adio/include ; then mkdir adio/include ; fi
+-if test ! -d mpi2-other ; then mkdir mpi2-other ; fi
+-if test ! -d mpi-io ; then mkdir mpi-io ; fi
+-if test ! -d mpi-io/glue ; then mkdir mpi-io/glue ; fi
++#SHLIBNAME=`echo $LIBNAME | sed 's/\.a$//'`
++#AC_SUBST(SHLIBNAME)
++#dnl
++#if test ! -d adio ; then mkdir adio ; fi
++#if test ! -d adio/include ; then mkdir adio/include ; fi
++#if test ! -d mpi2-other ; then mkdir mpi2-other ; fi
++#if test ! -d mpi-io ; then mkdir mpi-io ; fi
++#if test ! -d mpi-io/glue ; then mkdir mpi-io/glue ; fi
+ 
+ # Create makefiles for all of the adio devices.  Only the ones that 
+ # are active will be called by the top level ROMIO make
+@@ -1719,8 +1805,6 @@ AC_OUTPUT_COMMANDS([chmod 755 util/romioinstall test/runtests])
+ AC_CONFIG_FILES([
+     Makefile
+     localdefs
+-    mpi2-other/info/Makefile
+-    mpi2-other/array/Makefile
+     test/Makefile
+     test/misc.c
+     test/large_file.c
+@@ -1728,14 +1812,17 @@ AC_CONFIG_FILES([
+     test-internal/Makefile
+     util/romioinstall
+     include/mpio.h
+-    include/mpiof.h
+-    mpi2-other/info/fortran/Makefile
+-    mpi2-other/array/fortran/Makefile
+     test/fmisc.f
+     test/fcoll_test.f
+     test/pfcoll_test.f
+     test/fperf.f
+ ])
++# Open MPI: intentionally skip the following:
++# mpi2-other/info/Makefile
++# mpi2-other/array/Makefile
++# mpi2-other/info/fortran/Makefile
++# mpi2-other/array/fortran/Makefile
++# include/mpiof.h
+ AC_OUTPUT
+ 
+ dnl PAC_SUBDIR_CACHE_CLEANUP
+diff --git a/ompi/mca/io/romio321/romio/doc/users-guide.tex b/ompi/mca/io/romio321/romio/doc/users-guide.tex
+index b33d483..3715431 100644
+--- a/ompi/mca/io/romio321/romio/doc/users-guide.tex
++++ b/ompi/mca/io/romio321/romio/doc/users-guide.tex
+@@ -807,13 +807,19 @@ to include the file {\tt mpio.h} for C or {\tt mpiof.h} for Fortran in
+ your MPI-IO program.  
+ 
+ Note that on HP machines running HPUX and on NEC SX-4, you need to
+-compile Fortran programs with {\tt mpifort}.
++compile Fortran programs with {\tt mpifort}, because {\tt mpif77} does
++not support 8-byte integers.
+ 
+ With MPICH, HP MPI, or NEC MPI, you can compile MPI-IO programs as \\
+ \hspace*{.4in} {\tt mpicc foo.c}\\
+ or \\
++\hspace*{.4in} {\tt mpif77 foo.f }\\
++or\\
+ \hspace*{.4in} {\tt mpifort foo.f}\\
+ 
++As mentioned above, mpifort is preferred over mpif77 on HPUX and NEC
++because the f77 compilers on those machines do not support 8-byte integers.
++
+ With SGI MPI, you can compile MPI-IO programs as \\
+ \hspace*{.4in} {\tt cc foo.c -lmpi}\\
+ or \\
+@@ -863,7 +869,8 @@ file systems because they don't support {\tt fcntl} file locks,
+ and ROMIO uses that feature to implement shared file pointers.
+ 
+ \item On HP machines running HPUX and on NEC SX-4, you need to compile
+-Fortran programs with {\tt mpifort}.
++Fortran programs with {\tt mpifort} instead of {\tt mpif77}, because
++the {\tt f77} compilers on these machines don't support 8-byte integers.
+ 
+ \item The file-open mode {\tt MPI\_MODE\_EXCL} does not work on Intel
+ PFS file system, due to a bug in PFS.
+diff --git a/ompi/mca/io/romio321/romio/include/mpio.h.in b/ompi/mca/io/romio321/romio/include/mpio.h.in
+index 1f3f382..9ef709d 100644
+--- a/ompi/mca/io/romio321/romio/include/mpio.h.in
++++ b/ompi/mca/io/romio321/romio/include/mpio.h.in
+@@ -11,6 +11,16 @@
+ #define MPIO_INCLUDE
+ 
+ #include "mpi.h"
++/* Open MPI: We need to rename almost all of these functions, as well
++   a the types to be names that conform to the prefix rule */
++#include "io_romio_conv.h"
++
++#define MPIIMPL_HAVE_MPI_COMBINER_DARRAY 1
++#define MPIIMPL_HAVE_MPI_TYPE_CREATE_DARRAY 1
++#define MPIIMPL_HAVE_MPI_COMBINER_SUBARRAY 1
++#define MPIIMPL_HAVE_MPI_TYPE_CREATE_DARRAY 1
++#define MPIIMPL_HAVE_MPI_COMBINER_DUP 1
++#define MPICH_ATTR_POINTER_WITH_TYPE_TAG(x,y)
+ 
+ #if defined(__cplusplus)
+ extern "C" {
+@@ -38,6 +48,8 @@ typedef struct ADIOI_RequestD *MPIO_Request;
+ #endif
+ #define MPIO_REQUEST_DEFINED
+ 
++@DEFINE_HAVE_MPI_GREQUEST_EXTENSIONS@
++
+ #ifndef HAVE_MPI_OFFSET
+ @DEFINE_MPI_OFFSET@
+ /* If we needed to define MPI_Offset, then we also need to make
+@@ -279,9 +291,12 @@ int MPI_Type_create_darray(int size, int rank, int ndims, const int array_of_gsi
+ #endif
+ #endif
+ /* above needed for some versions of mpi.h in MPICH!! */
++/* Open MPI: I can't seem to make these #define properly.  Oh well --
++   we don't need them anyway :-( */
++#if 0
+ MPI_File MPI_File_f2c(MPI_Fint file);
+ MPI_Fint MPI_File_c2f(MPI_File file);
+-
++#endif
+ 
+ #ifndef HAVE_MPI_GREQUEST
+ /* The following functions are required if generalized requests are not
+@@ -329,15 +344,21 @@ int MPI_Info_free(MPI_Info *info);
+ #endif
+ #endif
+ /* above needed for some versions of mpi.h in MPICH!! */
++/* Open MPI: we don't need these in ROMIO */
++#if 0
+ MPI_Fint MPI_Info_c2f(MPI_Info info);
+ MPI_Info MPI_Info_f2c(MPI_Fint info);
+ #endif
++#endif
+ 
+ #endif   /* HAVE_PRAGMA_HP_SEC_DEF */
+ 
+ 
+ /**************** BINDINGS FOR THE PROFILING INTERFACE ***************/
+ 
++/* Open MPI: We don't want any of the profiling layer */
++#if 0
++
+ 
+ /* Section 9.2 */
+ int PMPI_File_open(MPI_Comm, const char *, int, MPI_Info, MPI_File *);
+@@ -528,6 +549,8 @@ MPI_Fint PMPI_Info_c2f(MPI_Info);
+ MPI_Info PMPI_Info_f2c(MPI_Fint);
+ #endif
+ 
++#endif /* Open MPI: We don't want any of the profiling layer */
++
+ #if defined(__cplusplus)
+ }
+ #endif
+diff --git a/ompi/mca/io/romio321/romio/mpi-io/Makefile.mk b/ompi/mca/io/romio321/romio/mpi-io/Makefile.mk
+index d4d5a29..264976e 100644
+--- a/ompi/mca/io/romio321/romio/mpi-io/Makefile.mk
++++ b/ompi/mca/io/romio321/romio/mpi-io/Makefile.mk
+@@ -14,8 +14,6 @@ noinst_HEADERS += mpi-io/mpioimpl.h mpi-io/mpioprof.h
+ romio_mpi_sources +=          \
+     mpi-io/close.c            \
+     mpi-io/delete.c           \
+-    mpi-io/file_c2f.c         \
+-    mpi-io/file_f2c.c         \
+     mpi-io/fsync.c            \
+     mpi-io/get_amode.c        \
+     mpi-io/get_atom.c         \
+diff --git a/ompi/mca/io/romio321/romio/mpi-io/close.c b/ompi/mca/io/romio321/romio/mpi-io/close.c
+index 3f2b0b1..12d5c47 100644
+--- a/ompi/mca/io/romio321/romio/mpi-io/close.c
++++ b/ompi/mca/io/romio321/romio/mpi-io/close.c
+@@ -76,8 +76,13 @@ int MPI_File_close(MPI_File *fh)
+      * somehow inform the MPI library that we no longer hold a reference to any
+      * user defined error handler.  We do this by setting the errhandler at this
+      * point to MPI_ERRORS_RETURN. */
++/* Open MPI: The call to PMPI_File_set_errhandler has to be done in romio/src/io_romio_file_open.c
++   in routine mca_io_romio_file_close()
++*/
++#if 0
+     error_code = PMPI_File_set_errhandler(*fh, MPI_ERRORS_RETURN);
+     if (error_code != MPI_SUCCESS) goto fn_fail;
++#endif
+ 
+     ADIO_Close(adio_fh, &error_code);
+     MPIO_File_free(fh);
+diff --git a/ompi/mca/io/romio321/romio/mpi-io/glue/Makefile.mk b/ompi/mca/io/romio321/romio/mpi-io/glue/Makefile.mk
+index 05954a1..66f7f9e 100644
+--- a/ompi/mca/io/romio321/romio/mpi-io/glue/Makefile.mk
++++ b/ompi/mca/io/romio321/romio/mpi-io/glue/Makefile.mk
+@@ -7,6 +7,7 @@
+ 
+ include $(top_srcdir)/mpi-io/glue/default/Makefile.mk
+ include $(top_srcdir)/mpi-io/glue/mpich/Makefile.mk
++include $(top_srcdir)/mpi-io/glue/openmpi/Makefile.mk
+ 
+ if !BUILD_ROMIO_EMBEDDED
+ romio_other_sources += \
+diff --git a/ompi/mca/io/romio321/romio/mpi-io/iread_all.c b/ompi/mca/io/romio321/romio/mpi-io/iread_all.c
+index 2615e56..00a0640 100644
+--- a/ompi/mca/io/romio321/romio/mpi-io/iread_all.c
++++ b/ompi/mca/io/romio321/romio/mpi-io/iread_all.c
+@@ -26,7 +26,7 @@ int MPI_File_iread_all(MPI_File fh, void *buf, int count, MPI_Datatype datatype,
+ #include "mpioprof.h"
+ #endif
+ 
+-#ifdef HAVE_MPI_GREQUEST
++#if HAVE_MPI_GREQUEST
+ #include "mpiu_greq.h"
+ #endif
+ 
+diff --git a/ompi/mca/io/romio321/romio/mpi-io/mpioprof.h b/ompi/mca/io/romio321/romio/mpi-io/mpioprof.h
+index f3ee3b4..c74413d 100644
+--- a/ompi/mca/io/romio321/romio/mpi-io/mpioprof.h
++++ b/ompi/mca/io/romio321/romio/mpi-io/mpioprof.h
+@@ -10,6 +10,15 @@
+    building the profiling interface
+  */
+ 
++/*
++ * Open MPI: Unfortunately, ROMIO doesn't seem to be able to build
++ * without a profiling interface, but we don't want a profiling
++ * interface, since we are just using ROMIO "behind the scenes".
++ * So enable all the profiling defines, only compile once, and don't
++ * do all the name mangling.  The effect is about the same, but without
++ * modification to all the files in the mpi-io directory.
++ */
++#if 0
+ #ifdef MPIO_BUILD_PROFILING
+ 
+ #undef MPI_File_open
+@@ -212,3 +221,4 @@
+ #define MPIX_Grequest_class_create PMPIX_Grequest_class_create
+ 
+ #endif
++#endif

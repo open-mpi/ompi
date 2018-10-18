@@ -44,7 +44,7 @@ void shmem_real_iget_f(FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_F
 
     for (i=0; i<length; i++)
     {
-        MCA_SPML_CALL(get((uint8_t *)FPTR_2_VOID_PTR(source) + i * sst_c * real_type_size,
+        MCA_SPML_CALL(get(oshmem_ctx_default, (uint8_t *)FPTR_2_VOID_PTR(source) + i * sst_c * real_type_size,
             real_type_size,
             (uint8_t *)FPTR_2_VOID_PTR(target) + i * tst_c * real_type_size,
             OMPI_FINT_2_INT(*pe)));

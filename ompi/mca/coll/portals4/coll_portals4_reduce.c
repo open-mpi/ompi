@@ -340,24 +340,38 @@ reduce_kary_tree_top(const void *sendbuf, void *recvbuf, int count,
 static int
 reduce_kary_tree_bottom(ompi_coll_portals4_request_t *request)
 {
+    int ret, line;
+
     if (request->u.reduce.is_optim) {
         PtlAtomicSync();
 
         if (request->u.reduce.use_ack_ct_h) {
-            PtlCTFree(request->u.reduce.ack_ct_h);
+            ret = PtlCTFree(request->u.reduce.ack_ct_h);
+            if (PTL_OK != ret) { ret = OMPI_ERROR; line = __LINE__; goto err_hdlr; }
         }
 
         if (request->u.reduce.child_nb) {
-            PtlMEUnlink(request->u.reduce.data_me_h);
+            do {
+                ret = PtlMEUnlink(request->u.reduce.data_me_h);
+            } while (PTL_IN_USE == ret);
+            if (PTL_OK != ret) { ret = OMPI_ERROR; line = __LINE__; goto err_hdlr; }
         }
 
-        PtlCTFree(request->u.reduce.trig_ct_h);
+        ret = PtlCTFree(request->u.reduce.trig_ct_h);
+        if (PTL_OK != ret) { ret = OMPI_ERROR; line = __LINE__; goto err_hdlr; }
 
         if (request->u.reduce.free_buffer) {
             free(request->u.reduce.free_buffer);
         }
     }
     return (OMPI_SUCCESS);
+
+err_hdlr:
+    opal_output(ompi_coll_base_framework.framework_output,
+                "%s:%4d:%4d\tError occurred ret=%d",
+                __FILE__, __LINE__, line, ret);
+
+    return ret;
 }
 
 
@@ -402,7 +416,7 @@ ompi_coll_portals4_ireduce_intra(const void* sendbuf, void* recvbuf, int count,
         int root,
         struct ompi_communicator_t *comm,
         ompi_request_t ** ompi_request,
-        struct mca_coll_base_module_2_2_0_t *module)
+        struct mca_coll_base_module_2_3_0_t *module)
 {
     int ret;
     mca_coll_portals4_module_t *portals4_module = (mca_coll_portals4_module_t*) module;

@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      UT-Battelle, LLC. All rights reserved.
- * Copyright (c) 2011-2015 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -41,9 +41,9 @@ BEGIN_C_DECLS
 struct mca_pml_ob1_recv_request_t {
     mca_pml_base_recv_request_t req_recv;
     opal_ptr_t remote_req_send;
-    int32_t  req_lock;
-    int32_t  req_pipeline_depth;
-    size_t   req_bytes_received;  /**< amount of data transferred into the user buffer */
+    opal_atomic_int32_t  req_lock;
+    opal_atomic_int32_t  req_pipeline_depth;
+    opal_atomic_size_t   req_bytes_received;  /**< amount of data transferred into the user buffer */
     size_t   req_bytes_expected; /**< local size of the data as suggested by the user */
     size_t   req_rdma_offset;
     size_t   req_send_offset;
@@ -205,9 +205,8 @@ recv_request_pml_complete(mca_pml_ob1_recv_request_t *recvreq)
 static inline bool
 recv_request_pml_complete_check(mca_pml_ob1_recv_request_t *recvreq)
 {
-#if OPAL_ENABLE_MULTI_THREADS
     opal_atomic_rmb();
-#endif
+
     if(recvreq->req_match_received &&
             recvreq->req_bytes_received >= recvreq->req_recv.req_bytes_packed &&
             lock_recv_request(recvreq)) {
@@ -245,9 +244,9 @@ static inline void recv_req_matched(mca_pml_ob1_recv_request_t *req,
     req->req_recv.req_base.req_ompi.req_status.MPI_SOURCE = hdr->hdr_src;
     req->req_recv.req_base.req_ompi.req_status.MPI_TAG = hdr->hdr_tag;
     req->req_match_received = true;
-#if OPAL_ENABLE_MULTI_THREADS
+
     opal_atomic_wmb();
-#endif
+
     if(req->req_recv.req_bytes_packed > 0) {
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
         if(MPI_ANY_SOURCE == req->req_recv.req_base.req_peer) {

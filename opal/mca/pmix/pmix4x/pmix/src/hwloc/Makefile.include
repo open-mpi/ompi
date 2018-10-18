@@ -1,0 +1,15 @@
+# -*- makefile -*-
+#
+# Copyright (c) 2018      Intel, Inc. All rights reserved.
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
+#
+
+sources += \
+        hwloc/hwloc.c
+
+headers += \
+        hwloc/hwloc-internal.h

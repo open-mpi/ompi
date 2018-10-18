@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -34,23 +36,7 @@
 #include <arpa/inet.h>
 #endif
 #ifdef HAVE_NET_IF_H
-#if defined(__APPLE__) && defined(_LP64)
-/* Apple engineering suggested using options align=power as a
-   workaround for a bug in OS X 10.4 (Tiger) that prevented ioctl(...,
-   SIOCGIFCONF, ...) from working properly in 64 bit mode on Power PC.
-   It turns out that the underlying issue is the size of struct
-   ifconf, which the kernel expects to be 12 and natural 64 bit
-   alignment would make 16.  The same bug appears in 64 bit mode on
-   Intel macs, but align=power is a no-op there, so instead, use the
-   pack pragma to instruct the compiler to pack on 4 byte words, which
-   has the same effect as align=power for our needs and works on both
-   Intel and Power PC Macs. */
-#pragma pack(push,4)
-#endif
 #include <net/if.h>
-#if defined(__APPLE__) && defined(_LP64)
-#pragma pack(pop)
-#endif
 #endif
 #ifdef HAVE_NETDB_H
 #include <netdb.h>
@@ -62,6 +48,7 @@
 #include "opal/constants.h"
 #include "opal/util/if.h"
 #include "opal/util/output.h"
+#include "opal/util/string_copy.h"
 #include "opal/mca/if/if.h"
 #include "opal/mca/if/base/base.h"
 
@@ -118,8 +105,8 @@ static int if_linux_ipv6_open(void)
                                 addrbyte[8], addrbyte[9], addrbyte[10], addrbyte[11],
                                 addrbyte[12], addrbyte[13], addrbyte[14], addrbyte[15], scope);
 
-            /* we don't want any other scope less than link-local */
-            if (scope < 0x20) {
+            /* Only interested in global (0x00) scope */
+            if (scope != 0x00)  {
                 opal_output_verbose(1, opal_if_base_framework.framework_output,
                                     "skipping interface %2x%2x:%2x%2x:%2x%2x:%2x%2x:%2x%2x:%2x%2x:%2x%2x:%2x%2x scope %x\n",
                                     addrbyte[0], addrbyte[1], addrbyte[2], addrbyte[3],
@@ -143,7 +130,7 @@ static int if_linux_ipv6_open(void)
             }
 
             /* now construct the opal_if_t */
-            strncpy(intf->if_name, ifname, IF_NAMESIZE);
+            opal_string_copy(intf->if_name, ifname, IF_NAMESIZE);
             intf->if_index = opal_list_get_size(&opal_if_list)+1;
             intf->if_kernel_index = (uint16_t) idx;
             ((struct sockaddr_in6*) &intf->if_addr)->sin6_addr = a6;

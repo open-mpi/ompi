@@ -4,6 +4,8 @@
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2016-2018 Cisco Systems, Inc.  All rights reserved
+ * Copyright (c) 2018      Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -19,6 +21,7 @@
 #include "opal/mca/base/base.h"
 #include "opal/mca/pmix/pmix.h"
 #include "opal/mca/pmix/base/base.h"
+#include "opal/util/opal_environ.h"
 
 /*
  * Globals
@@ -33,11 +36,8 @@ int opal_pmix_base_select(void)
     // value of OPAL's mca_base_component_show_load_errors (i.e., the
     // bool variable behind Open MPI's mca_component_show_load_errors
     // MCA param).
-    char *pmix_show_load_errors_env = NULL;
-    asprintf(&pmix_show_load_errors_env,
-             "PMIX_MCA_mca_base_component_show_load_errors=%d",
-             mca_base_component_show_load_errors ? 1 : 0);
-    putenv(pmix_show_load_errors_env);
+    char *pmix_show_load_errors_env = mca_base_component_show_load_errors ? "1" : "0";
+    opal_setenv("PMIX_MCA_mca_base_component_show_load_errors", pmix_show_load_errors_env, true, &environ);
 
     /*
      * Select the best component

@@ -13,6 +13,7 @@
  * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -25,6 +26,7 @@
 #include "opal/types.h"
 #include "opal/util/error.h"
 #include "opal/util/output.h"
+#include "opal/util/printf.h"
 #include "opal/dss/dss_internal.h"
 
 int opal_dss_pack(opal_buffer_t *buffer,
@@ -339,7 +341,7 @@ int opal_dss_pack_float(opal_buffer_t *buffer, const void *src,
     char *convert;
 
     for (i = 0; i < num_vals; ++i) {
-        asprintf(&convert, "%f", ssrc[i]);
+        opal_asprintf(&convert, "%f", ssrc[i]);
         if (OPAL_SUCCESS != (ret = opal_dss_pack_string(buffer, &convert, 1, OPAL_STRING))) {
             free(convert);
             return ret;
@@ -360,7 +362,7 @@ int opal_dss_pack_double(opal_buffer_t *buffer, const void *src,
     char *convert;
 
     for (i = 0; i < num_vals; ++i) {
-        asprintf(&convert, "%f", ssrc[i]);
+        opal_asprintf(&convert, "%f", ssrc[i]);
         if (OPAL_SUCCESS != (ret = opal_dss_pack_string(buffer, &convert, 1, OPAL_STRING))) {
             free(convert);
             return ret;

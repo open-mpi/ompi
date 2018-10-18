@@ -18,6 +18,7 @@
  * Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -41,6 +42,7 @@
 #include "opal/util/opal_getcwd.h"
 #include "opal/util/proc.h"
 #include "opal/util/show_help.h"
+#include "opal/util/printf.h"
 #include "opal/dss/dss.h"
 #include "opal/mca/hwloc/base/base.h"
 #include "opal/mca/pmix/pmix.h"
@@ -153,7 +155,7 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
             return OMPI_ERR_NOT_SUPPORTED;
         }
         opal_argv_append_nosize(&members, nstring);
-        (void)asprintf(&nstring, "%d", size);
+        (void)opal_asprintf(&nstring, "%d", size);
         opal_argv_append_nosize(&members, nstring);
         free(nstring);
     } else {
@@ -208,11 +210,11 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
         OBJ_CONSTRUCT(&info, opal_value_t);
         OBJ_CONSTRUCT(&pdat, opal_pmix_pdata_t);
         if (send_first) {
-            (void)asprintf(&info.key, "%s:connect", port_string);
-            (void)asprintf(&pdat.value.key, "%s:accept", port_string);
+            (void)opal_asprintf(&info.key, "%s:connect", port_string);
+            (void)opal_asprintf(&pdat.value.key, "%s:accept", port_string);
         } else {
-            (void)asprintf(&info.key, "%s:accept", port_string);
-            (void)asprintf(&pdat.value.key, "%s:connect", port_string);
+            (void)opal_asprintf(&info.key, "%s:accept", port_string);
+            (void)opal_asprintf(&pdat.value.key, "%s:connect", port_string);
         }
         info.type = OPAL_STRING;
         info.data.string = opal_argv_join(members, ':');
@@ -589,7 +591,11 @@ int ompi_dpm_disconnect(ompi_communicator_t *comm)
 
     /* ensure we tell the host RM to disconnect us - this
      * is a blocking operation so just use a fence */
-    ret = opal_pmix.fence(&coll, false);
+    if (OMPI_SUCCESS != (ret = opal_pmix.fence(&coll, false))) {
+        OMPI_ERROR_LOG(ret);
+        OPAL_LIST_DESTRUCT(&coll);
+        return ret;
+    }
     OPAL_LIST_DESTRUCT(&coll);
 
     return ret;
@@ -808,7 +814,7 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
                 info = OBJ_NEW(opal_value_t);
                 info->key = strdup(OPAL_PMIX_PPR);
                 info->type = OPAL_STRING;
-                (void)asprintf(&(info->data.string), "%s:n", slot_list);
+                (void)opal_asprintf(&(info->data.string), "%s:n", slot_list);
                 opal_list_append(&job_info, &info->super);
             }
             ompi_info_get (array_of_info[i], "pernode", sizeof(slot_list) - 1, slot_list, &flag);

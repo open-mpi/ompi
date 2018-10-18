@@ -13,7 +13,7 @@
  * Copyright (c) 2008      UT-Battelle, LLC. All rights reserved.
  * Copyright (c) 2011-2014 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -144,7 +144,7 @@ parser_ini(char **val_if_found, FILE *fp, const char *var_name)
             return ORTE_ERR_FILE_OPEN_FAILURE;
         }
         /* Success! */
-        asprintf(val_if_found, "%s/appinfo", cpq);
+        opal_asprintf(val_if_found, "%s/appinfo", cpq);
         if (NULL == val_if_found) {
             free(alps_config_str);
             ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
@@ -211,7 +211,7 @@ parser_separated_columns(char **val_if_found, FILE *fp, const char *var_name)
             return ORTE_ERR_FILE_OPEN_FAILURE;
         }
         /* Success! */
-        asprintf(val_if_found, "%s/appinfo", cpq);
+        opal_asprintf(val_if_found, "%s/appinfo", cpq);
         if (NULL == val_if_found) {
             free(alps_config_str);
             ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
@@ -508,7 +508,7 @@ orte_ras_alps_read_appinfo_file(opal_list_t *nodes, char *filename,
             opal_output_verbose(5, orte_ras_base_framework.framework_output,
                                 "ras:alps:read_appinfo: got NID %d", apSlots[ix].nid);
 
-            asprintf( &hostname, "%d", apSlots[ix].nid );
+            opal_asprintf( &hostname, "%d", apSlots[ix].nid );
             if (NULL == hostname) {
                 ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
                 return ORTE_ERR_OUT_OF_RESOURCE;
@@ -555,7 +555,7 @@ orte_ras_alps_read_appinfo_file(opal_list_t *nodes, char *filename,
             opal_output_verbose(5, orte_ras_base_framework.framework_output,
                                 "ras:alps:read_appinfo(modern): processing NID %d with %d slots",
                                 apNodes[ix].nid, apNodes[ix].numPEs);
-            asprintf( &hostname, "%d", apNodes[ix].nid );
+            opal_asprintf( &hostname, "%d", apNodes[ix].nid );
             if (NULL == hostname) {
                 ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
                 return ORTE_ERR_OUT_OF_RESOURCE;

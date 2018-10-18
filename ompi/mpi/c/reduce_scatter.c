@@ -13,7 +13,7 @@
  * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -31,6 +31,7 @@
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/op/op.h"
 #include "ompi/memchecker.h"
+#include "ompi/runtime/ompi_spc.h"
 
 #if OMPI_BUILD_MPI_PROFILING
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -46,6 +47,8 @@ int MPI_Reduce_scatter(const void *sendbuf, void *recvbuf, const int recvcounts[
                        MPI_Datatype datatype, MPI_Op op, MPI_Comm comm)
 {
     int i, err, size, count;
+
+    SPC_RECORD(OMPI_SPC_REDUCE_SCATTER, 1);
 
     MEMCHECKER(
         int rank;

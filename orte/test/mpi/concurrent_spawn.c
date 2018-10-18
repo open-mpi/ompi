@@ -32,7 +32,7 @@ int main(int argc, char* argv[])
         for (i = 0; i < NUM_CHILDREN; ++i) {
             printf("Parent [pid %ld] about to spawn child #%d\n",
                    (long)pid, i);
-            asprintf(&(child_argv[0]), "%d", i);
+            opal_asprintf(&(child_argv[0]), "%d", i);
             MPI_Comm_spawn(argv[0], child_argv, 1, MPI_INFO_NULL,
                            0, MPI_COMM_WORLD, &children[i],
                            MPI_ERRCODES_IGNORE);

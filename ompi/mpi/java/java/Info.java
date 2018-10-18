@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -69,7 +70,7 @@ public final class Info implements Freeable, Cloneable
 			throws MPIException;
 
 	/**
-	 * Java binding of the MPI operation {@code MPI_INFO_SET}.
+	 * Java binding of the MPI operation {@code MPI_INFO_GET}.
 	 * @param key key
 	 * @return value or {@code null} if key is not defined
 	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
@@ -83,7 +84,7 @@ public final class Info implements Freeable, Cloneable
 	private native String get(long handle, String key) throws MPIException;
 
 	/**
-	 * Java binding of the MPI operation {@code MPI_INFO_SET}.
+	 * Java binding of the MPI operation {@code MPI_INFO_DELETE}.
 	 * @param key key
 	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
 	 */

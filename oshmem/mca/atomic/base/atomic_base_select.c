@@ -98,7 +98,11 @@ int mca_atomic_base_select(void)
         OBJ_RELEASE(avail->ac_module);
         OBJ_RELEASE(avail);
         /* check correctness */
-        if (!(mca_atomic.atomic_fadd) || !(mca_atomic.atomic_cswap)) {
+        if (!(mca_atomic.atomic_fadd)  || !(mca_atomic.atomic_add) ||
+            !(mca_atomic.atomic_fand)  || !(mca_atomic.atomic_and) ||
+            !(mca_atomic.atomic_for)   || !(mca_atomic.atomic_or) ||
+            !(mca_atomic.atomic_fxor)  || !(mca_atomic.atomic_xor) ||
+            !(mca_atomic.atomic_cswap) || !(mca_atomic.atomic_swap)) {
             return OSHMEM_ERR_NOT_FOUND;
         }
     }

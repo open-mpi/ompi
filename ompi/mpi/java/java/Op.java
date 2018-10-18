@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -109,7 +110,7 @@ public final class Op implements Freeable
 	}
 
 	/**
-	 * Test if the operation is conmutative.
+	 * Test if the operation is commutative.
 	 * <p>Java binding of the MPI operation {@code MPI_OP_COMMUTATIVE}.
 	 * @return {@code true} if commutative, {@code false} otherwise
 	 */

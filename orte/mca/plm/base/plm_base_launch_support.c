@@ -39,6 +39,7 @@
 #include "opal/hash_string.h"
 #include "opal/util/argv.h"
 #include "opal/util/opal_environ.h"
+#include "opal/util/printf.h"
 #include "opal/class/opal_pointer_array.h"
 #include "opal/dss/dss.h"
 #include "opal/mca/hwloc/hwloc-internal.h"
@@ -1124,10 +1125,12 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
                 opal_argv_append_nosize(&atmp, alias);
                 free(alias);
             }
-            alias = opal_argv_join(atmp, ',');
+            if (0 < naliases) {
+                alias = opal_argv_join(atmp, ',');
+                orte_set_attribute(&daemon->node->attributes, ORTE_NODE_ALIAS, ORTE_ATTR_LOCAL, alias, OPAL_STRING);
+                free(alias);
+            }
             opal_argv_free(atmp);
-            orte_set_attribute(&daemon->node->attributes, ORTE_NODE_ALIAS, ORTE_ATTR_LOCAL, alias, OPAL_STRING);
-            free(alias);
         }
 
         /* unpack the topology signature for that node */
@@ -1508,7 +1511,7 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
     }
     opal_argv_append(argc, argv, "-"OPAL_MCA_CMD_LINE_ID);
     opal_argv_append(argc, argv, "ess_base_num_procs");
-    asprintf(&param, "%lu", num_procs);
+    opal_asprintf(&param, "%lu", num_procs);
     opal_argv_append(argc, argv, param);
     free(param);
 
@@ -1545,7 +1548,7 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
 
     /* if requested, pass our port */
     if (orte_fwd_mpirun_port) {
-        asprintf(&param, "%d", orte_process_info.my_port);
+        opal_asprintf(&param, "%d", orte_process_info.my_port);
         opal_argv_append(argc, argv, "-"OPAL_MCA_CMD_LINE_ID);
         opal_argv_append(argc, argv, "oob_tcp_static_ipv4_ports");
         opal_argv_append(argc, argv, param);

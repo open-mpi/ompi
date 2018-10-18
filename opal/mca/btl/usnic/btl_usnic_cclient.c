@@ -2,6 +2,7 @@
  * Copyright (c) 2014-2016 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -28,6 +29,8 @@
 #include "opal/mca/event/event.h"
 #include "opal/util/output.h"
 #include "opal/util/fd.h"
+#include "opal/util/string_copy.h"
+#include "opal/util/printf.h"
 
 #include "btl_usnic.h"
 #include "btl_usnic_module.h"
@@ -61,7 +64,7 @@ int opal_btl_usnic_connectivity_client_init(void)
     }
 
     char *ipc_filename = NULL;
-    asprintf(&ipc_filename, "%s/%s",
+    opal_asprintf(&ipc_filename, "%s/%s",
              opal_process_info.job_session_dir, CONNECTIVITY_SOCK_NAME);
     if (NULL == ipc_filename) {
         OPAL_ERROR_LOG(OPAL_ERR_IN_ERRNO);
@@ -103,7 +106,7 @@ int opal_btl_usnic_connectivity_client_init(void)
     struct sockaddr_un address;
     memset(&address, 0, sizeof(struct sockaddr_un));
     address.sun_family = AF_UNIX;
-    strncpy(address.sun_path, ipc_filename, sizeof(address.sun_path) - 1);
+    opal_string_copy(address.sun_path, ipc_filename, sizeof(address.sun_path));
 
     int count = 0;
     while (1) {
@@ -195,10 +198,10 @@ int opal_btl_usnic_connectivity_listen(opal_btl_usnic_module_t *module)
     }
 
     /* Ensure to NULL-terminate the passed strings */
-    strncpy(cmd.nodename, opal_process_info.nodename,
-            CONNECTIVITY_NODENAME_LEN - 1);
-    strncpy(cmd.usnic_name, module->linux_device_name,
-            CONNECTIVITY_IFNAME_LEN - 1);
+    opal_string_copy(cmd.nodename, opal_process_info.nodename,
+            CONNECTIVITY_NODENAME_LEN);
+    opal_string_copy(cmd.usnic_name, module->linux_device_name,
+            CONNECTIVITY_IFNAME_LEN);
 
     if (OPAL_SUCCESS != opal_fd_write(agent_fd, sizeof(cmd), &cmd)) {
         OPAL_ERROR_LOG(OPAL_ERR_IN_ERRNO);
@@ -255,7 +258,7 @@ int opal_btl_usnic_connectivity_ping(uint32_t src_ipv4_addr, int src_port,
         .max_msg_size = max_msg_size
     };
     /* Ensure to NULL-terminate the passed string */
-    strncpy(cmd.dest_nodename, dest_nodename, CONNECTIVITY_NODENAME_LEN - 1);
+    opal_string_copy(cmd.dest_nodename, dest_nodename, CONNECTIVITY_NODENAME_LEN);
 
     if (OPAL_SUCCESS != opal_fd_write(agent_fd, sizeof(cmd), &cmd)) {
         OPAL_ERROR_LOG(OPAL_ERR_IN_ERRNO);

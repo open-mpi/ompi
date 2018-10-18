@@ -13,7 +13,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2017      FUJITSU LIMITED.  All rights reserved.
+ * Copyright (c) 2017-2018 FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -653,7 +653,7 @@ public class Comm implements Freeable, Cloneable
 
 	/**
 	 * Start a buffered mode, nonblocking send.
-	 * <p>Java binding of the MPI operation <tt>MPI_IBSEND</tt>.
+	 * <p>Java binding of the MPI operation {@code MPI_IBSEND}.
 	 * @param buf   send buffer
 	 * @param count number of items to send
 	 * @param type  datatype of each item in send buffer
@@ -1137,8 +1137,8 @@ public class Comm implements Freeable, Cloneable
 	/**
 	 * Returns the type of topology associated with the communicator.
 	 * <p>Java binding of the MPI operation {@code MPI_TOPO_TEST}.
-	 * <p>The return value will be one of {@code MPI.GRAPH}, {@code MPI.CART}
-	 * or {@code MPI.UNDEFINED}.
+	 * <p>The return value will be one of {@code MPI.GRAPH}, {@code MPI.CART},
+	 * {@code MPI.DIST_GRAPH} or {@code MPI.UNDEFINED}.
 	 * @return topology type of communicator
 	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
 	 */
@@ -1170,7 +1170,7 @@ public class Comm implements Freeable, Cloneable
 
 	/**
 	 * Associates a new error handler with communicator at the calling process.
-	 * <p>Java binding of the MPI operation {@code MPI_ERRHANDLER_SET}.
+	 * <p>Java binding of the MPI operation {@code MPI_COMM_SET_ERRHANDLER}.
 	 * @param errhandler new MPI error handler for communicator
 	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
 	 */
@@ -1185,7 +1185,7 @@ public class Comm implements Freeable, Cloneable
 
 	/**
 	 * Returns the error handler currently associated with the communicator.
-	 * <p>Java binding of the MPI operation {@code MPI_ERRHANDLER_GET}.
+	 * <p>Java binding of the MPI operation {@code MPI_COMM_GET_ERRHANDLER}.
 	 * @return MPI error handler currently associated with communicator
 	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
 	 */
@@ -1228,7 +1228,7 @@ public class Comm implements Freeable, Cloneable
 	private native void barrier(long comm) throws MPIException;
 
 	/**
-	 * Nonblocking barrier sinchronization.
+	 * Nonblocking barrier synchronization.
 	 * <p>Java binding of the MPI operation {@code MPI_IBARRIER}.
 	 * @return communication request
 	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
@@ -2385,9 +2385,9 @@ public class Comm implements Freeable, Cloneable
 					throws MPIException;
 
 	/**
-	 * Adds flexibility to {@code allToAll}: location of data for send is  //here
-	 * specified by {@code sDispls} and location to place data on receive
-	 * side is specified by {@code rDispls}.
+	 * Adds more flexibility to {@code allToAllv}: datatypes for send are
+	 * specified by {@code sendTypes} and datatypes for receive are specified
+	 * by {@code recvTypes} per process.
 	 * <p>Java binding of the MPI operation {@code MPI_ALLTOALLW}.
 	 * @param sendBuf   send buffer
 	 * @param sendCount number of items sent to each buffer
@@ -2421,9 +2421,9 @@ public class Comm implements Freeable, Cloneable
 					throws MPIException;
 
 	/**
-	 * Adds flexibility to {@code iAllToAll}: location of data for send is
-	 * specified by {@code sDispls} and location to place data on receive
-	 * side is specified by {@code rDispls}.
+	 * Adds more flexibility to {@code iAllToAllv}: datatypes for send are
+	 * specified by {@code sendTypes} and datatypes for receive are specified
+	 * by {@code recvTypes} per process.
 	 * <p>Java binding of the MPI operation {@code MPI_IALLTOALLW}.
 	 * @param sendBuf   send buffer
 	 * @param sendCount number of items sent to each buffer

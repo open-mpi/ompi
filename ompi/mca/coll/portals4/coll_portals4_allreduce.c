@@ -343,15 +343,38 @@ allreduce_kary_tree_top(const void *sendbuf, void *recvbuf, int count,
 static int
 allreduce_kary_tree_bottom(ompi_coll_portals4_request_t *request)
 {
+    int ret;
+
     if (request->u.allreduce.is_optim) {
         PtlAtomicSync();
 
         if (request->u.allreduce.child_nb) {
-            PtlCTFree(request->u.allreduce.ack_ct_h);
+            ret = PtlCTFree(request->u.allreduce.ack_ct_h);
+            if (PTL_OK != ret) {
+                opal_output_verbose(1, ompi_coll_base_framework.framework_output,
+                        "%s:%d: PtlCTFree failed: %d\n",
+                        __FILE__, __LINE__, ret);
+                return OMPI_ERROR;
+            }
         }
 
-        PtlMEUnlink(request->u.allreduce.data_me_h);
-        PtlCTFree(request->u.allreduce.trig_ct_h);
+        do {
+            ret = PtlMEUnlink(request->u.allreduce.data_me_h);
+        } while (PTL_IN_USE == ret);
+        if (PTL_OK != ret) {
+            opal_output_verbose(1, ompi_coll_base_framework.framework_output,
+                    "%s:%d: PtlMEUnlink failed: %d\n",
+                    __FILE__, __LINE__, ret);
+            return OMPI_ERROR;
+        }
+
+        ret = PtlCTFree(request->u.allreduce.trig_ct_h);
+        if (PTL_OK != ret) {
+            opal_output_verbose(1, ompi_coll_base_framework.framework_output,
+                    "%s:%d: PtlCTFree failed: %d\n",
+                    __FILE__, __LINE__, ret);
+            return OMPI_ERROR;
+        }
     }
 
     return (OMPI_SUCCESS);
@@ -360,7 +383,7 @@ allreduce_kary_tree_bottom(ompi_coll_portals4_request_t *request)
 int ompi_coll_portals4_allreduce_intra(const void* sendbuf, void* recvbuf, int count,
         MPI_Datatype dtype, MPI_Op op,
         struct ompi_communicator_t *comm,
-        struct mca_coll_base_module_2_2_0_t *module)
+        struct mca_coll_base_module_2_3_0_t *module)
 {
     mca_coll_portals4_module_t *portals4_module = (mca_coll_portals4_module_t*) module;
     ompi_coll_portals4_request_t *request;
@@ -390,7 +413,7 @@ int ompi_coll_portals4_iallreduce_intra(const void* sendbuf, void* recvbuf, int 
         MPI_Datatype dtype, MPI_Op op,
         struct ompi_communicator_t *comm,
         ompi_request_t ** ompi_request,
-        struct mca_coll_base_module_2_2_0_t *module)
+        struct mca_coll_base_module_2_3_0_t *module)
 {
     mca_coll_portals4_module_t *portals4_module = (mca_coll_portals4_module_t*) module;
     ompi_coll_portals4_request_t *request;

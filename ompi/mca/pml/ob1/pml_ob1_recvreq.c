@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2017 The University of Tennessee and The University
+ * Copyright (c) 2004-2018 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
@@ -18,6 +18,8 @@
  * Copyright (c) 2012      FUJITSU LIMITED.  All rights reserved.
  * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2018      Sandia National Laboratories
+ *                         All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -29,6 +31,7 @@
 
 #include "opal/mca/mpool/mpool.h"
 #include "opal/util/arch.h"
+#include "ompi/runtime/ompi_spc.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/bml/bml.h"
 #include "pml_ob1_comm.h"
@@ -107,12 +110,16 @@ static int mca_pml_ob1_recv_request_cancel(struct ompi_request_t* ompi_request, 
         return OMPI_SUCCESS;
     }
 
+#if MCA_PML_OB1_CUSTOM_MATCH
+    custom_match_prq_cancel(ob1_comm->prq, request);
+#else
     if( request->req_recv.req_base.req_peer == OMPI_ANY_SOURCE ) {
         opal_list_remove_item( &ob1_comm->wild_receives, (opal_list_item_t*)request );
     } else {
         mca_pml_ob1_comm_proc_t* proc = mca_pml_ob1_peer_lookup (comm, request->req_recv.req_base.req_peer);
         opal_list_remove_item(&proc->specific_receives, (opal_list_item_t*)request);
     }
+#endif
     PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_REMOVE_FROM_POSTED_Q,
                              &(request->req_recv.req_base), PERUSE_RECV );
     /**
@@ -199,6 +206,8 @@ static void mca_pml_ob1_put_completion (mca_pml_ob1_rdma_frag_t *frag, int64_t r
 
         /* check completion status */
         OPAL_THREAD_ADD_FETCH_SIZE_T(&recvreq->req_bytes_received, rdma_size);
+        SPC_USER_OR_MPI(recvreq->req_recv.req_base.req_ompi.req_status.MPI_TAG, (ompi_spc_value_t)rdma_size,
+                        OMPI_SPC_BYTES_RECEIVED_USER, OMPI_SPC_BYTES_RECEIVED_MPI);
         if (recv_request_pml_complete_check(recvreq) == false &&
             recvreq->req_rdma_offset < recvreq->req_send_offset) {
             /* schedule additional rdma operations */
@@ -242,6 +251,7 @@ int mca_pml_ob1_recv_request_ack_send_btl(
     des->des_cbfunc = mca_pml_ob1_recv_ctl_completion;
 
     rc = mca_bml_base_send(bml_btl, des, MCA_PML_OB1_HDR_TYPE_ACK);
+    SPC_RECORD(OMPI_SPC_BYTES_RECEIVED_MPI, (ompi_spc_value_t)size);
     if( OPAL_LIKELY( rc >= 0 ) ) {
         return OMPI_SUCCESS;
     }
@@ -374,6 +384,8 @@ static void mca_pml_ob1_rget_completion (mca_btl_base_module_t* btl, struct mca_
     } else {
         /* is receive request complete */
         OPAL_THREAD_ADD_FETCH_SIZE_T(&recvreq->req_bytes_received, frag->rdma_length);
+        SPC_USER_OR_MPI(recvreq->req_recv.req_base.req_tag, (ompi_spc_value_t)frag->rdma_length,
+                        OMPI_SPC_BYTES_RECEIVED_USER, OMPI_SPC_BYTES_RECEIVED_MPI);
         /* TODO: re-add order */
         mca_pml_ob1_send_fin (recvreq->req_recv.req_base.req_proc,
                               bml_btl, frag->rdma_hdr.hdr_rget.hdr_frag,
@@ -429,6 +441,8 @@ static int mca_pml_ob1_recv_request_put_frag (mca_pml_ob1_rdma_frag_t *frag)
 
     /* send rdma request to peer */
     rc = mca_bml_base_send (bml_btl, ctl, MCA_PML_OB1_HDR_TYPE_PUT);
+    /* Increment counter for bytes_put even though they probably haven't all been received yet */
+    SPC_RECORD(OMPI_SPC_BYTES_PUT, (ompi_spc_value_t)frag->rdma_length);
     if (OPAL_UNLIKELY(rc < 0)) {
         mca_bml_base_free (bml_btl, ctl);
         return rc;
@@ -470,6 +484,8 @@ int mca_pml_ob1_recv_request_get_frag (mca_pml_ob1_rdma_frag_t *frag)
     rc = mca_bml_base_get (bml_btl, frag->local_address, frag->remote_address, local_handle,
                            (mca_btl_base_registration_handle_t *) frag->remote_handle, frag->rdma_length,
                            0, MCA_BTL_NO_ORDER, mca_pml_ob1_rget_completion, frag);
+    /* Increment counter for bytes_get even though they probably haven't all been received yet */
+    SPC_RECORD(OMPI_SPC_BYTES_GET, (ompi_spc_value_t)frag->rdma_length);
     if( OPAL_UNLIKELY(OMPI_SUCCESS > rc) ) {
         return mca_pml_ob1_recv_request_get_frag_failed (frag, OMPI_ERR_OUT_OF_RESOURCE);
     }
@@ -525,6 +541,8 @@ void mca_pml_ob1_recv_request_progress_frag( mca_pml_ob1_recv_request_t* recvreq
                );
 
     OPAL_THREAD_ADD_FETCH_SIZE_T(&recvreq->req_bytes_received, bytes_received);
+    SPC_USER_OR_MPI(recvreq->req_recv.req_base.req_ompi.req_status.MPI_TAG, (ompi_spc_value_t)bytes_received,
+                    OMPI_SPC_BYTES_RECEIVED_USER, OMPI_SPC_BYTES_RECEIVED_MPI);
     /* check completion status */
     if(recv_request_pml_complete_check(recvreq) == false &&
             recvreq->req_rdma_offset < recvreq->req_send_offset) {
@@ -602,7 +620,8 @@ void mca_pml_ob1_recv_request_frag_copy_finished( mca_btl_base_module_t* btl,
     des->des_cbfunc(NULL, NULL, des, 0);
 
     OPAL_THREAD_ADD_FETCH_SIZE_T(&recvreq->req_bytes_received, bytes_received);
-
+    SPC_USER_OR_MPI(recvreq->req_recv.req_base.req_ompi.req_status.MPI_TAG, (ompi_spc_value_t)bytes_received,
+                    OMPI_SPC_BYTES_RECEIVED_USER, OMPI_SPC_BYTES_RECEIVED_MPI);
     /* check completion status */
     if(recv_request_pml_complete_check(recvreq) == false &&
             recvreq->req_rdma_offset < recvreq->req_send_offset) {
@@ -816,6 +835,8 @@ void mca_pml_ob1_recv_request_progress_rndv( mca_pml_ob1_recv_request_t* recvreq
                                    recvreq->req_recv.req_base.req_datatype);
                    );
         OPAL_THREAD_ADD_FETCH_SIZE_T(&recvreq->req_bytes_received, bytes_received);
+        SPC_USER_OR_MPI(recvreq->req_recv.req_base.req_ompi.req_status.MPI_TAG, (ompi_spc_value_t)bytes_received,
+                        OMPI_SPC_BYTES_RECEIVED_USER, OMPI_SPC_BYTES_RECEIVED_MPI);
     }
     /* check completion status */
     if(recv_request_pml_complete_check(recvreq) == false &&
@@ -887,6 +908,8 @@ void mca_pml_ob1_recv_request_progress_match( mca_pml_ob1_recv_request_t* recvre
      * for this request.
      */
     recvreq->req_bytes_received += bytes_received;
+    SPC_USER_OR_MPI(recvreq->req_recv.req_base.req_ompi.req_status.MPI_TAG, (ompi_spc_value_t)bytes_received,
+                    OMPI_SPC_BYTES_RECEIVED_USER, OMPI_SPC_BYTES_RECEIVED_MPI);
     recv_request_pml_complete(recvreq);
 }
 
@@ -1067,20 +1090,32 @@ static inline void append_recv_req_to_queue(opal_list_t *queue,
  *  it places the request in the appropriate matched receive list. This
  *  function has to be called with the communicator matching lock held.
 */
+
+#if MCA_PML_OB1_CUSTOM_MATCH
+static mca_pml_ob1_recv_frag_t*
+recv_req_match_specific_proc( const mca_pml_ob1_recv_request_t *req,
+                              mca_pml_ob1_comm_proc_t *proc,
+                              custom_match_umq_node** hold_prev,
+                              custom_match_umq_node** hold_elem,
+                              int* hold_index)
+#else
 static mca_pml_ob1_recv_frag_t*
 recv_req_match_specific_proc( const mca_pml_ob1_recv_request_t *req,
                               mca_pml_ob1_comm_proc_t *proc )
+#endif
 {
     if (NULL == proc) {
         return NULL;
     }
 
+#if !MCA_PML_OB1_CUSTOM_MATCH
+    int tag = req->req_recv.req_base.req_tag;
     opal_list_t* unexpected_frags = &proc->unexpected_frags;
     mca_pml_ob1_recv_frag_t* frag;
-    int tag = req->req_recv.req_base.req_tag;
 
-    if(opal_list_get_size(unexpected_frags) == 0)
+    if(opal_list_get_size(unexpected_frags) == 0) {
         return NULL;
+    }
 
     if( OMPI_ANY_TAG == tag ) {
         OPAL_LIST_FOREACH(frag, unexpected_frags, mca_pml_ob1_recv_frag_t) {
@@ -1094,19 +1129,50 @@ recv_req_match_specific_proc( const mca_pml_ob1_recv_request_t *req,
         }
     }
     return NULL;
+#else
+    return custom_match_umq_find_verify_hold(req->req_recv.req_base.req_comm->c_pml_comm->umq,
+                                             req->req_recv.req_base.req_tag,
+                                             req->req_recv.req_base.req_peer,
+                                             hold_prev, hold_elem, hold_index);
+#endif
 }
 
 /*
  * this routine is used to try and match a wild posted receive - where
  * wild is determined by the value assigned to the source process
 */
+#if MCA_PML_OB1_CUSTOM_MATCH
+static mca_pml_ob1_recv_frag_t*
+recv_req_match_wild( mca_pml_ob1_recv_request_t* req,
+                     mca_pml_ob1_comm_proc_t **p,
+                     custom_match_umq_node** hold_prev,
+                     custom_match_umq_node** hold_elem,
+                     int* hold_index)
+#else
 static mca_pml_ob1_recv_frag_t*
 recv_req_match_wild( mca_pml_ob1_recv_request_t* req,
                      mca_pml_ob1_comm_proc_t **p)
+#endif
 {
     mca_pml_ob1_comm_t* comm = req->req_recv.req_base.req_comm->c_pml_comm;
     mca_pml_ob1_comm_proc_t **procp = comm->procs;
-    size_t i;
+
+#if MCA_PML_OB1_CUSTOM_MATCH
+    mca_pml_ob1_recv_frag_t* frag;
+    frag = custom_match_umq_find_verify_hold (comm->umq, req->req_recv.req_base.req_tag,
+                                              req->req_recv.req_base.req_peer,
+                                              hold_prev, hold_elem, hold_index);
+
+    if (frag) {
+        *p = procp[frag->hdr.hdr_match.hdr_src];
+        req->req_recv.req_base.req_proc = procp[frag->hdr.hdr_match.hdr_src]->ompi_proc;
+        prepare_recv_req_converter(req);
+    } else {
+        *p = NULL;
+    }
+
+    return frag;
+#else
 
     /*
      * Loop over all the outstanding messages to find one that matches.
@@ -1116,7 +1182,7 @@ recv_req_match_wild( mca_pml_ob1_recv_request_t* req,
      *
      * In order to avoid starvation do this in a round-robin fashion.
      */
-    for (i = comm->last_probed + 1; i < comm->num_procs; i++) {
+    for (size_t i = comm->last_probed + 1; i < comm->num_procs; i++) {
         mca_pml_ob1_recv_frag_t* frag;
 
         /* loop over messages from the current proc */
@@ -1128,7 +1194,7 @@ recv_req_match_wild( mca_pml_ob1_recv_request_t* req,
             return frag; /* match found */
         }
     }
-    for (i = 0; i <= comm->last_probed; i++) {
+    for (size_t i = 0; i <= comm->last_probed; i++) {
         mca_pml_ob1_recv_frag_t* frag;
 
         /* loop over messages from the current proc */
@@ -1143,6 +1209,7 @@ recv_req_match_wild( mca_pml_ob1_recv_request_t* req,
 
     *p = NULL;
     return NULL;
+#endif
 }
 
 
@@ -1152,8 +1219,14 @@ void mca_pml_ob1_recv_req_start(mca_pml_ob1_recv_request_t *req)
     mca_pml_ob1_comm_t *ob1_comm = comm->c_pml_comm;
     mca_pml_ob1_comm_proc_t* proc;
     mca_pml_ob1_recv_frag_t* frag;
-    opal_list_t *queue;
     mca_pml_ob1_hdr_t* hdr;
+#if MCA_PML_OB1_CUSTOM_MATCH
+    custom_match_umq_node* hold_prev;
+    custom_match_umq_node* hold_elem;
+    int hold_index;
+#else
+    opal_list_t *queue;
+#endif
 
     /* init/re-init the request */
     req->req_lock = 0;
@@ -1180,8 +1253,12 @@ void mca_pml_ob1_recv_req_start(mca_pml_ob1_recv_request_t *req)
 
     /* attempt to match posted recv */
     if(req->req_recv.req_base.req_peer == OMPI_ANY_SOURCE) {
+#if MCA_PML_OB1_CUSTOM_MATCH
+        frag = recv_req_match_wild(req, &proc, &hold_prev, &hold_elem, &hold_index);
+#else
         frag = recv_req_match_wild(req, &proc);
         queue = &ob1_comm->wild_receives;
+#endif
 #if !OPAL_ENABLE_HETEROGENEOUS_SUPPORT
         /* As we are in a homogeneous environment we know that all remote
          * architectures are exactly the same as the local one. Therefore,
@@ -1196,8 +1273,12 @@ void mca_pml_ob1_recv_req_start(mca_pml_ob1_recv_request_t *req)
     } else {
         proc = mca_pml_ob1_peer_lookup (comm, req->req_recv.req_base.req_peer);
         req->req_recv.req_base.req_proc = proc->ompi_proc;
+#if MCA_PML_OB1_CUSTOM_MATCH
+        frag = recv_req_match_specific_proc(req, proc, &hold_prev, &hold_elem, &hold_index);
+#else
         frag = recv_req_match_specific_proc(req, proc);
         queue = &proc->specific_receives;
+#endif
         /* wildcard recv will be prepared on match */
         prepare_recv_req_converter(req);
     }
@@ -1209,7 +1290,13 @@ void mca_pml_ob1_recv_req_start(mca_pml_ob1_recv_request_t *req)
            it when the message comes in. */
         if(OPAL_LIKELY(req->req_recv.req_base.req_type != MCA_PML_REQUEST_IPROBE &&
                        req->req_recv.req_base.req_type != MCA_PML_REQUEST_IMPROBE))
+#if MCA_PML_OB1_CUSTOM_MATCH
+            custom_match_prq_append(ob1_comm->prq, req,
+                                    req->req_recv.req_base.req_tag,
+                                    req->req_recv.req_base.req_peer);
+#else
             append_recv_req_to_queue(queue, req);
+#endif
         req->req_match_received = false;
         OB1_MATCHING_UNLOCK(&ob1_comm->matching_lock);
     } else {
@@ -1227,8 +1314,13 @@ void mca_pml_ob1_recv_req_start(mca_pml_ob1_recv_request_t *req)
             PERUSE_TRACE_COMM_EVENT(PERUSE_COMM_SEARCH_UNEX_Q_END,
                                     &(req->req_recv.req_base), PERUSE_RECV);
 
+#if MCA_PML_OB1_CUSTOM_MATCH
+            custom_match_umq_remove_hold(req->req_recv.req_base.req_comm->c_pml_comm->umq, hold_prev, hold_elem, hold_index);
+#else
             opal_list_remove_item(&proc->unexpected_frags,
                                   (opal_list_item_t*)frag);
+#endif
+            SPC_RECORD(OMPI_SPC_UNEXPECTED_IN_QUEUE, -1);
             OB1_MATCHING_UNLOCK(&ob1_comm->matching_lock);
 
             switch(hdr->hdr_common.hdr_type) {
@@ -1257,8 +1349,14 @@ void mca_pml_ob1_recv_req_start(mca_pml_ob1_recv_request_t *req)
                during the end of mprobe.  The request will then be
                "recreated" as a receive request, and the frag will be
                restarted with this request during mrecv */
+
+#if MCA_PML_OB1_CUSTOM_MATCH
+            custom_match_umq_remove_hold(req->req_recv.req_base.req_comm->c_pml_comm->umq, hold_prev, hold_elem, hold_index);
+#else
             opal_list_remove_item(&proc->unexpected_frags,
                                   (opal_list_item_t*)frag);
+#endif
+            SPC_RECORD(OMPI_SPC_UNEXPECTED_IN_QUEUE, -1);
             OB1_MATCHING_UNLOCK(&ob1_comm->matching_lock);
 
             req->req_recv.req_base.req_addr = frag;

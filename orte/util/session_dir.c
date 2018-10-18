@@ -12,7 +12,7 @@
  * Copyright (c) 2014      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2015-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2018 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -55,12 +55,14 @@
 #include "opal/util/os_dirpath.h"
 #include "opal/util/basename.h"
 #include "opal/util/opal_environ.h"
+#include "opal/util/printf.h"
 
 #include "orte/util/proc_info.h"
 #include "orte/util/name_fns.h"
 #include "orte/util/show_help.h"
 
 #include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/ras/base/base.h"
 #include "orte/runtime/runtime.h"
 #include "orte/runtime/orte_globals.h"
 
@@ -149,7 +151,7 @@ int orte_setup_top_session_dir(void)
             goto exit;
         }
 
-        if (0 > asprintf(&orte_process_info.top_session_dir,
+        if (0 > opal_asprintf(&orte_process_info.top_session_dir,
                          "%s/ompi.%s.%lu", orte_process_info.tmpdir_base,
                          orte_process_info.nodename, (unsigned long)uid)) {
             orte_process_info.top_session_dir = NULL;
@@ -175,13 +177,13 @@ static int _setup_jobfam_session_dir(orte_process_name_t *proc)
         }
 
         if (ORTE_PROC_IS_MASTER) {
-            if (0 > asprintf(&orte_process_info.jobfam_session_dir,
+            if (0 > opal_asprintf(&orte_process_info.jobfam_session_dir,
                              "%s/dvm", orte_process_info.top_session_dir)) {
                 rc = ORTE_ERR_OUT_OF_RESOURCE;
                 goto exit;
             }
         } else if (ORTE_PROC_IS_HNP) {
-            if (0 > asprintf(&orte_process_info.jobfam_session_dir,
+            if (0 > opal_asprintf(&orte_process_info.jobfam_session_dir,
                              "%s/pid.%lu", orte_process_info.top_session_dir,
                              (unsigned long)orte_process_info.pid)) {
                 rc = ORTE_ERR_OUT_OF_RESOURCE;
@@ -190,13 +192,13 @@ static int _setup_jobfam_session_dir(orte_process_name_t *proc)
         } else {
             /* we were not given one, so define it */
             if (NULL == proc || (ORTE_JOBID_INVALID == proc->jobid)) {
-                if (0 > asprintf(&orte_process_info.jobfam_session_dir,
+                if (0 > opal_asprintf(&orte_process_info.jobfam_session_dir,
                                  "%s/jobfam", orte_process_info.top_session_dir) ) {
                     rc = ORTE_ERR_OUT_OF_RESOURCE;
                     goto exit;
                 }
             } else {
-                if (0 > asprintf(&orte_process_info.jobfam_session_dir,
+                if (0 > opal_asprintf(&orte_process_info.jobfam_session_dir,
                                  "%s/jf.%d", orte_process_info.top_session_dir,
                                  ORTE_JOB_FAMILY(proc->jobid))) {
                     orte_process_info.jobfam_session_dir = NULL;
@@ -224,7 +226,7 @@ _setup_job_session_dir(orte_process_name_t *proc)
             return rc;
         }
         if (ORTE_JOBID_INVALID != proc->jobid) {
-            if (0 > asprintf(&orte_process_info.job_session_dir,
+            if (0 > opal_asprintf(&orte_process_info.job_session_dir,
                              "%s/%d", orte_process_info.jobfam_session_dir,
                              ORTE_LOCAL_JOBID(proc->jobid))) {
                 orte_process_info.job_session_dir = NULL;
@@ -254,7 +256,7 @@ _setup_proc_session_dir(orte_process_name_t *proc)
             return rc;
         }
         if (ORTE_VPID_INVALID != proc->vpid) {
-            if (0 > asprintf(&orte_process_info.proc_session_dir,
+            if (0 > opal_asprintf(&orte_process_info.proc_session_dir,
                              "%s/%d", orte_process_info.job_session_dir,
                              proc->vpid)) {
                 orte_process_info.proc_session_dir = NULL;
@@ -370,6 +372,16 @@ cleanup:
 int
 orte_session_dir_cleanup(orte_jobid_t jobid)
 {
+    /* special case - if a daemon is colocated with mpirun,
+     * then we let mpirun do the rest to avoid a race
+     * condition. this scenario always results in the rank=1
+     * daemon colocated with mpirun */
+    if (orte_ras_base.launch_orted_on_hn &&
+        ORTE_PROC_IS_DAEMON &&
+        1 == ORTE_PROC_MY_NAME->vpid) {
+        return ORTE_SUCCESS;
+    }
+
     if (!orte_create_session_dirs || orte_process_info.rm_session_dirs ) {
         /* we haven't created them or RM will clean them up for us*/
         return ORTE_SUCCESS;
@@ -385,6 +397,7 @@ orte_session_dir_cleanup(orte_jobid_t jobid)
          */
         return ORTE_ERR_NOT_INITIALIZED;
     }
+
 
     /* recursively blow the whole session away for our job family,
      * saving only output files
@@ -461,20 +474,6 @@ orte_session_dir_finalize(orte_process_name_t *proc)
 
     opal_os_dirpath_destroy(orte_process_info.proc_session_dir,
                             false, orte_dir_check_file);
-    opal_os_dirpath_destroy(orte_process_info.job_session_dir,
-                            false, orte_dir_check_file);
-    /* only remove the jobfam session dir if we are the
-     * local daemon and we are finalizing our own session dir */
-    if ((ORTE_PROC_IS_HNP || ORTE_PROC_IS_DAEMON) &&
-        (ORTE_PROC_MY_NAME == proc)) {
-        opal_os_dirpath_destroy(orte_process_info.jobfam_session_dir,
-                                false, orte_dir_check_file);
-    }
-
-    if( NULL != orte_process_info.top_session_dir ){
-        opal_os_dirpath_destroy(orte_process_info.top_session_dir,
-                                false, orte_dir_check_file);
-    }
 
     if (opal_os_dirpath_is_empty(orte_process_info.proc_session_dir)) {
         if (orte_debug_flag) {
@@ -490,6 +489,32 @@ orte_session_dir_finalize(orte_process_name_t *proc)
                 opal_output(0, "sess_dir_finalize: proc session dir not empty - leaving");
             }
         }
+    }
+
+    /* special case - if a daemon is colocated with mpirun,
+     * then we let mpirun do the rest to avoid a race
+     * condition. this scenario always results in the rank=1
+     * daemon colocated with mpirun */
+    if (orte_ras_base.launch_orted_on_hn &&
+        ORTE_PROC_IS_DAEMON &&
+        1 == ORTE_PROC_MY_NAME->vpid) {
+        return ORTE_SUCCESS;
+    }
+
+    opal_os_dirpath_destroy(orte_process_info.job_session_dir,
+                            false, orte_dir_check_file);
+
+    /* only remove the jobfam session dir if we are the
+     * local daemon and we are finalizing our own session dir */
+    if ((ORTE_PROC_IS_HNP || ORTE_PROC_IS_DAEMON) &&
+        (ORTE_PROC_MY_NAME == proc)) {
+        opal_os_dirpath_destroy(orte_process_info.jobfam_session_dir,
+                                false, orte_dir_check_file);
+    }
+
+    if( NULL != orte_process_info.top_session_dir ){
+        opal_os_dirpath_destroy(orte_process_info.top_session_dir,
+                                false, orte_dir_check_file);
     }
 
     if (opal_os_dirpath_is_empty(orte_process_info.job_session_dir)) {

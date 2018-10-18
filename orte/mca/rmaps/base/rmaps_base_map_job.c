@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011-2018 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
@@ -29,6 +29,7 @@
 
 #include "orte/mca/mca.h"
 #include "opal/util/output.h"
+#include "opal/util/string_copy.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/hwloc/base/base.h"
 #include "opal/dss/dss.h"
@@ -49,11 +50,12 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
     orte_job_t *jdata;
     orte_node_t *node;
     int rc, i, ppx = 0;
-    bool did_map, given, pernode = false;
+    bool did_map, pernode = false, persocket = false;
     orte_rmaps_base_selected_module_t *mod;
     orte_job_t *parent;
     orte_vpid_t nprocs;
     orte_app_context_t *app;
+    bool inherit = false;
 
     ORTE_ACQUIRE_OBJECT(caddy);
     jdata = caddy->jdata;
@@ -64,20 +66,35 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
                         "mca:rmaps: mapping job %s",
                         ORTE_JOBID_PRINT(jdata->jobid));
 
-    if (NULL == jdata->map->ppr && NULL != orte_rmaps_base.ppr) {
-        jdata->map->ppr = strdup(orte_rmaps_base.ppr);
+    /* if this is a dynamic job launch and they didn't explicitly
+     * request inheritance, then don't inherit the launch directives */
+    if (orte_get_attribute(&jdata->attributes, ORTE_JOB_LAUNCH_PROXY, NULL, OPAL_NAME)) {
+        inherit = orte_rmaps_base.inherit;
+        opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                            "mca:rmaps: dynamic job %s %s inherit launch directives",
+                            ORTE_JOBID_PRINT(jdata->jobid),
+                            inherit ? "will" : "will not");
+    } else {
+        /* initial launch always takes on MCA params */
+        inherit = true;
+    }
+
+    if (inherit) {
+        if (NULL == jdata->map->ppr && NULL != orte_rmaps_base.ppr) {
+            jdata->map->ppr = strdup(orte_rmaps_base.ppr);
+        }
+        if (0 == jdata->map->cpus_per_rank) {
+            jdata->map->cpus_per_rank = orte_rmaps_base.cpus_per_rank;
+        }
     }
     if (NULL != jdata->map->ppr) {
         /* get the procs/object */
         ppx = strtoul(jdata->map->ppr, NULL, 10);
         if (NULL != strstr(jdata->map->ppr, "node")) {
             pernode = true;
-        } else {
-            pernode = false;
+        } else if (NULL != strstr(jdata->map->ppr, "socket")) {
+            persocket = true;
         }
-    }
-    if (0 == jdata->map->cpus_per_rank) {
-        jdata->map->cpus_per_rank = orte_rmaps_base.cpus_per_rank;
     }
 
     /* compute the number of procs and check validity */
@@ -89,50 +106,20 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
                 orte_std_cntr_t slots;
                 OBJ_CONSTRUCT(&nodes, opal_list_t);
                 orte_rmaps_base_get_target_nodes(&nodes, &slots, app, ORTE_MAPPING_BYNODE, true, true);
-                if (NULL != jdata->map->ppr) {
-                    if (pernode) {
-                        nprocs += ppx * opal_list_get_size(&nodes);
-                    } else {
-                        /* must be procs/socket, so add in #sockets for each node */
-                        slots = 0;
-                        OPAL_LIST_FOREACH(node, &nodes, orte_node_t) {
-                            slots += ppx * opal_hwloc_base_get_nbobjs_by_type(node->topology->topo,
-                                                                              HWLOC_OBJ_SOCKET, 0,
-                                                                              OPAL_HWLOC_AVAILABLE);
-                        }
-                        nprocs += slots;
+                if (pernode) {
+                    slots = ppx * opal_list_get_size(&nodes);
+                } else if (persocket) {
+                    /* add in #sockets for each node */
+                    OPAL_LIST_FOREACH(node, &nodes, orte_node_t) {
+                        slots += ppx * opal_hwloc_base_get_nbobjs_by_type(node->topology->topo,
+                                                                          HWLOC_OBJ_SOCKET, 0,
+                                                                          OPAL_HWLOC_AVAILABLE);
                     }
-                } else {
-                    /* if we are in a managed allocation, then all is good - otherwise,
-                     * we have to do a little more checking */
-                    if (!orte_managed_allocation) {
-                        /* if all the nodes have their slots given, then we are okay */
-                        given = true;
-                        OPAL_LIST_FOREACH(node, &nodes, orte_node_t) {
-                            if (!ORTE_FLAG_TEST(node, ORTE_NODE_FLAG_SLOTS_GIVEN)) {
-                                given = false;
-                                break;
-                            }
-                        }
-                        /* if -host or -hostfile was given, and the slots were not,
-                         * then this is no longer allowed */
-                        if (!given &&
-                            (orte_get_attribute(&app->attributes, ORTE_APP_DASH_HOST, NULL, OPAL_STRING) ||
-                             orte_get_attribute(&app->attributes, ORTE_APP_HOSTFILE, NULL, OPAL_STRING))) {
-                            /* inform the user of the error */
-                            orte_show_help("help-orte-rmaps-base.txt", "num-procs-not-specified", true);
-                            OPAL_LIST_DESTRUCT(&nodes);
-                            OBJ_RELEASE(caddy);
-                            ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_MAP_FAILED);
-                            return;
-                        }
-                    }
-                    nprocs += slots;
                 }
+                app->num_procs = slots;
                 OPAL_LIST_DESTRUCT(&nodes);
-            } else {
-                nprocs += app->num_procs;
             }
+            nprocs += app->num_procs;
         }
     }
 
@@ -141,12 +128,13 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
                         "mca:rmaps: setting mapping policies for job %s nprocs %d",
                         ORTE_JOBID_PRINT(jdata->jobid), (int)nprocs);
 
-    if (!jdata->map->display_map) {
+    if (inherit && !jdata->map->display_map) {
         jdata->map->display_map = orte_rmaps_base.display_map;
     }
+
     /* set the default mapping policy IFF it wasn't provided */
     if (!ORTE_MAPPING_POLICY_IS_SET(jdata->map->mapping)) {
-        if (ORTE_MAPPING_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping)) {
+        if (inherit && (ORTE_MAPPING_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping))) {
             opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                                 "mca:rmaps mapping given by MCA param");
             jdata->map->mapping = orte_rmaps_base.mapping;
@@ -189,6 +177,7 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
             }
         }
     }
+
     /* check for oversubscribe directives */
     if (!(ORTE_MAPPING_SUBSCRIBE_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(jdata->map->mapping))) {
         if (!(ORTE_MAPPING_SUBSCRIBE_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping))) {
@@ -202,13 +191,16 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
             }
         }
     }
+
     /* check for no-use-local directive */
     if (!(ORTE_MAPPING_LOCAL_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(jdata->map->mapping))) {
-        if (ORTE_MAPPING_NO_USE_LOCAL & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping)) {
+        if (inherit && (ORTE_MAPPING_NO_USE_LOCAL & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping))) {
             ORTE_SET_MAPPING_DIRECTIVE(jdata->map->mapping, ORTE_MAPPING_NO_USE_LOCAL);
         }
     }
-    /* ditto for rank policy */
+
+    /* we don't have logic to determine default rank policy, so
+     * just inherit it if they didn't give us one */
     if (!ORTE_RANKING_POLICY_IS_SET(jdata->map->ranking)) {
         jdata->map->ranking = orte_rmaps_base.ranking;
     }
@@ -217,7 +209,7 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
      * already (e.g., during the call to comm_spawn), then we don't
      * override it */
     if (!OPAL_BINDING_POLICY_IS_SET(jdata->map->binding)) {
-        if (OPAL_BINDING_POLICY_IS_SET(opal_hwloc_binding_policy)) {
+        if (inherit && OPAL_BINDING_POLICY_IS_SET(opal_hwloc_binding_policy)) {
             /* if the user specified a default binding policy via
              * MCA param, then we use it - this can include a directive
              * to overload */
@@ -536,17 +528,17 @@ void orte_rmaps_base_display_map(orte_job_t *jdata)
                 if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(node->procs, j))) {
                     continue;
                 }
-                memset(tmp1, 0, 1024);
+                memset(tmp1, 0, sizeof(tmp1));
                 if (orte_get_attribute(&proc->attributes, ORTE_PROC_HWLOC_BOUND, (void**)&bd, OPAL_PTR)) {
                     if (NULL == bd) {
-                        (void)strncpy(tmp1, "UNBOUND", strlen("UNBOUND"));
+                        (void)opal_string_copy(tmp1, "UNBOUND", sizeof(tmp1));
                     } else {
                         if (OPAL_ERR_NOT_BOUND == opal_hwloc_base_cset2mapstr(tmp1, sizeof(tmp1), node->topology->topo, bd->cpuset)) {
-                            (void)strncpy(tmp1, "UNBOUND", strlen("UNBOUND"));
+                            (void)opal_string_copy(tmp1, "UNBOUND", sizeof(tmp1));
                         }
                     }
                 } else {
-                    (void)strncpy(tmp1, "UNBOUND", strlen("UNBOUND"));
+                    (void)opal_string_copy(tmp1, "UNBOUND", sizeof(tmp1));
                 }
                 opal_output(orte_clean_output, "\t\t<process rank=%s app_idx=%ld local_rank=%lu node_rank=%lu binding=%s>",
                             ORTE_VPID_PRINT(proc->name.vpid),  (long)proc->app_idx,

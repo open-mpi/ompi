@@ -13,7 +13,7 @@
  * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007-2016 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2015-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2018 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -43,6 +43,7 @@
 #include "opal/util/argv.h"
 #include "opal/util/show_help.h"
 #include "opal/util/opal_environ.h"
+#include "opal/util/printf.h"
 #include "opal/dss/dss.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/pmix/pmix.h"
@@ -638,14 +639,14 @@ static void recv_stats(int status, orte_process_name_t* sender,
                 nodefield = tmp;
             }
 
-            asprintf(&ctmp, "%d", stats->rank);
+            opal_asprintf(&ctmp, "%d", stats->rank);
             tmp = strlen(ctmp);
             free(ctmp);
             if (rankfield < tmp) {
                 rankfield = tmp;
             }
 
-            asprintf(&ctmp, "%lu", (unsigned long)stats->pid);
+            opal_asprintf(&ctmp, "%lu", (unsigned long)stats->pid);
             tmp = strlen(ctmp);
             free(ctmp);
             if (pidfield < tmp) {
@@ -659,7 +660,7 @@ static void recv_stats(int status, orte_process_name_t* sender,
 
             if (0 <= stats->priority) {
                 pri_found = true;
-                asprintf(&ctmp, "%d", stats->priority);
+                opal_asprintf(&ctmp, "%d", stats->priority);
                 tmp = strlen(ctmp);
                 free(ctmp);
                 if (prifield < tmp) {
@@ -669,7 +670,7 @@ static void recv_stats(int status, orte_process_name_t* sender,
 
             if (0 <= stats->num_threads) {
                 thr_found = true;
-                asprintf(&ctmp, "%d", stats->num_threads);
+                opal_asprintf(&ctmp, "%d", stats->num_threads);
                 tmp = strlen(ctmp);
                 free(ctmp);
                 if (thrfield < tmp) {
@@ -679,7 +680,7 @@ static void recv_stats(int status, orte_process_name_t* sender,
 
             if (0 < stats->vsize) {
                 vsize_found = true;
-                asprintf(&ctmp, "%8.2f", stats->vsize);
+                opal_asprintf(&ctmp, "%8.2f", stats->vsize);
                 tmp = strlen(ctmp);
                 free(ctmp);
                 if (vsizefield < tmp) {
@@ -689,7 +690,7 @@ static void recv_stats(int status, orte_process_name_t* sender,
 
             if (0 < stats->rss) {
                 rss_found = true;
-                asprintf(&ctmp, "%8.2f", stats->rss);
+                opal_asprintf(&ctmp, "%8.2f", stats->rss);
                 tmp = strlen(ctmp);
                 free(ctmp);
                 if (rssfield < tmp) {
@@ -699,7 +700,7 @@ static void recv_stats(int status, orte_process_name_t* sender,
 
             if (0 < stats->peak_vsize) {
                 pkv_found = true;
-                asprintf(&ctmp, "%8.2f", stats->peak_vsize);
+                opal_asprintf(&ctmp, "%8.2f", stats->peak_vsize);
                 tmp = strlen(ctmp);
                 free(ctmp);
                 if (pkvfield < tmp) {
@@ -709,7 +710,7 @@ static void recv_stats(int status, orte_process_name_t* sender,
 
             if (0 <= stats->processor) {
                 p_found = true;
-                asprintf(&ctmp, "%d", stats->processor);
+                opal_asprintf(&ctmp, "%d", stats->processor);
                 tmp = strlen(ctmp);
                 free(ctmp);
                 if (pfield < tmp) {
@@ -765,7 +766,7 @@ static void print_ranks(opal_list_t *statlist)
     opal_list_item_t *item;
     opal_pstats_t *stats, *pstats;
     int32_t minrank;
-    char pretty_time[10];
+    char pretty_time[32];
     int i;
 
     /* sort the results by rank */

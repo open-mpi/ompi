@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2018 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
@@ -51,15 +51,9 @@ struct ompi_predefined_datatype_t;
 /** Mutex to protect all the _init and _finalize variables */
 OMPI_DECLSPEC extern opal_mutex_t ompi_mpi_bootstrap_mutex;
 /** Did MPI start to initialize? */
-OMPI_DECLSPEC extern volatile bool ompi_mpi_init_started;
+OMPI_DECLSPEC extern opal_atomic_int32_t ompi_mpi_state;
 /** Has the RTE been initialized? */
 OMPI_DECLSPEC extern volatile bool ompi_rte_initialized;
-/** Is MPI fully initialized? */
-OMPI_DECLSPEC extern volatile bool ompi_mpi_initialized;
-/** Did MPI start to finalize? */
-OMPI_DECLSPEC extern volatile bool ompi_mpi_finalize_started;
-/** Has MPI been fully finalized? */
-OMPI_DECLSPEC extern volatile bool ompi_mpi_finalized;
 
 /** Do we have multiple threads? */
 OMPI_DECLSPEC extern bool ompi_mpi_thread_multiple;
@@ -69,6 +63,29 @@ OMPI_DECLSPEC extern int ompi_mpi_thread_requested;
 OMPI_DECLSPEC extern int ompi_mpi_thread_provided;
 /** Identifier of the main thread */
 OMPI_DECLSPEC extern struct opal_thread_t *ompi_mpi_main_thread;
+
+/*
+ * State of the MPI runtime.
+ *
+ * Atomically set/read in the ompi_mpi_state global variable (for
+ * functions such as MPI_INITIALIZED and MPI_FINALIZED).
+ */
+typedef enum {
+    OMPI_MPI_STATE_NOT_INITIALIZED = 0,
+
+    OMPI_MPI_STATE_INIT_STARTED,
+    OMPI_MPI_STATE_INIT_COMPLETED,
+
+    /* The PAST_COMM_SELF_DESTRUCT state is needed because attribute
+       callbacks that are invoked during the very beginning of
+       MPI_FINALIZE are supposed to return FALSE if they call
+       MPI_FINALIZED.  Hence, we need to distinguish between "We've
+       started MPI_FINALIZE" and "We're far enough in MPI_FINALIZE
+       that we now need to return TRUE from MPI_FINALIZED." */
+    OMPI_MPI_STATE_FINALIZE_STARTED,
+    OMPI_MPI_STATE_FINALIZE_PAST_COMM_SELF_DESTRUCT,
+    OMPI_MPI_STATE_FINALIZE_COMPLETED
+} ompi_mpi_state_t;
 
 /*
  * These variables are for the MPI F03 bindings (F03 must bind Fortran
@@ -158,6 +175,8 @@ void ompi_mpi_thread_level(int requested, int *provided);
  * @param argv argv, typically from main() (IN)
  * @param requested Thread support that is requested (IN)
  * @param provided Thread support that is provided (OUT)
+ * @param reinit_ok Return successfully (with no error) if someone has
+ * already called ompi_mpi_init().
  *
  * @returns MPI_SUCCESS if successful
  * @returns Error code if unsuccessful
@@ -169,7 +188,8 @@ void ompi_mpi_thread_level(int requested, int *provided);
  *
  * It is permissable to pass in (0, NULL) for (argc, argv).
  */
-int ompi_mpi_init(int argc, char **argv, int requested, int *provided);
+int ompi_mpi_init(int argc, char **argv, int requested, int *provided,
+                  bool reinit_ok);
 
 /**
  * Finalize the Open MPI MPI environment

@@ -25,25 +25,40 @@
 
 #include "atomic_mxm.h"
 
-int mca_atomic_mxm_fadd(void *target,
-                        void *prev,
-                        const void *value,
-                        size_t nlong,
-                        int pe,
-                        struct oshmem_op_t *op)
+int mca_atomic_mxm_add(shmem_ctx_t ctx,
+                       void *target,
+                       uint64_t value,
+                       size_t size,
+                       int pe)
 {
     mxm_send_req_t sreq;
     static char dummy_buf[8];
 
-    mca_atomic_mxm_req_init(&sreq, pe, target, nlong);
+    mca_atomic_mxm_req_init(&sreq, pe, target, size);
 
-    memcpy(&sreq.op.atomic.value, value, nlong);
-    sreq.opcode = MXM_REQ_OP_ATOMIC_FADD;
-    if (NULL == prev) {
-        sreq.base.data.buffer.ptr = dummy_buf;
-    } else {
-        sreq.base.data.buffer.ptr = prev;
-    }
+    sreq.op.atomic.value      = value;
+    sreq.opcode               = MXM_REQ_OP_ATOMIC_FADD;
+    sreq.base.data.buffer.ptr = dummy_buf;
+
+    mca_atomic_mxm_post(&sreq);
+
+    return OSHMEM_SUCCESS;
+}
+
+int mca_atomic_mxm_fadd(shmem_ctx_t ctx,
+                        void *target,
+                        void *prev,
+                        uint64_t value,
+                        size_t size,
+                        int pe)
+{
+    mxm_send_req_t sreq;
+
+    mca_atomic_mxm_req_init(&sreq, pe, target, size);
+
+    sreq.op.atomic.value      = value;
+    sreq.opcode               = MXM_REQ_OP_ATOMIC_FADD;
+    sreq.base.data.buffer.ptr = prev;
 
     mca_atomic_mxm_post(&sreq);
 

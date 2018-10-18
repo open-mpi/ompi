@@ -37,21 +37,33 @@ OSHMEM_DECLSPEC void atomic_mxm_unlock(int pe);
 
 /* API functions */
 
-int mca_atomic_mxm_init(bool enable_progress_threads, bool enable_threads);
+int mca_atomic_mxm_startup(bool enable_progress_threads, bool enable_threads);
 int mca_atomic_mxm_finalize(void);
 mca_atomic_base_module_t*
 mca_atomic_mxm_query(int *priority);
 
-int mca_atomic_mxm_fadd(void *target,
+int mca_atomic_mxm_add(shmem_ctx_t ctx,
+                       void *target,
+                       uint64_t value,
+                       size_t nlong,
+                       int pe);
+int mca_atomic_mxm_fadd(shmem_ctx_t ctx,
+                        void *target,
                         void *prev,
-                        const void *value,
+                        uint64_t value,
                         size_t nlong,
-                        int pe,
-                        struct oshmem_op_t *op);
-int mca_atomic_mxm_cswap(void *target,
-                         void *prev,
-                         const void *cond,
-                         const void *value,
+                        int pe);
+int mca_atomic_mxm_swap(shmem_ctx_t ctx,
+                        void *target,
+                        void *prev,
+                        uint64_t value,
+                        size_t nlong,
+                        int pe);
+int mca_atomic_mxm_cswap(shmem_ctx_t ctx,
+                         void *target,
+                         uint64_t *prev,
+                         uint64_t cond,
+                         uint64_t value,
                          size_t nlong,
                          int pe);
 
@@ -93,7 +105,7 @@ static inline void mca_atomic_mxm_req_init(mxm_send_req_t *sreq, int pe, void *t
 
     nlong_order = mca_atomic_mxm_order(nlong);
 
-    mkey = mca_spml_ikrit_get_mkey(pe, target, MXM_PTL_RDMA, &remote_addr);
+    mkey = mca_spml_ikrit_get_mkey(pe, target, MXM_PTL_RDMA, &remote_addr, mca_atomic_mxm_spml_self);
 
     /* mxm request init */
     sreq->base.state        = MXM_REQ_NEW;

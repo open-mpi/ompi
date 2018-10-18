@@ -56,7 +56,7 @@ static inline int mca_pml_ob1_process_pending_cuda_async_copies(void)
 }
 #endif /* OPAL_CUDA_SUPPORT */
 
-static int mca_pml_ob1_progress_needed = 0;
+static opal_atomic_int32_t mca_pml_ob1_progress_needed = 0;
 int mca_pml_ob1_enable_progress(int32_t count)
 {
     if( 0 == count ) return 0;  /* nothing to do */

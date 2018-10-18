@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2011-2017 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2011      UT-Battelle, LLC. All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
@@ -51,7 +51,7 @@
 #define MCA_BTL_UGNI_MAX_DEV_HANDLES 128
 
 /** number of rdma completion queue items to remove per progress loop */
-#define MCA_BTL_UGNI_COMPLETIONS_PER_LOOP 16
+#define MCA_BTL_UGNI_COMPLETIONS_PER_LOOP 32
 
 /** how often to check for connection requests */
 #define MCA_BTL_UGNI_CONNECT_USEC 10
@@ -96,7 +96,7 @@ struct mca_btl_ugni_cq_t {
     /** ugni CQ handle */
     gni_cq_handle_t gni_handle;
     /** number of completions expected on the CQ */
-    int32_t active_operations;
+    volatile int32_t active_operations;
 };
 typedef struct mca_btl_ugni_cq_t mca_btl_ugni_cq_t;
 
@@ -114,7 +114,10 @@ struct mca_btl_ugni_device_t {
     int dev_index;
 
     /** number of SMSG connections */
-    volatile int32_t smsg_connections;
+    opal_atomic_int32_t smsg_connections;
+
+    /** boolean indicating that the device was recently flushed */
+    volatile bool flushed;
 
     /** uGNI device handle */
     gni_nic_handle_t dev_handle;
@@ -132,10 +135,7 @@ struct mca_btl_ugni_device_t {
     gni_mem_handle_t smsg_irq_mhndl;
 
     /** RDMA endpoint free list */
-    opal_free_list_t endpoints;
-
-    /** post descriptors pending resources */
-    opal_list_t pending_post;
+    opal_free_list_t rdma_descs;
 };
 typedef struct mca_btl_ugni_device_t mca_btl_ugni_device_t;
 
@@ -162,15 +162,13 @@ typedef struct mca_btl_ugni_module_t {
     opal_mutex_t eager_get_pending_lock;
     opal_list_t eager_get_pending;
 
-    opal_free_list_t post_descriptors;
-
     mca_mpool_base_module_t *mpool;
     opal_free_list_t         smsg_mboxes;
 
     gni_ep_handle_t wildcard_ep;
     struct mca_btl_base_endpoint_t *local_ep;
 
-    volatile int32_t active_datagrams;
+    opal_atomic_int32_t active_datagrams;
     opal_event_t connection_event;
 
     struct mca_btl_ugni_endpoint_attr_t wc_remote_attr, wc_local_attr;
@@ -190,15 +188,13 @@ typedef struct mca_btl_ugni_module_t {
     opal_pointer_array_t pending_smsg_frags_bb;
 
     int32_t reg_max;
-    volatile int32_t reg_count;
+    opal_atomic_int32_t reg_count;
 
     /* used to calculate the fraction of registered memory resources
      * this rank should be limited too */
     int nlocal_procs;
 
-    volatile int active_send_count;
-    volatile int64_t connected_peer_count;
-    volatile int64_t active_rdma_count;
+    opal_atomic_int32_t active_rdma_count;
 
     mca_rcache_base_module_t *rcache;
 } mca_btl_ugni_module_t;
@@ -212,6 +208,10 @@ typedef struct mca_btl_ugni_component_t {
     /* Maximum number of entries a completion queue can hold */
     uint32_t remote_cq_size;
     uint32_t local_cq_size;
+    uint32_t local_rdma_cq_size;
+    /* There is a hardware limitation that hurts BTE performance
+     * if we submit too many BTE requests. This acts as a throttle. */
+    int32_t active_rdma_threshold;
 
     /* number of ugni modules */
     uint32_t ugni_num_btls;
@@ -221,7 +221,16 @@ typedef struct mca_btl_ugni_component_t {
     size_t smsg_max_data;
 
     /* After this message size switch to BTE protocols */
-    size_t ugni_fma_limit;
+    long int ugni_fma_limit;
+    /** FMA switchover for get */
+    long int ugni_fma_get_limit;
+    /** FMA switchover for put */
+    long int ugni_fma_put_limit;
+
+#if OPAL_C_HAVE__THREAD_LOCAL
+    bool bind_threads_to_devices;
+#endif
+
     /* Switch to get when sending above this size */
     size_t ugni_smsg_limit;
 
@@ -282,6 +291,9 @@ typedef struct mca_btl_ugni_component_t {
 
     /** NIC address */
     uint32_t dev_addr;
+
+    /** MCA variable identifier for the cdm_flags variable */
+    int cdm_flags_id;
 } mca_btl_ugni_component_t;
 
 /* Global structures */
@@ -289,18 +301,20 @@ typedef struct mca_btl_ugni_component_t {
 OPAL_MODULE_DECLSPEC extern mca_btl_ugni_component_t mca_btl_ugni_component;
 OPAL_MODULE_DECLSPEC extern mca_btl_ugni_module_t mca_btl_ugni_module;
 
+static inline uint32_t mca_btl_ugni_ep_get_device_index (mca_btl_ugni_module_t *ugni_module)
+{
+    static volatile uint32_t device_index = (uint32_t) 0;
+
+    /* don't really care if the device index is atomically updated */
+    return opal_atomic_fetch_add_32 ((volatile int32_t *) &device_index, 1) % mca_btl_ugni_component.virtual_device_count;
+}
+
 /**
  * Get a virtual device for communication
  */
 static inline mca_btl_ugni_device_t *mca_btl_ugni_ep_get_device (mca_btl_ugni_module_t *ugni_module)
 {
-    static volatile uint32_t device_index = (uint32_t) 0;
-    uint32_t dev_index;
-
-    /* don't really care if the device index is atomically updated */
-    dev_index = (device_index++) & (mca_btl_ugni_component.virtual_device_count - 1);
-
-    return ugni_module->devices + dev_index;
+    return ugni_module->devices + mca_btl_ugni_ep_get_device_index (ugni_module);
 }
 
 static inline int mca_btl_rc_ugni_to_opal (gni_return_t rc)
@@ -321,6 +335,9 @@ static inline int mca_btl_rc_ugni_to_opal (gni_return_t rc)
                           OPAL_ERR_OUT_OF_RESOURCE};
     return codes[rc];
 }
+
+
+int mca_btl_ugni_flush (mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint);
 
 /**
  * BML->BTL notification of change in the process list.
@@ -481,6 +498,16 @@ static inline uint64_t mca_btl_ugni_proc_name_to_id (opal_process_name_t name) {
 int mca_btl_ugni_spawn_progress_thread(struct mca_btl_base_module_t* btl);
 int mca_btl_ugni_kill_progress_thread(void);
 
+struct mca_btl_ugni_post_descriptor_t;
+
+void btl_ugni_dump_post_desc (struct mca_btl_ugni_post_descriptor_t *desc);
+
+
+struct mca_btl_ugni_post_descriptor_t;
+
+void mca_btl_ugni_handle_rdma_completions (mca_btl_ugni_module_t *ugni_module, mca_btl_ugni_device_t *device,
+                                           struct mca_btl_ugni_post_descriptor_t *post_desc, const int count);
+
 /**
  * Try to lock a uGNI device for exclusive access
  */
@@ -528,6 +555,58 @@ static inline intptr_t mca_btl_ugni_device_serialize (mca_btl_ugni_device_t *dev
     mca_btl_ugni_device_lock (device);
     rc = fn (device, arg);
     mca_btl_ugni_device_unlock (device);
+    return rc;
+}
+
+static inline intptr_t mca_btl_ugni_device_serialize_any (mca_btl_ugni_module_t *ugni_module,
+                                                          mca_btl_ugni_device_serialize_fn_t fn, void *arg)
+{
+    mca_btl_ugni_device_t *device;
+    intptr_t rc;
+
+    if (!opal_using_threads ()) {
+        return fn (ugni_module->devices, arg);
+    }
+
+#if OPAL_C_HAVE__THREAD_LOCAL
+    if (mca_btl_ugni_component.bind_threads_to_devices) {
+        /* NTH: if we have C11 _Thread_local just go ahead and assign the devices round-robin to each
+         * thread. in testing this give much better performance than just picking any device */
+        static _Thread_local mca_btl_ugni_device_t *device_local = NULL;
+
+        device = device_local;
+        if (OPAL_UNLIKELY(NULL == device)) {
+            /* assign device contexts round-robin */
+            device_local = device = mca_btl_ugni_ep_get_device (ugni_module);
+        }
+
+        mca_btl_ugni_device_lock (device);
+    } else {
+#endif
+        /* get the next starting index */
+        uint32_t device_index = mca_btl_ugni_ep_get_device_index (ugni_module);
+        const int device_count = mca_btl_ugni_component.virtual_device_count;
+
+        for (int i = 0 ; i < device_count ; ++i) {
+            device = ugni_module->devices + ((device_index + i) % device_count);
+            if (!mca_btl_ugni_device_trylock (device)) {
+                break;
+            }
+
+            device = NULL;
+        }
+
+        if (NULL == device) {
+            device = mca_btl_ugni_ep_get_device (ugni_module);
+            mca_btl_ugni_device_lock (device);
+        }
+#if OPAL_C_HAVE__THREAD_LOCAL
+    }
+#endif
+
+    rc = fn (device, arg);
+    mca_btl_ugni_device_unlock (device);
+
     return rc;
 }
 

@@ -3,16 +3,16 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2013 The University of Tennessee and The University
+ * Copyright (c) 2004-2017 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2017 Cisco Systems, Inc.  All rights reserved
+ * Copyright (c) 2006-2018 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2006-2015 Mellanox Technologies. All rights reserved.
- * Copyright (c) 2006-2015 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2006-2018 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
  * Copyright (c) 2009-2012 Oracle and/or its affiliates.  All rights reserved.
@@ -22,6 +22,7 @@
  * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014      Bull SAS.  All rights reserved.
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -64,6 +65,7 @@
 #include "opal/mca/installdirs/installdirs.h"
 #include "opal_stdint.h"
 #include "opal/util/show_help.h"
+#include "opal/util/printf.h"
 #include "opal/mca/btl/btl.h"
 #include "opal/mca/btl/base/base.h"
 #include "opal/mca/mpool/base/base.h"
@@ -621,6 +623,30 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_device_t *device,
     mca_btl_base_selected_module_t *ib_selected;
     union ibv_gid gid;
     uint64_t subnet_id;
+
+/*
+ * Starting with Open MPI 4.0 we don't support infiniband
+ * unless the user specifically requested to override this
+ * policy.  For ancient OFED, only allow if user has set
+ * the MCA parameter.
+ */
+#if HAVE_DECL_IBV_LINK_LAYER_ETHERNET
+    if ((IBV_LINK_LAYER_INFINIBAND == ib_port_attr->link_layer) &&
+        (false == mca_btl_openib_component.allow_ib)) {
+        opal_show_help("help-mpi-btl-openib.txt", "ib port not selected",
+                       true, opal_process_info.nodename,
+                       ibv_get_device_name(device->ib_dev), port_num);
+        return OPAL_ERR_NOT_FOUND;
+    }
+#else
+    if (false == mca_btl_openib_component.allow_ib) {
+        opal_show_help("help-mpi-btl-openib.txt", "ib port not selected",
+                       true, opal_process_info.nodename,
+                       ibv_get_device_name(device->ib_dev), port_num);
+        return OPAL_ERR_NOT_FOUND;
+    }
+#endif
+
 
     /* Ensure that the requested GID index (via the
        btl_openib_gid_index MCA param) is within the GID table
@@ -1524,7 +1550,11 @@ static uint64_t calculate_total_mem (void)
         if (NULL == machine) {
             return 0;
         }
+#if HWLOC_API_VERSION < 0x20000
         return machine->memory.total_memory;
+#else
+        return machine->total_memory;
+#endif
     }
 
     /* couldn't find it */
@@ -1833,7 +1863,7 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
                        "eager RDMA and progress threads", true);
     }
 
-    asprintf (&rcache_resources.cache_name, "verbs.%" PRIu64, device->ib_dev_attr.node_guid);
+    opal_asprintf (&rcache_resources.cache_name, "verbs.%" PRIu64, device->ib_dev_attr.node_guid);
     rcache_resources.reg_data = (void*)device;
     rcache_resources.sizeof_reg = sizeof(mca_btl_openib_reg_t);
     rcache_resources.register_mem = openib_reg_mr;
@@ -2780,7 +2810,6 @@ btl_openib_component_init(int *num_btl_modules,
     ib_devs = opal_ibv_get_device_list(&num_devs);
 
     if(0 == num_devs || NULL == ib_devs) {
-        mca_btl_base_error_no_nics("OpenFabrics (openib)", "device");
         goto no_btls;
     }
 
@@ -3436,7 +3465,9 @@ progress_pending_frags_wqe(mca_btl_base_endpoint_t *ep, const int qpn)
             frag = opal_list_remove_first(&ep->qps[qpn].no_wqe_pending_frags[i]);
             if(NULL == frag)
                 break;
+#if OPAL_ENABLE_DEBUG
             assert(0 == frag->opal_list_item_refcount);
+#endif
             tmp_ep = to_com_frag(frag)->endpoint;
             ret = mca_btl_openib_endpoint_post_send(tmp_ep, to_send_frag(frag));
             if (OPAL_SUCCESS != ret) {
@@ -3637,7 +3668,7 @@ error:
 #endif
 
     if(IBV_WC_WR_FLUSH_ERR != wc->status || !flush_err_printed[cq]++) {
-        BTL_PEER_ERROR(remote_proc, ("error polling %s with status %s "
+        BTL_PEER_ERROR(remote_proc, ("error polling %s with status %s"
                     "status number %d for wr_id %" PRIx64 " opcode %d  vendor error %d qp_idx %d",
                     cq_name[cq], btl_openib_component_status_to_string(wc->status),
                     wc->status, wc->wr_id,
@@ -3678,9 +3709,36 @@ error:
         }
     }
 
-    if(openib_btl)
+    if(openib_btl) {
+        /* return send wqe */
+        qp_put_wqe(endpoint, qp);
+
+        /* return wqes that were sent before this frag */
+        n = qp_frag_to_wqe(endpoint, qp, to_com_frag(des));
+
+        /* force emptying the pending frags toward the dead endpoint
+         * in progress_pending_frags* below */
+        endpoint->endpoint_state = MCA_BTL_IB_FAILED;
+
+        if(IBV_WC_SEND == wc->opcode && !BTL_OPENIB_QP_TYPE_PP(qp)) {
+            BTL_VERBOSE(("frag %p returning %d credits", (void*) frag, 1+n));
+            OPAL_THREAD_FETCH_ADD32(&openib_btl->qps[qp].u.srq_qp.sd_credits, 1+n);
+            /* new SRQ credit available. Try to progress pending frags*/
+            progress_pending_frags_srq(openib_btl, qp);
+        }
+        /* new wqe or/and get token available. Try to progress pending frags */
+        progress_pending_frags_wqe(endpoint, qp);
+        mca_btl_openib_frag_progress_pending_put_get(endpoint, qp);
+
+        if (des->des_flags & MCA_BTL_DES_SEND_ALWAYS_CALLBACK) {
+            des->des_cbfunc(&openib_btl->super, endpoint, des, wc->status);
+        }
+        if (des->des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP) {
+            mca_btl_openib_free(&openib_btl->super, des);
+        }
         openib_btl->error_cb(&openib_btl->super, MCA_BTL_ERROR_FLAGS_FATAL,
                              (struct opal_proc_t*)remote_proc, NULL);
+    }
 }
 
 static int poll_device(mca_btl_openib_device_t* device, int count)

@@ -217,6 +217,10 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
             if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i))) {
                 continue;
             }
+            /* ignore nodes that are non-usable */
+            if (ORTE_FLAG_TEST(node, ORTE_NODE_NON_USABLE)) {
+                continue;
+            }
             OPAL_LIST_FOREACH_SAFE(nptr, next, &nodes, orte_node_t) {
                 if (0 != strcmp(node->name, nptr->name)) {
                     OPAL_OUTPUT_VERBOSE((10, orte_rmaps_base_framework.framework_output,
@@ -320,6 +324,10 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
     }
     for (i=1; i < orte_node_pool->size; i++) {
         if (NULL != (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i))) {
+            /* ignore nodes that are non-usable */
+            if (ORTE_FLAG_TEST(node, ORTE_NODE_NON_USABLE)) {
+                continue;
+            }
             /* ignore nodes that are marked as do-not-use for this mapping */
             if (ORTE_NODE_STATE_DO_NOT_USE == node->state) {
                 OPAL_OUTPUT_VERBOSE((10, orte_rmaps_base_framework.framework_output,
@@ -461,12 +469,19 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
                 continue;
             }
             if (node->slots > node->slots_inuse) {
+                orte_std_cntr_t s;
+                /* check for any -host allocations */
+                if (orte_get_attribute(&app->attributes, ORTE_APP_DASH_HOST, (void**)&hosts, OPAL_STRING)) {
+                    s = orte_util_dash_host_compute_slots(node, hosts);
+                } else {
+                    s = node->slots - node->slots_inuse;
+                }
                 /* add the available slots */
                 OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base_framework.framework_output,
                                      "%s node %s has %d slots available",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                     node->name, node->slots - node->slots_inuse));
-                num_slots += node->slots - node->slots_inuse;
+                                     node->name, s));
+                num_slots += s;
                 continue;
             }
             if (!(ORTE_MAPPING_NO_OVERSUBSCRIBE & ORTE_GET_MAPPING_DIRECTIVE(policy))) {
@@ -645,20 +660,11 @@ orte_node_t* orte_rmaps_base_get_starting_point(opal_list_t *node_list,
         }
     }
 
- process:
+  process:
     OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base_framework.framework_output,
                          "%s Starting at node %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ((orte_node_t*)cur_node_item)->name));
-
-    /* make life easier - put the bookmark at the top of the list,
-     * shifting everything above it to the end of the list while
-     * preserving order
-     */
-    while (cur_node_item != (item = opal_list_get_first(node_list))) {
-        opal_list_remove_item(node_list, item);
-        opal_list_append(node_list, item);
-    }
 
     return (orte_node_t*)cur_node_item;
 }

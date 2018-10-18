@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2008-2011 University of Houston. All rights reserved.
+# Copyright (c) 2008-2018 University of Houston. All rights reserved.
 # Copyright (c) 2017      IBM Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
@@ -36,12 +36,7 @@ fs_lustre_sources = \
         fs_lustre.h \
         fs_lustre.c \
         fs_lustre_component.c \
-        fs_lustre_file_open.c \
-	fs_lustre_file_close.c \
-	fs_lustre_file_delete.c \
-	fs_lustre_file_sync.c \
-	fs_lustre_file_set_size.c \
-        fs_lustre_file_get_size.c
+        fs_lustre_file_open.c 
 
 AM_CPPFLAGS = $(fs_lustre_CPPFLAGS)
 

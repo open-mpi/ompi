@@ -33,7 +33,7 @@ struct ompi_osc_pt2pt_frag_t {
     char *top;
 
     /* Number of operations which have started writing into the frag, but not yet completed doing so */
-    volatile int32_t pending;
+    opal_atomic_int32_t pending;
     int32_t pending_long_sends;
     ompi_osc_pt2pt_frag_header_t *header;
     ompi_osc_pt2pt_module_t *module;
@@ -66,8 +66,8 @@ static inline ompi_osc_pt2pt_frag_t *ompi_osc_pt2pt_frag_alloc_non_buffered (omp
     ompi_osc_pt2pt_frag_t *curr;
 
     /* to ensure ordering flush the buffer on the peer */
-    curr = peer->active_frag;
-    if (NULL != curr && opal_atomic_compare_exchange_strong_ptr (&peer->active_frag, &curr, NULL)) {
+    curr = (ompi_osc_pt2pt_frag_t *) peer->active_frag;
+    if (NULL != curr && opal_atomic_compare_exchange_strong_ptr (&peer->active_frag, (intptr_t *) &curr, 0)) {
         /* If there's something pending, the pending finish will
            start the buffer.  Otherwise, we need to start it now. */
         int ret = ompi_osc_pt2pt_frag_finish (module, curr);
@@ -131,7 +131,7 @@ static inline int _ompi_osc_pt2pt_frag_alloc (ompi_osc_pt2pt_module_t *module, i
 
     OPAL_THREAD_LOCK(&module->lock);
     if (buffered) {
-        curr = peer->active_frag;
+        curr = (ompi_osc_pt2pt_frag_t *) peer->active_frag;
         if (NULL == curr || curr->remain_len < request_len || (long_send && curr->pending_long_sends == 32)) {
             curr = ompi_osc_pt2pt_frag_alloc_non_buffered (module, peer, request_len);
             if (OPAL_UNLIKELY(NULL == curr)) {
@@ -140,7 +140,7 @@ static inline int _ompi_osc_pt2pt_frag_alloc (ompi_osc_pt2pt_module_t *module, i
             }
 
             curr->pending_long_sends = long_send;
-            peer->active_frag = curr;
+            peer->active_frag = (uintptr_t) curr;
         } else {
             OPAL_THREAD_ADD_FETCH32(&curr->header->num_ops, 1);
             curr->pending_long_sends += long_send;

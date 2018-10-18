@@ -15,6 +15,7 @@
 
 #include "opal/constants.h"
 #include "opal/util/output.h"
+#include "opal/util/string_copy.h"
 #include "opal/mca/if/if.h"
 
 static int if_bsdx_open(void);
@@ -125,7 +126,7 @@ static int if_bsdx_open(void)
         /* fill values into the opal_if_t */
         memcpy(&a4, &(sin_addr->sin_addr), sizeof(struct in_addr));
 
-        strncpy(intf->if_name, cur_ifaddrs->ifa_name, IF_NAMESIZE);
+        opal_string_copy(intf->if_name, cur_ifaddrs->ifa_name, IF_NAMESIZE);
         intf->if_index = opal_list_get_size(&opal_if_list) + 1;
         ((struct sockaddr_in*) &intf->if_addr)->sin_addr = a4;
         ((struct sockaddr_in*) &intf->if_addr)->sin_family = AF_INET;

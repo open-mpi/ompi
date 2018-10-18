@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2016-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2017      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -77,6 +77,7 @@ static int PatchLoadImm (uintptr_t addr, unsigned int reg, size_t value)
 
 #endif
 
+#if !HAVE___CLEAR_CACHE
 static void flush_and_invalidate_cache (unsigned long a)
 {
 #if OPAL_ASSEMBLY_ARCH == OPAL_IA32
@@ -106,8 +107,15 @@ static void flush_and_invalidate_cache (unsigned long a)
     __asm__ volatile("mfence;clflush %0;mfence" : :"m" (*(char*)a));
 #elif OPAL_ASSEMBLY_ARCH == OPAL_IA64
     __asm__ volatile ("fc %0;; sync.i;; srlz.i;;" : : "r"(a) : "memory");
+#elif OPAL_ASSEMBLY_ARCH == OPAL_ARM64
+    __asm__ volatile ("dc cvau, %0\n\t"
+                      "dsb ish\n\t"
+                      "ic ivau, %0\n\t"
+                      "dsb ish\n\t"
+                      "isb":: "r" (a));
 #endif
 }
+#endif   // !HAVE___CLEAR_CACHE
 
 // modify protection of memory range
 static void ModifyMemoryProtection (uintptr_t addr, size_t length, int prot)
@@ -136,9 +144,26 @@ static inline void apply_patch (unsigned char *patch_data, uintptr_t address, si
 {
     ModifyMemoryProtection (address, data_size, PROT_EXEC|PROT_READ|PROT_WRITE);
     memcpy ((void *) address, patch_data, data_size);
-    for (size_t i = 0 ; i < data_size ; i += 16) {
+#if HAVE___CLEAR_CACHE
+    /* do not allow global declaration of compiler intrinsic */
+    void __clear_cache(void* beg, void* end);
+
+    __clear_cache ((void *) address, (void *) (address + data_size));
+#else
+    size_t offset_jump = 16;
+
+#if OPAL_ASSEMBLY_ARCH == OPAL_ARM64
+    offset_jump = 32;
+#endif
+
+    /* align the address */
+    address &= ~(offset_jump - 1);
+
+    for (size_t i = 0 ; i < data_size ; i += offset_jump) {
         flush_and_invalidate_cache (address + i);
     }
+
+#endif
 
     ModifyMemoryProtection (address, data_size, PROT_EXEC|PROT_READ);
 }

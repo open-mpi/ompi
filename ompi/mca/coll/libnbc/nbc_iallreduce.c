@@ -7,9 +7,10 @@
  *                         rights reserved.
  * Copyright (c) 2013-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2014-2017 Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2014-2018 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -52,9 +53,9 @@ int NBC_Allreduce_args_compare(NBC_Allreduce_args *a, NBC_Allreduce_args *b, voi
 }
 #endif
 
-int ompi_coll_libnbc_iallreduce(const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op,
-                                struct ompi_communicator_t *comm, ompi_request_t ** request,
-                                struct mca_coll_base_module_2_2_0_t *module)
+static int nbc_allreduce_init(const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op,
+                              struct ompi_communicator_t *comm, ompi_request_t ** request,
+                              struct mca_coll_base_module_2_3_0_t *module, bool persistent)
 {
   int rank, p, res;
   ptrdiff_t ext, lb;
@@ -86,7 +87,7 @@ int ompi_coll_libnbc_iallreduce(const void* sendbuf, void* recvbuf, int count, M
     return res;
   }
 
-  if (1 == p) {
+  if (1 == p && (!persistent || inplace)) {
     if (!inplace) {
       /* for a single node - copy data to receivebuf */
       res = NBC_Copy(sendbuf, count, datatype, recvbuf, count, datatype, comm);
@@ -94,8 +95,7 @@ int ompi_coll_libnbc_iallreduce(const void* sendbuf, void* recvbuf, int count, M
         return res;
       }
     }
-    *request = &ompi_request_empty;
-    return OMPI_SUCCESS;
+    return nbc_get_noop_request(persistent, request);
   }
 
   span = opal_datatype_span(&datatype->super, count, &gap);
@@ -127,13 +127,18 @@ int ompi_coll_libnbc_iallreduce(const void* sendbuf, void* recvbuf, int count, M
       return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
-    switch(alg) {
-      case NBC_ARED_BINOMIAL:
-        res = allred_sched_diss(rank, p, count, datatype, gap, sendbuf, recvbuf, op, inplace, schedule, tmpbuf);
-        break;
-      case NBC_ARED_RING:
-        res = allred_sched_ring(rank, p, count, datatype, sendbuf, recvbuf, op, size, ext, schedule, tmpbuf);
-        break;
+    if (p == 1) {
+      res = NBC_Sched_copy((void *)sendbuf, false, count, datatype,
+                           recvbuf, false, count, datatype, schedule, false);
+    } else {
+      switch(alg) {
+        case NBC_ARED_BINOMIAL:
+          res = allred_sched_diss(rank, p, count, datatype, gap, sendbuf, recvbuf, op, inplace, schedule, tmpbuf);
+          break;
+        case NBC_ARED_RING:
+          res = allred_sched_ring(rank, p, count, datatype, sendbuf, recvbuf, op, size, ext, schedule, tmpbuf);
+          break;
+      }
     }
 
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
@@ -180,7 +185,7 @@ int ompi_coll_libnbc_iallreduce(const void* sendbuf, void* recvbuf, int count, M
   }
 #endif
 
-  res = NBC_Schedule_request (schedule, comm, libnbc_module, request, tmpbuf);
+  res = NBC_Schedule_request (schedule, comm, libnbc_module, persistent, request, tmpbuf);
   if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
     OBJ_RELEASE(schedule);
     free(tmpbuf);
@@ -190,9 +195,28 @@ int ompi_coll_libnbc_iallreduce(const void* sendbuf, void* recvbuf, int count, M
   return OMPI_SUCCESS;
 }
 
-int ompi_coll_libnbc_iallreduce_inter(const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op,
-                                      struct ompi_communicator_t *comm, ompi_request_t ** request,
-                                      struct mca_coll_base_module_2_2_0_t *module)
+int ompi_coll_libnbc_iallreduce(const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op,
+                                struct ompi_communicator_t *comm, ompi_request_t ** request,
+                                struct mca_coll_base_module_2_3_0_t *module) {
+    int res = nbc_allreduce_init(sendbuf, recvbuf, count, datatype, op,
+                                 comm, request, module, false);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+        return res;
+    }
+  
+    res = NBC_Start(*(ompi_coll_libnbc_request_t **)request);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+        NBC_Return_handle (*(ompi_coll_libnbc_request_t **)request);
+        *request = &ompi_request_null.request;
+        return res;
+    }
+
+    return OMPI_SUCCESS;
+}
+
+static int nbc_allreduce_inter_init(const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op,
+                                    struct ompi_communicator_t *comm, ompi_request_t ** request,
+                                    struct mca_coll_base_module_2_3_0_t *module, bool persistent)
 {
   int rank, res, rsize;
   size_t size;
@@ -244,7 +268,7 @@ int ompi_coll_libnbc_iallreduce_inter(const void* sendbuf, void* recvbuf, int co
     return res;
   }
 
-  res = NBC_Schedule_request(schedule, comm, libnbc_module, request, tmpbuf);
+  res = NBC_Schedule_request(schedule, comm, libnbc_module, persistent, request, tmpbuf);
   if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
     OBJ_RELEASE(schedule);
     free(tmpbuf);
@@ -254,6 +278,24 @@ int ompi_coll_libnbc_iallreduce_inter(const void* sendbuf, void* recvbuf, int co
   return OMPI_SUCCESS;
 }
 
+int ompi_coll_libnbc_iallreduce_inter(const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op,
+                                      struct ompi_communicator_t *comm, ompi_request_t ** request,
+                                      struct mca_coll_base_module_2_3_0_t *module) {
+    int res = nbc_allreduce_inter_init(sendbuf, recvbuf, count, datatype, op,
+                                       comm, request, module, false);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+        return res;
+    }
+  
+    res = NBC_Start(*(ompi_coll_libnbc_request_t **)request);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+        NBC_Return_handle (*(ompi_coll_libnbc_request_t **)request);
+        *request = &ompi_request_null.request;
+        return res;
+    }
+
+    return OMPI_SUCCESS;
+}
 
 /* binomial allreduce (binomial tree up and binomial bcast down)
  * working principle:
@@ -311,7 +353,9 @@ static inline int allred_sched_diss(int rank, int p, int count, MPI_Datatype dat
     rbuf = recvbuf;
     tmprbuf = false;
     if (inplace) {
-        res = NBC_Copy(rbuf, count, datatype, ((char *)tmpbuf) - gap, count, datatype, MPI_COMM_SELF);
+        res = NBC_Sched_copy(rbuf, false, count, datatype,
+                             ((char *)tmpbuf) - gap, false, count, datatype,
+                             schedule, true);
         if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
           return res;
         }
@@ -690,3 +734,28 @@ static inline int allred_sched_linear(int rank, int rsize, const void *sendbuf, 
 
   return OMPI_SUCCESS;
 }
+
+int ompi_coll_libnbc_allreduce_init(const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op,
+                                    struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
+                                    struct mca_coll_base_module_2_3_0_t *module) {
+    int res = nbc_allreduce_init(sendbuf, recvbuf, count, datatype, op,
+                                 comm, request, module, true);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+        return res;
+    }
+
+    return OMPI_SUCCESS;
+}
+
+int ompi_coll_libnbc_allreduce_inter_init(const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op,
+                                          struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
+                                          struct mca_coll_base_module_2_3_0_t *module) {
+    int res = nbc_allreduce_inter_init(sendbuf, recvbuf, count, datatype, op,
+                                       comm, request, module, true);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+        return res;
+    }
+
+    return OMPI_SUCCESS;
+}
+

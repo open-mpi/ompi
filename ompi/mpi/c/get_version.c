@@ -12,6 +12,7 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015      Intel, Inc. All rights reserved
+ * Copyright (c) 2018      Cisco Systems, Inc.  All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -54,7 +55,9 @@ int MPI_Get_version(int *version, int *subversion)
                (i.e., use a NULL communicator, which will end up at the
                default errhandler, which is abort). */
 
-            if (ompi_mpi_initialized && !ompi_mpi_finalized) {
+            int32_t state = ompi_mpi_state;
+            if (state >= OMPI_MPI_STATE_INIT_COMPLETED &&
+                state < OMPI_MPI_STATE_FINALIZE_PAST_COMM_SELF_DESTRUCT) {
                 return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
                                               FUNC_NAME);
             } else {

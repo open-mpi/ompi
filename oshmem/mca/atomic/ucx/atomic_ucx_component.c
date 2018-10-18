@@ -70,7 +70,7 @@ mca_atomic_base_component_t mca_atomic_ucx_component = {
 
     /* Initialization / querying functions */
 
-    mca_atomic_ucx_init,
+    mca_atomic_ucx_startup,
     mca_atomic_ucx_finalize,
     mca_atomic_ucx_query
 };
@@ -85,6 +85,8 @@ static int ucx_register(void)
                                      OPAL_INFO_LVL_3,
                                      MCA_BASE_VAR_SCOPE_ALL_EQ,
                                      &mca_atomic_ucx_component.priority);
+
+    opal_common_ucx_mca_var_register(&mca_atomic_ucx_component.atomic_version);
 
     return OSHMEM_SUCCESS;
 }

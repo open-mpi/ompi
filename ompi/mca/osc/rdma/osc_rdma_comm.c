@@ -63,7 +63,7 @@ int ompi_osc_get_data_blocking (ompi_osc_rdma_module_t *module, struct mca_btl_b
     ompi_osc_rdma_frag_t *frag = NULL;
     volatile bool read_complete = false;
     size_t aligned_len, offset;
-    uint64_t aligned_addr = (source_address + btl_alignment_mask) & ~btl_alignment_mask;
+    uint64_t aligned_addr = source_address & ~btl_alignment_mask;
     char *ptr = data;
     int ret;
 
@@ -434,28 +434,6 @@ static void ompi_osc_rdma_put_complete_flush (struct mca_btl_base_module_t *btl,
     }
 }
 
-static void ompi_osc_rdma_aggregate_put_complete (struct mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint,
-                                                  void *local_address, mca_btl_base_registration_handle_t *local_handle,
-                                                  void *context, void *data, int status)
-{
-    ompi_osc_rdma_aggregation_t *aggregation = (ompi_osc_rdma_aggregation_t *) context;
-    ompi_osc_rdma_sync_t *sync = aggregation->sync;
-    ompi_osc_rdma_frag_t *frag = aggregation->frag;
-
-    assert (OPAL_SUCCESS == status);
-
-    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "aggregate put complete %p on sync %p. local address %p. status %d",
-                     (void *) aggregation, (void *) sync, local_address, status);
-
-    ompi_osc_rdma_frag_complete (frag);
-    ompi_osc_rdma_aggregation_return (aggregation);
-
-    /* make sure the aggregation is returned before marking the operation as complete */
-    opal_atomic_wmb ();
-
-    ompi_osc_rdma_sync_rdma_dec (sync);
-}
-
 static int ompi_osc_rdma_put_real (ompi_osc_rdma_sync_t *sync, ompi_osc_rdma_peer_t *peer, uint64_t target_address,
                                    mca_btl_base_registration_handle_t *target_handle, void *ptr,
                                    mca_btl_base_registration_handle_t *local_handle, size_t size,
@@ -492,109 +470,17 @@ static int ompi_osc_rdma_put_real (ompi_osc_rdma_sync_t *sync, ompi_osc_rdma_pee
     return ret;
 }
 
-#if 0
-static void ompi_osc_rdma_aggregate_append (ompi_osc_rdma_aggregation_t *aggregation, ompi_osc_rdma_request_t *request,
-                                            void *source_buffer, size_t size)
-{
-    size_t offset = aggregation->buffer_used;
-
-    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "appending %lu bytes of data from %p to aggregate fragment %p with start "
-                     "address 0x%lx", (unsigned long) size, source_buffer, (void *) aggregation,
-                     (unsigned long) aggregation->target_address);
-
-    memcpy (aggregation->buffer + offset, source_buffer, size);
-
-    aggregation->buffer_used += size;
-
-    if (request) {
-        /* the local buffer is now available */
-        ompi_osc_rdma_request_complete (request, 0);
-    }
-}
-
-static int ompi_osc_rdma_aggregate_alloc (ompi_osc_rdma_sync_t *sync, ompi_osc_rdma_peer_t *peer, uint64_t target_address,
-                                          mca_btl_base_registration_handle_t *target_handle, void *source_buffer, size_t size,
-                                          ompi_osc_rdma_request_t *request, int type)
-{
-    ompi_osc_rdma_module_t *module = sync->module;
-    ompi_osc_rdma_aggregation_t *aggregation;
-    int ret;
-
-    aggregation = (ompi_osc_rdma_aggregation_t *) opal_free_list_get (&mca_osc_rdma_component.aggregate);
-    if (OPAL_UNLIKELY(NULL == aggregation)) {
-        return OPAL_ERR_OUT_OF_RESOURCE;
-    }
-
-    ret = ompi_osc_rdma_frag_alloc (module, mca_osc_rdma_component.aggregation_limit, &aggregation->frag,
-                                    &aggregation->buffer);
-    if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
-        opal_free_list_return(&mca_osc_rdma_component.aggregate, (opal_free_list_item_t *) aggregation);
-        return ret;
-    }
-
-    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "allocated new aggregate fragment %p for target %d", (void *) aggregation,
-                     peer->rank);
-
-    peer->aggregate = aggregation;
-
-    aggregation->target_address = target_address;
-    aggregation->target_handle = target_handle;
-    aggregation->buffer_size = mca_osc_rdma_component.aggregation_limit;
-    aggregation->sync = sync;
-    aggregation->peer = peer;
-    aggregation->type = type;
-    aggregation->buffer_used = 0;
-
-    ompi_osc_rdma_aggregate_append (aggregation, request, source_buffer, size);
-
-    opal_list_append (&sync->aggregations, (opal_list_item_t *) aggregation);
-
-    return OMPI_SUCCESS;
-}
-#endif
-
 int ompi_osc_rdma_put_contig (ompi_osc_rdma_sync_t *sync, ompi_osc_rdma_peer_t *peer, uint64_t target_address,
                               mca_btl_base_registration_handle_t *target_handle, void *source_buffer, size_t size,
                               ompi_osc_rdma_request_t *request)
 {
     ompi_osc_rdma_module_t *module = sync->module;
-#if 0
-    ompi_osc_rdma_aggregation_t *aggregation = peer->aggregate;
-#endif
     mca_btl_base_registration_handle_t *local_handle = NULL;
     mca_btl_base_rdma_completion_fn_t cbfunc = NULL;
     ompi_osc_rdma_frag_t *frag = NULL;
     char *ptr = source_buffer;
     void *cbcontext;
     int ret;
-
-#if 0
-    if (aggregation) {
-        if (size <= (aggregation->buffer_size - aggregation->buffer_used) && (target_handle == aggregation->target_handle) &&
-            (target_address == aggregation->target_address + aggregation->buffer_used)) {
-            assert (OMPI_OSC_RDMA_TYPE_PUT == aggregation->type);
-            ompi_osc_rdma_aggregate_append (aggregation, request, source_buffer, size);
-            return OMPI_SUCCESS;
-        }
-
-        /* can't aggregate this operation. flush the previous segment */
-        ret = ompi_osc_rdma_peer_aggregate_flush (peer);
-        if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
-            return ret;
-        }
-    }
-
-    if (size <= (mca_osc_rdma_component.aggregation_limit >> 2)) {
-        ret = ompi_osc_rdma_aggregate_alloc (sync, peer, target_address, target_handle, source_buffer, size, request,
-                                             OMPI_OSC_RDMA_TYPE_PUT);
-        if (OPAL_LIKELY(OMPI_SUCCESS == ret)) {
-            if (request) {
-
-            }
-            return ret;
-        }
-    }
-#endif
 
     if (module->selected_btl->btl_register_mem && size > module->selected_btl->btl_put_local_registration_threshold) {
         ret = ompi_osc_rdma_frag_alloc (module, size, &frag, &ptr);
@@ -678,37 +564,6 @@ static void ompi_osc_rdma_get_complete (struct mca_btl_base_module_t *btl, struc
     }
 
     ompi_osc_rdma_request_complete (request, status);
-}
-
-int ompi_osc_rdma_peer_aggregate_flush (ompi_osc_rdma_peer_t *peer)
-{
-    ompi_osc_rdma_aggregation_t *aggregation = peer->aggregate;
-    int ret;
-
-    if (NULL == aggregation) {
-        return OMPI_SUCCESS;
-    }
-
-    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "flusing aggregate fragment %p", (void *) aggregation);
-
-    assert (OMPI_OSC_RDMA_TYPE_PUT == aggregation->type);
-
-    ret = ompi_osc_rdma_put_real (aggregation->sync, peer, aggregation->target_address, aggregation->target_handle,
-                                  aggregation->buffer, aggregation->frag->handle, aggregation->buffer_used,
-                                  ompi_osc_rdma_aggregate_put_complete, (void *) aggregation, NULL);
-
-    peer->aggregate = NULL;
-
-    if (OPAL_UNLIKELY(OMPI_SUCCESS == ret)) {
-        return OMPI_SUCCESS;
-    }
-
-    ompi_osc_rdma_cleanup_rdma (aggregation->sync, false, aggregation->frag, NULL, NULL);
-
-    ompi_osc_rdma_aggregation_return (aggregation);
-
-    return ret;
-
 }
 
 static int ompi_osc_rdma_get_partial (ompi_osc_rdma_sync_t *sync, ompi_osc_rdma_peer_t *peer, uint64_t source_address,

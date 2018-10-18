@@ -36,14 +36,12 @@ SHMEM_GENERATE_FORTRAN_BINDINGS_FUNCTION (ompi_fortran_integer4_t,
 ompi_fortran_integer4_t shmem_int4_fadd_f(FORTRAN_POINTER_T target, FORTRAN_POINTER_T value, MPI_Fint *pe)
 {
     ompi_fortran_integer4_t out_value = 0;
-    oshmem_op_t* op = oshmem_op_sum_fint4;
 
-    MCA_ATOMIC_CALL(fadd(FPTR_2_VOID_PTR(target),
+    MCA_ATOMIC_CALL(fadd(oshmem_ctx_default, FPTR_2_VOID_PTR(target),
         (void *)&out_value,
-        FPTR_2_VOID_PTR(value),
+        FPTR_2_INT(value, sizeof(out_value)),
         sizeof(out_value),
-        OMPI_FINT_2_INT(*pe),
-        op));
+        OMPI_FINT_2_INT(*pe)));
 
     return out_value;
 }

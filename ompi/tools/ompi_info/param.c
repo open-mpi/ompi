@@ -14,6 +14,7 @@
  * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015      Intel, Inc. All rights reserved
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -288,7 +289,7 @@ void ompi_info_do_config(bool want_all)
 
     /* setup strings that require allocation */
     if (OMPI_BUILD_FORTRAN_BINDINGS >= OMPI_FORTRAN_MPIFH_BINDINGS) {
-        (void)asprintf(&fortran_mpifh, "yes (%s)",
+        (void)opal_asprintf(&fortran_mpifh, "yes (%s)",
                        (OPAL_HAVE_WEAK_SYMBOLS ? "all" :
                         (OMPI_FORTRAN_CAPS ? "caps" :
                          (OMPI_FORTRAN_PLAIN ? "lower case" :
@@ -302,24 +303,24 @@ void ompi_info_do_config(bool want_all)
            didn't work consistently to put it in _STRINGIFY because
            sometimes the compiler would actually interpret the pragma
            in there before stringify-ing it. */
-        (void)asprintf(&fortran_have_ignore_tkr, "yes (%s)",
+        (void)opal_asprintf(&fortran_have_ignore_tkr, "yes (%s)",
                        OMPI_FORTRAN_IGNORE_TKR_PREDECL);
     } else {
         fortran_have_ignore_tkr = strdup("no");
     }
 
 #if OMPI_RTE_ORTE
-    (void)asprintf(&threads, "%s (MPI_THREAD_MULTIPLE: yes, OPAL support: yes, OMPI progress: %s, ORTE progress: yes, Event lib: yes)",
+    (void)opal_asprintf(&threads, "%s (MPI_THREAD_MULTIPLE: yes, OPAL support: yes, OMPI progress: %s, ORTE progress: yes, Event lib: yes)",
                    "posix", OPAL_ENABLE_PROGRESS_THREADS ? "yes" : "no");
 #else
-    (void)asprintf(&threads, "%s (MPI_THREAD_MULTIPLE: yes, OPAL support: yes, OMPI progress: %s, Event lib: yes)",
+    (void)opal_asprintf(&threads, "%s (MPI_THREAD_MULTIPLE: yes, OPAL support: yes, OMPI progress: %s, Event lib: yes)",
                    "posix", OPAL_ENABLE_PROGRESS_THREADS ? "yes" : "no");
 #endif
 
-    (void)asprintf(&ft_support, "%s (checkpoint thread: %s)",
+    (void)opal_asprintf(&ft_support, "%s (checkpoint thread: %s)",
                    OPAL_ENABLE_FT ? "yes" : "no", OPAL_ENABLE_FT_THREAD ? "yes" : "no");
 
-    (void)asprintf(&crdebug_support, "%s",
+    (void)opal_asprintf(&crdebug_support, "%s",
                    OPAL_ENABLE_CRDEBUG ? "yes" : "no");
 
     /* output values */

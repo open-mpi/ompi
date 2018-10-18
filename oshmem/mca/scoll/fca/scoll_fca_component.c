@@ -6,6 +6,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -35,6 +36,7 @@
 #include "scoll_fca.h"
 
 #include "opal/runtime/opal_progress.h"
+#include "opal/util/printf.h"
 #include "oshmem/proc/proc.h"
 #include "oshmem/mca/memheap/memheap.h"
 /*
@@ -200,10 +202,10 @@ static char *mca_scoll_fca_check_file(char *file)
 static char *mca_scoll_fca_get_spec_file(void)
 {
     char *file;
-    asprintf(&file, "%s/etc/fca_mpi_spec.ini", COLL_FCA_HOME);
+    opal_asprintf(&file, "%s/etc/fca_mpi_spec.ini", COLL_FCA_HOME);
     if (NULL == mca_scoll_fca_check_file(file)) {
         free(file);
-        asprintf(&file, "%s/../fca/etc/fca_mpi_spec.ini", opal_install_dirs.prefix);
+        opal_asprintf(&file, "%s/../fca/etc/fca_mpi_spec.ini", opal_install_dirs.prefix);
         if (NULL == mca_scoll_fca_check_file(file)) {
             free(file);
             return NULL;

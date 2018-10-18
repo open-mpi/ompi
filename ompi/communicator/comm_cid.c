@@ -22,6 +22,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * Copyright (c) 2017      Mellanox Technologies. All rights reserved.
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -33,6 +34,7 @@
 
 #include "opal/dss/dss.h"
 #include "opal/mca/pmix/pmix.h"
+#include "opal/util/printf.h"
 
 #include "ompi/proc/proc.h"
 #include "ompi/communicator/communicator.h"
@@ -900,7 +902,7 @@ static int ompi_comm_allreduce_pmix_reduce_complete (ompi_comm_request_t *reques
     opal_dss.unload(&sbuf, (void**)&info.data.bo.bytes, &info.data.bo.size);
     OBJ_DESTRUCT(&sbuf);
 
-    bytes_written = asprintf(&info.key,
+    bytes_written = opal_asprintf(&info.key,
                              cid_context->send_first ? "%s:%s:send:%d"
                                                      : "%s:%s:recv:%d",
                              cid_context->port_string,
@@ -910,7 +912,7 @@ static int ompi_comm_allreduce_pmix_reduce_complete (ompi_comm_request_t *reques
     if (bytes_written == -1) {
         opal_output_verbose (verbosity_level, output_id, "writing info.key failed\n");
     } else {
-        bytes_written = asprintf(&pdat.value.key,
+        bytes_written = opal_asprintf(&pdat.value.key,
                                  cid_context->send_first ? "%s:%s:recv:%d"
                                                          : "%s:%s:send:%d",
                                  cid_context->port_string,

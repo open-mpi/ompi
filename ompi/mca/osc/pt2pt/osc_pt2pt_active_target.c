@@ -8,7 +8,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2016 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2018 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2010-2016 IBM Corporation.  All rights reserved.
  * Copyright (c) 2012-2013 Sandia National Laboratories.  All rights reserved.
@@ -166,17 +166,16 @@ int ompi_osc_pt2pt_fence(int assert, ompi_win_t *win)
                          "osc pt2pt: fence done sending"));
 
     /* find out how much data everyone is going to send us.  */
-    ret = module->comm->c_coll->coll_reduce_scatter_block (module->epoch_outgoing_frag_count,
-                                                          &incoming_reqs, 1, MPI_UINT32_T,
-                                                          MPI_SUM, module->comm,
-                                                          module->comm->c_coll->coll_reduce_scatter_block_module);
+    ret = module->comm->c_coll->coll_reduce_scatter_block ((void *) module->epoch_outgoing_frag_count,
+                                                           &incoming_reqs, 1, MPI_UINT32_T,
+                                                           MPI_SUM, module->comm,
+                                                           module->comm->c_coll->coll_reduce_scatter_block_module);
     if (OMPI_SUCCESS != ret) {
         return ret;
     }
 
     OPAL_THREAD_LOCK(&module->lock);
-    bzero(module->epoch_outgoing_frag_count,
-          sizeof(uint32_t) * ompi_comm_size(module->comm));
+    bzero ((void *) module->epoch_outgoing_frag_count, sizeof(uint32_t) * ompi_comm_size(module->comm));
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                          "osc pt2pt: fence expects %d requests",
@@ -366,8 +365,11 @@ int ompi_osc_pt2pt_complete (ompi_win_t *win)
 
         /* XXX -- TODO -- since fragment are always delivered in order we do not need to count anything but long
          * requests. once that is done this can be removed. */
-        if (peer->active_frag && (peer->active_frag->remain_len < sizeof (complete_req))) {
-            ++complete_req.frag_count;
+        if (peer->active_frag) {
+            ompi_osc_pt2pt_frag_t *active_frag = (ompi_osc_pt2pt_frag_t *) peer->active_frag;
+            if (active_frag->remain_len < sizeof (complete_req)) {
+                ++complete_req.frag_count;
+            }
         }
 
         OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,

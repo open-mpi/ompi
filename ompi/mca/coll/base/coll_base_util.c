@@ -41,7 +41,7 @@ int ompi_coll_base_sendrecv_actual( const void* sendbuf, size_t scount,
 { /* post receive first, then send, then wait... should be fast (I hope) */
     int err, line = 0;
     size_t rtypesize, stypesize;
-    ompi_request_t *req;
+    ompi_request_t *req = MPI_REQUEST_NULL;
     ompi_status_public_t rstatus;
 
     /* post new irecv */
@@ -78,3 +78,28 @@ int ompi_coll_base_sendrecv_actual( const void* sendbuf, size_t scount,
     return (err);
 }
 
+/*
+ * ompi_mirror_perm: Returns mirror permutation of nbits low-order bits
+ *                   of x [*].
+ * [*] Warren Jr., Henry S. Hacker's Delight (2ed). 2013.
+ *     Chapter 7. Rearranging Bits and Bytes.
+ */
+unsigned int ompi_mirror_perm(unsigned int x, int nbits)
+{
+    x = (((x & 0xaaaaaaaa) >> 1) | ((x & 0x55555555) << 1));
+    x = (((x & 0xcccccccc) >> 2) | ((x & 0x33333333) << 2));
+    x = (((x & 0xf0f0f0f0) >> 4) | ((x & 0x0f0f0f0f) << 4));
+    x = (((x & 0xff00ff00) >> 8) | ((x & 0x00ff00ff) << 8));
+    x = ((x >> 16) | (x << 16));
+    return x >> (sizeof(x) * CHAR_BIT - nbits);
+}
+
+/*
+ * ompi_rounddown: Rounds a number down to nearest multiple.
+ *     rounddown(10,4) = 8, rounddown(6,3) = 6, rounddown(14,3) = 12
+ */
+int ompi_rounddown(int num, int factor)
+{
+    num /= factor;
+    return num * factor;    /* floor(num / factor) * factor */
+}

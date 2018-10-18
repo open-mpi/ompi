@@ -92,9 +92,9 @@ struct mca_rcache_base_registration_t {
     /** artifact of old mpool/rcache architecture. used by cuda code */
     unsigned char *alloc_base;
     /** number of outstanding references */
-    volatile int32_t ref_count;
+    opal_atomic_int32_t ref_count;
     /** registration flags */
-    volatile uint32_t flags;
+    opal_atomic_uint32_t flags;
     /** internal rcache context */
     void *rcache_context;
 #if OPAL_CUDA_GDR_SUPPORT

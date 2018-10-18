@@ -13,7 +13,7 @@
  * Copyright (c) 2006-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc.  All rights reserved.
  * Copyright (c) 2017      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -273,7 +273,7 @@ static void launch_daemons(int fd, short args, void *cbdata)
 
     /* number of processors needed */
     opal_argv_append(&argc, &argv, "-n");
-    asprintf(&tmp, "%lu", (unsigned long) map->num_new_daemons);
+    opal_asprintf(&tmp, "%lu", (unsigned long) map->num_new_daemons);
     opal_argv_append(&argc, &argv, tmp);
     free(tmp);
     opal_argv_append(&argc, &argv, "-N");
@@ -601,9 +601,9 @@ static int plm_alps_start_proc(int argc, char **argv, char **env,
             /* Reset PATH */
             oldenv = getenv("PATH");
             if (NULL != oldenv) {
-                asprintf(&newenv, "%s/%s:%s", prefix, bin_base, oldenv);
+                opal_asprintf(&newenv, "%s/%s:%s", prefix, bin_base, oldenv);
             } else {
-                asprintf(&newenv, "%s/%s", prefix, bin_base);
+                opal_asprintf(&newenv, "%s/%s", prefix, bin_base);
             }
             opal_setenv("PATH", newenv, true, &env);
             if (mca_plm_alps_component.debug) {
@@ -614,9 +614,9 @@ static int plm_alps_start_proc(int argc, char **argv, char **env,
             /* Reset LD_LIBRARY_PATH */
             oldenv = getenv("LD_LIBRARY_PATH");
             if (NULL != oldenv) {
-                asprintf(&newenv, "%s/%s:%s", prefix, lib_base, oldenv);
+                opal_asprintf(&newenv, "%s/%s:%s", prefix, lib_base, oldenv);
             } else {
-                asprintf(&newenv, "%s/%s", prefix, lib_base);
+                opal_asprintf(&newenv, "%s/%s", prefix, lib_base);
             }
             opal_setenv("LD_LIBRARY_PATH", newenv, true, &env);
             if (mca_plm_alps_component.debug) {

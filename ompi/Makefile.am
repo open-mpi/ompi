@@ -15,9 +15,10 @@
 # Copyright (c) 2013-2015 Los Alamos National Security, LLC. All rights
 #                         reserved.
 # Copyright (c) 2015-2017 Intel, Inc. All rights reserved.
-# Copyright (c) 2015-2017 Research Organization for Information Science
+# Copyright (c) 2015-2018 Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # Copyright (c) 2016      IBM Corporation.  All rights reserved.
+# Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -90,10 +91,12 @@ SUBDIRS = \
         mpi/fortran/mpif-h \
         $(OMPI_MPIEXT_USEMPI_DIR) \
         $(OMPI_FORTRAN_USEMPI_DIR) \
+        mpi/fortran/mpiext-use-mpi \
         mpi/fortran/use-mpi-f08/mod \
+        mpi/fortran/use-mpi-f08/bindings \
         $(OMPI_MPIEXT_USEMPIF08_DIRS) \
         mpi/fortran/use-mpi-f08 \
-        mpi/fortran/mpiext \
+        mpi/fortran/mpiext-use-mpi-f08 \
         $(MCA_ompi_FRAMEWORK_COMPONENT_DSO_SUBDIRS) \
         $(OMPI_CONTRIB_SUBDIRS)
 
@@ -119,9 +122,11 @@ DIST_SUBDIRS = \
         mpi/fortran/mpif-h \
         mpi/fortran/use-mpi-tkr \
         mpi/fortran/use-mpi-ignore-tkr \
+        mpi/fortran/mpiext-use-mpi \
         mpi/fortran/use-mpi-f08 \
         mpi/fortran/use-mpi-f08/mod \
-        mpi/fortran/mpiext \
+        mpi/fortran/use-mpi-f08/bindings \
+        mpi/fortran/mpiext-use-mpi-f08 \
         mpi/java \
         $(OMPI_MPIEXT_ALL_SUBDIRS) \
         $(MCA_ompi_FRAMEWORKS_SUBDIRS) \

@@ -3,6 +3,9 @@
  * Copyright (c) 2012-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2018      The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -18,6 +21,7 @@
 #include "ompi/memchecker.h"
 #include "ompi/request/request.h"
 #include "ompi/message/message.h"
+#include "ompi/runtime/ompi_spc.h"
 
 #if OMPI_BUILD_MPI_PROFILING
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -34,6 +38,8 @@ int MPI_Mrecv(void *buf, int count, MPI_Datatype type,
 {
     int rc = MPI_SUCCESS;
     ompi_communicator_t *comm;
+
+    SPC_RECORD(OMPI_SPC_MRECV, 1);
 
     MEMCHECKER(
         memchecker_datatype(type);

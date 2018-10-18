@@ -10,12 +10,15 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2011-2017 Cisco Systems, Inc.  All rights reserved
+ * Copyright (c) 2011-2018 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2012-2017 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (C) 2018      Mellanox Technologies, Ltd. 
+ *                         All rights reserved.
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -23,6 +26,7 @@
  * $HEADER$
  */
 
+#define OPAL_HWLOC_WANT_SHMEM 1
 
 #include "opal_config.h"
 
@@ -48,6 +52,7 @@
 #include "opal/util/output.h"
 #include "opal/util/os_dirpath.h"
 #include "opal/util/show_help.h"
+#include "opal/util/printf.h"
 #include "opal/threads/tsd.h"
 #include "opal/mca/pmix/pmix.h"
 
@@ -149,7 +154,7 @@ int opal_hwloc_base_filter_cpus(hwloc_topology_t topo)
             avail = hwloc_bitmap_alloc();
             hwloc_bitmap_and(avail, root->online_cpuset, root->allowed_cpuset);
         #else
-            avail = hwloc_bitmap_dup(root->allowed_cpuset);
+            avail = hwloc_bitmap_dup(root->cpuset);
         #endif
         OPAL_OUTPUT_VERBOSE((5, opal_hwloc_base_framework.framework_output,
                              "hwloc:base: no cpus specified - using root available cpuset"));
@@ -173,7 +178,7 @@ int opal_hwloc_base_filter_cpus(hwloc_topology_t topo)
                         hwloc_bitmap_and(pucpus, pu->online_cpuset, pu->allowed_cpuset);
                     #else
                         hwloc_bitmap_free(pucpus);
-                        pucpus = hwloc_bitmap_dup(pu->allowed_cpuset);
+                        pucpus = hwloc_bitmap_dup(pu->cpuset);
                     #endif
                     hwloc_bitmap_or(res, avail, pucpus);
                     hwloc_bitmap_copy(avail, res);
@@ -195,7 +200,7 @@ int opal_hwloc_base_filter_cpus(hwloc_topology_t topo)
                             hwloc_bitmap_and(pucpus, pu->online_cpuset, pu->allowed_cpuset);
                         #else
                             hwloc_bitmap_free(pucpus);
-                            pucpus = hwloc_bitmap_dup(pu->allowed_cpuset);
+                            pucpus = hwloc_bitmap_dup(pu->cpuset);
                         #endif
                         hwloc_bitmap_or(res, avail, pucpus);
                         hwloc_bitmap_copy(avail, res);
@@ -347,6 +352,11 @@ int opal_hwloc_base_get_topology(void)
         OPAL_MODEX_RECV_VALUE_IMMEDIATE(rc, OPAL_PMIX_HWLOC_XML_V1,
                                         &wildcard_rank, &val, OPAL_STRING);
 #endif
+        if (rc != OPAL_SUCCESS) {
+            /* check the old topo key to keep compatibility with older RMs */
+            OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, OPAL_PMIX_LOCAL_TOPO,
+                                           &wildcard_rank, &val, OPAL_STRING);
+        }
     } else {
         opal_output_verbose(1, opal_hwloc_base_framework.framework_output,
                             "hwloc:base PMIx not available");
@@ -560,30 +570,6 @@ int opal_hwloc_base_report_bind_failure(const char *file,
     return OPAL_SUCCESS;
 }
 
-static void df_search_cores(hwloc_obj_t obj, unsigned int *cnt)
-{
-    unsigned k;
-    opal_hwloc_obj_data_t *data;
-
-    if (HWLOC_OBJ_CORE == obj->type) {
-        data = (opal_hwloc_obj_data_t*)obj->userdata;
-        if (NULL == data) {
-            data = OBJ_NEW(opal_hwloc_obj_data_t);
-            obj->userdata = (void*)data;
-        }
-        if (NULL == opal_hwloc_base_cpu_list) {
-            data->npus = 1;
-        }
-        *cnt += data->npus;
-        return;
-    }
-
-    for (k=0; k < obj->arity; k++) {
-        df_search_cores(obj->children[k], cnt);
-    }
-    return;
-}
-
 /* determine if there is a single cpu in a bitmap */
 bool opal_hwloc_base_single_cpu(hwloc_cpuset_t cpuset)
 {
@@ -628,18 +614,8 @@ unsigned int opal_hwloc_base_get_npus(hwloc_topology_t topo,
              * count bits in this case as there may be more than
              * one hwthread/core. Instead, find the number of cores
              * in the system
-             *
-             * NOTE: remember, hwloc can't find "cores" in all
-             * environments. So first check to see if it found
-             * "core" at all.
              */
-            if (NULL != hwloc_get_obj_by_type(topo, HWLOC_OBJ_CORE, 0)) {
-                /* starting at the incoming obj, do a down-first search
-                 * and count the number of cores under it
-                 */
-                cnt = 0;
-                df_search_cores(obj, &cnt);
-            }
+            cnt = hwloc_get_nbobjs_inside_cpuset_by_type(topo, obj->cpuset, HWLOC_OBJ_CORE);
         } else {
             hwloc_cpuset_t cpuset;
 
@@ -732,14 +708,6 @@ unsigned int opal_hwloc_base_get_obj_idx(hwloc_topology_t topo,
  * there is a single cache object type, and the level is encoded
  * in an attribute union. So looking for cache objects involves
  * a multi-step test :-(
- *
- * And, of course, we make things even worse because we don't
- * always care about what is physically or logically present,
- * but rather what is available to us. For example, we don't
- * want to map or bind to a cpu that is offline, or one that
- * we aren't allowed by use by the OS. So we have to also filter
- * the search to avoid those objects that don't have any cpus
- * we can use :-((
  */
 static hwloc_obj_t df_search(hwloc_topology_t topo,
                              hwloc_obj_t start,
@@ -747,100 +715,66 @@ static hwloc_obj_t df_search(hwloc_topology_t topo,
                              unsigned cache_level,
                              unsigned int nobj,
                              opal_hwloc_resource_type_t rtype,
-                             unsigned int *idx,
                              unsigned int *num_objs)
 {
-    unsigned k;
     hwloc_obj_t obj;
-    opal_hwloc_obj_data_t *data;
+    int search_depth;
 
-    if (target == start->type) {
-#if HWLOC_API_VERSION < 0x20000
-        if (HWLOC_OBJ_CACHE == start->type && cache_level != start->attr->cache.depth) {
-            goto notfound;
-        }
+    search_depth = hwloc_get_type_depth(topo, target);
+    if (HWLOC_TYPE_DEPTH_MULTIPLE == search_depth) {
+        /* either v1.x Cache, or Groups */
+#if HWLOC_API_VERSION >= 0x20000
+        return NULL;
+#else
+        if (cache_level != HWLOC_OBJ_CACHE)
+            return NULL;
+        search_depth = hwloc_get_cache_type_depth(topo, cache_level, (hwloc_obj_cache_type_t) -1);
 #endif
-        if (OPAL_HWLOC_LOGICAL == rtype) {
-            /* the hwloc tree is composed of LOGICAL objects, so the only
-             * time we come here is when we are looking for logical caches
-             */
-            if (NULL != num_objs) {
-                /* we are counting the number of caches at this level */
-                *num_objs += 1;
-            } else if (*idx == nobj) {
-                /* found the specific instance of the cache level being sought */
-                return start;
-            }
-            *idx += 1;
-            return NULL;
+    }
+    if (HWLOC_TYPE_DEPTH_UNKNOWN == search_depth)
+        return NULL;
+
+    if (OPAL_HWLOC_LOGICAL == rtype) {
+        if (num_objs)
+            *num_objs = hwloc_get_nbobjs_by_depth(topo, search_depth);
+        return hwloc_get_obj_by_depth(topo, search_depth, nobj);
+    }
+    if (OPAL_HWLOC_PHYSICAL == rtype) {
+        /* the PHYSICAL object number is stored as the os_index. When
+         * counting physical objects, we can't just count the number
+         * that are in the hwloc tree as the only entries in the tree
+         * are LOGICAL objects - i.e., any physical gaps won't show. So
+         * we instead return the MAX os_index, as this is the best we
+         * can do to tell you how many PHYSICAL objects are in the system.
+         *
+         * NOTE: if the last PHYSICAL object is not present (e.g., the last
+         * socket on the node is empty), then the count we return will
+         * be wrong!
+         */
+        hwloc_obj_t found = NULL;
+        obj = NULL;
+        if (num_objs)
+            *num_objs = 0;
+        while ((obj = hwloc_get_next_obj_by_depth(topo, search_depth, obj)) != NULL) {
+            if (num_objs && obj->os_index > *num_objs)
+                *num_objs = obj->os_index;
+            if (obj->os_index == nobj)
+                found = obj;
         }
-        if (OPAL_HWLOC_PHYSICAL == rtype) {
-            /* the PHYSICAL object number is stored as the os_index. When
-             * counting physical objects, we can't just count the number
-             * that are in the hwloc tree as the only entries in the tree
-             * are LOGICAL objects - i.e., any physical gaps won't show. So
-             * we instead return the MAX os_index, as this is the best we
-             * can do to tell you how many PHYSICAL objects are in the system.
-             *
-             * NOTE: if the last PHYSICAL object is not present (e.g., the last
-             * socket on the node is empty), then the count we return will
-             * be wrong!
-             */
-            if (NULL != num_objs) {
-                /* we are counting the number of these objects */
-                if (*num_objs < (unsigned int)start->os_index) {
-                    *num_objs = (unsigned int)start->os_index;
-                }
-            } else if (*idx == nobj) {
-                /* found the specific instance of the cache level being sought */
-                return start;
-            }
-            *idx += 1;
-            return NULL;
+        return found;
+    }
+    if (OPAL_HWLOC_AVAILABLE == rtype) {
+        unsigned idx = 0;
+        if (num_objs)
+            *num_objs = hwloc_get_nbobjs_inside_cpuset_by_depth(topo, start->cpuset, search_depth);
+        obj = NULL;
+        while ((obj = hwloc_get_next_obj_inside_cpuset_by_depth(topo, start->cpuset, search_depth, obj)) != NULL) {
+            if (idx == nobj)
+                return obj;
+            idx++;
         }
-        if (OPAL_HWLOC_AVAILABLE == rtype) {
-            /* check - do we already know the index of this object */
-            data = (opal_hwloc_obj_data_t*)start->userdata;
-            if (NULL == data) {
-                data = OBJ_NEW(opal_hwloc_obj_data_t);
-                start->userdata = (void*)data;
-            }
-            /* if we already know our location and it matches,
-             * then we are good
-             */
-            if (UINT_MAX != data->idx && data->idx == nobj) {
-                return start;
-            }
-            /* see if we already know our available cpuset */
-            if (NULL == data->available) {
-                data->available = hwloc_bitmap_dup(start->cpuset);
-            }
-            if (NULL != data->available && !hwloc_bitmap_iszero(data->available)) {
-                if (NULL != num_objs) {
-                    *num_objs += 1;
-                } else if (*idx == nobj) {
-                    /* cache the location */
-                    data->idx = *idx;
-                    return start;
-                }
-                *idx += 1;
-            }
-            return NULL;
-        }
-        /* if it wasn't one of the above, then we are lost */
         return NULL;
     }
-
-#if HWLOC_API_VERSION < 0x20000
-  notfound:
-#endif
-    for (k=0; k < start->arity; k++) {
-        obj = df_search(topo, start->children[k], target, cache_level, nobj, rtype, idx, num_objs);
-        if (NULL != obj) {
-            return obj;
-        }
-    }
-
     return NULL;
 }
 
@@ -849,7 +783,7 @@ unsigned int opal_hwloc_base_get_nbobjs_by_type(hwloc_topology_t topo,
                                                 unsigned cache_level,
                                                 opal_hwloc_resource_type_t rtype)
 {
-    unsigned int num_objs, idx;
+    unsigned int num_objs;
     hwloc_obj_t obj;
     opal_hwloc_summary_t *sum;
     opal_hwloc_topo_data_t *data;
@@ -881,7 +815,6 @@ unsigned int opal_hwloc_base_get_nbobjs_by_type(hwloc_topology_t topo,
 
     /* for everything else, we have to do some work */
     num_objs = 0;
-    idx = 0;
     obj = hwloc_get_root_obj(topo);
 
     /* first see if the topology already has this summary */
@@ -904,7 +837,7 @@ unsigned int opal_hwloc_base_get_nbobjs_by_type(hwloc_topology_t topo,
     }
 
     /* don't already know it - go get it */
-    df_search(topo, obj, target, cache_level, 0, rtype, &idx, &num_objs);
+    df_search(topo, obj, target, cache_level, 0, rtype, &num_objs);
 
     /* cache the results for later */
     sum = OBJ_NEW(opal_hwloc_summary_t);
@@ -921,124 +854,6 @@ unsigned int opal_hwloc_base_get_nbobjs_by_type(hwloc_topology_t topo,
     return num_objs;
 }
 
-static hwloc_obj_t df_search_min_bound(hwloc_topology_t topo,
-                                       hwloc_obj_t start,
-                                       hwloc_obj_type_t target,
-                                       unsigned cache_level,
-                                       unsigned int *min_bound)
-{
-    unsigned k;
-    hwloc_obj_t obj, save=NULL;
-    opal_hwloc_obj_data_t *data;
-
-    if (target == start->type) {
-        /* only consider procs that are allowed */
-        if (0 == (k = opal_hwloc_base_get_npus(topo, start))) {
-            goto notfound;
-        }
-#if HWLOC_API_VERSION < 0x20000
-        if (HWLOC_OBJ_CACHE == start->type && cache_level != start->attr->cache.depth) {
-            goto notfound;
-        }
-#endif
-        /* see how many procs are bound to us */
-        data = (opal_hwloc_obj_data_t*)start->userdata;
-        if (NULL == data) {
-            data = OBJ_NEW(opal_hwloc_obj_data_t);
-            start->userdata = data;
-        }
-
-        OPAL_OUTPUT_VERBOSE((5, opal_hwloc_base_framework.framework_output,
-                             "hwloc:base:min_bound_under_obj object %s:%u nbound %u min %u",
-                             hwloc_obj_type_string(target), start->logical_index,
-                             data->num_bound, *min_bound));
-        if (data->num_bound < *min_bound) {
-            *min_bound = data->num_bound;
-            return start;
-        }
-        /* if we have more procs bound to us than the min, return NULL */
-        return NULL;
-    }
-
- notfound:
-    for (k=0; k < start->arity; k++) {
-        obj = df_search_min_bound(topo, start->children[k], target, cache_level, min_bound);
-        if (NULL != obj) {
-            save = obj;
-        }
-        /* if the target level is HWTHREAD and we are NOT treating
-         * hwthreads as separate cpus, then we can only consider
-         * the 0th hwthread on a core
-         */
-        if (HWLOC_OBJ_CORE == start->type && HWLOC_OBJ_PU == target &&
-            !opal_hwloc_use_hwthreads_as_cpus) {
-            break;
-        }
-    }
-
-    return save;
-}
-
-hwloc_obj_t opal_hwloc_base_find_min_bound_target_under_obj(hwloc_topology_t topo,
-                                                            hwloc_obj_t obj,
-                                                            hwloc_obj_type_t target,
-                                                            unsigned cache_level)
-{
-    unsigned int min_bound;
-    hwloc_obj_t loc;
-
-    /* bozo check */
-    if (NULL == topo || NULL == obj) {
-        OPAL_OUTPUT_VERBOSE((5, opal_hwloc_base_framework.framework_output,
-                             "hwloc:base:find_min_bound_under_obj NULL %s",
-                             (NULL == topo) ? "topology" : "object"));
-        return NULL;
-    }
-
-
-    /* if the object and target is the same type, then there is
-     * nothing under it, so just return itself
-     */
-    if (target == obj->type) {
-        /* again, we have to treat caches differently as
-         * the levels distinguish them
-         */
-#if HWLOC_API_VERSION < 0x20000
-        if (HWLOC_OBJ_CACHE == target &&
-            cache_level < obj->attr->cache.depth) {
-            goto moveon;
-        }
-#endif
-        return obj;
-    }
-
-#if HWLOC_API_VERSION < 0x20000
-  moveon:
-#endif
-    /* the hwloc accessors all report at the topo level,
-     * so we have to do some work
-     */
-    min_bound = UINT_MAX;
-
-    loc = df_search_min_bound(topo, obj, target, cache_level, &min_bound);
-
-    if (NULL != loc) {
-#if HWLOC_API_VERSION < 0x20000
-        if (HWLOC_OBJ_CACHE == target) {
-            OPAL_OUTPUT_VERBOSE((5, opal_hwloc_base_framework.framework_output,
-                        "hwloc:base:min_bound_under_obj found min bound of %u on %s:%u:%u",
-                        min_bound, hwloc_obj_type_string(target),
-                        cache_level, loc->logical_index));
-        } else
-#endif
-            OPAL_OUTPUT_VERBOSE((5, opal_hwloc_base_framework.framework_output,
-                        "hwloc:base:min_bound_under_obj found min bound of %u on %s:%u",
-                        min_bound, hwloc_obj_type_string(target), loc->logical_index));
-    }
-
-    return loc;
-}
-
 /* as above, only return the Nth instance of the specified object
  * type from inside the topology
  */
@@ -1048,7 +863,6 @@ hwloc_obj_t opal_hwloc_base_get_obj_by_type(hwloc_topology_t topo,
                                             unsigned int instance,
                                             opal_hwloc_resource_type_t rtype)
 {
-    unsigned int idx;
     hwloc_obj_t obj;
 
     /* bozo check */
@@ -1069,9 +883,8 @@ hwloc_obj_t opal_hwloc_base_get_obj_by_type(hwloc_topology_t topo,
     }
 
     /* for everything else, we have to do some work */
-    idx = 0;
     obj = hwloc_get_root_obj(topo);
-    return df_search(topo, obj, target, cache_level, instance, rtype, &idx, NULL);
+    return df_search(topo, obj, target, cache_level, instance, rtype, NULL);
 }
 
 static void df_clear(hwloc_topology_t topo,
@@ -1179,7 +992,6 @@ static int socket_core_to_cpu_set(char *socket_core_list,
     int lower_range, upper_range;
     int socket_id, core_id;
     hwloc_obj_t socket, core;
-    unsigned int idx;
     hwloc_obj_type_t obj_type = HWLOC_OBJ_CORE;
 
     socket_core = opal_argv_split(socket_core_list, ':');
@@ -1223,10 +1035,9 @@ static int socket_core_to_cpu_set(char *socket_core_list,
                 for (j=0; NULL != list[j]; j++) {
                     core_id = atoi(list[j]);
                     /* get that object */
-                    idx = 0;
                     if (NULL == (core = df_search(topo, socket, obj_type, 0,
                                                   core_id, OPAL_HWLOC_AVAILABLE,
-                                                  &idx, NULL))) {
+                                                  NULL))) {
                         opal_argv_free(list);
                         opal_argv_free(range);
                         opal_argv_free(socket_core);
@@ -1246,10 +1057,9 @@ static int socket_core_to_cpu_set(char *socket_core_list,
                 upper_range = atoi(range[1]);
                 for (core_id=lower_range; core_id <= upper_range; core_id++) {
                     /* get that object */
-                    idx = 0;
                     if (NULL == (core = df_search(topo, socket, obj_type, 0,
                                                   core_id, OPAL_HWLOC_AVAILABLE,
-                                                  &idx, NULL))) {
+                                                  NULL))) {
                         opal_argv_free(range);
                         opal_argv_free(socket_core);
                         return OPAL_ERR_NOT_FOUND;
@@ -2056,9 +1866,18 @@ static void sort_by_dist(hwloc_topology_t topo, char* device_name, opal_list_t *
             if (!strcmp(device_obj->name, device_name)) {
                 /* find numa node containing this device */
                 obj = device_obj->parent;
+#if HWLOC_API_VERSION < 0x20000
                 while ((obj != NULL) && (obj->type != HWLOC_OBJ_NODE)) {
                     obj = obj->parent;
                 }
+#else
+                while (obj && !obj->memory_arity) {
+                    obj = obj->parent; /* no memory child, walk up */
+                }
+                if (obj != NULL) {
+                    obj = obj->memory_first_child;
+                }
+#endif
                 if (obj == NULL) {
                     opal_output_verbose(5, opal_hwloc_base_framework.framework_output,
                             "hwloc:base:get_sorted_numa_list: NUMA node closest to %s wasn't found.",
@@ -2244,7 +2063,7 @@ char* opal_hwloc_base_get_topo_signature(hwloc_topology_t topo)
     endian = "unknown";
 #endif
 
-    asprintf(&sig, "%dN:%dS:%dL3:%dL2:%dL1:%dC:%dH:%s:%s",
+    opal_asprintf(&sig, "%dN:%dS:%dL3:%dL2:%dL1:%dC:%dH:%s:%s",
              nnuma, nsocket, nl3, nl2, nl1, ncore, nhwt, arch, endian);
     return sig;
 }
@@ -2320,14 +2139,14 @@ char* opal_hwloc_base_get_locality_string(hwloc_topology_t topo,
             hwloc_bitmap_list_asprintf(&tmp, result);
             switch(obj->type) {
                 case HWLOC_OBJ_NODE:
-                    asprintf(&t2, "%sNM%s:", (NULL == locality) ? "" : locality, tmp);
+                    opal_asprintf(&t2, "%sNM%s:", (NULL == locality) ? "" : locality, tmp);
                     if (NULL != locality) {
                         free(locality);
                     }
                     locality = t2;
                     break;
                 case HWLOC_OBJ_SOCKET:
-                    asprintf(&t2, "%sSK%s:", (NULL == locality) ? "" : locality, tmp);
+                    opal_asprintf(&t2, "%sSK%s:", (NULL == locality) ? "" : locality, tmp);
                     if (NULL != locality) {
                         free(locality);
                     }
@@ -2336,21 +2155,21 @@ char* opal_hwloc_base_get_locality_string(hwloc_topology_t topo,
 #if HWLOC_API_VERSION < 0x20000
                 case HWLOC_OBJ_CACHE:
                     if (3 == obj->attr->cache.depth) {
-                        asprintf(&t2, "%sL3%s:", (NULL == locality) ? "" : locality, tmp);
+                        opal_asprintf(&t2, "%sL3%s:", (NULL == locality) ? "" : locality, tmp);
                         if (NULL != locality) {
                             free(locality);
                         }
                         locality = t2;
                         break;
                     } else if (2 == obj->attr->cache.depth) {
-                        asprintf(&t2, "%sL2%s:", (NULL == locality) ? "" : locality, tmp);
+                        opal_asprintf(&t2, "%sL2%s:", (NULL == locality) ? "" : locality, tmp);
                         if (NULL != locality) {
                             free(locality);
                         }
                         locality = t2;
                         break;
                     } else {
-                        asprintf(&t2, "%sL1%s:", (NULL == locality) ? "" : locality, tmp);
+                        opal_asprintf(&t2, "%sL1%s:", (NULL == locality) ? "" : locality, tmp);
                         if (NULL != locality) {
                             free(locality);
                         }
@@ -2360,21 +2179,21 @@ char* opal_hwloc_base_get_locality_string(hwloc_topology_t topo,
                     break;
 #else
                 case HWLOC_OBJ_L3CACHE:
-                    asprintf(&t2, "%sL3%s:", (NULL == locality) ? "" : locality, tmp);
+                    opal_asprintf(&t2, "%sL3%s:", (NULL == locality) ? "" : locality, tmp);
                     if (NULL != locality) {
                         free(locality);
                     }
                     locality = t2;
                     break;
                 case HWLOC_OBJ_L2CACHE:
-                    asprintf(&t2, "%sL2%s:", (NULL == locality) ? "" : locality, tmp);
+                    opal_asprintf(&t2, "%sL2%s:", (NULL == locality) ? "" : locality, tmp);
                     if (NULL != locality) {
                         free(locality);
                     }
                     locality = t2;
                     break;
                 case HWLOC_OBJ_L1CACHE:
-                    asprintf(&t2, "%sL1%s:", (NULL == locality) ? "" : locality, tmp);
+                    opal_asprintf(&t2, "%sL1%s:", (NULL == locality) ? "" : locality, tmp);
                     if (NULL != locality) {
                         free(locality);
                     }
@@ -2382,14 +2201,14 @@ char* opal_hwloc_base_get_locality_string(hwloc_topology_t topo,
                     break;
 #endif
                 case HWLOC_OBJ_CORE:
-                    asprintf(&t2, "%sCR%s:", (NULL == locality) ? "" : locality, tmp);
+                    opal_asprintf(&t2, "%sCR%s:", (NULL == locality) ? "" : locality, tmp);
                     if (NULL != locality) {
                         free(locality);
                     }
                     locality = t2;
                     break;
                 case HWLOC_OBJ_PU:
-                    asprintf(&t2, "%sHT%s:", (NULL == locality) ? "" : locality, tmp);
+                    opal_asprintf(&t2, "%sHT%s:", (NULL == locality) ? "" : locality, tmp);
                     if (NULL != locality) {
                         free(locality);
                     }

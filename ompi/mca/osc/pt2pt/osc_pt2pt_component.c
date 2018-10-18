@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2015 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2018 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2006-2008 University of Houston.  All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
@@ -17,6 +17,7 @@
  * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -25,6 +26,8 @@
  */
 
 #include "ompi_config.h"
+#include "opal/util/show_help.h"
+#include "opal/util/printf.h"
 
 #include <string.h>
 
@@ -67,47 +70,46 @@ ompi_osc_pt2pt_component_t mca_osc_pt2pt_component = {
 
 
 ompi_osc_pt2pt_module_t ompi_osc_pt2pt_module_template = {
-    {
-        NULL, /* shared_query */
+    .super = {
+        .osc_win_attach = ompi_osc_pt2pt_attach,
+        .osc_win_detach = ompi_osc_pt2pt_detach,
+        .osc_free = ompi_osc_pt2pt_free,
 
-        ompi_osc_pt2pt_attach,
-        ompi_osc_pt2pt_detach,
-        ompi_osc_pt2pt_free,
+        .osc_put = ompi_osc_pt2pt_put,
+        .osc_get = ompi_osc_pt2pt_get,
+        .osc_accumulate = ompi_osc_pt2pt_accumulate,
+        .osc_compare_and_swap = ompi_osc_pt2pt_compare_and_swap,
+        .osc_fetch_and_op = ompi_osc_pt2pt_fetch_and_op,
+        .osc_get_accumulate = ompi_osc_pt2pt_get_accumulate,
 
-        ompi_osc_pt2pt_put,
-        ompi_osc_pt2pt_get,
-        ompi_osc_pt2pt_accumulate,
-        ompi_osc_pt2pt_compare_and_swap,
-        ompi_osc_pt2pt_fetch_and_op,
-        ompi_osc_pt2pt_get_accumulate,
+        .osc_rput = ompi_osc_pt2pt_rput,
+        .osc_rget = ompi_osc_pt2pt_rget,
+        .osc_raccumulate = ompi_osc_pt2pt_raccumulate,
+        .osc_rget_accumulate = ompi_osc_pt2pt_rget_accumulate,
 
-        ompi_osc_pt2pt_rput,
-        ompi_osc_pt2pt_rget,
-        ompi_osc_pt2pt_raccumulate,
-        ompi_osc_pt2pt_rget_accumulate,
+        .osc_fence = ompi_osc_pt2pt_fence,
 
-        ompi_osc_pt2pt_fence,
+        .osc_start = ompi_osc_pt2pt_start,
+        .osc_complete = ompi_osc_pt2pt_complete,
+        .osc_post = ompi_osc_pt2pt_post,
+        .osc_wait = ompi_osc_pt2pt_wait,
+        .osc_test = ompi_osc_pt2pt_test,
 
-        ompi_osc_pt2pt_start,
-        ompi_osc_pt2pt_complete,
-        ompi_osc_pt2pt_post,
-        ompi_osc_pt2pt_wait,
-        ompi_osc_pt2pt_test,
+        .osc_lock = ompi_osc_pt2pt_lock,
+        .osc_unlock = ompi_osc_pt2pt_unlock,
+        .osc_lock_all = ompi_osc_pt2pt_lock_all,
+        .osc_unlock_all = ompi_osc_pt2pt_unlock_all,
 
-        ompi_osc_pt2pt_lock,
-        ompi_osc_pt2pt_unlock,
-        ompi_osc_pt2pt_lock_all,
-        ompi_osc_pt2pt_unlock_all,
-
-        ompi_osc_pt2pt_sync,
-        ompi_osc_pt2pt_flush,
-        ompi_osc_pt2pt_flush_all,
-        ompi_osc_pt2pt_flush_local,
-        ompi_osc_pt2pt_flush_local_all,
+        .osc_sync = ompi_osc_pt2pt_sync,
+        .osc_flush = ompi_osc_pt2pt_flush,
+        .osc_flush_all = ompi_osc_pt2pt_flush_all,
+        .osc_flush_local = ompi_osc_pt2pt_flush_local,
+        .osc_flush_local_all = ompi_osc_pt2pt_flush_local_all,
     }
 };
 
 bool ompi_osc_pt2pt_no_locks = false;
+static bool using_thread_multiple = false;
 
 /* look up parameters for configuring this window.  The code first
    looks in the info structure passed by the user, then through mca
@@ -206,6 +208,10 @@ component_init(bool enable_progress_threads,
 {
     int ret;
 
+    if (enable_mpi_threads) {
+        using_thread_multiple = true;
+    }
+
     OBJ_CONSTRUCT(&mca_osc_pt2pt_component.lock, opal_mutex_t);
     OBJ_CONSTRUCT(&mca_osc_pt2pt_component.pending_operations, opal_list_t);
     OBJ_CONSTRUCT(&mca_osc_pt2pt_component.pending_operations_lock, opal_mutex_t);
@@ -301,6 +307,15 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
     /* We don't support shared windows; that's for the sm onesided
        component */
     if (MPI_WIN_FLAVOR_SHARED == flavor) return OMPI_ERR_NOT_SUPPORTED;
+
+    /*
+     * workaround for issue https://github.com/open-mpi/ompi/issues/2614
+     * The following check needs to be removed once 2614 is addressed.
+     */
+    if (using_thread_multiple) {
+        opal_show_help("help-osc-pt2pt.txt", "mpi-thread-multiple-not-supported", true);
+        return OMPI_ERR_NOT_SUPPORTED;
+    }
 
     /* create module structure with all fields initialized to zero */
     module = (ompi_osc_pt2pt_module_t*)
@@ -398,7 +413,7 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
     /* fill in window information */
     *model = MPI_WIN_UNIFIED;
     win->w_osc_module = (ompi_osc_base_module_t*) module;
-    asprintf(&name, "pt2pt window %d", ompi_comm_get_cid(module->comm));
+    opal_asprintf(&name, "pt2pt window %d", ompi_comm_get_cid(module->comm));
     ompi_win_set_name(win, name);
     free(name);
 
@@ -488,7 +503,7 @@ static void ompi_osc_pt2pt_peer_construct (ompi_osc_pt2pt_peer_t *peer)
 {
     OBJ_CONSTRUCT(&peer->queued_frags, opal_list_t);
     OBJ_CONSTRUCT(&peer->lock, opal_mutex_t);
-    peer->active_frag = NULL;
+    peer->active_frag = 0;
     peer->passive_incoming_frag_count = 0;
     peer->flags = 0;
 }

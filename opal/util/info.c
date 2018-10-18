@@ -10,13 +10,13 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2018 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2012-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
+ * Copyright (c) 2016-2018 IBM Corporation. All rights reserved.
  * Copyright (c) 2017      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
@@ -41,8 +41,7 @@
 #include "opal/util/argv.h"
 #include "opal/util/opal_getcwd.h"
 #include "opal/util/output.h"
-#include "opal/util/strncpy.h"
-
+#include "opal/util/string_copy.h"
 #include "opal/util/info.h"
 
 /*
@@ -97,7 +96,6 @@ static void opal_info_get_nolock (opal_info_t *info, const char *key, int valuel
                                  char *value, int *flag)
 {
     opal_info_entry_t *search;
-    int value_length;
 
     search = info_find_key (info, key);
     if (NULL == search){
@@ -105,25 +103,10 @@ static void opal_info_get_nolock (opal_info_t *info, const char *key, int valuel
     } else if (value && valuelen) {
         /*
          * We have found the element, so we can return the value
-         * Set the flag, value_length and value
+         * Set the flag and value
          */
-         *flag = 1;
-         value_length = strlen(search->ie_value);
-         /*
-          * If the stored value is shorter than valuelen, then
-          * we can copy the entire value out. Else, we have to
-          * copy ONLY valuelen bytes out
-          */
-          if (value_length < valuelen ) {
-               strcpy(value, search->ie_value);
-          } else {
-               opal_strncpy(value, search->ie_value, valuelen);
-               if (OPAL_MAX_INFO_VAL == valuelen) {
-                   value[valuelen-1] = 0;
-               } else {
-                   value[valuelen] = 0;
-               }
-          }
+        *flag = 1;
+        opal_string_copy(value, search->ie_value, valuelen);
     }
 }
 
@@ -152,7 +135,7 @@ static int opal_info_set_nolock (opal_info_t *info, const char *key, const char 
             OPAL_THREAD_UNLOCK(info->i_lock);
             return OPAL_ERR_OUT_OF_RESOURCE;
         }
-        strncpy (new_info->ie_key, key, OPAL_MAX_INFO_KEY);
+        opal_string_copy (new_info->ie_key, key, OPAL_MAX_INFO_KEY);
         new_info->ie_value = new_value;
         opal_list_append (&(info->super), (opal_list_item_t *) new_info);
     }
@@ -176,7 +159,7 @@ int opal_info_dup_mode (opal_info_t *info, opal_info_t **newinfo,
 {
     int err, flag;
     opal_info_entry_t *iterator;
-    char savedkey[OPAL_MAX_INFO_KEY];
+    char savedkey[OPAL_MAX_INFO_KEY + 1]; // iterator->ie_key has this as its size
     char savedval[OPAL_MAX_INFO_VAL];
     char *valptr, *pkey;
     int is_IN_key;
@@ -191,8 +174,10 @@ int opal_info_dup_mode (opal_info_t *info, opal_info_t **newinfo,
          exists_IN_key = 0;
          exists_reg_key = 0;
          pkey = iterator->ie_key;
-         if (0 == strncmp(iterator->ie_key, "__IN_", 5)) {
-             pkey += 5;
+         if (0 == strncmp(iterator->ie_key, OPAL_INFO_SAVE_PREFIX,
+             strlen(OPAL_INFO_SAVE_PREFIX)))
+        {
+             pkey += strlen(OPAL_INFO_SAVE_PREFIX);
 
              is_IN_key = 1;
              exists_IN_key = 1;
@@ -205,8 +190,10 @@ int opal_info_dup_mode (opal_info_t *info, opal_info_t **newinfo,
              exists_reg_key = 1;
 
 // see if there is an __IN_<key> for the current <key>
-             if (strlen(iterator->ie_key) + 5 < OPAL_MAX_INFO_KEY) {
-                 sprintf(savedkey, "__IN_%s", iterator->ie_key);
+             if (strlen(OPAL_INFO_SAVE_PREFIX) + strlen(pkey) < OPAL_MAX_INFO_KEY) {
+                 snprintf(savedkey, OPAL_MAX_INFO_KEY+1,
+                     OPAL_INFO_SAVE_PREFIX "%s", pkey);
+// (the prefix macro is a string, so the unreadable part above is a string concatenation)
                  opal_info_get_nolock (info, savedkey, OPAL_MAX_INFO_VAL,
                                        savedval, &flag);
              } else {
@@ -468,7 +455,7 @@ int opal_info_get_nthkey (opal_info_t *info, int n, char *key)
      * cast it to opal_info_entry_t before we can use it to
      * access the value
      */
-    strncpy(key, iterator->ie_key, OPAL_MAX_INFO_KEY);
+    opal_string_copy(key, iterator->ie_key, OPAL_MAX_INFO_KEY);
     OPAL_THREAD_UNLOCK(info->i_lock);
     return OPAL_SUCCESS;
 }

@@ -1,0 +1,39 @@
+1. prepare new romio directory
+cp -a <old romio> <new romio>
+# cp -a ompi/mca/io/romio ompi/mca/io/romio321
+rm -rf <new romio>/romio
+# rm -rf ompi/mca/io/romio321/romio
+git add <new romio>
+# git add ompi/mca/io/romio321
+# git commit
+
+2. import new romio
+cp -a <mpich dir>/src/mpi/romio <new romio>
+# cp -a /.../mpich-3.2b1/src/mpi/romio ompi/mca/io/romio321
+git add <new romio>
+# git add ompi/mca/io/romio321
+# git commit
+
+3. patch romio
+cd <new romio>
+# cd ompi/mca/io/romio321
+# git show 7a7968f02e2bad912426d1535119fb30d881b460 | patch -p5
+# cd ../../../..
+git add <new romio>
+# git add ompi/mca/io/romio321
+# git commit
+
+4. prepare ompi to use new romio
+vi <new romio>/Makefile.am <new romio>/configure.m4 <new romio>/src/Makefile.extra
+# vi ompi/mca/io/romio321/Makefile.am ompi/mca/io/romio321/configure.m4 ompi/mca/io/romio321/src/Makefile.extra
+git add <new romio>
+# git add ompi/mca/io/romio321
+# git commit
+
+
+5. remove old romio
+git rm -r <old romio>
+# git rm -r ompi/mca/io/romio
+# git commit
+rm -rf <old romio>
+# rm -rf ompi/mca/io/romio

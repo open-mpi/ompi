@@ -35,15 +35,13 @@ SHMEM_GENERATE_FORTRAN_BINDINGS_FUNCTION (ompi_fortran_real8_t,
 ompi_fortran_real8_t shmem_real8_fetch_f(FORTRAN_POINTER_T target, MPI_Fint *pe)
 {
     ompi_fortran_real8_t out_value = 0;
-    oshmem_op_t* op = oshmem_op_sum_freal8;
-    int value = 0;
+    ompi_fortran_real8_t value = 0;
 
-    MCA_ATOMIC_CALL(fadd(FPTR_2_VOID_PTR(target),
+    MCA_ATOMIC_CALL(fadd(oshmem_ctx_default, FPTR_2_VOID_PTR(target),
         (void *)&out_value,
-        (const void *)&value,
+        value,
         sizeof(out_value),
-        OMPI_FINT_2_INT(*pe),
-        op));
+        OMPI_FINT_2_INT(*pe)));
 
     return out_value;
 }

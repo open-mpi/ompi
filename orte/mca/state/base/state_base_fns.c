@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
- * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2018      Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -38,6 +40,7 @@
 #include "orte/mca/routed/routed.h"
 #include "orte/util/session_dir.h"
 #include "orte/util/threads.h"
+#include "orte/util/show_help.h"
 
 #include "orte/mca/state/base/base.h"
 #include "orte/mca/state/base/state_private.h"
@@ -405,8 +408,10 @@ static void cleanup_node(orte_proc_t *proc)
     if (NULL == (node = proc->node)) {
         return;
     }
-    node->num_procs--;
-    node->slots_inuse--;
+    if (!ORTE_FLAG_TEST(proc, ORTE_PROC_FLAG_TOOL)) {
+        node->num_procs--;
+        node->slots_inuse--;
+    }
     for (i=0; i < node->procs->size; i++) {
         if (NULL == (p = (orte_proc_t*)opal_pointer_array_get_item(node->procs, i))) {
             continue;
@@ -546,36 +551,17 @@ static void _send_notification(int status,
         return;
     }
 
-    if (OPAL_ERR_PROC_ABORTED == status) {
-        /* we will pass three opal_value_t's */
-        rc = 3;
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &rc, 1, OPAL_INT))) {
-            ORTE_ERROR_LOG(rc);
-            OBJ_RELEASE(buf);
-            return;
-        }
-        /* pass along the affected proc(s) */
-        OBJ_CONSTRUCT(&kv, opal_value_t);
-        kv.key = strdup(OPAL_PMIX_EVENT_AFFECTED_PROC);
-        kv.type = OPAL_NAME;
-        kv.data.name.jobid = proc->jobid;
-        kv.data.name.vpid = proc->vpid;
-        kvptr = &kv;
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &kvptr, 1, OPAL_VALUE))) {
-            ORTE_ERROR_LOG(rc);
-            OBJ_DESTRUCT(&kv);
-            OBJ_RELEASE(buf);
-            return;
-        }
-        OBJ_DESTRUCT(&kv);
+    if (ORTE_VPID_WILDCARD == target->vpid) {
+        /* we will only pass the affected proc */
+        rc = 1;
     } else {
-        /* we are going to pass two opal_value_t's */
+        /* we have to pass the target */
         rc = 2;
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &rc, 1, OPAL_INT))) {
-            ORTE_ERROR_LOG(rc);
-            OBJ_RELEASE(buf);
-            return;
-        }
+    }
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &rc, 1, OPAL_INT))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(buf);
+        return;
     }
 
     /* pass along the affected proc(s) */
@@ -593,23 +579,8 @@ static void _send_notification(int status,
     }
     OBJ_DESTRUCT(&kv);
 
-    /* pass along the proc(s) to be notified */
-    OBJ_CONSTRUCT(&kv, opal_value_t);
-    kv.key = strdup(OPAL_PMIX_EVENT_CUSTOM_RANGE);
-    kv.type = OPAL_NAME;
-    kv.data.name.jobid = target->jobid;
-    kv.data.name.vpid = target->vpid;
-    kvptr = &kv;
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &kvptr, 1, OPAL_VALUE))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_DESTRUCT(&kv);
-        OBJ_RELEASE(buf);
-        return;
-    }
-    OBJ_DESTRUCT(&kv);
-
-    /* if the targets are a wildcard, then xcast it to everyone */
     if (ORTE_VPID_WILDCARD == target->vpid) {
+        /* xcast it to everyone */
         OBJ_CONSTRUCT(&sig, orte_grpcomm_signature_t);
         sig.signature = (orte_process_name_t*)malloc(sizeof(orte_process_name_t));
         sig.signature[0].jobid = ORTE_PROC_MY_NAME->jobid;
@@ -622,6 +593,20 @@ static void _send_notification(int status,
         OBJ_DESTRUCT(&sig);
         OBJ_RELEASE(buf);
     } else {
+        /* pass along the proc to be notified */
+        OBJ_CONSTRUCT(&kv, opal_value_t);
+        kv.key = strdup(OPAL_PMIX_EVENT_CUSTOM_RANGE);
+        kv.type = OPAL_NAME;
+        kv.data.name.jobid = target->jobid;
+        kv.data.name.vpid = target->vpid;
+        kvptr = &kv;
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &kvptr, 1, OPAL_VALUE))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_DESTRUCT(&kv);
+            OBJ_RELEASE(buf);
+            return;
+        }
+        OBJ_DESTRUCT(&kv);
         /* get the daemon hosting the proc to be notified */
         daemon.jobid = ORTE_PROC_MY_NAME->jobid;
         daemon.vpid = orte_get_proc_daemon_vpid(target);
@@ -845,10 +830,7 @@ void orte_state_base_check_all_complete(int fd, short args, void *cbdata)
         }
 
         /* warn user */
-        opal_output(orte_clean_output,
-                    "-------------------------------------------------------\n"
-                    "While %s job %s terminated normally, %d %s. Further examination may be required.\n"
-                    "-------------------------------------------------------",
+        orte_show_help("help-state-base.txt", "normal-termination-but", true,
                     (1 == ORTE_LOCAL_JOBID(jdata->jobid)) ? "the primary" : "child",
                     (1 == ORTE_LOCAL_JOBID(jdata->jobid)) ? "" : ORTE_LOCAL_JOBID_PRINT(jdata->jobid),
                     i32, (1 == i32) ? "process returned\na non-zero exit code." :
@@ -1136,9 +1118,9 @@ void orte_state_base_check_fds(orte_job_t *jdata)
             opal_argv_free(list);
             list = NULL;
             if (NULL == result) {
-                asprintf(&result, "    %d\t(%s)\t%s\n", i, info, status);
+                opal_asprintf(&result, "    %d\t(%s)\t%s\n", i, info, status);
             } else {
-                asprintf(&r2, "%s    %d\t(%s)\t%s\n", result, i, info, status);
+                opal_asprintf(&r2, "%s    %d\t(%s)\t%s\n", result, i, info, status);
                 free(result);
                 result = r2;
             }
@@ -1146,7 +1128,7 @@ void orte_state_base_check_fds(orte_job_t *jdata)
         }
         ++cnt;
     }
-    asprintf(&r2, "%s: %d open file descriptors after job %d completed\n%s",
+    opal_asprintf(&r2, "%s: %d open file descriptors after job %d completed\n%s",
              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), cnt, ORTE_LOCAL_JOBID(jdata->jobid), result);
     opal_output(0, "%s", r2);
     free(result);

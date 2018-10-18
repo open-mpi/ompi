@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2009 Mellanox Technologies. All rights reserved.
- * Copyright (c) 2006-2015 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2006-2018 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
  * Copyright (c) 2009-2010 Oracle and/or its affiliates.  All rights reserved.
@@ -20,6 +20,7 @@
  * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -31,6 +32,7 @@
 
 #include <string.h>
 #include "opal/util/bit_ops.h"
+#include "opal/util/printf.h"
 #include "opal/mca/common/verbs/common_verbs.h"
 #include "opal/mca/installdirs/installdirs.h"
 #include "opal/util/os_dirpath.h"
@@ -267,7 +269,7 @@ int btl_openib_register_mca_params(void)
                    MCA_BTL_OPENIB_CQ_POLL_BATCH_DEFAULT, &mca_btl_openib_component.cq_poll_batch,
                    REGINT_GE_ONE));
 
-    asprintf(&str, "%s/mca-btl-openib-device-params.ini",
+    opal_asprintf(&str, "%s/mca-btl-openib-device-params.ini",
              opal_install_dirs.opaldatadir);
     if (NULL == str) {
         return OPAL_ERR_OUT_OF_RESOURCE;
@@ -290,6 +292,19 @@ int btl_openib_register_mca_params(void)
                                           &mca_btl_openib_component.device_type);
     if (0 > tmp) ret = tmp;
     OBJ_RELEASE(new_enum);
+
+    /*
+     * Provide way for using to override policy of ignoring IB HCAs
+     */
+
+    mca_btl_openib_component.allow_ib = false;
+    tmp = mca_base_component_var_register(&mca_btl_openib_component.super.btl_version,
+                                          "allow_ib",
+                                          "Override policy since Open MPI 4.0 of ignoring IB HCAs for openib BTL",
+                                          MCA_BASE_VAR_TYPE_BOOL, NULL,
+                                          0, 0, OPAL_INFO_LVL_5,
+                                          MCA_BASE_VAR_SCOPE_READONLY,
+                                          &mca_btl_openib_component.allow_ib);
 
     CHECK(reg_int("max_btls", NULL,
                   "Maximum number of device ports to use "
@@ -356,7 +371,7 @@ int btl_openib_register_mca_params(void)
                    "(must be >= 0)",
                    4, &mca_btl_openib_component.ib_qp_ous_rd_atom, 0));
 
-    asprintf(&msg, "OpenFabrics MTU, in bytes (if not specified in INI files).  Valid values are: %d=256 bytes, %d=512 bytes, %d=1024 bytes, %d=2048 bytes, %d=4096 bytes",
+    opal_asprintf(&msg, "OpenFabrics MTU, in bytes (if not specified in INI files).  Valid values are: %d=256 bytes, %d=512 bytes, %d=1024 bytes, %d=2048 bytes, %d=4096 bytes",
              IBV_MTU_256,
              IBV_MTU_512,
              IBV_MTU_1024,
@@ -560,7 +575,7 @@ int btl_openib_register_mca_params(void)
     CHECK(reg_bool("cuda_async_recv", NULL,
                    "Enable or disable CUDA async recv copies "
                    "(true = async; false = sync)",
-                   true, &mca_btl_openib_component.cuda_async_recv));
+                   false, &mca_btl_openib_component.cuda_async_recv));
     /* Also make the max send size larger for better GPU buffer performance */
     mca_btl_openib_module.super.btl_max_send_size = 128 * 1024;
     /* Turn of message coalescing - not sure if it works with GPU buffers */
@@ -632,7 +647,7 @@ int btl_openib_register_mca_params(void)
         mid_qp_size = 1024;
     }
 
-    asprintf(&default_qps,
+    opal_asprintf(&default_qps,
             "S,128,256,192,128:S,%u,1024,1008,64:S,%u,1024,1008,64:S,%u,1024,1008,64",
             mid_qp_size,
             (uint32_t)mca_btl_openib_module.super.btl_eager_limit,

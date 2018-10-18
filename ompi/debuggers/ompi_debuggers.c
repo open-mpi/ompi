@@ -13,6 +13,7 @@
  * Copyright (c) 2007-2016 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -48,6 +49,7 @@
 
 #include "opal/mca/base/base.h"
 #include "opal/util/argv.h"
+#include "opal/util/printf.h"
 #include "opal/mca/installdirs/installdirs.h"
 #include "debuggers.h"
 #include "ompi/mca/rte/rte.h"
@@ -132,7 +134,7 @@ static void check(char *dir, char *file, char **locations)
 {
     char *str;
 
-    asprintf(&str, "%s/%s.so", dir, file);
+    opal_asprintf(&str, "%s/%s.so", dir, file);
 
 #if defined(HAVE_SYS_STAT_H)
     {

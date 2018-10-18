@@ -6,6 +6,7 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2014      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  */
 #include "ompi_config.h"
@@ -19,6 +20,7 @@
 #include "opal/util/argv.h"
 #include "opal/util/proc.h"
 #include "opal/util/opal_getcwd.h"
+#include "opal/util/printf.h"
 #include "opal/mca/pmix/pmix.h"
 #include "opal/threads/threads.h"
 #include "opal/class/opal_list.h"
@@ -61,7 +63,7 @@ void ompi_rte_abort(int error_code, char *fmt, ...)
     va_start(arglist, fmt);
     if( NULL != fmt ) {
         char* buffer = NULL;
-        vasprintf( &buffer, fmt, arglist );
+        opal_vasprintf( &buffer, fmt, arglist );
         opal_output( 0, "%s", buffer );
         free( buffer );
     }

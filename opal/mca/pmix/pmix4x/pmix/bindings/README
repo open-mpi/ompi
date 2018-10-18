@@ -1,0 +1,21 @@
+Copyright (c) 2016-2018 Intel, Inc.  All rights reserved.
+
+$COPYRIGHT$
+
+Additional copyrights may follow
+
+$HEADER$
+
+===========================================================================
+
+This is where bindings of PMIx functions to alternative programming languages
+such as Python reside. All functions defined in the public headers have been
+provided with a wrapper. Note that there is no restriction on the number of
+wrappers that can exist, nor on what type of function is wrapped.
+
+There is only one rule to observe: you can wrap a framework, but you cannot wrap a
+specific plugin within that framework. This constraint flows from the fact that
+plugins are only accessed via the framework interface - thus, there is no way to
+guarantee that a particular plugin will be the active selection.
+
+

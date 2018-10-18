@@ -102,7 +102,7 @@ ompi_coll_base_topo_build_tree( int fanout,
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
 
-    tree = (ompi_coll_tree_t*)malloc(sizeof(ompi_coll_tree_t));
+    tree = (ompi_coll_tree_t*)malloc(COLL_TREE_SIZE(MAXTREEFANOUT));
     if (!tree) {
         OPAL_OUTPUT((ompi_coll_base_framework.framework_output,"coll:base:topo_build_tree PANIC::out of memory"));
         return NULL;
@@ -200,7 +200,7 @@ ompi_coll_base_topo_build_in_order_bintree( struct ompi_communicator_t* comm )
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
 
-    tree = (ompi_coll_tree_t*)malloc(sizeof(ompi_coll_tree_t));
+    tree = (ompi_coll_tree_t*)malloc(COLL_TREE_SIZE(MAXTREEFANOUT));
     if (!tree) {
         OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
                      "coll:base:topo_build_tree PANIC::out of memory"));
@@ -339,7 +339,7 @@ ompi_coll_base_topo_build_bmtree( struct ompi_communicator_t* comm,
 
     index = rank -root;
 
-    bmtree = (ompi_coll_tree_t*)malloc(sizeof(ompi_coll_tree_t));
+    bmtree = (ompi_coll_tree_t*)malloc(COLL_TREE_SIZE(MAXTREEFANOUT));
     if (!bmtree) {
         OPAL_OUTPUT((ompi_coll_base_framework.framework_output,"coll:base:topo:build_bmtree PANIC out of memory"));
         return NULL;
@@ -416,7 +416,7 @@ ompi_coll_base_topo_build_in_order_bmtree( struct ompi_communicator_t* comm,
 
     vrank = (rank - root + size) % size;
 
-    bmtree = (ompi_coll_tree_t*)malloc(sizeof(ompi_coll_tree_t));
+    bmtree = (ompi_coll_tree_t*)malloc(COLL_TREE_SIZE(MAXTREEFANOUT));
     if (!bmtree) {
         OPAL_OUTPUT((ompi_coll_base_framework.framework_output,"coll:base:topo:build_bmtree PANIC out of memory"));
         return NULL;
@@ -457,6 +457,75 @@ ompi_coll_base_topo_build_in_order_bmtree( struct ompi_communicator_t* comm,
     return bmtree;
 }
 
+/*
+ * ompi_coll_base_topo_build_kmtree: Build k-nomial tree for Bcast
+ *
+ * Example, comm_size=10
+ *    radix=2         radix=3             radix=4
+ *       0               0                   0
+ *    / / \ \       / /  |  \ \         /   / \ \ \
+ *   8 4   2 1     9 3   6   1 2       4   8  1 2 3
+ *   | |\  |         |\  |\           /|\  |
+ *   9 6 5 3         4 5 7 8         5 6 7 9
+ *     |
+ *     7
+ */
+ompi_coll_tree_t*
+ompi_coll_base_topo_build_kmtree(struct ompi_communicator_t* comm,
+                                 int root, int radix)
+{
+    OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+                 "coll:base:topo:build_kmtree root %d, radix %d", root, radix));
+    int comm_size = ompi_comm_size(comm);
+    int rank = ompi_comm_rank(comm);
+
+    /* nchilds <= (radix - 1) * \ceil(\log_{radix}(comm_size)) */
+    int log_radix = 0;
+    for (int i = 1; i < comm_size; i *= radix)
+        log_radix++;
+    int nchilds_max = (radix - 1) * log_radix;
+
+    int vrank = (rank - root + comm_size) % comm_size;
+    ompi_coll_tree_t *kmtree = malloc(COLL_TREE_SIZE(nchilds_max));
+    if (NULL == kmtree) {
+        OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+                     "coll:base:topo:build_kmtree PANIC out of memory"));
+        return NULL;
+    }
+
+    kmtree->tree_bmtree = 0;
+    kmtree->tree_root = root;
+    kmtree->tree_prev = MPI_PROC_NULL;
+    kmtree->tree_nextsize = 0;
+
+    /* Setup parent */
+    int mask = 0x1;
+    while (mask < comm_size) {
+        if (vrank % (radix * mask)) {
+            kmtree->tree_prev = vrank / (radix * mask) * (radix * mask);
+            kmtree->tree_prev = (kmtree->tree_prev + root) % comm_size;
+            break;
+        }
+        mask *= radix;
+    }
+
+    /* Setup childs */
+    mask /= radix;
+    int nchilds = 0;
+    while (mask > 0) {
+        for (int r = 1; r < radix; r++) {
+            int child = vrank + mask * r;
+            if (child < comm_size) {
+                child = (child + root) % comm_size;
+                kmtree->tree_next[nchilds] = child;
+                nchilds++;
+            }
+        }
+        mask /= radix;
+    }
+    kmtree->tree_nextsize = nchilds;
+    return kmtree;
+}
 
 ompi_coll_tree_t*
 ompi_coll_base_topo_build_chain( int fanout,
@@ -486,7 +555,7 @@ ompi_coll_base_topo_build_chain( int fanout,
     /*
      * Allocate space for topology arrays if needed
      */
-    chain = (ompi_coll_tree_t*)malloc( sizeof(ompi_coll_tree_t) );
+    chain = (ompi_coll_tree_t*)malloc(COLL_TREE_SIZE(MAXTREEFANOUT));
     if (!chain) {
         OPAL_OUTPUT((ompi_coll_base_framework.framework_output,"coll:base:topo:build_chain PANIC out of memory"));
         fflush(stdout);

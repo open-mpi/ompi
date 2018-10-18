@@ -14,8 +14,9 @@
  * Copyright (c) 2012-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2013-2017 Intel, Inc. All rights reserved
- * Copyright (c) 2017      Research Organization for Information Science
+ * Copyright (c) 2018      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -29,6 +30,7 @@
 #include "opal/util/output.h"
 #include "opal/util/show_help.h"
 #include "opal/util/opal_environ.h"
+#include "opal/util/printf.h"
 #include "ompi/proc/proc.h"
 
 #include "mtl_psm2.h"
@@ -147,19 +149,19 @@ static void ompi_mtl_psm2_set_shadow_env (struct ompi_mtl_psm2_shadow_variable *
 
     switch (variable->variable_type) {
     case MCA_BASE_VAR_TYPE_BOOL:
-        ret = asprintf (&env_value, "%s=%d", variable->env_name, storage->boolval ? 1 : 0);
+        ret = opal_asprintf (&env_value, "%s=%d", variable->env_name, storage->boolval ? 1 : 0);
         break;
     case MCA_BASE_VAR_TYPE_UNSIGNED_LONG:
         if (0 == strcmp (variable->env_name, "PSM2_TRACEMASK")) {
             /* PSM2 documentation shows the tracemask as a hexidecimal number. to be consitent
              * use hexidecimal here. */
-            ret = asprintf (&env_value, "%s=0x%lx", variable->env_name, storage->ulval);
+            ret = opal_asprintf (&env_value, "%s=0x%lx", variable->env_name, storage->ulval);
         } else {
-            ret = asprintf (&env_value, "%s=%lu", variable->env_name, storage->ulval);
+            ret = opal_asprintf (&env_value, "%s=%lu", variable->env_name, storage->ulval);
         }
         break;
     case MCA_BASE_VAR_TYPE_STRING:
-        ret = asprintf (&env_value, "%s=%s", variable->env_name, storage->stringval);
+        ret = opal_asprintf (&env_value, "%s=%s", variable->env_name, storage->stringval);
         break;
     }
 
@@ -277,7 +279,7 @@ ompi_mtl_psm2_component_open(void)
 
   /* Component available only if Omni-Path hardware is present */
   res = glob("/dev/hfi1_[0-9]", GLOB_DOOFFS, NULL, &globbuf);
-  if (globbuf.gl_pathc > 0) {
+  if (globbuf.gl_pathc > 0 || GLOB_NOMATCH==res) {
       globfree(&globbuf);
   }
   if (0 != res) {

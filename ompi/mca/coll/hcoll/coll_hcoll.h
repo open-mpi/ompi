@@ -312,7 +312,6 @@ int mca_coll_hcoll_igatherv(const void* sbuf, int scount,
                             ompi_request_t ** request,
                             mca_coll_base_module_t *module);
 
-int mca_coll_hcoll_progress(void);
 void mca_coll_hcoll_mem_release_cb(void *buf, size_t length, void *cbdata, bool from_alloc);
 END_C_DECLS
 

@@ -30,5 +30,5 @@ SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
 
 void shmem_quiet_f(void)
 {
-    MCA_SPML_CALL(fence());
+    MCA_SPML_CALL(quiet(oshmem_ctx_default));
 }

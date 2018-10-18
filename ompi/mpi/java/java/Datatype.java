@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -419,7 +420,7 @@ public final class Datatype implements Freeable, Cloneable
 
 	/**
 	 * The most general type constructor.
-	 * <p>Java binding of the MPI operation {@code MPI_TYPE_STRUCT}.
+	 * <p>Java binding of the MPI operation {@code MPI_TYPE_CREATE_STRUCT}.
 	 * <p>The number of blocks is taken to be size of the {@code blockLengths}
 	 * argument. The second and third arguments, {@code displacements},
 	 * and {@code types}, should be the same size.

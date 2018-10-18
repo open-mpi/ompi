@@ -3,11 +3,13 @@
 ! Copyright (c) 2010-2014 Cisco Systems, Inc.  All rights reserved.
 ! Copyright (c) 2010-2012 Los Alamos National Security, LLC.
 !               All Rights reserved.
+! Copyright (c) 2018      Research Organization for Information Science
+!                         and Technology (RIST).  All rights reserved.
 ! $COPYRIGHT$
 
 subroutine PMPI_Get_library_version_f08(version,resultlen,ierror)
    use :: mpi_f08_types, only : MPI_MAX_LIBRARY_VERSION_STRING
-   use :: mpi_f08, only : ompi_get_library_version_f
+   use :: ompi_mpifh_bindings, only : ompi_get_library_version_f
    implicit none
    character(len=MPI_MAX_LIBRARY_VERSION_STRING), intent(out) :: version
    integer, intent(out) :: resultlen

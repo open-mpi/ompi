@@ -75,7 +75,7 @@ struct ompi_datatype_t {
     struct opal_hash_table_t *d_keyhash;         /**< Attribute fields */
 
     void*              args;                     /**< Data description for the user */
-    void*              packed_description;       /**< Packed description of the datatype */
+    opal_atomic_intptr_t packed_description;       /**< Packed description of the datatype */
     uint64_t           pml_data;                 /**< PML-specific information */
     /* --- cacheline 6 boundary (384 bytes) --- */
     char               name[MPI_MAX_OBJECT_NAME];/**< Externally visible name */
@@ -178,7 +178,7 @@ OMPI_DECLSPEC int32_t ompi_datatype_destroy( ompi_datatype_t** type);
  * Datatype creation functions
  */
 static inline int32_t
-ompi_datatype_add( ompi_datatype_t* pdtBase, const ompi_datatype_t* pdtAdd, uint32_t count,
+ompi_datatype_add( ompi_datatype_t* pdtBase, const ompi_datatype_t* pdtAdd, size_t count,
                    ptrdiff_t disp, ptrdiff_t extent )
 {
     return opal_datatype_add( &pdtBase->super, &pdtAdd->super, count, disp, extent );

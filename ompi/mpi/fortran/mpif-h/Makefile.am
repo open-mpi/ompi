@@ -12,7 +12,7 @@
 # Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2011-2013 Inria.  All rights reserved.
 # Copyright (c) 2011-2013 Universite Bordeaux 1
-# Copyright (c) 2013-2014 Los Alamos National Security, LLC. All rights
+# Copyright (c) 2013-2018 Los Alamos National Security, LLC. All rights
 #                         reserved.
 # Copyright (c) 2015-2017 Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
@@ -129,7 +129,6 @@ lib@OMPI_LIBMPI_NAME@_mpifh_la_SOURCES += \
         add_error_class_f.c \
         add_error_code_f.c \
         add_error_string_f.c \
-        address_f.c \
         aint_add_f.c \
         aint_diff_f.c \
         allgather_f.c \
@@ -139,9 +138,6 @@ lib@OMPI_LIBMPI_NAME@_mpifh_la_SOURCES += \
         alltoall_f.c \
         alltoallv_f.c \
         alltoallw_f.c \
-        attr_delete_f.c \
-        attr_get_f.c \
-        attr_put_f.c \
         barrier_f.c \
         bcast_f.c \
         bsend_f.c \
@@ -198,10 +194,7 @@ lib@OMPI_LIBMPI_NAME@_mpifh_la_SOURCES += \
         dist_graph_neighbors_f.c \
         dist_graph_neighbors_count_f.c \
         dims_create_f.c \
-        errhandler_create_f.c \
         errhandler_free_f.c \
-        errhandler_get_f.c \
-        errhandler_set_f.c \
         error_class_f.c \
         error_string_f.c \
         exscan_f.c \
@@ -342,8 +335,6 @@ lib@OMPI_LIBMPI_NAME@_mpifh_la_SOURCES += \
         iscatterv_f.c \
         issend_f.c \
         is_thread_main_f.c \
-        keyval_create_f.c \
-        keyval_free_f.c \
         lookup_name_f.c \
         mprobe_f.c \
         mrecv_f.c \
@@ -411,7 +402,6 @@ lib@OMPI_LIBMPI_NAME@_mpifh_la_SOURCES += \
         type_create_subarray_f.c \
         type_delete_attr_f.c \
         type_dup_f.c \
-        type_extent_f.c \
         type_free_f.c \
         type_free_keyval_f.c \
         type_get_attr_f.c \
@@ -422,17 +412,12 @@ lib@OMPI_LIBMPI_NAME@_mpifh_la_SOURCES += \
         type_get_name_f.c \
         type_get_true_extent_f.c \
         type_get_true_extent_x_f.c \
-        type_hindexed_f.c \
-        type_hvector_f.c \
         type_indexed_f.c \
-        type_lb_f.c \
         type_match_size_f.c \
         type_set_attr_f.c \
         type_set_name_f.c \
         type_size_f.c \
         type_size_x_f.c \
-        type_struct_f.c \
-        type_ub_f.c \
         type_vector_f.c \
         unpack_external_f.c \
         unpack_f.c \
@@ -491,6 +476,25 @@ lib@OMPI_LIBMPI_NAME@_mpifh_la_SOURCES += \
         win_flush_local_f.c \
         win_flush_local_all_f.c
 
+
+if OMPI_ENABLE_MPI1_COMPAT
+lib@OMPI_LIBMPI_NAME@_mpifh_la_SOURCES += \
+        address_f.c \
+        attr_delete_f.c \
+        attr_get_f.c \
+        attr_put_f.c \
+        errhandler_create_f.c \
+        errhandler_get_f.c \
+        errhandler_set_f.c \
+        keyval_create_f.c \
+        keyval_free_f.c \
+        type_extent_f.c \
+        type_hindexed_f.c \
+        type_hvector_f.c \
+        type_lb_f.c \
+        type_struct_f.c \
+        type_ub_f.c
+endif
 endif
 
 #

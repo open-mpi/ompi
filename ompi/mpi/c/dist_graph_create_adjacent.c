@@ -3,7 +3,7 @@
  * Copyright (c) 2008      The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2011-2013 The University of Tennessee and The University
+ * Copyright (c) 2011-2018 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
@@ -74,7 +74,7 @@ int MPI_Dist_graph_create_adjacent(MPI_Comm comm_old,
         }
         comm_size = ompi_comm_size(comm_old);
         for (i = 0; i < indegree; ++i) {
-            if (sources[i] < 0 || sources[i] >= comm_size) {
+            if (((sources[i] < 0) && (sources[i] != MPI_PROC_NULL)) || sources[i] >= comm_size) {
                 return OMPI_ERRHANDLER_INVOKE(comm_old, MPI_ERR_ARG,
                                               "MPI_Dist_graph_create_adjacent invalid sources");
             } else if (MPI_UNWEIGHTED != sourceweights && sourceweights[i] < 0) {
@@ -83,7 +83,7 @@ int MPI_Dist_graph_create_adjacent(MPI_Comm comm_old,
             }
         }
         for (i = 0; i < outdegree; ++i) {
-            if (destinations[i] < 0 || destinations[i] >= comm_size) {
+            if (((destinations[i] < 0) && (destinations[i] != MPI_PROC_NULL)) || destinations[i] >= comm_size) {
                 return OMPI_ERRHANDLER_INVOKE(comm_old, MPI_ERR_ARG,
                                               "MPI_Dist_graph_create_adjacent invalid destinations");
             } else if (MPI_UNWEIGHTED != destweights && destweights[i] < 0) {

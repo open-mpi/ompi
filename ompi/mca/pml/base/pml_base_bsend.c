@@ -51,7 +51,7 @@ static size_t           mca_pml_bsend_size;       /* adjusted size of user buffe
 static size_t           mca_pml_bsend_count;      /* number of outstanding requests */
 static size_t           mca_pml_bsend_pagesz;     /* mmap page size */
 static int              mca_pml_bsend_pagebits;   /* number of bits in pagesz */
-static int32_t          mca_pml_bsend_init = 0;
+static opal_atomic_int32_t          mca_pml_bsend_init = 0;
 
 /* defined in pml_base_open.c */
 extern char *ompi_pml_base_bsend_allocator_name;

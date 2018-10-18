@@ -14,7 +14,7 @@
  *                         All rights reserved.
  * Copyright (c) 2008      Voltaire. All rights reserved
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
- * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
@@ -107,6 +107,10 @@ static int orte_rmaps_rf_map(orte_job_t *jdata)
         return ORTE_ERR_TAKE_NEXT_OPTION;
     }
     if (ORTE_MAPPING_BYUSER != ORTE_GET_MAPPING_POLICY(orte_rmaps_base.mapping)) {
+        /* NOT FOR US */
+        return ORTE_ERR_TAKE_NEXT_OPTION;
+    }
+    if (OPAL_BIND_ORDERED_REQUESTED(jdata->map->binding)) {
         /* NOT FOR US */
         return ORTE_ERR_TAKE_NEXT_OPTION;
     }

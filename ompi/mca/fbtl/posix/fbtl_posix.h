@@ -9,7 +9,9 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2016 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2018 University of Houston. All rights reserved.
+ * Copyright (c) 2018      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -24,7 +26,7 @@
 #include "ompi/mca/mca.h"
 #include "ompi/mca/fbtl/fbtl.h"
 #include "ompi/mca/common/ompio/common_ompio.h"
-#include "ompi/mca/io/ompio/io_ompio_request.h"
+#include "ompi/mca/common/ompio/common_ompio_request.h"
 
 extern int mca_fbtl_posix_priority;
 
@@ -33,11 +35,11 @@ BEGIN_C_DECLS
 int mca_fbtl_posix_component_init_query(bool enable_progress_threads,
                                         bool enable_mpi_threads);
 struct mca_fbtl_base_module_1_0_0_t *
-mca_fbtl_posix_component_file_query (mca_io_ompio_file_t *file, int *priority);
-int mca_fbtl_posix_component_file_unquery (mca_io_ompio_file_t *file);
+mca_fbtl_posix_component_file_query (ompio_file_t *file, int *priority);
+int mca_fbtl_posix_component_file_unquery (ompio_file_t *file);
 
-int mca_fbtl_posix_module_init (mca_io_ompio_file_t *file);
-int mca_fbtl_posix_module_finalize (mca_io_ompio_file_t *file);
+int mca_fbtl_posix_module_init (ompio_file_t *file);
+int mca_fbtl_posix_module_finalize (ompio_file_t *file);
 
 extern int fbtl_posix_max_aio_active_reqs;
 
@@ -48,19 +50,19 @@ OMPI_MODULE_DECLSPEC extern mca_fbtl_base_component_2_0_0_t mca_fbtl_posix_compo
  * ******************************************************************
  */
 
-ssize_t mca_fbtl_posix_preadv (mca_io_ompio_file_t *file );
-ssize_t mca_fbtl_posix_pwritev (mca_io_ompio_file_t *file );
-ssize_t mca_fbtl_posix_ipreadv (mca_io_ompio_file_t *file,
+ssize_t mca_fbtl_posix_preadv (ompio_file_t *file );
+ssize_t mca_fbtl_posix_pwritev (ompio_file_t *file );
+ssize_t mca_fbtl_posix_ipreadv (ompio_file_t *file,
                                ompi_request_t *request);
-ssize_t mca_fbtl_posix_ipwritev (mca_io_ompio_file_t *file,
+ssize_t mca_fbtl_posix_ipwritev (ompio_file_t *file,
                                 ompi_request_t *request);
 
 bool mca_fbtl_posix_progress     ( mca_ompio_request_t *req);
 void mca_fbtl_posix_request_free ( mca_ompio_request_t *req);
 
-int mca_fbtl_posix_lock ( struct flock *lock, mca_io_ompio_file_t *fh, int op, 
+int mca_fbtl_posix_lock ( struct flock *lock, ompio_file_t *fh, int op, 
                           OMPI_MPI_OFFSET_TYPE iov_offset, off_t len, int flags);
-void  mca_fbtl_posix_unlock ( struct flock *lock, mca_io_ompio_file_t *fh );
+void  mca_fbtl_posix_unlock ( struct flock *lock, ompio_file_t *fh );
 
 
 struct mca_fbtl_posix_request_data_t {
@@ -74,7 +76,7 @@ struct mca_fbtl_posix_request_data_t {
     int          *aio_req_status;       /* array of statuses */
     ssize_t        aio_total_len;       /* total amount of data written */
     struct flock   aio_lock;            /* lock used for certain file systems */
-    mca_io_ompio_file_t  *aio_fh;       /* pointer back to the mca_io_ompio_fh structure */
+    ompio_file_t  *aio_fh;       /* pointer back to the mca_io_ompio_fh structure */
 };
 typedef struct mca_fbtl_posix_request_data_t mca_fbtl_posix_request_data_t;
 

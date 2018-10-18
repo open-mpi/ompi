@@ -194,7 +194,7 @@ static int rsh_init(void)
     /* we were selected, so setup the launch agent */
     if (mca_plm_rsh_component.using_qrsh) {
         /* perform base setup for qrsh */
-        asprintf(&tmp, "%s/bin/%s", getenv("SGE_ROOT"), getenv("ARC"));
+        opal_asprintf(&tmp, "%s/bin/%s", getenv("SGE_ROOT"), getenv("ARC"));
         if (ORTE_SUCCESS != (rc = launch_agent_setup("qrsh", tmp))) {
             ORTE_ERROR_LOG(rc);
             free(tmp);
@@ -454,12 +454,12 @@ static int setup_launch(int *argcptr, char ***argvptr,
     param = opal_basename(opal_install_dirs.libdir);
     if (NULL != mca_plm_rsh_component.pass_libpath) {
         if (NULL != prefix_dir) {
-            asprintf(&lib_base, "%s:%s/%s", mca_plm_rsh_component.pass_libpath, prefix_dir, param);
+            opal_asprintf(&lib_base, "%s:%s/%s", mca_plm_rsh_component.pass_libpath, prefix_dir, param);
         } else {
-            asprintf(&lib_base, "%s:%s", mca_plm_rsh_component.pass_libpath, param);
+            opal_asprintf(&lib_base, "%s:%s", mca_plm_rsh_component.pass_libpath, param);
         }
     } else if (NULL != prefix_dir) {
-        asprintf(&lib_base, "%s/%s", prefix_dir, param);
+        opal_asprintf(&lib_base, "%s/%s", prefix_dir, param);
     }
     free(param);
 
@@ -473,13 +473,13 @@ static int setup_launch(int *argcptr, char ***argvptr,
          */
 
         value = opal_basename(opal_install_dirs.bindir);
-        asprintf(&bin_base, "%s/%s", prefix_dir, value);
+        opal_asprintf(&bin_base, "%s/%s", prefix_dir, value);
         free(value);
 
         if (NULL != orted_cmd) {
             if (0 == strcmp(orted_cmd, "orted")) {
                 /* if the cmd is our standard one, then add the prefix */
-                (void)asprintf(&full_orted_cmd, "%s/%s", bin_base, orted_cmd);
+                opal_asprintf(&full_orted_cmd, "%s/%s", bin_base, orted_cmd);
             } else {
                 /* someone specified something different, so don't prefix it */
                 full_orted_cmd = strdup(orted_cmd);
@@ -499,7 +499,7 @@ static int setup_launch(int *argcptr, char ***argvptr,
              * assemble the cmd with the orted_cmd at the end. Otherwise,
              * we have to insert the orted_prefix in the right place
              */
-            (void)asprintf (&final_cmd,
+            opal_asprintf (&final_cmd,
                             "%s%s%s PATH=%s%s$PATH ; export PATH ; "
                             "LD_LIBRARY_PATH=%s%s$LD_LIBRARY_PATH ; export LD_LIBRARY_PATH ; "
                             "DYLD_LIBRARY_PATH=%s%s$DYLD_LIBRARY_PATH ; export DYLD_LIBRARY_PATH ; "
@@ -529,7 +529,7 @@ static int setup_launch(int *argcptr, char ***argvptr,
              * assemble the cmd with the orted_cmd at the end. Otherwise,
              * we have to insert the orted_prefix in the right place
              */
-            (void)asprintf (&final_cmd,
+            opal_asprintf (&final_cmd,
                             "%s%s%s set path = ( %s $path ) ; "
                             "if ( $?LD_LIBRARY_PATH == 1 ) "
                             "set OMPI_have_llp ; "
@@ -581,7 +581,7 @@ static int setup_launch(int *argcptr, char ***argvptr,
         }
     } else {
         /* no prefix directory, so just aggregate the result */
-        (void)asprintf(&final_cmd, "%s %s",
+        opal_asprintf(&final_cmd, "%s %s",
                        (orted_prefix != NULL ? orted_prefix : ""),
                        (full_orted_cmd != NULL ? full_orted_cmd : ""));
         if (NULL != full_orted_cmd) {
@@ -1245,7 +1245,7 @@ static void launch_daemons(int fd, short args, void *cbdata)
         free(argv[node_name_index1]);
         username = NULL;
         if (orte_get_attribute(&node->attributes, ORTE_NODE_USERNAME, (void**)&username, OPAL_STRING)) {
-            (void)asprintf (&argv[node_name_index1], "%s@%s",
+            opal_asprintf (&argv[node_name_index1], "%s@%s",
                             username, node->name);
             free(username);
         } else {

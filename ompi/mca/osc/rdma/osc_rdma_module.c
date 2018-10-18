@@ -51,6 +51,10 @@ int ompi_osc_rdma_free(ompi_win_t *win)
         return OMPI_SUCCESS;
     }
 
+    while (module->pending_ops) {
+        ompi_osc_rdma_progress (module);
+    }
+
     if (NULL != module->comm) {
         opal_output_verbose(1, ompi_osc_base_framework.framework_output,
                             "rdma component destroying window with id %d",

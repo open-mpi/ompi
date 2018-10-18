@@ -1,13 +1,13 @@
-# -*- makefile -*-
+# -*- makefile.am -*-
 #
 # Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2012-2013 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
 # Copyright (c) 2012-2013 Inria.  All rights reserved.
-# Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+# Copyright (c) 2013-2018 Los Alamos National Security, LLC. All rights
 #                         reserved.
-# Copyright (c) 2015-2017 Research Organization for Information Science
+# Copyright (c) 2015-2018 Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # Copyright (c) 2016      IBM Corporation.  All rights reserved.
 # Copyright (c) 2017      FUJITSU LIMITED.  All rights reserved.
@@ -29,6 +29,7 @@ AM_FCFLAGS = -I$(top_builddir)/ompi/include \
              -I$(top_srcdir)/ompi/include \
              $(OMPI_FC_MODULE_FLAG)$(top_builddir)/ompi/$(OMPI_FORTRAN_USEMPI_DIR) \
              $(OMPI_FC_MODULE_FLAG)mod \
+             $(OMPI_FC_MODULE_FLAG)bindings \
              -I$(top_srcdir) $(FCFLAGS_f90)
 
 MOSTLYCLEANFILES = *.mod
@@ -42,7 +43,6 @@ module_sentinel_file = \
 
 mpi-f08.lo: $(module_sentinel_file)
 mpi-f08.lo: mpi-f08.F90
-mpi-f08.lo: mpi-f-interfaces-bind.h pmpi-f-interfaces-bind.h
 mpi-f08.lo: sizeof_f08.h
 
 #
@@ -792,8 +792,6 @@ pmpi_api_files = \
 lib@OMPI_LIBMPI_NAME@_usempif08_la_SOURCES = \
         $(mpi_api_files) \
         $(pmpi_api_files) \
-        mpi-f-interfaces-bind.h \
-        pmpi-f-interfaces-bind.h \
         mpi-f08.F90 \
         buffer_detach.c \
         constants.h \
@@ -830,11 +828,10 @@ lib@OMPI_LIBMPI_NAME@_usempif08_la_LDFLAGS = -version-info $(libmpi_usempif08_so
 mpi_api_lo_files = $(mpi_api_files:.F90=.lo)
 pmpi_api_lo_files = $(pmpi_api_files:.F90=.lo)
 
-$(mpi_api_lo_files): mpi-f08.lo
-$(pmpi_api_lo_files): mpi-f08.lo
+$(mpi_api_lo_files): mpi-f08.lo bindings/libforce_usempif08_internal_bindings_to_be_built.la
+$(pmpi_api_lo_files): mpi-f08.lo bindings/libforce_usempif08_internal_bindings_to_be_built.la
 
 mpi-f08.lo: $(module_sentinel_file) $(SIZEOF_H)
-mpi-f08.lo: mpi-f-interfaces-bind.h pmpi-f-interfaces-bind.h
 
 ###########################################################################
 
@@ -852,13 +849,5 @@ uninstall-local:
 	  echo rm -f $(DESTDIR)$(libdir)/$$file; \
 	  rm -f $(DESTDIR)$(libdir)/$$file; \
 	done
-else
-
-# Need to have empty targets because AM can't handle having an
-# AM_CONDITIONAL was targets in the "if" statement but not in the
-# "else".  :-(
-
-install-exec-hook:
-uninstall-local:
 
 endif

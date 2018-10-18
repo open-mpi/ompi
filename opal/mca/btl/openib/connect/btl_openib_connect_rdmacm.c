@@ -12,6 +12,7 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  *
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -55,6 +56,7 @@
 #include "opal/util/error.h"
 #include "opal/util/show_help.h"
 #include "opal/util/proc.h"
+#include "opal/util/printf.h"
 #include "opal/runtime/opal_progress_threads.h"
 
 #include "btl_openib_proc.h"
@@ -351,7 +353,7 @@ static void rdmacm_component_register(void)
 static char *stringify(uint32_t addr)
 {
     char *line = (char *) malloc(64);
-    asprintf(&line, "%d.%d.%d.%d (0x%x)",
+    opal_asprintf(&line, "%d.%d.%d.%d (0x%x)",
 #if defined(WORDS_BIGENDIAN)
              (addr >> 24),
              (addr >> 16) & 0xff,

@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
- * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2015-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -25,7 +25,7 @@ struct mca_btl_openib_eager_rdma_local_t {
     mca_btl_openib_reg_t *reg;
     uint16_t head; /**< RDMA buffer to poll */
     uint16_t tail; /**< Needed for credit managment */
-    int32_t credits; /**< number of RDMA credits */
+    opal_atomic_int32_t credits; /**< number of RDMA credits */
     int32_t rd_win;
 #if OPAL_ENABLE_DEBUG
     uint32_t seq;
@@ -38,8 +38,8 @@ typedef struct mca_btl_openib_eager_rdma_local_t mca_btl_openib_eager_rdma_local
 struct mca_btl_openib_eager_rdma_remote_t {
 	opal_ptr_t base; /**< address of remote buffer */
 	uint32_t rkey; /**< RKey for accessing remote buffer */
-	int32_t head; /**< RDMA buffer to post to */
-	int32_t tokens; /**< number of rdam tokens */
+	opal_atomic_int32_t head; /**< RDMA buffer to post to */
+        opal_atomic_int32_t tokens; /**< number of rdma tokens */
 #if OPAL_ENABLE_DEBUG
     uint32_t seq;
 #endif
@@ -108,7 +108,7 @@ typedef struct mca_btl_openib_eager_rdma_remote_t mca_btl_openib_eager_rdma_remo
 
 #define MCA_BTL_OPENIB_RDMA_MOVE_INDEX(HEAD, OLD_HEAD)                  \
     do {                                                                \
-        (OLD_HEAD) = (OPAL_THREAD_ADD_FETCH32(&(HEAD), 1) - 1) % mca_btl_openib_component.eager_rdma_num; \
+        (OLD_HEAD) = (OPAL_THREAD_ADD_FETCH32((opal_atomic_int32_t *) &(HEAD), 1) - 1) % mca_btl_openib_component.eager_rdma_num; \
     } while(0)
 
 #endif

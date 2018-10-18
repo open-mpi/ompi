@@ -49,6 +49,11 @@ OPAL_DECLSPEC extern bool opal_built_with_cuda_support;
 OPAL_DECLSPEC extern bool opal_cuda_support;
 
 /**
+ *  * Whether we want to warn the user when libcuda is missing.
+ *   */
+OPAL_DECLSPEC extern bool opal_warn_on_missing_libcuda;
+
+/**
  * Whether to use the "leave pinned" protocol or not (0 = no, 1 = yes,
  * -1 = determine at runtime).
  */

@@ -10,6 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2010-2018 Cisco Systems, Inc.  All rights reserved
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -23,6 +24,8 @@
 #include <string.h>
 
 #include "opal/class/opal_pointer_array.h"
+#include "opal/util/printf.h"
+#include "opal/util/string_copy.h"
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/attribute/attribute.h"
 
@@ -36,7 +39,7 @@ static void __ompi_datatype_allocate( ompi_datatype_t* datatype )
     datatype->id                 = -1;
     datatype->d_keyhash          = NULL;
     datatype->name[0]            = '\0';
-    datatype->packed_description = NULL;
+    datatype->packed_description = 0;
     datatype->pml_data           = 0;
 }
 
@@ -46,10 +49,10 @@ static void __ompi_datatype_release(ompi_datatype_t * datatype)
         ompi_datatype_release_args( datatype );
         datatype->args = NULL;
     }
-    if( NULL != datatype->packed_description ) {
-        free( datatype->packed_description );
-        datatype->packed_description = NULL;
-    }
+
+    free ((void *) datatype->packed_description );
+    datatype->packed_description = 0;
+
     if( datatype->d_f_to_c_index >= 0 ) {
         opal_pointer_array_set_item( &ompi_datatype_f_to_c_table, datatype->d_f_to_c_index, NULL );
         datatype->d_f_to_c_index = -1;
@@ -110,8 +113,8 @@ ompi_datatype_duplicate( const ompi_datatype_t* oldType, ompi_datatype_t** newTy
     new_ompi_datatype->args = NULL;
 
     char *new_name;
-    asprintf(&new_name, "Dup %s", oldType->name);
-    strncpy(new_ompi_datatype->name, new_name, MPI_MAX_OBJECT_NAME - 1);
+    opal_asprintf(&new_name, "Dup %s", oldType->name);
+    opal_string_copy(new_ompi_datatype->name, new_name, MPI_MAX_OBJECT_NAME);
     new_ompi_datatype->name[MPI_MAX_OBJECT_NAME - 1] = '\0';
     free(new_name);
 

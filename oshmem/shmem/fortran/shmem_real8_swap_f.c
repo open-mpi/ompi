@@ -36,10 +36,9 @@ ompi_fortran_real8_t shmem_real8_swap_f(FORTRAN_POINTER_T target, FORTRAN_POINTE
 {
     ompi_fortran_real8_t out_value = 0;
 
-    MCA_ATOMIC_CALL(cswap(FPTR_2_VOID_PTR(target),
+    MCA_ATOMIC_CALL(swap(oshmem_ctx_default, FPTR_2_VOID_PTR(target),
         (void *)&out_value,
-        NULL,
-        FPTR_2_VOID_PTR(value),
+        FPTR_2_INT(value, sizeof(out_value)),
         sizeof(out_value),
         OMPI_FINT_2_INT(*pe)));
 

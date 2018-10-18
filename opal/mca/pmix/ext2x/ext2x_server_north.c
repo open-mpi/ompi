@@ -35,6 +35,7 @@
 #include "opal/util/output.h"
 #include "opal/util/proc.h"
 #include "opal/util/show_help.h"
+#include "opal/util/string_copy.h"
 #include "opal/mca/pmix/base/base.h"
 #include "ext2x.h"
 
@@ -493,7 +494,7 @@ static void opal_lkupcbfunc(int status,
                 /* convert the jobid */
                 (void)opal_snprintf_jobid(d[n].proc.nspace, PMIX_MAX_NSLEN, p->proc.jobid);
                 d[n].proc.rank = ext2x_convert_opalrank(p->proc.vpid);
-                (void)strncpy(d[n].key, p->value.key, PMIX_MAX_KEYLEN);
+                (void)opal_string_copy(d[n].key, p->value.key, PMIX_MAX_KEYLEN);
                 ext2x_value_load(&d[n].value, &p->value);
             }
         }
@@ -928,7 +929,7 @@ static void info_cbfunc(int status,
         PMIX_INFO_CREATE(pcaddy->info, pcaddy->ninfo);
         n = 0;
         OPAL_LIST_FOREACH(kv, info, opal_value_t) {
-            (void)strncpy(pcaddy->info[n].key, kv->key, PMIX_MAX_KEYLEN);
+            (void)opal_string_copy(pcaddy->info[n].key, kv->key, PMIX_MAX_KEYLEN);
             ext2x_value_load(&pcaddy->info[n].value, kv);
         }
     }
@@ -1025,7 +1026,7 @@ static void toolcbfunc(int status,
         p.rank = ext2x_convert_opalrank(proc.vpid);
         /* store this job in our list of known nspaces */
         job = OBJ_NEW(opal_ext2x_jobid_trkr_t);
-        (void)strncpy(job->nspace, p.nspace, PMIX_MAX_NSLEN);
+        (void)opal_string_copy(job->nspace, p.nspace, PMIX_MAX_NSLEN);
         job->jobid = proc.jobid;
         OPAL_PMIX_ACQUIRE_THREAD(&opal_pmix_base.lock);
         opal_list_append(&mca_pmix_ext2x_component.jobids, &job->super);

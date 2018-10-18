@@ -171,7 +171,7 @@ opal_unpack_homogeneous_contig_function( opal_convertor_t* pConv,
  * part of the datatype is already received, we need to use a trick to handle this special
  * case. The trick is to fill the missing part with some well known value, unpack the data
  * as if it was completely received, and then move into the user memory only the bytes
- * that don't match th wekk known value. This approach work as long as there is no need
+ * that don't match the well known value. This approach work as long as there is no need
  * for more than structural changes. They will not work for cases where we will have to
  * change the content of the data (as in all conversions that require changing the size
  * of the exponent or mantissa).

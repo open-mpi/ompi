@@ -9,8 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2013-2016 University of Houston. All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2013-2018 University of Houston. All rights reserved.
+ * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -27,37 +27,24 @@
 #include "ompi/constants.h"
 #include "ompi/mca/sharedfp/sharedfp.h"
 #include "ompi/mca/sharedfp/base/base.h"
-#include "ompi/mca/io/ompio/io_ompio.h"
+#include "ompi/mca/common/ompio/common_ompio.h"
 
-int mca_sharedfp_lockedfile_iwrite(mca_io_ompio_file_t *fh,
+int mca_sharedfp_lockedfile_iwrite(ompio_file_t *fh,
                                    const void *buf,
                                    int count,
                                    ompi_datatype_t *datatype,
                                    MPI_Request * request)
 {
     int ret = OMPI_SUCCESS;
-    mca_sharedfp_base_module_t * shared_fp_base_module;
     OMPI_MPI_OFFSET_TYPE offset = 0;
     long bytesRequested = 0;
     size_t numofBytes;
     struct mca_sharedfp_base_data_t *sh = NULL;
 
     if(fh->f_sharedfp_data==NULL){
-	if ( mca_sharedfp_lockedfile_verbose ) {
-	    opal_output(ompi_sharedfp_base_framework.framework_output,
-			"sharedfp_lockedfile_iwrite: opening the shared file pointer\n");
-	}
-        shared_fp_base_module = fh->f_sharedfp;
-
-        ret = shared_fp_base_module->sharedfp_file_open(fh->f_comm,
-                                                        fh->f_filename,
-                                                        fh->f_amode,
-                                                        fh->f_info,
-                                                        fh);
-        if ( OMPI_SUCCESS != ret ) {
-            opal_output(0,"sharedfp_lockedfile_iwrite - error opening the shared file pointer\n");
-            return ret;
-        }
+        opal_output(ompi_sharedfp_base_framework.framework_output,
+                    "sharedfp_lockedfile_iwrite: module not initialized \n");
+        return OMPI_ERROR;
     }
 
     /*Calculate the number of bytes to write*/
@@ -73,7 +60,7 @@ int mca_sharedfp_lockedfile_iwrite(mca_io_ompio_file_t *fh,
 
     /*Request the offset to write bytesRequested bytes*/
     ret = mca_sharedfp_lockedfile_request_position(sh,bytesRequested,&offset);
-    offset /= sh->sharedfh->f_etype_size;
+    offset /= fh->f_etype_size;
 
     if ( -1 != ret) {
 	if ( mca_sharedfp_lockedfile_verbose ) {
@@ -82,19 +69,18 @@ int mca_sharedfp_lockedfile_iwrite(mca_io_ompio_file_t *fh,
 	}
 
         /* Write to the file */
-        ret = mca_common_ompio_file_iwrite_at(sh->sharedfh,offset,buf,count,datatype,request);
+        ret = mca_common_ompio_file_iwrite_at(fh,offset,buf,count,datatype,request);
     }
 
     return ret;
 }
 
-int mca_sharedfp_lockedfile_write_ordered_begin(mca_io_ompio_file_t *fh,
-                                       const void *buf,
-                                       int count,
-                                       struct ompi_datatype_t *datatype)
+int mca_sharedfp_lockedfile_write_ordered_begin(ompio_file_t *fh,
+                                                const void *buf,
+                                                int count,
+                                                struct ompi_datatype_t *datatype)
 {
     int ret = OMPI_SUCCESS;
-    mca_sharedfp_base_module_t * shared_fp_base_module=NULL;
     OMPI_MPI_OFFSET_TYPE offset = 0;
     long sendBuff = 0;
     long *buff=NULL;
@@ -107,26 +93,15 @@ int mca_sharedfp_lockedfile_write_ordered_begin(mca_io_ompio_file_t *fh,
     struct mca_sharedfp_base_data_t *sh = NULL;
 
     if(fh->f_sharedfp_data==NULL){
-	if ( mca_sharedfp_lockedfile_verbose ) {
-	    opal_output(ompi_sharedfp_base_framework.framework_output,
-			"sharedfp_lockedfile_write_ordered_begin: opening the shared file pointer\n");
-	}
-        shared_fp_base_module = fh->f_sharedfp;
-
-        ret = shared_fp_base_module->sharedfp_file_open(fh->f_comm,
-                                                        fh->f_filename,
-                                                        fh->f_amode,
-                                                        fh->f_info,
-                                                        fh);
-        if ( OMPI_SUCCESS != ret ) {
-            opal_output(0,"sharedfp_lockedfile_write_ordered_begin - error opening the shared file pointer\n");
-            return ret;
-        }
+        opal_output(ompi_sharedfp_base_framework.framework_output,
+                    "sharedfp_lockedfile_write_ordered_begin: module not initialized \n");
+        return OMPI_ERROR;
     }
 
 
     if ( true == fh->f_split_coll_in_use ) {
-        opal_output(0, "Only one split collective I/O operation allowed per file handle at any given point in time!\n");
+        opal_output(0, "Only one split collective I/O operation allowed per file handle at "
+                    "any given point in time!\n");
         return MPI_ERR_REQUEST;
     }
 
@@ -138,8 +113,8 @@ int mca_sharedfp_lockedfile_write_ordered_begin(mca_io_ompio_file_t *fh,
     sendBuff = count * numofBytes;
 
     /* Get the ranks in the communicator */
-    rank = ompi_comm_rank ( sh->comm );
-    size = ompi_comm_size ( sh->comm );
+    rank = ompi_comm_rank ( fh->f_comm );
+    size = ompi_comm_size ( fh->f_comm );
 
     if ( 0 == rank ) {
         buff = (long*) malloc (sizeof(long) * size);
@@ -148,9 +123,15 @@ int mca_sharedfp_lockedfile_write_ordered_begin(mca_io_ompio_file_t *fh,
 	}
     }
 
-    ret = sh->comm->c_coll->coll_gather ( &sendBuff, sendcnt, OMPI_OFFSET_DATATYPE, buff, recvcnt,
-					 OMPI_OFFSET_DATATYPE, 0, sh->comm,
-					 sh->comm->c_coll->coll_gather_module );
+    ret = fh->f_comm->c_coll->coll_gather ( &sendBuff, 
+                                            sendcnt, 
+                                            OMPI_OFFSET_DATATYPE, 
+                                            buff, 
+                                            recvcnt,
+                                            OMPI_OFFSET_DATATYPE, 
+                                            0, 
+                                            fh->f_comm,
+                                            fh->f_comm->c_coll->coll_gather_module );
     if ( OMPI_SUCCESS != ret ) {
 	goto exit;
     }
@@ -188,23 +169,29 @@ int mca_sharedfp_lockedfile_write_ordered_begin(mca_io_ompio_file_t *fh,
     }
 
     /* Scatter the results to the other processes*/
-    ret = sh->comm->c_coll->coll_scatter ( buff, sendcnt, OMPI_OFFSET_DATATYPE,
-					 &offsetBuff, recvcnt, OMPI_OFFSET_DATATYPE, 0,
-					 sh->comm, sh->comm->c_coll->coll_scatter_module );
+    ret = fh->f_comm->c_coll->coll_scatter ( buff, 
+                                             sendcnt, 
+                                             OMPI_OFFSET_DATATYPE,
+                                             &offsetBuff, 
+                                             recvcnt, 
+                                             OMPI_OFFSET_DATATYPE, 
+                                             0,
+                                             fh->f_comm, 
+                                             fh->f_comm->c_coll->coll_scatter_module );
     if ( OMPI_SUCCESS != ret ) {
 	goto exit;
     }
 
     /*Each process now has its own individual offset*/
     offset = offsetBuff - sendBuff;
-    offset /= sh->sharedfh->f_etype_size;
+    offset /= fh->f_etype_size;
 
     if ( mca_sharedfp_lockedfile_verbose ) {
 	opal_output(ompi_sharedfp_base_framework.framework_output,
                     "sharedfp_lockedfile_write_ordered_begin: Offset returned is %lld\n",offset);
      }
 
-    ret = mca_common_ompio_file_iwrite_at_all ( sh->sharedfh, offset, buf, count, datatype, &fh->f_split_coll_req );
+    ret = mca_common_ompio_file_iwrite_at_all ( fh, offset, buf, count, datatype, &fh->f_split_coll_req );
     fh->f_split_coll_in_use = true;
 
 exit:
@@ -217,7 +204,7 @@ exit:
 
 
 
-int mca_sharedfp_lockedfile_write_ordered_end(mca_io_ompio_file_t *fh,
+int mca_sharedfp_lockedfile_write_ordered_end(ompio_file_t *fh,
                                               const void *buf,
                                               ompi_status_public_t *status)
 {

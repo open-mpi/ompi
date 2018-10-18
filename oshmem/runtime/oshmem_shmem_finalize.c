@@ -3,6 +3,7 @@
  *                         All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2018      Cisco Systems, Inc.  All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -73,10 +74,18 @@ int oshmem_shmem_finalize(void)
         if (OSHMEM_SUCCESS == ret) {
             oshmem_shmem_initialized = false;
         }
+
+        SHMEM_MUTEX_DESTROY(shmem_internal_mutex_alloc);
     }
 
-    if ((OSHMEM_SUCCESS == ret) && ompi_mpi_initialized
-        && !ompi_mpi_finalized && oshmem_shmem_globalexit_status == 0) {
+    /* Note: ompi_mpi_state is set atomically in ompi_mpi_init() and
+       ompi_mpi_finalize().  Those 2 functions have the appropriate
+       memory barriers such that we don't need one here. */
+    int32_t state = ompi_mpi_state;
+    if ((OSHMEM_SUCCESS == ret) &&
+        (state >= OMPI_MPI_STATE_INIT_COMPLETED &&
+         state < OMPI_MPI_STATE_FINALIZE_PAST_COMM_SELF_DESTRUCT) &&
+        oshmem_shmem_globalexit_status == 0) {
         PMPI_Comm_free(&oshmem_comm_world);
         ret = ompi_mpi_finalize();
     }

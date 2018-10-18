@@ -101,7 +101,7 @@ AC_DEFUN([OPAL_CHECK_XPMEM], [
 	    fi
 	fi
 
-	OPAL_SUMMARY_ADD([[Transports]],[[Shared memory/XPMEM]],[$1],[$opal_check_cray_xpmem_happy])
+	OPAL_SUMMARY_ADD([[Transports]],[[Shared memory/XPMEM]],[$1],[$opal_check_xpmem_happy])
     fi
 
     AS_IF([test "$opal_check_xpmem_happy" = "yes"], [

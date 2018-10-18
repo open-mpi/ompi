@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2016-2018 Intel, Inc.  All rights reserved.
  * Copyright (c) 2016      Mellanox Technologies Ltd.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -145,7 +145,7 @@ static int get_remaining_time(uint32_t *timeleft)
     if (NULL == (jobid = getenv("SLURM_JOBID"))) {
         return ORTE_ERR_TAKE_NEXT_OPTION;
     }
-    if (0 > asprintf(&cmd, "squeue -h -j %s -o %%L", jobid)) {
+    if (0 > opal_asprintf(&cmd, "squeue -h -j %s -o %%L", jobid)) {
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
     fp = popen(cmd, "r");

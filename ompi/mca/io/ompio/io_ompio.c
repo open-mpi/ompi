@@ -10,10 +10,10 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2016 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2018 University of Houston. All rights reserved.
  * Copyright (c) 2011-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2013 Inria.  All rights reserved.
- * Copyright (c) 2015-2017 Research Organization for Information Science
+ * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -41,7 +41,7 @@
 #include "io_ompio.h"
 
 
-int ompi_io_ompio_generate_current_file_view (struct mca_io_ompio_file_t *fh,
+int ompi_io_ompio_generate_current_file_view (struct ompio_file_t *fh,
                                               size_t max_data,
                                               struct iovec **f_iov,
                                               int *iov_count)
@@ -415,127 +415,6 @@ int ompi_io_ompio_generate_current_file_view (struct mca_io_ompio_file_t *fh,
 }
 
 
-int ompi_io_ompio_decode_datatype (struct mca_io_ompio_file_t *fh,
-                                   ompi_datatype_t *datatype,
-                                   int count,
-                                   const void *buf,
-                                   size_t *max_data,
-                                   struct iovec **iov,
-                                   uint32_t *iovec_count)
-{
-
-
-
-    opal_convertor_t convertor;
-    size_t remaining_length = 0;
-    uint32_t i;
-    uint32_t temp_count;
-    struct iovec *temp_iov=NULL;
-    size_t temp_data;
-
-
-    opal_convertor_clone (fh->f_convertor, &convertor, 0);
-
-    if (OMPI_SUCCESS != opal_convertor_prepare_for_send (&convertor,
-                                                         &(datatype->super),
-                                                         count,
-                                                         buf)) {
-        opal_output (1, "Cannot attach the datatype to a convertor\n");
-        return OMPI_ERROR;
-    }
-
-    if ( 0 == datatype->super.size ) {
-	*max_data = 0;
-	*iovec_count = 0;
-	*iov = NULL;
-	return OMPI_SUCCESS;
-    }
-
-    remaining_length = count * datatype->super.size;
-
-    temp_count = OMPIO_IOVEC_INITIAL_SIZE;
-    temp_iov = (struct iovec*)malloc(temp_count * sizeof(struct iovec));
-    if (NULL == temp_iov) {
-        opal_output (1, "OUT OF MEMORY\n");
-        return OMPI_ERR_OUT_OF_RESOURCE;
-    }
-
-    while (0 == opal_convertor_raw(&convertor,
-				   temp_iov,
-                                   &temp_count,
-                                   &temp_data)) {
-#if 0
-        printf ("%d: New raw extraction (iovec_count = %d, max_data = %lu)\n",
-                fh->f_rank,temp_count, (unsigned long)temp_data);
-        for (i = 0; i < temp_count; i++) {
-            printf ("%d: \t{%p, %lu}\n",fh->f_rank,
-		    temp_iov[i].iov_base,
-		    (unsigned long)temp_iov[i].iov_len);
-        }
-#endif
-
-        *iovec_count = *iovec_count + temp_count;
-        *max_data = *max_data + temp_data;
-        *iov = (struct iovec *) realloc (*iov, *iovec_count * sizeof(struct iovec));
-        if (NULL == *iov) {
-            opal_output(1, "OUT OF MEMORY\n");
-            free(temp_iov);
-            return OMPI_ERR_OUT_OF_RESOURCE;
-        }
-        for (i=0 ; i<temp_count ; i++) {
-            (*iov)[i+(*iovec_count-temp_count)].iov_base = temp_iov[i].iov_base;
-            (*iov)[i+(*iovec_count-temp_count)].iov_len = temp_iov[i].iov_len;
-        }
-
-        remaining_length -= temp_data;
-        temp_count = OMPIO_IOVEC_INITIAL_SIZE;
-    }
-#if 0
-    printf ("%d: LAST raw extraction (iovec_count = %d, max_data = %d)\n",
-            fh->f_rank,temp_count, temp_data);
-    for (i = 0; i < temp_count; i++) {
-        printf ("%d: \t offset[%d]: %ld; length[%d]: %ld\n", fh->f_rank,i,temp_iov[i].iov_base, i,temp_iov[i].iov_len);
-    }
-#endif
-    *iovec_count = *iovec_count + temp_count;
-    *max_data = *max_data + temp_data;
-    if ( temp_count > 0 ) {
-	*iov = (struct iovec *) realloc (*iov, *iovec_count * sizeof(struct iovec));
-	if (NULL == *iov) {
-	    opal_output(1, "OUT OF MEMORY\n");
-            free(temp_iov);
-	    return OMPI_ERR_OUT_OF_RESOURCE;
-	}
-    }
-    for (i=0 ; i<temp_count ; i++) {
-        (*iov)[i+(*iovec_count-temp_count)].iov_base = temp_iov[i].iov_base;
-        (*iov)[i+(*iovec_count-temp_count)].iov_len = temp_iov[i].iov_len;
-    }
-
-    remaining_length -= temp_data;
-
-#if 0
-    if (0 == fh->f_rank) {
-        printf ("%d Entries: \n",*iovec_count);
-        for (i=0 ; i<*iovec_count ; i++) {
-            printf ("\t{%p, %d}\n",
-                    (*iov)[i].iov_base,
-                    (*iov)[i].iov_len);
-        }
-    }
-#endif
-    if (remaining_length != 0) {
-        printf( "Not all raw description was been extracted (%lu bytes missing)\n",
-                (unsigned long) remaining_length );
-    }
-
-    free (temp_iov);
-
-    return OMPI_SUCCESS;
-}
-
-
-
 int ompi_io_ompio_sort_offlen (mca_io_ompio_offlen_array_t *io_array,
                                int num_entries,
                                int *sorted){
@@ -642,7 +521,10 @@ int ompi_io_ompio_sort_offlen (mca_io_ompio_offlen_array_t *io_array,
 
 int mca_io_ompio_get_mca_parameter_value ( char *mca_parameter_name, int name_length )
 {
-    if ( !strncmp ( mca_parameter_name, "num_aggregators", name_length )) {
+    if ( !strncmp ( mca_parameter_name, "verbose_info_parsing", name_length )) {
+        return mca_io_ompio_verbose_info_parsing;
+    }
+    else if ( !strncmp ( mca_parameter_name, "num_aggregators", name_length )) {
         return mca_io_ompio_num_aggregators;
     }
     else if ( !strncmp ( mca_parameter_name, "bytes_per_agg", name_length )) {
@@ -659,6 +541,12 @@ int mca_io_ompio_get_mca_parameter_value ( char *mca_parameter_name, int name_le
     }
     else if ( !strncmp ( mca_parameter_name, "aggregators_cutoff_threshold", name_length )) {
         return mca_io_ompio_aggregators_cutoff_threshold;
+    }
+    else if ( !strncmp ( mca_parameter_name, "grouping_option", name_length )) {
+        return mca_io_ompio_grouping_option;
+    }
+    else if ( !strncmp ( mca_parameter_name, "coll_timing_info", name_length )) {
+        return mca_io_ompio_coll_timing_info;
     }
     else {
         opal_output (1, "Error in mca_io_ompio_get_mca_parameter_value: unknown parameter name");

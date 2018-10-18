@@ -26,6 +26,7 @@
 #include <string.h>
 
 #include "opal/util/argv.h"
+#include "opal/util/string_copy.h"
 #include "opal/constants.h"
 
 #define ARGSIZE 128
@@ -215,7 +216,7 @@ static char **opal_argv_split_inter(const char *src_string, int delimiter,
       if (NULL == argtemp)
 	return NULL;
 
-      strncpy(argtemp, src_string, arglen);
+      opal_string_copy(argtemp, src_string, arglen + 1);
       argtemp[arglen] = '\0';
 
       if (OPAL_SUCCESS != opal_argv_append(&argc, &argv, argtemp)) {
@@ -229,7 +230,7 @@ static char **opal_argv_split_inter(const char *src_string, int delimiter,
     /* short argument, copy to buffer and add */
 
     else {
-      strncpy(arg, src_string, arglen);
+      opal_string_copy(arg, src_string, arglen + 1);
       arg[arglen] = '\0';
 
       if (OPAL_SUCCESS != opal_argv_append(&argc, &argv, arg))

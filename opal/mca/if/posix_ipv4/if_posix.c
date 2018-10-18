@@ -19,6 +19,7 @@
 
 #include "opal/constants.h"
 #include "opal/util/output.h"
+#include "opal/util/string_copy.h"
 #include "opal/mca/if/if.h"
 #include "opal/mca/if/base/base.h"
 
@@ -218,7 +219,7 @@ static int if_posix_open(void)
 
         /* copy entry over into our data structure */
         memset(intf->if_name, 0, sizeof(intf->if_name));
-        strncpy(intf->if_name, ifr->ifr_name, sizeof(intf->if_name) - 1);
+        opal_string_copy(intf->if_name, ifr->ifr_name, sizeof(intf->if_name));
         intf->if_flags = ifr->ifr_flags;
 
         /* every new address gets its own internal if_index */

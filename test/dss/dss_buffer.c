@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -32,6 +33,7 @@
 
 #include "opal/runtime/opal.h"
 #include "opal/dss/dss.h"
+#include "opal/util/printf.h"
 
 #define NUM_ITERS 100
 #define NUM_ELEMS 1024
@@ -432,7 +434,7 @@ static bool test6(void)
     char* dst[NUM_ELEMS];
 
     for(i=0; i<NUM_ELEMS; i++) {
-        asprintf(&src[i], "%d", i);
+        opal_asprintf(&src[i], "%d", i);
     }
 
     bufA = OBJ_NEW(opal_buffer_t);
@@ -553,7 +555,7 @@ static bool test8(void)
 
     for(i=0; i<NUM_ELEMS; i++) {
         src[i] = (opal_byte_object_t*)malloc(sizeof(opal_byte_object_t));
-        asprintf((char**)&(src[i]->bytes), "%d", i);
+        opal_asprintf((char**)&(src[i]->bytes), "%d", i);
         src[i]->size = strlen((char*)(src[i]->bytes)) + 1;
     }
 
@@ -628,11 +630,11 @@ static bool test9(void)
     for(i=0; i<NUM_ELEMS; i++) {
         /* object offset 100 */
         srco[i] = (opal_byte_object_t*)malloc(sizeof(opal_byte_object_t));
-        asprintf((char**)&(srco[i]->bytes), "%d", i+100);
+        opal_asprintf((char**)&(srco[i]->bytes), "%d", i+100);
         srco[i]->size = strlen((char*)(srco[i]->bytes)) + 1;
 
         /* strings +200 */
-        asprintf(&srcs[i], "%d", i+200);
+        opal_asprintf(&srcs[i], "%d", i+200);
 
         /* bool */
         srcb[i] = ((i % 2) == 0) ? true : false;

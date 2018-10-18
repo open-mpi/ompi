@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2018      Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -99,8 +101,8 @@ static void opIntercept(void *invec, void *inoutvec, int *count,
     jobject jthis = object;
     jobject jin, jio;
 
-    MPI_Aint extent;
-    int rc = MPI_Type_extent(*datatype, &extent);
+    MPI_Aint lb, extent;
+    int rc = MPI_Type_get_extent(*datatype, &lb, &extent);
 
     if(ompi_java_exceptionCheck(env, rc))
         return;

@@ -17,6 +17,7 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -26,12 +27,14 @@
 
 #include "ompi_config.h"
 
+#include <float.h>
+
+#include "opal/util/printf.h"
+
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
-
-#include <float.h>
 
 #if OMPI_BUILD_MPI_PROFILING
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -107,12 +110,12 @@ int MPI_Type_create_f90_real(int p, int r, MPI_Datatype *newtype)
          */
         datatype->super.flags |= OMPI_DATATYPE_FLAG_PREDEFINED;
         /* Mark the datatype as a special F90 convenience type */
-        char *new_name;
-        asprintf(&new_name, "COMBINER %s", (*newtype)->name);
-        size_t max_len = MPI_MAX_OBJECT_NAME;
-        strncpy(datatype->name, new_name, max_len - 1);
-        datatype->name[max_len - 1] = '\0';
-        free(new_name);
+        // Specifically using opal_snprintf() here (instead of
+        // snprintf()) so that over-eager compilers do not warn us
+        // that we may be truncating the output.  We *know* that the
+        // output may be truncated, and it's ok.
+        opal_snprintf(datatype->name, sizeof(datatype->name),
+                      "COMBINER %s", (*newtype)->name);
 
         ompi_datatype_set_args( datatype, 2, a_i, 0, NULL, 0, NULL, MPI_COMBINER_F90_REAL );
 

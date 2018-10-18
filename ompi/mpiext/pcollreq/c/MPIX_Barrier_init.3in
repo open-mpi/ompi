@@ -1,0 +1,565 @@
+.\" -*- nroff -*-
+.\" Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
+.\" $COPYRIGHT$
+.TH MPIX_Barrier_init 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
+.SH NAME
+\fBMPIX_Allgather_init, MPIX_Allgatherv_init, MPIX_Allreduce_init, MPIX_Alltoall_init, MPIX_Alltoallv_init, MPIX_Alltoallw_init, MPIX_Barrier_init, MPIX_Bcast_init, MPIX_Exscan_init, MPIX_Gather_init, MPIX_Gatherv_init, MPIX_Reduce_init, MPIX_Reduce_scatter_init, MPIX_Reduce_scatter_block_init, MPIX_Scan_init, MPIX_Scatter_init, MPIX_Scatterv_init, MPIX_Neighbor_allgather_init, MPIX_Neighbor_allgatherv_init, MPIX_Neighbor_alltoall_init, MPIX_Neighbor_alltoallv_init, MPIX_Neighbor_alltoallw_init\fP \- Builds a handle for a collective communication or neighborhood collective communication
+
+.SH SYNTAX
+.ft R
+.SH C Syntax
+.nf
+#include <mpi.h>
+#include <mpi-ext.h>
+int MPIX_Allgather_init(const void *\fIsendbuf\fP, int \fIsendcount\fP,
+	MPI_Datatype \fIsendtype\fP, void *\fIrecvbuf\fP, int \fIrecvcount\fP,
+	MPI_Datatype \fIrecvtype\fP, MPI_Comm \fIcomm\fP, MPI_Info \fIinfo\fP,
+	MPI_Request *\fIrequest\fP)
+
+int MPIX_Allgatherv_init(const void *\fIsendbuf\fP, int \fIsendcount\fP,
+	MPI_Datatype \fIsendtype\fP, void *\fIrecvbuf\fP, const int \fIrecvcounts\fP[],
+	const int \fIdispls\fP[], MPI_Datatype \fIrecvtype\fP, MPI_Comm \fIcomm\fP,
+	MPI_Info \fIinfo\fP, MPI_Request *\fIrequest\fP)
+
+int MPIX_Allreduce_init(const void *\fIsendbuf\fP, void *\fIrecvbuf\fP, int \fIcount\fP,
+	MPI_Datatype \fIdatatype\fP, MPI_Op \fIop\fP, MPI_Comm \fIcomm\fP, MPI_Info \fIinfo\fP,
+	MPI_Request *\fIrequest\fP)
+
+int MPIX_Alltoall_init(const void *\fIsendbuf\fP, int \fIsendcount\fP,
+	MPI_Datatype \fIsendtype\fP, void *\fIrecvbuf\fP, int \fIrecvcount\fP,
+	MPI_Datatype \fIrecvtype\fP, MPI_Comm \fIcomm\fP, MPI_Info \fIinfo\fP,
+	MPI_Request *\fIrequest\fP)
+
+int MPIX_Alltoallv_init(const void *\fIsendbuf\fP, const int \fIsendcounts\fP[],
+	const int \fIsdispls\fP[], MPI_Datatype \fIsendtype\fP, void *\fIrecvbuf\fP,
+	const int \fIrecvcounts\fP[], const int \fIrdispls\fP[], MPI_Datatype \fIrecvtype\fP,
+	MPI_Comm \fIcomm\fP, MPI_Info \fIinfo\fP, MPI_Request *\fIrequest\fP)
+
+int MPIX_Alltoallw_init(const void *\fIsendbuf\fP, const int \fIsendcounts\fP[],
+	const int \fIsdispls\fP[], const MPI_Datatype \fIsendtypes\fP[], void *\fIrecvbuf\fP,
+	const int \fIrecvcounts\fP[], const int \fIrdispls\fP[],
+	const MPI_Datatype \fIrecvtypes\fP[], MPI_Comm \fIcomm\fP, MPI_Info \fIinfo\fP,
+	MPI_Request *\fIrequest\fP)
+
+int MPIX_Barrier_init(MPI_Comm \fIcomm\fP, MPI_Info \fIinfo\fP,
+	MPI_Request *\fIrequest\fP)
+
+int MPIX_Bcast_init(void *\fIbuffer\fP, int \fIcount\fP, MPI_Datatype \fIdatatype\fP,
+	int \fIroot\fP, MPI_Comm \fIcomm\fP, MPI_Info \fIinfo\fP, MPI_Request *\fIrequest\fP)
+
+int MPIX_Exscan_init(const void *\fIsendbuf\fP, void *\fIrecvbuf\fP, int \fIcount\fP,
+	MPI_Datatype \fIdatatype\fP, MPI_Op \fIop\fP, MPI_Comm \fIcomm\fP, MPI_Info \fIinfo\fP,
+	MPI_Request *\fIrequest\fP)
+
+int MPIX_Gather_init(const void *\fIsendbuf\fP, int \fIsendcount\fP,
+	MPI_Datatype \fIsendtype\fP, void *\fIrecvbuf\fP, int \fIrecvcount\fP,
+	MPI_Datatype \fIrecvtype\fP, int \fIroot\fP, MPI_Comm \fIcomm\fP, MPI_Info \fIinfo\fP,
+	MPI_Request *\fIrequest\fP)
+
+int MPIX_Gatherv_init(const void *\fIsendbuf\fP, int \fIsendcount\fP,
+	MPI_Datatype \fIsendtype\fP, void *\fIrecvbuf\fP, const int \fIrecvcounts\fP[],
+	const int \fIdispls\fP[], MPI_Datatype \fIrecvtype\fP, int \fIroot\fP, MPI_Comm \fIcomm\fP,
+	MPI_Info \fIinfo\fP, MPI_Request *\fIrequest\fP)
+
+int MPIX_Reduce_init(const void *\fIsendbuf\fP, void *\fIrecvbuf\fP, int \fIcount\fP,
+	MPI_Datatype \fIdatatype\fP, MPI_Op \fIop\fP, int \fIroot\fP, MPI_Comm \fIcomm\fP,
+	MPI_Info \fIinfo\fP, MPI_Request *\fIrequest\fP)
+
+int MPIX_Reduce_scatter_init(const void *\fIsendbuf\fP, void *\fIrecvbuf\fP,
+	const int \fIrecvcounts\fP[], MPI_Datatype \fIdatatype\fP, MPI_Op \fIop\fP,
+	MPI_Comm \fIcomm\fP, MPI_Info \fIinfo\fP, MPI_Request *\fIrequest\fP)
+
+int MPIX_Reduce_scatter_block_init(const void *\fIsendbuf\fP, void *\fIrecvbuf\fP,
+	int \fIrecvcount\fP, MPI_Datatype \fIdatatype\fP, MPI_Op \fIop\fP, MPI_Comm \fIcomm\fP,
+	MPI_Info \fIinfo\fP, MPI_Request *\fIrequest\fP)
+
+int MPIX_Scan_init(const void *\fIsendbuf\fP, void *\fIrecvbuf\fP, int \fIcount\fP,
+	MPI_Datatype \fIdatatype\fP, MPI_Op \fIop\fP, MPI_Comm \fIcomm\fP, MPI_Info \fIinfo\fP,
+	MPI_Request *\fIrequest\fP)
+
+int MPIX_Scatter_init(const void *\fIsendbuf\fP, int \fIsendcount\fP,
+	MPI_Datatype \fIsendtype\fP, void *\fIrecvbuf\fP, int \fIrecvcount\fP,
+	MPI_Datatype \fIrecvtype\fP, int \fIroot\fP, MPI_Comm \fIcomm\fP, MPI_Info \fIinfo\fP,
+	MPI_Request *\fIrequest\fP)
+
+int MPIX_Scatterv_init(const void *\fIsendbuf\fP, const int \fIsendcounts\fP[],
+	const int \fIdispls\fP[], MPI_Datatype \fIsendtype\fP, void *\fIrecvbuf\fP,
+	int \fIrecvcount\fP, MPI_Datatype \fIrecvtype\fP, int \fIroot\fP, MPI_Comm \fIcomm\fP,
+	MPI_Info \fIinfo\fP, MPI_Request *\fIrequest\fP)
+
+int MPIX_Neighbor_allgather_init(const void *\fIsendbuf\fP, int \fIsendcount\fP,
+	MPI_Datatype \fIsendtype\fP, void *\fIrecvbuf\fP, int \fIrecvcount\fP,
+	MPI_Datatype \fIrecvtype\fP, MPI_Comm \fIcomm\fP, MPI_Info \fIinfo\fP,
+	MPI_Request *\fIrequest\fP)
+
+int MPIX_Neighbor_allgatherv_init(const void *\fIsendbuf\fP, int \fIsendcount\fP,
+	MPI_Datatype \fIsendtype\fP, void *\fIrecvbuf\fP, const int \fIrecvcounts\fP[],
+	const int \fIdispls\fP[], MPI_Datatype \fIrecvtype\fP, MPI_Comm \fIcomm\fP,
+	MPI_Info \fIinfo\fP, MPI_Request *\fIrequest\fP)
+
+int MPIX_Neighbor_alltoall_init(const void *\fIsendbuf\fP, int \fIsendcount\fP,
+	MPI_Datatype \fIsendtype\fP, void *\fIrecvbuf\fP, int \fIrecvcount\fP,
+	MPI_Datatype \fIrecvtype\fP, MPI_Comm \fIcomm\fP, MPI_Info \fIinfo\fP,
+	MPI_Request *\fIrequest\fP)
+
+int MPIX_Neighbor_alltoallv_init(const void *\fIsendbuf\fP,
+	const int \fIsendcounts\fP[], const int \fIsdispls\fP[], MPI_Datatype \fIsendtype\fP,
+	void *\fIrecvbuf\fP, const int \fIrecvcounts\fP[], const int \fIrdispls\fP[],
+	MPI_Datatype \fIrecvtype\fP, MPI_Comm \fIcomm\fP, MPI_Info \fIinfo\fP,
+	MPI_Request *\fIrequest\fP)
+
+int MPIX_Neighbor_alltoallw_init(const void *\fIsendbuf\fP,
+	const int \fIsendcounts\fP[], const MPI_Aint \fIsdispls\fP[],
+	const MPI_Datatype \fIsendtypes\fP[], void *\fIrecvbuf\fP,
+	const int \fIrecvcounts\fP[], const MPI_Aint \fIrdispls\fP[],
+	const MPI_Datatype \fIrecvtypes\fP[], MPI_Comm \fIcomm\fP, MPI_Info \fIinfo\fP,
+	MPI_Request *\fIrequest\fP)
+
+.fi
+.SH Fortran Syntax
+.nf
+USE MPI
+USE MPI_EXT
+! or the older form: INCLUDE 'mpif.h'; INCLUDE 'mpif-ext.h'
+MPIX_ALLGATHER_INIT(\fISENDBUF, SENDCOUNT, SENDTYPE, RECVBUF, RECVCOUNT,
+		RECVTYPE, COMM, INFO, REQUEST, IERROR\fP)
+	<type>	\fISENDBUF\fP(*)\fI, RECVBUF\fP(*)
+	INTEGER	\fISENDCOUNT, SENDTYPE, RECVCOUNT, RECVTYPE, COMM, INFO\fP
+	INTEGER	\fIREQUEST, IERROR\fP
+
+MPIX_ALLGATHERV_INIT(\fISENDBUF, SENDCOUNT, SENDTYPE, RECVBUF,
+		RECVCOUNT, DISPLS, RECVTYPE, COMM, INFO, REQUEST, IERROR\fP)
+	<type>	\fISENDBUF\fP(*)\fI, RECVBUF\fP(*)
+	INTEGER	\fISENDCOUNT, SENDTYPE, RECVCOUNT\fP(*)
+	INTEGER	\fIDISPLS\fP(*)\fI, RECVTYPE, COMM, INFO, REQUEST, IERROR\fP
+
+MPIX_ALLREDUCE_INIT(\fISENDBUF, RECVBUF, COUNT, DATATYPE, OP, COMM, INFO,
+		REQUEST, IERROR\fP)
+	<type>	\fISENDBUF\fP(*)\fI, RECVBUF\fP(*)
+	INTEGER	\fICOUNT, DATATYPE, OP, COMM, INFO, REQUEST, IERROR\fP
+
+MPIX_ALLTOALL_INIT(\fISENDBUF, SENDCOUNT, SENDTYPE, RECVBUF, RECVCOUNT,
+		RECVTYPE, COMM, INFO, REQUEST, IERROR\fP)
+	<type>	\fISENDBUF(*), RECVBUF(*)\fP
+	INTEGER	\fISENDCOUNT, SENDTYPE, RECVCOUNT, RECVTYPE\fP
+	INTEGER	\fICOMM, INFO, REQUEST, IERROR\fP
+
+MPIX_ALLTOALLV_INIT(\fISENDBUF, SENDCOUNTS, SDISPLS, SENDTYPE,
+		RECVBUF, RECVCOUNTS, RDISPLS, RECVTYPE, COMM, INFO, REQUEST,
+		IERROR\fP)
+	<type>	\fISENDBUF(*), RECVBUF(*)\fP
+	INTEGER	\fISENDCOUNTS(*), SDISPLS(*), SENDTYPE\fP
+	INTEGER	\fIRECVCOUNTS(*), RDISPLS(*), RECVTYPE\fP
+	INTEGER	\fICOMM, INFO, REQUEST, IERROR\fP
+
+MPIX_ALLTOALLW_INIT(\fISENDBUF, SENDCOUNTS, SDISPLS, SENDTYPES,
+		RECVBUF, RECVCOUNTS, RDISPLS, RECVTYPES, COMM, INFO, REQUEST,
+		IERROR\fP)
+	<type>	\fISENDBUF(*), RECVBUF(*)\fP
+	INTEGER	\fISENDCOUNTS(*), SDISPLS(*), SENDTYPES(*)\fP
+	INTEGER	\fIRECVCOUNTS(*), RDISPLS(*), RECVTYPES(*)\fP
+	INTEGER	\fICOMM, INFO, REQUEST, IERROR\fP
+
+MPIX_BARRIER_INIT(\fICOMM\fP, \fIINFO\fP, \fIREQUEST\fP, \fIIERROR\fP)
+	INTEGER	\fICOMM\fP, \fIINFO\fP, \fIREQUEST\fP, \fIIERROR\fP
+
+MPIX_BCAST_INIT(\fIBUFFER\fP, \fICOUNT\fP, \fIDATATYPE\fP, \fIROOT\fP, \fICOMM\fP, \fIINFO\fP, \fIREQUEST\fP,
+		\fIIERROR\fP)
+	<type>	\fIBUFFER\fP(*)
+	INTEGER	\fICOUNT\fP, \fIDATATYPE\fP, \fIROOT\fP, \fICOMM\fP, \fIINFO\fP, \fIREQUEST\fP, \fIIERROR\fP
+
+MPIX_EXSCAN_INIT(\fISENDBUF, RECVBUF, COUNT, DATATYPE, OP, COMM, INFO,
+		REQUEST, IERROR\fP)
+	<type>	\fISENDBUF(*), RECVBUF(*)\fP
+	INTEGER	\fICOUNT, DATATYPE, OP, COMM, INFO, REQUEST, IERROR\fP
+
+MPIX_GATHER_INIT(\fISENDBUF, SENDCOUNT, SENDTYPE, RECVBUF, RECVCOUNT,
+		RECVTYPE, ROOT, COMM, INFO, REQUEST, IERROR\fP)
+	<type>	\fISENDBUF(*), RECVBUF(*)\fP
+	INTEGER	\fISENDCOUNT, SENDTYPE, RECVCOUNT, RECVTYPE, ROOT\fP
+	INTEGER	\fICOMM, INFO, REQUEST, IERROR\fP
+
+MPIX_GATHERV_INIT(\fISENDBUF, SENDCOUNT, SENDTYPE, RECVBUF, RECVCOUNTS,
+		DISPLS, RECVTYPE, ROOT, COMM, INFO, REQUEST, IERROR\fP)
+	<type>	\fISENDBUF(*), RECVBUF(*)\fP
+	INTEGER	\fISENDCOUNT, SENDTYPE, RECVCOUNTS(*), DISPLS(*)\fP
+	INTEGER	\fIRECVTYPE, ROOT, COMM, INFO, REQUEST, IERROR\fP
+
+MPIX_REDUCE_INIT(\fISENDBUF, RECVBUF, COUNT, DATATYPE, OP, ROOT, COMM,
+		INFO, REQUEST, IERROR\fP)
+	<type>	\fISENDBUF(*), RECVBUF(*)\fP
+	INTEGER	\fICOUNT, DATATYPE, OP, ROOT, COMM, INFO, REQUEST, IERROR\fP
+
+MPIX_REDUCE_SCATTER_INIT(\fISENDBUF, RECVBUF, RECVCOUNTS, DATATYPE, OP,
+		COMM, INFO, REQUEST, IERROR\fP)
+	<type>	\fISENDBUF(*), RECVBUF(*)\fP
+	INTEGER	\fIRECVCOUNTS(*), DATATYPE, OP, COMM, INFO, REQUEST, IERROR \fP
+
+MPIX_REDUCE_SCATTER_BLOCK_INIT(\fISENDBUF, RECVBUF, RECVCOUNT, DATATYPE,
+		OP, COMM, INFO, REQUEST, IERROR\fP)
+	<type>	\fISENDBUF(*), RECVBUF(*)\fP
+	INTEGER	\fIRECVCOUNT, DATATYPE, OP, COMM, INFO, REQUEST, IERROR \fP
+
+MPIX_SCAN_INIT(\fISENDBUF, RECVBUF, COUNT, DATATYPE, OP, COMM, INFO,
+		REQUEST, IERROR\fP)
+	<type>	\fISENDBUF(*), RECVBUF(*)\fP
+	INTEGER	\fICOUNT, DATATYPE, OP, COMM, INFO, REQUEST, IERROR\fP
+
+MPIX_SCATTER_INIT(\fISENDBUF, SENDCOUNT, SENDTYPE, RECVBUF, RECVCOUNT,
+		RECVTYPE, ROOT, COMM, INFO, REQUEST, IERROR\fP)
+	<type>	\fISENDBUF(*), RECVBUF(*)\fP
+	INTEGER	\fISENDCOUNT, SENDTYPE, RECVCOUNT, RECVTYPE, ROOT\fP
+	INTEGER	\fICOMM, INFO, REQUEST, IERROR\fP
+
+MPIX_SCATTERV_INIT(\fISENDBUF, SENDCOUNTS, DISPLS, SENDTYPE, RECVBUF,
+		RECVCOUNT, RECVTYPE, ROOT, COMM, INFO, REQUEST, IERROR\fP)
+	<type>	\fISENDBUF(*), RECVBUF(*)\fP
+	INTEGER	\fISENDCOUNTS(*), DISPLS(*), SENDTYPE\fP
+	INTEGER	\fIRECVCOUNT, RECVTYPE, ROOT, COMM, INFO, REQUEST, IERROR\fP
+
+MPIX_NEIGHBOR_ALLGATHER_INIT(\fISENDBUF\fP, \fISENDCOUNT\fP, \fISENDTYPE\fP, \fIRECVBUF\fP,
+		\fIRECVCOUNT\fP, \fIRECVTYPE\fP, \fICOMM\fP, \fIINFO\fP, \fIREQUEST\fP, \fIIERROR\fP)
+	<type>	\fISENDBUF\fP(*), \fIRECVBUF\fP(*)
+	INTEGER	\fISENDCOUNT\fP, \fISENDTYPE\fP, \fIRECVCOUNT\fP, \fIRECVTYPE\fP, \fICOMM\fP,
+	INTEGER	\fIINFO, REQUEST, IERROR\fP
+
+MPIX_NEIGHBOR_ALLGATHERV_INIT(\fISENDBUF\fP, \fISENDCOUNT\fP, \fISENDTYPE\fP, \fIRECVBUF\fP,
+		\fIRECVCOUNT\fP, \fIDISPLS\fP, \fIRECVTYPE\fP, \fICOMM\fP, \fIINFO\fP, \fIREQUEST\fP, \fIIERROR\fP)
+	<type>	\fISENDBUF\fP(*), \fIRECVBUF\fP(*)
+	INTEGER	\fISENDCOUNT\fP, \fISENDTYPE\fP, \fIRECVCOUNT\fP(*),
+	INTEGER	\fIDISPLS\fP(*), \fIRECVTYPE\fP, \fICOMM\fP, \fIINFO\fP, \fIREQUEST\fP, \fIIERROR\fP
+
+MPIX_NEIGHBOR_ALLTOALL_INIT(\fISENDBUF, SENDCOUNT, SENDTYPE, RECVBUF,
+		RECVCOUNT, RECVTYPE, COMM, INFO, REQUEST, IERROR\fP)
+	<type>	\fISENDBUF(*), RECVBUF(*)\fP
+	INTEGER	\fISENDCOUNT, SENDTYPE, RECVCOUNT, RECVTYPE\fP
+	INTEGER	\fICOMM, INFO, REQUEST, IERROR\fP
+
+MPIX_NEIGHBOR_ALLTOALLV_INIT(\fISENDBUF, SENDCOUNTS, SDISPLS, SENDTYPE,
+		RECVBUF, RECVCOUNTS, RDISPLS, RECVTYPE, COMM, INFO, REQUEST,
+		IERROR\fP)
+	<type>	\fISENDBUF(*), RECVBUF(*)\fP
+	INTEGER	\fISENDCOUNTS(*), SDISPLS(*), SENDTYPE\fP
+	INTEGER	\fIRECVCOUNTS(*), RDISPLS(*), RECVTYPE\fP
+	INTEGER	\fICOMM, INFO, REQUEST, IERROR\fP
+
+MPIX_NEIGHBOR_ALLTOALLW_INIT(\fISENDBUF, SENDCOUNTS, SDISPLS, SENDTYPES,
+		RECVBUF, RECVCOUNTS, RDISPLS, RECVTYPES, COMM, INFO, REQUEST,
+		IERROR\fP)
+	<type>	\fISENDBUF(*), RECVBUF(*)\fP
+	INTEGER	\fISENDCOUNTS(*), SENDTYPES(*)\fP
+	INTEGER	\fIRECVCOUNTS(*), RECVTYPES(*)\fP
+	INTEGER(KIND=MPI_ADDRESS_KIND) \fISDISPLS(*), RDISPLS(*)\fP
+	INTEGER	\fICOMM, INFO, REQUEST, IERROR\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+USE mpi_f08_ext
+MPIX_Allgather_init(\fIsendbuf\fP, \fIsendcount\fP, \fIsendtype\fP, \fIrecvbuf\fP, \fIrecvcount\fP,
+		\fIrecvtype\fP, \fIcomm\fP, \fIinfo\fP, \fIrequest\fP, \fIierror\fP)
+	TYPE(*), DIMENSION(..), INTENT(IN), ASYNCHRONOUS :: \fIsendbuf\fP
+	TYPE(*), DIMENSION(..), ASYNCHRONOUS :: \fIrecvbuf\fP
+	INTEGER, INTENT(IN) :: \fIsendcount\fP, \fIrecvcount\fP
+	TYPE(MPI_Datatype), INTENT(IN) :: \fIsendtype\fP, \fIrecvtype\fP
+	TYPE(MPI_Comm), INTENT(IN) :: \fIcomm\fP
+	TYPE(MPI_Info), INTENT(IN) :: \fIinfo\fP
+	TYPE(MPI_Request), INTENT(OUT) :: \fIrequest\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
+
+MPIX_Allgatherv_init(\fIsendbuf\fP, \fIsendcount\fP, \fIsendtype\fP, \fIrecvbuf\fP, \fIrecvcounts\fP,
+		\fIdispls\fP, \fIrecvtype\fP, \fIcomm\fP, \fIinfo\fP, \fIrequest\fP, \fIierror\fP)
+	TYPE(*), DIMENSION(..), INTENT(IN), ASYNCHRONOUS :: \fIsendbuf\fP
+	TYPE(*), DIMENSION(..), ASYNCHRONOUS :: \fIrecvbuf\fP
+	INTEGER, INTENT(IN) :: \fIsendcount\fP
+	INTEGER, INTENT(IN), ASYNCHRONOUS :: \fIrecvcounts(*)\fP, \fIdispls(*)\fP
+	TYPE(MPI_Datatype), INTENT(IN) :: \fIsendtype\fP, \fIrecvtype\fP
+	TYPE(MPI_Comm), INTENT(IN) :: \fIcomm\fP
+	TYPE(MPI_Info), INTENT(IN) :: \fIinfo\fP
+	TYPE(MPI_Request), INTENT(OUT) :: \fIrequest\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
+
+MPIX_Allreduce_init(\fIsendbuf\fP, \fIrecvbuf\fP, \fIcount\fP, \fIdatatype\fP, \fIop\fP, \fIcomm\fP, \fIinfo\fP,
+		\fIrequest\fP, \fIierror\fP)
+	TYPE(*), DIMENSION(..), INTENT(IN), ASYNCHRONOUS :: \fIsendbuf\fP
+	TYPE(*), DIMENSION(..), ASYNCHRONOUS :: \fIrecvbuf\fP
+	INTEGER, INTENT(IN) :: \fIcount\fP
+	TYPE(MPI_Datatype), INTENT(IN) :: \fIdatatype\fP
+	TYPE(MPI_Op), INTENT(IN) :: \fIop\fP
+	TYPE(MPI_Comm), INTENT(IN) :: \fIcomm\fP
+	TYPE(MPI_Info), INTENT(IN) :: \fIinfo\fP
+	TYPE(MPI_Request), INTENT(OUT) :: \fIrequest\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
+
+MPIX_Alltoall_init(\fIsendbuf\fP, \fIsendcount\fP, \fIsendtype\fP, \fIrecvbuf\fP, \fIrecvcount\fP,
+		\fIrecvtype\fP, \fIcomm\fP, \fIinfo\fP, \fIrequest\fP, \fIierror\fP)
+	TYPE(*), DIMENSION(..), INTENT(IN), ASYNCHRONOUS :: \fIsendbuf\fP
+	TYPE(*), DIMENSION(..), ASYNCHRONOUS :: \fIrecvbuf\fP
+	INTEGER, INTENT(IN) :: \fIsendcount\fP, \fIrecvcount\fP
+	TYPE(MPI_Datatype), INTENT(IN) :: \fIsendtype\fP, \fIrecvtype\fP
+	TYPE(MPI_Comm), INTENT(IN) :: \fIcomm\fP
+	TYPE(MPI_Info), INTENT(IN) :: \fIinfo\fP
+	TYPE(MPI_Request), INTENT(OUT) :: \fIrequest\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
+
+MPIX_Alltoallv_init(\fIsendbuf\fP, \fIsendcounts\fP, \fIsdispls\fP, \fIsendtype\fP, \fIrecvbuf\fP,
+		\fIrecvcounts\fP, \fIrdispls\fP, \fIrecvtype\fP, \fIcomm\fP, \fIinfo\fP, \fIrequest\fP, \fIierror\fP)
+	TYPE(*), DIMENSION(..), INTENT(IN), ASYNCHRONOUS :: \fIsendbuf\fP
+	TYPE(*), DIMENSION(..), ASYNCHRONOUS :: \fIrecvbuf\fP
+	INTEGER, INTENT(IN), ASYNCHRONOUS :: \fIsendcounts(*)\fP, \fIsdispls(*)\fP,
+	\fIrecvcounts(*)\fP, \fIrdispls(*)\fP
+	TYPE(MPI_Datatype), INTENT(IN) :: \fIsendtype\fP, \fIrecvtype\fP
+	TYPE(MPI_Comm), INTENT(IN) :: \fIcomm\fP
+	TYPE(MPI_Info), INTENT(IN) :: \fIinfo\fP
+	TYPE(MPI_Request), INTENT(OUT) :: \fIrequest\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
+
+MPIX_Alltoallw_init(\fIsendbuf\fP, \fIsendcounts\fP, \fIsdispls\fP, \fIsendtypes\fP, \fIrecvbuf\fP,
+		\fIrecvcounts\fP, \fIrdispls\fP, \fIrecvtypes\fP, \fIcomm\fP, \fIinfo\fP, \fIrequest\fP, \fIierror\fP)
+	TYPE(*), DIMENSION(..), INTENT(IN), ASYNCHRONOUS :: \fIsendbuf\fP
+	TYPE(*), DIMENSION(..), ASYNCHRONOUS :: \fIrecvbuf\fP
+	INTEGER, INTENT(IN), ASYNCHRONOUS :: \fIsendcounts(*)\fP, \fIsdispls(*)\fP,
+	\fIrecvcounts(*)\fP, \fIrdispls(*)\fP
+	TYPE(MPI_Datatype), INTENT(IN), ASYNCHRONOUS :: \fIsendtypes(*)\fP,
+	\fIrecvtypes(*)\fP
+	TYPE(MPI_Comm), INTENT(IN) :: \fIcomm\fP
+	TYPE(MPI_Info), INTENT(IN) :: \fIinfo\fP
+	TYPE(MPI_Request), INTENT(OUT) :: \fIrequest\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
+
+MPIX_Barrier_init(\fIcomm\fP, \fIinfo\fP, \fIrequest\fP, \fIierror\fP)
+	TYPE(MPI_Comm), INTENT(IN) :: \fIcomm\fP
+	TYPE(MPI_Info), INTENT(IN) :: \fIinfo\fP
+	TYPE(MPI_Request), INTENT(OUT) :: \fIrequest\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
+
+MPIX_Bcast_init(\fIbuffer\fP, \fIcount\fP, \fIdatatype\fP, \fIroot\fP, \fIcomm\fP, \fIinfo\fP, \fIrequest\fP,
+		\fIierror\fP)
+	TYPE(*), DIMENSION(..), ASYNCHRONOUS :: \fIbuffer\fP
+	INTEGER, INTENT(IN) :: \fIcount\fP, \fIroot\fP
+	TYPE(MPI_Datatype), INTENT(IN) :: \fIdatatype\fP
+	TYPE(MPI_Comm), INTENT(IN) :: \fIcomm\fP
+	TYPE(MPI_Info), INTENT(IN) :: \fIinfo\fP
+	TYPE(MPI_Request), INTENT(OUT) :: \fIrequest\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
+
+MPIX_Exscan_init(\fIsendbuf\fP, \fIrecvbuf\fP, \fIcount\fP, \fIdatatype\fP, \fIop\fP, \fIcomm\fP, \fIinfo\fP,
+		\fIrequest\fP, \fIierror\fP)
+	TYPE(*), DIMENSION(..), INTENT(IN), ASYNCHRONOUS :: \fIsendbuf\fP
+	TYPE(*), DIMENSION(..), ASYNCHRONOUS :: \fIrecvbuf\fP
+	INTEGER, INTENT(IN) :: \fIcount\fP
+	TYPE(MPI_Datatype), INTENT(IN) :: \fIdatatype\fP
+	TYPE(MPI_Op), INTENT(IN) :: \fIop\fP
+	TYPE(MPI_Comm), INTENT(IN) :: \fIcomm\fP
+	TYPE(MPI_Info), INTENT(IN) :: \fIinfo\fP
+	TYPE(MPI_Request), INTENT(OUT) :: \fIrequest\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
+
+MPIX_Gather_init(\fIsendbuf\fP, \fIsendcount\fP, \fIsendtype\fP, \fIrecvbuf\fP,
+		\fIrecvcount\fP, \fIrecvtype\fP, \fIroot\fP, \fIcomm\fP, \fIinfo\fP, \fIrequest\fP, \fIierror\fP)
+	TYPE(*), DIMENSION(..), INTENT(IN), ASYNCHRONOUS :: \fIsendbuf\fP
+	TYPE(*), DIMENSION(..), ASYNCHRONOUS :: \fIrecvbuf\fP
+	INTEGER, INTENT(IN) :: \fIsendcount\fP, \fIrecvcount\fP, \fIroot\fP
+	TYPE(MPI_Datatype), INTENT(IN) :: \fIsendtype\fP, \fIrecvtype\fP
+	TYPE(MPI_Comm), INTENT(IN) :: \fIcomm\fP
+	TYPE(MPI_Info), INTENT(IN) :: \fIinfo\fP
+	TYPE(MPI_Request), INTENT(OUT) :: \fIrequest\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
+
+MPIX_Gatherv_init(\fIsendbuf\fP, \fIsendcount\fP, \fIsendtype\fP, \fIrecvbuf\fP, \fIrecvcounts\fP,
+		\fIdispls\fP, \fIrecvtype\fP, \fIroot\fP, \fIcomm\fP, \fIinfo\fP, \fIrequest\fP, \fIierror\fP)
+	TYPE(*), DIMENSION(..), INTENT(IN), ASYNCHRONOUS :: \fIsendbuf\fP
+	TYPE(*), DIMENSION(..), ASYNCHRONOUS :: \fIrecvbuf\fP
+	INTEGER, INTENT(IN) :: \fIsendcount\fP, \fIroot\fP
+	INTEGER, INTENT(IN), ASYNCHRONOUS :: \fIrecvcounts(*)\fP, \fIdispls(*)\fP
+	TYPE(MPI_Datatype), INTENT(IN) :: \fIsendtype\fP, \fIrecvtype\fP
+	TYPE(MPI_Comm), INTENT(IN) :: \fIcomm\fP
+	TYPE(MPI_Info), INTENT(IN) :: \fIinfo\fP
+	TYPE(MPI_Request), INTENT(OUT) :: \fIrequest\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
+
+MPIX_Reduce_init(\fIsendbuf\fP, \fIrecvbuf\fP, \fIcount\fP, \fIdatatype\fP, \fIop\fP, \fIroot\fP, \fIcomm\fP,
+		\fIinfo\fP, \fIrequest\fP, \fIierror\fP)
+	TYPE(*), DIMENSION(..), INTENT(IN), ASYNCHRONOUS :: \fIsendbuf\fP
+	TYPE(*), DIMENSION(..), ASYNCHRONOUS :: \fIrecvbuf\fP
+	INTEGER, INTENT(IN) :: \fIcount\fP, \fIroot\fP
+	TYPE(MPI_Datatype), INTENT(IN) :: \fIdatatype\fP
+	TYPE(MPI_Op), INTENT(IN) :: \fIop\fP
+	TYPE(MPI_Comm), INTENT(IN) :: \fIcomm\fP
+	TYPE(MPI_Info), INTENT(IN) :: \fIinfo\fP
+	TYPE(MPI_Request), INTENT(OUT) :: \fIrequest\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
+
+MPIX_Reduce_scatter_init(\fIsendbuf\fP, \fIrecvbuf\fP, \fIrecvcounts\fP, \fIdatatype\fP, \fIop\fP,
+		\fIcomm\fP, \fIinfo\fP, \fIrequest\fP, \fIierror\fP)
+	TYPE(*), DIMENSION(..), INTENT(IN), ASYNCHRONOUS :: \fIsendbuf\fP
+	TYPE(*), DIMENSION(..), ASYNCHRONOUS :: \fIrecvbuf\fP
+	INTEGER, INTENT(IN), ASYNCHRONOUS :: \fIrecvcounts(*)\fP
+	TYPE(MPI_Datatype), INTENT(IN) :: \fIdatatype\fP
+	TYPE(MPI_Op), INTENT(IN) :: \fIop\fP
+	TYPE(MPI_Comm), INTENT(IN) :: \fIcomm\fP
+	TYPE(MPI_Info), INTENT(IN) :: \fIinfo\fP
+	TYPE(MPI_Request), INTENT(OUT) :: \fIrequest\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
+
+MPIX_Reduce_scatter_block_init(\fIsendbuf\fP, \fIrecvbuf\fP, \fIrecvcount\fP, \fIdatatype\fP,
+		\fIop\fP, \fIcomm\fP, \fIierror\fP)
+	TYPE(*), DIMENSION(..), INTENT(IN), ASYNCHRONOUS :: \fIsendbuf\fP
+	TYPE(*), DIMENSION(..), ASYNCHRONOUS :: \fIrecvbuf\fP
+	INTEGER, INTENT(IN) :: \fIrecvcount\fP
+	TYPE(MPI_Datatype), INTENT(IN) :: \fIdatatype\fP
+	TYPE(MPI_Op), INTENT(IN) :: \fIop\fP
+	TYPE(MPI_Comm), INTENT(IN) :: \fIcomm\fP
+	TYPE(MPI_Info), INTENT(IN) :: \fIinfo\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
+
+MPIX_Reduce_scatter_block_init(\fIsendbuf\fP, \fIrecvbuf\fP, \fIrecvcount\fP, \fIdatatype\fP, \fIop\fP,
+		\fIcomm\fP, \fIinfo\fP, \fIrequest\fP, \fIierror\fP)
+	TYPE(*), DIMENSION(..), INTENT(IN), ASYNCHRONOUS :: \fIsendbuf\fP
+	TYPE(*), DIMENSION(..), ASYNCHRONOUS :: \fIrecvbuf\fP
+	INTEGER, INTENT(IN) :: \fIrecvcount\fP
+	TYPE(MPI_Datatype), INTENT(IN) :: \fIdatatype\fP
+	TYPE(MPI_Op), INTENT(IN) :: \fIop\fP
+	TYPE(MPI_Comm), INTENT(IN) :: \fIcomm\fP
+	TYPE(MPI_Info), INTENT(IN) :: \fIinfo\fP
+	TYPE(MPI_Request), INTENT(OUT) :: \fIrequest\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
+
+MPIX_Scan_init(\fIsendbuf\fP, \fIrecvbuf\fP, \fIcount\fP, \fIdatatype\fP, \fIop\fP, \fIcomm\fP, \fIinfo\fP,
+		\fIrequest\fP, \fIierror\fP)
+	TYPE(*), DIMENSION(..), INTENT(IN), ASYNCHRONOUS :: \fIsendbuf\fP
+	TYPE(*), DIMENSION(..), ASYNCHRONOUS :: \fIrecvbuf\fP
+	INTEGER, INTENT(IN) :: \fIcount\fP
+	TYPE(MPI_Datatype), INTENT(IN) :: \fIdatatype\fP
+	TYPE(MPI_Op), INTENT(IN) :: \fIop\fP
+	TYPE(MPI_Comm), INTENT(IN) :: \fIcomm\fP
+	TYPE(MPI_Info), INTENT(IN) :: \fIinfo\fP
+	TYPE(MPI_Request), INTENT(OUT) :: \fIrequest\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
+
+MPIX_Scatter_init(\fIsendbuf\fP, \fIsendcount\fP, \fIsendtype\fP, \fIrecvbuf\fP, \fIrecvcount\fP,
+		\fIrecvtype\fP, \fIroot\fP, \fIcomm\fP, \fIinfo\fP, \fIrequest\fP, \fIierror\fP)
+	TYPE(*), DIMENSION(..), INTENT(IN), ASYNCHRONOUS :: \fIsendbuf\fP
+	TYPE(*), DIMENSION(..), ASYNCHRONOUS :: \fIrecvbuf\fP
+	INTEGER, INTENT(IN) :: \fIsendcount\fP, \fIrecvcount\fP, \fIroot\fP
+	TYPE(MPI_Datatype), INTENT(IN) :: \fIsendtype\fP, \fIrecvtype\fP
+	TYPE(MPI_Comm), INTENT(IN) :: \fIcomm\fP
+	TYPE(MPI_Info), INTENT(IN) :: \fIinfo\fP
+	TYPE(MPI_Request), INTENT(OUT) :: \fIrequest\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
+
+MPIX_Scatterv_init(\fIsendbuf\fP, \fIsendcounts\fP, \fIdispls\fP, \fIsendtype\fP, \fIrecvbuf\fP,
+		\fIrecvcount\fP, \fIrecvtype\fP, \fIroot\fP, \fIcomm\fP, \fIinfo\fP, \fIrequest\fP, \fIierror\fP)
+	TYPE(*), DIMENSION(..), INTENT(IN), ASYNCHRONOUS :: \fIsendbuf\fP
+	TYPE(*), DIMENSION(..), ASYNCHRONOUS :: \fIrecvbuf\fP
+	INTEGER, INTENT(IN), ASYNCHRONOUS :: \fIsendcounts(*)\fP, \fIdispls(*)\fP
+	INTEGER, INTENT(IN) :: \fIrecvcount\fP, \fIroot\fP
+	TYPE(MPI_Datatype), INTENT(IN) :: \fIsendtype\fP, \fIrecvtype\fP
+	TYPE(MPI_Comm), INTENT(IN) :: \fIcomm\fP
+	TYPE(MPI_Info), INTENT(IN) :: \fIinfo\fP
+	TYPE(MPI_Request), INTENT(OUT) :: \fIrequest\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
+
+MPIX_Neighbor_allgather_init(\fIsendbuf\fP, \fIsendcount\fP, \fIsendtype\fP, \fIrecvbuf\fP,
+		\fIrecvcount\fP, \fIrecvtype\fP, \fIcomm\fP, \fIinfo\fP, \fIrequest\fP, \fIierror\fP)
+	TYPE(*), DIMENSION(..), INTENT(IN), ASYNCHRONOUS :: \fIsendbuf\fP
+	TYPE(*), DIMENSION(..), ASYNCHRONOUS :: \fIrecvbuf\fP
+	INTEGER, INTENT(IN) :: \fIsendcount\fP, \fIrecvcount\fP
+	TYPE(MPI_Datatype), INTENT(IN) :: \fIsendtype\fP, \fIrecvtype\fP
+	TYPE(MPI_Comm), INTENT(IN) :: \fIcomm\fP
+	TYPE(MPI_Info), INTENT(IN) :: \fIinfo\fP
+	TYPE(MPI_Request), INTENT(OUT) :: \fIrequest\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
+
+MPIX_Neighbor_allgatherv_init(\fIsendbuf\fP, \fIsendcount\fP, \fIsendtype\fP, \fIrecvbuf\fP,
+		\fIrecvcounts\fP, \fIdispls\fP, \fIrecvtype\fP, \fIcomm\fP, \fIinfo\fP, \fIrequest\fP, \fIierror\fP)
+	TYPE(*), DIMENSION(..), INTENT(IN), ASYNCHRONOUS :: \fIsendbuf\fP
+	TYPE(*), DIMENSION(..), ASYNCHRONOUS :: \fIrecvbuf\fP
+	INTEGER, INTENT(IN) :: \fIsendcount\fP
+	INTEGER, INTENT(IN), ASYNCHRONOUS :: \fIrecvcounts(*)\fP, \fIdispls(*)\fP
+	TYPE(MPI_Datatype), INTENT(IN) :: \fIsendtype\fP, \fIrecvtype\fP
+	TYPE(MPI_Comm), INTENT(IN) :: \fIcomm\fP
+	TYPE(MPI_Info), INTENT(IN) :: \fIinfo\fP
+	TYPE(MPI_Request), INTENT(OUT) :: \fIrequest\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
+
+MPIX_Neighbor_alltoall_init(\fIsendbuf\fP, \fIsendcount\fP, \fIsendtype\fP, \fIrecvbuf\fP,
+		\fIrecvcount\fP, \fIrecvtype\fP, \fIcomm\fP, \fIinfo\fP, \fIrequest\fP, \fIierror\fP)
+	TYPE(*), DIMENSION(..), INTENT(IN), ASYNCHRONOUS :: \fIsendbuf\fP
+	TYPE(*), DIMENSION(..), ASYNCHRONOUS :: \fIrecvbuf\fP
+	INTEGER, INTENT(IN) :: \fIsendcount\fP, \fIrecvcount\fP
+	TYPE(MPI_Datatype), INTENT(IN) :: \fIsendtype\fP, \fIrecvtype\fP
+	TYPE(MPI_Comm), INTENT(IN) :: \fIcomm\fP
+	TYPE(MPI_Info), INTENT(IN) :: \fIinfo\fP
+	TYPE(MPI_Request), INTENT(OUT) :: \fIrequest\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
+
+MPIX_Neighbor_alltoallv_init(\fIsendbuf\fP, \fIsendcounts\fP, \fIsdispls\fP, \fIsendtype\fP,
+		\fIrecvbuf\fP, \fIrecvcounts\fP, \fIrdispls\fP, \fIrecvtype\fP, \fIcomm\fP, \fIinfo\fP, \fIrequest\fP,
+		\fIierror\fP)
+	TYPE(*), DIMENSION(..), INTENT(IN), ASYNCHRONOUS :: \fIsendbuf\fP
+	TYPE(*), DIMENSION(..), ASYNCHRONOUS :: \fIrecvbuf\fP
+	INTEGER, INTENT(IN), ASYNCHRONOUS :: \fIsendcounts(*)\fP, \fIsdispls(*)\fP,
+	\fIrecvcounts(*)\fP, \fIrdispls(*)\fP
+	TYPE(MPI_Datatype), INTENT(IN) :: \fIsendtype\fP, \fIrecvtype\fP
+	TYPE(MPI_Comm), INTENT(IN) :: \fIcomm\fP
+	TYPE(MPI_Info), INTENT(IN) :: \fIinfo\fP
+	TYPE(MPI_Request), INTENT(OUT) :: \fIrequest\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
+
+MPIX_Neighbor_alltoallw_init(\fIsendbuf\fP, \fIsendcounts\fP, \fIsdispls\fP, \fIsendtypes\fP,
+		\fIrecvbuf\fP, \fIrecvcounts\fP, \fIrdispls\fP, \fIrecvtypes\fP, \fIcomm\fP, \fIinfo\fP, \fIrequest\fP,
+		\fIierror\fP)
+	TYPE(*), DIMENSION(..), INTENT(IN), ASYNCHRONOUS :: \fIsendbuf\fP
+	TYPE(*), DIMENSION(..), ASYNCHRONOUS :: \fIrecvbuf\fP
+	INTEGER, INTENT(IN), ASYNCHRONOUS :: \fIsendcounts(*)\fP, \fIrecvcounts(*)\fP
+	INTEGER(KIND=MPI_ADDRESS_KIND), INTENT(IN), ASYNCHRONOUS ::
+	\fIsdispls(*)\fP, \fIrdispls(*)\fP
+	TYPE(MPI_Datatype), INTENT(IN), ASYNCHRONOUS :: \fIsendtypes(*)\fP,
+	\fIrecvtypes(*)\fP
+	TYPE(MPI_Comm), INTENT(IN) :: \fIcomm\fP
+	TYPE(MPI_Info), INTENT(IN) :: \fIinfo\fP
+	TYPE(MPI_Request), INTENT(OUT) :: \fIrequest\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
+
+.fi
+
+.SH DESCRIPTION
+.ft R
+Creates a persistent communication request for a collective operation or neighborhood collective operation.
+
+As of Sept. 2018, the feature of persistent collective communication operations and persistent collective neighborhood communication operations is planned to be included in the next MPI Standerd after MPI-3.1.
+.nf
+
+    https://github.com/mpi-forum/mpi-issues/issues/25
+.fi
+
+Open MPI implements its draft version shown in the following URL.
+.nf
+
+    https://github.com/mpi-forum/mpi-issues/files/2078076/mpi32-report-ticket25-austin-vote-june2018.pdf
+.fi
+
+The interface may still change in the standard. Therefore the prefix \fIMPIX_\fP is used instead of \fIMPI_\fP for these request creation routines. To start, complete, and free the created request, usual MPI routines (\fIMPI_Start\fP etc.) can be used.
+
+Future versions of Open MPI will switch to the \fIMPI_\fP prefix and will not require the C header file \fImpi-ext.h\fP, the Fortran modules \fImpi_ext\fP and \fImpi_f08_ext\fP, and the Fortran header file \fImpif-ext.h\fP once the MPI Standard which includes this feature is published.
+
+.SH EXAMPLE
+.nf
+
+    MPI_Request req;
+    MPIX_Barrier_init(MPI_COMM_WORLD, MPI_INFO_NULL, &req);
+    MPI_Start(&req);
+    MPI_Wait(&req, MPI_STATUS_IGNORE);
+    MPI_Request_free(&req);
+.fi
+
+.SH SEE ALSO
+.ft R
+.sp
+MPI_Start
+.br
+MPI_Startall
+.br
+MPI_Request_free

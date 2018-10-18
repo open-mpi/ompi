@@ -100,7 +100,7 @@ int ompi_coll_base_allgatherv_intra_bruck(const void *sbuf, int scount,
 {
     int line = -1, err = 0, rank, size, sendto, recvfrom, distance, blockcount, i;
     int *new_rcounts = NULL, *new_rdispls = NULL, *new_scounts = NULL, *new_sdispls = NULL;
-    ptrdiff_t slb, rlb, sext, rext;
+    ptrdiff_t rlb, rext;
     char *tmpsend = NULL, *tmprecv = NULL;
     struct ompi_datatype_t *new_rdtype, *new_sdtype;
 
@@ -109,9 +109,6 @@ int ompi_coll_base_allgatherv_intra_bruck(const void *sbuf, int scount,
 
     OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
                  "coll:base:allgather_intra_bruck rank %d", rank));
-
-    err = ompi_datatype_get_extent (sdtype, &slb, &sext);
-    if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
 
     err = ompi_datatype_get_extent (rdtype, &rlb, &rext);
     if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
@@ -229,7 +226,7 @@ int ompi_coll_base_allgatherv_intra_ring(const void *sbuf, int scount,
                                           mca_coll_base_module_t *module)
 {
     int line = -1, rank, size, sendto, recvfrom, i, recvdatafrom, senddatafrom, err = 0;
-    ptrdiff_t slb, rlb, sext, rext;
+    ptrdiff_t rlb, rext;
     char *tmpsend = NULL, *tmprecv = NULL;
 
     size = ompi_comm_size(comm);
@@ -237,9 +234,6 @@ int ompi_coll_base_allgatherv_intra_ring(const void *sbuf, int scount,
 
     OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
                  "coll:base:allgatherv_intra_ring rank %d", rank));
-
-    err = ompi_datatype_get_extent (sdtype, &slb, &sext);
-    if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
 
     err = ompi_datatype_get_extent (rdtype, &rlb, &rext);
     if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
@@ -361,7 +355,7 @@ ompi_coll_base_allgatherv_intra_neighborexchange(const void *sbuf, int scount,
     int line = -1, rank, size, i, even_rank, err = 0;
     int neighbor[2], offset_at_step[2], recv_data_from[2], send_data_from;
     int new_scounts[2], new_sdispls[2], new_rcounts[2], new_rdispls[2];
-    ptrdiff_t slb, rlb, sext, rext;
+    ptrdiff_t rlb, rext;
     char *tmpsend = NULL, *tmprecv = NULL;
     struct ompi_datatype_t  *new_rdtype, *new_sdtype;
 
@@ -380,9 +374,6 @@ ompi_coll_base_allgatherv_intra_neighborexchange(const void *sbuf, int scount,
 
     OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
                  "coll:base:allgatherv_intra_neighborexchange rank %d", rank));
-
-    err = ompi_datatype_get_extent (sdtype, &slb, &sext);
-    if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
 
     err = ompi_datatype_get_extent (rdtype, &rlb, &rext);
     if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
@@ -509,7 +500,7 @@ int ompi_coll_base_allgatherv_intra_two_procs(const void *sbuf, int scount,
 {
     int line = -1, err = 0, rank, remote;
     char *tmpsend = NULL, *tmprecv = NULL;
-    ptrdiff_t sext, rext, lb;
+    ptrdiff_t rext, lb;
 
     rank = ompi_comm_rank(comm);
 
@@ -519,9 +510,6 @@ int ompi_coll_base_allgatherv_intra_two_procs(const void *sbuf, int scount,
     if (2 != ompi_comm_size(comm)) {
         return MPI_ERR_UNSUPPORTED_OPERATION;
     }
-
-    err = ompi_datatype_get_extent (sdtype, &lb, &sext);
-    if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
 
     err = ompi_datatype_get_extent (rdtype, &lb, &rext);
     if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }

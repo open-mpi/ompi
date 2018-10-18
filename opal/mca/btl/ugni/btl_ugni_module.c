@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2011-2017 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2011      UT-Battelle, LLC. All rights reserved.
  * Copyright (c) 2014-2016 Research Organization for Information Science
@@ -59,6 +59,7 @@ mca_btl_ugni_module_t mca_btl_ugni_module = {
         .btl_atomic_op      = mca_btl_ugni_aop,
         .btl_atomic_fop     = mca_btl_ugni_afop,
         .btl_atomic_cswap   = mca_btl_ugni_acswap,
+        .btl_flush          = mca_btl_ugni_flush,
     }
 };
 
@@ -85,8 +86,8 @@ mca_btl_ugni_module_init (mca_btl_ugni_module_t *ugni_module)
 
     ugni_module->initialized = false;
     ugni_module->nlocal_procs = 0;
-    ugni_module->connected_peer_count = 0;
     ugni_module->active_datagrams = 0;
+    ugni_module->active_rdma_count = 0;
 
     opal_event_evtimer_set (opal_sync_event_base, &ugni_module->connection_event,
                             mca_btl_ugni_datagram_event, ugni_module);
@@ -109,7 +110,6 @@ mca_btl_ugni_module_init (mca_btl_ugni_module_t *ugni_module)
     OBJ_CONSTRUCT(&ugni_module->id_to_endpoint, opal_hash_table_t);
     OBJ_CONSTRUCT(&ugni_module->smsg_mboxes, opal_free_list_t);
     OBJ_CONSTRUCT(&ugni_module->eager_get_pending, opal_list_t);
-    OBJ_CONSTRUCT(&ugni_module->post_descriptors, opal_free_list_t);
 
     /* set up virtual device handles */
     for (int i = 0 ; i < mca_btl_ugni_component.virtual_device_count ; ++i) {
@@ -324,4 +324,39 @@ static int mca_btl_ugni_deregister_mem (mca_btl_base_module_t *btl, mca_btl_base
     (void) ugni_module->rcache->rcache_deregister (ugni_module->rcache, &reg->base);
 
     return OPAL_SUCCESS;
+}
+
+int mca_btl_ugni_event_fatal_error (gni_return_t grc, gni_cq_entry_t event_data)
+{
+    /* combined error check for get event and get completed. we might miss exactly
+     * what happened but it is unrecoverable anyway. fwiw, this error path has
+     * never been seen in production. */
+    if (GNI_CQ_OVERRUN(event_data)) {
+        /* TODO -- need to handle overrun -- how do we do this without an event?
+           will the event eventually come back? Ask Cray */
+        BTL_ERROR(("CQ overrun detected in RDMA event data. can not recover"));
+    } else {
+        BTL_ERROR(("Error in GNI_GetComplete %s", gni_err_str[grc]));
+    }
+
+    return mca_btl_rc_ugni_to_opal (grc);
+}
+
+int mca_btl_ugni_device_handle_event_error (mca_btl_ugni_rdma_desc_t *rdma_desc, gni_cq_entry_t event_data)
+{
+    mca_btl_ugni_device_t *device = rdma_desc->device;
+    uint32_t recoverable = 1;
+
+    (void) GNI_CqErrorRecoverable (event_data, &recoverable);
+
+    if (OPAL_UNLIKELY(++rdma_desc->tries >= mca_btl_ugni_component.rdma_max_retries || !recoverable)) {
+        char char_buffer[1024];
+        GNI_CqErrorStr (event_data, char_buffer, sizeof (char_buffer));
+
+        BTL_ERROR(("giving up on desciptor %p, recoverable %d: %s", (void *) rdma_desc, recoverable, char_buffer));
+
+        return OPAL_ERROR;
+    }
+
+    return _mca_btl_ugni_repost_rdma_desc_device (device, rdma_desc);
 }

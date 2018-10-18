@@ -12,9 +12,17 @@
 #include "ompi/mca/osc/osc.h"
 #include "ompi/mca/osc/base/base.h"
 #include "ompi/mca/osc/base/osc_base_obj_convert.h"
+#include "opal/mca/common/ucx/common_ucx.h"
 
 #include "osc_ucx.h"
 #include "osc_ucx_request.h"
+
+
+#define CHECK_VALID_RKEY(_module, _target, _count)                               \
+    if (!((_module)->win_info_array[_target]).rkey_init && ((_count) > 0)) {     \
+        OSC_UCX_VERBOSE(1, "window with non-zero length does not have an rkey"); \
+        return OMPI_ERROR;                                                       \
+    }
 
 typedef struct ucx_iovec {
     void *addr;
@@ -60,19 +68,14 @@ static inline int check_sync_state(ompi_osc_ucx_module_t *module, int target,
 
 static inline int incr_and_check_ops_num(ompi_osc_ucx_module_t *module, int target,
                                          ucp_ep_h ep) {
-    ucs_status_t status;
+    int status;
 
     module->global_ops_num++;
     module->per_target_ops_nums[target]++;
     if (module->global_ops_num >= OSC_UCX_OPS_THRESHOLD) {
-        /* TODO: ucp_ep_flush needs to be replaced with its non-blocking counterpart
-         * when it is implemented in UCX */
-        status = ucp_ep_flush(ep);
-        if (status != UCS_OK) {
-            opal_output_verbose(1, ompi_osc_base_framework.framework_output,
-                                "%s:%d: ucp_ep_flush failed: %d\n",
-                                __FILE__, __LINE__, status);
-            return OMPI_ERROR;
+        status = opal_common_ucx_ep_flush(ep, mca_osc_ucx_component.ucp_worker);
+        if (status != OMPI_SUCCESS) {
+            return status;
         }
         module->global_ops_num -= module->per_target_ops_nums[target];
         module->per_target_ops_nums[target] = 0;
@@ -169,18 +172,14 @@ static inline int ddt_put_get(ompi_osc_ucx_module_t *module,
                 status = ucp_put_nbi(ep, origin_ucx_iov[origin_ucx_iov_idx].addr, curr_len,
                                      remote_addr + (uint64_t)(target_ucx_iov[target_ucx_iov_idx].addr), rkey);
                 if (status != UCS_OK && status != UCS_INPROGRESS) {
-                    opal_output_verbose(1, ompi_osc_base_framework.framework_output,
-                                        "%s:%d: ucp_put_nbi failed: %d\n",
-                                        __FILE__, __LINE__, status);
+                    OSC_UCX_VERBOSE(1, "ucp_put_nbi failed: %d", status);
                     return OMPI_ERROR;
                 }
             } else {
                 status = ucp_get_nbi(ep, origin_ucx_iov[origin_ucx_iov_idx].addr, curr_len,
                                      remote_addr + (uint64_t)(target_ucx_iov[target_ucx_iov_idx].addr), rkey);
                 if (status != UCS_OK && status != UCS_INPROGRESS) {
-                    opal_output_verbose(1, ompi_osc_base_framework.framework_output,
-                                        "%s:%d: ucp_get_nbi failed: %d\n",
-                                        __FILE__, __LINE__, status);
+                    OSC_UCX_VERBOSE(1, "ucp_get_nbi failed: %d",status);
                     return OMPI_ERROR;
                 }
             }
@@ -214,9 +213,7 @@ static inline int ddt_put_get(ompi_osc_ucx_module_t *module,
                                      origin_ucx_iov[origin_ucx_iov_idx].len,
                                      remote_addr + target_lb + prev_len, rkey);
                 if (status != UCS_OK && status != UCS_INPROGRESS) {
-                    opal_output_verbose(1, ompi_osc_base_framework.framework_output,
-                                        "%s:%d: ucp_put_nbi failed: %d\n",
-                                        __FILE__, __LINE__, status);
+                    OSC_UCX_VERBOSE(1, "ucp_put_nbi failed: %d", status);
                     return OMPI_ERROR;
                 }
             } else {
@@ -224,9 +221,7 @@ static inline int ddt_put_get(ompi_osc_ucx_module_t *module,
                                      origin_ucx_iov[origin_ucx_iov_idx].len,
                                      remote_addr + target_lb + prev_len, rkey);
                 if (status != UCS_OK && status != UCS_INPROGRESS) {
-                    opal_output_verbose(1, ompi_osc_base_framework.framework_output,
-                                        "%s:%d: ucp_get_nbi failed: %d\n",
-                                        __FILE__, __LINE__, status);
+                    OSC_UCX_VERBOSE(1, "ucp_get_nbi failed: %d", status);
                     return OMPI_ERROR;
                 }
             }
@@ -247,9 +242,7 @@ static inline int ddt_put_get(ompi_osc_ucx_module_t *module,
                                      target_ucx_iov[target_ucx_iov_idx].len,
                                      remote_addr + (uint64_t)(target_ucx_iov[target_ucx_iov_idx].addr), rkey);
                 if (status != UCS_OK && status != UCS_INPROGRESS) {
-                    opal_output_verbose(1, ompi_osc_base_framework.framework_output,
-                                        "%s:%d: ucp_put_nbi failed: %d\n",
-                                        __FILE__, __LINE__, status);
+                    OSC_UCX_VERBOSE(1, "ucp_put_nbi failed: %d", status);
                     return OMPI_ERROR;
                 }
             } else {
@@ -257,9 +250,7 @@ static inline int ddt_put_get(ompi_osc_ucx_module_t *module,
                                      target_ucx_iov[target_ucx_iov_idx].len,
                                      remote_addr + (uint64_t)(target_ucx_iov[target_ucx_iov_idx].addr), rkey);
                 if (status != UCS_OK && status != UCS_INPROGRESS) {
-                    opal_output_verbose(1, ompi_osc_base_framework.framework_output,
-                                        "%s:%d: ucp_get_nbi failed: %d\n",
-                                        __FILE__, __LINE__, status);
+                    OSC_UCX_VERBOSE(1, "ucp_get_nbi failed: %d", status);
                     return OMPI_ERROR;
                 }
             }
@@ -291,13 +282,12 @@ static inline int start_atomicity(ompi_osc_ucx_module_t *module, ucp_ep_h ep, in
     ucs_status_t status;
 
     while (result_value != TARGET_LOCK_UNLOCKED) {
-        status = ucp_atomic_cswap64(ep, TARGET_LOCK_UNLOCKED,
-                                    TARGET_LOCK_EXCLUSIVE,
-                                    remote_addr, rkey, &result_value);
+        status = opal_common_ucx_atomic_cswap(ep, TARGET_LOCK_UNLOCKED, TARGET_LOCK_EXCLUSIVE,
+                                              &result_value, sizeof(result_value),
+                                              remote_addr, rkey,
+                                              mca_osc_ucx_component.ucp_worker);
         if (status != UCS_OK) {
-            opal_output_verbose(1, ompi_osc_base_framework.framework_output,
-                                "%s:%d: ucp_atomic_cswap64 failed: %d\n",
-                                __FILE__, __LINE__, status);
+            OSC_UCX_VERBOSE(1, "ucp_atomic_cswap64 failed: %d", status);
             return OMPI_ERROR;
         }
     }
@@ -309,20 +299,68 @@ static inline int end_atomicity(ompi_osc_ucx_module_t *module, ucp_ep_h ep, int 
     uint64_t result_value = 0;
     ucp_rkey_h rkey = (module->state_info_array)[target].rkey;
     uint64_t remote_addr = (module->state_info_array)[target].addr + OSC_UCX_STATE_ACC_LOCK_OFFSET;
-    ucs_status_t status;
+    int ret;
 
-    status = ucp_atomic_swap64(ep, TARGET_LOCK_UNLOCKED,
-                               remote_addr, rkey, &result_value);
-    if (status != UCS_OK) {
-        opal_output_verbose(1, ompi_osc_base_framework.framework_output,
-                            "%s:%d: ucp_atomic_swap64 failed: %d\n",
-                            __FILE__, __LINE__, status);
-        return OMPI_ERROR;
+    ret = opal_common_ucx_atomic_fetch(ep, UCP_ATOMIC_FETCH_OP_SWAP, TARGET_LOCK_UNLOCKED,
+                                       &result_value, sizeof(result_value),
+                                       remote_addr, rkey, mca_osc_ucx_component.ucp_worker);
+    if (OMPI_SUCCESS != ret) {
+        return ret;
     }
 
     assert(result_value == TARGET_LOCK_EXCLUSIVE);
 
     return OMPI_SUCCESS;
+}
+
+static inline int get_dynamic_win_info(uint64_t remote_addr, ompi_osc_ucx_module_t *module,
+                                       ucp_ep_h ep, int target) {
+    ucp_rkey_h state_rkey = (module->state_info_array)[target].rkey;
+    uint64_t remote_state_addr = (module->state_info_array)[target].addr + OSC_UCX_STATE_DYNAMIC_WIN_CNT_OFFSET;
+    size_t len = sizeof(uint64_t) + sizeof(ompi_osc_dynamic_win_info_t) * OMPI_OSC_UCX_ATTACH_MAX;
+    char *temp_buf = malloc(len);
+    ompi_osc_dynamic_win_info_t *temp_dynamic_wins;
+    uint64_t win_count;
+    int contain, insert = -1;
+    ucs_status_t status;
+    int ret;
+
+    if ((module->win_info_array[target]).rkey_init == true) {
+        ucp_rkey_destroy((module->win_info_array[target]).rkey);
+        (module->win_info_array[target]).rkey_init = false;
+    }
+
+    status = ucp_get_nbi(ep, (void *)temp_buf, len, remote_state_addr, state_rkey);
+    if (status != UCS_OK && status != UCS_INPROGRESS) {
+        OSC_UCX_VERBOSE(1, "ucp_get_nbi failed: %d", status);
+        return OMPI_ERROR;
+    }
+
+    ret = opal_common_ucx_ep_flush(ep, mca_osc_ucx_component.ucp_worker);
+    if (ret != OMPI_SUCCESS) {
+        return ret;
+    }
+
+    memcpy(&win_count, temp_buf, sizeof(uint64_t));
+    assert(win_count > 0 && win_count <= OMPI_OSC_UCX_ATTACH_MAX);
+
+    temp_dynamic_wins = (ompi_osc_dynamic_win_info_t *)(temp_buf + sizeof(uint64_t));
+    contain = ompi_osc_find_attached_region_position(temp_dynamic_wins, 0, win_count,
+                                                     remote_addr, 1, &insert);
+    assert(contain >= 0 && (uint64_t)contain < win_count);
+
+    status = ucp_ep_rkey_unpack(ep, temp_dynamic_wins[contain].rkey_buffer,
+                                &((module->win_info_array[target]).rkey));
+    if (status != UCS_OK) {
+        OSC_UCX_VERBOSE(1, "ucp_ep_rkey_unpack failed: %d", status);
+        return OMPI_ERROR;
+    }
+
+    (module->win_info_array[target]).rkey_init = true;
+
+    free(temp_buf);
+
+    return status;
 }
 
 int ompi_osc_ucx_put(const void *origin_addr, int origin_count, struct ompi_datatype_t *origin_dt,
@@ -331,7 +369,7 @@ int ompi_osc_ucx_put(const void *origin_addr, int origin_count, struct ompi_data
     ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t*) win->w_osc_module;
     ucp_ep_h ep = OSC_UCX_GET_EP(module->comm, target);
     uint64_t remote_addr = (module->win_info_array[target]).addr + target_disp * OSC_UCX_GET_DISP(module, target);
-    ucp_rkey_h rkey = (module->win_info_array[target]).rkey;
+    ucp_rkey_h rkey;
     bool is_origin_contig = false, is_target_contig = false;
     ptrdiff_t origin_lb, origin_extent, target_lb, target_extent;
     ucs_status_t status;
@@ -341,6 +379,21 @@ int ompi_osc_ucx_put(const void *origin_addr, int origin_count, struct ompi_data
     if (ret != OMPI_SUCCESS) {
         return ret;
     }
+
+    if (module->flavor == MPI_WIN_FLAVOR_DYNAMIC) {
+        status = get_dynamic_win_info(remote_addr, module, ep, target);
+        if (status != UCS_OK) {
+            return OMPI_ERROR;
+        }
+    }
+
+    CHECK_VALID_RKEY(module, target, target_count);
+
+    if (!target_count) {
+        return OMPI_SUCCESS;
+    }
+
+    rkey = (module->win_info_array[target]).rkey;
 
     ompi_datatype_get_true_extent(origin_dt, &origin_lb, &origin_extent);
     ompi_datatype_get_true_extent(target_dt, &target_lb, &target_extent);
@@ -358,9 +411,7 @@ int ompi_osc_ucx_put(const void *origin_addr, int origin_count, struct ompi_data
         status = ucp_put_nbi(ep, (void *)((intptr_t)origin_addr + origin_lb), origin_len,
                              remote_addr + target_lb, rkey);
         if (status != UCS_OK && status != UCS_INPROGRESS) {
-            opal_output_verbose(1, ompi_osc_base_framework.framework_output,
-                                "%s:%d: ucp_put_nbi failed: %d\n",
-                                __FILE__, __LINE__, status);
+            OSC_UCX_VERBOSE(1, "ucp_put_nbi failed: %d", status);
             return OMPI_ERROR;
         }
         return incr_and_check_ops_num(module, target, ep);
@@ -378,7 +429,7 @@ int ompi_osc_ucx_get(void *origin_addr, int origin_count,
     ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t*) win->w_osc_module;
     ucp_ep_h ep = OSC_UCX_GET_EP(module->comm, target);
     uint64_t remote_addr = (module->win_info_array[target]).addr + target_disp * OSC_UCX_GET_DISP(module, target);
-    ucp_rkey_h rkey = (module->win_info_array[target]).rkey;
+    ucp_rkey_h rkey;
     ptrdiff_t origin_lb, origin_extent, target_lb, target_extent;
     bool is_origin_contig = false, is_target_contig = false;
     ucs_status_t status;
@@ -388,6 +439,21 @@ int ompi_osc_ucx_get(void *origin_addr, int origin_count,
     if (ret != OMPI_SUCCESS) {
         return ret;
     }
+
+    if (module->flavor == MPI_WIN_FLAVOR_DYNAMIC) {
+        status = get_dynamic_win_info(remote_addr, module, ep, target);
+        if (status != UCS_OK) {
+            return OMPI_ERROR;
+        }
+    }
+
+    CHECK_VALID_RKEY(module, target, target_count);
+
+    if (!target_count) {
+        return OMPI_SUCCESS;
+    }
+
+    rkey = (module->win_info_array[target]).rkey;
 
     ompi_datatype_get_true_extent(origin_dt, &origin_lb, &origin_extent);
     ompi_datatype_get_true_extent(target_dt, &target_lb, &target_extent);
@@ -405,9 +471,7 @@ int ompi_osc_ucx_get(void *origin_addr, int origin_count,
         status = ucp_get_nbi(ep, (void *)((intptr_t)origin_addr + origin_lb), origin_len,
                              remote_addr + target_lb, rkey);
         if (status != UCS_OK && status != UCS_INPROGRESS) {
-            opal_output_verbose(1, ompi_osc_base_framework.framework_output,
-                                "%s:%d: ucp_get_nbi failed: %d\n",
-                                __FILE__, __LINE__, status);
+            OSC_UCX_VERBOSE(1, "ucp_get_nbi failed: %d", status);
             return OMPI_ERROR;
         }
 
@@ -449,11 +513,11 @@ int ompi_osc_ucx_accumulate(const void *origin_addr, int origin_count,
             return ret;
         }
     } else {
+        void *temp_addr_holder = NULL;
         void *temp_addr = NULL;
         uint32_t temp_count;
         ompi_datatype_t *temp_dt;
         ptrdiff_t temp_lb, temp_extent;
-        ucs_status_t status;
         bool is_origin_contig = ompi_datatype_is_contiguous_memory_layout(origin_dt, origin_count);
 
         if (ompi_datatype_is_predefined(target_dt)) {
@@ -466,7 +530,7 @@ int ompi_osc_ucx_accumulate(const void *origin_addr, int origin_count,
             }
         }
         ompi_datatype_get_true_extent(temp_dt, &temp_lb, &temp_extent);
-        temp_addr = malloc(temp_extent * temp_count);
+        temp_addr = temp_addr_holder = malloc(temp_extent * temp_count);
         if (temp_addr == NULL) {
             return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
         }
@@ -477,12 +541,9 @@ int ompi_osc_ucx_accumulate(const void *origin_addr, int origin_count,
             return ret;
         }
 
-        status = ucp_ep_flush(ep);
-        if (status != UCS_OK) {
-            opal_output_verbose(1, ompi_osc_base_framework.framework_output,
-                                "%s:%d: ucp_ep_flush failed: %d\n",
-                                __FILE__, __LINE__, status);
-            return OMPI_ERROR;
+        ret = opal_common_ucx_ep_flush(ep, mca_osc_ucx_component.ucp_worker);
+        if (ret != OMPI_SUCCESS) {
+            return ret;
         }
 
         if (ompi_datatype_is_predefined(origin_dt) || is_origin_contig) {
@@ -534,15 +595,12 @@ int ompi_osc_ucx_accumulate(const void *origin_addr, int origin_count,
             return ret;
         }
 
-        status = ucp_ep_flush(ep);
-        if (status != UCS_OK) {
-            opal_output_verbose(1, ompi_osc_base_framework.framework_output,
-                                "%s:%d: ucp_ep_flush failed: %d\n",
-                                __FILE__, __LINE__, status);
-            return OMPI_ERROR;
+        ret = opal_common_ucx_ep_flush(ep, mca_osc_ucx_component.ucp_worker);
+        if (ret != OMPI_SUCCESS) {
+            return ret;
         }
 
-        free(temp_addr);
+        free(temp_addr_holder);
     }
 
     ret = end_atomicity(module, ep, target);
@@ -557,10 +615,11 @@ int ompi_osc_ucx_compare_and_swap(const void *origin_addr, const void *compare_a
     ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t *)win->w_osc_module;
     ucp_ep_h ep = OSC_UCX_GET_EP(module->comm, target);
     uint64_t remote_addr = (module->win_info_array[target]).addr + target_disp * OSC_UCX_GET_DISP(module, target);
-    ucp_rkey_h rkey = (module->win_info_array[target]).rkey;
+    ucp_rkey_h rkey;
     size_t dt_bytes;
     ompi_osc_ucx_internal_request_t *req = NULL;
     int ret = OMPI_SUCCESS;
+    ucs_status_t status;
 
     ret = check_sync_state(module, target, false);
     if (ret != OMPI_SUCCESS) {
@@ -571,6 +630,15 @@ int ompi_osc_ucx_compare_and_swap(const void *origin_addr, const void *compare_a
     if (ret != OMPI_SUCCESS) {
         return ret;
     }
+
+    if (module->flavor == MPI_WIN_FLAVOR_DYNAMIC) {
+        status = get_dynamic_win_info(remote_addr, module, ep, target);
+        if (status != UCS_OK) {
+            return OMPI_ERROR;
+        }
+    }
+
+    rkey = (module->win_info_array[target]).rkey;
 
     ompi_datatype_type_size(dt, &dt_bytes);
     memcpy(result_addr, origin_addr, dt_bytes);
@@ -604,16 +672,26 @@ int ompi_osc_ucx_fetch_and_op(const void *origin_addr, void *result_addr,
         op == &ompi_mpi_op_sum.op) {
         ucp_ep_h ep = OSC_UCX_GET_EP(module->comm, target);
         uint64_t remote_addr = (module->win_info_array[target]).addr + target_disp * OSC_UCX_GET_DISP(module, target);
-        ucp_rkey_h rkey = (module->win_info_array[target]).rkey;
+        ucp_rkey_h rkey;
         uint64_t value = *(uint64_t *)origin_addr;
         ucp_atomic_fetch_op_t opcode;
         size_t dt_bytes;
         ompi_osc_ucx_internal_request_t *req = NULL;
+        ucs_status_t status;
 
         ret = start_atomicity(module, ep, target);
         if (ret != OMPI_SUCCESS) {
             return ret;
         }
+
+        if (module->flavor == MPI_WIN_FLAVOR_DYNAMIC) {
+            status = get_dynamic_win_info(remote_addr, module, ep, target);
+            if (status != UCS_OK) {
+                return OMPI_ERROR;
+            }
+        }
+
+        rkey = (module->win_info_array[target]).rkey;
 
         ompi_datatype_type_size(dt, &dt_bytes);
 
@@ -680,11 +758,11 @@ int ompi_osc_ucx_get_accumulate(const void *origin_addr, int origin_count,
                 return ret;
             }
         } else {
+            void *temp_addr_holder = NULL;
             void *temp_addr = NULL;
             uint32_t temp_count;
             ompi_datatype_t *temp_dt;
             ptrdiff_t temp_lb, temp_extent;
-            ucs_status_t status;
             bool is_origin_contig = ompi_datatype_is_contiguous_memory_layout(origin_dt, origin_count);
 
             if (ompi_datatype_is_predefined(target_dt)) {
@@ -697,7 +775,7 @@ int ompi_osc_ucx_get_accumulate(const void *origin_addr, int origin_count,
                 }
             }
             ompi_datatype_get_true_extent(temp_dt, &temp_lb, &temp_extent);
-            temp_addr = malloc(temp_extent * temp_count);
+            temp_addr = temp_addr_holder = malloc(temp_extent * temp_count);
             if (temp_addr == NULL) {
                 return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
             }
@@ -708,12 +786,9 @@ int ompi_osc_ucx_get_accumulate(const void *origin_addr, int origin_count,
                 return ret;
             }
 
-            status = ucp_ep_flush(ep);
-            if (status != UCS_OK) {
-                opal_output_verbose(1, ompi_osc_base_framework.framework_output,
-                                    "%s:%d: ucp_ep_flush failed: %d\n",
-                                    __FILE__, __LINE__, status);
-                return OMPI_ERROR;
+            ret = opal_common_ucx_ep_flush(ep, mca_osc_ucx_component.ucp_worker);
+            if (ret != OMPI_SUCCESS) {
+                return ret;
             }
 
             if (ompi_datatype_is_predefined(origin_dt) || is_origin_contig) {
@@ -764,15 +839,12 @@ int ompi_osc_ucx_get_accumulate(const void *origin_addr, int origin_count,
                 return ret;
             }
 
-            status = ucp_ep_flush(ep);
-            if (status != UCS_OK) {
-                opal_output_verbose(1, ompi_osc_base_framework.framework_output,
-                                    "%s:%d: ucp_ep_flush failed: %d\n",
-                                    __FILE__, __LINE__, status);
-                return OMPI_ERROR;
+            ret = opal_common_ucx_ep_flush(ep, mca_osc_ucx_component.ucp_worker);
+            if (ret != OMPI_SUCCESS) {
+                return ret;
             }
 
-            free(temp_addr);
+            free(temp_addr_holder);
         }
     }
 
@@ -789,7 +861,7 @@ int ompi_osc_ucx_rput(const void *origin_addr, int origin_count,
     ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t*) win->w_osc_module;
     ucp_ep_h ep = OSC_UCX_GET_EP(module->comm, target);
     uint64_t remote_addr = (module->state_info_array[target]).addr + OSC_UCX_STATE_REQ_FLAG_OFFSET;
-    ucp_rkey_h rkey = (module->state_info_array[target]).rkey;
+    ucp_rkey_h rkey;
     ompi_osc_ucx_request_t *ucx_req = NULL;
     ompi_osc_ucx_internal_request_t *internal_req = NULL;
     ucs_status_t status;
@@ -800,10 +872,19 @@ int ompi_osc_ucx_rput(const void *origin_addr, int origin_count,
         return ret;
     }
 
-    OMPI_OSC_UCX_REQUEST_ALLOC(win, ucx_req);
-    if (NULL == ucx_req) {
-        return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
+    if (module->flavor == MPI_WIN_FLAVOR_DYNAMIC) {
+        status = get_dynamic_win_info(remote_addr, module, ep, target);
+        if (status != UCS_OK) {
+            return OMPI_ERROR;
+        }
     }
+
+    CHECK_VALID_RKEY(module, target, target_count);
+
+    rkey = (module->win_info_array[target]).rkey;
+
+    OMPI_OSC_UCX_REQUEST_ALLOC(win, ucx_req);
+    assert(NULL != ucx_req);
 
     ret = ompi_osc_ucx_put(origin_addr, origin_count, origin_dt, target, target_disp,
                            target_count, target_dt, win);
@@ -813,9 +894,7 @@ int ompi_osc_ucx_rput(const void *origin_addr, int origin_count,
 
     status = ucp_worker_fence(mca_osc_ucx_component.ucp_worker);
     if (status != UCS_OK) {
-        opal_output_verbose(1, ompi_osc_base_framework.framework_output,
-                            "%s:%d: ucp_worker_fence failed: %d\n",
-                            __FILE__, __LINE__, status);
+        OSC_UCX_VERBOSE(1, "ucp_worker_fence failed: %d", status);
         return OMPI_ERROR;
     }
 
@@ -843,7 +922,7 @@ int ompi_osc_ucx_rget(void *origin_addr, int origin_count,
     ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t*) win->w_osc_module;
     ucp_ep_h ep = OSC_UCX_GET_EP(module->comm, target);
     uint64_t remote_addr = (module->state_info_array[target]).addr + OSC_UCX_STATE_REQ_FLAG_OFFSET;
-    ucp_rkey_h rkey = (module->state_info_array[target]).rkey;
+    ucp_rkey_h rkey;
     ompi_osc_ucx_request_t *ucx_req = NULL;
     ompi_osc_ucx_internal_request_t *internal_req = NULL;
     ucs_status_t status;
@@ -854,10 +933,19 @@ int ompi_osc_ucx_rget(void *origin_addr, int origin_count,
         return ret;
     }
 
-    OMPI_OSC_UCX_REQUEST_ALLOC(win, ucx_req);
-    if (NULL == ucx_req) {
-        return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
+    if (module->flavor == MPI_WIN_FLAVOR_DYNAMIC) {
+        status = get_dynamic_win_info(remote_addr, module, ep, target);
+        if (status != UCS_OK) {
+            return OMPI_ERROR;
+        }
     }
+
+    CHECK_VALID_RKEY(module, target, target_count);
+
+    rkey = (module->win_info_array[target]).rkey;
+
+    OMPI_OSC_UCX_REQUEST_ALLOC(win, ucx_req);
+    assert(NULL != ucx_req);
 
     ret = ompi_osc_ucx_get(origin_addr, origin_count, origin_dt, target, target_disp,
                            target_count, target_dt, win);
@@ -867,9 +955,7 @@ int ompi_osc_ucx_rget(void *origin_addr, int origin_count,
 
     status = ucp_worker_fence(mca_osc_ucx_component.ucp_worker);
     if (status != UCS_OK) {
-        opal_output_verbose(1, ompi_osc_base_framework.framework_output,
-                            "%s:%d: ucp_worker_fence failed: %d\n",
-                            __FILE__, __LINE__, status);
+        OSC_UCX_VERBOSE(1, "ucp_worker_fence failed: %d", status);
         return OMPI_ERROR;
     }
 
@@ -904,9 +990,7 @@ int ompi_osc_ucx_raccumulate(const void *origin_addr, int origin_count,
     }
 
     OMPI_OSC_UCX_REQUEST_ALLOC(win, ucx_req);
-    if (NULL == ucx_req) {
-        return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
-    }
+    assert(NULL != ucx_req);
 
     ret = ompi_osc_ucx_accumulate(origin_addr, origin_count, origin_dt, target, target_disp,
                                   target_count, target_dt, op, win);
@@ -938,9 +1022,7 @@ int ompi_osc_ucx_rget_accumulate(const void *origin_addr, int origin_count,
     }
 
     OMPI_OSC_UCX_REQUEST_ALLOC(win, ucx_req);
-    if (NULL == ucx_req) {
-        return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
-    }
+    assert(NULL != ucx_req);
 
     ret = ompi_osc_ucx_get_accumulate(origin_addr, origin_count, origin_datatype,
                                       result_addr, result_count, result_datatype,

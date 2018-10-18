@@ -15,6 +15,7 @@
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -74,16 +75,8 @@ int MPI_Bsend_init(const void *buf, int count, MPI_Datatype type,
     }
 
     if (MPI_PROC_NULL == dest) {
-        *request = OBJ_NEW(ompi_request_t);
-        /* Other fields were initialized by the constructor for
-           ompi_request_t */
-        (*request)->req_type = OMPI_REQUEST_NOOP;
-        (*request)->req_status = ompi_request_empty.req_status;
-        (*request)->req_complete = REQUEST_COMPLETED;
-        (*request)->req_state = OMPI_REQUEST_INACTIVE;
-        (*request)->req_persistent = true;
-        (*request)->req_free = ompi_request_persistent_proc_null_free;
-        return MPI_SUCCESS;
+        rc = ompi_request_persistent_noop_create(request);
+        OMPI_ERRHANDLER_RETURN(rc, comm, rc, FUNC_NAME);
     }
 
     OPAL_CR_ENTER_LIBRARY();

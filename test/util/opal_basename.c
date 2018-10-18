@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -24,6 +25,7 @@
 
 #include "support.h"
 #include "opal/util/basename.h"
+#include "opal/util/printf.h"
 
 
 static void test(const char* in, const char* out);
@@ -56,7 +58,7 @@ void test(const char* in, const char* out)
     if (0 == strcmp(ret, out)) {
         test_success();
     } else {
-        asprintf(&msg, "Mismatch: input \"%s\", expected \"%s\", got \"%s\"\n",
+        opal_asprintf(&msg, "Mismatch: input \"%s\", expected \"%s\", got \"%s\"\n",
                  in, out, ret);
         test_failure(msg);
         free(msg);

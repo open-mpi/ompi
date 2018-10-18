@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2015 Intel, Inc. All rights reserved
+ * Copyright (c) 2013-2018 Intel, Inc. All rights reserved
  *
  * $COPYRIGHT$
  *
@@ -14,8 +14,8 @@ OMPI_DECLSPEC extern mca_mtl_ofi_component_t mca_mtl_ofi_component;
 
 mca_mtl_ofi_module_t ompi_mtl_ofi = {
     {
-        8191,        /* max cid - 2^13 - 1 */
-        (1UL << 30), /* max tag value - must allow negatives */
+        (int)((1ULL << MTL_OFI_CID_BIT_COUNT_1) - 1), /* max cid */
+        (int)((1ULL << (MTL_OFI_TAG_BIT_COUNT_1 - 1)) - 1) ,/* max tag value */
         0,           /* request reserve space */
         0,           /* flags */
 

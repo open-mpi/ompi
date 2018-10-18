@@ -12,7 +12,7 @@
  * Copyright (c) 2011-2017 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2014-2018 Intel, Inc.  All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -162,10 +162,12 @@ int orte_ras_base_node_insert(opal_list_t* nodes, orte_job_t *jdata)
                     opal_argv_free(nalias);
                 }
                 /* and store the result */
-                ptr = opal_argv_join(alias, ',');
+                if (0 < opal_argv_count(alias)) {
+                    ptr = opal_argv_join(alias, ',');
+                    orte_set_attribute(&hnp_node->attributes, ORTE_NODE_ALIAS, ORTE_ATTR_LOCAL, ptr, OPAL_STRING);
+                    free(ptr);
+                }
                 opal_argv_free(alias);
-                orte_set_attribute(&hnp_node->attributes, ORTE_NODE_ALIAS, ORTE_ATTR_LOCAL, ptr, OPAL_STRING);
-                free(ptr);
             }
             /* don't keep duplicate copy */
             OBJ_RELEASE(node);

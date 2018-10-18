@@ -4,6 +4,7 @@
  *                         reserved.
  * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
+ * Copyright (c) 2018      Cisco Systems, Inc.  All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -64,8 +65,11 @@ const int PERUSE_num_events = (sizeof(PERUSE_events) / sizeof(peruse_event_assoc
 int PERUSE_Init (void)
 {
     if (MPI_PARAM_CHECK) {
-        if (!ompi_mpi_initialized || ompi_mpi_finalized)
+        int32_t state = ompi_mpi_state;
+        if (state < OMPI_MPI_STATE_INIT_COMPLETED ||
+            state >= OMPI_MPI_STATE_FINALIZE_STARTED) {
             return PERUSE_ERR_INIT;
+        }
     }
     ompi_peruse_init ();
     return PERUSE_SUCCESS;

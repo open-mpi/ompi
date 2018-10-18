@@ -223,6 +223,7 @@ AC_DEFUN([OPAL_CHECK_ATTRIBUTES], [
     opal_cv___attribute__weak_alias=0
     opal_cv___attribute__destructor=0
     opal_cv___attribute__optnone=0
+    opal_cv___attribute__error=0
   else
     AC_MSG_RESULT([yes])
 
@@ -267,6 +268,13 @@ AC_DEFUN([OPAL_CHECK_ATTRIBUTES], [
         [
          int foo(int arg1, int arg2) __attribute__ ((__deprecated__("compiler allows argument")));
          int foo(int arg1, int arg2) { return arg1 * arg2 + arg1; }
+        ],
+        [],
+        [])
+
+    _OPAL_CHECK_SPECIFIC_ATTRIBUTE([error],
+        [
+         int foo(int arg1, int arg2) __attribute__ ((__error__("")));
         ],
         [],
         [])
@@ -629,4 +637,6 @@ AC_DEFUN([OPAL_CHECK_ATTRIBUTES], [
                      [Whether your compiler has __attribute__ optnone or not])
   AC_DEFINE_UNQUOTED(OPAL_HAVE_ATTRIBUTE_EXTENSION, [$opal_cv___attribute__extension],
                      [Whether your compiler has __attribute__ extension or not])
+  AC_DEFINE_UNQUOTED(OPAL_HAVE_ATTRIBUTE_ERROR, [$opal_cv___attribute__error],
+                     [Whether your compiler has __attribute__ error or not])
 ])

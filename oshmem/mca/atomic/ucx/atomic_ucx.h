@@ -13,6 +13,7 @@
 
 #include "oshmem_config.h"
 
+#include "opal/mca/common/ucx/common_ucx.h"
 #include "opal/mca/mca.h"
 #include "oshmem/mca/atomic/atomic.h"
 #include "oshmem/util/oshmem_util.h"
@@ -36,22 +37,17 @@ OSHMEM_DECLSPEC void atomic_ucx_unlock(int pe);
 
 /* API functions */
 
-int mca_atomic_ucx_init(bool enable_progress_threads, bool enable_threads);
+int mca_atomic_ucx_startup(bool enable_progress_threads, bool enable_threads);
 int mca_atomic_ucx_finalize(void);
 mca_atomic_base_module_t*
 mca_atomic_ucx_query(int *priority);
 
-int mca_atomic_ucx_fadd(void *target,
-                        void *prev,
-                        const void *value,
-                        size_t nlong,
-                        int pe,
-                        struct oshmem_op_t *op);
-int mca_atomic_ucx_cswap(void *target,
-                         void *prev,
-                         const void *cond,
-                         const void *value,
-                         size_t nlong,
+int mca_atomic_ucx_cswap(shmem_ctx_t ctx,
+                         void *target,
+                         uint64_t *prev,
+                         uint64_t cond,
+                         uint64_t value,
+                         size_t size,
                          int pe);
 
 struct mca_atomic_ucx_module_t {
@@ -62,4 +58,4 @@ OBJ_CLASS_DECLARATION(mca_atomic_ucx_module_t);
 
 END_C_DECLS
 
-#endif /* MCA_ATOMIC_MXM_H */
+#endif /* MCA_ATOMIC_UCX_H */

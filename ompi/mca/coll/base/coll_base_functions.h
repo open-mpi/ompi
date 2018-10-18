@@ -14,7 +14,7 @@
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation.  All rights reserved.
  * Copyright (c) 2017      FUJITSU LIMITED.  All rights reserved.
@@ -33,6 +33,7 @@
 #include "ompi/mca/coll/base/base.h"
 #include "ompi/mca/mca.h"
 #include "ompi/mca/coll/coll.h"
+#include "ompi/info/info.h"
 #include "ompi/request/request.h"
 
 /* need to include our own topo prototypes so we can malloc data on the comm correctly */
@@ -135,6 +136,29 @@ typedef enum COLLTYPE {
 #define INEIGHBOR_ALLTOALLV_ARGS  NEIGHBOR_ALLTOALLV_BASE_ARGS,  ompi_request_t **request, mca_coll_base_module_t *module
 #define INEIGHBOR_ALLTOALLW_ARGS  NEIGHBOR_ALLTOALLW_BASE_ARGS,  ompi_request_t **request, mca_coll_base_module_t *module
 
+#define ALLGATHER_INIT_ARGS           ALLGATHER_BASE_ARGS,           ompi_info_t *info, ompi_request_t **request, mca_coll_base_module_t *module
+#define ALLGATHERV_INIT_ARGS          ALLGATHERV_BASE_ARGS,          ompi_info_t *info, ompi_request_t **request, mca_coll_base_module_t *module
+#define ALLREDUCE_INIT_ARGS           ALLREDUCE_BASE_ARGS,           ompi_info_t *info, ompi_request_t **request, mca_coll_base_module_t *module
+#define ALLTOALL_INIT_ARGS            ALLTOALL_BASE_ARGS,            ompi_info_t *info, ompi_request_t **request, mca_coll_base_module_t *module
+#define ALLTOALLV_INIT_ARGS           ALLTOALLV_BASE_ARGS,           ompi_info_t *info, ompi_request_t **request, mca_coll_base_module_t *module
+#define ALLTOALLW_INIT_ARGS           ALLTOALLW_BASE_ARGS,           ompi_info_t *info, ompi_request_t **request, mca_coll_base_module_t *module
+#define BARRIER_INIT_ARGS             BARRIER_BASE_ARGS,             ompi_info_t *info, ompi_request_t **request, mca_coll_base_module_t *module
+#define BCAST_INIT_ARGS               BCAST_BASE_ARGS,               ompi_info_t *info, ompi_request_t **request, mca_coll_base_module_t *module
+#define EXSCAN_INIT_ARGS              EXSCAN_BASE_ARGS,              ompi_info_t *info, ompi_request_t **request, mca_coll_base_module_t *module
+#define GATHER_INIT_ARGS              GATHER_BASE_ARGS,              ompi_info_t *info, ompi_request_t **request, mca_coll_base_module_t *module
+#define GATHERV_INIT_ARGS             GATHERV_BASE_ARGS,             ompi_info_t *info, ompi_request_t **request, mca_coll_base_module_t *module
+#define REDUCE_INIT_ARGS              REDUCE_BASE_ARGS,              ompi_info_t *info, ompi_request_t **request, mca_coll_base_module_t *module
+#define REDUCESCATTER_INIT_ARGS       REDUCESCATTER_BASE_ARGS,       ompi_info_t *info, ompi_request_t **request, mca_coll_base_module_t *module
+#define REDUCESCATTERBLOCK_INIT_ARGS  REDUCESCATTERBLOCK_BASE_ARGS,  ompi_info_t *info, ompi_request_t **request, mca_coll_base_module_t *module
+#define SCAN_INIT_ARGS                SCAN_BASE_ARGS,                ompi_info_t *info, ompi_request_t **request, mca_coll_base_module_t *module
+#define SCATTER_INIT_ARGS             SCATTER_BASE_ARGS,             ompi_info_t *info, ompi_request_t **request, mca_coll_base_module_t *module
+#define SCATTERV_INIT_ARGS            SCATTERV_BASE_ARGS,            ompi_info_t *info, ompi_request_t **request, mca_coll_base_module_t *module
+#define NEIGHBOR_ALLGATHER_INIT_ARGS  NEIGHBOR_ALLGATHER_BASE_ARGS,  ompi_info_t *info, ompi_request_t **request, mca_coll_base_module_t *module
+#define NEIGHBOR_ALLGATHERV_INIT_ARGS NEIGHBOR_ALLGATHERV_BASE_ARGS, ompi_info_t *info, ompi_request_t **request, mca_coll_base_module_t *module
+#define NEIGHBOR_ALLTOALL_INIT_ARGS   NEIGHBOR_ALLTOALL_BASE_ARGS,   ompi_info_t *info, ompi_request_t **request, mca_coll_base_module_t *module
+#define NEIGHBOR_ALLTOALLV_INIT_ARGS  NEIGHBOR_ALLTOALLV_BASE_ARGS,  ompi_info_t *info, ompi_request_t **request, mca_coll_base_module_t *module
+#define NEIGHBOR_ALLTOALLW_INIT_ARGS  NEIGHBOR_ALLTOALLW_BASE_ARGS,  ompi_info_t *info, ompi_request_t **request, mca_coll_base_module_t *module
+
 #define ALLGATHER_BASE_ARG_NAMES           sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm
 #define ALLGATHERV_BASE_ARG_NAMES          sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, comm
 #define ALLREDUCE_BASE_ARG_NAMES           sendbuf, recvbuf, count, datatype, op, comm
@@ -182,6 +206,7 @@ int ompi_coll_base_allreduce_intra_recursivedoubling(ALLREDUCE_ARGS);
 int ompi_coll_base_allreduce_intra_ring(ALLREDUCE_ARGS);
 int ompi_coll_base_allreduce_intra_ring_segmented(ALLREDUCE_ARGS, uint32_t segsize);
 int ompi_coll_base_allreduce_intra_basic_linear(ALLREDUCE_ARGS);
+int ompi_coll_base_allreduce_intra_redscat_allgather(ALLREDUCE_ARGS);
 
 /* AlltoAll */
 int ompi_coll_base_alltoall_intra_pairwise(ALLTOALL_ARGS);
@@ -220,8 +245,14 @@ int ompi_coll_base_bcast_intra_pipeline(BCAST_ARGS, uint32_t segsize);
 int ompi_coll_base_bcast_intra_binomial(BCAST_ARGS, uint32_t segsize);
 int ompi_coll_base_bcast_intra_bintree(BCAST_ARGS, uint32_t segsize);
 int ompi_coll_base_bcast_intra_split_bintree(BCAST_ARGS, uint32_t segsize);
+int ompi_coll_base_bcast_intra_knomial(BCAST_ARGS, uint32_t segsize, int radix);
+int ompi_coll_base_bcast_intra_scatter_allgather(BCAST_ARGS, uint32_t segsize);
+int ompi_coll_base_bcast_intra_scatter_allgather_ring(BCAST_ARGS, uint32_t segsize);
 
 /* Exscan */
+int ompi_coll_base_exscan_intra_recursivedoubling(EXSCAN_ARGS);
+int ompi_coll_base_exscan_intra_linear(EXSCAN_ARGS);
+int ompi_coll_base_exscan_intra_recursivedoubling(EXSCAN_ARGS);
 
 /* Gather */
 int ompi_coll_base_gather_intra_basic_linear(GATHER_ARGS);
@@ -238,13 +269,24 @@ int ompi_coll_base_reduce_intra_pipeline(REDUCE_ARGS, uint32_t segsize, int max_
 int ompi_coll_base_reduce_intra_binary(REDUCE_ARGS, uint32_t segsize, int max_outstanding_reqs );
 int ompi_coll_base_reduce_intra_binomial(REDUCE_ARGS, uint32_t segsize, int max_outstanding_reqs );
 int ompi_coll_base_reduce_intra_in_order_binary(REDUCE_ARGS, uint32_t segsize, int max_outstanding_reqs );
+int ompi_coll_base_reduce_intra_redscat_gather(REDUCE_ARGS);
 
 /* Reduce_scatter */
 int ompi_coll_base_reduce_scatter_intra_nonoverlapping(REDUCESCATTER_ARGS);
 int ompi_coll_base_reduce_scatter_intra_basic_recursivehalving(REDUCESCATTER_ARGS);
 int ompi_coll_base_reduce_scatter_intra_ring(REDUCESCATTER_ARGS);
+int ompi_coll_base_reduce_scatter_intra_butterfly(REDUCESCATTER_ARGS);
+
+/* Reduce_scatter_block */
+int ompi_coll_base_reduce_scatter_block_basic_linear(REDUCESCATTERBLOCK_ARGS);
+int ompi_coll_base_reduce_scatter_block_intra_recursivedoubling(REDUCESCATTERBLOCK_ARGS);
+int ompi_coll_base_reduce_scatter_block_intra_recursivehalving(REDUCESCATTERBLOCK_ARGS);
+int ompi_coll_base_reduce_scatter_block_intra_butterfly(REDUCESCATTERBLOCK_ARGS);
 
 /* Scan */
+int ompi_coll_base_scan_intra_recursivedoubling(SCAN_ARGS);
+int ompi_coll_base_scan_intra_linear(SCAN_ARGS);
+int ompi_coll_base_scan_intra_recursivedoubling(SCAN_ARGS);
 
 /* Scatter */
 int ompi_coll_base_scatter_intra_basic_linear(SCATTER_ARGS);
@@ -295,6 +337,22 @@ do {                                                                            
         }                                                                                    \
         coll_comm->cached_in_order_bmtree = ompi_coll_base_topo_build_in_order_bmtree( (OMPI_COMM), (ROOT) ); \
         coll_comm->cached_in_order_bmtree_root = (ROOT);                                     \
+    }                                                                                        \
+} while (0)
+
+#define COLL_BASE_UPDATE_KMTREE(OMPI_COMM, BASE_MODULE, ROOT, RADIX)	\
+do {                                                                                         \
+    mca_coll_base_comm_t* coll_comm = (BASE_MODULE)->base_data;                           \
+    if (!((coll_comm->cached_kmtree)                                                       \
+           && (coll_comm->cached_kmtree_root == (ROOT))                                     \
+           && (coll_comm->cached_kmtree_radix == (RADIX))))                                   \
+    {                                                                                        \
+        if (coll_comm->cached_kmtree ) { /* destroy previous k-nomial tree if defined */     \
+            ompi_coll_base_topo_destroy_tree(&(coll_comm->cached_kmtree));                  \
+        }                                                                                    \
+        coll_comm->cached_kmtree = ompi_coll_base_topo_build_kmtree((OMPI_COMM), (ROOT), (RADIX)); \
+        coll_comm->cached_kmtree_root = (ROOT);                                              \
+        coll_comm->cached_kmtree_radix = (RADIX);                                              \
     }                                                                                        \
 } while (0)
 
@@ -415,6 +473,11 @@ struct mca_coll_base_comm_t {
     /* binomial tree */
     ompi_coll_tree_t *cached_in_order_bmtree;
     int cached_in_order_bmtree_root;
+
+    /* k-nomial tree */
+    ompi_coll_tree_t *cached_kmtree;
+    int cached_kmtree_root;
+    int cached_kmtree_radix;
 
     /* chained tree (fanout followed by pipelines) */
     ompi_coll_tree_t *cached_chain;

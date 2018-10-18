@@ -12,6 +12,8 @@
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2008-2011 University of Houston. All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, Inc.  All rights reserved.
+ * Copyright (c) 2018      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -32,8 +34,9 @@
 
 #include "mpi.h"
 #include "opal/class/opal_list.h"
-#include "ompi/mca/sharedfp/sharedfp.h"
 #include "ompi/mca/mca.h"
+#include "ompi/mca/common/ompio/common_ompio.h"
+#include "ompi/mca/sharedfp/sharedfp.h"
 
 
 BEGIN_C_DECLS
@@ -43,17 +46,17 @@ BEGIN_C_DECLS
  */
 OMPI_DECLSPEC extern mca_base_framework_t ompi_sharedfp_base_framework;
 /* select a component */
-OMPI_DECLSPEC int mca_sharedfp_base_file_select(struct mca_io_ompio_file_t *file,
+OMPI_DECLSPEC int mca_sharedfp_base_file_select(struct ompio_file_t *file,
                                                 mca_base_component_t *preferred);
 
-OMPI_DECLSPEC int mca_sharedfp_base_file_unselect(struct mca_io_ompio_file_t *file);
+OMPI_DECLSPEC int mca_sharedfp_base_file_unselect(struct ompio_file_t *file);
 
 OMPI_DECLSPEC int mca_sharedfp_base_find_available(bool enable_progress_threads,
                                                    bool enable_mpi_threads);
 
-OMPI_DECLSPEC int mca_sharedfp_base_init_file (struct mca_io_ompio_file_t *file);
+OMPI_DECLSPEC int mca_sharedfp_base_init_file (struct ompio_file_t *file);
 
-OMPI_DECLSPEC int mca_sharedfp_base_get_param (struct mca_io_ompio_file_t *file, int keyval);
+OMPI_DECLSPEC int mca_sharedfp_base_get_param (struct ompio_file_t *file, int keyval);
 /*
  * Globals
  */

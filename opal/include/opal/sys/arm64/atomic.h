@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
  * Copyright (c) 2010      ARM ltd.  All rights reserved.
- * Copyright (c) 2016-2017 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2016-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -82,7 +82,7 @@ static inline void opal_atomic_isync (void)
  *
  *********************************************************************/
 
-static inline bool opal_atomic_compare_exchange_strong_32 (volatile int32_t *addr, int32_t *oldval, int32_t newval)
+static inline bool opal_atomic_compare_exchange_strong_32 (opal_atomic_int32_t *addr, int32_t *oldval, int32_t newval)
 {
     int32_t prev, tmp;
     bool ret;
@@ -102,7 +102,7 @@ static inline bool opal_atomic_compare_exchange_strong_32 (volatile int32_t *add
     return ret;
 }
 
-static inline int32_t opal_atomic_swap_32(volatile int32_t *addr, int32_t newval)
+static inline int32_t opal_atomic_swap_32(opal_atomic_int32_t *addr, int32_t newval)
 {
     int32_t ret, tmp;
 
@@ -121,7 +121,7 @@ static inline int32_t opal_atomic_swap_32(volatile int32_t *addr, int32_t newval
    atomic_?mb can be inlined).  Instead, we "inline" them by hand in
    the assembly, meaning there is one function call overhead instead
    of two */
-static inline bool opal_atomic_compare_exchange_strong_acq_32 (volatile int32_t *addr, int32_t *oldval, int32_t newval)
+static inline bool opal_atomic_compare_exchange_strong_acq_32 (opal_atomic_int32_t *addr, int32_t *oldval, int32_t newval)
 {
     int32_t prev, tmp;
     bool ret;
@@ -142,7 +142,7 @@ static inline bool opal_atomic_compare_exchange_strong_acq_32 (volatile int32_t 
 }
 
 
-static inline bool opal_atomic_compare_exchange_strong_rel_32 (volatile int32_t *addr, int32_t *oldval, int32_t newval)
+static inline bool opal_atomic_compare_exchange_strong_rel_32 (opal_atomic_int32_t *addr, int32_t *oldval, int32_t newval)
 {
     int32_t prev, tmp;
     bool ret;
@@ -162,30 +162,33 @@ static inline bool opal_atomic_compare_exchange_strong_rel_32 (volatile int32_t 
     return ret;
 }
 
-static inline int32_t opal_atomic_ll_32 (volatile int32_t *addr)
-{
-    int32_t ret;
+#define opal_atomic_ll_32(addr, ret)                                    \
+    do {                                                                \
+        opal_atomic_int32_t *_addr = (addr);                               \
+        int32_t _ret;                                                   \
+                                                                        \
+        __asm__ __volatile__ ("ldaxr    %w0, [%1]          \n"          \
+                              : "=&r" (_ret)                            \
+                              : "r" (_addr));                           \
+                                                                        \
+        ret = (typeof(ret)) _ret;                                       \
+    } while (0)
 
-    __asm__ __volatile__ ("ldaxr    %w0, [%1]          \n"
-                          : "=&r" (ret)
-                          : "r" (addr));
+#define opal_atomic_sc_32(addr, newval, ret)                            \
+    do {                                                                \
+        opal_atomic_int32_t *_addr = (addr);                               \
+        int32_t _newval = (int32_t) newval;                             \
+        int _ret;                                                       \
+                                                                        \
+        __asm__ __volatile__ ("stlxr    %w0, %w2, [%1]     \n"          \
+                              : "=&r" (_ret)                            \
+                              : "r" (_addr), "r" (_newval)              \
+                              : "cc", "memory");                        \
+                                                                        \
+        ret = (_ret == 0);                                              \
+    } while (0)
 
-    return ret;
-}
-
-static inline int opal_atomic_sc_32 (volatile int32_t *addr, int32_t newval)
-{
-    int ret;
-
-    __asm__ __volatile__ ("stlxr    %w0, %w2, [%1]     \n"
-                          : "=&r" (ret)
-                          : "r" (addr), "r" (newval)
-                          : "cc", "memory");
-
-    return ret == 0;
-}
-
-static inline bool opal_atomic_compare_exchange_strong_64 (volatile int64_t *addr, int64_t *oldval, int64_t newval)
+static inline bool opal_atomic_compare_exchange_strong_64 (opal_atomic_int64_t *addr, int64_t *oldval, int64_t newval)
 {
     int64_t prev;
     int tmp;
@@ -206,7 +209,7 @@ static inline bool opal_atomic_compare_exchange_strong_64 (volatile int64_t *add
     return ret;
 }
 
-static inline int64_t opal_atomic_swap_64 (volatile int64_t *addr, int64_t newval)
+static inline int64_t opal_atomic_swap_64 (opal_atomic_int64_t *addr, int64_t newval)
 {
     int64_t ret;
     int tmp;
@@ -226,7 +229,7 @@ static inline int64_t opal_atomic_swap_64 (volatile int64_t *addr, int64_t newva
    atomic_?mb can be inlined).  Instead, we "inline" them by hand in
    the assembly, meaning there is one function call overhead instead
    of two */
-static inline bool opal_atomic_compare_exchange_strong_acq_64 (volatile int64_t *addr, int64_t *oldval, int64_t newval)
+static inline bool opal_atomic_compare_exchange_strong_acq_64 (opal_atomic_int64_t *addr, int64_t *oldval, int64_t newval)
 {
     int64_t prev;
     int tmp;
@@ -248,7 +251,7 @@ static inline bool opal_atomic_compare_exchange_strong_acq_64 (volatile int64_t 
 }
 
 
-static inline bool opal_atomic_compare_exchange_strong_rel_64 (volatile int64_t *addr, int64_t *oldval, int64_t newval)
+static inline bool opal_atomic_compare_exchange_strong_rel_64 (opal_atomic_int64_t *addr, int64_t *oldval, int64_t newval)
 {
     int64_t prev;
     int tmp;
@@ -269,31 +272,34 @@ static inline bool opal_atomic_compare_exchange_strong_rel_64 (volatile int64_t 
     return ret;
 }
 
-static inline int64_t opal_atomic_ll_64 (volatile int64_t *addr)
-{
-    int64_t ret;
+#define opal_atomic_ll_64(addr, ret)                            \
+    do {                                                        \
+        opal_atomic_int64_t *_addr = (addr);                       \
+        int64_t _ret;                                           \
+                                                                \
+        __asm__ __volatile__ ("ldaxr    %0, [%1]          \n"   \
+                              : "=&r" (_ret)                    \
+                              : "r" (_addr));                   \
+                                                                \
+        ret = (typeof(ret)) _ret;                               \
+    } while (0)
 
-    __asm__ __volatile__ ("ldaxr    %0, [%1]        \n"
-                          : "=&r" (ret)
-                          : "r" (addr));
-
-    return ret;
-}
-
-static inline int opal_atomic_sc_64 (volatile int64_t *addr, int64_t newval)
-{
-    int ret;
-
-    __asm__ __volatile__ ("stlxr    %w0, %2, [%1]    \n"
-                          : "=&r" (ret)
-                          : "r" (addr), "r" (newval)
-                          : "cc", "memory");
-
-    return ret == 0;
-}
+#define opal_atomic_sc_64(addr, newval, ret)                            \
+    do {                                                                \
+        opal_atomic_int64_t *_addr = (addr);                               \
+        int64_t _newval = (int64_t) newval;                             \
+        int _ret;                                                       \
+                                                                        \
+        __asm__ __volatile__ ("stlxr    %w0, %2, [%1]     \n"           \
+                              : "=&r" (_ret)                            \
+                              : "r" (_addr), "r" (_newval)              \
+                              : "cc", "memory");                        \
+                                                                        \
+        ret = (_ret == 0);                                              \
+    } while (0)
 
 #define OPAL_ASM_MAKE_ATOMIC(type, bits, name, inst, reg)                   \
-    static inline type opal_atomic_fetch_ ## name ## _ ## bits (volatile type *addr, type value) \
+    static inline type opal_atomic_fetch_ ## name ## _ ## bits (opal_atomic_ ## type *addr, type value) \
     {                                                                   \
         type newval, old;                                               \
         int32_t tmp;                                                    \

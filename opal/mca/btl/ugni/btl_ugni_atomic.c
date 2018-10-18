@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2017 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2014-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -79,8 +79,8 @@ int mca_btl_ugni_aop (struct mca_btl_base_module_t *btl, struct mca_btl_base_end
                       mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata)
 {
     gni_mem_handle_t dummy = {0, 0};
-    mca_btl_ugni_post_descriptor_t *post_desc;
-    int gni_op, rc, type;
+    mca_btl_ugni_post_descriptor_t post_desc;
+    int gni_op, type;
     size_t size;
 
     size = (MCA_BTL_ATOMIC_FLAG_32BIT & flags) ? 4 : 8;
@@ -95,23 +95,13 @@ int mca_btl_ugni_aop (struct mca_btl_base_module_t *btl, struct mca_btl_base_end
         return OPAL_ERR_NOT_SUPPORTED;
     }
 
-    post_desc = mca_btl_ugni_alloc_post_descriptor (endpoint, NULL, cbfunc, cbcontext, cbdata);
-    if (OPAL_UNLIKELY(NULL == post_desc)) {
-        return OPAL_ERR_OUT_OF_RESOURCE;
-    }
+    init_post_desc (&post_desc, endpoint, order, GNI_POST_AMO, 0, dummy, remote_address,
+                    remote_handle->gni_handle, size, 0, cbfunc, cbcontext, cbdata,
+                    NULL);
+    post_desc.gni_desc.amo_cmd = gni_op;
+    post_desc.gni_desc.first_operand = operand;
 
-    init_gni_post_desc (post_desc, order, GNI_POST_AMO, 0, dummy, remote_address,
-                        remote_handle->gni_handle, size, 0);
-    post_desc->desc.amo_cmd = gni_op;
-
-    post_desc->desc.first_operand = operand;
-
-    rc = mca_btl_ugni_endpoint_post_fma (endpoint, post_desc);
-    if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
-        mca_btl_ugni_return_post_descriptor (post_desc);
-    }
-
-    return rc;
+    return mca_btl_ugni_endpoint_post_fma (endpoint, &post_desc);
 }
 
 int mca_btl_ugni_afop (struct mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint,
@@ -120,8 +110,8 @@ int mca_btl_ugni_afop (struct mca_btl_base_module_t *btl, struct mca_btl_base_en
                        uint64_t operand, int flags, int order, mca_btl_base_rdma_completion_fn_t cbfunc,
                        void *cbcontext, void *cbdata)
 {
-    mca_btl_ugni_post_descriptor_t *post_desc;
-    int gni_op, rc, type;
+    mca_btl_ugni_post_descriptor_t post_desc;
+    int gni_op, type;
     size_t size;
 
     size = (MCA_BTL_ATOMIC_FLAG_32BIT & flags) ? 4 : 8;
@@ -136,24 +126,13 @@ int mca_btl_ugni_afop (struct mca_btl_base_module_t *btl, struct mca_btl_base_en
         return OPAL_ERR_NOT_SUPPORTED;
     }
 
-    post_desc = mca_btl_ugni_alloc_post_descriptor (endpoint, local_handle, cbfunc, cbcontext, cbdata);
-    if (OPAL_UNLIKELY(NULL == post_desc)) {
-        return OPAL_ERR_OUT_OF_RESOURCE;
-    }
+    init_post_desc (&post_desc, endpoint, order, GNI_POST_AMO, (intptr_t) local_address,
+                    local_handle->gni_handle, remote_address, remote_handle->gni_handle,
+                    size, 0, cbfunc, cbcontext, cbdata, local_handle);
+    post_desc.gni_desc.amo_cmd = gni_op;
+    post_desc.gni_desc.first_operand = operand;
 
-
-    init_gni_post_desc (post_desc, order, GNI_POST_AMO, (intptr_t) local_address, local_handle->gni_handle,
-                        remote_address, remote_handle->gni_handle, size, 0);
-    post_desc->desc.amo_cmd = gni_op;
-
-    post_desc->desc.first_operand = operand;
-
-    rc = mca_btl_ugni_endpoint_post_fma (endpoint, post_desc);
-    if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
-        mca_btl_ugni_return_post_descriptor (post_desc);
-    }
-
-    return rc;
+    return mca_btl_ugni_endpoint_post_fma (endpoint, &post_desc);
 }
 
 int mca_btl_ugni_acswap (struct mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint,
@@ -161,30 +140,19 @@ int mca_btl_ugni_acswap (struct mca_btl_base_module_t *btl, struct mca_btl_base_
                          mca_btl_base_registration_handle_t *remote_handle, uint64_t compare, uint64_t value, int flags,
                          int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata)
 {
-    mca_btl_ugni_post_descriptor_t *post_desc;
-    int gni_op, rc;
+    mca_btl_ugni_post_descriptor_t post_desc;
     size_t size;
+    int gni_op;
 
     gni_op = (MCA_BTL_ATOMIC_FLAG_32BIT & flags) ? GNI_FMA_ATOMIC2_CSWAP_S : GNI_FMA_ATOMIC_CSWAP;
     size = (MCA_BTL_ATOMIC_FLAG_32BIT & flags) ? 4 : 8;
 
-    post_desc = mca_btl_ugni_alloc_post_descriptor (endpoint, local_handle, cbfunc, cbcontext, cbdata);
-    if (OPAL_UNLIKELY(NULL == post_desc)) {
-        return OPAL_ERR_OUT_OF_RESOURCE;
-    }
+    init_post_desc (&post_desc, endpoint, order, GNI_POST_AMO, (intptr_t) local_address,
+                    local_handle->gni_handle, remote_address, remote_handle->gni_handle, size, 0,
+                    cbfunc, cbcontext, cbdata, local_handle);
+    post_desc.gni_desc.amo_cmd = gni_op;
+    post_desc.gni_desc.first_operand = compare;
+    post_desc.gni_desc.second_operand = value;
 
-
-    init_gni_post_desc (post_desc, order, GNI_POST_AMO, (intptr_t) local_address, local_handle->gni_handle,
-                        remote_address, remote_handle->gni_handle, size, 0);
-    post_desc->desc.amo_cmd = gni_op;
-
-    post_desc->desc.first_operand = compare;
-    post_desc->desc.second_operand = value;
-
-    rc = mca_btl_ugni_endpoint_post_fma (endpoint, post_desc);
-    if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
-        mca_btl_ugni_return_post_descriptor (post_desc);
-    }
-
-    return rc;
+    return mca_btl_ugni_endpoint_post_fma (endpoint, &post_desc);
 }

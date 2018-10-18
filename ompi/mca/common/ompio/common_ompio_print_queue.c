@@ -11,6 +11,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2016 University of Houston. All rights reserved.
+ * Copyright (c) 2018      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -25,7 +27,6 @@
 #include "ompi/datatype/ompi_datatype.h"
 
 #include "ompi/mca/common/ompio/common_ompio.h"
-#include "ompi/mca/io/ompio/io_ompio.h"
 
 
 /* Print queue related function implementations */
@@ -98,7 +99,7 @@ int mca_common_ompio_full_print_queue( struct mca_common_ompio_print_queue *q)
 
 int mca_common_ompio_print_time_info( struct mca_common_ompio_print_queue *q,
                                       char *name,
-                                      struct mca_io_ompio_file_t *fh){
+                                      struct ompio_file_t *fh){
 
     int i = 0, j=0, nprocs_for_coll = 0, ret = OMPI_SUCCESS, count = 0;
     double *time_details = NULL, *final_sum = NULL;

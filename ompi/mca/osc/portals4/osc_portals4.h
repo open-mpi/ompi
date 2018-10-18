@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2011-2017 Sandia National Laboratories.  All rights reserved.
- * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2015-2018 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -95,7 +95,7 @@ struct ompi_osc_portals4_module_t {
     ptl_handle_md_t req_md_h; /* memory descriptor with event completion used by this window */
     ptl_handle_me_t data_me_h; /* data match list entry (MB are CID | OSC_PORTALS4_MB_DATA) */
     ptl_handle_me_t control_me_h; /* match list entry for control data (node_state_t).  Match bits are (CID | OSC_PORTALS4_MB_CONTROL). */
-    int64_t opcount;
+    opal_atomic_int64_t opcount;
     ptl_match_bits_t match_bits; /* match bits for module.  Same as cid for comm in most cases. */
 
     ptl_iovec_t     *origin_iovec_list; /* list of memory segments that compose the noncontiguous region */
@@ -281,9 +281,6 @@ int ompi_osc_portals4_flush_all(struct ompi_win_t *win);
 int ompi_osc_portals4_flush_local(int target,
                                   struct ompi_win_t *win);
 int ompi_osc_portals4_flush_local_all(struct ompi_win_t *win);
-
-int ompi_osc_portals4_set_info(struct ompi_win_t *win, struct opal_info_t *info);
-int ompi_osc_portals4_get_info(struct ompi_win_t *win, struct opal_info_t **info_used);
 
 static inline int
 ompi_osc_portals4_complete_all(ompi_osc_portals4_module_t *module)

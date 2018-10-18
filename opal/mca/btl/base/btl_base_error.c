@@ -13,6 +13,7 @@
  * Copyright (c) 2012      Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -27,6 +28,7 @@
 
 #include "opal/util/show_help.h"
 #include "opal/util/proc.h"
+#include "opal/util/printf.h"
 
 #include "base.h"
 #include "btl_base_error.h"
@@ -63,7 +65,7 @@ void mca_btl_base_error_no_nics(const char* transport,
     char *procid;
     if (mca_btl_base_warn_component_unused) {
         /* print out no-nic warning if user told us to */
-        asprintf(&procid, "%s", OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
+        opal_asprintf(&procid, "%s", OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
 
         opal_show_help("help-mpi-btl-base.txt", "btl:no-nics",
                        true, procid, transport, opal_process_info.nodename,

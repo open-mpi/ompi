@@ -10,11 +10,14 @@
  *
  * Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2014      NVIDIA Corporation.  All rights reserved.
- * Copyright (c) 2015-2017 Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015-2018 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
+ * $COPYRIGHT$
  *
+ * Additional copyrights may follow
  */
 #ifndef __NBC_INTERNAL_H__
 #define __NBC_INTERNAL_H__
@@ -259,9 +262,10 @@ void NBC_SchedCache_args_delete_key_dummy(void *k);
 #endif
 
 
-int NBC_Start(NBC_Handle *handle, NBC_Schedule *schedule);
-int NBC_Init_handle(struct ompi_communicator_t *comm, ompi_coll_libnbc_request_t **request, ompi_coll_libnbc_module_t *module);
-int NBC_Schedule_request(NBC_Schedule *schedule, ompi_communicator_t *comm, ompi_coll_libnbc_module_t *module, ompi_request_t **request, void *tmpbuf);
+int NBC_Start(NBC_Handle *handle);
+int NBC_Schedule_request(NBC_Schedule *schedule, ompi_communicator_t *comm,
+                         ompi_coll_libnbc_module_t *module, bool persistent,
+                         ompi_request_t **request, void *tmpbuf);
 void NBC_Return_handle(ompi_coll_libnbc_request_t *request);
 static inline int NBC_Type_intrinsic(MPI_Datatype type);
 int NBC_Create_fortran_handle(int *fhandle, NBC_Handle **handle);
@@ -363,6 +367,16 @@ static inline void nbc_schedule_inc_round (NBC_Schedule *schedule) {
   memcpy (&last_round_num, lastround, sizeof (last_round_num));
   ++last_round_num;
   memcpy (lastround, &last_round_num, sizeof (last_round_num));
+}
+
+/* returns a no-operation request (e.g. for one process barrier) */
+static inline int nbc_get_noop_request(bool persistent, ompi_request_t **request) {
+  if (persistent) {
+    return ompi_request_persistent_noop_create(request);
+  } else {
+    *request = &ompi_request_empty;
+    return OMPI_SUCCESS;
+  }
 }
 
 /* NBC_PRINT_ROUND prints a round in a schedule. A round has the format:
@@ -486,62 +500,27 @@ static inline int NBC_Type_intrinsic(MPI_Datatype type) {
 
 /* let's give a try to inline functions */
 static inline int NBC_Copy(const void *src, int srccount, MPI_Datatype srctype, void *tgt, int tgtcount, MPI_Datatype tgttype, MPI_Comm comm) {
-  int size, pos, res;
-  void *packbuf;
+  int res;
 
-#if OPAL_CUDA_SUPPORT
-  if((srctype == tgttype) && NBC_Type_intrinsic(srctype) && !(opal_cuda_check_bufs((char *)tgt, (char *)src))) {
-#else
-  if((srctype == tgttype) && NBC_Type_intrinsic(srctype)) {
-#endif /* OPAL_CUDA_SUPPORT */
-    /* if we have the same types and they are contiguous (intrinsic
-     * types are contiguous), we can just use a single memcpy */
-    ptrdiff_t gap, span;
-    span = opal_datatype_span(&srctype->super, srccount, &gap);
-
-    memcpy(tgt, src, span);
-  } else {
-    /* we have to pack and unpack */
-    res = PMPI_Pack_size(srccount, srctype, comm, &size);
-    if (MPI_SUCCESS != res) {
-      NBC_Error ("MPI Error in PMPI_Pack_size() (%i:%i)", res, size);
-      return res;
-    }
-
-    if (0 == size) {
-        return OMPI_SUCCESS;
-    }
-    packbuf = malloc(size);
-    if (NULL == packbuf) {
-      NBC_Error("Error in malloc()");
-      return res;
-    }
-
-    pos=0;
-    res = PMPI_Pack(src, srccount, srctype, packbuf, size, &pos, comm);
-
-    if (MPI_SUCCESS != res) {
-      NBC_Error ("MPI Error in PMPI_Pack() (%i)", res);
-      free (packbuf);
-      return res;
-    }
-
-    pos=0;
-    res = PMPI_Unpack(packbuf, size, &pos, tgt, tgtcount, tgttype, comm);
-    free(packbuf);
-    if (MPI_SUCCESS != res) {
-      NBC_Error ("MPI Error in PMPI_Unpack() (%i)", res);
-      return res;
-    }
+  res = ompi_datatype_sndrcv(src, srccount, srctype, tgt, tgtcount, tgttype);
+  if (OMPI_SUCCESS != res) {
+    NBC_Error ("MPI Error in ompi_datatype_sndrcv() (%i)", res);
+    return res;
   }
 
   return OMPI_SUCCESS;
 }
 
 static inline int NBC_Unpack(void *src, int srccount, MPI_Datatype srctype, void *tgt, MPI_Comm comm) {
-  int size, pos, res;
+  MPI_Aint size, pos;
+  int res;
   ptrdiff_t ext, lb;
 
+  res = ompi_datatype_pack_external_size("external32", srccount, srctype, &size);
+  if (OMPI_SUCCESS != res) {
+    NBC_Error ("MPI Error in ompi_datatype_pack_external_size() (%i)", res);
+    return res;
+  }
 #if OPAL_CUDA_SUPPORT
   if(NBC_Type_intrinsic(srctype) && !(opal_cuda_check_bufs((char *)tgt, (char *)src))) {
 #else
@@ -559,15 +538,10 @@ static inline int NBC_Unpack(void *src, int srccount, MPI_Datatype srctype, void
 
   } else {
     /* we have to unpack */
-    res = PMPI_Pack_size(srccount, srctype, comm, &size);
-    if (MPI_SUCCESS != res) {
-      NBC_Error ("MPI Error in PMPI_Pack_size() (%i)", res);
-      return res;
-    }
     pos = 0;
-    res = PMPI_Unpack(src, size, &pos, tgt, srccount, srctype, comm);
+    res = ompi_datatype_unpack_external("external32", src, size, &pos, tgt, srccount, srctype);
     if (MPI_SUCCESS != res) {
-      NBC_Error ("MPI Error in PMPI_Unpack() (%i)", res);
+      NBC_Error ("MPI Error in ompi_datatype_unpack_external() (%i)", res);
       return res;
     }
   }

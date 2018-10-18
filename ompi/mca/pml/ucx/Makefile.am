@@ -37,8 +37,8 @@ endif
 mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_pml_ucx_la_SOURCES = $(local_sources)
-mca_pml_ucx_la_LIBADD = $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
-	$(pml_ucx_LIBS)
+mca_pml_ucx_la_LIBADD = $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la $(pml_ucx_LIBS) \
+                        $(OPAL_TOP_BUILDDIR)/opal/mca/common/ucx/lib@OPAL_LIB_PREFIX@mca_common_ucx.la
 mca_pml_ucx_la_LDFLAGS = -module -avoid-version $(pml_ucx_LDFLAGS)
 
 noinst_LTLIBRARIES = $(component_noinst)

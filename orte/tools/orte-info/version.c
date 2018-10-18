@@ -13,6 +13,7 @@
  * Copyright (c) 2010-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2018      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -71,8 +72,8 @@ static char *make_version_str(const char *scope,
  * Determines the version information related to the orte components
  * being used.
  * Accepts:
- *	- want_all: True if all components' info is required.
- *	- cmd_line: The constructed command line argument
+ *      - want_all: True if all components' info is required.
+ *      - cmd_line: The constructed command line argument
  */
 void orte_info_do_version(bool want_all, opal_cmd_line_t *cmd_line)
 {
@@ -239,12 +240,12 @@ static void show_mca_version(const mca_base_component_t* component,
                                          "", false, "");
 
     if (orte_info_pretty) {
-        asprintf(&message, "MCA %s", component->mca_type_name);
+        opal_asprintf(&message, "MCA %s", component->mca_type_name);
         printed = false;
-        asprintf(&content, "%s (", component->mca_component_name);
+        opal_asprintf(&content, "%s (", component->mca_component_name);
 
         if (want_mca) {
-            asprintf(&tmp, "%sMCA v%s", content, mca_version);
+            opal_asprintf(&tmp, "%sMCA v%s", content, mca_version);
             free(content);
             content = tmp;
             printed = true;
@@ -252,11 +253,11 @@ static void show_mca_version(const mca_base_component_t* component,
 
         if (want_type) {
             if (printed) {
-                asprintf(&tmp, "%s, ", content);
+                opal_asprintf(&tmp, "%s, ", content);
                 free(content);
                 content = tmp;
             }
-            asprintf(&tmp, "%sAPI v%s", content, api_version);
+            opal_asprintf(&tmp, "%sAPI v%s", content, api_version);
             free(content);
             content = tmp;
             printed = true;
@@ -264,20 +265,20 @@ static void show_mca_version(const mca_base_component_t* component,
 
         if (want_component) {
             if (printed) {
-                asprintf(&tmp, "%s, ", content);
+                opal_asprintf(&tmp, "%s, ", content);
                 free(content);
                 content = tmp;
             }
-            asprintf(&tmp, "%sComponent v%s", content, component_version);
+            opal_asprintf(&tmp, "%sComponent v%s", content, component_version);
             free(content);
             content = tmp;
             printed = true;
         }
         if (NULL != content) {
-            asprintf(&tmp, "%s)", content);
+            opal_asprintf(&tmp, "%s)", content);
             free(content);
         } else {
-            asprintf(&tmp, ")");
+            opal_asprintf(&tmp, ")");
         }
 
         orte_info_out(message, NULL, tmp);
@@ -285,19 +286,19 @@ static void show_mca_version(const mca_base_component_t* component,
         free(tmp);
 
     } else {
-        asprintf(&message, "mca:%s:%s:version", component->mca_type_name, component->mca_component_name);
+        opal_asprintf(&message, "mca:%s:%s:version", component->mca_type_name, component->mca_component_name);
         if (want_mca) {
-            asprintf(&tmp, "mca:%s", mca_version);
+            opal_asprintf(&tmp, "mca:%s", mca_version);
             orte_info_out(NULL, message, tmp);
             free(tmp);
         }
         if (want_type) {
-            asprintf(&tmp, "api:%s", api_version);
+            opal_asprintf(&tmp, "api:%s", api_version);
             orte_info_out(NULL, message, tmp);
             free(tmp);
         }
         if (want_component) {
-            asprintf(&tmp, "component:%s", component_version);
+            opal_asprintf(&tmp, "component:%s", component_version);
             orte_info_out(NULL, message, tmp);
             free(tmp);
         }
@@ -325,17 +326,17 @@ static char *make_version_str(const char *scope,
         str = strdup(temp);
         if (release > 0) {
             snprintf(temp, BUFSIZ - 1, ".%d", release);
-            asprintf(&tmp, "%s%s", str, temp);
+            opal_asprintf(&tmp, "%s%s", str, temp);
             free(str);
             str = tmp;
         }
         if (NULL != greek) {
-            asprintf(&tmp, "%s%s", str, greek);
+            opal_asprintf(&tmp, "%s%s", str, greek);
             free(str);
             str = tmp;
         }
         if (want_repo && NULL != repo) {
-            asprintf(&tmp, "%s%s", str, repo);
+            opal_asprintf(&tmp, "%s%s", str, repo);
             free(str);
             str = tmp;
         }

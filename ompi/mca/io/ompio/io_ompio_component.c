@@ -10,12 +10,13 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2017 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2018 University of Houston. All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
+ * Copyright (c) 2018      DataDirect Networks. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -32,16 +33,25 @@
 #include "ompi/mca/io/io.h"
 #include "ompi/mca/fs/base/base.h"
 #include "io_ompio.h"
+#include "ompi/mca/common/ompio/common_ompio_request.h"
+
+#ifdef HAVE_IME_NATIVE_H
+#include "ompi/mca/fs/ime/fs_ime.h"
+#endif
+
+#if OPAL_CUDA_SUPPORT
+#include "ompi/mca/common/ompio/common_ompio_cuda.h"
+#endif
 
 int mca_io_ompio_cycle_buffer_size = OMPIO_DEFAULT_CYCLE_BUF_SIZE;
 int mca_io_ompio_bytes_per_agg = OMPIO_PREALLOC_MAX_BUF_SIZE;
 int mca_io_ompio_num_aggregators = -1;
 int mca_io_ompio_record_offset_info = 0;
 int mca_io_ompio_coll_timing_info = 0;
-int mca_io_ompio_sharedfp_lazy_open = 0;
 int mca_io_ompio_max_aggregators_ratio=8;
 int mca_io_ompio_aggregators_cutoff_threshold=3;
 int mca_io_ompio_overwrite_amode = 1;
+int mca_io_ompio_verbose_info_parsing = 0;
 
 int mca_io_ompio_grouping_option=5;
 
@@ -89,11 +99,6 @@ static int delete_priority_param = 30;
  */
 opal_mutex_t mca_io_ompio_mutex = {{0}};
 
-
-/*
- * Global list of requests for this component
- */
-opal_list_t mca_io_ompio_pending_requests = {{0}};
 
 
 /*
@@ -198,15 +203,6 @@ static int register_component(void)
                                            &mca_io_ompio_num_aggregators);
 
 
-    mca_io_ompio_sharedfp_lazy_open = 0;
-    (void) mca_base_component_var_register(&mca_io_ompio_component.io_version,
-                                           "sharedfp_lazy_open",
-                                           "lazy allocation of internal shared file pointer structures",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY,
-                                           &mca_io_ompio_sharedfp_lazy_open);
-
     mca_io_ompio_grouping_option = 5;
     (void) mca_base_component_var_register(&mca_io_ompio_component.io_version,
                                            "grouping_option",
@@ -254,6 +250,18 @@ static int register_component(void)
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &mca_io_ompio_overwrite_amode);
 
+    mca_io_ompio_verbose_info_parsing = 0;
+    (void) mca_base_component_var_register(&mca_io_ompio_component.io_version,
+                                           "verbose_info_parsing",
+                                           "Provide visual output when parsing info objects "
+                                           "0: no verbose output (default) "
+                                           "1: verbose output by rank 0 "
+                                           "2: verbose output by all ranks ",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_io_ompio_verbose_info_parsing);
+
     return OMPI_SUCCESS;
 }
 
@@ -262,23 +270,26 @@ static int open_component(void)
     /* Create the mutex */
     OBJ_CONSTRUCT(&mca_io_ompio_mutex, opal_mutex_t);
 
-    /* Create the list of pending requests */
+    mca_common_ompio_request_init ();
 
-    OBJ_CONSTRUCT(&mca_io_ompio_pending_requests, opal_list_t);
-
-    return OMPI_SUCCESS;
+    return mca_common_ompio_set_callbacks(ompi_io_ompio_generate_current_file_view,
+                                          mca_io_ompio_get_mca_parameter_value);
 }
 
 
 static int close_component(void)
 {
-    /* Destroy the list of pending requests */
-    /* JMS: Good opprotunity here to list out all the IO requests that
-       were not destroyed / completed upon MPI_FINALIZE */
+    mca_common_ompio_request_fini ();
 
-    OBJ_DESTRUCT(&mca_io_ompio_pending_requests);
+#if OPAL_CUDA_SUPPORT
+    mca_common_ompio_cuda_alloc_fini();
+#endif
 
     OBJ_DESTRUCT(&mca_io_ompio_mutex);
+
+#ifdef HAVE_IME_NATIVE_H
+    mca_fs_ime_native_fini();
+#endif
 
     return OMPI_SUCCESS;
 }
@@ -296,7 +307,7 @@ file_query(struct ompi_file_t *file,
            struct mca_io_base_file_t **private_data,
            int *priority)
 {
-    mca_io_ompio_data_t *data;
+    mca_common_ompio_data_t *data;
     char *tmp;
     int rank;
     int is_lustre=0; //false
@@ -333,7 +344,7 @@ file_query(struct ompi_file_t *file,
     /* Allocate a space for this module to hang private data (e.g.,
        the OMPIO file handle) */
 
-    data = calloc(1, sizeof(mca_io_ompio_data_t));
+    data = calloc(1, sizeof(mca_common_ompio_data_t));
     if (NULL == data) {
         return NULL;
     }
@@ -377,7 +388,7 @@ static int delete_select(const char *filename, struct opal_info_t *info,
     int ret;
 
     OPAL_THREAD_LOCK (&mca_io_ompio_mutex);
-    ret = mca_io_ompio_file_delete (filename, info);
+    ret = mca_common_ompio_file_delete (filename, info);
     OPAL_THREAD_UNLOCK (&mca_io_ompio_mutex);
 
     return ret;

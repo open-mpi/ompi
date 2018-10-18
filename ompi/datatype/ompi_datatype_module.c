@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2018 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
@@ -32,6 +32,7 @@
 
 #include "opal/datatype/opal_convertor_internal.h"
 #include "opal/util/output.h"
+#include "opal/util/string_copy.h"
 #include "opal/class/opal_pointer_array.h"
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/datatype/ompi_datatype_internal.h"
@@ -383,7 +384,7 @@ opal_pointer_array_t ompi_datatype_f_to_c_table = {{0}};
         (PDST)->super.desc     = (PSRC)->super.desc;                                 \
         (PDST)->super.opt_desc = (PSRC)->super.opt_desc;                             \
         (PDST)->packed_description = (PSRC)->packed_description;                     \
-        (PSRC)->packed_description = NULL;                                           \
+        (PSRC)->packed_description = 0;                                              \
         /* transfer the ptypes */                                                    \
         (PDST)->super.ptypes = (PSRC)->super.ptypes;                                 \
         (PSRC)->super.ptypes = NULL;                                                 \
@@ -420,7 +421,7 @@ opal_pointer_array_t ompi_datatype_f_to_c_table = {{0}};
         ptype->super.desc.desc = NULL;                                               \
         ptype->super.opt_desc.desc = NULL;                                           \
         OBJ_RELEASE( ptype );                                                        \
-        strncpy( (PDATA)->name, MPIDDTNAME, MPI_MAX_OBJECT_NAME );                   \
+        opal_string_copy( (PDATA)->name, MPIDDTNAME, MPI_MAX_OBJECT_NAME );          \
     } while(0)
 
 #define DECLARE_MPI2_COMPOSED_BLOCK_DDT( PDATA, MPIDDT, MPIDDTNAME, MPIType, FLAGS ) \
@@ -438,14 +439,14 @@ opal_pointer_array_t ompi_datatype_f_to_c_table = {{0}};
         ptype->super.desc.desc = NULL;                                               \
         ptype->super.opt_desc.desc = NULL;                                           \
         OBJ_RELEASE( ptype );                                                        \
-        strncpy( (PDATA)->name, (MPIDDTNAME), MPI_MAX_OBJECT_NAME );                 \
+        opal_string_copy( (PDATA)->name, (MPIDDTNAME), MPI_MAX_OBJECT_NAME );        \
     } while(0)
 
 #define DECLARE_MPI_SYNONYM_DDT( PDATA, MPIDDTNAME, PORIGDDT)                        \
     do {                                                                             \
         /* just memcpy as it's easier this way */                                    \
         memcpy( (PDATA), (PORIGDDT), sizeof(ompi_datatype_t) );                      \
-        strncpy( (PDATA)->name, MPIDDTNAME, MPI_MAX_OBJECT_NAME );                   \
+        opal_string_copy( (PDATA)->name, MPIDDTNAME, MPI_MAX_OBJECT_NAME );          \
         /* forget the language flag */                                               \
         (PDATA)->super.flags &= ~OMPI_DATATYPE_FLAG_DATA_LANGUAGE;                   \
         (PDATA)->super.flags &= ~OPAL_DATATYPE_FLAG_PREDEFINED;                      \

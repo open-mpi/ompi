@@ -58,6 +58,115 @@ included in the vX.Y.Z section and be denoted as:
 Master (not on release branches yet)
 ------------------------------------
 
+**********************************************************************
+*  PRE-DEPRECATION WARNING: MPIR Support
+*
+* As was announced in summer 2017, Open MPI is deprecating support for
+* MPIR-based tools beginning with the future release of OMPI v5.0, with
+* full removal of that support tentatively planned for OMPI v6.0.
+*
+* This serves as a pre-deprecation warning to provide tools developers
+* with sufficient time to migrate to PMIx. Support for PMIx-based
+* tools will be rolled out during the OMPI v4.x series. No runtime
+* deprecation warnings will be output during this time.
+*
+* Runtime deprecation warnings will be output beginning with the OMPI v5.0
+* release whenever MPIR-based tools connect to Open MPI's mpirun/mpiexec
+* launcher.
+**********************************************************************
+
+- Fix rank-by algorithms to properly rank by object and span
+- Do not build Open SHMEM layer when there are no SPMLs available.
+  Currently, this means the Open SHMEM layer will only build if
+  a MXM or UCX library is found.
+
+3.1.2 -- August, 2018
+------------------------
+
+- A subtle race condition bug was discovered in the "vader" BTL
+  (shared memory communications) that, in rare instances, can cause
+  MPI processes to crash or incorrectly classify (or effectively drop)
+  an MPI message sent via shared memory.  If you are using the "ob1"
+  PML with "vader" for shared memory communication (note that vader is
+  the default for shared memory communication with ob1), you need to
+  upgrade to v3.1.2 or later to fix this issue.  You may also upgrade
+  to the following versions to fix this issue:
+  - Open MPI v2.1.5 (expected end of August, 2018) or later in the
+    v2.1.x series
+  - Open MPI v3.0.1 (released March, 2018) or later in the v3.0.x
+    series
+- Assorted Portals 4.0 bug fixes.
+- Fix for possible data corruption in MPI_BSEND.
+- Move shared memory file for vader btl into /dev/shm on Linux.
+- Fix for MPI_ISCATTER/MPI_ISCATTERV Fortran interfaces with MPI_IN_PLACE.
+- Upgrade PMIx to v2.1.3.
+- Numerous One-sided bug fixes.
+- Fix for race condition in uGNI BTL.
+- Improve handling of large number of interfaces with TCP BTL.
+- Numerous UCX bug fixes.
+
+3.1.1 -- June, 2018
+-------------------
+
+- Fix potential hang in UCX PML during MPI_FINALIZE
+- Update internal PMIx to v2.1.2rc2 to fix forward version compatibility.
+- Add new MCA parameter osc_sm_backing_store to allow users to specify
+  where in the filesystem the backing file for the shared memory
+  one-sided component should live.  Defaults to /dev/shm on Linux.
+- Fix potential hang on non-x86 platforms when using builds with
+  optimization flags turned off.
+- Disable osc/pt2pt when using MPI_THREAD_MULTIPLE due to numerous
+  race conditions in the component.
+- Fix dummy variable names for the mpi and mpi_f08 Fortran bindings to
+  match the MPI standard.  This may break applications which use
+  name-based parameters in Fortran which used our internal names
+  rather than those documented in the MPI standard.
+- Revamp Java detection to properly handle new Java versions which do
+  not provide a javah wrapper.
+- Fix RMA function signatures for use-mpi-f08 bindings to have the
+  asynchonous property on all buffers.
+- Improved configure logic for finding the UCX library.
+
+3.1.0 -- May, 2018
+------------------
+
+- Various OpenSHMEM bug fixes.
+- Properly handle array_of_commands argument to Fortran version of
+  MPI_COMM_SPAWN_MULTIPLE.
+- Fix bug with MODE_SEQUENTIAL and the sharedfp MPI-IO component.
+- Use "javac -h" instead of "javah" when building the Java bindings
+  with a recent version of Java.
+- Fix mis-handling of jostepid under SLURM that could cause problems
+  with PathScale/OmniPath NICs.
+- Disable the POWER 7/BE block in configure.  Note that POWER 7/BE is
+  still not a supported platform, but it is no longer automatically
+  disabled.  See
+  https://github.com/open-mpi/ompi/issues/4349#issuecomment-374970982
+  for more information.
+- The output-filename option for mpirun is now converted to an
+  absolute path before being passed to other nodes.
+- Add monitoring component for PML, OSC, and COLL to track data
+  movement of MPI applications.  See
+  ompi/mca/commmon/monitoring/HowTo_pml_monitoring.tex for more
+  information about the monitoring framework.
+- Add support for communicator assertions: mpi_assert_no_any_tag,
+  mpi_assert_no_any_source, mpi_assert_exact_length, and
+  mpi_assert_allow_overtaking.
+- Update PMIx to version 2.1.1.
+- Update hwloc to 1.11.7.
+- Many one-sided behavior fixes.
+- Improved performance for Reduce and Allreduce using Rabenseifner's algorithm.
+- Revamped mpirun --help output to make it a bit more manageable.
+- Portals4 MTL improvements: Fix race condition in rendezvous protocol and
+  retry logic.
+- UCX OSC: initial implementation.
+- UCX PML improvements: add multi-threading support.
+- Yalla PML improvements: Fix error with irregular contiguous datatypes.
+- Openib BTL: disable XRC support by default.
+- TCP BTL: Add check to detect and ignore connections from processes
+  that aren't MPI (such as IDS probes) and verify that source and
+  destination are using the same version of Open MPI, fix issue with very
+  large message transfer.
 - ompi_info parsable output now escapes double quotes in values, and
   also quotes values can contains colons.  Thanks to Lev Givon for the
   suggestion.
@@ -68,8 +177,33 @@ Master (not on release branches yet)
   orte daemon, rather than the mpirun process.   This may be useful to set to
   true when using SLURM, as it improves interoperability with SLURM's signal
   propagation tools.  By default it is set to false, except for Cray XC systems.
+- Remove LoadLeveler RAS support.
 - Remove IB XRC support from the OpenIB BTL due to lack of support.
-- Fix rank-by algorithms to properly rank by object and span
+- Add functionality for IBM s390 platforms.  Note that regular
+  regression testing does not occur on the s390 and it is not
+  considered a supported platform.
+- Remove support for big endian PowerPC.
+- Remove support for XL compilers older than v13.1.
+- Remove support for atomic operations using MacOS atomics library.
+
+3.0.2 -- June, 2018
+-------------------
+
+- Disable osc/pt2pt when using MPI_THREAD_MULTIPLE due to numerous
+  race conditions in the component.
+- Fix dummy variable names for the mpi and mpi_f08 Fortran bindings to
+  match the MPI standard.  This may break applications which use
+  name-based parameters in Fortran which used our internal names
+  rather than those documented in the MPI standard.
+- Fixed MPI_SIZEOF in the "mpi" Fortran module for the NAG compiler.
+- Fix RMA function signatures for use-mpi-f08 bindings to have the
+  asynchonous property on all buffers.
+- Fix Fortran MPI_COMM_SPAWN_MULTIPLE to properly follow the count
+  length argument when parsing the array_of_commands variable.
+- Revamp Java detection to properly handle new Java versions which do
+  not provide a javah wrapper.
+- Improved configure logic for finding the UCX library.
+- Add support for HDR InfiniBand link speeds.
 - Disable the POWER 7/BE block in configure.  Note that POWER 7/BE is
   still not a supported platform, but it is no longer automatically
   disabled.  See
@@ -158,6 +292,68 @@ Known issues:
 
 - MPI_Connect/accept between applications started by different mpirun
   commands will fail, even if ompi-server is running.
+
+2.1.5 -- August 2018
+--------------------
+
+- A subtle race condition bug was discovered in the "vader" BTL
+  (shared memory communications) that, in rare instances, can cause
+  MPI processes to crash or incorrectly classify (or effectively drop)
+  an MPI message sent via shared memory.  If you are using the "ob1"
+  PML with "vader" for shared memory communication (note that vader is
+  the default for shared memory communication with ob1), you need to
+  upgrade to v2.1.5 to fix this issue.  You may also upgrade to the
+  following versions to fix this issue:
+  - Open MPI v3.0.1 (released March, 2018) or later in the v3.0.x
+    series
+  - Open MPI v3.1.2 (expected end of August, 2018) or later
+- A link issue was fixed when the UCX library was not located in the
+  linker-default search paths.
+
+2.1.4 -- August, 2018
+---------------------
+
+Bug fixes/minor improvements:
+- Disable the POWER 7/BE block in configure.  Note that POWER 7/BE is
+  still not a supported platform, but it is no longer automatically
+  disabled.  See
+  https://github.com/open-mpi/ompi/issues/4349#issuecomment-374970982
+  for more information.
+- Fix bug with request-based one-sided MPI operations when using the
+  "rdma" component.
+- Fix issue with large data structure in the TCP BTL causing problems
+  in some environments.  Thanks to @lgarithm for reporting the issue.
+- Minor Cygwin build fixes.
+- Minor fixes for the openib BTL:
+  - Support for the QLogic RoCE HCA
+  - Support for the Boradcom Cumulus RoCE HCA
+  - Enable support for HDR link speeds
+- Fix MPI_FINALIZED hang if invoked from an attribute destructor
+  during the MPI_COMM_SELF destruction in MPI_FINALIZE.  Thanks to
+  @AndrewGaspar for reporting the issue.
+- Java fixes:
+  - Modernize Java framework detection, especially on OS X/MacOS.
+    Thanks to Bryce Glover for reporting and submitting the fixes.
+  - Prefer "javac -h" to "javah" to support newer Java frameworks.
+- Fortran fixes:
+  - Use conformant dummy parameter names for Fortran bindings.  Thanks
+    to Themos Tsikas for reporting and submitting the fixes.
+  - Build the MPI_SIZEOF() interfaces in the "TKR"-style "mpi" module
+    whenever possible.  Thanks to Themos Tsikas for reporting the
+    issue.
+  - Fix array of argv handling for the Fortran bindings of
+    MPI_COMM_SPAWN_MULTIPLE (and its associated man page).
+  - Make NAG Fortran compiler support more robust in configure.
+- Disable the "pt2pt" one-sided MPI component when MPI_THREAD_MULTIPLE
+  is used.  This component is simply not safe in MPI_THREAD_MULTIPLE
+  scenarios, and will not be fixed in the v2.1.x series.
+- Make the "external" hwloc component fail gracefully if it is tries
+  to use an hwloc v2.x.y installation.  hwloc v2.x.y will not be
+  supported in the Open MPI v2.1.x series.
+- Fix "vader" shared memory support for messages larger than 2GB.
+  Thanks to Heiko Bauke for the bug report.
+- Configure fixes for external PMI directory detection.  Thanks to
+  Davide Vanzo for the report.
 
 2.1.3 -- March, 2018
 --------------------

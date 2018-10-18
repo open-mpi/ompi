@@ -9,10 +9,10 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2016 University of Houston. All rights reserved.
- * Copyright (c) 2015-2017 Research Organization for Information Science
+ * Copyright (c) 2008-2018 University of Houston. All rights reserved.
+ * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- *  Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
+ * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
  *  $COPYRIGHT$
  *
  *  Additional copyrights may follow
@@ -63,25 +63,22 @@ int mca_io_ompio_file_set_view (ompi_file_t *fp,
                                 opal_info_t *info)
 {
     int ret=OMPI_SUCCESS;
-    mca_io_ompio_data_t *data;
-    mca_io_ompio_file_t *fh;
-    mca_io_ompio_file_t *sh;
+    mca_common_ompio_data_t *data;
+    ompio_file_t *fh;
 
-    data = (mca_io_ompio_data_t *) fp->f_io_selected_data;
+    if ( (strcmp(datarep, "native") && strcmp(datarep, "NATIVE"))) {
+        return MPI_ERR_UNSUPPORTED_DATAREP;
+    }
+
+    data = (mca_common_ompio_data_t *) fp->f_io_selected_data;
 
     /* we need to call the internal file set view twice: once for the individual
        file pointer, once for the shared file pointer (if it is existent)
     */
     fh = &data->ompio_fh;
-
+  
     OPAL_THREAD_LOCK(&fp->f_lock);
     ret = mca_common_ompio_set_view(fh, disp, etype, filetype, datarep, info);
-
-    if ( NULL != fh->f_sharedfp_data) {
-        sh = ((struct mca_sharedfp_base_data_t *)fh->f_sharedfp_data)->sharedfh;
-        ret = mca_common_ompio_set_view(sh, disp, etype, filetype, datarep, info);
-    }
-
     OPAL_THREAD_UNLOCK(&fp->f_lock);
     return ret;
 }
@@ -92,10 +89,10 @@ int mca_io_ompio_file_get_view (struct ompi_file_t *fp,
                                 struct ompi_datatype_t **filetype,
                                 char *datarep)
 {
-    mca_io_ompio_data_t *data;
-    mca_io_ompio_file_t *fh;
+    mca_common_ompio_data_t *data;
+    ompio_file_t *fh;
 
-    data = (mca_io_ompio_data_t *) fp->f_io_selected_data;
+    data = (mca_common_ompio_data_t *) fp->f_io_selected_data;
     fh = &data->ompio_fh;
 
     OPAL_THREAD_LOCK(&fp->f_lock);

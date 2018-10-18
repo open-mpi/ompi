@@ -28,6 +28,7 @@
 #include "opal/util/show_help.h"
 #include "opal/constants.h"
 #include "opal/util/bipartite_graph.h"
+#include "opal/util/string_copy.h"
 
 #include "btl_usnic_compat.h"
 #include "btl_usnic.h"
@@ -239,8 +240,8 @@ static int create_proc(opal_proc_t *opal_proc,
         char protostr[32];
         proto = mca_btl_usnic_component.transport_protocol;
         memset(protostr, 0, sizeof(protostr));
-        strncpy(protostr, fi_tostr(&proto, FI_TYPE_PROTOCOL),
-                sizeof(protostr) - 1);
+        opal_string_copy(protostr, fi_tostr(&proto, FI_TYPE_PROTOCOL),
+                sizeof(protostr));
         proto = proc->proc_modex->protocol;
         opal_show_help("help-mpi-btl-usnic.txt",
                        "transport mismatch",

@@ -36,7 +36,7 @@ struct mca_coll_monitoring_module_t {
     mca_coll_base_module_t super;
     mca_coll_base_comm_coll_t real;
     mca_monitoring_coll_data_t*data;
-    int32_t is_initialized;
+    opal_atomic_int32_t is_initialized;
 };
 typedef struct mca_coll_monitoring_module_t mca_coll_monitoring_module_t;
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_coll_monitoring_module_t);

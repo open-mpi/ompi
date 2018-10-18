@@ -36,12 +36,12 @@ SHMEM_GENERATE_FORTRAN_BINDINGS_FUNCTION (ompi_fortran_integer4_t,
 
 ompi_fortran_integer4_t shmem_int4_cswap_f(FORTRAN_POINTER_T target, MPI_Fint *cond, FORTRAN_POINTER_T value, MPI_Fint *pe)
 {
-    ompi_fortran_integer4_t out_value = 0;
+    ompi_fortran_integer8_t out_value = 0;
 
-    MCA_ATOMIC_CALL(cswap(FPTR_2_VOID_PTR(target),
+    MCA_ATOMIC_CALL(cswap(oshmem_ctx_default, FPTR_2_VOID_PTR(target),
         (void *)&out_value,
-        (const void*)(OMPI_PFINT_2_PINT(cond)),
-        FPTR_2_VOID_PTR(value),
+        FPTR_2_INT(cond, sizeof(ompi_fortran_integer4_t)),
+        FPTR_2_INT(value, sizeof(ompi_fortran_integer4_t)),
         sizeof(out_value),
         OMPI_FINT_2_INT(*pe)));
 

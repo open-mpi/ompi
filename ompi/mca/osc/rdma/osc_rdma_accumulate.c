@@ -575,8 +575,7 @@ static int ompi_osc_rdma_fetch_and_op_cas (ompi_osc_rdma_sync_t *sync, const voi
     address = target_address & ~7;
     offset = target_address & ~address;
 
-    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "initiating fetch-and-op using compare-and-swap. origin: 0x%" PRIx64,
-                     *((int64_t *) origin_addr));
+    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "initiating fetch-and-op using compare-and-swap");
 
     ret = ompi_osc_get_data_blocking (module, peer->data_endpoint, address, target_handle, &old_value, 8);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
@@ -893,7 +892,7 @@ int ompi_osc_rdma_rget_accumulate_internal (ompi_osc_rdma_sync_t *sync, const vo
     /* if the datatype is small enough (and the count is 1) then try to directly use the hardware to execute
      * the atomic operation. this should be safe in all cases as either 1) the user has assured us they will
      * never use atomics with count > 1, 2) we have the accumulate lock, or 3) we have an exclusive lock */
-    if (origin_extent <= 8 && 1 == origin_count) {
+    if (origin_extent <= 8 && 1 == origin_count && !ompi_osc_rdma_peer_local_base (peer)) {
         if (module->acc_use_amo && ompi_datatype_is_predefined (origin_datatype)) {
             if (NULL == result_addr) {
                 ret = ompi_osc_rdma_acc_single_atomic (sync, origin_addr, origin_datatype, origin_extent, peer, target_address,

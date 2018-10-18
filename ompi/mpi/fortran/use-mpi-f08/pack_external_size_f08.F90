@@ -3,11 +3,13 @@
 ! Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
 ! Copyright (c) 2009-2012 Los Alamos National Security, LLC.
 !                         All rights reserved.
+! Copyright (c) 2018      Research Organization for Information Science
+!                         and Technology (RIST).  All rights reserved.
 ! $COPYRIGHT$
 
 subroutine MPI_Pack_external_size_f08(datarep,incount,datatype,size,ierror)
    use :: mpi_f08_types, only : MPI_Datatype, MPI_ADDRESS_KIND
-   use :: mpi_f08, only : ompi_pack_external_size_f
+   use :: ompi_mpifh_bindings, only : ompi_pack_external_size_f
    implicit none
    CHARACTER(LEN=*), INTENT(IN) :: datarep
    INTEGER, INTENT(IN) :: incount

@@ -19,32 +19,29 @@
 
 BEGIN_C_DECLS
 
+#define MCA_BASIC_OP(size, op4, op8) ((size == sizeof(uint64_t)) ? (op8) : (op4))
+
 /* Globally exported variables */
 
 OSHMEM_MODULE_DECLSPEC extern mca_atomic_base_component_1_0_0_t
 mca_atomic_basic_component;
 
-OSHMEM_DECLSPEC void atomic_basic_lock(int pe);
-OSHMEM_DECLSPEC void atomic_basic_unlock(int pe);
+OSHMEM_DECLSPEC void atomic_basic_lock(shmem_ctx_t ctx, int pe);
+OSHMEM_DECLSPEC void atomic_basic_unlock(shmem_ctx_t ctx, int pe);
 
 /* API functions */
 
-int mca_atomic_basic_init(bool enable_progress_threads, bool enable_threads);
+int mca_atomic_basic_startup(bool enable_progress_threads, bool enable_threads);
 int mca_atomic_basic_finalize(void);
 mca_atomic_base_module_t*
 mca_atomic_basic_query(int *priority);
 
-int mca_atomic_basic_fadd(void *target,
-                          void *prev,
-                          const void *value,
-                          size_t nlong,
-                          int pe,
-                          struct oshmem_op_t *op);
-int mca_atomic_basic_cswap(void *target,
-                           void *prev,
-                           const void *cond,
-                           const void *value,
-                           size_t nlong,
+int mca_atomic_basic_cswap(shmem_ctx_t ctx,
+                           void *target,
+                           uint64_t *prev,
+                           uint64_t cond,
+                           uint64_t value,
+                           size_t size,
                            int pe);
 
 struct mca_atomic_basic_module_t {

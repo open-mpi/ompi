@@ -53,12 +53,13 @@ foreach $id (sort {$a <=> $b} keys %phaseid) {
 
 sub aggregate{
   $phase = $_[0];
-
+ #Aggregating all files of given phase in files array.This should be done
+ # before creating $phase.prof to avoid adding $phase.prof to files array
+  @files = glob ($phase."*");
   print "Building $phase.prof\n";
 
   open OUT,">$phase.prof";
 
-  @files = glob ($phase."*");
 
   foreach $file ( @files) {
     open IN,$file;

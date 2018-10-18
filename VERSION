@@ -16,7 +16,7 @@
 # <major>.<minor>.<release>.
 
 major=4
-minor=0
+minor=1
 release=0
 
 # greek is generally used for alpha or beta release tags.  If it is
@@ -112,5 +112,6 @@ libmca_orte_common_alps_so_version=0:0:0
 libmca_opal_common_cuda_so_version=0:0:0
 libmca_opal_common_ofi_so_version=0:0:0
 libmca_opal_common_sm_so_version=0:0:0
+libmca_opal_common_ucx_so_version=0:0:0
 libmca_opal_common_ugni_so_version=0:0:0
 libmca_opal_common_verbs_so_version=0:0:0

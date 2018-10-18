@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009-2018 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2011-2015 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2011-2014 NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
@@ -23,31 +23,24 @@
 
 #include "opal_config.h"
 #include <string.h>
-#include "opal/mca/mpool/memkind/mpool_memkind.h"
+#include "mpool_memkind.h"
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
 #include "opal/mca/mpool/base/base.h"
 
-size_t partition_page_sizes[MEMKIND_NUM_BASE_KIND] = {
-    4096, 4096, 2097152, 4096, 2097152, 2097152,
-    1073741824, 1073741824, 1073741824, 4096, 4096,
-};
-
 /*
  *  Initializes the mpool module.
  */
-void mca_mpool_memkind_module_init(mca_mpool_memkind_module_t *mpool, int partition)
+
+void mca_mpool_memkind_module_init(mca_mpool_memkind_module_t *mpool)
 {
     mpool->super.mpool_component = &mca_mpool_memkind_component.super;
     mpool->super.mpool_alloc = mca_mpool_memkind_alloc;
     mpool->super.mpool_realloc = mca_mpool_memkind_realloc;
     mpool->super.mpool_free = mca_mpool_memkind_free;
     mpool->super.flags = MCA_MPOOL_FLAGS_MPI_ALLOC_MEM;
-    memkind_get_kind_by_partition (partition, &mpool->kind);
-    mpool->page_size = partition_page_sizes[partition];
 }
-
 
 void* mca_mpool_memkind_alloc(
     mca_mpool_base_module_t* mpool,

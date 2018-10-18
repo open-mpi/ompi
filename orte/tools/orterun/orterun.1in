@@ -341,7 +341,10 @@ MPI_COMM_WORLD ranks in a round-robin, "by node" manner.
 .
 .TP
 .B -cpu-list\fR,\fP --cpu-list \fR<cpus>\fP
-List of processor IDs to bind processes to [default=NULL].
+Comma-delimited list of processor IDs to which to bind processes
+[default=NULL].  Processor IDs are interpreted as hwloc logical core
+IDs.  Run the hwloc \fIlstopo(1)\fR command to see a list of available
+cores and their logical IDs.
 .
 .
 .
@@ -366,7 +369,7 @@ For process binding:
 .TP
 .B --bind-to \fR<foo>\fP
 Bind processes to the specified object, defaults to \fIcore\fP. Supported options
-include slot, hwthread, core, l1cache, l2cache, l3cache, socket, numa, board, and none.
+include slot, hwthread, core, l1cache, l2cache, l3cache, socket, numa, board, cpu-list, and none.
 .
 .TP
 .B -cpus-per-proc\fR,\fP --cpus-per-proc \fR<#perproc>\fP
@@ -642,7 +645,10 @@ Allow
 .I mpirun
 to run when executed by the root user
 .RI ( mpirun
-defaults to aborting when launched as the root user).
+defaults to aborting when launched as the root user).  Be sure to see
+the
+.I Running as root
+section, below, for more detail.
 .
 .
 .TP
@@ -1149,6 +1155,17 @@ cause the process to be bound to the processors that share a single L3
 cache within that socket.
 .
 .PP
+Alternatively, processes can be assigned to processors based on their
+local rank on a node using the \fI--bind-to cpu-list:ordered\fP option
+with an associated \fI--cpu-list "0,2,5"\fP. In this example, the
+first process on a node will be bound to cpu 0, the second process on
+the node will be bound to cpu 2, and the third process on the node
+will be bound to cpu 5. \fI--bind-to\fP will also accept
+\fIcpulist:ortered\fP as a synonym to \fIcpu-list:ordered\fP.  Note
+that an error will result if more processes are assigned to a node
+than cpus are provided.
+.
+.PP
 To help balance loads, the binding directive uses a round-robin method when binding to
 levels lower than used in the mapper. For example, consider the case where a job is
 mapped to the socket level, and then bound to core. Each socket will have multiple cores,
@@ -1614,7 +1631,26 @@ To override this default, you can add the
 .I --allow-run-as-root
 option to the
 .I mpirun
-command line.
+command line, or you can set the environmental parameters
+.I OMPI_ALLOW_RUN_AS_ROOT=1
+and
+.IR OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1 .
+Note that it takes setting
+.I two
+environment variables to effect the same behavior as
+.I --allow-run-as-root
+in order to stress the Open MPI team's strong advice against running
+as the root user.  After extended discussions with communities who use
+containers (where running as the root user is the default), there was
+a persistent desire to be able to enable root execution of
+.I mpirun
+via an environmental control (vs. the existing
+.I --allow-run-as-root
+command line parameter).  The compromise of using
+.I two
+environment variables was reached: it allows root execution via an
+environmental control, but it conveys the Open MPI team's strong
+recomendation against this behavior.
 .
 .SS Exit status
 .

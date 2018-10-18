@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2016 The University of Tennessee and The University
+ * Copyright (c) 2004-2017 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -214,13 +214,29 @@ ompi_coll_base_bcast_intra_generic( void* buffer,
     return (MPI_SUCCESS);
 
  error_hndl:
+    if (MPI_ERR_IN_STATUS == err) {
+        for( req_index = 0; req_index < 2; req_index++ ) {
+            if (MPI_REQUEST_NULL == recv_reqs[req_index]) continue;
+            if (MPI_ERR_PENDING == recv_reqs[req_index]->req_status.MPI_ERROR) continue;
+            err = recv_reqs[req_index]->req_status.MPI_ERROR;
+            break;
+        }
+    }
+    ompi_coll_base_free_reqs( recv_reqs, 2);
+    if( NULL != send_reqs ) {
+        if (MPI_ERR_IN_STATUS == err) {
+            for( req_index = 0; req_index < tree->tree_nextsize; req_index++ ) {
+                if (MPI_REQUEST_NULL == send_reqs[req_index]) continue;
+                if (MPI_ERR_PENDING == send_reqs[req_index]->req_status.MPI_ERROR) continue;
+                err = send_reqs[req_index]->req_status.MPI_ERROR;
+                break;
+            }
+        }
+        ompi_coll_base_free_reqs(send_reqs, tree->tree_nextsize);
+    }
     OPAL_OUTPUT( (ompi_coll_base_framework.framework_output,"%s:%4d\tError occurred %d, rank %2d",
                   __FILE__, line, err, rank) );
     (void)line;  // silence compiler warnings
-    ompi_coll_base_free_reqs( recv_reqs, 2);
-    if( NULL != send_reqs ) {
-        ompi_coll_base_free_reqs(send_reqs, tree->tree_nextsize);
-    }
 
     return err;
 }
@@ -649,12 +665,21 @@ ompi_coll_base_bcast_intra_basic_linear(void *buff, int count,
      * care what the error was -- just that there *was* an error.  The
      * PML will finish all requests, even if one or more of them fail.
      * i.e., by the end of this call, all the requests are free-able.
-     * So free them anyway -- even if there was an error, and return
-     * the error after we free everything. */
+     * So free them anyway -- even if there was an error. 
+     * Note we still need to get the actual error, as collective 
+     * operations cannot return MPI_ERR_IN_STATUS.
+     */
 
     err = ompi_request_wait_all(i, reqs, MPI_STATUSES_IGNORE);
  err_hndl:
     if( MPI_SUCCESS != err ) {  /* Free the reqs */
+        /* first find the real error code */
+        for( preq = reqs; preq < reqs+i; preq++ ) {
+            if (MPI_REQUEST_NULL == *preq) continue;
+            if (MPI_ERR_PENDING == (*preq)->req_status.MPI_ERROR) continue;
+            err = (*preq)->req_status.MPI_ERROR;
+            break;
+        }
         ompi_coll_base_free_reqs(reqs, i);
     }
 
@@ -662,5 +687,363 @@ ompi_coll_base_bcast_intra_basic_linear(void *buff, int count,
     return err;
 }
 
-
 /* copied function (with appropriate renaming) ends here */
+
+/*
+ * ompi_coll_base_bcast_intra_knomial
+ *
+ * Function:  Bcast using k-nomial tree algorithm
+ * Accepts:   Same arguments as MPI_Bcast
+ * Returns:   MPI_SUCCESS or error code
+ * Parameters: radix -- k-nomial tree radix (>= 2)
+ *
+ * Time complexity: (radix - 1)O(\log_{radix}(comm_size))
+ *
+ * Example, comm_size=10
+ *    radix=2         radix=3             radix=4
+ *       0               0                   0
+ *    / / \ \       / /  |  \ \         /   / \ \ \
+ *   8 4   2 1     9 3   6   1 2       4   8  1 2 3
+ *   | |\  |         |\  |\           /|\  |
+ *   9 6 5 3         4 5 7 8         5 6 7 9
+ *     |
+ *     7
+ */
+int ompi_coll_base_bcast_intra_knomial(
+    void *buf, int count, struct ompi_datatype_t *datatype, int root,
+    struct ompi_communicator_t *comm, mca_coll_base_module_t *module,
+    uint32_t segsize, int radix)
+{
+    int segcount = count;
+    size_t typesize;
+    mca_coll_base_comm_t *data = module->base_data;
+
+    COLL_BASE_UPDATE_KMTREE(comm, module, root, radix);
+    if (NULL == data->cached_kmtree) {
+        /* Failed to build k-nomial tree for given radix */
+        return ompi_coll_base_bcast_intra_binomial(buf, count, datatype, root, comm, module,
+                                                   segcount);
+    }
+
+    /**
+     * Determine number of elements sent per operation.
+     */
+    ompi_datatype_type_size(datatype, &typesize);
+    COLL_BASE_COMPUTED_SEGCOUNT(segsize, typesize, segcount);
+
+    OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+                 "coll:base:bcast_intra_knomial rank %d segsize %5d typesize %lu segcount %d",
+                 ompi_comm_rank(comm), segsize, (unsigned long)typesize, segcount));
+
+    return ompi_coll_base_bcast_intra_generic(buf, count, datatype, root, comm, module,
+                                              segcount, data->cached_kmtree);
+}
+
+/*
+ * ompi_coll_base_bcast_intra_scatter_allgather
+ *
+ * Function:  Bcast using a binomial tree scatter followed by a recursive
+ *            doubling allgather.
+ * Accepts:   Same arguments as MPI_Bcast
+ * Returns:   MPI_SUCCESS or error code
+ *
+ * Limitations: count >= comm_size
+ * Time complexity: O(\alpha\log(p) + \beta*m((p-1)/p))
+ *   Binomial tree scatter: \alpha\log(p) + \beta*m((p-1)/p)
+ *   Recursive doubling allgather: \alpha\log(p) + \beta*m((p-1)/p)
+ *
+ * Example, p=8, count=8, root=0
+ *    Binomial tree scatter      Recursive doubling allgather
+ * 0: --+  --+  --+  [0*******]  <-+ [01******]  <--+   [0123****] <--+
+ * 1:   |   2|  <-+  [*1******]  <-+ [01******]  <--|-+ [0123****] <--+-+
+ * 2:  4|  <-+  --+  [**2*****]  <-+ [**23****]  <--+ | [0123****] <--+-+-+
+ * 3:   |       <-+  [***3****]  <-+ [**23****]  <----+ [0123****] <--+-+-+-+
+ * 4: <-+  --+  --+  [****4***]  <-+ [****45**]  <--+   [****4567] <--+ | | |
+ * 5:       2|  <-+  [*****5**]  <-+ [****45**]  <--|-+ [****4567] <----+ | |
+ * 6:      <-+  --+  [******6*]  <-+ [******67]  <--+ | [****4567] <------+ |
+ * 7:           <-+  [*******7]  <-+ [******67]  <--|-+ [****4567] <--------+
+ */
+int ompi_coll_base_bcast_intra_scatter_allgather(
+    void *buf, int count, struct ompi_datatype_t *datatype, int root,
+    struct ompi_communicator_t *comm, mca_coll_base_module_t *module,
+    uint32_t segsize)
+{
+    int err = MPI_SUCCESS;
+    ptrdiff_t lb, extent;
+    size_t datatype_size;
+    MPI_Status status;
+    ompi_datatype_get_extent(datatype, &lb, &extent);
+    ompi_datatype_type_size(datatype, &datatype_size);
+    int comm_size = ompi_comm_size(comm);
+    int rank = ompi_comm_rank(comm);
+
+    OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+                 "coll:base:bcast_intra_scatter_allgather: rank %d/%d",
+                 rank, comm_size));
+    if (comm_size < 2 || datatype_size == 0)
+        return MPI_SUCCESS;
+
+    if (count < comm_size) {
+        OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+                     "coll:base:bcast_intra_scatter_allgather: rank %d/%d "
+                     "count %d switching to basic linear bcast",
+                     rank, comm_size, count));
+        return ompi_coll_base_bcast_intra_basic_linear(buf, count, datatype,
+                                                       root, comm, module);
+    }
+
+    int vrank = (rank - root + comm_size) % comm_size;
+    int recv_count = 0, send_count = 0;
+    int scatter_count = (count + comm_size - 1) / comm_size; /* ceil(count / comm_size) */
+    int curr_count = (rank == root) ? count : 0;
+
+    /* Scatter by binomial tree: receive data from parent */
+    int mask = 0x1;
+    while (mask < comm_size) {
+        if (vrank & mask) {
+            int parent = (rank - mask + comm_size) % comm_size;
+            /* Compute an upper bound on recv block size */
+            recv_count = count - vrank * scatter_count;
+            if (recv_count <= 0) {
+                curr_count = 0;
+            } else {
+                /* Recv data from parent */
+                err = MCA_PML_CALL(recv((char *)buf + (ptrdiff_t)vrank * scatter_count * extent,
+                                        recv_count, datatype, parent,
+                                        MCA_COLL_BASE_TAG_BCAST, comm, &status));
+                if (MPI_SUCCESS != err) { goto cleanup_and_return; }
+                /* Get received count */
+                curr_count = (int)(status._ucount / datatype_size);
+            }
+            break;
+        }
+        mask <<= 1;
+    }
+
+    /* Scatter by binomial tree: send data to child processes */
+    mask >>= 1;
+    while (mask > 0) {
+        if (vrank + mask < comm_size) {
+            send_count = curr_count - scatter_count * mask;
+            if (send_count > 0) {
+                int child = (rank + mask) % comm_size;
+                err = MCA_PML_CALL(send((char *)buf + (ptrdiff_t)scatter_count * (vrank + mask) * extent,
+                                        send_count, datatype, child,
+                                        MCA_COLL_BASE_TAG_BCAST,
+                                        MCA_PML_BASE_SEND_STANDARD, comm));
+                if (MPI_SUCCESS != err) { goto cleanup_and_return; }
+                curr_count -= send_count;
+            }
+        }
+        mask >>= 1;
+    }
+
+    /*
+     * Allgather by recursive doubling
+     * Each process has the curr_count elems in the buf[vrank * scatter_count, ...]
+     */
+    int rem_count = count - vrank * scatter_count;
+    curr_count = (scatter_count < rem_count) ? scatter_count : rem_count;
+    if (curr_count < 0)
+        curr_count = 0;
+
+    mask = 0x1;
+    while (mask < comm_size) {
+        int vremote = vrank ^ mask;
+        int remote = (vremote + root) % comm_size;
+
+        int vrank_tree_root = ompi_rounddown(vrank, mask);
+        int vremote_tree_root = ompi_rounddown(vremote, mask);
+
+        if (vremote < comm_size) {
+            ptrdiff_t send_offset = vrank_tree_root * scatter_count * extent;
+            ptrdiff_t recv_offset = vremote_tree_root * scatter_count * extent;
+            recv_count = count - vremote_tree_root * scatter_count;
+            if (recv_count < 0)
+                recv_count = 0;
+            err = ompi_coll_base_sendrecv((char *)buf + send_offset,
+                                          curr_count, datatype, remote,
+                                          MCA_COLL_BASE_TAG_BCAST,
+                                          (char *)buf + recv_offset,
+                                          recv_count, datatype, remote,
+                                          MCA_COLL_BASE_TAG_BCAST,
+                                          comm, &status, rank);
+            if (MPI_SUCCESS != err) { goto cleanup_and_return; }
+            recv_count = (int)(status._ucount / datatype_size);
+            curr_count += recv_count;
+        }
+
+        /*
+         * Non-power-of-two case: if process did not have destination process
+         * to communicate with, we need to send him the current result.
+         * Recursive halving algorithm is used for search of process.
+         */
+        if (vremote_tree_root + mask > comm_size) {
+            int nprocs_alldata = comm_size - vrank_tree_root - mask;
+            int offset = scatter_count * (vrank_tree_root + mask);
+            for (int rhalving_mask = mask >> 1; rhalving_mask > 0; rhalving_mask >>= 1) {
+                vremote = vrank ^ rhalving_mask;
+                remote = (vremote + root) % comm_size;
+                int tree_root = ompi_rounddown(vrank, rhalving_mask << 1);
+                /*
+                 * Send only if:
+                 * 1) current process has data: (vremote > vrank) && (vrank < tree_root + nprocs_alldata)
+                 * 2) remote process does not have data at any step: vremote >= tree_root + nprocs_alldata
+                 */
+                if ((vremote > vrank) && (vrank < tree_root + nprocs_alldata)
+                    && (vremote >= tree_root + nprocs_alldata)) {
+                    err = MCA_PML_CALL(send((char *)buf + (ptrdiff_t)offset * extent,
+                                            recv_count, datatype, remote,
+                                            MCA_COLL_BASE_TAG_BCAST,
+                                            MCA_PML_BASE_SEND_STANDARD, comm));
+                    if (MPI_SUCCESS != err) { goto cleanup_and_return; }
+
+                } else if ((vremote < vrank) && (vremote < tree_root + nprocs_alldata)
+                           && (vrank >= tree_root + nprocs_alldata)) {
+                    err = MCA_PML_CALL(recv((char *)buf + (ptrdiff_t)offset * extent,
+                                            count - offset, datatype, remote,
+                                            MCA_COLL_BASE_TAG_BCAST,
+                                            comm, &status));
+                    if (MPI_SUCCESS != err) { goto cleanup_and_return; }
+                    recv_count = (int)(status._ucount / datatype_size);
+                    curr_count += recv_count;
+                }
+            }
+        }
+        mask <<= 1;
+    }
+
+cleanup_and_return:
+    return err;
+}
+
+/*
+ * ompi_coll_base_bcast_intra_scatter_allgather_ring
+ *
+ * Function:  Bcast using a binomial tree scatter followed by a ring allgather.
+ * Accepts:   Same arguments as MPI_Bcast
+ * Returns:   MPI_SUCCESS or error code
+ *
+ * Limitations: count >= comm_size
+ * Time complexity: O(\alpha(\log(p) + p) + \beta*m((p-1)/p))
+ *   Binomial tree scatter: \alpha\log(p) + \beta*m((p-1)/p)
+ *   Ring allgather: 2(p-1)(\alpha + m/p\beta)
+ *
+ * Example, p=8, count=8, root=0
+ *    Binomial tree scatter      Ring allgather: p - 1 steps
+ * 0: --+  --+  --+  [0*******]  [0******7] [0*****67] [0****567] ... [01234567]
+ * 1:   |   2|  <-+  [*1******]  [01******] [01*****7] [01****67] ... [01234567]
+ * 2:  4|  <-+  --+  [**2*****]  [*12*****] [012*****] [012****7] ... [01234567]
+ * 3:   |       <-+  [***3****]  [**23****] [*123****] [0123****] ... [01234567]
+ * 4: <-+  --+  --+  [****4***]  [***34***] [**234***] [*1234***] ... [01234567]
+ * 5:       2|  <-+  [*****5**]  [****45**] [***345**] [**2345**] ... [01234567]
+ * 6:      <-+  --+  [******6*]  [*****56*] [****456*] [***3456*] ... [01234567]
+ * 7:           <-+  [*******7]  [******67] [*****567] [****4567] ... [01234567]
+ */
+int ompi_coll_base_bcast_intra_scatter_allgather_ring(
+    void *buf, int count, struct ompi_datatype_t *datatype, int root,
+    struct ompi_communicator_t *comm, mca_coll_base_module_t *module,
+    uint32_t segsize)
+{
+    int err = MPI_SUCCESS;
+    ptrdiff_t lb, extent;
+    size_t datatype_size;
+    MPI_Status status;
+    ompi_datatype_get_extent(datatype, &lb, &extent);
+    ompi_datatype_type_size(datatype, &datatype_size);
+    int comm_size = ompi_comm_size(comm);
+    int rank = ompi_comm_rank(comm);
+
+    OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+                 "coll:base:bcast_intra_scatter_allgather_ring: rank %d/%d",
+                 rank, comm_size));
+    if (comm_size < 2 || datatype_size == 0)
+        return MPI_SUCCESS;
+
+    if (count < comm_size) {
+        OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+                     "coll:base:bcast_intra_scatter_allgather_ring: rank %d/%d "
+                     "count %d switching to basic linear bcast",
+                     rank, comm_size, count));
+        return ompi_coll_base_bcast_intra_basic_linear(buf, count, datatype,
+                                                       root, comm, module);
+    }
+
+    int vrank = (rank - root + comm_size) % comm_size;
+    int recv_count = 0, send_count = 0;
+    int scatter_count = (count + comm_size - 1) / comm_size; /* ceil(count / comm_size) */
+    int curr_count = (rank == root) ? count : 0;
+
+    /* Scatter by binomial tree: receive data from parent */
+    int mask = 1;
+    while (mask < comm_size) {
+        if (vrank & mask) {
+            int parent = (rank - mask + comm_size) % comm_size;
+            /* Compute an upper bound on recv block size */
+            recv_count = count - vrank * scatter_count;
+            if (recv_count <= 0) {
+                curr_count = 0;
+            } else {
+                /* Recv data from parent */
+                err = MCA_PML_CALL(recv((char *)buf + (ptrdiff_t)vrank * scatter_count * extent,
+                                        recv_count, datatype, parent,
+                                        MCA_COLL_BASE_TAG_BCAST, comm, &status));
+                if (MPI_SUCCESS != err) { goto cleanup_and_return; }
+                /* Get received count */
+                curr_count = (int)(status._ucount / datatype_size);
+            }
+            break;
+        }
+        mask <<= 1;
+    }
+
+    /* Scatter by binomial tree: send data to child processes */
+    mask >>= 1;
+    while (mask > 0) {
+        if (vrank + mask < comm_size) {
+            send_count = curr_count - scatter_count * mask;
+            if (send_count > 0) {
+                int child = (rank + mask) % comm_size;
+                err = MCA_PML_CALL(send((char *)buf + (ptrdiff_t)scatter_count * (vrank + mask) * extent,
+                                        send_count, datatype, child,
+                                        MCA_COLL_BASE_TAG_BCAST,
+                                        MCA_PML_BASE_SEND_STANDARD, comm));
+                if (MPI_SUCCESS != err) { goto cleanup_and_return; }
+                curr_count -= send_count;
+            }
+        }
+        mask >>= 1;
+    }
+
+    /* Allgather by a ring algorithm */
+    int left = (rank - 1 + comm_size) % comm_size;
+    int right = (rank + 1) % comm_size;
+    int send_block = vrank;
+    int recv_block = (vrank - 1 + comm_size) % comm_size;
+
+    for (int i = 1; i < comm_size; i++) {
+        recv_count = (scatter_count < count - recv_block * scatter_count) ?
+                      scatter_count : count - recv_block * scatter_count;
+        if (recv_count < 0)
+            recv_count = 0;
+        ptrdiff_t recv_offset = recv_block * scatter_count * extent;
+
+        send_count = (scatter_count < count - send_block * scatter_count) ?
+                      scatter_count : count - send_block * scatter_count;
+        if (send_count < 0)
+            send_count = 0;
+        ptrdiff_t send_offset = send_block * scatter_count * extent;
+
+        err = ompi_coll_base_sendrecv((char *)buf + send_offset, send_count,
+                                      datatype, right, MCA_COLL_BASE_TAG_BCAST,
+                                      (char *)buf + recv_offset, recv_count,
+                                      datatype, left, MCA_COLL_BASE_TAG_BCAST,
+                                      comm, MPI_STATUS_IGNORE, rank);
+        if (MPI_SUCCESS != err) { goto cleanup_and_return; }
+        send_block = recv_block;
+        recv_block = (recv_block - 1 + comm_size) % comm_size;
+    }
+
+cleanup_and_return:
+    return err;
+}

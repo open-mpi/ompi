@@ -1,7 +1,10 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2014      The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
+ * Copyright (c) 2018      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  */
@@ -16,22 +19,9 @@
 #include "opal/sys/atomic.h"
 
 
-#if !OPAL_ENABLE_MULTI_THREADS
-
-/* If we don't have thread support, there's no point in running this
-   test */
-
-int main(int argc, char *argv[])
-{
-    printf("OMPI was compiled without thread support -- skipping this test\n");
-    return 77;
-}
-
-#else
-
 /* Only have the body of this test if we have thread support */
 
-static volatile int count = 0;
+static opal_atomic_int_t count = 0;
 
 
 static void* thr1_run(opal_object_t* obj)
@@ -75,5 +65,3 @@ int main(int argc, char** argv)
     test_verify_int(3, count);
     return test_finalize();
 }
-
-#endif /* OPAL_ENABLE_MULTI_THREADS */

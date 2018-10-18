@@ -9,7 +9,10 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2017 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2018 University of Houston. All rights reserved.
+ * Copyright (c) 2018      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2018      DataDirect Networks. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -53,11 +56,11 @@ static mca_fs_base_module_1_0_0_t lustre =  {
     mca_fs_lustre_module_init, /* initalise after being selected */
     mca_fs_lustre_module_finalize, /* close a module on a communicator */
     mca_fs_lustre_file_open,
-    mca_fs_lustre_file_close,
-    mca_fs_lustre_file_delete,
-    mca_fs_lustre_file_set_size,
-    mca_fs_lustre_file_get_size,
-    mca_fs_lustre_file_sync
+    mca_fs_base_file_close,
+    mca_fs_base_file_delete,
+    mca_fs_base_file_set_size,
+    mca_fs_base_file_get_size,
+    mca_fs_base_file_sync
 };
 /*
  * *******************************************************************
@@ -74,7 +77,7 @@ int mca_fs_lustre_component_init_query(bool enable_progress_threads,
 }
 
 struct mca_fs_base_module_1_0_0_t *
-mca_fs_lustre_component_file_query (mca_io_ompio_file_t *fh, int *priority)
+mca_fs_lustre_component_file_query (ompio_file_t *fh, int *priority)
 {
     char *tmp;
 
@@ -87,15 +90,18 @@ mca_fs_lustre_component_file_query (mca_io_ompio_file_t *fh, int *priority)
 
     tmp = strchr (fh->f_filename, ':');
     if (!tmp) {
-        if (OMPIO_ROOT == fh->f_rank) {
+        /* The communicator might be NULL if we only want to delete the file */
+        if (OMPIO_ROOT == fh->f_rank || MPI_COMM_NULL == fh->f_comm) {
             fh->f_fstype = mca_fs_base_get_fstype ( fh->f_filename );
         }
-	fh->f_comm->c_coll->coll_bcast (&(fh->f_fstype),
-				       1,
-				       MPI_INT,
-				       OMPIO_ROOT,
-				       fh->f_comm,
-				       fh->f_comm->c_coll->coll_bcast_module);
+        if (fh->f_comm != MPI_COMM_NULL) {
+            fh->f_comm->c_coll->coll_bcast (&(fh->f_fstype),
+                        1,
+                        MPI_INT,
+                        OMPIO_ROOT,
+                        fh->f_comm,
+                        fh->f_comm->c_coll->coll_bcast_module);
+        }
     }
     else {
 	if (!strncmp(fh->f_filename, "lustre:", 7) ||
@@ -114,7 +120,7 @@ mca_fs_lustre_component_file_query (mca_io_ompio_file_t *fh, int *priority)
    return NULL;
 }
 
-int mca_fs_lustre_component_file_unquery (mca_io_ompio_file_t *file)
+int mca_fs_lustre_component_file_unquery (ompio_file_t *file)
 {
    /* This function might be needed for some purposes later. for now it
     * does not have anything to do since there are no steps which need
@@ -123,7 +129,7 @@ int mca_fs_lustre_component_file_unquery (mca_io_ompio_file_t *file)
     return OMPI_SUCCESS;
 }
 
-int mca_fs_lustre_module_init (mca_io_ompio_file_t *file)
+int mca_fs_lustre_module_init (ompio_file_t *file)
 {
     /* Make sure the file type is not overwritten by the last queried
 	 * component */
@@ -132,7 +138,7 @@ int mca_fs_lustre_module_init (mca_io_ompio_file_t *file)
 }
 
 
-int mca_fs_lustre_module_finalize (mca_io_ompio_file_t *file)
+int mca_fs_lustre_module_finalize (ompio_file_t *file)
 {
     return OMPI_SUCCESS;
 }

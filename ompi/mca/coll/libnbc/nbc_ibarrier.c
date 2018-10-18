@@ -7,10 +7,11 @@
  *                         rights reserved.
  * Copyright (c) 2013-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2014-2017 Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2014-2018 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2015      Mellanox Technologies. All rights reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -21,21 +22,15 @@
 #include "nbc_internal.h"
 
 /* Dissemination implementation of MPI_Ibarrier */
-int ompi_coll_libnbc_ibarrier(struct ompi_communicator_t *comm, ompi_request_t ** request,
-                              struct mca_coll_base_module_2_2_0_t *module)
+static int nbc_barrier_init(struct ompi_communicator_t *comm, ompi_request_t ** request,
+                            struct mca_coll_base_module_2_3_0_t *module, bool persistent)
 {
   int rank, p, maxround, res, recvpeer, sendpeer;
   NBC_Schedule *schedule;
-  NBC_Handle *handle;
   ompi_coll_libnbc_module_t *libnbc_module = (ompi_coll_libnbc_module_t*) module;
 
   rank = ompi_comm_rank (comm);
   p = ompi_comm_size (comm);
-
-  res = NBC_Init_handle(comm, &handle, libnbc_module);
-  if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-    return res;
-  }
 
 #ifdef NBC_CACHE_SCHEDULE
   /* there only one argument set per communicator -> hang it directly at
@@ -47,12 +42,8 @@ int ompi_coll_libnbc_ibarrier(struct ompi_communicator_t *comm, ompi_request_t *
 #endif
     schedule = OBJ_NEW(NBC_Schedule);
     if (OPAL_UNLIKELY(NULL == schedule)) {
-      NBC_Return_handle (handle);
       return OMPI_ERR_OUT_OF_RESOURCE;
     }
-
-    /* ensure the schedule is released with the handle on error */
-    handle->schedule = schedule;
 
     maxround = (int)ceil((log((double)p)/LOG2)-1);
 
@@ -64,86 +55,88 @@ int ompi_coll_libnbc_ibarrier(struct ompi_communicator_t *comm, ompi_request_t *
       /* send msg to sendpeer */
       res = NBC_Sched_send (NULL, false, 0, MPI_BYTE, sendpeer, schedule, false);
       if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-        NBC_Return_handle (handle);
-        return OMPI_ERR_OUT_OF_RESOURCE;
+        OBJ_RELEASE(schedule);
+        return res;
       }
 
       /* recv msg from recvpeer */
       res = NBC_Sched_recv (NULL, false, 0, MPI_BYTE, recvpeer, schedule, false);
       if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-        NBC_Return_handle (handle);
-        return OMPI_ERR_OUT_OF_RESOURCE;
+        OBJ_RELEASE(schedule);
+        return res;
       }
 
       /* end communication round */
       if (round < maxround) {
         res = NBC_Sched_barrier (schedule);
         if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-          NBC_Return_handle (handle);
-          return OMPI_ERR_OUT_OF_RESOURCE;
+          OBJ_RELEASE(schedule);
+          return res;
         }
       }
     }
 
     res = NBC_Sched_commit (schedule);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-      NBC_Return_handle (handle);
-      return OMPI_ERR_OUT_OF_RESOURCE;
+      OBJ_RELEASE(schedule);
+      return res;
     }
 
 #ifdef NBC_CACHE_SCHEDULE
     /* add it */
     libnbc_module->NBC_Dict[NBC_BARRIER] = (hb_tree *) schedule;
     libnbc_module->NBC_Dict_size[NBC_BARRIER] = 1;
-  } else {
-    /* we found it */
-    handle->schedule = schedule = (NBC_Schedule *) libnbc_module->NBC_Dict[NBC_BARRIER];
   }
   OBJ_RETAIN(schedule);
 #endif
 
-  res = NBC_Start (handle, schedule);
+  res = NBC_Schedule_request(schedule, comm, libnbc_module, persistent, request, NULL);
   if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-    NBC_Return_handle (handle);
-    return OMPI_ERR_OUT_OF_RESOURCE;
+    OBJ_RELEASE(schedule);
+    return res;
   }
-
-  *request = (ompi_request_t *) handle;
 
   return OMPI_SUCCESS;
 }
 
-int ompi_coll_libnbc_ibarrier_inter(struct ompi_communicator_t *comm, ompi_request_t ** request,
-                                    struct mca_coll_base_module_2_2_0_t *module)
+int ompi_coll_libnbc_ibarrier(struct ompi_communicator_t *comm, ompi_request_t ** request,
+                              struct mca_coll_base_module_2_3_0_t *module) {
+    int res = nbc_barrier_init(comm, request, module, false);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+        return res;
+    }
+  
+    res = NBC_Start(*(ompi_coll_libnbc_request_t **)request);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+        NBC_Return_handle (*(ompi_coll_libnbc_request_t **)request);
+        *request = &ompi_request_null.request;
+        return res;
+    }
+
+    return OMPI_SUCCESS;
+}
+
+static int nbc_barrier_inter_init(struct ompi_communicator_t *comm, ompi_request_t ** request,
+                                  struct mca_coll_base_module_2_3_0_t *module, bool persistent)
 {
   int rank, res, rsize;
   NBC_Schedule *schedule;
-  NBC_Handle *handle;
   ompi_coll_libnbc_module_t *libnbc_module = (ompi_coll_libnbc_module_t*) module;
 
   rank = ompi_comm_rank (comm);
   rsize = ompi_comm_remote_size (comm);
 
-  res = NBC_Init_handle(comm, &handle, libnbc_module);
-  if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-    return res;
-  }
-
   schedule = OBJ_NEW(NBC_Schedule);
   if (OPAL_UNLIKELY(NULL == schedule)) {
-    NBC_Return_handle (handle);
     return OMPI_ERR_OUT_OF_RESOURCE;
   }
-
-  /* ensure the schedule is released with the handle on error */
-  handle->schedule = schedule;
 
   if (0 == rank) {
     for (int peer = 1 ; peer < rsize ; ++peer) {
       res = NBC_Sched_recv (NULL, false, 0, MPI_BYTE, peer, schedule, false);
       if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-        NBC_Return_handle (handle);
-        return OMPI_ERR_OUT_OF_RESOURCE;
+        OBJ_RELEASE(schedule);
+        return res;
       }
     }
   }
@@ -151,47 +144,81 @@ int ompi_coll_libnbc_ibarrier_inter(struct ompi_communicator_t *comm, ompi_reque
   /* synchronize with the remote root */
   res = NBC_Sched_recv (NULL, false, 0, MPI_BYTE, 0, schedule, false);
   if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-    NBC_Return_handle (handle);
-    return OMPI_ERR_OUT_OF_RESOURCE;
+    OBJ_RELEASE(schedule);
+    return res;
   }
 
   res = NBC_Sched_send (NULL, false, 0, MPI_BYTE, 0, schedule, false);
   if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-    NBC_Return_handle (handle);
-    return OMPI_ERR_OUT_OF_RESOURCE;
+    OBJ_RELEASE(schedule);
+    return res;
   }
 
   if (0 == rank) {
     /* wait for the remote root */
     res = NBC_Sched_barrier (schedule);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-      NBC_Return_handle (handle);
-      return OMPI_ERR_OUT_OF_RESOURCE;
+      OBJ_RELEASE(schedule);
+      return res;
     }
 
     /* inform remote peers that all local peers have entered the barrier */
     for (int peer = 1; peer < rsize ; ++peer) {
       res = NBC_Sched_send (NULL, false, 0, MPI_BYTE, peer, schedule, false);
       if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-        NBC_Return_handle (handle);
-        return OMPI_ERR_OUT_OF_RESOURCE;
+        OBJ_RELEASE(schedule);
+        return res;
       }
     }
   }
 
   res = NBC_Sched_commit (schedule);
   if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-    NBC_Return_handle (handle);
-    return OMPI_ERR_OUT_OF_RESOURCE;
+      OBJ_RELEASE(schedule);
+      return res;
   }
 
-  res = NBC_Start (handle, schedule);
+  res = NBC_Schedule_request(schedule, comm, libnbc_module, persistent, request, NULL);
   if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-    NBC_Return_handle (handle);
-    return OMPI_ERR_OUT_OF_RESOURCE;
+    OBJ_RELEASE(schedule);
+    return res;
   }
-
-  *request = (ompi_request_t *) handle;
-
   return OMPI_SUCCESS;
+}
+
+int ompi_coll_libnbc_ibarrier_inter(struct ompi_communicator_t *comm, ompi_request_t ** request,
+                                    struct mca_coll_base_module_2_3_0_t *module) {
+    int res = nbc_barrier_inter_init(comm, request, module, false);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+        return res;
+    }
+  
+    res = NBC_Start(*(ompi_coll_libnbc_request_t **)request);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+        NBC_Return_handle (*(ompi_coll_libnbc_request_t **)request);
+        *request = &ompi_request_null.request;
+        return res;
+    }
+
+    return OMPI_SUCCESS;
+}
+
+int ompi_coll_libnbc_barrier_init(struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
+                                  struct mca_coll_base_module_2_3_0_t *module) {
+    int res = nbc_barrier_init(comm, request, module, true);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+        return res;
+    }
+
+    return OMPI_SUCCESS;
+}
+
+int ompi_coll_libnbc_barrier_inter_init(struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
+                                        struct mca_coll_base_module_2_3_0_t *module) {
+    int res = nbc_barrier_inter_init(comm, request, module, true);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+        return res;
+    }
+
+    return OMPI_SUCCESS;
 }

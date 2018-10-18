@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2013-2015 Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2018      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -41,13 +42,23 @@ static inline void _shfree(void* ptr)
 {
     int rc;
 
-    RUNTIME_CHECK_INIT(); RUNTIME_CHECK_ADDR(ptr);
+    RUNTIME_CHECK_INIT();
+    if (NULL == ptr) {
+        return;
+    }
+
+    RUNTIME_CHECK_ADDR(ptr);
 
 #if OSHMEM_SPEC_COMPAT == 1
     shmem_barrier_all();
 #endif
 
+    SHMEM_MUTEX_LOCK(shmem_internal_mutex_alloc);
+
     rc = MCA_MEMHEAP_CALL(free(ptr));
+
+    SHMEM_MUTEX_UNLOCK(shmem_internal_mutex_alloc);
+
     if (OSHMEM_SUCCESS != rc) {
         SHMEM_API_VERBOSE(10, "shfree failure.");
     }

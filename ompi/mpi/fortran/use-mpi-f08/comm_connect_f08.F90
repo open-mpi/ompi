@@ -3,11 +3,13 @@
 ! Copyright (c) 2010-2012 Cisco Systems, Inc.  All rights reserved.
 ! Copyright (c) 2009-2012 Los Alamos National Security, LLC.
 !               All Rights reserved.
+! Copyright (c) 2018      Research Organization for Information Science
+!                         and Technology (RIST).  All rights reserved.
 ! $COPYRIGHT$
 
 subroutine MPI_Comm_connect_f08(port_name,info,root,comm,newcomm,ierror)
    use :: mpi_f08_types, only : MPI_Info, MPI_Comm
-   use :: mpi_f08, only : ompi_comm_connect_f
+   use :: ompi_mpifh_bindings, only : ompi_comm_connect_f
    implicit none
    CHARACTER(LEN=*), INTENT(IN) :: port_name
    TYPE(MPI_Info), INTENT(IN) :: info

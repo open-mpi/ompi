@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2014 University of Houston. All rights reserved.
- * Copyright (c) 2015-2017 Research Organization for Information Science
+ * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
  * $COPYRIGHT$
@@ -62,12 +62,12 @@ mca_fs_pvfs2_file_open (struct ompi_communicator_t *comm,
                         const char* filename,
                         int access_mode,
                         struct opal_info_t *info,
-                        mca_io_ompio_file_t *fh)
+                        ompio_file_t *fh)
 {
     int ret;
     mca_fs_pvfs2 *pvfs2_fs;
     PVFS_fs_id pvfs2_id;
-    char pvfs2_path[OMPIO_MAX_NAME] = {0};
+    char pvfs2_path[OMPIO_PVFS2_MAX_NAME] = {0};
     char * ncache_timeout;
     open_status o_status = {0, {0, 0}};
     struct ompi_datatype_t *open_status_type;
@@ -129,7 +129,7 @@ mca_fs_pvfs2_file_open (struct ompi_communicator_t *comm,
 
 
     if (OMPIO_ROOT == fh->f_rank) {
-        ret = PVFS_util_resolve(filename, &pvfs2_id, pvfs2_path, OMPIO_MAX_NAME);
+        ret = PVFS_util_resolve(filename, &pvfs2_id, pvfs2_path, OMPIO_PVFS2_MAX_NAME);
         if (ret < 0 ) {
             PVFS_perror("PVFS_util_resolve", ret);
 	    o_status.error = -1;

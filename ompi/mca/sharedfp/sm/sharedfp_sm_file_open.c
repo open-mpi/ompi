@@ -9,9 +9,9 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2013-2017 University of Houston. All rights reserved.
+ * Copyright (c) 2013-2018 University of Houston. All rights reserved.
  * Copyright (c) 2013      Intel, Inc. All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
@@ -44,52 +44,26 @@
 #include <semaphore.h>
 #include <sys/mman.h>
 #include <libgen.h>
-
+#include <unistd.h>
 
 int mca_sharedfp_sm_file_open (struct ompi_communicator_t *comm,
                                const char* filename,
                                int amode,
                                struct opal_info_t *info,
-                               mca_io_ompio_file_t *fh)
+                               ompio_file_t *fh)
 {
     int err = OMPI_SUCCESS;
     struct mca_sharedfp_base_data_t* sh;
     struct mca_sharedfp_sm_data * sm_data = NULL;
-    mca_io_ompio_file_t * shfileHandle, *ompio_fh;
     char * filename_basename;
     char * sm_filename;
     int sm_filename_length;
     struct mca_sharedfp_sm_offset * sm_offset_ptr;
     struct mca_sharedfp_sm_offset sm_offset;
-    mca_io_ompio_data_t *data;
     int sm_fd;
-    int rank;
     uint32_t comm_cid;
-
-    /*----------------------------------------------------*/
-    /*Open the same file again without shared file pointer*/
-    /*----------------------------------------------------*/
-    shfileHandle = (mca_io_ompio_file_t *)malloc(sizeof(mca_io_ompio_file_t));
-    if ( NULL == shfileHandle ) {
-        opal_output(0, "mca_sharedfp_sm_file_open: Error during memory allocation\n");
-        return OMPI_ERR_OUT_OF_RESOURCE;
-    }
-    err = mca_common_ompio_file_open(comm,filename,amode,info,shfileHandle,false);
-    if ( OMPI_SUCCESS != err) {
-        opal_output(0, "mca_sharedfp_sm_file_open: Error during file open\n");
-        free (shfileHandle);
-        return err;
-    }
-    shfileHandle->f_fh = fh->f_fh;
-    data = (mca_io_ompio_data_t *) fh->f_fh->f_io_selected_data;
-    ompio_fh = &data->ompio_fh;
-
-    err = mca_common_ompio_set_view (shfileHandle,
-                                     ompio_fh->f_disp,
-                                     ompio_fh->f_etype,
-                                     ompio_fh->f_orig_filetype,
-                                     ompio_fh->f_datarep,
-                                     &(MPI_INFO_NULL->super));
+    int int_pid;
+    pid_t my_pid;
 
     /*Memory is allocated here for the sh structure*/
     if ( mca_sharedfp_sm_verbose ) {
@@ -99,18 +73,13 @@ int mca_sharedfp_sm_file_open (struct ompi_communicator_t *comm,
 
     sh = (struct mca_sharedfp_base_data_t*)malloc(sizeof(struct mca_sharedfp_base_data_t));
     if ( NULL == sh ) {
-        opal_output(0, "mca_sharedfp_sm_file_open: Error, unable to malloc f_sharedfp_ptr struct\n");
-        free(shfileHandle);
+        opal_output(0, "mca_sharedfp_sm_file_open: Error, unable to malloc f_sharedfp  struct\n");
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
     /*Populate the sh file structure based on the implementation*/
-    sh->sharedfh      = shfileHandle;                        /* Shared file pointer*/
-    sh->global_offset = 0;                                /* Global Offset*/
-    sh->comm          = comm;                                 /* Communicator*/
+    sh->global_offset = 0;                        /* Global Offset*/
     sh->selected_module_data = NULL;
-
-    rank = ompi_comm_rank ( sh->comm );
 
     /*Open a shared memory segment which will hold the shared file pointer*/
     if ( mca_sharedfp_sm_verbose ) {
@@ -123,7 +92,6 @@ int mca_sharedfp_sm_file_open (struct ompi_communicator_t *comm,
     if ( NULL == sm_data ){
         opal_output(0, "mca_sharedfp_sm_file_open: Error, unable to malloc sm_data struct\n");
         free(sh);
-        free(shfileHandle);
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
     sm_data->sm_filename=NULL;
@@ -134,19 +102,32 @@ int mca_sharedfp_sm_file_open (struct ompi_communicator_t *comm,
     ** For sharedfp we also want to put the file backed shared memory into the tmp directory
     */
     filename_basename = basename((char*)filename);
-    /* format is "%s/%s_cid-%d.sm", see below */
+    /* format is "%s/%s_cid-%d-%d.sm", see below */
     sm_filename_length = strlen(ompi_process_info.job_session_dir) + 1 + strlen(filename_basename) + 5 + (3*sizeof(uint32_t)+1) + 4;
     sm_filename = (char*) malloc( sizeof(char) * sm_filename_length);
     if (NULL == sm_filename) {
         opal_output(0, "mca_sharedfp_sm_file_open: Error, unable to malloc sm_filename\n");
         free(sm_data);
         free(sh);
-        free(shfileHandle);
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
     comm_cid = ompi_comm_get_cid(comm);
-    sprintf(sm_filename, "%s/%s_cid-%d.sm", ompi_process_info.job_session_dir, filename_basename, comm_cid);
+    if ( 0 == fh->f_rank ) {
+        my_pid = getpid();
+        int_pid = (int) my_pid;
+    }
+    err = comm->c_coll->coll_bcast (&int_pid, 1, MPI_INT, 0, comm, comm->c_coll->coll_bcast_module );
+    if ( OMPI_SUCCESS != err ) {
+        opal_output(0,"mca_sharedfp_sm_file_open: Error in bcast operation \n");
+        free(sm_filename);
+        free(sm_data);
+        free(sh);
+        return err;
+    }
+
+    snprintf(sm_filename, sm_filename_length, "%s/%s_cid-%d-%d.sm", ompi_process_info.job_session_dir,
+             filename_basename, comm_cid, int_pid);
     /* open shared memory file, initialize to 0, map into memory */
     sm_fd = open(sm_filename, O_RDWR | O_CREAT,
                  S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
@@ -156,18 +137,25 @@ int mca_sharedfp_sm_file_open (struct ompi_communicator_t *comm,
         free(sm_filename);
         free(sm_data);
         free(sh);
-        free(shfileHandle);
         return OMPI_ERROR;
     }
 
     sm_data->sm_filename = sm_filename;
 
-    /*TODO: is it necessary to write to the file first?*/
-    if( 0 == rank ){
+    /* TODO: is it necessary to write to the file first? */
+    if( 0 == fh->f_rank ){
         memset ( &sm_offset, 0, sizeof (struct mca_sharedfp_sm_offset ));
         write ( sm_fd, &sm_offset, sizeof(struct mca_sharedfp_sm_offset));
     }
-    comm->c_coll->coll_barrier (comm, comm->c_coll->coll_barrier_module );
+    err = comm->c_coll->coll_barrier (comm, comm->c_coll->coll_barrier_module );
+    if ( OMPI_SUCCESS != err ) {
+        opal_output(0,"mca_sharedfp_sm_file_open: Error in barrier operation \n");
+        free(sm_filename);
+        free(sm_data);
+        free(sh);
+        close (sm_fd);
+        return err;
+    }
 
     /*the file has been written to, now we can map*/
     sm_offset_ptr = mmap(NULL, sizeof(struct mca_sharedfp_sm_offset), PROT_READ | PROT_WRITE,
@@ -182,7 +170,6 @@ int mca_sharedfp_sm_file_open (struct ompi_communicator_t *comm,
         free(sm_filename);
         free(sm_data);
         free(sh);
-        free(shfileHandle);
         return OMPI_ERROR;
     }
 
@@ -213,7 +200,7 @@ int mca_sharedfp_sm_file_open (struct ompi_communicator_t *comm,
         fh->f_sharedfp_data = sh;
 
         /*write initial zero*/
-        if(rank==0){
+        if(fh->f_rank==0){
             MPI_Offset position=0;
 
             sem_wait(sm_data->mutex);
@@ -224,23 +211,30 @@ int mca_sharedfp_sm_file_open (struct ompi_communicator_t *comm,
         free(sm_filename);
         free(sm_data);
         free(sh);
-        free(shfileHandle);
         munmap(sm_offset_ptr, sizeof(struct mca_sharedfp_sm_offset));
-        err = OMPI_ERROR;
+        return OMPI_ERROR;
     }
 
-    comm->c_coll->coll_barrier (comm, comm->c_coll->coll_barrier_module );
+    err = comm->c_coll->coll_barrier (comm, comm->c_coll->coll_barrier_module );
+    if ( OMPI_SUCCESS != err ) {
+        opal_output(0,"mca_sharedfp_sm_file_open: Error in barrier operation \n");
+        free(sm_filename);
+        free(sm_data);
+        free(sh);
+        munmap(sm_offset_ptr, sizeof(struct mca_sharedfp_sm_offset));
+        return err;
+    }
 
 #if defined(HAVE_SEM_OPEN)
-    if ( 0 == rank ) {
+    if ( 0 == fh->f_rank ) {
         sem_unlink ( sm_data->sem_name);
     }
 #endif
 
-    return err;
+    return OMPI_SUCCESS;
 }
 
-int mca_sharedfp_sm_file_close (mca_io_ompio_file_t *fh)
+int mca_sharedfp_sm_file_close (ompio_file_t *fh)
 {
     int err = OMPI_SUCCESS;
     /*sharedfp data structure*/
@@ -249,10 +243,6 @@ int mca_sharedfp_sm_file_close (mca_io_ompio_file_t *fh)
     struct mca_sharedfp_sm_data * file_data=NULL;
 
     if( NULL == fh->f_sharedfp_data ){
-        if ( mca_sharedfp_sm_verbose ) {
-            opal_output(ompi_sharedfp_base_framework.framework_output,
-                        "sharedfp_sm_file_close: shared file pointer structure not initialized\n");
-        }
         return OMPI_SUCCESS;
     }
     sh = fh->f_sharedfp_data;
@@ -261,7 +251,7 @@ int mca_sharedfp_sm_file_close (mca_io_ompio_file_t *fh)
      * all processes are ready to release the
      * shared file pointer resources
      */
-    sh->comm->c_coll->coll_barrier (sh->comm, sh->comm->c_coll->coll_barrier_module );
+    fh->f_comm->c_coll->coll_barrier (fh->f_comm, fh->f_comm->c_coll->coll_barrier_module );
 
     file_data = (sm_data*)(sh->selected_module_data);
     if (file_data)  {
@@ -286,12 +276,8 @@ int mca_sharedfp_sm_file_close (mca_io_ompio_file_t *fh)
         free(file_data);
     }
 
-    /* Close the main file opened by this component*/
-    err = mca_common_ompio_file_close(sh->sharedfh);
-
     /*free shared file pointer data struct*/
     free(sh);
 
     return err;
-
 }

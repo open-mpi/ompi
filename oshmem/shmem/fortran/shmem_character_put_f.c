@@ -37,7 +37,7 @@ void shmem_character_put_f(FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, M
     size_t character_type_size = 0;
     ompi_datatype_type_size(&ompi_mpi_character.dt, &character_type_size);
 
-    MCA_SPML_CALL(put(FPTR_2_VOID_PTR(target),
+    MCA_SPML_CALL(put(oshmem_ctx_default, FPTR_2_VOID_PTR(target),
         OMPI_FINT_2_INT(*length) * character_type_size,
         FPTR_2_VOID_PTR(source),
         OMPI_FINT_2_INT(*pe)));

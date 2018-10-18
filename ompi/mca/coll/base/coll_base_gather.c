@@ -65,9 +65,6 @@ ompi_coll_base_gather_intra_binomial(const void *sbuf, int scount,
     COLL_BASE_UPDATE_IN_ORDER_BMTREE( comm, base_module, root );
     bmtree = data->cached_in_order_bmtree;
 
-    ompi_datatype_type_extent(sdtype, &sextent);
-    ssize = opal_datatype_span(&sdtype->super, (int64_t)scount * size, &sgap);
-
     vrank = (rank - root + size) % size;
 
     if (rank == root) {
@@ -107,6 +104,8 @@ ompi_coll_base_gather_intra_binomial(const void *sbuf, int scount,
         /* other non-leaf nodes, allocate temp buffer for data received from
          * children, the most we need is half of the total data elements due
          * to the property of binimoal tree */
+        ompi_datatype_type_extent(sdtype, &sextent);
+        ssize = opal_datatype_span(&sdtype->super, (int64_t)scount * size, &sgap);
         tempbuf = (char *) malloc(ssize);
         if (NULL == tempbuf) {
             err= OMPI_ERR_OUT_OF_RESOURCE; line = __LINE__; goto err_hndl;
@@ -327,6 +326,15 @@ ompi_coll_base_gather_intra_linear_sync(const void *sbuf, int scount,
     return MPI_SUCCESS;
  error_hndl:
     if (NULL != reqs) {
+        /* find a real error code */
+        if (MPI_ERR_IN_STATUS == ret) {
+            for( i = 0; i < size; i++ ) {
+                if (MPI_REQUEST_NULL == reqs[i]) continue;
+                if (MPI_ERR_PENDING == reqs[i]->req_status.MPI_ERROR) continue;
+                ret = reqs[i]->req_status.MPI_ERROR;
+                break;
+            }
+        }
         ompi_coll_base_free_reqs(reqs, size);
     }
     OPAL_OUTPUT (( ompi_coll_base_framework.framework_output,

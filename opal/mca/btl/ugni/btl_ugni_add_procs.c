@@ -79,7 +79,7 @@ int mca_btl_ugni_add_procs (struct mca_btl_base_module_t* btl, size_t nprocs,
     if (false == ugni_module->initialized) {
         for (int i = 0 ; i < mca_btl_ugni_component.virtual_device_count ; ++i) {
             mca_btl_ugni_device_t *device = ugni_module->devices + i;
-            rc = GNI_CqCreate (device->dev_handle, mca_btl_ugni_component.local_cq_size, 0,
+            rc = GNI_CqCreate (device->dev_handle, mca_btl_ugni_component.local_rdma_cq_size, 0,
                                GNI_CQ_NOBLOCK, NULL, NULL, &device->dev_rdma_local_cq.gni_handle);
             if (GNI_RC_SUCCESS != rc) {
                 BTL_ERROR(("error creating local BTE/FMA CQ"));
@@ -94,7 +94,7 @@ int mca_btl_ugni_add_procs (struct mca_btl_base_module_t* btl, size_t nprocs,
             }
 
             if (mca_btl_ugni_component.progress_thread_enabled) {
-                rc = GNI_CqCreate (device->dev_handle, mca_btl_ugni_component.local_cq_size,
+                rc = GNI_CqCreate (device->dev_handle, mca_btl_ugni_component.local_rdma_cq_size,
                                    0, GNI_CQ_BLOCKING, NULL, NULL, &device->dev_rdma_local_irq_cq.gni_handle);
                 if (GNI_RC_SUCCESS != rc) {
                     BTL_ERROR(("error creating local BTE/FMA CQ"));
@@ -445,15 +445,6 @@ mca_btl_ugni_setup_mpools (mca_btl_ugni_module_t *ugni_module)
                               ugni_module->rcache, NULL, NULL);
     if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
         BTL_ERROR(("error creating smsg mailbox free list"));
-        return rc;
-    }
-
-    rc = opal_free_list_init (&ugni_module->post_descriptors,
-                              sizeof (mca_btl_ugni_post_descriptor_t),
-                              8, OBJ_CLASS(mca_btl_ugni_post_descriptor_t),
-                              0, 0, 0, -1, 256, NULL, 0, NULL, NULL, NULL);
-    if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
-        BTL_ERROR(("error creating post descriptor free list"));
         return rc;
     }
 

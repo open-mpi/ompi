@@ -14,6 +14,10 @@
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved
  * Copyright (c) 2013-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2018      Sandia National Laboratories
+ *                         All rights reserved.
+ * Copyright (c) 2018      Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -110,6 +114,7 @@ static inline unsigned int mca_pml_ob1_param_register_uint(
     return *storage;
 }
 
+#if 0
 static inline size_t mca_pml_ob1_param_register_sizet(
     const char* param_name,
     size_t default_value,
@@ -122,6 +127,7 @@ static inline size_t mca_pml_ob1_param_register_sizet(
                                            MCA_BASE_VAR_SCOPE_READONLY, storage);
     return *storage;
 }
+#endif
 
 static int mca_pml_ob1_comm_size_notify (mca_base_pvar_t *pvar, mca_base_pvar_event_t event, void *obj_handle, int *count)
 {
@@ -145,7 +151,12 @@ static int mca_pml_ob1_get_unex_msgq_size (const struct mca_base_pvar_t *pvar, v
     for (i = 0 ; i < comm_size ; ++i) {
         pml_proc = pml_comm->procs[i];
         if (pml_proc) {
+#if MCA_PML_OB1_CUSTOM_MATCH
+            values[i] = custom_match_umq_size(pml_comm->umq); // TODO: given the structure of custom match this does not make sense,
+                                                     //       as we only have one set of queues.
+#else
             values[i] = opal_list_get_size (&pml_proc->unexpected_frags);
+#endif
         } else {
             values[i] = 0;
         }
@@ -167,7 +178,12 @@ static int mca_pml_ob1_get_posted_recvq_size (const struct mca_base_pvar_t *pvar
         pml_proc = pml_comm->procs[i];
 
         if (pml_proc) {
+#if MCA_PML_OB1_CUSTOM_MATCH
+            values[i] = custom_match_prq_size(pml_comm->prq); // TODO: given the structure of custom match this does not make sense,
+                                                     //       as we only have one set of queues.
+#else
             values[i] = opal_list_get_size (&pml_proc->specific_receives);
+#endif
         } else {
             values[i] = 0;
         }
@@ -307,8 +323,14 @@ int mca_pml_ob1_component_fini(void)
     if(OMPI_SUCCESS != (rc = mca_bml.bml_finalize()))
         return rc;
 
-    if(!mca_pml_ob1.enabled)
+    if(!mca_pml_ob1.enabled) {
+        if( NULL != mca_pml_ob1.allocator ) {
+            (void)mca_pml_ob1.allocator->alc_finalize(mca_pml_ob1.allocator);
+            mca_pml_ob1.allocator = NULL;
+        }
+
         return OMPI_SUCCESS; /* never selected.. return success.. */
+    }
     mca_pml_ob1.enabled = false;  /* not anymore */
 
     /* return the static receive/send requests to the respective free list and

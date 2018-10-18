@@ -21,12 +21,14 @@
 #if OPAL_HAVE_ATOMIC_MATH_64
 
 typedef uint64_t osc_sm_post_type_t;
+typedef opal_atomic_uint64_t osc_sm_post_atomic_type_t;
 #define OSC_SM_POST_BITS 6
 #define OSC_SM_POST_MASK 0x3f
 
 #else
 
 typedef uint32_t osc_sm_post_type_t;
+typedef opal_atomic_uint32_t osc_sm_post_atomic_type_t;
 #define OSC_SM_POST_BITS 5
 #define OSC_SM_POST_MASK 0x1f
 
@@ -53,7 +55,7 @@ struct ompi_osc_sm_lock_t {
 typedef struct ompi_osc_sm_lock_t ompi_osc_sm_lock_t;
 
 struct ompi_osc_sm_node_state_t {
-    int32_t complete_count;
+    opal_atomic_int32_t complete_count;
     ompi_osc_sm_lock_t lock;
     opal_atomic_lock_t accumulate_lock;
 };
@@ -61,6 +63,8 @@ typedef struct ompi_osc_sm_node_state_t ompi_osc_sm_node_state_t;
 
 struct ompi_osc_sm_component_t {
     ompi_osc_base_component_t super;
+
+    char *backing_directory;
 };
 typedef struct ompi_osc_sm_component_t ompi_osc_sm_component_t;
 OMPI_DECLSPEC extern ompi_osc_sm_component_t mca_osc_sm_component;
@@ -96,7 +100,7 @@ struct ompi_osc_sm_module_t {
     ompi_osc_sm_node_state_t *my_node_state;
     ompi_osc_sm_node_state_t *node_states;
 
-    osc_sm_post_type_t ** volatile posts;
+    osc_sm_post_atomic_type_t **posts;
 
     opal_mutex_t lock;
 };

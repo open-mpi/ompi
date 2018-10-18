@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  *
@@ -139,7 +139,6 @@ typedef uint8_t opal_hwloc_resource_type_t;
 /* structs for storing info on objects */
 typedef struct {
     opal_object_t super;
-    hwloc_cpuset_t available;
     bool npus_calculated;
     unsigned int npus;
     unsigned int idx;
@@ -173,8 +172,15 @@ typedef uint16_t opal_binding_policy_t;
 
 /* binding directives */
 #define OPAL_BIND_IF_SUPPORTED      0x1000
+/* allow assignment of multiple procs to
+ * same cpu */
 #define OPAL_BIND_ALLOW_OVERLOAD    0x2000
+/* the binding policy was specified by the user */
 #define OPAL_BIND_GIVEN             0x4000
+/* bind each rank to the cpu in the given
+ * cpu list based on its node-local-rank */
+#define OPAL_BIND_ORDERED           0x8000
+
 /* binding policies - any changes in these
  * values must be reflected in orte/mca/rmaps/rmaps.h
  */
@@ -191,7 +197,7 @@ typedef uint16_t opal_binding_policy_t;
 #define OPAL_GET_BINDING_POLICY(pol) \
     ((pol) & 0x0fff)
 #define OPAL_SET_BINDING_POLICY(target, pol) \
-    (target) = (pol) | (((target) & 0x2000) | OPAL_BIND_GIVEN)
+    (target) = (pol) | (((target) & 0xf000) | OPAL_BIND_GIVEN)
 #define OPAL_SET_DEFAULT_BINDING_POLICY(target, pol)            \
     do {                                                        \
         if (!OPAL_BINDING_POLICY_IS_SET((target))) {            \
@@ -209,6 +215,8 @@ typedef uint16_t opal_binding_policy_t;
 /* macro to detect if binding is forced */
 #define OPAL_BIND_OVERLOAD_ALLOWED(n) \
     (OPAL_BIND_ALLOW_OVERLOAD & (n))
+#define OPAL_BIND_ORDERED_REQUESTED(n) \
+    (OPAL_BIND_ORDERED & (n))
 
 /* some global values */
 OPAL_DECLSPEC extern hwloc_topology_t opal_hwloc_topology;

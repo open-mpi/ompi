@@ -3,6 +3,7 @@
  *                         All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -22,6 +23,7 @@
 #include "opal/util/output.h"
 #include "opal/util/path.h"
 #include "opal/util/show_help.h"
+#include "opal/util/printf.h"
 
 #include "opal/util/uri.h"
 
@@ -59,7 +61,7 @@ char *opal_filename_to_uri(const char *filename,
      * the scheme can either be missing or given as "localhost"
      */
     if (NULL == hostname) {
-        asprintf(&uri, "file://%s", filename);
+        opal_asprintf(&uri, "file://%s", filename);
         return uri;
     }
 
@@ -96,7 +98,7 @@ char *opal_filename_to_uri(const char *filename,
      * ensure it was absolute, so the required separator should
      * already be present
      */
-    asprintf(&uri, "file://%s%s", hostname, fn);
+    opal_asprintf(&uri, "file://%s%s", hostname, fn);
     free(fn);
     return uri;
 }

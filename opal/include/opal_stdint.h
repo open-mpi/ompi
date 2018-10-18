@@ -28,6 +28,8 @@
 #ifndef OPAL_STDINT_H
 #define OPAL_STDINT_H 1
 
+#include "opal_config.h"
+
 /*
  * Include what we can and define what is missing.
  */

@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2018 University of Houston. All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
  * $COPYRIGHT$
@@ -61,7 +61,7 @@ mca_fs_lustre_file_open (struct ompi_communicator_t *comm,
                      const char* filename,
                      int access_mode,
                      struct opal_info_t *info,
-                     mca_io_ompio_file_t *fh)
+                     ompio_file_t *fh)
 {
     int amode, rank;
     int old_mask, perm;
@@ -115,12 +115,10 @@ mca_fs_lustre_file_open (struct ompi_communicator_t *comm,
     errno = 0;
     if (0 == fh->f_rank) {
        /* MODE_CREATE and MODE_EXCL can only be set by one process */
-        if ( !(fh->f_flags & OMPIO_SHAREDFP_IS_SET)) {
-            if ( access_mode & MPI_MODE_CREATE )
-                amode = amode | O_CREAT;
-            if (access_mode & MPI_MODE_EXCL)
-                amode = amode | O_EXCL;
-        }
+        if ( access_mode & MPI_MODE_CREATE )
+            amode = amode | O_CREAT;
+        if (access_mode & MPI_MODE_EXCL)
+            amode = amode | O_EXCL;
 
         if ( (fs_lustre_stripe_size>0 || fs_lustre_stripe_width>0) &&
              ( amode&O_CREAT)                                      && 

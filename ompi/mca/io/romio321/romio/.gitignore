@@ -1,0 +1,13 @@
+/Makefile
+/.deps
+/*.bb
+/*.bbg
+/*.gcda
+/*.gcno
+/.libs
+/.libstamp*
+/*.lo
+/.*-cache
+.state-cache
+version.m4
+confdb/config.rpath

@@ -3,6 +3,8 @@
 ! Copyright (c) 2010-2014 Cisco Systems, Inc.  All rights reserved.
 ! Copyright (c) 2009-2012 Los Alamos National Security, LLC.
 !                         All rights reserved.
+! Copyright (c) 2018      Research Organization for Information Science
+!                         and Technology (RIST).  All rights reserved.
 ! $COPYRIGHT$
 
 #include "ompi/mpi/fortran/configure-fortran-output.h"
@@ -13,7 +15,7 @@ subroutine MPI_Win_create_keyval_f08(win_copy_attr_fn,win_delete_attr_fn,&
    use :: mpi_f08_types, only : MPI_ADDRESS_KIND
    use :: mpi_f08_interfaces_callbacks, only : MPI_Win_copy_attr_function
    use :: mpi_f08_interfaces_callbacks, only : MPI_Win_delete_attr_function
-   use :: mpi_f08, only : ompi_win_create_keyval_f
+   use :: ompi_mpifh_bindings, only : ompi_win_create_keyval_f
    implicit none
    PROCEDURE(MPI_Win_copy_attr_function) :: win_copy_attr_fn
    PROCEDURE(MPI_Win_delete_attr_function) :: win_delete_attr_fn

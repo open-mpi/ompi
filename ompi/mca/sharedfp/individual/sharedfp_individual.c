@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2013-2015 University of Houston. All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
+ * Copyright (c) 2018      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -68,7 +70,7 @@ int mca_sharedfp_individual_component_init_query(bool enable_progress_threads,
    return OMPI_SUCCESS;
 }
 
-struct mca_sharedfp_base_module_1_0_0_t * mca_sharedfp_individual_component_file_query (mca_io_ompio_file_t *fh, int *priority) {
+struct mca_sharedfp_base_module_1_0_0_t * mca_sharedfp_individual_component_file_query (ompio_file_t *fh, int *priority) {
 
     int amode;
     bool wronly_flag=false;
@@ -152,7 +154,7 @@ struct mca_sharedfp_base_module_1_0_0_t * mca_sharedfp_individual_component_file
     return NULL;
 }
 
-int mca_sharedfp_individual_component_file_unquery (mca_io_ompio_file_t *file)
+int mca_sharedfp_individual_component_file_unquery (ompio_file_t *file)
 {
    /* This function might be needed for some purposes later. for now it
     * does not have anything to do since there are no steps which need
@@ -161,13 +163,13 @@ int mca_sharedfp_individual_component_file_unquery (mca_io_ompio_file_t *file)
    return OMPI_SUCCESS;
 }
 
-int mca_sharedfp_individual_module_init (mca_io_ompio_file_t *file)
+int mca_sharedfp_individual_module_init (ompio_file_t *file)
 {
     return OMPI_SUCCESS;
 }
 
 
-int mca_sharedfp_individual_module_finalize (mca_io_ompio_file_t *file)
+int mca_sharedfp_individual_module_finalize (ompio_file_t *file)
 {
     return OMPI_SUCCESS;
 }

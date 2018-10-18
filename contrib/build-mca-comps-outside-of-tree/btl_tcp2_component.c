@@ -12,6 +12,7 @@
  * Copyright (c) 2007-2010 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Laboratory
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -55,6 +56,7 @@
 #include "opal/util/argv.h"
 #include "opal/util/net.h"
 #include "opal/util/opal_sos.h"
+#include "opal/util/printf.h"
 
 #include "orte/types.h"
 #include "orte/util/show_help.h"
@@ -225,7 +227,7 @@ int mca_btl_tcp2_component_open(void)
                        mca_btl_tcp2_component.tcp_port_min );
         mca_btl_tcp2_component.tcp_port_min = 1024;
     }
-    asprintf( &message,
+    opal_asprintf( &message,
               "The number of ports where the TCP BTL will try to bind (default %d)."
               " This parameter together with the port min, define a range of ports"
               " where Open MPI will open sockets.",
@@ -244,7 +246,7 @@ int mca_btl_tcp2_component_open(void)
                        mca_btl_tcp2_component.tcp6_port_min );
         mca_btl_tcp2_component.tcp6_port_min = 1024;
     }
-    asprintf( &message,
+    opal_asprintf( &message,
               "The number of ports where the TCP BTL will try to bind (default %d)."
               " This parameter together with the port min, define a range of ports"
               " where Open MPI will open sockets.",

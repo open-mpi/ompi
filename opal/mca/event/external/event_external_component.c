@@ -6,6 +6,7 @@
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  *
  * Copyright (c) 2017      Intel, Inc. All rights reserved.
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -21,6 +22,7 @@
 #include "event.h"
 
 #include "opal/util/argv.h"
+#include "opal/util/printf.h"
 
 /*
  * Public string showing the sysinfo ompi_linux component version number
@@ -88,7 +90,7 @@ static int event_external_register (void) {
 #endif
 
     avail = opal_argv_join((char**)all_available_eventops, ',');
-    asprintf( &help_msg,
+    opal_asprintf( &help_msg,
               "Comma-delimited list of libevent subsystems "
               "to use (%s -- available on your platform)",
               avail );

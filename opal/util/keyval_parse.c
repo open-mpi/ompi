@@ -25,6 +25,7 @@
 #include "opal/util/keyval_parse.h"
 #include "opal/util/keyval/keyval_lex.h"
 #include "opal/util/output.h"
+#include "opal/util/string_copy.h"
 #include "opal/threads/mutex.h"
 #include <string.h>
 #include <ctype.h>
@@ -144,7 +145,7 @@ static int parse_line(void)
         key_buffer = tmp;
     }
 
-    strncpy(key_buffer, opal_util_keyval_yytext, key_buffer_len);
+    opal_string_copy(key_buffer, opal_util_keyval_yytext, key_buffer_len);
 
     /* The first thing we have to see is an "=" */
 
@@ -267,7 +268,7 @@ static int save_param_name (void)
         key_buffer = tmp;
     }
 
-    strncpy (key_buffer, opal_util_keyval_yytext, key_buffer_len);
+    opal_string_copy (key_buffer, opal_util_keyval_yytext, key_buffer_len);
 
     return OPAL_SUCCESS;
 }

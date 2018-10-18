@@ -13,7 +13,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2017 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
@@ -59,6 +59,7 @@
 #include "opal/util/output.h"
 #include "opal/util/os_path.h"
 #include "opal/util/argv.h"
+#include "opal/util/printf.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/grpcomm/grpcomm.h"
@@ -248,9 +249,6 @@ int pmix_server_init(void)
     OBJ_CONSTRUCT(&orte_pmix_server_globals.notifications, opal_list_t);
     orte_pmix_server_globals.server = *ORTE_NAME_INVALID;
 
-    /* ensure the PMIx server uses the proper rendezvous directory */
-    opal_setenv("PMIX_SERVER_TMPDIR", orte_process_info.proc_session_dir, true, &environ);
-
     OBJ_CONSTRUCT(&info, opal_list_t);
     /* tell the server our temp directory */
     kv = OBJ_NEW(opal_value_t);
@@ -290,6 +288,15 @@ int pmix_server_init(void)
         (ORTE_PROC_IS_HNP || ORTE_PROC_IS_MASTER)) {
         kv = OBJ_NEW(opal_value_t);
         kv->key = strdup(OPAL_PMIX_SERVER_SYSTEM_SUPPORT);
+        kv->type = OPAL_BOOL;
+        kv->data.flag = true;
+        opal_list_append(&info, &kv->super);
+    }
+
+    /* if we are the HNP or MASTER, then we are a gateway */
+    if (ORTE_PROC_IS_HNP || ORTE_PROC_IS_MASTER) {
+        kv = OBJ_NEW(opal_value_t);
+        kv->key = strdup(OPAL_PMIX_SERVER_GATEWAY);
         kv->type = OPAL_BOOL;
         kv->data.flag = true;
         opal_list_append(&info, &kv->super);
@@ -508,7 +515,7 @@ static void pmix_server_dmdx_recv(int status, orte_process_name_t* sender,
          * condition, so just log the request and we will fill
          * it later */
         req = OBJ_NEW(pmix_server_req_t);
-        (void)asprintf(&req->operation, "DMDX: %s:%d", __FILE__, __LINE__);
+        opal_asprintf(&req->operation, "DMDX: %s:%d", __FILE__, __LINE__);
         req->proxy = *sender;
         req->target = idreq;
         req->remote_room_num = room_num;
@@ -535,7 +542,7 @@ static void pmix_server_dmdx_recv(int status, orte_process_name_t* sender,
     /* track the request since the call down to the PMIx server
      * is asynchronous */
     req = OBJ_NEW(pmix_server_req_t);
-    (void)asprintf(&req->operation, "DMDX: %s:%d", __FILE__, __LINE__);
+    opal_asprintf(&req->operation, "DMDX: %s:%d", __FILE__, __LINE__);
     req->proxy = *sender;
     req->target = idreq;
     req->remote_room_num = room_num;

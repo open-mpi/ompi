@@ -15,6 +15,7 @@
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2017      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -85,6 +86,24 @@ int mca_coll_base_comm_unselect(ompi_communicator_t * comm)
     CLOSE(comm, iscatter);
     CLOSE(comm, iscatterv);
 
+    CLOSE(comm, allgather_init);
+    CLOSE(comm, allgatherv_init);
+    CLOSE(comm, allreduce_init);
+    CLOSE(comm, alltoall_init);
+    CLOSE(comm, alltoallv_init);
+    CLOSE(comm, alltoallw_init);
+    CLOSE(comm, barrier_init);
+    CLOSE(comm, bcast_init);
+    CLOSE(comm, exscan_init);
+    CLOSE(comm, gather_init);
+    CLOSE(comm, gatherv_init);
+    CLOSE(comm, reduce_init);
+    CLOSE(comm, reduce_scatter_block_init);
+    CLOSE(comm, reduce_scatter_init);
+    CLOSE(comm, scan_init);
+    CLOSE(comm, scatter_init);
+    CLOSE(comm, scatterv_init);
+
     CLOSE(comm, neighbor_allgather);
     CLOSE(comm, neighbor_allgatherv);
     CLOSE(comm, neighbor_alltoall);
@@ -96,6 +115,12 @@ int mca_coll_base_comm_unselect(ompi_communicator_t * comm)
     CLOSE(comm, ineighbor_alltoall);
     CLOSE(comm, ineighbor_alltoallv);
     CLOSE(comm, ineighbor_alltoallw);
+
+    CLOSE(comm, neighbor_allgather_init);
+    CLOSE(comm, neighbor_allgatherv_init);
+    CLOSE(comm, neighbor_alltoall_init);
+    CLOSE(comm, neighbor_alltoallv_init);
+    CLOSE(comm, neighbor_alltoallw_init);
 
     CLOSE(comm, reduce_local);
 

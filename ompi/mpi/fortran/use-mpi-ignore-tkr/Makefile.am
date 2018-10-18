@@ -1,7 +1,7 @@
 # -*- makefile -*-
 #
 # Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2015      Research Organization for Information Science
+# Copyright (c) 2015-2018 Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # Copyright (c) 2016      IBM Corporation.  All rights reserved.
 #
@@ -27,11 +27,13 @@ lib_LTLIBRARIES = lib@OMPI_LIBMPI_NAME@_usempi_ignore_tkr.la
 
 mpi-ignore-tkr-interfaces.h: mpi-ignore-tkr-interfaces.h.in
 mpi-ignore-tkr-file-interfaces.h: mpi-ignore-tkr-file-interfaces.h.in
+mpi-ignore-tkr-removed-interfaces.h: mpi-ignore-tkr-removed-interfaces.h.in
 
 mpi-ignore-tkr.lo: $(top_srcdir)/ompi/mpi/fortran/base/attr-fn-int-callback-interfaces.h
 mpi-ignore-tkr.lo: $(top_srcdir)/ompi/mpi/fortran/base/conversion-fn-null-int-interface.h
 mpi-ignore-tkr.lo: mpi-ignore-tkr-interfaces.h
 mpi-ignore-tkr.lo: mpi-ignore-tkr-file-interfaces.h
+mpi-ignore-tkr.lo: mpi-ignore-tkr-removed-interfaces.h
 mpi-ignore-tkr.lo: mpi-ignore-tkr-sizeof.h
 mpi-ignore-tkr.lo: mpi-ignore-tkr-sizeof.f90
 mpi-ignore-tkr.lo: mpi-ignore-tkr.F90
@@ -40,7 +42,8 @@ lib@OMPI_LIBMPI_NAME@_usempi_ignore_tkr_la_SOURCES = \
         mpi-ignore-tkr.F90
 nodist_lib@OMPI_LIBMPI_NAME@_usempi_ignore_tkr_la_SOURCES = \
         mpi-ignore-tkr-interfaces.h \
-        mpi-ignore-tkr-file-interfaces.h
+        mpi-ignore-tkr-file-interfaces.h \
+        mpi-ignore-tkr-removed-interfaces.h
 
 if BUILD_FORTRAN_SIZEOF
 # These files are generated; do not distribute them
@@ -108,13 +111,5 @@ uninstall-local:
 	  echo rm -f $(DESTDIR)$(libdir)/$$file; \
 	  rm -f $(DESTDIR)$(libdir)/$$file; \
 	done
-else
-
-# Need to have empty targets because AM can't handle having an
-# AM_CONDITIONAL was targets in the "if" statement but not in the
-# "else".  :-(
-
-install-exec-hook:
-uninstall-local:
 
 endif

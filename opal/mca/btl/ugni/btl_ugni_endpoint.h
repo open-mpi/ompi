@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2011-2017 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2011      UT-Battelle, LLC. All rights reserved.
  * $COPYRIGHT$
@@ -25,13 +25,11 @@ typedef enum mca_btl_ugni_endpoint_state_t mca_btl_ugni_endpoint_state_t;
 struct mca_btl_ugni_smsg_mbox_t;
 
 struct mca_btl_ugni_endpoint_handle_t {
-    opal_free_list_item_t super;
     mca_btl_ugni_device_t *device;
     gni_ep_handle_t gni_handle;
 };
 
 typedef struct mca_btl_ugni_endpoint_handle_t mca_btl_ugni_endpoint_handle_t;
-OBJ_CLASS_DECLARATION(mca_btl_ugni_endpoint_handle_t);
 
 typedef struct mca_btl_base_endpoint_t {
     opal_list_item_t super;
@@ -51,7 +49,7 @@ typedef struct mca_btl_base_endpoint_t {
     uint32_t ep_rem_id;
 
     /** endpoint to use for SMSG messages */
-    mca_btl_ugni_endpoint_handle_t *smsg_ep_handle;
+    mca_btl_ugni_endpoint_handle_t smsg_ep_handle;
 
     /** temporary space to store the remote SMSG attributes */
     mca_btl_ugni_endpoint_attr_t *remote_attr;
@@ -72,7 +70,7 @@ typedef struct mca_btl_base_endpoint_t {
     bool dg_posted;
 
     /** protect against re-entry to SMSG */
-    int32_t smsg_progressing;
+    opal_atomic_int32_t smsg_progressing;
 
     int index;
 } mca_btl_base_endpoint_t;
@@ -132,73 +130,16 @@ static inline mca_btl_ugni_module_t *mca_btl_ugni_ep_btl (mca_btl_ugni_endpoint_
 }
 
 /**
- * Allocate and bind a uGNI endpoint handle to the remote peer.
+ * Initialize and bind an endpoint handle
  *
  * @param[in]  ep                 BTL endpoint
  * @param[in]  cq                 completion queue
- * @param[out] ep_handle          uGNI endpoint handle
+ * @param[in]  device             device to bind with
+ * @param[in]  ep_handle          endpoint handle to initialize and bind
  */
-mca_btl_ugni_endpoint_handle_t *mca_btl_ugni_ep_handle_create (mca_btl_ugni_endpoint_t *ep, gni_cq_handle_t cq,
-                                                               mca_btl_ugni_device_t *device);
+int mca_btl_ugni_ep_handle_init (mca_btl_ugni_endpoint_t *ep, gni_cq_handle_t cq,
+                                 mca_btl_ugni_device_t *device, mca_btl_ugni_endpoint_handle_t *ep_handle);
 
-/**
- * Unbind and free the uGNI endpoint handle.
- *
- * @param[in]  ep_handle    uGNI endpoint handle to unbind and release
- */
-int mca_btl_ugni_ep_handle_destroy (mca_btl_ugni_endpoint_handle_t *ep_handle);
-
-/**
- * Free list initialization function for endpoint handles (DO NOT CALL outside free list)
- *
- * @param[in] item Free list item to initialize
- * @param[in] ctx  Free list context
- *
- * @returns OPAL_SUCCESS on success
- * @returns OPAL error code on error
- */
-int mca_btl_ugni_endpoint_handle_init_rdma (opal_free_list_item_t *item, void *ctx);
-
-/**
- * @brief get an endpoint handle from a device's free list
- *
- * @param[in] ep     btl endpoint
- * @param[in] device btl device to use
- *
- * This function MUST be called with the device lock held. This was done over using
- * the atomic free list to avoid unnecessary atomics in the critical path.
- */
-static inline mca_btl_ugni_endpoint_handle_t *
-mca_btl_ugni_ep_get_rdma (mca_btl_ugni_endpoint_t *ep, mca_btl_ugni_device_t *device)
-{
-    mca_btl_ugni_endpoint_handle_t *ep_handle;
-    gni_return_t grc;
-
-    ep_handle = (mca_btl_ugni_endpoint_handle_t *) opal_free_list_get_st (&device->endpoints);
-    if (OPAL_UNLIKELY(NULL == ep_handle)) {
-        return NULL;
-    }
-    grc = GNI_EpBind (ep_handle->gni_handle, ep->ep_rem_addr, ep->ep_rem_id | device->dev_index);
-    if (OPAL_UNLIKELY(GNI_RC_SUCCESS != grc)) {
-        opal_free_list_return_st (&device->endpoints, &ep_handle->super);
-        ep_handle = NULL;
-    }
-
-    return ep_handle;
-}
-
-/**
- * @brief return an endpoint handle to a device's free list
- *
- * @param[in] ep_handle   endpoint handle to return
- *
- * This function MUST be called with the device lock held. This was done over using
- * the atomic free list to avoid unnecessary atomics in the critical path. If
- */
-static inline void mca_btl_ugni_ep_return_rdma (mca_btl_ugni_endpoint_handle_t *ep_handle)
-{
-    (void) GNI_EpUnbind (ep_handle->gni_handle);
-    opal_free_list_return_st (&ep_handle->device->endpoints, &ep_handle->super);
-}
+int mca_btl_ugni_ep_handle_cleanup (mca_btl_ugni_endpoint_handle_t *ep_handle);
 
 #endif /* MCA_BTL_UGNI_ENDPOINT_H */

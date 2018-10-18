@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2018 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -20,6 +20,7 @@
 #include "orte/types.h"
 
 #include "opal/class/opal_list.h"
+#include "opal/util/printf.h"
 #include "orte/mca/mca.h"
 
 #include "orte/runtime/orte_globals.h"

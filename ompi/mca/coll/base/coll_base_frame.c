@@ -96,6 +96,9 @@ coll_base_comm_destruct(mca_coll_base_comm_t *data)
     if (data->cached_in_order_bmtree) { /* destroy bmtree if defined */
         ompi_coll_base_topo_destroy_tree (&data->cached_in_order_bmtree);
     }
+    if (data->cached_kmtree) { /* destroy kmtree if defined */
+        ompi_coll_base_topo_destroy_tree (&data->cached_kmtree);
+    }
     if (data->cached_chain) { /* destroy general chain if defined */
         ompi_coll_base_topo_destroy_tree (&data->cached_chain);
     }

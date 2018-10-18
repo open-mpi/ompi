@@ -10,14 +10,19 @@
  *                         rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2015-2017 Research Organization for Information Science
+ * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  *
  * Author(s): Torsten Hoefler <htor@cs.indiana.edu>
  *
  * Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2017      Ian Bradley Morgan and Anthony Skjellum. All
+ *                         rights reserved.
+ * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
+ * $COPYRIGHT$
  *
+ * Additional copyrights may follow
  */
 #include "nbc_internal.h"
 #include "ompi/mca/coll/base/coll_tags.h"
@@ -310,54 +315,36 @@ static inline void NBC_Free (NBC_Handle* handle) {
  *
  * to be called *only* from the progress thread !!! */
 int NBC_Progress(NBC_Handle *handle) {
-  int flag, res, ret=NBC_CONTINUE;
+  int res, ret=NBC_CONTINUE;
+  bool flag;
   unsigned long size = 0;
   char *delim;
-  int i;
-  ompi_status_public_t status;
 
-  /* the handle is done if there is no schedule attached */
-  if (NULL == handle->schedule) {
+  if (handle->nbc_complete) {
     return NBC_OK;
   }
+
+  flag = true;
 
   if ((handle->req_count > 0) && (handle->req_array != NULL)) {
     NBC_DEBUG(50, "NBC_Progress: testing for %i requests\n", handle->req_count);
 #ifdef NBC_TIMING
     Test_time -= MPI_Wtime();
 #endif
-    res = ompi_request_test_all(handle->req_count, handle->req_array, &flag, MPI_STATUSES_IGNORE);
-    if(res != OMPI_SUCCESS) {
-      // Attempt to cancel outstanding requests
-      for(i = 0; i < handle->req_count; ++i ) {
-        // If the request is complete, then try to report the error code
-        if( handle->req_array[i]->req_complete ) {
-          if( OMPI_SUCCESS != handle->req_array[i]->req_status.MPI_ERROR ) {
-            NBC_Error ("MPI Error in MPI_Testall() (req %d = %d)", i, handle->req_array[i]->req_status.MPI_ERROR);
-          }
+    /* don't call ompi_request_test_all as it causes a recursive call into opal_progress */
+    while (handle->req_count) {
+        ompi_request_t *subreq = handle->req_array[handle->req_count - 1];
+        if (REQUEST_COMPLETE(subreq)) {
+            ompi_request_free(&subreq);
+            handle->req_count--;
+        } else {
+            flag = false;
+            break;
         }
-        else {
-          ompi_request_cancel(handle->req_array[i]);
-          // If the PML actually canceled the request, then wait on it
-          if( handle->req_array[i]->req_status._cancelled) {
-            ompi_request_wait(&handle->req_array[i], &status);
-          }
-          // Warn the user that we had to leave a PML message outstanding so
-          // bad things could happen if they continue using nonblocking collectives
-          else {
-            NBC_Error ("MPI Error: Not able to cancel the internal request %d. "
-                       "Be aware that continuing to use nonblocking collectives on this communicator may result in undefined behavior.", i);
-          }
-        }
-      }
-
-      return OMPI_ERROR;
     }
 #ifdef NBC_TIMING
     Test_time += MPI_Wtime();
 #endif
-  } else {
-    flag = 1; /* we had no open requests -> proceed to next round */
   }
 
   /* a round is finished */
@@ -383,7 +370,10 @@ int NBC_Progress(NBC_Handle *handle) {
       /* this was the last round - we're done */
       NBC_DEBUG(5, "NBC_Progress last round finished - we're done\n");
 
-      NBC_Free(handle);
+      handle->nbc_complete = true;
+      if (!handle->super.req_persistent) {
+        NBC_Free(handle);
+      }
 
       return NBC_OK;
     }
@@ -581,60 +571,6 @@ static inline int NBC_Start_round(NBC_Handle *handle) {
   return OMPI_SUCCESS;
 }
 
-int NBC_Init_handle(struct ompi_communicator_t *comm, ompi_coll_libnbc_request_t **request, ompi_coll_libnbc_module_t *comminfo)
-{
-  int tmp_tag;
-  bool need_register = false;
-  ompi_coll_libnbc_request_t *handle;
-
-  OMPI_COLL_LIBNBC_REQUEST_ALLOC(comm, handle);
-  if (NULL == handle) return OMPI_ERR_OUT_OF_RESOURCE;
-  *request = handle;
-
-  handle->tmpbuf = NULL;
-  handle->req_count = 0;
-  handle->req_array = NULL;
-  handle->comm = comm;
-  handle->schedule = NULL;
-  handle->row_offset = 0;
-
-  /******************** Do the tag and shadow comm administration ...  ***************/
-
-  OPAL_THREAD_LOCK(&comminfo->mutex);
-  tmp_tag = comminfo->tag--;
-  if (tmp_tag == MCA_COLL_BASE_TAG_NONBLOCKING_END) {
-      tmp_tag = comminfo->tag = MCA_COLL_BASE_TAG_NONBLOCKING_BASE;
-      NBC_DEBUG(2,"resetting tags ...\n");
-  }
-
-  if (true != comminfo->comm_registered) {
-      comminfo->comm_registered = true;
-      need_register = true;
-  }
-  OPAL_THREAD_UNLOCK(&comminfo->mutex);
-
-  handle->tag = tmp_tag;
-
-  /* register progress */
-  if (need_register) {
-      int32_t tmp =
-          OPAL_THREAD_ADD_FETCH32(&mca_coll_libnbc_component.active_comms, 1);
-      if (tmp == 1) {
-          opal_progress_register(ompi_coll_libnbc_progress);
-      }
-  }
-
-  handle->comm=comm;
-  /*printf("got comminfo: %lu tag: %i\n", comminfo, comminfo->tag);*/
-
-  /******************** end of tag and shadow comm administration ...  ***************/
-  handle->comminfo = comminfo;
-
-  NBC_DEBUG(3, "got tag %i\n", handle->tag);
-
-  return OMPI_SUCCESS;
-}
-
 void NBC_Return_handle(ompi_coll_libnbc_request_t *request) {
   NBC_Free (request);
   OMPI_COLL_LIBNBC_REQUEST_RETURN(request);
@@ -692,16 +628,21 @@ int  NBC_Init_comm(MPI_Comm comm, NBC_Comminfo *comminfo) {
   return OMPI_SUCCESS;
 }
 
-int NBC_Start(NBC_Handle *handle, NBC_Schedule *schedule) {
+int NBC_Start(NBC_Handle *handle) {
   int res;
 
-  handle->schedule = schedule;
+  /* bozo case */
+  if ((ompi_request_t *)handle == &ompi_request_empty) {
+    return OMPI_SUCCESS;
+  }
 
   /* kick off first round */
+  handle->super.req_state = OMPI_REQUEST_ACTIVE;
   res = NBC_Start_round(handle);
   if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
     return res;
   }
+
   OPAL_THREAD_LOCK(&mca_coll_libnbc_component.lock);
   opal_list_append(&mca_coll_libnbc_component.active_requests, &(handle->super.super.super));
   OPAL_THREAD_UNLOCK(&mca_coll_libnbc_component.lock);
@@ -709,22 +650,85 @@ int NBC_Start(NBC_Handle *handle, NBC_Schedule *schedule) {
   return OMPI_SUCCESS;
 }
 
-int NBC_Schedule_request(NBC_Schedule *schedule, ompi_communicator_t *comm, ompi_coll_libnbc_module_t *module, ompi_request_t **request, void *tmpbuf) {
-  int res;
-  NBC_Handle *handle;
-  res = NBC_Init_handle (comm, &handle, module);
-  if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-    return res;
+int NBC_Schedule_request(NBC_Schedule *schedule, ompi_communicator_t *comm,
+                         ompi_coll_libnbc_module_t *module, bool persistent,
+                         ompi_request_t **request, void *tmpbuf) {
+  int ret, tmp_tag;
+  bool need_register = false;
+  ompi_coll_libnbc_request_t *handle;
+
+  /* no operation (e.g. one process barrier)? */
+  if (((int *)schedule->data)[0] == 0 && schedule->data[sizeof(int)] == 0) {
+    ret = nbc_get_noop_request(persistent, request);
+    if (OMPI_SUCCESS != ret) {
+      return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+
+    /* update the module->tag here because other processes may have operations
+     * and they may update the module->tag */
+    OPAL_THREAD_LOCK(&module->mutex);
+    tmp_tag = module->tag--;
+    if (tmp_tag == MCA_COLL_BASE_TAG_NONBLOCKING_END) {
+      tmp_tag = module->tag = MCA_COLL_BASE_TAG_NONBLOCKING_BASE;
+      NBC_DEBUG(2,"resetting tags ...\n");
+    }
+    OPAL_THREAD_UNLOCK(&module->mutex);
+
+    OBJ_RELEASE(schedule);
+    free(tmpbuf);
+
+    return OMPI_SUCCESS;
   }
+
+  OMPI_COLL_LIBNBC_REQUEST_ALLOC(comm, persistent, handle);
+  if (NULL == handle) return OMPI_ERR_OUT_OF_RESOURCE;
+
+  handle->tmpbuf = NULL;
+  handle->req_count = 0;
+  handle->req_array = NULL;
+  handle->comm = comm;
+  handle->schedule = NULL;
+  handle->row_offset = 0;
+  handle->nbc_complete = persistent ? true : false;
+
+  /******************** Do the tag and shadow comm administration ...  ***************/
+
+  OPAL_THREAD_LOCK(&module->mutex);
+  tmp_tag = module->tag--;
+  if (tmp_tag == MCA_COLL_BASE_TAG_NONBLOCKING_END) {
+      tmp_tag = module->tag = MCA_COLL_BASE_TAG_NONBLOCKING_BASE;
+      NBC_DEBUG(2,"resetting tags ...\n");
+  }
+
+  if (true != module->comm_registered) {
+      module->comm_registered = true;
+      need_register = true;
+  }
+  OPAL_THREAD_UNLOCK(&module->mutex);
+
+  handle->tag = tmp_tag;
+
+  /* register progress */
+  if (need_register) {
+      int32_t tmp =
+          OPAL_THREAD_ADD_FETCH32(&mca_coll_libnbc_component.active_comms, 1);
+      if (tmp == 1) {
+          opal_progress_register(ompi_coll_libnbc_progress);
+      }
+  }
+
+  handle->comm=comm;
+  /*printf("got module: %lu tag: %i\n", module, module->tag);*/
+
+  /******************** end of tag and shadow comm administration ...  ***************/
+  handle->comminfo = module;
+
+  NBC_DEBUG(3, "got tag %i\n", handle->tag);
+
   handle->tmpbuf = tmpbuf;
-
-  res = NBC_Start (handle, schedule);
-  if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-    NBC_Return_handle (handle);
-    return res;
-  }
-
+  handle->schedule = schedule;
   *request = (ompi_request_t *) handle;
+
   return OMPI_SUCCESS;
 }
 

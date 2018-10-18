@@ -14,8 +14,8 @@ dnl Copyright (c) 2007-2009 Sun Microsystems, Inc.  All rights reserved.
 dnl Copyright (c) 2008-2015 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2012-2017 Los Alamos National Security, LLC. All rights
 dnl                         reserved.
-dnl Copyright (c) 2015      Research Organization for Information Science
-dnl                         and Technology (RIST). All rights reserved.
+dnl Copyright (c) 2015-2018 Research Organization for Information Science
+dnl                         and Technology (RIST).  All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -24,52 +24,44 @@ dnl $HEADER$
 dnl
 
 AC_DEFUN([OPAL_CC_HELPER],[
-    OPAL_VAR_SCOPE_PUSH([opal_prog_cc_c11_helper_tmp])
+    OPAL_VAR_SCOPE_PUSH([opal_cc_helper_result])
     AC_MSG_CHECKING([$1])
 
-    opal_prog_cc_c11_helper_tmp=0
+    AC_LINK_IFELSE([AC_LANG_PROGRAM([$3],[$4])],
+                   [$2=1
+                    opal_cc_helper_result=yes],
+                   [$2=0
+                    opal_cc_helper_result=no])
 
-    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([$3],[$4])],[
-                          $2=yes
-                          opal_prog_cc_c11_helper_tmp=1], [$2=no])
-
-    AC_DEFINE_UNQUOTED([$5], [$opal_prog_cc_c11_helper_tmp], [$6])
-
-    AC_MSG_RESULT([$$2])
+    AC_MSG_RESULT([$opal_cc_helper_result])
     OPAL_VAR_SCOPE_POP
 ])
 
 
 AC_DEFUN([OPAL_PROG_CC_C11_HELPER],[
-    OPAL_VAR_SCOPE_PUSH([opal_prog_cc_c11_helper_CFLAGS_save opal_prog_cc_c11_helper__Thread_local_available opal_prog_cc_c11_helper_atomic_var_available opal_prog_cc_c11_helper__Atomic_available opal_prog_cc_c11_helper__static_assert_available opal_prog_cc_c11_helper__Generic_available])
+    OPAL_VAR_SCOPE_PUSH([opal_prog_cc_c11_helper_CFLAGS_save])
 
     opal_prog_cc_c11_helper_CFLAGS_save=$CFLAGS
     CFLAGS="$CFLAGS $1"
 
-    OPAL_CC_HELPER([if $CC $1 supports C11 thread local storage], [opal_prog_cc_c11_helper__Thread_local_available],
-                   [],[[static _Thread_local int  foo = 1;++foo;]], [OPAL_C_HAVE__THREAD_LOCAL],
-                   [Whether C compiler supports __Thread_local])
+    OPAL_CC_HELPER([if $CC $1 supports C11 _Thread_local], [opal_prog_cc_c11_helper__Thread_local_available],
+                   [],[[static _Thread_local int  foo = 1;++foo;]])
 
     OPAL_CC_HELPER([if $CC $1 supports C11 atomic variables], [opal_prog_cc_c11_helper_atomic_var_available],
-                   [[#include <stdatomic.h>]], [[static atomic_long foo = 1;++foo;]], [OPAL_C_HAVE_ATOMIC_CONV_VAR],
-                   [Whether C compiler support atomic convenience variables in stdatomic.h])
+                   [[#include <stdatomic.h>]], [[static atomic_long foo = 1;++foo;]])
 
     OPAL_CC_HELPER([if $CC $1 supports C11 _Atomic keyword], [opal_prog_cc_c11_helper__Atomic_available],
-                   [[#include <stdatomic.h>]],[[static _Atomic long foo = 1;++foo;]], [OPAL_C_HAVE__ATOMIC],
-                   [Whether C compiler supports __Atomic keyword])
+                   [[#include <stdatomic.h>]],[[static _Atomic long foo = 1;++foo;]])
 
     OPAL_CC_HELPER([if $CC $1 supports C11 _Generic keyword], [opal_prog_cc_c11_helper__Generic_available],
-                   [[#define FOO(x) (_Generic (x, int: 1))]], [[static int x, y; y = FOO(x);]], [OPAL_C_HAVE__GENERIC],
-                   [Whether C compiler supports __Generic keyword])
+                   [[#define FOO(x) (_Generic (x, int: 1))]], [[static int x, y; y = FOO(x);]])
 
     OPAL_CC_HELPER([if $CC $1 supports C11 _Static_assert], [opal_prog_cc_c11_helper__static_assert_available],
-                   [[#include <stdint.h>]],[[_Static_assert(sizeof(int64_t) == 8, "WTH");]], [OPAL_C_HAVE__STATIC_ASSERT],
-                   [Whether C compiler support _Static_assert keyword])
+                   [[#include <stdint.h>]],[[_Static_assert(sizeof(int64_t) == 8, "WTH");]])
 
-    dnl At this time Open MPI only needs thread local and the atomic convenience types for C11 support. These
-    dnl will likely be required in the future.
-    AS_IF([test "x$opal_prog_cc_c11_helper__Thread_local_available" = "xyes" && test "x$opal_prog_cc_c11_helper_atomic_var_available" = "xyes"],
-          [$2], [$3])
+    AS_IF([test $opal_prog_cc_c11_helper__Thread_local_available -eq 1 && test $opal_prog_cc_c11_helper_atomic_var_available -eq 1],
+          [$2],
+          [$3])
 
     CFLAGS=$opal_prog_cc_c11_helper_CFLAGS_save
 
@@ -135,6 +127,8 @@ AC_DEFUN([OPAL_SETUP_CC],[
     AC_REQUIRE([_OPAL_PROG_CC])
     AC_REQUIRE([AM_PROG_CC_C_O])
 
+    OPAL_VAR_SCOPE_PUSH([opal_prog_cc_c11_helper__Thread_local_available opal_prog_cc_c11_helper_atomic_var_available opal_prog_cc_c11_helper__Atomic_available opal_prog_cc_c11_helper__static_assert_available opal_prog_cc_c11_helper__Generic_available opal_prog_cc__thread_available])
+
     # AC_PROG_CC_C99 changes CC (instead of CFLAGS) so save CC (without c99
     # flags) for use in our wrappers.
     WRAPPER_CC="$CC"
@@ -157,8 +151,35 @@ AC_DEFUN([OPAL_SETUP_CC],[
 
         # Get the correct result for C11 support flags now that the compiler flags have
         # changed
-        OPAL_PROG_CC_C11_HELPER([],[],[])
+        OPAL_PROG_CC_C11_HELPER([], [], [])
     fi
+
+    # Check if compiler support __thread
+    OPAL_CC_HELPER([if $CC $1 supports __thread], [opal_prog_cc__thread_available],
+               [],[[static __thread int  foo = 1;++foo;]])
+
+    OPAL_CC_HELPER([if $CC $1 supports C11 _Thread_local], [opal_prog_cc_c11_helper__Thread_local_available],
+                   [],[[static _Thread_local int  foo = 1;++foo;]])
+
+    dnl At this time Open MPI only needs thread local and the atomic convenience types for C11 support. These
+    dnl will likely be required in the future.
+    AC_DEFINE_UNQUOTED([OPAL_C_HAVE__THREAD_LOCAL], [$opal_prog_cc_c11_helper__Thread_local_available],
+                       [Whether C compiler supports __Thread_local])
+
+    AC_DEFINE_UNQUOTED([OPAL_C_HAVE_ATOMIC_CONV_VAR], [$opal_prog_cc_c11_helper_atomic_var_available],
+                       [Whether C compiler support atomic convenience variables in stdatomic.h])
+
+    AC_DEFINE_UNQUOTED([OPAL_C_HAVE__ATOMIC], [$opal_prog_cc_c11_helper__Atomic_available],
+                       [Whether C compiler supports __Atomic keyword])
+
+    AC_DEFINE_UNQUOTED([OPAL_C_HAVE__GENERIC], [$opal_prog_cc_c11_helper__Generic_available],
+                       [Whether C compiler supports __Generic keyword])
+
+    AC_DEFINE_UNQUOTED([OPAL_C_HAVE__STATIC_ASSERT], [$opal_prog_cc_c11_helper__static_assert_available],
+                       [Whether C compiler support _Static_assert keyword])
+
+    AC_DEFINE_UNQUOTED([OPAL_C_HAVE___THREAD], [$opal_prog_cc__thread_available],
+                       [Whether C compiler supports __thread])
 
     OPAL_C_COMPILER_VENDOR([opal_c_vendor])
 
@@ -455,6 +476,7 @@ AC_DEFUN([OPAL_SETUP_CC],[
     OPAL_ENSURE_CONTAINS_OPTFLAGS(["$CFLAGS"])
     AC_MSG_RESULT([$co_result])
     CFLAGS="$co_result"
+    OPAL_VAR_SCOPE_POP
 ])
 
 

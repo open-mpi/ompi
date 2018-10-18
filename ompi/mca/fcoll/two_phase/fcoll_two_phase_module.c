@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2015 University of Houston. All rights reserved.
+ * Copyright (c) 2018      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -53,7 +55,7 @@ mca_fcoll_two_phase_component_init_query(bool enable_progress_threads,
 }
 
 mca_fcoll_base_module_1_0_0_t *
-mca_fcoll_two_phase_component_file_query (mca_io_ompio_file_t *fh, int *priority)
+mca_fcoll_two_phase_component_file_query (ompio_file_t *fh, int *priority)
 {
     *priority = mca_fcoll_two_phase_priority;
     if (0 >= mca_fcoll_two_phase_priority) {
@@ -61,15 +63,15 @@ mca_fcoll_two_phase_component_file_query (mca_io_ompio_file_t *fh, int *priority
     }
 
     if (mca_fcoll_base_query_table (fh, "two_phase")) {
-        if (*priority < 50) {
-            *priority = 50;
+        if (*priority < 35) {
+            *priority = 35;
         }
     }
 
     return &two_phase;
 }
 
-int mca_fcoll_two_phase_component_file_unquery (mca_io_ompio_file_t *file)
+int mca_fcoll_two_phase_component_file_unquery (ompio_file_t *file)
 {
    /* This function might be needed for some purposes later. for now it
     * does not have anything to do since there are no steps which need
@@ -78,13 +80,13 @@ int mca_fcoll_two_phase_component_file_unquery (mca_io_ompio_file_t *file)
    return OMPI_SUCCESS;
 }
 
-int mca_fcoll_two_phase_module_init (mca_io_ompio_file_t *file)
+int mca_fcoll_two_phase_module_init (ompio_file_t *file)
 {
     return OMPI_SUCCESS;
 }
 
 
-int mca_fcoll_two_phase_module_finalize (mca_io_ompio_file_t *file)
+int mca_fcoll_two_phase_module_finalize (ompio_file_t *file)
 {
     return OMPI_SUCCESS;
 }

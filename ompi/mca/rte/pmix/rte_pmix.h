@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2014      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -49,20 +49,21 @@ typedef uint32_t ompi_vpid_t;
 
 /* some local storage */
 OMPI_DECLSPEC extern opal_process_name_t pmix_name_wildcard;
-OMPI_DECLSPEC extern opal_process_name_t pmix_proc_my_name;
 OMPI_DECLSPEC extern hwloc_cpuset_t ompi_proc_applied_binding;
 
-#define OMPI_PROC_MY_NAME (&pmix_proc_my_name)
+#define OMPI_PROC_MY_NAME (&pmix_process_info.my_name)
 #define OMPI_NAME_WILDCARD  (&pmix_name_wildcard)
 
 typedef uint8_t ompi_rte_cmp_bitmask_t;
 #define OMPI_RTE_CMP_NONE   0x00
 #define OMPI_RTE_CMP_JOBID  0x02
 #define OMPI_RTE_CMP_VPID   0x04
-#define OMPI_RTE_CMP_ALL    0x04
+#define OMPI_RTE_CMP_ALL    0x0f
 #define OMPI_RTE_CMP_WILD   0x10
 
-#define OMPI_NAME_PRINT(a) OPAL_NAME_PRINT((*(a)))
+OMPI_DECLSPEC char* ompi_pmix_print_name(const ompi_process_name_t *name);
+
+#define OMPI_NAME_PRINT(a) ompi_pmix_print_name(a)
 OMPI_DECLSPEC int ompi_rte_compare_name_fields(ompi_rte_cmp_bitmask_t mask,
                                                const opal_process_name_t* name1,
                                                const opal_process_name_t* name2);
@@ -71,11 +72,17 @@ OMPI_DECLSPEC int ompi_rte_convert_string_to_process_name(opal_process_name_t *n
 OMPI_DECLSPEC int ompi_rte_convert_process_name_to_string(char** name_string,
                                                           const opal_process_name_t *name);
 
-#define OMPI_LOCAL_JOBID(jobid) jobid
-#define OMPI_JOB_FAMILY(jobid)  0
-/* do a little with the "family" param to avoid compiler warnings */
-#define OMPI_CONSTRUCT_JOBID(family,local) \
-    ((family & 0x0000) | local)
+#define OMPI_LOCAL_JOBID(n) \
+    ( (n) & 0x0000ffff)
+#define OMPI_JOB_FAMILY(n)  \
+    (((n) >> 16) & 0x0000ffff)
+#define OMPI_CONSTRUCT_LOCAL_JOBID(local, job) \
+    ( ((local) & 0xffff0000) | ((job) & 0x0000ffff) )
+#define OMPI_CONSTRUCT_JOB_FAMILY(n) \
+    ( ((n) << 16) & 0xffff0000)
+
+#define OMPI_CONSTRUCT_JOBID(family, local) \
+    OMPI_CONSTRUCT_LOCAL_JOBID(OMPI_CONSTRUCT_JOB_FAMILY(family), local)
 
 /* This is the DSS tag to serialize a proc name */
 #define OMPI_NAME OPAL_NAME

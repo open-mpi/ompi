@@ -11,6 +11,7 @@
 
 #include "oshmem/constants.h"
 #include "oshmem/include/shmem.h"
+#include "oshmem/include/shmemx.h"
 
 #include "oshmem/runtime/runtime.h"
 
@@ -47,13 +48,16 @@
 #pragma weak shmem_longlong_wait = pshmem_longlong_wait
 #pragma weak shmemx_int32_wait = pshmemx_int32_wait
 #pragma weak shmemx_int64_wait = pshmemx_int64_wait
-#pragma weak shmem_wait_until = pshmem_wait_until
 #pragma weak shmem_short_wait_until = pshmem_short_wait_until
 #pragma weak shmem_int_wait_until = pshmem_int_wait_until
 #pragma weak shmem_long_wait_until = pshmem_long_wait_until
 #pragma weak shmem_longlong_wait_until = pshmem_longlong_wait_until
 #pragma weak shmemx_int32_wait_until = pshmemx_int32_wait_until
 #pragma weak shmemx_int64_wait_until = pshmemx_int64_wait_until
+#pragma weak shmem_short_test = pshmem_short_test
+#pragma weak shmem_int_test = pshmem_int_test
+#pragma weak shmem_long_test = pshmem_long_test
+#pragma weak shmem_longlong_test = pshmem_longlong_test
 #include "oshmem/shmem/c/profile/defines.h"
 #endif
 
@@ -82,10 +86,32 @@ SHMEM_TYPE_WAIT(_int64, int64_t, SHMEM_INT64_T, shmemx)
         return ;                                                    \
     }
 
-SHMEM_TYPE_WAIT_UNTIL(, volatile long, SHMEM_LONG, shmem)
 SHMEM_TYPE_WAIT_UNTIL(_short, volatile short, SHMEM_SHORT, shmem)
 SHMEM_TYPE_WAIT_UNTIL(_int, volatile int, SHMEM_INT, shmem)
 SHMEM_TYPE_WAIT_UNTIL(_long, volatile long, SHMEM_LONG, shmem)
 SHMEM_TYPE_WAIT_UNTIL(_longlong, volatile long long, SHMEM_LLONG, shmem)
 SHMEM_TYPE_WAIT_UNTIL(_int32, int32_t, SHMEM_INT32_T, shmemx)
 SHMEM_TYPE_WAIT_UNTIL(_int64, int64_t, SHMEM_INT64_T, shmemx)
+
+#define SHMEM_TYPE_TEST(type_name, type, code, prefix)              \
+    int prefix##type_name##_test(type *addr, int cmp, type value)   \
+    {                                                               \
+        int rc = OSHMEM_SUCCESS;                                    \
+        int out_value;                                              \
+                                                                    \
+        RUNTIME_CHECK_INIT();                                       \
+                                                                    \
+        rc = MCA_SPML_CALL(test(                                    \
+            (void*)addr,                                            \
+            cmp,                                                    \
+            (void*)&value,                                          \
+            code, &out_value));                                     \
+        RUNTIME_CHECK_RC(rc);                                       \
+                                                                    \
+        return out_value;                                           \
+    }
+
+SHMEM_TYPE_TEST(_short, volatile short, SHMEM_SHORT, shmem)
+SHMEM_TYPE_TEST(_int, volatile int, SHMEM_INT, shmem)
+SHMEM_TYPE_TEST(_long, volatile long, SHMEM_LONG, shmem)
+SHMEM_TYPE_TEST(_longlong, volatile long long, SHMEM_LLONG, shmem)

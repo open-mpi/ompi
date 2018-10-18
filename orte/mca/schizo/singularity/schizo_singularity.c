@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2016-2018 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -68,7 +68,7 @@ static int setup_fork(orte_job_t *jdata, orte_app_context_t *app)
     /* Make sure we prepend the path Singularity was called by incase that
      * path is not defined on the nodes */
     if (0 < strlen(OPAL_SINGULARITY_PATH)) {
-        if (0 > asprintf(&pth, "%s/singularity", OPAL_SINGULARITY_PATH) ) {
+        if (0 > opal_asprintf(&pth, "%s/singularity", OPAL_SINGULARITY_PATH) ) {
             /* Something bad happened, let's move on */
             return ORTE_ERR_TAKE_NEXT_OPTION;
         }
@@ -87,7 +87,7 @@ static int setup_fork(orte_job_t *jdata, orte_app_context_t *app)
         /* add to PATH */
         if (0 == strncmp("PATH=", app->env[i], 5)) {
             t2 = opal_dirname(pth);
-            if (0 < asprintf(&newenv, "%s:%s", t2, app->env[i] + 5) ) {
+            if (0 < opal_asprintf(&newenv, "%s:%s", t2, app->env[i] + 5) ) {
                 opal_setenv("PATH", newenv, true, &app->env);
                 free(newenv);
             }

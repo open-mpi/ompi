@@ -3,6 +3,8 @@
 ! Copyright (c) 2010-2013 Cisco Systems, Inc.  All rights reserved.
 ! Copyright (c) 2009-2012 Los Alamos National Security, LLC.
 !                         All rights reserved.
+! Copyright (c) 2018      Research Organization for Information Science
+!                         and Technology (RIST).  All rights reserved.
 ! $COPYRIGHT$
 
 subroutine PMPI_Dist_graph_create_adjacent_f08(comm_old,indegree,sources,sourceweights,&
@@ -25,6 +27,6 @@ subroutine PMPI_Dist_graph_create_adjacent_f08(comm_old,indegree,sources,sourcew
    call PMPI_Dist_graph_create_adjacent(comm_old%MPI_VAL,indegree,sources,&
                                           sourceweights,outdegree,destinations,&
                                           destweights,info%MPI_VAL,&
-                                          reorder,comm_dist_graph%MPI_VAL,ierror)
+                                          reorder,comm_dist_graph%MPI_VAL,c_ierror)
    if (present(ierror)) ierror = c_ierror
 end subroutine PMPI_Dist_graph_create_adjacent_f08

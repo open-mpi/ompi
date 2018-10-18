@@ -19,6 +19,7 @@
  * Copyright (c) 2017      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  *
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -39,6 +40,7 @@
 #include "opal/runtime/opal_params.h"
 #include "opal/include/opal_stdint.h"
 #include "opal/mca/allocator/base/base.h"
+#include "opal/util/printf.h"
 
 #include <fcntl.h>
 #include <sys/mman.h>
@@ -133,7 +135,7 @@ void *mca_mpool_hugepage_seg_alloc (void *ctx, size_t *sizep)
 
         count = opal_atomic_add_fetch_32 (&huge_page->count, 1);
 
-        rc = asprintf (&path, "%s/hugepage.openmpi.%d.%d", huge_page->path,
+        rc = opal_asprintf (&path, "%s/hugepage.openmpi.%d.%d", huge_page->path,
                        getpid (), count);
         if (0 > rc) {
             return NULL;
@@ -183,7 +185,7 @@ void *mca_mpool_hugepage_seg_alloc (void *ctx, size_t *sizep)
 
     opal_mutex_lock (&hugepage_module->lock);
     opal_rb_tree_insert (&hugepage_module->allocation_tree, base, (void *) (intptr_t) size);
-    opal_atomic_add (&mca_mpool_hugepage_component.bytes_allocated, (int64_t) size);
+    (void) opal_atomic_fetch_add_size_t (&mca_mpool_hugepage_component.bytes_allocated, size);
     opal_mutex_unlock (&hugepage_module->lock);
 
     OPAL_OUTPUT_VERBOSE((MCA_BASE_VERBOSE_TRACE, opal_mpool_base_framework.framework_verbose,
@@ -207,7 +209,7 @@ void mca_mpool_hugepage_seg_free (void *ctx, void *addr)
         OPAL_OUTPUT_VERBOSE((MCA_BASE_VERBOSE_TRACE, opal_mpool_base_framework.framework_verbose,
                              "freeing segment %p of size %lu bytes", addr, size));
         munmap (addr, size);
-        opal_atomic_add (&mca_mpool_hugepage_component.bytes_allocated, -(int64_t) size);
+        (void) opal_atomic_fetch_add_size_t (&mca_mpool_hugepage_component.bytes_allocated, -size);
     }
 
     opal_mutex_unlock (&hugepage_module->lock);

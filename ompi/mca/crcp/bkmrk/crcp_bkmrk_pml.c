@@ -9,6 +9,7 @@
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2015      Intel, Inc. All rights reserved.
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -30,6 +31,7 @@
 #include "opal/runtime/opal_cr.h"
 #include "opal/mca/event/event.h"
 #include "opal/util/output.h"
+#include "opal/util/printf.h"
 
 #include "opal/util/opal_environ.h"
 #include "ompi/mca/mca.h"
@@ -3028,7 +3030,10 @@ ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_ft_event(
 
         if( opal_cr_timing_barrier_enabled ) {
             OPAL_CR_SET_TIMER(OPAL_CR_TIMER_CRCPBR0);
-            opal_pmix.fence(NULL, 0);
+            if( OMPI_SUCCESS != (ret = opal_pmix.fence(NULL, 0))) {
+                exit_status = ret;
+                goto DONE;
+            }
         }
         OPAL_CR_SET_TIMER(OPAL_CR_TIMER_CRCP0);
 
@@ -3096,7 +3101,10 @@ ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_ft_event(
 
         if( opal_cr_timing_barrier_enabled ) {
             OPAL_CR_SET_TIMER(OPAL_CR_TIMER_COREBR1);
-            opal_pmix.fence(NULL, 0);
+            if( OMPI_SUCCESS != (ret = opal_pmix.fence(NULL, 0))) {
+                exit_status = ret;
+                goto DONE;
+            }
         }
         OPAL_CR_SET_TIMER(OPAL_CR_TIMER_CORE2);
     }
@@ -6207,14 +6215,16 @@ static void clear_timers(void) {
 static void display_all_timers(int state) {
     bool report_ready = false;
     double barrier_start, barrier_stop;
-    int i;
+    int i, ret;
 
     if( 0 != OMPI_PROC_MY_NAME->vpid ) {
         if( 2 > timing_enabled ) {
             return;
         }
         else if( 2 == timing_enabled ) {
-            opal_pmix.fence(NULL, 0);
+            if( OPAL_SUCCESS != (ret = opal_pmix.fence(NULL, 0))) {
+                OPAL_ERROR_LOG(ret);
+            }
             return;
         }
     }
@@ -6235,7 +6245,9 @@ static void display_all_timers(int state) {
 
     if( timing_enabled >= 2) {
         barrier_start = get_time();
-        opal_pmix.fence(NULL, 0);
+        if( OPAL_SUCCESS != (ret = opal_pmix.fence(NULL, 0))) {
+            OPAL_ERROR_LOG(ret);
+        }
         barrier_stop = get_time();
         opal_output(0,
                     "crcp:bkmrk: timing(%20s): %20s = %10.2f s\n",
@@ -6273,7 +6285,7 @@ static void display_indv_timer_core(int idx, int proc, int msgs, bool direct) {
         /* These timers do not mean anything in the aggregate, so only display
          * them when directly asked for */
         if( direct && timing_enabled >= 2) {
-            asprintf(&str, "Proc %2d, Msg %5d", proc, msgs);
+            opal_asprintf(&str, "Proc %2d, Msg %5d", proc, msgs);
         } else {
             return;
         }

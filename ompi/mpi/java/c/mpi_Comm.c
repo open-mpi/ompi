@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
  *                         reserved.
@@ -696,7 +696,7 @@ JNIEXPORT void JNICALL Java_mpi_Comm_abort(
 JNIEXPORT void JNICALL Java_mpi_Comm_setErrhandler(
         JNIEnv *env, jobject jthis, jlong comm, jlong errhandler)
 {
-    int rc = MPI_Errhandler_set((MPI_Comm)comm, (MPI_Errhandler)errhandler);
+    int rc = MPI_Comm_set_errhandler((MPI_Comm)comm, (MPI_Errhandler)errhandler);
     ompi_java_exceptionCheck(env, rc);
 }
 
@@ -704,7 +704,7 @@ JNIEXPORT jlong JNICALL Java_mpi_Comm_getErrhandler(
         JNIEnv *env, jobject jthis, jlong comm)
 {
     MPI_Errhandler errhandler;
-    int rc = MPI_Errhandler_get((MPI_Comm)comm, &errhandler);
+    int rc = MPI_Comm_get_errhandler((MPI_Comm)comm, &errhandler);
     ompi_java_exceptionCheck(env, rc);
     return (jlong)errhandler;
 }

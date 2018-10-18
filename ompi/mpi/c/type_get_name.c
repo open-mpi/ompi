@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2018 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -22,6 +22,8 @@
 #include "ompi_config.h"
 
 #include <string.h>
+
+#include "opal/util/string_copy.h"
 
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/runtime/params.h"
@@ -71,6 +73,6 @@ int MPI_Type_get_name(MPI_Datatype type, char *type_name, int *resultlen)
        able to completely fit into MPI_MAX_OBJECT_NAME bytes (i.e.,
        name+\0). */
    *resultlen = (int)strlen(type->name);
-   strncpy(type_name, type->name, MPI_MAX_OBJECT_NAME);
+   opal_string_copy(type_name, type->name, MPI_MAX_OBJECT_NAME);
    return MPI_SUCCESS;
 }

@@ -8,6 +8,7 @@
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -19,6 +20,8 @@
 
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_component_repository.h"
+#include "opal/util/printf.h"
+#include "opal/util/string_copy.h"
 #include "ompi/constants.h"
 #include "ompi/mca/pml/base/base.h"
 #include "ompi/mca/vprotocol/vprotocol.h"
@@ -141,13 +144,12 @@ static int mca_pml_v_component_close(void)
 
     /* Mark that we have changed something */
     char *new_name;
-    asprintf(&new_name, "%s]v%s",
+    opal_asprintf(&new_name, "%s]v%s",
              mca_pml_v.host_pml_component.pmlm_version.mca_component_name,
              mca_vprotocol_component.pmlm_version.mca_component_name);
-    size_t len = sizeof(mca_pml_base_selected_component.pmlm_version.mca_component_name);
-    strncpy(mca_pml_base_selected_component.pmlm_version.mca_component_name,
-            new_name, len - 1);
-    mca_pml_base_selected_component.pmlm_version.mca_component_name[len - 1] = '\0';
+    opal_string_copy(mca_pml_base_selected_component.pmlm_version.mca_component_name,
+                     new_name,
+                     sizeof(mca_pml_base_selected_component.pmlm_version.mca_component_name));
     free(new_name);
 
     /* Replace finalize */

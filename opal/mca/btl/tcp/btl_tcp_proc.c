@@ -17,6 +17,7 @@
  * Copyright (c) 2015-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2015-2018 Cisco Systems, Inc.  All rights reserved
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -42,6 +43,7 @@
 #include "opal/util/net.h"
 #include "opal/util/proc.h"
 #include "opal/util/show_help.h"
+#include "opal/util/printf.h"
 
 #include "btl_tcp.h"
 #include "btl_tcp_proc.h"
@@ -51,10 +53,10 @@ static void mca_btl_tcp_proc_destruct(mca_btl_tcp_proc_t* proc);
 
 struct mca_btl_tcp_proc_data_t {
     mca_btl_tcp_interface_t** local_interfaces;
-    int local_kindex_to_index[MAX_KERNEL_INTERFACE_INDEX];
+    opal_hash_table_t local_kindex_to_index;
     size_t num_local_interfaces, max_local_interfaces;
     size_t num_peer_interfaces;
-    int peer_kindex_to_index[MAX_KERNEL_INTERFACE_INDEX];
+    opal_hash_table_t peer_kindex_to_index;
     unsigned int *best_assignment;
     int max_assignment_weight;
     int max_assignment_cardinality;
@@ -280,8 +282,6 @@ static mca_btl_tcp_interface_t** mca_btl_tcp_retrieve_local_interfaces(mca_btl_t
     if( NULL == proc_data->local_interfaces )
         return NULL;
 
-    memset(proc_data->local_kindex_to_index, -1, sizeof(int)*MAX_KERNEL_INTERFACE_INDEX);
-
     /* Collect up the list of included and excluded interfaces, if any */
     include = opal_argv_split(mca_btl_tcp_component.tcp_if_include,',');
     exclude = opal_argv_split(mca_btl_tcp_component.tcp_if_exclude,',');
@@ -291,7 +291,8 @@ static mca_btl_tcp_interface_t** mca_btl_tcp_retrieve_local_interfaces(mca_btl_t
      * the local node
      */
     for( idx = opal_ifbegin(); idx >= 0; idx = opal_ifnext (idx) ) {
-        int kindex, index;
+        int kindex;
+        uint64_t index;
         bool skip = false;
 
         opal_ifindextoaddr (idx, (struct sockaddr*) &local_addr, sizeof (local_addr));
@@ -340,12 +341,12 @@ static mca_btl_tcp_interface_t** mca_btl_tcp_retrieve_local_interfaces(mca_btl_t
         }
 
         kindex = opal_ifindextokindex(idx);
-        index = proc_data->local_kindex_to_index[kindex];
+        int rc = opal_hash_table_get_value_uint32(&proc_data->local_kindex_to_index, kindex, (void**) &index);
 
         /* create entry for this kernel index previously not seen */
-        if(-1 == index) {
+        if (OPAL_SUCCESS != rc) {
             index = proc_data->num_local_interfaces++;
-            proc_data->local_kindex_to_index[kindex] = index;
+            opal_hash_table_set_value_uint32(&proc_data->local_kindex_to_index, kindex, (void*)(uintptr_t) index);
 
             if( proc_data->num_local_interfaces == proc_data->max_local_interfaces ) {
                 proc_data->max_local_interfaces <<= 1;
@@ -359,7 +360,7 @@ static mca_btl_tcp_interface_t** mca_btl_tcp_retrieve_local_interfaces(mca_btl_t
             mca_btl_tcp_initialise_interface(proc_data->local_interfaces[index], kindex, index);
         }
 
-        local_interface = proc_data->local_interfaces[proc_data->local_kindex_to_index[kindex]];
+        local_interface = proc_data->local_interfaces[index];
         switch(local_addr.ss_family) {
         case AF_INET:
             /* if AF is disabled, skip it completely */
@@ -414,18 +415,23 @@ int mca_btl_tcp_proc_insert( mca_btl_tcp_proc_t* btl_proc,
 {
     struct sockaddr_storage endpoint_addr_ss;
     const char *proc_hostname;
-    unsigned int perm_size;
+    unsigned int perm_size = 0;
     int rc, *a = NULL;
     size_t i, j;
     mca_btl_tcp_interface_t** peer_interfaces = NULL;
     mca_btl_tcp_proc_data_t _proc_data, *proc_data=&_proc_data;
     size_t max_peer_interfaces;
-    memset(proc_data, 0, sizeof(mca_btl_tcp_proc_data_t));
     char str_local[128], str_remote[128];
 
     if (NULL == (proc_hostname = opal_get_proc_hostname(btl_proc->proc_opal))) {
         return OPAL_ERR_UNREACH;
     }
+
+    memset(proc_data, 0, sizeof(mca_btl_tcp_proc_data_t));
+    OBJ_CONSTRUCT(&_proc_data.local_kindex_to_index, opal_hash_table_t);
+    opal_hash_table_init(&_proc_data.local_kindex_to_index, 8);
+    OBJ_CONSTRUCT(&_proc_data.peer_kindex_to_index, opal_hash_table_t);
+    opal_hash_table_init(&_proc_data.peer_kindex_to_index, 8);
 
 #ifndef WORDS_BIGENDIAN
     /* if we are little endian and our peer is not so lucky, then we
@@ -457,7 +463,6 @@ int mca_btl_tcp_proc_insert( mca_btl_tcp_proc_t* btl_proc,
         goto exit;
     }
     proc_data->num_peer_interfaces = 0;
-    memset(proc_data->peer_kindex_to_index, -1, sizeof(int)*MAX_KERNEL_INTERFACE_INDEX);
 
     /*
      * identify all kernel interfaces and the associated addresses of
@@ -466,17 +471,17 @@ int mca_btl_tcp_proc_insert( mca_btl_tcp_proc_t* btl_proc,
 
     for( i = 0; i < btl_proc->proc_addr_count; i++ ) {
 
-        int index;
+        uint64_t index;
 
         mca_btl_tcp_addr_t* endpoint_addr = btl_proc->proc_addrs + i;
 
         mca_btl_tcp_proc_tosocks (endpoint_addr, &endpoint_addr_ss);
 
-        index = proc_data->peer_kindex_to_index[endpoint_addr->addr_ifkindex];
+        rc = opal_hash_table_get_value_uint32(&proc_data->peer_kindex_to_index, endpoint_addr->addr_ifkindex, (void**) &index);
 
-        if(-1 == index) {
+        if (OPAL_SUCCESS != rc) {
             index = proc_data->num_peer_interfaces++;
-            proc_data->peer_kindex_to_index[endpoint_addr->addr_ifkindex] = index;
+            opal_hash_table_set_value_uint32(&proc_data->peer_kindex_to_index, endpoint_addr->addr_ifkindex, (void*)(uintptr_t) index);
             if( proc_data->num_peer_interfaces == max_peer_interfaces ) {
                 max_peer_interfaces <<= 1;
                 peer_interfaces = (mca_btl_tcp_interface_t**)realloc( peer_interfaces,
@@ -729,12 +734,16 @@ int mca_btl_tcp_proc_insert( mca_btl_tcp_proc_t* btl_proc,
         }
         free(proc_data->local_interfaces[i]);
     }
-    free(proc_data->local_interfaces);
+    free(proc_data->local_interfaces); proc_data->local_interfaces = NULL;
     proc_data->max_local_interfaces = 0;
 
-    free(proc_data->weights);
-    free(proc_data->best_addr);
-    free(proc_data->best_assignment);
+    free(proc_data->weights); proc_data->weights = NULL;
+    free(proc_data->best_addr); proc_data->best_addr = NULL;
+    free(proc_data->best_assignment); proc_data->best_assignment = NULL;
+
+    OBJ_DESTRUCT(&_proc_data.local_kindex_to_index);
+    OBJ_DESTRUCT(&_proc_data.peer_kindex_to_index);
+
     free(a);
 
     return rc;
@@ -826,7 +835,7 @@ void mca_btl_tcp_proc_accept(mca_btl_tcp_proc_t* btl_proc, struct sockaddr* addr
         mca_btl_base_endpoint_t* btl_endpoint = btl_proc->proc_endpoints[i];
         /* We are not here to make a decision about what is good socket
          * and what is not. We simply check that this socket fit the endpoint
-         * end we prepare for the real decision function mca_btl_tcp_endpoint_accept. */ 
+         * end we prepare for the real decision function mca_btl_tcp_endpoint_accept. */
         if( btl_endpoint->endpoint_addr->addr_family != addr->sa_family) {
             continue;
         }
@@ -866,6 +875,10 @@ void mca_btl_tcp_proc_accept(mca_btl_tcp_proc_t* btl_proc, struct sockaddr* addr
                                               tmp[1], INET6_ADDRSTRLEN),
                                     (int)i, (int)btl_proc->proc_endpoint_count);
                 continue;
+            } else if (btl_endpoint->endpoint_state != MCA_BTL_TCP_CLOSED) {
+                 found_match = 1;
+                 match_btl_endpoint = btl_endpoint;
+                 continue;
             }
             break;
 #endif
@@ -881,7 +894,7 @@ void mca_btl_tcp_proc_accept(mca_btl_tcp_proc_t* btl_proc, struct sockaddr* addr
     }
     /* In this case the connection was inbound to an address exported, but was not in a CLOSED state.
      * mca_btl_tcp_endpoint_accept() has logic to deal with the race condition that has likely caused this
-     * scenario, so call it here.*/     
+     * scenario, so call it here.*/
     if (found_match) {
         (void)mca_btl_tcp_endpoint_accept(match_btl_endpoint, addr, sd);
         OPAL_THREAD_UNLOCK(&btl_proc->proc_lock);
@@ -890,17 +903,22 @@ void mca_btl_tcp_proc_accept(mca_btl_tcp_proc_t* btl_proc, struct sockaddr* addr
     /* No further use of this socket. Close it */
     CLOSE_THE_SOCKET(sd);
     {
-        char *addr_str = NULL, *tmp, *pnet;
+        char *addr_str = NULL, *tmp;
+        char ip[128];
+        ip[sizeof(ip) - 1] = '\0';
+
         for (size_t i = 0; i < btl_proc->proc_endpoint_count; i++) {
             mca_btl_base_endpoint_t* btl_endpoint = btl_proc->proc_endpoints[i];
             if (btl_endpoint->endpoint_addr->addr_family != addr->sa_family) {
                 continue;
             }
-            pnet = opal_net_get_hostname((struct sockaddr*)&btl_endpoint->endpoint_addr->addr_inet);
+            inet_ntop(btl_endpoint->endpoint_addr->addr_family,
+                      (void*) &(btl_endpoint->endpoint_addr->addr_inet),
+                      ip, sizeof(ip) - 1);
             if (NULL == addr_str) {
-                (void)asprintf(&tmp, "\n\t%s", pnet);
+                opal_asprintf(&tmp, "\n\t%s", ip);
             } else {
-                (void)asprintf(&tmp, "%s\n\t%s", addr_str, pnet);
+                opal_asprintf(&tmp, "%s\n\t%s", addr_str, ip);
                 free(addr_str);
             }
             addr_str = tmp;
@@ -911,6 +929,7 @@ void mca_btl_tcp_proc_accept(mca_btl_tcp_proc_t* btl_proc, struct sockaddr* addr
                        btl_proc->proc_opal->proc_hostname,
                        OPAL_NAME_PRINT(btl_proc->proc_opal->proc_name),
                        opal_net_get_hostname((struct sockaddr*)addr),
+                       btl_proc->proc_endpoint_count,
                        (NULL == addr_str) ? "NONE" : addr_str);
         if (NULL != addr_str) {
             free(addr_str);

@@ -8,6 +8,7 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  *
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -31,6 +32,7 @@
 #include "opal/util/output.h"
 #include "opal/util/proc.h"
 #include "opal/util/show_help.h"
+#include "opal/util/printf.h"
 
 #include "opal/util/sys_limits.h"
 #include "opal/align.h"
@@ -90,7 +92,7 @@ int opal_btl_openib_connect_base_register(void)
     }
     all_cpc_names = opal_argv_join(temp, ',');
     opal_argv_free(temp);
-    asprintf(&string,
+    opal_asprintf(&string,
              "Method used to select OpenFabrics connections (valid values: %s)",
              all_cpc_names);
 
@@ -102,7 +104,7 @@ int opal_btl_openib_connect_base_register(void)
                                            &btl_openib_cpc_include);
     free(string);
 
-    asprintf(&string,
+    opal_asprintf(&string,
              "Method used to exclude OpenFabrics connections (valid values: %s)",
              all_cpc_names);
 

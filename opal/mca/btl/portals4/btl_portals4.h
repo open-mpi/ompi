@@ -92,7 +92,7 @@ struct mca_btl_portals4_module_t {
 
     /* number of processes we're actively connected to.  Needed to
        know when to do activation / shutdown */
-    int32_t portals_num_procs;
+    opal_atomic_int32_t portals_num_procs;
 
     /* number of the interface (btl) */
     uint32_t interface_num;
@@ -111,11 +111,11 @@ struct mca_btl_portals4_module_t {
     ptl_handle_eq_t recv_eq_h;
 
     /* number outstanding sends and local rdma */
-    volatile int32_t portals_outstanding_ops;
+    opal_atomic_int32_t portals_outstanding_ops;
     int32_t portals_max_outstanding_ops;
 
     /* key to use for next rdma operation */
-    volatile int64_t portals_rdma_key;
+    opal_atomic_int64_t portals_rdma_key;
 
     /* our portals network interface */
     ptl_handle_ni_t portals_ni_h;

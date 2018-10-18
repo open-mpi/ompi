@@ -9,7 +9,9 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2013-2016 University of Houston. All rights reserved.
+ * Copyright (c) 2013-2018 University of Houston. All rights reserved.
+ * Copyright (c) 2018      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -26,18 +28,15 @@
 #include "ompi/mca/sharedfp/sharedfp.h"
 #include "ompi/mca/sharedfp/base/base.h"
 #include "ompi/mca/common/ompio/common_ompio.h"
-#include "ompi/mca/io/ompio/io_ompio.h"
 
 #include <stdlib.h>
 #include <stdio.h>
 
-int mca_sharedfp_individual_collaborate_data(struct mca_sharedfp_base_data_t *sh)
+int mca_sharedfp_individual_collaborate_data(struct mca_sharedfp_base_data_t *sh, ompio_file_t *ompio_fh)
 {
     int ret = OMPI_SUCCESS;
     mca_sharedfp_individual_header_record *headnode = NULL;
     char *buff=NULL;
-    MPI_Comm comm;
-    int rank, size;
     int nodesoneachprocess = 0;
     int idx=0,i=0,j=0, l=0;
     int *ranks = NULL;
@@ -51,11 +50,6 @@ int mca_sharedfp_individual_collaborate_data(struct mca_sharedfp_base_data_t *sh
     int totalnodes = 0;
     ompi_status_public_t status;
     int recordlength=0;
-
-    comm = sh->comm;
-
-    rank = ompi_comm_rank ( comm );
-    size = ompi_comm_size ( comm );
 
     headnode = (mca_sharedfp_individual_header_record*)sh->selected_module_data;
     if ( NULL == headnode)  {
@@ -73,12 +67,12 @@ int mca_sharedfp_individual_collaborate_data(struct mca_sharedfp_base_data_t *sh
                     "Nodes of each process = %d\n",nodesoneachprocess);
     }
 
-    countbuff = (int*)malloc(size * sizeof(int));
+    countbuff = (int*)malloc(ompio_fh->f_size * sizeof(int));
     if ( NULL == countbuff  ) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
-    displ = (int*)malloc(sizeof(int) * size);
+    displ = (int*)malloc(sizeof(int) * ompio_fh->f_size);
     if ( NULL == displ ) {
         ret = OMPI_ERR_OUT_OF_RESOURCE;
 	goto exit;
@@ -92,13 +86,24 @@ int mca_sharedfp_individual_collaborate_data(struct mca_sharedfp_base_data_t *sh
 	goto exit;
     }
 
-    comm->c_coll->coll_allgather ( &nodesoneachprocess, 1, MPI_INT,
-				  countbuff, 1, MPI_INT, comm,
-				  comm->c_coll->coll_allgather_module );
+    ret = ompio_fh->f_comm->c_coll->coll_allgather ( &nodesoneachprocess, 
+                                                     1, 
+                                                     MPI_INT,
+                                                     countbuff, 
+                                                     1, 
+                                                     MPI_INT, 
+                                                     ompio_fh->f_comm,
+                                                     ompio_fh->f_comm->c_coll->coll_allgather_module );
+
+    if ( OMPI_SUCCESS != ret ) {
+	goto exit;
+    }
+
 
     if ( mca_sharedfp_individual_verbose) {
-	for (i = 0; i < size ; i++) {
-            opal_output(ompi_sharedfp_base_framework.framework_output,"sharedfp_individual_collaborate_data: Countbuff[%d] = %d\n", i, countbuff[i]);
+	for (i = 0; i < ompio_fh->f_size ; i++) {
+            opal_output(ompi_sharedfp_base_framework.framework_output,"sharedfp_individual_collaborate_data: "
+                        "Countbuff[%d] = %d\n", i, countbuff[i]);
 	}
     }
 
@@ -108,7 +113,7 @@ int mca_sharedfp_individual_collaborate_data(struct mca_sharedfp_base_data_t *sh
         local_off[0] = 0;
     }
 
-    for(i = 0; i < size; i++) {
+    for(i = 0; i < ompio_fh->f_size; i++) {
         displ[i]    = totalnodes;
 	if ( mca_sharedfp_individual_verbose ) {
             opal_output(ompi_sharedfp_base_framework.framework_output,
@@ -126,27 +131,39 @@ int mca_sharedfp_individual_collaborate_data(struct mca_sharedfp_base_data_t *sh
         ret = OMPI_ERR_OUT_OF_RESOURCE;
 	goto exit;
     }
-    for ( l=0, i=0; i<size; i++ ) {
-        for ( j=0; j<countbuff[i]; j++ ) {
+    for ( l=0, i=0; i< ompio_fh->f_size; i++ ) {
+        for ( j=0; j< countbuff[i]; j++ ) {
             ranks[l++]=i;
         }
     }
 
-    ret =  mca_sharedfp_individual_create_buff ( &timestampbuff, &offsetbuff, totalnodes, size);
+    ret =  mca_sharedfp_individual_create_buff ( &timestampbuff, &offsetbuff, totalnodes, ompio_fh->f_size);
     if ( OMPI_SUCCESS != ret ) {
 	goto exit;
     }
 
-    ret = comm->c_coll->coll_allgatherv ( ind_ts, countbuff[rank], MPI_DOUBLE,
-					 timestampbuff, countbuff, displ, MPI_DOUBLE,
-					 comm, comm->c_coll->coll_allgatherv_module );
+    ret = ompio_fh->f_comm->c_coll->coll_allgatherv ( ind_ts, 
+                                                      countbuff[ompio_fh->f_rank], 
+                                                      MPI_DOUBLE,
+                                                      timestampbuff, 
+                                                      countbuff, 
+                                                      displ, 
+                                                      MPI_DOUBLE,
+                                                      ompio_fh->f_comm, 
+                                                      ompio_fh->f_comm->c_coll->coll_allgatherv_module );
     if ( OMPI_SUCCESS != ret ) {
 	goto exit;
     }
 
-    ret = comm->c_coll->coll_allgatherv ( ind_recordlength, countbuff[rank], OMPI_OFFSET_DATATYPE,
-					 offsetbuff, countbuff, displ, OMPI_OFFSET_DATATYPE,
-					 comm, comm->c_coll->coll_allgatherv_module );
+    ret = ompio_fh->f_comm->c_coll->coll_allgatherv ( ind_recordlength, 
+                                                      countbuff[ompio_fh->f_rank], 
+                                                      OMPI_OFFSET_DATATYPE,
+                                                      offsetbuff, 
+                                                      countbuff, 
+                                                      displ, 
+                                                      OMPI_OFFSET_DATATYPE,
+                                                      ompio_fh->f_comm, 
+                                                      ompio_fh->f_comm->c_coll->coll_allgatherv_module );
     if ( OMPI_SUCCESS != ret ) {
 	goto exit;
     }
@@ -176,21 +193,27 @@ int mca_sharedfp_individual_collaborate_data(struct mca_sharedfp_base_data_t *sh
         }
 
 	/*Read from the local data file*/
-	mca_common_ompio_file_read_at ( headnode->datafilehandle,
-				      local_off[i], buff, ind_recordlength[i],
-				      MPI_BYTE, &status);
+	ret = mca_common_ompio_file_read_at ( headnode->datafilehandle,
+                                              local_off[i], buff, ind_recordlength[i],
+                                              MPI_BYTE, &status);
+        if ( OMPI_SUCCESS != ret ) {
+            goto exit;
+        }
 
-	idx =  mca_sharedfp_individual_getoffset(ind_ts[i],timestampbuff, ranks, rank, totalnodes);
+	idx =  mca_sharedfp_individual_getoffset(ind_ts[i],timestampbuff, ranks, ompio_fh->f_rank, totalnodes);
 
 	if ( mca_sharedfp_individual_verbose ) {
             opal_output(ompi_sharedfp_base_framework.framework_output,
                         "sharedfp_individual_collaborate_data: Process %d writing %ld bytes to main file at position"
-                        "%lld (%d)\n", rank, ind_recordlength[i], offsetbuff[idx], idx);
+                        "%lld (%d)\n", ompio_fh->f_rank, ind_recordlength[i], offsetbuff[idx], idx);
         }
 
 	/*Write into main data file*/
-	mca_common_ompio_file_write_at( sh->sharedfh, offsetbuff[idx], buff,
-				      ind_recordlength[i], MPI_BYTE, &status);
+	ret = mca_common_ompio_file_write_at( ompio_fh, offsetbuff[idx], buff,
+                                              ind_recordlength[i], MPI_BYTE, &status);
+        if ( OMPI_SUCCESS != ret ) {
+            goto exit;
+        }
 
     }
 
@@ -228,7 +251,8 @@ exit:
 }
 
 /* Count the number of nodes and create and array of the timestamps*/
-int  mca_sharedfp_individual_get_timestamps_and_reclengths ( double **buff, long **rec_length, MPI_Offset **offbuff,struct mca_sharedfp_base_data_t *sh)
+int  mca_sharedfp_individual_get_timestamps_and_reclengths ( double **buff, long **rec_length, 
+                                                             MPI_Offset **offbuff,struct mca_sharedfp_base_data_t *sh)
 {
     int num = 0, i= 0, ctr = 0;
     int ret=OMPI_SUCCESS;
@@ -276,7 +300,11 @@ int  mca_sharedfp_individual_get_timestamps_and_reclengths ( double **buff, long
         ctr = 0;
         for (i = 0; i < headnode->numofrecordsonfile ; i++)  {
 
-            mca_common_ompio_file_read_at(headnode->metadatafilehandle,metaoffset, &rec, 32, MPI_BYTE,&status);
+            ret = mca_common_ompio_file_read_at(headnode->metadatafilehandle,metaoffset, 
+                                                &rec, 32, MPI_BYTE,&status);
+            if ( OMPI_SUCCESS != ret ) {
+                goto exit;
+            }
 
             *(*rec_length + ctr) = rec.recordlength;
             *(*buff + ctr) = rec.timestamp;
@@ -389,7 +417,8 @@ int  mca_sharedfp_individual_sort_timestamps(double **ts, MPI_Offset **off, int 
 }
 
 
-MPI_Offset  mca_sharedfp_individual_assign_globaloffset(MPI_Offset **offsetbuff,int totalnodes,struct mca_sharedfp_base_data_t *sh)
+MPI_Offset  mca_sharedfp_individual_assign_globaloffset(MPI_Offset **offsetbuff,int totalnodes,
+                                                        struct mca_sharedfp_base_data_t *sh)
 {
     int i = 0;
     OMPI_MPI_OFFSET_TYPE temp = 0,prevoffset = 0;

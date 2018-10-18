@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2011-2017 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2011      UT-Battelle, LLC. All rights reserved.
  * $COPYRIGHT$
@@ -41,11 +41,40 @@ OBJ_CLASS_INSTANCE(mca_btl_ugni_eager_frag_t, mca_btl_base_descriptor_t,
 static void mca_btl_ugni_post_descriptor_constructor (mca_btl_ugni_post_descriptor_t *desc)
 {
     desc->cq = NULL;
-    desc->ep_handle = NULL;
 }
 
 OBJ_CLASS_INSTANCE(mca_btl_ugni_post_descriptor_t, opal_free_list_item_t,
                    mca_btl_ugni_post_descriptor_constructor, NULL);
+
+static void mca_btl_ugni_rdma_desc_constructor (mca_btl_ugni_rdma_desc_t *desc)
+{
+    desc->device = NULL;
+    desc->gni_handle = 0;
+    desc->tries = 0;
+}
+
+static void mca_btl_ugni_rdma_desc_destructor (mca_btl_ugni_rdma_desc_t *desc)
+{
+    if (0 != desc->gni_handle) {
+        (void) GNI_EpDestroy (desc->gni_handle);
+        desc->gni_handle = 0;
+    }
+}
+
+int mca_btl_ugni_rdma_desc_init (opal_free_list_item_t *item, void *ctx)
+{
+    mca_btl_ugni_rdma_desc_t *rdma_desc = (mca_btl_ugni_rdma_desc_t *) item;
+    mca_btl_ugni_device_t *device = (mca_btl_ugni_device_t *) ctx;
+    gni_return_t grc;
+
+    grc = GNI_EpCreate (device->dev_handle, device->dev_rdma_local_cq.gni_handle, &rdma_desc->gni_handle);
+    rdma_desc->device = device;
+    return mca_btl_rc_ugni_to_opal (grc);
+}
+
+
+OBJ_CLASS_INSTANCE(mca_btl_ugni_rdma_desc_t, opal_free_list_item_t,
+                   mca_btl_ugni_rdma_desc_constructor, mca_btl_ugni_rdma_desc_destructor);
 
 int mca_btl_ugni_frag_init (mca_btl_ugni_base_frag_t *frag, void *id)
 {

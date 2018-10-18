@@ -13,7 +13,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2018 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -277,6 +277,7 @@ static int create_listen(void)
     }
 
     /* get the address info for this interface */
+    memset(&inaddr, 0, sizeof(inaddr));
     ((struct sockaddr_in*) &inaddr)->sin_family = AF_INET;
     ((struct sockaddr_in*) &inaddr)->sin_addr.s_addr = INADDR_ANY;
     addrlen = sizeof(struct sockaddr_in);
@@ -393,7 +394,7 @@ static int create_listen(void)
         }
         opal_list_append(&mca_oob_tcp_component.listeners, &conn->item);
         /* and to our ports */
-        asprintf(&tconn, "%d", ntohs(((struct sockaddr_in*) &inaddr)->sin_port));
+        opal_asprintf(&tconn, "%d", ntohs(((struct sockaddr_in*) &inaddr)->sin_port));
         opal_argv_append_nosize(&mca_oob_tcp_component.ipv4ports, tconn);
         free(tconn);
         if (OOB_TCP_DEBUG_CONNECT <= opal_output_get_verbosity(orte_oob_base_framework.framework_output)) {
@@ -529,6 +530,7 @@ static int create_listen6(void)
     }
 
     /* get the address info for this interface */
+    memset(&inaddr, 0, sizeof(inaddr));
     ((struct sockaddr_in6*) &inaddr)->sin6_family = AF_INET6;
     ((struct sockaddr_in6*) &inaddr)->sin6_addr = in6addr_any;
     addrlen = sizeof(struct sockaddr_in6);
@@ -633,7 +635,7 @@ static int create_listen6(void)
         conn->port = ntohs(((struct sockaddr_in6*) &inaddr)->sin6_port);
         opal_list_append(&mca_oob_tcp_component.listeners, &conn->item);
         /* and to our ports */
-        asprintf(&tconn, "%d", ntohs(((struct sockaddr_in6*) &inaddr)->sin6_port));
+        opal_asprintf(&tconn, "%d", ntohs(((struct sockaddr_in6*) &inaddr)->sin6_port));
         opal_argv_append_nosize(&mca_oob_tcp_component.ipv6ports, tconn);
         free(tconn);
         if (OOB_TCP_DEBUG_CONNECT <= opal_output_get_verbosity(orte_oob_base_framework.framework_output)) {

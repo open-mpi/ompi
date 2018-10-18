@@ -10,11 +10,11 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2018 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
  * $COPYRIGHT$
@@ -43,7 +43,6 @@
 #include "opal/util/argv.h"
 #include "opal/util/opal_getcwd.h"
 #include "opal/util/output.h"
-#include "opal/util/strncpy.h"
 #include "opal/util/info.h"
 
 #include "ompi/info/info.h"
@@ -258,6 +257,9 @@ int ompi_mpiinfo_finalize(void)
     opal_list_item_t *item;
     opal_info_entry_t *entry;
     bool found = false;
+
+    OBJ_DESTRUCT(&ompi_mpi_info_null);
+    OBJ_DESTRUCT(&ompi_mpi_info_env);
 
     /* Go through the f2c table and see if anything is left.  Free them
        all. */

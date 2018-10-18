@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015-2018 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2015      Intel, Inc. All rights reserved
  * $COPYRIGHT$
  *
@@ -44,13 +44,7 @@ int MPI_Initialized(int *flag)
 
     ompi_hook_base_mpi_initialized_top(flag);
 
-    /* We must obtain the lock to guarnatee consistent values of
-       ompi_mpi_initialized and ompi_mpi_finalized.  Note, too, that
-       this lock is held for the bulk of the duration of
-       ompi_mpi_init() and ompi_mpi_finalize(), so when we get the
-       lock, we are guaranteed that some other thread is not part way
-       through initialization or finalization. */
-    opal_mutex_lock(&ompi_mpi_bootstrap_mutex);
+    int32_t state = ompi_mpi_state;
 
     if (MPI_PARAM_CHECK) {
         if (NULL == flag) {
@@ -59,12 +53,11 @@ int MPI_Initialized(int *flag)
                whether we're currently (after MPI_Init and before
                MPI_Finalize) or not */
 
-            if (ompi_mpi_initialized && !ompi_mpi_finalized) {
-                opal_mutex_unlock(&ompi_mpi_bootstrap_mutex);
+            if (state >= OMPI_MPI_STATE_INIT_COMPLETED &&
+                state < OMPI_MPI_STATE_FINALIZE_PAST_COMM_SELF_DESTRUCT) {
                 return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
                                               FUNC_NAME);
             } else {
-                opal_mutex_unlock(&ompi_mpi_bootstrap_mutex);
                 /* We have no MPI object here so call ompi_errhandle_invoke
                  * directly */
                 return ompi_errhandler_invoke(NULL, NULL, -1,
@@ -74,8 +67,7 @@ int MPI_Initialized(int *flag)
         }
     }
 
-    *flag = ompi_mpi_initialized;
-    opal_mutex_unlock(&ompi_mpi_bootstrap_mutex);
+    *flag = (state >= OMPI_MPI_STATE_INIT_COMPLETED);
 
     ompi_hook_base_mpi_initialized_bottom(flag);
 

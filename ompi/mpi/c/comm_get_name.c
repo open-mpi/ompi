@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2018 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -23,12 +23,14 @@
 
 #include <string.h>
 
+#include "opal/threads/mutex.h"
+#include "opal/util/string_copy.h"
+
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/totalview.h"
-#include "opal/threads/mutex.h"
 #include "ompi/memchecker.h"
 
 #if OMPI_BUILD_MPI_PROFILING
@@ -72,7 +74,7 @@ int MPI_Comm_get_name(MPI_Comm comm, char *name, int *length)
        able to completely fit into MPI_MAX_OBJECT_NAME bytes (i.e.,
        name+\0). */
     if ( comm->c_flags & OMPI_COMM_NAMEISSET ) {
-        strncpy(name, comm->c_name, MPI_MAX_OBJECT_NAME);
+        opal_string_copy(name, comm->c_name, MPI_MAX_OBJECT_NAME);
         *length = (int) strlen(comm->c_name);
     } else {
         name[0] = '\0';

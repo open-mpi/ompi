@@ -26,7 +26,7 @@
 BEGIN_C_DECLS
 
 typedef struct ompi_wait_sync_t {
-    int32_t count;
+    opal_atomic_int32_t count;
     int32_t status;
     pthread_cond_t condition;
     pthread_mutex_t lock;

@@ -2,7 +2,7 @@
 /*
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014-2018 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
@@ -39,7 +39,9 @@ int MPI_T_finalize (void)
     if (0 == --ompi_mpit_init_count) {
         (void) ompi_info_close_components ();
 
-        if ((!ompi_mpi_initialized || ompi_mpi_finalized) &&
+        int32_t state = ompi_mpi_state;
+        if ((state < OMPI_MPI_STATE_INIT_COMPLETED ||
+             state >= OMPI_MPI_STATE_FINALIZE_PAST_COMM_SELF_DESTRUCT) &&
             (NULL != ompi_mpi_main_thread)) {
             /* we are not between MPI_Init and MPI_Finalize so we
              * have to free the ompi_mpi_main_thread */

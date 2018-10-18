@@ -61,6 +61,8 @@ static int mca_spml_ikrit_get_async(void *src_addr,
                                     void *dst_addr,
                                     int src);
 
+mca_spml_ikrit_ctx_t mca_spml_ikrit_ctx_default = { 0 };
+
 struct mca_spml_ikrit_put_request {
     opal_free_list_item_t   link;   /* must be a first member */
     mxm_send_req_t          mxm_req;
@@ -151,6 +153,8 @@ int mca_spml_ikrit_put_simple(void* dst_addr,
 
 static void mca_spml_ikrit_cache_mkeys(sshmem_mkey_t *, uint32_t seg, int remote_pe, int tr_id);
 
+static mxm_mem_key_t *mca_spml_ikrit_get_mkey_slow(int pe, void *va, int ptl_id, void **rva);
+
 mca_spml_ikrit_t mca_spml_ikrit = {
     {
         /* Init mca_spml_base_module_t */
@@ -160,6 +164,8 @@ mca_spml_ikrit_t mca_spml_ikrit = {
         mca_spml_ikrit_register,
         mca_spml_ikrit_deregister,
         mca_spml_ikrit_oob_get_mkeys,
+        mca_spml_ikrit_ctx_create,
+        mca_spml_ikrit_ctx_destroy,
         mca_spml_ikrit_put,
         mca_spml_ikrit_put_nb,
         mca_spml_ikrit_get,
@@ -168,6 +174,8 @@ mca_spml_ikrit_t mca_spml_ikrit = {
         mca_spml_ikrit_send,
         mca_spml_base_wait,
         mca_spml_base_wait_nb,
+        mca_spml_base_test,
+        mca_spml_ikrit_fence, /* fence is implemented as quiet */
         mca_spml_ikrit_fence,
         mca_spml_ikrit_cache_mkeys,
         mca_spml_base_rmkey_free,
@@ -175,7 +183,8 @@ mca_spml_ikrit_t mca_spml_ikrit = {
         mca_spml_base_memuse_hook,
 
         (void*)&mca_spml_ikrit
-    }
+    },
+    mca_spml_ikrit_get_mkey_slow
 };
 
 static void mca_spml_ikrit_cache_mkeys(sshmem_mkey_t *mkey, uint32_t seg, int dst_pe, int tr_id)
@@ -196,6 +205,7 @@ static void mca_spml_ikrit_cache_mkeys(sshmem_mkey_t *mkey, uint32_t seg, int ds
     }
 }
 
+static
 mxm_mem_key_t *mca_spml_ikrit_get_mkey_slow(int pe, void *va, int ptl_id, void **rva)
 {
     sshmem_mkey_t *mkey;
@@ -512,7 +522,7 @@ int mca_spml_ikrit_deregister(sshmem_mkey_t *mkeys)
 {
     int i;
 
-    MCA_SPML_CALL(fence());
+    MCA_SPML_CALL(fence(oshmem_ctx_default));
     if (!mkeys)
         return OSHMEM_SUCCESS;
 
@@ -566,6 +576,19 @@ int mca_spml_ikrit_oob_get_mkeys(int pe, uint32_t seg, sshmem_mkey_t *mkeys)
     return OSHMEM_ERROR;
 }
 
+int mca_spml_ikrit_ctx_create(long options, shmem_ctx_t *ctx)
+{
+    int rc = OSHMEM_SUCCESS;
+    mca_spml_ikrit_ctx_t *ctxp = malloc(sizeof(mca_spml_ikrit_ctx_t));
+    *ctx = (shmem_ctx_t)ctxp;
+    return rc;
+}
+
+void mca_spml_ikrit_ctx_destroy(shmem_ctx_t ctx)
+{
+    free(ctx);
+}
+
 static inline int mca_spml_ikrit_get_helper(mxm_send_req_t *sreq,
                                             void *src_addr,
                                             size_t size,
@@ -577,7 +600,7 @@ static inline int mca_spml_ikrit_get_helper(mxm_send_req_t *sreq,
     void *rva;
     mxm_mem_key_t *mkey;
 
-    mkey = mca_spml_ikrit_get_mkey(src, src_addr, MXM_PTL_RDMA, &rva);
+    mkey = mca_spml_ikrit_get_mkey(src, src_addr, MXM_PTL_RDMA, &rva, &mca_spml_ikrit);
 
     SPML_VERBOSE_FASTPATH(100,
                           "get: pe:%d ptl=%d src=%p -> dst: %p sz=%d. src_rva=%p",
@@ -612,7 +635,7 @@ static inline int mca_spml_ikrit_get_shm(void *src_addr,
     if (ptl_id != MXM_PTL_SHM)
         return OSHMEM_ERROR;
 
-    if (NULL != mca_spml_ikrit_get_mkey(src, src_addr, MXM_PTL_SHM, &rva))
+    if (NULL != mca_spml_ikrit_get_mkey(src, src_addr, MXM_PTL_SHM, &rva, &mca_spml_ikrit))
         return OSHMEM_ERROR;
 
     SPML_VERBOSE_FASTPATH(100,
@@ -624,7 +647,8 @@ static inline int mca_spml_ikrit_get_shm(void *src_addr,
     return OSHMEM_SUCCESS;
 }
 
-int mca_spml_ikrit_get_nb(void* src_addr,
+int mca_spml_ikrit_get_nb(shmem_ctx_t ctx,
+                          void* src_addr,
                           size_t size,
                           void* dst_addr,
                           int src,
@@ -633,7 +657,7 @@ int mca_spml_ikrit_get_nb(void* src_addr,
     return mca_spml_ikrit_get_async(src_addr, size, dst_addr, src);
 }
 
-int mca_spml_ikrit_get(void *src_addr, size_t size, void *dst_addr, int src)
+int mca_spml_ikrit_get(shmem_ctx_t ctx, void *src_addr, size_t size, void *dst_addr, int src)
 {
     mxm_send_req_t sreq;
 
@@ -797,7 +821,7 @@ static inline int mca_spml_ikrit_put_internal(void* dst_addr,
     }
 
     ptl_id = get_ptl_id(dst);
-    mkey = mca_spml_ikrit_get_mkey(dst, dst_addr, ptl_id, &rva);
+    mkey = mca_spml_ikrit_get_mkey(dst, dst_addr, ptl_id, &rva, &mca_spml_ikrit);
 
     if (OPAL_UNLIKELY(NULL == mkey)) {
         memcpy((void *) (unsigned long) rva, src_addr, size);
@@ -884,7 +908,7 @@ int mca_spml_ikrit_put_simple(void* dst_addr,
     static int count;
 
     ptl_id = get_ptl_id(dst);
-    mkey = mca_spml_ikrit_get_mkey(dst, dst_addr, ptl_id, &rva);
+    mkey = mca_spml_ikrit_get_mkey(dst, dst_addr, ptl_id, &rva, &mca_spml_ikrit);
 
     SPML_VERBOSE_FASTPATH(100, "put: pe:%d ptl=%d dst=%p <- src: %p sz=%d. dst_rva=%p, %s",
                           dst, ptl_id, dst_addr, src_addr, (int)size, (void *)rva);
@@ -933,7 +957,8 @@ int mca_spml_ikrit_put_simple(void* dst_addr,
     return OSHMEM_SUCCESS;
 }
 
-int mca_spml_ikrit_put_nb(void* dst_addr,
+int mca_spml_ikrit_put_nb(shmem_ctx_t ctx,
+                          void* dst_addr,
                           size_t size,
                           void* src_addr,
                           int dst,
@@ -949,7 +974,7 @@ int mca_spml_ikrit_put_nb(void* dst_addr,
     return OSHMEM_SUCCESS;
 }
 
-int mca_spml_ikrit_put(void* dst_addr, size_t size, void* src_addr, int dst)
+int mca_spml_ikrit_put(shmem_ctx_t ctx, void* dst_addr, size_t size, void* src_addr, int dst)
 {
     int err;
     mca_spml_ikrit_put_request_t *put_req;
@@ -980,7 +1005,7 @@ int mca_spml_ikrit_put(void* dst_addr, size_t size, void* src_addr, int dst)
 }
 
 
-int mca_spml_ikrit_fence(void)
+int mca_spml_ikrit_fence(shmem_ctx_t ctx)
 {
     mxm_peer_t *peer;
     opal_list_item_t *item;

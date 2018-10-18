@@ -1,0 +1,69 @@
+OFI MTL
+
+The OFI MTL supports Libfabric (a.k.a. Open Fabrics Interfaces OFI,
+https://ofiwg.github.io/libfabric/) tagged APIs (fi_tagged(3)). At
+initialization time, the MTL queries libfabric for providers supporting tag matching
+(fi_getinfo(3)). Libfabric will return a list of providers that satisfy the requested
+capabilities, having the most performant one at the top of the list.
+The user may modify the OFI provider selection with mca parameters
+mtl_ofi_provider_include or mtl_ofi_provider_exclude.
+
+PROGRESS:
+The MTL registers a progress function to opal_progress. There is currently
+no support for asynchronous progress. The progress function reads multiple events
+from the OFI provider Completion Queue (CQ) per iteration (defaults to 100, can be
+modified with the mca mtl_ofi_progress_event_cnt) and iterates until the
+completion queue is drained.
+
+COMPLETIONS:
+Each operation uses a request type ompi_mtl_ofi_request_t which includes a reference
+to an operation specific completion callback, an MPI request, and a context.  The
+context (fi_context) is used to map completion events with MPI_requests when reading the
+CQ.
+
+OFI TAG:
+MPI needs to send 96 bits of information per message (32 bits communicator id,
+32 bits source rank, 32 bits MPI tag) but OFI only offers 64 bits tags. In
+addition, the OFI MTL uses 2 bits of the OFI tag for the synchronous send protocol.
+Therefore, there are only 62 bits available in the OFI tag for message usage. The
+OFI MTL offers the mtl_ofi_tag_mode mca parameter with 4 modes to address this:
+
+"auto" (Default):
+After the OFI provider is selected, a runtime check is performed to assess
+FI_REMOTE_CQ_DATA and FI_DIRECTED_RECV support (see fi_tagged(3), fi_msg(2)
+and fi_getinfo(3)). If supported, "ofi_tag_full" is used. If not supported,
+fall back to "ofi_tag_1".
+
+"ofi_tag_1":
+For providers that do not support FI_REMOTE_CQ_DATA, the OFI MTL will
+trim the fields (Communicator ID, Source Rank, MPI tag) to make them fit the 62
+bits available bit in the OFI tag. There are two options available with different
+number of bits for the Communicator ID and MPI tag fields. This tag distribution
+offers: 12 bits for Communicator ID (max Communicator ID 4,095) subject to
+provider reserved bits (see mem_tag_format below), 18 bits for Source Rank (max
+Source Rank 262,143), 32 bits for MPI tag (max MPI tag is INT_MAX).
+
+"ofi_tag_2":
+Same as 2 "ofi_tag_1" but offering a different OFI tag distribution for
+applications that may require a greater number of supported Communicators at the
+expense of fewer MPI tag bits. This tag distribution offers: 24 bits for
+Communicator ID (max Communicator ED 16,777,215. See mem_tag_format below), 18
+bits for Source Rank (max Source Rank 262,143), 20 bits for MPI tag (max MPI tag
+524,287).
+
+"ofi_tag_full":
+For executions that cannot accept trimming source rank or MPI tag, this mode sends
+source rank for each message in the CQ DATA. The Source Rank is made available at
+the remote process CQ (FI_CQ_FORMAT_TAGGED is used, see fi_cq(3)) at the completion
+of the matching receive operation. Since the minimum size for FI_REMOTE_CQ_DATA
+is 32 bits, the Source Rank fits with no limitations. The OFI tag is used for the
+Communicator id (28 bits, max Communicator ID 268,435,455. See mem_tag_format below),
+and the MPI tag (max MPI tag is INT_MAX). If this mode is selected by the user
+and FI_REMOTE_CQ_DATA or FI_DIRECTED_RECV are not supported, the execution will abort.
+
+mem_tag_format (fi_endpoint(3))
+Some providers can reserve the higher order bits from the OFI tag for internal purposes.
+This is signaled in mem_tag_format (see fi_endpoint(3)) by setting higher order bits
+to zero. In such cases, the OFI MTL will reduce the number of communicator ids supported
+by reducing the bits available for the communicator ID field in the OFI tag.
+

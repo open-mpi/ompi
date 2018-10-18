@@ -13,6 +13,7 @@
  * Copyright (c) 2007-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -102,9 +103,9 @@ int opal_setenv(const char *name, const char *value, bool overwrite,
 
     if (NULL == value) {
         value = "";
-        asprintf(&newvalue, "%s=", name);
+        opal_asprintf(&newvalue, "%s=", name);
     } else {
-        asprintf(&newvalue, "%s=%s", name, value);
+        opal_asprintf(&newvalue, "%s=%s", name, value);
     }
     if (NULL == newvalue) {
         return OPAL_ERR_OUT_OF_RESOURCE;
@@ -162,7 +163,7 @@ int opal_setenv(const char *name, const char *value, bool overwrite,
 
     /* Make something easy to compare to */
 
-    asprintf(&compare, "%s=", name);
+    opal_asprintf(&compare, "%s=", name);
     if (NULL == compare) {
         free(newvalue);
         return OPAL_ERR_OUT_OF_RESOURCE;
@@ -218,7 +219,7 @@ int opal_unsetenv(const char *name, char ***env)
 
     /* Make something easy to compare to */
 
-    asprintf(&compare, "%s=", name);
+    opal_asprintf(&compare, "%s=", name);
     if (NULL == compare) {
         return OPAL_ERR_OUT_OF_RESOURCE;
     }

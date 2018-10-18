@@ -246,7 +246,6 @@ typedef unsigned int uint;
 #define HAVE_DECL___FUNC__ 1
 #endif
 
-/*#define strncpy strncpy_s*/
 /*#define sprintf sprintf_s*/
 
 /* Ugly signal mapping since windows doesn't support the full spectrum

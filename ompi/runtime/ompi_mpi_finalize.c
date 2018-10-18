@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2016 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2018 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2006-2014 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2006      University of Houston. All rights reserved.
@@ -110,22 +110,12 @@ int ompi_mpi_finalize(void)
     volatile bool active;
     uint32_t key;
     ompi_datatype_t * datatype;
-    //OPAL_TIMING_DECLARE(tm);
-    //OPAL_TIMING_INIT_EXT(&tm, OPAL_TIMING_GET_TIME_OF_DAY);
 
     ompi_hook_base_mpi_finalize_top();
 
-    /* Be a bit social if an erroneous program calls MPI_FINALIZE in
-       two different threads, otherwise we may deadlock in
-       ompi_comm_free() (or run into other nasty lions, tigers, or
-       bears).
-
-       This lock is held for the duration of ompi_mpi_init() and
-       ompi_mpi_finalize().  Hence, if we get it, then no other thread
-       is inside the critical section (and we don't have to check the
-       *_started bool variables). */
-    opal_mutex_lock(&ompi_mpi_bootstrap_mutex);
-    if (!ompi_mpi_initialized || ompi_mpi_finalized) {
+    int32_t state = ompi_mpi_state;
+    if (state < OMPI_MPI_STATE_INIT_COMPLETED ||
+        state >= OMPI_MPI_STATE_FINALIZE_STARTED) {
         /* Note that if we're not initialized or already finalized, we
            cannot raise an MPI exception.  The best that we can do is
            write something to stderr. */
@@ -133,19 +123,19 @@ int ompi_mpi_finalize(void)
         pid_t pid = getpid();
         gethostname(hostname, sizeof(hostname));
 
-        if (ompi_mpi_initialized) {
+        if (state < OMPI_MPI_STATE_INIT_COMPLETED) {
             opal_show_help("help-mpi-runtime.txt",
                            "mpi_finalize: not initialized",
                            true, hostname, pid);
-        } else if (ompi_mpi_finalized) {
+        } else if (state >= OMPI_MPI_STATE_FINALIZE_STARTED) {
             opal_show_help("help-mpi-runtime.txt",
                            "mpi_finalize:invoked_multiple_times",
                            true, hostname, pid);
         }
-        opal_mutex_unlock(&ompi_mpi_bootstrap_mutex);
         return MPI_ERR_OTHER;
     }
-    ompi_mpi_finalize_started = true;
+    opal_atomic_wmb();
+    opal_atomic_swap_32(&ompi_mpi_state, OMPI_MPI_STATE_FINALIZE_STARTED);
 
     ompi_mpiext_fini();
 
@@ -160,9 +150,14 @@ int ompi_mpi_finalize(void)
         ompi_mpi_comm_self.comm.c_keyhash = NULL;
     }
 
-    /* Proceed with MPI_FINALIZE */
-
-    ompi_mpi_finalized = true;
+    /* Mark that we are past COMM_SELF destruction so that
+       MPI_FINALIZED can return an accurate value (per MPI-3.1,
+       FINALIZED needs to return FALSE to MPI_FINALIZED until after
+       COMM_SELF is destroyed / all the attribute callbacks have been
+       invoked) */
+    opal_atomic_wmb();
+    opal_atomic_swap_32(&ompi_mpi_state,
+                        OMPI_MPI_STATE_FINALIZE_PAST_COMM_SELF_DESTRUCT);
 
     /* As finalize is the last legal MPI call, we are allowed to force the release
      * of the user buffer used for bsend, before going anywhere further.
@@ -176,9 +171,6 @@ int ompi_mpi_finalize(void)
     /* Redo ORTE calling opal_progress_event_users_increment() during
        MPI lifetime, to get better latency when not using TCP */
     opal_progress_event_users_increment();
-
-    /* check to see if we want timing information */
-    //OPAL_TIMING_MSTART((&tm,"time to execute finalize barrier"));
 
     /* NOTE: MPI-2.1 requires that MPI_FINALIZE is "collective" across
        *all* connected processes.  This only means that all processes
@@ -265,7 +257,13 @@ int ompi_mpi_finalize(void)
              * communications/actions to complete.  See
              * https://github.com/open-mpi/ompi/issues/1576 for the
              * original bug report. */
-            opal_pmix.fence_nb(NULL, 0, fence_cbfunc, (void*)&active);
+            if (OMPI_SUCCESS != (ret = opal_pmix.fence_nb(NULL, 0, fence_cbfunc,
+                                                          (void*)&active))) {
+                OMPI_ERROR_LOG(ret);
+                /* Reset the active flag to false, to avoid waiting for
+                 * completion when the fence was failed. */
+                active = false;
+            }
             OMPI_LAZY_WAIT_FOR_COMPLETION(active);
         } else {
             /* However, we cannot guarantee that the provided PMIx has
@@ -276,13 +274,11 @@ int ompi_mpi_finalize(void)
             ompi_communicator_t *comm = &ompi_mpi_comm_world.comm;
             comm->c_coll->coll_barrier(comm, comm->c_coll->coll_barrier_module);
 
-            opal_pmix.fence(NULL, 0);
+            if (OMPI_SUCCESS != (ret = opal_pmix.fence(NULL, 0))) {
+                OMPI_ERROR_LOG(ret);
+            }
         }
     }
-
-    /* check for timing request - get stop time and report elapsed
-     time if so */
-    //OPAL_TIMING_DELTAS(ompi_enable_timing, &tm);
 
     /*
      * Shutdown the Checkpoint/Restart Mech.
@@ -513,8 +509,10 @@ int ompi_mpi_finalize(void)
 
     /* All done */
 
- done:
-    opal_mutex_unlock(&ompi_mpi_bootstrap_mutex);
+  done:
+    opal_atomic_wmb();
+    opal_atomic_swap_32(&ompi_mpi_state, OMPI_MPI_STATE_FINALIZE_COMPLETED);
+
     ompi_hook_base_mpi_finalize_bottom();
 
     return ret;

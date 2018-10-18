@@ -18,12 +18,14 @@
 #define OSHMEM_SHMEM_RUNTIME_H
 
 #include "oshmem_config.h"
+#include "shmem.h"
 
 #include "opal/class/opal_list.h"
 #include "opal/class/opal_hash_table.h"
 
 #include "orte/runtime/orte_globals.h"
 #include "ompi/include/mpi.h"
+#include <pthread.h>
 
 BEGIN_C_DECLS
 
@@ -44,15 +46,33 @@ OSHMEM_DECLSPEC extern int oshmem_mpi_thread_provided;
 OSHMEM_DECLSPEC extern struct opal_thread_t *oshmem_mpi_main_thread;
 
 OSHMEM_DECLSPEC extern MPI_Comm oshmem_comm_world;
-/*
- * SHMEM_Init_thread constants
- */
-enum {
-    SHMEM_THREAD_SINGLE,
-    SHMEM_THREAD_FUNNELED,
-    SHMEM_THREAD_SERIALIZED,
-    SHMEM_THREAD_MULTIPLE
-};
+
+typedef pthread_mutex_t shmem_internal_mutex_t;
+OSHMEM_DECLSPEC extern shmem_internal_mutex_t shmem_internal_mutex_alloc;
+
+OSHMEM_DECLSPEC extern shmem_ctx_t oshmem_ctx_default;
+
+#   define SHMEM_MUTEX_INIT(_mutex)                                     \
+    do {                                                                \
+        if (oshmem_mpi_thread_provided == SHMEM_THREAD_MULTIPLE)        \
+            pthread_mutex_init(&_mutex, NULL);                          \
+    } while (0)
+#   define SHMEM_MUTEX_DESTROY(_mutex)                                  \
+    do {                                                                \
+        if (oshmem_mpi_thread_provided == SHMEM_THREAD_MULTIPLE)        \
+            pthread_mutex_destroy(&_mutex);                             \
+    } while (0)
+#   define SHMEM_MUTEX_LOCK(_mutex)                                     \
+    do {                                                                \
+        if (oshmem_mpi_thread_provided == SHMEM_THREAD_MULTIPLE)        \
+            pthread_mutex_lock(&_mutex);                                \
+    } while (0)
+#   define SHMEM_MUTEX_UNLOCK(_mutex)                                   \
+    do {                                                                \
+        if (oshmem_mpi_thread_provided == SHMEM_THREAD_MULTIPLE)        \
+            pthread_mutex_unlock(&_mutex);                              \
+    } while (0)
+
 
 /** Bitflags to be used for the modex exchange for the various thread
  *  levels. Required to support heterogeneous environments */

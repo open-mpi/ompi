@@ -34,6 +34,7 @@
 #include "opal/util/output.h"
 #include "opal/util/proc.h"
 #include "opal/util/show_help.h"
+#include "opal/util/string_copy.h"
 #include "opal/mca/pmix/base/base.h"
 #include "pmix1x.h"
 
@@ -419,7 +420,7 @@ static void opal_lkupcbfunc(int status,
                 /* convert the jobid */
                 (void)opal_snprintf_jobid(d[n].proc.nspace, PMIX_MAX_NSLEN, p->proc.jobid);
                 d[n].proc.rank = p->proc.vpid;
-                (void)strncpy(d[n].key, p->value.key, PMIX_MAX_KEYLEN);
+                (void)opal_string_copy(d[n].key, p->value.key, PMIX_MAX_KEYLEN);
                 pmix1_value_load(&d[n].value, &p->value);
             }
         }

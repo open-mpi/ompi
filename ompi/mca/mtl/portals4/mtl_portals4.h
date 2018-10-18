@@ -115,12 +115,12 @@ struct mca_mtl_portals4_module_t {
     opal_mutex_t short_block_mutex;
 
     /** number of send-side operations started */
-    uint64_t opcount;
+    opal_atomic_uint64_t opcount;
 
 #if OPAL_ENABLE_DEBUG
     /** number of receive-side operations started.  Used only for
         debugging */
-    uint64_t recv_opcount;
+    opal_atomic_uint64_t recv_opcount;
 #endif
 
 #if OMPI_MTL_PORTALS4_FLOW_CONTROL

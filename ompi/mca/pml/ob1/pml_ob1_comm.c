@@ -9,6 +9,9 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ *
+ * Copyright (c) 2018      Sandia National Laboratories
+ * 			   All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -30,16 +33,20 @@ static void mca_pml_ob1_comm_proc_construct(mca_pml_ob1_comm_proc_t* proc)
     proc->expected_sequence = 1;
     proc->send_sequence = 0;
     proc->frags_cant_match = NULL;
+#if !MCA_PML_OB1_CUSTOM_MATCH
     OBJ_CONSTRUCT(&proc->specific_receives, opal_list_t);
     OBJ_CONSTRUCT(&proc->unexpected_frags, opal_list_t);
+#endif
 }
 
 
 static void mca_pml_ob1_comm_proc_destruct(mca_pml_ob1_comm_proc_t* proc)
 {
     assert(NULL == proc->frags_cant_match);
+#if !MCA_PML_OB1_CUSTOM_MATCH
     OBJ_DESTRUCT(&proc->specific_receives);
     OBJ_DESTRUCT(&proc->unexpected_frags);
+#endif
     if (proc->ompi_proc) {
         OBJ_RELEASE(proc->ompi_proc);
     }
@@ -53,7 +60,12 @@ OBJ_CLASS_INSTANCE(mca_pml_ob1_comm_proc_t, opal_object_t,
 
 static void mca_pml_ob1_comm_construct(mca_pml_ob1_comm_t* comm)
 {
+#if !MCA_PML_OB1_CUSTOM_MATCH
     OBJ_CONSTRUCT(&comm->wild_receives, opal_list_t);
+#else
+    comm->prq = custom_match_prq_init();
+    comm->umq = custom_match_umq_init();
+#endif
     OBJ_CONSTRUCT(&comm->matching_lock, opal_mutex_t);
     OBJ_CONSTRUCT(&comm->proc_lock, opal_mutex_t);
     comm->recv_sequence = 0;
@@ -75,7 +87,12 @@ static void mca_pml_ob1_comm_destruct(mca_pml_ob1_comm_t* comm)
         free(comm->procs);
     }
 
+#if !MCA_PML_OB1_CUSTOM_MATCH
     OBJ_DESTRUCT(&comm->wild_receives);
+#else
+    custom_match_prq_destroy(comm->prq);
+    custom_match_umq_destroy(comm->umq);
+#endif
     OBJ_DESTRUCT(&comm->matching_lock);
     OBJ_DESTRUCT(&comm->proc_lock);
 }

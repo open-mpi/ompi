@@ -546,9 +546,9 @@ int mca_btl_tcp_recv_blocking(int sd, void* data, size_t size)
         int retval = recv(sd, ((char *)ptr) + cnt, size - cnt, 0);
         /* remote closed connection */
         if (0 == retval) {
-	    OPAL_OUTPUT_VERBOSE((100, opal_btl_base_framework.framework_output,
-				"remote peer unexpectedly closed connection while I was waiting for a blocking message"));
-	    break;
+            OPAL_OUTPUT_VERBOSE((100, opal_btl_base_framework.framework_output,
+                                 "remote peer unexpectedly closed connection while I was waiting for a blocking message"));
+            break;
         }
 
         /* socket is non-blocking so handle errors */
@@ -557,7 +557,7 @@ int mca_btl_tcp_recv_blocking(int sd, void* data, size_t size)
                 opal_socket_errno != EAGAIN &&
                 opal_socket_errno != EWOULDBLOCK) {
                 BTL_ERROR(("recv(%d) failed: %s (%d)", sd, strerror(opal_socket_errno), opal_socket_errno));
-		break;
+                break;
             }
             continue;
         }

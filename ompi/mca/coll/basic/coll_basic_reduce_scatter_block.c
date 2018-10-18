@@ -12,7 +12,7 @@
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2012      Sandia National Laboratories. All rights reserved.
- * Copyright (c) 2014-2016 Research Organization for Information Science
+ * Copyright (c) 2014-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -57,57 +57,8 @@ mca_coll_basic_reduce_scatter_block_intra(const void *sbuf, void *rbuf, int rcou
                                           struct ompi_communicator_t *comm,
                                           mca_coll_base_module_t *module)
 {
-    int rank, size, count, err = OMPI_SUCCESS;
-    ptrdiff_t gap, span;
-    char *recv_buf = NULL, *recv_buf_free = NULL;
-
-    /* Initialize */
-    rank = ompi_comm_rank(comm);
-    size = ompi_comm_size(comm);
-
-    /* short cut the trivial case */
-    count = rcount * size;
-    if (0 == count) {
-        return OMPI_SUCCESS;
-    }
-
-    /* get datatype information */
-    span = opal_datatype_span(&dtype->super, count, &gap);
-
-    /* Handle MPI_IN_PLACE */
-    if (MPI_IN_PLACE == sbuf) {
-        sbuf = rbuf;
-    }
-
-    if (0 == rank) {
-        /* temporary receive buffer.  See coll_basic_reduce.c for
-           details on sizing */
-        recv_buf_free = (char*) malloc(span);
-        if (NULL == recv_buf_free) {
-            err = OMPI_ERR_OUT_OF_RESOURCE;
-            goto cleanup;
-        }
-        recv_buf = recv_buf_free - gap;
-    }
-
-    /* reduction */
-    err =
-        comm->c_coll->coll_reduce(sbuf, recv_buf, count, dtype, op, 0,
-                                 comm, comm->c_coll->coll_reduce_module);
-
-    /* scatter */
-    if (MPI_SUCCESS == err) {
-        err = comm->c_coll->coll_scatter(recv_buf, rcount, dtype,
-                                        rbuf, rcount, dtype, 0,
-                                        comm, comm->c_coll->coll_scatter_module);
-    }
-
- cleanup:
-    if (NULL != recv_buf_free) free(recv_buf_free);
-
-    return err;
+    return ompi_coll_base_reduce_scatter_block_basic_linear(sbuf, rbuf, rcount, dtype, op, comm, module);
 }
-
 
 /*
  *	reduce_scatter_block_inter

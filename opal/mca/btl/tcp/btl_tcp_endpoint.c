@@ -10,10 +10,11 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2008 Sun Microsystems, Inc.  All rights reserved.
- * Copyright (c) 2013      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013-2018 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2014      Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -54,6 +55,8 @@
 #include "opal/util/net.h"
 #include "opal/util/show_help.h"
 #include "opal/util/proc.h"
+#include "opal/util/printf.h"
+#include "opal/util/string_copy.h"
 #include "opal/mca/btl/base/btl_base_error.h"
 
 #include "btl_tcp.h"
@@ -401,7 +404,8 @@ mca_btl_tcp_endpoint_send_connect_ack(mca_btl_base_endpoint_t* btl_endpoint)
     OPAL_PROCESS_NAME_HTON(guid);
     
     mca_btl_tcp_endpoint_hs_msg_t hs_msg;
-    strcpy(hs_msg.magic_id, mca_btl_tcp_magic_id_string);
+    opal_string_copy(hs_msg.magic_id, mca_btl_tcp_magic_id_string,
+                     sizeof(hs_msg.magic_id));
     hs_msg.guid = guid;
     
     if(sizeof(hs_msg) != 
@@ -717,34 +721,39 @@ static int mca_btl_tcp_endpoint_start_connect(mca_btl_base_endpoint_t* btl_endpo
 
     /* start the connect - will likely fail with EINPROGRESS */
     mca_btl_tcp_proc_tosocks(btl_endpoint->endpoint_addr, &endpoint_addr);
-    
+
     /* Bind the socket to one of the addresses associated with
      * this btl module.  This sets the source IP to one of the 
      * addresses shared in modex, so that the destination rank 
      * can properly pair btl modules, even in cases where Linux 
      * might do something unexpected with routing */
-    opal_socklen_t sockaddr_addrlen = sizeof(struct sockaddr_storage);
     if (endpoint_addr.ss_family == AF_INET) {
         assert(NULL != &btl_endpoint->endpoint_btl->tcp_ifaddr);
         if (bind(btl_endpoint->endpoint_sd, (struct sockaddr*) &btl_endpoint->endpoint_btl->tcp_ifaddr,
-		 sockaddr_addrlen) < 0) {
-	    BTL_ERROR(("bind() failed: %s (%d)", strerror(opal_socket_errno), opal_socket_errno));
+                 sizeof(struct sockaddr_in)) < 0) {
+            BTL_ERROR(("bind on local address (%s:%d) failed: %s (%d)",
+                       opal_net_get_hostname((struct sockaddr*) &btl_endpoint->endpoint_btl->tcp_ifaddr),
+                       htons(((struct sockaddr_in*)&btl_endpoint->endpoint_btl->tcp_ifaddr)->sin_port),
+                       strerror(opal_socket_errno), opal_socket_errno));
 
-	    CLOSE_THE_SOCKET(btl_endpoint->endpoint_sd);
-	    return OPAL_ERROR;
-	}
+            CLOSE_THE_SOCKET(btl_endpoint->endpoint_sd);
+            return OPAL_ERROR;
+        }
     }
 #if OPAL_ENABLE_IPV6
     if (endpoint_addr.ss_family == AF_INET6) {
         assert(NULL != &btl_endpoint->endpoint_btl->tcp_ifaddr_6);
         if (bind(btl_endpoint->endpoint_sd, (struct sockaddr*) &btl_endpoint->endpoint_btl->tcp_ifaddr_6,
-	    sockaddr_addrlen) < 0) {
-	    BTL_ERROR(("bind() failed: %s (%d)", strerror(opal_socket_errno), opal_socket_errno));
+                 sizeof(struct sockaddr_in6)) < 0) {
+            BTL_ERROR(("bind on local address (%s:%d) failed: %s (%d)",
+                       opal_net_get_hostname((struct sockaddr*) &btl_endpoint->endpoint_btl->tcp_ifaddr),
+                       htons(((struct sockaddr_in*)&btl_endpoint->endpoint_btl->tcp_ifaddr)->sin_port),
+                       strerror(opal_socket_errno), opal_socket_errno));
 
-	    CLOSE_THE_SOCKET(btl_endpoint->endpoint_sd);
-	    return OPAL_ERROR;
-        }    
-    }  
+            CLOSE_THE_SOCKET(btl_endpoint->endpoint_sd);
+            return OPAL_ERROR;
+        }
+    }
 #endif
     opal_output_verbose(10, opal_btl_base_framework.framework_output,
                         "btl: tcp: attempting to connect() to %s address %s on port %d",
@@ -833,7 +842,7 @@ static int mca_btl_tcp_endpoint_complete_connect(mca_btl_base_endpoint_t* btl_en
     }
     if(so_error != 0) {
         char *msg;
-        asprintf(&msg, "connect() to %s:%d failed",
+        opal_asprintf(&msg, "connect() to %s:%d failed",
                  opal_net_get_hostname((struct sockaddr*) &endpoint_addr),
                  ntohs(((struct sockaddr_in*) &endpoint_addr)->sin_port));
         opal_show_help("help-mpi-btl-tcp.txt", "client connect fail",

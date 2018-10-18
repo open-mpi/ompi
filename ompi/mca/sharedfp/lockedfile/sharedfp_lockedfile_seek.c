@@ -9,7 +9,9 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2013-2016 University of Houston. All rights reserved.
+ * Copyright (c) 2013-2018 University of Houston. All rights reserved.
+ * Copyright (c) 2018      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -30,76 +32,60 @@
 #include <fcntl.h>
 
 int
-mca_sharedfp_lockedfile_seek (mca_io_ompio_file_t *fh,
-                              OMPI_MPI_OFFSET_TYPE offset, int whence)
+mca_sharedfp_lockedfile_seek (ompio_file_t *fh,
+                              OMPI_MPI_OFFSET_TYPE off, int whence)
 {
-    int rank;
     int ret = OMPI_SUCCESS;
     struct mca_sharedfp_base_data_t *sh = NULL;
-    mca_sharedfp_base_module_t * shared_fp_base_module;
     struct mca_sharedfp_lockedfile_data * lockedfile_data;
     int fd_lockedfilehandle;
     /* flock structure that is used to setup the desired fcntl operation */
     struct flock fl;
+    OMPI_MPI_OFFSET_TYPE offset, end_position=0;
 
     if(fh->f_sharedfp_data==NULL){
 	opal_output(ompi_sharedfp_base_framework.framework_output,
-		    "sharedfp_lockedfile_seek - opening the shared file pointer\n");
-        shared_fp_base_module = fh->f_sharedfp;
-
-        ret = shared_fp_base_module->sharedfp_file_open(fh->f_comm,
-                                                        fh->f_filename,
-                                                        fh->f_amode,
-                                                        fh->f_info,
-                                                        fh);
-        if (ret != OMPI_SUCCESS) {
-            opal_output(0,"sharedfp_lockedfile_seek - error opening the shared file pointer\n");
-            return ret;
-        }
+		    "sharedfp_lockedfile_seek: module not initialized\n");
+        return OMPI_ERROR;
     }
 
     sh = fh->f_sharedfp_data;
-    rank = ompi_comm_rank ( sh->comm );
+    offset = off * fh->f_etype_size;
 
-    if( 0 == rank ){
+    if( 0 == fh->f_rank ){
         if ( MPI_SEEK_SET == whence ){
             /*don't need to read current value*/
             if(offset < 0){
-                opal_output(0,"sharedfp_lockedfile_seek - MPI_SEEK_SET, offset must be > 0, got offset=%lld.\n",offset);
-                ret = -1;
+                opal_output(0,"sharedfp_lockedfile_seek - MPI_SEEK_SET, offset must be > 0,"
+                            " got offset=%lld.\n",offset);
+                return OMPI_ERROR;
             }
-            opal_output(ompi_sharedfp_base_framework.framework_output,"MPI_SEEK_SET: new_offset=%lld\n",offset);
-            fflush(stdout);
         }
 	else if ( MPI_SEEK_CUR == whence){
             OMPI_MPI_OFFSET_TYPE current_position;
-            int status = mca_sharedfp_lockedfile_get_position(fh,&current_position);
-            opal_output(ompi_sharedfp_base_framework.framework_output,
-			"MPI_SEEK_CUR: curr=%lld, offset=%lld, call status=%d\n",current_position,offset,status);
+            ret = mca_sharedfp_lockedfile_get_position(fh,&current_position);
+            if ( OMPI_SUCCESS != ret ) {
+                return OMPI_ERROR;
+            }
 
             offset = current_position + offset;
-            opal_output(ompi_sharedfp_base_framework.framework_output,
-			"MPI_SEEK_CUR: new_offset=%lld\n",offset);
             fflush(stdout);
             if(offset < 0){
-                opal_output(0,"sharedfp_lockedfile_seek - MPI_SEEK_CURE, offset must be > 0, got offset=%lld.\n",offset);
-                ret = -1;
+                opal_output(0,"sharedfp_lockedfile_seek - MPI_SEEK_CUR, offset must be > 0, got offset=%lld.\n",offset);
+                return OMPI_ERROR;
             }
         }
 	else if( MPI_SEEK_END == whence ){
-            OMPI_MPI_OFFSET_TYPE end_position=0;
-            mca_common_ompio_file_get_size(sh->sharedfh,&end_position);
+            mca_common_ompio_file_get_size( fh,&end_position);
             offset = end_position + offset;
-	    opal_output(ompi_sharedfp_base_framework.framework_output,
-			"MPI_SEEK_END: file_get_size=%lld\n",end_position);
 
             if ( offset < 0){
                 opal_output(0,"sharedfp_lockedfile_seek - MPI_SEEK_CUR, offset must be > 0, got offset=%lld.\n",offset);
-                ret = -1;
+                return OMPI_ERROR;
             }
         }else{
             opal_output(0,"sharedfp_lockedfile_seek - whence=%i is not supported\n",whence);
-            ret = -1;
+            return OMPI_ERROR;
         }
 
 
@@ -160,6 +146,6 @@ mca_sharedfp_lockedfile_seek (mca_io_ompio_file_t *fh,
         }
     }
 
-    sh->comm->c_coll->coll_barrier ( sh->comm , sh->comm->c_coll->coll_barrier_module );
-    return ret;
+    fh->f_comm->c_coll->coll_barrier ( fh->f_comm , fh->f_comm->c_coll->coll_barrier_module );
+    return OMPI_SUCCESS;
 }

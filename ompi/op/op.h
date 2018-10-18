@@ -15,6 +15,7 @@
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -37,6 +38,7 @@
 #include "mpi.h"
 
 #include "opal/class/opal_object.h"
+#include "opal/util/printf.h"
 
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/mpi/fortran/base/fint_2_int.h"
@@ -483,7 +485,7 @@ static inline bool ompi_op_is_valid(ompi_op_t * op, ompi_datatype_t * ddt,
             /* Intrinsic ddt on intrinsic op */
             if (-1 == ompi_op_ddt_map[ddt->id] ||
                 NULL == op->o_func.intrinsic.fns[ompi_op_ddt_map[ddt->id]]) {
-                (void) asprintf(msg,
+                (void) opal_asprintf(msg,
                                 "%s: the reduction operation %s is not defined on the %s datatype",
                                 func, op->o_name, ddt->name);
                 return false;
@@ -491,11 +493,11 @@ static inline bool ompi_op_is_valid(ompi_op_t * op, ompi_datatype_t * ddt,
         } else {
             /* Non-intrinsic ddt on intrinsic op */
             if ('\0' != ddt->name[0]) {
-                (void) asprintf(msg,
+                (void) opal_asprintf(msg,
                                 "%s: the reduction operation %s is not defined for non-intrinsic datatypes (attempted with datatype named \"%s\")",
                                 func, op->o_name, ddt->name);
             } else {
-                (void) asprintf(msg,
+                (void) opal_asprintf(msg,
                                 "%s: the reduction operation %s is not defined for non-intrinsic datatypes",
                                 func, op->o_name);
             }

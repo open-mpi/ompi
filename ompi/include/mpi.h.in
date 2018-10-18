@@ -9,15 +9,15 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2016 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2018 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2009-2012 Oak Rigde National Laboratory.  All rights reserved.
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
- * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2012-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2011-2013 INRIA.  All rights reserved.
  * Copyright (c) 2015      University of Houston. All rights reserved.
- * Copyright (c) 2015-2017 Research Organization for Information Science
+ * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
@@ -57,6 +57,9 @@
 
 /* Whether your compiler has __attribute__ deprecated with the optional argument */
 #undef OPAL_HAVE_ATTRIBUTE_DEPRECATED_ARGUMENT
+
+/* Whether you compiler has __attribute__ error or not */
+#undef OPAL_HAVE_ATTRIBUTE_ERROR
 
 /* Define to 1 if you have the <sys/time.h> header file. */
 #undef OPAL_HAVE_SYS_TIME_H
@@ -132,6 +135,9 @@
 
 /* Whether we have FORTRAN REAL*8 or not */
 #undef OMPI_HAVE_FORTRAN_REAL8
+
+/* Whether in include MPI-1 compatibility */
+#undef OMPI_ENABLE_MPI1_COMPAT
 
 /* Whether we have float _Complex  or not */
 #undef HAVE_FLOAT__COMPLEX
@@ -273,6 +279,10 @@
 #                    define __mpi_interface_deprecated__(msg) __attribute__((__deprecated__))
 #                endif
 #            endif
+#            if OMPI_ENABLE_MPI1_COMPAT
+#                    define __mpi_interface_removed__(msg) __mpi_interface_deprecated__(msg)
+#                    define OMPI_OMIT_MPI1_COMPAT_DECLS 0
+#            endif
 #        endif
 #    endif
 #endif
@@ -284,6 +294,14 @@
  */
 #if !defined(__mpi_interface_deprecated__)
 #    define __mpi_interface_deprecated__(msg)
+#endif
+
+#if !defined(__mpi_interface_removed__)
+#    define __mpi_interface_removed__(msg)
+#endif
+
+#if !defined(OMPI_OMIT_MPI1_COMPAT_DECLS)
+#    define OMPI_OMIT_MPI1_COMPAT_DECLS !OMPI_ENABLE_MPI1_COMPAT
 #endif
 
 /*
@@ -360,36 +378,19 @@ typedef struct ompi_status_public_t ompi_status_public_t;
 /*
  * User typedefs
  *
- * Even though MPI_Copy_function and MPI_Delete_function are
- * deprecated, we do not use the attributes marking them as such,
- * because otherwise the compiler will warn for all the functions that
- * are declared using them (e.g., MPI_Keyval_create).
  */
-typedef int (MPI_Copy_function)(MPI_Comm, int, void *,
-                                void *, void *, int *);
-typedef int (MPI_Delete_function)(MPI_Comm, int, void *, void *);
 typedef int (MPI_Datarep_extent_function)(MPI_Datatype, MPI_Aint *, void *);
 typedef int (MPI_Datarep_conversion_function)(void *, MPI_Datatype,
                                               int, void *, MPI_Offset, void *);
 typedef void (MPI_Comm_errhandler_function)(MPI_Comm *, int *, ...);
-typedef MPI_Comm_errhandler_function MPI_Comm_errhandler_fn
-        __mpi_interface_deprecated__("MPI_Comm_errhandler_fn was deprecated in MPI-2.2; use MPI_Comm_errhandler_function instead");
 
     /* This is a little hackish, but errhandler.h needs space for a
-       MPI_File_errhandler_fn.  While it could just be removed, this
+       MPI_File_errhandler_function.  While it could just be removed, this
        allows us to maintain a stable ABI within OMPI, at least for
        apps that don't use MPI I/O. */
-typedef void (ompi_file_errhandler_fn)(MPI_File *, int *, ...);
-typedef ompi_file_errhandler_fn MPI_File_errhandler_fn
-        __mpi_interface_deprecated__("MPI_File_errhandler_fn was deprecated in MPI-2.2; use MPI_File_errhandler_function instead");
-typedef ompi_file_errhandler_fn MPI_File_errhandler_function;
+typedef void (ompi_file_errhandler_function)(MPI_File *, int *, ...);
+typedef ompi_file_errhandler_function MPI_File_errhandler_function;
 typedef void (MPI_Win_errhandler_function)(MPI_Win *, int *, ...);
-typedef MPI_Win_errhandler_function MPI_Win_errhandler_fn
-        __mpi_interface_deprecated__("MPI_Win_errhandler_fn was deprecated in MPI-2.2; use MPI_Win_errhandler_function instead");
-    /* MPI_Handler_function is deprecated, but we don't mark it as
-       such because otherwise the MPI_Errhandler_create() declaration
-       would cause a warning to be issued */
-typedef void (MPI_Handler_function)(MPI_Comm *, int *, ...);
 typedef void (MPI_User_function)(void *, void *, int *, MPI_Datatype *);
 typedef int (MPI_Comm_copy_attr_function)(MPI_Comm, int, void *,
                                             void *, void *, int *);
@@ -404,6 +405,30 @@ typedef int (MPI_Win_delete_attr_function)(MPI_Win, int, void *, void *);
 typedef int (MPI_Grequest_query_function)(void *, MPI_Status *);
 typedef int (MPI_Grequest_free_function)(void *);
 typedef int (MPI_Grequest_cancel_function)(void *, int);
+
+#if !OMPI_OMIT_MPI1_COMPAT_DECLS
+/*
+ * Removed typedefs. These will be deleted in a future Open MPI release.
+ */
+typedef MPI_Comm_errhandler_function MPI_Comm_errhandler_fn
+        __mpi_interface_removed__("MPI_Comm_errhandler_fn was removed in MPI-3.0; use MPI_Comm_errhandler_function instead");
+typedef ompi_file_errhandler_function MPI_File_errhandler_fn
+        __mpi_interface_removed__("MPI_File_errhandler_fn was removed in MPI-3.0; use MPI_File_errhandler_function instead");
+typedef MPI_Win_errhandler_function MPI_Win_errhandler_fn
+        __mpi_interface_removed__("MPI_Win_errhandler_fn was removed in MPI-3.0; use MPI_Win_errhandler_function instead");
+
+/*
+ * NOTE: We intentionally do *not* mark the following as
+ * deprecated/removed because they are used below in function
+ * prototypes (and would therefore emit warnings, just for #including
+ * <mpi.h>).
+ */
+typedef void (MPI_Handler_function)(MPI_Comm *, int *, ...);
+typedef int (MPI_Copy_function)(MPI_Comm, int, void *,
+                                void *, void *, int *);
+typedef int (MPI_Delete_function)(MPI_Comm, int, void *, void *);
+#endif /* !OMPI_OMIT_MPI1_COMPAT_DECLS */
+
 
 /*
  * Miscellaneous constants
@@ -838,22 +863,6 @@ OMPI_DECLSPEC int OMPI_C_MPI_COMM_DUP_FN( MPI_Comm comm, int comm_keyval,
                                           void* attribute_val_in,
                                           void* attribute_val_out,
                                           int* flag );
-OMPI_DECLSPEC int OMPI_C_MPI_NULL_DELETE_FN( MPI_Comm comm, int comm_keyval,
-                                             void* attribute_val_out,
-                                             void* extra_state )
-                                             __mpi_interface_deprecated__("MPI_NULL_DELETE_FN is deprecated in MPI-2.0");
-OMPI_DECLSPEC int OMPI_C_MPI_NULL_COPY_FN( MPI_Comm comm, int comm_keyval,
-                                           void* extra_state,
-                                           void* attribute_val_in,
-                                           void* attribute_val_out,
-                                           int* flag )
-                                           __mpi_interface_deprecated__("MPI_NULL_COPY_FN is deprecated in MPI-2.0");
-OMPI_DECLSPEC int OMPI_C_MPI_DUP_FN( MPI_Comm comm, int comm_keyval,
-                                     void* extra_state,
-                                     void* attribute_val_in,
-                                     void* attribute_val_out,
-                                     int* flag )
-                                     __mpi_interface_deprecated__("MPI_DUP_FN is deprecated in MPI-2.0");
 OMPI_DECLSPEC int OMPI_C_MPI_WIN_NULL_DELETE_FN( MPI_Win window,
                                                  int win_keyval,
                                                  void* attribute_val_out,
@@ -868,6 +877,24 @@ OMPI_DECLSPEC int OMPI_C_MPI_WIN_DUP_FN( MPI_Win window, int win_keyval,
                                          void* attribute_val_in,
                                          void* attribute_val_out,
                                          int* flag );
+#if !OMPI_OMIT_MPI1_COMPAT_DECLS
+/*
+ * Removed in MPI-3.0. Will be deleted in a future Open MPI release.
+ */
+OMPI_DECLSPEC int OMPI_C_MPI_NULL_DELETE_FN( MPI_Comm comm, int comm_keyval,
+                                             void* attribute_val_out,
+                                             void* extra_state );
+OMPI_DECLSPEC int OMPI_C_MPI_NULL_COPY_FN( MPI_Comm comm, int comm_keyval,
+                                           void* extra_state,
+                                           void* attribute_val_in,
+                                           void* attribute_val_out,
+                                           int* flag );
+OMPI_DECLSPEC int OMPI_C_MPI_DUP_FN( MPI_Comm comm, int comm_keyval,
+                                     void* extra_state,
+                                     void* attribute_val_in,
+                                     void* attribute_val_out,
+                                     int* flag );
+#endif /* !OMPI_OMIT_MPI1_COMPAT_DECLS */
 
 /*
  * External variables
@@ -908,8 +935,6 @@ OMPI_DECLSPEC extern struct ompi_predefined_op_t ompi_mpi_op_no_op;
 
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_datatype_null;
 
-OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_lb __mpi_interface_deprecated__("MPI_LB is deprecated in MPI-2.0");
-OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_ub __mpi_interface_deprecated__("MPI_UB is deprecated in MPI-2.0");
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_char;
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_signed_char;
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_unsigned_char;
@@ -1010,6 +1035,13 @@ OMPI_DECLSPEC extern struct ompi_predefined_info_t ompi_mpi_info_env;
 OMPI_DECLSPEC extern MPI_Fint *MPI_F_STATUS_IGNORE;
 OMPI_DECLSPEC extern MPI_Fint *MPI_F_STATUSES_IGNORE;
 
+#if !OMPI_OMIT_MPI1_COMPAT_DECLS
+/*
+ * Removed datatypes
+ */
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_lb __mpi_interface_removed__("MPI_LB was removed in MPI-3.0");
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_ub __mpi_interface_removed__("MPI_UB was removed in MPI-3.0");
+#endif /* !OMPI_OMIT_MPI1_COMPAT_DECLS */
 
 /*
  * MPI predefined handles
@@ -1058,8 +1090,13 @@ OMPI_DECLSPEC extern MPI_Fint *MPI_F_STATUSES_IGNORE;
 #define MPI_LONG_INT OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_long_int)
 #define MPI_SHORT_INT OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_short_int)
 #define MPI_2INT OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_2int)
+#if !OMPI_OMIT_MPI1_COMPAT_DECLS
+/*
+ * Removed datatypes
+ */
 #define MPI_UB OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_ub)
 #define MPI_LB OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_lb)
+#endif
 #define MPI_WCHAR OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_wchar)
 #if OPAL_HAVE_LONG_LONG
 #define MPI_LONG_LONG_INT OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_long_long_int)
@@ -1182,8 +1219,6 @@ OMPI_DECLSPEC  int MPI_Accumulate(const void *origin_addr, int origin_count, MPI
 OMPI_DECLSPEC  int MPI_Add_error_class(int *errorclass);
 OMPI_DECLSPEC  int MPI_Add_error_code(int errorclass, int *errorcode);
 OMPI_DECLSPEC  int MPI_Add_error_string(int errorcode, const char *string);
-OMPI_DECLSPEC  int MPI_Address(void *location, MPI_Aint *address)
-                               __mpi_interface_deprecated__("MPI_Address is superseded by MPI_Get_address in MPI-2.0");
 OMPI_DECLSPEC  int MPI_Allgather(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
                                  void *recvbuf, int recvcount,
                                  MPI_Datatype recvtype, MPI_Comm comm);
@@ -1220,12 +1255,6 @@ OMPI_DECLSPEC  int MPI_Alltoallw(const void *sendbuf, const int sendcounts[], co
 OMPI_DECLSPEC  int MPI_Ialltoallw(const void *sendbuf, const int sendcounts[], const int sdispls[], const MPI_Datatype sendtypes[],
                                  void *recvbuf, const int recvcounts[], const int rdispls[], const MPI_Datatype recvtypes[],
                                  MPI_Comm comm, MPI_Request *request);
-OMPI_DECLSPEC  int MPI_Attr_delete(MPI_Comm comm, int keyval)
-                                   __mpi_interface_deprecated__("MPI_Attr_delete is superseded by MPI_Comm_delete_attr in MPI-2.0");
-OMPI_DECLSPEC  int MPI_Attr_get(MPI_Comm comm, int keyval, void *attribute_val, int *flag)
-                                __mpi_interface_deprecated__("MPI_Attr_get is superseded by MPI_Comm_get_attr in MPI-2.0");
-OMPI_DECLSPEC  int MPI_Attr_put(MPI_Comm comm, int keyval, void *attribute_val)
-                                __mpi_interface_deprecated__("MPI_Attr_put is superseded by MPI_Comm_set_attr in MPI-2.0");
 OMPI_DECLSPEC  int MPI_Barrier(MPI_Comm comm);
 OMPI_DECLSPEC  int MPI_Ibarrier(MPI_Comm comm, MPI_Request *request);
 OMPI_DECLSPEC  int MPI_Bcast(void *buffer, int count, MPI_Datatype datatype,
@@ -1327,15 +1356,8 @@ OMPI_DECLSPEC  int MPI_Compare_and_swap(const void *origin_addr, const void *com
                                         MPI_Aint target_disp, MPI_Win win);
 OMPI_DECLSPEC  int MPI_Dims_create(int nnodes, int ndims, int dims[]);
 OMPI_DECLSPEC  MPI_Fint MPI_Errhandler_c2f(MPI_Errhandler errhandler);
-OMPI_DECLSPEC  int MPI_Errhandler_create(MPI_Handler_function *function,
-                                         MPI_Errhandler *errhandler)
-                                         __mpi_interface_deprecated__("MPI_Errhandler_create is superseded by MPI_Comm_create_errhandler in MPI-2.0");
 OMPI_DECLSPEC  MPI_Errhandler MPI_Errhandler_f2c(MPI_Fint errhandler);
 OMPI_DECLSPEC  int MPI_Errhandler_free(MPI_Errhandler *errhandler);
-OMPI_DECLSPEC  int MPI_Errhandler_get(MPI_Comm comm, MPI_Errhandler *errhandler)
-                                      __mpi_interface_deprecated__("MPI_Errhandler_get is superseded by MPI_Comm_get_errhandler in MPI-2.0");
-OMPI_DECLSPEC  int MPI_Errhandler_set(MPI_Comm comm, MPI_Errhandler errhandler)
-                                      __mpi_interface_deprecated__("MPI_Errhandler_set is superseded by MPI_Comm_set_errhandler in MPI-2.0");
 OMPI_DECLSPEC  int MPI_Error_class(int errorcode, int *errorclass);
 OMPI_DECLSPEC  int MPI_Error_string(int errorcode, char *string, int *resultlen);
 OMPI_DECLSPEC  int MPI_Exscan(const void *sendbuf, void *recvbuf, int count,
@@ -1547,12 +1569,6 @@ OMPI_DECLSPEC  int MPI_Isend(const void *buf, int count, MPI_Datatype datatype, 
 OMPI_DECLSPEC  int MPI_Issend(const void *buf, int count, MPI_Datatype datatype, int dest,
                               int tag, MPI_Comm comm, MPI_Request *request);
 OMPI_DECLSPEC  int MPI_Is_thread_main(int *flag);
-OMPI_DECLSPEC  int MPI_Keyval_create(MPI_Copy_function *copy_fn,
-                                     MPI_Delete_function *delete_fn,
-                                     int *keyval, void *extra_state)
-                                     __mpi_interface_deprecated__("MPI_Keyval_create is superseded by MPI_Comm_create_keyval in MPI-2.0");
-OMPI_DECLSPEC  int MPI_Keyval_free(int *keyval)
-                                   __mpi_interface_deprecated__("MPI_Keyval_free is superseded by MPI_Comm_free_keyval in MPI-2.0");
 OMPI_DECLSPEC  int MPI_Lookup_name(const char *service_name, MPI_Info info, char *port_name);
 OMPI_DECLSPEC  MPI_Fint MPI_Message_c2f(MPI_Message message);
 OMPI_DECLSPEC  MPI_Message MPI_Message_f2c(MPI_Fint message);
@@ -1754,8 +1770,6 @@ OMPI_DECLSPEC  int MPI_Type_create_resized(MPI_Datatype oldtype, MPI_Aint lb,
                                            MPI_Aint extent, MPI_Datatype *newtype);
 OMPI_DECLSPEC  int MPI_Type_delete_attr(MPI_Datatype type, int type_keyval);
 OMPI_DECLSPEC  int MPI_Type_dup(MPI_Datatype type, MPI_Datatype *newtype);
-OMPI_DECLSPEC  int MPI_Type_extent(MPI_Datatype type, MPI_Aint *extent)
-                                   __mpi_interface_deprecated__("MPI_Type_extent is superseded by MPI_Type_get_extent in MPI-2.0");
 OMPI_DECLSPEC  int MPI_Type_free(MPI_Datatype *type);
 OMPI_DECLSPEC  int MPI_Type_free_keyval(int *type_keyval);
 OMPI_DECLSPEC  MPI_Datatype MPI_Type_f2c(MPI_Fint datatype);
@@ -1779,31 +1793,15 @@ OMPI_DECLSPEC  int MPI_Type_get_true_extent(MPI_Datatype datatype, MPI_Aint *tru
                                             MPI_Aint *true_extent);
 OMPI_DECLSPEC  int MPI_Type_get_true_extent_x(MPI_Datatype datatype, MPI_Count *true_lb,
                                               MPI_Count *true_extent);
-OMPI_DECLSPEC  int MPI_Type_hindexed(int count, int array_of_blocklengths[],
-                                     MPI_Aint array_of_displacements[],
-                                     MPI_Datatype oldtype, MPI_Datatype *newtype)
-                                     __mpi_interface_deprecated__("MPI_Type_hindexed is superseded by MPI_Type_create_hindexed in MPI-2.0");
-OMPI_DECLSPEC  int MPI_Type_hvector(int count, int blocklength, MPI_Aint stride,
-                                    MPI_Datatype oldtype, MPI_Datatype *newtype)
-                                    __mpi_interface_deprecated__("MPI_Type_hvector is superseded by MPI_Type_create_hvector in MPI-2.0");
 OMPI_DECLSPEC  int MPI_Type_indexed(int count, const int array_of_blocklengths[],
                                     const int array_of_displacements[],
                                     MPI_Datatype oldtype, MPI_Datatype *newtype);
-OMPI_DECLSPEC  int MPI_Type_lb(MPI_Datatype type, MPI_Aint *lb)
-                               __mpi_interface_deprecated__("MPI_Type_lb is deprecated, use MPI_Type_get_extent in MPI-2.0");
 OMPI_DECLSPEC  int MPI_Type_match_size(int typeclass, int size, MPI_Datatype *type);
 OMPI_DECLSPEC  int MPI_Type_set_attr(MPI_Datatype type, int type_keyval,
                                      void *attr_val);
 OMPI_DECLSPEC  int MPI_Type_set_name(MPI_Datatype type, const char *type_name);
 OMPI_DECLSPEC  int MPI_Type_size(MPI_Datatype type, int *size);
 OMPI_DECLSPEC  int MPI_Type_size_x(MPI_Datatype type, MPI_Count *size);
-OMPI_DECLSPEC  int MPI_Type_struct(int count, int array_of_blocklengths[],
-                                   MPI_Aint array_of_displacements[],
-                                   MPI_Datatype array_of_types[],
-                                   MPI_Datatype *newtype)
-                                   __mpi_interface_deprecated__("MPI_Type_struct is superseded by MPI_Type_create_struct in MPI-2.0");
-OMPI_DECLSPEC  int MPI_Type_ub(MPI_Datatype mtype, MPI_Aint *ub)
-                               __mpi_interface_deprecated__("MPI_Type_ub is deprecated, use MPI_Type_get_extent in MPI-2.0");
 OMPI_DECLSPEC  int MPI_Type_vector(int count, int blocklength, int stride,
                                    MPI_Datatype oldtype, MPI_Datatype *newtype);
 OMPI_DECLSPEC  int MPI_Unpack(const void *inbuf, int insize, int *position,
@@ -1880,8 +1878,6 @@ OMPI_DECLSPEC  int PMPI_Accumulate(const void *origin_addr, int origin_count, MP
 OMPI_DECLSPEC  int PMPI_Add_error_class(int *errorclass);
 OMPI_DECLSPEC  int PMPI_Add_error_code(int errorclass, int *errorcode);
 OMPI_DECLSPEC  int PMPI_Add_error_string(int errorcode, const char *string);
-OMPI_DECLSPEC  int PMPI_Address(void *location, MPI_Aint *address)
-                                __mpi_interface_deprecated__("MPI_Address is superseded by MPI_Get_address in MPI-2.0");
 OMPI_DECLSPEC  int PMPI_Allgather(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
                                   void *recvbuf, int recvcount,
                                   MPI_Datatype recvtype, MPI_Comm comm);
@@ -1918,10 +1914,6 @@ OMPI_DECLSPEC  int PMPI_Alltoallw(const void *sendbuf, const int sendcounts[], c
 OMPI_DECLSPEC  int PMPI_Ialltoallw(const void *sendbuf, const int sendcounts[], const int sdispls[], const MPI_Datatype sendtypes[],
                                   void *recvbuf, const int recvcounts[], const int rdispls[], const MPI_Datatype recvtypes[],
                                   MPI_Comm comm, MPI_Request *request);
-OMPI_DECLSPEC  int PMPI_Attr_delete(MPI_Comm comm, int keyval)
-                                    __mpi_interface_deprecated__("MPI_Attr_delete is superseded by MPI_Comm_delete_attr in MPI-2.0");
-OMPI_DECLSPEC  int PMPI_Attr_get(MPI_Comm comm, int keyval, void *attribute_val, int *flag)
-                                 __mpi_interface_deprecated__("MPI_Attr_get is superseded by MPI_Comm_get_attr in MPI-2.0");
 OMPI_DECLSPEC  int PMPI_Dist_graph_create(MPI_Comm comm_old, int n, const int nodes[],
                                           const int degrees[], const int targets[],
                                           const int weights[], MPI_Info info,
@@ -1943,8 +1935,6 @@ OMPI_DECLSPEC  int PMPI_Dist_graph_neighbors_count(MPI_Comm comm,
                                                    int *inneighbors,
                                                    int *outneighbors,
                                                    int *weighted);
-OMPI_DECLSPEC  int PMPI_Attr_put(MPI_Comm comm, int keyval, void *attribute_val)
-                                 __mpi_interface_deprecated__("MPI_Attr_put is superseded by MPI_Comm_set_attr in MPI-2.0");
 OMPI_DECLSPEC  int PMPI_Barrier(MPI_Comm comm);
 OMPI_DECLSPEC  int PMPI_Ibarrier(MPI_Comm comm, MPI_Request *request);
 OMPI_DECLSPEC  int PMPI_Bcast(void *buffer, int count, MPI_Datatype datatype,
@@ -2025,15 +2015,8 @@ OMPI_DECLSPEC  int PMPI_Compare_and_swap(const void *origin_addr, const void *co
                                          MPI_Aint target_disp, MPI_Win win);
 OMPI_DECLSPEC  int PMPI_Dims_create(int nnodes, int ndims, int dims[]);
 OMPI_DECLSPEC  MPI_Fint PMPI_Errhandler_c2f(MPI_Errhandler errhandler);
-OMPI_DECLSPEC  int PMPI_Errhandler_create(MPI_Handler_function *function,
-                                          MPI_Errhandler *errhandler)
-                                          __mpi_interface_deprecated__("MPI_Errhandler_create is superseded by MPI_Comm_create_errhandler in MPI-2.0");
 OMPI_DECLSPEC  MPI_Errhandler PMPI_Errhandler_f2c(MPI_Fint errhandler);
 OMPI_DECLSPEC  int PMPI_Errhandler_free(MPI_Errhandler *errhandler);
-OMPI_DECLSPEC  int PMPI_Errhandler_get(MPI_Comm comm, MPI_Errhandler *errhandler)
-                                       __mpi_interface_deprecated__("MPI_Errhandler_get is superseded by MPI_Comm_get_errhandler in MPI-2.0");
-OMPI_DECLSPEC  int PMPI_Errhandler_set(MPI_Comm comm, MPI_Errhandler errhandler)
-                                       __mpi_interface_deprecated__("MPI_Errhandler_set is superseded by MPI_Comm_set_errhandler in MPI-2.0");
 OMPI_DECLSPEC  int PMPI_Error_class(int errorcode, int *errorclass);
 OMPI_DECLSPEC  int PMPI_Error_string(int errorcode, char *string, int *resultlen);
 OMPI_DECLSPEC  int PMPI_Exscan(const void *sendbuf, void *recvbuf, int count,
@@ -2247,12 +2230,6 @@ OMPI_DECLSPEC  int PMPI_Isend(const void *buf, int count, MPI_Datatype datatype,
 OMPI_DECLSPEC  int PMPI_Issend(const void *buf, int count, MPI_Datatype datatype, int dest,
                                int tag, MPI_Comm comm, MPI_Request *request);
 OMPI_DECLSPEC  int PMPI_Is_thread_main(int *flag);
-OMPI_DECLSPEC  int PMPI_Keyval_create(MPI_Copy_function *copy_fn,
-                                      MPI_Delete_function *delete_fn,
-                                      int *keyval, void *extra_state)
-                                      __mpi_interface_deprecated__("MPI_Keyval_create is superseded by MPI_Comm_create_keyval in MPI-2.0");
-OMPI_DECLSPEC  int PMPI_Keyval_free(int *keyval)
-                                    __mpi_interface_deprecated__("MPI_Keyval_free is superseded by MPI_Comm_free_keyval in MPI-2.0");
 OMPI_DECLSPEC  int PMPI_Lookup_name(const char *service_name, MPI_Info info, char *port_name);
 OMPI_DECLSPEC  MPI_Fint PMPI_Message_c2f(MPI_Message message);
 OMPI_DECLSPEC  MPI_Message PMPI_Message_f2c(MPI_Fint message);
@@ -2453,8 +2430,6 @@ OMPI_DECLSPEC  int PMPI_Type_create_resized(MPI_Datatype oldtype, MPI_Aint lb,
                                             MPI_Aint extent, MPI_Datatype *newtype);
 OMPI_DECLSPEC  int PMPI_Type_delete_attr(MPI_Datatype type, int type_keyval);
 OMPI_DECLSPEC  int PMPI_Type_dup(MPI_Datatype type, MPI_Datatype *newtype);
-OMPI_DECLSPEC  int PMPI_Type_extent(MPI_Datatype type, MPI_Aint *extent)
-                                    __mpi_interface_deprecated__("MPI_Type_extent is superseded by MPI_Type_get_extent in MPI-2.0");
 OMPI_DECLSPEC  int PMPI_Type_free(MPI_Datatype *type);
 OMPI_DECLSPEC  int PMPI_Type_free_keyval(int *type_keyval);
 OMPI_DECLSPEC  MPI_Datatype PMPI_Type_f2c(MPI_Fint datatype);
@@ -2478,31 +2453,15 @@ OMPI_DECLSPEC  int PMPI_Type_get_true_extent(MPI_Datatype datatype, MPI_Aint *tr
                                              MPI_Aint *true_extent);
 OMPI_DECLSPEC  int PMPI_Type_get_true_extent_x(MPI_Datatype datatype, MPI_Count *true_lb,
                                                MPI_Count *true_extent);
-OMPI_DECLSPEC  int PMPI_Type_hindexed(int count, int array_of_blocklengths[],
-                                      MPI_Aint array_of_displacements[],
-                                      MPI_Datatype oldtype, MPI_Datatype *newtype)
-                                      __mpi_interface_deprecated__("MPI_Type_hindexed is superseded by MPI_Type_create_hindexed in MPI-2.0");
-OMPI_DECLSPEC  int PMPI_Type_hvector(int count, int blocklength, MPI_Aint stride,
-                                     MPI_Datatype oldtype, MPI_Datatype *newtype)
-                                     __mpi_interface_deprecated__("MPI_Type_hvector is superseded by MPI_Type_create_hvector in MPI-2.0");
 OMPI_DECLSPEC  int PMPI_Type_indexed(int count, const int array_of_blocklengths[],
                                      const int array_of_displacements[],
                                      MPI_Datatype oldtype, MPI_Datatype *newtype);
-OMPI_DECLSPEC  int PMPI_Type_lb(MPI_Datatype type, MPI_Aint *lb)
-                                __mpi_interface_deprecated__("MPI_Type_lb is deprecated, use MPI_Type_get_extent in MPI-2.0");
 OMPI_DECLSPEC  int PMPI_Type_match_size(int typeclass, int size, MPI_Datatype *type);
 OMPI_DECLSPEC  int PMPI_Type_set_attr(MPI_Datatype type, int type_keyval,
                                       void *attr_val);
 OMPI_DECLSPEC  int PMPI_Type_set_name(MPI_Datatype type, const char *type_name);
 OMPI_DECLSPEC  int PMPI_Type_size(MPI_Datatype type, int *size);
 OMPI_DECLSPEC  int PMPI_Type_size_x(MPI_Datatype type, MPI_Count *size);
-OMPI_DECLSPEC  int PMPI_Type_struct(int count, int array_of_blocklengths[],
-                                    MPI_Aint array_of_displacements[],
-                                    MPI_Datatype array_of_types[],
-                                    MPI_Datatype *newtype)
-                                    __mpi_interface_deprecated__("MPI_Type_struct is superseded by MPI_Type_create_struct in MPI-2.0");
-OMPI_DECLSPEC  int PMPI_Type_ub(MPI_Datatype mtype, MPI_Aint *ub)
-                                __mpi_interface_deprecated__("MPI_Type_ub is deprecated, use MPI_Type_get_extent in MPI-2.0");
 OMPI_DECLSPEC  int PMPI_Type_vector(int count, int blocklength, int stride,
                                     MPI_Datatype oldtype, MPI_Datatype *newtype);
 OMPI_DECLSPEC  int PMPI_Unpack(const void *inbuf, int insize, int *position,
@@ -2665,6 +2624,90 @@ OMPI_DECLSPEC  int MPI_T_pvar_readreset(MPI_T_pvar_session session, MPI_T_pvar_h
 OMPI_DECLSPEC  int MPI_T_enum_get_info(MPI_T_enum enumtype, int *num, char *name, int *name_len);
 OMPI_DECLSPEC  int MPI_T_enum_get_item(MPI_T_enum enumtype, int index, int *value, char *name,
                                        int *name_len);
+
+#if !OMPI_OMIT_MPI1_COMPAT_DECLS
+/*
+ * Removed APIs
+ */
+OMPI_DECLSPEC  int MPI_Address(void *location, MPI_Aint *address)
+                               __mpi_interface_removed__("MPI_Address is superseded by MPI_Get_address in MPI-2.0");
+OMPI_DECLSPEC  int MPI_Attr_delete(MPI_Comm comm, int keyval)
+                                   __mpi_interface_deprecated__("MPI_Attr_delete is superseded by MPI_Comm_delete_attr in MPI-2.0");
+OMPI_DECLSPEC  int MPI_Attr_get(MPI_Comm comm, int keyval, void *attribute_val, int *flag)
+                                __mpi_interface_deprecated__("MPI_Attr_get is superseded by MPI_Comm_get_attr in MPI-2.0");
+OMPI_DECLSPEC  int MPI_Attr_put(MPI_Comm comm, int keyval, void *attribute_val)
+                                __mpi_interface_deprecated__("MPI_Attr_put is superseded by MPI_Comm_set_attr in MPI-2.0");
+OMPI_DECLSPEC  int MPI_Errhandler_create(MPI_Handler_function *function,
+                                         MPI_Errhandler *errhandler)
+                                         __mpi_interface_removed__("MPI_Errhandler_create is superseded by MPI_Comm_create_errhandler in MPI-2.0");
+OMPI_DECLSPEC  int MPI_Errhandler_get(MPI_Comm comm, MPI_Errhandler *errhandler)
+                                      __mpi_interface_removed__("MPI_Errhandler_get is superseded by MPI_Comm_get_errhandler in MPI-2.0");
+OMPI_DECLSPEC  int MPI_Errhandler_set(MPI_Comm comm, MPI_Errhandler errhandler)
+                                      __mpi_interface_removed__("MPI_Errhandler_set is superseded by MPI_Comm_set_errhandler in MPI-2.0");
+OMPI_DECLSPEC  int MPI_Keyval_create(MPI_Copy_function *copy_fn,
+                                     MPI_Delete_function *delete_fn,
+                                     int *keyval, void *extra_state)
+                                     __mpi_interface_deprecated__("MPI_Keyval_create is superseded by MPI_Comm_create_keyval in MPI-2.0");
+OMPI_DECLSPEC  int MPI_Keyval_free(int *keyval)
+                                   __mpi_interface_deprecated__("MPI_Keyval_free is superseded by MPI_Comm_free_keyval in MPI-2.0");
+OMPI_DECLSPEC  int MPI_Type_extent(MPI_Datatype type, MPI_Aint *extent)
+                                   __mpi_interface_removed__("MPI_Type_extent is superseded by MPI_Type_get_extent in MPI-2.0");
+OMPI_DECLSPEC  int MPI_Type_hindexed(int count, int array_of_blocklengths[],
+                                     MPI_Aint array_of_displacements[],
+                                     MPI_Datatype oldtype, MPI_Datatype *newtype)
+                                     __mpi_interface_removed__("MPI_Type_hindexed is superseded by MPI_Type_create_hindexed in MPI-2.0");
+OMPI_DECLSPEC  int MPI_Type_hvector(int count, int blocklength, MPI_Aint stride,
+                                    MPI_Datatype oldtype, MPI_Datatype *newtype)
+                                    __mpi_interface_removed__("MPI_Type_hvector is superseded by MPI_Type_create_hvector in MPI-2.0");
+OMPI_DECLSPEC  int MPI_Type_lb(MPI_Datatype type, MPI_Aint *lb)
+                               __mpi_interface_removed__("MPI_Type_lb has been removed, use MPI_Type_get_extent in MPI-2.0");
+OMPI_DECLSPEC  int MPI_Type_struct(int count, int array_of_blocklengths[],
+                                   MPI_Aint array_of_displacements[],
+                                   MPI_Datatype array_of_types[],
+                                   MPI_Datatype *newtype)
+                                   __mpi_interface_removed__("MPI_Type_struct is superseded by MPI_Type_create_struct in MPI-2.0");
+OMPI_DECLSPEC  int MPI_Type_ub(MPI_Datatype mtype, MPI_Aint *ub)
+                               __mpi_interface_removed__("MPI_Type_ub has been removed, use MPI_Type_get_extent in MPI-2.0");
+OMPI_DECLSPEC  int PMPI_Address(void *location, MPI_Aint *address)
+                                __mpi_interface_removed__("MPI_Address is superseded by MPI_Get_address in MPI-2.0");
+OMPI_DECLSPEC  int PMPI_Attr_delete(MPI_Comm comm, int keyval)
+                                    __mpi_interface_deprecated__("MPI_Attr_delete is superseded by MPI_Comm_delete_attr in MPI-2.0");
+OMPI_DECLSPEC  int PMPI_Attr_get(MPI_Comm comm, int keyval, void *attribute_val, int *flag)
+                                 __mpi_interface_deprecated__("MPI_Attr_get is superseded by MPI_Comm_get_attr in MPI-2.0");
+OMPI_DECLSPEC  int PMPI_Attr_put(MPI_Comm comm, int keyval, void *attribute_val)
+                                 __mpi_interface_deprecated__("MPI_Attr_put is superseded by MPI_Comm_set_attr in MPI-2.0");
+OMPI_DECLSPEC  int PMPI_Errhandler_create(MPI_Handler_function *function,
+                                          MPI_Errhandler *errhandler)
+                                          __mpi_interface_removed__("MPI_Errhandler_create is superseded by MPI_Comm_create_errhandler in MPI-2.0");
+OMPI_DECLSPEC  int PMPI_Errhandler_get(MPI_Comm comm, MPI_Errhandler *errhandler)
+                                       __mpi_interface_removed__("MPI_Errhandler_get is superseded by MPI_Comm_get_errhandler in MPI-2.0");
+OMPI_DECLSPEC  int PMPI_Errhandler_set(MPI_Comm comm, MPI_Errhandler errhandler)
+                                       __mpi_interface_removed__("MPI_Errhandler_set is superseded by MPI_Comm_set_errhandler in MPI-2.0");
+OMPI_DECLSPEC  int PMPI_Keyval_create(MPI_Copy_function *copy_fn,
+                                      MPI_Delete_function *delete_fn,
+                                      int *keyval, void *extra_state)
+                                      __mpi_interface_deprecated__("MPI_Keyval_create is superseded by MPI_Comm_create_keyval in MPI-2.0");
+OMPI_DECLSPEC  int PMPI_Keyval_free(int *keyval)
+                                    __mpi_interface_deprecated__("MPI_Keyval_free is superseded by MPI_Comm_free_keyval in MPI-2.0");
+OMPI_DECLSPEC  int PMPI_Type_extent(MPI_Datatype type, MPI_Aint *extent)
+                                    __mpi_interface_removed__("MPI_Type_extent is superseded by MPI_Type_get_extent in MPI-2.0");
+OMPI_DECLSPEC  int PMPI_Type_hindexed(int count, int array_of_blocklengths[],
+                                      MPI_Aint array_of_displacements[],
+                                      MPI_Datatype oldtype, MPI_Datatype *newtype)
+                                      __mpi_interface_removed__("MPI_Type_hindexed is superseded by MPI_Type_create_hindexed in MPI-2.0");
+OMPI_DECLSPEC  int PMPI_Type_hvector(int count, int blocklength, MPI_Aint stride,
+                                     MPI_Datatype oldtype, MPI_Datatype *newtype)
+                                     __mpi_interface_removed__("MPI_Type_hvector is superseded by MPI_Type_create_hvector in MPI-2.0");
+OMPI_DECLSPEC  int PMPI_Type_lb(MPI_Datatype type, MPI_Aint *lb)
+                                __mpi_interface_removed__("MPI_Type_lb has been removed, use MPI_Type_get_extent in MPI-2.0");
+OMPI_DECLSPEC  int PMPI_Type_struct(int count, int array_of_blocklengths[],
+                                    MPI_Aint array_of_displacements[],
+                                    MPI_Datatype array_of_types[],
+                                    MPI_Datatype *newtype)
+                                    __mpi_interface_removed__("MPI_Type_struct is superseded by MPI_Type_create_struct in MPI-2.0");
+OMPI_DECLSPEC  int PMPI_Type_ub(MPI_Datatype mtype, MPI_Aint *ub)
+                                __mpi_interface_removed__("MPI_Type_ub has been removed, use MPI_Type_get_extent in MPI-2.0");
+#endif /* !OMPI_OMIT_MPI1_COMPAT_DECLS */
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

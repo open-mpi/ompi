@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2013      University of Houston. All rights reserved.
+ * Copyright (c) 2018      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -26,7 +28,7 @@
 #include "ompi/mca/sharedfp/sharedfp.h"
 
 int
-mca_sharedfp_individual_get_position(mca_io_ompio_file_t *fh,
+mca_sharedfp_individual_get_position(ompio_file_t *fh,
                          OMPI_MPI_OFFSET_TYPE * offset)
 {
     opal_output(0,"mca_sharedfp_individual_get_position: NOT IMPLEMENTED\n");

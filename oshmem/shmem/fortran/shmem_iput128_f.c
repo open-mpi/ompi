@@ -41,7 +41,7 @@ void shmem_iput128_f(FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fin
 
     for (i=0; i<length; i++)
     {
-        MCA_SPML_CALL(put((uint8_t *)FPTR_2_VOID_PTR(target) + i * tst_c * 16,
+        MCA_SPML_CALL(put(oshmem_ctx_default, (uint8_t *)FPTR_2_VOID_PTR(target) + i * tst_c * 16,
             16,
             (uint8_t *)FPTR_2_VOID_PTR(source) + i * sst_c * 16,
             OMPI_FINT_2_INT(*pe)));

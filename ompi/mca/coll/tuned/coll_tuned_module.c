@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2016      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2018      Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -106,6 +108,7 @@ ompi_coll_tuned_comm_query(struct ompi_communicator_t *comm, int *priority)
     tuned_module->super.coll_gatherv    = NULL;
     tuned_module->super.coll_reduce     = ompi_coll_tuned_reduce_intra_dec_fixed;
     tuned_module->super.coll_reduce_scatter = ompi_coll_tuned_reduce_scatter_intra_dec_fixed;
+    tuned_module->super.coll_reduce_scatter_block = ompi_coll_tuned_reduce_scatter_block_intra_dec_fixed;
     tuned_module->super.coll_scan       = NULL;
     tuned_module->super.coll_scatter    = ompi_coll_tuned_scatter_intra_dec_fixed;
     tuned_module->super.coll_scatterv   = NULL;
@@ -229,7 +232,7 @@ tuned_module_enable( mca_coll_base_module_t *module,
         COLL_TUNED_EXECUTE_IF_DYNAMIC(tuned_module, BCAST,
                                       tuned_module->super.coll_bcast      = ompi_coll_tuned_bcast_intra_dec_dynamic);
         COLL_TUNED_EXECUTE_IF_DYNAMIC(tuned_module, EXSCAN,
-                                      tuned_module->super.coll_exscan     = NULL);
+                                      tuned_module->super.coll_exscan     = ompi_coll_tuned_exscan_intra_dec_dynamic);
         COLL_TUNED_EXECUTE_IF_DYNAMIC(tuned_module, GATHER,
                                       tuned_module->super.coll_gather     = ompi_coll_tuned_gather_intra_dec_dynamic);
         COLL_TUNED_EXECUTE_IF_DYNAMIC(tuned_module, GATHERV,
@@ -238,8 +241,10 @@ tuned_module_enable( mca_coll_base_module_t *module,
                                       tuned_module->super.coll_reduce     = ompi_coll_tuned_reduce_intra_dec_dynamic);
         COLL_TUNED_EXECUTE_IF_DYNAMIC(tuned_module, REDUCESCATTER,
                                       tuned_module->super.coll_reduce_scatter = ompi_coll_tuned_reduce_scatter_intra_dec_dynamic);
+        COLL_TUNED_EXECUTE_IF_DYNAMIC(tuned_module, REDUCESCATTERBLOCK,
+                                      tuned_module->super.coll_reduce_scatter_block = ompi_coll_tuned_reduce_scatter_block_intra_dec_dynamic);
         COLL_TUNED_EXECUTE_IF_DYNAMIC(tuned_module, SCAN,
-                                      tuned_module->super.coll_scan       = NULL);
+                                      tuned_module->super.coll_scan       = ompi_coll_tuned_scan_intra_dec_dynamic);
         COLL_TUNED_EXECUTE_IF_DYNAMIC(tuned_module, SCATTER,
                                       tuned_module->super.coll_scatter    = ompi_coll_tuned_scatter_intra_dec_dynamic);
         COLL_TUNED_EXECUTE_IF_DYNAMIC(tuned_module, SCATTERV,
@@ -254,6 +259,8 @@ tuned_module_enable( mca_coll_base_module_t *module,
     data->cached_bmtree = NULL;
     /* binomial tree */
     data->cached_in_order_bmtree = NULL;
+    /* k-nomial tree */
+    data->cached_kmtree = NULL;
     /* chains (fanout followed by pipelines) */
     data->cached_chain = NULL;
     /* standard pipeline */

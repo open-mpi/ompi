@@ -13,7 +13,7 @@
  *                         reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2011      IBM Corporation.  All rights reserved.
- * Copyright (c) 2015      Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2018 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -39,6 +39,7 @@
 #include "orte/mca/mca.h"
 
 #include "orte/mca/plm/plm.h"
+#include "orte/mca/plm/base/base.h"
 
 BEGIN_C_DECLS
 

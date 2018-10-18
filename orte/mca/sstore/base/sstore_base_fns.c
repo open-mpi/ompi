@@ -4,6 +4,7 @@
  * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2018      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -203,7 +204,7 @@ int orte_sstore_base_tool_request_restart_handle(orte_sstore_base_handle_t *hand
     } else {
         snapshot->basedir = strdup(basedir);
     }
-    asprintf(&(snapshot->metadata_filename),
+    opal_asprintf(&(snapshot->metadata_filename),
              "%s/%s/%s",
              snapshot->basedir,
              snapshot->reference,
@@ -212,7 +213,7 @@ int orte_sstore_base_tool_request_restart_handle(orte_sstore_base_handle_t *hand
     /*
      * Check the checkpoint location
      */
-    asprintf(&tmp_str, "%s/%s",
+    opal_asprintf(&tmp_str, "%s/%s",
              snapshot->basedir,
              snapshot->reference);
     if (0 >  (ret = access(tmp_str, F_OK)) ) {
@@ -246,7 +247,7 @@ int orte_sstore_base_tool_request_restart_handle(orte_sstore_base_handle_t *hand
     /*
      * Check the checkpoint sequence location
      */
-    asprintf(&tmp_str, "%s/%s/%d",
+    opal_asprintf(&tmp_str, "%s/%s/%d",
              snapshot->basedir,
              snapshot->reference,
              snapshot->seq_num);
@@ -292,7 +293,7 @@ int orte_sstore_base_tool_get_attr(orte_sstore_base_handle_t handle, orte_sstore
     int ret, exit_status = ORTE_SUCCESS;
 
     if( SSTORE_METADATA_GLOBAL_SNAP_LOC_ABS == key ) {
-        asprintf(value, "%s/%s",
+        opal_asprintf(value, "%s/%s",
                  tool_global_snapshot->basedir,
                  tool_global_snapshot->reference);
     }
@@ -300,13 +301,13 @@ int orte_sstore_base_tool_get_attr(orte_sstore_base_handle_t handle, orte_sstore
         *value = strdup(orte_sstore_base_local_snapshot_fmt);
     }
     else if( SSTORE_METADATA_LOCAL_SNAP_LOC == key ) {
-        asprintf(value, "%s/%s/%d",
+        opal_asprintf(value, "%s/%s/%d",
                  tool_global_snapshot->basedir,
                  tool_global_snapshot->reference,
                  tool_global_snapshot->seq_num);
     }
     else if( SSTORE_METADATA_LOCAL_SNAP_REF_LOC_FMT == key ) {
-        asprintf(value, "%s/%s/%d/%s",
+        opal_asprintf(value, "%s/%s/%d/%s",
                  tool_global_snapshot->basedir,
                  tool_global_snapshot->reference,
                  tool_global_snapshot->seq_num,
@@ -322,7 +323,7 @@ int orte_sstore_base_tool_get_attr(orte_sstore_base_handle_t handle, orte_sstore
                 goto cleanup;
             }
         }
-        asprintf(value, "%d", tool_global_snapshot->num_seqs);
+        opal_asprintf(value, "%d", tool_global_snapshot->num_seqs);
     }
     else if( SSTORE_METADATA_GLOBAL_SNAP_ALL_SEQ == key ) {
         if( NULL == tool_global_snapshot->all_seqs ) {
@@ -356,7 +357,7 @@ int orte_sstore_base_tool_get_attr(orte_sstore_base_handle_t handle, orte_sstore
 int orte_sstore_base_get_global_snapshot_ref(char **name_str, pid_t pid)
 {
     if( NULL == orte_sstore_base_global_snapshot_ref ) {
-        asprintf(name_str, "ompi_global_snapshot_%d.ckpt", pid);
+        opal_asprintf(name_str, "ompi_global_snapshot_%d.ckpt", pid);
     }
     else {
         *name_str = strdup(orte_sstore_base_global_snapshot_ref);
@@ -511,7 +512,7 @@ int orte_sstore_base_get_all_snapshots(opal_list_t *all_snapshots, char *basedir
         }
 
         /* Add the full path */
-        asprintf(&tmp_str, "%s/%s", loc_basedir, dir_entp->d_name);
+        opal_asprintf(&tmp_str, "%s/%s", loc_basedir, dir_entp->d_name);
         if(0 != (ret = stat(tmp_str, &file_status) ) ){
             free( tmp_str);
             tmp_str = NULL;
@@ -519,7 +520,7 @@ int orte_sstore_base_get_all_snapshots(opal_list_t *all_snapshots, char *basedir
         } else {
             /* Is it a directory? */
             if(S_ISDIR(file_status.st_mode) ) {
-                asprintf(&metadata_file, "%s/%s",
+                opal_asprintf(&metadata_file, "%s/%s",
                          tmp_str,
                          orte_sstore_base_global_metadata_filename);
                 if(0 != (ret = stat(metadata_file, &file_status) ) ){
@@ -534,10 +535,10 @@ int orte_sstore_base_get_all_snapshots(opal_list_t *all_snapshots, char *basedir
 
                         global_snapshot->ss_handle = 1;
                         global_snapshot->basedir = strdup(loc_basedir);
-                        asprintf(&(global_snapshot->reference),
+                        opal_asprintf(&(global_snapshot->reference),
                                  "%s",
                                  dir_entp->d_name);
-                        asprintf(&(global_snapshot->metadata_filename),
+                        opal_asprintf(&(global_snapshot->metadata_filename),
                                  "%s/%s/%s",
                                  global_snapshot->basedir,
                                  global_snapshot->reference,
@@ -756,7 +757,7 @@ int orte_sstore_base_find_all_seq_nums(orte_sstore_base_global_snapshot_info_t *
     }
 
     while(0 <= (tmp_seq_num = orte_sstore_base_metadata_read_next_seq_num(metadata)) ) {
-        asprintf(&tmp_str, "%d", tmp_seq_num);
+        opal_asprintf(&tmp_str, "%d", tmp_seq_num);
 
         if( NULL != tmp_str ) {
             opal_argv_append(num_seq, seq_list, tmp_str);

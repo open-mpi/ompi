@@ -11,6 +11,7 @@
 
 #include "oshmem/constants.h"
 #include "oshmem/include/shmem.h"
+#include "oshmem/include/shmemx.h"
 
 #include "oshmem/runtime/runtime.h"
 
@@ -21,12 +22,9 @@
  * double, long) from symmetric data objects on remote PEs.
  * Retrieves the value at the symmetric address addr of the remote PE pe.
  */
-#define SHMEM_TYPE_G(type_name, type, prefix)    \
-    type prefix##type_name##_g(const type *addr, int pe) \
-    {                                                               \
+#define DO_SHMEM_TYPE_G(ctx, type, addr, pe, out_value) do {        \
         int rc = OSHMEM_SUCCESS;                                    \
         size_t size = 0;                                            \
-        type out_value;                                             \
                                                                     \
         RUNTIME_CHECK_INIT();                                       \
         RUNTIME_CHECK_PE(pe);                                       \
@@ -34,17 +32,40 @@
                                                                     \
         size = sizeof(out_value);                                   \
         rc = MCA_SPML_CALL(get(                                     \
+            ctx,                                                    \
             (void*)addr,                                            \
             size,                                                   \
             (void*)&out_value,                                      \
             pe));                                                   \
         RUNTIME_CHECK_RC(rc);                                       \
-                                                                    \
+    } while (0)
+
+#define SHMEM_CTX_TYPE_G(type_name, type, prefix)                   \
+    type prefix##_ctx##type_name##_g(shmem_ctx_t ctx, const type *addr, int pe) \
+    {                                                               \
+        type out_value;                                             \
+        DO_SHMEM_TYPE_G(ctx, type, addr, pe, out_value);            \
+        return out_value;                                           \
+    }
+
+#define SHMEM_TYPE_G(type_name, type, prefix)                       \
+    type prefix##type_name##_g(const type *addr, int pe)            \
+    {                                                               \
+        type out_value;                                             \
+        DO_SHMEM_TYPE_G(oshmem_ctx_default, type, addr, pe, out_value); \
         return out_value;                                           \
     }
 
 #if OSHMEM_PROFILING
 #include "oshmem/include/pshmem.h"
+#pragma weak shmem_ctx_char_g = pshmem_ctx_char_g
+#pragma weak shmem_ctx_short_g = pshmem_ctx_short_g
+#pragma weak shmem_ctx_int_g = pshmem_ctx_int_g
+#pragma weak shmem_ctx_long_g = pshmem_ctx_long_g
+#pragma weak shmem_ctx_longlong_g = pshmem_ctx_longlong_g
+#pragma weak shmem_ctx_float_g = pshmem_ctx_float_g
+#pragma weak shmem_ctx_double_g = pshmem_ctx_double_g
+#pragma weak shmem_ctx_longdouble_g = pshmem_ctx_longdouble_g
 #pragma weak shmem_char_g = pshmem_char_g
 #pragma weak shmem_short_g = pshmem_short_g
 #pragma weak shmem_int_g = pshmem_int_g
@@ -59,6 +80,14 @@
 #include "oshmem/shmem/c/profile/defines.h"
 #endif
 
+SHMEM_CTX_TYPE_G(_char, char, shmem)
+SHMEM_CTX_TYPE_G(_short, short, shmem)
+SHMEM_CTX_TYPE_G(_int, int, shmem)
+SHMEM_CTX_TYPE_G(_long, long, shmem)
+SHMEM_CTX_TYPE_G(_longlong, long long, shmem)
+SHMEM_CTX_TYPE_G(_float, float, shmem)
+SHMEM_CTX_TYPE_G(_double, double, shmem)
+SHMEM_CTX_TYPE_G(_longdouble, long double, shmem)
 SHMEM_TYPE_G(_char, char, shmem)
 SHMEM_TYPE_G(_short, short, shmem)
 SHMEM_TYPE_G(_int, int, shmem)

@@ -16,6 +16,7 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017 IBM Corporation.  All rights reserved.
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -43,6 +44,8 @@
 #include "opal/constants.h"
 #include "opal/class/opal_hash_table.h"
 #include "opal/util/basename.h"
+#include "opal/util/string_copy.h"
+#include "opal/util/printf.h"
 
 #if OPAL_HAVE_DL_SUPPORT
 
@@ -167,12 +170,8 @@ static int process_repository_item (const char *filename, void *data)
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
 
-    /* strncpy does not guarantee a \0 */
-    ri->ri_type[MCA_BASE_MAX_TYPE_NAME_LEN] = '\0';
-    strncpy (ri->ri_type, type, MCA_BASE_MAX_TYPE_NAME_LEN);
-
-    ri->ri_name[MCA_BASE_MAX_TYPE_NAME_LEN] = '\0';
-    strncpy (ri->ri_name, name, MCA_BASE_MAX_COMPONENT_NAME_LEN);
+    opal_string_copy (ri->ri_type, type, MCA_BASE_MAX_TYPE_NAME_LEN);
+    opal_string_copy (ri->ri_name, name, MCA_BASE_MAX_COMPONENT_NAME_LEN);
 
     opal_list_append (component_list, &ri->super);
 
@@ -188,7 +187,7 @@ static int file_exists(const char *filename, const char *ext)
         return access (filename, F_OK) == 0;
     }
 
-    ret = asprintf(&final, "%s.%s", filename, ext);
+    ret = opal_asprintf(&final, "%s.%s", filename, ext);
     if (0 > ret || NULL == final) {
         return 0;
     }
@@ -436,7 +435,7 @@ int mca_base_component_repository_open (mca_base_framework_t *framework,
         if( mca_base_component_track_load_errors ) {
             mca_base_failed_component_t *f_comp = OBJ_NEW(mca_base_failed_component_t);
             f_comp->comp = ri;
-            asprintf(&(f_comp->error_msg), "%s", err_msg);
+            opal_asprintf(&(f_comp->error_msg), "%s", err_msg);
             opal_list_append(&framework->framework_failed_components, &f_comp->super);
         }
 
@@ -447,7 +446,7 @@ int mca_base_component_repository_open (mca_base_framework_t *framework,
        Malloc out enough space for it. */
 
     do {
-        ret = asprintf (&struct_name, "mca_%s_%s_component", ri->ri_type, ri->ri_name);
+        ret = opal_asprintf (&struct_name, "mca_%s_%s_component", ri->ri_type, ri->ri_name);
         if (0 > ret) {
             ret = OPAL_ERR_OUT_OF_RESOURCE;
             break;

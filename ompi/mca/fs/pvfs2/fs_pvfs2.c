@@ -10,6 +10,9 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2016 University of Houston. All rights reserved.
+ * Copyright (c) 2018      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2018      DataDirect Networks. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -73,7 +76,7 @@ int mca_fs_pvfs2_component_init_query(bool enable_progress_threads,
 }
 
 struct mca_fs_base_module_1_0_0_t *
-mca_fs_pvfs2_component_file_query (mca_io_ompio_file_t *fh, int *priority)
+mca_fs_pvfs2_component_file_query (ompio_file_t *fh, int *priority)
 {
 
     /* The code in this function is based on the ADIO FS selection in ROMIO
@@ -92,15 +95,18 @@ mca_fs_pvfs2_component_file_query (mca_io_ompio_file_t *fh, int *priority)
 
     tmp = strchr (fh->f_filename, ':');
     if (!tmp) {
-        if (OMPIO_ROOT == fh->f_rank) {
+        /* The communicator might be NULL if we only want to delete the file */
+        if (OMPIO_ROOT == fh->f_rank || MPI_COMM_NULL == fh->f_comm) {
             fh->f_fstype = mca_fs_base_get_fstype ( fh->f_filename );
-	}
-	fh->f_comm->c_coll->coll_bcast (&(fh->f_fstype),
-				       1,
-				       MPI_INT,
-				       OMPIO_ROOT,
-				       fh->f_comm,
-				       fh->f_comm->c_coll->coll_bcast_module);
+	    }
+        if (fh->f_comm != MPI_COMM_NULL) {
+            fh->f_comm->c_coll->coll_bcast (&(fh->f_fstype),
+                        1,
+                        MPI_INT,
+                        OMPIO_ROOT,
+                        fh->f_comm,
+                        fh->f_comm->c_coll->coll_bcast_module);
+        }
     }
     else {
         if (!strncmp(fh->f_filename, "pvfs2:", 6) ||
@@ -119,7 +125,7 @@ mca_fs_pvfs2_component_file_query (mca_io_ompio_file_t *fh, int *priority)
    return NULL;
 }
 
-int mca_fs_pvfs2_component_file_unquery (mca_io_ompio_file_t *file)
+int mca_fs_pvfs2_component_file_unquery (ompio_file_t *file)
 {
    /* This function might be needed for some purposes later. for now it
     * does not have anything to do since there are no steps which need
@@ -128,7 +134,7 @@ int mca_fs_pvfs2_component_file_unquery (mca_io_ompio_file_t *file)
    return OMPI_SUCCESS;
 }
 
-int mca_fs_pvfs2_module_init (mca_io_ompio_file_t *file)
+int mca_fs_pvfs2_module_init (ompio_file_t *file)
 {
     /* Make sure the file type is not overwritten by the last queried
 	 * component */
@@ -137,7 +143,7 @@ int mca_fs_pvfs2_module_init (mca_io_ompio_file_t *file)
 }
 
 
-int mca_fs_pvfs2_module_finalize (mca_io_ompio_file_t *file)
+int mca_fs_pvfs2_module_finalize (ompio_file_t *file)
 {
     return OMPI_SUCCESS;
 }

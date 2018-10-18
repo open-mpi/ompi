@@ -2,6 +2,7 @@
  * Copyright (c) 2014-2016 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -27,6 +28,8 @@
 #include "opal/types.h"
 #include "opal/util/output.h"
 #include "opal/util/fd.h"
+#include "opal/util/string_copy.h"
+#include "opal/util/printf.h"
 
 #include "btl_usnic.h"
 #include "btl_usnic_connectivity.h"
@@ -318,7 +321,7 @@ static void agent_sendto(int fd, char *buffer, ssize_t numbytes,
             }
 
             char *msg;
-            asprintf(&msg, "Unexpected sendto() error: errno=%d (%s)",
+            opal_asprintf(&msg, "Unexpected sendto() error: errno=%d (%s)",
                      errno, strerror(errno));
             ABORT(msg);
             /* Will not return */
@@ -1175,7 +1178,7 @@ int opal_btl_usnic_connectivity_agent_init(void)
         /* Will not return */
     }
 
-    asprintf(&ipc_filename, "%s/%s",
+    opal_asprintf(&ipc_filename, "%s/%s",
              opal_process_info.job_session_dir, CONNECTIVITY_SOCK_NAME);
     if (NULL == ipc_filename) {
         OPAL_ERROR_LOG(OPAL_ERR_IN_ERRNO);
@@ -1189,7 +1192,7 @@ int opal_btl_usnic_connectivity_agent_init(void)
 
     memset(&address, 0, sizeof(struct sockaddr_un));
     address.sun_family = AF_UNIX;
-    strncpy(address.sun_path, ipc_filename, sizeof(address.sun_path) - 1);
+    opal_string_copy(address.sun_path, ipc_filename, sizeof(address.sun_path));
 
     if (bind(ipc_accept_fd, (struct sockaddr *) &address,
              sizeof(struct sockaddr_un)) != 0) {

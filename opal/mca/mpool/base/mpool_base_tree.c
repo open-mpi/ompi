@@ -17,6 +17,7 @@
  *                         All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -29,6 +30,7 @@
 #include "opal/mca/mca.h"
 #include "opal/util/show_help.h"
 #include "opal/util/proc.h"
+#include "opal/util/printf.h"
 
 #include "opal/class/opal_rb_tree.h"
 #include "mpool_base_tree.h"
@@ -221,11 +223,11 @@ static void action(void *key, void *value)
            successive items if we're supposed to catenate more
            notices. */
         if (NULL == leak_msg) {
-            asprintf(&leak_msg, "    %lu bytes at address 0x%lx",
+            opal_asprintf(&leak_msg, "    %lu bytes at address 0x%lx",
                      (unsigned long) item->num_bytes,
                      (unsigned long) key);
         } else {
-            asprintf(&tmp, "%s\n    %lu bytes at address 0x%lx",
+            opal_asprintf(&tmp, "%s\n    %lu bytes at address 0x%lx",
                      leak_msg, (unsigned long) item->num_bytes,
                      (unsigned long) key);
             free(leak_msg);

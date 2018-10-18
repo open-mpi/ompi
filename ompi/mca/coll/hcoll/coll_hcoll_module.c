@@ -4,6 +4,7 @@
  * Copyright (c) 2017      The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2018      Cisco Systems, Inc.  All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -239,16 +240,6 @@ static int mca_coll_hcoll_module_enable(mca_coll_base_module_t *module,
     return OMPI_SUCCESS;
 }
 
-int mca_coll_hcoll_progress(void)
-{
-    if (ompi_mpi_finalized){
-        hcoll_rte_p2p_disabled_notify();
-    }
-
-    (*hcoll_progress_fn)();
-    return OMPI_SUCCESS;
-}
-
 
 OBJ_CLASS_INSTANCE(mca_coll_hcoll_dtype_t,
                    opal_free_list_item_t,
@@ -289,7 +280,7 @@ mca_coll_hcoll_comm_query(struct ompi_communicator_t *comm, int *priority)
            mxm bcol in libhcoll needs world_group fully functional during init
            world_group, i.e. ompi_comm_world, is not ready at hcoll component open
            call */
-        opal_progress_register(mca_coll_hcoll_progress);
+        opal_progress_register(hcoll_progress_fn);
 
         HCOL_VERBOSE(10,"Calling hcoll_init();");
 #if HCOLL_API >= HCOLL_VERSION(3,2)
@@ -306,7 +297,7 @@ mca_coll_hcoll_comm_query(struct ompi_communicator_t *comm, int *priority)
 
         if (HCOLL_SUCCESS != rc){
             cm->hcoll_enable = 0;
-            opal_progress_unregister(mca_coll_hcoll_progress);
+            opal_progress_unregister(hcoll_progress_fn);
             HCOL_ERROR("Hcol library init failed");
             return NULL;
         }
@@ -327,7 +318,7 @@ mca_coll_hcoll_comm_query(struct ompi_communicator_t *comm, int *priority)
         if (OMPI_SUCCESS != err) {
             cm->hcoll_enable = 0;
             hcoll_finalize();
-            opal_progress_unregister(mca_coll_hcoll_progress);
+            opal_progress_unregister(hcoll_progress_fn);
             HCOL_ERROR("Hcol comm keyval create failed");
             return NULL;
         }
@@ -340,7 +331,7 @@ mca_coll_hcoll_comm_query(struct ompi_communicator_t *comm, int *priority)
             if (OMPI_SUCCESS != err) {
                 cm->hcoll_enable = 0;
                 hcoll_finalize();
-                opal_progress_unregister(mca_coll_hcoll_progress);
+                opal_progress_unregister(hcoll_progress_fn);
                 HCOL_ERROR("Hcol type keyval create failed");
                 return NULL;
             }
@@ -357,7 +348,7 @@ mca_coll_hcoll_comm_query(struct ompi_communicator_t *comm, int *priority)
         if (!cm->libhcoll_initialized) {
             cm->hcoll_enable = 0;
             hcoll_finalize();
-            opal_progress_unregister(mca_coll_hcoll_progress);
+            opal_progress_unregister(hcoll_progress_fn);
         }
         return NULL;
     }
@@ -376,7 +367,7 @@ mca_coll_hcoll_comm_query(struct ompi_communicator_t *comm, int *priority)
         if (!cm->libhcoll_initialized) {
             cm->hcoll_enable = 0;
             hcoll_finalize();
-            opal_progress_unregister(mca_coll_hcoll_progress);
+            opal_progress_unregister(hcoll_progress_fn);
         }
         return NULL;
     }

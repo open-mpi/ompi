@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2015      Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -19,6 +20,7 @@
 
 #include "opal/util/opal_environ.h"
 #include "opal/util/output.h"
+#include "opal/util/printf.h"
 
 #include "oshmem/version.h"
 #include "oshmem/constants.h"
@@ -262,7 +264,7 @@ static int oshmem_info_get_heap_size(char *value, size_t *interp)
         char *tmp = p;
 
         if(!p) {
-            asprintf(&tmp, "%lld", size * factor);
+            opal_asprintf(&tmp, "%lld", size * factor);
         }
 
         if (tmp) {

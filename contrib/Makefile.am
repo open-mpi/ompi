@@ -12,7 +12,7 @@
 # Copyright (c) 2009-2017 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2010      IBM Corporation.  All rights reserved.
 # Copyright (c) 2010-2011 Oak Ridge National Labs.  All rights reserved.
-# Copyright (c) 2013-2016 Los Alamos National Security, Inc.  All rights
+# Copyright (c) 2013-2018 Los Alamos National Security, Inc.  All rights
 #                         reserved.
 # Copyright (c) 2013      Intel Corporation.  All rights reserved.
 # Copyright (c) 2017      Amazon.com, Inc. or its affiliates.
@@ -67,29 +67,29 @@ EXTRA_DIST = \
         platform/lanl/cray_xc_cle5.2/optimized-common \
         platform/lanl/cray_xc_cle5.2/optimized-lustre \
         platform/lanl/cray_xc_cle5.2/optimized-lustre.conf \
-        platform/lanl/toss/debug-common \
-        platform/lanl/toss/debug \
-        platform/lanl/toss/debug.conf \
-        platform/lanl/toss/debug-mlx \
-        platform/lanl/toss/debug-mlx.conf \
-        platform/lanl/toss/optimized-common \
-        platform/lanl/toss/optimized \
-        platform/lanl/toss/optimized.conf \
-        platform/lanl/toss/optimized-mlx \
-        platform/lanl/toss/optimized-mlx.conf \
-        platform/lanl/toss/toss-common \
+        platform/lanl/toss/README \
+        platform/lanl/toss/common \
+        platform/lanl/toss/common-optimized \
+        platform/lanl/toss/cray-lustre-optimized \
+        platform/lanl/toss/cray-lustre-optimized.conf \
+        platform/lanl/toss/toss2-mlx-optimized \
+        platform/lanl/toss/toss2-mlx-optimized.conf \
+        platform/lanl/toss/toss2-qib-optimized \
+        platform/lanl/toss/toss2-qib-optimized.conf \
+        platform/lanl/toss/toss3-hfi-optimized \
+        platform/lanl/toss/toss3-hfi-optimized.conf \
+        platform/lanl/toss/toss3-mlx-optimized \
+        platform/lanl/toss/toss3-mlx-optimized.conf \
+        platform/lanl/toss/toss3-wc-optimized \
+        platform/lanl/toss/toss3-wc-optimized.conf \
         platform/lanl/darwin/darwin-common \
         platform/lanl/darwin/debug-common \
         platform/lanl/darwin/optimized-common \
         platform/lanl/darwin/mic-common \
         platform/lanl/darwin/debug \
         platform/lanl/darwin/debug.conf \
-        platform/lanl/darwin/debug-mic \
-        platform/lanl/darwin/debug-mic.conf \
         platform/lanl/darwin/optimized \
         platform/lanl/darwin/optimized.conf \
-        platform/lanl/darwin/optimized-mic \
-        platform/lanl/darwin/optimized-mic.conf \
 	platform/snl/portals4-m5 \
 	platform/snl/portals4-orte \
 	platform/ibm/debug-ppc32-gcc \

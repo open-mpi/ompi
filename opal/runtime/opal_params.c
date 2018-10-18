@@ -22,6 +22,7 @@
  * Copyright (c) 2015      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -47,6 +48,7 @@
 #include "opal/util/opal_environ.h"
 #include "opal/util/show_help.h"
 #include "opal/util/timings.h"
+#include "opal/util/printf.h"
 
 char *opal_signal_string = NULL;
 char *opal_stacktrace_output_filename = NULL;
@@ -61,6 +63,7 @@ bool opal_timing_overhead = true;
 
 bool opal_built_with_cuda_support = OPAL_INT_TO_BOOL(OPAL_CUDA_SUPPORT);
 bool opal_cuda_support = false;
+bool opal_warn_on_missing_libcuda = true;
 #if OPAL_ENABLE_FT_CR == 1
 bool opal_base_distill_checkpoint_ready = false;
 #endif
@@ -108,10 +111,10 @@ int opal_register_params(void)
         };
         for (j = 0 ; signals[j] != -1 ; ++j) {
             if (j == 0) {
-                asprintf(&string, "%d", signals[j]);
+                opal_asprintf(&string, "%d", signals[j]);
             } else {
                 char *tmp;
-                asprintf(&tmp, "%s,%d", string, signals[j]);
+                opal_asprintf(&tmp, "%s,%d", string, signals[j]);
                 free(string);
                 string = tmp;
             }
@@ -241,6 +244,16 @@ int opal_register_params(void)
                                  MCA_BASE_VAR_TYPE_BOOL, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
                                  OPAL_INFO_LVL_3, MCA_BASE_VAR_SCOPE_ALL_EQ,
                                  &opal_cuda_support);
+    if (0 > ret) {
+        return ret;
+    }
+
+    opal_warn_on_missing_libcuda = true;
+    ret = mca_base_var_register ("opal", "opal", NULL, "warn_on_missing_libcuda",
+                                 "Whether to print a message when CUDA support is enabled but libcuda is not found",
+                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                 OPAL_INFO_LVL_3, MCA_BASE_VAR_SCOPE_ALL_EQ,
+                                 &opal_warn_on_missing_libcuda);
     if (0 > ret) {
         return ret;
     }

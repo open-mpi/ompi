@@ -9,9 +9,10 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2018 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -48,9 +49,9 @@ static char **search_dirs = NULL;
  * Local functions
  */
 static int opal_show_vhelp_internal(const char *filename, const char *topic,
-                                    bool want_error_header, va_list arglist);
+                                    int want_error_header, va_list arglist);
 static int opal_show_help_internal(const char *filename, const char *topic,
-                                   bool want_error_header, ...);
+                                   int want_error_header, ...);
 
 opal_show_help_fn_t opal_show_help = opal_show_help_internal;
 opal_show_vhelp_fn_t opal_show_vhelp = opal_show_vhelp_internal;
@@ -89,7 +90,7 @@ int opal_show_help_finalize(void)
  * not optimization.  :-)
  */
 static int array2string(char **outstring,
-                        bool want_error_header, char **lines)
+                        int want_error_header, char **lines)
 {
     int i, count;
     size_t len;
@@ -160,11 +161,11 @@ static int open_file(const char *base, const char *topic)
             filename = opal_os_path( false, search_dirs[i], base, NULL );
             opal_show_help_yyin = fopen(filename, "r");
             if (NULL == opal_show_help_yyin) {
-                asprintf(&err_msg, "%s: %s", filename, strerror(errno));
+                opal_asprintf(&err_msg, "%s: %s", filename, strerror(errno));
                 base_len = strlen(base);
                 if (4 > base_len || 0 != strcmp(base + base_len - 4, ".txt")) {
                     free(filename);
-                    asprintf(&filename, "%s%s%s.txt", search_dirs[i], OPAL_PATH_SEP, base);
+                    opal_asprintf(&filename, "%s%s%s.txt", search_dirs[i], OPAL_PATH_SEP, base);
                     opal_show_help_yyin = fopen(filename, "r");
                 }
             }
@@ -293,7 +294,7 @@ static int load_array(char ***array, const char *filename, const char *topic)
 }
 
 char *opal_show_help_vstring(const char *filename, const char *topic,
-                             bool want_error_header, va_list arglist)
+                             int want_error_header, va_list arglist)
 {
     int rc;
     char *single_string, *output, **array = NULL;
@@ -308,7 +309,7 @@ char *opal_show_help_vstring(const char *filename, const char *topic,
 
     if (OPAL_SUCCESS == rc) {
         /* Apply the formatting to make the final output string */
-        vasprintf(&output, single_string, arglist);
+        opal_vasprintf(&output, single_string, arglist);
         free(single_string);
     }
 
@@ -317,7 +318,7 @@ char *opal_show_help_vstring(const char *filename, const char *topic,
 }
 
 char *opal_show_help_string(const char *filename, const char *topic,
-                            bool want_error_handler, ...)
+                            int want_error_handler, ...)
 {
     char *output;
     va_list arglist;
@@ -331,7 +332,7 @@ char *opal_show_help_string(const char *filename, const char *topic,
 }
 
 static int opal_show_vhelp_internal(const char *filename, const char *topic,
-                                    bool want_error_header, va_list arglist)
+                                    int want_error_header, va_list arglist)
 {
     char *output;
 
@@ -349,7 +350,7 @@ static int opal_show_vhelp_internal(const char *filename, const char *topic,
 }
 
 static int opal_show_help_internal(const char *filename, const char *topic,
-                                   bool want_error_header, ...)
+                                   int want_error_header, ...)
 {
     va_list arglist;
     int rc;

@@ -9,8 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2016 University of Houston. All rights reserved.
- * Copyright (c) 2015-2017 Research Organization for Information Science
+ * Copyright (c) 2008-2018 University of Houston. All rights reserved.
+ * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -34,7 +34,7 @@
 #include "ompi/mca/sharedfp/base/base.h"
 
 #include "io_ompio.h"
-#include "io_ompio_request.h"
+#include "ompi/mca/common/ompio/common_ompio_request.h"
 #include "math.h"
 #include <unistd.h>
 
@@ -50,7 +50,7 @@
 ** routesin are used e.g. from the shared file pointer modules.
 ** The main difference is, that the first one takes an ompi_file_t
 ** as a file pointer argument, while the second uses the ompio internal
-** mca_io_ompio_file_t structure.
+** ompio_file_t structure.
 */
 
 
@@ -61,10 +61,10 @@ int mca_io_ompio_file_write (ompi_file_t *fp,
 			     ompi_status_public_t *status)
 {
     int ret = OMPI_SUCCESS;
-    mca_io_ompio_data_t *data;
-    mca_io_ompio_file_t *fh;
+    mca_common_ompio_data_t *data;
+    ompio_file_t *fh;
 
-    data = (mca_io_ompio_data_t *) fp->f_io_selected_data;
+    data = (mca_common_ompio_data_t *) fp->f_io_selected_data;
     fh = &data->ompio_fh;
     OPAL_THREAD_LOCK(&fp->f_lock);
     ret = mca_common_ompio_file_write(fh,buf,count,datatype,status);
@@ -81,9 +81,9 @@ int mca_io_ompio_file_write_at (ompi_file_t *fh,
 				ompi_status_public_t *status)
 {
     int ret = OMPI_SUCCESS;
-    mca_io_ompio_data_t *data;
+    mca_common_ompio_data_t *data;
 
-    data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
+    data = (mca_common_ompio_data_t *) fh->f_io_selected_data;
     OPAL_THREAD_LOCK(&fh->f_lock);
     ret = mca_common_ompio_file_write_at (&data->ompio_fh, offset,buf,count,datatype,status);
     OPAL_THREAD_UNLOCK(&fh->f_lock);
@@ -98,9 +98,9 @@ int mca_io_ompio_file_iwrite (ompi_file_t *fp,
 			      ompi_request_t **request)
 {
     int ret = OMPI_SUCCESS;
-    mca_io_ompio_data_t *data;
+    mca_common_ompio_data_t *data;
 
-    data = (mca_io_ompio_data_t *) fp->f_io_selected_data;
+    data = (mca_common_ompio_data_t *) fp->f_io_selected_data;
     OPAL_THREAD_LOCK(&fp->f_lock);
     ret = mca_common_ompio_file_iwrite(&data->ompio_fh,buf,count,datatype,request);
     OPAL_THREAD_UNLOCK(&fp->f_lock);
@@ -117,9 +117,9 @@ int mca_io_ompio_file_iwrite_at (ompi_file_t *fh,
 				 ompi_request_t **request)
 {
     int ret = OMPI_SUCCESS;
-    mca_io_ompio_data_t *data;
+    mca_common_ompio_data_t *data;
 
-    data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
+    data = (mca_common_ompio_data_t *) fh->f_io_selected_data;
     OPAL_THREAD_LOCK(&fh->f_lock);
     ret = mca_common_ompio_file_iwrite_at(&data->ompio_fh,offset,buf,count,datatype,request);
     OPAL_THREAD_UNLOCK(&fh->f_lock);
@@ -138,9 +138,9 @@ int mca_io_ompio_file_write_all (ompi_file_t *fh,
 				 ompi_status_public_t *status)
 {
     int ret = OMPI_SUCCESS;
-    mca_io_ompio_data_t *data;
+    mca_common_ompio_data_t *data;
 
-    data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
+    data = (mca_common_ompio_data_t *) fh->f_io_selected_data;
 
     OPAL_THREAD_LOCK(&fh->f_lock);
     ret = data->ompio_fh.
@@ -168,9 +168,9 @@ int mca_io_ompio_file_write_at_all (ompi_file_t *fh,
 				    ompi_status_public_t *status)
 {
     int ret = OMPI_SUCCESS;
-    mca_io_ompio_data_t *data;
+    mca_common_ompio_data_t *data;
 
-    data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
+    data = (mca_common_ompio_data_t *) fh->f_io_selected_data;
     OPAL_THREAD_LOCK(&fh->f_lock);
     ret = mca_common_ompio_file_write_at_all(&data->ompio_fh,offset,buf,count,datatype,status);
     OPAL_THREAD_UNLOCK(&fh->f_lock);
@@ -185,10 +185,10 @@ int mca_io_ompio_file_iwrite_all (ompi_file_t *fh,
 				  ompi_request_t **request)
 {
     int ret = OMPI_SUCCESS;
-    mca_io_ompio_data_t *data=NULL;
-    mca_io_ompio_file_t *fp=NULL;
+    mca_common_ompio_data_t *data=NULL;
+    ompio_file_t *fp=NULL;
 
-    data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
+    data = (mca_common_ompio_data_t *) fh->f_io_selected_data;
     fp = &data->ompio_fh;
 
     OPAL_THREAD_LOCK(&fh->f_lock);
@@ -219,9 +219,9 @@ int mca_io_ompio_file_iwrite_at_all (ompi_file_t *fh,
 				     ompi_request_t **request)
 {
     int ret = OMPI_SUCCESS;
-    mca_io_ompio_data_t *data;
+    mca_common_ompio_data_t *data;
 
-    data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
+    data = (mca_common_ompio_data_t *) fh->f_io_selected_data;
     OPAL_THREAD_LOCK(&fh->f_lock);
     ret = mca_common_ompio_file_iwrite_at_all ( &data->ompio_fh, offset, buf, count, datatype, request );
     OPAL_THREAD_UNLOCK(&fh->f_lock);
@@ -240,11 +240,11 @@ int mca_io_ompio_file_write_shared (ompi_file_t *fp,
 				    ompi_status_public_t * status)
 {
     int ret = OMPI_SUCCESS;
-    mca_io_ompio_data_t *data;
-    mca_io_ompio_file_t *fh;
+    mca_common_ompio_data_t *data;
+    ompio_file_t *fh;
     mca_sharedfp_base_module_t * shared_fp_base_module;
 
-    data = (mca_io_ompio_data_t *) fp->f_io_selected_data;
+    data = (mca_common_ompio_data_t *) fp->f_io_selected_data;
     fh = &data->ompio_fh;
 
     /*get the shared fp module associated with this file*/
@@ -267,11 +267,11 @@ int mca_io_ompio_file_iwrite_shared (ompi_file_t *fp,
 				     ompi_request_t **request)
 {
     int ret = OMPI_SUCCESS;
-    mca_io_ompio_data_t *data;
-    mca_io_ompio_file_t *fh;
+    mca_common_ompio_data_t *data;
+    ompio_file_t *fh;
     mca_sharedfp_base_module_t * shared_fp_base_module;
 
-    data = (mca_io_ompio_data_t *) fp->f_io_selected_data;
+    data = (mca_common_ompio_data_t *) fp->f_io_selected_data;
     fh = &data->ompio_fh;
 
     /*get the shared fp module associated with this file*/
@@ -294,11 +294,11 @@ int mca_io_ompio_file_write_ordered (ompi_file_t *fp,
 				     ompi_status_public_t * status)
 {
     int ret = OMPI_SUCCESS;
-    mca_io_ompio_data_t *data;
-    mca_io_ompio_file_t *fh;
+    mca_common_ompio_data_t *data;
+    ompio_file_t *fh;
     mca_sharedfp_base_module_t * shared_fp_base_module;
 
-    data = (mca_io_ompio_data_t *) fp->f_io_selected_data;
+    data = (mca_common_ompio_data_t *) fp->f_io_selected_data;
     fh = &data->ompio_fh;
 
     /*get the shared fp module associated with this file*/
@@ -320,11 +320,11 @@ int mca_io_ompio_file_write_ordered_begin (ompi_file_t *fp,
 					   struct ompi_datatype_t *datatype)
 {
     int ret = OMPI_SUCCESS;
-    mca_io_ompio_data_t *data;
-    mca_io_ompio_file_t *fh;
+    mca_common_ompio_data_t *data;
+    ompio_file_t *fh;
     mca_sharedfp_base_module_t * shared_fp_base_module;
 
-    data = (mca_io_ompio_data_t *) fp->f_io_selected_data;
+    data = (mca_common_ompio_data_t *) fp->f_io_selected_data;
     fh = &data->ompio_fh;
 
     /*get the shared fp module associated with this file*/
@@ -345,11 +345,11 @@ int mca_io_ompio_file_write_ordered_end (ompi_file_t *fp,
 					 ompi_status_public_t *status)
 {
     int ret = OMPI_SUCCESS;
-    mca_io_ompio_data_t *data;
-    mca_io_ompio_file_t *fh;
+    mca_common_ompio_data_t *data;
+    ompio_file_t *fh;
     mca_sharedfp_base_module_t * shared_fp_base_module;
 
-    data = (mca_io_ompio_data_t *) fp->f_io_selected_data;
+    data = (mca_common_ompio_data_t *) fp->f_io_selected_data;
     fh = &data->ompio_fh;
 
     /*get the shared fp module associated with this file*/
@@ -374,10 +374,10 @@ int mca_io_ompio_file_write_all_begin (ompi_file_t *fh,
 				       struct ompi_datatype_t *datatype)
 {
     int ret = OMPI_SUCCESS;
-    mca_io_ompio_file_t *fp;
-    mca_io_ompio_data_t *data;
+    ompio_file_t *fp;
+    mca_common_ompio_data_t *data;
 
-    data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
+    data = (mca_common_ompio_data_t *) fh->f_io_selected_data;
     fp = &data->ompio_fh;
     if ( true == fp->f_split_coll_in_use ) {
 	printf("Only one split collective I/O operation allowed per file handle at any given point in time!\n");
@@ -395,10 +395,10 @@ int mca_io_ompio_file_write_all_end (ompi_file_t *fh,
 				     ompi_status_public_t *status)
 {
     int ret = OMPI_SUCCESS;
-    mca_io_ompio_file_t *fp;
-    mca_io_ompio_data_t *data;
+    ompio_file_t *fp;
+    mca_common_ompio_data_t *data;
 
-    data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
+    data = (mca_common_ompio_data_t *) fh->f_io_selected_data;
     fp = &data->ompio_fh;
     ret = ompi_request_wait ( &fp->f_split_coll_req, status );
 
@@ -415,10 +415,10 @@ int mca_io_ompio_file_write_at_all_begin (ompi_file_t *fh,
 					  struct ompi_datatype_t *datatype)
 {
     int ret = OMPI_SUCCESS;
-    mca_io_ompio_data_t *data=NULL;
-    mca_io_ompio_file_t *fp=NULL;
+    mca_common_ompio_data_t *data=NULL;
+    ompio_file_t *fp=NULL;
 
-    data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
+    data = (mca_common_ompio_data_t *) fh->f_io_selected_data;
     fp = &data->ompio_fh;
 
     if ( true == fp->f_split_coll_in_use ) {
@@ -439,10 +439,10 @@ int mca_io_ompio_file_write_at_all_end (ompi_file_t *fh,
 					ompi_status_public_t * status)
 {
     int ret = OMPI_SUCCESS;
-    mca_io_ompio_data_t *data;
-    mca_io_ompio_file_t *fp=NULL;
+    mca_common_ompio_data_t *data;
+    ompio_file_t *fp=NULL;
 
-    data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
+    data = (mca_common_ompio_data_t *) fh->f_io_selected_data;
     fp = &data->ompio_fh;
     ret = ompi_request_wait ( &fp->f_split_coll_req, status );
 

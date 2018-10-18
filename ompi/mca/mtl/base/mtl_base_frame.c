@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2015-2018 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -108,6 +108,7 @@ ompi_mtl_base_close(void)
 {
     /* NTH: Should we be freeing the mtl module here? */
     ompi_mtl = NULL;
+    ompi_mtl_base_selected_component = NULL;
 
     /* Close all remaining available modules (may be one if this is a
        OMPI RTE program, or [possibly] multiple if this is ompi_info) */

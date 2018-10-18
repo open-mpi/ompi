@@ -8,6 +8,7 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -24,6 +25,7 @@
 
 #include "opal/class/opal_pointer_array.h"
 #include "opal/class/opal_hash_table.h"
+#include "opal/util/printf.h"
 
 static opal_hash_table_t mca_base_pvar_index_hash;
 static opal_pointer_array_t registered_pvars;
@@ -845,16 +847,16 @@ int mca_base_pvar_dump(int index, char ***out, mca_base_var_dump_type_t output_t
         }
 
         /* build the message*/
-        (void)asprintf(&tmp, "mca:%s:%s:pvar:%s:", framework, component, full_name);
+        (void)opal_asprintf(&tmp, "mca:%s:%s:pvar:%s:", framework, component, full_name);
 
-        (void)asprintf(out[0] + line++, "%sclass:%s", tmp, pvar_class_names[pvar->var_class]);
-        (void)asprintf(out[0] + line++, "%sread-only:%s", tmp, mca_base_pvar_is_readonly(pvar) ? "true" : "false");
-        (void)asprintf(out[0] + line++, "%scontinuous:%s", tmp, mca_base_pvar_is_continuous(pvar) ? "true" : "false");
-        (void)asprintf(out[0] + line++, "%satomic:%s", tmp, mca_base_pvar_is_atomic(pvar) ? "true" : "false");
+        (void)opal_asprintf(out[0] + line++, "%sclass:%s", tmp, pvar_class_names[pvar->var_class]);
+        (void)opal_asprintf(out[0] + line++, "%sread-only:%s", tmp, mca_base_pvar_is_readonly(pvar) ? "true" : "false");
+        (void)opal_asprintf(out[0] + line++, "%scontinuous:%s", tmp, mca_base_pvar_is_continuous(pvar) ? "true" : "false");
+        (void)opal_asprintf(out[0] + line++, "%satomic:%s", tmp, mca_base_pvar_is_atomic(pvar) ? "true" : "false");
 
         /* if it has a help message, output the help message */
         if (pvar->description) {
-            (void)asprintf(out[0] + line++, "%shelp:%s", tmp, pvar->description);
+            (void)opal_asprintf(out[0] + line++, "%shelp:%s", tmp, pvar->description);
         }
 
         if (NULL != pvar->enumerator) {
@@ -868,11 +870,11 @@ int mca_base_pvar_dump(int index, char ***out, mca_base_var_dump_type_t output_t
                     continue;
                 }
 
-                (void)asprintf(out[0] + line++, "%senumerator:value:%d:%s", tmp, enum_value, enum_string);
+                (void)opal_asprintf(out[0] + line++, "%senumerator:value:%d:%s", tmp, enum_value, enum_string);
             }
         }
 
-        (void)asprintf(out[0] + line++, "%stype:%s", tmp, ompi_var_type_names[pvar->type]);
+        (void)opal_asprintf(out[0] + line++, "%stype:%s", tmp, ompi_var_type_names[pvar->type]);
         free(tmp);  // release tmp storage
     } else {
         /* there will be at most three lines in the pretty print case */
@@ -881,11 +883,11 @@ int mca_base_pvar_dump(int index, char ***out, mca_base_var_dump_type_t output_t
             return OPAL_ERR_OUT_OF_RESOURCE;
         }
 
-        (void)asprintf (out[0] + line++, "performance \"%s\" (type: %s, class: %s)", full_name,
+        (void)opal_asprintf (out[0] + line++, "performance \"%s\" (type: %s, class: %s)", full_name,
                         ompi_var_type_names[pvar->type], pvar_class_names[pvar->var_class]);
 
         if (pvar->description) {
-            (void)asprintf(out[0] + line++, "%s", pvar->description);
+            (void)opal_asprintf(out[0] + line++, "%s", pvar->description);
         }
 
         if (NULL != pvar->enumerator) {
@@ -893,7 +895,7 @@ int mca_base_pvar_dump(int index, char ***out, mca_base_var_dump_type_t output_t
 
             ret = pvar->enumerator->dump(pvar->enumerator, &values);
             if (OPAL_SUCCESS == ret) {
-                (void)asprintf (out[0] + line++, "Values: %s", values);
+                (void)opal_asprintf (out[0] + line++, "Values: %s", values);
                 free (values);
             }
         }

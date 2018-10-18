@@ -1,6 +1,6 @@
 # -*- makefile -*-
 #
-# Copyright (c) 2011-2013 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2011-2018 Cisco Systems, Inc.  All rights reserved
 # Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
 # Copyright (c) 2015      Los Alamos National Security, LLC. All rights
 #                         reserved.
@@ -17,7 +17,7 @@
 if OMPI_WANT_JAVA_BINDINGS
 
 # Get the include files that were generated from the .java source files
-AM_CPPFLAGS = -I$(top_builddir)/ompi/mpi/java/java $(OPAL_JDK_CPPFLAGS) -DOMPI_LIBMPI_NAME=\"$(OMPI_LIBMPI_NAME)\" -DOPAL_DYN_LIB_SUFFIX=\"$(OPAL_DYN_LIB_SUFFIX)\"
+AM_CPPFLAGS = -I$(top_builddir)/ompi/mpi/java/java $(OMPI_JDK_CPPFLAGS) -DOMPI_LIBMPI_NAME=\"$(OMPI_LIBMPI_NAME)\" -DOPAL_DYN_LIB_SUFFIX=\"$(OPAL_DYN_LIB_SUFFIX)\"
 
 headers = \
         mpiJava.h

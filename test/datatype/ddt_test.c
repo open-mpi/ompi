@@ -373,10 +373,6 @@ int main( int argc, char* argv[] )
     }
     OBJ_RELEASE( pdt ); assert( pdt == NULL );
 
-    mpich_typeub();
-    mpich_typeub2();
-    mpich_typeub3();
-
     printf( "\n\n#\n * TEST UPPER MATRIX\n #\n\n" );
     rc = test_upper( length );
     if( rc == 0 )

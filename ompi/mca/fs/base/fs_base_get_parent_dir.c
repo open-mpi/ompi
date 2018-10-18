@@ -12,6 +12,7 @@
  * Copyright (c) 2008-2016 University of Houston. All rights reserved.
  * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2018      Cisco Systems, Inc.  All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -21,12 +22,15 @@
 
 
 #include "ompi_config.h"
+
 #include <stdio.h>
 
-#include "ompi/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/util/path.h"
+#include "opal/util/printf.h"
+#include "opal/util/string_copy.h"
 
+#include "ompi/mca/mca.h"
 #include "ompi/mca/fs/fs.h"
 #include "ompi/mca/fs/base/base.h"
 #include "ompi/mca/common/ompio/common_ompio.h"
@@ -52,6 +56,11 @@ void mca_fs_base_get_parent_dir ( char *filename, char **dirnamep)
     int err;
     char *dir = NULL, *slash;
     struct stat statbuf;
+
+    if (strlen(filename) < 1) {
+        opal_asprintf(dirnamep, ".%s", OPAL_PATH_SEP);
+        return;
+    }
 
     err = lstat(filename, &statbuf);
 
@@ -86,10 +95,16 @@ void mca_fs_base_get_parent_dir ( char *filename, char **dirnamep)
     }
 
     slash = strrchr(dir, '/');
-    if (!slash) strncpy(dir, ".", 2);
-    else {
-	if (slash == dir) *(dir + 1) = '\0';
-	else *slash = '\0';
+    if (!slash) {
+        // It is guaranteed in this case that "dir" will be at least 2
+        // characters long.
+        opal_string_copy(dir, ".", 2);
+    } else {
+	if (slash == dir) {
+            *(dir + 1) = '\0';
+        } else {
+            *slash = '\0';
+        }
     }
 
     *dirnamep = dir;
@@ -116,6 +131,9 @@ int  mca_fs_base_get_fstype(char *fname )
     }
     else if ( 0 == strncasecmp(fstype, "pvfs2", sizeof("pvfs2"))) {
         ompio_type = PVFS2;
+    }
+    else if ( 0 == strncasecmp(fstype, "ime", sizeof("ime"))) {
+        ompio_type = IME;
     }
 
     free (fstype);
