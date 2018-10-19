@@ -95,50 +95,6 @@ static int mca_pml_monitoring_component_open(void)
     return OMPI_SUCCESS;
 }
 
-static int mca_pml_monitoring_component_close(void)
-{
-    if( !mca_common_monitoring_enabled ) return OMPI_SUCCESS;
-
-    /**
-     * If this component is already active, then we are currently monitoring
-     * the execution and this call to close if the one from MPI_Finalize.
-     * Clean up and release the extra reference on ourselves.
-     */
-    if( mca_pml_monitoring_active ) {  /* Already active, turn off */
-        pml_selected_component.pmlm_version.mca_close_component();
-        mca_base_component_repository_release((mca_base_component_t*)&mca_pml_monitoring_component);
-        mca_pml_monitoring_active = 0;
-        return OMPI_SUCCESS;
-    }
-
-    /**
-     * We are supposed to monitor the execution. Save the winner PML component and
-     * module, and swap it with ourselves. Increase our refcount so that we are
-     * not dlclose.
-     */
-    if( OPAL_SUCCESS != mca_base_component_repository_retain_component(mca_pml_monitoring_component.pmlm_version.mca_type_name,
-                                                                       mca_pml_monitoring_component.pmlm_version.mca_component_name) ) {
-        return OMPI_ERROR;
-    }
-
-    /* Save a copy of the selected PML */
-    pml_selected_component = mca_pml_base_selected_component;
-    pml_selected_module = mca_pml;
-    /* Install our interception layer */
-    mca_pml_base_selected_component = mca_pml_monitoring_component;
-    mca_pml = mca_pml_monitoring_module;
-    /* Restore some of the original values: progress, flags, tags and context id */
-    mca_pml.pml_progress = pml_selected_module.pml_progress;
-    mca_pml.pml_max_contextid = pml_selected_module.pml_max_contextid;
-    mca_pml.pml_max_tag = pml_selected_module.pml_max_tag;
-    /* Add MCA_PML_BASE_FLAG_REQUIRE_WORLD flag to ensure the hashtable is properly initialized */
-    mca_pml.pml_flags = pml_selected_module.pml_flags | MCA_PML_BASE_FLAG_REQUIRE_WORLD;
-
-    mca_pml_monitoring_active = 1;
-
-    return OMPI_SUCCESS;
-}
-
 static mca_pml_base_module_t*
 mca_pml_monitoring_component_init(int* priority,
                                   bool enable_progress_threads,
@@ -154,19 +110,72 @@ mca_pml_monitoring_component_init(int* priority,
 
 static int mca_pml_monitoring_component_finish(void)
 {
-    if( mca_common_monitoring_enabled && mca_pml_monitoring_active ) {
-        /* Free internal data structure */
-        mca_common_monitoring_finalize();
+    if( !mca_common_monitoring_enabled )
+        return OMPI_SUCCESS;
+    if( !mca_pml_monitoring_active ) {
+        /* The monitoring component priority is always low to guarantee that the component
+         * is never selected. Thus, the first time component_finish is called it is right
+         * after the selection of the best PML was done, and the perfect moment to intercept
+         * it. At this point we remove ourselves from ompi_pml_base_framework.framework_components
+         * so that the component never gets closed and unloaded and it's VARs are safe for
+         * the rest of the execution.
+         */
+        mca_pml_base_component_t *component = NULL;
+        mca_base_component_list_item_t *cli = NULL;
+        OPAL_LIST_FOREACH(cli, &ompi_pml_base_framework.framework_components, mca_base_component_list_item_t) {
+            component = (mca_pml_base_component_t *) cli->cli_component;
+            
+            if( component == &mca_pml_monitoring_component ) {
+                opal_list_remove_item(&ompi_pml_base_framework.framework_components, (opal_list_item_t*)cli);
+                OBJ_RELEASE(cli);
+                break;
+            }
+        }
+        /**
+         * We are supposed to monitor the execution. Save the winner PML component and
+         * module, and swap it with ourselves. Increase our refcount so that we are
+         * not dlclose.
+         */
+        /* Save a copy of the selected PML */
+        pml_selected_component = mca_pml_base_selected_component;
+        pml_selected_module = mca_pml;
+        /* Install our interception layer */
+        mca_pml_base_selected_component = mca_pml_monitoring_component;
+        mca_pml = mca_pml_monitoring_module;
+
+        /* Restore some of the original values: progress, flags, tags and context id */
+        mca_pml.pml_progress = pml_selected_module.pml_progress;
+        mca_pml.pml_max_contextid = pml_selected_module.pml_max_contextid;
+        mca_pml.pml_max_tag = pml_selected_module.pml_max_tag;
+        /* Add MCA_PML_BASE_FLAG_REQUIRE_WORLD flag to ensure the hashtable is properly initialized */
+        mca_pml.pml_flags = pml_selected_module.pml_flags | MCA_PML_BASE_FLAG_REQUIRE_WORLD;
+
+        mca_pml_monitoring_active = 1;
+    } else {
+        /**
+         * This is the second call to component_finalize, and the component is actively
+         * intercepting the calls to the best PML. Time to stop and cleanly finalize ourself.
+         */
+
         /* Restore the original PML */
         mca_pml_base_selected_component = pml_selected_component;
         mca_pml = pml_selected_module;
         /* Redirect the close call to the original PML */
         pml_selected_component.pmlm_finalize();
+
+        /* Free internal data structure */
+        mca_common_monitoring_finalize();
+
         /**
-         * We should never release the last ref on the current
-         * component or face forever punishement.
+         * We are in the compoenent code itself, we need to prevent the dlloader from
+         * removing the code. This will result in minimal memory leaks, but it is the only
+         * way to remove most of the references to the component (including the *vars).
          */
-        /* mca_base_component_repository_release(&mca_common_monitoring_component.pmlm_version); */
+        mca_base_component_repository_retain_component(mca_pml_monitoring_component.pmlm_version.mca_type_name,
+                                                       mca_pml_monitoring_component.pmlm_version.mca_component_name);
+        /* Release all memory and be gone. */
+        mca_base_component_close((mca_base_component_t*)&mca_pml_monitoring_component,
+                                 ompi_pml_base_framework.framework_output);
     }
     return OMPI_SUCCESS;
 }
@@ -188,7 +197,7 @@ mca_pml_base_component_2_0_0_t mca_pml_monitoring_component = {
         .mca_component_name = "monitoring", /* MCA component name */
         MCA_MONITORING_MAKE_VERSION,
         .mca_open_component = mca_pml_monitoring_component_open,  /* component open */
-        .mca_close_component = mca_pml_monitoring_component_close, /* component close */
+        .mca_close_component = NULL, /* component close */
         .mca_register_component_params = mca_pml_monitoring_component_register
     },
     .pmlm_data = {
