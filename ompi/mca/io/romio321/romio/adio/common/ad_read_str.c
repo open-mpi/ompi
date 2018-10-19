@@ -34,7 +34,7 @@
              &status1, error_code); \
         if (*error_code != MPI_SUCCESS) return; \
     } \
-    ADIOI_Assert(req_len == (size_t)req_len); \
+    ADIOI_Assert((ADIO_Size) req_len == (size_t)req_len);                \
     memcpy((char *)buf + userbuf_off, readbuf+req_off-readbuf_off, req_len); \
 }
 
