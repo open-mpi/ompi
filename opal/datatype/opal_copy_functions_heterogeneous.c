@@ -4,9 +4,8 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2015-2017 Research Organization for Information Science
- * Copyright (c) 2015-2017 Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015-2018 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -140,12 +139,12 @@ opal_dt_swap_long_double(void *to_p, const void *from_p, const size_t size, size
 
 #define COPY_TYPE_HETEROGENEOUS_INTERNAL( TYPENAME, TYPE, LONG_DOUBLE )                   \
 static int32_t                                                                            \
-copy_##TYPENAME##_heterogeneous(opal_convertor_t *pConvertor, uint32_t count,             \
+copy_##TYPENAME##_heterogeneous(opal_convertor_t *pConvertor, size_t count,               \
                                 const char* from, size_t from_len, ptrdiff_t from_extent, \
                                 char* to, size_t to_length, ptrdiff_t to_extent,          \
                                 ptrdiff_t *advance)             \
 {                                                                       \
-    uint32_t i;                                                         \
+    size_t i;                                                           \
                                                                         \
     datatype_check( #TYPE, sizeof(TYPE), sizeof(TYPE), &count,          \
                    from, from_len, from_extent,                         \
@@ -188,12 +187,12 @@ copy_##TYPENAME##_heterogeneous(opal_convertor_t *pConvertor, uint32_t count,   
 
 #define COPY_2SAMETYPE_HETEROGENEOUS_INTERNAL( TYPENAME, TYPE, LONG_DOUBLE)                 \
 static int32_t                                                                            \
-copy_##TYPENAME##_heterogeneous(opal_convertor_t *pConvertor, uint32_t count,             \
+copy_##TYPENAME##_heterogeneous(opal_convertor_t *pConvertor, size_t count,               \
                                 const char* from, size_t from_len, ptrdiff_t from_extent, \
                                 char* to, size_t to_length, ptrdiff_t to_extent,          \
                                 ptrdiff_t *advance)             \
 {                                                                       \
-    uint32_t i;                                                         \
+    size_t i;                                                           \
                                                                         \
     datatype_check( #TYPE, sizeof(TYPE), sizeof(TYPE), &count,          \
                    from, from_len, from_extent,                         \
@@ -233,12 +232,12 @@ copy_##TYPENAME##_heterogeneous(opal_convertor_t *pConvertor, uint32_t count,   
 
 #define COPY_2TYPE_HETEROGENEOUS( TYPENAME, TYPE1, TYPE2 )              \
 static int32_t                                                          \
-copy_##TYPENAME##_heterogeneous(opal_convertor_t *pConvertor, uint32_t count, \
-                                const char* from, uint32_t from_len, ptrdiff_t from_extent, \
-                                char* to, uint32_t to_length, ptrdiff_t to_extent, \
+copy_##TYPENAME##_heterogeneous(opal_convertor_t *pConvertor, size_t count, \
+                                const char* from, size_t from_len, ptrdiff_t from_extent, \
+                                char* to, size_t to_length, ptrdiff_t to_extent, \
                                 ptrdiff_t *advance)             \
 {                                                                       \
-    uint32_t i;                                                         \
+    size_t i;                                                           \
                                                                         \
     datatype_check( #TYPENAME, sizeof(TYPE1) + sizeof(TYPE2),           \
                    sizeof(TYPE1) + sizeof(TYPE2), &count,               \
@@ -276,13 +275,13 @@ copy_##TYPENAME##_heterogeneous(opal_convertor_t *pConvertor, uint32_t count, \
 
 
 static inline void
-datatype_check(char *type, size_t local_size, size_t remote_size, uint32_t *count,
+datatype_check(char *type, size_t local_size, size_t remote_size, size_t *count,
                const char* from, size_t from_len, ptrdiff_t from_extent,
                char* to, size_t to_len, ptrdiff_t to_extent)
 {
     /* make sure the remote buffer is large enough to hold the data */
     if( (remote_size * *count) > from_len ) {
-        *count = (uint32_t)(from_len / remote_size);
+        *count = from_len / remote_size;
         if( (*count * remote_size) != from_len ) {
             DUMP( "oops should I keep this data somewhere (excedent %d bytes)?\n",
                   from_len - (*count * remote_size) );
@@ -296,20 +295,18 @@ datatype_check(char *type, size_t local_size, size_t remote_size, uint32_t *coun
 }
 
 #define CXX_BOOL_COPY_LOOP(TYPE)                        \
-    for( i = 0; i < count; i++ ) {                      \
+    for(size_t i = 0; i < count; i++ ) {                \
         bool *to_real = (bool*) to;                     \
         *to_real = *((TYPE*) from) == 0 ? false : true; \
         to += to_extent;                                \
         from += from_extent;                            \
     }
 static int32_t
-copy_cxx_bool_heterogeneous(opal_convertor_t *pConvertor, uint32_t count,
-                            const char* from, uint32_t from_len, ptrdiff_t from_extent,
-                            char* to, uint32_t to_length, ptrdiff_t to_extent,
+copy_cxx_bool_heterogeneous(opal_convertor_t *pConvertor, size_t count,
+                            const char* from, size_t from_len, ptrdiff_t from_extent,
+                            char* to, size_t to_length, ptrdiff_t to_extent,
                             ptrdiff_t *advance)
 {
-    uint32_t i;
-
     /* fix up the from extent */
     if ((pConvertor->remoteArch & OPAL_ARCH_BOOLISxx) !=
         (opal_local_arch & OPAL_ARCH_BOOLISxx)) {
