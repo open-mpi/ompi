@@ -13,8 +13,8 @@
  * Copyright (c) 2008-2009 Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2013      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2017      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017-2018 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -85,7 +85,7 @@ opal_unpack_homogeneous_contig_function( opal_convertor_t* pConv,
     for( iov_count = 0; iov_count < (*out_size); iov_count++ ) {
         remaining = pConv->local_size - pConv->bConverted;
         if( 0 == remaining ) break;  /* we're done this time */
-        if( remaining > (uint32_t)iov[iov_count].iov_len )
+        if( remaining > iov[iov_count].iov_len )
             remaining = iov[iov_count].iov_len;
         packed_buffer = (unsigned char*)iov[iov_count].iov_base;
         bConverted = remaining; /* how much will get unpacked this time */
@@ -176,7 +176,7 @@ opal_unpack_homogeneous_contig_function( opal_convertor_t* pConv,
  * change the content of the data (as in all conversions that require changing the size
  * of the exponent or mantissa).
  */
-static inline uint32_t
+static inline void
 opal_unpack_partial_datatype( opal_convertor_t* pConvertor, dt_elem_desc_t* pElem,
                               unsigned char* partial_data,
                               ptrdiff_t start_position, ptrdiff_t length,
@@ -185,17 +185,17 @@ opal_unpack_partial_datatype( opal_convertor_t* pConvertor, dt_elem_desc_t* pEle
     char unused_byte = 0x7F, saved_data[16];
     unsigned char temporary[16], *temporary_buffer = temporary;
     unsigned char* user_data = *user_buffer + pElem->elem.disp;
-    uint32_t i, count_desc = 1;
+    size_t count_desc = 1;
     size_t data_length = opal_datatype_basicDatatypes[pElem->elem.common.type]->size;
 
     DO_DEBUG( opal_output( 0, "unpack partial data start %lu end %lu data_length %lu user %p\n"
-                           "\tbConverted %lu total_length %lu count %d\n",
+                           "\tbConverted %lu total_length %lu count %ld\n",
                            (unsigned long)start_position, (unsigned long)start_position + length, (unsigned long)data_length, (void*)*user_buffer,
                            (unsigned long)pConvertor->bConverted, (unsigned long)pConvertor->local_size, pConvertor->count ); );
 
     /* Find a byte that is not used in the partial buffer */
  find_unused_byte:
-    for( i = 0; i < length; i++ ) {
+    for(ptrdiff_t i = 0; i < length; i++ ) {
         if( unused_byte == partial_data[i] ) {
             unused_byte--;
             goto find_unused_byte;
@@ -234,18 +234,17 @@ opal_unpack_partial_datatype( opal_convertor_t* pConvertor, dt_elem_desc_t* pEle
     {
         char resaved_data[16];
         pConvertor->cbmemcpy(resaved_data, user_data, data_length, pConvertor );
-        for( i = 0; i < data_length; i++ ) {
+        for(size_t i = 0; i < data_length; i++ ) {
             if( unused_byte == resaved_data[i] )
                 pConvertor->cbmemcpy(&user_data[i], &saved_data[i], 1, pConvertor);
         }
     }
 #else
-    for( i = 0; i < data_length; i++ ) {
+    for(size_t i = 0; i < data_length; i++ ) {
         if( unused_byte == user_data[i] )
             user_data[i] = saved_data[i];
     }
 #endif
-    return 0;
 }
 
 /* The pack/unpack functions need a cleanup. I have to create a proper interface to access
@@ -265,7 +264,7 @@ opal_generic_simple_unpack_function( opal_convertor_t* pConvertor,
 {
     dt_stack_t* pStack;                /* pointer to the position on the stack */
     uint32_t pos_desc;                 /* actual position in the description of the derived datatype */
-    uint32_t count_desc;               /* the number of items already done in the actual pos_desc */
+    size_t count_desc;                 /* the number of items already done in the actual pos_desc */
     size_t total_unpacked = 0;         /* total size unpacked this time */
     dt_elem_desc_t* description;
     dt_elem_desc_t* pElem;
@@ -286,15 +285,15 @@ opal_generic_simple_unpack_function( opal_convertor_t* pConvertor,
     pStack     = pConvertor->pStack + pConvertor->stack_pos;
     pos_desc   = pStack->index;
     conv_ptr   = pConvertor->pBaseBuf + pStack->disp;
-    count_desc = (uint32_t)pStack->count;
+    count_desc = pStack->count;
     pStack--;
     pConvertor->stack_pos--;
     pElem = &(description[pos_desc]);
 
-    DO_DEBUG( opal_output( 0, "unpack start pos_desc %d count_desc %d disp %ld\n"
-                           "stack_pos %d pos_desc %d count_desc %d disp %ld\n",
+    DO_DEBUG( opal_output( 0, "unpack start pos_desc %d count_desc %" PRIsize_t " disp %ld\n"
+                           "stack_pos %d pos_desc %d count_desc %" PRIsize_t " disp %ld\n",
                            pos_desc, count_desc, (long)(conv_ptr - pConvertor->pBaseBuf),
-                           pConvertor->stack_pos, pStack->index, (int)pStack->count, (long)(pStack->disp) ); );
+                           pConvertor->stack_pos, pStack->index, pStack->count, (long)(pStack->disp) ); );
 
     for( iov_count = 0; iov_count < (*out_size); iov_count++ ) {
         iov_ptr = (unsigned char *) iov[iov_count].iov_base;
@@ -343,15 +342,15 @@ opal_generic_simple_unpack_function( opal_convertor_t* pConvertor,
                                                   iov_ptr, 0, iov_len_local,
                                                   &temp );
 
-                    pConvertor->partial_length = (uint32_t)iov_len_local;
+                    pConvertor->partial_length = iov_len_local;
                     iov_len_local = 0;
                 }
                 goto complete_loop;
             }
             if( OPAL_DATATYPE_END_LOOP == pElem->elem.common.type ) { /* end of the current loop */
-                DO_DEBUG( opal_output( 0, "unpack end_loop count %d stack_pos %d pos_desc %d disp %ld space %lu\n",
-                                       (int)pStack->count, pConvertor->stack_pos, pos_desc,
-                                       (long)pStack->disp, (unsigned long)iov_len_local ); );
+                DO_DEBUG( opal_output( 0, "unpack end_loop count %" PRIsize_t " stack_pos %d pos_desc %d disp %ld space %lu\n",
+                                       pStack->count, pConvertor->stack_pos, pos_desc,
+                                       pStack->disp, (unsigned long)iov_len_local ); );
                 if( --(pStack->count) == 0 ) { /* end of loop */
                     if( 0 == pConvertor->stack_pos ) {
                         /* Do the same thing as when the loop is completed */
@@ -374,9 +373,9 @@ opal_generic_simple_unpack_function( opal_convertor_t* pConvertor,
                 }
                 conv_ptr = pConvertor->pBaseBuf + pStack->disp;
                 UPDATE_INTERNAL_COUNTERS( description, pos_desc, pElem, count_desc );
-                DO_DEBUG( opal_output( 0, "unpack new_loop count %d stack_pos %d pos_desc %d disp %ld space %lu\n",
-                                       (int)pStack->count, pConvertor->stack_pos, pos_desc,
-                                       (long)pStack->disp, (unsigned long)iov_len_local ); );
+                DO_DEBUG( opal_output( 0, "unpack new_loop count %" PRIsize_t " stack_pos %d pos_desc %d disp %ld space %lu\n",
+                                       pStack->count, pConvertor->stack_pos, pos_desc,
+                                       pStack->disp, (unsigned long)iov_len_local ); );
             }
             if( OPAL_DATATYPE_LOOP == pElem->elem.common.type ) {
                 ptrdiff_t local_disp = (ptrdiff_t)conv_ptr;
@@ -415,8 +414,8 @@ opal_generic_simple_unpack_function( opal_convertor_t* pConvertor,
     /* Save the global position for the next round */
     PUSH_STACK( pStack, pConvertor->stack_pos, pos_desc, pElem->elem.common.type, count_desc,
                 conv_ptr - pConvertor->pBaseBuf );
-    DO_DEBUG( opal_output( 0, "unpack save stack stack_pos %d pos_desc %d count_desc %d disp %ld\n",
-                           pConvertor->stack_pos, pStack->index, (int)pStack->count, (long)pStack->disp ); );
+    DO_DEBUG( opal_output( 0, "unpack save stack stack_pos %d pos_desc %d count_desc %" PRIsize_t " disp %ld\n",
+                           pConvertor->stack_pos, pStack->index, pStack->count, (long)pStack->disp ); );
     return 0;
 }
 
@@ -439,21 +438,21 @@ opal_unpack_general_function( opal_convertor_t* pConvertor,
 {
     dt_stack_t* pStack;                /* pointer to the position on the stack */
     uint32_t pos_desc;                 /* actual position in the description of the derived datatype */
-    uint32_t count_desc;               /* the number of items already done in the actual pos_desc */
+    size_t count_desc;                 /* the number of items already done in the actual pos_desc */
     uint16_t type = OPAL_DATATYPE_MAX_PREDEFINED; /* type at current position */
     size_t total_unpacked = 0;         /* total size unpacked this time */
     dt_elem_desc_t* description;
     dt_elem_desc_t* pElem;
     const opal_datatype_t *pData = pConvertor->pDesc;
     unsigned char *conv_ptr, *iov_ptr;
-    size_t iov_len_local;
     uint32_t iov_count;
+    size_t iov_len_local;
 
     const opal_convertor_master_t* master = pConvertor->master;
     ptrdiff_t advance;       /* number of bytes that we should advance the buffer */
-    int32_t rc;
+    size_t rc;
 
-    DO_DEBUG( opal_output( 0, "opal_convertor_general_unpack( %p, {%p, %lu}, %u )\n",
+    DO_DEBUG( opal_output( 0, "opal_convertor_general_unpack( %p, {%p, %lu}, %d )\n",
                            (void*)pConvertor, (void*)iov[0].iov_base, (unsigned long)iov[0].iov_len, *out_size ); );
 
     description = pConvertor->use_desc->desc;
@@ -465,15 +464,15 @@ opal_unpack_general_function( opal_convertor_t* pConvertor,
     pStack     = pConvertor->pStack + pConvertor->stack_pos;
     pos_desc   = pStack->index;
     conv_ptr   = pConvertor->pBaseBuf + pStack->disp;
-    count_desc = (uint32_t)pStack->count;
+    count_desc = pStack->count;
     pStack--;
     pConvertor->stack_pos--;
     pElem = &(description[pos_desc]);
 
-    DO_DEBUG( opal_output( 0, "unpack start pos_desc %d count_desc %d disp %ld\n"
-                           "stack_pos %d pos_desc %d count_desc %d disp %ld\n",
+    DO_DEBUG( opal_output( 0, "unpack start pos_desc %d count_desc %" PRIsize_t " disp %ld\n"
+                           "stack_pos %d pos_desc %d count_desc %" PRIsize_t " disp %ld\n",
                            pos_desc, count_desc, (long)(conv_ptr - pConvertor->pBaseBuf),
-                           pConvertor->stack_pos, pStack->index, (int)pStack->count, (long)(pStack->disp) ); );
+                           pConvertor->stack_pos, pStack->index, pStack->count, (long)(pStack->disp) ); );
 
     for( iov_count = 0; iov_count < (*out_size); iov_count++ ) {
         iov_ptr = (unsigned char *) iov[iov_count].iov_base;
@@ -485,7 +484,7 @@ opal_unpack_general_function( opal_convertor_t* pConvertor,
                 type = description[pos_desc].elem.common.type;
                 OPAL_DATATYPE_SAFEGUARD_POINTER( conv_ptr + pElem->elem.disp, pData->size, pConvertor->pBaseBuf,
                                                  pData, pConvertor->count );
-                DO_DEBUG( opal_output( 0, "unpack (%p, %ld) -> (%p:%ld, %d, %ld) type %s\n",
+                DO_DEBUG( opal_output( 0, "unpack (%p, %ld) -> (%p:%ld, %" PRIsize_t ", %ld) type %s\n",
                                        (void*)iov_ptr, iov_len_local,
                                        (void*)pConvertor->pBaseBuf, conv_ptr + pElem->elem.disp - pConvertor->pBaseBuf,
                                        count_desc, description[pos_desc].elem.extent,
@@ -520,15 +519,15 @@ opal_unpack_general_function( opal_convertor_t* pConvertor,
                                                   iov_ptr, 0, iov_len_local,
                                                   &temp );
 
-                    pConvertor->partial_length = (uint32_t)iov_len_local;
+                    pConvertor->partial_length = iov_len_local;
                     iov_len_local = 0;
                 }
                 goto complete_loop;
             }
             if( OPAL_DATATYPE_END_LOOP == pElem->elem.common.type ) { /* end of the current loop */
-                DO_DEBUG( opal_output( 0, "unpack end_loop count %d stack_pos %d pos_desc %d disp %ld space %lu\n",
-                                       (int)pStack->count, pConvertor->stack_pos, pos_desc,
-                                       (long)pStack->disp, (unsigned long)iov_len_local ); );
+                DO_DEBUG( opal_output( 0, "unpack end_loop count %" PRIsize_t " stack_pos %d pos_desc %d disp %ld space %lu\n",
+                                       pStack->count, pConvertor->stack_pos, pos_desc,
+                                       pStack->disp, (unsigned long)iov_len_local ); );
                 if( --(pStack->count) == 0 ) { /* end of loop */
                     if( 0 == pConvertor->stack_pos ) {
                         /* Do the same thing as when the loop is completed */
@@ -551,9 +550,9 @@ opal_unpack_general_function( opal_convertor_t* pConvertor,
                 }
                 conv_ptr = pConvertor->pBaseBuf + pStack->disp;
                 UPDATE_INTERNAL_COUNTERS( description, pos_desc, pElem, count_desc );
-                DO_DEBUG( opal_output( 0, "unpack new_loop count %d stack_pos %d pos_desc %d disp %ld space %lu\n",
-                                       (int)pStack->count, pConvertor->stack_pos, pos_desc,
-                                       (long)pStack->disp, (unsigned long)iov_len_local ); );
+                DO_DEBUG( opal_output( 0, "unpack new_loop count %" PRIsize_t " stack_pos %d pos_desc %d disp %ld space %lu\n",
+                                       pStack->count, pConvertor->stack_pos, pos_desc,
+                                       pStack->disp, (unsigned long)iov_len_local ); );
             }
             if( OPAL_DATATYPE_LOOP == pElem->elem.common.type ) {
                 PUSH_STACK( pStack, pConvertor->stack_pos, pos_desc, OPAL_DATATYPE_LOOP, count_desc,
@@ -580,7 +579,7 @@ opal_unpack_general_function( opal_convertor_t* pConvertor,
     /* Save the global position for the next round */
     PUSH_STACK( pStack, pConvertor->stack_pos, pos_desc, pElem->elem.common.type, count_desc,
                 conv_ptr - pConvertor->pBaseBuf );
-    DO_DEBUG( opal_output( 0, "unpack save stack stack_pos %d pos_desc %d count_desc %d disp %ld\n",
-                           pConvertor->stack_pos, pStack->index, (int)pStack->count, (long)pStack->disp ); );
+    DO_DEBUG( opal_output( 0, "unpack save stack stack_pos %d pos_desc %d count_desc %" PRIsize_t" disp %ld\n",
+                           pConvertor->stack_pos, pStack->index, pStack->count, (long)pStack->disp ); );
     return 0;
 }

@@ -12,6 +12,9 @@
  *                         All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc. All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2018      Cisco Systems, Inc.  All rights reserved
+ * Copyright (c) 2018      Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -95,9 +98,9 @@ int opal_datatype_dump_data_desc( dt_elem_desc_t* pDesc, int nbElems, char* ptr,
                            (int)pDesc->end_loop.items, (long)pDesc->end_loop.first_elem_disp,
                            (int)pDesc->end_loop.size );
         else
-            index += snprintf( ptr + index, length - index, "count %d disp 0x%lx (%ld) blen %d extent %d (size %ld)\n",
-                               (int)pDesc->elem.count, (long)pDesc->elem.disp, (long)pDesc->elem.disp, (int)pDesc->elem.blocklen,
-                               (int)pDesc->elem.extent, (long)(pDesc->elem.count * opal_datatype_basicDatatypes[pDesc->elem.common.type]->size) );
+            index += snprintf( ptr + index, length - index, "count %" PRIsize_t " disp 0x%lx (%ld) blen %d extent %ld (size %ld)\n",
+                               pDesc->elem.count, (long)pDesc->elem.disp, (long)pDesc->elem.disp, (int)pDesc->elem.blocklen,
+                               pDesc->elem.extent, (long)(pDesc->elem.count * opal_datatype_basicDatatypes[pDesc->elem.common.type]->size) );
         pDesc++;
 
         if( length <= (size_t)index ) break;
@@ -117,11 +120,11 @@ void opal_datatype_dump( const opal_datatype_t* pData )
     buffer = (char*)malloc( length );
     index += snprintf( buffer, length - index, "Datatype %p[%s] size %ld align %d id %d length %d used %d\n"
                                                "true_lb %ld true_ub %ld (true_extent %ld) lb %ld ub %ld (extent %ld)\n"
-                                               "nbElems %d loops %d flags %X (",
+                                               "nbElems %" PRIsize_t " loops %d flags %X (",
                      (void*)pData, pData->name, (long)pData->size, (int)pData->align, pData->id, (int)pData->desc.length, (int)pData->desc.used,
                      (long)pData->true_lb, (long)pData->true_ub, (long)(pData->true_ub - pData->true_lb),
                      (long)pData->lb, (long)pData->ub, (long)(pData->ub - pData->lb),
-                     (int)pData->nbElems, (int)pData->loops, (int)pData->flags );
+                     pData->nbElems, (int)pData->loops, (int)pData->flags );
     /* dump the flags */
     if( pData->flags == OPAL_DATATYPE_FLAG_PREDEFINED )
         index += snprintf( buffer + index, length - index, "predefined " );
