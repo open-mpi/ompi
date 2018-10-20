@@ -86,7 +86,7 @@ BEGIN_C_DECLS
  * associated type.
  */
 #define MAX_DT_COMPONENT_COUNT UINT_MAX
-typedef uint32_t opal_datatype_count_t;
+typedef size_t opal_datatype_count_t;
 
 typedef union dt_elem_desc dt_elem_desc_t;
 
