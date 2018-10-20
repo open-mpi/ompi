@@ -12,8 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
- * Copyright (c) 2013-2017 Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2013-2018 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2017      Intel, Inc. All rights reserved
  * $COPYRIGHT$
  *
@@ -330,7 +330,7 @@ static inline int opal_convertor_create_stack_with_pos_contig( opal_convertor_t*
     dt_stack_t* pStack;   /* pointer to the position on the stack */
     const opal_datatype_t* pData = pConvertor->pDesc;
     dt_elem_desc_t* pElems;
-    uint32_t count;
+    size_t count;
     ptrdiff_t extent;
 
     pStack = pConvertor->pStack;
@@ -340,7 +340,7 @@ static inline int opal_convertor_create_stack_with_pos_contig( opal_convertor_t*
      */
     pElems = pConvertor->use_desc->desc;
 
-    count = (uint32_t)(starting_point / pData->size);
+    count = starting_point / pData->size;
     extent = pData->ub - pData->lb;
 
     pStack[0].type     = OPAL_DATATYPE_LOOP;  /* the first one is always the loop */
@@ -349,7 +349,7 @@ static inline int opal_convertor_create_stack_with_pos_contig( opal_convertor_t*
     pStack[0].disp     = count * extent;
 
     /* now compute the number of pending bytes */
-    count = (uint32_t)(starting_point - count * pData->size);
+    count = starting_point - count * pData->size;
     /**
      * We save the current displacement starting from the begining
      * of this data.
@@ -563,7 +563,7 @@ size_t opal_convertor_compute_remote_size( opal_convertor_t* pConvertor )
 
 int32_t opal_convertor_prepare_for_recv( opal_convertor_t* convertor,
                                          const struct opal_datatype_t* datatype,
-                                         int32_t count,
+                                         size_t count,
                                          const void* pUserBuf )
 {
     /* Here I should check that the data is not overlapping */
@@ -605,7 +605,7 @@ int32_t opal_convertor_prepare_for_recv( opal_convertor_t* convertor,
 
 int32_t opal_convertor_prepare_for_send( opal_convertor_t* convertor,
                                          const struct opal_datatype_t* datatype,
-                                         int32_t count,
+                                         size_t count,
                                          const void* pUserBuf )
 {
     convertor->flags |= CONVERTOR_SEND;
@@ -699,11 +699,11 @@ int opal_convertor_clone( const opal_convertor_t* source,
 
 void opal_convertor_dump( opal_convertor_t* convertor )
 {
-    opal_output( 0, "Convertor %p count %d stack position %d bConverted %ld\n"
-                 "\tlocal_size %ld remote_size %ld flags %X stack_size %d pending_length %d\n"
+    opal_output( 0, "Convertor %p count %" PRIsize_t" stack position %d bConverted %" PRIsize_t "\n"
+                 "\tlocal_size %ld remote_size %ld flags %X stack_size %d pending_length %" PRIsize_t "\n"
                  "\tremote_arch %u local_arch %u\n",
                  (void*)convertor,
-                 convertor->count, convertor->stack_pos, (unsigned long)convertor->bConverted,
+                 convertor->count, convertor->stack_pos, convertor->bConverted,
                  (unsigned long)convertor->local_size, (unsigned long)convertor->remote_size,
                  convertor->flags, convertor->stack_size, convertor->partial_length,
                  convertor->remoteArch, opal_local_arch );
@@ -734,8 +734,8 @@ void opal_datatype_dump_stack( const dt_stack_t* pStack, int stack_pos,
 {
     opal_output( 0, "\nStack %p stack_pos %d name %s\n", (void*)pStack, stack_pos, name );
     for( ; stack_pos >= 0; stack_pos-- ) {
-        opal_output( 0, "%d: pos %d count %d disp %ld ", stack_pos, pStack[stack_pos].index,
-                     (int)pStack[stack_pos].count, (long)pStack[stack_pos].disp );
+        opal_output( 0, "%d: pos %d count %" PRIsize_t " disp %ld ", stack_pos, pStack[stack_pos].index,
+                     pStack[stack_pos].count, pStack[stack_pos].disp );
         if( pStack->index != -1 )
             opal_output( 0, "\t[desc count %lu disp %ld extent %ld]\n",
                          (unsigned long)pDesc[pStack[stack_pos].index].elem.count,

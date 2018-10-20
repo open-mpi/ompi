@@ -12,8 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2014      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2015-2017 Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015-2018 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -42,7 +42,7 @@
 
 static int32_t
 opal_datatype_optimize_short( opal_datatype_t* pData,
-                              int32_t count,
+                              size_t count,
                               dt_type_desc_t* pTypeDesc )
 {
     dt_elem_desc_t* pElemDesc;
