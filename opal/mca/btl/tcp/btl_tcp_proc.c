@@ -117,73 +117,99 @@ void mca_btl_tcp_proc_destruct(mca_btl_tcp_proc_t* tcp_proc)
 mca_btl_tcp_proc_t* mca_btl_tcp_proc_create(opal_proc_t* proc)
 {
     mca_btl_tcp_proc_t* btl_proc;
-    size_t size;
     int rc;
+    mca_btl_tcp_modex_addr_t *remote_addrs = NULL;
+    size_t i, size;
 
     OPAL_THREAD_LOCK(&mca_btl_tcp_component.tcp_lock);
     rc = opal_proc_table_get_value(&mca_btl_tcp_component.tcp_procs,
                                    proc->proc_name, (void**)&btl_proc);
-    if(OPAL_SUCCESS == rc) {
+    if (OPAL_SUCCESS == rc) {
         OPAL_THREAD_UNLOCK(&mca_btl_tcp_component.tcp_lock);
         return btl_proc;
     }
 
-    do {  /* This loop is only necessary so that we can break out of the serial code */
-        btl_proc = OBJ_NEW(mca_btl_tcp_proc_t);
-        if(NULL == btl_proc) {
-            rc = OPAL_ERR_OUT_OF_RESOURCE;
-            break;
+    /* proc was not found, so create one */
+    btl_proc = OBJ_NEW(mca_btl_tcp_proc_t);
+    if (NULL == btl_proc) {
+        rc = OPAL_ERR_OUT_OF_RESOURCE;
+        goto cleanup;
+    }
+
+    /* Retain the proc, but don't store the ref into the btl_proc just yet. This
+     * provides a way to release the btl_proc in case of failure without having to
+     * unlock the mutex.
+     */
+    OBJ_RETAIN(proc);
+
+    /* lookup tcp parameters exported by this proc */
+    OPAL_MODEX_RECV(rc, &mca_btl_tcp_component.super.btl_version,
+                    &proc->proc_name, (uint8_t**)&remote_addrs, &size);
+    if (OPAL_SUCCESS != rc) {
+        if (OPAL_ERR_NOT_FOUND != rc) {
+            BTL_ERROR(("opal_modex_recv: failed with return value=%d", rc));
         }
+        goto cleanup;
+    }
 
-        /* Retain the proc, but don't store the ref into the btl_proc just yet. This
-         * provides a way to release the btl_proc in case of failure without having to
-         * unlock the mutex.
-         */
-        OBJ_RETAIN(proc);
+    if (0 != (size % sizeof(mca_btl_tcp_modex_addr_t))) {
+        BTL_ERROR(("opal_modex_recv: invalid size %lu: btl-size: %lu\n",
+                   (unsigned long)size,
+                   (unsigned long)sizeof(mca_btl_tcp_modex_addr_t)));
+        rc = OPAL_ERROR;
+        goto cleanup;
+    }
 
-        /* lookup tcp parameters exported by this proc */
-        OPAL_MODEX_RECV(rc, &mca_btl_tcp_component.super.btl_version,
-                        &proc->proc_name, (uint8_t**)&btl_proc->proc_addrs, &size);
-        if(rc != OPAL_SUCCESS) {
-            if(OPAL_ERR_NOT_FOUND != rc)
-                BTL_ERROR(("opal_modex_recv: failed with return value=%d", rc));
-            break;
-        }
+    btl_proc->proc_addr_count = size / sizeof(mca_btl_tcp_modex_addr_t);
+    btl_proc->proc_addrs = malloc(btl_proc->proc_addr_count *
+                                  sizeof(mca_btl_tcp_addr_t));
+    if (NULL == btl_proc->proc_addrs) {
+        rc = OPAL_ERR_OUT_OF_RESOURCE;
+        goto cleanup;
+    }
 
-        if(0 != (size % sizeof(mca_btl_tcp_addr_t))) {
-            BTL_ERROR(("opal_modex_recv: invalid size %lu: btl-size: %lu\n",
-                       (unsigned long) size, (unsigned long)sizeof(mca_btl_tcp_addr_t)));
-            rc = OPAL_ERROR;
-            break;
-        }
-
-        btl_proc->proc_addr_count = size / sizeof(mca_btl_tcp_addr_t);
-
-        /* allocate space for endpoint array - one for each exported address */
-        btl_proc->proc_endpoints = (mca_btl_base_endpoint_t**)
-            malloc((1 + btl_proc->proc_addr_count) *
-                   sizeof(mca_btl_base_endpoint_t*));
-        if(NULL == btl_proc->proc_endpoints) {
-            rc = OPAL_ERR_OUT_OF_RESOURCE;
-            break;
-        }
-
-        /* convert the OPAL addr_family field to OS constants,
-         * so we can check for AF_INET (or AF_INET6) and don't have
-         * to deal with byte ordering anymore.
-         */
-        for (unsigned int i = 0; i < btl_proc->proc_addr_count; i++) {
-            if (MCA_BTL_TCP_AF_INET == btl_proc->proc_addrs[i].addr_family) {
-                btl_proc->proc_addrs[i].addr_family = AF_INET;
-            }
+    /* the modex and proc structures differ slightly, so copy the
+       fields needed in the proc version */
+    for (i = 0 ; i < btl_proc->proc_addr_count ; i++) {
+        if (MCA_BTL_TCP_AF_INET == remote_addrs[i].addr_family) {
+            memcpy(&btl_proc->proc_addrs[i].addr_inet,
+                   remote_addrs[i].addr, sizeof(struct in_addr));
+            btl_proc->proc_addrs[i].addr_port = remote_addrs[i].addr_port;
+            btl_proc->proc_addrs[i].addr_ifkindex = remote_addrs[i].addr_ifkindex;
+            btl_proc->proc_addrs[i].addr_family = AF_INET;
+            btl_proc->proc_addrs[i].addr_inuse = false;
+        } else if (MCA_BTL_TCP_AF_INET6 == remote_addrs[i].addr_family) {
 #if OPAL_ENABLE_IPV6
-            if (MCA_BTL_TCP_AF_INET6 == btl_proc->proc_addrs[i].addr_family) {
-                btl_proc->proc_addrs[i].addr_family = AF_INET6;
-            }
+            memcpy(&btl_proc->proc_addrs[i].addr_inet6,
+                   remote_addrs[i].addr, sizeof(struct in6_addr));
+            btl_proc->proc_addrs[i].addr_port = remote_addrs[i].addr_port;
+            btl_proc->proc_addrs[i].addr_ifkindex = remote_addrs[i].addr_ifkindex;
+            btl_proc->proc_addrs[i].addr_family = AF_INET6;
+            btl_proc->proc_addrs[i].addr_inuse = false;
+#else
+            rc = OPAL_ERR_NOT_SUPPORTED;
+            goto cleanup;
 #endif
+        } else {
+            BTL_ERROR(("Unexpected address family %d",
+                       (int)remote_addrs[i].addr_family));
+            rc = OPAL_ERR_BAD_PARAM;
+            goto cleanup;
         }
-    } while (0);
+    }
 
+    free(remote_addrs);
+
+    /* allocate space for endpoint array - one for each exported address */
+    btl_proc->proc_endpoints = (mca_btl_base_endpoint_t**)
+        malloc((1 + btl_proc->proc_addr_count) *
+               sizeof(mca_btl_base_endpoint_t*));
+    if (NULL == btl_proc->proc_endpoints) {
+        rc = OPAL_ERR_OUT_OF_RESOURCE;
+        goto cleanup;
+    }
+
+cleanup:
     if (OPAL_SUCCESS == rc) {
         btl_proc->proc_opal = proc;  /* link with the proc */
         /* add to hash table of all proc instance. */
@@ -669,7 +695,7 @@ int mca_btl_tcp_proc_insert( mca_btl_tcp_proc_t* btl_proc,
             }
             peer_interfaces[best]->inuse++;
             btl_endpoint->endpoint_addr = proc_data->best_addr[i][best];
-            btl_endpoint->endpoint_addr->addr_inuse++;
+            btl_endpoint->endpoint_addr->addr_inuse = true;
             rc = OPAL_SUCCESS;
             break;
         }
@@ -695,7 +721,7 @@ int mca_btl_tcp_proc_insert( mca_btl_tcp_proc_t* btl_proc,
         if (CQ_NO_CONNECTION != max) {
             peer_interfaces[j_max]->inuse++;
             btl_endpoint->endpoint_addr = proc_data->best_addr[i_max][j_max];
-            btl_endpoint->endpoint_addr->addr_inuse++;
+            btl_endpoint->endpoint_addr->addr_inuse = true;
             rc = OPAL_SUCCESS;
         }
     }
@@ -772,7 +798,7 @@ int mca_btl_tcp_proc_remove(mca_btl_tcp_proc_t* btl_proc, mca_btl_base_endpoint_
                    being removed early in the wireup sequence (e.g., if it
                    is unreachable by all other procs) */
                 if (NULL != btl_endpoint->endpoint_addr) {
-                    btl_endpoint->endpoint_addr->addr_inuse--;
+                    btl_endpoint->endpoint_addr->addr_inuse = false;
                 }
                 break;
             }
