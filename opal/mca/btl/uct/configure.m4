@@ -30,6 +30,20 @@
 AC_DEFUN([MCA_opal_btl_uct_CONFIG],[
     AC_CONFIG_FILES([opal/mca/btl/uct/Makefile])
 
+    AC_ARG_WITH([btl_uct],
+                [AS_HELP_STRING([--with-btl-uct],
+                                [If specified, cause an error if UCT
+                                 support cannot be built])])
+
+    # If --without-uct was specified, then gracefully exit.
+    # Otherwise, do the rest of the config.
+    AS_IF([test "x$with_btl_uct" = "xno"],
+          [AC_MSG_WARN([--without-btl-uct specified; skipping uct BTL])
+           $2],
+          [_OPAL_BTL_UCT_DO_CONFIG($1, $2)])
+])
+
+AC_DEFUN([_OPAL_BTL_UCT_DO_CONFIG],[
     OMPI_CHECK_UCX([btl_uct],
                    [btl_uct_happy="yes"],
                    [btl_uct_happy="no"])
