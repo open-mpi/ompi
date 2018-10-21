@@ -19,7 +19,8 @@
  *
  */
 
-#include "opal/include/opal/align.h"
+#include "ompi_config.h"
+#include "opal/align.h"
 #include "opal/util/bit_ops.h"
 #include "ompi/op/op.h"
 
