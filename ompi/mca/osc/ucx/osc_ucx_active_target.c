@@ -193,8 +193,9 @@ int ompi_osc_ucx_complete(struct ompi_win_t *win) {
             OSC_UCX_VERBOSE(1, "ucp_atomic_post failed: %d", status);
         }
 
-        if (OMPI_SUCCESS != opal_common_ucx_ep_flush(ep, mca_osc_ucx_component.ucp_worker)) {
-            OSC_UCX_VERBOSE(1, "opal_common_ucx_ep_flush failed");
+        ret = opal_common_ucx_ep_flush(ep, mca_osc_ucx_component.ucp_worker);
+        if (OMPI_SUCCESS != ret) {
+            OSC_UCX_VERBOSE(1, "opal_common_ucx_ep_flush failed: %d", ret);
         }
     }
 
