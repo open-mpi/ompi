@@ -55,8 +55,14 @@ int ompi_osc_rdma_flush (int target, struct ompi_win_t *win)
     }
     OPAL_THREAD_UNLOCK(&module->lock);
 
+    mca_base_event_raise(mca_osc_rdma_events[OMPI_OSC_RDMA_EVENT_FLUSH_STARTED].event, MCA_BASE_CALLBACK_SAFETY_ASYNC_SIGNAL_SAFE,
+                         module->win, NULL, &target);
+
     /* finish all outstanding fragments */
     ompi_osc_rdma_sync_rdma_complete (lock);
+
+    mca_base_event_raise(mca_osc_rdma_events[OMPI_OSC_RDMA_EVENT_FLUSH_COMPLETE].event, MCA_BASE_CALLBACK_SAFETY_ASYNC_SIGNAL_SAFE,
+                         module->win, NULL, &target);
 
     OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "flush on target %d complete", target);
 
@@ -84,6 +90,9 @@ int ompi_osc_rdma_flush_all (struct ompi_win_t *win)
         ompi_osc_rdma_sync_rdma_complete (&module->all_sync);
     }
 
+    mca_base_event_raise(mca_osc_rdma_events[OMPI_OSC_RDMA_EVENT_FLUSH_STARTED].event, MCA_BASE_CALLBACK_SAFETY_ASYNC_SIGNAL_SAFE,
+                         module->win, NULL, &(int) {-1});
+
     /* flush all locks */
     ret = opal_hash_table_get_first_key_uint32 (&module->outstanding_locks, &key, (void **) &lock, &node);
     while (OPAL_SUCCESS == ret) {
@@ -92,6 +101,9 @@ int ompi_osc_rdma_flush_all (struct ompi_win_t *win)
         ret = opal_hash_table_get_next_key_uint32 (&module->outstanding_locks, &key, (void **) &lock,
                                                    node, &node);
     }
+
+    mca_base_event_raise(mca_osc_rdma_events[OMPI_OSC_RDMA_EVENT_FLUSH_COMPLETE].event, MCA_BASE_CALLBACK_SAFETY_ASYNC_SIGNAL_SAFE,
+                         module->win, NULL, &(int) {-1});
 
     OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "flush_all complete");
 
@@ -158,6 +170,9 @@ static inline int ompi_osc_rdma_lock_atomic_internal (ompi_osc_rdma_module_t *mo
         } while (1);
     }
 
+    mca_base_event_raise(mca_osc_rdma_events[OMPI_OSC_RDMA_EVENT_LOCK_ACQUIRED].event, MCA_BASE_CALLBACK_SAFETY_ASYNC_SIGNAL_SAFE,
+                         module->win, NULL, &peer->rank);
+
     return OMPI_SUCCESS;
 }
 
@@ -181,6 +196,10 @@ static inline int ompi_osc_rdma_unlock_atomic_internal (ompi_osc_rdma_module_t *
         ompi_osc_rdma_lock_release_shared (module, peer, -1, offsetof (ompi_osc_rdma_state_t, local_lock));
         peer->flags &= ~OMPI_OSC_RDMA_PEER_DEMAND_LOCKED;
     }
+
+    mca_base_event_raise(mca_osc_rdma_events[OMPI_OSC_RDMA_EVENT_LOCK_RELEASED].event, MCA_BASE_CALLBACK_SAFETY_ASYNC_SIGNAL_SAFE,
+                         module->win, NULL, &peer->rank);
+
 
     return OMPI_SUCCESS;
 }
@@ -354,6 +373,9 @@ int ompi_osc_rdma_lock_all_atomic (int assert, struct ompi_win_t *win)
             ret = ompi_osc_rdma_lock_acquire_shared (module, module->leader, 0x0000000100000000UL,
                                                      offsetof(ompi_osc_rdma_state_t, global_lock),
                                                      0x00000000ffffffffUL);
+
+            mca_base_event_raise(mca_osc_rdma_events[OMPI_OSC_RDMA_EVENT_LOCK_ACQUIRED].event, MCA_BASE_CALLBACK_SAFETY_ASYNC_SIGNAL_SAFE,
+                                 module->win, NULL, &(int) {-1});
         } else {
             /* always lock myself */
             ret = ompi_osc_rdma_demand_lock_peer (module, module->my_peer);
@@ -409,6 +431,9 @@ int ompi_osc_rdma_unlock_all_atomic (struct ompi_win_t *win)
             /* decrement the master lock shared count */
             (void) ompi_osc_rdma_lock_release_shared (module, module->leader, -0x0000000100000000UL,
                                                       offsetof (ompi_osc_rdma_state_t, global_lock));
+
+            mca_base_event_raise(mca_osc_rdma_events[OMPI_OSC_RDMA_EVENT_LOCK_RELEASED].event, MCA_BASE_CALLBACK_SAFETY_ASYNC_SIGNAL_SAFE,
+                                 module->win, NULL, &(int) {-1});
         }
     }
 

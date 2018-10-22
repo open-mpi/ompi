@@ -84,6 +84,87 @@ static char* ompi_osc_rdma_set_no_lock_info(opal_infosubscriber_t *obj, char *ke
 static char *ompi_osc_rdma_btl_names;
 static char *ompi_osc_rdma_mtl_names;
 
+static char *mca_osc_rdma_target_element[] = {
+    "target", NULL,
+};
+
+static opal_datatype_t *mca_osc_rdma_rdma_event_types[] = {
+    &ompi_mpi_int.dt.super, &ompi_mpi_int64_t.dt.super, &ompi_mpi_int64_t.dt.super,
+};
+
+static char *mca_osc_rdma_rdma_event_elements[] = {
+    "target", "address", "size_bytes", NULL,
+};
+
+static unsigned long mca_osc_rdma_rdma_event_offsets[] = {
+    offsetof (mca_osc_rdma_rdma_event_t, target), offsetof (mca_osc_rdma_rdma_event_t, address),
+    offsetof (mca_osc_rdma_rdma_event_t, size),
+};
+
+mca_base_event_list_item_t mca_osc_rdma_events[] = {
+    [OMPI_OSC_RDMA_EVENT_LOCK_ACQUIRED] = {.name = "lock_acquired", .desc = "Passive-target lock aquired",
+                                           .verbosity = OPAL_INFO_LVL_5, .datatypes = &(opal_datatype_t *) {&ompi_mpi_int.dt.super},
+                                           .offsets = &(unsigned long) {0}, .num_datatypes = 1, .elements = mca_osc_rdma_target_element,
+                                           .extent = sizeof (int), .bind = MCA_BASE_VAR_BIND_MPI_WIN},
+
+    [OMPI_OSC_RDMA_EVENT_LOCK_RELEASED] = {.name = "lock_released", .desc = "Passive-target lock required",
+                                           .verbosity = OPAL_INFO_LVL_5, .datatypes = &(opal_datatype_t *) {&ompi_mpi_int.dt.super},
+                                           .offsets = &(unsigned long) {0}, .num_datatypes = 1, .elements = mca_osc_rdma_target_element,
+                                           .extent = sizeof (int), .bind = MCA_BASE_VAR_BIND_MPI_WIN},
+
+    [OMPI_OSC_RDMA_EVENT_PUT_STARTED] = {.name = "put_started", .desc = "Put started to target. Complete event may not exist.",
+                                         .verbosity = OPAL_INFO_LVL_5, .datatypes = mca_osc_rdma_rdma_event_types,
+                                         .offsets = mca_osc_rdma_rdma_event_offsets, .num_datatypes = 3,
+                                         .elements = mca_osc_rdma_rdma_event_elements, .extent = 24, .bind = MCA_BASE_VAR_BIND_MPI_WIN},
+
+    [OMPI_OSC_RDMA_EVENT_PUT_COMPLETE] = {.name = "put_complete", .desc = "Put completed on target",
+                                         .verbosity = OPAL_INFO_LVL_5, .datatypes = mca_osc_rdma_rdma_event_types,
+                                         .offsets = mca_osc_rdma_rdma_event_offsets, .num_datatypes = 3,
+                                         .elements = mca_osc_rdma_rdma_event_elements, .extent = 24, .bind = MCA_BASE_VAR_BIND_MPI_WIN},
+
+    [OMPI_OSC_RDMA_EVENT_GET_STARTED] = {.name = "get_started", .desc = "Put started to target. Complete event may not exist.",
+                                         .verbosity = OPAL_INFO_LVL_5, .datatypes = mca_osc_rdma_rdma_event_types,
+                                         .offsets = mca_osc_rdma_rdma_event_offsets, .num_datatypes = 3,
+                                         .elements = mca_osc_rdma_rdma_event_elements, .extent = 24, .bind = MCA_BASE_VAR_BIND_MPI_WIN},
+
+    [OMPI_OSC_RDMA_EVENT_GET_COMPLETE] = {.name = "get_complete", .desc = "Put completed on target",
+                                         .verbosity = OPAL_INFO_LVL_5, .datatypes = mca_osc_rdma_rdma_event_types,
+                                         .offsets = mca_osc_rdma_rdma_event_offsets, .num_datatypes = 3,
+                                         .elements = mca_osc_rdma_rdma_event_elements, .extent = 24, .bind = MCA_BASE_VAR_BIND_MPI_WIN},
+
+    [OMPI_OSC_RDMA_EVENT_FLUSH_STARTED] = {.name = "flush_started", .desc = "Flush started on target",
+                                           .verbosity = OPAL_INFO_LVL_5, .datatypes = &(opal_datatype_t *) {&ompi_mpi_int.dt.super},
+                                           .offsets = &(unsigned long) {0}, .num_datatypes = 1, .elements = mca_osc_rdma_target_element,
+                                           .extent = sizeof (int), .bind = MCA_BASE_VAR_BIND_MPI_WIN},
+
+    [OMPI_OSC_RDMA_EVENT_FLUSH_COMPLETE] = {.name = "flush_complete", .desc = "Flush complete on target",
+                                            .verbosity = OPAL_INFO_LVL_5, .datatypes = &(opal_datatype_t *) {&ompi_mpi_int.dt.super},
+                                            .offsets = &(unsigned long) {0}, .num_datatypes = 1, .elements = mca_osc_rdma_target_element,
+                                            .extent = sizeof (int), .bind = MCA_BASE_VAR_BIND_MPI_WIN},
+
+    [OMPI_OSC_RDMA_EVENT_PSCW_EXPOSE_START] = {.name = "pscw_expose_start", .desc = "PSWW exposure started",
+                                          .verbosity = OPAL_INFO_LVL_5, .datatypes = &(opal_datatype_t *) {&ompi_mpi_int.dt.super},
+                                          .offsets = &(unsigned long) {0}, .num_datatypes = 0, .elements = mca_osc_rdma_target_element,
+                                          .extent = sizeof (int), .bind = MCA_BASE_VAR_BIND_MPI_WIN},
+
+    [OMPI_OSC_RDMA_EVENT_PSCW_EXPOSE_COMPLETE] = {.name = "pscw_expose_complete", .desc = "PSWW exposure complete",
+                                             .verbosity = OPAL_INFO_LVL_5, .datatypes = &(opal_datatype_t *) {&ompi_mpi_int.dt.super},
+                                             .offsets = &(unsigned long) {0}, .num_datatypes = 0, .elements = mca_osc_rdma_target_element,
+                                             .extent = sizeof (int), .bind = MCA_BASE_VAR_BIND_MPI_WIN},
+
+    [OMPI_OSC_RDMA_EVENT_PSCW_ACCESS_START] = {.name = "pscw_access_start", .desc = "PSWW access epoch started",
+                                          .verbosity = OPAL_INFO_LVL_5, .datatypes = &(opal_datatype_t *) {&ompi_mpi_int.dt.super},
+                                          .offsets = &(unsigned long) {0}, .num_datatypes = 1, .elements = mca_osc_rdma_target_element,
+                                          .extent = sizeof (int), .bind = MCA_BASE_VAR_BIND_MPI_WIN},
+
+    [OMPI_OSC_RDMA_EVENT_PSCW_ACCESS_COMPLETE] = {.name = "pscw_access_complete", .desc = "PSWW access epoch complete",
+                                             .verbosity = OPAL_INFO_LVL_5, .datatypes = &(opal_datatype_t *) {&ompi_mpi_int.dt.super},
+                                             .offsets = &(unsigned long) {0}, .num_datatypes = 1, .elements = mca_osc_rdma_target_element,
+                                             .extent = sizeof (int), .bind = MCA_BASE_VAR_BIND_MPI_WIN},
+
+    [OMPI_OSC_RDMA_EVENT_FENCE] = {.name = "fence", .desc = "Fence called", .verbosity = OPAL_INFO_LVL_5, .bind = MCA_BASE_VAR_BIND_MPI_WIN},
+};
+
 static const mca_base_var_enum_value_t ompi_osc_rdma_locking_modes[] = {
     {.value = OMPI_OSC_RDMA_LOCKING_TWO_LEVEL, .string = "two_level"},
     {.value = OMPI_OSC_RDMA_LOCKING_ON_DEMAND, .string = "on_demand"},
@@ -291,6 +372,8 @@ static int ompi_osc_rdma_component_register (void)
                                              NULL, MCA_BASE_VAR_BIND_MPI_WIN, MCA_BASE_PVAR_FLAG_CONTINUOUS,
                                              ompi_osc_rdma_pvar_read, NULL, NULL,
                                              (void *) (intptr_t) offsetof (ompi_osc_rdma_module_t, get_retry_count));
+
+    mca_base_component_event_register_list (&mca_osc_rdma_component.super.osc_version, mca_osc_rdma_events, OMPI_OSC_RDMA_EVENT_MAX);
 
     return OMPI_SUCCESS;
 }

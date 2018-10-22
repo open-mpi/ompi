@@ -13,6 +13,7 @@
  * $HEADER$
  */
 
+#include "osc_rdma.h"
 #include "osc_rdma_comm.h"
 #include "osc_rdma_sync.h"
 #include "osc_rdma_request.h"
@@ -448,6 +449,9 @@ static int ompi_osc_rdma_put_real (ompi_osc_rdma_sync_t *sync, ompi_osc_rdma_pee
     OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "initiating btl put of %lu bytes to remote address %" PRIx64 ", sync "
                      "object %p...", (unsigned long) size, target_address, (void *) sync);
 
+    mca_base_event_raise(mca_osc_rdma_events[OMPI_OSC_RDMA_EVENT_PUT_STARTED].event, MCA_BASE_CALLBACK_SAFETY_ASYNC_SIGNAL_SAFE,
+                         module->win, NULL, &((mca_osc_rdma_rdma_event_t){.target = peer->rank, .address = target_address, .size = size}));
+
     /* flag outstanding rma requests */
     ompi_osc_rdma_sync_rdma_inc (sync);
 
@@ -697,6 +701,9 @@ static int ompi_osc_rdma_get_contig (ompi_osc_rdma_sync_t *sync, ompi_osc_rdma_p
          * as well. this path also covers the case where the get operation is not buffered. */
         ompi_osc_rdma_sync_rdma_inc (sync);
     }
+
+    mca_base_event_raise(mca_osc_rdma_events[OMPI_OSC_RDMA_EVENT_GET_STARTED].event, MCA_BASE_CALLBACK_SAFETY_ASYNC_SIGNAL_SAFE,
+                         module->win, NULL, &((mca_osc_rdma_rdma_event_t){.target = peer->rank, .address = source_address, .size = size}));
 
     do {
         ret = module->selected_btl->btl_get (module->selected_btl, peer->data_endpoint, ptr,

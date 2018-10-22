@@ -50,6 +50,34 @@
 #include "osc_rdma_peer.h"
 
 #include "opal_stdint.h"
+#include "opal/mca/base/mca_base_event.h"
+
+enum {
+    OMPI_OSC_RDMA_EVENT_LOCK_ACQUIRED,
+    OMPI_OSC_RDMA_EVENT_LOCK_RELEASED,
+    OMPI_OSC_RDMA_EVENT_PUT_STARTED,
+    OMPI_OSC_RDMA_EVENT_PUT_COMPLETE,
+    OMPI_OSC_RDMA_EVENT_GET_STARTED,
+    OMPI_OSC_RDMA_EVENT_GET_COMPLETE,
+    OMPI_OSC_RDMA_EVENT_FLUSH_STARTED,
+    OMPI_OSC_RDMA_EVENT_FLUSH_COMPLETE,
+    OMPI_OSC_RDMA_EVENT_PSCW_EXPOSE_START,
+    OMPI_OSC_RDMA_EVENT_PSCW_EXPOSE_COMPLETE,
+    OMPI_OSC_RDMA_EVENT_PSCW_ACCESS_START,
+    OMPI_OSC_RDMA_EVENT_PSCW_ACCESS_COMPLETE,
+    OMPI_OSC_RDMA_EVENT_FENCE,
+    OMPI_OSC_RDMA_EVENT_MAX,
+};
+
+struct mca_osc_rdma_rdma_event_t {
+    int target;
+    uint64_t address;
+    uint64_t size;
+};
+
+typedef struct mca_osc_rdma_rdma_event_t mca_osc_rdma_rdma_event_t;
+
+extern mca_base_event_list_item_t mca_osc_rdma_events[];
 
 #define RANK_ARRAY_COUNT(module) ((ompi_comm_size ((module)->comm) + (module)->node_count - 1) / (module)->node_count)
 
