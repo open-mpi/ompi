@@ -83,6 +83,13 @@ included in the vX.Y.Z section and be denoted as:
 - Various improvements to MPI RMA performance when using RDMA
   capable interconnects.
 - Update memkind component to use the memkind 1.6 public API.
+- Fix a problem with javadoc builds using OpenJDK 11.  Thanks to
+  Siegmar Gross for reporting.
+- Fix a memory leak using UCX.  Thanks to Charles Taylor for reporting.
+- Fix hangs in MPI_FINALIZE when using UCX.
+- Fix a problem with building Open MPI using an external PMIx 2.1.2
+  library.  Thanks to Marcin Krotkiewski for reporting.
+- Fix race conditions in Vader (shared memory) transport.
 - Fix problems with use of newer map-by mpirun options.  Thanks to
   Tony Reina for reporting.
 - Fix rank-by algorithms to properly rank by object and span
