@@ -31,15 +31,6 @@
 #include "btl_uct_endpoint.h"
 #include "btl_uct_am.h"
 
-#include "opal/memoryhooks/memory.h"
-#include "opal/mca/memory/base/base.h"
-#include <ucm/api/ucm.h>
-
-static void mca_btl_uct_mem_release_cb(void *buf, size_t length, void *cbdata, bool from_alloc)
-{
-    ucm_vm_munmap(buf, length);
-}
-
 struct mca_btl_base_endpoint_t *mca_btl_uct_get_ep (struct mca_btl_base_module_t *module, opal_proc_t *proc)
 {
     mca_btl_uct_module_t *uct_module = (mca_btl_uct_module_t *) module;
@@ -83,7 +74,6 @@ static int mca_btl_uct_add_procs (mca_btl_base_module_t *btl,
 
     if (false == uct_module->initialized) {
         mca_btl_uct_tl_t *am_tl = uct_module->am_tl;
-        mca_btl_uct_tl_t *rdma_tl = uct_module->rdma_tl;
 
         /* NTH: might want to vary this size based off the universe size (if
          * one exists). the table is only used for connection lookup and
@@ -97,7 +87,7 @@ static int mca_btl_uct_add_procs (mca_btl_base_module_t *btl,
         if (am_tl) {
             rc = opal_free_list_init (&uct_module->short_frags, sizeof (mca_btl_uct_base_frag_t),
                                       opal_cache_line_size, OBJ_CLASS(mca_btl_uct_base_frag_t),
-                                      am_tl->uct_iface_attr.cap.am.max_short, opal_cache_line_size,
+                                      MCA_BTL_UCT_TL_ATTR(am_tl, 0).cap.am.max_short, opal_cache_line_size,
                                       0, 1024, 64, NULL, 0, NULL, NULL, NULL);
 
             rc = opal_free_list_init (&uct_module->eager_frags, sizeof (mca_btl_uct_base_frag_t),
@@ -109,18 +99,6 @@ static int mca_btl_uct_add_procs (mca_btl_base_module_t *btl,
                                       opal_cache_line_size, OBJ_CLASS(mca_btl_uct_base_frag_t),
                                       btl->btl_max_send_size, opal_cache_line_size, 0, 128, 8,
                                       NULL, 0, uct_module->rcache, NULL, NULL);
-        }
-
-        if (rdma_tl) {
-            rc = opal_free_list_init (&uct_module->rdma_completions, sizeof (mca_btl_uct_uct_completion_t),
-                                      opal_cache_line_size, OBJ_CLASS(mca_btl_uct_uct_completion_t),
-                                      0, opal_cache_line_size, 0, 4096, 128, NULL, 0, NULL, NULL,
-                                      NULL);
-        }
-
-        if (mca_btl_uct_component.disable_ucx_memory_hooks) {
-            ucm_set_external_event(UCM_EVENT_VM_UNMAPPED);
-            opal_mem_hooks_register_release(mca_btl_uct_mem_release_cb, NULL);
         }
 
         uct_module->initialized = true;
@@ -288,10 +266,6 @@ int mca_btl_uct_finalize (mca_btl_base_module_t* btl)
     mca_btl_uct_endpoint_t *endpoint;
     uint64_t key;
 
-    if (mca_btl_uct_component.disable_ucx_memory_hooks) {
-        opal_mem_hooks_unregister_release (mca_btl_uct_mem_release_cb);
-    }
-
     /* clean up any leftover endpoints */
     OPAL_HASH_TABLE_FOREACH(key, uint64, endpoint, &uct_module->id_to_endpoint) {
         OBJ_RELEASE(endpoint);
@@ -300,9 +274,9 @@ int mca_btl_uct_finalize (mca_btl_base_module_t* btl)
     OBJ_DESTRUCT(&uct_module->short_frags);
     OBJ_DESTRUCT(&uct_module->eager_frags);
     OBJ_DESTRUCT(&uct_module->max_frags);
-    OBJ_DESTRUCT(&uct_module->rdma_completions);
     OBJ_DESTRUCT(&uct_module->pending_frags);
     OBJ_DESTRUCT(&uct_module->lock);
+    OBJ_DESTRUCT(&uct_module->pending_connection_reqs);
 
     if (uct_module->rcache) {
         mca_rcache_base_module_destroy (uct_module->rcache);

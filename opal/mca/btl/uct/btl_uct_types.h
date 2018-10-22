@@ -77,6 +77,9 @@ struct mca_btl_uct_conn_req_t {
     /** name of the requesting process */
     opal_process_name_t proc_name;
 
+    /** request type: 0 == endpoint data, 1 == endpoint data + remote ready */
+    int type;
+
     /** context id that should be connected */
     int context_id;
 
@@ -141,9 +144,21 @@ struct mca_btl_uct_device_context_t {
     /** UCT interface handle */
     uct_iface_h uct_iface;
 
+    /** interface attributes */
+    uct_iface_attr_t uct_iface_attr;
+
+    /** RDMA completions */
+    opal_free_list_t rdma_completions;
+
     /** complete fragments and rdma operations. this fifo is used to avoid making
      * callbacks while holding the device lock. */
     opal_fifo_t completion_fifo;
+
+    /** progress is enabled on this context */
+    bool progress_enabled;
+
+    /** context is in AM callback */
+    volatile bool in_am_callback;
 };
 
 typedef struct mca_btl_uct_device_context_t mca_btl_uct_device_context_t;
@@ -229,8 +244,8 @@ struct mca_btl_uct_base_frag_t {
     /** module this fragment is associated with */
     struct mca_btl_uct_module_t *btl;
 
-    /** context this fragment is waiting on */
-    int context_id;
+    /* tl context */
+    mca_btl_uct_device_context_t *context;
 
     /** is this frag ready to send (only used when pending) */
     bool ready;
@@ -301,9 +316,6 @@ struct mca_btl_uct_tl_t {
     /** device name for this tl (used for creating device contexts) */
     char *uct_dev_name;
 
-    /** interface attributes */
-    uct_iface_attr_t uct_iface_attr;
-
     /** maxiumum number of device contexts that can be created */
     int max_device_contexts;
 
@@ -317,5 +329,15 @@ struct mca_btl_uct_tl_t {
 
 typedef struct mca_btl_uct_tl_t mca_btl_uct_tl_t;
 OBJ_CLASS_DECLARATION(mca_btl_uct_tl_t);
+
+#define MCA_BTL_UCT_TL_ATTR(tl, context_id) (tl)->uct_dev_contexts[(context_id)]->uct_iface_attr
+
+struct mca_btl_uct_pending_connection_request_t {
+    opal_list_item_t super;
+    uint8_t request_data[];
+};
+
+typedef struct mca_btl_uct_pending_connection_request_t mca_btl_uct_pending_connection_request_t;
+OBJ_CLASS_DECLARATION(mca_btl_uct_pending_connection_request_t);
 
 #endif /* !defined(BTL_UCT_TYPES_H) */

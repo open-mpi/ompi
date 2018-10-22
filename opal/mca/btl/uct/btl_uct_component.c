@@ -28,6 +28,9 @@
 #include "opal/mca/btl/base/base.h"
 #include "opal/mca/hwloc/base/base.h"
 #include "opal/util/argv.h"
+#include "opal/memoryhooks/memory.h"
+#include "opal/mca/memory/base/base.h"
+#include <ucm/api/ucm.h>
 
 #include <string.h>
 
@@ -47,13 +50,13 @@ static int mca_btl_uct_component_register(void)
                                            MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_3, MCA_BASE_VAR_SCOPE_LOCAL,
                                            &mca_btl_uct_component.memory_domains);
 
-    mca_btl_uct_component.allowed_transports = "any";
+    mca_btl_uct_component.allowed_transports = "dc_mlx5,rc_mlx5,ud,any";
     (void) mca_base_component_var_register(&mca_btl_uct_component.super.btl_version,
-                                           "transports", "Comma-delimited list of transports of the form to use."
-                                           " The list of transports available can be queried using ucx_info. Special"
-                                           "values: any (any available) (default: any)", MCA_BASE_VAR_TYPE_STRING,
-                                           NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_3, MCA_BASE_VAR_SCOPE_LOCAL,
-                                           &mca_btl_uct_component.allowed_transports);
+                                           "transports", "Comma-delimited list of transports to use sorted by increasing "
+                                           "priority. The list of transports available can be queried using ucx_info. Special"
+                                           "values: any (any available) (default: dc_mlx5,rc_mlx5,ud,any)",
+                                           MCA_BASE_VAR_TYPE_STRING, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_3,
+                                           MCA_BASE_VAR_SCOPE_LOCAL, &mca_btl_uct_component.allowed_transports);
 
     mca_btl_uct_component.num_contexts_per_module = 0;
     (void) mca_base_component_var_register(&mca_btl_uct_component.super.btl_version,
@@ -93,6 +96,11 @@ static int mca_btl_uct_component_register(void)
                                         &module->super);
 }
 
+static void mca_btl_uct_mem_release_cb(void *buf, size_t length, void *cbdata, bool from_alloc)
+{
+    ucm_vm_munmap(buf, length);
+}
+
 static int mca_btl_uct_component_open(void)
 {
     if (0 == mca_btl_uct_component.num_contexts_per_module) {
@@ -112,6 +120,15 @@ static int mca_btl_uct_component_open(void)
         }
     }
 
+    if (mca_btl_uct_component.num_contexts_per_module > MCA_BTL_UCT_MAX_WORKERS) {
+        mca_btl_uct_component.num_contexts_per_module = MCA_BTL_UCT_MAX_WORKERS;
+    }
+
+    if (mca_btl_uct_component.disable_ucx_memory_hooks) {
+        ucm_set_external_event(UCM_EVENT_VM_UNMAPPED);
+        opal_mem_hooks_register_release(mca_btl_uct_mem_release_cb, NULL);
+    }
+
     return OPAL_SUCCESS;
 }
 
@@ -121,6 +138,10 @@ static int mca_btl_uct_component_open(void)
  */
 static int mca_btl_uct_component_close(void)
 {
+    if (mca_btl_uct_component.disable_ucx_memory_hooks) {
+        opal_mem_hooks_unregister_release (mca_btl_uct_mem_release_cb);
+    }
+
     return OPAL_SUCCESS;
 }
 
@@ -128,12 +149,12 @@ static size_t mca_btl_uct_tl_modex_size (mca_btl_uct_tl_t *tl)
 {
     const size_t size = strlen (tl->uct_tl_name) + 1;
 
-    if (tl->uct_iface_attr.cap.flags & UCT_IFACE_FLAG_CONNECT_TO_IFACE) {
+    if (MCA_BTL_UCT_TL_ATTR(tl, 0).cap.flags & UCT_IFACE_FLAG_CONNECT_TO_IFACE) {
         /* pad out to a multiple of 4 bytes */
-        return (4 + 3 + size + tl->uct_iface_attr.device_addr_len + tl->uct_iface_attr.iface_addr_len) & ~3;
+        return (4 + 3 + size + MCA_BTL_UCT_TL_ATTR(tl, 0).device_addr_len + MCA_BTL_UCT_TL_ATTR(tl, 0).iface_addr_len) & ~3;
     }
 
-    return (4 + 3 + size + tl->uct_iface_attr.device_addr_len) & ~3;
+    return (4 + 3 + size + MCA_BTL_UCT_TL_ATTR(tl, 0).device_addr_len) & ~3;
 }
 
 static size_t mca_btl_uct_module_modex_size (mca_btl_uct_module_t *module)
@@ -172,13 +193,13 @@ static size_t mca_btl_uct_tl_modex_pack (mca_btl_uct_tl_t *tl, uint8_t *modex_da
      * the same endpoint since we are only doing RDMA. if any of these assumptions are
      * wrong then we can't delay creating the other contexts and must include their
      * information in the modex. */
-    if (tl->uct_iface_attr.cap.flags & UCT_IFACE_FLAG_CONNECT_TO_IFACE) {
+    if (MCA_BTL_UCT_TL_ATTR(tl, 0).cap.flags & UCT_IFACE_FLAG_CONNECT_TO_IFACE) {
         uct_iface_get_address (dev_context->uct_iface, (uct_iface_addr_t *) modex_data);
-        modex_data += tl->uct_iface_attr.iface_addr_len;
+        modex_data += MCA_BTL_UCT_TL_ATTR(tl, 0).iface_addr_len;
     }
 
     uct_iface_get_device_address (dev_context->uct_iface, (uct_device_addr_t *) modex_data);
-    modex_data += tl->uct_iface_attr.device_addr_len;
+    modex_data += MCA_BTL_UCT_TL_ATTR(tl, 0).device_addr_len;
 
     return modex_size;
 }
@@ -247,9 +268,9 @@ static mca_btl_uct_module_t *mca_btl_uct_alloc_module (const char *md_name, mca_
     OBJ_CONSTRUCT(&module->short_frags, opal_free_list_t);
     OBJ_CONSTRUCT(&module->eager_frags, opal_free_list_t);
     OBJ_CONSTRUCT(&module->max_frags, opal_free_list_t);
-    OBJ_CONSTRUCT(&module->rdma_completions, opal_free_list_t);
     OBJ_CONSTRUCT(&module->pending_frags, opal_list_t);
-    OBJ_CONSTRUCT(&module->lock, opal_mutex_t);
+    OBJ_CONSTRUCT(&module->lock, opal_recursive_mutex_t);
+    OBJ_CONSTRUCT(&module->pending_connection_reqs, opal_fifo_t);
 
     module->md = md;
     module->md_name = strdup (md_name);
@@ -275,10 +296,13 @@ ucs_status_t mca_btl_uct_am_handler (void *arg, void *data, size_t length, unsig
                                   .seg_len = length - sizeof (*header)};
     mca_btl_uct_base_frag_t frag = {.base = {.des_segments = &seg, .des_segment_count = 1}};
 
+    /* prevent recursion */
+    tl_context->in_am_callback = true;
+
     reg = mca_btl_base_active_message_trigger + header->data.tag;
-    mca_btl_uct_context_unlock (tl_context);
     reg->cbfunc (&uct_btl->super, header->data.tag, &frag.base, reg->cbdata);
-    mca_btl_uct_context_lock (tl_context);
+
+    tl_context->in_am_callback = false;
 
     return UCS_OK;
 }
@@ -468,8 +492,7 @@ static int mca_btl_uct_component_progress_pending (mca_btl_uct_module_t *uct_btl
 
         opal_list_remove_item (&uct_btl->pending_frags, (opal_list_item_t *) frag);
 
-        if (OPAL_SUCCESS > mca_btl_uct_send (&uct_btl->super, frag->endpoint, &frag->base,
-                                              frag->header.data.tag)) {
+        if (OPAL_SUCCESS > mca_btl_uct_send_frag (uct_btl, frag, false)) {
             opal_list_prepend (&uct_btl->pending_frags, (opal_list_item_t *) frag);
         }
     }
@@ -500,8 +523,15 @@ static int mca_btl_uct_component_progress (void)
         }
 
         if (module->conn_tl) {
+            mca_btl_uct_pending_connection_request_t *request;
+
             if (module->conn_tl != module->am_tl && module->conn_tl != module->rdma_tl) {
                 ret += mca_btl_uct_tl_progress (module->conn_tl, 0);
+            }
+
+            while (NULL != (request = (mca_btl_uct_pending_connection_request_t *) opal_fifo_pop_atomic (&module->pending_connection_reqs))) {
+                mca_btl_uct_process_connection_request (module, (mca_btl_uct_conn_req_t *) request->request_data);
+                OBJ_RELEASE(request);
             }
         }
 
