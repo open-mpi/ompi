@@ -58,6 +58,10 @@ included in the vX.Y.Z section and be denoted as:
 3.1.3 -- October, 2018
 ----------------------
 
+- Fix race condition in MPI_THREAD_MULTIPLE support of non-blocking
+  send/receive path.
+- Fix error handling SIGCHLD forwarding.
+- Add support for CHARACTER and LOGICAL Fortran datatypes for MPI_SIZEOF.
 - Fix compile error when using OpenJDK 11 to compile the Java bindings.
 - Fix crash when using a hostfile with a 'user@host' line.
 - Numerous Fortran '08 interface fixes.
