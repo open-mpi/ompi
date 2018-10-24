@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2011 The University of Tennessee and The University
+ * Copyright (c) 2004-2018 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -669,7 +669,9 @@ int orte_ess_base_orted_finalize(void)
     (void) mca_base_framework_close(&orte_filem_base_framework);
     (void) mca_base_framework_close(&orte_grpcomm_base_framework);
     (void) mca_base_framework_close(&orte_iof_base_framework);
-    (void) mca_base_framework_close(&orte_errmgr_base_framework);
+    /* first stage shutdown of the errmgr, deregister the handler but keep
+     * the required facilities until the rml and oob are offline */
+    orte_errmgr.finalize();
     (void) mca_base_framework_close(&orte_plm_base_framework);
     /* make sure our local procs are dead */
     orte_odls.kill_local_procs(NULL);
@@ -678,6 +680,7 @@ int orte_ess_base_orted_finalize(void)
     (void) mca_base_framework_close(&orte_routed_base_framework);
     (void) mca_base_framework_close(&orte_rml_base_framework);
     (void) mca_base_framework_close(&orte_oob_base_framework);
+    (void) mca_base_framework_close(&orte_errmgr_base_framework);
     (void) mca_base_framework_close(&orte_state_base_framework);
     /* remove our use of the session directory tree */
     orte_session_dir_finalize(ORTE_PROC_MY_NAME);

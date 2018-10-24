@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  *
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2018 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
@@ -101,14 +101,14 @@ static void notify_cbfunc(int status,
             state = ORTE_PROC_STATE_TERMINATED;
     }
 
+    /* push it into our event base */
+    ORTE_ACTIVATE_PROC_STATE((orte_process_name_t*)source, state);
+
     /* let the caller know we processed this, but allow the
      * chain to continue */
     if (NULL != cbfunc) {
         cbfunc(ORTE_SUCCESS, NULL, NULL, NULL, cbdata);
     }
-
-    /* push it into our event base */
-    ORTE_ACTIVATE_PROC_STATE((orte_process_name_t*)source, state);
 }
 
 /************************
@@ -143,6 +143,7 @@ static int finalize(void)
 {
     if (SIZE_MAX != myerrhandle) {
         opal_pmix.deregister_evhandler(myerrhandle, NULL, NULL);
+        myerrhandle = SIZE_MAX;
     }
     return ORTE_SUCCESS;
 }
