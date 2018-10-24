@@ -119,7 +119,11 @@ int ompi_coll_tuned_alltoall_intra_dec_fixed(const void *sbuf, int scount,
        the University of Tennessee (2GB MX) up to 64 nodes.
        Has better performance for messages of intermediate sizes than the old one */
     /* determine block size */
-    ompi_datatype_type_size(sdtype, &dsize);
+    if (MPI_IN_PLACE != sbuf) {
+        ompi_datatype_type_size(sdtype, &dsize);
+    } else {
+        ompi_datatype_type_size(rdtype, &dsize);
+    }
     block_dsize = dsize * (ptrdiff_t)scount;
 
     if ((block_dsize < (size_t) ompi_coll_tuned_alltoall_small_msg)
@@ -549,7 +553,11 @@ int ompi_coll_tuned_allgather_intra_dec_fixed(const void *sbuf, int scount,
     }
 
     /* Determine complete data size */
-    ompi_datatype_type_size(sdtype, &dsize);
+    if (MPI_IN_PLACE != sbuf) {
+        ompi_datatype_type_size(sdtype, &dsize);
+    } else {
+        ompi_datatype_type_size(rdtype, &dsize);
+    }
     total_dsize = dsize * (ptrdiff_t)scount * (ptrdiff_t)communicator_size;
 
     OPAL_OUTPUT((ompi_coll_tuned_stream, "ompi_coll_tuned_allgather_intra_dec_fixed"
@@ -644,7 +652,12 @@ int ompi_coll_tuned_allgatherv_intra_dec_fixed(const void *sbuf, int scount,
     }
 
     /* Determine complete data size */
-    ompi_datatype_type_size(sdtype, &dsize);
+    if (MPI_IN_PLACE != sbuf) {
+        ompi_datatype_type_size(sdtype, &dsize);
+    } else {
+        ompi_datatype_type_size(rdtype, &dsize);
+    }
+
     total_dsize = 0;
     for (i = 0; i < communicator_size; i++) {
         total_dsize += dsize * (ptrdiff_t)rcounts[i];
