@@ -24,3 +24,19 @@ fi_info -v -p %s
 
   Local host: %s
   Location: %s:%d
+
+[SEP unavailable]
+Scalable Endpoint feature is required for Thread Grouping feature to work
+but it is not supported by %s provider. Try disabling this feature.
+
+  Local host: %s
+  Location: %s:%d
+
+[SEP ctxt limit]
+Reached limit (%d) for number of OFI contexts that can be opened with the
+provider. Creating new communicators beyond this limit is possible but
+they will re-use existing contexts in round-robin fashion.
+Using new communicators beyond the limit will impact performance.
+
+  Local host: %s
+  Location: %s:%d
