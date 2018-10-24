@@ -19,6 +19,19 @@ BEGIN_C_DECLS
 /**
  * MTL Module Interface
  */
+
+typedef struct mca_mtl_ofi_context_t {
+    /* Transmit and receive contexts */
+    struct fid_ep *tx_ep;
+    struct fid_ep *rx_ep;
+
+    /* Completion queue */
+    struct fid_cq *cq;
+
+    /* Thread locking */
+    opal_mutex_t context_lock;
+} mca_mtl_ofi_context_t;
+
 typedef struct mca_mtl_ofi_module_t {
     mca_mtl_base_module_t base;
 
@@ -31,11 +44,38 @@ typedef struct mca_mtl_ofi_module_t {
     /** Address vector handle */
     struct fid_av *av;
 
-    /** Completion queue handle */
-    struct fid_cq *cq;
+    /* Scalable Endpoint */
+    struct fid_ep *sep;
 
-    /** Endpoint to communicate on */
-    struct fid_ep *ep;
+    /* Multi-threaded Application flag */
+    bool mpi_thread_multiple;
+
+    /* OFI contexts */
+    mca_mtl_ofi_context_t *ofi_ctxt;
+
+    /* Max context count for scalable endpoints */
+    int max_ctx_cnt;
+
+    /* Total number of TX/RX contexts used by MTL */
+    int total_ctxts_used;
+
+    /*
+     * Store context id of communicator if creating more than number of
+     * contexts
+     */
+    int threshold_comm_context_id;
+
+    /* Mapping of communicator ID to OFI context */
+    int *comm_to_context;
+
+    /* MCA parameter for Thread grouping feature */
+    int thread_grouping;
+
+    /* Boolen value to indicate if provider supports Scalable EP or not */
+    bool sep_supported;
+
+    /* Numbers of bits used for rx contexts */
+    int rx_ctx_bits;
 
     /** Endpoint name length */
     size_t epnamelen;
@@ -79,6 +119,19 @@ typedef struct mca_mtl_ofi_component_t {
     /** Base MTL component */
     mca_mtl_base_component_2_0_0_t super;
 } mca_mtl_ofi_component_t;
+
+typedef enum {
+    OFI_REGULAR_EP  = 0,
+    OFI_SCALABLE_EP,
+} mca_mtl_ofi_ep_type;
+
+/*
+ * Define upper limit for number of events read from a CQ.
+ * Setting this to 100 as this was deemed optimal from empirical data.
+ * If one wants to read lesser number of events from the CQ, the MCA
+ * variable can be used.
+ */
+#define MTL_OFI_MAX_PROG_EVENT_COUNT    100
 
 /*OFI TAG:
  * Define 3 different OFI tag distributions:
