@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2011 The University of Tennessee and The University
+ * Copyright (c) 2004-2018 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -172,7 +172,14 @@ int orte_rmaps_rr_byslot(orte_job_t *jdata,
                 --nxtra_nodes;
             }
         }
-        num_procs_to_assign = node->slots - node->slots_inuse + extra_procs_to_assign;
+        if(node->slots <= node->slots_inuse) {
+            /* nodes are already oversubscribed */
+            num_procs_to_assign = extra_procs_to_assign;
+        }
+        else {
+            /* nodes have some room */
+            num_procs_to_assign = node->slots - node->slots_inuse + extra_procs_to_assign;
+        }
         opal_output_verbose(2, orte_rmaps_base_framework.framework_output,
                             "mca:rmaps:rr:slot adding up to %d procs to node %s",
                             num_procs_to_assign, node->name);
