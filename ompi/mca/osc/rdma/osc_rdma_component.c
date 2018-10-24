@@ -653,6 +653,9 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
             }
         }
 
+        /* barrier to make sure memory is registered */
+        shared_comm->c_coll->coll_barrier(shared_comm, shared_comm->c_coll->coll_barrier_module);
+
         if (MPI_WIN_FLAVOR_CREATE == module->flavor) {
             ret = ompi_osc_rdma_initialize_region (module, base, size);
             if (OMPI_SUCCESS != ret) {
