@@ -9,6 +9,9 @@
  * Copyright (c) 2016      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2017      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2017-2018 The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -186,6 +189,8 @@ int pmix3x_server_finalize(void)
 {
     pmix_status_t rc;
     opal_pmix3x_event_t *event, *ev2;
+    opal_list_t evlist;
+    OBJ_CONSTRUCT(&evlist, opal_list_t);
 
     OPAL_PMIX_ACQUIRE_THREAD(&opal_pmix_base.lock);
     --opal_pmix_base.initialized;
@@ -196,12 +201,19 @@ int pmix3x_server_finalize(void)
             OPAL_PMIX_DESTRUCT_LOCK(&event->lock);
             OPAL_PMIX_CONSTRUCT_LOCK(&event->lock);
             PMIx_Deregister_event_handler(event->index, dereg_cbfunc, (void*)event);
-            OPAL_PMIX_WAIT_THREAD(&event->lock);
             opal_list_remove_item(&mca_pmix_pmix3x_component.events, &event->super);
-            OBJ_RELEASE(event);
+            /* wait and release outside the loop to avoid double mutex
+             * interlock */
+            opal_list_append(&evlist, &event->super);
         }
     }
     OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
+    OPAL_LIST_FOREACH_SAFE(event, ev2, &evlist, opal_pmix3x_event_t) {
+        OPAL_PMIX_WAIT_THREAD(&event->lock);
+        opal_list_remove_item(&evlist, &event->super);
+        OBJ_RELEASE(event);
+    }
+    OBJ_DESTRUCT(&evlist);
     rc = PMIx_server_finalize();
     return pmix3x_convert_rc(rc);
 }
