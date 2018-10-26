@@ -132,12 +132,10 @@ static int nbc_allgather_init(const void* sendbuf, int sendcount, MPI_Datatype s
 
     switch (alg) {
       case NBC_ALLGATHER_LINEAR:
-        if (rank == 0) printf("MK: LINEAR\n");
         res = allgather_sched_linear(rank, p, schedule, sendbuf, sendcount, sendtype,
                                      recvbuf, recvcount, recvtype);
         break;
       case NBC_ALLGATHER_RDBL:
-        if (rank == 0) printf("MK: RDBL\n");
         res = allgather_sched_recursivedoubling(rank, p, schedule, sendbuf, sendcount,
                                                 sendtype, recvbuf, recvcount, recvtype);
         break;
