@@ -14,6 +14,8 @@
 # Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2011-2018 Los Alamos National Security, LLC.
 #                         All rights reserved.
+# Copyright (c) 2018      Research Organization for Information Science
+#                         and Technology (RIST).  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -39,7 +41,7 @@ AC_DEFUN([MCA_opal_btl_uct_CONFIG],[
         CPPFLAGS_save="$CPPFLAGS"
         CPPFLAGS="$CPPFLAGS $btl_uct_CPPFLAGS"
 
-        AC_CHECK_DECLS([UCT_PROGRESS_THREAD_SAFE UCT_CB_FLAG_SYNC], [], [], [[#include <uct/api/uct.h>]])
+        AC_CHECK_DECLS([UCT_PROGRESS_THREAD_SAFE, UCT_CB_FLAG_SYNC], [], [], [[#include <uct/api/uct.h>]])
 
         CPPFLAGS="$CPPFLAGS_save"
         OPAL_VAR_SCOPE_POP
