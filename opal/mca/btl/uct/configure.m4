@@ -39,7 +39,7 @@ AC_DEFUN([MCA_opal_btl_uct_CONFIG],[
         CPPFLAGS_save="$CPPFLAGS"
         CPPFLAGS="$CPPFLAGS $btl_uct_CPPFLAGS"
 
-        AC_CHECK_DECLS([UCT_PROGRESS_THREAD_SAFE], [], [], [[#include <uct/api/uct.h>]])
+        AC_CHECK_DECLS([UCT_PROGRESS_THREAD_SAFE UCT_CB_FLAG_SYNC], [], [], [[#include <uct/api/uct.h>]])
 
         CPPFLAGS="$CPPFLAGS_save"
         OPAL_VAR_SCOPE_POP

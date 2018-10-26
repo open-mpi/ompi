@@ -16,6 +16,12 @@
 #include "opal/util/bit_ops.h"
 #include "opal/util/argv.h"
 
+#if HAVE_DECL_UCT_CB_FLAG_SYNC
+#define MCA_BTL_UCT_CB_FLAG_SYNC UCT_CB_FLAG_SYNC
+#else
+#define MCA_BTL_UCT_CB_FLAG_SYNC 0
+#endif
+
 /**
  * @brief Convert UCT capabilities to BTL flags
  */
@@ -318,9 +324,9 @@ mca_btl_uct_device_context_t *mca_btl_uct_context_create (mca_btl_uct_module_t *
     }
 
     if (context_id > 0 && tl == module->am_tl) {
-        BTL_VERBOSE(("installing AM handler for tl %p context id %d", (void *) tl, context_id));
-        uct_iface_set_am_handler (context->uct_iface, MCA_BTL_UCT_FRAG, mca_btl_uct_am_handler,
-                                  context, UCT_CB_FLAG_SYNC);
+      BTL_VERBOSE(("installing AM handler for tl %p context id %d", (void *) tl, context_id));
+      uct_iface_set_am_handler (context->uct_iface, MCA_BTL_UCT_FRAG, mca_btl_uct_am_handler,
+				context, MCA_BTL_UCT_CB_FLAG_SYNC);
     }
 
     if (enable_progress) {
