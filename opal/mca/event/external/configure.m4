@@ -58,15 +58,7 @@ AC_DEFUN([MCA_opal_event_external_CONFIG],[
 
     OPAL_VAR_SCOPE_PUSH([opal_event_external_CPPFLAGS_save opal_event_external_CFLAGS_save opal_event_external_LDFLAGS_save opal_event_external_LIBS_save opal_event_dir opal_event_summary_msg])
 
-    # Make some processing below easier ($with_libevent==yes and
-    # $with_libevent==no has already been filtered out).
-    AS_IF([test "$with_libevent" = "external"],
-          [with_libevent=])
-
     opal_event_summary_msg="internal"
-
-    # Once we get to this point, $with_libevent is either: blank, a
-    # directory location, or "internal".
 
     # Check the value of $with_libevent_libdir.  This macro safely
     # handles "yes", "no", blank, and directory name values.
@@ -83,7 +75,7 @@ AC_DEFUN([MCA_opal_event_external_CONFIG],[
           [opal_event_dir=$with_libevent
            AC_MSG_RESULT([$opal_event_dir])
            OPAL_CHECK_WITHDIR([libevent], [$opal_event_dir],
-                              [include/event.h])
+                              [include/event2/event.h])
            AS_IF([test -z "$with_libevent_libdir" || test "$with_libevent_libdir" = "yes"],
                  [AC_MSG_CHECKING([for $with_libevent/lib64])
                   AS_IF([test -d "$with_libevent/lib64"],
@@ -114,7 +106,7 @@ AC_DEFUN([MCA_opal_event_external_CONFIG],[
            opal_event_external_LIBS_save=$LIBS
 
            OPAL_CHECK_PACKAGE([opal_event_external],
-                              [event.h],
+                              [event2/event.h],
                               [event],
                               [event_config_new],
                               [-levent_pthreads],
