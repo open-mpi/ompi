@@ -368,7 +368,6 @@ static inline int bcast_sched_chain(int rank, int p, int root, NBC_Schedule *sch
  * Description: an implementation of Ibcast using k-nomial tree algorithm
  *
  * Time: (radix - 1)O(log_{radix}(comm_size))
- * Memory: O(reqs_max)
  * Schedule length (rounds): O(log(comm_size))
  */
 static inline int bcast_sched_knomial(
