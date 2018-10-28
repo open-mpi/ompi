@@ -79,7 +79,7 @@ int mca_scoll_basic_alltoall(struct oshmem_group_t *group,
 
     /* Wait for operation completion */
     SCOLL_VERBOSE(14, "[#%d] Wait for operation completion", group->my_pe);
-    rc = BARRIER_FUNC(group, pSync + 1, SCOLL_DEFAULT_ALG);
+    rc = BARRIER_FUNC(group, pSync, SCOLL_DEFAULT_ALG);
 
     /* Restore initial values */
     SCOLL_VERBOSE(12, "PE#%d Restore special synchronization array",
