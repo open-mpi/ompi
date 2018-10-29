@@ -137,18 +137,20 @@ AC_DEFUN([MCA_opal_event_external_CONFIG],[
 
            AS_IF([test "$opal_event_external_support" = "yes"],
                  [AS_IF([test -z "$with_libevent" || test "$with_libevent" = "yes"],
-                        [AC_MSG_CHECKING([if external libevent version is 2.0.21 or greater])
+                        [AC_MSG_CHECKING([if external libevent version is 2.0.22 or greater])
                          AC_COMPILE_IFELSE(
-                             [AC_LANG_PROGRAM([[#include <event.h>]],
+                             [AC_LANG_PROGRAM([[#include <event2/event.h>]],
                                  [[
-#if _EVENT_NUMERIC_VERSION < 0x02001500
-#error "libevent API version is less than 0x02001500"
+#if defined(_EVENT_NUMERIC_VERSION) && _EVENT_NUMERIC_VERSION < 0x02001600
+#error "libevent API version is less than 0x02001600"
+#elif defined(EVENT__NUMERIC_VERSION) && EVENT__NUMERIC_VERSION < 0x02001600
+#error "libevent API version is less than 0x02001600"
 #endif
                                  ]])],
                              [AC_MSG_RESULT([yes])],
                              [AC_MSG_RESULT([no])
-                              opal_event_summary_msg="internal (external libevent version is less that internal version 2.0.21)"
-                              AC_MSG_WARN([external libevent version is less than internal version (2.0.21)])
+                              opal_event_summary_msg="internal (external libevent version is less that internal version 2.0.22)"
+                              AC_MSG_WARN([external libevent version is less than internal version (2.0.22)])
                               AC_MSG_WARN([using internal libevent])
                               opal_event_external_support=no])])])
 
