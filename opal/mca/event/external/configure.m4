@@ -58,15 +58,7 @@ AC_DEFUN([MCA_opal_event_external_CONFIG],[
 
     OPAL_VAR_SCOPE_PUSH([opal_event_external_CPPFLAGS_save opal_event_external_CFLAGS_save opal_event_external_LDFLAGS_save opal_event_external_LIBS_save opal_event_dir opal_event_summary_msg])
 
-    # Make some processing below easier ($with_libevent==yes and
-    # $with_libevent==no has already been filtered out).
-    AS_IF([test "$with_libevent" = "external"],
-          [with_libevent=])
-
     opal_event_summary_msg="internal"
-
-    # Once we get to this point, $with_libevent is either: blank, a
-    # directory location, or "internal".
 
     # Check the value of $with_libevent_libdir.  This macro safely
     # handles "yes", "no", blank, and directory name values.
@@ -83,7 +75,7 @@ AC_DEFUN([MCA_opal_event_external_CONFIG],[
           [opal_event_dir=$with_libevent
            AC_MSG_RESULT([$opal_event_dir])
            OPAL_CHECK_WITHDIR([libevent], [$opal_event_dir],
-                              [include/event.h])
+                              [include/event2/event.h])
            AS_IF([test -z "$with_libevent_libdir" || test "$with_libevent_libdir" = "yes"],
                  [AC_MSG_CHECKING([for $with_libevent/lib64])
                   AS_IF([test -d "$with_libevent/lib64"],
@@ -114,7 +106,7 @@ AC_DEFUN([MCA_opal_event_external_CONFIG],[
            opal_event_external_LIBS_save=$LIBS
 
            OPAL_CHECK_PACKAGE([opal_event_external],
-                              [event.h],
+                              [event2/event.h],
                               [event],
                               [event_config_new],
                               [-levent_pthreads],
@@ -145,18 +137,20 @@ AC_DEFUN([MCA_opal_event_external_CONFIG],[
 
            AS_IF([test "$opal_event_external_support" = "yes"],
                  [AS_IF([test -z "$with_libevent" || test "$with_libevent" = "yes"],
-                        [AC_MSG_CHECKING([if external libevent version is 2.0.21 or greater])
+                        [AC_MSG_CHECKING([if external libevent version is 2.0.22 or greater])
                          AC_COMPILE_IFELSE(
-                             [AC_LANG_PROGRAM([[#include <event.h>]],
+                             [AC_LANG_PROGRAM([[#include <event2/event.h>]],
                                  [[
-#if _EVENT_NUMERIC_VERSION < 0x02001500
-#error "libevent API version is less than 0x02001500"
+#if defined(_EVENT_NUMERIC_VERSION) && _EVENT_NUMERIC_VERSION < 0x02001600
+#error "libevent API version is less than 0x02001600"
+#elif defined(EVENT__NUMERIC_VERSION) && EVENT__NUMERIC_VERSION < 0x02001600
+#error "libevent API version is less than 0x02001600"
 #endif
                                  ]])],
                              [AC_MSG_RESULT([yes])],
                              [AC_MSG_RESULT([no])
-                              opal_event_summary_msg="internal (external libevent version is less that internal version 2.0.21)"
-                              AC_MSG_WARN([external libevent version is less than internal version (2.0.21)])
+                              opal_event_summary_msg="internal (external libevent version is less that internal version 2.0.22)"
+                              AC_MSG_WARN([external libevent version is less than internal version (2.0.22)])
                               AC_MSG_WARN([using internal libevent])
                               opal_event_external_support=no])])])
 
