@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
+# Copyright (c) 2014-2018 Intel, Inc.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -89,3 +89,21 @@ to it - please check the connection info and ensure the server
 is alive:
 
   Connection:  %s
+#
+[mpir-debugger-detected]
+Open MPI has detected that you have attached a debugger to this MPI
+job, and that debugger is using the legacy "MPIR" method of
+attachment.
+
+Please note that Open MPI has deprecated the "MPIR" debugger
+attachment method in favor of the new "PMIx" debugger attchment
+mechanisms.
+
+*** This means that future versions of Open MPI may not support the
+*** "MPIR" debugger attachment method at all.  Specifically: the
+*** debugger you just attached may not work with future versions of
+*** Open MPI.
+
+You may wish to contact your debugger vendor to inquire about support
+for PMIx-based debugger attachment mechanisms. Meantime, you can
+disable this warning by setting the OMPI_MPIR_DO_NOT_WARN envar to 1.
