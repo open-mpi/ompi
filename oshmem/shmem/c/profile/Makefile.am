@@ -38,6 +38,7 @@ OSHMEM_API_SOURCES = \
 	pshmem_align.c \
 	pshmem_query.c \
 	pshmem_p.c \
+	pshmem_context.c \
 	pshmem_put.c \
 	pshmem_g.c \
 	pshmem_get.c \
