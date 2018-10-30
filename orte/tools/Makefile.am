@@ -26,20 +26,16 @@
 
 SUBDIRS += \
 	tools/orte-clean \
-	tools/orte-ps \
 	tools/orted \
 	tools/orterun \
 	tools/wrappers \
-        tools/orte-top \
         tools/orte-info \
         tools/orte-server
 
 DIST_SUBDIRS += \
 	tools/orte-clean \
-	tools/orte-ps \
 	tools/orted \
 	tools/orterun \
 	tools/wrappers \
-        tools/orte-top \
         tools/orte-info \
         tools/orte-server
