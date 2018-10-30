@@ -25,9 +25,15 @@
  */
 #if OSHMEM_PROFILING
 #include "oshmem/include/pshmem.h"
+#pragma weak shmem_int_atomic_and       = pshmem_int_atomic_and
+#pragma weak shmem_long_atomic_and      = pshmem_long_atomic_and
+#pragma weak shmem_longlong_atomic_and  = pshmem_longlong_atomic_and
 #pragma weak shmem_uint_atomic_and      = pshmem_uint_atomic_and
 #pragma weak shmem_ulong_atomic_and     = pshmem_ulong_atomic_and
 #pragma weak shmem_ulonglong_atomic_and = pshmem_ulonglong_atomic_and
+#pragma weak shmem_ctx_int_atomic_and   = pshmem_ctx_int_atomic_and
+#pragma weak shmem_ctx_long_atomic_and  = pshmem_ctx_long_atomic_and
+#pragma weak shmem_ctx_longlong_atomic_and = pshmem_ctx_longlong_atomic_and
 #pragma weak shmem_ctx_uint_atomic_and  = pshmem_ctx_uint_atomic_and
 #pragma weak shmem_ctx_ulong_atomic_and = pshmem_ctx_ulong_atomic_and
 #pragma weak shmem_ctx_ulonglong_atomic_and = pshmem_ctx_ulonglong_atomic_and
@@ -38,9 +44,15 @@
 #include "oshmem/shmem/c/profile/defines.h"
 #endif
 
+OSHMEM_TYPE_OP(int, int, shmem, and)
+OSHMEM_TYPE_OP(long, long, shmem, and)
+OSHMEM_TYPE_OP(longlong, long long, shmem, and)
 OSHMEM_TYPE_OP(uint, unsigned int, shmem, and)
 OSHMEM_TYPE_OP(ulong, unsigned long, shmem, and)
 OSHMEM_TYPE_OP(ulonglong, unsigned long long, shmem, and)
+OSHMEM_CTX_TYPE_OP(int, int, shmem, and)
+OSHMEM_CTX_TYPE_OP(long, long, shmem, and)
+OSHMEM_CTX_TYPE_OP(longlong, long long, shmem, and)
 OSHMEM_CTX_TYPE_OP(uint, unsigned int, shmem, and)
 OSHMEM_CTX_TYPE_OP(ulong, unsigned long, shmem, and)
 OSHMEM_CTX_TYPE_OP(ulonglong, unsigned long long, shmem, and)

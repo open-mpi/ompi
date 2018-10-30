@@ -62,11 +62,17 @@
 #pragma weak shmem_ctx_int_atomic_set = pshmem_ctx_int_atomic_set
 #pragma weak shmem_ctx_long_atomic_set = pshmem_ctx_long_atomic_set
 #pragma weak shmem_ctx_longlong_atomic_set = pshmem_ctx_longlong_atomic_set
+#pragma weak shmem_ctx_uint_atomic_set = pshmem_ctx_uint_atomic_set
+#pragma weak shmem_ctx_ulong_atomic_set = pshmem_ctx_ulong_atomic_set
+#pragma weak shmem_ctx_ulonglong_atomic_set = pshmem_ctx_ulonglong_atomic_set
 #pragma weak shmem_ctx_float_atomic_set = pshmem_ctx_float_atomic_set
 #pragma weak shmem_ctx_double_atomic_set = pshmem_ctx_double_atomic_set
 #pragma weak shmem_int_atomic_set = pshmem_int_atomic_set
 #pragma weak shmem_long_atomic_set = pshmem_long_atomic_set
 #pragma weak shmem_longlong_atomic_set = pshmem_longlong_atomic_set
+#pragma weak shmem_uint_atomic_set = pshmem_uint_atomic_set
+#pragma weak shmem_ulong_atomic_set = pshmem_ulong_atomic_set
+#pragma weak shmem_ulonglong_atomic_set = pshmem_ulonglong_atomic_set
 #pragma weak shmem_float_atomic_set = pshmem_float_atomic_set
 #pragma weak shmem_double_atomic_set = pshmem_double_atomic_set
 #pragma weak shmem_int_set = pshmem_int_set
@@ -82,11 +88,17 @@
 SHMEM_CTX_TYPE_ATOMIC_SET(_int, int, shmem)
 SHMEM_CTX_TYPE_ATOMIC_SET(_long, long, shmem)
 SHMEM_CTX_TYPE_ATOMIC_SET(_longlong, long long, shmem)
+SHMEM_CTX_TYPE_ATOMIC_SET(_uint, unsigned int, shmem)
+SHMEM_CTX_TYPE_ATOMIC_SET(_ulong, unsigned long, shmem)
+SHMEM_CTX_TYPE_ATOMIC_SET(_ulonglong, unsigned long long, shmem)
 SHMEM_CTX_TYPE_ATOMIC_SET(_float, float, shmem)
 SHMEM_CTX_TYPE_ATOMIC_SET(_double, double, shmem)
 SHMEM_TYPE_ATOMIC_SET(_int, int, shmem)
 SHMEM_TYPE_ATOMIC_SET(_long, long, shmem)
 SHMEM_TYPE_ATOMIC_SET(_longlong, long long, shmem)
+SHMEM_TYPE_ATOMIC_SET(_uint, unsigned int, shmem)
+SHMEM_TYPE_ATOMIC_SET(_ulong, unsigned long, shmem)
+SHMEM_TYPE_ATOMIC_SET(_ulonglong, unsigned long long, shmem)
 SHMEM_TYPE_ATOMIC_SET(_float, float, shmem)
 SHMEM_TYPE_ATOMIC_SET(_double, double, shmem)
 

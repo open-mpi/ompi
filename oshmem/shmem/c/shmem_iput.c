@@ -68,6 +68,12 @@
 #pragma weak shmem_ctx_int_iput = pshmem_ctx_int_iput
 #pragma weak shmem_ctx_long_iput = pshmem_ctx_long_iput
 #pragma weak shmem_ctx_longlong_iput = pshmem_ctx_longlong_iput
+#pragma weak shmem_ctx_schar_iput = pshmem_ctx_schar_iput
+#pragma weak shmem_ctx_uchar_iput = pshmem_ctx_uchar_iput
+#pragma weak shmem_ctx_ushort_iput = pshmem_ctx_ushort_iput
+#pragma weak shmem_ctx_uint_iput = pshmem_ctx_uint_iput
+#pragma weak shmem_ctx_ulong_iput = pshmem_ctx_ulong_iput
+#pragma weak shmem_ctx_ulonglong_iput = pshmem_ctx_ulonglong_iput
 #pragma weak shmem_ctx_float_iput = pshmem_ctx_float_iput
 #pragma weak shmem_ctx_double_iput = pshmem_ctx_double_iput
 #pragma weak shmem_ctx_longdouble_iput = pshmem_ctx_longdouble_iput
@@ -76,6 +82,12 @@
 #pragma weak shmem_int_iput = pshmem_int_iput
 #pragma weak shmem_long_iput = pshmem_long_iput
 #pragma weak shmem_longlong_iput = pshmem_longlong_iput
+#pragma weak shmem_schar_iput = pshmem_schar_iput
+#pragma weak shmem_uchar_iput = pshmem_uchar_iput
+#pragma weak shmem_ushort_iput = pshmem_ushort_iput
+#pragma weak shmem_uint_iput = pshmem_uint_iput
+#pragma weak shmem_ulong_iput = pshmem_ulong_iput
+#pragma weak shmem_ulonglong_iput = pshmem_ulonglong_iput
 #pragma weak shmem_float_iput = pshmem_float_iput
 #pragma weak shmem_double_iput = pshmem_double_iput
 #pragma weak shmem_longdouble_iput = pshmem_longdouble_iput
@@ -97,6 +109,12 @@ SHMEM_CTX_TYPE_IPUT(_short, short)
 SHMEM_CTX_TYPE_IPUT(_int, int)
 SHMEM_CTX_TYPE_IPUT(_long, long)
 SHMEM_CTX_TYPE_IPUT(_longlong, long long)
+SHMEM_CTX_TYPE_IPUT(_schar, signed char)
+SHMEM_CTX_TYPE_IPUT(_uchar, unsigned char)
+SHMEM_CTX_TYPE_IPUT(_ushort, unsigned short)
+SHMEM_CTX_TYPE_IPUT(_uint, unsigned int)
+SHMEM_CTX_TYPE_IPUT(_ulong, unsigned long)
+SHMEM_CTX_TYPE_IPUT(_ulonglong, unsigned long long)
 SHMEM_CTX_TYPE_IPUT(_float, float)
 SHMEM_CTX_TYPE_IPUT(_double, double)
 SHMEM_CTX_TYPE_IPUT(_longdouble, long double)
@@ -105,6 +123,12 @@ SHMEM_TYPE_IPUT(_short, short)
 SHMEM_TYPE_IPUT(_int, int)
 SHMEM_TYPE_IPUT(_long, long)
 SHMEM_TYPE_IPUT(_longlong, long long)
+SHMEM_TYPE_IPUT(_schar, signed char)
+SHMEM_TYPE_IPUT(_uchar, unsigned char)
+SHMEM_TYPE_IPUT(_ushort, unsigned short)
+SHMEM_TYPE_IPUT(_uint, unsigned int)
+SHMEM_TYPE_IPUT(_ulong, unsigned long)
+SHMEM_TYPE_IPUT(_ulonglong, unsigned long long)
 SHMEM_TYPE_IPUT(_float, float)
 SHMEM_TYPE_IPUT(_double, double)
 SHMEM_TYPE_IPUT(_longdouble, long double)

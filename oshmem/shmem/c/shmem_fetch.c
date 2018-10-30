@@ -68,11 +68,17 @@
 #pragma weak shmem_ctx_int_atomic_fetch = pshmem_ctx_int_atomic_fetch
 #pragma weak shmem_ctx_long_atomic_fetch = pshmem_ctx_long_atomic_fetch
 #pragma weak shmem_ctx_longlong_atomic_fetch = pshmem_ctx_longlong_atomic_fetch
+#pragma weak shmem_ctx_uint_atomic_fetch = pshmem_ctx_uint_atomic_fetch
+#pragma weak shmem_ctx_ulong_atomic_fetch = pshmem_ctx_ulong_atomic_fetch
+#pragma weak shmem_ctx_ulonglong_atomic_fetch = pshmem_ctx_ulonglong_atomic_fetch
 #pragma weak shmem_ctx_double_atomic_fetch = pshmem_ctx_double_atomic_fetch
 #pragma weak shmem_ctx_float_atomic_fetch = pshmem_ctx_float_atomic_fetch
 #pragma weak shmem_int_atomic_fetch = pshmem_int_atomic_fetch
 #pragma weak shmem_long_atomic_fetch = pshmem_long_atomic_fetch
 #pragma weak shmem_longlong_atomic_fetch = pshmem_longlong_atomic_fetch
+#pragma weak shmem_uint_atomic_fetch = pshmem_uint_atomic_fetch
+#pragma weak shmem_ulong_atomic_fetch = pshmem_ulong_atomic_fetch
+#pragma weak shmem_ulonglong_atomic_fetch = pshmem_ulonglong_atomic_fetch
 #pragma weak shmem_double_atomic_fetch = pshmem_double_atomic_fetch
 #pragma weak shmem_float_atomic_fetch = pshmem_float_atomic_fetch
 #pragma weak shmem_int_fetch = pshmem_int_fetch
@@ -88,11 +94,17 @@
 SHMEM_CTX_TYPE_ATOMIC_FETCH(_int, int, shmem)
 SHMEM_CTX_TYPE_ATOMIC_FETCH(_long, long, shmem)
 SHMEM_CTX_TYPE_ATOMIC_FETCH(_longlong, long long, shmem)
+SHMEM_CTX_TYPE_ATOMIC_FETCH(_uint, unsigned int, shmem)
+SHMEM_CTX_TYPE_ATOMIC_FETCH(_ulong, unsigned long, shmem)
+SHMEM_CTX_TYPE_ATOMIC_FETCH(_ulonglong, unsigned long long, shmem)
 SHMEM_CTX_TYPE_ATOMIC_FETCH(_double, double, shmem)
 SHMEM_CTX_TYPE_ATOMIC_FETCH(_float, float, shmem)
 SHMEM_TYPE_ATOMIC_FETCH(_int, int, shmem)
 SHMEM_TYPE_ATOMIC_FETCH(_long, long, shmem)
 SHMEM_TYPE_ATOMIC_FETCH(_longlong, long long, shmem)
+SHMEM_TYPE_ATOMIC_FETCH(_uint, unsigned int, shmem)
+SHMEM_TYPE_ATOMIC_FETCH(_ulong, unsigned long, shmem)
+SHMEM_TYPE_ATOMIC_FETCH(_ulonglong, unsigned long long, shmem)
 SHMEM_TYPE_ATOMIC_FETCH(_double, double, shmem)
 SHMEM_TYPE_ATOMIC_FETCH(_float, float, shmem)
 

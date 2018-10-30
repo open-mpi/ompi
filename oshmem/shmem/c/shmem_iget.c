@@ -67,6 +67,12 @@
 #pragma weak shmem_ctx_int_iget = pshmem_ctx_int_iget
 #pragma weak shmem_ctx_long_iget = pshmem_ctx_long_iget
 #pragma weak shmem_ctx_longlong_iget = pshmem_ctx_longlong_iget
+#pragma weak shmem_ctx_schar_iget = pshmem_ctx_schar_iget
+#pragma weak shmem_ctx_uchar_iget = pshmem_ctx_uchar_iget
+#pragma weak shmem_ctx_ushort_iget = pshmem_ctx_ushort_iget
+#pragma weak shmem_ctx_uint_iget = pshmem_ctx_uint_iget
+#pragma weak shmem_ctx_ulong_iget = pshmem_ctx_ulong_iget
+#pragma weak shmem_ctx_ulonglong_iget = pshmem_ctx_ulonglong_iget
 #pragma weak shmem_ctx_float_iget = pshmem_ctx_float_iget
 #pragma weak shmem_ctx_double_iget = pshmem_ctx_double_iget
 #pragma weak shmem_ctx_longdouble_iget = pshmem_ctx_longdouble_iget
@@ -75,6 +81,12 @@
 #pragma weak shmem_int_iget = pshmem_int_iget
 #pragma weak shmem_long_iget = pshmem_long_iget
 #pragma weak shmem_longlong_iget = pshmem_longlong_iget
+#pragma weak shmem_schar_iget = pshmem_schar_iget
+#pragma weak shmem_uchar_iget = pshmem_uchar_iget
+#pragma weak shmem_ushort_iget = pshmem_ushort_iget
+#pragma weak shmem_uint_iget = pshmem_uint_iget
+#pragma weak shmem_ulong_iget = pshmem_ulong_iget
+#pragma weak shmem_ulonglong_iget = pshmem_ulonglong_iget
 #pragma weak shmem_float_iget = pshmem_float_iget
 #pragma weak shmem_double_iget = pshmem_double_iget
 #pragma weak shmem_longdouble_iget = pshmem_longdouble_iget
@@ -96,6 +108,12 @@ SHMEM_CTX_TYPE_IGET(_short, short)
 SHMEM_CTX_TYPE_IGET(_int, int)
 SHMEM_CTX_TYPE_IGET(_long, long)
 SHMEM_CTX_TYPE_IGET(_longlong, long long)
+SHMEM_CTX_TYPE_IGET(_schar, signed char)
+SHMEM_CTX_TYPE_IGET(_uchar, unsigned char)
+SHMEM_CTX_TYPE_IGET(_ushort, unsigned short)
+SHMEM_CTX_TYPE_IGET(_uint, unsigned int)
+SHMEM_CTX_TYPE_IGET(_ulong, unsigned long)
+SHMEM_CTX_TYPE_IGET(_ulonglong, unsigned long long)
 SHMEM_CTX_TYPE_IGET(_float, float)
 SHMEM_CTX_TYPE_IGET(_double, double)
 SHMEM_CTX_TYPE_IGET(_longdouble, long double)
@@ -104,6 +122,12 @@ SHMEM_TYPE_IGET(_short, short)
 SHMEM_TYPE_IGET(_int, int)
 SHMEM_TYPE_IGET(_long, long)
 SHMEM_TYPE_IGET(_longlong, long long)
+SHMEM_TYPE_IGET(_schar, signed char)
+SHMEM_TYPE_IGET(_uchar, unsigned char)
+SHMEM_TYPE_IGET(_ushort, unsigned short)
+SHMEM_TYPE_IGET(_uint, unsigned int)
+SHMEM_TYPE_IGET(_ulong, unsigned long)
+SHMEM_TYPE_IGET(_ulonglong, unsigned long long)
 SHMEM_TYPE_IGET(_float, float)
 SHMEM_TYPE_IGET(_double, double)
 SHMEM_TYPE_IGET(_longdouble, long double)
