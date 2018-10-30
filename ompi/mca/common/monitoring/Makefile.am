@@ -3,8 +3,8 @@
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
 # Copyright (c) 2016      Inria.  All rights reserved.
-# Copyright (c) 2017      Research Organization for Information Science
-#                         and Technology (RIST). All rights reserved.
+# Copyright (c) 2017-2018 Research Organization for Information Science
+#                         and Technology (RIST).  All rights reserved.
 # Copyright (c) 2018      Cisco Systems, Inc.  All rights reserved
 # $COPYRIGHT$
 #
@@ -13,10 +13,14 @@
 # $HEADER$
 #
 
+include $(top_srcdir)/Makefile.ompi-rules
+
 EXTRA_DIST = profile2mat.pl aggregate_profile.pl
 
 sources = common_monitoring.c common_monitoring_coll.c
 headers = common_monitoring.h common_monitoring_coll.h
+
+# See the comments in opal/mca/common/sm/Makefile.am for the explanations
 
 lib_LTLIBRARIES =
 noinst_LTLIBRARIES =
@@ -50,15 +54,7 @@ libmca_common_monitoring_la_LDFLAGS =  \
 libmca_common_monitoring_la_LIBADD = $(common_monitoring_LIBS)
 libmca_common_monitoring_noinst_la_SOURCES = $(headers) $(sources)
 
-# These two rules will sym link the "noinst" libtool library filename
-# to the installable libtool library filename in the case where we are
-# compiling this component statically (case 2), described above).
-V=0
-OMPI_V_LN_SCOMP = $(ompi__v_LN_SCOMP_$V)
-ompi__v_LN_SCOMP_ = $(ompi__v_LN_SCOMP_$AM_DEFAULT_VERBOSITY)
-ompi__v_LN_SCOMP_0 = @echo "  LN_S    " `basename $(component_install)`;
-
-all-local:
+all-local: $(component_noinst)
 	$(OMPI_V_LN_SCOMP) if test -z "$(lib_LTLIBRARIES)"; then \
 	  rm -f "$(component_install)"; \
 	  $(LN_S) "$(component_noinst)" "$(component_install)"; \

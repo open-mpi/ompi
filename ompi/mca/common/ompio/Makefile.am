@@ -12,7 +12,7 @@
 # Copyright (c) 2008-2018 University of Houston. All rights reserved.
 # Copyright (c) 2016      IBM Corporation.  All rights reserved.
 # Copyright (c) 2017-2018 Research Organization for Information Science
-#                         and Technology (RIST). All rights reserved.
+#                         and Technology (RIST).  All rights reserved.
 #
 # $COPYRIGHT$
 #
@@ -20,6 +20,8 @@
 #
 # $HEADER$
 #
+
+include $(top_srcdir)/Makefile.ompi-rules
 
 headers = \
 	common_ompio_aggregators.h \
@@ -37,14 +39,7 @@ sources = \
 	common_ompio_file_write.c
 
 
-# To simplify components that link to this library, we will *always*
-# have an output libtool library named libmca_<type>_<name>.la -- even
-# for case 2) described above (i.e., so there's no conditional logic
-# necessary in component Makefile.am's that link to this library).
-# Hence, if we're creating a noinst version of this library (i.e.,
-# case 2), we sym link it to the libmca_<type>_<name>.la name
-# (libtool will do the Right Things under the covers).  See the
-# all-local and clean-local rules, below, for how this is effected.
+# See the comments in opal/mca/common/sm/Makefile.am for the explanations
 
 lib_LTLIBRARIES =
 noinst_LTLIBRARIES =
@@ -79,15 +74,7 @@ headers += common_ompio_cuda.h
 sources += common_ompio_cuda.c
 endif
 
-# These two rules will sym link the "noinst" libtool library filename
-# to the installable libtool library filename in the case where we are
-# compiling this component statically (case 2), described above).
-V=0
-OMPI_V_LN_SCOMP = $(ompi__v_LN_SCOMP_$V)
-ompi__v_LN_SCOMP_ = $(ompi__v_LN_SCOMP_$AM_DEFAULT_VERBOSITY)
-ompi__v_LN_SCOMP_0 = @echo "  LN_S    " `basename $(comp_inst)`;
-
-all-local:
+all-local: $(comp_noinst)
 	$(OMPI_V_LN_SCOMP) if test -z "$(lib_LTLIBRARIES)"; then \
 	  rm -f "$(comp_inst)"; \
 	  $(LN_S) "$(comp_noinst)" "$(comp_inst)"; \

@@ -12,6 +12,8 @@
 # Copyright (c) 2010-2015 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2010-2015 Los Alamos National Security, LLC.
 #                         All rights reserved.
+# Copyright (c) 2018      Research Organization for Information Science
+#                         and Technology (RIST).  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -40,6 +42,8 @@
 #
 # Note that building this common component statically and linking
 # against other dynamic components is *not* supported!
+
+include $(top_srcdir)/Makefile.ompi-rules
 
 # Header files
 
@@ -101,13 +105,7 @@ endif
 # to the installable libtool library filename in the case where we are
 # compiling this component statically (case 2), described above).
 
-# See Makefile.ompi-rules for an explanation of the "V" macros, below
-V=0
-OMPI_V_LN_SCOMP = $(ompi__v_LN_SCOMP_$V)
-ompi__v_LN_SCOMP_ = $(ompi__v_LN_SCOMP_$AM_DEFAULT_VERBOSITY)
-ompi__v_LN_SCOMP_0 = @echo "  LN_S    " `basename $(comp_inst)`;
-
-all-local:
+all-local: $(comp_noinst)
 	$(OMPI_V_LN_SCOMP) if test -z "$(lib_LTLIBRARIES)"; then \
 	  rm -f "$(comp_inst)"; \
 	  $(LN_S) "$(comp_noinst)" "$(comp_inst)"; \
