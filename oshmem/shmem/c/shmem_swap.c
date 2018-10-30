@@ -65,11 +65,17 @@
 #pragma weak shmem_ctx_int_atomic_swap = pshmem_ctx_int_atomic_swap
 #pragma weak shmem_ctx_long_atomic_swap = pshmem_ctx_long_atomic_swap
 #pragma weak shmem_ctx_longlong_atomic_swap = pshmem_ctx_longlong_atomic_swap
+#pragma weak shmem_ctx_uint_atomic_swap = pshmem_ctx_uint_atomic_swap
+#pragma weak shmem_ctx_ulong_atomic_swap = pshmem_ctx_ulong_atomic_swap
+#pragma weak shmem_ctx_ulonglong_atomic_swap = pshmem_ctx_ulonglong_atomic_swap
 #pragma weak shmem_ctx_float_atomic_swap = pshmem_ctx_float_atomic_swap
 #pragma weak shmem_ctx_double_atomic_swap = pshmem_ctx_double_atomic_swap
 #pragma weak shmem_int_atomic_swap = pshmem_int_atomic_swap
 #pragma weak shmem_long_atomic_swap = pshmem_long_atomic_swap
 #pragma weak shmem_longlong_atomic_swap = pshmem_longlong_atomic_swap
+#pragma weak shmem_uint_atomic_swap = pshmem_uint_atomic_swap
+#pragma weak shmem_ulong_atomic_swap = pshmem_ulong_atomic_swap
+#pragma weak shmem_ulonglong_atomic_swap = pshmem_ulonglong_atomic_swap
 #pragma weak shmem_float_atomic_swap = pshmem_float_atomic_swap
 #pragma weak shmem_double_atomic_swap = pshmem_double_atomic_swap
 #pragma weak shmem_int_swap = pshmem_int_swap
@@ -85,11 +91,17 @@
 SHMEM_CTX_TYPE_ATOMIC_SWAP(_int, int, shmem)
 SHMEM_CTX_TYPE_ATOMIC_SWAP(_long, long, shmem)
 SHMEM_CTX_TYPE_ATOMIC_SWAP(_longlong, long long, shmem)
+SHMEM_CTX_TYPE_ATOMIC_SWAP(_uint, unsigned int, shmem)
+SHMEM_CTX_TYPE_ATOMIC_SWAP(_ulong, unsigned long, shmem)
+SHMEM_CTX_TYPE_ATOMIC_SWAP(_ulonglong, unsigned long long, shmem)
 SHMEM_CTX_TYPE_ATOMIC_SWAP(_float, float, shmem)
 SHMEM_CTX_TYPE_ATOMIC_SWAP(_double, double, shmem)
 SHMEM_TYPE_ATOMIC_SWAP(_int, int, shmem)
 SHMEM_TYPE_ATOMIC_SWAP(_long, long, shmem)
 SHMEM_TYPE_ATOMIC_SWAP(_longlong, long long, shmem)
+SHMEM_TYPE_ATOMIC_SWAP(_uint, unsigned int, shmem)
+SHMEM_TYPE_ATOMIC_SWAP(_ulong, unsigned long, shmem)
+SHMEM_TYPE_ATOMIC_SWAP(_ulonglong, unsigned long long, shmem)
 SHMEM_TYPE_ATOMIC_SWAP(_float, float, shmem)
 SHMEM_TYPE_ATOMIC_SWAP(_double, double, shmem)
 

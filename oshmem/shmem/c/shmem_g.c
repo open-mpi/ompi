@@ -63,6 +63,11 @@
 #pragma weak shmem_ctx_int_g = pshmem_ctx_int_g
 #pragma weak shmem_ctx_long_g = pshmem_ctx_long_g
 #pragma weak shmem_ctx_longlong_g = pshmem_ctx_longlong_g
+#pragma weak shmem_ctx_uchar_g = pshmem_ctx_uchar_g
+#pragma weak shmem_ctx_ushort_g = pshmem_ctx_ushort_g
+#pragma weak shmem_ctx_uint_g = pshmem_ctx_uint_g
+#pragma weak shmem_ctx_ulong_g = pshmem_ctx_ulong_g
+#pragma weak shmem_ctx_ulonglong_g = pshmem_ctx_ulonglong_g
 #pragma weak shmem_ctx_float_g = pshmem_ctx_float_g
 #pragma weak shmem_ctx_double_g = pshmem_ctx_double_g
 #pragma weak shmem_ctx_longdouble_g = pshmem_ctx_longdouble_g
@@ -71,6 +76,11 @@
 #pragma weak shmem_int_g = pshmem_int_g
 #pragma weak shmem_long_g = pshmem_long_g
 #pragma weak shmem_longlong_g = pshmem_longlong_g
+#pragma weak shmem_uchar_g = pshmem_uchar_g
+#pragma weak shmem_ushort_g = pshmem_ushort_g
+#pragma weak shmem_uint_g = pshmem_uint_g
+#pragma weak shmem_ulong_g = pshmem_ulong_g
+#pragma weak shmem_ulonglong_g = pshmem_ulonglong_g
 #pragma weak shmem_float_g = pshmem_float_g
 #pragma weak shmem_double_g = pshmem_double_g
 #pragma weak shmem_longdouble_g = pshmem_longdouble_g
@@ -85,6 +95,12 @@ SHMEM_CTX_TYPE_G(_short, short, shmem)
 SHMEM_CTX_TYPE_G(_int, int, shmem)
 SHMEM_CTX_TYPE_G(_long, long, shmem)
 SHMEM_CTX_TYPE_G(_longlong, long long, shmem)
+SHMEM_CTX_TYPE_G(_schar, signed char, shmem)
+SHMEM_CTX_TYPE_G(_uchar, unsigned char, shmem)
+SHMEM_CTX_TYPE_G(_ushort, unsigned short, shmem)
+SHMEM_CTX_TYPE_G(_uint, unsigned int, shmem)
+SHMEM_CTX_TYPE_G(_ulong, unsigned long, shmem)
+SHMEM_CTX_TYPE_G(_ulonglong, unsigned long long, shmem)
 SHMEM_CTX_TYPE_G(_float, float, shmem)
 SHMEM_CTX_TYPE_G(_double, double, shmem)
 SHMEM_CTX_TYPE_G(_longdouble, long double, shmem)
@@ -93,6 +109,12 @@ SHMEM_TYPE_G(_short, short, shmem)
 SHMEM_TYPE_G(_int, int, shmem)
 SHMEM_TYPE_G(_long, long, shmem)
 SHMEM_TYPE_G(_longlong, long long, shmem)
+SHMEM_TYPE_G(_schar, signed char, shmem)
+SHMEM_TYPE_G(_uchar, unsigned char, shmem)
+SHMEM_TYPE_G(_ushort, unsigned short, shmem)
+SHMEM_TYPE_G(_uint, unsigned int, shmem)
+SHMEM_TYPE_G(_ulong, unsigned long, shmem)
+SHMEM_TYPE_G(_ulonglong, unsigned long long, shmem)
 SHMEM_TYPE_G(_float, float, shmem)
 SHMEM_TYPE_G(_double, double, shmem)
 SHMEM_TYPE_G(_longdouble, long double, shmem)

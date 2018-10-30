@@ -69,6 +69,12 @@
 #pragma weak shmem_int_put_nbi = pshmem_int_put_nbi
 #pragma weak shmem_long_put_nbi = pshmem_long_put_nbi
 #pragma weak shmem_longlong_put_nbi = pshmem_longlong_put_nbi
+#pragma weak shmem_schar_put_nbi = pshmem_schar_put_nbi
+#pragma weak shmem_uchar_put_nbi = pshmem_uchar_put_nbi
+#pragma weak shmem_ushort_put_nbi = pshmem_ushort_put_nbi
+#pragma weak shmem_uint_put_nbi = pshmem_uint_put_nbi
+#pragma weak shmem_ulong_put_nbi = pshmem_ulong_put_nbi
+#pragma weak shmem_ulonglong_put_nbi = pshmem_ulonglong_put_nbi
 #pragma weak shmem_float_put_nbi = pshmem_float_put_nbi
 #pragma weak shmem_double_put_nbi = pshmem_double_put_nbi
 #pragma weak shmem_longdouble_put_nbi = pshmem_longdouble_put_nbi
@@ -83,6 +89,12 @@
 #pragma weak shmem_ctx_int_put_nbi = pshmem_ctx_int_put_nbi
 #pragma weak shmem_ctx_long_put_nbi = pshmem_ctx_long_put_nbi
 #pragma weak shmem_ctx_longlong_put_nbi = pshmem_ctx_longlong_put_nbi
+#pragma weak shmem_ctx_schar_put_nbi = pshmem_ctx_schar_put_nbi
+#pragma weak shmem_ctx_uchar_put_nbi = pshmem_ctx_uchar_put_nbi
+#pragma weak shmem_ctx_ushort_put_nbi = pshmem_ctx_ushort_put_nbi
+#pragma weak shmem_ctx_uint_put_nbi = pshmem_ctx_uint_put_nbi
+#pragma weak shmem_ctx_ulong_put_nbi = pshmem_ctx_ulong_put_nbi
+#pragma weak shmem_ctx_ulonglong_put_nbi = pshmem_ctx_ulonglong_put_nbi
 #pragma weak shmem_ctx_float_put_nbi = pshmem_ctx_float_put_nbi
 #pragma weak shmem_ctx_double_put_nbi = pshmem_ctx_double_put_nbi
 #pragma weak shmem_ctx_longdouble_put_nbi = pshmem_ctx_longdouble_put_nbi
@@ -100,6 +112,12 @@ SHMEM_CTX_TYPE_PUT_NB(_short, short)
 SHMEM_CTX_TYPE_PUT_NB(_int, int)
 SHMEM_CTX_TYPE_PUT_NB(_long, long)
 SHMEM_CTX_TYPE_PUT_NB(_longlong, long long)
+SHMEM_CTX_TYPE_PUT_NB(_schar, signed char)
+SHMEM_CTX_TYPE_PUT_NB(_uchar, unsigned char)
+SHMEM_CTX_TYPE_PUT_NB(_ushort, unsigned short)
+SHMEM_CTX_TYPE_PUT_NB(_uint, unsigned int)
+SHMEM_CTX_TYPE_PUT_NB(_ulong, unsigned long)
+SHMEM_CTX_TYPE_PUT_NB(_ulonglong, unsigned long long)
 SHMEM_CTX_TYPE_PUT_NB(_float, float)
 SHMEM_CTX_TYPE_PUT_NB(_double, double)
 SHMEM_CTX_TYPE_PUT_NB(_longdouble, long double)
@@ -108,6 +126,12 @@ SHMEM_TYPE_PUT_NB(_short, short)
 SHMEM_TYPE_PUT_NB(_int, int)
 SHMEM_TYPE_PUT_NB(_long, long)
 SHMEM_TYPE_PUT_NB(_longlong, long long)
+SHMEM_TYPE_PUT_NB(_schar, signed char)
+SHMEM_TYPE_PUT_NB(_uchar, unsigned char)
+SHMEM_TYPE_PUT_NB(_ushort, unsigned short)
+SHMEM_TYPE_PUT_NB(_uint, unsigned int)
+SHMEM_TYPE_PUT_NB(_ulong, unsigned long)
+SHMEM_TYPE_PUT_NB(_ulonglong, unsigned long long)
 SHMEM_TYPE_PUT_NB(_float, float)
 SHMEM_TYPE_PUT_NB(_double, double)
 SHMEM_TYPE_PUT_NB(_longdouble, long double)

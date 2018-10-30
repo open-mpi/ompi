@@ -63,9 +63,15 @@
 #pragma weak shmem_ctx_int_atomic_inc = pshmem_ctx_int_atomic_inc
 #pragma weak shmem_ctx_long_atomic_inc = pshmem_ctx_long_atomic_inc
 #pragma weak shmem_ctx_longlong_atomic_inc = pshmem_ctx_longlong_atomic_inc
+#pragma weak shmem_ctx_uint_atomic_inc = pshmem_ctx_uint_atomic_inc
+#pragma weak shmem_ctx_ulong_atomic_inc = pshmem_ctx_ulong_atomic_inc
+#pragma weak shmem_ctx_ulonglong_atomic_inc = pshmem_ctx_ulonglong_atomic_inc
 #pragma weak shmem_int_atomic_inc = pshmem_int_atomic_inc
 #pragma weak shmem_long_atomic_inc = pshmem_long_atomic_inc
 #pragma weak shmem_longlong_atomic_inc = pshmem_longlong_atomic_inc
+#pragma weak shmem_uint_atomic_inc = pshmem_uint_atomic_inc
+#pragma weak shmem_ulong_atomic_inc = pshmem_ulong_atomic_inc
+#pragma weak shmem_ulonglong_atomic_inc = pshmem_ulonglong_atomic_inc
 #pragma weak shmem_int_inc = pshmem_int_inc
 #pragma weak shmem_long_inc = pshmem_long_inc
 #pragma weak shmem_longlong_inc = pshmem_longlong_inc
@@ -77,14 +83,20 @@
 SHMEM_CTX_TYPE_ATOMIC_INC(_int, int, shmem)
 SHMEM_CTX_TYPE_ATOMIC_INC(_long, long, shmem)
 SHMEM_CTX_TYPE_ATOMIC_INC(_longlong, long long, shmem)
+SHMEM_CTX_TYPE_ATOMIC_INC(_uint, unsigned int, shmem)
+SHMEM_CTX_TYPE_ATOMIC_INC(_ulong, unsigned long, shmem)
+SHMEM_CTX_TYPE_ATOMIC_INC(_ulonglong, unsigned long long, shmem)
 SHMEM_TYPE_ATOMIC_INC(_int, int, shmem)
 SHMEM_TYPE_ATOMIC_INC(_long, long, shmem)
 SHMEM_TYPE_ATOMIC_INC(_longlong, long long, shmem)
+SHMEM_TYPE_ATOMIC_INC(_uint, unsigned int, shmem)
+SHMEM_TYPE_ATOMIC_INC(_ulong, unsigned long, shmem)
+SHMEM_TYPE_ATOMIC_INC(_ulonglong, unsigned long long, shmem)
 
 #define SHMEM_TYPE_INC(type_name, type, prefix)                     \
     void prefix##type_name##_inc(type *target, int pe)              \
     {                                                               \
-        DO_SHMEM_TYPE_ATOMIC_INC(oshmem_ctx_default, type_name,      \
+        DO_SHMEM_TYPE_ATOMIC_INC(oshmem_ctx_default, type_name,     \
                                  type, target, pe);                 \
         return ;                                                    \
     }
