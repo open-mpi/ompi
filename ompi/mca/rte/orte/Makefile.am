@@ -28,7 +28,7 @@ libmca_rte_orte_la_SOURCES =$(sources) $(headers)
 libmca_rte_orte_la_LDFLAGS = -module -avoid-version
 libmca_rte_orte_la_LIBADD = $(top_builddir)/orte/lib@ORTE_LIB_PREFIX@open-rte.la
 
-man_pages = mpirun.1 mpiexec.1 ompi-ps.1 ompi-clean.1 ompi-top.1 ompi-server.1
+man_pages = mpirun.1 mpiexec.1 ompi-clean.1 ompi-server.1
 
 if OPAL_INSTALL_BINARIES
 nodist_man_MANS = $(man_pages)
@@ -36,17 +36,13 @@ nodist_man_MANS = $(man_pages)
 install-exec-hook:
 	(cd $(DESTDIR)$(bindir); rm -f mpirun$(EXEEXT); $(LN_S) orterun$(EXEEXT) mpirun$(EXEEXT))
 	(cd $(DESTDIR)$(bindir); rm -f mpiexec$(EXEEXT); $(LN_S) orterun$(EXEEXT) mpiexec$(EXEEXT))
-	(cd $(DESTDIR)$(bindir); rm -f ompi-ps$(EXEEXT); $(LN_S) orte-ps$(EXEEXT) ompi-ps$(EXEEXT))
 	(cd $(DESTDIR)$(bindir); rm -f ompi-clean$(EXEEXT); $(LN_S) orte-clean$(EXEEXT) ompi-clean$(EXEEXT))
-	(cd $(DESTDIR)$(bindir); rm -f ompi-top$(EXEEXT); $(LN_S) orte-top$(EXEEXT) ompi-top$(EXEEXT))
 	(cd $(DESTDIR)$(bindir); rm -f ompi-server$(EXEEXT); $(LN_S) orte-server$(EXEEXT) ompi-server$(EXEEXT))
 
 uninstall-local:
 	rm -f $(DESTDIR)$(bindir)/mpirun$(EXEEXT) \
 		$(DESTDIR)$(bindir)/mpiexec$(EXEEXT) \
-		$(DESTDIR)$(bindir)/ompi-ps$(EXEEXT) \
 		$(DESTDIR)$(bindir)/ompi-clean$(EXEEXT) \
-		$(DESTDIR)$(bindir)/ompi-top$(EXEEXT) \
 		$(DESTDIR)$(bindir)/ompi-server$(EXEEXT)
 
 endif # OPAL_INSTALL_BINARIES
@@ -60,23 +56,11 @@ mpirun.1: $(top_builddir)/orte/tools/orterun/orterun.1
 mpiexec.1: $(top_builddir)/orte/tools/orterun/orterun.1
 	cp -f $(top_builddir)/orte/tools/orterun/orterun.1 mpiexec.1
 
-$(top_builddir)/orte/tools/orte-ps/orte-ps.1:
-	(cd $(top_builddir)/orte/tools/orte-ps && $(MAKE) $(AM_MAKEFLAGS) orte-ps.1)
-
-ompi-ps.1: $(top_builddir)/orte/tools/orte-ps/orte-ps.1
-	cp -f $(top_builddir)/orte/tools/orte-ps/orte-ps.1 ompi-ps.1
-
 $(top_builddir)/orte/tools/orte-clean/orte-clean.1:
 	(cd $(top_builddir)/orte/tools/orte-clean && $(MAKE) $(AM_MAKEFLAGS) orte-clean.1)
 
 ompi-clean.1: $(top_builddir)/orte/tools/orte-clean/orte-clean.1
 	cp -f $(top_builddir)/orte/tools/orte-clean/orte-clean.1 ompi-clean.1
-
-$(top_builddir)/orte/tools/orte-top/orte-top.1:
-	(cd $(top_builddir)/orte/tools/orte-top && $(MAKE) $(AM_MAKEFLAGS) orte-top.1)
-
-ompi-top.1: $(top_builddir)/orte/tools/orte-top/orte-top.1
-	cp -f $(top_builddir)/orte/tools/orte-top/orte-top.1 ompi-top.1
 
 $(top_builddir)/orte/tools/orte-server/orte-server.1:
 	(cd $(top_builddir)/orte/tools/orte-server && $(MAKE) $(AM_MAKEFLAGS) orte-server.1)
