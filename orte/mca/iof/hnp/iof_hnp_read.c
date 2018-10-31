@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2011 The University of Tennessee and The University
+ * Copyright (c) 2004-2018 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -284,6 +284,8 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
         /* if we read 0 bytes from the stdout/err/diag, there is
          * nothing to output - release the appropriate event.
          * This will delete the read event and close the file descriptor */
+        /* make sure we don't do recursive delete on the proct */
+        OBJ_RETAIN(proct);
         if (rev->tag & ORTE_IOF_STDOUT) {
             orte_iof_base_static_dump_output(proct->revstdout);
             OBJ_RELEASE(proct->revstdout);
@@ -305,6 +307,7 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
             /* this proc's iof is complete */
             ORTE_ACTIVATE_PROC_STATE(&proct->name, ORTE_PROC_STATE_IOF_COMPLETE);
         }
+        OBJ_RELEASE(proct);
         return;
     }
 
