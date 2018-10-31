@@ -18,6 +18,8 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
+ * Copyright (c) 2018      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -104,6 +106,16 @@ OBJ_CLASS_INSTANCE(
     ompi_request_destruct);
 
 
+static int ompi_request_finalize (void)
+{
+    OMPI_REQUEST_FINI( &ompi_request_null.request );
+    OBJ_DESTRUCT( &ompi_request_null.request );
+    OMPI_REQUEST_FINI( &ompi_request_empty );
+    OBJ_DESTRUCT( &ompi_request_empty );
+    OBJ_DESTRUCT( &ompi_request_f_to_c_table );
+    return OMPI_SUCCESS;
+}
+
 int ompi_request_init(void)
 {
 
@@ -173,20 +185,10 @@ int ompi_request_init(void)
     ompi_status_empty._ucount = 0;
     ompi_status_empty._cancelled = 0;
 
+    ompi_mpi_instance_append_finalize (ompi_request_finalize);
+
     return OMPI_SUCCESS;
 }
-
-
-int ompi_request_finalize(void)
-{
-    OMPI_REQUEST_FINI( &ompi_request_null.request );
-    OBJ_DESTRUCT( &ompi_request_null.request );
-    OMPI_REQUEST_FINI( &ompi_request_empty );
-    OBJ_DESTRUCT( &ompi_request_empty );
-    OBJ_DESTRUCT( &ompi_request_f_to_c_table );
-    return OMPI_SUCCESS;
-}
-
 
 int ompi_request_persistent_noop_create(ompi_request_t** request)
 {

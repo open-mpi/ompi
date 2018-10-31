@@ -98,13 +98,13 @@ reduce_kary_tree_top(const void *sendbuf, void *recvbuf, int count,
          */
 
         /* Compute match bits */
-        COLL_PORTALS4_SET_BITS(match_bits_ack, ompi_comm_get_cid(comm), 1, 0,
+        COLL_PORTALS4_SET_BITS(match_bits_ack, ompi_comm_get_local_cid(comm), 1, 0,
                 COLL_PORTALS4_REDUCE, 0, internal_count);
 
-        COLL_PORTALS4_SET_BITS(match_bits_rtr, ompi_comm_get_cid(comm), 0, 1,
+        COLL_PORTALS4_SET_BITS(match_bits_rtr, ompi_comm_get_local_cid(comm), 0, 1,
                 COLL_PORTALS4_REDUCE, 0, internal_count);
 
-        COLL_PORTALS4_SET_BITS(match_bits, ompi_comm_get_cid(comm), 0, 0,
+        COLL_PORTALS4_SET_BITS(match_bits, ompi_comm_get_local_cid(comm), 0, 0,
                 COLL_PORTALS4_REDUCE, 0, internal_count);
 
         if ((ret = PtlCTAlloc(mca_coll_portals4_component.ni_h, &request->u.reduce.trig_ct_h)) != 0) {

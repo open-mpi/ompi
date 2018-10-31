@@ -65,6 +65,7 @@ typedef struct mca_mtl_request_t mca_mtl_request_t;
 #if OPAL_CUDA_SUPPORT
 #define MCA_MTL_BASE_FLAG_CUDA_INIT_DISABLE 0x00000002
 #endif
+#define MCA_MTL_BASE_FLAG_SUPPORTS_EXT_CID 0x00000004
 
 /**
  * Initialization routine for MTL component

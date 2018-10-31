@@ -648,9 +648,9 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
 
         if (0 == local_rank) {
             /* allocate the shared memory segment */
-            ret = opal_asprintf (&data_file, "%s" OPAL_PATH_SEP "osc_rdma.%s.%x.%d.%d",
+            ret = opal_asprintf (&data_file, "%s" OPAL_PATH_SEP "osc_rdma.%s.%x.%s.%d",
                             mca_osc_rdma_component.backing_directory, ompi_process_info.nodename,
-                            OMPI_PROC_MY_NAME->jobid, ompi_comm_get_cid(module->comm), getpid());
+                            OMPI_PROC_MY_NAME->jobid, ompi_comm_print_cid(module->comm), getpid());
             if (0 > ret) {
                 ret = OMPI_ERR_OUT_OF_RESOURCE;
             } else {
@@ -1424,8 +1424,8 @@ static int ompi_osc_rdma_component_select (struct ompi_win_t *win, void **base, 
     }
 
     opal_output_verbose(MCA_BASE_VERBOSE_INFO, ompi_osc_base_framework.framework_output,
-                        "creating osc/rdma window of flavor %d with id %d",
-                        flavor, ompi_comm_get_cid(module->comm));
+                        "creating osc/rdma window of flavor %d with id %s",
+                        flavor, ompi_comm_print_cid(module->comm));
 
     /* peer data */
     if (world_size > init_limit) {
@@ -1538,7 +1538,7 @@ static int ompi_osc_rdma_component_select (struct ompi_win_t *win, void **base, 
     /* update component data */
     OPAL_THREAD_LOCK(&mca_osc_rdma_component.lock);
     ret = opal_hash_table_set_value_uint32(&mca_osc_rdma_component.modules,
-                                           ompi_comm_get_cid(module->comm),
+                                           ompi_comm_get_local_cid(module->comm),
                                            module);
     OPAL_THREAD_UNLOCK(&mca_osc_rdma_component.lock);
     if (OMPI_SUCCESS != ret) {
@@ -1549,7 +1549,7 @@ static int ompi_osc_rdma_component_select (struct ompi_win_t *win, void **base, 
     /* fill in window information */
     *model = MPI_WIN_UNIFIED;
     win->w_osc_module = (ompi_osc_base_module_t*) module;
-    opal_asprintf(&name, "rdma window %d", ompi_comm_get_cid(module->comm));
+    opal_asprintf(&name, "rdma window %s", ompi_comm_print_cid(module->comm));
     ompi_win_set_name(win, name);
     free(name);
 
@@ -1566,8 +1566,8 @@ static int ompi_osc_rdma_component_select (struct ompi_win_t *win, void **base, 
         module->leader = ompi_osc_rdma_module_peer (module, 0);
 
         opal_output_verbose(MCA_BASE_VERBOSE_INFO, ompi_osc_base_framework.framework_output,
-                            "finished creating osc/rdma window with id %d",
-                            ompi_comm_get_cid(module->comm));
+                            "finished creating osc/rdma window with id %s",
+                            ompi_comm_print_cid(module->comm));
     }
 
     return ret;

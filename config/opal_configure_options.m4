@@ -21,6 +21,7 @@ dnl Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
 dnl Copyright (c) 2015      Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
 dnl Copyright (c) 2020      Amazon.com, Inc. or its affiliates.  All Rights
+dnl Copyright (c) 2019-2021 Triad National Security, LLC. All rights
 dnl                         reserved.
 dnl
 dnl $COPYRIGHT$
@@ -526,6 +527,10 @@ OPAL_WITH_OPTION_MIN_MAX_VALUE(port_name,      1024, 255, 2048)
 
 # Min length accroding to MPI-2.1, p. 418
 OPAL_WITH_OPTION_MIN_MAX_VALUE(datarep_string,  128,  64,  256)
+
+OPAL_WITH_OPTION_MIN_MAX_VALUE(pset_name_len,  512,  512, 4096)
+
+OPAL_WITH_OPTION_MIN_MAX_VALUE(stringtag_len,     1024, 256, 2048)
 
 # some systems don't want/like getpwuid
 AC_MSG_CHECKING([if want getpwuid support])

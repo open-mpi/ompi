@@ -3,6 +3,8 @@
 ! Copyright (c) 2020      Research Organization for Information Science
 !                         and Technology (RIST).  All rights reserved.
 ! Copyright (c) 2022      Cisco Systems, Inc.  All rights reserved
+! Copyright (c) 2022      Triad National Security, LLC. All rights
+!                         reserved.
 ! $COPYRIGHT$
 !
 ! Additional copyrights may follow
@@ -75,6 +77,10 @@ module mpi_types
    type, BIND(C) :: MPI_Request
       integer :: MPI_VAL
    end type MPI_Request
+
+   type, BIND(C) :: MPI_Session
+      integer :: MPI_VAL
+   end type MPI_Session
 
    type, BIND(C) :: MPI_Win
       integer :: MPI_VAL

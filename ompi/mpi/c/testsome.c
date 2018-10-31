@@ -15,6 +15,8 @@
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2021      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -57,6 +59,7 @@ int MPI_Testsome(int incount, MPI_Request requests[],
 
     if ( MPI_PARAM_CHECK ) {
         int indx, rc = MPI_SUCCESS;
+        MPI_Request check_req = NULL;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if ((NULL == requests) && (0 != incount)) {
             rc = MPI_ERR_REQUEST;
@@ -65,6 +68,20 @@ int MPI_Testsome(int incount, MPI_Request requests[],
                 if (NULL == requests[indx]) {
                     rc = MPI_ERR_REQUEST;
                     break;
+                }
+                if (&ompi_request_empty == requests[indx]) { 
+                    continue;
+                } else if (NULL == requests[indx]->req_mpi_object.comm) {
+                    continue;
+                } else if (NULL == check_req) {
+                    check_req = requests[indx];
+                }
+                else {
+                    if (!ompi_comm_instances_same(requests[indx]->req_mpi_object.comm,
+                                                     check_req->req_mpi_object.comm)) {
+                        rc = MPI_ERR_REQUEST;
+                        break;
+                    }
                 }
             }
         }

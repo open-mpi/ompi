@@ -67,6 +67,20 @@
 #define MPI_Sendrecv_replace_f08 PMPI_Sendrecv_replace_f08
 #define MPI_Send_init PMPI_Send_init
 #define MPI_Send_init_f08 PMPI_Send_init_f08
+#define MPI_Session_get_info PMPI_Session_get_info
+#define MPI_Session_get_info_f08 PMPI_Session_get_info_f08
+#define MPI_Session_get_nth_pset PMPI_Session_get_nth_pset
+#define MPI_Session_get_nth_pset_f08 PMPI_Session_get_nth_pset_f08
+#define MPI_Session_get_nth_psetlen PMPI_Session_get_nth_psetlen
+#define MPI_Session_get_nth_psetlen_f08 PMPI_Session_get_nth_psetlen_f08
+#define MPI_Session_get_num_psets PMPI_Session_get_num_psets
+#define MPI_Session_get_num_psets_f08 PMPI_Session_get_num_psets_f08
+#define MPI_Session_get_pset_info PMPI_Session_get_pset_info
+#define MPI_Session_get_pset_info_f08 PMPI_Session_get_pset_info_f08
+#define MPI_Session_init PMPI_Session_init
+#define MPI_Session_init_f08 PMPI_Session_init_f08
+#define MPI_Session_finalize PMPI_Session_finalize
+#define MPI_Session_finalize_f08 PMPI_Session_finalize_f08
 #define MPI_Ssend PMPI_Ssend
 #define MPI_Ssend_f08 PMPI_Ssend_f08
 #define MPI_Ssend_init PMPI_Ssend_init
@@ -271,6 +285,8 @@
 #define MPI_Comm_create_f08 PMPI_Comm_create_f08
 #define MPI_Comm_create_group PMPI_Comm_create_group
 #define MPI_Comm_create_group_f08 PMPI_Comm_create_group_f08
+#define MPI_Comm_create_from_group PMPI_Comm_create_from_group
+#define MPI_Comm_create_from_group_f08 PMPI_Comm_create_from_group_f08
 #define MPI_Comm_create_keyval PMPI_Comm_create_keyval
 #define MPI_Comm_create_keyval_f08 PMPI_Comm_create_keyval_f08
 #define MPI_Comm_delete_attr PMPI_Comm_delete_attr
@@ -319,6 +335,8 @@
 #define MPI_Group_difference_f08 PMPI_Group_difference_f08
 #define MPI_Group_excl PMPI_Group_excl
 #define MPI_Group_excl_f08 PMPI_Group_excl_f08
+#define MPI_Group_from_session_pset PMPI_Group_from_session_pset
+#define MPI_Group_from_session_pset_f08 PMPI_Group_from_session_pset_f08
 #define MPI_Group_free PMPI_Group_free
 #define MPI_Group_free_f08 PMPI_Group_free_f08
 #define MPI_Group_incl PMPI_Group_incl
@@ -339,6 +357,8 @@
 #define MPI_Group_union_f08 PMPI_Group_union_f08
 #define MPI_Intercomm_create PMPI_Intercomm_create
 #define MPI_Intercomm_create_f08 PMPI_Intercomm_create_f08
+#define MPI_Intercomm_create_from_groups PMPI_Intercomm_create_from_groups
+#define MPI_Intercomm_create_from_groups_f08 PMPI_Intercomm_create_from_groups_f08
 #define MPI_Intercomm_merge PMPI_Intercomm_merge
 #define MPI_Intercomm_merge_f08 PMPI_Intercomm_merge_f08
 #define MPI_Type_create_keyval PMPI_Type_create_keyval

@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -16,6 +17,8 @@
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
+ * Copyright (c) 2018      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -55,6 +58,13 @@ mca_topo_base_comm_select(const ompi_communicator_t*  comm,
                           mca_topo_base_module_t*     preferred_module,
                           mca_topo_base_module_t**    selected_module,
                           uint32_t                    type);
+
+/* Select a topo module for a particular type of topology */
+OMPI_DECLSPEC int
+mca_topo_base_group_select (const ompi_group_t *group,
+                            mca_topo_base_module_t *preferred_module,
+                            mca_topo_base_module_t **selected_module,
+                            uint32_t type);
 
 /* Find all components that want to be considered in this job */
 OMPI_DECLSPEC int

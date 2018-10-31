@@ -195,7 +195,7 @@ static inline void vprotocol_pessimist_sender_based_copy_start(ompi_request_t *r
     sbhdr->size = pmlreq->req_bytes_packed;
     sbhdr->dst = pmlreq->req_base.req_peer;
     sbhdr->tag = pmlreq->req_base.req_tag;
-    sbhdr->contextid = pmlreq->req_base.req_comm->c_contextid;
+    sbhdr->contextid = ompi_comm_get_extended_cid (pmlreq->req_base.req_comm);
     sbhdr->sequence = pmlreq->req_base.req_sequence;
     ftreq->sb.cursor += sizeof(vprotocol_pessimist_sender_based_header_t);
     V_OUTPUT_VERBOSE(70, "pessimist:\tsb\tsend\t%"PRIpclock"\tsize %lu (+%lu header)", VPESSIMIST_FTREQ(req)->reqid, (long unsigned)pmlreq->req_bytes_packed, (long unsigned)sizeof(vprotocol_pessimist_sender_based_header_t));

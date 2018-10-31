@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -17,6 +18,8 @@
  *                         All rights reserved.
  * Copyright (c) 2016-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
+ * Copyright (c) 2018-2021 Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -41,14 +44,24 @@
 #include "ompi/communicator/communicator.h"
 #include "ompi/file/file.h"
 #include "ompi/win/win.h"
+#include "ompi/instance/instance.h"
 #include "opal/util/printf.h"
 #include "opal/util/output.h"
+#include "ompi/runtime/mpiruntime.h"
 
 /*
  * Local functions
  */
 static void backend_abort(int fatal, char *type, struct ompi_communicator_t *comm,
                           char *name, int *error_code, va_list arglist);
+static void backend_abort_aggregate(int fatal, char *type,
+                                    struct ompi_communicator_t *comm,
+                                    char *name, int *error_code,
+                                    va_list arglist);
+static void backend_abort_no_aggregate(int fatal, char *type,
+                                       struct ompi_communicator_t *comm,
+                                       char *name, int *error_code,
+                                       va_list arglist);
 static void out(char *str, char *arg);
 
 
@@ -172,6 +185,36 @@ void ompi_mpi_errors_abort_win_handler(struct ompi_win_t **win,
   va_end(arglist);
 }
 
+void ompi_mpi_errors_are_fatal_instance_handler (struct ompi_instance_t **instance,
+                                                 int *error_code, ...)
+{
+  char *name;
+  va_list arglist;
+  int err = MPI_ERR_UNKNOWN;
+
+  va_start(arglist, error_code);
+
+  if (NULL != instance) {
+      name = (*instance)->i_name;
+  } else {
+      name = NULL;
+  }
+
+  if (NULL != error_code) {
+     err = *error_code;
+  }
+
+  /* We only want aggregation while the rte is initialized */
+  if (ompi_rte_initialized) {
+      backend_abort_aggregate(true, "session", NULL, name, error_code, arglist);
+  } else {
+      backend_abort_no_aggregate(true, "session", NULL, name, error_code, arglist);
+  }
+  va_end(arglist);
+
+  ompi_mpi_abort(NULL, err);
+}
+
 void ompi_mpi_errors_return_comm_handler(struct ompi_communicator_t **comm,
                                          int *error_code, ...)
 {
@@ -198,6 +241,18 @@ void ompi_mpi_errors_return_file_handler(struct ompi_file_t **file,
 
 void ompi_mpi_errors_return_win_handler(struct ompi_win_t **win,
                                         int *error_code, ...)
+{
+    /* Don't need anything more -- just need this function to exist */
+    /* Silence some compiler warnings */
+
+    va_list arglist;
+    va_start(arglist, error_code);
+    va_end(arglist);
+}
+
+
+void ompi_mpi_errors_return_instance_handler (struct ompi_instance_t **instance,
+                                              int *error_code, ...)
 {
     /* Don't need anything more -- just need this function to exist */
     /* Silence some compiler warnings */

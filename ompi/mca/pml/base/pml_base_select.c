@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -38,6 +38,7 @@
 #include "opal/mca/pmix/pmix-internal.h"
 
 #include "ompi/constants.h"
+#include "ompi/instance/instance.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/pml/base/base.h"
 #include "ompi/proc/proc.h"
@@ -46,6 +47,15 @@ typedef struct opened_component_t {
   opal_list_item_t super;
   mca_pml_base_component_t *om_component;
 } opened_component_t;
+
+
+static int mca_pml_base_finalize (void) {
+  if (NULL != mca_pml_base_selected_component.pmlm_finalize) {
+      return mca_pml_base_selected_component.pmlm_finalize();
+  }
+
+  return OMPI_SUCCESS;
+}
 
 /**
  * Function for selecting one component from all those that are
@@ -224,6 +234,7 @@ int mca_pml_base_select(bool enable_progress_threads,
     ret = mca_pml_base_pml_selected(best_component->pmlm_version.mca_component_name);
 
     /* All done */
+    ompi_mpi_instance_append_finalize (mca_pml_base_finalize);
 
     return ret;
 }

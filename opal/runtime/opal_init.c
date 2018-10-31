@@ -481,6 +481,9 @@ int opal_init_util(int *pargc, char ***pargv)
 
     opal_init_called = true;
 
+    /* register for */
+    opal_finalize_register_cleanup_arg (mca_base_framework_close_list, opal_init_util_frameworks);
+
     /* set the nodename right away so anyone who needs it has it. Note
      * that we don't bother with fqdn and prefix issues here - we let
      * the RTE later replace this with a modified name if the user

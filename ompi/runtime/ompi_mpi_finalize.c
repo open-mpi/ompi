@@ -19,7 +19,6 @@
  * Copyright (c) 2014-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- *
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
  * Copyright (c) 2019      Triad National Security, LLC. All rights
  *                         reserved.
@@ -61,7 +60,6 @@
 #include "opal/mca/allocator/base/base.h"
 #include "opal/mca/pmix/pmix-internal.h"
 #include "opal/util/timings.h"
-
 #include "mpi.h"
 #include "ompi/constants.h"
 #include "ompi/errhandler/errcode.h"
@@ -87,9 +85,15 @@
 #include "ompi/mca/io/base/base.h"
 #include "ompi/mca/pml/base/pml_base_bsend.h"
 #include "ompi/runtime/params.h"
-#include "ompi/dpm/dpm.h"
-#include "ompi/mpiext/mpiext.h"
+#include "ompi/datatype/ompi_datatype.h"
+#include "ompi/mca/hook/hook.h"
 #include "ompi/mca/hook/base/base.h"
+#include "ompi/communicator/communicator.h"
+#include "ompi/attribute/attribute.h"
+#include "ompi/instance/instance.h"
+
+#include "mpi.h"
+#include "ompi/constants.h"
 
 extern bool ompi_enable_timing;
 
@@ -104,13 +108,8 @@ static void fence_cbfunc(pmix_status_t status, void *cbdata)
 int ompi_mpi_finalize(void)
 {
     int ret = MPI_SUCCESS;
-    opal_list_item_t *item;
-    ompi_proc_t** procs;
-    size_t nprocs;
-    volatile bool active;
-    uint32_t key;
-    ompi_datatype_t * datatype;
     pmix_status_t rc;
+    volatile bool active;
 
     ompi_hook_base_mpi_finalize_top();
 
@@ -137,8 +136,6 @@ int ompi_mpi_finalize(void)
     }
     opal_atomic_wmb();
     opal_atomic_swap_32(&ompi_mpi_state, OMPI_MPI_STATE_FINALIZE_STARTED);
-
-    ompi_mpiext_fini();
 
     /* Per MPI-2:4.8, we have to free MPI_COMM_SELF before doing
        anything else in MPI_FINALIZE (to include setting up such that
@@ -195,11 +192,6 @@ int ompi_mpi_finalize(void)
     opal_atomic_wmb();
     opal_atomic_swap_32(&ompi_mpi_state,
                         OMPI_MPI_STATE_FINALIZE_PAST_COMM_SELF_DESTRUCT);
-
-    /* As finalize is the last legal MPI call, we are allowed to force the release
-     * of the user buffer used for bsend, before going anywhere further.
-     */
-    (void)mca_pml_base_bsend_detach(NULL, NULL);
 
 #if OPAL_ENABLE_PROGRESS_THREADS == 0
     opal_progress_set_event_flag(OPAL_EVLOOP_ONCE | OPAL_EVLOOP_NONBLOCK);
@@ -299,207 +291,7 @@ int ompi_mpi_finalize(void)
         OMPI_LAZY_WAIT_FOR_COMPLETION(active);
     }
 
-    /* Shut down any bindings-specific issues: C++, F77, F90 */
-
-    /* Remove all memory associated by MPI_REGISTER_DATAREP (per
-       MPI-2:9.5.3, there is no way for an MPI application to
-       *un*register datareps, but we don't want the OMPI layer causing
-       memory leaks). */
-    while (NULL != (item = opal_list_remove_first(&ompi_registered_datareps))) {
-        OBJ_RELEASE(item);
-    }
-    OBJ_DESTRUCT(&ompi_registered_datareps);
-
-    /* Remove all F90 types from the hash tables */
-    OPAL_HASH_TABLE_FOREACH(key, uint32, datatype, &ompi_mpi_f90_integer_hashtable)
-        OBJ_RELEASE(datatype);
-    OBJ_DESTRUCT(&ompi_mpi_f90_integer_hashtable);
-    OPAL_HASH_TABLE_FOREACH(key, uint32, datatype, &ompi_mpi_f90_real_hashtable)
-        OBJ_RELEASE(datatype);
-    OBJ_DESTRUCT(&ompi_mpi_f90_real_hashtable);
-    OPAL_HASH_TABLE_FOREACH(key, uint32, datatype, &ompi_mpi_f90_complex_hashtable)
-        OBJ_RELEASE(datatype);
-    OBJ_DESTRUCT(&ompi_mpi_f90_complex_hashtable);
-
-    /* Free communication objects */
-
-    /* free file resources */
-    if (OMPI_SUCCESS != (ret = ompi_file_finalize())) {
-        goto done;
-    }
-
-    /* free window resources */
-    if (OMPI_SUCCESS != (ret = ompi_win_finalize())) {
-        goto done;
-    }
-    if (OMPI_SUCCESS != (ret = ompi_osc_base_finalize())) {
-        goto done;
-    }
-    if (OMPI_SUCCESS != (ret = mca_part_base_finalize())) {
-        goto done;
-    }
-
-
-    /* free communicator resources. this MUST come before finalizing the PML
-     * as this will call into the pml */
-    if (OMPI_SUCCESS != (ret = ompi_comm_finalize())) {
-        goto done;
-    }
-
-    /* call del_procs on all allocated procs even though some may not be known
-     * to the pml layer. the pml layer is expected to be resilient and ignore
-     * any unknown procs. */
-    nprocs = 0;
-    procs = ompi_proc_get_allocated (&nprocs);
-    MCA_PML_CALL(del_procs(procs, nprocs));
-    free(procs);
-
-    /* free pml resource */
-    if(OMPI_SUCCESS != (ret = mca_pml_base_finalize())) {
-        goto done;
-    }
-
-    /* free requests */
-    if (OMPI_SUCCESS != (ret = ompi_request_finalize())) {
-        goto done;
-    }
-
-    if (OMPI_SUCCESS != (ret = ompi_message_finalize())) {
-        goto done;
-    }
-
-    /* If requested, print out a list of memory allocated by ALLOC_MEM
-       but not freed by FREE_MEM */
-    if (0 != ompi_debug_show_mpi_alloc_mem_leaks) {
-        mca_mpool_base_tree_print(ompi_debug_show_mpi_alloc_mem_leaks);
-    }
-
-    /* Now that all MPI objects dealing with communications are gone,
-       shut down MCA types having to do with communications */
-    if (OMPI_SUCCESS != (ret = mca_base_framework_close(&ompi_pml_base_framework) ) ) {
-        OMPI_ERROR_LOG(ret);
-        goto done;
-    }
-
-    /* shut down buffered send code */
-    mca_pml_base_bsend_fini();
-
-    /* Free secondary resources */
-
-    /* free group resources */
-    if (OMPI_SUCCESS != (ret = ompi_group_finalize())) {
-        goto done;
-    }
-
-    /* finalize the DPM subsystem */
-    if ( OMPI_SUCCESS != (ret = ompi_dpm_finalize())) {
-        goto done;
-    }
-
-    /* free internal error resources */
-    if (OMPI_SUCCESS != (ret = ompi_errcode_intern_finalize())) {
-        goto done;
-    }
-
-    /* free error code resources */
-    if (OMPI_SUCCESS != (ret = ompi_mpi_errcode_finalize())) {
-        goto done;
-    }
-
-    /* free errhandler resources */
-    if (OMPI_SUCCESS != (ret = ompi_errhandler_finalize())) {
-        goto done;
-    }
-
-    /* Free all other resources */
-
-    /* free op resources */
-    if (OMPI_SUCCESS != (ret = ompi_op_finalize())) {
-        goto done;
-    }
-
-    /* free ddt resources */
-    if (OMPI_SUCCESS != (ret = ompi_datatype_finalize())) {
-        goto done;
-    }
-
-    /* free info resources */
-    if (OMPI_SUCCESS != (ret = ompi_mpiinfo_finalize())) {
-        goto done;
-    }
-
-    /* Close down MCA modules */
-
-    /* io is opened lazily, so it's only necessary to close it if it
-       was actually opened */
-    if (0 < ompi_io_base_framework.framework_refcnt) {
-        /* May have been "opened" multiple times. We want it closed now */
-        ompi_io_base_framework.framework_refcnt = 1;
-
-        if (OMPI_SUCCESS != mca_base_framework_close(&ompi_io_base_framework)) {
-            goto done;
-        }
-    }
-    (void) mca_base_framework_close(&ompi_topo_base_framework);
-    if (OMPI_SUCCESS != (ret = mca_base_framework_close(&ompi_osc_base_framework))) {
-        goto done;
-    }
-    if (OMPI_SUCCESS != (ret = mca_base_framework_close(&ompi_part_base_framework))) {
-        goto done;
-    }
-    if (OMPI_SUCCESS != (ret = mca_base_framework_close(&ompi_coll_base_framework))) {
-        goto done;
-    }
-    if (OMPI_SUCCESS != (ret = mca_base_framework_close(&ompi_bml_base_framework))) {
-        goto done;
-    }
-    if (OMPI_SUCCESS != (ret = mca_base_framework_close(&opal_mpool_base_framework))) {
-        goto done;
-    }
-    if (OMPI_SUCCESS != (ret = mca_base_framework_close(&opal_rcache_base_framework))) {
-        goto done;
-    }
-    if (OMPI_SUCCESS != (ret = mca_base_framework_close(&opal_allocator_base_framework))) {
-        goto done;
-    }
-
-    /* free proc resources */
-    if ( OMPI_SUCCESS != (ret = ompi_proc_finalize())) {
-        goto done;
-    }
-
-    if (NULL != ompi_mpi_main_thread) {
-        OBJ_RELEASE(ompi_mpi_main_thread);
-        ompi_mpi_main_thread = NULL;
-    }
-
-    /* Clean up memory/resources from the MPI dynamic process
-       functionality checker */
-    ompi_mpi_dynamics_finalize();
-
-    /* Leave the RTE */
-
-    if (OMPI_SUCCESS != (ret = ompi_rte_finalize())) {
-        goto done;
-    }
-    ompi_rte_initialized = false;
-
-    /* Now close the hook framework */
-    if (OMPI_SUCCESS != (ret = mca_base_framework_close(&ompi_hook_base_framework) ) ) {
-        OMPI_ERROR_LOG(ret);
-        goto done;
-    }
-
-    if (OPAL_SUCCESS != (ret = opal_finalize_util())) {
-        goto done;
-    }
-
-    if (0 == opal_initialized) {
-        /* if there is no MPI_T_init_thread that has been MPI_T_finalize'd,
-         * then be gentle to the app and release all the memory now (instead
-         * of the opal library destructor */
-        opal_class_finalize();
-    }
+    ompi_mpi_instance_finalize (&ompi_mpi_instance_default);
 
     /* cleanup environment */
     opal_unsetenv("OMPI_COMMAND", &environ);
@@ -507,7 +299,7 @@ int ompi_mpi_finalize(void)
 
     /* All done */
 
-  done:
+   done:
     opal_atomic_wmb();
     opal_atomic_swap_32(&ompi_mpi_state, OMPI_MPI_STATE_FINALIZE_COMPLETED);
 

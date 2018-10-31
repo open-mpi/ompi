@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -12,6 +13,8 @@
  * Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2018-2021 Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -40,29 +43,29 @@ static const char FUNC_NAME[] = "MPI_Comm_create_errhandler";
 int MPI_Comm_create_errhandler(MPI_Comm_errhandler_function *function,
                                MPI_Errhandler *errhandler)
 {
-  int err = MPI_SUCCESS;
+    int err = MPI_SUCCESS;
 
-  /* Error checking */
+    /* Error checking */
 
-  if (MPI_PARAM_CHECK) {
-    OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+    if (MPI_PARAM_CHECK) {
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
-    if (NULL == function ||
-        NULL == errhandler) {
-      return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG,
-                                    FUNC_NAME);
+        if (NULL == function ||
+            NULL == errhandler) {
+          return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG,
+                                                 FUNC_NAME);
+        }
     }
-  }
 
-  /* Create and cache the errhandler.  Sets a refcount of 1. */
+    /* Create and cache the errhandler.  Sets a refcount of 1. */
 
-  *errhandler =
-    ompi_errhandler_create(OMPI_ERRHANDLER_TYPE_COMM,
-                           (ompi_errhandler_generic_handler_fn_t*) function,
-                           OMPI_ERRHANDLER_LANG_C);
-  if (NULL == *errhandler) {
-    err = MPI_ERR_INTERN;
-  }
+    *errhandler =
+        ompi_errhandler_create(OMPI_ERRHANDLER_TYPE_COMM,
+                               (ompi_errhandler_generic_handler_fn_t*) function,
+                               OMPI_ERRHANDLER_LANG_C);
+    if (NULL == *errhandler) {
+        err = MPI_ERR_INTERN;
+    }
 
-  OMPI_ERRHANDLER_NOHANDLE_RETURN(err, MPI_ERR_INTERN, FUNC_NAME);
+    OMPI_ERRHANDLER_NOHANDLE_RETURN(err, MPI_ERR_INTERN, FUNC_NAME);
 }

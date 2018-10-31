@@ -39,7 +39,7 @@ int ompi_mtl_psm2_iprobe(struct mca_mtl_base_module_t* mtl,
     psm2_mq_status2_t mqstat;
     psm2_error_t err;
 
-    PSM2_MAKE_TAGSEL(src, tag, comm->c_contextid, mqtag, tagsel);
+    PSM2_MAKE_TAGSEL(src, tag, comm->c_index, mqtag, tagsel);
 
     err = psm2_mq_iprobe2(ompi_mtl_psm2.mq,
             PSM2_MQ_ANY_ADDR, &mqtag, &tagsel, &mqstat);
@@ -88,7 +88,7 @@ ompi_mtl_psm2_improbe(struct mca_mtl_base_module_t *mtl,
     psm2_mq_req_t mqreq;
     psm2_error_t err;
 
-    PSM2_MAKE_TAGSEL(src, tag, comm->c_contextid, mqtag, tagsel);
+    PSM2_MAKE_TAGSEL(src, tag, comm->c_index, mqtag, tagsel);
 
     err = psm2_mq_improbe2(ompi_mtl_psm2.mq,
             PSM2_MQ_ANY_ADDR, &mqtag, &tagsel, &mqreq, &mqstat);

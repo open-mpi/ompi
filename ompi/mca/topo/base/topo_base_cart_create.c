@@ -16,6 +16,8 @@
  *                         reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2018      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -28,6 +30,78 @@
 
 #include "ompi/mca/topo/base/base.h"
 #include "ompi/mca/topo/topo.h"
+
+static int mca_topo_base_cart_allocate (ompi_group_t *group, int ndims, const int *dims, const int *periods,
+                                        int *my_rank, int *num_procs, mca_topo_base_comm_cart_2_2_0_t **cart_out)
+{
+    mca_topo_base_comm_cart_2_2_0_t *cart = OBJ_NEW(mca_topo_base_comm_cart_2_2_0_t);
+    int nprocs = 1;
+
+    *num_procs = group->grp_proc_count;
+    *my_rank = group->grp_my_rank;
+
+    /* Calculate the number of processes in this grid */
+    for (int i = 0 ; i < ndims ; ++i) {
+        if (dims[i] <= 0) {
+            return OMPI_ERROR;
+        }
+        nprocs *= dims[i];
+    }
+
+    /* check for the error condition */
+    if (OPAL_UNLIKELY(*num_procs < nprocs)) {
+        return MPI_ERR_DIMS;
+    }
+
+    /* check if we have to trim the list of processes */
+    if (nprocs < *num_procs) {
+        *num_procs = nprocs;
+    }
+
+    if (*my_rank > (nprocs - 1)) {
+        *my_rank = MPI_UNDEFINED;
+    }
+
+    if (MPI_UNDEFINED == *my_rank) {
+        /* nothing more to do */
+        *cart_out = NULL;
+        return OMPI_SUCCESS;
+    }
+
+    if (OPAL_UNLIKELY(NULL == cart)) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+    cart->ndims = ndims;
+
+    /* MPI-2.1 allows 0-dimension cartesian communicators, so prevent
+       a 0-byte malloc -- leave dims as NULL */
+    if (0 == ndims) {
+        *cart_out = cart;
+        return OMPI_SUCCESS;
+    }
+
+    cart->dims = (int *) malloc (sizeof (int) * ndims);
+    cart->periods = (int *) malloc (sizeof (int) * ndims);
+    cart->coords = (int *) malloc (sizeof (int) * ndims);
+    if (OPAL_UNLIKELY(NULL == cart->dims || NULL == cart->periods || NULL == cart->coords)) {
+        OBJ_RELEASE(cart);
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+
+    /* Cartesian communicator; copy the right data to the common information */
+    memcpy(cart->dims, dims, ndims * sizeof(int));
+    memcpy(cart->periods, periods, ndims * sizeof(int));
+
+    nprocs = *num_procs;
+    for (int i = 0, rank = *my_rank ; i < ndims ; ++i) {
+        nprocs /= cart->dims[i];
+        cart->coords[i] = rank / nprocs;
+        rank %= nprocs;
+    }
+
+    *cart_out = cart;
+    return OMPI_SUCCESS;
+}
 
 /*
  * function - makes a new communicator to which topology information
@@ -55,135 +129,50 @@ int mca_topo_base_cart_create(mca_topo_base_module_t *topo,
                               bool reorder,
                               ompi_communicator_t** comm_topo)
 {
-    int nprocs = 1, i, new_rank, num_procs, ret;
+    int new_rank, num_procs, ret;
     ompi_communicator_t *new_comm;
-    ompi_proc_t **topo_procs = NULL;
     mca_topo_base_comm_cart_2_2_0_t* cart;
+    ompi_group_t *c_local_group;
 
-    num_procs = old_comm->c_local_group->grp_proc_count;
-    new_rank = old_comm->c_local_group->grp_my_rank;
     assert(topo->type == OMPI_COMM_CART);
 
-    /* Calculate the number of processes in this grid */
-    for (i = 0; i < ndims; ++i) {
-        if(dims[i] <= 0) {
-            return OMPI_ERROR;
-        }
-        nprocs *= dims[i];
+    ret = mca_topo_base_cart_allocate (old_comm->c_local_group, ndims, dims, periods,
+                                       &new_rank, &num_procs, &cart);
+    if (OPAL_UNLIKELY(OPAL_SUCCESS != ret)) {
+        return ret;
     }
 
-    /* check for the error condition */
-    if (num_procs < nprocs) {
-        return MPI_ERR_DIMS;
-    }
-
-    /* check if we have to trim the list of processes */
-    if (nprocs < num_procs) {
-        num_procs = nprocs;
-    }
-
-    if (new_rank > (nprocs-1)) {
-        ndims = 0;
-        new_rank = MPI_UNDEFINED;
-        num_procs = 0;
-    }
-
-    cart = OBJ_NEW(mca_topo_base_comm_cart_2_2_0_t);
-    if( NULL == cart ) {
+    /* Copy the proc structure from the previous communicator over to
+       the new one.  The topology module is then able to work on this
+       copy and rearrange it as it deems fit. NTH: seems odd that this
+       function has always clipped the group size here. It might be
+       worthwhile to clip the group in the module (if reordering) */
+    c_local_group = ompi_group_flatten (old_comm->c_local_group, num_procs);
+    if (OPAL_UNLIKELY(NULL == c_local_group)) {
+        OBJ_RELEASE(cart);
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
-    cart->ndims = ndims;
 
-    /* MPI-2.1 allows 0-dimension cartesian communicators, so prevent
-       a 0-byte malloc -- leave dims as NULL */
-    if( ndims > 0 ) {
-        cart->dims = (int*)malloc(sizeof(int) * ndims);
-        if (NULL == cart->dims) {
-            OBJ_RELEASE(cart);
-            return OMPI_ERROR;
-        }
-        memcpy(cart->dims, dims, ndims * sizeof(int));
+    ret = ompi_comm_create (old_comm, c_local_group, &new_comm);
 
-        /* Cartesian communicator; copy the right data to the common information */
-        cart->periods = (int*)malloc(sizeof(int) * ndims);
-        if (NULL == cart->periods) {
-            OBJ_RELEASE(cart);
-            return OMPI_ERR_OUT_OF_RESOURCE;
-        }
-        memcpy(cart->periods, periods, ndims * sizeof(int));
+    ompi_group_free (&c_local_group);
 
-        cart->coords = (int*)malloc(sizeof(int) * ndims);
-        if (NULL == cart->coords) {
-            OBJ_RELEASE(cart);
-            return OMPI_ERR_OUT_OF_RESOURCE;
-        }
-        {  /* setup the cartesian topology */
-            int n_procs = num_procs, rank = new_rank;
-
-            for (i = 0; i < ndims; ++i) {
-                n_procs /= cart->dims[i];
-                cart->coords[i] = rank / n_procs;
-                rank %= n_procs;
-            }
-        }
-    }
-
-    /* JMS: This should really be refactored to use
-       comm_create_group(), because ompi_comm_allocate() still
-       complains about 0-byte mallocs in debug builds for 0-member
-       groups. */
-    if (num_procs > 0) {
-        /* Copy the proc structure from the previous communicator over to
-           the new one.  The topology module is then able to work on this
-           copy and rearrange it as it deems fit. */
-        topo_procs = (ompi_proc_t**)malloc(num_procs * sizeof(ompi_proc_t *));
-        if (NULL == topo_procs) {
-            OBJ_RELEASE(cart);
-            return OMPI_ERR_OUT_OF_RESOURCE;
-        }
-        if(OMPI_GROUP_IS_DENSE(old_comm->c_local_group)) {
-            memcpy(topo_procs,
-                   old_comm->c_local_group->grp_proc_pointers,
-                   num_procs * sizeof(ompi_proc_t *));
-        } else {
-            for(i = 0 ; i < num_procs; i++) {
-                topo_procs[i] = ompi_group_peer_lookup(old_comm->c_local_group,i);
-            }
-        }
-    }
-
-    /* allocate a new communicator */
-    new_comm = ompi_comm_allocate(num_procs, 0);
-    if (NULL == new_comm) {
-        free(topo_procs);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
         OBJ_RELEASE(cart);
-        return MPI_ERR_INTERN;
-    }
-
-    ret = ompi_comm_enable(old_comm, new_comm,
-                           new_rank, num_procs, topo_procs);
-    if (OMPI_SUCCESS != ret) {
-        /* something wrong happened during setting the communicator */
-        free(topo_procs);
-        OBJ_RELEASE(cart);
-        if (MPI_COMM_NULL != new_comm) {
-            new_comm->c_topo = NULL;
-            new_comm->c_flags &= ~OMPI_COMM_CART;
-            ompi_comm_free (&new_comm);
-        }
         return ret;
+    }
+
+    *comm_topo = new_comm;
+
+    if (MPI_COMM_NULL == new_comm) {
+        /* not part of this new communicator */
+        return OMPI_SUCCESS;
     }
 
     new_comm->c_topo           = topo;
     new_comm->c_topo->mtc.cart = cart;
     new_comm->c_topo->reorder  = reorder;
     new_comm->c_flags         |= OMPI_COMM_CART;
-    *comm_topo = new_comm;
-
-    if( MPI_UNDEFINED == new_rank ) {
-        ompi_comm_free(&new_comm);
-        *comm_topo = MPI_COMM_NULL;
-    }
 
     /* end here */
     return OMPI_SUCCESS;
@@ -197,15 +186,9 @@ static void mca_topo_base_comm_cart_2_2_0_construct(mca_topo_base_comm_cart_2_2_
 }
 
 static void mca_topo_base_comm_cart_2_2_0_destruct(mca_topo_base_comm_cart_2_2_0_t * cart) {
-    if (NULL != cart->dims) {
-        free(cart->dims);
-    }
-    if (NULL != cart->periods) {
-        free(cart->periods);
-    }
-    if (NULL != cart->coords) {
-        free(cart->coords);
-    }
+    free(cart->dims);
+    free(cart->periods);
+    free(cart->coords);
 }
 
 OBJ_CLASS_INSTANCE(mca_topo_base_comm_cart_2_2_0_t, opal_object_t,

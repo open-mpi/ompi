@@ -44,6 +44,7 @@ struct mca_pml_ob1_comm_proc_t {
     opal_object_t super;
     struct ompi_proc_t* ompi_proc;
     uint16_t expected_sequence;    /**< send message sequence number - receiver side */
+    int16_t comm_index;           /**< index of this communicator on the receiver size (-1 - not set) */
     opal_atomic_int32_t send_sequence; /**< send side sequence number */
     struct mca_pml_ob1_recv_frag_t* frags_cant_match;  /**< out-of-order fragment queues */
 #if !MCA_PML_OB1_CUSTOM_MATCH
@@ -53,6 +54,8 @@ struct mca_pml_ob1_comm_proc_t {
 };
 
 OBJ_CLASS_DECLARATION(mca_pml_ob1_comm_proc_t);
+
+#define MCA_PML_OB1_PROC_REQUIRES_EXT_MATCH(proc) (-1 == (proc)->comm_index)
 
 /**
  *  Cached on ompi_communicator_t to hold queues/state
@@ -66,7 +69,7 @@ struct mca_pml_comm_t {
     opal_list_t wild_receives;    /**< queue of unmatched wild (source process not specified) receives */
 #endif
     opal_mutex_t proc_lock;
-    mca_pml_ob1_comm_proc_t **procs;
+    mca_pml_ob1_comm_proc_t * volatile * procs;
     size_t num_procs;
     size_t last_probed;
 #if MCA_PML_OB1_CUSTOM_MATCH
@@ -77,6 +80,11 @@ struct mca_pml_comm_t {
 typedef struct mca_pml_comm_t mca_pml_ob1_comm_t;
 
 OBJ_CLASS_DECLARATION(mca_pml_ob1_comm_t);
+
+/**
+ * @brief Helper function to allocate/fill in ob1 proc for a comm/rank
+ */
+mca_pml_ob1_comm_proc_t *mca_pml_ob1_peer_create (ompi_communicator_t *comm, mca_pml_ob1_comm_t *pml_comm, int rank);
 
 static inline mca_pml_ob1_comm_proc_t *mca_pml_ob1_peer_lookup (struct ompi_communicator_t *comm, int rank)
 {
@@ -93,15 +101,7 @@ static inline mca_pml_ob1_comm_proc_t *mca_pml_ob1_peer_lookup (struct ompi_comm
                        " valid range of the communicator. Please submit a bug request!");
     }
     if (OPAL_UNLIKELY(NULL == pml_comm->procs[rank])) {
-        OPAL_THREAD_LOCK(&pml_comm->proc_lock);
-        if (NULL == pml_comm->procs[rank]) {
-            mca_pml_ob1_comm_proc_t* proc = OBJ_NEW(mca_pml_ob1_comm_proc_t);
-            proc->ompi_proc = ompi_comm_peer_lookup (comm, rank);
-            OBJ_RETAIN(proc->ompi_proc);
-            opal_atomic_wmb ();
-            pml_comm->procs[rank] = proc;
-        }
-        OPAL_THREAD_UNLOCK(&pml_comm->proc_lock);
+        mca_pml_ob1_peer_create (comm, pml_comm, rank);
     }
 
     return pml_comm->procs[rank];

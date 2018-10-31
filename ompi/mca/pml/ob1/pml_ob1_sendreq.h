@@ -46,6 +46,7 @@ typedef enum {
 struct mca_pml_ob1_send_request_t {
     mca_pml_base_send_request_t req_send;
     mca_bml_base_endpoint_t* req_endpoint;
+    mca_pml_ob1_comm_proc_t *ob1_proc;
     opal_ptr_t req_recv;
     opal_atomic_int32_t  req_state;
     opal_atomic_int32_t  req_lock;
@@ -143,7 +144,8 @@ get_request_from_send_pending(mca_pml_ob1_send_pending_t *type)
                                        tag,                             \
                                        comm,                            \
                                        sendmode,                        \
-                                       persistent)                      \
+                                       persistent,                      \
+                                       ob1_proc)                        \
     {                                                                   \
         MCA_PML_BASE_SEND_REQUEST_INIT(&(sendreq)->req_send,            \
                                        buf,                             \
@@ -156,10 +158,13 @@ get_request_from_send_pending(mca_pml_ob1_send_pending_t *type)
                                        persistent,                      \
                                        0); /* convertor_flags */        \
         (sendreq)->req_recv.pval = NULL;                                \
+        (sendreq)->ob1_proc = ob1_proc;                                 \
     }
 
 #define MCA_PML_OB1_SEND_REQUEST_RESET(sendreq)                         \
     MCA_PML_BASE_SEND_REQUEST_RESET(&(sendreq)->req_send)
+
+#define MCA_PML_OB1_SEND_REQUEST_REQUIRES_EXT_MATCH(sendreq) (-1 == sendreq->ob1_proc->comm_index)
 
 static inline void mca_pml_ob1_free_rdma_resources (mca_pml_ob1_send_request_t* sendreq)
 {

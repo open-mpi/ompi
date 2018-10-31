@@ -60,8 +60,8 @@ int ompi_osc_rdma_free(ompi_win_t *win)
 
     if (NULL != module->comm) {
         opal_output_verbose(1, ompi_osc_base_framework.framework_output,
-                            "rdma component destroying window with id %d",
-                            ompi_comm_get_cid(module->comm));
+                            "rdma component destroying window with id %s",
+                            ompi_comm_print_cid(module->comm));
 
         /* finish with a barrier */
         if (ompi_group_size(win->w_group) > 1) {
@@ -72,7 +72,7 @@ int ompi_osc_rdma_free(ompi_win_t *win)
         /* remove from component information */
         OPAL_THREAD_LOCK(&mca_osc_rdma_component.lock);
         opal_hash_table_remove_value_uint32(&mca_osc_rdma_component.modules,
-                                            ompi_comm_get_cid(module->comm));
+                                            ompi_comm_get_local_cid(module->comm));
         OPAL_THREAD_UNLOCK(&mca_osc_rdma_component.lock);
     }
 

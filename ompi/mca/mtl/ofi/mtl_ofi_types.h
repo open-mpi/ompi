@@ -95,6 +95,9 @@ typedef struct mca_mtl_ofi_module_t {
     /** Optimized function Symbol Tables **/
     struct ompi_mtl_ofi_symtable sym_table;
 
+    bool is_initialized;
+    bool has_posted_initial_buffer;
+
 } mca_mtl_ofi_module_t;
 
 extern mca_mtl_ofi_module_t ompi_mtl_ofi;

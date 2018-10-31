@@ -182,7 +182,7 @@ static void ompi_comm_rbcast_bml_recv_cb(
                              OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), __func__, msg->cid, msg->epoch));
         return;
     }
-    if(OPAL_UNLIKELY( msg->cid != comm->c_contextid )) {
+    if(OPAL_UNLIKELY( msg->cid != ompi_comm_get_local_cid(comm))) {
         OPAL_OUTPUT_VERBOSE((2, ompi_ftmpi_output_handle,
                              "%s %s: Info: received a late rbcast message with CID %3d:%d during an MPI_COMM_DUP that is trying to reuse that CID (thus increasing the epoch) - ignoring, nothing to do",
                              OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), __func__, msg->cid, msg->epoch));

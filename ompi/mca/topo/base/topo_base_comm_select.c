@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -11,6 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2008-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2013 Inria.  All rights reserved.
+ * Copyright (c) 2018      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -68,10 +71,10 @@ static OBJ_CLASS_INSTANCE(queried_module_t, opal_list_item_t, NULL, NULL);
  * 4. Select the module with the highest priority.
  * 5. OBJ_RELEASE all the "losing" modules.
  */
-int mca_topo_base_comm_select(const ompi_communicator_t*  comm,
-                              mca_topo_base_module_t*     preferred_module,
-                              mca_topo_base_module_t**    selected_module,
-                              uint32_t                    type)
+static int _mca_topo_base_select (const ompi_communicator_t *comm, const ompi_group_t *group,
+                                  mca_topo_base_module_t *preferred_module,
+                                  mca_topo_base_module_t **selected_module,
+                                  uint32_t type)
 {
     int priority;
     int best_priority;
@@ -88,9 +91,15 @@ int mca_topo_base_comm_select(const ompi_communicator_t*  comm,
     if (OMPI_SUCCESS != (err = mca_topo_base_lazy_init())) {
         return err;
     }
-    opal_output_verbose(10, ompi_topo_base_framework.framework_output,
-                        "topo:base:comm_select: new communicator: %s (cid %d)",
-                        comm->c_name, comm->c_contextid);
+
+    if (comm) {
+        opal_output_verbose(10, ompi_topo_base_framework.framework_output,
+                            "topo:base:comm_select: new communicator: %s (cid %s)",
+                            comm->c_name, ompi_comm_print_cid (comm));
+    } else {
+        opal_output_verbose(10, ompi_topo_base_framework.framework_output,
+                            "topo:base:group_select: new communicator");
+    }
 
     /* Check and see if a preferred component was provided. If it was
        provided then it should be used (if possible) */
@@ -106,7 +115,7 @@ int mca_topo_base_comm_select(const ompi_communicator_t*  comm,
          /* query the component for its priority and get its module
             structure. This is necessary to proceed */
          component = (mca_topo_base_component_t *)preferred_module->topo_component;
-         module = component->topoc_comm_query(comm, &priority, type);
+         module = component->topoc_query(comm, group, &priority, type);
          if (NULL != module) {
 
              /* this query seems to have returned something legitimate
@@ -149,14 +158,14 @@ int mca_topo_base_comm_select(const ompi_communicator_t*  comm,
        /*
         * we can call the query function only if there is a function :-)
         */
-       if (NULL == component->topoc_comm_query) {
+       if (NULL == component->topoc_query) {
           opal_output_verbose(10, ompi_topo_base_framework.framework_output,
                              "select: no query, ignoring the component");
        } else {
            /*
             * call the query function and see what it returns
             */
-           module = component->topoc_comm_query(comm, &priority, type);
+           module = component->topoc_query(comm, group, &priority, type);
 
            if (NULL == module) {
                /*
@@ -251,6 +260,17 @@ int mca_topo_base_comm_select(const ompi_communicator_t*  comm,
     return OMPI_SUCCESS;
 }
 
+int mca_topo_base_comm_select (const ompi_communicator_t *comm, mca_topo_base_module_t *preferred_module,
+                               mca_topo_base_module_t **selected_module, uint32_t type)
+{
+    return _mca_topo_base_select (comm, NULL, preferred_module, selected_module, type);
+}
+
+int mca_topo_base_group_select(const ompi_group_t *group, mca_topo_base_module_t *preferred_module,
+                               mca_topo_base_module_t **selected_module, uint32_t type)
+{
+    return _mca_topo_base_select (NULL, group, preferred_module, selected_module, type);
+}
 
 /*
  * This function fills in the null function pointers, in other words,

@@ -30,7 +30,7 @@ const char *mca_topo_basic_component_version_string =
  */
 static int init_query(bool enable_progress_threads, bool enable_mpi_threads);
 static struct mca_topo_base_module_t *
-comm_query(const ompi_communicator_t *comm, int *priority, uint32_t type);
+mca_topo_basic_query(const ompi_communicator_t *comm, const ompi_group_t *group, int *priority, uint32_t type);
 
 /*
  * Public component structure
@@ -40,9 +40,8 @@ mca_topo_basic_component_t mca_topo_basic_component =
     .topoc_version = {
         MCA_TOPO_BASE_VERSION_2_2_0,
         .mca_component_name = "basic",
-        .mca_component_major_version = OMPI_MAJOR_VERSION,
-        .mca_component_minor_version = OMPI_MINOR_VERSION,
-        .mca_component_release_version = OMPI_RELEASE_VERSION,
+        MCA_BASE_MAKE_VERSION(component, OMPI_MAJOR_VERSION, OMPI_MINOR_VERSION,
+                              OMPI_RELEASE_VERSION),
         /* NULLs for the rest of the function pointers */
     },
 
@@ -52,7 +51,7 @@ mca_topo_basic_component_t mca_topo_basic_component =
     },
 
     .topoc_init_query = init_query,
-    .topoc_comm_query = comm_query,
+    .topoc_query = mca_topo_basic_query,
 };
 
 
@@ -64,7 +63,7 @@ static int init_query(bool enable_progress_threads, bool enable_mpi_threads)
 
 
 static struct mca_topo_base_module_t *
-comm_query(const ompi_communicator_t *comm, int *priority, uint32_t type)
+mca_topo_basic_query (const ompi_communicator_t *comm, const ompi_group_t *group, int *priority, uint32_t type)
 {
     /* Don't use OBJ_NEW, we need to zero the memory or the functions pointers
      * will not be correctly copied over from the base.
@@ -81,5 +80,3 @@ comm_query(const ompi_communicator_t *comm, int *priority, uint32_t type)
     basic->type = type;
     return basic;
 }
-
-

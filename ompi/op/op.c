@@ -17,6 +17,8 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
+ * Copyright (c) 2018      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -33,6 +35,7 @@
 #include "ompi/op/op.h"
 #include "ompi/mca/op/base/base.h"
 #include "ompi/datatype/ompi_datatype_internal.h"
+#include "ompi/instance/instance.h"
 
 
 /*
@@ -47,6 +50,7 @@ opal_pointer_array_t *ompi_op_f_to_c_table = {0};
 static int add_intrinsic(ompi_op_t *op, int fort_handle, int flags,
                          const char *name);
 
+static int ompi_op_finalize (void);
 
 /*
  * Class information
@@ -300,15 +304,23 @@ int ompi_op_init(void)
         ompi_mpi_op_replace.op.op_type = OMPI_OP_REPLACE;
     }
 
+    ompi_mpi_instance_append_finalize (ompi_op_finalize);
+
     /* All done */
     return OMPI_SUCCESS;
 }
 
 
-/*
- * Clean up the op resources
+
+/**
+ * Finalize the op interface.
+ *
+ * @returns OMPI_SUCCESS Always
+ *
+ * Invokes on instance teardown if ompi_op_init() was called; tears down the op interface, and
+ * destroys the F2C translation table.
  */
-int ompi_op_finalize(void)
+static int ompi_op_finalize (void)
 {
     /* clean up the intrinsic ops */
     OBJ_DESTRUCT(&ompi_mpi_op_no_op);

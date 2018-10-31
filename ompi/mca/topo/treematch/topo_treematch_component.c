@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2011-2015 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
@@ -26,7 +27,7 @@ const char *mca_topo_treematch_component_version_string =
  */
 static int init_query(bool enable_progress_threads, bool enable_mpi_threads);
 static struct mca_topo_base_module_t *
-comm_query(const ompi_communicator_t *comm, int *priority, uint32_t type);
+mca_topo_treematch_query(const ompi_communicator_t *comm, const ompi_group_t *group, int *priority, uint32_t type);
 static int mca_topo_treematch_component_register(void);
 
 /*
@@ -34,29 +35,24 @@ static int mca_topo_treematch_component_register(void);
  */
 mca_topo_treematch_component_2_2_0_t mca_topo_treematch_component =
     {
-        {
-            {
+        .super = {
+            .topoc_version = {
                 MCA_TOPO_BASE_VERSION_2_2_0,
-
-                "treematch",
-                OMPI_MAJOR_VERSION,
-                OMPI_MINOR_VERSION,
-                OMPI_RELEASE_VERSION,
-                NULL,  /* component open */
-                NULL,  /* component close */
-                NULL, /* component query */
-                mca_topo_treematch_component_register, /* component register */
+                .mca_component_name = "treematch",
+                MCA_BASE_MAKE_VERSION(component, OMPI_MAJOR_VERSION, OMPI_MINOR_VERSION,
+                                      OMPI_RELEASE_VERSION),
+                .mca_register_component_params = mca_topo_treematch_component_register,
             },
 
-            {
+            .topoc_data = {
                 /* The component is checkpoint ready */
                 MCA_BASE_METADATA_PARAM_CHECKPOINT
             },
 
-            init_query,
-            comm_query
+            .topoc_init_query = init_query,
+            .topoc_query = mca_topo_treematch_query,
         },
-        0  /* reorder: by default centralized */
+        .reorder_mode = 0  /* reorder: by default centralized */
     };
 
 
@@ -72,7 +68,7 @@ static int init_query(bool enable_progress_threads, bool enable_mpi_threads)
 
 
 static struct mca_topo_base_module_t *
-comm_query(const ompi_communicator_t *comm, int *priority, uint32_t type)
+mca_topo_treematch_query(const ompi_communicator_t *comm, const ompi_group_t *group, int *priority, uint32_t type)
 {
     mca_topo_treematch_module_t *treematch;
 

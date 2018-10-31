@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University.
  *                         All rights reserved.
@@ -9,6 +10,8 @@
  *                         All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2018      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -53,6 +56,21 @@ ompi_osc_base_set_memory_alignment(struct opal_info_t *info,
     }
 }
 
+static int ompi_osc_base_finalize(void)
+{
+    opal_list_item_t* item;
+
+    /* Finalize all available modules */
+    while (NULL !=
+           (item = opal_list_remove_first(&ompi_osc_base_framework.framework_components))) {
+        ompi_osc_base_component_t *component = (ompi_osc_base_component_t*)
+            ((mca_base_component_list_item_t*) item)->cli_component;
+        component->osc_finalize();
+        OBJ_RELEASE(item);
+    }
+    return OMPI_SUCCESS;
+}
+
 
 int
 ompi_osc_base_find_available(bool enable_progress_threads,
@@ -74,22 +92,9 @@ ompi_osc_base_find_available(bool enable_progress_threads,
             OBJ_RELEASE(cli);
         }
     }
-    return OMPI_SUCCESS;
-}
 
-int
-ompi_osc_base_finalize(void)
-{
-    opal_list_item_t* item;
+    ompi_mpi_instance_append_finalize (ompi_osc_base_finalize);
 
-    /* Finalize all available modules */
-    while (NULL !=
-           (item = opal_list_remove_first(&ompi_osc_base_framework.framework_components))) {
-        ompi_osc_base_component_t *component = (ompi_osc_base_component_t*)
-            ((mca_base_component_list_item_t*) item)->cli_component;
-        component->osc_finalize();
-        OBJ_RELEASE(item);
-    }
     return OMPI_SUCCESS;
 }
 

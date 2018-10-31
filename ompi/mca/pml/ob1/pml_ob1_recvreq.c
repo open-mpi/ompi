@@ -22,6 +22,8 @@
  *                         All rights reserved.
  * Copyright (c) 2020      Google, LLC. All rights reserved.
  * Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
+ * Copyright (c) 2021      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -282,6 +284,10 @@ int mca_pml_ob1_recv_request_ack_send_btl(
     mca_bml_base_free(bml_btl, des);
     return OMPI_ERR_OUT_OF_RESOURCE;
 }
+
+/*
+ *
+ */
 
 static int mca_pml_ob1_recv_request_ack(
     mca_pml_ob1_recv_request_t* recvreq,
@@ -1199,8 +1205,8 @@ recv_req_match_wild( mca_pml_ob1_recv_request_t* req,
                      mca_pml_ob1_comm_proc_t **p)
 #endif
 {
-    mca_pml_ob1_comm_t* comm = req->req_recv.req_base.req_comm->c_pml_comm;
-    mca_pml_ob1_comm_proc_t **procp = comm->procs;
+    mca_pml_ob1_comm_t *comm = (mca_pml_ob1_comm_t *) req->req_recv.req_base.req_comm->c_pml_comm;
+    mca_pml_ob1_comm_proc_t **procp = (mca_pml_ob1_comm_proc_t **) comm->procs;
 
 #if MCA_PML_OB1_CUSTOM_MATCH
     mca_pml_ob1_recv_frag_t* frag;
@@ -1304,8 +1310,8 @@ void mca_pml_ob1_recv_req_start(mca_pml_ob1_recv_request_t *req)
         ompi_communicator_t* comm_ptr = req->req_recv.req_base.req_comm;
         if( ((ompi_comm_is_revoked(comm_ptr) && !ompi_request_tag_is_ft(req->req_recv.req_base.req_tag) )
          || (ompi_comm_coll_revoked(comm_ptr) && ompi_request_tag_is_collective(req->req_recv.req_base.req_tag)))) {
-            OPAL_OUTPUT_VERBOSE((2, ompi_ftmpi_output_handle, "Recvreq: Posting a new recv req peer %d, tag %d on a revoked/coll_revoked communicator %d, discarding it.\n",
-                req->req_recv.req_base.req_peer, req->req_recv.req_base.req_tag, comm_ptr->c_contextid));
+            OPAL_OUTPUT_VERBOSE((2, ompi_ftmpi_output_handle, "Recvreq: Posting a new recv req peer %d, tag %d on a revoked/coll_revoked communicator %s, discarding it.\n",
+                req->req_recv.req_base.req_peer, req->req_recv.req_base.req_tag, ompi_comm_print_cid(comm_ptr)));
             req->req_recv.req_base.req_ompi.req_status.MPI_ERROR = ompi_comm_is_revoked(comm_ptr)? MPI_ERR_REVOKED: MPI_ERR_PROC_FAILED;
             recv_request_pml_complete( req );
             PERUSE_TRACE_COMM_EVENT(PERUSE_COMM_SEARCH_UNEX_Q_END,
