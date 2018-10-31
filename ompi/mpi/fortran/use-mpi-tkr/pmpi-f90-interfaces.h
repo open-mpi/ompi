@@ -7,6 +7,8 @@
 ! Additional copyrights may follow
 !
 ! $HEADER$
+!
+
 
 #define MPI_Wtick PMPI_Wtick
 #define MPI_Wtime PMPI_Wtime
@@ -30,6 +32,7 @@
 #define MPI_Comm_call_errhandler PMPI_Comm_call_errhandler
 #define MPI_Comm_compare PMPI_Comm_compare
 #define MPI_Comm_create PMPI_Comm_create
+#define MPI_Comm_create_from_group PMPI_Comm_create_from_group
 #define MPI_Comm_create_group PMPI_Comm_create_group
 #define MPI_Comm_create_errhandler PMPI_Comm_create_errhandler
 #define MPI_Comm_create_keyval PMPI_Comm_create_keyval
@@ -78,6 +81,7 @@
 #define MPI_Group_difference PMPI_Group_difference
 #define MPI_Group_excl PMPI_Group_excl
 #define MPI_Group_free PMPI_Group_free
+#define MPI_Group_from_session_pset PMPI_Group_from_session_pset
 #define MPI_Group_incl PMPI_Group_incl
 #define MPI_Group_intersection PMPI_Group_intersection
 #define MPI_Group_range_excl PMPI_Group_range_excl
@@ -100,6 +104,7 @@
 #define MPI_Init_thread PMPI_Init_thread
 #define MPI_Initialized PMPI_Initialized
 #define MPI_Intercomm_create PMPI_Intercomm_create
+#define MPI_Intercomm_create_from_groups PMPI_Intercomm_create_from_groups
 #define MPI_Intercomm_merge PMPI_Intercomm_merge
 #define MPI_Iprobe PMPI_Iprobe
 #define MPI_Is_thread_main PMPI_Is_thread_main
@@ -118,6 +123,12 @@
 #define MPI_Register_datarep PMPI_Register_datarep
 #define MPI_Request_free PMPI_Request_free
 #define MPI_Request_get_status PMPI_Request_get_status
+#define MPI_Session_get_info PMPI_Session_get_info
+#define MPI_Session_get_nth_pset PMPI_Session_get_nth_pset
+#define MPI_Session_get_num_psets PMPI_Session_get_num_psets
+#define MPI_Session_get_pset_info PMPI_Session_get_pset_info
+#define MPI_Session_init PMPI_Session_init
+#define MPI_Session_finalize PMPI_Session_finalize
 #define MPI_Start PMPI_Start
 #define MPI_Startall PMPI_Startall
 #define MPI_Status_f2f08 PMPI_Status_f2f08

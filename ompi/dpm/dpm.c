@@ -21,7 +21,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
- * Copyright (c) 2021      Triad National Security, LLC. All rights
+ * Copyright (c) 2018-2021 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -492,10 +492,9 @@ bcast_rportlen:
                          NULL  ,                   /* remote_procs */
                          NULL,                     /* attrs */
                          comm->error_handler,      /* error handler */
-                         NULL,                     /* topo component */
                          group,                    /* local group */
-                         new_group_pointer         /* remote group */
-                         );
+                         new_group_pointer,        /* remote group */
+                         0);                       /* flags */
     if (OMPI_SUCCESS != rc) {
         goto exit;
     }
@@ -1701,15 +1700,6 @@ int ompi_dpm_dyn_init(void)
     snprintf(newcomm->c_name, MPI_MAX_OBJECT_NAME, "MPI_COMM_PARENT");
     newcomm->c_flags |= OMPI_COMM_NAMEISSET;
 
-    return OMPI_SUCCESS;
-}
-
-
-/*
- * finalize the module
- */
-int ompi_dpm_finalize(void)
-{
     return OMPI_SUCCESS;
 }
 

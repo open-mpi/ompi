@@ -42,7 +42,7 @@ enum {
 #define PML_UCX_MAKE_SEND_TAG(_tag, _comm) \
     ((((uint64_t) (_tag)            ) << (PML_UCX_RANK_BITS + PML_UCX_CONTEXT_BITS)) | \
      (((uint64_t)(_comm)->c_my_rank ) << PML_UCX_CONTEXT_BITS) | \
-     ((uint64_t)(_comm)->c_contextid))
+     ((uint64_t)(_comm)->c_index))
 
 
 #define PML_UCX_MAKE_RECV_TAG(_ucp_tag, _ucp_tag_mask, _tag, _src, _comm) \
@@ -54,7 +54,7 @@ enum {
         } \
         \
         _ucp_tag = (((uint64_t)(_src) & UCS_MASK(PML_UCX_RANK_BITS)) << PML_UCX_CONTEXT_BITS) | \
-                   (_comm)->c_contextid; \
+                   (_comm)->c_index; \
         \
         if ((_tag) != MPI_ANY_TAG) { \
             _ucp_tag_mask |= PML_UCX_TAG_MASK; \

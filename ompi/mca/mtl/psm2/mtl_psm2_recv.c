@@ -63,7 +63,7 @@ ompi_mtl_psm2_irecv(struct mca_mtl_base_module_t* mtl,
     mtl_psm2_request->convertor = convertor;
     mtl_psm2_request->type = OMPI_mtl_psm2_IRECV;
 
-    PSM2_MAKE_TAGSEL(src, tag, comm->c_contextid, mqtag, tagsel);
+    PSM2_MAKE_TAGSEL(src, tag, comm->c_index, mqtag, tagsel);
 
     err = psm2_mq_irecv2(ompi_mtl_psm2.mq,
 		       PSM2_MQ_ANY_ADDR,

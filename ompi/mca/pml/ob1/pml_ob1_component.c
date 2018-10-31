@@ -314,6 +314,9 @@ mca_pml_ob1_component_init( int* priority,
 
     }
 
+    /** this pml supports the extended CID space */
+    mca_pml_ob1.super.pml_flags |= MCA_PML_BASE_FLAG_SUPPORTS_EXT_CID;
+
     return &mca_pml_ob1.super;
 }
 

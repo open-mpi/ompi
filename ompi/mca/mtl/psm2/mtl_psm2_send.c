@@ -48,7 +48,7 @@ ompi_mtl_psm2_send(struct mca_mtl_base_module_t* mtl,
 
     assert(mtl == &ompi_mtl_psm2.super);
 
-    PSM2_MAKE_MQTAG(comm->c_contextid, comm->c_my_rank, tag, mqtag);
+    PSM2_MAKE_MQTAG(comm->c_index, comm->c_my_rank, tag, mqtag);
 
     ret = ompi_mtl_datatype_pack(convertor,
                                  &mtl_psm2_request.buf,
@@ -106,7 +106,7 @@ ompi_mtl_psm2_isend(struct mca_mtl_base_module_t* mtl,
 
     assert(mtl == &ompi_mtl_psm2.super);
 
-    PSM2_MAKE_MQTAG(comm->c_contextid, comm->c_my_rank, tag, mqtag);
+    PSM2_MAKE_MQTAG(comm->c_index, comm->c_my_rank, tag, mqtag);
 
 
     ret = ompi_mtl_datatype_pack(convertor,

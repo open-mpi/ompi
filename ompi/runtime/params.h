@@ -16,7 +16,7 @@
  * Copyright (c) 2010-2012 Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2013      Intel, Inc. All rights reserved
- * Copyright (c) 2021      Triad National Security, LLC. All rights
+ * Copyright (c) 2018-2021 Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
  * $COPYRIGHT$
@@ -30,6 +30,8 @@
 #define OMPI_RUNTIME_PARAMS_H
 
 #include "ompi_config.h"
+
+#include "ompi/runtime/mpiruntime.h"
 
 BEGIN_C_DECLS
 
@@ -180,6 +182,15 @@ OMPI_DECLSPEC extern bool ompi_mpi_spc_dump_enabled;
  */
 OMPI_DECLSPEC extern uint32_t ompi_pmix_connect_timeout;
 
+ /**
+ * A boolean value that determines whether or not to enable runtime timing of
+ * init and finalize.
+ */
+OMPI_DECLSPEC extern bool ompi_enable_timing;
+
+OMPI_DECLSPEC extern int ompi_mpi_event_tick_rate;
+OMPI_DECLSPEC extern bool ompi_mpi_yield_when_idle;
+
 /**
  * Register MCA parameters used by the MPI layer.
  *
@@ -189,6 +200,7 @@ OMPI_DECLSPEC extern uint32_t ompi_pmix_connect_timeout;
  * global variables to the values obtained from the MCA system.
  */
 OMPI_DECLSPEC int ompi_mpi_register_params(void);
+
 
 /**
  * Display all MCA parameters used

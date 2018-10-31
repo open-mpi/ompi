@@ -42,12 +42,12 @@ mca_bml_base_module_t mca_bml = {
 };
 mca_bml_base_component_t mca_bml_component = {{0}};
 
-static bool init_called = false;
+bool mca_bml_component_init_called = false;
 
 bool
 mca_bml_base_inited(void)
 {
-    return init_called;
+    return mca_bml_component_init_called;
 }
 
 int mca_bml_base_init( bool enable_progress_threads,
@@ -57,11 +57,11 @@ int mca_bml_base_init( bool enable_progress_threads,
     int priority = 0, best_priority = -1;
     mca_base_component_list_item_t *cli = NULL;
 
-    if (init_called) {
+    if (true == mca_bml_component_init_called) {
         return OPAL_SUCCESS;
     }
 
-    init_called = true;
+    mca_bml_component_init_called = true;
 
     OPAL_LIST_FOREACH(cli, &ompi_bml_base_framework.framework_components, mca_base_component_list_item_t) {
         component = (mca_bml_base_component_t*) cli->cli_component;

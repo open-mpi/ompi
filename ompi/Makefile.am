@@ -193,6 +193,7 @@ include patterns/net/Makefile.am
 include patterns/comm/Makefile.am
 include mca/Makefile.am
 include util/Makefile.am
+include instance/Makefile.am
 
 distclean-local:
 	rm -f mpiext/static-components.h

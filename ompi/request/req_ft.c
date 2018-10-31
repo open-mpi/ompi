@@ -13,6 +13,9 @@
  * Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2010-2012 Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2021      Triad National Security, LLC. All rights
+ *                         reserved.
+ *
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -91,9 +94,9 @@ bool ompi_request_is_failed_fn(ompi_request_t *req)
         req->req_status.MPI_ERROR  = MPI_ERR_REVOKED;
 
         opal_output_verbose(10, ompi_ftmpi_output_handle,
-                            "%s ompi_request_is_failed: %p (peer %d, tag %d) is on communicator %s(%d) that has been revoked!",
+                            "%s ompi_request_is_failed: %p (peer %d, tag %d) is on communicator %s(%s) that has been revoked!",
                             OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), (void*)req, pml_req->req_peer, pml_req->req_tag,
-                            req->req_mpi_object.comm->c_name, req->req_mpi_object.comm->c_contextid);
+                            req->req_mpi_object.comm->c_name, ompi_comm_print_cid(req->req_mpi_object.comm));
         goto return_with_error;
     }
 
@@ -129,9 +132,9 @@ bool ompi_request_is_failed_fn(ompi_request_t *req)
                 req->req_status.MPI_ERROR  = MPI_ERR_PROC_FAILED;
             }
             opal_output_verbose(10, ompi_ftmpi_output_handle,
-                                "%s ompi_request_is_failed: Request %p (peer %d, tag %d) in comm %s(%d) peer ANY_SOURCE %s!",
+                                "%s ompi_request_is_failed: Request %p (peer %d, tag %d) in comm %s(%s) peer ANY_SOURCE %s!",
                                 OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), (void*)req, pml_req->req_peer, pml_req->req_tag,
-                                req->req_mpi_object.comm->c_name, req->req_mpi_object.comm->c_contextid,
+                                req->req_mpi_object.comm->c_name, ompi_comm_print_cid(req->req_mpi_object.comm),
                                 ompi_mpi_errnum_get_string(req->req_status.MPI_ERROR));
             goto return_with_error;
         }
@@ -144,9 +147,9 @@ bool ompi_request_is_failed_fn(ompi_request_t *req)
         req->req_status.MPI_ERROR  = MPI_ERR_PROC_FAILED;
         assert(MPI_ANY_SOURCE != pml_req->req_peer); /* this case is handled above, so... */
         opal_output_verbose(10, ompi_ftmpi_output_handle,
-                            "%s ompi_request_is_failed: Request %p (peer %d, tag %d) in comm %s(%d) mpi_source %3d failed - Ret %s",
+                            "%s ompi_request_is_failed: Request %p (peer %d, tag %d) in comm %s(%s) mpi_source %3d failed - Ret %s",
                             OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), (void*)req, pml_req->req_peer, pml_req->req_tag,
-                            req->req_mpi_object.comm->c_name, req->req_mpi_object.comm->c_contextid,
+                            req->req_mpi_object.comm->c_name, ompi_comm_print_cid(req->req_mpi_object.comm),
                             req->req_status.MPI_SOURCE,
                             ompi_mpi_errnum_get_string(req->req_status.MPI_ERROR));
         goto return_with_error;

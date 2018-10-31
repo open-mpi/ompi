@@ -4,6 +4,8 @@
  *                         reserved.
  * Copyright (c) 2020      Bull S.A.S. All rights reserved.
  * Copyright (c) 2021      Cisco Systems, Inc.  All rights reserved
+ * Copyright (c) 2021      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -187,21 +189,21 @@ mca_coll_han_comm_query(struct ompi_communicator_t * comm, int *priority)
      */
     if (OMPI_COMM_IS_INTER(comm)) {
         opal_output_verbose(10, ompi_coll_base_framework.framework_output,
-                            "coll:han:comm_query (%d/%s): intercomm; disqualifying myself",
-                            comm->c_contextid, comm->c_name);
+                            "coll:han:comm_query (%s/%s): intercomm; disqualifying myself",
+                            ompi_comm_print_cid(comm), comm->c_name);
         return NULL;
     }
     if (1 == ompi_comm_size(comm)) {
         opal_output_verbose(10, ompi_coll_base_framework.framework_output,
-                            "coll:han:comm_query (%d/%s): comm is too small; disqualifying myself",
-                            comm->c_contextid, comm->c_name);
+                            "coll:han:comm_query (%s/%s): comm is too small; disqualifying myself",
+                            ompi_comm_print_cid(comm), comm->c_name);
         return NULL;
     }
     if( !ompi_group_have_remote_peers(comm->c_local_group) ) {
         /* The group only contains local processes. Disable HAN for now */
         opal_output_verbose(10, ompi_coll_base_framework.framework_output,
-                            "coll:han:comm_query (%d/%s): comm has only local processes; disqualifying myself",
-                            comm->c_contextid, comm->c_name);
+                            "coll:han:comm_query (%s/%s): comm has only local processes; disqualifying myself",
+                            ompi_comm_print_cid(comm), comm->c_name);
         return NULL;
     }
     /* Get the priority level attached to this module. If priority is less
@@ -209,8 +211,8 @@ mca_coll_han_comm_query(struct ompi_communicator_t * comm, int *priority)
     *priority = mca_coll_han_component.han_priority;
     if (mca_coll_han_component.han_priority < 0) {
         opal_output_verbose(10, ompi_coll_base_framework.framework_output,
-                            "coll:han:comm_query (%d/%s): priority too low; disqualifying myself",
-                            comm->c_contextid, comm->c_name);
+                            "coll:han:comm_query (%s/%s): priority too low; disqualifying myself",
+                            ompi_comm_print_cid(comm), comm->c_name);
         return NULL;
     }
 
@@ -264,8 +266,8 @@ mca_coll_han_comm_query(struct ompi_communicator_t * comm, int *priority)
     }
 
     opal_output_verbose(10, ompi_coll_base_framework.framework_output,
-                        "coll:han:comm_query (%d/%s): pick me! pick me!",
-                        comm->c_contextid, comm->c_name);
+                        "coll:han:comm_query (%s/%s): pick me! pick me!",
+                        ompi_comm_print_cid(comm), comm->c_name);
     return &(han_module->super);
 }
 
@@ -280,8 +282,8 @@ mca_coll_han_comm_query(struct ompi_communicator_t * comm, int *priority)
     do {                                                                \
         if (!comm->c_coll->coll_ ## __api || !comm->c_coll->coll_ ## __api ## _module) { \
             opal_output_verbose(1, ompi_coll_base_framework.framework_output, \
-                                "(%d/%s): no underlying " # __api"; disqualifying myself", \
-                                comm->c_contextid, comm->c_name); \
+                                "(%s/%s): no underlying " # __api"; disqualifying myself", \
+                                ompi_comm_print_cid(comm), comm->c_name); \
             goto handle_error;                                  \
         }                                                       \
         han_module->previous_ ## __api            = comm->c_coll->coll_ ## __api; \

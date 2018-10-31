@@ -3,6 +3,9 @@
  * Copyright (c) 2014-2021 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2021      Triad National Security, LLC. All rights
+ *                         reserved.
+ *
  *
  * $COPYRIGHT$
  *
@@ -491,7 +494,7 @@ static void era_debug_print_group(int lvl, ompi_group_t *group, ompi_communicato
     }
     s = 128 + n * 16;
     str = (char*)malloc(s);
-    sprintf(str, "Group of size %d. Ranks in %d.%d: (", n, comm->c_contextid, comm->c_epoch);
+    sprintf(str, "Group of size %d. Ranks in %d.%d: (", n, comm->c_index, comm->c_epoch);
     p = strlen(str);
     for(i = 0; i < n; i++) {
         snprintf(str + p, s - p, "%d%s", gra[i], i==n-1 ? "" : ", ");
@@ -896,19 +899,19 @@ static void era_agreement_info_set_comm(era_agreement_info_t *ci, ompi_communica
     int *src_ra;
     int r, grp_size;
 
-    assert( comm->c_contextid == ci->agreement_id.ERAID_FIELDS.contextid );
+    assert( comm->c_index     == ci->agreement_id.ERAID_FIELDS.contextid );
     assert( comm->c_epoch     == ci->agreement_id.ERAID_FIELDS.epoch     );
     assert( ci->comm          == NULL                                    );
     ci->comm = comm;
     OBJ_RETAIN(comm);
 
     OPAL_OUTPUT_VERBOSE((30, ompi_ftmpi_output_handle,
-                         "%s ftagree:agreement (ERA) Agreement (%d.%d).%d: assigning to communicator %d\n",
+                         "%s ftagree:agreement (ERA) Agreement (%d.%d).%d: assigning to communicator %s\n",
                          OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
                          ci->agreement_id.ERAID_FIELDS.contextid,
                          ci->agreement_id.ERAID_FIELDS.epoch,
                          ci->agreement_id.ERAID_FIELDS.agreementid,
-                         comm->c_contextid));
+                         ompi_comm_print_cid(comm)));
 
     if( AGS(comm) == NULL ) {
         era_comm_agreement_specific_t *ags = OBJ_NEW(era_comm_agreement_specific_t);
@@ -1628,7 +1631,6 @@ static void era_decide(era_value_t *decided_value, era_agreement_info_t *ci)
 
 #if OPAL_ENABLE_DEBUG
     void *value;
-
     r = era_parent(ci);
     if( opal_hash_table_get_value_uint64(&era_passed_agreements,
                                          ci->agreement_id.ERAID_KEY, &value) == OMPI_SUCCESS ) {
@@ -2168,7 +2170,7 @@ static void send_msg(ompi_communicator_t *comm,
     }
 #endif /* OPAL_ENABLE_DEBUG */
 
-    assert( NULL == comm || agreement_id.ERAID_FIELDS.contextid == ompi_comm_get_cid(comm) );
+    assert( NULL == comm || agreement_id.ERAID_FIELDS.contextid == ompi_comm_get_local_cid(comm) );
     assert( NULL == comm || agreement_id.ERAID_FIELDS.epoch == comm->c_epoch );
 
     if( NULL == comm ) {
@@ -2775,10 +2777,10 @@ static void era_on_comm_rank_failure(ompi_communicator_t *comm, int rank, bool r
     opal_hash_table_t *msg_table;
 
     OPAL_OUTPUT_VERBOSE((4, ompi_ftmpi_output_handle,
-                         "%s ftagree:agreement (ERA) %d in communicator (%d.%d) died\n",
+                         "%s ftagree:agreement (ERA) %d in communicator (%s.%d) died\n",
                          OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
                          rank,
-                         comm->c_contextid,
+                         ompi_comm_print_cid(comm),
                          comm->c_epoch));
 
     if( AGS(comm) != NULL ) {
@@ -2811,7 +2813,7 @@ static void era_on_comm_rank_failure(ompi_communicator_t *comm, int rank, bool r
                                                      &key64, &next_value,
                                                      node, &node);
 
-            if( cid.ERAID_FIELDS.contextid == comm->c_contextid &&
+            if( cid.ERAID_FIELDS.contextid == comm->c_contextid.cid_sub.u64 &&
                 cid.ERAID_FIELDS.epoch     == comm->c_epoch ) {
                 ci = (era_agreement_info_t *)value;
                 OPAL_OUTPUT_VERBOSE((6, ompi_ftmpi_output_handle,
@@ -3027,7 +3029,7 @@ static int mca_coll_ftagree_era_prepare_agreement(ompi_communicator_t* comm,
     }
 
     /* Let's find the id of the new agreement */
-    agreement_id.ERAID_FIELDS.contextid   = comm->c_contextid;
+    agreement_id.ERAID_FIELDS.contextid   = comm->c_contextid.cid_sub.u64;
     agreement_id.ERAID_FIELDS.epoch       = comm->c_epoch;
     agreement_id.ERAID_FIELDS.agreementid = (uint16_t)ag_info->agreement_seq_num;
 
@@ -3227,10 +3229,19 @@ int mca_coll_ftagree_era_inter(void *contrib,
         contriblh[0] = ~0;
         contriblh[1] = *(int*)contrib;
     }
-    ompi_comm_set(&shadowcomm, comm,
-                  ompi_group_size(uniongrp), NULL, 0, NULL,
-                  NULL, comm->error_handler, NULL,
-                  uniongrp, NULL);
+
+    ompi_comm_set(&shadowcomm,                     /* new comm */
+                  comm,                            /* old comm */
+                  ompi_group_size(uniongrp),       /* local_size */
+                  NULL,                            /* local_procs */
+                  0,                               /* remote_size */
+                  NULL,                            /* remote procs */
+                  NULL,                            /* attrs */
+                  comm->error_handler,             /* error handler */
+                  NULL,                            /* local group */
+                  uniongrp,                        /* remote group */
+                  0);                              /* flags */
+
     ompi_group_free(&uniongrp);
     shadowcomm->c_contextid = comm->c_contextid;
     shadowcomm->c_epoch = comm->c_epoch;
@@ -3365,7 +3376,7 @@ int mca_coll_ftagree_era_free_comm(ompi_communicator_t* comm,
     } while(rc != MPI_SUCCESS);
     OBJ_RELEASE(acked);
 
-    aid.ERAID_FIELDS.contextid = comm->c_contextid;
+    aid.ERAID_FIELDS.contextid = comm->c_contextid.cid_sub.u64;
     aid.ERAID_FIELDS.epoch     = comm->c_epoch;
 
     opal_mutex_lock(&era_mutex);

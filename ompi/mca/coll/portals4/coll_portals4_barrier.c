@@ -54,10 +54,10 @@ barrier_hypercube_top(struct ompi_communicator_t *comm,
         return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
     }
 
-    COLL_PORTALS4_SET_BITS(match_bits_rtr, ompi_comm_get_cid(comm),
+    COLL_PORTALS4_SET_BITS(match_bits_rtr, ompi_comm_get_local_cid(comm),
             0, 1, COLL_PORTALS4_BARRIER, 0, count);
 
-    COLL_PORTALS4_SET_BITS(match_bits, ompi_comm_get_cid(comm),
+    COLL_PORTALS4_SET_BITS(match_bits, ompi_comm_get_local_cid(comm),
             0, 0, COLL_PORTALS4_BARRIER, 0, count);
 
     /* Build "tree" out of hypercube */

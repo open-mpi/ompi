@@ -328,16 +328,6 @@ extern struct opal_pointer_array_t *ompi_op_f_to_c_table;
 int ompi_op_init(void);
 
 /**
- * Finalize the op interface.
- *
- * @returns OMPI_SUCCESS Always
- *
- * Invokes from ompi_mpi_finalize(); tears down the op interface, and
- * destroys the F2C translation table.
- */
-int ompi_op_finalize(void);
-
-/**
  * Create a ompi_op_t with a user-defined callback (vs. creating an
  * intrinsic ompi_op_t).
  *

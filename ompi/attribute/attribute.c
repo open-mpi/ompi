@@ -15,7 +15,7 @@
  *                         reserved.
  * Copyright (c) 2017      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2018-2021 Triad National Security, LLC. All rights
+ * Copyright (c) 2018-2022 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -243,6 +243,7 @@
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/communicator/communicator.h"  /* ompi_communicator_t generated in [COPY|DELETE]_ATTR_CALLBACKS */
 #include "ompi/win/win.h"                    /* ompi_win_t generated in [COPY|DELETE]_ATTR_CALLBACKS */
+#include "ompi/instance/instance.h"
 #include "ompi/mpi/fortran/base/fint_2_int.h"
 
 
@@ -464,16 +465,6 @@ static OBJ_CLASS_INSTANCE(ompi_attribute_keyval_t,
                           opal_object_t,
                           ompi_attribute_keyval_construct,
                           ompi_attribute_keyval_destruct);
-
-/*
- * compatibility until sessions work is finished
- */
-static inline int ompi_mpi_instance_retain(void) {
-    return OMPI_SUCCESS;
-}
-
-static inline void ompi_mpi_instance_release(void) {
-}
 
 /*
  * Static variables

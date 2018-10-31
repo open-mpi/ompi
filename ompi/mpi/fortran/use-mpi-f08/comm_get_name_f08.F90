@@ -19,7 +19,8 @@ subroutine MPI_Comm_get_name_f08(comm,comm_name,resultlen,ierror)
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
    integer :: c_ierror
 
-   call ompi_comm_get_name_f(comm%MPI_VAL,comm_name,resultlen,c_ierror,len(comm_name))
+   call ompi_comm_get_name_f(comm%MPI_VAL,comm_name,resultlen,c_ierror, &
+                             len(comm_name))
    if (present(ierror)) ierror = c_ierror
 
 end subroutine MPI_Comm_get_name_f08

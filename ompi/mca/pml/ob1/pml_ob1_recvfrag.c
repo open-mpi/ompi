@@ -20,7 +20,10 @@
  * Copyright (c) 2018      Sandia National Laboratories
  *                         All rights reserved.
  * Copyright (c) 2020      Google, LLC. All rights reserved.
+ * Copyright (c) 2020-2021 Triad National Security, LLC. All rights
+ *                         reserved.
  * Copyright (c) 2021      Cisco Systems, Inc.  All rights reserved
+ *
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -405,8 +408,8 @@ int mca_pml_ob1_revoke_comm( struct ompi_communicator_t* ompi_comm, bool coll_on
 #if OPAL_ENABLE_DEBUG
     if( opal_list_get_size(&nack_list) ) {
         OPAL_OUTPUT_VERBOSE((15, ompi_ftmpi_output_handle,
-                             "ob1_revoke_comm: purging unexpected and cantmatch frags for in comm %d (%s): nacking %zu frags",
-                             ompi_comm->c_contextid, coll_only ? "collective frags only" : "all revoked",
+                             "ob1_revoke_comm: purging unexpected and cantmatch frags for in comm %s (%s): nacking %zu frags",
+                             ompi_comm_print_cid(ompi_comm), coll_only ? "collective frags only" : "all revoked",
                              opal_list_get_size(&nack_list)));
         if( verbose > 15) mca_pml_ob1_dump(ompi_comm, verbose);
     }
@@ -477,8 +480,8 @@ void mca_pml_ob1_recv_frag_callback_match (mca_btl_base_module_t *btl,
          * this pending queue will be searched and all matching fragments
          * moved to the right communicator.
          */
-        append_frag_to_list( &mca_pml_ob1.non_existing_communicator_pending,
-                             btl, hdr, segments, num_segments, NULL );
+        append_frag_to_list( &mca_pml_ob1.non_existing_communicator_pending, btl,
+                             hdr, segments, num_segments, NULL );
         return;
     }
     comm = (mca_pml_ob1_comm_t *)comm_ptr->c_pml_comm;
@@ -682,7 +685,7 @@ void mca_pml_ob1_recv_frag_callback_ack (mca_btl_base_module_t *btl,
 #if OPAL_ENABLE_FT_MPI
     /* if the req_recv is NULL, the comm has been revoked at the receiver */
     if( OPAL_UNLIKELY(NULL == sendreq->req_recv.pval) ) {
-        OPAL_OUTPUT_VERBOSE((2, ompi_ftmpi_output_handle, "Recvfrag: Received a NACK to the RDV/RGET match to %d for seq %" PRIu64 " on comm %d\n", sendreq->req_send.req_base.req_peer, sendreq->req_send.req_base.req_sequence, sendreq->req_send.req_base.req_comm->c_contextid));
+        OPAL_OUTPUT_VERBOSE((2, ompi_ftmpi_output_handle, "Recvfrag: Received a NACK to the RDV/RGET match to %d for seq %" PRIu64 " on comm %s\n", sendreq->req_send.req_base.req_peer, sendreq->req_send.req_base.req_sequence, ompi_comm_print_cid(sendreq->req_send.req_base.req_comm)));
         if (NULL != sendreq->rdma_frag) {
             MCA_PML_OB1_RDMA_FRAG_RETURN(sendreq->rdma_frag);
             sendreq->rdma_frag = NULL;
@@ -1038,8 +1041,8 @@ static int mca_pml_ob1_recv_frag_match (mca_btl_base_module_t *btl,
          * this pending queue will be searched and all matching fragments
          * moved to the right communicator.
          */
-        append_frag_to_list( &mca_pml_ob1.non_existing_communicator_pending,
-                             btl, hdr, segments, num_segments, NULL );
+        append_frag_to_list( &mca_pml_ob1.non_existing_communicator_pending, btl,
+                             hdr, segments, num_segments, NULL );
         return OMPI_SUCCESS;
     }
     comm = (mca_pml_ob1_comm_t *)comm_ptr->c_pml_comm;
@@ -1202,3 +1205,71 @@ mca_pml_ob1_recv_frag_match_proc (mca_btl_base_module_t *btl,
     return OMPI_SUCCESS;
 }
 
+void mca_pml_ob1_handle_cid (ompi_communicator_t *comm, int src, mca_pml_ob1_cid_hdr_t *hdr_cid)
+{
+    mca_pml_ob1_comm_proc_t *ob1_proc = mca_pml_ob1_peer_lookup (comm, src);
+    bool had_comm_index = (-1 != ob1_proc->comm_index);
+
+    if (!had_comm_index) {
+        /* avoid sending too many extra packets. if this doesn't work well then a flag can be added to
+         * the proc to indicate that this packet has been sent */
+        ob1_proc->comm_index = hdr_cid->hdr_src_comm_index;
+
+        /*
+         * if the proc to send to is myself,  no need to do the send
+         */
+        if(ob1_proc->ompi_proc != ompi_proc_local()) {
+            (void) mca_pml_ob1_send_cid (ob1_proc->ompi_proc, comm);
+        }
+    }
+}
+
+void mca_pml_ob1_recv_frag_callback_cid (mca_btl_base_module_t* btl,
+                                         const mca_btl_base_receive_descriptor_t* des)
+{
+    mca_btl_base_segment_t segments[MCA_BTL_DES_MAX_SEGMENTS];
+    mca_pml_ob1_hdr_t *hdr = (mca_pml_ob1_hdr_t *) des->des_segments[0].seg_addr.pval;
+    mca_pml_ob1_match_hdr_t *hdr_match = &hdr->hdr_ext_match.hdr_match;
+    size_t num_segments = des->des_segment_count;
+    ompi_communicator_t *comm;
+
+    memcpy (segments, des->des_segments, num_segments * sizeof (segments[0]));
+    assert (segments->seg_len >= sizeof (hdr->hdr_cid));
+
+    ob1_hdr_ntoh (hdr, hdr->hdr_common.hdr_type);
+
+    /* NTH: this should be ok as as all BTLs create a dummy segment */
+    segments->seg_len -= offsetof (mca_pml_ob1_ext_match_hdr_t, hdr_match);
+    segments->seg_addr.pval = (void *) hdr_match;
+
+    /* find the communicator with this extended CID */
+    comm = ompi_comm_lookup_cid (hdr->hdr_cid.hdr_cid);
+    if (OPAL_UNLIKELY(NULL == comm)) {
+        if (segments->seg_len > 0) {
+            /* This is a special case. A message for a not yet existing
+             * communicator can happens. Instead of doing a matching we
+             * will temporarily add it the a pending queue in the PML.
+             * Later on, when the communicator is completely instantiated,
+             * this pending queue will be searched and all matching fragments
+             * moved to the right communicator.
+             */
+            append_frag_to_list (&mca_pml_ob1.non_existing_communicator_pending,
+                                 btl, (const mca_pml_ob1_match_hdr_t *)hdr, des->des_segments, 
+                                 num_segments, NULL);
+        }
+
+        /* nothing more to do */
+        return;
+    }
+
+    mca_pml_ob1_handle_cid (comm, hdr->hdr_cid.hdr_src, &hdr->hdr_cid);
+    hdr_match->hdr_ctx = comm->c_index;
+
+    if (segments->seg_len == 0) {
+        /* just a response */
+        return;
+    }
+
+    mca_pml_ob1_recv_frag_match (btl, hdr_match, segments, des->des_segment_count,
+                                 hdr_match->hdr_common.hdr_type);
+}

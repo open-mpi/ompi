@@ -73,8 +73,9 @@ static const char FUNC_NAME[] = "MPI_WIN_CREATE_ERRHANDLER";
 void ompi_win_create_errhandler_f(ompi_errhandler_fortran_handler_fn_t* function,
 				 MPI_Fint *errhandler, MPI_Fint *ierr)
 {
-    MPI_Errhandler c_errhandler =
-        ompi_errhandler_create(OMPI_ERRHANDLER_TYPE_WIN,
+    MPI_Errhandler c_errhandler;
+
+    c_errhandler = ompi_errhandler_create(OMPI_ERRHANDLER_TYPE_WIN,
                                (ompi_errhandler_generic_handler_fn_t*) function,
                                OMPI_ERRHANDLER_LANG_FORTRAN);
     if (MPI_ERRHANDLER_NULL != c_errhandler) {

@@ -64,7 +64,6 @@ int mca_sharedfp_sm_file_open (struct ompi_communicator_t *comm,
     struct mca_sharedfp_sm_offset * sm_offset_ptr;
     struct mca_sharedfp_sm_offset sm_offset;
     int sm_fd;
-    uint32_t comm_cid;
     int int_pid;
     pid_t my_pid;
 
@@ -105,9 +104,8 @@ int mca_sharedfp_sm_file_open (struct ompi_communicator_t *comm,
     ** For sharedfp we also want to put the file backed shared memory into the tmp directory
     */
     filename_basename = opal_basename((char*)filename);
-    /* format is "%s/%s_cid-%d-%d.sm", see below */
+    /* format is "%s/%s_cid-%s-%d.sm", see below */
 
-    comm_cid = ompi_comm_get_cid(comm);
     if ( 0 == fh->f_rank ) {
         my_pid = getpid();
         int_pid = (int) my_pid;
@@ -121,8 +119,8 @@ int mca_sharedfp_sm_file_open (struct ompi_communicator_t *comm,
         return err;
     }
 
-    opal_asprintf(&sm_filename, "%s/%s_cid-%d-%d.sm", ompi_process_info.job_session_dir,
-                  filename_basename, comm_cid, int_pid);
+    opal_asprintf(&sm_filename, "%s/%s_cid-%s-%d.sm", ompi_process_info.job_session_dir,
+                  filename_basename, ompi_comm_print_cid(comm), int_pid);
     /* open shared memory file, initialize to 0, map into memory */
     sm_fd = open(sm_filename, O_RDWR | O_CREAT,
                  S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);

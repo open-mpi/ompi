@@ -489,7 +489,12 @@ typedef int (*mca_pml_base_module_dump_fn_t)(
  */
 /** PML requires requires all procs in the job on the first call to
  * add_procs */
-#define MCA_PML_BASE_FLAG_REQUIRE_WORLD 0x00000001
+#define MCA_PML_BASE_FLAG_REQUIRE_WORLD    0x00000001
+
+/**
+ * PML supports the extended CID space (doesn't need a global communicator index)
+ */
+#define MCA_PML_BASE_FLAG_SUPPORTS_EXT_CID 0x00000002
 
 /**
  *  PML instance.
@@ -558,6 +563,11 @@ OMPI_DECLSPEC extern mca_pml_base_module_t mca_pml;
 static inline bool mca_pml_base_requires_world (void)
 {
     return !!(mca_pml.pml_flags & MCA_PML_BASE_FLAG_REQUIRE_WORLD);
+}
+
+static inline bool mca_pml_base_supports_extended_cid (void)
+{
+    return !!(mca_pml.pml_flags & MCA_PML_BASE_FLAG_SUPPORTS_EXT_CID);
 }
 
 END_C_DECLS

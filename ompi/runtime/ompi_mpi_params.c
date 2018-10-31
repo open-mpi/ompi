@@ -20,7 +20,7 @@
  *                         All rights reserved.
  * Copyright (c) 2016-2021 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
- * Copyright (c) 2021      Triad National Security, LLC. All rights
+ * Copyright (c) 2018-2021 Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
  * $COPYRIGHT$
@@ -87,6 +87,8 @@ bool ompi_mpi_compat_mpi3 = false;
 char *ompi_mpi_spc_attach_string = NULL;
 bool ompi_mpi_spc_dump_enabled = false;
 uint32_t ompi_pmix_connect_timeout = 0;
+
+bool ompi_enable_timing = false;
 
 static bool show_default_mca_params = false;
 static bool show_file_mca_params = false;
@@ -389,6 +391,30 @@ int ompi_mpi_register_params(void)
                                   MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL,
                                   0, 0, OPAL_INFO_LVL_3, MCA_BASE_VAR_SCOPE_LOCAL,
                                   &ompi_pmix_connect_timeout);
+
+    /* check to see if we want timing information */
+    /* TODO: enable OMPI init and OMPI finalize timings if
+     * this variable was set to 1!
+     */
+    ompi_enable_timing = false;
+    (void) mca_base_var_register("ompi", "ompi", NULL, "timing",
+                                 "Request that critical timing loops be measured",
+                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                 OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY,
+                                 &ompi_enable_timing);
+
+#if OPAL_ENABLE_FT_MPI
+    /* Before loading any other part of the MPI library, we need to load
+ *      * the ft-mpi tune file to override default component selection when
+ *           * FT is desired ON; this does override openmpi-params.conf, but not
+ *                * command line or env.
+ *                     */
+    if( ompi_ftmpi_enabled ) {
+        mca_base_var_load_extra_files("ft-mpi", false);
+    }
+#endif /* OPAL_ENABLE_FT_MPI */
+
 
     return OMPI_SUCCESS;
 }

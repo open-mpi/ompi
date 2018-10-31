@@ -6,6 +6,8 @@
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2018      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -20,12 +22,15 @@
 #include "opal/class/opal_object.h"
 #include "ompi/message/message.h"
 #include "ompi/constants.h"
+#include "ompi/instance/instance.h"
 
 static void ompi_message_constructor(ompi_message_t *msg);
 
 OBJ_CLASS_INSTANCE(ompi_message_t,
                    opal_free_list_item_t,
                    ompi_message_constructor, NULL);
+
+static int ompi_message_finalize (void);
 
 opal_free_list_t ompi_message_free_list = {{{0}}};
 opal_pointer_array_t  ompi_message_f_to_c_table = {{0}};
@@ -67,11 +72,12 @@ ompi_message_init(void)
         return OMPI_ERR_NOT_FOUND;
     }
 
+    ompi_mpi_instance_append_finalize (ompi_message_finalize);
+
     return rc;
 }
 
-int
-ompi_message_finalize(void)
+static int ompi_message_finalize (void)
 {
     OBJ_DESTRUCT(&ompi_message_no_proc);
     OBJ_DESTRUCT(&ompi_message_free_list);

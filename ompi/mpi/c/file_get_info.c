@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -13,6 +14,8 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2019 IBM Corporation. All rights reserved.
+ * Copyright (c) 2018      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -77,8 +80,8 @@ int MPI_File_get_info(MPI_File fh, MPI_Info *info_used)
     }
 
 
-    (*info_used) = OBJ_NEW(ompi_info_t);
-    if (NULL == (*info_used)) {
+    *info_used = ompi_info_allocate ();
+    if (NULL == *info_used) {
        return OMPI_ERRHANDLER_INVOKE(fh, MPI_ERR_NO_MEM, FUNC_NAME);
     }
     opal_info_t *opal_info_used = &(*info_used)->super;
