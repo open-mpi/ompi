@@ -15,8 +15,8 @@
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015-2018 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
@@ -26,6 +26,10 @@
  */
 
 #include "opal_config.h"
+
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
 
 #include "opal/mca/mca.h"
 #include "opal/util/show_help.h"
