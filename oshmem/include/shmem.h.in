@@ -99,6 +99,10 @@ enum {
 #define SHMEM_VENDOR_STRING             "http://www.open-mpi.org/"
 #define SHMEM_MAX_NAME_LEN              256
 
+#define SHMEM_CTX_PRIVATE               (1<<0)
+#define SHMEM_CTX_SERIALIZED            (1<<1)
+#define SHMEM_CTX_NOSTORE               (1<<2)
+
 /*
  * Deprecated (but still valid) names
  */
@@ -195,7 +199,9 @@ OSHMEM_DECLSPEC  void *shmem_ptr(const void *ptr, int pe);
 
 typedef struct { int dummy; } * shmem_ctx_t;
 
-#define SHMEM_CTX_DEFAULT oshmem_ctx_default;
+#define SHMEM_CTX_DEFAULT oshmem_ctx_default
+
+extern shmem_ctx_t oshmem_ctx_default;
 
 OSHMEM_DECLSPEC int shmem_ctx_create(long options, shmem_ctx_t *ctx);
 OSHMEM_DECLSPEC void shmem_ctx_destroy(shmem_ctx_t ctx);
