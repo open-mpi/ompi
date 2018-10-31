@@ -706,6 +706,25 @@ Network Support
   mechanisms for Open MPI to utilize single-copy semantics for shared
   memory.
 
+- In the past, InfiniBand and RoCE support was provided through the OpenIB BTL.
+  Starting with Open MPI 4.x, InfiniBand support through the OpenIB component
+  is deprecated and superseded by the UCX component (pml). UCX is an open-source
+  optimized communication library which supports multiple networks, including
+  RoCE, InfiniBand, uGNI, TCP, shared memory, and others.
+  Unlike the OpenIB component which was self-contained entirely in Open MPI,
+  UCX needs to first be installed on the system before configuring Open MPI
+  to use it. UCX can be downloaded from http://www.openucx.org or from
+  Fedora/RedHat yum repository. UCX is also part of Mellanox OFED and
+  Mellanox HPC-X binary distributions.
+  Once installed, Open MPI can be built with UCX support by adding --with-ucx
+  to the Open MPI configure command. Once Open MPI is configured to use UCX,
+  the runtime will automatically select the UCX PML if one of the supported
+  networks is detected. It's possible to force using UCX in the mpirun or
+  oshrun command lines by specifying any or all of the following mca
+  parameters: "-mca pml ucx" for MPI point-to-point operations,
+  "-mca spml ucx" for OpenSHMEM support, and "-mca osc ucx" for MPI RMA
+  (one-sided) operations.
+
 Open MPI Extensions
 -------------------
 
