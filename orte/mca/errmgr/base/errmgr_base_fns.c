@@ -14,8 +14,8 @@
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2013-2018 Intel, Inc.  All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2014-2018 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -28,16 +28,16 @@
 #include "orte/constants.h"
 
 #include <string.h>
-#if HAVE_SYS_TYPES_H
+#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif  /* HAVE_SYS_TYPES_H */
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif  /* HAVE_UNISTD_H */
-#if HAVE_SYS_TYPES_H
+#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif /* HAVE_SYS_TYPES_H */
-#if HAVE_SYS_STAT_H
+#ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
 #endif /* HAVE_SYS_STAT_H */
 #ifdef HAVE_DIRENT_H

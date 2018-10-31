@@ -24,7 +24,7 @@
 
 #include <unistd.h>
 #include <sys/uio.h>
-#if HAVE_AIO_H
+#ifdef HAVE_AIO_H
 #include <aio.h>
 #endif
 

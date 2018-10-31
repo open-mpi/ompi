@@ -2,6 +2,8 @@
  * Copyright (c) 2014-2018 Intel, Inc.  All rights reserved.
  * Copyright (c) 2017-2018 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2017      Inria.  All rights reserved.
+ * Copyright (c) 2018      Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -28,7 +30,7 @@
 #ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
 #endif
-#if HAVE_FCNTL_H
+#ifdef HAVE_FCNTL_H
 #include <fcntl.h>
 #endif
 

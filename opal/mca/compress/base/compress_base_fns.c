@@ -1,9 +1,8 @@
 /*
  * Copyright (c) 2004-2010 The Trustees of Indiana University.
  *                         All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
- *
+ * Copyright (c) 2015-2018 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
@@ -16,10 +15,10 @@
 
 #include <string.h>
 #include <sys/wait.h>
-#if HAVE_SYS_TYPES_H
+#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
-#if HAVE_UNISTD_H
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
 #ifdef HAVE_FCNTL_H

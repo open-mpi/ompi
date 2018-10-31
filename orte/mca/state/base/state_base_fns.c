@@ -15,10 +15,10 @@
 #include "orte_config.h"
 #include "orte/constants.h"
 
-#if HAVE_UNISTD_H
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
-#if HAVE_FCNTL_H
+#ifdef HAVE_FCNTL_H
 #include <fcntl.h>
 #endif
 

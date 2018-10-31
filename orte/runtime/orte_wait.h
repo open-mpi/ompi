@@ -14,6 +14,8 @@
  * Copyright (c) 2011      Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2018      Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -36,7 +38,7 @@
 #include <sys/types.h>
 #endif
 #include <time.h>
-#if HAVE_SYS_TIME_H
+#ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif
 

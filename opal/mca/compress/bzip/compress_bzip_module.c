@@ -3,9 +3,9 @@
  *                         All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  *
- * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2014      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015-2018 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
@@ -20,7 +20,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
-#if HAVE_UNISTD_H
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif  /* HAVE_UNISTD_H */
 

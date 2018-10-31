@@ -2,6 +2,8 @@
  * Copyright (c) 2014      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2018      Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -27,10 +29,10 @@
 #ifdef HAVE_SYS_IPC_H
 #include <sys/ipc.h>
 #endif /* HAVE_SYS_IPC_H */
-#if HAVE_SYS_SHM_H
+#ifdef HAVE_SYS_SHM_H
 #include <sys/shm.h>
 #endif /* HAVE_SYS_SHM_H */
-#if HAVE_SYS_STAT_H
+#ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
 #endif /* HAVE_SYS_STAT_H */
 #include <string.h>
