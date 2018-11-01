@@ -78,12 +78,14 @@
 #pragma weak shmem_float_put_nbi = pshmem_float_put_nbi
 #pragma weak shmem_double_put_nbi = pshmem_double_put_nbi
 #pragma weak shmem_longdouble_put_nbi = pshmem_longdouble_put_nbi
+
 #pragma weak shmem_put8_nbi = pshmem_put8_nbi
 #pragma weak shmem_put16_nbi = pshmem_put16_nbi
 #pragma weak shmem_put32_nbi = pshmem_put32_nbi
 #pragma weak shmem_put64_nbi = pshmem_put64_nbi
 #pragma weak shmem_put128_nbi = pshmem_put128_nbi
 #pragma weak shmem_putmem_nbi = pshmem_putmem_nbi
+
 #pragma weak shmem_ctx_char_put_nbi = pshmem_ctx_char_put_nbi
 #pragma weak shmem_ctx_short_put_nbi = pshmem_ctx_short_put_nbi
 #pragma weak shmem_ctx_int_put_nbi = pshmem_ctx_int_put_nbi
@@ -98,6 +100,7 @@
 #pragma weak shmem_ctx_float_put_nbi = pshmem_ctx_float_put_nbi
 #pragma weak shmem_ctx_double_put_nbi = pshmem_ctx_double_put_nbi
 #pragma weak shmem_ctx_longdouble_put_nbi = pshmem_ctx_longdouble_put_nbi
+
 #pragma weak shmem_ctx_put8_nbi = pshmem_ctx_put8_nbi
 #pragma weak shmem_ctx_put16_nbi = pshmem_ctx_put16_nbi
 #pragma weak shmem_ctx_put32_nbi = pshmem_ctx_put32_nbi

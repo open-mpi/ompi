@@ -73,6 +73,7 @@
 #pragma weak shmem_ctx_ulonglong_atomic_fetch = pshmem_ctx_ulonglong_atomic_fetch
 #pragma weak shmem_ctx_double_atomic_fetch = pshmem_ctx_double_atomic_fetch
 #pragma weak shmem_ctx_float_atomic_fetch = pshmem_ctx_float_atomic_fetch
+
 #pragma weak shmem_int_atomic_fetch = pshmem_int_atomic_fetch
 #pragma weak shmem_long_atomic_fetch = pshmem_long_atomic_fetch
 #pragma weak shmem_longlong_atomic_fetch = pshmem_longlong_atomic_fetch
@@ -81,11 +82,13 @@
 #pragma weak shmem_ulonglong_atomic_fetch = pshmem_ulonglong_atomic_fetch
 #pragma weak shmem_double_atomic_fetch = pshmem_double_atomic_fetch
 #pragma weak shmem_float_atomic_fetch = pshmem_float_atomic_fetch
+
 #pragma weak shmem_int_fetch = pshmem_int_fetch
 #pragma weak shmem_long_fetch = pshmem_long_fetch
 #pragma weak shmem_longlong_fetch = pshmem_longlong_fetch
 #pragma weak shmem_double_fetch = pshmem_double_fetch
 #pragma weak shmem_float_fetch = pshmem_float_fetch
+
 #pragma weak shmemx_int32_fetch = pshmemx_int32_fetch
 #pragma weak shmemx_int64_fetch = pshmemx_int64_fetch
 #include "oshmem/shmem/c/profile/defines.h"

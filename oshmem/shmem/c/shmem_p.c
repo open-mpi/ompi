@@ -73,6 +73,7 @@
 #pragma weak shmem_ctx_float_p = pshmem_ctx_float_p
 #pragma weak shmem_ctx_double_p = pshmem_ctx_double_p
 #pragma weak shmem_ctx_longdouble_p = pshmem_ctx_longdouble_p
+
 #pragma weak shmem_char_p = pshmem_char_p
 #pragma weak shmem_short_p = pshmem_short_p
 #pragma weak shmem_int_p = pshmem_int_p
@@ -87,6 +88,7 @@
 #pragma weak shmem_float_p = pshmem_float_p
 #pragma weak shmem_double_p = pshmem_double_p
 #pragma weak shmem_longdouble_p = pshmem_longdouble_p
+
 #pragma weak shmemx_int16_p = pshmemx_int16_p
 #pragma weak shmemx_int32_p = pshmemx_int32_p
 #pragma weak shmemx_int64_p = pshmemx_int64_p

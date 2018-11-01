@@ -31,12 +31,14 @@
 #pragma weak shmem_uint_atomic_and      = pshmem_uint_atomic_and
 #pragma weak shmem_ulong_atomic_and     = pshmem_ulong_atomic_and
 #pragma weak shmem_ulonglong_atomic_and = pshmem_ulonglong_atomic_and
+
 #pragma weak shmem_ctx_int_atomic_and   = pshmem_ctx_int_atomic_and
 #pragma weak shmem_ctx_long_atomic_and  = pshmem_ctx_long_atomic_and
 #pragma weak shmem_ctx_longlong_atomic_and = pshmem_ctx_longlong_atomic_and
 #pragma weak shmem_ctx_uint_atomic_and  = pshmem_ctx_uint_atomic_and
 #pragma weak shmem_ctx_ulong_atomic_and = pshmem_ctx_ulong_atomic_and
 #pragma weak shmem_ctx_ulonglong_atomic_and = pshmem_ctx_ulonglong_atomic_and
+
 #pragma weak shmemx_int32_atomic_and    = pshmemx_int32_atomic_and
 #pragma weak shmemx_int64_atomic_and    = pshmemx_int64_atomic_and
 #pragma weak shmemx_uint32_atomic_and   = pshmemx_uint32_atomic_and

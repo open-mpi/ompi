@@ -33,12 +33,14 @@
 #pragma weak shmem_uint_atomic_fetch_or      = pshmem_uint_atomic_fetch_or
 #pragma weak shmem_ulong_atomic_fetch_or     = pshmem_ulong_atomic_fetch_or
 #pragma weak shmem_ulonglong_atomic_fetch_or = pshmem_ulonglong_atomic_fetch_or
+
 #pragma weak shmem_ctx_int_atomic_fetch_or   = pshmem_ctx_int_atomic_fetch_or
 #pragma weak shmem_ctx_long_atomic_fetch_or  = pshmem_ctx_long_atomic_fetch_or
 #pragma weak shmem_ctx_longlong_atomic_fetch_or = pshmem_ctx_longlong_atomic_fetch_or
 #pragma weak shmem_ctx_uint_atomic_fetch_or  = pshmem_ctx_uint_atomic_fetch_or
 #pragma weak shmem_ctx_ulong_atomic_fetch_or = pshmem_ctx_ulong_atomic_fetch_or
 #pragma weak shmem_ctx_ulonglong_atomic_fetch_or = pshmem_ctx_ulonglong_atomic_fetch_or
+
 #pragma weak shmemx_int32_atomic_fetch_or    = pshmemx_int32_atomic_fetch_or
 #pragma weak shmemx_int64_atomic_fetch_or    = pshmemx_int64_atomic_fetch_or
 #pragma weak shmemx_uint32_atomic_fetch_or   = pshmemx_uint32_atomic_fetch_or

@@ -76,6 +76,7 @@
 #pragma weak shmem_ctx_float_iget = pshmem_ctx_float_iget
 #pragma weak shmem_ctx_double_iget = pshmem_ctx_double_iget
 #pragma weak shmem_ctx_longdouble_iget = pshmem_ctx_longdouble_iget
+
 #pragma weak shmem_char_iget = pshmem_char_iget
 #pragma weak shmem_short_iget = pshmem_short_iget
 #pragma weak shmem_int_iget = pshmem_int_iget
@@ -90,11 +91,13 @@
 #pragma weak shmem_float_iget = pshmem_float_iget
 #pragma weak shmem_double_iget = pshmem_double_iget
 #pragma weak shmem_longdouble_iget = pshmem_longdouble_iget
+
 #pragma weak shmem_ctx_iget8 = pshmem_ctx_iget8
 #pragma weak shmem_ctx_iget16 = pshmem_ctx_iget16
 #pragma weak shmem_ctx_iget32 = pshmem_ctx_iget32
 #pragma weak shmem_ctx_iget64 = pshmem_ctx_iget64
 #pragma weak shmem_ctx_iget128 = pshmem_ctx_iget128
+
 #pragma weak shmem_iget8 = pshmem_iget8
 #pragma weak shmem_iget16 = pshmem_iget16
 #pragma weak shmem_iget32 = pshmem_iget32
