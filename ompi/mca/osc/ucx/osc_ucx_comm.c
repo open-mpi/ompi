@@ -16,6 +16,15 @@
 #include "osc_ucx.h"
 #include "osc_ucx_request.h"
 
+
+#define CHECK_VALID_RKEY(_module, _target, _count)                                        \
+    if (!((_module)->win_info_array[_target]).rkey_init && ((_count) > 0)) {              \
+        opal_output_verbose(1, ompi_osc_base_framework.framework_output,                  \
+                            "%s:%d: window with non-zero length does not have an rkey\n", \
+                            __FILE__, __LINE__);                                          \
+        return OMPI_ERROR;                                                                \
+    }
+
 typedef struct ucx_iovec {
     void *addr;
     size_t len;
@@ -337,7 +346,7 @@ static inline int get_dynamic_win_info(uint64_t remote_addr, ompi_osc_ucx_module
 
     if ((module->win_info_array[target]).rkey_init == true) {
         ucp_rkey_destroy((module->win_info_array[target]).rkey);
-        (module->win_info_array[target]).rkey_init == false;
+        (module->win_info_array[target]).rkey_init = false;
     }
 
     status = ucp_get_nbi(ep, (void *)temp_buf, len, remote_state_addr, state_rkey);
@@ -404,6 +413,12 @@ int ompi_osc_ucx_put(const void *origin_addr, int origin_count, struct ompi_data
         }
     }
 
+    CHECK_VALID_RKEY(module, target, target_count);
+
+    if (!target_count) {
+        return OMPI_SUCCESS;
+    }
+
     rkey = (module->win_info_array[target]).rkey;
 
     ompi_datatype_get_true_extent(origin_dt, &origin_lb, &origin_extent);
@@ -458,6 +473,12 @@ int ompi_osc_ucx_get(void *origin_addr, int origin_count,
         if (status != UCS_OK) {
             return OMPI_ERROR;
         }
+    }
+
+    CHECK_VALID_RKEY(module, target, target_count);
+
+    if (!target_count) {
+        return OMPI_SUCCESS;
     }
 
     rkey = (module->win_info_array[target]).rkey;
@@ -900,6 +921,8 @@ int ompi_osc_ucx_rput(const void *origin_addr, int origin_count,
         }
     }
 
+    CHECK_VALID_RKEY(module, target, target_count);
+
     rkey = (module->win_info_array[target]).rkey;
 
     OMPI_OSC_UCX_REQUEST_ALLOC(win, ucx_req);
@@ -962,6 +985,8 @@ int ompi_osc_ucx_rget(void *origin_addr, int origin_count,
             return OMPI_ERROR;
         }
     }
+
+    CHECK_VALID_RKEY(module, target, target_count);
 
     rkey = (module->win_info_array[target]).rkey;
 
