@@ -76,6 +76,8 @@ bool opal_leave_pinned_pipeline = false;
 bool opal_abort_print_stack = false;
 int opal_abort_delay = 0;
 
+int opal_max_thread_in_progress = 1;
+
 static bool opal_register_done = false;
 
 int opal_register_params(void)
@@ -359,6 +361,12 @@ int opal_register_params(void)
             "Store SHELL env variables from amca conf file",
             MCA_BASE_VAR_TYPE_STRING, NULL, 0, MCA_BASE_VAR_FLAG_INTERNAL, OPAL_INFO_LVL_3,
             MCA_BASE_VAR_SCOPE_READONLY, &mca_base_env_list_internal);
+
+    /* Number of threads allowed in opal_progress. This might increase multithreaded performance. */
+    (void)mca_base_var_register ("opal", "opal", NULL, "max_thread_in_progress",
+            "Number of thread allowed in opal_progress. Default: 1",
+            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_8,
+            MCA_BASE_VAR_SCOPE_READONLY, &opal_max_thread_in_progress);
 
     /* The ddt engine has a few parameters */
     ret = opal_datatype_register_params();
