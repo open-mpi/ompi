@@ -14,7 +14,7 @@
 
 #include "mtl_ofi.h"
 #include "opal/util/argv.h"
-#include "opal/util/show_help.h"
+#include "opal/util/printf.h"
 
 static int ompi_mtl_ofi_component_open(void);
 static int ompi_mtl_ofi_component_query(mca_base_module_t **module, int *priority);
@@ -576,6 +576,8 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
         ompi_mtl_ofi_define_tag_mode(ofi_tag_mode);
     }
 
+    ompi_mtl_ofi.num_peers = 0;
+
     /**
      * Open fabric
      * The getinfo struct returns a fabric attribute struct that can be used to
@@ -708,6 +710,8 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
                             __FILE__, __LINE__, fi_strerror(-ret));
         goto error;
     }
+
+    ompi_mtl_ofi.provider_name = strdup(prov->fabric_attr->prov_name);
 
     /**
      * Free providers info since it's not needed anymore.
