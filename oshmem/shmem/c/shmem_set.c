@@ -67,6 +67,7 @@
 #pragma weak shmem_ctx_ulonglong_atomic_set = pshmem_ctx_ulonglong_atomic_set
 #pragma weak shmem_ctx_float_atomic_set = pshmem_ctx_float_atomic_set
 #pragma weak shmem_ctx_double_atomic_set = pshmem_ctx_double_atomic_set
+
 #pragma weak shmem_int_atomic_set = pshmem_int_atomic_set
 #pragma weak shmem_long_atomic_set = pshmem_long_atomic_set
 #pragma weak shmem_longlong_atomic_set = pshmem_longlong_atomic_set
@@ -75,11 +76,13 @@
 #pragma weak shmem_ulonglong_atomic_set = pshmem_ulonglong_atomic_set
 #pragma weak shmem_float_atomic_set = pshmem_float_atomic_set
 #pragma weak shmem_double_atomic_set = pshmem_double_atomic_set
+
 #pragma weak shmem_int_set = pshmem_int_set
 #pragma weak shmem_long_set = pshmem_long_set
 #pragma weak shmem_longlong_set = pshmem_longlong_set
 #pragma weak shmem_float_set = pshmem_float_set
 #pragma weak shmem_double_set = pshmem_double_set
+
 #pragma weak shmemx_int32_set = pshmemx_int32_set
 #pragma weak shmemx_int64_set = pshmemx_int64_set
 #include "oshmem/shmem/c/profile/defines.h"

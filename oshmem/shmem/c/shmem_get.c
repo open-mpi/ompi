@@ -71,6 +71,7 @@
 #pragma weak shmem_ctx_float_get = pshmem_ctx_float_get
 #pragma weak shmem_ctx_double_get = pshmem_ctx_double_get
 #pragma weak shmem_ctx_longdouble_get = pshmem_ctx_longdouble_get
+
 #pragma weak shmem_char_get = pshmem_char_get
 #pragma weak shmem_short_get = pshmem_short_get
 #pragma weak shmem_int_get = pshmem_int_get
@@ -85,12 +86,14 @@
 #pragma weak shmem_float_get = pshmem_float_get
 #pragma weak shmem_double_get = pshmem_double_get
 #pragma weak shmem_longdouble_get = pshmem_longdouble_get
+
 #pragma weak shmem_ctx_getmem = pshmem_ctx_getmem
 #pragma weak shmem_ctx_get8 = pshmem_ctx_get8
 #pragma weak shmem_ctx_get16 = pshmem_ctx_get16
 #pragma weak shmem_ctx_get32 = pshmem_ctx_get32
 #pragma weak shmem_ctx_get64 = pshmem_ctx_get64
 #pragma weak shmem_ctx_get128 = pshmem_ctx_get128
+
 #pragma weak shmem_getmem = pshmem_getmem
 #pragma weak shmem_get8 = pshmem_get8
 #pragma weak shmem_get16 = pshmem_get16

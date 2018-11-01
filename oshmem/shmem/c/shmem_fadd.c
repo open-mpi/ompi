@@ -70,15 +70,18 @@
 #pragma weak shmem_ctx_uint_atomic_fetch_add = pshmem_ctx_uint_atomic_fetch_add
 #pragma weak shmem_ctx_ulong_atomic_fetch_add = pshmem_ctx_ulong_atomic_fetch_add
 #pragma weak shmem_ctx_ulonglong_atomic_fetch_add = pshmem_ctx_ulonglong_atomic_fetch_add
+
 #pragma weak shmem_int_atomic_fetch_add = pshmem_int_atomic_fetch_add
 #pragma weak shmem_long_atomic_fetch_add = pshmem_long_atomic_fetch_add
 #pragma weak shmem_longlong_atomic_fetch_add = pshmem_longlong_atomic_fetch_add
 #pragma weak shmem_uint_atomic_fetch_add = pshmem_uint_atomic_fetch_add
 #pragma weak shmem_ulong_atomic_fetch_add = pshmem_ulong_atomic_fetch_add
 #pragma weak shmem_ulonglong_atomic_fetch_add = pshmem_ulonglong_atomic_fetch_add
+
 #pragma weak shmem_int_fadd = pshmem_int_fadd
 #pragma weak shmem_long_fadd = pshmem_long_fadd
 #pragma weak shmem_longlong_fadd = pshmem_longlong_fadd
+
 #pragma weak shmemx_int32_fadd = pshmemx_int32_fadd
 #pragma weak shmemx_int64_fadd = pshmemx_int64_fadd
 #include "oshmem/shmem/c/profile/defines.h"

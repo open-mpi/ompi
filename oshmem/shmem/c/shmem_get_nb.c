@@ -71,6 +71,7 @@
 #pragma weak shmem_ctx_float_get_nbi = pshmem_ctx_float_get_nbi
 #pragma weak shmem_ctx_double_get_nbi = pshmem_ctx_double_get_nbi
 #pragma weak shmem_ctx_longdouble_get_nbi = pshmem_ctx_longdouble_get_nbi
+
 #pragma weak shmem_char_get_nbi = pshmem_char_get_nbi
 #pragma weak shmem_short_get_nbi = pshmem_short_get_nbi
 #pragma weak shmem_int_get_nbi = pshmem_int_get_nbi
@@ -85,12 +86,14 @@
 #pragma weak shmem_float_get_nbi = pshmem_float_get_nbi
 #pragma weak shmem_double_get_nbi = pshmem_double_get_nbi
 #pragma weak shmem_longdouble_get_nbi = pshmem_longdouble_get_nbi
+
 #pragma weak shmem_ctx_get8_nbi = pshmem_ctx_get8_nbi
 #pragma weak shmem_ctx_get16_nbi = pshmem_ctx_get16_nbi
 #pragma weak shmem_ctx_get32_nbi = pshmem_ctx_get32_nbi
 #pragma weak shmem_ctx_get64_nbi = pshmem_ctx_get64_nbi
 #pragma weak shmem_ctx_get128_nbi = pshmem_ctx_get128_nbi
 #pragma weak shmem_ctx_getmem_nbi = pshmem_ctx_getmem_nbi
+
 #pragma weak shmem_get8_nbi = pshmem_get8_nbi
 #pragma weak shmem_get16_nbi = pshmem_get16_nbi
 #pragma weak shmem_get32_nbi = pshmem_get32_nbi

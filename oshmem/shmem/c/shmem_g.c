@@ -71,6 +71,7 @@
 #pragma weak shmem_ctx_float_g = pshmem_ctx_float_g
 #pragma weak shmem_ctx_double_g = pshmem_ctx_double_g
 #pragma weak shmem_ctx_longdouble_g = pshmem_ctx_longdouble_g
+
 #pragma weak shmem_char_g = pshmem_char_g
 #pragma weak shmem_short_g = pshmem_short_g
 #pragma weak shmem_int_g = pshmem_int_g
@@ -84,6 +85,7 @@
 #pragma weak shmem_float_g = pshmem_float_g
 #pragma weak shmem_double_g = pshmem_double_g
 #pragma weak shmem_longdouble_g = pshmem_longdouble_g
+
 #pragma weak shmemx_int16_g = pshmemx_int16_g
 #pragma weak shmemx_int32_g = pshmemx_int32_g
 #pragma weak shmemx_int64_g = pshmemx_int64_g

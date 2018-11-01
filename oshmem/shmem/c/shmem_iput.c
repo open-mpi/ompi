@@ -77,6 +77,7 @@
 #pragma weak shmem_ctx_float_iput = pshmem_ctx_float_iput
 #pragma weak shmem_ctx_double_iput = pshmem_ctx_double_iput
 #pragma weak shmem_ctx_longdouble_iput = pshmem_ctx_longdouble_iput
+
 #pragma weak shmem_char_iput = pshmem_char_iput
 #pragma weak shmem_short_iput = pshmem_short_iput
 #pragma weak shmem_int_iput = pshmem_int_iput
@@ -91,11 +92,13 @@
 #pragma weak shmem_float_iput = pshmem_float_iput
 #pragma weak shmem_double_iput = pshmem_double_iput
 #pragma weak shmem_longdouble_iput = pshmem_longdouble_iput
+
 #pragma weak shmem_ctx_iput8 = pshmem_ctx_iput8
 #pragma weak shmem_ctx_iput16 = pshmem_ctx_iput16
 #pragma weak shmem_ctx_iput32 = pshmem_ctx_iput32
 #pragma weak shmem_ctx_iput64 = pshmem_ctx_iput64
 #pragma weak shmem_ctx_iput128 = pshmem_ctx_iput128
+
 #pragma weak shmem_iput8 = pshmem_iput8
 #pragma weak shmem_iput16 = pshmem_iput16
 #pragma weak shmem_iput32 = pshmem_iput32

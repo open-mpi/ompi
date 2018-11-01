@@ -70,6 +70,7 @@
 #pragma weak shmem_ctx_ulonglong_atomic_swap = pshmem_ctx_ulonglong_atomic_swap
 #pragma weak shmem_ctx_float_atomic_swap = pshmem_ctx_float_atomic_swap
 #pragma weak shmem_ctx_double_atomic_swap = pshmem_ctx_double_atomic_swap
+
 #pragma weak shmem_int_atomic_swap = pshmem_int_atomic_swap
 #pragma weak shmem_long_atomic_swap = pshmem_long_atomic_swap
 #pragma weak shmem_longlong_atomic_swap = pshmem_longlong_atomic_swap
@@ -78,11 +79,13 @@
 #pragma weak shmem_ulonglong_atomic_swap = pshmem_ulonglong_atomic_swap
 #pragma weak shmem_float_atomic_swap = pshmem_float_atomic_swap
 #pragma weak shmem_double_atomic_swap = pshmem_double_atomic_swap
+
 #pragma weak shmem_int_swap = pshmem_int_swap
 #pragma weak shmem_long_swap = pshmem_long_swap
 #pragma weak shmem_longlong_swap = pshmem_longlong_swap
 #pragma weak shmem_float_swap = pshmem_float_swap
 #pragma weak shmem_double_swap = pshmem_double_swap
+
 #pragma weak shmemx_int32_swap = pshmemx_int32_swap
 #pragma weak shmemx_int64_swap = pshmemx_int64_swap
 #include "oshmem/shmem/c/profile/defines.h"
