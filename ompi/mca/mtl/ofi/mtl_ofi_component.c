@@ -15,7 +15,6 @@
 
 #include "mtl_ofi.h"
 #include "opal/util/argv.h"
-#include "opal/util/show_help.h"
 #include "opal/util/printf.h"
 
 static int ompi_mtl_ofi_component_open(void);
@@ -607,6 +606,7 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
 
     /* Update the maximum supported Communicator ID */
     ompi_mtl_ofi.base.mtl_max_contextid = (int)((1ULL << ofi_tag_bits_for_cid) - 1);
+    ompi_mtl_ofi.num_peers = 0;
 
     /**
      * Open fabric
@@ -739,6 +739,8 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
                             __FILE__, __LINE__, fi_strerror(-ret));
         goto error;
     }
+
+    ompi_mtl_ofi.provider_name = strdup(prov->fabric_attr->prov_name);
 
     /**
      * Free providers info since it's not needed anymore.
