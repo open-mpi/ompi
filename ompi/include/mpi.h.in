@@ -791,14 +791,6 @@ enum {
    protection for this case. */
 
 #if !defined(OMPI_COMPILING_FORTRAN_WRAPPERS)
-/*
- * Deprecated Defines:
- */
-#define MPI_NULL_DELETE_FN OMPI_C_MPI_NULL_DELETE_FN
-#define MPI_NULL_COPY_FN OMPI_C_MPI_NULL_COPY_FN
-#define MPI_DUP_FN OMPI_C_MPI_DUP_FN
-
-/***/:w
 
 #define MPI_TYPE_NULL_DELETE_FN OMPI_C_MPI_TYPE_NULL_DELETE_FN
 #define MPI_TYPE_NULL_COPY_FN OMPI_C_MPI_TYPE_NULL_COPY_FN
@@ -2610,7 +2602,6 @@ OMPI_DECLSPEC  int MPI_Attr_put(MPI_Comm comm, int keyval, void *attribute_val)
             __mpi_interface_deprecated__("MPI_Attr_put is deprecated in MPI-2.0; use MPI_Comm_set_attr instead");
 OMPI_DECLSPEC  int PMPI_Attr_put(MPI_Comm comm, int keyval, void *attribute_val)
             __mpi_interface_deprecated__("PMPI_Attr_put is deprecated in MPI-2.0; use PMPI_Comm_set_attr instead");
-/***/
 
 /*
  * Even though MPI_Copy_function and MPI_Delete_function are
@@ -2635,18 +2626,21 @@ OMPI_DECLSPEC  int MPI_Keyval_free(int *keyval)
             __mpi_interface_deprecated__("MPI_Keyval_free is deprecated in MPI-2.0; MPI_Comm_free_keyval instead.");
 OMPI_DECLSPEC  int PMPI_Keyval_free(int *keyval)
             __mpi_interface_deprecated__("PMPI_Keyval_free is deprecated in MPI-2.0; PMPI_Comm_free_keyval instead.");
+#define MPI_DUP_FN OMPI_C_MPI_DUP_FN
 OMPI_DECLSPEC int OMPI_C_MPI_DUP_FN( MPI_Comm comm, int comm_keyval,
                                      void* extra_state,
                                      void* attribute_val_in,
                                      void* attribute_val_out,
                                      int* flag )
             __mpi_interface_deprecated__("MPI_DUP_FN is deprecated in MPI-2.0; use MPI_COMM_DUP_FN instead.");
+#define MPI_NULL_COPY_FN OMPI_C_MPI_NULL_COPY_FN
 OMPI_DECLSPEC int OMPI_C_MPI_NULL_COPY_FN( MPI_Comm comm, int comm_keyval,
                                            void* extra_state,
                                            void* attribute_val_in,
                                            void* attribute_val_out,
                                            int* flag )
             __mpi_interface_deprecated__("MPI_NULL_COPY_FN is deprecated in MPI-2.0; use MPI_COMM_NULL_COPY_FN instead.");
+#define MPI_NULL_DELETE_FN OMPI_C_MPI_NULL_DELETE_FN
 OMPI_DECLSPEC int OMPI_C_MPI_NULL_DELETE_FN( MPI_Comm comm, int comm_keyval,
                                              void* attribute_val_out,
                                              void* extra_state )
@@ -2695,7 +2689,7 @@ OMPI_DECLSPEC  int PMPI_Type_struct(int count, int array_of_blocklengths[],
                                     MPI_Datatype array_of_types[],
                                     MPI_Datatype *newtype)
             __mpi_interface_removed__("PMPI_Type_struct is removed in MPI-3.0; use PMPI_Type_create_struct instead.");
-/***/
+
 OMPI_DECLSPEC  int MPI_Type_extent(MPI_Datatype type, MPI_Aint *extent)
             __mpi_interface_removed__("MPI_Type_extent is removed in MPI-3.0; use MPI_Type_get_extent instead.");
 OMPI_DECLSPEC  int PMPI_Type_extent(MPI_Datatype type, MPI_Aint *extent)
@@ -2708,7 +2702,7 @@ OMPI_DECLSPEC  int MPI_Type_lb(MPI_Datatype type, MPI_Aint *lb)
             __mpi_interface_removed__("MPI_Type_lb has been removed in MPI-3.0; use MPI_Type_get_extent instead.");
 OMPI_DECLSPEC  int PMPI_Type_lb(MPI_Datatype type, MPI_Aint *lb)
             __mpi_interface_removed__("PMPI_Type_lb has been removed in MPI-3.0; use PMPI_Type_get_extent instead.");
-/***/
+
 OMPI_DECLSPEC  int MPI_Errhandler_create(MPI_Handler_function *function,
                                          MPI_Errhandler *errhandler)
             __mpi_interface_removed__("MPI_Errhandler_create is removed in MPI-3.0; use MPI_Comm_create_errhandler instead.");
