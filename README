@@ -479,6 +479,56 @@ MPI Functionality and Features
 
 - All MPI-3 functionality is supported.
 
+- Note that starting with Open MPI v4.0.0, prototypes for several
+  legacy MPI-1 symbols that were deleted in the MPI-3.0 specification
+  (which was published in 2012) are no longer available by default in
+  mpi.h.  Specifically, several MPI-1 symbols were deprecated in the
+  1996 publishing of the MPI-2.0 specification.  These deprecated
+  symbols were eventually removed from the MPI-3.0 specification in
+  2012.
+
+  The symbols that now no longer appear by default in Open MPI's mpi.h
+  are:
+
+  - MPI_Address (replaced by MPI_Get_address)
+  - MPI_Errhandler_create (replaced by MPI_Comm_create_errhandler)
+  - MPI_Errhandler_get (replaced by MPI_Comm_get_errhandler)
+  - MPI_Errhandler_set (replaced by MPI_Comm_set_errhandler)
+  - MPI_Type_extent (replaced by MPI_Type_get_extent)
+  - MPI_Type_hindexed (replaced by MPI_Type_create_hindexed)
+  - MPI_Type_hvector (replaced by MPI_Type_create_hvector)
+  - MPI_Type_lb (replaced by MPI_Type_get_extent)
+  - MPI_Type_struct (replaced by MPI_Type_create_struct)
+  - MPI_Type_ub (replaced by MPI_Type_get_extent)
+  - MPI_LB (replaced by MPI_Type_create_resized)
+  - MPI_UB (replaced by MPI_Type_create_resized)
+  - MPI_COMBINER_HINDEXED_INTEGER
+  - MPI_COMBINER_HVECTOR_INTEGER
+  - MPI_COMBINER_STRUCT_INTEGER
+  - MPI_Handler_function (replaced by MPI_Comm_errhandler_function)
+
+  Although these symbols are no longer prototyped in mpi.h, they
+  are still present in the MPI library in Open MPI v4.0.x. This
+  enables legacy MPI applications to link and run successfully with
+  Open MPI v4.0.x, even though they will fail to compile.
+
+  *** Future releases of Open MPI beyond the v4.0.x series may
+      remove these symbols altogether.
+
+  *** The Open MPI team STRONGLY encourages all MPI application
+      developers to stop using these constructs that were first
+      deprecated over 20 years ago, and finally removed from the MPI
+      specification in MPI-3.0 (in 2012).
+
+  *** The Open MPI FAQ (https://www.open-mpi.org/faq/) contains
+      examples of how to update legacy MPI applications using these
+      deleted symbols to use the "new" symbols.
+
+  All that being said, if you are unable to immediately update your
+  application to stop using these legacy MPI-1 symbols, you can
+  re-enable them in mpi.h by configuring Open MPI with the
+  --enable-mpi-compatibility flag.
+
 - Rank reordering support is available using the TreeMatch library. It
   is activated for the graph and dist_graph topologies.
 
