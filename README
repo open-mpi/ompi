@@ -12,7 +12,7 @@ Copyright (c) 2006-2018 Cisco Systems, Inc.  All rights reserved.
 Copyright (c) 2006-2011 Mellanox Technologies. All rights reserved.
 Copyright (c) 2006-2012 Oracle and/or its affiliates.  All rights reserved.
 Copyright (c) 2007      Myricom, Inc.  All rights reserved.
-Copyright (c) 2008-2017 IBM Corporation.  All rights reserved.
+Copyright (c) 2008-2018 IBM Corporation.  All rights reserved.
 Copyright (c) 2010      Oak Ridge National Labs.  All rights reserved.
 Copyright (c) 2011      University of Houston. All rights reserved.
 Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
@@ -115,7 +115,7 @@ General notes
 - The run-time systems that are currently supported are:
   - rsh / ssh
   - PBS Pro, Torque
-  - Platform LSF (v7.0.2 and later)
+  - Platform LSF (v9.0.1 and later)
   - SLURM
   - Cray XE, XC, and XK
   - Oracle Grid Engine (OGE) 6.1, 6.2 and open source Grid Engine
@@ -1237,6 +1237,19 @@ MISCELLANEOUS SUPPORT LIBRARIES
   penalty for enabling this option.
 
 MPI FUNCTIONALITY
+
+--enable-mpi1-compatibility
+  Open MPI v4.0.0 is the first Open MPI release to remove MPI
+  functionality, which was removed in the MPI-3 version of the
+  standard.  As a convienence for users, Open MPI v4.0.0 provides
+  this configure option to build in this removed functionality.
+
+  This configure flag is deprecated, and may be removed in a
+  future major version of Open MPI.
+
+can still be used to restore
+    prototypes for the items that have been removed from the MPI
+        specification (e.g., MPI_Address()).
 
 --with-mpi-param-check(=value)
   Whether or not to check MPI function parameters for errors at
