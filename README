@@ -641,11 +641,11 @@ OpenSHMEM Collectives
 Network Support
 ---------------
 
-- There are four main MPI network models available: "ob1", "cm",
-  "yalla", and "ucx".  "ob1" uses BTL ("Byte Transfer Layer")
+- There are several main MPI network models available: "ob1", "cm",
+  "ucx", and "yalla".  "ob1" uses BTL ("Byte Transfer Layer")
   components for each supported network.  "cm" uses MTL ("Matching
-  Transport Layer") components for each supported network.  "yalla"
-  uses the Mellanox MXM transport.  "ucx" uses the OpenUCX transport.
+  Transport Layer") components for each supported network.  "ucx" uses
+  the OpenUCX transport.
 
   - "ob1" supports a variety of networks that can be used in
     combination with each other:
@@ -668,42 +668,93 @@ Network Support
     - OpenFabrics Interfaces ("libfabric" tag matching)
     - Portals 4
 
-    Open MPI will, by default, choose to use "cm" when one of the
-    above transports can be used, unless OpenUCX or MXM support is
-    detected, in which case the "ucx" or "yalla" PML will be used
-    by default.  Otherwise, "ob1" will be used and the corresponding
-    BTLs will be selected. Users can force the use of ob1 or cm if
-    desired by setting the "pml" MCA parameter at run-time:
+  - UCX is the Unified Communication X (UCX) communication library
+    (http://www.openucx.org/).  This is an open-source project
+    developed in collaboration between industry, laboratories, and
+    academia to create an open-source production grade communication
+    framework for data centric and high-performance applications.  The
+    UCX library can be downloaded from repositories (e.g.,
+    Fedora/RedHat yum repositories).  The UCX library is also part of
+    Mellanox OFED and Mellanox HPC-X binary distributions.
 
-      shell$ mpirun --mca pml ob1 ...
+    UCX currently supports:
+
+    - OpenFabrics Verbs (including InfiniBand and RoCE)
+    - Cray's uGNI
+    - TCP
+    - Shared memory
+    - NVIDIA CUDA drivers
+
+  While users can manually select any of the above transports at run
+  time, Open MPI will select a default transport as follows:
+
+  1. If InfiniBand devices are available, use the UCX PML.
+
+  2. If PSM, PSM2, or other tag-matching-supporting Libfabric
+     transport devices are available (e.g., Cray uGNI), use the "cm"
+     PML and a single appropriate corresponding "mtl" module.
+
+  3. If MXM/InfiniBand devices are availble, use the "yalla" PML
+     (NOTE: the "yalla"/MXM PML is deprecated -- see below).
+
+  4. Otherwise, use the ob1 PML and one or more appropriate "btl"
+     modules.
+
+  Users can override Open MPI's default selection algorithms and force
+  the use of a specific transport if desired by setting the "pml" MCA
+  parameter (and potentially the "btl" and/or "mtl" MCA parameters) at
+  run-time:
+
+      shell$ mpirun --mca pml ob1 --mca btl [comma-delimted-BTLs] ...
       or
-      shell$ mpirun --mca pml cm ...
+      shell$ mpirun --mca pml cm --mca mtl [MTL] ...
+      or
+      shell$ mpirun --mca pml ucx ...
 
-- Similarly, there are two OpenSHMEM network models available: "ucx",
-  and "ikrit":
-  - "ucx" interfaces directly with UCX;
-  - "ikrit" interfaces directly with Mellanox MXM.
+  As alluded to above, there is actually a fourth MPI point-to-point
+  transport, but it is deprecated and will likely be removed in a
+  future Open MPI release:
 
-- UCX is the Unified Communication X (UCX) communication library
-  (http://www.openucx.org/).
-  This is an open-source project developed in collaboration between
-  industry, laboratories, and academia to create an open-source
-  production grade communication framework for data centric and
-  high-performance applications.
-  UCX currently supports:
-  - OFA Verbs;
-  - Cray's uGNI;
-  - NVIDIA CUDA drivers.
+  - "yalla" uses the Mellanox MXM transport library.  MXM is the
+     deprecated Mellanox Messaging Accelerator library, utilizing a
+     full range of IB transports to provide the following messaging
+     services to the upper level MPI/OpenSHMEM libraries.  MXM is only
+     included in this release of Open MPI for backwards compatibility;
+     the "ucx" PML should be used insead.
 
-- MXM is the Mellanox Messaging Accelerator library utilizing a full
-  range of IB transports to provide the following messaging services
-  to the upper level MPI/OpenSHMEM libraries:
+- The main OpenSHMEM network model is "ucx"; it interfaces directly
+  with UCX.
 
-  - Usage of all available IB transports
-  - Native RDMA support
-  - Progress thread
-  - Shared memory communication
-  - Hardware-assisted reliability
+  The "ikrit" OpenSHMEM network model is also available, but is
+  deprecated; it uses the deprecated Mellanox Message Accelerator
+  (MXM) library.
+
+- In prior versions of Open MPI, InfiniBand and RoCE support was
+  provided through the openib BTL and ob1 PML plugins.  Starting with
+  Open MPI 4.0.0, InfiniBand support through the openib+ob1 plugins is
+  both deprecated and superseded by the ucx PML component.
+
+  While the openib BTL depended on libibverbs, the UCX PML depends on
+  the UCX library.
+
+  Once installed, Open MPI can be built with UCX support by adding
+  --with-ucx to the Open MPI configure command. Once Open MPI is
+  configured to use UCX, the runtime will automatically select the UCX
+  PML if one of the supported networks is detected (e.g., InfiniBand).
+  It's possible to force using UCX in the mpirun or oshrun command
+  lines by specifying any or all of the following mca parameters:
+  "--mca pml ucx" for MPI point-to-point operations, "--mca spml ucx"
+  for OpenSHMEM support, and "--mca osc ucx" for MPI RMA (one-sided)
+  operations.
+
+- Although the ob1 PML+openib BTL is still the default for iWARP and
+  RoCE devices, it will reject InfiniBand defaults (by default) so
+  that they will use the ucx PML.  If using the openib BTL is still
+  desired, set the following MCA parameters:
+
+  # Note that "vader" is Open MPI's shared memory BTL
+  $ mpirun --mca pml ob1 --mca btl openib,vader,self \
+        --mca btl_openib_allow_ib 1 ...
 
 - The usnic BTL is support for Cisco's usNIC device ("userspace NIC")
   on Cisco UCS servers with the Virtualized Interface Card (VIC).
@@ -755,32 +806,6 @@ Network Support
   respectively.  Linux CMA and XPMEM are similar (but different)
   mechanisms for Open MPI to utilize single-copy semantics for shared
   memory.
-
-- In prior versions of Open MPI, InfiniBand and RoCE support was
-  provided through the openib BTL and ob1 PML plugins.  Starting with
-  Open MPI 4.0.0, InfiniBand support through the openib+ob1 plugins is
-  both deprecated and superseded by the UCX PML component.
-
-  UCX is an open-source optimized communication library which supports
-  multiple networks, including RoCE, InfiniBand, uGNI, TCP, shared
-  memory, and others.
-
-  While the openib BTL depended on libibverbs, the UCX PML depends on
-  the UCX library.  The UCX library can be downloaded from
-  http://www.openucx.org/ or from various Linux distribution
-  repositories (e.g., Fedora/RedHat yum repositories).  The UCX
-  library is also part of Mellanox OFED and Mellanox HPC-X binary
-  distributions.
-
-  Once installed, Open MPI can be built with UCX support by adding
-  --with-ucx to the Open MPI configure command. Once Open MPI is
-  configured to use UCX, the runtime will automatically select the UCX
-  PML if one of the supported networks is detected (e.g., InfiniBand).
-  It's possible to force using UCX in the mpirun or oshrun command
-  lines by specifying any or all of the following mca parameters:
-  "-mca pml ucx" for MPI point-to-point operations, "-mca spml ucx"
-  for OpenSHMEM support, and "-mca osc ucx" for MPI RMA (one-sided)
-  operations.
 
 Open MPI Extensions
 -------------------
