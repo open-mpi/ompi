@@ -11,7 +11,9 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
- * Copyright (c) 2014-2016 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2014-2018 Los Alamos National Security, LLC. All rights
+ *                         reserved.
+ * Copyright (c) 2018      Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -51,7 +53,14 @@ static inline void opal_atomic_mb(void)
 
 static inline void opal_atomic_rmb(void)
 {
+#if OPAL_ASSEMBLY_ARCH == OPAL_X86_64
+    /* work around a bug in older gcc versions where ACQUIRE seems to get
+     * treated as a no-op instead of being equivalent to
+     * __asm__ __volatile__("": : :"memory") */
+    __atomic_thread_fence (__ATOMIC_SEQ_CST);
+#else
     __atomic_thread_fence (__ATOMIC_ACQUIRE);
+#endif
 }
 
 static inline void opal_atomic_wmb(void)
