@@ -132,7 +132,7 @@ int mca_btl_ofi_send (mca_btl_base_module_t *btl,
     return OPAL_SUCCESS;
 }
 
-inline int mca_btl_ofi_recv_frag (mca_btl_ofi_module_t *ofi_btl,
+int mca_btl_ofi_recv_frag (mca_btl_ofi_module_t *ofi_btl,
                            mca_btl_base_endpoint_t *endpoint,
                            mca_btl_ofi_context_t *context,
                            mca_btl_ofi_base_frag_t *frag)
