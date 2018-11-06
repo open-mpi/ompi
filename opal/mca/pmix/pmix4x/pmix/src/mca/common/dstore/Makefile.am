@@ -46,7 +46,7 @@ pmixdir = $(pmixincludedir)/$(subdir)
 pmix_HEADERS = $(headers)
 endif
 
-all-local:
+all-local: $(comp_noinst)
 	if test -z "$(lib_LTLIBRARIES)"; then \
 		rm -f "$(comp_inst)"; \
 		$(LN_S) "$(comp_noinst)" "$(comp_inst)"; \

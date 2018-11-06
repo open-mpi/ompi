@@ -12,8 +12,8 @@ dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2012-2016 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
-dnl Copyright (c) 2015      Research Organization for Information Science
-dnl                         and Technology (RIST). All rights reserved.
+dnl Copyright (c) 2015-2018 Research Organization for Information Science
+dnl                         and Technology (RIST).  All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -22,7 +22,7 @@ dnl $HEADER$
 dnl
 
 AC_DEFUN([PMIX_CONFIG_SUBDIR],[
-PMIX_VAR_SCOPE_PUSH([subdir_parent sub_configure subdir_dir subdir_srcdir subdir_cache_file subdir_args subdir_dots total_dir dir_part temp])
+PMIX_VAR_SCOPE_PUSH([subdir_parent sub_configure subdir_dir subdir_srcdir subdir_cache_file subdir_args subdir_dots total_dir dir_part subdir_temp])
 
 #
 # Invoke configure in a specific subdirectory.
@@ -58,8 +58,8 @@ if test "$subdir_dir" != ":" && test -d $srcdir/$subdir_dir; then
 	[[\\/]]* | ?:[[\\/]]* ) total_dir=;;
 	*)                      total_dir=.;;
 	esac
-	temp=$subdir_dir
-	for dir_part in `IFS='/\\'; set X $temp; shift; echo "$[@]"`; do
+	subdir_temp=$subdir_dir
+	for dir_part in `IFS='/\\'; set X $subdir_temp; shift; echo "$[@]"`; do
 	    case $dir_part in
 	    # Skip DOS drivespec
 	    ?:) total_dir=$dir_part ;;
