@@ -11,8 +11,8 @@ dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2008-2018 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
-dnl Copyright (c) 2015-2017 Research Organization for Information Science
-dnl                         and Technology (RIST). All rights reserved.
+dnl Copyright (c) 2015-2018 Research Organization for Information Science
+dnl                         and Technology (RIST).  All rights reserved.
 dnl Copyright (c) 2014-2018 Los Alamos National Security, LLC. All rights
 dnl                         reserved.
 dnl Copyright (c) 2017      Amazon.com, Inc. or its affiliates.  All Rights
@@ -1148,6 +1148,9 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
     if test "x$enable_c11_atomics" != "xno" && test "$opal_cv_c11_supported" = "yes" ; then
         opal_cv_asm_builtin="BUILTIN_C11"
         OPAL_CHECK_C11_CSWAP_INT128
+    elif test "x$enable_c11_atomics" = "xyes"; then
+        AC_MSG_WARN([C11 atomics were requested but are not supported])
+        AC_MSG_ERROR([Cannot continue])
     else
         opal_cv_asm_builtin="BUILTIN_NO"
         AS_IF([test "$opal_cv_asm_builtin" = "BUILTIN_NO" && test "$enable_builtin_atomics" = "yes"],
