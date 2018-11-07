@@ -731,8 +731,8 @@ Network Support
 
 - In prior versions of Open MPI, InfiniBand and RoCE support was
   provided through the openib BTL and ob1 PML plugins.  Starting with
-  Open MPI 4.0.0, InfiniBand support through the openib+ob1 plugins is
-  both deprecated and superseded by the ucx PML component.
+  Open MPI 4.0.0, InfiniBand support through the openib plugin is both
+  deprecated and superseded by the ucx PML component.
 
   While the openib BTL depended on libibverbs, the UCX PML depends on
   the UCX library.
