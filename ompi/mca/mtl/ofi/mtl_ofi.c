@@ -54,8 +54,21 @@ ompi_mtl_ofi_add_procs(struct mca_mtl_base_module_t *mtl,
     char *ep_names = NULL;
     fi_addr_t *fi_addrs = NULL;
     mca_mtl_ofi_endpoint_t *endpoint = NULL;
+    int num_peers_limit = (1 << ompi_mtl_ofi.num_bits_source_rank) - 1;
 
     namelen = ompi_mtl_ofi.epnamelen;
+
+    /* We cannot add more ranks than available tag bits */
+    if ((false == ompi_mtl_ofi.fi_cq_data) &&
+        OPAL_UNLIKELY(((int) (nprocs + ompi_mtl_ofi.num_peers) > num_peers_limit))) {
+        opal_output(0, "%s:%d: OFI provider: %s does not have enough bits for source rank in its tag.\n"
+                       "Adding more ranks will result in undefined behaviour. Please enable\n"
+                       "FI_REMOTE_CQ_DATA feature in the provider. For more info refer fi_cq(3).\n",
+                       __FILE__, __LINE__, ompi_mtl_ofi.provider_name);
+        fflush(stderr);
+        ret = OMPI_ERROR;
+        goto bail;
+    }
 
     /**
      * Create array of EP names.
@@ -125,6 +138,9 @@ ompi_mtl_ofi_add_procs(struct mca_mtl_base_module_t *mtl,
         /* FIXME: What happens if this endpoint already exists? */
         procs[i]->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_MTL] = endpoint;
     }
+
+    /* Update global counter of number of procs added to this rank */
+    ompi_mtl_ofi.num_peers += nprocs;
 
     ret = OMPI_SUCCESS;
 

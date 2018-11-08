@@ -43,7 +43,7 @@ typedef struct mca_mtl_ofi_module_t {
     /** "Any source" address */
     fi_addr_t any_addr;
 
-    /** Optional user-specified OFI provider name */
+    /** OFI provider name */
     char *provider_name;
 
     /** Maximum inject size */
@@ -61,6 +61,7 @@ typedef struct mca_mtl_ofi_module_t {
     unsigned long long source_rank_mask;
     unsigned long long mpi_tag_mask;
     int num_bits_mpi_tag;
+    int num_peers;
 
     /** Synchronous protocol tag bits */
     unsigned long long sync_send;
