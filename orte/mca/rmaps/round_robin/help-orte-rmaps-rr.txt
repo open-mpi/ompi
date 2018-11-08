@@ -11,6 +11,7 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2017      Intel, Inc. All rights reserved.
+# Copyright (c) 2018      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -19,15 +20,6 @@
 #
 # This is the US/English general help file for Open RTE's orterun.
 #
-[orte-rmaps-rr:alloc-error]
-There are not enough slots available in the system to satisfy the %d slots
-that were requested:
-
-  application: %s
-  host:  %s
-
-Either request fewer slots for your application, or make more slots available
-for use.
 [orte-rmaps-rr:multi-apps-and-zero-np]
 RMAPS found multiple applications to be launched, with
 at least one that failed to specify the number of processes to execute.

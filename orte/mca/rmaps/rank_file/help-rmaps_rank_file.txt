@@ -1,6 +1,6 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2011-2018 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2013      Los Alamos National Security, LLC.
 #                         All rights reserved.
 # $COPYRIGHT$
@@ -89,14 +89,6 @@ some systems may require using full hostnames, such as
 #
 [bad-index]
 Rankfile claimed host %s by index that is bigger than number of allocated hosts.
-#
-[orte-rmaps-rf:alloc-error]
-There are not enough slots available in the system to satisfy the %d slots
-that were requested by the application:
-    %s
-
-Either request fewer slots for your application, or make more slots available
-for use.
 #
 [bad-rankfile]
 Error, invalid rank (%d) in the rankfile (%s)
