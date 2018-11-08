@@ -37,12 +37,11 @@ environment in which Open MPI processes are run:
 
   1. Hostfile, via "slots=N" clauses (N defaults to number of
      processor cores if not provided)
-  2. The --host:N command line parameter (N defaults to 1 if not
-     provided)
+  2. The --host command line parameter, via a ":N" suffix on the
+     hostname (N defaults to 1 if not provided)
   3. Resource manager (e.g., SLURM, PBS/Torque, LSF, etc.)
-  4. If neither a hostfile, the --hosts command line parameter, nor an
-     RM is present, Open MPI defaults to the number of processor
-     cores
+  4. If none of a hostfile, the --host command line parameter, or an
+     RM is present, Open MPI defaults to the number of processor cores
 
 In all the above cases, if you want Open MPI to default to the number
 of hardware threads instead of the number of processor cores, use the
