@@ -115,7 +115,7 @@ General notes
 - The run-time systems that are currently supported are:
   - rsh / ssh
   - PBS Pro, Torque
-  - Platform LSF (v9.1.1 and later)
+  - Platform LSF (tested with v9.1.1 and later)
   - SLURM
   - Cray XE, XC, and XK
   - Oracle Grid Engine (OGE) 6.1, 6.2 and open source Grid Engine
@@ -1205,13 +1205,6 @@ RUN-TIME SYSTEM SUPPORT
 
   LSF is a resource manager system, frequently used as a batch
   scheduler in HPC systems.
-
-  NOTE: If you are using LSF version 7.0.5, you will need to add
-        "LIBS=-ldl" to the configure command line.  For example:
-
-            ./configure LIBS=-ldl --with-lsf ...
-
-        This workaround should *only* be needed for LSF 7.0.5.
 
 --with-lsf-libdir=<directory>
   Look in directory for the LSF libraries.  By default, Open MPI will
