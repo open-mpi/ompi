@@ -4,8 +4,6 @@
 #                         Corporation.  All rights reserved.
 # Copyright (c) 2010-2014 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2015      NVIDIA, Inc. All rights reserved.
-# Copyright (c) 2018      Research Organization for Information Science
-#                         and Technology (RIST).  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -30,13 +28,13 @@ noinst_LTLIBRARIES = libmpiext_cuda_c.la
 ompidir = $(ompiincludedir)/ompi/mpiext/cuda/c
 
 # This is the header file that is installed.
-nodist_include_HEADERS = \
-        mpiext_cuda_c.h
+ompi_HEADERS = mpiext_cuda_c.h
 
 # Sources for the convenience libtool library.  Other than the one
 # header file, all source files in the extension have no file naming
 # conventions.
 libmpiext_cuda_c_la_SOURCES = \
+        $(ompi_HEADERS) \
         mpiext_cuda.c
 libmpiext_cuda_c_la_LDFLAGS = -module -avoid-version
 
