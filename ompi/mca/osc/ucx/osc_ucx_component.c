@@ -103,9 +103,9 @@ static int component_open(void) {
 
 static int component_register(void) {
     char *description_str;
-    mca_osc_ucx_component.priority = 0;
-    asprintf(&description_str, "Priority of the osc/ucx component (default: %d)",
-             mca_osc_ucx_component.priority);
+    mca_osc_ucx_component.priority = 200;
+    opal_asprintf(&description_str, "Priority of the osc/ucx component (default: %d)",
+                  mca_osc_ucx_component.priority);
     (void) mca_base_component_var_register(&mca_osc_ucx_component.super.osc_version, "priority", description_str,
                                            MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL, 0, 0, OPAL_INFO_LVL_3,
                                            MCA_BASE_VAR_SCOPE_GROUP, &mca_osc_ucx_component.priority);
