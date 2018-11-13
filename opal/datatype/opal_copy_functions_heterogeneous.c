@@ -373,7 +373,7 @@ COPY_TYPE_HETEROGENEOUS(int16, int128_t)
 COPY_TYPE_HETEROGENEOUS( float2, float )
 #elif SIZEOF_DOUBLE == 2
 COPY_TYPE_HETEROGENEOUS( float2, double )
-#elif HAVE_LONG_DOUBLE && SIZEOF_LONG_DOUBLE == 2
+#elif SIZEOF_LONG_DOUBLE == 2
 COPY_TYPE_HETEROGENEOUS( float2, long double )
 #else
 /* #error No basic type for copy function for opal_datatype_float2 found */
@@ -384,7 +384,7 @@ COPY_TYPE_HETEROGENEOUS( float2, long double )
 COPY_TYPE_HETEROGENEOUS( float4, float )
 #elif SIZEOF_DOUBLE == 4
 COPY_TYPE_HETEROGENEOUS( float4, double )
-#elif HAVE_LONG_DOUBLE && SIZEOF_LONG_DOUBLE == 4
+#elif SIZEOF_LONG_DOUBLE == 4
 COPY_TYPE_HETEROGENEOUS( float4, long double )
 #else
 /* #error No basic type for copy function for opal_datatype_float4 found */
@@ -395,7 +395,7 @@ COPY_TYPE_HETEROGENEOUS( float4, long double )
 COPY_TYPE_HETEROGENEOUS( float8, float )
 #elif SIZEOF_DOUBLE == 8
 COPY_TYPE_HETEROGENEOUS( float8, double )
-#elif HAVE_LONG_DOUBLE && SIZEOF_LONG_DOUBLE == 8
+#elif SIZEOF_LONG_DOUBLE == 8
 COPY_TYPE_HETEROGENEOUS( float8, long double )
 #else
 /* #error No basic type for copy function for opal_datatype_float8 found */
@@ -406,7 +406,7 @@ COPY_TYPE_HETEROGENEOUS( float8, long double )
 COPY_TYPE_HETEROGENEOUS( float12, float )
 #elif SIZEOF_DOUBLE == 12
 COPY_TYPE_HETEROGENEOUS( float12, double )
-#elif HAVE_LONG_DOUBLE && SIZEOF_LONG_DOUBLE == 12
+#elif SIZEOF_LONG_DOUBLE == 12
 COPY_TYPE_HETEROGENEOUS( float12, long double )
 #else
 /* #error No basic type for copy function for opal_datatype_float12 found */
@@ -417,33 +417,18 @@ COPY_TYPE_HETEROGENEOUS( float12, long double )
 COPY_TYPE_HETEROGENEOUS( float16, float )
 #elif SIZEOF_DOUBLE == 16
 COPY_TYPE_HETEROGENEOUS( float16, double )
-#elif HAVE_LONG_DOUBLE && SIZEOF_LONG_DOUBLE == 16
+#elif SIZEOF_LONG_DOUBLE == 16
 COPY_TYPE_HETEROGENEOUS_INTERNAL( float16, long double, 1)
 #else
 /* #error No basic type for copy function for opal_datatype_float16 found */
 #define copy_float16_heterogeneous NULL
 #endif
 
-#if HAVE_FLOAT__COMPLEX
 COPY_2SAMETYPE_HETEROGENEOUS( float_complex, float )
-#else
-/* #error No basic type for copy function for opal_datatype_float_complex found */
-#define copy_float_complex_heterogeneous NULL
-#endif
 
-#if HAVE_DOUBLE__COMPLEX
 COPY_2SAMETYPE_HETEROGENEOUS( double_complex, double )
-#else
-/* #error No basic type for copy function for opal_datatype_double_complex found */
-#define copy_double_complex_heterogeneous NULL
-#endif
 
-#if HAVE_LONG_DOUBLE__COMPLEX
 COPY_2SAMETYPE_HETEROGENEOUS_INTERNAL( long_double_complex, long double, 1)
-#else
-/* #error No basic type for copy function for opal_datatype_long_double_complex found */
-#define copy_long_double_complex_heterogeneous NULL
-#endif
 
 COPY_TYPE_HETEROGENEOUS (wchar, wchar_t)
 

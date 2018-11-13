@@ -95,7 +95,7 @@ typedef signed long intptr_t;
 typedef unsigned long uintptr_t;
 #endif
 
-#elif HAVE_LONG_LONG && SIZEOF_VOID_P == SIZEOF_LONG_LONG
+#elif SIZEOF_VOID_P == SIZEOF_LONG_LONG
 
 #ifndef HAVE_INTPTR_T
 typedef signed long long intptr_t;

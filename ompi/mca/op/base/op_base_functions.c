@@ -139,9 +139,7 @@ FUNC_FUNC(max, fortran_integer16, ompi_fortran_integer16_t)
 /* Floating point */
 FUNC_FUNC(max, float, float)
 FUNC_FUNC(max, double, double)
-#if HAVE_LONG_DOUBLE
 FUNC_FUNC(max, long_double, long double)
-#endif
 #if OMPI_HAVE_FORTRAN_REAL
 FUNC_FUNC(max, fortran_real, ompi_fortran_real_t)
 #endif
@@ -199,9 +197,7 @@ FUNC_FUNC(min, fortran_integer16, ompi_fortran_integer16_t)
 /* Floating point */
 FUNC_FUNC(min, float, float)
 FUNC_FUNC(min, double, double)
-#if HAVE_LONG_DOUBLE
 FUNC_FUNC(min, long_double, long double)
-#endif
 #if OMPI_HAVE_FORTRAN_REAL
 FUNC_FUNC(min, fortran_real, ompi_fortran_real_t)
 #endif
@@ -256,9 +252,7 @@ OP_FUNC(sum, fortran_integer16, ompi_fortran_integer16_t, +=)
 /* Floating point */
 OP_FUNC(sum, float, float, +=)
 OP_FUNC(sum, double, double, +=)
-#if HAVE_LONG_DOUBLE
 OP_FUNC(sum, long_double, long double, +=)
-#endif
 #if OMPI_HAVE_FORTRAN_REAL
 OP_FUNC(sum, fortran_real, ompi_fortran_real_t, +=)
 #endif
@@ -278,15 +272,9 @@ OP_FUNC(sum, fortran_real8, ompi_fortran_real8_t, +=)
 OP_FUNC(sum, fortran_real16, ompi_fortran_real16_t, +=)
 #endif
 /* Complex */
-#if HAVE_FLOAT__COMPLEX
 OP_FUNC(sum, c_float_complex, float _Complex, +=)
-#endif
-#if HAVE_DOUBLE__COMPLEX
 OP_FUNC(sum, c_double_complex, double _Complex, +=)
-#endif
-#if HAVE_LONG_DOUBLE__COMPLEX
 OP_FUNC(sum, c_long_double_complex, long double _Complex, +=)
-#endif
 
 /*************************************************************************
  * Product
@@ -323,9 +311,7 @@ OP_FUNC(prod, fortran_integer16, ompi_fortran_integer16_t, *=)
 /* Floating point */
 OP_FUNC(prod, float, float, *=)
 OP_FUNC(prod, double, double, *=)
-#if HAVE_LONG_DOUBLE
 OP_FUNC(prod, long_double, long double, *=)
-#endif
 #if OMPI_HAVE_FORTRAN_REAL
 OP_FUNC(prod, fortran_real, ompi_fortran_real_t, *=)
 #endif
@@ -345,15 +331,9 @@ OP_FUNC(prod, fortran_real8, ompi_fortran_real8_t, *=)
 OP_FUNC(prod, fortran_real16, ompi_fortran_real16_t, *=)
 #endif
 /* Complex */
-#if HAVE_FLOAT__COMPLEX
 OP_FUNC(prod, c_float_complex, float _Complex, *=)
-#endif
-#if HAVE_DOUBLE__COMPLEX
 OP_FUNC(prod, c_double_complex, double _Complex, *=)
-#endif
-#if HAVE_LONG_DOUBLE__COMPLEX
 OP_FUNC(prod, c_long_double_complex, long double _Complex, *=)
-#endif
 
 /*************************************************************************
  * Logical AND
@@ -550,9 +530,7 @@ LOC_STRUCT(double_int, double, int)
 LOC_STRUCT(long_int, long, int)
 LOC_STRUCT(2int, int, int)
 LOC_STRUCT(short_int, short, int)
-#if HAVE_LONG_DOUBLE
 LOC_STRUCT(long_double_int, long double, int)
-#endif
 
 /*************************************************************************
  * Max location
@@ -572,9 +550,7 @@ LOC_FUNC(maxloc, double_int, >)
 LOC_FUNC(maxloc, long_int, >)
 LOC_FUNC(maxloc, 2int, >)
 LOC_FUNC(maxloc, short_int, >)
-#if HAVE_LONG_DOUBLE
 LOC_FUNC(maxloc, long_double_int, >)
-#endif
 
 /*************************************************************************
  * Min location
@@ -594,9 +570,7 @@ LOC_FUNC(minloc, double_int, <)
 LOC_FUNC(minloc, long_int, <)
 LOC_FUNC(minloc, 2int, <)
 LOC_FUNC(minloc, short_int, <)
-#if HAVE_LONG_DOUBLE
 LOC_FUNC(minloc, long_double_int, <)
-#endif
 
 
 /*
@@ -719,9 +693,7 @@ FUNC_FUNC_3BUF(max, fortran_integer16, ompi_fortran_integer16_t)
 /* Floating point */
 FUNC_FUNC_3BUF(max, float, float)
 FUNC_FUNC_3BUF(max, double, double)
-#if HAVE_LONG_DOUBLE
 FUNC_FUNC_3BUF(max, long_double, long double)
-#endif
 #if OMPI_HAVE_FORTRAN_REAL
 FUNC_FUNC_3BUF(max, fortran_real, ompi_fortran_real_t)
 #endif
@@ -779,9 +751,7 @@ FUNC_FUNC_3BUF(min, fortran_integer16, ompi_fortran_integer16_t)
 /* Floating point */
 FUNC_FUNC_3BUF(min, float, float)
 FUNC_FUNC_3BUF(min, double, double)
-#if HAVE_LONG_DOUBLE
 FUNC_FUNC_3BUF(min, long_double, long double)
-#endif
 #if OMPI_HAVE_FORTRAN_REAL
 FUNC_FUNC_3BUF(min, fortran_real, ompi_fortran_real_t)
 #endif
@@ -836,9 +806,7 @@ OP_FUNC_3BUF(sum, fortran_integer16, ompi_fortran_integer16_t, +)
 /* Floating point */
 OP_FUNC_3BUF(sum, float, float, +)
 OP_FUNC_3BUF(sum, double, double, +)
-#if HAVE_LONG_DOUBLE
 OP_FUNC_3BUF(sum, long_double, long double, +)
-#endif
 #if OMPI_HAVE_FORTRAN_REAL
 OP_FUNC_3BUF(sum, fortran_real, ompi_fortran_real_t, +)
 #endif
@@ -858,15 +826,9 @@ OP_FUNC_3BUF(sum, fortran_real8, ompi_fortran_real8_t, +)
 OP_FUNC_3BUF(sum, fortran_real16, ompi_fortran_real16_t, +)
 #endif
 /* Complex */
-#if HAVE_FLOAT__COMPLEX
 OP_FUNC_3BUF(sum, c_float_complex, float _Complex, +)
-#endif
-#if HAVE_DOUBLE__COMPLEX
 OP_FUNC_3BUF(sum, c_double_complex, double _Complex, +)
-#endif
-#if HAVE_LONG_DOUBLE__COMPLEX
 OP_FUNC_3BUF(sum, c_long_double_complex, long double _Complex, +)
-#endif
 
 /*************************************************************************
  * Product
@@ -903,9 +865,7 @@ OP_FUNC_3BUF(prod, fortran_integer16, ompi_fortran_integer16_t, *)
 /* Floating point */
 OP_FUNC_3BUF(prod, float, float, *)
 OP_FUNC_3BUF(prod, double, double, *)
-#if HAVE_LONG_DOUBLE
 OP_FUNC_3BUF(prod, long_double, long double, *)
-#endif
 #if OMPI_HAVE_FORTRAN_REAL
 OP_FUNC_3BUF(prod, fortran_real, ompi_fortran_real_t, *)
 #endif
@@ -925,15 +885,9 @@ OP_FUNC_3BUF(prod, fortran_real8, ompi_fortran_real8_t, *)
 OP_FUNC_3BUF(prod, fortran_real16, ompi_fortran_real16_t, *)
 #endif
 /* Complex */
-#if HAVE_FLOAT__COMPLEX
 OP_FUNC_3BUF(prod, c_float_complex, float _Complex, *)
-#endif
-#if HAVE_DOUBLE__COMPLEX
 OP_FUNC_3BUF(prod, c_double_complex, double _Complex, *)
-#endif
-#if HAVE_LONG_DOUBLE__COMPLEX
 OP_FUNC_3BUF(prod, c_long_double_complex, long double _Complex, *)
-#endif
 
 /*************************************************************************
  * Logical AND
@@ -1131,9 +1085,7 @@ LOC_STRUCT_3BUF(double_int, double, int)
 LOC_STRUCT_3BUF(long_int, long, int)
 LOC_STRUCT_3BUF(2int, int, int)
 LOC_STRUCT_3BUF(short_int, short, int)
-#if HAVE_LONG_DOUBLE
 LOC_STRUCT_3BUF(long_double_int, long double, int)
-#endif
 */
 
 /*************************************************************************
@@ -1154,9 +1106,7 @@ LOC_FUNC_3BUF(maxloc, double_int, >)
 LOC_FUNC_3BUF(maxloc, long_int, >)
 LOC_FUNC_3BUF(maxloc, 2int, >)
 LOC_FUNC_3BUF(maxloc, short_int, >)
-#if HAVE_LONG_DOUBLE
 LOC_FUNC_3BUF(maxloc, long_double_int, >)
-#endif
 
 /*************************************************************************
  * Min location
@@ -1176,9 +1126,7 @@ LOC_FUNC_3BUF(minloc, double_int, <)
 LOC_FUNC_3BUF(minloc, long_int, <)
 LOC_FUNC_3BUF(minloc, 2int, <)
 LOC_FUNC_3BUF(minloc, short_int, <)
-#if HAVE_LONG_DOUBLE
 LOC_FUNC_3BUF(minloc, long_double_int, <)
-#endif
 
 /*
  * Helpful defines, because there's soooo many names!

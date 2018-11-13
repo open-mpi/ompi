@@ -155,7 +155,7 @@ COPY_CONTIGUOUS_BYTES( bytes, 16 )
 COPY_TYPE( float_2, float, 1 )
 #elif SIZEOF_DOUBLE == 2
 COPY_TYPE( float_2, double, 1 )
-#elif HAVE_LONG_DOUBLE && SIZEOF_LONG_DOUBLE == 2
+#elif SIZEOF_LONG_DOUBLE == 2
 COPY_TYPE( float_2, long double, 1 )
 #else
 /* #error No basic type for copy function for opal_datatype_float2 found */
@@ -166,7 +166,7 @@ COPY_TYPE( float_2, long double, 1 )
 COPY_TYPE( float_4, float, 1 )
 #elif SIZEOF_DOUBLE == 4
 COPY_TYPE( float_4, double, 1 )
-#elif HAVE_LONG_DOUBLE && SIZEOF_LONG_DOUBLE == 4
+#elif SIZEOF_LONG_DOUBLE == 4
 COPY_TYPE( float_4, long double, 1 )
 #else
 #error No basic type for copy function for opal_datatype_float4 found
@@ -176,7 +176,7 @@ COPY_TYPE( float_4, long double, 1 )
 COPY_TYPE( float_8, float, 1 )
 #elif SIZEOF_DOUBLE == 8
 COPY_TYPE( float_8, double, 1 )
-#elif HAVE_LONG_DOUBLE && SIZEOF_LONG_DOUBLE == 8
+#elif SIZEOF_LONG_DOUBLE == 8
 COPY_TYPE( float_8, long double, 1 )
 #else
 #error No basic type for copy function for opal_datatype_float8 found
@@ -186,7 +186,7 @@ COPY_TYPE( float_8, long double, 1 )
 COPY_TYPE( float_12, float, 1 )
 #elif SIZEOF_DOUBLE == 12
 COPY_TYPE( float_12, double, 1 )
-#elif HAVE_LONG_DOUBLE && SIZEOF_LONG_DOUBLE == 12
+#elif SIZEOF_LONG_DOUBLE == 12
 COPY_TYPE( float_12, long double, 1 )
 #else
 /* #error No basic type for copy function for opal_datatype_float12 found */
@@ -197,33 +197,18 @@ COPY_TYPE( float_12, long double, 1 )
 COPY_TYPE( float_16, float, 1 )
 #elif SIZEOF_DOUBLE == 16
 COPY_TYPE( float_16, double, 1 )
-#elif HAVE_LONG_DOUBLE && SIZEOF_LONG_DOUBLE == 16
+#elif SIZEOF_LONG_DOUBLE == 16
 COPY_TYPE( float_16, long double, 1 )
 #else
 /* #error No basic type for copy function for opal_datatype_float16 found */
 #define copy_float_16 NULL
 #endif
 
-#if HAVE_FLOAT__COMPLEX
 COPY_TYPE ( float_complex, float _Complex, 1)
-#else
-/* #error No basic type for copy function for opal_datatype_float_complex found */
-#define copy_float_complex NULL
-#endif
 
-#if HAVE_DOUBLE__COMPLEX
 COPY_TYPE ( double_complex, double _Complex, 1)
-#else
-/* #error No basic type for copy function for opal_datatype_double_complex found */
-#define copy_double_complex NULL
-#endif
 
-#if HAVE_LONG_DOUBLE__COMPLEX
 COPY_TYPE ( long_double_complex, long double _Complex, 1)
-#else
-/* #error No basic type for copy function for opal_datatype_long_double_complex found */
-#define copy_long_double_complex NULL
-#endif
 
 #if SIZEOF__BOOL == SIZEOF_CHAR
 COPY_TYPE (bool, char, 1)

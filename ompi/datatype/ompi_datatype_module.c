@@ -80,20 +80,11 @@ ompi_predefined_datatype_t ompi_mpi_int =            OMPI_DATATYPE_INIT_PREDEFIN
 ompi_predefined_datatype_t ompi_mpi_unsigned =       OMPI_DATATYPE_INIT_PREDEFINED (UNSIGNED, OMPI_DATATYPE_FLAG_DATA_C | OMPI_DATATYPE_FLAG_DATA_INT );
 ompi_predefined_datatype_t ompi_mpi_long =           OMPI_DATATYPE_INIT_PREDEFINED (LONG, OMPI_DATATYPE_FLAG_DATA_C | OMPI_DATATYPE_FLAG_DATA_INT );
 ompi_predefined_datatype_t ompi_mpi_unsigned_long =  OMPI_DATATYPE_INIT_PREDEFINED (UNSIGNED_LONG, OMPI_DATATYPE_FLAG_DATA_C | OMPI_DATATYPE_FLAG_DATA_INT );
-#if HAVE_LONG_LONG
 ompi_predefined_datatype_t ompi_mpi_long_long_int =  OMPI_DATATYPE_INIT_PREDEFINED (LONG_LONG_INT, OMPI_DATATYPE_FLAG_DATA_C | OMPI_DATATYPE_FLAG_DATA_INT );
 ompi_predefined_datatype_t ompi_mpi_unsigned_long_long = OMPI_DATATYPE_INIT_PREDEFINED (UNSIGNED_LONG_LONG, OMPI_DATATYPE_FLAG_DATA_C | OMPI_DATATYPE_FLAG_DATA_INT );
-#else
-ompi_predefined_datatype_t ompi_mpi_long_long_int =  OMPI_DATATYPE_INIT_UNAVAILABLE (LONG_LONG_INT, OMPI_DATATYPE_FLAG_DATA_C | OMPI_DATATYPE_FLAG_DATA_INT );
-ompi_predefined_datatype_t ompi_mpi_unsigned_long_long = OMPI_DATATYPE_INIT_UNAVAILABLE (UNSIGNED_LONG_LONG, OMPI_DATATYPE_FLAG_DATA_C | OMPI_DATATYPE_FLAG_DATA_INT);
-#endif  /* HAVE_LONG_LONG */
 ompi_predefined_datatype_t ompi_mpi_float =          OMPI_DATATYPE_INIT_PREDEFINED (FLOAT, OMPI_DATATYPE_FLAG_DATA_C | OMPI_DATATYPE_FLAG_DATA_FLOAT );
 ompi_predefined_datatype_t ompi_mpi_double =         OMPI_DATATYPE_INIT_PREDEFINED (DOUBLE, OMPI_DATATYPE_FLAG_DATA_C | OMPI_DATATYPE_FLAG_DATA_FLOAT );
-#if HAVE_LONG_DOUBLE
 ompi_predefined_datatype_t ompi_mpi_long_double =    OMPI_DATATYPE_INIT_PREDEFINED (LONG_DOUBLE, OMPI_DATATYPE_FLAG_DATA_C | OMPI_DATATYPE_FLAG_DATA_FLOAT );
-#else
-ompi_predefined_datatype_t ompi_mpi_long_double =    OMPI_DATATYPE_INIT_UNAVAILABLE (LONG_DOUBLE, OMPI_DATATYPE_FLAG_DATA_C | OMPI_DATATYPE_FLAG_DATA_FLOAT );
-#endif  /* HAVE_LONG_DOUBLE */
 #if defined(OPAL_ALIGNMENT_WCHAR) && OPAL_ALIGNMENT_WCHAR != 0
 ompi_predefined_datatype_t ompi_mpi_wchar =          OMPI_DATATYPE_INIT_PREDEFINED (WCHAR, OMPI_DATATYPE_FLAG_DATA_C );
 #else
@@ -113,11 +104,7 @@ ompi_predefined_datatype_t ompi_mpi_cxx_bool =       OMPI_DATATYPE_INIT_PREDEFIN
 ompi_predefined_datatype_t ompi_mpi_c_float_complex =       OMPI_DATATYPE_INIT_PREDEFINED_BASIC_TYPE (C_FLOAT_COMPLEX, C_COMPLEX, OMPI_DATATYPE_FLAG_DATA_C | OMPI_DATATYPE_FLAG_DATA_COMPLEX );
 ompi_predefined_datatype_t ompi_mpi_c_complex =             OMPI_DATATYPE_INIT_PREDEFINED_BASIC_TYPE (C_FLOAT_COMPLEX, C_COMPLEX, OMPI_DATATYPE_FLAG_DATA_C | OMPI_DATATYPE_FLAG_DATA_COMPLEX );
 ompi_predefined_datatype_t ompi_mpi_c_double_complex =      OMPI_DATATYPE_INIT_PREDEFINED (C_DOUBLE_COMPLEX, OMPI_DATATYPE_FLAG_DATA_C | OMPI_DATATYPE_FLAG_DATA_COMPLEX );
-#if HAVE_LONG_DOUBLE
 ompi_predefined_datatype_t ompi_mpi_c_long_double_complex = OMPI_DATATYPE_INIT_PREDEFINED (C_LONG_DOUBLE_COMPLEX, OMPI_DATATYPE_FLAG_DATA_C | OMPI_DATATYPE_FLAG_DATA_COMPLEX );
-#else
-ompi_predefined_datatype_t ompi_mpi_c_long_double_complex = OMPI_DATATYPE_INIT_UNAVAILABLE (C_LONG_DOUBLE_COMPLEX, OMPI_DATATYPE_FLAG_DATA_C | OMPI_DATATYPE_FLAG_DATA_COMPLEX );
-#endif  /* HAVE_LONG_DOUBLE */
 
 /* The C++ complex datatypes are the same as the C datatypes */
 ompi_predefined_datatype_t ompi_mpi_cxx_cplex =      OMPI_DATATYPE_INIT_PREDEFINED_BASIC_TYPE (C_FLOAT_COMPLEX, CXX_FLOAT_COMPLEX, OMPI_DATATYPE_FLAG_DATA_CPP | OMPI_DATATYPE_FLAG_DATA_COMPLEX );
@@ -137,7 +124,7 @@ ompi_predefined_datatype_t ompi_mpi_dblcplex =       OMPI_DATATYPE_INIT_UNAVAILA
 #endif
 
 /* In Fortran, there does not exist a type LONG DOUBLE COMPLEX, but DOUBLE COMPLEX(KIND=8) may require this */
-#if HAVE_LONG_DOUBLE && OMPI_HAVE_FORTRAN_DOUBLE_COMPLEX
+#if OMPI_HAVE_FORTRAN_DOUBLE_COMPLEX
 ompi_predefined_datatype_t ompi_mpi_ldblcplex =      OMPI_DATATYPE_INIT_PREDEFINED_BASIC_TYPE (C_LONG_DOUBLE_COMPLEX, LONG_DOUBLE_COMPLEX, OMPI_DATATYPE_FLAG_DATA_FORTRAN | OMPI_DATATYPE_FLAG_DATA_COMPLEX );
 #else
 ompi_predefined_datatype_t ompi_mpi_ldblcplex =      OMPI_DATATYPE_INIT_UNAVAILABLE (LONG_DOUBLE_COMPLEX, OMPI_DATATYPE_FLAG_DATA_FORTRAN | OMPI_DATATYPE_FLAG_DATA_COMPLEX );
@@ -174,11 +161,7 @@ ompi_predefined_datatype_t ompi_mpi_dblprec =        OMPI_DATATYPE_INIT_PREDEFIN
 /* Aggregate struct datatypes are not const */
 ompi_predefined_datatype_t ompi_mpi_float_int =      OMPI_DATATYPE_INIT_DEFER (FLOAT_INT, OMPI_DATATYPE_FLAG_DATA_C );
 ompi_predefined_datatype_t ompi_mpi_double_int =     OMPI_DATATYPE_INIT_DEFER (DOUBLE_INT, OMPI_DATATYPE_FLAG_DATA_C );
-#if HAVE_LONG_DOUBLE
 ompi_predefined_datatype_t ompi_mpi_longdbl_int =    OMPI_DATATYPE_INIT_DEFER (LONG_DOUBLE_INT, OMPI_DATATYPE_FLAG_DATA_C );
-#else
-ompi_predefined_datatype_t ompi_mpi_longdbl_int =    OMPI_DATATYPE_INIT_UNAVAILABLE (LONG_DOUBLE_INT, OMPI_DATATYPE_FLAG_DATA_C );
-#endif  /* HAVE_LONG_DOUBLE */
 
 ompi_predefined_datatype_t ompi_mpi_2int =           OMPI_DATATYPE_INIT_DEFER (2INT, OMPI_DATATYPE_FLAG_DATA_C | OMPI_DATATYPE_FLAG_DATA_INT );
 ompi_predefined_datatype_t ompi_mpi_short_int =      OMPI_DATATYPE_INIT_DEFER (SHORT_INT, OMPI_DATATYPE_FLAG_DATA_C | OMPI_DATATYPE_FLAG_DATA_INT );
