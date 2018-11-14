@@ -41,6 +41,7 @@
 #include "opal/threads/mutex.h"
 #include "opal/util/arch.h"
 #include "opal/util/argv.h"
+#include "opal/util/printf.h"
 #include "opal/align.h"
 #if OPAL_CUDA_SUPPORT
 #include "opal/datatype/opal_datatype_cuda.h"
@@ -584,16 +585,16 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
             }
         }
 
-        /* allocate the shared memory segment */
-        ret = asprintf (&data_file, "%s" OPAL_PATH_SEP "osc_rdma.%s.%x.%d",
-                        mca_osc_rdma_component.backing_directory, ompi_process_info.nodename,
-                        OMPI_PROC_MY_NAME->jobid, ompi_comm_get_cid(module->comm));
-        if (0 > ret) {
-            ret = OMPI_ERR_OUT_OF_RESOURCE;
-            break;
-        }
-
         if (0 == local_rank) {
+            /* allocate the shared memory segment */
+            ret = opal_asprintf (&data_file, "%s" OPAL_PATH_SEP "osc_rdma.%s.%x.%d",
+                            mca_osc_rdma_component.backing_directory, ompi_process_info.nodename,
+                            OMPI_PROC_MY_NAME->jobid, ompi_comm_get_cid(module->comm));
+            if (0 > ret) {
+                ret = OMPI_ERR_OUT_OF_RESOURCE;
+                break;
+            }
+
             /* allocate enough space for the state + data for all local ranks */
             ret = opal_shmem_segment_create (&module->seg_ds, data_file, total_size);
             free (data_file);
