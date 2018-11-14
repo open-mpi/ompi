@@ -410,28 +410,18 @@ AC_CHECK_SIZEOF(char)
 AC_CHECK_SIZEOF(short)
 AC_CHECK_SIZEOF(int)
 AC_CHECK_SIZEOF(long)
-if test "$ac_cv_type_long_long" = yes; then
-    AC_CHECK_SIZEOF(long long)
-fi
+AC_CHECK_SIZEOF(long long)
 AC_CHECK_SIZEOF(float)
 AC_CHECK_SIZEOF(double)
-if test "$ac_cv_type_long_double" = yes; then
-    AC_CHECK_SIZEOF(long double)
-fi
+AC_CHECK_SIZEOF(long double)
 if test "$ac_cv_type___float128" = yes; then
     AC_CHECK_SIZEOF(__float128)
 fi
 # We only need these types if we're building the OMPI project, but
 # OPAL currently doesn't protect for their lack of presence well.
-if test "$ac_cv_type_float__Complex" = yes; then
-    AC_CHECK_SIZEOF(float _Complex)
-fi
-if test "$ac_cv_type_double__Complex" = yes; then
-    AC_CHECK_SIZEOF(double _Complex)
-fi
-if test "$ac_cv_type_long_double__Complex" = yes; then
-    AC_CHECK_SIZEOF(long double _Complex)
-fi
+AC_CHECK_SIZEOF(float _Complex)
+AC_CHECK_SIZEOF(double _Complex)
+AC_CHECK_SIZEOF(long double _Complex)
 
 AC_CHECK_SIZEOF(void *)
 AC_CHECK_SIZEOF(size_t)
@@ -470,14 +460,10 @@ OPAL_C_GET_ALIGNMENT(short, OPAL_ALIGNMENT_SHORT)
 OPAL_C_GET_ALIGNMENT(wchar_t, OPAL_ALIGNMENT_WCHAR)
 OPAL_C_GET_ALIGNMENT(int, OPAL_ALIGNMENT_INT)
 OPAL_C_GET_ALIGNMENT(long, OPAL_ALIGNMENT_LONG)
-if test "$ac_cv_type_long_long" = yes; then
-    OPAL_C_GET_ALIGNMENT(long long, OPAL_ALIGNMENT_LONG_LONG)
-fi
+OPAL_C_GET_ALIGNMENT(long long, OPAL_ALIGNMENT_LONG_LONG)
 OPAL_C_GET_ALIGNMENT(float, OPAL_ALIGNMENT_FLOAT)
 OPAL_C_GET_ALIGNMENT(double, OPAL_ALIGNMENT_DOUBLE)
-if test "$ac_cv_type_long_double" = yes; then
-    OPAL_C_GET_ALIGNMENT(long double, OPAL_ALIGNMENT_LONG_DOUBLE)
-fi
+OPAL_C_GET_ALIGNMENT(long double, OPAL_ALIGNMENT_LONG_DOUBLE)
 if test "$ac_cv_type___float128" = yes; then
     OPAL_C_GET_ALIGNMENT(__float128, OPAL_ALIGNMENT___FLOAT128)
 fi
@@ -485,15 +471,9 @@ fi
 
 # We only need these types if we're building the OMPI project, but
 # OPAL currently doesn't protect for their lack of presence well.
-if test "$ac_cv_type_float__Complex" = yes; then
-    OPAL_C_GET_ALIGNMENT(float _Complex, OPAL_ALIGNMENT_FLOAT_COMPLEX)
-fi
-if test "$ac_cv_type_double__Complex" = yes; then
-    OPAL_C_GET_ALIGNMENT(double _Complex, OPAL_ALIGNMENT_DOUBLE_COMPLEX)
-fi
-if test "$ac_cv_type_long_double__Complex" = yes; then
-    OPAL_C_GET_ALIGNMENT(long double _Complex, OPAL_ALIGNMENT_LONG_DOUBLE_COMPLEX)
-fi
+OPAL_C_GET_ALIGNMENT(float _Complex, OPAL_ALIGNMENT_FLOAT_COMPLEX)
+OPAL_C_GET_ALIGNMENT(double _Complex, OPAL_ALIGNMENT_DOUBLE_COMPLEX)
+OPAL_C_GET_ALIGNMENT(long double _Complex, OPAL_ALIGNMENT_LONG_DOUBLE_COMPLEX)
 
 OPAL_C_GET_ALIGNMENT(void *, OPAL_ALIGNMENT_VOID_P)
 OPAL_C_GET_ALIGNMENT(size_t, OPAL_ALIGNMENT_SIZE_T)
