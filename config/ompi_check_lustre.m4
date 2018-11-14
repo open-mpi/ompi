@@ -79,7 +79,7 @@ EOF
 
                    # Try the compile
                    OPAL_LOG_COMMAND(
-                       [$CC $CFLAGS -I$with_lustre/include -c conftest.c],
+                       [$CC $CFLAGS -I$ompi_check_lustre_dir/include -c conftest.c],
                        [ompi_check_lustre_struct_happy="yes"],
                        [ompi_check_lustre_struct_happy="no"
                         ompi_check_lustre_happy="no"]
