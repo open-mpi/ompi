@@ -20,6 +20,8 @@
 #include "osc_ucx.h"
 #include "osc_ucx_request.h"
 
+#define UCX_VERSION(_major, _minor, _build) (((_major) * 100) + (_minor))
+
 #define memcpy_off(_dst, _src, _len, _off)        \
     memcpy(((char*)(_dst)) + (_off), _src, _len); \
     (_off) += (_len);
@@ -105,8 +107,15 @@ static int component_open(void) {
 }
 
 static int component_register(void) {
+    unsigned major          = 0;
+    unsigned minor          = 0;
+    unsigned release_number = 0;
     char *description_str;
-    mca_osc_ucx_component.priority = 200;
+
+    ucp_get_version(&major, &minor, &release_number);
+
+    mca_osc_ucx_component.priority = UCX_VERSION(major, minor, release_number) >= UCX_VERSION(1, 5, 0) ? 200 : 0;
+
     opal_asprintf(&description_str, "Priority of the osc/ucx component (default: %d)",
              mca_osc_ucx_component.priority);
     (void) mca_base_component_var_register(&mca_osc_ucx_component.super.osc_version, "priority", description_str,
