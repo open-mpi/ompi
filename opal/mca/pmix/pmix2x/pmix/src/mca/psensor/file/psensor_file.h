@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2010-2018 Cisco Systems, Inc.  All rights reserved.
  *
  * Copyright (c) 2017      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
@@ -29,7 +29,7 @@ typedef struct {
     pmix_list_t trackers;
 } pmix_psensor_file_component_t;
 
-extern pmix_psensor_file_component_t mca_psensor_file_component;
+PMIX_EXPORT extern pmix_psensor_file_component_t mca_psensor_file_component;
 extern pmix_psensor_base_module_t pmix_psensor_file_module;
 
 
