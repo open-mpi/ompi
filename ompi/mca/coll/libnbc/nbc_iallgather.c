@@ -132,7 +132,6 @@ static int nbc_allgather_init(const void* sendbuf, int sendcount, MPI_Datatype s
 
     switch (alg) {
       case NBC_ALLGATHER_LINEAR:
-        if (rank == 0) printf("MK: LINEAR\n");
         res = allgather_sched_linear(rank, p, schedule, sendbuf, sendcount, sendtype,
                                      recvbuf, recvcount, recvtype);
         break;
