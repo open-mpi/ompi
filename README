@@ -63,6 +63,59 @@ Much, much more information is also available in the Open MPI FAQ:
 
 ===========================================================================
 
+Quick start
+-----------
+
+In many cases, Open MPI can be built and installed by simply
+indicating the installation directory on the command line:
+
+$ tar xf openmpi-<version>.tar.bz2
+$ cd openmpi-<version>
+$ ./configure --prefix=<path> |& tee config.out
+...lots of output...
+$ make -j 8 |& tee make.out
+...lots of output...
+$ make install |& tee install.out
+...lots of output...
+
+Note that there are many, many configuration options to the
+"./configure" step.  Some of them may be needed for your particular
+environmnet; see below for desciptions of the options available.
+
+If your installation prefix path is not writable by a regular user,
+you may need to use sudo or su to run the "make install" step.  For
+example:
+
+$ sudo make install |& tee install.out
+[sudo] password for jsquyres: <enter your password here>
+...lots of output...
+
+Finally, note that VPATH builds are fully supported.  For example:
+
+$ tar xf openmpi-<version>.tar.bz2
+$ cd openmpi-<version>
+$ mkdir build
+$ cd build
+$ ../configure --prefix=<path> |& tee config.out
+...etc.
+
+The rest of this README file contains:
+
+- General release notes about Open MPI, including information about
+  platform, compiler, and run-time support, MPI and OpenSHMEM
+  functionality, network support, and MPI extensions.
+- Detailed information on building and installing Open MPI.
+- Open MPI version and library numbering policies, including how those
+  are related to backwards compatibility guarantees.
+- Information on how to both query and validate your Open MPI
+  installation.
+- Description of Open MPI extensions.
+- Examples showing how to compile and run Open MPI applications.
+- Summary information on the various plugin frameworks inside Open
+  MPI and OpenSHMEM.
+
+===========================================================================
+
 The following abbreviated list of release notes applies to this code
 base as of this writing (March 2017):
 
