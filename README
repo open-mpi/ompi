@@ -858,6 +858,18 @@ There are many available configure options (see "./configure --help"
 for a full list); a summary of the more commonly used ones is included
 below.
 
+NOTE: if you are building Open MPI on a network filesystem, the
+      machine you on which you are building *must* be
+      time-synchronized with the file server.  Specifically: Open
+      MPI's build system *requires* accurate filesystem timestamps.
+      If your "make" output includes warning about timestamps in the
+      future or runs GNU Automake, Autoconf, and/or Libtool, this is
+      *not normal*, and you may have an invalid build.  Ensure that
+      the time on your build machine is synchronized with the time on
+      your file server, or build on a local filesystem.  Then remove
+      the Open MPI source directory and start over (e.g., by
+      re-extracting the Open MPI tarball).
+
 Note that for many of Open MPI's --with-<foo> options, Open MPI will,
 by default, search for header files and/or libraries for <foo>.  If
 the relevant files are found, Open MPI will built support for <foo>;
