@@ -65,15 +65,24 @@
 
 #if OSHMEM_PROFILING
 #include "oshmem/include/pshmem.h"
+#pragma weak shmem_ctx_uint_atomic_compare_swap = pshmem_ctx_uint_atomic_compare_swap
+#pragma weak shmem_ctx_ulong_atomic_compare_swap = pshmem_ctx_ulong_atomic_compare_swap
+#pragma weak shmem_ctx_ulonglong_atomic_compare_swap = pshmem_ctx_ulonglong_atomic_compare_swap
 #pragma weak shmem_ctx_int_atomic_compare_swap = pshmem_ctx_int_atomic_compare_swap
 #pragma weak shmem_ctx_long_atomic_compare_swap = pshmem_ctx_long_atomic_compare_swap
 #pragma weak shmem_ctx_longlong_atomic_compare_swap = pshmem_ctx_longlong_atomic_compare_swap
+
 #pragma weak shmem_int_atomic_compare_swap = pshmem_int_atomic_compare_swap
 #pragma weak shmem_long_atomic_compare_swap = pshmem_long_atomic_compare_swap
 #pragma weak shmem_longlong_atomic_compare_swap = pshmem_longlong_atomic_compare_swap
+#pragma weak shmem_uint_atomic_compare_swap = pshmem_uint_atomic_compare_swap
+#pragma weak shmem_ulong_atomic_compare_swap = pshmem_ulong_atomic_compare_swap
+#pragma weak shmem_ulonglong_atomic_compare_swap = pshmem_ulonglong_atomic_compare_swap
+
 #pragma weak shmem_int_cswap = pshmem_int_cswap
 #pragma weak shmem_long_cswap = pshmem_long_cswap
 #pragma weak shmem_longlong_cswap = pshmem_longlong_cswap
+
 #pragma weak shmemx_int32_cswap = pshmemx_int32_cswap
 #pragma weak shmemx_int64_cswap = pshmemx_int64_cswap
 #include "oshmem/shmem/c/profile/defines.h"
@@ -82,9 +91,15 @@
 SHMEM_CTX_TYPE_ATOMIC_COMPARE_SWAP(_int, int, shmem)
 SHMEM_CTX_TYPE_ATOMIC_COMPARE_SWAP(_long, long, shmem)
 SHMEM_CTX_TYPE_ATOMIC_COMPARE_SWAP(_longlong, long long, shmem)
+SHMEM_CTX_TYPE_ATOMIC_COMPARE_SWAP(_uint, unsigned int, shmem)
+SHMEM_CTX_TYPE_ATOMIC_COMPARE_SWAP(_ulong, unsigned long, shmem)
+SHMEM_CTX_TYPE_ATOMIC_COMPARE_SWAP(_ulonglong, unsigned long long, shmem)
 SHMEM_TYPE_ATOMIC_COMPARE_SWAP(_int, int, shmem)
 SHMEM_TYPE_ATOMIC_COMPARE_SWAP(_long, long, shmem)
 SHMEM_TYPE_ATOMIC_COMPARE_SWAP(_longlong, long long, shmem)
+SHMEM_TYPE_ATOMIC_COMPARE_SWAP(_uint, unsigned int, shmem)
+SHMEM_TYPE_ATOMIC_COMPARE_SWAP(_ulong, unsigned long, shmem)
+SHMEM_TYPE_ATOMIC_COMPARE_SWAP(_ulonglong, unsigned long long, shmem)
 
 /* deprecated APIs */
 #define SHMEM_TYPE_CSWAP(type_name, type, prefix)                   \

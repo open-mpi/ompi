@@ -64,17 +64,31 @@
 #pragma weak shmem_ctx_int_p = pshmem_ctx_int_p
 #pragma weak shmem_ctx_long_p = pshmem_ctx_long_p
 #pragma weak shmem_ctx_longlong_p = pshmem_ctx_longlong_p
+#pragma weak shmem_ctx_schar_p = pshmem_ctx_schar_p
+#pragma weak shmem_ctx_uchar_p = pshmem_ctx_uchar_p
+#pragma weak shmem_ctx_ushort_p = pshmem_ctx_ushort_p
+#pragma weak shmem_ctx_uint_p = pshmem_ctx_uint_p
+#pragma weak shmem_ctx_ulong_p = pshmem_ctx_ulong_p
+#pragma weak shmem_ctx_ulonglong_p = pshmem_ctx_ulonglong_p
 #pragma weak shmem_ctx_float_p = pshmem_ctx_float_p
 #pragma weak shmem_ctx_double_p = pshmem_ctx_double_p
 #pragma weak shmem_ctx_longdouble_p = pshmem_ctx_longdouble_p
+
 #pragma weak shmem_char_p = pshmem_char_p
 #pragma weak shmem_short_p = pshmem_short_p
 #pragma weak shmem_int_p = pshmem_int_p
 #pragma weak shmem_long_p = pshmem_long_p
 #pragma weak shmem_longlong_p = pshmem_longlong_p
+#pragma weak shmem_schar_p = pshmem_schar_p
+#pragma weak shmem_uchar_p = pshmem_uchar_p
+#pragma weak shmem_ushort_p = pshmem_ushort_p
+#pragma weak shmem_uint_p = pshmem_uint_p
+#pragma weak shmem_ulong_p = pshmem_ulong_p
+#pragma weak shmem_ulonglong_p = pshmem_ulonglong_p
 #pragma weak shmem_float_p = pshmem_float_p
 #pragma weak shmem_double_p = pshmem_double_p
 #pragma weak shmem_longdouble_p = pshmem_longdouble_p
+
 #pragma weak shmemx_int16_p = pshmemx_int16_p
 #pragma weak shmemx_int32_p = pshmemx_int32_p
 #pragma weak shmemx_int64_p = pshmemx_int64_p
@@ -86,6 +100,12 @@ SHMEM_CTX_TYPE_P(_short, short, shmem)
 SHMEM_CTX_TYPE_P(_int, int, shmem)
 SHMEM_CTX_TYPE_P(_long, long, shmem)
 SHMEM_CTX_TYPE_P(_longlong, long long, shmem)
+SHMEM_CTX_TYPE_P(_schar, signed char, shmem)
+SHMEM_CTX_TYPE_P(_uchar, unsigned char, shmem)
+SHMEM_CTX_TYPE_P(_ushort, unsigned short, shmem)
+SHMEM_CTX_TYPE_P(_uint, unsigned int, shmem)
+SHMEM_CTX_TYPE_P(_ulong, unsigned long, shmem)
+SHMEM_CTX_TYPE_P(_ulonglong, unsigned long long, shmem)
 SHMEM_CTX_TYPE_P(_float, float, shmem)
 SHMEM_CTX_TYPE_P(_double, double, shmem)
 SHMEM_CTX_TYPE_P(_longdouble, long double, shmem)
@@ -94,6 +114,12 @@ SHMEM_TYPE_P(_short, short, shmem)
 SHMEM_TYPE_P(_int, int, shmem)
 SHMEM_TYPE_P(_long, long, shmem)
 SHMEM_TYPE_P(_longlong, long long, shmem)
+SHMEM_TYPE_P(_schar, signed char, shmem)
+SHMEM_TYPE_P(_uchar, unsigned char, shmem)
+SHMEM_TYPE_P(_ushort, unsigned short, shmem)
+SHMEM_TYPE_P(_uint, unsigned int, shmem)
+SHMEM_TYPE_P(_ulong, unsigned long, shmem)
+SHMEM_TYPE_P(_ulonglong, unsigned long long, shmem)
 SHMEM_TYPE_P(_float, float, shmem)
 SHMEM_TYPE_P(_double, double, shmem)
 SHMEM_TYPE_P(_longdouble, long double, shmem)

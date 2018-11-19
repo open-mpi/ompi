@@ -62,23 +62,38 @@
 #pragma weak shmem_ctx_int_get_nbi = pshmem_ctx_int_get_nbi
 #pragma weak shmem_ctx_long_get_nbi = pshmem_ctx_long_get_nbi
 #pragma weak shmem_ctx_longlong_get_nbi = pshmem_ctx_longlong_get_nbi
+#pragma weak shmem_ctx_schar_get_nbi = pshmem_ctx_schar_get_nbi
+#pragma weak shmem_ctx_uchar_get_nbi = pshmem_ctx_uchar_get_nbi
+#pragma weak shmem_ctx_ushort_get_nbi = pshmem_ctx_ushort_get_nbi
+#pragma weak shmem_ctx_uint_get_nbi = pshmem_ctx_uint_get_nbi
+#pragma weak shmem_ctx_ulong_get_nbi = pshmem_ctx_ulong_get_nbi
+#pragma weak shmem_ctx_ulonglong_get_nbi = pshmem_ctx_ulonglong_get_nbi
 #pragma weak shmem_ctx_float_get_nbi = pshmem_ctx_float_get_nbi
 #pragma weak shmem_ctx_double_get_nbi = pshmem_ctx_double_get_nbi
 #pragma weak shmem_ctx_longdouble_get_nbi = pshmem_ctx_longdouble_get_nbi
+
 #pragma weak shmem_char_get_nbi = pshmem_char_get_nbi
 #pragma weak shmem_short_get_nbi = pshmem_short_get_nbi
 #pragma weak shmem_int_get_nbi = pshmem_int_get_nbi
 #pragma weak shmem_long_get_nbi = pshmem_long_get_nbi
 #pragma weak shmem_longlong_get_nbi = pshmem_longlong_get_nbi
+#pragma weak shmem_schar_get_nbi = pshmem_schar_get_nbi
+#pragma weak shmem_uchar_get_nbi = pshmem_uchar_get_nbi
+#pragma weak shmem_ushort_get_nbi = pshmem_ushort_get_nbi
+#pragma weak shmem_uint_get_nbi = pshmem_uint_get_nbi
+#pragma weak shmem_ulong_get_nbi = pshmem_ulong_get_nbi
+#pragma weak shmem_ulonglong_get_nbi = pshmem_ulonglong_get_nbi
 #pragma weak shmem_float_get_nbi = pshmem_float_get_nbi
 #pragma weak shmem_double_get_nbi = pshmem_double_get_nbi
 #pragma weak shmem_longdouble_get_nbi = pshmem_longdouble_get_nbi
+
 #pragma weak shmem_ctx_get8_nbi = pshmem_ctx_get8_nbi
 #pragma weak shmem_ctx_get16_nbi = pshmem_ctx_get16_nbi
 #pragma weak shmem_ctx_get32_nbi = pshmem_ctx_get32_nbi
 #pragma weak shmem_ctx_get64_nbi = pshmem_ctx_get64_nbi
 #pragma weak shmem_ctx_get128_nbi = pshmem_ctx_get128_nbi
 #pragma weak shmem_ctx_getmem_nbi = pshmem_ctx_getmem_nbi
+
 #pragma weak shmem_get8_nbi = pshmem_get8_nbi
 #pragma weak shmem_get16_nbi = pshmem_get16_nbi
 #pragma weak shmem_get32_nbi = pshmem_get32_nbi
@@ -93,6 +108,12 @@ SHMEM_CTX_TYPE_GET_NB(_short, short)
 SHMEM_CTX_TYPE_GET_NB(_int, int)
 SHMEM_CTX_TYPE_GET_NB(_long, long)
 SHMEM_CTX_TYPE_GET_NB(_longlong, long long)
+SHMEM_CTX_TYPE_GET_NB(_schar, signed char)
+SHMEM_CTX_TYPE_GET_NB(_uchar, unsigned char)
+SHMEM_CTX_TYPE_GET_NB(_ushort, unsigned short)
+SHMEM_CTX_TYPE_GET_NB(_uint, unsigned int)
+SHMEM_CTX_TYPE_GET_NB(_ulong, unsigned long)
+SHMEM_CTX_TYPE_GET_NB(_ulonglong, unsigned long long)
 SHMEM_CTX_TYPE_GET_NB(_float, float)
 SHMEM_CTX_TYPE_GET_NB(_double, double)
 SHMEM_CTX_TYPE_GET_NB(_longdouble, long double)
@@ -101,6 +122,12 @@ SHMEM_TYPE_GET_NB(_short, short)
 SHMEM_TYPE_GET_NB(_int, int)
 SHMEM_TYPE_GET_NB(_long, long)
 SHMEM_TYPE_GET_NB(_longlong, long long)
+SHMEM_TYPE_GET_NB(_schar, signed char)
+SHMEM_TYPE_GET_NB(_uchar, unsigned char)
+SHMEM_TYPE_GET_NB(_ushort, unsigned short)
+SHMEM_TYPE_GET_NB(_uint, unsigned int)
+SHMEM_TYPE_GET_NB(_ulong, unsigned long)
+SHMEM_TYPE_GET_NB(_ulonglong, unsigned long long)
 SHMEM_TYPE_GET_NB(_float, float)
 SHMEM_TYPE_GET_NB(_double, double)
 SHMEM_TYPE_GET_NB(_longdouble, long double)
