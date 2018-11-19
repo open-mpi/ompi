@@ -141,6 +141,10 @@ int mca_common_ompio_set_view (ompio_file_t *fh,
     // in orig_file type, No need to set args on this one.
     ompi_datatype_duplicate (newfiletype, &fh->f_filetype);
 
+    if ( (fh->f_view_size % fh->f_etype_size) ) {
+        // File view is not a multiple of the etype.
+        return MPI_ERR_ARG;
+    }
 
     if( SIMPLE_PLUS == OMPIO_MCA_GET(fh, grouping_option) ) {
         fh->f_cc_size = get_contiguous_chunk_size (fh, 1);

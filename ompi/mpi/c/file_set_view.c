@@ -64,6 +64,10 @@ int MPI_File_set_view(MPI_File fh, MPI_Offset disp, MPI_Datatype etype,
                OMPI_CHECK_DATATYPE_FOR_VIEW(rc, filetype, 0);
            }
         }
+        if ( NULL == datarep) {
+            rc = MPI_ERR_UNSUPPORTED_DATAREP;
+            fh = MPI_FILE_NULL;            
+        }
         OMPI_ERRHANDLER_CHECK(rc, fh, rc, FUNC_NAME);
     }
 

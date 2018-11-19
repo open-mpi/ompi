@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2016 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2018 University of Houston. All rights reserved.
  * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      Cisco Systems, Inc.  All rights reserved.
@@ -372,6 +372,13 @@ int mca_io_ompio_file_sync (ompi_file_t *fh)
         OPAL_THREAD_UNLOCK(&fh->f_lock);
         return MPI_ERR_ACCESS;
     }        
+    // Make sure all processes reach this point before syncing the file.
+    ret = data->ompio_fh.f_comm->c_coll->coll_barrier (data->ompio_fh.f_comm,
+                                                       data->ompio_fh.f_comm->c_coll->coll_barrier_module);
+    if ( MPI_SUCCESS != ret ) {
+        OPAL_THREAD_UNLOCK(&fh->f_lock);
+        return ret;
+    }
     ret = data->ompio_fh.f_fs->fs_file_sync (&data->ompio_fh);
     OPAL_THREAD_UNLOCK(&fh->f_lock);
 
@@ -400,8 +407,9 @@ int mca_io_ompio_file_seek (ompi_file_t *fh,
         }
         break;
     case MPI_SEEK_CUR:
-        offset += data->ompio_fh.f_position_in_file_view;
-        offset += data->ompio_fh.f_disp;
+        ret = mca_common_ompio_file_get_position (&data->ompio_fh,
+                                                  &temp_offset);
+        offset += temp_offset;
         if (offset < 0) {
             OPAL_THREAD_UNLOCK(&fh->f_lock);
             return OMPI_ERROR;
