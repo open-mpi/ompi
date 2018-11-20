@@ -63,6 +63,59 @@ Much, much more information is also available in the Open MPI FAQ:
 
 ===========================================================================
 
+Quick start
+-----------
+
+In many cases, Open MPI can be built and installed by simply
+indicating the installation directory on the command line:
+
+$ tar xf openmpi-<version>.tar.bz2
+$ cd openmpi-<version>
+$ ./configure --prefix=<path> |& tee config.out
+...lots of output...
+$ make -j 8 |& tee make.out
+...lots of output...
+$ make install |& tee install.out
+...lots of output...
+
+Note that there are many, many configuration options to the
+"./configure" step.  Some of them may be needed for your particular
+environmnet; see below for desciptions of the options available.
+
+If your installation prefix path is not writable by a regular user,
+you may need to use sudo or su to run the "make install" step.  For
+example:
+
+$ sudo make install |& tee install.out
+[sudo] password for jsquyres: <enter your password here>
+...lots of output...
+
+Finally, note that VPATH builds are fully supported.  For example:
+
+$ tar xf openmpi-<version>.tar.bz2
+$ cd openmpi-<version>
+$ mkdir build
+$ cd build
+$ ../configure --prefix=<path> |& tee config.out
+...etc.
+
+The rest of this README file contains:
+
+- General release notes about Open MPI, including information about
+  platform, compiler, and run-time support, MPI and OpenSHMEM
+  functionality, network support, and MPI extensions.
+- Detailed information on building and installing Open MPI.
+- Open MPI version and library numbering policies, including how those
+  are related to backwards compatibility guarantees.
+- Information on how to both query and validate your Open MPI
+  installation.
+- Description of Open MPI extensions.
+- Examples showing how to compile and run Open MPI applications.
+- Summary information on the various plugin frameworks inside Open
+  MPI and OpenSHMEM.
+
+===========================================================================
+
 The following abbreviated list of release notes applies to this code
 base as of this writing (March 2017):
 
@@ -857,6 +910,18 @@ shell$ make [-j N] all install
 There are many available configure options (see "./configure --help"
 for a full list); a summary of the more commonly used ones is included
 below.
+
+NOTE: if you are building Open MPI on a network filesystem, the
+      machine you on which you are building *must* be
+      time-synchronized with the file server.  Specifically: Open
+      MPI's build system *requires* accurate filesystem timestamps.
+      If your "make" output includes warning about timestamps in the
+      future or runs GNU Automake, Autoconf, and/or Libtool, this is
+      *not normal*, and you may have an invalid build.  Ensure that
+      the time on your build machine is synchronized with the time on
+      your file server, or build on a local filesystem.  Then remove
+      the Open MPI source directory and start over (e.g., by
+      re-extracting the Open MPI tarball).
 
 Note that for many of Open MPI's --with-<foo> options, Open MPI will,
 by default, search for header files and/or libraries for <foo>.  If
