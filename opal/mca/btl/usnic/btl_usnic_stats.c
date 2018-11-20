@@ -373,10 +373,8 @@ static bool setup_mpit_pvar_type(void)
         pvar_type = MCA_BASE_VAR_TYPE_UNSIGNED_INT;
     } else if (sizeof(uint64_t) == sizeof(unsigned long)) {
         pvar_type = MCA_BASE_VAR_TYPE_UNSIGNED_LONG;
-#ifdef HAVE_UNSIGNED_LONG_LONG
     } else if (sizeof(uint64_t) == sizeof(unsigned long long)) {
         pvar_type = MCA_BASE_VAR_TYPE_UNSIGNED_LONG_LONG;
-#endif
     }
 
     /* Let the caller know if we found a compatible type or not */

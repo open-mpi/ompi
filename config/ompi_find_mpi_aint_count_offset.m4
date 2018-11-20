@@ -97,8 +97,7 @@ AC_DEFUN([_OMPI_FIND_MPI_COUNT_TYPE], [
 
     MPI_COUNT_TYPE=unknonwn
     AC_MSG_CHECKING([for type of MPI_Count])
-    if test $ac_cv_type_long_long = yes && \
-       test $ac_cv_sizeof_long_long -le $ac_cv_sizeof_size_t && \
+    if test $ac_cv_sizeof_long_long -le $ac_cv_sizeof_size_t && \
        test $ac_cv_sizeof_long_long -ge $MPI_AINT_SIZE; then
         MPI_COUNT_TYPE="long long"
         MPI_COUNT_DATATYPE=MPI_LONG_LONG

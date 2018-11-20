@@ -127,12 +127,10 @@ ompi_osc_portals4_get_dt(struct ompi_datatype_t *dt, ptl_datatype_t *ptl_dt)
         return get_sized_type(false, sizeof(long), ptl_dt);
     } else if (MPI_UNSIGNED == base_dt) {
         return get_sized_type(false, sizeof(int), ptl_dt);
-#if OPAL_HAVE_LONG_LONG
     } else if (MPI_LONG_LONG_INT == base_dt) {
         return get_sized_type(true, sizeof(long long int), ptl_dt);
     } else if (MPI_LONG_LONG == base_dt) {
         return get_sized_type(true, sizeof(long long), ptl_dt);
-#endif
     } else if (MPI_INT8_T == base_dt) {
         *ptl_dt = PTL_INT8_T;
     } else if (MPI_UINT8_T == base_dt) {
@@ -149,20 +147,14 @@ ompi_osc_portals4_get_dt(struct ompi_datatype_t *dt, ptl_datatype_t *ptl_dt)
         *ptl_dt = PTL_INT64_T;
     } else if (MPI_UINT64_T == base_dt) {
         *ptl_dt = PTL_UINT64_T;
-#if HAVE_FLOAT__COMPLEX
     } else if (MPI_C_COMPLEX == base_dt) {
         *ptl_dt = PTL_DOUBLE_COMPLEX;
     } else if (MPI_C_FLOAT_COMPLEX == base_dt) {
         *ptl_dt = PTL_FLOAT_COMPLEX;
-#endif
-#if HAVE_DOUBLE__COMPLEX
     } else if (MPI_C_DOUBLE_COMPLEX == base_dt) {
         *ptl_dt = PTL_DOUBLE_COMPLEX;
-#endif
-#if HAVE_LONG_DOUBLE__COMPLEX
     } else if (MPI_C_LONG_DOUBLE_COMPLEX == base_dt) {
         *ptl_dt = PTL_LONG_DOUBLE_COMPLEX;
-#endif
     } else if (MPI_AINT == base_dt) {
         if (sizeof(MPI_Aint) == 2) {
             *ptl_dt = PTL_UINT16_T;
