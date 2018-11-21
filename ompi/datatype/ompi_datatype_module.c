@@ -17,7 +17,7 @@
  *                         reserved.
  * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2016      FUJITSU LIMITED.  All rights reserved.
+ * Copyright (c) 2016-2018 FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -49,9 +49,9 @@ int32_t ompi_datatype_number_of_predefined_data = 0;
  * The following initialization of C, C++ and Fortran types is fairly complex,
  * based on the OPAL-datatypes.
  *   ompi_datatypes.h
- *       \-------> ompi_datatypes_internal.h   (Macros defining type-number and initalization)
+ *       \-------> ompi_datatypes_internal.h   (Macros defining type-number and initialization)
  *   opal_datatypes.h
- *       \-------> opal_datatypes_internal.h   (Macros defining type-number and initalization)
+ *       \-------> opal_datatypes_internal.h   (Macros defining type-number and initialization)
  *
  * The Macros in the OMPI Layer differ in that:
  *   Additionally to OMPI_DATATYPE_INIT_PREDEFINED_BASIC_TYPE, we have a OMPI_DATATYPE_INIT_PREDEFINED,
@@ -82,6 +82,11 @@ ompi_predefined_datatype_t ompi_mpi_long =           OMPI_DATATYPE_INIT_PREDEFIN
 ompi_predefined_datatype_t ompi_mpi_unsigned_long =  OMPI_DATATYPE_INIT_PREDEFINED (UNSIGNED_LONG, OMPI_DATATYPE_FLAG_DATA_C | OMPI_DATATYPE_FLAG_DATA_INT );
 ompi_predefined_datatype_t ompi_mpi_long_long_int =  OMPI_DATATYPE_INIT_PREDEFINED (LONG_LONG_INT, OMPI_DATATYPE_FLAG_DATA_C | OMPI_DATATYPE_FLAG_DATA_INT );
 ompi_predefined_datatype_t ompi_mpi_unsigned_long_long = OMPI_DATATYPE_INIT_PREDEFINED (UNSIGNED_LONG_LONG, OMPI_DATATYPE_FLAG_DATA_C | OMPI_DATATYPE_FLAG_DATA_INT );
+#if defined(HAVE_SHORT_FLOAT) || defined(HAVE_OPAL_SHORT_FLOAT_T)
+ompi_predefined_datatype_t ompi_mpi_short_float =    OMPI_DATATYPE_INIT_PREDEFINED (SHORT_FLOAT, OMPI_DATATYPE_FLAG_DATA_C | OMPI_DATATYPE_FLAG_DATA_FLOAT );
+#else
+ompi_predefined_datatype_t ompi_mpi_short_float =    OMPI_DATATYPE_INIT_UNAVAILABLE (SHORT_FLOAT, OMPI_DATATYPE_FLAG_DATA_C | OMPI_DATATYPE_FLAG_DATA_FLOAT );
+#endif  /* HAVE_SHORT_FLOAT */
 ompi_predefined_datatype_t ompi_mpi_float =          OMPI_DATATYPE_INIT_PREDEFINED (FLOAT, OMPI_DATATYPE_FLAG_DATA_C | OMPI_DATATYPE_FLAG_DATA_FLOAT );
 ompi_predefined_datatype_t ompi_mpi_double =         OMPI_DATATYPE_INIT_PREDEFINED (DOUBLE, OMPI_DATATYPE_FLAG_DATA_C | OMPI_DATATYPE_FLAG_DATA_FLOAT );
 ompi_predefined_datatype_t ompi_mpi_long_double =    OMPI_DATATYPE_INIT_PREDEFINED (LONG_DOUBLE, OMPI_DATATYPE_FLAG_DATA_C | OMPI_DATATYPE_FLAG_DATA_FLOAT );
@@ -101,12 +106,22 @@ ompi_predefined_datatype_t ompi_mpi_cxx_bool =       OMPI_DATATYPE_INIT_PREDEFIN
 /*
  * Complex datatypes for C (base types), C++, and fortran
  */
+#if defined(HAVE_SHORT_FLOAT__COMPLEX) || defined(HAVE_OPAL_SHORT_FLOAT_COMPLEX_T)
+ompi_predefined_datatype_t ompi_mpi_c_short_float_complex = OMPI_DATATYPE_INIT_PREDEFINED (C_SHORT_FLOAT_COMPLEX, OMPI_DATATYPE_FLAG_DATA_C | OMPI_DATATYPE_FLAG_DATA_COMPLEX );
+#else
+ompi_predefined_datatype_t ompi_mpi_c_short_float_complex = OMPI_DATATYPE_INIT_UNAVAILABLE (C_SHORT_FLOAT_COMPLEX, OMPI_DATATYPE_FLAG_DATA_C | OMPI_DATATYPE_FLAG_DATA_COMPLEX );
+#endif  /* HAVE_SHORT_FLOAT__COMPLEX */
 ompi_predefined_datatype_t ompi_mpi_c_float_complex =       OMPI_DATATYPE_INIT_PREDEFINED_BASIC_TYPE (C_FLOAT_COMPLEX, C_COMPLEX, OMPI_DATATYPE_FLAG_DATA_C | OMPI_DATATYPE_FLAG_DATA_COMPLEX );
 ompi_predefined_datatype_t ompi_mpi_c_complex =             OMPI_DATATYPE_INIT_PREDEFINED_BASIC_TYPE (C_FLOAT_COMPLEX, C_COMPLEX, OMPI_DATATYPE_FLAG_DATA_C | OMPI_DATATYPE_FLAG_DATA_COMPLEX );
 ompi_predefined_datatype_t ompi_mpi_c_double_complex =      OMPI_DATATYPE_INIT_PREDEFINED (C_DOUBLE_COMPLEX, OMPI_DATATYPE_FLAG_DATA_C | OMPI_DATATYPE_FLAG_DATA_COMPLEX );
 ompi_predefined_datatype_t ompi_mpi_c_long_double_complex = OMPI_DATATYPE_INIT_PREDEFINED (C_LONG_DOUBLE_COMPLEX, OMPI_DATATYPE_FLAG_DATA_C | OMPI_DATATYPE_FLAG_DATA_COMPLEX );
 
 /* The C++ complex datatypes are the same as the C datatypes */
+#if defined(HAVE_SHORT_FLOAT__COMPLEX) || defined(HAVE_OPAL_SHORT_FLOAT_COMPLEX_T)
+ompi_predefined_datatype_t ompi_mpi_cxx_sfltcplex =  OMPI_DATATYPE_INIT_PREDEFINED_BASIC_TYPE (C_SHORT_FLOAT_COMPLEX, CXX_SHORT_FLOAT_COMPLEX, OMPI_DATATYPE_FLAG_DATA_CPP | OMPI_DATATYPE_FLAG_DATA_COMPLEX );
+#else
+ompi_predefined_datatype_t ompi_mpi_cxx_sfltcplex =  OMPI_DATATYPE_INIT_UNAVAILABLE (CXX_SHORT_FLOAT_COMPLEX, OMPI_DATATYPE_FLAG_DATA_CPP | OMPI_DATATYPE_FLAG_DATA_COMPLEX );
+#endif  /* HAVE_SHORT_FLOAT__COMPLEX */
 ompi_predefined_datatype_t ompi_mpi_cxx_cplex =      OMPI_DATATYPE_INIT_PREDEFINED_BASIC_TYPE (C_FLOAT_COMPLEX, CXX_FLOAT_COMPLEX, OMPI_DATATYPE_FLAG_DATA_CPP | OMPI_DATATYPE_FLAG_DATA_COMPLEX );
 ompi_predefined_datatype_t ompi_mpi_cxx_dblcplex =   OMPI_DATATYPE_INIT_PREDEFINED_BASIC_TYPE (C_DOUBLE_COMPLEX, CXX_DOUBLE_COMPLEX, OMPI_DATATYPE_FLAG_DATA_CPP | OMPI_DATATYPE_FLAG_DATA_COMPLEX );
 ompi_predefined_datatype_t ompi_mpi_cxx_ldblcplex =  OMPI_DATATYPE_INIT_PREDEFINED_BASIC_TYPE (C_LONG_DOUBLE_COMPLEX, CXX_LONG_DOUBLE_COMPLEX, OMPI_DATATYPE_FLAG_DATA_CPP | OMPI_DATATYPE_FLAG_DATA_COMPLEX );
@@ -346,6 +361,12 @@ const ompi_datatype_t* ompi_datatype_basicDatatypes[OMPI_DATATYPE_MPI_MAX_PREDEF
 
     /* MPI 3.0 types */
     [OMPI_DATATYPE_MPI_COUNT] = &ompi_mpi_count.dt,
+
+    /* Datatypes proposed to the MPI Forum in June 2017 for proposal in
+     * the MPI 4.0 standard. As of February 2019, it is not accepted yet.
+     * See https://github.com/mpi-forum/mpi-issues/issues/65 */
+    [OMPI_DATATYPE_MPI_SHORT_FLOAT] = &ompi_mpi_short_float.dt,
+    [OMPI_DATATYPE_MPI_C_SHORT_FLOAT_COMPLEX] = &ompi_mpi_c_short_float_complex.dt,
 
     [OMPI_DATATYPE_MPI_UNAVAILABLE] = &ompi_mpi_unavailable.dt,
 };
@@ -611,6 +632,13 @@ int32_t ompi_datatype_init( void )
 
     /* MPI 3.0 types */
     MOOG(count, 72);
+
+    /* Datatypes proposed to the MPI Forum in June 2017 for proposal in
+     * the MPI 4.0 standard. As of February 2019, it is not accepted yet.
+     * See https://github.com/mpi-forum/mpi-issues/issues/65 */
+    MOOG(short_float, 73);
+    MOOG(c_short_float_complex, 74);
+    MOOG(cxx_sfltcplex, 75);
 
     /**
      * Now make sure all non-contiguous types are marked as such.

@@ -9,7 +9,7 @@
  *                         reserved.
  * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2016      FUJITSU LIMITED.  All rights reserved.
+ * Copyright (c) 2016-2018 FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -99,8 +99,16 @@
  */
 #define OMPI_DATATYPE_MPI_COUNT                   0x2E
 
+/*
+ * Datatypes proposed to the MPI Forum in June 2017 for proposal in
+ * the MPI 4.0 standard. As of February 2019, it is not accepted yet.
+ * See https://github.com/mpi-forum/mpi-issues/issues/65
+ */
+#define OMPI_DATATYPE_MPI_SHORT_FLOAT             0x2F
+#define OMPI_DATATYPE_MPI_C_SHORT_FLOAT_COMPLEX   0x30
+
 /* This should __ALWAYS__ stay last  */
-#define OMPI_DATATYPE_MPI_UNAVAILABLE             0x2F
+#define OMPI_DATATYPE_MPI_UNAVAILABLE             0x31
 
 
 #define OMPI_DATATYPE_MPI_MAX_PREDEFINED          (OMPI_DATATYPE_MPI_UNAVAILABLE+1)
@@ -382,6 +390,7 @@
  * C++ datatypes, these map to C datatypes.
  */
 #define OMPI_DATATYPE_MPI_CXX_BOOL                OMPI_DATATYPE_MPI_C_BOOL
+#define OMPI_DATATYPE_MPI_CXX_SHORT_FLOAT_COMPLEX OMPI_DATATYPE_MPI_C_SHORT_FLOAT_COMPLEX
 #define OMPI_DATATYPE_MPI_CXX_FLOAT_COMPLEX       OMPI_DATATYPE_MPI_C_FLOAT_COMPLEX
 #define OMPI_DATATYPE_MPI_CXX_DOUBLE_COMPLEX      OMPI_DATATYPE_MPI_C_DOUBLE_COMPLEX
 #define OMPI_DATATYPE_MPI_CXX_LONG_DOUBLE_COMPLEX OMPI_DATATYPE_MPI_C_LONG_DOUBLE_COMPLEX
@@ -438,7 +447,7 @@ extern const ompi_datatype_t* ompi_datatype_basicDatatypes[OMPI_DATATYPE_MPI_MAX
     OMPI_DATATYPE_INIT_PREDEFINED_BASIC_TYPE( UNAVAILABLE, NAME, FLAGS )
 
 /*
- * Initilization for these types is deferred until runtime.
+ * Initialization for these types is deferred until runtime.
  *
  * Using this macro implies that at this point not all informations needed
  * to fill up the datatype are known. We fill them with zeros and then later
@@ -570,6 +579,26 @@ extern const ompi_datatype_t* ompi_datatype_basicDatatypes[OMPI_DATATYPE_MPI_MAX
 #define OMPI_DATATYPE_INITIALIZER_UNSIGNED_LONG_LONG  OPAL_DATATYPE_INITIALIZER_UINT16
 #endif
 
+#if defined(HAVE_SHORT_FLOAT)
+#if SIZEOF_SHORT_FLOAT == 2
+#define OMPI_DATATYPE_INITIALIZER_SHORT_FLOAT         OPAL_DATATYPE_INITIALIZER_FLOAT2
+#elif SIZEOF_SHORT_FLOAT == 4
+#define OMPI_DATATYPE_INITIALIZER_SHORT_FLOAT         OPAL_DATATYPE_INITIALIZER_FLOAT4
+#elif SIZEOF_SHORT_FLOAT == 8
+#define OMPI_DATATYPE_INITIALIZER_SHORT_FLOAT         OPAL_DATATYPE_INITIALIZER_FLOAT8
+#endif
+#elif defined(HAVE_OPAL_SHORT_FLOAT_T) /* HAVE_SHORT_FLOAT */
+#if SIZEOF_OPAL_SHORT_FLOAT_T == 2
+#define OMPI_DATATYPE_INITIALIZER_SHORT_FLOAT         OPAL_DATATYPE_INITIALIZER_FLOAT2
+#elif SIZEOF_OPAL_SHORT_FLOAT_T == 4
+#define OMPI_DATATYPE_INITIALIZER_SHORT_FLOAT         OPAL_DATATYPE_INITIALIZER_FLOAT4
+#elif SIZEOF_OPAL_SHORT_FLOAT_T == 8
+#define OMPI_DATATYPE_INITIALIZER_SHORT_FLOAT         OPAL_DATATYPE_INITIALIZER_FLOAT8
+#endif
+#else /* HAVE_SHORT_FLOAT */
+#define OMPI_DATATYPE_INITIALIZER_SHORT_FLOAT         OPAL_DATATYPE_INITIALIZER_UNAVAILABLE
+#endif /* HAVE_SHORT_FLOAT */
+
 #if SIZEOF_FLOAT == 2
 #define OMPI_DATATYPE_INITIALIZER_FLOAT               OPAL_DATATYPE_INITIALIZER_FLOAT2
 #elif SIZEOF_FLOAT == 4
@@ -604,6 +633,7 @@ extern const ompi_datatype_t* ompi_datatype_basicDatatypes[OMPI_DATATYPE_MPI_MAX
 
 #define OMPI_DATATYPE_INITIALIZER_WCHAR               OPAL_DATATYPE_INITIALIZER_WCHAR
 
+#define OMPI_DATATYPE_INITIALIZER_C_SHORT_FLOAT_COMPLEX OPAL_DATATYPE_INITIALIZER_SHORT_FLOAT_COMPLEX
 #define OMPI_DATATYPE_INITIALIZER_C_FLOAT_COMPLEX       OPAL_DATATYPE_INITIALIZER_FLOAT_COMPLEX
 #define OMPI_DATATYPE_INITIALIZER_C_DOUBLE_COMPLEX      OPAL_DATATYPE_INITIALIZER_DOUBLE_COMPLEX
 #define OMPI_DATATYPE_INITIALIZER_C_LONG_DOUBLE_COMPLEX OPAL_DATATYPE_INITIALIZER_LONG_DOUBLE_COMPLEX
@@ -615,7 +645,7 @@ extern const ompi_datatype_t* ompi_datatype_basicDatatypes[OMPI_DATATYPE_MPI_MAX
 #define OMPI_DATATYPE_FIRST_TYPE                      OPAL_DATATYPE_MAX_PREDEFINED
 
 /*
- * Derived datatypes supposely contiguous
+ * Derived datatypes supposedly contiguous
  */
 #define OMPI_DATATYPE_2INT                            (OMPI_DATATYPE_FIRST_TYPE+6)
 #define OMPI_DATATYPE_2INTEGER                        (OMPI_DATATYPE_FIRST_TYPE+7)

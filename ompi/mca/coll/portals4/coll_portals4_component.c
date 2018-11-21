@@ -116,6 +116,12 @@ ptl_datatype_t ompi_coll_portals4_atomic_datatype [OMPI_DATATYPE_MPI_MAX_PREDEFI
         /* MPI 3.0 types */
         [OMPI_DATATYPE_MPI_COUNT] = COLL_PORTALS4_NO_DTYPE,
 
+        /* Datatypes proposed to the MPI Forum in June 2017 for proposal in
+         * the MPI 4.0 standard. As of February 2019, it is not accepted yet.
+         * See https://github.com/mpi-forum/mpi-issues/issues/65 */
+        [OMPI_DATATYPE_MPI_SHORT_FLOAT] = COLL_PORTALS4_NO_DTYPE,
+        [OMPI_DATATYPE_MPI_C_SHORT_FLOAT_COMPLEX] = COLL_PORTALS4_NO_DTYPE,
+
         [OMPI_DATATYPE_MPI_UNAVAILABLE] = COLL_PORTALS4_NO_DTYPE,
 
 };
