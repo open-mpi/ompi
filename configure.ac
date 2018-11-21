@@ -494,6 +494,12 @@ OPAL_C_GET_ALIGNMENT(void *, OPAL_ALIGNMENT_VOID_P)
 OPAL_C_GET_ALIGNMENT(size_t, OPAL_ALIGNMENT_SIZE_T)
 
 #
+# Check for an alternate type of C 'short float'
+#
+
+OPAL_CHECK_ALT_SHORT_FLOAT
+
+#
 # Check for other compiler characteristics
 #
 

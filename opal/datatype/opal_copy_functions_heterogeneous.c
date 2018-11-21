@@ -375,6 +375,8 @@ COPY_TYPE_HETEROGENEOUS( float2, float )
 COPY_TYPE_HETEROGENEOUS( float2, double )
 #elif SIZEOF_LONG_DOUBLE == 2
 COPY_TYPE_HETEROGENEOUS( float2, long double )
+#elif defined(HAVE_OPAL_SHORT_FLOAT_T) && SIZEOF_OPAL_SHORT_FLOAT_T == 2
+COPY_TYPE_HETEROGENEOUS( float2, opal_short_float_t )
 #else
 /* #error No basic type for copy function for opal_datatype_float2 found */
 #define copy_float2_heterogeneous NULL
@@ -388,6 +390,8 @@ COPY_TYPE_HETEROGENEOUS( float4, float )
 COPY_TYPE_HETEROGENEOUS( float4, double )
 #elif SIZEOF_LONG_DOUBLE == 4
 COPY_TYPE_HETEROGENEOUS( float4, long double )
+#elif defined(HAVE_OPAL_SHORT_FLOAT_T) && SIZEOF_OPAL_SHORT_FLOAT_T == 4
+COPY_TYPE_HETEROGENEOUS( float4, opal_short_float_t )
 #else
 /* #error No basic type for copy function for opal_datatype_float4 found */
 #define copy_float4_heterogeneous NULL
@@ -401,6 +405,8 @@ COPY_TYPE_HETEROGENEOUS( float8, float )
 COPY_TYPE_HETEROGENEOUS( float8, double )
 #elif SIZEOF_LONG_DOUBLE == 8
 COPY_TYPE_HETEROGENEOUS( float8, long double )
+#elif defined(HAVE_OPAL_SHORT_FLOAT_T) && SIZEOF_OPAL_SHORT_FLOAT_T == 8
+COPY_TYPE_HETEROGENEOUS( float8, opal_short_float_t )
 #else
 /* #error No basic type for copy function for opal_datatype_float8 found */
 #define copy_float8_heterogeneous NULL
@@ -414,6 +420,8 @@ COPY_TYPE_HETEROGENEOUS( float12, float )
 COPY_TYPE_HETEROGENEOUS( float12, double )
 #elif SIZEOF_LONG_DOUBLE == 12
 COPY_TYPE_HETEROGENEOUS( float12, long double )
+#elif defined(HAVE_OPAL_SHORT_FLOAT_T) && SIZEOF_OPAL_SHORT_FLOAT_T == 12
+COPY_TYPE_HETEROGENEOUS( float12, opal_short_float_t )
 #else
 /* #error No basic type for copy function for opal_datatype_float12 found */
 #define copy_float12_heterogeneous NULL
@@ -427,6 +435,8 @@ COPY_TYPE_HETEROGENEOUS( float16, float )
 COPY_TYPE_HETEROGENEOUS( float16, double )
 #elif SIZEOF_LONG_DOUBLE == 16
 COPY_TYPE_HETEROGENEOUS_INTERNAL( float16, long double, 1)
+#elif defined(HAVE_OPAL_SHORT_FLOAT_T) && SIZEOF_OPAL_SHORT_FLOAT_T == 16
+COPY_TYPE_HETEROGENEOUS( float16, opal_short_float_t )
 #else
 /* #error No basic type for copy function for opal_datatype_float16 found */
 #define copy_float16_heterogeneous NULL
@@ -434,6 +444,8 @@ COPY_TYPE_HETEROGENEOUS_INTERNAL( float16, long double, 1)
 
 #if defined(HAVE_SHORT_FLOAT__COMPLEX)
 COPY_2SAMETYPE_HETEROGENEOUS( short_float_complex, short float _Complex )
+#elif defined(HAVE_OPAL_SHORT_FLOAT_COMPLEX_T)
+COPY_2SAMETYPE_HETEROGENEOUS( short_float_complex, opal_short_float_complex_t )
 #else
 /* #error No basic type for copy function for opal_datatype_short_float_complex found */
 #define copy_short_float_complex_heterogeneous NULL

@@ -109,6 +109,8 @@ OPAL_DECLSPEC const size_t opal_datatype_local_sizes[OPAL_DATATYPE_MAX_PREDEFINE
     [OPAL_DATATYPE_FLOAT16] = 16,   /* sizeof (float16) */
 #if defined(HAVE_SHORT_FLOAT__COMPLEX)
     [OPAL_DATATYPE_SHORT_FLOAT_COMPLEX] = sizeof(short float _Complex),
+#elif defined(HAVE_OPAL_SHORT_FLOAT_COMPLEX_T)
+    [OPAL_DATATYPE_SHORT_FLOAT_COMPLEX] = sizeof(opal_short_float_complex_t),
 #else
     [OPAL_DATATYPE_SHORT_FLOAT_COMPLEX] = 4, /* typical sizeof(short float _Complex) */
 #endif

@@ -375,6 +375,8 @@ void ompi_info_do_config(bool want_all)
         opal_info_out_int("C long size", "compiler:c:sizeof:long", sizeof(long));
 #if defined(HAVE_SHORT_FLOAT)
         opal_info_out_int("C short float size", "compiler:c:sizeof:short_float", sizeof(short float));
+#elif defined(HAVE_OPAL_SHORT_FLOAT_T)
+        opal_info_out_int("C short float size", "compiler:c:sizeof:short_float", sizeof(opal_short_float_t));
 #endif
         opal_info_out_int("C float size", "compiler:c:sizeof:float", sizeof(float));
         opal_info_out_int("C double size", "compiler:c:sizeof:double", sizeof(double));
@@ -392,6 +394,8 @@ void ompi_info_do_config(bool want_all)
         opal_info_out_int("C int align", "compiler:c:align:int", OPAL_ALIGNMENT_INT);
 #if defined(HAVE_SHORT_FLOAT)
         opal_info_out_int("C short float align", "compiler:c:align:short_float", OPAL_ALIGNMENT_SHORT_FLOAT);
+#elif defined(HAVE_OPAL_SHORT_FLOAT_T)
+        opal_info_out_int("C short float align", "compiler:c:align:short_float", OPAL_ALIGNMENT_OPAL_SHORT_FLOAT_T);
 #endif
         opal_info_out_int("C float align", "compiler:c:align:float", OPAL_ALIGNMENT_FLOAT);
         opal_info_out_int("C double align", "compiler:c:align:double", OPAL_ALIGNMENT_DOUBLE);
