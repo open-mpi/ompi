@@ -63,6 +63,7 @@
 #pragma weak shmem_ctx_int_g = pshmem_ctx_int_g
 #pragma weak shmem_ctx_long_g = pshmem_ctx_long_g
 #pragma weak shmem_ctx_longlong_g = pshmem_ctx_longlong_g
+#pragma weak shmem_ctx_schar_g = pshmem_ctx_schar_g
 #pragma weak shmem_ctx_uchar_g = pshmem_ctx_uchar_g
 #pragma weak shmem_ctx_ushort_g = pshmem_ctx_ushort_g
 #pragma weak shmem_ctx_uint_g = pshmem_ctx_uint_g
@@ -77,6 +78,7 @@
 #pragma weak shmem_int_g = pshmem_int_g
 #pragma weak shmem_long_g = pshmem_long_g
 #pragma weak shmem_longlong_g = pshmem_longlong_g
+#pragma weak shmem_schar_g = pshmem_schar_g
 #pragma weak shmem_uchar_g = pshmem_uchar_g
 #pragma weak shmem_ushort_g = pshmem_ushort_g
 #pragma weak shmem_uint_g = pshmem_uint_g

@@ -204,8 +204,6 @@ OSHMEM_DECLSPEC void shmemx_int64_prod_to_all(int64_t *target, const int64_t *so
 
 #define shmem_int32_wait            shmemx_int32_wait
 #define shmem_int64_wait            shmemx_int64_wait
-#define shmem_int32_wait_until      shmemx_int32_wait_until
-#define shmem_int64_wait_until      shmemx_int64_wait_until
 
 #define shmem_int16_and_to_all      shmemx_int16_and_to_all
 #define shmem_int32_and_to_all      shmemx_int32_and_to_all

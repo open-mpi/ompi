@@ -218,8 +218,6 @@ OSHMEM_DECLSPEC void pshmemx_int64_prod_to_all(int64_t *target, const int64_t *s
 
 #define pshmem_int32_wait            pshmemx_int32_wait
 #define pshmem_int64_wait            pshmemx_int64_wait
-#define pshmem_int32_wait_until      pshmemx_int32_wait_until
-#define pshmem_int64_wait_until      pshmemx_int64_wait_until
 
 #define pshmem_int16_and_to_all      pshmemx_int16_and_to_all
 #define pshmem_int32_and_to_all      pshmemx_int32_and_to_all
