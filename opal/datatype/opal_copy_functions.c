@@ -7,6 +7,7 @@
  * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -149,7 +150,9 @@ COPY_CONTIGUOUS_BYTES( bytes, 8 )
 COPY_CONTIGUOUS_BYTES( bytes, 16 )
 #endif
 
-#if SIZEOF_FLOAT == 2
+#if defined(HAVE_SHORT_FLOAT) && SIZEOF_SHORT_FLOAT == 2
+COPY_TYPE( float_2, short float, 1 )
+#elif SIZEOF_FLOAT == 2
 COPY_TYPE( float_2, float, 1 )
 #elif SIZEOF_DOUBLE == 2
 COPY_TYPE( float_2, double, 1 )
@@ -160,7 +163,9 @@ COPY_TYPE( float_2, long double, 1 )
 #define copy_float_2 NULL
 #endif
 
-#if SIZEOF_FLOAT == 4
+#if defined(HAVE_SHORT_FLOAT) && SIZEOF_SHORT_FLOAT == 4
+COPY_TYPE( float_4, short float, 1 )
+#elif SIZEOF_FLOAT == 4
 COPY_TYPE( float_4, float, 1 )
 #elif SIZEOF_DOUBLE == 4
 COPY_TYPE( float_4, double, 1 )
@@ -170,7 +175,9 @@ COPY_TYPE( float_4, long double, 1 )
 #error No basic type for copy function for opal_datatype_float4 found
 #endif
 
-#if SIZEOF_FLOAT == 8
+#if defined(HAVE_SHORT_FLOAT) && SIZEOF_SHORT_FLOAT == 8
+COPY_TYPE( float_8, short float, 1 )
+#elif SIZEOF_FLOAT == 8
 COPY_TYPE( float_8, float, 1 )
 #elif SIZEOF_DOUBLE == 8
 COPY_TYPE( float_8, double, 1 )
@@ -180,7 +187,9 @@ COPY_TYPE( float_8, long double, 1 )
 #error No basic type for copy function for opal_datatype_float8 found
 #endif
 
-#if SIZEOF_FLOAT == 12
+#if defined(HAVE_SHORT_FLOAT) && SIZEOF_SHORT_FLOAT == 12
+COPY_TYPE( float_12, short float, 1 )
+#elif SIZEOF_FLOAT == 12
 COPY_TYPE( float_12, float, 1 )
 #elif SIZEOF_DOUBLE == 12
 COPY_TYPE( float_12, double, 1 )
@@ -191,7 +200,9 @@ COPY_TYPE( float_12, long double, 1 )
 #define copy_float_12 NULL
 #endif
 
-#if SIZEOF_FLOAT == 16
+#if defined(HAVE_SHORT_FLOAT) && SIZEOF_SHORT_FLOAT == 16
+COPY_TYPE( float_16, short float, 1 )
+#elif SIZEOF_FLOAT == 16
 COPY_TYPE( float_16, float, 1 )
 #elif SIZEOF_DOUBLE == 16
 COPY_TYPE( float_16, double, 1 )
@@ -200,6 +211,13 @@ COPY_TYPE( float_16, long double, 1 )
 #else
 /* #error No basic type for copy function for opal_datatype_float16 found */
 #define copy_float_16 NULL
+#endif
+
+#if defined(HAVE_SHORT_FLOAT__COMPLEX)
+COPY_TYPE ( short_float_complex, short float _Complex, 1)
+#else
+/* #error No basic type for copy function for opal_datatype_short_float_complex found */
+#define copy_short_float_complex NULL
 #endif
 
 COPY_TYPE ( float_complex, float _Complex, 1)
@@ -245,6 +263,7 @@ conversion_fct_t opal_datatype_copy_functions[OPAL_DATATYPE_MAX_PREDEFINED] = {
     (conversion_fct_t)copy_float_8,              /* OPAL_DATATYPE_FLOAT8       */
     (conversion_fct_t)copy_float_12,             /* OPAL_DATATYPE_FLOAT12       */
     (conversion_fct_t)copy_float_16,             /* OPAL_DATATYPE_FLOAT16      */
+    (conversion_fct_t)copy_short_float_complex,  /* OPAL_DATATYPE_SHORT_FLOAT_COMPLEX */
     (conversion_fct_t)copy_float_complex,        /* OPAL_DATATYPE_FLOAT_COMPLEX */
     (conversion_fct_t)copy_double_complex,       /* OPAL_DATATYPE_DOUBLE_COMPLEX */
     (conversion_fct_t)copy_long_double_complex,  /* OPAL_DATATYPE_LONG_DOUBLE_COMPLEX */

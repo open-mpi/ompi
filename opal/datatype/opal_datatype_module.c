@@ -19,6 +19,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2018      Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -75,6 +76,7 @@ OPAL_DECLSPEC const opal_datatype_t opal_datatype_float4 =      OPAL_DATATYPE_IN
 OPAL_DECLSPEC const opal_datatype_t opal_datatype_float8 =      OPAL_DATATYPE_INITIALIZER_FLOAT8(0);
 OPAL_DECLSPEC const opal_datatype_t opal_datatype_float12 =     OPAL_DATATYPE_INITIALIZER_FLOAT12(0);
 OPAL_DECLSPEC const opal_datatype_t opal_datatype_float16 =     OPAL_DATATYPE_INITIALIZER_FLOAT16(0);
+OPAL_DECLSPEC const opal_datatype_t opal_datatype_short_float_complex = OPAL_DATATYPE_INITIALIZER_SHORT_FLOAT_COMPLEX(0);
 OPAL_DECLSPEC const opal_datatype_t opal_datatype_float_complex = OPAL_DATATYPE_INITIALIZER_FLOAT_COMPLEX(0);
 OPAL_DECLSPEC const opal_datatype_t opal_datatype_double_complex = OPAL_DATATYPE_INITIALIZER_DOUBLE_COMPLEX(0);
 OPAL_DECLSPEC const opal_datatype_t opal_datatype_long_double_complex = OPAL_DATATYPE_INITIALIZER_LONG_DOUBLE_COMPLEX(0);
@@ -105,6 +107,11 @@ OPAL_DECLSPEC const size_t opal_datatype_local_sizes[OPAL_DATATYPE_MAX_PREDEFINE
     [OPAL_DATATYPE_FLOAT8] = 8,     /* sizeof (float8) */
     [OPAL_DATATYPE_FLOAT12] = 12,   /* sizeof (float12) */
     [OPAL_DATATYPE_FLOAT16] = 16,   /* sizeof (float16) */
+#if defined(HAVE_SHORT_FLOAT__COMPLEX)
+    [OPAL_DATATYPE_SHORT_FLOAT_COMPLEX] = sizeof(short float _Complex),
+#else
+    [OPAL_DATATYPE_SHORT_FLOAT_COMPLEX] = 4, /* typical sizeof(short float _Complex) */
+#endif
     [OPAL_DATATYPE_FLOAT_COMPLEX] = sizeof(float _Complex),
     [OPAL_DATATYPE_DOUBLE_COMPLEX] = sizeof(double _Complex),
     [OPAL_DATATYPE_LONG_DOUBLE_COMPLEX] = sizeof(long double _Complex),
@@ -136,6 +143,7 @@ OPAL_DECLSPEC const opal_datatype_t* opal_datatype_basicDatatypes[OPAL_DATATYPE_
     [OPAL_DATATYPE_FLOAT8] = &opal_datatype_float8,
     [OPAL_DATATYPE_FLOAT12] = &opal_datatype_float12,
     [OPAL_DATATYPE_FLOAT16] = &opal_datatype_float16,
+    [OPAL_DATATYPE_SHORT_FLOAT_COMPLEX] = &opal_datatype_short_float_complex,
     [OPAL_DATATYPE_FLOAT_COMPLEX] = &opal_datatype_float_complex,
     [OPAL_DATATYPE_DOUBLE_COMPLEX] = &opal_datatype_double_complex,
     [OPAL_DATATYPE_LONG_DOUBLE_COMPLEX] = &opal_datatype_long_double_complex,

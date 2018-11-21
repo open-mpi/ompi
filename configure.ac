@@ -25,6 +25,7 @@
 # Copyright (c) 2016-2017 IBM Corporation.  All rights reserved.
 # Copyright (c) 2018      Amazon.com, Inc. or its affiliates.
 #                         All Rights reserved.
+# Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -387,10 +388,12 @@ AC_CHECK_TYPES(uint128_t)
 AC_CHECK_TYPES(long long)
 
 AC_CHECK_TYPES(__float128)
+AC_CHECK_TYPES(short float)
 AC_CHECK_TYPES(long double)
 # We only need these types if we're building the OMPI project, but
 # OPAL currently doesn't protect for their lack of presence well.
 AC_CHECK_HEADERS(complex.h)
+AC_CHECK_TYPES(short float _Complex)
 AC_CHECK_TYPES(float _Complex)
 AC_CHECK_TYPES(double _Complex)
 AC_CHECK_TYPES(long double _Complex)
@@ -411,6 +414,9 @@ AC_CHECK_SIZEOF(short)
 AC_CHECK_SIZEOF(int)
 AC_CHECK_SIZEOF(long)
 AC_CHECK_SIZEOF(long long)
+if test "$ac_cv_type_short_float" = yes; then
+    AC_CHECK_SIZEOF(short float)
+fi
 AC_CHECK_SIZEOF(float)
 AC_CHECK_SIZEOF(double)
 AC_CHECK_SIZEOF(long double)
@@ -419,6 +425,9 @@ if test "$ac_cv_type___float128" = yes; then
 fi
 # We only need these types if we're building the OMPI project, but
 # OPAL currently doesn't protect for their lack of presence well.
+if test "$ac_cv_type_short_float__Complex" = yes; then
+    AC_CHECK_SIZEOF(short float _Complex)
+fi
 AC_CHECK_SIZEOF(float _Complex)
 AC_CHECK_SIZEOF(double _Complex)
 AC_CHECK_SIZEOF(long double _Complex)
@@ -461,6 +470,9 @@ OPAL_C_GET_ALIGNMENT(wchar_t, OPAL_ALIGNMENT_WCHAR)
 OPAL_C_GET_ALIGNMENT(int, OPAL_ALIGNMENT_INT)
 OPAL_C_GET_ALIGNMENT(long, OPAL_ALIGNMENT_LONG)
 OPAL_C_GET_ALIGNMENT(long long, OPAL_ALIGNMENT_LONG_LONG)
+if test "$ac_cv_type_short_float" = yes; then
+    OPAL_C_GET_ALIGNMENT(short float, OPAL_ALIGNMENT_SHORT_FLOAT)
+fi
 OPAL_C_GET_ALIGNMENT(float, OPAL_ALIGNMENT_FLOAT)
 OPAL_C_GET_ALIGNMENT(double, OPAL_ALIGNMENT_DOUBLE)
 OPAL_C_GET_ALIGNMENT(long double, OPAL_ALIGNMENT_LONG_DOUBLE)
@@ -471,6 +483,9 @@ fi
 
 # We only need these types if we're building the OMPI project, but
 # OPAL currently doesn't protect for their lack of presence well.
+if test "$ac_cv_type_short_float__Complex" = yes; then
+    OPAL_C_GET_ALIGNMENT(short float _Complex, OPAL_ALIGNMENT_SHORT_FLOAT_COMPLEX)
+fi
 OPAL_C_GET_ALIGNMENT(float _Complex, OPAL_ALIGNMENT_FLOAT_COMPLEX)
 OPAL_C_GET_ALIGNMENT(double _Complex, OPAL_ALIGNMENT_DOUBLE_COMPLEX)
 OPAL_C_GET_ALIGNMENT(long double _Complex, OPAL_ALIGNMENT_LONG_DOUBLE_COMPLEX)

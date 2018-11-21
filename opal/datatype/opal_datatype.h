@@ -18,6 +18,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2018      Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -51,7 +52,7 @@ BEGIN_C_DECLS
  * This must match the same definition as in opal_datatype_internal.h
  */
 #if !defined(OPAL_DATATYPE_MAX_PREDEFINED)
-#define OPAL_DATATYPE_MAX_PREDEFINED 25
+#define OPAL_DATATYPE_MAX_PREDEFINED 26
 #endif
 /*
  * No more than this number of _Basic_ datatypes in C/CPP or Fortran
@@ -170,6 +171,7 @@ OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_float4;     /* in bytes
 OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_float8;     /* in bytes */
 OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_float12;    /* in bytes */
 OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_float16;    /* in bytes */
+OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_short_float_complex;
 OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_float_complex;
 OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_double_complex;
 OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_long_double_complex;
