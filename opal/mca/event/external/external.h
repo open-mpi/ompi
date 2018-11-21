@@ -4,7 +4,7 @@
  * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2017      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2017-2018 IBM Corporation.  All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -78,6 +78,8 @@ OPAL_DECLSPEC int opal_event_finalize(void);
 #define opal_event_enable_debug_mode() event_enable_debug_mode()
 
 #define opal_event_set(b, x, fd, fg, cb, arg) event_assign((x), (b), (fd), (fg), (event_callback_fn) (cb), (arg))
+
+#define opal_event_assign(x, b, fd, fg, cb, arg) event_assign((x), (b), (fd), (fg), (event_callback_fn) (cb), (arg))
 
 #define opal_event_add(ev, tv) event_add((ev), (tv))
 
