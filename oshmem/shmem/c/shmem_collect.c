@@ -39,10 +39,10 @@ static void _shmem_collect(void *target,
                       long *pSync)                              \
 {                                                               \
     RUNTIME_CHECK_INIT();                                       \
-    RUNTIME_CHECK_ADDR(target);                                 \
-    RUNTIME_CHECK_ADDR(source);                                 \
+    RUNTIME_CHECK_ADDR_SIZE(target, nelems);                    \
+    RUNTIME_CHECK_ADDR_SIZE(source, nelems);                    \
                                                                 \
-    _shmem_collect( target, source, nelems * element_size,     \
+    _shmem_collect( target, source, nelems * element_size,      \
                      PE_start, logPE_stride, PE_size,           \
                      pSync,                                     \
                      nelems_type);                              \

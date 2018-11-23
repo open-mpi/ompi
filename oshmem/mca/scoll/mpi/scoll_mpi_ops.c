@@ -61,7 +61,7 @@ int mca_scoll_mpi_broadcast(struct oshmem_group_t *group,
      *  and considering this contradiction, we cast size_t to int here
      *  in case if the value is less than INT_MAX and fallback to previous module otherwise. */
 #ifdef INCOMPATIBLE_SHMEM_OMPI_COLL_APIS
-    if (INT_MAX < nlong) {
+    if ((INT_MAX < nlong) || !nlong) {
         MPI_COLL_VERBOSE(20,"RUNNING FALLBACK BCAST");
         PREVIOUS_SCOLL_FN(mpi_module, broadcast, group,
                 PE_root,
@@ -104,7 +104,7 @@ int mca_scoll_mpi_collect(struct oshmem_group_t *group,
     void *sbuf, *rbuf;
     MPI_COLL_VERBOSE(20,"RUNNING MPI ALLGATHER");
     mpi_module = (mca_scoll_mpi_module_t *) group->g_scoll.scoll_collect_module;
-    if (nlong_type == true) {
+    if ((nlong_type == true) && nlong) {
         sbuf = (void *) source;
         rbuf = target;
         stype =  &ompi_mpi_char.dt;
@@ -184,7 +184,7 @@ int mca_scoll_mpi_reduce(struct oshmem_group_t *group,
      *  and considering this contradiction, we cast size_t to int here
      *  in case if the value is less than INT_MAX and fallback to previous module otherwise. */
 #ifdef INCOMPATIBLE_SHMEM_OMPI_COLL_APIS
-    if (INT_MAX < count) {
+    if ((INT_MAX < count) || !nlong) {
         MPI_COLL_VERBOSE(20,"RUNNING FALLBACK REDUCE");
         PREVIOUS_SCOLL_FN(mpi_module, reduce, group,
                 op,
