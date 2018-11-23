@@ -30,7 +30,7 @@ static void _shmem_alltoall(void *target,
                             int PE_size,
                             long *pSync);
 
-#define SHMEM_TYPE_ALLTOALL(name, element_size)     \
+#define SHMEM_TYPE_ALLTOALL(name, element_size)                      \
     void shmem##name(void *target,                                   \
                      const void *source,                             \
                      size_t nelems,                                  \
@@ -40,15 +40,15 @@ static void _shmem_alltoall(void *target,
                      long *pSync)                                    \
 {                                                                    \
     RUNTIME_CHECK_INIT();                                            \
-    RUNTIME_CHECK_ADDR(target);                                      \
-    RUNTIME_CHECK_ADDR(source);                                      \
+    RUNTIME_CHECK_ADDR_SIZE(target, nelems);                         \
+    RUNTIME_CHECK_ADDR_SIZE(source, nelems);                         \
                                                                      \
     _shmem_alltoall(target, source, 1, 1, nelems, element_size,      \
                        PE_start, logPE_stride, PE_size,              \
                        pSync);                                       \
 }
 
-#define SHMEM_TYPE_ALLTOALLS(name, element_size)     \
+#define SHMEM_TYPE_ALLTOALLS(name, element_size)                     \
     void shmem##name(void *target,                                   \
                      const void *source,                             \
                      ptrdiff_t dst, ptrdiff_t sst,                   \
@@ -59,8 +59,8 @@ static void _shmem_alltoall(void *target,
                      long *pSync)                                    \
 {                                                                    \
     RUNTIME_CHECK_INIT();                                            \
-    RUNTIME_CHECK_ADDR(target);                                      \
-    RUNTIME_CHECK_ADDR(source);                                      \
+    RUNTIME_CHECK_ADDR_SIZE(target, nelems);                         \
+    RUNTIME_CHECK_ADDR_SIZE(source, nelems);                         \
                                                                      \
     _shmem_alltoall(target, source, dst, sst, nelems, element_size,  \
                        PE_start, logPE_stride, PE_size,              \

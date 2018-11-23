@@ -66,7 +66,7 @@ int mca_scoll_basic_collect(struct oshmem_group_t *group,
     if ((rc == OSHMEM_SUCCESS) && oshmem_proc_group_is_member(group)) {
         int i = 0;
 
-        if (nlong_type) {
+        if (nlong_type && nlong) {
             alg = (alg == SCOLL_DEFAULT_ALG ?
                     mca_scoll_basic_param_collect_algorithm : alg);
             switch (alg) {
@@ -156,7 +156,7 @@ static int _algorithm_f_central_counter(struct oshmem_group_t *group,
                   group->my_pe);
     SCOLL_VERBOSE(15, "[#%d] pSync[0] = %ld", group->my_pe, pSync[0]);
 
-    if (PE_root == group->my_pe) {
+    if ((PE_root == group->my_pe) && nlong) {
         int pe_cur = 0;
 
         memcpy((void*) ((unsigned char*) target + 0 * nlong),
@@ -543,7 +543,7 @@ static int _algorithm_central_collector(struct oshmem_group_t *group,
     /* Set own data size */
     pSync[0] = (nlong ? (long)nlong : SHMEM_SYNC_READY);
 
-    if (PE_root == group->my_pe) {
+    if ((PE_root == group->my_pe) && nlong) {
         long value = 0;
         int pe_cur = 0;
         long wait_pe_count = 0;
