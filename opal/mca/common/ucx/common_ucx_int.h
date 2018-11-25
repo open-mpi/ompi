@@ -167,6 +167,16 @@ int opal_common_ucx_atomic_fetch(ucp_ep_h ep, ucp_atomic_fetch_op_t opcode,
 }
 
 static inline
+ucs_status_ptr_t opal_common_ucx_atomic_fetch_nb(ucp_ep_h ep, ucp_atomic_fetch_op_t opcode,
+                                                 uint64_t value, void *result, size_t op_size,
+                                                 uint64_t remote_addr, ucp_rkey_h rkey,
+                                                 ucp_worker_h worker)
+{
+    return ucp_atomic_fetch_nb(ep, opcode, value, result, op_size,
+                               remote_addr, rkey, opal_common_ucx_empty_complete_cb);
+}
+
+static inline
 int opal_common_ucx_atomic_cswap(ucp_ep_h ep, uint64_t compare,
                                  uint64_t value, void *result, size_t op_size,
                                  uint64_t remote_addr, ucp_rkey_h rkey,
