@@ -9,7 +9,7 @@
 
 #include "opal_config.h"
 
-#include "common_ucx.h"
+#include "common_ucx_int.h"
 #include "opal/mca/base/mca_base_var.h"
 #include "opal/mca/base/mca_base_framework.h"
 #include "opal/mca/pmix/pmix.h"
