@@ -228,7 +228,7 @@ void mca_pml_ucx_completed_request_init(ompi_request_t *ompi_req)
     mca_pml_ucx_request_init_common(ompi_req, false, OMPI_REQUEST_ACTIVE,
                                     mca_pml_completed_request_free,
                                     mca_pml_completed_request_cancel);
+    ompi_req->req_mpi_object.comm = &ompi_mpi_comm_world.comm;
     ompi_request_complete(ompi_req, false);
-
 }
 
