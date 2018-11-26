@@ -58,6 +58,9 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
         pialltoallv.c \
         palltoallw.c \
         pialltoallw.c \
+        pattr_delete.c \
+        pattr_get.c \
+        pattr_put.c \
         pbarrier.c \
         pibarrier.c \
         pbcast.c \
@@ -265,6 +268,8 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
         pineighbor_alltoallv.c \
         pneighbor_alltoallw.c \
         pineighbor_alltoallw.c \
+        pkeyval_create.c \
+        pkeyval_free.c \
         pop_c2f.c \
         pop_create.c \
         pop_commutative.c \
@@ -414,14 +419,9 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
 if OMPI_ENABLE_MPI1_COMPAT
 nodist_libmpi_c_pmpi_la_SOURCES += \
         paddress.c \
-        pattr_delete.c \
-        pattr_get.c \
-        pattr_put.c \
         perrhandler_create.c \
         perrhandler_get.c \
         perrhandler_set.c \
-        pkeyval_create.c \
-        pkeyval_free.c \
         ptype_extent.c \
         ptype_hindexed.c \
         ptype_hvector.c \
