@@ -84,8 +84,8 @@ if ($^O eq "solaris") {
     $patch_prog = "gpatch";
 }
 
-$username = getpwuid($>);
-$full_hostname = `hostname`;
+$username = $ENV{USER} || getpwuid($>);
+$full_hostname = $ENV{HOSTNAME} || `hostname`;
 chomp($full_hostname);
 $hostname = $full_hostname;
 $hostname =~ s/^([\w\-]+)\..+/\1/;
@@ -1189,9 +1189,6 @@ if (-e "orcm") {
 }
 
 #---------------------------------------------------------------------------
-
-$full_hostname = `hostname`;
-chomp($full_hostname);
 
 $m4 = "dnl
 dnl \$HEADER\$
