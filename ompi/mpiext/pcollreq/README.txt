@@ -4,7 +4,8 @@ $COPYRIGHT$
 
 This extension provides the feature of persistent collective communication
 operations and persistent neighborhood collective communication operations,
-which is proposed in the MPI Forum as of June 2018.
+which is planned to be included in the next MPI Standard after MPI-3.1 as
+of Nov. 2018.
 
 See MPIX_Barrier_init(3) for more details.
 

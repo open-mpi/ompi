@@ -529,16 +529,16 @@ MPIX_Neighbor_alltoallw_init(\fIsendbuf\fP, \fIsendcounts\fP, \fIsdispls\fP, \fI
 .ft R
 Creates a persistent communication request for a collective operation or neighborhood collective operation.
 
-As of Sept. 2018, the feature of persistent collective communication operations and persistent collective neighborhood communication operations is planned to be included in the next MPI Standerd after MPI-3.1.
+As of Nov. 2018, the feature of persistent collective communication operations and persistent collective neighborhood communication operations is planned to be included in the next MPI Standard after MPI-3.1.
 .nf
 
     https://github.com/mpi-forum/mpi-issues/issues/25
 .fi
 
-Open MPI implements its draft version shown in the following URL.
+Open MPI implements 2018 Draft Specification of the MPI standard shown in the following URL.
 .nf
 
-    https://github.com/mpi-forum/mpi-issues/files/2078076/mpi32-report-ticket25-austin-vote-june2018.pdf
+    https://www.mpi-forum.org/docs/drafts/mpi-2018-draft-report.pdf
 .fi
 
 The interface may still change in the standard. Therefore the prefix \fIMPIX_\fP is used instead of \fIMPI_\fP for these request creation routines. To start, complete, and free the created request, usual MPI routines (\fIMPI_Start\fP etc.) can be used.
