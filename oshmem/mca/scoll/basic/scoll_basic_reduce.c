@@ -78,10 +78,14 @@ int mca_scoll_basic_reduce(struct oshmem_group_t *group,
     if ((rc == OSHMEM_SUCCESS) && oshmem_proc_group_is_member(group)) {
         int i = 0;
 
+        /* Do nothing on zero-length request */
+        if (OPAL_UNLIKELY(!nlong)) {
+            return OSHMEM_SUCCESS;
+        }
+
         if (pSync) {
-            alg = (nlong ? (alg == SCOLL_DEFAULT_ALG ?
-                                   mca_scoll_basic_param_reduce_algorithm : alg) :
-                           SCOLL_ALG_REDUCE_CENTRAL_COUNTER );
+            alg = (alg == SCOLL_DEFAULT_ALG ?
+                    mca_scoll_basic_param_reduce_algorithm : alg);
             switch (alg) {
             case SCOLL_ALG_REDUCE_CENTRAL_COUNTER:
                 {
@@ -186,7 +190,7 @@ static int _algorithm_central_counter(struct oshmem_group_t *group,
 
     SCOLL_VERBOSE(12, "[#%d] Reduce algorithm: Central Counter", group->my_pe);
 
-    if ((PE_root == group->my_pe) && nlong) {
+    if (PE_root == group->my_pe) {
         int pe_cur = 0;
         void *target_cur = NULL;
 

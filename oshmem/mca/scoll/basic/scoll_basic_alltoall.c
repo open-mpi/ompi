@@ -61,17 +61,20 @@ int mca_scoll_basic_alltoall(struct oshmem_group_t *group,
         return OSHMEM_ERR_BAD_PARAM;
     }
 
-    if (nelems) {
-        if ((sst == 1) && (dst == 1)) {
-            rc = a2a_alg_simple(group, target, source, nelems, element_size);
-        } else {
-            rc = a2as_alg_simple(group, target, source, dst, sst, nelems,
-                                 element_size);
-        }
+    /* Do nothing on zero-length request */
+    if (OPAL_UNLIKELY(!nelems)) {
+        return OPAL_SUCCESS;
+    }
 
-        if (rc != OSHMEM_SUCCESS) {
-           return rc;
-        }
+    if ((sst == 1) && (dst == 1)) {
+        rc = a2a_alg_simple(group, target, source, nelems, element_size);
+    } else {
+        rc = a2as_alg_simple(group, target, source, dst, sst, nelems,
+                             element_size);
+    }
+
+    if (rc != OSHMEM_SUCCESS) {
+       return rc;
     }
 
     /* quiet is needed because scoll level barrier does not
