@@ -197,16 +197,6 @@ static int _algorithm_binomial_tree(struct oshmem_group_t *group,
                   "[#%d] pSync[0] = %ld root = #%d",
                   group->my_pe, pSync[0], PE_root);
 
-    if (OPAL_UNLIKELY(!nlong)) {
-        SCOLL_VERBOSE(14, "[#%d] Wait for operation completion", group->my_pe);
-        /* wait until root finishes sending data  */
-        rc = BARRIER_FUNC(group,
-                (pSync + 1),
-                SCOLL_DEFAULT_ALG);
-        return rc;
-    }
-
-
     vrank = (my_id + group->proc_count - root_id) % group->proc_count;
     hibit = opal_hibit(vrank, dim);
 
