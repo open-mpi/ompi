@@ -54,6 +54,9 @@ linked_files = \
         palltoall_f.c \
         palltoallv_f.c \
         palltoallw_f.c \
+        pattr_delete_f.c \
+        pattr_get_f.c \
+        pattr_put_f.c \
         pbarrier_f.c \
         pbcast_f.c \
         pbsend_f.c \
@@ -251,6 +254,8 @@ linked_files = \
         pisend_f.c \
         pissend_f.c \
         pis_thread_main_f.c \
+        pkeyval_create_f.c \
+        pkeyval_free_f.c \
         plookup_name_f.c \
         pmprobe_f.c \
         pmrecv_f.c \
@@ -395,14 +400,9 @@ linked_files = \
 if OMPI_ENABLE_MPI1_COMPAT
 linked_files += \
         paddress_f.c \
-        pattr_delete_f.c \
-        pattr_get_f.c \
-        pattr_put_f.c \
         perrhandler_create_f.c \
         perrhandler_get_f.c \
         perrhandler_set_f.c \
-        pkeyval_create_f.c \
-        pkeyval_free_f.c \
         ptype_extent_f.c \
         ptype_hindexed_f.c \
         ptype_hvector_f.c \

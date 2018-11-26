@@ -78,6 +78,9 @@ libmpi_c_mpi_la_SOURCES = \
         ialltoallv.c \
         alltoallw.c \
         ialltoallw.c \
+        attr_delete.c \
+        attr_get.c \
+        attr_put.c \
         barrier.c \
         ibarrier.c \
         bcast.c \
@@ -285,6 +288,8 @@ libmpi_c_mpi_la_SOURCES = \
         ineighbor_alltoallv.c \
         neighbor_alltoallw.c \
         ineighbor_alltoallw.c \
+        keyval_create.c \
+        keyval_free.c \
         op_c2f.c \
         op_commutative.c \
         op_create.c \
@@ -431,17 +436,13 @@ libmpi_c_mpi_la_SOURCES = \
 	win_unlock_all.c \
         win_wait.c
 
+
 if OMPI_ENABLE_MPI1_COMPAT
 libmpi_c_mpi_la_SOURCES += \
         address.c \
-        attr_delete.c \
-        attr_get.c \
-        attr_put.c \
         errhandler_create.c \
         errhandler_get.c \
         errhandler_set.c \
-        keyval_create.c \
-        keyval_free.c \
         type_extent.c \
         type_hindexed.c \
         type_hvector.c \
