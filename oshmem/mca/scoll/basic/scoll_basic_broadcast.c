@@ -55,6 +55,11 @@ int mca_scoll_basic_broadcast(struct oshmem_group_t *group,
     if ((rc == OSHMEM_SUCCESS) && oshmem_proc_group_is_member(group)) {
         int i = 0;
 
+        /* Do nothing on zero-length request */
+        if (OPAL_UNLIKELY(!nlong)) {
+            return OSHMEM_SUCCESS;
+        }
+
         if (pSync) {
             alg = (alg == SCOLL_DEFAULT_ALG ?
                     mca_scoll_basic_param_broadcast_algorithm : alg);
@@ -131,7 +136,7 @@ static int _algorithm_central_counter(struct oshmem_group_t *group,
                   group->my_pe, pSync[0], PE_root);
 
     /* Check if this PE is the root */
-    if ((PE_root == group->my_pe) && nlong) {
+    if (PE_root == group->my_pe) {
         int pe_cur = 0;
 
         SCOLL_VERBOSE(14,
