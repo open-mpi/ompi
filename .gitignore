@@ -249,6 +249,7 @@ ompi/mpiext/example/tests/progress_usempif08
 
 ompi/mpiext/cuda/c/MPIX_Query_cuda_support.3
 ompi/mpiext/cuda/c/mpiext_cuda_c.h
+ompi/mpiext/cuda/c/cuda_c.h
 
 ompi/mpiext/pcollreq/c/MPIX_*.3
 ompi/mpiext/pcollreq/c/profile/pallgather_init.c
@@ -274,6 +275,7 @@ ompi/mpiext/pcollreq/c/profile/preduce_scatter_init.c
 ompi/mpiext/pcollreq/c/profile/pscan_init.c
 ompi/mpiext/pcollreq/c/profile/pscatter_init.c
 ompi/mpiext/pcollreq/c/profile/pscatterv_init.c
+ompi/mpiext/pcollreq/c/profile/ppcollreq_c.h
 
 ompi/mpiext/pcollreq/mpif-h/profile/pallgather_init_f.c
 ompi/mpiext/pcollreq/mpif-h/profile/pallgatherv_init_f.c
