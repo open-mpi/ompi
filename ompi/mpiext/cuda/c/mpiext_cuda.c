@@ -7,6 +7,8 @@
  * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2015      NVIDIA, Inc. All rights reserved.
+ * Copyright (c) 2018      Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -21,7 +23,7 @@
 #include <string.h>
 
 #include "opal/constants.h"
-#include "ompi/mpiext/cuda/c/mpiext_cuda_c.h"
+#include "ompi/mpiext/cuda/c/cuda_c.h"
 
 /* If CUDA-aware support is configured in, return 1. Otherwise, return 0.
  * This API may be extended to return more features in the future. */

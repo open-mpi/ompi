@@ -461,7 +461,7 @@ AC_DEFUN([EXT_PROCESS_COMPONENT],[
     ###############
     # C Bindings
     ###############
-    test_header="${srcdir}/ompi/mpiext/$component/c/mpiext_${component}_c.h"
+    test_header="${srcdir}/ompi/mpiext/${component}/c/${component}_c.h"
 
     AC_MSG_CHECKING([if MPI Extension $component has C bindings])
 
@@ -479,14 +479,14 @@ AC_DEFUN([EXT_PROCESS_COMPONENT],[
     $3="$$3 $component"
 
     # JMS Where is this needed?
-    EXT_C_HEADERS="$EXT_C_HEADERS mpiext/$component/c/mpiext_${component}_c.h"
+    EXT_C_HEADERS="$EXT_C_HEADERS mpiext/c/${component}_c.h"
 
-    component_header="mpiext_${component}_c.h"
+    component_header="${component}_c.h"
 
     cat >> $mpi_ext_h <<EOF
 /* Enabled Extension: $component */
 #define $component_define 1
-#include "openmpi/ompi/mpiext/$component/c/$component_header"
+#include "openmpi/ompi/mpiext/$component_header"
 
 EOF
 

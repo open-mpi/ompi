@@ -36,7 +36,7 @@
 #include "ompi/mca/topo/topo.h"
 #include "ompi/mca/topo/base/base.h"
 #include "ompi/runtime/ompi_spc.h"
-#include "ompi/mpiext/pcollreq/c/mpiext_pcollreq_c.h"
+#include "ompi/mpiext/pcollreq/c/pcollreq_c.h"
 
 #if OMPI_BUILD_MPI_PROFILING
 #if OPAL_HAVE_WEAK_SYMBOLS

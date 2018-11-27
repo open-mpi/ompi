@@ -29,7 +29,7 @@
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/op/op.h"
-#include "ompi/mpiext/pcollreq/c/mpiext_pcollreq_c.h"
+#include "ompi/mpiext/pcollreq/c/pcollreq_c.h"
 #include "ompi/memchecker.h"
 #include "ompi/runtime/ompi_spc.h"
 
