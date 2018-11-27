@@ -91,8 +91,8 @@ libmpi_usempi_tkr_so_version=32:0:12
 libmpi_usempi_ignore_tkr_so_version=31:1:11
 libmpi_usempif08_so_version=31:1:11
 
-libopen_rte_so_version=30:4:10
-libopen_pal_so_version=30:4:10
+libopen_rte_so_version=30:5:10
+libopen_pal_so_version=30:5:10
 libmpi_java_so_version=30:0:10
 liboshmem_so_version=30:3:10
 libompitrace_so_version=30:0:10
