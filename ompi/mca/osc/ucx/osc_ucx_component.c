@@ -114,7 +114,7 @@ static int component_register(void) {
 
     ucp_get_version(&major, &minor, &release_number);
 
-    mca_osc_ucx_component.priority = UCX_VERSION(major, minor, release_number) >= UCX_VERSION(1, 5, 0) ? 200 : 0;
+    mca_osc_ucx_component.priority = UCX_VERSION(major, minor, release_number) >= UCX_VERSION(1, 5, 0) ? 60 : 0;
 
     opal_asprintf(&description_str, "Priority of the osc/ucx component (default: %d)",
              mca_osc_ucx_component.priority);
