@@ -66,6 +66,11 @@ int mca_scoll_basic_collect(struct oshmem_group_t *group,
     if ((rc == OSHMEM_SUCCESS) && oshmem_proc_group_is_member(group)) {
         int i = 0;
 
+        /* Do nothing on zero-length request */
+        if (OPAL_UNLIKELY(!nlong)) {
+            return OPAL_SUCCESS;
+        }
+
         if (nlong_type) {
             alg = (alg == SCOLL_DEFAULT_ALG ?
                     mca_scoll_basic_param_collect_algorithm : alg);

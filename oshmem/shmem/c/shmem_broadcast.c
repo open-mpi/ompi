@@ -29,7 +29,7 @@ static void _shmem_broadcast(void *target,
                               int PE_size,
                               long *pSync);
 
-#define SHMEM_TYPE_BROADCAST(name, element_size)     \
+#define SHMEM_TYPE_BROADCAST(name, element_size)                    \
     void shmem##name( void *target,                                 \
                       const void *source,                           \
                       size_t nelems,                                \
@@ -40,10 +40,10 @@ static void _shmem_broadcast(void *target,
                       long *pSync)                                  \
 {                                                                   \
     RUNTIME_CHECK_INIT();                                           \
-    RUNTIME_CHECK_ADDR(target);                                     \
-    RUNTIME_CHECK_ADDR(source);                                     \
+    RUNTIME_CHECK_ADDR_SIZE(target, nelems);                        \
+    RUNTIME_CHECK_ADDR_SIZE(source, nelems);                        \
                                                                     \
-    _shmem_broadcast( target, source, nelems * element_size,       \
+    _shmem_broadcast( target, source, nelems * element_size,        \
                        PE_root, PE_start, logPE_stride, PE_size,    \
                        pSync);                                      \
 }
