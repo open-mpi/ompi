@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015-2018 Intel, Inc.  All rights reserved.
  * Copyright (c) 2016      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2017      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -98,6 +98,7 @@ struct orte_cmd_options_t {
     int timeout;
     bool report_state_on_timeout;
     bool get_stack_traces;
+    char *pset;
 };
 typedef struct orte_cmd_options_t orte_cmd_options_t;
 ORTE_DECLSPEC extern orte_cmd_options_t orte_cmd_options;

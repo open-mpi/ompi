@@ -1620,6 +1620,12 @@ static int create_app(int argc, char* argv[],
         }
     }
 
+    /* if they specified a process set name, then pass it along */
+    if (NULL != orte_cmd_options.pset) {
+        orte_set_attribute(&app->attributes, ORTE_APP_PSET_NAME, ORTE_ATTR_GLOBAL,
+                           orte_cmd_options.pset, OPAL_STRING);
+    }
+
     /* Did the user specify a hostfile. Need to check for both
      * hostfile and machine file.
      * We can only deal with one hostfile per app context, otherwise give an error.
