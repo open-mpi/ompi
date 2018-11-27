@@ -7,8 +7,6 @@
 
 typedef struct {
     int ctx_id;
-    // TODO: make sure that this is being set by external thread
-    volatile int released;
     opal_common_ucx_ctx_t *gctx;
     opal_common_ucx_winfo_t *winfo;
 } _tlocal_ctx_t;
@@ -35,7 +33,7 @@ OBJ_CLASS_DECLARATION(_winfo_list_item_t);
 
 typedef struct {
     opal_list_item_t super;
-    _tlocal_ctx_t *ptr;
+    opal_common_ucx_winfo_t *ptr;
 } _ctx_record_list_item_t;
 OBJ_CLASS_DECLARATION(_ctx_record_list_item_t);
 
@@ -99,9 +97,9 @@ static int _wpool_add_active(opal_common_ucx_wpool_t *wpool,
 /* Internal Worker Pool Context management */
 static void _common_ucx_wpctx_free(opal_common_ucx_ctx_t *ctx);
 static int _common_ucx_wpctx_append(opal_common_ucx_ctx_t *ctx,
-                                    _tlocal_ctx_t *ctx_rec);
+                                    opal_common_ucx_winfo_t *winfo);
 static void _common_ucx_wpctx_remove(opal_common_ucx_ctx_t *ctx,
-                                     _tlocal_ctx_t *ctx_rec);
+                                     opal_common_ucx_winfo_t *winfo);
 
 /* Internal Worker Pool Memeory management */
 static int _comm_ucx_wpmem_map(opal_common_ucx_wpool_t *wpool,
