@@ -53,7 +53,7 @@
 #include "ompi/request/grequest.h"
 #include "ompi/mpi/fortran/base/datarep.h"
 
-#include "ompi/mpiext/pcollreq/c/mpiext_pcollreq_c.h"
+#include "ompi/mpiext/pcollreq/c/pcollreq_c.h"
 
 BEGIN_C_DECLS
 
