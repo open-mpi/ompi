@@ -430,6 +430,28 @@ int orte_pmix_server_register_nspace(orte_job_t *jdata, bool force)
                 kv->type = OPAL_UINT32;
                 kv->data.uint32 = app->num_procs;
                 opal_list_append(info, &kv->super);
+
+                app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, pptr->app_idx);
+                tmp = NULL;
+                if (orte_get_attribute(&app->attributes, ORTE_APP_PSET_NAME, (void**)&tmp, OPAL_STRING) &&
+                    NULL != tmp) {
+                    kv = OBJ_NEW(opal_value_t);
+                    kv->key = strdup(OPAL_PMIX_PSET_NAME);
+                    kv->type = OPAL_STRING;
+                    kv->data.string = tmp;
+                    opal_list_append(pmap, &kv->super);
+                }
+            } else {
+                app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, 0);
+                tmp = NULL;
+                if (orte_get_attribute(&app->attributes, ORTE_APP_PSET_NAME, (void**)&tmp, OPAL_STRING) &&
+                    NULL != tmp) {
+                    kv = OBJ_NEW(opal_value_t);
+                    kv->key = strdup(OPAL_PMIX_PSET_NAME);
+                    kv->type = OPAL_STRING;
+                    kv->data.string = tmp;
+                    opal_list_append(pmap, &kv->super);
+                }
             }
 
             /* local rank */

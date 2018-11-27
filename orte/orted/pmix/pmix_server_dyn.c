@@ -264,6 +264,9 @@ int pmix_server_spawn_fn(opal_process_name_t *requestor,
             } else if (0 == strcmp(info->key, OPAL_PMIX_APPEND_ENVAR)) {
                 orte_add_attribute(&app->attributes, ORTE_APP_APPEND_ENVAR,
                                    ORTE_ATTR_GLOBAL, &info->data.envar, OPAL_ENVAR);
+                } else if (0 == strcmp(info->key, OPAL_PMIX_PSET_NAME)) {
+                    orte_set_attribute(&app->attributes, ORTE_APP_PSET_NAME,
+                                       ORTE_ATTR_GLOBAL, info->data.string, OPAL_STRING);
 
             } else {
                 /* unrecognized key */

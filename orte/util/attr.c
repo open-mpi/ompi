@@ -252,6 +252,8 @@ const char *orte_attr_key_to_str(orte_attribute_key_t key)
             return "ORTE_APP_APPEND_ENVAR";
         case ORTE_APP_ADD_ENVAR:
             return "ORTE_APP_ADD_ENVAR";
+        case ORTE_APP_PSET_NAME:
+            return "ORTE_APP_PSET_NAME";
 
         case ORTE_NODE_USERNAME:
             return "NODE-USERNAME";

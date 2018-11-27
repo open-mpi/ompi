@@ -52,6 +52,8 @@ typedef uint8_t orte_app_context_flags_t;
 #define ORTE_APP_PREPEND_ENVAR      19    // opal_envar_t - prepend the specified value to the given envar
 #define ORTE_APP_APPEND_ENVAR       20    // opal_envar_t - append the specified value to the given envar
 #define ORTE_APP_ADD_ENVAR          21    // opal_envar_t - add envar, do not override pre-existing one
+#define ORTE_APP_PSET_NAME          23    // string - user-assigned name for the process
+                                          //          set containing the given process
 
 #define ORTE_APP_MAX_KEY        100
 

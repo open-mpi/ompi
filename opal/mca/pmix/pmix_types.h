@@ -89,6 +89,8 @@ BEGIN_C_DECLS
 #define OPAL_PMIX_VERSION_INFO                  "pmix.version"          // (char*) PMIx version of contactor
 #define OPAL_PMIX_REQUESTOR_IS_TOOL             "pmix.req.tool"         // (bool) requesting process is a tool
 #define OPAL_PMIX_REQUESTOR_IS_CLIENT           "pmix.req.client"       // (bool) requesting process is a client process
+#define OPAL_PMIX_PSET_NAME                     "pmix.pset.nm"          // (char*) user-assigned name for the process
+                                                                        //         set containing the given process
 
 /* model attributes */
 #define OPAL_PMIX_PROGRAMMING_MODEL             "pmix.pgm.model"        // (char*) programming model being initialized (e.g., "MPI" or "OpenMP")
