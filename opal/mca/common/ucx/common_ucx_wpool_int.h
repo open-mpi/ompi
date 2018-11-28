@@ -18,7 +18,6 @@ typedef struct {
 
 typedef struct {
     int mem_id;
-    volatile int released;
     opal_common_ucx_wpmem_t *gmem;
     _mem_info_t *mem;
     opal_common_ucx_tlocal_fast_ptrs_t *mem_tls_ptr;
@@ -106,10 +105,8 @@ static int _comm_ucx_wpmem_map(opal_common_ucx_wpool_t *wpool,
                                void **base, size_t size, ucp_mem_h *memh_ptr,
                                opal_common_ucx_mem_type_t mem_type);
 static void _common_ucx_wpmem_free(opal_common_ucx_wpmem_t *mem);
-static int _common_ucx_wpmem_append(opal_common_ucx_wpmem_t *mem,
-                                    _tlocal_mem_t *mem_rec);
-static void _common_ucx_mem_remove(opal_common_ucx_wpmem_t *mem,
-                                   _tlocal_mem_t *mem_rec);
+static int _common_ucx_wpmem_signup(opal_common_ucx_wpmem_t *mem);
+static void _common_ucx_mem_signout(opal_common_ucx_wpmem_t *mem);
 
 
 #endif // COMMON_UCX_WPOOL_INT_H

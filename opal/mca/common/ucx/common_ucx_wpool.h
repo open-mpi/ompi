@@ -62,19 +62,17 @@ typedef struct {
 
 typedef struct {
     int mem_id;
-    opal_mutex_t mutex;
     /* reference context to which memory region belongs */
     opal_common_ucx_ctx_t *ctx;
+
+    /* object lifetime control */
+    volatile int released;
+    opal_atomic_int32_t refcntr;
 
     /* UCX memory handler */
     ucp_mem_h memh;
     char *mem_addrs;
     int *mem_displs;
-
-    /* list of TLS components that become
-     * assosiated with this mem region */
-    opal_list_t registrations;
-    volatile int released;
 
     /* TLS item that allows each thread to
      * store endpoints and rkey arrays
