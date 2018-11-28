@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -17,6 +18,8 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      Amazon.com, Inc. or its affiliates.
  *                         All Rights reserved.
+ * Copyright (c) 2018      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -29,85 +32,124 @@
 #include "opal_config.h"
 
 #include "opal/class/opal_object.h"
-#include "opal/dss/dss.h"
 #include "opal/util/output.h"
 #include "opal/util/malloc.h"
-#include "opal/util/net.h"
 #include "opal/util/proc.h"
-#include "opal/util/keyval_parse.h"
 #include "opal/util/show_help.h"
 #include "opal/memoryhooks/memory.h"
-#include "opal/mca/base/base.h"
 #include "opal/runtime/opal.h"
 #include "opal/constants.h"
-#include "opal/datatype/opal_datatype.h"
-#include "opal/mca/if/base/base.h"
-#include "opal/mca/installdirs/base/base.h"
-#include "opal/mca/memchecker/base/base.h"
-#include "opal/mca/memcpy/base/base.h"
-#include "opal/mca/backtrace/base/base.h"
-#include "opal/mca/reachable/base/base.h"
-#include "opal/mca/timer/base/base.h"
-#include "opal/mca/hwloc/base/base.h"
-#include "opal/mca/event/base/base.h"
-#include "opal/runtime/opal_progress.h"
-#include "opal/mca/shmem/base/base.h"
-#if OPAL_ENABLE_FT_CR    == 1
-#include "opal/mca/compress/base/base.h"
-#endif
-
-#include "opal/runtime/opal_cr.h"
-#include "opal/mca/crs/base/base.h"
 #include "opal/threads/tsd.h"
+#include "opal/runtime/opal_cr.h"
+#include "opal/runtime/opal_progress.h"
 
 extern int opal_initialized;
 extern int opal_util_initialized;
 extern bool opal_init_called;
 
-int
-opal_finalize_util(void)
+static opal_mutex_t opal_finalize_cleanup_fns_lock = OPAL_MUTEX_STATIC_INIT;
+opal_list_t opal_finalize_cleanup_fns = {{0}};
+
+struct opal_cleanup_fn_item_t {
+    opal_list_item_t  super;
+    opal_cleanup_fn_t cleanup_fn;
+    void             *user_data;
+#if OPAL_ENABLE_DEBUG
+    char *cleanup_fn_name;
+#endif
+};
+
+typedef struct opal_cleanup_fn_item_t opal_cleanup_fn_item_t;
+OBJ_CLASS_DECLARATION(opal_cleanup_fn_item_t);
+
+static void opal_cleanup_fn_item_construct (opal_cleanup_fn_item_t *item)
 {
-    if( --opal_util_initialized != 0 ) {
-        if( opal_util_initialized < 0 ) {
+#if OPAL_ENABLE_DEBUG
+    item->cleanup_fn_name = NULL;
+#endif
+}
+
+static void opal_cleanup_fn_item_destruct (opal_cleanup_fn_item_t *item)
+{
+#if OPAL_ENABLE_DEBUG
+    free (item->cleanup_fn_name);
+    item->cleanup_fn_name = NULL;
+#endif
+}
+
+
+OBJ_CLASS_INSTANCE(opal_cleanup_fn_item_t, opal_list_item_t,
+                   opal_cleanup_fn_item_construct, opal_cleanup_fn_item_destruct);
+
+static void opal_finalize_domain_construct (opal_finalize_domain_t *domain)
+{
+    domain->domain_name = NULL;
+}
+
+static void opal_finalize_domain_destruct (opal_finalize_domain_t *domain)
+{
+    free (domain->domain_name);
+    domain->domain_name = NULL;
+}
+
+OBJ_CLASS_INSTANCE(opal_finalize_domain_t, opal_list_t, opal_finalize_domain_construct,
+                   opal_finalize_domain_destruct);
+
+static opal_finalize_domain_t *current_finalize_domain;
+opal_finalize_domain_t opal_init_util_domain;
+opal_finalize_domain_t opal_init_domain;
+
+void opal_finalize_append_cleanup (opal_cleanup_fn_t cleanup_fn, const char *fn_name, void *user_data)
+{
+    opal_cleanup_fn_item_t *cleanup_item = OBJ_NEW(opal_cleanup_fn_item_t);
+    assert (NULL != cleanup_item);
+    cleanup_item->cleanup_fn = cleanup_fn;
+    cleanup_item->user_data = user_data;
+#if OPAL_ENABLE_DEBUG
+    cleanup_item->cleanup_fn_name = strdup (fn_name);
+    assert (NULL != cleanup_item->cleanup_fn_name);
+#else
+    (void) fn_name;
+#endif
+
+    opal_mutex_lock (&opal_finalize_cleanup_fns_lock);
+    opal_list_append (&current_finalize_domain->super, &cleanup_item->super);
+    opal_mutex_unlock (&opal_finalize_cleanup_fns_lock);
+}
+
+void opal_finalize_domain_init (opal_finalize_domain_t *domain, const char *domain_name)
+{
+    free (domain->domain_name);
+    domain->domain_name = domain_name ? strdup (domain_name) : NULL;
+}
+
+void opal_finalize_set_domain (opal_finalize_domain_t *domain)
+{
+    current_finalize_domain = domain;
+}
+
+void opal_finalize_cleanup_domain (opal_finalize_domain_t *domain)
+{
+    opal_cleanup_fn_item_t *cleanup_item, *next;
+    /* call any registered cleanup functions before tearing down OPAL */
+    OPAL_LIST_FOREACH_SAFE_REV(cleanup_item, next, &domain->super, opal_cleanup_fn_item_t) {
+        cleanup_item->cleanup_fn (cleanup_item->user_data);
+        opal_list_remove_item (&domain->super, &cleanup_item->super);
+        OBJ_RELEASE(cleanup_item);
+    }
+}
+
+int opal_finalize_util (void)
+{
+    if (--opal_util_initialized != 0) {
+        if (opal_util_initialized < 0) {
             return OPAL_ERROR;
         }
         return OPAL_SUCCESS;
     }
 
-    /* close interfaces code. */
-    (void) mca_base_framework_close(&opal_if_base_framework);
-
-    (void) mca_base_framework_close(&opal_event_base_framework);
-
-    /* Clear out all the registered MCA params */
-    opal_deregister_params();
-    mca_base_var_finalize();
-
-    opal_net_finalize();
-
-    /* keyval lex-based parser */
-    opal_util_keyval_parse_finalize();
-
-    (void) mca_base_framework_close(&opal_installdirs_base_framework);
-
-    mca_base_close();
-
-    /* finalize the memory allocator */
-    opal_malloc_finalize();
-
-    /* finalize the show_help system */
-    opal_show_help_finalize();
-
-    /* finalize the output system.  This has to come *after* the
-       malloc code, as the malloc code needs to call into this, but
-       the malloc code turning off doesn't affect opal_output that
-       much */
-    opal_output_finalize();
-
-    /* close the dss */
-    opal_dss_close();
-
-    opal_datatype_finalize();
+    opal_finalize_cleanup_domain (&opal_init_util_domain);
+    OBJ_DESTRUCT(&opal_init_util_domain);
 
     /* finalize the class/object system */
     opal_class_finalize();
@@ -119,49 +161,17 @@ opal_finalize_util(void)
 }
 
 
-int
-opal_finalize(void)
+int opal_finalize(void)
 {
-    if( --opal_initialized != 0 ) {
-        if( opal_initialized < 0 ) {
+    if (--opal_initialized != 0) {
+        if (opal_initialized < 0) {
             return OPAL_ERROR;
         }
         return OPAL_SUCCESS;
     }
 
-    opal_progress_finalize();
-
-    /* close the checkpoint and restart service */
-    opal_cr_finalize();
-
-#if OPAL_ENABLE_FT_CR    == 1
-    (void) mca_base_framework_close(&opal_compress_base_framework);
-#endif
-
-    (void) mca_base_framework_close(&opal_reachable_base_framework);
-
-    (void) mca_base_framework_close(&opal_event_base_framework);
-
-    /* close high resolution timers */
-    (void) mca_base_framework_close(&opal_timer_base_framework);
-
-    (void) mca_base_framework_close(&opal_backtrace_base_framework);
-    (void) mca_base_framework_close(&opal_memchecker_base_framework);
-
-    /* close the memcpy framework */
-    (void) mca_base_framework_close(&opal_memcpy_base_framework);
-
-    /* finalize the memory manager / tracker */
-    opal_mem_hooks_finalize();
-
-    /* close the hwloc framework */
-    (void) mca_base_framework_close(&opal_hwloc_base_framework);
-
-    /* close the shmem framework */
-    (void) mca_base_framework_close(&opal_shmem_base_framework);
-
-    /* cleanup the main thread specific stuff */
-    opal_tsd_keys_destruct();
+    opal_finalize_cleanup_domain (&opal_init_domain);
+    OBJ_DESTRUCT(&opal_init_domain);
 
     /* finalize util code */
     opal_finalize_util();
@@ -169,29 +179,22 @@ opal_finalize(void)
     return OPAL_SUCCESS;
 }
 
+static bool fork_warning_issued = false;
+static bool atfork_called = false;
 
-void opal_finalize_test(void)
+static void warn_fork_cb(void)
 {
-    /* Clear out all the registered MCA params */
-    mca_base_var_finalize();
+    if (opal_initialized && !fork_warning_issued) {
+        opal_show_help("help-opal-runtime.txt", "opal_init:warn-fork", true,
+                       OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), getpid());
+        fork_warning_issued = true;
+    }
+}
 
-    (void) mca_base_framework_close(&opal_installdirs_base_framework);
-
-    /* finalize the mca */
-    mca_base_close();
-
-    /* finalize the show_help system */
-    opal_show_help_finalize();
-
-    /* finalize the output system.  This has to come *after* the
-       malloc code, as the malloc code needs to call into this, but
-       the malloc code turning off doesn't affect opal_output that
-       much */
-    opal_output_finalize();
-
-    /* close the dss */
-    opal_dss_close();
-
-    /* finalize the class/object system */
-    opal_class_finalize();
+void opal_warn_fork(void)
+{
+    if (opal_warn_on_fork && !atfork_called) {
+        pthread_atfork(warn_fork_cb, NULL, NULL);
+        atfork_called = true;
+    }
 }

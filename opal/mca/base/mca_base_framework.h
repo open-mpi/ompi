@@ -3,6 +3,8 @@
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2017 IBM Corporation.  All rights reserved.
+ * Copyright (c) 2018      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -174,6 +176,20 @@ OPAL_DECLSPEC int mca_base_framework_register (mca_base_framework_t *framework,
                                                mca_base_register_flag_t flags);
 
 /**
+ * Register frameworks with MCA.
+ *
+ * @param[in] framework NULL-terminated list of frameworks to register
+ *
+ * @retval OPAL_SUCCESS Upon success
+ * @retval OPAL_ERROR Upon failure
+ *
+ * Call the MCA variable registration functions of each framework in the
+ * frameworks array.
+ */
+OPAL_DECLSPEC int mca_base_framework_register_list (mca_base_framework_t **frameworks,
+                                                    mca_base_register_flag_t flags);
+
+/**
  * Open a framework
  *
  * @param[in] framework framework to open
@@ -187,6 +203,19 @@ OPAL_DECLSPEC int mca_base_framework_open (mca_base_framework_t *framework,
                                            mca_base_open_flag_t flags);
 
 /**
+ * Open frameworks
+ *
+ * @param[in] frameworks NULL-terminated array of framework to open
+ *
+ * @retval OPAL_SUCCESS Upon success
+ * @retval OPAL_ERROR Upon failure
+ *
+ * Call the open function on multiple frameworks
+ */
+OPAL_DECLSPEC int mca_base_framework_open_list (mca_base_framework_t **frameworks,
+                                                mca_base_open_flag_t flags);
+
+/**
  * Close a framework
  *
  * @param[in] framework framework to close
@@ -198,6 +227,17 @@ OPAL_DECLSPEC int mca_base_framework_open (mca_base_framework_t *framework,
  */
 OPAL_DECLSPEC int mca_base_framework_close (mca_base_framework_t *framework);
 
+/**
+ * Close frameworks
+ *
+ * @param[in] frameworks NULL-terminated array of framework to close
+ *
+ * @retval OPAL_SUCCESS Upon success
+ * @retval OPAL_ERROR Upon failure
+ *
+ * Call the close function on multiple frameworks
+ */
+OPAL_DECLSPEC int mca_base_framework_close_list (mca_base_framework_t **frameworks);
 
 /**
  * Check if a framework is already registered

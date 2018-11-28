@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -13,6 +14,8 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
+ * Copyright (c) 2018      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -27,6 +30,7 @@
 #include <locale.h>
 #include <errno.h>
 
+#include "opal/runtime/opal.h"
 #include "opal/mca/installdirs/installdirs.h"
 #include "opal/util/show_help.h"
 #include "opal/util/show_help_lex.h"
@@ -52,6 +56,7 @@ static int opal_show_vhelp_internal(const char *filename, const char *topic,
                                     int want_error_header, va_list arglist);
 static int opal_show_help_internal(const char *filename, const char *topic,
                                    int want_error_header, ...);
+static void opal_show_help_finalize (void);
 
 opal_show_help_fn_t opal_show_help = opal_show_help_internal;
 opal_show_vhelp_fn_t opal_show_vhelp = opal_show_vhelp_internal;
@@ -67,10 +72,12 @@ int opal_show_help_init(void)
 
     opal_argv_append_nosize(&search_dirs, opal_install_dirs.opaldatadir);
 
+    opal_finalize_register_cleanup (opal_show_help_finalize);
+
     return OPAL_SUCCESS;
 }
 
-int opal_show_help_finalize(void)
+static void opal_show_help_finalize (void)
 {
     opal_output_close(output_stream);
     output_stream = -1;
@@ -79,9 +86,7 @@ int opal_show_help_finalize(void)
     if (NULL != search_dirs) {
         opal_argv_free(search_dirs);
         search_dirs = NULL;
-    };
-
-    return OPAL_SUCCESS;
+    }
 }
 
 /*

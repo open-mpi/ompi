@@ -16,6 +16,8 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017 IBM Corporation.  All rights reserved.
+ * Copyright (c) 2018      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -130,7 +132,7 @@ OPAL_DECLSPEC int mca_base_open(void);
  * It must be the last MCA function invoked.  It is normally invoked
  * during the finalize stage.
  */
-OPAL_DECLSPEC int mca_base_close(void);
+OPAL_DECLSPEC void mca_base_close(void);
 
 /**
  * A generic select function

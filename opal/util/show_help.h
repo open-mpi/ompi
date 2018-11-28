@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,6 +11,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2018 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2018      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -101,15 +104,6 @@ BEGIN_C_DECLS
  * Initialization of show_help subsystem
  */
 OPAL_DECLSPEC int opal_show_help_init(void);
-
-
-/**
- * \internal
- *
- * Finalization of show_help subsystem
- */
-OPAL_DECLSPEC int opal_show_help_finalize(void);
-
 
 /**
  * Look up a text message in a text file and display it to the

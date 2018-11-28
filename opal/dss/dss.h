@@ -1,5 +1,5 @@
-/* -*- C -*-
- *
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
+/*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
@@ -12,6 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, Inc. All rights reserved.
  * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2018      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -356,12 +358,6 @@ OPAL_DECLSPEC int opal_dss_register_vars (void);
  * executed as part of the program startup.
  */
 OPAL_DECLSPEC int opal_dss_open(void);
-
-/**
- * DSS finalize function
- */
-OPAL_DECLSPEC int opal_dss_close(void);
-
 
 /**
  * Copy a data value from one location to another.

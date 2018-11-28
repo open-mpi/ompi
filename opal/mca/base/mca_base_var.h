@@ -15,6 +15,8 @@
  *                         reserved.
  * Copyright (c) 2016      Intel, Inc. All rights reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
+ * Copyright (c) 2018      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -708,22 +710,6 @@ OPAL_DECLSPEC int mca_base_var_get_count (void);
  */
 OPAL_DECLSPEC int mca_base_var_build_env(char ***env, int *num_env,
                                          bool internal);
-
-/**
- * Shut down the MCA variable system (normally only invoked by the
- * MCA framework itself).
- *
- * @returns OPAL_SUCCESS This function never fails.
- *
- * This function shuts down the MCA variable repository and frees all
- * associated memory.  No other mca_base_var*() functions can be
- * invoked after this function.
- *
- * This function is normally only invoked by the MCA framework itself
- * when the process is shutting down (e.g., during MPI_FINALIZE).  It
- * is only documented here for completeness.
- */
-OPAL_DECLSPEC int mca_base_var_finalize(void);
 
 typedef enum {
     /* Dump human-readable strings */

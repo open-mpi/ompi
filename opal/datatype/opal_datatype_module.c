@@ -17,6 +17,8 @@
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2018      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -28,6 +30,7 @@
 
 #include <stddef.h>
 
+#include "opal/runtime/opal.h"
 #include "opal/util/arch.h"
 #include "opal/util/output.h"
 #include "opal/datatype/opal_datatype_internal.h"
@@ -204,6 +207,21 @@ int opal_datatype_register_params(void)
     return OPAL_SUCCESS;
 }
 
+static void opal_datatype_finalize (void)
+{
+    /* As the synonyms are just copies of the internal data we should not free them.
+     * Anyway they are over the limit of OPAL_DATATYPE_MAX_PREDEFINED so they will never get freed.
+     */
+
+    /* As they are statically allocated they cannot be released. But we
+     * can call OBJ_DESTRUCT, just to free all internally allocated ressources.
+     */
+    /* clear all master convertors */
+    opal_convertor_destroy_masters();
+
+    opal_output_close (opal_datatype_dfd);
+    opal_datatype_dfd = -1;
+}
 
 int32_t opal_datatype_init( void )
 {
@@ -242,27 +260,7 @@ int32_t opal_datatype_init( void )
         opal_output_set_verbosity(opal_datatype_dfd, opal_ddt_verbose);
     }
 
-    return OPAL_SUCCESS;
-}
-
-
-int32_t opal_datatype_finalize( void )
-{
-    /* As the synonyms are just copies of the internal data we should not free them.
-     * Anyway they are over the limit of OPAL_DATATYPE_MAX_PREDEFINED so they will never get freed.
-     */
-
-    /* As they are statically allocated they cannot be released. But we
-     * can call OBJ_DESTRUCT, just to free all internally allocated ressources.
-     */
-#if defined(VERBOSE)
-    if( opal_datatype_dfd != -1 )
-        opal_output_close( opal_datatype_dfd );
-    opal_datatype_dfd = -1;
-#endif /* VERBOSE */
-
-    /* clear all master convertors */
-    opal_convertor_destroy_masters();
+    opal_finalize_register_cleanup (opal_datatype_finalize);
 
     return OPAL_SUCCESS;
 }

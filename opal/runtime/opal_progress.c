@@ -98,6 +98,25 @@ static int fake_cb(void) { return 0; }
 static int _opal_progress_unregister (opal_progress_callback_t cb, volatile opal_progress_callback_t *callback_array,
                                       size_t *callback_array_len);
 
+static void opal_progress_finalize (void)
+{
+    /* free memory associated with the callbacks */
+    opal_atomic_lock(&progress_lock);
+
+    callbacks_len = 0;
+    callbacks_size = 0;
+    free ((void *) callbacks);
+    callbacks = NULL;
+
+    callbacks_lp_len = 0;
+    callbacks_lp_size = 0;
+    free ((void *) callbacks_lp);
+    callbacks_lp = NULL;
+
+    opal_atomic_unlock(&progress_lock);
+}
+
+
 /* init the progress engine - called from orte_init */
 int
 opal_progress_init(void)
@@ -144,27 +163,7 @@ opal_progress_init(void)
     OPAL_OUTPUT((debug_output, "progress: initialized poll rate to: %ld",
                  (long) event_progress_delta));
 
-    return OPAL_SUCCESS;
-}
-
-
-int
-opal_progress_finalize(void)
-{
-    /* free memory associated with the callbacks */
-    opal_atomic_lock(&progress_lock);
-
-    callbacks_len = 0;
-    callbacks_size = 0;
-    free ((void *) callbacks);
-    callbacks = NULL;
-
-    callbacks_lp_len = 0;
-    callbacks_lp_size = 0;
-    free ((void *) callbacks_lp);
-    callbacks_lp = NULL;
-
-    opal_atomic_unlock(&progress_lock);
+    opal_finalize_register_cleanup (opal_progress_finalize);
 
     return OPAL_SUCCESS;
 }

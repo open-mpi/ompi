@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2014 Los Alamos National Security, LLC.  All rights
  *                         reserved.
+ * Copyright (c) 2018      Triad National Security, LLC. All rights
+ *                         reserved.
  *
  * $COPYRIGHT$
  *
@@ -32,6 +34,7 @@ BEGIN_C_DECLS
 
 #include "opal_config.h"
 #include "opal/threads/mutex.h"
+#include "opal/runtime/opal.h"
 
 /**
  * Initialize the progress engine
@@ -42,17 +45,6 @@ BEGIN_C_DECLS
  * interface may be called.
  */
 OPAL_DECLSPEC int opal_progress_init(void);
-
-
-/**
- * Shut down the progress engine
- *
- * Shut down the progress engine.  This includes deregistering all
- * registered callbacks and freeing all resources.  After finalize
- * returns, no calls into the progress interface are allowed.
- */
-OPAL_DECLSPEC int opal_progress_finalize(void);
-
 
 /**
  * Progress all pending events

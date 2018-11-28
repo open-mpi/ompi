@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -15,6 +15,8 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
+ * Copyright (c) 2018      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -26,6 +28,7 @@
  */
 #include "opal_config.h"
 
+#include "opal/runtime/opal.h"
 #include "opal/mca/base/mca_base_var.h"
 
 #include "opal/dss/dss_internal.h"
@@ -310,6 +313,21 @@ int opal_dss_register_vars (void)
                                  &opal_dss_threshold_size);
 
     return (0 > ret) ? ret : OPAL_SUCCESS;
+}
+
+static void opal_dss_close (void)
+{
+    opal_dss_initialized = false;
+
+    for (int i = 0 ; i < opal_pointer_array_get_size(&opal_dss_types) ; ++i) {
+        opal_dss_type_info_t *info = (opal_dss_type_info_t*)opal_pointer_array_get_item(&opal_dss_types, i);
+        if (NULL != info) {
+            opal_pointer_array_set_item(&opal_dss_types, i, NULL);
+            OBJ_RELEASE(info);
+        }
+    }
+
+    OBJ_DESTRUCT(&opal_dss_types);
 }
 
 int opal_dss_open(void)
@@ -658,28 +676,8 @@ int opal_dss_open(void)
     /* All done */
 
     opal_dss_initialized = true;
-    return OPAL_SUCCESS;
-}
 
-
-int opal_dss_close(void)
-{
-    int32_t i;
-
-    if (!opal_dss_initialized) {
-        return OPAL_SUCCESS;
-    }
-    opal_dss_initialized = false;
-
-    for (i = 0 ; i < opal_pointer_array_get_size(&opal_dss_types) ; ++i) {
-        opal_dss_type_info_t *info = (opal_dss_type_info_t*)opal_pointer_array_get_item(&opal_dss_types, i);
-        if (NULL != info) {
-            opal_pointer_array_set_item(&opal_dss_types, i, NULL);
-            OBJ_RELEASE(info);
-        }
-    }
-
-    OBJ_DESTRUCT(&opal_dss_types);
+    opal_finalize_register_cleanup (opal_dss_close);
 
     return OPAL_SUCCESS;
 }

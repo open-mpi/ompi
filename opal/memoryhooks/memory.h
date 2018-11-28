@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -9,6 +10,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2018      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -58,24 +61,6 @@ BEGIN_C_DECLS
  * @retval OPAL_SUCCESS Initialization completed successfully
  */
 OPAL_DECLSPEC int opal_mem_hooks_init(void);
-
-
-/**
- * Finalize the memory hooks subsystem
- *
- * Finalize the memory hooks subsystem.  This is generally called
- * during opal_finalize() and no other memory hooks functions should
- * be called after this function is called.  opal_mem_hooks_finalize()
- * will automatically deregister any callbacks that have not already
- * been deregistered.  In a multi-threaded application, it is possible
- * that one thread will have a memory hook callback while the other
- * thread is in opal_mem_hooks_finalize(), however, no threads will
- * receive a callback once the calling thread has exited
- * opal_mem_hooks_finalize().
- *
- * @retval OPAL_SUCCESS Shutdown completed successfully
- */
-OPAL_DECLSPEC int opal_mem_hooks_finalize(void);
 
 
 /**

@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -12,6 +13,8 @@
  * Copyright (c) 2008	   Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2010-2016 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2018      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -26,6 +29,7 @@
 
 #include "opal_config.h"
 #include "opal/types.h"
+#include "opal/class/opal_list.h"
 
 BEGIN_C_DECLS
 
@@ -42,6 +46,12 @@ OPAL_DECLSPEC extern int opal_cache_line_size;
 
 /** Do we want to be warned on fork or not? */
 OPAL_DECLSPEC extern bool opal_warn_on_fork;
+
+/**
+ * @brief list of cleanup functions that should be called as part of opal_finalize_util().
+ *        opal_finalize()
+ */
+extern opal_list_t opal_finalize_cleanup_fns;
 
 /**
  * Initialize the OPAL layer, including the MCA system.
@@ -94,42 +104,96 @@ OPAL_DECLSPEC int opal_init_psm(void);
  */
 OPAL_DECLSPEC int opal_finalize_util(void);
 
-/**
- * Initialize a very thin OPAL layer solely for use
- * by unit tests. The purpose of this function is to
- * provide the absolute bare minimum support required
- * to open, select, and close a framework. This is
- * maintained separately from the other OPAL runtime
- * APIs to avoid conflicts when new frameworks are
- * added to the normal OPAL init sequence. It has no
- * other purpose and should not be used outside of
- * unit tests.
- *
- * @retval OPAL_SUCCESS Upon success.
- * @retval OPAL_ERROR Upon failure.
- */
-OPAL_DECLSPEC int opal_init_test(void);
-
-/**
- * Finalize the very thin OPAL layer used solely
- * by unit tests. The purpose of this function is to
- * finalize the absolute bare minimum support opened
- * by its companion opal_init_test API. It has no
- * other purpose and should not be used outside of
- * unit tests.
- *
- * @retval OPAL_SUCCESS Upon success.
- * @retval OPAL_ERROR Upon failure.
- */
-OPAL_DECLSPEC void opal_finalize_test(void);
-
 OPAL_DECLSPEC void opal_warn_fork(void);
 
 /**
- * Internal function.  Do not call.
+ * Internal function.  Only valid when called from opal_init_util().
  */
 OPAL_DECLSPEC int opal_register_params(void);
-OPAL_DECLSPEC int opal_deregister_params(void);
+
+/* finalize cleanup */
+/**
+ * @brief Cleanup domain
+ *
+ * Cleanup domains are made up of a list of functions that need to be
+ * called at finalize. A domain can be allocated/constructed then be
+ * passed to opal_finalize_domain_init() to give it a name. The name
+ * is optional and is used only for debugging purposes (this mean it
+ * *is* optional *but* still recommended. You can then set the
+ * finalize domain using opal_finalize_set_domain(). Once this is
+ * called all cleanup functions registered with
+ * opal_finalize_append_cleanup() will be registered to the set
+ * domain. To call the finalize functions in a domain call
+ * the opal_finalize_cleanup_domain() API.
+ */
+struct opal_finalize_domain_t {
+    /** domains are opal lists */
+    opal_list_t super;
+    /** name of this finalize domain */
+    char *domain_name;
+};
+typedef struct opal_finalize_domain_t opal_finalize_domain_t;
+
+OBJ_CLASS_DECLARATION(opal_finalize_domain_t);
+
+/**
+ * @brief Initialize a finalize domain.
+ *
+ * @param[in] domain      Finalize domain to initialize
+ * @param[in] domain_name Name for this finalize domain (may be NULL)
+ *
+ * This function sets the name of a finalize domain. The domain must
+ * have already been initialized by OBJ_CONSTRUCT() or OBJ_NEW().
+ */
+void opal_finalize_domain_init (opal_finalize_domain_t *domain, const char *domain_name);
+
+/**
+ * @brief Set the current finalize domain for opal_finalize_append_cleanup()
+ *
+ * @param[in] domain     Finalize domain to use
+ *
+ * This function sets the current finalize domain. This API is not thread safe
+ * and is must be protected from multi-threaded invocation.
+ */
+void opal_finalize_set_domain (opal_finalize_domain_t *domain);
+
+/**
+ * @brief Finalize a domain
+ *
+ * @param[in] domain      Finalize domain to cleanup
+ *
+ * This function calls all the finalization functions registered with the
+ * specified domain in reverse-registration order. This function releases
+ * any memory allocated by the relevant calls to opal_finalize_append_cleanup()
+ * and effectively empties the cleanup domain.
+ */
+void opal_finalize_cleanup_domain (opal_finalize_domain_t *domain);
+
+/**
+ * @brief Cleanup domain function
+ *
+ * The argument is optional. It is valid to use the opal_finalize_register_cleanup()
+ * macro to register a function that is of type void (*) (void).
+ */
+typedef void (*opal_cleanup_fn_t) (void *);
+
+/**
+ * @brief Append a cleanup function to the current domain
+ *
+ * @param[in] cleanup_fn     Cleanup function to register
+ * @param[in] fn_name        Name of the cleanup function (for debugging)
+ * @param[in] user_data      User data to pass to the cleanup function
+ */
+void opal_finalize_append_cleanup (opal_cleanup_fn_t cleanup_fn, const char *fn_name, void *user_data);
+
+#define opal_finalize_register_cleanup_3(x, y, z) opal_finalize_append_cleanup((opal_cleanup_fn_t) x, y, z)
+#define opal_finalize_register_cleanup_arg(x, y) opal_finalize_append_cleanup((opal_cleanup_fn_t) x, # x "(" #y ")", y)
+#define opal_finalize_register_cleanup(x) opal_finalize_register_cleanup_3((opal_cleanup_fn_t) (x), # x, NULL)
+
+/* opal cleanup domains */
+extern opal_finalize_domain_t opal_init_util_domain;
+extern opal_finalize_domain_t opal_init_domain;
+
 
 END_C_DECLS
 

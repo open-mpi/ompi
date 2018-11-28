@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -9,6 +10,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2018      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -49,8 +52,6 @@ OPAL_DECLSPEC int opal_util_keyval_parse(const char *filename,
                                          opal_keyval_parse_fn_t callback);
 
 OPAL_DECLSPEC int opal_util_keyval_parse_init(void);
-
-OPAL_DECLSPEC int opal_util_keyval_parse_finalize(void);
 
 OPAL_DECLSPEC int opal_util_keyval_save_internal_envars(opal_keyval_parse_fn_t callback);
 
