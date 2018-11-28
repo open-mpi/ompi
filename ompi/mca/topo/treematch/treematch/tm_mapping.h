@@ -19,9 +19,8 @@ int nb_lines(char *filename);
 int nb_processing_units(tm_topology_t *topology);
 void print_1D_tab(int *tab,int N);
 tm_solution_t * tm_compute_mapping(tm_topology_t *topology,tm_tree_t *comm_tree);
-void tm_finalize(void);
+void tm_finalize();
 void tm_free_affinity_mat(tm_affinity_mat_t *aff_mat);
-/* load affinity matrix */
 tm_affinity_mat_t *tm_load_aff_mat(char *filename);
 void update_comm_speed(double **comm_speed,int old_size,int new_size);
 

@@ -31,7 +31,7 @@ static int ilog2(int val)
 
 static int verbose_level = ERROR;
 
-static bucket_list_t global_bl;
+bucket_list_t global_bl;
 
 int tab_cmp(const void*,const void*);
 int old_bucket_id(int,int,bucket_list_t);

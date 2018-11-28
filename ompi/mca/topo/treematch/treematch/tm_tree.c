@@ -934,7 +934,7 @@ void  partial_exhaustive_search(int nb_args, void **args, int thread_id){
   work_unit_t *work = (work_unit_t *) args[7];
   pthread_mutex_t *lock = (pthread_mutex_t *) args[8];
   int *tab_i;
-  int id = -1, id1, id2;
+  int id=-1, id1, id2;
   int total_work = work->nb_work;
   int cur_work = 0;
 
@@ -1768,6 +1768,7 @@ void group_nodes(tm_affinity_mat_t *aff_mat, tm_tree_t *tab_node, tm_tree_t *new
   int mat_order = aff_mat -> order;
   tm_tree_t **cur_group = NULL;
   int j, l;
+  unsigned long int list_size;
   unsigned long int  i;
   group_list_t list, **best_selection = NULL, **tab_group = NULL;
   double best_val, last_best;
@@ -1827,7 +1828,8 @@ void group_nodes(tm_affinity_mat_t *aff_mat, tm_tree_t *tab_node, tm_tree_t *new
     best_selection = (group_list_t **)MALLOC(sizeof(group_list_t*)*solution_size);
 
     list_all_possible_groups(cost_mat, tab_node, 0, arity, 0, cur_group, &list);
-    assert( nb_groups == (unsigned long int)list.val );
+    list_size = (int)list.val;
+    assert( list_size == nb_groups);
     tab_group = (group_list_t**)MALLOC(sizeof(group_list_t*)*nb_groups);
     list_to_tab(list.next, tab_group, nb_groups);
     if(verbose_level>=INFO)

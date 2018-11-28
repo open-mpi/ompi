@@ -58,13 +58,15 @@ typedef struct {
   int *arity;             /* Arity of the nodes of each level*/
   int nb_levels;          /* Number of levels of the tree. Levels are numbered from top to bottom starting at 0*/
   size_t *nb_nodes;       /* Number of nodes of each level*/
-  int physical_num;       /* Flag set to !=0 if se use physical numberig and set to 0 is we use logical numbering */ 
+  int physical_num;       /* Flag set to !=0 if se use physical numberig and set to 0 is we use logical numbering */
   int *node_id;           /* ID of the nodes of the tree of the last level*/
   int *node_rank ;        /* Rank of the nodes of the tree for the last level given its ID: this is the inverse tab of node_id*/
+
   size_t *nb_free_nodes;  /* Nb of available nodes of each level*/
   int **free_nodes;       /* array of node that are free: useful to simulate batch scheduler*/
   double *cost;           /* Cost of the communication depending on the distance:
 			    cost[i] is the cost for communicating at distance nb_levels-i*/
+  
   int *constraints;       /* Array of constraints: id of the nodes where it is possible to map processes */
   int nb_constraints;     /* Size of the above array */
   int oversub_fact;       /* Maximum number of processes to be mapped on a given node */
@@ -135,6 +137,8 @@ tm_topology_t *tm_load_topology(char *arch_filename, tm_file_type_t arch_file_ty
 
  */
 tm_topology_t  *tm_build_synthetic_topology(int *arity, double *cost, int nb_levels, int *core_numbering, int nb_core_per_nodes);
+/* load affinity matrix */
+tm_affinity_mat_t *tm_load_aff_mat(char *com_filename);
 /*
    Alternativelly, build the affinity matrix from a array of array of matrix of size order by order
    For performance reason mat is not copied.
@@ -175,6 +179,7 @@ void tm_free_affinity_mat(tm_affinity_mat_t *aff_mat);
 void tm_set_verbose_level(unsigned int level);
 unsigned int  tm_get_verbose_level(void);
 /* finalize treematch :check memory if necessary, and free internal variables (thread pool)*/
+void tm_finalize();
 
 /*
 Ask for exhaustive search: may be very long
@@ -182,7 +187,7 @@ Ask for exhaustive search: may be very long
    new_val != 0 : exhuative search
 */
 void tm_set_exhaustive_search_flag(int new_val);
-int tm_get_exhaustive_search_flag(void);
+int tm_get_exhaustive_search_flag();
 
 /*
 Ask for greedy k-partitionning even if scotch is available
@@ -190,7 +195,7 @@ Ask for greedy k-partitionning even if scotch is available
    new_val != 0 : greedy k-partitionning
 */
 void tm_set_greedy_flag(int new_val);
-int tm_get_greedy_flag(void);
+int tm_get_greedy_flag();
 
 
 /* Setting the maximum number of threads you want to use in parallel parts of TreeMatch */
@@ -198,7 +203,7 @@ void tm_set_max_nb_threads(unsigned int val);
 
 /* managing the usage of physical vs. logical core numbering when using hwloc/xml files */
 void            tm_set_numbering(tm_numbering_t new_val); /* TM_NUMBERING_LOGICAL or TM_NUMBERING_PHYSICAL */
-tm_numbering_t  tm_get_numbering(void); /* TM_NUMBERING_LOGICAL or TM_NUMBERING_PHYSICAL */
+tm_numbering_t  tm_get_numbering(); /* TM_NUMBERING_LOGICAL or TM_NUMBERING_PHYSICAL */
 
 #include "tm_malloc.h"
 
