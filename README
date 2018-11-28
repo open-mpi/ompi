@@ -527,7 +527,7 @@ MPI Functionality and Features
   All that being said, if you are unable to immediately update your
   application to stop using these legacy MPI-1 symbols, you can
   re-enable them in mpi.h by configuring Open MPI with the
-  --enable-mpi-compatibility flag.
+  --enable-mpi1-compatibility flag.
 
 - Rank reordering support is available using the TreeMatch library. It
   is activated for the graph and dist_graph topologies.
