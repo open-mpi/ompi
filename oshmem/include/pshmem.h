@@ -14,32 +14,7 @@
 #ifndef PSHMEM_SHMEM_H
 #define PSHMEM_SHMEM_H
 
-
-#include <stddef.h>     /* include for ptrdiff_t */
-#include <stdint.h>     /* include for fixed width types */
-#if defined(c_plusplus) || defined(__cplusplus)
-#    include <complex>
-#    define OSHMEM_COMPLEX_TYPE(type)    std::complex<type>
-#else
-#    include <complex.h>
-#    define OSHMEM_COMPLEX_TYPE(type)    type complex
-#endif
-
-
-#ifndef OSHMEM_DECLSPEC
-#  if defined(OPAL_C_HAVE_VISIBILITY) && (OPAL_C_HAVE_VISIBILITY == 1)
-#     define OSHMEM_DECLSPEC __attribute__((visibility("default")))
-#  else
-#     define OSHMEM_DECLSPEC
-#  endif
-#endif
-
-#if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201112L)
-#define OSHMEMP_HAVE_C11 1
-#else
-#define OSHMEMP_HAVE_C11 0
-#endif
-
+#include <shmem.h>
 #include <pshmemx.h>
 
 #if defined(c_plusplus) || defined(__cplusplus)
