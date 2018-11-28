@@ -244,11 +244,15 @@ static int mca_pml_ob1_component_register(void)
 
 static int mca_pml_ob1_component_open(void)
 {
+    int rc;
     mca_pml_ob1_output = opal_output_open(NULL);
     opal_output_set_verbosity(mca_pml_ob1_output, mca_pml_ob1_verbose);
 
     mca_pml_ob1.enabled = false;
-    return mca_base_framework_open(&ompi_bml_base_framework, 0);
+    if (OMPI_SUCCESS != (rc = mca_base_framework_open(&ompi_bml_base_framework, 0))) {
+        return rc;
+    }
+    return mca_bml_base_init (1, ompi_mpi_thread_multiple);
 }
 
 

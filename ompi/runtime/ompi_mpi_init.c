@@ -18,8 +18,8 @@
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
  * Copyright (c) 2012-2013 Inria.  All rights reserved.
  * Copyright (c) 2014-2018 Intel, Inc.  All rights reserved.
- * Copyright (c) 2014-2016 Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2014-2018 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2016-2018 Mellanox Technologies Ltd. All rights reserved.
  *
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
@@ -604,14 +604,6 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided,
     }
     if (OMPI_SUCCESS != (ret = mca_base_framework_open(&opal_mpool_base_framework, 0))) {
         error = "mca_mpool_base_open() failed";
-        goto error;
-    }
-    if (OMPI_SUCCESS != (ret = mca_base_framework_open(&ompi_bml_base_framework, 0))) {
-        error = "mca_bml_base_open() failed";
-        goto error;
-    }
-    if (OMPI_SUCCESS != (ret = mca_bml_base_init (1, ompi_mpi_thread_multiple))) {
-        error = "mca_bml_base_init() failed";
         goto error;
     }
     if (OMPI_SUCCESS != (ret = mca_base_framework_open(&ompi_pml_base_framework, 0))) {

@@ -17,8 +17,8 @@
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
  * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
- * Copyright (c) 2016      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016-2018 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  *
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
  * $COPYRIGHT$
@@ -444,9 +444,6 @@ int ompi_mpi_finalize(void)
         goto done;
     }
     if (OMPI_SUCCESS != (ret = mca_base_framework_close(&ompi_coll_base_framework))) {
-        goto done;
-    }
-    if (OMPI_SUCCESS != (ret = mca_base_framework_close(&ompi_bml_base_framework))) {
         goto done;
     }
     if (OMPI_SUCCESS != (ret = mca_base_framework_close(&opal_mpool_base_framework))) {
