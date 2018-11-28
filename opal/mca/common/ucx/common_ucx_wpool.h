@@ -37,12 +37,10 @@ typedef struct {
     opal_list_t idle_workers;
     opal_list_t active_workers;
 
-    opal_atomic_int32_t cur_ctxid, cur_memid;
     opal_list_t tls_list;
 } opal_common_ucx_wpool_t;
 
 typedef struct {
-    int ctx_id;
     opal_mutex_t mutex;
     opal_atomic_int32_t refcntr;
 
@@ -61,7 +59,6 @@ typedef struct {
 } opal_common_ucx_ctx_t;
 
 typedef struct {
-    int mem_id;
     /* reference context to which memory region belongs */
     opal_common_ucx_ctx_t *ctx;
 

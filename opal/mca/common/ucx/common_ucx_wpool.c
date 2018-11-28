@@ -144,7 +144,6 @@ opal_common_ucx_wpool_init(opal_common_ucx_wpool_t *wpool,
         return rc;
     }
 
-    wpool->cur_ctxid = wpool->cur_memid = 0;
     OBJ_CONSTRUCT(&wpool->mutex, opal_mutex_t);
     OBJ_CONSTRUCT(&wpool->tls_list, opal_list_t);
 
@@ -400,8 +399,7 @@ opal_common_ucx_wpctx_create(opal_common_ucx_wpool_t *wpool, int comm_size,
     opal_common_ucx_ctx_t *ctx = calloc(1, sizeof(*ctx));
     int ret = OPAL_SUCCESS;
 
-    ctx->ctx_id = OPAL_ATOMIC_ADD_FETCH32(&wpool->cur_ctxid, 1);
-    WPOOL_DBG_OUT(_dbg_ctx, "ctx_create: ctx_id = %d\n", (int)ctx->ctx_id);
+    WPOOL_DBG_OUT(_dbg_ctx, "ctx_create: ctx = %p\n", (void*)ctx);
 
     OBJ_CONSTRUCT(&ctx->mutex, opal_mutex_t);
     OBJ_CONSTRUCT(&ctx->tls_workers, opal_list_t);
@@ -553,10 +551,7 @@ int opal_common_ucx_wpmem_create(opal_common_ucx_ctx_t *ctx,
     ucs_status_t status;
     int ret = OPAL_SUCCESS;
 
-    mem->mem_id = OPAL_ATOMIC_ADD_FETCH32(&ctx->wpool->cur_memid, 1);
-
-    WPOOL_DBG_OUT(_dbg_mem, "ctx = %p, mem_id = %d\n",
-                  (void *)ctx, (int)mem->mem_id);
+    WPOOL_DBG_OUT(_dbg_mem, "for ctx = %p\n", (void *)ctx);
 
     mem->released = 0;
     mem->refcntr = 1; /* application holding this memory handler */
@@ -820,7 +815,7 @@ static void _common_ucx_tls_cleanup(_tlocal_table_t *tls)
     // Cleanup memory table
     size = tls->mem_tbl_size;
     for (i = 0; i < size; i++) {
-        if (!tls->mem_tbl[i]->mem_id){
+        if (NULL == tls->mem_tbl[i]->gmem){
             continue;
         }
         _tlocal_mem_record_cleanup(tls->mem_tbl[i]);
@@ -830,7 +825,7 @@ static void _common_ucx_tls_cleanup(_tlocal_table_t *tls)
     // Cleanup ctx table
     size = tls->ctx_tbl_size;
     for (i = 0; i < size; i++) {
-        if (!tls->ctx_tbl[i]->ctx_id){
+        if (NULL == tls->ctx_tbl[i]->gctx){
             continue;
         }
         _tlocal_ctx_record_cleanup(tls->ctx_tbl[i]);
@@ -883,23 +878,22 @@ _tlocal_tls_memtbl_extend(_tlocal_table_t *tbl, size_t append)
 
 
 static inline _tlocal_ctx_t *
-_tlocal_ctx_search(_tlocal_table_t *tls, int ctx_id)
+_tlocal_ctx_search(_tlocal_table_t *tls, opal_common_ucx_ctx_t *ctx)
 {
     size_t i;
     for(i=0; i<tls->ctx_tbl_size; i++) {
-        if( tls->ctx_tbl[i]->ctx_id == ctx_id){
+        if (tls->ctx_tbl[i]->gctx == ctx){
             return tls->ctx_tbl[i];
         }
     }
-    WPOOL_DBG_OUT(_dbg_tls, "tls = %p, ctx_id = %d\n",
-                  (void *)tls, (int)ctx_id);
+    WPOOL_DBG_OUT(_dbg_tls, "tls = %p, ctx = %p\n", (void *)tls, (void*)ctx);
     return NULL;
 }
 
 static int
 _tlocal_ctx_record_cleanup(_tlocal_ctx_t *ctx_rec)
 {
-    if (0 == ctx_rec->ctx_id) {
+    if (NULL == ctx_rec->gctx) {
         return OPAL_SUCCESS;
     }
     /* Remove myself from the communication context structure
@@ -927,11 +921,13 @@ _tlocal_add_ctx(_tlocal_table_t *tls, opal_common_ucx_ctx_t *ctx)
     /* Try to find available record in the TLS table
      * In parallel perform deferred cleanups */
     for (i=0; i<tls->ctx_tbl_size; i++) {
-        if (tls->ctx_tbl[i]->gctx->released ) {
-            /* Found dirty record, need to clean first */
-            _tlocal_ctx_record_cleanup(tls->ctx_tbl[i]);
+        if (NULL != tls->ctx_tbl[i]->gctx) {
+            if (tls->ctx_tbl[i]->gctx->released ) {
+                /* Found dirty record, need to clean first */
+                _tlocal_ctx_record_cleanup(tls->ctx_tbl[i]);
+            }
         }
-        if ((0 == tls->ctx_tbl[i]->ctx_id) && (0 > free_idx)) {
+        if ((NULL != tls->ctx_tbl[i]->gctx) && (0 > free_idx)) {
             /* Found clean record */
             free_idx = i;
         }
@@ -947,7 +943,6 @@ _tlocal_add_ctx(_tlocal_table_t *tls, opal_common_ucx_ctx_t *ctx)
         }
     }
 
-    tls->ctx_tbl[free_idx]->ctx_id = ctx->ctx_id;
     tls->ctx_tbl[free_idx]->gctx = ctx;
     tls->ctx_tbl[free_idx]->winfo = _wpool_get_idle(tls->wpool, ctx->comm_size);
     if (NULL == tls->ctx_tbl[free_idx]->winfo) {
@@ -1009,13 +1004,13 @@ static int _tlocal_ctx_connect(_tlocal_ctx_t *ctx_rec, int target)
 /* TLS memory management */
 
 static inline _tlocal_mem_t *
-_tlocal_search_mem(_tlocal_table_t *tls, int mem_id)
+_tlocal_search_mem(_tlocal_table_t *tls, opal_common_ucx_wpmem_t *gmem)
 {
     size_t i;
-    WPOOL_DBG_OUT(_dbg_tls || _dbg_mem, "tls = %p mem_id = %d\n",
-                  (void *)tls, (int)mem_id);
+    WPOOL_DBG_OUT(_dbg_tls || _dbg_mem, "tls = %p mem = %p\n",
+                  (void *)tls, (void*)gmem);
     for(i=0; i<tls->mem_tbl_size; i++) {
-        if( tls->mem_tbl[i]->mem_id == mem_id){
+        if( tls->mem_tbl[i]->gmem == gmem){
             return tls->mem_tbl[i];
         }
     }
@@ -1066,12 +1061,14 @@ static _tlocal_mem_t *_tlocal_add_mem(_tlocal_table_t *tls,
 
     /* Try to find available spot in the table */
     for (i=0; i<tls->mem_tbl_size; i++) {
-        if (tls->mem_tbl[i]->gmem->released) {
-            /* Found a dirty record. Need to clean it first */
-            _tlocal_mem_record_cleanup(tls->mem_tbl[i]);
-            break;
+        if (NULL == tls->mem_tbl[i]->gmem) {
+            if (tls->mem_tbl[i]->gmem->released) {
+                /* Found a dirty record. Need to clean it first */
+                _tlocal_mem_record_cleanup(tls->mem_tbl[i]);
+                break;
+            }
         }
-        if ((0 == tls->mem_tbl[i]->mem_id) && (0 > free_idx)) {
+        if ((NULL == tls->mem_tbl[i]->gmem) && (0 > free_idx)) {
             /* Found a clear record */
             free_idx = i;
         }
@@ -1086,17 +1083,17 @@ static _tlocal_mem_t *_tlocal_add_mem(_tlocal_table_t *tls,
         }
         WPOOL_DBG_OUT(_dbg_tls || _dbg_mem, "tls = %p\n", (void *)tls);
     }
-    tls->mem_tbl[free_idx]->mem_id = mem->mem_id;
+
     tls->mem_tbl[free_idx]->gmem = mem;
     tls->mem_tbl[free_idx]->mem = calloc(1, sizeof(*tls->mem_tbl[free_idx]->mem));
 
-    ctx_rec = _tlocal_ctx_search(tls, mem->ctx->ctx_id);
+    ctx_rec = _tlocal_ctx_search(tls, mem->ctx);
     if (NULL == ctx_rec) {
         // TODO: act accordingly - cleanup
         return NULL;
     }
-    WPOOL_DBG_OUT("tls = %p, ctx_id = %d\n",
-                  (void *)tls, (int)mem->ctx->ctx_id);
+    WPOOL_DBG_OUT("tls = %p, ctx = %p\n",
+                  (void *)tls, (void*)mem->ctx);
 
     tls->mem_tbl[free_idx]->mem->worker = ctx_rec->winfo;
     tls->mem_tbl[free_idx]->mem->rkeys = calloc(mem->ctx->comm_size,
@@ -1162,10 +1159,10 @@ opal_common_ucx_tlocal_fetch_spath(opal_common_ucx_wpmem_t *mem, int target)
     WPOOL_DBG_OUT(_dbg_tls || _dbg_mem, "tls = %p\n",(void*)tls);
 
     /* Obtain the worker structure */
-    ctx_rec = _tlocal_ctx_search(tls, mem->ctx->ctx_id);
+    ctx_rec = _tlocal_ctx_search(tls, mem->ctx);
 
-    WPOOL_DBG_OUT(_dbg_tls || _dbg_mem, "ctx_id = %d, ctx_rec=%p\n",
-                  (int)mem->ctx->ctx_id, (void *)ctx_rec);
+    WPOOL_DBG_OUT(_dbg_tls || _dbg_mem, "ctx_id = %p, ctx_rec=%p\n",
+                  (void*)mem->ctx, (void *)ctx_rec);
     if (OPAL_UNLIKELY(NULL == ctx_rec)) {
         ctx_rec = _tlocal_add_ctx(tls, mem->ctx);
         if (NULL == ctx_rec) {
@@ -1191,9 +1188,9 @@ opal_common_ucx_tlocal_fetch_spath(opal_common_ucx_wpmem_t *mem, int target)
     WPOOL_DBG_OUT(_dbg_tls || _dbg_mem, "ep = %p\n", (void *)ep);
 
     /* Obtain the memory region info */
-    mem_rec = _tlocal_search_mem(tls, mem->mem_id);
-    WPOOL_DBG_OUT(_dbg_tls || _dbg_mem, "tls = %p mem_rec = %p mem_id = %d\n",
-                  (void *)tls, (void *)mem_rec, (int)mem->mem_id);
+    mem_rec = _tlocal_search_mem(tls, mem);
+    WPOOL_DBG_OUT(_dbg_tls || _dbg_mem, "tls = %p mem_rec = %p mem_id = %p\n",
+                  (void *)tls, (void *)mem_rec, (void*)mem);
     if (OPAL_UNLIKELY(mem_rec == NULL)) {
         mem_rec = _tlocal_add_mem(tls, mem);
         WPOOL_DBG_OUT(_dbg_tls || _dbg_mem, "tls = %p mem = %p\n",
