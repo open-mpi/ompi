@@ -53,6 +53,27 @@ included in the vX.Y.Z section and be denoted as:
    (** also appeared: A.B.C)  -- indicating that this item was previously
                                  included in release version vA.B.C.
 
+2.1.6 -- January 2019
+---------------------
+
+- Update the openib BTL to handle a newer flavor of the
+  ibv_exp_query() API.  Thanks to Angel Beltre (and others) for
+  reporting the issue.
+- Fix a segv when specifying a username in a hostfile.  Thanks to
+  StackOverflow user @derangedhk417 for reporting the issue.
+- Work around Oracle compiler v5.15 bug (which resulted in a failure
+  to compile Open MPI source code).
+- Disable CUDA async receive support in the openib BTL by default
+  because it is broken for sizes larger than the GPUDirect RDMA
+  limit.  User can set the MCA variable btl_openib_cuda_async_recv to
+  true to re-enable CUDA async receive support.
+- Various atomic and shared memory consistency bug fixes, especially
+  affecting the vader (shared memory) BTL and PMIx.
+- Add openib BTL support for BCM57XXX and BCM58XXX Broadcom HCAs.
+- Fix segv in oob/ud component.  Thanks to Balázs Hajgató for
+  reporting the issue.
+
+
 2.1.5 -- August 2018
 --------------------
 
