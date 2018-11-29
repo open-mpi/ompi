@@ -543,6 +543,8 @@ int opal_common_ucx_wpmem_create(opal_common_ucx_ctx_t *ctx,
                                opal_common_ucx_mem_type_t mem_type,
                                opal_common_ucx_exchange_func_t exchange_func,
                                void *exchange_metadata,
+                                 char **my_mem_addr,
+                                 int *my_mem_addr_size,
                                opal_common_ucx_wpmem_t **mem_ptr)
 {
     opal_common_ucx_wpmem_t *mem = calloc(1, sizeof(*mem));
@@ -581,8 +583,6 @@ int opal_common_ucx_wpmem_create(opal_common_ucx_ctx_t *ctx,
     ret = exchange_func(rkey_addr, rkey_addr_len,
                         &mem->mem_addrs, &mem->mem_displs, exchange_metadata);
     WPOOL_DBG_OUT(_dbg_mem, "\tcomplete exchange");
-
-    ucp_rkey_buffer_release(rkey_addr);
     if (ret != OPAL_SUCCESS) {
         goto error_rkey_pack;
     }
@@ -592,6 +592,8 @@ int opal_common_ucx_wpmem_create(opal_common_ucx_ctx_t *ctx,
     pthread_key_create(&mem->mem_tls_key, NULL);
 
     (*mem_ptr) = mem;
+    (*my_mem_addr) = rkey_addr;
+    (*my_mem_addr_size) = rkey_addr_len;
 
     WPOOL_DBG_OUT(_dbg_mem, "mem = %p. Done\n", (void *)mem);
     return ret;

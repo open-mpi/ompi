@@ -227,6 +227,8 @@ OPAL_DECLSPEC int opal_common_ucx_wpmem_create(opal_common_ucx_ctx_t *ctx,
                                opal_common_ucx_mem_type_t mem_type,
                                opal_common_ucx_exchange_func_t exchange_func,
                                void *exchange_metadata,
+                                               char **my_mem_addr,
+                                               int *my_mem_addr_size,
                                opal_common_ucx_wpmem_t **mem_ptr);
 OPAL_DECLSPEC int opal_common_ucx_wpmem_free(opal_common_ucx_wpmem_t *mem);
 
