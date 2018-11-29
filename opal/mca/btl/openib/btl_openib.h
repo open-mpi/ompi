@@ -18,8 +18,8 @@
  * Copyright (c) 2009-2010 Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2013-2014 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2014      Bull SAS.  All rights reserved.
- * Copyright (c) 2015-2016 Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015-2018 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -163,6 +163,9 @@ struct mca_btl_openib_component_t {
 
     int                                ib_num_btls;
     /**< number of devices available to the openib component */
+
+    int                                ib_allowed_btls;
+    /**< number of devices allowed to the openib component */
 
     struct mca_btl_openib_module_t             **openib_btls;
     /**< array of available BTLs */
@@ -501,6 +504,8 @@ struct mca_btl_openib_module_t {
     int local_procs;                   /** number of local procs */
 
     bool atomic_ops_be;                /** atomic result is big endian */
+
+    bool allowed;                      /** is this port allowed */
 };
 typedef struct mca_btl_openib_module_t mca_btl_openib_module_t;
 

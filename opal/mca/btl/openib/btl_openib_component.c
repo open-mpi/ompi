@@ -19,8 +19,8 @@
  * Copyright (c) 2011-2015 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2012      Oak Ridge National Laboratory.  All rights reserved
  * Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
- * Copyright (c) 2014-2017 Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2014-2018 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2014      Bull SAS.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -269,7 +269,7 @@ static int btl_openib_modex_send(void)
         /* uint8_t for number of modules in the message */
         1 +
         /* For each module: */
-        mca_btl_openib_component.ib_num_btls *
+        mca_btl_openib_component.ib_allowed_btls *
         (
          /* Common module data */
          modex_message_size +
@@ -278,6 +278,9 @@ static int btl_openib_modex_send(void)
          );
     /* For each module, add in the size of the per-CPC data */
     for (i = 0; i < mca_btl_openib_component.ib_num_btls; i++) {
+        if (! mca_btl_openib_component.openib_btls[i]->allowed) {
+            continue;
+        }
         for (j = 0;
              j < mca_btl_openib_component.openib_btls[i]->num_cpcs;
              ++j) {
@@ -300,12 +303,15 @@ static int btl_openib_modex_send(void)
 
     /* Pack the number of modules */
     offset = message;
-    pack8(&offset, mca_btl_openib_component.ib_num_btls);
-    opal_output(-1, "modex sending %d btls (packed: %d, offset now at %d)", mca_btl_openib_component.ib_num_btls, *((uint8_t*) message), (int) (offset - message));
+    pack8(&offset, mca_btl_openib_component.ib_allowed_btls);
+    opal_output(-1, "modex sending %d btls (packed: %d, offset now at %d)", mca_btl_openib_component.ib_allowed_btls, *((uint8_t*) message), (int) (offset - message));
 
     /* Pack each of the modules */
     for (i = 0; i < mca_btl_openib_component.ib_num_btls; i++) {
 
+        if (! mca_btl_openib_component.openib_btls[i]->allowed) {
+            continue;
+        }
         /* Pack the modex common message struct.  */
         size = modex_message_size;
 
@@ -628,22 +634,35 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_device_t *device,
  * policy.  For ancient OFED, only allow if user has set
  * the MCA parameter.
  */
+    if (! mca_btl_openib_component.allow_ib
 #if HAVE_DECL_IBV_LINK_LAYER_ETHERNET
-    if ((IBV_LINK_LAYER_INFINIBAND == ib_port_attr->link_layer) &&
-        (false == mca_btl_openib_component.allow_ib)) {
-        opal_show_help("help-mpi-btl-openib.txt", "ib port not selected",
-                       true, opal_process_info.nodename,
-                       ibv_get_device_name(device->ib_dev), port_num);
-        return OPAL_ERR_NOT_FOUND;
-    }
-#else
-    if (false == mca_btl_openib_component.allow_ib) {
-        opal_show_help("help-mpi-btl-openib.txt", "ib port not selected",
-                       true, opal_process_info.nodename,
-                       ibv_get_device_name(device->ib_dev), port_num);
-        return OPAL_ERR_NOT_FOUND;
-    }
+        && IBV_LINK_LAYER_INFINIBAND == ib_port_attr->link_layer
 #endif
+       ) {
+        openib_btl = (mca_btl_openib_module_t *) calloc(1, sizeof(mca_btl_openib_module_t));
+        if(NULL == openib_btl) {
+            BTL_ERROR(("Failed malloc: %s:%d", __FILE__, __LINE__));
+            return OPAL_ERR_OUT_OF_RESOURCE;
+        }
+        memcpy(openib_btl, &mca_btl_openib_module,
+                sizeof(mca_btl_openib_module));
+        ib_selected = OBJ_NEW(mca_btl_base_selected_module_t);
+        ib_selected->btl_module = (mca_btl_base_module_t*) openib_btl;
+        openib_btl->device = device;
+        openib_btl->port_num = (uint8_t) port_num;
+        openib_btl->allowed = false;
+        OBJ_CONSTRUCT(&openib_btl->ib_lock, opal_mutex_t);
+        opal_list_append(btl_list, (opal_list_item_t*) ib_selected);
+        opal_pointer_array_add(device->device_btls, (void*) openib_btl);
+        ++device->btls;
+        ++mca_btl_openib_component.ib_num_btls;
+        if (-1 != mca_btl_openib_component.ib_max_btls &&
+            mca_btl_openib_component.ib_num_btls >=
+            mca_btl_openib_component.ib_max_btls) {
+            return OPAL_ERR_VALUE_OUT_OF_BOUNDS;
+        }
+        return OPAL_SUCCESS;
+    }
 
 
     /* Ensure that the requested GID index (via the
@@ -880,10 +899,13 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_device_t *device,
                 }
             }
 
+            openib_btl->allowed = true;
+
             opal_list_append(btl_list, (opal_list_item_t*) ib_selected);
             opal_pointer_array_add(device->device_btls, (void*) openib_btl);
             ++device->btls;
             ++mca_btl_openib_component.ib_num_btls;
+            ++mca_btl_openib_component.ib_allowed_btls;
             if (-1 != mca_btl_openib_component.ib_max_btls &&
                 mca_btl_openib_component.ib_num_btls >=
                 mca_btl_openib_component.ib_max_btls) {
@@ -2912,36 +2934,38 @@ btl_openib_component_init(int *num_btl_modules,
         goto no_btls;
     }
 
-    /* Now that we know we have devices and ports that we want to use,
-       init CPC components */
-    if (OPAL_SUCCESS != (ret = opal_btl_openib_connect_base_init())) {
-        goto no_btls;
-    }
-
-    /* Setup the BSRQ QP's based on the final value of
-       mca_btl_openib_component.receive_queues. */
-    if (OPAL_SUCCESS != setup_qps()) {
-        goto no_btls;
-    }
-    if (mca_btl_openib_component.num_srq_qps > 0 ||
-                     mca_btl_openib_component.num_xrc_qps > 0) {
-        opal_hash_table_t *srq_addr_table = &mca_btl_openib_component.srq_manager.srq_addr_table;
-        if(OPAL_SUCCESS != opal_hash_table_init(
-                srq_addr_table, (mca_btl_openib_component.num_srq_qps +
-                                 mca_btl_openib_component.num_xrc_qps) *
-                                 mca_btl_openib_component.ib_num_btls)) {
-            BTL_ERROR(("SRQ internal error. Failed to allocate SRQ addr hash table"));
+    if (0 < mca_btl_openib_component.ib_allowed_btls) {
+        /* Now that we know we have devices and ports that we want to use,
+           init CPC components */
+        if (OPAL_SUCCESS != (ret = opal_btl_openib_connect_base_init())) {
             goto no_btls;
         }
-    }
 
-    /* For XRC:
-     * from this point we know if MCA_BTL_XRC_ENABLED it true or false */
+        /* Setup the BSRQ QP's based on the final value of
+           mca_btl_openib_component.receive_queues. */
+        if (OPAL_SUCCESS != setup_qps()) {
+            goto no_btls;
+        }
+        if (mca_btl_openib_component.num_srq_qps > 0 ||
+                         mca_btl_openib_component.num_xrc_qps > 0) {
+            opal_hash_table_t *srq_addr_table = &mca_btl_openib_component.srq_manager.srq_addr_table;
+            if(OPAL_SUCCESS != opal_hash_table_init(
+                    srq_addr_table, (mca_btl_openib_component.num_srq_qps +
+                                     mca_btl_openib_component.num_xrc_qps) *
+                                     mca_btl_openib_component.ib_num_btls)) {
+                BTL_ERROR(("SRQ internal error. Failed to allocate SRQ addr hash table"));
+                goto no_btls;
+            }
+        }
 
-    /* Init XRC IB Addr hash table */
-    if (MCA_BTL_XRC_ENABLED) {
-        OBJ_CONSTRUCT(&mca_btl_openib_component.ib_addr_table,
-                opal_hash_table_t);
+        /* For XRC:
+         * from this point we know if MCA_BTL_XRC_ENABLED it true or false */
+
+        /* Init XRC IB Addr hash table */
+        if (MCA_BTL_XRC_ENABLED) {
+            OBJ_CONSTRUCT(&mca_btl_openib_component.ib_addr_table,
+                    opal_hash_table_t);
+        }
     }
 
     /* Allocate space for btl modules */
@@ -2967,31 +2991,34 @@ btl_openib_component_init(int *num_btl_modules,
         ib_selected = (mca_btl_base_selected_module_t*)item;
         openib_btl = (mca_btl_openib_module_t*)ib_selected->btl_module;
 
-        /* Search for a CPC that can handle this port */
-        ret = opal_btl_openib_connect_base_select_for_local_port(openib_btl);
-        /* If we get NOT_SUPPORTED, then no CPC was found for this
-           port.  But that's not a fatal error -- just keep going;
-           let's see if we find any usable openib modules or not. */
-        if (OPAL_ERR_NOT_SUPPORTED == ret) {
-            continue;
-        } else if (OPAL_SUCCESS != ret) {
-            /* All others *are* fatal.  Note that we already did a
-               show_help in the lower layer */
-            goto no_btls;
-        }
+        if (openib_btl->allowed) {
+            /* Search for a CPC that can handle this port */
+            ret = opal_btl_openib_connect_base_select_for_local_port(openib_btl);
+            /* If we get NOT_SUPPORTED, then no CPC was found for this
+               port.  But that's not a fatal error -- just keep going;
+               let's see if we find any usable openib modules or not. */
+            if (OPAL_ERR_NOT_SUPPORTED == ret) {
+                continue;
+            } else if (OPAL_SUCCESS != ret) {
+                /* All others *are* fatal.  Note that we already did a
+                   show_help in the lower layer */
+                goto no_btls;
+            }
 
-        if (mca_btl_openib_component.max_hw_msg_size > 0 &&
-            (uint32_t)mca_btl_openib_component.max_hw_msg_size > openib_btl->ib_port_attr.max_msg_sz) {
-            BTL_ERROR(("max_hw_msg_size (%" PRIu32 ") is larger than hw max message size (%" PRIu32 ")",
-                mca_btl_openib_component.max_hw_msg_size, openib_btl->ib_port_attr.max_msg_sz));
+            if (mca_btl_openib_component.max_hw_msg_size > 0 &&
+                (uint32_t)mca_btl_openib_component.max_hw_msg_size > openib_btl->ib_port_attr.max_msg_sz) {
+                BTL_ERROR(("max_hw_msg_size (%" PRIu32 ") is larger than hw max message size (%" PRIu32 ")",
+                    mca_btl_openib_component.max_hw_msg_size, openib_btl->ib_port_attr.max_msg_sz));
+            }
+
+            if (finish_btl_init(openib_btl) != OPAL_SUCCESS) {
+                goto no_btls;
+            }
         }
 
         mca_btl_openib_component.openib_btls[i] = openib_btl;
         OBJ_RELEASE(ib_selected);
         btls[i] = &openib_btl->super;
-        if (finish_btl_init(openib_btl) != OPAL_SUCCESS) {
-            goto no_btls;
-        }
         ++i;
     }
     /* If we got nothing, then error out */
@@ -3039,6 +3066,7 @@ btl_openib_component_init(int *num_btl_modules,
        there are no openib BTL's in this process and return NULL. */
 
     mca_btl_openib_component.ib_num_btls = 0;
+    mca_btl_openib_component.ib_allowed_btls = 0;
     btl_openib_modex_send();
     if (NULL != btls) {
         free(btls);

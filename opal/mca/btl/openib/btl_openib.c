@@ -19,8 +19,8 @@
  * Copyright (c) 2009      IBM Corporation.  All rights reserved.
  * Copyright (c) 2013-2015 Intel, Inc. All rights reserved
  * Copyright (c) 2013-2015 NVIDIA Corporation.  All rights reserved.
- * Copyright (c) 2014-2015 Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2014-2018 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2014      Bull SAS.  All rights reserved
  * $COPYRIGHT$
  *
@@ -1040,6 +1040,14 @@ int mca_btl_openib_add_procs(
     int btl_rank = 0;
     volatile mca_btl_base_endpoint_t* endpoint;
 
+
+    if (! openib_btl->allowed) {
+        opal_bitmap_clear_all_bits(reachable);
+        opal_show_help("help-mpi-btl-openib.txt", "ib port not selected",
+                       true, opal_process_info.nodename,
+                       ibv_get_device_name(openib_btl->device->ib_dev), openib_btl->port_num);
+    }
+
     btl_rank = get_openib_btl_params(openib_btl, &lcl_subnet_id_port_cnt);
     if( 0 > btl_rank ){
         return OPAL_ERR_NOT_FOUND;
@@ -1639,75 +1647,77 @@ static int mca_btl_openib_finalize_resources(struct mca_btl_base_module_t* btl) 
         return OPAL_SUCCESS;
     }
 
-    /* Release all QPs */
-    if (NULL != openib_btl->device->endpoints) {
-        for (ep_index=0;
-             ep_index < opal_pointer_array_get_size(openib_btl->device->endpoints);
-             ep_index++) {
-            endpoint=(mca_btl_openib_endpoint_t *)opal_pointer_array_get_item(openib_btl->device->endpoints,
+    if (openib_btl->allowed) {
+        /* Release all QPs */
+        if (NULL != openib_btl->device->endpoints) {
+            for (ep_index=0;
+                 ep_index < opal_pointer_array_get_size(openib_btl->device->endpoints);
+                 ep_index++) {
+                endpoint=(mca_btl_openib_endpoint_t *)opal_pointer_array_get_item(openib_btl->device->endpoints,
                                                                               ep_index);
-            if(!endpoint) {
-                BTL_VERBOSE(("In finalize, got another null endpoint"));
-                continue;
-            }
-            if(endpoint->endpoint_btl != openib_btl) {
-                continue;
-            }
-            for(i = 0; i < openib_btl->device->eager_rdma_buffers_count; i++) {
-                if(openib_btl->device->eager_rdma_buffers[i] == endpoint) {
-                    openib_btl->device->eager_rdma_buffers[i] = NULL;
-                    OBJ_RELEASE(endpoint);
+                if(!endpoint) {
+                    BTL_VERBOSE(("In finalize, got another null endpoint"));
+                    continue;
                 }
-            }
-            opal_pointer_array_set_item(openib_btl->device->endpoints,
-                                        ep_index, NULL);
-            assert(((opal_object_t*)endpoint)->obj_reference_count == 1);
-            OBJ_RELEASE(endpoint);
-        }
-    }
-
-    /* Release SRQ resources */
-    for(qp = 0; qp < mca_btl_openib_component.num_qps; qp++) {
-        if(!BTL_OPENIB_QP_TYPE_PP(qp)) {
-            MCA_BTL_OPENIB_CLEAN_PENDING_FRAGS(
-                    &openib_btl->qps[qp].u.srq_qp.pending_frags[0]);
-            MCA_BTL_OPENIB_CLEAN_PENDING_FRAGS(
-                    &openib_btl->qps[qp].u.srq_qp.pending_frags[1]);
-            if (NULL != openib_btl->qps[qp].u.srq_qp.srq) {
-                opal_mutex_t *lock =
-                             &mca_btl_openib_component.srq_manager.lock;
-
-                opal_hash_table_t *srq_addr_table =
-                            &mca_btl_openib_component.srq_manager.srq_addr_table;
-
-                opal_mutex_lock(lock);
-                if (OPAL_SUCCESS !=
-                        opal_hash_table_remove_value_ptr(srq_addr_table,
-                                    &openib_btl->qps[qp].u.srq_qp.srq,
-                                    sizeof(struct ibv_srq *))) {
-                    BTL_VERBOSE(("Failed to remove SRQ  %d entry from hash table.", qp));
-                    rc = OPAL_ERROR;
+                if(endpoint->endpoint_btl != openib_btl) {
+                    continue;
                 }
-                opal_mutex_unlock(lock);
-                if (0 != ibv_destroy_srq(openib_btl->qps[qp].u.srq_qp.srq)) {
-                    BTL_VERBOSE(("Failed to close SRQ %d", qp));
-                    rc = OPAL_ERROR;
+                for(i = 0; i < openib_btl->device->eager_rdma_buffers_count; i++) {
+                    if(openib_btl->device->eager_rdma_buffers[i] == endpoint) {
+                        openib_btl->device->eager_rdma_buffers[i] = NULL;
+                        OBJ_RELEASE(endpoint);
+                    }
                 }
+                opal_pointer_array_set_item(openib_btl->device->endpoints,
+                                            ep_index, NULL);
+                assert(((opal_object_t*)endpoint)->obj_reference_count == 1);
+                OBJ_RELEASE(endpoint);
             }
-
-            OBJ_DESTRUCT(&openib_btl->qps[qp].u.srq_qp.pending_frags[0]);
-            OBJ_DESTRUCT(&openib_btl->qps[qp].u.srq_qp.pending_frags[1]);
         }
-    }
 
-    /* Finalize the CPC modules on this openib module */
-    for (i = 0; i < openib_btl->num_cpcs; ++i) {
-        if (NULL != openib_btl->cpcs[i]->cbm_finalize) {
-            openib_btl->cpcs[i]->cbm_finalize(openib_btl, openib_btl->cpcs[i]);
+        /* Release SRQ resources */
+        for(qp = 0; qp < mca_btl_openib_component.num_qps; qp++) {
+            if(!BTL_OPENIB_QP_TYPE_PP(qp)) {
+                MCA_BTL_OPENIB_CLEAN_PENDING_FRAGS(
+                        &openib_btl->qps[qp].u.srq_qp.pending_frags[0]);
+                MCA_BTL_OPENIB_CLEAN_PENDING_FRAGS(
+                        &openib_btl->qps[qp].u.srq_qp.pending_frags[1]);
+                if (NULL != openib_btl->qps[qp].u.srq_qp.srq) {
+                    opal_mutex_t *lock =
+                                 &mca_btl_openib_component.srq_manager.lock;
+
+                    opal_hash_table_t *srq_addr_table =
+                                &mca_btl_openib_component.srq_manager.srq_addr_table;
+
+                    opal_mutex_lock(lock);
+                    if (OPAL_SUCCESS !=
+                            opal_hash_table_remove_value_ptr(srq_addr_table,
+                                        &openib_btl->qps[qp].u.srq_qp.srq,
+                                        sizeof(struct ibv_srq *))) {
+                        BTL_VERBOSE(("Failed to remove SRQ  %d entry from hash table.", qp));
+                        rc = OPAL_ERROR;
+                    }
+                    opal_mutex_unlock(lock);
+                    if (0 != ibv_destroy_srq(openib_btl->qps[qp].u.srq_qp.srq)) {
+                        BTL_VERBOSE(("Failed to close SRQ %d", qp));
+                        rc = OPAL_ERROR;
+                    }
+                }
+
+                OBJ_DESTRUCT(&openib_btl->qps[qp].u.srq_qp.pending_frags[0]);
+                OBJ_DESTRUCT(&openib_btl->qps[qp].u.srq_qp.pending_frags[1]);
+            }
         }
-        free(openib_btl->cpcs[i]);
+
+        /* Finalize the CPC modules on this openib module */
+        for (i = 0; i < openib_btl->num_cpcs; ++i) {
+            if (NULL != openib_btl->cpcs[i]->cbm_finalize) {
+                openib_btl->cpcs[i]->cbm_finalize(openib_btl, openib_btl->cpcs[i]);
+            }
+            free(openib_btl->cpcs[i]);
+        }
+        free(openib_btl->cpcs);
     }
-    free(openib_btl->cpcs);
 
     /* Release device if there are no more users */
     if(!(--openib_btl->device->btls)) {
