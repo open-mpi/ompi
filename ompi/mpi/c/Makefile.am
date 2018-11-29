@@ -437,7 +437,8 @@ libmpi_c_mpi_la_SOURCES = \
         win_wait.c
 
 
-if OMPI_ENABLE_MPI1_COMPAT
+# include all of the removed MPI functions in library
+# for v4.0.x regardless of state of OMPI_ENABLE_MPI1_COMPAT
 libmpi_c_mpi_la_SOURCES += \
         address.c \
         errhandler_create.c \
@@ -449,7 +450,6 @@ libmpi_c_mpi_la_SOURCES += \
         type_lb.c \
         type_struct.c \
         type_ub.c
-endif
 
 # Conditionally install the header files
 

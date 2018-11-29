@@ -279,7 +279,7 @@
 #                    define __mpi_interface_deprecated__(msg) __attribute__((__deprecated__))
 #                endif
 #            endif
-#            if OMPI_ENABLE_MPI1_COMPAT
+#            if (OMPI_ENABLE_MPI1_COMPAT && !OMPI_BUILDING)
 #                    define __mpi_interface_removed__(msg) __mpi_interface_deprecated__(msg)
 #                    define OMPI_OMIT_MPI1_COMPAT_DECLS 0
 #            endif
@@ -1001,7 +1001,7 @@ OMPI_DECLSPEC extern struct ompi_predefined_info_t ompi_mpi_info_env;
 OMPI_DECLSPEC extern MPI_Fint *MPI_F_STATUS_IGNORE;
 OMPI_DECLSPEC extern MPI_Fint *MPI_F_STATUSES_IGNORE;
 
-#if !OMPI_OMIT_MPI1_COMPAT_DECLS
+#if (!OMPI_OMIT_MPI1_COMPAT_DECLS || OMPI_BUILDING)
 /*
  * Removed datatypes.  These datatypes are only available if Open MPI
  * was configured with --enable-mpi1-compatibility.
@@ -2662,7 +2662,7 @@ OMPI_DECLSPEC int OMPI_C_MPI_NULL_DELETE_FN( MPI_Comm comm, int comm_keyval,
                                              void* extra_state )
             __mpi_interface_deprecated__("MPI_NULL_DELETE_FN was deprecated in MPI-2.0; use MPI_COMM_NULL_DELETE_FN instead.");
 
-#if !OMPI_OMIT_MPI1_COMPAT_DECLS
+#if (!OMPI_OMIT_MPI1_COMPAT_DECLS || OMPI_BUILDING)
 /*
  * Removed typedefs.  These typedefs are only available if Open MPI
  * was configured with --enable-mpi1-compatibility.

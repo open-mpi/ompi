@@ -21,6 +21,17 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
+/* This implementation has been removed from the MPI 3.1 standard.
+ * Open MPI v4.0.x is keeping the implementation in the library, but
+ * removing the prototypes from the headers, unless the user configures
+ * with --enable-mpi1-compatibility.
+ *
+ * To prevent having to port these implementations of removed functions
+ * to the newer MPI calls, we are defining ENABLE_MPI1_COMPAT to 1
+ * before including the c bindings.
+ */
+#define ENABLE_MPI1_COMPAT 1
+
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"

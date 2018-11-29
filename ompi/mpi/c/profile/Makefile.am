@@ -416,7 +416,8 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
 	pwin_unlock_all.c \
         pwin_wait.c
 
-if OMPI_ENABLE_MPI1_COMPAT
+# include all of the removed MPI functions in library
+# for v4.0.x regardless of state of OMPI_ENABLE_MPI1_COMPAT
 nodist_libmpi_c_pmpi_la_SOURCES += \
         paddress.c \
         perrhandler_create.c \
@@ -428,7 +429,6 @@ nodist_libmpi_c_pmpi_la_SOURCES += \
         ptype_lb.c \
         ptype_struct.c \
         ptype_ub.c
-endif
 
 #
 # Sym link in the sources from the real MPI directory

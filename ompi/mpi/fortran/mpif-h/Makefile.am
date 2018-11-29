@@ -481,8 +481,8 @@ lib@OMPI_LIBMPI_NAME@_mpifh_la_SOURCES += \
         win_flush_local_f.c \
         win_flush_local_all_f.c
 
-
-if OMPI_ENABLE_MPI1_COMPAT
+# include all of the removed MPI functions in library
+# for v4.0.x regardless of state of OMPI_ENABLE_MPI1_COMPAT
 lib@OMPI_LIBMPI_NAME@_mpifh_la_SOURCES += \
         address_f.c \
         errhandler_create_f.c \
@@ -494,7 +494,6 @@ lib@OMPI_LIBMPI_NAME@_mpifh_la_SOURCES += \
         type_lb_f.c \
         type_struct_f.c \
         type_ub_f.c
-endif
 endif
 
 #

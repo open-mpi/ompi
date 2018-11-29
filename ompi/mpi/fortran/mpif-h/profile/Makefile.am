@@ -397,7 +397,8 @@ linked_files = \
         pwin_flush_local_f.c \
         pwin_flush_local_all_f.c
 
-if OMPI_ENABLE_MPI1_COMPAT
+# include all of the removed MPI functions in library
+# for v4.0.x regardless of state of OMPI_ENABLE_MPI1_COMPAT
 linked_files += \
         paddress_f.c \
         perrhandler_create_f.c \
@@ -409,7 +410,6 @@ linked_files += \
         ptype_lb_f.c \
         ptype_struct_f.c \
         ptype_ub_f.c
-endif
 
 #
 # Sym link in the sources from the real MPI directory
