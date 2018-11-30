@@ -5,8 +5,8 @@ dnl                         University Research and Technology
 dnl                         Corporation.  All rights reserved.
 dnl Copyright (c) 2009-2017 Cisco Systems, Inc.  All rights reserved
 dnl Copyright (c) 2011-2012 Oak Ridge National Labs.  All rights reserved.
-dnl Copyright (c) 2015-2017 Research Organization for Information Science
-dnl                         and Technology (RIST). All rights reserved.
+dnl Copyright (c) 2015-2018 Research Organization for Information Science
+dnl                         and Technology (RIST).  All rights reserved.
 dnl Copyright (c) 2017      The University of Tennessee and The University
 dnl                         of Tennessee Research Foundation.  All rights
 dnl                         reserved.
@@ -568,7 +568,7 @@ EOF
         if test "$enabled_mpifh" = 1; then
             mpifh_component_header="mpiext_${component}_mpifh.h"
             cat >> $mpiusempi_ext_h <<EOF
-      include '${srcdir}/ompi/mpiext/$component/mpif-h/$mpifh_component_header'
+#include "${srcdir}/ompi/mpiext/$component/mpif-h/$mpifh_component_header"
 EOF
         fi
 
@@ -621,7 +621,7 @@ EOF
         if test "$enabled_mpifh" = 1; then
             mpifh_component_header="mpiext_${component}_mpifh.h"
             cat >> $mpiusempif08_ext_h <<EOF
-      include '${srcdir}/ompi/mpiext/$component/mpif-h/$mpifh_component_header'
+#include "${srcdir}/ompi/mpiext/$component/mpif-h/$mpifh_component_header"
 EOF
         fi
 
