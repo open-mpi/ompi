@@ -815,14 +815,14 @@ Open MPI Extensions
 
 - The following extensions are included in this version of Open MPI:
 
-  - pcollreq: Provides routines for persistent collective
-    communication operations and persistent neighborhood collective
-    communication operations, which are proposed in the MPI Forum as
-    of June 2018.  The function names are prefixed with MPIX_ instead
-    of MPI_, like MPIX_Barrier_init, because they are not standardized
-    yet.  Future versions of Open MPI will switch to the MPI_ prefix
-    once the MPI Standard which includes this feature is published.
-    See their man page for more details.
+  - pcollreq: Provides routines for persistent collective communication
+    operations and persistent neighborhood collective communication
+    operations, which are planned to be included in the next MPI
+    Standard after MPI-3.1 as of Nov. 2018.  The function names are
+    prefixed with MPIX_ instead of MPI_, like MPIX_Barrier_init,
+    because they are not standardized yet.  Future versions of Open MPI
+    will switch to the MPI_ prefix once the MPI Standard which includes
+    this feature is published.  See their man page for more details.
   - affinity: Provides the OMPI_Affinity_str() routine on retrieving
     a string that contains what resources a process is bound to.  See
     its man page for more details.
