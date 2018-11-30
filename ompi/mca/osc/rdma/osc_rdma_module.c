@@ -111,7 +111,7 @@ int ompi_osc_rdma_free(ompi_win_t *win)
 
         OBJ_DESTRUCT(&module->peer_hash);
     } else if (NULL != module->comm) {
-        for (int i = 0 ; i < ompi_comm_rank (module->comm) ; ++i) {
+        for (int i = 0 ; i < ompi_comm_size (module->comm) ; ++i) {
             if (NULL != module->peer_array[i]) {
                 OBJ_RELEASE(module->peer_array[i]);
             }
