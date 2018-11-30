@@ -116,21 +116,8 @@ ompi_mtl_ofi_component_register(void)
     int ret;
     mca_base_var_enum_t *new_enum = NULL;
     char *desc;
-    int num_total_procs = (int)ompi_process_info.num_procs;
-    /* num_local_peers does not include us in
-     * its calculation, so adjust for that */
-    int num_local_procs = (int)(1 + ompi_process_info.num_local_peers);
 
-    /* Lower priority when all porcesses are loal (vader is faster for shm).
-     * However, if running only one process assume it is ompi_info or this
-     * is most likely going to spawn.
-     */
-    if ((num_local_procs == num_total_procs) && (1 < num_total_procs)) {
-        param_priority = 10;
-    } else {
-        param_priority = 25;   /* for now give a lower priority than the psm mtl */
-    }
-
+    param_priority = 25;   /* for now give a lower priority than the psm mtl */
     mca_base_component_var_register(&mca_mtl_ofi_component.super.mtl_version,
                                     "priority", "Priority of the OFI MTL component",
                                     MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
