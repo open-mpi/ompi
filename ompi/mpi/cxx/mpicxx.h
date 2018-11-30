@@ -44,7 +44,7 @@
 
 #include <stdarg.h>
 
-#if !defined(OMPI_IGNORE_CXX_SEEK) & OMPI_WANT_MPI_CXX_SEEK
+#if !defined(OMPI_IGNORE_CXX_SEEK) && OMPI_WANT_MPI_CXX_SEEK
 // We need to include the header files that define SEEK_* or use them
 // in ways that require them to be #defines so that if the user
 // includes them later, the double inclusion logic in the headers will
