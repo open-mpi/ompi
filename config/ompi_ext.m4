@@ -513,6 +513,33 @@ EOF
         EXT_MPIFH_HEADERS="$EXT_MPIFH_HEADERS mpiext/mpiext_${component}_mpifh.h"
         $4="$$4 $component"
 
+        # Per https://github.com/open-mpi/ompi/pull/6030, we will end
+        # up putting a user-visible Fortran "include" statement in the
+        # installed mpif-ext.h file, and we therefore have to ensure
+        # that the total length of the line is <=72 characters.  Doing
+        # a little math here:
+        #
+        # leading indent spaces: 6 chars
+        # "include '": 9 chars
+        # "openmpi/mpiext/mpiext_NAME_mpifh.h": without NAME, 30 chars
+        # trailing "'": 1 char
+        #
+        # 6+9+30+1 = 46 chars overhead.
+        # 72-46 = 26 characters left for NAME.
+        #
+        # It would be exceedingly unusual to have an MPI extension
+        # name > 26 characters.  But just in case, put a check here
+        # to make sure: error out if the MPI extension name is > 26
+        # characters (because otherwise it'll just be a really weird /
+        # hard to diagnose compile error when a user tries to compile
+        # a Fortran MPI application that includes `mpif-ext.h`).
+        len=`echo $component | wc -c`
+        result=`expr $len \> 26`
+        AS_IF([test $result -eq 1],
+              [AC_MSG_WARN([MPI extension name too long: $component])
+               AC_MSG_WARN([For esoteric reasons, MPI Extensions with mpif.h bindings must have a name that is <= 26 characters])
+               AC_MSG_ERROR([Cannot continue])])
+
         component_header="mpiext_${component}_mpifh.h"
 
         cat >> $mpif_ext_h <<EOF
