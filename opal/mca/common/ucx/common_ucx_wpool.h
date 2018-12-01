@@ -110,7 +110,7 @@ typedef int (*opal_common_ucx_exchange_func_t)(void *my_info, size_t my_info_len
                                                void *metadata);
 
 /* For developer use only */
-#define OPAL_COMMON_UCX_WPOOL_DBG
+//#define OPAL_COMMON_UCX_WPOOL_DBG
 #ifdef OPAL_COMMON_UCX_WPOOL_DBG
 extern __thread FILE *tls_pf;
 extern __thread int initialized;
@@ -168,7 +168,7 @@ static inline void opal_common_ucx_wpool_dbg_init(void)
 }
 
 #else
-#define DBG_OUT(...)
+#define WPOOL_DBG_OUT(...)
 #endif
 
 

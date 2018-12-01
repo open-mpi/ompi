@@ -817,20 +817,19 @@ static void _common_ucx_tls_cleanup(_tlocal_table_t *tls)
     // Cleanup memory table
     size = tls->mem_tbl_size;
     for (i = 0; i < size; i++) {
-        if (NULL == tls->mem_tbl[i]->gmem){
-            continue;
+        if (NULL != tls->mem_tbl[i]->gmem){
+            _tlocal_mem_record_cleanup(tls->mem_tbl[i]);
         }
-        _tlocal_mem_record_cleanup(tls->mem_tbl[i]);
+
         free(tls->mem_tbl[i]);
     }
 
     // Cleanup ctx table
     size = tls->ctx_tbl_size;
     for (i = 0; i < size; i++) {
-        if (NULL == tls->ctx_tbl[i]->gctx){
-            continue;
+        if (NULL != tls->ctx_tbl[i]->gctx){
+            _tlocal_ctx_record_cleanup(tls->ctx_tbl[i]);
         }
-        _tlocal_ctx_record_cleanup(tls->ctx_tbl[i]);
         free(tls->ctx_tbl[i]);
     }
 
@@ -918,7 +917,7 @@ static _tlocal_ctx_t *
 _tlocal_add_ctx(_tlocal_table_t *tls, opal_common_ucx_ctx_t *ctx)
 {
     size_t i, free_idx = -1;
-    int rc;
+    int rc, found = 0;
 
     /* Try to find available record in the TLS table
      * In parallel perform deferred cleanups */
@@ -929,14 +928,15 @@ _tlocal_add_ctx(_tlocal_table_t *tls, opal_common_ucx_ctx_t *ctx)
                 _tlocal_ctx_record_cleanup(tls->ctx_tbl[i]);
             }
         }
-        if ((NULL != tls->ctx_tbl[i]->gctx) && (0 > free_idx)) {
+        if ((NULL == tls->ctx_tbl[i]->gctx) && !found) {
             /* Found clean record */
             free_idx = i;
+            found = 1;
         }
     }
 
     /* if needed - extend the table */
-    if (0 > free_idx) {
+    if (!found) {
         free_idx = tls->ctx_tbl_size;
         rc = _tlocal_tls_ctxtbl_extend(tls, 4);
         if (rc) {
@@ -1025,15 +1025,6 @@ _tlocal_mem_record_cleanup(_tlocal_mem_t *mem_rec)
     size_t i;
     WPOOL_DBG_OUT(_dbg_tls || _dbg_mem, "record=%p, is_freed = %d\n",
                   (void *)mem_rec, mem_rec->gmem->released);
-    if (mem_rec->gmem->released) {
-        return;
-    }
-    /* Remove myself from the memory context structure
-     * This may result in context release as we are using
-     * delayed cleanup */
-    _common_ucx_mem_signout(mem_rec->gmem);
-    WPOOL_DBG_OUT(_dbg_tls || _dbg_mem, "gmem = %p mem_rec = %p\n",
-                  (void *)mem_rec->gmem, (void *)mem_rec);
 
     for(i = 0; i < mem_rec->gmem->ctx->comm_size; i++) {
         if (mem_rec->mem->rkeys[i]) {
@@ -1043,6 +1034,13 @@ _tlocal_mem_record_cleanup(_tlocal_mem_t *mem_rec)
         }
     }
     free(mem_rec->mem->rkeys);
+
+    /* Remove myself from the memory context structure
+     * This may result in context release as we are using
+     * delayed cleanup */
+    _common_ucx_mem_signout(mem_rec->gmem);
+    WPOOL_DBG_OUT(_dbg_tls || _dbg_mem, "gmem = %p mem_rec = %p\n",
+                  (void *)mem_rec->gmem, (void *)mem_rec);
 
     /* Release fast-path pointers */
     if (NULL != mem_rec->mem_tls_ptr) {
@@ -1059,24 +1057,24 @@ static _tlocal_mem_t *_tlocal_add_mem(_tlocal_table_t *tls,
 {
     size_t i, free_idx = -1;
     _tlocal_ctx_t *ctx_rec = NULL;
-    int rc = OPAL_SUCCESS;
+    int rc = OPAL_SUCCESS, found = 0;
 
     /* Try to find available spot in the table */
     for (i=0; i<tls->mem_tbl_size; i++) {
-        if (NULL == tls->mem_tbl[i]->gmem) {
+        if (NULL != tls->mem_tbl[i]->gmem) {
             if (tls->mem_tbl[i]->gmem->released) {
                 /* Found a dirty record. Need to clean it first */
                 _tlocal_mem_record_cleanup(tls->mem_tbl[i]);
-                break;
             }
         }
-        if ((NULL == tls->mem_tbl[i]->gmem) && (0 > free_idx)) {
+        if ((NULL == tls->mem_tbl[i]->gmem) && !found) {
             /* Found a clear record */
             free_idx = i;
+            found = 1;
         }
     }
 
-    if (0 > free_idx){
+    if (!found){
         free_idx = tls->mem_tbl_size;
         rc = _tlocal_tls_memtbl_extend(tls, 4);
         if (rc != OPAL_SUCCESS) {
