@@ -27,7 +27,7 @@ noinst_LTLIBRARIES = libmpiext_cuda_c.la
 
 # This is where the top-level header file (that is included in
 # <mpi-ext.h>) must be installed.
-ompidir = $(ompiincludedir)/ompi/mpiext
+ompidir = $(ompiincludedir)/mpiext
 
 # This is the header file that is installed.
 nodist_ompi_HEADERS = cuda_c.h

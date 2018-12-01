@@ -13,4 +13,4 @@
 # be slurped up to be part of the mpi_ext Fortran module so that it is
 # included in dist tarballs.
 
-noinst_HEADERS = mpiext_pcollreq_usempi.h
+noinst_HEADERS = pcollreq_usempi.h

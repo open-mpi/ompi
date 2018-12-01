@@ -25,7 +25,7 @@ noinst_LTLIBRARIES = libmpiext_example_c.la
 
 # This is where the top-level header file (that is included in
 # <mpi-ext.h>) must be installed.
-ompidir = $(ompiincludedir)/ompi/mpiext
+ompidir = $(ompiincludedir)/mpiext
 
 # This is the header file that is installed.
 ompi_HEADERS = example_c.h
