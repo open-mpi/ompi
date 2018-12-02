@@ -290,24 +290,24 @@ opal_common_ucx_wpool_progress(opal_common_ucx_wpool_t *wpool)
     /* Go over all active workers and progress them
      * TODO: may want to have some partitioning to progress only part of
      * workers */
-    opal_mutex_lock(&wpool->mutex);
-    OPAL_LIST_FOREACH_SAFE(item, next, &wpool->active_workers,
-                           _winfo_list_item_t) {
-        opal_common_ucx_winfo_t *winfo = item->ptr;
-        opal_mutex_lock(&winfo->mutex);
-        if( OPAL_UNLIKELY(winfo->released) ) {
-            /* Do garbage collection of worker info's if needed */
-            opal_list_remove_item(&wpool->active_workers, &item->super);
-            _winfo_reset(winfo);
-            opal_list_append(&wpool->idle_workers, &item->super);
-        } else {
-            /* Progress worker until there are existing events */
-            while(ucp_worker_progress(winfo->worker));
+    if (!opal_mutex_trylock (&wpool->mutex)) {
+        OPAL_LIST_FOREACH_SAFE(item, next, &wpool->active_workers,
+                               _winfo_list_item_t) {
+            opal_common_ucx_winfo_t *winfo = item->ptr;
+            opal_mutex_lock(&winfo->mutex);
+            if( OPAL_UNLIKELY(winfo->released) ) {
+                /* Do garbage collection of worker info's if needed */
+                opal_list_remove_item(&wpool->active_workers, &item->super);
+                _winfo_reset(winfo);
+                opal_list_append(&wpool->idle_workers, &item->super);
+            } else {
+                /* Progress worker until there are existing events */
+                while(ucp_worker_progress(winfo->worker));
+            }
+            opal_mutex_unlock(&winfo->mutex);
         }
-        opal_mutex_unlock(&winfo->mutex);
+        opal_mutex_unlock(&wpool->mutex);
     }
-
-    opal_mutex_unlock(&wpool->mutex);
 }
 
 static int
