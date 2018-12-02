@@ -1,5 +1,7 @@
 #
 # Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2018      Research Organization for Information Science
+#                         and Technology (RIST).  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -12,4 +14,4 @@
 # be slurped up to be part of the mpi_ext Fortran module so that it is
 # included in dist tarballs.
 
-noinst_HEADERS = mpiext_example_usempi.h
+noinst_HEADERS = example_usempi.h

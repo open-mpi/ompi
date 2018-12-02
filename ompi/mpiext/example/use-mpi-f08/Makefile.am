@@ -1,7 +1,7 @@
 #
 # Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2017      Research Organization for Information Science
-#                         and Technology (RIST). All rights reserved.
+# Copyright (c) 2017-2018 Research Organization for Information Science
+#                         and Technology (RIST).  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -32,10 +32,10 @@ if OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS
 noinst_LTLIBRARIES += libmpiext_example_usempif08.la
 
 # Note that no header files are installed; instead,
-# mpiext_example_usempif08.h is automatically slurped up into the
+# example_usempif08.h is automatically slurped up into the
 # mpi_f08_ext module.  It must be listed so that it is included in
 # dist tarballs.
-noinst_HEADERS = mpiext_example_usempif08.h
+noinst_HEADERS = example_usempif08.h
 
 # Sources for the convenience libtool library.
 libmpiext_example_usempif08_la_SOURCES = mpiext_example_progress_f08.F90

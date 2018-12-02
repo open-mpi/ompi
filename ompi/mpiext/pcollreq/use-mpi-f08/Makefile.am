@@ -33,10 +33,10 @@ if OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS
 noinst_LTLIBRARIES += libmpiext_pcollreq_usempif08.la
 
 # Note that no header files are installed; instead,
-# mpiext_pcollreq_usempif08.h is automatically slurped up into the
+# pcollreq_usempif08.h is automatically slurped up into the
 # mpi_f08_ext module.  It must be listed so that it is included in
 # dist tarballs.
-noinst_HEADERS = mpiext_pcollreq_usempif08.h
+noinst_HEADERS = pcollreq_usempif08.h
 
 mpi_api_files = \
         allgather_init_f08.F90 \
