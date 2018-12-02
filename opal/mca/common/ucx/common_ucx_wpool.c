@@ -57,7 +57,7 @@ _winfo_create(opal_common_ucx_wpool_t *wpool)
         goto release_worker;
     }
 
-    OBJ_CONSTRUCT(&winfo->mutex, opal_mutex_t);
+    OBJ_CONSTRUCT(&winfo->mutex, opal_recursive_mutex_t);
     winfo->worker = worker;
     winfo->endpoints = NULL;
     winfo->comm_size = 0;
@@ -142,7 +142,7 @@ opal_common_ucx_wpool_init(opal_common_ucx_wpool_t *wpool,
         return rc;
     }
 
-    OBJ_CONSTRUCT(&wpool->mutex, opal_mutex_t);
+    OBJ_CONSTRUCT(&wpool->mutex, opal_recursive_mutex_t);
     OBJ_CONSTRUCT(&wpool->tls_list, opal_list_t);
 
     status = ucp_config_read("MPI", NULL, &config);
@@ -399,7 +399,7 @@ opal_common_ucx_wpctx_create(opal_common_ucx_wpool_t *wpool, int comm_size,
 
     WPOOL_DBG_OUT(_dbg_ctx, "ctx_create: ctx = %p\n", (void*)ctx);
 
-    OBJ_CONSTRUCT(&ctx->mutex, opal_mutex_t);
+    OBJ_CONSTRUCT(&ctx->mutex, opal_recursive_mutex_t);
     OBJ_CONSTRUCT(&ctx->tls_workers, opal_list_t);
     ctx->released = 0;
     ctx->refcntr = 1; /* application holding the context */

@@ -22,7 +22,7 @@ BEGIN_C_DECLS
 typedef struct {
     /* Ref counting & locking*/
     int refcnt;
-    opal_mutex_t mutex;
+    opal_recursive_mutex_t mutex;
 
     /* UCX data */
     ucp_context_h ucp_ctx;
@@ -42,7 +42,7 @@ typedef struct {
 } opal_common_ucx_wpool_t;
 
 typedef struct {
-    opal_mutex_t mutex;
+    opal_recursive_mutex_t mutex;
     opal_atomic_int32_t refcntr;
 
     /* the reference to a Worker pool this context belongs to*/
@@ -79,7 +79,7 @@ typedef struct {
 } opal_common_ucx_wpmem_t;
 
 typedef struct  {
-    opal_mutex_t mutex;
+    opal_recursive_mutex_t mutex;
     volatile int released;
     ucp_worker_h worker;
     ucp_ep_h *endpoints;
