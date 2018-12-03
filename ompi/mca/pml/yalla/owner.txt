@@ -4,4 +4,4 @@
 # status: e.g. active, maintenance, unmaintained
 #
 owner: MELLANOX
-status: active
+status: maintenance
