@@ -22,9 +22,9 @@
 #include <winbase.h>
 #endif
 
-#if HAVE_LIBSCOTCH
+#if defined(HAVE_LIBSCOTCH)
 #include <scotch.h>
-#endif
+#endif  /* defined(HAVE_LIBSCOTCH) */
 
 #include <sys/mman.h>
 
@@ -58,7 +58,6 @@ int nb_leaves(tm_tree_t *comm_tree);
 int nb_lines(char *filename);
 void print_1D_tab(int *tab,int N);
 tm_solution_t * tm_compute_mapping(tm_topology_t *topology,tm_tree_t *comm_tree);
-void tm_finalize();
 void tm_free_affinity_mat(tm_affinity_mat_t *aff_mat);
 tm_affinity_mat_t *tm_load_aff_mat(char *filename);
 void update_comm_speed(double **comm_speed,int old_size,int new_size);
@@ -172,14 +171,14 @@ long int  init_mat(char *filename,int N, double **mat, double *sum_row){
 }
 
 
-size_t get_filesize(char* filename) {
+static size_t get_filesize(char* filename) {
     struct stat st;
     stat(filename, &st);
     return st.st_size;
 }
 
 
-char *parse_line(int i, double **mat, double *sum_row, int N, char *data, char *filename, long int *nnz){
+static char *parse_line(int i, double **mat, double *sum_row, int N, char *data, char *filename, long int *nnz){
   /* now parse the buffer byte per byte for the current line i until we reach '\n'*/
   unsigned int vl = tm_get_verbose_level();
   long val;
@@ -215,7 +214,7 @@ char *parse_line(int i, double **mat, double *sum_row, int N, char *data, char *
 
 
 /* buffered read with mmap of teh file */
-long int init_mat_mmap(char *filename,int N, double **mat, double *sum_row){
+static long int init_mat_mmap(char *filename,int N, double **mat, double *sum_row){
   int i;
   unsigned int vl = tm_get_verbose_level();
   size_t filesize = get_filesize(filename);
@@ -251,7 +250,7 @@ long int init_mat_mmap(char *filename,int N, double **mat, double *sum_row){
 
 
 
-long int init_mat_long(char *filename,int N, double **mat, double *sum_row){
+static long int init_mat_long(char *filename,int N, double **mat, double *sum_row){
   int i;
   unsigned int vl = tm_get_verbose_level();
   char line[LINE_SIZE];
@@ -425,7 +424,7 @@ int nb_leaves(tm_tree_t *comm_tree)
 }
 
 /* find the first '-1 in the array of size n and put the value there*/
-void set_val(int *tab, int val, int n){
+static void set_val(int *tab, int val, int n){
   int i = 0;
 
   while (i < n ){

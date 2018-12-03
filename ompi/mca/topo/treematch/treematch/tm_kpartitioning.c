@@ -6,9 +6,9 @@
 #include <stdio.h>
 #include "config.h"
 
-#if HAVE_LIBSCOTCH
+#if defined(HAVE_LIBSCOTCH)
 #include <scotch.h>
-#endif
+#endif  /* defined(HAVE_LIBSCOTCH) */
 
 
 #define USE_KL_KPART 0
@@ -49,7 +49,7 @@ int tm_get_greedy_flag(){
 }
 
 
-#if HAVE_LIBSCOTCH
+#if defined(HAVE_LIBSCOTCH)
 
 SCOTCH_Graph* com_mat_to_scotch_graph(com_mat_t *com_mat, int n){
   double **mat = com_mat->comm;
@@ -284,7 +284,7 @@ int  *kpartition_scotch(int k, com_mat_t *com_mat, int n, int *constraints, int 
   return partition;
 }
 
-#endif /* HAVE_LIBSCOTCH */
+#endif /* defined(HAVE_LIBSCOTCH) */
 
 
 void allocate_vertex(int u, int *res, com_mat_t *com_mat, int n, int *size, int max_size)
@@ -475,7 +475,7 @@ int *kpartition(int k, com_mat_t *com_mat, int n, int *constraints, int nb_const
   /* else */
 
 
-#if HAVE_LIBSCOTCH
+#if defined(HAVE_LIBSCOTCH)
   if(!greedy_flag){
     if(verbose_level >= DEBUG)
       printf("Using Scotch\n");
@@ -485,11 +485,11 @@ int *kpartition(int k, com_mat_t *com_mat, int n, int *constraints, int nb_const
       printf("Using greedy partitionning\n");
     res = kpartition_greedy(k, com_mat, n, constraints, nb_constraints);
   }
-#else
+#else  /* defined(HAVE_LIBSCOTCH) */
   if(verbose_level >= DEBUG)
     printf("Using greedy partitionning\n");
   res = kpartition_greedy(k, com_mat, n, constraints, nb_constraints);
-#endif
+#endif  /* defined(HAVE_LIBSCOTCH) */
   return res;
 }
 
@@ -684,8 +684,8 @@ void free_const_tab(constraint_t *const_tab, int k)
   FREE(const_tab);
 }
 
-
-void check_com_mat(com_mat_t *com_mat){
+#if 0
+static void check_com_mat(com_mat_t *com_mat){
   int i,j;
 
   for( i = 0 ; i < com_mat->n ; i++ )
@@ -694,16 +694,15 @@ void check_com_mat(com_mat_t *com_mat){
 	printf("com_mat->comm[%d][%d]= %f\n",i,j,com_mat->comm[i][j]);
 	exit(-1);
       }
-
-
 }
+#endif
 
-void print_tab(int n){
+static void print_tab(int n){
   for(;n;n--)
     fprintf(stdout,"\t");
 }
 
-void display_partition(int *partition, int *local_vertices, int n, int depth, int k){
+static void display_partition(int *partition, int *local_vertices, int n, int depth, int k){
   int cur_part, j;
   print_tab(depth);fprintf(stdout,"Partitions at depth=%d\n",depth);
   for( cur_part = 0; cur_part < k ; cur_part ++){

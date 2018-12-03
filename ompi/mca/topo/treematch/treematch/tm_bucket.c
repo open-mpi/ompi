@@ -525,7 +525,7 @@ void partial_update_val (int nb_args, void **args, int thread_id){
 
   if(nb_args != 5){
     if(verbose_level >= ERROR)
-      fprintf(stderr,"(Thread: %d) Wrong number of args in %s: %d\n",thread_id, __FUNCTION__, nb_args);
+      fprintf(stderr,"(Thread: %d) Wrong number of args in %s: %d\n",thread_id, __func__, nb_args);
     exit(-1);
   }
 

@@ -179,7 +179,7 @@ void tm_free_affinity_mat(tm_affinity_mat_t *aff_mat);
 void tm_set_verbose_level(unsigned int level);
 unsigned int  tm_get_verbose_level(void);
 /* finalize treematch :check memory if necessary, and free internal variables (thread pool)*/
-void tm_finalize();
+void tm_finalize(void);
 
 /*
 Ask for exhaustive search: may be very long
@@ -187,7 +187,7 @@ Ask for exhaustive search: may be very long
    new_val != 0 : exhuative search
 */
 void tm_set_exhaustive_search_flag(int new_val);
-int tm_get_exhaustive_search_flag();
+int tm_get_exhaustive_search_flag(void);
 
 /*
 Ask for greedy k-partitionning even if scotch is available
@@ -195,7 +195,7 @@ Ask for greedy k-partitionning even if scotch is available
    new_val != 0 : greedy k-partitionning
 */
 void tm_set_greedy_flag(int new_val);
-int tm_get_greedy_flag();
+int tm_get_greedy_flag(void);
 
 
 /* Setting the maximum number of threads you want to use in parallel parts of TreeMatch */
@@ -203,7 +203,7 @@ void tm_set_max_nb_threads(unsigned int val);
 
 /* managing the usage of physical vs. logical core numbering when using hwloc/xml files */
 void            tm_set_numbering(tm_numbering_t new_val); /* TM_NUMBERING_LOGICAL or TM_NUMBERING_PHYSICAL */
-tm_numbering_t  tm_get_numbering(); /* TM_NUMBERING_LOGICAL or TM_NUMBERING_PHYSICAL */
+tm_numbering_t  tm_get_numbering(void); /* TM_NUMBERING_LOGICAL or TM_NUMBERING_PHYSICAL */
 
 #include "tm_malloc.h"
 

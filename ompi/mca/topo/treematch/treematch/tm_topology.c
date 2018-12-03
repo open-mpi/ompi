@@ -28,7 +28,6 @@ double ** topology_to_arch(hwloc_topology_t topology);
 void   build_synthetic_proc_id(tm_topology_t *topology);
 tm_topology_t  *tm_build_synthetic_topology(int *arity, double *cost, int nb_levels, int *core_numbering, int nb_core_per_nodes);
 void            tm_set_numbering(tm_numbering_t new_val); /* TM_NUMBERING_LOGICAL or TM_NUMBERING_PHYSICAL */
-tm_numbering_t  tm_get_numbering(); /* TM_NUMBERING_LOGICAL or TM_NUMBERING_PHYSICAL */
 
 
 #define LINE_SIZE (1000000)
@@ -135,8 +134,7 @@ int topo_nb_proc(hwloc_topology_t topology,int N)
 }
 
 
-
-double link_cost(int depth)
+static double link_cost(int depth)
 {
   /*
     Bertha values
@@ -153,7 +151,6 @@ double link_cost(int depth)
    return (long int)pow(100,depth);
   */
 }
-
 
 double ** topology_to_arch(hwloc_topology_t topology)
 {
@@ -198,7 +195,7 @@ int symetric(hwloc_topology_t topology)
    return 1;
 }
 
-void build_process_tab_id(tm_topology_t *topology,  hwloc_obj_t *objs, char* filename){
+static void build_process_tab_id(tm_topology_t *topology,  hwloc_obj_t *objs, char* filename){
   unsigned int i,j;
   unsigned int nb_nodes = topology->nb_proc_units; 
   int vl = tm_get_verbose_level();
@@ -482,7 +479,7 @@ int int_cmp_inc(const void* x1,const void* x2)
 }
 
 
-int topo_check_constraints(tm_topology_t *topology){
+static int topo_check_constraints(tm_topology_t *topology){
   int n = topology->nb_constraints;
   int i;
   int depth = topology->nb_levels-1;
@@ -502,7 +499,7 @@ int topo_check_constraints(tm_topology_t *topology){
 
 /* cpy flag tells if we need to copy the array.
    Set to 1 when called from the application level and 0 when called from inside the library*/
-int tm_topology_set_binding_constraints_cpy(int *constraints, int nb_constraints, tm_topology_t *topology, int cpy_flag){
+static int tm_topology_set_binding_constraints_cpy(int *constraints, int nb_constraints, tm_topology_t *topology, int cpy_flag){
 
   topology -> nb_constraints = nb_constraints;
   if(cpy_flag){

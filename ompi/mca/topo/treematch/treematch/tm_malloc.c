@@ -36,7 +36,7 @@ static void init_extra_data(void);
 
 
 
-char *my_strdup(char* string){
+static char *my_strdup(char* string){
   int size = 1+strlen(string);
   char *res = (char*)malloc(size*sizeof(char));
 

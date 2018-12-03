@@ -106,7 +106,7 @@ double display_sol_sum_com(tm_topology_t *topology, tm_affinity_mat_t *aff_mat, 
       a = cost[depth-distance(topology,sigma[i],sigma[j])];
       if(tm_get_verbose_level() >= DEBUG)
 	printf("T_%d_%d %f*%f=%f\n",i,j,c,a,c*a);
-	sol += c*a;
+      sol += c*a;
     }
 
   for (i = 0; i < N; i++) {
@@ -120,7 +120,7 @@ double display_sol_sum_com(tm_topology_t *topology, tm_affinity_mat_t *aff_mat, 
 }
 
 
-double display_sol_max_com(tm_topology_t *topology, tm_affinity_mat_t *aff_mat, int *sigma)
+static double display_sol_max_com(tm_topology_t *topology, tm_affinity_mat_t *aff_mat, int *sigma)
 {
   double a,c,sol;
   int i,j;
@@ -156,7 +156,7 @@ double display_sol_max_com(tm_topology_t *topology, tm_affinity_mat_t *aff_mat, 
   return sol;
 }
 
-double display_sol_hop_byte(tm_topology_t *topology, tm_affinity_mat_t *aff_mat, int *sigma)
+static double display_sol_hop_byte(tm_topology_t *topology, tm_affinity_mat_t *aff_mat, int *sigma)
 {
   double c,sol;
   int nb_hops;
@@ -171,7 +171,7 @@ double display_sol_hop_byte(tm_topology_t *topology, tm_affinity_mat_t *aff_mat,
       nb_hops = 2*distance(topology,sigma[i],sigma[j]);
       if(tm_get_verbose_level() >= DEBUG)
 	printf("T_%d_%d %f*%d=%f\n",i,j,c,nb_hops,c*nb_hops);
-	sol += c*nb_hops;
+      sol += c*nb_hops;
     }
 
   for (i = 0; i < N; i++) {
@@ -278,7 +278,7 @@ int in_tab(int *tab, int n, int val){
     if(tab[i] == val)
       return 1;
 
-    return 0;
+  return 0;
 }
 
 void map_Packed(tm_topology_t *topology, int N, int *sigma)
