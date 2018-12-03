@@ -57,7 +57,11 @@ static dte_data_representation_t* ompi_datatype_2_dte_data_rep[OMPI_DATATYPE_MAX
     &DTE_UINT32,                /*OPAL_DATATYPE_UINT4          11 */
     &DTE_UINT64,                /*OPAL_DATATYPE_UINT8          12 */
     &DTE_UINT128,               /*OPAL_DATATYPE_UINT16         13 */
-    &DTE_ZERO,                  /*OPAL_DATATYPE_FLOAT2         14 */
+#if defined(DTE_FLOAT16)
+    &DTE_FLOAT16,               /*OPAL_DATATYPE_FLOAT2         14 */
+#else
+    &DTE_ZERO,
+#endif
     &DTE_FLOAT32,               /*OPAL_DATATYPE_FLOAT4         15 */
     &DTE_FLOAT64,               /*OPAL_DATATYPE_FLOAT8         16 */
     &DTE_FLOAT96,               /*OPAL_DATATYPE_FLOAT12        17 */
