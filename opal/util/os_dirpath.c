@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2015-2017 Research Organization for Information Science
+ * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2017 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
@@ -28,7 +28,7 @@
 #include <unistd.h>
 #endif  /* HAVE_UNISTD_H */
 #include <stdlib.h>
-#if HAVE_SYS_STAT_H
+#ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
 #endif /* HAVE_SYS_STAT_H */
 #ifdef HAVE_SYS_TYPES_H

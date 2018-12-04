@@ -13,6 +13,8 @@
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2010-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2018      Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -39,10 +41,10 @@
 #ifdef HAVE_SYS_IPC_H
 #include <sys/ipc.h>
 #endif /* HAVE_SYS_IPC_H */
-#if HAVE_SYS_SHM_H
+#ifdef HAVE_SYS_SHM_H
 #include <sys/shm.h>
 #endif /* HAVE_SYS_SHM_H */
-#if HAVE_SYS_STAT_H
+#ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
 #endif /* HAVE_SYS_STAT_H */
 #include <string.h>

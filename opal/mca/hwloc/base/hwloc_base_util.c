@@ -14,7 +14,7 @@
  * Copyright (c) 2012-2017 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
- * Copyright (c) 2015-2017 Research Organization for Information Science
+ * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (C) 2018      Mellanox Technologies, Ltd. 
  *                         All rights reserved.
@@ -42,7 +42,7 @@
 #ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
 #endif
-#if HAVE_FCNTL_H
+#ifdef HAVE_FCNTL_H
 #include <fcntl.h>
 #endif
 
