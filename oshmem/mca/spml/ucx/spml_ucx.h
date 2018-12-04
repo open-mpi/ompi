@@ -69,6 +69,8 @@ typedef struct ucp_peer ucp_peer_t;
 struct mca_spml_ucx_ctx {
     ucp_worker_h             ucp_worker;
     ucp_peer_t              *ucp_peers;
+    sshmem_mkey_t          **mkeys; /* mkeys used to register static segments
+                                       for self communications */
     long                     options;
 };
 typedef struct mca_spml_ucx_ctx mca_spml_ucx_ctx_t;

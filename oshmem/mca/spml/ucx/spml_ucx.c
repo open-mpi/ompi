@@ -412,10 +412,12 @@ void mca_spml_ucx_memuse_hook(void *addr, size_t length)
     }
 }
 
-sshmem_mkey_t *mca_spml_ucx_register(void* addr,
+static
+sshmem_mkey_t *mca_spml_ucx_register_ctx(void* addr,
                                          size_t size,
                                          uint64_t shmid,
-                                         int *count)
+                                         int *count,
+                                         mca_spml_ucx_ctx_t *ctx)
 {
     sshmem_mkey_t *mkeys;
     ucs_status_t status;
@@ -436,7 +438,7 @@ sshmem_mkey_t *mca_spml_ucx_register(void* addr,
     segno   = memheap_find_segnum(addr);
     mem_seg = memheap_find_seg(segno);
 
-    ucx_mkey = &mca_spml_ucx_ctx_default.ucp_peers[my_pe].mkeys[segno].key;
+    ucx_mkey = &ctx->ucp_peers[my_pe].mkeys[segno].key;
     mkeys[0].spml_context = ucx_mkey;
 
     /* if possible use mem handle already created by ucx allocator */
@@ -474,7 +476,7 @@ sshmem_mkey_t *mca_spml_ucx_register(void* addr,
         oshmem_shmem_abort(-1);
     }
 
-    status = ucp_ep_rkey_unpack(mca_spml_ucx_ctx_default.ucp_peers[oshmem_group_self->my_pe].ucp_conn,
+    status = ucp_ep_rkey_unpack(ctx->ucp_peers[oshmem_group_self->my_pe].ucp_conn,
                                 mkeys[0].u.data,
                                 &ucx_mkey->rkey);
     if (UCS_OK != status) {
@@ -485,7 +487,7 @@ sshmem_mkey_t *mca_spml_ucx_register(void* addr,
     mkeys[0].len     = len;
     mkeys[0].va_base = addr;
     *count = 1;
-    mca_spml_ucx_cache_mkey(&mca_spml_ucx_ctx_default, &mkeys[0], segno, my_pe);
+    mca_spml_ucx_cache_mkey(ctx, &mkeys[0], segno, my_pe);
     return mkeys;
 
 error_unmap:
@@ -494,6 +496,14 @@ error_out:
     free(mkeys);
 
     return NULL ;
+}
+
+sshmem_mkey_t *mca_spml_ucx_register(void* addr,
+                                     size_t size,
+                                     uint64_t shmid,
+                                     int *count)
+{
+    return mca_spml_ucx_register_ctx(addr, size, shmid, count, &mca_spml_ucx_ctx_default);
 }
 
 int mca_spml_ucx_deregister(sshmem_mkey_t *mkeys)
@@ -535,6 +545,9 @@ int mca_spml_ucx_ctx_create(long options, shmem_ctx_t *ctx)
     size_t i, nprocs = oshmem_num_procs();
     ucs_status_t err;
     int rc = OSHMEM_ERROR;
+    int seg;
+    map_segment_t *s;
+    int num_btl;
 
     ctx_item = OBJ_NEW(mca_spml_ucx_ctx_list_item_t);
     ctx_item->ctx.options = options;
@@ -566,6 +579,28 @@ int mca_spml_ucx_ctx_create(long options, shmem_ctx_t *ctx)
         if (UCS_OK != err) {
             SPML_ERROR("ucp_ep_create(proc=%d/%d) failed: %s", i, nprocs,
                        ucs_status_string(err));
+            goto error2;
+        }
+    }
+
+    ctx_item->ctx.mkeys = (sshmem_mkey_t**)calloc(memheap_map->n_segments,
+                                                  sizeof(*(ctx_item->ctx.mkeys)));
+    if (NULL == ctx_item->ctx.mkeys) {
+        goto error2;
+    }
+
+    for (seg = 0; seg < memheap_map->n_segments; seg++) {
+        num_btl = 0;
+        s       = &memheap_map->mem_segs[seg];
+        ctx_item->ctx.mkeys[seg] =
+            mca_spml_ucx_register_ctx(s->super.va_base,
+                                      (char*)s->super.va_end - (char*)s->super.va_base,
+                                      0, &num_btl, &ctx_item->ctx);
+        if (NULL == ctx_item->ctx.mkeys[seg]) {
+            /* failed to register - rollback */
+            for (seg--; seg >= 0; seg--) {
+                mca_spml_ucx_deregister(ctx_item->ctx.mkeys[seg]);
+            }
             goto error2;
         }
     }
@@ -602,6 +637,7 @@ void mca_spml_ucx_ctx_destroy(shmem_ctx_t ctx)
 {
     mca_spml_ucx_ctx_list_item_t *ctx_item, *next;
     size_t i, nprocs = oshmem_num_procs();
+    int seg;
 
     MCA_SPML_CALL(quiet(ctx));
 
@@ -612,6 +648,12 @@ void mca_spml_ucx_ctx_destroy(shmem_ctx_t ctx)
                            mca_spml_ucx_ctx_list_item_t) {
         if ((shmem_ctx_t)(&ctx_item->ctx) == ctx) {
             opal_list_remove_item(&(mca_spml_ucx.ctx_list), &ctx_item->super);
+            for (seg = 0; seg < memheap_map->n_segments; seg++) {
+                if (ctx_item->ctx.mkeys[seg]) {
+                    mca_spml_ucx_deregister(ctx_item->ctx.mkeys[seg]);
+                    ctx_item->ctx.mkeys[seg] = NULL;
+                }
+            }
             for (i = 0; i < nprocs; i++) {
                 ucp_ep_destroy(ctx_item->ctx.ucp_peers[i].ucp_conn);
             }
