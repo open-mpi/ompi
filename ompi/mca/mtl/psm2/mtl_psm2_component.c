@@ -124,10 +124,6 @@ ompi_mtl_psm2_component_register(void)
          * process assume it is ompi_info or this is most likely going to spawn, for
          * which all PSM2 devices are needed */
         setenv("PSM2_DEVICES", "self,shm", 0);
-        /* ob1 is much faster than psm2 with shared memory */
-        param_priority = 10;
-    } else {
-        param_priority = 40;
     }
 
     (void) mca_base_component_var_register (&mca_mtl_psm2_component.super.mtl_version,
