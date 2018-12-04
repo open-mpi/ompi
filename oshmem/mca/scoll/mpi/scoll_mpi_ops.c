@@ -54,6 +54,12 @@ int mca_scoll_mpi_broadcast(struct oshmem_group_t *group,
     }
     dtype = &ompi_mpi_char.dt;
     root = oshmem_proc_group_find_id(group, PE_root);
+
+    /* Do nothing on zero-length request */
+    if (OPAL_UNLIKELY(!nlong)) {
+        return OSHMEM_SUCCESS;
+    }
+
     /* Open SHMEM specification has the following constrains (page 85):
      * "If using C/C++, nelems must be of type integer. If you are using Fortran, it must be a
      *  default integer value". And also fortran signature says "INTEGER".
@@ -104,6 +110,12 @@ int mca_scoll_mpi_collect(struct oshmem_group_t *group,
     void *sbuf, *rbuf;
     MPI_COLL_VERBOSE(20,"RUNNING MPI ALLGATHER");
     mpi_module = (mca_scoll_mpi_module_t *) group->g_scoll.scoll_collect_module;
+
+    /* Do nothing on zero-length request */
+    if (OPAL_UNLIKELY(!nlong)) {
+        return OSHMEM_SUCCESS;
+    }
+
     if (nlong_type == true) {
         sbuf = (void *) source;
         rbuf = target;
@@ -177,6 +189,12 @@ int mca_scoll_mpi_reduce(struct oshmem_group_t *group,
     dtype = shmem_dtype_to_ompi_dtype(op);
     h_op = shmem_op_to_ompi_op(op->op);
     count = nlong/op->dt_size;
+
+    /* Do nothing on zero-length request */
+    if (OPAL_UNLIKELY(!nlong)) {
+        return OSHMEM_SUCCESS;
+    }
+
     /* Open SHMEM specification has the following constrains (page 85):
      * "If using C/C++, nelems must be of type integer. If you are using Fortran, it must be a
      *  default integer value". And also fortran signature says "INTEGER".

@@ -26,8 +26,8 @@
  * object of every PE in the active set. The active set of PEs is defined by the triple PE_start,
  * logPE_stride and PE_size.
  */
-#define SHMEM_TYPE_REDUCE_OP(name, type_name, type, prefix)    \
-    void prefix##type_name##_##name##_to_all( type *target,                     \
+#define SHMEM_TYPE_REDUCE_OP(name, type_name, type, prefix)                                 \
+    void prefix##type_name##_##name##_to_all( type *target,                                 \
                                         const type *source,                                 \
                                         int nreduce,                                        \
                                         int PE_start,                                       \
@@ -40,8 +40,8 @@
     oshmem_group_t*  group = NULL;                                                          \
                                                                                             \
     RUNTIME_CHECK_INIT();                                                                   \
-    RUNTIME_CHECK_ADDR(target);                                                             \
-    RUNTIME_CHECK_ADDR(source);                                                             \
+    RUNTIME_CHECK_ADDR_SIZE(target, nreduce);                                               \
+    RUNTIME_CHECK_ADDR_SIZE(source, nreduce);                                               \
                                                                                             \
     {                                                                                       \
         group = oshmem_proc_group_create_nofail(PE_start, 1<<logPE_stride, PE_size);        \

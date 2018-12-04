@@ -61,6 +61,11 @@ int mca_scoll_basic_alltoall(struct oshmem_group_t *group,
         return OSHMEM_ERR_BAD_PARAM;
     }
 
+    /* Do nothing on zero-length request */
+    if (OPAL_UNLIKELY(!nelems)) {
+        return OPAL_SUCCESS;
+    }
+
     if ((sst == 1) && (dst == 1)) {
         rc = a2a_alg_simple(group, target, source, nelems, element_size);
     } else {
