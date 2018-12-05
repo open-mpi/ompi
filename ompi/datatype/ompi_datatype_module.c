@@ -649,7 +649,8 @@ int32_t ompi_datatype_finalize( void )
     /* release the local convertors (external32 and local) */
     ompi_datatype_default_convertors_fini();
 
-    opal_datatype_finalize();
+    /* don't call opal_datatype_finalize () as it no longer exists. the function will be called
+     * opal_finalize_util (). */
 
     return OMPI_SUCCESS;
 }
