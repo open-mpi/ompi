@@ -15,6 +15,5 @@
 
 #include "common_ucx_int.h"
 #include "common_ucx_wpool.h"
-#include "common_ucx_request.h"
 
 #endif

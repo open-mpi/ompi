@@ -80,8 +80,8 @@ static void
 _winfo_reset(opal_common_ucx_winfo_t *winfo)
 {
     if (winfo->inflight_req != UCS_OK) {
-        opal_common_ucx_wait_request(winfo->inflight_req, winfo->worker,
-                                     "opal_common_ucx_flush");
+        opal_common_ucx_wait_request_mt(winfo->inflight_req,
+                                        "opal_common_ucx_flush");
         winfo->inflight_req = UCS_OK;
     }
 
@@ -1228,10 +1228,10 @@ opal_common_ucx_tlocal_fetch_spath(opal_common_ucx_wpmem_t *mem, int target)
 }
 
 OPAL_DECLSPEC int
-opal_common_ucx_flush(ucp_ep_h ep, ucp_worker_h worker,
-                      opal_common_ucx_flush_type_t type,
-                      opal_common_ucx_flush_scope_t scope,
-                      ucs_status_ptr_t *req_ptr)
+opal_common_ucx_winfo_flush(opal_common_ucx_winfo_t *winfo, int target,
+                            opal_common_ucx_flush_type_t type,
+                            opal_common_ucx_flush_scope_t scope,
+                            ucs_status_ptr_t *req_ptr)
 {
     ucs_status_ptr_t req;
     ucs_status_t status = UCS_OK;
@@ -1239,12 +1239,14 @@ opal_common_ucx_flush(ucp_ep_h ep, ucp_worker_h worker,
 
 #if HAVE_DECL_UCP_EP_FLUSH_NB
     if (scope == OPAL_COMMON_UCX_SCOPE_EP) {
-        req = ucp_ep_flush_nb(ep, 0, opal_common_ucx_empty_complete_cb);
+        req = ucp_ep_flush_nb(winfo->endpoints[target], 0, opal_common_ucx_empty_complete_cb);
     } else {
-        req = ucp_worker_flush_nb(worker, 0, opal_common_ucx_empty_complete_cb);
+        req = ucp_worker_flush_nb(winfo->worker, 0, opal_common_ucx_empty_complete_cb);
     }
+    ((opal_common_ucx_request_t *)req)->winfo = winfo;
+
     if(OPAL_COMMON_UCX_FLUSH_B) {
-        rc = opal_common_ucx_wait_request(req, worker, "ucp_ep_flush_nb");
+        rc = opal_common_ucx_wait_request_mt(req, "ucp_ep_flush_nb");
     } else {
         *req_ptr = req;
     }
@@ -1254,9 +1256,9 @@ opal_common_ucx_flush(ucp_ep_h ep, ucp_worker_h worker,
     case OPAL_COMMON_UCX_FLUSH_NB_PREFERRED:
     case OPAL_COMMON_UCX_FLUSH_B:
         if (scope == OPAL_COMMON_UCX_SCOPE_EP) {
-            status = ucp_ep_flush(ep);
+            status = ucp_ep_flush(winfo->endpoints[target]);
         } else {
-            status = ucp_worker_flush(worker);
+            status = ucp_worker_flush(winfo->worker);
         }
         rc = (status == UCS_OK) ? OPAL_SUCCESS : OPAL_ERROR;
     case OPAL_COMMON_UCX_FLUSH_NB:
@@ -1287,9 +1289,8 @@ opal_common_ucx_wpmem_flush(opal_common_ucx_wpmem_t *mem,
             continue;
         }
         opal_mutex_lock(&item->ptr->mutex);
-        rc = opal_common_ucx_flush(item->ptr->endpoints[target],
-                                   item->ptr->worker, OPAL_COMMON_UCX_FLUSH_B,
-                                   scope, NULL);
+        rc = opal_common_ucx_winfo_flush(item->ptr, target, OPAL_COMMON_UCX_FLUSH_B,
+                                         scope, NULL);
         switch (scope) {
         case OPAL_COMMON_UCX_SCOPE_WORKER:
             item->ptr->global_inflight_ops = 0;
@@ -1322,4 +1323,21 @@ OPAL_DECLSPEC int
 opal_common_ucx_wpmem_fence(opal_common_ucx_wpmem_t *mem) {
     /* TODO */
     return OPAL_SUCCESS;
+}
+
+OPAL_DECLSPEC void
+opal_common_ucx_req_init(void *request) {
+    opal_common_ucx_request_t *req = (opal_common_ucx_request_t *)request;
+    req->ext_req = NULL;
+    req->ext_cb = NULL;
+    req->winfo = NULL;
+}
+
+OPAL_DECLSPEC void
+opal_common_ucx_req_completion(void *request, ucs_status_t status) {
+    opal_common_ucx_request_t *req = (opal_common_ucx_request_t *)request;
+    if (req->ext_cb != NULL) {
+        (*req->ext_cb)(req->ext_req);
+    }
+    ucp_request_release(req);
 }

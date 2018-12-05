@@ -2,7 +2,6 @@
 #define COMMON_UCX_INT_H
 
 #include "opal_config.h"
-#include "common_ucx_request.h"
 
 #include <stdint.h>
 
