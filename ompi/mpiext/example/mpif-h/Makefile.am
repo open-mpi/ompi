@@ -4,6 +4,8 @@
 #                         Corporation.  All rights reserved.
 # Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
 # Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2018      Research Organization for Information Science
+#                         and Technology (RIST).  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -26,7 +28,7 @@ noinst_LTLIBRARIES =
 
 # Directory where the header file to be included in mpif-ext.h must be
 # installed.
-ompidir = $(ompiincludedir)/ompi/mpiext/example/mpif-h
+ompidir = $(ompiincludedir)/mpiext
 
 # Just like noinst_LTLIBRARIES, set this macro to empty and
 # conditionally add to it later.

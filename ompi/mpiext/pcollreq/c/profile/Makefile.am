@@ -22,7 +22,7 @@ noinst_LTLIBRARIES = libpmpiext_pcollreq_c.la
 
 # This is where the top-level header file (that is included in
 # <mpi-ext.h>) must be installed.
-ompidir = $(ompiincludedir)/ompi/mpiext/pcollreq/c
+ompidir = $(ompiincludedir)/mpiext
 
 # This is the header file that is installed.
 ompi_HEADERS = pmpiext_pcollreq_c.h

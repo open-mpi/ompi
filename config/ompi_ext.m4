@@ -405,11 +405,15 @@ AC_DEFUN([EXT_CONFIGURE_M4_CONFIG_COMPONENT],[
 #--------------------
 #
 # C:
-# - c/mpiext_<component>_c.h: is included in mpi_ext.h
+# - c/mpiext_<component>_c.h: is installed to
+#   <includedir>/openmpi/mpiext/mpiext_<component>_c.h and is included in
+#   mpi_ext.h
 # - c/libmpiext_<component>.la: convneience library slurped into libmpi.la
 #
 # mpi.f.h:
-# - mpif-h/mpiext_<component>_mpifh.h: is included mpi mpif_ext.h
+# - mpif-h/mpiext_<component>_mpifh.h: is installed to
+#   <includedir>openmpi/mpiext/mpiext_<component>_mpifh.h and is included mpi
+#   mpif_ext.h
 # - mpif-h/libmpiext_<component>_mpifh.la: convenience library slurped
 #   into libmpi_mpifh.la
 #
@@ -461,7 +465,7 @@ AC_DEFUN([EXT_PROCESS_COMPONENT],[
     ###############
     # C Bindings
     ###############
-    test_header="${srcdir}/ompi/mpiext/$component/c/mpiext_${component}_c.h"
+    test_header="${srcdir}/ompi/mpiext/${component}/c/mpiext_${component}_c.h"
 
     AC_MSG_CHECKING([if MPI Extension $component has C bindings])
 
@@ -479,14 +483,14 @@ AC_DEFUN([EXT_PROCESS_COMPONENT],[
     $3="$$3 $component"
 
     # JMS Where is this needed?
-    EXT_C_HEADERS="$EXT_C_HEADERS mpiext/$component/c/mpiext_${component}_c.h"
+    EXT_C_HEADERS="$EXT_C_HEADERS mpiext/c/mpiext_${component}_c.h"
 
     component_header="mpiext_${component}_c.h"
 
     cat >> $mpi_ext_h <<EOF
 /* Enabled Extension: $component */
 #define $component_define 1
-#include "openmpi/ompi/mpiext/$component/c/$component_header"
+#include "openmpi/mpiext/$component_header"
 
 EOF
 
@@ -506,8 +510,7 @@ EOF
         AC_MSG_RESULT([yes])
         enabled_mpifh=1
 
-    # JMS Where is this needed?
-        EXT_MPIFH_HEADERS="$EXT_MPIFH_HEADERS mpiext/$component/mpif-h/mpiext_${component}_mpifh.h"
+        EXT_MPIFH_HEADERS="$EXT_MPIFH_HEADERS mpiext/mpiext_${component}_mpifh.h"
         $4="$$4 $component"
 
         component_header="mpiext_${component}_mpifh.h"
@@ -519,7 +522,7 @@ EOF
       integer $component_define
       parameter ($component_define=1)
 
-      include 'openmpi/ompi/mpiext/$component/mpif-h/$component_header'
+      include 'openmpi/mpiext/$component_header'
 
 EOF
     else
@@ -550,7 +553,6 @@ EOF
     if test -e "$test_header" ; then
         AC_MSG_RESULT([yes])
 
-    # JMS Where is this needed?
         EXT_USEMPI_HEADERS="$EXT_USEMPI_HEADERS mpiext/$component/use-mpi/mpiext_${component}_usempi.h"
         $5="$$5 $component"
         component_header="mpiext_${component}_usempi.h"
@@ -602,7 +604,6 @@ EOF
     if test -e "$test_header" ; then
         AC_MSG_RESULT([yes])
 
-    # JMS Where is this needed?
         EXT_USEMPIF08_HEADERS="$EXT_USEMPIF08_HEADERS mpiext/$component/use-mpi-f08/mpiext_${component}_usempif08.h"
         $6="$$6 $component"
 
