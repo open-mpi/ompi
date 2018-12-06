@@ -17,6 +17,7 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -80,10 +81,10 @@ int MPI_Type_create_f90_complex(int p, int r, MPI_Datatype *newtype)
      * cache.
      */
 
-    if( (LDBL_DIG < p) || (LDBL_MAX_10_EXP < r) )    *newtype = &ompi_mpi_datatype_null.dt;
-    else if( (DBL_DIG < p) || (DBL_MAX_10_EXP < r) ) *newtype = &ompi_mpi_ldblcplex.dt;
-    else if( (FLT_DIG < p) || (FLT_MAX_10_EXP < r) ) *newtype = &ompi_mpi_dblcplex.dt;
-    else                                             *newtype = &ompi_mpi_cplex.dt;
+    if     ( (LDBL_DIG < p) || (LDBL_MAX_10_EXP < r) || (-LDBL_MIN_10_EXP < r) ) *newtype = &ompi_mpi_datatype_null.dt;
+    else if( (DBL_DIG  < p) || (DBL_MAX_10_EXP  < r) || (-DBL_MIN_10_EXP  < r) ) *newtype = &ompi_mpi_ldblcplex.dt;
+    else if( (FLT_DIG  < p) || (FLT_MAX_10_EXP  < r) || (-FLT_MIN_10_EXP  < r) ) *newtype = &ompi_mpi_dblcplex.dt;
+    else                                                                         *newtype = &ompi_mpi_cplex.dt;
 
     if( *newtype != &ompi_mpi_datatype_null.dt ) {
         ompi_datatype_t* datatype;
