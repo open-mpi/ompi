@@ -4,6 +4,8 @@
  *                         reserved.
  * Copyright (c) 2018      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2018      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -26,7 +28,7 @@
  * @brief Convert UCT capabilities to BTL flags
  */
 static uint64_t mca_btl_uct_cap_to_btl_flag[][2] = {
-    {UCT_IFACE_FLAG_AM_ZCOPY, MCA_BTL_FLAGS_SEND},
+    {UCT_IFACE_FLAG_AM_SHORT, MCA_BTL_FLAGS_SEND},
     {UCT_IFACE_FLAG_PUT_ZCOPY, MCA_BTL_FLAGS_PUT},
     {UCT_IFACE_FLAG_GET_ZCOPY, MCA_BTL_FLAGS_GET},
     {0,0},
