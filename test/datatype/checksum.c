@@ -1,7 +1,9 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
+ * Copyright (c) 2018      Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -14,6 +16,7 @@
 #include "opal/datatype/opal_convertor.h"
 #include "ompi/datatype/ompi_datatype.h"
 #include "opal/datatype/opal_datatype_checksum.h"
+#include "opal/runtime/opal.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -38,6 +41,7 @@ int main( int argc, char* argv[] )
     struct iovec iov[2];
     opal_convertor_t* convertor;
 
+    opal_init_util (NULL, NULL);
     ompi_datatype_init();
     srandom( (int)time(NULL) );
     /*srandomdev();*/
@@ -149,6 +153,7 @@ int main( int argc, char* argv[] )
 
     /* clean-ups all data allocations */
     ompi_datatype_finalize();
+    opal_finalize_util ();
 
     return 0;
 }

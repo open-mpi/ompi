@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -13,6 +13,8 @@
  * Copyright (c) 2006      Sun Microsystems Inc. All rights reserved.
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2018      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -63,6 +65,7 @@ main(int argc, char* argv[])
     int _dbg = 0;
     while (_dbg) poll(NULL, 0, 1);
 
+    opal_init_util (NULL, NULL);
     ompi_datatype_init();
 
     /**
@@ -397,6 +400,7 @@ main(int argc, char* argv[])
 
  cleanup:
     ompi_datatype_finalize();
+    opal_finalize_util ();
 
     return ret;
 }

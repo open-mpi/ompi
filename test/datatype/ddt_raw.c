@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -13,6 +13,8 @@
  * Copyright (c) 2006      Sun Microsystems Inc. All rights reserved.
  * Copyright (c) 2018      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2018      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -23,6 +25,8 @@
 #include "ompi_config.h"
 #include "ddt_lib.h"
 #include "opal/datatype/opal_convertor.h"
+#include "opal/runtime/opal.h"
+
 #include <time.h>
 #include <stdlib.h>
 #ifdef HAVE_SYS_TIME_H
@@ -148,6 +152,7 @@ int main( int argc, char* argv[] )
     ompi_datatype_t *pdt, *pdt1, *pdt2, *pdt3;
     int rc, length = 500, iov_num = 5;
 
+    opal_init_util (NULL, NULL);
     ompi_datatype_init();
 
     /**
@@ -310,6 +315,7 @@ int main( int argc, char* argv[] )
 
     /* clean-ups all data allocations */
     ompi_datatype_finalize();
+    opal_finalize_util ();
 
     return OMPI_SUCCESS;
 }
