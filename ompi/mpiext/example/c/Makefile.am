@@ -4,8 +4,6 @@
 #                         Corporation.  All rights reserved.
 # Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
 # Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2018      Research Organization for Information Science
-#                         and Technology (RIST).  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -25,10 +23,10 @@ noinst_LTLIBRARIES = libmpiext_example_c.la
 
 # This is where the top-level header file (that is included in
 # <mpi-ext.h>) must be installed.
-ompidir = $(ompiincludedir)/ompi/mpiext
+ompidir = $(ompiincludedir)/ompi/mpiext/example/c
 
 # This is the header file that is installed.
-ompi_HEADERS = example_c.h
+ompi_HEADERS = mpiext_example_c.h
 
 # Sources for the convenience libtool library.  Other than the one
 # header file, all source files in the extension have no file naming

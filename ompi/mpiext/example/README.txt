@@ -73,17 +73,17 @@ directory name: ompi/mpiext/<extension name>
 Under this top-level directory, the extension *must* have a directory
 named "c" (for the C bindings) that:
 
-- contains a file named <ext_name>_c.h
-- installs <ext_name>_c.h to
-  $includedir/openmpi/mpiext/c
+- contains a file named mpiext_<ext_name>_c.h
+- installs mpiext_<ext_name>_c.h to
+  $includedir/openmpi/mpiext/<ext_name>/c
 - builds a Libtool convenience library named libmpiext_<ext_name>_c.la
 
 Optionally, the extension may have a director named "mpif-h" (for the
 Fortran mpif.h bindings) that:
 
-- contains a file named <ext_name>_mpifh.h
-- installs <ext_name>_mpih.h to
-  $includedir/openmpi/mpiext
+- contains a file named mpiext_<ext_name>_mpifh.h
+- installs mpiext_<ext_name>_mpih.h to
+  $includedir/openmpi/mpiext/<ext_name>/mpif-h
 - builds a Libtool convenience library named libmpiext_<ext_name>_mpifh.la
 
 Optionally, the extension may have a director named "use-mpi" (for the

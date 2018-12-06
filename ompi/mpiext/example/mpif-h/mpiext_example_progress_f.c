@@ -1,8 +1,6 @@
 /*
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2018      Research Organization for Information Science
- *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -23,7 +21,7 @@
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 #include "ompi/mpi/fortran/base/constants.h"
 
-#include "ompi/mpiext/example/c/example_c.h"
+#include "ompi/mpiext/example/c/mpiext_example_c.h"
 
 /* Rather than doing a whole pile of messy things with weak symbols,
    just define one back-end function (the _f version), and then four
