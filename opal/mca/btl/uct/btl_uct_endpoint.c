@@ -309,7 +309,7 @@ int mca_btl_uct_endpoint_connect (mca_btl_uct_module_t *uct_btl, mca_btl_uct_end
                                   void *ep_addr, int tl_index)
 {
     mca_btl_uct_tl_endpoint_t *tl_endpoint = endpoint->uct_eps[context_id] + tl_index;
-    mca_btl_uct_tl_t *tl = (tl_index == uct_btl->rdma_tl->tl_index) ? uct_btl->rdma_tl : uct_btl->am_tl;
+    mca_btl_uct_tl_t *tl = (NULL != uct_btl->rdma_tl && tl_index == uct_btl->rdma_tl->tl_index) ? uct_btl->rdma_tl : uct_btl->am_tl;
     mca_btl_uct_device_context_t *tl_context = mca_btl_uct_module_get_tl_context_specific (uct_btl, tl, context_id);
     uint8_t *rdma_tl_data = NULL, *conn_tl_data = NULL, *am_tl_data = NULL, *tl_data;
     mca_btl_uct_connection_ep_t *conn_ep = NULL;
