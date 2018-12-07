@@ -63,35 +63,55 @@
 
 #if OSHMEM_PROFILING
 #include "oshmem/include/pshmem.h"
-#pragma weak shmem_ctx_char_iput = pshmem_ctx_char_iput
-#pragma weak shmem_ctx_short_iput = pshmem_ctx_short_iput
-#pragma weak shmem_ctx_int_iput = pshmem_ctx_int_iput
-#pragma weak shmem_ctx_long_iput = pshmem_ctx_long_iput
-#pragma weak shmem_ctx_longlong_iput = pshmem_ctx_longlong_iput
-#pragma weak shmem_ctx_schar_iput = pshmem_ctx_schar_iput
-#pragma weak shmem_ctx_uchar_iput = pshmem_ctx_uchar_iput
-#pragma weak shmem_ctx_ushort_iput = pshmem_ctx_ushort_iput
-#pragma weak shmem_ctx_uint_iput = pshmem_ctx_uint_iput
-#pragma weak shmem_ctx_ulong_iput = pshmem_ctx_ulong_iput
-#pragma weak shmem_ctx_ulonglong_iput = pshmem_ctx_ulonglong_iput
-#pragma weak shmem_ctx_float_iput = pshmem_ctx_float_iput
-#pragma weak shmem_ctx_double_iput = pshmem_ctx_double_iput
+#pragma weak shmem_ctx_char_iput       = pshmem_ctx_char_iput
+#pragma weak shmem_ctx_short_iput      = pshmem_ctx_short_iput
+#pragma weak shmem_ctx_int_iput        = pshmem_ctx_int_iput
+#pragma weak shmem_ctx_long_iput       = pshmem_ctx_long_iput
+#pragma weak shmem_ctx_float_iput      = pshmem_ctx_float_iput
+#pragma weak shmem_ctx_double_iput     = pshmem_ctx_double_iput
+#pragma weak shmem_ctx_longlong_iput   = pshmem_ctx_longlong_iput
+#pragma weak shmem_ctx_schar_iput      = pshmem_ctx_schar_iput
+#pragma weak shmem_ctx_uchar_iput      = pshmem_ctx_uchar_iput
+#pragma weak shmem_ctx_ushort_iput     = pshmem_ctx_ushort_iput
+#pragma weak shmem_ctx_uint_iput       = pshmem_ctx_uint_iput
+#pragma weak shmem_ctx_ulong_iput      = pshmem_ctx_ulong_iput
+#pragma weak shmem_ctx_ulonglong_iput  = pshmem_ctx_ulonglong_iput
 #pragma weak shmem_ctx_longdouble_iput = pshmem_ctx_longdouble_iput
+#pragma weak shmem_ctx_int8_iput       = pshmem_ctx_int8_iput
+#pragma weak shmem_ctx_int16_iput      = pshmem_ctx_int16_iput
+#pragma weak shmem_ctx_int32_iput      = pshmem_ctx_int32_iput
+#pragma weak shmem_ctx_int64_iput      = pshmem_ctx_int64_iput
+#pragma weak shmem_ctx_uint8_iput      = pshmem_ctx_uint8_iput
+#pragma weak shmem_ctx_uint16_iput     = pshmem_ctx_uint16_iput
+#pragma weak shmem_ctx_uint32_iput     = pshmem_ctx_uint32_iput
+#pragma weak shmem_ctx_uint64_iput     = pshmem_ctx_uint64_iput
+#pragma weak shmem_ctx_size_iput       = pshmem_ctx_size_iput
+#pragma weak shmem_ctx_ptrdiff_iput    = pshmem_ctx_ptrdiff_iput
 
-#pragma weak shmem_char_iput = pshmem_char_iput
-#pragma weak shmem_short_iput = pshmem_short_iput
-#pragma weak shmem_int_iput = pshmem_int_iput
-#pragma weak shmem_long_iput = pshmem_long_iput
-#pragma weak shmem_longlong_iput = pshmem_longlong_iput
-#pragma weak shmem_schar_iput = pshmem_schar_iput
-#pragma weak shmem_uchar_iput = pshmem_uchar_iput
-#pragma weak shmem_ushort_iput = pshmem_ushort_iput
-#pragma weak shmem_uint_iput = pshmem_uint_iput
-#pragma weak shmem_ulong_iput = pshmem_ulong_iput
-#pragma weak shmem_ulonglong_iput = pshmem_ulonglong_iput
-#pragma weak shmem_float_iput = pshmem_float_iput
-#pragma weak shmem_double_iput = pshmem_double_iput
-#pragma weak shmem_longdouble_iput = pshmem_longdouble_iput
+#pragma weak shmem_char_iput           = pshmem_char_iput
+#pragma weak shmem_short_iput          = pshmem_short_iput
+#pragma weak shmem_int_iput            = pshmem_int_iput
+#pragma weak shmem_long_iput           = pshmem_long_iput
+#pragma weak shmem_float_iput          = pshmem_float_iput
+#pragma weak shmem_double_iput         = pshmem_double_iput
+#pragma weak shmem_longlong_iput       = pshmem_longlong_iput
+#pragma weak shmem_schar_iput          = pshmem_schar_iput
+#pragma weak shmem_uchar_iput          = pshmem_uchar_iput
+#pragma weak shmem_ushort_iput         = pshmem_ushort_iput
+#pragma weak shmem_uint_iput           = pshmem_uint_iput
+#pragma weak shmem_ulong_iput          = pshmem_ulong_iput
+#pragma weak shmem_ulonglong_iput      = pshmem_ulonglong_iput
+#pragma weak shmem_longdouble_iput     = pshmem_longdouble_iput
+#pragma weak shmem_int8_iput           = pshmem_int8_iput
+#pragma weak shmem_int16_iput          = pshmem_int16_iput
+#pragma weak shmem_int32_iput          = pshmem_int32_iput
+#pragma weak shmem_int64_iput          = pshmem_int64_iput
+#pragma weak shmem_uint8_iput          = pshmem_uint8_iput
+#pragma weak shmem_uint16_iput         = pshmem_uint16_iput
+#pragma weak shmem_uint32_iput         = pshmem_uint32_iput
+#pragma weak shmem_uint64_iput         = pshmem_uint64_iput
+#pragma weak shmem_size_iput           = pshmem_size_iput
+#pragma weak shmem_ptrdiff_iput        = pshmem_ptrdiff_iput
 
 #pragma weak shmem_ctx_iput8 = pshmem_ctx_iput8
 #pragma weak shmem_ctx_iput16 = pshmem_ctx_iput16
@@ -121,6 +141,17 @@ SHMEM_CTX_TYPE_IPUT(_ulonglong, unsigned long long)
 SHMEM_CTX_TYPE_IPUT(_float, float)
 SHMEM_CTX_TYPE_IPUT(_double, double)
 SHMEM_CTX_TYPE_IPUT(_longdouble, long double)
+SHMEM_CTX_TYPE_IPUT(_int8, int8_t)
+SHMEM_CTX_TYPE_IPUT(_int16, int16_t)
+SHMEM_CTX_TYPE_IPUT(_int32, int32_t)
+SHMEM_CTX_TYPE_IPUT(_int64, int64_t)
+SHMEM_CTX_TYPE_IPUT(_uint8, uint8_t)
+SHMEM_CTX_TYPE_IPUT(_uint16, uint16_t)
+SHMEM_CTX_TYPE_IPUT(_uint32, uint32_t)
+SHMEM_CTX_TYPE_IPUT(_uint64, uint64_t)
+SHMEM_CTX_TYPE_IPUT(_size, size_t)
+SHMEM_CTX_TYPE_IPUT(_ptrdiff, ptrdiff_t)
+
 SHMEM_TYPE_IPUT(_char, char)
 SHMEM_TYPE_IPUT(_short, short)
 SHMEM_TYPE_IPUT(_int, int)
@@ -135,6 +166,16 @@ SHMEM_TYPE_IPUT(_ulonglong, unsigned long long)
 SHMEM_TYPE_IPUT(_float, float)
 SHMEM_TYPE_IPUT(_double, double)
 SHMEM_TYPE_IPUT(_longdouble, long double)
+SHMEM_TYPE_IPUT(_int8, int8_t)
+SHMEM_TYPE_IPUT(_int16, int16_t)
+SHMEM_TYPE_IPUT(_int32, int32_t)
+SHMEM_TYPE_IPUT(_int64, int64_t)
+SHMEM_TYPE_IPUT(_uint8, uint8_t)
+SHMEM_TYPE_IPUT(_uint16, uint16_t)
+SHMEM_TYPE_IPUT(_uint32, uint32_t)
+SHMEM_TYPE_IPUT(_uint64, uint64_t)
+SHMEM_TYPE_IPUT(_size, size_t)
+SHMEM_TYPE_IPUT(_ptrdiff, ptrdiff_t)
 
 #define DO_SHMEM_IPUTMEM(ctx, target, source, tst, sst, element_size, nelems, pe) do { \
         int rc = OSHMEM_SUCCESS;                                    \
