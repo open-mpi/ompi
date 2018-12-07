@@ -54,8 +54,6 @@ typedef struct {
 
 OBJ_CLASS_DECLARATION(_tlocal_table_t);
 
-
-
 static int _tlocal_tls_ctxtbl_extend(_tlocal_table_t *tbl, size_t append);
 static int _tlocal_tls_memtbl_extend(_tlocal_table_t *tbl, size_t append);
 static _tlocal_table_t* _common_ucx_tls_init(opal_common_ucx_wpool_t *wpool);
