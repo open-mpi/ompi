@@ -60,7 +60,7 @@ static inline void pmix_atomic_mb(void)
 
 static inline void pmix_atomic_rmb(void)
 {
-#if OPAL_ASSEMBLY_ARCH == OPAL_X86_64
+#if PMIX_ASSEMBLY_ARCH == PMIX_X86_64
     /* work around a bug in older gcc versions where ACQUIRE seems to get
      * treated as a no-op instead of being equivalent to
      * __asm__ __volatile__("": : :"memory") */
