@@ -62,35 +62,55 @@
 
 #if OSHMEM_PROFILING
 #include "oshmem/include/pshmem.h"
-#pragma weak shmem_ctx_char_iget = pshmem_ctx_char_iget
-#pragma weak shmem_ctx_short_iget = pshmem_ctx_short_iget
-#pragma weak shmem_ctx_int_iget = pshmem_ctx_int_iget
-#pragma weak shmem_ctx_long_iget = pshmem_ctx_long_iget
-#pragma weak shmem_ctx_longlong_iget = pshmem_ctx_longlong_iget
-#pragma weak shmem_ctx_schar_iget = pshmem_ctx_schar_iget
-#pragma weak shmem_ctx_uchar_iget = pshmem_ctx_uchar_iget
-#pragma weak shmem_ctx_ushort_iget = pshmem_ctx_ushort_iget
-#pragma weak shmem_ctx_uint_iget = pshmem_ctx_uint_iget
-#pragma weak shmem_ctx_ulong_iget = pshmem_ctx_ulong_iget
-#pragma weak shmem_ctx_ulonglong_iget = pshmem_ctx_ulonglong_iget
-#pragma weak shmem_ctx_float_iget = pshmem_ctx_float_iget
-#pragma weak shmem_ctx_double_iget = pshmem_ctx_double_iget
+#pragma weak shmem_ctx_char_iget       = pshmem_ctx_char_iget
+#pragma weak shmem_ctx_short_iget      = pshmem_ctx_short_iget
+#pragma weak shmem_ctx_int_iget        = pshmem_ctx_int_iget
+#pragma weak shmem_ctx_long_iget       = pshmem_ctx_long_iget
+#pragma weak shmem_ctx_float_iget      = pshmem_ctx_float_iget
+#pragma weak shmem_ctx_double_iget     = pshmem_ctx_double_iget
+#pragma weak shmem_ctx_longlong_iget   = pshmem_ctx_longlong_iget
+#pragma weak shmem_ctx_schar_iget      = pshmem_ctx_schar_iget
+#pragma weak shmem_ctx_uchar_iget      = pshmem_ctx_uchar_iget
+#pragma weak shmem_ctx_ushort_iget     = pshmem_ctx_ushort_iget
+#pragma weak shmem_ctx_uint_iget       = pshmem_ctx_uint_iget
+#pragma weak shmem_ctx_ulong_iget      = pshmem_ctx_ulong_iget
+#pragma weak shmem_ctx_ulonglong_iget  = pshmem_ctx_ulonglong_iget
 #pragma weak shmem_ctx_longdouble_iget = pshmem_ctx_longdouble_iget
+#pragma weak shmem_ctx_int8_iget       = pshmem_ctx_int8_iget
+#pragma weak shmem_ctx_int16_iget      = pshmem_ctx_int16_iget
+#pragma weak shmem_ctx_int32_iget      = pshmem_ctx_int32_iget
+#pragma weak shmem_ctx_int64_iget      = pshmem_ctx_int64_iget
+#pragma weak shmem_ctx_uint8_iget      = pshmem_ctx_uint8_iget
+#pragma weak shmem_ctx_uint16_iget     = pshmem_ctx_uint16_iget
+#pragma weak shmem_ctx_uint32_iget     = pshmem_ctx_uint32_iget
+#pragma weak shmem_ctx_uint64_iget     = pshmem_ctx_uint64_iget
+#pragma weak shmem_ctx_size_iget       = pshmem_ctx_size_iget
+#pragma weak shmem_ctx_ptrdiff_iget    = pshmem_ctx_ptrdiff_iget
 
-#pragma weak shmem_char_iget = pshmem_char_iget
-#pragma weak shmem_short_iget = pshmem_short_iget
-#pragma weak shmem_int_iget = pshmem_int_iget
-#pragma weak shmem_long_iget = pshmem_long_iget
-#pragma weak shmem_longlong_iget = pshmem_longlong_iget
-#pragma weak shmem_schar_iget = pshmem_schar_iget
-#pragma weak shmem_uchar_iget = pshmem_uchar_iget
-#pragma weak shmem_ushort_iget = pshmem_ushort_iget
-#pragma weak shmem_uint_iget = pshmem_uint_iget
-#pragma weak shmem_ulong_iget = pshmem_ulong_iget
-#pragma weak shmem_ulonglong_iget = pshmem_ulonglong_iget
-#pragma weak shmem_float_iget = pshmem_float_iget
-#pragma weak shmem_double_iget = pshmem_double_iget
-#pragma weak shmem_longdouble_iget = pshmem_longdouble_iget
+#pragma weak shmem_char_iget           = pshmem_char_iget
+#pragma weak shmem_short_iget          = pshmem_short_iget
+#pragma weak shmem_int_iget            = pshmem_int_iget
+#pragma weak shmem_long_iget           = pshmem_long_iget
+#pragma weak shmem_float_iget          = pshmem_float_iget
+#pragma weak shmem_double_iget         = pshmem_double_iget
+#pragma weak shmem_longlong_iget       = pshmem_longlong_iget
+#pragma weak shmem_schar_iget          = pshmem_schar_iget
+#pragma weak shmem_uchar_iget          = pshmem_uchar_iget
+#pragma weak shmem_ushort_iget         = pshmem_ushort_iget
+#pragma weak shmem_uint_iget           = pshmem_uint_iget
+#pragma weak shmem_ulong_iget          = pshmem_ulong_iget
+#pragma weak shmem_ulonglong_iget      = pshmem_ulonglong_iget
+#pragma weak shmem_longdouble_iget     = pshmem_longdouble_iget
+#pragma weak shmem_int8_iget           = pshmem_int8_iget
+#pragma weak shmem_int16_iget          = pshmem_int16_iget
+#pragma weak shmem_int32_iget          = pshmem_int32_iget
+#pragma weak shmem_int64_iget          = pshmem_int64_iget
+#pragma weak shmem_uint8_iget          = pshmem_uint8_iget
+#pragma weak shmem_uint16_iget         = pshmem_uint16_iget
+#pragma weak shmem_uint32_iget         = pshmem_uint32_iget
+#pragma weak shmem_uint64_iget         = pshmem_uint64_iget
+#pragma weak shmem_size_iget           = pshmem_size_iget
+#pragma weak shmem_ptrdiff_iget        = pshmem_ptrdiff_iget
 
 #pragma weak shmem_ctx_iget8 = pshmem_ctx_iget8
 #pragma weak shmem_ctx_iget16 = pshmem_ctx_iget16
@@ -120,6 +140,17 @@ SHMEM_CTX_TYPE_IGET(_ulonglong, unsigned long long)
 SHMEM_CTX_TYPE_IGET(_float, float)
 SHMEM_CTX_TYPE_IGET(_double, double)
 SHMEM_CTX_TYPE_IGET(_longdouble, long double)
+SHMEM_CTX_TYPE_IGET(_int8, int8_t)
+SHMEM_CTX_TYPE_IGET(_int16, int16_t)
+SHMEM_CTX_TYPE_IGET(_int32, int32_t)
+SHMEM_CTX_TYPE_IGET(_int64, int64_t)
+SHMEM_CTX_TYPE_IGET(_uint8, uint8_t)
+SHMEM_CTX_TYPE_IGET(_uint16, uint16_t)
+SHMEM_CTX_TYPE_IGET(_uint32, uint32_t)
+SHMEM_CTX_TYPE_IGET(_uint64, uint64_t)
+SHMEM_CTX_TYPE_IGET(_size, size_t)
+SHMEM_CTX_TYPE_IGET(_ptrdiff, ptrdiff_t)
+
 SHMEM_TYPE_IGET(_char, char)
 SHMEM_TYPE_IGET(_short, short)
 SHMEM_TYPE_IGET(_int, int)
@@ -134,6 +165,16 @@ SHMEM_TYPE_IGET(_ulonglong, unsigned long long)
 SHMEM_TYPE_IGET(_float, float)
 SHMEM_TYPE_IGET(_double, double)
 SHMEM_TYPE_IGET(_longdouble, long double)
+SHMEM_TYPE_IGET(_int8, int8_t)
+SHMEM_TYPE_IGET(_int16, int16_t)
+SHMEM_TYPE_IGET(_int32, int32_t)
+SHMEM_TYPE_IGET(_int64, int64_t)
+SHMEM_TYPE_IGET(_uint8, uint8_t)
+SHMEM_TYPE_IGET(_uint16, uint16_t)
+SHMEM_TYPE_IGET(_uint32, uint32_t)
+SHMEM_TYPE_IGET(_uint64, uint64_t)
+SHMEM_TYPE_IGET(_size, size_t)
+SHMEM_TYPE_IGET(_ptrdiff, ptrdiff_t)
 
 #define DO_SHMEM_IGETMEM(ctx, target, source, tst, sst, element_size, nelems, pe) do { \
         int rc = OSHMEM_SUCCESS;                                    \
