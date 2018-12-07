@@ -60,17 +60,19 @@ static int _tlocal_tls_ctxtbl_extend(_tlocal_table_t *tbl, size_t append);
 static int _tlocal_tls_memtbl_extend(_tlocal_table_t *tbl, size_t append);
 static _tlocal_table_t* _common_ucx_tls_init(opal_common_ucx_wpool_t *wpool);
 static void _common_ucx_tls_cleanup(_tlocal_table_t *tls);
-static inline _tlocal_ctx_t *_tlocal_ctx_search(_tlocal_table_t *tls, int ctx_id);
+static inline _tlocal_ctx_t *_tlocal_ctx_search(_tlocal_table_t *tls,
+                                                int ctx_id);
 static int _tlocal_ctx_record_cleanup(_tlocal_ctx_t *ctx_rec);
-static _tlocal_ctx_t *_tlocal_add_ctx(_tlocal_table_t *tls, opal_common_ucx_ctx_t *ctx);
+static _tlocal_ctx_t *_tlocal_add_ctx(_tlocal_table_t *tls,
+                                      opal_common_ucx_ctx_t *ctx);
 static int _tlocal_ctx_connect(_tlocal_ctx_t *ctx, int target);
-static inline _tlocal_mem_t *_tlocal_search_mem(_tlocal_table_t *tls, int mem_id);
-static _tlocal_mem_t *_tlocal_add_mem(_tlocal_table_t *tls, opal_common_ucx_wpmem_t *mem);
+static inline _tlocal_mem_t *_tlocal_search_mem(_tlocal_table_t *tls,
+                                                int mem_id);
+static _tlocal_mem_t *_tlocal_add_mem(_tlocal_table_t *tls,
+                                      opal_common_ucx_wpmem_t *mem);
 static int _tlocal_mem_create_rkey(_tlocal_mem_t *mem_rec, ucp_ep_h ep, int target);
 // TOD: Return the error from it
 static void _tlocal_mem_record_cleanup(_tlocal_mem_t *mem_rec);
-
-
 static void _tlocal_cleanup(void *arg);
 
 /* Sorted declarations */

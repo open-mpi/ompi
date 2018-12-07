@@ -122,6 +122,12 @@ extern __thread int initialized;
 #include <time.h>
 #include <sys/time.h>
 
+static int _dbg_winfo = 0;
+static int _dbg_wpool = 0;
+static int _dbg_ctx = 0;
+static int _dbg_mem = 0;
+static int _dbg_tls = 0;
+
 static inline void init_tls_dbg(void)
 {
     if( !initialized ) {
@@ -133,22 +139,34 @@ static inline void init_tls_dbg(void)
         sprintf(fname, "%s.%d.log", hname, tid);
         tls_pf = fopen(fname, "w");
         initialized = 1;
+        // Create issusion that they are used to avoid compiler warnings
+        (void)_dbg_ctx;
+        (void)_dbg_mem;
+        (void)_dbg_tls;
+        (void)_dbg_winfo;
+        (void)_dbg_wpool;
     }
 }
 
-#define DBG_OUT(...)                \
-{                                   \
-    struct timeval start_;          \
-    time_t nowtime_;                \
-    struct tm *nowtm_;              \
-    char tmbuf_[64];                \
-    gettimeofday(&start_, NULL);    \
-    nowtime_ = start_.tv_sec;       \
-    nowtm_ = localtime(&nowtime_);  \
-    strftime(tmbuf_, sizeof(tmbuf_), "%H:%M:%S", nowtm_); \
-    init_tls_dbg();                 \
-    fprintf(tls_pf, "[%s.%06ld] ", tmbuf_, start_.tv_usec);\
-    fprintf(tls_pf, __VA_ARGS__);    \
+
+#define DBG_OUT(level, ...)                    \
+{                                              \
+    struct timeval start_;                     \
+    time_t nowtime_;                           \
+    struct tm *nowtm_;                         \
+    char tmbuf_[64];                           \
+    gettimeofday(&start_, NULL);               \
+    nowtime_ = start_.tv_sec;                  \
+    nowtm_ = localtime(&nowtime_);             \
+    strftime(tmbuf_, sizeof(tmbuf_),           \
+               "%H:%M:%S", nowtm_);            \
+    init_tls_dbg();                            \
+    if (level) {                               \
+        fprintf(tls_pf, "[%s.%06ld] %s:",      \
+                      tmbuf_, start_.tv_usec,  \
+                      __func__);          \
+    }                                          \
+    fprintf(tls_pf, __VA_ARGS__);              \
 }
 
 #else
