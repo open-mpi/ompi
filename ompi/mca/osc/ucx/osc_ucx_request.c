@@ -45,20 +45,11 @@ static void request_construct(ompi_osc_ucx_request_t *request)
     request->super.req_cancel = request_cancel;
 }
 
-void internal_req_init(void *request) {
-    ompi_osc_ucx_internal_request_t *req = (ompi_osc_ucx_internal_request_t *)request;
-    req->external_req = NULL;
-}
-
-void req_completion(void *request, ucs_status_t status) {
-    ompi_osc_ucx_internal_request_t *req = (ompi_osc_ucx_internal_request_t *)request;
-
-    if(req->external_req != NULL) {
-        ompi_request_complete(&(req->external_req->super), true);
-        ucp_request_release(req);
-        mca_osc_ucx_component.num_incomplete_req_ops--;
-        assert(mca_osc_ucx_component.num_incomplete_req_ops >= 0);
-    }
+void req_completion(void *request) {
+    ompi_osc_ucx_request_t *req = (ompi_osc_ucx_request_t *)request;
+    ompi_request_complete(&(req->super), true);
+    mca_osc_ucx_component.num_incomplete_req_ops--;
+    assert(mca_osc_ucx_component.num_incomplete_req_ops >= 0);
 }
 
 OBJ_CLASS_INSTANCE(ompi_osc_ucx_request_t, ompi_request_t,
