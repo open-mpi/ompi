@@ -1243,7 +1243,9 @@ opal_common_ucx_winfo_flush(opal_common_ucx_winfo_t *winfo, int target,
     } else {
         req = ucp_worker_flush_nb(winfo->worker, 0, opal_common_ucx_empty_complete_cb);
     }
-    ((opal_common_ucx_request_t *)req)->winfo = winfo;
+    if (UCS_PTR_IS_PTR(req)) {
+        ((opal_common_ucx_request_t *)req)->winfo = winfo;
+    }
 
     if(OPAL_COMMON_UCX_FLUSH_B) {
         rc = opal_common_ucx_wait_request_mt(req, "ucp_ep_flush_nb");
