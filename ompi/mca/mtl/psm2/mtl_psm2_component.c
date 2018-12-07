@@ -126,6 +126,7 @@ ompi_mtl_psm2_component_register(void)
         setenv("PSM2_DEVICES", "self,shm", 0);
     }
 
+    param_priority = 40;
     (void) mca_base_component_var_register (&mca_mtl_psm2_component.super.mtl_version,
                                             "priority", "Priority of the PSM2 MTL component",
                                             MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
