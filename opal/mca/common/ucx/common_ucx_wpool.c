@@ -126,9 +126,7 @@ opal_common_ucx_wpool_free(opal_common_ucx_wpool_t *wpool)
 
 OPAL_DECLSPEC int
 opal_common_ucx_wpool_init(opal_common_ucx_wpool_t *wpool,
-                               int proc_world_size,
-                               ucp_request_init_callback_t req_init_ptr,
-                               size_t req_size, bool enable_mt)
+                           int proc_world_size, bool enable_mt)
 {
     ucp_config_t *config = NULL;
     ucp_params_t context_params;
@@ -164,8 +162,8 @@ opal_common_ucx_wpool_init(opal_common_ucx_wpool_t *wpool,
                               UCP_FEATURE_AMO64;
     context_params.mt_workers_shared = (enable_mt ? 1 : 0);
     context_params.estimated_num_eps = proc_world_size;
-    context_params.request_init = req_init_ptr;
-    context_params.request_size = req_size;
+    context_params.request_init = opal_common_ucx_req_init;
+    context_params.request_size = sizeof(opal_common_ucx_request_t);
 
     status = ucp_init(&context_params, config, &wpool->ucp_ctx);
     ucp_config_release(config);
@@ -1272,4 +1270,3 @@ opal_common_ucx_wpmem_fence(opal_common_ucx_wpmem_t *mem) {
     /* TODO */
     return OPAL_SUCCESS;
 }
-
