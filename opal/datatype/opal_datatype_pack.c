@@ -286,6 +286,7 @@ opal_generic_simple_pack_function( opal_convertor_t* pConvertor,
     unsigned char *conv_ptr, *iov_ptr;
     size_t iov_len_local;
     uint32_t iov_count;
+    int save_disp = 0;
 
     DO_DEBUG( opal_output( 0, "opal_convertor_generic_simple_pack( %p:%p, {%p, %lu}, %d )\n",
                            (void*)pConvertor, (void*)pConvertor->pBaseBuf,
@@ -340,6 +341,34 @@ opal_generic_simple_pack_function( opal_convertor_t* pConvertor,
                     pConvertor->stack_pos--;  /* go one position up on the stack */
                     pStack--;
                     pos_desc++;  /* and move to the next element */
+                } else if (pStack->index != -1 &&
+                           OPAL_DATATYPE_LOOP == description[pStack->index].loop.common.type &&
+                           pStack->count > 0) {
+                    /*
+                     * if we are not at the end of the datatype
+                     * AND we've got a LOOP to process in the stack
+                     * AND the count of blocks remaining in the LOOP is greater
+                     *     than 0.
+                     * ==> do what is needed to convert the remaining data into
+                     *     a LOOP element.
+                     * Doing this, the remaining of the loop will be itself
+                     * processed as a loop instead of being processed data block
+                     * by data block.
+                     */
+                    description = pConvertor->use_desc->desc;
+                    pStack->disp += description[pStack->index].loop.extent;
+
+                    pos_desc   = pStack->index;
+                    conv_ptr   = pConvertor->pBaseBuf + pStack->disp;
+                    count_desc = (uint32_t)pStack->count;
+
+                    save_disp = (pStack)->disp;
+                    pStack--;
+                    save_disp -= (pStack)->disp;
+                    pConvertor->stack_pos--;
+                    pElem = &(description[pos_desc]);
+
+                    goto loop_part;
                 } else {
                     pos_desc = pStack->index + 1;  /* jump back to the begining of the loop */
                     if( pStack->index == -1 ) {  /* If it's the datatype count loop */
@@ -355,6 +384,7 @@ opal_generic_simple_pack_function( opal_convertor_t* pConvertor,
                                        (int)pStack->count, pConvertor->stack_pos, pos_desc,
                                        count_desc, (long)pStack->disp, (unsigned long)iov_len_local ); );
             }
+        loop_part:
             if( OPAL_DATATYPE_LOOP == pElem->elem.common.type ) {
                 ptrdiff_t local_disp = (ptrdiff_t)conv_ptr;
                 if( pElem->loop.common.flags & OPAL_DATATYPE_FLAG_CONTIGUOUS ) {
@@ -368,9 +398,10 @@ opal_generic_simple_pack_function( opal_convertor_t* pConvertor,
                 }
                 local_disp = (ptrdiff_t)conv_ptr - local_disp;
                 PUSH_STACK( pStack, pConvertor->stack_pos, pos_desc, OPAL_DATATYPE_LOOP, count_desc,
-                            pStack->disp + local_disp);
+                            pStack->disp + local_disp + save_disp);
                 pos_desc++;
             update_loop_description:  /* update the current state */
+                save_disp = 0;
                 conv_ptr = pConvertor->pBaseBuf + pStack->disp;
                 UPDATE_INTERNAL_COUNTERS( description, pos_desc, pElem, count_desc );
                 DDT_DUMP_STACK( pConvertor->pStack, pConvertor->stack_pos, pElem, "advance loop" );
