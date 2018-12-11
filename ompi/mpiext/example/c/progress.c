@@ -3,8 +3,6 @@
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2018      Research Organization for Information Science
- *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -16,7 +14,7 @@
 
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/mpiext/mpiext.h"
-#include "ompi/mpiext/example/c/example_c.h"
+#include "ompi/mpiext/example/mpiext_example_c.h"
 
 static const char FUNC_NAME[] = "OMPI_Progress";
 

@@ -31,7 +31,7 @@ noinst_LTLIBRARIES =
 
 # Directory where the header file to be included in mpif-ext.h must be
 # installed.
-ompidir = $(ompiincludedir)/ompi/mpiext
+ompidir = $(ompiincludedir)/mpiext
 
 # Just like noinst_LTLIBRARIES, set this macro to empty and
 # conditionally add to it later.
@@ -46,7 +46,7 @@ if OMPI_BUILD_FORTRAN_MPIFH_BINDINGS
 noinst_LTLIBRARIES += libmpiext_pcollreq_mpifh.la
 
 # This is the header file that is installed.
-ompi_HEADERS += pcollreq_mpifh.h
+ompi_HEADERS += mpiext_pcollreq_mpifh.h
 
 noinst_HEADERS = mpiext_pcollreq_prototypes.h
 

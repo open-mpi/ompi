@@ -3,8 +3,6 @@
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2018      Research Organization for Information Science
- *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -20,7 +18,7 @@
 #include "ompi/communicator/communicator.h"
 #include "orte/mca/snapc/snapc.h"
 
-#include "ompi/mpiext/cr/c/cr_c.h"
+#include "ompi/mpiext/cr/c/mpiext_cr_c.h"
 
 static const char FUNC_NAME[] = "OMPI_CR_Quiesce_checkpoint";
 

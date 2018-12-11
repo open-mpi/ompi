@@ -32,10 +32,10 @@ noinst_LTLIBRARIES = libmpiext_affinity_c.la
 
 # This is where the top-level header file (that is included in
 # <mpi-ext.h>) must be installed.
-ompidir = $(ompiincludedir)/ompi/mpiext
+ompidir = $(ompiincludedir)/mpiext/
 
 # This is the header file that is installed.
-ompi_HEADERS = affinity_c.h
+ompi_HEADERS = mpiext_affinity_c.h
 
 # Sources for the convenience libtool library.  Other than the one
 # header file, all source files in the extension have no file naming

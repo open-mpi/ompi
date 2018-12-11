@@ -28,7 +28,7 @@ noinst_LTLIBRARIES =
 
 # Directory where the header file to be included in mpif-ext.h must be
 # installed.
-ompidir = $(ompiincludedir)/ompi/mpiext
+ompidir = $(ompiincludedir)/mpiext
 
 # Just like noinst_LTLIBRARIES, set this macro to empty and
 # conditionally add to it later.
@@ -43,7 +43,7 @@ if OMPI_BUILD_FORTRAN_MPIFH_BINDINGS
 noinst_LTLIBRARIES += libmpiext_example_mpifh.la
 
 # This is the header file that is installed.
-ompi_HEADERS += example_mpifh.h
+ompi_HEADERS += mpiext_example_mpifh.h
 
 # Sources for the convenience libtool library.
 libmpiext_example_mpifh_la_SOURCES = \

@@ -405,11 +405,15 @@ AC_DEFUN([EXT_CONFIGURE_M4_CONFIG_COMPONENT],[
 #--------------------
 #
 # C:
-# - c/mpiext_<component>_c.h: is included in mpi_ext.h
+# - c/mpiext_<component>_c.h: is installed to
+#   <includedir>/openmpi/mpiext/mpiext_<component>_c.h and is included in
+#   mpi_ext.h
 # - c/libmpiext_<component>.la: convneience library slurped into libmpi.la
 #
 # mpi.f.h:
-# - mpif-h/<component>_mpifh.h: is included mpi mpif_ext.h
+# - mpif-h/mpiext_<component>_mpifh.h: is installed to
+#   <includedir>openmpi/mpiext/mpiext_<component>_mpifh.h and is included mpi
+#   mpif_ext.h
 # - mpif-h/libmpiext_<component>_mpifh.la: convenience library slurped
 #   into libmpi_mpifh.la
 #
@@ -461,7 +465,7 @@ AC_DEFUN([EXT_PROCESS_COMPONENT],[
     ###############
     # C Bindings
     ###############
-    test_header="${srcdir}/ompi/mpiext/${component}/c/${component}_c.h"
+    test_header="${srcdir}/ompi/mpiext/${component}/c/mpiext_${component}_c.h"
 
     AC_MSG_CHECKING([if MPI Extension $component has C bindings])
 
@@ -479,14 +483,14 @@ AC_DEFUN([EXT_PROCESS_COMPONENT],[
     $3="$$3 $component"
 
     # JMS Where is this needed?
-    EXT_C_HEADERS="$EXT_C_HEADERS mpiext/c/${component}_c.h"
+    EXT_C_HEADERS="$EXT_C_HEADERS mpiext/c/mpiext_${component}_c.h"
 
-    component_header="${component}_c.h"
+    component_header="mpiext_${component}_c.h"
 
     cat >> $mpi_ext_h <<EOF
 /* Enabled Extension: $component */
 #define $component_define 1
-#include "openmpi/ompi/mpiext/$component_header"
+#include "openmpi/mpiext/$component_header"
 
 EOF
 
@@ -497,7 +501,7 @@ EOF
     # Test if this extension has mpif.h bindings
     # If not, skip this step.
     #
-    test_header="${srcdir}/ompi/mpiext/$component/mpif-h/${component}_mpifh.h"
+    test_header="${srcdir}/ompi/mpiext/$component/mpif-h/mpiext_${component}_mpifh.h"
     enabled_mpifh=0
 
     AC_MSG_CHECKING([if MPI Extension $component has mpif.h bindings])
@@ -506,11 +510,37 @@ EOF
         AC_MSG_RESULT([yes])
         enabled_mpifh=1
 
-    # JMS Where is this needed?
-        EXT_MPIFH_HEADERS="$EXT_MPIFH_HEADERS mpiext/${component}_mpifh.h"
+        EXT_MPIFH_HEADERS="$EXT_MPIFH_HEADERS mpiext/mpiext_${component}_mpifh.h"
         $4="$$4 $component"
 
-        component_header="${component}_mpifh.h"
+        # Per https://github.com/open-mpi/ompi/pull/6030, we will end
+        # up putting a user-visible Fortran "include" statement in the
+        # installed mpif-ext.h file, and we therefore have to ensure
+        # that the total length of the line is <=72 characters.  Doing
+        # a little math here:
+        #
+        # leading indent spaces: 6 chars
+        # "include '": 9 chars
+        # "openmpi/mpiext/mpiext_NAME_mpifh.h": without NAME, 30 chars
+        # trailing "'": 1 char
+        #
+        # 6+9+30+1 = 46 chars overhead.
+        # 72-46 = 26 characters left for NAME.
+        #
+        # It would be exceedingly unusual to have an MPI extension
+        # name > 26 characters.  But just in case, put a check here
+        # to make sure: error out if the MPI extension name is > 26
+        # characters (because otherwise it'll just be a really weird /
+        # hard to diagnose compile error when a user tries to compile
+        # a Fortran MPI application that includes `mpif-ext.h`).
+        len=`echo $component | wc -c`
+        result=`expr $len \> 26`
+        AS_IF([test $result -eq 1],
+              [AC_MSG_WARN([MPI extension name too long: $component])
+               AC_MSG_WARN([For esoteric reasons, MPI Extensions with mpif.h bindings must have a name that is <= 26 characters])
+               AC_MSG_ERROR([Cannot continue])])
+
+        component_header="mpiext_${component}_mpifh.h"
 
         cat >> $mpif_ext_h <<EOF
 !
@@ -519,7 +549,7 @@ EOF
       integer $component_define
       parameter ($component_define=1)
 
-      include 'openmpi/ompi/mpiext/$component_header'
+      include 'openmpi/mpiext/$component_header'
 
 EOF
     else
@@ -550,7 +580,6 @@ EOF
     if test -e "$test_header" ; then
         AC_MSG_RESULT([yes])
 
-    # JMS Where is this needed?
         EXT_USEMPI_HEADERS="$EXT_USEMPI_HEADERS mpiext/$component/use-mpi/mpiext_${component}_usempi.h"
         $5="$$5 $component"
         component_header="mpiext_${component}_usempi.h"
@@ -566,7 +595,7 @@ EOF
         # srcdir is needed to find the header.
         #
         if test "$enabled_mpifh" = 1; then
-            mpifh_component_header="${component}_mpifh.h"
+            mpifh_component_header="mpiext_${component}_mpifh.h"
             cat >> $mpiusempi_ext_h <<EOF
 #include "${srcdir}/ompi/mpiext/$component/mpif-h/$mpifh_component_header"
 EOF
@@ -602,7 +631,6 @@ EOF
     if test -e "$test_header" ; then
         AC_MSG_RESULT([yes])
 
-    # JMS Where is this needed?
         EXT_USEMPIF08_HEADERS="$EXT_USEMPIF08_HEADERS mpiext/$component/use-mpi-f08/mpiext_${component}_usempif08.h"
         $6="$$6 $component"
 
@@ -619,7 +647,7 @@ EOF
         # the srcdir is needed to find the header.
         #
         if test "$enabled_mpifh" = 1; then
-            mpifh_component_header="${component}_mpifh.h"
+            mpifh_component_header="mpiext_${component}_mpifh.h"
             cat >> $mpiusempif08_ext_h <<EOF
 #include "${srcdir}/ompi/mpiext/$component/mpif-h/$mpifh_component_header"
 EOF
