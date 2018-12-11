@@ -107,16 +107,16 @@ module mpi_f08_types
   !  NULL "handles" (indices)
   !
 
-  type(MPI_Comm),       bind(C, name="ompi_f08_mpi_comm_null") OMPI_PROTECTED       :: MPI_COMM_NULL;
-  type(MPI_Datatype),   bind(C, name="ompi_f08_mpi_datatype_null") OMPI_PROTECTED   :: MPI_DATATYPE_NULL;
-  type(MPI_Errhandler), bind(C, name="ompi_f08_mpi_errhandler_null") OMPI_PROTECTED :: MPI_ERRHANDLER_NULL;
-  type(MPI_Group),      bind(C, name="ompi_f08_mpi_group_null") OMPI_PROTECTED      :: MPI_GROUP_NULL;
-  type(MPI_Info),       bind(C, name="ompi_f08_mpi_info_null") OMPI_PROTECTED       :: MPI_INFO_NULL;
-  type(MPI_Message),    bind(C, name="ompi_f08_mpi_message_null") OMPI_PROTECTED    :: MPI_MESSAGE_NULL;
-  type(MPI_Op),         bind(C, name="ompi_f08_mpi_op_null") OMPI_PROTECTED         :: MPI_OP_NULL;
-  type(MPI_Request),    bind(C, name="ompi_f08_mpi_request_null") OMPI_PROTECTED    :: MPI_REQUEST_NULL;
-  type(MPI_Win),        bind(C, name="ompi_f08_mpi_win_null") OMPI_PROTECTED        :: MPI_WIN_NULL;
-  type(MPI_File),       bind(C, name="ompi_f08_mpi_file_null") OMPI_PROTECTED       :: MPI_FILE_NULL;
+  type(MPI_Comm),       bind(C, name="ompi_f08_mpi_comm_null") OMPI_PROTECTED       :: MPI_COMM_NULL
+  type(MPI_Datatype),   bind(C, name="ompi_f08_mpi_datatype_null") OMPI_PROTECTED   :: MPI_DATATYPE_NULL
+  type(MPI_Errhandler), bind(C, name="ompi_f08_mpi_errhandler_null") OMPI_PROTECTED :: MPI_ERRHANDLER_NULL
+  type(MPI_Group),      bind(C, name="ompi_f08_mpi_group_null") OMPI_PROTECTED      :: MPI_GROUP_NULL
+  type(MPI_Info),       bind(C, name="ompi_f08_mpi_info_null") OMPI_PROTECTED       :: MPI_INFO_NULL
+  type(MPI_Message),    bind(C, name="ompi_f08_mpi_message_null") OMPI_PROTECTED    :: MPI_MESSAGE_NULL
+  type(MPI_Op),         bind(C, name="ompi_f08_mpi_op_null") OMPI_PROTECTED         :: MPI_OP_NULL
+  type(MPI_Request),    bind(C, name="ompi_f08_mpi_request_null") OMPI_PROTECTED    :: MPI_REQUEST_NULL
+  type(MPI_Win),        bind(C, name="ompi_f08_mpi_win_null") OMPI_PROTECTED        :: MPI_WIN_NULL
+  type(MPI_File),       bind(C, name="ompi_f08_mpi_file_null") OMPI_PROTECTED       :: MPI_FILE_NULL
 
   !
   ! Pre-defined datatype bindings
