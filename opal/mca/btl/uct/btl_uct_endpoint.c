@@ -2,6 +2,8 @@
 /*
  * Copyright (c) 2018      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2018      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -137,11 +139,26 @@ static void mca_btl_uct_connection_ep_destruct (mca_btl_uct_connection_ep_t *ep)
 OBJ_CLASS_INSTANCE(mca_btl_uct_connection_ep_t, opal_object_t, mca_btl_uct_connection_ep_construct,
                    mca_btl_uct_connection_ep_destruct);
 
+struct mca_btl_uct_conn_completion_t {
+    uct_completion_t super;
+    volatile bool complete;
+};
+typedef struct mca_btl_uct_conn_completion_t mca_btl_uct_conn_completion_t;
+
+static void mca_btl_uct_endpoint_flush_complete (uct_completion_t *self, ucs_status_t status)
+{
+    mca_btl_uct_conn_completion_t *completion = (mca_btl_uct_conn_completion_t *) self;
+    BTL_VERBOSE(("connection flush complete"));
+    completion->complete = true;
+}
+
 static int mca_btl_uct_endpoint_send_conn_req (mca_btl_uct_module_t *uct_btl, mca_btl_base_endpoint_t *endpoint,
                                                mca_btl_uct_device_context_t *conn_tl_context,
                                                mca_btl_uct_conn_req_t *request, size_t request_length)
 {
     mca_btl_uct_connection_ep_t *conn_ep = endpoint->conn_ep;
+    mca_btl_uct_conn_completion_t completion = {.super = {.count = 1, .func = mca_btl_uct_endpoint_flush_complete},
+                                                .complete = false};
     ucs_status_t ucs_status;
 
     BTL_VERBOSE(("sending connection request to peer. context id: %d, type: %d, length: %" PRIsize_t,
@@ -170,10 +187,18 @@ static int mca_btl_uct_endpoint_send_conn_req (mca_btl_uct_module_t *uct_btl, mc
     } while (1);
 
     /* for now we just wait for the connection request to complete before continuing */
-    do {
-        ucs_status = uct_ep_flush (conn_ep->uct_ep, 0, NULL);
-        mca_btl_uct_context_progress (conn_tl_context);
-    } while (UCS_INPROGRESS == ucs_status);
+    ucs_status = uct_ep_flush (conn_ep->uct_ep, 0, &completion.super);
+    if (UCS_OK != ucs_status && UCS_INPROGRESS != ucs_status) {
+        /* NTH: I don't know if this path is needed. For some networks we must use a completion. */
+        do {
+            ucs_status = uct_ep_flush (conn_ep->uct_ep, 0, NULL);
+            mca_btl_uct_context_progress (conn_tl_context);
+        } while (UCS_INPROGRESS == ucs_status);
+    } else {
+        do {
+            mca_btl_uct_context_progress (conn_tl_context);
+        } while (!completion.complete);
+    }
 
     opal_mutex_lock (&endpoint->ep_lock);
 
@@ -284,8 +309,8 @@ int mca_btl_uct_endpoint_connect (mca_btl_uct_module_t *uct_btl, mca_btl_uct_end
                                   void *ep_addr, int tl_index)
 {
     mca_btl_uct_tl_endpoint_t *tl_endpoint = endpoint->uct_eps[context_id] + tl_index;
-    mca_btl_uct_device_context_t *tl_context = mca_btl_uct_module_get_rdma_context_specific (uct_btl, context_id);
     mca_btl_uct_tl_t *tl = (tl_index == uct_btl->rdma_tl->tl_index) ? uct_btl->rdma_tl : uct_btl->am_tl;
+    mca_btl_uct_device_context_t *tl_context = mca_btl_uct_module_get_tl_context_specific (uct_btl, tl, context_id);
     uint8_t *rdma_tl_data = NULL, *conn_tl_data = NULL, *am_tl_data = NULL, *tl_data;
     mca_btl_uct_connection_ep_t *conn_ep = NULL;
     mca_btl_uct_modex_t *modex;

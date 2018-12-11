@@ -14,6 +14,9 @@
  *                         reserved.
  * Copyright (c) 2018      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
+ * Copyright (c) 2018      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -50,7 +53,7 @@ static int mca_btl_uct_component_register(void)
                                            MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_3, MCA_BASE_VAR_SCOPE_LOCAL,
                                            &mca_btl_uct_component.memory_domains);
 
-    mca_btl_uct_component.allowed_transports = "dc_mlx5,rc_mlx5,ud,any";
+    mca_btl_uct_component.allowed_transports = "dc_mlx5,rc_mlx5,ud,ugni_rdma,ugni_smsg,any";
     (void) mca_base_component_var_register(&mca_btl_uct_component.super.btl_version,
                                            "transports", "Comma-delimited list of transports to use sorted by increasing "
                                            "priority. The list of transports available can be queried using ucx_info. Special"
