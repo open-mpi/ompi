@@ -277,7 +277,6 @@ mca_btl_openib_proc_t* mca_btl_openib_proc_get_locked(opal_proc_t* proc)
 
     if (0 == ib_proc->proc_port_count) {
         ib_proc->proc_endpoints = NULL;
-        goto no_err_exit;
     } else {
         ib_proc->proc_endpoints = (volatile mca_btl_base_endpoint_t**)
             malloc(ib_proc->proc_port_count *
