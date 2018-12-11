@@ -49,7 +49,7 @@ AC_DEFUN([MCA_opal_btl_uct_CONFIG],[
 
     AS_IF([test "$btl_uct_happy" = "yes"],
           [$1
-           btl_uct_LIBS = "$btl_uct_LIBS -luct"
+           btl_uct_LIBS="$btl_uct_LIBS -luct"
           ],
           [$2])
 
