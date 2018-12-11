@@ -927,6 +927,7 @@ error:
         (void) fi_close((fid_t)ompi_mtl_ofi.av);
     }
     if ((false == ompi_mtl_ofi.sep_supported) &&
+        ompi_mtl_ofi.ofi_ctxt != NULL &&
          ompi_mtl_ofi.ofi_ctxt[0].cq) {
         /* Check if CQ[0] was created for non-SEP case and close if needed */
         (void) fi_close((fid_t)ompi_mtl_ofi.ofi_ctxt[0].cq);
