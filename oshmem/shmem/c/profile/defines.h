@@ -532,6 +532,10 @@
 #define shmem_uint_atomic_fetch_and       pshmem_uint_atomic_fetch_and
 #define shmem_ulong_atomic_fetch_and      pshmem_ulong_atomic_fetch_and
 #define shmem_ulonglong_atomic_fetch_and  pshmem_ulonglong_atomic_fetch_and
+#define shmem_int32_atomic_fetch_and      pshmem_int32_atomic_fetch_and
+#define shmem_int64_atomic_fetch_and      pshmem_int64_atomic_fetch_and
+#define shmem_uint32_atomic_fetch_and     pshmem_uint32_atomic_fetch_and
+#define shmem_uint64_atomic_fetch_and     pshmem_uint64_atomic_fetch_and
 
 #define shmem_ctx_int_atomic_fetch_and    pshmem_ctx_int_atomic_fetch_and
 #define shmem_ctx_long_atomic_fetch_and   pshmem_ctx_long_atomic_fetch_and
@@ -539,6 +543,10 @@
 #define shmem_ctx_uint_atomic_fetch_and   pshmem_ctx_uint_atomic_fetch_and
 #define shmem_ctx_ulong_atomic_fetch_and  pshmem_ctx_ulong_atomic_fetch_and
 #define shmem_ctx_ulonglong_atomic_fetch_and pshmem_ctx_ulonglong_atomic_fetch_and
+#define shmem_ctx_int32_atomic_fetch_and  pshmem_ctx_int32_atomic_fetch_and
+#define shmem_ctx_int64_atomic_fetch_and  pshmem_ctx_int64_atomic_fetch_and
+#define shmem_ctx_uint32_atomic_fetch_and pshmem_ctx_uint32_atomic_fetch_and
+#define shmem_ctx_uint64_atomic_fetch_and pshmem_ctx_uint64_atomic_fetch_and
 
 #define shmemx_int32_atomic_fetch_and     pshmemx_int32_atomic_fetch_and
 #define shmemx_int64_atomic_fetch_and     pshmemx_int64_atomic_fetch_and
@@ -552,6 +560,10 @@
 #define shmem_uint_atomic_fetch_or        pshmem_uint_atomic_fetch_or
 #define shmem_ulong_atomic_fetch_or       pshmem_ulong_atomic_fetch_or
 #define shmem_ulonglong_atomic_fetch_or   pshmem_ulonglong_atomic_fetch_or
+#define shmem_int32_atomic_fetch_or       pshmem_int32_atomic_fetch_or
+#define shmem_int64_atomic_fetch_or       pshmem_int64_atomic_fetch_or
+#define shmem_uint32_atomic_fetch_or      pshmem_uint32_atomic_fetch_or
+#define shmem_uint64_atomic_fetch_or      pshmem_uint64_atomic_fetch_or
 
 #define shmem_ctx_int_atomic_fetch_or     pshmem_ctx_int_atomic_fetch_or
 #define shmem_ctx_long_atomic_fetch_or    pshmem_ctx_long_atomic_fetch_or
@@ -559,6 +571,10 @@
 #define shmem_ctx_uint_atomic_fetch_or    pshmem_ctx_uint_atomic_fetch_or
 #define shmem_ctx_ulong_atomic_fetch_or   pshmem_ctx_ulong_atomic_fetch_or
 #define shmem_ctx_ulonglong_atomic_fetch_or pshmem_ctx_ulonglong_atomic_fetch_or
+#define shmem_ctx_int32_atomic_fetch_or   pshmem_ctx_int32_atomic_fetch_or
+#define shmem_ctx_int64_atomic_fetch_or   pshmem_ctx_int64_atomic_fetch_or
+#define shmem_ctx_uint32_atomic_fetch_or  pshmem_ctx_uint32_atomic_fetch_or
+#define shmem_ctx_uint64_atomic_fetch_or  pshmem_ctx_uint64_atomic_fetch_or
 
 #define shmemx_int32_atomic_fetch_or      pshmemx_int32_atomic_fetch_or
 #define shmemx_int64_atomic_fetch_or      pshmemx_int64_atomic_fetch_or
@@ -572,6 +588,10 @@
 #define shmem_uint_atomic_fetch_xor       pshmem_uint_atomic_fetch_xor
 #define shmem_ulong_atomic_fetch_xor      pshmem_ulong_atomic_fetch_xor
 #define shmem_ulonglong_atomic_fetch_xor  pshmem_ulonglong_atomic_fetch_xor
+#define shmem_int32_atomic_fetch_xor      pshmem_int32_atomic_fetch_xor
+#define shmem_int64_atomic_fetch_xor      pshmem_int64_atomic_fetch_xor
+#define shmem_uint32_atomic_fetch_xor     pshmem_uint32_atomic_fetch_xor
+#define shmem_uint64_atomic_fetch_xor     pshmem_uint64_atomic_fetch_xor
 
 #define shmem_ctx_int_atomic_fetch_xor    pshmem_ctx_int_atomic_fetch_xor
 #define shmem_ctx_long_atomic_fetch_xor   pshmem_ctx_long_atomic_fetch_xor
@@ -579,6 +599,10 @@
 #define shmem_ctx_uint_atomic_fetch_xor   pshmem_ctx_uint_atomic_fetch_xor
 #define shmem_ctx_ulong_atomic_fetch_xor  pshmem_ctx_ulong_atomic_fetch_xor
 #define shmem_ctx_ulonglong_atomic_fetch_xor pshmem_ctx_ulonglong_atomic_fetch_xor
+#define shmem_ctx_int32_atomic_fetch_xor  pshmem_ctx_int32_atomic_fetch_xor
+#define shmem_ctx_int64_atomic_fetch_xor  pshmem_ctx_int64_atomic_fetch_xor
+#define shmem_ctx_uint32_atomic_fetch_xor pshmem_ctx_uint32_atomic_fetch_xor
+#define shmem_ctx_uint64_atomic_fetch_xor pshmem_ctx_uint64_atomic_fetch_xor
 
 #define shmemx_int32_atomic_fetch_xor     pshmemx_int32_atomic_fetch_xor
 #define shmemx_int64_atomic_fetch_xor     pshmemx_int64_atomic_fetch_xor
@@ -664,6 +688,10 @@
 #define shmem_uint_atomic_and        pshmem_uint_atomic_and
 #define shmem_ulong_atomic_and       pshmem_ulong_atomic_and
 #define shmem_ulonglong_atomic_and   pshmem_ulonglong_atomic_and
+#define shmem_int32_atomic_and       pshmem_int32_atomic_and
+#define shmem_int64_atomic_and       pshmem_int64_atomic_and
+#define shmem_uint32_atomic_and      pshmem_uint32_atomic_and
+#define shmem_uint64_atomic_and      pshmem_uint64_atomic_and
 
 #define shmem_ctx_int_atomic_and     pshmem_ctx_int_atomic_and
 #define shmem_ctx_long_atomic_and    pshmem_ctx_long_atomic_and
@@ -671,6 +699,10 @@
 #define shmem_ctx_uint_atomic_and    pshmem_ctx_uint_atomic_and
 #define shmem_ctx_ulong_atomic_and   pshmem_ctx_ulong_atomic_and
 #define shmem_ctx_ulonglong_atomic_and pshmem_ctx_ulonglong_atomic_and
+#define shmem_ctx_int32_atomic_and   pshmem_ctx_int32_atomic_and
+#define shmem_ctx_int64_atomic_and   pshmem_ctx_int64_atomic_and
+#define shmem_ctx_uint32_atomic_and  pshmem_ctx_uint32_atomic_and
+#define shmem_ctx_uint64_atomic_and  pshmem_ctx_uint64_atomic_and
 
 #define shmemx_int32_atomic_and      pshmemx_int32_atomic_and
 #define shmemx_int64_atomic_and      pshmemx_int64_atomic_and
@@ -685,6 +717,10 @@
 #define shmem_uint_atomic_or         pshmem_uint_atomic_or
 #define shmem_ulong_atomic_or        pshmem_ulong_atomic_or
 #define shmem_ulonglong_atomic_or    pshmem_ulonglong_atomic_or
+#define shmem_int32_atomic_or        pshmem_int32_atomic_or
+#define shmem_int64_atomic_or        pshmem_int64_atomic_or
+#define shmem_uint32_atomic_or       pshmem_uint32_atomic_or
+#define shmem_uint64_atomic_or       pshmem_uint64_atomic_or
 
 #define shmem_ctx_int_atomic_or      pshmem_ctx_int_atomic_or
 #define shmem_ctx_long_atomic_or     pshmem_ctx_long_atomic_or
@@ -692,6 +728,10 @@
 #define shmem_ctx_uint_atomic_or     pshmem_ctx_uint_atomic_or
 #define shmem_ctx_ulong_atomic_or    pshmem_ctx_ulong_atomic_or
 #define shmem_ctx_ulonglong_atomic_or pshmem_ctx_ulonglong_atomic_or
+#define shmem_ctx_int32_atomic_or    pshmem_ctx_int32_atomic_or
+#define shmem_ctx_int64_atomic_or    pshmem_ctx_int64_atomic_or
+#define shmem_ctx_uint32_atomic_or   pshmem_ctx_uint32_atomic_or
+#define shmem_ctx_uint64_atomic_or   pshmem_ctx_uint64_atomic_or
 
 #define shmemx_int32_atomic_or       pshmemx_int32_atomic_or
 #define shmemx_int64_atomic_or       pshmemx_int64_atomic_or
@@ -706,6 +746,10 @@
 #define shmem_uint_atomic_xor        pshmem_uint_atomic_xor
 #define shmem_ulong_atomic_xor       pshmem_ulong_atomic_xor
 #define shmem_ulonglong_atomic_xor   pshmem_ulonglong_atomic_xor
+#define shmem_int32_atomic_xor       pshmem_int32_atomic_xor
+#define shmem_int64_atomic_xor       pshmem_int64_atomic_xor
+#define shmem_uint32_atomic_xor      pshmem_uint32_atomic_xor
+#define shmem_uint64_atomic_xor      pshmem_uint64_atomic_xor
 
 #define shmem_ctx_int_atomic_xor     pshmem_ctx_int_atomic_xor
 #define shmem_ctx_long_atomic_xor    pshmem_ctx_long_atomic_xor
@@ -713,6 +757,10 @@
 #define shmem_ctx_uint_atomic_xor    pshmem_ctx_uint_atomic_xor
 #define shmem_ctx_ulong_atomic_xor   pshmem_ctx_ulong_atomic_xor
 #define shmem_ctx_ulonglong_atomic_xor pshmem_ctx_ulonglong_atomic_xor
+#define shmem_ctx_int32_atomic_xor   pshmem_ctx_int32_atomic_xor
+#define shmem_ctx_int64_atomic_xor   pshmem_ctx_int64_atomic_xor
+#define shmem_ctx_uint32_atomic_xor  pshmem_ctx_uint32_atomic_xor
+#define shmem_ctx_uint64_atomic_xor  pshmem_ctx_uint64_atomic_xor
 
 #define shmemx_int32_atomic_xor      pshmemx_int32_atomic_xor
 #define shmemx_int64_atomic_xor      pshmemx_int64_atomic_xor
@@ -764,6 +812,17 @@
 #define shmem_int_wait_until         pshmem_int_wait_until
 #define shmem_long_wait_until        pshmem_long_wait_until
 #define shmem_longlong_wait_until    pshmem_longlong_wait_until
+#define shmem_ushort_wait_until      pshmem_ushort_wait_until
+#define shmem_uint_wait_until        pshmem_uint_wait_until
+#define shmem_ulong_wait_until       pshmem_ulong_wait_until
+#define shmem_ulonglong_wait_until   pshmem_ulonglong_wait_until
+#define shmem_int32_wait_until       pshmem_int32_wait_until
+#define shmem_int64_wait_until       pshmem_int64_wait_until
+#define shmem_uint32_wait_until      pshmem_uint32_wait_until
+#define shmem_uint64_wait_until      pshmem_uint64_wait_until
+#define shmem_size_wait_until        pshmem_size_wait_until
+#define shmem_ptrdiff_wait_until     pshmem_ptrdiff_wait_until
+
 #define shmemx_int32_wait_until      pshmemx_int32_wait_until
 #define shmemx_int64_wait_until      pshmemx_int64_wait_until
 
@@ -771,6 +830,16 @@
 #define shmem_int_test               pshmem_int_test
 #define shmem_long_test              pshmem_long_test
 #define shmem_longlong_test          pshmem_longlong_test
+#define shmem_ushort_test            pshmem_ushort_test
+#define shmem_uint_test              pshmem_uint_test
+#define shmem_ulong_test             pshmem_ulong_test
+#define shmem_ulonglong_test         pshmem_ulonglong_test
+#define shmem_int32_test             pshmem_int32_test
+#define shmem_int64_test             pshmem_int64_test
+#define shmem_uint32_test            pshmem_uint32_test
+#define shmem_uint64_test            pshmem_uint64_test
+#define shmem_size_test              pshmem_size_test
+#define shmem_ptrdiff_test           pshmem_ptrdiff_test
 
 /*
  * Barrier sync routines
