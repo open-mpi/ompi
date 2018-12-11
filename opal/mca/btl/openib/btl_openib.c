@@ -1048,6 +1048,7 @@ int mca_btl_openib_add_procs(
         opal_show_help("help-mpi-btl-openib.txt", "ib port not selected",
                        true, opal_process_info.nodename,
                        ibv_get_device_name(openib_btl->device->ib_dev), openib_btl->port_num);
+        return OPAL_SUCCESS;
     }
 
     btl_rank = get_openib_btl_params(openib_btl, &lcl_subnet_id_port_cnt);
