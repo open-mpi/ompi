@@ -24,7 +24,7 @@ and deliver to our users.
 ## Contributor's Declaration
 
 In order to ensure that we can keep distributing Open MPI under our
-[open source license](LICENSE), we need to ensure that all
+[open source license](/LICENSE), we need to ensure that all
 contributions are compatible with that license.
 
 To that end, we require that all Git commits contributed to Open MPI
