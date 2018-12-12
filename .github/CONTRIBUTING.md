@@ -16,7 +16,7 @@ MPI is used in production environments all around the world.
 If you're contributing a small bug fix, awesome!
 
 If you're contributing a large new piece of functionality, that will
-be best viewed if you -- or someone, anyone -- is also stepping up to
+be best viewed if you — or someone, anyone — is also stepping up to
 help maintain that functionality over time.  We love new ideas and new
 features, but we do need to be realistic in what we can reliably test
 and deliver to our users.
@@ -53,7 +53,7 @@ email address.
 
 * Ensure the PR description clearly describes the problem and solution. If there is an existing GitHub issue open describing this bug, please include it in the description so we can close it.
 
-* Before submitting, please read the [Contributing to the Open MPI Project FAQ](https://www.open-mpi.org/faq/?category=contributing) web page, and the [SubmittingPullRequests](https://github.com/open-mpi/ompi/wiki/SubmittingPullRequests) wiki.  In particular, note that all git commits contributed to Open MPI require a Signed-off by line.
+* Before submitting, please read the [Contributing to the Open MPI Project FAQ](https://www.open-mpi.org/faq/?category=contributing) web page, and the [SubmittingPullRequests](https://github.com/open-mpi/ompi/wiki/SubmittingPullRequests) wiki page.  In particular, note that all Git commits contributed to Open MPI require a "Signed-off-by" line.
 
 ## **Do you intend to add a new feature or change an existing one?**
 
@@ -71,7 +71,7 @@ There are a small number of style rules for Open MPI:
 
 1. For all code:
     * 4 space tabs.  No more, no less.
-    * No tab characters *at all*.  2 indentations are 8 spaces -- not a tab.
+    * No tab characters *at all*.  2 indentations are 8 spaces — not a tab.
     * m4 code is a bit weird in terms of indentation: we don't have a
       good, consistent indentation style in our existing code.  But
       still: no tab characters at all.
@@ -86,4 +86,4 @@ There are a small number of style rules for Open MPI:
 
 That's about it.  Thank you!
 
-- The Open MPI Team
+— The Open MPI Team
