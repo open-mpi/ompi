@@ -5,6 +5,7 @@
 !                         All rights reserved.
 ! Copyright (c) 2015-2018 Research Organization for Information Science
 !                         and Technology (RIST). All rights reserved.
+! Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
 ! $COPYRIGHT$
 !
 ! This file creates mappings between MPI C types (e.g., MPI_Comm) and
@@ -102,21 +103,22 @@ module mpi_f08_types
   type(MPI_Op), bind(C, name="ompi_f08_mpi_maxloc"  ) OMPI_PROTECTED ::  MPI_MAXLOC
   type(MPI_Op), bind(C, name="ompi_f08_mpi_minloc"  ) OMPI_PROTECTED ::  MPI_MINLOC
   type(MPI_Op), bind(C, name="ompi_f08_mpi_replace" ) OMPI_PROTECTED ::  MPI_REPLACE
+  type(MPI_Op), bind(C, name="ompi_f08_mpi_no_op"   ) OMPI_PROTECTED ::  MPI_NO_OP
 
   !
   !  NULL "handles" (indices)
   !
 
-  type(MPI_Comm),       bind(C, name="ompi_f08_mpi_comm_null") OMPI_PROTECTED       :: MPI_COMM_NULL;
-  type(MPI_Datatype),   bind(C, name="ompi_f08_mpi_datatype_null") OMPI_PROTECTED   :: MPI_DATATYPE_NULL;
-  type(MPI_Errhandler), bind(C, name="ompi_f08_mpi_errhandler_null") OMPI_PROTECTED :: MPI_ERRHANDLER_NULL;
-  type(MPI_Group),      bind(C, name="ompi_f08_mpi_group_null") OMPI_PROTECTED      :: MPI_GROUP_NULL;
-  type(MPI_Info),       bind(C, name="ompi_f08_mpi_info_null") OMPI_PROTECTED       :: MPI_INFO_NULL;
-  type(MPI_Message),    bind(C, name="ompi_f08_mpi_message_null") OMPI_PROTECTED    :: MPI_MESSAGE_NULL;
-  type(MPI_Op),         bind(C, name="ompi_f08_mpi_op_null") OMPI_PROTECTED         :: MPI_OP_NULL;
-  type(MPI_Request),    bind(C, name="ompi_f08_mpi_request_null") OMPI_PROTECTED    :: MPI_REQUEST_NULL;
-  type(MPI_Win),        bind(C, name="ompi_f08_mpi_win_null") OMPI_PROTECTED        :: MPI_WIN_NULL;
-  type(MPI_File),       bind(C, name="ompi_f08_mpi_file_null") OMPI_PROTECTED       :: MPI_FILE_NULL;
+  type(MPI_Comm),       bind(C, name="ompi_f08_mpi_comm_null") OMPI_PROTECTED       :: MPI_COMM_NULL
+  type(MPI_Datatype),   bind(C, name="ompi_f08_mpi_datatype_null") OMPI_PROTECTED   :: MPI_DATATYPE_NULL
+  type(MPI_Errhandler), bind(C, name="ompi_f08_mpi_errhandler_null") OMPI_PROTECTED :: MPI_ERRHANDLER_NULL
+  type(MPI_Group),      bind(C, name="ompi_f08_mpi_group_null") OMPI_PROTECTED      :: MPI_GROUP_NULL
+  type(MPI_Info),       bind(C, name="ompi_f08_mpi_info_null") OMPI_PROTECTED       :: MPI_INFO_NULL
+  type(MPI_Message),    bind(C, name="ompi_f08_mpi_message_null") OMPI_PROTECTED    :: MPI_MESSAGE_NULL
+  type(MPI_Op),         bind(C, name="ompi_f08_mpi_op_null") OMPI_PROTECTED         :: MPI_OP_NULL
+  type(MPI_Request),    bind(C, name="ompi_f08_mpi_request_null") OMPI_PROTECTED    :: MPI_REQUEST_NULL
+  type(MPI_Win),        bind(C, name="ompi_f08_mpi_win_null") OMPI_PROTECTED        :: MPI_WIN_NULL
+  type(MPI_File),       bind(C, name="ompi_f08_mpi_file_null") OMPI_PROTECTED       :: MPI_FILE_NULL
 
   !
   ! Pre-defined datatype bindings
@@ -171,6 +173,10 @@ module mpi_f08_types
   type(MPI_Datatype), bind(C, name="ompi_f08_mpi_c_float_complex") OMPI_PROTECTED   :: MPI_C_FLOAT_COMPLEX
   type(MPI_Datatype), bind(C, name="ompi_f08_mpi_c_double_complex") OMPI_PROTECTED  :: MPI_C_DOUBLE_COMPLEX
   type(MPI_Datatype), bind(C, name="ompi_f08_mpi_c_long_double_complex") OMPI_PROTECTED :: MPI_C_LONG_DOUBLE_COMPLEX
+  type(MPI_Datatype), bind(C, name="ompi_f08_mpi_cxx_complex") OMPI_PROTECTED         :: MPI_CXX_COMPLEX
+  type(MPI_Datatype), bind(C, name="ompi_f08_mpi_cxx_float_complex") OMPI_PROTECTED   :: MPI_CXX_FLOAT_COMPLEX
+  type(MPI_Datatype), bind(C, name="ompi_f08_mpi_cxx_double_complex") OMPI_PROTECTED  :: MPI_CXX_DOUBLE_COMPLEX
+  type(MPI_Datatype), bind(C, name="ompi_f08_mpi_cxx_long_double_complex") OMPI_PROTECTED :: MPI_CXX_LONG_DOUBLE_COMPLEX
   type(MPI_Datatype), bind(C, name="ompi_f08_mpi_complex") OMPI_PROTECTED           :: MPI_COMPLEX
   type(MPI_Datatype), bind(C, name="ompi_f08_mpi_complex8") OMPI_PROTECTED          :: MPI_COMPLEX8
   type(MPI_Datatype), bind(C, name="ompi_f08_mpi_complex16") OMPI_PROTECTED         :: MPI_COMPLEX16
@@ -193,6 +199,7 @@ module mpi_f08_types
   type(MPI_Datatype), bind(C, name="ompi_f08_mpi_logical4") OMPI_PROTECTED          :: MPI_LOGICAL4
   type(MPI_Datatype), bind(C, name="ompi_f08_mpi_logical8") OMPI_PROTECTED          :: MPI_LOGICAL8
   type(MPI_Datatype), bind(C, name="ompi_f08_mpi_c_bool") OMPI_PROTECTED            :: MPI_C_BOOL
+  type(MPI_Datatype), bind(C, name="ompi_f08_mpi_cxx_bool") OMPI_PROTECTED          :: MPI_CXX_BOOL
   type(MPI_Datatype), bind(C, name="ompi_f08_mpi_count") OMPI_PROTECTED             :: MPI_COUNT
   type(MPI_Datatype), bind(C, name="ompi_f08_mpi_offset") OMPI_PROTECTED            :: MPI_OFFSET
 

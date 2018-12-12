@@ -14,15 +14,11 @@ ompi_f08_mpi_byte
 ompi_f08_mpi_c_bool
 ompi_f08_mpi_c_complex
 ompi_f08_mpi_count
-ompi_f08_mpi_c_double
 ompi_f08_mpi_c_double_complex
-ompi_f08_mpi_c_float
 ompi_f08_mpi_c_float_complex
 ompi_f08_mpi_char
 ompi_f08_mpi_character
-ompi_f08_mpi_c_long_double
 ompi_f08_mpi_c_long_double_complex
-ompi_f08_mpi_c_offset
 ompi_f08_mpi_comm_null
 ompi_f08_mpi_comm_self
 ompi_f08_mpi_comm_world
@@ -30,6 +26,11 @@ ompi_f08_mpi_complex
 ompi_f08_mpi_complex16
 ompi_f08_mpi_complex32
 ompi_f08_mpi_complex8
+ompi_f08_mpi_cxx_bool
+ompi_f08_mpi_cxx_complex
+ompi_f08_mpi_cxx_double_complex
+ompi_f08_mpi_cxx_float_complex
+ompi_f08_mpi_cxx_long_double_complex
 ompi_f08_mpi_datatype_null
 ompi_f08_mpi_double
 ompi_f08_mpi_double_complex
@@ -77,6 +78,7 @@ ompi_f08_mpi_message_no_proc
 ompi_f08_mpi_message_null
 ompi_f08_mpi_min
 ompi_f08_mpi_minloc
+ompi_f08_mpi_no_op
 ompi_f08_mpi_offset
 ompi_f08_mpi_op_null
 ompi_f08_mpi_packed
