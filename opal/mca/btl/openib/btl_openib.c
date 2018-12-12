@@ -1047,7 +1047,7 @@ int mca_btl_openib_add_procs(
         opal_bitmap_clear_all_bits(reachable);
         opal_show_help("help-mpi-btl-openib.txt", "ib port not selected",
                        true, opal_process_info.nodename,
-                       ibv_get_device_name(openib_btl->device->ib_dev), openib_btl->port_num);
+                       openib_btl->device_name, openib_btl->port_num);
         return OPAL_SUCCESS;
     }
 
@@ -1720,11 +1720,11 @@ static int mca_btl_openib_finalize_resources(struct mca_btl_base_module_t* btl) 
             free(openib_btl->cpcs[i]);
         }
         free(openib_btl->cpcs);
-    }
 
-    /* Release device if there are no more users */
-    if(!(--openib_btl->device->btls)) {
-        OBJ_RELEASE(openib_btl->device);
+        /* Release device if there are no more users */
+        if(!(--openib_btl->device->allowed_btls)) {
+            OBJ_RELEASE(openib_btl->device);
+        }
     }
 
     if (NULL != openib_btl->qps) {

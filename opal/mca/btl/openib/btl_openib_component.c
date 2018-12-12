@@ -650,9 +650,10 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_device_t *device,
                 sizeof(mca_btl_openib_module));
         ib_selected = OBJ_NEW(mca_btl_base_selected_module_t);
         ib_selected->btl_module = (mca_btl_base_module_t*) openib_btl;
-        openib_btl->device = device;
         openib_btl->port_num = (uint8_t) port_num;
         openib_btl->allowed = false;
+        openib_btl->device = NULL;
+        openib_btl->device_name = strdup(ibv_get_device_name(device->ib_dev));
         OBJ_CONSTRUCT(&openib_btl->ib_lock, opal_mutex_t);
         opal_list_append(btl_list, (opal_list_item_t*) ib_selected);
         opal_pointer_array_add(device->device_btls, (void*) openib_btl);
@@ -786,6 +787,7 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_device_t *device,
             ib_selected = OBJ_NEW(mca_btl_base_selected_module_t);
             ib_selected->btl_module = (mca_btl_base_module_t*) openib_btl;
             openib_btl->device = device;
+            openib_btl->device_name = NULL;
             openib_btl->port_num = (uint8_t) port_num;
             openib_btl->pkey_index = pkey_index;
             openib_btl->lid = lid;
@@ -906,6 +908,7 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_device_t *device,
             opal_list_append(btl_list, (opal_list_item_t*) ib_selected);
             opal_pointer_array_add(device->device_btls, (void*) openib_btl);
             ++device->btls;
+            ++device->allowed_btls;
             ++mca_btl_openib_component.ib_num_btls;
             ++mca_btl_openib_component.ib_allowed_btls;
             if (-1 != mca_btl_openib_component.ib_max_btls &&
@@ -1935,7 +1938,7 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
             if (ib_port_attr.active_mtu < device->mtu){
                 device->mtu = ib_port_attr.active_mtu;
             }
-            if (mca_btl_openib_component.apm_ports && device->btls > 0) {
+            if (mca_btl_openib_component.apm_ports && device->allowed_btls > 0) {
                 init_apm_port(device, i, ib_port_attr.lid);
                 break;
             }
@@ -1971,7 +1974,7 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
 
     /* If we made a BTL, check APM status and return.  Otherwise, fall
        through and destroy everything */
-    if (device->btls > 0) {
+    if (device->allowed_btls > 0) {
         /* if apm was enabled it should be > 1 */
         if (1 == mca_btl_openib_component.apm_ports) {
             opal_show_help("help-mpi-btl-openib.txt",
@@ -2291,6 +2294,11 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
 
     good:
         mca_btl_openib_component.devices_count++;
+        return OPAL_SUCCESS;
+    } else if (device->btls > 0) {
+        /* no port is allowed to be used by btl/openib,
+         * so release the device right away */
+        OBJ_RELEASE(device);
         return OPAL_SUCCESS;
     }
 

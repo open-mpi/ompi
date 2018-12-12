@@ -392,6 +392,7 @@ typedef struct mca_btl_openib_device_t {
     /* Whether this device supports eager RDMA */
     uint8_t use_eager_rdma;
     uint8_t btls;              /** < number of btls using this device */
+    uint8_t allowed_btls;      /** < number of allowed btls using this device */
     opal_pointer_array_t *endpoints;
     opal_pointer_array_t *device_btls;
     uint16_t hp_cq_polls;
@@ -483,6 +484,7 @@ struct mca_btl_openib_module_t {
     uint8_t num_cpcs;
 
     mca_btl_openib_device_t *device;
+    char * device_name;
     uint8_t port_num;                  /**< ID of the PORT */
     uint16_t pkey_index;
     struct ibv_port_attr ib_port_attr;
