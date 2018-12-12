@@ -14,8 +14,8 @@
  * Copyright (c) 2012-2017 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
- * Copyright (c) 2015-2017 Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015-2018 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * Copyright (C) 2018      Mellanox Technologies, Ltd. 
  *                         All rights reserved.
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
@@ -371,7 +371,7 @@ int opal_hwloc_base_get_topology(void)
             free(val);
             return OPAL_ERROR;
         }
-        if (0 != hwloc_topology_set_xmlbuffer(opal_hwloc_topology, val, strlen(val))) {
+        if (0 != hwloc_topology_set_xmlbuffer(opal_hwloc_topology, val, strlen(val)+1)) {
             free(val);
             hwloc_topology_destroy(opal_hwloc_topology);
             return OPAL_ERROR;

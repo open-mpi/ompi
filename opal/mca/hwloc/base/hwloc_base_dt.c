@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2017      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017-2018 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  *
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
@@ -98,7 +98,7 @@ int opal_hwloc_unpack(opal_buffer_t *buffer, void *dest,
             free(xmlbuffer);
             goto cleanup;
         }
-        if (0 != hwloc_topology_set_xmlbuffer(t, xmlbuffer, strlen(xmlbuffer))) {
+        if (0 != hwloc_topology_set_xmlbuffer(t, xmlbuffer, strlen(xmlbuffer)+1)) {
             rc = OPAL_ERROR;
             free(xmlbuffer);
             hwloc_topology_destroy(t);
