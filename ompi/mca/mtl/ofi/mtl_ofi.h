@@ -1407,7 +1407,7 @@ ompi_mtl_ofi_add_comm(struct mca_mtl_base_module_t *mtl,
                       struct ompi_communicator_t *comm)
 {
     int ret;
-    mca_mtl_ofi_ep_type ep_type = (false == ompi_mtl_ofi.sep_supported) ?
+    mca_mtl_ofi_ep_type ep_type = (0 == ompi_mtl_ofi.enable_sep) ?
                                   OFI_REGULAR_EP : OFI_SCALABLE_EP;
 
     /*
@@ -1438,7 +1438,7 @@ ompi_mtl_ofi_del_comm(struct mca_mtl_base_module_t *mtl,
                       struct ompi_communicator_t *comm)
 {
     int ret = OMPI_SUCCESS;
-    mca_mtl_ofi_ep_type ep_type = (false == ompi_mtl_ofi.sep_supported) ?
+    mca_mtl_ofi_ep_type ep_type = (0 == ompi_mtl_ofi.enable_sep) ?
                                   OFI_REGULAR_EP : OFI_SCALABLE_EP;
 
     /*

@@ -472,13 +472,6 @@ static int ompi_mtl_ofi_init_sep(struct fi_info *prov)
     int ret = OMPI_SUCCESS, num_ofi_ctxts;
     struct fi_av_attr av_attr = {0};
 
-    ompi_mtl_ofi.max_ctx_cnt = (prov->domain_attr->max_ep_tx_ctx <
-                                prov->domain_attr->max_ep_rx_ctx) ?
-                                prov->domain_attr->max_ep_tx_ctx :
-                                prov->domain_attr->max_ep_rx_ctx;
-
-    /* Provision enough contexts to service all ranks in a node */
-    ompi_mtl_ofi.max_ctx_cnt /= (1 + ompi_process_info.num_local_peers);
     prov->ep_attr->tx_ctx_cnt = prov->ep_attr->rx_ctx_cnt =
                                 ompi_mtl_ofi.max_ctx_cnt;
 
@@ -600,15 +593,14 @@ static mca_mtl_base_module_t*
 ompi_mtl_ofi_component_init(bool enable_progress_threads,
                             bool enable_mpi_threads)
 {
-    int ret, fi_version;
+    int ret, fi_version, num_local_ranks;
+    int ofi_tag_leading_zeros, ofi_tag_bits_for_cid;
     struct fi_info *hints;
     struct fi_info *providers = NULL;
     struct fi_info *prov = NULL;
     struct fi_info *prov_cq_data = NULL;
     char ep_name[FI_NAME_MAX] = {0};
     size_t namelen;
-    int ofi_tag_leading_zeros;
-    int ofi_tag_bits_for_cid;
 
     /**
      * Hints to filter providers
@@ -773,10 +765,10 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
     ompi_mtl_ofi.num_peers = 0;
 
     /* Check if Scalable Endpoints can be enabled for the provider */
-    ompi_mtl_ofi.sep_supported = false;
+    ompi_mtl_ofi.enable_sep = 0;
     if ((prov->domain_attr->max_ep_tx_ctx > 1) ||
         (prov->domain_attr->max_ep_rx_ctx > 1)) {
-        ompi_mtl_ofi.sep_supported = true;
+        ompi_mtl_ofi.enable_sep = 1;
         opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                             "%s:%d: Scalable EP supported in %s provider. Enabling in MTL.\n",
                             __FILE__, __LINE__, prov->fabric_attr->prov_name);
@@ -785,7 +777,7 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
     /*
      * Scalable Endpoints is required for Thread Grouping feature
      */
-    if (!ompi_mtl_ofi.sep_supported && ompi_mtl_ofi.thread_grouping) {
+    if (!ompi_mtl_ofi.enable_sep && ompi_mtl_ofi.thread_grouping) {
         opal_show_help("help-mtl-ofi.txt", "SEP unavailable", true,
                        prov->fabric_attr->prov_name,
                        ompi_process_info.nodename, __FILE__, __LINE__,
@@ -848,7 +840,20 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
      * vectors, completion counters or event queues etc, and enabled.
      * See man fi_endpoint for more details.
      */
-    if (true == ompi_mtl_ofi.sep_supported) {
+    ompi_mtl_ofi.max_ctx_cnt = (prov->domain_attr->max_ep_tx_ctx <
+                                prov->domain_attr->max_ep_rx_ctx) ?
+                                prov->domain_attr->max_ep_tx_ctx :
+                                prov->domain_attr->max_ep_rx_ctx;
+
+    num_local_ranks = 1 + ompi_process_info.num_local_peers;
+    if (ompi_mtl_ofi.max_ctx_cnt <= num_local_ranks) {
+        ompi_mtl_ofi.enable_sep = 0;
+    }
+
+    if (1 == ompi_mtl_ofi.enable_sep) {
+        /* Provision enough contexts to service all ranks in a node */
+        ompi_mtl_ofi.max_ctx_cnt /= num_local_ranks;
+
         ret = ompi_mtl_ofi_init_sep(prov);
     } else {
         ret = ompi_mtl_ofi_init_regular_ep(prov);
@@ -926,7 +931,7 @@ error:
     if (ompi_mtl_ofi.av) {
         (void) fi_close((fid_t)ompi_mtl_ofi.av);
     }
-    if ((false == ompi_mtl_ofi.sep_supported) &&
+    if ((0 == ompi_mtl_ofi.enable_sep) &&
         ompi_mtl_ofi.ofi_ctxt != NULL &&
          ompi_mtl_ofi.ofi_ctxt[0].cq) {
         /* Check if CQ[0] was created for non-SEP case and close if needed */
@@ -964,9 +969,9 @@ ompi_mtl_ofi_finalize(struct mca_mtl_base_module_t *mtl)
         goto finalize_err;
     }
 
-    if (false == ompi_mtl_ofi.sep_supported) {
+    if (0 == ompi_mtl_ofi.enable_sep) {
         /*
-         * CQ[0] is bound to SEP object when SEP is not supported by a
+         * CQ[0] is bound to SEP object Nwhen SEP is not supported by a
          * provider. OFI spec requires that we close the Endpoint that is bound
          * to the CQ before closing the CQ itself. So, for the non-SEP case, we
          * handle the closing of CQ[0] here.
