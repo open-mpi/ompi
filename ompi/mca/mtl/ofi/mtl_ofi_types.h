@@ -71,8 +71,8 @@ typedef struct mca_mtl_ofi_module_t {
     /* MCA parameter for Thread grouping feature */
     int thread_grouping;
 
-    /* Boolen value to indicate if provider supports Scalable EP or not */
-    bool sep_supported;
+    /* If SEP is used by OFI MTL */
+    int enable_sep;
 
     /* Numbers of bits used for rx contexts */
     int rx_ctx_bits;
