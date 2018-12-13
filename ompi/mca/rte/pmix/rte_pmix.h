@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
@@ -7,6 +8,8 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
+ * Copyright (c) 2018      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -115,6 +118,7 @@ typedef struct {
     int32_t num_local_peers;
     uint32_t num_procs;
     uint32_t app_num;
+    char *cpuset;
 } pmix_process_info_t;
 OMPI_DECLSPEC extern pmix_process_info_t pmix_process_info;
 #define ompi_process_info pmix_process_info

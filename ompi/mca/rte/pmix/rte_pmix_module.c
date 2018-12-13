@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
@@ -7,6 +8,8 @@
  *                         reserved.
  * Copyright (c) 2014-2018 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
+ * Copyright (c) 2018      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  */
 #include "ompi_config.h"
@@ -500,7 +503,7 @@ int ompi_rte_init(int *pargc, char ***pargv)
     opal_proc_t *myproc;
     int u32, *u32ptr;
     uint16_t u16, *u16ptr;
-    char **peers=NULL, *mycpuset;
+    char **peers=NULL;
     char *envar, *ev1, *ev2;
     opal_value_t *kv;
     char *val;
@@ -684,9 +687,9 @@ int ompi_rte_init(int *pargc, char ***pargv)
         OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, OPAL_PMIX_LOCALITY_STRING,
                                        &pmix_process_info.my_name, &val, OPAL_STRING);
         if (OPAL_SUCCESS == ret && NULL != val) {
-            mycpuset = val;
+            pmix_process_info.cpuset = val;
         } else {
-            mycpuset = NULL;
+            pmix_process_info.cpuset = NULL;
         }
         pname.jobid = pmix_process_info.my_name.jobid;
         for (i=0; NULL != peers[i]; i++) {
@@ -699,7 +702,7 @@ int ompi_rte_init(int *pargc, char ***pargv)
                 OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, OPAL_PMIX_LOCALITY_STRING,
                                                &pname, &val, OPAL_STRING);
                 if (OPAL_SUCCESS == ret && NULL != val) {
-                    u16 = opal_hwloc_compute_relative_locality(mycpuset, val);
+                    u16 = opal_hwloc_compute_relative_locality(pmix_process_info.cpuset, val);
                     free(val);
                 } else {
                     /* all we can say is that it shares our node */
@@ -718,23 +721,30 @@ int ompi_rte_init(int *pargc, char ***pargv)
             if (OPAL_SUCCESS != ret) {
                 error = "local store of locality";
                 opal_argv_free(peers);
-                if (NULL != mycpuset) {
-                    free(mycpuset);
+                if (NULL != pmix_process_info.cpuset) {
+                    free(pmix_process_info.cpuset);
                 }
                 goto error;
             }
             OBJ_RELEASE(kv);
         }
         opal_argv_free(peers);
-        if (NULL != mycpuset) {
-            free(mycpuset);
-        }
     }
 
     /* poor attempt to detect we are bound */
     if (NULL != getenv("SLURM_CPU_BIND_TYPE")) {
         pmix_proc_is_bound = true;
     }
+
+    /* set the remaining opal_process_info fields. Note that
+     * the OPAL layer will have initialized these to NULL, and
+     * anyone between us would not have strdup'd the string, so
+     * we cannot free it here */
+    opal_process_info.job_session_dir  = pmix_process_info.job_session_dir;
+    opal_process_info.proc_session_dir = pmix_process_info.proc_session_dir;
+    opal_process_info.num_local_peers  = (int32_t)pmix_process_info.num_local_peers;
+    opal_process_info.my_local_rank    = (int32_t)pmix_process_info.my_local_rank;
+    opal_process_info.cpuset           = pmix_process_info.cpuset;
 
     /* push our hostname so others can find us, if they need to - the
      * native PMIx component will ignore this request as the hostname
@@ -807,6 +817,10 @@ int ompi_rte_finalize(void)
                                 false, check_file);
         free(pmix_process_info.job_session_dir);
     }
+
+    free (pmix_process_info.cpuset);
+    pmix_process_info.cpuset = NULL;
+
     return OMPI_SUCCESS;
 }
 
