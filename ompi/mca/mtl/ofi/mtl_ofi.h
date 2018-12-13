@@ -747,7 +747,7 @@ ompi_mtl_ofi_iprobe(struct mca_mtl_base_module_t *mtl,
     struct ompi_mtl_ofi_request_t ofi_req;
     ompi_proc_t *ompi_proc = NULL;
     mca_mtl_ofi_endpoint_t *endpoint = NULL;
-    fi_addr_t remote_proc = 0;
+    fi_addr_t remote_proc = ompi_mtl_ofi.any_addr;
     uint64_t match_bits, mask_bits;
     ssize_t ret;
     struct fi_msg_tagged msg;
@@ -827,7 +827,7 @@ ompi_mtl_ofi_improbe(struct mca_mtl_base_module_t *mtl,
     struct ompi_mtl_ofi_request_t *ofi_req;
     ompi_proc_t *ompi_proc = NULL;
     mca_mtl_ofi_endpoint_t *endpoint = NULL;
-    fi_addr_t remote_proc = 0;
+    fi_addr_t remote_proc = ompi_mtl_ofi.any_addr;
     uint64_t match_bits, mask_bits;
     ssize_t ret;
     struct fi_msg_tagged msg;
