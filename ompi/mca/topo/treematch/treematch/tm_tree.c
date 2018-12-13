@@ -5,7 +5,6 @@
 #include <assert.h>
 #include <pthread.h>
 
-#include "treematch.h"
 #include "tm_tree.h"
 #include "tm_mapping.h"
 #include "tm_timings.h"
@@ -82,12 +81,23 @@ void free_non_constraint_tree(tm_tree_t *);
 void free_constraint_tree(tm_tree_t *);
 void free_tab_double(double**, int);
 void free_tab_int(int**, int );
-void partial_aggregate_aff_mat (int, void **, int);
+static void partial_aggregate_aff_mat (int, void **, int);
 void free_affinity_mat(tm_affinity_mat_t *aff_mat);
 int int_cmp_inc(const void* x1, const void* x2);
 
 
 
+double choose (long n, long k)
+{
+  /* compute C_n_k */
+  double res = 1;
+  int i;
+
+  for( i = 0 ; i < k ; i++ ){
+    res *= ((double)(n-i)/(double)(k-i));
+  }
+  return res;
+}
 
 
 void tm_set_exhaustive_search_flag(int new_val){
@@ -105,8 +115,6 @@ void free_affinity_mat(tm_affinity_mat_t *aff_mat){
   FREE(aff_mat);
 }
 
-
-
 void free_list_child(tm_tree_t *tree)
 {
   int i;
@@ -116,13 +124,14 @@ void free_list_child(tm_tree_t *tree)
       free_list_child(tree->child[i]);
 
     FREE(tree->child);
-    if(tree->dumb)
+    if(tree->dumb) /*in dumb subtrees  internal nodes  have been allocated individually, they need to bee freed one by one*/
       FREE(tree);
   }
 }
 void free_tab_child(tm_tree_t *tree)
 {
   if(tree){
+    /*in a non constaint tree internal node are allocated in an array an stored ib tab_child : they are freed globaly here */
     free_tab_child(tree->tab_child);
     FREE(tree->tab_child);
   }
@@ -130,20 +139,26 @@ void free_tab_child(tm_tree_t *tree)
 
 void free_non_constraint_tree(tm_tree_t *tree)
 {
-  int d = tree->dumb;
+  if(tree->dumb){
+    if(tm_get_verbose_level() <= CRITICAL){
+      fprintf(stderr,"Error trying to free a dumb tree!\n. This should never be done like this: the root of a non-constraint tree cannot be a dumb one!\n");
+    }
+    exit(-1);
+  }
 
-  free_tab_child(tree);
-  free_list_child(tree);
-  if(!d)
-    FREE(tree);
+  free_list_child(tree); /* free the tree->child array recursively and the nodes in dumb subtree*/
+  free_tab_child(tree); /* free the tree->tab_child array that correspond of all the child nodes of a given node in non dumb subtrees */
+  FREE(tree);
 }
 
 void free_constraint_tree(tm_tree_t *tree)
 {
   int i;
+
   if(tree){
     for(i=0;i<tree->arity;i++)
       free_constraint_tree(tree->child[i]);
+    /* tab_child field is NULL for all nodes in the constraint tree*/
     FREE(tree->child);
     FREE(tree);
   }
@@ -155,20 +170,9 @@ void tm_free_tree(tm_tree_t *tree)
   if(tree->constraint)
     free_constraint_tree(tree);
   else
-    free_non_constraint_tree(tree);
+    free_non_constraint_tree(tree); /* tab_child field is NULL for all nodes in the tree*/
 }
 
-double choose (long n, long k)
-{
-  /* compute C_n_k */
-  double res = 1;
-  int i;
-
-  for( i = 0 ; i < k ; i++ ){
-    res *= ((double)(n-i)/(double)(k-i));
-  }
-  return res;
-}
 
 void set_node(tm_tree_t *node, tm_tree_t ** child, int arity, tm_tree_t *parent,
 	      int id, double val, tm_tree_t *tab_child, int depth)
@@ -239,11 +243,12 @@ void partial_aggregate_aff_mat (int nb_args, void **args, int thread_id){
   int M = *(int*)args[4];
   double **mat = (double**)args[5];
   double *sum_row = (double*)args[6];
+  long int *nnz = (long int *)args[7]; 
   int i, j, i1, j1;
   int id1, id2;
 
 
-  if(nb_args != 7){
+  if(nb_args != 8){
     if(verbose_level >= ERROR)
       fprintf(stderr, "Thread %d: Wrong number of args in %s: %d\n", thread_id, __func__, nb_args);
     exit(-1);
@@ -262,6 +267,9 @@ void partial_aggregate_aff_mat (int nb_args, void **args, int thread_id){
 	    mat[i][j] += old_mat[id1][id2];
 	    /* printf("mat[%d][%d]+=old_mat[%d][%d]=%f\n", i, j, id1, id2, old_mat[id1][id2]);*/
 	  }
+	}
+	if(mat[i][j]){
+	  (*nnz)++;
 	  sum_row[i] += mat[i][j];
 	}
       }
@@ -274,7 +282,8 @@ static tm_affinity_mat_t *aggregate_aff_mat(tm_tree_t *tab_node, tm_affinity_mat
   int i, j, i1, j1, id1, id2;
   double **new_mat = NULL, **old_mat = aff_mat->mat;
   double *sum_row = NULL;
-
+  long int nnz = 0;
+  
   new_mat = (double**)MALLOC(M*sizeof(double*));
   for( i = 0 ; i < M ; i++ )
     new_mat[i] = (double*)CALLOC((M), sizeof(double));
@@ -287,16 +296,19 @@ static tm_affinity_mat_t *aggregate_aff_mat(tm_tree_t *tab_node, tm_affinity_mat
     work_t **works;
     int *inf;
     int *sup;
+    long int *nnz_tab;
 
     nb_threads = MIN(M/512, get_nb_threads());
     works = (work_t**)MALLOC(sizeof(work_t*)*nb_threads);
     inf = (int*)MALLOC(sizeof(int)*nb_threads);
     sup = (int*)MALLOC(sizeof(int)*nb_threads);
+    nnz_tab = (long int*)MALLOC(sizeof(long int)*nb_threads);
     for(id=0;id<nb_threads;id++){
-      void **args=(void**)MALLOC(sizeof(void*)*7);
+      void **args=(void**)MALLOC(sizeof(void*)*8);
       inf[id]=id*M/nb_threads;
       sup[id]=(id+1)*M/nb_threads;
       if(id == nb_threads-1) sup[id]=M;
+      nnz_tab[id] = 0;
       args[0]=(void*)(inf+id);
       args[1]=(void*)(sup+id);
       args[2]=(void*)old_mat;
@@ -304,8 +316,9 @@ static tm_affinity_mat_t *aggregate_aff_mat(tm_tree_t *tab_node, tm_affinity_mat
       args[4]=&M;
       args[5]=(void*)new_mat;
       args[6]=(void*)sum_row;
+      args[7]=(void*)(nnz_tab+id);
 
-      works[id]= create_work(7, args, partial_aggregate_aff_mat);
+      works[id]= create_work(8, args, partial_aggregate_aff_mat);
       if(verbose_level >= DEBUG)
 	printf("Executing %p\n", (void *)works[id]);
 
@@ -315,13 +328,16 @@ static tm_affinity_mat_t *aggregate_aff_mat(tm_tree_t *tab_node, tm_affinity_mat
     for(id=0;id<nb_threads;id++){
       wait_work_completion(works[id]);
       FREE(works[id]->args);
+      nnz += nnz_tab[id];
+      destroy_work(works[id]);
     }
-
 
     FREE(inf);
     FREE(sup);
     FREE(works);
+    FREE(nnz_tab);
 
+	
   }else{
   for( i = 0 ; i < M ; i++ )
     for( j = 0 ; j < M ; j++ ){
@@ -333,12 +349,16 @@ static tm_affinity_mat_t *aggregate_aff_mat(tm_tree_t *tab_node, tm_affinity_mat
 	    new_mat[i][j] += old_mat[id1][id2];
 	    /* printf("mat[%d][%d]+=old_mat[%d][%d]=%f\n", i, j, id1, id2, old_mat[id1][id2]);*/
 	  }
+	}
+	if(new_mat[i][j]){
+	  nnz ++;
 	  sum_row[i] += new_mat[i][j];
 	}
       }
     }
   }
-  return new_affinity_mat(new_mat, sum_row, M);
+ 
+  return new_affinity_mat(new_mat, sum_row, M, nnz);
 }
 
 void free_tab_double(double**tab, int mat_order)
@@ -918,7 +938,7 @@ static void  partial_exhaustive_search(int nb_args, void **args, int thread_id){
   work_unit_t *work = (work_unit_t *) args[7];
   pthread_mutex_t *lock = (pthread_mutex_t *) args[8];
   int *tab_i;
-  int id = 0, id1, id2;
+  int id=-1, id1, id2;
   int total_work = work->nb_work;
   int cur_work = 0;
 
@@ -1009,12 +1029,7 @@ static void  partial_exhaustive_search(int nb_args, void **args, int thread_id){
 }
 
 
-#if 0
-static int dbl_cmp_dec(const void* x1,const void* x2)
-{
-  return *((double *)x1) > *((double *)x2) ? -1 : 1;
-}
-#endif
+
 static int dbl_cmp_inc(const void* x1,const void* x2)
 {
   return *((double *)x1) < *((double *)x2) ? -1 : 1;
@@ -1181,6 +1196,7 @@ static int thread_exhaustive_search(group_list_t **tab_group, int nb_groups, int
   for(id=0;id<nb_threads;id++){
     wait_work_completion(works[id]);
     FREE(works[id]->args);
+    destroy_work(works[id]);
   }
 
   exit(-1);
@@ -1208,6 +1224,7 @@ static int thread_exhaustive_search(group_list_t **tab_group, int nb_groups, int
   exit(-1);
   return 0;
 }
+
 
 #if 0
 static int old_recurs_exhaustive_search(group_list_t **tab, int i, int n, int arity, int d, int solution_size, double val, double *best_val, group_list_t **selection, group_list_t **best_selection, int8_t **indep_mat)
@@ -1695,7 +1712,8 @@ tm_affinity_mat_t *build_cost_matrix(tm_affinity_mat_t *aff_mat, double* obj_wei
   double **old_mat;
   double avg;
   int i, j, mat_order;
-
+  long int nnz = 0;
+  
   if(!obj_weight)
     return aff_mat;
 
@@ -1727,8 +1745,9 @@ tm_affinity_mat_t *build_cost_matrix(tm_affinity_mat_t *aff_mat, double* obj_wei
 	mat[i][j] = 1e-4*old_mat[i][j]/comm_speed-fabs(avg-(obj_weight[i]+obj_weight[j])/2);
 	sum_row[i] += mat[i][j];
       }
+      if(mat[i][j]) nnz++;
     }
-  return new_affinity_mat(mat, sum_row, mat_order);
+  return new_affinity_mat(mat, sum_row, mat_order,nnz);
 
 }
 
@@ -1750,6 +1769,7 @@ void group_nodes(tm_affinity_mat_t *aff_mat, tm_tree_t *tab_node, tm_tree_t *new
   int mat_order = aff_mat -> order;
   tm_tree_t **cur_group = NULL;
   int j, l;
+  unsigned long int list_size;
   unsigned long int  i;
   group_list_t list, **best_selection = NULL, **tab_group = NULL;
   double best_val, last_best;
@@ -1809,7 +1829,8 @@ void group_nodes(tm_affinity_mat_t *aff_mat, tm_tree_t *tab_node, tm_tree_t *new
     best_selection = (group_list_t **)MALLOC(sizeof(group_list_t*)*solution_size);
 
     list_all_possible_groups(cost_mat, tab_node, 0, arity, 0, cur_group, &list);
-    assert( nb_groups == (unsigned long int)list.val );
+    list_size = (int)list.val;
+    assert( list_size == nb_groups);
     tab_group = (group_list_t**)MALLOC(sizeof(group_list_t*)*nb_groups);
     list_to_tab(list.next, tab_group, nb_groups);
     if(verbose_level>=INFO)
@@ -1952,7 +1973,7 @@ void complete_aff_mat(tm_affinity_mat_t **aff_mat , int mat_order, int K)
     sum_row[i] = (*aff_mat)->sum_row[i];
   }
 
-  *aff_mat = new_affinity_mat(new_mat, sum_row, M);
+  *aff_mat = new_affinity_mat(new_mat, sum_row, M, (*aff_mat)->nnz);
 }
 
 void complete_obj_weight(double **tab, int mat_order, int K)
@@ -2001,7 +2022,9 @@ void create_dumb_tree(tm_tree_t *node, int depth, tm_topology_t *topology)
     list_child[i]->dumb = 1;
   }
 
-  set_node(node, list_child, arity, NULL, -1, 0, list_child[0], depth);
+  /* list_child => node->child ; list_child[0] => node->tab_child */
+  /* printf("list_child[0] =  %p\n",list_child[0]); */
+  set_node(node, list_child, arity, NULL, -1, 0, NULL, depth);
 }
 void complete_tab_node(tm_tree_t **tab, int mat_order, int K, int depth, tm_topology_t *topology)
 {
@@ -2080,6 +2103,8 @@ tm_tree_t *build_level_topology(tm_tree_t *tab_node, tm_affinity_mat_t *aff_mat,
     TIC;
     K = arity*((mat_order/arity)+1)-mat_order;
     /*printf("****mat_order=%d arity=%d K=%d\n", mat_order, arity, K);  */
+    if(verbose_level >= INFO)
+      printf("****mat_order=%d arity=%d K=%d\n", mat_order, arity, K);
     /*display_tab(tab, mat_order);*/
     /* add K rows and columns to comm_matrix*/
     complete_aff_mat(&aff_mat, mat_order, K);
@@ -2106,8 +2131,8 @@ tm_tree_t *build_level_topology(tm_tree_t *tab_node, tm_affinity_mat_t *aff_mat,
   for( i = 0 ; i < M ; i++ ){
     tm_tree_t **list_child = NULL;
     list_child = (tm_tree_t**)CALLOC(arity, sizeof(tm_tree_t*));
-    set_node(&new_tab_node[i], list_child, arity, NULL, i, 0, tab_node, depth);
-  }
+    set_node(&new_tab_node[i], list_child, arity, NULL, i, 0, tab_node, depth); 
+ }
   duration = TOC;
   if(verbose_level >= INFO)
     printf("New nodes creation= %fs\n ", duration);
@@ -2224,7 +2249,7 @@ int check_constraints(tm_topology_t  *topology, int **constraints)
 	 In order to have all the ranks of a given id we need to shift them as follows:
       */
       shift = 1 + i%topology->oversub_fact - topology->oversub_fact;
-      (*constraints)[i] = topology->node_rank[topology->nb_levels-1][topology->constraints[i/topology->oversub_fact]] +shift;
+      (*constraints)[i] = topology->node_rank[topology->constraints[i/topology->oversub_fact]] +shift;
       if((*constraints)[i] < last)
 	sorted = 0;
       last  = (*constraints)[i];

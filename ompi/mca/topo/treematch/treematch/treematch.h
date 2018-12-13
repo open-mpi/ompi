@@ -21,6 +21,11 @@ typedef enum{
   TM_METRIC_HOP_BYTE = 3
 } tm_metric_t;
 
+/* numbering */
+typedef enum{
+  TM_NUMBERING_LOGICAL   = 0,
+  TM_NUMBERING_PHYSICAL  = 1
+} tm_numbering_t;
 
 /********* TreeMatch Public Structures **********/
 
@@ -30,39 +35,42 @@ typedef struct _job_info_t{
   int finish_date;
 } tm_job_info_t;
 
-typedef struct _tree_t{
+typedef struct _tm_tree_t{
   int constraint; /* tells if the tree has been constructed with constraints on the nodes or not.
 		     Usefull for freeing it. needs to be set on the root only*/
-  struct _tree_t **child;
-  struct _tree_t *parent;
-  struct _tree_t *tab_child; /*the pointer to be freed*/
+  struct _tm_tree_t **child;
+  struct _tm_tree_t *parent;
+  struct _tm_tree_t *tab_child; /* The pointer to be freed */
   double val;
   int arity;
   int depth;
-  int id;
-  int uniq;
-  int dumb; /* 1 if the node belongs to a dumb tree: hence has to be freed separately*/
+  int id;   /* id of the node or the leaf. Ids are different onmly on a given level */
+  int uniq; /* uniq id in the whole tree */
+  int dumb; /* 1 if the node belongs to a dumb tree: hence has to be freed separately */
   tm_job_info_t *job_info;
-  int nb_processes; /* number of grouped processes (i.e. the order of the affinity matrix). Set at the root only*/
-}tm_tree_t; /* FT : changer le nom : tm_grouap_hierachy_t ?*/
+  int nb_processes; /* number of grouped processes (i.e. the order of the affinity matrix). Set at the root only */
+}tm_tree_t; /* FT : changer le nom : tm_grouap_hierachy_t ? */
 
 /* Maximum number of levels in the tree*/
 #define TM_MAX_LEVELS 100
 
 typedef struct {
-  int *arity;         /* arity of the nodes of each level*/
-  int nb_levels;      /*number of levels of the tree. Levels are numbered from top to bottom starting at 0*/
-  size_t *nb_nodes;      /*nb of nodes of each level*/
-  int **node_id;      /*ID of the nodes of the tree for each level*/
-  int **node_rank ;   /*rank of the nodes of the tree for each level given its ID: this is the inverse tab of node_id*/
-  size_t *nb_free_nodes; /*nb of available nodes of each level*/
-  int **free_nodes;   /*tab of node that are free: useful to simulate batch scheduler*/
-  double *cost;       /*cost of the communication depending on the distance:
-			cost[i] is the cost for communicating at distance nb_levels-i*/
-  int *constraints;   /* array of constraints: id of the nodes where it is possible to map processes */
-  int nb_constraints; /* Size of the above array */
-  int oversub_fact;   /* maximum number of processes to be mapped on a given node */
-  int nb_proc_units;  /* the real number of units used for computation */
+  int *arity;             /* Arity of the nodes of each level*/
+  int nb_levels;          /* Number of levels of the tree. Levels are numbered from top to bottom starting at 0*/
+  size_t *nb_nodes;       /* Number of nodes of each level*/
+  int physical_num;       /* Flag set to !=0 if se use physical numberig and set to 0 is we use logical numbering */
+  int *node_id;           /* ID of the nodes of the tree of the last level*/
+  int *node_rank ;        /* Rank of the nodes of the tree for the last level given its ID: this is the inverse tab of node_id*/
+
+  size_t *nb_free_nodes;  /* Nb of available nodes of each level*/
+  int **free_nodes;       /* array of node that are free: useful to simulate batch scheduler*/
+  double *cost;           /* Cost of the communication depending on the distance:
+			    cost[i] is the cost for communicating at distance nb_levels-i*/
+  
+  int *constraints;       /* Array of constraints: id of the nodes where it is possible to map processes */
+  int nb_constraints;     /* Size of the above array */
+  int oversub_fact;       /* Maximum number of processes to be mapped on a given node */
+  int nb_proc_units;      /* The real number of units used for computation */
 }tm_topology_t;
 
 
@@ -70,17 +78,18 @@ typedef struct {
   double ** mat;
   double *  sum_row;
   int order;
+  long int nnz; /* number of non zero entries */
 } tm_affinity_mat_t;
 
 /*
- sigma_i is such that  process i is mapped on core sigma_i
- k_i is such that core i exectutes process k_i_j (0<=j<<=oversubscribing factor - 1)
+ sigma[i] is such that  process i is mapped on core sigma[i]
+ k[i][j] is such that core i executes process k[i][j] (0<=j<<=oversubscribing factor - 1)
 
  size of sigma is the number of processes (nb_objs)
  size of k is the number of cores/nodes   (nb_compute_units)
  size of k[i] is the number of process we can execute per nodes (1 if no oversubscribing)
 
- We must have numbe of process<=number of cores
+ We must have number of process<=number of cores
 
  k[i] == NULL if no process is mapped on core i
 */
@@ -95,8 +104,10 @@ typedef struct {
 
 
 /************ TreeMatch Public API ************/
+/* construct topology from local one using hwloc */
+tm_topology_t* tm_get_local_topology_with_hwloc(void);
 
-/* load XML or TGT topology */
+/* Aletrnatively, load XML or TGT topology */
 tm_topology_t *tm_load_topology(char *arch_filename, tm_file_type_t arch_file_type);
 /*
    Alternatively, build a synthetic balanced topology.
@@ -120,7 +131,7 @@ tm_topology_t *tm_load_topology(char *arch_filename, tm_file_type_t arch_file_ty
 
    double cost[5] = {500,100,50,10,0};
    int arity[5] = {16,2,2,2,0};
-   int cn[5]={0,1};
+   int cn[2]={0,1};
 
    topology = tm_build_synthetic_topology(arity,cost,5,cn,2);
 
@@ -153,7 +164,7 @@ void tm_optimize_topology(tm_topology_t **topology);
 void tm_enable_oversubscribing(tm_topology_t *topology, unsigned int oversub_fact);
 /* core of the treematch: compute the solution tree */
 tm_tree_t *tm_build_tree_from_topology(tm_topology_t *topology, tm_affinity_mat_t *aff_mat, double *obj_weight, double *com_speed);
-/* compute the mapping according to teh tree an dthe core numbering*/
+/* compute the mapping according to the tree and the core numbering*/
 tm_solution_t *tm_compute_mapping(tm_topology_t *topology, tm_tree_t *comm_tree);
 /* display the solution*/
 double tm_display_solution(tm_topology_t *topology, tm_affinity_mat_t *aff_mat, tm_solution_t *sol, tm_metric_t metric);
@@ -178,10 +189,21 @@ Ask for exhaustive search: may be very long
 void tm_set_exhaustive_search_flag(int new_val);
 int tm_get_exhaustive_search_flag(void);
 
+/*
+Ask for greedy k-partitionning even if scotch is available
+   new_val == 0 : no greedy k-partitionning
+   new_val != 0 : greedy k-partitionning
+*/
+void tm_set_greedy_flag(int new_val);
+int tm_get_greedy_flag(void);
+
 
 /* Setting the maximum number of threads you want to use in parallel parts of TreeMatch */
 void tm_set_max_nb_threads(unsigned int val);
 
+/* managing the usage of physical vs. logical core numbering when using hwloc/xml files */
+void            tm_set_numbering(tm_numbering_t new_val); /* TM_NUMBERING_LOGICAL or TM_NUMBERING_PHYSICAL */
+tm_numbering_t  tm_get_numbering(void); /* TM_NUMBERING_LOGICAL or TM_NUMBERING_PHYSICAL */
 
 #include "tm_malloc.h"
 

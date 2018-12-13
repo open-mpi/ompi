@@ -2,12 +2,33 @@
 #include <float.h>
 #include "tm_solution.h"
 #include "tm_mt.h"
-#include "tm_mapping.h"
+#include "tm_topology.h"
 
 typedef struct {
   int  val;
   long key;
 } hash_t;
+
+
+
+void tm_free_solution(tm_solution_t *sol);
+int distance(tm_topology_t *topology,int i, int j);
+double display_sol_sum_com(tm_topology_t *topology, tm_affinity_mat_t *aff_mat, int *sigma);
+  double display_sol(tm_topology_t *topology, tm_affinity_mat_t *aff_mat, int *sigma, tm_metric_t metric);
+double tm_display_solution(tm_topology_t *topology, tm_affinity_mat_t *aff_mat, tm_solution_t *sol,
+			   tm_metric_t metric);
+void tm_display_other_heuristics(tm_topology_t *topology, tm_affinity_mat_t *aff_mat, tm_metric_t metric);
+int in_tab(int *tab, int n, int val);
+void map_Packed(tm_topology_t *topology, int N, int *sigma);
+void map_RR(tm_topology_t * topology, int N, int *sigma);
+int hash_asc(const void* x1,const void* x2);
+int *generate_random_sol(tm_topology_t *topology,int N, int seed);
+double eval_sol(int *sol,int N,double **comm, double **arch);
+void exchange(int *sol,int i,int j);
+double gain_exchange(int *sol,int l,int m,double eval1,int N,double **comm, double **arch);
+void select_max(int *l,int *m,double **gain,int N,int *state);
+void compute_gain(int *sol,int N,double **gain,double **comm, double **arch);
+void map_MPIPP(tm_topology_t *topology,int nb_seed,int N,int *sigma,double **comm, double **arch);
 
 
 void tm_free_solution(tm_solution_t *sol){
@@ -41,8 +62,8 @@ int distance(tm_topology_t *topology,int i, int j)
   int vl = tm_get_verbose_level();
   int depth = topology->nb_levels-1;
 
-  f_i = topology->node_rank[depth][i];
-  f_j = topology->node_rank[depth][j];
+  f_i = topology->node_rank[i];
+  f_j = topology->node_rank[j];
 
   if(vl >= DEBUG)
     printf("i=%d, j=%d Level = %d f=(%d,%d)\n",i ,j, level, f_i, f_j);
@@ -58,7 +79,7 @@ int distance(tm_topology_t *topology,int i, int j)
   } while((f_i!=f_j) && (level < depth));
 
   if(vl >= DEBUG)
-    printf("distance(%d,%d):%d\n",topology->node_rank[depth][i], topology->node_rank[depth][j], level);
+    printf("distance(%d,%d):%d\n",topology->node_rank[i], topology->node_rank[j], level);
   /* exit(-1); */
   return level;
 }
@@ -270,10 +291,10 @@ void map_Packed(tm_topology_t *topology, int N, int *sigma)
 
   for( i = 0 ; i < topology->nb_nodes[depth] ; i++){
     /* printf ("%d -> %d\n",objs[i]->os_index,i); */
-    if((!topology->constraints) || (in_tab(topology->constraints, topology->nb_constraints, topology->node_id[depth][i]))){
+    if((!topology->constraints) || (in_tab(topology->constraints, topology->nb_constraints, topology->node_id[i]))){
       if(vl >= DEBUG)
-	printf ("%lu: %d -> %d\n", i, j, topology->node_id[depth][i]);
-      sigma[j++]=topology->node_id[depth][i];
+	printf ("%lu: %d -> %d\n", i, j, topology->node_id[i]);
+      sigma[j++]=topology->node_id[i];
       if(j == N)
 	break;
     }
@@ -306,14 +327,14 @@ int hash_asc(const void* x1,const void* x2)
 }
 
 
-int *generate_random_sol(tm_topology_t *topology,int N,int level,int seed)
+int *generate_random_sol(tm_topology_t *topology,int N, int seed)
 {
   hash_t *hash_tab = NULL;
   int *sol = NULL;
   int *nodes_id= NULL;
   int i;
 
-  nodes_id = topology->node_id[level];
+  nodes_id = topology->node_id;
 
   hash_tab = (hash_t*)MALLOC(sizeof(hash_t)*N);
   sol = (int*)MALLOC(sizeof(int)*N);
@@ -428,7 +449,7 @@ void map_MPIPP(tm_topology_t *topology,int nb_seed,int N,int *sigma,double **com
   state = (int*)MALLOC(sizeof(int)*N);
   temp = (double*)MALLOC(sizeof(double)*N);
 
-  sol = generate_random_sol(topology,N,topology->nb_levels-1,seed++);
+  sol = generate_random_sol(topology, N, seed++);
   for( i = 0 ; i < N ; i++)
     sigma[i] = sol[i];
 
@@ -488,7 +509,7 @@ void map_MPIPP(tm_topology_t *topology,int nb_seed,int N,int *sigma,double **com
       }
     }while( max > 0 );
     FREE(sol);
-    sol=generate_random_sol(topology,N,topology->nb_levels-1,seed++);
+    sol=generate_random_sol(topology, N, seed++);
   }
 
 

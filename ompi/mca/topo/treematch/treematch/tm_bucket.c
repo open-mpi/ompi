@@ -31,7 +31,7 @@ static int ilog2(int val)
 
 static int verbose_level = ERROR;
 
-static bucket_list_t global_bl;
+bucket_list_t global_bl;
 
 int tab_cmp(const void*,const void*);
 int old_bucket_id(int,int,bucket_list_t);
@@ -199,7 +199,7 @@ void add_to_bucket(int id,int i,int j,bucket_list_t bucket_list)
     /* display_bucket(bucket);*/
     if(verbose_level >= DEBUG){
       printf("Extending bucket %d (%p) from size %d to size %d!\n",
-             id, (void*)bucket->bucket, bucket->nb_elem, bucket->nb_elem+size);
+	     id,(void*)bucket->bucket, bucket->nb_elem, bucket->nb_elem+size);
     }
 
     bucket->bucket = (coord*)REALLOC(bucket->bucket,sizeof(coord)*(size + bucket->bucket_len));
@@ -648,6 +648,7 @@ double bucket_grouping(tm_affinity_mat_t *aff_mat,tm_tree_t *tab_node, tm_tree_t
       wait_work_completion(works[id]);
       val+=tab_val[id];
       FREE(works[id]->args);
+      destroy_work(works[id]);
     }
 
 

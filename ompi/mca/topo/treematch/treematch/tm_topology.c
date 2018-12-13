@@ -7,7 +7,7 @@
 #include "tm_solution.h"
 
 
-tm_topology_t* get_local_topo_with_hwloc(void);
+tm_topology_t* tm_get_local_topo_with_hwloc(void);
 tm_topology_t* hwloc_to_tm(char *filename);
 int int_cmp_inc(const void* x1,const void* x2);
 void optimize_arity(int **arity, double **cost, int *nb_levels,int n);
@@ -27,9 +27,22 @@ void topology_numbering_cpy(tm_topology_t *topology,int **numbering,int *nb_node
 double ** topology_to_arch(hwloc_topology_t topology);
 void   build_synthetic_proc_id(tm_topology_t *topology);
 tm_topology_t  *tm_build_synthetic_topology(int *arity, double *cost, int nb_levels, int *core_numbering, int nb_core_per_nodes);
+void            tm_set_numbering(tm_numbering_t new_val); /* TM_NUMBERING_LOGICAL or TM_NUMBERING_PHYSICAL */
 
 
 #define LINE_SIZE (1000000)
+
+
+static tm_numbering_t numbering = TM_NUMBERING_LOGICAL;
+
+void            tm_set_numbering(tm_numbering_t new_val){
+  numbering = new_val;
+}
+
+tm_numbering_t  tm_get_numbering(){
+  return numbering;
+}
+
 
 
 /* transform a tgt scotch file into a topology file*/
@@ -101,6 +114,13 @@ tm_topology_t * tgt_to_tm(char *filename)
   return topology;
 }
 
+
+
+int nb_processing_units(tm_topology_t *topology)
+{
+  return topology->nb_proc_units;
+}
+
 int topo_nb_proc(hwloc_topology_t topology,int N)
 {
   hwloc_obj_t *objs = NULL;
@@ -112,7 +132,6 @@ int topo_nb_proc(hwloc_topology_t topology,int N)
   FREE(objs);
   return nb_proc;
 }
-
 
 
 static double link_cost(int depth)
@@ -133,7 +152,6 @@ static double link_cost(int depth)
   */
 }
 
-
 double ** topology_to_arch(hwloc_topology_t topology)
 {
   int nb_proc,i,j;
@@ -141,14 +159,7 @@ double ** topology_to_arch(hwloc_topology_t topology)
   double **arch = NULL;
 
   nb_proc = hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_PU);
-  if( nb_proc <= 0 ) {  /* if multiple levels with PUs */
-      return NULL;
-  }
   arch = (double**)MALLOC(sizeof(double*)*nb_proc);
-  if( NULL == arch ) {
-      return NULL;
-  }
-
   for( i = 0 ; i < nb_proc ; i++ ){
     obj_proc1 = hwloc_get_obj_by_type(topology,HWLOC_OBJ_PU,i);
     arch[obj_proc1->os_index] = (double*)MALLOC(sizeof(double)*nb_proc);
@@ -184,6 +195,46 @@ int symetric(hwloc_topology_t topology)
    return 1;
 }
 
+static void build_process_tab_id(tm_topology_t *topology,  hwloc_obj_t *objs, char* filename){
+  unsigned int i,j;
+  unsigned int nb_nodes = topology->nb_proc_units; 
+  int vl = tm_get_verbose_level();
+  
+  /* Build process id tab */
+  if(numbering == TM_NUMBERING_LOGICAL){
+    for (i = 0; i < nb_nodes; i++){
+      topology->node_id[i] = i;
+      topology->node_rank[i] = i;
+    }
+  }else if(numbering == TM_NUMBERING_PHYSICAL){
+    for (i = 0; i < nb_nodes; i++){
+      if(objs[i]->os_index > nb_nodes){
+	if(vl >= CRITICAL){
+	  fprintf(stderr, "Cannot use forced physical numbering!\n\tIndex of PU %d is %d and larger than number of nodes : %d\n",
+		  i, objs[i]->os_index, nb_nodes);
+	}
+	exit(-1);
+      }
+      for(j = 0; j < i; j++){
+	if((unsigned int)topology->node_id[j] == objs[i]->os_index){
+	  if(vl >= CRITICAL){
+	    fprintf(stderr, "Cannot use forced physical numbering!\n\tDuplicated physical number of some PUs in %s.\n\tPU %d and PU %d have the same physical number: (os_index[%d] = %d) == (os_index[%d] = %d)\n", filename, j, i, j, objs[j]->os_index, i, objs[i]->os_index);
+	  }
+	  exit(-1);
+	}
+      }
+      topology->node_id[i] = objs[i]->os_index;
+      topology->node_rank[objs[i]->os_index] = i;
+    }
+  }else{
+    if(vl >= CRITICAL){
+      fprintf(stderr, "Unknown numbering %d\n", (int)numbering);
+    }
+    exit(-1);
+  }
+}
+
+
 tm_topology_t* hwloc_to_tm(char *filename)
 {
   hwloc_topology_t topology;
@@ -193,43 +244,46 @@ tm_topology_t* hwloc_to_tm(char *filename)
   unsigned int nb_nodes;
   double *cost;
   int err, l;
-  unsigned int i;
   int vl = tm_get_verbose_level();
 
   /* Build the topology */
   hwloc_topology_init(&topology);
-  err = hwloc_topology_set_xml(topology,filename);
+  err = hwloc_topology_set_xml(topology, filename);
   if(err == -1){
     if(vl >= CRITICAL)
       fprintf(stderr,"Error: %s is a bad xml topology file!\n",filename);
     exit(-1);
   }
 
-#if HWLOC_API_VERSION >= 0x00020000
-  hwloc_topology_set_all_types_filter(topology, HWLOC_TYPE_FILTER_KEEP_STRUCTURE);
-#else  /* HWLOC_API_VERSION >= 0x00020000 */
+#if HWLOC_API_VERSION < 0x20000
   hwloc_topology_ignore_all_keep_structure(topology);
-#endif  /* HWLOC_API_VERSION >= 0x00020000 */
-  hwloc_topology_load(topology);
+#else
+  hwloc_topology_set_all_types_filter(topology, HWLOC_TYPE_FILTER_KEEP_STRUCTURE);
+#endif
+
+  err = hwloc_topology_load(topology);
+  if(err == -1){
+    if(vl >= CRITICAL)
+      fprintf(stderr,"Error: the content of the xml topology file %s is not compatible with the version installed on this machine.\nPlease use compatible versions to generate the file and to use it!\n",filename);
+    exit(-1);
+  }
 
 
   /* Test if symetric */
   if(!symetric(topology)){
-    if(tm_get_verbose_level() >= CRITICAL)
+    if(vl >= CRITICAL)
       fprintf(stderr,"%s not symetric!\n",filename);
     exit(-1);
   }
 
   /* work on depth */
   topodepth = hwloc_topology_get_depth(topology);
-
+  
   res                   = (tm_topology_t*)MALLOC(sizeof(tm_topology_t));
   res->oversub_fact      = 1;
   res->nb_constraints   = 0;
   res->constraints      = NULL;
   res->nb_levels        = topodepth;
-  res->node_id          = (int**)MALLOC(sizeof(int*)*res->nb_levels);
-  res->node_rank        = (int**)MALLOC(sizeof(int*)*res->nb_levels);
   res->nb_nodes         = (size_t*)MALLOC(sizeof(size_t)*res->nb_levels);
   res->arity            = (int*)MALLOC(sizeof(int)*res->nb_levels);
 
@@ -240,35 +294,24 @@ tm_topology_t* hwloc_to_tm(char *filename)
   for( depth = 0 ; depth < topodepth ; depth++ ){
     nb_nodes = hwloc_get_nbobjs_by_depth(topology, depth);
     res->nb_nodes[depth] = nb_nodes;
-    res->node_id[depth] = (int*)MALLOC(sizeof(int)*nb_nodes);
-    res->node_rank[depth] = (int*)MALLOC(sizeof(int)*nb_nodes);
 
-    objs = (hwloc_obj_t*)MALLOC(sizeof(hwloc_obj_t)*nb_nodes);
-    objs[0] = hwloc_get_next_obj_by_depth(topology,depth,NULL);
-    hwloc_get_closest_objs(topology,objs[0],objs+1,nb_nodes-1);
+    objs    = (hwloc_obj_t*)MALLOC(sizeof(hwloc_obj_t)*nb_nodes);
+    objs[0] = hwloc_get_next_obj_by_depth(topology, depth, NULL);
+    hwloc_get_closest_objs(topology, objs[0], objs+1, nb_nodes-1);
     res->arity[depth] = objs[0]->arity;
-
-    if (depth == topodepth -1){
-      res->nb_constraints = nb_nodes;
-      res->nb_proc_units  = nb_nodes;
-    }
-
+    
     if(vl >= DEBUG)
       printf("\n--%d(%d) **%d**:--\n",res->arity[depth],nb_nodes,res->arity[0]);
 
-    /* Build process id tab */
-    for (i = 0; i < nb_nodes; i++){
-      if(objs[i]->os_index > nb_nodes){
-	if(vl >= CRITICAL){
-	  fprintf(stderr, "Index of object %d of level %d is %d and larger than number of nodes : %d\n",
-		  i, depth, objs[i]->os_index, nb_nodes);
-	}
-	exit(-1);
-      }
-
-      res->node_id[depth][i] = objs[i]->os_index;
-      res->node_rank[depth][objs[i]->os_index] = i;
-      /* if(depth==topodepth-1) */
+    
+    if (depth == topodepth -1){
+      res->nb_constraints = nb_nodes;
+      res->nb_proc_units  = nb_nodes;
+      res->node_id        = (int*)MALLOC(sizeof(int)*nb_nodes);
+      res->node_rank      = (int*)MALLOC(sizeof(int)*nb_nodes);
+   
+      build_process_tab_id(res, objs, filename);
+     
     }
     FREE(objs);
 
@@ -292,21 +335,23 @@ tm_topology_t* hwloc_to_tm(char *filename)
   return res;
 }
 
-tm_topology_t* get_local_topo_with_hwloc(void)
+tm_topology_t* tm_get_local_topology_with_hwloc(void)
 {
   hwloc_topology_t topology;
   tm_topology_t *res = NULL;
   hwloc_obj_t *objs = NULL;
   unsigned topodepth,depth;
-  int nb_nodes,i;
+  int nb_nodes;
 
   /* Build the topology */
   hwloc_topology_init(&topology);
-#if HWLOC_API_VERSION >= 0x00020000
-  hwloc_topology_set_all_types_filter(topology, HWLOC_TYPE_FILTER_KEEP_STRUCTURE);
-#else  /* HWLOC_API_VERSION >= 0x00020000 */
+
+#if HWLOC_API_VERSION < 0x20000
   hwloc_topology_ignore_all_keep_structure(topology);
-#endif  /* HWLOC_API_VERSION >= 0x00020000 */
+#else
+  hwloc_topology_set_all_types_filter(topology, HWLOC_TYPE_FILTER_KEEP_STRUCTURE);
+#endif
+
   hwloc_topology_load(topology);
 
   /* Test if symetric */
@@ -323,17 +368,15 @@ tm_topology_t* get_local_topo_with_hwloc(void)
   res->nb_constraints  = 0;
   res->constraints     = NULL;
   res->nb_levels       = topodepth;
-  res->node_id         = (int**)MALLOC(sizeof(int*)*res->nb_levels);
-  res->node_rank       = (int**)MALLOC(sizeof(int*)*res->nb_levels);
   res->nb_nodes        = (size_t*)MALLOC(sizeof(size_t)*res->nb_levels);
   res->arity           = (int*)MALLOC(sizeof(int)*res->nb_levels);
+  res->oversub_fact    = 1; //defaut
+  res->cost            = NULL; 
 
   /* Build TreeMatch topology */
   for( depth = 0 ; depth < topodepth ; depth++ ){
     nb_nodes = hwloc_get_nbobjs_by_depth(topology, depth);
     res->nb_nodes[depth] = nb_nodes;
-    res->node_id[depth] = (int*)MALLOC(sizeof(int)*nb_nodes);
-    res->node_rank[depth] = (int*)MALLOC(sizeof(int)*nb_nodes);
 
     objs = (hwloc_obj_t*)MALLOC(sizeof(hwloc_obj_t)*nb_nodes);
     objs[0] = hwloc_get_next_obj_by_depth(topology,depth,NULL);
@@ -342,15 +385,14 @@ tm_topology_t* get_local_topo_with_hwloc(void)
 
     if (depth == topodepth -1){
       res->nb_constraints = nb_nodes;
-      res->nb_proc_units = nb_nodes;
-    }
+      res->nb_proc_units  = nb_nodes;
+      res->node_id        = (int*)MALLOC(sizeof(int)*nb_nodes);
+      res->node_rank      = (int*)MALLOC(sizeof(int)*nb_nodes);
     /* printf("%d:",res->arity[depth]); */
 
-    /* Build process id tab */
-    for (i = 0; i < nb_nodes; i++){
-      res->node_id[depth][i] = objs[i]->os_index;
-      res->node_rank[depth][objs[i]->os_index] = i;
-      /* if(depth==topodepth-1) */
+      /* Build process id tab */
+
+      build_process_tab_id(res, objs, "Local node topology");
     }
     FREE(objs);
   }
@@ -367,15 +409,9 @@ tm_topology_t* get_local_topo_with_hwloc(void)
 
 void tm_free_topology(tm_topology_t *topology)
 {
-  int i;
-  for( i = 0 ; i < topology->nb_levels ; i++ ){
-    FREE(topology->node_id[i]);
-    FREE(topology->node_rank[i]);
-  }
-
-  FREE(topology->constraints);
   FREE(topology->node_id);
   FREE(topology->node_rank);
+  FREE(topology->constraints);
   FREE(topology->nb_nodes);
   FREE(topology->arity);
   FREE(topology->cost);
@@ -400,18 +436,15 @@ tm_topology_t *tm_load_topology(char *arch_filename, tm_file_type_t arch_file_ty
 void tm_display_topology(tm_topology_t *topology)
 {
   int i;
-  unsigned int j;
   unsigned long  id;
   for( i = 0 ; i < topology->nb_levels ; i++ ){
-    printf("%d: ",i);
-    for( j = 0 ; j < topology->nb_nodes[i] ; j++)
-      printf("%d ",topology->node_id[i][j]);
+    printf("Level %d with arity %d ", i, topology->arity[i]); 
     printf("\n");
   }
 
   printf("Last level: ");
   for(id = 0; id < topology->nb_nodes[topology->nb_levels-1]/topology->oversub_fact; id++)
-    printf("%d ",topology->node_rank[topology->nb_levels-1][id]);
+    printf("%d ",topology->node_rank[id]);
   printf("\n");
 
 
@@ -430,9 +463,13 @@ void tm_display_topology(tm_topology_t *topology)
 
 void tm_display_arity(tm_topology_t *topology){
   int depth;
-  for(depth=0; depth < topology->nb_levels; depth++)
-    printf("%d(%lf): ",topology->arity[depth], topology->cost[depth]);
-
+  for(depth=0; depth < topology->nb_levels; depth++){
+    printf("%d",topology->arity[depth]);
+    if(topology->cost) 
+      printf("(%lf)",topology->cost[depth]); 
+    else 
+      printf(":"); 
+  }
   printf("\n");
 }
 
@@ -447,7 +484,7 @@ static int topo_check_constraints(tm_topology_t *topology){
   int i;
   int depth = topology->nb_levels-1;
   for (i=0;i<n;i++){
-    if(!in_tab(topology->node_id[depth], topology->nb_nodes[depth], topology->constraints[i])){
+    if(!in_tab(topology->node_id, topology->nb_nodes[depth], topology->constraints[i])){
       if(tm_get_verbose_level() >= CRITICAL){
 	fprintf(stderr,"Error! Incompatible constraint with the topology: rank %d in the constraints is not a valid id of any nodes of the topology.\n",topology->constraints[i]);
       }
@@ -548,7 +585,7 @@ void topology_numbering_cpy(tm_topology_t *topology,int **numbering,int *nb_node
   if(vl >= INFO)
     printf("nb_nodes=%d\n",*nb_nodes);
   *numbering = (int*)MALLOC(sizeof(int)*(*nb_nodes));
-  memcpy(*numbering,topology->node_id[nb_levels-1],sizeof(int)*(*nb_nodes));
+  memcpy(*numbering,topology->node_id,sizeof(int)*(*nb_nodes));
 }
 
 void topology_arity_cpy(tm_topology_t *topology,int **arity,int *nb_levels)
@@ -701,7 +738,7 @@ void tm_optimize_topology(tm_topology_t **topology){
   FREE(arity);
   FREE(numbering);
   tm_free_topology(*topology);
-  
+
   *topology = new_topo;
   /*  exit(-1); */
 
@@ -738,8 +775,6 @@ tm_topology_t  *tm_build_synthetic_topology(int *arity, double *cost, int nb_lev
   topology->constraints    = NULL;
   topology->nb_levels      = nb_levels;
   topology->arity          = (int*)MALLOC(sizeof(int)*topology->nb_levels);
-  topology->node_id        = (int**)MALLOC(sizeof(int*)*topology->nb_levels);
-  topology->node_rank      = (int**)MALLOC(sizeof(int*)*topology->nb_levels);
   topology->nb_nodes       = (size_t *)MALLOC(sizeof(size_t)*topology->nb_levels);
   if(cost)
     topology->cost         = (double*)CALLOC(topology->nb_levels,sizeof(double));
@@ -753,27 +788,17 @@ tm_topology_t  *tm_build_synthetic_topology(int *arity, double *cost, int nb_lev
   n = 1;
   for( i = 0 ; i < topology->nb_levels ; i++ ){
     topology->nb_nodes[i] = n;
-    topology->node_id[i] = (int*)MALLOC(sizeof(int)*n);
-    topology->node_rank[i] = (int*)MALLOC(sizeof(int)*n);
-    if( i < topology->nb_levels-1){
-      for( j = 0 ; j < n ; j++ ){
-	topology->node_id[i][j] = j;
-	topology->node_rank[i][j]=j;
-      }
-    }else{
+    if (i == topology->nb_levels-1){
+      topology->node_id        = (int*)MALLOC(sizeof(int)*n);
+      topology->node_rank      = (int*)MALLOC(sizeof(int)*n);
+      topology->nb_constraints = n;
+      topology->nb_proc_units  = n;
       for( j = 0 ; j < n ; j++ ){
 	int id = core_numbering[j%nb_core_per_nodes] + (nb_core_per_nodes)*(j/nb_core_per_nodes);
-	topology->node_id[i][j] = id;
-	topology->node_rank[i][id] = j;
+	topology->node_id[j]    = id;
+	topology->node_rank[id] = j;
       }
     }
-
-
-    if (i == topology->nb_levels-1){
-      topology->nb_constraints = n;
-      topology->nb_proc_units = n;
-    }
-
     n *= topology->arity[i];
   }
   if(cost){
@@ -791,32 +816,30 @@ void   build_synthetic_proc_id(tm_topology_t *topology)
   int i;
   size_t j,n = 1;
 
-  topology->node_id   = (int**)MALLOC(sizeof(int*)*topology->nb_levels);
-  topology->node_rank = (int**)MALLOC(sizeof(int*)*topology->nb_levels);
   topology->nb_nodes  = (size_t*) MALLOC(sizeof(size_t)*topology->nb_levels);
 
   for( i = 0 ; i < topology->nb_levels ; i++ ){
     /* printf("n= %lld, arity := %d\n",n, topology->arity[i]); */
     topology->nb_nodes[i] = n;
-    topology->node_id[i] = (int*)MALLOC(sizeof(long int)*n);
-    topology->node_rank[i] = (int*)MALLOC(sizeof(long int)*n);
-    if ( !topology->node_id[i] ){
-      if(tm_get_verbose_level() >= CRITICAL)
-	fprintf(stderr,"Cannot allocate level %d (of size %ld) of the topology\n", i, (unsigned long int)n);
-      exit(-1);
-    }
-
+   
     if (i == topology->nb_levels-1){
+      topology->node_rank      = (int*)MALLOC(sizeof(int)*n);
+      topology->node_id        = (int*)MALLOC(sizeof(int)*n);
+      if ( !topology->node_id ){
+	if(tm_get_verbose_level() >= CRITICAL)
+	  fprintf(stderr,"Cannot allocate last level (of size %ld) of the topology\n", (unsigned long int)n);
+	exit(-1);
+      }
+      
       topology->nb_constraints = n;
       topology->nb_proc_units = n;
+      
+      for( j = 0 ; j < n ; j++ ){
+	topology->node_id[j]   = j;
+	topology->node_rank[j] = j;
+      }
     }
 
-
-
-    for( j = 0 ; j < n ; j++ ){
-      topology->node_id[i][j] = j;
-      topology->node_rank[i][j] = j;
-    }
     n *= topology->arity[i];
   }
 
@@ -827,6 +850,7 @@ void   build_synthetic_proc_id(tm_topology_t *topology)
 void tm_enable_oversubscribing(tm_topology_t *topology, unsigned int oversub_fact){
 {
   int i,j,n;
+  int *node_id, *node_rank;
 
   if(oversub_fact <=1)
     return;
@@ -834,8 +858,6 @@ void tm_enable_oversubscribing(tm_topology_t *topology, unsigned int oversub_fac
   topology -> nb_levels ++;
   topology -> arity        = (int*)    REALLOC(topology->arity, sizeof(int)*topology->nb_levels);
   topology -> cost         = (double*) REALLOC(topology->cost, sizeof(double)*topology->nb_levels);
-  topology -> node_id      = (int**)   REALLOC(topology->node_id, sizeof(int*)*topology->nb_levels);
-  topology -> node_rank    = (int**)   REALLOC(topology->node_rank, sizeof(int*)*topology->nb_levels);
   topology -> nb_nodes     = (size_t *)REALLOC(topology->nb_nodes, sizeof(size_t)*topology->nb_levels);
   topology -> oversub_fact = oversub_fact;
 
@@ -843,15 +865,19 @@ void tm_enable_oversubscribing(tm_topology_t *topology, unsigned int oversub_fac
   n = topology->nb_nodes[i-1] * oversub_fact;
   topology->arity[i-1] = oversub_fact;
   topology->cost[i-1] = 0;
-  topology->node_id[i] = (int*)MALLOC(sizeof(int)*n);
-  topology->node_rank[i] = (int*)MALLOC(sizeof(int)*n);
+  node_id = (int*)MALLOC(sizeof(int)*n);
+  node_rank = (int*)MALLOC(sizeof(int)*n);
   topology->nb_nodes[i] = n;
 
   for( j = 0 ; j < n ; j++ ){
-    int id = topology->node_id[i-1][j/oversub_fact];
-    topology->node_id[i][j] = id;
-    topology->node_rank[i][id] = j;
+    int id = topology->node_id[j/oversub_fact];
+    node_id[j]    = id;
+    node_rank[id] = j;
   }
+  FREE(topology->node_id);
+  FREE(topology->node_rank);
+  topology->node_id   = node_id;  
+  topology->node_rank = node_rank;  
  }
 
 }

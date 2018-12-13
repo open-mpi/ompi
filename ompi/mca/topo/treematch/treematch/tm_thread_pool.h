@@ -41,6 +41,7 @@ void wait_work_completion(work_t *work);
 void terminate_thread_pool(void);
 work_t *create_work(int nb_args, void **args, void (int, void **, int));
 int test_main(void);
+void destroy_work(work_t *work);
 
 
 

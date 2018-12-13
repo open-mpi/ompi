@@ -6,6 +6,11 @@
 #include <stdio.h>
 #include "config.h"
 
+#if defined(HAVE_LIBSCOTCH)
+#include <scotch.h>
+#endif  /* defined(HAVE_LIBSCOTCH) */
+
+
 #define USE_KL_KPART 0
 #define KL_KPART_GREEDY_TRIALS 0
 
@@ -33,6 +38,253 @@ void free_const_tab(constraint_t *,int);
 void kpartition_build_level_topology(tm_tree_t *,com_mat_t *,int,int,tm_topology_t *,
 				     int *,int *,int,double *,double *);
 
+static int greedy_flag = 0;
+
+void tm_set_greedy_flag(int new_val){
+  greedy_flag = new_val;
+}
+
+int tm_get_greedy_flag(){
+  return greedy_flag;
+}
+
+
+#if defined(HAVE_LIBSCOTCH)
+
+SCOTCH_Graph* com_mat_to_scotch_graph(com_mat_t *com_mat, int n){
+  double **mat = com_mat->comm;
+  SCOTCH_Num vertnbr = n;	// number of vertices
+  SCOTCH_Num edgenbr = vertnbr*vertnbr;			// number of edges
+  /* adjacency list */
+  SCOTCH_Num *verttab = (SCOTCH_Num *)malloc(sizeof(SCOTCH_Num) * (vertnbr+1));
+  /* loads of vertices */
+  /* SCOTCH_Num *velotab = (SCOTCH_Num *)malloc(sizeof(SCOTCH_Num) * vertnbr); */
+  /* id of the neighbors */
+  SCOTCH_Num *edgetab = (SCOTCH_Num *)malloc(sizeof(SCOTCH_Num) * edgenbr);
+  /* number of bytes exchanged */
+  SCOTCH_Num *edlotab = (SCOTCH_Num *)malloc(sizeof(SCOTCH_Num) * edgenbr);
+  SCOTCH_Graph *graphptr =  SCOTCH_graphAlloc();
+
+  int edgeNum = 0;
+  int i,j;
+
+  /* Building with the communication matrix */
+  for(i = 0; i < com_mat->n ; i++) {
+    verttab[i] = edgeNum;
+    for(j = 0; j < i; j++) {
+      if(mat[i][j]){
+	edgetab[edgeNum] = j;
+	edlotab[edgeNum] = (SCOTCH_Num)mat[i][j];
+	edgeNum++;
+      }
+    }
+    /* ensure i!=j. Hence, avoid to test it...*/
+    for(j = i+1 ; j < com_mat->n ; j++) {
+      if(mat[i][j]){
+	edgetab[edgeNum] = j;
+	edlotab[edgeNum] = (SCOTCH_Num)mat[i][j];
+	edgeNum++;
+      }
+    }
+  }
+  
+
+  /* for(i = baseval; i < com_mat->n ; i++) { */
+  /*   verttab[i] = edgeNum; */
+  /*   /\* velotab[i] = (SCOTCH_Num) ceil(ogr->vertices[i].getVertexLoad() * ratio); *\/ */
+  /*   for(j = baseval; j < com_mat->n ; j++) { */
+  /*     if((mat[i][j] || mat[j][i]) && (i!=j)){ */
+  /* 	edgetab[edgeNum] = j; */
+  /* 	edlotab[edgeNum] = (SCOTCH_Num) ((mat[i][j] + mat[j][i])/2); */
+  /* 	edgeNum++; */
+  /*     } */
+  /*   } */
+  /* } */
+
+  /* adding the dumb vertices: they have no neighbor*/
+  for(i = com_mat->n ; i<vertnbr ; i++) {
+    verttab[i] = edgeNum;
+  }
+
+  verttab[i] = edgeNum;
+
+  if(tm_get_verbose_level() >=DEBUG){
+    printf("Graph converted to Scotch format: edgeNum=%d, edgenbr = %lld, vertnbr = %lld\n",edgeNum, (long long int)edgenbr, (long long int)vertnbr);
+  }
+
+  assert(edgeNum <= edgenbr);
+  edgenbr = edgeNum;
+
+  SCOTCH_graphInit(graphptr);
+  SCOTCH_graphBuild(graphptr, 0, vertnbr, verttab, verttab+1, NULL, NULL, edgenbr, edgetab, edlotab); 
+
+  return graphptr;
+}
+
+
+
+int  check_partition(SCOTCH_Num *parttab, int k, int n){
+  int *count = CALLOC(sizeof(int), k);
+  int i;
+  for(i=0; i<n; i++){
+    count[parttab[i]]++;
+  }
+
+  int target= n/k;
+
+  for(i = 0; i<k ; i++){
+    if(count[i] != target){
+      if(tm_get_verbose_level()>=INFO)
+	fprintf(stdout, "Error in partition: %d vertices in partition %d while expecting %d vertices\n",count[i], i, target);
+      FREE(count);
+      return 0;
+    }
+  }
+
+   FREE(count);
+  return 1;
+}
+
+
+/* n is the number of element in teh graoh with dumlb_vertices
+   comm_mat->n is the nulber of processes (i.e. the size of teh graph without dumb veritcies*/
+int  *kpartition_scotch(int k, com_mat_t *com_mat, int n, int *constraints, int nb_constraints){
+  SCOTCH_Num    partnbr = (SCOTCH_Num) k;
+  SCOTCH_Graph* graphptr;
+  SCOTCH_Strat  strat;
+  SCOTCH_Num    straval;
+  SCOTCH_Num   *parttab = (SCOTCH_Num *)MALLOC(sizeof(SCOTCH_Num) * n);
+  int          *partition = (int *)MALLOC(sizeof(int) * n);
+  int          i, j;
+  int          *nb_dumb = (int *)MALLOC(sizeof(int) * k); /*number of dumb vertices per partition */ 
+  int          dumb_id, min_nb_dumb = n, sum_dumb = 0, p;
+  /* if(SCOTCH_graphCheck(graphptr) == 1){ */
+  /*   fprintf(stderr,"Bad scotch graph! Exiting program...\n"); */
+  /*   exit(-1); */
+  /* } */
+
+  /* printf("Correct scotch graph (%d, %d)!\n", SCOTCH_numSizeof(), sizeof(SCOTCH_Num)); */
+
+  for(i=0;i<n;i++)
+    parttab[i] = -1;
+
+
+  /* put "dumb" vertices in the correct partition if there are any*/
+  /*constraints are leaves that can be used */
+  if (nb_constraints){
+    int end, start = 0;
+    for( i = 0 ; i < k ; i ++){
+      int max_val = (i+1)* (n/k);
+      end = start;
+      while( end < nb_constraints){
+	if(constraints[end] >= max_val)
+	  break;
+	end++;
+      }
+      /* now end - start is the number of constraints for the ith subtree
+	 hence the number of dumb vertices in partition i is the differences between the
+	 number of leaves of the subtree (n/k) and the number of constraints
+      */
+      nb_dumb[i] = n/k - (end-start);
+      sum_dumb += nb_dumb[i];
+      if(nb_dumb[i] < min_nb_dumb){
+	min_nb_dumb = nb_dumb[i];
+     }
+       start=end;
+    }
+
+    /* Imagine we have n=12, k=3, nb_dumb[0] = 3, nb_dumb[1] = 2, nb_dumb[2] = 3, hence min_nb_dumb = 2 and sum_dumb = 8 
+       So, we have 8 fix vertices and 12-8 = 4 free vertices
+       We want scotch to allocate the 6 free vertices such that the whole partition is balanced (4 vertex in each) : 
+       1 in parttion 0,   2 in partition 1 and 1 in partition 2.
+       To do so we can fill partab as follows: 
+       {-1, -1, -1, -1, 0, 0, 0, 1, 1, 2, 2, 2} and call scotch with a n=12 vertices graph with SCOTCH_STRATBALANCE
+       dumb_id = n - sum_dumb;
+       for(i = 0;i<k;i++){
+         for( j = 0; j < nb_dumb[i]; j ++ ){
+           parttab[dumb_id] = i;
+           dumb_id++;
+         } 
+       }
+       
+       A more efficient solution is to fill partab as follows
+       {-1, -1, -1, -1, 0, 2, 0, 0, 1, 1, 2, 2} and call Scotch with 
+       a p = 6 (n-sum_dumb+ sum_{i}(nb_dumb[i]-min_dumb) vertices graph. 
+       Scotch will then only use the 8 fist element of partab
+    */
+
+    dumb_id = n - sum_dumb; /* now dumb_id is the number of free vertices*/
+    for(i = 0 ; i < k ; i++){
+      for( j = 0; j < nb_dumb[i] - min_nb_dumb; j ++ ){
+	parttab[dumb_id] = i;
+	dumb_id++;
+      } 
+    }
+    p = dumb_id; 
+    for(i = 0 ; i < k ; i++){
+      for( j = 0 ; j < min_nb_dumb ; j ++ ){
+	parttab[dumb_id] = i;
+	dumb_id++;
+      } 
+    }
+  }else{
+    p=n; /* if no constraint use n vertices */
+  }       
+
+
+  graphptr = com_mat_to_scotch_graph(com_mat, p);
+  
+  SCOTCH_stratInit (&strat);
+  straval = SCOTCH_STRATBALANCE;
+  if(k>4)
+    straval = SCOTCH_STRATSPEED;
+  SCOTCH_stratGraphMapBuild (&strat, straval, partnbr, 0);
+
+
+  if(tm_get_verbose_level()>=DEBUG){
+    printf("Before Scotch (p=%d, n=%d): \n", p, n);
+    for(i = 0 ; i < n; i++){
+      printf("%d ",(int)parttab[i]);
+    }
+    printf("\n");
+  }
+
+  if(SCOTCH_graphPartFixed(graphptr, partnbr, &strat, parttab) == 0){
+    if(tm_get_verbose_level()>=DEBUG){
+      printf("After Scotch: \n");
+      for(i = 0 ; i < n; i++){
+	printf("%d ",(int)parttab[i]);
+      }
+      printf("\n");
+    }
+  }else{
+    if(tm_get_verbose_level()>=CRITICAL){
+      fprintf(stderr,"Scotch Partitionning failed\n");  
+    }
+    exit(-1);
+  }
+
+  if(!check_partition(parttab, partnbr, n)){
+    if(tm_get_verbose_level()>=INFO){
+      printf("falling from Scotch to greedy partionning\n");
+    }
+    FREE(partition);
+    partition = kpartition_greedy(k, com_mat, n, constraints, nb_constraints);
+  }else{
+    for(i=0;i<n;i++)
+      partition[i] = parttab [i];
+  }
+
+  SCOTCH_stratExit (&strat);
+  SCOTCH_graphExit(graphptr);
+  SCOTCH_memFree(graphptr);
+  FREE(parttab);
+  FREE(nb_dumb);
+  
+  return partition;
+}
+
+#endif /* defined(HAVE_LIBSCOTCH) */
 
 
 void allocate_vertex(int u, int *res, com_mat_t *com_mat, int n, int *size, int max_size)
@@ -128,6 +380,7 @@ int  *kpartition_greedy(int k, com_mat_t *com_mat, int n, int *constraints, int 
 
 
     /* put "dumb" vertices in the correct partition if there are any*/
+    /*constraints are leaves that can be used */
     if (nb_constraints){
       start = 0;
       dumb_id = n-1;
@@ -139,7 +392,7 @@ int  *kpartition_greedy(int k, com_mat_t *com_mat, int n, int *constraints, int 
 	    break;
 	  end++;
 	}
-	/* now end - start is the number of constarints for the ith subtree
+	/* now end - start is the number of constraints for the ith subtree
 	   hence the number of dumb vertices is the differences between the
 	   number of leaves of the subtree (n/k) and the number of constraints
 	*/
@@ -222,13 +475,21 @@ int *kpartition(int k, com_mat_t *com_mat, int n, int *constraints, int nb_const
   /* else */
 
 
-#if HAVE_LIBSCOTCH
-  /*printf("Using Scotch\n");*/
+#if defined(HAVE_LIBSCOTCH)
+  if(!greedy_flag){
+    if(verbose_level >= DEBUG)
+      printf("Using Scotch\n");
+    res = kpartition_scotch(k, com_mat, n, constraints, nb_constraints);
+  }else{
+    if(verbose_level >= DEBUG)
+      printf("Using greedy partitionning\n");
+    res = kpartition_greedy(k, com_mat, n, constraints, nb_constraints);
+  }
+#else  /* defined(HAVE_LIBSCOTCH) */
+  if(verbose_level >= DEBUG)
+    printf("Using greedy partitionning\n");
   res = kpartition_greedy(k, com_mat, n, constraints, nb_constraints);
-#else
-  /*printf("Using default\n");*/
-  res = kpartition_greedy(k, com_mat, n, constraints, nb_constraints);
-#endif
+#endif  /* defined(HAVE_LIBSCOTCH) */
   return res;
 }
 
@@ -242,7 +503,7 @@ constraint_t *split_constraints (int *constraints, int nb_constraints, int k, tm
   const_tab = (constraint_t *)CALLOC(k,sizeof(constraint_t));
 
   /* nb_leaves is the number of leaves of the current subtree
-     this will help to detremine where to split constraints and how to shift values
+     this will help to determine where to split constraints and how to shift values
   */
   nb_leaves = compute_nb_leaves_from_level( depth + 1, topology );
 
@@ -250,8 +511,6 @@ constraint_t *split_constraints (int *constraints, int nb_constraints, int k, tm
      each sub-contraints 'i' contains constraints of value in [i*nb_leaves,(i+1)*nb_leaves[
    */
   start = 0;
-
-
 
   for( i = 0; i < k; i++ ){
     /*returns the indice in constraints that contains the smallest value not copied
@@ -294,7 +553,7 @@ com_mat_t **split_com_mat(com_mat_t *com_mat, int n, int k, int *partition)
     printf("Partition: "); print_1D_tab(partition,n);
     display_tab(com_mat->comm,com_mat->n);
     printf("m=%d,n=%d,k=%d\n",m,n,k);
-    printf("perm=%p\n", (void*)perm);
+    printf("perm=%p\n", (void *)perm);
   }
 
   perm  = (int*)MALLOC(sizeof(int)*m);
@@ -438,6 +697,26 @@ static void check_com_mat(com_mat_t *com_mat){
 }
 #endif
 
+static void print_tab(int n){
+  for(;n;n--)
+    fprintf(stdout,"\t");
+}
+
+static void display_partition(int *partition, int *local_vertices, int n, int depth, int k){
+  int cur_part, j;
+  print_tab(depth);fprintf(stdout,"Partitions at depth=%d\n",depth);
+  for( cur_part = 0; cur_part < k ; cur_part ++){
+    print_tab(depth); fprintf(stdout,"%d :",cur_part);
+    for( j = 0; j < n; j ++){
+      if ( partition[j] == cur_part ){
+	if(local_vertices[j]!=-1)
+	  fprintf(stdout,"%d ",local_vertices[j]);
+      }
+    }
+    fprintf(stdout,"\n");
+  }	
+}
+
 void kpartition_build_level_topology(tm_tree_t *cur_node, com_mat_t *com_mat, int N, int depth,
 				     tm_topology_t *topology, int *local_vertices,
 				     int *constraints, int nb_constraints,
@@ -471,6 +750,10 @@ void kpartition_build_level_topology(tm_tree_t *cur_node, com_mat_t *com_mat, in
   /* partition the com_matrix in k partitions*/
   partition = kpartition(k, com_mat, N, constraints, nb_constraints);
 
+  if(verbose_level>=INFO)
+    display_partition(partition, local_vertices, N, depth, k);
+
+  /* exit(-1); */
   /* split the communication matrix in k parts according to the partition just found above */
   tab_com_mat = split_com_mat( com_mat, N, k, partition);
 
@@ -558,7 +841,7 @@ tm_tree_t *kpartition_build_tree_from_topology(tm_topology_t *topology,double **
      the value of this array will be used to number the leaves of the tm_tree_t tree
      that start at "root"
 
-     min(N,nb_contraints) is used to takle the case where thre is less processes than constraints
+     min(N,nb_contraints) is used to tackle the case where there is less processes than constraints
 
    */
 
