@@ -61,7 +61,7 @@ BEGIN_C_DECLS
  *
  * BEWARE: This constant should reflect whatever the OMPI-layer needs.
  */
-#define OPAL_DATATYPE_MAX_SUPPORTED  49
+#define OPAL_DATATYPE_MAX_SUPPORTED  50
 
 
 /* flags for the datatypes. */

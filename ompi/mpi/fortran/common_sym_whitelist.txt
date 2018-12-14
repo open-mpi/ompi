@@ -25,6 +25,7 @@ ompi_f08_mpi_comm_world
 ompi_f08_mpi_complex
 ompi_f08_mpi_complex16
 ompi_f08_mpi_complex32
+ompi_f08_mpi_complex4
 ompi_f08_mpi_complex8
 ompi_f08_mpi_cxx_bool
 ompi_f08_mpi_cxx_complex

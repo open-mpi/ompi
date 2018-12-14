@@ -145,6 +145,12 @@ ompi_predefined_datatype_t ompi_mpi_ldblcplex =      OMPI_DATATYPE_INIT_PREDEFIN
 ompi_predefined_datatype_t ompi_mpi_ldblcplex =      OMPI_DATATYPE_INIT_UNAVAILABLE (LONG_DOUBLE_COMPLEX, OMPI_DATATYPE_FLAG_DATA_FORTRAN | OMPI_DATATYPE_FLAG_DATA_COMPLEX );
 #endif
 
+#if OMPI_HAVE_FORTRAN_COMPLEX4
+ompi_predefined_datatype_t ompi_mpi_complex4 =       OMPI_DATATYPE_INIT_PREDEFINED_BASIC_TYPE (OMPI_KIND_FORTRAN_COMPLEX4, COMPLEX4, OMPI_DATATYPE_FLAG_DATA_FORTRAN | OMPI_DATATYPE_FLAG_DATA_COMPLEX );
+#else
+ompi_predefined_datatype_t ompi_mpi_complex4 =       OMPI_DATATYPE_INIT_UNAVAILABLE (COMPLEX4, OMPI_DATATYPE_FLAG_DATA_FORTRAN | OMPI_DATATYPE_FLAG_DATA_COMPLEX);
+#endif
+
 #if OMPI_HAVE_FORTRAN_COMPLEX8
 ompi_predefined_datatype_t ompi_mpi_complex8 =       OMPI_DATATYPE_INIT_PREDEFINED_BASIC_TYPE (OMPI_KIND_FORTRAN_COMPLEX8, COMPLEX8, OMPI_DATATYPE_FLAG_DATA_FORTRAN | OMPI_DATATYPE_FLAG_DATA_COMPLEX );
 #else
@@ -315,6 +321,7 @@ const ompi_datatype_t* ompi_datatype_basicDatatypes[OMPI_DATATYPE_MPI_MAX_PREDEF
     [OMPI_DATATYPE_MPI_FLOAT] = &ompi_mpi_float.dt,
     [OMPI_DATATYPE_MPI_DOUBLE] = &ompi_mpi_double.dt,
     [OMPI_DATATYPE_MPI_LONG_DOUBLE] = &ompi_mpi_long_double.dt,
+    [OMPI_DATATYPE_MPI_COMPLEX4] = &ompi_mpi_complex4.dt,
     [OMPI_DATATYPE_MPI_COMPLEX8] = &ompi_mpi_complex8.dt,
     [OMPI_DATATYPE_MPI_COMPLEX16] = &ompi_mpi_complex16.dt,
     [OMPI_DATATYPE_MPI_COMPLEX32] = &ompi_mpi_complex32.dt,
@@ -633,12 +640,15 @@ int32_t ompi_datatype_init( void )
     /* MPI 3.0 types */
     MOOG(count, 72);
 
+    /* Datatype missing in old Open MPI */
+    MOOG(complex4, 73);
+
     /* Datatypes proposed to the MPI Forum in June 2017 for proposal in
      * the MPI 4.0 standard. As of February 2019, it is not accepted yet.
      * See https://github.com/mpi-forum/mpi-issues/issues/65 */
-    MOOG(short_float, 73);
-    MOOG(c_short_float_complex, 74);
-    MOOG(cxx_sfltcplex, 75);
+    MOOG(short_float, 74);
+    MOOG(c_short_float_complex, 75);
+    MOOG(cxx_sfltcplex, 76);
 
     /**
      * Now make sure all non-contiguous types are marked as such.

@@ -495,6 +495,8 @@ void ompi_info_do_config(bool want_all)
             opal_info_out("Fort have integer16", "compiler:fortran:have:integer16",
                           OMPI_HAVE_FORTRAN_INTEGER16 ? "yes" : "no");
 
+            opal_info_out("Fort have real2", "compiler:fortran:have:real2",
+                          OMPI_HAVE_FORTRAN_REAL2 ? "yes" : "no");
             opal_info_out("Fort have real4", "compiler:fortran:have:real4",
                           OMPI_HAVE_FORTRAN_REAL4 ? "yes" : "no");
             opal_info_out("Fort have real8", "compiler:fortran:have:real8",
@@ -502,6 +504,8 @@ void ompi_info_do_config(bool want_all)
             opal_info_out("Fort have real16", "compiler:fortran:have:real16",
                           OMPI_HAVE_FORTRAN_REAL16 && OMPI_REAL16_MATCHES_C ? "yes" : "no");
 
+            opal_info_out("Fort have complex4", "compiler:fortran:have:complex4",
+                          OMPI_HAVE_FORTRAN_COMPLEX4 ? "yes" : "no");
             opal_info_out("Fort have complex8", "compiler:fortran:have:complex8",
                           OMPI_HAVE_FORTRAN_COMPLEX8 ? "yes" : "no");
             opal_info_out("Fort have complex16", "compiler:fortran:have:complex16",
@@ -522,6 +526,8 @@ void ompi_info_do_config(bool want_all)
 
             opal_info_out_int("Fort real size", "compiler:fortran:sizeof:real",
                           OMPI_SIZEOF_FORTRAN_REAL);
+            opal_info_out_int("Fort real2 size", "compiler:fortran:sizeof:real2",
+                          OMPI_HAVE_FORTRAN_REAL2 ? OMPI_SIZEOF_FORTRAN_REAL2 : -1);
             opal_info_out_int("Fort real4 size", "compiler:fortran:sizeof:real4",
                           OMPI_HAVE_FORTRAN_REAL4 ? OMPI_SIZEOF_FORTRAN_REAL4 : -1);
             opal_info_out_int("Fort real8 size", "compiler:fortran:sizeof:real8",
@@ -538,6 +544,8 @@ void ompi_info_do_config(bool want_all)
             opal_info_out_int("Fort dbl cplx size",
                           "compiler:fortran:sizeof:double_complex",
                           OMPI_HAVE_FORTRAN_DOUBLE_COMPLEX ? OMPI_SIZEOF_FORTRAN_DOUBLE_COMPLEX : -1);
+            opal_info_out_int("Fort cplx4 size", "compiler:fortran:sizeof:complex4",
+                          OMPI_HAVE_FORTRAN_COMPLEX4 ? OMPI_SIZEOF_FORTRAN_COMPLEX4 : -1);
             opal_info_out_int("Fort cplx8 size", "compiler:fortran:sizeof:complex8",
                           OMPI_HAVE_FORTRAN_COMPLEX8 ? OMPI_SIZEOF_FORTRAN_COMPLEX8 : -1);
             opal_info_out_int("Fort cplx16 size", "compiler:fortran:sizeof:complex16",
@@ -560,6 +568,8 @@ void ompi_info_do_config(bool want_all)
 
             opal_info_out_int("Fort real align", "compiler:fortran:align:real",
                           OMPI_ALIGNMENT_FORTRAN_REAL);
+            opal_info_out_int("Fort real2 align", "compiler:fortran:align:real2",
+                          OMPI_HAVE_FORTRAN_REAL2 ? OMPI_ALIGNMENT_FORTRAN_REAL2 : -1);
             opal_info_out_int("Fort real4 align", "compiler:fortran:align:real4",
                           OMPI_HAVE_FORTRAN_REAL4 ? OMPI_ALIGNMENT_FORTRAN_REAL4 : -1);
             opal_info_out_int("Fort real8 align", "compiler:fortran:align:real8",
@@ -576,6 +586,8 @@ void ompi_info_do_config(bool want_all)
             opal_info_out_int("Fort dbl cplx align",
                           "compiler:fortran:align:double_complex",
                           OMPI_HAVE_FORTRAN_DOUBLE_COMPLEX ? OMPI_ALIGNMENT_FORTRAN_DOUBLE_COMPLEX : -1);
+            opal_info_out_int("Fort cplx4 align", "compiler:fortran:align:complex4",
+                          OMPI_HAVE_FORTRAN_COMPLEX4 ? OMPI_ALIGNMENT_FORTRAN_COMPLEX4 : -1);
             opal_info_out_int("Fort cplx8 align", "compiler:fortran:align:complex8",
                           OMPI_HAVE_FORTRAN_COMPLEX8 ? OMPI_ALIGNMENT_FORTRAN_COMPLEX8 : -1);
             opal_info_out_int("Fort cplx16 align", "compiler:fortran:align:complex16",

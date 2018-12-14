@@ -129,9 +129,13 @@ AC_DEFUN([OMPI_FORTRAN_CHECK], [
             long*double)          ofc_type_kind=C_LONG_DOUBLE         ;;
             long*long)            ofc_type_kind=C_LONG_LONG           ;;
             short)                ofc_type_kind=C_SHORT               ;;
+            short*float)          ofc_type_kind=C_SHORT_FLOAT         ;;
+            short*float*_Complex) ofc_type_kind=C_SHORT_FLOAT_COMPLEX ;;
             float*_Complex)       ofc_type_kind=C_FLOAT_COMPLEX       ;;
             double*_Complex)      ofc_type_kind=C_DOUBLE_COMPLEX      ;;
             long*double*_Complex) ofc_type_kind=C_LONG_DOUBLE_COMPLEX ;;
+            opal_short_float_t)   ofc_type_kind=C_SHORT_FLOAT         ;;
+            opal_short_float_complex_t) ofc_type_kind=C_SHORT_FLOAT_COMPLEX ;;
             *)
                 # Skip types like "DOUBLE PRECISION"
                 ;;
@@ -142,8 +146,9 @@ AC_DEFUN([OMPI_FORTRAN_CHECK], [
 
             # See if the value is -1.  If so, then just say we don't
             # have a match.  If the compiler doesn't support
-            # ISO_C_BINDING, then we'll just fall back to a default
-            # kind and hope for the best.  :-\
+            # ISO_C_BINDING, C_SHORT_FLOAT, or C_SHORT_FLOAT_COMPLEX,
+            # then we'll just fall back to a default kind and hope
+            # for the best.  :-\
             OMPI_FORTRAN_GET_KIND_VALUE([$ofc_type_kind], 4, [ofc_type_kind_value])
             AS_IF([test $ofc_type_kind_value -le 0],
                   [ofc_have_type=0

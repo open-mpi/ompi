@@ -18,6 +18,7 @@ dnl Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
 dnl Copyright (c) 2014-2017 Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
 dnl Copyright (c) 2016      IBM Corporation.  All rights reserved.
+dnl Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -168,15 +169,20 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
                    [int, int64_t, long long, long], [16], [yes])
 
     OMPI_FORTRAN_CHECK([REAL], [yes],
-                   [float, double, long double], [-1], [yes])
+                   [short float, float, double, long double, opal_short_float_t],
+                   [-1], [yes])
     OMPI_FORTRAN_CHECK([REAL*2], [no],
-                   [float, double, long double], [2], [yes])
+                   [short float, float, double, long double, opal_short_float_t],
+                   [2], [yes])
     OMPI_FORTRAN_CHECK([REAL*4], [no],
-                   [float, double, long double], [4], [yes])
+                   [short float, float, double, long double, opal_short_float_t],
+                   [4], [yes])
     OMPI_FORTRAN_CHECK([REAL*8], [no],
-                   [float, double, long double], [8], [yes])
+                   [short float, float, double, long double, opal_short_float_t],
+                   [8], [yes])
     OMPI_FORTRAN_CHECK([REAL*16], [no],
-                   [float, double, long double], [16], [yes])
+                   [short float, float, double, long double, opal_short_float_t],
+                   [16], [yes])
 
     # In some compilers, the bit representation of REAL*16 is not the same
     # as the C counterpart that we found.  If this is the case, then we
@@ -184,9 +190,12 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
     OMPI_FORTRAN_CHECK_REAL16_C_EQUIV
 
     OMPI_FORTRAN_CHECK([DOUBLE PRECISION], [yes],
-                   [float, double, long double], [-1], [yes])
+                   [short float, float, double, long double, opal_short_float_t],
+                   [-1], [yes])
 
-    OMPI_FORTRAN_CHECK([COMPLEX], [yes], [float _Complex, double _Complex], [-1], [no])
+    OMPI_FORTRAN_CHECK([COMPLEX], [yes],
+                   [short float _Complex, float _Complex, double _Complex, long double _Complex, opal_short_float_complex_t],
+                   [-1], [no])
 
     # The complex*N tests are a bit different (note: the complex tests are
     # the same as all the rest, because complex is a composite of two
@@ -199,21 +208,23 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
     #    have a back-end C type for it)
     # b) compiler supports complex*N
 
-    OMPI_FORTRAN_CHECK([COMPLEX*4], [no], [float _Complex], [4], [no])
+    OMPI_FORTRAN_CHECK([COMPLEX*4], [no],
+                   [short float _Complex, float _Complex, double _Complex, long double _Complex, opal_short_float_complex_t],
+                   [4], [no])
     OMPI_FORTRAN_CHECK([COMPLEX*8], [no],
-                   [float _Complex, double _Complex, long double _Complex],
+                   [short float _Complex, float _Complex, double _Complex, long double _Complex, opal_short_float_complex_t],
                    [8], [no])
     OMPI_FORTRAN_CHECK([COMPLEX*16], [no],
-                   [float _Complex, double _Complex, long double _Complex],
+                   [short float _Complex, float _Complex, double _Complex, long double _Complex, opal_short_float_complex_t],
                    [16], [no])
     OMPI_FORTRAN_CHECK([COMPLEX*32], [no],
-                   [float _Complex, double _Complex, long double _Complex],
+                   [short float _Complex, float _Complex, double _Complex, long double _Complex, opal_short_float_complex_t],
                    [32], [no])
     # Double precision complex types are not standard, but many
     # compilers support it.  Code should be wrapped with #ifdef
     # OMPI_HAVE_FORTRAN_DOUBLE_COMPLEX
     OMPI_FORTRAN_CHECK([DOUBLE COMPLEX], [no],
-                   [float _Complex, double _Complex, long double _Complex],
+                   [short float _Complex, float _Complex, double _Complex, long double _Complex, opal_short_float_complex_t],
                    [-1], [no])
 
     # Regardless of whether we have fortran bindings, or even a

@@ -3,7 +3,7 @@
 # Copyright (c) 2011-2014 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2016-2017 Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
-# Copyright (c) 2016      FUJITSU LIMITED.  All rights reserved.
+# Copyright (c) 2016-2018 FUJITSU LIMITED.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -195,6 +195,7 @@ $handles->{MPI_C_FLOAT_COMPLEX} = $handles->{MPI_C_COMPLEX};
 $handles->{MPI_C_DOUBLE_COMPLEX} = 70;
 $handles->{MPI_C_LONG_DOUBLE_COMPLEX} = 71;
 $handles->{MPI_COUNT} = 72;
+$handles->{MPI_COMPLEX4} = 73;
 
 $handles->{MPI_MESSAGE_NO_PROC} = 1;
 
