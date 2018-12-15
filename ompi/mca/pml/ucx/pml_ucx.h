@@ -1,5 +1,6 @@
 /*
  * Copyright (C) Mellanox Technologies Ltd. 2001-2011.  ALL RIGHTS RESERVED.
+ * Copyright (C) 2020 Huawei Technologies Co., Ltd.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -18,10 +19,7 @@
 #include "ompi/datatype/ompi_datatype_internal.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/request/request.h"
-#include "opal/mca/common/ucx/common_ucx.h"
-
-#include <ucp/api/ucp.h>
-#include "pml_ucx_freelist.h"
+#include "ompi/mca/common/ucx/common_ucx.h"
 
 #define PML_UCX_ASSERT  MCA_COMMON_UCX_ASSERT
 #define PML_UCX_ERROR   MCA_COMMON_UCX_ERROR
@@ -30,7 +28,6 @@
 
 typedef struct mca_pml_ucx_module           mca_pml_ucx_module_t;
 typedef struct pml_ucx_persistent_request   mca_pml_ucx_persistent_request_t;
-typedef struct pml_ucx_convertor            mca_pml_ucx_convertor_t;
 
 /*
  * TODO version check
@@ -39,34 +36,15 @@ typedef struct pml_ucx_convertor            mca_pml_ucx_convertor_t;
 struct mca_pml_ucx_module {
     mca_pml_base_module_t     super;
 
-    /* UCX global objects */
-    ucp_context_h             ucp_context;
-    ucp_worker_h              ucp_worker;
-
-    /* Datatypes */
-    int                       datatype_attr_keyval;
-    ucp_datatype_t            predefined_types[OMPI_DATATYPE_MPI_MAX_PREDEFINED];
-
     /* Requests */
-    mca_pml_ucx_freelist_t    persistent_reqs;
-    ompi_request_t            completed_send_req;
     size_t                    request_size;
     int                       num_disconnect;
 
-    /* Converters pool */
-    mca_pml_ucx_freelist_t    convs;
-
     int                       priority;
-    bool                      cuda_initialized;
 };
 
 extern mca_pml_base_component_2_0_0_t mca_pml_ucx_component;
 extern mca_pml_ucx_module_t ompi_pml_ucx;
-
-int mca_pml_ucx_open(void);
-int mca_pml_ucx_close(void);
-int mca_pml_ucx_init(int enable_mpi_threads);
-int mca_pml_ucx_cleanup(void);
 
 int mca_pml_ucx_add_procs(struct ompi_proc_t **procs, size_t nprocs);
 int mca_pml_ucx_del_procs(struct ompi_proc_t **procs, size_t nprocs);
@@ -125,9 +103,6 @@ int mca_pml_ucx_mrecv(void *buf, size_t count, ompi_datatype_t *datatype,
                         struct ompi_message_t **message,
                         ompi_status_public_t* status);
 
-int mca_pml_ucx_start(size_t count, ompi_request_t** requests);
-
 int mca_pml_ucx_dump(struct ompi_communicator_t* comm, int verbose);
-
 
 #endif /* PML_UCX_H_ */

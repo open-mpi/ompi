@@ -6,6 +6,8 @@
 # Copyright (c) 2016      IBM Corporation.  All rights reserved.
 # Copyright (c) 2017      Los Alamos National Security, LLC.  All rights
 #                         reserved.
+# Copyright (c) 2020      Huawei Technologies Co., Ltd.  All rights
+#                         reserved.
 
 # This is the VERSION file for Open MPI, describing the precise
 # version of Open MPI in this distribution.  The various components of
@@ -97,6 +99,7 @@ libompitrace_so_version=0:0:0
 # OMPI layer
 libmca_ompi_common_ompio_so_version=0:0:0
 libmca_ompi_common_monitoring_so_version=0:0:0
+libmca_ompi_common_ucx_so_version=0:0:0
 
 # OPAL layer
 libmca_opal_common_cuda_so_version=0:0:0

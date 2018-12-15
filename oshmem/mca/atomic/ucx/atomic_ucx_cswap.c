@@ -65,6 +65,7 @@ int mca_atomic_ucx_cswap(shmem_ctx_t ctx,
     }
 
     return opal_common_ucx_wait_request(status_ptr, ucx_ctx->ucp_worker[0],
+                                        OPAL_COMMON_UCX_REQUEST_TYPE_UCP,
 #if HAVE_DECL_UCP_ATOMIC_OP_NBX
                                         "ucp_atomic_op_nbx");
 #else
