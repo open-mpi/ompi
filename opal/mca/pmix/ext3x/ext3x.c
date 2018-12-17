@@ -43,7 +43,7 @@
 #include "opal/util/show_help.h"
 #include "opal/util/string_copy.h"
 
-#include "pmix3x.h"
+#include "ext3x.h"
 #include "opal/mca/pmix/base/base.h"
 #include "opal/mca/pmix/pmix_types.h"
 
@@ -55,8 +55,8 @@
 /* These are functions used by both client and server to
  * access common functions in the embedded PMIx library */
 static bool legacy_get(void);
-static const char *pmix3x_get_nspace(opal_jobid_t jobid);
-static void pmix3x_register_jobid(opal_jobid_t jobid, const char *nspace);
+static const char *ext3x_get_nspace(opal_jobid_t jobid);
+static void ext3x_register_jobid(opal_jobid_t jobid, const char *nspace);
 static void register_handler(opal_list_t *event_codes,
                              opal_list_t *info,
                              opal_pmix_notification_fn_t evhandler,
@@ -70,71 +70,71 @@ static int notify_event(int status,
                         opal_pmix_data_range_t range,
                         opal_list_t *info,
                         opal_pmix_op_cbfunc_t cbfunc, void *cbdata);
-static void pmix3x_query(opal_list_t *queries,
+static void ext3x_query(opal_list_t *queries,
                          opal_pmix_info_cbfunc_t cbfunc, void *cbdata);
-static void pmix3x_log(opal_list_t *info,
+static void ext3x_log(opal_list_t *info,
                        opal_pmix_op_cbfunc_t cbfunc, void *cbdata);
 
-static int pmix3x_register_cleanup(char *path, bool directory, bool ignore, bool jobscope);
+static int ext3x_register_cleanup(char *path, bool directory, bool ignore, bool jobscope);
 
-const opal_pmix_base_module_t opal_pmix_pmix3x_module = {
+const opal_pmix_base_module_t opal_pmix_ext3x_module = {
     .legacy_get = legacy_get,
     /* client APIs */
-    .init = pmix3x_client_init,
-    .finalize = pmix3x_client_finalize,
-    .initialized = pmix3x_initialized,
-    .abort = pmix3x_abort,
-    .commit = pmix3x_commit,
-    .fence = pmix3x_fence,
-    .fence_nb = pmix3x_fencenb,
-    .put = pmix3x_put,
-    .get = pmix3x_get,
-    .get_nb = pmix3x_getnb,
-    .publish = pmix3x_publish,
-    .publish_nb = pmix3x_publishnb,
-    .lookup = pmix3x_lookup,
-    .lookup_nb = pmix3x_lookupnb,
-    .unpublish = pmix3x_unpublish,
-    .unpublish_nb = pmix3x_unpublishnb,
-    .spawn = pmix3x_spawn,
-    .spawn_nb = pmix3x_spawnnb,
-    .connect = pmix3x_connect,
-    .connect_nb = pmix3x_connectnb,
-    .disconnect = pmix3x_disconnect,
-    .disconnect_nb = pmix3x_disconnectnb,
-    .resolve_peers = pmix3x_resolve_peers,
-    .resolve_nodes = pmix3x_resolve_nodes,
-    .query = pmix3x_query,
-    .log = pmix3x_log,
-    .allocate = pmix3x_allocate,
-    .job_control = pmix3x_job_control,
-    .register_cleanup = pmix3x_register_cleanup,
+    .init = ext3x_client_init,
+    .finalize = ext3x_client_finalize,
+    .initialized = ext3x_initialized,
+    .abort = ext3x_abort,
+    .commit = ext3x_commit,
+    .fence = ext3x_fence,
+    .fence_nb = ext3x_fencenb,
+    .put = ext3x_put,
+    .get = ext3x_get,
+    .get_nb = ext3x_getnb,
+    .publish = ext3x_publish,
+    .publish_nb = ext3x_publishnb,
+    .lookup = ext3x_lookup,
+    .lookup_nb = ext3x_lookupnb,
+    .unpublish = ext3x_unpublish,
+    .unpublish_nb = ext3x_unpublishnb,
+    .spawn = ext3x_spawn,
+    .spawn_nb = ext3x_spawnnb,
+    .connect = ext3x_connect,
+    .connect_nb = ext3x_connectnb,
+    .disconnect = ext3x_disconnect,
+    .disconnect_nb = ext3x_disconnectnb,
+    .resolve_peers = ext3x_resolve_peers,
+    .resolve_nodes = ext3x_resolve_nodes,
+    .query = ext3x_query,
+    .log = ext3x_log,
+    .allocate = ext3x_allocate,
+    .job_control = ext3x_job_control,
+    .register_cleanup = ext3x_register_cleanup,
     /* server APIs */
-    .server_init = pmix3x_server_init,
-    .server_finalize = pmix3x_server_finalize,
-    .generate_regex = pmix3x_server_gen_regex,
-    .generate_ppn = pmix3x_server_gen_ppn,
-    .server_register_nspace = pmix3x_server_register_nspace,
-    .server_deregister_nspace = pmix3x_server_deregister_nspace,
-    .server_register_client = pmix3x_server_register_client,
-    .server_deregister_client = pmix3x_server_deregister_client,
-    .server_setup_fork = pmix3x_server_setup_fork,
-    .server_dmodex_request = pmix3x_server_dmodex,
-    .server_notify_event = pmix3x_server_notify_event,
-    .server_iof_push = pmix3x_server_iof_push,
-    .server_setup_application = pmix3x_server_setup_application,
-    .server_setup_local_support = pmix3x_server_setup_local_support,
+    .server_init = ext3x_server_init,
+    .server_finalize = ext3x_server_finalize,
+    .generate_regex = ext3x_server_gen_regex,
+    .generate_ppn = ext3x_server_gen_ppn,
+    .server_register_nspace = ext3x_server_register_nspace,
+    .server_deregister_nspace = ext3x_server_deregister_nspace,
+    .server_register_client = ext3x_server_register_client,
+    .server_deregister_client = ext3x_server_deregister_client,
+    .server_setup_fork = ext3x_server_setup_fork,
+    .server_dmodex_request = ext3x_server_dmodex,
+    .server_notify_event = ext3x_server_notify_event,
+    .server_iof_push = ext3x_server_iof_push,
+    .server_setup_application = ext3x_server_setup_application,
+    .server_setup_local_support = ext3x_server_setup_local_support,
     /* tool APIs */
-    .tool_init = pmix3x_tool_init,
-    .tool_finalize = pmix3x_tool_fini,
+    .tool_init = ext3x_tool_init,
+    .tool_finalize = ext3x_tool_fini,
     /* utility APIs */
     .get_version = PMIx_Get_version,
     .register_evhandler = register_handler,
     .deregister_evhandler = deregister_handler,
     .notify_event = notify_event,
-    .store_local = pmix3x_store_local,
-    .get_nspace = pmix3x_get_nspace,
-    .register_jobid = pmix3x_register_jobid
+    .store_local = ext3x_store_local,
+    .get_nspace = ext3x_get_nspace,
+    .register_jobid = ext3x_register_jobid
 };
 
 static bool legacy_get(void)
@@ -144,24 +144,24 @@ static bool legacy_get(void)
 
 static void opcbfunc(pmix_status_t status, void *cbdata)
 {
-    pmix3x_opcaddy_t *op = (pmix3x_opcaddy_t*)cbdata;
+    ext3x_opcaddy_t *op = (ext3x_opcaddy_t*)cbdata;
 
     OPAL_ACQUIRE_OBJECT(op);
 
     if (NULL != op->opcbfunc) {
-        op->opcbfunc(pmix3x_convert_rc(status), op->cbdata);
+        op->opcbfunc(ext3x_convert_rc(status), op->cbdata);
     }
     OBJ_RELEASE(op);
 }
 
 
-static const char *pmix3x_get_nspace(opal_jobid_t jobid)
+static const char *ext3x_get_nspace(opal_jobid_t jobid)
 {
-    opal_pmix3x_jobid_trkr_t *jptr;
+    opal_ext3x_jobid_trkr_t *jptr;
 
     OPAL_PMIX_ACQUIRE_THREAD(&opal_pmix_base.lock);
 
-    OPAL_LIST_FOREACH(jptr, &mca_pmix_pmix3x_component.jobids, opal_pmix3x_jobid_trkr_t) {
+    OPAL_LIST_FOREACH(jptr, &mca_pmix_ext3x_component.jobids, opal_ext3x_jobid_trkr_t) {
         if (jptr->jobid == jobid) {
             OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
             return jptr->nspace;
@@ -171,29 +171,29 @@ static const char *pmix3x_get_nspace(opal_jobid_t jobid)
     return NULL;
 }
 
-static void pmix3x_register_jobid(opal_jobid_t jobid, const char *nspace)
+static void ext3x_register_jobid(opal_jobid_t jobid, const char *nspace)
 {
-    opal_pmix3x_jobid_trkr_t *jptr;
+    opal_ext3x_jobid_trkr_t *jptr;
 
     OPAL_PMIX_ACQUIRE_THREAD(&opal_pmix_base.lock);
 
     /* if we don't already have it, add this to our jobid tracker */
-    OPAL_LIST_FOREACH(jptr, &mca_pmix_pmix3x_component.jobids, opal_pmix3x_jobid_trkr_t) {
+    OPAL_LIST_FOREACH(jptr, &mca_pmix_ext3x_component.jobids, opal_ext3x_jobid_trkr_t) {
         if (jptr->jobid == jobid) {
             OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
             return;
         }
     }
-    jptr = OBJ_NEW(opal_pmix3x_jobid_trkr_t);
+    jptr = OBJ_NEW(opal_ext3x_jobid_trkr_t);
     (void)opal_string_copy(jptr->nspace, nspace, PMIX_MAX_NSLEN);
     jptr->jobid = jobid;
-    opal_list_append(&mca_pmix_pmix3x_component.jobids, &jptr->super);
+    opal_list_append(&mca_pmix_ext3x_component.jobids, &jptr->super);
     OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
 }
 
 static void event_hdlr_complete(pmix_status_t status, void *cbdata)
 {
-    pmix3x_opcaddy_t *op = (pmix3x_opcaddy_t*)cbdata;
+    ext3x_opcaddy_t *op = (ext3x_opcaddy_t*)cbdata;
 
     OBJ_RELEASE(op);
 }
@@ -202,15 +202,15 @@ static void return_local_event_hdlr(int status, opal_list_t *results,
                                     opal_pmix_op_cbfunc_t cbfunc, void *thiscbdata,
                                     void *notification_cbdata)
 {
-    pmix3x_threadshift_t *cd = (pmix3x_threadshift_t*)notification_cbdata;
-    pmix3x_opcaddy_t *op;
+    ext3x_threadshift_t *cd = (ext3x_threadshift_t*)notification_cbdata;
+    ext3x_opcaddy_t *op;
     opal_value_t *kv;
     pmix_status_t pstatus;
     size_t n;
 
     OPAL_ACQUIRE_OBJECT(cd);
     if (NULL != cd->pmixcbfunc) {
-        op = OBJ_NEW(pmix3x_opcaddy_t);
+        op = OBJ_NEW(ext3x_opcaddy_t);
 
         if (NULL != results && 0 < (op->ninfo = opal_list_get_size(results))) {
             /* convert the list of results to an array of info */
@@ -218,12 +218,12 @@ static void return_local_event_hdlr(int status, opal_list_t *results,
             n=0;
             OPAL_LIST_FOREACH(kv, cd->info, opal_value_t) {
                 (void)opal_string_copy(op->info[n].key, kv->key, PMIX_MAX_KEYLEN);
-                pmix3x_value_load(&op->info[n].value, kv);
+                ext3x_value_load(&op->info[n].value, kv);
                 ++n;
             }
         }
         /* convert the status */
-        pstatus = pmix3x_convert_opalrc(status);
+        pstatus = ext3x_convert_opalrc(status);
         /* call the library's callback function */
         cd->pmixcbfunc(pstatus, op->info, op->ninfo, event_hdlr_complete, op, cd->cbdata);
     }
@@ -243,13 +243,13 @@ static void return_local_event_hdlr(int status, opal_list_t *results,
 /* process the notification */
 static void process_event(int sd, short args, void *cbdata)
 {
-    pmix3x_threadshift_t *cd = (pmix3x_threadshift_t*)cbdata;
-    opal_pmix3x_event_t *event;
+    ext3x_threadshift_t *cd = (ext3x_threadshift_t*)cbdata;
+    opal_ext3x_event_t *event;
 
     OPAL_PMIX_ACQUIRE_THREAD(&opal_pmix_base.lock);
 
     /* cycle thru the registrations */
-    OPAL_LIST_FOREACH(event, &mca_pmix_pmix3x_component.events, opal_pmix3x_event_t) {
+    OPAL_LIST_FOREACH(event, &mca_pmix_ext3x_component.events, opal_ext3x_event_t) {
         if (cd->id == event->index) {
             /* found it - invoke the handler, pointing its
              * callback function to our callback function */
@@ -285,14 +285,14 @@ static void process_event(int sd, short args, void *cbdata)
  * by mpirun), directly from a RM (when direct launched), or
  * from another process (via the local daemon).
  * The call will occur in the PMIx event base */
-void pmix3x_event_hdlr(size_t evhdlr_registration_id,
+void ext3x_event_hdlr(size_t evhdlr_registration_id,
                        pmix_status_t status, const pmix_proc_t *source,
                        pmix_info_t info[], size_t ninfo,
                        pmix_info_t results[], size_t nresults,
                        pmix_event_notification_cbfunc_fn_t cbfunc,
                        void *cbdata)
 {
-    pmix3x_threadshift_t *cd;
+    ext3x_threadshift_t *cd;
     int rc;
     opal_value_t *iptr;
     size_t n;
@@ -304,13 +304,13 @@ void pmix3x_event_hdlr(size_t evhdlr_registration_id,
 
     OPAL_PMIX_ACQUIRE_THREAD(&opal_pmix_base.lock);
 
-    cd = OBJ_NEW(pmix3x_threadshift_t);
+    cd = OBJ_NEW(ext3x_threadshift_t);
     cd->id = evhdlr_registration_id;
     cd->pmixcbfunc = cbfunc;
     cd->cbdata = cbdata;
 
     /* convert the incoming status */
-    cd->status = pmix3x_convert_rc(status);
+    cd->status = ext3x_convert_rc(status);
     opal_output_verbose(2, opal_pmix_base_framework.framework_output,
                         "%s CONVERTED STATUS %d TO STATUS %d",
                         OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), status, cd->status);
@@ -324,7 +324,7 @@ void pmix3x_event_hdlr(size_t evhdlr_registration_id,
             OPAL_ERROR_LOG(rc);
             cd->pname.jobid = OPAL_NAME_INVALID->jobid;
         }
-        cd->pname.vpid = pmix3x_convert_rank(source->rank);
+        cd->pname.vpid = ext3x_convert_rank(source->rank);
     }
 
     /* convert the array of info */
@@ -333,7 +333,7 @@ void pmix3x_event_hdlr(size_t evhdlr_registration_id,
         for (n=0; n < ninfo; n++) {
             iptr = OBJ_NEW(opal_value_t);
             iptr->key = strdup(info[n].key);
-            if (OPAL_SUCCESS != (rc = pmix3x_value_unload(iptr, &info[n].value))) {
+            if (OPAL_SUCCESS != (rc = ext3x_value_unload(iptr, &info[n].value))) {
                 OPAL_ERROR_LOG(rc);
                 OBJ_RELEASE(iptr);
                 continue;
@@ -347,7 +347,7 @@ void pmix3x_event_hdlr(size_t evhdlr_registration_id,
         for (n=0; n < nresults; n++) {
             iptr = OBJ_NEW(opal_value_t);
             iptr->key = strdup(results[n].key);
-            if (OPAL_SUCCESS != (rc = pmix3x_value_unload(iptr, &results[n].value))) {
+            if (OPAL_SUCCESS != (rc = ext3x_value_unload(iptr, &results[n].value))) {
                 OPAL_ERROR_LOG(rc);
                 OBJ_RELEASE(iptr);
                 continue;
@@ -365,7 +365,7 @@ void pmix3x_event_hdlr(size_t evhdlr_registration_id,
     return;
 }
 
-static int pmix3x_register_cleanup(char *path, bool directory, bool ignore, bool jobscope)
+static int ext3x_register_cleanup(char *path, bool directory, bool ignore, bool jobscope)
 {
     pmix_info_t pinfo[3];
     size_t n, ninfo=0;
@@ -395,16 +395,16 @@ static int pmix3x_register_cleanup(char *path, bool directory, bool ignore, bool
         rc = PMIx_Job_control_nb(NULL, 0, pinfo, ninfo, NULL, NULL);
     } else {
         /* only applies to us */
-        rc = PMIx_Job_control_nb(&mca_pmix_pmix3x_component.myproc, 1, pinfo, ninfo, NULL, NULL);
+        rc = PMIx_Job_control_nb(&mca_pmix_ext3x_component.myproc, 1, pinfo, ninfo, NULL, NULL);
     }
-    ret = pmix3x_convert_rc(rc);
+    ret = ext3x_convert_rc(rc);
     for (n=0; n < ninfo; n++) {
         PMIX_INFO_DESTRUCT(&pinfo[n]);
     }
     return ret;
 }
 
-opal_vpid_t pmix3x_convert_rank(pmix_rank_t rank)
+opal_vpid_t ext3x_convert_rank(pmix_rank_t rank)
 {
     switch(rank) {
     case PMIX_RANK_UNDEF:
@@ -416,7 +416,7 @@ opal_vpid_t pmix3x_convert_rank(pmix_rank_t rank)
     }
 }
 
-pmix_rank_t pmix3x_convert_opalrank(opal_vpid_t vpid)
+pmix_rank_t ext3x_convert_opalrank(opal_vpid_t vpid)
 {
     switch(vpid) {
     case OPAL_VPID_WILDCARD:
@@ -428,7 +428,7 @@ pmix_rank_t pmix3x_convert_opalrank(opal_vpid_t vpid)
     }
 }
 
-pmix_status_t pmix3x_convert_opalrc(int rc)
+pmix_status_t ext3x_convert_opalrc(int rc)
 {
     switch (rc) {
     case OPAL_ERR_DEBUGGER_RELEASE:
@@ -516,7 +516,7 @@ pmix_status_t pmix3x_convert_opalrc(int rc)
     }
 }
 
-int pmix3x_convert_rc(pmix_status_t rc)
+int ext3x_convert_rc(pmix_status_t rc)
 {
     switch (rc) {
     case PMIX_ERR_DEBUGGER_RELEASE:
@@ -613,7 +613,7 @@ int pmix3x_convert_rc(pmix_status_t rc)
     }
 }
 
-opal_pmix_scope_t pmix3x_convert_scope(pmix_scope_t scope)
+opal_pmix_scope_t ext3x_convert_scope(pmix_scope_t scope)
 {
     switch(scope) {
         case PMIX_SCOPE_UNDEF:
@@ -629,7 +629,7 @@ opal_pmix_scope_t pmix3x_convert_scope(pmix_scope_t scope)
     }
 }
 
-pmix_scope_t pmix3x_convert_opalscope(opal_pmix_scope_t scope) {
+pmix_scope_t ext3x_convert_opalscope(opal_pmix_scope_t scope) {
     switch(scope) {
     case OPAL_PMIX_LOCAL:
         return PMIX_LOCAL;
@@ -642,7 +642,7 @@ pmix_scope_t pmix3x_convert_opalscope(opal_pmix_scope_t scope) {
     }
 }
 
-pmix_data_range_t pmix3x_convert_opalrange(opal_pmix_data_range_t range) {
+pmix_data_range_t ext3x_convert_opalrange(opal_pmix_data_range_t range) {
     switch(range) {
     case OPAL_PMIX_RANGE_UNDEF:
         return PMIX_RANGE_UNDEF;
@@ -663,7 +663,7 @@ pmix_data_range_t pmix3x_convert_opalrange(opal_pmix_data_range_t range) {
     }
 }
 
-opal_pmix_data_range_t pmix3x_convert_range(pmix_data_range_t range) {
+opal_pmix_data_range_t ext3x_convert_range(pmix_data_range_t range) {
     switch(range) {
     case PMIX_RANGE_UNDEF:
         return OPAL_PMIX_RANGE_UNDEF;
@@ -682,7 +682,7 @@ opal_pmix_data_range_t pmix3x_convert_range(pmix_data_range_t range) {
     }
 }
 
-opal_pmix_persistence_t pmix3x_convert_persist(pmix_persistence_t persist)
+opal_pmix_persistence_t ext3x_convert_persist(pmix_persistence_t persist)
 {
     switch(persist) {
         case PMIX_PERSIST_INDEF:
@@ -700,7 +700,7 @@ opal_pmix_persistence_t pmix3x_convert_persist(pmix_persistence_t persist)
     }
 }
 
-pmix_persistence_t pmix3x_convert_opalpersist(opal_pmix_persistence_t persist)
+pmix_persistence_t ext3x_convert_opalpersist(opal_pmix_persistence_t persist)
 {
     switch(persist) {
         case OPAL_PMIX_PERSIST_INDEF:
@@ -718,13 +718,13 @@ pmix_persistence_t pmix3x_convert_opalpersist(opal_pmix_persistence_t persist)
     }
 }
 
-char* pmix3x_convert_jobid(opal_jobid_t jobid)
+char* ext3x_convert_jobid(opal_jobid_t jobid)
 {
-    opal_pmix3x_jobid_trkr_t *jptr;
+    opal_ext3x_jobid_trkr_t *jptr;
 
     /* look thru our list of jobids and find the
      * corresponding nspace */
-    OPAL_LIST_FOREACH(jptr, &mca_pmix_pmix3x_component.jobids, opal_pmix3x_jobid_trkr_t) {
+    OPAL_LIST_FOREACH(jptr, &mca_pmix_ext3x_component.jobids, opal_ext3x_jobid_trkr_t) {
         if (jptr->jobid == jobid) {
             return jptr->nspace;
         }
@@ -735,10 +735,10 @@ char* pmix3x_convert_jobid(opal_jobid_t jobid)
 /****   RHC: NEED TO ADD SUPPORT FOR NEW PMIX DATA TYPES, INCLUDING
  ****   CONVERSION OF PROC STATES    ****/
 
-void pmix3x_value_load(pmix_value_t *v,
+void ext3x_value_load(pmix_value_t *v,
                        opal_value_t *kv)
 {
-    opal_pmix3x_jobid_trkr_t *job;
+    opal_ext3x_jobid_trkr_t *job;
     bool found;
     opal_list_t *list;
     opal_value_t *val;
@@ -831,11 +831,11 @@ void pmix3x_value_load(pmix_value_t *v,
             break;
         case OPAL_STATUS:
             v->type = PMIX_STATUS;
-            v->data.status = pmix3x_convert_opalrc(kv->data.status);
+            v->data.status = ext3x_convert_opalrc(kv->data.status);
             break;
         case OPAL_VPID:
             v->type = PMIX_PROC_RANK;
-            v->data.rank = pmix3x_convert_opalrank(kv->data.name.vpid);
+            v->data.rank = ext3x_convert_opalrank(kv->data.name.vpid);
             break;
         case OPAL_NAME:
             v->type = PMIX_PROC;
@@ -843,7 +843,7 @@ void pmix3x_value_load(pmix_value_t *v,
             PMIX_PROC_CREATE(v->data.proc, 1);
             /* see if this job is in our list of known nspaces */
             found = false;
-            OPAL_LIST_FOREACH(job, &mca_pmix_pmix3x_component.jobids, opal_pmix3x_jobid_trkr_t) {
+            OPAL_LIST_FOREACH(job, &mca_pmix_ext3x_component.jobids, opal_ext3x_jobid_trkr_t) {
                 if (job->jobid == kv->data.name.jobid) {
                     (void)opal_string_copy(v->data.proc->nspace, job->nspace, PMIX_MAX_NSLEN);
                     found = true;
@@ -853,7 +853,7 @@ void pmix3x_value_load(pmix_value_t *v,
             if (!found) {
                 (void)opal_snprintf_jobid(v->data.proc->nspace, PMIX_MAX_NSLEN, kv->data.name.jobid);
             }
-            v->data.proc->rank = pmix3x_convert_opalrank(kv->data.name.vpid);
+            v->data.proc->rank = ext3x_convert_opalrank(kv->data.name.vpid);
             break;
         case OPAL_BYTE_OBJECT:
             v->type = PMIX_BYTE_OBJECT;
@@ -868,15 +868,15 @@ void pmix3x_value_load(pmix_value_t *v,
             break;
         case OPAL_PERSIST:
             v->type = PMIX_PERSIST;
-            v->data.persist = pmix3x_convert_opalpersist((opal_pmix_persistence_t)kv->data.uint8);
+            v->data.persist = ext3x_convert_opalpersist((opal_pmix_persistence_t)kv->data.uint8);
             break;
         case OPAL_SCOPE:
             v->type = PMIX_SCOPE;
-            v->data.scope = pmix3x_convert_opalscope((opal_pmix_scope_t)kv->data.uint8);
+            v->data.scope = ext3x_convert_opalscope((opal_pmix_scope_t)kv->data.uint8);
             break;
         case OPAL_DATA_RANGE:
             v->type = PMIX_DATA_RANGE;
-            v->data.range = pmix3x_convert_opalrange((opal_pmix_data_range_t)kv->data.uint8);
+            v->data.range = ext3x_convert_opalrange((opal_pmix_data_range_t)kv->data.uint8);
             break;
         case OPAL_PROC_STATE:
             v->type = PMIX_PROC_STATE;
@@ -908,7 +908,7 @@ void pmix3x_value_load(pmix_value_t *v,
                     if (NULL != val->key) {
                         (void)opal_string_copy(info[n].key, val->key, PMIX_MAX_KEYLEN);
                     }
-                    pmix3x_value_load(&info[n].value, val);
+                    ext3x_value_load(&info[n].value, val);
                     ++n;
                 }
             } else {
@@ -920,7 +920,7 @@ void pmix3x_value_load(pmix_value_t *v,
             PMIX_PROC_INFO_CREATE(v->data.pinfo, 1);
             /* see if this job is in our list of known nspaces */
             found = false;
-            OPAL_LIST_FOREACH(job, &mca_pmix_pmix3x_component.jobids, opal_pmix3x_jobid_trkr_t) {
+            OPAL_LIST_FOREACH(job, &mca_pmix_ext3x_component.jobids, opal_ext3x_jobid_trkr_t) {
                 if (job->jobid == kv->data.pinfo.name.jobid) {
                     (void)opal_string_copy(v->data.pinfo->proc.nspace, job->nspace, PMIX_MAX_NSLEN);
                     found = true;
@@ -930,7 +930,7 @@ void pmix3x_value_load(pmix_value_t *v,
             if (!found) {
                 (void)opal_snprintf_jobid(v->data.pinfo->proc.nspace, PMIX_MAX_NSLEN, kv->data.pinfo.name.jobid);
             }
-            v->data.pinfo->proc.rank = pmix3x_convert_opalrank(kv->data.pinfo.name.vpid);
+            v->data.pinfo->proc.rank = ext3x_convert_opalrank(kv->data.pinfo.name.vpid);
             if (NULL != kv->data.pinfo.hostname) {
                 v->data.pinfo->hostname = strdup(kv->data.pinfo.hostname);
             }
@@ -939,7 +939,7 @@ void pmix3x_value_load(pmix_value_t *v,
             }
             v->data.pinfo->pid = kv->data.pinfo.pid;
             v->data.pinfo->exit_code = kv->data.pinfo.exit_code;
-            v->data.pinfo->state = pmix3x_convert_opalstate(kv->data.pinfo.state);
+            v->data.pinfo->state = ext3x_convert_opalstate(kv->data.pinfo.state);
             break;
         case OPAL_ENVAR:
             v->type = PMIX_ENVAR;
@@ -958,12 +958,12 @@ void pmix3x_value_load(pmix_value_t *v,
     }
 }
 
-int pmix3x_value_unload(opal_value_t *kv,
+int ext3x_value_unload(opal_value_t *kv,
                         const pmix_value_t *v)
 {
     int rc=OPAL_SUCCESS;
     bool found;
-    opal_pmix3x_jobid_trkr_t *job;
+    opal_ext3x_jobid_trkr_t *job;
     opal_list_t *lt;
     opal_value_t *ival;
     size_t n;
@@ -1052,7 +1052,7 @@ int pmix3x_value_unload(opal_value_t *kv,
         break;
     case PMIX_STATUS:
         kv->type = OPAL_STATUS;
-        kv->data.status = pmix3x_convert_rc(v->data.status);
+        kv->data.status = ext3x_convert_rc(v->data.status);
         break;
     case PMIX_VALUE:
         OPAL_ERROR_LOG(OPAL_ERR_NOT_SUPPORTED);
@@ -1062,7 +1062,7 @@ int pmix3x_value_unload(opal_value_t *kv,
         kv->type = OPAL_NAME;
         /* see if this job is in our list of known nspaces */
         found = false;
-        OPAL_LIST_FOREACH(job, &mca_pmix_pmix3x_component.jobids, opal_pmix3x_jobid_trkr_t) {
+        OPAL_LIST_FOREACH(job, &mca_pmix_ext3x_component.jobids, opal_ext3x_jobid_trkr_t) {
             if (0 == strncmp(job->nspace, v->data.proc->nspace, PMIX_MAX_NSLEN)) {
                 kv->data.name.jobid = job->jobid;
                 found = true;
@@ -1071,10 +1071,10 @@ int pmix3x_value_unload(opal_value_t *kv,
         }
         if (!found) {
             if (OPAL_SUCCESS != (rc = opal_convert_string_to_jobid(&kv->data.name.jobid, v->data.proc->nspace))) {
-                return pmix3x_convert_opalrc(rc);
+                return ext3x_convert_opalrc(rc);
             }
         }
-        kv->data.name.vpid = pmix3x_convert_rank(v->data.proc->rank);
+        kv->data.name.vpid = ext3x_convert_rank(v->data.proc->rank);
         break;
     case PMIX_APP:
         OPAL_ERROR_LOG(OPAL_ERR_NOT_SUPPORTED);
@@ -1113,7 +1113,7 @@ int pmix3x_value_unload(opal_value_t *kv,
         break;
     case PMIX_PERSIST:
         kv->type = OPAL_PERSIST;
-        kv->data.uint8 = pmix3x_convert_persist(v->data.persist);
+        kv->data.uint8 = ext3x_convert_persist(v->data.persist);
         break;
     case PMIX_POINTER:
         kv->type = OPAL_PTR;
@@ -1121,11 +1121,11 @@ int pmix3x_value_unload(opal_value_t *kv,
         break;
     case PMIX_SCOPE:
         kv->type = OPAL_SCOPE;
-        kv->data.uint8 = pmix3x_convert_scope(v->data.scope);
+        kv->data.uint8 = ext3x_convert_scope(v->data.scope);
         break;
     case PMIX_DATA_RANGE:
         kv->type = OPAL_DATA_RANGE;
-        kv->data.uint8 = pmix3x_convert_range(v->data.range);
+        kv->data.uint8 = ext3x_convert_range(v->data.range);
         break;
     case PMIX_COMMAND:
         OPAL_ERROR_LOG(OPAL_ERR_NOT_SUPPORTED);
@@ -1153,7 +1153,7 @@ int pmix3x_value_unload(opal_value_t *kv,
         }
         /* see if this job is in our list of known nspaces */
         found = false;
-        OPAL_LIST_FOREACH(job, &mca_pmix_pmix3x_component.jobids, opal_pmix3x_jobid_trkr_t) {
+        OPAL_LIST_FOREACH(job, &mca_pmix_ext3x_component.jobids, opal_ext3x_jobid_trkr_t) {
             if (0 == strncmp(job->nspace, v->data.pinfo->proc.nspace, PMIX_MAX_NSLEN)) {
                 kv->data.pinfo.name.jobid = job->jobid;
                 found = true;
@@ -1162,10 +1162,10 @@ int pmix3x_value_unload(opal_value_t *kv,
         }
         if (!found) {
             if (OPAL_SUCCESS != (rc = opal_convert_string_to_jobid(&kv->data.pinfo.name.jobid, v->data.pinfo->proc.nspace))) {
-                return pmix3x_convert_opalrc(rc);
+                return ext3x_convert_opalrc(rc);
             }
         }
-        kv->data.pinfo.name.vpid = pmix3x_convert_rank(v->data.pinfo->proc.rank);
+        kv->data.pinfo.name.vpid = ext3x_convert_rank(v->data.pinfo->proc.rank);
         if (NULL != v->data.pinfo->hostname) {
             kv->data.pinfo.hostname = strdup(v->data.pinfo->hostname);
         }
@@ -1174,7 +1174,7 @@ int pmix3x_value_unload(opal_value_t *kv,
         }
         kv->data.pinfo.pid = v->data.pinfo->pid;
         kv->data.pinfo.exit_code = v->data.pinfo->exit_code;
-        kv->data.pinfo.state = pmix3x_convert_state(v->data.pinfo->state);
+        kv->data.pinfo.state = ext3x_convert_state(v->data.pinfo->state);
         break;
     case PMIX_DATA_ARRAY:
         if (NULL == v->data.darray || NULL == v->data.darray->array) {
@@ -1195,7 +1195,7 @@ int pmix3x_value_unload(opal_value_t *kv,
                     break;
                 }
                 ival->key = strdup(iptr[n].key);
-                rc = pmix3x_value_unload(ival, &iptr[n].value);
+                rc = ext3x_value_unload(ival, &iptr[n].value);
                 if (OPAL_SUCCESS != rc) {
                     OPAL_LIST_RELEASE(lt);
                     kv->type = OPAL_UNDEF;
@@ -1207,7 +1207,7 @@ int pmix3x_value_unload(opal_value_t *kv,
         break;
     case PMIX_PROC_RANK:
         kv->type = OPAL_VPID;
-        kv->data.name.vpid = pmix3x_convert_rank(v->data.rank);
+        kv->data.name.vpid = ext3x_convert_rank(v->data.rank);
         break;
     case PMIX_QUERY:
         OPAL_ERROR_LOG(OPAL_ERR_NOT_SUPPORTED);
@@ -1252,7 +1252,7 @@ static void errreg_cbfunc (pmix_status_t status,
                            size_t errhandler_ref,
                            void *cbdata)
 {
-    pmix3x_opcaddy_t *op = (pmix3x_opcaddy_t*)cbdata;
+    ext3x_opcaddy_t *op = (ext3x_opcaddy_t*)cbdata;
 
     OPAL_ACQUIRE_OBJECT(op);
     op->event->index = errhandler_ref;
@@ -1260,7 +1260,7 @@ static void errreg_cbfunc (pmix_status_t status,
                         "PMIX3x errreg_cbfunc - error handler registered status=%d, reference=%lu",
                         status, (unsigned long)errhandler_ref);
     if (NULL != op->evregcbfunc) {
-        op->evregcbfunc(pmix3x_convert_rc(status), errhandler_ref, op->cbdata);
+        op->evregcbfunc(ext3x_convert_rc(status), errhandler_ref, op->cbdata);
     }
     OBJ_RELEASE(op);
 }
@@ -1271,7 +1271,7 @@ static void register_handler(opal_list_t *event_codes,
                              opal_pmix_evhandler_reg_cbfunc_t cbfunc,
                              void *cbdata)
 {
-    pmix3x_opcaddy_t *op = (pmix3x_opcaddy_t*)cbdata;
+    ext3x_opcaddy_t *op = (ext3x_opcaddy_t*)cbdata;
     size_t n;
     opal_value_t *kv;
 
@@ -1284,7 +1284,7 @@ static void register_handler(opal_list_t *event_codes,
         return;
     }
 
-    op = OBJ_NEW(pmix3x_opcaddy_t);
+    op = OBJ_NEW(ext3x_opcaddy_t);
     op->evregcbfunc = cbfunc;
     op->cbdata = cbdata;
 
@@ -1294,7 +1294,7 @@ static void register_handler(opal_list_t *event_codes,
         op->pcodes = (pmix_status_t*)malloc(op->ncodes * sizeof(pmix_status_t));
         n=0;
         OPAL_LIST_FOREACH(kv, event_codes, opal_value_t) {
-            op->pcodes[n] = pmix3x_convert_opalrc(kv->data.integer);
+            op->pcodes[n] = ext3x_convert_opalrc(kv->data.integer);
             ++n;
         }
     }
@@ -1305,20 +1305,20 @@ static void register_handler(opal_list_t *event_codes,
         n=0;
         OPAL_LIST_FOREACH(kv, info, opal_value_t) {
             (void)opal_string_copy(op->info[n].key, kv->key, PMIX_MAX_KEYLEN);
-            pmix3x_value_load(&op->info[n].value, kv);
+            ext3x_value_load(&op->info[n].value, kv);
             ++n;
         }
     }
 
     /* register the event */
-    op->event = OBJ_NEW(opal_pmix3x_event_t);
+    op->event = OBJ_NEW(opal_ext3x_event_t);
     op->event->handler = evhandler;
-    opal_list_append(&mca_pmix_pmix3x_component.events, &op->event->super);
+    opal_list_append(&mca_pmix_ext3x_component.events, &op->event->super);
     OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
 
     PMIx_Register_event_handler(op->pcodes, op->ncodes,
                                 op->info, op->ninfo,
-                                pmix3x_event_hdlr, errreg_cbfunc, op);
+                                ext3x_event_hdlr, errreg_cbfunc, op);
     return;
 }
 
@@ -1326,8 +1326,8 @@ static void deregister_handler(size_t evhandler,
                                opal_pmix_op_cbfunc_t cbfunc,
                                void *cbdata)
 {
-    pmix3x_opcaddy_t *op;
-    opal_pmix3x_event_t *event;
+    ext3x_opcaddy_t *op;
+    opal_ext3x_event_t *event;
 
     OPAL_PMIX_ACQUIRE_THREAD(&opal_pmix_base.lock);
     if (0 >= opal_pmix_base.initialized) {
@@ -1339,9 +1339,9 @@ static void deregister_handler(size_t evhandler,
     }
 
     /* look for this event */
-    OPAL_LIST_FOREACH(event, &mca_pmix_pmix3x_component.events, opal_pmix3x_event_t) {
+    OPAL_LIST_FOREACH(event, &mca_pmix_ext3x_component.events, opal_ext3x_event_t) {
         if (evhandler == event->index) {
-            opal_list_remove_item(&mca_pmix_pmix3x_component.events, &event->super);
+            opal_list_remove_item(&mca_pmix_ext3x_component.events, &event->super);
             OBJ_RELEASE(event);
             break;
         }
@@ -1349,7 +1349,7 @@ static void deregister_handler(size_t evhandler,
 
     OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
 
-    op = OBJ_NEW(pmix3x_opcaddy_t);
+    op = OBJ_NEW(ext3x_opcaddy_t);
     op->opcbfunc = cbfunc;
     op->cbdata = cbdata;
 
@@ -1360,9 +1360,9 @@ static void deregister_handler(size_t evhandler,
 
 static void notify_complete(pmix_status_t status, void *cbdata)
 {
-    pmix3x_opcaddy_t *op = (pmix3x_opcaddy_t*)cbdata;
+    ext3x_opcaddy_t *op = (ext3x_opcaddy_t*)cbdata;
     if (NULL != op->opcbfunc) {
-        op->opcbfunc(pmix3x_convert_rc(status), op->cbdata);
+        op->opcbfunc(ext3x_convert_rc(status), op->cbdata);
     }
     OBJ_RELEASE(op);
 }
@@ -1373,7 +1373,7 @@ static int notify_event(int status,
                         opal_list_t *info,
                         opal_pmix_op_cbfunc_t cbfunc, void *cbdata)
 {
-    pmix3x_opcaddy_t *op;
+    ext3x_opcaddy_t *op;
     opal_value_t *kv;
     pmix_proc_t p, *pptr;
     pmix_status_t pstatus;
@@ -1387,30 +1387,30 @@ static int notify_event(int status,
         return OPAL_ERR_NOT_INITIALIZED;
     }
 
-    op = OBJ_NEW(pmix3x_opcaddy_t);
+    op = OBJ_NEW(ext3x_opcaddy_t);
     op->opcbfunc = cbfunc;
     op->cbdata = cbdata;
 
     /* convert the status */
-    pstatus = pmix3x_convert_opalrc(status);
+    pstatus = ext3x_convert_opalrc(status);
 
     /* convert the source */
     if (NULL == source) {
         pptr = NULL;
     } else {
-        if (NULL == (nsptr = pmix3x_convert_jobid(source->jobid))) {
+        if (NULL == (nsptr = ext3x_convert_jobid(source->jobid))) {
             OBJ_RELEASE(op);
             OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
             return OPAL_ERR_NOT_FOUND;
         }
         (void)opal_string_copy(p.nspace, nsptr, PMIX_MAX_NSLEN);
-        p.rank = pmix3x_convert_opalrank(source->vpid);
+        p.rank = ext3x_convert_opalrank(source->vpid);
         pptr = &p;
     }
     OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
 
     /* convert the range */
-    prange = pmix3x_convert_opalrange(range);
+    prange = ext3x_convert_opalrange(range);
 
     /* convert the list of info */
     if (NULL != info && 0 < (op->ninfo = opal_list_get_size(info))) {
@@ -1422,9 +1422,9 @@ static int notify_event(int status,
              * provided, and it will be an int coming down to us */
             if (0 == strcmp(kv->key, OPAL_PMIX_JOB_TERM_STATUS)) {
                 op->info[n].value.type = PMIX_STATUS;
-                op->info[n].value.data.status = pmix3x_convert_opalrc(kv->data.integer);
+                op->info[n].value.data.status = ext3x_convert_opalrc(kv->data.integer);
             } else {
-                pmix3x_value_load(&op->info[n].value, kv);
+                ext3x_value_load(&op->info[n].value, kv);
             }
             ++n;
         }
@@ -1433,7 +1433,7 @@ static int notify_event(int status,
     /* ask the library to notify our clients */
     pstatus = PMIx_Notify_event(pstatus, pptr, prange, op->info, op->ninfo, notify_complete, op);
 
-    return pmix3x_convert_rc(pstatus);
+    return ext3x_convert_rc(pstatus);
 }
 
 static void relcbfunc(void *cbdata)
@@ -1450,7 +1450,7 @@ static void infocbfunc(pmix_status_t status,
                        pmix_release_cbfunc_t release_fn,
                        void *release_cbdata)
 {
-    pmix3x_opcaddy_t *cd = (pmix3x_opcaddy_t*)cbdata;
+    ext3x_opcaddy_t *cd = (ext3x_opcaddy_t*)cbdata;
     int rc = OPAL_SUCCESS;
     opal_list_t *results = NULL;
     opal_value_t *iptr;
@@ -1465,7 +1465,7 @@ static void infocbfunc(pmix_status_t status,
             iptr = OBJ_NEW(opal_value_t);
             opal_list_append(results, &iptr->super);
             iptr->key = strdup(info[n].key);
-            if (OPAL_SUCCESS != (rc = pmix3x_value_unload(iptr, &info[n].value))) {
+            if (OPAL_SUCCESS != (rc = ext3x_value_unload(iptr, &info[n].value))) {
                 OPAL_ERROR_LOG(rc);
                 OPAL_LIST_RELEASE(results);
                 results = NULL;
@@ -1485,13 +1485,13 @@ static void infocbfunc(pmix_status_t status,
     OBJ_RELEASE(cd);
 }
 
-static void pmix3x_query(opal_list_t *queries,
+static void ext3x_query(opal_list_t *queries,
                          opal_pmix_info_cbfunc_t cbfunc, void *cbdata)
 {
     int rc;
     opal_value_t *ival;
     size_t n, nqueries, nq;
-    pmix3x_opcaddy_t *cd;
+    ext3x_opcaddy_t *cd;
     pmix_status_t prc;
     opal_pmix_query_t *q;
 
@@ -1506,7 +1506,7 @@ static void pmix3x_query(opal_list_t *queries,
     OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
 
     /* create the caddy */
-    cd = OBJ_NEW(pmix3x_opcaddy_t);
+    cd = OBJ_NEW(ext3x_opcaddy_t);
 
     /* bozo check */
     if (NULL == queries || 0 == (nqueries = opal_list_get_size(queries))) {
@@ -1530,7 +1530,7 @@ static void pmix3x_query(opal_list_t *queries,
             nq = 0;
             OPAL_LIST_FOREACH(ival, &q->qualifiers, opal_value_t) {
                 (void)opal_string_copy(cd->queries[n].qualifiers[nq].key, ival->key, PMIX_MAX_KEYLEN);
-                pmix3x_value_load(&cd->queries[n].qualifiers[nq].value, ival);
+                ext3x_value_load(&cd->queries[n].qualifiers[nq].value, ival);
                 ++nq;
             }
         }
@@ -1541,7 +1541,7 @@ static void pmix3x_query(opal_list_t *queries,
     if (PMIX_SUCCESS != (prc = PMIx_Query_info_nb(cd->queries, cd->nqueries,
                                                   infocbfunc, cd))) {
         /* do not hang! */
-        rc = pmix3x_convert_rc(prc);
+        rc = ext3x_convert_rc(prc);
         goto CLEANUP;
     }
 
@@ -1555,13 +1555,13 @@ static void pmix3x_query(opal_list_t *queries,
     return;
 }
 
-static void pmix3x_log(opal_list_t *info,
+static void ext3x_log(opal_list_t *info,
                        opal_pmix_op_cbfunc_t cbfunc, void *cbdata)
 {
     int rc;
     opal_value_t *ival;
     size_t n, ninfo;
-    pmix3x_opcaddy_t *cd;
+    ext3x_opcaddy_t *cd;
     pmix_status_t prc;
 
     OPAL_PMIX_ACQUIRE_THREAD(&opal_pmix_base.lock);
@@ -1575,7 +1575,7 @@ static void pmix3x_log(opal_list_t *info,
     OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
 
     /* create the caddy */
-    cd = OBJ_NEW(pmix3x_opcaddy_t);
+    cd = OBJ_NEW(ext3x_opcaddy_t);
 
     /* bozo check */
     if (NULL == info || 0 == (ninfo = opal_list_get_size(info))) {
@@ -1593,7 +1593,7 @@ static void pmix3x_log(opal_list_t *info,
     n=0;
     OPAL_LIST_FOREACH(ival, info, opal_value_t) {
         (void)opal_string_copy(cd->info[n].key, ival->key, PMIX_MAX_KEYLEN);
-        pmix3x_value_load(&cd->info[n].value, ival);
+        ext3x_value_load(&cd->info[n].value, ival);
         ++n;
     }
 
@@ -1601,7 +1601,7 @@ static void pmix3x_log(opal_list_t *info,
     if (PMIX_SUCCESS != (prc = PMIx_Log_nb(cd->info, cd->ninfo, NULL, 0,
                                            opcbfunc, cd))) {
         /* do not hang! */
-        rc = pmix3x_convert_rc(prc);
+        rc = ext3x_convert_rc(prc);
         goto CLEANUP;
     }
 
@@ -1614,7 +1614,7 @@ static void pmix3x_log(opal_list_t *info,
     OBJ_RELEASE(cd);
 }
 
-opal_pmix_alloc_directive_t pmix3x_convert_allocdir(pmix_alloc_directive_t dir)
+opal_pmix_alloc_directive_t ext3x_convert_allocdir(pmix_alloc_directive_t dir)
 {
     switch (dir) {
         case PMIX_ALLOC_NEW:
@@ -1630,7 +1630,7 @@ opal_pmix_alloc_directive_t pmix3x_convert_allocdir(pmix_alloc_directive_t dir)
     }
 }
 
-int pmix3x_convert_state(pmix_proc_state_t state)
+int ext3x_convert_state(pmix_proc_state_t state)
 {
     switch(state) {
         case PMIX_PROC_STATE_UNDEF:
@@ -1677,7 +1677,7 @@ int pmix3x_convert_state(pmix_proc_state_t state)
     }
 }
 
-pmix_proc_state_t pmix3x_convert_opalstate(int state)
+pmix_proc_state_t ext3x_convert_opalstate(int state)
 {
     switch(state) {
         case 0:
@@ -1720,25 +1720,25 @@ pmix_proc_state_t pmix3x_convert_opalstate(int state)
 }
 
 /****  INSTANTIATE INTERNAL CLASSES  ****/
-OBJ_CLASS_INSTANCE(opal_pmix3x_jobid_trkr_t,
+OBJ_CLASS_INSTANCE(opal_ext3x_jobid_trkr_t,
                    opal_list_item_t,
                    NULL, NULL);
 
-static void evcon(opal_pmix3x_event_t *p)
+static void evcon(opal_ext3x_event_t *p)
 {
     OPAL_PMIX_CONSTRUCT_LOCK(&p->lock);
     p->handler = NULL;
     p->cbdata = NULL;
 }
-static void evdes(opal_pmix3x_event_t *p)
+static void evdes(opal_ext3x_event_t *p)
 {
     OPAL_PMIX_DESTRUCT_LOCK(&p->lock);
 }
-OBJ_CLASS_INSTANCE(opal_pmix3x_event_t,
+OBJ_CLASS_INSTANCE(opal_ext3x_event_t,
                    opal_list_item_t,
                    evcon, evdes);
 
-static void opcon(pmix3x_opcaddy_t *p)
+static void opcon(ext3x_opcaddy_t *p)
 {
     memset(&p->p, 0, sizeof(pmix_proc_t));
     p->nspace = NULL;
@@ -1768,7 +1768,7 @@ static void opcon(pmix3x_opcaddy_t *p)
     p->qcbfunc = NULL;
     p->cbdata = NULL;
 }
-static void opdes(pmix3x_opcaddy_t *p)
+static void opdes(ext3x_opcaddy_t *p)
 {
     OPAL_PMIX_DESTRUCT_LOCK(&p->lock);
     if (NULL != p->nspace) {
@@ -1796,11 +1796,11 @@ static void opdes(pmix3x_opcaddy_t *p)
         PMIX_QUERY_FREE(p->queries, p->nqueries);
     }
 }
-OBJ_CLASS_INSTANCE(pmix3x_opcaddy_t,
+OBJ_CLASS_INSTANCE(ext3x_opcaddy_t,
                    opal_object_t,
                    opcon, opdes);
 
-static void ocadcon(pmix3x_opalcaddy_t *p)
+static void ocadcon(ext3x_opalcaddy_t *p)
 {
     OBJ_CONSTRUCT(&p->procs, opal_list_t);
     OBJ_CONSTRUCT(&p->info, opal_list_t);
@@ -1816,17 +1816,17 @@ static void ocadcon(pmix3x_opalcaddy_t *p)
     p->toolcbfunc = NULL;
     p->ocbdata = NULL;
 }
-static void ocaddes(pmix3x_opalcaddy_t *p)
+static void ocaddes(ext3x_opalcaddy_t *p)
 {
     OPAL_LIST_DESTRUCT(&p->procs);
     OPAL_LIST_DESTRUCT(&p->info);
     OPAL_LIST_DESTRUCT(&p->apps);
 }
-OBJ_CLASS_INSTANCE(pmix3x_opalcaddy_t,
+OBJ_CLASS_INSTANCE(ext3x_opalcaddy_t,
                    opal_object_t,
                    ocadcon, ocaddes);
 
-static void tscon(pmix3x_threadshift_t *p)
+static void tscon(ext3x_threadshift_t *p)
 {
     OPAL_PMIX_CONSTRUCT_LOCK(&p->lock);
     p->msg = NULL;
@@ -1841,7 +1841,7 @@ static void tscon(pmix3x_threadshift_t *p)
     p->opcbfunc = NULL;
     p->cbdata = NULL;
 }
-static void tsdes(pmix3x_threadshift_t *p)
+static void tsdes(ext3x_threadshift_t *p)
 {
     OPAL_PMIX_DESTRUCT_LOCK(&p->lock);
     if (NULL != p->strings) {
@@ -1849,22 +1849,22 @@ static void tsdes(pmix3x_threadshift_t *p)
     }
     OPAL_LIST_DESTRUCT(&p->results);
 }
-OBJ_CLASS_INSTANCE(pmix3x_threadshift_t,
+OBJ_CLASS_INSTANCE(ext3x_threadshift_t,
                    opal_object_t,
                    tscon, tsdes);
 
-static void dmcon(opal_pmix3x_dmx_trkr_t *p)
+static void dmcon(opal_ext3x_dmx_trkr_t *p)
 {
     p->nspace = NULL;
     p->cbfunc = NULL;
     p->cbdata = NULL;
 }
-static void dmdes(opal_pmix3x_dmx_trkr_t *p)
+static void dmdes(opal_ext3x_dmx_trkr_t *p)
 {
     if (NULL != p->nspace) {
         free(p->nspace);
     }
 }
-OBJ_CLASS_INSTANCE(opal_pmix3x_dmx_trkr_t,
+OBJ_CLASS_INSTANCE(opal_ext3x_dmx_trkr_t,
                    opal_list_item_t,
                    dmcon, dmdes);
