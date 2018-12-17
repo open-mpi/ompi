@@ -8,6 +8,7 @@
 typedef struct {
     opal_common_ucx_ctx_t *gctx;
     opal_common_ucx_winfo_t *winfo;
+    opal_atomic_int32_t refcnt;
 } _tlocal_ctx_t;
 
 typedef struct {
@@ -19,6 +20,7 @@ typedef struct {
     opal_common_ucx_wpmem_t *gmem;
     _mem_info_t *mem;
     opal_common_ucx_tlocal_fast_ptrs_t *mem_tls_ptr;
+    _tlocal_ctx_t *ctx_rec;
 } _tlocal_mem_t;
 
 typedef struct {
