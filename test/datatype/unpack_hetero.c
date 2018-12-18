@@ -39,7 +39,7 @@ uint32_t remote_arch = 0xffffffff;
  */
 int main( int argc, char* argv[] )
 {
-    opal_datatype_init();
+    opal_init_util (NULL, NULL);
 
     /**
      * By default simulate homogeneous architectures.
@@ -93,7 +93,7 @@ int main( int argc, char* argv[] )
     OBJ_RELEASE(pConv);
 
     /* clean-ups all data allocations */
-    opal_datatype_finalize();
-    opal_finalize();
+    opal_finalize_util ();
+
     return OPAL_SUCCESS;
 }

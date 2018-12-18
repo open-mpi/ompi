@@ -503,7 +503,7 @@ int main( int argc, char* argv[] )
     opal_datatype_t *pdt, *pdt1, *pdt2, *pdt3;
     int rc, length = 500;
 
-    opal_datatype_init();
+    opal_init_util (NULL, NULL);
 
     /**
      * By default simulate homogeneous architectures.
@@ -717,7 +717,7 @@ int main( int argc, char* argv[] )
     OBJ_RELEASE( pdt2 ); assert( pdt2 == NULL );
 
     /* clean-ups all data allocations */
-    opal_datatype_finalize();
-    opal_finalize();
+    opal_finalize_util ();
+
     return OPAL_SUCCESS;
 }

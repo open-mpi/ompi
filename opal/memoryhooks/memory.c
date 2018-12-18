@@ -34,6 +34,7 @@
 #include "opal/class/opal_list.h"
 #include "opal/class/opal_object.h"
 #include "opal/sys/atomic.h"
+#include "opal/runtime/opal.h"
 
 /*
  * local types
@@ -55,27 +56,23 @@ static opal_list_t release_cb_list;
 static opal_atomic_lock_t release_lock;
 static int release_run_callbacks;
 
-int
-opal_mem_hooks_init(void)
+/**
+ * Finalize the memory hooks subsystem
+ *
+ * Finalize the memory hooks subsystem.  This is generally called
+ * during opal_finalize() and no other memory hooks functions should
+ * be called after this function is called.  opal_mem_hooks_finalize()
+ * will automatically deregister any callbacks that have not already
+ * been deregistered.  In a multi-threaded application, it is possible
+ * that one thread will have a memory hook callback while the other
+ * thread is in opal_mem_hooks_finalize(), however, no threads will
+ * receive a callback once the calling thread has exited
+ * opal_mem_hooks_finalize().
+ *
+ * @retval OPAL_SUCCESS Shutdown completed successfully
+ */
+static void opal_mem_hooks_finalize(void)
 {
-    OBJ_CONSTRUCT(&release_cb_list, opal_list_t);
-
-    opal_atomic_lock_init(&release_lock, OPAL_ATOMIC_LOCK_UNLOCKED);
-
-    /* delay running callbacks until there is something in the
-       registration */
-    release_run_callbacks = false;
-    opal_atomic_mb();
-
-    return OPAL_SUCCESS;
-}
-
-
-int
-opal_mem_hooks_finalize(void)
-{
-    opal_list_item_t *item;
-
     /* don't try to run callbacks any more */
     release_run_callbacks = false;
     opal_atomic_mb();
@@ -86,15 +83,27 @@ opal_mem_hooks_finalize(void)
     opal_atomic_lock(&release_lock);
 
     /* clean out the lists */
-    while (NULL != (item = opal_list_remove_first(&release_cb_list))) {
-        OBJ_RELEASE(item);
-    }
-    OBJ_DESTRUCT(&release_cb_list);
+    OPAL_LIST_DESTRUCT(&release_cb_list);
 
     opal_atomic_unlock(&release_lock);
+}
+
+int opal_mem_hooks_init (void)
+{
+    OBJ_CONSTRUCT(&release_cb_list, opal_list_t);
+
+    opal_atomic_lock_init(&release_lock, OPAL_ATOMIC_LOCK_UNLOCKED);
+
+    /* delay running callbacks until there is something in the
+       registration */
+    release_run_callbacks = false;
+    opal_atomic_mb();
+
+    opal_finalize_register_cleanup (opal_mem_hooks_finalize);
 
     return OPAL_SUCCESS;
 }
+
 
 
 /* called from memory manager / memory-manager specific hooks */

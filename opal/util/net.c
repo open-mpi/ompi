@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -16,6 +17,8 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights
+ *                         reserved.
+ * Copyright (c) 2018      Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -60,6 +63,7 @@
 #include <ifaddrs.h>
 #endif
 
+#include "opal/runtime/opal.h"
 #include "opal/util/net.h"
 #include "opal/util/output.h"
 #include "opal/util/argv.h"
@@ -129,6 +133,21 @@ get_hostname_buffer(void)
 }
 #endif
 
+/**
+ * Finalize the network helper subsystem
+ *
+ * Finalize the network helper subsystem.  Should be called exactly
+ * once for any process that will use any function in the network
+ * helper subsystem.
+ *
+ * @retval OPAL_SUCCESS   Success
+ */
+static void opal_net_finalize (void)
+{
+    free(private_ipv4);
+    private_ipv4 = NULL;
+}
+
 int
 opal_net_init(void)
 {
@@ -169,6 +188,8 @@ opal_net_init(void)
         opal_argv_free(args);
     }
 
+    opal_finalize_register_cleanup (opal_net_finalize);
+
  do_local_init:
 #if OPAL_ENABLE_IPV6
     return opal_tsd_key_create(&hostname_tsd_key, hostname_cleanup);
@@ -176,17 +197,6 @@ opal_net_init(void)
     return OPAL_SUCCESS;
 #endif
 }
-
-
-int
-opal_net_finalize()
-{
-    free(private_ipv4);
-    private_ipv4 = NULL;
-
-    return OPAL_SUCCESS;
-}
-
 
 /* convert a CIDR prefixlen to netmask (in network byte order) */
 uint32_t

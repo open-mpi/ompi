@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -9,6 +10,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2018      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -22,6 +25,7 @@
 
 #include "opal/util/malloc.h"
 #include "opal/util/output.h"
+#include "opal/runtime/opal.h"
 
 
 /*
@@ -54,26 +58,11 @@ int opal_malloc_output = -1;
 static opal_output_stream_t malloc_stream;
 
 
-/*
- * Initialize the malloc debug interface
- */
-void opal_malloc_init(void)
-{
 #if OPAL_ENABLE_DEBUG
-    OBJ_CONSTRUCT(&malloc_stream, opal_output_stream_t);
-    malloc_stream.lds_is_debugging = true;
-    malloc_stream.lds_verbose_level = 5;
-    malloc_stream.lds_prefix = "malloc debug: ";
-    malloc_stream.lds_want_stderr = true;
-    opal_malloc_output = opal_output_open(&malloc_stream);
-#endif  /* OPAL_ENABLE_DEBUG */
-}
-
-
 /*
  * Finalize the malloc debug interface
  */
-void opal_malloc_finalize(void)
+static void opal_malloc_finalize(void)
 {
     if (-1 != opal_malloc_output) {
         opal_output_close(opal_malloc_output);
@@ -82,6 +71,24 @@ void opal_malloc_finalize(void)
     }
 }
 
+/*
+ * Initialize the malloc debug interface
+ */
+void opal_malloc_init(void)
+{
+    OBJ_CONSTRUCT(&malloc_stream, opal_output_stream_t);
+    malloc_stream.lds_is_debugging = true;
+    malloc_stream.lds_verbose_level = 5;
+    malloc_stream.lds_prefix = "malloc debug: ";
+    malloc_stream.lds_want_stderr = true;
+    opal_malloc_output = opal_output_open(&malloc_stream);
+    opal_finalize_register_cleanup (opal_malloc_finalize);
+}
+#else
+void opal_malloc_init (void)
+{
+}
+#endif  /* OPAL_ENABLE_DEBUG */
 
 /*
  * Debug version of malloc

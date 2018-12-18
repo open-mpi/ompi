@@ -18,6 +18,8 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
+ * Copyright (c) 2018      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -144,6 +146,7 @@ static int read_files (char *file_list, opal_list_t *file_values, char sep);
 static int var_set_initial (mca_base_var_t *var, mca_base_var_t *original);
 static int var_get (int vari, mca_base_var_t **var_out, bool original);
 static int var_value_string (mca_base_var_t *var, char **value_string);
+static void mca_base_var_finalize (void);
 
 /*
  * classes
@@ -292,6 +295,8 @@ int mca_base_var_init(void)
         mca_base_var_initialized = true;
 
     }
+
+    opal_finalize_register_cleanup (mca_base_var_finalize);
 
     return OPAL_SUCCESS;
 }
@@ -1103,7 +1108,7 @@ int mca_base_var_build_env(char ***env, int *num_env, bool internal)
  * Shut down the MCA parameter system (normally only invoked by the
  * MCA framework itself).
  */
-int mca_base_var_finalize(void)
+static void mca_base_var_finalize (void)
 {
     opal_object_t *object;
     opal_list_item_t *item;
@@ -1158,10 +1163,6 @@ int mca_base_var_finalize(void)
         free (mca_base_envar_files);
         mca_base_envar_files = NULL;
     }
-
-    /* All done */
-
-    return OPAL_SUCCESS;
 }
 
 

@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -11,6 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2018      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -263,14 +266,6 @@ struct opal_output_stream_t {
      * and has a verbose level of 0.
      */
     OPAL_DECLSPEC bool opal_output_init(void);
-
-    /**
-     * Shut down the output stream system.
-     *
-     * Shut down the output stream system, including the default verbose
-     * stream.
-     */
-    OPAL_DECLSPEC void opal_output_finalize(void);
 
     /**
      * Opens an output stream.

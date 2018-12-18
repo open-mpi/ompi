@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,6 +11,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
+ * Copyright (c) 2018      Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -49,19 +52,6 @@ BEGIN_C_DECLS
  *                        buffer creation
  */
 OPAL_DECLSPEC int opal_net_init(void);
-
-
-/**
- * Finalize the network helper subsystem
- *
- * Finalize the network helper subsystem.  Should be called exactly
- * once for any process that will use any function in the network
- * helper subsystem.
- *
- * @retval OPAL_SUCCESS   Success
- */
-OPAL_DECLSPEC int opal_net_finalize(void);
-
 
 /**
  * Calculate netmask in network byte order from CIDR notation

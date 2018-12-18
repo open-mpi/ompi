@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -9,6 +10,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2018      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -59,14 +62,6 @@ BEGIN_C_DECLS
    * unless this function is invoked first.
    */
 void opal_malloc_init(void);
-
-  /**
-   * Shut down malloc debug output.
-   *
-   * This function is invoked as part of opal_finalize() to shut down the
-   * output stream for malloc debug messages.
-   */
-void opal_malloc_finalize(void);
 
   /**
    * \internal

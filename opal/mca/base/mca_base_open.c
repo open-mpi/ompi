@@ -15,6 +15,8 @@
  *                         reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
+ * Copyright (c) 2018      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -33,6 +35,7 @@
 #include <unistd.h>
 #endif
 
+#include "opal/runtime/opal.h"
 #include "opal/mca/installdirs/installdirs.h"
 #include "opal/util/output.h"
 #include "opal/util/printf.h"
@@ -163,6 +166,8 @@ int mca_base_open(void)
     free(lds.lds_prefix);
 
     /* Open up the component repository */
+
+    opal_finalize_register_cleanup (mca_base_close);
 
     return mca_base_component_repository_init();
 }

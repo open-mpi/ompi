@@ -80,6 +80,13 @@ int opal_max_thread_in_progress = 1;
 
 static bool opal_register_done = false;
 
+static void opal_deregister_params (void)
+{
+    /* The MCA variable system will be torn down shortly so reset the registered
+     * flag. */
+    opal_register_done = false;
+}
+
 int opal_register_params(void)
 {
     int ret;
@@ -380,12 +387,7 @@ int opal_register_params(void)
         return ret;
     }
 
-    return OPAL_SUCCESS;
-}
-
-int opal_deregister_params(void)
-{
-    opal_register_done = false;
+    opal_finalize_register_cleanup (opal_deregister_params);
 
     return OPAL_SUCCESS;
 }

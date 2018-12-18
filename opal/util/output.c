@@ -18,6 +18,8 @@
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  * Copyright (c) 2017-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
+ * Copyright (c) 2018      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -99,6 +101,7 @@ static void free_descriptor(int output_id);
 static int make_string(char **no_newline_string, output_desc_t *ldi,
                        const char *format, va_list arglist);
 static int output(int output_id, const char *format, va_list arglist);
+static void opal_output_finalize (void);
 
 
 #define OPAL_OUTPUT_MAX_STREAMS 64
@@ -217,6 +220,10 @@ bool opal_output_init(void)
 
     /* Open the default verbose stream */
     verbose_stream = opal_output_open(&verbose);
+
+    /* make sure opal output is cleaned up on finalize */
+    opal_finalize_register_cleanup (opal_output_finalize);
+
     return true;
 }
 
@@ -335,7 +342,7 @@ void opal_output_close(int output_id)
 
     /* Setup */
 
-    if (!initialized) {
+    if (!initialized || output_id < 0) {
         return;
     }
 
@@ -343,7 +350,7 @@ void opal_output_close(int output_id)
      * free the resources associated with the descriptor */
 
     OPAL_THREAD_LOCK(&mutex);
-    if (output_id >= 0 && output_id < OPAL_OUTPUT_MAX_STREAMS &&
+    if (output_id < OPAL_OUTPUT_MAX_STREAMS &&
         info[output_id].ldi_used && info[output_id].ldi_enabled) {
         free_descriptor(output_id);
 
@@ -492,7 +499,7 @@ void opal_output_set_output_file_info(const char *dir,
 /*
  * Shut down the output stream system
  */
-void opal_output_finalize(void)
+static void opal_output_finalize(void)
 {
     if (initialized) {
         if (verbose_stream != -1) {

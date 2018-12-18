@@ -16,6 +16,8 @@
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2017-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2018      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -181,7 +183,6 @@ OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_wchar;
  */
 int opal_datatype_register_params(void);
 OPAL_DECLSPEC int32_t opal_datatype_init( void );
-OPAL_DECLSPEC int32_t opal_datatype_finalize( void );
 OPAL_DECLSPEC opal_datatype_t* opal_datatype_create( int32_t expectedSize );
 OPAL_DECLSPEC int32_t opal_datatype_create_desc( opal_datatype_t * datatype, int32_t expectedSize );
 OPAL_DECLSPEC int32_t opal_datatype_commit( opal_datatype_t * pData );

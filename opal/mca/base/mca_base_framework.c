@@ -5,6 +5,8 @@
  * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2017 IBM Corporation.  All rights reserved.
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
+ * Copyright (c) 2018      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -140,6 +142,22 @@ int mca_base_framework_register (struct mca_base_framework_t *framework,
     return OPAL_SUCCESS;
 }
 
+int mca_base_framework_register_list (mca_base_framework_t **frameworks, mca_base_register_flag_t flags)
+{
+    if (NULL == frameworks) {
+        return OPAL_ERR_BAD_PARAM;
+    }
+
+    for (int i = 0 ; frameworks[i] ; ++i) {
+        int ret = mca_base_framework_register (frameworks[i], flags);
+        if (OPAL_UNLIKELY(OPAL_SUCCESS != ret && OPAL_ERR_NOT_AVAILABLE != ret)) {
+            return ret;
+        }
+    }
+
+    return OPAL_SUCCESS;
+}
+
 int mca_base_framework_open (struct mca_base_framework_t *framework,
                              mca_base_open_flag_t flags) {
     int ret;
@@ -187,6 +205,22 @@ int mca_base_framework_open (struct mca_base_framework_t *framework,
     }
 
     return ret;
+}
+
+int mca_base_framework_open_list (mca_base_framework_t **frameworks, mca_base_open_flag_t flags)
+{
+    if (NULL == frameworks) {
+        return OPAL_ERR_BAD_PARAM;
+    }
+
+    for (int i = 0 ; frameworks[i] ; ++i) {
+        int ret = mca_base_framework_open (frameworks[i], flags);
+        if (OPAL_UNLIKELY(OPAL_SUCCESS != ret && OPAL_ERR_NOT_AVAILABLE != ret)) {
+            return ret;
+        }
+    }
+
+    return OPAL_SUCCESS;
 }
 
 int mca_base_framework_close (struct mca_base_framework_t *framework) {
@@ -246,4 +280,20 @@ int mca_base_framework_close (struct mca_base_framework_t *framework) {
     framework_close_output (framework);
 
     return ret;
+}
+
+int mca_base_framework_close_list (mca_base_framework_t **frameworks)
+{
+    if (NULL == frameworks) {
+        return OPAL_ERR_BAD_PARAM;
+    }
+
+    for (int i = 0 ; frameworks[i] ; ++i) {
+        int ret = mca_base_framework_close (frameworks[i]);
+        if (OPAL_UNLIKELY(OPAL_SUCCESS != ret)) {
+            return ret;
+        }
+    }
+
+    return OPAL_SUCCESS;
 }

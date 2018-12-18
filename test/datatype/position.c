@@ -1,10 +1,12 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2018      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -19,6 +21,7 @@
 #include "opal/datatype/opal_convertor.h"
 #include "ompi/datatype/ompi_datatype.h"
 #include "opal/util/output.h"
+#include "opal/runtime/opal.h"
 
 /**
  * The purpose of this test is to simulate the multi-network packing and
@@ -231,7 +234,7 @@ int main( int argc, char* argv[] )
     }
     memcpy(recv_buffer, send_buffer, sizeof(ddt_ldi_t) * data_count );
 
-    opal_datatype_init();
+    opal_init_util (NULL, NULL);
     ompi_datatype_init();
 
 #if (OPAL_ENABLE_DEBUG == 1) && (OPAL_C_HAVE_VISIBILITY == 0)
@@ -278,6 +281,7 @@ int main( int argc, char* argv[] )
     free(segments);
 
     ompi_datatype_finalize();
+    opal_finalize_util ();
 
     return (0 == errors ? 0 : -1);
 }

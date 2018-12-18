@@ -12,6 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2015-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2018      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -22,6 +24,7 @@
 #include "opal_config.h"
 
 #include "opal/constants.h"
+#include "opal/runtime/opal.h"
 #include "opal/util/keyval_parse.h"
 #include "opal/util/keyval/keyval_lex.h"
 #include "opal/util/output.h"
@@ -45,22 +48,20 @@ static void parse_error(int num);
 static char *env_str = NULL;
 static int envsize = 1024;
 
-int opal_util_keyval_parse_init(void)
+static void opal_util_keyval_parse_finalize (void)
 {
-    OBJ_CONSTRUCT(&keyval_mutex, opal_mutex_t);
-
-    return OPAL_SUCCESS;
-}
-
-
-int
-opal_util_keyval_parse_finalize(void)
-{
-    if (NULL != key_buffer) free(key_buffer);
+    free(key_buffer);
     key_buffer = NULL;
     key_buffer_len = 0;
 
     OBJ_DESTRUCT(&keyval_mutex);
+}
+
+int opal_util_keyval_parse_init(void)
+{
+    OBJ_CONSTRUCT(&keyval_mutex, opal_mutex_t);
+
+    opal_finalize_register_cleanup (opal_util_keyval_parse_finalize);
 
     return OPAL_SUCCESS;
 }
