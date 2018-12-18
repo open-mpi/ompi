@@ -6,6 +6,7 @@
 # Copyright (c) 2018      Los Alamos National Security, LLC. All rights
 #                         reserved.
 # Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
+# Copyright (c) 2020      IBM Corporation. All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -46,6 +47,7 @@ AC_DEFUN([OMPI_CONFIG_FILES],[
         ompi/mpi/tool/profile/Makefile
 
         ompi/tools/ompi_info/Makefile
+        ompi/tools/profilesupport/Makefile
         ompi/tools/wrappers/Makefile
         ompi/tools/wrappers/mpicc-wrapper-data.txt
         ompi/tools/wrappers/mpic++-wrapper-data.txt
@@ -57,5 +59,7 @@ AC_DEFUN([OMPI_CONFIG_FILES],[
         ompi/tools/wrappers/mpijavac.pl
         ompi/tools/mpisync/Makefile
         ompi/tools/mpirun/Makefile
+        ompi/tools/pmpi_dynamic_layering/stub/Makefile
+        ompi/tools/pmpi_dynamic_layering/real/Makefile
     ])
 ])
