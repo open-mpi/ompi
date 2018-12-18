@@ -606,17 +606,17 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *buffer,
         }
     }
 
-    /* extract the ppn regex */
-    cnt = 1;
-    if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, &ppn, &cnt, OPAL_STRING))) {
-        ORTE_ERROR_LOG(rc);
-        goto REPORT_ERROR;
-    }
-
     /* if the job is fully described, then mpirun will have computed
      * and sent us the complete array of procs in the orte_job_t, so we
      * don't need to do anything more here */
     if (!orte_get_attribute(&jdata->attributes, ORTE_JOB_FULLY_DESCRIBED, NULL, OPAL_BOOL)) {
+        /* extract the ppn regex */
+        cnt = 1;
+        if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, &ppn, &cnt, OPAL_STRING))) {
+            ORTE_ERROR_LOG(rc);
+            goto REPORT_ERROR;
+        }
+
         if (!ORTE_PROC_IS_HNP) {
             /* populate the node array of the job map and the proc array of
              * the job object so we know how many procs are on each node */
