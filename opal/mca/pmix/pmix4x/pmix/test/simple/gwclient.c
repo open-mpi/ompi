@@ -35,7 +35,6 @@
 #include "src/util/output.h"
 #include "src/util/printf.h"
 
-static volatile bool completed = false;
 static pmix_proc_t myproc;
 
 int main(int argc, char **argv)

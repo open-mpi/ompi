@@ -350,6 +350,7 @@ int main(int argc, char **argv)
 #endif
     mylock_t mylock;
     pmix_status_t code;
+    sigset_t unblock;
 
     /* smoke test */
     if (PMIX_SUCCESS != 0) {
@@ -427,34 +428,48 @@ int main(int argc, char **argv)
 
     fprintf(stderr, "Testing version %s\n", PMIx_Get_version());
 
+    /* ensure that SIGCHLD is unblocked as we need to capture it */
+    if (0 != sigemptyset(&unblock)) {
+        fprintf(stderr, "SIGEMPTYSET FAILED\n");
+        exit(1);
+    }
+    if (0 != sigaddset(&unblock, SIGCHLD)) {
+        fprintf(stderr, "SIGADDSET FAILED\n");
+        exit(1);
+    }
+    if (0 != sigprocmask(SIG_UNBLOCK, &unblock, NULL)) {
+        fprintf(stderr, "SIG_UNBLOCK FAILED\n");
+        exit(1);
+    }
+
+
     /* setup the server library and tell it to support tool connections */
 #if PMIX_HAVE_HWLOC
     if (hwloc) {
 #if HWLOC_API_VERSION < 0x20000
-        ninfo = 4;
+        ninfo = 3;
 #else
-        ninfo = 5;
+        ninfo = 4;
 #endif
     } else {
-        ninfo = 3;
+        ninfo = 2;
     }
 #else
-    ninfo = 3;
+    ninfo = 2;
 #endif
 
     PMIX_INFO_CREATE(info, ninfo);
     PMIX_INFO_LOAD(&info[0], PMIX_SERVER_TOOL_SUPPORT, NULL, PMIX_BOOL);
-    PMIX_INFO_LOAD(&info[1], PMIX_USOCK_DISABLE, &usock, PMIX_BOOL);
-    PMIX_INFO_LOAD(&info[2], PMIX_SERVER_GATEWAY, NULL, PMIX_BOOL);
+    PMIX_INFO_LOAD(&info[1], PMIX_SERVER_GATEWAY, NULL, PMIX_BOOL);
 #if PMIX_HAVE_HWLOC
     if (hwloc) {
         if (NULL != hwloc_file) {
-            PMIX_INFO_LOAD(&info[3], PMIX_TOPOLOGY_FILE, hwloc_file, PMIX_STRING);
+            PMIX_INFO_LOAD(&info[2], PMIX_TOPOLOGY_FILE, hwloc_file, PMIX_STRING);
         } else {
-            PMIX_INFO_LOAD(&info[3], PMIX_TOPOLOGY, NULL, PMIX_STRING);
+            PMIX_INFO_LOAD(&info[2], PMIX_TOPOLOGY, NULL, PMIX_STRING);
         }
 #if HWLOC_API_VERSION >= 0x20000
-        PMIX_INFO_LOAD(&info[4], PMIX_HWLOC_SHARE_TOPO, NULL, PMIX_BOOL);
+        PMIX_INFO_LOAD(&info[3], PMIX_HWLOC_SHARE_TOPO, NULL, PMIX_BOOL);
 #endif
     }
 #endif
@@ -599,7 +614,6 @@ int main(int argc, char **argv)
             pmix_list_append(&children, &child->super);
         }
     }
-    free(executable);
     pmix_argv_free(client_argv);
     pmix_argv_free(client_env);
 
@@ -611,14 +625,21 @@ int main(int argc, char **argv)
         nanosleep(&ts, NULL);
     }
 
-    /* see if anyone exited with non-zero status */
-    n=0;
-    PMIX_LIST_FOREACH(child, &children, wait_tracker_t) {
-        if (0 != child->exit_code) {
-            fprintf(stderr, "Child %d [%d] exited with status %d - test FAILED\n", n, child->pid, child->exit_code);
-        }
-        ++n;
+    /* see if anyone exited with non-zero status unless the test
+     * was expected to do so */
+    if (NULL == strstr(executable, "simpdie")) {
+      n=0;
+      PMIX_LIST_FOREACH(child, &children, wait_tracker_t) {
+          if (0 != child->exit_code) {
+              fprintf(stderr, "Child %d [%d] exited with status %d - test FAILED\n", n, child->pid, child->exit_code);
+          }
+          ++n;
+      }
+    } else if (1 == exit_code) {
+      exit_code = 0;
     }
+    free(executable);
+
     /* try notifying ourselves */
     ninfo = 3;
     PMIX_INFO_CREATE(info, ninfo);
@@ -753,21 +774,14 @@ static void errhandler_reg_callbk (pmix_status_t status,
 static pmix_status_t connected(const pmix_proc_t *proc, void *server_object,
                                pmix_op_cbfunc_t cbfunc, void *cbdata)
 {
-    if (NULL != cbfunc) {
-        cbfunc(PMIX_SUCCESS, cbdata);
-    }
-    return PMIX_SUCCESS;
+    return PMIX_OPERATION_SUCCEEDED;
 }
 static pmix_status_t finalized(const pmix_proc_t *proc, void *server_object,
                      pmix_op_cbfunc_t cbfunc, void *cbdata)
 {
     pmix_output(0, "SERVER: FINALIZED %s:%d WAKEUP %d",
                 proc->nspace, proc->rank, wakeup);
-    /* ensure we call the cbfunc so the proc can exit! */
-    if (NULL != cbfunc) {
-        cbfunc(PMIX_SUCCESS, cbdata);
-    }
-    return PMIX_SUCCESS;
+    return PMIX_OPERATION_SUCCEEDED;
 }
 
 static void abcbfunc(pmix_status_t status, void *cbdata)
@@ -825,17 +839,31 @@ static pmix_status_t abort_fn(const pmix_proc_t *proc,
     return PMIX_SUCCESS;
 }
 
+static void fencbfn(int sd, short args, void *cbdata)
+{
+    pmix_shift_caddy_t *scd = (pmix_shift_caddy_t*)cbdata;
 
+    /* pass the provided data back to each participating proc */
+    if (NULL != scd->cbfunc.modexcbfunc) {
+        scd->cbfunc.modexcbfunc(scd->status, scd->data, scd->ndata, scd->cbdata, NULL, NULL);
+    }
+    PMIX_RELEASE(scd);
+}
 static pmix_status_t fencenb_fn(const pmix_proc_t procs[], size_t nprocs,
                       const pmix_info_t info[], size_t ninfo,
                       char *data, size_t ndata,
                       pmix_modex_cbfunc_t cbfunc, void *cbdata)
 {
+    pmix_shift_caddy_t *scd;
+
     pmix_output(0, "SERVER: FENCENB");
-    /* pass the provided data back to each participating proc */
-    if (NULL != cbfunc) {
-        cbfunc(PMIX_SUCCESS, data, ndata, cbdata, NULL, NULL);
-    }
+    scd = PMIX_NEW(pmix_shift_caddy_t);
+    scd->status = PMIX_SUCCESS;
+    scd->data = data;
+    scd->ndata = ndata;
+    scd->cbfunc.modexcbfunc = cbfunc;
+    scd->cbdata = cbdata;
+    PMIX_THREADSHIFT(scd, fencbfn);
     return PMIX_SUCCESS;
 }
 
@@ -844,6 +872,8 @@ static pmix_status_t dmodex_fn(const pmix_proc_t *proc,
                      const pmix_info_t info[], size_t ninfo,
                      pmix_modex_cbfunc_t cbfunc, void *cbdata)
 {
+    pmix_shift_caddy_t *scd;
+
     pmix_output(0, "SERVER: DMODEX");
 
     /* if this is a timeout test, then do nothing */
@@ -851,11 +881,12 @@ static pmix_status_t dmodex_fn(const pmix_proc_t *proc,
         return PMIX_SUCCESS;
     }
 
-    /* we don't have any data for remote procs as this
-     * test only runs one server - so report accordingly */
-    if (NULL != cbfunc) {
-        cbfunc(PMIX_ERR_NOT_FOUND, NULL, 0, cbdata, NULL, NULL);
-    }
+    scd = PMIX_NEW(pmix_shift_caddy_t);
+    scd->status = PMIX_ERR_NOT_FOUND;
+    scd->cbfunc.modexcbfunc = cbfunc;
+    scd->cbdata = cbdata;
+    PMIX_THREADSHIFT(scd, fencbfn);
+
     return PMIX_SUCCESS;
 }
 
@@ -877,12 +908,25 @@ static pmix_status_t publish_fn(const pmix_proc_t *proc,
         pmix_value_xfer(&p->pdata.value, (pmix_value_t*)&info[n].value);
         pmix_list_append(&pubdata, &p->super);
     }
-    if (NULL != cbfunc) {
-        cbfunc(PMIX_SUCCESS, cbdata);
-    }
-    return PMIX_SUCCESS;
+
+    return PMIX_OPERATION_SUCCEEDED;
 }
 
+typedef struct {
+    pmix_event_t ev;
+    pmix_pdata_t *pd;
+    size_t n;
+    pmix_lookup_cbfunc_t cbfunc;
+    void *cbdata;
+} lkobj_t;
+
+static void lkcbfn(int sd, short args, void *cbdata)
+{
+    lkobj_t *lk = (lkobj_t*)cbdata;
+
+    lk->cbfunc(PMIX_SUCCESS, lk->pd, lk->n, lk->cbdata);
+    PMIX_PDATA_FREE(lk->pd, lk->n);
+}
 
 static pmix_status_t lookup_fn(const pmix_proc_t *proc, char **keys,
                      const pmix_info_t info[], size_t ninfo,
@@ -893,6 +937,7 @@ static pmix_status_t lookup_fn(const pmix_proc_t *proc, char **keys,
     size_t i, n;
     pmix_pdata_t *pd = NULL;
     pmix_status_t ret = PMIX_ERR_NOT_FOUND;
+    lkobj_t lk;
 
     pmix_output(0, "SERVER: LOOKUP");
 
@@ -925,13 +970,15 @@ static pmix_status_t lookup_fn(const pmix_proc_t *proc, char **keys,
         }
     }
     PMIX_LIST_DESTRUCT(&results);
-    if (NULL != cbfunc) {
-        cbfunc(ret, pd, n, cbdata);
+    if (PMIX_SUCCESS == ret) {
+        lk.pd = pd;
+        lk.n = n;
+        lk.cbfunc = cbfunc;
+        lk.cbdata = cbdata;
+        PMIX_THREADSHIFT(&lk, lkcbfn);
     }
-    if (0 < n) {
-        PMIX_PDATA_FREE(pd, n);
-    }
-    return PMIX_SUCCESS;
+
+    return ret;
 }
 
 
@@ -953,10 +1000,7 @@ static pmix_status_t unpublish_fn(const pmix_proc_t *proc, char **keys,
             }
         }
     }
-    if (NULL != cbfunc) {
-        cbfunc(PMIX_SUCCESS, cbdata);
-    }
-    return PMIX_SUCCESS;
+    return PMIX_OPERATION_SUCCEEDED;
 }
 
 static void spcbfunc(pmix_status_t status, void *cbdata)
@@ -1020,11 +1064,7 @@ static pmix_status_t connect_fn(const pmix_proc_t procs[], size_t nprocs,
 
     numconnects++;
 
-    if (NULL != cbfunc) {
-        cbfunc(PMIX_SUCCESS, cbdata);
-    }
-
-    return PMIX_SUCCESS;
+    return PMIX_OPERATION_SUCCEEDED;
 }
 
 
@@ -1034,30 +1074,20 @@ static pmix_status_t disconnect_fn(const pmix_proc_t procs[], size_t nprocs,
 {
     pmix_output(0, "SERVER: DISCONNECT");
 
-    /* in practice, we would pass this request to the local
-     * resource manager for handling */
-
-    if (NULL != cbfunc) {
-        cbfunc(PMIX_SUCCESS, cbdata);
-    }
-
-    return PMIX_SUCCESS;
+    return PMIX_OPERATION_SUCCEEDED;
 }
 
 static pmix_status_t register_event_fn(pmix_status_t *codes, size_t ncodes,
                                        const pmix_info_t info[], size_t ninfo,
                                        pmix_op_cbfunc_t cbfunc, void *cbdata)
 {
-    if (NULL != cbfunc) {
-        cbfunc(PMIX_SUCCESS, cbdata);
-    }
-    return PMIX_SUCCESS;
+    return PMIX_OPERATION_SUCCEEDED;
 }
 
 static pmix_status_t deregister_events(pmix_status_t *codes, size_t ncodes,
                                        pmix_op_cbfunc_t cbfunc, void *cbdata)
 {
-    return PMIX_SUCCESS;
+    return PMIX_OPERATION_SUCCEEDED;
 }
 
 static pmix_status_t notify_event(pmix_status_t code,
@@ -1071,9 +1101,20 @@ static pmix_status_t notify_event(pmix_status_t code,
 }
 
 typedef struct query_data_t {
+    pmix_event_t ev;
     pmix_info_t *data;
     size_t ndata;
+    pmix_info_cbfunc_t cbfunc;
+    void *cbdata;
 } query_data_t;
+
+static void qfn(int sd, short args, void *cbdata)
+{
+    query_data_t *qd = (query_data_t*)cbdata;
+
+    qd->cbfunc(PMIX_SUCCESS, qd->data, qd->ndata, qd->cbdata, NULL, NULL);
+    PMIX_INFO_FREE(qd->data, qd->ndata);
+}
 
 static pmix_status_t query_fn(pmix_proc_t *proct,
                               pmix_query_t *queries, size_t nqueries,
@@ -1082,6 +1123,7 @@ static pmix_status_t query_fn(pmix_proc_t *proct,
 {
     size_t n;
     pmix_info_t *info;
+    query_data_t qd;
 
     pmix_output(0, "SERVER: QUERY");
 
@@ -1098,7 +1140,11 @@ static pmix_status_t query_fn(pmix_proc_t *proct,
             return PMIX_ERROR;
         }
     }
-    cbfunc(PMIX_SUCCESS, info, nqueries, cbdata, NULL, NULL);
+    qd.data = info;
+    qd.ndata = nqueries;
+    qd.cbfunc = cbfunc;
+    qd.cbdata = cbdata;
+    PMIX_THREADSHIFT(&qd, qfn);
     return PMIX_SUCCESS;
 }
 
@@ -1119,16 +1165,29 @@ static void tool_connect_fn(pmix_info_t *info, size_t ninfo,
     }
 }
 
+typedef struct {
+    pmix_event_t ev;
+    pmix_op_cbfunc_t cbfunc;
+    void *cbdata;
+} mylog_t;
+
+static void foobar(int sd, short args, void *cbdata)
+{
+    mylog_t *lg = (mylog_t*)cbdata;
+    lg->cbfunc(PMIX_SUCCESS, lg->cbdata);
+}
 static void log_fn(const pmix_proc_t *client,
                    const pmix_info_t data[], size_t ndata,
                    const pmix_info_t directives[], size_t ndirs,
                    pmix_op_cbfunc_t cbfunc, void *cbdata)
 {
+    mylog_t lg;
+
     pmix_output(0, "SERVER: LOG");
 
-    if (NULL != cbfunc) {
-        cbfunc(PMIX_SUCCESS, cbdata);
-    }
+    lg.cbfunc = cbfunc;
+    lg.cbdata = cbdata;
+    PMIX_THREADSHIFT(&lg, foobar);
 }
 
 static pmix_status_t alloc_fn(const pmix_proc_t *client,
@@ -1136,7 +1195,7 @@ static pmix_status_t alloc_fn(const pmix_proc_t *client,
                               const pmix_info_t data[], size_t ndata,
                               pmix_info_cbfunc_t cbfunc, void *cbdata)
 {
-    return PMIX_SUCCESS;
+    return PMIX_OPERATION_SUCCEEDED;
 }
 
 static pmix_status_t jctrl_fn(const pmix_proc_t *requestor,
@@ -1196,7 +1255,7 @@ static void wait_signal_callback(int fd, short event, void *arg)
                     exit_code = t2->exit_code;
                 }
                 --wakeup;
-                return;
+                break;
             }
         }
     }

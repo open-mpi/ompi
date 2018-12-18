@@ -25,13 +25,15 @@
 
 headers = \
         gds_ds21_base.h \
-        gds_ds21_lock.h
+        gds_ds21_lock.h \
+        gds_ds21_file.h
 
 sources = \
         gds_ds21_base.c \
         gds_ds21_lock.c \
         gds_ds21_lock_pthread.c \
-        gds_ds21_component.c
+        gds_ds21_component.c \
+        gds_ds21_file.c
 
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la

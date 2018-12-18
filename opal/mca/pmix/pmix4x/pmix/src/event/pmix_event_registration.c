@@ -95,7 +95,11 @@ static void regevents_cbfunc(struct pmix_peer_t *peer, pmix_ptl_hdr_t *hdr,
     PMIX_BFROPS_UNPACK(rc, peer, buf, &ret, &cnt, PMIX_STATUS);
     if ((PMIX_SUCCESS != rc) ||
         (PMIX_SUCCESS != ret)) {
-        PMIX_ERROR_LOG(rc);
+        if (PMIX_SUCCESS != rc) {
+            PMIX_ERROR_LOG(rc);
+        } else {
+            PMIX_ERROR_LOG(ret);
+        }
         /* remove the err handler and call the error handler reg completion callback fn.*/
         if (NULL == rb->list) {
             if (NULL != rb->hdlr) {
@@ -333,16 +337,17 @@ static pmix_status_t _add_hdlr(pmix_rshift_caddy_t *cd, pmix_list_t *xfer)
         NULL != pmix_host_server.register_events) {
         pmix_output_verbose(2, pmix_client_globals.event_output,
                             "pmix: _add_hdlr registering with server");
-        if (PMIX_SUCCESS != (rc = pmix_host_server.register_events(cd->codes, cd->ncodes,
-                                                                   cd2->info, cd2->ninfo,
-                                                                   reg_cbfunc, cd2))) {
+        rc = pmix_host_server.register_events(cd->codes, cd->ncodes,
+                                              cd2->info, cd2->ninfo,
+                                              reg_cbfunc, cd2);
+        if (PMIX_SUCCESS != rc && PMIX_OPERATION_SUCCEEDED != rc) {
             if (NULL != cd2->info) {
                 PMIX_INFO_FREE(cd2->info, cd2->ninfo);
             }
             PMIX_RELEASE(cd2);
             return rc;
         }
-        return PMIX_ERR_WOULD_BLOCK;
+        return PMIX_SUCCESS;
     } else {
         if (NULL != cd2->info) {
             PMIX_INFO_FREE(cd2->info, cd2->ninfo);
@@ -355,13 +360,15 @@ static pmix_status_t _add_hdlr(pmix_rshift_caddy_t *cd, pmix_list_t *xfer)
 
 static void check_cached_events(pmix_rshift_caddy_t *cd)
 {
-    size_t i, n;
+    size_t n;
     pmix_notify_caddy_t *ncd;
     bool found, matched;
     pmix_event_chain_t *chain;
+    int j;
 
-    for (i=0; i < (size_t)pmix_globals.notifications.size; i++) {
-        if (NULL == (ncd = (pmix_notify_caddy_t*)pmix_ring_buffer_poke(&pmix_globals.notifications, i))) {
+    for (j=0; j < pmix_globals.max_events; j++) {
+        pmix_hotel_knock(&pmix_globals.notifications, j, (void**)&ncd);
+        if (NULL == ncd) {
             continue;
         }
         found = false;

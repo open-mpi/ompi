@@ -163,6 +163,15 @@ int main(int argc, char **argv)
     }
     PMIX_VALUE_RELEASE(val);
 
+    /* test something */
+    if (PMIX_SUCCESS != (rc = PMIx_Get(&myproc, PMIX_SERVER_URI, NULL, 0, &val))) {
+        pmix_output(0, "Client ns %s rank %d: PMIx_Get failed: %s",
+                    myproc.nspace, myproc.rank, PMIx_Error_string(rc));
+        exit(rc);
+    }
+    pmix_output(0, "CLIENT SERVER URI: %s", val->data.string);
+    PMIX_VALUE_RELEASE(val);
+
     /* register a handler specifically for when models declare */
     active = true;
     ninfo = 1;
@@ -183,6 +192,7 @@ int main(int argc, char **argv)
     while (active) {
         usleep(10);
     }
+
 
     /* get our universe size */
     (void)strncpy(proc.nspace, myproc.nspace, PMIX_MAX_NSLEN);

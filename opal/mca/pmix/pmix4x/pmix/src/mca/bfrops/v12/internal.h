@@ -107,7 +107,7 @@ pmix_status_t pmix12_bfrop_print(char **output, char *prefix, void *src, pmix_da
 
 pmix_status_t pmix12_bfrop_copy_payload(pmix_buffer_t *dest, pmix_buffer_t *src);
 
-pmix_status_t pmix12_bfrop_value_xfer(pmix_value_t *p, pmix_value_t *src);
+pmix_status_t pmix12_bfrop_value_xfer(pmix_value_t *p, const pmix_value_t *src);
 
 void pmix12_bfrop_value_load(pmix_value_t *v, const void *data,
                             pmix_data_type_t type);

@@ -324,7 +324,7 @@ typedef pmix_status_t (*pmix_bfrop_print_fn_t)(char **output, char *prefix,
  * @retval PMIX_ERROR(s) An appropriate error code
  */
 typedef pmix_status_t (*pmix_bfrop_value_xfer_fn_t)(pmix_value_t *dest,
-                                                    pmix_value_t *src);
+                                                    const pmix_value_t *src);
 
 
 /**

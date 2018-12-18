@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2017-2018 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$

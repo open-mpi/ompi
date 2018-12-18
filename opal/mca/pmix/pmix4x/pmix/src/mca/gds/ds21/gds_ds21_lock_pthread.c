@@ -2,7 +2,7 @@
  * Copyright (c) 2018      Mellanox Technologies, Inc.
  *                         All rights reserved.
  *
- * Copyright (c) 2018      Intel, Inc. All rights reserved.
+ * Copyright (c) 2018      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -68,7 +68,7 @@ typedef struct {
 } segment_hdr_t;
 
 #define _GET_IDX_ARR_PTR(seg_ptr) \
-    ((int32_t*)((char*)seg_ptr + sizeof(segment_hdr_t)))
+    ((pmix_atomic_int32_t*)((char*)seg_ptr + sizeof(segment_hdr_t)))
 
 #define _GET_MUTEX_ARR_PTR(seg_hdr) \
     ((pthread_mutex_t*)((char*)seg_hdr + seg_hdr->mutex_offs))
@@ -215,7 +215,7 @@ pmix_status_t pmix_gds_ds21_lock_init(pmix_common_dstor_lock_ctx_t *ctx, const c
         }
     }
     else {
-        int32_t *lock_idx_ptr;
+        pmix_atomic_int32_t *lock_idx_ptr;
         bool idx_found = false;
 
         size = pmix_common_dstor_getpagesize();

@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2015-2018 Intel, Inc. All rights reserved.
- * Copyright (c) 2016      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2016-2018 IBM Corporation.  All rights reserved.
  * Copyright (c) 2016-2018 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2018      Research Organization for Information Science
@@ -23,6 +23,7 @@
 #include "src/mca/common/dstore/dstore_common.h"
 #include "gds_ds12_base.h"
 #include "gds_ds12_lock.h"
+#include "gds_ds12_file.h"
 #include "src/mca/common/dstore/dstore_base.h"
 
 static pmix_common_dstore_ctx_t *ds12_ctx;
@@ -30,8 +31,14 @@ static pmix_common_dstore_ctx_t *ds12_ctx;
 static pmix_status_t ds12_init(pmix_info_t info[], size_t ninfo)
 {
     pmix_status_t rc = PMIX_SUCCESS;
+    pmix_common_dstore_file_cbs_t *dstore_file_cbs = NULL;
 
-    ds12_ctx = pmix_common_dstor_init(&pmix_ds12_lock_module, "ds12", info, ninfo);
+    if (!PMIX_PROC_IS_SERVER(pmix_globals.mypeer)) {
+        dstore_file_cbs = &pmix_ds20_file_module;
+    }
+    ds12_ctx = pmix_common_dstor_init("ds12", info, ninfo,
+                                      &pmix_ds12_lock_module,
+                                      dstore_file_cbs);
     if (NULL == ds12_ctx) {
         rc = PMIX_ERR_INIT;
     }
@@ -87,6 +94,11 @@ static pmix_status_t ds12_cache_job_info(struct pmix_namespace_t *ns,
 static pmix_status_t ds12_register_job_info(struct pmix_peer_t *pr,
                                             pmix_buffer_t *reply)
 {
+    if (PMIX_PROC_IS_V1(pr)) {
+        ds12_ctx->file_cbs = &pmix_ds12_file_module;
+    } else {
+        ds12_ctx->file_cbs = &pmix_ds20_file_module;
+    }
     return pmix_common_dstor_register_job_info(ds12_ctx, pr, reply);
 }
 
@@ -108,9 +120,9 @@ static pmix_status_t ds12_store(const pmix_proc_t *proc,
  * shall store it accordingly */
 static pmix_status_t ds12_store_modex(struct pmix_namespace_t *nspace,
                                       pmix_list_t *cbs,
-                                      pmix_byte_object_t *bo)
+                                      pmix_buffer_t *buf)
 {
-    return pmix_common_dstor_store_modex(ds12_ctx, nspace, cbs, bo);
+    return pmix_common_dstor_store_modex(ds12_ctx, nspace, cbs, buf);
 }
 
 static pmix_status_t ds12_fetch(const pmix_proc_t *proc,
@@ -141,6 +153,7 @@ static pmix_status_t ds12_del_nspace(const char* nspace)
 
 pmix_gds_base_module_t pmix_ds12_module = {
     .name = "ds12",
+    .is_tsafe = false,
     .init = ds12_init,
     .finalize = ds12_finalize,
     .assign_module = ds12_assign_module,

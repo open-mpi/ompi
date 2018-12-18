@@ -16,7 +16,8 @@ AM_CPPFLAGS = $(LTDLINCL)
 headers = \
         dstore_common.h \
         dstore_base.h \
-        dstore_segment.h
+        dstore_segment.h \
+        dstore_file.h
 
 # Source files
 

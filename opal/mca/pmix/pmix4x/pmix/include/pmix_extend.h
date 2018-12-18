@@ -63,6 +63,18 @@
 extern "C" {
 #endif
 
+/* declare a convenience macro for checking keys */
+#define PMIX_CHECK_KEY(a, b) \
+    (0 == strncmp((a)->key, (b), PMIX_MAX_KEYLEN))
+
+/* define a convenience macro for checking nspaces */
+#define PMIX_CHECK_NSPACE(a, b) \
+    (0 == strncmp((a), (b), PMIX_MAX_NSLEN))
+
+/* define a convenience macro for checking names */
+#define PMIX_CHECK_PROCID(a, b) \
+    (PMIX_CHECK_NSPACE((a)->nspace, (b)->nspace) && ((a)->rank == (b)->rank || (PMIX_RANK_WILDCARD == (a)->rank || PMIX_RANK_WILDCARD == (b)->rank)))
+
 /* expose some functions that are resolved in the
  * PMIx library, but part of a header that
  * includes internal functions - we don't
@@ -73,7 +85,7 @@ void pmix_value_load(pmix_value_t *v, const void *data, pmix_data_type_t type);
 
 pmix_status_t pmix_value_unload(pmix_value_t *kv, void **data, size_t *sz);
 
-pmix_status_t pmix_value_xfer(pmix_value_t *kv, pmix_value_t *src);
+pmix_status_t pmix_value_xfer(pmix_value_t *kv, const pmix_value_t *src);
 
 pmix_status_t pmix_argv_append_nosize(char ***argv, const char *arg);
 

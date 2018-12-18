@@ -8,8 +8,8 @@ Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
                         University of Stuttgart.  All rights reserved.
 Copyright (c) 2004-2005 The Regents of the University of California.
                         All rights reserved.
-Copyright (c) 2008-2015 Cisco Systems, Inc.  All rights reserved.
-Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
+Copyright (c) 2008-2018 Cisco Systems, Inc.  All rights reserved
+Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
 $COPYRIGHT$
 
 Additional copyrights may follow
@@ -205,17 +205,17 @@ NOTE: On MacOS/X, the default "libtool" program is different than the
    m4, Autoconf and Automake build and install very quickly; Libtool will
    take a minute or two.
 
-5. You can now run PMIx’s top-level "autogen.sh" script.  This script
+5. You can now run PMIx’s top-level "autogen.pl" script.  This script
    will invoke the GNU Autoconf, Automake, and Libtool commands in the
    proper order and setup to run PMIx's top-level "configure" script.
 
-   5a. You generally need to run autogen.sh only when the top-level
+   5a. You generally need to run autogen.pl only when the top-level
        file "configure.ac" changes, or any files in the config/ or
        <project>/config/ directories change (these directories are
        where a lot of "include" files for PMI’xs configure script
        live).
 
-   5b. You do *NOT* need to re-run autogen.sh if you modify a
+   5b. You do *NOT* need to re-run autogen.pl if you modify a
        Makefile.am.
 
 Use of Flex

@@ -208,6 +208,10 @@ void pmix_ds12_lock_finalize(pmix_common_dstor_lock_ctx_t *lock_ctx)
         PMIX_ERROR_LOG(PMIX_ERROR);
         return;
     }
+    if (NULL == pthread_lock->lockfile) {
+        PMIX_ERROR_LOG(PMIX_ERROR);
+        return;
+    }
 
     /* detach & unlink from current desc */
     if (pthread_lock->segment->seg_cpid == getpid()) {
@@ -217,6 +221,8 @@ void pmix_ds12_lock_finalize(pmix_common_dstor_lock_ctx_t *lock_ctx)
 
     free(pthread_lock->segment);
     pthread_lock->segment = NULL;
+    free(pthread_lock->lockfile);
+    pthread_lock->lockfile = NULL;
     pthread_lock->rwlock = NULL;
     free(pthread_lock);
     *lock_ctx = NULL;

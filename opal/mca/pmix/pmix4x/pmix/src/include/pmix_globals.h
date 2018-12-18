@@ -36,7 +36,7 @@
 
 #include "src/class/pmix_hash_table.h"
 #include "src/class/pmix_list.h"
-#include "src/class/pmix_ring_buffer.h"
+#include "src/class/pmix_hotel.h"
 #include "src/event/pmix_event.h"
 #include "src/threads/threads.h"
 
@@ -106,6 +106,11 @@ typedef uint8_t pmix_cmd_t;
 #define PMIX_VALIDATE_CRED_CMD      21
 #define PMIX_IOF_PULL_CMD           22
 #define PMIX_IOF_PUSH_CMD           23
+#define PMIX_GROUP_CONSTRUCT_CMD    24
+#define PMIX_GROUP_JOIN_CMD         25
+#define PMIX_GROUP_INVITE_CMD       26
+#define PMIX_GROUP_LEAVE_CMD        27
+#define PMIX_GROUP_DESTRUCT_CMD     28
 
 /* provide a "pretty-print" function for cmds */
 const char* pmix_command_string(pmix_cmd_t cmd);
@@ -278,6 +283,11 @@ PMIX_CLASS_DECLARATION(pmix_query_caddy_t);
  * - instanced in pmix_server_ops.c */
 typedef struct {
     pmix_list_item_t super;
+    pmix_event_t ev;
+    bool event_active;
+    bool lost_connection;           // tracker went thru lost connection procedure
+    bool local;                     // operation is strictly local
+    char *id;                       // string identifier for the collective
     pmix_cmd_t type;
     pmix_proc_t pname;
     bool hybrid;                    // true if participating procs are from more than one nspace
@@ -295,6 +305,7 @@ typedef struct {
     pmix_collect_t collect_type;    // whether or not data is to be returned at completion
     pmix_modex_cbfunc_t modexcbfunc;
     pmix_op_cbfunc_t op_cbfunc;
+    void *cbdata;
 } pmix_server_trkr_t;
 PMIX_CLASS_DECLARATION(pmix_server_trkr_t);
 
@@ -340,6 +351,7 @@ PMIX_CLASS_DECLARATION(pmix_server_caddy_t);
        pmix_release_cbfunc_t relfn;
        pmix_hdlr_reg_cbfunc_t hdlrregcbfn;
        pmix_op_cbfunc_t opcbfn;
+       pmix_modex_cbfunc_t modexcbfunc;
     } cbfunc;
     void *cbdata;
     size_t ref;
@@ -394,6 +406,11 @@ typedef struct {
     pmix_object_t super;
     pmix_event_t ev;
     pmix_lock_t lock;
+    /* timestamp receipt of the notification so we
+     * can evict the oldest one if we get overwhelmed */
+    time_t ts;
+    /* what room of the hotel they are in */
+    int room;
     pmix_status_t status;
     pmix_proc_t source;
     pmix_data_range_t range;
@@ -448,7 +465,9 @@ typedef struct {
     struct timeval event_window;
     pmix_list_t cached_events;          // events waiting in the window prior to processing
     pmix_list_t iof_requests;           // list of pmix_iof_req_t IOF requests
-    pmix_ring_buffer_t notifications;   // ring buffer of pending notifications
+    int max_events;                     // size of the notifications hotel
+    int event_eviction_time;            // max time to cache notifications
+    pmix_hotel_t notifications;         // hotel of pending notifications
     /* processes also need a place where they can store
      * their own internal data - e.g., data provided by
      * the user via the store_internal interface, as well

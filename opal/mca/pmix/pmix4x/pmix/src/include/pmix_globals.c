@@ -238,6 +238,9 @@ static void iofreqdes(pmix_iof_req_t *p)
     if (NULL != p->peer) {
         PMIX_RELEASE(p->peer);
     }
+    if (NULL != p->pname.nspace) {
+        free(p->pname.nspace);
+    }
 }
 PMIX_EXPORT PMIX_CLASS_INSTANCE(pmix_iof_req_t,
                                 pmix_list_item_t,
@@ -344,6 +347,8 @@ static void qdes(pmix_query_caddy_t *p)
 {
     PMIX_DESTRUCT_LOCK(&p->lock);
     PMIX_BYTE_OBJECT_DESTRUCT(&p->bo);
+    PMIX_PROC_FREE(p->targets, p->ntargets);
+    PMIX_INFO_FREE(p->info, p->ninfo);
 }
 PMIX_EXPORT PMIX_CLASS_INSTANCE(pmix_query_caddy_t,
                                 pmix_object_t,

@@ -11,11 +11,11 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
- * Copyright (c) 2014-2017 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2014-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2017      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2018      Intel, Inc. All rights reserved.
+ * Copyright (c) 2018      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -58,7 +58,7 @@ static inline void pmix_atomic_wmb(void)
 
 #define PMIX_HAVE_ATOMIC_COMPARE_EXCHANGE_32 1
 
-static inline bool pmix_atomic_compare_exchange_strong_32 (volatile int32_t *addr, int32_t *oldval, int32_t newval)
+static inline bool pmix_atomic_compare_exchange_strong_32 (pmix_atomic_int32_t *addr, int32_t *oldval, int32_t newval)
 {
     int32_t prev = __sync_val_compare_and_swap (addr, *oldval, newval);
     bool ret = prev == *oldval;
@@ -72,31 +72,31 @@ static inline bool pmix_atomic_compare_exchange_strong_32 (volatile int32_t *add
 #define PMIX_HAVE_ATOMIC_MATH_32 1
 
 #define PMIX_HAVE_ATOMIC_ADD_32 1
-static inline int32_t pmix_atomic_fetch_add_32(volatile int32_t *addr, int32_t delta)
+static inline int32_t pmix_atomic_fetch_add_32(pmix_atomic_int32_t *addr, int32_t delta)
 {
     return __sync_fetch_and_add(addr, delta);
 }
 
 #define PMIX_HAVE_ATOMIC_AND_32 1
-static inline int32_t pmix_atomic_fetch_and_32(volatile int32_t *addr, int32_t value)
+static inline int32_t pmix_atomic_fetch_and_32(pmix_atomic_int32_t *addr, int32_t value)
 {
     return __sync_fetch_and_and(addr, value);
 }
 
 #define PMIX_HAVE_ATOMIC_OR_32 1
-static inline int32_t pmix_atomic_fetch_or_32(volatile int32_t *addr, int32_t value)
+static inline int32_t pmix_atomic_fetch_or_32(pmix_atomic_int32_t *addr, int32_t value)
 {
     return __sync_fetch_and_or(addr, value);
 }
 
 #define PMIX_HAVE_ATOMIC_XOR_32 1
-static inline int32_t pmix_atomic_fetch_xor_32(volatile int32_t *addr, int32_t value)
+static inline int32_t pmix_atomic_fetch_xor_32(pmix_atomic_int32_t *addr, int32_t value)
 {
     return __sync_fetch_and_xor(addr, value);
 }
 
 #define PMIX_HAVE_ATOMIC_SUB_32 1
-static inline int32_t pmix_atomic_fetch_sub_32(volatile int32_t *addr, int32_t delta)
+static inline int32_t pmix_atomic_fetch_sub_32(pmix_atomic_int32_t *addr, int32_t delta)
 {
     return __sync_fetch_and_sub(addr, delta);
 }
@@ -105,7 +105,7 @@ static inline int32_t pmix_atomic_fetch_sub_32(volatile int32_t *addr, int32_t d
 
 #define PMIX_HAVE_ATOMIC_COMPARE_EXCHANGE_64 1
 
-static inline bool pmix_atomic_compare_exchange_strong_64 (volatile int64_t *addr, int64_t *oldval, int64_t newval)
+static inline bool pmix_atomic_compare_exchange_strong_64 (pmix_atomic_int64_t *addr, int64_t *oldval, int64_t newval)
 {
     int64_t prev = __sync_val_compare_and_swap (addr, *oldval, newval);
     bool ret = prev == *oldval;
@@ -118,31 +118,31 @@ static inline bool pmix_atomic_compare_exchange_strong_64 (volatile int64_t *add
 
 #define PMIX_HAVE_ATOMIC_MATH_64 1
 #define PMIX_HAVE_ATOMIC_ADD_64 1
-static inline int64_t pmix_atomic_fetch_add_64(volatile int64_t *addr, int64_t delta)
+static inline int64_t pmix_atomic_fetch_add_64(pmix_atomic_int64_t *addr, int64_t delta)
 {
     return __sync_fetch_and_add(addr, delta);
 }
 
 #define PMIX_HAVE_ATOMIC_AND_64 1
-static inline int64_t pmix_atomic_fetch_and_64(volatile int64_t *addr, int64_t value)
+static inline int64_t pmix_atomic_fetch_and_64(pmix_atomic_int64_t *addr, int64_t value)
 {
     return __sync_fetch_and_and(addr, value);
 }
 
 #define PMIX_HAVE_ATOMIC_OR_64 1
-static inline int64_t pmix_atomic_fetch_or_64(volatile int64_t *addr, int64_t value)
+static inline int64_t pmix_atomic_fetch_or_64(pmix_atomic_int64_t *addr, int64_t value)
 {
     return __sync_fetch_and_or(addr, value);
 }
 
 #define PMIX_HAVE_ATOMIC_XOR_64 1
-static inline int64_t pmix_atomic_fetch_xor_64(volatile int64_t *addr, int64_t value)
+static inline int64_t pmix_atomic_fetch_xor_64(pmix_atomic_int64_t *addr, int64_t value)
 {
     return __sync_fetch_and_xor(addr, value);
 }
 
 #define PMIX_HAVE_ATOMIC_SUB_64 1
-static inline int64_t pmix_atomic_fetch_sub_64(volatile int64_t *addr, int64_t delta)
+static inline int64_t pmix_atomic_fetch_sub_64(pmix_atomic_int64_t *addr, int64_t delta)
 {
     return __sync_fetch_and_sub(addr, delta);
 }
@@ -150,7 +150,7 @@ static inline int64_t pmix_atomic_fetch_sub_64(volatile int64_t *addr, int64_t d
 #endif
 
 #if PMIX_HAVE_SYNC_BUILTIN_CSWAP_INT128
-static inline bool pmix_atomic_compare_exchange_strong_128 (volatile pmix_int128_t *addr,
+static inline bool pmix_atomic_compare_exchange_strong_128 (pmix_atomic_int128_t *addr,
                                                             pmix_int128_t *oldval, pmix_int128_t newval)
 {
     pmix_int128_t prev = __sync_val_compare_and_swap (addr, *oldval, newval);

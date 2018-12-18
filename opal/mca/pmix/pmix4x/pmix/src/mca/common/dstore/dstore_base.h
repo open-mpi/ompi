@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2017      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
@@ -24,6 +24,7 @@ BEGIN_C_DECLS
 #include "src/class/pmix_value_array.h"
 #include "dstore_common.h"
 #include "dstore_segment.h"
+#include "dstore_file.h"
 
 #define INITIAL_SEG_SIZE 4096
 #define NS_META_SEG_SIZE (1<<22)
@@ -50,6 +51,7 @@ struct pmix_common_dstore_ctx_s {
     pmix_value_array_t *ns_track_array;
 
     pmix_common_lock_callbacks_t *lock_cbs;
+    pmix_common_dstore_file_cbs_t *file_cbs;
 
     size_t initial_segment_size;
     size_t meta_segment_size;
@@ -69,6 +71,8 @@ struct pmix_common_dstore_ctx_s {
      * sparse communication patterns when direct modex is usually used.
      */
     int direct_mode;
+    /* dstore ctx protect lock, uses for clients only */
+    pthread_mutex_t lock;
 };
 
 struct session_s {

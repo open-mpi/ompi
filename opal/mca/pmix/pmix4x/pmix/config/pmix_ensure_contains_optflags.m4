@@ -12,7 +12,7 @@ dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2007-2009 Sun Microsystems, Inc.  All rights reserved.
 dnl Copyright (c) 2008-2015 Cisco Systems, Inc.  All rights reserved.
-dnl Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
+dnl Copyright (c) 2013      Intel, Inc. All rights reserved
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow

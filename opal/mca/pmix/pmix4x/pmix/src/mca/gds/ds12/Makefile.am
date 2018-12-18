@@ -25,12 +25,15 @@
 
 headers = \
         gds_ds12_base.h \
-        gds_ds12_lock.h
+        gds_ds12_lock.h \
+        gds_ds12_file.h
 
 sources = \
         gds_ds12_base.c \
         gds_ds12_lock.c \
-        gds_ds12_component.c
+        gds_ds12_component.c \
+        gds_ds12_file.c \
+        gds_ds20_file.c
 
 if HAVE_DSTORE_PTHREAD_LOCK
 sources += gds_ds12_lock_pthread.c

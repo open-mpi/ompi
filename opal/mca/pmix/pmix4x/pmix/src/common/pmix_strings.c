@@ -230,6 +230,16 @@ PMIX_EXPORT const char* pmix_command_string(pmix_cmd_t cmd)
             return "IOF PUSH";
         case PMIX_IOF_PULL_CMD:
             return "IOF PULL";
+        case PMIX_GROUP_CONSTRUCT_CMD:
+            return "GROUP CONSTRUCT";
+        case PMIX_GROUP_JOIN_CMD:
+            return "GROUP JOIN";
+        case PMIX_GROUP_INVITE_CMD:
+            return "GROUP INVITE";
+        case PMIX_GROUP_LEAVE_CMD:
+            return "GROUP LEAVE";
+        case PMIX_GROUP_DESTRUCT_CMD:
+            return "GROUP DESTRUCT";
         default:
             return "UNKNOWN";
     }
