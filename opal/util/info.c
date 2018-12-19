@@ -106,7 +106,13 @@ static void opal_info_get_nolock (opal_info_t *info, const char *key, int valuel
          * Set the flag and value
          */
         *flag = 1;
-        opal_string_copy(value, search->ie_value, valuelen);
+        // Note: we copy exactly (valuelen) characters, because that's
+        // what the caller asked for.  Don't use opal_string_copy()
+        // here, because that will guarantee to \0-terminate what is
+        // copied (i.e., potentially copy (valuelen-1) chars and then
+        // an additional \0).  Instead: copy over exactly (valuelen)
+        // characters, and if that's not \0-terminated, then so be it.
+        memcpy(value, search->ie_value, valuelen);
     }
 }
 
