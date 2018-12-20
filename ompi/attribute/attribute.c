@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -14,6 +15,8 @@
  *                         reserved.
  * Copyright (c) 2017      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2018      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -424,6 +427,7 @@ static MPI_Fint translate_to_fint(attribute_value_t *val);
 static MPI_Aint translate_to_aint(attribute_value_t *val);
 
 static int compare_attr_sequence(const void *attr1, const void *attr2);
+static void ompi_attr_finalize(void);
 
 
 /*
@@ -556,9 +560,8 @@ int ompi_attr_init(void)
                                                     ATTR_TABLE_SIZE))) {
         return ret;
     }
-    if (OMPI_SUCCESS != (ret = ompi_attr_create_predefined())) {
-        return ret;
-    }
+
+    opal_finalize_register_cleanup (ompi_attr_finalize);
 
     return OMPI_SUCCESS;
 }
@@ -567,14 +570,11 @@ int ompi_attr_init(void)
 /*
  * Cleanup everything during MPI_Finalize().
  */
-int ompi_attr_finalize(void)
+static void ompi_attr_finalize(void)
 {
-    ompi_attr_free_predefined();
     OBJ_DESTRUCT(&attribute_lock);
     OBJ_RELEASE(keyval_hash);
     OBJ_RELEASE(key_bitmap);
-
-    return OMPI_SUCCESS;
 }
 
 /*****************************************************************************/

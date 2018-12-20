@@ -17,6 +17,8 @@
  *                         reserved.
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2018      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -299,16 +301,6 @@ struct ompi_request_t;
    * corresopnding F2C translation table.
    */
   int ompi_errhandler_init(void);
-
-  /**
-   * Finalize the error handler interface.
-   *
-   * @returns OMPI_SUCCESS Always
-   *
-   * Invokes from ompi_mpi_finalize(); tears down the error handler
-   * interface, and destroys the F2C translation table.
-   */
-  int ompi_errhandler_finalize(void);
 
   /**
    * \internal

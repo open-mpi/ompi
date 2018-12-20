@@ -18,6 +18,8 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
+ * Copyright (c) 2018      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -48,6 +50,8 @@ ompi_request_fns_t               ompi_request_functions = {
     ompi_request_default_wait_all,
     ompi_request_default_wait_some
 };
+
+static void ompi_request_finalize(void);
 
 static void ompi_request_construct(ompi_request_t* req)
 {
@@ -173,18 +177,19 @@ int ompi_request_init(void)
     ompi_status_empty._ucount = 0;
     ompi_status_empty._cancelled = 0;
 
+    opal_finalize_register_cleanup (ompi_request_finalize);
+
     return OMPI_SUCCESS;
 }
 
 
-int ompi_request_finalize(void)
+static void ompi_request_finalize(void)
 {
     OMPI_REQUEST_FINI( &ompi_request_null.request );
     OBJ_DESTRUCT( &ompi_request_null.request );
     OMPI_REQUEST_FINI( &ompi_request_empty );
     OBJ_DESTRUCT( &ompi_request_empty );
     OBJ_DESTRUCT( &ompi_request_f_to_c_table );
-    return OMPI_SUCCESS;
 }
 
 

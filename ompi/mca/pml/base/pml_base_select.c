@@ -46,6 +46,15 @@ typedef struct opened_component_t {
 
 static bool modex_reqd=false;
 
+static void mca_pml_base_finalize(void)
+{
+    if (NULL != mca_pml_base_selected_component.pmlm_finalize) {
+        (void) mca_pml_base_selected_component.pmlm_finalize();
+    }
+}
+
+
+
 /**
  * Function for selecting one component from all those that are
  * available.
@@ -292,6 +301,7 @@ int mca_pml_base_select(bool enable_progress_threads,
     }
 
     /* All done */
+    opal_finalize_register_cleanup (mca_pml_base_finalize);
 
     return OMPI_SUCCESS;
 }

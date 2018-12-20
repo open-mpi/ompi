@@ -15,6 +15,8 @@
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2018      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -115,14 +117,6 @@ static int mca_pml_base_register(mca_base_register_flag_t flags)
 
     return OMPI_SUCCESS;
 }
-
-int mca_pml_base_finalize(void) {
-  if (NULL != mca_pml_base_selected_component.pmlm_finalize) {
-    return mca_pml_base_selected_component.pmlm_finalize();
-  }
-  return OMPI_SUCCESS;
-}
-
 
 static int mca_pml_base_close(void)
 {

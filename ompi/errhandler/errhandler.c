@@ -15,6 +15,8 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015-2016 Intel, Inc. All rights reserved.
+ * Copyright (c) 2018      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -44,6 +46,8 @@ opal_pointer_array_t ompi_errhandler_f_to_c_table = {{0}};
  * default errhandler id
  */
 static size_t default_errhandler_id = SIZE_MAX;
+
+static void ompi_errhandler_finalize(void);
 
 /*
  * Class information
@@ -148,6 +152,7 @@ int ompi_errhandler_init(void)
                    sizeof(ompi_mpi_errors_throw_exceptions.eh.eh_name));
 
   /* All done */
+  opal_finalize_register_cleanup (ompi_errhandler_finalize);
 
   return OMPI_SUCCESS;
 }
@@ -156,7 +161,7 @@ int ompi_errhandler_init(void)
 /*
  * Clean up the errorhandler resources
  */
-int ompi_errhandler_finalize(void)
+static void ompi_errhandler_finalize(void)
 {
     OBJ_DESTRUCT(&ompi_mpi_errhandler_null.eh);
     OBJ_DESTRUCT(&ompi_mpi_errors_return.eh);
@@ -170,10 +175,6 @@ int ompi_errhandler_finalize(void)
     /* Remove errhandler F2C table */
 
     OBJ_DESTRUCT(&ompi_errhandler_f_to_c_table);
-
-    /* All done */
-
-    return OMPI_SUCCESS;
 }
 
 

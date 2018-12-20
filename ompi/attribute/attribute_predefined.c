@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -13,6 +14,8 @@
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2017      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2018      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -91,6 +94,7 @@
 /*
  * Private functions
  */
+static void ompi_attr_free_predefined(void);
 static int create_comm(int target_keyval, bool want_inherit);
 static int free_comm(int keyval);
 
@@ -98,7 +102,6 @@ static int create_win(int target_keyval);
 static int free_win(int keyval);
 
 static int set_f(int keyval, MPI_Fint value);
-
 
 int ompi_attr_create_predefined(void)
 {
@@ -155,26 +158,20 @@ int ompi_attr_create_predefined(void)
     return ret;
 }
 
-
-int ompi_attr_free_predefined(void)
+static void ompi_attr_free_predefined(void)
 {
-    int ret;
-
-    if (OMPI_SUCCESS != (ret = free_comm(MPI_TAG_UB)) ||
-        OMPI_SUCCESS != (ret = free_comm(MPI_HOST)) ||
-        OMPI_SUCCESS != (ret = free_comm(MPI_IO)) ||
-        OMPI_SUCCESS != (ret = free_comm(MPI_WTIME_IS_GLOBAL)) ||
-        OMPI_SUCCESS != (ret = free_comm(MPI_APPNUM)) ||
-        OMPI_SUCCESS != (ret = free_comm(MPI_LASTUSEDCODE)) ||
-        OMPI_SUCCESS != (ret = free_comm(MPI_UNIVERSE_SIZE)) ||
-        OMPI_SUCCESS != (ret = free_win(MPI_WIN_BASE)) ||
-        OMPI_SUCCESS != (ret = free_win(MPI_WIN_SIZE)) ||
-        OMPI_SUCCESS != (ret = free_win(MPI_WIN_DISP_UNIT)) ||
-        OMPI_SUCCESS != (ret = free_win(MPI_WIN_CREATE_FLAVOR)) ||
-        OMPI_SUCCESS != (ret = free_win(MPI_WIN_MODEL))) {
-        return ret;
-    }
-    return OMPI_SUCCESS;
+    (void) free_comm(MPI_TAG_UB);
+    (void) free_comm(MPI_HOST);
+    (void) free_comm(MPI_IO);
+    (void) free_comm(MPI_WTIME_IS_GLOBAL);
+    (void) free_comm(MPI_APPNUM);
+    (void) free_comm(MPI_LASTUSEDCODE);
+    (void) free_comm(MPI_UNIVERSE_SIZE);
+    (void) free_win(MPI_WIN_BASE);
+    (void) free_win(MPI_WIN_SIZE);
+    (void) free_win(MPI_WIN_DISP_UNIT);
+    (void) free_win(MPI_WIN_CREATE_FLAVOR);
+    (void) free_win(MPI_WIN_MODEL);
 }
 
 

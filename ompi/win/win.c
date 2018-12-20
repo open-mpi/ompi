@@ -17,6 +17,8 @@
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
+ * Copyright (c) 2018      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -74,8 +76,9 @@ static void ompi_win_destruct(ompi_win_t *win);
 OBJ_CLASS_INSTANCE(ompi_win_t, opal_infosubscriber_t,
                    ompi_win_construct, ompi_win_destruct);
 
-int
-ompi_win_init(void)
+static void ompi_win_finalize (void);
+
+int ompi_win_init (void)
 {
     int ret;
 
@@ -106,6 +109,8 @@ ompi_win_init(void)
         return ret;
     }
 
+    opal_finalize_register_cleanup (ompi_win_finalize);
+
     return OMPI_SUCCESS;
 }
 
@@ -116,7 +121,7 @@ static void ompi_win_dump (ompi_win_t *win)
                 win->w_f_to_c_index, ompi_group_size (win->w_group));
 }
 
-int ompi_win_finalize(void)
+static void ompi_win_finalize (void)
 {
     size_t size = opal_pointer_array_get_size (&ompi_mpi_windows);
     /* start at 1 to skip win null */
@@ -136,8 +141,6 @@ int ompi_win_finalize(void)
     OBJ_DESTRUCT(&ompi_mpi_windows);
     OBJ_RELEASE(ompi_win_accumulate_ops);
     OBJ_RELEASE(ompi_win_accumulate_order);
-
-    return OMPI_SUCCESS;
 }
 
 static int alloc_window(struct ompi_communicator_t *comm, opal_info_t *info, int flavor, ompi_win_t **win_out)

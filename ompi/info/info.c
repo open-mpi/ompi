@@ -17,6 +17,8 @@
  * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
+ * Copyright (c) 2018      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -44,6 +46,7 @@
 #include "opal/util/opal_getcwd.h"
 #include "opal/util/output.h"
 #include "opal/util/info.h"
+#include "opal/runtime/opal.h"
 
 #include "ompi/info/info.h"
 #include "ompi/runtime/mpiruntime.h"
@@ -61,6 +64,7 @@ ompi_predefined_info_t ompi_mpi_info_env = {{{{{0}}}}};
  */
 static void info_constructor(ompi_info_t *info);
 static void info_destructor(ompi_info_t *info);
+static void ompi_mpiinfo_finalize(void);
 
 /*
  * ompi_info_t classes
@@ -191,6 +195,7 @@ int ompi_mpiinfo_init(void)
     }
 
     /* All done */
+    opal_finalize_register_cleanup (ompi_mpiinfo_finalize);
 
     return OMPI_SUCCESS;
 }
@@ -250,7 +255,7 @@ int ompi_info_get_nkeys(ompi_info_t *info, int *nkeys)
 /*
  * Shut down MPI_Info handling
  */
-int ompi_mpiinfo_finalize(void)
+static void ompi_mpiinfo_finalize(void)
 {
     size_t i, max;
     ompi_info_t *info;
@@ -316,7 +321,6 @@ int ompi_mpiinfo_finalize(void)
     /* All done -- destroy the table */
 
     OBJ_DESTRUCT(&ompi_info_f_to_c_table);
-    return OPAL_SUCCESS;
 }
 
 

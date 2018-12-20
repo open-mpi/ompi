@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -16,6 +16,8 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      University of Houston. All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
+ * Copyright (c) 2018      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -54,6 +56,7 @@ ompi_predefined_file_t  *ompi_mpi_file_null_addr = &ompi_mpi_file_null;
  */
 static void file_constructor(ompi_file_t *obj);
 static void file_destructor(ompi_file_t *obj);
+static void ompi_file_finalize (void);
 
 
 /*
@@ -89,6 +92,7 @@ int ompi_file_init(void)
                                 &ompi_mpi_file_null.file);
 
     /* All done */
+    opal_finalize_register_cleanup (ompi_file_finalize);
 
     return OMPI_SUCCESS;
 }
@@ -163,7 +167,7 @@ int ompi_file_close(ompi_file_t **file)
 /*
  * Shut down the MPI_File bookkeeping
  */
-int ompi_file_finalize(void)
+static void ompi_file_finalize (void)
 {
     int i, max;
     size_t num_unnamed;
@@ -213,10 +217,6 @@ int ompi_file_finalize(void)
         opal_output(0, "WARNING: %lu unnamed MPI_File handles still allocated at MPI_FINALIZE", (unsigned long)num_unnamed);
     }
     OBJ_DESTRUCT(&ompi_file_f_to_c_table);
-
-    /* All done */
-
-    return OMPI_SUCCESS;
 }
 
 

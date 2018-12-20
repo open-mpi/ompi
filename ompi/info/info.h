@@ -15,6 +15,8 @@
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
+ * Copyright (c) 2018      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -91,13 +93,6 @@ int ompi_mpiinfo_init(void);
  * This function is used to free a ompi level info
  */
 int ompi_info_free (ompi_info_t **info);
-
-
-/**
- * This functions is called during ompi_mpi_finalize() and shuts
- * down MPI_Info handling.
- */
-int ompi_mpiinfo_finalize(void);
 
 /**
  * ompi_info_foo() wrapper around various opal_info_foo() calls
