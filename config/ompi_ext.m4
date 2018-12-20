@@ -171,6 +171,9 @@ EOF
 #include "ompi/mpi/fortran/configure-fortran-output.h"
 
 module mpi_ext
+!     Some mpi_ext extensions may require the mpi module.
+      use mpi
+!
 !     Even though this is not a useful parameter (cannot be used as a
 !     preprocessor catch) define it to keep the linker from complaining
 !     during the build.
@@ -213,6 +216,9 @@ EOF
 #include "ompi/mpi/fortran/configure-fortran-output.h"
 
 module mpi_f08_ext
+!     Some mpi_f08_ext extensions may require the mpi_f08 module.
+      use mpi_f08
+!
 !     Even though this is not a useful parameter (cannot be used as a
 !     preprocessor catch) define it to keep the linker from complaining
 !     during the build.
