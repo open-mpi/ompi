@@ -521,13 +521,6 @@ enum {
     MPI_WIN_DISP_UNIT,
     MPI_WIN_CREATE_FLAVOR,
     MPI_WIN_MODEL,
-
-    /* Even though these four are IMPI attributes, they need to be there
-       for all MPI jobs */
-    IMPI_CLIENT_SIZE,
-    IMPI_CLIENT_COLOR,
-    IMPI_HOST_SIZE,
-    IMPI_HOST_COLOR
 };
 
 /*
