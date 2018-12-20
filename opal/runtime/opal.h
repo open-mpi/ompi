@@ -48,12 +48,6 @@ OPAL_DECLSPEC extern int opal_cache_line_size;
 OPAL_DECLSPEC extern bool opal_warn_on_fork;
 
 /**
- * @brief list of cleanup functions that should be called as part of opal_finalize_util().
- *        opal_finalize()
- */
-extern opal_list_t opal_finalize_cleanup_fns;
-
-/**
  * Initialize the OPAL layer, including the MCA system.
  *
  * @retval OPAL_SUCCESS Upon success.
@@ -131,6 +125,8 @@ struct opal_finalize_domain_t {
     opal_list_t super;
     /** name of this finalize domain */
     char *domain_name;
+    /** was this domain allocated with OBJ_NEW() */
+    bool domain_was_allocated;
 };
 typedef struct opal_finalize_domain_t opal_finalize_domain_t;
 
@@ -142,10 +138,20 @@ OBJ_CLASS_DECLARATION(opal_finalize_domain_t);
  * @param[in] domain      Finalize domain to initialize
  * @param[in] domain_name Name for this finalize domain (may be NULL)
  *
- * This function sets the name of a finalize domain. The domain must
- * have already been initialized by OBJ_CONSTRUCT() or OBJ_NEW().
+ * This function calls OBJ_CONSTRUCT() on the domain and sets the name (if
+ * provided).
  */
 void opal_finalize_domain_init (opal_finalize_domain_t *domain, const char *domain_name);
+
+/**
+ * @brief Allocate a finalize domain.
+ *
+ * @param[in] domain_name Name for this finalize domain (may be NULL)
+ *
+ * This function is a wrapper around OBJ_NEW() and sets the name (if
+ * provided).
+ */
+opal_finalize_domain_t *opal_finalize_domain_create (const char *domain_name);
 
 /**
  * @brief Set the current finalize domain for opal_finalize_append_cleanup()
@@ -155,7 +161,9 @@ void opal_finalize_domain_init (opal_finalize_domain_t *domain, const char *doma
  * This function sets the current finalize domain. This API is not thread safe
  * and is must be protected from multi-threaded invocation.
  */
-void opal_finalize_set_domain (opal_finalize_domain_t *domain);
+void opal_finalize_push_domain (opal_finalize_domain_t *domain);
+
+void opal_finalize_pop_domain (void);
 
 /**
  * @brief Finalize a domain
@@ -165,9 +173,20 @@ void opal_finalize_set_domain (opal_finalize_domain_t *domain);
  * This function calls all the finalization functions registered with the
  * specified domain in reverse-registration order. This function releases
  * any memory allocated by the relevant calls to opal_finalize_append_cleanup()
- * and effectively empties the cleanup domain.
+ * and effectively empties the cleanup domain. Finally, the function
+ * calls OBJ_DESTRUCT on the domain. If the domain was allocated with
+ * opal_finalize_domain_create() it will be freed by this call.
  */
 void opal_finalize_cleanup_domain (opal_finalize_domain_t *domain);
+
+/**
+ * @brief Cleanup and remove the currently active finalize domain
+ *
+ * This function removes the current cleanup domain from the stack and
+ * calls the associated cleanup functions. Equivalent to opal_finalize_pop_domain()
+ * followed by opal_finalize_cleanup_domain().
+ */
+void opal_finalize_cleanup_and_pop_domain (void);
 
 /**
  * @brief Cleanup domain function

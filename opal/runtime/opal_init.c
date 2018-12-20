@@ -357,6 +357,9 @@ static int opal_init_error (const char *error, int ret)
                         "opal_init:startup:internal-failure", true,
                         error, ret );
     }
+
+    opal_finalize_cleanup_and_pop_domain ();
+
     return ret;
 }
 
@@ -380,9 +383,8 @@ opal_init_util(int* pargc, char*** pargv)
     }
 
 
-    OBJ_CONSTRUCT(&opal_init_util_domain, opal_finalize_domain_t);
     (void) opal_finalize_domain_init (&opal_init_util_domain, "opal_init_util");
-    opal_finalize_set_domain (&opal_init_util_domain);
+    opal_finalize_push_domain (&opal_init_util_domain);
 
     opal_thread_set_main();
 
@@ -407,6 +409,7 @@ opal_init_util(int* pargc, char*** pargv)
     if (OPAL_SUCCESS != (ret = mca_base_framework_open(&opal_installdirs_base_framework, 0))) {
         fprintf(stderr, "opal_installdirs_base_open() failed -- process will likely abort (%s:%d, returned %d instead of OPAL_SUCCESS)\n",
                 __FILE__, __LINE__, ret);
+        opal_finalize_cleanup_and_pop_domain ();
         return ret;
     }
 
@@ -513,6 +516,8 @@ opal_init_util(int* pargc, char*** pargv)
 
     OPAL_TIMING_ENV_NEXT(otmng, "opal_if_init");
 
+    opal_finalize_pop_domain ();
+
     return OPAL_SUCCESS;
 }
 
@@ -544,9 +549,8 @@ opal_init(int* pargc, char*** pargv)
         return ret;
     }
 
-    OBJ_CONSTRUCT(&opal_init_domain, opal_finalize_domain_t);
     (void) opal_finalize_domain_init (&opal_init_domain, "opal_init");
-    opal_finalize_set_domain (&opal_init_domain);
+    opal_finalize_push_domain (&opal_init_domain);
 
     opal_finalize_register_cleanup_arg (mca_base_framework_close_list, opal_init_frameworks);
     opal_finalize_register_cleanup (opal_tsd_keys_destruct);
@@ -584,6 +588,8 @@ opal_init(int* pargc, char*** pargv)
     if (OPAL_SUCCESS != (ret = opal_reachable_base_select())) {
         return opal_init_error ("opal_reachable_base_select", ret);
     }
+
+    opal_finalize_pop_domain ();
 
     return OPAL_SUCCESS;
 }
