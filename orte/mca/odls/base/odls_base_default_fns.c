@@ -13,7 +13,7 @@
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2011-2017 Cisco Systems, Inc.  All rights reserved
+ * Copyright (c) 2011-2018 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2013-2018 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2018 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
@@ -645,21 +645,20 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *buffer,
                 goto REPORT_ERROR;
             }
         }
+        free(ppn);
+
         /* compute the ranks and add the proc objects
          * to the jdata->procs array */
         if (ORTE_SUCCESS != (rc = orte_rmaps_base_compute_vpids(jdata))) {
             ORTE_ERROR_LOG(rc);
-            free(ppn);
             goto REPORT_ERROR;
         }
         /* and finally, compute the local and node ranks */
         if (ORTE_SUCCESS != (rc = orte_rmaps_base_compute_local_ranks(jdata))) {
             ORTE_ERROR_LOG(rc);
-            free(ppn);
             goto REPORT_ERROR;
         }
     }
-    free(ppn);
 
     /* unpack the buffer containing any application setup info - there
      * might not be any, so it isn't an error if we don't find things */
