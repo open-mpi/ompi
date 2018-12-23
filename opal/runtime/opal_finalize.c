@@ -96,8 +96,8 @@ OBJ_CLASS_INSTANCE(opal_finalize_domain_t, opal_list_t, opal_finalize_domain_con
                    opal_finalize_domain_destruct);
 
 static opal_finalize_domain_t *current_finalize_domain;
-opal_finalize_domain_t opal_init_util_domain = {{0}};
-opal_finalize_domain_t opal_init_domain = {{0}};
+opal_finalize_domain_t opal_init_util_domain = {{{0}}};
+opal_finalize_domain_t opal_init_domain = {{{0}}};
 
 void opal_finalize_append_cleanup (opal_cleanup_fn_t cleanup_fn, const char *fn_name, void *user_data)
 {
