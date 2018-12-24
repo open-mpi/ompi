@@ -225,7 +225,7 @@ pmix_value_cmp_t pmix12_bfrop_value_cmp(pmix_value_t *p, pmix_value_t *p1)
     return PMIX_VALUE1_GREATER;
 }
 /* COPY FUNCTIONS FOR GENERIC PMIX TYPES */
-pmix_status_t pmix12_bfrop_value_xfer(pmix_value_t *p, pmix_value_t *src)
+pmix_status_t pmix12_bfrop_value_xfer(pmix_value_t *p, const pmix_value_t *src)
 {
     /* copy the right field */
     p->type = src->type;

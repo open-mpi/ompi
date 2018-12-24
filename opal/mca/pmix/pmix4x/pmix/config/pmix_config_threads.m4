@@ -11,7 +11,7 @@ dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2009-2011 Oak Ridge National Labs.  All rights reserved.
-dnl Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
+dnl Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
 dnl Copyright (c) 2015      Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
 dnl $COPYRIGHT$

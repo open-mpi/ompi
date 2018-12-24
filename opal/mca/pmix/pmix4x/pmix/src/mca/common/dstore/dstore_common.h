@@ -2,6 +2,7 @@
  * Copyright (c) 2018      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2018      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2018      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -20,6 +21,7 @@
 #include "src/class/pmix_list.h"
 #include "src/mca/gds/gds.h"
 #include "src/mca/pshmem/pshmem.h"
+#include "src/mca/common/dstore/dstore_file.h"
 
 typedef void* pmix_common_dstor_lock_ctx_t;
 
@@ -43,8 +45,9 @@ typedef struct {
 
 typedef struct pmix_common_dstore_ctx_s pmix_common_dstore_ctx_t;
 
-PMIX_EXPORT pmix_common_dstore_ctx_t *pmix_common_dstor_init(pmix_common_lock_callbacks_t *lock_cb,
-                                const char *ds_name, pmix_info_t info[], size_t ninfo);
+PMIX_EXPORT pmix_common_dstore_ctx_t *pmix_common_dstor_init(const char *ds_name, pmix_info_t info[], size_t ninfo,
+                                                             pmix_common_lock_callbacks_t *lock_cb,
+                                                             pmix_common_dstore_file_cbs_t *file_cb);
 PMIX_EXPORT void pmix_common_dstor_finalize(pmix_common_dstore_ctx_t *ds_ctx);
 PMIX_EXPORT pmix_status_t pmix_common_dstor_add_nspace(pmix_common_dstore_ctx_t *ds_ctx,
                                 const char *nspace, pmix_info_t info[], size_t ninfo);
@@ -73,5 +76,5 @@ PMIX_EXPORT pmix_status_t pmix_common_dstor_fetch(pmix_common_dstore_ctx_t *ds_c
 PMIX_EXPORT pmix_status_t pmix_common_dstor_store_modex(pmix_common_dstore_ctx_t *ds_ctx,
                                 struct pmix_namespace_t *nspace,
                                 pmix_list_t *cbs,
-                                pmix_byte_object_t *bo);
+                                pmix_buffer_t *buff);
 #endif

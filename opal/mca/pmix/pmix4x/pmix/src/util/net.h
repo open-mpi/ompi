@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2017-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2017      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow

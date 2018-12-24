@@ -3,12 +3,17 @@
  * Copyright (c) 2015-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015-2018 Mellanox Technologies, Inc.
+ *                         All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
  *
  * $HEADER$
  */
+
+#ifndef CLI_STAGES_H
+#define CLI_STAGES_H
 
 #include <src/include/pmix_config.h>
 #include <signal.h>
@@ -41,7 +46,7 @@ typedef struct {
     pmix_event_t *ev;
     cli_state_t state;
     cli_state_t next_state[CLI_TERM+1];
-    int rank;
+    pmix_rank_t rank;
     char *ns;
 } cli_info_t;
 
@@ -50,7 +55,7 @@ extern int cli_info_cnt;
 extern bool test_abort;
 
 int cli_rank(cli_info_t *cli);
-void cli_init(int nprocs, cli_state_t order[]);
+void cli_init(int nprocs);
 void cli_connect(cli_info_t *cli, int sd, struct event_base * ebase, event_callback_fn callback);
 void cli_finalize(cli_info_t *cli);
 void cli_disconnect(cli_info_t *cli);
@@ -75,3 +80,5 @@ void op_callbk(pmix_status_t status,
 void errhandler_reg_callbk (pmix_status_t status,
                             size_t errhandler_ref,
                             void *cbdata);
+
+#endif // CLI_STAGES_H

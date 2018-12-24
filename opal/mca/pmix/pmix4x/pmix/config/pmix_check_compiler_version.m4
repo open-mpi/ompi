@@ -1,7 +1,7 @@
 dnl -*- shell-script -*-
 dnl
 dnl Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
-dnl Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
+dnl Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
 dnl
 dnl $COPYRIGHT$
 dnl

@@ -274,7 +274,7 @@ PMIX_EXPORT pmix_status_t pmix_bfrops_stub_copy_payload(struct pmix_peer_t *peer
                                                         pmix_buffer_t *src);
 PMIX_EXPORT pmix_status_t pmix_bfrops_stub_value_xfer(struct pmix_peer_t *peer,
                                                       pmix_value_t *dest,
-                                                      pmix_value_t *src);
+                                                      const pmix_value_t *src);
 PMIX_EXPORT void pmix_bfrops_stub_value_load(struct pmix_peer_t *peer,
                                              pmix_value_t *v, void *data,
                                              pmix_data_type_t type);
@@ -670,7 +670,7 @@ PMIX_EXPORT pmix_status_t pmix_bfrops_base_value_unload(pmix_value_t *kv,
                                                         size_t *sz);
 
 PMIX_EXPORT pmix_status_t pmix_bfrops_base_value_xfer(pmix_value_t *p,
-                                                      pmix_value_t *src);
+                                                      const pmix_value_t *src);
 
 PMIX_EXPORT pmix_value_cmp_t pmix_bfrops_base_value_cmp(pmix_value_t *p,
                                                         pmix_value_t *p1);

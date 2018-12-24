@@ -1,5 +1,7 @@
 /*
  * Copyright (c) 2018      Intel, Inc. All rights reserved.
+ * Copyright (c) 2018      Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -447,11 +449,13 @@ static pmix_status_t allocate(pmix_namespace_t *nptr,
             }
             /* nope - they asked for something that we cannot do */
             if (NULL == avail) {
+                PMIX_LIST_DESTRUCT(&mylist);
                 return PMIX_ERR_NOT_AVAILABLE;
             }
             /* setup to track the assignment */
             trk = PMIX_NEW(tcp_port_tracker_t);
             if (NULL == trk) {
+                PMIX_LIST_DESTRUCT(&mylist);
                 return PMIX_ERR_NOMEM;
             }
             trk->nspace = strdup(nptr->nspace);
@@ -463,6 +467,7 @@ static pmix_status_t allocate(pmix_namespace_t *nptr,
                 /* return the allocated ports */
                 pmix_list_remove_item(&allocations, &trk->super);
                 PMIX_RELEASE(trk);
+                PMIX_LIST_DESTRUCT(&mylist);
                 return rc;
             }
             allocated = true;
@@ -485,11 +490,13 @@ static pmix_status_t allocate(pmix_namespace_t *nptr,
             }
             /* nope - they asked for something that we cannot do */
             if (NULL == avail) {
+                PMIX_LIST_DESTRUCT(&mylist);
                 return PMIX_ERR_NOT_AVAILABLE;
             }
             /* setup to track the assignment */
             trk = PMIX_NEW(tcp_port_tracker_t);
             if (NULL == trk) {
+                PMIX_LIST_DESTRUCT(&mylist);
                 return PMIX_ERR_NOMEM;
             }
             trk->nspace = strdup(nptr->nspace);
@@ -501,6 +508,7 @@ static pmix_status_t allocate(pmix_namespace_t *nptr,
                 /* return the allocated ports */
                 pmix_list_remove_item(&allocations, &trk->super);
                 PMIX_RELEASE(trk);
+                PMIX_LIST_DESTRUCT(&mylist);
                 return rc;
             }
             allocated = true;
@@ -509,6 +517,7 @@ static pmix_status_t allocate(pmix_namespace_t *nptr,
             pmix_output_verbose(2, pmix_pnet_base_framework.framework_output,
                                 "pnet:tcp:allocate unsupported type %s for nspace %s",
                                 type, nptr->nspace);
+            PMIX_LIST_DESTRUCT(&mylist);
             return PMIX_ERR_TAKE_NEXT_OPTION;
         }
 
@@ -523,6 +532,7 @@ static pmix_status_t allocate(pmix_namespace_t *nptr,
                 /* setup to track the assignment */
                 trk = PMIX_NEW(tcp_port_tracker_t);
                 if (NULL == trk) {
+                    PMIX_LIST_DESTRUCT(&mylist);
                     return PMIX_ERR_NOMEM;
                 }
                 trk->nspace = strdup(nptr->nspace);
@@ -534,6 +544,7 @@ static pmix_status_t allocate(pmix_namespace_t *nptr,
                     /* return the allocated ports */
                     pmix_list_remove_item(&allocations, &trk->super);
                     PMIX_RELEASE(trk);
+                    PMIX_LIST_DESTRUCT(&mylist);
                     return rc;
                 }
                 allocated = true;
@@ -587,6 +598,7 @@ static pmix_status_t allocate(pmix_namespace_t *nptr,
                     trk = PMIX_NEW(tcp_port_tracker_t);
                     if (NULL == trk) {
                         pmix_argv_free(reqs);
+                        PMIX_LIST_DESTRUCT(&mylist);
                         return PMIX_ERR_NOMEM;
                     }
                     trk->nspace = strdup(nptr->nspace);
@@ -598,6 +610,7 @@ static pmix_status_t allocate(pmix_namespace_t *nptr,
                         /* return the allocated ports */
                         pmix_list_remove_item(&allocations, &trk->super);
                         PMIX_RELEASE(trk);
+                        PMIX_LIST_DESTRUCT(&mylist);
                         return rc;
                     }
                     allocated = true;
@@ -608,6 +621,7 @@ static pmix_status_t allocate(pmix_namespace_t *nptr,
                                     ports_per_node, nptr->nspace);
                 if (0 == ports_per_node) {
                     /* nothing to allocate */
+                    PMIX_LIST_DESTRUCT(&mylist);
                     return PMIX_ERR_TAKE_NEXT_OPTION;
                 }
                 avail = (tcp_available_ports_t*)pmix_list_get_first(&available);
@@ -615,6 +629,7 @@ static pmix_status_t allocate(pmix_namespace_t *nptr,
                     /* setup to track the assignment */
                     trk = PMIX_NEW(tcp_port_tracker_t);
                     if (NULL == trk) {
+                        PMIX_LIST_DESTRUCT(&mylist);
                         return PMIX_ERR_NOMEM;
                     }
                     trk->nspace = strdup(nptr->nspace);
@@ -634,6 +649,7 @@ static pmix_status_t allocate(pmix_namespace_t *nptr,
         }
         if (!allocated) {
             /* nope - we cannot help */
+            PMIX_LIST_DESTRUCT(&mylist);
             return PMIX_ERR_TAKE_NEXT_OPTION;
         }
     }
@@ -644,18 +660,21 @@ static pmix_status_t allocate(pmix_namespace_t *nptr,
         generate_key(unique_key);
         kv = PMIX_NEW(pmix_kval_t);
         if (NULL == kv) {
+            PMIX_LIST_DESTRUCT(&mylist);
             return PMIX_ERR_NOMEM;
         }
         kv->key = strdup(PMIX_ALLOC_NETWORK_SEC_KEY);
         kv->value = (pmix_value_t*)malloc(sizeof(pmix_value_t));
         if (NULL == kv->value) {
             PMIX_RELEASE(kv);
+            PMIX_LIST_DESTRUCT(&mylist);
             return PMIX_ERR_NOMEM;
         }
         kv->value->type = PMIX_BYTE_OBJECT;
         kv->value->data.bo.bytes = (char*)malloc(2 * sizeof(uint64_t));
         if (NULL == kv->value->data.bo.bytes) {
             PMIX_RELEASE(kv);
+            PMIX_LIST_DESTRUCT(&mylist);
             return PMIX_ERR_NOMEM;
         }
         memcpy(kv->value->data.bo.bytes, unique_key, 2 * sizeof(uint64_t));

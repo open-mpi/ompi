@@ -14,7 +14,7 @@
 # Copyright (c) 2010-2011 Oak Ridge National Labs.  All rights reserved.
 # Copyright (c) 2013-2016 Los Alamos National Security, Inc.  All rights
 #                         reserved.
-# Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
+# Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow

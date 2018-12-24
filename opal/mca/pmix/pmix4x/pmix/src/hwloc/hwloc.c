@@ -493,7 +493,7 @@ pmix_status_t pmix_hwloc_get_topology(pmix_info_t *info, size_t ninfo)
 
     return PMIX_SUCCESS;
 #else  // PMIX_HAVE_HWLOC
-    return PMIX_ERR_NOT_SUPPORTED;
+    return PMIX_SUCCESS;
 #endif
 }
 

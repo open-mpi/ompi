@@ -16,7 +16,7 @@
  *                         reserved.
  * Copyright (c) 2017      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2018      Intel, Inc. All rights reserved.
+ * Copyright (c) 2018      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -57,7 +57,13 @@
 #include <stdbool.h>
 
 #include "src/atomics/sys/architecture.h"
-#include "src/include/pmix_stdint.h"
+#include "src/include/pmix_stdatomic.h"
+
+#if PMIX_ASSEMBLY_BUILTIN == PMIX_BUILTIN_C11
+
+#include "atomic_stdc.h"
+
+#else /* !PMIX_C_HAVE__ATOMIC */
 
 /* do some quick #define cleanup in cases where we are doing
    testing... */
@@ -93,7 +99,7 @@ BEGIN_C_DECLS
  */
 struct pmix_atomic_lock_t {
     union {
-        volatile int32_t lock;     /**< The lock address (an integer) */
+        pmix_atomic_int32_t lock;     /**< The lock address (an integer) */
         volatile unsigned char sparc_lock; /**< The lock address on sparc */
         char padding[sizeof(int)]; /**< Array for optional padding */
     } u;
@@ -147,6 +153,8 @@ enum {
     PMIX_ATOMIC_LOCK_UNLOCKED = 0,
     PMIX_ATOMIC_LOCK_LOCKED = 1
 };
+
+#define PMIX_ATOMIC_LOCK_INIT {.u = {.lock = PMIX_ATOMIC_LOCK_UNLOCKED}}
 
 /**********************************************************************
  *
@@ -351,19 +359,19 @@ void pmix_atomic_unlock(pmix_atomic_lock_t *lock);
 #if PMIX_HAVE_INLINE_ATOMIC_COMPARE_EXCHANGE_32
 static inline
 #endif
-bool pmix_atomic_compare_exchange_strong_32 (volatile int32_t *addr, int32_t *oldval,
+bool pmix_atomic_compare_exchange_strong_32 (pmix_atomic_int32_t *addr, int32_t *oldval,
                                              int32_t newval);
 
 #if PMIX_HAVE_INLINE_ATOMIC_COMPARE_EXCHANGE_32
 static inline
 #endif
-bool pmix_atomic_compare_exchange_strong_acq_32 (volatile int32_t *addr, int32_t *oldval,
+bool pmix_atomic_compare_exchange_strong_acq_32 (pmix_atomic_int32_t *addr, int32_t *oldval,
                                                  int32_t newval);
 
 #if PMIX_HAVE_INLINE_ATOMIC_COMPARE_EXCHANGE_32
 static inline
 #endif
-bool pmix_atomic_compare_exchange_strong_rel_32 (volatile int32_t *addr, int32_t *oldval,
+bool pmix_atomic_compare_exchange_strong_rel_32 (pmix_atomic_int32_t *addr, int32_t *oldval,
                                                  int32_t newval);
 #endif
 
@@ -376,19 +384,19 @@ bool pmix_atomic_compare_exchange_strong_rel_32 (volatile int32_t *addr, int32_t
 #if PMIX_HAVE_INLINE_ATOMIC_COMPARE_EXCHANGE_64
 static inline
 #endif
-bool pmix_atomic_compare_exchange_strong_64 (volatile int64_t *addr, int64_t *oldval,
+bool pmix_atomic_compare_exchange_strong_64 (pmix_atomic_int64_t *addr, int64_t *oldval,
                                              int64_t newval);
 
 #if PMIX_HAVE_INLINE_ATOMIC_COMPARE_EXCHANGE_64
 static inline
 #endif
-bool pmix_atomic_compare_exchange_strong_acq_64 (volatile int64_t *addr, int64_t *oldval,
+bool pmix_atomic_compare_exchange_strong_acq_64 (pmix_atomic_int64_t *addr, int64_t *oldval,
                                                  int64_t newval);
 
 #if PMIX_HAVE_INLINE_ATOMIC_COMPARE_EXCHANGE_64
 static inline
 #endif
-bool pmix_atomic_compare_exchange_strong_rel_64 (volatile int64_t *addr, int64_t *oldval,
+bool pmix_atomic_compare_exchange_strong_rel_64 (pmix_atomic_int64_t *addr, int64_t *oldval,
                                                  int64_t newval);
 
 #endif
@@ -400,20 +408,20 @@ bool pmix_atomic_compare_exchange_strong_rel_64 (volatile int64_t *addr, int64_t
 
 #if defined(DOXYGEN) || PMIX_HAVE_ATOMIC_MATH_32 || PMIX_HAVE_ATOMIC_COMPARE_EXCHANGE_32
 
-static inline int32_t pmix_atomic_add_fetch_32(volatile int32_t *addr, int delta);
-static inline int32_t pmix_atomic_fetch_add_32(volatile int32_t *addr, int delta);
-static inline int32_t pmix_atomic_and_fetch_32(volatile int32_t *addr, int32_t value);
-static inline int32_t pmix_atomic_fetch_and_32(volatile int32_t *addr, int32_t value);
-static inline int32_t pmix_atomic_or_fetch_32(volatile int32_t *addr, int32_t value);
-static inline int32_t pmix_atomic_fetch_or_32(volatile int32_t *addr, int32_t value);
-static inline int32_t pmix_atomic_xor_fetch_32(volatile int32_t *addr, int32_t value);
-static inline int32_t pmix_atomic_fetch_xor_32(volatile int32_t *addr, int32_t value);
-static inline int32_t pmix_atomic_sub_fetch_32(volatile int32_t *addr, int delta);
-static inline int32_t pmix_atomic_fetch_sub_32(volatile int32_t *addr, int delta);
-static inline int32_t pmix_atomic_min_fetch_32 (volatile int32_t *addr, int32_t value);
-static inline int32_t pmix_atomic_fetch_min_32 (volatile int32_t *addr, int32_t value);
-static inline int32_t pmix_atomic_max_fetch_32 (volatile int32_t *addr, int32_t value);
-static inline int32_t pmix_atomic_fetch_max_32 (volatile int32_t *addr, int32_t value);
+static inline int32_t pmix_atomic_add_fetch_32(pmix_atomic_int32_t *addr, int delta);
+static inline int32_t pmix_atomic_fetch_add_32(pmix_atomic_int32_t *addr, int delta);
+static inline int32_t pmix_atomic_and_fetch_32(pmix_atomic_int32_t *addr, int32_t value);
+static inline int32_t pmix_atomic_fetch_and_32(pmix_atomic_int32_t *addr, int32_t value);
+static inline int32_t pmix_atomic_or_fetch_32(pmix_atomic_int32_t *addr, int32_t value);
+static inline int32_t pmix_atomic_fetch_or_32(pmix_atomic_int32_t *addr, int32_t value);
+static inline int32_t pmix_atomic_xor_fetch_32(pmix_atomic_int32_t *addr, int32_t value);
+static inline int32_t pmix_atomic_fetch_xor_32(pmix_atomic_int32_t *addr, int32_t value);
+static inline int32_t pmix_atomic_sub_fetch_32(pmix_atomic_int32_t *addr, int delta);
+static inline int32_t pmix_atomic_fetch_sub_32(pmix_atomic_int32_t *addr, int delta);
+static inline int32_t pmix_atomic_min_fetch_32 (pmix_atomic_int32_t *addr, int32_t value);
+static inline int32_t pmix_atomic_fetch_min_32 (pmix_atomic_int32_t *addr, int32_t value);
+static inline int32_t pmix_atomic_max_fetch_32 (pmix_atomic_int32_t *addr, int32_t value);
+static inline int32_t pmix_atomic_fetch_max_32 (pmix_atomic_int32_t *addr, int32_t value);
 
 #endif /* PMIX_HAVE_ATOMIC_MATH_32 */
 
@@ -430,19 +438,19 @@ static inline int32_t pmix_atomic_fetch_max_32 (volatile int32_t *addr, int32_t 
 
 #if defined(DOXYGEN) || PMIX_HAVE_ATOMIC_MATH_64 || PMIX_HAVE_ATOMIC_COMPARE_EXCHANGE_64
 
-static inline int64_t pmix_atomic_add_fetch_64(volatile int64_t *addr, int64_t delta);
-static inline int64_t pmix_atomic_fetch_add_64(volatile int64_t *addr, int64_t delta);
-static inline int64_t pmix_atomic_and_fetch_64(volatile int64_t *addr, int64_t value);
-static inline int64_t pmix_atomic_fetch_and_64(volatile int64_t *addr, int64_t value);
-static inline int64_t pmix_atomic_or_fetch_64(volatile int64_t *addr, int64_t value);
-static inline int64_t pmix_atomic_fetch_or_64(volatile int64_t *addr, int64_t value);
-static inline int64_t pmix_atomic_fetch_xor_64(volatile int64_t *addr, int64_t value);
-static inline int64_t pmix_atomic_sub_fetch_64(volatile int64_t *addr, int64_t delta);
-static inline int64_t pmix_atomic_fetch_sub_64(volatile int64_t *addr, int64_t delta);
-static inline int64_t pmix_atomic_min_fetch_64 (volatile int64_t *addr, int64_t value);
-static inline int64_t pmix_atomic_fetch_min_64 (volatile int64_t *addr, int64_t value);
-static inline int64_t pmix_atomic_max_fetch_64 (volatile int64_t *addr, int64_t value);
-static inline int64_t pmix_atomic_fetch_max_64 (volatile int64_t *addr, int64_t value);
+static inline int64_t pmix_atomic_add_fetch_64(pmix_atomic_int64_t *addr, int64_t delta);
+static inline int64_t pmix_atomic_fetch_add_64(pmix_atomic_int64_t *addr, int64_t delta);
+static inline int64_t pmix_atomic_and_fetch_64(pmix_atomic_int64_t *addr, int64_t value);
+static inline int64_t pmix_atomic_fetch_and_64(pmix_atomic_int64_t *addr, int64_t value);
+static inline int64_t pmix_atomic_or_fetch_64(pmix_atomic_int64_t *addr, int64_t value);
+static inline int64_t pmix_atomic_fetch_or_64(pmix_atomic_int64_t *addr, int64_t value);
+static inline int64_t pmix_atomic_fetch_xor_64(pmix_atomic_int64_t *addr, int64_t value);
+static inline int64_t pmix_atomic_sub_fetch_64(pmix_atomic_int64_t *addr, int64_t delta);
+static inline int64_t pmix_atomic_fetch_sub_64(pmix_atomic_int64_t *addr, int64_t delta);
+static inline int64_t pmix_atomic_min_fetch_64 (pmix_atomic_int64_t *addr, int64_t value);
+static inline int64_t pmix_atomic_fetch_min_64 (pmix_atomic_int64_t *addr, int64_t value);
+static inline int64_t pmix_atomic_max_fetch_64 (pmix_atomic_int64_t *addr, int64_t value);
+static inline int64_t pmix_atomic_fetch_max_64 (pmix_atomic_int64_t *addr, int64_t value);
 
 #endif /* PMIX_HAVE_ATOMIC_MATH_64 */
 
@@ -459,7 +467,7 @@ static inline int64_t pmix_atomic_fetch_max_64 (volatile int64_t *addr, int64_t 
  */
 #if defined(DOXYGEN) || PMIX_ENABLE_DEBUG
 static inline size_t
-pmix_atomic_add_fetch_size_t(volatile size_t *addr, size_t delta)
+pmix_atomic_add_fetch_size_t(pmix_atomic_size_t *addr, size_t delta)
 {
 #if SIZEOF_SIZE_T == 4
     return (size_t) pmix_atomic_add_fetch_32((int32_t*) addr, delta);
@@ -471,7 +479,7 @@ pmix_atomic_add_fetch_size_t(volatile size_t *addr, size_t delta)
 }
 
 static inline size_t
-pmix_atomic_fetch_add_size_t(volatile size_t *addr, size_t delta)
+pmix_atomic_fetch_add_size_t(pmix_atomic_size_t *addr, size_t delta)
 {
 #if SIZEOF_SIZE_T == 4
     return (size_t) pmix_atomic_fetch_add_32((int32_t*) addr, delta);
@@ -483,7 +491,7 @@ pmix_atomic_fetch_add_size_t(volatile size_t *addr, size_t delta)
 }
 
 static inline size_t
-pmix_atomic_sub_fetch_size_t(volatile size_t *addr, size_t delta)
+pmix_atomic_sub_fetch_size_t(pmix_atomic_size_t *addr, size_t delta)
 {
 #if SIZEOF_SIZE_T == 4
     return (size_t) pmix_atomic_sub_fetch_32((int32_t*) addr, delta);
@@ -495,7 +503,7 @@ pmix_atomic_sub_fetch_size_t(volatile size_t *addr, size_t delta)
 }
 
 static inline size_t
-pmix_atomic_fetch_sub_size_t(volatile size_t *addr, size_t delta)
+pmix_atomic_fetch_sub_size_t(pmix_atomic_size_t *addr, size_t delta)
 {
 #if SIZEOF_SIZE_T == 4
     return (size_t) pmix_atomic_fetch_sub_32((int32_t*) addr, delta);
@@ -508,15 +516,15 @@ pmix_atomic_fetch_sub_size_t(volatile size_t *addr, size_t delta)
 
 #else
 #if SIZEOF_SIZE_T == 4
-#define pmix_atomic_add_fetch_size_t(addr, delta) ((size_t) pmix_atomic_add_fetch_32((volatile int32_t *) addr, delta))
-#define pmix_atomic_fetch_add_size_t(addr, delta) ((size_t) pmix_atomic_fetch_add_32((volatile int32_t *) addr, delta))
-#define pmix_atomic_sub_fetch_size_t(addr, delta) ((size_t) pmix_atomic_sub_fetch_32((volatile int32_t *) addr, delta))
-#define pmix_atomic_fetch_sub_size_t(addr, delta) ((size_t) pmix_atomic_fetch_sub_32((volatile int32_t *) addr, delta))
+#define pmix_atomic_add_fetch_size_t(addr, delta) ((size_t) pmix_atomic_add_fetch_32((pmix_atomic_int32_t *) addr, delta))
+#define pmix_atomic_fetch_add_size_t(addr, delta) ((size_t) pmix_atomic_fetch_add_32((pmix_atomic_int32_t *) addr, delta))
+#define pmix_atomic_sub_fetch_size_t(addr, delta) ((size_t) pmix_atomic_sub_fetch_32((pmix_atomic_int32_t *) addr, delta))
+#define pmix_atomic_fetch_sub_size_t(addr, delta) ((size_t) pmix_atomic_fetch_sub_32((pmix_atomic_int32_t *) addr, delta))
 #elif SIZEOF_SIZE_T == 8
-#define pmix_atomic_add_fetch_size_t(addr, delta) ((size_t) pmix_atomic_add_fetch_64((volatile int64_t *) addr, delta))
-#define pmix_atomic_fetch_add_size_t(addr, delta) ((size_t) pmix_atomic_fetch_add_64((volatile int64_t *) addr, delta))
-#define pmix_atomic_sub_fetch_size_t(addr, delta) ((size_t) pmix_atomic_sub_fetch_64((volatile int64_t *) addr, delta))
-#define pmix_atomic_fetch_sub_size_t(addr, delta) ((size_t) pmix_atomic_fetch_sub_64((volatile int64_t *) addr, delta))
+#define pmix_atomic_add_fetch_size_t(addr, delta) ((size_t) pmix_atomic_add_fetch_64((pmix_atomic_int64_t *) addr, delta))
+#define pmix_atomic_fetch_add_size_t(addr, delta) ((size_t) pmix_atomic_fetch_add_64((pmix_atomic_int64_t *) addr, delta))
+#define pmix_atomic_sub_fetch_size_t(addr, delta) ((size_t) pmix_atomic_sub_fetch_64((pmix_atomic_int64_t *) addr, delta))
+#define pmix_atomic_fetch_sub_size_t(addr, delta) ((size_t) pmix_atomic_fetch_sub_64((pmix_atomic_int64_t *) addr, delta))
 #else
 #error "Unknown size_t size"
 #endif
@@ -526,20 +534,20 @@ pmix_atomic_fetch_sub_size_t(volatile size_t *addr, size_t delta)
 /* these are always done with inline functions, so always mark as
    static inline */
 
-static inline bool pmix_atomic_compare_exchange_strong_xx (volatile void *addr, void *oldval,
+static inline bool pmix_atomic_compare_exchange_strong_xx (pmix_atomic_intptr_t *addr, intptr_t *oldval,
                                                            int64_t newval, size_t length);
-static inline bool pmix_atomic_compare_exchange_strong_acq_xx (volatile void *addr, void *oldval,
+static inline bool pmix_atomic_compare_exchange_strong_acq_xx (pmix_atomic_intptr_t *addr, intptr_t *oldval,
                                                                int64_t newval, size_t length);
-static inline bool pmix_atomic_compare_exchange_strong_rel_xx (volatile void *addr, void *oldval,
+static inline bool pmix_atomic_compare_exchange_strong_rel_xx (pmix_atomic_intptr_t *addr, intptr_t *oldval,
                                                                int64_t newval, size_t length);
 
 
-static inline bool pmix_atomic_compare_exchange_strong_ptr (volatile void* addr, void *oldval,
-                                                            void *newval);
-static inline bool pmix_atomic_compare_exchange_strong_acq_ptr (volatile void* addr, void *oldval,
-                                                                void *newval);
-static inline bool pmix_atomic_compare_exchange_strong_rel_ptr (volatile void* addr, void *oldval,
-                                                                void *newval);
+static inline bool pmix_atomic_compare_exchange_strong_ptr (pmix_atomic_intptr_t* addr, intptr_t *oldval,
+                                                            intptr_t newval);
+static inline bool pmix_atomic_compare_exchange_strong_acq_ptr (pmix_atomic_intptr_t* addr, intptr_t *oldval,
+                                                                intptr_t newval);
+static inline bool pmix_atomic_compare_exchange_strong_rel_ptr (pmix_atomic_intptr_t* addr, intptr_t *oldval,
+                                                                intptr_t newval);
 
 /**
  * Atomic compare and set of generic type with relaxed semantics. This
@@ -555,7 +563,7 @@ static inline bool pmix_atomic_compare_exchange_strong_rel_ptr (volatile void* a
  * See pmix_atomic_compare_exchange_* for pseudo-code.
  */
 #define pmix_atomic_compare_exchange_strong( ADDR, OLDVAL, NEWVAL )                  \
-    pmix_atomic_compare_exchange_strong_xx( (volatile void*)(ADDR), (void *)(OLDVAL), \
+    pmix_atomic_compare_exchange_strong_xx( (pmix_atomic_intptr_t*)(ADDR), (intptr_t *)(OLDVAL), \
                                             (intptr_t)(NEWVAL), sizeof(*(ADDR)) )
 
 /**
@@ -572,7 +580,7 @@ static inline bool pmix_atomic_compare_exchange_strong_rel_ptr (volatile void* a
  * See pmix_atomic_compare_exchange_acq_* for pseudo-code.
  */
 #define pmix_atomic_compare_exchange_strong_acq( ADDR, OLDVAL, NEWVAL )                  \
-    pmix_atomic_compare_exchange_strong_acq_xx( (volatile void*)(ADDR), (void *)(OLDVAL), \
+    pmix_atomic_compare_exchange_strong_acq_xx( (pmix_atomic_intptr_t*)(ADDR), (intptr_t *)(OLDVAL), \
                                                 (intptr_t)(NEWVAL), sizeof(*(ADDR)) )
 
 /**
@@ -589,7 +597,7 @@ static inline bool pmix_atomic_compare_exchange_strong_rel_ptr (volatile void* a
  * See pmix_atomic_compare_exchange_rel_* for pseudo-code.
  */
 #define pmix_atomic_compare_exchange_strong_rel( ADDR, OLDVAL, NEWVAL ) \
-    pmix_atomic_compare_exchange_strong_rel_xx( (volatile void*)(ADDR), (void *)(OLDVAL), \
+    pmix_atomic_compare_exchange_strong_rel_xx( (pmix_atomic_intptr_t*)(ADDR), (intptr_t *)(OLDVAL), \
                                                 (intptr_t)(NEWVAL), sizeof(*(ADDR)) )
 
 
@@ -597,15 +605,15 @@ static inline bool pmix_atomic_compare_exchange_strong_rel_ptr (volatile void* a
 
 #if defined(DOXYGEN) || (PMIX_HAVE_ATOMIC_MATH_32 || PMIX_HAVE_ATOMIC_MATH_64)
 
-static inline void pmix_atomic_add_xx(volatile void* addr,
+static inline void pmix_atomic_add_xx(pmix_atomic_intptr_t* addr,
                                       int32_t value, size_t length);
-static inline void pmix_atomic_sub_xx(volatile void* addr,
+static inline void pmix_atomic_sub_xx(pmix_atomic_intptr_t* addr,
                                       int32_t value, size_t length);
 
-static inline intptr_t pmix_atomic_add_fetch_ptr( volatile void* addr, void* delta );
-static inline intptr_t pmix_atomic_fetch_add_ptr( volatile void* addr, void* delta );
-static inline intptr_t pmix_atomic_sub_fetch_ptr( volatile void* addr, void* delta );
-static inline intptr_t pmix_atomic_fetch_sub_ptr( volatile void* addr, void* delta );
+static inline intptr_t pmix_atomic_add_fetch_ptr( pmix_atomic_intptr_t* addr, void* delta );
+static inline intptr_t pmix_atomic_fetch_add_ptr( pmix_atomic_intptr_t* addr, void* delta );
+static inline intptr_t pmix_atomic_sub_fetch_ptr( pmix_atomic_intptr_t* addr, void* delta );
+static inline intptr_t pmix_atomic_fetch_sub_ptr( pmix_atomic_intptr_t* addr, void* delta );
 
 /**
  * Atomically increment the content depending on the type. This
@@ -618,7 +626,7 @@ static inline intptr_t pmix_atomic_fetch_sub_ptr( volatile void* addr, void* del
  * @param delta         Value to add (converted to <TYPE>).
  */
 #define pmix_atomic_add( ADDR, VALUE )                                  \
-   pmix_atomic_add_xx( (volatile void*)(ADDR), (int32_t)(VALUE), \
+   pmix_atomic_add_xx( (pmix_atomic_intptr_t*)(ADDR), (int32_t)(VALUE), \
                        sizeof(*(ADDR)) )
 
 /**
@@ -632,7 +640,7 @@ static inline intptr_t pmix_atomic_fetch_sub_ptr( volatile void* addr, void* del
  * @param delta         Value to substract (converted to <TYPE>).
  */
 #define pmix_atomic_sub( ADDR, VALUE )                                  \
-   pmix_atomic_sub_xx( (volatile void*)(ADDR), (int32_t)(VALUE),        \
+   pmix_atomic_sub_xx( (pmix_atomic_intptr_t*)(ADDR), (int32_t)(VALUE),        \
                       sizeof(*(ADDR)) )
 
 #endif /* PMIX_HAVE_ATOMIC_MATH_32 || PMIX_HAVE_ATOMIC_MATH_64 */
@@ -643,6 +651,8 @@ static inline intptr_t pmix_atomic_fetch_sub_ptr( volatile void* addr, void* del
  * in assembly
  */
 #include "src/atomics/sys/atomic_impl.h"
+
+#endif /* !PMIX_C_HAVE__ATOMIC */
 
 END_C_DECLS
 

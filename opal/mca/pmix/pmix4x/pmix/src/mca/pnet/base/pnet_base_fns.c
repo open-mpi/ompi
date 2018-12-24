@@ -278,6 +278,8 @@ void pmix_pnet_base_deregister_nspace(char *nspace)
 {
     pmix_pnet_base_active_module_t *active;
     pmix_namespace_t *nptr, *ns;
+    pmix_pnet_job_t *job;
+    pmix_pnet_node_t *node;
 
     if (!pmix_pnet_globals.initialized) {
         return;
@@ -307,7 +309,24 @@ void pmix_pnet_base_deregister_nspace(char *nspace)
         }
     }
 
-    return;
+    PMIX_LIST_FOREACH(job, &pmix_pnet_globals.jobs, pmix_pnet_job_t) {
+        if (0 == strcmp(nspace, job->nspace)) {
+            pmix_list_remove_item(&pmix_pnet_globals.jobs, &job->super);
+            PMIX_RELEASE(job);
+            break;
+        }
+    }
+
+    PMIX_LIST_FOREACH(node, &pmix_pnet_globals.nodes, pmix_pnet_node_t) {
+        pmix_pnet_local_procs_t *lp;
+        PMIX_LIST_FOREACH(lp, &node->local_jobs, pmix_pnet_local_procs_t) {
+            if (0 == strcmp(nspace, lp->nspace)) {
+                pmix_list_remove_item(&node->local_jobs, &lp->super);
+                PMIX_RELEASE(lp);
+                break;
+            }
+        }
+    }
 }
 
 static void cicbfunc(pmix_status_t status,

@@ -4,7 +4,7 @@
 # Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
 # Copyright (c) 2013      Mellanox Technologies, Inc.
 #                         All rights reserved.
-# Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
+# Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
 # Copyright (c) 2015      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # Copyright (c) 2015      IBM Corporation.  All rights reserved.

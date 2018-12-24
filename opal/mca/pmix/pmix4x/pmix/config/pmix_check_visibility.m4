@@ -12,7 +12,7 @@
 #                         All rights reserved.
 # Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2009-2011 Oracle and/or its affiliates.  All rights reserved.
-# Copyright (c) 2017-2018 Intel, Inc. All rights reserved.
+# Copyright (c) 2017      Intel, Inc. All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow

@@ -5,7 +5,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014      Artem Y. Polyakov <artpol84@gmail.com>.
  *                         All rights reserved.
- * Copyright (c) 2016      Mellanox Technologies, Inc.
+ * Copyright (c) 2016-2018 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
@@ -75,8 +75,15 @@ static void _getnb_cbfunc(struct pmix_peer_t *pr,
 
 static void _value_cbfunc(pmix_status_t status, pmix_value_t *kv, void *cbdata);
 
+static pmix_status_t _getfn_fastpath(const pmix_proc_t *proc, const pmix_key_t key,
+                                     const pmix_info_t info[], size_t ninfo,
+                                     pmix_value_t **val);
 
-PMIX_EXPORT pmix_status_t PMIx_Get(const pmix_proc_t *proc, const char key[],
+static pmix_status_t process_values(pmix_value_t **v, pmix_cb_t *cb);
+
+
+PMIX_EXPORT pmix_status_t PMIx_Get(const pmix_proc_t *proc,
+                                   const pmix_key_t key,
                                    const pmix_info_t info[], size_t ninfo,
                                    pmix_value_t **val)
 {
@@ -97,6 +104,11 @@ PMIX_EXPORT pmix_status_t PMIx_Get(const pmix_proc_t *proc, const char key[],
                         (NULL == proc) ? PMIX_RANK_UNDEF : proc->rank,
                         (NULL == key) ? "NULL" : key);
 
+    /* try to get data directly, without threadshift */
+    if (PMIX_SUCCESS == (rc = _getfn_fastpath(proc, key, info, ninfo, val))) {
+        goto done;
+    }
+
     /* create a callback object as we need to pass it to the
      * recv routine so we know which callback to use when
      * the return message is recvd */
@@ -115,13 +127,14 @@ PMIX_EXPORT pmix_status_t PMIx_Get(const pmix_proc_t *proc, const char key[],
     }
     PMIX_RELEASE(cb);
 
+  done:
     pmix_output_verbose(2, pmix_client_globals.get_output,
                         "pmix:client get completed");
 
     return rc;
 }
 
-PMIX_EXPORT pmix_status_t PMIx_Get_nb(const pmix_proc_t *proc, const char *key,
+PMIX_EXPORT pmix_status_t PMIx_Get_nb(const pmix_proc_t *proc, const pmix_key_t key,
                                       const pmix_info_t info[], size_t ninfo,
                                       pmix_value_cbfunc_t cbfunc, void *cbdata)
 {
@@ -472,6 +485,55 @@ static void infocb(pmix_status_t status,
     }
 }
 
+static pmix_status_t _getfn_fastpath(const pmix_proc_t *proc, const pmix_key_t key,
+                                     const pmix_info_t info[], size_t ninfo,
+                                     pmix_value_t **val)
+{
+    pmix_cb_t *cb = PMIX_NEW(pmix_cb_t);
+    pmix_status_t rc = PMIX_SUCCESS;
+    size_t n;
+
+    /* scan the incoming directives */
+    if (NULL != info) {
+        for (n=0; n < ninfo; n++) {
+            if (0 == strncmp(info[n].key, PMIX_DATA_SCOPE, PMIX_MAX_KEYLEN)) {
+                cb->scope = info[n].value.data.scope;
+                break;
+            }
+        }
+    }
+    cb->proc = (pmix_proc_t*)proc;
+    cb->copy = true;
+    cb->key = (char*)key;
+    cb->info = (pmix_info_t*)info;
+    cb->ninfo = ninfo;
+
+    PMIX_GDS_FETCH_IS_TSAFE(rc, pmix_globals.mypeer);
+    if (PMIX_SUCCESS == rc) {
+        PMIX_GDS_FETCH_KV(rc, pmix_globals.mypeer, cb);
+        if (PMIX_SUCCESS == rc) {
+            goto done;
+        }
+    }
+    PMIX_GDS_FETCH_IS_TSAFE(rc, pmix_client_globals.myserver);
+    if (PMIX_SUCCESS == rc) {
+        PMIX_GDS_FETCH_KV(rc, pmix_client_globals.myserver, cb);
+        if (PMIX_SUCCESS == rc) {
+            goto done;
+        }
+    }
+    PMIX_RELEASE(cb);
+    return rc;
+
+  done:
+    rc = process_values(val, cb);
+    if (NULL != *val) {
+        PMIX_VALUE_COMPRESSED_STRING_UNPACK(*val);
+    }
+    PMIX_RELEASE(cb);
+    return rc;
+}
+
 static void _getnbfn(int fd, short flags, void *cbdata)
 {
     pmix_cb_t *cb = (pmix_cb_t*)cbdata;
@@ -480,7 +542,6 @@ static void _getnbfn(int fd, short flags, void *cbdata)
     pmix_value_t *val = NULL;
     pmix_status_t rc;
     size_t n;
-    char *tmp;
     pmix_proc_t proc;
     bool optional = false;
     bool immediate = false;
@@ -608,20 +669,7 @@ static void _getnbfn(int fd, short flags, void *cbdata)
     /* if a callback was provided, execute it */
     if (NULL != cb->cbfunc.valuefn) {
         if (NULL != val)  {
-            /* if this is a compressed string, then uncompress it */
-            if (PMIX_COMPRESSED_STRING == val->type) {
-                pmix_util_uncompress_string(&tmp, (uint8_t*)val->data.bo.bytes, val->data.bo.size);
-                if (NULL == tmp) {
-                    PMIX_ERROR_LOG(PMIX_ERR_NOMEM);
-                    rc = PMIX_ERR_NOMEM;
-                    PMIX_VALUE_RELEASE(val);
-                    val = NULL;
-                } else {
-                    PMIX_VALUE_DESTRUCT(val);
-                    val->data.string = tmp;
-                    val->type = PMIX_STRING;
-                }
-            }
+            PMIX_VALUE_COMPRESSED_STRING_UNPACK(val);
         }
         cb->cbfunc.valuefn(rc, val, cb->cbdata);
     }

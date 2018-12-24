@@ -63,15 +63,16 @@ struct pmix_ptl_module_t;
 
 /* define a process type */
 typedef uint16_t pmix_proc_type_t;
+
 #define PMIX_PROC_UNDEF             0x0000
-#define PMIX_PROC_CLIENT            0x0001
-#define PMIX_PROC_SERVER            0x0002
-#define PMIX_PROC_TOOL              0x0004
-#define PMIX_PROC_V1                0x0008
-#define PMIX_PROC_V20               0x0010
-#define PMIX_PROC_V21               0x0020
-#define PMIX_PROC_V3                0x0040
-#define PMIX_PROC_LAUNCHER_ACT      0x1000
+#define PMIX_PROC_CLIENT            0x0001      // simple client process
+#define PMIX_PROC_SERVER            0x0002      // simple server process
+#define PMIX_PROC_TOOL              0x0004      // simple tool
+#define PMIX_PROC_V1                0x0008      // process is using PMIx v1 protocols
+#define PMIX_PROC_V20               0x0010      // process is using PMIx v2.0 protocols
+#define PMIX_PROC_V21               0x0020      // process is using PMIx v2.1 protocols
+#define PMIX_PROC_V3                0x0040      // process is using PMIx v3 protocols
+#define PMIX_PROC_LAUNCHER_ACT      0x1000      // process acting as launcher
 #define PMIX_PROC_LAUNCHER          (PMIX_PROC_TOOL | PMIX_PROC_SERVER | PMIX_PROC_LAUNCHER_ACT)
 #define PMIX_PROC_CLIENT_TOOL_ACT   0x2000
 #define PMIX_PROC_CLIENT_TOOL       (PMIX_PROC_TOOL | PMIX_PROC_CLIENT | PMIX_PROC_CLIENT_TOOL_ACT)
@@ -196,11 +197,14 @@ typedef struct {
     pmix_event_t ev;
     pmix_listener_protocol_t protocol;
     int sd;
+    bool need_id;
+    uint8_t flag;
     char nspace[PMIX_MAX_NSLEN+1];
     pmix_info_t *info;
     size_t ninfo;
     pmix_status_t status;
     struct sockaddr_storage addr;
+    struct pmix_peer_t *peer;
     char *bfrops;
     char *psec;
     char *gds;
@@ -236,9 +240,6 @@ PMIX_EXPORT extern int pmix_ptl_base_output;
 
 #define PMIX_ACTIVATE_POST_MSG(ms)                                      \
     do {                                                                \
-        pmix_output_verbose(5, pmix_ptl_base_output,                    \
-                            "[%s:%d] post msg",                         \
-                            __FILE__, __LINE__);                        \
         pmix_event_assign(&((ms)->ev), pmix_globals.evbase, -1,         \
                           EV_WRITE, pmix_ptl_base_process_msg, (ms));   \
         PMIX_POST_OBJECT(ms);                                           \
@@ -259,37 +260,42 @@ PMIX_EXPORT extern int pmix_ptl_base_output;
  * t - tag to be sent to
  * b - buffer to be sent
  */
-#define PMIX_SERVER_QUEUE_REPLY(p, t, b)                                                \
-    do {                                                                                \
-        pmix_ptl_send_t *snd;                                                           \
-        uint32_t nbytes;                                                                \
-        pmix_output_verbose(5, pmix_ptl_base_output,                                    \
+#define PMIX_SERVER_QUEUE_REPLY(r, p, t, b)                                                 \
+    do {                                                                                    \
+        pmix_ptl_send_t *snd;                                                               \
+        uint32_t nbytes;                                                                    \
+        pmix_output_verbose(5, pmix_ptl_base_output,                                        \
                             "[%s:%d] queue callback called: reply to %s:%d on tag %d size %d",  \
-                            __FILE__, __LINE__,                                         \
-                            (p)->info->pname.nspace,                                    \
-                            (p)->info->pname.rank, (t), (int)(b)->bytes_used);          \
-        snd = PMIX_NEW(pmix_ptl_send_t);                                                \
-        snd->hdr.pindex = htonl(pmix_globals.pindex);                                   \
-        snd->hdr.tag = htonl(t);                                                        \
-        nbytes = (b)->bytes_used;                                                       \
-        snd->hdr.nbytes = htonl(nbytes);                                                \
-        snd->data = (b);                                                                \
-        /* always start with the header */                                              \
-        snd->sdptr = (char*)&snd->hdr;                                                  \
-        snd->sdbytes = sizeof(pmix_ptl_hdr_t);                                          \
-        /* if there is no message on-deck, put this one there */                        \
-        if (NULL == (p)->send_msg) {                                                    \
-            (p)->send_msg = snd;                                                        \
-        } else {                                                                        \
-            /* add it to the queue */                                                   \
-            pmix_list_append(&(p)->send_queue, &snd->super);                            \
-        }                                                                               \
-        /* ensure the send event is active */                                           \
-        if (!(p)->send_ev_active && 0 <= (p)->sd) {                                     \
-            (p)->send_ev_active = true;                                                 \
-            PMIX_POST_OBJECT(snd);                                                      \
-            pmix_event_add(&(p)->send_event, 0);                                        \
-        }                                                                               \
+                            __FILE__, __LINE__,                                             \
+                            (p)->info->pname.nspace,                                        \
+                            (p)->info->pname.rank, (t), (int)(b)->bytes_used);              \
+        if ((p)->finalized) {                                                               \
+            (r) = PMIX_ERR_UNREACH;                                                         \
+        } else {                                                                            \
+            snd = PMIX_NEW(pmix_ptl_send_t);                                                \
+            snd->hdr.pindex = htonl(pmix_globals.pindex);                                   \
+            snd->hdr.tag = htonl(t);                                                        \
+            nbytes = (b)->bytes_used;                                                       \
+            snd->hdr.nbytes = htonl(nbytes);                                                \
+            snd->data = (b);                                                                \
+            /* always start with the header */                                              \
+            snd->sdptr = (char*)&snd->hdr;                                                  \
+            snd->sdbytes = sizeof(pmix_ptl_hdr_t);                                          \
+            /* if there is no message on-deck, put this one there */                        \
+            if (NULL == (p)->send_msg) {                                                    \
+                (p)->send_msg = snd;                                                        \
+            } else {                                                                        \
+                /* add it to the queue */                                                   \
+                pmix_list_append(&(p)->send_queue, &snd->super);                            \
+            }                                                                               \
+            /* ensure the send event is active */                                           \
+            if (!(p)->send_ev_active && 0 <= (p)->sd) {                                     \
+                (p)->send_ev_active = true;                                                 \
+                PMIX_POST_OBJECT(snd);                                                      \
+                pmix_event_add(&(p)->send_event, 0);                                        \
+            }                                                                               \
+            (r) = PMIX_SUCCESS;                                                             \
+        }                                                                                   \
     } while (0)
 
 #define CLOSE_THE_SOCKET(s)                     \

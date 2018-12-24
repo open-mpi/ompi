@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
- * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc.  All rights reserved.
  * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2017      Research Organization for Information Science
@@ -47,6 +47,7 @@
 #define PMIX_BUILTIN_SYNC   0200
 #define PMIX_BUILTIN_GCC    0202
 #define PMIX_BUILTIN_NO     0203
+#define PMIX_BUILTIN_C11    0204
 
 /* Formats */
 #define PMIX_DEFAULT        1000  /* standard for given architecture */

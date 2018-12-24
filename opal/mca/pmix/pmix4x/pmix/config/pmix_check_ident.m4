@@ -1,7 +1,7 @@
 dnl -*- shell-script -*-
 dnl
 dnl Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
-dnl Copyright (c) 2015-2018 Intel, Inc. All rights reserved.
+dnl Copyright (c) 2015      Intel, Inc. All rights reserved
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow

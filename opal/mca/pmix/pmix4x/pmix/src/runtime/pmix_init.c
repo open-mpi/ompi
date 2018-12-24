@@ -80,6 +80,15 @@ PMIX_EXPORT pmix_globals_t pmix_globals = {
 };
 
 
+static void _notification_eviction_cbfunc(struct pmix_hotel_t *hotel,
+                                          int room_num,
+                                          void *occupant)
+{
+    pmix_notify_caddy_t *cache = (pmix_notify_caddy_t*)occupant;
+    PMIX_RELEASE(cache);
+}
+
+
 int pmix_rte_init(pmix_proc_type_t type,
                   pmix_info_t info[], size_t ninfo,
                   pmix_ptl_cbfunc_t cbfunc)
@@ -154,8 +163,15 @@ int pmix_rte_init(pmix_proc_type_t type,
     pmix_globals.event_window.tv_usec = 0;
     PMIX_CONSTRUCT(&pmix_globals.cached_events, pmix_list_t);
     /* construct the global notification ring buffer */
-    PMIX_CONSTRUCT(&pmix_globals.notifications, pmix_ring_buffer_t);
-    pmix_ring_buffer_init(&pmix_globals.notifications, 256);
+    PMIX_CONSTRUCT(&pmix_globals.notifications, pmix_hotel_t);
+    ret = pmix_hotel_init(&pmix_globals.notifications, pmix_globals.max_events,
+                          pmix_globals.evbase, pmix_globals.event_eviction_time,
+                          _notification_eviction_cbfunc);
+    if (PMIX_SUCCESS != ret) {
+        error = "notification hotel init";
+        goto return_error;
+    }
+
     /* and setup the iof request tracking list */
     PMIX_CONSTRUCT(&pmix_globals.iof_requests, pmix_list_t);
 

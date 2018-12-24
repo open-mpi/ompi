@@ -8,8 +8,8 @@ Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
                         University of Stuttgart.  All rights reserved.
 Copyright (c) 2004-2005 The Regents of the University of California.
                         All rights reserved.
-Copyright (c) 2008-2015 Cisco Systems, Inc.  All rights reserved.
-Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
+Copyright (c) 2008-2018 Cisco Systems, Inc.  All rights reserved
+Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
 $COPYRIGHT$
 
 Additional copyrights may follow
@@ -37,7 +37,7 @@ build PMIx.  You must then run:
 shell$ ./autogen.pl
 
 You will need very recent versions of GNU Autoconf, Automake, and
-Libtool.  If autogen.sh fails, read the HACKING file.  If anything
+Libtool.  If autogen.pl fails, read the HACKING file.  If anything
 else fails, read the HACKING file.  Finally, we suggest reading the
 HACKING file.
 

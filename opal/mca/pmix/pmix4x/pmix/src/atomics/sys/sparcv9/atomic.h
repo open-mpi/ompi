@@ -13,9 +13,9 @@
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserverd.
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2017      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2017-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2018      Intel, Inc. All rights reserved.
+ * Copyright (c) 2018      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -32,7 +32,7 @@
 
 #define ASI_P "0x80"
 
-#define MEMBAR(type) __asm__  __volatile__ ("membar " type : : : "memory")
+#define MEPMIXMBAR(type) __asm__  __volatile__ ("membar " type : : : "memory")
 
 
 /**********************************************************************
@@ -56,19 +56,19 @@
 
 static inline void pmix_atomic_mb(void)
 {
-    MEMBAR("#LoadLoad | #LoadStore | #StoreStore | #StoreLoad");
+    MEPMIXMBAR("#LoadLoad | #LoadStore | #StoreStore | #StoreLoad");
 }
 
 
 static inline void pmix_atomic_rmb(void)
 {
-    MEMBAR("#LoadLoad");
+    MEPMIXMBAR("#LoadLoad");
 }
 
 
 static inline void pmix_atomic_wmb(void)
 {
-    MEMBAR("#StoreStore");
+    MEPMIXMBAR("#StoreStore");
 }
 
 static inline void pmix_atomic_isync(void)
@@ -86,7 +86,7 @@ static inline void pmix_atomic_isync(void)
  *********************************************************************/
 #if PMIX_GCC_INLINE_ASSEMBLY
 
-static inline bool pmix_atomic_compare_exchange_strong_32 (volatile int32_t *addr, int32_t *oldval, int32_t newval)
+static inline bool pmix_atomic_compare_exchange_strong_32 (pmix_atomic_int32_t *addr, int32_t *oldval, int32_t newval)
 {
     /* casa [reg(rs1)] %asi, reg(rs2), reg(rd)
      *
@@ -108,7 +108,7 @@ static inline bool pmix_atomic_compare_exchange_strong_32 (volatile int32_t *add
 }
 
 
-static inline bool pmix_atomic_compare_exchange_strong_acq_32 (volatile int32_t *addr, int32_t *oldval, int32_t newval)
+static inline bool pmix_atomic_compare_exchange_strong_acq_32 (pmix_atomic_int32_t *addr, int32_t *oldval, int32_t newval)
 {
     bool rc;
 
@@ -119,7 +119,7 @@ static inline bool pmix_atomic_compare_exchange_strong_acq_32 (volatile int32_t 
 }
 
 
-static inline bool pmix_atomic_compare_exchange_strong_rel_32 (volatile int32_t *addr, int32_t *oldval, int32_t newval)
+static inline bool pmix_atomic_compare_exchange_strong_rel_32 (pmix_atomic_int32_t *addr, int32_t *oldval, int32_t newval)
 {
     pmix_atomic_wmb();
     return pmix_atomic_compare_exchange_strong_32 (addr, oldval, newval);
@@ -128,7 +128,7 @@ static inline bool pmix_atomic_compare_exchange_strong_rel_32 (volatile int32_t 
 
 #if PMIX_ASSEMBLY_ARCH == PMIX_SPARCV9_64
 
-static inline bool pmix_atomic_compare_exchange_strong_64 (volatile int64_t *addr, int64_t *oldval, int64_t newval)
+static inline bool pmix_atomic_compare_exchange_strong_64 (pmix_atomic_int64_t *addr, int64_t *oldval, int64_t newval)
 {
     /* casa [reg(rs1)] %asi, reg(rs2), reg(rd)
      *
@@ -150,7 +150,7 @@ static inline bool pmix_atomic_compare_exchange_strong_64 (volatile int64_t *add
 
 #else /* PMIX_ASSEMBLY_ARCH == PMIX_SPARCV9_64 */
 
-static inline bool pmix_atomic_compare_exchange_strong_64 (volatile int64_t *addr, int64_t *oldval, int64_t newval)
+static inline bool pmix_atomic_compare_exchange_strong_64 (pmix_atomic_int64_t *addr, int64_t *oldval, int64_t newval)
 {
     /* casa [reg(rs1)] %asi, reg(rs2), reg(rd)
      *
@@ -180,7 +180,7 @@ static inline bool pmix_atomic_compare_exchange_strong_64 (volatile int64_t *add
 
 #endif /* PMIX_ASSEMBLY_ARCH == PMIX_SPARCV9_64 */
 
-static inline bool pmix_atomic_compare_exchange_strong_acq_64 (volatile int64_t *addr, int64_t *oldval, int64_t newval)
+static inline bool pmix_atomic_compare_exchange_strong_acq_64 (pmix_atomic_int64_t *addr, int64_t *oldval, int64_t newval)
 {
     bool rc;
 
@@ -191,7 +191,7 @@ static inline bool pmix_atomic_compare_exchange_strong_acq_64 (volatile int64_t 
 }
 
 
-static inline bool pmix_atomic_compare_exchange_strong_rel_64 (volatile int64_t *addr, int64_t *oldval, int64_t newval)
+static inline bool pmix_atomic_compare_exchange_strong_rel_64 (pmix_atomic_int64_t *addr, int64_t *oldval, int64_t newval)
 {
     pmix_atomic_wmb();
     return pmix_atomic_compare_exchange_strong_64 (addr, oldval, newval);

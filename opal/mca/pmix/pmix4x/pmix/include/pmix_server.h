@@ -489,6 +489,35 @@ typedef pmix_status_t (*pmix_server_stdin_fn_t)(const pmix_proc_t *source,
                                                 pmix_op_cbfunc_t cbfunc, void *cbdata);
 
 
+/* Perform a "fence" operation across the specified procs, plus any special
+ * actions included in the directives. Return the result of any special action
+ * requests in the info cbfunc when the fence is completed. Actions may include:
+ *
+ * PMIX_GROUP_ASSIGN_CONTEXT_ID - request that the RM assign a unique
+ *                                numerical (size_t) ID to this group
+ *
+ * grp - user-assigned string ID of this group
+ *
+ * op - pmix_group_operation_t value indicating the operation to perform
+ *      Current values support construct and destruct of the group
+ *
+ * procs - pointer to array of pmix_proc_t ID's of group members
+ *
+ * nprocs - number of group members
+ *
+ * directives - array of key-value attributes specifying special actions.
+ *
+ * ndirs - size of the directives array
+ *
+ * cbfunc - callback function when the operation is completed
+ *
+ * cbdata - object to be returned in cbfunc
+ */
+typedef pmix_status_t (*pmix_server_grp_fn_t)(pmix_group_operation_t op, char grp[],
+                                              const pmix_proc_t procs[], size_t nprocs,
+                                              const pmix_info_t directives[], size_t ndirs,
+                                              pmix_info_cbfunc_t cbfunc, void *cbdata);
+
 typedef struct pmix_server_module_2_0_0_t {
     /* v1x interfaces */
     pmix_server_client_connected_fn_t   client_connected;
@@ -518,6 +547,8 @@ typedef struct pmix_server_module_2_0_0_t {
     pmix_server_validate_cred_fn_t      validate_credential;
     pmix_server_iof_fn_t                iof_pull;
     pmix_server_stdin_fn_t              push_stdin;
+    /* v4x interfaces */
+    pmix_server_grp_fn_t                group;
 } pmix_server_module_t;
 
 /****    HOST RM FUNCTIONS FOR INTERFACE TO PMIX SERVER    ****/

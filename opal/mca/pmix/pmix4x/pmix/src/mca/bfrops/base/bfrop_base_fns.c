@@ -46,7 +46,7 @@ PMIX_EXPORT pmix_status_t pmix_value_unload(pmix_value_t *kv,
 }
 
 PMIX_EXPORT pmix_status_t pmix_value_xfer(pmix_value_t *dest,
-                                          pmix_value_t *src)
+                                          const pmix_value_t *src)
 {
     return pmix_bfrops_base_value_xfer(dest, src);
 }
@@ -509,7 +509,7 @@ pmix_value_cmp_t pmix_bfrops_base_value_cmp(pmix_value_t *p,
 
 /* Xfer FUNCTIONS FOR GENERIC PMIX TYPES */
 pmix_status_t pmix_bfrops_base_value_xfer(pmix_value_t *p,
-                                          pmix_value_t *src)
+                                          const pmix_value_t *src)
 {
     /* copy the right field */
     p->type = src->type;

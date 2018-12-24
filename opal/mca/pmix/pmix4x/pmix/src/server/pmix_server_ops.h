@@ -6,8 +6,8 @@
  * Copyright (c) 2015      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
- * Copyright (c) 2016      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016-2018 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  */
 
@@ -57,6 +57,7 @@ typedef struct {
     size_t napps;
     pmix_iof_channel_t channels;
     pmix_byte_object_t *bo;
+    size_t nbo;
     pmix_op_cbfunc_t opcbfunc;
     pmix_dmodex_response_fn_t cbfunc;
     pmix_setup_application_cbfunc_t setupcbfunc;
@@ -131,13 +132,30 @@ typedef struct {
 PMIX_CLASS_DECLARATION(pmix_regevents_info_t);
 
 typedef struct {
-    pmix_list_t nspaces;                    // list of pmix_namespace_t for the nspaces we know about
+    pmix_list_item_t super;
+    char *grpid;
+    pmix_proc_t *members;
+    size_t nmbrs;
+} pmix_group_t;
+PMIX_CLASS_DECLARATION(pmix_group_t);
+
+typedef struct {
+    pmix_list_item_t super;
+    pmix_group_t *grp;
+    pmix_rank_t rank;
+    size_t idx;
+} pmix_group_caddy_t;
+PMIX_CLASS_DECLARATION(pmix_group_caddy_t);
+
+typedef struct {
+    pmix_list_t nspaces;                    // list of pmix_nspace_t for the nspaces we know about
     pmix_pointer_array_t clients;           // array of pmix_peer_t local clients
     pmix_list_t collectives;                // list of active pmix_server_trkr_t
     pmix_list_t remote_pnd;                 // list of pmix_dmdx_remote_t awaiting arrival of data fror servicing remote req's
     pmix_list_t local_reqs;                 // list of pmix_dmdx_local_t awaiting arrival of data from local neighbours
     pmix_list_t gdata;                      // cache of data given to me for passing to all clients
     pmix_list_t events;                     // list of pmix_regevents_info_t registered events
+    pmix_list_t groups;                     // list of pmix_group_t group memberships
     pmix_hotel_t iof;                       // IO to be forwarded to clients
     bool tool_connections_allowed;
     char *tmpdir;                           // temporary directory for this server
@@ -301,6 +319,12 @@ pmix_status_t pmix_server_iofstdin(pmix_peer_t *peer,
                                    pmix_op_cbfunc_t cbfunc,
                                    void *cbdata);
 
+pmix_status_t pmix_server_grpconstruct(pmix_server_caddy_t *cd,
+                                       pmix_buffer_t *buf);
+
+pmix_status_t pmix_server_grpdestruct(pmix_server_caddy_t *cd,
+                                      pmix_buffer_t *buf);
+
 pmix_status_t pmix_server_event_recvd_from_client(pmix_peer_t *peer,
                                                   pmix_buffer_t *buf,
                                                   pmix_op_cbfunc_t cbfunc,
@@ -313,7 +337,11 @@ void pmix_server_message_handler(struct pmix_peer_t *pr,
                                  pmix_ptl_hdr_t *hdr,
                                  pmix_buffer_t *buf, void *cbdata);
 
+void pmix_server_purge_events(pmix_peer_t *peer,
+                              pmix_proc_t *proc);
+
 PMIX_EXPORT extern pmix_server_module_t pmix_host_server;
 PMIX_EXPORT extern pmix_server_globals_t pmix_server_globals;
+
 
 #endif // PMIX_SERVER_OPS_H

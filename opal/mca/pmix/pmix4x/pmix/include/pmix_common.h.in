@@ -4,7 +4,7 @@
  * Copyright (c) 2016-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
- * Copyright (c) 2016-2017 Mellanox Technologies, Inc.
+ * Copyright (c) 2016-2018 Mellanox Technologies, Inc.
  *                         All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -81,8 +81,8 @@ extern "C" {
 /****  PMIX CONSTANTS    ****/
 
 /* define maximum value and key sizes */
-#define PMIX_MAX_NSLEN     63
-#define PMIX_MAX_KEYLEN    63
+#define PMIX_MAX_NSLEN     255
+#define PMIX_MAX_KEYLEN    511
 
 /* define abstract types for namespaces and keys */
 typedef char pmix_nspace_t[PMIX_MAX_NSLEN+1];
@@ -106,6 +106,7 @@ typedef uint32_t pmix_rank_t;
 /* other special rank values will be used to define
  * groups of ranks for use in collectives */
 #define PMIX_RANK_LOCAL_NODE    UINT32_MAX-2        // all ranks on local node
+#define PMIX_RANK_LOCAL_PEERS   UINT32_MAX-4        // all peers (i.e., all procs within the same nspace) on local node
 /* define an invalid value */
 #define PMIX_RANK_INVALID   UINT32_MAX-3
 
@@ -179,6 +180,8 @@ typedef uint32_t pmix_rank_t;
 #define PMIX_VERSION_INFO                   "pmix.version"          // (char*) PMIx version of contactor
 #define PMIX_REQUESTOR_IS_TOOL              "pmix.req.tool"         // (bool) requesting process is a tool
 #define PMIX_REQUESTOR_IS_CLIENT            "pmix.req.client"       // (bool) requesting process is a client process
+#define PMIX_PSET_NAME                      "pmix.pset.nm"          // (char*) user-assigned name for the process
+                                                                    //         set containing the given process
 
 /* model attributes */
 #define PMIX_PROGRAMMING_MODEL              "pmix.pgm.model"        // (char*) programming model being initialized (e.g., "MPI" or "OpenMP")
@@ -354,6 +357,8 @@ typedef uint32_t pmix_rank_t;
 #define PMIX_EVENT_DO_NOT_CACHE             "pmix.evnocache"        // (bool) instruct the PMIx server not to cache the event
 #define PMIX_EVENT_SILENT_TERMINATION       "pmix.evsilentterm"     // (bool) do not generate an event when this job normally terminates
 #define PMIX_EVENT_PROXY                    "pmix.evproxy"          // (pmix_proc_t*) PMIx server that sourced the event
+#define PMIX_EVENT_TEXT_MESSAGE             "pmix.evtext"           // (char*) text message suitable for output by recipient - e.g., describing
+                                                                    //         the cause of the event
 
 /* fault tolerance-related events */
 #define PMIX_EVENT_TERMINATE_SESSION        "pmix.evterm.sess"      // (bool) RM intends to terminate session
@@ -410,8 +415,11 @@ typedef uint32_t pmix_rank_t;
 #define PMIX_FWD_STDERR                     "pmix.fwd.stderr"       // (bool) forward stderr from the spawned processes to this process (typically used by a tool)
 #define PMIX_FWD_STDDIAG                    "pmix.fwd.stddiag"      // (bool) if a diagnostic channel exists, forward any output on it
                                                                     //        from the spawned processes to this process (typically used by a tool)
+#define PMIX_SPAWN_TOOL                     "pmix.spwn.tool"        // (bool) job being spawned is a tool
 
 /* query attributes */
+#define PMIX_QUERY_REFRESH_CACHE            "pmix.qry.rfsh"         // (bool) retrieve updated information from server
+                                                                    //        to update local cache
 #define PMIX_QUERY_NAMESPACES               "pmix.qry.ns"           // (char*) request a comma-delimited list of active nspaces
 #define PMIX_QUERY_JOB_STATUS               "pmix.qry.jst"          // (pmix_status_t) status of a specified currently executing job
 #define PMIX_QUERY_QUEUE_LIST               "pmix.qry.qlst"         // (char*) request a comma-delimited list of scheduler queues
@@ -432,6 +440,10 @@ typedef uint32_t pmix_rank_t;
                                                                     //         is being requested
 #define PMIX_TIME_REMAINING                 "pmix.time.remaining"   // (char*) query number of seconds (uint32_t) remaining in allocation
                                                                     //         for the specified nspace
+#define PMIX_QUERY_NUM_PSETS                "pmix.qry.psetnum"      // (size_t) return the number of psets defined
+                                                                    //          in the specified range (defaults to session)
+#define PMIX_QUERY_PSET_NAMES               "pmix.qry.psets"        // (char*) return a comma-delimited list of the names of the
+                                                                    //         psets defined in the specified range (defaults to session)
 
 /* log attributes */
 #define PMIX_LOG_SOURCE                     "pmix.log.source"       // (pmix_proc_t*) ID of source of the log request
@@ -627,6 +639,23 @@ typedef uint32_t pmix_rank_t;
 #define PMIX_SETUP_APP_NONENVARS            "pmix.setup.nenv"       // (bool) include all non-envar data
 #define PMIX_SETUP_APP_ALL                  "pmix.setup.all"        // (bool) include all relevant data
 
+/* Attributes supporting the PMIx Groups APIs */
+#define PMIX_GROUP_ID                       "pmix.grp.id"           // (char*) user-provided group identifier
+#define PMIX_GROUP_LEADER                   "pmix.grp.ldr"          // (bool) this process is the leader of the group
+#define PMIX_GROUP_OPTIONAL                 "pmix.grp.opt"          // (bool) participation is optional - do not return an error if any of the
+                                                                    //        specified processes terminate without having joined. The default
+                                                                    //        is false
+#define PMIX_GROUP_NOTIFY_TERMINATION       "pmix.grp.notterm"      // (bool) notify remaining members when another member terminates without first
+                                                                    //        leaving the group. The default is false
+#define PMIX_GROUP_INVITE_DECLINE           "pmix.grp.decline"      // (bool) notify the inviting process that this process does not wish to
+                                                                    //        participate in the proposed group The default is true
+#define PMIX_GROUP_FT_COLLECTIVE            "pmix.grp.ftcoll"       // (bool) adjust internal tracking for terminated processes. Default is false
+#define PMIX_GROUP_MEMBERSHIP               "pmix.grp.mbrs"         // (pmix_data_array_t*) array of group member ID's
+#define PMIX_GROUP_ASSIGN_CONTEXT_ID        "pmix.grp.actxid"       // (bool) request that the RM assign a unique numerical (size_t) ID to this group
+#define PMIX_GROUP_CONTEXT_ID               "pmix.grp.ctxid"        // (size_t) context ID assigned to group
+#define PMIX_GROUP_LOCAL_ONLY               "pmix.grp.lcl"          // (bool) group operation only involves local procs
+#define PMIX_GROUP_ENDPT_DATA               "pmix.grp.endpt"        // (pmix_byte_object_t) data collected to be shared during construction
+
 
 /****    PROCESS STATE DEFINITIONS    ****/
 typedef uint8_t pmix_proc_state_t;
@@ -738,75 +767,71 @@ typedef int pmix_status_t;
 #define PMIX_ERR_V2X_BASE                   -100
 
 /* v2.x communication errors */
-#define PMIX_ERR_LOST_CONNECTION_TO_SERVER      (PMIX_ERR_V2X_BASE -  1)
-#define PMIX_ERR_LOST_PEER_CONNECTION           (PMIX_ERR_V2X_BASE -  2)
-#define PMIX_ERR_LOST_CONNECTION_TO_CLIENT      (PMIX_ERR_V2X_BASE -  3)
+#define PMIX_ERR_LOST_CONNECTION_TO_SERVER          -101
+#define PMIX_ERR_LOST_PEER_CONNECTION               -102
+#define PMIX_ERR_LOST_CONNECTION_TO_CLIENT          -103
 /* used by the query system */
-#define PMIX_QUERY_PARTIAL_SUCCESS              (PMIX_ERR_V2X_BASE -  4)
+#define PMIX_QUERY_PARTIAL_SUCCESS                  -104
 /* request responses */
-#define PMIX_NOTIFY_ALLOC_COMPLETE              (PMIX_ERR_V2X_BASE -  5)
+#define PMIX_NOTIFY_ALLOC_COMPLETE                  -105
 /* job control */
-#define PMIX_JCTRL_CHECKPOINT                   (PMIX_ERR_V2X_BASE -  6)    // monitored by client to trigger checkpoint operation
-#define PMIX_JCTRL_CHECKPOINT_COMPLETE          (PMIX_ERR_V2X_BASE -  7)    // sent by client and monitored by server to notify that requested
+#define PMIX_JCTRL_CHECKPOINT                       -106    // monitored by client to trigger checkpoint operation
+#define PMIX_JCTRL_CHECKPOINT_COMPLETE              -107    // sent by client and monitored by server to notify that requested
                                                                             //     checkpoint operation has completed
-#define PMIX_JCTRL_PREEMPT_ALERT                (PMIX_ERR_V2X_BASE -  8)    // monitored by client to detect RM intends to preempt
-/* monitoring */
-#define PMIX_MONITOR_HEARTBEAT_ALERT            (PMIX_ERR_V2X_BASE -  9)
-#define PMIX_MONITOR_FILE_ALERT                 (PMIX_ERR_V2X_BASE - 10)
-#define PMIX_PROC_TERMINATED                    (PMIX_ERR_V2X_BASE - 11)
-#define PMIX_ERR_INVALID_TERMINATION            (PMIX_ERR_V2X_BASE - 12)
+#define PMIX_JCTRL_PREEMPT_ALERT                    -108    // monitored by client to detect RM intends to preempt
 
-/* define a starting point for operational error constants so
- * we avoid renumbering when making additions */
-#define PMIX_ERR_OP_BASE    PMIX_ERR_V2X_BASE-100
+/* monitoring */
+#define PMIX_MONITOR_HEARTBEAT_ALERT                -109
+#define PMIX_MONITOR_FILE_ALERT                     -110
+#define PMIX_PROC_TERMINATED                        -111
+#define PMIX_ERR_INVALID_TERMINATION                -112
 
 /* operational */
-#define PMIX_ERR_EVENT_REGISTRATION             (PMIX_ERR_OP_BASE - 14)
-#define PMIX_ERR_JOB_TERMINATED                 (PMIX_ERR_OP_BASE - 15)
-#define PMIX_ERR_UPDATE_ENDPOINTS               (PMIX_ERR_OP_BASE - 16)
-#define PMIX_MODEL_DECLARED                     (PMIX_ERR_OP_BASE - 17)
-#define PMIX_GDS_ACTION_COMPLETE                (PMIX_ERR_OP_BASE - 18)
-#define PMIX_PROC_HAS_CONNECTED                 (PMIX_ERR_OP_BASE - 19)
-#define PMIX_CONNECT_REQUESTED                  (PMIX_ERR_OP_BASE - 20)
-#define PMIX_MODEL_RESOURCES                    (PMIX_ERR_OP_BASE - 21)     // model resource usage has changed
-#define PMIX_OPENMP_PARALLEL_ENTERED            (PMIX_ERR_OP_BASE - 22)     // an OpenMP parallel region has been entered
-#define PMIX_OPENMP_PARALLEL_EXITED             (PMIX_ERR_OP_BASE - 23)     // an OpenMP parallel region has completed
-#define PMIX_LAUNCH_DIRECTIVE                   (PMIX_ERR_OP_BASE - 24)
-#define PMIX_LAUNCHER_READY                     (PMIX_ERR_OP_BASE - 25)
-#define PMIX_OPERATION_IN_PROGRESS              (PMIX_ERR_OP_BASE - 26)
-#define PMIX_OPERATION_SUCCEEDED                (PMIX_ERR_OP_BASE - 27)
-#define PMIX_ERR_INVALID_OPERATION              (PMIX_ERR_OP_BASE - 28)
-
-
-/* define a starting point for system error constants so
- * we avoid renumbering when making additions - host environments
-+ * are responsible for translating their own event codes into
-+ * the closest PMIx equivalent value */
-#define PMIX_ERR_SYS_BASE    PMIX_ERR_OP_BASE-200
+#define PMIX_ERR_EVENT_REGISTRATION                 -144
+#define PMIX_ERR_JOB_TERMINATED                     -145
+#define PMIX_ERR_UPDATE_ENDPOINTS                   -146
+#define PMIX_MODEL_DECLARED                         -147
+#define PMIX_GDS_ACTION_COMPLETE                    -148
+#define PMIX_PROC_HAS_CONNECTED                     -149
+#define PMIX_CONNECT_REQUESTED                      -150
+#define PMIX_MODEL_RESOURCES                        -151     // model resource usage has changed
+#define PMIX_OPENMP_PARALLEL_ENTERED                -152     // an OpenMP parallel region has been entered
+#define PMIX_OPENMP_PARALLEL_EXITED                 -153     // an OpenMP parallel region has completed
+#define PMIX_LAUNCH_DIRECTIVE                       -154
+#define PMIX_LAUNCHER_READY                         -155
+#define PMIX_OPERATION_IN_PROGRESS                  -156
+#define PMIX_OPERATION_SUCCEEDED                    -157
+#define PMIX_ERR_INVALID_OPERATION                  -158
+#define PMIX_GROUP_INVITED                          -159
+#define PMIX_GROUP_LEFT                             -160
+#define PMIX_GROUP_INVITE_ACCEPTED                  -161
+#define PMIX_GROUP_INVITE_DECLINED                  -162
+#define PMIX_GROUP_INVITE_FAILED                    -163
+#define PMIX_GROUP_MEMBERSHIP_UPDATE                -164
+#define PMIX_GROUP_CONSTRUCT_ABORT                  -165
+#define PMIX_GROUP_CONSTRUCT_COMPLETE               -166
+#define PMIX_GROUP_LEADER_SELECTED                  -167
+#define PMIX_GROUP_LEADER_FAILED                    -168
+#define PMIX_GROUP_CONTEXT_ID_ASSIGNED              -169
 
 /* system failures */
-#define PMIX_ERR_NODE_DOWN                      (PMIX_ERR_SYS_BASE -  0)
-#define PMIX_ERR_NODE_OFFLINE                   (PMIX_ERR_SYS_BASE -  1)
-#define PMIX_ERR_SYS_OTHER                      (PMIX_ERR_EVHDLR_BASE + 1)
+#define PMIX_ERR_NODE_DOWN                          -231
+#define PMIX_ERR_NODE_OFFLINE                       -232
+#define PMIX_ERR_SYS_OTHER                          -330
 
 /* define a macro for identifying system event values */
 #define PMIX_SYSTEM_EVENT(a)   \
-    (PMIX_ERR_SYS_BASE >= (a) && PMIX_ERR_EVHDLR_BASE < (a))
-
-/* define a starting point for event handler error constants so
- * we avoid renumbering when making additions */
-#define PMIX_ERR_EVHDLR_BASE    PMIX_ERR_SYS_BASE-500
+    (230 > (a) && -331 < (a))
 
 /* used by event handlers */
-#define PMIX_EVENT_NO_ACTION_TAKEN              (PMIX_ERR_EVHDLR_BASE -  1)
-#define PMIX_EVENT_PARTIAL_ACTION_TAKEN         (PMIX_ERR_EVHDLR_BASE -  2)
-#define PMIX_EVENT_ACTION_DEFERRED              (PMIX_ERR_EVHDLR_BASE -  3)
-#define PMIX_EVENT_ACTION_COMPLETE              (PMIX_ERR_EVHDLR_BASE -  4)
-
+#define PMIX_EVENT_NO_ACTION_TAKEN                  -331
+#define PMIX_EVENT_PARTIAL_ACTION_TAKEN             -332
+#define PMIX_EVENT_ACTION_DEFERRED                  -333
+#define PMIX_EVENT_ACTION_COMPLETE                  -334
 
 /* define a starting point for PMIx internal error codes
  * that are never exposed outside the library */
-#define PMIX_INTERNAL_ERR_BASE          PMIX_ERR_EVHDLR_BASE-1000
+#define PMIX_INTERNAL_ERR_BASE                      -1330
 
 /* define a starting point for user-level defined error
  * constants - negative values larger than this are guaranteed
@@ -948,16 +973,35 @@ typedef uint16_t pmix_iof_channel_t;
 #define PMIX_FWD_STDDIAG_CHANNEL    0x0008
 #define PMIX_FWD_ALL_CHANNELS       0x00ff
 
+/* define values associated with PMIx_Group_join
+ * to indicate accept and decline - this is
+ * done for readability of user code */
+typedef enum {
+    PMIX_GROUP_DECLINE,
+    PMIX_GROUP_ACCEPT
+} pmix_group_opt_t;
+
+typedef enum {
+    PMIX_GROUP_CONSTRUCT,
+    PMIX_GROUP_DESTRUCT
+} pmix_group_operation_t;
+
 
 /* declare a convenience macro for checking keys */
 #define PMIX_CHECK_KEY(a, b) \
     (0 == strncmp((a)->key, (b), PMIX_MAX_KEYLEN))
 
+#define PMIX_LOAD_KEY(a, b) \
+    do {                                            \
+        memset((a), 0, PMIX_MAX_KEYLEN+1);          \
+        pmix_strncpy((a), (b), PMIX_MAX_KEYLEN);    \
+    }while(0)
+
 /* define a convenience macro for loading nspaces */
 #define PMIX_LOAD_NSPACE(a, b)                      \
     do {                                            \
         memset((a), 0, PMIX_MAX_NSLEN+1);           \
-        (void)strncpy((a), (b), PMIX_MAX_NSLEN);    \
+        pmix_strncpy((a), (b), PMIX_MAX_NSLEN);     \
     }while(0)
 
 /* define a convenience macro for checking nspaces */
@@ -1012,6 +1056,7 @@ typedef struct pmix_byte_object {
             }                               \
         }                                   \
         free((m));                          \
+        (m) = NULL;                         \
     } while(0)
 
 #define PMIX_BYTE_OBJECT_LOAD(b, d, s)      \
@@ -1406,9 +1451,31 @@ typedef struct pmix_value {
             (n) = (t)((m)->data.fval);                  \
         } else if (PMIX_DOUBLE == (m)->type) {          \
             (n) = (t)((m)->data.dval);                  \
+        } else if (PMIX_PID == (m)->type) {             \
+            (n) = (t)((m)->data.pid);                   \
         } else {                                        \
             (s) = PMIX_ERR_BAD_PARAM;                   \
         }                                               \
+    } while(0)
+
+#define PMIX_VALUE_COMPRESSED_STRING_UNPACK(s)                              \
+    do {                                                                    \
+        char *tmp;                                                          \
+        /* if this is a compressed string, then uncompress it */            \
+        if (PMIX_COMPRESSED_STRING == (s)->type) {                          \
+            pmix_util_uncompress_string(&tmp, (uint8_t*)(s)->data.bo.bytes, \
+                (s)->data.bo.size);                                         \
+            if (NULL == tmp) {                                              \
+                PMIX_ERROR_LOG(PMIX_ERR_NOMEM);                             \
+                rc = PMIX_ERR_NOMEM;                                        \
+                PMIX_VALUE_RELEASE(s);                                      \
+                val = NULL;                                                 \
+            } else {                                                        \
+                PMIX_VALUE_DESTRUCT(s);                                     \
+                (s)->data.string = tmp;                                     \
+                (s)->type = PMIX_STRING;                                    \
+            }                                                               \
+        }                                                                   \
     } while(0)
 
 /****    PMIX INFO STRUCT    ****/
@@ -1450,7 +1517,7 @@ typedef struct pmix_info {
 #define PMIX_INFO_LOAD(m, k, v, t)                          \
     do {                                                    \
         if (NULL != (k)) {                                  \
-            (void)strncpy((m)->key, (k), PMIX_MAX_KEYLEN);  \
+            pmix_strncpy((m)->key, (k), PMIX_MAX_KEYLEN);   \
         }                                                   \
         (m)->flags = 0;                                     \
         pmix_value_load(&((m)->value), (v), (t));           \
@@ -1458,7 +1525,7 @@ typedef struct pmix_info {
 #define PMIX_INFO_XFER(d, s)                                        \
     do {                                                            \
         if (NULL != (s)->key) {                                     \
-            (void)strncpy((d)->key, (s)->key, PMIX_MAX_KEYLEN);     \
+            pmix_strncpy((d)->key, (s)->key, PMIX_MAX_KEYLEN);      \
         }                                                           \
         (d)->flags = (s)->flags;                                    \
         pmix_value_xfer(&(d)->value, (pmix_value_t*)&(s)->value);   \
@@ -1531,9 +1598,9 @@ typedef struct pmix_pdata {
     do {                                                                    \
         if (NULL != (m)) {                                                  \
             memset((m), 0, sizeof(pmix_pdata_t));                           \
-            (void)strncpy((m)->proc.nspace, (p)->nspace, PMIX_MAX_NSLEN);   \
+            pmix_strncpy((m)->proc.nspace, (p)->nspace, PMIX_MAX_NSLEN);    \
             (m)->proc.rank = (p)->rank;                                     \
-            (void)strncpy((m)->key, (k), PMIX_MAX_KEYLEN);                  \
+            pmix_strncpy((m)->key, (k), PMIX_MAX_KEYLEN);                   \
             pmix_value_load(&((m)->value), (v), (t));                       \
         }                                                                   \
     } while (0)
@@ -1542,9 +1609,9 @@ typedef struct pmix_pdata {
     do {                                                                        \
         if (NULL != (d)) {                                                      \
             memset((d), 0, sizeof(pmix_pdata_t));                               \
-            (void)strncpy((d)->proc.nspace, (s)->proc.nspace, PMIX_MAX_NSLEN);  \
+            pmix_strncpy((d)->proc.nspace, (s)->proc.nspace, PMIX_MAX_NSLEN);   \
             (d)->proc.rank = (s)->proc.rank;                                    \
-            (void)strncpy((d)->key, (s)->key, PMIX_MAX_KEYLEN);                 \
+            pmix_strncpy((d)->key, (s)->key, PMIX_MAX_KEYLEN);                  \
             pmix_value_xfer(&((d)->value), &((s)->value));                      \
         }                                                                       \
     } while (0)
@@ -2141,7 +2208,7 @@ PMIX_EXPORT void PMIx_Deregister_event_handler(size_t evhdlr_ref,
 PMIX_EXPORT pmix_status_t PMIx_Notify_event(pmix_status_t status,
                                             const pmix_proc_t *source,
                                             pmix_data_range_t range,
-                                            pmix_info_t info[], size_t ninfo,
+                                            const pmix_info_t info[], size_t ninfo,
                                             pmix_op_cbfunc_t cbfunc, void *cbdata);
 
 /* Provide a string representation for several types of value. Note
@@ -2459,6 +2526,8 @@ static inline void pmix_value_destruct(pmix_value_t * m) {
         }
     } else if (PMIX_ENVAR == (m)->type) {
         PMIX_ENVAR_DESTRUCT(&(m)->data.envar);
+    } else if (PMIX_PROC == (m)->type) {
+        PMIX_PROC_RELEASE((m)->data.proc);
     }
 }
 

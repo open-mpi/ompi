@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2016-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2018      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -53,6 +54,8 @@ typedef struct {
     int max_retries;
     char *report_uri;
     bool remote_connections;
+    int handshake_wait_time;
+    int handshake_max_retries;
 } pmix_ptl_tcp_component_t;
 
 extern pmix_ptl_tcp_component_t mca_ptl_tcp_component;
