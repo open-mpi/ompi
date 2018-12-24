@@ -4,8 +4,8 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2015-2017 Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015-2018 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -39,18 +39,17 @@
  * Return value: Number of elements of type TYPE copied
  */
 #define COPY_TYPE( TYPENAME, TYPE, COUNT )                                              \
-static int copy_##TYPENAME( opal_convertor_t *pConvertor, uint32_t count,               \
-                            char* from, size_t from_len, ptrdiff_t from_extent, \
-                            char* to, size_t to_len, ptrdiff_t to_extent,       \
-                            ptrdiff_t *advance)                                 \
+static int copy_##TYPENAME( opal_convertor_t *pConvertor, size_t count,                 \
+                            char* from, size_t from_len, ptrdiff_t from_extent,         \
+                            char* to, size_t to_len, ptrdiff_t to_extent,               \
+                            ptrdiff_t *advance)                                         \
 {                                                                                       \
-    uint32_t i;                                                                         \
     size_t remote_TYPE_size = sizeof(TYPE) * (COUNT); /* TODO */                        \
     size_t local_TYPE_size = (COUNT) * sizeof(TYPE);                                    \
                                                                                         \
     /* make sure the remote buffer is large enough to hold the data */                  \
     if( (remote_TYPE_size * count) > from_len ) {                                       \
-        count = (uint32_t)(from_len / remote_TYPE_size);                                \
+        count = from_len / remote_TYPE_size;                                            \
         if( (count * remote_TYPE_size) != from_len ) {                                  \
             DUMP( "oops should I keep this data somewhere (excedent %d bytes)?\n",      \
                   from_len - (count * remote_TYPE_size) );                              \
@@ -67,7 +66,7 @@ static int copy_##TYPENAME( opal_convertor_t *pConvertor, uint32_t count,       
         MEMCPY( to, from, count * local_TYPE_size );                                    \
     } else {                                                                            \
         /* source or destination are non-contigous */                                   \
-        for( i = 0; i < count; i++ ) {                                                  \
+        for(size_t i = 0; i < count; i++ ) {                                            \
             MEMCPY( to, from, local_TYPE_size );                                        \
             to += to_extent;                                                            \
             from += from_extent;                                                        \
@@ -92,17 +91,16 @@ static int copy_##TYPENAME( opal_convertor_t *pConvertor, uint32_t count,       
  * Return value: Number of elements of type TYPE copied
  */
 #define COPY_CONTIGUOUS_BYTES( TYPENAME, COUNT )                                          \
-static int copy_##TYPENAME##_##COUNT( opal_convertor_t *pConvertor, uint32_t count,       \
-                                      char* from, size_t from_len, ptrdiff_t from_extent, \
-                                      char* to, size_t to_len, ptrdiff_t to_extent,       \
-                                      ptrdiff_t *advance )              \
+static size_t copy_##TYPENAME##_##COUNT( opal_convertor_t *pConvertor, size_t count,         \
+                                         char* from, size_t from_len, ptrdiff_t from_extent, \
+                                         char* to, size_t to_len, ptrdiff_t to_extent,       \
+                                         ptrdiff_t *advance )              \
 {                                                                               \
-    uint32_t i;                                                                 \
     size_t remote_TYPE_size = (size_t)(COUNT); /* TODO */                       \
     size_t local_TYPE_size = (size_t)(COUNT);                                   \
                                                                                 \
     if( (remote_TYPE_size * count) > from_len ) {                               \
-        count = (uint32_t)(from_len / remote_TYPE_size);                        \
+        count = from_len / remote_TYPE_size;                                    \
         if( (count * remote_TYPE_size) != from_len ) {                          \
             DUMP( "oops should I keep this data somewhere (excedent %d bytes)?\n", \
                   from_len - (count * remote_TYPE_size) );                      \
@@ -117,7 +115,7 @@ static int copy_##TYPENAME##_##COUNT( opal_convertor_t *pConvertor, uint32_t cou
         (to_extent == (ptrdiff_t)remote_TYPE_size) ) {                  \
         MEMCPY( to, from, count * local_TYPE_size );                            \
     } else {                                                                    \
-        for( i = 0; i < count; i++ ) {                                          \
+        for(size_t i = 0; i < count; i++ ) {                                    \
             MEMCPY( to, from, local_TYPE_size );                                \
             to += to_extent;                                                    \
             from += from_extent;                                                \

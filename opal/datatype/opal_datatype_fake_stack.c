@@ -11,8 +11,8 @@
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2017      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017-2018 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -47,7 +47,7 @@ int opal_convertor_create_stack_with_pos_general( opal_convertor_t* pConvertor,
 	size_t loop_length, *remoteLength, remote_size;
     size_t resting_place = starting_point;
     dt_elem_desc_t* pElems;
-    uint32_t count;
+    size_t count;
 
     assert( 0 != starting_point );
     assert( pConvertor->bConverted != starting_point );
@@ -93,7 +93,7 @@ int opal_convertor_create_stack_with_pos_general( opal_convertor_t* pConvertor,
     /* remove from the main loop all the complete datatypes */
     assert (! (pConvertor->flags & CONVERTOR_SEND));
     remote_size    = opal_convertor_compute_remote_size( pConvertor );
-    count          = (int32_t)(starting_point / remote_size);
+    count          = starting_point / remote_size;
     resting_place -= (remote_size * count);
     pStack->count  = pConvertor->count - count;
     pStack->index  = -1;

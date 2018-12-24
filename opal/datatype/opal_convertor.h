@@ -12,8 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2014      NVIDIA Corporation.  All rights reserved.
- * Copyright (c) 2017      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017-2018 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2017      Intel, Inc. All rights reserved
  * $COPYRIGHT$
  *
@@ -74,6 +74,7 @@ struct opal_convertor_master_t;
 struct dt_stack_t {
     int32_t           index;    /**< index in the element description */
     int16_t           type;     /**< the type used for the last pack/unpack (original or OPAL_DATATYPE_UINT1) */
+    int16_t           padding;
     size_t            count;    /**< number of times we still have to do it */
     ptrdiff_t         disp;     /**< actual displacement depending on the count field */
 };
@@ -93,30 +94,33 @@ struct opal_convertor_t {
     const opal_datatype_t*        pDesc;          /**< the datatype description associated with the convertor */
     const dt_type_desc_t*         use_desc;       /**< the version used by the convertor (normal or optimized) */
     opal_datatype_count_t         count;          /**< the total number of full datatype elements */
+
+    /* --- cacheline boundary (64 bytes - if 64bits arch and !OPAL_ENABLE_DEBUG) --- */
     uint32_t                      stack_size;     /**< size of the allocated stack */
-    /* --- cacheline 1 boundary (64 bytes) --- */
     unsigned char*                pBaseBuf;       /**< initial buffer as supplied by the user */
     dt_stack_t*                   pStack;         /**< the local stack for the actual conversion */
     convertor_advance_fct_t       fAdvance;       /**< pointer to the pack/unpack functions */
+
+    /* --- cacheline boundary (96 bytes - if 64bits arch and !OPAL_ENABLE_DEBUG) --- */
     struct opal_convertor_master_t* master;       /**< the master convertor */
 
     /* All others fields get modified for every call to pack/unpack functions */
     uint32_t                      stack_pos;      /**< the actual position on the stack */
-    uint32_t                      partial_length; /**< amount of data left over from the last unpack */
+    size_t                        partial_length; /**< amount of data left over from the last unpack */
     size_t                        bConverted;     /**< # of bytes already converted */
+
+    /* --- cacheline boundary (128 bytes - if 64bits arch and !OPAL_ENABLE_DEBUG) --- */
     uint32_t                      checksum;       /**< checksum computed by pack/unpack operation */
     uint32_t                      csum_ui1;       /**< partial checksum computed by pack/unpack operation */
     size_t                        csum_ui2;       /**< partial checksum computed by pack/unpack operation */
-     /* --- cacheline 2 boundary (128 bytes) --- */
+
+    /* --- fields are no more aligned on cacheline --- */
     dt_stack_t                    static_stack[DT_STATIC_STACK_SIZE];  /**< local stack for small datatypes */
-    /* --- cacheline 3 boundary (192 bytes) was 56 bytes ago --- */
 
 #if OPAL_CUDA_SUPPORT
     memcpy_fct_t                  cbmemcpy;       /**< memcpy or cuMemcpy */
     void *                        stream;         /**< CUstream for async copy */
 #endif
-    /* size: 248, cachelines: 4, members: 20 */
-    /* last cacheline: 56 bytes */
 };
 OPAL_DECLSPEC OBJ_CLASS_DECLARATION( opal_convertor_t );
 
@@ -251,12 +255,12 @@ static inline void opal_convertor_get_offset_pointer( const opal_convertor_t* pC
  */
 OPAL_DECLSPEC int32_t opal_convertor_prepare_for_send( opal_convertor_t* convertor,
                                                        const struct opal_datatype_t* datatype,
-                                                       int32_t count,
+                                                       size_t count,
                                                        const void* pUserBuf);
 
 static inline int32_t opal_convertor_copy_and_prepare_for_send( const opal_convertor_t* pSrcConv,
                                                                 const struct opal_datatype_t* datatype,
-                                                                int32_t count,
+                                                                size_t count,
                                                                 const void* pUserBuf,
                                                                 int32_t flags,
                                                                 opal_convertor_t* convertor )
@@ -273,11 +277,11 @@ static inline int32_t opal_convertor_copy_and_prepare_for_send( const opal_conve
  */
 OPAL_DECLSPEC int32_t opal_convertor_prepare_for_recv( opal_convertor_t* convertor,
                                                        const struct opal_datatype_t* datatype,
-                                                       int32_t count,
+                                                       size_t count,
                                                        const void* pUserBuf );
 static inline int32_t opal_convertor_copy_and_prepare_for_recv( const opal_convertor_t* pSrcConv,
                                                                 const struct opal_datatype_t* datatype,
-                                                                int32_t count,
+                                                                size_t count,
                                                                 const void* pUserBuf,
                                                                 int32_t flags,
                                                                 opal_convertor_t* convertor )

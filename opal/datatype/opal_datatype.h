@@ -88,7 +88,7 @@ BEGIN_C_DECLS
  * associated type.
  */
 #define MAX_DT_COMPONENT_COUNT UINT_MAX
-typedef uint32_t opal_datatype_count_t;
+typedef size_t opal_datatype_count_t;
 
 typedef union dt_elem_desc dt_elem_desc_t;
 
@@ -121,7 +121,6 @@ struct opal_datatype_t {
 
     /* Attribute fields */
     char               name[OPAL_MAX_OBJECT_NAME];  /**< name of the datatype */
-    /* --- cacheline 2 boundary (128 bytes) was 8-12 bytes ago --- */
     dt_type_desc_t     desc;     /**< the data description */
     dt_type_desc_t     opt_desc; /**< short description of the data used when conversion is useless
                                       or in the send case (without conversion) */
