@@ -47,8 +47,6 @@ static const char FUNC_NAME[] = "MPI_Type_set_name";
 
 int MPI_Type_set_name (MPI_Datatype type, const char *type_name)
 {
-    int length;
-
     MEMCHECKER(
         memchecker_datatype(type);
         );
@@ -65,10 +63,6 @@ int MPI_Type_set_name (MPI_Datatype type, const char *type_name)
     }
 
     memset(type->name, 0, MPI_MAX_OBJECT_NAME);
-    length = (int)strlen( type_name );
-    if( length >= MPI_MAX_OBJECT_NAME ) {
-        length = MPI_MAX_OBJECT_NAME - 1;
-    }
-    opal_string_copy( type->name, type_name, length );
+    opal_string_copy( type->name, type_name, MPI_MAX_OBJECT_NAME);
     return MPI_SUCCESS;
 }
