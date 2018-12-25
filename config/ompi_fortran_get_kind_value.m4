@@ -13,6 +13,7 @@ dnl                         All rights reserved.
 dnl Copyright (c) 2010-2012 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2015      Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
+dnl Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -38,6 +39,7 @@ AC_DEFUN([OMPI_FORTRAN_GET_KIND_VALUE],[
              value=
              AC_RUN_IFELSE(AC_LANG_PROGRAM(, [[
         use, intrinsic :: ISO_C_BINDING
+        implicit none
         open(unit = 7, file = "conftest.out")
         write(7, *) $1
         close(7)

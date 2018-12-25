@@ -13,6 +13,7 @@ dnl                         All rights reserved.
 dnl Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2015      Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
+dnl Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -38,8 +39,8 @@ AC_DEFUN([OMPI_FORTRAN_CHECK], [
     ofc_expected_size=$4
     ofc_define_type=$5
     ofc_have_type=0
-    ofc_type_size=$ac_cv_sizeof_int
-    ofc_type_alignment=$ac_cv_sizeof_int
+    ofc_type_size=0
+    ofc_type_alignment=0
     ofc_c_type=ompi_fortran_bogus_type_t
     ofc_type_kind=0
 
