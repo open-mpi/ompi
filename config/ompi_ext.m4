@@ -506,7 +506,7 @@ EOF
 
     AC_MSG_CHECKING([if MPI Extension $component has mpif.h bindings])
 
-    if test -e "$test_header" ; then
+    if test -e "$test_header" || test -e "$test_header".in ; then
         AC_MSG_RESULT([yes])
         enabled_mpifh=1
 
@@ -541,6 +541,10 @@ EOF
                AC_MSG_ERROR([Cannot continue])])
 
         component_header="mpiext_${component}_mpifh.h"
+        mpifh_component_header_path="ompi/mpiext/$component/mpif-h/${component_header}"
+        if test -e "${srcdir}/${mpifh_component_header_path}" ; then
+            mpifh_component_header_path="${srcdir}/${mpifh_component_header_path}"
+        fi
 
         cat >> $mpif_ext_h <<EOF
 !
@@ -577,12 +581,17 @@ EOF
 
     AC_MSG_CHECKING([if MPI Extension $component has "use mpi" bindings])
 
-    if test -e "$test_header" ; then
+    if test -e "$test_header" || test -e "$test_header".in ; then
         AC_MSG_RESULT([yes])
 
         EXT_USEMPI_HEADERS="$EXT_USEMPI_HEADERS mpiext/$component/use-mpi/mpiext_${component}_usempi.h"
         $5="$$5 $component"
+
         component_header="mpiext_${component}_usempi.h"
+        usempi_component_header_path="ompi/mpiext/$component/use-mpi/$component_header"
+        if test -e "${srcdir}/${usempi_component_header_path}" ; then
+            usempi_component_header_path="${srcdir}/${usempi_component_header_path}"
+        fi
 
         cat >> $mpiusempi_ext_h <<EOF
 !
@@ -597,12 +606,12 @@ EOF
         if test "$enabled_mpifh" = 1; then
             mpifh_component_header="mpiext_${component}_mpifh.h"
             cat >> $mpiusempi_ext_h <<EOF
-#include "${srcdir}/ompi/mpiext/$component/mpif-h/$mpifh_component_header"
+#include "${mpifh_component_header_path}"
 EOF
         fi
 
         cat >> $mpiusempi_ext_h <<EOF
-#include "${srcdir}/ompi/mpiext/$component/use-mpi/$component_header"
+#include "${usempi_component_header_path}"
 
 EOF
     else
@@ -628,13 +637,17 @@ EOF
 
     AC_MSG_CHECKING([if MPI Extension $component has "use mpi_f08" bindings])
 
-    if test -e "$test_header" ; then
+    if test -e "$test_header" || test -e "$test_header".in ; then
         AC_MSG_RESULT([yes])
 
         EXT_USEMPIF08_HEADERS="$EXT_USEMPIF08_HEADERS mpiext/$component/use-mpi-f08/mpiext_${component}_usempif08.h"
         $6="$$6 $component"
 
         component_header="mpiext_${component}_usempif08.h"
+        usempif08_component_header_path="ompi/mpiext/$component/use-mpi-f08/$component_header"
+        if test -e "${srcdir}/${usempif08_component_header_path}" ; then
+            usempif08_component_header_path="${srcdir}/${usempif08_component_header_path}"
+        fi
 
         cat >> $mpiusempif08_ext_h <<EOF
 !
@@ -649,12 +662,12 @@ EOF
         if test "$enabled_mpifh" = 1; then
             mpifh_component_header="mpiext_${component}_mpifh.h"
             cat >> $mpiusempif08_ext_h <<EOF
-#include "${srcdir}/ompi/mpiext/$component/mpif-h/$mpifh_component_header"
+#include "${mpifh_component_header_path}"
 EOF
         fi
 
         cat >> $mpiusempif08_ext_h <<EOF
-#include "${srcdir}/ompi/mpiext/$component/use-mpi-f08/$component_header"
+#include "${usempif08_component_header_path}"
 
 EOF
     else
