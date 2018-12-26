@@ -44,38 +44,19 @@ typedef struct mca_mtl_ofi_module_t {
     /** Address vector handle */
     struct fid_av *av;
 
-    /* Scalable Endpoint */
-    struct fid_ep *sep;
-
     /* Multi-threaded Application flag */
     bool mpi_thread_multiple;
 
-    /* OFI contexts */
-    mca_mtl_ofi_context_t *ofi_ctxt;
-
-    /* Max context count for scalable endpoints */
-    int max_ctx_cnt;
-
-    /* Total number of TX/RX contexts used by MTL */
-    int total_ctxts_used;
-
-    /*
-     * Store context id of communicator if creating more than number of
-     * contexts
-     */
-    int threshold_comm_context_id;
-
-    /* Mapping of communicator ID to OFI context */
-    int *comm_to_context;
-
-    /* MCA parameter for Thread grouping feature */
-    int thread_grouping;
-
-    /* If SEP is used by OFI MTL */
-    int enable_sep;
-
-    /* Numbers of bits used for rx contexts */
-    int rx_ctx_bits;
+    /* Scalable Endpoint attributes */
+    struct fid_ep *sep;                 /* Endpoint object */
+    mca_mtl_ofi_context_t *ofi_ctxt;    /* OFI contexts */
+    int threshold_comm_context_id;      /* Set threshold communicator ID */
+    int *comm_to_context;               /* Map communicator ID to context */
+    int rx_ctx_bits;                    /* Bits used for RX context */
+    int total_ctxts_used;               /* Total number of contexts used */
+    int enable_sep;                     /* MCA to enable/disable SEP feature */
+    int thread_grouping;                /* MCA for thread grouping feature */
+    int num_ofi_contexts;               /* MCA for number of contexts to use */
 
     /** Endpoint name length */
     size_t epnamelen;

@@ -111,11 +111,22 @@ favours only creating as many contexts as needed.
            }
     }
 
-2. MCA variable:
+2. MCA variables:
 To utilize the feature, the following MCA variable needs to be set:
+  mtl_ofi_enable_sep:
+  This MCA variable needs to be set to enable the use of Scalable Endpoints
+  feature in the OFI MTL. The underlying provider is also checked to ensure the
+  feature is supported. If the provider chosen does not support it, user needs
+  to either set this variable to 0 or select different provider which supports
+  the feature.
+
+  Default: 0
+
+  Command-line syntax:
+  "-mca mtl_ofi_enable_sep 1"
+
   mtl_ofi_thread_grouping:
-  This MCA variable is at the OFI MTL level and needs to be set to switch
-  the feature on.
+  This MCA variable needs to be set to switch Thread Grouping feature on.
 
   Default: 0
 
@@ -124,20 +135,45 @@ To utilize the feature, the following MCA variable needs to be set:
    - Applications that have multiple threads using a single communicator as
      it may degrade performance.
 
-Command-line syntax to set the MCA variable:
-  "-mca mtl_ofi_thread_grouping 1"
+  Command-line syntax:
+    "-mca mtl_ofi_thread_grouping 1"
+
+  mtl_ofi_num_ctxts:
+  MCA variable allows user to set the number of OFI contexts the applications
+  expects to use. For multi-threaded applications using Thread Grouping
+  feature, this number should be set to the number of user threads that will
+  call into MPI. For single-threaded applications one OFI context is
+  sufficient.
+
+  Default: 1
+
+  Command-line syntax:
+  "-mca mtl_ofi_num_ctxts N" [ N: number of OFI contexts required by
+                                         application ]
 
 3. Notes on performance:
-  - OFI MTL will create as many TX/RX contexts as allowed by an underlying
-    provider (each provider may have different thresholds). Once the threshold
+  - OFI MTL will create as many TX/RX contexts as set by MCA mtl_ofi_num_ctxts.
+    The number of contexts that can be created is also limited by the underlying
+    provider as each provider may have different thresholds. Once the threshold
     is exceeded, contexts are used in a round-robin fashion which leads to
     resource sharing among threads. Therefore locks are required to guard
     against race conditions. For performance, it is recommended to have
 
-      Number of communicators = Number of contexts
+      Number of threads = Number of communicators = Number of contexts
 
     For example, when using PSM2 provider, the number of contexts is dictated
     by the Intel Omni-Path HFI1 driver module.
+
+  - OPAL layer allows for multiple threads to enter progress simultaneously. To
+    enable this feature, user needs to set MCA variable
+    "max_thread_in_progress". When using Thread Grouping feature, it is
+    recommended to set this MCA parameter to the number of threads expected to
+    call into MPI as it provides performance benefits.
+
+    Command-line syntax:
+    "-mca opal_max_thread_in_progress N" [ N: number of threads expected to
+                                              make MPI calls ]
+      Default: 1
 
   - For applications using a single thread with multiple communicators and MCA
     variable "mtl_ofi_thread_grouping" set to 1, the MTL will use multiple

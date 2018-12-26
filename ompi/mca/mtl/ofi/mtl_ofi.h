@@ -327,16 +327,7 @@ ompi_mtl_ofi_isend_callback(struct fi_cq_tagged_entry *wc,
 
 #define MTL_OFI_MAP_COMM_TO_CONTEXT(comm_id, ctxt_id)                           \
     do {                                                                        \
-        if (ompi_mtl_ofi.thread_grouping &&                                     \
-            (!ompi_mtl_ofi.threshold_comm_context_id ||                         \
-            ((uint32_t) ompi_mtl_ofi.threshold_comm_context_id > comm_id))) {   \
-            ctxt_id = ompi_mtl_ofi.comm_to_context[comm_id];                    \
-        } else if (ompi_mtl_ofi.thread_grouping) {                              \
-            /* Round-robin assignment of contexts if threshold is reached */    \
-            ctxt_id = comm_id % ompi_mtl_ofi.total_ctxts_used;                  \
-        } else {                                                                \
-            ctxt_id = 0;                                                        \
-        }                                                                       \
+        ctxt_id = ompi_mtl_ofi.comm_to_context[comm_id];                    \
     } while (0);
 
 __opal_attribute_always_inline__ static inline int
@@ -348,40 +339,40 @@ ompi_mtl_ofi_ssend_recv(ompi_mtl_ofi_request_t *ack_req,
                   uint64_t *match_bits,
                   int tag)
 {
-        ssize_t ret = OMPI_SUCCESS;
-        int ctxt_id = 0;
+    ssize_t ret = OMPI_SUCCESS;
+    int ctxt_id = 0;
 
-        MTL_OFI_MAP_COMM_TO_CONTEXT(comm->c_contextid, ctxt_id);
-        set_thread_context(ctxt_id);
+    MTL_OFI_MAP_COMM_TO_CONTEXT(comm->c_contextid, ctxt_id);
+    set_thread_context(ctxt_id);
 
-        ack_req = malloc(sizeof(ompi_mtl_ofi_request_t));
-        assert(ack_req);
+    ack_req = malloc(sizeof(ompi_mtl_ofi_request_t));
+    assert(ack_req);
 
-        ack_req->parent = ofi_req;
-        ack_req->event_callback = ompi_mtl_ofi_send_ack_callback;
-        ack_req->error_callback = ompi_mtl_ofi_send_ack_error_callback;
+    ack_req->parent = ofi_req;
+    ack_req->event_callback = ompi_mtl_ofi_send_ack_callback;
+    ack_req->error_callback = ompi_mtl_ofi_send_ack_error_callback;
 
-        ofi_req->completion_count += 1;
+    ofi_req->completion_count += 1;
 
-        MTL_OFI_RETRY_UNTIL_DONE(fi_trecv(ompi_mtl_ofi.ofi_ctxt[ctxt_id].rx_ep,
-                                          NULL,
-                                          0,
-                                          NULL,
-                                          *src_addr,
-                                          *match_bits | ompi_mtl_ofi.sync_send_ack,
-                                          0, /* Exact match, no ignore bits */
-                                          (void *) &ack_req->ctx), ret);
-        if (OPAL_UNLIKELY(0 > ret)) {
-            opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
-                                "%s:%d: fi_trecv failed: %s(%zd)",
-                                __FILE__, __LINE__, fi_strerror(-ret), ret);
-            free(ack_req);
-            return ompi_mtl_ofi_get_error(ret);
-        }
+    MTL_OFI_RETRY_UNTIL_DONE(fi_trecv(ompi_mtl_ofi.ofi_ctxt[ctxt_id].rx_ep,
+                                      NULL,
+                                      0,
+                                      NULL,
+                                      *src_addr,
+                                      *match_bits | ompi_mtl_ofi.sync_send_ack,
+                                      0, /* Exact match, no ignore bits */
+                                      (void *) &ack_req->ctx), ret);
+    if (OPAL_UNLIKELY(0 > ret)) {
+        opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+                            "%s:%d: fi_trecv failed: %s(%zd)",
+                            __FILE__, __LINE__, fi_strerror(-ret), ret);
+        free(ack_req);
+        return ompi_mtl_ofi_get_error(ret);
+    }
 
-         /* The SYNC_SEND tag bit is set for the send operation only.*/
-        MTL_OFI_SET_SYNC_SEND(*match_bits);
-        return OMPI_SUCCESS;
+     /* The SYNC_SEND tag bit is set for the send operation only.*/
+    MTL_OFI_SET_SYNC_SEND(*match_bits);
+    return OMPI_SUCCESS;
 }
 
 __opal_attribute_always_inline__ static inline int
@@ -1242,13 +1233,15 @@ static int ompi_mtl_ofi_init_contexts(struct mca_mtl_base_module_t *mtl,
     }
 
     /*
-     * We only create upto Max number of contexts allowed by provider.
+     * We only create upto Max number of contexts asked for by the user.
      * If user enables thread grouping feature and creates more number of
-     * communicators than we have contexts, then we set the threshold
-     * context_id so we know to use context 0 for operations involving these
-     * "extra" communicators.
+     * communicators than available contexts, then we set the threshold
+     * context_id so that new communicators created beyond the threshold
+     * will be assigned to contexts in a round-robin fashion.
      */
-    if (ompi_mtl_ofi.max_ctx_cnt <= ctxt_id) {
+    if (ompi_mtl_ofi.num_ofi_contexts <= ompi_mtl_ofi.total_ctxts_used) {
+        ompi_mtl_ofi.comm_to_context[comm->c_contextid] = comm->c_contextid %
+                                                          ompi_mtl_ofi.total_ctxts_used;
         if (!ompi_mtl_ofi.threshold_comm_context_id) {
             ompi_mtl_ofi.threshold_comm_context_id = comm->c_contextid;
 
