@@ -87,6 +87,16 @@ OSHMEM_DECLSPEC  void pshmem_ctx_uint_p(shmem_ctx_t ctx, unsigned int* addr, uns
 OSHMEM_DECLSPEC  void pshmem_ctx_ulong_p(shmem_ctx_t ctx, unsigned long* addr, unsigned long value, int pe);
 OSHMEM_DECLSPEC  void pshmem_ctx_ulonglong_p(shmem_ctx_t ctx, unsigned long long* addr, unsigned long long value, int pe);
 OSHMEM_DECLSPEC  void pshmem_ctx_longdouble_p(shmem_ctx_t ctx, long double* addr, long double value, int pe);
+OSHMEM_DECLSPEC  void pshmem_ctx_int8_p(shmem_ctx_t ctx, int8_t* addr, int8_t value, int pe);
+OSHMEM_DECLSPEC  void pshmem_ctx_int16_p(shmem_ctx_t ctx, int16_t* addr, int16_t value, int pe);
+OSHMEM_DECLSPEC  void pshmem_ctx_int32_p(shmem_ctx_t ctx, int32_t* addr, int32_t value, int pe);
+OSHMEM_DECLSPEC  void pshmem_ctx_int64_p(shmem_ctx_t ctx, int64_t* addr, int64_t value, int pe);
+OSHMEM_DECLSPEC  void pshmem_ctx_uint8_p(shmem_ctx_t ctx, uint8_t* addr, uint8_t value, int pe);
+OSHMEM_DECLSPEC  void pshmem_ctx_uint16_p(shmem_ctx_t ctx, uint16_t* addr, uint16_t value, int pe);
+OSHMEM_DECLSPEC  void pshmem_ctx_uint32_p(shmem_ctx_t ctx, uint32_t* addr, uint32_t value, int pe);
+OSHMEM_DECLSPEC  void pshmem_ctx_uint64_p(shmem_ctx_t ctx, uint64_t* addr, uint64_t value, int pe);
+OSHMEM_DECLSPEC  void pshmem_ctx_size_p(shmem_ctx_t ctx, size_t* addr, size_t value, int pe);
+OSHMEM_DECLSPEC  void pshmem_ctx_ptrdiff_p(shmem_ctx_t ctx, ptrdiff_t* addr, ptrdiff_t value, int pe);
 
 OSHMEM_DECLSPEC  void pshmem_char_p(char* addr, char value, int pe);
 OSHMEM_DECLSPEC  void pshmem_short_p(short* addr, short value, int pe);
@@ -102,6 +112,16 @@ OSHMEM_DECLSPEC  void pshmem_uint_p(unsigned int* addr, unsigned int value, int 
 OSHMEM_DECLSPEC  void pshmem_ulong_p(unsigned long* addr, unsigned long value, int pe);
 OSHMEM_DECLSPEC  void pshmem_ulonglong_p(unsigned long long* addr, unsigned long long value, int pe);
 OSHMEM_DECLSPEC  void pshmem_longdouble_p(long double* addr, long double value, int pe);
+OSHMEM_DECLSPEC  void pshmem_int8_p(int8_t* addr, int8_t value, int pe);
+OSHMEM_DECLSPEC  void pshmem_int16_p(int16_t* addr, int16_t value, int pe);
+OSHMEM_DECLSPEC  void pshmem_int32_p(int32_t* addr, int32_t value, int pe);
+OSHMEM_DECLSPEC  void pshmem_int64_p(int64_t* addr, int64_t value, int pe);
+OSHMEM_DECLSPEC  void pshmem_uint8_p(uint8_t* addr, uint8_t value, int pe);
+OSHMEM_DECLSPEC  void pshmem_uint16_p(uint16_t* addr, uint16_t value, int pe);
+OSHMEM_DECLSPEC  void pshmem_uint32_p(uint32_t* addr, uint32_t value, int pe);
+OSHMEM_DECLSPEC  void pshmem_uint64_p(uint64_t* addr, uint64_t value, int pe);
+OSHMEM_DECLSPEC  void pshmem_size_p(size_t* addr, size_t value, int pe);
+OSHMEM_DECLSPEC  void pshmem_ptrdiff_p(ptrdiff_t* addr, ptrdiff_t value, int pe);
 #if OSHMEM_HAVE_C11
 #define pshmem_p(...)                                                \
     _Generic(&*(__OSHMEM_VAR_ARG1(__VA_ARGS__)),                     \
@@ -154,6 +174,16 @@ OSHMEM_DECLSPEC  void pshmem_ctx_uint_put(shmem_ctx_t ctx, unsigned int *target,
 OSHMEM_DECLSPEC  void pshmem_ctx_ulong_put(shmem_ctx_t ctx, unsigned long *target, const unsigned long *source, size_t len, int pe);
 OSHMEM_DECLSPEC  void pshmem_ctx_ulonglong_put(shmem_ctx_t ctx, unsigned long long *target, const unsigned long long *source, size_t len, int pe);
 OSHMEM_DECLSPEC  void pshmem_ctx_longdouble_put(shmem_ctx_t ctx, long double *target, const long double *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_ctx_int8_put(shmem_ctx_t ctx, int8_t *target, const int8_t *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_ctx_int16_put(shmem_ctx_t ctx, int16_t *target, const int16_t *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_ctx_int32_put(shmem_ctx_t ctx, int32_t *target, const int32_t *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_ctx_int64_put(shmem_ctx_t ctx, int64_t *target, const int64_t *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_ctx_uint8_put(shmem_ctx_t ctx, uint8_t *target, const uint8_t *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_ctx_uint16_put(shmem_ctx_t ctx, uint16_t *target, const uint16_t *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_ctx_uint32_put(shmem_ctx_t ctx, uint32_t *target, const uint32_t *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_ctx_uint64_put(shmem_ctx_t ctx, uint64_t *target, const uint64_t *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_ctx_size_put(shmem_ctx_t ctx, size_t *target, const size_t *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_ctx_ptrdiff_put(shmem_ctx_t ctx, ptrdiff_t *target, const ptrdiff_t *source, size_t len, int pe);
 
 OSHMEM_DECLSPEC  void pshmem_char_put(char *target, const char *source, size_t len, int pe);
 OSHMEM_DECLSPEC  void pshmem_short_put(short *target, const short *source, size_t len, int pe);
@@ -169,6 +199,16 @@ OSHMEM_DECLSPEC  void pshmem_uint_put(unsigned int *target, const unsigned int *
 OSHMEM_DECLSPEC  void pshmem_ulong_put(unsigned long *target, const unsigned long *source, size_t len, int pe);
 OSHMEM_DECLSPEC  void pshmem_ulonglong_put(unsigned long long *target, const unsigned long long *source, size_t len, int pe);
 OSHMEM_DECLSPEC  void pshmem_longdouble_put(long double *target, const long double *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_int8_put(int8_t *target, const int8_t *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_int16_put(int16_t *target, const int16_t *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_int32_put(int32_t *target, const int32_t *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_int64_put(int64_t *target, const int64_t *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_uint8_put(uint8_t *target, const uint8_t *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_uint16_put(uint16_t *target, const uint16_t *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_uint32_put(uint32_t *target, const uint32_t *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_uint64_put(uint64_t *target, const uint64_t *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_size_put(size_t *target, const size_t *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_ptrdiff_put(ptrdiff_t *target, const ptrdiff_t *source, size_t len, int pe);
 #if OSHMEM_HAVE_C11
 #define pshmem_put(...)                                              \
     _Generic(&*(__OSHMEM_VAR_ARG1(__VA_ARGS__)),                     \
@@ -235,6 +275,16 @@ OSHMEM_DECLSPEC void pshmem_ctx_uint_iput(shmem_ctx_t ctx, unsigned int* target,
 OSHMEM_DECLSPEC void pshmem_ctx_ulong_iput(shmem_ctx_t ctx, unsigned long* target, const unsigned long* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
 OSHMEM_DECLSPEC void pshmem_ctx_ulonglong_iput(shmem_ctx_t ctx, unsigned long long* target, const unsigned long long* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
 OSHMEM_DECLSPEC void pshmem_ctx_longdouble_iput(shmem_ctx_t ctx, long double* target, const long double* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
+OSHMEM_DECLSPEC void pshmem_ctx_int8_iput(shmem_ctx_t ctx, int8_t* target, const int8_t* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
+OSHMEM_DECLSPEC void pshmem_ctx_int16_iput(shmem_ctx_t ctx, int16_t* target, const int16_t* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
+OSHMEM_DECLSPEC void pshmem_ctx_int32_iput(shmem_ctx_t ctx, int32_t* target, const int32_t* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
+OSHMEM_DECLSPEC void pshmem_ctx_int64_iput(shmem_ctx_t ctx, int64_t* target, const int64_t* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
+OSHMEM_DECLSPEC void pshmem_ctx_uint8_iput(shmem_ctx_t ctx, uint8_t* target, const uint8_t* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
+OSHMEM_DECLSPEC void pshmem_ctx_uint16_iput(shmem_ctx_t ctx, uint16_t* target, const uint16_t* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
+OSHMEM_DECLSPEC void pshmem_ctx_uint32_iput(shmem_ctx_t ctx, uint32_t* target, const uint32_t* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
+OSHMEM_DECLSPEC void pshmem_ctx_uint64_iput(shmem_ctx_t ctx, uint64_t* target, const uint64_t* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
+OSHMEM_DECLSPEC void pshmem_ctx_size_iput(shmem_ctx_t ctx, size_t* target, const size_t* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
+OSHMEM_DECLSPEC void pshmem_ctx_ptrdiff_iput(shmem_ctx_t ctx, ptrdiff_t* target, const ptrdiff_t* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
 
 OSHMEM_DECLSPEC void pshmem_char_iput(char* target, const char* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
 OSHMEM_DECLSPEC void pshmem_short_iput(short* target, const short* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
@@ -250,6 +300,16 @@ OSHMEM_DECLSPEC void pshmem_uint_iput(unsigned int* target, const unsigned int* 
 OSHMEM_DECLSPEC void pshmem_ulong_iput(unsigned long* target, const unsigned long* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
 OSHMEM_DECLSPEC void pshmem_ulonglong_iput(unsigned long long* target, const unsigned long long* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
 OSHMEM_DECLSPEC void pshmem_longdouble_iput(long double* target, const long double* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
+OSHMEM_DECLSPEC void pshmem_int8_iput(int8_t* target, const int8_t* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
+OSHMEM_DECLSPEC void pshmem_int16_iput(int16_t* target, const int16_t* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
+OSHMEM_DECLSPEC void pshmem_int32_iput(int32_t* target, const int32_t* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
+OSHMEM_DECLSPEC void pshmem_int64_iput(int64_t* target, const int64_t* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
+OSHMEM_DECLSPEC void pshmem_uint8_iput(uint8_t* target, const uint8_t* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
+OSHMEM_DECLSPEC void pshmem_uint16_iput(uint16_t* target, const uint16_t* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
+OSHMEM_DECLSPEC void pshmem_uint32_iput(uint32_t* target, const uint32_t* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
+OSHMEM_DECLSPEC void pshmem_uint64_iput(uint64_t* target, const uint64_t* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
+OSHMEM_DECLSPEC void pshmem_size_iput(size_t* target, const size_t* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
+OSHMEM_DECLSPEC void pshmem_ptrdiff_iput(ptrdiff_t* target, const ptrdiff_t* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
 #if OSHMEM_HAVE_C11
 #define pshmem_iput(...)                                             \
     _Generic(&*(__OSHMEM_VAR_ARG1(__VA_ARGS__)),                     \
@@ -314,8 +374,17 @@ OSHMEM_DECLSPEC  void pshmem_ctx_uint_put_nbi(shmem_ctx_t ctx, unsigned int *tar
 OSHMEM_DECLSPEC  void pshmem_ctx_ulong_put_nbi(shmem_ctx_t ctx, unsigned long *target, const unsigned long *source, size_t len, int pe);
 OSHMEM_DECLSPEC  void pshmem_ctx_ulonglong_put_nbi(shmem_ctx_t ctx, unsigned long long *target, const unsigned long long *source, size_t len, int pe);
 OSHMEM_DECLSPEC  void pshmem_ctx_longdouble_put_nbi(shmem_ctx_t ctx, long double *target, const long double *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_ctx_int8_put_nbi(shmem_ctx_t ctx, int8_t *target, const int8_t *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_ctx_int16_put_nbi(shmem_ctx_t ctx, int16_t *target, const int16_t *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_ctx_int32_put_nbi(shmem_ctx_t ctx, int32_t *target, const int32_t *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_ctx_int64_put_nbi(shmem_ctx_t ctx, int64_t *target, const int64_t *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_ctx_uint8_put_nbi(shmem_ctx_t ctx, uint8_t *target, const uint8_t *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_ctx_uint16_put_nbi(shmem_ctx_t ctx, uint16_t *target, const uint16_t *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_ctx_uint32_put_nbi(shmem_ctx_t ctx, uint32_t *target, const uint32_t *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_ctx_uint64_put_nbi(shmem_ctx_t ctx, uint64_t *target, const uint64_t *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_ctx_size_put_nbi(shmem_ctx_t ctx, size_t *target, const size_t *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_ctx_ptrdiff_put_nbi(shmem_ctx_t ctx, ptrdiff_t *target, const ptrdiff_t *source, size_t len, int pe);
 
-OSHMEM_DECLSPEC  void pshmem_putmem_nbi(void *target, const void *source, size_t len, int pe);
 OSHMEM_DECLSPEC  void pshmem_char_put_nbi(char *target, const char *source, size_t len, int pe);
 OSHMEM_DECLSPEC  void pshmem_short_put_nbi(short *target, const short *source, size_t len, int pe);
 OSHMEM_DECLSPEC  void pshmem_int_put_nbi(int *target, const int *source, size_t len, int pe);
@@ -330,6 +399,16 @@ OSHMEM_DECLSPEC  void pshmem_uint_put_nbi(unsigned int *target, const unsigned i
 OSHMEM_DECLSPEC  void pshmem_ulong_put_nbi(unsigned long *target, const unsigned long *source, size_t len, int pe);
 OSHMEM_DECLSPEC  void pshmem_ulonglong_put_nbi(unsigned long long *target, const unsigned long long *source, size_t len, int pe);
 OSHMEM_DECLSPEC  void pshmem_longdouble_put_nbi(long double *target, const long double *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_int8_put_nbi(int8_t *target, const int8_t *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_int16_put_nbi(int16_t *target, const int16_t *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_int32_put_nbi(int32_t *target, const int32_t *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_int64_put_nbi(int64_t *target, const int64_t *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_uint8_put_nbi(uint8_t *target, const uint8_t *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_uint16_put_nbi(uint16_t *target, const uint16_t *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_uint32_put_nbi(uint32_t *target, const uint32_t *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_uint64_put_nbi(uint64_t *target, const uint64_t *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_size_put_nbi(size_t *target, const size_t *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_ptrdiff_put_nbi(ptrdiff_t *target, const ptrdiff_t *source, size_t len, int pe);
 #if OSHMEM_HAVE_C11
 #define pshmem_put_nbi(...)                                          \
     _Generic(&*(__OSHMEM_VAR_ARG1(__VA_ARGS__)),                     \
@@ -377,6 +456,7 @@ OSHMEM_DECLSPEC  void pshmem_put16_nbi(void *target, const void *source, size_t 
 OSHMEM_DECLSPEC  void pshmem_put32_nbi(void *target, const void *source, size_t len, int pe);
 OSHMEM_DECLSPEC  void pshmem_put64_nbi(void *target, const void *source, size_t len, int pe);
 OSHMEM_DECLSPEC  void pshmem_put128_nbi(void *target, const void *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_putmem_nbi(void *target, const void *source, size_t len, int pe);
 
 /*
  * Elemental get routines
@@ -395,6 +475,16 @@ OSHMEM_DECLSPEC  unsigned short pshmem_ctx_ushort_g(shmem_ctx_t ctx, const unsig
 OSHMEM_DECLSPEC  unsigned int pshmem_ctx_uint_g(shmem_ctx_t ctx, const unsigned int* addr, int pe);
 OSHMEM_DECLSPEC  unsigned long pshmem_ctx_ulong_g(shmem_ctx_t ctx, const unsigned long* addr, int pe);
 OSHMEM_DECLSPEC  unsigned long long pshmem_ctx_ulonglong_g(shmem_ctx_t ctx, const unsigned long long* addr, int pe);
+OSHMEM_DECLSPEC  int8_t pshmem_ctx_int8_g(shmem_ctx_t ctx, const int8_t* addr, int pe);
+OSHMEM_DECLSPEC  int16_t pshmem_ctx_int16_g(shmem_ctx_t ctx, const int16_t* addr, int pe);
+OSHMEM_DECLSPEC  int32_t pshmem_ctx_int32_g(shmem_ctx_t ctx, const int32_t* addr, int pe);
+OSHMEM_DECLSPEC  int64_t pshmem_ctx_int64_g(shmem_ctx_t ctx, const int64_t* addr, int pe);
+OSHMEM_DECLSPEC  uint8_t pshmem_ctx_uint8_g(shmem_ctx_t ctx, const uint8_t* addr, int pe);
+OSHMEM_DECLSPEC  uint16_t pshmem_ctx_uint16_g(shmem_ctx_t ctx, const uint16_t* addr, int pe);
+OSHMEM_DECLSPEC  uint32_t pshmem_ctx_uint32_g(shmem_ctx_t ctx, const uint32_t* addr, int pe);
+OSHMEM_DECLSPEC  uint64_t pshmem_ctx_uint64_g(shmem_ctx_t ctx, const uint64_t* addr, int pe);
+OSHMEM_DECLSPEC  size_t pshmem_ctx_size_g(shmem_ctx_t ctx, const size_t* addr, int pe);
+OSHMEM_DECLSPEC  ptrdiff_t pshmem_ctx_ptrdiff_g(shmem_ctx_t ctx, const ptrdiff_t* addr, int pe);
 
 OSHMEM_DECLSPEC  char pshmem_char_g(const char* addr, int pe);
 OSHMEM_DECLSPEC  short pshmem_short_g(const short* addr, int pe);
@@ -410,6 +500,16 @@ OSHMEM_DECLSPEC  unsigned short pshmem_ushort_g(const unsigned short* addr, int 
 OSHMEM_DECLSPEC  unsigned int pshmem_uint_g(const unsigned int* addr, int pe);
 OSHMEM_DECLSPEC  unsigned long pshmem_ulong_g(const unsigned long* addr, int pe);
 OSHMEM_DECLSPEC  unsigned long long pshmem_ulonglong_g(const unsigned long long* addr, int pe);
+OSHMEM_DECLSPEC  int8_t pshmem_int8_g(const int8_t* addr, int pe);
+OSHMEM_DECLSPEC  int16_t pshmem_int16_g(const int16_t* addr, int pe);
+OSHMEM_DECLSPEC  int32_t pshmem_int32_g(const int32_t* addr, int pe);
+OSHMEM_DECLSPEC  int64_t pshmem_int64_g(const int64_t* addr, int pe);
+OSHMEM_DECLSPEC  uint8_t pshmem_uint8_g(const uint8_t* addr, int pe);
+OSHMEM_DECLSPEC  uint16_t pshmem_uint16_g(const uint16_t* addr, int pe);
+OSHMEM_DECLSPEC  uint32_t pshmem_uint32_g(const uint32_t* addr, int pe);
+OSHMEM_DECLSPEC  uint64_t pshmem_uint64_g(const uint64_t* addr, int pe);
+OSHMEM_DECLSPEC  size_t pshmem_size_g(const size_t* addr, int pe);
+OSHMEM_DECLSPEC  ptrdiff_t pshmem_ptrdiff_g(const ptrdiff_t* addr, int pe);
 #if OSHMEM_HAVE_C11
 #define pshmem_g(...)                                                \
     _Generic(&*(__OSHMEM_VAR_ARG1(__VA_ARGS__)),                     \
@@ -462,6 +562,16 @@ OSHMEM_DECLSPEC  void pshmem_ctx_uint_get(shmem_ctx_t ctx, unsigned int *target,
 OSHMEM_DECLSPEC  void pshmem_ctx_ulong_get(shmem_ctx_t ctx, unsigned long *target, const unsigned long *source, size_t len, int pe);
 OSHMEM_DECLSPEC  void pshmem_ctx_ulonglong_get(shmem_ctx_t ctx, unsigned long long *target, const unsigned long long *source, size_t len, int pe);
 OSHMEM_DECLSPEC  void pshmem_ctx_longdouble_get(shmem_ctx_t ctx, long double *target, const long double *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_ctx_int8_get(shmem_ctx_t ctx, int8_t *target, const int8_t *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_ctx_int16_get(shmem_ctx_t ctx, int16_t *target, const int16_t *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_ctx_int32_get(shmem_ctx_t ctx, int32_t *target, const int32_t *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_ctx_int64_get(shmem_ctx_t ctx, int64_t *target, const int64_t *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_ctx_uint8_get(shmem_ctx_t ctx, uint8_t *target, const uint8_t *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_ctx_uint16_get(shmem_ctx_t ctx, uint16_t *target, const uint16_t *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_ctx_uint32_get(shmem_ctx_t ctx, uint32_t *target, const uint32_t *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_ctx_uint64_get(shmem_ctx_t ctx, uint64_t *target, const uint64_t *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_ctx_size_get(shmem_ctx_t ctx, size_t *target, const size_t *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_ctx_ptrdiff_get(shmem_ctx_t ctx, ptrdiff_t *target, const ptrdiff_t *source, size_t len, int pe);
 
 OSHMEM_DECLSPEC  void pshmem_char_get(char *target, const char *source, size_t len, int pe);
 OSHMEM_DECLSPEC  void pshmem_short_get(short *target, const short *source, size_t len, int pe);
@@ -477,6 +587,16 @@ OSHMEM_DECLSPEC  void pshmem_uint_get(unsigned int *target, const unsigned int *
 OSHMEM_DECLSPEC  void pshmem_ulong_get(unsigned long *target, const unsigned long *source, size_t len, int pe);
 OSHMEM_DECLSPEC  void pshmem_ulonglong_get(unsigned long long *target, const unsigned long long *source, size_t len, int pe);
 OSHMEM_DECLSPEC  void pshmem_longdouble_get(long double *target, const long double *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_int8_get(int8_t *target, const int8_t *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_int16_get(int16_t *target, const int16_t *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_int32_get(int32_t *target, const int32_t *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_int64_get(int64_t *target, const int64_t *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_uint8_get(uint8_t *target, const uint8_t *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_uint16_get(uint16_t *target, const uint16_t *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_uint32_get(uint32_t *target, const uint32_t *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_uint64_get(uint64_t *target, const uint64_t *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_size_get(size_t *target, const size_t *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_ptrdiff_get(ptrdiff_t *target, const ptrdiff_t *source, size_t len, int pe);
 #if OSHMEM_HAVE_C11
 #define pshmem_get(...)                                              \
     _Generic(&*(__OSHMEM_VAR_ARG1(__VA_ARGS__)),                     \
@@ -529,35 +649,55 @@ OSHMEM_DECLSPEC  void pshmem_getmem(void *target, const void *source, size_t len
 /*
  * Strided get routines
  */
-OSHMEM_DECLSPEC void pshmem_ctx_char_iget(shmem_ctx_t ctx, char* target, const char* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
-OSHMEM_DECLSPEC void pshmem_ctx_short_iget(shmem_ctx_t ctx, short* target, const short* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
-OSHMEM_DECLSPEC void pshmem_ctx_int_iget(shmem_ctx_t ctx, int* target, const int* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
-OSHMEM_DECLSPEC void pshmem_ctx_long_iget(shmem_ctx_t ctx, long* target, const long* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
-OSHMEM_DECLSPEC void pshmem_ctx_longlong_iget(shmem_ctx_t ctx, long long* target, const long long* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
-OSHMEM_DECLSPEC void pshmem_ctx_schar_iget(shmem_ctx_t ctx, signed char* target, const signed char* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
-OSHMEM_DECLSPEC void pshmem_ctx_uchar_iget(shmem_ctx_t ctx, unsigned char* target, const unsigned char* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
-OSHMEM_DECLSPEC void pshmem_ctx_ushort_iget(shmem_ctx_t ctx, unsigned short* target, const unsigned short* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
-OSHMEM_DECLSPEC void pshmem_ctx_uint_iget(shmem_ctx_t ctx, unsigned int* target, const unsigned int* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
-OSHMEM_DECLSPEC void pshmem_ctx_ulong_iget(shmem_ctx_t ctx, unsigned long* target, const unsigned long* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
-OSHMEM_DECLSPEC void pshmem_ctx_ulonglong_iget(shmem_ctx_t ctx, unsigned long long* target, const unsigned long long* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
-OSHMEM_DECLSPEC void pshmem_ctx_float_iget(shmem_ctx_t ctx, float* target, const float* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
-OSHMEM_DECLSPEC void pshmem_ctx_double_iget(shmem_ctx_t ctx, double* target, const double* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
-OSHMEM_DECLSPEC void pshmem_ctx_longdouble_iget(shmem_ctx_t ctx, long double* target, const long double* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
+OSHMEM_DECLSPEC void pshmem_ctx_char_iget(shmem_ctx_t ctx, char* target, const char* source, ptrdiff_t tst, ptrdiff_t sst, size_t len, int pe);
+OSHMEM_DECLSPEC void pshmem_ctx_short_iget(shmem_ctx_t ctx, short* target, const short* source, ptrdiff_t tst, ptrdiff_t sst, size_t len, int pe);
+OSHMEM_DECLSPEC void pshmem_ctx_int_iget(shmem_ctx_t ctx, int* target, const int* source, ptrdiff_t tst, ptrdiff_t sst, size_t len, int pe);
+OSHMEM_DECLSPEC void pshmem_ctx_long_iget(shmem_ctx_t ctx, long* target, const long* source, ptrdiff_t tst, ptrdiff_t sst, size_t len, int pe);
+OSHMEM_DECLSPEC void pshmem_ctx_longlong_iget(shmem_ctx_t ctx, long long* target, const long long* source, ptrdiff_t tst, ptrdiff_t sst, size_t len, int pe);
+OSHMEM_DECLSPEC void pshmem_ctx_schar_iget(shmem_ctx_t ctx, signed char* target, const signed char* source, ptrdiff_t tst, ptrdiff_t sst, size_t len, int pe);
+OSHMEM_DECLSPEC void pshmem_ctx_uchar_iget(shmem_ctx_t ctx, unsigned char* target, const unsigned char* source, ptrdiff_t tst, ptrdiff_t sst, size_t len, int pe);
+OSHMEM_DECLSPEC void pshmem_ctx_ushort_iget(shmem_ctx_t ctx, unsigned short* target, const unsigned short* source, ptrdiff_t tst, ptrdiff_t sst, size_t len, int pe);
+OSHMEM_DECLSPEC void pshmem_ctx_uint_iget(shmem_ctx_t ctx, unsigned int* target, const unsigned int* source, ptrdiff_t tst, ptrdiff_t sst, size_t len, int pe);
+OSHMEM_DECLSPEC void pshmem_ctx_ulong_iget(shmem_ctx_t ctx, unsigned long* target, const unsigned long* source, ptrdiff_t tst, ptrdiff_t sst, size_t len, int pe);
+OSHMEM_DECLSPEC void pshmem_ctx_ulonglong_iget(shmem_ctx_t ctx, unsigned long long* target, const unsigned long long* source, ptrdiff_t tst, ptrdiff_t sst, size_t len, int pe);
+OSHMEM_DECLSPEC void pshmem_ctx_float_iget(shmem_ctx_t ctx, float* target, const float* source, ptrdiff_t tst, ptrdiff_t sst, size_t len, int pe);
+OSHMEM_DECLSPEC void pshmem_ctx_double_iget(shmem_ctx_t ctx, double* target, const double* source, ptrdiff_t tst, ptrdiff_t sst, size_t len, int pe);
+OSHMEM_DECLSPEC void pshmem_ctx_longdouble_iget(shmem_ctx_t ctx, long double* target, const long double* source, ptrdiff_t tst, ptrdiff_t sst, size_t len, int pe);
+OSHMEM_DECLSPEC void pshmem_ctx_int8_iget(shmem_ctx_t ctx, int8_t* target, const int8_t* source, ptrdiff_t tst, ptrdiff_t sst, size_t len, int pe);
+OSHMEM_DECLSPEC void pshmem_ctx_int16_iget(shmem_ctx_t ctx, int16_t* target, const int16_t* source, ptrdiff_t tst, ptrdiff_t sst, size_t len, int pe);
+OSHMEM_DECLSPEC void pshmem_ctx_int32_iget(shmem_ctx_t ctx, int32_t* target, const int32_t* source, ptrdiff_t tst, ptrdiff_t sst, size_t len, int pe);
+OSHMEM_DECLSPEC void pshmem_ctx_int64_iget(shmem_ctx_t ctx, int64_t* target, const int64_t* source, ptrdiff_t tst, ptrdiff_t sst, size_t len, int pe);
+OSHMEM_DECLSPEC void pshmem_ctx_uint8_iget(shmem_ctx_t ctx, uint8_t* target, const uint8_t* source, ptrdiff_t tst, ptrdiff_t sst, size_t len, int pe);
+OSHMEM_DECLSPEC void pshmem_ctx_uint16_iget(shmem_ctx_t ctx, uint16_t* target, const uint16_t* source, ptrdiff_t tst, ptrdiff_t sst, size_t len, int pe);
+OSHMEM_DECLSPEC void pshmem_ctx_uint32_iget(shmem_ctx_t ctx, uint32_t* target, const uint32_t* source, ptrdiff_t tst, ptrdiff_t sst, size_t len, int pe);
+OSHMEM_DECLSPEC void pshmem_ctx_uint64_iget(shmem_ctx_t ctx, uint64_t* target, const uint64_t* source, ptrdiff_t tst, ptrdiff_t sst, size_t len, int pe);
+OSHMEM_DECLSPEC void pshmem_ctx_size_iget(shmem_ctx_t ctx, size_t* target, const size_t* source, ptrdiff_t tst, ptrdiff_t sst, size_t len, int pe);
+OSHMEM_DECLSPEC void pshmem_ctx_ptrdiff_iget(shmem_ctx_t ctx, ptrdiff_t* target, const ptrdiff_t* source, ptrdiff_t tst, ptrdiff_t sst, size_t len, int pe);
 
-OSHMEM_DECLSPEC void pshmem_char_iget(char* target, const char* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
-OSHMEM_DECLSPEC void pshmem_short_iget(short* target, const short* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
-OSHMEM_DECLSPEC void pshmem_int_iget(int* target, const int* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
-OSHMEM_DECLSPEC void pshmem_float_iget(float* target, const float* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
-OSHMEM_DECLSPEC void pshmem_double_iget(double* target, const double* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
-OSHMEM_DECLSPEC void pshmem_longlong_iget(long long* target, const long long* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
-OSHMEM_DECLSPEC void pshmem_longdouble_iget(long double* target, const long double* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
-OSHMEM_DECLSPEC void pshmem_long_iget(long* target, const long* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
-OSHMEM_DECLSPEC void pshmem_schar_iget(signed char* target, const signed char* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
-OSHMEM_DECLSPEC void pshmem_uchar_iget(unsigned char* target, const unsigned char* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
-OSHMEM_DECLSPEC void pshmem_ushort_iget(unsigned short* target, const unsigned short* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
-OSHMEM_DECLSPEC void pshmem_uint_iget(unsigned int* target, const unsigned int* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
-OSHMEM_DECLSPEC void pshmem_ulong_iget(unsigned long* target, const unsigned long* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
-OSHMEM_DECLSPEC void pshmem_ulonglong_iget(unsigned long long* target, const unsigned long long* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
+OSHMEM_DECLSPEC void pshmem_char_iget(char* target, const char* source, ptrdiff_t tst, ptrdiff_t sst, size_t len, int pe);
+OSHMEM_DECLSPEC void pshmem_short_iget(short* target, const short* source, ptrdiff_t tst, ptrdiff_t sst, size_t len, int pe);
+OSHMEM_DECLSPEC void pshmem_int_iget(int* target, const int* source, ptrdiff_t tst, ptrdiff_t sst, size_t len, int pe);
+OSHMEM_DECLSPEC void pshmem_float_iget(float* target, const float* source, ptrdiff_t tst, ptrdiff_t sst, size_t len, int pe);
+OSHMEM_DECLSPEC void pshmem_double_iget(double* target, const double* source, ptrdiff_t tst, ptrdiff_t sst, size_t len, int pe);
+OSHMEM_DECLSPEC void pshmem_longlong_iget(long long* target, const long long* source, ptrdiff_t tst, ptrdiff_t sst, size_t len, int pe);
+OSHMEM_DECLSPEC void pshmem_longdouble_iget(long double* target, const long double* source, ptrdiff_t tst, ptrdiff_t sst, size_t len, int pe);
+OSHMEM_DECLSPEC void pshmem_long_iget(long* target, const long* source, ptrdiff_t tst, ptrdiff_t sst, size_t len, int pe);
+OSHMEM_DECLSPEC void pshmem_schar_iget(signed char* target, const signed char* source, ptrdiff_t tst, ptrdiff_t sst, size_t len, int pe);
+OSHMEM_DECLSPEC void pshmem_uchar_iget(unsigned char* target, const unsigned char* source, ptrdiff_t tst, ptrdiff_t sst, size_t len, int pe);
+OSHMEM_DECLSPEC void pshmem_ushort_iget(unsigned short* target, const unsigned short* source, ptrdiff_t tst, ptrdiff_t sst, size_t len, int pe);
+OSHMEM_DECLSPEC void pshmem_uint_iget(unsigned int* target, const unsigned int* source, ptrdiff_t tst, ptrdiff_t sst, size_t len, int pe);
+OSHMEM_DECLSPEC void pshmem_ulong_iget(unsigned long* target, const unsigned long* source, ptrdiff_t tst, ptrdiff_t sst, size_t len, int pe);
+OSHMEM_DECLSPEC void pshmem_ulonglong_iget(unsigned long long* target, const unsigned long long* source, ptrdiff_t tst, ptrdiff_t sst, size_t len, int pe);
+OSHMEM_DECLSPEC void pshmem_int8_iget(int8_t* target, const int8_t* source, ptrdiff_t tst, ptrdiff_t sst, size_t len, int pe);
+OSHMEM_DECLSPEC void pshmem_int16_iget(int16_t* target, const int16_t* source, ptrdiff_t tst, ptrdiff_t sst, size_t len, int pe);
+OSHMEM_DECLSPEC void pshmem_int32_iget(int32_t* target, const int32_t* source, ptrdiff_t tst, ptrdiff_t sst, size_t len, int pe);
+OSHMEM_DECLSPEC void pshmem_int64_iget(int64_t* target, const int64_t* source, ptrdiff_t tst, ptrdiff_t sst, size_t len, int pe);
+OSHMEM_DECLSPEC void pshmem_uint8_iget(uint8_t* target, const uint8_t* source, ptrdiff_t tst, ptrdiff_t sst, size_t len, int pe);
+OSHMEM_DECLSPEC void pshmem_uint16_iget(uint16_t* target, const uint16_t* source, ptrdiff_t tst, ptrdiff_t sst, size_t len, int pe);
+OSHMEM_DECLSPEC void pshmem_uint32_iget(uint32_t* target, const uint32_t* source, ptrdiff_t tst, ptrdiff_t sst, size_t len, int pe);
+OSHMEM_DECLSPEC void pshmem_uint64_iget(uint64_t* target, const uint64_t* source, ptrdiff_t tst, ptrdiff_t sst, size_t len, int pe);
+OSHMEM_DECLSPEC void pshmem_size_iget(size_t* target, const size_t* source, ptrdiff_t tst, ptrdiff_t sst, size_t len, int pe);
+OSHMEM_DECLSPEC void pshmem_ptrdiff_iget(ptrdiff_t* target, const ptrdiff_t* source, ptrdiff_t tst, ptrdiff_t sst, size_t len, int pe);
 #if OSHMEM_HAVE_C11
 #define pshmem_iget(...)                                             \
     _Generic(&*(__OSHMEM_VAR_ARG1(__VA_ARGS__)),                     \
@@ -622,6 +762,16 @@ OSHMEM_DECLSPEC  void pshmem_ctx_ulonglong_get_nbi(shmem_ctx_t ctx, unsigned lon
 OSHMEM_DECLSPEC  void pshmem_ctx_float_get_nbi(shmem_ctx_t ctx, float *target, const float *source, size_t len, int pe);
 OSHMEM_DECLSPEC  void pshmem_ctx_double_get_nbi(shmem_ctx_t ctx, double *target, const double *source, size_t len, int pe);
 OSHMEM_DECLSPEC  void pshmem_ctx_longdouble_get_nbi(shmem_ctx_t ctx, long double *target, const long double *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_ctx_int8_get_nbi(shmem_ctx_t ctx, int8_t *target, const int8_t *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_ctx_int16_get_nbi(shmem_ctx_t ctx, int16_t *target, const int16_t *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_ctx_int32_get_nbi(shmem_ctx_t ctx, int32_t *target, const int32_t *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_ctx_int64_get_nbi(shmem_ctx_t ctx, int64_t *target, const int64_t *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_ctx_uint8_get_nbi(shmem_ctx_t ctx, uint8_t *target, const uint8_t *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_ctx_uint16_get_nbi(shmem_ctx_t ctx, uint16_t *target, const uint16_t *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_ctx_uint32_get_nbi(shmem_ctx_t ctx, uint32_t *target, const uint32_t *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_ctx_uint64_get_nbi(shmem_ctx_t ctx, uint64_t *target, const uint64_t *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_ctx_size_get_nbi(shmem_ctx_t ctx, size_t *target, const size_t *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_ctx_ptrdiff_get_nbi(shmem_ctx_t ctx, ptrdiff_t *target, const ptrdiff_t *source, size_t len, int pe);
 
 OSHMEM_DECLSPEC  void pshmem_getmem_nbi(void *target, const void *source, size_t len, int pe);
 OSHMEM_DECLSPEC  void pshmem_char_get_nbi(char *target, const char *source, size_t len, int pe);
@@ -638,6 +788,16 @@ OSHMEM_DECLSPEC  void pshmem_ulonglong_get_nbi(unsigned long long *target, const
 OSHMEM_DECLSPEC  void pshmem_float_get_nbi(float *target, const float *source, size_t len, int pe);
 OSHMEM_DECLSPEC  void pshmem_double_get_nbi(double *target, const double *source, size_t len, int pe);
 OSHMEM_DECLSPEC  void pshmem_longdouble_get_nbi(long double *target, const long double *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_int8_get_nbi(int8_t *target, const int8_t *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_int16_get_nbi(int16_t *target, const int16_t *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_int32_get_nbi(int32_t *target, const int32_t *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_int64_get_nbi(int64_t *target, const int64_t *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_uint8_get_nbi(uint8_t *target, const uint8_t *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_uint16_get_nbi(uint16_t *target, const uint16_t *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_uint32_get_nbi(uint32_t *target, const uint32_t *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_uint64_get_nbi(uint64_t *target, const uint64_t *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_size_get_nbi(size_t *target, const size_t *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_ptrdiff_get_nbi(ptrdiff_t *target, const ptrdiff_t *source, size_t len, int pe);
 #if OSHMEM_HAVE_C11
 #define pshmem_get_nbi(...)                                          \
     _Generic(&*(__OSHMEM_VAR_ARG1(__VA_ARGS__)),                     \
