@@ -153,9 +153,11 @@ OMPI_DECLSPEC ompi_fortran_08_handle_t OMPI_F08_HANDLE_ALIGNED ompi_f08_mpi_comp
  * OMPI_MPI_* macros are not defined in ompi/include/mpif-values.pl
  * because they should not be included in mpif.h. So immediate values
  * defined in ompi/datatype/ompi_datatype_module.c are used here.
+ * ompi_f08_mpi_c_float16 is a synonym for ompi_f08_mpi_short_float.
  */
 #if defined(HAVE_SHORT_FLOAT) || defined(HAVE_OPAL_SHORT_FLOAT_T)
 OMPI_DECLSPEC ompi_fortran_08_handle_t OMPI_F08_HANDLE_ALIGNED ompi_f08_mpi_short_float       = {74};
 OMPI_DECLSPEC ompi_fortran_08_handle_t OMPI_F08_HANDLE_ALIGNED ompi_f08_mpi_c_short_float_complex = {75};
 OMPI_DECLSPEC ompi_fortran_08_handle_t OMPI_F08_HANDLE_ALIGNED ompi_f08_mpi_cxx_short_float_complex = {76};
+OMPI_DECLSPEC ompi_fortran_08_handle_t OMPI_F08_HANDLE_ALIGNED ompi_f08_mpi_c_float16         = {74};
 #endif

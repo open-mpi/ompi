@@ -14,6 +14,7 @@ ompi_f08_mpi_byte
 ompi_f08_mpi_c_bool
 ompi_f08_mpi_c_complex
 ompi_f08_mpi_c_double_complex
+ompi_f08_mpi_c_float16
 ompi_f08_mpi_c_float_complex
 ompi_f08_mpi_c_long_double_complex
 ompi_f08_mpi_c_short_float_complex

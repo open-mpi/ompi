@@ -13,6 +13,13 @@ Each MPI datatype corresponds to the C/C++ type 'short float', the C type
 'short float _Complex', and the C++ type 'std::complex<short float>',
 respectively.
 
+In addition, this extension provides a datatype MPIX_C_FLOAT16 for
+the C type _Float16, which is defined in ISO/IEC JTC 1/SC 22/WG 14
+N1945 (ISO/IEC TS 18661-3:2015). This name and meaning are same as
+that of MPICH.
+
+  https://github.com/pmodels/mpich/pull/3455
+
 This extension is enabled only if the C compiler supports 'short float'
 or '_Float16', or the '--enable-alt-short-float=TYPE' option is passed
 to the configure script.
