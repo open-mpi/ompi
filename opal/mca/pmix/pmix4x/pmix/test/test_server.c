@@ -298,12 +298,13 @@ static size_t server_pack_procs(int server_id, char **buf, size_t size)
 static void remove_server_item(server_info_t *server)
 {
     pmix_list_remove_item(server_list, &server->super);
+    PMIX_DESTRUCT_LOCK(&server->lock);
     PMIX_RELEASE(server);
 }
 
 static int srv_wait_all(double timeout)
 {
-    server_info_t *server;
+    server_info_t *server, *next;
     pid_t pid;
     int status;
     struct timeval tv;
@@ -314,18 +315,20 @@ static int srv_wait_all(double timeout)
     start_time = tv.tv_sec + 1E-6*tv.tv_usec;
     cur_time = start_time;
 
+    /* Remove this server from the list */
+    PMIX_LIST_FOREACH_SAFE(server, next, server_list, server_info_t) {
+        if (server->pid == getpid()) {
+            /* remove himself */
+            remove_server_item(server);
+            break;
+        }
+    }
+
     while (!pmix_list_is_empty(server_list) &&
                                 (timeout >= (cur_time - start_time))) {
-        struct timespec ts;
-
-        /* going through the server list first to delete yourself */
+        pid = waitpid(-1, &status, 0);
         if (pid >= 0) {
-            PMIX_LIST_FOREACH(server, server_list, server_info_t) {
-                if (server->pid == getpid()) {
-                    /* remove himself */
-                    remove_server_item(server);
-                    continue;
-                }
+            PMIX_LIST_FOREACH_SAFE(server, next, server_list, server_info_t) {
                 if (server->pid == pid) {
                     TEST_VERBOSE(("server %d finalize PID:%d with status %d", server->idx,
                                 server->pid, WEXITSTATUS(status)));
@@ -334,15 +337,9 @@ static int srv_wait_all(double timeout)
                 }
             }
         }
-
-        ts.tv_sec = 0;
-        ts.tv_nsec = 100000;
-        nanosleep(&ts, NULL);
         // calculate current timestamp
         gettimeofday(&tv, NULL);
         cur_time = tv.tv_sec + 1E-6*tv.tv_usec;
-
-        pid = waitpid(-1, &status, WNOHANG);
     }
 
     return ret;
@@ -383,6 +380,9 @@ static int server_send_msg(msg_hdr_t *msg_hdr, char *data, size_t size)
                 server = server_tmp;
                 break;
             }
+        }
+        if (NULL == server) {
+            abort();
         }
     } else {
         server = (server_info_t *)pmix_list_get_first(server_list);
@@ -427,10 +427,7 @@ static int server_send_procs(void)
     server->modex_cbfunc = _send_procs_cb;
     server->cbdata = (void*)server;
 
-    PMIX_CONSTRUCT_LOCK(&server->lock);
-
     if (PMIX_SUCCESS != (rc = server_send_msg(&msg_hdr, buf, msg_hdr.size))) {
-        PMIX_DESTRUCT_LOCK(&server->lock);
         if (buf) {
             free(buf);
         }
@@ -441,8 +438,6 @@ static int server_send_procs(void)
     }
 
     PMIX_WAIT_THREAD(&server->lock);
-    PMIX_DESTRUCT_LOCK(&server->lock);
-
     return PMIX_SUCCESS;
 }
 
@@ -463,15 +458,11 @@ int server_barrier(double to)
     msg_hdr.src_id = my_server_id;
     msg_hdr.size = 0;
 
-    PMIX_CONSTRUCT_LOCK(&server->lock);
-
     if (PMIX_SUCCESS != (rc = server_send_msg(&msg_hdr, NULL, 0))) {
-        PMIX_DESTRUCT_LOCK(&server->lock);
         return PMIX_ERROR;
     }
 
     WAIT_THREAD(&server->lock, to, rc);
-    PMIX_DESTRUCT_LOCK(&server->lock);
     if (rc == ETIMEDOUT) {
         TEST_ERROR(("timeout waiting from %d", server->idx));
         return PMIX_ERROR;
@@ -580,8 +571,12 @@ static void server_read_cb(evutil_socket_t fd, short event, void *arg)
             msg_buf = NULL;
             break;
         case CMD_DMDX_REQUEST: {
-            int *sender_id = (int*)malloc(sizeof(int));
+            int *sender_id;
             pmix_proc_t proc;
+            if (NULL == msg_buf) {
+                abort();
+            }
+            sender_id = (int*)malloc(sizeof(int));
             server_unpack_dmdx(msg_buf, sender_id, &proc);
             TEST_VERBOSE(("%d: CMD_DMDX_REQUEST from %d: %s:%d", my_server_id,
                         *sender_id, proc.nspace, proc.rank));
@@ -692,8 +687,9 @@ int server_dmdx_get(const char *nspace, int rank,
 {
     server_info_t *server = NULL, *tmp;
     msg_hdr_t msg_hdr;
-    int rc = PMIX_SUCCESS;
+    pmix_status_t rc = PMIX_SUCCESS;
     char *buf = NULL;
+
 
     if (0 > (msg_hdr.dst_id = server_find_id(nspace, rank))) {
         TEST_ERROR(("%d: server cannot found for %s:%d", my_server_id, nspace, rank));
@@ -722,10 +718,10 @@ int server_dmdx_get(const char *nspace, int rank,
     server->cbdata = cbdata;
 
     if (PMIX_SUCCESS != (rc = server_send_msg(&msg_hdr, buf, msg_hdr.size))) {
-        return PMIX_ERROR;
+        rc = PMIX_ERROR;
     }
-
-    return PMIX_SUCCESS;
+    free(buf);
+    return rc;
 
 error:
     cbfunc(PMIX_ERROR, NULL, 0, cbdata, NULL, 0);
@@ -769,6 +765,7 @@ int server_init(test_params *params)
                     server_info->wr_fd = fd2[1];
                     close(fd1[1]);
                     close(fd2[0]);
+                    PMIX_CONSTRUCT_LOCK(&server_info->lock);
                     pmix_list_append(server_list, &server_info->super);
                     break;
                 }
@@ -776,6 +773,7 @@ int server_init(test_params *params)
                 server_info->pid = pid;
                 server_info->wr_fd = fd1[1];
                 server_info->rd_fd = fd2[0];
+                PMIX_CONSTRUCT_LOCK(&server_info->lock);
                 close(fd1[0]);
                 close(fd2[1]);
             } else {
@@ -784,6 +782,7 @@ int server_init(test_params *params)
                 server_info->idx  = 0;
                 server_info->rd_fd = fd1[0];
                 server_info->wr_fd = fd1[1];
+                PMIX_CONSTRUCT_LOCK(&server_info->lock);
                 close(fd2[0]);
                 close(fd2[1]);
             }

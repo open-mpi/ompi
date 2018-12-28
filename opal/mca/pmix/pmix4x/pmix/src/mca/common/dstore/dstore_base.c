@@ -2057,10 +2057,10 @@ static pmix_status_t _dstore_fetch(pmix_common_dstore_ctx_t *ds_ctx,
 
     /* all segment data updated, ctx lock may released */
     if (lock_is_set) {
+        lock_is_set = false;
         if (0 != (rc = pthread_mutex_unlock(&ds_ctx->lock))) {
             goto error;
         }
-        lock_is_set = false;
     }
 
     while (nprocs--) {

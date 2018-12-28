@@ -679,10 +679,6 @@ AC_DEFUN([PMIX_SETUP_CORE],[
           [AC_DEFINE_UNQUOTED([HAVE_UNIX_BYTESWAP], [1],
                               [whether unix byteswap routines -- htonl, htons, nothl, ntohs -- are available])])
 
-    # check pandoc separately so we can setup an AM_CONDITIONAL off it
-    AC_CHECK_PROG([pmix_have_pandoc], [pandoc], [yes], [no])
-    AM_CONDITIONAL([PMIX_HAVE_PANDOC], [test "x$pmix_have_pandoc" = "xyes"])
-
     #
     # Make sure we can copy va_lists (need check declared, not linkable)
     #
@@ -1104,20 +1100,6 @@ AC_DEFINE_UNQUOTED([PMIX_ENABLE_TIMING], [$WANT_PMIX_TIMING],
                    [Whether we want developer-level timing support or not])
 
 #
-# Install header files
-#
-AC_MSG_CHECKING([if want to head developer-level header files])
-AC_ARG_WITH(devel-headers,
-              AC_HELP_STRING([--with-devel-headers],
-                             [also install developer-level header files (only for internal PMIx developers, default: disabled)]))
-if test "$with_devel_headers" = "yes"; then
-    AC_MSG_RESULT([yes])
-    WANT_INSTALL_HEADERS=1
-else
-    AC_MSG_RESULT([no])
-    WANT_INSTALL_HEADERS=0
-fi
-
 #
 # Install backward compatibility support for PMI-1 and PMI-2
 #

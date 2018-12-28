@@ -4,6 +4,8 @@
  * Copyright (c) 2016      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2018      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2018      Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -106,6 +108,7 @@ pmix_status_t pmix_gds_base_store_modex(struct pmix_namespace_t *nspace,
     PMIX_BFROPS_UNPACK(rc, pmix_globals.mypeer,
             buff, &bo, &cnt, PMIX_BYTE_OBJECT);
     while (PMIX_SUCCESS == rc) {
+        PMIX_CONSTRUCT(&bkt, pmix_buffer_t);
         PMIX_LOAD_BUFFER(pmix_globals.mypeer, &bkt, bo.bytes, bo.size);
         /* unpack the data collection flag */
         cnt = 1;
@@ -113,10 +116,12 @@ pmix_status_t pmix_gds_base_store_modex(struct pmix_namespace_t *nspace,
                 &bkt, &byte, &cnt, PMIX_BYTE);
         if (PMIX_ERR_UNPACK_READ_PAST_END_OF_BUFFER == rc) {
             /* no data was returned, so we are done with this blob */
+            PMIX_DESTRUCT(&bkt);
             break;
         }
         if (PMIX_SUCCESS != rc) {
             /* we have an error */
+            PMIX_DESTRUCT(&bkt);
             goto error;
         }
 
@@ -124,6 +129,7 @@ pmix_status_t pmix_gds_base_store_modex(struct pmix_namespace_t *nspace,
         if (have_ctype) {
             if (ctype != (pmix_collect_t)byte) {
                 rc = PMIX_ERR_INVALID_ARG;
+                PMIX_DESTRUCT(&bkt);
                 goto error;
             }
         }
@@ -145,6 +151,7 @@ pmix_status_t pmix_gds_base_store_modex(struct pmix_namespace_t *nspace,
              * of its presence. */
             rc = cb_fn(cbdata, (struct pmix_namespace_t *)ns, cbs, &bo2);
             if (PMIX_SUCCESS != rc) {
+                PMIX_DESTRUCT(&bkt);
                 goto error;
             }
             PMIX_BYTE_OBJECT_DESTRUCT(&bo2);
@@ -153,6 +160,7 @@ pmix_status_t pmix_gds_base_store_modex(struct pmix_namespace_t *nspace,
             PMIX_BFROPS_UNPACK(rc, pmix_globals.mypeer,
                     &bkt, &bo2, &cnt, PMIX_BYTE_OBJECT);
         }
+        PMIX_DESTRUCT(&bkt);
         if (PMIX_ERR_UNPACK_READ_PAST_END_OF_BUFFER == rc) {
             rc = PMIX_SUCCESS;
         } else if (PMIX_SUCCESS != rc) {

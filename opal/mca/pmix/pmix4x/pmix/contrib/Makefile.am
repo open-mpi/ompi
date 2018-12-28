@@ -25,8 +25,6 @@
 EXTRA_DIST = \
 	make_dist_tarball \
 	buildrpm.sh \
-	cron-run-all-md2nroff.pl \
-        md2nroff.pl \
 	platform/optimized \
         pmix_jenkins.sh \
         pmix-release.sh \
