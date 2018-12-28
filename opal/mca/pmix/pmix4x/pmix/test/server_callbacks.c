@@ -188,6 +188,7 @@ pmix_status_t lookup_fn(const pmix_proc_t *proc, char **keys,
               pmix_lookup_cbfunc_t cbfunc, void *cbdata)
 {
     size_t i, ndata, ret;
+    pmix_status_t rc = PMIX_SUCCESS;
     pmix_pdata_t *pdata;
     pmix_test_info_t *tinfo;
     if (NULL == pmix_test_published_list) {
@@ -210,13 +211,15 @@ pmix_status_t lookup_fn(const pmix_proc_t *proc, char **keys,
         }
     }
     if (ret != ndata) {
-        return PMIX_ERR_NOT_FOUND;
+        rc = PMIX_ERR_NOT_FOUND;
+        goto error;
     }
     if (NULL != cbfunc) {
         cbfunc(PMIX_SUCCESS, pdata, ndata, cbdata);
     }
+error:
     PMIX_PDATA_FREE(pdata, ndata);
-    return PMIX_SUCCESS;
+    return rc;
 }
 
 pmix_status_t unpublish_fn(const pmix_proc_t *proc, char **keys,
