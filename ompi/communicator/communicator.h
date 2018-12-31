@@ -649,12 +649,13 @@ OMPI_DECLSPEC int ompi_comm_set_nb ( ompi_communicator_t **ncomm,
  * The routine makes sure, that all processes have afterwards
  * a list of ompi_proc_t pointers for the remote group.
  */
-struct ompi_proc_t **ompi_comm_get_rprocs ( ompi_communicator_t *local_comm,
-                                            ompi_communicator_t *bridge_comm,
-                                            int local_leader,
-                                            int remote_leader,
-                                            int tag,
-                                            int rsize);
+int ompi_comm_get_rprocs ( ompi_communicator_t *local_comm,
+                           ompi_communicator_t *bridge_comm,
+                           int local_leader,
+                           int remote_leader,
+                           int tag,
+                           int rsize,
+                           struct ompi_proc_t ***prprocs );
 
 /**
  * This routine verifies, whether local_group and remote group are overlapping

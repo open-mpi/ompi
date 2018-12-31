@@ -137,9 +137,9 @@ int MPI_Intercomm_create(MPI_Comm local_comm, int local_leader,
         goto err_exit;
     }
 
-    rprocs = ompi_comm_get_rprocs( local_comm, bridge_comm, lleader,
-                                   remote_leader, tag, rsize );
-    if ( NULL == rprocs ) {
+    rc = ompi_comm_get_rprocs( local_comm, bridge_comm, lleader,
+                               remote_leader, tag, rsize, &rprocs );
+    if ( OMPI_SUCCESS != rc ) {
         goto err_exit;
     }
 
@@ -222,7 +222,7 @@ int MPI_Intercomm_create(MPI_Comm local_comm, int local_leader,
     }
     if ( OMPI_SUCCESS != rc ) {
         *newintercomm = MPI_COMM_NULL;
-        return OMPI_ERRHANDLER_INVOKE(local_comm, MPI_ERR_INTERN,
+        return OMPI_ERRHANDLER_INVOKE(local_comm, rc,
                                       FUNC_NAME);
     }
 

@@ -372,6 +372,13 @@ static int ompi_comm_checkcid (ompi_comm_request_t *request)
     int ret;
     int participate = (context->newcomm->c_local_group->grp_my_rank != MPI_UNDEFINED);
 
+    if (OMPI_SUCCESS != request->super.req_status.MPI_ERROR) {
+        if (participate) {
+            opal_pointer_array_set_item(&ompi_mpi_communicators, context->nextlocal_cid, NULL);
+        }
+        return request->super.req_status.MPI_ERROR;
+    }
+
     if (OPAL_THREAD_TRYLOCK(&ompi_cid_lock)) {
         return ompi_comm_request_schedule_append (request, ompi_comm_checkcid, NULL, 0);
     }
@@ -409,11 +416,18 @@ static int ompi_comm_nextcid_check_flag (ompi_comm_request_t *request)
     ompi_comm_cid_context_t *context = (ompi_comm_cid_context_t *) request->context;
     int participate = (context->newcomm->c_local_group->grp_my_rank != MPI_UNDEFINED);
 
+    if (OMPI_SUCCESS != request->super.req_status.MPI_ERROR) {
+        if (participate) {
+            opal_pointer_array_set_item(&ompi_mpi_communicators, context->nextcid, NULL);
+        }
+        return request->super.req_status.MPI_ERROR;
+    }
+
     if (OPAL_THREAD_TRYLOCK(&ompi_cid_lock)) {
         return ompi_comm_request_schedule_append (request, ompi_comm_nextcid_check_flag, NULL, 0);
     }
 
-    if (1 == context->rflag) {
+    if (0 != context->rflag) {
         if( !participate ) {
             /* we need to provide something sane here
              * but we cannot use `nextcid` as we may have it
@@ -444,7 +458,7 @@ static int ompi_comm_nextcid_check_flag (ompi_comm_request_t *request)
         return OMPI_SUCCESS;
     }
 
-    if (participate && (1 == context->flag)) {
+    if (participate && (0 != context->flag)) {
         /* we could use this cid, but other don't agree */
         opal_pointer_array_set_item (&ompi_mpi_communicators, context->nextcid, NULL);
         context->start = context->nextcid + 1; /* that's where we can start the next round */
