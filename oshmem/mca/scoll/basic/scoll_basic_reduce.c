@@ -242,6 +242,7 @@ static int _algorithm_central_counter(struct oshmem_group_t *group,
                 target,
                 nlong,
                 (pSync + 1),
+                true,
                 SCOLL_DEFAULT_ALG);
     }
 
@@ -360,6 +361,7 @@ static int _algorithm_tournament(struct oshmem_group_t *group,
                 target,
                 nlong,
                 (pSync + 1),
+                true,
                 SCOLL_DEFAULT_ALG);
     }
 
@@ -639,6 +641,7 @@ static int _algorithm_linear(struct oshmem_group_t *group,
                 target,
                 nlong,
                 (pSync + 1),
+                true,
                 SCOLL_DEFAULT_ALG);
     }
 
@@ -807,6 +810,7 @@ static int _algorithm_log(struct oshmem_group_t *group,
                 target,
                 nlong,
                 (pSync + 1),
+                true,
                 SCOLL_DEFAULT_ALG);
     }
 

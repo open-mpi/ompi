@@ -78,6 +78,7 @@ static void _shmem_broadcast(void *target,
                                             source,
                                             nbytes,
                                             pSync,
+                                            true,
                                             SCOLL_DEFAULT_ALG);
 out:
         oshmem_proc_group_destroy(group);
