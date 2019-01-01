@@ -41,6 +41,7 @@ int mca_scoll_basic_broadcast(struct oshmem_group_t *group,
                               const void *source,
                               size_t nlong,
                               long *pSync,
+                              bool nlong_type,
                               int alg)
 {
     int rc = OSHMEM_SUCCESS;
@@ -56,7 +57,7 @@ int mca_scoll_basic_broadcast(struct oshmem_group_t *group,
         int i = 0;
 
         /* Do nothing on zero-length request */
-        if (OPAL_UNLIKELY(!nlong)) {
+        if (OPAL_UNLIKELY(nlong_type && !nlong)) {
             return OSHMEM_SUCCESS;
         }
 

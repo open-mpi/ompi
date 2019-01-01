@@ -66,12 +66,13 @@ int mca_scoll_basic_collect(struct oshmem_group_t *group,
     if ((rc == OSHMEM_SUCCESS) && oshmem_proc_group_is_member(group)) {
         int i = 0;
 
-        /* Do nothing on zero-length request */
-        if (OPAL_UNLIKELY(!nlong)) {
-            return OPAL_SUCCESS;
-        }
-
         if (nlong_type) {
+
+            /* Do nothing on zero-length request */
+            if (OPAL_UNLIKELY(!nlong)) {
+                return OPAL_SUCCESS;
+            }
+
             alg = (alg == SCOLL_DEFAULT_ALG ?
                     mca_scoll_basic_param_collect_algorithm : alg);
             switch (alg) {
@@ -198,6 +199,7 @@ static int _algorithm_f_central_counter(struct oshmem_group_t *group,
                     target,
                     group->proc_count * nlong,
                     (pSync + 1),
+                    true,
                     SCOLL_DEFAULT_ALG);
     }
 
@@ -308,6 +310,7 @@ static int _algorithm_f_tournament(struct oshmem_group_t *group,
                 target,
                 group->proc_count * nlong,
                 (pSync + 1),
+                true,
                 SCOLL_DEFAULT_ALG);
     }
 
@@ -629,6 +632,7 @@ static int _algorithm_central_collector(struct oshmem_group_t *group,
                 target,
                 offset,
                 (pSync + 1),
+                false,
                 SCOLL_DEFAULT_ALG);
     }
 

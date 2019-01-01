@@ -50,6 +50,7 @@ int mca_scoll_fca_broadcast(struct oshmem_group_t *group,
                             const void *source,
                             size_t nlong,
                             long *pSync,
+                            bool nlong_type,
                             int alg)
 {
     mca_scoll_fca_module_t *fca_module =
