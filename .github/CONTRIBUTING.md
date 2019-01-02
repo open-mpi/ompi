@@ -30,7 +30,7 @@ contributions are compatible with that license.
 To that end, we require that all Git commits contributed to Open MPI
 have a "Signed-off-by" token indicating that the commit author agrees
 with [Open MPI's Contributor's
-Declaration](https://github.com/open-mpi/ompi/wiki/Admistrative-rules#contributors-declaration).
+Declaration](https://github.com/open-mpi/ompi/wiki/Administrative-rules#contributors-declaration).
 
 If you have not already done so, please ensure that:
 
