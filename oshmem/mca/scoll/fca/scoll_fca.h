@@ -115,6 +115,7 @@ int mca_scoll_fca_broadcast(struct oshmem_group_t *group,
                             const void *source,
                             size_t nlong,
                             long *pSync,
+                            bool nlong_type,
                             int algorithm_type);
 int mca_scoll_fca_collect(struct oshmem_group_t *group,
                           void *target,

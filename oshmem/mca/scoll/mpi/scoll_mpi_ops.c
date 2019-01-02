@@ -38,6 +38,7 @@ int mca_scoll_mpi_broadcast(struct oshmem_group_t *group,
                             const void *source,
                             size_t nlong,
                             long *pSync,
+                            bool nlong_type,
                             int alg)
 {
     mca_scoll_mpi_module_t *mpi_module;
@@ -54,20 +55,14 @@ int mca_scoll_mpi_broadcast(struct oshmem_group_t *group,
     }
     dtype = &ompi_mpi_char.dt;
     root = oshmem_proc_group_find_id(group, PE_root);
-
-    /* Do nothing on zero-length request */
-    if (OPAL_UNLIKELY(!nlong)) {
-        return OSHMEM_SUCCESS;
-    }
-
     /* Open SHMEM specification has the following constrains (page 85):
      * "If using C/C++, nelems must be of type integer. If you are using Fortran, it must be a
      *  default integer value". And also fortran signature says "INTEGER".
      *  Since ompi coll components doesn't support size_t at the moment,
      *  and considering this contradiction, we cast size_t to int here
      *  in case if the value is less than INT_MAX and fallback to previous module otherwise. */
+    if (OPAL_UNLIKELY(!nlong_type || (INT_MAX < nlong))) {
 #ifdef INCOMPATIBLE_SHMEM_OMPI_COLL_APIS
-    if (INT_MAX < nlong) {
         MPI_COLL_VERBOSE(20,"RUNNING FALLBACK BCAST");
         PREVIOUS_SCOLL_FN(mpi_module, broadcast, group,
                 PE_root,
@@ -75,13 +70,21 @@ int mca_scoll_mpi_broadcast(struct oshmem_group_t *group,
                 source,
                 nlong,
                 pSync,
+                nlong_type,
                 SCOLL_DEFAULT_ALG);
         return rc;
-    }
-    rc = mpi_module->comm->c_coll->coll_bcast(buf, (int)nlong, dtype, root, mpi_module->comm, mpi_module->comm->c_coll->coll_bcast_module);
 #else
-    rc = mpi_module->comm->c_coll->coll_bcast(buf, nlong, dtype, root, mpi_module->comm, mpi_module->comm->c_coll->coll_bcast_module);
+        MPI_COLL_ERROR(20, "variable broadcast length, or exceeds INT_MAX: %zu", nlong);
+        return OSHMEM_ERR_NOT_SUPPORTED;
 #endif
+    }
+
+    /* Do nothing on zero-length request */
+    if (OPAL_UNLIKELY(!nlong)) {
+        return OSHMEM_SUCCESS;
+    }
+
+    rc = mpi_module->comm->c_coll->coll_bcast(buf, nlong, dtype, root, mpi_module->comm, mpi_module->comm->c_coll->coll_bcast_module);
     if (OMPI_SUCCESS != rc){
         MPI_COLL_VERBOSE(20,"RUNNING FALLBACK BCAST");
         PREVIOUS_SCOLL_FN(mpi_module, broadcast, group,
@@ -90,6 +93,7 @@ int mca_scoll_mpi_broadcast(struct oshmem_group_t *group,
                 source,
                 nlong,
                 pSync,
+                nlong_type,
                 SCOLL_DEFAULT_ALG);
     }
     return rc;
@@ -111,12 +115,13 @@ int mca_scoll_mpi_collect(struct oshmem_group_t *group,
     MPI_COLL_VERBOSE(20,"RUNNING MPI ALLGATHER");
     mpi_module = (mca_scoll_mpi_module_t *) group->g_scoll.scoll_collect_module;
 
-    /* Do nothing on zero-length request */
-    if (OPAL_UNLIKELY(!nlong)) {
-        return OSHMEM_SUCCESS;
-    }
-
     if (nlong_type == true) {
+
+        /* Do nothing on zero-length request */
+        if (OPAL_UNLIKELY(!nlong)) {
+            return OSHMEM_SUCCESS;
+        }
+
         sbuf = (void *) source;
         rbuf = target;
         stype =  &ompi_mpi_char.dt;

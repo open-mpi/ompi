@@ -122,6 +122,7 @@ typedef int (*mca_scoll_base_module_broadcast_fn_t)(struct oshmem_group_t *group
                                                     const void *source,
                                                     size_t nlong,
                                                     long *pSync,
+                                                    bool nlong_type,
                                                     int alg);
 typedef int (*mca_scoll_base_module_collect_fn_t)(struct oshmem_group_t *group,
                                                   void *target,

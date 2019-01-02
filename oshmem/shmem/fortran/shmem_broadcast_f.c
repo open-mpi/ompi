@@ -93,7 +93,9 @@ SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
                 FPTR_2_VOID_PTR(target), \
                 FPTR_2_VOID_PTR(source), \
                 OMPI_FINT_2_INT(*nlong) * op->dt_size, \
-                FPTR_2_VOID_PTR(pSync), SCOLL_DEFAULT_ALG );\
+                FPTR_2_VOID_PTR(pSync), \
+                true, \
+                SCOLL_DEFAULT_ALG );\
     out: \
         oshmem_proc_group_destroy(group);\
         RUNTIME_CHECK_RC(rc); \
