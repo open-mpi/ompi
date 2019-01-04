@@ -81,7 +81,7 @@ struct mca_spml_ucx_ctx_list_item {
 };
 typedef struct mca_spml_ucx_ctx_list_item mca_spml_ucx_ctx_list_item_t;
 
-typedef spml_ucx_mkey_t * (*mca_spml_ucx_get_mkey_slow_fn_t)(int pe, void *va, void **rva);
+typedef spml_ucx_mkey_t * (*mca_spml_ucx_get_mkey_slow_fn_t)(shmem_ctx_t ctx, int pe, void *va, void **rva);
 
 struct mca_spml_ucx {
     mca_spml_base_module_t   super;
@@ -143,7 +143,7 @@ extern int mca_spml_ucx_deregister(sshmem_mkey_t *mkeys);
 
 extern void mca_spml_ucx_memuse_hook(void *addr, size_t length);
 
-extern void mca_spml_ucx_rmkey_unpack(sshmem_mkey_t *mkey, uint32_t segno, int pe, int tr_id);
+extern void mca_spml_ucx_rmkey_unpack(shmem_ctx_t ctx, sshmem_mkey_t *mkey, uint32_t segno, int pe, int tr_id);
 extern void mca_spml_ucx_rmkey_free(sshmem_mkey_t *mkey);
 extern void *mca_spml_ucx_rmkey_ptr(const void *dst_addr, sshmem_mkey_t *, int pe);
 
@@ -153,17 +153,25 @@ extern int mca_spml_ucx_fence(shmem_ctx_t ctx);
 extern int mca_spml_ucx_quiet(shmem_ctx_t ctx);
 extern int spml_ucx_progress(void);
 
+static void mca_spml_ucx_cache_mkey(mca_spml_ucx_ctx_t *ucx_ctx, sshmem_mkey_t *mkey, uint32_t segno, int dst_pe)
+{
+    ucp_peer_t *peer;
+
+    peer = &(ucx_ctx->ucp_peers[dst_pe]);
+    mkey_segment_init(&peer->mkeys[segno].super, mkey, segno);
+}
 
 static inline spml_ucx_mkey_t * 
-mca_spml_ucx_get_mkey(mca_spml_ucx_ctx_t *ucx_ctx, int pe, void *va, void **rva, mca_spml_ucx_t* module)
+mca_spml_ucx_get_mkey(shmem_ctx_t ctx, int pe, void *va, void **rva, mca_spml_ucx_t* module)
 {
     spml_ucx_cached_mkey_t *mkey;
+    mca_spml_ucx_ctx_t *ucx_ctx = (mca_spml_ucx_ctx_t *)ctx;
 
     mkey = ucx_ctx->ucp_peers[pe].mkeys;
     mkey = (spml_ucx_cached_mkey_t *)map_segment_find_va(&mkey->super.super, sizeof(*mkey), va);
     if (OPAL_UNLIKELY(NULL == mkey)) {
         assert(module->get_mkey_slow);
-        return module->get_mkey_slow(pe, va, rva);
+        return module->get_mkey_slow(ctx, pe, va, rva);
     }
     *rva = map_segment_va2rva(&mkey->super, va);
     return &mkey->key;
