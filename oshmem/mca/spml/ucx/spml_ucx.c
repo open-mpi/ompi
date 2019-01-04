@@ -45,7 +45,7 @@
 #endif
 
 static
-spml_ucx_mkey_t * mca_spml_ucx_get_mkey_slow(int pe, void *va, void **rva);
+spml_ucx_mkey_t * mca_spml_ucx_get_mkey_slow(shmem_ctx_t ctx, int pe, void *va, void **rva);
 
 mca_spml_ucx_t mca_spml_ucx = {
     .super = {
@@ -309,11 +309,11 @@ error:
 
 
 static
-spml_ucx_mkey_t * mca_spml_ucx_get_mkey_slow(int pe, void *va, void **rva)
+spml_ucx_mkey_t * mca_spml_ucx_get_mkey_slow(shmem_ctx_t ctx, int pe, void *va, void **rva)
 {
     sshmem_mkey_t *r_mkey;
 
-    r_mkey = mca_memheap_base_get_cached_mkey(pe, va, 0, rva);
+    r_mkey = mca_memheap_base_get_cached_mkey(ctx, pe, va, 0, rva);
     if (OPAL_UNLIKELY(!r_mkey)) {
         SPML_UCX_ERROR("pe=%d: %p is not address of symmetric variable",
                        pe, va);
@@ -351,23 +351,16 @@ void *mca_spml_ucx_rmkey_ptr(const void *dst_addr, sshmem_mkey_t *mkey, int pe)
 #endif
 }
 
-static void mca_spml_ucx_cache_mkey(mca_spml_ucx_ctx_t *ucx_ctx, sshmem_mkey_t *mkey, uint32_t segno, int dst_pe)
-{
-    ucp_peer_t *peer;
-
-    peer = &(ucx_ctx->ucp_peers[dst_pe]);
-    mkey_segment_init(&peer->mkeys[segno].super, mkey, segno);
-}
-
-void mca_spml_ucx_rmkey_unpack(sshmem_mkey_t *mkey, uint32_t segno, int pe, int tr_id)
+void mca_spml_ucx_rmkey_unpack(shmem_ctx_t ctx, sshmem_mkey_t *mkey, uint32_t segno, int pe, int tr_id)
 {
     spml_ucx_mkey_t   *ucx_mkey;
+    mca_spml_ucx_ctx_t *ucx_ctx = (mca_spml_ucx_ctx_t *)ctx;
     ucs_status_t err;
     
-    ucx_mkey = &mca_spml_ucx_ctx_default.ucp_peers[pe].mkeys[segno].key;
+    ucx_mkey = &ucx_ctx->ucp_peers[pe].mkeys[segno].key;
 
-    err = ucp_ep_rkey_unpack(mca_spml_ucx_ctx_default.ucp_peers[pe].ucp_conn,
-            mkey->u.data, 
+    err = ucp_ep_rkey_unpack(ucx_ctx->ucp_peers[pe].ucp_conn,
+            mkey->u.data,
             &ucx_mkey->rkey); 
     if (UCS_OK != err) {
         SPML_UCX_ERROR("failed to unpack rkey: %s", ucs_status_string(err));
@@ -375,7 +368,7 @@ void mca_spml_ucx_rmkey_unpack(sshmem_mkey_t *mkey, uint32_t segno, int pe, int 
     }
 
     mkey->spml_context = ucx_mkey;
-    mca_spml_ucx_cache_mkey(&mca_spml_ucx_ctx_default, mkey, segno, pe);
+    mca_spml_ucx_cache_mkey(ucx_ctx, mkey, segno, pe);
     return;
 
 error_fatal:
@@ -636,7 +629,7 @@ int mca_spml_ucx_get(shmem_ctx_t ctx, void *src_addr, size_t size, void *dst_add
     ucs_status_t status;
 #endif
 
-    ucx_mkey = mca_spml_ucx_get_mkey(ucx_ctx, src, src_addr, &rva, &mca_spml_ucx);
+    ucx_mkey = mca_spml_ucx_get_mkey(ctx, src, src_addr, &rva, &mca_spml_ucx);
 #if HAVE_DECL_UCP_GET_NB
     request = ucp_get_nb(ucx_ctx->ucp_peers[src].ucp_conn, dst_addr, size,
                          (uint64_t)rva, ucx_mkey->rkey, opal_common_ucx_empty_complete_cb);
@@ -655,7 +648,7 @@ int mca_spml_ucx_get_nb(shmem_ctx_t ctx, void *src_addr, size_t size, void *dst_
     spml_ucx_mkey_t *ucx_mkey;
     mca_spml_ucx_ctx_t *ucx_ctx = (mca_spml_ucx_ctx_t *)ctx;
 
-    ucx_mkey = mca_spml_ucx_get_mkey(ucx_ctx, src, src_addr, &rva, &mca_spml_ucx);
+    ucx_mkey = mca_spml_ucx_get_mkey(ctx, src, src_addr, &rva, &mca_spml_ucx);
     status = ucp_get_nbi(ucx_ctx->ucp_peers[src].ucp_conn, dst_addr, size,
                      (uint64_t)rva, ucx_mkey->rkey);
 
@@ -673,7 +666,7 @@ int mca_spml_ucx_put(shmem_ctx_t ctx, void* dst_addr, size_t size, void* src_add
     ucs_status_t status;
 #endif
 
-    ucx_mkey = mca_spml_ucx_get_mkey(ucx_ctx, dst, dst_addr, &rva, &mca_spml_ucx);
+    ucx_mkey = mca_spml_ucx_get_mkey(ctx, dst, dst_addr, &rva, &mca_spml_ucx);
 #if HAVE_DECL_UCP_PUT_NB
     request = ucp_put_nb(ucx_ctx->ucp_peers[dst].ucp_conn, src_addr, size,
                          (uint64_t)rva, ucx_mkey->rkey, opal_common_ucx_empty_complete_cb);
@@ -692,7 +685,7 @@ int mca_spml_ucx_put_nb(shmem_ctx_t ctx, void* dst_addr, size_t size, void* src_
     spml_ucx_mkey_t *ucx_mkey;
     mca_spml_ucx_ctx_t *ucx_ctx = (mca_spml_ucx_ctx_t *)ctx;
 
-    ucx_mkey = mca_spml_ucx_get_mkey(ucx_ctx, dst, dst_addr, &rva, &mca_spml_ucx);
+    ucx_mkey = mca_spml_ucx_get_mkey(ctx, dst, dst_addr, &rva, &mca_spml_ucx);
     status = ucp_put_nbi(ucx_ctx->ucp_peers[dst].ucp_conn, src_addr, size,
                      (uint64_t)rva, ucx_mkey->rkey);
 
