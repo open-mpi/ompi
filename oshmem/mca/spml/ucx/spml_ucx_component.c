@@ -111,7 +111,14 @@ static int mca_spml_ucx_component_register(void)
 
 int spml_ucx_progress(void)
 {
+    mca_spml_ucx_ctx_list_item_t *ctx_item, *next;
     ucp_worker_progress(mca_spml_ucx_ctx_default.ucp_worker);
+    SHMEM_MUTEX_LOCK(mca_spml_ucx.internal_mutex);
+    OPAL_LIST_FOREACH_SAFE(ctx_item, next, &(mca_spml_ucx.ctx_list),
+                           mca_spml_ucx_ctx_list_item_t) {
+        ucp_worker_progress(ctx_item->ctx.ucp_worker);
+    }
+    SHMEM_MUTEX_UNLOCK(mca_spml_ucx.internal_mutex);
     return 1;
 }
 

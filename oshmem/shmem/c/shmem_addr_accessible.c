@@ -31,7 +31,8 @@ int shmem_addr_accessible(const void *addr, int pe)
     RUNTIME_CHECK_INIT();
 
     for (i = 0; i < mca_memheap_base_num_transports(); i++) {
-        mkey = mca_memheap_base_get_cached_mkey(pe, (void *)addr, i, &rva);
+        /* TODO: iterate on all ctxs, try to get cached mkey */
+        mkey = mca_memheap_base_get_cached_mkey(oshmem_ctx_default, pe, (void *)addr, i, &rva);
         if (mkey) {
             return 1;
         }
