@@ -12,7 +12,7 @@
  * Copyright (c) 2009      Institut National de Recherche en Informatique
  *                         et Automatique. All rights reserved.
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2011-2019 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2013-2018 Intel, Inc.  All rights reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
@@ -675,6 +675,8 @@ int orte_ess_base_orted_finalize(void)
     (void) mca_base_framework_close(&orte_plm_base_framework);
     /* make sure our local procs are dead */
     orte_odls.kill_local_procs(NULL);
+    (void) mca_base_framework_close(&orte_regx_base_framework);
+    (void) mca_base_framework_close(&orte_rmaps_base_framework);
     (void) mca_base_framework_close(&orte_rtc_base_framework);
     (void) mca_base_framework_close(&orte_odls_base_framework);
     (void) mca_base_framework_close(&orte_routed_base_framework);
