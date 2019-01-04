@@ -2,7 +2,7 @@
 #define COMMON_UCX_WPOOL_INT_H
 
 #include "opal_config.h"
-#include "common_ucx_int.h"
+#include "common_ucx.h"
 #include "common_ucx_wpool.h"
 
 typedef struct {

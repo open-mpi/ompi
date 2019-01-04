@@ -4,7 +4,7 @@
 
 #include "opal_config.h"
 
-#include "common_ucx_int.h"
+#include "common_ucx.h"
 #include <stdint.h>
 #include <string.h>
 

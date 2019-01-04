@@ -15,6 +15,7 @@
 #include "ompi/group/group.h"
 #include "ompi/communicator/communicator.h"
 #include "opal/mca/common/ucx/common_ucx.h"
+#include "opal/mca/common/ucx/common_ucx_wpool.h"
 
 #define OSC_UCX_ASSERT  MCA_COMMON_UCX_ASSERT
 #define OSC_UCX_ERROR   MCA_COMMON_UCX_ERROR
