@@ -552,9 +552,6 @@ int ompi_osc_ucx_free(struct ompi_win_t *win) {
     ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t*) win->w_osc_module;
     int ret;
 
-    WPOOL_DBG_OUT(dbg_level, "start, mem = %p lock flag = %d\n",
-                  (void *)module->mem, (int)module->state.lock);
-
     assert(module->lock_count == 0);
     assert(opal_list_is_empty(&module->pending_posts) == true);
     OBJ_DESTRUCT(&module->outstanding_locks);
@@ -562,22 +559,11 @@ int ompi_osc_ucx_free(struct ompi_win_t *win) {
 
     opal_common_ucx_wpmem_flush(module->mem, OPAL_COMMON_UCX_SCOPE_WORKER, 0);
 
-    WPOOL_DBG_OUT(dbg_level, "after mem_flush, mem = %p lock flag = %d\n",
-                  (void *)module->mem, (int)module->state.lock);
-
-    /*
-    while (module->state.lock != TARGET_LOCK_UNLOCKED) {
-        ucp_worker_progress(mca_osc_ucx_component.wpool->recv_worker);
-    }
-    */
-
     ret = module->comm->c_coll->coll_barrier(module->comm,
                                              module->comm->c_coll->coll_barrier_module);
     if (ret != OMPI_SUCCESS) {
         return ret;
     }
-
-    WPOOL_DBG_OUT(dbg_level, "after barrier, mem = %p\n", (void *)module->mem);
 
     free(module->addrs);
     free(module->state_addrs);
