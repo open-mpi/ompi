@@ -31,7 +31,7 @@ typedef struct {
 
     /* UCX data */
     ucp_context_h ucp_ctx;
-    ucp_worker_h recv_worker;
+    ucp_worker_h dflt_worker;
     ucp_address_t *recv_waddr;
     size_t recv_waddr_len;
 
@@ -76,7 +76,9 @@ typedef struct {
 /* Worker Pool memory (wpmem) is an object that represents a remotely accessible
  * distributed memory.
  * It has dynamic lifetime (created and destroyed by corresponding functions).
- * It depends on particular Wpool context
+ * It depends on particular Wpool context.
+ * Currently OSC is using one context per MPI Window, though in future it will
+ * be possible to have one context for multiple windows.
  */
 typedef struct {
     /* reference context to which memory region belongs */
@@ -100,7 +102,8 @@ typedef struct {
 /* The structure that wraps UCP worker and holds the state that is required
  * for its use.
  * The structure is allocated along with UCP worker on demand and is being held
- * in the Worker Pool lists (either active or idle)
+ * in the Worker Pool lists (either active or idle).
+ * One wpmem is intended per shared memory segment (i.e. MPI Window).
  */
 typedef struct opal_common_ucx_winfo {
     opal_recursive_mutex_t mutex;

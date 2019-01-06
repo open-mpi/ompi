@@ -186,9 +186,9 @@ opal_common_ucx_wpool_init(opal_common_ucx_wpool_t *wpool,
         rc = OPAL_ERROR;
         goto err_worker_create;
     }
-    wpool->recv_worker = winfo->worker;
+    wpool->dflt_worker = winfo->worker;
 
-    status = ucp_worker_get_address(wpool->recv_worker,
+    status = ucp_worker_get_address(wpool->dflt_worker,
                                     &wpool->recv_waddr, &wpool->recv_waddr_len);
     if (status != UCS_OK) {
         MCA_COMMON_UCX_VERBOSE(1, "ucp_worker_get_address failed: %d", status);
@@ -208,8 +208,8 @@ opal_common_ucx_wpool_init(opal_common_ucx_wpool_t *wpool,
 err_wpool_add:
     free(wpool->recv_waddr);
 err_get_addr:
-    if (NULL != wpool->recv_worker) {
-        ucp_worker_destroy(wpool->recv_worker);
+    if (NULL != wpool->dflt_worker) {
+        ucp_worker_destroy(wpool->dflt_worker);
     }
  err_worker_create:
     ucp_cleanup(wpool->ucp_ctx);
@@ -241,7 +241,7 @@ void opal_common_ucx_wpool_finalize(opal_common_ucx_wpool_t *wpool)
 
     /* Release the address here. recv worker will be released
      * below along with other idle workers */
-    ucp_worker_release_address(wpool->recv_worker, wpool->recv_waddr);
+    ucp_worker_release_address(wpool->dflt_worker, wpool->recv_waddr);
 
     /* Go over the list, free idle list items */
     if (!opal_list_is_empty(&wpool->idle_workers)) {
