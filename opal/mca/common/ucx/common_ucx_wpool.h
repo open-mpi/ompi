@@ -9,13 +9,13 @@
 #include <string.h>
 
 #include <ucp/api/ucp.h>
-#include <pthread.h>
 
 #include "opal/mca/mca.h"
 #include "opal/util/output.h"
 #include "opal/runtime/opal_progress.h"
 #include "opal/include/opal/constants.h"
 #include "opal/class/opal_list.h"
+#include "opal/threads/tsd.h"
 
 BEGIN_C_DECLS
 
@@ -32,7 +32,7 @@ typedef struct {
 
     /* Thread-local key to allow each thread to have
      * local information assisiated with this wpool */
-    pthread_key_t tls_key;
+    opal_tsd_key_t tls_key;
 
     /* Bookkeeping information */
     opal_list_t idle_workers;
@@ -75,7 +75,7 @@ typedef struct {
     /* TLS item that allows each thread to
      * store endpoints and rkey arrays
      * for faster access */
-    pthread_key_t mem_tls_key;
+    opal_tsd_key_t mem_tls_key;
 } opal_common_ucx_wpmem_t;
 
 typedef struct opal_common_ucx_winfo {
@@ -159,7 +159,10 @@ opal_common_ucx_tlocal_fetch(opal_common_ucx_wpmem_t *mem, int target,
     int rc = OPAL_SUCCESS;
 
     /* First check the fast-path */
-    fp = pthread_getspecific(mem->mem_tls_key);
+    rc = opal_tsd_getspecific(mem->mem_tls_key, (void**)&fp);
+    if (OPAL_SUCCESS != rc) {
+        return rc;
+    }
     expr = fp && (NULL != fp->winfo) && (fp->winfo->endpoints[target]) &&
             (NULL != fp->rkeys[target]);
     if (OPAL_UNLIKELY(!expr)) {
@@ -167,7 +170,10 @@ opal_common_ucx_tlocal_fetch(opal_common_ucx_wpmem_t *mem, int target,
         if (OPAL_SUCCESS != rc) {
             return rc;
         }
-        fp = pthread_getspecific(mem->mem_tls_key);
+        rc = opal_tsd_getspecific(mem->mem_tls_key, (void**)&fp);
+        if (OPAL_SUCCESS != rc) {
+            return rc;
+        }
     }
     MCA_COMMON_UCX_ASSERT(fp && (NULL != fp->winfo) &&
                           (fp->winfo->endpoints[target])

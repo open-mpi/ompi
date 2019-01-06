@@ -26,8 +26,6 @@
     memcpy(((char*)(_dst)) + (_off), _src, _len); \
     (_off) += (_len);
 
-static int dbg_level = 0;
-
 static int component_open(void);
 static int component_register(void);
 static int component_init(bool enable_progress_threads, bool enable_mpi_threads);

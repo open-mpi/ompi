@@ -201,7 +201,7 @@ opal_common_ucx_wpool_init(opal_common_ucx_wpool_t *wpool,
         goto err_wpool_add;
     }
 
-    pthread_key_create(&wpool->tls_key, _tlocal_cleanup);
+    opal_tsd_key_create(&wpool->tls_key, _tlocal_cleanup);
 
     return rc;
 
@@ -229,7 +229,7 @@ void opal_common_ucx_wpool_finalize(opal_common_ucx_wpool_t *wpool)
 
     /* After this have been called no thread cleanup callback
      * will be called */
-    pthread_key_delete(wpool->tls_key);
+    opal_tsd_key_delete(wpool->tls_key);
 
     /* Go over remaining TLS structures and release it */
     OPAL_LIST_FOREACH_SAFE(tls_item, tls_next, &wpool->tls_list,
@@ -553,7 +553,7 @@ int opal_common_ucx_wpmem_create(opal_common_ucx_ctx_t *ctx,
 
     /* Dont need the destructor here, will use
      * wpool-level destructor */
-    pthread_key_create(&mem->mem_tls_key, NULL);
+    opal_tsd_key_create(&mem->mem_tls_key, NULL);
 
     (*mem_ptr) = mem;
     (*my_mem_addr) = rkey_addr;
@@ -641,7 +641,7 @@ static int _comm_ucx_wpmem_map(opal_common_ucx_wpool_t *wpool,
 
 static void _common_ucx_wpmem_free(opal_common_ucx_wpmem_t *mem)
 {
-    pthread_key_delete(mem->mem_tls_key);
+    opal_tsd_key_delete(mem->mem_tls_key);
     free(mem->mem_addrs);
     free(mem->mem_displs);
     ucp_mem_unmap(mem->ctx->wpool->ucp_ctx, mem->memh);
@@ -714,15 +714,21 @@ static _tlocal_table_t* _common_ucx_tls_init(opal_common_ucx_wpool_t *wpool)
         return NULL;
     }
 
-    pthread_setspecific(wpool->tls_key, tls);
+    opal_tsd_setspecific(wpool->tls_key, tls);
 
     return tls;
 }
 
 static inline _tlocal_table_t *
 _tlocal_get_tls(opal_common_ucx_wpool_t *wpool){
-    _tlocal_table_t *tls = pthread_getspecific(wpool->tls_key);
-    if( OPAL_UNLIKELY(NULL == tls) ) {
+    _tlocal_table_t *tls;
+    int rc = opal_tsd_getspecific(wpool->tls_key, (void**)&tls);
+
+    if (OPAL_SUCCESS != rc) {
+        return NULL;
+    }
+
+    if (OPAL_UNLIKELY(NULL == tls)) {
         tls = _common_ucx_tls_init(wpool);
     }
     return tls;
@@ -777,7 +783,7 @@ static void _common_ucx_tls_cleanup(_tlocal_table_t *tls)
         free(tls->ctx_tbl[i]);
     }
 
-    pthread_setspecific(tls->wpool->tls_key, NULL);
+    opal_tsd_setspecific(tls->wpool->tls_key, NULL);
 
     OBJ_RELEASE(tls);
     return;
@@ -1033,7 +1039,7 @@ static _tlocal_mem_t *_tlocal_add_mem(_tlocal_table_t *tls,
             calloc(1, sizeof(*tls->mem_tbl[free_idx]->mem_tls_ptr));
     tls->mem_tbl[free_idx]->mem_tls_ptr->winfo = ctx_rec->winfo;
     tls->mem_tbl[free_idx]->mem_tls_ptr->rkeys = tls->mem_tbl[free_idx]->mem->rkeys;
-    pthread_setspecific(mem->mem_tls_key, tls->mem_tbl[free_idx]->mem_tls_ptr);
+    opal_tsd_setspecific(mem->mem_tls_key, tls->mem_tbl[free_idx]->mem_tls_ptr);
 
     /* Make sure that we completed all the data structures before
      * placing the item to the list

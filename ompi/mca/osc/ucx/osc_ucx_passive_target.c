@@ -18,8 +18,6 @@
 
 OBJ_CLASS_INSTANCE(ompi_osc_ucx_lock_t, opal_object_t, NULL, NULL);
 
-static int dbg_level = 0;
-
 static inline int start_shared(ompi_osc_ucx_module_t *module, int target) {
     uint64_t result_value = -1;
     uint64_t remote_addr = (module->state_addrs)[target] + OSC_UCX_STATE_LOCK_OFFSET;
