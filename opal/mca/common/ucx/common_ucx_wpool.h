@@ -19,6 +19,11 @@
 
 BEGIN_C_DECLS
 
+/* Worker pool is a global object that that is allocated per component or can be
+ * shared between multiple compatible components.
+ * The lifetime of this object is normally equal to the lifetime of a component[s].
+ * It is expected to be initialized in MPI_Init and finalized in MPI_Finalize.
+ */
 typedef struct {
     /* Ref counting & locking*/
     int refcnt;
@@ -41,6 +46,15 @@ typedef struct {
     opal_list_t tls_list;
 } opal_common_ucx_wpool_t;
 
+/* Worker Pool Context (wpctx) is an object that is comprised of a set of UCP
+ * workers that are considered as one logical communication entity.
+ * One UCP worker per "active" thread is used.
+ * Thread is considered "active" if it performs communication operations on this
+ * Wpool context.
+ * A lifetime of this object is dynamic and determined by the application
+ * (the object is created and destroyed with corresponding functions).
+ * Context is bound to a particular Worker Pool object.
+ */
 typedef struct {
     opal_recursive_mutex_t mutex;
     opal_atomic_int32_t refcntr;
@@ -59,6 +73,11 @@ typedef struct {
     size_t comm_size;
 } opal_common_ucx_ctx_t;
 
+/* Worker Pool memory (wpmem) is an object that represents a remotely accessible
+ * distributed memory.
+ * It has dynamic lifetime (created and destroyed by corresponding functions).
+ * It depends on particular Wpool context
+ */
 typedef struct {
     /* reference context to which memory region belongs */
     opal_common_ucx_ctx_t *ctx;
@@ -78,6 +97,11 @@ typedef struct {
     opal_tsd_key_t mem_tls_key;
 } opal_common_ucx_wpmem_t;
 
+/* The structure that wraps UCP worker and holds the state that is required
+ * for its use.
+ * The structure is allocated along with UCP worker on demand and is being held
+ * in the Worker Pool lists (either active or idle)
+ */
 typedef struct opal_common_ucx_winfo {
     opal_recursive_mutex_t mutex;
     volatile int released;
@@ -96,6 +120,10 @@ typedef struct {
 
 typedef void (*opal_common_ucx_user_req_handler_t)(void *request);
 
+/* A fast-path structure that gathers all pointers that are required to
+ * perform RMA operation
+ * wpmem's mem_tls_key holds the pointer to this structure
+ */
 typedef struct {
     void *ext_req;
     opal_common_ucx_user_req_handler_t ext_cb;
