@@ -278,7 +278,7 @@ static int vader_add_procs (struct mca_btl_base_module_t* btl,
             continue;
         }
 
-        if (my_proc != procs[proc] && reachability) {
+        if (my_proc != procs[proc] && NULL != reachability) {
             /* add this proc to shared memory accessibility list */
             rc = opal_bitmap_set_bit (reachability, proc);
             if(OPAL_SUCCESS != rc) {
