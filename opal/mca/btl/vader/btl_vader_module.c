@@ -17,6 +17,8 @@
  * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2018      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -276,7 +278,7 @@ static int vader_add_procs (struct mca_btl_base_module_t* btl,
             continue;
         }
 
-        if (my_proc != procs[proc]) {
+        if (my_proc != procs[proc] && reachability) {
             /* add this proc to shared memory accessibility list */
             rc = opal_bitmap_set_bit (reachability, proc);
             if(OPAL_SUCCESS != rc) {
