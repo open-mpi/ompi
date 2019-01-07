@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2016-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
@@ -109,6 +109,9 @@ typedef uint32_t pmix_rank_t;
 #define PMIX_RANK_LOCAL_PEERS   UINT32_MAX-4        // all peers (i.e., all procs within the same nspace) on local node
 /* define an invalid value */
 #define PMIX_RANK_INVALID   UINT32_MAX-3
+/* define a boundary for valid ranks */
+#define PMIX_RANK_VALID         UINT32_MAX-50
+
 
 /****  PMIX ENVIRONMENTAL PARAMETERS  ****/
 /* There are a few environmental parameters used by PMIx for
@@ -444,6 +447,49 @@ typedef uint32_t pmix_rank_t;
                                                                     //          in the specified range (defaults to session)
 #define PMIX_QUERY_PSET_NAMES               "pmix.qry.psets"        // (char*) return a comma-delimited list of the names of the
                                                                     //         psets defined in the specified range (defaults to session)
+
+/* information retrieval attributes */
+#define PMIX_SESSION_INFO                   "pmix.ssn.info"         // (bool) Return information about the specified session. If information
+                                                                    //        about a session other than the one containing the requesting
+                                                                    //        process is desired, then the attribute array must contain a
+                                                                    //        PMIX_SESSION_ID attribute identifying the desired target.
+#define PMIX_JOB_INFO                       "pmix.job.info"         // (bool) Return information about the specified job or namespace. If
+                                                                    //        information about a job or namespace other than the one containing
+                                                                    //        the requesting process is desired, then the attribute array must
+                                                                    //        contain a PMIX_JOBID or PMIX_NSPACE attribute identifying the
+                                                                    //        desired target. Similarly, if information is requested about a
+                                                                    //        job or namespace in a session other than the one containing the
+                                                                    //        requesting process, then an attribute identifying the target
+                                                                    //        session must be provided.
+#define PMIX_APP_INFO                       "pmix.app.info"         // (bool) Return information about the specified application. If information
+                                                                    //        about an application other than the one containing the requesting
+                                                                    //        process is desired, then the attribute array must contain a
+                                                                    //        PMIX_APPNUM attribute identifying the desired target. Similarly,
+                                                                    //        if information is requested about an application in a job or session
+                                                                    //        other than the one containing the requesting process, then attributes
+                                                                    //        identifying the target job and/or session must be provided.
+#define PMIX_NODE_INFO                      "pmix.node.info"        // (bool) Return information about the specified node. If information about a
+                                                                    //        node other than the one containing the requesting process is desired,
+                                                                    //        then the attribute array must contain either the PMIX_NODEID or
+                                                                    //        PMIX_HOSTNAME attribute identifying the desired target.
+
+/* information storage attributes */
+#define PMIX_SESSION_INFO_ARRAY             "pmix.ssn.arr"          // (pmix_data_array_t) Provide an array of pmix_info_t containing
+                                                                    //        session-level information. The PMIX_SESSION_ID attribute is required
+                                                                    //        to be included in the array.
+#define PMIX_JOB_INFO_ARRAY                 "pmix.job.arr"          // (pmix_data_array_t) Provide an array of pmix_info_t containing job-level
+                                                                    //        information. Information is registered one job (aka namespace) at a time
+                                                                    //        via the PMIx_server_register_nspace API. Thus, there is no requirement that
+                                                                    //        the array contain either the PMIX_NSPACE or PMIX_JOBID attributes, though
+                                                                    //        either or both of them may be included.
+#define PMIX_APP_INFO_ARRAY                 "pmix.app.arr"          // (pmix_data_array_t) Provide an array of pmix_info_t containing app-level
+                                                                    //        information. The PMIX_NSPACE or PMIX_JOBID attributes of the job containing
+                                                                    //        the appplication, plus its PMIX_APPNUM attribute, are required to be
+                                                                    //        included in the array.
+#define PMIX_NODE_INFO_ARRAY                "pmix.node.arr"         // (pmix_data_array_t) Provide an array of pmix_info_t containing node-level
+                                                                    //        information. At a minimum, either the PMIX_NODEID or PMIX_HOSTNAME
+                                                                    //        attribute is required to be included in the array, though both may be
+                                                                    //        included.
 
 /* log attributes */
 #define PMIX_LOG_SOURCE                     "pmix.log.source"       // (pmix_proc_t*) ID of source of the log request
@@ -1047,16 +1093,18 @@ typedef struct pmix_byte_object {
         }                               \
     } while(0)
 
-#define PMIX_BYTE_OBJECT_FREE(m, n)         \
-    do {                                    \
-        size_t _n;                          \
-        for (_n=0; _n < n; _n++) {          \
-            if (NULL != (m)[_n].bytes) {    \
-                free((m)[_n].bytes);        \
-            }                               \
-        }                                   \
-        free((m));                          \
-        (m) = NULL;                         \
+#define PMIX_BYTE_OBJECT_FREE(m, n)             \
+    do {                                        \
+        size_t _n;                              \
+        if (NULL != (m)) {                      \
+            for (_n=0; _n < n; _n++) {          \
+                if (NULL != (m)[_n].bytes) {    \
+                    free((m)[_n].bytes);        \
+                }                               \
+            }                                   \
+            free((m));                          \
+            (m) = NULL;                         \
+        }                                       \
     } while(0)
 
 #define PMIX_BYTE_OBJECT_LOAD(b, d, s)      \

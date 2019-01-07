@@ -13,7 +13,7 @@
  * Copyright (c) 2011-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2018      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -460,6 +460,55 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
         return PMIX_ERR_UNREACH;
     }
 
+    /* if they asked for system-level first or only, we start there */
+    if (system_level || system_level_only) {
+        if (0 > asprintf(&filename, "%s/pmix.sys.%s", mca_ptl_tcp_component.system_tmpdir, myhost)) {
+            if (NULL != iptr) {
+                PMIX_INFO_FREE(iptr, niptr);
+            }
+            return PMIX_ERR_NOMEM;
+        }
+        pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
+                            "ptl:tcp:tool looking for system server at %s",
+                            filename);
+        /* try to read the file */
+        rc = parse_uri_file(filename, &suri, &nspace, &rank);
+        free(filename);
+        if (PMIX_SUCCESS == rc) {
+            pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
+                                "ptl:tcp:tool attempt connect to system server at %s", suri);
+            /* go ahead and try to connect */
+            if (PMIX_SUCCESS == try_connect(suri, &sd, iptr, niptr)) {
+                /* don't free nspace - we will use it below */
+                if (NULL != iptr) {
+                    PMIX_INFO_FREE(iptr, niptr);
+                }
+                /* save the URI for storage */
+                urikv = PMIX_NEW(pmix_kval_t);
+                urikv->key = strdup(PMIX_SERVER_URI);
+                PMIX_VALUE_CREATE(urikv->value, 1);
+                PMIX_VALUE_LOAD(urikv->value, suri, PMIX_STRING);
+                goto complete;
+            }
+            free(nspace);
+        }
+    }
+
+    /* we get here if they either didn't ask for a system-level connection,
+     * or they asked for it and it didn't succeed. If they _only_ wanted
+     * a system-level connection, then we are done */
+    if (system_level_only) {
+        pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
+                            "ptl:tcp: connecting to system failed");
+        if (NULL != suri) {
+            free(suri);
+        }
+        if (NULL != iptr) {
+            PMIX_INFO_FREE(iptr, niptr);
+        }
+        return PMIX_ERR_UNREACH;
+    }
+
     /* if they gave us a pid, then look for it */
     if (0 != pid) {
         if (NULL != server_nspace) {
@@ -538,55 +587,6 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
         }
         /* since they gave us a specific nspace and we couldn't
          * connect to it, return an error */
-        return PMIX_ERR_UNREACH;
-    }
-
-    /* if they asked for system-level, we start there */
-    if (system_level || system_level_only) {
-        if (0 > asprintf(&filename, "%s/pmix.sys.%s", mca_ptl_tcp_component.system_tmpdir, myhost)) {
-            if (NULL != iptr) {
-                PMIX_INFO_FREE(iptr, niptr);
-            }
-            return PMIX_ERR_NOMEM;
-        }
-        pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
-                            "ptl:tcp:tool looking for system server at %s",
-                            filename);
-        /* try to read the file */
-        rc = parse_uri_file(filename, &suri, &nspace, &rank);
-        free(filename);
-        if (PMIX_SUCCESS == rc) {
-            pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
-                                "ptl:tcp:tool attempt connect to system server at %s", suri);
-            /* go ahead and try to connect */
-            if (PMIX_SUCCESS == try_connect(suri, &sd, iptr, niptr)) {
-                /* don't free nspace - we will use it below */
-                if (NULL != iptr) {
-                    PMIX_INFO_FREE(iptr, niptr);
-                }
-                /* save the URI for storage */
-                urikv = PMIX_NEW(pmix_kval_t);
-                urikv->key = strdup(PMIX_SERVER_URI);
-                PMIX_VALUE_CREATE(urikv->value, 1);
-                PMIX_VALUE_LOAD(urikv->value, suri, PMIX_STRING);
-                goto complete;
-            }
-            free(nspace);
-        }
-    }
-
-    /* we get here if they either didn't ask for a system-level connection,
-     * or they asked for it and it didn't succeed. If they _only_ wanted
-     * a system-level connection, then we are done */
-    if (system_level_only) {
-        pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
-                            "ptl:tcp: connecting to system failed");
-        if (NULL != suri) {
-            free(suri);
-        }
-        if (NULL != iptr) {
-            PMIX_INFO_FREE(iptr, niptr);
-        }
         return PMIX_ERR_UNREACH;
     }
 
@@ -1253,9 +1253,13 @@ static pmix_status_t recv_connect_ack(int sd, uint8_t myflag)
         tv.tv_sec  = mca_ptl_tcp_component.handshake_wait_time;
         tv.tv_usec = 0;
         if (0 != setsockopt(sd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv))) {
-            pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
-                                "pmix: recv_connect_ack could not setsockopt SO_RCVTIMEO");
-            return PMIX_ERR_UNREACH;
+            if (ENOPROTOOPT == errno || EOPNOTSUPP == errno) {
+                sockopt = false;
+            } else {
+                pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
+                                    "pmix: recv_connect_ack could not setsockopt SO_RCVTIMEO");
+                return PMIX_ERR_UNREACH;
+            }
         }
     }
 

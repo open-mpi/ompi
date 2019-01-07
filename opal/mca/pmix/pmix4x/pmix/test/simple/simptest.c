@@ -926,6 +926,7 @@ static void lkcbfn(int sd, short args, void *cbdata)
 
     lk->cbfunc(PMIX_SUCCESS, lk->pd, lk->n, lk->cbdata);
     PMIX_PDATA_FREE(lk->pd, lk->n);
+    free(lk);
 }
 
 static pmix_status_t lookup_fn(const pmix_proc_t *proc, char **keys,
@@ -937,7 +938,7 @@ static pmix_status_t lookup_fn(const pmix_proc_t *proc, char **keys,
     size_t i, n;
     pmix_pdata_t *pd = NULL;
     pmix_status_t ret = PMIX_ERR_NOT_FOUND;
-    lkobj_t lk;
+    lkobj_t *lk;
 
     pmix_output(0, "SERVER: LOOKUP");
 
@@ -971,11 +972,12 @@ static pmix_status_t lookup_fn(const pmix_proc_t *proc, char **keys,
     }
     PMIX_LIST_DESTRUCT(&results);
     if (PMIX_SUCCESS == ret) {
-        lk.pd = pd;
-        lk.n = n;
-        lk.cbfunc = cbfunc;
-        lk.cbdata = cbdata;
-        PMIX_THREADSHIFT(&lk, lkcbfn);
+        lk = (lkobj_t*)malloc(sizeof(lkobj_t));
+        lk->pd = pd;
+        lk->n = n;
+        lk->cbfunc = cbfunc;
+        lk->cbdata = cbdata;
+        PMIX_THREADSHIFT(lk, lkcbfn);
     }
 
     return ret;

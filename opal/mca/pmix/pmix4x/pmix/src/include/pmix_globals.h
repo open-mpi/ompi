@@ -420,6 +420,7 @@ typedef struct {
      */
     pmix_proc_t *targets;
     size_t ntargets;
+    size_t nleft;   // number of targets left to be notified
     /* When generating a notification, the originator can
      * specify the range of procs affected by this event.
      * For example, when creating a JOB_TERMINATED event,
