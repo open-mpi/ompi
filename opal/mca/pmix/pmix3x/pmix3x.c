@@ -1,8 +1,8 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
- * Copyright (c) 2014-2017 Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2014-2019 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2014-2015 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2016      Cisco Systems, Inc.  All rights reserved.
@@ -1106,10 +1106,12 @@ int pmix3x_value_unload(opal_value_t *kv,
         OPAL_ERROR_LOG(OPAL_ERR_NOT_SUPPORTED);
         rc = OPAL_ERR_NOT_SUPPORTED;
         break;
+#ifdef PMIX_MODEX
     case PMIX_MODEX:
         OPAL_ERROR_LOG(OPAL_ERR_NOT_SUPPORTED);
         rc = OPAL_ERR_NOT_SUPPORTED;
         break;
+#endif /* PMIX_MODEX */
     case PMIX_PERSIST:
         kv->type = OPAL_PERSIST;
         kv->data.uint8 = pmix3x_convert_persist(v->data.persist);
@@ -1218,10 +1220,12 @@ int pmix3x_value_unload(opal_value_t *kv,
         OPAL_ERROR_LOG(OPAL_ERR_NOT_SUPPORTED);
         rc = OPAL_ERR_NOT_SUPPORTED;
         break;
+#ifdef PMIX_INFO_ARRAY
     case PMIX_INFO_ARRAY:
         OPAL_ERROR_LOG(OPAL_ERR_NOT_SUPPORTED);
         rc = OPAL_ERR_NOT_SUPPORTED;
         break;
+#endif /* PMIX_INFO_ARRAY */
     case PMIX_IOF_CHANNEL:
         OPAL_ERROR_LOG(OPAL_ERR_NOT_SUPPORTED);
         rc = OPAL_ERR_NOT_SUPPORTED;
