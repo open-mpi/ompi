@@ -70,7 +70,7 @@ void ompi_type_create_f90_complex_f(MPI_Fint *p, MPI_Fint *r,
 				   MPI_Fint *newtype, MPI_Fint *ierr)
 {
     int c_ierr;
-    MPI_Datatype c_newtype = PMPI_Type_f2c(*newtype);
+    MPI_Datatype c_newtype;
 
     c_ierr = PMPI_Type_create_f90_complex(OMPI_FINT_2_INT(*p),
                                          OMPI_FINT_2_INT(*r),
