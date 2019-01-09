@@ -22,7 +22,7 @@
  *                         All Rights reserved.
  * Copyright (c) 2018      Mellanox Technologies, Inc.
  *                         All rights reserved.
- * Copyright (c) 2018      Triad National Security, LLC. All rights
+ * Copyright (c) 2018-2019 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -388,9 +388,6 @@ opal_init_util(int* pargc, char*** pargv)
 
     opal_init_called = true;
 
-    /* register for */
-    opal_finalize_register_cleanup_arg (mca_base_framework_close_list, opal_init_util_frameworks);
-
     /* set the nodename right away so anyone who needs it has it. Note
      * that we don't bother with fqdn and prefix issues here - we let
      * the RTE later replace this with a modified name if the user
@@ -510,6 +507,9 @@ opal_init_util(int* pargc, char*** pargv)
                 __FILE__, __LINE__, ret);
         return ret;
     }
+
+    /* register for */
+    opal_finalize_register_cleanup_arg (mca_base_framework_close_list, opal_init_util_frameworks);
 
     OPAL_TIMING_ENV_NEXT(otmng, "opal_if_init");
 
