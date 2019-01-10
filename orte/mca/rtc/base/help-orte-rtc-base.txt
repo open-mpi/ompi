@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2011-2014 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2011-2018 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2011      Los Alamos National Security, LLC.
 #                         All rights reserved.
 # Copyright (c) 2014      Intel, Inc.  All rights reserved.
@@ -22,13 +22,6 @@
 #
 # This is the US/English general help file for Open RTE's orterun.
 #
-[orte-rtc-base:alloc-error]
-There are not enough slots available in the system to satisfy the %d slots
-that were requested by the application:
-  %s
-
-Either request fewer slots for your application, or make more slots available
-for use.
 [orte-rtc-base:not-all-mapped-alloc]
 Some of the requested hosts are not included in the current allocation for the
 application:
