@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018      Intel, Inc. All rights reserved.
+ * Copyright (c) 2018-2019 Intel, Inc.  All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -22,6 +22,8 @@ typedef struct {
     pmix_pnet_base_component_t super;
     char *static_ports;
     char *default_request;
+    char *incparms;
+    char *excparms;
     char **include;
     char **exclude;
 } pmix_pnet_tcp_component_t;

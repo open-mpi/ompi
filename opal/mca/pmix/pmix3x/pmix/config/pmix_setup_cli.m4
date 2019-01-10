@@ -2,7 +2,8 @@ dnl -*- shell-script -*-
 dnl
 dnl Copyright (c) 2016      Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
-dnl Copyright (c) 2017      Intel, Inc. All rights reserved.
+dnl Copyright (c) 2017-2019 Intel, Inc.  All rights reserved.
+dnl Copyright (c) 2018      Cisco, Inc. All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -33,6 +34,7 @@ AC_DEFUN([PMIX_CAPTURE_CONFIGURE_CLI],[
 
         eval "$1=\$$1\\ \$quoted_arg"
     done
+    AC_DEFINE_UNQUOTED([$1], ["$$1"], [Capture the configure cmd line])
     PMIX_VAR_SCOPE_POP
     AC_SUBST($1)
 ])

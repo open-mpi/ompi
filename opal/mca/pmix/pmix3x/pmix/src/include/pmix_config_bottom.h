@@ -13,7 +13,7 @@
  * Copyright (c) 2009-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
- * Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2018 Intel, Inc.  All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -573,4 +573,5 @@ typedef PMIX_PTRDIFF_TYPE ptrdiff_t;
 #undef HAVE_CONFIG_H
 
 #endif /* PMIX_BUILDING */
+
 #endif /* PMIX_CONFIG_BOTTOM_H */

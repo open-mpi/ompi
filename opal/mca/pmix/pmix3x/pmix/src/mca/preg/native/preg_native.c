@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2015-2018 Intel, Inc.  All rights reserved.
- * Copyright (c) 2016      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2016-2019 IBM Corporation.  All rights reserved.
  * Copyright (c) 2018      Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
  *
@@ -152,9 +152,22 @@ static pmix_status_t generate_node_regex(const char *input,
             suffix = NULL;
             numdigits = (int)strlen(&vptr[startnum]);
         }
+
         /* is this value already on our list? */
         found = false;
         PMIX_LIST_FOREACH(vreg, &vids, pmix_regex_value_t) {
+            // The regex must preserve ordering of the values.
+            // If we disqualified this entry in a previous check then exclude it
+            // from future checks as well. This will prevent a later entry from
+            // being 'pulled forward' accidentally. For example, given:
+            // "a28n01,a99n02,a28n02"
+            // Without this 'skip' the loop would have 'a28n02' combine with
+            // 'a28n01' jumping over the 'a99n02' entry, and thus not preserving
+            // the order of the list when the regex is unpacked.
+            if( vreg->skip ) {
+                continue;
+            }
+
             if (0 < strlen(prefix) && NULL == vreg->prefix) {
                 continue;
             }
@@ -163,6 +176,7 @@ static pmix_status_t generate_node_regex(const char *input,
             }
             if (0 < strlen(prefix) && NULL != vreg->prefix
                 && 0 != strcmp(prefix, vreg->prefix)) {
+                vreg->skip = true;
                 continue;
             }
             if (NULL == suffix && NULL != vreg->suffix) {
@@ -173,9 +187,11 @@ static pmix_status_t generate_node_regex(const char *input,
             }
             if (NULL != suffix && NULL != vreg->suffix &&
                 0 != strcmp(suffix, vreg->suffix)) {
+                vreg->skip = true;
                 continue;
             }
             if (numdigits != vreg->num_digits) {
+                vreg->skip = true;
                 continue;
             }
             /* found a match - flag it */
@@ -522,7 +538,7 @@ static pmix_status_t resolve_peers(const char *nodename,
     /* scope is irrelevant as the info we seek must be local */
     cb.scope = PMIX_SCOPE_UNDEF;
     /* let the proc point to the nspace */
-    (void)strncpy(proc.nspace, nspace, PMIX_MAX_NSLEN);
+    pmix_strncpy(proc.nspace, nspace, PMIX_MAX_NSLEN);
     proc.rank = PMIX_RANK_WILDCARD;
     cb.proc = &proc;
 
@@ -565,7 +581,7 @@ static pmix_status_t resolve_peers(const char *nodename,
                 goto complete;
             }
             for (j=0; j < np; j++) {
-                (void)strncpy(p[j].nspace, nspace, PMIX_MAX_NSLEN);
+                pmix_strncpy(p[j].nspace, nspace, PMIX_MAX_NSLEN);
                 p[j].rank = strtoul(ptr[j], NULL, 10);
             }
             rc = PMIX_SUCCESS;
@@ -619,7 +635,7 @@ static pmix_status_t resolve_nodes(const char *nspace,
     /* scope is irrelevant as the info we seek must be local */
     cb.scope = PMIX_SCOPE_UNDEF;
     /* put the nspace in the proc field */
-    (void)strncpy(proc.nspace, nspace, PMIX_MAX_NSLEN);
+    pmix_strncpy(proc.nspace, nspace, PMIX_MAX_NSLEN);
     /* the info will be associated with PMIX_RANK_WILDCARD */
     proc.rank = PMIX_RANK_WILDCARD;
     cb.proc = &proc;

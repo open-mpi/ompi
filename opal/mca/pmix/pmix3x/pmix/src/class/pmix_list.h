@@ -13,7 +13,7 @@
  * Copyright (c) 2007      Voltaire All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2018 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -109,7 +109,7 @@ struct pmix_list_item_t
 
 #if PMIX_ENABLE_DEBUG
     /** Atomic reference count for debugging */
-    volatile int32_t pmix_list_item_refcount;
+    pmix_atomic_int32_t pmix_list_item_refcount;
     /** The list this item belong to */
     volatile struct pmix_list_t* pmix_list_item_belong_to;
 #endif

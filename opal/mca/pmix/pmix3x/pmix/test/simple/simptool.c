@@ -13,7 +13,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2018 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Mellanox Technologies, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -95,6 +95,7 @@ int main(int argc, char **argv)
     PMIX_QUERY_CREATE(query, nq);
     pmix_argv_append_nosize(&query[0].keys, "foobar");
     pmix_argv_append_nosize(&query[1].keys, "spastic");
+    pmix_argv_append_nosize(&query[1].keys, PMIX_SERVER_URI);
     active = true;
     if (PMIX_SUCCESS != (rc = PMIx_Query_info_nb(query, nq, cbfunc, (void*)&active))) {
         pmix_output(0, "Client ns %s rank %d: PMIx_Query_info failed: %d", myproc.nspace, myproc.rank, rc);

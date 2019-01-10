@@ -60,7 +60,7 @@ typedef void (*pmix_pnet_base_module_fini_fn_t)(void);
  * each other, environmental variables picked up at the login node
  * for forwarding to compute nodes, or allocation of static endpts
  */
-typedef pmix_status_t (*pmix_pnet_base_module_allocate_fn_t)(pmix_nspace_t *nptr,
+typedef pmix_status_t (*pmix_pnet_base_module_allocate_fn_t)(pmix_namespace_t *nptr,
                                                              pmix_info_t *info,
                                                              pmix_list_t *ilist);
 
@@ -68,7 +68,7 @@ typedef pmix_status_t (*pmix_pnet_base_module_allocate_fn_t)(pmix_nspace_t *nptr
  * Give the local network library an opportunity to setup address information
  * for the application by passing in the layout type and a regex describing
  * the layout */
-typedef pmix_status_t (*pmix_pnet_base_module_setup_local_net_fn_t)(pmix_nspace_t *nptr,
+typedef pmix_status_t (*pmix_pnet_base_module_setup_local_net_fn_t)(pmix_namespace_t *nptr,
                                                                     pmix_info_t info[],
                                                                     size_t ninfo);
 
@@ -76,7 +76,7 @@ typedef pmix_status_t (*pmix_pnet_base_module_setup_local_net_fn_t)(pmix_nspace_
  * Give the local network library an opportunity to add any envars to the
  * environment of a local application process prior to fork/exec
  */
-typedef pmix_status_t (*pmix_pnet_base_module_setup_fork_fn_t)(pmix_nspace_t *nptr,
+typedef pmix_status_t (*pmix_pnet_base_module_setup_fork_fn_t)(pmix_namespace_t *nptr,
                                                                const pmix_proc_t *proc,
                                                                char ***env);
 
@@ -90,13 +90,13 @@ typedef void (*pmix_pnet_base_module_child_finalized_fn_t)(pmix_proc_t *peer);
  * Provide  an opportunity for the local network library to cleanup after
  * all local clients for a given application have terminated
  */
-typedef void (*pmix_pnet_base_module_local_app_finalized_fn_t)(pmix_nspace_t *nptr);
+typedef void (*pmix_pnet_base_module_local_app_finalized_fn_t)(pmix_namespace_t *nptr);
 
 /**
  * Provide an opportunity for the fabric components to cleanup any
  * resource allocations (e.g., static ports) they may have assigned
  */
-typedef void (*pmix_pnet_base_module_dregister_nspace_fn_t)(pmix_nspace_t *nptr);
+typedef void (*pmix_pnet_base_module_dregister_nspace_fn_t)(pmix_namespace_t *nptr);
 
 
 /**
@@ -166,7 +166,7 @@ typedef struct {
 
 
 /* define a few API versions of the functions - main difference is the
- * string nspace parameter instead of a pointer to pmix_nspace_t. This
+ * string nspace parameter instead of a pointer to pmix_namespace_t. This
  * is done as an optimization to avoid having every component look for
  * that pointer */
 typedef pmix_status_t (*pmix_pnet_base_API_allocate_fn_t)(char *nspace,

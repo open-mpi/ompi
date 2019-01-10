@@ -13,7 +13,7 @@
  * Copyright (c) 2011-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2018 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -62,6 +62,37 @@ pmix_bfrops_module_t pmix_bfrops_pmix21_module = {
     .register_type = register_type,
     .data_type_string = data_type_string
 };
+
+/* DEPRECATED data type values */
+#define PMIX_MODEX        29
+#define PMIX_INFO_ARRAY   44
+
+/****    PMIX MODEX STRUCT  -  DEPRECATED    ****/
+typedef struct pmix_modex_data {
+    char nspace[PMIX_MAX_NSLEN+1];
+    int rank;
+    uint8_t *blob;
+    size_t size;
+} pmix_modex_data_t;
+
+static pmix_status_t pmix21_bfrop_pack_array(pmix_buffer_t *buffer, const void *src,
+                                             int32_t num_vals, pmix_data_type_t type);
+static pmix_status_t pmix21_bfrop_pack_modex(pmix_buffer_t *buffer, const void *src,
+                                    int32_t num_vals, pmix_data_type_t type);
+static pmix_status_t pmix21_bfrop_unpack_array(pmix_buffer_t *buffer, void *dest,
+                                               int32_t *num_vals, pmix_data_type_t type);
+static pmix_status_t pmix21_bfrop_unpack_modex(pmix_buffer_t *buffer, void *dest,
+                                       int32_t *num_vals, pmix_data_type_t type);
+static pmix_status_t pmix21_bfrop_copy_array(pmix_info_array_t **dest,
+                                             pmix_info_array_t *src,
+                                             pmix_data_type_t type);
+static pmix_status_t pmix21_bfrop_copy_modex(pmix_modex_data_t **dest, pmix_modex_data_t *src,
+                                    pmix_data_type_t type);
+static pmix_status_t pmix21_bfrop_print_array(char **output, char *prefix,
+                                              pmix_info_array_t *src, pmix_data_type_t type);
+static pmix_status_t pmix21_bfrop_print_modex(char **output, char *prefix,
+                                     pmix_modex_data_t *src, pmix_data_type_t type);
+
 
 static pmix_status_t init(void)
 {
@@ -265,10 +296,10 @@ static pmix_status_t init(void)
                        &mca_bfrops_v21_component.types);
 
     PMIX_REGISTER_TYPE("PMIX_MODEX", PMIX_MODEX,
-                       pmix_bfrops_base_pack_modex,
-                       pmix_bfrops_base_unpack_modex,
-                       pmix_bfrops_base_copy_modex,
-                       pmix_bfrops_base_print_modex,
+                       pmix21_bfrop_pack_modex,
+                       pmix21_bfrop_unpack_modex,
+                       pmix21_bfrop_copy_modex,
+                       pmix21_bfrop_print_modex,
                        &mca_bfrops_v21_component.types);
 
     /* these are fixed-sized values and can be done by base */
@@ -374,10 +405,10 @@ static pmix_status_t init(void)
 
     /**** DEPRECATED ****/
     PMIX_REGISTER_TYPE("PMIX_INFO_ARRAY", PMIX_INFO_ARRAY,
-                       pmix_bfrops_base_pack_array,
-                       pmix_bfrops_base_unpack_array,
-                       pmix_bfrops_base_copy_array,
-                       pmix_bfrops_base_print_array,
+                       pmix21_bfrop_pack_array,
+                       pmix21_bfrop_unpack_array,
+                       pmix21_bfrop_copy_array,
+                       pmix21_bfrop_print_array,
                        &mca_bfrops_v21_component.types);
     /********************/
 
@@ -446,3 +477,198 @@ static const char* data_type_string(pmix_data_type_t type)
 {
     return pmix_bfrops_base_data_type_string(&mca_bfrops_v21_component.types, type);
 }
+
+/**** DEPRECATED ****/
+static pmix_status_t pmix21_bfrop_pack_array(pmix_buffer_t *buffer, const void *src,
+                                             int32_t num_vals, pmix_data_type_t type)
+{
+    pmix_info_array_t *ptr;
+    int32_t i;
+    pmix_status_t ret;
+
+    ptr = (pmix_info_array_t *) src;
+
+    for (i = 0; i < num_vals; ++i) {
+        /* pack the size */
+        if (PMIX_SUCCESS != (ret = pmix_bfrops_base_pack_sizet(buffer, &ptr[i].size, 1, PMIX_SIZE))) {
+            return ret;
+        }
+        if (0 < ptr[i].size) {
+            /* pack the values */
+            if (PMIX_SUCCESS != (ret = pmix_bfrops_base_pack_info(buffer, ptr[i].array, ptr[i].size, PMIX_INFO))) {
+                return ret;
+            }
+        }
+    }
+
+    return PMIX_SUCCESS;
+}
+
+static pmix_status_t pmix21_bfrop_pack_modex(pmix_buffer_t *buffer, const void *src,
+                                    int32_t num_vals, pmix_data_type_t type)
+{
+    pmix_modex_data_t *ptr;
+    int32_t i;
+    pmix_status_t ret;
+
+    ptr = (pmix_modex_data_t *) src;
+
+    for (i = 0; i < num_vals; ++i) {
+        if (PMIX_SUCCESS != (ret = pmix_bfrops_base_pack_sizet(buffer, &ptr[i].size, 1, PMIX_SIZE))) {
+            return ret;
+        }
+        if( 0 < ptr[i].size){
+            if (PMIX_SUCCESS != (ret = pmix_bfrops_base_pack_byte(buffer, ptr[i].blob, ptr[i].size, PMIX_UINT8))) {
+                return ret;
+            }
+        }
+    }
+    return PMIX_SUCCESS;
+}
+
+/********************/
+
+/**** DEPRECATED ****/
+static pmix_status_t pmix21_bfrop_unpack_array(pmix_buffer_t *buffer, void *dest,
+                                               int32_t *num_vals, pmix_data_type_t type)
+{
+    pmix_info_array_t *ptr;
+    int32_t i, n, m;
+    pmix_status_t ret;
+
+    pmix_output_verbose(20, pmix_bfrops_base_framework.framework_output,
+                        "pmix21_bfrop_unpack: %d info arrays", *num_vals);
+
+    ptr = (pmix_info_array_t*) dest;
+    n = *num_vals;
+
+    for (i = 0; i < n; ++i) {
+        pmix_output_verbose(20, pmix_bfrops_base_framework.framework_output,
+                            "pmix21_bfrop_unpack: init array[%d]", i);
+        memset(&ptr[i], 0, sizeof(pmix_info_array_t));
+        /* unpack the size of this array */
+        m=1;
+        if (PMIX_SUCCESS != (ret = pmix_bfrops_base_unpack_sizet(buffer, &ptr[i].size, &m, PMIX_SIZE))) {
+            return ret;
+        }
+        if (0 < ptr[i].size) {
+            ptr[i].array = (pmix_info_t*)malloc(ptr[i].size * sizeof(pmix_info_t));
+            m=ptr[i].size;
+            if (PMIX_SUCCESS != (ret = pmix_bfrops_base_unpack_value(buffer, ptr[i].array, &m, PMIX_INFO))) {
+                return ret;
+            }
+        }
+    }
+    return PMIX_SUCCESS;
+}
+
+static pmix_status_t pmix21_bfrop_unpack_modex(pmix_buffer_t *buffer, void *dest,
+                            int32_t *num_vals, pmix_data_type_t type)
+{
+    pmix_modex_data_t *ptr;
+    int32_t i, n, m;
+    pmix_status_t ret;
+
+    pmix_output_verbose(20, pmix_bfrops_base_framework.framework_output,
+                        "pmix20_bfrop_unpack: %d modex", *num_vals);
+
+    ptr = (pmix_modex_data_t *) dest;
+    n = *num_vals;
+
+    for (i = 0; i < n; ++i) {
+        memset(&ptr[i], 0, sizeof(pmix_modex_data_t));
+        /* unpack the number of bytes */
+        m=1;
+        if (PMIX_SUCCESS != (ret = pmix_bfrops_base_unpack_sizet(buffer, &ptr[i].size, &m, PMIX_SIZE))) {
+            return ret;
+        }
+        if (0 < ptr[i].size) {
+            ptr[i].blob = (uint8_t*)malloc(ptr[i].size * sizeof(uint8_t));
+            m=ptr[i].size;
+            if (PMIX_SUCCESS != (ret = pmix_bfrops_base_unpack_byte(buffer, ptr[i].blob, &m, PMIX_UINT8))) {
+                return ret;
+            }
+        }
+    }
+    return PMIX_SUCCESS;
+}
+
+/********************/
+
+/**** DEPRECATED ****/
+static pmix_status_t pmix21_bfrop_copy_array(pmix_info_array_t **dest,
+                                             pmix_info_array_t *src,
+                                             pmix_data_type_t type)
+{
+    pmix_info_t *d1, *s1;
+
+    *dest = (pmix_info_array_t*)malloc(sizeof(pmix_info_array_t));
+    (*dest)->size = src->size;
+    (*dest)->array = (pmix_info_t*)malloc(src->size * sizeof(pmix_info_t));
+    d1 = (pmix_info_t*)(*dest)->array;
+    s1 = (pmix_info_t*)src->array;
+    memcpy(d1, s1, src->size * sizeof(pmix_info_t));
+    return PMIX_SUCCESS;
+}
+
+static pmix_status_t pmix21_bfrop_copy_modex(pmix_modex_data_t **dest, pmix_modex_data_t *src,
+                                    pmix_data_type_t type)
+{
+    *dest = (pmix_modex_data_t*)malloc(sizeof(pmix_modex_data_t));
+    if (NULL == *dest) {
+        return PMIX_ERR_OUT_OF_RESOURCE;
+    }
+    (*dest)->blob = NULL;
+    (*dest)->size = 0;
+    if (NULL != src->blob) {
+        (*dest)->blob = (uint8_t*)malloc(src->size * sizeof(uint8_t));
+        if (NULL == (*dest)->blob) {
+            return PMIX_ERR_OUT_OF_RESOURCE;
+        }
+        memcpy((*dest)->blob, src->blob, src->size * sizeof(uint8_t));
+        (*dest)->size = src->size;
+    }
+    return PMIX_SUCCESS;
+}
+
+/*******************/
+
+/**** DEPRECATED ****/
+static pmix_status_t pmix21_bfrop_print_array(char **output, char *prefix,
+                                              pmix_info_array_t *src, pmix_data_type_t type)
+{
+    size_t j;
+    char *tmp, *tmp2, *tmp3, *pfx;
+    pmix_info_t *s1;
+
+    if (0 > asprintf(&tmp, "%sARRAY SIZE: %ld", prefix, (long)src->size)) {
+        return PMIX_ERR_NOMEM;
+    }
+    if (0 > asprintf(&pfx, "\n%s\t",  (NULL == prefix) ? "" : prefix)) {
+        free(tmp);
+        return PMIX_ERR_NOMEM;
+    }
+    s1 = (pmix_info_t*)src->array;
+
+    for (j=0; j < src->size; j++) {
+        pmix_bfrops_base_print_info(&tmp2, pfx, &s1[j], PMIX_INFO);
+        if (0 > asprintf(&tmp3, "%s%s", tmp, tmp2)) {
+            free(tmp);
+            free(tmp2);
+            return PMIX_ERR_NOMEM;
+        }
+        free(tmp);
+        free(tmp2);
+        tmp = tmp3;
+    }
+    *output = tmp;
+    return PMIX_SUCCESS;
+}
+
+static pmix_status_t pmix21_bfrop_print_modex(char **output, char *prefix,
+                                     pmix_modex_data_t *src, pmix_data_type_t type)
+{
+    return PMIX_SUCCESS;
+}
+
+/********************/

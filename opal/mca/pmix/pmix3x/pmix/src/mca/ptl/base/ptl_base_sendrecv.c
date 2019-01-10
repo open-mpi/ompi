@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      Artem Y. Polyakov <artpol84@gmail.com>.
  *                         All rights reserved.
  * Copyright (c) 2015-2017 Research Organization for Information Science
@@ -55,16 +55,30 @@ static void _notify_complete(pmix_status_t status, void *cbdata)
     PMIX_RELEASE(chain);
 }
 
+static void _timeout(int sd, short args, void *cbdata)
+{
+    pmix_server_trkr_t *trk = (pmix_server_trkr_t*)cbdata;
+
+    PMIX_RELEASE(trk);
+}
+
+static void lcfn(pmix_status_t status, void *cbdata)
+{
+    pmix_peer_t *peer = (pmix_peer_t*)cbdata;
+    PMIX_RELEASE(peer);
+}
+
 void pmix_ptl_base_lost_connection(pmix_peer_t *peer, pmix_status_t err)
 {
-    pmix_server_trkr_t *trk;
+    pmix_server_trkr_t *trk, *tnxt;
     pmix_server_caddy_t *rinfo, *rnext;
-    pmix_regevents_info_t *reginfoptr, *regnext;
-    pmix_peer_events_info_t *pr, *pnext;
     pmix_rank_info_t *info, *pinfo;
     pmix_ptl_posted_recv_t *rcv;
     pmix_buffer_t buf;
     pmix_ptl_hdr_t hdr;
+    struct timeval tv = {1200, 0};
+    pmix_proc_t proc;
+    pmix_status_t rc;
 
     /* stop all events */
     if (peer->recv_ev_active) {
@@ -82,20 +96,17 @@ void pmix_ptl_base_lost_connection(pmix_peer_t *peer, pmix_status_t err)
     CLOSE_THE_SOCKET(peer->sd);
 
     if (PMIX_PROC_IS_SERVER(pmix_globals.mypeer) &&
-        !PMIX_PROC_IS_LAUNCHER(pmix_globals.mypeer)) {
+        !PMIX_PROC_IS_TOOL(pmix_globals.mypeer)) {
         /* if I am a server, then we need to ensure that
          * we properly account for the loss of this client
          * from any local collectives in which it was
          * participating - note that the proc would not
          * have been added to any collective tracker until
          * after it successfully connected */
-        PMIX_LIST_FOREACH(trk, &pmix_server_globals.collectives, pmix_server_trkr_t) {
+        PMIX_LIST_FOREACH_SAFE(trk, tnxt, &pmix_server_globals.collectives, pmix_server_trkr_t) {
             /* see if this proc is participating in this tracker */
             PMIX_LIST_FOREACH_SAFE(rinfo, rnext, &trk->local_cbs, pmix_server_caddy_t) {
-                if (0 != strncmp(rinfo->peer->info->pname.nspace, peer->info->pname.nspace, PMIX_MAX_NSLEN)) {
-                    continue;
-                }
-                if (rinfo->peer->info->pname.rank != peer->info->pname.rank) {
+                if (!PMIX_CHECK_PROCID(&rinfo->peer->info->pname, &peer->info->pname)) {
                     continue;
                 }
                 /* it is - adjust the count */
@@ -103,24 +114,64 @@ void pmix_ptl_base_lost_connection(pmix_peer_t *peer, pmix_status_t err)
                 /* remove it from the list */
                 pmix_list_remove_item(&trk->local_cbs, &rinfo->super);
                 PMIX_RELEASE(rinfo);
-                /* we need to let the other participants know that this
-                 * proc has disappeared as otherwise the collective will never
-                 * complete */
+                trk->lost_connection = true;  // mark that a peer's connection was lost
+                if (0 == pmix_list_get_size(&trk->local_cbs)) {
+                    /* this tracker is complete, so release it - there
+                     * is nobody waiting for a response */
+                    pmix_list_remove_item(&pmix_server_globals.collectives, &trk->super);
+                    /* do NOT release the tracker here as the host may
+                     * have a copy they will return later. However, they
+                     * might never call back, so set a LONG timeout to
+                     * we avoid a memory leak if they don't */
+                    pmix_event_evtimer_set(pmix_globals.evbase, &trk->ev,
+                                           _timeout, trk);
+                    pmix_event_evtimer_add(&trk->ev, &tv);
+                    trk->event_active = true;
+                    break;
+                }
+                /* if there are other participants waiting for a response,
+                 * we need to let them know that this proc has disappeared
+                 * as otherwise the collective will never complete */
                 if (PMIX_FENCENB_CMD == trk->type) {
                     if (NULL != trk->modexcbfunc) {
+                        /* do NOT release the tracker here as the host may
+                         * have a copy they will return later. However, they
+                         * might never call back, so set a LONG timeout to
+                         * we avoid a memory leak if they don't */
+                        pmix_event_evtimer_set(pmix_globals.evbase, &trk->ev,
+                                               _timeout, trk);
+                        pmix_event_evtimer_add(&trk->ev, &tv);
+                        trk->event_active = true;
                         trk->modexcbfunc(PMIX_ERR_LOST_CONNECTION_TO_CLIENT, NULL, 0, trk, NULL, NULL);
                     }
                 } else if (PMIX_CONNECTNB_CMD == trk->type) {
                     if (NULL != trk->op_cbfunc) {
+                        /* do NOT release the tracker here as the host may
+                         * have a copy they will return later. However, they
+                         * might never call back, so set a LONG timeout to
+                         * we avoid a memory leak if they don't */
+                        pmix_event_evtimer_set(pmix_globals.evbase, &trk->ev,
+                                               _timeout, trk);
+                        pmix_event_evtimer_add(&trk->ev, &tv);
+                        trk->event_active = true;
                         trk->op_cbfunc(PMIX_ERR_LOST_CONNECTION_TO_CLIENT, trk);
                     }
                 } else if (PMIX_DISCONNECTNB_CMD == trk->type) {
                     if (NULL != trk->op_cbfunc) {
+                        /* do NOT release the tracker here as the host may
+                         * have a copy they will return later. However, they
+                         * might never call back, so set a LONG timeout to
+                         * we avoid a memory leak if they don't */
+                        pmix_event_evtimer_set(pmix_globals.evbase, &trk->ev,
+                                               _timeout, trk);
+                        pmix_event_evtimer_add(&trk->ev, &tv);
+                        trk->event_active = true;
                         trk->op_cbfunc(PMIX_ERR_LOST_CONNECTION_TO_CLIENT, trk);
                     }
                 }
             }
         }
+
         /* remove this proc from the list of ranks for this nspace if it is
          * still there - we must check for multiple copies as there will be
          * one for each "clone" of this peer */
@@ -130,38 +181,53 @@ void pmix_ptl_base_lost_connection(pmix_peer_t *peer, pmix_status_t err)
             }
         }
         /* reduce the number of local procs */
-        --peer->nptr->nlocalprocs;
+        if (0 < peer->nptr->nlocalprocs) {
+            --peer->nptr->nlocalprocs;
+        }
 
         /* remove this client from our array */
         pmix_pointer_array_set_item(&pmix_server_globals.clients,
                                     peer->index, NULL);
-        /* cleanup any remaining events they have registered for */
-        PMIX_LIST_FOREACH_SAFE(reginfoptr, regnext, &pmix_server_globals.events, pmix_regevents_info_t) {
-            PMIX_LIST_FOREACH_SAFE(pr, pnext, &reginfoptr->peers, pmix_peer_events_info_t) {
-                if (peer == pr->peer) {
-                    pmix_list_remove_item(&reginfoptr->peers, &pr->super);
-                    PMIX_RELEASE(pr);
-                    if (0 == pmix_list_get_size(&reginfoptr->peers)) {
-                        pmix_list_remove_item(&pmix_server_globals.events, &reginfoptr->super);
-                        PMIX_RELEASE(reginfoptr);
-                        break;
-                    }
-                }
-            }
-        }
-        /* cleanup any sensors that are monitoring them */
-        pmix_psensor.stop(peer, NULL);
 
-        if (!peer->finalized && !PMIX_PROC_IS_TOOL(peer)) {
+        /* purge any notifications cached for this client */
+        pmix_server_purge_events(peer, NULL);
+
+        if (PMIX_PROC_IS_LAUNCHER(pmix_globals.mypeer)) {
+            /* only connection I can lose is to my server, so mark it */
+            pmix_globals.connected = false;
+        } else {
+            /* cleanup any sensors that are monitoring them */
+            pmix_psensor.stop(peer, NULL);
+        }
+
+        if (!peer->finalized && !PMIX_PROC_IS_TOOL(peer) && !pmix_globals.mypeer->finalized) {
             /* if this peer already called finalize, then
              * we are just seeing their connection go away
              * when they terminate - so do not generate
              * an event. If not, then we do */
-            PMIX_REPORT_EVENT(err, peer, PMIX_RANGE_NAMESPACE, _notify_complete);
+            PMIX_REPORT_EVENT(err, peer, PMIX_RANGE_PROC_LOCAL, _notify_complete);
         }
         /* now decrease the refcount - might actually free the object */
         PMIX_RELEASE(peer->info);
 
+        /* be sure to let the host know that the tool or client
+         * is gone - otherwise, it won't know to cleanup the
+         * resources it allocated to it */
+        if (NULL != pmix_host_server.client_finalized && !peer->finalized) {
+            pmix_strncpy(proc.nspace, peer->info->pname.nspace, PMIX_MAX_NSLEN);
+            proc.rank = peer->info->pname.rank;
+            /* now tell the host server */
+            rc = pmix_host_server.client_finalized(&proc, peer->info->server_object,
+                                                   lcfn, peer);
+            if (PMIX_SUCCESS == rc) {
+                /* we will release the peer when the server calls us back */
+                peer->finalized = true;
+                return;
+            }
+        }
+        /* mark the peer as "gone" since a release doesn't guarantee
+         * that the peer object doesn't persist */
+        peer->finalized = true;
         /* Release peer info */
         PMIX_RELEASE(peer);
      } else {
@@ -191,7 +257,7 @@ void pmix_ptl_base_lost_connection(pmix_peer_t *peer, pmix_status_t err)
         PMIX_DESTRUCT(&buf);
         /* if I called finalize, then don't generate an event */
         if (!pmix_globals.mypeer->finalized) {
-            PMIX_REPORT_EVENT(err, pmix_client_globals.myserver, PMIX_RANGE_LOCAL, _notify_complete);
+            PMIX_REPORT_EVENT(err, pmix_client_globals.myserver, PMIX_RANGE_PROC_LOCAL, _notify_complete);
         }
     }
 }
@@ -343,7 +409,9 @@ void pmix_ptl_base_send_handler(int sd, short flags, void *cbdata)
 
     if (NULL != msg) {
         pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
-                            "ptl:base:send_handler SENDING MSG");
+                            "ptl:base:send_handler SENDING MSG TO %s:%d TAG %u",
+                            peer->info->pname.nspace, peer->info->pname.rank,
+                            ntohl(msg->hdr.tag));
         if (PMIX_SUCCESS == (rc = send_msg(peer->sd, msg))) {
             // message is complete
             pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
@@ -574,10 +642,10 @@ void pmix_ptl_base_send(int sd, short args, void *cbdata)
     if (NULL == queue->peer || queue->peer->sd < 0 ||
         NULL == queue->peer->info || NULL == queue->peer->nptr) {
         /* this peer has lost connection */
+        if (NULL != queue->buf) {
+            PMIX_RELEASE(queue->buf);
+        }
         PMIX_RELEASE(queue);
-        /* ensure we post the object before another thread
-         * picks it back up */
-        PMIX_POST_OBJECT(queue);
         return;
     }
 
@@ -586,6 +654,12 @@ void pmix_ptl_base_send(int sd, short args, void *cbdata)
                         __FILE__, __LINE__,
                         (queue->peer)->info->pname.nspace,
                         (queue->peer)->info->pname.rank, (queue->tag));
+
+    if (NULL == queue->buf) {
+        /* nothing to send? */
+        PMIX_RELEASE(queue);
+        return;
+    }
 
     snd = PMIX_NEW(pmix_ptl_send_t);
     snd->hdr.pindex = htonl(pmix_globals.pindex);
@@ -623,12 +697,19 @@ void pmix_ptl_base_send_recv(int fd, short args, void *cbdata)
     /* acquire the object */
     PMIX_ACQUIRE_OBJECT(ms);
 
-    if (ms->peer->sd < 0) {
-        /* this peer's socket has been closed */
+    if (NULL == ms->peer || ms->peer->sd < 0 ||
+        NULL == ms->peer->info || NULL == ms->peer->nptr) {
+        /* this peer has lost connection */
+        if (NULL != ms->bfr) {
+            PMIX_RELEASE(ms->bfr);
+        }
         PMIX_RELEASE(ms);
-        /* ensure we post the object before another thread
-         * picks it back up */
-        PMIX_POST_OBJECT(NULL);
+        return;
+    }
+
+    if (NULL == ms->bfr) {
+        /* nothing to send? */
+        PMIX_RELEASE(ms);
         return;
     }
 
@@ -739,7 +820,9 @@ void pmix_ptl_base_process_msg(int fd, short flags, void *cbdata)
     /* if the tag in this message is above the dynamic marker, then
      * that is an error */
     if (PMIX_PTL_TAG_DYNAMIC <= msg->hdr.tag) {
-        pmix_output(0, "UNEXPECTED MESSAGE tag = %d", msg->hdr.tag);
+        pmix_output(0, "UNEXPECTED MESSAGE tag = %d from source %s:%d",
+                    msg->hdr.tag, msg->peer->info->pname.nspace,
+                    msg->peer->info->pname.rank);
         PMIX_REPORT_EVENT(PMIX_ERROR, msg->peer, PMIX_RANGE_NAMESPACE, _notify_complete);
         PMIX_RELEASE(msg);
         return;

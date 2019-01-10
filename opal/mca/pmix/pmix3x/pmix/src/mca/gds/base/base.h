@@ -14,6 +14,7 @@
  * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2018      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -76,6 +77,12 @@ struct pmix_gds_globals_t {
 };
 typedef struct pmix_gds_globals_t pmix_gds_globals_t;
 
+typedef void * pmix_gds_base_store_modex_cbdata_t;
+typedef pmix_status_t (*pmix_gds_base_store_modex_cb_fn_t)(pmix_gds_base_store_modex_cbdata_t cbdata,
+                                                           struct pmix_namespace_t *nspace,
+                                                           pmix_list_t *cbs,
+                                                           pmix_byte_object_t *bo);
+
 PMIX_EXPORT extern pmix_gds_globals_t pmix_gds_globals;
 
 /* get a list of available support - caller must free results
@@ -97,6 +104,12 @@ PMIX_EXPORT pmix_gds_base_module_t* pmix_gds_base_assign_module(pmix_info_t *inf
 */
 PMIX_EXPORT pmix_status_t pmix_gds_base_setup_fork(const pmix_proc_t *proc,
                                                    char ***env);
+
+PMIX_EXPORT pmix_status_t pmix_gds_base_store_modex(struct pmix_namespace_t *nspace,
+                                                           pmix_list_t *cbs,
+                                                           pmix_buffer_t *xfer,
+                                                           pmix_gds_base_store_modex_cb_fn_t cb_fn,
+                                                           pmix_gds_base_store_modex_cbdata_t cbdata);
 
 END_C_DECLS
 

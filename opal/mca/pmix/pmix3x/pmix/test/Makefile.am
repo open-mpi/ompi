@@ -11,7 +11,7 @@
 #                         All rights reserved.
 # Copyright (c) 2006-2010 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2012-2013 Los Alamos National Security, Inc.  All rights reserved.
-# Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
+# Copyright (c) 2013-2018 Intel, Inc.  All rights reserved.
 # Copyright (c) 2018      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
@@ -29,7 +29,7 @@ endif
 
 headers = test_common.h cli_stages.h server_callbacks.h utils.h test_fence.h \
         test_publish.h test_spawn.h test_cd.h test_resolve_peers.h test_error.h \
-        test_replace.h test_internal.h
+        test_replace.h test_internal.h test_server.h
 
 AM_CPPFLAGS = -I$(top_builddir)/src -I$(top_builddir)/src/include -I$(top_builddir)/src/api
 
@@ -43,7 +43,7 @@ endif
 noinst_PROGRAMS += pmix_test pmix_client pmix_regex
 
 pmix_test_SOURCES = $(headers) \
-        pmix_test.c test_common.c cli_stages.c server_callbacks.c utils.c
+        pmix_test.c test_common.c cli_stages.c server_callbacks.c test_server.c utils.c
 pmix_test_LDFLAGS = $(PMIX_PKG_CONFIG_LDFLAGS)
 pmix_test_LDADD = \
     $(top_builddir)/src/libpmix.la
@@ -70,7 +70,7 @@ pmix_client_LDADD = \
     $(top_builddir)/src/libpmix.la
 
 pmix_regex_SOURCES = $(headers) \
-        pmix_regex.c test_common.c cli_stages.c server_callbacks.c utils.c
+        pmix_regex.c test_common.c cli_stages.c server_callbacks.c test_server.c utils.c
 pmix_regex_LDFLAGS = $(PMIX_PKG_CONFIG_LDFLAGS)
 pmix_regex_LDADD = \
     $(top_builddir)/src/libpmix.la

@@ -172,63 +172,84 @@ pmix_status_t pmix_server_notify_client_of_event(pmix_status_t status,
 
 void pmix_event_timeout_cb(int fd, short flags, void *arg);
 
-#define PMIX_REPORT_EVENT(e, p, r, f)                                               \
-    do {                                                                            \
-        pmix_event_chain_t *ch, *cp;                                                \
-        size_t n, ninfo;                                                            \
-        pmix_info_t *info;                                                          \
-        pmix_proc_t proc;                                                           \
-                                                                                    \
-        ch = NULL;                                                                  \
-        /* see if we already have this event cached */                              \
-        PMIX_LIST_FOREACH(cp, &pmix_globals.cached_events, pmix_event_chain_t) {    \
-            if (cp->status == (e)) {                                                \
-                ch = cp;                                                            \
-                break;                                                              \
-            }                                                                       \
-        }                                                                           \
-        if (NULL == ch) {                                                           \
-            /* nope - need to add it */                                             \
-            ch = PMIX_NEW(pmix_event_chain_t);                                      \
-            ch->status = (e);                                                       \
-            ch->range = (r);                                                        \
-            (void)strncpy(ch->source.nspace,                                        \
-                          (p)->nptr->nspace,                                        \
-                          PMIX_MAX_NSLEN);                                          \
-            ch->source.rank = (p)->info->pname.rank;                                \
-            ch->ninfo = 0;                                                          \
-            ch->nallocated = 2;                                                     \
-            ch->final_cbfunc = (f);                                                 \
-            ch->final_cbdata = ch;                                                  \
-            PMIX_INFO_CREATE(ch->info, ch->nallocated);                             \
-            /* cache it */                                                          \
-            pmix_list_append(&pmix_globals.cached_events, &ch->super);              \
-            ch->timer_active = true;                                                \
-            pmix_event_assign(&ch->ev, pmix_globals.evbase, -1, 0,                  \
-                              pmix_event_timeout_cb, ch);                           \
-            PMIX_POST_OBJECT(ch);                                                   \
-            pmix_event_add(&ch->ev, &pmix_globals.event_window);                    \
-        } else {                                                                    \
-            /* add this peer to the array of sources */                             \
-            (void)strncpy(proc.nspace, (p)->nptr->nspace, PMIX_MAX_NSLEN);          \
-            proc.rank = (p)->info->pname.rank;                                      \
-            ninfo = ch->nallocated + 1;                                             \
-            PMIX_INFO_CREATE(info, ninfo);                                          \
-            /* must keep the hdlr name and return object at the end, so prepend */  \
-            PMIX_INFO_LOAD(&info[0], PMIX_PROCID,                                   \
-                           &proc, PMIX_PROC);                                       \
-            for (n=0; n < ch->ninfo; n++) {                                         \
-                PMIX_INFO_XFER(&info[n+1], &ch->info[n]);                           \
-            }                                                                       \
-            PMIX_INFO_FREE(ch->info, ch->nallocated);                               \
-            ch->nallocated = ninfo;                                                 \
-            ch->info = info;                                                        \
-            ch->ninfo = ninfo - 2;                                                  \
-            /* reset the timer */                                                   \
-            pmix_event_del(&ch->ev);                                                \
-            PMIX_POST_OBJECT(ch);                                                   \
-            pmix_event_add(&ch->ev, &pmix_globals.event_window);                    \
-        }                                                                           \
+#define PMIX_REPORT_EVENT(e, p, r, f)                                                   \
+    do {                                                                                \
+        pmix_event_chain_t *ch, *cp;                                                    \
+        size_t n, ninfo;                                                                \
+        pmix_info_t *info;                                                              \
+        pmix_proc_t proc;                                                               \
+                                                                                        \
+        ch = NULL;                                                                      \
+        /* see if we already have this event cached */                                  \
+        PMIX_LIST_FOREACH(cp, &pmix_globals.cached_events, pmix_event_chain_t) {        \
+            if (cp->status == (e)) {                                                    \
+                ch = cp;                                                                \
+                break;                                                                  \
+            }                                                                           \
+        }                                                                               \
+        if (NULL == ch) {                                                               \
+            /* nope - need to add it */                                                 \
+            ch = PMIX_NEW(pmix_event_chain_t);                                          \
+            ch->status = (e);                                                           \
+            ch->range = (r);                                                            \
+            PMIX_LOAD_PROCID(&ch->source, (p)->nptr->nspace,                            \
+                             (p)->info->pname.rank);                                    \
+            PMIX_PROC_CREATE(ch->affected, 1);                                          \
+            ch->naffected = 1;                                                          \
+            PMIX_LOAD_PROCID(ch->affected, (p)->nptr->nspace,                           \
+                             (p)->info->pname.rank);                                    \
+            /* if I'm a client or tool and this is my server, then we don't */          \
+            /* set the targets - otherwise, we do */                                    \
+            if (!PMIX_PROC_IS_SERVER(pmix_globals.mypeer) &&                            \
+                !PMIX_CHECK_PROCID(&pmix_client_globals.myserver->info->pname,          \
+                                  &(p)->info->pname)) {                                 \
+                PMIX_PROC_CREATE(ch->targets, 1);                                       \
+                ch->ntargets = 1;                                                       \
+                PMIX_LOAD_PROCID(ch->targets, (p)->nptr->nspace, PMIX_RANK_WILDCARD);   \
+            }                                                                           \
+            /* if this is lost-connection-to-server, then we let it go to */            \
+            /* the default event handler - otherwise, we don't */                       \
+            if (PMIX_ERR_LOST_CONNECTION_TO_SERVER != (e) &&                            \
+                PMIX_ERR_UNREACH != (e)) {                                              \
+                ch->ninfo = 1;                                                          \
+                ch->nallocated = 3;                                                     \
+                PMIX_INFO_CREATE(ch->info, ch->nallocated);                             \
+                /* mark for non-default handlers only */                                \
+                PMIX_INFO_LOAD(&ch->info[0], PMIX_EVENT_NON_DEFAULT, NULL, PMIX_BOOL);  \
+            } else {                                                                    \
+                ch->nallocated = 2;                                                     \
+                PMIX_INFO_CREATE(ch->info, ch->nallocated);                             \
+            }                                                                           \
+            ch->final_cbfunc = (f);                                                     \
+            ch->final_cbdata = ch;                                                      \
+            /* cache it */                                                              \
+            pmix_list_append(&pmix_globals.cached_events, &ch->super);                  \
+            ch->timer_active = true;                                                    \
+            pmix_event_assign(&ch->ev, pmix_globals.evbase, -1, 0,                      \
+                              pmix_event_timeout_cb, ch);                               \
+            PMIX_POST_OBJECT(ch);                                                       \
+            pmix_event_add(&ch->ev, &pmix_globals.event_window);                        \
+        } else {                                                                        \
+            /* add this peer to the array of sources */                                 \
+            pmix_strncpy(proc.nspace, (p)->nptr->nspace, PMIX_MAX_NSLEN);               \
+            proc.rank = (p)->info->pname.rank;                                          \
+            ninfo = ch->nallocated + 1;                                                 \
+            PMIX_INFO_CREATE(info, ninfo);                                              \
+            /* must keep the hdlr name and return object at the end, so prepend */      \
+            PMIX_INFO_LOAD(&info[0], PMIX_PROCID,                                       \
+                           &proc, PMIX_PROC);                                           \
+            for (n=0; n < ch->ninfo; n++) {                                             \
+                PMIX_INFO_XFER(&info[n+1], &ch->info[n]);                               \
+            }                                                                           \
+            PMIX_INFO_FREE(ch->info, ch->nallocated);                                   \
+            ch->nallocated = ninfo;                                                     \
+            ch->info = info;                                                            \
+            ch->ninfo = ninfo - 2;                                                      \
+            /* reset the timer */                                                       \
+            pmix_event_del(&ch->ev);                                                    \
+            PMIX_POST_OBJECT(ch);                                                       \
+            pmix_event_add(&ch->ev, &pmix_globals.event_window);                        \
+        }                                                                               \
     } while(0)
 
 

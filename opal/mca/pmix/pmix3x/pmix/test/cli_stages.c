@@ -3,6 +3,8 @@
  * Copyright (c) 2015-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015-2018 Mellanox Technologies, Inc.
+ *                         All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -21,17 +23,26 @@ int cli_rank(cli_info_t *cli)
     int i;
     for(i=0; i < cli_info_cnt; i++){
         if( cli == &cli_info[i] ){
-            return i;
+            return cli->rank;
         }
     }
     return -1;
 }
 
-void cli_init(int nprocs, cli_state_t order[])
+void cli_init(int nprocs)
 {
     int n, i;
+    cli_state_t order[CLI_TERM+1];
+
     cli_info = malloc( sizeof(cli_info_t) * nprocs);
     cli_info_cnt = nprocs;
+
+    order[CLI_UNINIT] = CLI_FORKED;
+    order[CLI_FORKED] = CLI_FIN;
+    order[CLI_CONNECTED] = CLI_UNDEF;
+    order[CLI_FIN] = CLI_TERM;
+    order[CLI_DISCONN] = CLI_UNDEF;
+    order[CLI_TERM] = CLI_UNDEF;
 
     for (n=0; n < nprocs; n++) {
         cli_info[n].sd = -1;
@@ -198,8 +209,9 @@ void cli_wait_all(double timeout)
             TEST_VERBOSE(("waitpid = %d", pid));
             for(i=0; i < cli_info_cnt; i++){
                 if( cli_info[i].pid == pid ){
-                    TEST_VERBOSE(("the child with pid = %d has rank = %d\n"
-                                "\t\texited = %d, signalled = %d", pid, i,
+                    TEST_VERBOSE(("the child with pid = %d has rank = %d, ns = %s\n"
+                                "\t\texited = %d, signalled = %d", pid,
+                                  cli_info[i].rank, cli_info[i].ns,
                                 WIFEXITED(status), WIFSIGNALED(status) ));
                     if( WIFEXITED(status) || WIFSIGNALED(status) ){
                         cli_cleanup(&cli_info[i]);
@@ -211,6 +223,9 @@ void cli_wait_all(double timeout)
             if( errno == ECHILD ){
                 TEST_VERBOSE(("No more children to wait. Happens on the last cli_wait_all call "
                             "which is used to ensure that all children terminated.\n"));
+                if (pmix_test_verbose) {
+                    sleep(1);
+                }
                 break;
             } else {
                 TEST_ERROR(("waitpid(): %d : %s", errno, strerror(errno)));

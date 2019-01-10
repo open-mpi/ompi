@@ -4,7 +4,7 @@
 # Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2009      High Performance Computing Center Stuttgart,
 #                         University of Stuttgart.  All rights reserved.
-# Copyright (c) 2016      Intel, Inc. All rights reserved.
+# Copyright (c) 2016-2018 Intel, Inc.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -19,4 +19,4 @@ libmca_pinstalldirs_config_la_SOURCES = \
 
 # This file is generated; we do not want to include it in the tarball
 nodist_libmca_pinstalldirs_config_la_SOURCES = \
-        install_dirs.h
+        pinstall_dirs.h

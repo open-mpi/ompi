@@ -1,4 +1,4 @@
-Copyright (c) 2015-2018 Intel, Inc. All rights reserved.
+Copyright (c) 2015-2019 Intel, Inc.  All rights reserved.
 Copyright (c) 2017      IBM Corporation.  All rights reserved.
 $COPYRIGHT$
 
@@ -17,8 +17,61 @@ the README file, PMIx typically maintains two separate version
 series simultaneously - the current release and one that is locked
 to only bug fixes.  Since these series are semi-independent of each
 other, a single NEWS-worthy item might apply to different series. For
-example, a bug might be fixed in the master, and then moved to the
-current release as well as the "stable" bug fix release branch.
+example, a bug might be fixed in the master, and then moved to
+multiple release branches.
+
+
+3.1.2 -- 24 Jan 2019
+----------------------
+ - Fix a bug in macro identifying system events
+ - Restore some non-standard macros to the pmix_extend.h
+   header - these are considered "deprecated" and will be
+   removed from public-facing headers in future releases
+
+
+3.1.1 -- 18 Jan 2019
+----------------------
+- Fix a bug in registration of default event handlers
+  that somehow slipped thru testing
+
+
+3.1.0 -- 17 Jan 2019
+----------------------
+**** THIS RELEASE MARKS THE STARTING POINT FOR FULL COMPLIANCE
+**** WITH THE PMIX v3 STANDARD. ALL API BEHAVIORS AND ATTRIBUTE
+**** DEFINITIONS MEET THE v3 STANDARD SPECIFICATIONS.
+ - Add a new, faster dstore GDS component 'ds21'
+ - Performance optimizations for the dstore GDS components.
+ - Plug miscellaneous memory leaks
+ - Silence an unnecessary warning message when checking connection
+   to a non-supporting server
+ - Ensure lost-connection events get delivered to default event
+   handlers
+ - Correctly handle cache refresh for queries
+ - Protect against race conditions between host and internal library
+   when dealing with async requests
+ - Cleanup tool operations and add support for connections to
+   remote servers. Initial support for debugger direct/indirect
+   launch verified with PRRTE. Cleanup setting of tmpdir options.
+   Drop rendezvous files when acting as a launcher
+ - Automatically store the server URI for easy access by client
+ - Provide MCA parameter to control TCP connect retry/timeout
+ - Update event notification system to properly evict oldest events
+   when more space is needed
+ - Fix a number of error paths
+ - Update IOF cache code to properly drop oldest message. Provide
+   MCA parameter for setting cache size.
+ - Handle setsockopt(SO_RCVTIMEO) not being supported
+ - Ensure that epilogs get run even when connections unexpectedly
+   terminate. Properly split epilog strings to process multiple
+   paths
+ - Pass the tool's command line to the server so it can be returned
+   in queries
+ - Add support for C11 atomics
+ - Support collection and forwarding of fabric-specific envars
+ - Improve handling of hwloc configure option
+ - Fix PMIx_server_generate_regex to preserve node ordering
+ - Fix a bug when registering default event handlers
 
 
 3.0.2 -- 18 Sept 2018
@@ -87,6 +140,46 @@ current release as well as the "stable" bug fix release branch.
      attributes to query available channels and to tag and
      format output.
 - Fix several memory and file descriptor leaks
+
+
+2.2.2 -- 24 Jan 2019
+----------------------
+ - Fix a bug in macro identifying system events
+
+
+2.2.1 -- 18 Jan 2019
+----------------------
+ - Fix a bug in registration of default event handlers
+   that somehow slipped thru testing
+
+
+2.2.0 -- 17 Jan 2019
+----------------------
+**** THIS RELEASE MARKS THE STARTING POINT FOR FULL COMPLIANCE
+**** WITH THE PMIX v2.2 STANDARD. ALL API BEHAVIORS AND ATTRIBUTE
+**** DEFINITIONS MEET THE v2.2 STANDARD SPECIFICATIONS.
+ - Add a new, faster dstore GDS component 'ds21'
+ - Performance optimizations for the dstore GDS components.
+ - Plug miscellaneous memory leaks
+ - Silence an unnecessary warning message when checking connection
+   to a non-supporting server
+ - Ensure lost-connection events get delivered to default event
+   handlers
+ - Correctly handle cache refresh for queries
+ - Protect against race conditions between host and internal library
+   when dealing with async requests
+ - Cleanup tool operations and add support for connections to
+   remote servers.
+ - Automatically store the server URI for easy access by client
+ - Provide MCA parameter to control TCP connect retry/timeout
+ - Update event notification system to properly evict oldest events
+   when more space is needed
+ - Fix a number of error paths
+ - Handle setsockopt(SO_RCVTIMEO) not being supported
+ - Pass the tool's command line to the server so it can be returned
+   in queries
+ - Add support for C11 atomics
+ - Fix a bug when registering default event handlers
 
 
 2.1.4 -- 18 Sep 2018

@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2015-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2016      Intel, Inc. All rights reserved
+ * Copyright (c) 2016-2018 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -136,7 +136,7 @@ static int parse_line(void)
         key_buffer = tmp;
     }
 
-    strncpy(key_buffer, pmix_util_keyval_yytext, key_buffer_len);
+    pmix_strncpy(key_buffer, pmix_util_keyval_yytext, key_buffer_len-1);
 
     /* The first thing we have to see is an "=" */
 
@@ -259,7 +259,7 @@ static int save_param_name (void)
         key_buffer = tmp;
     }
 
-    strncpy (key_buffer, pmix_util_keyval_yytext, key_buffer_len);
+    pmix_strncpy (key_buffer, pmix_util_keyval_yytext, key_buffer_len-1);
 
     return PMIX_SUCCESS;
 }

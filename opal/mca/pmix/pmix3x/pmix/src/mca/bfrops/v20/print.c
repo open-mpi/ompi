@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, Inc.  All rights reserved.
- * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc.  All rights reserved.
  * Copyright (c) 2016      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
@@ -761,7 +761,7 @@ pmix_status_t pmix20_bfrop_print_status(char **output, char *prefix,
  * PMIX_VALUE
  */
  pmix_status_t pmix20_bfrop_print_value(char **output, char *prefix,
-                                      pmix_value_t *src, pmix_data_type_t type)
+                                        pmix_value_t *src, pmix_data_type_t type)
  {
     char *prefx;
     int rc;
@@ -904,12 +904,6 @@ pmix_status_t pmix20_bfrop_print_status(char **output, char *prefix,
         rc = asprintf(output, "%sPMIX_VALUE: Data type: DATA_ARRAY\tARRAY SIZE: %ld",
                       prefx, (long)src->data.darray->size);
         break;
-        /**** DEPRECATED ****/
-        case PMIX_INFO_ARRAY:
-        rc = asprintf(output, "%sPMIX_VALUE: Data type: INFO_ARRAY\tARRAY SIZE: %ld",
-                      prefx, (long)src->data.array->size);
-        break;
-        /********************/
         default:
         rc = asprintf(output, "%sPMIX_VALUE: Data type: UNKNOWN\tValue: UNPRINTABLE", prefx);
         break;

@@ -596,7 +596,7 @@ PMIX_EXPORT pmix_status_t PMIx_generate_ppn(const char *input, char **ppn);
  * for the PMIx server library to correctly handle collectives
  * as a collective operation call can occur before all the
  * procs have been started */
-PMIX_EXPORT pmix_status_t PMIx_server_register_nspace(const char nspace[], int nlocalprocs,
+PMIX_EXPORT pmix_status_t PMIx_server_register_nspace(const pmix_nspace_t nspace, int nlocalprocs,
                                           pmix_info_t info[], size_t ninfo,
                                           pmix_op_cbfunc_t cbfunc, void *cbdata);
 
@@ -605,7 +605,7 @@ PMIX_EXPORT pmix_status_t PMIx_server_register_nspace(const char nspace[], int n
  * intended to support persistent PMIx servers by providing
  * an opportunity for the host RM to tell the PMIx server
  * library to release all memory for a completed job */
-PMIX_EXPORT void PMIx_server_deregister_nspace(const char nspace[],
+PMIX_EXPORT void PMIx_server_deregister_nspace(const pmix_nspace_t nspace,
                                                pmix_op_cbfunc_t cbfunc, void *cbdata);
 
 /* Register a client process with the PMIx server library. The
@@ -676,7 +676,7 @@ typedef void (*pmix_setup_application_cbfunc_t)(pmix_status_t status,
  * operation in case network libraries need to perform some action
  * before responding. Any returned env will be distributed along
  * with the application */
-PMIX_EXPORT pmix_status_t PMIx_server_setup_application(const char nspace[],
+PMIX_EXPORT pmix_status_t PMIx_server_setup_application(const pmix_nspace_t nspace,
                                                         pmix_info_t info[], size_t ninfo,
                                                         pmix_setup_application_cbfunc_t cbfunc, void *cbdata);
 
@@ -692,7 +692,7 @@ PMIX_EXPORT pmix_status_t PMIx_server_setup_application(const char nspace[],
  * for the first local client - i.e., they will only be executed
  * once for a given nspace
  */
-PMIX_EXPORT pmix_status_t PMIx_server_setup_local_support(const char nspace[],
+PMIX_EXPORT pmix_status_t PMIx_server_setup_local_support(const pmix_nspace_t nspace,
                                                           pmix_info_t info[], size_t ninfo,
                                                           pmix_op_cbfunc_t cbfunc, void *cbdata);
 

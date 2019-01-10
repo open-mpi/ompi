@@ -3,7 +3,7 @@
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2016      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2016-2018 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -146,8 +146,8 @@ static int if_solaris_ipv6_open(void)
          i += sizeof (*lifreq)) {
 
         lifreq = (struct lifreq *)((caddr_t)lifconf.lifc_buf + i);
-        strncpy (lifquery.lifr_name, lifreq->lifr_name,
-                 sizeof (lifquery.lifr_name));
+        pmix_strncpy (lifquery.lifr_name, lifreq->lifr_name,
+                 sizeof (lifquery.lifr_name)-1);
 
         /* lookup kernel index */
         error = ioctl (sd, SIOCGLIFINDEX, &lifquery);
@@ -190,7 +190,7 @@ static int if_solaris_ipv6_open(void)
                 }
                 intf->af_family = AF_INET6;
 
-                strncpy (intf->if_name, lifreq->lifr_name, IF_NAMESIZE);
+                pmix_strncpy (intf->if_name, lifreq->lifr_name, IF_NAMESIZE-1);
                 intf->if_index = pmix_list_get_size(&pmix_if_list)+1;
                 memcpy(&intf->if_addr, my_addr, sizeof (*my_addr));
                 intf->if_mask = 64;

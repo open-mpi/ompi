@@ -33,31 +33,30 @@
 
 
 /**
- * Use an atomic operation for increment/decrement if pmix_using_threads()
- * indicates that threads are in use by the application or library.
+ * Use an atomic operation for increment/decrement
  */
 
 #define PMIX_THREAD_DEFINE_ATOMIC_OP(type, name, operator, suffix)      \
-static inline type pmix_thread_ ## name ## _fetch_ ## suffix (volatile type *addr, type delta) \
+static inline type pmix_thread_ ## name ## _fetch_ ## suffix (pmix_atomic_ ## type *addr, type delta) \
 {                                                                       \
     return pmix_atomic_ ## name ## _fetch_ ## suffix (addr, delta);     \
 }                                                                       \
                                                                         \
-static inline type pmix_thread_fetch_ ## name ## _ ## suffix (volatile type *addr, type delta) \
+static inline type pmix_thread_fetch_ ## name ## _ ## suffix (pmix_atomic_ ## type *addr, type delta) \
 {                                                                       \
     return pmix_atomic_fetch_ ## name ## _ ## suffix (addr, delta);     \
 }
 
 #define PMIX_THREAD_DEFINE_ATOMIC_COMPARE_EXCHANGE(type, addr_type, suffix)       \
-static inline bool pmix_thread_compare_exchange_strong_ ## suffix (volatile addr_type *addr, type *compare, type value) \
+static inline bool pmix_thread_compare_exchange_strong_ ## suffix (pmix_atomic_ ## addr_type *addr, type *compare, type value) \
 {                                                                       \
-    return pmix_atomic_compare_exchange_strong_ ## suffix ((volatile type *) addr, compare, value); \
+    return pmix_atomic_compare_exchange_strong_ ## suffix (addr, (addr_type *) compare, (addr_type) value); \
 }
 
 #define PMIX_THREAD_DEFINE_ATOMIC_SWAP(type, addr_type, suffix)         \
-static inline type pmix_thread_swap_ ## suffix (volatile addr_type *ptr, type newvalue) \
+static inline type pmix_thread_swap_ ## suffix (pmix_atomic_ ## addr_type *ptr, type newvalue) \
 {                                                                       \
-    return pmix_atomic_swap_ ## suffix ((volatile type *) ptr, newvalue); \
+    return (type) pmix_atomic_swap_ ## suffix (ptr, (addr_type) newvalue); \
 }
 
 PMIX_THREAD_DEFINE_ATOMIC_OP(int32_t, add, +, 32)
@@ -112,13 +111,13 @@ PMIX_THREAD_DEFINE_ATOMIC_SWAP(void *, intptr_t, ptr)
 #define PMIX_THREAD_COMPARE_EXCHANGE_STRONG_32 pmix_thread_compare_exchange_strong_32
 #define PMIX_ATOMIC_COMPARE_EXCHANGE_STRONG_32 pmix_thread_compare_exchange_strong_32
 
-#define PMIX_THREAD_COMPARE_EXCHANGE_STRONG_PTR(x, y, z) pmix_thread_compare_exchange_strong_ptr ((volatile intptr_t *) x, (void *) y, (void *) z)
+#define PMIX_THREAD_COMPARE_EXCHANGE_STRONG_PTR(x, y, z) pmix_thread_compare_exchange_strong_ptr ((pmix_atomic_intptr_t *) x, (intptr_t *) y, (intptr_t) z)
 #define PMIX_ATOMIC_COMPARE_EXCHANGE_STRONG_PTR PMIX_THREAD_COMPARE_EXCHANGE_STRONG_PTR
 
 #define PMIX_THREAD_SWAP_32 pmix_thread_swap_32
 #define PMIX_ATOMIC_SWAP_32 pmix_thread_swap_32
 
-#define PMIX_THREAD_SWAP_PTR(x, y) pmix_thread_swap_ptr ((volatile intptr_t *) x, (void *) y)
+#define PMIX_THREAD_SWAP_PTR(x, y) pmix_thread_swap_ptr ((pmix_atomic_intptr_t *) x, (intptr_t) y)
 #define PMIX_ATOMIC_SWAP_PTR PMIX_THREAD_SWAP_PTR
 
 /* define 64-bit macros is 64-bit atomic math is available */

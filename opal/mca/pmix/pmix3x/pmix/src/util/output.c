@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -694,7 +694,7 @@ static int open_file(int i)
         if (NULL == filename) {
             return PMIX_ERR_OUT_OF_RESOURCE;
         }
-        strncpy(filename, output_dir, PMIX_PATH_MAX);
+        pmix_strncpy(filename, output_dir, PMIX_PATH_MAX-1);
         strcat(filename, "/");
         if (NULL != output_prefix) {
             strcat(filename, output_prefix);

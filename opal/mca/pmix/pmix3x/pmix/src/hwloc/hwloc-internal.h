@@ -3,7 +3,7 @@
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  *
- * Copyright (c) 2016-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2016-2019 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -22,7 +22,7 @@
 #include <pmix_common.h>
 
 #if PMIX_HAVE_HWLOC
-#include <hwloc.h>
+#include PMIX_HWLOC_HEADER
 
 #if HWLOC_API_VERSION < 0x00010b00
 #define HWLOC_OBJ_NUMANODE HWLOC_OBJ_NODE

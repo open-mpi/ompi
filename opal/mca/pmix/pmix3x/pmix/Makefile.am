@@ -37,10 +37,6 @@ dist_pmixdata_DATA =
 if ! PMIX_EMBEDDED_MODE
 dist_pmixdata_DATA += contrib/pmix-valgrind.supp
 
-if PMIX_HAVE_PANDOC
-SUBDIRS += man
-endif
-
 endif
 
 if PMIX_TESTS_EXAMPLES

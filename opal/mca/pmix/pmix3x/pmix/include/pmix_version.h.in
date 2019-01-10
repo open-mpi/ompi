@@ -2,7 +2,7 @@
  * Copyright (c) 2016      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2018      IBM Corporation.  All rights reserved.
- * Copyright (c) 2018      Intel, Inc. All rights reserved.
+ * Copyright (c) 2018-2019 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -19,5 +19,5 @@
 #define PMIX_VERSION_MINOR @pmixminor@
 #define PMIX_VERSION_RELEASE @pmixrelease@
 
-#define PMIX_NUMERIC_VERSION 0x00030001
+#define PMIX_NUMERIC_VERSION 0x00030100
 #endif

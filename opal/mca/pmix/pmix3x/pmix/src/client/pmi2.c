@@ -79,7 +79,7 @@ PMIX_EXPORT int PMI2_Init(int *spawned, int *size, int *rank, int *appnum)
                 *appnum = 0;
             }
             pmi2_singleton = true;
-            (void)strncpy(myproc.nspace, "1234", PMIX_MAX_NSLEN);
+            pmix_strncpy(myproc.nspace, "1234", PMIX_MAX_NSLEN);
             myproc.rank = 0;
             pmi2_init = 1;
             return PMI2_SUCCESS;
@@ -227,7 +227,7 @@ PMIX_EXPORT int PMI2_Job_Spawn(int count, const char * cmds[],
         apps[i].info = (pmix_info_t*)malloc(apps[i].ninfo * sizeof(pmix_info_t));
         /* copy the info objects */
         for (j=0; j < apps[i].ninfo; j++) {
-            (void)strncpy(apps[i].info[j].key, info_keyval_vectors[i][j].key, PMIX_MAX_KEYLEN);
+            pmix_strncpy(apps[i].info[j].key, info_keyval_vectors[i][j].key, PMIX_MAX_KEYLEN);
             apps[i].info[j].value.type = PMIX_STRING;
             apps[i].info[j].value.data.string = strdup(info_keyval_vectors[i][j].val);
         }
@@ -271,7 +271,7 @@ PMIX_EXPORT int PMI2_Job_GetId(char jobid[], int jobid_size)
     if (NULL == jobid) {
         return PMI2_ERR_INVALID_ARGS;
     }
-    (void)strncpy(jobid, myproc.nspace, jobid_size);
+    pmix_strncpy(jobid, myproc.nspace, jobid_size-1);
     return PMI2_SUCCESS;
 }
 
@@ -339,7 +339,7 @@ PMIX_EXPORT int PMI2_Job_Connect(const char jobid[], PMI2_Connect_comm_t *conn)
     }
 
     memset(proc.nspace, 0, sizeof(proc.nspace));
-    (void)strncpy(proc.nspace, (jobid ? jobid : proc.nspace), sizeof(proc.nspace)-1);
+    pmix_strncpy(proc.nspace, (jobid ? jobid : proc.nspace), PMIX_MAX_NSLEN);
     proc.rank = PMIX_RANK_WILDCARD;
     rc = PMIx_Connect(&proc, 1, NULL, 0);
     return convert_err(rc);
@@ -357,7 +357,7 @@ PMIX_EXPORT int PMI2_Job_Disconnect(const char jobid[])
     }
 
     memset(proc.nspace, 0, sizeof(proc.nspace));
-    (void)strncpy(proc.nspace, (jobid ? jobid : proc.nspace), sizeof(proc.nspace)-1);
+    pmix_strncpy(proc.nspace, (jobid ? jobid : proc.nspace), PMIX_MAX_NSLEN);
     proc.rank = PMIX_RANK_WILDCARD;
     rc = PMIx_Disconnect(&proc, 1, NULL, 0);
     return convert_err(rc);
@@ -455,7 +455,7 @@ PMIX_EXPORT int PMI2_KVS_Get(const char *jobid, int src_pmi_id,
     pmix_output_verbose(3, pmix_globals.debug_output,
             "PMI2_KVS_Get: key=%s jobid=%s src_pmi_id=%d", key, (jobid ? jobid : "null"), src_pmi_id);
 
-    (void)strncpy(proc.nspace, (jobid ? jobid : myproc.nspace), PMIX_MAX_NSLEN);
+    pmix_strncpy(proc.nspace, (jobid ? jobid : myproc.nspace), PMIX_MAX_NSLEN);
     if (src_pmi_id == PMI2_ID_NULL) {
         /* the rank is UNDEF */
         proc.rank = PMIX_RANK_UNDEF;
@@ -468,7 +468,7 @@ PMIX_EXPORT int PMI2_KVS_Get(const char *jobid, int src_pmi_id,
         if (PMIX_STRING != val->type) {
             rc = PMIX_ERROR;
         } else if (NULL != val->data.string) {
-            (void)strncpy(value, val->data.string, maxvalue);
+            pmix_strncpy(value, val->data.string, maxvalue-1);
             *vallen = strlen(val->data.string);
         }
         PMIX_VALUE_RELEASE(val);
@@ -511,7 +511,7 @@ PMIX_EXPORT int PMI2_Info_GetNodeAttr(const char name[],
         if (PMIX_STRING != val->type) {
             rc = PMIX_ERROR;
         } else if (NULL != val->data.string) {
-            (void)strncpy(value, val->data.string, valuelen);
+            pmix_strncpy(value, val->data.string, valuelen-1);
             *found = 1;
         }
         PMIX_VALUE_RELEASE(val);
@@ -586,7 +586,7 @@ PMIX_EXPORT int PMI2_Info_GetJobAttr(const char name[], char value[], int valuel
         proc.rank = PMIX_RANK_WILDCARD;
         if (PMIX_SUCCESS == PMIx_Get(&proc, PMIX_ANL_MAP, NULL, 0, &val) &&
                (NULL != val) && (PMIX_STRING == val->type)) {
-            strncpy(value, val->data.string, valuelen);
+            pmix_strncpy(value, val->data.string, valuelen);
             PMIX_VALUE_FREE(val, 1);
             *found = 1;
             return PMI2_SUCCESS;
@@ -610,7 +610,7 @@ PMIX_EXPORT int PMI2_Info_GetJobAttr(const char name[], char value[], int valuel
         if (PMIX_STRING != val->type) {
             rc = PMIX_ERROR;
         } else if (NULL != val->data.string) {
-            (void)strncpy(value, val->data.string, valuelen);
+            pmix_strncpy(value, val->data.string, valuelen-1);
             *found = 1;
         }
         PMIX_VALUE_RELEASE(val);
@@ -648,14 +648,14 @@ PMIX_EXPORT int PMI2_Nameserv_publish(const char service_name[],
     }
 
     /* pass the service/port */
-    (void)strncpy(info[0].key, service_name, PMIX_MAX_KEYLEN);
+    pmix_strncpy(info[0].key, service_name, PMIX_MAX_KEYLEN);
     info[0].value.type = PMIX_STRING;
     info[0].value.data.string = (char*)port;
     nvals = 1;
 
     /* if provided, add any other value */
     if (NULL != info_ptr) {
-        (void)strncpy(info[1].key, info_ptr->key, PMIX_MAX_KEYLEN);
+        pmix_strncpy(info[1].key, info_ptr->key, PMIX_MAX_KEYLEN);
         info[1].value.type = PMIX_STRING;
         info[1].value.data.string = (char*)info_ptr->val;
         nvals = 2;
@@ -689,12 +689,12 @@ PMIX_EXPORT int PMI2_Nameserv_lookup(const char service_name[],
     PMIX_PDATA_CONSTRUCT(&pdata[1]);
 
     /* pass the service */
-    (void)strncpy(pdata[0].key, service_name, PMIX_MAX_KEYLEN);
+    pmix_strncpy(pdata[0].key, service_name, PMIX_MAX_KEYLEN);
     nvals = 1;
 
     /* if provided, add any other value */
     if (NULL != info_ptr) {
-        (void)strncpy(pdata[1].key, info_ptr->key, PMIX_MAX_KEYLEN);
+        pmix_strncpy(pdata[1].key, info_ptr->key, PMIX_MAX_KEYLEN);
         pdata[1].value.type = PMIX_STRING;
         pdata[1].value.data.string = info_ptr->val;
         nvals = 2;
@@ -716,7 +716,7 @@ PMIX_EXPORT int PMI2_Nameserv_lookup(const char service_name[],
     }
 
     /* return the port */
-    (void)strncpy(port, pdata[0].value.data.string, portLen);
+    pmix_strncpy(port, pdata[0].value.data.string, portLen-1);
     PMIX_PDATA_DESTRUCT(&pdata[0]);
 
     if (NULL != info_ptr) {

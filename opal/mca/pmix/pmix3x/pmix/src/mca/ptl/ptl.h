@@ -143,11 +143,23 @@ typedef struct pmix_ptl_module_t pmix_ptl_module_t;
 
 
 /*****    MACROS FOR EXECUTING PTL FUNCTIONS    *****/
-#define PMIX_PTL_SEND_RECV(r, p, b, c, d)               \
-    (r) = (p)->nptr->compat.ptl->send_recv((struct pmix_peer_t*)(p), b, c, d)
+#define PMIX_PTL_SEND_RECV(r, p, b, c, d)                                               \
+    do {                                                                                \
+        if ((p)->finalized) {                                                           \
+            (r) = PMIX_ERR_UNREACH;                                                     \
+        } else {                                                                        \
+            (r) = (p)->nptr->compat.ptl->send_recv((struct pmix_peer_t*)(p), b, c, d);  \
+        }                                                                               \
+    } while(0)
 
-#define PMIX_PTL_SEND_ONEWAY(r, p, b, t)                \
-    (r) = (p)->nptr->compat.ptl->send((struct pmix_peer_t*)(p), b, t)
+#define PMIX_PTL_SEND_ONEWAY(r, p, b, t)                                        \
+    do {                                                                        \
+        if ((p)->finalized) {                                                   \
+            (r) = PMIX_ERR_UNREACH;                                             \
+        } else {                                                                \
+            (r) = (p)->nptr->compat.ptl->send((struct pmix_peer_t*)(p), b, t);  \
+        }                                                                       \
+    } while(0)
 
 #define PMIX_PTL_RECV(r, p, c, t)      \
     (r) = (p)->nptr->compat.ptl->recv((struct pmix_peer_t*)(p), c, t)

@@ -13,11 +13,12 @@
  *                         All rights reserved.
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2018 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2015      Mellanox Technologies, Inc.
+ * Copyright (c) 2015-2018 Mellanox Technologies, Inc.
  *                         All rights reserved.
+ *
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -35,7 +36,8 @@
 
 #include "server_callbacks.h"
 #include "utils.h"
-#include "src/include/pmix_globals.h"
+#include "test_server.h"
+#include "test_common.h"
 
 bool spawn_wait = false;
 
@@ -47,7 +49,6 @@ int main(int argc, char **argv)
     struct stat stat_buf;
     struct timeval tv;
     double test_start;
-    cli_state_t order[CLI_TERM+1];
     test_params params;
     INIT_TEST_PARAMS(params);
     int test_fail = 0;
@@ -68,6 +69,14 @@ int main(int argc, char **argv)
     parse_cmd(argc, argv, &params);
     TEST_VERBOSE(("Start PMIx_lite smoke test (timeout is %d)", params.timeout));
 
+    /* set common argv and env */
+    client_env = pmix_argv_copy(environ);
+    set_client_argv(&params, &client_argv);
+
+    tmp = pmix_argv_join(client_argv, ' ');
+    TEST_VERBOSE(("Executing test: %s", tmp));
+    free(tmp);
+
     /* verify executable */
     if( 0 > ( rc = stat(params.binary, &stat_buf) ) ){
         TEST_ERROR(("Cannot stat() executable \"%s\": %d: %s", params.binary, errno, strerror(errno)));
@@ -83,48 +92,29 @@ int main(int argc, char **argv)
         return 0;
     }
 
-    /* setup the server library */
-    pmix_info_t info[1];
-    (void)strncpy(info[0].key, PMIX_SOCKET_MODE, PMIX_MAX_KEYLEN);
-    info[0].value.type = PMIX_UINT32;
-    info[0].value.data.uint32 = 0666;
-
-    if (PMIX_SUCCESS != (rc = PMIx_server_init(&mymodule, info, 1))) {
-        TEST_ERROR(("Init failed with error %d", rc));
+    if (PMIX_SUCCESS != (rc = server_init(&params))) {
         FREE_TEST_PARAMS(params);
         return rc;
     }
-    /* register the errhandler */
-    PMIx_Register_event_handler(NULL, 0, NULL, 0,
-                                errhandler, errhandler_reg_callbk, NULL);
 
-    order[CLI_UNINIT] = CLI_FORKED;
-    order[CLI_FORKED] = CLI_FIN;
-    order[CLI_CONNECTED] = CLI_UNDEF;
-    order[CLI_FIN] = CLI_TERM;
-    order[CLI_DISCONN] = CLI_UNDEF;
-    order[CLI_TERM] = CLI_UNDEF;
-    cli_init(params.nprocs, order);
-
-    /* set common argv and env */
-    client_env = pmix_argv_copy(environ);
-    set_client_argv(&params, &client_argv);
-
-    tmp = pmix_argv_join(client_argv, ' ');
-    TEST_VERBOSE(("Executing test: %s", tmp));
-    free(tmp);
+    cli_init(params.lsize);
 
     int launched = 0;
     /* set namespaces and fork clients */
     if (NULL == params.ns_dist) {
+        uint32_t i;
+        int base_rank = 0;
+
+        /* compute my start counter */
+        for(i = 0; i < (uint32_t)my_server_id; i++) {
+            base_rank += (params.nprocs % params.nservers) > (uint32_t)i ?
+                        params.nprocs / params.nservers + 1 :
+                        params.nprocs / params.nservers;
+        }
         /* we have a single namespace for all clients */
         ns_nprocs = params.nprocs;
-        rc = launch_clients(ns_nprocs, params.binary, &client_env, &client_argv);
-        if (PMIX_SUCCESS != rc) {
-            FREE_TEST_PARAMS(params);
-            return rc;
-        }
-        launched += ns_nprocs;
+        launched += server_launch_clients(params.lsize, params.nprocs, base_rank,
+                                   &params, &client_env, &client_argv);
     } else {
         char *pch;
         pch = strtok(params.ns_dist, ":");
@@ -136,17 +126,13 @@ int main(int argc, char **argv)
                 return PMIX_ERROR;
             }
             if (0 < ns_nprocs) {
-                rc = launch_clients(ns_nprocs, params.binary, &client_env, &client_argv);
-                if (PMIX_SUCCESS != rc) {
-                    FREE_TEST_PARAMS(params);
-                    return rc;
-                }
+                launched += server_launch_clients(ns_nprocs, ns_nprocs, 0, &params,
+                                           &client_env, &client_argv);
             }
             pch = strtok (NULL, ":");
-            launched += ns_nprocs;
         }
     }
-    if (params.nprocs != (uint32_t)launched) {
+    if (params.lsize != (uint32_t)launched) {
         TEST_ERROR(("Total number of processes doesn't correspond number specified by ns_dist parameter."));
         cli_kill_all();
         test_fail = 1;
@@ -185,24 +171,16 @@ int main(int argc, char **argv)
         PMIX_WAIT_FOR_COMPLETION(spawn_wait);
     }
 
-    pmix_argv_free(client_argv);
-    pmix_argv_free(client_env);
-
     /* deregister the errhandler */
     PMIx_Deregister_event_handler(0, op_callbk, NULL);
 
     cli_wait_all(1.0);
 
-    /* finalize the server library */
-    if (PMIX_SUCCESS != (rc = PMIx_server_finalize())) {
-        TEST_ERROR(("Finalize failed with error %d", rc));
-    }
+    test_fail += server_finalize(&params);
 
     FREE_TEST_PARAMS(params);
-
-    if (0 == test_fail) {
-        TEST_OUTPUT(("Test finished OK!"));
-    }
+    pmix_argv_free(client_argv);
+    pmix_argv_free(client_env);
 
     return test_fail;
 }

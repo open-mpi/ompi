@@ -15,7 +15,7 @@
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2016-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2016-2018 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -164,12 +164,12 @@ static int process_repository_item (const char *filename, void *data)
         return PMIX_ERR_OUT_OF_RESOURCE;
     }
 
-    /* strncpy does not guarantee a \0 */
+    /* pmix_strncpy does not guarantee a \0 */
     ri->ri_type[PMIX_MCA_BASE_MAX_TYPE_NAME_LEN] = '\0';
-    strncpy (ri->ri_type, type, PMIX_MCA_BASE_MAX_TYPE_NAME_LEN);
+    pmix_strncpy (ri->ri_type, type, PMIX_MCA_BASE_MAX_TYPE_NAME_LEN);
 
     ri->ri_name[PMIX_MCA_BASE_MAX_TYPE_NAME_LEN] = '\0';
-    strncpy (ri->ri_name, name, PMIX_MCA_BASE_MAX_COMPONENT_NAME_LEN);
+    pmix_strncpy (ri->ri_name, name, PMIX_MCA_BASE_MAX_COMPONENT_NAME_LEN);
 
     pmix_list_append (component_list, &ri->super);
 

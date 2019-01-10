@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2017-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -95,7 +95,11 @@ static void regevents_cbfunc(struct pmix_peer_t *peer, pmix_ptl_hdr_t *hdr,
     PMIX_BFROPS_UNPACK(rc, peer, buf, &ret, &cnt, PMIX_STATUS);
     if ((PMIX_SUCCESS != rc) ||
         (PMIX_SUCCESS != ret)) {
-        PMIX_ERROR_LOG(rc);
+        if (PMIX_SUCCESS != rc) {
+            PMIX_ERROR_LOG(rc);
+        } else {
+            PMIX_ERROR_LOG(ret);
+        }
         /* remove the err handler and call the error handler reg completion callback fn.*/
         if (NULL == rb->list) {
             if (NULL != rb->hdlr) {
@@ -293,11 +297,7 @@ static pmix_status_t _add_hdlr(pmix_rshift_caddy_t *cd, pmix_list_t *xfer)
         PMIX_INFO_CREATE(cd2->info, cd2->ninfo);
         n=0;
         PMIX_LIST_FOREACH(ixfer, xfer, pmix_info_caddy_t) {
-            (void)strncpy(cd2->info[n].key, ixfer->info[n].key, PMIX_MAX_KEYLEN);
-            PMIX_BFROPS_VALUE_LOAD(pmix_client_globals.myserver,
-                                   &cd2->info[n].value,
-                                   &ixfer->info[n].value.data,
-                                   ixfer->info[n].value.type);
+            PMIX_INFO_XFER(&cd2->info[n], ixfer->info);
             ++n;
         }
     }
@@ -333,16 +333,17 @@ static pmix_status_t _add_hdlr(pmix_rshift_caddy_t *cd, pmix_list_t *xfer)
         NULL != pmix_host_server.register_events) {
         pmix_output_verbose(2, pmix_client_globals.event_output,
                             "pmix: _add_hdlr registering with server");
-        if (PMIX_SUCCESS != (rc = pmix_host_server.register_events(cd->codes, cd->ncodes,
-                                                                   cd2->info, cd2->ninfo,
-                                                                   reg_cbfunc, cd2))) {
+        rc = pmix_host_server.register_events(cd->codes, cd->ncodes,
+                                              cd2->info, cd2->ninfo,
+                                              reg_cbfunc, cd2);
+        if (PMIX_SUCCESS != rc && PMIX_OPERATION_SUCCEEDED != rc) {
             if (NULL != cd2->info) {
                 PMIX_INFO_FREE(cd2->info, cd2->ninfo);
             }
             PMIX_RELEASE(cd2);
             return rc;
         }
-        return PMIX_ERR_WOULD_BLOCK;
+        return PMIX_SUCCESS;
     } else {
         if (NULL != cd2->info) {
             PMIX_INFO_FREE(cd2->info, cd2->ninfo);
@@ -355,13 +356,15 @@ static pmix_status_t _add_hdlr(pmix_rshift_caddy_t *cd, pmix_list_t *xfer)
 
 static void check_cached_events(pmix_rshift_caddy_t *cd)
 {
-    size_t i, n;
+    size_t n;
     pmix_notify_caddy_t *ncd;
     bool found, matched;
     pmix_event_chain_t *chain;
+    int j;
 
-    for (i=0; i < (size_t)pmix_globals.notifications.size; i++) {
-        if (NULL == (ncd = (pmix_notify_caddy_t*)pmix_ring_buffer_poke(&pmix_globals.notifications, i))) {
+    for (j=0; j < pmix_globals.max_events; j++) {
+        pmix_hotel_knock(&pmix_globals.notifications, j, (void**)&ncd);
+        if (NULL == ncd) {
             continue;
         }
         found = false;
@@ -381,15 +384,11 @@ static void check_cached_events(pmix_rshift_caddy_t *cd)
         if (!found) {
             continue;
         }
-       /* if we were given specific targets, check if we are one */
+        /* if we were given specific targets, check if we are one */
         if (NULL != ncd->targets) {
             matched = false;
             for (n=0; n < ncd->ntargets; n++) {
-                if (0 != strncmp(pmix_globals.myid.nspace, ncd->targets[n].nspace, PMIX_MAX_NSLEN)) {
-                    continue;
-                }
-                if (PMIX_RANK_WILDCARD == ncd->targets[n].rank ||
-                    pmix_globals.myid.rank == ncd->targets[n].rank) {
+                if (PMIX_CHECK_PROCID(&pmix_globals.myid, &ncd->targets[n])) {
                     matched = true;
                     break;
                 }
@@ -407,7 +406,7 @@ static void check_cached_events(pmix_rshift_caddy_t *cd)
        /* create the chain */
         chain = PMIX_NEW(pmix_event_chain_t);
         chain->status = ncd->status;
-        (void)strncpy(chain->source.nspace, pmix_globals.myid.nspace, PMIX_MAX_NSLEN);
+        pmix_strncpy(chain->source.nspace, pmix_globals.myid.nspace, PMIX_MAX_NSLEN);
         chain->source.rank = pmix_globals.myid.rank;
         /* we always leave space for event hdlr name and a callback object */
         chain->nallocated = ncd->ninfo + 2;
@@ -439,6 +438,12 @@ static void check_cached_events(pmix_rshift_caddy_t *cd)
                 }
             }
         }
+        /* check this event out of the cache since we
+         * are processing it */
+        pmix_hotel_checkout(&pmix_globals.notifications, ncd->room);
+        /* release the storage */
+        PMIX_RELEASE(ncd);
+
         /* we don't want this chain to propagate, so indicate it
          * should only be run as a single-shot */
         chain->endchain = true;
@@ -493,8 +498,6 @@ static void reg_event_hdlr(int sd, short args, void *cbdata)
                 }
             } else if (0 == strncmp(cd->info[n].key, PMIX_EVENT_HDLR_NAME, PMIX_MAX_KEYLEN)) {
                 name = cd->info[n].value.data.string;
-            } else if (0 == strncmp(cd->info[n].key, PMIX_EVENT_ENVIRO_LEVEL, PMIX_MAX_KEYLEN)) {
-                cd->enviro = PMIX_INFO_TRUE(&cd->info[n]);
             } else if (0 == strncmp(cd->info[n].key, PMIX_EVENT_RETURN_OBJECT, PMIX_MAX_KEYLEN)) {
                 cbobject = cd->info[n].value.data.ptr;
             } else if (0 == strncmp(cd->info[n].key, PMIX_EVENT_HDLR_FIRST_IN_CATEGORY, PMIX_MAX_KEYLEN)) {
@@ -519,14 +522,31 @@ static void reg_event_hdlr(int sd, short args, void *cbdata)
             } else if (0 == strncmp(cd->info[n].key, PMIX_EVENT_AFFECTED_PROC, PMIX_MAX_KEYLEN)) {
                 cd->affected = cd->info[n].value.data.proc;
                 cd->naffected = 1;
+                ixfer = PMIX_NEW(pmix_info_caddy_t);
+                ixfer->info = &cd->info[n];
+                ixfer->ninfo = 1;
+                pmix_list_append(&xfer, &ixfer->super);
             } else if (0 == strncmp(cd->info[n].key, PMIX_EVENT_AFFECTED_PROCS, PMIX_MAX_KEYLEN)) {
                 cd->affected = (pmix_proc_t*)cd->info[n].value.data.darray->array;
                 cd->naffected = cd->info[n].value.data.darray->size;
+                ixfer = PMIX_NEW(pmix_info_caddy_t);
+                ixfer->info = &cd->info[n];
+                ixfer->ninfo = 1;
+                pmix_list_append(&xfer, &ixfer->super);
             } else {
                 ixfer = PMIX_NEW(pmix_info_caddy_t);
                 ixfer->info = &cd->info[n];
+                ixfer->ninfo = 1;
                 pmix_list_append(&xfer, &ixfer->super);
             }
+        }
+    }
+
+    /* check the codes for system events */
+    for (n=0; n < cd->ncodes; n++) {
+        if (PMIX_SYSTEM_EVENT(cd->codes[n])) {
+            cd->enviro = true;
+            break;
         }
     }
 

@@ -12,6 +12,8 @@
  * Copyright (c) 2007-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2018      Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -241,25 +243,24 @@ PMIX_EXPORT const char* PMIx_IOF_channel_string(pmix_iof_channel_t channel)
 {
     size_t cnt=0;
 
-    memset(answer, 0, sizeof(answer));
     if (PMIX_FWD_STDIN_CHANNEL & channel) {
-        strncpy(&answer[cnt], "STDIN ", strlen("STDIN "));
+        strcpy(&answer[cnt], "STDIN ");
         cnt += strlen("STDIN ");
     }
     if (PMIX_FWD_STDOUT_CHANNEL & channel) {
-        strncpy(&answer[cnt], "STDOUT ", strlen("STDOUT "));
+        strcpy(&answer[cnt], "STDOUT ");
         cnt += strlen("STDOUT ");
     }
     if (PMIX_FWD_STDERR_CHANNEL & channel) {
-        strncpy(&answer[cnt], "STDERR ", strlen("STDERR "));
+        strcpy(&answer[cnt], "STDERR ");
         cnt += strlen("STDERR ");
     }
     if (PMIX_FWD_STDDIAG_CHANNEL & channel) {
-        strncpy(&answer[cnt], "STDDIAG ", strlen("STDDIAG "));
+        strcpy(&answer[cnt], "STDDIAG ");
         cnt += strlen("STDDIAG ");
     }
     if (0 == cnt) {
-        strncpy(&answer[cnt], "NONE", strlen("NONE"));
+        strcpy(&answer[cnt], "NONE");
     }
     return answer;
 }

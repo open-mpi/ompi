@@ -12,7 +12,7 @@
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2016-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2016-2018 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -49,9 +49,9 @@ static char **search_dirs = NULL;
  * Local functions
  */
 static int pmix_show_vhelp_internal(const char *filename, const char *topic,
-                                    bool want_error_header, va_list arglist);
+                                    int want_error_header, va_list arglist);
 static int pmix_show_help_internal(const char *filename, const char *topic,
-                                   bool want_error_header, ...);
+                                   int want_error_header, ...);
 
 pmix_show_help_fn_t pmix_show_help = pmix_show_help_internal;
 pmix_show_vhelp_fn_t pmix_show_vhelp = pmix_show_vhelp_internal;
@@ -90,7 +90,7 @@ int pmix_show_help_finalize(void)
  * not optimization.  :-)
  */
 static int array2string(char **outstring,
-                        bool want_error_header, char **lines)
+                        int want_error_header, char **lines)
 {
     int i, count;
     size_t len;
@@ -298,7 +298,7 @@ static int load_array(char ***array, const char *filename, const char *topic)
 }
 
 char *pmix_show_help_vstring(const char *filename, const char *topic,
-                             bool want_error_header, va_list arglist)
+                             int want_error_header, va_list arglist)
 {
     int rc;
     char *single_string, *output, **array = NULL;
@@ -324,7 +324,7 @@ char *pmix_show_help_vstring(const char *filename, const char *topic,
 }
 
 char *pmix_show_help_string(const char *filename, const char *topic,
-                            bool want_error_handler, ...)
+                            int want_error_handler, ...)
 {
     char *output;
     va_list arglist;
@@ -338,7 +338,7 @@ char *pmix_show_help_string(const char *filename, const char *topic,
 }
 
 static int pmix_show_vhelp_internal(const char *filename, const char *topic,
-                                    bool want_error_header, va_list arglist)
+                                    int want_error_header, va_list arglist)
 {
     char *output;
 
@@ -356,7 +356,7 @@ static int pmix_show_vhelp_internal(const char *filename, const char *topic,
 }
 
 static int pmix_show_help_internal(const char *filename, const char *topic,
-                                   bool want_error_header, ...)
+                                   int want_error_header, ...)
 {
     va_list arglist;
     int rc;

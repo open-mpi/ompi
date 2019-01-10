@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2015-2017 Intel, Inc.  All rights reserved.
+# Copyright (c) 2015-2018 Intel, Inc.  All rights reserved.
 #
 # $COPYRIGHT$
 #
@@ -14,7 +14,8 @@ if WANT_PRIMARY_HEADERS
 include_HEADERS = \
         pmix.h \
         pmix_server.h \
-        pmix_tool.h
+        pmix_tool.h \
+	pmix_extend.h
 
 if WANT_PMI_BACKWARD
 include_HEADERS += \

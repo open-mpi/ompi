@@ -11,7 +11,7 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2012      Los Alamos National Security, Inc.  All rights reserved.
-# Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
+# Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
 # Copyright (c) 2017      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # Copyright (c) 2017      Mellanox Technologies, Inc.
@@ -24,11 +24,24 @@
 #
 
 headers = \
-        gds_dstore.h
+        gds_ds12_base.h \
+        gds_ds12_lock.h \
+        gds_ds12_file.h
 
 sources = \
-        gds_dstore.c \
-        gds_dstore_component.c
+        gds_ds12_base.c \
+        gds_ds12_lock.c \
+        gds_ds12_component.c \
+        gds_ds12_file.c \
+        gds_ds20_file.c
+
+if HAVE_DSTORE_PTHREAD_LOCK
+sources += gds_ds12_lock_pthread.c
+else
+if HAVE_DSTORE_FCNTL_LOCK
+sources += gds_ds12_lock_fcntl.c
+endif
+endif
 
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
@@ -49,7 +62,8 @@ endif
 mcacomponentdir = $(pmixlibdir)
 mcacomponent_LTLIBRARIES = $(component)
 mca_gds_ds12_la_SOURCES = $(component_sources)
-mca_gds_ds12_la_LDFLAGS = -module -avoid-version
+mca_gds_ds12_la_LDFLAGS = -module -avoid-version \
+    $(PMIX_TOP_BUILDDIR)/src/mca/common/dstore/libmca_common_dstore.la
 
 noinst_LTLIBRARIES = $(lib)
 libmca_gds_ds12_la_SOURCES = $(lib_sources)

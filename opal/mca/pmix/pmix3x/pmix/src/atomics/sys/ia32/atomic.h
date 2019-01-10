@@ -13,9 +13,9 @@
  * Copyright (c) 2007-2010 Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2015-2017 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2015-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2018      Intel, Inc. All rights reserved.
+ * Copyright (c) 2018      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -85,7 +85,7 @@ static inline void pmix_atomic_isync(void)
  *********************************************************************/
 #if PMIX_GCC_INLINE_ASSEMBLY
 
-static inline bool pmix_atomic_compare_exchange_strong_32 (volatile int32_t *addr, int32_t *oldval, int32_t newval)
+static inline bool pmix_atomic_compare_exchange_strong_32 (pmix_atomic_int32_t *addr, int32_t *oldval, int32_t newval)
 {
    unsigned char ret;
    __asm__ __volatile__ (
@@ -107,15 +107,15 @@ static inline bool pmix_atomic_compare_exchange_strong_32 (volatile int32_t *add
 
 #define PMIX_HAVE_ATOMIC_SWAP_32 1
 
-static inline int32_t pmix_atomic_swap_32( volatile int32_t *addr,
-                                           int32_t newval)
+static inline int32_t pmix_atomic_swap_32( pmix_atomic_int32_t *addr,
+					   int32_t newval)
 {
     int32_t oldval;
 
     __asm__ __volatile__("xchg %1, %0" :
-                         "=r" (oldval), "=m" (*addr) :
-                         "0" (newval), "m" (*addr) :
-                         "memory");
+			 "=r" (oldval), "=m" (*addr) :
+			 "0" (newval), "m" (*addr) :
+			 "memory");
     return oldval;
 }
 
@@ -131,7 +131,7 @@ static inline int32_t pmix_atomic_swap_32( volatile int32_t *addr,
  *
  * Atomically adds @i to @v.
  */
-static inline int32_t pmix_atomic_fetch_add_32(volatile int32_t* v, int i)
+static inline int32_t pmix_atomic_fetch_add_32(pmix_atomic_int32_t* v, int i)
 {
     int ret = i;
    __asm__ __volatile__(
@@ -151,7 +151,7 @@ static inline int32_t pmix_atomic_fetch_add_32(volatile int32_t* v, int i)
  *
  * Atomically subtracts @i from @v.
  */
-static inline int32_t pmix_atomic_fetch_sub_32(volatile int32_t* v, int i)
+static inline int32_t pmix_atomic_fetch_sub_32(pmix_atomic_int32_t* v, int i)
 {
     int ret = -i;
    __asm__ __volatile__(

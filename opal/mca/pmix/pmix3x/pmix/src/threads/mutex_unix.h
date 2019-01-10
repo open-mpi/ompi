@@ -77,14 +77,14 @@ PMIX_EXPORT PMIX_CLASS_DECLARATION(pmix_recursive_mutex_t);
         .m_lock_debug = 0,                                              \
         .m_lock_file = NULL,                                            \
         .m_lock_line = 0,                                               \
-        .m_lock_atomic = { .u = { .lock = PMIX_ATOMIC_LOCK_UNLOCKED } },\
+        .m_lock_atomic = {PMIX_ATOMIC_LOCK_UNLOCKED},                   \
     }
 #else
 #define PMIX_MUTEX_STATIC_INIT                                          \
     {                                                                   \
         .super = PMIX_OBJ_STATIC_INIT(pmix_mutex_t),                    \
         .m_lock_pthread = PTHREAD_MUTEX_INITIALIZER,                    \
-        .m_lock_atomic = { .u = { .lock = PMIX_ATOMIC_LOCK_UNLOCKED } },\
+        .m_lock_atomic = {PMIX_ATOMIC_LOCK_UNLOCKED},                   \
     }
 #endif
 
@@ -98,14 +98,14 @@ PMIX_EXPORT PMIX_CLASS_DECLARATION(pmix_recursive_mutex_t);
         .m_lock_debug = 0,                                              \
         .m_lock_file = NULL,                                            \
         .m_lock_line = 0,                                               \
-        .m_lock_atomic = { .u = { .lock = PMIX_ATOMIC_LOCK_UNLOCKED } },\
+        .m_lock_atomic = {PMIX_ATOMIC_LOCK_UNLOCKED},                   \
     }
 #else
 #define PMIX_RECURSIVE_MUTEX_STATIC_INIT                                \
     {                                                                   \
         .super = PMIX_OBJ_STATIC_INIT(pmix_mutex_t),                    \
         .m_lock_pthread = PMIX_PTHREAD_RECURSIVE_MUTEX_INITIALIZER,     \
-        .m_lock_atomic = { .u = { .lock = PMIX_ATOMIC_LOCK_UNLOCKED } },\
+        .m_lock_atomic = {PMIX_ATOMIC_LOCK_UNLOCKED},                   \
     }
 #endif
 

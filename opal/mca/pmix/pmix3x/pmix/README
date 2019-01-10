@@ -43,6 +43,11 @@ joe@mycomputer.example.com!).  You can subscribe to the list here:
 
      https://groups.google.com/d/forum/pmix
 
+Finally, just to round out all the possible ways to communicate with the
+PMIx community, you are invited to join the community's Slack channel:
+
+    pmix-workspace.slack.com
+
 Thanks for your time.
 
 ===========================================================================
@@ -192,21 +197,22 @@ PMIx's version numbers are the union of several different values:
 major, minor, release, and an optional quantifier.
 
   * Major: The major number is the first integer in the version string
-    (e.g., v1.2.3). Changes in the major number typically indicate a
-    significant change in the code base and/or end-user
-    functionality. The major number is always included in the version
-    number.
+    (e.g., v1.2.3) and indicates the corresponding version of the PMIx
+    Standard. In other words, a PMIx library release starting with "v2"
+    indicates that the implementation conforms to version 2 of the PMIx
+    Standard.
 
   * Minor: The minor number is the second integer in the version
     string (e.g., v1.2.3). Changes in the minor number typically
     indicate a incremental change in the code base and/or end-user
-    functionality. The minor number is always included in the version
-    number:
+    functionality, but not the supported version of the Standard.
+    The minor number is always included in the version number.
 
   * Release: The release number is the third integer in the version
     string (e.g., v1.2.3). Changes in the release number typically
     indicate a bug fix in the code base and/or end-user
-    functionality.
+    functionality. The release number is always included in the
+    version number.
 
   * Quantifier: PMIx version numbers sometimes have an arbitrary
     string affixed to the end of the version number. Common strings
@@ -293,16 +299,15 @@ Application Binary Interface (ABI) Compatibility
 ------------------------------------------------
 
 PMIx provides forward ABI compatibility in all versions of a given
-feature release series and its corresponding
-super stable series.  For example, on a single platform, an pmix
+feature release series.  For example, on a single platform, an pmix
 application linked against PMIx v1.3.2 shared libraries can be
 updated to point to the shared libraries in any successive v1.3.x or
 v1.4 release and still work properly (e.g., via the LD_LIBRARY_PATH
 environment variable or other operating system mechanism).
 
-PMIx reserves the right to break ABI compatibility at new feature
+PMIx reserves the right to break ABI compatibility at new major
 release series.  For example, the same pmix application from above
-(linked against PMIx v1.3.2 shared libraries) will *not* work with
+(linked against PMIx v1.3.2 shared libraries) may *not* work with
 PMIx v1.5 shared libraries.
 
 ===========================================================================

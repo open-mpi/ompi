@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      Mellanox Technologies, Inc.
@@ -75,7 +75,7 @@ PMIX_EXPORT int PMI_Init(int *spawned)
                 *spawned = 0;
             }
             pmi_singleton = true;
-            (void)strncpy(myproc.nspace, "1234", PMIX_MAX_NSLEN);
+            pmix_strncpy(myproc.nspace, "1234", PMIX_MAX_NSLEN);
             myproc.rank = 0;
             pmi_init = 1;
             return PMI_SUCCESS;
@@ -242,7 +242,7 @@ PMIX_EXPORT int PMI_KVS_Get( const char kvsname[], const char key[], char value[
         proc.rank = PMIX_RANK_WILDCARD;
         if (PMIX_SUCCESS == PMIx_Get(&proc, PMIX_ANL_MAP, NULL, 0, &val) &&
                (NULL != val) && (PMIX_STRING == val->type)) {
-            strncpy(value, val->data.string, length);
+            pmix_strncpy(value, val->data.string, length-1);
             PMIX_VALUE_FREE(val, 1);
             return PMI_SUCCESS;
         } else {
@@ -259,7 +259,7 @@ PMIX_EXPORT int PMI_KVS_Get( const char kvsname[], const char key[], char value[
 
     /* retrieve the data from PMIx - since we don't have a rank,
      * we indicate that by passing the UNDEF value */
-    (void)strncpy(proc.nspace, kvsname, PMIX_MAX_NSLEN);
+    pmix_strncpy(proc.nspace, kvsname, PMIX_MAX_NSLEN);
     proc.rank = PMIX_RANK_UNDEF;
 
     rc = PMIx_Get(&proc, key, NULL, 0, &val);
@@ -267,7 +267,7 @@ PMIX_EXPORT int PMI_KVS_Get( const char kvsname[], const char key[], char value[
         if (PMIX_STRING != val->type) {
             rc = PMIX_ERROR;
         } else if (NULL != val->data.string) {
-            (void)strncpy(value, val->data.string, length);
+            pmix_strncpy(value, val->data.string, length-1);
         }
         PMIX_VALUE_RELEASE(val);
     }
@@ -445,7 +445,7 @@ PMIX_EXPORT int PMI_Publish_name(const char service_name[], const char port[])
     }
 
     /* pass the service/port */
-    (void) strncpy(info.key, service_name, PMIX_MAX_KEYLEN);
+           pmix_strncpy(info.key, service_name, PMIX_MAX_KEYLEN);
     info.value.type = PMIX_STRING;
     info.value.data.string = (char*) port;
 
@@ -497,7 +497,7 @@ PMIX_EXPORT int PMI_Lookup_name(const char service_name[], char port[])
     PMIX_PDATA_CONSTRUCT(&pdata);
 
     /* pass the service */
-    (void) strncpy(pdata.key, service_name, PMIX_MAX_KEYLEN);
+           pmix_strncpy(pdata.key, service_name, PMIX_MAX_KEYLEN);
 
     /* PMI-1 doesn't want the nspace back */
     if (PMIX_SUCCESS != (rc = PMIx_Lookup(&pdata, 1, NULL, 0))) {
@@ -514,7 +514,7 @@ PMIX_EXPORT int PMI_Lookup_name(const char service_name[], char port[])
      * potential we could overrun it. As this feature
      * isn't widely supported in PMI-1, try being
      * conservative */
-    (void) strncpy(port, pdata.value.data.string, PMIX_MAX_KEYLEN);
+           pmix_strncpy(port, pdata.value.data.string, PMIX_MAX_KEYLEN);
     PMIX_PDATA_DESTRUCT(&pdata);
 
     return PMIX_SUCCESS;
@@ -535,7 +535,7 @@ PMIX_EXPORT int PMI_Get_id(char id_str[], int length)
         return PMI_ERR_INVALID_LENGTH;
     }
 
-    (void) strncpy(id_str, myproc.nspace, length);
+    pmix_strncpy(id_str, myproc.nspace, length-1);
     return PMI_SUCCESS;
 }
 
@@ -742,7 +742,7 @@ PMIX_EXPORT int PMI_Spawn_multiple(int count,
             apps[i].info = (pmix_info_t*)malloc(apps[i].ninfo * sizeof(pmix_info_t));
             /* copy the info objects */
             for (j = 0; j < apps[i].ninfo; j++) {
-                (void)strncpy(apps[i].info[j].key, info_keyval_vectors[i][j].key, PMIX_MAX_KEYLEN);
+                pmix_strncpy(apps[i].info[j].key, info_keyval_vectors[i][j].key, PMIX_MAX_KEYLEN);
                 apps[i].info[j].value.type = PMIX_STRING;
                 apps[i].info[j].value.data.string = strdup(info_keyval_vectors[i][j].val);
             }

@@ -184,6 +184,7 @@ int main(int argc, char **argv)
         usleep(10);
     }
 
+
     /* get our universe size */
     (void)strncpy(proc.nspace, myproc.nspace, PMIX_MAX_NSLEN);
     proc.rank = PMIX_RANK_WILDCARD;

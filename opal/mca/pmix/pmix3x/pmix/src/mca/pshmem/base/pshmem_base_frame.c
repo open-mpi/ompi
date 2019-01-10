@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, Inc.  All rights reserved.
- * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -60,6 +60,9 @@ static pmix_status_t pmix_pshmem_close(void)
 
 static pmix_status_t pmix_pshmem_open(pmix_mca_base_open_flag_t flags)
 {
+    if (initialized) {
+        return PMIX_SUCCESS;
+    }
     /* initialize globals */
     initialized = true;
 

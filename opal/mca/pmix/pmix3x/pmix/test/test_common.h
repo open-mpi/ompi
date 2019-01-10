@@ -1,10 +1,10 @@
 /*
- * Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Artem Y. Polyakov <artpol84@gmail.com>.
  *                         All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2015-2017 Mellanox Technologies, Inc.
+ * Copyright (c) 2015-2018 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
  *
@@ -51,7 +51,7 @@ extern FILE *file;
 #define STRIPPED_FILE_NAME (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
 
 #define TEST_OUTPUT(x) { \
-    fprintf(file,"%s:%s: %s\n",STRIPPED_FILE_NAME, __func__, \
+    fprintf(file,"==%d== %s:%s: %s\n", getpid(), STRIPPED_FILE_NAME, __func__, \
             pmix_test_output_prepare x ); \
     fflush(file); \
 }
@@ -59,13 +59,13 @@ extern FILE *file;
 // Write output without adding anything to it.
 // Need for automate tests to receive "OK" string
 #define TEST_OUTPUT_CLEAR(x) { \
-    fprintf(file, "%s", pmix_test_output_prepare x ); \
+    fprintf(file, "==%d== %s", getpid(), pmix_test_output_prepare x ); \
     fflush(file); \
 }
 
 // Always write errors to the stderr
 #define TEST_ERROR(x) { \
-    fprintf(stderr,"ERROR [%s:%d:%s]: %s\n", STRIPPED_FILE_NAME, __LINE__, __func__, \
+    fprintf(stderr,"==%d== ERROR [%s:%d:%s]: %s\n", getpid(), STRIPPED_FILE_NAME, __LINE__, __func__, \
             pmix_test_output_prepare x ); \
     fflush(stderr); \
 }
@@ -129,6 +129,8 @@ typedef struct {
     char *key_replace;
     int test_internal;
     char *gds_mode;
+    int nservers;
+    uint32_t lsize;
 } test_params;
 
 #define INIT_TEST_PARAMS(params) do { \
@@ -160,6 +162,8 @@ typedef struct {
     params.key_replace = NULL;        \
     params.test_internal = 0;         \
     params.gds_mode = NULL;           \
+    params.nservers = 1;              \
+    params.lsize = 0;                 \
 } while (0)
 
 #define FREE_TEST_PARAMS(params) do { \

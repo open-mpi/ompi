@@ -46,7 +46,7 @@ PMIX_EXPORT pmix_status_t pmix_value_unload(pmix_value_t *kv,
 }
 
 PMIX_EXPORT pmix_status_t pmix_value_xfer(pmix_value_t *dest,
-                                          pmix_value_t *src)
+                                          const pmix_value_t *src)
 {
     return pmix_bfrops_base_value_xfer(dest, src);
 }
@@ -509,11 +509,8 @@ pmix_value_cmp_t pmix_bfrops_base_value_cmp(pmix_value_t *p,
 
 /* Xfer FUNCTIONS FOR GENERIC PMIX TYPES */
 pmix_status_t pmix_bfrops_base_value_xfer(pmix_value_t *p,
-                                          pmix_value_t *src)
+                                          const pmix_value_t *src)
 {
-    size_t n;
-    pmix_info_t *p1, *s1;
-
     /* copy the right field */
     p->type = src->type;
     switch (src->type) {
@@ -643,22 +640,6 @@ pmix_status_t pmix_bfrops_base_value_xfer(pmix_value_t *p,
         p->data.envar.separator = src->data.envar.separator;
         break;
 
-    /**** DEPRECATED ****/
-    case PMIX_INFO_ARRAY:
-        p->data.array->size = src->data.array->size;
-        if (0 < src->data.array->size) {
-            p->data.array->array = (pmix_info_t*)malloc(src->data.array->size * sizeof(pmix_info_t));
-            if (NULL == p->data.array->array) {
-                return PMIX_ERR_NOMEM;
-            }
-            p1 = (pmix_info_t*)p->data.array->array;
-            s1 = (pmix_info_t*)src->data.array->array;
-            for (n=0; n < src->data.darray->size; n++) {
-                PMIX_INFO_XFER(&p1[n], &s1[n]);
-            }
-        }
-        break;
-    /********************/
     default:
         pmix_output(0, "PMIX-XFER-VALUE: UNSUPPORTED TYPE %d", (int)src->type);
         return PMIX_ERROR;
