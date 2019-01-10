@@ -623,7 +623,6 @@ MPI Functionality and Features
       - portals4
 
   (2) The ob1 PML and the following BTLs support MPI_THREAD_MULTIPLE:
-      - openib (see exception below)
       - self
       - sm
       - smcuda
@@ -631,10 +630,6 @@ MPI Functionality and Features
       - ugni
       - usnic
       - vader (shared memory)
-
-  The openib BTL's RDMACM based connection setup mechanism is also not
-  thread safe.  The default UDCM method should be used for
-  applications requiring MPI_THREAD_MULTIPLE support.
 
   Currently, MPI File operations are not thread safe even if MPI is
   initialized for MPI_THREAD_MULTIPLE support.
@@ -794,7 +789,8 @@ Network Support
 - In prior versions of Open MPI, InfiniBand and RoCE support was
   provided through the openib BTL and ob1 PML plugins.  Starting with
   Open MPI 4.0.0, InfiniBand support through the openib plugin is both
-  deprecated and superseded by the ucx PML component.
+  deprecated and superseded by the ucx PML component.  The openib BTL
+  was removed in Open MPI v5.0.0.
 
   While the openib BTL depended on libibverbs, the UCX PML depends on
   the UCX library.
@@ -808,15 +804,6 @@ Network Support
   "--mca pml ucx" for MPI point-to-point operations, "--mca spml ucx"
   for OpenSHMEM support, and "--mca osc ucx" for MPI RMA (one-sided)
   operations.
-
-- Although the ob1 PML+openib BTL is still the default for iWARP and
-  RoCE devices, it will reject InfiniBand defaults (by default) so
-  that they will use the ucx PML.  If using the openib BTL is still
-  desired, set the following MCA parameters:
-
-  # Note that "vader" is Open MPI's shared memory BTL
-  $ mpirun --mca pml ob1 --mca btl openib,vader,self \
-        --mca btl_openib_allow_ib 1 ...
 
 - The usnic BTL is support for Cisco's usNIC device ("userspace NIC")
   on Cisco UCS servers with the Virtualized Interface Card (VIC).
@@ -850,8 +837,8 @@ Network Support
 
     http://lwn.net/Articles/343351/
 
-- The use of fork() with OpenFabrics-based networks (i.e., the openib
-  BTL) is only partially supported, and only on Linux kernels >=
+- The use of fork() with OpenFabrics-based networks (i.e., the UCX
+  PML) is only partially supported, and only on Linux kernels >=
   v2.6.15 with libibverbs v1.1 or later (first released as part of
   OFED v1.2), per restrictions imposed by the OFED network stack.
 
