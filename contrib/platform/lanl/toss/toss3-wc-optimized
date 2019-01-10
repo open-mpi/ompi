@@ -16,6 +16,3 @@ with_pmi=yes
 
 # Enable lustre support in romio
 with_io_romio_flags=--with-file-system=ufs+nfs+lustre
-
-# Do not build ibverbs support
-with_verbs=no

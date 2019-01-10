@@ -1,9 +1,6 @@
 # (c) 2012-2014 Los Alamos National Security, LLC. All rights reserved.
 # Common Cray XE/XK-6 options (used by all builds)
 
-# do not use IB verbs
-with_verbs=no
-
 # enable XPMEM enhanced shared memory (needs for Vader BTL)
 with_xpmem=/opt/cray/xpmem/0.1-2.0400.30792.5.6.gem
 

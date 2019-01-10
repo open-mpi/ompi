@@ -32,9 +32,6 @@ with_tm=no
 # Enable PMI support for direct launch
 with_pmi=yes
 
-# Always build ibverbs support
-with_verbs=yes
-
 # Install the development headers
 with_devel_headers=yes
 
