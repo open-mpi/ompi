@@ -1,9 +1,9 @@
 /*
- * Copyright (c) 2015-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2016-2018 IBM Corporation.  All rights reserved.
  * Copyright (c) 2016-2018 Mellanox Technologies, Inc.
  *                         All rights reserved.
- * Copyright (c) 2018      Research Organization for Information Science
+ * Copyright (c) 2018-2019 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
  *
  * $COPYRIGHT$
@@ -1782,6 +1782,7 @@ PMIX_EXPORT void pmix_common_dstor_finalize(pmix_common_dstore_ctx_t *ds_ctx)
     }
     free(ds_ctx->ds_name);
     free(ds_ctx->base_path);
+    free(ds_ctx);
 }
 
 static pmix_status_t _dstore_store_nolock(pmix_common_dstore_ctx_t *ds_ctx,

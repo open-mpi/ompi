@@ -2,7 +2,7 @@
 #
 # Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2013      Los Alamos National Security, LLC.  All rights reserved.
-# Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
+# Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
 # Copyright (c) 2017      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
@@ -35,6 +35,8 @@ AC_DEFUN([PMIX_LIBEVENT_CONFIG],[
     AC_DEFINE_UNQUOTED([PMIX_EVENT2_THREAD_HEADER], [$PMIX_EVENT2_THREAD_HEADER],
                        [Location of event2/thread.h])
     AC_MSG_RESULT([$PMIX_EVENT2_THREAD_HEADER])
+
+    PMIX_SUMMARY_ADD([[External Packages]],[[Libevent]], [pmix_libevent], [yes ($pmix_libevent_source)])
 ])
 
 AC_DEFUN([_PMIX_LIBEVENT_EMBEDDED_MODE],[
@@ -47,6 +49,7 @@ AC_DEFUN([_PMIX_LIBEVENT_EMBEDDED_MODE],[
           [PMIX_EVENT_HEADER="$with_libevent_header"
            PMIX_EVENT2_THREAD_HEADER="$with_libevent_header"])
 
+    pmix_libevent_source=embedded
  ])
 
 AC_DEFUN([_PMIX_LIBEVENT_EXTERNAL],[
@@ -138,6 +141,7 @@ AC_DEFUN([_PMIX_LIBEVENT_EXTERNAL],[
     # Set output variables
     PMIX_EVENT_HEADER="<event.h>"
     PMIX_EVENT2_THREAD_HEADER="<event2/thread.h>"
+    pmix_libevent_source=$pmix_event_dir
 
     PMIX_VAR_SCOPE_POP
 ])dnl

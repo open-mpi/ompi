@@ -13,7 +13,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Mellanox Technologies, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -33,24 +33,19 @@
 #include <time.h>
 
 #include <pmix.h>
+#include "examples.h"
 
 static uint32_t nprocs;
 static pmix_proc_t myproc;
 static uint32_t getcount = 0;
 
-#define WAIT_FOR_COMPLETION(a)                  \
-    do {                                        \
-        while ((a)) {                           \
-            usleep(10);                         \
-        }                                       \
-    } while (0)
-
 static void opcbfunc(pmix_status_t status, void *cbdata)
 {
-    bool *active = (bool*)cbdata;
+    mylock_t *lock = (mylock_t*)cbdata;
 
     fprintf(stderr, "%s:%d completed fence_nb\n", myproc.nspace, myproc.rank);
-    *active = false;
+    lock->status = status;
+    DEBUG_WAKEUP_THREAD(lock);
 }
 
 static void valcbfunc(pmix_status_t status,
@@ -98,7 +93,7 @@ int main(int argc, char **argv)
     char *tmp;
     pmix_proc_t proc;
     uint32_t n, num_gets;
-    bool active;
+    mylock_t mylock;
 
     /* init us */
     if (PMIX_SUCCESS != (rc = PMIx_Init(&myproc, NULL, 0))) {
@@ -170,9 +165,10 @@ int main(int argc, char **argv)
     PMIX_PROC_CONSTRUCT(&proc);
     (void)strncpy(proc.nspace, myproc.nspace, PMIX_MAX_NSLEN);
     proc.rank = PMIX_RANK_WILDCARD;
-    active = true;
-    if (PMIX_SUCCESS != (rc = PMIx_Fence_nb(&proc, 1, NULL, 0, opcbfunc, &active))) {
+    DEBUG_CONSTRUCT_LOCK(&mylock);
+    if (PMIX_SUCCESS != (rc = PMIx_Fence_nb(&proc, 1, NULL, 0, opcbfunc, &mylock))) {
         fprintf(stderr, "Client ns %s rank %d: PMIx_Fence failed: %d\n", myproc.nspace, myproc.rank, rc);
+        DEBUG_DESTRUCT_LOCK(&mylock);
         goto done;
     }
 
@@ -203,7 +199,7 @@ int main(int argc, char **argv)
     }
 
     /* wait for the first fence to finish */
-    WAIT_FOR_COMPLETION(active);
+    DEBUG_WAIT_THREAD(&mylock);
 
     /* wait for all my "get" calls to complete */
     while (getcount < num_gets) {

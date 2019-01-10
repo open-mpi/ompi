@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2016-2018 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2016-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2017-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2018      IBM Corporation.  All rights reserved.
@@ -1454,7 +1454,7 @@ static void connection_handler(int sd, short args, void *cbdata)
         /* and the group id */
         PMIX_INFO_LOAD(&pnd->info[n], PMIX_GRPID, &pnd->gid, PMIX_UINT32);
         ++n;
-        /* if we have it, pass along our ID */
+        /* if we have it, pass along their ID */
         if (!pnd->need_id) {
             PMIX_INFO_LOAD(&pnd->info[n], PMIX_NSPACE, nspace, PMIX_STRING);
             ++n;

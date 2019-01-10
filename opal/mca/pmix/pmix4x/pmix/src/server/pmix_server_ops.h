@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2015-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Artem Y. Polyakov <artpol84@gmail.com>.
  *                         All rights reserved.
  * Copyright (c) 2015      Mellanox Technologies, Inc.
@@ -13,6 +13,11 @@
 
 #ifndef PMIX_SERVER_OPS_H
 #define PMIX_SERVER_OPS_H
+
+#include <unistd.h>
+#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
 
 #include <src/include/pmix_config.h>
 #include "src/include/types.h"
@@ -58,6 +63,11 @@ typedef struct {
     pmix_iof_channel_t channels;
     pmix_byte_object_t *bo;
     size_t nbo;
+    /* timestamp receipt of the notification so we
+     * can evict the oldest one if we get overwhelmed */
+    time_t ts;
+    /* what room of the hotel they are in */
+    int room;
     pmix_op_cbfunc_t opcbfunc;
     pmix_dmodex_response_fn_t cbfunc;
     pmix_setup_application_cbfunc_t setupcbfunc;
@@ -148,6 +158,14 @@ typedef struct {
 PMIX_CLASS_DECLARATION(pmix_group_caddy_t);
 
 typedef struct {
+    pmix_list_item_t super;
+    pmix_proc_t source;
+    pmix_iof_channel_t channel;
+    pmix_byte_object_t *bo;
+} pmix_iof_cache_t;
+PMIX_CLASS_DECLARATION(pmix_iof_cache_t);
+
+typedef struct {
     pmix_list_t nspaces;                    // list of pmix_nspace_t for the nspaces we know about
     pmix_pointer_array_t clients;           // array of pmix_peer_t local clients
     pmix_list_t collectives;                // list of active pmix_server_trkr_t
@@ -156,7 +174,8 @@ typedef struct {
     pmix_list_t gdata;                      // cache of data given to me for passing to all clients
     pmix_list_t events;                     // list of pmix_regevents_info_t registered events
     pmix_list_t groups;                     // list of pmix_group_t group memberships
-    pmix_hotel_t iof;                       // IO to be forwarded to clients
+    pmix_list_t iof;                        // IO to be forwarded to clients
+    size_t max_iof_cache;                   // max number of IOF messages to cache
     bool tool_connections_allowed;
     char *tmpdir;                           // temporary directory for this server
     char *system_tmpdir;                    // system tmpdir

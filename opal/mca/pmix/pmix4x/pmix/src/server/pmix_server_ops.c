@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2018 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2014-2015 Artem Y. Polyakov <artpol84@gmail.com>.
@@ -1121,10 +1121,9 @@ static void spcbfunc(pmix_status_t status,
 {
     pmix_setup_caddy_t *cd = (pmix_setup_caddy_t*)cbdata;
     pmix_iof_req_t *req;
-    pmix_setup_caddy_t *occupant;
-    int i;
     pmix_buffer_t *msg;
     pmix_status_t rc;
+    pmix_iof_cache_t *iof, *ionext;
 
     /* if it was successful, and there are IOF requests, then
      * register them now */
@@ -1142,60 +1141,60 @@ static void spcbfunc(pmix_status_t status,
         req->channels = cd->channels;
         pmix_list_append(&pmix_globals.iof_requests, &req->super);
         /* process any cached IO */
-        for (i=0; i < PMIX_IOF_HOTEL_SIZE; i++) {
-            pmix_hotel_knock(&pmix_server_globals.iof, PMIX_IOF_HOTEL_SIZE-i-1, (void**)&occupant);
-            if (NULL != occupant) {
-                if (!(occupant->channels & req->channels)) {
-                    continue;
-                }
-                /* if the source matches the request, then forward this along */
-                if (0 != strncmp(occupant->procs->nspace, req->pname.nspace, PMIX_MAX_NSLEN) ||
-                    (PMIX_RANK_WILDCARD != req->pname.rank && occupant->procs->rank != req->pname.rank)) {
-                    continue;
-                }
-                /* never forward back to the source! This can happen if the source
-                 * is a launcher */
-                if (0 == strncmp(occupant->procs->nspace, req->peer->info->pname.nspace, PMIX_MAX_NSLEN) &&
-                    occupant->procs->rank == req->peer->info->pname.rank) {
-                    continue;
-                }
-                /* setup the msg */
-                if (NULL == (msg = PMIX_NEW(pmix_buffer_t))) {
-                    PMIX_ERROR_LOG(PMIX_ERR_OUT_OF_RESOURCE);
-                    rc = PMIX_ERR_OUT_OF_RESOURCE;
-                    break;
-                }
-                /* provide the source */
-                PMIX_BFROPS_PACK(rc, req->peer, msg, occupant->procs, 1, PMIX_PROC);
-                if (PMIX_SUCCESS != rc) {
-                    PMIX_ERROR_LOG(rc);
-                    PMIX_RELEASE(msg);
-                    break;
-                }
-                /* provide the channel */
-                PMIX_BFROPS_PACK(rc, req->peer, msg, &occupant->channels, 1, PMIX_IOF_CHANNEL);
-                if (PMIX_SUCCESS != rc) {
-                    PMIX_ERROR_LOG(rc);
-                    PMIX_RELEASE(msg);
-                    break;
-                }
-                /* pack the data */
-                PMIX_BFROPS_PACK(rc, req->peer, msg, occupant->bo, 1, PMIX_BYTE_OBJECT);
-                if (PMIX_SUCCESS != rc) {
-                    PMIX_ERROR_LOG(rc);
-                    PMIX_RELEASE(msg);
-                    break;
-                }
-                /* send it to the requestor */
-                PMIX_PTL_SEND_ONEWAY(rc, req->peer, msg, PMIX_PTL_TAG_IOF);
-                if (PMIX_SUCCESS != rc) {
-                    PMIX_ERROR_LOG(rc);
-                    PMIX_RELEASE(msg);
-                }
-                /* remove it from the hotel since it has now been forwarded */
-                pmix_hotel_checkout(&pmix_server_globals.iof, PMIX_IOF_HOTEL_SIZE-i-1);
-                PMIX_RELEASE(occupant);
+        PMIX_LIST_FOREACH_SAFE(iof, ionext, &pmix_server_globals.iof, pmix_iof_cache_t) {
+            /* if the channels don't match, then ignore it */
+            if (!(iof->channel & req->channels)) {
+                continue;
             }
+            /* if the source does not match the request, then ignore it */
+            if (!PMIX_CHECK_PROCID(&iof->source, &req->pname)) {
+                continue;
+            }
+            /* never forward back to the source! This can happen if the source
+             * is a launcher */
+            if (PMIX_CHECK_PROCID(&iof->source, &req->peer->info->pname)) {
+                continue;
+            }
+            pmix_output_verbose(2, pmix_server_globals.iof_output,
+                                "PMIX:SERVER:SPAWN delivering cached IOF from %s:%d to %s:%d",
+                                iof->source.nspace, iof->source.rank,
+                                req->pname.nspace, req->pname.rank);
+            /* setup the msg */
+            if (NULL == (msg = PMIX_NEW(pmix_buffer_t))) {
+                PMIX_ERROR_LOG(PMIX_ERR_OUT_OF_RESOURCE);
+                rc = PMIX_ERR_OUT_OF_RESOURCE;
+                break;
+            }
+            /* provide the source */
+            PMIX_BFROPS_PACK(rc, req->peer, msg, &iof->source, 1, PMIX_PROC);
+            if (PMIX_SUCCESS != rc) {
+                PMIX_ERROR_LOG(rc);
+                PMIX_RELEASE(msg);
+                break;
+            }
+            /* provide the channel */
+            PMIX_BFROPS_PACK(rc, req->peer, msg, &iof->channel, 1, PMIX_IOF_CHANNEL);
+            if (PMIX_SUCCESS != rc) {
+                PMIX_ERROR_LOG(rc);
+                PMIX_RELEASE(msg);
+                break;
+            }
+            /* pack the data */
+            PMIX_BFROPS_PACK(rc, req->peer, msg, iof->bo, 1, PMIX_BYTE_OBJECT);
+            if (PMIX_SUCCESS != rc) {
+                PMIX_ERROR_LOG(rc);
+                PMIX_RELEASE(msg);
+                break;
+            }
+            /* send it to the requestor */
+            PMIX_PTL_SEND_ONEWAY(rc, req->peer, msg, PMIX_PTL_TAG_IOF);
+            if (PMIX_SUCCESS != rc) {
+                PMIX_ERROR_LOG(rc);
+                PMIX_RELEASE(msg);
+            }
+            /* remove it from the list since it has now been forwarded */
+            pmix_list_remove_item(&pmix_server_globals.iof, &iof->super);
+            PMIX_RELEASE(iof);
         }
     }
 
@@ -1294,7 +1293,8 @@ pmix_status_t pmix_server_spawn(pmix_peer_t *peer,
                 }
             }
         }
-        /* we will construct any required iof request tracker upon completion of the spawn */
+        /* we will construct any required iof request tracker upon completion of the spawn
+         * as we need the nspace of the spawned application! */
     }
     /* add the directive to the end */
     if (PMIX_PROC_IS_TOOL(peer)) {
@@ -1648,6 +1648,8 @@ pmix_status_t pmix_server_register_events(pmix_peer_t *peer,
     pmix_cmd_t cmd = PMIX_NOTIFY_CMD;
     pmix_proc_t *affected = NULL;
     size_t naffected = 0;
+    pmix_range_trkr_t rngtrk;
+    pmix_proc_t proc;
 
     pmix_output_verbose(2, pmix_server_globals.event_output,
                         "recvd register events for peer %s:%d",
@@ -1882,6 +1884,8 @@ pmix_status_t pmix_server_register_events(pmix_peer_t *peer,
     }
 
     /* check if any matching notifications have been cached */
+    rngtrk.procs = NULL;
+    rngtrk.nprocs = 0;
     for (i=0; i < pmix_globals.max_events; i++) {
         pmix_hotel_knock(&pmix_globals.notifications, i, (void**)&cd);
         if (NULL == cd) {
@@ -1904,23 +1908,33 @@ pmix_status_t pmix_server_register_events(pmix_peer_t *peer,
         if (!found) {
             continue;
         }
-       /* if we were given specific targets, check if this is one */
+        /* check the range */
+        rngtrk.range = cd->range;
+        PMIX_LOAD_PROCID(&proc, peer->info->pname.nspace, peer->info->pname.rank);
+        if (!pmix_notify_check_range(&rngtrk, &proc)) {
+            continue;
+        }
+        /* if we were given specific targets, check if this is one */
+        found = false;
         if (NULL != cd->targets) {
             matched = false;
             for (n=0; n < cd->ntargets; n++) {
-                if (0 != strncmp(peer->info->pname.nspace, cd->targets[n].nspace, PMIX_MAX_NSLEN)) {
-                    continue;
-                }
                 /* if the source of the event is the same peer just registered, then ignore it
                  * as the event notification system will have already locally
                  * processed it */
-                if (0 == strncmp(peer->info->pname.nspace, cd->source.nspace, PMIX_MAX_NSLEN) &&
-                    peer->info->pname.rank == cd->source.rank) {
+                if (PMIX_CHECK_PROCID(&cd->source, &peer->info->pname)) {
                     continue;
                 }
-                if (PMIX_RANK_WILDCARD == cd->targets[n].rank ||
-                    peer->info->pname.rank == cd->targets[n].rank) {
+                if (PMIX_CHECK_PROCID(&peer->info->pname, &cd->targets[n])) {
                     matched = true;
+                    /* track the number of targets we have left to notify */
+                    --cd->nleft;
+                    /* if this is the last one, then evict this event
+                     * from the cache */
+                    if (0 == cd->nleft) {
+                        pmix_hotel_checkout(&pmix_globals.notifications, cd->room);
+                        found = true;  // mark that we should release cd
+                    }
                     break;
                 }
             }
@@ -1929,6 +1943,7 @@ pmix_status_t pmix_server_register_events(pmix_peer_t *peer,
                 continue;
             }
         }
+
         /* if they specified affected proc(s) they wanted to know about, check */
         if (!pmix_notify_check_affected(cd->affected, cd->naffected,
                                         affected, naffected)) {
@@ -1974,7 +1989,11 @@ pmix_status_t pmix_server_register_events(pmix_peer_t *peer,
         if (PMIX_SUCCESS != ret) {
             PMIX_RELEASE(relay);
         }
+        if (found) {
+            PMIX_RELEASE(cd);
+        }
     }
+
     if (NULL != codes) {
         free(codes);
     }
@@ -2196,13 +2215,13 @@ pmix_status_t pmix_server_query(pmix_peer_t *peer,
     pmix_status_t rc;
     pmix_query_caddy_t *cd;
     pmix_proc_t proc;
+    pmix_cb_t cb;
+    size_t n, p;
+    pmix_list_t results;
+    pmix_kval_t *kv, *kvnxt;
 
     pmix_output_verbose(2, pmix_server_globals.base_output,
                         "recvd query from client");
-
-    if (NULL == pmix_host_server.query) {
-        return PMIX_ERR_NOT_SUPPORTED;
-    }
 
     cd = PMIX_NEW(pmix_query_caddy_t);
     if (NULL == cd) {
@@ -2214,36 +2233,132 @@ pmix_status_t pmix_server_query(pmix_peer_t *peer,
     PMIX_BFROPS_UNPACK(rc, peer, buf, &cd->nqueries, &cnt, PMIX_SIZE);
     if (PMIX_SUCCESS != rc) {
         PMIX_ERROR_LOG(rc);
-        goto exit;
+        PMIX_RELEASE(cd);
+        return rc;
     }
     /* unpack the queries */
     if (0 < cd->nqueries) {
         PMIX_QUERY_CREATE(cd->queries, cd->nqueries);
         if (NULL == cd->queries) {
             rc = PMIX_ERR_NOMEM;
-            goto exit;
+            PMIX_RELEASE(cd);
+            return rc;
         }
         cnt = cd->nqueries;
         PMIX_BFROPS_UNPACK(rc, peer, buf, cd->queries, &cnt, PMIX_QUERY);
         if (PMIX_SUCCESS != rc) {
             PMIX_ERROR_LOG(rc);
-            goto exit;
+            PMIX_RELEASE(cd);
+            return rc;
         }
     }
 
+    /** check each query/key to see if we already have the info
+     * before passing the request up to the host */
+    /* check the directives to see if they want us to refresh
+     * the local cached results - if we wanted to optimize this
+     * more, we would check each query and allow those that don't
+     * want to be refreshed to be executed locally, and those that
+     * did would be sent to the host. However, for now we simply
+     * */
+    memset(proc.nspace, 0, PMIX_MAX_NSLEN+1);
+    proc.rank = PMIX_RANK_INVALID;
+    PMIX_CONSTRUCT(&results, pmix_list_t);
+
+    for (n=0; n < cd->nqueries; n++) {
+        for (p=0; p < cd->queries[n].nqual; p++) {
+            if (PMIX_CHECK_KEY(&cd->queries[n].qualifiers[p], PMIX_QUERY_REFRESH_CACHE)) {
+                if (PMIX_INFO_TRUE(&cd->queries[n].qualifiers[p])) {
+                    PMIX_LIST_DESTRUCT(&results);
+                    goto query;
+                }
+            } else if (PMIX_CHECK_KEY(&cd->queries[n].qualifiers[p], PMIX_PROCID)) {
+                PMIX_LOAD_NSPACE(proc.nspace, cd->queries[n].qualifiers[p].value.data.proc->nspace);
+                proc.rank = cd->queries[n].qualifiers[p].value.data.proc->rank;
+            } else if (PMIX_CHECK_KEY(&cd->queries[n].qualifiers[p], PMIX_NSPACE)) {
+                PMIX_LOAD_NSPACE(proc.nspace, cd->queries[n].qualifiers[p].value.data.string);
+            } else if (PMIX_CHECK_KEY(&cd->queries[n].qualifiers[p], PMIX_RANK)) {
+                proc.rank = cd->queries[n].qualifiers[p].value.data.rank;
+            }
+        }
+        /* we get here if a refresh isn't required - first try a local
+         * "get" on the data to see if we already have it */
+        PMIX_CONSTRUCT(&cb, pmix_cb_t);
+        cb.copy = false;
+        /* set the proc */
+        if (PMIX_RANK_INVALID == proc.rank &&
+            0 == strlen(proc.nspace)) {
+            /* use our id */
+            cb.proc = &pmix_globals.myid;
+        } else {
+            if (0 == strlen(proc.nspace)) {
+                /* use our nspace */
+                PMIX_LOAD_NSPACE(cb.proc->nspace, pmix_globals.myid.nspace);
+            }
+            if (PMIX_RANK_INVALID == proc.rank) {
+                /* user the wildcard rank */
+                proc.rank = PMIX_RANK_WILDCARD;
+            }
+            cb.proc = &proc;
+        }
+        for (p=0; NULL != cd->queries[n].keys[p]; p++) {
+            cb.key = cd->queries[n].keys[p];
+            PMIX_GDS_FETCH_KV(rc, pmix_globals.mypeer, &cb);
+            if (PMIX_SUCCESS != rc) {
+                /* needs to be passed to the host */
+                PMIX_LIST_DESTRUCT(&results);
+                PMIX_DESTRUCT(&cb);
+                goto query;
+            }
+            /* need to retain this result */
+            PMIX_LIST_FOREACH_SAFE(kv, kvnxt, &cb.kvs, pmix_kval_t) {
+                pmix_list_remove_item(&cb.kvs, &kv->super);
+                pmix_list_append(&results, &kv->super);
+            }
+            PMIX_DESTRUCT(&cb);
+        }
+    }
+
+    /* if we get here, then all queries were completely locally
+     * resolved, so construct the results for return */
+    rc = PMIX_ERR_NOT_FOUND;
+    if (0 < (cd->ninfo = pmix_list_get_size(&results))) {
+        PMIX_INFO_CREATE(cd->info, cd->ninfo);
+        n = 0;
+        PMIX_LIST_FOREACH_SAFE(kv, kvnxt, &results, pmix_kval_t) {
+            PMIX_LOAD_KEY(cd->info[n].key, kv->key);
+            rc = pmix_value_xfer(&cd->info[n].value, kv->value);
+            if (PMIX_SUCCESS != rc) {
+                PMIX_INFO_FREE(cd->info, cd->ninfo);
+                cd->info = NULL;
+                cd->ninfo = 0;
+                break;
+            }
+            ++n;
+        }
+    }
+    /* done with the list of results */
+    PMIX_LIST_DESTRUCT(&results);
+    /* we can just call the cbfunc here as we are already
+     * in an event - let our internal cbfunc do a threadshift
+     * if necessary */
+    cbfunc(PMIX_SUCCESS, cd->info, cd->ninfo, cd, NULL, NULL);
+    return PMIX_SUCCESS;
+
+  query:
+    if (NULL == pmix_host_server.query) {
+        PMIX_RELEASE(cd);
+        return PMIX_ERR_NOT_SUPPORTED;
+    }
+
     /* setup the requesting peer name */
-    pmix_strncpy(proc.nspace, peer->info->pname.nspace, PMIX_MAX_NSLEN);
-    proc.rank = peer->info->pname.rank;
+    PMIX_LOAD_PROCID(&proc, peer->info->pname.nspace, peer->info->pname.rank);
 
     /* ask the host for the info */
     if (PMIX_SUCCESS != (rc = pmix_host_server.query(&proc, cd->queries, cd->nqueries,
                                                      cbfunc, cd))) {
-        goto exit;
+        PMIX_RELEASE(cd);
     }
-    return PMIX_SUCCESS;
-
-  exit:
-    PMIX_RELEASE(cd);
     return rc;
 }
 
@@ -2952,9 +3067,8 @@ pmix_status_t pmix_server_iofreg(pmix_peer_t *peer,
     pmix_iof_req_t *req;
     bool notify, match;
     size_t n;
-    int i;
-    pmix_setup_caddy_t *occupant;
     pmix_buffer_t *msg;
+    pmix_iof_cache_t *iof, *ionext;
 
     pmix_output_verbose(2, pmix_server_globals.iof_output,
                         "recvd IOF PULL request from client");
@@ -3051,54 +3165,60 @@ pmix_status_t pmix_server_iofreg(pmix_peer_t *peer,
             pmix_list_append(&pmix_globals.iof_requests, &req->super);
         }
         /* process any cached IO */
-        for (i=0; i < PMIX_IOF_HOTEL_SIZE; i++) {
-            pmix_hotel_knock(&pmix_server_globals.iof, PMIX_IOF_HOTEL_SIZE-i-1, (void**)&occupant);
-            if (NULL != occupant) {
-                if (!(occupant->channels & req->channels)) {
-                    continue;
-                }
-                /* if the source matches the request, then forward this along */
-                if (0 != strncmp(occupant->procs->nspace, req->pname.nspace, PMIX_MAX_NSLEN) ||
-                    (PMIX_RANK_WILDCARD != req->pname.rank && occupant->procs->rank != req->pname.rank)) {
-                    continue;
-                }
-                /* setup the msg */
-                if (NULL == (msg = PMIX_NEW(pmix_buffer_t))) {
-                    PMIX_ERROR_LOG(PMIX_ERR_OUT_OF_RESOURCE);
-                    rc = PMIX_ERR_OUT_OF_RESOURCE;
-                    break;
-                }
-                /* provide the source */
-                PMIX_BFROPS_PACK(rc, req->peer, msg, occupant->procs, 1, PMIX_PROC);
-                if (PMIX_SUCCESS != rc) {
-                    PMIX_ERROR_LOG(rc);
-                    PMIX_RELEASE(msg);
-                    break;
-                }
-                /* provide the channel */
-                PMIX_BFROPS_PACK(rc, req->peer, msg, &occupant->channels, 1, PMIX_IOF_CHANNEL);
-                if (PMIX_SUCCESS != rc) {
-                    PMIX_ERROR_LOG(rc);
-                    PMIX_RELEASE(msg);
-                    break;
-                }
-                /* pack the data */
-                PMIX_BFROPS_PACK(rc, req->peer, msg, occupant->bo, 1, PMIX_BYTE_OBJECT);
-                if (PMIX_SUCCESS != rc) {
-                    PMIX_ERROR_LOG(rc);
-                    PMIX_RELEASE(msg);
-                    break;
-                }
-                /* send it to the requestor */
-                PMIX_PTL_SEND_ONEWAY(rc, req->peer, msg, PMIX_PTL_TAG_IOF);
-                if (PMIX_SUCCESS != rc) {
-                    PMIX_ERROR_LOG(rc);
-                    PMIX_RELEASE(msg);
-                }
-                /* remove it from the hotel since it has now been forwarded */
-                pmix_hotel_checkout(&pmix_server_globals.iof, PMIX_IOF_HOTEL_SIZE-i-1);
-                PMIX_RELEASE(occupant);
+        PMIX_LIST_FOREACH_SAFE(iof, ionext, &pmix_server_globals.iof, pmix_iof_cache_t) {
+            /* if the channels don't match, then ignore it */
+            if (!(iof->channel & req->channels)) {
+                continue;
             }
+            /* if the source does not match the request, then ignore it */
+            if (!PMIX_CHECK_PROCID(&iof->source, &req->pname)) {
+                continue;
+            }
+            /* never forward back to the source! This can happen if the source
+             * is a launcher */
+            if (PMIX_CHECK_PROCID(&iof->source, &req->peer->info->pname)) {
+                continue;
+            }
+            pmix_output_verbose(2, pmix_server_globals.iof_output,
+                                "PMIX:SERVER:IOFREQ delivering cached IOF from %s:%d to %s:%d",
+                                iof->source.nspace, iof->source.rank,
+                                req->peer->info->pname.nspace, req->peer->info->pname.rank);
+            /* setup the msg */
+            if (NULL == (msg = PMIX_NEW(pmix_buffer_t))) {
+                PMIX_ERROR_LOG(PMIX_ERR_OUT_OF_RESOURCE);
+                rc = PMIX_ERR_OUT_OF_RESOURCE;
+                break;
+            }
+            /* provide the source */
+            PMIX_BFROPS_PACK(rc, req->peer, msg, &iof->source, 1, PMIX_PROC);
+            if (PMIX_SUCCESS != rc) {
+                PMIX_ERROR_LOG(rc);
+                PMIX_RELEASE(msg);
+                break;
+            }
+            /* provide the channel */
+            PMIX_BFROPS_PACK(rc, req->peer, msg, &iof->channel, 1, PMIX_IOF_CHANNEL);
+            if (PMIX_SUCCESS != rc) {
+                PMIX_ERROR_LOG(rc);
+                PMIX_RELEASE(msg);
+                break;
+            }
+            /* pack the data */
+            PMIX_BFROPS_PACK(rc, req->peer, msg, iof->bo, 1, PMIX_BYTE_OBJECT);
+            if (PMIX_SUCCESS != rc) {
+                PMIX_ERROR_LOG(rc);
+                PMIX_RELEASE(msg);
+                break;
+            }
+            /* send it to the requestor */
+            PMIX_PTL_SEND_ONEWAY(rc, req->peer, msg, PMIX_PTL_TAG_IOF);
+            if (PMIX_SUCCESS != rc) {
+                PMIX_ERROR_LOG(rc);
+                PMIX_RELEASE(msg);
+            }
+            /* remove it from the list since it has now been forwarded */
+            pmix_list_remove_item(&pmix_server_globals.iof, &iof->super);
+            PMIX_RELEASE(iof);
         }
     }
     if (notify) {
@@ -4043,6 +4163,7 @@ static void ncon(pmix_notify_caddy_t *p)
     p->range = PMIX_RANGE_UNDEF;
     p->targets = NULL;
     p->ntargets = 0;
+    p->nleft = SIZE_MAX;
     p->affected = NULL;
     p->naffected = 0;
     p->nondefault = false;
@@ -4192,3 +4313,15 @@ PMIX_CLASS_INSTANCE(pmix_group_t,
 PMIX_CLASS_INSTANCE(pmix_group_caddy_t,
                     pmix_list_item_t,
                     NULL, NULL);
+
+static void iocon(pmix_iof_cache_t *p)
+{
+    p->bo = NULL;
+}
+static void iodes(pmix_iof_cache_t *p)
+{
+    PMIX_BYTE_OBJECT_FREE(p->bo, 1);  // macro protects against NULL
+}
+PMIX_CLASS_INSTANCE(pmix_iof_cache_t,
+                    pmix_list_item_t,
+                    iocon, iodes);

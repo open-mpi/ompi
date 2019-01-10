@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014      Artem Y. Polyakov <artpol84@gmail.com>.
@@ -1098,7 +1098,6 @@ PMIX_EXPORT pmix_status_t PMIx_tool_finalize(void)
     struct timeval tv = {5, 0};
     int n;
     pmix_peer_t *peer;
-    pmix_setup_caddy_t *cd;
 
     PMIX_ACQUIRE_THREAD(&pmix_global_lock);
     if (1 != pmix_globals.init_cntr) {
@@ -1183,14 +1182,6 @@ PMIX_EXPORT pmix_status_t PMIx_tool_finalize(void)
     if (PMIX_PROC_IS_LAUNCHER(pmix_globals.mypeer)) {
         pmix_ptl_base_stop_listening();
 
-        /* cleanout any IOF */
-        for (n=0; n < PMIX_IOF_HOTEL_SIZE; n++) {
-            pmix_hotel_checkout_and_return_occupant(&pmix_server_globals.iof, n, (void**)&cd);
-            if (NULL != cd) {
-                PMIX_RELEASE(cd);
-            }
-        }
-        PMIX_DESTRUCT(&pmix_server_globals.iof);
         for (n=0; n < pmix_server_globals.clients.size; n++) {
             if (NULL != (peer = (pmix_peer_t*)pmix_pointer_array_get_item(&pmix_server_globals.clients, n))) {
                 PMIX_RELEASE(peer);
@@ -1204,6 +1195,7 @@ PMIX_EXPORT pmix_status_t PMIx_tool_finalize(void)
         PMIX_LIST_DESTRUCT(&pmix_server_globals.gdata);
         PMIX_LIST_DESTRUCT(&pmix_server_globals.events);
         PMIX_LIST_DESTRUCT(&pmix_server_globals.nspaces);
+        PMIX_LIST_DESTRUCT(&pmix_server_globals.iof);
     }
 
     /* shutdown services */

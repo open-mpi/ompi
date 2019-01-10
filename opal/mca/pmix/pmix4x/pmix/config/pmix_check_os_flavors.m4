@@ -1,7 +1,7 @@
 dnl -*- shell-script -*-
 dnl
 dnl Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
-dnl Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
+dnl Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
 dnl Copyright (c) 2014      Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
 dnl
@@ -56,6 +56,13 @@ AC_DEFUN([PMIX_CHECK_OS_FLAVORS],
     AC_DEFINE_UNQUOTED([PMIX_HAVE_SOLARIS],
                        [$pmix_have_solaris],
                        [Whether or not we have solaris])
+
+    AS_IF([test "$pmix_found_apple" = "yes"],
+          [pmix_have_apple=1],
+          [pmix_have_apple=0])
+    AC_DEFINE_UNQUOTED([PMIX_HAVE_APPLE],
+                       [$pmix_have_apple],
+                       [Whether or not we have apple])
 
     # check for sockaddr_in (a good sign we have TCP)
     AC_CHECK_HEADERS([netdb.h netinet/in.h netinet/tcp.h])
