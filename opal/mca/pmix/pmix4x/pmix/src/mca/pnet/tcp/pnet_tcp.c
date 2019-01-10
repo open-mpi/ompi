@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018      Intel, Inc. All rights reserved.
+ * Copyright (c) 2018-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2018      Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
  *
@@ -749,7 +749,12 @@ static pmix_status_t setup_local_network(pmix_namespace_t *nptr,
                 PMIX_BFROPS_UNPACK(rc, pmix_globals.mypeer,
                                    &bkt, &nkvals, &cnt, PMIX_SIZE);
                 /* setup the info array */
-                PMIX_INFO_CREATE(jinfo, nkvals);
+                PMIX_INFO_CONSTRUCT(&stinfo);
+                pmix_strncpy(stinfo.key, idkey, PMIX_MAX_KEYLEN);
+                stinfo.value.type = PMIX_DATA_ARRAY;
+                PMIX_DATA_ARRAY_CREATE(stinfo.value.data.darray, nkvals, PMIX_INFO);
+                jinfo = (pmix_info_t*)stinfo.value.data.darray->array;
+
                 /* cycle thru the blob and extract the kvals */
                 kv = PMIX_NEW(pmix_kval_t);
                 cnt = 1;
@@ -787,12 +792,6 @@ static pmix_status_t setup_local_network(pmix_namespace_t *nptr,
                     PMIX_INFO_FREE(jinfo, nkvals);
                     return PMIX_ERR_BAD_PARAM;
                 }
-                /* the data gets stored as a pmix_data_array_t on the provided key */
-                PMIX_INFO_CONSTRUCT(&stinfo);
-                pmix_strncpy(stinfo.key, idkey, PMIX_MAX_KEYLEN);
-                stinfo.value.type = PMIX_DATA_ARRAY;
-                PMIX_DATA_ARRAY_CREATE(stinfo.value.data.darray, nkvals, PMIX_INFO);
-                stinfo.value.data.darray->array = jinfo;
 
                 /* cache the info on the job */
                 PMIX_GDS_CACHE_JOB_INFO(rc, pmix_globals.mypeer, nptr,

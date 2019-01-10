@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2016      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
@@ -140,7 +140,7 @@ PMIX_EXPORT pmix_status_t PMIx_Query_info_nb(pmix_query_t queries[], size_t nque
     pmix_buffer_t *msg;
     pmix_status_t rc;
     pmix_cb_t cb;
-    size_t n, m, p;
+    size_t n, p;
     pmix_list_t results;
     pmix_kval_t *kv, *kvnxt;
     pmix_proc_t proc;
@@ -172,21 +172,19 @@ PMIX_EXPORT pmix_status_t PMIx_Query_info_nb(pmix_query_t queries[], size_t nque
     memset(proc.nspace, 0, PMIX_MAX_NSLEN+1);
     proc.rank = PMIX_RANK_INVALID;
     for (n=0; n < nqueries; n++) {
-        for (m=0; m < queries[n].nqual; m++) {
-            if (NULL != queries[n].qualifiers) {
-                for (p=0; p < queries[n].nqual; p++) {
-                    if (PMIX_CHECK_KEY(&queries[n].qualifiers[p], PMIX_QUERY_REFRESH_CACHE)) {
-                        PMIX_LIST_DESTRUCT(&results);
-                        goto query;
-                    } else if (PMIX_CHECK_KEY(&queries[n].qualifiers[p], PMIX_PROCID)) {
-                        PMIX_LOAD_NSPACE(proc.nspace, queries[n].qualifiers[p].value.data.proc->nspace);
-                        proc.rank = queries[n].qualifiers[p].value.data.proc->rank;
-                    } else if (PMIX_CHECK_KEY(&queries[n].qualifiers[p], PMIX_NSPACE)) {
-                        PMIX_LOAD_NSPACE(proc.nspace, queries[n].qualifiers[p].value.data.string);
-                    } else if (PMIX_CHECK_KEY(&queries[n].qualifiers[p], PMIX_RANK)) {
-                        proc.rank = queries[n].qualifiers[p].value.data.rank;
-                    }
+        for (p=0; p < queries[n].nqual; p++) {
+            if (PMIX_CHECK_KEY(&queries[n].qualifiers[p], PMIX_QUERY_REFRESH_CACHE)) {
+                if (PMIX_INFO_TRUE(&queries[n].qualifiers[p])) {
+                    PMIX_LIST_DESTRUCT(&results);
+                    goto query;
                 }
+            } else if (PMIX_CHECK_KEY(&queries[n].qualifiers[p], PMIX_PROCID)) {
+                PMIX_LOAD_NSPACE(proc.nspace, queries[n].qualifiers[p].value.data.proc->nspace);
+                proc.rank = queries[n].qualifiers[p].value.data.proc->rank;
+            } else if (PMIX_CHECK_KEY(&queries[n].qualifiers[p], PMIX_NSPACE)) {
+                PMIX_LOAD_NSPACE(proc.nspace, queries[n].qualifiers[p].value.data.string);
+            } else if (PMIX_CHECK_KEY(&queries[n].qualifiers[p], PMIX_RANK)) {
+                proc.rank = queries[n].qualifiers[p].value.data.rank;
             }
         }
         /* we get here if a refresh isn't required - first try a local
@@ -255,6 +253,7 @@ PMIX_EXPORT pmix_status_t PMIx_Query_info_nb(pmix_query_t queries[], size_t nque
     /* regardless of the result of the query, we return
      * PMIX_SUCCESS here to indicate that the operation
      * was accepted for processing */
+    PMIX_RELEASE_THREAD(&pmix_global_lock);
     return PMIX_SUCCESS;
 
 
@@ -270,10 +269,10 @@ PMIX_EXPORT pmix_status_t PMIx_Query_info_nb(pmix_query_t queries[], size_t nque
         }
         pmix_output_verbose(2, pmix_globals.debug_output,
                             "pmix:query handed to RM");
-        pmix_host_server.query(&pmix_globals.myid,
-                               queries, nqueries,
-                               cbfunc, cbdata);
-        return PMIX_SUCCESS;
+        rc = pmix_host_server.query(&pmix_globals.myid,
+                                    queries, nqueries,
+                                    cbfunc, cbdata);
+        return rc;
     }
 
     /* if we aren't connected, don't attempt to send */

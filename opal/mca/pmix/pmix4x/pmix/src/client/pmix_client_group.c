@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014      Artem Y. Polyakov <artpol84@gmail.com>.
@@ -627,12 +627,13 @@ PMIX_EXPORT pmix_status_t PMIx_Group_invite(const char grp[],
     (void)strncpy(cb.info[n].key, PMIX_EVENT_CUSTOM_RANGE, PMIX_MAX_KEYLEN);
     cb.info[n].value.type = PMIX_DATA_ARRAY;
     PMIX_DATA_ARRAY_CREATE(cb.info[n].value.data.darray, nprocs, PMIX_PROC);
-    if (NULL == cb.info[n].value.data.darray) {
+    if (NULL == cb.info[n].value.data.darray ||
+        NULL == cb.info[n].value.data.darray->array) {
         PMIX_DESTRUCT(&cb);
         return PMIX_ERR_NOMEM;
     }
-    PMIX_PROC_CREATE(cb.info[n].value.data.darray->array, nprocs);
-    memcpy(cb.info[n++].value.data.darray->array, procs, nprocs * sizeof(pmix_proc_t));
+    memcpy(cb.info[n].value.data.darray->array, procs, nprocs * sizeof(pmix_proc_t));
+    ++n;
     /* mark that this only goes to non-default handlers */
     PMIX_INFO_LOAD(&cb.info[n], PMIX_EVENT_NON_DEFAULT, NULL, PMIX_BOOL);
     ++n;
@@ -753,7 +754,8 @@ PMIX_EXPORT pmix_status_t PMIx_Group_invite_nb(const char grp[],
     (void)strncpy(cb->info[n].key, PMIX_EVENT_CUSTOM_RANGE, PMIX_MAX_KEYLEN);
     cb->info[n].value.type = PMIX_DATA_ARRAY;
     PMIX_DATA_ARRAY_CREATE(cb->info[n].value.data.darray, nprocs, PMIX_PROC);
-    if (NULL == cb->info[n].value.data.darray) {
+    if (NULL == cb->info[n].value.data.darray ||
+        NULL == cb->info[n].value.data.darray->array) {
         PMIX_CONSTRUCT(&lock, pmix_cb_t);
         PMIx_Deregister_event_handler(cb->ref,
                                       op_cbfunc, &lock);
@@ -762,7 +764,6 @@ PMIX_EXPORT pmix_status_t PMIx_Group_invite_nb(const char grp[],
         PMIX_RELEASE(cb);
         return PMIX_ERR_NOMEM;
     }
-    PMIX_PROC_CREATE(cb->info[n].value.data.darray->array, nprocs);
     memcpy(cb->info[n].value.data.darray->array, procs, nprocs * sizeof(pmix_proc_t));
     ++n;
     /* mark that this only goes to non-default handlers */

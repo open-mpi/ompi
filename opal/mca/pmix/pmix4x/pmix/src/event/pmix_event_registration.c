@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2017-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -388,15 +388,11 @@ static void check_cached_events(pmix_rshift_caddy_t *cd)
         if (!found) {
             continue;
         }
-       /* if we were given specific targets, check if we are one */
+        /* if we were given specific targets, check if we are one */
         if (NULL != ncd->targets) {
             matched = false;
             for (n=0; n < ncd->ntargets; n++) {
-                if (0 != strncmp(pmix_globals.myid.nspace, ncd->targets[n].nspace, PMIX_MAX_NSLEN)) {
-                    continue;
-                }
-                if (PMIX_RANK_WILDCARD == ncd->targets[n].rank ||
-                    pmix_globals.myid.rank == ncd->targets[n].rank) {
+                if (PMIX_CHECK_PROCID(&pmix_globals.myid, &ncd->targets[n])) {
                     matched = true;
                     break;
                 }
@@ -446,6 +442,12 @@ static void check_cached_events(pmix_rshift_caddy_t *cd)
                 }
             }
         }
+        /* check this event out of the cache since we
+         * are processing it */
+        pmix_hotel_checkout(&pmix_globals.notifications, ncd->room);
+        /* release the storage */
+        PMIX_RELEASE(ncd);
+
         /* we don't want this chain to propagate, so indicate it
          * should only be run as a single-shot */
         chain->endchain = true;

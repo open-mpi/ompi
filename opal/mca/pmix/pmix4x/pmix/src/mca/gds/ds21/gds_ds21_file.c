@@ -1,7 +1,9 @@
 /*
  * Copyright (c) 2018      Mellanox Technologies, Inc.
  *                         All rights reserved.
- *
+ * Copyright (c) 2019      Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
+ * Copyright (c) 2019      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -17,10 +19,15 @@
 #include "src/mca/common/dstore/dstore_file.h"
 #include "gds_ds21_file.h"
 
-/* TODO: adapt to size_t size */
+#if 8 > SIZEOF_SIZE_T
+#define ESH_REGION_EXTENSION_FLG    0x80000000
+#define ESH_REGION_INVALIDATED_FLG  0x40000000
+#define ESH_REGION_SIZE_MASK        0x3FFFFFFF
+#else
 #define ESH_REGION_EXTENSION_FLG    0x8000000000000000
 #define ESH_REGION_INVALIDATED_FLG  0x4000000000000000
 #define ESH_REGION_SIZE_MASK        0x3FFFFFFFFFFFFFFF
+#endif
 
 #define ESH_KV_SIZE_V21(addr)                               \
 __pmix_attribute_extension__ ({                             \

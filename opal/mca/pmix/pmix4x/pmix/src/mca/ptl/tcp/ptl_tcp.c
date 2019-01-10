@@ -13,7 +13,7 @@
  * Copyright (c) 2011-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2018      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -43,7 +43,12 @@
 #ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
 #endif
+#ifdef HAVE_DIRENT_H
 #include <dirent.h>
+#endif
+#ifdef HAVE_SYS_SYSCTL_H
+#include <sys/sysctl.h>
+#endif
 
 #include "src/include/pmix_globals.h"
 #include "src/include/pmix_socket_errno.h"
@@ -133,7 +138,7 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
     pid_t pid = 0, mypid;
     pmix_list_t ilist;
     pmix_info_caddy_t *kv;
-    pmix_info_t *iptr = NULL, mypidinfo;
+    pmix_info_t *iptr = NULL, mypidinfo, mycmdlineinfo, launcher;
     size_t niptr = 0;
     pmix_kval_t *urikv = NULL;
 
@@ -303,6 +308,97 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
     kv->info = &mypidinfo;
     pmix_list_append(&ilist, &kv->super);
 
+    /* if I am a launcher, tell them so */
+    if (PMIX_PROC_IS_LAUNCHER(pmix_globals.mypeer)) {
+        kv = PMIX_NEW(pmix_info_caddy_t);
+        PMIX_INFO_LOAD(&launcher, PMIX_LAUNCHER, NULL, PMIX_BOOL);
+        kv->info = &launcher;
+        pmix_list_append(&ilist, &kv->super);
+    }
+
+    /* add our cmd line to the array */
+#if PMIX_HAVE_APPLE
+    int mib[3], argmax, nargs, num;
+    size_t size;
+    char *procargs, *cp, *cptr;
+    char **stack = NULL;
+
+    /* Get the maximum process arguments size. */
+    mib[0] = CTL_KERN;
+    mib[1] = KERN_ARGMAX;
+    size = sizeof(argmax);
+
+    if (sysctl(mib, 2, &argmax, &size, NULL, 0) == -1) {
+        fprintf(stderr, "sysctl() argmax failed\n");
+        return -1;
+    }
+
+    /* Allocate space for the arguments. */
+    procargs = (char *)malloc(argmax);
+    if (procargs == NULL)
+        return -1;
+
+    /* Make a sysctl() call to get the raw argument space of the process. */
+    mib[0] = CTL_KERN;
+    mib[1] = KERN_PROCARGS2;
+    mib[2] = getpid();
+
+    size = (size_t)argmax;
+
+    if (sysctl(mib, 3, procargs, &size, NULL, 0) == -1) {
+        fprintf(stderr, "Lacked permissions\n");;
+        return 0;
+    }
+
+    memcpy(&nargs, procargs, sizeof(nargs));
+    /* this points to the executable - skip over that to get the rest */
+    cp = procargs + sizeof(nargs);
+    cp += strlen(cp);
+    /* this is the first argv */
+    pmix_argv_append_nosize(&stack, cp);
+    /* skip any embedded NULLs */
+    while (cp < &procargs[size] && '\0' == *cp) {
+        ++cp;
+    }
+    if (cp != &procargs[size]) {
+        /* from this point, we have the argv separated by NULLs - split them out */
+        cptr = cp;
+        num = 0;
+        while (cp < &procargs[size] && num < nargs) {
+            if ('\0' == *cp) {
+                pmix_argv_append_nosize(&stack, cptr);
+                ++cp;  // skip over the NULL
+                cptr = cp;
+                ++num;
+            } else {
+                ++cp;
+            }
+        }
+    }
+    p = pmix_argv_join(stack, ' ');
+    pmix_argv_free(stack);
+    free(procargs);
+#else
+    char tmp[512];
+    FILE *fp;
+
+    /* open the pid's info file */
+    snprintf(tmp, 512, "/proc/%lu/cmdline", (unsigned long)mypid);
+    fp = fopen(tmp, "r");
+    if (NULL != fp) {
+        /* read the cmd line */
+        fgets(tmp, 512, fp);
+        fclose(fp);
+        p = strdup(tmp);
+    }
+#endif
+    /* pass it along */
+    kv = PMIX_NEW(pmix_info_caddy_t);
+    PMIX_INFO_LOAD(&mycmdlineinfo, PMIX_CMD_LINE, p, PMIX_STRING);
+    kv->info = &mycmdlineinfo;
+    pmix_list_append(&ilist, &kv->super);
+    free(p);
+
     /* if we need to pass anything, setup an array */
     if (0 < (niptr = pmix_list_get_size(&ilist))) {
         PMIX_INFO_CREATE(iptr, niptr);
@@ -460,6 +556,55 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
         return PMIX_ERR_UNREACH;
     }
 
+    /* if they asked for system-level first or only, we start there */
+    if (system_level || system_level_only) {
+        if (0 > asprintf(&filename, "%s/pmix.sys.%s", mca_ptl_tcp_component.system_tmpdir, myhost)) {
+            if (NULL != iptr) {
+                PMIX_INFO_FREE(iptr, niptr);
+            }
+            return PMIX_ERR_NOMEM;
+        }
+        pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
+                            "ptl:tcp:tool looking for system server at %s",
+                            filename);
+        /* try to read the file */
+        rc = parse_uri_file(filename, &suri, &nspace, &rank);
+        free(filename);
+        if (PMIX_SUCCESS == rc) {
+            pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
+                                "ptl:tcp:tool attempt connect to system server at %s", suri);
+            /* go ahead and try to connect */
+            if (PMIX_SUCCESS == try_connect(suri, &sd, iptr, niptr)) {
+                /* don't free nspace - we will use it below */
+                if (NULL != iptr) {
+                    PMIX_INFO_FREE(iptr, niptr);
+                }
+                /* save the URI for storage */
+                urikv = PMIX_NEW(pmix_kval_t);
+                urikv->key = strdup(PMIX_SERVER_URI);
+                PMIX_VALUE_CREATE(urikv->value, 1);
+                PMIX_VALUE_LOAD(urikv->value, suri, PMIX_STRING);
+                goto complete;
+            }
+            free(nspace);
+        }
+    }
+
+    /* we get here if they either didn't ask for a system-level connection,
+     * or they asked for it and it didn't succeed. If they _only_ wanted
+     * a system-level connection, then we are done */
+    if (system_level_only) {
+        pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
+                            "ptl:tcp: connecting to system failed");
+        if (NULL != suri) {
+            free(suri);
+        }
+        if (NULL != iptr) {
+            PMIX_INFO_FREE(iptr, niptr);
+        }
+        return PMIX_ERR_UNREACH;
+    }
+
     /* if they gave us a pid, then look for it */
     if (0 != pid) {
         if (NULL != server_nspace) {
@@ -538,55 +683,6 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
         }
         /* since they gave us a specific nspace and we couldn't
          * connect to it, return an error */
-        return PMIX_ERR_UNREACH;
-    }
-
-    /* if they asked for system-level, we start there */
-    if (system_level || system_level_only) {
-        if (0 > asprintf(&filename, "%s/pmix.sys.%s", mca_ptl_tcp_component.system_tmpdir, myhost)) {
-            if (NULL != iptr) {
-                PMIX_INFO_FREE(iptr, niptr);
-            }
-            return PMIX_ERR_NOMEM;
-        }
-        pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
-                            "ptl:tcp:tool looking for system server at %s",
-                            filename);
-        /* try to read the file */
-        rc = parse_uri_file(filename, &suri, &nspace, &rank);
-        free(filename);
-        if (PMIX_SUCCESS == rc) {
-            pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
-                                "ptl:tcp:tool attempt connect to system server at %s", suri);
-            /* go ahead and try to connect */
-            if (PMIX_SUCCESS == try_connect(suri, &sd, iptr, niptr)) {
-                /* don't free nspace - we will use it below */
-                if (NULL != iptr) {
-                    PMIX_INFO_FREE(iptr, niptr);
-                }
-                /* save the URI for storage */
-                urikv = PMIX_NEW(pmix_kval_t);
-                urikv->key = strdup(PMIX_SERVER_URI);
-                PMIX_VALUE_CREATE(urikv->value, 1);
-                PMIX_VALUE_LOAD(urikv->value, suri, PMIX_STRING);
-                goto complete;
-            }
-            free(nspace);
-        }
-    }
-
-    /* we get here if they either didn't ask for a system-level connection,
-     * or they asked for it and it didn't succeed. If they _only_ wanted
-     * a system-level connection, then we are done */
-    if (system_level_only) {
-        pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
-                            "ptl:tcp: connecting to system failed");
-        if (NULL != suri) {
-            free(suri);
-        }
-        if (NULL != iptr) {
-            PMIX_INFO_FREE(iptr, niptr);
-        }
         return PMIX_ERR_UNREACH;
     }
 
@@ -1253,9 +1349,13 @@ static pmix_status_t recv_connect_ack(int sd, uint8_t myflag)
         tv.tv_sec  = mca_ptl_tcp_component.handshake_wait_time;
         tv.tv_usec = 0;
         if (0 != setsockopt(sd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv))) {
-            pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
-                                "pmix: recv_connect_ack could not setsockopt SO_RCVTIMEO");
-            return PMIX_ERR_UNREACH;
+            if (ENOPROTOOPT == errno || EOPNOTSUPP == errno) {
+                sockopt = false;
+            } else {
+                pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
+                                    "pmix: recv_connect_ack could not setsockopt SO_RCVTIMEO");
+                return PMIX_ERR_UNREACH;
+            }
         }
     }
 
