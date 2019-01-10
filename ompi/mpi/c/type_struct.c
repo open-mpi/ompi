@@ -20,10 +20,6 @@
 
 #include "ompi_config.h"
 
-/* defining ENABLE_MPI1_COMPAT to 1 for removed implementations here.
- * see comments in address.c for more information. */
-#define ENABLE_MPI1_COMPAT 1
-
 #include "ompi/mpi/c/bindings.h"
 
 #if OMPI_BUILD_MPI_PROFILING

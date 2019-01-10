@@ -20,10 +20,6 @@
 
 #include "ompi_config.h"
 
-/* defining ENABLE_MPI1_COMPAT to 1 for removed implementations here.
- * see comments in address.c for more information. */
-#define ENABLE_MPI1_COMPAT 1
-
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
@@ -35,7 +31,7 @@
 #define MPI_Errhandler_create PMPI_Errhandler_create
 #endif
 
-int MPI_Errhandler_create(MPI_Comm_errhandler_function *function,
+int MPI_Errhandler_create(MPI_Handler_function *function,
                           MPI_Errhandler *errhandler)
 {
 

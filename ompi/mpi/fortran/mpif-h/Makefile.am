@@ -138,9 +138,6 @@ lib@OMPI_LIBMPI_NAME@_mpifh_la_SOURCES += \
         alltoall_f.c \
         alltoallv_f.c \
         alltoallw_f.c \
-        attr_delete_f.c \
-        attr_get_f.c \
-        attr_put_f.c \
         barrier_f.c \
         bcast_f.c \
         bsend_f.c \
@@ -338,8 +335,6 @@ lib@OMPI_LIBMPI_NAME@_mpifh_la_SOURCES += \
         iscatterv_f.c \
         issend_f.c \
         is_thread_main_f.c \
-        keyval_create_f.c \
-        keyval_free_f.c \
         lookup_name_f.c \
         mprobe_f.c \
         mrecv_f.c \
@@ -481,19 +476,25 @@ lib@OMPI_LIBMPI_NAME@_mpifh_la_SOURCES += \
         win_flush_local_f.c \
         win_flush_local_all_f.c
 
-# include all of the removed MPI functions in library
-# for v4.0.x regardless of state of OMPI_ENABLE_MPI1_COMPAT
+
+if OMPI_ENABLE_MPI1_COMPAT
 lib@OMPI_LIBMPI_NAME@_mpifh_la_SOURCES += \
         address_f.c \
+        attr_delete_f.c \
+        attr_get_f.c \
+        attr_put_f.c \
         errhandler_create_f.c \
         errhandler_get_f.c \
         errhandler_set_f.c \
+        keyval_create_f.c \
+        keyval_free_f.c \
         type_extent_f.c \
         type_hindexed_f.c \
         type_hvector_f.c \
         type_lb_f.c \
         type_struct_f.c \
         type_ub_f.c
+endif
 endif
 
 #
