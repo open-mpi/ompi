@@ -12,6 +12,7 @@
  * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2018      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -370,6 +371,10 @@ int opal_value_unload(opal_value_t *kv,
 
     case OPAL_PTR:
         *data = kv->data.ptr;
+        break;
+
+    case OPAL_VPID:
+        memcpy(*data, &kv->data.name.vpid, sizeof(opal_vpid_t));
         break;
 
     default:
