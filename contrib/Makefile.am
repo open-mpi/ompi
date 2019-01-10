@@ -42,9 +42,6 @@ EXTRA_DIST = \
 	dist/mofed/compile_debian_mlnx_example.in \
 	dist/mofed/debian \
 	platform/optimized \
-	platform/redstorm \
-	platform/cray_xt3 \
-	platform/cray_xt3_romio \
 	platform/ornl/cray_xt_cnl_romio \
 	platform/ornl/cray_xt_cnl_romio_debug \
         platform/ornl/ornl_configure.gnu \
