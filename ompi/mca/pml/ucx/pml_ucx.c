@@ -454,6 +454,7 @@ int mca_pml_ucx_enable(bool enable)
     PML_UCX_FREELIST_INIT(&ompi_pml_ucx.convs,
                           mca_pml_ucx_convertor_t,
                           128, -1, 128);
+    ompi_pml_ucx.enabled = enable;
     return OMPI_SUCCESS;
 }
 
@@ -1019,5 +1020,7 @@ int mca_pml_ucx_dump(struct ompi_communicator_t* comm, int verbose)
 
 static void mca_pml_ucx_mpi_init_bottom(int argc, char **argv, int requested, int *provided)
 {
-    *provided = MPI_THREAD_SINGLE;
+    if (ompi_pml_ucx.enabled) {
+        *provided = MPI_THREAD_SINGLE;
+    }
 }
