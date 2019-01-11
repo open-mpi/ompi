@@ -21,6 +21,7 @@
 #include "ompi/mca/pml/base/pml_base_bsend.h"
 #include "opal/mca/common/ucx/common_ucx.h"
 #include "pml_ucx_request.h"
+#include "ompi/mca/hook/base/base.h"
 
 #include <inttypes.h>
 
@@ -77,6 +78,13 @@ mca_pml_ucx_module_t ompi_pml_ucx = {
     },
     .ucp_context           = NULL,
     .ucp_worker            = NULL
+};
+
+static void mca_pml_ucx_mpi_init_bottom(int argc, char **argv, int requested, int *provided);
+
+static ompi_hook_base_component_t hook_ucx_extra_component = {
+    /* Component functions */
+    .hookm_mpi_init_bottom = mca_pml_ucx_mpi_init_bottom
 };
 
 #define PML_UCX_REQ_ALLOCA() \
@@ -188,7 +196,7 @@ int mca_pml_ucx_close(void)
     return OMPI_SUCCESS;
 }
 
-int mca_pml_ucx_init(void)
+int mca_pml_ucx_init(int enable_mpi_threads)
 {
     ucp_worker_params_t params;
     ucp_worker_attr_t attr;
@@ -199,8 +207,7 @@ int mca_pml_ucx_init(void)
 
     /* TODO check MPI thread mode */
     params.field_mask  = UCP_WORKER_PARAM_FIELD_THREAD_MODE;
-    params.thread_mode = UCS_THREAD_MODE_SINGLE;
-    if (ompi_mpi_thread_multiple) {
+    if (enable_mpi_threads) {
         params.thread_mode = UCS_THREAD_MODE_MULTI;
     } else {
         params.thread_mode = UCS_THREAD_MODE_SINGLE;
@@ -222,12 +229,14 @@ int mca_pml_ucx_init(void)
         goto err_destroy_worker;
     }
 
-    if (ompi_mpi_thread_multiple && (attr.thread_mode != UCS_THREAD_MODE_MULTI)) {
-        /* UCX does not support multithreading, disqualify current PML for now */
-        /* TODO: we should let OMPI to fallback to THREAD_SINGLE mode */
-        PML_UCX_ERROR("UCP worker does not support MPI_THREAD_MULTIPLE");
-        rc = OMPI_ERR_NOT_SUPPORTED;
-        goto err_destroy_worker;
+    if (enable_mpi_threads && (attr.thread_mode != UCS_THREAD_MODE_MULTI)) {
+        PML_UCX_VERBOSE(1, "UCP worker does not support MPI_THREAD_MULTIPLE, "
+                           "force MPI_THREAD_SINGLE");
+        /* reduce priority of PML UCX to minimal to allow other components
+         * to operate in multi-thread mode, add hook to modify provided
+         * thread model */
+        ompi_pml_ucx.priority = 1;
+        ompi_hook_base_register_callbacks(&hook_ucx_extra_component);
     }
 
     rc = mca_pml_ucx_send_worker_address();
@@ -268,6 +277,7 @@ int mca_pml_ucx_cleanup(void)
 
     PML_UCX_VERBOSE(1, "mca_pml_ucx_cleanup");
 
+    ompi_hook_base_deregister_callbacks(&hook_ucx_extra_component);
     opal_progress_unregister(mca_pml_ucx_progress);
 
     if (ompi_pml_ucx.datatype_attr_keyval != MPI_KEYVAL_INVALID) {
@@ -1005,4 +1015,9 @@ int mca_pml_ucx_start(size_t count, ompi_request_t** requests)
 int mca_pml_ucx_dump(struct ompi_communicator_t* comm, int verbose)
 {
     return OMPI_SUCCESS;
+}
+
+static void mca_pml_ucx_mpi_init_bottom(int argc, char **argv, int requested, int *provided)
+{
+    *provided = MPI_THREAD_SINGLE;
 }
