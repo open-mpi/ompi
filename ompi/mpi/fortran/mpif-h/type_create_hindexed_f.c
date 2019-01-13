@@ -75,7 +75,7 @@ void ompi_type_create_hindexed_f(MPI_Fint *count,
 {
     int c_ierr;
     MPI_Datatype c_old = PMPI_Type_f2c(*oldtype);
-    MPI_Datatype c_new = PMPI_Type_f2c(*newtype);
+    MPI_Datatype c_new;
     OMPI_ARRAY_NAME_DECL(array_of_blocklengths);
 
     OMPI_ARRAY_FINT_2_INT(array_of_blocklengths, *count);
