@@ -14,7 +14,7 @@ dnl Copyright (c) 2007-2009 Sun Microsystems, Inc.  All rights reserved.
 dnl Copyright (c) 2008-2015 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2012-2017 Los Alamos National Security, LLC. All rights
 dnl                         reserved.
-dnl Copyright (c) 2015-2018 Research Organization for Information Science
+dnl Copyright (c) 2015-2019 Research Organization for Information Science
 dnl                         and Technology (RIST).  All rights reserved.
 dnl $COPYRIGHT$
 dnl
@@ -59,7 +59,11 @@ AC_DEFUN([OPAL_PROG_CC_C11_HELPER],[
     OPAL_CC_HELPER([if $CC $1 supports C11 _Static_assert], [opal_prog_cc_c11_helper__static_assert_available],
                    [[#include <stdint.h>]],[[_Static_assert(sizeof(int64_t) == 8, "WTH");]])
 
-    AS_IF([test $opal_prog_cc_c11_helper__Thread_local_available -eq 1 && test $opal_prog_cc_c11_helper_atomic_var_available -eq 1],
+    OPAL_CC_HELPER([if $CC $1 supports C11 atomic_fetch_xor_explicit], [opal_prog_cc_c11_helper_atomic_fetch_xor_explicit_available],
+                   [[#include <stdatomic.h>
+#include <stdint.h>]],[[_Atomic uint32_t a; uint32_t b; atomic_fetch_xor_explicit(&a, b, memory_order_relaxed);]])
+
+    AS_IF([test $opal_prog_cc_c11_helper__Thread_local_available -eq 1 && test $opal_prog_cc_c11_helper_atomic_var_available -eq 1 && test $opal_prog_cc_c11_helper_atomic_fetch_xor_explicit_available -eq 1],
           [$2],
           [$3])
 
@@ -127,7 +131,7 @@ AC_DEFUN([OPAL_SETUP_CC],[
     AC_REQUIRE([_OPAL_PROG_CC])
     AC_REQUIRE([AM_PROG_CC_C_O])
 
-    OPAL_VAR_SCOPE_PUSH([opal_prog_cc_c11_helper__Thread_local_available opal_prog_cc_c11_helper_atomic_var_available opal_prog_cc_c11_helper__Atomic_available opal_prog_cc_c11_helper__static_assert_available opal_prog_cc_c11_helper__Generic_available opal_prog_cc__thread_available])
+    OPAL_VAR_SCOPE_PUSH([opal_prog_cc_c11_helper__Thread_local_available opal_prog_cc_c11_helper_atomic_var_available opal_prog_cc_c11_helper__Atomic_available opal_prog_cc_c11_helper__static_assert_available opal_prog_cc_c11_helper__Generic_available opal_prog_cc__thread_available opal_prog_cc_c11_helper_atomic_fetch_xor_explicit_available])
 
     # AC_PROG_CC_C99 changes CC (instead of CFLAGS) so save CC (without c99
     # flags) for use in our wrappers.
