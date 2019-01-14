@@ -108,6 +108,9 @@ typedef struct mca_mtl_ofi_module_t {
     unsigned long long sync_send_ack;
     unsigned long long sync_proto_mask;
 
+    /** Optimized function Symbol Tables **/
+    struct ompi_mtl_ofi_symtable sym_table;
+
 } mca_mtl_ofi_module_t;
 
 extern mca_mtl_ofi_module_t ompi_mtl_ofi;
