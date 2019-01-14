@@ -2,6 +2,8 @@
 /*
  * Copyright (c) 2011-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2018      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -259,20 +261,17 @@ static inline void mca_btl_vader_try_fbox_setup (mca_btl_base_endpoint_t *ep, mc
         /* protect access to mca_btl_vader_component.segment_offset */
         OPAL_THREAD_LOCK(&mca_btl_vader_component.lock);
 
-        if (mca_btl_vader_component.segment_size >= mca_btl_vader_component.segment_offset + mca_btl_vader_component.fbox_size &&
-            mca_btl_vader_component.fbox_max > mca_btl_vader_component.fbox_count) {
-            /* verify the remote side will accept another fbox */
-            if (0 <= opal_atomic_add_fetch_32 (&ep->fifo->fbox_available, -1)) {
-                void *fbox_base = mca_btl_vader_component.my_segment + mca_btl_vader_component.segment_offset;
-                mca_btl_vader_component.segment_offset += mca_btl_vader_component.fbox_size;
+        /* verify the remote side will accept another fbox */
+        if (0 <= opal_atomic_add_fetch_32 (&ep->fifo->fbox_available, -1)) {
+            opal_free_list_item_t *fbox = opal_free_list_get (&mca_btl_vader_component.vader_fboxes);
 
+            if (NULL != fbox) {
                 /* zero out the fast box */
-                memset (fbox_base, 0, mca_btl_vader_component.fbox_size);
-                mca_btl_vader_endpoint_setup_fbox_send (ep, fbox_base);
+                memset (fbox->ptr, 0, mca_btl_vader_component.fbox_size);
+                mca_btl_vader_endpoint_setup_fbox_send (ep, fbox);
 
                 hdr->flags |= MCA_BTL_VADER_FLAG_SETUP_FBOX;
                 hdr->fbox_base = virtual2relative((char *) ep->fbox_out.buffer);
-                ++mca_btl_vader_component.fbox_count;
             } else {
                 opal_atomic_add_fetch_32 (&ep->fifo->fbox_available, 1);
             }

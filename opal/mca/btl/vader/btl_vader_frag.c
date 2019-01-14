@@ -13,6 +13,8 @@
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2018      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -41,38 +43,9 @@ static inline void mca_btl_vader_frag_constructor (mca_btl_vader_frag_t *frag)
 int mca_btl_vader_frag_init (opal_free_list_item_t *item, void *ctx)
 {
     mca_btl_vader_frag_t *frag = (mca_btl_vader_frag_t *) item;
-    unsigned int data_size = (unsigned int)(uintptr_t) ctx;
-    unsigned int frag_size = data_size + sizeof (mca_btl_vader_hdr_t);
 
-    /* ensure next fragment is aligned on a cache line */
-    frag_size = (frag_size + 63) & ~63;
-
-    OPAL_THREAD_LOCK(&mca_btl_vader_component.lock);
-
-    if (data_size && mca_btl_vader_component.segment_size < mca_btl_vader_component.segment_offset + frag_size) {
-        OPAL_THREAD_UNLOCK(&mca_btl_vader_component.lock);
-        return OPAL_ERR_OUT_OF_RESOURCE;
-    }
-
-    /* Set the list element here so we don't have to set it on the critical path. This only
-     * works if each free list has its own unique fragment size and ALL free lists are initialized
-     * with opal_free_list_init. */
-    if (mca_btl_vader_component.max_inline_send == data_size) {
-        frag->my_list = &mca_btl_vader_component.vader_frags_user;
-    } else if (mca_btl_vader.super.btl_eager_limit == data_size) {
-        frag->my_list = &mca_btl_vader_component.vader_frags_eager;
-    } else if (mca_btl_vader.super.btl_max_send_size == data_size) {
-        frag->my_list = &mca_btl_vader_component.vader_frags_max_send;
-    }
-
-    if (data_size) {
-        item->ptr = mca_btl_vader_component.my_segment + mca_btl_vader_component.segment_offset;
-        mca_btl_vader_component.segment_offset += frag_size;
-    }
-
-    OPAL_THREAD_UNLOCK(&mca_btl_vader_component.lock);
-
-    mca_btl_vader_frag_constructor ((mca_btl_vader_frag_t *) item);
+    /* Set the list element here so we don't have to set it on the critical path */
+    frag->my_list = (opal_free_list_t *) ctx;
 
     return OPAL_SUCCESS;
 }
