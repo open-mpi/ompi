@@ -53,6 +53,8 @@ OPAL_DECLSPEC OBJ_CLASS_DECLARATION(mca_mpool_base_selected_module_t);
 OPAL_DECLSPEC mca_mpool_base_component_t* mca_mpool_base_component_lookup(const char* name);
 OPAL_DECLSPEC mca_mpool_base_module_t* mca_mpool_base_module_lookup(const char* name);
 
+OPAL_DECLSPEC mca_mpool_base_module_t *mca_mpool_basic_create (void *base, size_t size, unsigned min_align);
+
 /*
  * Globals
  */

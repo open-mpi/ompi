@@ -28,7 +28,8 @@ libmca_mpool_la_SOURCES += \
         base/mpool_base_lookup.c \
         base/mpool_base_alloc.c \
 	base/mpool_base_tree.c \
-	base/mpool_base_default.c
+	base/mpool_base_default.c \
+	base/mpool_base_basic.c
 
 dist_opaldata_DATA += \
         base/help-mpool-base.txt
