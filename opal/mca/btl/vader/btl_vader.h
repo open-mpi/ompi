@@ -15,6 +15,8 @@
  * Copyright (c) 2010-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2015      Mellanox Technologies. All rights reserved.
+ * Copyright (c) 2018      Triad National Security, LLC. All rights
+ *                         reserved.
  *
  * $COPYRIGHT$
  *
@@ -53,6 +55,7 @@
 #include "opal/mca/rcache/rcache.h"
 #include "opal/mca/rcache/base/base.h"
 #include "opal/mca/btl/base/btl_base_error.h"
+#include "opal/mca/mpool/base/base.h"
 #include "opal/util/proc.h"
 #include "btl_vader_endpoint.h"
 
@@ -112,16 +115,15 @@ struct mca_btl_vader_component_t {
     opal_mutex_t lock;                      /**< lock to protect concurrent updates to this structure's members */
     char *my_segment;                       /**< this rank's base pointer */
     size_t segment_size;                    /**< size of my_segment */
-    size_t segment_offset;                  /**< start of unused portion of my_segment */
     int32_t num_smp_procs;                  /**< current number of smp procs on this host */
     opal_free_list_t vader_frags_eager;     /**< free list of vader send frags */
     opal_free_list_t vader_frags_max_send;  /**< free list of vader max send frags (large fragments) */
     opal_free_list_t vader_frags_user;      /**< free list of small inline frags */
+    opal_free_list_t vader_fboxes;          /**< free list of available fast-boxes */
 
     unsigned int fbox_threshold;            /**< number of sends required before we setup a send fast box for a peer */
     unsigned int fbox_max;                  /**< maximum number of send fast boxes to allocate */
     unsigned int fbox_size;                 /**< size of each peer fast box allocation */
-    unsigned int fbox_count;                /**< number of send fast boxes allocated  */
 
     int single_copy_mechanism;              /**< single copy mechanism to use */
 
@@ -143,6 +145,7 @@ struct mca_btl_vader_component_t {
 #if OPAL_BTL_VADER_HAVE_KNEM
     unsigned int knem_dma_min;              /**< minimum size to enable DMA for knem transfers (0 disables) */
 #endif
+    mca_mpool_base_module_t *mpool;
 };
 typedef struct mca_btl_vader_component_t mca_btl_vader_component_t;
 OPAL_MODULE_DECLSPEC extern mca_btl_vader_component_t mca_btl_vader_component;
