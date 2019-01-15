@@ -513,17 +513,45 @@ opal_atomic_fetch_sub_size_t(opal_atomic_size_t *addr, size_t delta)
 #endif
 }
 
+static inline size_t
+opal_atomic_fetch_max_size_t(opal_atomic_size_t *addr, size_t value)
+{
+#if SIZEOF_SIZE_T == 4
+    return (size_t) opal_atomic_fetch_max_32((int32_t*) addr, value);
+#elif SIZEOF_SIZE_T == 8
+    return (size_t) opal_atomic_fetch_max_64((int64_t*) addr, value);
+#else
+#error "Unknown size_t size"
+#endif
+}
+
+static inline size_t
+opal_atomic_max_fetch_size_t(opal_atomic_size_t *addr, size_t value)
+{
+#if SIZEOF_SIZE_T == 4
+    return (size_t) opal_atomic_max_fetch_32((int32_t*) addr, value);
+#elif SIZEOF_SIZE_T == 8
+    return (size_t) opal_atomic_max_fetch_64((int64_t*) addr, value);
+#else
+#error "Unknown size_t size"
+#endif
+}
+
 #else
 #if SIZEOF_SIZE_T == 4
 #define opal_atomic_add_fetch_size_t(addr, delta) ((size_t) opal_atomic_add_fetch_32((opal_atomic_int32_t *) addr, delta))
 #define opal_atomic_fetch_add_size_t(addr, delta) ((size_t) opal_atomic_fetch_add_32((opal_atomic_int32_t *) addr, delta))
 #define opal_atomic_sub_fetch_size_t(addr, delta) ((size_t) opal_atomic_sub_fetch_32((opal_atomic_int32_t *) addr, delta))
 #define opal_atomic_fetch_sub_size_t(addr, delta) ((size_t) opal_atomic_fetch_sub_32((opal_atomic_int32_t *) addr, delta))
+#define opal_atomic_fetch_max_size_t(addr, value) ((size_t) opal_atomic_fetch_max_32((opal_atomic_int32_t *) addr, value))
+#define opal_atomic_max_fetch_size_t(addr, value) ((size_t) opal_atomic_max_fetch_32((opal_atomic_int32_t *) addr, value))
 #elif SIZEOF_SIZE_T == 8
 #define opal_atomic_add_fetch_size_t(addr, delta) ((size_t) opal_atomic_add_fetch_64((opal_atomic_int64_t *) addr, delta))
 #define opal_atomic_fetch_add_size_t(addr, delta) ((size_t) opal_atomic_fetch_add_64((opal_atomic_int64_t *) addr, delta))
 #define opal_atomic_sub_fetch_size_t(addr, delta) ((size_t) opal_atomic_sub_fetch_64((opal_atomic_int64_t *) addr, delta))
 #define opal_atomic_fetch_sub_size_t(addr, delta) ((size_t) opal_atomic_fetch_sub_64((opal_atomic_int64_t *) addr, delta))
+#define opal_atomic_fetch_max_size_t(addr, value) ((size_t) opal_atomic_fetch_max_64((opal_atomic_int64_t *) addr, value))
+#define opal_atomic_max_fetch_size_t(addr, value) ((size_t) opal_atomic_max_fetch_64((opal_atomic_int64_t *) addr, value))
 #else
 #error "Unknown size_t size"
 #endif

@@ -173,6 +173,17 @@ static inline int64_t opal_atomic_fetch_max_64 (opal_atomic_int64_t *addr, int64
     return old;
 }
 
+static inline size_t opal_atomic_fetch_max_size_t (opal_atomic_size_t *addr, size_t value)
+{
+#if SIZEOF_SIZE_T == 4
+    return opal_atomic_fetch_max_32 ((opal_atomic_int32_t *)addr, value);
+#elif SIZEOF_SIZE_T == 8
+    return opal_atomic_fetch_max_64 ((opal_atomic_int64_t *) addr, value);
+#else
+#error "Unknown size_t size"
+#endif
+}
+
 static inline int32_t opal_atomic_min_fetch_32 (opal_atomic_int32_t *addr, int32_t value)
 {
     int32_t old = opal_atomic_fetch_min_32 (addr, value);
@@ -194,6 +205,12 @@ static inline int64_t opal_atomic_min_fetch_64 (opal_atomic_int64_t *addr, int64
 static inline int64_t opal_atomic_max_fetch_64 (opal_atomic_int64_t *addr, int64_t value)
 {
     int64_t old = opal_atomic_fetch_max_64 (addr, value);
+    return old >= value ? old : value;
+}
+
+static inline size_t opal_atomic_max_fetch_size_t (opal_atomic_size_t *addr, size_t value)
+{
+    size_t old = opal_atomic_fetch_max_size_t (addr, value);
     return old >= value ? old : value;
 }
 
