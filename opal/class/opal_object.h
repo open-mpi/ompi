@@ -124,6 +124,7 @@
 #include <stdlib.h>
 
 #include "opal/threads/thread_usage.h"
+#include "opal/util/memprof.h"
 
 BEGIN_C_DECLS
 
@@ -132,12 +133,6 @@ BEGIN_C_DECLS
 #define OPAL_OBJ_MAGIC_ID ((0xdeafbeedULL << 32) + 0xdeafbeedULL)
 #endif
 
-void __attribute__((weak)) Tau_track_class_allocation(const char * name, size_t size);
-void __attribute__((weak)) Tau_track_class_deallocation(const char * name, size_t size);
-void __attribute__((weak)) Tau_start_class_allocation(const char * name, size_t size, int include_in_parent);
-void __attribute__((weak)) Tau_stop_class_allocation(const char * name, int record);
-void __attribute__((weak)) Tau_start_class_deallocation(const char * name, size_t size, int include_in_parent);
-void __attribute__((weak)) Tau_stop_class_deallocation(const char * name, int record);
 
 /* typedefs ***********************************************************/
 

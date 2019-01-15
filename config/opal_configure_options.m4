@@ -120,6 +120,7 @@ else
 fi
 AC_DEFINE_UNQUOTED(OPAL_ENABLE_MEM_PROFILE, $WANT_MEM_PROFILE,
     [Whether we want the memory profiling or not])
+AM_CONDITIONAL([OPAL_ENABLE_MEM_PROFILE], [test "$WANT_MEM_PROFILE" = "1"])
 
 #
 # Developer picky compiler options

@@ -17,6 +17,8 @@
 # Copyright (c) 2016      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
+# Copyright (c) 2019      UT-Battelle, LLC. All rights reserved.
+#
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -55,6 +57,7 @@ headers = \
         if.h \
         keyval_parse.h \
         malloc.h \
+        memprof.h \
         net.h \
         numtostr.h \
         opal_environ.h \
@@ -117,6 +120,10 @@ libopalutil_la_SOURCES = \
 
 if OPAL_COMPILE_TIMING
 libopalutil_la_SOURCES += timings.c
+endif
+
+if OPAL_ENABLE_MEM_PROFILE
+libopalutil_la_SOURCES += memprof.c
 endif
 
 libopalutil_la_LIBADD = \
