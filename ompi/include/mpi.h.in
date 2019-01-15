@@ -19,7 +19,7 @@
  * Copyright (c) 2015      University of Houston. All rights reserved.
  * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2017-2018 IBM Corporation.  All rights reserved.
+ * Copyright (c) 2017-2019 IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -279,8 +279,12 @@
 #                    define __mpi_interface_deprecated__(msg) __attribute__((__deprecated__))
 #                endif
 #            endif
+             /* For removed API, there is no portable way to cause the
+              * C compiler to error with a nice message on the usage of
+              * one of these symbols, so instead we use a C syntax-error
+              */
 #            if (OMPI_ENABLE_MPI1_COMPAT && !OMPI_BUILDING)
-#                    define __mpi_interface_removed__(msg) __mpi_interface_deprecated__(msg)
+#                    define __mpi_interface_removed__(msg) error-(msg)
 #                    define OMPI_OMIT_MPI1_COMPAT_DECLS 0
 #            endif
 #        endif
