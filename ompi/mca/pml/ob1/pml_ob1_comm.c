@@ -17,6 +17,7 @@
  */
 
 #include "ompi_config.h"
+#include "opal/util/memprof.h"
 #include <string.h>
 
 #include "pml_ob1.h"
@@ -91,11 +92,11 @@ OBJ_CLASS_INSTANCE(
 int mca_pml_ob1_comm_init_size (mca_pml_ob1_comm_t* comm, size_t size)
 {
     /* send message sequence-number support - sender side */
-    Tau_start_class_allocation(comm->super.obj_class->cls_name, 0, 0);
+    OPAL_MEMPROF_START_ALLOC(comm->super.obj_class->cls_name, 0, 0);
     comm->procs = (mca_pml_ob1_comm_proc_t **) calloc(size, sizeof (mca_pml_ob1_comm_proc_t *));
-    Tau_start_class_allocation("mca_pml_ob1_comm_proc_t", size * sizeof(mca_pml_ob1_comm_proc_t *), 0);
-    Tau_stop_class_allocation("mca_pml_ob1_comm_proc_t", 1);
-    Tau_stop_class_allocation(comm->super.obj_class->cls_name, 0);
+    OPAL_MEMPROF_START_ALLOC("mca_pml_ob1_comm_proc_t", size * sizeof(mca_pml_ob1_comm_proc_t *), 0);
+    OPAL_MEMPROF_STOP_ALLOC("mca_pml_ob1_comm_proc_t", 1);
+    OPAL_MEMPROF_STOP_ALLOC(comm->super.obj_class->cls_name, 0);
     if(NULL == comm->procs) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }

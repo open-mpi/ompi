@@ -19,6 +19,7 @@
 
 #include "opal/runtime/opal.h"
 #include "opal/memoryhooks/memory.h"
+#include "opal/util/memprof.h"
 #include "opal/mca/memory/base/base.h"
 #include "opal/mca/pmix/pmix.h"
 #include "ompi/mca/pml/base/pml_base_bsend.h"
@@ -256,11 +257,11 @@ int mca_pml_yalla_add_procs(struct ompi_proc_t **procs, size_t nprocs)
             return OMPI_ERROR;
         }
 
-        Tau_start_class_allocation(procs[i]->super.super.super.obj_class->cls_name, 0, 0);
-        Tau_start_class_allocation("mxm_conn_h", sizeof(mxm_conn_h), 0);
+        OPAL_MEMPROF_START_ALLOC(procs[i]->super.super.super.obj_class->cls_name, 0, 0);
+        OPAL_MEMPROF_START_ALLOC("mxm_conn_h", sizeof(mxm_conn_h), 0);
         procs[i]->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_PML] = conn;
-        Tau_stop_class_allocation("mxm_conn_h", 1);
-        Tau_stop_class_allocation(procs[i]->super.super.super.obj_class->cls_name, 0);
+        OPAL_MEMPROF_STOP_ALLOC("mxm_conn_h", 1);
+        OPAL_MEMPROF_STOP_ALLOC(procs[i]->super.super.super.obj_class->cls_name, 0);
     }
 
     return OMPI_SUCCESS;

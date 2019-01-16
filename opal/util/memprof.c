@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 2018 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2019      UT-Battelle, LLC. All rights reserved.
+ *
  * $COPYRIGHT$
  *
  * Additional copyrights may follow

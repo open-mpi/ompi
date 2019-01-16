@@ -35,6 +35,8 @@
 
 #include "opal/util/bit_ops.h"
 #include "opal/util/info_subscriber.h"
+#include "opal/util/string_copy.h"
+#include "opal/util/memprof.h"
 #include "opal/mca/pmix/pmix.h"
 #include "ompi/constants.h"
 #include "ompi/mca/pml/pml.h"
@@ -242,7 +244,7 @@ ompi_communicator_t *ompi_comm_allocate ( int local_size, int remote_size )
 
     /* create new communicator element */
     new_comm = OBJ_NEW(ompi_communicator_t);
-    Tau_start_class_allocation(new_comm->super.s_base.obj_class->cls_name, 0, 0);
+    OPAL_MEMPROF_START_ALLOC(new_comm->super.s_base.obj_class->cls_name, 0, 0);
     new_comm->super.s_info = NULL;
     new_comm->c_local_group = ompi_group_allocate ( local_size );
     if ( 0 < remote_size ) {
@@ -259,7 +261,7 @@ ompi_communicator_t *ompi_comm_allocate ( int local_size, int remote_size )
 
     /* fill in the inscribing hyper-cube dimensions */
     new_comm->c_cube_dim = opal_cube_dim(local_size);
-    Tau_stop_class_allocation(new_comm->super.s_base.obj_class->cls_name, 0);
+    OPAL_MEMPROF_STOP_ALLOC(new_comm->super.s_base.obj_class->cls_name, 0);
 
     return new_comm;
 }
