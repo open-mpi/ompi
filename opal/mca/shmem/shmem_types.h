@@ -32,6 +32,7 @@
 #define OPAL_SHMEM_TYPES_H
 
 #include "opal_config.h"
+#include "opal/align.h"
 
 #include <stddef.h>
 #include <string.h>
@@ -103,7 +104,7 @@ struct opal_shmem_seg_hdr_t {
     opal_atomic_lock_t lock;
     /* pid of the segment creator */
     pid_t cpid;
-};
+} __opal_attribute_aligned__(OPAL_ALIGN_MIN);
 typedef struct opal_shmem_seg_hdr_t opal_shmem_seg_hdr_t;
 
 struct opal_shmem_ds_t {

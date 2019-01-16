@@ -430,6 +430,7 @@ static int allocate_state_single (ompi_osc_rdma_module_t *module, void **base, s
      * registration handles needed to access this data. */
     total_size = local_rank_array_size + module->region_size +
         module->state_size + leader_peer_data_size;
+    total_size += OPAL_ALIGN_PAD_AMOUNT(total_size, OPAL_ALIGN_MIN);
 
     if (MPI_WIN_FLAVOR_ALLOCATE == module->flavor) {
         total_size += size;
@@ -571,6 +572,12 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
     /* calculate base offsets */
     module->state_offset = state_base = local_rank_array_size + module->region_size;
     data_base = state_base + leader_peer_data_size + module->state_size * local_size;
+
+    /* ensure proper alignment */
+    data_base += OPAL_ALIGN_PAD_AMOUNT(data_base, OPAL_ALIGN_MIN);
+    if (MPI_WIN_FLAVOR_ALLOCATE == module->flavor) {
+        size += OPAL_ALIGN_PAD_AMOUNT(size, OPAL_ALIGN_MIN);
+    }
 
     do {
         temp = calloc (local_size, sizeof (temp[0]));
