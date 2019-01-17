@@ -138,6 +138,8 @@ struct mca_coll_hcoll_module_t {
     mca_coll_base_module_t *previous_gather_module;
     mca_coll_base_module_gatherv_fn_t previous_gatherv;
     mca_coll_base_module_t *previous_gatherv_module;
+    mca_coll_base_module_scatterv_fn_t previous_scatterv;
+    mca_coll_base_module_t *previous_scatterv_module;
     mca_coll_base_module_reduce_scatter_fn_t previous_reduce_scatter;
     mca_coll_base_module_t *previous_reduce_scatter_module;
     mca_coll_base_module_ibcast_fn_t previous_ibcast;
@@ -236,6 +238,15 @@ int mca_coll_hcoll_alltoallv(const void *sbuf, const int *scounts,
 int mca_coll_hcoll_gatherv(const void* sbuf, int scount,
                             struct ompi_datatype_t *sdtype,
                             void* rbuf, const int *rcounts, const int *displs,
+                            struct ompi_datatype_t *rdtype,
+                            int root,
+                            struct ompi_communicator_t *comm,
+                            mca_coll_base_module_t *module);
+
+
+int mca_coll_hcoll_scatterv(const void* sbuf, const int *scounts, const int *displs,
+                            struct ompi_datatype_t *sdtype,
+                            void* rbuf, int rcount,
                             struct ompi_datatype_t *rdtype,
                             int root,
                             struct ompi_communicator_t *comm,
