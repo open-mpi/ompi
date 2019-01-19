@@ -896,11 +896,14 @@ int mca_common_ompio_split_initial_groups(ompio_file_t *fh,
     int size_smallest_group = 0;
     int num_groups = 0;
     int ret = OMPI_SUCCESS;
+    OMPI_MPI_COUNT_TYPE bytes_per_agg_group = 0;
 
     OMPI_MPI_OFFSET_TYPE max_cci = 0;
     OMPI_MPI_OFFSET_TYPE min_cci = 0;
 
-    size_new_group = ceil ((float)OMPIO_MCA_GET(fh, bytes_per_agg) * fh->f_init_procs_per_group/ bytes_per_group);
+    bytes_per_agg_group = (OMPI_MPI_COUNT_TYPE)OMPIO_MCA_GET(fh, bytes_per_agg);
+    // integer round up
+    size_new_group = (int)(bytes_per_agg_group / bytes_per_group + (bytes_per_agg_group % bytes_per_group ? 1u : 0u));
     size_old_group = fh->f_init_procs_per_group;
 
     ret = mca_common_ompio_split_a_group(fh,
@@ -948,7 +951,7 @@ int mca_common_ompio_split_initial_groups(ompio_file_t *fh,
 		 if((max_cci < OMPIO_CONTG_THRESHOLD) &&
 		    (size_new_group < size_old_group)){
 
-		    size_new_group = floor( (float) (size_new_group + size_old_group ) / 2 );
+		    size_new_group = (size_new_group + size_old_group ) / 2;
   	            ret = mca_common_ompio_split_a_group(fh,
                                                          start_offsets_lens,
                                                          end_offsets,
@@ -976,7 +979,9 @@ int mca_common_ompio_split_initial_groups(ompio_file_t *fh,
 	            (size_new_group < size_old_group)){  //can be a better condition
                  //monitor the previous iteration
 		 //break if it has not changed.
-	      	     size_new_group = ceil( (float) (size_new_group + size_old_group ) / 2 );
+	      	     size_new_group = size_new_group + size_old_group;
+	      	     // integer round up
+	      	     size_new_group = size_new_group / 2 + (size_new_group % 2 ? 1 : 0);
 		     ret = mca_common_ompio_split_a_group(fh,
                                                           start_offsets_lens,
                                                           end_offsets,
