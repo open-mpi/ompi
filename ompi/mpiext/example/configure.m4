@@ -32,3 +32,11 @@ AC_DEFUN([OMPI_MPIEXT_example_CONFIG],[
 
 # only need to set this if the component needs init/finalize hooks
 AC_DEFUN([OMPI_MPIEXT_example_NEED_INIT], [1])
+
+# By default, mpiext_example_mpifh.h is included in the source file
+# of the mpi_ext module. To disable it, define this macro as 0.
+#AC_DEFUN([OMPI_MPIEXT_example_INCLUDE_MPIFH_IN_USEMPI], [0])
+
+# By default, mpiext_example_mpifh.h is included in the source file
+# of the mpi_f08_ext module. To disable it, define this macro as 0.
+#AC_DEFUN([OMPI_MPIEXT_example_INCLUDE_MPIFH_IN_USEMPIF08], [0])

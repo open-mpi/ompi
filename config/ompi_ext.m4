@@ -171,6 +171,9 @@ EOF
 #include "ompi/mpi/fortran/configure-fortran-output.h"
 
 module mpi_ext
+!     Some mpi_ext extensions may require the mpi module.
+      use mpi
+!
 !     Even though this is not a useful parameter (cannot be used as a
 !     preprocessor catch) define it to keep the linker from complaining
 !     during the build.
@@ -213,6 +216,9 @@ EOF
 #include "ompi/mpi/fortran/configure-fortran-output.h"
 
 module mpi_f08_ext
+!     Some mpi_f08_ext extensions may require the mpi_f08 module.
+      use mpi_f08
+!
 !     Even though this is not a useful parameter (cannot be used as a
 !     preprocessor catch) define it to keep the linker from complaining
 !     during the build.
@@ -601,9 +607,15 @@ EOF
         #
         # Include the mpif.h header if it is available.  Cannot do
         # this from inside the usempi.h since, for VPATH builds, the
-        # srcdir is needed to find the header.
+        # srcdir is needed to find the header.  Each extension can
+        # refuse it by defining the OMPI_MPIEXT_$1_INCLUDE_MPIFH_IN_USEMPI
+        # macro in its ompi/mpiext/*/configure.m4.  See
+        # ompi/mpiext/example/configure.m4 for an example.
         #
-        if test "$enabled_mpifh" = 1; then
+        m4_ifdef([OMPI_MPIEXT_]$1[_INCLUDE_MPIFH_IN_USEMPI],
+                 [include_mpifh=OMPI_MPIEXT_$1_INCLUDE_MPIFH_IN_USEMPI],
+                 [include_mpifh=1])
+        if test "$enabled_mpifh" = 1 && test "$include_mpifh" != 0; then
             mpifh_component_header="mpiext_${component}_mpifh.h"
             cat >> $mpiusempi_ext_h <<EOF
 #include "${mpifh_component_header_path}"
@@ -657,9 +669,15 @@ EOF
         #
         # Include the mpif.h header if it is available.  Cannot do
         # this from inside the usempif08.h since, for VPATH builds,
-        # the srcdir is needed to find the header.
+        # the srcdir is needed to find the header.  Each extension can
+        # refuse it by defining the OMPI_MPIEXT_$1_INCLUDE_MPIFH_IN_USEMPIF08
+        # macro in its ompi/mpiext/*/configure.m4.  See
+        # ompi/mpiext/example/configure.m4 for an example.
         #
-        if test "$enabled_mpifh" = 1; then
+        m4_ifdef([OMPI_MPIEXT_]$1[_INCLUDE_MPIFH_IN_USEMPIF08],
+                 [include_mpifh=OMPI_MPIEXT_$1_INCLUDE_MPIFH_IN_USEMPIF08],
+                 [include_mpifh=1])
+        if test "$enabled_mpifh" = 1 && test "$include_mpifh" != 0; then
             mpifh_component_header="mpiext_${component}_mpifh.h"
             cat >> $mpiusempif08_ext_h <<EOF
 #include "${mpifh_component_header_path}"
