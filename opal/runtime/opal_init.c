@@ -358,7 +358,7 @@ static int opal_init_error (const char *error, int ret)
                         error, ret );
     }
 
-    opal_finalize_cleanup_and_pop_domain ();
+    (void) opal_finalize_cleanup_and_pop_domain ();
 
     return ret;
 }

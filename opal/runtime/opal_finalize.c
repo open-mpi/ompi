@@ -49,9 +49,12 @@ extern bool opal_init_called;
 
 static opal_mutex_t opal_finalize_cleanup_fns_lock = OPAL_MUTEX_STATIC_INIT;
 
+typedef int (*opal_cleanup_fn_rc_t) (void *);
+
 struct opal_cleanup_fn_item_t {
     opal_list_item_t  super;
     opal_cleanup_fn_t cleanup_fn;
+    int32_t           cleanup_flags;
     void             *user_data;
 #if OPAL_ENABLE_DEBUG
     char *cleanup_fn_name;
@@ -104,11 +107,12 @@ static int opal_finalize_domain_stack_index = -1;
 opal_finalize_domain_t opal_init_util_domain = {{{0}}};
 opal_finalize_domain_t opal_init_domain = {{{0}}};
 
-void opal_finalize_append_cleanup (opal_cleanup_fn_t cleanup_fn, const char *fn_name, void *user_data)
+void opal_finalize_append_cleanup (opal_cleanup_fn_t cleanup_fn, int32_t flags, const char *fn_name, void *user_data)
 {
     opal_cleanup_fn_item_t *cleanup_item = OBJ_NEW(opal_cleanup_fn_item_t);
     assert (NULL != cleanup_item);
     cleanup_item->cleanup_fn = cleanup_fn;
+    cleanup_item->cleanup_flags = flags;
     cleanup_item->user_data = user_data;
 #if OPAL_ENABLE_DEBUG
     cleanup_item->cleanup_fn_name = strdup (fn_name);
@@ -158,12 +162,26 @@ void opal_finalize_pop_domain (void)
     --opal_finalize_domain_stack_index;
 }
 
-void opal_finalize_cleanup_domain (opal_finalize_domain_t *domain)
+int opal_finalize_cleanup_domain (opal_finalize_domain_t *domain)
 {
+    int rc = OPAL_SUCCESS;
+
     opal_cleanup_fn_item_t *cleanup_item, *next;
     /* call any registered cleanup functions before tearing down OPAL */
     OPAL_LIST_FOREACH_SAFE_REV(cleanup_item, next, &domain->super, opal_cleanup_fn_item_t) {
-        cleanup_item->cleanup_fn (cleanup_item->user_data);
+        int error_code = OPAL_SUCCESS;
+
+        if (cleanup_item->cleanup_flags & OPAL_CLEANUP_FLAG_NORC) {
+            opal_cleanup_fn_rc_t cleanup = (opal_cleanup_fn_rc_t) cleanup_item->cleanup_fn;
+            error_code = cleanup (cleanup_item->user_data);
+        } else {
+            (void) cleanup_item->cleanup_fn (cleanup_item->user_data);
+        }
+
+        if (OPAL_UNLIKELY(OPAL_SUCCESS != rc && OPAL_SUCCESS != rc)) {
+            /* save the error code */
+            rc = error_code;
+        }
         opal_list_remove_item (&domain->super, &cleanup_item->super);
         OBJ_RELEASE(cleanup_item);
     }
@@ -173,19 +191,23 @@ void opal_finalize_cleanup_domain (opal_finalize_domain_t *domain)
     } else {
         OBJ_DESTRUCT(domain);
     }
+
+    return rc;
 }
 
-void opal_finalize_cleanup_and_pop_domain (void)
+int opal_finalize_cleanup_and_pop_domain (void)
 {
     opal_finalize_domain_t *domain;
     assert (opal_finalize_domain_stack_index >= 0);
     domain = opal_finalize_domain_stack[opal_finalize_domain_stack_index];
     opal_finalize_pop_domain ();
-    opal_finalize_cleanup_domain (domain);
+    return opal_finalize_cleanup_domain (domain);
 }
 
 int opal_finalize_util (void)
 {
+    int rc;
+
     if (--opal_util_initialized != 0) {
         if (opal_util_initialized < 0) {
             return OPAL_ERROR;
@@ -193,7 +215,7 @@ int opal_finalize_util (void)
         return OPAL_SUCCESS;
     }
 
-    opal_finalize_cleanup_domain (&opal_init_util_domain);
+    rc = opal_finalize_cleanup_domain (&opal_init_util_domain);
 
     /* finalize the class/object system */
     opal_class_finalize();
@@ -201,12 +223,14 @@ int opal_finalize_util (void)
     free (opal_process_info.nodename);
     opal_process_info.nodename = NULL;
 
-    return OPAL_SUCCESS;
+    return rc;
 }
 
 
 int opal_finalize(void)
 {
+    int rc;
+
     if (--opal_initialized != 0) {
         if (opal_initialized < 0) {
             return OPAL_ERROR;
@@ -214,12 +238,13 @@ int opal_finalize(void)
         return OPAL_SUCCESS;
     }
 
-    opal_finalize_cleanup_domain (&opal_init_domain);
+    rc = opal_finalize_cleanup_domain (&opal_init_domain);
+    if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
+        return rc;
+    }
 
     /* finalize util code */
-    opal_finalize_util();
-
-    return OPAL_SUCCESS;
+    return opal_finalize_util();
 }
 
 static bool fork_warning_issued = false;

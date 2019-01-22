@@ -292,7 +292,11 @@ int ompi_mpi_finalize(void)
     ompi_mpi_dynamics_finalize();
 
     opal_finalize_pop_domain ();
-    opal_finalize_cleanup_domain (&ompi_mpi_init_domain);
+    ret = opal_finalize_cleanup_domain (&ompi_mpi_init_domain);
+    if (OMPI_SUCCESS != ret) {
+        /* for now we abandon cleanup on any failure */
+        goto done;
+    }
 
     /* Leave the RTE */
 
