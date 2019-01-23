@@ -5,8 +5,8 @@
  *                         reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2013      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2017      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017-2019 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -170,9 +170,18 @@ opal_convertor_raw( opal_convertor_t* pConvertor,
             ddt_endloop_desc_t* end_loop = (ddt_endloop_desc_t*)(pElem + pElem->loop.items);
 
             if( pElem->loop.common.flags & OPAL_DATATYPE_FLAG_CONTIGUOUS ) {
-                uint32_t i;
-                source_base += end_loop->first_elem_disp;
-                for( i = count_desc; (i > 0) && (index < *iov_count); i--, index++ ) {
+                ptrdiff_t offset = end_loop->first_elem_disp;
+                source_base += offset;
+                for(size_t i = count_desc; i > 0; i--, index++ ) {
+                    if (index >= *iov_count) {
+                        dt_elem_desc_t* nElem = pElem + 1;
+                        while (nElem->elem.common.type == OPAL_DATATYPE_LOOP) {
+                            nElem++;
+                        }
+                        assert(OPAL_DATATYPE_END_LOOP != nElem->elem.common.type);
+                        offset = nElem->elem.disp;
+                        break;
+                    }
                     OPAL_DATATYPE_SAFEGUARD_POINTER( source_base, end_loop->size, pConvertor->pBaseBuf,
                                                 pConvertor->pDesc, pConvertor->count );
                     iov[index].iov_base = (IOVBASE_TYPE *) source_base;
@@ -181,7 +190,7 @@ opal_convertor_raw( opal_convertor_t* pConvertor,
                     raw_data += end_loop->size;
                     count_desc--;
                 }
-                source_base -= end_loop->first_elem_disp;
+                source_base -= offset;
                 if( 0 == count_desc ) {  /* completed */
                     pos_desc += pElem->loop.items + 1;
                     goto update_loop_description;
