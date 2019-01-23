@@ -4,8 +4,8 @@
 #                         reserved.
 # Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
-# Copyright (c) 2014-2015 Research Organization for Information Science
-#                         and Technology (RIST). All rights reserved.
+# Copyright (c) 2014-2019 Research Organization for Information Science
+#                         and Technology (RIST).  All rights reserved.
 # Copyright (c) 2016      IBM Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
@@ -15,7 +15,7 @@
 #
 
 if PROJECT_OMPI
-    MPI_TESTS = checksum position position_noncontig ddt_test ddt_raw unpack_ooo ddt_pack external32 large_data
+    MPI_TESTS = checksum position position_noncontig ddt_test ddt_raw ddt_raw2 unpack_ooo ddt_pack external32 large_data
     MPI_CHECKS = to_self
 endif
 TESTS = opal_datatype_test unpack_hetero $(MPI_TESTS)
@@ -37,6 +37,12 @@ ddt_test_LDADD = \
 ddt_raw_SOURCES = ddt_raw.c ddt_lib.c ddt_lib.h
 ddt_raw_LDFLAGS = $(OMPI_PKG_CONFIG_LDFLAGS)
 ddt_raw_LDADD = \
+        $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
+        $(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la
+
+ddt_raw2_SOURCES = ddt_raw2.c ddt_lib.c ddt_lib.h
+ddt_raw2_LDFLAGS = $(OMPI_PKG_CONFIG_LDFLAGS)
+ddt_raw2_LDADD = \
         $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
         $(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la
 
