@@ -886,6 +886,10 @@ Open MPI Extensions
     because they are not standardized yet.  Future versions of Open MPI
     will switch to the MPI_ prefix once the MPI Standard which includes
     this feature is published.  See their man page for more details.
+  - shortfloat: Provides MPI datatypes MPIX_C_FLOAT16, MPIX_SHORT_FLOAT,
+    MPIX_SHORT_FLOAT, and MPIX_CXX_SHORT_FLOAT_COMPLEX if corresponding
+    language types are available. See ompi/mpiext/shortfloat/README.txt
+    for details.
   - affinity: Provides the OMPI_Affinity_str() routine on retrieving
     a string that contains what resources a process is bound to.  See
     its man page for more details.
