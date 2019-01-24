@@ -491,7 +491,7 @@ ompi_mtl_ofi_define_tag_mode(int ofi_tag_mode, int *bits_for_cid) {
         }                                                                                   \
     } while(0);
 
-static int ompi_mtl_ofi_init_sep(struct fi_info *prov)
+static int ompi_mtl_ofi_init_sep(struct fi_info *prov, int universe_size)
 {
     int ret = OMPI_SUCCESS, num_ofi_ctxts;
     struct fi_av_attr av_attr = {0};
@@ -513,7 +513,7 @@ static int ompi_mtl_ofi_init_sep(struct fi_info *prov)
 
     av_attr.type = (MTL_OFI_AV_TABLE == av_type) ? FI_AV_TABLE: FI_AV_MAP;
     av_attr.rx_ctx_bits = ompi_mtl_ofi.rx_ctx_bits;
-    av_attr.count = ompi_mtl_ofi.num_ofi_contexts;
+    av_attr.count = ompi_mtl_ofi.num_ofi_contexts * universe_size;
     ret = fi_av_open(ompi_mtl_ofi.domain, &av_attr, &ompi_mtl_ofi.av, NULL);
 
     if (0 != ret) {
@@ -546,7 +546,7 @@ static int ompi_mtl_ofi_init_sep(struct fi_info *prov)
     return ret;
 }
 
-static int ompi_mtl_ofi_init_regular_ep(struct fi_info * prov)
+static int ompi_mtl_ofi_init_regular_ep(struct fi_info * prov, int universe_size)
 {
     int ret = OMPI_SUCCESS;
     struct fi_av_attr av_attr = {0};
@@ -574,6 +574,7 @@ static int ompi_mtl_ofi_init_regular_ep(struct fi_info * prov)
      *     - address vector and completion queues
      */
     av_attr.type = (MTL_OFI_AV_TABLE == av_type) ? FI_AV_TABLE: FI_AV_MAP;
+    av_attr.count = universe_size;
     ret = fi_av_open(ompi_mtl_ofi.domain, &av_attr, &ompi_mtl_ofi.av, NULL);
     if (ret) {
         MTL_OFI_LOG_FI_ERR(ret, "fi_av_open failed");
@@ -626,6 +627,8 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
     struct fi_info *prov_cq_data = NULL;
     char ep_name[FI_NAME_MAX] = {0};
     size_t namelen;
+    int universe_size;
+    char *univ_size_str;
 
     /**
      * Hints to filter providers
@@ -897,21 +900,35 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
      * vectors, completion counters or event queues etc, and enabled.
      * See man fi_endpoint for more details.
      */
-    max_ofi_ctxts = (prov->domain_attr->max_ep_tx_ctx <
-                     prov->domain_attr->max_ep_rx_ctx) ?
-                     prov->domain_attr->max_ep_tx_ctx :
-                     prov->domain_attr->max_ep_rx_ctx;
 
-    num_local_ranks = 1 + ompi_process_info.num_local_peers;
-    if ((max_ofi_ctxts <= num_local_ranks) &&
-        (1 == ompi_mtl_ofi.enable_sep)) {
-        opal_show_help("help-mtl-ofi.txt", "Local ranks exceed ofi contexts",
-                       true, prov->fabric_attr->prov_name,
-                       ompi_process_info.nodename, __FILE__, __LINE__);
-        goto error;
+    /* use the universe size as a rough guess on the address vector
+     * size hint that should be passed to fi_av_open().  For regular
+     * endpoints, the count will be the universe size.  For scalable
+     * endpoints, the count will be the universe size multiplied by
+     * the number of contexts.  In either case, if the universe grows
+     * (via dynamic processes), the count is a hint, not a hard limit,
+     * so libfabric will just be slightly less efficient.
+     */
+    univ_size_str = getenv("OMPI_UNIVERSE_SIZE");
+    if (NULL == univ_size_str ||
+        (universe_size = strtol(univ_size_str, NULL, 0)) <= 0) {
+        universe_size = ompi_proc_world_size();
     }
 
     if (1 == ompi_mtl_ofi.enable_sep) {
+        max_ofi_ctxts = (prov->domain_attr->max_ep_tx_ctx <
+                         prov->domain_attr->max_ep_rx_ctx) ?
+                         prov->domain_attr->max_ep_tx_ctx :
+                         prov->domain_attr->max_ep_rx_ctx;
+
+        num_local_ranks = 1 + ompi_process_info.num_local_peers;
+        if (max_ofi_ctxts <= num_local_ranks) {
+            opal_show_help("help-mtl-ofi.txt", "Local ranks exceed ofi contexts",
+                           true, prov->fabric_attr->prov_name,
+                           ompi_process_info.nodename, __FILE__, __LINE__);
+            goto error;
+        }
+
         /* Provision enough contexts to service all ranks in a node */
         max_ofi_ctxts /= num_local_ranks;
 
@@ -926,9 +943,9 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
             ompi_mtl_ofi.num_ofi_contexts = max_ofi_ctxts;
         }
 
-        ret = ompi_mtl_ofi_init_sep(prov);
+        ret = ompi_mtl_ofi_init_sep(prov, universe_size);
     } else {
-        ret = ompi_mtl_ofi_init_regular_ep(prov);
+        ret = ompi_mtl_ofi_init_regular_ep(prov, universe_size);
     }
 
     if (OMPI_SUCCESS != ret) {
