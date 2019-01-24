@@ -3,6 +3,8 @@
  * Copyright (c) 2012      Sandia National Laboratories.  All rights reserved.
  * Copyright (c) 2014-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2019      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -51,8 +53,6 @@ struct ompi_osc_rdma_request_t {
     uint64_t target_address;
 
     struct ompi_osc_rdma_request_t *parent_request;
-    /* used for non-contiguous get accumulate operations */
-    opal_convertor_t convertor;
 
     /** synchronization object */
     struct ompi_osc_rdma_sync_t *sync;
