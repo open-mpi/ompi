@@ -364,6 +364,15 @@ static int close_open_file_descriptors(int write_fd,
         return ORTE_ERR_FILE_OPEN_FAILURE;
     }
     struct dirent *files;
+
+    /* grab the fd of the opendir above so we don't close in the 
+     * middle of the scan. */
+    int dir_scan_fd = dirfd(dir);
+    if(dir_scan_fd < 0 ) {
+        return ORTE_ERR_FILE_OPEN_FAILURE;
+    }
+
+    
     while (NULL != (files = readdir(dir))) {
         if (!isdigit(files->d_name[0])) {
             continue;
@@ -373,7 +382,7 @@ static int close_open_file_descriptors(int write_fd,
             closedir(dir);
             return ORTE_ERR_TYPE_MISMATCH;
         }
-        if (fd >=3 && fd != opts.p_internal[1] && fd != write_fd) {
+        if (fd >=3 && fd != opts.p_internal[1] && fd != write_fd && fd != dir_scan_fd) {
             close(fd);
         }
     }
