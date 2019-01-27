@@ -535,9 +535,6 @@ int ompi_rte_init(int *pargc, char ***pargv)
 
     /* FIXME open pmix ? */
 
-    /* set the event base */
-    opal_pmix_base_set_evbase(opal_sync_event_base);
-
     /* initialize the selected module */
     if (!opal_pmix_initialized() && (OPAL_SUCCESS != (ret = opal_pmix_init(NULL)))) {
         /* we cannot run - this could be due to being direct launched

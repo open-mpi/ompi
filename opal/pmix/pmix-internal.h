@@ -228,10 +228,14 @@ extern int opal_pmix_base_exchange(opal_value_t *info,
  */
 #define OPAL_MODEX_SEND_VALUE(r, sc, s, d, t)   \
     do {                                        \
+        pmix_status_t rc;                       \
         pmix_value_t _kv;                       \
         PMIX_VALUE_LOAD(&_kv, (d), (t));        \
-        (r) = PMIx_Put((sc), (s), &(_kv));      \
+        rc = PMIx_Put((sc), (s), &(_kv));       \
+        (r) = opal_pmix_convert_status(rc);     \
+        if (OPAL_SUCCESS != (r)) {              \
                 OPAL_ERROR_LOG((r));            \
+        }                                       \
     } while(0);
 
 /**
