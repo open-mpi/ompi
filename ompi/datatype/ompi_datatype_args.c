@@ -13,8 +13,8 @@
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2013-2016 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2015-2017 Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015-2019 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
@@ -237,6 +237,8 @@ int32_t ompi_datatype_set_args( ompi_datatype_t* pData,
              */
             OBJ_RETAIN( d[pos] );
             pArgs->total_pack_size += ((ompi_datatype_args_t*)d[pos]->args)->total_pack_size;
+        } else {
+            pArgs->total_pack_size += sizeof(int); /* _NAMED */
         }
         pArgs->total_pack_size += sizeof(int);  /* each data has an ID */
     }
