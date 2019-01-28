@@ -184,14 +184,6 @@ OSHMEM_DECLSPEC void pshmemx_int64_prod_to_all(int64_t *target, const int64_t *s
 /*
  * Backward compatibility section
  */
-#define pshmem_int16_p               pshmemx_int16_p
-#define pshmem_int32_p               pshmemx_int32_p
-#define pshmem_int64_p               pshmemx_int64_p
-
-#define pshmem_int16_g               pshmemx_int16_g
-#define pshmem_int32_g               pshmemx_int32_g
-#define pshmem_int64_g               pshmemx_int64_g
-
 #define pshmem_int32_swap            pshmemx_int32_swap
 #define pshmem_int64_swap            pshmemx_int64_swap
 
