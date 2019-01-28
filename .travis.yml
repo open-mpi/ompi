@@ -39,27 +39,16 @@ addons:
 env:
     global:
         - AM_MAKEFLAGS="-j4"
-        - CPPFLAGS="-I$HOME/bogus/include"
-        - LDFLAGS="-L$HOME/bogus/lib"
-        - LD_LIBRARY_PATH="$HOME/bogus/lib"
     matrix:
-        - GCC_VERSION=default
-        - GCC_VERSION=6
+        - PMIX_BRANCH=master
 
 # Install dependencies for the verbs and usnic providers.  Open MPI is
 # not currently using the verbs provider in Libfabric, so we might as
 # well not build it.
 before_install:
-    - if [[ "GCC_VERSION" == "6" ]]; then COMPILERS="CC=gcc-6 CXX=g++-6 FC=gfortran-6"; fi
-    - export CONFIGURE_ARGS="--prefix=$HOME/bogus $COMPILERS" DISTCHECK_CONFIGURE_FLAGS="$CONFIGURE_ARGS"
-    - export DISTCHECK_CONFIGURE_FLAGS="$CONFIGURE_ARGS"
-    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then git clone https://github.com/ofiwg/libfabric.git ; fi
-    - if [[ "$TRAVIS_OS_NAME" == "linux" ]] && [[ "$GCC_VERSION" == "6" ]] ; then sudo apt-get --assume-yes install gcc-6 g++-6 gfortran-6; fi
-    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then cd libfabric && ./autogen.sh && ./configure --prefix=$HOME/bogus --enable-usnic --disable-verbs $COMPILERS && make install && cd .. ; fi
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update; brew upgrade automake || true; brew upgrade libtool || true; fi
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew tap homebrew/science || true; brew install hwloc || true; brew upgrade hwloc || true ; fi
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]] && [[ "$GCC_VERSION" == "6" ]] ; then brew install gcc || true; brew upgrade gcc || true ; fi
-    - mkdir -p $HOME/bogus/include $HOME/bogus/lib
+    - git clone -b $PMIX_BRANCH --depth=10 https://github.com/pmix/pmix.git
+    - cd pmix && ./autogen.pl && ./configure --prefix=$HOME/bogus/pmix && make -j 2 install && cd ..
+    - export LD_LIBRARY_PATH=$HOME/bogus/pmix/lib:$LD_LIBRARY_PATH
 
 # Note that we use "make -k" to do the entire build, even if there was a
 # build error in there somewhere.  This prevents us from needing to submit
@@ -68,17 +57,25 @@ install:
     - m4 --version
     - autoconf --version
     - automake --version
-    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then libtool --version; else glibtool --version; fi
+    - libtool --version
     - ./autogen.pl
-    - if [[ "$TRAVIS_OS_NAME" == "linux" && "$CC" == "gcc" ]]; then ./configure $CONFIGURE_ARGS --with-libfabric=$HOME/bogus --with-usnic --with-verbs; else ./configure $CONFIGURE_ARGS; fi
+    - ./configure --with-pmix=$HOME/bogus/pmix --prefix=$HOME/bogus/ompi
     - make -k
 
 # We only need to distcheck on one OS / compiler combination (this is just
 # a minor optimization to make the overall set of builds faster).
 script:
-    - if [[ "$TRAVIS_OS_NAME" == "linux" && "$CC" == "gcc" ]]; then make distcheck; else make check; fi
+    - make check
+    - git clone --depth=10 https://github.com/pmix/prrte.git
+    - cd prrte && ./autogen.pl && ./configure --with-pmix=$HOME/bogus/pmix --prefix=$HOME/bogus/prrte && make -j 2 install && cd ..
+    - export PATH=$HOME/bogus/prrte/bin:$HOME/bogus/ompi/bin:$PATH
+    - cd examples && make 
+    - prte --daemonize
+    - prun -n 1 ./hello_c
+    - prun -n 1 ./ring_c
+    - prun --oversubscribe -n 2 ./hello_c
+    - prun --oversubscribe -n 2 ./ring_c
 
-matrix:
-  exclude:
-    - env: GCC_VERSION=6
-      compiler: clang
+branches:
+  only:
+  - topic/noorte
