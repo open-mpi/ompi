@@ -53,7 +53,7 @@ main(int argc, char* argv[])
     int ret = 0;
     int         blen[4];
     ptrdiff_t    disp[4];
-    ompi_datatype_t *newType, *types[4], *struct_type, *vec_type;
+    ompi_datatype_t *newType, *types[4], *struct_type, *vec_type, *dup_type;
     ptrdiff_t    old_lb, old_extent, old_true_lb, old_true_extent;
     ptrdiff_t    lb, extent, true_lb, true_extent;
 
@@ -397,6 +397,53 @@ main(int argc, char* argv[])
     ret = ompi_datatype_destroy(&unpacked_dt);
     if (ret != 0) goto cleanup;
 
+    /**
+     *
+     *                 TEST 7
+     *
+     */
+    printf("---> Basic test with dup'ed MPI_INT\n");
+
+    ret = get_extents(&ompi_mpi_int.dt, &old_lb, &old_extent, &old_true_lb, &old_true_extent);
+    if (ret != 0) goto cleanup;
+    ret = ompi_datatype_duplicate(&ompi_mpi_int.dt, &dup_type);
+    if (ret != 0) goto cleanup;
+    ompi_datatype_t * type = &ompi_mpi_int.dt;
+    ret = ompi_datatype_set_args(dup_type, 0, NULL, 0, NULL, 1, &type, MPI_COMBINER_DUP);
+    if (ret != 0) goto cleanup;
+    packed_ddt_len = ompi_datatype_pack_description_length(dup_type);
+    ptr = payload = malloc(packed_ddt_len);
+    ret = ompi_datatype_get_pack_description(dup_type, &packed_ddt);
+    if (ret != 0) goto cleanup;
+
+    memcpy(payload, packed_ddt, packed_ddt_len);
+    unpacked_dt = ompi_datatype_create_from_packed_description(&payload,
+                                                               ompi_proc_local());
+    free(ptr);
+    if (unpacked_dt == NULL) {
+        printf("\tFAILED: could not unpack datatype\n");
+        ret = 1;
+        goto cleanup;
+    } else {
+        ret = get_extents(unpacked_dt, &lb, &extent, &true_lb, &true_extent);
+        if (ret != 0) goto cleanup;
+
+        if (old_lb != lb || old_extent != extent ||
+            old_true_lb != true_lb || old_true_extent != extent) {
+            printf("\tFAILED: datatypes don't match\n");
+            ret = 1;
+            goto cleanup;
+        }
+        printf("\tPASSED\n");
+    }
+    if (unpacked_dt == &ompi_mpi_int32_t.dt) {
+        printf("\tPASSED\n");
+    } else {
+        printf("\tFAILED: datatypes don't match\n");
+        ret = 1;
+        goto cleanup;
+    }
+    ompi_datatype_destroy(&dup_type);
 
  cleanup:
     ompi_datatype_finalize();
