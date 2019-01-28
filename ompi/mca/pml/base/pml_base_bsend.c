@@ -16,6 +16,8 @@
  * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2018      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -56,6 +58,8 @@ static opal_atomic_int32_t          mca_pml_bsend_init = 0;
 /* defined in pml_base_open.c */
 extern char *ompi_pml_base_bsend_allocator_name;
 
+static void mca_pml_base_bsend_fini(void);
+
 /*
  * Routine to return pages to sub-allocator as needed
  */
@@ -81,8 +85,10 @@ int mca_pml_base_bsend_init(bool thread_safe)
 {
     size_t tmp;
 
-    if(OPAL_THREAD_ADD_FETCH32(&mca_pml_bsend_init, 1) > 1)
+    if(OPAL_THREAD_ADD_FETCH32(&mca_pml_bsend_init, 1) > 1) {
+        opal_finalize_register_cleanup (mca_pml_base_bsend_fini);
         return OMPI_SUCCESS;
+    }
 
     /* initialize static objects */
     OBJ_CONSTRUCT(&mca_pml_bsend_mutex, opal_mutex_t);
@@ -100,6 +106,9 @@ int mca_pml_base_bsend_init(bool thread_safe)
         tmp >>= 1;
         mca_pml_bsend_pagebits++;
     }
+
+    opal_finalize_register_cleanup (mca_pml_base_bsend_fini);
+
     return OMPI_SUCCESS;
 }
 
@@ -107,10 +116,10 @@ int mca_pml_base_bsend_init(bool thread_safe)
 /*
  * One-time cleanup at shutdown - release any resources.
  */
-int mca_pml_base_bsend_fini(void)
+static void mca_pml_base_bsend_fini(void)
 {
     if(OPAL_THREAD_ADD_FETCH32(&mca_pml_bsend_init,-1) > 0)
-        return OMPI_SUCCESS;
+        return;
 
     if(NULL != mca_pml_bsend_allocator)
         mca_pml_bsend_allocator->alc_finalize(mca_pml_bsend_allocator);
@@ -118,7 +127,6 @@ int mca_pml_base_bsend_fini(void)
 
     OBJ_DESTRUCT(&mca_pml_bsend_condition);
     OBJ_DESTRUCT(&mca_pml_bsend_mutex);
-    return OMPI_SUCCESS;
 }
 
 

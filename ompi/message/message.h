@@ -4,6 +4,8 @@
  * Copyright (c) 2012-2017 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
  *                         reserved.
+ * Copyright (c) 2018      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -48,8 +50,6 @@ struct ompi_predefined_message_t {
 typedef struct ompi_predefined_message_t ompi_predefined_message_t;
 
 int ompi_message_init(void);
-
-int ompi_message_finalize(void);
 
 OMPI_DECLSPEC extern opal_free_list_t ompi_message_free_list;
 OMPI_DECLSPEC extern opal_pointer_array_t  ompi_message_f_to_c_table;

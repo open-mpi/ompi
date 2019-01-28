@@ -16,6 +16,8 @@
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2018      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -33,6 +35,7 @@
 #include "opal/util/string_copy.h"
 
 #include "ompi/errhandler/errcode.h"
+#include "opal/runtime/opal.h"
 #include "ompi/constants.h"
 
 /* Table holding all error codes */
@@ -118,6 +121,7 @@ static ompi_mpi_errcode_t ompi_t_err_invalid_name;
 
 static void ompi_mpi_errcode_construct(ompi_mpi_errcode_t* errcode);
 static void ompi_mpi_errcode_destruct(ompi_mpi_errcode_t* errcode);
+static void ompi_mpi_errcode_finalize (void);
 
 OBJ_CLASS_INSTANCE(ompi_mpi_errcode_t,opal_object_t,ompi_mpi_errcode_construct, ompi_mpi_errcode_destruct);
 
@@ -221,10 +225,13 @@ int ompi_mpi_errcode_init (void)
        MPI_ERR_LASTCODE.  So just start it as == MPI_ERR_LASTCODE. */
     ompi_mpi_errcode_lastused = MPI_ERR_LASTCODE;
     ompi_mpi_errcode_lastpredefined = MPI_ERR_LASTCODE;
+
+    opal_finalize_register_cleanup (ompi_mpi_errcode_finalize);
+
     return OMPI_SUCCESS;
 }
 
-int ompi_mpi_errcode_finalize(void)
+static void ompi_mpi_errcode_finalize (void)
 {
     int i;
     ompi_mpi_errcode_t *errc;
@@ -314,7 +321,6 @@ int ompi_mpi_errcode_finalize(void)
     OBJ_DESTRUCT(&ompi_t_err_invalid_name);
 
     OBJ_DESTRUCT(&ompi_mpi_errcodes);
-    return OMPI_SUCCESS;
 }
 
 int ompi_mpi_errcode_add(int errclass )

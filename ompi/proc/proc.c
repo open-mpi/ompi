@@ -17,6 +17,8 @@
  * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015-2017 Mellanox Technologies. All rights reserved.
+ * Copyright (c) 2018      Triad National Security, LLC. All rights
+ *                         reserved.
  *
  * $COPYRIGHT$
  *
@@ -55,6 +57,7 @@ ompi_proc_t* ompi_proc_local_proc = NULL;
 static void ompi_proc_construct(ompi_proc_t* proc);
 static void ompi_proc_destruct(ompi_proc_t* proc);
 static ompi_proc_t *ompi_proc_for_name_nolock (const opal_process_name_t proc_name);
+static void ompi_proc_finalize (void);
 
 OBJ_CLASS_INSTANCE(
     ompi_proc_t,
@@ -277,6 +280,8 @@ int ompi_proc_init(void)
     }
 #endif
 
+    opal_finalize_register_cleanup (ompi_proc_finalize);
+
     return OMPI_SUCCESS;
 }
 
@@ -379,7 +384,7 @@ int ompi_proc_complete_init(void)
     return errcode;
 }
 
-int ompi_proc_finalize (void)
+static void ompi_proc_finalize (void)
 {
     ompi_proc_t *proc;
 
@@ -412,8 +417,6 @@ int ompi_proc_finalize (void)
     OBJ_DESTRUCT(&ompi_proc_list);
     OBJ_DESTRUCT(&ompi_proc_lock);
     OBJ_DESTRUCT(&ompi_proc_hash);
-
-    return OMPI_SUCCESS;
 }
 
 int ompi_proc_world_size (void)

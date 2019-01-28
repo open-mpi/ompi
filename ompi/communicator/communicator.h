@@ -21,6 +21,8 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
+ * Copyright (c) 2018      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -580,11 +582,6 @@ OMPI_DECLSPEC int ompi_comm_nextcid (ompi_communicator_t *newcomm, ompi_communic
 OMPI_DECLSPEC int ompi_comm_nextcid_nb (ompi_communicator_t *newcomm, ompi_communicator_t *comm,
                                         ompi_communicator_t *bridgecomm, const void *arg0, const void *arg1,
                                         bool send_first, int mode, ompi_request_t **req);
-
-/**
- * shut down the communicator infrastructure.
- */
-int ompi_comm_finalize (void);
 
 /**
  * This is THE routine, where all the communicator stuff

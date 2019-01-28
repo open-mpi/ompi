@@ -22,6 +22,8 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
+ * Copyright (c) 2018      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -74,6 +76,8 @@ static void ompi_comm_destruct(ompi_communicator_t* comm);
 OBJ_CLASS_INSTANCE(ompi_communicator_t, opal_infosubscriber_t,
                    ompi_comm_construct,
                    ompi_comm_destruct);
+
+static void ompi_comm_finalize (void);
 
 /* This is the counter for the number of communicators, which contain
    process with more than one jobid. This counter is a usefull
@@ -231,6 +235,7 @@ int ompi_comm_init(void)
 
     /* initialize communicator requests (for ompi_comm_idup) */
     ompi_comm_request_init ();
+    opal_finalize_register_cleanup (ompi_comm_finalize);
 
     return OMPI_SUCCESS;
 }
@@ -262,7 +267,7 @@ ompi_communicator_t *ompi_comm_allocate ( int local_size, int remote_size )
     return new_comm;
 }
 
-int ompi_comm_finalize(void)
+static void ompi_comm_finalize (void)
 {
     int max, i;
     ompi_communicator_t *comm;
@@ -353,8 +358,6 @@ int ompi_comm_finalize(void)
 
     /* finalize communicator requests */
     ompi_comm_request_fini ();
-
-    return OMPI_SUCCESS;
 }
 
 /********************************************************************************/

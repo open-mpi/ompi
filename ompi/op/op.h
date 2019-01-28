@@ -16,6 +16,8 @@
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
+ * Copyright (c) 2018      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -347,16 +349,6 @@ extern struct opal_pointer_array_t *ompi_op_f_to_c_table;
  * translation table.
  */
 int ompi_op_init(void);
-
-/**
- * Finalize the op interface.
- *
- * @returns OMPI_SUCCESS Always
- *
- * Invokes from ompi_mpi_finalize(); tears down the op interface, and
- * destroys the F2C translation table.
- */
-int ompi_op_finalize(void);
 
 /**
  * Create a ompi_op_t with a user-defined callback (vs. creating an

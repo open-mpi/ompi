@@ -16,6 +16,8 @@
  * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2018      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -27,6 +29,8 @@
 #include "ompi/group/group.h"
 #include "ompi/constants.h"
 #include "mpi.h"
+
+static void ompi_group_finalize(void);
 
 /* define class information */
 static void ompi_group_construct(ompi_group_t *);
@@ -340,6 +344,8 @@ int ompi_group_init(void)
     ompi_mpi_group_empty.group.grp_flags            |= OMPI_GROUP_DENSE;
     ompi_mpi_group_empty.group.grp_flags            |= OMPI_GROUP_INTRINSIC;
 
+    opal_finalize_register_cleanup (ompi_group_finalize);
+
     return OMPI_SUCCESS;
 }
 
@@ -347,7 +353,7 @@ int ompi_group_init(void)
 /*
  * Clean up group infrastructure
  */
-int ompi_group_finalize(void)
+static void ompi_group_finalize(void)
 {
     ompi_mpi_group_null.group.grp_flags = 0;
     OBJ_DESTRUCT(&ompi_mpi_group_null);
@@ -356,6 +362,4 @@ int ompi_group_finalize(void)
     OBJ_DESTRUCT(&ompi_mpi_group_empty);
 
     OBJ_DESTRUCT(&ompi_group_f_to_c_table);
-
-    return OMPI_SUCCESS;
 }

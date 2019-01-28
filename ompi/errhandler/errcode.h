@@ -14,6 +14,8 @@
  * Copyright (c) 2007-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
  *                         reserved.
+ * Copyright (c) 2018      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -151,15 +153,6 @@ static inline char* ompi_mpi_errnum_get_string (int errnum)
  * Invoked from ompi_mpi_init(); sets up all static MPI error codes,
  */
 int ompi_mpi_errcode_init(void);
-
-/**
- * Finalize the error codes.
- *
- * @returns OMPI_SUCCESS Always
- *
- * Invokes from ompi_mpi_finalize(); tears down the error code array.
- */
-int ompi_mpi_errcode_finalize(void);
 
 /**
  * Add an error code

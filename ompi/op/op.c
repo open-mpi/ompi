@@ -16,6 +16,8 @@
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2018      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -32,6 +34,7 @@
 #include "ompi/op/op.h"
 #include "ompi/mca/op/base/base.h"
 #include "ompi/datatype/ompi_datatype_internal.h"
+#include "opal/runtime/opal.h"
 
 
 /*
@@ -39,6 +42,7 @@
  */
 opal_pointer_array_t *ompi_op_f_to_c_table = {0};
 
+static void ompi_op_finalize(void);
 
 /*
  * Create intrinsic op
@@ -286,6 +290,8 @@ int ompi_op_init(void)
         ompi_mpi_op_replace.op.op_type = OMPI_OP_REPLACE;
     }
 
+    opal_finalize_register_cleanup (ompi_op_finalize);
+
     /* All done */
     return OMPI_SUCCESS;
 }
@@ -294,7 +300,7 @@ int ompi_op_init(void)
 /*
  * Clean up the op resources
  */
-int ompi_op_finalize(void)
+static void ompi_op_finalize(void)
 {
     /* clean up the intrinsic ops */
     OBJ_DESTRUCT(&ompi_mpi_op_no_op);
@@ -316,10 +322,6 @@ int ompi_op_finalize(void)
     /* Remove op F2C table */
 
     OBJ_RELEASE(ompi_op_f_to_c_table);
-
-    /* All done */
-
-    return OMPI_SUCCESS;
 }
 
 

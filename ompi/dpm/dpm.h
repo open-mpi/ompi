@@ -13,6 +13,8 @@
  * Copyright (c) 2013-2015 Intel, Inc. All rights reserved
  * Copyright (c) 2013-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
+ * Copyright (c) 2018      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -95,11 +97,6 @@ int ompi_dpm_open_port(char *port_name);
  * Unpublish the rendezvous point
  */
 int ompi_dpm_close_port(const char *port_name);
-
-/*
- * Finalize the DPM
- */
-int ompi_dpm_finalize(void);
 
 END_C_DECLS
 

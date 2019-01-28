@@ -18,6 +18,8 @@
  *                         reserved.
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2018      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -183,14 +185,6 @@ OMPI_DECLSPEC void ompi_group_decrement_proc_count(ompi_group_t *group);
  * @return Error code
  */
 int ompi_group_init(void);
-
-
-/**
- * Clean up OMPI group infrastructure.
- *
- * @return Error code
- */
-int ompi_group_finalize(void);
 
 
 /**

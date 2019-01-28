@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -13,6 +13,8 @@
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
+ * Copyright (c) 2018      Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -86,15 +88,6 @@ static inline int ompi_errcode_get_mpi_code(int errcode)
  * Invoked from ompi_mpi_init(); sets up all static MPI error codes,
  */
 int ompi_errcode_intern_init(void);
-
-/**
- * Finalize the error codes.
- *
- * @returns OMPI_SUCCESS Always
- *
- * Invokes from ompi_mpi_finalize(); tears down the error code array.
- */
-int ompi_errcode_intern_finalize(void);
 
 END_C_DECLS
 

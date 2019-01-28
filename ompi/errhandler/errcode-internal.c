@@ -15,6 +15,8 @@
  * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
  *                         reseved.
  * Copyright (c) 2018      Cisco Systems, Inc.  All rights reserved
+ * Copyright (c) 2018      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -31,6 +33,7 @@
 #include "opal/util/string_copy.h"
 
 #include "ompi/errhandler/errcode-internal.h"
+#include "opal/runtime/opal.h"
 
 /* Table holding all error codes */
 opal_pointer_array_t ompi_errcodes_intern = {{0}};
@@ -62,6 +65,7 @@ static ompi_errcode_intern_t ompi_err_rma_flavor_intern;
 
 static void ompi_errcode_intern_construct(ompi_errcode_intern_t* errcode);
 static void ompi_errcode_intern_destruct(ompi_errcode_intern_t* errcode);
+static void ompi_errcode_intern_finalize (void);
 
 OBJ_CLASS_INSTANCE(ompi_errcode_intern_t,opal_object_t,ompi_errcode_intern_construct, ompi_errcode_intern_destruct);
 
@@ -286,10 +290,11 @@ int ompi_errcode_intern_init (void)
                                 &ompi_err_rma_flavor_intern);
 
     ompi_errcode_intern_lastused=pos;
+    opal_finalize_register_cleanup (ompi_errcode_intern_finalize);
     return OMPI_SUCCESS;
 }
 
-int ompi_errcode_intern_finalize(void)
+static void ompi_errcode_intern_finalize (void)
 {
 
     OBJ_DESTRUCT(&ompi_success_intern);
@@ -317,7 +322,6 @@ int ompi_errcode_intern_finalize(void)
     OBJ_DESTRUCT(&ompi_err_rma_flavor_intern);
 
     OBJ_DESTRUCT(&ompi_errcodes_intern);
-    return OMPI_SUCCESS;
 }
 
 static void ompi_errcode_intern_construct(ompi_errcode_intern_t *errcode)

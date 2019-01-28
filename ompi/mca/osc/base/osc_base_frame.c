@@ -36,6 +36,8 @@
 
 #include "ompi/mca/osc/base/static-components.h"
 
+static void ompi_osc_base_finalize (void);
+
 int
 ompi_osc_base_find_available(bool enable_progress_threads,
                             bool enable_mpi_threads)
@@ -56,11 +58,13 @@ ompi_osc_base_find_available(bool enable_progress_threads,
             OBJ_RELEASE(cli);
         }
     }
+
+    opal_finalize_register_cleanup (ompi_osc_base_finalize);
+
     return OMPI_SUCCESS;
 }
 
-int
-ompi_osc_base_finalize(void)
+static void ompi_osc_base_finalize (void)
 {
     opal_list_item_t* item;
 
@@ -72,7 +76,6 @@ ompi_osc_base_finalize(void)
         component->osc_finalize();
         OBJ_RELEASE(item);
     }
-    return OMPI_SUCCESS;
 }
 
 MCA_BASE_FRAMEWORK_DECLARE(ompi, osc, "One-sided communication", NULL, NULL, NULL,
