@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  *
  * $COPYRIGHT$
@@ -52,18 +52,18 @@
 
 static pmix_status_t opa_init(void);
 static void opa_finalize(void);
-static pmix_status_t allocate(pmix_nspace_t *nptr,
+static pmix_status_t allocate(pmix_namespace_t *nptr,
                               pmix_info_t *info,
                               pmix_list_t *ilist);
-static pmix_status_t setup_local_network(pmix_nspace_t *nptr,
+static pmix_status_t setup_local_network(pmix_namespace_t *nptr,
                                          pmix_info_t info[],
                                          size_t ninfo);
-static pmix_status_t setup_fork(pmix_nspace_t *nptr,
+static pmix_status_t setup_fork(pmix_namespace_t *nptr,
                                 const pmix_proc_t *proc,
                                 char ***env);
 static void child_finalized(pmix_proc_t *peer);
-static void local_app_finalized(pmix_nspace_t *nptr);
-static void deregister_nspace(pmix_nspace_t *nptr);
+static void local_app_finalized(pmix_namespace_t *nptr);
+static void deregister_nspace(pmix_namespace_t *nptr);
 static pmix_status_t collect_inventory(pmix_info_t directives[], size_t ndirs,
                                        pmix_inventory_cbfunc_t cbfunc, void *cbdata);
 static pmix_status_t deliver_inventory(pmix_info_t info[], size_t ninfo,
@@ -229,7 +229,7 @@ static char* transports_print(uint64_t *unique_key)
 /* NOTE: if there is any binary data to be transferred, then
  * this function MUST pack it for transport as the host will
  * not know how to do so */
-static pmix_status_t allocate(pmix_nspace_t *nptr,
+static pmix_status_t allocate(pmix_namespace_t *nptr,
                               pmix_info_t *info,
                               pmix_list_t *ilist)
 {
@@ -251,16 +251,19 @@ static pmix_status_t allocate(pmix_nspace_t *nptr,
         return PMIX_ERR_TAKE_NEXT_OPTION;
     }
 
-    if (0 == strncmp(info->key, PMIX_SETUP_APP_ENVARS, PMIX_MAX_KEYLEN)) {
+    if (PMIX_CHECK_KEY(info, PMIX_SETUP_APP_ENVARS)) {
         envars = PMIX_INFO_TRUE(info);
-    } else if (0 == strncmp(info->key, PMIX_SETUP_APP_ALL, PMIX_MAX_KEYLEN)) {
+    } else if (PMIX_CHECK_KEY(info, PMIX_SETUP_APP_ALL)) {
         envars = PMIX_INFO_TRUE(info);
         seckeys = PMIX_INFO_TRUE(info);
-    } else if (0 == strncmp(info->key, PMIX_SETUP_APP_NONENVARS, PMIX_MAX_KEYLEN)) {
+    } else if (PMIX_CHECK_KEY(info, PMIX_SETUP_APP_NONENVARS) ||
+               PMIX_CHECK_KEY(info, PMIX_ALLOC_NETWORK_SEC_KEY)) {
         seckeys = PMIX_INFO_TRUE(info);
     }
 
     if (seckeys) {
+        pmix_output_verbose(2, pmix_pnet_base_framework.framework_output,
+                            "pnet: opa providing seckeys");
         /* put the number here - or else create an appropriate string. this just needs to
          * eventually be a string variable
          */
@@ -311,6 +314,10 @@ static pmix_status_t allocate(pmix_nspace_t *nptr,
     }
 
     if (envars) {
+        pmix_output_verbose(2, pmix_pnet_base_framework.framework_output,
+                            "pnet: opa harvesting envars %s excluding %s",
+                            (NULL == mca_pnet_opa_component.incparms) ? "NONE" : mca_pnet_opa_component.incparms,
+                            (NULL == mca_pnet_opa_component.excparms) ? "NONE" : mca_pnet_opa_component.excparms);
         /* harvest envars to pass along */
         if (NULL != mca_pnet_opa_component.include) {
             rc = pmix_pnet_base_harvest_envars(mca_pnet_opa_component.include,
@@ -327,13 +334,16 @@ static pmix_status_t allocate(pmix_nspace_t *nptr,
     return PMIX_ERR_TAKE_NEXT_OPTION;
 }
 
-static pmix_status_t setup_local_network(pmix_nspace_t *nptr,
+static pmix_status_t setup_local_network(pmix_namespace_t *nptr,
                                          pmix_info_t info[],
                                          size_t ninfo)
 {
     size_t n;
     pmix_kval_t *kv;
 
+
+    pmix_output_verbose(2, pmix_pnet_base_framework.framework_output,
+                        "pnet: opa setup_local_network");
 
     if (NULL != info) {
         for (n=0; n < ninfo; n++) {
@@ -353,6 +363,14 @@ static pmix_status_t setup_local_network(pmix_nspace_t *nptr,
                     return PMIX_ERR_NOMEM;
                 }
                 pmix_value_xfer(kv->value, &info[n].value);
+                if (PMIX_ENVAR == kv->value->type) {
+                    pmix_output_verbose(2, pmix_pnet_base_framework.framework_output,
+                                        "pnet:opa:setup_local_network adding %s=%s to environment",
+                                        kv->value->data.envar.envar, kv->value->data.envar.value);
+                } else {
+                    pmix_output_verbose(2, pmix_pnet_base_framework.framework_output,
+                                        "pnet:opa:setup_local_network loading blob");
+                }
                 pmix_list_append(&nptr->setup_data, &kv->super);
             }
         }
@@ -361,11 +379,14 @@ static pmix_status_t setup_local_network(pmix_nspace_t *nptr,
     return PMIX_SUCCESS;
 }
 
-static pmix_status_t setup_fork(pmix_nspace_t *nptr,
+static pmix_status_t setup_fork(pmix_namespace_t *nptr,
                                 const pmix_proc_t *proc,
                                 char ***env)
 {
     pmix_kval_t *kv, *next;
+
+    pmix_output_verbose(2, pmix_pnet_base_framework.framework_output,
+                        "pnet: opa setup fork");
 
     /* if there are any cached nspace prep blobs, execute them,
      * ensuring that we only do so once per nspace - note that
@@ -387,14 +408,14 @@ static void child_finalized(pmix_proc_t *peer)
                         "pnet:opa child finalized");
 }
 
-static void local_app_finalized(pmix_nspace_t *nptr)
+static void local_app_finalized(pmix_namespace_t *nptr)
 {
     pmix_output_verbose(2, pmix_pnet_base_framework.framework_output,
                         "pnet:opa app finalized");
 
 }
 
-static void deregister_nspace(pmix_nspace_t *nptr)
+static void deregister_nspace(pmix_namespace_t *nptr)
 {
     pmix_output_verbose(2, pmix_pnet_base_framework.framework_output,
                         "pnet:opa deregister nspace");

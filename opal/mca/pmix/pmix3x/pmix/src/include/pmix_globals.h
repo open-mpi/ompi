@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -36,7 +36,7 @@
 
 #include "src/class/pmix_hash_table.h"
 #include "src/class/pmix_list.h"
-#include "src/class/pmix_ring_buffer.h"
+#include "src/class/pmix_hotel.h"
 #include "src/event/pmix_event.h"
 #include "src/threads/threads.h"
 
@@ -178,14 +178,14 @@ typedef struct {
                                 // from this nspace
     pmix_list_t setup_data;     // list of pmix_kval_t containing info structs having blobs
                                 // for setting up the local node for this nspace/application
-} pmix_nspace_t;
-PMIX_CLASS_DECLARATION(pmix_nspace_t);
+} pmix_namespace_t;
+PMIX_CLASS_DECLARATION(pmix_namespace_t);
 
-/* define a caddy for quickly creating a list of pmix_nspace_t
+/* define a caddy for quickly creating a list of pmix_namespace_t
  * objects for local, dedicated purposes */
 typedef struct {
     pmix_list_item_t super;
-    pmix_nspace_t *ns;
+    pmix_namespace_t *ns;
 } pmix_nspace_caddy_t;
 PMIX_CLASS_DECLARATION(pmix_nspace_caddy_t);
 
@@ -219,7 +219,7 @@ PMIX_CLASS_DECLARATION(pmix_info_caddy_t);
  * by the socket, not the process nspace/rank */
 typedef struct pmix_peer_t {
     pmix_object_t super;
-    pmix_nspace_t *nptr;            // point to the nspace object for this process
+    pmix_namespace_t *nptr;            // point to the nspace object for this process
     pmix_rank_info_t *info;
     pmix_proc_type_t proc_type;
     pmix_listener_protocol_t protocol;
@@ -278,6 +278,11 @@ PMIX_CLASS_DECLARATION(pmix_query_caddy_t);
  * - instanced in pmix_server_ops.c */
 typedef struct {
     pmix_list_item_t super;
+    pmix_event_t ev;
+    bool event_active;
+    bool lost_connection;           // tracker went thru lost connection procedure
+    bool local;                     // operation is strictly local
+    char *id;                       // string identifier for the collective
     pmix_cmd_t type;
     pmix_proc_t pname;
     bool hybrid;                    // true if participating procs are from more than one nspace
@@ -295,6 +300,7 @@ typedef struct {
     pmix_collect_t collect_type;    // whether or not data is to be returned at completion
     pmix_modex_cbfunc_t modexcbfunc;
     pmix_op_cbfunc_t op_cbfunc;
+    void *cbdata;
 } pmix_server_trkr_t;
 PMIX_CLASS_DECLARATION(pmix_server_trkr_t);
 
@@ -340,6 +346,7 @@ PMIX_CLASS_DECLARATION(pmix_server_caddy_t);
        pmix_release_cbfunc_t relfn;
        pmix_hdlr_reg_cbfunc_t hdlrregcbfn;
        pmix_op_cbfunc_t opcbfn;
+       pmix_modex_cbfunc_t modexcbfunc;
     } cbfunc;
     void *cbdata;
     size_t ref;
@@ -394,6 +401,11 @@ typedef struct {
     pmix_object_t super;
     pmix_event_t ev;
     pmix_lock_t lock;
+    /* timestamp receipt of the notification so we
+     * can evict the oldest one if we get overwhelmed */
+    time_t ts;
+    /* what room of the hotel they are in */
+    int room;
     pmix_status_t status;
     pmix_proc_t source;
     pmix_data_range_t range;
@@ -403,6 +415,7 @@ typedef struct {
      */
     pmix_proc_t *targets;
     size_t ntargets;
+    size_t nleft;   // number of targets left to be notified
     /* When generating a notification, the originator can
      * specify the range of procs affected by this event.
      * For example, when creating a JOB_TERMINATED event,
@@ -438,6 +451,8 @@ typedef struct {
     pmix_peer_t *mypeer;                // my own peer object
     uid_t uid;                          // my effective uid
     gid_t gid;                          // my effective gid
+    char *hostname;                     // my hostname
+    uint32_t nodeid;                    // my nodeid, if given
     int pindex;
     pmix_event_base_t *evbase;
     bool external_evbase;
@@ -448,7 +463,9 @@ typedef struct {
     struct timeval event_window;
     pmix_list_t cached_events;          // events waiting in the window prior to processing
     pmix_list_t iof_requests;           // list of pmix_iof_req_t IOF requests
-    pmix_ring_buffer_t notifications;   // ring buffer of pending notifications
+    int max_events;                     // size of the notifications hotel
+    int event_eviction_time;            // max time to cache notifications
+    pmix_hotel_t notifications;         // hotel of pending notifications
     /* processes also need a place where they can store
      * their own internal data - e.g., data provided by
      * the user via the store_internal interface, as well

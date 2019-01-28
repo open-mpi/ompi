@@ -13,7 +13,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2018 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Mellanox Technologies, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -87,7 +87,9 @@ int main(int argc, char **argv)
     pmix_value_t *val = &value;
     pmix_proc_t proc;
     uint32_t nprocs;
-
+    pmix_status_t code[5] = {PMIX_ERR_PROC_ABORTING, PMIX_ERR_PROC_ABORTED,
+                             PMIX_ERR_PROC_REQUESTED_ABORT, PMIX_ERR_JOB_TERMINATED,
+                             PMIX_ERR_UNREACH};
     /* init us */
     if (PMIX_SUCCESS != (rc = PMIx_Init(&myproc, NULL, 0))) {
         pmix_output(0, "Client ns %s rank %d: PMIx_Init failed: %d", myproc.nspace, myproc.rank, rc);
@@ -108,7 +110,7 @@ int main(int argc, char **argv)
     completed = false;
 
     /* register our errhandler */
-    PMIx_Register_event_handler(NULL, 0, NULL, 0,
+    PMIx_Register_event_handler(code, 5, NULL, 0,
                                 notification_fn, errhandler_reg_callbk, NULL);
 
     /* call fence to sync */

@@ -365,6 +365,8 @@ opal/mca/hwloc/base/static-components.h.new.struct
 
 opal/mca/installdirs/config/install_dirs.h
 
+!opal/mca/pmix/pmix*/pmix/AUTHORS
+!opal/mca/pmix/pmix*/pmix/contrib/perf_tools/Makefile
 opal/mca/pmix/pmix*/pmix/include/pmix/autogen/config.h
 opal/mca/pmix/pmix*/pmix/include/pmix/autogen/config.h.in
 opal/mca/pmix/pmix*/pmix/src/include/private/autogen/config.h.in

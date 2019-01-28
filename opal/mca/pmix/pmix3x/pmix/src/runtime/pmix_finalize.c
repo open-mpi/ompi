@@ -52,6 +52,9 @@ extern bool pmix_init_called;
 
 void pmix_rte_finalize(void)
 {
+    int i;
+    pmix_notify_caddy_t *cd;
+
     if( --pmix_initialized != 0 ) {
         if( pmix_initialized < 0 ) {
             fprintf(stderr, "PMIx Finalize called too many times\n");
@@ -104,9 +107,10 @@ void pmix_rte_finalize(void)
     PMIX_RELEASE(pmix_globals.mypeer);
     PMIX_DESTRUCT(&pmix_globals.events);
     PMIX_LIST_DESTRUCT(&pmix_globals.cached_events);
-    {
-        pmix_notify_caddy_t *cd;
-        while (NULL != (cd=(pmix_notify_caddy_t *)pmix_ring_buffer_pop(&pmix_globals.notifications))) {
+    /* clear any notifications */
+    for (i=0; i < pmix_globals.max_events; i++) {
+        pmix_hotel_checkout_and_return_occupant(&pmix_globals.notifications, i, (void**)&cd);
+        if (NULL != cd) {
             PMIX_RELEASE(cd);
         }
     }

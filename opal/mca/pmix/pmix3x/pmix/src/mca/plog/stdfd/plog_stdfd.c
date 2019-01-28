@@ -90,7 +90,7 @@ static pmix_status_t mylog(const pmix_proc_t *source,
     /* check to see if there are any relevant directives */
     for (n=0; n < ndirs; n++) {
         if (0 == strncmp(directives[n].key, PMIX_LOG_TIMESTAMP, PMIX_MAX_KEYLEN)) {
-            flags.timestamp = data[n].value.data.time;
+            flags.timestamp = directives[n].value.data.time;
         } else if (0 == strncmp(directives[n].key, PMIX_LOG_XML_OUTPUT, PMIX_MAX_KEYLEN)) {
             flags.xml = PMIX_INFO_TRUE(&directives[n]);
         } else if (0 == strncmp(directives[n].key, PMIX_LOG_TAG_OUTPUT, PMIX_MAX_KEYLEN)) {

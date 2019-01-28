@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
@@ -225,10 +225,8 @@ pmix_value_cmp_t pmix12_bfrop_value_cmp(pmix_value_t *p, pmix_value_t *p1)
     return PMIX_VALUE1_GREATER;
 }
 /* COPY FUNCTIONS FOR GENERIC PMIX TYPES */
-pmix_status_t pmix12_bfrop_value_xfer(pmix_value_t *p, pmix_value_t *src)
+pmix_status_t pmix12_bfrop_value_xfer(pmix_value_t *p, const pmix_value_t *src)
 {
-    pmix_info_t *p1, *s1;
-
     /* copy the right field */
     p->type = src->type;
     switch (src->type) {
@@ -300,22 +298,7 @@ pmix_status_t pmix12_bfrop_value_xfer(pmix_value_t *p, pmix_value_t *src)
         p->data.tv.tv_usec = src->data.tv.tv_usec;
         break;
     case PMIX_INFO_ARRAY:
-        p->data.array = (pmix_info_array_t*)malloc(sizeof(pmix_info_array_t));
-        if (NULL == p->data.array) {
-            return PMIX_ERR_NOMEM;
-        }
-        p->data.array->size = src->data.array->size;
-        if (0 < src->data.array->size) {
-            p->data.array->array = (pmix_info_t*)malloc(src->data.array->size * sizeof(pmix_info_t));
-            if (NULL == p->data.array->array) {
-                free(p->data.array);
-                return PMIX_ERR_NOMEM;
-            }
-            p1 = (pmix_info_t*)p->data.array->array;
-            s1 = (pmix_info_t*)src->data.array->array;
-            memcpy(p1, s1, src->data.array->size * sizeof(pmix_info_t));
-        }
-        break;
+        return PMIX_ERR_NOT_SUPPORTED;
     case PMIX_BYTE_OBJECT:
         if (NULL != src->data.bo.bytes && 0 < src->data.bo.size) {
             p->data.bo.bytes = malloc(src->data.bo.size);
@@ -356,7 +339,7 @@ pmix_status_t pmix12_bfrop_copy_info(pmix_info_t **dest, pmix_info_t *src,
                                     pmix_data_type_t type)
 {
     *dest = (pmix_info_t*)malloc(sizeof(pmix_info_t));
-    (void)strncpy((*dest)->key, src->key, PMIX_MAX_KEYLEN);
+    pmix_strncpy((*dest)->key, src->key, PMIX_MAX_KEYLEN);
     return pmix_value_xfer(&(*dest)->value, &src->value);
 }
 
@@ -381,7 +364,7 @@ pmix_status_t pmix12_bfrop_copy_app(pmix_app_t **dest, pmix_app_t *src,
     (*dest)->ninfo = src->ninfo;
     (*dest)->info = (pmix_info_t*)malloc(src->ninfo * sizeof(pmix_info_t));
     for (j=0; j < src->ninfo; j++) {
-        (void)strncpy((*dest)->info[j].key, src->info[j].key, PMIX_MAX_KEYLEN);
+        pmix_strncpy((*dest)->info[j].key, src->info[j].key, PMIX_MAX_KEYLEN);
         pmix_value_xfer(&(*dest)->info[j].value, &src->info[j].value);
     }
     return PMIX_SUCCESS;
@@ -427,7 +410,7 @@ pmix_status_t pmix12_bfrop_copy_proc(pmix_proc_t **dest, pmix_proc_t *src,
     if (NULL == *dest) {
         return PMIX_ERR_OUT_OF_RESOURCE;
     }
-    (void)strncpy((*dest)->nspace, src->nspace, PMIX_MAX_NSLEN);
+    pmix_strncpy((*dest)->nspace, src->nspace, PMIX_MAX_NSLEN);
     (*dest)->rank = src->rank;
     return PMIX_SUCCESS;
 }
@@ -484,9 +467,9 @@ pmix_status_t pmix12_bfrop_copy_pdata(pmix_pdata_t **dest,
                                      pmix_data_type_t type)
 {
     *dest = (pmix_pdata_t*)malloc(sizeof(pmix_pdata_t));
-    (void)strncpy((*dest)->proc.nspace, src->proc.nspace, PMIX_MAX_NSLEN);
+    pmix_strncpy((*dest)->proc.nspace, src->proc.nspace, PMIX_MAX_NSLEN);
     (*dest)->proc.rank = src->proc.rank;
-    (void)strncpy((*dest)->key, src->key, PMIX_MAX_KEYLEN);
+    pmix_strncpy((*dest)->key, src->key, PMIX_MAX_KEYLEN);
     return pmix_value_xfer(&(*dest)->value, &src->value);
 }
 

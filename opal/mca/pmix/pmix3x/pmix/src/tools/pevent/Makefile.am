@@ -11,7 +11,7 @@
 #                         All rights reserved.
 # Copyright (c) 2008-2014 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
-# Copyright (c) 2017      Intel, Inc. All rights reserved.
+# Copyright (c) 2017-2018 Intel, Inc.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -29,4 +29,5 @@ endif # PMIX_INSTALL_BINARIES
 
 pevent_SOURCES = pevent.c
 pevent_LDADD = \
+    $(PMIX_EXTRA_LTLIB) \
 	$(top_builddir)/src/libpmix.la

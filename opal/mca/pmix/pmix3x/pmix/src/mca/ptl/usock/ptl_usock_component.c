@@ -15,6 +15,7 @@
  * Copyright (c) 2016-2018 Intel, Inc.  All rights reserved.
  * Copyright (c) 2017      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2018      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -341,7 +342,7 @@ static void connection_handler(int sd, short args, void *cbdata)
     pmix_status_t rc;
     unsigned int rank;
     pmix_usock_hdr_t hdr;
-    pmix_nspace_t *nptr, *tmp;
+    pmix_namespace_t *nptr, *tmp;
     pmix_rank_info_t *info;
     pmix_peer_t *psave = NULL;
     bool found;
@@ -481,6 +482,10 @@ static void connection_handler(int sd, short args, void *cbdata)
             cred.bytes = ptr;
             ptr += cred.size;
             len -= cred.size;
+        } else {
+            /* set cred pointer to NULL to guard against validation
+             * methods that assume a zero length credential is NULL */
+            cred.bytes = NULL;
         }
     }
 
@@ -541,7 +546,7 @@ static void connection_handler(int sd, short args, void *cbdata)
 
     /* see if we know this nspace */
     nptr = NULL;
-    PMIX_LIST_FOREACH(tmp, &pmix_server_globals.nspaces, pmix_nspace_t) {
+    PMIX_LIST_FOREACH(tmp, &pmix_server_globals.nspaces, pmix_namespace_t) {
         if (0 == strcmp(tmp->nspace, nspace)) {
             nptr = tmp;
             break;
@@ -718,10 +723,10 @@ static void connection_handler(int sd, short args, void *cbdata)
 
     /* let the host server know that this client has connected */
     if (NULL != pmix_host_server.client_connected) {
-        (void)strncpy(proc.nspace, psave->info->pname.nspace, PMIX_MAX_NSLEN);
+        pmix_strncpy(proc.nspace, psave->info->pname.nspace, PMIX_MAX_NSLEN);
         proc.rank = psave->info->pname.rank;
         rc = pmix_host_server.client_connected(&proc, psave->info->server_object, NULL, NULL);
-        if (PMIX_SUCCESS != rc) {
+        if (PMIX_SUCCESS != rc && PMIX_OPERATION_SUCCEEDED != rc) {
             PMIX_ERROR_LOG(rc);
             info->proc_cnt--;
             PMIX_RELEASE(info);

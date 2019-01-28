@@ -13,8 +13,8 @@
  *                         All rights reserved.
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
- * Copyright (c) 2015-2017 Mellanox Technologies, Inc.  All rights reserved.
+ * Copyright (c) 2013-2018 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015-2018 Mellanox Technologies, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -78,7 +78,7 @@ int main(int argc, char **argv)
     parse_cmd(argc, argv, &params);
 
     // We don't know rank at this place!
-    TEST_VERBOSE(("Client ns %s rank %d: Start", params.nspace, params.rank));
+    TEST_VERBOSE(("Client %s:%d started PID:%d", params.nspace, params.rank, getpid()));
 
     /* handle early-fail test case */
     if (1 == params.early_fail && 0 == params.rank) {
@@ -236,6 +236,7 @@ int main(int argc, char **argv)
         TEST_VERBOSE(("Client ns %s rank %d:PMIx_Finalize successfully completed", myproc.nspace, myproc.rank));
     }
 
+    TEST_VERBOSE(("Client %s:%d finished PID:%d", params.nspace, params.rank, getpid()));
     TEST_OUTPUT_CLEAR(("OK\n"));
     TEST_CLOSE_FILE();
     FREE_TEST_PARAMS(params);

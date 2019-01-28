@@ -236,7 +236,7 @@ pmix_status_t pmix_bfrops_base_copy_info(pmix_info_t **dest,
                                          pmix_data_type_t type)
 {
     *dest = (pmix_info_t*)malloc(sizeof(pmix_info_t));
-    (void)strncpy((*dest)->key, src->key, PMIX_MAX_KEYLEN);
+    pmix_strncpy((*dest)->key, src->key, PMIX_MAX_KEYLEN);
     (*dest)->flags = src->flags;
     return pmix_bfrops_base_value_xfer(&(*dest)->value, &src->value);
 }
@@ -267,7 +267,7 @@ pmix_status_t pmix_bfrops_base_copy_app(pmix_app_t **dest,
     (*dest)->ninfo = src->ninfo;
     (*dest)->info = (pmix_info_t*)malloc(src->ninfo * sizeof(pmix_info_t));
     for (j=0; j < src->ninfo; j++) {
-        (void)strncpy((*dest)->info[j].key, src->info[j].key, PMIX_MAX_KEYLEN);
+        pmix_strncpy((*dest)->info[j].key, src->info[j].key, PMIX_MAX_KEYLEN);
         pmix_value_xfer(&(*dest)->info[j].value, &src->info[j].value);
     }
     return PMIX_SUCCESS;
@@ -300,29 +300,8 @@ pmix_status_t pmix_bfrops_base_copy_proc(pmix_proc_t **dest,
     if (NULL == *dest) {
         return PMIX_ERR_OUT_OF_RESOURCE;
     }
-    (void)strncpy((*dest)->nspace, src->nspace, PMIX_MAX_NSLEN);
+    pmix_strncpy((*dest)->nspace, src->nspace, PMIX_MAX_NSLEN);
     (*dest)->rank = src->rank;
-    return PMIX_SUCCESS;
-}
-
-pmix_status_t pmix_bfrops_base_copy_modex(pmix_modex_data_t **dest,
-                                          pmix_modex_data_t *src,
-                                          pmix_data_type_t type)
-{
-    *dest = (pmix_modex_data_t*)malloc(sizeof(pmix_modex_data_t));
-    if (NULL == *dest) {
-        return PMIX_ERR_OUT_OF_RESOURCE;
-    }
-    (*dest)->blob = NULL;
-    (*dest)->size = 0;
-    if (NULL != src->blob) {
-        (*dest)->blob = (uint8_t*)malloc(src->size * sizeof(uint8_t));
-        if (NULL == (*dest)->blob) {
-            return PMIX_ERR_OUT_OF_RESOURCE;
-        }
-        memcpy((*dest)->blob, src->blob, src->size * sizeof(uint8_t));
-        (*dest)->size = src->size;
-    }
     return PMIX_SUCCESS;
 }
 
@@ -357,9 +336,9 @@ pmix_status_t pmix_bfrops_base_copy_pdata(pmix_pdata_t **dest,
                                           pmix_data_type_t type)
 {
     *dest = (pmix_pdata_t*)malloc(sizeof(pmix_pdata_t));
-    (void)strncpy((*dest)->proc.nspace, src->proc.nspace, PMIX_MAX_NSLEN);
+    pmix_strncpy((*dest)->proc.nspace, src->proc.nspace, PMIX_MAX_NSLEN);
     (*dest)->proc.rank = src->proc.rank;
-    (void)strncpy((*dest)->key, src->key, PMIX_MAX_KEYLEN);
+    pmix_strncpy((*dest)->key, src->key, PMIX_MAX_KEYLEN);
     return pmix_bfrops_base_value_xfer(&(*dest)->value, &src->value);
 }
 
@@ -405,7 +384,6 @@ pmix_status_t pmix_bfrops_base_copy_darray(pmix_data_array_t **dest,
     pmix_buffer_t *pb, *sb;
     pmix_byte_object_t *pbo, *sbo;
     pmix_kval_t *pk, *sk;
-    pmix_modex_data_t *pm, *sm;
     pmix_proc_info_t *pi, *si;
     pmix_query_t *pq, *sq;
     pmix_envar_t *pe, *se;
@@ -699,31 +677,6 @@ pmix_status_t pmix_bfrops_base_copy_darray(pmix_data_array_t **dest,
                 }
             }
             break;
-        case PMIX_MODEX:
-            PMIX_MODEX_CREATE(p->array, src->size);
-            if (NULL == p->array) {
-                free(p);
-                return PMIX_ERR_NOMEM;
-            }
-            pm = (pmix_modex_data_t*)p->array;
-            sm = (pmix_modex_data_t*)src->array;
-            for (n=0; n < src->size; n++) {
-                memcpy(&pm[n], &sm[n], sizeof(pmix_modex_data_t));
-                if (NULL != sm[n].blob && 0 < sm[n].size) {
-                    pm[n].blob = (uint8_t*)malloc(sm[n].size);
-                    if (NULL == pm[n].blob) {
-                        PMIX_MODEX_FREE(pm, src->size);
-                        free(p);
-                        return PMIX_ERR_NOMEM;
-                    }
-                    memcpy(pm[n].blob, sm[n].blob, sm[n].size);
-                    pm[n].size = sm[n].size;
-                } else {
-                    pm[n].blob = NULL;
-                    pm[n].size = 0;
-                }
-            }
-            break;
         case PMIX_PERSIST:
             p->array = (pmix_persistence_t*)malloc(src->size * sizeof(pmix_persistence_t));
             if (NULL == p->array) {
@@ -875,32 +828,6 @@ pmix_status_t pmix_bfrops_base_copy_query(pmix_query_t **dest,
     }
     return PMIX_SUCCESS;
 }
-
-/**** DEPRECATED ****/
-pmix_status_t pmix_bfrops_base_copy_array(pmix_info_array_t **dest,
-                                          pmix_info_array_t *src,
-                                          pmix_data_type_t type)
-{
-    pmix_info_t *d1, *s1;
-
-    *dest = (pmix_info_array_t*)malloc(sizeof(pmix_info_array_t));
-    if (NULL == (*dest)) {
-        return PMIX_ERR_NOMEM;
-        }
-    (*dest)->size = src->size;
-    if (0 < src->size) {
-        (*dest)->array = (pmix_info_t*)malloc(src->size * sizeof(pmix_info_t));
-        if (NULL == (*dest)->array) {
-            free(*dest);
-            return PMIX_ERR_NOMEM;
-        }
-        d1 = (pmix_info_t*)(*dest)->array;
-        s1 = (pmix_info_t*)src->array;
-        memcpy(d1, s1, src->size * sizeof(pmix_info_t));
-    }
-    return PMIX_SUCCESS;
-}
-/*******************/
 
 pmix_status_t pmix_bfrops_base_copy_envar(pmix_envar_t **dest,
                                           pmix_envar_t *src,

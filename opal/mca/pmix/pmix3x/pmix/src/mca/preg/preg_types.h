@@ -13,6 +13,7 @@
  * Copyright (c) 2007-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, Inc. All rights reserved.
  * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2019      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -51,6 +52,7 @@ typedef struct {
     char *suffix;
     int num_digits;
     pmix_list_t ranges;
+    bool skip;
 } pmix_regex_value_t;
 PMIX_EXPORT PMIX_CLASS_DECLARATION(pmix_regex_value_t);
 

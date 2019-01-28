@@ -57,4 +57,6 @@ AC_DEFUN([PMIX_CHECK_DSTOR_LOCK],[
         fi
     fi
     LIBS="$orig_libs"
+    AM_CONDITIONAL([HAVE_DSTORE_PTHREAD_LOCK], [test "$_x_ac_pthread_lock_found" = "1"])
+    AM_CONDITIONAL([HAVE_DSTORE_FCNTL_LOCK], [test "$_x_ac_fcntl_lock_found" = "1"])
 ])

@@ -6,7 +6,7 @@
  *                         reserved.
  * Copyright (c) 2011-2014 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      Mellanox Technologies, Inc.
@@ -172,7 +172,7 @@ pmix_status_t pmix_hash_fetch(pmix_hash_table_t *table, pmix_rank_t rank,
             /* copy the list elements */
             n=0;
             PMIX_LIST_FOREACH(hv, &proc_data->data, pmix_kval_t) {
-                (void)strncpy(info[n].key, hv->key, PMIX_MAX_KEYLEN);
+                pmix_strncpy(info[n].key, hv->key, PMIX_MAX_KEYLEN);
                 pmix_value_xfer(&info[n].value, hv->value);
                 ++n;
             }

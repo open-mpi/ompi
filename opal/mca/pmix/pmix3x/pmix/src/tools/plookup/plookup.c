@@ -13,7 +13,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2018 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Mellanox Technologies, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -269,7 +269,7 @@ int main(int argc, char **argv)
     /* setup the keys */
     PMIX_PDATA_CREATE(pdata, ndata);
     for (n=0; n < ndata; n++) {
-        (void)strncpy(pdata[n].key, keys[n], PMIX_MAX_KEYLEN);
+        pmix_strncpy(pdata[n].key, keys[n], PMIX_MAX_KEYLEN);
     }
     /* perform the lookup */
     rc = PMIx_Lookup(pdata, ndata, info, ninfo);

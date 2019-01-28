@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2016-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2016-2019 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -69,33 +69,30 @@ pmix_pnet_opa_component_t mca_pnet_opa_component = {
     .exclude = NULL
 };
 
-static char *includeparam;
-static char *excludeparam;
-
 static pmix_status_t component_register(void)
 {
     pmix_mca_base_component_t *component = &mca_pnet_opa_component.super.base;
 
-    includeparam = "HFI_*,PSM2_*";
+    mca_pnet_opa_component.incparms = "HFI_*,PSM2_*";
     (void)pmix_mca_base_component_var_register(component, "include_envars",
                                                "Comma-delimited list of envars to harvest (\'*\' and \'?\' supported)",
                                                PMIX_MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
                                                PMIX_INFO_LVL_2,
                                                PMIX_MCA_BASE_VAR_SCOPE_LOCAL,
-                                               &includeparam);
-    if (NULL != includeparam) {
-        mca_pnet_opa_component.include = pmix_argv_split(includeparam, ',');
+                                               &mca_pnet_opa_component.incparms);
+    if (NULL != mca_pnet_opa_component.incparms) {
+        mca_pnet_opa_component.include = pmix_argv_split(mca_pnet_opa_component.incparms, ',');
     }
 
-    excludeparam = NULL;
+    mca_pnet_opa_component.excparms = NULL;
     (void)pmix_mca_base_component_var_register(component, "exclude_envars",
                                                "Comma-delimited list of envars to exclude (\'*\' and \'?\' supported)",
                                                PMIX_MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
                                                PMIX_INFO_LVL_2,
                                                PMIX_MCA_BASE_VAR_SCOPE_LOCAL,
-                                               &excludeparam);
-    if (NULL != excludeparam) {
-        mca_pnet_opa_component.exclude = pmix_argv_split(excludeparam, ',');
+                                               &mca_pnet_opa_component.excparms);
+    if (NULL != mca_pnet_opa_component.excparms) {
+        mca_pnet_opa_component.exclude = pmix_argv_split(mca_pnet_opa_component.excparms, ',');
     }
 
     return PMIX_SUCCESS;

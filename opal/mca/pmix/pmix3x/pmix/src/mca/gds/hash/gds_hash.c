@@ -1,8 +1,10 @@
 /*
  * Copyright (c) 2015-2018 Intel, Inc.  All rights reserved.
- * Copyright (c) 2016      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2016-2018 IBM Corporation.  All rights reserved.
  * Copyright (c) 2018      Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
+ * Copyright (c) 2018      Mellanox Technologies, Inc.
+ *                         All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -51,7 +53,7 @@ static void hash_finalize(void);
 static pmix_status_t hash_assign_module(pmix_info_t *info, size_t ninfo,
                                         int *priority);
 
-static pmix_status_t hash_cache_job_info(struct pmix_nspace_t *ns,
+static pmix_status_t hash_cache_job_info(struct pmix_namespace_t *ns,
                                          pmix_info_t info[], size_t ninfo);
 
 static pmix_status_t hash_register_job_info(struct pmix_peer_t *pr,
@@ -64,9 +66,14 @@ static pmix_status_t hash_store(const pmix_proc_t *proc,
                                 pmix_scope_t scope,
                                 pmix_kval_t *kv);
 
-static pmix_status_t hash_store_modex(struct pmix_nspace_t *ns,
+static pmix_status_t hash_store_modex(struct pmix_namespace_t *ns,
                                       pmix_list_t *cbs,
-                                      pmix_byte_object_t *bo);
+                                      pmix_buffer_t *buff);
+
+static pmix_status_t _hash_store_modex(void * cbdata,
+                                       struct pmix_namespace_t *ns,
+                                       pmix_list_t *cbs,
+                                       pmix_byte_object_t *bo);
 
 static pmix_status_t hash_fetch(const pmix_proc_t *proc,
                                 pmix_scope_t scope, bool copy,
@@ -91,6 +98,7 @@ static pmix_status_t accept_kvs_resp(pmix_buffer_t *buf);
 
 pmix_gds_base_module_t pmix_hash_module = {
     .name = "hash",
+    .is_tsafe = false,
     .init = hash_init,
     .finalize = hash_finalize,
     .assign_module = hash_assign_module,
@@ -110,7 +118,7 @@ pmix_gds_base_module_t pmix_hash_module = {
 typedef struct {
     pmix_list_item_t super;
     char *ns;
-    pmix_nspace_t *nptr;
+    pmix_namespace_t *nptr;
     pmix_hash_table_t internal;
     pmix_hash_table_t remote;
     pmix_hash_table_t local;
@@ -355,10 +363,10 @@ static pmix_status_t store_map(pmix_hash_table_t *ht,
     return PMIX_SUCCESS;
 }
 
-pmix_status_t hash_cache_job_info(struct pmix_nspace_t *ns,
+pmix_status_t hash_cache_job_info(struct pmix_namespace_t *ns,
                                   pmix_info_t info[], size_t ninfo)
 {
-    pmix_nspace_t *nptr = (pmix_nspace_t*)ns;
+    pmix_namespace_t *nptr = (pmix_namespace_t*)ns;
     pmix_hash_trkr_t *trk, *t;
     pmix_hash_table_t *ht;
     pmix_kval_t *kp2, *kvptr;
@@ -580,7 +588,7 @@ pmix_status_t hash_cache_job_info(struct pmix_nspace_t *ns,
 }
 
 static pmix_status_t register_info(pmix_peer_t *peer,
-                                   pmix_nspace_t *ns,
+                                   pmix_namespace_t *ns,
                                    pmix_buffer_t *reply)
 {
     pmix_hash_trkr_t *trk, *t;
@@ -672,13 +680,13 @@ static pmix_status_t register_info(pmix_peer_t *peer,
 }
 
 /* the purpose of this function is to pack the job-level
- * info stored in the pmix_nspace_t into a buffer and send
+ * info stored in the pmix_namespace_t into a buffer and send
  * it to the given client */
 static pmix_status_t hash_register_job_info(struct pmix_peer_t *pr,
                                             pmix_buffer_t *reply)
 {
     pmix_peer_t *peer = (pmix_peer_t*)pr;
-    pmix_nspace_t *ns = peer->nptr;
+    pmix_namespace_t *ns = peer->nptr;
     char *msg;
     pmix_status_t rc;
     pmix_hash_trkr_t *trk, *t2;
@@ -1181,11 +1189,18 @@ static pmix_status_t hash_store(const pmix_proc_t *proc,
  * host has received data from some other peer. It therefore
  * always contains data solely from remote procs, and we
  * shall store it accordingly */
-static pmix_status_t hash_store_modex(struct pmix_nspace_t *nspace,
+static pmix_status_t hash_store_modex(struct pmix_namespace_t *nspace,
                                       pmix_list_t *cbs,
-                                      pmix_byte_object_t *bo)
+                                      pmix_buffer_t *buf) {
+    return pmix_gds_base_store_modex(nspace, cbs, buf, _hash_store_modex, NULL);
+}
+
+static pmix_status_t _hash_store_modex(void * cbdata,
+                                       struct pmix_namespace_t *nspace,
+                                       pmix_list_t *cbs,
+                                       pmix_byte_object_t *bo)
 {
-    pmix_nspace_t *ns = (pmix_nspace_t*)nspace;
+    pmix_namespace_t *ns = (pmix_namespace_t*)nspace;
     pmix_hash_trkr_t *trk, *t;
     pmix_status_t rc = PMIX_SUCCESS;
     int32_t cnt;

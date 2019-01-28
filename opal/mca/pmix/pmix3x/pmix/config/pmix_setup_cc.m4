@@ -14,8 +14,8 @@ dnl Copyright (c) 2007-2009 Sun Microsystems, Inc.  All rights reserved.
 dnl Copyright (c) 2008-2015 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2012-2017 Los Alamos National Security, LLC. All rights
 dnl                         reserved.
-dnl Copyright (c) 2015      Research Organization for Information Science
-dnl                         and Technology (RIST). All rights reserved.
+dnl Copyright (c) 2015-2019 Research Organization for Information Science
+dnl                         and Technology (RIST).  All rights reserved.
 dnl Copyright (c) 2018      Intel, Inc. All rights reserved.
 dnl $COPYRIGHT$
 dnl
@@ -60,7 +60,12 @@ AC_DEFUN([PMIX_PROG_CC_C11_HELPER],[
     PMIX_CC_HELPER([if $CC $1 supports C11 _Static_assert], [pmix_prog_cc_c11_helper__static_assert_available],
                    [[#include <stdint.h>]],[[_Static_assert(sizeof(int64_t) == 8, "WTH");]])
 
-    AS_IF([test $pmix_prog_cc_c11_helper__Thread_local_available -eq 1 && test $pmix_prog_cc_c11_helper_atomic_var_available -eq 1],
+    PMIX_CC_HELPER([if $CC $1 supports C11 atomic_fetch_xor_explicit], [pmix_prog_cc_c11_helper_atomic_fetch_xor_explicit_available],
+	           [[#include <stdatomic.h>
+#include <stdint.h>]],[[_Atomic uint32_t a; uint32_t b; atomic_fetch_xor_explicit(&a, b, memory_order_relaxed);]])
+
+
+    AS_IF([test $pmix_prog_cc_c11_helper__Thread_local_available -eq 1 && test $pmix_prog_cc_c11_helper_atomic_var_available -eq 1 && test $pmix_prog_cc_c11_helper_atomic_fetch_xor_explicit_available -eq 1],
           [$2],
           [$3])
 
@@ -128,7 +133,7 @@ AC_DEFUN([PMIX_SETUP_CC],[
     AC_REQUIRE([_PMIX_PROG_CC])
     AC_REQUIRE([AM_PROG_CC_C_O])
 
-    PMIX_VAR_SCOPE_PUSH([pmix_prog_cc_c11_helper__Thread_local_available pmix_prog_cc_c11_helper_atomic_var_available pmix_prog_cc_c11_helper__Atomic_available pmix_prog_cc_c11_helper__static_assert_available pmix_prog_cc_c11_helper__Generic_available pmix_prog_cc__thread_available])
+    PMIX_VAR_SCOPE_PUSH([pmix_prog_cc_c11_helper__Thread_local_available pmix_prog_cc_c11_helper_atomic_var_available pmix_prog_cc_c11_helper__Atomic_available pmix_prog_cc_c11_helper__static_assert_available pmix_prog_cc_c11_helper__Generic_available pmix_prog_cc__thread_available pmix_prog_cc_c11_helper_atomic_fetch_xor_explicit_available])
 
     PMIX_PROG_CC_C11
 

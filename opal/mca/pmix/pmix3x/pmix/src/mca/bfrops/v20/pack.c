@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2013 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      Mellanox Technologies, Inc.
@@ -613,13 +613,6 @@ static pmix_status_t pack_val(pmix_buffer_t *buffer,
                 return ret;
             }
             break;
-        /**** DEPRECATED ****/
-        case PMIX_INFO_ARRAY:
-            if (PMIX_SUCCESS != (ret = pmix20_bfrop_pack_buffer(buffer, p->data.array, 1, PMIX_INFO_ARRAY))) {
-                return ret;
-            }
-            break;
-        /********************/
         default:
         pmix_output(0, "PACK-PMIX-VALUE: UNSUPPORTED TYPE %d", (int)p->type);
         return PMIX_ERROR;
@@ -1035,10 +1028,9 @@ pmix_status_t pmix20_bfrop_pack_alloc_directive(pmix_buffer_t *buffer, const voi
     return pmix20_bfrop_pack_byte(buffer, src, num_vals, PMIX_UINT8);
 }
 
-
 /**** DEPRECATED ****/
 pmix_status_t pmix20_bfrop_pack_array(pmix_buffer_t *buffer, const void *src,
-                          int32_t num_vals, pmix_data_type_t type)
+                                      int32_t num_vals, pmix_data_type_t type)
 {
     pmix_info_array_t *ptr;
     int32_t i;
@@ -1048,12 +1040,12 @@ pmix_status_t pmix20_bfrop_pack_array(pmix_buffer_t *buffer, const void *src,
 
     for (i = 0; i < num_vals; ++i) {
         /* pack the size */
-        if (PMIX_SUCCESS != (ret = pmix20_bfrop_pack_sizet(buffer, &ptr[i].size, 1, PMIX_SIZE))) {
+        if (PMIX_SUCCESS != (ret = pmix_bfrops_base_pack_sizet(buffer, &ptr[i].size, 1, PMIX_SIZE))) {
             return ret;
         }
         if (0 < ptr[i].size) {
             /* pack the values */
-            if (PMIX_SUCCESS != (ret = pmix20_bfrop_pack_info(buffer, ptr[i].array, ptr[i].size, PMIX_INFO))) {
+            if (PMIX_SUCCESS != (ret = pmix_bfrops_base_pack_info(buffer, ptr[i].array, ptr[i].size, PMIX_INFO))) {
                 return ret;
             }
         }
@@ -1062,3 +1054,4 @@ pmix_status_t pmix20_bfrop_pack_array(pmix_buffer_t *buffer, const void *src,
     return PMIX_SUCCESS;
 }
 /********************/
+

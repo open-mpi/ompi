@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  *
  * $COPYRIGHT$
@@ -46,18 +46,18 @@
 
 static pmix_status_t test_init(void);
 static void test_finalize(void);
-static pmix_status_t allocate(pmix_nspace_t *nptr,
+static pmix_status_t allocate(pmix_namespace_t *nptr,
                               pmix_info_t *info,
                               pmix_list_t *ilist);
-static pmix_status_t setup_local_network(pmix_nspace_t *nptr,
+static pmix_status_t setup_local_network(pmix_namespace_t *nptr,
                                          pmix_info_t info[],
                                          size_t ninfo);
-static pmix_status_t setup_fork(pmix_nspace_t *nptr,
+static pmix_status_t setup_fork(pmix_namespace_t *nptr,
                                 const pmix_proc_t *proc,
                                 char ***env);
 static void child_finalized(pmix_proc_t *peer);
-static void local_app_finalized(pmix_nspace_t *nptr);
-static void deregister_nspace(pmix_nspace_t *nptr);
+static void local_app_finalized(pmix_namespace_t *nptr);
+static void deregister_nspace(pmix_namespace_t *nptr);
 static pmix_status_t collect_inventory(pmix_info_t directives[], size_t ndirs,
                                        pmix_inventory_cbfunc_t cbfunc, void *cbdata);
 static pmix_status_t deliver_inventory(pmix_info_t info[], size_t ninfo,
@@ -94,7 +94,7 @@ static void test_finalize(void)
 /* NOTE: if there is any binary data to be transferred, then
  * this function MUST pack it for transport as the host will
  * not know how to do so */
-static pmix_status_t allocate(pmix_nspace_t *nptr,
+static pmix_status_t allocate(pmix_namespace_t *nptr,
                               pmix_info_t *info,
                               pmix_list_t *ilist)
 {
@@ -283,7 +283,7 @@ static pmix_status_t allocate(pmix_nspace_t *nptr,
     return PMIX_SUCCESS;
 }
 
-static pmix_status_t setup_local_network(pmix_nspace_t *nptr,
+static pmix_status_t setup_local_network(pmix_namespace_t *nptr,
                                          pmix_info_t info[],
                                          size_t ninfo)
 {
@@ -345,8 +345,13 @@ static pmix_status_t setup_local_network(pmix_nspace_t *nptr,
                cnt = 1;
                PMIX_BFROPS_UNPACK(rc, pmix_globals.mypeer,
                                   &bkt, &nkvals, &cnt, PMIX_SIZE);
-                   /* setup the info array */
-               PMIX_INFO_CREATE(jinfo, nkvals);
+                   /* the data gets stored as a pmix_data_array_t on the provided key */
+               PMIX_INFO_CONSTRUCT(&stinfo);
+               pmix_strncpy(stinfo.key, idkey, PMIX_MAX_KEYLEN);
+               stinfo.value.type = PMIX_DATA_ARRAY;
+               PMIX_DATA_ARRAY_CREATE(stinfo.value.data.darray, nkvals, PMIX_INFO);
+               jinfo = (pmix_info_t*)stinfo.value.data.darray->array;
+
                    /* cycle thru the blob and extract the kvals */
                kv = PMIX_NEW(pmix_kval_t);
                cnt = 1;
@@ -358,7 +363,7 @@ static pmix_status_t setup_local_network(pmix_nspace_t *nptr,
                                        "recvd KEY %s %s", kv->key,
                                        (PMIX_STRING == kv->value->type) ? kv->value->data.string : "NON-STRING");
                        /* xfer the value to the info */
-                   (void)strncpy(jinfo[m].key, kv->key, PMIX_MAX_KEYLEN);
+                   pmix_strncpy(jinfo[m].key, kv->key, PMIX_MAX_KEYLEN);
                    PMIX_BFROPS_VALUE_XFER(rc, pmix_globals.mypeer,
                                           &jinfo[m].value, kv->value);
                        /* if this is the ID key, save it */
@@ -384,14 +389,7 @@ static pmix_status_t setup_local_network(pmix_nspace_t *nptr,
                    PMIX_INFO_FREE(jinfo, nkvals);
                    return PMIX_ERR_BAD_PARAM;
                }
-                   /* the data gets stored as a pmix_data_array_t on the provided key */
-               PMIX_INFO_CONSTRUCT(&stinfo);
-               (void)strncpy(stinfo.key, idkey, PMIX_MAX_KEYLEN);
-               stinfo.value.type = PMIX_DATA_ARRAY;
-               PMIX_DATA_ARRAY_CREATE(stinfo.value.data.darray, nkvals, PMIX_INFO);
-               stinfo.value.data.darray->array = jinfo;
-
-                   /* cache the info on the job */
+               /* cache the info on the job */
                PMIX_GDS_CACHE_JOB_INFO(rc, pmix_globals.mypeer, nptr,
                                        &stinfo, 1);
                PMIX_INFO_DESTRUCT(&stinfo);
@@ -404,7 +402,7 @@ static pmix_status_t setup_local_network(pmix_nspace_t *nptr,
     return PMIX_SUCCESS;
 }
 
-static pmix_status_t setup_fork(pmix_nspace_t *nptr,
+static pmix_status_t setup_fork(pmix_namespace_t *nptr,
                                 const pmix_proc_t *proc,
                                 char ***env)
 {
@@ -457,12 +455,12 @@ static void child_finalized(pmix_proc_t *peer)
                 peer->nspace, peer->rank);
 }
 
-static void local_app_finalized(pmix_nspace_t *nptr)
+static void local_app_finalized(pmix_namespace_t *nptr)
 {
     pmix_output(0, "pnet:test NSPACE %s LOCALLY FINALIZED", nptr->nspace);
 }
 
-static void deregister_nspace(pmix_nspace_t *nptr)
+static void deregister_nspace(pmix_namespace_t *nptr)
 {
     pmix_output(0, "pnet:test DEREGISTER NSPACE %s", nptr->nspace);
 }

@@ -9,7 +9,7 @@ Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 Copyright (c) 2004-2005 The Regents of the University of California.
                         All rights reserved.
 Copyright (c) 2008-2015 Cisco Systems, Inc.  All rights reserved.
-Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
+Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
 $COPYRIGHT$
 
 Additional copyrights may follow
@@ -22,9 +22,9 @@ For More Information
 
 This file is a *very* short overview of building and installing
 the PMIx library.  Much more information is available in the
-FAQ section on the PMIx web site:
+How-To section on the PMIx web site:
 
-    http://pmix.github.io/pmix/faq
+    https://pmix.org/support/how-to/
 
 
 Developer Builds
@@ -55,6 +55,24 @@ system from within the directory at the top of the tree:
 shell$ ./configure --prefix=/where/to/install
 [...lots of output...]
 shell$ make all install
+
+NOTE: this version of PMIx requires the Libevent package to build
+and operate. Any version of Libevent greater than or equal to
+2.0.21 is acceptable.
+
+NOTE: this version of PMIx optionally supports the HWLOC package
+for providing topology information to both the host environment
+(by collecting local inventory for rollup) and local client
+processes. Any version of HWLOC greater than 1.10 is supported,
+although versions in the 2.x series are recommended.
+
+Note that you must point configure at the libevent installation
+using the --with-libevent=<dir> option if it is in a non-standard
+location. Similarly, non-standard locations for the HWLOC package
+must be specified using the --with-hwloc=<dir> option. In both
+cases, PMIx will automatically detect these packages in standard
+locations and build-in support for them unless otherwise specified
+using the respective configure option.
 
 If you need special access to install, then you can execute "make
 all" as a user with write permissions in the build tree, and a

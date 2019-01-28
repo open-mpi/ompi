@@ -1,18 +1,23 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2015-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Artem Y. Polyakov <artpol84@gmail.com>.
  *                         All rights reserved.
  * Copyright (c) 2015      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
- * Copyright (c) 2016      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016-2018 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  */
 
 #ifndef PMIX_SERVER_OPS_H
 #define PMIX_SERVER_OPS_H
+
+#include <unistd.h>
+#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
 
 #include <src/include/pmix_config.h>
 #include "src/include/types.h"
@@ -57,6 +62,12 @@ typedef struct {
     size_t napps;
     pmix_iof_channel_t channels;
     pmix_byte_object_t *bo;
+    size_t nbo;
+    /* timestamp receipt of the notification so we
+     * can evict the oldest one if we get overwhelmed */
+    time_t ts;
+    /* what room of the hotel they are in */
+    int room;
     pmix_op_cbfunc_t opcbfunc;
     pmix_dmodex_response_fn_t cbfunc;
     pmix_setup_application_cbfunc_t setupcbfunc;
@@ -120,6 +131,8 @@ typedef struct {
     pmix_list_item_t super;
     pmix_peer_t *peer;
     bool enviro_events;
+    pmix_proc_t *affected;
+    size_t naffected;
 } pmix_peer_events_info_t;
 PMIX_CLASS_DECLARATION(pmix_peer_events_info_t);
 
@@ -131,6 +144,14 @@ typedef struct {
 PMIX_CLASS_DECLARATION(pmix_regevents_info_t);
 
 typedef struct {
+    pmix_list_item_t super;
+    pmix_proc_t source;
+    pmix_iof_channel_t channel;
+    pmix_byte_object_t *bo;
+} pmix_iof_cache_t;
+PMIX_CLASS_DECLARATION(pmix_iof_cache_t);
+
+typedef struct {
     pmix_list_t nspaces;                    // list of pmix_nspace_t for the nspaces we know about
     pmix_pointer_array_t clients;           // array of pmix_peer_t local clients
     pmix_list_t collectives;                // list of active pmix_server_trkr_t
@@ -138,9 +159,11 @@ typedef struct {
     pmix_list_t local_reqs;                 // list of pmix_dmdx_local_t awaiting arrival of data from local neighbours
     pmix_list_t gdata;                      // cache of data given to me for passing to all clients
     pmix_list_t events;                     // list of pmix_regevents_info_t registered events
-    pmix_hotel_t iof;                       // IO to be forwarded to clients
+    pmix_list_t iof;                        // IO to be forwarded to clients
+    size_t max_iof_cache;                   // max number of IOF messages to cache
     bool tool_connections_allowed;
     char *tmpdir;                           // temporary directory for this server
+    char *system_tmpdir;                    // system tmpdir
     // verbosity for server get operations
     int get_output;
     int get_verbose;
@@ -194,8 +217,8 @@ typedef struct {
 
 bool pmix_server_trk_update(pmix_server_trkr_t *trk);
 
-void pmix_pending_nspace_requests(pmix_nspace_t *nptr);
-pmix_status_t pmix_pending_resolve(pmix_nspace_t *nptr, pmix_rank_t rank,
+void pmix_pending_nspace_requests(pmix_namespace_t *nptr);
+pmix_status_t pmix_pending_resolve(pmix_namespace_t *nptr, pmix_rank_t rank,
                                    pmix_status_t status, pmix_dmdx_local_t *lcd);
 
 
@@ -312,7 +335,11 @@ void pmix_server_message_handler(struct pmix_peer_t *pr,
                                  pmix_ptl_hdr_t *hdr,
                                  pmix_buffer_t *buf, void *cbdata);
 
+void pmix_server_purge_events(pmix_peer_t *peer,
+                              pmix_proc_t *proc);
+
 PMIX_EXPORT extern pmix_server_module_t pmix_host_server;
 PMIX_EXPORT extern pmix_server_globals_t pmix_server_globals;
+
 
 #endif // PMIX_SERVER_OPS_H

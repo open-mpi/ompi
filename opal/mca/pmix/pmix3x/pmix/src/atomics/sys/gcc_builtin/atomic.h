@@ -11,13 +11,13 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
- * Copyright (c) 2014-2017 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2014-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2016-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2018      Intel, Inc. All rights reserved.
  * Copyright (c) 2018      Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2018      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -86,103 +86,103 @@ static inline void pmix_atomic_wmb(void)
 /*
  * Suppress numerous (spurious ?) warnings from Oracle Studio compilers
  * see https://community.oracle.com/thread/3968347
- */
+ */ 
 #if defined(__SUNPRO_C) || defined(__SUNPRO_CC)
 #pragma error_messages(off, E_ARG_INCOMPATIBLE_WITH_ARG_L)
 #endif
 
-static inline bool pmix_atomic_compare_exchange_strong_acq_32 (volatile int32_t *addr, int32_t *oldval, int32_t newval)
+static inline bool pmix_atomic_compare_exchange_strong_acq_32 (pmix_atomic_int32_t *addr, int32_t *oldval, int32_t newval)
 {
     return __atomic_compare_exchange_n (addr, oldval, newval, false, __ATOMIC_ACQUIRE, __ATOMIC_RELAXED);
 }
 
 
-static inline bool pmix_atomic_compare_exchange_strong_rel_32 (volatile int32_t *addr, int32_t *oldval, int32_t newval)
+static inline bool pmix_atomic_compare_exchange_strong_rel_32 (pmix_atomic_int32_t *addr, int32_t *oldval, int32_t newval)
 {
     return __atomic_compare_exchange_n (addr, oldval, newval, false, __ATOMIC_RELEASE, __ATOMIC_RELAXED);
 }
 
-static inline bool pmix_atomic_compare_exchange_strong_32 (volatile int32_t *addr, int32_t *oldval, int32_t newval)
+static inline bool pmix_atomic_compare_exchange_strong_32 (pmix_atomic_int32_t *addr, int32_t *oldval, int32_t newval)
 {
     return __atomic_compare_exchange_n (addr, oldval, newval, false, __ATOMIC_ACQUIRE, __ATOMIC_RELAXED);
 }
 
-static inline int32_t pmix_atomic_swap_32 (volatile int32_t *addr, int32_t newval)
+static inline int32_t pmix_atomic_swap_32 (pmix_atomic_int32_t *addr, int32_t newval)
 {
     int32_t oldval;
     __atomic_exchange (addr, &newval, &oldval, __ATOMIC_RELAXED);
     return oldval;
 }
 
-static inline int32_t pmix_atomic_fetch_add_32(volatile int32_t *addr, int32_t delta)
+static inline int32_t pmix_atomic_fetch_add_32(pmix_atomic_int32_t *addr, int32_t delta)
 {
     return __atomic_fetch_add (addr, delta, __ATOMIC_RELAXED);
 }
 
-static inline int32_t pmix_atomic_fetch_and_32(volatile int32_t *addr, int32_t value)
+static inline int32_t pmix_atomic_fetch_and_32(pmix_atomic_int32_t *addr, int32_t value)
 {
     return __atomic_fetch_and (addr, value, __ATOMIC_RELAXED);
 }
 
-static inline int32_t pmix_atomic_fetch_or_32(volatile int32_t *addr, int32_t value)
+static inline int32_t pmix_atomic_fetch_or_32(pmix_atomic_int32_t *addr, int32_t value)
 {
     return __atomic_fetch_or (addr, value, __ATOMIC_RELAXED);
 }
 
-static inline int32_t pmix_atomic_fetch_xor_32(volatile int32_t *addr, int32_t value)
+static inline int32_t pmix_atomic_fetch_xor_32(pmix_atomic_int32_t *addr, int32_t value)
 {
     return __atomic_fetch_xor (addr, value, __ATOMIC_RELAXED);
 }
 
-static inline int32_t pmix_atomic_fetch_sub_32(volatile int32_t *addr, int32_t delta)
+static inline int32_t pmix_atomic_fetch_sub_32(pmix_atomic_int32_t *addr, int32_t delta)
 {
     return __atomic_fetch_sub (addr, delta, __ATOMIC_RELAXED);
 }
 
-static inline bool pmix_atomic_compare_exchange_strong_acq_64 (volatile int64_t *addr, int64_t *oldval, int64_t newval)
+static inline bool pmix_atomic_compare_exchange_strong_acq_64 (pmix_atomic_int64_t *addr, int64_t *oldval, int64_t newval)
 {
     return __atomic_compare_exchange_n (addr, oldval, newval, false, __ATOMIC_ACQUIRE, __ATOMIC_RELAXED);
 }
 
-static inline bool pmix_atomic_compare_exchange_strong_rel_64 (volatile int64_t *addr, int64_t *oldval, int64_t newval)
+static inline bool pmix_atomic_compare_exchange_strong_rel_64 (pmix_atomic_int64_t *addr, int64_t *oldval, int64_t newval)
 {
     return __atomic_compare_exchange_n (addr, oldval, newval, false, __ATOMIC_RELEASE, __ATOMIC_RELAXED);
 }
 
 
-static inline bool pmix_atomic_compare_exchange_strong_64 (volatile int64_t *addr, int64_t *oldval, int64_t newval)
+static inline bool pmix_atomic_compare_exchange_strong_64 (pmix_atomic_int64_t *addr, int64_t *oldval, int64_t newval)
 {
     return __atomic_compare_exchange_n (addr, oldval, newval, false, __ATOMIC_ACQUIRE, __ATOMIC_RELAXED);
 }
 
-static inline int64_t pmix_atomic_swap_64 (volatile int64_t *addr, int64_t newval)
+static inline int64_t pmix_atomic_swap_64 (pmix_atomic_int64_t *addr, int64_t newval)
 {
     int64_t oldval;
     __atomic_exchange (addr, &newval, &oldval, __ATOMIC_RELAXED);
     return oldval;
 }
 
-static inline int64_t pmix_atomic_fetch_add_64(volatile int64_t *addr, int64_t delta)
+static inline int64_t pmix_atomic_fetch_add_64(pmix_atomic_int64_t *addr, int64_t delta)
 {
     return __atomic_fetch_add (addr, delta, __ATOMIC_RELAXED);
 }
 
-static inline int64_t pmix_atomic_fetch_and_64(volatile int64_t *addr, int64_t value)
+static inline int64_t pmix_atomic_fetch_and_64(pmix_atomic_int64_t *addr, int64_t value)
 {
     return __atomic_fetch_and (addr, value, __ATOMIC_RELAXED);
 }
 
-static inline int64_t pmix_atomic_fetch_or_64(volatile int64_t *addr, int64_t value)
+static inline int64_t pmix_atomic_fetch_or_64(pmix_atomic_int64_t *addr, int64_t value)
 {
     return __atomic_fetch_or (addr, value, __ATOMIC_RELAXED);
 }
 
-static inline int64_t pmix_atomic_fetch_xor_64(volatile int64_t *addr, int64_t value)
+static inline int64_t pmix_atomic_fetch_xor_64(pmix_atomic_int64_t *addr, int64_t value)
 {
     return __atomic_fetch_xor (addr, value, __ATOMIC_RELAXED);
 }
 
-static inline int64_t pmix_atomic_fetch_sub_64(volatile int64_t *addr, int64_t delta)
+static inline int64_t pmix_atomic_fetch_sub_64(pmix_atomic_int64_t *addr, int64_t delta)
 {
     return __atomic_fetch_sub (addr, delta, __ATOMIC_RELAXED);
 }
@@ -191,7 +191,7 @@ static inline int64_t pmix_atomic_fetch_sub_64(volatile int64_t *addr, int64_t d
 
 #define PMIX_HAVE_ATOMIC_COMPARE_EXCHANGE_128 1
 
-static inline bool pmix_atomic_compare_exchange_strong_128 (volatile pmix_int128_t *addr,
+static inline bool pmix_atomic_compare_exchange_strong_128 (pmix_atomic_int128_t *addr,
                                                             pmix_int128_t *oldval, pmix_int128_t newval)
 {
     return __atomic_compare_exchange_n (addr, oldval, newval, false,
@@ -204,7 +204,7 @@ static inline bool pmix_atomic_compare_exchange_strong_128 (volatile pmix_int128
 
 /* __atomic version is not lock-free so use legacy __sync version */
 
-static inline bool pmix_atomic_compare_exchange_strong_128 (volatile pmix_int128_t *addr,
+static inline bool pmix_atomic_compare_exchange_strong_128 (pmix_atomic_pmix_int128_t *addr,
                                                             pmix_int128_t *oldval, pmix_int128_t newval)
 {
     pmix_int128_t prev = __sync_val_compare_and_swap (addr, *oldval, newval);

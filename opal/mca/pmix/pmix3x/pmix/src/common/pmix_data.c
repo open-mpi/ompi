@@ -98,7 +98,7 @@ static pmix_peer_t* find_peer(const pmix_proc_t *proc)
         /* didn't find it, so try to get the library version of the target
          * from the host - the result will be cached, so we will only have
          * to retrieve it once */
-        (void)strncpy(wildcard.nspace, proc->nspace, PMIX_MAX_NSLEN);
+        pmix_strncpy(wildcard.nspace, proc->nspace, PMIX_MAX_NSLEN);
         wildcard.rank = PMIX_RANK_WILDCARD;
         if (PMIX_SUCCESS != (rc = PMIx_Get(&wildcard, PMIX_BFROPS_MODULE, NULL, 0, &value))) {
             /* couldn't get it - nothing we can do */
@@ -110,7 +110,7 @@ static pmix_peer_t* find_peer(const pmix_proc_t *proc)
             PMIX_RELEASE(value);
             return NULL;
         }
-        peer->nptr = PMIX_NEW(pmix_nspace_t);
+        peer->nptr = PMIX_NEW(pmix_namespace_t);
         if (NULL == peer->nptr) {
             PMIX_RELEASE(peer);
             PMIX_RELEASE(value);
@@ -137,15 +137,9 @@ static pmix_peer_t* find_peer(const pmix_proc_t *proc)
         return pmix_client_globals.myserver;
     }
 
-    /* if the target is another member of my nspace, then
-     * they must be using the same version */
-    if (0 == strncmp(proc->nspace, pmix_globals.myid.nspace, PMIX_MAX_NSLEN)) {
-        return pmix_globals.mypeer;
-    }
-
     /* try to get the library version of this peer - the result will be
      * cached, so we will only have to retrieve it once */
-    (void)strncpy(wildcard.nspace, proc->nspace, PMIX_MAX_NSLEN);
+    pmix_strncpy(wildcard.nspace, proc->nspace, PMIX_MAX_NSLEN);
     wildcard.rank = PMIX_RANK_WILDCARD;
     if (PMIX_SUCCESS != (rc = PMIx_Get(&wildcard, PMIX_BFROPS_MODULE, NULL, 0, &value))) {
         /* couldn't get it - nothing we can do */
@@ -157,7 +151,7 @@ static pmix_peer_t* find_peer(const pmix_proc_t *proc)
         PMIX_RELEASE(value);
         return NULL;
     }
-    peer->nptr = PMIX_NEW(pmix_nspace_t);
+    peer->nptr = PMIX_NEW(pmix_namespace_t);
     if (NULL == peer->nptr) {
         PMIX_RELEASE(peer);
         PMIX_RELEASE(value);

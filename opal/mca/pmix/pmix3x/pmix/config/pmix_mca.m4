@@ -11,7 +11,7 @@ dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2010-2015 Cisco Systems, Inc.  All rights reserved.
-dnl Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
+dnl Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -428,7 +428,7 @@ AC_DEFUN([MCA_CONFIGURE_FRAMEWORK],[
     # Create the final .h file that will be included in the type's
     # top-level glue.  This lists all the static components.  We don't
     # need to do this for "common".
-    if test "$2" != "common"; then
+    if test "$1" != "common"; then
         cat > $outfile <<EOF
 /*
  * \$HEADER\$

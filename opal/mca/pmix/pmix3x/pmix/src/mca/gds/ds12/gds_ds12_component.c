@@ -33,7 +33,7 @@
 
 #include "src/include/pmix_globals.h"
 #include "src/mca/gds/gds.h"
-#include "gds_dstore.h"
+#include "gds_ds12_base.h"
 
 static pmix_status_t component_open(void);
 static pmix_status_t component_close(void);

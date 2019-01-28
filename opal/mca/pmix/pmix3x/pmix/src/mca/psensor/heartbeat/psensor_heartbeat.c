@@ -297,7 +297,7 @@ static void check_heartbeat(int fd, short dummy, void *cbdata)
                              pmix_globals.myid.nspace, pmix_globals.myid.rank,
                              ft->requestor->info->pname.nspace, ft->requestor->info->pname.rank));
         /* generate an event */
-        (void)strncpy(source.nspace, ft->requestor->info->pname.nspace, PMIX_MAX_NSLEN);
+        pmix_strncpy(source.nspace, ft->requestor->info->pname.nspace, PMIX_MAX_NSLEN);
         source.rank = ft->requestor->info->pname.rank;
         /* ensure the tracker remains throughout the process */
         PMIX_RETAIN(ft);

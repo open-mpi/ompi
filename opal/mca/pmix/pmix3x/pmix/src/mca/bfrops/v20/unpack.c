@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, Inc.  All rights reserved.
- * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      Mellanox Technologies, Inc.
@@ -756,12 +756,13 @@ pmix_status_t pmix20_bfrop_unpack_status(pmix_buffer_t *buffer, void *dest,
             break;
         /**** DEPRECATED ****/
         case PMIX_INFO_ARRAY:
-            /* this field is now a pointer, so we must allocate storage for it */
-            val->data.array = (pmix_info_array_t*)malloc(sizeof(pmix_info_array_t));
-            if (NULL == val->data.array) {
-                return PMIX_ERR_NOMEM;
-            }
-            if (PMIX_SUCCESS != (ret = pmix20_bfrop_unpack_buffer(buffer, val->data.array, &m, PMIX_INFO_ARRAY))) {
+            /* we don't know anything about info array's so we
+             * have to convert this to a data array */
+            val->data.darray = (pmix_data_array_t*)calloc(1, sizeof(pmix_data_array_t));
+            val->data.darray->type = PMIX_INFO_ARRAY;
+            val->data.darray->size = m;
+            /* unpack into it */
+            if (PMIX_SUCCESS != (ret = pmix20_bfrop_unpack_buffer(buffer, &val->data.darray->array, &m, PMIX_INFO_ARRAY))) {
                 return ret;
             }
             break;
@@ -825,7 +826,7 @@ pmix_status_t pmix20_bfrop_unpack_info(pmix_buffer_t *buffer, void *dest,
             PMIX_ERROR_LOG(PMIX_ERROR);
             return PMIX_ERROR;
         }
-        (void)strncpy(ptr[i].key, tmp, PMIX_MAX_KEYLEN);
+        pmix_strncpy(ptr[i].key, tmp, PMIX_MAX_KEYLEN);
         free(tmp);
         /* unpack the flags */
         m=1;
@@ -882,7 +883,7 @@ pmix_status_t pmix20_bfrop_unpack_pdata(pmix_buffer_t *buffer, void *dest,
         if (NULL == tmp) {
             return PMIX_ERROR;
         }
-        (void)strncpy(ptr[i].key, tmp, PMIX_MAX_KEYLEN);
+        pmix_strncpy(ptr[i].key, tmp, PMIX_MAX_KEYLEN);
         free(tmp);
         /* unpack value - since the value structure is statically-defined
          * instead of a pointer in this struct, we directly unpack it to
@@ -962,7 +963,7 @@ pmix_status_t pmix20_bfrop_unpack_proc(pmix_buffer_t *buffer, void *dest,
         if (NULL == tmp) {
             return PMIX_ERROR;
         }
-        (void)strncpy(ptr[i].nspace, tmp, PMIX_MAX_NSLEN);
+        pmix_strncpy(ptr[i].nspace, tmp, PMIX_MAX_NSLEN);
         free(tmp);
         /* unpack the rank */
         m=1;

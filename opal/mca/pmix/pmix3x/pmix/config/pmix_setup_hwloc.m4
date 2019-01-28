@@ -2,7 +2,7 @@
 #
 # Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2013      Los Alamos National Security, LLC.  All rights reserved.
-# Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
+# Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -13,6 +13,43 @@
 # MCA_hwloc_CONFIG([action-if-found], [action-if-not-found])
 # --------------------------------------------------------------------
 AC_DEFUN([PMIX_HWLOC_CONFIG],[
+    AC_ARG_WITH([hwloc-header],
+                [AC_HELP_STRING([--with-hwloc-header=HEADER],
+                                [The value that should be included in C files to include hwloc.h])])
+
+    AC_ARG_ENABLE([embedded-hwloc],
+                  [AC_HELP_STRING([--enable-embedded-hwloc],
+                                  [Enable use of locally embedded hwloc])])
+
+    AS_IF([test "$enable_embedded_hwloc" = "yes"],
+          [_PMIX_HWLOC_EMBEDDED_MODE],
+          [_PMIX_HWLOC_EXTERNAL])
+
+    AC_MSG_CHECKING([hwloc header])
+    AC_DEFINE_UNQUOTED([PMIX_HWLOC_HEADER], [$PMIX_HWLOC_HEADER],
+                       [Location of hwloc.h])
+    AC_MSG_RESULT([$PMIX_HWLOC_HEADER])
+
+    AC_DEFINE_UNQUOTED([PMIX_HAVE_HWLOC], [$pmix_hwloc_support],
+                   [Whether or not we have hwloc support])
+
+    PMIX_SUMMARY_ADD([[External Packages]],[[HWLOC]], [pmix_hwloc], [$pmix_hwloc_support_will_build ($pmix_hwloc_source)])
+])
+
+AC_DEFUN([_PMIX_HWLOC_EMBEDDED_MODE],[
+    AC_MSG_CHECKING([for hwloc])
+    AC_MSG_RESULT([assumed available (embedded mode)])
+
+    AS_IF([test -z "$with_hwloc_header" || test "$with_hwloc_header" = "yes"],
+          [PMIX_HWLOC_HEADER="<hwloc.h>"],
+          [PMIX_HWLOC_HEADER="$with_hwloc_header"])
+
+    pmix_hwloc_support=1
+    pmix_hwloc_source=embedded
+    pmix_hwloc_support_will_build=yes
+ ])
+
+AC_DEFUN([_PMIX_HWLOC_EXTERNAL],[
     PMIX_VAR_SCOPE_PUSH([pmix_hwloc_dir pmix_hwloc_libdir pmix_hwloc_standard_lib_location pmix_hwloc_standard_header_location])
 
     AC_ARG_WITH([hwloc],
@@ -45,6 +82,17 @@ AC_DEFUN([PMIX_HWLOC_CONFIG],[
                    AC_MSG_RESULT([$pmix_hwloc_dir and $pmix_hwloc_libdir])],
                   [AC_MSG_RESULT([$with_hwloc_libdir])])
         else
+            pmix_hwloc_dir=/usr/include
+            if test -d /usr/lib; then
+                pmix_hwloc_libdir=/usr/lib
+            elif test -d /usr/lib64; then
+                pmix_hwloc_libdir=/usr/lib64
+            else
+                AC_MSG_RESULT([not found])
+                AC_MSG_WARN([Could not find /usr/lib or /usr/lib64 - you may])
+                AC_MSG_WARN([need to specify --with-hwloc_libdir=<path>])
+                AC_MSG_ERROR([Can not continue])
+            fi
             AC_MSG_RESULT([(default search paths)])
             pmix_hwloc_standard_header_location=yes
             pmix_hwloc_standard_lib_location=yes
@@ -62,18 +110,13 @@ AC_DEFUN([PMIX_HWLOC_CONFIG],[
                            [$pmix_hwloc_libdir],
                            [pmix_hwloc_support=1],
                            [pmix_hwloc_support=0])
-        if test $pmix_hwloc_support = "1"; then
-            LIBS="$LIBS -lhwloc"
-            PMIX_EMBEDDED_LIBS="$PMIX_EMBEDDED_LIBS -lhwloc"
-            if test "$pmix_hwloc_standard_header_location" != "yes"; then
-                PMIX_EMBEDDED_CPPFLAGS="$PMIX_EMBEDDED_CPPFLAGS $pmix_hwloc_CPPFLAGS"
-                CPPFLAGS="$CPPFLAGS $pmix_hwloc_CPPFLAGS"
-            fi
-            if test "$pmix_hwloc_standard_lib_location" != "yes"; then
-                PMIX_EMBEDDED_LDFLAGS="$PMIX_EMBEDDED_LDFLAGS $pmix_hwloc_LDFLAGS"
-                LDFLAGS="$LDFLAGS $pmix_hwloc_LDFLAGS"
-            fi
-        fi
+
+        AS_IF([test "$pmix_hwloc_standard_header_location" != "yes"],
+              [PMIX_FLAGS_APPEND_UNIQ(CPPFLAGS, $pmix_hwloc_CPPFLAGS)])
+
+        AS_IF([test "$pmix_hwloc_standard_lib_location" != "yes"],
+              [PMIX_FLAGS_APPEND_UNIQ(LDFLAGS, $pmix_hwloc_LDFLAGS)])
+        PMIX_FLAGS_APPEND_UNIQ(LIBS, $pmix_hwloc_LIBS)
     fi
 
     if test ! -z "$with_hwloc" && test "$with_hwloc" != "no" && test "$pmix_hwloc_support" != "1"; then
@@ -98,11 +141,16 @@ AC_DEFUN([PMIX_HWLOC_CONFIG],[
     AC_MSG_CHECKING([will hwloc support be built])
     if test "$pmix_hwloc_support" != "1"; then
         AC_MSG_RESULT([no])
+        pmix_hwloc_source=none
+        pmix_hwloc_support_will_build=no
     else
         AC_MSG_RESULT([yes])
+        pmix_hwloc_source=$pmix_hwloc_dir
+        pmix_hwloc_support_will_build=yes
     fi
 
-    AC_DEFINE_UNQUOTED([PMIX_HAVE_HWLOC], [$pmix_hwloc_support],
-                       [Whether or not we have hwloc support])
+    # Set output variables
+    PMIX_HWLOC_HEADER="<hwloc.h>"
+
     PMIX_VAR_SCOPE_POP
 ])dnl

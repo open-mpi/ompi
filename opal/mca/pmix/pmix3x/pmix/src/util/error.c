@@ -159,28 +159,24 @@ PMIX_EXPORT const char* PMIx_Error_string(pmix_status_t errnum)
         return "LOST-PEER-CONNECTION";
     case PMIX_ERR_LOST_CONNECTION_TO_CLIENT:
         return "LOST-CONNECTION-TO-CLIENT";
-
-
     case PMIX_QUERY_PARTIAL_SUCCESS:
         return "QUERY-PARTIAL-SUCCESS";
-
-
     case PMIX_NOTIFY_ALLOC_COMPLETE:
         return "PMIX ALLOC OPERATION COMPLETE";
-
-
     case PMIX_JCTRL_CHECKPOINT:
         return "PMIX JOB CONTROL CHECKPOINT";
     case PMIX_JCTRL_CHECKPOINT_COMPLETE:
         return "PMIX JOB CONTROL CHECKPOINT COMPLETE";
     case PMIX_JCTRL_PREEMPT_ALERT:
         return "PMIX PRE-EMPTION ALERT";
-
-
     case PMIX_MONITOR_HEARTBEAT_ALERT:
         return "PMIX HEARTBEAT ALERT";
     case PMIX_MONITOR_FILE_ALERT:
         return "PMIX FILE MONITOR ALERT";
+    case PMIX_PROC_TERMINATED:
+        return "PROC-TERMINATED";
+    case PMIX_ERR_INVALID_TERMINATION:
+        return "INVALID-TERMINATION";
 
     case PMIX_ERR_EVENT_REGISTRATION:
         return "EVENT-REGISTRATION";
@@ -196,20 +192,28 @@ PMIX_EXPORT const char* PMIx_Error_string(pmix_status_t errnum)
         return "PROC-HAS-CONNECTED";
     case PMIX_CONNECT_REQUESTED:
         return "CONNECT-REQUESTED";
+    case PMIX_OPENMP_PARALLEL_ENTERED:
+        return "OPENMP-PARALLEL-ENTERED";
+    case PMIX_OPENMP_PARALLEL_EXITED:
+        return "OPENMP-PARALLEL-EXITED";
+
     case PMIX_LAUNCH_DIRECTIVE:
         return "LAUNCH-DIRECTIVE";
     case PMIX_LAUNCHER_READY:
         return "LAUNCHER-READY";
     case PMIX_OPERATION_IN_PROGRESS:
         return "OPERATION-IN-PROGRESS";
-    case PMIX_PROC_TERMINATED:
-        return "PROC-TERMINATED";
+    case PMIX_OPERATION_SUCCEEDED:
+        return "OPERATION-SUCCEEDED";
+    case PMIX_ERR_INVALID_OPERATION:
+        return "INVALID-OPERATION";
 
     case PMIX_ERR_NODE_DOWN:
         return "NODE-DOWN";
     case PMIX_ERR_NODE_OFFLINE:
         return "NODE-OFFLINE";
-
+    case PMIX_ERR_SYS_OTHER:
+        return "UNDEFINED-SYSTEM-EVENT";
 
     case PMIX_EVENT_NO_ACTION_TAKEN:
         return "EVENT-NO-ACTION-TAKEN";

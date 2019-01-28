@@ -15,7 +15,7 @@
 #                         reserved.
 # Copyright (c) 2017      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
-# Copyright (c) 2017      Intel, Inc. All rights reserved.
+# Copyright (c) 2017-2018 Intel, Inc.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -30,7 +30,8 @@ headers += \
 	atomics/sys/atomic.h \
 	atomics/sys/atomic_impl.h \
 	atomics/sys/timer.h \
-        atomics/sys/cma.h
+    atomics/sys/cma.h \
+    atomics/sys/atomic_stdc.h
 
 include atomics/sys/x86_64/Makefile.include
 include atomics/sys/arm/Makefile.include

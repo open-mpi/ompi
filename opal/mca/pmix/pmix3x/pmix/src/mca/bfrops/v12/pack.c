@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2013 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      Mellanox Technologies, Inc.
@@ -534,11 +534,6 @@ static pmix_status_t pack_val(pmix_buffer_t *buffer,
         break;
     case PMIX_TIMEVAL:
         if (PMIX_SUCCESS != (ret = pmix12_bfrop_pack_buffer(buffer, &p->data.tv, 1, PMIX_TIMEVAL))) {
-            return ret;
-        }
-        break;
-    case PMIX_INFO_ARRAY:
-        if (PMIX_SUCCESS != (ret = pmix12_bfrop_pack_buffer(buffer, &p->data.array, 1, PMIX_INFO_ARRAY))) {
             return ret;
         }
         break;

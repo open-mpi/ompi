@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2019 Intel, Inc.  All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -20,6 +20,8 @@ BEGIN_C_DECLS
 
 typedef struct {
     pmix_pnet_base_component_t super;
+    char *incparms;
+    char *excparms;
     char **include;
     char **exclude;
 } pmix_pnet_opa_component_t;
