@@ -16,8 +16,8 @@
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2013-2018 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      NVIDIA Corporation.  All rights reserved.
- * Copyright (c) 2015-2017 Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015-2019 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -484,6 +484,10 @@ static int component_available(void)
     char name[32];
     struct sockaddr_storage my_ss;
     int kindex;
+    char **ipv4loops = NULL;
+#if OPAL_ENABLE_IPV6
+    char **ipv6loops = NULL;
+#endif
 
     opal_output_verbose(5, orte_oob_base_framework.framework_output,
                         "oob:tcp: component_available called");
@@ -566,16 +570,6 @@ static int component_available(void)
                     continue;
                 }
             }
-        } else {
-            /* if no specific interfaces were provided, we ignore the loopback
-             * interface unless nothing else is available
-             */
-            if (1 < opal_ifcount() && opal_ifisloopback(i)) {
-                opal_output_verbose(20, orte_oob_base_framework.framework_output,
-                                    "%s oob:tcp:init rejecting loopback interface %s",
-                                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), name);
-                continue;
-            }
         }
 
         /* Refs ticket #3019
@@ -588,20 +582,34 @@ static int component_available(void)
 
         /* add this address to our connections */
         if (AF_INET == my_ss.ss_family) {
-            opal_output_verbose(10, orte_oob_base_framework.framework_output,
-                                "%s oob:tcp:init adding %s to our list of %s connections",
-                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                opal_net_get_hostname((struct sockaddr*) &my_ss),
-                                (AF_INET == my_ss.ss_family) ? "V4" : "V6");
-            opal_argv_append_nosize(&mca_oob_tcp_component.ipv4conns, opal_net_get_hostname((struct sockaddr*) &my_ss));
+            if (opal_ifisloopback(i)) {
+                opal_output_verbose(10, orte_oob_base_framework.framework_output,
+                                    "%s oob:tcp:init saving V4 loopback interface %s",
+                                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                    opal_net_get_hostname((struct sockaddr*) &my_ss));
+                opal_argv_append_nosize(&ipv4loops, opal_net_get_hostname((struct sockaddr*) &my_ss));
+            } else {
+                opal_output_verbose(10, orte_oob_base_framework.framework_output,
+                                    "%s oob:tcp:init adding %s to our list of V4 connections",
+                                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                    opal_net_get_hostname((struct sockaddr*) &my_ss));
+                opal_argv_append_nosize(&mca_oob_tcp_component.ipv4conns, opal_net_get_hostname((struct sockaddr*) &my_ss));
+            }
         } else if (AF_INET6 == my_ss.ss_family) {
 #if OPAL_ENABLE_IPV6
-            opal_output_verbose(10, orte_oob_base_framework.framework_output,
-                                "%s oob:tcp:init adding %s to our list of %s connections",
-                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                opal_net_get_hostname((struct sockaddr*) &my_ss),
-                                (AF_INET == my_ss.ss_family) ? "V4" : "V6");
-            opal_argv_append_nosize(&mca_oob_tcp_component.ipv6conns, opal_net_get_hostname((struct sockaddr*) &my_ss));
+            if (opal_ifisloopback(i)) {
+                opal_output_verbose(10, orte_oob_base_framework.framework_output,
+                                    "%s oob:tcp:init saving V6 loopback interface %s",
+                                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                    opal_net_get_hostname((struct sockaddr*) &my_ss));
+                opal_argv_append_nosize(&ipv6loops, opal_net_get_hostname((struct sockaddr*) &my_ss));
+            } else {
+                opal_output_verbose(10, orte_oob_base_framework.framework_output,
+                                    "%s oob:tcp:init adding %s to our list of V6 connections",
+                                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                    opal_net_get_hostname((struct sockaddr*) &my_ss));
+                opal_argv_append_nosize(&mca_oob_tcp_component.ipv6conns, opal_net_get_hostname((struct sockaddr*) &my_ss));
+            }
 #endif // OPAL_ENABLE_IPV6
         } else {
             opal_output_verbose(10, orte_oob_base_framework.framework_output,
@@ -614,6 +622,19 @@ static int component_available(void)
     /* cleanup */
     if (NULL != interfaces) {
         opal_argv_free(interfaces);
+    }
+
+    if (0 == opal_argv_count(mca_oob_tcp_component.ipv4conns)
+#if OPAL_ENABLE_IPV6
+        && 0 == opal_argv_count(mca_oob_tcp_component.ipv6conns)
+#endif
+        ) {
+        opal_output_verbose(10, orte_oob_base_framework.framework_output,
+                            "adding all loopback interfaces");
+        mca_oob_tcp_component.ipv4conns = ipv4loops;
+#if OPAL_ENABLE_IPV6
+        mca_oob_tcp_component.ipv6conns = ipv6loops;
+#endif
     }
 
     if (0 == opal_argv_count(mca_oob_tcp_component.ipv4conns)
