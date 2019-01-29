@@ -9,7 +9,7 @@
  *                          University of Stuttgart.  All rights reserved.
  *  Copyright (c) 2004-2005 The Regents of the University of California.
  *                          All rights reserved.
- *  Copyright (c) 2008-2018 University of Houston. All rights reserved.
+ *  Copyright (c) 2008-2019 University of Houston. All rights reserved.
  *  Copyright (c) 2018      Research Organization for Information Science
  *                          and Technology (RIST). All rights reserved.
  *  $COPYRIGHT$
@@ -33,8 +33,8 @@
 
 #include "common_ompio.h"
 #include "common_ompio_request.h"
-#include "math.h"
 #include <unistd.h>
+#include <math.h>
 
 #if OPAL_CUDA_SUPPORT
 #include "common_ompio_cuda.h"
@@ -132,8 +132,8 @@ int mca_common_ompio_file_read (ompio_file_t *fh,
     else {
 	bytes_per_cycle = OMPIO_MCA_GET(fh, cycle_buffer_size);
     }
-    cycles = ceil((float)max_data/bytes_per_cycle);
-
+    cycles = ceil((double)max_data/bytes_per_cycle);
+    
 #if 0
 	printf ("Bytes per Cycle: %d   Cycles: %d max_data:%d \n",bytes_per_cycle, cycles, max_data);
 #endif
