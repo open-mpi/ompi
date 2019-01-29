@@ -98,9 +98,10 @@ ompi_mtl_ofi_add_procs(struct mca_mtl_base_module_t *mtl,
                               (void**)&ep_name,
                               &size);
         if (OMPI_SUCCESS != ret) {
-            opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
-                                "%s:%d: modex_recv failed: %d\n",
-                                __FILE__, __LINE__, ret);
+            opal_show_help("help-mtl-ofi.txt", "modex failed",
+                           true, ompi_process_info.nodename,
+			   procs[i]->super.proc_hostname,
+			   opal_strerror(ret), ret);
             goto bail;
         }
         memcpy(&ep_names[i*namelen], ep_name, namelen);

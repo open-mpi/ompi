@@ -65,3 +65,13 @@ are more threads than the available contexts.
 
   Local host: %s
   Location: %s:%d
+
+[modex failed]
+The OFI MTL was not able to find endpoint information for a remote
+endpoint.  Most likely, this means that the remote process was unable
+to initialize the Libfabric NIC correctly.  This error is not
+recoverable and your application is likely to abort.
+
+  Local host: %s
+  Remote host: %s
+  Error: %s (%d)
