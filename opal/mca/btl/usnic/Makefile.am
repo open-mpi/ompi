@@ -11,7 +11,7 @@
 #                         All rights reserved.
 # Copyright (c) 2006      Sandia National Laboratories. All rights
 #                         reserved.
-# Copyright (c) 2010-2015 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2010-2019 Cisco Systems, Inc.  All rights reserved
 # Copyright (c) 2015      Intel, Inc. All rights reserved.
 # Copyright (c) 2016-2017 IBM Corporation.  All rights reserved.
 # Copyright (c) 2017      Los Alamos National Security, LLC.  All rights
@@ -23,7 +23,7 @@
 # $HEADER$
 #
 
-AM_CPPFLAGS = -DBTL_IN_OPAL=1 $(opal_common_ofi_CPPFLAGS) -DOMPI_LIBMPI_NAME=\"$(OMPI_LIBMPI_NAME)\"
+AM_CPPFLAGS = -DBTL_IN_OPAL=1 $(opal_ofi_CPPFLAGS) -DOMPI_LIBMPI_NAME=\"$(OMPI_LIBMPI_NAME)\"
 
 EXTRA_DIST = README.txt README.test
 
@@ -88,13 +88,18 @@ mcacomponent_LTLIBRARIES = $(component)
 mca_btl_usnic_la_SOURCES = $(component_sources)
 mca_btl_usnic_la_LDFLAGS = \
         $(opal_btl_usnic_LDFLAGS) \
+        $(opal_ofi_LDFLAGS) \
         -module -avoid-version
 mca_btl_usnic_la_LIBADD = $(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la \
-        $(OPAL_TOP_BUILDDIR)/opal/mca/common/ofi/lib@OPAL_LIB_PREFIX@mca_common_ofi.la
+        $(opal_ofi_LIBS)
 
 noinst_LTLIBRARIES = $(lib)
 libmca_btl_usnic_la_SOURCES = $(lib_sources)
-libmca_btl_usnic_la_LDFLAGS = -module -avoid-version $(opal_btl_usnic_LDFLAGS)
+libmca_btl_usnic_la_LDFLAGS = \
+        $(opal_btl_usnic_LDFLAGS) \
+        $(opal_ofi_LDFLAGS) \
+        -module -avoid-version
+libmca_btl_usnic_la_LIBADD = $(opal_ofi_LIBS)
 
 if OPAL_BTL_USNIC_BUILD_UNIT_TESTS
 usnic_btl_run_tests_CPPFLAGS = \
