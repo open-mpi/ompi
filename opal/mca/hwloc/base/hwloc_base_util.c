@@ -371,7 +371,7 @@ int opal_hwloc_base_get_topology(void)
             free(val);
             return OPAL_ERROR;
         }
-        if (0 != hwloc_topology_set_xmlbuffer(opal_hwloc_topology, val, strlen(val))) {
+        if (0 != hwloc_topology_set_xmlbuffer(opal_hwloc_topology, val, strlen(val)+1)) {
             free(val);
             hwloc_topology_destroy(opal_hwloc_topology);
             return OPAL_ERROR;
