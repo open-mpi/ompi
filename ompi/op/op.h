@@ -16,6 +16,8 @@
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
+ * Copyright (c) 2019      Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -571,9 +573,16 @@ static inline void ompi_op_reduce(ompi_op_t * op, void *source,
 
     /* For intrinsics, we also pass the corresponding op module */
     if (0 != (op->o_flags & OMPI_OP_FLAGS_INTRINSIC)) {
-        op->o_func.intrinsic.fns[ompi_op_ddt_map[dtype->id]](source, target,
-                                                             &count, &dtype,
-                                                             op->o_func.intrinsic.modules[ompi_op_ddt_map[dtype->id]]);
+        int dtype_id;
+        if (!ompi_datatype_is_predefined(dtype)) {
+            ompi_datatype_t *dt = ompi_datatype_get_single_predefined_type_from_args(dtype);
+            dtype_id = ompi_op_ddt_map[dt->id];
+        } else {
+            dtype_id = ompi_op_ddt_map[dtype->id];
+        }
+        op->o_func.intrinsic.fns[dtype_id](source, target,
+                                           &count, &dtype,
+                                           op->o_func.intrinsic.modules[dtype_id]);
         return;
     }
 
