@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2018 The University of Tennessee and The University
+ * Copyright (c) 2004-2019 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2007 High Performance Computing Center Stuttgart,
@@ -963,19 +963,21 @@ static int mca_pml_ob1_recv_frag_match( mca_btl_base_module_t *btl,
     frag_msg_seq = hdr->hdr_seq;
     next_msg_seq_expected = (uint16_t)proc->expected_sequence;
 
-    /* If the sequence number is wrong, queue it up for later. */
-    if(OPAL_UNLIKELY(frag_msg_seq != next_msg_seq_expected)) {
-        mca_pml_ob1_recv_frag_t* frag;
-        MCA_PML_OB1_RECV_FRAG_ALLOC(frag);
-        MCA_PML_OB1_RECV_FRAG_INIT(frag, hdr, segments, num_segments, btl);
-        append_frag_to_ordered_list(&proc->frags_cant_match, frag, next_msg_seq_expected);
+    if (!OMPI_COMM_CHECK_ASSERT_ALLOW_OVERTAKE(comm_ptr)) {
+        /* If the sequence number is wrong, queue it up for later. */
+        if(OPAL_UNLIKELY(frag_msg_seq != next_msg_seq_expected)) {
+            mca_pml_ob1_recv_frag_t* frag;
+            MCA_PML_OB1_RECV_FRAG_ALLOC(frag);
+            MCA_PML_OB1_RECV_FRAG_INIT(frag, hdr, segments, num_segments, btl);
+            append_frag_to_ordered_list(&proc->frags_cant_match, frag, next_msg_seq_expected);
 
-        SPC_RECORD(OMPI_SPC_OUT_OF_SEQUENCE, 1);
-        SPC_RECORD(OMPI_SPC_OOS_IN_QUEUE, 1);
-        SPC_UPDATE_WATERMARK(OMPI_SPC_MAX_OOS_IN_QUEUE, OMPI_SPC_OOS_IN_QUEUE);
+            SPC_RECORD(OMPI_SPC_OUT_OF_SEQUENCE, 1);
+            SPC_RECORD(OMPI_SPC_OOS_IN_QUEUE, 1);
+            SPC_UPDATE_WATERMARK(OMPI_SPC_MAX_OOS_IN_QUEUE, OMPI_SPC_OOS_IN_QUEUE);
 
-        OB1_MATCHING_UNLOCK(&comm->matching_lock);
-        return OMPI_SUCCESS;
+            OB1_MATCHING_UNLOCK(&comm->matching_lock);
+            return OMPI_SUCCESS;
+        }
     }
 
     /* mca_pml_ob1_recv_frag_match_proc() will release the lock. */
@@ -1011,6 +1013,10 @@ mca_pml_ob1_recv_frag_match_proc( mca_btl_base_module_t *btl,
 
  match_this_frag:
     /* We're now expecting the next sequence number. */
+    /* NOTE: We should have checked for ALLOW_OVERTAKE comm flag here
+     * but adding a branch in this critical path is not ideal for performance.
+     * We decided to let it run the sequence number even we are not doing
+     * anything with it. */
     proc->expected_sequence++;
 
     /* We generate the SEARCH_POSTED_QUEUE only when the message is
