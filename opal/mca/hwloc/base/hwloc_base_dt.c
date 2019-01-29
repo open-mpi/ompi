@@ -96,7 +96,7 @@ int opal_hwloc_unpack(opal_buffer_t *buffer, void *dest,
             free(xmlbuffer);
             goto cleanup;
         }
-        if (0 != hwloc_topology_set_xmlbuffer(t, xmlbuffer, strlen(xmlbuffer))) {
+        if (0 != hwloc_topology_set_xmlbuffer(t, xmlbuffer, strlen(xmlbuffer)+1)) {
             rc = OPAL_ERROR;
             free(xmlbuffer);
             hwloc_topology_destroy(t);
