@@ -47,19 +47,17 @@ int ompi_sync_wait_mt(ompi_wait_sync_t *sync)
     }
 
     /* Insert sync on the list of pending synchronization constructs */
-    if (num_thread_in_progress >= opal_max_thread_in_progress) {
-        OPAL_THREAD_LOCK(&wait_sync_lock);
-        if( NULL == wait_sync_list ) {
-            sync->next = sync->prev = sync;
-            wait_sync_list = sync;
-        } else {
-            sync->prev = wait_sync_list->prev;
-            sync->prev->next = sync;
-            sync->next = wait_sync_list;
-            wait_sync_list->prev = sync;
-        }
-        OPAL_THREAD_UNLOCK(&wait_sync_lock);
+    OPAL_THREAD_LOCK(&wait_sync_lock);
+    if( NULL == wait_sync_list ) {
+        sync->next = sync->prev = sync;
+        wait_sync_list = sync;
+    } else {
+        sync->prev = wait_sync_list->prev;
+        sync->prev->next = sync;
+        sync->next = wait_sync_list;
+        wait_sync_list->prev = sync;
     }
+    OPAL_THREAD_UNLOCK(&wait_sync_lock);
 
     /**
      * If we are not responsible for progresing, go silent until something worth noticing happen:
@@ -91,23 +89,18 @@ int ompi_sync_wait_mt(ompi_wait_sync_t *sync)
     }
     OPAL_THREAD_ADD_FETCH32(&num_thread_in_progress, -1);
 
-    if (NULL != wait_sync_list) {
-        assert(sync == wait_sync_list);
-    }
-
  i_am_done:
     /* My sync is now complete. Trim the list: remove self, wake next */
-    if (num_thread_in_progress >= opal_max_thread_in_progress) {
-        OPAL_THREAD_LOCK(&wait_sync_lock);
-        sync->prev->next = sync->next;
-        sync->next->prev = sync->prev;
-        /* In case I am the progress manager, pass the duties on */
-        if( sync == wait_sync_list ) {
-            wait_sync_list = (sync == sync->next) ? NULL : sync->next;
-            if( NULL != wait_sync_list )
-                WAIT_SYNC_PASS_OWNERSHIP(wait_sync_list);
-        }
-        OPAL_THREAD_UNLOCK(&wait_sync_lock);
+    OPAL_THREAD_LOCK(&wait_sync_lock);
+    sync->prev->next = sync->next;
+    sync->next->prev = sync->prev;
+    /* In case I am the progress manager, pass the duties on */
+    if( sync == wait_sync_list ) {
+        wait_sync_list = (sync == sync->next) ? NULL : sync->next;
+        if( NULL != wait_sync_list )
+            WAIT_SYNC_PASS_OWNERSHIP(wait_sync_list);
     }
+    OPAL_THREAD_UNLOCK(&wait_sync_lock);
+
     return (0 == sync->status) ? OPAL_SUCCESS : OPAL_ERROR;
 }
