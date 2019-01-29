@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2017 Cisco Systems, Inc.  All rights reserved
+ * Copyright (c) 2011-2019 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  *
@@ -21,6 +21,17 @@
 BEGIN_C_DECLS
 
 #include <opal_config.h>
+
+// Need to undef HWLOC_VERSION here because configure will *always*
+// configure the embedded hwloc (for complicated reasons), even if we
+// know that the external hwloc will be used.  This will cause the
+// embedded hwloc to define HWLOC_VERSION.  And if it's different than
+// the HWLOC_VERSION value from the external hwloc, we'll get oodles
+// of warnings about how HWLOC_VERSION is re-defined.  So just
+// undefine it here after we've included <opal_config.h> and before we
+// include the external <hwloc.h>.
+#undef HWLOC_VERSION
+
 #include MCA_hwloc_external_header
 
 /* If the including file requested it, also include the hwloc verbs
