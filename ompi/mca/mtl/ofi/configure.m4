@@ -2,7 +2,9 @@
 #
 # Copyright (c) 2013-2014 Intel, Inc. All rights reserved
 #
-# Copyright (c) 2014-2015 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2014-2019 Cisco Systems, Inc.  All rights reserved
+# Copyright (c) 2017      Los Alamos National Security, LLC.  All rights
+#                         reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -23,10 +25,10 @@ AC_DEFUN([MCA_ompi_mtl_ofi_POST_CONFIG], [
 AC_DEFUN([MCA_ompi_mtl_ofi_CONFIG],[
     AC_CONFIG_FILES([ompi/mca/mtl/ofi/Makefile])
 
-    # ensure we already ran the common libfabric config
-    AC_REQUIRE([MCA_opal_common_libfabric_CONFIG])
+    # Check for OFI
+    OPAL_CHECK_OFI
 
-    AS_IF([test "$opal_common_libfabric_happy" = "yes"],
+    AS_IF([test "$opal_ofi_happy" = "yes"],
           [$1],
           [$2])
 ])dnl

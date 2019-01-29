@@ -12,7 +12,9 @@
 #                         All rights reserved.
 # Copyright (c) 2006      Sandia National Laboratories. All rights
 #                         reserved.
-# Copyright (c) 2010-2015 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2010-2019 Cisco Systems, Inc.  All rights reserved
+# Copyright (c) 2017      Los Alamos National Security, LLC.  All rights
+#                         reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -93,21 +95,17 @@ AC_DEFUN([_OPAL_BTL_USNIC_DO_CONFIG],[
            AC_MSG_RESULT([$opal_btl_usnic_happy])
           ])
 
-    # The usnic BTL requires libfabric support.
     AS_IF([test "$opal_btl_usnic_happy" = "yes"],
-          [AC_MSG_CHECKING([whether libfabric support is available])
-           AS_IF([test "$opal_common_libfabric_happy" = "yes"],
-                 [opal_btl_usnic_happy=yes],
-                 [opal_btl_usnic_happy=no])
-           AC_MSG_RESULT([$opal_btl_usnic_happy])
-          ])
+          [ # The usnic BTL requires OFI libfabric support
+           OPAL_CHECK_OFI
+           opal_btl_usnic_happy=$opal_ofi_happy])
 
     # The usnic BTL requires at least libfabric v1.1 (there was a
     # critical bug in libfabric v1.0).
     AS_IF([test "$opal_btl_usnic_happy" = "yes"],
           [AC_MSG_CHECKING([whether libfabric is >= v1.1])
            opal_btl_usnic_CPPFLAGS_save=$CPPFLAGS
-           CPPFLAGS="$opal_common_libfabric_CPPFLAGS $CPPFLAGS"
+           CPPFLAGS="$opal_ofi_CPPFLAGS $CPPFLAGS"
            AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <rdma/fabric.h>]],
 [[
 #if !defined(FI_MAJOR_VERSION)
@@ -125,7 +123,7 @@ AC_DEFUN([_OPAL_BTL_USNIC_DO_CONFIG],[
     # Make sure we can find the libfabric usnic extensions header
     AS_IF([test "$opal_btl_usnic_happy" = "yes" ],
           [opal_btl_usnic_CPPFLAGS_save=$CPPFLAGS
-           CPPFLAGS="$opal_common_libfabric_CPPFLAGS $CPPFLAGS"
+           CPPFLAGS="$opal_ofi_CPPFLAGS $CPPFLAGS"
            AC_CHECK_HEADER([rdma/fi_ext_usnic.h],
                             [],
                             [opal_btl_usnic_happy=no])
