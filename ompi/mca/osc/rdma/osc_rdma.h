@@ -13,7 +13,9 @@
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2013 Sandia National Laboratories.  All rights reserved.
  * Copyright (c) 2016-2018 Intel, Inc. All rights reserved.
- * Copyright (c) 2020      Google, LLC. All rights reserved.
+ * Copyright (c) 2019      Triad National Security, LLC. All rights
+ *                         reserved.
+ * Copyright (c) 2020-2021 Google, LLC. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -104,6 +106,9 @@ struct ompi_osc_rdma_component_t {
 
     /** directory where to place backing files */
     char *backing_directory;
+
+    /** maximum count for network AMO usage */
+    unsigned long network_amo_max_count;
 };
 typedef struct ompi_osc_rdma_component_t ompi_osc_rdma_component_t;
 
@@ -157,6 +162,9 @@ struct ompi_osc_rdma_module_t {
 
     /** Local displacement unit. */
     int disp_unit;
+
+    /** maximum count for network AMO usage */
+    unsigned long network_amo_max_count;
 
     /** global leader */
     ompi_osc_rdma_peer_t *leader;
