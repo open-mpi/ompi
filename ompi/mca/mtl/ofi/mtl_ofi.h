@@ -1261,7 +1261,7 @@ static int ompi_mtl_ofi_init_contexts(struct mca_mtl_base_module_t *mtl,
         if (!ompi_mtl_ofi.threshold_comm_context_id) {
             ompi_mtl_ofi.threshold_comm_context_id = comm->c_contextid;
 
-            opal_show_help("help-mtl-ofi.txt", "SEP ctxt limit", true, ctxt_id,
+            opal_show_help("help-mtl-ofi.txt", "SEP thread grouping ctxt limit", true, ctxt_id,
                            ompi_process_info.nodename, __FILE__, __LINE__);
         }
 
