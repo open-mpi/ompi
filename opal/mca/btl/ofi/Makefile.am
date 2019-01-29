@@ -22,7 +22,7 @@
 
 #dist_opaldata_DATA = help-mpi-btl-ofi.txt
 
-AM_CPPFLAGS = $(opal_common_ofi_CPPFLAGS)
+AM_CPPFLAGS = $(opal_ofi_CPPFLAGS)
 sources = \
     btl_ofi.h \
     btl_ofi_component.c \
@@ -56,11 +56,12 @@ mcacomponentdir = $(opallibdir)
 mcacomponent_LTLIBRARIES = $(component)
 mca_btl_ofi_la_SOURCES = $(component_sources)
 mca_btl_ofi_la_LDFLAGS = -module -avoid-version \
-						 $(opal_common_ofi_LDFLAGS)
+                         $(opal_ofi_LDFLAGS)
 mca_btl_ofi_la_LIBADD = $(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la \
     $(OPAL_TOP_BUILDDIR)/opal/mca/common/ofi/lib@OPAL_LIB_PREFIX@mca_common_ofi.la \
     $(opal_ofi_LIBS)
 
 noinst_LTLIBRARIES = $(lib)
 libmca_btl_ofi_la_SOURCES = $(lib_sources)
-libmca_btl_ofi_la_LDFLAGS = -module -avoid-version $(opal_common_ofi_LDFLAGS)
+libmca_btl_ofi_la_LDFLAGS = -module -avoid-version $(opal_ofi_LDFLAGS)
+libmca_btl_ofi_la_LIBS = $(opal_ofi_LIBS)
