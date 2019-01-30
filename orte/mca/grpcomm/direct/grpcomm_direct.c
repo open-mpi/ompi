@@ -5,7 +5,7 @@
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC. All
  *                         rights reserved.
- * Copyright (c) 2014-2018 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -24,15 +24,15 @@
 #include "opal/dss/dss.h"
 #include "opal/class/opal_list.h"
 #include "opal/mca/pmix/pmix.h"
+#include "opal/mca/compress/compress.h"
 
 #include "orte/mca/errmgr/errmgr.h"
-#include "orte/mca/regx/regx.h"
 #include "orte/mca/rml/base/base.h"
 #include "orte/mca/rml/base/rml_contact.h"
 #include "orte/mca/routed/base/base.h"
 #include "orte/mca/state/state.h"
-#include "orte/util/compress.h"
 #include "orte/util/name_fns.h"
+#include "orte/util/nidmap.h"
 #include "orte/util/proc_info.h"
 
 #include "orte/mca/grpcomm/base/base.h"
@@ -271,7 +271,7 @@ static void xcast_recv(int status, orte_process_name_t* sender,
     opal_list_t coll;
     orte_grpcomm_signature_t *sig;
     orte_rml_tag_t tag;
-    char *rtmod, *nidmap;
+    char *rtmod;
     size_t inlen, cmplen;
     uint8_t *packed_data, *cmpdata;
     int32_t nvals, i;
@@ -336,7 +336,7 @@ static void xcast_recv(int status, orte_process_name_t* sender,
             return;
         }
         /* decompress the data */
-        if (orte_util_uncompress_block(&cmpdata, cmplen,
+        if (opal_compress.decompress_block(&cmpdata, cmplen,
                                        packed_data, inlen)) {
             /* the data has been uncompressed */
             opal_dss.load(&datbuf, cmpdata, cmplen);
@@ -409,38 +409,17 @@ static void xcast_recv(int status, orte_process_name_t* sender,
                     ORTE_ERROR_LOG(ret);
                     goto relay;
                 }
-                /* unpack the nidmap string - may be NULL */
-                cnt = 1;
-                if (OPAL_SUCCESS != (ret = opal_dss.unpack(data, &nidmap, &cnt, OPAL_STRING))) {
-                    ORTE_ERROR_LOG(ret);
-                    goto relay;
-                }
-                if (NULL != nidmap) {
-                    if (ORTE_SUCCESS != (ret = orte_regx.nidmap_parse(nidmap))) {
-                        ORTE_ERROR_LOG(ret);
-                        goto relay;
-                    }
-                    free(nidmap);
-                }
-                /* see if they included info on node capabilities */
+                /* unpack flag indicating if nidmap included */
                 cnt = 1;
                 if (OPAL_SUCCESS != (ret = opal_dss.unpack(data, &flag, &cnt, OPAL_INT8))) {
                     ORTE_ERROR_LOG(ret);
                     goto relay;
                 }
-                if (0 != flag) {
-                    /* update our local nidmap, if required - the decode function
-                     * knows what to do
-                     */
-                    OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_framework.framework_output,
-                                         "%s grpcomm:direct:xcast updating daemon nidmap",
-                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-
-                    if (ORTE_SUCCESS != (ret = orte_regx.decode_daemon_nodemap(data))) {
+                if (1 == flag) {
+                    if (ORTE_SUCCESS != (ret = orte_util_decode_nidmap(data))) {
                         ORTE_ERROR_LOG(ret);
                         goto relay;
                     }
-
                     if (!ORTE_PROC_IS_HNP) {
                         /* update the routing plan - the HNP already did
                          * it when it computed the VM, so don't waste time
@@ -450,7 +429,7 @@ static void xcast_recv(int status, orte_process_name_t* sender,
                     /* routing is now possible */
                     orte_routed_base.routing_enabled = true;
 
-                    /* unpack the byte object */
+                    /* unpack the wireup byte object */
                     cnt=1;
                     if (ORTE_SUCCESS != (ret = opal_dss.unpack(data, &bo, &cnt, OPAL_BYTE_OBJECT))) {
                         ORTE_ERROR_LOG(ret);

@@ -3,5 +3,5 @@
 # owner: institution that is responsible for this package
 # status: e.g. active, maintenance, unmaintained
 #
-owner: IBM
-status: active
+owner:project
+status:maintenance

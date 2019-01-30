@@ -14,7 +14,7 @@
  *                         reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc. All rights reserved.
  * Copyright (c) 2010-2011 Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2014-2018 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2016-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -54,11 +54,11 @@
 #include "opal/runtime/opal.h"
 #include "opal/runtime/opal_progress.h"
 #include "opal/dss/dss.h"
+#include "opal/mca/compress/compress.h"
 
 #include "orte/util/proc_info.h"
 #include "orte/util/session_dir.h"
 #include "orte/util/name_fns.h"
-#include "orte/util/compress.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/grpcomm/base/base.h"
@@ -639,7 +639,7 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
             free(coprocessors);
         }
         answer = OBJ_NEW(opal_buffer_t);
-        if (orte_util_compress_block((uint8_t*)data.base_ptr, data.bytes_used,
+        if (opal_compress.compress_block((uint8_t*)data.base_ptr, data.bytes_used,
                              &cmpdata, &cmplen)) {
             /* the data was compressed - mark that we compressed it */
             flag = 1;

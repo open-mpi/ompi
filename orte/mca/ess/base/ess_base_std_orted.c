@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2018 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -12,9 +12,9 @@
  * Copyright (c) 2009      Institut National de Recherche en Informatique
  *                         et Automatique. All rights reserved.
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2011-2019 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2013-2018 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
@@ -57,7 +57,6 @@
 #include "orte/mca/iof/base/base.h"
 #include "orte/mca/plm/base/base.h"
 #include "orte/mca/odls/base/base.h"
-#include "orte/mca/regx/base/base.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rmaps/base/base.h"
 #include "orte/mca/filem/base/base.h"
@@ -515,17 +514,6 @@ int orte_ess_base_orted_setup(void)
         error = "orte_rmaps_base_select";
         goto error;
     }
-    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_regx_base_framework, 0))) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_regx_base_open";
-        goto error;
-    }
-    if (ORTE_SUCCESS != (ret = orte_regx_base_select())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_regx_base_select";
-        goto error;
-    }
-
 
     /* if a topology file was given, then the rmaps framework open
      * will have reset our topology. Ensure we always get the right
@@ -540,46 +528,6 @@ int orte_ess_base_orted_setup(void)
     if (15 < opal_output_get_verbosity(orte_ess_base_framework.framework_output)) {
         opal_output(0, "%s Topology Info:", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
         opal_dss.dump(0, opal_hwloc_topology, OPAL_HWLOC_TOPO);
-    }
-
-    /* if we were given the host list, then we need to setup
-     * the daemon info so the RML can function properly
-     * without requiring a wireup stage. This must be done
-     * after we enable_comm as that function determines our
-     * own port, which we need in order to construct the nidmap
-     */
-    if (NULL != orte_node_regex) {
-        if (ORTE_SUCCESS != (ret = orte_regx.nidmap_parse(orte_node_regex))) {
-            ORTE_ERROR_LOG(ret);
-            error = "construct nidmap";
-            goto error;
-        }
-        /* be sure to update the routing tree so any tree spawn operation
-         * properly gets the number of children underneath us */
-        orte_routed.update_routing_plan(NULL);
-    }
-
-    if (orte_static_ports || orte_fwd_mpirun_port) {
-        if (NULL == orte_node_regex) {
-            /* we didn't get the node info */
-            error = "cannot construct daemon map for static ports - no node map info";
-            goto error;
-        }
-        /* extract the node info from the environment and
-         * build a nidmap from it - this will update the
-         * routing plan as well
-         */
-        if (ORTE_SUCCESS != (ret = orte_regx.build_daemon_nidmap())) {
-            ORTE_ERROR_LOG(ret);
-            error = "construct daemon map from static ports";
-            goto error;
-        }
-        /* be sure to update the routing tree so the initial "phone home"
-         * to mpirun goes through the tree if static ports were enabled
-         */
-        orte_routed.update_routing_plan(NULL);
-        /* routing can be enabled */
-        orte_routed_base.routing_enabled = true;
     }
 
     /* Now provide a chance for the PLM
@@ -669,20 +617,15 @@ int orte_ess_base_orted_finalize(void)
     (void) mca_base_framework_close(&orte_filem_base_framework);
     (void) mca_base_framework_close(&orte_grpcomm_base_framework);
     (void) mca_base_framework_close(&orte_iof_base_framework);
-    /* first stage shutdown of the errmgr, deregister the handler but keep
-     * the required facilities until the rml and oob are offline */
-    orte_errmgr.finalize();
+    (void) mca_base_framework_close(&orte_errmgr_base_framework);
     (void) mca_base_framework_close(&orte_plm_base_framework);
     /* make sure our local procs are dead */
     orte_odls.kill_local_procs(NULL);
-    (void) mca_base_framework_close(&orte_regx_base_framework);
-    (void) mca_base_framework_close(&orte_rmaps_base_framework);
     (void) mca_base_framework_close(&orte_rtc_base_framework);
     (void) mca_base_framework_close(&orte_odls_base_framework);
     (void) mca_base_framework_close(&orte_routed_base_framework);
     (void) mca_base_framework_close(&orte_rml_base_framework);
     (void) mca_base_framework_close(&orte_oob_base_framework);
-    (void) mca_base_framework_close(&orte_errmgr_base_framework);
     (void) mca_base_framework_close(&orte_state_base_framework);
     /* remove our use of the session directory tree */
     orte_session_dir_finalize(ORTE_PROC_MY_NAME);

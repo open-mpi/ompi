@@ -4,6 +4,7 @@
  *                         All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2019      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -65,22 +66,39 @@ opal_compress_bzip_component_t mca_compress_bzip_component = {
     }
 };
 
+static bool nocompress(uint8_t *inbytes,
+                       size_t inlen,
+                       uint8_t **outbytes,
+                       size_t *olen)
+{
+    return false;
+}
+
+static bool nodecompress(uint8_t **outbytes, size_t olen,
+                         uint8_t *inbytes, size_t len)
+{
+    return false;
+}
+
 /*
  * Bzip module
  */
 static opal_compress_base_module_t loc_module = {
     /** Initialization Function */
-    opal_compress_bzip_module_init,
+    .init = opal_compress_bzip_module_init,
     /** Finalization Function */
-    opal_compress_bzip_module_finalize,
+    .finalize = opal_compress_bzip_module_finalize,
 
     /** Compress Function */
-    opal_compress_bzip_compress,
-    opal_compress_bzip_compress_nb,
+    .compress = opal_compress_bzip_compress,
+    .compress_nb = opal_compress_bzip_compress_nb,
 
     /** Decompress Function */
-    opal_compress_bzip_decompress,
-    opal_compress_bzip_decompress_nb
+    .decompress = opal_compress_bzip_decompress,
+    .decompress_nb = opal_compress_bzip_decompress_nb,
+
+    .compress_block = nocompress,
+    .decompress_block = nodecompress
 };
 
 static int compress_bzip_register (void)

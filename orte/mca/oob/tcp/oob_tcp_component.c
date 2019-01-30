@@ -14,7 +14,7 @@
  *                         reserved.
  * Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2018 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -334,11 +334,6 @@ static int tcp_component_register(void)
 
     if (NULL != mca_oob_tcp_component.tcp_static_ports ||
         NULL != mca_oob_tcp_component.tcp6_static_ports) {
-        /* can't fwd mpirun port _and_ have static ports */
-        if (ORTE_PROC_IS_HNP && orte_fwd_mpirun_port) {
-            orte_show_help("help-oob-tcp.txt", "static-fwd", true);
-            return ORTE_ERR_NOT_AVAILABLE;
-        }
         orte_static_ports = true;
     }
 
