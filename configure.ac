@@ -374,6 +374,27 @@ OPAL_CHECK_IDENT([CC], [CFLAGS], [c], [C])
 # Check for some types
 #
 
+# 'short float' support of the Intel C++ Compiler (group of C and C++
+# compilers), at least versions 18.0 and 19.0, is half-baked. It can
+# compile declarations of 'short float' variables and expressions of
+# 'sizeof(short float)' but cannot compile casts and operations of
+# 'short float' variables. In this situation, 'AC_CHECK_TYPES(short float)'
+# defines 'HAVE_SHORT_FLOAT' as 1 and compilation errors occur in
+# ompi/mca/op/base/op_base_functions.c. To avoid this error, check it
+# using 'AC_COMPILE_IFELSE' and set Autoconf cache variables before
+# 'AC_CHECK_TYPES(short float)'. This check can be removed when all
+# OMPI-supported Intel C++ Compilers support 'short float' completely
+# (or drop it completely).
+if test "$opal_cv_c_compiler_vendor" = "intel"; then
+    AC_MSG_CHECKING([if Intel compiler supports "short float" properly])
+    AC_COMPILE_IFELSE(
+        [AC_LANG_SOURCE([float f(short float a, short float b) { return (float)(a + b); }])],
+        [AC_MSG_RESULT([yes])],
+        [ac_cv_type_short_float="no"
+         ac_cv_type_short_float__Complex="no"]
+         AC_MSG_RESULT([no]))
+fi
+
 AC_CHECK_TYPES(int8_t)
 AC_CHECK_TYPES(uint8_t)
 AC_CHECK_TYPES(int16_t)
