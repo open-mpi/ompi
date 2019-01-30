@@ -1,3 +1,17 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
+/*
+ * Copyright (c) 2019      The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
+ * Copyright (c) 2019      Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
+
 #include "ompi_config.h"
 #include "ddt_lib.h"
 #include "opal/datatype/opal_convertor.h"
@@ -12,11 +26,12 @@
 #include <stdio.h>
 
 
-int mca_common_ompio_decode_datatype ( ompi_datatype_t *datatype,
-                                      int count,
-                                      struct iovec **iov,
-                                      uint32_t *iovec_count,
-                                      int increment)
+static int
+mca_common_ompio_decode_datatype ( ompi_datatype_t *datatype,
+                                   int count,
+                                   struct iovec **iov,
+                                   uint32_t *iovec_count,
+                                   int increment)
 {
 
 
@@ -310,20 +325,35 @@ int main (int argc, char *argv[]) {
     datatype->super.opt_desc.used = 184;
     datatype->super.opt_desc.desc = descs;
 
-    uint32_t iovec_count = 0;
-    struct iovec * iov = NULL;
-    mca_common_ompio_decode_datatype ( datatype, 1, &iov, &iovec_count, 300);
-    uint32_t iovec_count2 = 0;
-    struct iovec * iov2 = NULL;
-    mca_common_ompio_decode_datatype ( datatype, 1, &iov2, &iovec_count2, 100);
+    /* Get the entire raw description of the datatype in a single call */
+    uint32_t iovec_count_300 = 0;
+    struct iovec * iov_300 = NULL;
+    mca_common_ompio_decode_datatype ( datatype, 1, &iov_300, &iovec_count_300, 300);
+    /* Get the raw description of the datatype 10 elements at the time. This stresses some
+     * of the execution paths in the convertor raw.
+     */
+    uint32_t iovec_count_10 = 0;
+    struct iovec * iov_10 = NULL;
+    mca_common_ompio_decode_datatype ( datatype, 1, &iov_10, &iovec_count_10, 10);
+    /* Get the raw description of the datatype one element at the time. This stresses all
+     * execution paths in the convertor raw.
+     */
+    uint32_t iovec_count_1 = 0;
+    struct iovec * iov_1 = NULL;
+    mca_common_ompio_decode_datatype ( datatype, 1, &iov_1, &iovec_count_1, 1);
 
-    assert(iovec_count == iovec_count2);
+
+    assert(iovec_count_300 == iovec_count_10);
+    assert(iovec_count_300 == iovec_count_1);
     // assert(iov[100].iov_base == iov2[100].iov_base);
     // assert(iov[100].iov_len == iov2[100].iov_len);
-    for (int i=0; i<iovec_count; i++) {
-        assert(iov[i].iov_base == iov2[i].iov_base);
-        assert(iov[i].iov_len == iov2[i].iov_len);
+    for (uint32_t i = 0; i < iovec_count_300; i++) {
+        assert(iov_300[i].iov_base == iov_10[i].iov_base);
+        assert(iov_300[i].iov_len == iov_10[i].iov_len);
+        assert(iov_300[i].iov_base == iov_1[i].iov_base);
+        assert(iov_300[i].iov_len == iov_1[i].iov_len);
     }
 
     return 0;
 }
+
