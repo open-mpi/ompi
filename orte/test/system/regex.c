@@ -21,7 +21,7 @@
 int main(int argc, char **argv)
 {
     int rc;
-    char *regex, **nodelist;
+    char *regex = NULL, **nodelist;
     char **nodes=NULL;
     int i;
     opal_pointer_array_t *node_pool;
@@ -71,7 +71,7 @@ int main(int argc, char **argv)
 
         nptr->index = opal_pointer_array_add(node_pool, nptr);
     }
-    opal_argv_free(nodelist);
+
 
 
     if (ORTE_SUCCESS != (rc = orte_regx.nidmap_create(node_pool, &regex))) {
@@ -85,14 +85,29 @@ int main(int argc, char **argv)
         }
         free(regex);
         regex = opal_argv_join(nodes, ',');
-        opal_argv_free(nodes);
         if (0 == strcmp(regex, argv[1])) {
             fprintf(stderr, "EXACT MATCH\n");
         } else {
             fprintf(stderr, "ERROR: %s\n", regex);
+            if (opal_argv_count(nodes) != opal_argv_count(nodelist)) {
+                fprintf(stderr, "ERROR: number of nodes %d, expected %d\n",
+                        opal_argv_count(nodes), opal_argv_count(nodelist));
+                goto exit;
+            }
+            for (i=0; NULL != nodelist[i]; i++) {
+                if (0 == strcmp(nodelist[i], nodes[i])) {
+                    fprintf(stderr, "%s OK\n", nodelist[i]);
+                }
+                fprintf(stderr, "%s ERROR, expect %s\n", nodes[i], nodelist[i]);
+            }
         }
         free(regex);
+        regex = NULL;
     }
+exit:
+    opal_argv_free(nodelist);
+    opal_argv_free(nodes);
+
 
     for (i=0; (nptr = opal_pointer_array_get_item(node_pool, i)) != NULL; i++) {
         free(nptr->name);
