@@ -17,7 +17,7 @@
  * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2018      Triad National Security, LLC. All rights
+ * Copyright (c) 2018-2019 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -117,8 +117,8 @@ static int vader_btl_first_time_init(mca_btl_vader_t *vader_btl, int n)
     rc = opal_free_list_init (&component->vader_frags_user,
                               sizeof(mca_btl_vader_frag_t),
                               opal_cache_line_size, OBJ_CLASS(mca_btl_vader_frag_t),
-                              mca_btl_vader_component.max_inline_send, opal_cache_line_size,
-                              component->vader_free_list_num,
+                              mca_btl_vader_component.max_inline_send + sizeof (mca_btl_vader_frag_t),
+                              opal_cache_line_size, component->vader_free_list_num,
                               component->vader_free_list_max,
                               component->vader_free_list_inc,
                               component->mpool, 0, NULL, mca_btl_vader_frag_init,
@@ -131,8 +131,8 @@ static int vader_btl_first_time_init(mca_btl_vader_t *vader_btl, int n)
     rc = opal_free_list_init (&component->vader_frags_eager,
                               sizeof (mca_btl_vader_frag_t),
                               opal_cache_line_size, OBJ_CLASS(mca_btl_vader_frag_t),
-                              mca_btl_vader.super.btl_eager_limit, opal_cache_line_size,
-                              component->vader_free_list_num,
+                              mca_btl_vader.super.btl_eager_limit + sizeof (mca_btl_vader_frag_t),
+                              opal_cache_line_size, component->vader_free_list_num,
                               component->vader_free_list_max,
                               component->vader_free_list_inc,
                               component->mpool, 0, NULL, mca_btl_vader_frag_init,
@@ -146,8 +146,8 @@ static int vader_btl_first_time_init(mca_btl_vader_t *vader_btl, int n)
         rc = opal_free_list_init (&component->vader_frags_max_send,
                                   sizeof (mca_btl_vader_frag_t),
                                   opal_cache_line_size, OBJ_CLASS(mca_btl_vader_frag_t),
-                                  mca_btl_vader.super.btl_max_send_size, opal_cache_line_size,
-                                  component->vader_free_list_num,
+                                  mca_btl_vader.super.btl_max_send_size + sizeof (mca_btl_vader_frag_t),
+                                  opal_cache_line_size, component->vader_free_list_num,
                                   component->vader_free_list_max,
                                   component->vader_free_list_inc,
                                   component->mpool, 0, NULL, mca_btl_vader_frag_init,
