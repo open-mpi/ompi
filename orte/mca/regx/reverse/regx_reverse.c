@@ -142,7 +142,9 @@ static int nidmap_create(opal_pointer_array_t *pool, char **regex)
                 for( j = 0; j <= i; ++j) {
                     prefix[j] = node[j];
                 }
-                startnum = j;
+                if (numdigits) {
+                    startnum = j;
+                }
                 break;
             }
         }
