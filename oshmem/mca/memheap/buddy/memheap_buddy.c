@@ -1,5 +1,7 @@
 /* Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2019      Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -14,10 +16,8 @@
 #include "oshmem/mca/memheap/buddy/memheap_buddy.h"
 #include "oshmem/mca/memheap/buddy/memheap_buddy_component.h"
 #include "oshmem/mca/memheap/base/base.h"
-#include "orte/mca/grpcomm/grpcomm.h"
 #include "opal/class/opal_hash_table.h"
 #include "opal/class/opal_object.h"
-#include "orte/util/name_fns.h"
 
 static int buddy_init(mca_memheap_buddy_module_t* buddy);
 

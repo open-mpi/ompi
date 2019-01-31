@@ -1,8 +1,8 @@
 /*
  * Copyright (c) 2013-2018 Mellanox Technologies, Inc.
  *                         All rights reserved.
- * Copyright (c) 2014-2016 Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2014-2019 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2016      ARM, Inc. All rights reserved.
  * $COPYRIGHT$
@@ -22,13 +22,6 @@
 #ifdef HAVE_STRINGS_H
 #include <strings.h>
 #endif
-
-#include "orte/mca/errmgr/errmgr.h"
-#include "orte/mca/ess/ess.h"
-#include "orte/util/proc_info.h"
-#include "orte/util/name_fns.h"
-#include "orte/util/show_help.h"
-#include "orte/runtime/orte_globals.h"
 
 #include "opal/datatype/opal_convertor.h"
 #include "opal/threads/mutex.h"
@@ -82,7 +75,7 @@ int oshmem_proc_group_init(void)
     OBJ_CONSTRUCT(&oshmem_group_array, opal_pointer_array_t);
 
     rc = opal_pointer_array_init(&oshmem_group_array, 0,
-                                 ORTE_GLOBAL_ARRAY_MAX_SIZE, 1);
+                                 INT_MAX, 1);
     if (OPAL_SUCCESS != rc) {
         goto err1;
     }
@@ -215,10 +208,10 @@ oshmem_group_t* oshmem_proc_group_create(int pe_start, int pe_stride, int pe_siz
     /* Prepare peers list */
     OBJ_CONSTRUCT(&(group->peer_list), opal_list_t);
     {
-        orte_namelist_t *peer = NULL;
+        ompi_namelist_t *peer = NULL;
 
         for (i = 0; i < group->proc_count; i++) {
-            peer = OBJ_NEW(orte_namelist_t);
+            peer = OBJ_NEW(ompi_namelist_t);
             peer->name.jobid = OSHMEM_PROC_JOBID(group->proc_array[i]);
             peer->name.vpid = OSHMEM_PROC_VPID(group->proc_array[i]);
             opal_list_append(&(group->peer_list), &peer->super);

@@ -1,8 +1,8 @@
 /*
  * Copyright (c) 2013-2018 Mellanox Technologies, Inc.
  *                         All rights reserved.
- * Copyright (c) 2015-2016 Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015-2019 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2015-2018 Cisco Systems, Inc.  All rights reserved
  * $COPYRIGHT$
  *
@@ -34,16 +34,6 @@
 #include "opal/util/stacktrace.h"
 #include "opal/util/show_help.h"
 #include "opal/runtime/opal.h"
-
-#include "orte/util/proc_info.h"
-#include "orte/runtime/runtime.h"
-#include "orte/mca/grpcomm/grpcomm.h"
-#include "orte/runtime/orte_globals.h"
-#include "orte/util/show_help.h"
-#include "orte/mca/ess/ess.h"
-#include "orte/runtime/orte_globals.h"
-#include "orte/mca/errmgr/errmgr.h"
-#include "orte/util/name_fns.h"
 
 #include "ompi/datatype/ompi_datatype.h"
 #include "opal/mca/rcache/base/base.h"
@@ -376,7 +366,7 @@ static int _shmem_init(int argc, char **argv, int requested, int *provided)
 
     error: if (ret != OSHMEM_SUCCESS) {
         const char *err_msg = opal_strerror(ret);
-        orte_show_help("help-shmem-runtime.txt",
+        opal_show_help("help-shmem-runtime.txt",
                        "shmem_init:startup:internal-failure",
                        true,
                        "SHMEM_INIT",
