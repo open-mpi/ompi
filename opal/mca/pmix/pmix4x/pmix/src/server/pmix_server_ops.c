@@ -4152,11 +4152,18 @@ PMIX_EXPORT PMIX_CLASS_INSTANCE(pmix_setup_caddy_t,
 
 static void ncon(pmix_notify_caddy_t *p)
 {
-    struct timespec tp;
 
     PMIX_CONSTRUCT_LOCK(&p->lock);
-    clock_gettime(CLOCK_MONOTONIC, &tp);
+#if defined(__linux__) && OPAL_HAVE_CLOCK_GETTIME
+    struct timespec tp;
+    (void) clock_gettime(CLOCK_MONOTONIC, &tp);
     p->ts = tp.tv_sec;
+#else
+    /* Fall back to gettimeofday() if we have nothing else */
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    p->ts = tv.tv_sec;
+#endif
     p->room = -1;
     memset(p->source.nspace, 0, PMIX_MAX_NSLEN+1);
     p->source.rank = PMIX_RANK_UNDEF;
