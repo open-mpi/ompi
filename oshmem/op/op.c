@@ -2,8 +2,8 @@
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2013      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015-2019 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -14,8 +14,7 @@
 #include "oshmem_config.h"
 #include <complex.h>
 
-#include "orte/runtime/orte_globals.h"
-
+#include "opal/datatype/opal_datatype.h"
 #include "opal/datatype/opal_datatype_internal.h"
 #include "opal/class/opal_pointer_array.h"
 
@@ -330,7 +329,7 @@ int oshmem_op_init(void)
     if (OPAL_SUCCESS
             != opal_pointer_array_init(&oshmem_op_array,
                                        0,
-                                       ORTE_GLOBAL_ARRAY_MAX_SIZE,
+                                       INT_MAX,
                                        1)) {
         return OSHMEM_ERROR;
     }

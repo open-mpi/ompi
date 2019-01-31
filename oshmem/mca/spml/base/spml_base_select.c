@@ -1,8 +1,8 @@
 /*
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2014-2019 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -17,8 +17,6 @@
 #include "opal/util/show_help.h"
 #include "opal/mca/base/base.h"
 #include "opal/runtime/opal.h"
-
-#include "orte/mca/errmgr/errmgr.h"
 
 #include "oshmem/util/oshmem_util.h"
 #include "oshmem/constants.h"
@@ -147,10 +145,10 @@ int mca_spml_base_select(bool enable_progress_threads, bool enable_mpi_threads)
             if (NULL == tmp_val) {
                 continue;
             }
-            orte_errmgr.abort(1, "SPML %s cannot be selected", tmp_val);
+            ompi_rte_abort(1, "SPML %s cannot be selected", tmp_val);
         }
         if (0 == i) {
-            orte_errmgr.abort(2,
+            ompi_rte_abort(2,
                               "No spml component available.  This shouldn't happen.");
         }
     }

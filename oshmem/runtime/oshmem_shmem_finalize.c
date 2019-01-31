@@ -1,8 +1,8 @@
 /*
  * Copyright (c) 2013-2018 Mellanox Technologies, Inc.
  *                         All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015-2019 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2018      Cisco Systems, Inc.  All rights reserved
  * $COPYRIGHT$
  *
@@ -31,12 +31,6 @@
 #include "opal/mca/base/base.h"
 #include "opal/sys/atomic.h"
 #include "opal/runtime/opal.h"
-
-#include "orte/util/show_help.h"
-#include "orte/mca/errmgr/errmgr.h"
-#include "orte/mca/grpcomm/grpcomm.h"
-#include "orte/runtime/runtime.h"
-#include "orte/runtime/orte_globals.h"
 
 #include "opal/mca/rcache/base/base.h"
 #include "opal/mca/mpool/base/base.h"

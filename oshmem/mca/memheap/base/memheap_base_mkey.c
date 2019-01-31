@@ -2,8 +2,8 @@
 /*
  * Copyright (c) 2013-2015 Mellanox Technologies, Inc.
  *                         All rights reserved.
- * Copyright (c) 2015-2016 Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015-2019 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
@@ -204,7 +204,7 @@ static void do_recv(int source_pe, opal_buffer_t* buffer)
     MEMHEAP_VERBOSE(5, "unpacking %d of %d", cnt, OPAL_UINT8);
     rc = opal_dss.unpack(buffer, &msg_type, &cnt, OPAL_UINT8);
     if (OPAL_SUCCESS != rc) {
-        ORTE_ERROR_LOG(rc);
+        OMPI_ERROR_LOG(rc);
         goto send_fail;
     }
 
@@ -221,7 +221,7 @@ static void do_recv(int source_pe, opal_buffer_t* buffer)
         msg = OBJ_NEW(opal_buffer_t);
         if (!msg) {
             MEMHEAP_ERROR("failed to get msg buffer");
-            ORTE_ERROR_LOG(rc);
+            OMPI_ERROR_LOG(rc);
             return;
         }
 
@@ -236,7 +236,7 @@ static void do_recv(int source_pe, opal_buffer_t* buffer)
         rc = send_buffer(source_pe, msg);
         if (MPI_SUCCESS != rc) {
             MEMHEAP_ERROR("FAILED to send rml message %d", rc);
-            ORTE_ERROR_LOG(rc);
+            OMPI_ERROR_LOG(rc);
             goto send_fail;
         }
         break;
@@ -266,7 +266,7 @@ static void do_recv(int source_pe, opal_buffer_t* buffer)
     send_fail: msg = OBJ_NEW(opal_buffer_t);
     if (!msg) {
         MEMHEAP_ERROR("failed to get msg buffer");
-        ORTE_ERROR_LOG(rc);
+        OMPI_ERROR_LOG(rc);
         return;
     }
     msg_type = MEMHEAP_RKEY_RESP_FAIL;
@@ -275,7 +275,7 @@ static void do_recv(int source_pe, opal_buffer_t* buffer)
     rc = send_buffer(source_pe, msg);
     if (MPI_SUCCESS != rc) {
         MEMHEAP_ERROR("FAILED to send rml message %d", rc);
-        ORTE_ERROR_LOG(rc);
+        OMPI_ERROR_LOG(rc);
     }
 
 }
@@ -342,14 +342,14 @@ static int oshmem_mkey_recv_cb(void)
         tmp_buf = malloc(size);
         if (NULL == tmp_buf) {
             MEMHEAP_ERROR("not enough memory");
-            ORTE_ERROR_LOG(0);
+            OMPI_ERROR_LOG(0);
             return n;
         } else {
 		    memcpy(tmp_buf, (void*)&r->buf, size);
 		    msg = OBJ_NEW(opal_buffer_t);
 		    if (NULL == msg) {
 		        MEMHEAP_ERROR("not enough memory");
-		        ORTE_ERROR_LOG(0);
+		        OMPI_ERROR_LOG(0);
 		        free(tmp_buf);
 		        return n;
 		    }
@@ -368,7 +368,7 @@ static int oshmem_mkey_recv_cb(void)
         rc = PMPI_Start(&r->recv_req);
         if (MPI_SUCCESS != rc) {
             MEMHEAP_ERROR("Failed to post recv request %d", rc);
-            ORTE_ERROR_LOG(rc);
+            OMPI_ERROR_LOG(rc);
             return n;
         }
         opal_list_append(&memheap_oob.req_list, &r->super);

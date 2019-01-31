@@ -2,6 +2,8 @@
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2017      ARM, Inc. All rights reserved.
+ * Copyright (c) 2019      Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -12,8 +14,6 @@
 #include "oshmem_config.h"
 #include "ompi/mca/bml/base/base.h"
 #include "opal/datatype/opal_convertor.h"
-#include "orte/include/orte/types.h"
-#include "orte/runtime/orte_globals.h"
 #include "oshmem/proc/proc.h"
 #include "oshmem/mca/spml/base/base.h"
 #include "opal/mca/btl/btl.h"

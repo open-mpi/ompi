@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2013-2015 Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2019      Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -11,8 +13,6 @@
 #include "oshmem_config.h"
 #include <stdio.h>
 #include <stdlib.h>
-
-#include "orte/mca/grpcomm/grpcomm.h"
 
 #include "oshmem/constants.h"
 #include "oshmem/mca/spml/spml.h"
