@@ -3,6 +3,8 @@
 #                         All rights reserved.
 # Copyright (c) 2014      Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2016-2018 Intel, Inc.  All rights reserved.
+# Copyright (c) 2019      Research Organization for Information Science
+#                         and Technology (RIST).  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -31,6 +33,7 @@ libmca_rte_orte_la_LIBADD = $(top_builddir)/orte/lib@ORTE_LIB_PREFIX@open-rte.la
 man_pages = mpirun.1 mpiexec.1 ompi-clean.1 ompi-server.1
 
 if OPAL_INSTALL_BINARIES
+if PROJECT_ORTE
 nodist_man_MANS = $(man_pages)
 
 install-exec-hook:
@@ -45,6 +48,7 @@ uninstall-local:
 		$(DESTDIR)$(bindir)/ompi-clean$(EXEEXT) \
 		$(DESTDIR)$(bindir)/ompi-server$(EXEEXT)
 
+endif # PROJECT_ORTE
 endif # OPAL_INSTALL_BINARIES
 
 $(top_builddir)/orte/tools/orterun/orterun.1:
