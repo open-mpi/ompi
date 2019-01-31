@@ -2,8 +2,8 @@
 #                         All rights reserved.
 # Copyright (c) 2013-2014 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2014      Intel, Inc.  All rights reserved.
-# Copyright (c) 2014-2017 Research Organization for Information Science
-#                         and Technology (RIST). All rights reserved.
+# Copyright (c) 2014-2019 Research Organization for Information Science
+#                         and Technology (RIST).  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -12,7 +12,11 @@
 
 include $(top_srcdir)/Makefile.ompi-rules
 
-man_pages = oshcc.1 shmemcc.1 oshc++.1 shmemc++.1 oshcxx.1 shmemcxx.1 oshfort.1 shmemfort.1 oshrun.1 shmemrun.1
+man_pages = oshcc.1 shmemcc.1 oshc++.1 shmemc++.1 oshcxx.1 shmemcxx.1 oshfort.1 shmemfort.1
+
+if PROJECT_ORTE
+man_pages += oshrun.1 shmemrun.1
+endif
 
 if PROJECT_OSHMEM
 man_MANS = $(man_pages)
@@ -22,11 +26,17 @@ nodist_oshmemdata_DATA =  \
 	shmemc++-wrapper-data.txt \
 	shmemfort-wrapper-data.txt
 
-# Only install / uninstall if we're building oshmem
-install-exec-hook-always:
+targets_install_exec = install-exec-always
+targets_install_data = install-data-always
+targets_uninstall_local = uninstall-local-always
+
+mk_bindir:
 	test -z "$(bindir)" || $(mkdir_p) "$(DESTDIR)$(bindir)"
-	(cd $(DESTDIR)$(bindir); rm -f shmemrun$(EXEEXT); $(LN_S) mpirun$(EXEEXT) shmemrun$(EXEEXT))
-	(cd $(DESTDIR)$(bindir); rm -f oshrun$(EXEEXT); $(LN_S) mpirun$(EXEEXT) oshrun$(EXEEXT))
+
+mk_pkgdatadir:
+	test -z "$(pkgdatadir)" || $(mkdir_p) "$(DESTDIR)$(pkgdatadir)"
+
+install-exec-always: mk_bindir
 	(cd $(DESTDIR)$(bindir); rm -f shmemcc$(EXEEXT); $(LN_S) opal_wrapper$(EXEEXT) shmemcc$(EXEEXT))
 	(cd $(DESTDIR)$(bindir); rm -f oshcc$(EXEEXT); $(LN_S) opal_wrapper$(EXEEXT) oshcc$(EXEEXT))
 	(cd $(DESTDIR)$(bindir); rm -f shmemc++$(EXEEXT); $(LN_S) opal_wrapper$(EXEEXT) shmemc++$(EXEEXT))
@@ -36,7 +46,11 @@ install-exec-hook-always:
 	(cd $(DESTDIR)$(bindir); rm -f shmemfort$(EXEEXT); $(LN_S) opal_wrapper$(EXEEXT) shmemfort$(EXEEXT))
 	(cd $(DESTDIR)$(bindir); rm -f oshfort$(EXEEXT); $(LN_S) opal_wrapper$(EXEEXT) oshfort$(EXEEXT))
 
-install-data-hook-always:
+install-exec-rte: mk_bindir
+	(cd $(DESTDIR)$(bindir); rm -f shmemrun$(EXEEXT); $(LN_S) mpirun$(EXEEXT) shmemrun$(EXEEXT))
+	(cd $(DESTDIR)$(bindir); rm -f oshrun$(EXEEXT); $(LN_S) mpirun$(EXEEXT) oshrun$(EXEEXT))
+
+install-data-always: mk_pkgdatadir
 	(cd $(DESTDIR)$(pkgdatadir); rm -f oshcc-wrapper-data.txt; $(LN_S) shmemcc-wrapper-data.txt oshcc-wrapper-data.txt)
 	(cd $(DESTDIR)$(pkgdatadir); rm -f shmemcxx-wrapper-data.txt; $(LN_S) shmemc++-wrapper-data.txt shmemcxx-wrapper-data.txt)
 	(cd $(DESTDIR)$(pkgdatadir); rm -f oshc++-wrapper-data.txt; $(LN_S) shmemc++-wrapper-data.txt oshc++-wrapper-data.txt)
@@ -44,9 +58,7 @@ install-data-hook-always:
 	(cd $(DESTDIR)$(pkgdatadir); rm -f oshfort-wrapper-data.txt; $(LN_S) shmemfort-wrapper-data.txt oshfort-wrapper-data.txt)
 
 uninstall-local-always:
-	rm -f $(DESTDIR)$(bindir)/shmemrun$(EXEEXT) \
-	$(DESTDIR)$(bindir)/oshrun$(EXEEXT) \
-	$(DESTDIR)$(bindir)/shmemcc$(EXEEXT) \
+	rm -f $(DESTDIR)$(bindir)/shmemcc$(EXEEXT) \
 	$(DESTDIR)$(bindir)/oshcc$(EXEEXT) \
 	$(DESTDIR)$(bindir)/shmemcxx$(EXEEXT) \
 	$(DESTDIR)$(bindir)/oshcxx$(EXEEXT) \
@@ -59,19 +71,19 @@ uninstall-local-always:
 	$(DESTDIR)$(pkgdatadir)/shmemfort-wrapper-data.txt \
 	$(DESTDIR)$(pkgdatadir)/oshfort-wrapper-data.txt
 
+uninstall-local-rte:
+	rm -f $(DESTDIR)$(bindir)/shmemrun$(EXEEXT) \
+	$(DESTDIR)$(bindir)/oshrun$(EXEEXT)
 
-if CASE_SENSITIVE_FS
-man_MANS += oshCC.1 shmemCC.1
-
-install-exec-hook: install-exec-hook-always
+install-exec-cs: mk_bindir
 	(cd $(DESTDIR)$(bindir); rm -f shmemCC$(EXEEXT); $(LN_S) opal_wrapper$(EXEEXT) shmemCC$(EXEEXT))
 	(cd $(DESTDIR)$(bindir); rm -f oshCC$(EXEEXT); $(LN_S) opal_wrapper$(EXEEXT) oshCC$(EXEEXT))
 
-install-data-hook: install-data-hook-always
+install-data-cs: mk_pkgdatadir
 	(cd $(DESTDIR)$(pkgdatadir); rm -f shmemCC-wrapper-data.txt; $(LN_S) shmemcxx-wrapper-data.txt shmemCC-wrapper-data.txt)
 	(cd $(DESTDIR)$(pkgdatadir); rm -f oshCC-wrapper-data.txt; $(LN_S) oshcxx-wrapper-data.txt oshCC-wrapper-data.txt)
 
-uninstall-local: uninstall-local-always
+uninstall-local-cs:
 	rm -f $(DESTDIR)$(bindir)/shmemCC$(EXEEXT) \
 	$(DESTDIR)$(mandir)/man1/shmemCC.1 \
 	$(DESTDIR)$(pkgdatadir)/shmemCC-wrapper-data.txt
@@ -87,12 +99,25 @@ shmemCC.1: $(top_builddir)/opal/tools/wrappers/generic_wrapper.1
 	rm -f shmemCC.1
 	sed -e 's/#COMMAND#/shmemCC/g' -e 's/#PROJECT#/Open SHMEM/g' -e 's/#PROJECT_SHORT#/OSHMEM/g' -e 's/#LANGUAGE#/C++/g' < $(top_builddir)/opal/tools/wrappers/generic_wrapper.1 > shmemCC.1
 
-else # CASE_SENSITIVE_FS
-install-exec-hook: install-exec-hook-always
-install-data-hook: install-data-hook-always
-uninstall-local: uninstall-local-always
+if CASE_SENSITIVE_FS
+man_MANS += oshCC.1 shmemCC.1
 
+targets_install_exec += install-exec-cs
+
+targets_install_data += install-data-cs
+
+targets_uninstall_local += uninstall-local-cs
 endif # CASE_SENSITIVE_FS
+
+if PROJECT_ORTE
+targets_install_exec += install-exec-rte
+targets_uninstall_local += uninstall-rte
+endif # PROJECT_ORTE
+
+install-exec-hook: $(targets_install_exec)
+install-data-hook: $(targets_install_data)
+uninstall-local: $(targets_uninstall_local)
+
 
 ########################################################
 #
