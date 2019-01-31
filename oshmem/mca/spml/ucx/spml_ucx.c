@@ -1,8 +1,8 @@
 /*
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
- * Copyright (c) 2014-2018 Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2014-2019 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2016      ARM, Inc. All rights reserved.
  * $COPYRIGHT$
  *
@@ -21,8 +21,6 @@
 #include "oshmem_config.h"
 #include "opal/datatype/opal_convertor.h"
 #include "opal/mca/common/ucx/common_ucx.h"
-#include "orte/include/orte/types.h"
-#include "orte/runtime/orte_globals.h"
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/mca/pml/pml.h"
 
@@ -35,7 +33,6 @@
 #include "oshmem/mca/spml/base/base.h"
 #include "oshmem/mca/spml/base/spml_base_putreq.h"
 #include "oshmem/runtime/runtime.h"
-#include "orte/util/show_help.h"
 
 #include "oshmem/mca/spml/ucx/spml_ucx_component.h"
 

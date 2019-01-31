@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2014      Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2019      Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -68,7 +70,7 @@ char * oshmem_get_unique_file_name(uint64_t pe)
         return NULL;
     }
 
-    snprintf(file_name, OPAL_PATH_MAX, "%s/shmem_job_%u_pe_%llu", mca_sshmem_base_backing_file_dir, ORTE_PROC_MY_NAME->jobid, (unsigned long long)pe);
+    snprintf(file_name, OPAL_PATH_MAX, "%s/shmem_job_%u_pe_%llu", mca_sshmem_base_backing_file_dir, OMPI_PROC_MY_NAME->jobid, (unsigned long long)pe);
 
     return file_name;
 }

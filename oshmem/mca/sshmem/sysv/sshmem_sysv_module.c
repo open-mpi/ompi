@@ -1,7 +1,9 @@
 /*
  * Copyright (c) 2014      Mellanox Technologies, Inc.
  *                         All rights reserved.
- * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2019      Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -43,7 +45,6 @@
 #include "opal/util/output.h"
 #include "opal/util/path.h"
 #include "opal/util/show_help.h"
-#include "orte/util/show_help.h"
 
 #include "oshmem/proc/proc.h"
 #include "oshmem/mca/sshmem/sshmem.h"
@@ -156,7 +157,7 @@ retry_alloc:
                        "create segment failure",
                        true,
                        "sysv",
-                       orte_process_info.nodename, (unsigned long long) size,
+                       ompi_process_info.nodename, (unsigned long long) size,
                        strerror(errno), errno);
         opal_show_help("help-oshmem-sshmem-sysv.txt",
                        "sysv:create segment failure",
@@ -171,7 +172,7 @@ retry_alloc:
                        "create segment failure",
                        true,
                        "sysv",
-                       orte_process_info.nodename, (unsigned long long) size,
+                       ompi_process_info.nodename, (unsigned long long) size,
                        strerror(errno), errno);
         opal_show_help("help-oshmem-sshmem-sysv.txt",
                        "sysv:create segment failure",

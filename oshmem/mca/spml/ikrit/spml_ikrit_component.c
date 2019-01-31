@@ -5,6 +5,8 @@
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
+ * Copyright (c) 2019      Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -18,16 +20,14 @@
 #include <unistd.h>
 
 #include "opal/util/printf.h"
+#include "opal/util/show_help.h"
 #include "oshmem_config.h"
-#include "orte/util/show_help.h"
 #include "shmem.h"
 #include "oshmem/runtime/params.h"
 #include "oshmem/mca/spml/spml.h"
 #include "oshmem/mca/spml/base/base.h"
 #include "spml_ikrit_component.h"
 #include "oshmem/mca/spml/ikrit/spml_ikrit.h"
-
-#include "orte/util/show_help.h"
 
 static int mca_spml_ikrit_component_register(void);
 static int mca_spml_ikrit_component_open(void);
@@ -76,7 +76,7 @@ static inline int check_mxm_tls(char *var)
                     "%s=%s",
                     var, getenv(var)
                     )) {
-            orte_show_help("help-oshmem-spml-ikrit.txt", "mxm shm tls", true,
+            opal_show_help("help-oshmem-spml-ikrit.txt", "mxm shm tls", true,
                     str);
             free(str);
         }
@@ -133,7 +133,7 @@ static inline int check_mxm_hw_tls(char *v, char *tls)
         }
 	}
 
-    orte_show_help("help-oshmem-spml-ikrit.txt", "mxm tls", true,
+    opal_show_help("help-oshmem-spml-ikrit.txt", "mxm tls", true,
                     v, tls);
     return OSHMEM_ERROR;
 }
@@ -260,7 +260,7 @@ int spml_ikrit_progress(void)
 
     err = mxm_progress(mca_spml_ikrit.mxm_context);
     if ((MXM_OK != err) && (MXM_ERR_NO_PROGRESS != err)) {
-        orte_show_help("help-oshmem-spml-ikrit.txt",
+        opal_show_help("help-oshmem-spml-ikrit.txt",
                        "errors during mxm_progress",
                        true,
                        mxm_error_string(err));
@@ -317,7 +317,7 @@ static int mca_spml_ikrit_component_open(void)
             SPML_VERBOSE(1,
                          "No supported device found, disqualifying spml/ikrit");
         } else {
-            orte_show_help("help-oshmem-spml-ikrit.txt",
+            opal_show_help("help-oshmem-spml-ikrit.txt",
                            "mxm init",
                            true,
                            mxm_error_string(err));
@@ -329,7 +329,7 @@ static int mca_spml_ikrit_component_open(void)
                         MXM_SHMEM_MQ_ID,
                         &mca_spml_ikrit.mxm_mq);
     if (MXM_OK != err) {
-        orte_show_help("help-oshmem-spml-ikrit.txt",
+        opal_show_help("help-oshmem-spml-ikrit.txt",
                        "mxm mq create",
                        true,
                        mxm_error_string(err));
@@ -365,7 +365,7 @@ static int spml_ikrit_mxm_init(void)
                         mca_spml_ikrit.mxm_ep_opts,
                         &mca_spml_ikrit.mxm_ep);
     if (MXM_OK != err) {
-        orte_show_help("help-oshmem-spml-ikrit.txt",
+        opal_show_help("help-oshmem-spml-ikrit.txt",
                        "unable to create endpoint",
                        true,
                        mxm_error_string(err));
@@ -376,7 +376,7 @@ static int spml_ikrit_mxm_init(void)
                 mca_spml_ikrit.mxm_ep_hw_rdma_opts,
                 &mca_spml_ikrit.mxm_hw_rdma_ep);
         if (MXM_OK != err) {
-            orte_show_help("help-oshmem-spml-ikrit.txt",
+            opal_show_help("help-oshmem-spml-ikrit.txt",
                     "unable to create endpoint",
                     true,
                     mxm_error_string(err));

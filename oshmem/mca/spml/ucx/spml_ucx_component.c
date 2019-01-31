@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2015      Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2019      Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -14,7 +16,6 @@
 #include <unistd.h>
 
 #include "oshmem_config.h"
-#include "orte/util/show_help.h"
 #include "shmem.h"
 #include "oshmem/runtime/params.h"
 #include "oshmem/mca/spml/spml.h"
@@ -22,7 +23,6 @@
 #include "spml_ucx_component.h"
 #include "oshmem/mca/spml/ucx/spml_ucx.h"
 
-#include "orte/util/show_help.h"
 #include "opal/util/opal_environ.h"
 
 static int mca_spml_ucx_component_register(void);

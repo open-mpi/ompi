@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2013-2018 Mellanox Technologies, Inc.
  *                         All rights reserved.
- * Copyright (c) 2016      Research Organization for Information Science
+ * Copyright (c) 2016-2019 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      Cisco Systems, Inc.  All rights reserved
  * $COPYRIGHT$
@@ -21,9 +21,6 @@
 #include "opal/util/proc.h"
 #include "opal/dss/dss_types.h"
 #include "opal/mca/hwloc/hwloc-internal.h"
-
-#include "orte/types.h"
-#include "orte/runtime/orte_globals.h"
 
 #include "ompi/proc/proc.h"
 #include "ompi/communicator/communicator.h"
@@ -138,27 +135,27 @@ static inline ompi_proc_t *oshmem_proc_local(void)
  *
  * @return Pointer to the process instance for \c name
  */
-static inline ompi_proc_t *oshmem_proc_for_find(const orte_process_name_t name)
+static inline ompi_proc_t *oshmem_proc_for_find(const ompi_process_name_t name)
 {
     return (ompi_proc_t *)ompi_proc_for_name(name);
 }
 
 static inline ompi_proc_t *oshmem_proc_find(int pe)
 {
-    orte_process_name_t name;
+    ompi_process_name_t name;
 
-    name.jobid = ORTE_PROC_MY_NAME->jobid;
+    name.jobid = OMPI_PROC_MY_NAME->jobid;
     name.vpid = pe;
     return oshmem_proc_for_find(name);
 }
 
 static inline int oshmem_proc_pe(ompi_proc_t *proc)
 {
-    return (proc ? (int) ((orte_process_name_t*)&proc->super.proc_name)->vpid : -1);
+    return (proc ? (int) ((ompi_process_name_t*)&proc->super.proc_name)->vpid : -1);
 }
 
-#define OSHMEM_PROC_JOBID(PROC)    (((orte_process_name_t*)&((PROC)->super.proc_name))->jobid)
-#define OSHMEM_PROC_VPID(PROC)     (((orte_process_name_t*)&((PROC)->super.proc_name))->vpid)
+#define OSHMEM_PROC_JOBID(PROC)    (((ompi_process_name_t*)&((PROC)->super.proc_name))->jobid)
+#define OSHMEM_PROC_VPID(PROC)     (((ompi_process_name_t*)&((PROC)->super.proc_name))->vpid)
 
 /**
  * Initialize the OSHMEM process predefined groups
@@ -259,9 +256,9 @@ static inline ompi_proc_t *oshmem_proc_group_find(oshmem_group_t* group,
             }
         }
     } else {
-        orte_process_name_t name;
+        ompi_process_name_t name;
 
-        name.jobid = ORTE_PROC_MY_NAME->jobid;
+        name.jobid = OMPI_PROC_MY_NAME->jobid;
         name.vpid = pe;
         proc = oshmem_proc_for_find(name);
     }

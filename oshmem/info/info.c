@@ -2,6 +2,8 @@
  * Copyright (c) 2015      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
+ * Copyright (c) 2019      Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -15,12 +17,12 @@
 #include <string.h>
 #include <errno.h>
 
-#include "orte/runtime/orte_globals.h"
-#include "orte/util/show_help.h"
-
 #include "opal/util/opal_environ.h"
+#include "opal/util/show_help.h"
 #include "opal/util/output.h"
 #include "opal/util/printf.h"
+
+#include "ompi/mca/rte/rte.h"
 
 #include "oshmem/version.h"
 #include "oshmem/constants.h"
@@ -65,7 +67,7 @@ int oshmem_info_init(void)
             goto out;
         }
     }
-    if (oshmem_shmem_info_env.print_version && 0 == ORTE_PROC_MY_NAME->vpid) {
+    if (oshmem_shmem_info_env.print_version && 0 == OMPI_PROC_MY_NAME->vpid) {
         char version[OSHMEM_MAX_LIBRARY_VERSION_STRING];
         int len;
 
@@ -73,7 +75,7 @@ int oshmem_info_init(void)
         if (OSHMEM_SUCCESS != ret || 0 == len) {
             goto out;
         }
-        orte_show_help("help-shmem-runtime.txt",
+        opal_show_help("help-shmem-runtime.txt",
                        "oshmem_init:print-version",
                        true,
                        version);
@@ -85,8 +87,8 @@ int oshmem_info_init(void)
             goto out;
         }
     }
-    if (oshmem_shmem_info_env.print_info && 0 == ORTE_PROC_MY_NAME->vpid) {
-        orte_show_help("help-shmem-runtime.txt",
+    if (oshmem_shmem_info_env.print_info && 0 == OMPI_PROC_MY_NAME->vpid) {
+        opal_show_help("help-shmem-runtime.txt",
                        "oshmem_init:print-info",
                        true,
                        OSHMEM_ENV_VERSION,
