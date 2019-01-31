@@ -10,6 +10,8 @@
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * Copyright (c) 2018      Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2019      Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  */
 #include "ompi_config.h"
@@ -758,12 +760,12 @@ int ompi_rte_init(int *pargc, char ***pargv)
     return OPAL_SUCCESS;
 
   error:
-    opal_show_help_finalize();
     if (OPAL_ERR_SILENT != ret ) {
         opal_show_help("help-ompi-rte-pmix.txt",
                        "internal-failure",
                        true, error, opal_strerror(ret), ret);
     }
+    opal_finalize();
     return ret;
 
 }
