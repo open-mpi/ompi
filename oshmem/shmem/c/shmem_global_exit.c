@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2012-2015 Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2019      Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -11,8 +13,6 @@
 
 #include "oshmem/include/shmem.h"
 #include "oshmem/runtime/runtime.h"
-
-#include "orte/mca/errmgr/errmgr.h"
 
 #if OSHMEM_PROFILING
 #include "oshmem/include/pshmem.h"
@@ -38,7 +38,7 @@ static inline void _globalexit(int status)
 {
     oshmem_shmem_inglobalexit++;
 
-    orte_errmgr.abort(status, NULL);
+    ompi_rte_abort(status, NULL);
 
     oshmem_shmem_aborted = true;
     exit(status);

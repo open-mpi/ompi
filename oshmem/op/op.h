@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2019      Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -18,8 +20,6 @@
 
 #include "opal/class/opal_list.h"
 #include "opal/dss/dss_types.h"
-
-#include "orte/types.h"
 
 BEGIN_C_DECLS
 

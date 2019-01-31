@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2013-2016 Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2019      Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -11,8 +13,6 @@
 #include "oshmem_config.h"
 
 #include <stdlib.h>
-
-#include "orte/util/show_help.h"
 
 #include "oshmem/constants.h"
 #include "oshmem/include/shmem.h"
