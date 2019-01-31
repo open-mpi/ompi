@@ -102,7 +102,7 @@ opal_convertor_raw( opal_convertor_t* pConvertor,
                     /* now here we have a basic datatype */
                     OPAL_DATATYPE_SAFEGUARD_POINTER( source_base, blength, pConvertor->pBaseBuf,
                                                 pConvertor->pDesc, pConvertor->count );
-                    DO_DEBUG( opal_output( 0, "raw 1. iov[%d] = {base %p, length %lu}\n",
+                    DO_DEBUG( opal_output( 0, "raw 1. iov[%d] = {base %p, length %" PRIsize_t "}\n",
                                            index, (void*)source_base, (unsigned long)blength ); );
                     iov[index].iov_base = (IOVBASE_TYPE *) source_base;
                     iov[index].iov_len  = blength;
@@ -115,7 +115,7 @@ opal_convertor_raw( opal_convertor_t* pConvertor,
                 for(size_t i = count_desc; (i > 0) && (index < *iov_count); i--, index++ ) {
                     OPAL_DATATYPE_SAFEGUARD_POINTER( source_base, blength, pConvertor->pBaseBuf,
                                                 pConvertor->pDesc, pConvertor->count );
-                    DO_DEBUG( opal_output( 0, "raw 2. iov[%d] = {base %p, length %lu}\n",
+                    DO_DEBUG( opal_output( 0, "raw 2. iov[%d] = {base %p, length %" PRIsize_t "}\n",
                                            index, (void*)source_base, (unsigned long)blength ); );
                     iov[index].iov_base = (IOVBASE_TYPE *) source_base;
                     iov[index].iov_len  = blength;
@@ -172,16 +172,7 @@ opal_convertor_raw( opal_convertor_t* pConvertor,
             if( pElem->loop.common.flags & OPAL_DATATYPE_FLAG_CONTIGUOUS ) {
                 ptrdiff_t offset = end_loop->first_elem_disp;
                 source_base += offset;
-                for(size_t i = count_desc; i > 0; i--, index++ ) {
-                    if (index >= *iov_count) {
-                        dt_elem_desc_t* nElem = pElem + 1;
-                        while (nElem->elem.common.type == OPAL_DATATYPE_LOOP) {
-                            nElem++;
-                        }
-                        assert(OPAL_DATATYPE_END_LOOP != nElem->elem.common.type);
-                        offset = nElem->elem.disp;
-                        break;
-                    }
+                for(size_t i = MIN(count_desc, *iov_count - index); i > 0; i--, index++ ) {
                     OPAL_DATATYPE_SAFEGUARD_POINTER( source_base, end_loop->size, pConvertor->pBaseBuf,
                                                 pConvertor->pDesc, pConvertor->count );
                     iov[index].iov_base = (IOVBASE_TYPE *) source_base;
@@ -189,12 +180,19 @@ opal_convertor_raw( opal_convertor_t* pConvertor,
                     source_base += pElem->loop.extent;
                     raw_data += end_loop->size;
                     count_desc--;
+                    DO_DEBUG( opal_output( 0, "raw contig loop generate iov[%d] = {base %p, length %" PRIsize_t "}"
+                                           "space %lu [pos_desc %d]\n",
+                                           index, iov[index].iov_base, iov[index].iov_len,
+                                           (unsigned long)raw_data, pos_desc ); );
                 }
                 source_base -= offset;
                 if( 0 == count_desc ) {  /* completed */
                     pos_desc += pElem->loop.items + 1;
                     goto update_loop_description;
                 }
+            }
+            if( index == *iov_count ) {  /* all iov have been filled, we need to bail out */
+                goto complete_loop;
             }
             local_disp = (ptrdiff_t)source_base - local_disp;
             PUSH_STACK( pStack, pConvertor->stack_pos, pos_desc, OPAL_DATATYPE_LOOP, count_desc,
