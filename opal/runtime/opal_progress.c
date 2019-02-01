@@ -15,7 +15,7 @@
  * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  *
- * Copyright (c) 2018      Intel, Inc. All rights reserved.
+ * Copyright (c) 2017-2018 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -30,7 +30,7 @@
 #endif
 
 #include "opal/runtime/opal_progress.h"
-#include "opal/mca/event/event.h"
+#include "opal/event/event-internal.h"
 #include "opal/mca/base/mca_base_var.h"
 #include "opal/constants.h"
 #include "opal/mca/timer/base/base.h"
@@ -174,7 +174,6 @@ static int opal_progress_events(void)
     int events = 0;
 
     if( opal_progress_event_flag != 0 && !OPAL_THREAD_SWAP_32(&lock, 1) ) {
-#if OPAL_HAVE_WORKING_EVENTOPS
 #if OPAL_PROGRESS_USE_TIMERS
 #if OPAL_PROGRESS_ONLY_USEC_NATIVE
         opal_timer_t now = opal_timer_base_get_usec();
@@ -200,7 +199,6 @@ static int opal_progress_events(void)
         }
 #endif /* OPAL_PROGRESS_USE_TIMERS */
 
-#endif /* OPAL_HAVE_WORKING_EVENTOPS */
         lock = 0;
     }
 

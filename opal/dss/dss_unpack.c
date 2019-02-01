@@ -1086,6 +1086,11 @@ int opal_dss_unpack_value(opal_buffer_t *buffer, void *dest,
                 return ret;
             }
             break;
+        case OPAL_TIME:
+            if (OPAL_SUCCESS != (ret = opal_dss_unpack_buffer(buffer, &ptr[i]->data.time, &m, OPAL_TIME))) {
+                return ret;
+            }
+            break;
         case OPAL_PTR:
             /* just ignore these values */
             break;

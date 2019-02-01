@@ -99,7 +99,8 @@ enum {
     OPAL_ERR_FILE_ALERT                     = (OPAL_ERR_BASE - 68),
     OPAL_ERR_MODEL_DECLARED                 = (OPAL_ERR_BASE - 69),
     OPAL_PMIX_LAUNCH_DIRECTIVE              = (OPAL_ERR_BASE - 70),
-    OPAL_OPERATION_SUCCEEDED                = (OPAL_ERR_BASE - 71)
+    OPAL_PMIX_LAUNCHER_READY                = (OPAL_ERR_BASE - 71),
+    OPAL_OPERATION_SUCCEEDED                = (OPAL_ERR_BASE - 72)
 };
 
 #define OPAL_ERR_MAX                (OPAL_ERR_BASE - 100)

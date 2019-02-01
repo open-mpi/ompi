@@ -50,7 +50,7 @@
 #include "opal/util/printf.h"
 #include "opal/threads/mutex.h"
 #include "opal/constants.h"
-#include "opal/mca/pmix/pmix.h"
+#include "opal/pmix/pmix-internal.h"
 
 /*
  * Private data
@@ -811,9 +811,7 @@ static int open_file(int i)
         }
 
         /* register it to be ignored */
-        if (NULL != opal_pmix.register_cleanup) {
-            opal_pmix.register_cleanup(filename, false, true, false);
-        }
+        opal_pmix_register_cleanup(filename, false, true, false);
         free(filename);  /* release the filename in all cases */
     }
 

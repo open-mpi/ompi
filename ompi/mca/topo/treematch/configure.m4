@@ -20,8 +20,6 @@
 #                                [action-if-cant-compile])
 # -------------------------------------------
 AC_DEFUN([MCA_ompi_topo_treematch_CONFIG], [
-    AC_REQUIRE([MCA_opal_hwloc_CONFIG_REQUIRE])
-
     AC_ARG_WITH([treematch],
           [AC_HELP_STRING([--with-treematch(=DIR)],
                [Build TreeMatch topology support, optionally adding DIR/include, DIR/lib, and DIR/lib64 to the search path for headers and libraries])])

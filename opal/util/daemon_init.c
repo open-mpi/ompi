@@ -9,8 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015-2019 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -33,8 +33,7 @@
 #include "opal/util/daemon_init.h"
 #include "opal/constants.h"
 
-
-int opal_daemon_init(char *working_dir)
+int opal_daemon_init_callback(char *working_dir, int (*parent_fn)(pid_t))
 {
 #if defined(HAVE_FORK)
     pid_t pid;
@@ -43,7 +42,12 @@ int opal_daemon_init(char *working_dir)
     if ((pid = fork()) < 0) {
         return OPAL_ERROR;
     } else if (pid != 0) {
-        exit(0);   /* parent goes bye-bye */
+        /* parent goes bye-bye */
+        int rc = 0;
+        if (NULL != parent_fn) {
+            rc = parent_fn(pid);
+        }
+        exit(rc);
     }
 
     /* child continues */

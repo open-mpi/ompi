@@ -15,6 +15,7 @@
  *                         reserved.
  * Copyright (c) 2016-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017      Intel, Inc.  All rights reserved.
  * Copyright (c) 2018      Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
@@ -85,7 +86,7 @@ static inline void opal_atomic_wmb(void)
 /*
  * Suppress numerous (spurious ?) warnings from Oracle Studio compilers
  * see https://community.oracle.com/thread/3968347
- */ 
+ */
 #if defined(__SUNPRO_C) || defined(__SUNPRO_CC)
 #pragma error_messages(off, E_ARG_INCOMPATIBLE_WITH_ARG_L)
 #endif

@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2019      Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -33,12 +35,19 @@ BEGIN_C_DECLS
  *
  * @param working_dir Pointer to a character string containing the desired working directory. Providing
  * a value of NULL will cause the function to leave the program in the current working directory.
+ * @param parent_fn The function to execute in the parent before exiting
+ * a value of NULL will cause the parent to simply exit(0).
  *
  * @retval OPAL_SUCCESS Indicates that the conversion was successful
  * @retval OPAL_ERROR Indicates that the conversion was not successful - a fork could not be completed.
  */
-OPAL_DECLSPEC int opal_daemon_init(char *working_dir);
+OPAL_DECLSPEC int opal_daemon_init_callback(char *working_dir, int (*parent_fn)(pid_t child));
 
 END_C_DECLS
+
+static inline int opal_daemon_init(char *working_dir)
+{
+    return opal_daemon_init_callback(working_dir, NULL);
+}
 
 #endif /* OPAL_DAEMON_INIT_H */

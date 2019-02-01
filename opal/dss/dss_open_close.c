@@ -12,8 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, Inc.  All rights reserved.
  * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015-2018 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * Copyright (c) 2018      Triad National Security, LLC. All rights
  *                         reserved.
@@ -88,10 +88,12 @@ static void opal_value_destruct(opal_value_t* ptr)
     if (OPAL_STRING == ptr->type &&
         NULL != ptr->data.string) {
         free(ptr->data.string);
-    }
-    if (OPAL_BYTE_OBJECT == ptr->type &&
+    } else if (OPAL_BYTE_OBJECT == ptr->type &&
         NULL != ptr->data.bo.bytes) {
         free(ptr->data.bo.bytes);
+    } else if (OPAL_LIST == ptr->type &&
+        NULL != ptr->data.ptr) {
+        OPAL_LIST_RELEASE(ptr->data.ptr);
     }
 }
 OBJ_CLASS_INSTANCE(opal_value_t,

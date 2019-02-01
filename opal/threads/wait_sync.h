@@ -9,6 +9,7 @@
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
+ * Copyright (c) 2019      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -19,6 +20,7 @@
 #if !defined(OPAL_THREADS_WAIT_SYNC_H)
 #define OPAL_THREADS_WAIT_SYNC_H
 
+#include "opal/constants.h"
 #include "opal/sys/atomic.h"
 #include "opal/threads/condition.h"
 #include <pthread.h>

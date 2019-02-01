@@ -10,7 +10,7 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2015-2016 Intel, Inc. All rights reserved.
+# Copyright (c) 2015-2018 Intel, Inc. All rights reserved.
 # Copyright (c) 2016      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
@@ -70,6 +70,9 @@ endif
 
 include class/Makefile.am
 include memoryhooks/Makefile.am
+include event/Makefile.am
+include hwloc/Makefile.am
+include pmix/Makefile.am
 include runtime/Makefile.am
 include threads/Makefile.am
 include mca/Makefile.am

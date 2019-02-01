@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2017      FUJITSU LIMITED.  All rights reserved.
+ * Copyright (c) 2017-2018 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -27,8 +28,12 @@
 BEGIN_C_DECLS
 
 #define OPAL_ERROR_LOG(r) \
-    opal_output(0, "OPAL ERROR: %s in file %s at line %d", \
-                opal_strerror((r)), __FILE__, __LINE__);
+    do {                                                            \
+        if (OPAL_ERR_SILENT != (r)) {                               \
+            opal_output(0, "OPAL ERROR: %s in file %s at line %d",  \
+                        opal_strerror((r)), __FILE__, __LINE__);    \
+        }                                                           \
+    } while(0);
 
 
 /**

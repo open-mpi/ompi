@@ -825,6 +825,11 @@ int opal_dss_pack_value(opal_buffer_t *buffer, const void *src,
                 return ret;
             }
             break;
+        case OPAL_TIME:
+            if (OPAL_SUCCESS != (ret = opal_dss_pack_buffer(buffer, &ptr[i]->data.time, 1, OPAL_TIME))) {
+                return ret;
+            }
+            break;
         case OPAL_PTR:
             /* just ignore these values */
             break;

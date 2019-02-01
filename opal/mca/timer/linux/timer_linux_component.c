@@ -16,6 +16,7 @@
  *                         reserved.
  * Copyright (c) 2015-2017 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2016 Broadcom Limited. All rights reserved.
+ * Copyright (c) 2016-2017 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -118,7 +119,7 @@ static int opal_timer_linux_find_freq(void)
     opal_timer_linux_freq = 0;
 
 #if OPAL_ASSEMBLY_ARCH == OPAL_ARM64
-	opal_timer_linux_freq = opal_sys_timer_freq();
+        opal_timer_linux_freq = opal_sys_timer_freq();
 #endif
 
     if (0 == opal_timer_linux_freq) {

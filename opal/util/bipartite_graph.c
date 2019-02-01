@@ -2,6 +2,7 @@
  * Copyright (c) 2014      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2017      Amazon.com, Inc. or its affiliates.  All Rights
  *                         reserved.
+ * Copyright (c) 2017      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -165,8 +166,8 @@ static void free_vertex(opal_bp_graph_t *g,
 }
 
 int opal_bp_graph_create(opal_bp_graph_cleanup_fn_t v_data_cleanup_fn,
-			 opal_bp_graph_cleanup_fn_t e_data_cleanup_fn,
-			 opal_bp_graph_t **g_out)
+                         opal_bp_graph_cleanup_fn_t e_data_cleanup_fn,
+                         opal_bp_graph_t **g_out)
 {
     int err;
     opal_bp_graph_t *g = NULL;
@@ -244,8 +245,8 @@ int opal_bp_graph_free(opal_bp_graph_t *g)
 }
 
 int opal_bp_graph_clone(const opal_bp_graph_t *g,
-			bool copy_user_data,
-			opal_bp_graph_t **g_clone_out)
+                        bool copy_user_data,
+                        opal_bp_graph_t **g_clone_out)
 {
     int err;
     int i;
@@ -259,8 +260,8 @@ int opal_bp_graph_clone(const opal_bp_graph_t *g,
     *g_clone_out = NULL;
 
     if (copy_user_data) {
-	opal_output(0, "[%s:%d:%s] user data copy requested but not yet supported", 
-		    __FILE__, __LINE__, __func__);
+        opal_output(0, "[%s:%d:%s] user data copy requested but not yet supported",
+                    __FILE__, __LINE__, __func__);
         abort();
         return OPAL_ERR_FATAL;
     }
@@ -287,7 +288,7 @@ int opal_bp_graph_clone(const opal_bp_graph_t *g,
         FOREACH_OUT_EDGE(g, i, e) {
             assert(i == e->source);
             err = opal_bp_graph_add_edge(gx, e->source, e->target,
-					    e->cost, e->capacity, NULL);
+                                            e->cost, e->capacity, NULL);
             if (OPAL_SUCCESS != err) {
                 goto out_free_gx;
             }
@@ -305,7 +306,7 @@ int opal_bp_graph_clone(const opal_bp_graph_t *g,
 }
 
 int opal_bp_graph_indegree(const opal_bp_graph_t *g,
-			   int vertex)
+                           int vertex)
 {
     opal_bp_graph_vertex_t *v;
 
@@ -314,7 +315,7 @@ int opal_bp_graph_indegree(const opal_bp_graph_t *g,
 }
 
 int opal_bp_graph_outdegree(const opal_bp_graph_t *g,
-			       int vertex)
+                               int vertex)
 {
     opal_bp_graph_vertex_t *v;
 
@@ -323,11 +324,11 @@ int opal_bp_graph_outdegree(const opal_bp_graph_t *g,
 }
 
 int opal_bp_graph_add_edge(opal_bp_graph_t *g,
-			   int from,
-			   int to,
-			   int64_t cost,
-			   int capacity,
-			   void *e_data)
+                           int from,
+                           int to,
+                           int64_t cost,
+                           int capacity,
+                           void *e_data)
 {
     opal_bp_graph_edge_t *e;
     opal_bp_graph_vertex_t *v_from, *v_to;
@@ -377,8 +378,8 @@ int opal_bp_graph_add_edge(opal_bp_graph_t *g,
 }
 
 int opal_bp_graph_add_vertex(opal_bp_graph_t *g,
-			     void *v_data,
-			     int *index_out)
+                             void *v_data,
+                             int *index_out)
 {
     opal_bp_graph_vertex_t *v;
 
@@ -455,9 +456,9 @@ static void shrink_flow_matrix(int *flow, int old_n, int new_n)
  */
 static int
 bottleneck_path(
-		opal_bp_graph_t *gx,
-		int n,
-		int *pred)
+                opal_bp_graph_t *gx,
+                int n,
+                int *pred)
 {
     int u, v;
     int min;
@@ -485,9 +486,9 @@ bottleneck_path(
  * The contents of "pred" are only valid if this routine returns true.
  */
 bool opal_bp_graph_bellman_ford(opal_bp_graph_t *gx,
-				int source,
-				int target,
-				int *pred)
+                                int source,
+                                int target,
+                                int *pred)
 {
     int64_t *dist;
     int i;
@@ -568,7 +569,7 @@ bool opal_bp_graph_bellman_ford(opal_bp_graph_t *gx,
                 dist[u] != MAX_COST && /* avoid signed overflow */
                 (dist[u] + e_ptr->cost) < dist[v]) {
                 opal_output(0, "[%s:%d:%s] negative-weight cycle detected",
-			    __FILE__, __LINE__, __func__);
+                            __FILE__, __LINE__, __func__);
                 abort();
                 goto out;
             }
@@ -641,16 +642,16 @@ int opal_bp_graph_bipartite_to_flow(opal_bp_graph_t *g)
 
         if (inbound > 0 && outbound > 0) {
             opal_output(0, "[%s:%d:%s] graph is not (unidirectionally) bipartite",
-			__FILE__, __LINE__, __func__);
+                        __FILE__, __LINE__, __func__);
             abort();
         }
         else if (inbound > 0) {
             /* "right" side of the graph, create edges to the sink */
             ++num_right;
             err = opal_bp_graph_add_edge(g, u, g->sink_idx,
-					    0, /* no cost */
-					    /*capacity=*/1,
-					    /*e_data=*/NULL);
+                                            0, /* no cost */
+                                            /*capacity=*/1,
+                                            /*e_data=*/NULL);
             if (OPAL_SUCCESS != err) {
                 GRAPH_DEBUG_OUT(("add_edge failed"));
                 return err;
@@ -660,9 +661,9 @@ int opal_bp_graph_bipartite_to_flow(opal_bp_graph_t *g)
             /* "left" side of the graph, create edges to the source */
             ++num_left;
             err = opal_bp_graph_add_edge(g, g->source_idx, u,
-					    0, /* no cost */
-					    /*capacity=*/1,
-					    /*e_data=*/NULL);
+                                            0, /* no cost */
+                                            /*capacity=*/1,
+                                            /*e_data=*/NULL);
             if (OPAL_SUCCESS != err) {
                 GRAPH_DEBUG_OUT(("add_edge failed"));
                 return err;
@@ -682,7 +683,7 @@ int opal_bp_graph_bipartite_to_flow(opal_bp_graph_t *g)
      * exist in the original graph.
      */
     order = opal_bp_graph_order(g); /* need residuals for newly created
-					  source/sink edges too */
+                                          source/sink edges too */
     for (u = 0; u < order; ++u) {
         opal_bp_graph_edge_t * e_ptr;
         FOREACH_OUT_EDGE(g, u, e_ptr) {
@@ -692,9 +693,9 @@ int opal_bp_graph_bipartite_to_flow(opal_bp_graph_t *g)
              * negative for these edges because "giving back" flow pays us
              * back any cost already incurred. */
             err = opal_bp_graph_add_edge(g, v, u,
-					    -e_ptr->cost,
-					    /*capacity=*/0,
-					    /*e_data=*/NULL);
+                                            -e_ptr->cost,
+                                            /*capacity=*/0,
+                                            /*e_data=*/NULL);
             if (OPAL_SUCCESS != err && OPAL_EXISTS != err) {
                 return err;
             }
@@ -808,7 +809,7 @@ static int min_cost_flow_ssp(opal_bp_graph_t *gx,
             err = set_capacity(gx, u, v, c);
             if (OPAL_SUCCESS != err) {
                 opal_output(0, "[%s:%d:%s] unable to set capacity, missing edge?",
-			    __FILE__, __LINE__, __func__);
+                            __FILE__, __LINE__, __func__);
                 abort();
             }
 
@@ -817,7 +818,7 @@ static int min_cost_flow_ssp(opal_bp_graph_t *gx,
             err = set_capacity(gx, v, u, c);
             if (OPAL_SUCCESS != err) {
                 opal_output(0, "[%s:%d:%s] unable to set capacity, missing edge?",
-			    __FILE__, __LINE__, __func__);
+                            __FILE__, __LINE__, __func__);
                 abort();
             }
         }
@@ -835,8 +836,8 @@ static int min_cost_flow_ssp(opal_bp_graph_t *gx,
 }
 
 int opal_bp_graph_solve_bipartite_assignment(const opal_bp_graph_t *g,
-					     int *num_match_edges_out,
-					     int **match_edges_out)
+                                             int *num_match_edges_out,
+                                             int **match_edges_out)
 {
     int err;
     int i;

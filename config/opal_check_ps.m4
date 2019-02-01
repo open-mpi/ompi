@@ -12,7 +12,7 @@ dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
 dnl Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
-dnl Copyright (c) 2014      Intel, Inc. All rights reserved.
+dnl Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
 dnl Copyright (c) 2017      UT-Battelle, LLC. All rights reserved.
 dnl $COPYRIGHT$
 dnl
@@ -41,4 +41,3 @@ fi
 AC_MSG_RESULT([$PS_FLAVOR])
 AC_DEFINE_UNQUOTED([ORTE_CLEAN_PS_CMD], ["$PS_FLAVOR"], [Specific ps command to use in orte-clean])
 ])
-

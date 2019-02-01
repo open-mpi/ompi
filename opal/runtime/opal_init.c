@@ -54,7 +54,7 @@
 #include "opal/mca/memory/base/base.h"
 #include "opal/mca/patcher/base/base.h"
 #include "opal/mca/memcpy/base/base.h"
-#include "opal/mca/hwloc/base/base.h"
+#include "opal/hwloc/hwloc-internal.h"
 #include "opal/mca/reachable/base/base.h"
 #include "opal/mca/timer/base/base.h"
 #include "opal/mca/memchecker/base/base.h"
@@ -69,7 +69,7 @@
 #include "opal/mca/crs/base/base.h"
 
 #include "opal/runtime/opal_progress.h"
-#include "opal/mca/event/base/base.h"
+#include "opal/event/event-internal.h"
 #include "opal/mca/backtrace/base/base.h"
 
 #include "opal/constants.h"
@@ -311,7 +311,9 @@ opal_err2str(int errnum, const char **errmsg)
     case OPAL_PMIX_LAUNCH_DIRECTIVE:
         retval = "Launch directive";
         break;
-
+    case OPAL_PMIX_LAUNCHER_READY:
+        retval = "Launcher ready";
+        break;
     default:
         retval = "UNRECOGNIZED";
     }
@@ -441,6 +443,11 @@ opal_init_util(int* pargc, char*** pargv)
     if (OPAL_SUCCESS != (ret = mca_base_var_cache_files(false))) {
         return opal_init_error ("failed to cache files", ret);
     }
+    if (OPAL_SUCCESS != (ret = opal_hwloc_base_register())) {
+        error = "opal_hwloc_base_register";
+        goto return_error;
+    }
+
 
     OPAL_TIMING_ENV_NEXT(otmng, "opal_var_cache");
 
@@ -549,6 +556,17 @@ opal_init(int* pargc, char*** pargv)
 
     opal_finalize_register_cleanup_arg (mca_base_framework_close_list, opal_init_frameworks);
     opal_finalize_register_cleanup (opal_tsd_keys_destruct);
+
+    /* open hwloc */
+    ret = opal_hwloc_base_open();
+    if (OPAL_UNLIKELY(OPAL_SUCCESS != ret)) {
+        return opal_init_error ("opal_hwloc_base_open", ret);
+    }
+
+    ret = opal_event_base_open();
+    if (OPAL_UNLIKELY(OPAL_SUCCESS != ret)) {
+        return opal_init_error ("opal_event_base_open", ret);
+    }
 
     ret = mca_base_framework_open_list (opal_init_frameworks, 0);
     if (OPAL_UNLIKELY(OPAL_SUCCESS != ret)) {

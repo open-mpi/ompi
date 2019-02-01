@@ -12,6 +12,7 @@
  * Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2017      Intel, Inc.  All rights reserved.
  * Copyright (c) 2017      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -489,7 +490,7 @@ char *opal_stackframe_output_string(void)
 
     /* Calculate the space needed for the string */
     for (i = 3; i < traces_size; i++) {
-	    if (NULL == traces[i]) {
+            if (NULL == traces[i]) {
             break;
         }
         len += strlen(traces[i]) + 1;
@@ -597,8 +598,8 @@ int opal_util_register_stackhandlers (void)
 #endif
 
     for (tmp = next = opal_signal_string ;
-	 next != NULL && *next != '\0';
-	 tmp = next + 1)
+         next != NULL && *next != '\0';
+         tmp = next + 1)
     {
       int sig;
       int ret;
@@ -616,7 +617,7 @@ int opal_util_register_stackhandlers (void)
                          opal_signal_string, tmp);
           return OPAL_ERR_SILENT;
       } else if (next == NULL) {
-	 return OPAL_ERR_BAD_PARAM;
+         return OPAL_ERR_BAD_PARAM;
       } else if (':' == *next &&
                  0 == strncasecmp(next, ":complain", 9)) {
           complain = true;
@@ -655,4 +656,3 @@ int opal_util_register_stackhandlers (void)
 
     return OPAL_SUCCESS;
 }
-

@@ -13,8 +13,8 @@
  * Copyright (c) 2007-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, Inc. All rights
  *                         reserved.
- * Copyright (c) 2014-2016 Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2014-2018 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
@@ -108,6 +108,7 @@ typedef struct {
 #define    OPAL_PROC_STATE          (opal_data_type_t)   37 /**< corresponds to PMIx proc state type (uint8_t) */
 #define    OPAL_PROC_INFO           (opal_data_type_t)   38 /**< corresponds to PMIx proc_info type */
 #define    OPAL_ENVAR               (opal_data_type_t)   39 /**< corresponds to PMIx envar type */
+#define    OPAL_LIST                (opal_data_type_t)   40 /**< an opal list */
 
     /* OPAL Dynamic */
 #define    OPAL_DSS_ID_DYNAMIC      (opal_data_type_t)  100

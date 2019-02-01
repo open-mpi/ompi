@@ -35,6 +35,7 @@
 #include "opal/class/opal_pointer_array.h"
 
 #include "opal/dss/dss.h"
+#include "opal/util/output.h"
 #include "opal/util/proc.h"
 
 #if !defined(STDC_HEADERS) && HAVE_MEMORY_H
