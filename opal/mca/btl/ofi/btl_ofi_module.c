@@ -313,6 +313,7 @@ int mca_btl_ofi_finalize (mca_btl_base_module_t* btl)
 
     if (ofi_btl->rcache) {
         mca_rcache_base_module_destroy (ofi_btl->rcache);
+        ofi_btl->rcache = NULL;
     }
 
     free (btl);
