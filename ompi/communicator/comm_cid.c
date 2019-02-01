@@ -33,7 +33,7 @@
 #include "ompi_config.h"
 
 #include "opal/dss/dss.h"
-#include "opal/mca/pmix/pmix.h"
+#include "opal/pmix/pmix-internal.h"
 #include "opal/util/printf.h"
 
 #include "ompi/proc/proc.h"

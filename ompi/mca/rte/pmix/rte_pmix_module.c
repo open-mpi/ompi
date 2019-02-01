@@ -44,8 +44,8 @@
 #include "opal/util/proc.h"
 #include "opal/util/show_help.h"
 #include "opal/util/string_copy.h"
-#include "opal/mca/hwloc/base/base.h"
-#include "opal/mca/pmix/base/base.h"
+#include "opal/hwloc/hwloc-internal.h"
+#include "opal/pmix/pmix-internal.h"
 #include "opal/threads/threads.h"
 #include "opal/threads/tsd.h"
 #include "opal/class/opal_list.h"
@@ -533,30 +533,20 @@ int ompi_rte_init(int *pargc, char ***pargv)
         goto error;
     }
 
-    /* open and setup pmix */
-    if (OPAL_SUCCESS != (ret = mca_base_framework_open(&opal_pmix_base_framework, 0))) {
-        OPAL_ERROR_LOG(ret);
-        /* we cannot run */
-        error = "pmix init";
-        goto error;
-    }
-    if (OPAL_SUCCESS != (ret = opal_pmix_base_select())) {
-        /* we cannot run */
-        error = "pmix init";
-        goto error;
-    }
+    /* FIXME open pmix ? */
+
     /* set the event base */
     opal_pmix_base_set_evbase(opal_sync_event_base);
 
     /* initialize the selected module */
-    if (!opal_pmix.initialized() && (OPAL_SUCCESS != (ret = opal_pmix.init(NULL)))) {
+    if (!opal_pmix_initialized() && (OPAL_SUCCESS != (ret = opal_pmix_init(NULL)))) {
         /* we cannot run - this could be due to being direct launched
          * without the required PMI support being built, so print
          * out a help message indicating it */
         opal_show_help("help-ompi-rte-pmix.txt", "no-pmi", true);
         return OPAL_ERR_SILENT;
     }
-    /* opal_pmix.init will have filled in proc name fields in
+    /* opal_pmix_init will have filled in proc name fields in
      * OPAL, so transfer them here */
     pmix_process_info.my_name.jobid = OPAL_PROC_MY_NAME.jobid;
     pmix_process_info.my_name.vpid = OPAL_PROC_MY_NAME.vpid;
@@ -565,7 +555,7 @@ int ompi_rte_init(int *pargc, char ***pargv)
     pmix_process_info.nodename = opal_get_proc_hostname(myproc);
 
     /* get our local rank from PMI */
-    OPAL_MODEX_RECV_VALUE(ret, OPAL_PMIX_LOCAL_RANK,
+    OPAL_MODEX_RECV_VALUE(ret, PMIX_LOCAL_RANK,
                           &pmix_process_info.my_name, &u16ptr, OPAL_UINT16);
     if (OPAL_SUCCESS != ret) {
         error = "getting local rank";
@@ -574,7 +564,7 @@ int ompi_rte_init(int *pargc, char ***pargv)
     pmix_process_info.my_local_rank = u16;
 
     /* get our node rank from PMI */
-    OPAL_MODEX_RECV_VALUE(ret, OPAL_PMIX_NODE_RANK,
+    OPAL_MODEX_RECV_VALUE(ret, PMIX_NODE_RANK,
                           &pmix_process_info.my_name, &u16ptr, OPAL_UINT16);
     if (OPAL_SUCCESS != ret) {
         error = "getting node rank";
@@ -585,7 +575,7 @@ int ompi_rte_init(int *pargc, char ***pargv)
     /* get job size */
     pname.jobid = pmix_process_info.my_name.jobid;
     pname.vpid = OPAL_VPID_WILDCARD;
-    OPAL_MODEX_RECV_VALUE(ret, OPAL_PMIX_JOB_SIZE,
+    OPAL_MODEX_RECV_VALUE(ret, PMIX_JOB_SIZE,
                           &pname, &u32ptr, OPAL_UINT32);
     if (OPAL_SUCCESS != ret) {
         error = "getting job size";
@@ -608,7 +598,7 @@ int ompi_rte_init(int *pargc, char ***pargv)
     }
 
     /* get our app number from PMI - ok if not found */
-    OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, OPAL_PMIX_APPNUM,
+    OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, PMIX_APPNUM,
                                    &pmix_process_info.my_name, &u32ptr, OPAL_UINT32);
     if (OPAL_SUCCESS == ret) {
         pmix_process_info.app_num = u32;
@@ -618,7 +608,7 @@ int ompi_rte_init(int *pargc, char ***pargv)
 
     /* get the number of local peers - required for wireup of
      * shared memory BTL */
-    OPAL_MODEX_RECV_VALUE(ret, OPAL_PMIX_LOCAL_SIZE,
+    OPAL_MODEX_RECV_VALUE(ret, PMIX_LOCAL_SIZE,
                           &pname, &u32ptr, OPAL_UINT32);
     if (OPAL_SUCCESS == ret) {
         pmix_process_info.num_local_peers = u32 - 1;  // want number besides ourselves
@@ -648,7 +638,7 @@ int ompi_rte_init(int *pargc, char ***pargv)
     }
 
     /* retrieve temp directories info */
-    OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, OPAL_PMIX_NSDIR, &pname, &val, OPAL_STRING);
+    OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, PMIX_NSDIR, &pname, &val, OPAL_STRING);
     if (OPAL_SUCCESS == ret && NULL != val) {
         pmix_process_info.job_session_dir = val;
         val = NULL;
@@ -670,7 +660,7 @@ int ompi_rte_init(int *pargc, char ***pargv)
             goto error;
         }
         /* retrieve the local peers */
-        OPAL_MODEX_RECV_VALUE(ret, OPAL_PMIX_LOCAL_PEERS,
+        OPAL_MODEX_RECV_VALUE(ret, PMIX_LOCAL_PEERS,
                               &pname, &val, OPAL_STRING);
         if (OPAL_SUCCESS == ret && NULL != val) {
             peers = opal_argv_split(val, ',');
@@ -686,7 +676,7 @@ int ompi_rte_init(int *pargc, char ***pargv)
     if (NULL != peers) {
         /* identify our location */
         val = NULL;
-        OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, OPAL_PMIX_LOCALITY_STRING,
+        OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, PMIX_LOCALITY_STRING,
                                        &pmix_process_info.my_name, &val, OPAL_STRING);
         if (OPAL_SUCCESS == ret && NULL != val) {
             pmix_process_info.cpuset = val;
@@ -701,7 +691,7 @@ int ompi_rte_init(int *pargc, char ***pargv)
                 u16 = OPAL_PROC_ALL_LOCAL;
             } else {
                 val = NULL;
-                OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, OPAL_PMIX_LOCALITY_STRING,
+                OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, PMIX_LOCALITY_STRING,
                                                &pname, &val, OPAL_STRING);
                 if (OPAL_SUCCESS == ret && NULL != val) {
                     u16 = opal_hwloc_compute_relative_locality(pmix_process_info.cpuset, val);
@@ -712,14 +702,14 @@ int ompi_rte_init(int *pargc, char ***pargv)
                 }
             }
             kv = OBJ_NEW(opal_value_t);
-            kv->key = strdup(OPAL_PMIX_LOCALITY);
+            kv->key = strdup(PMIX_LOCALITY);
             kv->type = OPAL_UINT16;
             OPAL_OUTPUT_VERBOSE((1, ompi_rte_base_framework.framework_output,
                                  "%s locality: proc %s locality %s",
                                  OPAL_NAME_PRINT(pmix_process_info.my_name),
                                  OPAL_NAME_PRINT(pname), opal_hwloc_base_print_locality(u16)));
             kv->data.uint16 = u16;
-            ret = opal_pmix.store_local(&pname, kv);
+            ret = opal_pmix_store_local(&pname, kv);
             if (OPAL_SUCCESS != ret) {
                 error = "local store of locality";
                 opal_argv_free(peers);
@@ -751,7 +741,7 @@ int ompi_rte_init(int *pargc, char ***pargv)
     /* push our hostname so others can find us, if they need to - the
      * native PMIx component will ignore this request as the hostname
      * is provided by the system */
-    OPAL_MODEX_SEND_VALUE(ret, OPAL_PMIX_GLOBAL, OPAL_PMIX_HOSTNAME, pmix_process_info.nodename, OPAL_STRING);
+    OPAL_MODEX_SEND_VALUE(ret, PMIX_GLOBAL, PMIX_HOSTNAME, pmix_process_info.nodename, OPAL_STRING);
     if (OPAL_SUCCESS != ret) {
         error = "db store hostname";
         goto error;
@@ -808,10 +798,7 @@ int ompi_rte_finalize(void)
     }
 
     /* shutdown pmix */
-    if (NULL != opal_pmix.finalize) {
-        opal_pmix.finalize();
-        (void) mca_base_framework_close(&opal_pmix_base_framework);
-    }
+    opal_pmix_finalize();
 
     /* cleanup the session directory we created */
     if (NULL != pmix_process_info.job_session_dir) {
@@ -840,7 +827,7 @@ void ompi_rte_abort(int error_code, char *fmt, ...)
     va_end(arglist);
 
     /* call abort */
-    opal_pmix.abort(error_code, buffer, NULL);
+    opal_pmix_abort(error_code, buffer, NULL);
     if (NULL != buffer) {
         free(buffer);
     }
@@ -934,12 +921,12 @@ void ompi_rte_wait_for_debugger(void)
 
     OBJ_CONSTRUCT(&directives, opal_list_t);
     kv = OBJ_NEW(opal_value_t);
-    kv->key = strdup(OPAL_PMIX_EVENT_HDLR_NAME);
+    kv->key = strdup(PMIX_EVENT_HDLR_NAME);
     kv->type = OPAL_STRING;
     kv->data.string = strdup("MPI-DEBUGGER-ATTACH");
     opal_list_append(&directives, &kv->super);
 
-    opal_pmix.register_evhandler(codes, &directives, _release_fn, _register_fn, codes);
+    opal_pmix_register_evhandler(codes, &directives, _release_fn, _register_fn, codes);
     /* let the MPI progress engine run while we wait for registration to complete */
     OMPI_WAIT_FOR_COMPLETION(debugger_register_active);
     OPAL_LIST_DESTRUCT(&directives);
@@ -948,7 +935,7 @@ void ompi_rte_wait_for_debugger(void)
     OMPI_WAIT_FOR_COMPLETION(debugger_event_active);
 
     /* deregister the event handler */
-    opal_pmix.deregister_evhandler(handler, NULL, NULL);
+    opal_pmix_deregister_evhandler(handler, NULL, NULL);
 }
 
 bool ompi_rte_connect_accept_support(const char *port)

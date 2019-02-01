@@ -14,7 +14,7 @@
 
 #include "ompi_config.h"
 #include "vprotocol_pessimist_eventlog.h"
-#include "opal/mca/pmix/pmix.h"
+#include "opal/pmix/pmix-internal.h"
 #include "opal/util/printf.h"
 #include "ompi/dpm/dpm.h"
 
@@ -32,7 +32,7 @@ int vprotocol_pessimist_event_logger_connect(int el_rank, ompi_communicator_t **
     opal_asprintf(&pdat->value.key, VPROTOCOL_EVENT_LOGGER_NAME_FMT, el_rank);
     opal_list_append(&results, &pdat->super);
 
-    rc = opal_pmix.lookup(&results, NULL);
+    rc = opal_pmix_lookup(&results, NULL);
     if (OPAL_SUCCESS != rc ||
         OPAL_STRING != pdat->value.type ||
         NULL == pdat->value.data.string) {

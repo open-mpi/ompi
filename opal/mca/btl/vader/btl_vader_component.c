@@ -365,7 +365,7 @@ static int mca_btl_base_vader_modex_send (void)
     }
 #endif
 
-    OPAL_MODEX_SEND(rc, OPAL_PMIX_LOCAL,
+    OPAL_MODEX_SEND(rc, PMIX_LOCAL,
                     &mca_btl_vader_component.super.btl_version, &modex, modex_size);
 
     return rc;
@@ -539,9 +539,7 @@ static mca_btl_base_module_t **mca_btl_vader_component_init (int *num_btls,
             free (btls);
             return NULL;
         }
-        if (NULL != opal_pmix.register_cleanup) {
-            opal_pmix.register_cleanup (sm_file, false, false, false);
-        }
+        opal_pmix_register_cleanup (sm_file, false, false, false);
 
         rc = opal_shmem_segment_create (&component->seg_ds, sm_file, component->segment_size);
         free (sm_file);

@@ -37,8 +37,8 @@ struct opal_proc_t;
 
 #include "opal/threads/threads.h"
 #include "opal/util/proc.h"
-#include "opal/mca/hwloc/hwloc-internal.h"
-#include "opal/mca/pmix/pmix.h"
+#include "opal/hwloc/hwloc-internal.h"
+#include "opal/pmix/pmix-internal.h"
 
 struct ompi_proc_t;
 struct ompi_communicator_t;

@@ -36,7 +36,10 @@
 
 BEGIN_C_DECLS
 
-OPAL_DECLSPEC extern int opal_pmix_verbose_output;
+extern int opal_pmix_verbose_output;
+extern bool opal_pmix_collect_all_data;
+extern bool opal_pmix_base_async_modex;
+extern int opal_pmix_base_timeout;
 
 /* define a caddy for pointing to pmix_info_t that
  * are to be included in an answer */
@@ -57,6 +60,28 @@ typedef struct {
 OBJ_CLASS_DECLARATION(opal_info_item_t);
 
 
+/****    PMIX LOOKUP RETURN STRUCT    ****/
+typedef struct {
+    opal_list_item_t super;
+    opal_process_name_t proc;
+    opal_value_t value;
+} opal_pmix_pdata_t;
+
+OBJ_CLASS_DECLARATION(opal_pmix_pdata_t);
+
+/****    PMIX APP STRUCT    ****/
+typedef struct {
+    opal_list_item_t super;
+    char *cmd;
+    char **argv;
+    char **env;
+    char *cwd;
+    int maxprocs;
+    opal_list_t info;
+} opal_pmix_app_t;
+/* utility macros for working with pmix_app_t structs */
+OBJ_CLASS_DECLARATION(opal_pmix_app_t);
+
 typedef struct {
     opal_mutex_t mutex;
     pthread_cond_t cond;
@@ -64,6 +89,10 @@ typedef struct {
     int status;
     char *msg;
 } opal_pmix_lock_t;
+
+extern int opal_pmix_base_exchange(opal_value_t *info,
+                                   opal_pmix_pdata_t *pdat,
+                                   int timeout);
 
 #define opal_pmix_condition_wait(a,b)   pthread_cond_wait(a, &(b)->m_lock_pthread)
 
@@ -432,6 +461,73 @@ typedef struct {
 
 #define OPAL_PMIX_SHOW_HELP    "opal.show.help"
 
+/* define a callback for common operations that simply return
+ * a status. Examples include the non-blocking versions of
+ * Fence, Connect, and Disconnect */
+typedef void (*opal_pmix_op_cbfunc_t)(int status, void *cbdata);
+
+/* define a callback function by which event handlers can notify
+ * us that they have completed their action, and pass along any
+ * further information for subsequent handlers */
+typedef void (*opal_pmix_notification_complete_fn_t)(int status, opal_list_t *results,
+                                                     opal_pmix_op_cbfunc_t cbfunc, void *thiscbdata,
+                                                     void *notification_cbdata);
+
+/* define a callback function for calls to register_evhandler. The
+ * status indicates if the request was successful or not, evhandler_ref is
+ * a size_t reference assigned to the evhandler by PMIX, this reference
+ * must be used to deregister the err handler. A ptr to the original
+ * cbdata is returned. */
+typedef void (*opal_pmix_evhandler_reg_cbfunc_t)(int status,
+                                                 size_t evhandler_ref,
+                                                 void *cbdata);
+
+/* define a callback function for the evhandler. Upon receipt of an
+ * event notification, the active module will execute the specified notification
+ * callback function, providing:
+ *
+ * status - the error that occurred
+ * source - identity of the proc that generated the event
+ * info - any additional info provided regarding the error.
+ * results - any info from prior event handlers
+ * cbfunc - callback function to execute when the evhandler is
+ *          finished with the provided data so it can be released
+ * cbdata - pointer to be returned in cbfunc
+ *
+ * Note that different resource managers may provide differing levels
+ * of support for event notification to application processes. Thus, the
+ * info list may be NULL or may contain detailed information of the event.
+ * It is the responsibility of the application to parse any provided info array
+ * for defined key-values if it so desires.
+ *
+ * Possible uses of the opal_value_t list include:
+ *
+ * - for the RM to alert the process as to planned actions, such as
+ *   to abort the session, in response to the reported event
+ *
+ * - provide a timeout for alternative action to occur, such as for
+ *   the application to request an alternate response to the event
+ *
+ * For example, the RM might alert the application to the failure of
+ * a node that resulted in termination of several processes, and indicate
+ * that the overall session will be aborted unless the application
+ * requests an alternative behavior in the next 5 seconds. The application
+ * then has time to respond with a checkpoint request, or a request to
+ * recover from the failure by obtaining replacement nodes and restarting
+ * from some earlier checkpoint.
+ *
+ * Support for these options is left to the discretion of the host RM. Info
+ * keys are included in the common definions above, but also may be augmented
+ * on a per-RM basis.
+ *
+ * On the server side, the notification function is used to inform the host
+ * server of a detected error in the PMIx subsystem and/or client */
+typedef void (*opal_pmix_notification_fn_t)(int status,
+                                            const opal_process_name_t *source,
+                                            opal_list_t *info, opal_list_t *results,
+                                            opal_pmix_notification_complete_fn_t cbfunc,
+                                            void *cbdata);
+
 /* some helper functions */
 OPAL_DECLSPEC pmix_proc_state_t opal_pmix_convert_state(int state);
 OPAL_DECLSPEC int opal_pmix_convert_pstate(pmix_proc_state_t);
@@ -487,6 +583,59 @@ OPAL_DECLSPEC int opal_pmix_register_cleanup(char *path,
                                              bool ignore,
                                              bool jobscope);
 
+OPAL_DECLSPEC int opal_pmix_fence(opal_list_t *procs,
+                                  int collect_data);
+
+OPAL_DECLSPEC int opal_pmix_fence_nb(opal_list_t *procs,
+                                     int collect_data,
+                                     opal_pmix_op_cbfunc_t cbfunc,
+                                     void *cbdata);
+
+OPAL_DECLSPEC int opal_pmix_lookup(opal_list_t *data,
+                                   opal_list_t *info);
+
+OPAL_DECLSPEC int opal_pmix_publish(opal_list_t *info);
+
+OPAL_DECLSPEC int opal_pmix_unpublish(char **keys,
+                                      opal_list_t *info);
+
+OPAL_DECLSPEC int opal_pmix_initialized(void);
+
+OPAL_DECLSPEC int opal_pmix_init(opal_list_t *ilist);
+
+OPAL_DECLSPEC int opal_pmix_store_local(const opal_process_name_t *proc,
+                                        opal_value_t *val);
+
+OPAL_DECLSPEC int opal_pmix_finalize(void);
+
+OPAL_DECLSPEC int opal_pmix_abort(int status,
+                                  const char *msg,
+                                  opal_list_t *procs);
+
+OPAL_DECLSPEC void opal_pmix_register_evhandler(opal_list_t *event_codes,
+                                                opal_list_t *info,
+                                                opal_pmix_notification_fn_t evhandler,
+                                                opal_pmix_evhandler_reg_cbfunc_t cbfunc,
+                                                void *cbdata);
+
+OPAL_DECLSPEC void opal_pmix_deregister_evhandler(size_t evhandler,
+                                                  opal_pmix_op_cbfunc_t cbfunc,
+                                                  void *cbdata);
+
+OPAL_DECLSPEC void opal_pmix_base_set_evbase(opal_event_base_t *evbase);
+
+OPAL_DECLSPEC char* opal_pmix_get_nspace(opal_jobid_t jobid);
+
+OPAL_DECLSPEC void opal_pmix_register_jobid(opal_jobid_t jobid, const char *nspace);
+
+OPAL_DECLSPEC int opal_pmix_connect(opal_list_t *procs);
+
+OPAL_DECLSPEC int opal_pmix_spawn(opal_list_t *job_info,
+                                  opal_list_t *apps,
+                                  opal_jobid_t *jobid);
+
+OPAL_DECLSPEC int opal_pmix_commit(void);
+
 /* protect against early versions of PMIx */
 #ifndef PMIX_VALUE_UNLOAD
 pmix_status_t pmix_value_unload(pmix_value_t *kv, void **data, size_t *sz);
@@ -531,6 +680,19 @@ pmix_status_t pmix_value_unload(pmix_value_t *kv, void **data, size_t *sz);
     (0 == strncmp((a)->key, (b), PMIX_MAX_KEYLEN))
 #endif
 
+/**
+ * Provide a macro for accessing a base function that exchanges
+ * data values between two procs using the PMIx Publish/Lookup
+ * APIs */
+ #define OPAL_PMIX_EXCHANGE(r, i, p, t)                          \
+    do {                                                         \
+        OPAL_OUTPUT_VERBOSE((1, opal_pmix_verbose_output,        \
+                            "%s[%s:%d] EXCHANGE %s WITH %s",     \
+                            OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),  \
+                            __FILE__, __LINE__,                  \
+                            (i)->key, (p)->value.key));          \
+        (r) = opal_pmix_base_exchange((i), (p), (t));            \
+    } while(0);
 END_C_DECLS
 
 #endif

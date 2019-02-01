@@ -26,7 +26,7 @@
  */
 
 #include "ompi_config.h"
-#include "opal/mca/event/event.h"
+#include "opal/event/event-internal.h"
 #include "mpi.h"
 #include "ompi/runtime/params.h"
 #include "ompi/mca/pml/pml.h"

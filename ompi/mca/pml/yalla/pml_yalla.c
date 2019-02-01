@@ -20,7 +20,7 @@
 #include "opal/runtime/opal.h"
 #include "opal/memoryhooks/memory.h"
 #include "opal/mca/memory/base/base.h"
-#include "opal/mca/pmix/pmix.h"
+#include "opal/pmix/pmix-internal.h"
 #include "ompi/mca/pml/base/pml_base_bsend.h"
 #include "ompi/message/message.h"
 

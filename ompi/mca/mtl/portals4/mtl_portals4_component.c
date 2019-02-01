@@ -23,9 +23,9 @@
 
 #include "ompi_config.h"
 
-#include "opal/mca/event/event.h"
+#include "opal/event/event-internal.h"
 #include "opal/util/output.h"
-#include "opal/mca/pmix/pmix.h"
+#include "opal/pmix/pmix-internal.h"
 
 #include "mtl_portals4.h"
 #include "mtl_portals4_request.h"

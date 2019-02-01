@@ -29,10 +29,9 @@
 #include "opal/util/output.h"
 #include "opal/util/show_help.h"
 #include "opal/runtime/opal_progress.h"
-#include "ompi/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/runtime/opal.h"
-#include "opal/mca/pmix/pmix.h"
+#include "opal/pmix/pmix-internal.h"
 
 #include "ompi/constants.h"
 #include "ompi/mca/pml/pml.h"
@@ -312,7 +311,7 @@ mca_pml_base_pml_selected(const char *name)
 {
     int rc;
 
-    OPAL_MODEX_SEND(rc, OPAL_PMIX_GLOBAL, &pml_base_component, name, strlen(name) + 1);
+    OPAL_MODEX_SEND(rc, PMIX_GLOBAL, &pml_base_component, name, strlen(name) + 1);
     return rc;
 }
 

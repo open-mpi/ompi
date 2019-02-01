@@ -24,7 +24,7 @@
 #define MCA_BTL_OFI_ENDPOINT_H
 
 #include "opal/class/opal_list.h"
-#include "opal/mca/event/event.h"
+#include "opal/event/event-internal.h"
 
 #include "btl_ofi.h"
 

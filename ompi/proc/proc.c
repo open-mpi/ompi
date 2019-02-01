@@ -36,8 +36,8 @@
 #include "opal/dss/dss.h"
 #include "opal/util/arch.h"
 #include "opal/util/show_help.h"
-#include "opal/mca/hwloc/base/base.h"
-#include "opal/mca/pmix/pmix.h"
+#include "opal/hwloc/hwloc-internal.h"
+#include "opal/pmix/pmix-internal.h"
 #include "opal/util/argv.h"
 
 #include "ompi/proc/proc.h"
@@ -148,7 +148,7 @@ int ompi_proc_complete_init_single (ompi_proc_t *proc)
      * we don't chase after it if some system doesn't
      * provide it */
     proc->super.proc_hostname = NULL;
-    OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, OPAL_PMIX_HOSTNAME, &proc->super.proc_name,
+    OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, PMIX_HOSTNAME, &proc->super.proc_name,
                                    (char**)&(proc->super.proc_hostname), OPAL_STRING);
 
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
@@ -157,7 +157,7 @@ int ompi_proc_complete_init_single (ompi_proc_t *proc)
     {
         uint32_t *ui32ptr;
         ui32ptr = &(proc->super.proc_arch);
-        OPAL_MODEX_RECV_VALUE(ret, OPAL_PMIX_ARCH, &proc->super.proc_name,
+        OPAL_MODEX_RECV_VALUE(ret, PMIX_ARCH, &proc->super.proc_name,
                               (void**)&ui32ptr, OPAL_UINT32);
         if (OPAL_SUCCESS == ret) {
             /* if arch is different than mine, create a new convertor for this proc */
@@ -270,8 +270,8 @@ int ompi_proc_init(void)
     opal_proc_local_set(&proc->super);
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
     /* add our arch to the modex */
-    OPAL_MODEX_SEND_VALUE(ret, OPAL_PMIX_GLOBAL,
-                          OPAL_PMIX_ARCH, &opal_local_arch, OPAL_UINT32);
+    OPAL_MODEX_SEND_VALUE(ret, PMIX_GLOBAL,
+                          PMIX_ARCH, &opal_local_arch, OPAL_UINT32);
     if (OPAL_SUCCESS != ret) {
         return ret;
     }
@@ -316,7 +316,7 @@ int ompi_proc_complete_init(void)
     wildcard_rank.jobid = OMPI_PROC_MY_NAME->jobid;
     wildcard_rank.vpid = OMPI_NAME_WILDCARD->vpid;
     /* retrieve the local peers */
-    OPAL_MODEX_RECV_VALUE(ret, OPAL_PMIX_LOCAL_PEERS,
+    OPAL_MODEX_RECV_VALUE(ret, PMIX_LOCAL_PEERS,
                           &wildcard_rank, &val, OPAL_STRING);
     if (OPAL_SUCCESS == ret && NULL != val) {
         char **peers = opal_argv_split(val, ',');
@@ -334,7 +334,7 @@ int ompi_proc_complete_init(void)
             }
             /* get the locality information - all RTEs are required
              * to provide this information at startup */
-            OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, OPAL_PMIX_LOCALITY, &proc->super.proc_name, &u16ptr, OPAL_UINT16);
+            OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, PMIX_LOCALITY, &proc->super.proc_name, &u16ptr, OPAL_UINT16);
             if (OPAL_SUCCESS == ret) {
                 proc->super.proc_flags = u16;
             }
@@ -662,7 +662,7 @@ ompi_proc_pack(ompi_proc_t **proclist, int proclistsize,
         }
         /* retrieve and send the corresponding nspace for this job
          * as the remote side may not know the translation */
-        nspace = (char*)opal_pmix.get_nspace(proc->super.proc_name.jobid);
+        nspace = (char*)opal_pmix_get_nspace(proc->super.proc_name.jobid);
         rc = opal_dss.pack(buf, &nspace, 1, OPAL_STRING);
         if(rc != OPAL_SUCCESS) {
             OMPI_ERROR_LOG(rc);
@@ -766,7 +766,7 @@ ompi_proc_unpack(opal_buffer_t* buf,
             free(newprocs);
             return rc;
         }
-        opal_pmix.register_jobid(new_name.jobid, nspace);
+        opal_pmix_register_jobid(new_name.jobid, nspace);
         free(nspace);
         rc = opal_dss.unpack(buf, &new_arch, &count, OPAL_UINT32);
         if (rc != OPAL_SUCCESS) {

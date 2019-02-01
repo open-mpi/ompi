@@ -35,9 +35,9 @@
 #include <stdio.h>
 
 #include "ompi/constants.h"
-#include "opal/mca/hwloc/base/base.h"
+#include "opal/hwloc/hwloc-internal.h"
 #include "opal/dss/dss.h"
-#include "opal/mca/pmix/pmix.h"
+#include "opal/pmix/pmix-internal.h"
 #include "opal/util/string_copy.h"
 
 #include "ompi/proc/proc.h"
@@ -673,7 +673,7 @@ static int ompi_comm_split_type_get_part (ompi_group_t *group, const int split_t
 
             u16ptr = &locality;
 
-            OPAL_MODEX_RECV_VALUE(ret, OPAL_PMIX_LOCALITY, &proc_name, &u16ptr, OPAL_UINT16);
+            OPAL_MODEX_RECV_VALUE(ret, PMIX_LOCALITY, &proc_name, &u16ptr, OPAL_UINT16);
             if (OPAL_SUCCESS != ret) {
                 continue;
             }
@@ -1655,7 +1655,7 @@ int ompi_comm_get_rprocs ( ompi_communicator_t *local_comm,
          * to provide this information at startup */
         uint16_t *u16ptr, u16;
         u16ptr = &u16;
-        OPAL_MODEX_RECV_VALUE(rc, OPAL_PMIX_LOCALITY, &rprocs[i]->super.proc_name, &u16ptr, OPAL_UINT16);
+        OPAL_MODEX_RECV_VALUE(rc, PMIX_LOCALITY, &rprocs[i]->super.proc_name, &u16ptr, OPAL_UINT16);
         if (OPAL_SUCCESS == rc) {
             rprocs[i]->super.proc_flags = u16;
         } else {

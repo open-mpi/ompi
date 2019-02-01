@@ -28,7 +28,7 @@
 
 #include "opal_config.h"
 
-#include "opal/mca/event/event.h"
+#include "opal/event/event-internal.h"
 #include "opal/mca/mpool/mpool.h"
 
 #include "opal/mca/allocator/allocator.h"

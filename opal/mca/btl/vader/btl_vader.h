@@ -59,7 +59,7 @@
 #include "opal/util/proc.h"
 #include "btl_vader_endpoint.h"
 
-#include "opal/mca/pmix/pmix.h"
+#include "opal/pmix/pmix-internal.h"
 
 #include "btl_vader_xpmem.h"
 #include "btl_vader_knem.h"

@@ -29,7 +29,7 @@
 #include <string.h>
 
 /* Open MPI includes */
-#include "opal/mca/event/event.h"
+#include "opal/event/event-internal.h"
 #include "opal/mca/btl/btl.h"
 #include "opal/mca/btl/base/base.h"
 #include "opal/mca/mpool/mpool.h"

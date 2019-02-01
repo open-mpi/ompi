@@ -26,7 +26,7 @@
 #include <stdio.h>
 
 #include "opal/class/opal_list.h"
-#include "opal/mca/pmix/pmix.h"
+#include "opal/pmix/pmix-internal.h"
 #include "opal/util/show_help.h"
 
 #include "ompi/mpi/c/bindings.h"
@@ -71,17 +71,6 @@ int MPI_Publish_name(const char *service_name, MPI_Info info,
         }
     }
 
-    if (NULL == opal_pmix.publish) {
-        opal_show_help("help-mpi-api.txt",
-                       "MPI function not supported",
-                       true,
-                       FUNC_NAME,
-                       "Underlying runtime environment does not support name publishing functionality");
-        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD,
-                                      OMPI_ERR_NOT_SUPPORTED,
-                                        FUNC_NAME);
-    }
-
     OPAL_CR_ENTER_LIBRARY();
     OBJ_CONSTRUCT(&values, opal_list_t);
 
@@ -92,15 +81,15 @@ int MPI_Publish_name(const char *service_name, MPI_Info info,
         if (flag) {
             if (0 == strcmp(range, "nspace")) {
                 rng = OBJ_NEW(opal_value_t);
-                rng->key = strdup(OPAL_PMIX_RANGE);
+                rng->key = strdup(PMIX_RANGE);
                 rng->type = OPAL_INT;
-                rng->data.integer = OPAL_PMIX_RANGE_NAMESPACE;  // share only with procs in same nspace
+                rng->data.integer = PMIX_RANGE_NAMESPACE;  // share only with procs in same nspace
                 opal_list_append(&values, &rng->super);
             } else if (0 == strcmp(range, "session")) {
                 rng = OBJ_NEW(opal_value_t);
-                rng->key = strdup(OPAL_PMIX_RANGE);
+                rng->key = strdup(PMIX_RANGE);
                 rng->type = OPAL_INT;
-                rng->data.integer = OPAL_PMIX_RANGE_SESSION; // share only with procs in same session
+                rng->data.integer = PMIX_RANGE_SESSION; // share only with procs in same session
                 opal_list_append(&values, &rng->super);
             } else {
                 /* unrecognized scope */
@@ -114,27 +103,27 @@ int MPI_Publish_name(const char *service_name, MPI_Info info,
         if (flag) {
             if (0 == strcmp(range, "indef")) {
                 rng = OBJ_NEW(opal_value_t);
-                rng->key = strdup(OPAL_PMIX_PERSISTENCE);
+                rng->key = strdup(PMIX_PERSISTENCE);
                 rng->type = OPAL_INT;
-                rng->data.integer = OPAL_PMIX_PERSIST_INDEF;   // retain until specifically deleted
+                rng->data.integer = PMIX_PERSIST_INDEF;   // retain until specifically deleted
                 opal_list_append(&values, &rng->super);
             } else if (0 == strcmp(range, "proc")) {
                 rng = OBJ_NEW(opal_value_t);
-                rng->key = strdup(OPAL_PMIX_PERSISTENCE);
+                rng->key = strdup(PMIX_PERSISTENCE);
                 rng->type = OPAL_INT;
-                rng->data.integer = OPAL_PMIX_PERSIST_PROC;    // retain until publishing process terminates
+                rng->data.integer = PMIX_PERSIST_PROC;    // retain until publishing process terminates
                 opal_list_append(&values, &rng->super);
             } else if (0 == strcmp(range, "app")) {
                 rng = OBJ_NEW(opal_value_t);
-                rng->key = strdup(OPAL_PMIX_PERSISTENCE);
+                rng->key = strdup(PMIX_PERSISTENCE);
                 rng->type = OPAL_INT;
-                rng->data.integer = OPAL_PMIX_PERSIST_APP;     // retain until application terminates
+                rng->data.integer = PMIX_PERSIST_APP;     // retain until application terminates
                 opal_list_append(&values, &rng->super);
             } else if (0 == strcmp(range, "session")) {
                 rng = OBJ_NEW(opal_value_t);
-                rng->key = strdup(OPAL_PMIX_PERSISTENCE);
+                rng->key = strdup(PMIX_PERSISTENCE);
                 rng->type = OPAL_INT;
-                rng->data.integer = OPAL_PMIX_PERSIST_SESSION; // retain until session/allocation terminates
+                rng->data.integer = PMIX_PERSIST_SESSION; // retain until session/allocation terminates
                 opal_list_append(&values, &rng->super);
             } else {
                 /* unrecognized persistence */
@@ -153,7 +142,7 @@ int MPI_Publish_name(const char *service_name, MPI_Info info,
     rng->data.string = strdup(port_name);
     opal_list_append(&values, &rng->super);
 
-    rc = opal_pmix.publish(&values);
+    rc = opal_pmix_publish(&values);
     OPAL_LIST_DESTRUCT(&values);
 
     OPAL_CR_EXIT_LIBRARY();

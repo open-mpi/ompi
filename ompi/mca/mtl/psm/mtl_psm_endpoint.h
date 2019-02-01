@@ -24,7 +24,7 @@
 #define MCA_MTL_PSM_ENDPOINT_H
 
 #include "opal/class/opal_list.h"
-#include "opal/mca/event/event.h"
+#include "opal/event/event-internal.h"
 #include "ompi/mca/mtl/mtl.h"
 #include "mtl_psm.h"
 

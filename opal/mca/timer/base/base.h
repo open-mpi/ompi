@@ -22,7 +22,7 @@
 #define OPAL_TIMER_BASE_H
 
 #include "opal_config.h"
-#include "opal/mca/base/mca_base_framework.h"
+#include "opal/mca/base/base.h"
 #include "opal/mca/timer/timer.h"
 
 

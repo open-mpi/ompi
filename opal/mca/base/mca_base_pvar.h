@@ -14,7 +14,7 @@
 #if !defined(OPAL_MPIT_PVAR_H)
 #define OPAL_MPIT_PVAR_H
 
-#include "opal/mca/base/mca_base_var.h"
+#include "opal/mca/base/base.h"
 
 /*
  * These flags are used when registering a new pvar.

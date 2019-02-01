@@ -46,7 +46,7 @@
 #include "opal/class/opal_value_array.h"
 #include "opal/class/opal_pointer_array.h"
 #include "opal/class/opal_hash_table.h"
-#include "opal/mca/base/mca_base_var.h"
+#include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_pvar.h"
 
 BEGIN_C_DECLS

@@ -16,6 +16,7 @@
 #define MPIT_INTERNAL_H
 
 #include "opal/util/string_copy.h"
+#include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_var.h"
 #include "opal/mca/base/mca_base_pvar.h"
 

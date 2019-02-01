@@ -29,7 +29,7 @@
 
 #include "opal/mca/btl/btl.h"
 #include "opal/mca/btl/base/base.h"
-#include "opal/mca/hwloc/base/base.h"
+#include "opal/hwloc/hwloc-internal.h"
 #include "opal/util/argv.h"
 #include "opal/memoryhooks/memory.h"
 #include "opal/mca/memory/base/base.h"
@@ -250,7 +250,7 @@ static int mca_btl_uct_modex_send (void)
         }
     }
 
-    OPAL_MODEX_SEND(rc, OPAL_PMIX_GLOBAL, &mca_btl_uct_component.super.btl_version, modex, modex_size);
+    OPAL_MODEX_SEND(rc, PMIX_GLOBAL, &mca_btl_uct_component.super.btl_version, modex, modex_size);
     return rc;
 }
 

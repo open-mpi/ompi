@@ -36,7 +36,7 @@
 
 #include "opal/class/opal_hash_table.h"
 #include "opal/mca/btl/base/btl_base_error.h"
-#include "opal/mca/pmix/pmix.h"
+#include "opal/pmix/pmix-internal.h"
 #include "opal/util/arch.h"
 #include "opal/util/argv.h"
 #include "opal/util/if.h"

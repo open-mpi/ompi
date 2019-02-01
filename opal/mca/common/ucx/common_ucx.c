@@ -10,9 +10,8 @@
 #include "opal_config.h"
 
 #include "common_ucx.h"
-#include "opal/mca/base/mca_base_var.h"
-#include "opal/mca/base/mca_base_framework.h"
-#include "opal/mca/pmix/pmix.h"
+#include "opal/mca/base/base.h"
+#include "opal/pmix/pmix-internal.h"
 #include "opal/memoryhooks/memory.h"
 
 #include <ucm/api/ucm.h>
@@ -137,7 +136,7 @@ OPAL_DECLSPEC int opal_common_ucx_mca_pmix_fence(ucp_worker_h worker)
     volatile int fenced = 0;
     int ret = OPAL_SUCCESS;
 
-    if (OPAL_SUCCESS != (ret = opal_pmix.fence_nb(NULL, 0,
+    if (OPAL_SUCCESS != (ret = opal_pmix_fence_nb(NULL, 0,
                     opal_common_ucx_mca_fence_complete_cb, (void*)&fenced))){
         return ret;
     }

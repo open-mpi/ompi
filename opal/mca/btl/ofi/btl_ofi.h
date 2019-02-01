@@ -30,13 +30,13 @@
 #include <string.h>
 
 /* Open MPI includes */
-#include "opal/mca/event/event.h"
+#include "opal/event/event-internal.h"
 #include "opal/mca/btl/btl.h"
 #include "opal/mca/btl/base/base.h"
 #include "opal/mca/mpool/mpool.h"
 #include "opal/mca/btl/base/btl_base_error.h"
 #include "opal/mca/rcache/base/base.h"
-#include "opal/mca/pmix/pmix.h"
+#include "opal/pmix/pmix-internal.h"
 
 #include "opal/class/opal_hash_table.h"
 

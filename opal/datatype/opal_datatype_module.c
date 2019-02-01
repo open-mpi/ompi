@@ -37,7 +37,7 @@
 #include "opal/datatype/opal_datatype_internal.h"
 #include "opal/datatype/opal_datatype.h"
 #include "opal/datatype/opal_convertor_internal.h"
-#include "opal/mca/base/mca_base_var.h"
+#include "opal/mca/base/base.h"
 
 /* by default the debuging is turned off */
 int opal_datatype_dfd = -1;

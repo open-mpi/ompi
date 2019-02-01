@@ -59,7 +59,7 @@
 #include <sys/time.h>
 #endif
 
-#include "opal/mca/event/event.h"
+#include "opal/event/event-internal.h"
 #include "opal/util/ethtool.h"
 #include "opal/util/if.h"
 #include "opal/util/output.h"
@@ -75,7 +75,7 @@
 #include "opal/mca/btl/base/base.h"
 #include "opal/mca/mpool/base/base.h"
 #include "opal/mca/btl/base/btl_base_error.h"
-#include "opal/mca/pmix/pmix.h"
+#include "opal/pmix/pmix-internal.h"
 #include "opal/threads/threads.h"
 
 #include "opal/constants.h"
@@ -1214,7 +1214,7 @@ static int mca_btl_tcp_component_exchange(void)
          }
      }
 
-     OPAL_MODEX_SEND(rc, OPAL_PMIX_GLOBAL,
+     OPAL_MODEX_SEND(rc, PMIX_GLOBAL,
                      &mca_btl_tcp_component.super.btl_version,
                      addrs, size);
      free(addrs);

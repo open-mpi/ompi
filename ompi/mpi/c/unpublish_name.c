@@ -26,7 +26,7 @@
 #include <stdio.h>
 
 #include "opal/class/opal_list.h"
-#include "opal/mca/pmix/pmix.h"
+#include "opal/pmix/pmix-internal.h"
 #include "opal/util/argv.h"
 #include "opal/util/show_help.h"
 
@@ -73,17 +73,6 @@ int MPI_Unpublish_name(const char *service_name, MPI_Info info,
         }
     }
 
-    if (NULL == opal_pmix.publish) {
-        opal_show_help("help-mpi-api.txt",
-                       "MPI function not supported",
-                       true,
-                       FUNC_NAME,
-                       "Underlying runtime environment does not support name publishing functionality");
-        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD,
-                                      OMPI_ERR_NOT_SUPPORTED,
-                                      FUNC_NAME);
-    }
-
     OPAL_CR_ENTER_LIBRARY();
     OBJ_CONSTRUCT(&pinfo, opal_list_t);
 
@@ -94,15 +83,15 @@ int MPI_Unpublish_name(const char *service_name, MPI_Info info,
         if (flag) {
             if (0 == strcmp(range, "nspace")) {
                 rng = OBJ_NEW(opal_value_t);
-                rng->key = strdup(OPAL_PMIX_RANGE);
+                rng->key = strdup(PMIX_RANGE);
                 rng->type = OPAL_INT;
-                rng->data.integer = OPAL_PMIX_RANGE_NAMESPACE;  // share only with procs in same nspace
+                rng->data.integer = PMIX_RANGE_NAMESPACE;  // share only with procs in same nspace
                 opal_list_append(&pinfo, &rng->super);
             } else if (0 == strcmp(range, "session")) {
                 rng = OBJ_NEW(opal_value_t);
-                rng->key = strdup(OPAL_PMIX_RANGE);
+                rng->key = strdup(PMIX_RANGE);
                 rng->type = OPAL_INT;
-                rng->data.integer = OPAL_PMIX_RANGE_SESSION; // share only with procs in same session
+                rng->data.integer = PMIX_RANGE_SESSION; // share only with procs in same session
                 opal_list_append(&pinfo, &rng->super);
             } else {
                 /* unrecognized scope */
@@ -116,7 +105,7 @@ int MPI_Unpublish_name(const char *service_name, MPI_Info info,
     /* unpublish the service_name */
     opal_argv_append_nosize(&keys, service_name);
 
-    rc = opal_pmix.unpublish(keys, &pinfo);
+    rc = opal_pmix_unpublish(keys, &pinfo);
     opal_argv_free(keys);
     OPAL_LIST_DESTRUCT(&pinfo);
 

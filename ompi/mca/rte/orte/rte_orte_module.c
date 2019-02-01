@@ -21,7 +21,7 @@
 #include "opal/util/proc.h"
 #include "opal/util/opal_getcwd.h"
 #include "opal/util/printf.h"
-#include "opal/mca/pmix/pmix.h"
+#include "opal/pmix/pmix-internal.h"
 #include "opal/threads/threads.h"
 #include "opal/class/opal_list.h"
 #include "opal/dss/dss.h"

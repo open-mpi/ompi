@@ -26,7 +26,7 @@
 
 #include "opal/class/opal_list.h"
 #include "opal/class/opal_hotel.h"
-#include "opal/mca/event/event.h"
+#include "opal/event/event-internal.h"
 
 #include "btl_usnic.h"
 

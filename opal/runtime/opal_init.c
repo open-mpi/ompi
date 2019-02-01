@@ -444,8 +444,7 @@ opal_init_util(int* pargc, char*** pargv)
         return opal_init_error ("failed to cache files", ret);
     }
     if (OPAL_SUCCESS != (ret = opal_hwloc_base_register())) {
-        error = "opal_hwloc_base_register";
-        goto return_error;
+        return opal_init_error ("opal_hwloc_base_register", ret);
     }
 
 

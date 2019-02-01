@@ -22,7 +22,7 @@
 #include "ompi_config.h"
 
 #include "opal/constants.h"
-#include "opal/mca/hwloc/base/base.h"
+#include "opal/hwloc/hwloc-internal.h"
 
 #include "ompi/mca/topo/treematch/topo_treematch.h"
 #include "ompi/mca/topo/treematch/treematch/treematch.h"
@@ -34,7 +34,7 @@
 
 #include "ompi/mca/pml/pml.h"
 
-#include "opal/mca/pmix/pmix.h"
+#include "opal/pmix/pmix-internal.h"
 
 /* #define __DEBUG__ 1  */
 
@@ -170,7 +170,7 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
             vpids[num_procs_in_node++] = i;
 
         pval = &val;
-        OPAL_MODEX_RECV_VALUE(err, OPAL_PMIX_NODEID, &(proc->super.proc_name), &pval, OPAL_UINT32);
+        OPAL_MODEX_RECV_VALUE(err, PMIX_NODEID, &(proc->super.proc_name), &pval, OPAL_UINT32);
         if( OPAL_SUCCESS != err ) {
             opal_output(0, "Unable to extract peer %s nodeid from the modex.\n",
                         OMPI_NAME_PRINT(&(proc->super.proc_name)));

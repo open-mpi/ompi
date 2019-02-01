@@ -29,13 +29,13 @@
 
 #include "opal/dss/dss.h"
 #include "opal/runtime/opal_cr.h"
-#include "opal/mca/event/event.h"
+#include "opal/event/event-internal.h"
 #include "opal/util/output.h"
 #include "opal/util/printf.h"
 
 #include "opal/util/opal_environ.h"
 #include "ompi/mca/mca.h"
-#include "opal/mca/pmix/pmix.h"
+#include "opal/pmix/pmix-internal.h"
 
 #include "ompi/request/request.h"
 #include "ompi/mca/rte/rte.h"

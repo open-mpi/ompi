@@ -20,8 +20,7 @@
 #include "opal/util/output.h"
 #include "opal/util/printf.h"
 
-#include "mca_base_framework.h"
-#include "mca_base_var.h"
+#include "base.h"
 #include "opal/mca/base/base.h"
 
 bool mca_base_framework_is_registered (struct mca_base_framework_t *framework)

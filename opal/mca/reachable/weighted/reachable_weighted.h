@@ -23,10 +23,10 @@
 
 #include "opal/mca/reachable/reachable.h"
 #include "opal/mca/mca.h"
-#include "opal/mca/event/event.h"
+#include "opal/event/event-internal.h"
 #include "opal/util/proc.h"
 
-#include "opal/mca/pmix/base/base.h"
+#include "opal/pmix/pmix-internal.h"
 
 BEGIN_C_DECLS
 

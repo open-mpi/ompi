@@ -25,6 +25,7 @@
 
 #include "opal/class/opal_list.h"
 #include "opal/mca/mca.h"
+#include "opal/mca/base/base.h"
 #include "opal/mca/allocator/allocator.h"
 
 BEGIN_C_DECLS

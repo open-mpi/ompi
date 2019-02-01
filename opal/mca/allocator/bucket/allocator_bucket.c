@@ -24,7 +24,7 @@
 #include "opal/mca/allocator/allocator.h"
 #include "opal/constants.h"
 #include "opal/mca/allocator/bucket/allocator_bucket_alloc.h"
-#include "opal/mca/base/mca_base_var.h"
+#include "opal/mca/base/base.h"
 
 struct mca_allocator_base_module_t* mca_allocator_bucket_module_init(
     bool enable_mpi_threads,

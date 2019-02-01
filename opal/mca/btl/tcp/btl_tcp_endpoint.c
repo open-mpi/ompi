@@ -51,7 +51,7 @@
 #endif  /* HAVE_SYS_TIME_H */
 #include <time.h>
 
-#include "opal/mca/event/event.h"
+#include "opal/event/event-internal.h"
 #include "opal/util/net.h"
 #include "opal/util/show_help.h"
 #include "opal/util/proc.h"

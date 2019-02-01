@@ -23,7 +23,7 @@
 
 #include "ompi_config.h"
 
-#include "opal/mca/event/event.h"
+#include "opal/event/event-internal.h"
 #include "opal/util/output.h"
 #include "opal/util/show_help.h"
 #include "ompi/proc/proc.h"

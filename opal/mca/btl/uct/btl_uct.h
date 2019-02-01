@@ -29,14 +29,14 @@
 #include <string.h>
 
 /* Open MPI includes */
-#include "opal/mca/event/event.h"
+#include "opal/event/event-internal.h"
 #include "opal/mca/btl/base/base.h"
 #include "opal/mca/mpool/mpool.h"
 #include "opal/mca/btl/base/btl_base_error.h"
 #include "opal/mca/rcache/base/base.h"
 #include "opal/class/opal_fifo.h"
 #include "opal/class/opal_hash_table.h"
-#include "opal/mca/pmix/pmix.h"
+#include "opal/pmix/pmix-internal.h"
 #include "opal/threads/tsd.h"
 #include <uct/api/uct.h>
 

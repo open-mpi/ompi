@@ -26,6 +26,7 @@
 #include "ompi_config.h"
 
 #include "ompi/mca/mca.h"
+#include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_framework.h"
 #include "ompi/mca/bml/bml.h"
 #include "ompi/proc/proc.h"

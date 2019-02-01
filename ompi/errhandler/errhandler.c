@@ -31,7 +31,7 @@
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/errhandler/errhandler_predefined.h"
 #include "opal/class/opal_pointer_array.h"
-#include "opal/mca/pmix/pmix.h"
+#include "opal/pmix/pmix-internal.h"
 #include "opal/util/string_copy.h"
 
 
@@ -165,7 +165,7 @@ int ompi_errhandler_finalize(void)
 
     /* JMS Add stuff here checking for unreleased errorhandlers,
        similar to communicators, info handles, etc. */
-    opal_pmix.deregister_evhandler(default_errhandler_id, NULL, NULL);
+    opal_pmix_deregister_evhandler(default_errhandler_id, NULL, NULL);
 
     /* Remove errhandler F2C table */
 

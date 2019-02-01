@@ -42,7 +42,7 @@
 #include <sys/stat.h>  /* for mkfifo */
 #endif  /* HAVE_SYS_STAT_H */
 
-#include "opal/mca/event/event.h"
+#include "opal/event/event-internal.h"
 #include "opal/util/output.h"
 #include "opal/util/printf.h"
 #include "opal/mca/crs/crs.h"

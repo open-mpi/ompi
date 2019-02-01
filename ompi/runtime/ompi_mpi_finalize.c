@@ -43,7 +43,7 @@
 #include <netdb.h>
 #endif
 
-#include "opal/mca/event/event.h"
+#include "opal/event/event-internal.h"
 #include "opal/util/output.h"
 #include "opal/runtime/opal_progress.h"
 #include "opal/mca/base/base.h"
@@ -54,7 +54,7 @@
 #include "opal/mca/mpool/base/mpool_base_tree.h"
 #include "opal/mca/rcache/base/base.h"
 #include "opal/mca/allocator/base/base.h"
-#include "opal/mca/pmix/pmix.h"
+#include "opal/pmix/pmix-internal.h"
 #include "opal/util/timings.h"
 
 #include "mpi.h"
@@ -248,24 +248,25 @@ int ompi_mpi_finalize(void)
        https://svn.open-mpi.org/trac/ompi/ticket/4669#comment:4 for
        more details). */
     if (!ompi_async_mpi_finalize) {
-        if (NULL != opal_pmix.fence_nb) {
-            active = true;
-            OPAL_POST_OBJECT(&active);
-            /* Note that use of the non-blocking PMIx fence will
-             * allow us to lazily cycle calling
-             * opal_progress(), which will allow any other pending
-             * communications/actions to complete.  See
-             * https://github.com/open-mpi/ompi/issues/1576 for the
-             * original bug report. */
-            if (OMPI_SUCCESS != (ret = opal_pmix.fence_nb(NULL, 0, fence_cbfunc,
-                                                          (void*)&active))) {
-                OMPI_ERROR_LOG(ret);
-                /* Reset the active flag to false, to avoid waiting for
-                 * completion when the fence was failed. */
-                active = false;
-            }
-            OMPI_LAZY_WAIT_FOR_COMPLETION(active);
-        } else {
+        active = true;
+        OPAL_POST_OBJECT(&active);
+        /* Note that use of the non-blocking PMIx fence will
+         * allow us to lazily cycle calling
+         * opal_progress(), which will allow any other pending
+         * communications/actions to complete.  See
+         * https://github.com/open-mpi/ompi/issues/1576 for the
+         * original bug report. */
+        if (OMPI_SUCCESS != (ret = opal_pmix_fence_nb(NULL, 0, fence_cbfunc,
+                                                      (void*)&active))) {
+            OMPI_ERROR_LOG(ret);
+            /* Reset the active flag to false, to avoid waiting for
+             * completion when the fence was failed. */
+            active = false;
+        }
+        OMPI_LAZY_WAIT_FOR_COMPLETION(active);
+#if 0
+        /* FIXME GG */
+        {
             /* However, we cannot guarantee that the provided PMIx has
              * fence_nb.  If it doesn't, then do the best we can: an MPI
              * barrier on COMM_WORLD (which isn't the best because of the
@@ -278,6 +279,7 @@ int ompi_mpi_finalize(void)
                 OMPI_ERROR_LOG(ret);
             }
         }
+#endif
     }
 
     /*

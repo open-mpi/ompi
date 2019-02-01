@@ -28,7 +28,7 @@
 
 #include "opal_config.h"
 #include "opal/class/opal_list.h"
-#include "opal/mca/event/event.h"
+#include "opal/event/event-internal.h"
 #include "opal/mca/rcache/rcache.h"
 #if HAVE_SYS_MMAN_H
 #include <sys/mman.h>

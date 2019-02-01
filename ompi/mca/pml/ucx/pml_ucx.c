@@ -15,7 +15,7 @@
 #include "pml_ucx.h"
 
 #include "opal/runtime/opal.h"
-#include "opal/mca/pmix/pmix.h"
+#include "opal/pmix/pmix-internal.h"
 #include "ompi/attribute/attribute.h"
 #include "ompi/message/message.h"
 #include "ompi/mca/pml/base/pml_base_bsend.h"
@@ -134,6 +134,7 @@ static int mca_pml_ucx_send_worker_address(void)
     PML_UCX_VERBOSE(2, "Pack worker address, size %ld", addrlen);
 
     OPAL_MODEX_SEND(rc, OPAL_PMIX_GLOBAL,
+    OPAL_MODEX_SEND(rc, PMIX_GLOBAL,
                     &mca_pml_ucx_component.pmlm_version, (void*)address, addrlen);
 
     ucp_worker_release_address(ompi_pml_ucx.ucp_worker, address);

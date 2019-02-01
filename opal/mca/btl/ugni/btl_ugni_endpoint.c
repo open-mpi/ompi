@@ -13,7 +13,7 @@
 
 #include "btl_ugni_endpoint.h"
 #include "btl_ugni_smsg.h"
-#include "opal/mca/pmix/pmix.h"
+#include "opal/pmix/pmix-internal.h"
 
 static void mca_btl_ugni_ep_construct (mca_btl_base_endpoint_t *ep)
 {

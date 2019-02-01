@@ -29,7 +29,7 @@
 #include "opal_config.h"
 
 #include "opal/runtime/opal.h"
-#include "opal/mca/base/mca_base_var.h"
+#include "opal/mca/base/base.h"
 
 #include "opal/dss/dss_internal.h"
 

@@ -33,6 +33,14 @@
 
 #include "opal/pmix/pmix-internal.h"
 
+#include "opal/util/argv.h"
+ 
+bool opal_pmix_collect_all_data = true;
+
+bool opal_pmix_base_async_modex = false;
+
+int opal_pmix_base_timeout = -1;
+
 pmix_status_t opal_pmix_convert_rc(int rc)
 {
     switch (rc) {
@@ -793,6 +801,20 @@ OBJ_CLASS_INSTANCE(opal_ds_info_t,
                    opal_list_item_t,
                    dsicon, NULL);
 
+static void lkcon(opal_pmix_pdata_t *p)
+{
+    p->proc.jobid = OPAL_JOBID_INVALID;
+    p->proc.vpid = OPAL_VPID_INVALID;
+    OBJ_CONSTRUCT(&p->value, opal_value_t);
+}
+static void lkdes(opal_pmix_pdata_t *p)
+{
+    OBJ_DESTRUCT(&p->value);
+}
+OBJ_CLASS_INSTANCE(opal_pmix_pdata_t,
+                   opal_list_item_t,
+                   lkcon, lkdes);
+
 static void infoitmcon(opal_info_item_t *p)
 {
     PMIX_INFO_CONSTRUCT(&p->info);
@@ -804,3 +826,219 @@ static void infoitdecon(opal_info_item_t *p)
 OBJ_CLASS_INSTANCE(opal_info_item_t,
                    opal_list_item_t,
                    infoitmcon, infoitdecon);
+
+static void apcon(opal_pmix_app_t *p)
+{
+    p->cmd = NULL;
+    p->argv = NULL;
+    p->env = NULL;
+    p->cwd = NULL;
+    p->maxprocs = 0;
+    OBJ_CONSTRUCT(&p->info, opal_list_t);
+}
+static void apdes(opal_pmix_app_t *p)
+{
+    if (NULL != p->cmd) {
+        free(p->cmd);
+    }
+    if (NULL != p->argv) {
+        opal_argv_free(p->argv);
+    }
+    if (NULL != p->env) {
+        opal_argv_free(p->env);
+    }
+    if (NULL != p->cwd) {
+        free(p->cwd);
+    }
+    OPAL_LIST_DESTRUCT(&p->info);
+}
+OBJ_CLASS_INSTANCE(opal_pmix_app_t,
+                   opal_list_item_t,
+                   apcon, apdes);
+
+int opal_pmix_fence(opal_list_t *procs, int collect_data) {
+    int rc = OPAL_ERR_NOT_IMPLEMENTED;
+    OPAL_ERROR_LOG(rc);
+    return rc;
+}
+
+int opal_pmix_fence_nb(opal_list_t *procs, int collect_data,
+                       opal_pmix_op_cbfunc_t cbfunc, void *cbdata) {
+    int rc = OPAL_ERR_NOT_IMPLEMENTED;
+    OPAL_ERROR_LOG(rc);
+    return rc;
+}
+
+int opal_pmix_lookup(opal_list_t *data, opal_list_t *info) {
+    int rc = OPAL_ERR_NOT_IMPLEMENTED;
+    OPAL_ERROR_LOG(rc);
+    return rc;
+}
+
+int opal_pmix_publish(opal_list_t *info) {
+    int rc = OPAL_ERR_NOT_IMPLEMENTED;
+    OPAL_ERROR_LOG(rc);
+    return rc;
+}
+
+int opal_pmix_unpublish(char **keys, opal_list_t *info) {
+    int rc = OPAL_ERR_NOT_IMPLEMENTED;
+    OPAL_ERROR_LOG(rc);
+    return rc;
+}
+
+int opal_pmix_initialized(void) {
+    int rc = OPAL_ERR_NOT_IMPLEMENTED;
+    OPAL_ERROR_LOG(rc);
+    return rc;
+}
+
+int opal_pmix_init(opal_list_t *ilist) {
+    int rc = OPAL_ERR_NOT_IMPLEMENTED;
+    OPAL_ERROR_LOG(rc);
+    return rc;
+}
+
+int opal_pmix_store_local(const opal_process_name_t *proc,
+                          opal_value_t *val) {
+    int rc = OPAL_ERR_NOT_IMPLEMENTED;
+    OPAL_ERROR_LOG(rc);
+    return rc;
+}
+
+int opal_pmix_finalize(void) {
+    int rc = OPAL_ERR_NOT_IMPLEMENTED;
+    OPAL_ERROR_LOG(rc);
+    return rc;
+}
+
+int opal_pmix_abort(int status, const char *msg,
+                    opal_list_t *procs) {
+    int rc = OPAL_ERR_NOT_IMPLEMENTED;
+    OPAL_ERROR_LOG(rc);
+    return rc;
+}
+
+void opal_pmix_register_evhandler(opal_list_t *event_codes, opal_list_t *info,
+                                  opal_pmix_notification_fn_t evhandler,
+                                  opal_pmix_evhandler_reg_cbfunc_t cbfunc,
+                                  void *cbdata) {
+    int rc = OPAL_ERR_NOT_IMPLEMENTED;
+    OPAL_ERROR_LOG(rc);
+}
+
+void opal_pmix_deregister_evhandler(size_t evhandler, opal_pmix_op_cbfunc_t cbfunc,
+                                    void *cbdata) {
+    int rc = OPAL_ERR_NOT_IMPLEMENTED;
+    OPAL_ERROR_LOG(rc);
+}
+
+void opal_pmix_base_set_evbase(opal_event_base_t *evbase) {
+    int rc = OPAL_ERR_NOT_IMPLEMENTED;
+    OPAL_ERROR_LOG(rc);
+}
+
+char* opal_pmix_get_nspace(opal_jobid_t jobid) {
+    int rc = OPAL_ERR_NOT_IMPLEMENTED;
+    OPAL_ERROR_LOG(rc);
+    return NULL;
+}
+
+void opal_pmix_register_jobid(opal_jobid_t jobid, const char *nspace) {
+    int rc = OPAL_ERR_NOT_IMPLEMENTED;
+    OPAL_ERROR_LOG(rc);
+}
+
+int opal_pmix_connect(opal_list_t *procs) {
+    int rc = OPAL_ERR_NOT_IMPLEMENTED;
+    OPAL_ERROR_LOG(rc);
+    return rc;
+}
+
+int opal_pmix_spawn(opal_list_t *job_info, opal_list_t *apps, opal_jobid_t *jobid) {
+    int rc = OPAL_ERR_NOT_IMPLEMENTED;
+    OPAL_ERROR_LOG(rc);
+    return rc;
+}
+
+int opal_pmix_commit() {
+    int rc = OPAL_ERR_NOT_IMPLEMENTED;
+    OPAL_ERROR_LOG(rc);
+    return rc;
+}
+
+int opal_pmix_base_exchange(opal_value_t *indat,
+                            opal_pmix_pdata_t *outdat,
+                            int timeout)
+{
+    int rc;
+    opal_list_t ilist, mlist;
+    opal_value_t *info;
+    opal_pmix_pdata_t *pdat;
+
+    /* protect the incoming value */
+    opal_dss.copy((void**)&info, indat, OPAL_VALUE);
+    OBJ_CONSTRUCT(&ilist, opal_list_t);
+    opal_list_append(&ilist, &info->super);
+    /* tell the server to delete upon read */
+    info = OBJ_NEW(opal_value_t);
+    info->key = strdup(PMIX_PERSISTENCE);
+    info->type = OPAL_PERSIST;
+    info->data.integer = PMIX_PERSIST_FIRST_READ;
+    opal_list_append(&ilist, &info->super);
+
+    /* publish it with "session" scope */
+    rc = opal_pmix_publish(&ilist);
+    OPAL_LIST_DESTRUCT(&ilist);
+    if (OPAL_SUCCESS != rc) {
+        return rc;
+    }
+
+    /* lookup the other side's info - if a non-blocking form
+     * of lookup isn't available, then we use the blocking
+     * form and trust that the underlying system will WAIT
+     * until the other side publishes its data */
+    pdat = OBJ_NEW(opal_pmix_pdata_t);
+    pdat->value.key = strdup(outdat->value.key);
+    pdat->value.type = outdat->value.type;
+    /* setup the constraints */
+    OBJ_CONSTRUCT(&mlist, opal_list_t);
+    /* tell it to wait for the data to arrive */
+    info = OBJ_NEW(opal_value_t);
+    info->key = strdup(PMIX_WAIT);
+    info->type = OPAL_BOOL;
+    info->data.flag = true;
+    opal_list_append(&mlist, &info->super);
+    /* pass along the given timeout as we don't know when
+     * the other side will publish - it doesn't
+     * have to be simultaneous */
+    info = OBJ_NEW(opal_value_t);
+    info->key = strdup(PMIX_TIMEOUT);
+    info->type = OPAL_INT;
+    if (0 < opal_pmix_base_timeout) {
+        /* the user has overridden the default */
+        info->data.integer = opal_pmix_base_timeout;
+    } else {
+        info->data.integer = timeout;
+    }
+    opal_list_append(&mlist, &info->super);
+
+    /* if a non-blocking version of lookup isn't
+     * available, then use the blocking version */
+    OBJ_CONSTRUCT(&ilist, opal_list_t);
+    opal_list_append(&ilist, &pdat->super);
+    rc = opal_pmix_lookup(&ilist, &mlist);
+    OPAL_LIST_DESTRUCT(&mlist);
+    if (OPAL_SUCCESS != rc) {
+        OPAL_LIST_DESTRUCT(&ilist);
+        return rc;
+    }
+
+    /* pass back the result */
+    outdat->proc = pdat->proc;
+    free(outdat->value.key);
+    rc = opal_value_xfer(&outdat->value, &pdat->value);
+    OPAL_LIST_DESTRUCT(&ilist);
+    return rc;
+}
+

@@ -32,7 +32,7 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
-#include "opal/mca/hwloc/base/base.h"
+#include "opal/hwloc/hwloc-internal.h"
 
 #if OPAL_ENABLE_FT_CR    == 1
 #include "orte/mca/sstore/sstore.h"

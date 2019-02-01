@@ -26,6 +26,7 @@
 #include <stdint.h>
 #include <stdarg.h>
 #include <hwloc.h>
+#include <hwloc/openfabrics-verbs.h>
 #if HWLOC_API_VERSION >= 0x20000
 #include <hwloc/shmem.h>
 #endif

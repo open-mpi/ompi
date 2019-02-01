@@ -34,7 +34,7 @@
 #include "opal/mca/btl/btl.h"
 #include "opal/datatype/opal_convertor.h"
 #include "opal/util/proc.h"
-#include "opal/mca/pmix/pmix.h"
+#include "opal/pmix/pmix-internal.h"
 
 #include "btl_portals4.h"
 #include "btl_portals4_recv.h"

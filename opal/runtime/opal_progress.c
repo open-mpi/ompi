@@ -31,7 +31,7 @@
 
 #include "opal/runtime/opal_progress.h"
 #include "opal/event/event-internal.h"
-#include "opal/mca/base/mca_base_var.h"
+#include "opal/mca/base/base.h"
 #include "opal/constants.h"
 #include "opal/mca/timer/base/base.h"
 #include "opal/util/output.h"

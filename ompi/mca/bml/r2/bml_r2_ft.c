@@ -27,7 +27,7 @@
 
 #include "opal/runtime/opal_progress.h"
 #include "opal/mca/btl/base/base.h"
-#include "opal/mca/pmix/pmix.h"
+#include "opal/pmix/pmix-internal.h"
 
 #include "ompi/runtime/ompi_cr.h"
 #include "ompi/mca/bml/base/base.h"

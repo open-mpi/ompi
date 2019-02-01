@@ -23,7 +23,7 @@
 
 #include "opal_stdint.h"
 #include "opal/threads/mutex.h"
-#include "opal/mca/event/event.h"
+#include "opal/event/event-internal.h"
 #include "opal/util/show_help.h"
 #include "opal/types.h"
 #include "opal/util/output.h"

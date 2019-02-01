@@ -36,7 +36,7 @@
 #include "opal/util/bit_ops.h"
 #include "opal/util/info_subscriber.h"
 #include "opal/util/string_copy.h"
-#include "opal/mca/pmix/pmix.h"
+#include "opal/pmix/pmix-internal.h"
 #include "ompi/constants.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/coll/base/base.h"
@@ -162,7 +162,7 @@ int ompi_comm_init(void)
     char *str=NULL;
     int rc;
 
-    OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, OPAL_PMIX_MAPBY, &wildcard, &str, OPAL_STRING);
+    OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, PMIX_MAPBY, &wildcard, &str, OPAL_STRING);
     if ( 0 == rc && NULL != str) {
         if ( strstr ( str, "BYNODE") ) {
             OMPI_COMM_SET_MAPBY_NODE(&ompi_mpi_comm_world.comm);

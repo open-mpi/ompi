@@ -29,7 +29,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "opal/mca/hwloc/base/base.h"
+#include "opal/hwloc/hwloc-internal.h"
 #include "opal/runtime/opal.h"
 #include "opal/util/string_copy.h"
 

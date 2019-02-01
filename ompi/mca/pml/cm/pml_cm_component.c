@@ -22,7 +22,7 @@
 #include "ompi_config.h"
 
 #include "pml_cm.h"
-#include "opal/mca/event/event.h"
+#include "opal/event/event-internal.h"
 #include "ompi/mca/mtl/mtl.h"
 #include "ompi/mca/mtl/base/base.h"
 #include "ompi/mca/pml/base/pml_base_bsend.h"

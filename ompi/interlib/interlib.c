@@ -27,7 +27,7 @@
 
 #include <string.h>
 
-#include "opal/mca/pmix/pmix.h"
+#include "opal/pmix/pmix-internal.h"
 #include "ompi/mca/rte/rte.h"
 #include "ompi/interlib/interlib.h"
 
@@ -67,7 +67,7 @@ static void model_callback(int status,
          * know that we are MPI */
         if (NULL != info) {
             OPAL_LIST_FOREACH(val, info, opal_value_t) {
-                if (0 == strcmp(val->key, OPAL_PMIX_PROGRAMMING_MODEL) &&
+                if (0 == strcmp(val->key, PMIX_PROGRAMMING_MODEL) &&
                     0 == strcmp(val->data.string, "MPI")) {
                     goto cback;
                 }
@@ -101,7 +101,7 @@ int ompi_interlib_declare(int threadlevel, char *version)
     /* give it a name so we can distinguish it */
     OBJ_CONSTRUCT(&directives, opal_list_t);
     kv = OBJ_NEW(opal_value_t);
-    kv->key = strdup(OPAL_PMIX_EVENT_HDLR_NAME);
+    kv->key = strdup(PMIX_EVENT_HDLR_NAME);
     kv->type = OPAL_STRING;
     kv->data.string = strdup("MPI-Model-Declarations");
     opal_list_append(&directives, &kv->super);
@@ -116,7 +116,7 @@ int ompi_interlib_declare(int threadlevel, char *version)
      * isn't required so long as the code that generates
      * the event stipulates its range as proc_local. We rely
      * on that here */
-    opal_pmix.register_evhandler(&info, &directives, model_callback,
+    opal_pmix_register_evhandler(&info, &directives, model_callback,
                                  model_registration_callback,
                                  (void*)&trk);
     OMPI_LAZY_WAIT_FOR_COMPLETION(trk.active);
@@ -130,22 +130,22 @@ int ompi_interlib_declare(int threadlevel, char *version)
     /* declare that we are present and active */
     OBJ_CONSTRUCT(&info, opal_list_t);
     kv = OBJ_NEW(opal_value_t);
-    kv->key = strdup(OPAL_PMIX_PROGRAMMING_MODEL);
+    kv->key = strdup(PMIX_PROGRAMMING_MODEL);
     kv->type = OPAL_STRING;
     kv->data.string = strdup("MPI");
     opal_list_append(&info, &kv->super);
     kv = OBJ_NEW(opal_value_t);
-    kv->key = strdup(OPAL_PMIX_MODEL_LIBRARY_NAME);
+    kv->key = strdup(PMIX_MODEL_LIBRARY_NAME);
     kv->type = OPAL_STRING;
     kv->data.string = strdup("OpenMPI");
     opal_list_append(&info, &kv->super);
     kv = OBJ_NEW(opal_value_t);
-    kv->key = strdup(OPAL_PMIX_MODEL_LIBRARY_VERSION);
+    kv->key = strdup(PMIX_MODEL_LIBRARY_VERSION);
     kv->type = OPAL_STRING;
     kv->data.string = strdup(version);
     opal_list_append(&info, &kv->super);
     kv = OBJ_NEW(opal_value_t);
-    kv->key = strdup(OPAL_PMIX_THREADING_MODEL);
+    kv->key = strdup(PMIX_THREADING_MODEL);
     kv->type = OPAL_STRING;
     if (MPI_THREAD_SINGLE == threadlevel) {
         kv->data.string = strdup("NONE");
@@ -154,9 +154,9 @@ int ompi_interlib_declare(int threadlevel, char *version)
     }
     opal_list_append(&info, &kv->super);
     /* call pmix to initialize these values */
-    ret = opal_pmix.init(&info);
+    ret = opal_pmix_init(&info);
     OPAL_LIST_DESTRUCT(&info);
     /* account for our refcount on pmix_init */
-    opal_pmix.finalize();
+    opal_pmix_finalize();
     return ret;
 }

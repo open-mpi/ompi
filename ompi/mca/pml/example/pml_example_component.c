@@ -17,7 +17,7 @@
 
 #include "ompi_config.h"
 
-#include "opal/mca/event/event.h"
+#include "opal/event/event-internal.h"
 #include "pml_example.h"
 
 static int mca_pml_example_component_register(void);

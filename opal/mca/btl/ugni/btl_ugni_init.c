@@ -20,7 +20,7 @@
 
 #include "opal/class/opal_list.h"
 #include "opal/dss/dss.h"
-#include "opal/mca/pmix/pmix.h"
+#include "opal/pmix/pmix-internal.h"
 #include "opal/util/bit_ops.h"
 #include "opal/mca/hwloc/base/base.h"
 
