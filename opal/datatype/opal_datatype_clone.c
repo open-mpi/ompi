@@ -12,6 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc. All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2019      Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -41,6 +43,7 @@ int32_t opal_datatype_clone( const opal_datatype_t * src_type, opal_datatype_t *
             sizeof(opal_datatype_t)-sizeof(opal_object_t) );
 
     dest_type->flags &= (~OPAL_DATATYPE_FLAG_PREDEFINED);
+    dest_type->ptypes = NULL;
     dest_type->desc.desc = temp;
 
     /**
