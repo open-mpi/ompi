@@ -43,6 +43,7 @@
     static inline int pvar_prefix ## _init(MPI_T_pvar_session session)  \
     {                                                                   \
         int MPIT_result;                                                \
+        MPI_Comm comm = MPI_COMM_WORLD;                                 \
         /* Get index */                                                 \
         MPIT_result = MPI_T_pvar_get_index(pvar_prefix ## _pvar_name,   \
                                            pvar_class,                  \
@@ -57,7 +58,7 @@
         /* Allocating a new PVAR in a session will reset the counters */ \
         int count;                                                      \
         MPIT_result = MPI_T_pvar_handle_alloc(session, pvar_prefix ## _pvar_idx, \
-                                              MPI_COMM_WORLD, &(pvar_prefix ## _handle), \
+                                              &comm, &(pvar_prefix ## _handle), \
                                               &count);                  \
         if( MPI_SUCCESS != MPIT_result ) {                              \
             fprintf(stderr, "Failed to allocate handle on \"%s\" pvar, check that you have " \

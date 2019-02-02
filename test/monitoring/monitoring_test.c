@@ -78,6 +78,7 @@ int main(int argc, char* argv[])
     int rank, size, n, to, from, tagno, MPIT_result, provided, count, world_rank;
     MPI_T_pvar_session session;
     MPI_Comm newcomm;
+    MPI_Comm comm = MPI_COMM_WORLD;
     char filename[1024];
     
     for ( int arg_it = 1; argc > 1 && arg_it < argc; ++arg_it ) {
@@ -120,7 +121,7 @@ int main(int argc, char* argv[])
 
         /* Allocating a new PVAR in a session will reset the counters */
         MPIT_result = MPI_T_pvar_handle_alloc(session, flush_pvar_idx,
-                                              MPI_COMM_WORLD, &flush_handle, &count);
+                                              &comm, &flush_handle, &count);
         if (MPIT_result != MPI_SUCCESS) {
             printf("failed to allocate handle on \"%s\" pvar, check that you have monitoring pml\n",
                    flush_pvar_name);
