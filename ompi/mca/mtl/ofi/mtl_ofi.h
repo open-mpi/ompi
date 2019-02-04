@@ -325,10 +325,18 @@ ompi_mtl_ofi_isend_callback(struct fi_cq_tagged_entry *wc,
     return OMPI_SUCCESS;
 }
 
-#define MTL_OFI_MAP_COMM_TO_CONTEXT(comm_id, ctxt_id)                           \
-    do {                                                                        \
-        ctxt_id = ompi_mtl_ofi.comm_to_context[comm_id];                    \
-    } while (0);
+/* Return OFI context ID associated with the specific communicator */
+__opal_attribute_always_inline__ static inline int
+ompi_mtl_ofi_map_comm_to_ctxt(uint32_t comm_id)
+{
+    /* For non-thread-grouping use case, only one context is used which is
+     * associated to MPI_COMM_WORLD, so use that. */
+    if (0 == ompi_mtl_ofi.thread_grouping) {
+        comm_id = 0;
+    }
+
+    return ompi_mtl_ofi.comm_to_context[comm_id];
+}
 
 __opal_attribute_always_inline__ static inline int
 ompi_mtl_ofi_ssend_recv(ompi_mtl_ofi_request_t *ack_req,
@@ -342,7 +350,7 @@ ompi_mtl_ofi_ssend_recv(ompi_mtl_ofi_request_t *ack_req,
     ssize_t ret = OMPI_SUCCESS;
     int ctxt_id = 0;
 
-    MTL_OFI_MAP_COMM_TO_CONTEXT(comm->c_contextid, ctxt_id);
+    ctxt_id = ompi_mtl_ofi_map_comm_to_ctxt(comm->c_contextid);
     set_thread_context(ctxt_id);
 
     ack_req = malloc(sizeof(ompi_mtl_ofi_request_t));
@@ -397,7 +405,7 @@ ompi_mtl_ofi_send_generic(struct mca_mtl_base_module_t *mtl,
     fi_addr_t src_addr = 0;
     fi_addr_t sep_peer_fiaddr = 0;
 
-    MTL_OFI_MAP_COMM_TO_CONTEXT(comm->c_contextid, ctxt_id);
+    ctxt_id = ompi_mtl_ofi_map_comm_to_ctxt(comm->c_contextid);
     set_thread_context(ctxt_id);
 
     /**
@@ -532,7 +540,7 @@ ompi_mtl_ofi_isend_generic(struct mca_mtl_base_module_t *mtl,
     ompi_mtl_ofi_request_t *ack_req = NULL; /* For synchronous send */
     fi_addr_t sep_peer_fiaddr = 0;
 
-    MTL_OFI_MAP_COMM_TO_CONTEXT(comm->c_contextid, ctxt_id);
+    ctxt_id = ompi_mtl_ofi_map_comm_to_ctxt(comm->c_contextid);
     set_thread_context(ctxt_id);
 
     ofi_req->event_callback = ompi_mtl_ofi_isend_callback;
@@ -617,7 +625,7 @@ ompi_mtl_ofi_recv_callback(struct fi_cq_tagged_entry *wc,
     ompi_status_public_t *status = NULL;
     struct fi_msg_tagged tagged_msg;
 
-    MTL_OFI_MAP_COMM_TO_CONTEXT(ofi_req->comm->c_contextid, ctxt_id);
+    ctxt_id = ompi_mtl_ofi_map_comm_to_ctxt(ofi_req->comm->c_contextid);
 
     assert(ofi_req->super.ompi_req);
     status = &ofi_req->super.ompi_req->req_status;
@@ -758,7 +766,7 @@ ompi_mtl_ofi_irecv_generic(struct mca_mtl_base_module_t *mtl,
     size_t length;
     bool free_after;
 
-    MTL_OFI_MAP_COMM_TO_CONTEXT(comm->c_contextid, ctxt_id);
+    ctxt_id = ompi_mtl_ofi_map_comm_to_ctxt(comm->c_contextid);
     set_thread_context(ctxt_id);
 
     if (ofi_cq_data) {
@@ -884,7 +892,7 @@ ompi_mtl_ofi_imrecv(struct mca_mtl_base_module_t *mtl,
     uint64_t msgflags = FI_CLAIM | FI_COMPLETION;
     struct ompi_communicator_t *comm = (*message)->comm;
 
-    MTL_OFI_MAP_COMM_TO_CONTEXT(comm->c_contextid, ctxt_id);
+    ctxt_id = ompi_mtl_ofi_map_comm_to_ctxt(comm->c_contextid);
     set_thread_context(ctxt_id);
 
     ompi_ret = ompi_mtl_datatype_recv_buf(convertor,
@@ -977,7 +985,7 @@ ompi_mtl_ofi_iprobe_generic(struct mca_mtl_base_module_t *mtl,
     uint64_t msgflags = FI_PEEK | FI_COMPLETION;
     int ctxt_id = 0;
 
-    MTL_OFI_MAP_COMM_TO_CONTEXT(comm->c_contextid, ctxt_id);
+    ctxt_id = ompi_mtl_ofi_map_comm_to_ctxt(comm->c_contextid);
     set_thread_context(ctxt_id);
 
     if (ofi_cq_data) {
@@ -1066,7 +1074,7 @@ ompi_mtl_ofi_improbe_generic(struct mca_mtl_base_module_t *mtl,
     uint64_t msgflags = FI_PEEK | FI_CLAIM | FI_COMPLETION;
     int ctxt_id = 0;
 
-    MTL_OFI_MAP_COMM_TO_CONTEXT(comm->c_contextid, ctxt_id);
+    ctxt_id = ompi_mtl_ofi_map_comm_to_ctxt(comm->c_contextid);
     set_thread_context(ctxt_id);
 
     ofi_req = malloc(sizeof *ofi_req);
@@ -1168,7 +1176,7 @@ ompi_mtl_ofi_cancel(struct mca_mtl_base_module_t *mtl,
     int ret, ctxt_id = 0;
     ompi_mtl_ofi_request_t *ofi_req = (ompi_mtl_ofi_request_t*) mtl_request;
 
-    MTL_OFI_MAP_COMM_TO_CONTEXT(ofi_req->comm->c_contextid, ctxt_id);
+    ctxt_id = ompi_mtl_ofi_map_comm_to_ctxt(ofi_req->comm->c_contextid);
 
     switch (ofi_req->type) {
         case OMPI_MTL_OFI_SEND:
