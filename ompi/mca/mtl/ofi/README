@@ -72,7 +72,7 @@ by reducing the bits available for the communicator ID field in the OFI tag.
 
 SCALABLE ENDPOINTS:
 -------------------
-OFI MTL supports OFI Scalable Endpoints feature as a means to improve
+OFI MTL supports OFI Scalable Endpoints (SEP) feature as a means to improve
 multi-threaded application throughput and message rate. Currently the feature
 is designed to utilize multiple TX/RX contexts exposed by the OFI provider in
 conjunction with a multi-communicator MPI application model. Therefore, new OFI
@@ -81,12 +81,13 @@ instead of creating them all at once during init time and this approach also
 favours only creating as many contexts as needed.
 
 1. Multi-communicator model:
-   With this approach, the application first duplicates the communicators it
-   wants to use with MPI operations (ideally creating as many communicators as
-   the number of threads it wants to use to call into MPI). The duplicated
-   communicators are then used by the corresponding threads to perform MPI
-   operations. A possible usage scenario could be in an MPI + OMP
-   application as follows (example limited to 2 ranks):
+   With this approach, the MPI application is requried to first duplicate
+   the communicators it wants to use with MPI operations (ideally creating
+   as many communicators as the number of threads it wants to use to call
+   into MPI). The duplicated communicators are then used by the
+   corresponding threads to perform MPI operations. A possible usage
+   scenario could be in an MPI + OMP application as follows
+   (example limited to 2 ranks):
 
     MPI_Comm dup_comm[n];
     MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &provided);
@@ -112,13 +113,17 @@ favours only creating as many contexts as needed.
     }
 
 2. MCA variables:
-To utilize the feature, the following MCA variable needs to be set:
+  To utilize the feature, the following MCA variables need to be set:
   mtl_ofi_enable_sep:
-  This MCA variable needs to be set to enable the use of Scalable Endpoints
+  This MCA variable needs to be set to enable the use of Scalable Endpoints (SEP)
   feature in the OFI MTL. The underlying provider is also checked to ensure the
   feature is supported. If the provider chosen does not support it, user needs
-  to either set this variable to 0 or select different provider which supports
+  to either set this variable to 0 or select a different provider which supports
   the feature.
+  For single-threaded applications one OFI context is sufficient, so OFI SEPs
+  may not add benefit.
+  Note that mtl_ofi_thread_grouping (see below) needs to be enabled to use the
+  different OFI SEP contexts. Otherwise, only one context (ctxt 0) will be used.
 
   Default: 0
 
@@ -126,7 +131,12 @@ To utilize the feature, the following MCA variable needs to be set:
   "-mca mtl_ofi_enable_sep 1"
 
   mtl_ofi_thread_grouping:
-  This MCA variable needs to be set to switch Thread Grouping feature on.
+  Turn Thread Grouping feature on. This is needed to use the Multi-communicator
+  model explained above. This means that the OFI MTL will use the communicator
+  ID to decide the SEP contexts to be used by the thread. In this way, each
+  thread will have direct access to different OFI resources. If disabled,
+  only context 0 will be used.
+  Requires mtl_ofi_enable_sep to be set to 1.
 
   Default: 0
 
@@ -139,11 +149,11 @@ To utilize the feature, the following MCA variable needs to be set:
     "-mca mtl_ofi_thread_grouping 1"
 
   mtl_ofi_num_ctxts:
-  MCA variable allows user to set the number of OFI contexts the applications
-  expects to use. For multi-threaded applications using Thread Grouping
-  feature, this number should be set to the number of user threads that will
-  call into MPI. For single-threaded applications one OFI context is
-  sufficient.
+  This MCA variable allows user to set the number of OFI SEP contexts the
+  application expects to use. For multi-threaded applications using Thread
+  Grouping feature, this number should be set to the number of user threads
+  that will call into MPI. This variable will only have effect if
+  mtl_ofi_enable_sep is set to 1.
 
   Default: 1
 
