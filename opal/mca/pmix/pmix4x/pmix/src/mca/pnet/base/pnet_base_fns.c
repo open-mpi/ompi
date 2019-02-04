@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2015-2018 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2016      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2018      Research Organization for Information Science
@@ -39,10 +39,11 @@ pmix_status_t pmix_pnet_base_allocate(char *nspace,
                                       pmix_list_t *ilist)
 {
     pmix_pnet_base_active_module_t *active;
-    pmix_status_t rc;
+    pmix_status_t rc = PMIX_SUCCESS;
     pmix_namespace_t *nptr, *ns;
     size_t n;
     char *nregex, *pregex;
+    char *params[2] = {"PMIX_MCA_", NULL};
 
     if (!pmix_pnet_globals.initialized) {
         return PMIX_ERR_INIT;
@@ -75,22 +76,7 @@ pmix_status_t pmix_pnet_base_allocate(char *nspace,
             pmix_list_append(&pmix_server_globals.nspaces, &nptr->super);
         }
 
-        /* if the info param is NULL, then we make one pass thru the actives
-         * in case someone specified an allocation or collection of envars
-         * via MCA param */
-        if (NULL == info) {
-            PMIX_LIST_FOREACH(active, &pmix_pnet_globals.actives, pmix_pnet_base_active_module_t) {
-                if (NULL != active->module->allocate) {
-                    if (PMIX_SUCCESS == (rc = active->module->allocate(nptr, NULL, ilist))) {
-                        break;
-                    }
-                    if (PMIX_ERR_TAKE_NEXT_OPTION != rc) {
-                        /* true error */
-                        return rc;
-                    }
-                }
-            }
-        } else {
+        if (NULL != info) {
             /* check for description of the node and proc maps */
             nregex = NULL;
             pregex = NULL;
@@ -131,7 +117,10 @@ pmix_status_t pmix_pnet_base_allocate(char *nspace,
         }
     }
 
-    return PMIX_SUCCESS;
+    /* add any local PMIx MCA params */
+    rc = pmix_pnet_base_harvest_envars(params, NULL, ilist);
+
+    return rc;
 }
 
 /* can only be called by a server */

@@ -1638,7 +1638,7 @@ pmix_status_t pmix_server_register_events(pmix_peer_t *peer,
     pmix_info_t *info = NULL;
     size_t ninfo=0, ncodes, n, k;
     pmix_regevents_info_t *reginfo;
-    pmix_peer_events_info_t *prev;
+    pmix_peer_events_info_t *prev = NULL;
     pmix_notify_caddy_t *cd;
     pmix_setup_caddy_t *scd;
     int i;
@@ -1738,10 +1738,36 @@ pmix_status_t pmix_server_register_events(pmix_peer_t *peer,
         goto cleanup;
     }
 
+    /* if they didn't send us any codes, then they are registering a
+     * default event handler. In that case, check only for default
+     * handlers and add this request to it, if not already present */
+    if (0 == ncodes)  {
+        PMIX_LIST_FOREACH(reginfo, &pmix_server_globals.events, pmix_regevents_info_t) {
+            if (PMIX_MAX_ERR_CONSTANT == reginfo->code) {
+                /* both are default handlers */
+                prev = PMIX_NEW(pmix_peer_events_info_t);
+                if (NULL == prev) {
+                    rc = PMIX_ERR_NOMEM;
+                    goto cleanup;
+                }
+                PMIX_RETAIN(peer);
+                prev->peer = peer;
+                if (NULL != affected) {
+                    PMIX_PROC_CREATE(prev->affected, naffected);
+                    prev->naffected = naffected;
+                    memcpy(prev->affected, affected, naffected * sizeof(pmix_proc_t));
+                }
+                pmix_list_append(&reginfo->peers, &prev->super);
+                break;
+            }
+        }
+        rc = PMIX_OPERATION_SUCCEEDED;
+        goto cleanup;
+    }
+
     /* store the event registration info so we can call the registered
      * client when the server notifies the event */
-    k=0;
-    do {
+    for (n=0; n < ncodes; n++) {
         found = false;
         PMIX_LIST_FOREACH(reginfo, &pmix_server_globals.events, pmix_regevents_info_t) {
             if (NULL == codes) {
@@ -1755,35 +1781,28 @@ pmix_status_t pmix_server_register_events(pmix_peer_t *peer,
             } else {
                 if (PMIX_MAX_ERR_CONSTANT == reginfo->code) {
                     continue;
-                } else if (codes[k] == reginfo->code) {
+                } else if (codes[n] == reginfo->code) {
                     found = true;
                     break;
                 }
             }
         }
         if (found) {
-            /* found it - add this peer if we don't already have it */
-            found = false;
-            PMIX_LIST_FOREACH(prev, &reginfo->peers, pmix_peer_events_info_t) {
-                if (prev->peer == peer) {
-                    /* already have it */
-                    rc = PMIX_SUCCESS;
-                    found = true;
-                    break;
-                }
+            /* found it - add this request */
+            prev = PMIX_NEW(pmix_peer_events_info_t);
+            if (NULL == prev) {
+                rc = PMIX_ERR_NOMEM;
+                goto cleanup;
             }
-            if (!found) {
-                /* get here if we don't already have this peer */
-                prev = PMIX_NEW(pmix_peer_events_info_t);
-                if (NULL == prev) {
-                    rc = PMIX_ERR_NOMEM;
-                    goto cleanup;
-                }
-                PMIX_RETAIN(peer);
-                prev->peer = peer;
-                prev->enviro_events = enviro_events;
-                pmix_list_append(&reginfo->peers, &prev->super);
+            PMIX_RETAIN(peer);
+            prev->peer = peer;
+            if (NULL != affected) {
+                PMIX_PROC_CREATE(prev->affected, naffected);
+                prev->naffected = naffected;
+                memcpy(prev->affected, affected, naffected * sizeof(pmix_proc_t));
             }
+            prev->enviro_events = enviro_events;
+            pmix_list_append(&reginfo->peers, &prev->super);
         } else {
             /* if we get here, then we didn't find an existing registration for this code */
             reginfo = PMIX_NEW(pmix_regevents_info_t);
@@ -1794,7 +1813,7 @@ pmix_status_t pmix_server_register_events(pmix_peer_t *peer,
             if (NULL == codes) {
                 reginfo->code = PMIX_MAX_ERR_CONSTANT;
             } else {
-                reginfo->code = codes[k];
+                reginfo->code = codes[n];
             }
             pmix_list_append(&pmix_server_globals.events, &reginfo->super);
             prev = PMIX_NEW(pmix_peer_events_info_t);
@@ -1804,11 +1823,15 @@ pmix_status_t pmix_server_register_events(pmix_peer_t *peer,
             }
             PMIX_RETAIN(peer);
             prev->peer = peer;
+            if (NULL != affected) {
+                PMIX_PROC_CREATE(prev->affected, naffected);
+                prev->naffected = naffected;
+                memcpy(prev->affected, affected, naffected * sizeof(pmix_proc_t));
+            }
             prev->enviro_events = enviro_events;
             pmix_list_append(&reginfo->peers, &prev->super);
         }
-        ++k;
-    } while (k < ncodes);
+    }
 
     /* if they asked for enviro events, call the local server */
     if (enviro_events) {
@@ -1908,7 +1931,20 @@ pmix_status_t pmix_server_register_events(pmix_peer_t *peer,
         if (!found) {
             continue;
         }
+        /* check if the affected procs (if given) match those they
+         * wanted to know about */
+        if (!pmix_notify_check_affected(cd->affected, cd->naffected,
+                                        affected, naffected)) {
+            continue;
+        }
         /* check the range */
+        if (NULL == cd->targets) {
+            rngtrk.procs = &cd->source;
+            rngtrk.nprocs = 1;
+        } else {
+            rngtrk.procs = cd->targets;
+            rngtrk.nprocs = cd->ntargets;
+        }
         rngtrk.range = cd->range;
         PMIX_LOAD_PROCID(&proc, peer->info->pname.nspace, peer->info->pname.rank);
         if (!pmix_notify_check_range(&rngtrk, &proc)) {
@@ -1944,11 +1980,6 @@ pmix_status_t pmix_server_register_events(pmix_peer_t *peer,
             }
         }
 
-        /* if they specified affected proc(s) they wanted to know about, check */
-        if (!pmix_notify_check_affected(cd->affected, cd->naffected,
-                                        affected, naffected)) {
-            continue;
-        }
         /* all matches - notify */
         relay = PMIX_NEW(pmix_buffer_t);
         if (NULL == relay) {
@@ -2253,14 +2284,12 @@ pmix_status_t pmix_server_query(pmix_peer_t *peer,
         }
     }
 
-    /** check each query/key to see if we already have the info
-     * before passing the request up to the host */
     /* check the directives to see if they want us to refresh
      * the local cached results - if we wanted to optimize this
      * more, we would check each query and allow those that don't
      * want to be refreshed to be executed locally, and those that
      * did would be sent to the host. However, for now we simply
-     * */
+     * determine that if we don't have it, then ask for everything */
     memset(proc.nspace, 0, PMIX_MAX_NSLEN+1);
     proc.rank = PMIX_RANK_INVALID;
     PMIX_CONSTRUCT(&results, pmix_list_t);
@@ -2279,6 +2308,12 @@ pmix_status_t pmix_server_query(pmix_peer_t *peer,
                 PMIX_LOAD_NSPACE(proc.nspace, cd->queries[n].qualifiers[p].value.data.string);
             } else if (PMIX_CHECK_KEY(&cd->queries[n].qualifiers[p], PMIX_RANK)) {
                 proc.rank = cd->queries[n].qualifiers[p].value.data.rank;
+            } else if (PMIX_CHECK_KEY(&cd->queries[n].qualifiers[p], PMIX_HOSTNAME)) {
+                if (0 != strcmp(cd->queries[n].qualifiers[p].value.data.string, pmix_globals.hostname)) {
+                    /* asking about a different host, so ask for the info */
+                    PMIX_LIST_DESTRUCT(&results);
+                    goto query;
+                }
             }
         }
         /* we get here if a refresh isn't required - first try a local
@@ -4152,11 +4187,17 @@ PMIX_EXPORT PMIX_CLASS_INSTANCE(pmix_setup_caddy_t,
 
 static void ncon(pmix_notify_caddy_t *p)
 {
-    struct timespec tp;
-
     PMIX_CONSTRUCT_LOCK(&p->lock);
-    clock_gettime(CLOCK_MONOTONIC, &tp);
+#if defined(__linux__) && OPAL_HAVE_CLOCK_GETTIME
+    struct timespec tp;
+    (void) clock_gettime(CLOCK_MONOTONIC, &tp);
     p->ts = tp.tv_sec;
+#else
+    /* Fall back to gettimeofday() if we have nothing else */
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    p->ts = tv.tv_sec;
+#endif
     p->room = -1;
     memset(p->source.nspace, 0, PMIX_MAX_NSLEN+1);
     p->source.rank = PMIX_RANK_UNDEF;
@@ -4244,11 +4285,16 @@ PMIX_CLASS_INSTANCE(pmix_dmdx_local_t,
 static void prevcon(pmix_peer_events_info_t *p)
 {
     p->peer = NULL;
+    p->affected = NULL;
+    p->naffected = 0;
 }
 static void prevdes(pmix_peer_events_info_t *p)
 {
     if (NULL != p->peer) {
         PMIX_RELEASE(p->peer);
+    }
+    if (NULL != p->affected) {
+        PMIX_PROC_FREE(p->affected, p->naffected);
     }
 }
 PMIX_CLASS_INSTANCE(pmix_peer_events_info_t,

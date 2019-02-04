@@ -456,6 +456,8 @@ typedef struct {
     pmix_peer_t *mypeer;                // my own peer object
     uid_t uid;                          // my effective uid
     gid_t gid;                          // my effective gid
+    char *hostname;                     // my hostname
+    uint32_t nodeid;                    // my nodeid, if given
     int pindex;
     pmix_event_base_t *evbase;
     bool external_evbase;

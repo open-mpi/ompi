@@ -131,6 +131,8 @@ typedef struct {
     pmix_list_item_t super;
     pmix_peer_t *peer;
     bool enviro_events;
+    pmix_proc_t *affected;
+    size_t naffected;
 } pmix_peer_events_info_t;
 PMIX_CLASS_DECLARATION(pmix_peer_events_info_t);
 

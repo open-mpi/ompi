@@ -14,8 +14,8 @@
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015-2019 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -1183,13 +1183,13 @@ static void log_fn(const pmix_proc_t *client,
                    const pmix_info_t directives[], size_t ndirs,
                    pmix_op_cbfunc_t cbfunc, void *cbdata)
 {
-    mylog_t lg;
+    mylog_t *lg = (mylog_t *)malloc(sizeof(mylog_t));
 
     pmix_output(0, "SERVER: LOG");
 
-    lg.cbfunc = cbfunc;
-    lg.cbdata = cbdata;
-    PMIX_THREADSHIFT(&lg, foobar);
+    lg->cbfunc = cbfunc;
+    lg->cbdata = cbdata;
+    PMIX_THREADSHIFT(lg, foobar);
 }
 
 static pmix_status_t alloc_fn(const pmix_proc_t *client,
