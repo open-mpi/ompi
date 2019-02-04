@@ -297,11 +297,7 @@ static pmix_status_t _add_hdlr(pmix_rshift_caddy_t *cd, pmix_list_t *xfer)
         PMIX_INFO_CREATE(cd2->info, cd2->ninfo);
         n=0;
         PMIX_LIST_FOREACH(ixfer, xfer, pmix_info_caddy_t) {
-            pmix_strncpy(cd2->info[n].key, ixfer->info[n].key, PMIX_MAX_KEYLEN);
-            PMIX_BFROPS_VALUE_LOAD(pmix_client_globals.myserver,
-                                   &cd2->info[n].value,
-                                   &ixfer->info[n].value.data,
-                                   ixfer->info[n].value.type);
+            PMIX_INFO_XFER(&cd2->info[n], ixfer->info);
             ++n;
         }
     }
@@ -526,12 +522,21 @@ static void reg_event_hdlr(int sd, short args, void *cbdata)
             } else if (0 == strncmp(cd->info[n].key, PMIX_EVENT_AFFECTED_PROC, PMIX_MAX_KEYLEN)) {
                 cd->affected = cd->info[n].value.data.proc;
                 cd->naffected = 1;
+                ixfer = PMIX_NEW(pmix_info_caddy_t);
+                ixfer->info = &cd->info[n];
+                ixfer->ninfo = 1;
+                pmix_list_append(&xfer, &ixfer->super);
             } else if (0 == strncmp(cd->info[n].key, PMIX_EVENT_AFFECTED_PROCS, PMIX_MAX_KEYLEN)) {
                 cd->affected = (pmix_proc_t*)cd->info[n].value.data.darray->array;
                 cd->naffected = cd->info[n].value.data.darray->size;
+                ixfer = PMIX_NEW(pmix_info_caddy_t);
+                ixfer->info = &cd->info[n];
+                ixfer->ninfo = 1;
+                pmix_list_append(&xfer, &ixfer->super);
             } else {
                 ixfer = PMIX_NEW(pmix_info_caddy_t);
                 ixfer->info = &cd->info[n];
+                ixfer->ninfo = 1;
                 pmix_list_append(&xfer, &ixfer->super);
             }
         }

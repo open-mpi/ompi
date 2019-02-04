@@ -645,6 +645,11 @@ AC_DEFUN([PMIX_SETUP_CORE],[
 
     pmix_show_title "Library and Function tests"
 
+    # Darwin doesn't need -lutil, as it's something other than this -lutil.
+    PMIX_SEARCH_LIBS_CORE([openpty], [util])
+
+    PMIX_SEARCH_LIBS_CORE([gethostbyname], [nsl])
+
     PMIX_SEARCH_LIBS_CORE([socket], [socket])
 
     # IRIX and CentOS have dirname in -lgen, usually in libc
@@ -652,6 +657,9 @@ AC_DEFUN([PMIX_SETUP_CORE],[
 
     # Darwin doesn't need -lm, as it's a symlink to libSystem.dylib
     PMIX_SEARCH_LIBS_CORE([ceil], [m])
+
+    # -lrt might be needed for clock_gettime
+    PMIX_SEARCH_LIBS_CORE([clock_gettime], [rt])
 
     AC_CHECK_FUNCS([asprintf snprintf vasprintf vsnprintf strsignal socketpair strncpy_s usleep statfs statvfs getpeereid getpeerucred strnlen posix_fallocate tcgetpgrp])
 

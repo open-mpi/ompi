@@ -82,6 +82,17 @@ AC_DEFUN([_PMIX_HWLOC_EXTERNAL],[
                    AC_MSG_RESULT([$pmix_hwloc_dir and $pmix_hwloc_libdir])],
                   [AC_MSG_RESULT([$with_hwloc_libdir])])
         else
+            pmix_hwloc_dir=/usr/include
+            if test -d /usr/lib; then
+                pmix_hwloc_libdir=/usr/lib
+            elif test -d /usr/lib64; then
+                pmix_hwloc_libdir=/usr/lib64
+            else
+                AC_MSG_RESULT([not found])
+                AC_MSG_WARN([Could not find /usr/lib or /usr/lib64 - you may])
+                AC_MSG_WARN([need to specify --with-hwloc_libdir=<path>])
+                AC_MSG_ERROR([Can not continue])
+            fi
             AC_MSG_RESULT([(default search paths)])
             pmix_hwloc_standard_header_location=yes
             pmix_hwloc_standard_lib_location=yes
@@ -104,8 +115,8 @@ AC_DEFUN([_PMIX_HWLOC_EXTERNAL],[
               [PMIX_FLAGS_APPEND_UNIQ(CPPFLAGS, $pmix_hwloc_CPPFLAGS)])
 
         AS_IF([test "$pmix_hwloc_standard_lib_location" != "yes"],
-              [PMIX_FLAGS_APPEND_UNIQ(LIBS, $pmix_hwloc_LIBS)
-               PMIX_FLAGS_APPEND_UNIQ(LDFLAGS, $pmix_hwloc_LDFLAGS)])
+              [PMIX_FLAGS_APPEND_UNIQ(LDFLAGS, $pmix_hwloc_LDFLAGS)])
+        PMIX_FLAGS_APPEND_UNIQ(LIBS, $pmix_hwloc_LIBS)
     fi
 
     if test ! -z "$with_hwloc" && test "$with_hwloc" != "no" && test "$pmix_hwloc_support" != "1"; then

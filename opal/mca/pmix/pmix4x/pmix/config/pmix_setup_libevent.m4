@@ -118,9 +118,8 @@ AC_DEFUN([_PMIX_LIBEVENT_EXTERNAL],[
 
     AS_IF([test "$pmix_event_defaults" = "no"],
           [PMIX_FLAGS_APPEND_UNIQ(CPPFLAGS, $pmix_libevent_CPPFLAGS)
-           PMIX_FLAGS_APPEND_UNIQ(LIBS, $pmix_libevent_LIBS)
            PMIX_FLAGS_APPEND_UNIQ(LDFLAGS, $pmix_libevent_LDFLAGS)])
-
+    PMIX_FLAGS_APPEND_UNIQ(LIBS, $pmix_libevent_LIBS)
 
     # Ensure that this libevent has the symbol
     # "evthread_set_lock_callbacks", which will only exist if

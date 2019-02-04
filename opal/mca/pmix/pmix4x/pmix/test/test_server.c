@@ -1,5 +1,5 @@
  /*
- * Copyright (c) 2015-2018 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015-2018 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2016      Research Organization for Information Science
@@ -75,25 +75,6 @@ static void nscon(server_nspace_t *ns)
 PMIX_CLASS_INSTANCE(server_nspace_t,
                     pmix_list_item_t,
                     nscon, nsdes);
-
-#define WAIT_THREAD(lck, to, ret)                                   \
-    do {                                                            \
-        struct timespec ts;                                         \
-        pmix_mutex_lock(&(lck)->mutex);                             \
-        ts.tv_sec  = time(NULL);                                    \
-        ts.tv_nsec = 0;                                             \
-        ts.tv_sec += (int)to;                                       \
-        while ((lck)->active) {                                     \
-            ret = pthread_cond_timedwait(&(lck)->cond,              \
-                                    &(lck)->mutex.m_lock_pthread,   \
-                                    &ts);                           \
-            if (ETIMEDOUT == rc) {                                  \
-                break;                                              \
-            }                                                       \
-        }                                                           \
-        PMIX_ACQUIRE_OBJECT(lck);                                   \
-        pmix_mutex_unlock(&(lck)->mutex);                           \
-    } while(0)
 
 static int server_send_procs(void);
 static void server_read_cb(evutil_socket_t fd, short event, void *arg);
@@ -427,6 +408,8 @@ static int server_send_procs(void)
     server->modex_cbfunc = _send_procs_cb;
     server->cbdata = (void*)server;
 
+    server->lock.active = true;
+
     if (PMIX_SUCCESS != (rc = server_send_msg(&msg_hdr, buf, msg_hdr.size))) {
         if (buf) {
             free(buf);
@@ -441,7 +424,7 @@ static int server_send_procs(void)
     return PMIX_SUCCESS;
 }
 
-int server_barrier(double to)
+int server_barrier(void)
 {
     server_info_t *server;
     msg_hdr_t msg_hdr;
@@ -458,15 +441,12 @@ int server_barrier(double to)
     msg_hdr.src_id = my_server_id;
     msg_hdr.size = 0;
 
+    server->lock.active = true;
+
     if (PMIX_SUCCESS != (rc = server_send_msg(&msg_hdr, NULL, 0))) {
         return PMIX_ERROR;
     }
-
-    WAIT_THREAD(&server->lock, to, rc);
-    if (rc == ETIMEDOUT) {
-        TEST_ERROR(("timeout waiting from %d", server->idx));
-        return PMIX_ERROR;
-    }
+    PMIX_WAIT_THREAD(&server->lock);
 
     return PMIX_SUCCESS;
 }
@@ -820,7 +800,7 @@ int server_init(test_params *params)
     PMIx_Register_event_handler(NULL, 0, NULL, 0,
                                 errhandler, errhandler_reg_callbk, NULL);
 
-    if (0 != (rc = server_barrier(5))) {
+    if (0 != (rc = server_barrier())) {
         goto error;
     }
 
@@ -836,7 +816,7 @@ int server_finalize(test_params *params)
     int rc = PMIX_SUCCESS;
     int total_ret = 0;
 
-    if (0 != (rc = server_barrier(5))) {
+    if (0 != (rc = server_barrier())) {
         total_ret++;
         goto exit;
     }
@@ -846,12 +826,6 @@ int server_finalize(test_params *params)
         remove_server_item(server);
     }
 
-    /* finalize the server library */
-    if (PMIX_SUCCESS != (rc = PMIx_server_finalize())) {
-        TEST_ERROR(("Finalize failed with error %d", rc));
-        goto exit;
-    }
-
     if (params->nservers && 0 == my_server_id) {
         int ret;
         /* wait for all servers are finished */
@@ -859,7 +833,7 @@ int server_finalize(test_params *params)
         if (!pmix_list_is_empty(server_list)) {
             total_ret += ret;
         }
-        PMIX_RELEASE(server_list);
+        PMIX_LIST_RELEASE(server_list);
         TEST_VERBOSE(("SERVER %d FINALIZE PID:%d with status %d",
                     my_server_id, getpid(), ret));
         if (0 == total_ret) {
@@ -868,9 +842,16 @@ int server_finalize(test_params *params)
             rc = PMIX_ERROR;
         }
     }
+    PMIX_LIST_RELEASE(server_nspace);
+
+    /* finalize the server library */
+    if (PMIX_SUCCESS != (rc = PMIx_server_finalize())) {
+        TEST_ERROR(("Finalize failed with error %d", rc));
+        total_ret += rc;
+        goto exit;
+    }
 
 exit:
-    PMIX_DESTRUCT(server_nspace);
     return total_ret;
 }
 

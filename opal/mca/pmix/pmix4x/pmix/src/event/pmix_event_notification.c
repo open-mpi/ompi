@@ -165,9 +165,8 @@ static pmix_status_t notify_server_of_event(pmix_status_t status,
     pmix_cmd_t cmd = PMIX_NOTIFY_CMD;
     pmix_cb_t *cb;
     pmix_event_chain_t *chain;
-    size_t n, nleft;
+    size_t n;
     pmix_notify_caddy_t *cd;
-    pmix_namespace_t *nptr, *tmp;
 
     pmix_output_verbose(2, pmix_client_globals.event_output,
                         "[%s:%d] client: notifying server %s:%d of status %s for range %s",
@@ -253,31 +252,6 @@ static pmix_status_t notify_server_of_event(pmix_status_t status,
         cd->ntargets = chain->ntargets;
         PMIX_PROC_CREATE(cd->targets, cd->ntargets);
         memcpy(cd->targets, chain->targets, cd->ntargets * sizeof(pmix_proc_t));
-        /* compute the number of targets that need to be notified */
-        nleft = 0;
-        for (n=0; n < cd->ntargets; n++) {
-            /* if this is a single proc, then increment by one */
-            if (PMIX_RANK_VALID >= cd->targets[n].rank) {
-                ++nleft;
-            } else {
-                /* look up the nspace for this proc */
-                nptr = NULL;
-                PMIX_LIST_FOREACH(tmp, &pmix_server_globals.nspaces, pmix_namespace_t) {
-                    if (PMIX_CHECK_NSPACE(tmp->nspace, cd->targets[n].nspace)) {
-                        nptr = tmp;
-                        break;
-                    }
-                }
-                /* if we don't yet know it, then nothing to do */
-                if (NULL == nptr) {
-                    nleft = SIZE_MAX;
-                    break;
-                }
-                /* might notify all local members */
-                nleft += nptr->nlocalprocs;
-            }
-        }
-        cd->nleft = nleft;
     }
     if (NULL != chain->affected) {
         cd->naffected = chain->naffected;
@@ -1027,32 +1001,33 @@ static void _notify_client_event(int sd, short args, void *cbdata)
                     if (matched) {
                         continue;
                     }
+                    /* check if the affected procs (if given) match those they
+                     * wanted to know about */
+                    if (!pmix_notify_check_affected(cd->affected, cd->naffected,
+                                                    pr->affected, pr->naffected)) {
+                        continue;
+                    }
                     /* check the range */
+                    if (NULL == cd->targets) {
+                        rngtrk.procs = &cd->source;
+                        rngtrk.nprocs = 1;
+                    } else {
+                        rngtrk.procs = cd->targets;
+                        rngtrk.nprocs = cd->ntargets;
+                    }
                     rngtrk.range = cd->range;
                     PMIX_LOAD_PROCID(&proc, pr->peer->info->pname.nspace, pr->peer->info->pname.rank);
                     if (!pmix_notify_check_range(&rngtrk, &proc)) {
                         continue;
                     }
-                    /* if we were given specific targets, check if this is one */
                     if (NULL != cd->targets) {
-                        matched = false;
-                        for (n=0; n < cd->ntargets; n++) {
-                            if (PMIX_CHECK_PROCID(&pr->peer->info->pname, &cd->targets[n])) {
-                                matched = true;
-                                /* track the number of targets we have left to notify */
-                                --cd->nleft;
-                                /* if the event was cached and this is the last one,
-                                 * then evict this event from the cache */
-                                if (0 == cd->nleft) {
-                                    pmix_hotel_checkout(&pmix_globals.notifications, cd->room);
-                                    PMIX_RELEASE(cd);
-                                }
-                                break;
-                            }
-                        }
-                        if (!matched) {
-                            /* do not notify this one */
-                            continue;
+                        /* track the number of targets we have left to notify */
+                        --cd->nleft;
+                        /* if the event was cached and this is the last one,
+                         * then evict this event from the cache */
+                        if (0 == cd->nleft) {
+                            pmix_hotel_checkout(&pmix_globals.notifications, cd->room);
+                            PMIX_RELEASE(cd);
                         }
                     }
                     pmix_output_verbose(2, pmix_server_globals.event_output,
@@ -1217,37 +1192,34 @@ bool pmix_notify_check_range(pmix_range_trkr_t *rng,
         return true;
     }
     if (PMIX_RANGE_NAMESPACE == rng->range) {
-        if (0 == strncmp(pmix_globals.myid.nspace, proc->nspace, PMIX_MAX_NSLEN)) {
-            return true;
+        for (n=0; n < rng->nprocs; n++) {
+            if (PMIX_CHECK_NSPACE(rng->procs[n].nspace, proc->nspace)) {
+                return true;
+            }
         }
         return false;
     }
     if (PMIX_RANGE_PROC_LOCAL == rng->range) {
-        if (0 == strncmp(pmix_globals.myid.nspace, proc->nspace, PMIX_MAX_NSLEN) &&
-            pmix_globals.myid.rank == proc->rank) {
-            return true;
+        for (n=0; n < rng->nprocs; n++) {
+            if (PMIX_CHECK_PROCID(&rng->procs[n], proc)) {
+                return true;
+            }
         }
         return false;
     }
     if (PMIX_RANGE_CUSTOM == rng->range) {
-        if (NULL != rng->procs) {
-            /* see if this proc was included */
-            for (n=0; n < rng->nprocs; n++) {
-                if (0 != strncmp(rng->procs[n].nspace, proc->nspace, PMIX_MAX_NSLEN)) {
-                    continue;
-                }
-                if (PMIX_RANK_WILDCARD == rng->procs[n].rank ||
-                    rng->procs[n].rank == proc->rank) {
-                    return true;
-                }
+        /* see if this proc was included */
+        for (n=0; n < rng->nprocs; n++) {
+            if (0 != strncmp(rng->procs[n].nspace, proc->nspace, PMIX_MAX_NSLEN)) {
+                continue;
             }
-            /* if we get here, then this proc isn't in range */
-            return false;
-        } else {
-            /* if they didn't give us a list, then assume
-             * everyone included */
-            return true;
+            if (PMIX_RANK_WILDCARD == rng->procs[n].rank ||
+                rng->procs[n].rank == proc->rank) {
+                return true;
+            }
         }
+        /* if we get here, then this proc isn't in range */
+        return false;
     }
 
     /* if it is anything else, then reject it */
@@ -1270,12 +1242,7 @@ bool pmix_notify_check_affected(pmix_proc_t *interested, size_t ninterested,
     /* check if the two overlap */
     for (n=0; n < naffected; n++) {
         for (m=0; m < ninterested; m++) {
-            if (0 != strncmp(affected[n].nspace, interested[m].nspace, PMIX_MAX_NSLEN)) {
-                continue;
-            }
-            if (PMIX_RANK_WILDCARD == interested[m].rank ||
-                PMIX_RANK_WILDCARD == affected[n].rank ||
-                affected[n].rank == interested[m].rank) {
+            if (PMIX_CHECK_PROCID(&affected[n], &interested[m])) {
                 return true;
             }
         }

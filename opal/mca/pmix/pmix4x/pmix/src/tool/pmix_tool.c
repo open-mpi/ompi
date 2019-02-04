@@ -63,6 +63,7 @@
 #include "src/runtime/pmix_rte.h"
 #include "src/mca/bfrops/base/base.h"
 #include "src/mca/gds/base/base.h"
+#include "src/mca/pnet/base/base.h"
 #include "src/mca/ptl/base/base.h"
 #include "src/mca/psec/psec.h"
 #include "src/include/pmix_globals.h"
@@ -619,6 +620,13 @@ PMIX_EXPORT int PMIx_tool_init(pmix_proc_t *proc,
         rcv->cbfunc = pmix_server_message_handler;
         /* add it to the end of the list of recvs */
         pmix_list_append(&pmix_ptl_globals.posted_recvs, &rcv->super);
+        /* open the pnet framework so we can harvest envars */
+        rc = pmix_mca_base_framework_open(&pmix_pnet_base_framework, 0);
+        if (PMIX_SUCCESS != rc){
+            PMIX_RELEASE_THREAD(&pmix_global_lock);
+            return rc;
+        }
+        /* note that we do not select active plugins as we don't need them */
     }
 
     /* setup IOF */
@@ -1188,6 +1196,7 @@ PMIX_EXPORT pmix_status_t PMIx_tool_finalize(void)
             }
         }
 
+        (void)pmix_mca_base_framework_close(&pmix_pnet_base_framework);
         PMIX_DESTRUCT(&pmix_server_globals.clients);
         PMIX_LIST_DESTRUCT(&pmix_server_globals.collectives);
         PMIX_LIST_DESTRUCT(&pmix_server_globals.remote_pnd);

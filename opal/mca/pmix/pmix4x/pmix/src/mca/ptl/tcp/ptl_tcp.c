@@ -190,11 +190,6 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
         pmix_client_globals.myserver->nptr->compat.bfrops = pmix_globals.mypeer->nptr->compat.bfrops;
         /* mark that we are using the V2 (i.e., tcp) protocol */
         pmix_globals.mypeer->protocol = PMIX_PROTOCOL_V2;
-        /* save the URI for storage */
-        urikv = PMIX_NEW(pmix_kval_t);
-        urikv->key = strdup(PMIX_SERVER_URI);
-        PMIX_VALUE_CREATE(urikv->value, 1);
-        PMIX_VALUE_LOAD(urikv->value, evar, PMIX_STRING);
 
         /* the URI consists of the following elements:
         *    - server nspace.rank
@@ -218,6 +213,7 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
         ++p2;
         nspace = strdup(p);
         rank = strtoull(p2, NULL, 10);
+        suri = strdup(uri[1]);
 
         pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
                             "ptl:tcp:client attempt connect to %s", uri[1]);
@@ -226,6 +222,7 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
         if (PMIX_SUCCESS != (rc = try_connect(uri[1], &sd, info, ninfo))) {
             free(nspace);
             pmix_argv_free(uri);
+            free(suri);
             return rc;
         }
         pmix_argv_free(uri);
@@ -497,11 +494,6 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
             }
             return rc;
         }
-        /* save the URI for storage */
-        urikv = PMIX_NEW(pmix_kval_t);
-        urikv->key = strdup(PMIX_SERVER_URI);
-        PMIX_VALUE_CREATE(urikv->value, 1);
-        PMIX_VALUE_LOAD(urikv->value, suri, PMIX_STRING);
         /* cleanup */
         free(suri);
         suri = NULL;
@@ -535,11 +527,6 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
                 goto complete;
             }
         }
-        /* save the URI for storage */
-        urikv = PMIX_NEW(pmix_kval_t);
-        urikv->key = strdup(PMIX_SERVER_URI);
-        PMIX_VALUE_CREATE(urikv->value, 1);
-        PMIX_VALUE_LOAD(urikv->value, suri, PMIX_STRING);
         /* cleanup */
         if (NULL != nspace) {
             free(nspace);
@@ -579,11 +566,6 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
                 if (NULL != iptr) {
                     PMIX_INFO_FREE(iptr, niptr);
                 }
-                /* save the URI for storage */
-                urikv = PMIX_NEW(pmix_kval_t);
-                urikv->key = strdup(PMIX_SERVER_URI);
-                PMIX_VALUE_CREATE(urikv->value, 1);
-                PMIX_VALUE_LOAD(urikv->value, suri, PMIX_STRING);
                 goto complete;
             }
             free(nspace);
@@ -625,11 +607,6 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
                        filename, iptr, niptr, &sd, &nspace, &rank, &suri);
         free(filename);
         if (PMIX_SUCCESS == rc) {
-            /* save the URI for storage */
-            urikv = PMIX_NEW(pmix_kval_t);
-            urikv->key = strdup(PMIX_SERVER_URI);
-            PMIX_VALUE_CREATE(urikv->value, 1);
-            PMIX_VALUE_LOAD(urikv->value, suri, PMIX_STRING);
             goto complete;
         }
         if (NULL != suri) {
@@ -665,11 +642,6 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
                        filename, iptr, niptr, &sd, &nspace, &rank, &suri);
         free(filename);
         if (PMIX_SUCCESS == rc) {
-            /* save the URI for storage */
-            urikv = PMIX_NEW(pmix_kval_t);
-            urikv->key = strdup(PMIX_SERVER_URI);
-            PMIX_VALUE_CREATE(urikv->value, 1);
-            PMIX_VALUE_LOAD(urikv->value, suri, PMIX_STRING);
             goto complete;
         }
         if (NULL != suri) {
@@ -719,11 +691,6 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
         }
         return PMIX_ERR_UNREACH;
     }
-    /* save the URI for storage */
-    urikv = PMIX_NEW(pmix_kval_t);
-    urikv->key = strdup(PMIX_SERVER_URI);
-    PMIX_VALUE_CREATE(urikv->value, 1);
-    PMIX_VALUE_LOAD(urikv->value, suri, PMIX_STRING);
     if (NULL != iptr) {
         PMIX_INFO_FREE(iptr, niptr);
     }
@@ -769,6 +736,11 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
         pmix_client_globals.myserver->info->pname.rank = rank;
     }
     /* store the URI for subsequent lookups */
+    urikv = PMIX_NEW(pmix_kval_t);
+    urikv->key = strdup(PMIX_SERVER_URI);
+    PMIX_VALUE_CREATE(urikv->value, 1);
+    urikv->value->type = PMIX_STRING;
+    asprintf(&urikv->value->data.string, "%s.%u;%s", nspace, rank, suri);
     PMIX_GDS_STORE_KV(rc, pmix_globals.mypeer,
                       &pmix_globals.myid, PMIX_INTERNAL,
                       urikv);

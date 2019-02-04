@@ -160,6 +160,24 @@ PMIX_EXPORT pmix_status_t PMIx_Query_info_nb(pmix_query_t queries[], size_t nque
         return PMIX_ERR_BAD_PARAM;
     }
 
+    /* do a quick check of the qualifiers array to ensure
+     * the nqual field has been set */
+    for (n=0; n < nqueries; n++) {
+        if (NULL != queries[n].qualifiers && 0 == queries[n].nqual) {
+            /* look for the info marked as "end" */
+            p = 0;
+            while (!(PMIX_INFO_IS_END(&queries[n].qualifiers[p])) && p < SIZE_MAX) {
+                ++p;
+            }
+            if (SIZE_MAX == p) {
+                /* nothing we can do */
+                PMIX_RELEASE_THREAD(&pmix_global_lock);
+                return PMIX_ERR_BAD_PARAM;
+            }
+            queries[n].nqual = p;
+        }
+    }
+
     /* setup the list of local results */
     PMIX_CONSTRUCT(&results, pmix_list_t);
 
@@ -185,6 +203,12 @@ PMIX_EXPORT pmix_status_t PMIx_Query_info_nb(pmix_query_t queries[], size_t nque
                 PMIX_LOAD_NSPACE(proc.nspace, queries[n].qualifiers[p].value.data.string);
             } else if (PMIX_CHECK_KEY(&queries[n].qualifiers[p], PMIX_RANK)) {
                 proc.rank = queries[n].qualifiers[p].value.data.rank;
+            } else if (PMIX_CHECK_KEY(&queries[n].qualifiers[p], PMIX_HOSTNAME)) {
+                if (0 != strcmp(queries[n].qualifiers[p].value.data.string, pmix_globals.hostname)) {
+                    /* asking about a different host, so ask for the info */
+                    PMIX_LIST_DESTRUCT(&results);
+                    goto query;
+                }
             }
         }
         /* we get here if a refresh isn't required - first try a local

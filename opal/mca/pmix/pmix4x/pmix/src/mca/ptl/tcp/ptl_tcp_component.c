@@ -357,6 +357,7 @@ static pmix_status_t setup_listener(pmix_info_t info[], size_t ninfo,
     char *prefix, myhost[PMIX_MAXHOSTNAMELEN];
     char myconnhost[PMIX_MAXHOSTNAMELEN];
     int myport;
+    pmix_kval_t *urikv;
 
     pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
                         "ptl:tcp setup_listener");
@@ -640,6 +641,16 @@ static pmix_status_t setup_listener(pmix_info_t info[], size_t ninfo,
     pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
                         "ptl:tcp URI %s", lt->uri);
 
+    /* save the URI internally so we can report it */
+    urikv = PMIX_NEW(pmix_kval_t);
+    urikv->key = strdup(PMIX_SERVER_URI);
+    PMIX_VALUE_CREATE(urikv->value, 1);
+    PMIX_VALUE_LOAD(urikv->value, lt->uri, PMIX_STRING);
+    PMIX_GDS_STORE_KV(rc, pmix_globals.mypeer,
+                      &pmix_globals.myid, PMIX_INTERNAL,
+                      urikv);
+    PMIX_RELEASE(urikv);  // maintain accounting
+
     if (NULL != mca_ptl_tcp_component.report_uri) {
         /* if the string is a "-", then output to stdout */
         if (0 == strcmp(mca_ptl_tcp_component.report_uri, "-")) {
@@ -690,7 +701,7 @@ static pmix_status_t setup_listener(pmix_info_t info[], size_t ninfo,
         fprintf(fp, "v%s\n", PMIX_VERSION);
         fclose(fp);
         /* set the file mode */
-        if (0 != chmod(mca_ptl_tcp_component.rendezvous_filename, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) {
+        if (0 != chmod(mca_ptl_tcp_component.rendezvous_filename, S_IRUSR | S_IWUSR | S_IRGRP)) {
             PMIX_ERROR_LOG(PMIX_ERR_FILE_OPEN_FAILURE);
             CLOSE_THE_SOCKET(lt->socket);
             free(mca_ptl_tcp_component.rendezvous_filename);
