@@ -116,7 +116,7 @@ OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_recursive_mutex_t);
  *
  ************************************************************************/
 
-static inline int opal_mutex_trylock(opal_mutex_t *m)
+static inline int opal_mutex_trylock(struct opal_mutex_t *m)
 {
 #if OPAL_ENABLE_DEBUG
     int ret = pthread_mutex_trylock(&m->m_lock_pthread);
@@ -131,7 +131,7 @@ static inline int opal_mutex_trylock(opal_mutex_t *m)
 #endif
 }
 
-static inline void opal_mutex_lock(opal_mutex_t *m)
+static inline void opal_mutex_lock(struct opal_mutex_t *m)
 {
 #if OPAL_ENABLE_DEBUG
     int ret = pthread_mutex_lock(&m->m_lock_pthread);
@@ -145,7 +145,7 @@ static inline void opal_mutex_lock(opal_mutex_t *m)
 #endif
 }
 
-static inline void opal_mutex_unlock(opal_mutex_t *m)
+static inline void opal_mutex_unlock(struct opal_mutex_t *m)
 {
 #if OPAL_ENABLE_DEBUG
     int ret = pthread_mutex_unlock(&m->m_lock_pthread);
@@ -171,17 +171,17 @@ static inline void opal_mutex_unlock(opal_mutex_t *m)
  * Spin Locks
  ************************************************************************/
 
-static inline int opal_mutex_atomic_trylock(opal_mutex_t *m)
+static inline int opal_mutex_atomic_trylock(struct opal_mutex_t *m)
 {
     return opal_atomic_trylock(&m->m_lock_atomic);
 }
 
-static inline void opal_mutex_atomic_lock(opal_mutex_t *m)
+static inline void opal_mutex_atomic_lock(struct opal_mutex_t *m)
 {
     opal_atomic_lock(&m->m_lock_atomic);
 }
 
-static inline void opal_mutex_atomic_unlock(opal_mutex_t *m)
+static inline void opal_mutex_atomic_unlock(struct opal_mutex_t *m)
 {
     opal_atomic_unlock(&m->m_lock_atomic);
 }
@@ -192,17 +192,17 @@ static inline void opal_mutex_atomic_unlock(opal_mutex_t *m)
  * Standard locking
  ************************************************************************/
 
-static inline int opal_mutex_atomic_trylock(opal_mutex_t *m)
+static inline int opal_mutex_atomic_trylock(struct opal_mutex_t *m)
 {
     return opal_mutex_trylock(m);
 }
 
-static inline void opal_mutex_atomic_lock(opal_mutex_t *m)
+static inline void opal_mutex_atomic_lock(struct opal_mutex_t *m)
 {
     opal_mutex_lock(m);
 }
 
-static inline void opal_mutex_atomic_unlock(opal_mutex_t *m)
+static inline void opal_mutex_atomic_unlock(struct opal_mutex_t *m)
 {
     opal_mutex_unlock(m);
 }

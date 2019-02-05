@@ -12,7 +12,7 @@
  *
  * $HEADER$
  */
-#include "wait_sync.h"
+#include "opal/mca/threads/wait_sync.h"
 
 static opal_mutex_t wait_sync_lock = OPAL_MUTEX_STATIC_INIT;
 static ompi_wait_sync_t* wait_sync_list = NULL;

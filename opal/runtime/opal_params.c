@@ -61,6 +61,10 @@ char *opal_timing_output = NULL;
 bool opal_timing_overhead = true;
 #endif
 
+#if OPAL_ENABLE_DEBUG
+bool opal_debug_threads;
+#endif
+
 bool opal_built_with_cuda_support = OPAL_INT_TO_BOOL(OPAL_CUDA_SUPPORT);
 bool opal_cuda_support = false;
 bool opal_warn_on_missing_libcuda = true;
