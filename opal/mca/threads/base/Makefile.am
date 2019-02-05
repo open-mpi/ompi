@@ -9,6 +9,8 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2019      Sandia National Laboratories.  All rights reserved.
+#
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -18,7 +20,7 @@
 
 headers += \
         base/base.h \
-	base/threads_base_null.h
+        base/threads_base_null.h
 
 libmca_threads_la_SOURCES += \
         base/threads_base_open.c

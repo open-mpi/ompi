@@ -13,6 +13,8 @@
 # Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2015      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
+# Copyright (c) 2019      Sandia National Laboratories.  All rights reserved.
+# Copyright (c) 2019      Triad National Security, LLC. All rights
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -50,10 +52,8 @@ AC_DEFUN([MCA_opal_threads_pthreads_CONFIG],[
                  [threads_pthreads_happy="no"])])
 
     AS_IF([test "$threads_pthreads_happy" = "yes"],
-          [AC_CHECK_HEADERS([mach/mach_time.h])
-           AC_CHECK_FUNC([mach_absolute_time],
-                         [threads_pthreads_happy="yes"],
-                         [threads_pthreads_happy="no"])])
+          [OPAL_CONFIG_POSIX_THREADS([threads_pthreads_happy="yes"],
+                                     [threads_pthreads_happy="no"])])
 
    AS_IF([test "$threads_pthreads_happy" = "no" && \
           test "$threads_pthreads_should_use" = "1"],
