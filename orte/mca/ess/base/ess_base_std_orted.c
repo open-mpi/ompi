@@ -621,6 +621,7 @@ int orte_ess_base_orted_finalize(void)
     (void) mca_base_framework_close(&orte_plm_base_framework);
     /* make sure our local procs are dead */
     orte_odls.kill_local_procs(NULL);
+    (void) mca_base_framework_close(&orte_rmaps_base_framework);
     (void) mca_base_framework_close(&orte_rtc_base_framework);
     (void) mca_base_framework_close(&orte_odls_base_framework);
     (void) mca_base_framework_close(&orte_routed_base_framework);

@@ -589,7 +589,5 @@ opal_init(int* pargc, char*** pargv)
         return opal_init_error ("opal_compress_base_select", ret);
     }
 
-    opal_finalize_pop_domain ();
-
     return OPAL_SUCCESS;
 }
