@@ -60,10 +60,6 @@ bool opal_thread_self_compare(opal_thread_t *t)
     return t->t_handle == pthread_self();
 }
 
-int sync_wait_mt(void *p) {
-	return 0;
-}
-
 int opal_thread_join(opal_thread_t *t, void **thr_return) {
     int rc = pthread_join(t->t_handle, thr_return);
     t->t_handle = (pthread_t) -1;

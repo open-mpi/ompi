@@ -35,13 +35,7 @@ AC_DEFUN([MCA_opal_threads_CONFIG],[
         # first, compile all the components
         MCA_CONFIGURE_FRAMEWORK($1, $2, 1)
 
-        # someone should have set this...
-        if test "$threads_base_include" = "" ; then
-            threads_base_include="base/threads_base_null.h"
-        fi
-
         if test "$mutex_base_include" = "" ; then
-#            mutex_base_include="base/mutex_base_null.h"
             mutex_base_include="pthreads/mutex_unix.h"
         fi
         AC_DEFINE_UNQUOTED([MCA_threads_IMPLEMENTATION_HEADER],

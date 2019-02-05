@@ -29,23 +29,25 @@
 
 #include "opal_config.h"
 
-#include MCA_mutex_IMPLEMENTATION_HEADER
-
-BEGIN_C_DECLS
-
 /**
- * @file:
+* @file:
  *
  * Mutual exclusion functions.
  *
  * Functions for locking of critical sections.
  */
 
+
 /**
  * Opaque mutex object
  */
+
 typedef struct opal_mutex_t opal_mutex_t;
 typedef struct opal_mutex_t opal_recursive_mutex_t;
+
+BEGIN_C_DECLS
+#include MCA_mutex_IMPLEMENTATION_HEADER
+END_C_DECLS
 
 OBJ_CLASS_DECLARATION(opal_mutex_t);
 OBJ_CLASS_DECLARATION(opal_recursive_mutex_t);
@@ -100,11 +102,6 @@ static inline void opal_mutex_atomic_lock(opal_mutex_t *mutex);
  */
 static inline void opal_mutex_atomic_unlock(opal_mutex_t *mutex);
 
-END_C_DECLS
-
-#include MCA_mutex_IMPLEMENTATION_HEADER
-
-BEGIN_C_DECLS
 
 /**
  * Lock a mutex if opal_using_threads() says that multiple threads may
