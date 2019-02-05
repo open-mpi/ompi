@@ -69,7 +69,7 @@
 #include "opal/util/argv.h"
 #include "opal/util/show_help.h"
 #include "opal/constants.h"
-#include "opal/threads/tsd.h"
+#include "opal/mca/threads/tsd.h"
 #include "opal/runtime/opal_params.h"
 
 /* this function doesn't depend on sockaddr_h */

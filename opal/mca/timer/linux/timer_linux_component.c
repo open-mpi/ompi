@@ -26,6 +26,7 @@
 #include "opal_config.h"
 
 #include <string.h>
+#include <time.h>
 
 #include "opal/mca/timer/timer.h"
 #include "opal/mca/timer/base/base.h"

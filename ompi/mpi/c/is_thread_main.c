@@ -25,7 +25,7 @@
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/runtime/mpiruntime.h"
-#include "opal/threads/threads.h"
+#include "opal/mca/threads/threads.h"
 
 #if OMPI_BUILD_MPI_PROFILING
 #if OPAL_HAVE_WEAK_SYMBOLS

@@ -15,7 +15,7 @@
 
 #include "support.h"
 #include "opal/constants.h"
-#include "opal/threads/threads.h"
+#include "opal/mca/threads/threads.h"
 #include "opal/sys/atomic.h"
 
 

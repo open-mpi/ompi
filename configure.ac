@@ -26,6 +26,8 @@
 # Copyright (c) 2018      Amazon.com, Inc. or its affiliates.
 #                         All Rights reserved.
 # Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
+# Copyright (c) 2019      Triad National Security, LLC. All rights
+#                         reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -946,22 +948,6 @@ OPAL_CHECK_BROKEN_QSORT
 # all: type of recvfrom optlen
 
 #
-# Check out what thread support we have
-#
-OPAL_CONFIG_THREADS
-
-CFLAGS="$CFLAGS $THREAD_CFLAGS"
-CPPFLAGS="$CPPFLAGS $THREAD_CPPFLAGS"
-LDFLAGS="$LDFLAGS $THREAD_LDFLAGS"
-LIBS="$LIBS $THREAD_LIBS"
-
-OPAL_WRAPPER_FLAGS_ADD([CFLAGS], [$THREAD_CFLAGS])
-OPAL_WRAPPER_FLAGS_ADD([CXXFLAGS], [$THREAD_CXXFLAGS])
-OPAL_WRAPPER_FLAGS_ADD([FCFLAGS], [$THREAD_FCFLAGS])
-OPAL_WRAPPER_FLAGS_ADD([LDFLAGS], [$THREAD_LDFLAGS])
-# no need to update WRAPPER_EXTRA_LIBS - we'll get it from LT later
-
-#
 # What is the local equivalent of "ln -s"
 #
 
@@ -1112,6 +1098,14 @@ OPAL_CONFIG_SUBDIR_ARGS([opal_subdir_args])
 AC_MSG_RESULT([$opal_subdir_args])
 
 OPAL_MCA
+
+#
+# Now that we know how to support threads with wrappers, update
+#
+OPAL_WRAPPER_FLAGS_ADD([CFLAGS], [$THREAD_CFLAGS])
+OPAL_WRAPPER_FLAGS_ADD([CXXFLAGS], [$THREAD_CXXFLAGS])
+OPAL_WRAPPER_FLAGS_ADD([FCFLAGS], [$THREAD_FCFLAGS])
+OPAL_WRAPPER_FLAGS_ADD([LDFLAGS], [$THREAD_LDFLAGS])
 
 m4_ifdef([project_ompi], [OMPI_REQUIRE_ENDPOINT_TAG_FINI])
 

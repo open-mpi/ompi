@@ -232,7 +232,7 @@
 #include "ompi_config.h"
 
 #include "opal/class/opal_bitmap.h"
-#include "opal/threads/mutex.h"
+#include "opal/mca/threads/mutex.h"
 #include "opal/sys/atomic.h"
 
 #include "ompi/attribute/attribute.h"

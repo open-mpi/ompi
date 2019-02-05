@@ -27,7 +27,7 @@
 #include "ompi_config.h"
 #include "opal/class/opal_free_list.h"
 #include "opal/class/opal_hash_table.h"
-#include "opal/threads/threads.h"
+#include "opal/mca/threads/threads.h"
 #include "opal/util/output.h"
 
 #include "opal/mca/shmem/shmem.h"

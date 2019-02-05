@@ -71,9 +71,6 @@ OPAL_DECLSPEC int opal_event_finalize(void);
 
 #define opal_event_set_priority(x, n) event_priority_set((x), (n))
 
-/* thread support APIs */
-#define opal_event_use_threads() evthread_use_pthreads()
-
 /* Basic event APIs */
 #define opal_event_enable_debug_mode() event_enable_debug_mode()
 

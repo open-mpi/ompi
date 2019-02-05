@@ -18,7 +18,7 @@
 #include "opal/mca/patcher/patcher.h"
 
 #include "opal/class/opal_list.h"
-#include "opal/threads/mutex.h"
+#include "opal/mca/threads/mutex.h"
 
 struct mca_patcher_linux_patch_got_t {
     opal_list_item_t super;

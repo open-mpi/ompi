@@ -25,8 +25,8 @@
 #include "support.h"
 #include "opal/runtime/opal.h"
 #include "opal/constants.h"
-#include "opal/threads/threads.h"
-#include "opal/threads/condition.h"
+#include "opal/mca/threads/threads.h"
+#include "opal/mca/threads/condition.h"
 #include "opal/sys/atomic.h"
 
 static opal_mutex_t mutex;

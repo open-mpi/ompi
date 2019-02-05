@@ -25,7 +25,7 @@
 #include <time.h>
 
 #include "opal_stdint.h"
-#include "opal/threads/mutex.h"
+#include "opal/mca/threads/mutex.h"
 #include "opal/mca/event/event.h"
 #include "opal/util/output.h"
 #include "opal/util/fd.h"

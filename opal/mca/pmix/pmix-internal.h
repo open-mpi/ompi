@@ -5,6 +5,8 @@
  *                         reserved.
  * Copyright (c) 2019      Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
+ * Copyright (c) 2020      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -24,6 +26,7 @@
 
 #include "opal/mca/mca.h"
 #include "opal/mca/event/event.h"
+#include "opal/mca/threads/threads.h"
 #include "opal/dss/dss.h"
 #include "opal/runtime/opal.h"
 #include "opal/dss/dss.h"
@@ -61,21 +64,23 @@ typedef struct {
 } opal_info_item_t;
 OBJ_CLASS_DECLARATION(opal_info_item_t);
 
+typedef opal_cond_t opal_pmix_condition_t;
 
 typedef struct {
     opal_mutex_t mutex;
-    pthread_cond_t cond;
+    opal_pmix_condition_t cond;
     volatile bool active;
     int status;
     char *msg;
 } opal_pmix_lock_t;
 
-#define opal_pmix_condition_wait(a,b)   pthread_cond_wait(a, &(b)->m_lock_pthread)
+#define opal_pmix_condition_wait(a,b)    opal_cond_wait(a, b)
+#define opal_pmix_condition_broadcast(a) opal_cond_broadcast(a)
 
 #define OPAL_PMIX_CONSTRUCT_LOCK(l)                     \
     do {                                                \
         OBJ_CONSTRUCT(&(l)->mutex, opal_mutex_t);       \
-        pthread_cond_init(&(l)->cond, NULL);            \
+        opal_cond_init(&(l)->cond);                     \
         (l)->active = true;                             \
         (l)->status = 0;                                \
         (l)->msg = NULL;                                \
@@ -86,7 +91,7 @@ typedef struct {
     do {                                    \
         OPAL_ACQUIRE_OBJECT((l));           \
         OBJ_DESTRUCT(&(l)->mutex);          \
-        pthread_cond_destroy(&(l)->cond);   \
+        opal_cond_destroy(&(l)->cond);      \
         if (NULL != (l)->msg) {             \
             free((l)->msg);                 \
         }                                   \
@@ -161,7 +166,7 @@ typedef struct {
                         __FILE__, __LINE__);            \
         }                                               \
         (lck)->active = false;                          \
-        pthread_cond_broadcast(&(lck)->cond);           \
+        opal_pmix_condition_broadcast(&(lck)->cond);    \
         opal_mutex_unlock(&(lck)->mutex);               \
     } while(0)
 #else
@@ -169,18 +174,17 @@ typedef struct {
     do {                                                \
         assert(0 != opal_mutex_trylock(&(lck)->mutex)); \
         (lck)->active = false;                          \
-        pthread_cond_broadcast(&(lck)->cond);           \
+        opal_pmix_condition_broadcast(&(lck)->cond);    \
         opal_mutex_unlock(&(lck)->mutex);               \
     } while(0)
 #endif
-
 
 #define OPAL_PMIX_WAKEUP_THREAD(lck)                    \
     do {                                                \
         opal_mutex_lock(&(lck)->mutex);                 \
         (lck)->active = false;                          \
         OPAL_POST_OBJECT(lck);                          \
-        pthread_cond_broadcast(&(lck)->cond);           \
+        opal_pmix_condition_broadcast(&(lck)->cond);    \
         opal_mutex_unlock(&(lck)->mutex);               \
     } while(0)
 

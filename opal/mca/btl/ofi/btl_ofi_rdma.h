@@ -14,7 +14,7 @@
 #ifndef BTL_OFI_RDMA_H
 #define BTL_OFI_RDMA_H
 
-#include "opal/threads/thread_usage.h"
+#include "opal/mca/threads/thread_usage.h"
 
 #include "btl_ofi.h"
 #include "btl_ofi_endpoint.h"

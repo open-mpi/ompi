@@ -28,7 +28,7 @@
 #include "opal/class/opal_lifo.h"
 
 #include "opal/sys/atomic.h"
-#include "opal/threads/mutex.h"
+#include "opal/mca/threads/mutex.h"
 
 BEGIN_C_DECLS
 

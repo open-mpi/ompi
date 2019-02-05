@@ -13,7 +13,7 @@
 #include "opal/constants.h"
 
 #include "opal/mca/mca.h"
-#include "opal/threads/thread_usage.h"
+#include "opal/mca/threads/thread_usage.h"
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
 #include "opal/mca/base/base.h"

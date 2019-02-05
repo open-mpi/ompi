@@ -20,7 +20,7 @@
 #include "ompi_config.h"
 
 #include "mpi.h"
-#include "opal/threads/mutex.h"
+#include "opal/mca/threads/mutex.h"
 #include "ompi/mca/io/io.h"
 #include "io_ompio.h"
 

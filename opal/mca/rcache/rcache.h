@@ -27,7 +27,7 @@
 #define MCA_RCACHE_H
 #include "opal/mca/mca.h"
 #include "opal/mca/mpool/mpool.h"
-#include "opal/threads/mutex.h"
+#include "opal/mca/threads/mutex.h"
 
 
 /* forward-declaration of rcache module structure */

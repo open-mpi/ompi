@@ -48,8 +48,8 @@
 #include <time.h>
 
 #include "opal/class/opal_object.h"
-#include "opal/threads/mutex.h"
-#include "opal/threads/threads.h"
+#include "opal/mca/threads/mutex.h"
+#include "opal/mca/threads/threads.h"
 #include "opal/util/output.h"
 #include "opal/constants.h"
 #include "opal/util/argv.h"
@@ -101,9 +101,6 @@ OPAL_DECLSPEC int opal_event_finalize(void);
 #define opal_event_base_priority_init(b, n) event_base_priority_init((b), (n))
 
 #define opal_event_set_priority(x, n) event_priority_set((x), (n))
-
-/* thread support APIs */
-#define opal_event_use_threads() evthread_use_pthreads()
 
 /* Basic event APIs */
 #define opal_event_enable_debug_mode() event_enable_debug_mode()

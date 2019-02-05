@@ -29,7 +29,7 @@
 #include "opal_config.h"
 #include <stdlib.h>
 #include <string.h>
-#include "opal/threads/mutex.h"
+#include "opal/mca/threads/mutex.h"
 #include "opal/mca/allocator/allocator.h"
 
 BEGIN_C_DECLS

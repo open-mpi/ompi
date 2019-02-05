@@ -14,7 +14,7 @@
 
 #include "ompi_config.h"
 #include "opal/class/opal_free_list.h"
-#include "opal/threads/threads.h"
+#include "opal/mca/threads/threads.h"
 
 enum ompi_osc_pt2pt_sync_type_t {
     /** default value */

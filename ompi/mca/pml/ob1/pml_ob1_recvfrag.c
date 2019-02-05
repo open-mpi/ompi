@@ -33,7 +33,7 @@
 #include "ompi_config.h"
 
 #include "opal/class/opal_list.h"
-#include "opal/threads/mutex.h"
+#include "opal/mca/threads/mutex.h"
 #include "opal/prefetch.h"
 
 #include "ompi/constants.h"

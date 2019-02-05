@@ -30,7 +30,7 @@
 #include "mpi.h"
 #include "opal/class/opal_list.h"
 #include "ompi/errhandler/errhandler.h"
-#include "opal/threads/mutex.h"
+#include "opal/mca/threads/mutex.h"
 #include "opal/util/info_subscriber.h"
 #include "ompi/mca/io/io.h"
 

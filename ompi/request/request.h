@@ -35,8 +35,8 @@
 #include "mpi.h"
 #include "opal/class/opal_free_list.h"
 #include "opal/class/opal_pointer_array.h"
-#include "opal/threads/condition.h"
-#include "opal/threads/wait_sync.h"
+#include "opal/mca/threads/condition.h"
+#include "opal/mca/threads/wait_sync.h"
 #include "ompi/constants.h"
 
 BEGIN_C_DECLS

@@ -36,7 +36,7 @@
 #include "opal/class/opal_hash_table.h"
 #include "opal/util/info_subscriber.h"
 #include "ompi/errhandler/errhandler.h"
-#include "opal/threads/mutex.h"
+#include "opal/mca/threads/mutex.h"
 #include "ompi/communicator/comm_request.h"
 
 #include "mpi.h"

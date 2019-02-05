@@ -24,8 +24,8 @@
  */
 
 #include "ompi_config.h"
-#include "opal/threads/mutex.h"
-#include "opal/threads/condition.h"
+#include "opal/mca/threads/mutex.h"
+#include "opal/mca/threads/condition.h"
 #include "ompi/datatype/ompi_datatype.h"
 #include "opal/mca/allocator/base/base.h"
 #include "opal/mca/allocator/allocator.h"

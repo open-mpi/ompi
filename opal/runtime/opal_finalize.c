@@ -39,7 +39,7 @@
 #include "opal/memoryhooks/memory.h"
 #include "opal/runtime/opal.h"
 #include "opal/constants.h"
-#include "opal/threads/tsd.h"
+#include "opal/mca/threads/tsd.h"
 #include "opal/runtime/opal_cr.h"
 #include "opal/runtime/opal_progress.h"
 
