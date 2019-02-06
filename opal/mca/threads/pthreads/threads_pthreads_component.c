@@ -25,7 +25,6 @@
 
 #include "opal/mca/threads/thread.h"
 #include "opal/mca/threads/threads.h"
-#include "opal/mca/threads/pthreads/threads_pthreads.h"
 #include "opal/constants.h"
 
 static int opal_threads_pthreads_open(void);

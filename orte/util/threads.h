@@ -27,11 +27,11 @@
  * we only have a memory barrier */
 #define ORTE_ACQUIRE_OBJECT(o)  opal_atomic_rmb()
 
-#define orte_condition_wait(a,b)    pthread_cond_wait(a, &(b)->m_lock_pthread)
-typedef pthread_cond_t orte_condition_t;
-#define orte_condition_broadcast(a) pthread_cond_broadcast(a)
-#define orte_condition_signal(a)    pthread_cond_signal(a)
-#define ORTE_CONDITION_STATIC_INIT PTHREAD_COND_INITIALIZER
+#define orte_condition_wait(a,b)    opal_cond_wait(a,b)
+typedef opal_cond_t orte_condition_t;
+#define orte_condition_broadcast(a) opal_cond_broadcast(a)
+#define orte_condition_signal(a)    opal_cond_signal(a)
+#define ORTE_CONDITION_STATIC_INIT OPAL_COND_INITIALIZER
 
 /* define a threadshift macro */
 #define ORTE_THREADSHIFT(x, eb, f, p)                                   \
@@ -51,14 +51,14 @@ typedef struct {
 #define ORTE_CONSTRUCT_LOCK(l)                          \
     do {                                                \
         OBJ_CONSTRUCT(&(l)->mutex, opal_mutex_t);       \
-        pthread_cond_init(&(l)->cond, NULL);            \
+        opal_cond_init(&(l)->cond);                     \
         (l)->active = true;                             \
     } while(0)
 
 #define ORTE_DESTRUCT_LOCK(l)               \
     do {                                    \
         OBJ_DESTRUCT(&(l)->mutex);          \
-        pthread_cond_destroy(&(l)->cond);   \
+        opal_cond_destroy(&(l)->cond);      \
     } while(0)
 
 

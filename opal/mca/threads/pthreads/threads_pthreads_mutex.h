@@ -23,8 +23,8 @@
  * $HEADER$
  */
 
-#ifndef  OPAL_MUTEX_UNIX_H
-#define  OPAL_MUTEX_UNIX_H 1
+#ifndef  OPAL_MCA_THREADS_PTHREADS_THREADS_PTHREADS_MUTEX_H
+#define  OPAL_MCA_THREADS_PTHREADS_THREADS_PTHREADS_MUTEX_H 1
 
 /**
  * @file:
@@ -211,6 +211,14 @@ static inline void opal_mutex_atomic_unlock(opal_mutex_t *m)
 
 #endif
 
+typedef pthread_cond_t opal_cond_t;
+#define OPAL_CONDITION_STATIC_INIT PTHREAD_COND_INITIALIZER
+#define opal_cond_init(a)          pthread_cond_init(a, NULL)
+#define opal_cond_wait(a,b)        pthread_cond_wait(a, &(b)->m_lock_pthread)
+#define opal_cond_broadcast(a)     pthread_cond_broadcast(a)
+#define opal_cond_signal(a)        pthread_cond_signal(a)
+#define opal_cond_destroy(a)       pthread_cond_destroy(a)
+
 END_C_DECLS
 
-#endif                          /* OPAL_MUTEX_UNIX_H */
+#endif           /* OPAL_MCA_THREADS_PTHREADS_THREADS_PTHREADS_MUTEX_H */

@@ -55,11 +55,11 @@ OPAL_DECLSPEC int opal_pmix_base_exchange(opal_value_t *info,
 
 OPAL_DECLSPEC void opal_pmix_base_set_evbase(opal_event_base_t *evbase);
 
-#define opal_pmix_condition_wait(a,b)   pthread_cond_wait(a, &(b)->m_lock_pthread)
-typedef pthread_cond_t opal_pmix_condition_t;
-#define opal_pmix_condition_broadcast(a) pthread_cond_broadcast(a)
-#define opal_pmix_condition_signal(a)    pthread_cond_signal(a)
-#define OPAL_PMIX_CONDITION_STATIC_INIT PTHREAD_COND_INITIALIZER
+#define opal_pmix_condition_wait(a,b)    opal_cond_wait(a, b)
+typedef opal_cond_t opal_pmix_condition_t;
+#define opal_pmix_condition_broadcast(a) opal_cond_broadcast(a)
+#define opal_pmix_condition_signal(a)    opal_cond_signal(a)
+#define OPAL_PMIX_CONDITION_STATIC_INIT  OPAL_CONDITION_STATIC_INIT
 
 typedef struct {
     opal_mutex_t mutex;
@@ -81,7 +81,7 @@ extern opal_pmix_base_t opal_pmix_base;
 #define OPAL_PMIX_CONSTRUCT_LOCK(l)                     \
     do {                                                \
         OBJ_CONSTRUCT(&(l)->mutex, opal_mutex_t);       \
-        pthread_cond_init(&(l)->cond, NULL);            \
+        opal_cond_init(&(l)->cond);                     \
         (l)->active = true;                             \
         OPAL_POST_OBJECT((l));                          \
     } while(0)
@@ -90,7 +90,7 @@ extern opal_pmix_base_t opal_pmix_base;
     do {                                    \
         OPAL_ACQUIRE_OBJECT((l));           \
         OBJ_DESTRUCT(&(l)->mutex);          \
-        pthread_cond_destroy(&(l)->cond);   \
+        opal_cond_destroy(&(l)->cond);      \
     } while(0)
 
 

@@ -30,11 +30,19 @@ AC_DEFUN([MCA_opal_threads_pthreads_COMPILE_MODE], [
 ])
 
 AC_DEFUN([MCA_opal_threads_pthreads_POST_CONFIG],[
-    AS_IF([test "$1" = "1"], [threads_base_include="pthreads/threads_pthreads.h"])
+    AS_IF([test "$1" = "1"], [threads_base_include="pthreads/threads_pthreads_threads.h"])
 ])dnl
 
 AC_DEFUN([MCA_opal_mutex_pthreads_POST_CONFIG],[
-    AS_IF([test "$1" = "1"], [mutex_base_include="pthreads/mutex_unix.h"])
+    AS_IF([test "$1" = "1"], [mutex_base_include="pthreads/threads_pthreads_mutex.h"])
+])dnl
+
+AC_DEFUN([MCA_opal_tsd_pthreads_POST_CONFIG],[
+    AS_IF([test "$1" = "1"], [threads_base_include="pthreads/threads_pthreads_tsd.h"])
+])dnl
+
+AC_DEFUN([MCA_opal_wait_sync_pthreads_POST_CONFIG],[
+    AS_IF([test "$1" = "1"], [mutex_base_include="pthreads/threads_pthreads_wait_sync.h"])
 ])dnl
 
 # MCA_threads_pthreads_CONFIG(action-if-can-compile,

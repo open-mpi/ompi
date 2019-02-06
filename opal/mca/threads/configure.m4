@@ -25,19 +25,23 @@ m4_define(MCA_opal_threads_CONFIGURE_MODE, STOP_AT_FIRST)
 AC_DEFINE_UNQUOTED([OPAL_ENABLE_MULTI_THREADS], [1],
 	[Whether we should enable thread support within the OPAL code base])
 AC_DEFUN([MCA_opal_threads_CONFIG],[
-        threads_base_include=
-
         # All components look at this value
         AC_ARG_WITH([threads],
             [AC_HELP_STRING([--with-threads=TYPE],
-                        [Build high resolution threads component TYPE])])
+                        [Build high resolution threads component TYPE])],
+                        [],
+                        [with_threads=pthreads])
+
+        thread_type=$with_threads
 
         # first, compile all the components
         MCA_CONFIGURE_FRAMEWORK($1, $2, 1)
 
-        if test "$mutex_base_include" = "" ; then
-            mutex_base_include="pthreads/mutex_unix.h"
-        fi
+        threads_base_include="${thread_type}/threads_${thread_type}_threads.h"
+        mutex_base_include="${thread_type}/threads_${thread_type}_mutex.h"
+        tsd_base_include="${thread_type}/threads_${thread_type}_tsd.h"
+        wait_sync_base_include="${thread_type}/threads_${thread_type}_wait_sync.h"
+
         AC_DEFINE_UNQUOTED([MCA_threads_IMPLEMENTATION_HEADER],
                            ["opal/mca/threads/$threads_base_include"],
                            [Header to include for threads implementation])
@@ -45,6 +49,12 @@ AC_DEFUN([MCA_opal_threads_CONFIG],[
         AC_DEFINE_UNQUOTED([MCA_mutex_IMPLEMENTATION_HEADER],
                            ["opal/mca/threads/$mutex_base_include"],
                            [Header to include for mutex implementation])
+
+        AC_DEFINE_UNQUOTED([MCA_tsd_IMPLEMENTATION_HEADER],
+                           ["opal/mca/threads/$tsd_base_include"],
+                           [Header to include for tsd implementation])
+
+        AC_DEFINE_UNQUOTED([MCA_wait_sync_IMPLEMENTATION_HEADER],
+                           ["opal/mca/threads/$wait_sync_base_include"],
+                           [Header to include for wait_sync implementation])
 ])
-
-

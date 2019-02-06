@@ -27,9 +27,6 @@
 
 #include "opal_config.h"
 
-#include <pthread.h>
-#include <signal.h>
-
 #include "opal/class/opal_object.h"
 #if OPAL_ENABLE_DEBUG
 #include "opal/util/output.h"
@@ -44,12 +41,7 @@ typedef void *(*opal_thread_fn_t) (opal_object_t *);
 
 #define OPAL_THREAD_CANCELLED   ((void*)1);
 
-struct opal_thread_t {
-    opal_object_t super;
-    opal_thread_fn_t t_run;
-    void* t_arg;
-    pthread_t t_handle;
-};
+#include MCA_threads_IMPLEMENTATION_HEADER
 
 typedef struct opal_thread_t opal_thread_t;
 
@@ -139,7 +131,6 @@ OPAL_DECLSPEC opal_thread_t *opal_thread_get_self(void);
 OPAL_DECLSPEC void opal_thread_kill(opal_thread_t *, int sig);
 OPAL_DECLSPEC void opal_thread_set_main(void);
 OPAL_DECLSPEC void opal_event_use_threads(void);
-
 
 END_C_DECLS
 

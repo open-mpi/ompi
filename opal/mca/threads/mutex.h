@@ -29,6 +29,8 @@
 
 #include "opal_config.h"
 
+BEGIN_C_DECLS
+
 /**
 * @file:
  *
@@ -37,7 +39,6 @@
  * Functions for locking of critical sections.
  */
 
-
 /**
  * Opaque mutex object
  */
@@ -45,9 +46,7 @@
 typedef struct opal_mutex_t opal_mutex_t;
 typedef struct opal_mutex_t opal_recursive_mutex_t;
 
-BEGIN_C_DECLS
 #include MCA_mutex_IMPLEMENTATION_HEADER
-END_C_DECLS
 
 OBJ_CLASS_DECLARATION(opal_mutex_t);
 OBJ_CLASS_DECLARATION(opal_recursive_mutex_t);

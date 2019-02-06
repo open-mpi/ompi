@@ -21,9 +21,12 @@
 noinst_LTLIBRARIES = libmca_threads_pthreads.la
 
 libmca_threads_pthreads_la_SOURCES = \
-    threads_pthreads.h \
     threads_pthreads_component.c \
-    threads_pthreads_mutex.c \
     threads_pthreads_condition.c \
+    threads_pthreads_module.c \
+    threads_pthreads_mutex.c \
+    threads_pthreads_mutex.h \
+    threads_pthreads_threads.h \
+    threads_pthreads_tsd.h \
     threads_pthreads_wait_sync.c \
-    threads_pthreads_module.c
+    threads_pthreads_wait_sync.h
