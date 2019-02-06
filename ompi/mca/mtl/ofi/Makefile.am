@@ -5,6 +5,8 @@
 # Copyright (c) 2017      Los Alamos National Security, LLC.  All rights
 #                         reserved.
 # Copyright (c) 2017      IBM Corporation.  All rights reserved.
+# Copyright (c) 2019      Research Organization for Information Science
+#                         and Technology (RIST).  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -55,7 +57,7 @@ mtl_ofi_sources = \
 # files should be added to generated_source_modules, as well as adding
 # their .c variants to generated_sources.
 %.c : %.pm;
-	$(PERL) generate-opt-funcs.pl $@
+	$(PERL) -I$(top_srcdir)/ompi/mca/mtl/ofi  $(top_srcdir)/ompi/mca/mtl/ofi/generate-opt-funcs.pl $@
 
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
