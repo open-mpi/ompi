@@ -13,40 +13,40 @@
 #
 
 EXTRA_DIST = post_configure.sh \
-	$(generated_source_modules)
+    $(generated_source_modules)
 
 MAINTAINERCLEANFILES = \
-	$(generated_sources)
+    $(generated_sources)
 
 AM_CPPFLAGS = $(ompi_mtl_ofi_CPPFLAGS) $(opal_common_ofi_CPPFLAGS)
 
 dist_ompidata_DATA = help-mtl-ofi.txt
 
 generated_source_modules = \
-	mtl_ofi_send_opt.pm \
-	mtl_ofi_isend_opt.pm \
-	mtl_ofi_irecv_opt.pm \
-	mtl_ofi_iprobe_opt.pm \
-	mtl_ofi_improbe_opt.pm
+    mtl_ofi_send_opt.pm \
+    mtl_ofi_isend_opt.pm \
+    mtl_ofi_irecv_opt.pm \
+    mtl_ofi_iprobe_opt.pm \
+    mtl_ofi_improbe_opt.pm
 
 generated_sources = \
-	mtl_ofi_send_opt.c \
-	mtl_ofi_isend_opt.c \
-	mtl_ofi_irecv_opt.c \
-	mtl_ofi_iprobe_opt.c \
-	mtl_ofi_improbe_opt.c
+    mtl_ofi_send_opt.c \
+    mtl_ofi_isend_opt.c \
+    mtl_ofi_irecv_opt.c \
+    mtl_ofi_iprobe_opt.c \
+    mtl_ofi_improbe_opt.c
 
 mtl_ofi_sources = \
-				   mtl_ofi.h \
-				   mtl_ofi.c \
-				   mtl_ofi_compat.h \
-				   mtl_ofi_component.c \
-				   mtl_ofi_endpoint.h \
-				   mtl_ofi_endpoint.c \
-				   mtl_ofi_request.h \
-				   mtl_ofi_types.h \
-				   mtl_ofi_opt.h \
-				   $(generated_sources)
+    mtl_ofi.h \
+    mtl_ofi.c \
+    mtl_ofi_compat.h \
+    mtl_ofi_component.c \
+    mtl_ofi_endpoint.h \
+    mtl_ofi_endpoint.c \
+    mtl_ofi_request.h \
+    mtl_ofi_types.h \
+    mtl_ofi_opt.h \
+    $(generated_sources)
 
 # A number of files are generated from macro expansion to minimize
 # branches in the critical path.  These files have perl modules with the suffix
