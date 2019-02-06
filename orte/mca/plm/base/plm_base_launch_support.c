@@ -130,7 +130,11 @@ void orte_plm_base_daemons_reported(int fd, short args, void *cbdata)
     orte_state_caddy_t *caddy = (orte_state_caddy_t*)cbdata;
     orte_topology_t *t;
     orte_node_t *node;
-    int i;
+    int i, rc;
+    uint8_t u8;
+    opal_buffer_t buf;
+    orte_grpcomm_signature_t *sig;
+    orte_daemon_cmd_flag_t command = ORTE_DAEMON_PASS_NODE_INFO_CMD;
 
     ORTE_ACQUIRE_OBJECT(caddy);
 
@@ -176,6 +180,78 @@ void orte_plm_base_daemons_reported(int fd, short args, void *cbdata)
     }
     /* ensure we update the routing plan */
     orte_routed.update_routing_plan(NULL);
+
+    /* prep the buffer */
+    OBJ_CONSTRUCT(&buf, opal_buffer_t);
+    /* load the command */
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &command, 1, ORTE_DAEMON_CMD))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_DESTRUCT(&buf);
+        ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+        OBJ_RELEASE(caddy);
+        return;
+    }
+
+
+    /* if we did not execute a tree-spawn, then the daemons do
+     * not currently have a nidmap for the job - in that case,
+     * send one to them */
+    if (!orte_nidmap_communicated) {
+        u8 = 1;
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &u8, 1, OPAL_UINT8))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_DESTRUCT(&buf);
+            ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+            OBJ_RELEASE(caddy);
+            return;
+        }
+        if (OPAL_SUCCESS != (rc = orte_util_nidmap_create(orte_node_pool, &buf))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_DESTRUCT(&buf);
+            ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+            OBJ_RELEASE(caddy);
+            return;
+        }
+        orte_nidmap_communicated = true;
+    } else {
+        u8 = 0;
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &u8, 1, OPAL_UINT8))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_DESTRUCT(&buf);
+            ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+            OBJ_RELEASE(caddy);
+            return;
+        }
+    }
+
+    /* we always send the topologies and the #slots on each node. Note
+     * that we cannot send the #slots until after the above step since,
+     * for unmanaged allocations, we might have just determined it! */
+    if (OPAL_SUCCESS != (rc = orte_util_pass_node_info(&buf))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_DESTRUCT(&buf);
+        ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+        OBJ_RELEASE(caddy);
+        return;
+    }
+
+    /* goes to all daemons */
+    sig = OBJ_NEW(orte_grpcomm_signature_t);
+    sig->signature = (orte_process_name_t*)malloc(sizeof(orte_process_name_t));
+    sig->signature[0].jobid = ORTE_PROC_MY_NAME->jobid;
+    sig->signature[0].vpid = ORTE_VPID_WILDCARD;
+    sig->sz = 1;
+    if (ORTE_SUCCESS != (rc = orte_grpcomm.xcast(sig, ORTE_RML_TAG_DAEMON, &buf))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(sig);
+        OBJ_DESTRUCT(&buf);
+        ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+        OBJ_RELEASE(caddy);
+        return;
+    }
+    OBJ_DESTRUCT(&buf);
+    /* maintain accounting */
+    OBJ_RELEASE(sig);
 
     /* progress the job */
     caddy->jdata->state = ORTE_JOB_STATE_DAEMONS_REPORTED;

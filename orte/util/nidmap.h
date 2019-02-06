@@ -29,11 +29,20 @@
 #include "opal/dss/dss_types.h"
 #include "orte/runtime/orte_globals.h"
 
+/* pass info about the nodes in an allocation */
 ORTE_DECLSPEC int orte_util_nidmap_create(opal_pointer_array_t *pool,
                                           opal_buffer_t *buf);
 
 ORTE_DECLSPEC int orte_util_decode_nidmap(opal_buffer_t *buf);
 
+
+/* pass topology and #slots info */
+ORTE_DECLSPEC int orte_util_pass_node_info(opal_buffer_t *buf);
+
+ORTE_DECLSPEC int orte_util_parse_node_info(opal_buffer_t *buf);
+
+
+/* pass info about node assignments for a specific job */
 ORTE_DECLSPEC int orte_util_generate_ppn(orte_job_t *jdata,
                                          opal_buffer_t *buf);
 

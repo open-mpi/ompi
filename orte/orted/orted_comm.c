@@ -59,6 +59,7 @@
 #include "orte/util/proc_info.h"
 #include "orte/util/session_dir.h"
 #include "orte/util/name_fns.h"
+#include "orte/util/nidmap.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/grpcomm/base/base.h"
@@ -126,7 +127,7 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
     char *coprocessors;
     orte_job_map_t *map;
     int8_t flag;
-    uint8_t *cmpdata;
+    uint8_t *cmpdata, u8;
     size_t cmplen;
 
     /* unpack the command */
@@ -240,6 +241,32 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
             ORTE_ERROR_LOG(ret);
         }
         break;
+
+
+    case ORTE_DAEMON_PASS_NODE_INFO_CMD:
+        if (orte_debug_daemons_flag) {
+            opal_output(0, "%s orted_cmd: received pass_node_info",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+        }
+        if (!ORTE_PROC_IS_HNP) {
+            n = 1;
+            if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &u8, &n, OPAL_UINT8))) {
+                ORTE_ERROR_LOG(ret);
+                goto CLEANUP;
+            }
+            if (1 == u8) {
+                if (ORTE_SUCCESS != (ret = orte_util_decode_nidmap(buffer))) {
+                    ORTE_ERROR_LOG(ret);
+                    goto CLEANUP;
+                }
+            }
+            if (ORTE_SUCCESS != (ret = orte_util_parse_node_info(buffer))) {
+                ORTE_ERROR_LOG(ret);
+                goto CLEANUP;
+            }
+        }
+        break;
+
 
         /****    ADD_LOCAL_PROCS   ****/
     case ORTE_DAEMON_ADD_LOCAL_PROCS:
