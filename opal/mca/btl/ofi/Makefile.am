@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2009-2019 Cisco Systems, Inc.  All rights reserved
 # Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
 # Copyright (c) 2017      IBM Corporation.  All rights reserved.
 # Copyright (c) 2018      Intel, inc. All rights reserved
@@ -25,16 +25,16 @@
 AM_CPPFLAGS = $(opal_common_ofi_CPPFLAGS)
 sources = \
     btl_ofi.h \
-	btl_ofi_component.c \
-	btl_ofi_endpoint.h \
-	btl_ofi_endpoint.c \
-	btl_ofi_module.c \
-	btl_ofi_rdma.h \
-	btl_ofi_rdma.c \
-	btl_ofi_atomics.c \
-	btl_ofi_frag.c \
-	btl_ofi_frag.h \
-	btl_ofi_context.c
+    btl_ofi_component.c \
+    btl_ofi_endpoint.h \
+    btl_ofi_endpoint.c \
+    btl_ofi_module.c \
+    btl_ofi_rdma.h \
+    btl_ofi_rdma.c \
+    btl_ofi_atomics.c \
+    btl_ofi_frag.c \
+    btl_ofi_frag.h \
+    btl_ofi_context.c
 
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
