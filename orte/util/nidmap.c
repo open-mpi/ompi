@@ -220,8 +220,8 @@ int orte_util_nidmap_create(opal_pointer_array_t *pool,
 
 int orte_util_decode_nidmap(opal_buffer_t *buf)
 {
-    uint8_t u8, *vp8 = NULL, *flags = NULL;
-    uint16_t *vp16 = NULL, *slots = NULL;
+    uint8_t u8, *vp8 = NULL;
+    uint16_t *vp16 = NULL;
     uint32_t *vp32 = NULL, vpid;
     int cnt, rc, nbytes, n;
     bool compressed;
@@ -364,98 +364,6 @@ int orte_util_decode_nidmap(opal_buffer_t *buf)
         vp8 = NULL;
     }
 
-
-    /* unpack compression flag for slots */
-    cnt = 1;
-    if (OPAL_SUCCESS != (rc = opal_dss.unpack(buf, &compressed, &cnt, OPAL_BOOL))) {
-        ORTE_ERROR_LOG(rc);
-        goto cleanup;
-    }
-
-    /* if compressed, get the uncompressed size */
-    if (compressed) {
-        cnt = 1;
-        if (OPAL_SUCCESS != (rc = opal_dss.unpack(buf, &sz, &cnt, OPAL_SIZE))) {
-            ORTE_ERROR_LOG(rc);
-            goto cleanup;
-        }
-    }
-
-    /* unpack the slots object */
-    cnt = 1;
-    if (OPAL_SUCCESS != (rc = opal_dss.unpack(buf, &boptr, &cnt, OPAL_BYTE_OBJECT))) {
-        ORTE_ERROR_LOG(rc);
-        goto cleanup;
-    }
-
-    /* if compressed, decompress */
-    if (compressed) {
-        if (!opal_compress.decompress_block((uint8_t**)&slots, sz,
-                                            boptr->bytes, boptr->size)) {
-            ORTE_ERROR_LOG(ORTE_ERROR);
-            if (NULL != boptr->bytes) {
-                free(boptr->bytes);
-            }
-            free(boptr);
-            rc = ORTE_ERROR;
-            goto cleanup;
-        }
-    } else {
-        slots = (uint16_t*)boptr->bytes;
-        boptr->bytes = NULL;
-        boptr->size = 0;
-    }
-    if (NULL != boptr->bytes) {
-        free(boptr->bytes);
-    }
-    free(boptr);
-
-
-    /* unpack compression flag for node flags */
-    cnt = 1;
-    if (OPAL_SUCCESS != (rc = opal_dss.unpack(buf, &compressed, &cnt, OPAL_BOOL))) {
-        ORTE_ERROR_LOG(rc);
-        goto cleanup;
-    }
-
-    /* if compressed, get the uncompressed size */
-    if (compressed) {
-        cnt = 1;
-        if (OPAL_SUCCESS != (rc = opal_dss.unpack(buf, &sz, &cnt, OPAL_SIZE))) {
-            ORTE_ERROR_LOG(rc);
-        goto cleanup;
-        }
-    }
-
-    /* unpack the node flags object */
-    cnt = 1;
-    if (OPAL_SUCCESS != (rc = opal_dss.unpack(buf, &boptr, &cnt, OPAL_BYTE_OBJECT))) {
-        ORTE_ERROR_LOG(rc);
-        goto cleanup;
-    }
-
-    /* if compressed, decompress */
-    if (compressed) {
-        if (!opal_compress.decompress_block((uint8_t**)&flags, sz,
-                                            boptr->bytes, boptr->size)) {
-            ORTE_ERROR_LOG(ORTE_ERROR);
-            if (NULL != boptr->bytes) {
-                free(boptr->bytes);
-            }
-            free(boptr);
-            rc = ORTE_ERROR;
-            goto cleanup;
-        }
-    } else {
-        flags = (uint8_t*)boptr->bytes;
-        boptr->bytes = NULL;
-        boptr->size = 0;
-    }
-    if (NULL != boptr->bytes) {
-        free(boptr->bytes);
-    }
-    free(boptr);
-
     /* if we are the HNP, we don't need any of this stuff */
     if (ORTE_PROC_IS_HNP) {
         goto cleanup;
@@ -478,12 +386,6 @@ int orte_util_decode_nidmap(opal_buffer_t *buf)
         nd = OBJ_NEW(orte_node_t);
         nd->name = names[n];
         opal_pointer_array_set_item(orte_node_pool, n, nd);
-        /* set the #slots */
-        nd->slots = slots[n];
-        /* set the flags */
-        if (1 == flags[n]) {
-            ORTE_FLAG_SET(nd, ORTE_NODE_FLAG_SLOTS_GIVEN);
-        }
         /* set the topology - always default to homogeneous
          * as that is the most common scenario */
         nd->topology = t;
@@ -526,6 +428,18 @@ int orte_util_decode_nidmap(opal_buffer_t *buf)
     }
 
   cleanup:
+    if (NULL != vp8) {
+        free(vp8);
+    }
+    if (NULL != vp16) {
+        free(vp16);
+    }
+    if (NULL != vp32) {
+        free(vp32);
+    }
+    if (NULL != names) {
+        opal_argv_free(names);
+    }
     return rc;
 }
 
