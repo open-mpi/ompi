@@ -17,7 +17,6 @@ created.
     - with_slurm
     - with_tm
     - with_pmi
-    - with_verbs
     - NOTE: common had "with_devel_headers=yes" in it that was not propagated.
       This option should not be used in production as per Open MPI developer
       mailing list guidance.
@@ -58,9 +57,6 @@ created.
     - change: comment "Disable components not needed on TOSS platforms with
       high-speed networks" to "Disable components not needed on TOSS Ethernet-
       connected clusters"
-    - change: with_verbs=no
-    - change: comment "Always build ibverbs support" to "Do not build ibverbs
-      support"
 - toss3-wc-optimized.conf
   - copy of toss3-hfi-optimized.conf with the following changes:
     - change: comment "Add the interface for out-of-band communication and set
@@ -83,7 +79,6 @@ created.
       - enable_mca_no_build=crs,filem,routed-linear,snapc,pml-dr,pml-crcp2,pml-crcpw,pml-v,pml-example,crcp,pml-cm,ess-cnos,grpcomm-cnos,plm-rsh,btl-tcp,oob-ud,ras-simulator,mpool-fake
       - enable_mca_static=btl:ugni,btl:self,btl:vader,pml:ob1
       - enable_mca_directpml-ob1
-      - with_verbs=no
       - with_tm=no
       - enable_orte_static_ports=no
       - enable_pty_support=no

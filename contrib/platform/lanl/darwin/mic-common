@@ -29,7 +29,6 @@ enable_pci=no
 enable_libpci=no
 with_pmi=no
 with_slurm=no
-with_verbs=no
 
 MIC_LDFLAGS="-L$XCOMPOSER/compiler/lib/mic -Wl,-rpath=$XCOMPOSER/compiler/lib/mic"
 

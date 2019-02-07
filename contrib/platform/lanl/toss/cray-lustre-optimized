@@ -20,9 +20,6 @@ enable_mca_static=btl:ugni,btl:self,btl:vader,pml:ob1
 # enable direct calling for ob1
 enable_mca_direct=pml-ob1
 
-# do not use IB verbs
-with_verbs=no
-
 # do not use torque
 with_tm=no
 

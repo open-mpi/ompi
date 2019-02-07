@@ -69,9 +69,6 @@ AC_DEFUN([MCA_opal_hwloc_hwloc201_POST_CONFIG],[
 # MCA_hwloc_hwloc201_CONFIG([action-if-found], [action-if-not-found])
 # --------------------------------------------------------------------
 AC_DEFUN([MCA_opal_hwloc_hwloc201_CONFIG],[
-    # Hwloc needs to know if we have Verbs support
-    AC_REQUIRE([OPAL_CHECK_VERBS_DIR])
-
     AC_CONFIG_FILES([opal/mca/hwloc/hwloc201/Makefile])
 
     OPAL_VAR_SCOPE_PUSH([HWLOC_VERSION opal_hwloc_hwloc201_save_CPPFLAGS opal_hwloc_hwloc201_save_LDFLAGS opal_hwloc_hwloc201_save_LIBS opal_hwloc_hwloc201_save_cairo opal_hwloc_hwloc201_save_xml opal_hwloc_hwloc201_save_mode opal_hwloc_hwloc201_basedir opal_hwloc_hwloc201_file opal_hwloc_hwloc201_save_cflags CPPFLAGS_save LIBS_save opal_hwloc_external])

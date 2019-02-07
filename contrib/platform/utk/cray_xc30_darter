@@ -24,7 +24,6 @@ with_alps=yes
 with_tm=no
 with_slurm=no
 with_xpmem=yes
-with_verbs=no
 enable_mca_no_build=crs,filem,routed-linear,snapc,pml-dr,pml-crcp2,pml-crcpw,pml-example,crcp,pml-cm,ess-cnos,grpcomm-cnos,plm-rsh,btl-tcp,oob-ud,ras-simulator,mpool-fake,maffinity-first_use,maffinity-libnuma,paffinity-linux
 enable_mca_static=btl:ugni,btl:self,btl:vader,pml:ob1,coll:ml
 #enable_mca_direct=pml-ob1
