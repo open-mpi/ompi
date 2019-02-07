@@ -71,5 +71,9 @@ ompi_osc_base_select(ompi_win_t *win,
 
     if (NULL == best_component) return OMPI_ERR_NOT_SUPPORTED;
 
+    opal_output_verbose( 10, ompi_osc_base_framework.framework_output,
+                         "select: component %s selected",
+                         best_component->osc_version.mca_component_name );
+
     return best_component->osc_select(win, base, size, disp_unit, comm, info, flavor, model);
 }
