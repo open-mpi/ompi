@@ -199,6 +199,8 @@ ompi/mca/rte/orte/mpirun.1
 
 ompi/mca/sharedfp/addproc/mca_sharedfp_addproc_control
 
+ompi/mca/topo/treematch/config.h
+
 ompi/mpi/c/profile/p*.c
 
 ompi/mpi/fortran/configure-fortran-output.h
