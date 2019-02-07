@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2016-2019 Intel, Inc.  All rights reserved.
- * Copyright (c) 2018      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2018-2019 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -602,9 +602,9 @@ int orte_util_pass_node_info(opal_buffer_t *buffer)
         /* add the object */
         boptr = &bo;
         rc = opal_dss.pack(buffer, &boptr, 1, OPAL_BYTE_OBJECT);
-    }
-    if (compressed) {
-        free(bo.bytes);
+        if (compressed) {
+            free(bo.bytes);
+        }
     }
 
     /* if we have uniform #slots, then just flag it - no
@@ -646,9 +646,9 @@ int orte_util_pass_node_info(opal_buffer_t *buffer)
         /* add the object */
         boptr = &bo;
         rc = opal_dss.pack(buffer, &boptr, 1, OPAL_BYTE_OBJECT);
-    }
-    if (compressed) {
-        free(bo.bytes);
+        if (compressed) {
+            free(bo.bytes);
+        }
     }
 
     /* if we have uniform flags, then just flag it - no
@@ -694,9 +694,9 @@ int orte_util_pass_node_info(opal_buffer_t *buffer)
         /* add the object */
         boptr = &bo;
         rc = opal_dss.pack(buffer, &boptr, 1, OPAL_BYTE_OBJECT);
-    }
-    if (compressed) {
-        free(bo.bytes);
+        if (compressed) {
+            free(bo.bytes);
+        }
     }
 
   cleanup:
