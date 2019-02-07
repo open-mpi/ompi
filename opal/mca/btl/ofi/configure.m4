@@ -11,7 +11,7 @@
 # Copyright (c) 2004-2006 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2006      QLogic Corp. All rights reserved.
-# Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2009-2019 Cisco Systems, Inc.  All rights reserved
 # Copyright (c) 2011-2018 Los Alamos National Security, LLC.
 #                         All rights reserved.
 # Copyright (c) 2018      Intel, inc. All rights reserved
@@ -34,12 +34,13 @@ AC_DEFUN([MCA_opal_btl_ofi_CONFIG],[
 
     AC_CONFIG_FILES([opal/mca/btl/ofi/Makefile])
 
-    AC_REQUIRE([MCA_opal_common_ofi_CONFIG])
+    # Check for OFI
+    OPAL_CHECK_OFI
 
     opal_btl_ofi_happy=0
-    AS_IF([test "$opal_common_ofi_happy" = "yes"],
+    AS_IF([test "$opal_ofi_happy" = "yes"],
           [CPPFLAGS_save=$CPPFLAGS
-           CPPFLAGS="$opal_common_ofi_CPPFLAGS $CPPFLAGS"
+           CPPFLAGS="$opal_ofi_CPPFLAGS $CPPFLAGS"
            AC_CHECK_DECL([FI_MR_VIRT_ADDR], [opal_btl_ofi_happy=1], [],
                          [#include <rdma/fabric.h>])
            CPPFLAGS=$CPPFLAGS_save])

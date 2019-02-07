@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2009-2019 Cisco Systems, Inc.  All rights reserved
 # Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
 # Copyright (c) 2017      IBM Corporation.  All rights reserved.
 # Copyright (c) 2018      Intel, inc. All rights reserved
@@ -22,19 +22,19 @@
 
 #dist_opaldata_DATA = help-mpi-btl-ofi.txt
 
-AM_CPPFLAGS = $(opal_common_ofi_CPPFLAGS)
+AM_CPPFLAGS = $(opal_ofi_CPPFLAGS)
 sources = \
     btl_ofi.h \
-	btl_ofi_component.c \
-	btl_ofi_endpoint.h \
-	btl_ofi_endpoint.c \
-	btl_ofi_module.c \
-	btl_ofi_rdma.h \
-	btl_ofi_rdma.c \
-	btl_ofi_atomics.c \
-	btl_ofi_frag.c \
-	btl_ofi_frag.h \
-	btl_ofi_context.c
+    btl_ofi_component.c \
+    btl_ofi_endpoint.h \
+    btl_ofi_endpoint.c \
+    btl_ofi_module.c \
+    btl_ofi_rdma.h \
+    btl_ofi_rdma.c \
+    btl_ofi_atomics.c \
+    btl_ofi_frag.c \
+    btl_ofi_frag.h \
+    btl_ofi_context.c
 
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
@@ -56,10 +56,11 @@ mcacomponentdir = $(opallibdir)
 mcacomponent_LTLIBRARIES = $(component)
 mca_btl_ofi_la_SOURCES = $(component_sources)
 mca_btl_ofi_la_LDFLAGS = -module -avoid-version \
-						 $(opal_common_ofi_LDFLAGS)
+                         $(opal_ofi_LDFLAGS)
 mca_btl_ofi_la_LIBADD = $(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la \
-	$(OPAL_TOP_BUILDDIR)/opal/mca/common/ofi/lib@OPAL_LIB_PREFIX@mca_common_ofi.la
+    $(opal_ofi_LIBS)
 
 noinst_LTLIBRARIES = $(lib)
 libmca_btl_ofi_la_SOURCES = $(lib_sources)
-libmca_btl_ofi_la_LDFLAGS = -module -avoid-version $(opal_common_ofi_LDFLAGS)
+libmca_btl_ofi_la_LDFLAGS = -module -avoid-version $(opal_ofi_LDFLAGS)
+libmca_btl_ofi_la_LIBS = $(opal_ofi_LIBS)
