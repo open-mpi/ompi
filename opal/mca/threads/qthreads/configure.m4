@@ -37,25 +37,7 @@ AC_DEFUN([MCA_opal_threads_qthreads_POST_CONFIG],[
 AC_DEFUN([MCA_opal_threads_qthreads_CONFIG],[
     AC_CONFIG_FILES([opal/mca/threads/qthreads/Makefile])
 
-    AS_IF([test "$with_threads" = "qthreads"],
-          [threads_qthreads_happy="yes"
-           threads_qthreads_should_use=1],
-          [threads_qthreads_should_use=0
-           AS_IF([test "$with_threads" = ""],
-                 [threads_qthreads_happy="yes"],
-                 [threads_qthreads_happy="no"])])
-
-    AS_IF([test "$threads_qthreads_happy" = "yes"],
-          [AC_CHECK_HEADERS([mach/mach_time.h])
-           AC_CHECK_FUNC([mach_absolute_time],
-                         [threads_qthreads_happy="yes"],
-                         [threads_qthreads_happy="no"])])
-
-   AS_IF([test "$threads_qthreads_happy" = "no" && \
-          test "$threads_qthreads_should_use" = "1"],
-         [AC_MSG_ERROR([qthreads threads requested but not available.  Aborting.])])
-
-    AS_IF([test "$threads_qthreads_happy" = "yes"],
+    AS_IF([test "$HAVE_THREAD_PKG_TYPE" = "qthreads"],
           [$1],
           [$2])
 ])

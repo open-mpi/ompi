@@ -25,14 +25,9 @@ m4_define(MCA_opal_threads_CONFIGURE_MODE, STOP_AT_FIRST)
 AC_DEFINE_UNQUOTED([OPAL_ENABLE_MULTI_THREADS], [1],
 	[Whether we should enable thread support within the OPAL code base])
 AC_DEFUN([MCA_opal_threads_CONFIG],[
-        # All components look at this value
-        AC_ARG_WITH([threads],
-            [AC_HELP_STRING([--with-threads=TYPE],
-                        [Build high resolution threads component TYPE])],
-                        [],
-                        [with_threads=pthreads])
-
-        thread_type=$with_threads
+        thread_type=$HAVE_THREAD_PKG_TYPE
+        threads_base_include=
+        mutex_base_include=
 
         # first, compile all the components
         MCA_CONFIGURE_FRAMEWORK($1, $2, 1)

@@ -35,14 +35,17 @@ AC_DEFUN([MCA_opal_threads_pthreads_POST_CONFIG],[
 
 AC_DEFUN([MCA_opal_mutex_pthreads_POST_CONFIG],[
     AS_IF([test "$1" = "1"], [mutex_base_include="pthreads/threads_pthreads_mutex.h"])
+    AC_MSG_CHECKING([mutex_base_include = $mutex_base_include])
 ])dnl
 
 AC_DEFUN([MCA_opal_tsd_pthreads_POST_CONFIG],[
     AS_IF([test "$1" = "1"], [threads_base_include="pthreads/threads_pthreads_tsd.h"])
+    AC_MSG_CHECKING([threads_base_include = $threads_base_include])
 ])dnl
 
 AC_DEFUN([MCA_opal_wait_sync_pthreads_POST_CONFIG],[
-    AS_IF([test "$1" = "1"], [mutex_base_include="pthreads/threads_pthreads_wait_sync.h"])
+    AS_IF([test "$1" = "1"], [wait_sync_base_include="pthreads/threads_pthreads_wait_sync.h"])
+    AC_MSG_CHECKING([wait_sync_includenclude = $wait_sync_base_include])
 ])dnl
 
 # MCA_threads_pthreads_CONFIG(action-if-can-compile,
@@ -51,23 +54,9 @@ AC_DEFUN([MCA_opal_wait_sync_pthreads_POST_CONFIG],[
 AC_DEFUN([MCA_opal_threads_pthreads_CONFIG],[
     AC_CONFIG_FILES([opal/mca/threads/pthreads/Makefile])
 
-    AS_IF([test "$with_threads" = "pthreads"],
-          [threads_pthreads_happy="yes"
-           threads_pthreads_should_use=1],
-          [threads_pthreads_should_use=0
-           AS_IF([test "$with_threads" = ""],
-                 [threads_pthreads_happy="yes"],
-                 [threads_pthreads_happy="no"])])
+    AC_MSG_CHECKING([HAVE_THREAD_PKG_TYPE = $HAVE_THREAD_PKG_TYPE])
 
-    AS_IF([test "$threads_pthreads_happy" = "yes"],
-          [OPAL_CONFIG_POSIX_THREADS([threads_pthreads_happy="yes"],
-                                     [threads_pthreads_happy="no"])])
-
-   AS_IF([test "$threads_pthreads_happy" = "no" && \
-          test "$threads_pthreads_should_use" = "1"],
-         [AC_MSG_ERROR([pthreads threads requested but not available.  Aborting.])])
-
-    AS_IF([test "$threads_pthreads_happy" = "yes"],
+    AS_IF([test "$HAVE_THREAD_PKG_TYPE" = "pthreads"],
           [$1],
           [$2])
 ])

@@ -281,11 +281,11 @@ if test "$opal_pthread_c_success" = "0"; then
                               opal_pthread_c_success=0)
     AC_LANG_POP(C)
     if test "$opal_pthread_c_success" = "1"; then
-      PTHREAD_CFLAGS="$pf"
+      TPKG_CFLAGS="$pf"
       AC_MSG_RESULT([yes])
       break
     else
-      PTHREAD_CFLAGS=
+      TPKG_CFLAGS=
       CFLAGS="$orig_CFLAGS"
       AC_MSG_RESULT([no])
     fi
@@ -307,11 +307,11 @@ if test "$opal_pthread_cxx_success" = "0"; then
                               opal_pthread_cxx_success=0)
     AC_LANG_POP(C++)
     if test "$opal_pthread_cxx_success" = "1"; then
-      PTHREAD_CXXFLAGS="$pf"
+      TPKG_CXXFLAGS="$pf"
       AC_MSG_RESULT([yes])
       break
     else
-      PTHREAD_CXXFLAGS=
+      TPKG_CXXFLAGS=
       CXXFLAGS="$orig_CXXFLAGS"
       AC_MSG_RESULT([no])
     fi
@@ -335,11 +335,11 @@ if test "$opal_pthread_fortran_success" = "0" && \
                                        opal_pthread_fortran_success=0)
     AC_LANG_POP(C)
     if test "$opal_pthread_fortran_success" = "1"; then
-      PTHREAD_FCFLAGS="$pf"
+      TPKG_FCFLAGS="$pf"
       AC_MSG_RESULT([yes])
       break
     else
-      PTHREAD_FCFLAGS=
+      TPKG_FCFLAGS=
       FCFLAGS="$orig_FCFLAGS"
       AC_MSG_RESULT([no])
     fi
@@ -406,14 +406,14 @@ if test "$opal_pthread_c_success" = "0"; then
     case "${host_cpu}-${host-_os}" in
       *-aix* | *-freebsd*)
         if test "`echo $CPPFLAGS | $GREP 'D_THREAD_SAFE'`" = ""; then
-          PTHREAD_CPPFLAGS="-D_THREAD_SAFE"
-          CPPFLAGS="$CPPFLAGS $PTHREAD_CPPFLAGS"
+          TPKG_CPPFLAGS="-D_THREAD_SAFE"
+          CPPFLAGS="$CPPFLAGS $TPKG_CPPFLAGS"
         fi
       ;;
       *)
         if test "`echo $CPPFLAGS | $GREP 'D_REENTRANT'`" = ""; then
-          PTHREAD_CPPFLAGS="-D_REENTRANT"
-          CPPFLAGS="$CPPFLAGS $PTHREAD_CPPFLAGS"
+          TPKG_CPPFLAGS="-D_REENTRANT"
+          CPPFLAGS="$CPPFLAGS $TPKG_CPPFLAGS"
         fi
       ;;
     esac
@@ -423,10 +423,10 @@ if test "$opal_pthread_c_success" = "0"; then
                               opal_pthread_c_success=0)
     AC_LANG_POP(C)
     if test "$opal_pthread_c_success" = "1"; then
-      PTHREAD_LIBS="$pl"
+      TPKG_LIBS="$pl"
       AC_MSG_RESULT([yes])
     else
-      PTHREAD_CPPFLAGS=
+      TPKG_CPPFLAGS=
       CPPFLAGS="$orig_CPPFLAGS"
       LIBS="$orig_LIBS"
       AC_MSG_RESULT([no])
@@ -441,23 +441,23 @@ AC_DEFUN([OPAL_INTL_POSIX_THREADS_LIBS_CXX],[
 # C++ compiler
 #
 if test "$opal_pthread_cxx_success" = "0"; then
-  if test ! "$opal_pthread_c_success" = "0" && test ! "$PTHREAD_LIBS" = "" ; then
-    AC_MSG_CHECKING([if C++ compiler and POSIX threads work with $PTHREAD_LIBS])
+  if test ! "$opal_pthread_c_success" = "0" && test ! "$TPKG_LIBS" = "" ; then
+    AC_MSG_CHECKING([if C++ compiler and POSIX threads work with $TPKG_LIBS])
     case "${host_cpu}-${host-_os}" in
       *-aix* | *-freebsd*)
         if test "`echo $CXXCPPFLAGS | $GREP 'D_THREAD_SAFE'`" = ""; then
-          PTHREAD_CXXCPPFLAGS="-D_THREAD_SAFE"
-          CXXCPPFLAGS="$CXXCPPFLAGS $PTHREAD_CXXCPPFLAGS"
+          TPKG_CXXCPPFLAGS="-D_THREAD_SAFE"
+          CXXCPPFLAGS="$CXXCPPFLAGS $TPKG_CXXCPPFLAGS"
         fi
       ;;
       *)
         if test "`echo $CXXCPPFLAGS | $GREP 'D_REENTRANT'`" = ""; then
-          PTHREAD_CXXCPPFLAGS="-D_REENTRANT"
-          CXXCPPFLAGS="$CXXCPPFLAGS $PTHREAD_CXXCPPFLAGS"
+          TPKG_CXXCPPFLAGS="-D_REENTRANT"
+          CXXCPPFLAGS="$CXXCPPFLAGS $TPKG_CXXCPPFLAGS"
         fi
       ;;
     esac
-    LIBS="$orig_LIBS $PTHREAD_LIBS"
+    LIBS="$orig_LIBS $TPKG_LIBS"
     AC_LANG_PUSH(C++)
     OPAL_INTL_PTHREAD_TRY_LINK(opal_pthread_cxx_success=1,
                               opal_pthread_cxx_success=0)
@@ -476,14 +476,14 @@ if test "$opal_pthread_cxx_success" = "0"; then
       case "${host_cpu}-${host-_os}" in
         *-aix* | *-freebsd*)
           if test "`echo $CXXCPPFLAGS | $GREP 'D_THREAD_SAFE'`" = ""; then
-            PTHREAD_CXXCPPFLAGS="-D_THREAD_SAFE"
-            CXXCPPFLAGS="$CXXCPPFLAGS $PTHREAD_CXXCPPFLAGS"
+            TPKG_CXXCPPFLAGS="-D_THREAD_SAFE"
+            CXXCPPFLAGS="$CXXCPPFLAGS $TPKG_CXXCPPFLAGS"
           fi
         ;;
         *)
           if test "`echo $CXXCPPFLAGS | $GREP 'D_REENTRANT'`" = ""; then
-            PTHREAD_CXXCPPFLAGS="-D_REENTRANT"
-            CXXCPPFLAGS="$CXXCPPFLAGS $PTHREAD_CXXCPPFLAGS"
+            TPKG_CXXCPPFLAGS="-D_REENTRANT"
+            CXXCPPFLAGS="$CXXCPPFLAGS $TPKG_CXXCPPFLAGS"
           fi
         ;;
       esac
@@ -493,10 +493,10 @@ if test "$opal_pthread_cxx_success" = "0"; then
                                 opal_pthread_cxx_success=0)
       AC_LANG_POP(C++)
       if test "$opal_pthread_cxx_success" = "1"; then
-	PTHREAD_LIBS="$pl"
+	TPKG_LIBS="$pl"
         AC_MSG_RESULT([yes])
       else
-        PTHREAD_CXXCPPFLAGS=
+        TPKG_CXXCPPFLAGS=
         CXXCPPFLAGS="$orig_CXXCPPFLAGS"
         LIBS="$orig_LIBS"
         AC_MSG_RESULT([no])
@@ -514,9 +514,9 @@ AC_DEFUN([OPAL_INTL_POSIX_THREADS_LIBS_FC],[
 if test "$opal_pthread_fortran_success" = "0" && \
    test "$OMPI_TRY_FORTRAN_BINDINGS" -gt "$OMPI_FORTRAN_NO_BINDINGS" && \
    test $ompi_fortran_happy -eq 1; then
-  if test ! "$opal_pthread_c_success" = "0" && test ! "$PTHREAD_LIBS" = "" ; then
-    AC_MSG_CHECKING([if Fortran compiler and POSIX threads work with $PTHREAD_LIBS])
-    LIBS="$orig_LIBS $PTHREAD_LIBS"
+  if test ! "$opal_pthread_c_success" = "0" && test ! "$TPKG_LIBS" = "" ; then
+    AC_MSG_CHECKING([if Fortran compiler and POSIX threads work with $TPKG_LIBS])
+    LIBS="$orig_LIBS $TPKG_LIBS"
     AC_LANG_PUSH(C)
     OPAL_INTL_PTHREAD_TRY_LINK_FORTRAN(opal_pthread_fortran_success=1,
                                        opal_pthread_fortran_success=0)
@@ -537,7 +537,7 @@ if test "$opal_pthread_fortran_success" = "0" && \
                                          opal_pthread_fortran_success=0)
       AC_LANG_POP(C)
       if test "$opal_pthread_fortran_success" = "1"; then
-	PTHREAD_LIBS="$pl"
+	TPKG_LIBS="$pl"
         AC_MSG_RESULT([yes])
         break
       else
@@ -600,13 +600,13 @@ orig_CXXCPPFLAGS="$CXXCPPFLAGS"
 orig_LDFLAGS="$LDFLAGS"
 orig_LIBS="$LIBS"
 
-PTHREAD_CFLAGS=
-PTHREAD_FCFLAGS=
-PTHREAD_CXXFLAGS=
-PTHREAD_CPPFLAGS=
-PTHREAD_CXXCPPFLAGS=
-PTHREAD_LDFLAGS=
-PTHREAD_LIBS=
+TPKG_CFLAGS=
+TPKG_FCFLAGS=
+TPKG_CXXFLAGS=
+TPKG_CPPFLAGS=
+TPKG_CXXCPPFLAGS=
+TPKG_LDFLAGS=
+TPKG_LIBS=
 
 # Try with the basics, mam.
 OPAL_INTL_POSIX_THREADS_PLAIN

@@ -62,8 +62,7 @@ endif # OPAL_INSTALL_BINARIES
 endif # OPAL_WANT_SCRIPT_WRAPPER_COMPILERS
 
 opal_wrapper_SOURCES = opal_wrapper.c
-# XXX(nevans) I need to fix this, compile or runtime for the threading library?
-opal_wrapper_LDADD = $(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la $(top_builddir)/opal/mca/threads/pthreads/libmca_threads_pthreads.la
+opal_wrapper_LDADD = $(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la
 
 # Ensure that the man pages are rebuilt if the opal_config.h file
 # changes; a "good enough" way to know if configure was run again (and
