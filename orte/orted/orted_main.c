@@ -16,7 +16,7 @@
  * Copyright (c) 2009      Institut National de Recherche en Informatique
  *                         et Automatique. All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
- * Copyright (c) 2013-2018 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -67,22 +67,22 @@
 #include "opal/dss/dss.h"
 #include "opal/mca/hwloc/hwloc-internal.h"
 #include "opal/mca/pmix/pmix.h"
+#include "opal/mca/compress/compress.h"
 
 #include "orte/util/show_help.h"
 #include "orte/util/proc_info.h"
 #include "orte/util/session_dir.h"
 #include "orte/util/name_fns.h"
+#include "orte/util/nidmap.h"
 #include "orte/util/parse_options.h"
 #include "orte/mca/rml/base/rml_contact.h"
 #include "orte/util/pre_condition_transports.h"
-#include "orte/util/compress.h"
 #include "orte/util/threads.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/ess/ess.h"
 #include "orte/mca/grpcomm/grpcomm.h"
 #include "orte/mca/grpcomm/base/base.h"
-#include "orte/mca/regx/regx.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/rml_types.h"
 #include "orte/mca/odls/odls.h"
@@ -220,10 +220,6 @@ opal_cmd_line_init_t orte_cmd_line_opts[] = {
     { "orte_report_bindings", '\0', "report-bindings", "report-bindings", 0,
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
       "Whether to report process bindings to stderr" },
-
-    { "orte_node_regex", '\0', "nodes", "nodes", 1,
-      NULL, OPAL_CMD_LINE_TYPE_STRING,
-      "Regular expression defining nodes in system" },
 
     /* End of list */
     { NULL, '\0', NULL, NULL, 0,
@@ -716,19 +712,19 @@ int orte_daemon(int argc, char *argv[])
         /* tell the routed module that we have a path
          * back to the HNP
          */
-        if (ORTE_SUCCESS != (ret = orte_routed.update_route(NULL, ORTE_PROC_MY_HNP, ORTE_PROC_MY_PARENT))) {
+        if (ORTE_SUCCESS != (ret = orte_routed.update_route(ORTE_PROC_MY_HNP, ORTE_PROC_MY_PARENT))) {
             ORTE_ERROR_LOG(ret);
             goto DONE;
         }
         /* and a path to our parent */
-        if (ORTE_SUCCESS != (ret = orte_routed.update_route(NULL, ORTE_PROC_MY_PARENT, ORTE_PROC_MY_PARENT))) {
+        if (ORTE_SUCCESS != (ret = orte_routed.update_route(ORTE_PROC_MY_PARENT, ORTE_PROC_MY_PARENT))) {
             ORTE_ERROR_LOG(ret);
             goto DONE;
         }
         /* set the lifeline to point to our parent so that we
          * can handle the situation if that lifeline goes away
          */
-        if (ORTE_SUCCESS != (ret = orte_routed.set_lifeline(NULL, ORTE_PROC_MY_PARENT))) {
+        if (ORTE_SUCCESS != (ret = orte_routed.set_lifeline(ORTE_PROC_MY_PARENT))) {
             ORTE_ERROR_LOG(ret);
             goto DONE;
         }
@@ -747,7 +743,7 @@ int orte_daemon(int argc, char *argv[])
 
         /* define the target jobid */
         target.jobid = ORTE_PROC_MY_NAME->jobid;
-        if (orte_fwd_mpirun_port || orte_static_ports || NULL != orte_parent_uri) {
+        if (NULL != orte_parent_uri) {
             /* we start by sending to ourselves */
             target.vpid = ORTE_PROC_MY_NAME->vpid;
             /* since we will be waiting for any children to send us
@@ -755,13 +751,10 @@ int orte_daemon(int argc, char *argv[])
              * a little time in the launch phase by "warming up" the
              * connection to our parent while we wait for our children */
             buffer = OBJ_NEW(opal_buffer_t);  // zero-byte message
-            if (NULL == orte_node_regex) {
-                orte_rml.recv_buffer_nb(ORTE_PROC_MY_PARENT, ORTE_RML_TAG_NODE_REGEX_REPORT,
-                                        ORTE_RML_PERSISTENT, node_regex_report, &node_regex_waiting);
-                node_regex_waiting = true;
-            }
-            if (0 > (ret = orte_rml.send_buffer_nb(orte_mgmt_conduit,
-                                                   ORTE_PROC_MY_PARENT, buffer,
+            node_regex_waiting = true;
+            orte_rml.recv_buffer_nb(ORTE_PROC_MY_PARENT, ORTE_RML_TAG_NODE_REGEX_REPORT,
+                                    ORTE_RML_PERSISTENT, node_regex_report, &node_regex_waiting);
+            if (0 > (ret = orte_rml.send_buffer_nb(ORTE_PROC_MY_PARENT, buffer,
                                                    ORTE_RML_TAG_WARMUP_CONNECTION,
                                                    orte_rml_send_callback, NULL))) {
                 ORTE_ERROR_LOG(ret);
@@ -917,7 +910,7 @@ int orte_daemon(int argc, char *argv[])
             if (ORTE_SUCCESS != (ret = opal_dss.pack(&data, &opal_hwloc_topology, 1, OPAL_HWLOC_TOPO))) {
                 ORTE_ERROR_LOG(ret);
             }
-            if (orte_util_compress_block((uint8_t*)data.base_ptr, data.bytes_used,
+            if (opal_compress.compress_block((uint8_t*)data.base_ptr, data.bytes_used,
                                  &cmpdata, &cmplen)) {
                 /* the data was compressed - mark that we compressed it */
                 flag = 1;
@@ -961,8 +954,7 @@ int orte_daemon(int argc, char *argv[])
         }
 
         /* send it to the designated target */
-        if (0 > (ret = orte_rml.send_buffer_nb(orte_mgmt_conduit,
-                                               &target, buffer,
+        if (0 > (ret = orte_rml.send_buffer_nb(&target, buffer,
                                                ORTE_RML_TAG_ORTED_CALLBACK,
                                                orte_rml_send_callback, NULL))) {
             ORTE_ERROR_LOG(ret);
@@ -1019,10 +1011,6 @@ int orte_daemon(int argc, char *argv[])
                 }
                 i += 2;
             }
-        }
-        if (NULL != orte_node_regex) {
-            /* now launch any child daemons of ours */
-            orte_plm.remote_spawn();
         }
     }
 
@@ -1150,19 +1138,16 @@ static void rollup(int status, orte_process_name_t* sender,
 }
 
 static void report_orted() {
-    char *rtmod;
     int nreqd, ret;
 
     /* get the number of children */
-    rtmod = orte_rml.get_routed(orte_mgmt_conduit);
-    nreqd = orte_routed.num_routes(rtmod) + 1;
+    nreqd = orte_routed.num_routes() + 1;
     if (nreqd == ncollected && NULL != mybucket && !node_regex_waiting) {
         /* add the collection of our children's buckets to ours */
         opal_dss.copy_payload(mybucket, bucket);
         OBJ_RELEASE(bucket);
         /* relay this on to our parent */
-        if (0 > (ret = orte_rml.send_buffer_nb(orte_mgmt_conduit,
-                                               ORTE_PROC_MY_PARENT, mybucket,
+        if (0 > (ret = orte_rml.send_buffer_nb(ORTE_PROC_MY_PARENT, mybucket,
                                                ORTE_RML_TAG_ORTED_CALLBACK,
                                                orte_rml_send_callback, NULL))) {
             ORTE_ERROR_LOG(ret);
@@ -1174,27 +1159,18 @@ static void report_orted() {
 static void node_regex_report(int status, orte_process_name_t* sender,
                               opal_buffer_t *buffer,
                               orte_rml_tag_t tag, void *cbdata) {
-    int rc, n=1;
-    char * regex;
-    assert(NULL == orte_node_regex);
+    int rc;
     bool * active = (bool *)cbdata;
 
-    /* extract the node regex if needed, and update the routing tree */
-    n = 1;
-    if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &regex, &n, OPAL_STRING))) {
-        ORTE_ERROR_LOG(rc);
-        return;
-    }
-    orte_node_regex = regex;
-
-    if (ORTE_SUCCESS != (rc = orte_regx.nidmap_parse(orte_node_regex))) {
+    /* extract the node info if needed, and update the routing tree */
+    if (ORTE_SUCCESS != (rc = orte_util_decode_nidmap(buffer))) {
         ORTE_ERROR_LOG(rc);
         return;
     }
 
     /* update the routing tree so any tree spawn operation
      * properly gets the number of children underneath us */
-    orte_routed.update_routing_plan(NULL);
+    orte_routed.update_routing_plan();
 
     *active = false;
 

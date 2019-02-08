@@ -14,7 +14,7 @@
  *                         All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -48,24 +48,18 @@ ORTE_MODULE_DECLSPEC extern orte_rml_component_t mca_rml_oob_component;
 
 void orte_rml_oob_fini(struct orte_rml_base_module_t *mod);
 
-int orte_rml_oob_send_nb(struct orte_rml_base_module_t *mod,
-                         orte_process_name_t* peer,
+int orte_rml_oob_send_nb(orte_process_name_t* peer,
                          struct iovec* msg,
                          int count,
                          orte_rml_tag_t tag,
                          orte_rml_callback_fn_t cbfunc,
                          void* cbdata);
 
-int orte_rml_oob_send_buffer_nb(struct orte_rml_base_module_t *mod,
-                                orte_process_name_t* peer,
+int orte_rml_oob_send_buffer_nb(orte_process_name_t* peer,
                                 opal_buffer_t* buffer,
                                 orte_rml_tag_t tag,
                                 orte_rml_buffer_callback_fn_t cbfunc,
                                 void* cbdata);
-
-int orte_rml_oob_ping(struct orte_rml_base_module_t *mod,
-                      const char* uri,
-                      const struct timeval* tv);
 
 END_C_DECLS
 

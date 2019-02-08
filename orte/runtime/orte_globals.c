@@ -13,7 +13,7 @@
  * Copyright (c) 2009-2010 Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2018 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
@@ -72,18 +72,12 @@ char *orte_basename = NULL;
 bool orte_coprocessors_detected = false;
 opal_hash_table_t *orte_coprocessors = NULL;
 char *orte_topo_signature = NULL;
-char *orte_mgmt_transport = NULL;
-char *orte_coll_transport = NULL;
-int orte_mgmt_conduit = -1;
-int orte_coll_conduit = -1;
 bool orte_no_vm = false;
 char *orte_data_server_uri = NULL;
 
 /* ORTE OOB port flags */
 bool orte_static_ports = false;
-char *orte_oob_static_ports = NULL;
 bool orte_standalone_operation = false;
-bool orte_fwd_mpirun_port = true;
 
 bool orte_keep_fqdn_hostnames = false;
 bool orte_have_fqdn_allocation = false;
@@ -159,7 +153,6 @@ char *orte_default_hostfile = NULL;
 bool orte_default_hostfile_given = false;
 char *orte_rankfile = NULL;
 int orte_num_allocated_nodes = 0;
-char *orte_node_regex = NULL;
 char *orte_default_dash_host = NULL;
 
 /* tool communication controls */

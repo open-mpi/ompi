@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2014 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -65,18 +65,9 @@ ORTE_DECLSPEC int orte_rml_base_select(void);
 /*
  *  globals that might be needed
  */
-/* adding element to hold the active modules and components */
-typedef struct {
-    opal_list_item_t super;
-    int pri;
-    orte_rml_component_t *component;
-} orte_rml_base_active_t;
-OBJ_CLASS_DECLARATION(orte_rml_base_active_t);
 
 /* a global struct containing framework-level values */
 typedef struct {
-    opal_list_t actives;  /* list to hold the active components */
-    opal_pointer_array_t conduits;  /* array to hold the open conduits */
     opal_list_t posted_recvs;
     opal_list_t unmatched_msgs;
     int max_retries;
@@ -114,8 +105,6 @@ typedef struct {
      * transfers
      */
     char *data;
-    /* routed module to be used */
-    char *routed;
 } orte_rml_send_t;
 OBJ_CLASS_DECLARATION(orte_rml_send_t);
 
@@ -232,51 +221,10 @@ OBJ_CLASS_DECLARATION(orte_self_send_xfer_t);
         OBJ_RELEASE(m);                                                 \
     }while(0);
 
-#define ORTE_RML_INVALID_CHANNEL_NUM  UINT32_MAX
 /* common implementations */
 ORTE_DECLSPEC void orte_rml_base_post_recv(int sd, short args, void *cbdata);
 ORTE_DECLSPEC void orte_rml_base_process_msg(int fd, short flags, void *cbdata);
 
-
-/* Stub API interfaces to cycle through active plugins */
-int orte_rml_API_ping(orte_rml_conduit_t conduit_id,
-                      const char* contact_info,
-                      const struct timeval* tv);
-
-int orte_rml_API_send_nb(orte_rml_conduit_t conduit_id,
-                         orte_process_name_t* peer, struct iovec* msg,
-                         int count, orte_rml_tag_t tag,
-                         orte_rml_callback_fn_t cbfunc, void* cbdata);
-
-int orte_rml_API_send_buffer_nb(orte_rml_conduit_t conduit_id,
-                                orte_process_name_t* peer,
-                                struct opal_buffer_t* buffer,
-                                orte_rml_tag_t tag,
-                                orte_rml_buffer_callback_fn_t cbfunc,
-                                void* cbdata);
-
-void orte_rml_API_recv_nb(orte_process_name_t* peer,
-                          orte_rml_tag_t tag,
-                          bool persistent,
-                          orte_rml_callback_fn_t cbfunc,
-                          void* cbdata);
-void orte_rml_API_recv_buffer_nb(orte_process_name_t* peer,
-                                 orte_rml_tag_t tag,
-                                 bool persistent,
-                                 orte_rml_buffer_callback_fn_t cbfunc,
-                                 void* cbdata);
-
-void orte_rml_API_recv_cancel(orte_process_name_t* peer, orte_rml_tag_t tag);
-
-void orte_rml_API_purge(orte_process_name_t *peer);
-
-int orte_rml_API_query_transports(opal_list_t *providers);
-
-orte_rml_conduit_t orte_rml_API_open_conduit(opal_list_t *attributes);
-
-void orte_rml_API_close_conduit(orte_rml_conduit_t id);
-
-char* orte_rml_API_get_routed(orte_rml_conduit_t id);
 
 END_C_DECLS
 

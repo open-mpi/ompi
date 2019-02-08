@@ -13,7 +13,7 @@
  * Copyright (c) 2007-2017 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  * Copyright (c) 2017-2018 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
@@ -73,11 +73,6 @@ ORTE_DECLSPEC extern opal_event_base_t *orte_event_base;  /* instantiated in ort
 ORTE_DECLSPEC extern bool orte_event_base_active; /* instantiated in orte/runtime/orte_init.c */
 ORTE_DECLSPEC extern bool orte_proc_is_bound;  /* instantiated in orte/runtime/orte_init.c */
 ORTE_DECLSPEC extern int orte_progress_thread_debug;  /* instantiated in orte/runtime/orte_init.c */
-
-ORTE_DECLSPEC extern char *orte_mgmt_transport;
-ORTE_DECLSPEC extern char *orte_coll_transport;
-ORTE_DECLSPEC extern int orte_mgmt_conduit;
-ORTE_DECLSPEC extern int orte_coll_conduit;
 
 /**
  * Global indicating where this process was bound to at launch (will
@@ -465,9 +460,7 @@ ORTE_DECLSPEC extern char *orte_data_server_uri;
 
 /* ORTE OOB port flags */
 ORTE_DECLSPEC extern bool orte_static_ports;
-ORTE_DECLSPEC extern char *orte_oob_static_ports;
 ORTE_DECLSPEC extern bool orte_standalone_operation;
-ORTE_DECLSPEC extern bool orte_fwd_mpirun_port;
 
 /* nodename flags */
 ORTE_DECLSPEC extern bool orte_keep_fqdn_hostnames;
@@ -543,7 +536,6 @@ ORTE_DECLSPEC extern char *orte_default_hostfile;
 ORTE_DECLSPEC extern bool orte_default_hostfile_given;
 ORTE_DECLSPEC extern char *orte_rankfile;
 ORTE_DECLSPEC extern int orte_num_allocated_nodes;
-ORTE_DECLSPEC extern char *orte_node_regex;
 ORTE_DECLSPEC extern char *orte_default_dash_host;
 
 /* PMI version control */

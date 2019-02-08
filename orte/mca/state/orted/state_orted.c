@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2011-2017 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -239,8 +239,7 @@ static void track_jobs(int fd, short argc, void *cbdata)
         }
 
         /* send it */
-        if (0 > (rc = orte_rml.send_buffer_nb(orte_mgmt_conduit,
-                                              ORTE_PROC_MY_HNP, alert,
+        if (0 > (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, alert,
                                               ORTE_RML_TAG_PLM,
                                               orte_rml_send_callback, NULL))) {
             ORTE_ERROR_LOG(rc);
@@ -262,7 +261,6 @@ static void track_procs(int fd, short argc, void *cbdata)
     opal_buffer_t *alert;
     int rc, i;
     orte_plm_cmd_flag_t cmd;
-    char *rtmod;
     orte_std_cntr_t index;
     orte_job_map_t *map;
     orte_node_t *node;
@@ -333,8 +331,7 @@ static void track_procs(int fd, short argc, void *cbdata)
                 }
             }
             /* send it */
-            if (0 > (rc = orte_rml.send_buffer_nb(orte_mgmt_conduit,
-                                                  ORTE_PROC_MY_HNP, alert,
+            if (0 > (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, alert,
                                                   ORTE_RML_TAG_PLM,
                                                   orte_rml_send_callback, NULL))) {
                 ORTE_ERROR_LOG(rc);
@@ -391,9 +388,8 @@ static void track_procs(int fd, short argc, void *cbdata)
          * gone, then terminate ourselves IF no local procs
          * remain (might be some from another job)
          */
-        rtmod = orte_rml.get_routed(orte_mgmt_conduit);
         if (orte_orteds_term_ordered &&
-            0 == orte_routed.num_routes(rtmod)) {
+            0 == orte_routed.num_routes()) {
             for (i=0; i < orte_local_children->size; i++) {
                 if (NULL != (pdata = (orte_proc_t*)opal_pointer_array_get_item(orte_local_children, i)) &&
                     ORTE_FLAG_TEST(pdata, ORTE_PROC_FLAG_ALIVE)) {
@@ -431,8 +427,7 @@ static void track_procs(int fd, short argc, void *cbdata)
                                  "%s state:orted: SENDING JOB LOCAL TERMINATION UPDATE FOR JOB %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_JOBID_PRINT(jdata->jobid)));
-            if (0 > (rc = orte_rml.send_buffer_nb(orte_mgmt_conduit,
-                                                  ORTE_PROC_MY_HNP, alert,
+            if (0 > (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, alert,
                                                   ORTE_RML_TAG_PLM,
                                                   orte_rml_send_callback, NULL))) {
                 ORTE_ERROR_LOG(rc);

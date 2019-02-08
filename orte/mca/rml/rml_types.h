@@ -12,7 +12,7 @@
  * Copyright (c) 2007-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2009-2016 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2017      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -200,19 +200,6 @@ BEGIN_C_DECLS
  * a defined constant.
  */
 typedef uint32_t orte_rml_tag_t;
-
-/* Conduit ID */
-typedef uint16_t orte_rml_conduit_t;
-#define ORTE_RML_CONDUIT_INVALID  0xff
-
-/* define an object for reporting transports */
-typedef struct {
-    opal_list_item_t super;
-    char *component;
-    opal_list_t attributes;
-    opal_list_t transports;
-} orte_rml_pathway_t;
-OBJ_CLASS_DECLARATION(orte_rml_pathway_t);
 
 /* ******************************************************************** */
 

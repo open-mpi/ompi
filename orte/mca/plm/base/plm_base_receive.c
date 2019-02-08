@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2011      Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2017      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -278,8 +278,7 @@ void orte_plm_base_recv(int status, orte_process_name_t* sender,
         }
 
         /* send the response back to the sender */
-        if (0 > (ret = orte_rml.send_buffer_nb(orte_mgmt_conduit,
-                                               sender, answer, ORTE_RML_TAG_LAUNCH_RESP,
+        if (0 > (ret = orte_rml.send_buffer_nb(sender, answer, ORTE_RML_TAG_LAUNCH_RESP,
                                                orte_rml_send_callback, NULL))) {
             ORTE_ERROR_LOG(ret);
             OBJ_RELEASE(answer);

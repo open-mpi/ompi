@@ -12,7 +12,7 @@
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2016-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2016-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2017      Mellanox Technologies. All rights reserved.
  * Copyright (c) 2017      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -513,8 +513,7 @@ static int orted_output(const orte_process_name_t* peer,
                          "%s iof:orted:output sending %d bytes to HNP",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (int)strlen(msg)+1));
 
-    orte_rml.send_buffer_nb(orte_mgmt_conduit,
-                            ORTE_PROC_MY_HNP, buf, ORTE_RML_TAG_IOF_HNP,
+    orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, buf, ORTE_RML_TAG_IOF_HNP,
                             orte_rml_send_callback, NULL);
 
     return ORTE_SUCCESS;

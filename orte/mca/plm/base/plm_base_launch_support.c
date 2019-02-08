@@ -13,7 +13,7 @@
  * Copyright (c) 2009      Institut National de Recherche en Informatique
  *                         et Automatique. All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
- * Copyright (c) 2013-2018 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2018 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
@@ -44,8 +44,10 @@
 #include "opal/dss/dss.h"
 #include "opal/mca/hwloc/hwloc-internal.h"
 #include "opal/mca/pmix/pmix.h"
+#include "opal/mca/compress/compress.h"
 
 #include "orte/util/dash_host/dash_host.h"
+#include "orte/util/nidmap.h"
 #include "orte/util/session_dir.h"
 #include "orte/util/show_help.h"
 #include "orte/mca/errmgr/errmgr.h"
@@ -53,7 +55,6 @@
 #include "orte/mca/iof/base/base.h"
 #include "orte/mca/odls/base/base.h"
 #include "orte/mca/ras/base/base.h"
-#include "orte/mca/regx/regx.h"
 #include "orte/mca/rmaps/rmaps.h"
 #include "orte/mca/rmaps/base/base.h"
 #include "orte/mca/rml/rml.h"
@@ -72,7 +73,6 @@
 #include "orte/runtime/runtime.h"
 #include "orte/runtime/orte_locks.h"
 #include "orte/runtime/orte_quit.h"
-#include "orte/util/compress.h"
 #include "orte/util/name_fns.h"
 #include "orte/util/pre_condition_transports.h"
 #include "orte/util/proc_info.h"
@@ -130,7 +130,11 @@ void orte_plm_base_daemons_reported(int fd, short args, void *cbdata)
     orte_state_caddy_t *caddy = (orte_state_caddy_t*)cbdata;
     orte_topology_t *t;
     orte_node_t *node;
-    int i;
+    int i, rc;
+    uint8_t u8;
+    opal_buffer_t buf;
+    orte_grpcomm_signature_t *sig;
+    orte_daemon_cmd_flag_t command = ORTE_DAEMON_PASS_NODE_INFO_CMD;
 
     ORTE_ACQUIRE_OBJECT(caddy);
 
@@ -175,7 +179,79 @@ void orte_plm_base_daemons_reported(int fd, short args, void *cbdata)
         orte_ras_base_display_alloc();
     }
     /* ensure we update the routing plan */
-    orte_routed.update_routing_plan(NULL);
+    orte_routed.update_routing_plan();
+
+    /* prep the buffer */
+    OBJ_CONSTRUCT(&buf, opal_buffer_t);
+    /* load the command */
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &command, 1, ORTE_DAEMON_CMD))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_DESTRUCT(&buf);
+        ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+        OBJ_RELEASE(caddy);
+        return;
+    }
+
+
+    /* if we did not execute a tree-spawn, then the daemons do
+     * not currently have a nidmap for the job - in that case,
+     * send one to them */
+    if (!orte_nidmap_communicated) {
+        u8 = 1;
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &u8, 1, OPAL_UINT8))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_DESTRUCT(&buf);
+            ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+            OBJ_RELEASE(caddy);
+            return;
+        }
+        if (OPAL_SUCCESS != (rc = orte_util_nidmap_create(orte_node_pool, &buf))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_DESTRUCT(&buf);
+            ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+            OBJ_RELEASE(caddy);
+            return;
+        }
+        orte_nidmap_communicated = true;
+    } else {
+        u8 = 0;
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &u8, 1, OPAL_UINT8))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_DESTRUCT(&buf);
+            ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+            OBJ_RELEASE(caddy);
+            return;
+        }
+    }
+
+    /* we always send the topologies and the #slots on each node. Note
+     * that we cannot send the #slots until after the above step since,
+     * for unmanaged allocations, we might have just determined it! */
+    if (OPAL_SUCCESS != (rc = orte_util_pass_node_info(&buf))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_DESTRUCT(&buf);
+        ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+        OBJ_RELEASE(caddy);
+        return;
+    }
+
+    /* goes to all daemons */
+    sig = OBJ_NEW(orte_grpcomm_signature_t);
+    sig->signature = (orte_process_name_t*)malloc(sizeof(orte_process_name_t));
+    sig->signature[0].jobid = ORTE_PROC_MY_NAME->jobid;
+    sig->signature[0].vpid = ORTE_VPID_WILDCARD;
+    sig->sz = 1;
+    if (ORTE_SUCCESS != (rc = orte_grpcomm.xcast(sig, ORTE_RML_TAG_DAEMON, &buf))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(sig);
+        OBJ_DESTRUCT(&buf);
+        ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+        OBJ_RELEASE(caddy);
+        return;
+    }
+    OBJ_DESTRUCT(&buf);
+    /* maintain accounting */
+    OBJ_RELEASE(sig);
 
     /* progress the job */
     caddy->jdata->state = ORTE_JOB_STATE_DAEMONS_REPORTED;
@@ -580,7 +656,7 @@ void orte_plm_base_send_launch_msg(int fd, short args, void *cbdata)
         uint8_t *cmpdata;
         size_t cmplen;
         /* report the size of the launch message */
-        compressed = orte_util_compress_block((uint8_t*)jdata->launch_msg.base_ptr,
+        compressed = opal_compress.compress_block((uint8_t*)jdata->launch_msg.base_ptr,
                                               jdata->launch_msg.bytes_used,
                                               &cmpdata, &cmplen);
         if (compressed) {
@@ -736,8 +812,7 @@ void orte_plm_base_post_launch(int fd, short args, void *cbdata)
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_JOBID_PRINT(jdata->jobid),
                          ORTE_NAME_PRINT(&jdata->originator)));
-    if (0 > (ret = orte_rml.send_buffer_nb(orte_mgmt_conduit,
-                                           &jdata->originator, answer,
+    if (0 > (ret = orte_rml.send_buffer_nb(&jdata->originator, answer,
                                            ORTE_RML_TAG_LAUNCH_RESP,
                                            orte_rml_send_callback, NULL))) {
         ORTE_ERROR_LOG(ret);
@@ -857,7 +932,7 @@ void orte_plm_base_daemon_topology(int status, orte_process_name_t* sender,
             goto CLEANUP;
         }
         /* decompress the data */
-        if (orte_util_uncompress_block(&cmpdata, cmplen,
+        if (opal_compress.decompress_block(&cmpdata, cmplen,
                                        packed_data, inlen)) {
             /* the data has been uncompressed */
             opal_dss.load(&datbuf, cmpdata, cmplen);
@@ -1184,7 +1259,7 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
                     goto CLEANUP;
                 }
                 /* decompress the data */
-                if (orte_util_uncompress_block(&cmpdata, cmplen,
+                if (opal_compress.decompress_block(&cmpdata, cmplen,
                                                packed_data, inlen)) {
                     /* the data has been uncompressed */
                     opal_dss.load(&datbuf, cmpdata, cmplen);
@@ -1270,8 +1345,7 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
                     goto CLEANUP;
                 }
                 /* send it */
-                orte_rml.send_buffer_nb(orte_mgmt_conduit,
-                                        &dname, relay,
+                orte_rml.send_buffer_nb(&dname, relay,
                                         ORTE_RML_TAG_DAEMON,
                                         orte_rml_send_callback, NULL);
                 /* we will count this node as completed
@@ -1514,46 +1588,6 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
     opal_asprintf(&param, "%lu", num_procs);
     opal_argv_append(argc, argv, param);
     free(param);
-
-    /* convert the nodes with daemons to a regex */
-    param = NULL;
-    if (ORTE_SUCCESS != (rc = orte_regx.nidmap_create(orte_node_pool, &param))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    if (NULL != orte_node_regex) {
-        free(orte_node_regex);
-    }
-    orte_node_regex = param;
-    /* if this is too long, then we'll have to do it with
-     * a phone home operation instead */
-    if (strlen(param) < orte_plm_globals.node_regex_threshold) {
-        opal_argv_append(argc, argv, "-"OPAL_MCA_CMD_LINE_ID);
-        opal_argv_append(argc, argv, "orte_node_regex");
-        opal_argv_append(argc, argv, orte_node_regex);
-        /* mark that the nidmap has been communicated */
-        orte_nidmap_communicated = true;
-    }
-
-    if (!orte_static_ports && !orte_fwd_mpirun_port) {
-        /* if we are using static ports, or we are forwarding
-         * mpirun's port, then we would have built all the
-         * connection info and so there is nothing to be passed.
-         * Otherwise, we have to pass the HNP uri so we can
-         * phone home */
-        opal_argv_append(argc, argv, "-"OPAL_MCA_CMD_LINE_ID);
-        opal_argv_append(argc, argv, "orte_hnp_uri");
-        opal_argv_append(argc, argv, orte_process_info.my_hnp_uri);
-    }
-
-    /* if requested, pass our port */
-    if (orte_fwd_mpirun_port) {
-        opal_asprintf(&param, "%d", orte_process_info.my_port);
-        opal_argv_append(argc, argv, "-"OPAL_MCA_CMD_LINE_ID);
-        opal_argv_append(argc, argv, "oob_tcp_static_ipv4_ports");
-        opal_argv_append(argc, argv, param);
-        free(param);
-    }
 
     /* if --xterm was specified, pass that along */
     if (NULL != orte_xterm) {
@@ -2136,7 +2170,7 @@ int orte_plm_base_setup_virtual_machine(orte_job_t *jdata)
                 opal_list_remove_item(&nodes, item);
                 OBJ_RELEASE(item);
             } else {
-                /* The filtering logic sets this flag only for nodes which 
+                /* The filtering logic sets this flag only for nodes which
                  * are kept after filtering. This flag will be subsequently
                  * used in rmaps components and must be reset here */
                 ORTE_FLAG_UNSET(node, ORTE_NODE_FLAG_MAPPED);
@@ -2274,7 +2308,7 @@ int orte_plm_base_setup_virtual_machine(orte_job_t *jdata)
 
         /* ensure all routing plans are up-to-date - we need this
          * so we know how to tree-spawn and/or xcast info */
-        orte_routed.update_routing_plan(NULL);
+        orte_routed.update_routing_plan();
     }
 
     /* mark that the daemon job changed */

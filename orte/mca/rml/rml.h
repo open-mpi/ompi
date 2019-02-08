@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2011-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  *
@@ -55,10 +55,6 @@ BEGIN_C_DECLS
 
 
 /* ******************************************************************** */
-
-/* forward declare */
-struct orte_rml_base_module_t;
-struct orte_rml_component_t;
 
 typedef struct {
     opal_object_t super;
@@ -173,8 +169,7 @@ typedef void (*orte_rml_exception_callback_t)(orte_process_name_t* peer,
  *                     from the local process
  * @retval ORTE_ERROR  An unspecified error occurred during the update
  */
-typedef int (*orte_rml_module_ping_fn_t)(struct orte_rml_base_module_t *mod,
-                                         const char* contact_info,
+typedef int (*orte_rml_module_ping_fn_t)(const char* contact_info,
                                          const struct timeval* tv);
 
 
@@ -201,8 +196,7 @@ typedef int (*orte_rml_module_ping_fn_t)(struct orte_rml_base_module_t *mod,
  *                    receiving process is not available
  * @retval ORTE_ERROR  An unspecified error occurred
  */
-typedef int (*orte_rml_module_send_nb_fn_t)(struct orte_rml_base_module_t *mod,
-                                            orte_process_name_t* peer,
+typedef int (*orte_rml_module_send_nb_fn_t)(orte_process_name_t* peer,
                                             struct iovec* msg,
                                             int count,
                                             orte_rml_tag_t tag,
@@ -232,8 +226,7 @@ typedef int (*orte_rml_module_send_nb_fn_t)(struct orte_rml_base_module_t *mod,
  *                    receiving process is not available
  * @retval ORTE_ERROR  An unspecified error occurred
  */
-typedef int (*orte_rml_module_send_buffer_nb_fn_t)(struct orte_rml_base_module_t *mod,
-                                                   orte_process_name_t* peer,
+typedef int (*orte_rml_module_send_buffer_nb_fn_t)(orte_process_name_t* peer,
                                                    struct opal_buffer_t* buffer,
                                                    orte_rml_tag_t tag,
                                                    orte_rml_buffer_callback_fn_t cbfunc,
@@ -246,6 +239,49 @@ typedef int (*orte_rml_module_send_buffer_nb_fn_t)(struct orte_rml_base_module_t
  */
 typedef void (*orte_rml_module_purge_fn_t)(orte_process_name_t *peer);
 
+
+/**
+ * Receive an iovec non-blocking message
+ *
+ * @param[in]  peer    Peer process or ORTE_NAME_WILDCARD for wildcard receive
+ * @param[in]  tag     User defined tag for matching send/recv
+ * @param[in] persistent Boolean flag indicating whether or not this is a one-time recv
+ * @param[in] cbfunc   Callback function on message comlpetion
+ * @param[in] cbdata   User data to provide during completion callback
+ */
+typedef void (*orte_rml_module_recv_nb_fn_t)(orte_process_name_t* peer,
+                                          orte_rml_tag_t tag,
+                                          bool persistent,
+                                          orte_rml_callback_fn_t cbfunc,
+                                          void* cbdata);
+
+
+/**
+ * Receive a buffer non-blocking message
+ *
+ * @param[in]  peer    Peer process or ORTE_NAME_WILDCARD for wildcard receive
+ * @param[in]  tag     User defined tag for matching send/recv
+ * @param[in] persistent Boolean flag indicating whether or not this is a one-time recv
+ * @param[in] cbfunc   Callback function on message comlpetion
+ * @param[in] cbdata   User data to provide during completion callback
+ */
+typedef void (*orte_rml_module_recv_buffer_nb_fn_t)(orte_process_name_t* peer,
+                                                 orte_rml_tag_t tag,
+                                                 bool persistent,
+                                                 orte_rml_buffer_callback_fn_t cbfunc,
+                                                 void* cbdata);
+
+/**
+ * Cancel a posted non-blocking receive
+ *
+ * Attempt to cancel a posted non-blocking receive.
+ *
+ * @param[in] peer    Peer process or ORTE_NAME_WILDCARD, exactly as passed
+ *                    to the non-blocking receive call
+ * @param[in] tag     Posted receive tag
+ */
+typedef void (*orte_rml_module_recv_cancel_fn_t)(orte_process_name_t* peer,
+                                              orte_rml_tag_t tag);
 
 
 /**
@@ -265,244 +301,20 @@ typedef struct orte_rml_base_module_t {
     /** Send non-blocking buffer message */
     orte_rml_module_send_buffer_nb_fn_t          send_buffer_nb;
 
+    orte_rml_module_recv_nb_fn_t                 recv_nb;
+    orte_rml_module_recv_buffer_nb_fn_t          recv_buffer_nb;
+    orte_rml_module_recv_cancel_fn_t             recv_cancel;
+
     /** Purge information */
     orte_rml_module_purge_fn_t                   purge;
 } orte_rml_base_module_t;
 
 
-/* ******************************************************************** */
-/*                 RML PUBLIC MODULE API DEFINITION                     */
-
-/** Open conduit - call each component and see if they can provide a
- *  conduit that can satisfy all these attributes - return the conduit id
- *  (a negative value indicates error)
- */
-typedef orte_rml_conduit_t (*orte_rml_API_open_conduit_fn_t)(opal_list_t *attributes);
-
-/**
- * Close a conduit - allow the component to cleanup.
- */
-typedef void (*orte_rml_API_close_conduit_fn_t)(orte_rml_conduit_t id);
-
-/**
- * Query the library to provide all the supported interfaces/transport
- * providers in the current node/system.
- *
- * @param[out] List of providers and their attributes.
-*/
-typedef int (*orte_rml_API_query_transports_fn_t)(opal_list_t *transports);
-
-/* query the routed module for a given conduit */
-typedef char* (*orte_rml_API_query_routed_fn_t)(orte_rml_conduit_t id);
-
-/**
- * "Ping" another process to determine availability
- *
- * Ping another process to determine if it is available.  This
- * function only verifies that the process is alive and will allow a
- * connection to the local process.  It does *not* qualify as
- * establishing communication with the remote process, as required by
- * the note for set_contact_info().
- *
- * @param[in] contact_info The contact info string for the remote process
- * @param[in] tv           Timeout after which the ping should be failed
- *
- * @retval ORTE_SUCESS The process is available and will allow connections
- *                     from the local process
- * @retval ORTE_ERROR  An unspecified error occurred during the update
- */
-typedef int (*orte_rml_API_ping_fn_t)(orte_rml_conduit_t conduit_id,
-                                      const char* contact_info,
-                                      const struct timeval* tv);
-
-
-/**
- * Send an iovec non-blocking message
- *
- * Send an array of iovecs to the specified peer.  The call
- * will return immediately, although the iovecs may not be modified
- * until the completion callback is triggered.  The iovecs *may* be
- * passed to another call to send_nb before the completion callback is
- * triggered.  The callback being triggered does not give any
- * indication of remote completion.
- *
- * @param[in] peer   Name of receiving process
- * @param[in] msg    Pointer to an array of iovecs to be sent
- * @param[in] count  Number of iovecs in array
- * @param[in] tag    User defined tag for matching send/recv
- * @param[in] cbfunc Callback function on message comlpetion
- * @param[in] cbdata User data to provide during completion callback
- *
- * @retval ORTE_SUCCESS The message was successfully started
- * @retval ORTE_ERR_BAD_PARAM One of the parameters was invalid
- * @retval ORTE_ERR_ADDRESSEE_UNKNOWN Contact information for the
- *                    receiving process is not available
- * @retval ORTE_ERROR  An unspecified error occurred
- */
-typedef int (*orte_rml_API_send_nb_fn_t)(orte_rml_conduit_t conduit_id,
-                                         orte_process_name_t* peer,
-                                         struct iovec* msg,
-                                         int count,
-                                         orte_rml_tag_t tag,
-                                         orte_rml_callback_fn_t cbfunc,
-                                         void* cbdata);
-
-
-/**
- * Send a buffer non-blocking message
- *
- * Send a buffer to the specified peer.  The call
- * will return immediately, although the buffer may not be modified
- * until the completion callback is triggered.  The buffer *may* be
- * passed to another call to send_nb before the completion callback is
- * triggered.  The callback being triggered does not give any
- * indication of remote completion.
- *
- * @param[in] peer   Name of receiving process
- * @param[in] buffer Pointer to buffer to be sent
- * @param[in] tag    User defined tag for matching send/recv
- * @param[in] cbfunc Callback function on message comlpetion
- * @param[in] cbdata User data to provide during completion callback
- *
- * @retval ORTE_SUCCESS The message was successfully started
- * @retval ORTE_ERR_BAD_PARAM One of the parameters was invalid
- * @retval ORTE_ERR_ADDRESSEE_UNKNOWN Contact information for the
- *                    receiving process is not available
- * @retval ORTE_ERROR  An unspecified error occurred
- */
-typedef int (*orte_rml_API_send_buffer_nb_fn_t)(orte_rml_conduit_t conduit_id,
-                                                orte_process_name_t* peer,
-                                                struct opal_buffer_t* buffer,
-                                                orte_rml_tag_t tag,
-                                                orte_rml_buffer_callback_fn_t cbfunc,
-                                                void* cbdata);
-
-/**
- * Purge the RML/OOB of contact info and pending messages
- * to/from a specified process. Used when a process aborts
- * and is to be restarted
- */
-typedef void (*orte_rml_API_purge_fn_t)(orte_process_name_t *peer);
-
-/**
- * Receive an iovec non-blocking message
- *
- * @param[in]  peer    Peer process or ORTE_NAME_WILDCARD for wildcard receive
- * @param[in]  tag     User defined tag for matching send/recv
- * @param[in] persistent Boolean flag indicating whether or not this is a one-time recv
- * @param[in] cbfunc   Callback function on message comlpetion
- * @param[in] cbdata   User data to provide during completion callback
- */
-typedef void (*orte_rml_API_recv_nb_fn_t)(orte_process_name_t* peer,
-                                          orte_rml_tag_t tag,
-                                          bool persistent,
-                                          orte_rml_callback_fn_t cbfunc,
-                                          void* cbdata);
-
-
-/**
- * Receive a buffer non-blocking message
- *
- * @param[in]  peer    Peer process or ORTE_NAME_WILDCARD for wildcard receive
- * @param[in]  tag     User defined tag for matching send/recv
- * @param[in] persistent Boolean flag indicating whether or not this is a one-time recv
- * @param[in] cbfunc   Callback function on message comlpetion
- * @param[in] cbdata   User data to provide during completion callback
- */
-typedef void (*orte_rml_API_recv_buffer_nb_fn_t)(orte_process_name_t* peer,
-                                                 orte_rml_tag_t tag,
-                                                 bool persistent,
-                                                 orte_rml_buffer_callback_fn_t cbfunc,
-                                                 void* cbdata);
-
-
-/**
- * Cancel a posted non-blocking receive
- *
- * Attempt to cancel a posted non-blocking receive.
- *
- * @param[in] peer    Peer process or ORTE_NAME_WILDCARD, exactly as passed
- *                    to the non-blocking receive call
- * @param[in] tag     Posted receive tag
- */
-typedef void (*orte_rml_API_recv_cancel_fn_t)(orte_process_name_t* peer,
-                                              orte_rml_tag_t tag);
-
-/**
- * RML API interface
- */
-typedef struct {
-    /** Open Conduit **/
-    orte_rml_API_open_conduit_fn_t              open_conduit;
-
-    /** Shutdown the conduit and clean up resources */
-    orte_rml_API_close_conduit_fn_t             close_conduit;
-
-    /** Ping process for connectivity check */
-    orte_rml_API_ping_fn_t                      ping;
-
-    /** Send non-blocking iovec message */
-    orte_rml_API_send_nb_fn_t           send_nb;
-
-    /** Send non-blocking buffer message */
-    orte_rml_API_send_buffer_nb_fn_t    send_buffer_nb;
-
-    /** Receive non-blocking iovec message */
-    orte_rml_API_recv_nb_fn_t                   recv_nb;
-
-    /** Receive non-blocking buffer message */
-    orte_rml_API_recv_buffer_nb_fn_t            recv_buffer_nb;
-
-    /** Cancel posted non-blocking receive */
-    orte_rml_API_recv_cancel_fn_t               recv_cancel;
-
-    /** Purge information */
-    orte_rml_API_purge_fn_t                     purge;
-
-    /** Query information of transport in system */
-    orte_rml_API_query_transports_fn_t          query_transports;
-
-    /* get the routed module for a given conduit */
-    orte_rml_API_query_routed_fn_t              get_routed;
-} orte_rml_base_API_t;
-
 /** Interface for RML communication */
-ORTE_DECLSPEC extern orte_rml_base_API_t orte_rml;
+ORTE_DECLSPEC extern orte_rml_base_module_t orte_rml;
 
 /* ******************************************************************** */
 /*                     RML COMPONENT DEFINITION                         */
-
-/**
- * RML open_conduit
- *
- * Create an instance (module) of the given RML component.  Upon
- * returning, the module data structure should be fully populated and
- * all functions should be usable and will have the conduit information.
- *
- * @param[in] opal_list_t of all attributes requested for the conduit.
- *            Each attribute will be key-value.
- *  [TODO] put in examples of the key-value here.
- * @return Exactly one module created by the call to the component's
- * initialization function should be returned.  The module structure
- * should be fully populated, and the priority should be set to a
- * reasonable value.
- *
- * @retval NULL An error occurred and initialization did not occur
- * @retval non-NULL The module was successfully initialized
- */
-typedef orte_rml_base_module_t* (*orte_rml_component_open_conduit_fn_t)(opal_list_t *attributes);
-
-/**
- * Query the library to provide all the supported interfaces/transport
- * providers in the current node/system.
- *
- */
-typedef orte_rml_pathway_t* (*orte_rml_component_query_transports_fn_t)(void);
-
-/** Close conduit - allow the specific component to
- *  cleanup the module for this conduit
- */
-typedef void (*orte_rml_module_close_conduit_fn_t)(orte_rml_base_module_t *mod);
 
 /**
  * RML component interface
@@ -518,10 +330,6 @@ typedef struct orte_rml_component_t {
     mca_base_component_data_t                   data;
     /* Component priority */
     int                                         priority;
-    /* Component interface functions */
-    orte_rml_component_open_conduit_fn_t        open_conduit;
-    orte_rml_component_query_transports_fn_t    query_transports;
-    orte_rml_module_close_conduit_fn_t          close_conduit;
 } orte_rml_component_t;
 
 

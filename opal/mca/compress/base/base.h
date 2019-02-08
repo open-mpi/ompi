@@ -3,6 +3,7 @@
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  *
+ * Copyright (c) 2019      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -26,6 +27,12 @@
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
+
+typedef struct {
+    size_t compress_limit;
+} opal_compress_base_t;
+
+OPAL_DECLSPEC extern opal_compress_base_t opal_compress_base;
 
     /**
      * Initialize the COMPRESS MCA framework

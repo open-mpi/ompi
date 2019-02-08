@@ -13,7 +13,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2017      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -586,7 +586,6 @@ void mca_oob_tcp_recv_handler(int sd, short flags, void *cbdata)
                     snd->data = peer->recv_msg->data;
                     snd->seq_num = peer->recv_msg->hdr.seq_num;
                     snd->count = peer->recv_msg->hdr.nbytes;
-                    snd->routed = strdup(peer->recv_msg->hdr.routed);
                     snd->cbfunc.iov = NULL;
                     snd->cbdata = NULL;
                     /* activate the OOB send state */

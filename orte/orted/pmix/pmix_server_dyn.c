@@ -13,7 +13,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009-2017 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2014-2016 Research Organization for Information Science
@@ -143,8 +143,7 @@ static void spawn(int sd, short args, void *cbdata)
     }
 
     /* send it to the HNP for processing - might be myself! */
-    if (ORTE_SUCCESS != (rc = orte_rml.send_buffer_nb(orte_mgmt_conduit,
-                                                      ORTE_PROC_MY_HNP, buf,
+    if (ORTE_SUCCESS != (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, buf,
                                                       ORTE_RML_TAG_PLM,
                                                       orte_rml_send_callback, NULL))) {
         ORTE_ERROR_LOG(rc);

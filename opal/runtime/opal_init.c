@@ -15,7 +15,7 @@
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2010-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      Amazon.com, Inc. or its affiliates.
@@ -61,9 +61,7 @@
 #include "opal/mca/if/base/base.h"
 #include "opal/dss/dss.h"
 #include "opal/mca/shmem/base/base.h"
-#if OPAL_ENABLE_FT_CR    == 1
 #include "opal/mca/compress/base/base.h"
-#endif
 #include "opal/threads/threads.h"
 #include "opal/threads/tsd.h"
 
@@ -524,7 +522,8 @@ opal_init_util(int* pargc, char*** pargv)
 static mca_base_framework_t *opal_init_frameworks[] = {
     &opal_hwloc_base_framework, &opal_memcpy_base_framework, &opal_memchecker_base_framework,
     &opal_backtrace_base_framework, &opal_timer_base_framework, &opal_event_base_framework,
-    &opal_shmem_base_framework, &opal_reachable_base_framework, NULL,
+    &opal_shmem_base_framework, &opal_reachable_base_framework, &opal_compress_base_framework,
+    NULL,
 };
 
 int
@@ -583,6 +582,11 @@ opal_init(int* pargc, char*** pargv)
     /* Intitialize reachable framework */
     if (OPAL_SUCCESS != (ret = opal_reachable_base_select())) {
         return opal_init_error ("opal_reachable_base_select", ret);
+    }
+
+    /* Intitialize compress framework */
+    if (OPAL_SUCCESS != (ret = opal_compress_base_select())) {
+        return opal_init_error ("opal_compress_base_select", ret);
     }
 
     return OPAL_SUCCESS;

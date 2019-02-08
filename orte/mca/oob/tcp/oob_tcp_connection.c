@@ -13,7 +13,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009-2018 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      Mellanox Technologies Ltd. All rights reserved.
@@ -334,7 +334,7 @@ void mca_oob_tcp_peer_try_connect(int fd, short args, void *cbdata)
          * an event in the component event base, and so it will fire async
          * from us if we are in our own progress thread
          */
-        ORTE_ACTIVATE_TCP_CMP_OP(peer, NULL, mca_oob_tcp_component_failed_to_connect);
+        ORTE_ACTIVATE_TCP_CMP_OP(peer, mca_oob_tcp_component_failed_to_connect);
         /* FIXME: post any messages in the send queue back to the OOB
          * level for reassignment
          */
@@ -937,7 +937,7 @@ int mca_oob_tcp_peer_recv_connect_ack(mca_oob_tcp_peer_t* pr,
     /* set the peer into the component and OOB-level peer tables to indicate
      * that we know this peer and we will be handling him
      */
-    ORTE_ACTIVATE_TCP_CMP_OP(peer, NULL, mca_oob_tcp_component_set_module);
+    ORTE_ACTIVATE_TCP_CMP_OP(peer, mca_oob_tcp_component_set_module);
 
     /* connected */
     tcp_peer_connected(peer);
@@ -968,7 +968,7 @@ static void tcp_peer_connected(mca_oob_tcp_peer_t* peer)
     }
 
     /* update the route */
-    orte_routed.update_route(NULL, &peer->name, &peer->name);
+    orte_routed.update_route(&peer->name, &peer->name);
 
     /* initiate send of first message on queue */
     if (NULL == peer->send_msg) {
@@ -1027,7 +1027,7 @@ void mca_oob_tcp_peer_close(mca_oob_tcp_peer_t *peer)
     /* inform the component-level that we have lost a connection so
      * it can decide what to do about it.
      */
-    ORTE_ACTIVATE_TCP_CMP_OP(peer, NULL, mca_oob_tcp_component_lost_connection);
+    ORTE_ACTIVATE_TCP_CMP_OP(peer, mca_oob_tcp_component_lost_connection);
 
     if (orte_orteds_term_ordered || orte_finalizing || orte_abnormal_term_ordered) {
         /* nothing more to do */
@@ -1238,7 +1238,7 @@ bool mca_oob_tcp_peer_accept(mca_oob_tcp_peer_t* peer)
         /* set the peer into the component and OOB-level peer tables to indicate
          * that we know this peer and we will be handling him
          */
-        ORTE_ACTIVATE_TCP_CMP_OP(peer, NULL, mca_oob_tcp_component_set_module);
+        ORTE_ACTIVATE_TCP_CMP_OP(peer, mca_oob_tcp_component_set_module);
 
         tcp_peer_connected(peer);
         if (!peer->recv_ev_active) {

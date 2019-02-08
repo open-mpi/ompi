@@ -13,7 +13,7 @@
  * Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -149,8 +149,7 @@ BEGIN_C_DECLS
         opal_dss.pack(buf, (b), 1, ORTE_NAME);                          \
                                                                         \
         /* send the buffer to the HNP */                                \
-        orte_rml.send_buffer_nb(orte_mgmt_conduit,                      \
-                                ORTE_PROC_MY_HNP, buf,                  \
+        orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, buf,                  \
                                 ORTE_RML_TAG_IOF_HNP,                   \
                                 orte_rml_send_callback, NULL);          \
     } while(0);

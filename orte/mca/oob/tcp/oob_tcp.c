@@ -13,7 +13,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -180,7 +180,7 @@ static void send_nb(orte_rml_send_t *msg)
 
 
     /* do we have a route to this peer (could be direct)? */
-    hop = orte_routed.get_route(msg->routed, &msg->dst);
+    hop = orte_routed.get_route(&msg->dst);
     /* do we know this hop? */
     if (NULL == (peer = mca_oob_tcp_peer_lookup(&hop))) {
         /* push this back to the component so it can try

@@ -8,7 +8,7 @@
  *                         reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014-2018 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
@@ -204,8 +204,7 @@ static void orted_abort(int error_code, char *fmt, ...)
     }
 
     /* send it */
-    if (0 > (rc = orte_rml.send_buffer_nb(orte_mgmt_conduit,
-                                          ORTE_PROC_MY_HNP, alert,
+    if (0 > (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, alert,
                                           ORTE_RML_TAG_PLM,
                                           orte_rml_send_callback, NULL))) {
         ORTE_ERROR_LOG(rc);
@@ -303,8 +302,7 @@ static void job_errors(int fd, short args, void *cbdata)
         goto cleanup;
     }
     /* send it */
-    if (0 > (rc = orte_rml.send_buffer_nb(orte_mgmt_conduit,
-                                          ORTE_PROC_MY_HNP, alert,
+    if (0 > (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, alert,
                                           ORTE_RML_TAG_PLM,
                                           orte_rml_send_callback, NULL))) {
         ORTE_ERROR_LOG(rc);
@@ -321,7 +319,6 @@ static void proc_errors(int fd, short args, void *cbdata)
     orte_job_t *jdata;
     orte_process_name_t *proc = &caddy->name;
     orte_proc_state_t state = caddy->proc_state;
-    char *rtmod;
     orte_proc_t *child, *ptr;
     opal_buffer_t *alert;
     orte_plm_cmd_flag_t cmd;
@@ -386,9 +383,6 @@ static void proc_errors(int fd, short args, void *cbdata)
         goto cleanup;
     }
 
-    /* get our management conduit's routed module name */
-    rtmod = orte_rml.get_routed(orte_mgmt_conduit);
-
     if (ORTE_PROC_STATE_COMM_FAILED == state) {
         /* if it is our own connection, ignore it */
         if (OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL, ORTE_PROC_MY_NAME, proc)) {
@@ -427,56 +421,6 @@ static void proc_errors(int fd, short args, void *cbdata)
                              "%s errmgr:default:orted daemon %s exited",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(proc)));
-        /* if we are using static ports, then it is possible that the HNP
-         * will not see this termination. So if the HNP didn't order us
-         * to terminate, then we should ensure it knows */
-        if (orte_static_ports && !orte_orteds_term_ordered) {
-            /* send an alert to the HNP */
-            alert = OBJ_NEW(opal_buffer_t);
-            /* pack update state command */
-            cmd = ORTE_PLM_UPDATE_PROC_STATE;
-            if (ORTE_SUCCESS != (rc = opal_dss.pack(alert, &cmd, 1, ORTE_PLM_CMD))) {
-                ORTE_ERROR_LOG(rc);
-                return;
-            }
-            /* get the proc_t */
-            if (NULL == (child = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, proc->vpid))) {
-                ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-                ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
-                goto cleanup;
-            }
-            /* set the exit code to reflect the problem */
-            child->exit_code = ORTE_ERR_COMM_FAILURE;
-            /* pack only the data for this daemon - have to start with the jobid
-             * so the receiver can unpack it correctly
-             */
-            if (ORTE_SUCCESS != (rc = opal_dss.pack(alert, &proc->jobid, 1, ORTE_JOBID))) {
-                ORTE_ERROR_LOG(rc);
-                return;
-            }
-
-            /* now pack the daemon's info */
-            if (ORTE_SUCCESS != (rc = pack_state_for_proc(alert, child))) {
-                ORTE_ERROR_LOG(rc);
-                return;
-            }
-            /* send it */
-            OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base_framework.framework_output,
-                                 "%s errmgr:default_orted reporting lost connection to daemon %s",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_NAME_PRINT(proc)));
-            if (0 > (rc = orte_rml.send_buffer_nb(orte_mgmt_conduit,
-                                                  ORTE_PROC_MY_HNP, alert,
-                                                  ORTE_RML_TAG_PLM,
-                                                  orte_rml_send_callback, NULL))) {
-                ORTE_ERROR_LOG(rc);
-                OBJ_RELEASE(alert);
-            }
-            /* mark that we notified the HNP for this job so we don't do it again */
-            orte_set_attribute(&jdata->attributes, ORTE_JOB_FAIL_NOTIFIED, ORTE_ATTR_LOCAL, NULL, OPAL_BOOL);
-            /* continue on */
-            goto cleanup;
-        }
 
         if (orte_orteds_term_ordered) {
             /* are any of my children still alive */
@@ -494,7 +438,7 @@ static void proc_errors(int fd, short args, void *cbdata)
             }
             /* if all my routes and children are gone, then terminate
                ourselves nicely (i.e., this is a normal termination) */
-            if (0 == orte_routed.num_routes(rtmod)) {
+            if (0 == orte_routed.num_routes()) {
                 OPAL_OUTPUT_VERBOSE((2, orte_errmgr_base_framework.framework_output,
                                      "%s errmgr:default:orted all routes gone - exiting",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
@@ -503,7 +447,7 @@ static void proc_errors(int fd, short args, void *cbdata)
                 OPAL_OUTPUT_VERBOSE((2, orte_errmgr_base_framework.framework_output,
                                      "%s errmgr:default:orted not exiting, num_routes() == %d",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                     (int)orte_routed.num_routes(rtmod)));
+                                     (int)orte_routed.num_routes()));
             }
         }
         /* if not, then we can continue */
@@ -563,8 +507,7 @@ static void proc_errors(int fd, short args, void *cbdata)
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(&child->name),
                                  jdata->num_local_procs));
-            if (0 > (rc = orte_rml.send_buffer_nb(orte_mgmt_conduit,
-                                                  ORTE_PROC_MY_HNP, alert,
+            if (0 > (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, alert,
                                                   ORTE_RML_TAG_PLM,
                                                   orte_rml_send_callback, NULL))) {
                 ORTE_ERROR_LOG(rc);
@@ -629,7 +572,7 @@ static void proc_errors(int fd, short args, void *cbdata)
             }
             /* if all my routes and children are gone, then terminate
                ourselves nicely (i.e., this is a normal termination) */
-            if (0 == orte_routed.num_routes(rtmod)) {
+            if (0 == orte_routed.num_routes()) {
                 OPAL_OUTPUT_VERBOSE((2, orte_errmgr_base_framework.framework_output,
                                      "%s errmgr:default:orted all routes gone - exiting",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
@@ -671,8 +614,7 @@ static void proc_errors(int fd, short args, void *cbdata)
                                  ORTE_NAME_PRINT(&child->name),
                                  jdata->num_local_procs));
             /* send it */
-            if (0 > (rc = orte_rml.send_buffer_nb(orte_mgmt_conduit,
-                                                  ORTE_PROC_MY_HNP, alert,
+            if (0 > (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, alert,
                                                   ORTE_RML_TAG_PLM,
                                                   orte_rml_send_callback, NULL))) {
                 ORTE_ERROR_LOG(rc);
@@ -727,8 +669,7 @@ static void proc_errors(int fd, short args, void *cbdata)
         OBJ_RELEASE(jdata);
 
         /* send it */
-        if (0 > (rc = orte_rml.send_buffer_nb(orte_mgmt_conduit,
-                                              ORTE_PROC_MY_HNP, alert,
+        if (0 > (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, alert,
                                               ORTE_RML_TAG_PLM,
                                               orte_rml_send_callback, NULL))) {
             ORTE_ERROR_LOG(rc);

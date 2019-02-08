@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2015-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2017      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -44,6 +44,7 @@
 #include "orte/runtime/orte_globals.h"
 #include "orte/runtime/orte_wait.h"
 #include "orte/util/name_fns.h"
+#include "orte/util/nidmap.h"
 #include "orte/util/threads.h"
 
 #include "orte/mca/rml/rml.h"
@@ -181,16 +182,14 @@ void orte_rml_base_process_msg(int fd, short flags, void *cbdata)
                 ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
                 return;
             }
-            assert (NULL != orte_node_regex);
 
-            if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, &orte_node_regex, 1, OPAL_STRING))) {
+            if (ORTE_SUCCESS != (rc = orte_util_nidmap_create(orte_node_pool, buffer))) {
                 ORTE_ERROR_LOG(rc);
                 OBJ_RELEASE(buffer);
                 return;
             }
 
-            if (ORTE_SUCCESS != (rc = orte_rml.send_buffer_nb(orte_mgmt_conduit,
-                                                              &msg->sender, buffer,
+            if (ORTE_SUCCESS != (rc = orte_rml.send_buffer_nb(&msg->sender, buffer,
                                                               ORTE_RML_TAG_NODE_REGEX_REPORT,
                                                               orte_rml_send_callback, NULL))) {
                 ORTE_ERROR_LOG(rc);

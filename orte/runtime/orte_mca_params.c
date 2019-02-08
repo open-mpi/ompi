@@ -13,7 +13,7 @@
  * Copyright (c) 2009-2010 Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved
- * Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2018 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
@@ -407,14 +407,6 @@ int orte_register_params(void)
         orte_default_dash_host = NULL;
     }
 
-    /* regex of nodes in system */
-    orte_node_regex = NULL;
-    (void) mca_base_var_register ("orte", "orte", NULL, "node_regex",
-                                  "Regular expression defining nodes in the system",
-                                  MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
-                                  OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
-                                  &orte_node_regex);
-
     /* whether or not to keep FQDN hostnames */
     orte_keep_fqdn_hostnames = false;
     (void) mca_base_var_register ("orte", "orte", NULL, "keep_fqdn_hostnames",
@@ -754,19 +746,6 @@ int orte_register_params(void)
                                   OPAL_INFO_LVL_5, MCA_BASE_VAR_SCOPE_READONLY,
                                   &orte_daemon_cores);
 
-    /* get the conduit params */
-    orte_coll_transport = "fabric,ethernet";
-    (void) mca_base_var_register("orte", "orte", "coll", "transports",
-                                 "Comma-separated list of transports to use for ORTE collectives",
-                                 MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_9,
-                                 MCA_BASE_VAR_SCOPE_READONLY, &orte_coll_transport);
-
-    orte_mgmt_transport = "oob";
-    (void) mca_base_var_register("orte", "orte", "mgmt", "transports",
-                                 "Comma-separated list of transports to use for ORTE management messages",
-                                 MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_9,
-                                 MCA_BASE_VAR_SCOPE_READONLY, &orte_mgmt_transport);
-
     /* Amount of time to wait for a stack trace to return from the daemons */
     orte_stack_trace_wait_timeout = 30;
     (void) mca_base_var_register ("orte", "orte", NULL, "timeout_for_stack_trace",
@@ -775,13 +754,6 @@ int orte_register_params(void)
                                   MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
                                   OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
                                   &orte_stack_trace_wait_timeout);
-
-    orte_fwd_mpirun_port = false;
-    (void) mca_base_var_register ("orte", "orte", NULL, "fwd_mpirun_port",
-                                  "Forward the port used by mpirun so all daemons will use it",
-                                  MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
-                                  OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
-                                  &orte_fwd_mpirun_port);
 
     /* register the URI of the UNIVERSAL data server */
     orte_data_server_uri = NULL;

@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
- * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2018      Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
@@ -508,8 +508,7 @@ void orte_state_base_notify_data_server(orte_process_name_t *target)
     }
 
     /* send the request to the server */
-    rc = orte_rml.send_buffer_nb(orte_mgmt_conduit,
-                                 &orte_pmix_server_globals.server, buf,
+    rc = orte_rml.send_buffer_nb(&orte_pmix_server_globals.server, buf,
                                  ORTE_RML_TAG_DATA_SERVER,
                                  orte_rml_send_callback, NULL);
     if (ORTE_SUCCESS != rc) {
@@ -617,8 +616,7 @@ static void _send_notification(int status,
                             ORTE_ERROR_NAME(status),
                             ORTE_NAME_PRINT(target),
                             ORTE_NAME_PRINT(&daemon));
-        if (ORTE_SUCCESS != (rc = orte_rml.send_buffer_nb(orte_mgmt_conduit,
-                                                          &daemon, buf,
+        if (ORTE_SUCCESS != (rc = orte_rml.send_buffer_nb(&daemon, buf,
                                                           ORTE_RML_TAG_NOTIFICATION,
                                                           orte_rml_send_callback, NULL))) {
             ORTE_ERROR_LOG(rc);
@@ -635,7 +633,6 @@ void orte_state_base_track_procs(int fd, short argc, void *cbdata)
     orte_job_t *jdata;
     orte_proc_t *pdata;
     int i;
-    char *rtmod;
     orte_process_name_t parent, target;
 
     ORTE_ACQUIRE_OBJECT(caddy);
@@ -647,9 +644,6 @@ void orte_state_base_track_procs(int fd, short argc, void *cbdata)
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         ORTE_NAME_PRINT(proc),
                         orte_proc_state_to_str(state));
-
-    /* get our "lifeline" routed module */
-    rtmod = orte_rml.get_routed(orte_mgmt_conduit);
 
     /* get the job object for this proc */
     if (NULL == (jdata = orte_get_job_data_object(proc->jobid))) {
@@ -722,7 +716,7 @@ void orte_state_base_track_procs(int fd, short argc, void *cbdata)
          * remain (might be some from another job)
          */
         if (orte_orteds_term_ordered &&
-            0 == orte_routed.num_routes(rtmod)) {
+            0 == orte_routed.num_routes()) {
             for (i=0; i < orte_local_children->size; i++) {
                 if (NULL != (pdata = (orte_proc_t*)opal_pointer_array_get_item(orte_local_children, i)) &&
                     ORTE_FLAG_TEST(pdata, ORTE_PROC_FLAG_ALIVE)) {
@@ -783,7 +777,6 @@ void orte_state_base_check_all_complete(int fd, short args, void *cbdata)
     int32_t i32, *i32ptr;
     uint32_t u32;
     void *nptr;
-    char *rtmod;
 
     ORTE_ACQUIRE_OBJECT(caddy);
     jdata = caddy->jdata;
@@ -792,10 +785,6 @@ void orte_state_base_check_all_complete(int fd, short args, void *cbdata)
                         "%s state:base:check_job_complete on job %s",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         (NULL == jdata) ? "NULL" : ORTE_JOBID_PRINT(jdata->jobid));
-
-    /* get our "lifeline" routed module */
-    rtmod = orte_rml.get_routed(orte_mgmt_conduit);
-
 
     if (NULL == jdata || jdata->jobid == ORTE_PROC_MY_NAME->jobid) {
         /* just check to see if the daemons are complete */
@@ -864,7 +853,7 @@ void orte_state_base_check_all_complete(int fd, short args, void *cbdata)
      */
  CHECK_DAEMONS:
     if (jdata == NULL || jdata->jobid == ORTE_PROC_MY_NAME->jobid) {
-        if (0 == orte_routed.num_routes(rtmod)) {
+        if (0 == orte_routed.num_routes()) {
             /* orteds are done! */
             OPAL_OUTPUT_VERBOSE((2, orte_state_base_framework.framework_output,
                                  "%s orteds complete - exiting",
