@@ -384,7 +384,7 @@ int orte_util_decode_nidmap(opal_buffer_t *buf)
     for (n=0; NULL != names[n]; n++) {
         /* add this name to the pool */
         nd = OBJ_NEW(orte_node_t);
-        nd->name = names[n];
+        nd->name = strdup(names[n]);
         opal_pointer_array_set_item(orte_node_pool, n, nd);
         /* set the topology - always default to homogeneous
          * as that is the most common scenario */
