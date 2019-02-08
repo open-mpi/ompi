@@ -51,6 +51,7 @@ int MPI_Type_create_f90_real(int p, int r, MPI_Datatype *newtype)
 {
     uint64_t key;
     int p_key, r_key;
+    int sflt_dig = 3, sflt_max_10_exp = +5, sflt_min_10_exp = -4;
 
     OPAL_CR_NOOP_PROGRESS();
 
@@ -87,7 +88,9 @@ int MPI_Type_create_f90_real(int p, int r, MPI_Datatype *newtype)
     if     ( (LDBL_DIG < p) || (LDBL_MAX_10_EXP < r) || (-LDBL_MIN_10_EXP < r) ) *newtype = &ompi_mpi_datatype_null.dt;
     else if( (DBL_DIG  < p) || (DBL_MAX_10_EXP  < r) || (-DBL_MIN_10_EXP  < r) ) *newtype = &ompi_mpi_long_double.dt;
     else if( (FLT_DIG  < p) || (FLT_MAX_10_EXP  < r) || (-FLT_MIN_10_EXP  < r) ) *newtype = &ompi_mpi_double.dt;
-    else                                                                         *newtype = &ompi_mpi_float.dt;
+    else if( ! OMPI_HAVE_FORTRAN_REAL2 ||
+             (sflt_dig < p) || (sflt_max_10_exp < r) || (-sflt_min_10_exp < r) ) *newtype = &ompi_mpi_float.dt;
+    else                                                                         *newtype = &ompi_mpi_real2.dt;
 
     if( *newtype != &ompi_mpi_datatype_null.dt ) {
         ompi_datatype_t* datatype;

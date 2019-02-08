@@ -32,13 +32,16 @@ my $ierror_arg;
 my $maxrank_arg;
 my $generate_arg;
 my $mpi_arg;
+my $mpi_real2;
 my $mpi_real16;
+my $mpi_complex4;
 my $mpi_complex32;
 my $pmpi_arg;
 my $help_arg = 0;
 
 &Getopt::Long::Configure("bundling");
 my $ok = Getopt::Long::GetOptions("complex32=i" => \$mpi_complex32,
+                                  "complex4=i" => \$mpi_complex4,
                                   "header=s" => \$header_arg,
                                   "impl=s" => \$impl_arg,
                                   "ierror=s" => \$ierror_arg,
@@ -47,6 +50,7 @@ my $ok = Getopt::Long::GetOptions("complex32=i" => \$mpi_complex32,
                                   "mpi" => \$mpi_arg,
                                   "pmpi" => \$pmpi_arg,
                                   "real16=i" => \$mpi_real16,
+                                  "real2=i" => \$mpi_real2,
                                   "help|h" => \$help_arg);
 
 die "Must specify header and/or impl filenames to output"
@@ -60,8 +64,9 @@ die "max array rank must be >= 4 and <=15"
 die "Must specify --pmpi and/or --mpi if --impl is specified"
     if (defined($generate_arg) && $generate_arg &&
         (defined($impl_arg) && !defined($mpi_arg) && !defined($pmpi_arg)));
-die "Must specify real16 and complex32"
-    if (!defined($mpi_real16) || !defined($mpi_complex32));
+die "Must specify real2, real16, complex4, and complex32"
+    if (!defined($mpi_real2) || !defined($mpi_real16) ||
+        !defined($mpi_complex4) || !defined($mpi_complex32));
 
 #############################################################################
 
@@ -148,11 +153,13 @@ sub generate {
 for my $size (qw/8 16 32 64/) {
     queue_sub("integer(int${size})", "int${size}", "int${size}");
 }
-for my $size (qw/32 64 128/) {
-    if ($size != 128 || $mpi_real16 == 1) {
+for my $size (qw/16 32 64 128/) {
+    if (!($size == 16 && $mpi_real2 == 0) &&
+        !($size == 128 &&$mpi_real16 == 0)) {
         queue_sub("real(real${size})", "real${size}", "real${size}");
     }
-    if ($size != 128 || $mpi_complex32 == 1) {
+    if (!($size == 16 && $mpi_complex4 == 0) &&
+        !($size == 128 && $mpi_complex32 == 0)) {
         queue_sub("complex(real${size})", "complex${size}", "real${size}");
     }
 }

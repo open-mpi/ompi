@@ -6,6 +6,7 @@
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
+ * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -366,59 +367,88 @@ COPY_TYPE_HETEROGENEOUS(int16, int128_t)
 #endif
 
 
-#if SIZEOF_FLOAT == 2
+#if defined(HAVE_SHORT_FLOAT) && SIZEOF_SHORT_FLOAT == 2
+COPY_TYPE_HETEROGENEOUS( float2, short float )
+#elif SIZEOF_FLOAT == 2
 COPY_TYPE_HETEROGENEOUS( float2, float )
 #elif SIZEOF_DOUBLE == 2
 COPY_TYPE_HETEROGENEOUS( float2, double )
 #elif SIZEOF_LONG_DOUBLE == 2
 COPY_TYPE_HETEROGENEOUS( float2, long double )
+#elif defined(HAVE_OPAL_SHORT_FLOAT_T) && SIZEOF_OPAL_SHORT_FLOAT_T == 2
+COPY_TYPE_HETEROGENEOUS( float2, opal_short_float_t )
 #else
 /* #error No basic type for copy function for opal_datatype_float2 found */
 #define copy_float2_heterogeneous NULL
 #endif
 
-#if SIZEOF_FLOAT == 4
+#if defined(HAVE_SHORT_FLOAT) && SIZEOF_SHORT_FLOAT == 4
+COPY_TYPE_HETEROGENEOUS( float4, short float )
+#elif SIZEOF_FLOAT == 4
 COPY_TYPE_HETEROGENEOUS( float4, float )
 #elif SIZEOF_DOUBLE == 4
 COPY_TYPE_HETEROGENEOUS( float4, double )
 #elif SIZEOF_LONG_DOUBLE == 4
 COPY_TYPE_HETEROGENEOUS( float4, long double )
+#elif defined(HAVE_OPAL_SHORT_FLOAT_T) && SIZEOF_OPAL_SHORT_FLOAT_T == 4
+COPY_TYPE_HETEROGENEOUS( float4, opal_short_float_t )
 #else
 /* #error No basic type for copy function for opal_datatype_float4 found */
 #define copy_float4_heterogeneous NULL
 #endif
 
-#if SIZEOF_FLOAT == 8
+#if defined(HAVE_SHORT_FLOAT) && SIZEOF_SHORT_FLOAT == 8
+COPY_TYPE_HETEROGENEOUS( float8, short float )
+#elif SIZEOF_FLOAT == 8
 COPY_TYPE_HETEROGENEOUS( float8, float )
 #elif SIZEOF_DOUBLE == 8
 COPY_TYPE_HETEROGENEOUS( float8, double )
 #elif SIZEOF_LONG_DOUBLE == 8
 COPY_TYPE_HETEROGENEOUS( float8, long double )
+#elif defined(HAVE_OPAL_SHORT_FLOAT_T) && SIZEOF_OPAL_SHORT_FLOAT_T == 8
+COPY_TYPE_HETEROGENEOUS( float8, opal_short_float_t )
 #else
 /* #error No basic type for copy function for opal_datatype_float8 found */
 #define copy_float8_heterogeneous NULL
 #endif
 
-#if SIZEOF_FLOAT == 12
+#if defined(HAVE_SHORT_FLOAT) && SIZEOF_SHORT_FLOAT == 12
+COPY_TYPE_HETEROGENEOUS( float12, short float )
+#elif SIZEOF_FLOAT == 12
 COPY_TYPE_HETEROGENEOUS( float12, float )
 #elif SIZEOF_DOUBLE == 12
 COPY_TYPE_HETEROGENEOUS( float12, double )
 #elif SIZEOF_LONG_DOUBLE == 12
 COPY_TYPE_HETEROGENEOUS( float12, long double )
+#elif defined(HAVE_OPAL_SHORT_FLOAT_T) && SIZEOF_OPAL_SHORT_FLOAT_T == 12
+COPY_TYPE_HETEROGENEOUS( float12, opal_short_float_t )
 #else
 /* #error No basic type for copy function for opal_datatype_float12 found */
 #define copy_float12_heterogeneous NULL
 #endif
 
-#if SIZEOF_FLOAT == 16
+#if defined(HAVE_SHORT_FLOAT) && SIZEOF_SHORT_FLOAT == 16
+COPY_TYPE_HETEROGENEOUS( float16, short float )
+#elif SIZEOF_FLOAT == 16
 COPY_TYPE_HETEROGENEOUS( float16, float )
 #elif SIZEOF_DOUBLE == 16
 COPY_TYPE_HETEROGENEOUS( float16, double )
 #elif SIZEOF_LONG_DOUBLE == 16
 COPY_TYPE_HETEROGENEOUS_INTERNAL( float16, long double, 1)
+#elif defined(HAVE_OPAL_SHORT_FLOAT_T) && SIZEOF_OPAL_SHORT_FLOAT_T == 16
+COPY_TYPE_HETEROGENEOUS( float16, opal_short_float_t )
 #else
 /* #error No basic type for copy function for opal_datatype_float16 found */
 #define copy_float16_heterogeneous NULL
+#endif
+
+#if defined(HAVE_SHORT_FLOAT__COMPLEX)
+COPY_2SAMETYPE_HETEROGENEOUS( short_float_complex, short float _Complex )
+#elif defined(HAVE_OPAL_SHORT_FLOAT_COMPLEX_T)
+COPY_2SAMETYPE_HETEROGENEOUS( short_float_complex, opal_short_float_complex_t )
+#else
+/* #error No basic type for copy function for opal_datatype_short_float_complex found */
+#define copy_short_float_complex_heterogeneous NULL
 #endif
 
 COPY_2SAMETYPE_HETEROGENEOUS( float_complex, float )
@@ -450,6 +480,7 @@ conversion_fct_t opal_datatype_heterogeneous_copy_functions[OPAL_DATATYPE_MAX_PR
    [OPAL_DATATYPE_FLOAT8]              = (conversion_fct_t) copy_float8_heterogeneous,
    [OPAL_DATATYPE_FLOAT12]             = (conversion_fct_t) copy_float12_heterogeneous,
    [OPAL_DATATYPE_FLOAT16]             = (conversion_fct_t) copy_float16_heterogeneous,
+   [OPAL_DATATYPE_SHORT_FLOAT_COMPLEX] = (conversion_fct_t) copy_short_float_complex_heterogeneous,
    [OPAL_DATATYPE_FLOAT_COMPLEX]       = (conversion_fct_t) copy_float_complex_heterogeneous,
    [OPAL_DATATYPE_DOUBLE_COMPLEX]      = (conversion_fct_t) copy_double_complex_heterogeneous,
    [OPAL_DATATYPE_LONG_DOUBLE_COMPLEX] = (conversion_fct_t) copy_long_double_complex_heterogeneous,

@@ -202,6 +202,7 @@ module mpi_f08_types
   type(MPI_Datatype), bind(C, name="ompi_f08_mpi_cxx_bool") OMPI_PROTECTED          :: MPI_CXX_BOOL
   type(MPI_Datatype), bind(C, name="ompi_f08_mpi_count") OMPI_PROTECTED             :: MPI_COUNT
   type(MPI_Datatype), bind(C, name="ompi_f08_mpi_offset") OMPI_PROTECTED            :: MPI_OFFSET
+  type(MPI_Datatype), bind(C, name="ompi_f08_mpi_complex4") OMPI_PROTECTED          :: MPI_COMPLEX4
 
 !... Special sentinel constants
 !------------------------------

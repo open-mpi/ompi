@@ -302,6 +302,10 @@ ompi/mpiext/pcollreq/mpif-h/profile/pscan_init_f.c
 ompi/mpiext/pcollreq/mpif-h/profile/pscatter_init_f.c
 ompi/mpiext/pcollreq/mpif-h/profile/pscatterv_init_f.c
 
+ompi/mpiext/shortfloat/c/mpiext_shortfloat_c.h
+ompi/mpiext/shortfloat/mpif-h/mpiext_shortfloat_mpifh.h
+ompi/mpiext/shortfloat/use-mpi-f08/mpiext_shortfloat_usempif08.h
+
 ompi/tools/mpisync/mpisync
 ompi/tools/mpisync/mpirun_prof
 ompi/tools/mpisync/ompi_timing_post

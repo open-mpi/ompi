@@ -23,6 +23,7 @@
  * Copyright (c) 2016-2018 Mellanox Technologies Ltd. All rights reserved.
  *
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
+ * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -158,11 +159,13 @@ ompi_predefined_datatype_t *ompi_mpi_integer4_addr  = &ompi_mpi_integer4;
 ompi_predefined_datatype_t *ompi_mpi_integer8_addr  = &ompi_mpi_integer8;
 ompi_predefined_datatype_t *ompi_mpi_integer16_addr = &ompi_mpi_integer16;
 ompi_predefined_datatype_t *ompi_mpi_real_addr      = &ompi_mpi_real;
+ompi_predefined_datatype_t *ompi_mpi_real2_addr     = &ompi_mpi_real2;
 ompi_predefined_datatype_t *ompi_mpi_real4_addr     = &ompi_mpi_real4;
 ompi_predefined_datatype_t *ompi_mpi_real8_addr     = &ompi_mpi_real8;
 ompi_predefined_datatype_t *ompi_mpi_real16_addr    = &ompi_mpi_real16;
 ompi_predefined_datatype_t *ompi_mpi_dblprec_addr   = &ompi_mpi_dblprec;
 ompi_predefined_datatype_t *ompi_mpi_cplex_addr     = &ompi_mpi_cplex;
+ompi_predefined_datatype_t *ompi_mpi_complex4_addr  = &ompi_mpi_complex4;
 ompi_predefined_datatype_t *ompi_mpi_complex8_addr  = &ompi_mpi_complex8;
 ompi_predefined_datatype_t *ompi_mpi_complex16_addr = &ompi_mpi_complex16;
 ompi_predefined_datatype_t *ompi_mpi_complex32_addr = &ompi_mpi_complex32;

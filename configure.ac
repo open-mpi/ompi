@@ -25,6 +25,7 @@
 # Copyright (c) 2016-2017 IBM Corporation.  All rights reserved.
 # Copyright (c) 2018      Amazon.com, Inc. or its affiliates.
 #                         All Rights reserved.
+# Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -371,6 +372,27 @@ OPAL_CHECK_IDENT([CC], [CFLAGS], [c], [C])
 # Check for some types
 #
 
+# 'short float' support of the Intel C++ Compiler (group of C and C++
+# compilers), at least versions 18.0 and 19.0, is half-baked. It can
+# compile declarations of 'short float' variables and expressions of
+# 'sizeof(short float)' but cannot compile casts and operations of
+# 'short float' variables. In this situation, 'AC_CHECK_TYPES(short float)'
+# defines 'HAVE_SHORT_FLOAT' as 1 and compilation errors occur in
+# ompi/mca/op/base/op_base_functions.c. To avoid this error, check it
+# using 'AC_COMPILE_IFELSE' and set Autoconf cache variables before
+# 'AC_CHECK_TYPES(short float)'. This check can be removed when all
+# OMPI-supported Intel C++ Compilers support 'short float' completely
+# (or drop it completely).
+if test "$opal_cv_c_compiler_vendor" = "intel"; then
+    AC_MSG_CHECKING([if Intel compiler supports "short float" properly])
+    AC_COMPILE_IFELSE(
+        [AC_LANG_SOURCE([float f(short float a, short float b) { return (float)(a + b); }])],
+        [AC_MSG_RESULT([yes])],
+        [ac_cv_type_short_float="no"
+         ac_cv_type_short_float__Complex="no"]
+         AC_MSG_RESULT([no]))
+fi
+
 AC_CHECK_TYPES(int8_t)
 AC_CHECK_TYPES(uint8_t)
 AC_CHECK_TYPES(int16_t)
@@ -385,10 +407,12 @@ AC_CHECK_TYPES(uint128_t)
 AC_CHECK_TYPES(long long)
 
 AC_CHECK_TYPES(__float128)
+AC_CHECK_TYPES(short float)
 AC_CHECK_TYPES(long double)
 # We only need these types if we're building the OMPI project, but
 # OPAL currently doesn't protect for their lack of presence well.
 AC_CHECK_HEADERS(complex.h)
+AC_CHECK_TYPES(short float _Complex)
 AC_CHECK_TYPES(float _Complex)
 AC_CHECK_TYPES(double _Complex)
 AC_CHECK_TYPES(long double _Complex)
@@ -409,6 +433,9 @@ AC_CHECK_SIZEOF(short)
 AC_CHECK_SIZEOF(int)
 AC_CHECK_SIZEOF(long)
 AC_CHECK_SIZEOF(long long)
+if test "$ac_cv_type_short_float" = yes; then
+    AC_CHECK_SIZEOF(short float)
+fi
 AC_CHECK_SIZEOF(float)
 AC_CHECK_SIZEOF(double)
 AC_CHECK_SIZEOF(long double)
@@ -417,6 +444,9 @@ if test "$ac_cv_type___float128" = yes; then
 fi
 # We only need these types if we're building the OMPI project, but
 # OPAL currently doesn't protect for their lack of presence well.
+if test "$ac_cv_type_short_float__Complex" = yes; then
+    AC_CHECK_SIZEOF(short float _Complex)
+fi
 AC_CHECK_SIZEOF(float _Complex)
 AC_CHECK_SIZEOF(double _Complex)
 AC_CHECK_SIZEOF(long double _Complex)
@@ -459,6 +489,9 @@ OPAL_C_GET_ALIGNMENT(wchar_t, OPAL_ALIGNMENT_WCHAR)
 OPAL_C_GET_ALIGNMENT(int, OPAL_ALIGNMENT_INT)
 OPAL_C_GET_ALIGNMENT(long, OPAL_ALIGNMENT_LONG)
 OPAL_C_GET_ALIGNMENT(long long, OPAL_ALIGNMENT_LONG_LONG)
+if test "$ac_cv_type_short_float" = yes; then
+    OPAL_C_GET_ALIGNMENT(short float, OPAL_ALIGNMENT_SHORT_FLOAT)
+fi
 OPAL_C_GET_ALIGNMENT(float, OPAL_ALIGNMENT_FLOAT)
 OPAL_C_GET_ALIGNMENT(double, OPAL_ALIGNMENT_DOUBLE)
 OPAL_C_GET_ALIGNMENT(long double, OPAL_ALIGNMENT_LONG_DOUBLE)
@@ -469,12 +502,21 @@ fi
 
 # We only need these types if we're building the OMPI project, but
 # OPAL currently doesn't protect for their lack of presence well.
+if test "$ac_cv_type_short_float__Complex" = yes; then
+    OPAL_C_GET_ALIGNMENT(short float _Complex, OPAL_ALIGNMENT_SHORT_FLOAT_COMPLEX)
+fi
 OPAL_C_GET_ALIGNMENT(float _Complex, OPAL_ALIGNMENT_FLOAT_COMPLEX)
 OPAL_C_GET_ALIGNMENT(double _Complex, OPAL_ALIGNMENT_DOUBLE_COMPLEX)
 OPAL_C_GET_ALIGNMENT(long double _Complex, OPAL_ALIGNMENT_LONG_DOUBLE_COMPLEX)
 
 OPAL_C_GET_ALIGNMENT(void *, OPAL_ALIGNMENT_VOID_P)
 OPAL_C_GET_ALIGNMENT(size_t, OPAL_ALIGNMENT_SIZE_T)
+
+#
+# Check for an alternate type of C 'short float'
+#
+
+OPAL_CHECK_ALT_SHORT_FLOAT
 
 #
 # Check for other compiler characteristics

@@ -15,6 +15,7 @@
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2009      University of Houston.  All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -106,11 +107,13 @@ OMPI_DECLSPEC extern struct ompi_predefined_datatype_t *ompi_mpi_integer4_addr;
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t *ompi_mpi_integer8_addr;
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t *ompi_mpi_integer16_addr;
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t *ompi_mpi_real_addr;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t *ompi_mpi_real2_addr;
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t *ompi_mpi_real4_addr;
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t *ompi_mpi_real8_addr;
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t *ompi_mpi_real16_addr;
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t *ompi_mpi_dblprec_addr;
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t *ompi_mpi_cplex_addr;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t *ompi_mpi_complex4_addr;
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t *ompi_mpi_complex8_addr;
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t *ompi_mpi_complex16_addr;
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t *ompi_mpi_complex32_addr;

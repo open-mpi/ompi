@@ -13,6 +13,7 @@
  * Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -102,6 +103,49 @@
         }                                                               \
     }
 
+/*
+ * Define a function to calculate sum of complex numbers using a real
+ * number floating-point type (float, double, etc.).  This macro is used
+ * when the compiler supports a real number floating-point type but does
+ * not supports the corresponding complex number type.
+ */
+#define COMPLEX_SUM_FUNC(type_name, type) \
+  static void ompi_op_base_2buff_sum_##type_name(void *in, void *out, int *count, \
+                                                 struct ompi_datatype_t **dtype, \
+                                                 struct ompi_op_base_module_1_0_0_t *module) \
+  {                                                                      \
+      int i;                                                             \
+      type (*a)[2] = (type (*)[2]) in;                                   \
+      type (*b)[2] = (type (*)[2]) out;                                  \
+      for (i = 0; i < *count; ++i, ++a, ++b) {                           \
+          (*b)[0] += (*a)[0];                                            \
+          (*b)[1] += (*a)[1];                                            \
+      }                                                                  \
+  }
+
+/*
+ * Define a function to calculate product of complex numbers using a real
+ * number floating-point type (float, double, etc.).  This macro is used
+ * when the compiler supports a real number floating-point type but does
+ * not supports the corresponding complex number type.
+ */
+#define COMPLEX_PROD_FUNC(type_name, type) \
+  static void ompi_op_base_2buff_prod_##type_name(void *in, void *out, int *count, \
+                                                  struct ompi_datatype_t **dtype, \
+                                                  struct ompi_op_base_module_1_0_0_t *module) \
+  {                                                                      \
+      int i;                                                             \
+      type (*a)[2] = (type (*)[2]) in;                                   \
+      type (*b)[2] = (type (*)[2]) out;                                  \
+      type c[2];                                                         \
+      for (i = 0; i < *count; ++i, ++a, ++b) {                           \
+          c[0] = (*a)[0] * (*b)[0] - (*a)[1] * (*b)[1];                  \
+          c[1] = (*a)[0] * (*b)[1] + (*a)[1] * (*b)[0];                  \
+          (*b)[0] = c[0];                                                \
+          (*b)[1] = c[1];                                                \
+      }                                                                  \
+  }
+
 /*************************************************************************
  * Max
  *************************************************************************/
@@ -137,6 +181,11 @@ FUNC_FUNC(max, fortran_integer8, ompi_fortran_integer8_t)
 FUNC_FUNC(max, fortran_integer16, ompi_fortran_integer16_t)
 #endif
 /* Floating point */
+#if defined(HAVE_SHORT_FLOAT)
+FUNC_FUNC(max, short_float, short float)
+#elif defined(HAVE_OPAL_SHORT_FLOAT_T)
+FUNC_FUNC(max, short_float, opal_short_float_t)
+#endif
 FUNC_FUNC(max, float, float)
 FUNC_FUNC(max, double, double)
 FUNC_FUNC(max, long_double, long double)
@@ -195,6 +244,11 @@ FUNC_FUNC(min, fortran_integer8, ompi_fortran_integer8_t)
 FUNC_FUNC(min, fortran_integer16, ompi_fortran_integer16_t)
 #endif
 /* Floating point */
+#if defined(HAVE_SHORT_FLOAT)
+FUNC_FUNC(min, short_float, short float)
+#elif defined(HAVE_OPAL_SHORT_FLOAT_T)
+FUNC_FUNC(min, short_float, opal_short_float_t)
+#endif
 FUNC_FUNC(min, float, float)
 FUNC_FUNC(min, double, double)
 FUNC_FUNC(min, long_double, long double)
@@ -250,6 +304,11 @@ OP_FUNC(sum, fortran_integer8, ompi_fortran_integer8_t, +=)
 OP_FUNC(sum, fortran_integer16, ompi_fortran_integer16_t, +=)
 #endif
 /* Floating point */
+#if defined(HAVE_SHORT_FLOAT)
+OP_FUNC(sum, short_float, short float, +=)
+#elif defined(HAVE_OPAL_SHORT_FLOAT_T)
+OP_FUNC(sum, short_float, opal_short_float_t, +=)
+#endif
 OP_FUNC(sum, float, float, +=)
 OP_FUNC(sum, double, double, +=)
 OP_FUNC(sum, long_double, long double, +=)
@@ -272,6 +331,11 @@ OP_FUNC(sum, fortran_real8, ompi_fortran_real8_t, +=)
 OP_FUNC(sum, fortran_real16, ompi_fortran_real16_t, +=)
 #endif
 /* Complex */
+#if defined(HAVE_SHORT_FLOAT__COMPLEX)
+OP_FUNC(sum, c_short_float_complex, short float _Complex, +=)
+#elif defined(HAVE_OPAL_SHORT_FLOAT_COMPLEX_T)
+COMPLEX_SUM_FUNC(c_short_float_complex, opal_short_float_t)
+#endif
 OP_FUNC(sum, c_float_complex, float _Complex, +=)
 OP_FUNC(sum, c_double_complex, double _Complex, +=)
 OP_FUNC(sum, c_long_double_complex, long double _Complex, +=)
@@ -309,6 +373,11 @@ OP_FUNC(prod, fortran_integer8, ompi_fortran_integer8_t, *=)
 OP_FUNC(prod, fortran_integer16, ompi_fortran_integer16_t, *=)
 #endif
 /* Floating point */
+#if defined(HAVE_SHORT_FLOAT)
+OP_FUNC(prod, short_float, short float, *=)
+#elif defined(HAVE_OPAL_SHORT_FLOAT_T)
+OP_FUNC(prod, short_float, opal_short_float_t, *=)
+#endif
 OP_FUNC(prod, float, float, *=)
 OP_FUNC(prod, double, double, *=)
 OP_FUNC(prod, long_double, long double, *=)
@@ -331,6 +400,11 @@ OP_FUNC(prod, fortran_real8, ompi_fortran_real8_t, *=)
 OP_FUNC(prod, fortran_real16, ompi_fortran_real16_t, *=)
 #endif
 /* Complex */
+#if defined(HAVE_SHORT_FLOAT__COMPLEX)
+OP_FUNC(prod, c_short_float_complex, short float _Complex, *=)
+#elif defined(HAVE_OPAL_SHORT_FLOAT_COMPLEX_T)
+COMPLEX_PROD_FUNC(c_short_float_complex, opal_short_float_t)
+#endif
 OP_FUNC(prod, c_float_complex, float _Complex, *=)
 OP_FUNC(prod, c_double_complex, double _Complex, *=)
 OP_FUNC(prod, c_long_double_complex, long double _Complex, *=)
@@ -656,6 +730,50 @@ LOC_FUNC(minloc, long_double_int, <)
       }                                                                 \
   }
 
+/*
+ * Define a function to calculate sum of complex numbers using a real
+ * number floating-point type (float, double, etc.).  This macro is used
+ * when the compiler supports a real number floating-point type but does
+ * not supports the corresponding complex number type.
+ */
+#define COMPLEX_SUM_FUNC_3BUF(type_name, type) \
+  static void ompi_op_base_3buff_sum_##type_name(void * restrict in1,    \
+                                                 void * restrict in2, void * restrict out, int *count, \
+                                                 struct ompi_datatype_t **dtype, \
+                                                 struct ompi_op_base_module_1_0_0_t *module) \
+  {                                                                      \
+      int i;                                                             \
+      type (*a1)[2] = (type (*)[2]) in1;                                 \
+      type (*a2)[2] = (type (*)[2]) in2;                                 \
+      type (*b)[2] = (type (*)[2]) out;                                  \
+      for (i = 0; i < *count; ++i, ++a1, ++a2, ++b) {                    \
+          (*b)[0] = (*a1)[0] + (*a2)[0];                                 \
+          (*b)[1] = (*a1)[1] + (*a2)[1];                                 \
+      }                                                                  \
+  }
+
+/*
+ * Define a function to calculate product of complex numbers using a real
+ * number floating-point type (float, double, etc.).  This macro is used
+ * when the compiler supports a real number floating-point type but does
+ * not supports the corresponding complex number type.
+ */
+#define COMPLEX_PROD_FUNC_3BUF(type_name, type) \
+  static void ompi_op_base_3buff_prod_##type_name(void * restrict in1,   \
+                                                  void * restrict in2, void * restrict out, int *count, \
+                                                  struct ompi_datatype_t **dtype, \
+                                                  struct ompi_op_base_module_1_0_0_t *module) \
+  {                                                                      \
+      int i;                                                             \
+      type (*a1)[2] = (type (*)[2]) in1;                                 \
+      type (*a2)[2] = (type (*)[2]) in2;                                 \
+      type (*b)[2] = (type (*)[2]) out;                                  \
+      for (i = 0; i < *count; ++i, ++a1, ++a2, ++b) {                    \
+          (*b)[0] = (*a1)[0] * (*a2)[0] - (*a1)[1] * (*a2)[1];           \
+          (*b)[1] = (*a1)[0] * (*a2)[1] + (*a1)[1] * (*a2)[0];           \
+      }                                                                  \
+  }
+
 /*************************************************************************
  * Max
  *************************************************************************/
@@ -691,6 +809,11 @@ FUNC_FUNC_3BUF(max, fortran_integer8, ompi_fortran_integer8_t)
 FUNC_FUNC_3BUF(max, fortran_integer16, ompi_fortran_integer16_t)
 #endif
 /* Floating point */
+#if defined(HAVE_SHORT_FLOAT)
+FUNC_FUNC_3BUF(max, short_float, short float)
+#elif defined(HAVE_OPAL_SHORT_FLOAT_T)
+FUNC_FUNC_3BUF(max, short_float, opal_short_float_t)
+#endif
 FUNC_FUNC_3BUF(max, float, float)
 FUNC_FUNC_3BUF(max, double, double)
 FUNC_FUNC_3BUF(max, long_double, long double)
@@ -749,6 +872,11 @@ FUNC_FUNC_3BUF(min, fortran_integer8, ompi_fortran_integer8_t)
 FUNC_FUNC_3BUF(min, fortran_integer16, ompi_fortran_integer16_t)
 #endif
 /* Floating point */
+#if defined(HAVE_SHORT_FLOAT)
+FUNC_FUNC_3BUF(min, short_float, short float)
+#elif defined(HAVE_OPAL_SHORT_FLOAT_T)
+FUNC_FUNC_3BUF(min, short_float, opal_short_float_t)
+#endif
 FUNC_FUNC_3BUF(min, float, float)
 FUNC_FUNC_3BUF(min, double, double)
 FUNC_FUNC_3BUF(min, long_double, long double)
@@ -804,6 +932,11 @@ OP_FUNC_3BUF(sum, fortran_integer8, ompi_fortran_integer8_t, +)
 OP_FUNC_3BUF(sum, fortran_integer16, ompi_fortran_integer16_t, +)
 #endif
 /* Floating point */
+#if defined(HAVE_SHORT_FLOAT)
+OP_FUNC_3BUF(sum, short_float, short float, +)
+#elif defined(HAVE_OPAL_SHORT_FLOAT_T)
+OP_FUNC_3BUF(sum, short_float, opal_short_float_t, +)
+#endif
 OP_FUNC_3BUF(sum, float, float, +)
 OP_FUNC_3BUF(sum, double, double, +)
 OP_FUNC_3BUF(sum, long_double, long double, +)
@@ -826,6 +959,11 @@ OP_FUNC_3BUF(sum, fortran_real8, ompi_fortran_real8_t, +)
 OP_FUNC_3BUF(sum, fortran_real16, ompi_fortran_real16_t, +)
 #endif
 /* Complex */
+#if defined(HAVE_SHORT_FLOAT__COMPLEX)
+OP_FUNC_3BUF(sum, c_short_float_complex, short float _Complex, +)
+#elif defined(HAVE_OPAL_SHORT_FLOAT_COMPLEX_T)
+COMPLEX_SUM_FUNC_3BUF(c_short_float_complex, opal_short_float_t)
+#endif
 OP_FUNC_3BUF(sum, c_float_complex, float _Complex, +)
 OP_FUNC_3BUF(sum, c_double_complex, double _Complex, +)
 OP_FUNC_3BUF(sum, c_long_double_complex, long double _Complex, +)
@@ -863,6 +1001,11 @@ OP_FUNC_3BUF(prod, fortran_integer8, ompi_fortran_integer8_t, *)
 OP_FUNC_3BUF(prod, fortran_integer16, ompi_fortran_integer16_t, *)
 #endif
 /* Floating point */
+#if defined(HAVE_SHORT_FLOAT)
+OP_FUNC_3BUF(prod, short_float, short float, *)
+#elif defined(HAVE_OPAL_SHORT_FLOAT_T)
+OP_FUNC_3BUF(prod, short_float, opal_short_float_t, *)
+#endif
 OP_FUNC_3BUF(prod, float, float, *)
 OP_FUNC_3BUF(prod, double, double, *)
 OP_FUNC_3BUF(prod, long_double, long double, *)
@@ -885,6 +1028,11 @@ OP_FUNC_3BUF(prod, fortran_real8, ompi_fortran_real8_t, *)
 OP_FUNC_3BUF(prod, fortran_real16, ompi_fortran_real16_t, *)
 #endif
 /* Complex */
+#if defined(HAVE_SHORT_FLOAT__COMPLEX)
+OP_FUNC_3BUF(prod, c_short_float_complex, short float _Complex, *)
+#elif defined(HAVE_OPAL_SHORT_FLOAT_COMPLEX_T)
+COMPLEX_PROD_FUNC_3BUF(c_short_float_complex, opal_short_float_t)
+#endif
 OP_FUNC_3BUF(prod, c_float_complex, float _Complex, *)
 OP_FUNC_3BUF(prod, c_double_complex, double _Complex, *)
 OP_FUNC_3BUF(prod, c_long_double_complex, long double _Complex, *)
@@ -1240,12 +1388,22 @@ LOC_FUNC_3BUF(minloc, long_double_int, <)
 
 /** Floating point, including all the Fortran reals *********************/
 
+#if defined(HAVE_SHORT_FLOAT) || defined(HAVE_OPAL_SHORT_FLOAT_T)
+#define SHORT_FLOAT(name, ftype) ompi_op_base_##ftype##_##name##_short_float
+#else
+#define SHORT_FLOAT(name, ftype) NULL
+#endif
+#define FLOAT(name, ftype) ompi_op_base_##ftype##_##name##_float
+#define DOUBLE(name, ftype) ompi_op_base_##ftype##_##name##_double
+#define LONG_DOUBLE(name, ftype) ompi_op_base_##ftype##_##name##_long_double
+
 #define FLOATING_POINT(name, ftype)                                                            \
-  [OMPI_OP_BASE_TYPE_FLOAT] = ompi_op_base_##ftype##_##name##_float,                           \
-  [OMPI_OP_BASE_TYPE_DOUBLE] = ompi_op_base_##ftype##_##name##_double,                         \
+  [OMPI_OP_BASE_TYPE_SHORT_FLOAT] = SHORT_FLOAT(name, ftype),                                  \
+  [OMPI_OP_BASE_TYPE_FLOAT] = FLOAT(name, ftype),                                              \
+  [OMPI_OP_BASE_TYPE_DOUBLE] = DOUBLE(name, ftype),                                            \
   FLOATING_POINT_FORTRAN_REAL(name, ftype),                                                    \
   [OMPI_OP_BASE_TYPE_DOUBLE_PRECISION] = FLOATING_POINT_FORTRAN_DOUBLE_PRECISION(name, ftype), \
-  [OMPI_OP_BASE_TYPE_LONG_DOUBLE] = ompi_op_base_##ftype##_##name##_long_double
+  [OMPI_OP_BASE_TYPE_LONG_DOUBLE] = LONG_DOUBLE(name, ftype)
 
 /** Fortran logical *****************************************************/
 
@@ -1262,11 +1420,17 @@ LOC_FUNC_3BUF(minloc, long_double_int, <)
 
 /** Complex *****************************************************/
 
+#if defined(HAVE_SHORT_FLOAT__COMPLEX) || defined(HAVE_OPAL_SHORT_FLOAT_COMPLEX_T)
+#define SHORT_FLOAT_COMPLEX(name, ftype) ompi_op_base_##ftype##_##name##_c_short_float_complex
+#else
+#define SHORT_FLOAT_COMPLEX(name, ftype) NULL
+#endif
 #define FLOAT_COMPLEX(name, ftype) ompi_op_base_##ftype##_##name##_c_float_complex
 #define DOUBLE_COMPLEX(name, ftype) ompi_op_base_##ftype##_##name##_c_double_complex
 #define LONG_DOUBLE_COMPLEX(name, ftype) ompi_op_base_##ftype##_##name##_c_long_double_complex
 
 #define COMPLEX(name, ftype)                                                  \
+    [OMPI_OP_BASE_TYPE_C_SHORT_FLOAT_COMPLEX] = SHORT_FLOAT_COMPLEX(name, ftype), \
     [OMPI_OP_BASE_TYPE_C_FLOAT_COMPLEX] = FLOAT_COMPLEX(name, ftype),         \
     [OMPI_OP_BASE_TYPE_C_DOUBLE_COMPLEX] = DOUBLE_COMPLEX(name, ftype),       \
     [OMPI_OP_BASE_TYPE_C_LONG_DOUBLE_COMPLEX] = LONG_DOUBLE_COMPLEX(name, ftype)

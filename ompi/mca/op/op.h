@@ -16,6 +16,7 @@
  * Copyright (c) 2007-2009 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -131,6 +132,8 @@ enum {
     /** Fortran integer*16 */
     OMPI_OP_BASE_TYPE_INTEGER16,
 
+    /** Floating point: short float */
+    OMPI_OP_BASE_TYPE_SHORT_FLOAT,
     /** Floating point: float */
     OMPI_OP_BASE_TYPE_FLOAT,
     /** Floating point: double */
@@ -156,6 +159,8 @@ enum {
     OMPI_OP_BASE_TYPE_BOOL,
 
     /** Complex */
+    /* short float complex */
+    OMPI_OP_BASE_TYPE_C_SHORT_FLOAT_COMPLEX,
     /* float complex */
     OMPI_OP_BASE_TYPE_C_FLOAT_COMPLEX,
     /* double complex */

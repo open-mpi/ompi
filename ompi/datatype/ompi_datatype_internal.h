@@ -9,7 +9,7 @@
  *                         reserved.
  * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2016      FUJITSU LIMITED.  All rights reserved.
+ * Copyright (c) 2016-2018 FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -46,61 +46,70 @@
 #define OMPI_DATATYPE_MPI_FLOAT                   0x09
 #define OMPI_DATATYPE_MPI_DOUBLE                  0x0A
 #define OMPI_DATATYPE_MPI_LONG_DOUBLE             0x0B
-#define OMPI_DATATYPE_MPI_COMPLEX8                0x0C
-#define OMPI_DATATYPE_MPI_COMPLEX16               0x0D
-#define OMPI_DATATYPE_MPI_COMPLEX32               0x0E
-#define OMPI_DATATYPE_MPI_WCHAR                   0x0F
-#define OMPI_DATATYPE_MPI_PACKED                  0x10
+#define OMPI_DATATYPE_MPI_COMPLEX4                0x0C
+#define OMPI_DATATYPE_MPI_COMPLEX8                0x0D
+#define OMPI_DATATYPE_MPI_COMPLEX16               0x0E
+#define OMPI_DATATYPE_MPI_COMPLEX32               0x0F
+#define OMPI_DATATYPE_MPI_WCHAR                   0x10
+#define OMPI_DATATYPE_MPI_PACKED                  0x11
 
-#define OMPI_DATATYPE_MPI_BOOL                    0x11
+#define OMPI_DATATYPE_MPI_BOOL                    0x12
 
-#define OMPI_DATATYPE_MPI_LOGICAL                 0x12
-#define OMPI_DATATYPE_MPI_CHARACTER               0x13
-#define OMPI_DATATYPE_MPI_INTEGER                 0x14
-#define OMPI_DATATYPE_MPI_REAL                    0x15
-#define OMPI_DATATYPE_MPI_DOUBLE_PRECISION        0x16
+#define OMPI_DATATYPE_MPI_LOGICAL                 0x13
+#define OMPI_DATATYPE_MPI_CHARACTER               0x14
+#define OMPI_DATATYPE_MPI_INTEGER                 0x15
+#define OMPI_DATATYPE_MPI_REAL                    0x16
+#define OMPI_DATATYPE_MPI_DOUBLE_PRECISION        0x17
 
 /*
- * Derived datatypes supposely contiguous
+ * Derived datatypes supposedly contiguous
  */
-#define OMPI_DATATYPE_MPI_COMPLEX                 0x17   /* Was COMPLEX_FLOAT */
-#define OMPI_DATATYPE_MPI_DOUBLE_COMPLEX          0x18   /* Was COMPLEX_DOUBLE */
-#define OMPI_DATATYPE_MPI_LONG_DOUBLE_COMPLEX     0x19   /* Was COMPLEX_LONG_DOUBLE */
-#define OMPI_DATATYPE_MPI_2INT                    0x1A
-#define OMPI_DATATYPE_MPI_2INTEGER                0x1B
-#define OMPI_DATATYPE_MPI_2REAL                   0x1C
-#define OMPI_DATATYPE_MPI_2DBLPREC                0x1D
-#define OMPI_DATATYPE_MPI_2COMPLEX                0x1E
-#define OMPI_DATATYPE_MPI_2DOUBLE_COMPLEX         0x1F
+#define OMPI_DATATYPE_MPI_COMPLEX                 0x18   /* Was COMPLEX_FLOAT */
+#define OMPI_DATATYPE_MPI_DOUBLE_COMPLEX          0x19   /* Was COMPLEX_DOUBLE */
+#define OMPI_DATATYPE_MPI_LONG_DOUBLE_COMPLEX     0x1A   /* Was COMPLEX_LONG_DOUBLE */
+#define OMPI_DATATYPE_MPI_2INT                    0x1B
+#define OMPI_DATATYPE_MPI_2INTEGER                0x1C
+#define OMPI_DATATYPE_MPI_2REAL                   0x1D
+#define OMPI_DATATYPE_MPI_2DBLPREC                0x1E
+#define OMPI_DATATYPE_MPI_2COMPLEX                0x1F
+#define OMPI_DATATYPE_MPI_2DOUBLE_COMPLEX         0x20
 /*
  * Derived datatypes which will definitively be non contiguous on some architectures.
  */
-#define OMPI_DATATYPE_MPI_FLOAT_INT               0x20
-#define OMPI_DATATYPE_MPI_DOUBLE_INT              0x21
-#define OMPI_DATATYPE_MPI_LONG_DOUBLE_INT         0x22
-#define OMPI_DATATYPE_MPI_LONG_INT                0x23
-#define OMPI_DATATYPE_MPI_SHORT_INT               0x24
+#define OMPI_DATATYPE_MPI_FLOAT_INT               0x21
+#define OMPI_DATATYPE_MPI_DOUBLE_INT              0x22
+#define OMPI_DATATYPE_MPI_LONG_DOUBLE_INT         0x23
+#define OMPI_DATATYPE_MPI_LONG_INT                0x24
+#define OMPI_DATATYPE_MPI_SHORT_INT               0x25
 /*
  * Datatypes from the MPI 2.2 standard
  */
-#define OMPI_DATATYPE_MPI_AINT                    0x25
-#define OMPI_DATATYPE_MPI_OFFSET                  0x26
-#define OMPI_DATATYPE_MPI_C_BOOL                  0x27
-#define OMPI_DATATYPE_MPI_C_COMPLEX               0x28
-#define OMPI_DATATYPE_MPI_C_FLOAT_COMPLEX         0x29
-#define OMPI_DATATYPE_MPI_C_DOUBLE_COMPLEX        0x2A
-#define OMPI_DATATYPE_MPI_C_LONG_DOUBLE_COMPLEX   0x2B
+#define OMPI_DATATYPE_MPI_AINT                    0x26
+#define OMPI_DATATYPE_MPI_OFFSET                  0x27
+#define OMPI_DATATYPE_MPI_C_BOOL                  0x28
+#define OMPI_DATATYPE_MPI_C_COMPLEX               0x29
+#define OMPI_DATATYPE_MPI_C_FLOAT_COMPLEX         0x2A
+#define OMPI_DATATYPE_MPI_C_DOUBLE_COMPLEX        0x2B
+#define OMPI_DATATYPE_MPI_C_LONG_DOUBLE_COMPLEX   0x2C
 
-#define OMPI_DATATYPE_MPI_LB                      0x2C
-#define OMPI_DATATYPE_MPI_UB                      0x2D
+#define OMPI_DATATYPE_MPI_LB                      0x2D
+#define OMPI_DATATYPE_MPI_UB                      0x2E
 
 /*
  * Datatypes from the MPI 3.0 standard
  */
-#define OMPI_DATATYPE_MPI_COUNT                   0x2E
+#define OMPI_DATATYPE_MPI_COUNT                   0x2F
+
+/*
+ * Datatypes proposed to the MPI Forum in June 2017 for proposal in
+ * the MPI 4.0 standard. As of February 2019, it is not accepted yet.
+ * See https://github.com/mpi-forum/mpi-issues/issues/65
+ */
+#define OMPI_DATATYPE_MPI_SHORT_FLOAT             0x30
+#define OMPI_DATATYPE_MPI_C_SHORT_FLOAT_COMPLEX   0x31
 
 /* This should __ALWAYS__ stay last  */
-#define OMPI_DATATYPE_MPI_UNAVAILABLE             0x2F
+#define OMPI_DATATYPE_MPI_UNAVAILABLE             0x32
 
 
 #define OMPI_DATATYPE_MPI_MAX_PREDEFINED          (OMPI_DATATYPE_MPI_UNAVAILABLE+1)
@@ -332,6 +341,9 @@
 /* REAL */
 #if OMPI_SIZEOF_FORTRAN_REAL2 == OMPI_SIZEOF_FORTRAN_REAL
 #  define OMPI_DATATYPE_MPI_REAL2                 OMPI_DATATYPE_MPI_REAL
+#elif (defined(HAVE_SHORT_FLOAT) && OMPI_SIZEOF_FORTRAN_REAL2 == SIZEOF_SHORT_FLOAT) || \
+      (defined(HAVE_OPAL_SHORT_FLOAT_T) && OMPI_SIZEOF_FORTRAN_REAL2 == SIZEOF_OPAL_SHORT_FLOAT_T)
+#  define OMPI_DATATYPE_MPI_REAL2                 OMPI_DATATYPE_MPI_SHORT_FLOAT
 #elif OMPI_SIZEOF_FORTRAN_REAL2 == SIZEOF_FLOAT
 #  define OMPI_DATATYPE_MPI_REAL2                 OMPI_DATATYPE_MPI_FLOAT
 #elif OMPI_SIZEOF_FORTRAN_REAL2 == SIZEOF_DOUBLE
@@ -344,6 +356,9 @@
 
 #if OMPI_SIZEOF_FORTRAN_REAL4 == OMPI_SIZEOF_FORTRAN_REAL
 #  define OMPI_DATATYPE_MPI_REAL4                 OMPI_DATATYPE_MPI_REAL
+#elif (defined(HAVE_SHORT_FLOAT) && OMPI_SIZEOF_FORTRAN_REAL4 == SIZEOF_SHORT_FLOAT) || \
+      (defined(HAVE_OPAL_SHORT_FLOAT_T) && OMPI_SIZEOF_FORTRAN_REAL4 == SIZEOF_OPAL_SHORT_FLOAT_T)
+#  define OMPI_DATATYPE_MPI_REAL4                 OMPI_DATATYPE_MPI_SHORT_FLOAT
 #elif OMPI_SIZEOF_FORTRAN_REAL4 == SIZEOF_FLOAT
 #  define OMPI_DATATYPE_MPI_REAL4                 OMPI_DATATYPE_MPI_FLOAT
 #elif OMPI_SIZEOF_FORTRAN_REAL4 == SIZEOF_DOUBLE
@@ -356,6 +371,9 @@
 
 #if OMPI_SIZEOF_FORTRAN_REAL8 == OMPI_SIZEOF_FORTRAN_REAL
 #  define OMPI_DATATYPE_MPI_REAL8                 OMPI_DATATYPE_MPI_REAL
+#elif (defined(HAVE_SHORT_FLOAT) && OMPI_SIZEOF_FORTRAN_REAL8 == SIZEOF_SHORT_FLOAT) || \
+      (defined(HAVE_OPAL_SHORT_FLOAT_T) && OMPI_SIZEOF_FORTRAN_REAL8 == SIZEOF_OPAL_SHORT_FLOAT_T)
+#  define OMPI_DATATYPE_MPI_REAL8                 OMPI_DATATYPE_MPI_SHORT_FLOAT
 #elif OMPI_SIZEOF_FORTRAN_REAL8 == SIZEOF_FLOAT
 #  define OMPI_DATATYPE_MPI_REAL8                 OMPI_DATATYPE_MPI_FLOAT
 #elif OMPI_SIZEOF_FORTRAN_REAL8 == SIZEOF_DOUBLE
@@ -368,6 +386,9 @@
 
 #if OMPI_SIZEOF_FORTRAN_REAL16 == OMPI_SIZEOF_FORTRAN_REAL
 #  define OMPI_DATATYPE_MPI_REAL16                OMPI_DATATYPE_MPI_REAL
+#elif (defined(HAVE_SHORT_FLOAT) && OMPI_SIZEOF_FORTRAN_REAL16 == SIZEOF_SHORT_FLOAT) || \
+      (defined(HAVE_OPAL_SHORT_FLOAT_T) && OMPI_SIZEOF_FORTRAN_REAL16 == SIZEOF_OPAL_SHORT_FLOAT_T)
+#  define OMPI_DATATYPE_MPI_REAL16                 OMPI_DATATYPE_MPI_SHORT_FLOAT
 #elif OMPI_SIZEOF_FORTRAN_REAL16 == SIZEOF_FLOAT
 #  define OMPI_DATATYPE_MPI_REAL16                OMPI_DATATYPE_MPI_FLOAT
 #elif OMPI_SIZEOF_FORTRAN_REAL16 == SIZEOF_DOUBLE
@@ -382,6 +403,7 @@
  * C++ datatypes, these map to C datatypes.
  */
 #define OMPI_DATATYPE_MPI_CXX_BOOL                OMPI_DATATYPE_MPI_C_BOOL
+#define OMPI_DATATYPE_MPI_CXX_SHORT_FLOAT_COMPLEX OMPI_DATATYPE_MPI_C_SHORT_FLOAT_COMPLEX
 #define OMPI_DATATYPE_MPI_CXX_FLOAT_COMPLEX       OMPI_DATATYPE_MPI_C_FLOAT_COMPLEX
 #define OMPI_DATATYPE_MPI_CXX_DOUBLE_COMPLEX      OMPI_DATATYPE_MPI_C_DOUBLE_COMPLEX
 #define OMPI_DATATYPE_MPI_CXX_LONG_DOUBLE_COMPLEX OMPI_DATATYPE_MPI_C_LONG_DOUBLE_COMPLEX
@@ -438,7 +460,7 @@ extern const ompi_datatype_t* ompi_datatype_basicDatatypes[OMPI_DATATYPE_MPI_MAX
     OMPI_DATATYPE_INIT_PREDEFINED_BASIC_TYPE( UNAVAILABLE, NAME, FLAGS )
 
 /*
- * Initilization for these types is deferred until runtime.
+ * Initialization for these types is deferred until runtime.
  *
  * Using this macro implies that at this point not all informations needed
  * to fill up the datatype are known. We fill them with zeros and then later
@@ -570,6 +592,26 @@ extern const ompi_datatype_t* ompi_datatype_basicDatatypes[OMPI_DATATYPE_MPI_MAX
 #define OMPI_DATATYPE_INITIALIZER_UNSIGNED_LONG_LONG  OPAL_DATATYPE_INITIALIZER_UINT16
 #endif
 
+#if defined(HAVE_SHORT_FLOAT)
+#if SIZEOF_SHORT_FLOAT == 2
+#define OMPI_DATATYPE_INITIALIZER_SHORT_FLOAT         OPAL_DATATYPE_INITIALIZER_FLOAT2
+#elif SIZEOF_SHORT_FLOAT == 4
+#define OMPI_DATATYPE_INITIALIZER_SHORT_FLOAT         OPAL_DATATYPE_INITIALIZER_FLOAT4
+#elif SIZEOF_SHORT_FLOAT == 8
+#define OMPI_DATATYPE_INITIALIZER_SHORT_FLOAT         OPAL_DATATYPE_INITIALIZER_FLOAT8
+#endif
+#elif defined(HAVE_OPAL_SHORT_FLOAT_T) /* HAVE_SHORT_FLOAT */
+#if SIZEOF_OPAL_SHORT_FLOAT_T == 2
+#define OMPI_DATATYPE_INITIALIZER_SHORT_FLOAT         OPAL_DATATYPE_INITIALIZER_FLOAT2
+#elif SIZEOF_OPAL_SHORT_FLOAT_T == 4
+#define OMPI_DATATYPE_INITIALIZER_SHORT_FLOAT         OPAL_DATATYPE_INITIALIZER_FLOAT4
+#elif SIZEOF_OPAL_SHORT_FLOAT_T == 8
+#define OMPI_DATATYPE_INITIALIZER_SHORT_FLOAT         OPAL_DATATYPE_INITIALIZER_FLOAT8
+#endif
+#else /* HAVE_SHORT_FLOAT */
+#define OMPI_DATATYPE_INITIALIZER_SHORT_FLOAT         OPAL_DATATYPE_INITIALIZER_UNAVAILABLE
+#endif /* HAVE_SHORT_FLOAT */
+
 #if SIZEOF_FLOAT == 2
 #define OMPI_DATATYPE_INITIALIZER_FLOAT               OPAL_DATATYPE_INITIALIZER_FLOAT2
 #elif SIZEOF_FLOAT == 4
@@ -604,6 +646,7 @@ extern const ompi_datatype_t* ompi_datatype_basicDatatypes[OMPI_DATATYPE_MPI_MAX
 
 #define OMPI_DATATYPE_INITIALIZER_WCHAR               OPAL_DATATYPE_INITIALIZER_WCHAR
 
+#define OMPI_DATATYPE_INITIALIZER_C_SHORT_FLOAT_COMPLEX OPAL_DATATYPE_INITIALIZER_SHORT_FLOAT_COMPLEX
 #define OMPI_DATATYPE_INITIALIZER_C_FLOAT_COMPLEX       OPAL_DATATYPE_INITIALIZER_FLOAT_COMPLEX
 #define OMPI_DATATYPE_INITIALIZER_C_DOUBLE_COMPLEX      OPAL_DATATYPE_INITIALIZER_DOUBLE_COMPLEX
 #define OMPI_DATATYPE_INITIALIZER_C_LONG_DOUBLE_COMPLEX OPAL_DATATYPE_INITIALIZER_LONG_DOUBLE_COMPLEX
@@ -615,7 +658,7 @@ extern const ompi_datatype_t* ompi_datatype_basicDatatypes[OMPI_DATATYPE_MPI_MAX
 #define OMPI_DATATYPE_FIRST_TYPE                      OPAL_DATATYPE_MAX_PREDEFINED
 
 /*
- * Derived datatypes supposely contiguous
+ * Derived datatypes supposedly contiguous
  */
 #define OMPI_DATATYPE_2INT                            (OMPI_DATATYPE_FIRST_TYPE+6)
 #define OMPI_DATATYPE_2INTEGER                        (OMPI_DATATYPE_FIRST_TYPE+7)

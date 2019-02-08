@@ -27,8 +27,9 @@ extern mca_coll_hcoll_dtype_t zero_dte_mapping;
 #define OPAL_DATATYPE_FLOAT8         16
 #define OPAL_DATATYPE_FLOAT12        17
 #define OPAL_DATATYPE_FLOAT16        18
-#define OPAL_DATATYPE_FLOAT_COMPLEX  19
-#define OPAL_DATATYPE_DOUBLE_COMPLEX 20
+#define OPAL_DATATYPE_SHORT_FLOAT_COMPLEX 19
+#define OPAL_DATATYPE_FLOAT_COMPLEX  20
+#define OPAL_DATATYPE_DOUBLE_COMPLEX 21
 
 total 15 types
 */
@@ -56,37 +57,42 @@ static dte_data_representation_t* ompi_datatype_2_dte_data_rep[OMPI_DATATYPE_MAX
     &DTE_UINT32,                /*OPAL_DATATYPE_UINT4          11 */
     &DTE_UINT64,                /*OPAL_DATATYPE_UINT8          12 */
     &DTE_UINT128,               /*OPAL_DATATYPE_UINT16         13 */
-    &DTE_ZERO,                  /*OPAL_DATATYPE_FLOAT2         14 */
+#if defined(DTE_FLOAT16)
+    &DTE_FLOAT16,               /*OPAL_DATATYPE_FLOAT2         14 */
+#else
+    &DTE_ZERO,
+#endif
     &DTE_FLOAT32,               /*OPAL_DATATYPE_FLOAT4         15 */
     &DTE_FLOAT64,               /*OPAL_DATATYPE_FLOAT8         16 */
     &DTE_FLOAT96,               /*OPAL_DATATYPE_FLOAT12        17 */
     &DTE_FLOAT128,              /*OPAL_DATATYPE_FLOAT16        18 */
+    &DTE_ZERO,                  /*OPAL_DATATYPE_SHORT_FLOAT_COMPLEX 19 */
 #if defined(DTE_FLOAT32_COMPLEX)
-    &DTE_FLOAT32_COMPLEX,       /*OPAL_DATATYPE_COMPLEX8       19 */
+    &DTE_FLOAT32_COMPLEX,       /*OPAL_DATATYPE_FLOAT_COMPLEX  20 */
 #else
     &DTE_ZERO,
 #endif
 #if defined(DTE_FLOAT64_COMPLEX)
-    &DTE_FLOAT64_COMPLEX,       /*OPAL_DATATYPE_COMPLEX32      20 */
+    &DTE_FLOAT64_COMPLEX,       /*OPAL_DATATYPE_DOUBLE_COMPLEX 21 */
 #else
     &DTE_ZERO,
 #endif
 #if defined(DTE_FLOAT128_COMPLEX)
-    &DTE_FLOAT128_COMPLEX,       /*OPAL_DATATYPE_COMPLEX64     21 */
+    &DTE_FLOAT128_COMPLEX,      /*OPAL_DATATYPE_LONG_DOUBLE_COMPLEX 22 */
 #else
     &DTE_ZERO,
 #endif
 #if defined(DTE_BOOL)
-    &DTE_BOOL,                  /*OPAL_DATATYPE_BOOL           22 */
+    &DTE_BOOL,                  /*OPAL_DATATYPE_BOOL           23 */
 #else
     &DTE_ZERO,
 #endif
 #if defined(DTE_WCHAR)
-    &DTE_WCHAR,                 /*OPAL_DATATYPE_WCHAR          23 */
+    &DTE_WCHAR,                 /*OPAL_DATATYPE_WCHAR          24 */
 #else
     &DTE_ZERO,
 #endif
-    &DTE_ZERO                   /*OPAL_DATATYPE_UNAVAILABLE    24 */
+    &DTE_ZERO                   /*OPAL_DATATYPE_UNAVAILABLE    25 */
 };
 
 enum {
