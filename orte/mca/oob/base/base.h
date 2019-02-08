@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2017-2018 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2017-2019 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -143,11 +143,6 @@ ORTE_DECLSPEC void orte_oob_base_send_nb(int fd, short args, void *cbdata);
  * it is unchanged and does not require acess via event
  */
 ORTE_DECLSPEC void orte_oob_base_get_addr(char **uri);
-
-/* Get the available transports and their attributes */
-#define ORTE_OOB_GET_TRANSPORTS(u) orte_oob_base_get_transports(u)
-ORTE_DECLSPEC void orte_oob_base_get_transports(opal_list_t *transports);
-
 
 #if OPAL_ENABLE_FT_CR == 1
 ORTE_DECLSPEC void orte_oob_base_ft_event(int fd, short args, void *cbdata);

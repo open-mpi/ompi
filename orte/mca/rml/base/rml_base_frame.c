@@ -5,7 +5,7 @@
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2013      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -40,25 +40,9 @@
 
 
 /* Initialising stub fns in the global var used by other modules */
-orte_rml_base_API_t orte_rml = {
-    .ping                   = orte_rml_API_ping,
-    .send_nb                = orte_rml_API_send_nb,
-    .send_buffer_nb         = orte_rml_API_send_buffer_nb,
-    .recv_nb                = orte_rml_API_recv_nb,
-    .recv_buffer_nb         = orte_rml_API_recv_buffer_nb,
-    .recv_cancel            = orte_rml_API_recv_cancel,
-    .purge                  = orte_rml_API_purge,
-    .query_transports       = orte_rml_API_query_transports,
-    .open_conduit           = orte_rml_API_open_conduit,
-    .close_conduit          = orte_rml_API_close_conduit,
-    .get_routed             = orte_rml_API_get_routed
-};
+orte_rml_base_module_t orte_rml = {0};
 
 orte_rml_base_t orte_rml_base = {{{0}}};
-
-orte_rml_component_t *orte_rml_component = NULL;
-
-static bool selected = false;
 
 static int orte_rml_base_register(mca_base_register_flag_t flags)
 {
@@ -82,62 +66,9 @@ static int orte_rml_base_register(mca_base_register_flag_t flags)
     return ORTE_SUCCESS;
 }
 
-static void cleanup(int sd, short args, void *cbdata)
-{
-    orte_lock_t *lk = (orte_lock_t*)cbdata;
-
-    ORTE_ACQUIRE_OBJECT(active);
-    OPAL_LIST_DESTRUCT(&orte_rml_base.posted_recvs);
-    if (NULL != lk) {
-        ORTE_POST_OBJECT(lk);
-        ORTE_WAKEUP_THREAD(lk);
-    }
-}
-
 static int orte_rml_base_close(void)
 {
-    orte_lock_t lock;
-    int idx, total_conduits = opal_pointer_array_get_size(&orte_rml_base.conduits);
-    orte_rml_base_module_t *mod;
-    orte_rml_component_t *comp;
-
-     /* cycle thru the conduits opened and call each module's finalize */
-     /* The components finalise/close() will be responsible for freeing the module pointers   */
-    for (idx = 0; idx < total_conduits ; idx++)
-    {
-        if( NULL != (mod = (orte_rml_base_module_t*)opal_pointer_array_get_item(&orte_rml_base.conduits,idx))) {
-            /* close the conduit */
-            comp = (orte_rml_component_t*)mod->component;
-            if (NULL != comp && NULL != comp->close_conduit) {
-                comp->close_conduit(mod);
-            }
-            free(mod);
-        }
-
-    }
-    OBJ_DESTRUCT(&orte_rml_base.conduits);
-
-    OPAL_LIST_DESTRUCT(&orte_rml_base.actives)
-
-    /* because the RML posted recvs list is in a separate
-     * async thread for apps, we can't just destruct it here.
-     * Instead, we push it into that event thread and destruct
-     * it there */
-     if (ORTE_PROC_IS_APP) {
-        opal_event_t ev;
-        ORTE_CONSTRUCT_LOCK(&lock);
-        opal_event_set(orte_event_base, &ev, -1,
-                       OPAL_EV_WRITE, cleanup, (void*)&lock);
-        opal_event_set_priority(&ev, ORTE_ERROR_PRI);
-        ORTE_POST_OBJECT(ev);
-        opal_event_active(&ev, OPAL_EV_WRITE, 1);
-        ORTE_WAIT_THREAD(&lock);
-        ORTE_DESTRUCT_LOCK(&lock);
-     } else {
-        /* we can call the destruct directly */
-        cleanup(0, 0, NULL);
-     }
-
+    OPAL_LIST_DESTRUCT(&orte_rml_base.posted_recvs);
     return mca_base_framework_components_close(&orte_rml_base_framework, NULL);
 }
 
@@ -145,11 +76,8 @@ static int orte_rml_base_open(mca_base_open_flag_t flags)
 {
     /* Initialize globals */
     /* construct object for holding the active plugin modules */
-    OBJ_CONSTRUCT(&orte_rml_base.actives, opal_list_t);
     OBJ_CONSTRUCT(&orte_rml_base.posted_recvs, opal_list_t);
     OBJ_CONSTRUCT(&orte_rml_base.unmatched_msgs, opal_list_t);
-    OBJ_CONSTRUCT(&orte_rml_base.conduits, opal_pointer_array_t);
-    opal_pointer_array_init(&orte_rml_base.conduits,1,INT16_MAX,1);
 
     /* Open up all available components */
     return mca_base_framework_components_open(&orte_rml_base_framework, flags);
@@ -159,61 +87,28 @@ MCA_BASE_FRAMEWORK_DECLARE(orte, rml, "ORTE Run-Time Messaging Layer",
                            orte_rml_base_register, orte_rml_base_open, orte_rml_base_close,
                            mca_rml_base_static_components, 0);
 
-OBJ_CLASS_INSTANCE(orte_rml_base_active_t,
-                   opal_list_item_t,
-                   NULL, NULL);
-
 /**
  * Function for ordering the component(plugin) by priority
  */
 int orte_rml_base_select(void)
 {
-   mca_base_component_list_item_t *cli=NULL;
-   orte_rml_component_t *component=NULL;
-   orte_rml_base_active_t *newmodule, *mod;
-   bool inserted;
+    orte_rml_component_t *best_component = NULL;
+    orte_rml_base_module_t *best_module = NULL;
 
-   if (selected) {
-      return ORTE_SUCCESS;
-   }
-   selected = true;
-
-   OPAL_LIST_FOREACH(cli, &orte_rml_base_framework.framework_components, mca_base_component_list_item_t ) {
-       component = (orte_rml_component_t*) cli->cli_component;
-
-       opal_output_verbose(10, orte_rml_base_framework.framework_output,
-                           "orte_rml_base_select: Initializing %s component %s",
-                            component->base.mca_type_name,
-                            component->base.mca_component_name);
-
-       /* add to the list of available components */
-       newmodule = OBJ_NEW(orte_rml_base_active_t);
-       newmodule->pri = component->priority;
-       newmodule->component = component;
-
-       /* maintain priority order */
-       inserted = false;
-       OPAL_LIST_FOREACH(mod, &orte_rml_base.actives, orte_rml_base_active_t) {
-           if (newmodule->pri > mod->pri) {
-               opal_list_insert_pos(&orte_rml_base.actives,
-                            (opal_list_item_t*)mod, &newmodule->super);
-               inserted = true;
-               break;
-           }
-       }
-       if (!inserted) {
-           /* must be lowest priority - add to end */
-           opal_list_append(&orte_rml_base.actives, &newmodule->super);
-       }
+    /*
+     * Select the best component
+     */
+    if( OPAL_SUCCESS != mca_base_select("rml", orte_rml_base_framework.framework_output,
+                                        &orte_rml_base_framework.framework_components,
+                                        (mca_base_module_t **) &best_module,
+                                        (mca_base_component_t **) &best_component, NULL) ) {
+        /* This will only happen if no component was selected */
+        /* If we didn't find one to select, that is an error */
+        return ORTE_ERROR;
     }
 
-    if (4 < opal_output_get_verbosity(orte_rml_base_framework.framework_output)) {
-        opal_output(0, "%s: Final rml priorities", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-        /* show the prioritized list */
-        OPAL_LIST_FOREACH(mod, &orte_rml_base.actives, orte_rml_base_active_t) {
-            opal_output(0, "\tComponent: %s Priority: %d", mod->component->base.mca_component_name, mod->pri);
-        }
-    }
+    /* Save the winner */
+    orte_rml = *best_module;
 
     return ORTE_SUCCESS;
 }
@@ -279,17 +174,10 @@ static void send_cons(orte_rml_send_t *ptr)
     ptr->buffer = NULL;
     ptr->data = NULL;
     ptr->seq_num = 0xFFFFFFFF;
-    ptr->routed = NULL;
-}
-static void send_des(orte_rml_send_t *ptr)
-{
-    if (NULL != ptr->routed) {
-        free(ptr->routed);
-    }
 }
 OBJ_CLASS_INSTANCE(orte_rml_send_t,
                    opal_list_item_t,
-                   send_cons, send_des);
+                   send_cons, NULL);
 
 
 static void send_req_cons(orte_rml_send_request_t *ptr)
@@ -353,21 +241,3 @@ static void prq_des(orte_rml_recv_request_t *ptr)
 OBJ_CLASS_INSTANCE(orte_rml_recv_request_t,
                    opal_object_t,
                    prq_cons, prq_des);
-
-static void pthcons(orte_rml_pathway_t *p)
-{
-    p->component = NULL;
-    OBJ_CONSTRUCT(&p->attributes, opal_list_t);
-    OBJ_CONSTRUCT(&p->transports, opal_list_t);
-}
-static void pthdes(orte_rml_pathway_t *p)
-{
-    if (NULL != p->component) {
-        free(p->component);
-    }
-    OPAL_LIST_DESTRUCT(&p->attributes);
-    OPAL_LIST_DESTRUCT(&p->transports);
-}
-OBJ_CLASS_INSTANCE(orte_rml_pathway_t,
-                   opal_list_item_t,
-                   pthcons, pthdes);

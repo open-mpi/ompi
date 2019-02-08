@@ -12,7 +12,7 @@
  * Copyright (c) 2006-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2010-2011 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2015-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015-2019 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -73,21 +73,15 @@ typedef struct {
     uint16_t af_family;
     char *net;
     char *port;
-    char *rtmod;
 } mca_oob_tcp_peer_op_t;
 OBJ_CLASS_DECLARATION(mca_oob_tcp_peer_op_t);
 
-#define ORTE_ACTIVATE_TCP_CMP_OP(p, r, cbfunc)                          \
+#define ORTE_ACTIVATE_TCP_CMP_OP(p, cbfunc)                          \
     do {                                                                \
         mca_oob_tcp_peer_op_t *pop;                                     \
-        char *proxy;                                                    \
         pop = OBJ_NEW(mca_oob_tcp_peer_op_t);                           \
         pop->peer.jobid = (p)->name.jobid;                              \
         pop->peer.vpid = (p)->name.vpid;                                \
-        proxy = (r);                                                    \
-        if (NULL != proxy) {                                            \
-            pop->rtmod = strdup(proxy);                                 \
-        }                                                               \
         ORTE_THREADSHIFT(pop, orte_oob_base.ev_base,                    \
                          (cbfunc), ORTE_MSG_PRI);                       \
     } while(0);

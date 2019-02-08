@@ -112,8 +112,7 @@ static int xcast(orte_vpid_t *vpids,
 
     /* send it to the HNP (could be myself) for relay */
     OBJ_RETAIN(buf);  // we'll let the RML release it
-    if (0 > (rc = orte_rml.send_buffer_nb(orte_coll_conduit,
-                                          ORTE_PROC_MY_HNP, buf, ORTE_RML_TAG_XCAST,
+    if (0 > (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, buf, ORTE_RML_TAG_XCAST,
                                           orte_rml_send_callback, NULL))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(buf);
@@ -153,8 +152,7 @@ static int allgather(orte_grpcomm_coll_t *coll,
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
     /* send the info to ourselves for tracking */
-    rc = orte_rml.send_buffer_nb(orte_coll_conduit,
-                                 ORTE_PROC_MY_NAME, relay,
+    rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_NAME, relay,
                                  ORTE_RML_TAG_ALLGATHER_DIRECT,
                                  orte_rml_send_callback, NULL);
     return rc;
@@ -245,8 +243,7 @@ static void allgather_recv(int status, orte_process_name_t* sender,
             /* transfer the collected bucket */
             opal_dss.copy_payload(reply, &coll->bucket);
             /* send the info to our parent */
-            rc = orte_rml.send_buffer_nb(orte_coll_conduit,
-                                         ORTE_PROC_MY_PARENT, reply,
+            rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_PARENT, reply,
                                          ORTE_RML_TAG_ALLGATHER_DIRECT,
                                          orte_rml_send_callback, NULL);
         }
@@ -271,7 +268,6 @@ static void xcast_recv(int status, orte_process_name_t* sender,
     opal_list_t coll;
     orte_grpcomm_signature_t *sig;
     orte_rml_tag_t tag;
-    char *rtmod;
     size_t inlen, cmplen;
     uint8_t *packed_data, *cmpdata;
     int32_t nvals, i;
@@ -372,9 +368,6 @@ static void xcast_recv(int status, orte_process_name_t* sender,
         return;
     }
 
-    /* get our conduit's routed module name */
-    rtmod = orte_rml.get_routed(orte_coll_conduit);
-
     /* if this is headed for the daemon command processor,
      * then we first need to check for add_local_procs
      * as that command includes some needed wireup info */
@@ -424,7 +417,7 @@ static void xcast_recv(int status, orte_process_name_t* sender,
                         /* update the routing plan - the HNP already did
                          * it when it computed the VM, so don't waste time
                          * re-doing it here */
-                        orte_routed.update_routing_plan(rtmod);
+                        orte_routed.update_routing_plan();
                     }
                     /* routing is now possible */
                     orte_routed_base.routing_enabled = true;
@@ -523,7 +516,7 @@ static void xcast_recv(int status, orte_process_name_t* sender,
   relay:
     if (!orte_do_not_launch) {
         /* get the list of next recipients from the routed module */
-        orte_routed.get_routing_list(rtmod, &coll);
+        orte_routed.get_routing_list(&coll);
 
         /* if list is empty, no relay is required */
         if (opal_list_is_empty(&coll)) {
@@ -569,8 +562,7 @@ static void xcast_recv(int status, orte_process_name_t* sender,
                 ORTE_FORCED_TERMINATE(ORTE_ERR_UNREACH);
                 continue;
             }
-            if (ORTE_SUCCESS != (ret = orte_rml.send_buffer_nb(orte_coll_conduit,
-                                                               &nm->name, rly, ORTE_RML_TAG_XCAST,
+            if (ORTE_SUCCESS != (ret = orte_rml.send_buffer_nb(&nm->name, rly, ORTE_RML_TAG_XCAST,
                                                                orte_rml_send_callback, NULL))) {
                 ORTE_ERROR_LOG(ret);
                 OBJ_RELEASE(rly);

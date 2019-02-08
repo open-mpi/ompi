@@ -74,11 +74,6 @@ ORTE_DECLSPEC extern bool orte_event_base_active; /* instantiated in orte/runtim
 ORTE_DECLSPEC extern bool orte_proc_is_bound;  /* instantiated in orte/runtime/orte_init.c */
 ORTE_DECLSPEC extern int orte_progress_thread_debug;  /* instantiated in orte/runtime/orte_init.c */
 
-ORTE_DECLSPEC extern char *orte_mgmt_transport;
-ORTE_DECLSPEC extern char *orte_coll_transport;
-ORTE_DECLSPEC extern int orte_mgmt_conduit;
-ORTE_DECLSPEC extern int orte_coll_conduit;
-
 /**
  * Global indicating where this process was bound to at launch (will
  * be NULL if !orte_proc_is_bound)

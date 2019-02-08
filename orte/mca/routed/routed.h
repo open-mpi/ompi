@@ -7,7 +7,7 @@
  * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -221,47 +221,8 @@ typedef struct {
     orte_routed_module_ft_event_fn_t                ft_event;
 } orte_routed_module_t;
 
-/* define an equivalent set of API functions - these will be implemented
- * as "stubs" in the framework base */
-typedef char* (*orte_routed_API_assign_module_fn_t)(char *modules);
-
-typedef int (*orte_routed_API_delete_route_fn_t)(char *module,
-                                                 orte_process_name_t *proc);
-typedef int (*orte_routed_API_update_route_fn_t)(char *module,
-                                                 orte_process_name_t *target,
-                                                 orte_process_name_t *route);
-typedef orte_process_name_t (*orte_routed_API_get_route_fn_t)(char *module,
-                                                              orte_process_name_t *target);
-typedef int (*orte_routed_API_route_lost_fn_t)(char *module,
-                                               const orte_process_name_t *route);
-typedef bool (*orte_routed_API_route_is_defined_fn_t)(char *module,
-                                                      const orte_process_name_t *target);
-typedef void (*orte_routed_API_update_routing_plan_fn_t)(char *module);
-typedef void (*orte_routed_API_get_routing_list_fn_t)(char *module, opal_list_t *coll);
-typedef int (*orte_routed_API_set_lifeline_fn_t)(char *module, orte_process_name_t *proc);
-typedef size_t (*orte_routed_API_num_routes_fn_t)(char *module);
-typedef int  (*orte_routed_API_ft_event_fn_t)(char *module, int state);
-
-
-typedef struct {
-    /* API functions */
-    orte_routed_API_assign_module_fn_t          assign_module;
-    orte_routed_API_delete_route_fn_t           delete_route;
-    orte_routed_API_update_route_fn_t           update_route;
-    orte_routed_API_get_route_fn_t              get_route;
-    orte_routed_API_route_lost_fn_t             route_lost;
-    orte_routed_API_route_is_defined_fn_t       route_is_defined;
-    orte_routed_API_set_lifeline_fn_t           set_lifeline;
-    /* fns for daemons */
-    orte_routed_API_update_routing_plan_fn_t    update_routing_plan;
-    orte_routed_API_get_routing_list_fn_t       get_routing_list;
-    orte_routed_API_num_routes_fn_t             num_routes;
-    /* FT Notification */
-    orte_routed_API_ft_event_fn_t               ft_event;
-} orte_routed_API_t;
-
 /* provide an interface to the routed framework stub functions */
-ORTE_DECLSPEC extern orte_routed_API_t orte_routed;
+ORTE_DECLSPEC extern orte_routed_module_t orte_routed;
 
 /* ******************************************************************** */
 

@@ -9,7 +9,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Evergrid, Inc. All rights reserved.
  * Copyright (c) 2013      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2014-2018 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -767,8 +767,7 @@ int orte_snapc_base_global_coord_ckpt_update_cmd(orte_process_name_t* peer,
         }
     }
 
-    if (0 > (ret = orte_rml.send_buffer_nb(orte_mgmt_conduit,
-                                           peer, loc_buffer,
+    if (0 > (ret = orte_rml.send_buffer_nb(peer, loc_buffer,
                                            ORTE_RML_TAG_CKPT,
                                            orte_rml_send_callback, NULL))) {
         opal_output(orte_snapc_base_framework.framework_output,

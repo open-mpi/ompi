@@ -399,29 +399,30 @@ int orte_util_decode_nidmap(opal_buffer_t *buf)
         } else {
             vpid = UINT32_MAX;
         }
-        if (UINT32_MAX != vpid &&
-            NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(daemons->procs, vpid))) {
-            proc = OBJ_NEW(orte_proc_t);
-            proc->name.jobid = ORTE_PROC_MY_NAME->jobid;
-            proc->name.vpid = vpid;
-            proc->state = ORTE_PROC_STATE_RUNNING;
-            ORTE_FLAG_SET(proc, ORTE_PROC_FLAG_ALIVE);
-            daemons->num_procs++;
-            opal_pointer_array_set_item(daemons->procs, proc->name.vpid, proc);
+        if (UINT32_MAX != vpid) {
+            if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(daemons->procs, vpid))) {
+                proc = OBJ_NEW(orte_proc_t);
+                proc->name.jobid = ORTE_PROC_MY_NAME->jobid;
+                proc->name.vpid = vpid;
+                proc->state = ORTE_PROC_STATE_RUNNING;
+                ORTE_FLAG_SET(proc, ORTE_PROC_FLAG_ALIVE);
+                daemons->num_procs++;
+                opal_pointer_array_set_item(daemons->procs, proc->name.vpid, proc);
+            }
+            nd->index = proc->name.vpid;
+            OBJ_RETAIN(nd);
+            proc->node = nd;
+            OBJ_RETAIN(proc);
+            nd->daemon = proc;
         }
-        nd->index = proc->name.vpid;
-        OBJ_RETAIN(nd);
-        proc->node = nd;
-        OBJ_RETAIN(proc);
-        nd->daemon = proc;
     }
 
     /* update num procs */
     if (orte_process_info.num_procs != daemons->num_procs) {
         orte_process_info.num_procs = daemons->num_procs;
-        /* need to update the routing plan */
-        orte_routed.update_routing_plan(NULL);
     }
+    /* need to update the routing plan */
+    orte_routed.update_routing_plan();
 
     if (orte_process_info.max_procs < orte_process_info.num_procs) {
         orte_process_info.max_procs = orte_process_info.num_procs;

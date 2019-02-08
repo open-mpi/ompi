@@ -103,8 +103,7 @@ static int component_send(orte_rml_send_t *msg);
 static char* component_get_addr(void);
 static int component_set_addr(orte_process_name_t *peer,
                               char **uris);
-static bool component_is_reachable(char *rtmod, orte_process_name_t *peer);
-static orte_rml_pathway_t* component_query_transports(void);
+static bool component_is_reachable(orte_process_name_t *peer);
 #if OPAL_ENABLE_FT_CR == 1
 static int component_ft_event(int state);
 #endif
@@ -135,7 +134,6 @@ mca_oob_tcp_component_t mca_oob_tcp_component = {
         .get_addr = component_get_addr,
         .set_addr = component_set_addr,
         .is_reachable = component_is_reachable,
-        .query_transports = component_query_transports,
 #if OPAL_ENABLE_FT_CR == 1
         .ft_event = component_ft_event,
 #endif
@@ -627,37 +625,6 @@ static int component_available(void)
     return ORTE_SUCCESS;
 }
 
-static orte_rml_pathway_t* component_query_transports(void)
-{
-    orte_rml_pathway_t *p;
-    char *qual;
-
-    /* if neither IPv4 or IPv6 connections are available, then
-     * we have nothing to support */
-    if (NULL == mca_oob_tcp_component.ipv4conns &&
-        NULL == mca_oob_tcp_component.ipv6conns) {
-        return NULL;
-    }
-
-    /* if we get here, then we support Ethernet and TCP */
-    p = OBJ_NEW(orte_rml_pathway_t);
-    p->component = strdup("oob");
-    orte_set_attribute(&p->attributes, ORTE_RML_TRANSPORT_TYPE, ORTE_ATTR_LOCAL, "Ethernet", OPAL_STRING);
-    orte_set_attribute(&p->attributes, ORTE_RML_PROTOCOL_TYPE, ORTE_ATTR_LOCAL, "TCP", OPAL_STRING);
-    /* setup our qualifiers - we route communications, may have IPv4 and/or IPv6, etc. */
-    if (NULL != mca_oob_tcp_component.ipv4conns &&
-        NULL != mca_oob_tcp_component.ipv6conns) {
-        qual = "routed=true:ipv4:ipv6";
-    } else if (NULL == mca_oob_tcp_component.ipv6conns) {
-        qual = "routed=true:ipv4";
-    } else {
-        qual = "routed=true:ipv6";
-    }
-    orte_set_attribute(&p->attributes, ORTE_RML_QUALIFIER_ATTRIB, ORTE_ATTR_LOCAL, qual, OPAL_STRING);
-
-    return p;
-}
-
 /* Start all modules */
 static int component_startup(void)
 {
@@ -1008,12 +975,12 @@ static int component_set_addr(orte_process_name_t *peer,
     return ORTE_ERR_TAKE_NEXT_OPTION;
 }
 
-static bool component_is_reachable(char *rtmod, orte_process_name_t *peer)
+static bool component_is_reachable(orte_process_name_t *peer)
 {
     orte_process_name_t hop;
 
     /* if we have a route to this peer, then we can reach it */
-    hop = orte_routed.get_route(rtmod, peer);
+    hop = orte_routed.get_route(peer);
     if (ORTE_JOBID_INVALID == hop.jobid ||
         ORTE_VPID_INVALID == hop.vpid) {
         opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
@@ -1102,7 +1069,7 @@ void mca_oob_tcp_component_lost_connection(int fd, short args, void *cbdata)
 
     if (!orte_finalizing) {
         /* activate the proc state */
-        if (ORTE_SUCCESS != orte_routed.route_lost(pop->rtmod, &pop->peer)) {
+        if (ORTE_SUCCESS != orte_routed.route_lost(&pop->peer)) {
             ORTE_ACTIVATE_PROC_STATE(&pop->peer, ORTE_PROC_STATE_LIFELINE_LOST);
         } else {
             ORTE_ACTIVATE_PROC_STATE(&pop->peer, ORTE_PROC_STATE_COMM_FAILED);
@@ -1216,7 +1183,6 @@ void mca_oob_tcp_component_hop_unknown(int fd, short args, void *cbdata)
     snd->count = mop->snd->hdr.nbytes;
     snd->cbfunc.iov = NULL;
     snd->cbdata = NULL;
-    snd->routed = strdup(mop->snd->hdr.routed);
     /* activate the OOB send state */
     ORTE_OOB_SEND(snd);
     /* protect the data */
@@ -1416,15 +1382,11 @@ OBJ_CLASS_INSTANCE(mca_oob_tcp_addr_t,
 
 static void pop_cons(mca_oob_tcp_peer_op_t *pop)
 {
-    pop->rtmod = NULL;
     pop->net = NULL;
     pop->port = NULL;
 }
 static void pop_des(mca_oob_tcp_peer_op_t *pop)
 {
-    if (NULL != pop->rtmod) {
-        free(pop->rtmod);
-    }
     if (NULL != pop->net) {
         free(pop->net);
     }

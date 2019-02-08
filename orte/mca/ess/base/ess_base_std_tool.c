@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      Hochschule Esslingen.  All rights reserved.
  *
  * Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
@@ -94,7 +94,6 @@ int orte_ess_base_tool_setup(opal_list_t *flags)
 {
     int ret;
     char *error = NULL;
-    opal_list_t transports;
     opal_list_t info;
     opal_value_t *kv, *knext, val;
     opal_pmix_query_t *q;
@@ -222,13 +221,6 @@ int orte_ess_base_tool_setup(opal_list_t *flags)
         goto error;
     }
 
-    /* get a conduit for our use - we never route IO over fabric */
-    OBJ_CONSTRUCT(&transports, opal_list_t);
-    orte_set_attribute(&transports, ORTE_RML_TRANSPORT_TYPE,
-                       ORTE_ATTR_LOCAL, orte_mgmt_transport, OPAL_STRING);
-    orte_mgmt_conduit = orte_rml.open_conduit(&transports);
-    OPAL_LIST_DESTRUCT(&transports);
-
     /* we -may- need to know the name of the head
      * of our session directory tree, particularly the
      * tmp base where any other session directories on
@@ -269,7 +261,7 @@ int orte_ess_base_tool_setup(opal_list_t *flags)
         val.data.string = NULL;
         OBJ_DESTRUCT(&val);
         /* set the route to be direct */
-        if (ORTE_SUCCESS != orte_routed.update_route(NULL, ORTE_PROC_MY_HNP, ORTE_PROC_MY_HNP)) {
+        if (ORTE_SUCCESS != orte_routed.update_route(ORTE_PROC_MY_HNP, ORTE_PROC_MY_HNP)) {
             orte_show_help("help-orte-top.txt", "orte-top:hnp-uri-bad", true, orte_process_info.my_hnp_uri);
             orte_finalize();
             exit(1);
@@ -277,7 +269,7 @@ int orte_ess_base_tool_setup(opal_list_t *flags)
 
         /* connect to the HNP so we can recv forwarded output */
         buf = OBJ_NEW(opal_buffer_t);
-        ret = orte_rml.send_buffer_nb(orte_mgmt_conduit, ORTE_PROC_MY_HNP,
+        ret = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP,
                                       buf, ORTE_RML_TAG_WARMUP_CONNECTION,
                                       orte_rml_send_callback, NULL);
         if (ORTE_SUCCESS != ret) {
@@ -287,7 +279,7 @@ int orte_ess_base_tool_setup(opal_list_t *flags)
         }
 
         /* set the target hnp as our lifeline so we will terminate if it exits */
-        orte_routed.set_lifeline(NULL, ORTE_PROC_MY_HNP);
+        orte_routed.set_lifeline(ORTE_PROC_MY_HNP);
 
         /* setup the IOF */
         if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_iof_base_framework, 0))) {
@@ -316,8 +308,6 @@ int orte_ess_base_tool_setup(opal_list_t *flags)
 int orte_ess_base_tool_finalize(void)
 {
     orte_wait_finalize();
-
-    orte_rml.close_conduit(orte_mgmt_conduit);
 
     /* if I am a tool, then all I will have done is
      * a very small subset of orte_init - ensure that

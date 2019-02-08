@@ -13,7 +13,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2017 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
@@ -1080,8 +1080,7 @@ void pmix_server_log_fn(opal_process_name_t *requestor,
             buf = OBJ_NEW(opal_buffer_t);
             opal_dss.load(buf, val->data.bo.bytes, val->data.bo.size);
             val->data.bo.bytes = NULL;
-            if (ORTE_SUCCESS != (rc = orte_rml.send_buffer_nb(orte_mgmt_conduit,
-                                                              ORTE_PROC_MY_HNP, buf,
+            if (ORTE_SUCCESS != (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, buf,
                                                               ORTE_RML_TAG_SHOW_HELP,
                                                               orte_rml_send_callback, NULL))) {
                 ORTE_ERROR_LOG(rc);

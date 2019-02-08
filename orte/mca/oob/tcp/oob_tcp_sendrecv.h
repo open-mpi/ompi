@@ -12,7 +12,7 @@
  * Copyright (c) 2006-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2010-2018 Cisco Systems, Inc.  All rights reserved
- * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -109,10 +109,6 @@ OBJ_CLASS_DECLARATION(mca_oob_tcp_recv_t);
         _s->hdr.type = MCA_OOB_TCP_USER;                               \
         _s->hdr.tag = (m)->tag;                                        \
         _s->hdr.seq_num = (m)->seq_num;                                \
-        if (NULL != (m)->routed) {                                      \
-            (void)opal_string_copy(_s->hdr.routed, (m)->routed,         \
-                          ORTE_MAX_RTD_SIZE);                           \
-        }                                                               \
         /* point to the actual message */                               \
         _s->msg = (m);                                                 \
         /* set the total number of bytes to be sent */                  \
@@ -157,10 +153,6 @@ OBJ_CLASS_DECLARATION(mca_oob_tcp_recv_t);
         _s->hdr.type = MCA_OOB_TCP_USER;                               \
         _s->hdr.tag = (m)->tag;                                        \
         _s->hdr.seq_num = (m)->seq_num;                                \
-        if (NULL != (m)->routed) {                                      \
-            (void)opal_string_copy(_s->hdr.routed, (m)->routed,         \
-                          ORTE_MAX_RTD_SIZE);                           \
-        }                                                               \
         /* point to the actual message */                               \
         _s->msg = (m);                                                 \
         /* set the total number of bytes to be sent */                  \

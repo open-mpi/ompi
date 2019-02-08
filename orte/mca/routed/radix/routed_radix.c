@@ -6,7 +6,7 @@
  *                         reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -223,12 +223,6 @@ static orte_process_name_t get_route(orte_process_name_t *target)
         goto found;
     }
 
-    /* if I am an application process, always route via my local daemon */
-    if (ORTE_PROC_IS_APP) {
-        ret = ORTE_PROC_MY_DAEMON;
-        goto found;
-    }
-
     /* if I am a tool, the route is direct if target is in
      * my own job family, and to the target's HNP if not
      */
@@ -264,7 +258,13 @@ static orte_process_name_t get_route(orte_process_name_t *target)
         }
     }
 
-    /* if the jobid is different than our own, then this the target
+    /* if the target is our parent, then send it direct */
+    if (OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL, ORTE_PROC_MY_PARENT, target)) {
+        ret = ORTE_PROC_MY_PARENT;
+        goto found;
+    }
+
+    /* if the jobid is different than our own, then this target
      * is a tool and we should go direct */
     if (ORTE_JOB_FAMILY(target->jobid) != ORTE_JOB_FAMILY(ORTE_PROC_MY_NAME->jobid)) {
         ret = target;
@@ -273,10 +273,15 @@ static orte_process_name_t get_route(orte_process_name_t *target)
 
     daemon.jobid = ORTE_PROC_MY_NAME->jobid;
     /* find out what daemon hosts this proc */
-    if (ORTE_VPID_INVALID == (daemon.vpid = orte_get_proc_daemon_vpid(target))) {
-        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-        ret = ORTE_NAME_INVALID;
-        goto found;
+    if (ORTE_PROC_MY_NAME->jobid == target->jobid) {
+        /* it's a daemon - no need to look it up */
+        daemon.vpid = target->vpid;
+    } else {
+        if (ORTE_VPID_INVALID == (daemon.vpid = orte_get_proc_daemon_vpid(target))) {
+            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+            ret = ORTE_NAME_INVALID;
+            goto found;
+        }
     }
 
     /* if the daemon is me, then send direct to the target! */

@@ -189,8 +189,7 @@ void orte_rml_base_process_msg(int fd, short flags, void *cbdata)
                 return;
             }
 
-            if (ORTE_SUCCESS != (rc = orte_rml.send_buffer_nb(orte_mgmt_conduit,
-                                                              &msg->sender, buffer,
+            if (ORTE_SUCCESS != (rc = orte_rml.send_buffer_nb(&msg->sender, buffer,
                                                               ORTE_RML_TAG_NODE_REGEX_REPORT,
                                                               orte_rml_send_callback, NULL))) {
                 ORTE_ERROR_LOG(rc);

@@ -109,7 +109,6 @@ int orte_ess_base_orted_setup(void)
     hwloc_obj_t obj;
     unsigned i, j;
     orte_topology_t *t;
-    opal_list_t transports;
     orte_ess_base_signal_t *sig;
     int idx;
 
@@ -448,27 +447,6 @@ int orte_ess_base_orted_setup(void)
         goto error;
     }
 
-    /* get a conduit for our use - we never route IO over fabric */
-    OBJ_CONSTRUCT(&transports, opal_list_t);
-    orte_set_attribute(&transports, ORTE_RML_TRANSPORT_TYPE,
-                       ORTE_ATTR_LOCAL, orte_mgmt_transport, OPAL_STRING);
-    if (ORTE_RML_CONDUIT_INVALID == (orte_mgmt_conduit = orte_rml.open_conduit(&transports))) {
-        ret = ORTE_ERR_OPEN_CONDUIT_FAIL;
-        error = "orte_rml_open_mgmt_conduit";
-        goto error;
-    }
-    OPAL_LIST_DESTRUCT(&transports);
-
-    OBJ_CONSTRUCT(&transports, opal_list_t);
-    orte_set_attribute(&transports, ORTE_RML_TRANSPORT_TYPE,
-                       ORTE_ATTR_LOCAL, orte_coll_transport, OPAL_STRING);
-    if (ORTE_RML_CONDUIT_INVALID == (orte_coll_conduit = orte_rml.open_conduit(&transports))) {
-        ret = ORTE_ERR_OPEN_CONDUIT_FAIL;
-        error = "orte_rml_open_coll_conduit";
-        goto error;
-    }
-    OPAL_LIST_DESTRUCT(&transports);
-
     /*
      * Group communications
      */
@@ -609,10 +587,6 @@ int orte_ess_base_orted_finalize(void)
     pmix_server_finalize();
     (void) mca_base_framework_close(&opal_pmix_base_framework);
 
-    /* release the conduits */
-    orte_rml.close_conduit(orte_mgmt_conduit);
-    orte_rml.close_conduit(orte_coll_conduit);
-
     /* close frameworks */
     (void) mca_base_framework_close(&orte_filem_base_framework);
     (void) mca_base_framework_close(&orte_grpcomm_base_framework);
@@ -695,8 +669,7 @@ static void signal_forward_callback(int fd, short event, void *arg)
     }
 
     /* send it to ourselves */
-    if (0 > (rc = orte_rml.send_buffer_nb(orte_mgmt_conduit,
-                                          ORTE_PROC_MY_NAME, cmd,
+    if (0 > (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_NAME, cmd,
                                           ORTE_RML_TAG_DAEMON,
                                           NULL, NULL))) {
         ORTE_ERROR_LOG(rc);

@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2016-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2016-2019 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -161,7 +161,7 @@ int orte_read_hnp_contact_file(char *filename, orte_hnp_contact_t *hnp, bool con
         OBJ_DESTRUCT(&val);
 
         /* set the route to be direct */
-        if (ORTE_SUCCESS != (rc = orte_routed.update_route(NULL, &hnp->name, &hnp->name))) {
+        if (ORTE_SUCCESS != (rc = orte_routed.update_route(&hnp->name, &hnp->name))) {
             ORTE_ERROR_LOG(rc);
             free(hnp_uri);
             return rc;

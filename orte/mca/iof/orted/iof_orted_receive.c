@@ -12,7 +12,7 @@
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2014-2016 Intel Corporation.  All rights reserved.
+ * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -72,9 +72,8 @@ void orte_iof_orted_send_xonxoff(orte_iof_tag_t tag)
                          (ORTE_IOF_XON == tag) ? "xon" : "xoff"));
 
     /* send the buffer to the HNP */
-    if (0 > (rc = orte_rml.send_buffer_nb(orte_mgmt_conduit,
-                                                  ORTE_PROC_MY_HNP, buf, ORTE_RML_TAG_IOF_HNP,
-                                                  send_cb, NULL))) {
+    if (0 > (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, buf, ORTE_RML_TAG_IOF_HNP,
+                                          send_cb, NULL))) {
         ORTE_ERROR_LOG(rc);
     }
 }

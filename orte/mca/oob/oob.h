@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2015-2016 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2019 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -55,9 +55,8 @@ typedef int (*mca_oob_base_component_send_fn_t)(orte_rml_send_t *msg);
 typedef char* (*mca_oob_base_component_get_addr_fn_t)(void);
 typedef int (*mca_oob_base_component_set_addr_fn_t)(orte_process_name_t *peer,
                                                     char **uris);
-typedef bool (*mca_oob_base_component_is_reachable_fn_t)(char *routed, orte_process_name_t *peer);
+typedef bool (*mca_oob_base_component_is_reachable_fn_t)(orte_process_name_t *peer);
 typedef void (*mca_oob_ping_callback_fn_t)(int status, void *cbdata);
-typedef orte_rml_pathway_t* (*mca_oob_base_component_query_transports_fn_t)(void);
 
 #if OPAL_ENABLE_FT_CR == 1
 typedef int (*mca_oob_base_component_ft_event_fn_t)(int state);
@@ -75,7 +74,6 @@ typedef struct {
     mca_oob_base_component_get_addr_fn_t            get_addr;
     mca_oob_base_component_set_addr_fn_t            set_addr;
     mca_oob_base_component_is_reachable_fn_t        is_reachable;
-    mca_oob_base_component_query_transports_fn_t    query_transports;
 #if OPAL_ENABLE_FT_CR == 1
     mca_oob_base_component_ft_event_fn_t            ft_event;
 #endif

@@ -12,7 +12,7 @@
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC
  *                         All rights reserved
- * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -109,9 +109,8 @@ int orte_iof_hnp_send_data_to_endpoint(orte_process_name_t *host,
     /* send the buffer to the host - this is either a daemon or
      * a tool that requested IOF
      */
-    if (0 > (rc = orte_rml.send_buffer_nb(orte_mgmt_conduit,
-                                                  host, buf, ORTE_RML_TAG_IOF_PROXY,
-                                                  orte_rml_send_callback, NULL))) {
+    if (0 > (rc = orte_rml.send_buffer_nb(host, buf, ORTE_RML_TAG_IOF_PROXY,
+                                          orte_rml_send_callback, NULL))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }

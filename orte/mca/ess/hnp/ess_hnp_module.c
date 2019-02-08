@@ -141,7 +141,6 @@ static int rte_init(void)
     uint32_t h;
     int idx;
     orte_topology_t *t;
-    opal_list_t transports;
     orte_ess_base_signal_t *sig;
     opal_value_t val;
 
@@ -369,27 +368,6 @@ static int rte_init(void)
         error = "orte_rml_base_select";
         goto error;
     }
-
-    /* get a conduit for our use - we never route IO over fabric */
-    OBJ_CONSTRUCT(&transports, opal_list_t);
-    orte_set_attribute(&transports, ORTE_RML_TRANSPORT_TYPE,
-                       ORTE_ATTR_LOCAL, orte_mgmt_transport, OPAL_STRING);
-    if (ORTE_RML_CONDUIT_INVALID == (orte_mgmt_conduit = orte_rml.open_conduit(&transports))) {
-        ret = ORTE_ERR_OPEN_CONDUIT_FAIL;
-        error = "orte_rml_open_mgmt_conduit";
-        goto error;
-    }
-    OPAL_LIST_DESTRUCT(&transports);
-
-    OBJ_CONSTRUCT(&transports, opal_list_t);
-    orte_set_attribute(&transports, ORTE_RML_TRANSPORT_TYPE,
-                       ORTE_ATTR_LOCAL, orte_coll_transport, OPAL_STRING);
-    if (ORTE_RML_CONDUIT_INVALID == (orte_coll_conduit = orte_rml.open_conduit(&transports))) {
-        ret = ORTE_ERR_OPEN_CONDUIT_FAIL;
-        error = "orte_rml_open_coll_conduit";
-        goto error;
-    }
-    OPAL_LIST_DESTRUCT(&transports);
 
     /* it is now safe to start the pmix server */
     pmix_server_start();
@@ -775,10 +753,6 @@ static int rte_finalize(void)
     /* output any lingering stdout/err data */
     fflush(stdout);
     fflush(stderr);
-
-        /* release the conduits */
-    orte_rml.close_conduit(orte_mgmt_conduit);
-    orte_rml.close_conduit(orte_coll_conduit);
 
     (void) mca_base_framework_close(&orte_iof_base_framework);
     (void) mca_base_framework_close(&orte_rtc_base_framework);

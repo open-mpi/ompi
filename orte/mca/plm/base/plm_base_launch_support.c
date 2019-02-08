@@ -179,7 +179,7 @@ void orte_plm_base_daemons_reported(int fd, short args, void *cbdata)
         orte_ras_base_display_alloc();
     }
     /* ensure we update the routing plan */
-    orte_routed.update_routing_plan(NULL);
+    orte_routed.update_routing_plan();
 
     /* prep the buffer */
     OBJ_CONSTRUCT(&buf, opal_buffer_t);
@@ -812,8 +812,7 @@ void orte_plm_base_post_launch(int fd, short args, void *cbdata)
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_JOBID_PRINT(jdata->jobid),
                          ORTE_NAME_PRINT(&jdata->originator)));
-    if (0 > (ret = orte_rml.send_buffer_nb(orte_mgmt_conduit,
-                                           &jdata->originator, answer,
+    if (0 > (ret = orte_rml.send_buffer_nb(&jdata->originator, answer,
                                            ORTE_RML_TAG_LAUNCH_RESP,
                                            orte_rml_send_callback, NULL))) {
         ORTE_ERROR_LOG(ret);
@@ -1346,8 +1345,7 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
                     goto CLEANUP;
                 }
                 /* send it */
-                orte_rml.send_buffer_nb(orte_mgmt_conduit,
-                                        &dname, relay,
+                orte_rml.send_buffer_nb(&dname, relay,
                                         ORTE_RML_TAG_DAEMON,
                                         orte_rml_send_callback, NULL);
                 /* we will count this node as completed
@@ -2310,7 +2308,7 @@ int orte_plm_base_setup_virtual_machine(orte_job_t *jdata)
 
         /* ensure all routing plans are up-to-date - we need this
          * so we know how to tree-spawn and/or xcast info */
-        orte_routed.update_routing_plan(NULL);
+        orte_routed.update_routing_plan();
     }
 
     /* mark that the daemon job changed */

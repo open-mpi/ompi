@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2017      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -326,8 +326,7 @@ static void _send_notification(int status,
                             ORTE_ERROR_NAME(status),
                             ORTE_NAME_PRINT(target),
                             ORTE_NAME_PRINT(&daemon));
-        if (ORTE_SUCCESS != (rc = orte_rml.send_buffer_nb(orte_mgmt_conduit,
-                                                          &daemon, buf,
+        if (ORTE_SUCCESS != (rc = orte_rml.send_buffer_nb(&daemon, buf,
                                                           ORTE_RML_TAG_NOTIFICATION,
                                                           orte_rml_send_callback, NULL))) {
             ORTE_ERROR_LOG(rc);

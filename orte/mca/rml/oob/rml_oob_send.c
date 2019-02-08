@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -70,8 +70,7 @@ static void send_self_exe(int fd, short args, void* data)
     OBJ_RELEASE(xfer);
 }
 
-int orte_rml_oob_send_nb(struct orte_rml_base_module_t *mod,
-                         orte_process_name_t* peer,
+int orte_rml_oob_send_nb(orte_process_name_t* peer,
                          struct iovec* iov,
                          int count,
                          orte_rml_tag_t tag,
@@ -170,7 +169,6 @@ int orte_rml_oob_send_nb(struct orte_rml_base_module_t *mod,
     snd->count = count;
     snd->cbfunc.iov = cbfunc;
     snd->cbdata = cbdata;
-    snd->routed = strdup(mod->routed);
 
     /* activate the OOB send state */
     ORTE_OOB_SEND(snd);
@@ -178,8 +176,7 @@ int orte_rml_oob_send_nb(struct orte_rml_base_module_t *mod,
     return ORTE_SUCCESS;
 }
 
-int orte_rml_oob_send_buffer_nb(struct orte_rml_base_module_t *mod,
-                                orte_process_name_t* peer,
+int orte_rml_oob_send_buffer_nb(orte_process_name_t* peer,
                                 opal_buffer_t* buffer,
                                 orte_rml_tag_t tag,
                                 orte_rml_buffer_callback_fn_t cbfunc,
@@ -259,7 +256,6 @@ int orte_rml_oob_send_buffer_nb(struct orte_rml_base_module_t *mod,
     snd->buffer = buffer;
     snd->cbfunc.buffer = cbfunc;
     snd->cbdata = cbdata;
-    snd->routed = strdup(mod->routed);
 
     /* activate the OOB send state */
     ORTE_OOB_SEND(snd);

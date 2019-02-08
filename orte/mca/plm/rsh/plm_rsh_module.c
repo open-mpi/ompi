@@ -14,7 +14,7 @@
  *                         reserved.
  * Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2011-2017 IBM Corporation.  All rights reserved.
- * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -265,7 +265,6 @@ static void rsh_wait_daemon(int sd, short flags, void *cbdata)
     orte_wait_tracker_t *t2 = (orte_wait_tracker_t*)cbdata;
     orte_plm_rsh_caddy_t *caddy=(orte_plm_rsh_caddy_t*)t2->cbdata;
     orte_proc_t *daemon = caddy->daemon;
-    char *rtmod;
 
     if (orte_orteds_term_ordered || orte_abnormal_term_ordered) {
         /* ignore any such report - it will occur if we left the
@@ -290,8 +289,7 @@ static void rsh_wait_daemon(int sd, short flags, void *cbdata)
             buf = OBJ_NEW(opal_buffer_t);
             opal_dss.pack(buf, &(daemon->name.vpid), 1, ORTE_VPID);
             opal_dss.pack(buf, &daemon->exit_code, 1, OPAL_INT);
-            orte_rml.send_buffer_nb(orte_coll_conduit,
-                                    ORTE_PROC_MY_HNP, buf,
+            orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, buf,
                                     ORTE_RML_TAG_REPORT_REMOTE_LAUNCH,
                                     orte_rml_send_callback, NULL);
             /* note that this daemon failed */
@@ -312,8 +310,7 @@ static void rsh_wait_daemon(int sd, short flags, void *cbdata)
             /* remove it from the routing table to ensure num_routes
              * returns the correct value
              */
-            rtmod = orte_rml.get_routed(orte_coll_conduit);
-            orte_routed.route_lost(rtmod, &daemon->name);
+            orte_routed.route_lost(&daemon->name);
             /* report that the daemon has failed so we can exit */
             ORTE_ACTIVATE_PROC_STATE(&daemon->name, ORTE_PROC_STATE_FAILED_TO_START);
         }
@@ -797,7 +794,6 @@ static int remote_spawn(void)
     orte_job_t *daemons;
     opal_list_t coll;
     orte_namelist_t *child;
-    char *rtmod;
 
     OPAL_OUTPUT_VERBOSE((1, orte_plm_base_framework.framework_output,
                          "%s plm:rsh: remote spawn called",
@@ -816,9 +812,8 @@ static int remote_spawn(void)
     }
 
     /* get the updated routing list */
-    rtmod = orte_rml.get_routed(orte_coll_conduit);
     OBJ_CONSTRUCT(&coll, opal_list_t);
-    orte_routed.get_routing_list(rtmod, &coll);
+    orte_routed.get_routing_list(&coll);
 
     /* if I have no children, just return */
     if (0 == opal_list_get_size(&coll)) {
@@ -913,8 +908,7 @@ cleanup:
         buf = OBJ_NEW(opal_buffer_t);
         opal_dss.pack(buf, &target.vpid, 1, ORTE_VPID);
         opal_dss.pack(buf, &rc, 1, OPAL_INT);
-        orte_rml.send_buffer_nb(orte_coll_conduit,
-                                ORTE_PROC_MY_HNP, buf,
+        orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, buf,
                                 ORTE_RML_TAG_REPORT_REMOTE_LAUNCH,
                                 orte_rml_send_callback, NULL);
     }
@@ -1040,7 +1034,6 @@ static void launch_daemons(int fd, short args, void *cbdata)
     char *username;
     int port, *portptr;
     orte_namelist_t *child;
-    char *rtmod;
 
     ORTE_ACQUIRE_OBJECT(state);
 
@@ -1185,8 +1178,7 @@ static void launch_daemons(int fd, short args, void *cbdata)
 
         /* get the updated routing list */
         OBJ_CONSTRUCT(&coll, opal_list_t);
-        rtmod = orte_rml.get_routed(orte_coll_conduit);
-        orte_routed.get_routing_list(rtmod, &coll);
+        orte_routed.get_routing_list(&coll);
     }
 
     /* setup the launch */

@@ -712,19 +712,19 @@ int orte_daemon(int argc, char *argv[])
         /* tell the routed module that we have a path
          * back to the HNP
          */
-        if (ORTE_SUCCESS != (ret = orte_routed.update_route(NULL, ORTE_PROC_MY_HNP, ORTE_PROC_MY_PARENT))) {
+        if (ORTE_SUCCESS != (ret = orte_routed.update_route(ORTE_PROC_MY_HNP, ORTE_PROC_MY_PARENT))) {
             ORTE_ERROR_LOG(ret);
             goto DONE;
         }
         /* and a path to our parent */
-        if (ORTE_SUCCESS != (ret = orte_routed.update_route(NULL, ORTE_PROC_MY_PARENT, ORTE_PROC_MY_PARENT))) {
+        if (ORTE_SUCCESS != (ret = orte_routed.update_route(ORTE_PROC_MY_PARENT, ORTE_PROC_MY_PARENT))) {
             ORTE_ERROR_LOG(ret);
             goto DONE;
         }
         /* set the lifeline to point to our parent so that we
          * can handle the situation if that lifeline goes away
          */
-        if (ORTE_SUCCESS != (ret = orte_routed.set_lifeline(NULL, ORTE_PROC_MY_PARENT))) {
+        if (ORTE_SUCCESS != (ret = orte_routed.set_lifeline(ORTE_PROC_MY_PARENT))) {
             ORTE_ERROR_LOG(ret);
             goto DONE;
         }
@@ -754,8 +754,7 @@ int orte_daemon(int argc, char *argv[])
             node_regex_waiting = true;
             orte_rml.recv_buffer_nb(ORTE_PROC_MY_PARENT, ORTE_RML_TAG_NODE_REGEX_REPORT,
                                     ORTE_RML_PERSISTENT, node_regex_report, &node_regex_waiting);
-            if (0 > (ret = orte_rml.send_buffer_nb(orte_mgmt_conduit,
-                                                   ORTE_PROC_MY_PARENT, buffer,
+            if (0 > (ret = orte_rml.send_buffer_nb(ORTE_PROC_MY_PARENT, buffer,
                                                    ORTE_RML_TAG_WARMUP_CONNECTION,
                                                    orte_rml_send_callback, NULL))) {
                 ORTE_ERROR_LOG(ret);
@@ -955,8 +954,7 @@ int orte_daemon(int argc, char *argv[])
         }
 
         /* send it to the designated target */
-        if (0 > (ret = orte_rml.send_buffer_nb(orte_mgmt_conduit,
-                                               &target, buffer,
+        if (0 > (ret = orte_rml.send_buffer_nb(&target, buffer,
                                                ORTE_RML_TAG_ORTED_CALLBACK,
                                                orte_rml_send_callback, NULL))) {
             ORTE_ERROR_LOG(ret);
@@ -1140,19 +1138,16 @@ static void rollup(int status, orte_process_name_t* sender,
 }
 
 static void report_orted() {
-    char *rtmod;
     int nreqd, ret;
 
     /* get the number of children */
-    rtmod = orte_rml.get_routed(orte_mgmt_conduit);
-    nreqd = orte_routed.num_routes(rtmod) + 1;
+    nreqd = orte_routed.num_routes() + 1;
     if (nreqd == ncollected && NULL != mybucket && !node_regex_waiting) {
         /* add the collection of our children's buckets to ours */
         opal_dss.copy_payload(mybucket, bucket);
         OBJ_RELEASE(bucket);
         /* relay this on to our parent */
-        if (0 > (ret = orte_rml.send_buffer_nb(orte_mgmt_conduit,
-                                               ORTE_PROC_MY_PARENT, mybucket,
+        if (0 > (ret = orte_rml.send_buffer_nb(ORTE_PROC_MY_PARENT, mybucket,
                                                ORTE_RML_TAG_ORTED_CALLBACK,
                                                orte_rml_send_callback, NULL))) {
             ORTE_ERROR_LOG(ret);
@@ -1175,7 +1170,7 @@ static void node_regex_report(int status, orte_process_name_t* sender,
 
     /* update the routing tree so any tree spawn operation
      * properly gets the number of children underneath us */
-    orte_routed.update_routing_plan(NULL);
+    orte_routed.update_routing_plan();
 
     *active = false;
 

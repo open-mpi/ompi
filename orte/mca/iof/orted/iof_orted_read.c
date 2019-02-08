@@ -12,7 +12,7 @@
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2016-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2016-2019 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -140,9 +140,8 @@ void orte_iof_orted_read_handler(int fd, short event, void *cbdata)
                          "%s iof:orted:read handler sending %d bytes to HNP",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), numbytes));
 
-    orte_rml.send_buffer_nb(orte_mgmt_conduit,
-                                    ORTE_PROC_MY_HNP, buf, ORTE_RML_TAG_IOF_HNP,
-                                    orte_rml_send_callback, NULL);
+    orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, buf, ORTE_RML_TAG_IOF_HNP,
+                            orte_rml_send_callback, NULL);
 
     /* re-add the event */
     ORTE_IOF_READ_ACTIVATE(rev);

@@ -72,10 +72,6 @@ char *orte_basename = NULL;
 bool orte_coprocessors_detected = false;
 opal_hash_table_t *orte_coprocessors = NULL;
 char *orte_topo_signature = NULL;
-char *orte_mgmt_transport = NULL;
-char *orte_coll_transport = NULL;
-int orte_mgmt_conduit = -1;
-int orte_coll_conduit = -1;
 bool orte_no_vm = false;
 char *orte_data_server_uri = NULL;
 
