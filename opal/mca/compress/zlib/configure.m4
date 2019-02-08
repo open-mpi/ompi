@@ -60,7 +60,7 @@ AC_DEFUN([MCA_opal_compress_zlib_CONFIG],[
               [opal_zlib_libdir="$with_zlib_libdir"
                opal_zlib_standard_lib_location=no])
 
-        OPAL_CHECK_PACKAGE([opal_zlib],
+        OPAL_CHECK_PACKAGE([compress_zlib],
                            [zlib.h],
                            [z],
                            [deflate],
@@ -92,7 +92,7 @@ AC_DEFUN([MCA_opal_compress_zlib_CONFIG],[
            OPAL_SUMMARY_ADD([[External Packages]],[[ZLIB]], [opal_zlib], [yes ($opal_zlib_source)])],
           [$2])
 
-    # substitute in the things needed to build psm2
+    # substitute in the things needed to build this component
     AC_SUBST([compress_zlib_CFLAGS])
     AC_SUBST([compress_zlib_CPPFLAGS])
     AC_SUBST([compress_zlib_LDFLAGS])
