@@ -322,7 +322,6 @@ static inline int _periodical_flush_nb(opal_common_ucx_wpmem_t *mem,
             MCA_COMMON_UCX_VERBOSE(1, "opal_common_ucx_flush failed: %d", rc);
             return rc;
         }
-        ((opal_common_ucx_request_t *)winfo->inflight_req)->winfo = winfo;
     } else if (OPAL_UNLIKELY(winfo->inflight_req != UCS_OK)) {
         int ret;
         do {
