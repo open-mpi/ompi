@@ -11,6 +11,8 @@
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2019      Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -77,7 +79,7 @@ static void opal_datatype_destruct( opal_datatype_t* datatype )
         }
     }
     /* dont free the ptypes of predefined types (it was not dynamically allocated) */
-    if( (NULL != datatype->ptypes) && (datatype->id >= OPAL_DATATYPE_MAX_PREDEFINED) ) {
+    if( (NULL != datatype->ptypes) && (!opal_datatype_is_predefined(datatype)) ) {
         free(datatype->ptypes);
         datatype->ptypes = NULL;
     }
