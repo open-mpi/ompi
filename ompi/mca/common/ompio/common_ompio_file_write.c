@@ -9,8 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2016 University of Houston. All rights reserved.
- * Copyright (c) 2015-2017 Research Organization for Information Science
+ * Copyright (c) 2008-2019 University of Houston. All rights reserved.
+ * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -34,6 +34,7 @@
 #include "ompi/mca/io/ompio/io_ompio_request.h"
 #include "math.h"
 #include <unistd.h>
+#include <math.h>
 
 int mca_common_ompio_file_write (mca_io_ompio_file_t *fh,
 			       const void *buf,
@@ -76,7 +77,7 @@ int mca_common_ompio_file_write (mca_io_ompio_file_t *fh,
     else {
 	bytes_per_cycle = mca_io_ompio_cycle_buffer_size;
     }
-    cycles = ceil((float)max_data/bytes_per_cycle);
+    cycles = ceil((double)max_data/bytes_per_cycle);
 
 #if 0
     printf ("Bytes per Cycle: %d   Cycles: %d\n", bytes_per_cycle, cycles);
