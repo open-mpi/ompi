@@ -260,7 +260,6 @@
    including stdint.h */
 #define __STDC_LIMIT_MACROS
 #endif
-#include "opal_config.h"
 #include "opal_stdint.h"
 
 /***********************************************************************
