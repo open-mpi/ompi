@@ -70,7 +70,6 @@ headers = \
         show_help.h \
         show_help_lex.h \
         stacktrace.h \
-        strncpy.h \
         string_copy.h \
         sys_limits.h \
         timings.h \
@@ -110,7 +109,6 @@ libopalutil_la_SOURCES = \
         show_help.c \
         show_help_lex.l \
         stacktrace.c \
-        strncpy.c \
         string_copy.c \
         sys_limits.c \
         uri.c \
