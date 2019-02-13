@@ -43,39 +43,40 @@ atomic_barrier_noinline.c:
 	ln -s $(top_srcdir)/test/asm/atomic_barrier.c atomic_barrier_noinline.c
 atomic_barrier_noinline_SOURCES = atomic_barrier_noinline.c
 atomic_barrier_noinline_CFLAGS = $(AM_CFLAGS) -DOMPI_DISABLE_INLINE_ASM
+atomic_barrier_noinline_LDADD = $(libs) -lpthread
 
 ######################################################################
 
 atomic_spinlock_SOURCES = atomic_spinlock.c
-atomic_spinlock_LDADD = $(libs)
+atomic_spinlock_LDADD = $(libs) -lpthread
 
 atomic_spinlock_noinline.c:
 	ln -s $(top_srcdir)/test/asm/atomic_spinlock.c atomic_spinlock_noinline.c
 atomic_spinlock_noinline_SOURCES = atomic_spinlock_noinline.c
 atomic_spinlock_noinline_CFLAGS = $(AM_CFLAGS) -DOMPI_DISABLE_INLINE_ASM
-atomic_spinlock_noinline_LDADD = $(libs)
+atomic_spinlock_noinline_LDADD = $(libs) -lpthread
 
 ######################################################################
 
 atomic_math_SOURCES = atomic_math.c
-atomic_math_LDADD = $(libs)
+atomic_math_LDADD = $(libs) -lpthread
 
 atomic_math_noinline.c:
 	ln -s $(top_srcdir)/test/asm/atomic_math.c atomic_math_noinline.c
 atomic_math_noinline_SOURCES = atomic_math_noinline.c
 atomic_math_noinline_CFLAGS = $(AM_CFLAGS) -DOMPI_DISABLE_INLINE_ASM
-atomic_math_noinline_LDADD = $(libs)
+atomic_math_noinline_LDADD = $(libs) -lpthread
 
 ######################################################################
 
 atomic_cmpset_SOURCES = atomic_cmpset.c
-atomic_cmpset_LDADD = $(libs)
+atomic_cmpset_LDADD = $(libs) -lpthread
 
 atomic_cmpset_noinline.c:
 	ln -s $(top_srcdir)/test/asm/atomic_cmpset.c atomic_cmpset_noinline.c
 atomic_cmpset_noinline_SOURCES = atomic_cmpset_noinline.c
 atomic_cmpset_noinline_CFLAGS = $(AM_CFLAGS) -DOMPI_DISABLE_INLINE_ASM
-atomic_cmpset_noinline_LDADD = $(libs)
+atomic_cmpset_noinline_LDADD = $(libs) -lpthread
 
 ######################################################################
 

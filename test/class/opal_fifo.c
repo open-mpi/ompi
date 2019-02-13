@@ -18,6 +18,7 @@
 #include "opal/runtime/opal.h"
 #include "opal/constants.h"
 
+#include <pthread.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <stddef.h>

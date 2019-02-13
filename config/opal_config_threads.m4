@@ -63,8 +63,8 @@ AS_IF([test -z "$with_threads" || test "$with_threads" = "pthreads" || test "$wi
 #
 # see if argobots is called for
 #
-AS_IF([test -z "$thread_type_found" && test "$with_threads" = argobots"],
-      [OPAL_CONFIG_ARGOBOT_THREADS(HAVE_THREAD_PKG=1, HAVE_THREAD_PKG=0)
+AS_IF([test -z "$thread_type_found" && test "$with_threads" = "argobots"],
+      [OPAL_CONFIG_ARGOBOTS_THREADS(HAVE_THREAD_PKG=1, HAVE_THREAD_PKG=0)
        AC_MSG_CHECKING([for working ARGOBOTS threads package])
        AS_IF([test "$HAVE_THREAD_PKG" = "1"],
              [AC_MSG_RESULT([yes])
@@ -72,7 +72,7 @@ AS_IF([test -z "$thread_type_found" && test "$with_threads" = argobots"],
              [AC_MSG_RESULT([no])])],
       [])
 
-AS_IF([test -z "$thread_type_found" && test "$with_threads" = qthreads"],
+AS_IF([test -z "$thread_type_found" && test "$with_threads" = "qthreads"],
       [OPAL_CONFIG_QTHREADS(HAVE_THREAD_PKG=1, HAVE_THREAD_PKG=0)
        AC_MSG_CHECKING([for working Qthreads package])
        AS_IF([test "$HAVE_THREAD_PKG" = "1"],

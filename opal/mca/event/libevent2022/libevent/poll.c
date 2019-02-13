@@ -162,6 +162,9 @@ poll_dispatch(struct event_base *base, struct timeval *tv)
 
 	EVBASE_RELEASE_LOCK(base, th_base_lock);
 
+	if (msec > 0) {
+		msec = 0;
+	}
 	res = poll(event_set, nfds, msec);
 
 	EVBASE_ACQUIRE_LOCK(base, th_base_lock);

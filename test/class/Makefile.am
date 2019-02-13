@@ -92,13 +92,15 @@ ompi_rb_tree_DEPENDENCIES = $(ompi_rb_tree_LDADD)
 opal_lifo_SOURCES = opal_lifo.c
 opal_lifo_LDADD = \
         $(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la \
-	$(top_builddir)/test/support/libsupport.a
+	$(top_builddir)/test/support/libsupport.a \
+        -lpthread
 opal_lifo_DEPENDENCIES = $(opal_lifo_LDADD)
 
 opal_fifo_SOURCES = opal_fifo.c
 opal_fifo_LDADD = \
         $(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la \
-	$(top_builddir)/test/support/libsupport.a
+	$(top_builddir)/test/support/libsupport.a \
+        -lpthread
 opal_fifo_DEPENDENCIES = $(opal_fifo_LDADD)
 
 clean-local:
