@@ -86,7 +86,10 @@
 #define OOB_TCP_STR_EXPAND(tok) #tok
 #define OOB_TCP_STR(tok) OOB_TCP_STR_EXPAND(tok)
 
-static char * oob_tcp_version_string = OOB_TCP_STR(ORTE_MAJOR_VERSION) "." OOB_TCP_STR(ORTE_MINOR_VERSION) ".0";
+/*
+ * See discussion at https://github.com/open-mpi/ompi/pull/6157
+ */
+static char * oob_tcp_version_string = "4.0.0";
 
 static void tcp_peer_event_init(mca_oob_tcp_peer_t* peer);
 static int  tcp_peer_send_connect_ack(mca_oob_tcp_peer_t* peer);
