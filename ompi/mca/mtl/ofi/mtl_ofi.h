@@ -1213,14 +1213,8 @@ ompi_mtl_ofi_cancel(struct mca_mtl_base_module_t *mtl,
                 ret = fi_cancel((fid_t)ompi_mtl_ofi.ofi_ctxt[ctxt_id].rx_ep,
                                &ofi_req->ctx);
                 if (0 == ret) {
-                    /**
-                     * Wait for the request to be cancelled.
-                     */
-                    while (!ofi_req->super.ompi_req->req_status._cancelled) {
-                        opal_progress();
-                        if (ofi_req->req_started)
-                            goto ofi_cancel_not_possible;
-                    }
+                    if (ofi_req->req_started)
+                        goto ofi_cancel_not_possible;
                 } else {
 ofi_cancel_not_possible:
                     /**
