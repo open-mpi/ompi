@@ -38,7 +38,6 @@ headers += \
 
 lib@ORTE_LIB_PREFIX@open_rte_la_SOURCES += \
         runtime/orte_finalize.c \
-        runtime/orte_init.c \
         runtime/orte_locks.c \
         runtime/orte_globals.c \
         runtime/orte_quit.c \
@@ -52,3 +51,12 @@ lib@ORTE_LIB_PREFIX@open_rte_la_SOURCES += \
         runtime/orte_cr.c \
         runtime/orte_data_server.c \
         runtime/orte_info_support.c
+
+# The MPIR portion of the library must be built with flags to
+# enable stepping out of MPI_INIT into main.
+# Use an intermediate library to isolate the debug object.
+noinst_LTLIBRARIES += libruntime_mpir.la
+libruntime_mpir_la_SOURCES = \
+        runtime/orte_init.c
+libruntime_mpir_la_CFLAGS = $(MPIR_UNWIND_CFLAGS)
+lib@ORTE_LIB_PREFIX@open_rte_la_LIBADD += libruntime_mpir.la
