@@ -22,6 +22,8 @@ Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
 Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
 Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights
                         reserved.
+Copyright (c) 2019      Triad National Security, LLC. All rights
+                        reserved.
 $COPYRIGHT$
 
 Additional copyrights may follow
@@ -54,6 +56,43 @@ included in the vX.Y.Z section and be denoted as:
 
    (** also appeared: A.B.C)  -- indicating that this item was previously
                                  included in release version vA.B.C.
+
+4.0.1 -- February, 2019
+------------------------
+
+- Update embedded PMIx to 3.1.2.
+- Fix an issue of excessive compiler warning messages from mpi.h
+  when using newer C++ compilers.  Thanks to @Shadow-fax for
+  reporting.
+- Fix a problem when building Open MPI using clang 5.0.
+- Fix a problem with MPI_WIN_CREATE when using UCX.  Thanks
+  to Adam Simpson for reporting.
+- Fix a memory leak encountered for certain MPI datatype
+  destructor operations.  Thanks to Axel Huebl for reporting.
+- Fix several problems with MPI RMA accumulate operations.
+  Thanks to Jeff Hammond for reporting.
+- Fix possible race condition in closing some file descriptors
+  during job launch using mpirun.  Thanks to Jason Williams
+  for reporting and providing a fix.
+- Fix a problem in OMPIO for large individual write operations.
+  Thanks to Axel Huebl for reporting.
+- Fix a problem with parsing of map-by ppr options to mpirun.
+  Thanks to David Rich for reporting.
+- Fix a problem observed when using the mpool hugepage component.  Thanks
+  to Hunter Easterday for reporting and fixing.
+- Fix valgrind warning generated when invoking certain MPI Fortran
+  data type creation functions.  Thanks to @rtoijala for reporting.
+- Fix a problem when trying to build with a PMIX 3.1 or newer
+  release.  Thanks to Alastair McKinstry for reporting.
+- Fix a problem encountered with building MPI F08 module files.
+  Thanks to Igor Andriyash and Axel Huebl for reporting.
+- Fix two memory leaks encountered for certain MPI-RMA usage patterns.
+  Thanks to Joseph Schuchart for reporting and fixing.
+- Fix a problem with the ORTE rmaps_base_oversubscribe MCA paramater.
+  Thanks to @iassiour for reporting.
+- Fix a problem with UCX PML default error handler for MPI communicators.
+  Thanks to Marcin Krotkiewski for reporting.
+- Fix various issues with OMPIO uncovered by the testmpio test suite.
 
 4.0.0 -- September, 2018
 ------------------------
