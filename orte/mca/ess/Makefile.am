@@ -19,6 +19,10 @@
 
 AM_CPPFLAGS = $(LTDLINCL)
 
+# Add unwind flags because files in this tree are
+# involved in startup.
+AM_CFLAGS = $(MPIR_UNWIND_CFLAGS)
+
 # main library setup
 noinst_LTLIBRARIES = libmca_ess.la
 libmca_ess_la_SOURCES =
