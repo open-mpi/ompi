@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2019      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -21,6 +22,12 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
+/* This implementation has been removed from the MPI 3.0 standard.
+ * Open MPI v4.0.x is keeping the implementation in the library, but
+ * removing the prototypes from the headers, unless the user configures
+ * with --enable-mpi1-compatibility.
+ */
+
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
@@ -30,6 +37,10 @@
 #if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_Address = PMPI_Address
 #endif
+/* undef before defining, to prevent possible redefinition when
+ * using _Static_assert to error on usage of removed functions.
+ */
+#undef MPI_Address
 #define MPI_Address PMPI_Address
 #endif
 
