@@ -32,9 +32,18 @@ headers += \
 lib@OMPI_LIBMPI_NAME@_la_SOURCES += \
         runtime/ompi_mpi_abort.c \
         runtime/ompi_mpi_dynamics.c \
-        runtime/ompi_mpi_init.c \
         runtime/ompi_mpi_finalize.c \
         runtime/ompi_mpi_params.c \
         runtime/ompi_mpi_preconnect.c \
 	runtime/ompi_cr.c \
 	runtime/ompi_info_support.c
+
+# The MPIR portion of the library must be built with flags to
+# enable stepping out of MPI_INIT into main.
+# Use an intermediate library to isolate the debug object.
+noinst_LTLIBRARIES += libompi_mpir.la
+libompi_mpir_la_SOURCES = \
+	runtime/ompi_mpi_init.c
+libompi_mpir_la_CFLAGS = $(MPIR_UNWIND_CFLAGS)
+
+lib@OMPI_LIBMPI_NAME@_la_LIBADD += libompi_mpir.la

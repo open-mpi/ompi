@@ -11,6 +11,12 @@
 # $HEADER$
 #
 
+# Add MPIR unwind flags because files in this tree are
+# involved in startup. This is not needed in the other
+# subdirs in orte/mca/ess because the other components are
+# solely used by daemons and thus are not accessible by the debugger.
+AM_CFLAGS = $(MPIR_UNWIND_CFLAGS)
+
 AM_CPPFLAGS = $(ess_pmi_CPPFLAGS)
 
 sources = \
