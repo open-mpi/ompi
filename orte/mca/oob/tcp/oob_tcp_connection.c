@@ -14,8 +14,8 @@
  * Copyright (c) 2009-2018 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
- * Copyright (c) 2014-2015 Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2014-2018 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2016      Mellanox Technologies Ltd. All rights reserved.
  * $COPYRIGHT$
  *
@@ -82,6 +82,14 @@
 #include "oob_tcp_peer.h"
 #include "oob_tcp_common.h"
 #include "oob_tcp_connection.h"
+
+#define OOB_TCP_STR_EXPAND(tok) #tok
+#define OOB_TCP_STR(tok) OOB_TCP_STR_EXPAND(tok)
+
+/*
+ * See discussion at https://github.com/open-mpi/ompi/pull/6157
+ */
+static char * oob_tcp_version_string = "4.0.0";
 
 static void tcp_peer_event_init(mca_oob_tcp_peer_t* peer);
 static int  tcp_peer_send_connect_ack(mca_oob_tcp_peer_t* peer);
@@ -417,7 +425,7 @@ static int tcp_peer_send_connect_ack(mca_oob_tcp_peer_t* peer)
     memset(hdr.routed, 0, ORTE_MAX_RTD_SIZE+1);
 
     /* payload size */
-    sdsize = sizeof(ack_flag) + strlen(orte_version_string) + 1;
+    sdsize = sizeof(ack_flag) + strlen(oob_tcp_version_string) + 1;
     hdr.nbytes = sdsize;
     MCA_OOB_TCP_HDR_HTON(&hdr);
 
@@ -433,8 +441,8 @@ static int tcp_peer_send_connect_ack(mca_oob_tcp_peer_t* peer)
     offset += sizeof(hdr);
     memcpy(msg + offset, &ack_flag, sizeof(ack_flag));
     offset += sizeof(ack_flag);
-    memcpy(msg + offset, orte_version_string, strlen(orte_version_string));
-    offset += strlen(orte_version_string)+1;
+    memcpy(msg + offset, oob_tcp_version_string, strlen(oob_tcp_version_string));
+    offset += strlen(oob_tcp_version_string)+1;
 
     /* send it */
     if (ORTE_SUCCESS != tcp_peer_send_blocking(peer->sd, msg, sdsize)) {
@@ -905,12 +913,12 @@ int mca_oob_tcp_peer_recv_connect_ack(mca_oob_tcp_peer_t* pr,
     /* check that this is from a matching version */
     version = (char*)((char*)msg + offset);
     offset += strlen(version) + 1;
-    if (0 != strcmp(version, orte_version_string)) {
+    if (0 != strcmp(version, oob_tcp_version_string)) {
         opal_show_help("help-oob-tcp.txt", "version mismatch",
                        true,
                        opal_process_info.nodename,
                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                       orte_version_string,
+                       oob_tcp_version_string,
                        opal_fd_get_peer_name(peer->sd),
                        ORTE_NAME_PRINT(&(peer->name)),
                        version);
