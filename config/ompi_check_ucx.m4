@@ -120,6 +120,10 @@ AC_DEFUN([OMPI_CHECK_UCX],[
                                   UCP_ATOMIC_FETCH_OP_FXOR],
                                  [], [],
                                  [#include <ucp/api/ucp.h>])
+                  AC_CHECK_DECLS([UCP_WORKER_ATTR_FIELD_ADDRESS_FLAGS],
+                                 [AC_DEFINE([HAVE_UCP_WORKER_ADDRESS_FLAGS], [1],
+                                            [have worker address attribute])], [],
+                                 [#include <ucp/api/ucp.h>])
                   CPPFLAGS=$old_CPPFLAGS
 
                   OPAL_SUMMARY_ADD([[Transports]],[[Open UCX]],[$1],[$ompi_check_ucx_happy])])])
