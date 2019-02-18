@@ -1589,6 +1589,11 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
     opal_argv_append(argc, argv, param);
     free(param);
 
+    /* pass the HNP uri */
+    opal_argv_append(argc, argv, "-"OPAL_MCA_CMD_LINE_ID);
+    opal_argv_append(argc, argv, "orte_hnp_uri");
+    opal_argv_append(argc, argv, orte_process_info.my_hnp_uri);
+
     /* if --xterm was specified, pass that along */
     if (NULL != orte_xterm) {
         opal_argv_append(argc, argv, "-"OPAL_MCA_CMD_LINE_ID);
