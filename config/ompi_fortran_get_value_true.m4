@@ -68,10 +68,8 @@ void ompi_print_f(ompi_fortran_logical_t * logical)
         fprintf(f, "%d\n", (int)*logical);
     } else if (SIZEOF_LONG >= sizeof(ompi_fortran_logical_t) ) {
 	fprintf(f, "%ld\n", (long) *logical);
-#ifdef HAVE_LONG_LONG
     } else if (SIZEOF_LONG_LONG >= sizeof(ompi_fortran_logical_t) ) {
         fprintf(f, "%lld\n", (long long) *logical);
-#endif
     } else {
         exit(1);
     }
