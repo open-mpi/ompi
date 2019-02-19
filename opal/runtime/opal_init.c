@@ -526,8 +526,8 @@ opal_init_util(int* pargc, char*** pargv)
  * versions of memcpy correctly configured.
  */
 static mca_base_framework_t *opal_init_frameworks[] = {
-    &opal_hwloc_base_framework, &opal_memcpy_base_framework, &opal_memchecker_base_framework,
-    &opal_backtrace_base_framework, &opal_timer_base_framework, &opal_event_base_framework,
+    &opal_memcpy_base_framework, &opal_memchecker_base_framework,
+    &opal_backtrace_base_framework, &opal_timer_base_framework,
     &opal_shmem_base_framework, &opal_reachable_base_framework, &opal_compress_base_framework,
     NULL,
 };

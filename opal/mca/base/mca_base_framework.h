@@ -5,6 +5,7 @@
  * Copyright (c) 2017 IBM Corporation.  All rights reserved.
  * Copyright (c) 2018      Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2019      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -16,7 +17,6 @@
 #define OPAL_MCA_BASE_FRAMEWORK_H
 
 #include "opal/mca/mca.h"
-#include "opal/mca/base/base.h"
 #include "opal/class/opal_list.h"
 
 /*
