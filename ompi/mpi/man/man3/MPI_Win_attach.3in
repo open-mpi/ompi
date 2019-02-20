@@ -1,19 +1,20 @@
 .\" -*- nroff -*-
-.\" Copyright (c) 2015      Research Organization for Information Science
-.\"                         and Technology (RIST). All rights reserved.
+.\" Copyright (c) 2015-2019 Research Organization for Information Science
+.\"                         and Technology (RIST).  All rights reserved.
+.\" Copyright (c) 2019      FUJITSU LIMITED.  All rights reserved.
 .\" $COPYRIGHT$
 .TH MPI_Win_attach 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
-\fBMPI_Win_create, MPI_Win_detach\fP \- One-sided MPI call that attach / detach a window object for RMA operations.
+\fBMPI_Win_attach, MPI_Win_detach\fP \- One-sided MPI call that attach / detach a window object for RMA operations.
 
 .SH SYNTAX
 .ft R
 .SH C Syntax
 .nf
 #include <mpi.h>
-MPI_Win_attach(MPI_Win *\fIwin\fP, void *\fIbase\fP, MPI_Aint \fIsize\fP)
+MPI_Win_attach(MPI_Win \fIwin\fP, void *\fIbase\fP, MPI_Aint \fIsize\fP)
 
-MPI_Win_detach(MPI_Win *\fIwin\fP, void *\fIbase\fP)
+MPI_Win_detach(MPI_Win \fIwin\fP, void *\fIbase\fP)
 .fi
 .SH Fortran Syntax
 .nf
@@ -62,7 +63,7 @@ Fortran only: Error status (integer).
 .ft R
 MPI_Win_attach is a one-sided MPI communication collective call executed by all processes in the group of \fIcomm\fP. It returns a window object that can be used by these processes to perform RMA operations. Each process specifies a window of existing memory that it exposes to RMA accesses by the processes in the group of \fIcomm\fP. The window consists of \fIsize\fP bytes, starting at address \fIbase\fP. A process may elect to expose no memory by specifying \fIsize\fP = 0.
 .sp
-If the \fIbase\fP value used by MPI_Win_create was allocated by MPI_Alloc_mem, the size of the window can be no larger than the value set by the MPI_ALLOC_MEM function.
+If the \fIbase\fP value used by MPI_Win_attach was allocated by MPI_Alloc_mem, the size of the window can be no larger than the value set by the MPI_ALLOC_MEM function.
 .sp
 
 .SH NOTES
