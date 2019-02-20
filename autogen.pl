@@ -5,8 +5,8 @@
 # Copyright (c) 2013      Mellanox Technologies, Inc.
 #                         All rights reserved.
 # Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
-# Copyright (c) 2015-2016 Research Organization for Information Science
-#                         and Technology (RIST). All rights reserved.
+# Copyright (c) 2015-2019 Research Organization for Information Science
+#                         and Technology (RIST).  All rights reserved.
 # Copyright (c) 2015      IBM Corporation.  All rights reserved.
 #
 # $COPYRIGHT$
@@ -1347,7 +1347,7 @@ push(@{$projects}, { name => "orte", dir => "orte", need_base => 1 })
 push(@{$projects}, { name => "ompi", dir => "ompi", need_base => 1 })
     if (!$no_ompi_arg);
 push(@{$projects}, { name => "oshmem", dir => "oshmem", need_base => 1 })
-    if (!$no_ompi_arg && !$no_orte_arg && !$no_oshmem_arg);
+    if (!$no_ompi_arg && !$no_oshmem_arg);
 push(@{$projects}, { name => "orcm", dir => "orcm", need_base => 1 })
     if (-e "orcm");
 

@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2019      Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -23,7 +25,6 @@
 #include "opal/class/opal_list.h"
 #include "opal/class/opal_hash_table.h"
 
-#include "orte/runtime/orte_globals.h"
 #include "ompi/include/mpi.h"
 #include <pthread.h>
 
@@ -153,8 +154,8 @@ OSHMEM_DECLSPEC int oshmem_shmem_register_params(void);
 #define RUNTIME_CHECK_ERROR(...)                                    \
     do {                                                            \
         fprintf(stderr, "[%s]%s[%s:%d:%s] ",                        \
-                orte_process_info.nodename,                         \
-                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),                 \
+                ompi_process_info.nodename,                         \
+                OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),                 \
                 __FILE__, __LINE__, __func__);                      \
         fprintf(stderr, __VA_ARGS__);                               \
     } while(0);
@@ -184,7 +185,7 @@ OSHMEM_DECLSPEC int oshmem_shmem_register_params(void);
  */
 #define RUNTIME_CHECK_PE(x)    \
     if (OPAL_UNLIKELY(((x) < 0) ||                                                      \
-                      ((int)(x) > (int)(orte_process_info.num_procs - 1))))             \
+                      ((int)(x) > (int)(ompi_process_info.num_procs - 1))))             \
     {                                                                                   \
         RUNTIME_CHECK_ERROR("Target PE #%d is not in valid range\n", (x));              \
         oshmem_shmem_abort(-1);                                                         \

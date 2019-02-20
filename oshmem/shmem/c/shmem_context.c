@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2013-2018 Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2019      Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -11,8 +13,6 @@
 #include "oshmem_config.h"
 
 #include <stdlib.h>
-
-#include "orte/util/show_help.h"
 
 #include "opal/runtime/opal_cr.h"
 #include "opal/util/output.h"

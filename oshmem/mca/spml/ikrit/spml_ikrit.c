@@ -2,8 +2,8 @@
 /*
  * Copyright (c) 2013-2015 Mellanox Technologies, Inc.
  *                         All rights reserved.
- * Copyright (c) 2014-2016 Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2014-2019 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
@@ -23,8 +23,7 @@
 #include "oshmem_config.h"
 #include "opal/datatype/opal_convertor.h"
 #include "opal/mca/memchecker/base/base.h"
-#include "orte/include/orte/types.h"
-#include "orte/runtime/orte_globals.h"
+#include "opal/util/show_help.h"
 #include "oshmem/mca/spml/ikrit/spml_ikrit.h"
 #include "oshmem/include/shmem.h"
 #include "oshmem/mca/memheap/memheap.h"
@@ -33,7 +32,6 @@
 #include "oshmem/mca/spml/base/base.h"
 #include "oshmem/mca/spml/base/spml_base_putreq.h"
 #include "oshmem/runtime/runtime.h"
-#include "orte/util/show_help.h"
 #include "oshmem/mca/sshmem/sshmem.h"
 
 #include "oshmem/mca/spml/ikrit/spml_ikrit_component.h"
@@ -351,7 +349,7 @@ int mca_spml_ikrit_add_procs(ompi_proc_t** procs, size_t nprocs)
     if (mca_spml_ikrit.hw_rdma_channel) {
         err = mxm_ep_get_address(mca_spml_ikrit.mxm_hw_rdma_ep, &my_ep_info.addr.ep_addr, &mxm_addr_len);
         if (MXM_OK != err) {
-            orte_show_help("help-oshmem-spml-ikrit.txt", "unable to get endpoint address", true,
+            opal_show_help("help-oshmem-spml-ikrit.txt", "unable to get endpoint address", true,
                     mxm_error_string(err));
             rc = OSHMEM_ERROR;
             goto bail;
@@ -361,7 +359,7 @@ int mca_spml_ikrit_add_procs(ompi_proc_t** procs, size_t nprocs)
     }
     err = mxm_ep_get_address(mca_spml_ikrit.mxm_ep, &my_ep_info.addr.ep_addr, &mxm_addr_len);
     if (MXM_OK != err) {
-        orte_show_help("help-oshmem-spml-ikrit.txt", "unable to get endpoint address", true,
+        opal_show_help("help-oshmem-spml-ikrit.txt", "unable to get endpoint address", true,
                 mxm_error_string(err));
         rc = OSHMEM_ERROR;
         goto bail;

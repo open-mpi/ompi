@@ -1,8 +1,8 @@
 /*
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
- * Copyright (c) 2016      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016-2019 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2016      ARM, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
@@ -34,7 +34,6 @@
 #include "opal/class/opal_free_list.h"
 #include "opal/class/opal_list.h"
 
-#include "orte/runtime/orte_globals.h"
 #include "opal/mca/common/ucx/common_ucx.h"
 
 #include <ucp/api/ucp.h>

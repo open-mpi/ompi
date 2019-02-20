@@ -1,7 +1,9 @@
 /*
- *  Copyright (c) 2013      Mellanox Technologies, Inc.
- *                          All rights reserved.
+ * Copyright (c) 2013      Mellanox Technologies, Inc.
+ *                         All rights reserved.
  * Copyright (c) 2017      FUJITSU LIMITED.  All rights reserved.
+ * Copyright (c) 2019      Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -27,13 +29,7 @@
 #include "opal/mca/backtrace/backtrace.h"
 #include "opal/util/error.h"
 #include "opal/runtime/opal_params.h"
-
-#include "orte/util/proc_info.h"
-#include "orte/runtime/runtime.h"
-#include "orte/runtime/orte_globals.h"
-#include "orte/util/name_fns.h"
-#include "orte/util/show_help.h"
-#include "orte/mca/errmgr/errmgr.h"
+#include "opal/util/show_help.h"
 
 #include "oshmem/runtime/params.h"
 #include "oshmem/runtime/runtime.h"
@@ -56,18 +52,20 @@ int oshmem_shmem_abort(int errcode)
     /* If ORTE is initialized, use its nodename.  Otherwise, call
      gethostname. */
 
-    if (orte_initialized) {
-        host = orte_process_info.nodename;
+    /* If MPI is initialized, we know we have a runtime nodename, so
+       use that.  Otherwise, call gethostname. */
+    if (ompi_rte_initialized) {
+        host = ompi_process_info.nodename;
     } else {
         gethostname(hostname, sizeof(hostname));
         host = hostname;
     }
     pid = getpid();
 
-    orte_show_help("help-shmem-api.txt",
+    opal_show_help("help-shmem-api.txt",
                    "shmem-abort",
                    true,
-                   ORTE_PROC_MY_NAME->vpid,
+                   OMPI_PROC_MY_NAME->vpid,
                    pid,
                    host,
                    errcode);
@@ -100,10 +98,10 @@ int oshmem_shmem_abort(int errcode)
     /* Wait for a while before aborting */
     opal_delay_abort();
 
-    if (!orte_initialized || !oshmem_shmem_initialized) {
-        if (orte_show_help_is_available()) {
+    if (!oshmem_shmem_initialized) {
+        if (!opal_initialized) {
             /* TODO help message from SHMEM not from MPI is needed*/
-            orte_show_help("help-shmem-runtime.txt",
+            opal_show_help("help-shmem-runtime.txt",
                            "oshmem shmem abort:cannot guarantee all killed",
                            true,
                            host,
@@ -125,7 +123,7 @@ int oshmem_shmem_abort(int errcode)
     oshmem_shmem_aborted = true;
     /* now that we've aborted everyone else, gracefully die. */
 
-    orte_errmgr.abort(errcode, NULL );
+    ompi_rte_abort(errcode, NULL );
 
     return OSHMEM_SUCCESS;
 }

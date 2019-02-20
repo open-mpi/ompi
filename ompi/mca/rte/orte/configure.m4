@@ -2,8 +2,9 @@
 #
 # Copyright (c) 2012      Los Alamos National Security, LLC.  All rights reserved.
 # Copyright (c) 2013      Sandia National Laboratories. All rights reserved.
-#
 # Copyright (c) 2017      Intel, Inc. All rights reserved.
+# Copyright (c) 2019      Research Organization for Information Science
+#                         and Technology (RIST).  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -36,13 +37,16 @@ AC_DEFUN([MCA_ompi_rte_orte_POST_CONFIG],[
 AC_DEFUN([MCA_ompi_rte_orte_CONFIG],[
     AC_CONFIG_FILES([ompi/mca/rte/orte/Makefile])
 
-    # This will need to get more complicated when we can build against
-    # an external ORTE.
-    AC_ARG_WITH([orte],
-        AC_HELP_STRING([--with-orte],
-                       [Use ORTE run-time environment (default: yes)]))
-    AS_IF([test "$with_orte" != "no"],
-          [$1],
-          [AC_MSG_NOTICE([ORTE disabled by user])
-           $2])
+    m4_ifdef([project_orte],
+             [# This will need to get more complicated when we can build against
+              # an external ORTE.
+              AC_ARG_WITH([orte],
+                  AC_HELP_STRING([--with-orte],
+                                 [Use ORTE run-time environment (default: yes)]))
+              AS_IF([test "$with_orte" != "no"],
+                    [$1],
+                    [AC_MSG_NOTICE([ORTE disabled by user])
+                     $2])
+             ],
+             [$2])
 ])
