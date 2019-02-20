@@ -266,7 +266,7 @@ static int mca_btl_tcp_component_register(void)
                                     "The size of the receive buffer socket option for each connection.  "
                                     "Modern TCP stacks generally are smarter than a fixed size and in some "
                                     "situations setting a buffer size explicitly can actually lower "
-                                    "performance.  0 means the tcp btl will not try to set a send buffer "
+                                    "performance.  0 means the tcp btl will not try to set a receive buffer "
                                     "size.",
                                     0, OPAL_INFO_LVL_4, &mca_btl_tcp_component.tcp_rcvbuf);
     mca_btl_tcp_param_register_int ("endpoint_cache",
