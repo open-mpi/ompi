@@ -15,6 +15,7 @@
 #include "ompi/group/group.h"
 #include "ompi/communicator/communicator.h"
 #include "opal/mca/common/ucx/common_ucx.h"
+#include "opal/mca/common/ucx/common_ucx_wpool.h"
 
 #define OSC_UCX_ASSERT  MCA_COMMON_UCX_ASSERT
 #define OSC_UCX_ERROR   MCA_COMMON_UCX_ERROR
@@ -22,18 +23,11 @@
 
 #define OMPI_OSC_UCX_POST_PEER_MAX 32
 #define OMPI_OSC_UCX_ATTACH_MAX    32
-#define OMPI_OSC_UCX_RKEY_BUF_MAX  1024
-
-typedef struct ompi_osc_ucx_win_info {
-    ucp_rkey_h rkey;
-    uint64_t addr;
-    bool rkey_init;
-} ompi_osc_ucx_win_info_t;
+#define OMPI_OSC_UCX_MEM_ADDR_MAX_LEN  1024
 
 typedef struct ompi_osc_ucx_component {
     ompi_osc_base_component_t super;
-    ucp_context_h ucp_context;
-    ucp_worker_h ucp_worker;
+    opal_common_ucx_wpool_t *wpool;
     bool enable_mpi_threads;
     opal_free_list_t requests; /* request free list for the r* communication variants */
     bool env_initialized; /* UCX environment is initialized or not */
@@ -62,7 +56,6 @@ typedef struct ompi_osc_ucx_epoch_type {
 #define TARGET_LOCK_EXCLUSIVE ((uint64_t)(0x0000000100000000ULL))
 
 #define OSC_UCX_IOVEC_MAX 128
-#define OSC_UCX_OPS_THRESHOLD 1000000
 
 #define OSC_UCX_STATE_LOCK_OFFSET 0
 #define OSC_UCX_STATE_REQ_FLAG_OFFSET sizeof(uint64_t)
@@ -75,11 +68,13 @@ typedef struct ompi_osc_ucx_epoch_type {
 typedef struct ompi_osc_dynamic_win_info {
     uint64_t base;
     size_t size;
-    char rkey_buffer[OMPI_OSC_UCX_RKEY_BUF_MAX];
+    char mem_addr[OMPI_OSC_UCX_MEM_ADDR_MAX_LEN];
 } ompi_osc_dynamic_win_info_t;
 
 typedef struct ompi_osc_local_dynamic_win_info {
-    ucp_mem_h memh;
+    opal_common_ucx_wpmem_t *mem;
+    char *my_mem_addr;
+    int my_mem_addr_size;
     int refcnt;
 } ompi_osc_local_dynamic_win_info_t;
 
@@ -97,12 +92,10 @@ typedef struct ompi_osc_ucx_state {
 typedef struct ompi_osc_ucx_module {
     ompi_osc_base_module_t super;
     struct ompi_communicator_t *comm;
-    ucp_mem_h memh; /* remote accessible memory */
     int flavor;
     size_t size;
-    ucp_mem_h state_memh;
-    ompi_osc_ucx_win_info_t *win_info_array;
-    ompi_osc_ucx_win_info_t *state_info_array;
+    uint64_t *addrs;
+    uint64_t *state_addrs;
     int disp_unit; /* if disp_unit >= 0, then everyone has the same
                     * disp unit size; if disp_unit == -1, then we
                     * need to look at disp_units */
@@ -117,11 +110,12 @@ typedef struct ompi_osc_ucx_module {
     opal_list_t pending_posts;
     int lock_count;
     int post_count;
-    int global_ops_num;
-    int *per_target_ops_nums;
     uint64_t req_result;
     int *start_grp_ranks;
     bool lock_all_is_nocheck;
+    opal_common_ucx_ctx_t *ctx;
+    opal_common_ucx_wpmem_t *mem;
+    opal_common_ucx_wpmem_t *state_mem;
 } ompi_osc_ucx_module_t;
 
 typedef enum locktype {
@@ -215,8 +209,5 @@ int ompi_osc_ucx_flush_local_all(struct ompi_win_t *win);
 int ompi_osc_find_attached_region_position(ompi_osc_dynamic_win_info_t *dynamic_wins,
                                            int min_index, int max_index,
                                            uint64_t base, size_t len, int *insert);
-
-void req_completion(void *request, ucs_status_t status);
-void internal_req_init(void *request);
 
 #endif /* OMPI_OSC_UCX_H */

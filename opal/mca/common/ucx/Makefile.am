@@ -12,13 +12,16 @@
 
 # Header files
 
-headers = \
-        common_ucx.h
+headers =                         \
+        common_ucx.h              \
+        common_ucx_wpool.h        \
+        common_ucx_wpool_int.h
 
 # Source files
 
 sources = \
-        common_ucx.c
+        common_ucx.c              \
+        common_ucx_wpool.c
 
 # Help file
 

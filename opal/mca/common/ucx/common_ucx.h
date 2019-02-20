@@ -36,6 +36,9 @@ BEGIN_C_DECLS
 #  define MCA_COMMON_UCX_ASSERT(_x)
 #endif
 
+#define MCA_COMMON_UCX_PER_TARGET_OPS_THRESHOLD 1000
+#define MCA_COMMON_UCX_GLOBAL_OPS_THRESHOLD 1000
+
 #define _MCA_COMMON_UCX_QUOTE(_x) \
     # _x
 #define MCA_COMMON_UCX_QUOTE(_x) \
@@ -176,6 +179,17 @@ int opal_common_ucx_atomic_fetch(ucp_ep_h ep, ucp_atomic_fetch_op_t opcode,
     request = ucp_atomic_fetch_nb(ep, opcode, value, result, op_size,
                                   remote_addr, rkey, opal_common_ucx_empty_complete_cb);
     return opal_common_ucx_wait_request(request, worker, "ucp_atomic_fetch_nb");
+}
+
+static inline
+ucs_status_ptr_t opal_common_ucx_atomic_fetch_nb(ucp_ep_h ep, ucp_atomic_fetch_op_t opcode,
+                                                 uint64_t value, void *result, size_t op_size,
+                                                 uint64_t remote_addr, ucp_rkey_h rkey,
+                                                 ucp_send_callback_t req_handler,
+                                                 ucp_worker_h worker)
+{
+    return ucp_atomic_fetch_nb(ep, opcode, value, result, op_size,
+                               remote_addr, rkey, req_handler);
 }
 
 static inline
