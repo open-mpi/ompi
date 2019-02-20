@@ -19,6 +19,8 @@
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
  * Copyright (c) 2018      Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
+ * Copyright (c) 2019      Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -722,7 +724,13 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
 
             ompi_osc_module_add_peer (module, peer);
 
-            if (MPI_WIN_FLAVOR_DYNAMIC == module->flavor || 0 == temp[i].size) {
+            if (MPI_WIN_FLAVOR_DYNAMIC == module->flavor) {
+                if (module->use_cpu_atomics && peer_rank == my_rank) {
+                    peer->flags |= OMPI_OSC_RDMA_PEER_LOCAL_BASE;
+                }
+                /* nothing more to do */
+                continue;
+            } else if (0 == temp[i].size) {
                 /* nothing more to do */
                 continue;
             }
