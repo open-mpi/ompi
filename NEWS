@@ -55,6 +55,44 @@ included in the vX.Y.Z section and be denoted as:
    (** also appeared: A.B.C)  -- indicating that this item was previously
                                  included in release version vA.B.C.
 
+3.1.4 -- March, 2019
+--------------------
+
+- Fix compile error when configured with --enable-mpi-java and
+  --with-devel-headers.  Thanks to @g-raffy for reporting the issue
+  (** also appeared: v3.0.4).
+- Only use hugepages with appropriate permissions.  Thanks to Hunter
+  Easterday for the fix.
+- Fix possible floating point rounding and division issues in OMPIO
+  which led to crashes and/or data corruption with very large data.
+  Thanks to Axel Huebl and René Widera for identifing the issue,
+  supplying and testing the fix (** also appeared: v3.0.4).
+- Use static_cast<> in mpi.h where appropriate.  Thanks to @shadow-fx
+  for identifying the issue (** also appeared: v3.0.4).
+- Fix RMA accumulate of non-predefined datatypes with predefined
+  operators.  Thanks to Jeff Hammond for raising the issue (** also
+  appeared: v3.0.4).
+- Fix race condition when closing open file descriptors when launching
+  MPI processes.  Thanks to Jason Williams for identifying the issue and
+  supplying the fix (** also appeared: v3.0.4).
+- Fix support for external PMIx v3.1.x.
+- Fix Valgrind warnings for some MPI_TYPE_CREATE_* functions.  Thanks
+  to Risto Toijala for identifying the issue and supplying the fix (**
+  also appeared: v3.0.4).
+- Fix MPI_TYPE_CREATE_F90_{REAL,COMPLEX} for r=38 and r=308 (** also
+  appeared: v3.0.4).
+- Fix assembly issues with old versions of gcc (<6.0.0) that affected
+  the stability of shared memory communications (e.g., with the vader
+  BTL) (** also appeared: v3.0.4).
+- Fix MPI_Allreduce crashes with some cases in the coll/spacc module.
+- Fix the OFI MTL handling of MPI_ANY_SOURCE (** also appeared:
+  v3.0.4).
+- Fix noisy errors in the openib BTL with regards to
+  ibv_exp_query_device().  Thanks to Angel Beltre and others who
+  reported the issue (** also appeared: v3.0.4).
+- Fix zero-size MPI one-sided windows with UCX.
+
+
 3.1.3 -- October, 2018
 ----------------------
 
