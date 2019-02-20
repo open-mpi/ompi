@@ -11,6 +11,8 @@
 #                         and Technology (RIST). All rights reserved.
 # Copyright (c) 2016      IBM Corporation.  All rights reserved.
 # Copyright (c) 2017      FUJITSU LIMITED.  All rights reserved.
+# Copyright (c) 2019      Triad National Security, LLC. All rights
+#                         reserved.
 #
 # $COPYRIGHT$
 #
@@ -39,7 +41,8 @@ CLEANFILES += *.i90
 lib_LTLIBRARIES = lib@OMPI_LIBMPI_NAME@_usempif08.la
 
 module_sentinel_file = \
-        mod/libforce_usempif08_internal_modules_to_be_built.la
+        mod/libforce_usempif08_internal_modules_to_be_built.la \
+        bindings/libforce_usempif08_internal_bindings_to_be_built.la
 
 mpi-f08.lo: $(module_sentinel_file)
 mpi-f08.lo: mpi-f08.F90
