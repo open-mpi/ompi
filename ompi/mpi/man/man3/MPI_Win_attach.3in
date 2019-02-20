@@ -1,6 +1,6 @@
 .\" -*- nroff -*-
-.\" Copyright (c) 2015      Research Organization for Information Science
-.\"                         and Technology (RIST). All rights reserved.
+.\" Copyright (c) 2015-2019 Research Organization for Information Science
+.\"                         and Technology (RIST).  All rights reserved.
 .\" $COPYRIGHT$
 .TH MPI_Win_attach 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -11,9 +11,9 @@
 .SH C Syntax
 .nf
 #include <mpi.h>
-MPI_Win_attach(MPI_Win *\fIwin\fP, void *\fIbase\fP, MPI_Aint \fIsize\fP)
+MPI_Win_attach(MPI_Win \fIwin\fP, void *\fIbase\fP, MPI_Aint \fIsize\fP)
 
-MPI_Win_detach(MPI_Win *\fIwin\fP, void *\fIbase\fP)
+MPI_Win_detach(MPI_Win \fIwin\fP, void *\fIbase\fP)
 .fi
 .SH Fortran Syntax
 .nf
