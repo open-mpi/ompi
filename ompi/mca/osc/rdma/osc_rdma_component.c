@@ -382,8 +382,6 @@ static int ompi_osc_rdma_component_query (struct ompi_win_t *win, void **base, s
     return mca_osc_rdma_component.priority;
 }
 
-#define RANK_ARRAY_COUNT(module) ((ompi_comm_size ((module)->comm) + (module)->node_count - 1) / (module)->node_count)
-
 static int ompi_osc_rdma_initialize_region (ompi_osc_rdma_module_t *module, void **base, size_t size) {
     ompi_osc_rdma_region_t *region = (ompi_osc_rdma_region_t *) module->state->regions;
     int ret;
