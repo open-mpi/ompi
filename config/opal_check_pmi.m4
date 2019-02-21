@@ -243,6 +243,7 @@ AC_DEFUN([OPAL_CHECK_PMI],[
 # OPAL_CHECK_PMIX_LIB(installdir, libdir, [action-if-valid], [action-if-not-valid])
 AC_DEFUN([OPAL_CHECK_PMIX_LIB],[
 
+    OPAL_VAR_SCOPE_PUSH([opal_external_pmix_save_CPPFLAGS opal_external_pmix_save_LDFLAGS opal_external_pmix_save_LIBS])
     opal_external_pmix_happy=no
 
     # Make sure we have the headers and libs in the correct location
@@ -386,12 +387,12 @@ AC_DEFUN([OPAL_CHECK_PMIX_LIB],[
     ])
     AS_IF([test "$opal_external_pmix_happy" = "yes"],
           [$3], [$4])
+
+    OPAL_VAR_SCOPE_POP
 ])
 
 
 AC_DEFUN([OPAL_CHECK_PMIX],[
-
-    OPAL_VAR_SCOPE_PUSH([opal_external_pmix_save_CPPFLAGS opal_external_pmix_save_LDFLAGS opal_external_pmix_save_LIBS])
 
     AC_ARG_WITH([pmix],
                 [AC_HELP_STRING([--with-pmix(=DIR)],
@@ -469,6 +470,4 @@ AC_DEFUN([OPAL_CHECK_PMIX],[
                  [OPAL_SUMMARY_ADD([[Miscellaneous]],[[PMIx support]], [opal_pmix], [External (1.2.5) WARNING - DYNAMIC OPS NOT SUPPORTED])],
                  [OPAL_SUMMARY_ADD([[Miscellaneous]],[[PMIx support]], [opal_pmix], [External ($opal_external_pmix_version)])])],
           [OPAL_SUMMARY_ADD([[Miscellaneous]], [[PMIx support]], [opal_pmix], [Internal])])
-
-    OPAL_VAR_SCOPE_POP
 ])
