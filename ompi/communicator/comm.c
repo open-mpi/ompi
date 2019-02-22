@@ -1884,6 +1884,10 @@ int ompi_comm_enable(ompi_communicator_t *old_comm,
 {
     int ret = OMPI_SUCCESS;
 
+    /* set the rank information before calling nextcid */
+    new_comm->c_local_group->grp_my_rank = new_rank;
+    new_comm->c_my_rank = new_rank;
+
     /* Determine context id. It is identical to f_2_c_handle */
     ret = ompi_comm_nextcid (new_comm, old_comm, NULL, NULL, NULL, false,
                              OMPI_COMM_CID_INTRA);
