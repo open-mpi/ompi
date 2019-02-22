@@ -660,6 +660,17 @@ void mca_btl_tcp_set_socket_options(int sd)
                    strerror(opal_socket_errno), opal_socket_errno));
     }
 #endif
+#if defined(SO_NOSIGPIPE)
+    /* Some BSD flavors generate EPIPE when we write to a disconnected peer. We need
+     * the prevent this signal to be able to trap socket shutdown and cleanly release
+     * the endpoint.
+     */
+    int optval2 = 1;
+    if(setsockopt(sd, SOL_SOCKET, SO_NOSIGPIPE, (char *)&optval2, sizeof(optval2)) < 0) {
+        BTL_ERROR(("setsockopt(SO_NOSIGPIPE) failed: %s (%d)",
+                   strerror(opal_socket_errno), opal_socket_errno));
+    }
+#endif
 }
 
 

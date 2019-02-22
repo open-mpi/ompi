@@ -184,7 +184,7 @@ struct mca_btl_tcp_module_t {
 typedef struct mca_btl_tcp_module_t mca_btl_tcp_module_t;
 extern mca_btl_tcp_module_t mca_btl_tcp_module;
 
-#define CLOSE_THE_SOCKET(socket)   {(void)shutdown(socket, SHUT_RDWR); (void)close(socket);}
+#define CLOSE_THE_SOCKET(socket)   {OPAL_OUTPUT_VERBOSE((20, opal_btl_base_framework.framework_output, "CLOSE FD %d at %s:%d", socket, __FILE__, __LINE__)); (void)shutdown(socket, SHUT_RDWR); (void)close(socket);}
 
 /**
  * TCP component initialization.
