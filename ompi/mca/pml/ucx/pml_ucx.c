@@ -82,11 +82,46 @@ mca_pml_ucx_module_t ompi_pml_ucx = {
 #define PML_UCX_REQ_ALLOCA() \
     ((char *)alloca(ompi_pml_ucx.request_size) + ompi_pml_ucx.request_size);
 
+#if HAVE_UCP_WORKER_ADDRESS_FLAGS
+static int mca_pml_ucx_send_worker_address_type(int addr_flags, int modex_scope)
+{
+    ucs_status_t status;
+    ucp_worker_attr_t attrs;
+    int rc;
+
+    attrs.field_mask    = UCP_WORKER_ATTR_FIELD_ADDRESS |
+                          UCP_WORKER_ATTR_FIELD_ADDRESS_FLAGS;
+    attrs.address_flags = addr_flags;
+
+    status = ucp_worker_query(ompi_pml_ucx.ucp_worker, &attrs);
+    if (UCS_OK != status) {
+        PML_UCX_ERROR("Failed to query UCP worker address");
+        return OMPI_ERROR;
+    }
+
+    OPAL_MODEX_SEND(rc, modex_scope, &mca_pml_ucx_component.pmlm_version,
+                    (void*)attrs.address, attrs.address_length);
+
+    ucp_worker_release_address(ompi_pml_ucx.ucp_worker, attrs.address);
+
+    if (OMPI_SUCCESS != rc) {
+        return OMPI_ERROR;
+    }
+
+    PML_UCX_VERBOSE(2, "Pack %s worker address, size %ld",
+                    (modex_scope == OPAL_PMIX_LOCAL) ? "local" : "remote",
+                    attrs.address_length);
+
+    return OMPI_SUCCESS;
+}
+#endif
 
 static int mca_pml_ucx_send_worker_address(void)
 {
-    ucp_address_t *address;
     ucs_status_t status;
+
+#if !HAVE_UCP_WORKER_ADDRESS_FLAGS
+    ucp_address_t *address;
     size_t addrlen;
     int rc;
 
@@ -96,16 +131,35 @@ static int mca_pml_ucx_send_worker_address(void)
         return OMPI_ERROR;
     }
 
+    PML_UCX_VERBOSE(2, "Pack worker address, size %ld", addrlen);
+
     OPAL_MODEX_SEND(rc, OPAL_PMIX_GLOBAL,
                     &mca_pml_ucx_component.pmlm_version, (void*)address, addrlen);
-    if (OMPI_SUCCESS != rc) {
-        PML_UCX_ERROR("Open MPI couldn't distribute EP connection details");
-        return OMPI_ERROR;
-    }
 
     ucp_worker_release_address(ompi_pml_ucx.ucp_worker, address);
 
+    if (OMPI_SUCCESS != rc) {
+        goto err;
+    }
+#else
+    /* Pack just network device addresses for remote node peers */
+    status = mca_pml_ucx_send_worker_address_type(UCP_WORKER_ADDRESS_FLAG_NET_ONLY,
+                                                  OPAL_PMIX_REMOTE);
+    if (UCS_OK != status) {
+        goto err;
+    }
+
+    status = mca_pml_ucx_send_worker_address_type(0, OPAL_PMIX_LOCAL);
+    if (UCS_OK != status) {
+        goto err;
+    }
+#endif
+
     return OMPI_SUCCESS;
+
+err:
+    PML_UCX_ERROR("Open MPI couldn't distribute EP connection details");
+    return OMPI_ERROR;
 }
 
 static int mca_pml_ucx_recv_worker_address(ompi_proc_t *proc,
@@ -121,6 +175,9 @@ static int mca_pml_ucx_recv_worker_address(ompi_proc_t *proc,
         PML_UCX_ERROR("Failed to receive UCX worker address: %s (%d)",
                       opal_strerror(ret), ret);
     }
+
+    PML_UCX_VERBOSE(2, "Got proc %d address, size %ld",
+                    proc->super.proc_name.vpid, *addrlen_p);
     return ret;
 }
 
