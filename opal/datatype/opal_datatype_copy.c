@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2013 The University of Tennessee and The University
+ * Copyright (c) 2004-2019 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
@@ -41,7 +41,15 @@
 #define DO_DEBUG(INST)
 #endif  /* OPAL_ENABLE_DEBUG */
 
-static size_t opal_datatype_memop_block_size = 128 * 1024;
+size_t opal_datatype_memop_block_size = 128 * 1024;
+size_t opal_datatype_cuda_memop_block_size = SIZE_MAX;  /* or (size_t)-1 in pre C99 */
+
+/* The MEM_OP_BLOCK_SIZE_CONST define how a large contiguous memcpy
+ * should be split. In some cases having a pipeline might allow for
+ * cache write-backs, but in general (and certainly in the case of
+ * CUDA devices) this should be set to the largest size_t value.
+ */
+#define MEM_OP_BLOCK_SIZE_CONST opal_datatype_memop_block_size
 
 /**
  * Non overlapping memory regions
@@ -72,6 +80,10 @@ static size_t opal_datatype_memop_block_size = 128 * 1024;
 #include "opal_datatype_copy.h"
 
 #if OPAL_CUDA_SUPPORT
+
+#undef MEM_OP_BLOCK_SIZE_CONST
+#define MEM_OP_BLOCK_SIZE_CONST opal_datatype_cuda_memop_block_size
+
 #include "opal_datatype_cuda.h"
 
 #undef MEM_OP_NAME
@@ -92,9 +104,12 @@ static size_t opal_datatype_memop_block_size = 128 * 1024;
             fct = copy_function;                                    \
         }                                                           \
     } while(0)
-#else
+
+#else  /* OPAL_CUDA_SUPPORT */
+
 #define SET_CUDA_COPY_FCT(cuda_device_bufs, fct, copy_function)
-#endif
+
+#endif  /* OPAL_CUDA_SUPPORT */
 
 int32_t opal_datatype_copy_content_same_ddt( const opal_datatype_t* datatype, int32_t count,
                                              char* destination_base, char* source_base )
