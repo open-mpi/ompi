@@ -21,6 +21,7 @@ int main(int argc, char**argv)
     MPI_T_pvar_session session;
     MPI_Status status;
     MPI_Request request;
+    MPI_Comm comm = MPI_COMM_WORLD;
     size_t*counts;
 
     n = -1;
@@ -50,7 +51,7 @@ int main(int argc, char**argv)
 
     /* Allocating a new PVAR in a session will reset the counters */
     MPIT_result = MPI_T_pvar_handle_alloc(session, count_pvar_idx,
-					  MPI_COMM_WORLD, &count_handle, &count);
+					  &comm, &count_handle, &count);
     if (MPIT_result != MPI_SUCCESS) {
 	printf("failed to allocate handle on \"%s\" pvar, check that you have monitoring pml\n",
 	       count_pvar_name);
