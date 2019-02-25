@@ -55,6 +55,7 @@ struct oob_comm {
     oob_comm_request_t req_pool[MEMHEAP_RECV_REQS_MAX];
     opal_list_t req_list;
     int is_inited;
+    shmem_ctx_t ctx;
 };
 
 mca_memheap_map_t* memheap_map = NULL;
@@ -66,7 +67,7 @@ static int send_buffer(int pe, opal_buffer_t *msg);
 static int oshmem_mkey_recv_cb(void);
 
 /* pickup list of rkeys and remote va */
-static int memheap_oob_get_mkeys(int pe,
+static int memheap_oob_get_mkeys(shmem_ctx_t ctx, int pe,
                                  uint32_t va_seg_num,
                                  sshmem_mkey_t *mkey);
 
@@ -142,7 +143,7 @@ static void memheap_attach_segment(sshmem_mkey_t *mkey, int tr_id)
 }
 
 
-static void unpack_remote_mkeys(opal_buffer_t *msg, int remote_pe)
+static void unpack_remote_mkeys(shmem_ctx_t ctx, opal_buffer_t *msg, int remote_pe)
 {
     int32_t cnt;
     int32_t n;
@@ -182,7 +183,7 @@ static void unpack_remote_mkeys(opal_buffer_t *msg, int remote_pe)
             } else {
                 memheap_oob.mkeys[tr_id].u.key = MAP_SEGMENT_SHM_INVALID;
             }
-            MCA_SPML_CALL(rmkey_unpack(&memheap_oob.mkeys[tr_id], memheap_oob.segno, remote_pe, tr_id));
+            MCA_SPML_CALL(rmkey_unpack(ctx, &memheap_oob.mkeys[tr_id], memheap_oob.segno, remote_pe, tr_id));
         }
 
         MEMHEAP_VERBOSE(5,
@@ -242,7 +243,7 @@ static void do_recv(int source_pe, opal_buffer_t* buffer)
     case MEMHEAP_RKEY_RESP:
         MEMHEAP_VERBOSE(5, "*** RKEY RESP");
         OPAL_THREAD_LOCK(&memheap_oob.lck);
-        unpack_remote_mkeys(buffer, source_pe);
+        unpack_remote_mkeys(memheap_oob.ctx, buffer, source_pe);
         memheap_oob.mkeys_rcvd = MEMHEAP_RKEY_RESP;
         opal_condition_broadcast(&memheap_oob.cond);
         OPAL_THREAD_UNLOCK(&memheap_oob.lck);
@@ -455,14 +456,14 @@ static int send_buffer(int pe, opal_buffer_t *msg)
     return rc;
 }
 
-static int memheap_oob_get_mkeys(int pe, uint32_t seg, sshmem_mkey_t *mkeys)
+static int memheap_oob_get_mkeys(shmem_ctx_t ctx, int pe, uint32_t seg, sshmem_mkey_t *mkeys)
 {
     opal_buffer_t *msg;
     uint8_t cmd;
     int i;
     int rc;
 
-    if (OSHMEM_SUCCESS == MCA_SPML_CALL(oob_get_mkeys(pe, seg, mkeys))) {
+    if (OSHMEM_SUCCESS == MCA_SPML_CALL(oob_get_mkeys(ctx, pe, seg, mkeys))) {
         for (i = 0; i < memheap_map->num_transports; i++) {
             MEMHEAP_VERBOSE(5,
                             "MKEY CALCULATED BY LOCAL SPML: pe: %d tr_id: %d %s",
@@ -478,6 +479,7 @@ static int memheap_oob_get_mkeys(int pe, uint32_t seg, sshmem_mkey_t *mkeys)
     memheap_oob.mkeys = mkeys;
     memheap_oob.segno = seg;
     memheap_oob.mkeys_rcvd = 0;
+    memheap_oob.ctx = ctx;
 
     msg = OBJ_NEW(opal_buffer_t);
     if (!msg) {
@@ -645,7 +647,7 @@ void mca_memheap_modex_recv_all(void)
             }
             memheap_oob.mkeys = s->mkeys_cache[i];
             memheap_oob.segno = j;
-            unpack_remote_mkeys(msg, i);
+            unpack_remote_mkeys(oshmem_ctx_default, msg, i);
         }
     }
 
@@ -674,7 +676,8 @@ exit_fatal:
     }
 }
 
-sshmem_mkey_t * mca_memheap_base_get_cached_mkey_slow(map_segment_t *s,
+sshmem_mkey_t * mca_memheap_base_get_cached_mkey_slow(shmem_ctx_t ctx,
+                                                      map_segment_t *s,
                                                       int pe,
                                                       void* va,
                                                       int btl_id,
@@ -692,7 +695,7 @@ sshmem_mkey_t * mca_memheap_base_get_cached_mkey_slow(map_segment_t *s,
     if (!s->mkeys_cache[pe])
         return NULL ;
 
-    rc = memheap_oob_get_mkeys(pe,
+    rc = memheap_oob_get_mkeys(ctx, pe,
                                s - memheap_map->mem_segs,
                                s->mkeys_cache[pe]);
     if (OSHMEM_SUCCESS != rc)
