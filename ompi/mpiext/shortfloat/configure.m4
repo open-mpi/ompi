@@ -1,6 +1,8 @@
 # -*- shell-script -*-
 #
-# Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
+# Copyright (c) 2018-2019 FUJITSU LIMITED.  All rights reserved.
+# Copyright (c) 2019      Research Organization for Information Science
+#                         and Technology (RIST).  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -41,3 +43,6 @@ AC_DEFUN([OMPI_MPIEXT_shortfloat_CONFIG],[
 # and the mpi_f08_ext module. The former is integer and the latter is
 # type(mpi_datatype).
 AC_DEFUN([OMPI_MPIEXT_shortfloat_INCLUDE_MPIFH_IN_USEMPIF08], [0])
+
+# This extension provides only header files for datatype handles.
+AC_DEFUN([OMPI_MPIEXT_shortfloat_HAVE_OBJECT], [0])
