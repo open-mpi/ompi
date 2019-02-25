@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
+# Copyright (c) 2018-2019 FUJITSU LIMITED.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -30,7 +30,9 @@ if OMPI_BUILD_FORTRAN_MPIFH_BINDINGS
 ompi_HEADERS += mpiext_shortfloat_mpifh.h
 
 # Sources for the convenience libtool library.
-libmpiext_shortfloat_mpifh_la_SOURCES = $(ompi_HEADERS)
+libmpiext_shortfloat_mpifh_la_SOURCES = \
+        $(ompi_HEADERS) \
+        mpiext_shortfloat_mpifh.c
 libmpiext_shortfloat_mpifh_la_LDFLAGS = -module -avoid-version
 
 endif

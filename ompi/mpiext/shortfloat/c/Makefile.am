@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
+# Copyright (c) 2018-2019 FUJITSU LIMITED.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -18,5 +18,7 @@ ompidir = $(ompiincludedir)/mpiext
 ompi_HEADERS = mpiext_shortfloat_c.h
 
 # Sources for the convenience libtool library.
-libmpiext_shortfloat_c_la_SOURCES = $(ompi_HEADERS)
+libmpiext_shortfloat_c_la_SOURCES = \
+        $(ompi_HEADERS) \
+        mpiext_shortfloat_c.c
 libmpiext_shortfloat_c_la_LDFLAGS = -module -avoid-version

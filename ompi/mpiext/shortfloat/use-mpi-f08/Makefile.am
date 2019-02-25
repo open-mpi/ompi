@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
+# Copyright (c) 2018-2019 FUJITSU LIMITED.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -36,7 +36,9 @@ noinst_LTLIBRARIES += libmpiext_shortfloat_usempif08.la
 noinst_HEADERS = mpiext_shortfloat_usempif08.h
 
 # Sources for the convenience libtool library.
-libmpiext_shortfloat_usempif08_la_SOURCES = $(ompi_HEADERS)
+libmpiext_shortfloat_usempif08_la_SOURCES = \
+        $(ompi_HEADERS) \
+        mpiext_shortfloat_usempif08.c
 libmpiext_shortfloat_usempif08_la_LDFLAGS = -module -avoid-version
 
 endif
