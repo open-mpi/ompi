@@ -9,7 +9,9 @@
  *                          University of Stuttgart.  All rights reserved.
  *  Copyright (c) 2004-2005 The Regents of the University of California.
  *                          All rights reserved.
- *  Copyright (c) 2008-2016 University of Houston. All rights reserved.
+ *  Copyright (c) 2008-2019 University of Houston. All rights reserved.
+ *  Copyright (c) 2018      Research Organization for Information Science
+ *                          and Technology (RIST). All rights reserved.
  *  $COPYRIGHT$
  *
  *  Additional copyrights may follow
@@ -34,6 +36,7 @@
 #include "ompi/mca/io/ompio/io_ompio_request.h"
 #include "math.h"
 #include <unistd.h>
+#include <math.h>
 
 /* Read and write routines are split into two interfaces.
 **   The
@@ -99,8 +102,8 @@ int mca_common_ompio_file_read (mca_io_ompio_file_t *fh,
     else {
 	bytes_per_cycle = mca_io_ompio_cycle_buffer_size;
     }
-    cycles = ceil((float)max_data/bytes_per_cycle);
-
+    cycles = ceil((double)max_data/bytes_per_cycle);
+    
 #if 0
 	printf ("Bytes per Cycle: %d   Cycles: %d max_data:%d \n",bytes_per_cycle, cycles, max_data);
 #endif
