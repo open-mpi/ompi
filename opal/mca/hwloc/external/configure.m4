@@ -133,8 +133,6 @@ AC_DEFUN([MCA_opal_hwloc_external_CONFIG],[
                  [CPPFLAGS="$CPPFLAGS $opal_hwloc_external_CPPFLAGS"
                   LDFLAGS="$LDFLAGS $opal_hwloc_external_LDFLAGS"
                   LIBS="$LIBS $opal_hwloc_external_LIBS"
-                  AC_CHECK_DECLS([HWLOC_OBJ_OSDEV_COPROC], [], [], [#include <hwloc.h>])
-                  AC_CHECK_FUNCS([hwloc_topology_dup])
 
                   AC_MSG_CHECKING([if external hwloc version is 1.5 or greater])
                   AC_COMPILE_IFELSE(
@@ -171,6 +169,9 @@ AC_DEFUN([MCA_opal_hwloc_external_CONFIG],[
                  [AC_DEFINE_UNQUOTED([HWLOC_EXTERNAL_HWLOC_VERSION],
                                      [external],
                                      [Version of hwloc])
+
+                  AC_CHECK_DECLS([HWLOC_OBJ_OSDEV_COPROC], [], [], [#include <hwloc.h>])
+                  AC_CHECK_FUNCS([hwloc_topology_dup])
 
                   # See if the external hwloc supports XML
                   AC_MSG_CHECKING([if external hwloc supports XML])
