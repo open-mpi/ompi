@@ -50,6 +50,8 @@
 
 #include "opal_stdint.h"
 
+#define RANK_ARRAY_COUNT(module) ((ompi_comm_size ((module)->comm) + (module)->node_count - 1) / (module)->node_count)
+
 enum {
     OMPI_OSC_RDMA_LOCKING_TWO_LEVEL,
     OMPI_OSC_RDMA_LOCKING_ON_DEMAND,
