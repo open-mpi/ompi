@@ -57,10 +57,13 @@ included in the vX.Y.Z section and be denoted as:
    (** also appeared: A.B.C)  -- indicating that this item was previously
                                  included in release version vA.B.C.
 
-4.0.1 -- February, 2019
-------------------------
+4.0.1 -- March, 2019
+--------------------
 
 - Update embedded PMIx to 3.1.2.
+- Fix an issue when using --enable-visibility configure option
+  and older versions of hwloc.  Thanks to Ben Menadue for reporting
+  and providing a fix.
 - Fix an issue with MPI_WIN_CREATE_DYNAMIC and MPI_GET from self.
   thanks to Bart Janssens for reporting.
 - Fix an issue of excessive compiler warning messages from mpi.h
