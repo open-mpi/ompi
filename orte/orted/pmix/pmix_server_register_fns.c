@@ -13,7 +13,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009-2018 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2014-2016 Research Organization for Information Science
@@ -71,6 +71,9 @@ int orte_pmix_server_register_nspace(orte_job_t *jdata, bool force)
     gid_t gid;
     opal_list_t *cache;
     hwloc_obj_t machine;
+    opal_buffer_t buf, bucket;
+    opal_byte_object_t bo, *boptr;
+    orte_proc_t *proc;
 
     opal_output_verbose(2, orte_pmix_server_globals.output,
                         "%s register nspace for %s",
@@ -494,21 +497,52 @@ int orte_pmix_server_register_nspace(orte_job_t *jdata, bool force)
                                           jdata->num_local_procs,
                                           info, NULL, NULL);
     OPAL_LIST_RELEASE(info);
+    if (OPAL_SUCCESS != rc) {
+        return rc;
+    }
 
-    /* if the user has connected us to an external server, then we must
-     * assume there is going to be some cross-mpirun exchange, and so
+    /* if I am the HNP and this job is a member of my family, then we must
+     * assume there could be some cross-mpirun exchange, and so
      * we protect against that situation by publishing the job info
      * for this job - this allows any subsequent "connect" to retrieve
      * the job info */
-    if (NULL != orte_data_server_uri) {
-        opal_buffer_t buf;
 
+    if (ORTE_PROC_IS_HNP && ORTE_JOB_FAMILY(ORTE_PROC_MY_NAME->jobid) == ORTE_JOB_FAMILY(jdata->jobid)) {
+        /* pack the job - note that this doesn't include the procs
+         * or their locations */
         OBJ_CONSTRUCT(&buf, opal_buffer_t);
         if (OPAL_SUCCESS != (rc = opal_dss.pack(&buf, &jdata, 1, ORTE_JOB))) {
             ORTE_ERROR_LOG(rc);
             OBJ_DESTRUCT(&buf);
             return rc;
         }
+
+        /* pack the hostname, daemon vpid and contact URI for each involved node */
+        map = jdata->map;
+        OBJ_CONSTRUCT(&bucket, opal_buffer_t);
+        for (i=0; i < map->nodes->size; i++) {
+            if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(map->nodes, i))) {
+                continue;
+            }
+            opal_dss.pack(&bucket, &node->daemon->rml_uri, 1, OPAL_STRING);
+        }
+        opal_dss.unload(&bucket, (void**)&bo.bytes, &bo.size);
+        boptr = &bo;
+        opal_dss.pack(&buf, &boptr, 1, OPAL_BYTE_OBJECT);
+
+        /* pack the proc name and daemon vpid for each proc */
+        OBJ_CONSTRUCT(&bucket, opal_buffer_t);
+        for (i=0; i < jdata->procs->size; i++) {
+            if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, i))) {
+                continue;
+            }
+            opal_dss.pack(&bucket, &proc->name, 1, ORTE_NAME);
+            opal_dss.pack(&bucket, &proc->node->daemon->name, 1, ORTE_NAME);
+        }
+        opal_dss.unload(&bucket, (void**)&bo.bytes, &bo.size);
+        boptr = &bo;
+        opal_dss.pack(&buf, &boptr, 1, OPAL_BYTE_OBJECT);
+
         info = OBJ_NEW(opal_list_t);
         /* create a key-value with the key being the string jobid
          * and the value being the byte object */
