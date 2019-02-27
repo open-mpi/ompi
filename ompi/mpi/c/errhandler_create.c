@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2019      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -20,9 +21,11 @@
 
 #include "ompi_config.h"
 
-/* defining ENABLE_MPI1_COMPAT to 1 for removed implementations here.
- * see comments in address.c for more information. */
-#define ENABLE_MPI1_COMPAT 1
+/* This implementation has been removed from the MPI 3.0 standard.
+ * Open MPI v4.0.x is keeping the implementation in the library, but
+ * removing the prototypes from the headers, unless the user configures
+ * with --enable-mpi1-compatibility.
+ */
 
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/communicator/communicator.h"
@@ -32,6 +35,10 @@
 #if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_Errhandler_create = PMPI_Errhandler_create
 #endif
+/* undef before defining, to prevent possible redefinition when
+ * using _Static_assert to error on usage of removed functions.
+ */
+#undef MPI_Errhandler_create
 #define MPI_Errhandler_create PMPI_Errhandler_create
 #endif
 

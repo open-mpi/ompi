@@ -19,7 +19,8 @@
  * Copyright (c) 2015      University of Houston. All rights reserved.
  * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2017-2018 IBM Corporation.  All rights reserved.
+ * Copyright (c) 2017-2019 IBM Corporation.  All rights reserved.
+ * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -279,10 +280,50 @@
 #                    define __mpi_interface_deprecated__(msg) __attribute__((__deprecated__))
 #                endif
 #            endif
-#            if (OMPI_ENABLE_MPI1_COMPAT && !OMPI_BUILDING)
-#                    define __mpi_interface_removed__(msg) __mpi_interface_deprecated__(msg)
-#                    define OMPI_OMIT_MPI1_COMPAT_DECLS 0
-#            endif
+#        endif
+
+         /* For MPI removed APIs, there is no generally portable way to cause
+          * the C compiler to error with a nice message, on the _usage_ of
+          * one of these symbols.  We've gone with tiered appraoch:
+          *
+          * If the user configured with --enable-mpi1-compatibility,
+          * just emit a compiletime warning (via the deprecation function
+          * attribute) that they're using an MPI1 removed function.
+          *
+          * Otherwise, we'd like to issue a fatal error directing the user
+          * that they've used an MPI1 removed function.  If the user's
+          * compiler supports C11 _Static_assert feature, we #define
+          * the MPI routines to instead be a call to _Static_assert
+          * with an appropreate message suggesting the new MPI3 equivalent.
+          *
+          * Otherwise, if the user's compiler supports the error function
+          * attribute, define the MPI routines with that error attribute.
+          * This is supported by most modern GNU compilers.
+          *
+          * Finally if the compiler doesn't support any of those, just
+          * Don't declare those MPI routines at all in mpi.h
+          *
+          * Don't do MACRO magic for building Profiling library as it
+          * interferes with the above.
+          */
+#        if (OMPI_ENABLE_MPI1_COMPAT || OMPI_BUILDING)
+#            define OMPI_OMIT_MPI1_COMPAT_DECLS 0
+#            define OMPI_REMOVED_USE_STATIC_ASSERT 0
+#            define __mpi_interface_removed__(func, newfunc) __mpi_interface_deprecated__(#func " was removed in MPI-3.0.  Use " #newfunc " instead.  continuing...")
+#        elif (__STDC_VERSION__ >= 201112L)
+#            define OMPI_OMIT_MPI1_COMPAT_DECLS 1
+#            define OMPI_REMOVED_USE_STATIC_ASSERT 1
+// This macro definition may show up in compiler output.  So we both
+// outdent it back to column 0 and give it a user-friendly name to
+// help users grok what we are trying to tell them here.
+#define THIS_SYMBOL_WAS_REMOVED_IN_MPI30(func, newfunc) _Static_assert(0, #func " was removed in MPI-3.0.  Use " #newfunc " instead.")
+#        elif OPAL_HAVE_ATTRIBUTE_ERROR
+#            define OMPI_OMIT_MPI1_COMPAT_DECLS 0
+#            define OMPI_REMOVED_USE_STATIC_ASSERT 0
+#            define __mpi_interface_removed__(func, newfunc) __attribute__((__error__(#func " was removed in MPI-3.0.  Use " #newfunc " instead.")))
+#        else
+#            define OMPI_OMIT_MPI1_COMPAT_DECLS 1
+#            define OMPI_REMOVED_USE_STATIC_ASSERT 0
 #        endif
 #    endif
 #endif
@@ -297,7 +338,15 @@
 #endif
 
 #if !defined(__mpi_interface_removed__)
-#    define __mpi_interface_removed__(msg)
+#    define __mpi_interface_removed__(A,B)
+#endif
+
+#if !defined(THIS_SYMBOL_WAS_REMOVED_IN_MPI30)
+#    define THIS_SYMBOL_WAS_REMOVED_IN_MPI30(func, newfunc)
+#endif
+
+#if !defined(OMPI_REMOVED_USE_STATIC_ASSERT)
+#    define OMPI_REMOVED_USE_STATIC_ASSERT 0
 #endif
 
 #if !defined(OMPI_OMIT_MPI1_COMPAT_DECLS)
@@ -1010,7 +1059,6 @@ OMPI_DECLSPEC extern struct ompi_predefined_info_t ompi_mpi_info_env;
 OMPI_DECLSPEC extern MPI_Fint *MPI_F_STATUS_IGNORE;
 OMPI_DECLSPEC extern MPI_Fint *MPI_F_STATUSES_IGNORE;
 
-#if (!OMPI_OMIT_MPI1_COMPAT_DECLS || OMPI_BUILDING)
 /*
  * Removed datatypes.  These datatypes are only available if Open MPI
  * was configured with --enable-mpi1-compatibility.
@@ -1018,14 +1066,25 @@ OMPI_DECLSPEC extern MPI_Fint *MPI_F_STATUSES_IGNORE;
  * These datatypes were formally removed from the MPI specification
  * and should no longer be used in MPI applications.
  */
-#define MPI_UB OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_ub)
-#define MPI_LB OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_lb)
+#if (OMPI_ENABLE_MPI1_COMPAT || OMPI_BUILDING)
+#    define MPI_UB OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_ub)
+#    define MPI_LB OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_lb)
 
-OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_lb
-            __mpi_interface_removed__("MPI_LB was removed in MPI-3.0; use MPI_Type_create_resized instead.");
-OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_ub
-            __mpi_interface_removed__("MPI_UB was removed in MPI-3.0; use MPI_Type_create_resized instead.");
-#endif /* !OMPI_OMIT_MPI1_COMPAT_DECLS */
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_lb;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_ub;
+
+#else
+/* If not building or configured --enable-mpi1-compatibility, then
+ * we don't want these datatypes, instead we define MPI_UB and
+ * MPI_LB to our Static Assert message if the compiler supports
+ * that staticly assert with a nice message.
+ */
+#    if (OMPI_REMOVED_USE_STATIC_ASSERT)
+#        define MPI_UB THIS_SYMBOL_WAS_REMOVED_IN_MPI30(MPI_UB, MPI_Type_create_resized);
+#        define MPI_LB THIS_SYMBOL_WAS_REMOVED_IN_MPI30(MPI_LB, MPI_Type_create_resized);
+#    endif /* OMPI_REMOVED_USE_STATIC_ASSERT */
+#endif /* Removed datatypes */
+
 
 /*
  * MPI predefined handles
@@ -2695,60 +2754,73 @@ typedef void (MPI_Handler_function)(MPI_Comm *, int *, ...);
  * and should no longer be used in MPI applications.
  */
 OMPI_DECLSPEC  int MPI_Address(void *location, MPI_Aint *address)
-            __mpi_interface_removed__("MPI_Address was removed in MPI-3.0; use MPI_Get_address instead.");
+                   __mpi_interface_removed__(MPI_Address, MPI_Get_address);
 OMPI_DECLSPEC  int PMPI_Address(void *location, MPI_Aint *address)
-            __mpi_interface_removed__("PMPI_Address was removed in MPI-3.0; use MPI_Get_address instead.");
+                   __mpi_interface_removed__(PMPI_Address, PMPI_Get_address);
 OMPI_DECLSPEC  int MPI_Errhandler_create(MPI_Handler_function *function,
                                          MPI_Errhandler *errhandler)
-            __mpi_interface_removed__("MPI_Errhandler_create was removed in MPI-3.0; use MPI_Comm_create_errhandler instead.");
+                   __mpi_interface_removed__(MPI_Errhandler_create, MPI_Comm_create_errhandler);
 OMPI_DECLSPEC  int PMPI_Errhandler_create(MPI_Handler_function *function,
                                           MPI_Errhandler *errhandler)
-            __mpi_interface_removed__("PMPI_Errhandler_create was removed in MPI-3.0; use PMPI_Comm_create_errhandler instead.");
+                   __mpi_interface_removed__(PMPI_Errhandler_create, PMPI_Comm_create_errhandler);
 OMPI_DECLSPEC  int MPI_Errhandler_get(MPI_Comm comm, MPI_Errhandler *errhandler)
-            __mpi_interface_removed__("MPI_Errhandler_get was removed in MPI-3.0; use MPI_Comm_get_errhandler instead.");
+                   __mpi_interface_removed__(MPI_Errhandler_get, MPI_Comm_get_errhandler);
 OMPI_DECLSPEC  int PMPI_Errhandler_get(MPI_Comm comm, MPI_Errhandler *errhandler)
-            __mpi_interface_removed__("PMPI_Errhandler_get was removed in MPI-3.0; use PMPI_Comm_get_errhandler instead.");
+                   __mpi_interface_removed__(PMPI_Errhandler_get, PMPI_Comm_get_errhandler);
 OMPI_DECLSPEC  int MPI_Errhandler_set(MPI_Comm comm, MPI_Errhandler errhandler)
-            __mpi_interface_removed__("MPI_Errhandler_set was removed in MPI-3.0; use MPI_Comm_set_errhandler instead.");
+                   __mpi_interface_removed__(MPI_Errhandler_set, MPI_Comm_set_errhandler);
 OMPI_DECLSPEC  int PMPI_Errhandler_set(MPI_Comm comm, MPI_Errhandler errhandler)
-            __mpi_interface_removed__("PMPI_Errhandler_set was removed in MPI-3.0; use PMPI_Comm_set_errhandler instead.");
+                   __mpi_interface_removed__(PMPI_Errhandler_set, PMPI_Comm_set_errhandler);
 OMPI_DECLSPEC  int MPI_Type_extent(MPI_Datatype type, MPI_Aint *extent)
-            __mpi_interface_removed__("MPI_Type_extent was removed in MPI-3.0; use MPI_Type_get_extent instead.");
+                   __mpi_interface_removed__(MPI_Type_extent, MPI_Type_get_extent);
 OMPI_DECLSPEC  int PMPI_Type_extent(MPI_Datatype type, MPI_Aint *extent)
-            __mpi_interface_removed__("PMPI_Type_extent was removed in MPI-3.0; use PMPI_Type_get_extent instead.");
+                   __mpi_interface_removed__(PMPI_Type_extent, PMPI_Type_get_extent);
 OMPI_DECLSPEC  int MPI_Type_hindexed(int count, int array_of_blocklengths[],
                                      MPI_Aint array_of_displacements[],
                                      MPI_Datatype oldtype, MPI_Datatype *newtype)
-            __mpi_interface_removed__("MPI_Type_hindexed was removed in MPI-3.0; use MPI_Type_create_hindexed instead.");
+                   __mpi_interface_removed__(MPI_Type_hindexed, MPI_Type_create_hindexed);
 OMPI_DECLSPEC  int PMPI_Type_hindexed(int count, int array_of_blocklengths[],
                                       MPI_Aint array_of_displacements[],
                                       MPI_Datatype oldtype, MPI_Datatype *newtype)
-            __mpi_interface_removed__("PMPI_Type_hindexed was removed in MPI-3.0; use PMPI_Type_create_hindexed instead.");
+                   __mpi_interface_removed__(PMPI_Type_hindexed, PMPI_Type_create_hindexed);
 OMPI_DECLSPEC  int MPI_Type_hvector(int count, int blocklength, MPI_Aint stride,
                                     MPI_Datatype oldtype, MPI_Datatype *newtype)
-            __mpi_interface_removed__("MPI_Type_hvector was removed in MPI-3.0; use MPI_Type_create_hvector instead.");
+                   __mpi_interface_removed__(MPI_Type_hvector, MPI_Type_create_hvector);
 OMPI_DECLSPEC  int PMPI_Type_hvector(int count, int blocklength, MPI_Aint stride,
                                      MPI_Datatype oldtype, MPI_Datatype *newtype)
-            __mpi_interface_removed__("PMPI_Type_hvector was removed in MPI-3.0; use PMPI_Type_create_hvector instead.");
+                   __mpi_interface_removed__(PMPI_Type_hvector, PMPI_Type_create_hvector);
 OMPI_DECLSPEC  int MPI_Type_lb(MPI_Datatype type, MPI_Aint *lb)
-            __mpi_interface_removed__("MPI_Type_lb has been removed in MPI-3.0; use MPI_Type_get_extent instead.");
+                   __mpi_interface_removed__(MPI_Type_lb, MPI_Type_get_extent);
 OMPI_DECLSPEC  int PMPI_Type_lb(MPI_Datatype type, MPI_Aint *lb)
-            __mpi_interface_removed__("PMPI_Type_lb has been removed in MPI-3.0; use PMPI_Type_get_extent instead.");
+                   __mpi_interface_removed__(PMPI_Type_lb, PMPI_Type_get_extent);
 OMPI_DECLSPEC  int MPI_Type_struct(int count, int array_of_blocklengths[],
                                    MPI_Aint array_of_displacements[],
                                    MPI_Datatype array_of_types[],
                                    MPI_Datatype *newtype)
-            __mpi_interface_removed__("MPI_Type_struct was removed in MPI-3.0; use MPI_Type_create_struct instead.");
+                   __mpi_interface_removed__(MPI_Type_struct, MPI_Type_create_struct);
 OMPI_DECLSPEC  int PMPI_Type_struct(int count, int array_of_blocklengths[],
                                     MPI_Aint array_of_displacements[],
                                     MPI_Datatype array_of_types[],
                                     MPI_Datatype *newtype)
-            __mpi_interface_removed__("PMPI_Type_struct was removed in MPI-3.0; use PMPI_Type_create_struct instead.");
+                   __mpi_interface_removed__(PMPI_Type_struct, PMPI_Type_create_struct);
 OMPI_DECLSPEC  int MPI_Type_ub(MPI_Datatype mtype, MPI_Aint *ub)
-            __mpi_interface_removed__("MPI_Type_ub has been removed in MPI-3.0; use MPI_Type_get_extent instead.");
+                   __mpi_interface_removed__(MPI_Type_ub, MPI_Type_get_extent);
 OMPI_DECLSPEC  int PMPI_Type_ub(MPI_Datatype mtype, MPI_Aint *ub)
-            __mpi_interface_removed__("PMPI_Type_ub has been removed in MPI-3.0; use PMPI_Type_get_extent instead.");
+                   __mpi_interface_removed__(PMPI_Type_ub, PMPI_Type_get_extent);
 #endif /* !OMPI_OMIT_MPI1_COMPAT_DECLS */
+
+#if OMPI_REMOVED_USE_STATIC_ASSERT
+#define MPI_Address(...)  THIS_SYMBOL_WAS_REMOVED_IN_MPI30(MPI_Address, MPI_Get_address)
+#define MPI_Errhandler_create(...)  THIS_SYMBOL_WAS_REMOVED_IN_MPI30(MPI_Errhandler_create, MPI_Comm_create_errhandler)
+#define MPI_Errhandler_get(...)  THIS_SYMBOL_WAS_REMOVED_IN_MPI30(MPI_Errhandler_get, MPI_Comm_get_errhandler)
+#define MPI_Errhandler_set(...)  THIS_SYMBOL_WAS_REMOVED_IN_MPI30(MPI_Errhandler_set, MPI_Comm_set_errhandler)
+#define MPI_Type_extent(...)  THIS_SYMBOL_WAS_REMOVED_IN_MPI30(MPI_Type_extent, MPI_Type_get_extent)
+#define MPI_Type_hindexed(...)  THIS_SYMBOL_WAS_REMOVED_IN_MPI30(MPI_Type_hindexed, MPI_Type_create_hindexed)
+#define MPI_Type_hvector(...)  THIS_SYMBOL_WAS_REMOVED_IN_MPI30(MPI_Type_hvector, MPI_Type_create_hvector)
+#define MPI_Type_lb(...)  THIS_SYMBOL_WAS_REMOVED_IN_MPI30(MPI_Type_lb, MPI_Type_get_extent)
+#define MPI_Type_struct(...)  THIS_SYMBOL_WAS_REMOVED_IN_MPI30(MPI_Type_struct, MPI_Type_create_struct)
+#define MPI_Type_ub(...)  THIS_SYMBOL_WAS_REMOVED_IN_MPI30(MPI_Type_ub, MPI_Type_get_extent)
+#endif
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }
