@@ -437,20 +437,6 @@ libmpi_c_mpi_la_SOURCES = \
         win_wait.c
 
 
-if OMPI_ENABLE_MPI1_COMPAT
-libmpi_c_mpi_la_SOURCES += \
-        address.c \
-        errhandler_create.c \
-        errhandler_get.c \
-        errhandler_set.c \
-        type_extent.c \
-        type_hindexed.c \
-        type_hvector.c \
-        type_lb.c \
-        type_struct.c \
-        type_ub.c
-endif
-
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
