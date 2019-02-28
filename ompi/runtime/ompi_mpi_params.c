@@ -17,7 +17,7 @@
  * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Mellanox Technologies, Inc.
  *                         All rights reserved.
- * Copyright (c) 2016      Research Organization for Information Science
+ * Copyright (c) 2016-2019 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -82,6 +82,7 @@ static bool show_default_mca_params = false;
 static bool show_file_mca_params = false;
 static bool show_enviro_mca_params = false;
 static bool show_override_mca_params = false;
+static bool ompi_mpi_oversubscribe = false;
 
 int ompi_mpi_register_params(void)
 {
@@ -108,13 +109,18 @@ int ompi_mpi_register_params(void)
      * opal_progress: decide whether to yield and the event library
      * tick rate
      */
-    /* JMS: Need ORTE data here -- set this to 0 when
-       exactly/under-subscribed, or 1 when oversubscribed */
-    ompi_mpi_yield_when_idle = false;
+    ompi_mpi_oversubscribe = false;
+    (void) mca_base_var_register("ompi", "mpi", NULL, "oversubscribe",
+                                 "Internal MCA parameter set by the runtime environment when oversubscribing nodes",
+                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                 OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY,
+                                 &ompi_mpi_oversubscribe);
+    ompi_mpi_yield_when_idle = ompi_mpi_oversubscribe;
     (void) mca_base_var_register("ompi", "mpi", NULL, "yield_when_idle",
                                  "Yield the processor when waiting for MPI communication (for MPI processes, will default to 1 when oversubscribing nodes)",
                                  MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
-                                 OPAL_INFO_LVL_9,
+                                 OPAL_INFO_LVL_5,
                                  MCA_BASE_VAR_SCOPE_READONLY,
                                  &ompi_mpi_yield_when_idle);
 
