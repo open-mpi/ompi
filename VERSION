@@ -24,7 +24,7 @@ release=4
 # requirement is that it must be entirely printable ASCII characters
 # and have no white space.
 
-greek=a1
+greek=rc1
 
 # If repo_rev is empty, then the repository version number will be
 # obtained during "make dist" via the "git describe --tags --always"
@@ -82,17 +82,17 @@ date="Unreleased developer copy"
 # Version numbers are described in the Libtool current:revision:age
 # format.
 
-libmpi_so_version=40:4:0
-libmpi_cxx_so_version=40:0:0
-libmpi_mpifh_so_version=41:3:1
-libmpi_usempi_tkr_so_version=40:1:0
-libmpi_usempi_ignore_tkr_so_version=40:1:0
-libmpi_usempif08_so_version=40:2:0
-libopen_rte_so_version=40:4:0
-libopen_pal_so_version=42:0:0
-libmpi_java_so_version=40:0:0
-liboshmem_so_version=41:2:1
-libompitrace_so_version=40:0:0
+libmpi_so_version=40:5:0
+libmpi_cxx_so_version=40:1:0
+libmpi_mpifh_so_version=41:4:1
+libmpi_usempi_tkr_so_version=40:2:0
+libmpi_usempi_ignore_tkr_so_version=40:3:0
+libmpi_usempif08_so_version=40:3:0
+libopen_rte_so_version=40:5:0
+libopen_pal_so_version=42:1:0
+libmpi_java_so_version=40:1:0
+liboshmem_so_version=41:3:1
+libompitrace_so_version=40:1:0
 
 # "Common" components install standalone libraries that are run-time
 # linked by one or more components.  So they need to be versioned as
@@ -100,13 +100,13 @@ libompitrace_so_version=40:0:0
 # components-don't-affect-the-build-system abstraction.
 
 # OMPI layer
-libmca_ompi_common_ompio_so_version=41:1:0
+libmca_ompi_common_ompio_so_version=41:2:0
 
 # ORTE layer
-libmca_orte_common_alps_so_version=40:0:0
+libmca_orte_common_alps_so_version=40:1:0
 
 # OPAL layer
-libmca_opal_common_cuda_so_version=40:0:0
-libmca_opal_common_sm_so_version=40:0:0
-libmca_opal_common_ugni_so_version=40:0:0
-libmca_opal_common_verbs_so_version=41:0:1
+libmca_opal_common_cuda_so_version=40:1:0
+libmca_opal_common_sm_so_version=40:1:0
+libmca_opal_common_ugni_so_version=40:1:0
+libmca_opal_common_verbs_so_version=41:1:1

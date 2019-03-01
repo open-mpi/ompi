@@ -36,6 +36,36 @@ This file contains notable changes between releases for each release since
 Open MPI 1.0.  Because Open MPI maintains multiple release branches at any time,
 it is possible for items to appear more than once in the list.
 
+3.0.4 -- March, 2019
+--------------------
+
+- Fix compile error when configured with --enable-mpi-java and
+  --with-devel-headers.  Thanks to @g-raffy for reporting the issue.
+- Fix possible floating point rounding and division issues in OMPIO
+  which led to crashes and/or data corruption with very large data.
+  Thanks to Axel Huebl and RenÃ© Widera for identifing the issue,
+  supplying and testing the fix (** also appeared: v3.0.4).
+- Use static_cast<> in mpi.h where appropriate.  Thanks to @shadow-fx
+  for identifying the issue.
+- Fix datatype issue with RMA accumulate.  Thanks to Jeff Hammond for
+  raising the issue.
+- Fix RMA accumulate of non-predefined datatypes with predefined
+  operators.  Thanks to Jeff Hammond for raising the issue.
+- Fix race condition when closing open file descriptors when launching
+  MPI processes.  Thanks to Jason Williams for identifying the issue and
+  supplying the fix.
+- Fix Valgrind warnings for some MPI_TYPE_CREATE_* functions.  Thanks
+  to Risto Toijala for identifying the issue and supplying the fix.
+- Fix MPI_TYPE_CREATE_F90_{REAL,COMPLEX} for r=38 and r=308.
+- Fix assembly issues with old versions of gcc (<6.0.0) that affected
+  the stability of shared memory communications (e.g., with the vader
+  BTL).
+- Fix the OFI MTL handling of MPI_ANY_SOURCE.
+- Fix noisy errors in the openib BTL with regards to
+  ibv_exp_query_device().  Thanks to Angel Beltre and others who
+  reported the issue.
+
+
 3.0.3 -- October, 2018
 ----------------------
 
