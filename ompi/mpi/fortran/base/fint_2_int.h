@@ -11,8 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2014-2019 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -161,9 +161,24 @@
 
 /*
  * Define MACROS to take account of different size of logical from int
+ *
+ * There used to be an in-place option for the below conversions of
+ * logical arrays.  So if mpi_cart_create(..., periods, ...) took an
+ * input array of Fortran logicals, it would walk the array converting
+ * the elements to C-logical values, then at the end it would restore
+ * the values back to Fortran logicals.
+ *
+ * The problem with that is periods is an INPUT argument and some
+ * Fortran compilers even put it in read-only memory because of that.
+ * So writing to it wasn't generally okay, even though we were restoring it
+ * before returning.
+ *
+ * The in-place option is hence only valid if no conversion is ever needed
+ * (e.g. Fortran logical and C int have the same size *and** Fortran logical
+ * .TRUE. value is 1 in C.
  */
 
-#if OMPI_SIZEOF_FORTRAN_LOGICAL == SIZEOF_INT
+#if (OMPI_SIZEOF_FORTRAN_LOGICAL == SIZEOF_INT) && (OMPI_FORTRAN_VALUE_TRUE == 1)
 #  define OMPI_LOGICAL_NAME_DECL(in)               /* Not needed for int==logical */
 #  define OMPI_LOGICAL_NAME_CONVERT(in)        in  /* Not needed for int==logical */
 #  define OMPI_LOGICAL_SINGLE_NAME_CONVERT(in) in /* Not needed for int==logical */
@@ -172,37 +187,15 @@
 #  define OMPI_ARRAY_LOGICAL_2_INT_ALLOC(in,n)     /* Not needed for int==logical */
 #  define OMPI_ARRAY_LOGICAL_2_INT_CLEANUP(in)     /* Not needed for int==logical */
 
-#  if OMPI_FORTRAN_VALUE_TRUE == 1
-#    define OMPI_FORTRAN_MUST_CONVERT_LOGICAL_2_INT    0
-#    define OMPI_LOGICAL_2_INT(a) a
-#    define OMPI_INT_2_LOGICAL(a) a
-#    define OMPI_ARRAY_LOGICAL_2_INT(in, n)
-#    define OMPI_ARRAY_INT_2_LOGICAL(in, n)
-#    define OMPI_SINGLE_INT_2_LOGICAL(a)            /* Single-OUT variable -- Not needed for int==logical, true=1 */
-#  else
-#    define OMPI_FORTRAN_MUST_CONVERT_LOGICAL_2_INT    1
-#    define OMPI_LOGICAL_2_INT(a) ((a)==0? 0 : 1)
-#    define OMPI_INT_2_LOGICAL(a) ((a)==0? 0 : OMPI_FORTRAN_VALUE_TRUE)
-#    define OMPI_SINGLE_INT_2_LOGICAL(a) *a=OMPI_INT_2_LOGICAL(OMPI_LOGICAL_NAME_CONVERT(*a))
-#    define OMPI_ARRAY_LOGICAL_2_INT(in, n) do { \
-       int converted_n = (int)(n); \
-       OMPI_ARRAY_LOGICAL_2_INT_ALLOC(in, converted_n + 1); \
-       while (--converted_n >= 0) { \
-         OMPI_LOGICAL_ARRAY_NAME_CONVERT(in)[converted_n]=OMPI_LOGICAL_2_INT(in[converted_n]); \
-       } \
-     } while (0)
-#    define OMPI_ARRAY_INT_2_LOGICAL(in, n) do { \
-       int converted_n = (int)(n); \
-       while (--converted_n >= 0) { \
-         in[converted_n]=OMPI_INT_2_LOGICAL(OMPI_LOGICAL_ARRAY_NAME_CONVERT(in)[converted_n]); \
-       } \
-       OMPI_ARRAY_LOGICAL_2_INT_CLEANUP(in); \
-     }  while (0)
-
-#  endif
+#  define OMPI_FORTRAN_MUST_CONVERT_LOGICAL_2_INT    0
+#  define OMPI_LOGICAL_2_INT(a) a
+#  define OMPI_INT_2_LOGICAL(a) a
+#  define OMPI_ARRAY_LOGICAL_2_INT(in, n)
+#  define OMPI_ARRAY_INT_2_LOGICAL(in, n)
+#  define OMPI_SINGLE_INT_2_LOGICAL(a)            /* Single-OUT variable -- Not needed for int==logical, true=1 */
 #else
 /*
- * For anything other than Fortran-logical == C-int, we have to convert
+ * For anything other than Fortran-logical == C-int or some .TRUE. is not 1 in C, we have to convert
  */
 #  define OMPI_FORTRAN_MUST_CONVERT_LOGICAL_2_INT    1
 #  define OMPI_LOGICAL_NAME_DECL(in)           int c_##in
@@ -238,7 +231,7 @@
        } \
        OMPI_ARRAY_LOGICAL_2_INT_CLEANUP(in); \
      }  while (0)
-#endif /* OMPI_SIZEOF_FORTRAN_LOGICAL */
+#endif /* OMPI_SIZEOF_FORTRAN_LOGICAL && OMPI_FORTRAN_VALUE_TRUE */
 
 
 #endif /* OMPI_FORTRAN_BASE_FINT_2_INT_H */
