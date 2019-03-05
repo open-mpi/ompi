@@ -276,7 +276,7 @@ static inline bool opal_atomic_compare_exchange_strong_64 (opal_atomic_int64_t *
 #define opal_atomic_sc_64(addr, value, ret)                             \
     do {                                                                \
         opal_atomic_int64_t *_addr = (addr);                               \
-        int64_t _foo, _newval = (int64_t) value;                        \
+        int64_t _newval = (int64_t) value;                              \
         int32_t _ret;                                                   \
                                                                         \
         __asm__ __volatile__ ("   stdcx.  %2, 0, %1  \n\t"              \
