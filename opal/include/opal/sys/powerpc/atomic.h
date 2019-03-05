@@ -98,27 +98,7 @@ void opal_atomic_isync(void)
     ISYNC();
 }
 
-#elif OPAL_XLC_INLINE_ASSEMBLY /* end OPAL_GCC_INLINE_ASSEMBLY */
-
-/* Yeah, I don't know who thought this was a reasonable syntax for
- * inline assembly.  Do these because they are used so often and they
- * are fairly simple (aka: there is a tech pub on IBM's web site
- * containing the right hex for the instructions).
- */
-
-#undef OPAL_HAVE_INLINE_ATOMIC_MEM_BARRIER
-#define OPAL_HAVE_INLINE_ATOMIC_MEM_BARRIER 0
-
-#pragma mc_func opal_atomic_mb { "7c0004ac" }          /* sync  */
-#pragma reg_killed_by opal_atomic_mb                   /* none */
-
-#pragma mc_func opal_atomic_rmb { "7c2004ac" }         /* lwsync  */
-#pragma reg_killed_by opal_atomic_rmb                  /* none */
-
-#pragma mc_func opal_atomic_wmb { "7c2004ac" }         /* lwsync */
-#pragma reg_killed_by opal_atomic_wmb                  /* none */
-
-#endif
+#endif /* end OPAL_GCC_INLINE_ASSEMBLY */
 
 /**********************************************************************
  *
