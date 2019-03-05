@@ -607,6 +607,8 @@ void mca_spml_ucx_ctx_destroy(shmem_ctx_t ctx)
 
     MCA_SPML_CALL(quiet(ctx));
 
+    oshmem_shmem_barrier();
+
     SHMEM_MUTEX_LOCK(mca_spml_ucx.internal_mutex);
 
     /* delete context object from list */
@@ -614,10 +616,22 @@ void mca_spml_ucx_ctx_destroy(shmem_ctx_t ctx)
                            mca_spml_ucx_ctx_list_item_t) {
         if ((shmem_ctx_t)(&ctx_item->ctx) == ctx) {
             opal_list_remove_item(&(mca_spml_ucx.ctx_list), &ctx_item->super);
-            for (i = 0; i < nprocs; i++) {
-                ucp_ep_destroy(ctx_item->ctx.ucp_peers[i].ucp_conn);
+
+            opal_common_ucx_del_proc_t *del_procs;
+            del_procs = malloc(sizeof(*del_procs) * nprocs);
+
+            for (i = 0; i < nprocs; ++i) {
+                del_procs[i].ep   = ctx_item->ctx.ucp_peers[i].ucp_conn;
+                del_procs[i].vpid = i;
+                ctx_item->ctx.ucp_peers[i].ucp_conn = NULL;
             }
+
+            opal_common_ucx_del_procs(del_procs, nprocs, oshmem_my_proc_id(),
+                                      mca_spml_ucx.num_disconnect,
+                                      ctx_item->ctx.ucp_worker);
+            free(del_procs);
             free(ctx_item->ctx.ucp_peers);
+
             ucp_worker_destroy(ctx_item->ctx.ucp_worker);
             OBJ_RELEASE(ctx_item);
             break;
