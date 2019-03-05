@@ -18,7 +18,6 @@ mpi_api_man_pages = \
         mpi/man/man3/MPI_Add_error_class.3 \
         mpi/man/man3/MPI_Add_error_code.3 \
         mpi/man/man3/MPI_Add_error_string.3 \
-        mpi/man/man3/MPI_Address.3 \
 	mpi/man/man3/MPI_Aint_add.3 \
 	mpi/man/man3/MPI_Aint_diff.3 \
         mpi/man/man3/MPI_Allgather.3 \
@@ -98,10 +97,7 @@ mpi_api_man_pages = \
         mpi/man/man3/MPI_Dist_graph_create_adjacent.3 \
         mpi/man/man3/MPI_Dist_graph_neighbors.3 \
         mpi/man/man3/MPI_Dist_graph_neighbors_count.3 \
-        mpi/man/man3/MPI_Errhandler_create.3 \
         mpi/man/man3/MPI_Errhandler_free.3 \
-        mpi/man/man3/MPI_Errhandler_get.3 \
-        mpi/man/man3/MPI_Errhandler_set.3 \
         mpi/man/man3/MPI_Error_class.3 \
         mpi/man/man3/MPI_Error_string.3 \
         mpi/man/man3/MPI_Exscan.3 \
@@ -355,7 +351,6 @@ mpi_api_man_pages = \
         mpi/man/man3/MPI_Type_create_subarray.3 \
         mpi/man/man3/MPI_Type_delete_attr.3 \
         mpi/man/man3/MPI_Type_dup.3 \
-        mpi/man/man3/MPI_Type_extent.3 \
         mpi/man/man3/MPI_Type_f2c.3 \
         mpi/man/man3/MPI_Type_free.3 \
         mpi/man/man3/MPI_Type_free_keyval.3 \
@@ -367,17 +362,12 @@ mpi_api_man_pages = \
         mpi/man/man3/MPI_Type_get_name.3 \
         mpi/man/man3/MPI_Type_get_true_extent.3 \
         mpi/man/man3/MPI_Type_get_true_extent_x.3 \
-        mpi/man/man3/MPI_Type_hindexed.3 \
-        mpi/man/man3/MPI_Type_hvector.3 \
         mpi/man/man3/MPI_Type_indexed.3 \
-        mpi/man/man3/MPI_Type_lb.3 \
         mpi/man/man3/MPI_Type_match_size.3 \
         mpi/man/man3/MPI_Type_set_attr.3 \
         mpi/man/man3/MPI_Type_set_name.3 \
         mpi/man/man3/MPI_Type_size.3 \
         mpi/man/man3/MPI_Type_size_x.3 \
-        mpi/man/man3/MPI_Type_struct.3 \
-        mpi/man/man3/MPI_Type_ub.3 \
         mpi/man/man3/MPI_Type_vector.3 \
         mpi/man/man3/MPI_Unpack.3 \
         mpi/man/man3/MPI_Unpack_external.3 \
