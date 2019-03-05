@@ -16,6 +16,8 @@
 # Copyright (c) 2016-2017 IBM Corporation.  All rights reserved.
 # Copyright (c) 2017      Los Alamos National Security, LLC.  All rights
 #                         reserved.
+# Copyright (c) 2019      Research Organization for Information Science
+#                         and Technology (RIST).  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -103,7 +105,8 @@ libmca_btl_usnic_la_LIBADD = $(opal_ofi_LIBS)
 
 if OPAL_BTL_USNIC_BUILD_UNIT_TESTS
 usnic_btl_run_tests_CPPFLAGS = \
-    -DBTL_USNIC_RUN_TESTS_SYMBOL=\"opal_btl_usnic_run_tests\"
+    -DBTL_USNIC_RUN_TESTS_SYMBOL=\"opal_btl_usnic_run_tests\" \
+    -DOMPI_LIBMPI_NAME=\"$(OMPI_LIBMPI_NAME)\"
 usnic_btl_run_tests_SOURCES = test/usnic_btl_run_tests.c
 usnic_btl_run_tests_LDADD = -ldl
 bin_PROGRAMS = usnic_btl_run_tests
