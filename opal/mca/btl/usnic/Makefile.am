@@ -107,9 +107,8 @@ libmca_btl_usnic_la_LDFLAGS = \
 libmca_btl_usnic_la_LIBADD = $(opal_ofi_LIBS)
 
 if OPAL_BTL_USNIC_BUILD_UNIT_TESTS
-usnic_btl_run_tests_CPPFLAGS = \
-    -DBTL_USNIC_RUN_TESTS_SYMBOL=\"opal_btl_usnic_run_tests\" \
-    -DOMPI_LIBMPI_NAME=\"$(OMPI_LIBMPI_NAME)\"
+usnic_btl_run_tests_CPPFLAGS = $(AM_CPPFLAGS) \
+    -DBTL_USNIC_RUN_TESTS_SYMBOL=\"opal_btl_usnic_run_tests\"
 usnic_btl_run_tests_SOURCES = test/usnic_btl_run_tests.c
 usnic_btl_run_tests_LDADD = -ldl
 bin_PROGRAMS = usnic_btl_run_tests
