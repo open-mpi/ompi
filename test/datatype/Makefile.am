@@ -15,7 +15,7 @@
 #
 
 if PROJECT_OMPI
-    MPI_TESTS = checksum position position_noncontig ddt_test ddt_raw ddt_raw2 unpack_ooo ddt_pack external32
+    MPI_TESTS = checksum position position_noncontig ddt_test ddt_raw ddt_raw2 unpack_ooo ddt_pack external32 large_data
     MPI_CHECKS = to_self
 endif
 TESTS = opal_datatype_test unpack_hetero $(MPI_TESTS)
@@ -73,6 +73,12 @@ position_noncontig_LDADD = \
 to_self_SOURCES = to_self.c
 to_self_LDFLAGS = $(OMPI_PKG_CONFIG_LDFLAGS)
 to_self_LDADD = $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la
+
+large_data_SOURCES = large_data.c
+large_data_LDFLAGS = $(OMPI_PKG_CONFIG_LDFLAGS)
+large_data_LDADD = \
+        $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
+        $(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la
 
 opal_datatype_test_SOURCES = opal_datatype_test.c opal_ddt_lib.c opal_ddt_lib.h
 opal_datatype_test_LDFLAGS = $(OMPI_PKG_CONFIG_LDFLAGS)

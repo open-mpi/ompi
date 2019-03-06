@@ -43,11 +43,11 @@ opal_convertor_raw( opal_convertor_t* pConvertor,
     const opal_datatype_t *pData = pConvertor->pDesc;
     dt_stack_t* pStack;       /* pointer to the position on the stack */
     uint32_t pos_desc;        /* actual position in the description of the derived datatype */
-    uint32_t count_desc;      /* the number of items already done in the actual pos_desc */
+    size_t count_desc;        /* the number of items already done in the actual pos_desc */
     dt_elem_desc_t* description, *pElem;
     unsigned char *source_base;  /* origin of the data */
     size_t raw_data = 0;      /* sum of raw data lengths in the iov_len fields */
-    uint32_t index = 0, i;    /* the iov index and a simple counter */
+    uint32_t index = 0;       /* the iov index and a simple counter */
 
     assert( (*iov_count) > 0 );
     if( OPAL_LIKELY(pConvertor->flags & CONVERTOR_COMPLETED) ) {
@@ -83,15 +83,15 @@ opal_convertor_raw( opal_convertor_t* pConvertor,
     pStack = pConvertor->pStack + pConvertor->stack_pos;
     pos_desc     = pStack->index;
     source_base  = pConvertor->pBaseBuf + pStack->disp;
-    count_desc   = (uint32_t)pStack->count;
+    count_desc   = pStack->count;
     pStack--;
     pConvertor->stack_pos--;
     pElem = &(description[pos_desc]);
     source_base += pStack->disp;
-    DO_DEBUG( opal_output( 0, "raw start pos_desc %d count_desc %d disp %ld\n"
-                           "stack_pos %d pos_desc %d count_desc %d disp %ld\n",
+    DO_DEBUG( opal_output( 0, "raw start pos_desc %d count_desc %" PRIsize_t " disp %ld\n"
+                           "stack_pos %d pos_desc %d count_desc %" PRIsize_t " disp %ld\n",
                            pos_desc, count_desc, (long)(source_base - pConvertor->pBaseBuf),
-                           pConvertor->stack_pos, pStack->index, (int)pStack->count, (long)pStack->disp ); );
+                           pConvertor->stack_pos, pStack->index, pStack->count, (long)pStack->disp ); );
     while( 1 ) {
         while( pElem->elem.common.flags & OPAL_DATATYPE_FLAG_DATA ) {
             size_t blength = opal_datatype_basicDatatypes[pElem->elem.common.type]->size;
@@ -112,7 +112,7 @@ opal_convertor_raw( opal_convertor_t* pConvertor,
                     count_desc = 0;
                 }
             } else {
-                for( i = count_desc; (i > 0) && (index < *iov_count); i--, index++ ) {
+                for(size_t i = count_desc; (i > 0) && (index < *iov_count); i--, index++ ) {
                     OPAL_DATATYPE_SAFEGUARD_POINTER( source_base, blength, pConvertor->pBaseBuf,
                                                 pConvertor->pDesc, pConvertor->count );
                     DO_DEBUG( opal_output( 0, "raw 2. iov[%d] = {base %p, length %" PRIsize_t "}\n",
@@ -134,9 +134,9 @@ opal_convertor_raw( opal_convertor_t* pConvertor,
             goto complete_loop;
         }
         if( OPAL_DATATYPE_END_LOOP == pElem->elem.common.type ) { /* end of the current loop */
-            DO_DEBUG( opal_output( 0, "raw end_loop count %d stack_pos %d"
+            DO_DEBUG( opal_output( 0, "raw end_loop count %" PRIsize_t " stack_pos %d"
                                    " pos_desc %d disp %ld space %lu\n",
-                                   (int)pStack->count, pConvertor->stack_pos,
+                                   pStack->count, pConvertor->stack_pos,
                                    pos_desc, (long)pStack->disp, (unsigned long)raw_data ); );
             if( --(pStack->count) == 0 ) { /* end of loop */
                 if( pConvertor->stack_pos == 0 ) {
@@ -160,9 +160,9 @@ opal_convertor_raw( opal_convertor_t* pConvertor,
             }
             source_base = pConvertor->pBaseBuf + pStack->disp;
             UPDATE_INTERNAL_COUNTERS( description, pos_desc, pElem, count_desc );
-            DO_DEBUG( opal_output( 0, "raw new_loop count %d stack_pos %d "
+            DO_DEBUG( opal_output( 0, "raw new_loop count %" PRIsize_t " stack_pos %d "
                                    "pos_desc %d disp %ld space %lu\n",
-                                   (int)pStack->count, pConvertor->stack_pos,
+                                   pStack->count, pConvertor->stack_pos,
                                    pos_desc, (long)pStack->disp, (unsigned long)raw_data ); );
         }
         if( OPAL_DATATYPE_LOOP == pElem->elem.common.type ) {
@@ -172,7 +172,7 @@ opal_convertor_raw( opal_convertor_t* pConvertor,
             if( pElem->loop.common.flags & OPAL_DATATYPE_FLAG_CONTIGUOUS ) {
                 ptrdiff_t offset = end_loop->first_elem_disp;
                 source_base += offset;
-                for(uint32_t i = MIN(count_desc, *iov_count - index); i > 0; i--, index++ ) {
+                for(size_t i = MIN(count_desc, *iov_count - index); i > 0; i--, index++ ) {
                     OPAL_DATATYPE_SAFEGUARD_POINTER( source_base, end_loop->size, pConvertor->pBaseBuf,
                                                 pConvertor->pDesc, pConvertor->count );
                     iov[index].iov_base = (IOVBASE_TYPE *) source_base;
@@ -216,7 +216,7 @@ complete_loop:
     /* I complete an element, next step I should go to the next one */
     PUSH_STACK( pStack, pConvertor->stack_pos, pos_desc, OPAL_DATATYPE_UINT1, count_desc,
                 source_base - pStack->disp - pConvertor->pBaseBuf );
-    DO_DEBUG( opal_output( 0, "raw save stack stack_pos %d pos_desc %d count_desc %d disp %ld\n",
-                           pConvertor->stack_pos, pStack->index, (int)pStack->count, (long)pStack->disp ); );
+    DO_DEBUG( opal_output( 0, "raw save stack stack_pos %d pos_desc %d count_desc %" PRIsize_t " disp %ld\n",
+                           pConvertor->stack_pos, pStack->index, pStack->count, (long)pStack->disp ); );
     return 0;
 }
