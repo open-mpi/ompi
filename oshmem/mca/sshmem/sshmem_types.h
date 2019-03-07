@@ -94,6 +94,7 @@ typedef struct sshmem_mkey {
         void *data;
         uint64_t key;
     } u;
+    void *spml_context;       /* spml module can attach internal structures here */
 } sshmem_mkey_t;
 
 typedef struct map_base_segment {
