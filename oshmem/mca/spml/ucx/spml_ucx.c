@@ -106,7 +106,7 @@ int mca_spml_ucx_enable(bool enable)
 int mca_spml_ucx_del_procs(ompi_proc_t** procs, size_t nprocs)
 {
     opal_common_ucx_del_proc_t *del_procs;
-    size_t i, j;
+    size_t i;
     int ret;
 
     oshmem_shmem_barrier();
@@ -121,12 +121,6 @@ int mca_spml_ucx_del_procs(ompi_proc_t** procs, size_t nprocs)
     }
 
     for (i = 0; i < nprocs; ++i) {
-        for (j = 0; j < MCA_MEMHEAP_SEG_COUNT; j++) {
-            if (mca_spml_ucx_ctx_default.ucp_peers[i].mkeys[j].key.rkey != NULL) {
-                ucp_rkey_destroy(mca_spml_ucx_ctx_default.ucp_peers[i].mkeys[j].key.rkey);
-            }
-        }
-
         del_procs[i].ep   = mca_spml_ucx_ctx_default.ucp_peers[i].ucp_conn;
         del_procs[i].vpid = i;
 
@@ -352,16 +346,21 @@ spml_ucx_mkey_t * mca_spml_ucx_get_mkey_slow(shmem_ctx_t ctx, int pe, void *va, 
 
 void mca_spml_ucx_rmkey_free(sshmem_mkey_t *mkey)
 {
+    spml_ucx_mkey_t   *ucx_mkey;
+
+    if (!mkey->spml_context) {
+        return;
+    }
+    ucx_mkey = (spml_ucx_mkey_t *)(mkey->spml_context);
+    ucp_rkey_destroy(ucx_mkey->rkey);
 }
 
-void *mca_spml_ucx_rmkey_ptr(const void *dst_addr, sshmem_mkey_t *key, int pe)
+void *mca_spml_ucx_rmkey_ptr(const void *dst_addr, sshmem_mkey_t *mkey, int pe)
 {
 #if (((UCP_API_MAJOR >= 1) && (UCP_API_MINOR >= 3)) || (UCP_API_MAJOR >= 2))
     void *rva;
     ucs_status_t err;
-    mca_spml_ucx_ctx_t *ucx_ctx = (mca_spml_ucx_ctx_t *)&mca_spml_ucx_ctx_default;
-    uint32_t segno = memheap_find_segnum((void*)dst_addr);
-    spml_ucx_mkey_t *ucx_mkey = &ucx_ctx->ucp_peers[pe].mkeys[segno].key;
+    spml_ucx_mkey_t *ucx_mkey = (spml_ucx_mkey_t *)(mkey->spml_context);
 
     err = ucp_rkey_ptr(ucx_mkey->rkey, (uint64_t)dst_addr, &rva);
     if (UCS_OK != err) {
@@ -389,6 +388,9 @@ void mca_spml_ucx_rmkey_unpack(shmem_ctx_t ctx, sshmem_mkey_t *mkey, uint32_t se
         goto error_fatal;
     }
 
+    if (ucx_ctx == &mca_spml_ucx_ctx_default) {
+        mkey->spml_context = ucx_mkey;
+    }
     mca_spml_ucx_cache_mkey(ucx_ctx, mkey, segno, pe);
     return;
 
@@ -451,6 +453,7 @@ sshmem_mkey_t *mca_spml_ucx_register(void* addr,
     mem_seg = memheap_find_seg(segno);
 
     ucx_mkey = &mca_spml_ucx_ctx_default.ucp_peers[my_pe].mkeys[segno].key;
+    mkeys[0].spml_context = ucx_mkey;
 
     /* if possible use mem handle already created by ucx allocator */
     if (MAP_SEGMENT_ALLOC_UCX != mem_seg->type) {
@@ -517,12 +520,14 @@ int mca_spml_ucx_deregister(sshmem_mkey_t *mkeys)
     int my_pe = oshmem_my_proc_id();
 
     MCA_SPML_CALL(quiet(oshmem_ctx_default));
-    if (!mkeys || !mkeys[0].va_base)
+    if (!mkeys)
+        return OSHMEM_SUCCESS;
+
+    if (!mkeys[0].spml_context)
         return OSHMEM_SUCCESS;
 
     mem_seg  = memheap_find_va(mkeys[0].va_base);
-    segno = memheap_find_segnum(mkeys[0].va_base);
-    ucx_mkey = &mca_spml_ucx_ctx_default.ucp_peers[my_pe].mkeys[segno].key;
+    ucx_mkey = (spml_ucx_mkey_t*)mkeys[0].spml_context;
 
     if (OPAL_UNLIKELY(NULL == mem_seg)) {
         return OSHMEM_ERROR;
