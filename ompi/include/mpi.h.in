@@ -306,7 +306,9 @@
           * Don't do MACRO magic for building Profiling library as it
           * interferes with the above.
           */
-#        if (OMPI_ENABLE_MPI1_COMPAT || OMPI_BUILDING)
+#        if defined(OMPI_OMIT_MPI1_COMPAT_DECLS)
+             /* The user set OMPI_OMIT_MPI1_COMPAT_DECLS, do what he commands */
+#        elif (OMPI_ENABLE_MPI1_COMPAT || OMPI_BUILDING)
 #            define OMPI_OMIT_MPI1_COMPAT_DECLS 0
 #            define OMPI_REMOVED_USE_STATIC_ASSERT 0
 #            define __mpi_interface_removed__(func, newfunc) __mpi_interface_deprecated__(#func " was removed in MPI-3.0.  Use " #newfunc " instead.  continuing...")
