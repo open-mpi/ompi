@@ -226,13 +226,47 @@ mca_spml_ucx_component_init(int* priority,
 
 static int mca_spml_ucx_component_fini(void)
 {
+    mca_spml_ucx_ctx_list_item_t *ctx_item, *next;
+    size_t i, j, nprocs = oshmem_num_procs();
+
     opal_progress_unregister(spml_ucx_progress);
-        
+
+    if(!mca_spml_ucx.enabled)
+        return OSHMEM_SUCCESS; /* never selected.. return success.. */
+
+    /* delete context objects from list */
+    OPAL_LIST_FOREACH_SAFE(ctx_item, next, &(mca_spml_ucx.ctx_list),
+                           mca_spml_ucx_ctx_list_item_t) {
+        opal_list_remove_item(&(mca_spml_ucx.ctx_list), &ctx_item->super);
+
+        opal_common_ucx_del_proc_t *del_procs;
+        del_procs = malloc(sizeof(*del_procs) * nprocs);
+
+        for (i = 0; i < nprocs; ++i) {
+            for (j = 0; j < MCA_MEMHEAP_SEG_COUNT; j++) {
+                if (ctx_item->ctx.ucp_peers[i].mkeys[j].key.rkey != NULL) {
+                    ucp_rkey_destroy(ctx_item->ctx.ucp_peers[i].mkeys[j].key.rkey);
+                }
+            }
+
+            del_procs[i].ep   = ctx_item->ctx.ucp_peers[i].ucp_conn;
+            del_procs[i].vpid = i;
+            ctx_item->ctx.ucp_peers[i].ucp_conn = NULL;
+        }
+
+        opal_common_ucx_del_procs(del_procs, nprocs, oshmem_my_proc_id(),
+                                  mca_spml_ucx.num_disconnect,
+                                  ctx_item->ctx.ucp_worker);
+        free(del_procs);
+        free(ctx_item->ctx.ucp_peers);
+
+        ucp_worker_destroy(ctx_item->ctx.ucp_worker);
+        OBJ_RELEASE(ctx_item);
+    }
+
     if (mca_spml_ucx_ctx_default.ucp_worker) {
         ucp_worker_destroy(mca_spml_ucx_ctx_default.ucp_worker);
     }
-    if(!mca_spml_ucx.enabled)
-        return OSHMEM_SUCCESS; /* never selected.. return success.. */
 
     mca_spml_ucx.enabled = false;  /* not anymore */
 
