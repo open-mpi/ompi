@@ -91,6 +91,7 @@ struct mca_spml_ucx {
     mca_spml_ucx_get_mkey_slow_fn_t get_mkey_slow;
     char                     **remote_addrs_tbl;
     opal_list_t              ctx_list;
+    opal_list_t              idle_ctx_list;
     int                      priority; /* component priority */
     shmem_internal_mutex_t   internal_mutex;
 };
