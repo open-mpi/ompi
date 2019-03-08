@@ -41,9 +41,6 @@
 #define SPML_UCX_PUT_DEBUG    0
 #endif
 
-static
-spml_ucx_mkey_t * mca_spml_ucx_get_mkey_slow(shmem_ctx_t ctx, int pe, void *va, void **rva);
-
 mca_spml_ucx_t mca_spml_ucx = {
     .super = {
         /* Init mca_spml_base_module_t */
@@ -77,7 +74,7 @@ mca_spml_ucx_t mca_spml_ucx = {
     .num_disconnect         = 1,
     .heap_reg_nb            = 0,
     .enabled                = 0,
-    .get_mkey_slow          = mca_spml_ucx_get_mkey_slow
+    .get_mkey_slow          = NULL
 };
 
 OBJ_CLASS_INSTANCE(mca_spml_ucx_ctx_list_item_t, opal_list_item_t, NULL, NULL);
@@ -308,37 +305,6 @@ error:
     SPML_UCX_ERROR("add procs FAILED rc=%d", rc);
     return rc;
 
-}
-
-
-static
-spml_ucx_mkey_t * mca_spml_ucx_get_mkey_slow(shmem_ctx_t ctx, int pe, void *va, void **rva)
-{
-    sshmem_mkey_t *r_mkey;
-    spml_ucx_mkey_t *ucx_mkey;
-    uint32_t segno;
-    mca_spml_ucx_ctx_t *ucx_ctx = (mca_spml_ucx_ctx_t *)ctx;
-    ucs_status_t err;
-
-    r_mkey = mca_memheap_base_get_cached_mkey(ctx, pe, va, 0, rva);
-    if (OPAL_UNLIKELY(!r_mkey)) {
-        SPML_UCX_ERROR("pe=%d: %p is not address of symmetric variable",
-                       pe, va);
-        oshmem_shmem_abort(-1);
-        return NULL;
-    }
-
-    segno = memheap_find_segnum(va);
-    ucx_mkey = &ucx_ctx->ucp_peers[pe].mkeys[segno].key;
-
-    if (ucx_mkey->rkey == NULL) {
-        err = ucp_ep_rkey_unpack(ucx_ctx->ucp_peers[pe].ucp_conn,
-                                 r_mkey->u.data,
-                                 &ucx_mkey->rkey);
-        mca_spml_ucx_cache_mkey(ucx_ctx, r_mkey, segno, pe); /* make sure it is properly cached */
-    }
-
-    return ucx_mkey;
 }
 
 void mca_spml_ucx_rmkey_free(sshmem_mkey_t *mkey)
@@ -592,22 +558,17 @@ int mca_spml_ucx_ctx_create(long options, shmem_ctx_t *ctx)
         }
 
         for (j = 0; j < MCA_MEMHEAP_SEG_COUNT; j++) {
-            ctx_item->ctx.ucp_peers[i].mkeys[j].key.rkey = NULL;
+            mkey = &memheap_map->mem_segs[j].mkeys_cache[i][0];
+            ucx_mkey = &ctx_item->ctx.ucp_peers[i].mkeys[j].key;
+            err = ucp_ep_rkey_unpack(ctx_item->ctx.ucp_peers[i].ucp_conn,
+                                     mkey->u.data,
+                                     &ucx_mkey->rkey);
+            if (UCS_OK != err) {
+                SPML_UCX_ERROR("failed to unpack rkey");
+                goto error2;
+            }
+            mca_spml_ucx_cache_mkey(&ctx_item->ctx, mkey, j, i);
         }
-    }
-
-    for (i = 0; i < MCA_MEMHEAP_SEG_COUNT; i++) {
-        mkey = &memheap_map->mem_segs[i].mkeys_cache[my_pe][0];
-        ucx_mkey = &ctx_item->ctx.ucp_peers[my_pe].mkeys[i].key;
-        err = ucp_ep_rkey_unpack(ctx_item->ctx.ucp_peers[my_pe].ucp_conn,
-                                 mkey->u.data,
-                                 &ucx_mkey->rkey);
-        if (UCS_OK != err) {
-            SPML_UCX_ERROR("failed to unpack rkey");
-            goto error2;
-        }
-
-        mca_spml_ucx_cache_mkey(&ctx_item->ctx, mkey, i, my_pe);
     }
 
     SHMEM_MUTEX_LOCK(mca_spml_ucx.internal_mutex);
