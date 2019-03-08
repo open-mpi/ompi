@@ -52,8 +52,7 @@ void *shmem_ptr(const void *dst_addr, int pe)
     }
 
     for (i = 0; i < mca_memheap_base_num_transports(); i++) {
-        /* TODO: iterate on all ctxs, try to get cached mkeys */
-        mkey = mca_memheap_base_get_cached_mkey(oshmem_ctx_default, pe, (void *)dst_addr, i, &rva);
+        mkey = mca_memheap_base_get_cached_mkey(pe, (void *)dst_addr, i, &rva);
         if (!mkey) {
             continue;
         }

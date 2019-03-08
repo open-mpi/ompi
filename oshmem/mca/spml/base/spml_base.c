@@ -247,12 +247,12 @@ int mca_spml_base_wait_nb(void* handle)
     return OSHMEM_SUCCESS;
 }
 
-int mca_spml_base_oob_get_mkeys(shmem_ctx_t ctx, int pe, uint32_t segno, sshmem_mkey_t *mkeys)
+int mca_spml_base_oob_get_mkeys(int pe, uint32_t segno, sshmem_mkey_t *mkeys)
 {
     return OSHMEM_ERROR;
 }
 
-void mca_spml_base_rmkey_unpack(shmem_ctx_t ctx, sshmem_mkey_t *mkey, uint32_t segno, int pe, int tr_id)
+void mca_spml_base_rmkey_unpack(sshmem_mkey_t *mkey, uint32_t segno, int pe, int tr_id)
 {
 }
 
