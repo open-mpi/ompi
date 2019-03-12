@@ -485,9 +485,11 @@ static void _query(int sd, short args, void *cbdata)
     orte_pmix_server_op_caddy_t *cd = (orte_pmix_server_op_caddy_t*)cbdata;
     opal_pmix_query_t *q;
     opal_value_t *kv;
+    orte_jobid_t jobid;
     orte_job_t *jdata;
     orte_proc_t *proct;
-    int rc, i, num_replies;
+    orte_app_context_t *app;
+    int rc = ORTE_SUCCESS, i, k, num_replies;
     opal_list_t *results, targets, *array;
     size_t n;
     uint32_t key;
@@ -703,16 +705,117 @@ static void _query(int sd, short args, void *cbdata)
                 kv->type = OPAL_STRING;
                 kv->data.string = strdup(orte_process_info.my_hnp_uri);
                 opal_list_append(results, &kv->super);
+            } else if (0 == strcmp(q->keys[n], OPAL_PMIX_QUERY_PROC_TABLE)) {
+                /* the job they are asking about is in the qualifiers */
+                jobid = ORTE_JOBID_INVALID;
+                OPAL_LIST_FOREACH(kv, &q->qualifiers, opal_value_t) {
+                    if (0 == strcmp(kv->key, OPAL_PMIX_PROCID)) {
+                        /* save the id */
+                        jobid = kv->data.name.jobid;
+                        break;
+                    }
+                }
+                if (ORTE_JOBID_INVALID == jobid) {
+                    rc = ORTE_ERR_NOT_FOUND;
+                    goto done;
+                }
+                /* construct a list of values with opal_proc_info_t
+                 * entries for each proc in the indicated job */
+                jdata = orte_get_job_data_object(jobid);
+                if (NULL == jdata) {
+                    rc = ORTE_ERR_NOT_FOUND;
+                    goto done;
+                }
+                /* setup the reply */
+                kv = OBJ_NEW(opal_value_t);
+                kv->key = strdup(OPAL_PMIX_QUERY_PROC_TABLE);
+                kv->type = OPAL_PTR;
+                array = OBJ_NEW(opal_list_t);
+                kv->data.ptr = array;
+                opal_list_append(results, &kv->super);
+                /* cycle thru the job and create an entry for each proc */
+                for (k=0; k < jdata->procs->size; k++) {
+                    if (NULL == (proct = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, k))) {
+                        continue;
+                    }
+                    kv = OBJ_NEW(opal_value_t);
+                    kv->type = OPAL_PROC_INFO;
+                    kv->data.pinfo.name.jobid = jobid;
+                    kv->data.pinfo.name.vpid = proct->name.vpid;
+                    if (NULL != proct->node && NULL != proct->node->name) {
+                        kv->data.pinfo.hostname = strdup(proct->node->name);
+                    }
+                    app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, proct->app_idx);
+                    if (NULL != app && NULL != app->app) {
+                        kv->data.pinfo.executable_name = strdup(app->app);
+                    }
+                    kv->data.pinfo.pid = proct->pid;
+                    kv->data.pinfo.exit_code = proct->exit_code;
+                    kv->data.pinfo.state = proct->state;
+                    opal_list_append(array, &kv->super);
+                }
+            } else if (0 == strcmp(q->keys[n], OPAL_PMIX_QUERY_LOCAL_PROC_TABLE)) {
+                /* the job they are asking about is in the qualifiers */
+                jobid = ORTE_JOBID_INVALID;
+                OPAL_LIST_FOREACH(kv, &q->qualifiers, opal_value_t) {
+                    if (0 == strcmp(kv->key, OPAL_PMIX_PROCID)) {
+                        /* save the id */
+                        jobid = kv->data.name.jobid;
+                        break;
+                    }
+                }
+                if (ORTE_JOBID_INVALID == jobid) {
+                    rc = ORTE_ERR_BAD_PARAM;
+                    goto done;
+                }
+                /* construct a list of values with opal_proc_info_t
+                 * entries for each LOCAL proc in the indicated job */
+                jdata = orte_get_job_data_object(jobid);
+                if (NULL == jdata) {
+                    rc = ORTE_ERR_NOT_FOUND;
+                    goto done;
+                }
+                /* setup the reply */
+                kv = OBJ_NEW(opal_value_t);
+                kv->key = strdup(OPAL_PMIX_QUERY_LOCAL_PROC_TABLE);
+                kv->type = OPAL_PTR;
+                array = OBJ_NEW(opal_list_t);
+                kv->data.ptr = array;
+                opal_list_append(results, &kv->super);
+                /* cycle thru the job and create an entry for each proc */
+                for (k=0; k < jdata->procs->size; k++) {
+                    if (NULL == (proct = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, k))) {
+                        continue;
+                    }
+                    if (ORTE_FLAG_TEST(proct, ORTE_PROC_FLAG_LOCAL)) {
+                        kv = OBJ_NEW(opal_value_t);
+                        kv->type = OPAL_PROC_INFO;
+                        kv->data.pinfo.name.jobid = jobid;
+                        kv->data.pinfo.name.vpid = proct->name.vpid;
+                        if (NULL != proct->node && NULL != proct->node->name) {
+                            kv->data.pinfo.hostname = strdup(proct->node->name);
+                        }
+                        app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, proct->app_idx);
+                        if (NULL != app && NULL != app->app) {
+                            kv->data.pinfo.executable_name = strdup(app->app);
+                        }
+                        kv->data.pinfo.pid = proct->pid;
+                        kv->data.pinfo.exit_code = proct->exit_code;
+                        kv->data.pinfo.state = proct->state;
+                        opal_list_append(array, &kv->super);
+                    }
+                }
             }
         }
     }
 
-    if (0 == opal_list_get_size(results)) {
-        rc = ORTE_ERR_NOT_FOUND;
-    } else if (opal_list_get_size(results) < opal_list_get_size(cd->info)) {
-        rc = ORTE_ERR_PARTIAL_SUCCESS;
-    } else {
-        rc = ORTE_SUCCESS;
+  done:
+    if (ORTE_SUCCESS == rc) {
+        if (0 == opal_list_get_size(results)) {
+            rc = ORTE_ERR_NOT_FOUND;
+        } else if (opal_list_get_size(results) < opal_list_get_size(cd->info)) {
+            rc = ORTE_ERR_PARTIAL_SUCCESS;
+        }
     }
     cd->infocbfunc(rc, results, cd->cbdata, qrel, results);
 }

@@ -12,7 +12,7 @@
  * Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -287,7 +287,7 @@ static int orte_rmaps_base_open(mca_base_open_flag_t flags)
                        "rmaps_base_cpus_per_proc", "rmaps_base_mapping_policy=<obj>:PE=N, default <obj>=NUMA");
     }
 
-    if (ORTE_SUCCESS != (rc = orte_rmaps_base_set_mapping_policy(&orte_rmaps_base.mapping,
+    if (ORTE_SUCCESS != (rc = orte_rmaps_base_set_mapping_policy(NULL, &orte_rmaps_base.mapping,
                                                                  &orte_rmaps_base.device,
                                                                  rmaps_base_mapping_policy))) {
         return rc;
@@ -599,7 +599,8 @@ static int check_modifiers(char *ck, orte_mapping_policy_t *tmp)
     return ORTE_ERR_TAKE_NEXT_OPTION;
 }
 
-int orte_rmaps_base_set_mapping_policy(orte_mapping_policy_t *policy,
+int orte_rmaps_base_set_mapping_policy(orte_job_t *jdata,
+                                       orte_mapping_policy_t *policy,
                                        char **device, char *inspec)
 {
     char *ck;
@@ -624,136 +625,144 @@ int orte_rmaps_base_set_mapping_policy(orte_mapping_policy_t *policy,
 
     if (NULL == inspec) {
         ORTE_SET_MAPPING_POLICY(tmp, ORTE_MAPPING_BYSOCKET);
-    } else {
-        spec = strdup(inspec);  // protect the input string
-        /* see if a colon was included - if so, then we have a policy + modifier */
-        ck = strchr(spec, ':');
-        if (NULL != ck) {
-            /* if the colon is the first character of the string, then we
-             * just have modifiers on the default mapping policy */
-            if (ck == spec) {
-                ck++;
-                opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
-                                    "%s rmaps:base only modifiers %s provided - assuming bysocket mapping",
-                                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ck);
-                ORTE_SET_MAPPING_POLICY(tmp, ORTE_MAPPING_BYSOCKET);
-                if (ORTE_ERR_SILENT == (rc = check_modifiers(ck, &tmp)) &&
+        goto setpolicy;
+    }
+
+    spec = strdup(inspec);  // protect the input string
+    /* see if a colon was included - if so, then we have a policy + modifier */
+    ck = strchr(spec, ':');
+    if (NULL != ck) {
+        /* if the colon is the first character of the string, then we
+         * just have modifiers on the default mapping policy */
+        if (ck == spec) {
+            ck++;  // step over the colon
+            opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                                "%s rmaps:base only modifiers %s provided - assuming bysocket mapping",
+                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ck);
+            ORTE_SET_MAPPING_POLICY(tmp, ORTE_MAPPING_BYSOCKET);
+            if (ORTE_ERR_SILENT == (rc = check_modifiers(ck, &tmp)) &&
+                ORTE_ERR_BAD_PARAM != rc) {
+                free(spec);
+                return ORTE_ERR_SILENT;
+            }
+            free(spec);
+            goto setpolicy;
+        }
+        *ck = '\0';  // terminate spec where the colon was
+        ck++;    // step past the colon
+        opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                            "%s rmaps:base policy %s modifiers %s provided",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), spec, ck);
+
+        if (0 == strncasecmp(spec, "ppr", strlen(spec))) {
+            /* at this point, ck points to a string that contains at least
+             * two fields (specifying the #procs/obj and the object we are
+             * to map by). we have to allow additional modifiers here - e.g.,
+             * specifying #pe's/proc or oversubscribe - so check for modifiers. if
+             * they are present, ck will look like "N:obj:mod1,mod2,mod3"
+             */
+            if (NULL == (ptr = strchr(ck, ':'))) {
+                /* this is an error - there had to be at least one
+                 * colon to delimit the number from the object type
+                 */
+                orte_show_help("help-orte-rmaps-base.txt", "invalid-pattern", true, inspec);
+                free(spec);
+                return ORTE_ERR_SILENT;
+            }
+            ptr++; // move past the colon
+            /* at this point, ptr is pointing to the beginning of the string that describes
+             * the object plus any modifiers (i.e., "obj:mod1,mod2". We first check to see if there
+             * is another colon indicating that there are modifiers to the request */
+            if (NULL != (cptr = strchr(ptr, ':'))) {
+                /* there are modifiers, so we terminate the object string
+                 * at the location of the colon */
+                *cptr = '\0';
+                /* step over that colon */
+                cptr++;
+                /* now check for modifiers  - may be none, so
+                 * don't emit an error message if the modifier
+                 * isn't recognized */
+                if (ORTE_ERR_SILENT == (rc = check_modifiers(cptr, &tmp)) &&
                     ORTE_ERR_BAD_PARAM != rc) {
                     free(spec);
                     return ORTE_ERR_SILENT;
                 }
-                free(spec);
-                goto setpolicy;
             }
-            /* split the string */
-            *ck = '\0';
-            ck++;
-            opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
-                                "%s rmaps:base policy %s modifiers %s provided",
-                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), spec, ck);
-            /* if the policy is "dist", then we set the policy to that value
-             * and save the second argument as the device
-             */
-            if (0 == strncasecmp(spec, "ppr", strlen(spec))) {
-                /* we have to allow additional modifiers here - e.g., specifying
-                 * #pe's/proc or oversubscribe - so check for modifiers
-                 */
-                if (NULL == (ptr = strrchr(ck, ':'))) {
-                    /* this is an error - there had to be at least one
-                     * colon to delimit the number from the object type
-                     */
-                    orte_show_help("help-orte-rmaps-base.txt", "invalid-pattern", true, inspec);
-                    free(spec);
-                    return ORTE_ERR_SILENT;
-                }
-                ptr++; // move past the colon
-                /* at this point, ck is pointing to the number of procs/object
-                 * and ptr is pointing to the beginning of the string that describes
-                 * the object plus any modifiers. We first check to see if there
-                 * is a comma indicating that there are modifiers to the request */
-                if (NULL != (cptr = strchr(ptr, ','))) {
-                    /* there are modifiers, so we terminate the object string
-                     * at the location of the first comma */
-                    *cptr = '\0';
-                    /* step over that comma */
-                    cptr++;
-                    /* now check for modifiers  - may be none, so
-                     * don't emit an error message if the modifier
-                     * isn't recognized */
-                    if (ORTE_ERR_SILENT == (rc = check_modifiers(cptr, &tmp)) &&
-                        ORTE_ERR_BAD_PARAM != rc) {
-                        free(spec);
-                        return ORTE_ERR_SILENT;
-                    }
-                }
-                /* now save the pattern */
+            /* now save the pattern */
+            if (NULL == jdata || NULL == jdata->map) {
                 orte_rmaps_base.ppr = strdup(ck);
-                ORTE_SET_MAPPING_POLICY(tmp, ORTE_MAPPING_PPR);
-                ORTE_SET_MAPPING_DIRECTIVE(tmp, ORTE_MAPPING_GIVEN);
-                free(spec);
-                goto setpolicy;
-            }
-            if (ORTE_SUCCESS != (rc = check_modifiers(ck, &tmp)) &&
-                ORTE_ERR_TAKE_NEXT_OPTION != rc) {
-                if (ORTE_ERR_BAD_PARAM == rc) {
-                    orte_show_help("help-orte-rmaps-base.txt", "unrecognized-modifier", true, inspec);
-                }
-                free(spec);
-                return rc;
-            }
-        }
-        len = strlen(spec);
-        if (0 == strncasecmp(spec, "slot", len)) {
-            ORTE_SET_MAPPING_POLICY(tmp, ORTE_MAPPING_BYSLOT);
-        } else if (0 == strncasecmp(spec, "node", len)) {
-            ORTE_SET_MAPPING_POLICY(tmp, ORTE_MAPPING_BYNODE);
-        } else if (0 == strncasecmp(spec, "seq", len)) {
-            ORTE_SET_MAPPING_POLICY(tmp, ORTE_MAPPING_SEQ);
-        } else if (0 == strncasecmp(spec, "core", len)) {
-            ORTE_SET_MAPPING_POLICY(tmp, ORTE_MAPPING_BYCORE);
-        } else if (0 == strncasecmp(spec, "l1cache", len)) {
-            ORTE_SET_MAPPING_POLICY(tmp, ORTE_MAPPING_BYL1CACHE);
-        } else if (0 == strncasecmp(spec, "l2cache", len)) {
-            ORTE_SET_MAPPING_POLICY(tmp, ORTE_MAPPING_BYL2CACHE);
-        } else if (0 == strncasecmp(spec, "l3cache", len)) {
-            ORTE_SET_MAPPING_POLICY(tmp, ORTE_MAPPING_BYL3CACHE);
-        } else if (0 == strncasecmp(spec, "socket", len)) {
-            ORTE_SET_MAPPING_POLICY(tmp, ORTE_MAPPING_BYSOCKET);
-        } else if (0 == strncasecmp(spec, "numa", len)) {
-            ORTE_SET_MAPPING_POLICY(tmp, ORTE_MAPPING_BYNUMA);
-        } else if (0 == strncasecmp(spec, "board", len)) {
-            ORTE_SET_MAPPING_POLICY(tmp, ORTE_MAPPING_BYBOARD);
-        } else if (0 == strncasecmp(spec, "hwthread", len)) {
-            ORTE_SET_MAPPING_POLICY(tmp, ORTE_MAPPING_BYHWTHREAD);
-            /* if we are mapping processes to individual hwthreads, then
-             * we need to treat those hwthreads as separate cpus
-             */
-            opal_hwloc_use_hwthreads_as_cpus = true;
-        } else if (0 == strncasecmp(spec, "dist", len)) {
-            if (NULL != rmaps_dist_device) {
-                if (NULL != (pch = strchr(rmaps_dist_device, ':'))) {
-                    *pch = '\0';
-                }
-                if (NULL != device) {
-                    *device = strdup(rmaps_dist_device);
-                }
-                ORTE_SET_MAPPING_POLICY(tmp, ORTE_MAPPING_BYDIST);
             } else {
-                orte_show_help("help-orte-rmaps-base.txt", "device-not-specified", true);
-                free(spec);
-                return ORTE_ERR_SILENT;
+                jdata->map->ppr = strdup(ck);
             }
+            ORTE_SET_MAPPING_POLICY(tmp, ORTE_MAPPING_PPR);
+            ORTE_SET_MAPPING_DIRECTIVE(tmp, ORTE_MAPPING_GIVEN);
+            free(spec);
+            goto setpolicy;
+        }
+        if (ORTE_SUCCESS != (rc = check_modifiers(ck, &tmp)) &&
+            ORTE_ERR_TAKE_NEXT_OPTION != rc) {
+            if (ORTE_ERR_BAD_PARAM == rc) {
+                orte_show_help("help-orte-rmaps-base.txt", "unrecognized-modifier", true, inspec);
+            }
+            free(spec);
+            return rc;
+        }
+    }
+    len = strlen(spec);
+    if (0 == strncasecmp(spec, "slot", len)) {
+        ORTE_SET_MAPPING_POLICY(tmp, ORTE_MAPPING_BYSLOT);
+    } else if (0 == strncasecmp(spec, "node", len)) {
+        ORTE_SET_MAPPING_POLICY(tmp, ORTE_MAPPING_BYNODE);
+    } else if (0 == strncasecmp(spec, "seq", len)) {
+        ORTE_SET_MAPPING_POLICY(tmp, ORTE_MAPPING_SEQ);
+    } else if (0 == strncasecmp(spec, "core", len)) {
+        ORTE_SET_MAPPING_POLICY(tmp, ORTE_MAPPING_BYCORE);
+    } else if (0 == strncasecmp(spec, "l1cache", len)) {
+        ORTE_SET_MAPPING_POLICY(tmp, ORTE_MAPPING_BYL1CACHE);
+    } else if (0 == strncasecmp(spec, "l2cache", len)) {
+        ORTE_SET_MAPPING_POLICY(tmp, ORTE_MAPPING_BYL2CACHE);
+    } else if (0 == strncasecmp(spec, "l3cache", len)) {
+        ORTE_SET_MAPPING_POLICY(tmp, ORTE_MAPPING_BYL3CACHE);
+    } else if (0 == strncasecmp(spec, "socket", len)) {
+        ORTE_SET_MAPPING_POLICY(tmp, ORTE_MAPPING_BYSOCKET);
+    } else if (0 == strncasecmp(spec, "numa", len)) {
+        ORTE_SET_MAPPING_POLICY(tmp, ORTE_MAPPING_BYNUMA);
+    } else if (0 == strncasecmp(spec, "board", len)) {
+        ORTE_SET_MAPPING_POLICY(tmp, ORTE_MAPPING_BYBOARD);
+    } else if (0 == strncasecmp(spec, "hwthread", len)) {
+        ORTE_SET_MAPPING_POLICY(tmp, ORTE_MAPPING_BYHWTHREAD);
+        /* if we are mapping processes to individual hwthreads, then
+         * we need to treat those hwthreads as separate cpus
+         */
+        opal_hwloc_use_hwthreads_as_cpus = true;
+    } else if (0 == strncasecmp(spec, "dist", len)) {
+        if (NULL != rmaps_dist_device) {
+            if (NULL != (pch = strchr(rmaps_dist_device, ':'))) {
+                *pch = '\0';
+            }
+            if (NULL != device) {
+                *device = strdup(rmaps_dist_device);
+            }
+            ORTE_SET_MAPPING_POLICY(tmp, ORTE_MAPPING_BYDIST);
         } else {
-            orte_show_help("help-orte-rmaps-base.txt", "unrecognized-policy", true, "mapping", spec);
+            orte_show_help("help-orte-rmaps-base.txt", "device-not-specified", true);
             free(spec);
             return ORTE_ERR_SILENT;
         }
+    } else {
+        orte_show_help("help-orte-rmaps-base.txt", "unrecognized-policy", true, "mapping", spec);
         free(spec);
-        ORTE_SET_MAPPING_DIRECTIVE(tmp, ORTE_MAPPING_GIVEN);
+        return ORTE_ERR_SILENT;
     }
+    free(spec);
+    ORTE_SET_MAPPING_DIRECTIVE(tmp, ORTE_MAPPING_GIVEN);
 
  setpolicy:
-    *policy = tmp;
+    if (NULL == jdata || NULL == jdata->map) {
+        *policy = tmp;
+    } else {
+        jdata->map->mapping = tmp;
+    }
 
     return ORTE_SUCCESS;
 }
