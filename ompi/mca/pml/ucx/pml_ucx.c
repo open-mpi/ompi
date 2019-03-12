@@ -422,6 +422,7 @@ int mca_pml_ucx_add_procs(struct ompi_proc_t **procs, size_t nprocs)
         }
     }
 
+    opal_common_ucx_mca_proc_added();
     return OMPI_SUCCESS;
 }
 
