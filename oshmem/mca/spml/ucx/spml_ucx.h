@@ -74,13 +74,13 @@ typedef struct mca_spml_ucx_ctx mca_spml_ucx_ctx_t;
 
 extern mca_spml_ucx_ctx_t mca_spml_ucx_ctx_default;
 
-struct mca_spml_ucx_ctx_list_item {
-    opal_list_item_t super;
-    mca_spml_ucx_ctx_t ctx;
-};
-typedef struct mca_spml_ucx_ctx_list_item mca_spml_ucx_ctx_list_item_t;
-
 typedef spml_ucx_mkey_t * (*mca_spml_ucx_get_mkey_slow_fn_t)(shmem_ctx_t ctx, int pe, void *va, void **rva);
+
+typedef struct mca_spml_ucx_ctx_array {
+    int                      ctxs_count;
+    int                      ctxs_num;
+    mca_spml_ucx_ctx_t       **ctxs;
+} mca_spml_ucx_ctx_array_t;
 
 struct mca_spml_ucx {
     mca_spml_base_module_t   super;
@@ -90,8 +90,8 @@ struct mca_spml_ucx {
     bool                     enabled;
     mca_spml_ucx_get_mkey_slow_fn_t get_mkey_slow;
     char                     **remote_addrs_tbl;
-    opal_list_t              ctx_list;
-    opal_list_t              idle_ctx_list;
+    mca_spml_ucx_ctx_array_t active_array;
+    mca_spml_ucx_ctx_array_t idle_array;
     int                      priority; /* component priority */
     shmem_internal_mutex_t   internal_mutex;
 };
@@ -151,7 +151,8 @@ extern int mca_spml_ucx_add_procs(ompi_proc_t** procs, size_t nprocs);
 extern int mca_spml_ucx_del_procs(ompi_proc_t** procs, size_t nprocs);
 extern int mca_spml_ucx_fence(shmem_ctx_t ctx);
 extern int mca_spml_ucx_quiet(shmem_ctx_t ctx);
-extern int spml_ucx_progress(void);
+extern int spml_ucx_default_progress(void);
+extern int spml_ucx_ctx_progress(void);
 
 static void mca_spml_ucx_cache_mkey(mca_spml_ucx_ctx_t *ucx_ctx, sshmem_mkey_t *mkey, uint32_t segno, int dst_pe)
 {
@@ -191,6 +192,9 @@ static inline int ucx_status_to_oshmem_nb(ucs_status_t status)
     return OSHMEM_SUCCESS;
 #endif
 }
+
+#define MCA_SPML_UCX_CTXS_ARRAY_SIZE 64
+#define MCA_SPML_UCX_CTXS_ARRAY_INC 64
 
 END_C_DECLS
 
