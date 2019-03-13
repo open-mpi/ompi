@@ -151,6 +151,7 @@ void opal_common_ucx_mca_proc_added(void)
         }
     }
 #endif
+}
 
 OPAL_DECLSPEC int opal_common_ucx_mca_pmix_fence_nb(int *fenced)
 {
