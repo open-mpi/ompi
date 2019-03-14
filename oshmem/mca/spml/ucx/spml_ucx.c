@@ -138,6 +138,8 @@ int mca_spml_ucx_del_procs(ompi_proc_t** procs, size_t nprocs)
 
     mca_spml_ucx_ctx_default.ucp_peers = NULL;
 
+    opal_common_ucx_mca_proc_added();
+
     return ret;
 }
 
