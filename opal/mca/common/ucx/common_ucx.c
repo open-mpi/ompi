@@ -132,6 +132,27 @@ static void opal_common_ucx_mca_fence_complete_cb(int status, void *fenced)
     *(int*)fenced = 1;
 }
 
+void opal_common_ucx_mca_proc_added(void)
+{
+#if HAVE_DECL_UCM_TEST_EVENTS
+    static int warned = 0;
+    static char *mem_hooks_suggestion = "Pls try adding --mca opal_common_ucx_opal_mem_hooks 1 "
+                                        "to mpirun/oshrun command line to resolve this issue.";
+    ucs_status_t status;
+
+    if (!warned) {
+        status = ucm_test_events(UCM_EVENT_VM_UNMAPPED);
+        if (status != UCS_OK) {
+            MCA_COMMON_UCX_WARN("UCX is unable to handle VM_UNMAP event. "
+                                "This may cause performance degradation or data "
+                                "corruption. %s",
+                                opal_common_ucx.opal_mem_hooks ? "" : mem_hooks_suggestion);
+            warned = 1;
+        }
+    }
+#endif
+}
+
 OPAL_DECLSPEC int opal_common_ucx_mca_pmix_fence(ucp_worker_h worker)
 {
     volatile int fenced = 0;

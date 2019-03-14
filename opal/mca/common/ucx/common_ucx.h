@@ -44,10 +44,11 @@ BEGIN_C_DECLS
 #define MCA_COMMON_UCX_QUOTE(_x) \
     _MCA_COMMON_UCX_QUOTE(_x)
 
-#define MCA_COMMON_UCX_ERROR(...)                                   \
-    opal_output_verbose(0, opal_common_ucx.output,                  \
-                        __FILE__ ":" MCA_COMMON_UCX_QUOTE(__LINE__) \
-                        " Error: " __VA_ARGS__)
+#define MCA_COMMON_UCX_ERROR(...) \
+    MCA_COMMON_UCX_VERBOSE(0, " Error: " __VA_ARGS__)
+
+#define MCA_COMMON_UCX_WARN(...) \
+    MCA_COMMON_UCX_VERBOSE(0, " Warning: " __VA_ARGS__)
 
 #define MCA_COMMON_UCX_VERBOSE(_level, ... )                                \
     if (((_level) <= MCA_COMMON_UCX_MAX_VERBOSE) &&                         \
@@ -101,6 +102,7 @@ extern opal_common_ucx_module_t opal_common_ucx;
 
 OPAL_DECLSPEC void opal_common_ucx_mca_register(void);
 OPAL_DECLSPEC void opal_common_ucx_mca_deregister(void);
+OPAL_DECLSPEC void opal_common_ucx_mca_proc_added(void);
 OPAL_DECLSPEC void opal_common_ucx_empty_complete_cb(void *request, ucs_status_t status);
 OPAL_DECLSPEC int opal_common_ucx_mca_pmix_fence(ucp_worker_h worker);
 OPAL_DECLSPEC int opal_common_ucx_del_procs(opal_common_ucx_del_proc_t *procs, size_t count,
