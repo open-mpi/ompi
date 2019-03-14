@@ -136,9 +136,8 @@ void opal_common_ucx_mca_proc_added(void)
 {
 #if HAVE_DECL_UCM_TEST_EVENTS
     static int warned = 0;
-    static char *mem_hooks_suggestion = "Try to add command line agrument "
-                                        "'--mca opal_common_ucx_opal_mem_hooks 1' to resolve "
-                                        "this issue.";
+    static char *mem_hooks_suggestion = "Pls try adding --mca opal_common_ucx_opal_mem_hooks 1 "
+                                        "to mpirun/oshrun command line to resolve this issue.";
     ucs_status_t status;
 
     if (!warned) {
