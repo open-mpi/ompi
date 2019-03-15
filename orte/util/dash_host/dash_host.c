@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2013      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2014-2018 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
@@ -52,7 +52,8 @@ int orte_util_dash_host_compute_slots(orte_node_t *node, char *hosts)
 
     /* see if this node appears in the list */
     for (n=0; NULL != specs[n]; n++) {
-        if (0 == strncmp(node->name, specs[n], strlen(node->name))) {
+        if (0 == strncmp(node->name, specs[n], strlen(node->name)) ||
+            (orte_ifislocal(node->name) && orte_ifislocal(specs[n]))) {
             /* check if the #slots was specified */
             if (NULL != (cptr = strchr(specs[n], ':'))) {
                 *cptr = '\0';

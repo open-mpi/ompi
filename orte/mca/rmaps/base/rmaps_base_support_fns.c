@@ -12,7 +12,7 @@
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -210,18 +210,17 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
             return ORTE_ERR_SILENT;
         }
         /* find the nodes in our node array and assemble them
-         * in daemon order if the vm was launched
+         * in list order as that is what the user specified
          */
-        for (i=0; i < orte_node_pool->size; i++) {
-            nd = NULL;
-            if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i))) {
-                continue;
-            }
-            /* ignore nodes that are non-usable */
-            if (ORTE_FLAG_TEST(node, ORTE_NODE_NON_USABLE)) {
-                continue;
-            }
-            OPAL_LIST_FOREACH_SAFE(nptr, next, &nodes, orte_node_t) {
+        OPAL_LIST_FOREACH_SAFE(nptr, next, &nodes, orte_node_t) {
+            for (i=0; i < orte_node_pool->size; i++) {
+                if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i))) {
+                    continue;
+                }
+                /* ignore nodes that are non-usable */
+                if (ORTE_FLAG_TEST(node, ORTE_NODE_NON_USABLE)) {
+                    continue;
+                }
                 if (0 != strcmp(node->name, nptr->name)) {
                     OPAL_OUTPUT_VERBOSE((10, orte_rmaps_base_framework.framework_output,
                                          "NODE %s DOESNT MATCH NODE %s",
@@ -266,37 +265,14 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
                      */
                     ORTE_FLAG_UNSET(node, ORTE_NODE_FLAG_MAPPED);
                 }
-                if (NULL == nd || NULL == nd->daemon ||
-                    NULL == node->daemon ||
-                    nd->daemon->name.vpid < node->daemon->name.vpid) {
-                    /* just append to end */
-                    opal_list_append(allocated_nodes, &node->super);
-                    nd = node;
-                } else {
-                    /* starting from end, put this node in daemon-vpid order */
-                    while (node->daemon->name.vpid < nd->daemon->name.vpid) {
-                        if (opal_list_get_begin(allocated_nodes) == opal_list_get_prev(&nd->super)) {
-                            /* insert at beginning */
-                            opal_list_prepend(allocated_nodes, &node->super);
-                            goto moveon1;
-                        }
-                        nd = (orte_node_t*)opal_list_get_prev(&nd->super);
-                    }
-                    item = opal_list_get_next(&nd->super);
-                    if (item == opal_list_get_end(allocated_nodes)) {
-                        /* we are at the end - just append */
-                        opal_list_append(allocated_nodes, &node->super);
-                    } else {
-                        nd = (orte_node_t*)item;
-                        opal_list_insert_pos(allocated_nodes, item, &node->super);
-                    }
-                moveon1:
-                    /* reset us back to the end for the next node */
-                    nd = (orte_node_t*)opal_list_get_last(allocated_nodes);
-                }
-                opal_list_remove_item(&nodes, (opal_list_item_t*)nptr);
-                OBJ_RELEASE(nptr);
+                /* the list is ordered as per user direction using -host
+                 * or the listing in -hostfile - preserve that ordering */
+                opal_list_append(allocated_nodes, &node->super);
+                break;
             }
+            /* remove the item from the list as we have allocated it */
+            opal_list_remove_item(&nodes, (opal_list_item_t*)nptr);
+            OBJ_RELEASE(nptr);
         }
         OBJ_DESTRUCT(&nodes);
         /* now prune for usage and compute total slots */
