@@ -18,6 +18,9 @@
  * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
+ * Copyright (c) 2018      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -301,6 +304,7 @@ static int mca_btl_vader_component_open(void)
     OBJ_CONSTRUCT(&mca_btl_vader_component.vader_frags_eager, opal_free_list_t);
     OBJ_CONSTRUCT(&mca_btl_vader_component.vader_frags_user, opal_free_list_t);
     OBJ_CONSTRUCT(&mca_btl_vader_component.vader_frags_max_send, opal_free_list_t);
+    OBJ_CONSTRUCT(&mca_btl_vader_component.vader_fboxes, opal_free_list_t);
     OBJ_CONSTRUCT(&mca_btl_vader_component.lock, opal_mutex_t);
     OBJ_CONSTRUCT(&mca_btl_vader_component.pending_endpoints, opal_list_t);
     OBJ_CONSTRUCT(&mca_btl_vader_component.pending_fragments, opal_list_t);
@@ -321,6 +325,7 @@ static int mca_btl_vader_component_close(void)
     OBJ_DESTRUCT(&mca_btl_vader_component.vader_frags_eager);
     OBJ_DESTRUCT(&mca_btl_vader_component.vader_frags_user);
     OBJ_DESTRUCT(&mca_btl_vader_component.vader_frags_max_send);
+    OBJ_DESTRUCT(&mca_btl_vader_component.vader_fboxes);
     OBJ_DESTRUCT(&mca_btl_vader_component.lock);
     OBJ_DESTRUCT(&mca_btl_vader_component.pending_endpoints);
     OBJ_DESTRUCT(&mca_btl_vader_component.pending_fragments);
@@ -517,7 +522,6 @@ static mca_btl_base_module_t **mca_btl_vader_component_init (int *num_btls,
 
     /* no fast boxes allocated initially */
     component->num_fbox_in_endpoints = 0;
-    component->fbox_count = 0;
 
     mca_btl_vader_check_single_copy ();
 
@@ -558,8 +562,6 @@ static mca_btl_base_module_t **mca_btl_vader_component_init (int *num_btls,
             return NULL;
         }
     }
-
-    component->segment_offset = 0;
 
     /* initialize my fifo */
     vader_fifo_init ((struct vader_fifo_t *) component->my_segment);

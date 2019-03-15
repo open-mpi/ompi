@@ -17,7 +17,7 @@
  * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2018      Triad National Security, LLC. All rights
+ * Copyright (c) 2018-2019 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -97,19 +97,32 @@ static int vader_btl_first_time_init(mca_btl_vader_t *vader_btl, int n)
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
 
-    component->segment_offset = MCA_BTL_VADER_FIFO_SIZE;
+    component->mpool = mca_mpool_basic_create ((void *) (component->my_segment + MCA_BTL_VADER_FIFO_SIZE),
+                                               (unsigned long) (mca_btl_vader_component.segment_size - MCA_BTL_VADER_FIFO_SIZE), 64);
+    if (NULL == component->mpool) {
+        free (component->endpoints);
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
+
+    rc = opal_free_list_init (&component->vader_fboxes, sizeof (opal_free_list_item_t), 8,
+                              OBJ_CLASS(opal_free_list_item_t), mca_btl_vader_component.fbox_size,
+                              opal_cache_line_size, 0, mca_btl_vader_component.fbox_max, 4,
+                              component->mpool, 0, NULL, NULL, NULL);
+    if (OPAL_SUCCESS != rc) {
+        return rc;
+    }
 
     /* initialize fragment descriptor free lists */
     /* initialize free list for small send and inline fragments */
     rc = opal_free_list_init (&component->vader_frags_user,
                               sizeof(mca_btl_vader_frag_t),
                               opal_cache_line_size, OBJ_CLASS(mca_btl_vader_frag_t),
-                              0, opal_cache_line_size,
-                              component->vader_free_list_num,
+                              mca_btl_vader_component.max_inline_send + sizeof (mca_btl_vader_frag_t),
+                              opal_cache_line_size, component->vader_free_list_num,
                               component->vader_free_list_max,
                               component->vader_free_list_inc,
-                              NULL, 0, NULL, mca_btl_vader_frag_init,
-                              (void *)(intptr_t) mca_btl_vader_component.max_inline_send);
+                              component->mpool, 0, NULL, mca_btl_vader_frag_init,
+                              &component->vader_frags_user);
     if (OPAL_SUCCESS != rc) {
         return rc;
     }
@@ -118,12 +131,12 @@ static int vader_btl_first_time_init(mca_btl_vader_t *vader_btl, int n)
     rc = opal_free_list_init (&component->vader_frags_eager,
                               sizeof (mca_btl_vader_frag_t),
                               opal_cache_line_size, OBJ_CLASS(mca_btl_vader_frag_t),
-                              0, opal_cache_line_size,
-                              component->vader_free_list_num,
+                              mca_btl_vader.super.btl_eager_limit + sizeof (mca_btl_vader_frag_t),
+                              opal_cache_line_size, component->vader_free_list_num,
                               component->vader_free_list_max,
                               component->vader_free_list_inc,
-                              NULL, 0, NULL, mca_btl_vader_frag_init,
-                              (void *)(intptr_t) mca_btl_vader.super.btl_eager_limit);
+                              component->mpool, 0, NULL, mca_btl_vader_frag_init,
+                              &component->vader_frags_eager);
     if (OPAL_SUCCESS != rc) {
         return rc;
     }
@@ -133,12 +146,12 @@ static int vader_btl_first_time_init(mca_btl_vader_t *vader_btl, int n)
         rc = opal_free_list_init (&component->vader_frags_max_send,
                                   sizeof (mca_btl_vader_frag_t),
                                   opal_cache_line_size, OBJ_CLASS(mca_btl_vader_frag_t),
-                                  0, opal_cache_line_size,
-                                  component->vader_free_list_num,
+                                  mca_btl_vader.super.btl_max_send_size + sizeof (mca_btl_vader_frag_t),
+                                  opal_cache_line_size, component->vader_free_list_num,
                                   component->vader_free_list_max,
                                   component->vader_free_list_inc,
-                                  NULL, 0, NULL, mca_btl_vader_frag_init,
-                                  (void *)(intptr_t) mca_btl_vader.super.btl_max_send_size);
+                                  component->mpool, 0, NULL, mca_btl_vader_frag_init,
+                                  &component->vader_frags_max_send);
         if (OPAL_SUCCESS != rc) {
             return rc;
         }
@@ -367,6 +380,11 @@ static int vader_finalize(struct mca_btl_base_module_t *btl)
     }
 #endif
 
+    if (component->mpool) {
+        component->mpool->mpool_finalize (component->mpool);
+        component->mpool = NULL;
+    }
+
     return OPAL_SUCCESS;
 }
 
@@ -536,6 +554,7 @@ static void mca_btl_vader_endpoint_constructor (mca_btl_vader_endpoint_t *ep)
     OBJ_CONSTRUCT(&ep->pending_frags, opal_list_t);
     OBJ_CONSTRUCT(&ep->pending_frags_lock, opal_mutex_t);
     ep->fifo = NULL;
+    ep->fbox_out.fbox = NULL;
 }
 
 #if OPAL_BTL_VADER_HAVE_XPMEM
@@ -564,8 +583,12 @@ static void mca_btl_vader_endpoint_destructor (mca_btl_vader_endpoint_t *ep)
         /* disconnect from the peer's segment */
         opal_shmem_segment_detach (&seg_ds);
     }
+    if (ep->fbox_out.fbox) {
+        opal_free_list_return (&mca_btl_vader_component.vader_fboxes, ep->fbox_out.fbox);
+    }
 
     ep->fbox_in.buffer = ep->fbox_out.buffer = NULL;
+    ep->fbox_out.fbox = NULL;
     ep->segment_base = NULL;
     ep->fifo = NULL;
 }
