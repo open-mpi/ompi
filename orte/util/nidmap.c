@@ -1032,7 +1032,7 @@ int orte_util_decode_ppn(orte_job_t *jdata,
 {
     orte_std_cntr_t index;
     orte_app_idx_t n;
-    int cnt, rc;
+    int cnt, rc, m;
     opal_byte_object_t *boptr;
     bool compressed;
     uint8_t *bytes;
@@ -1043,8 +1043,8 @@ int orte_util_decode_ppn(orte_job_t *jdata,
     opal_buffer_t bucket;
 
     /* reset any flags */
-    for (n=0; n < orte_node_pool->size; n++) {
-        if (NULL != (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, n))) {
+    for (m=0; m < orte_node_pool->size; m++) {
+        if (NULL != (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, m))) {
             ORTE_FLAG_UNSET(node, ORTE_NODE_FLAG_MAPPED);
         }
     }
@@ -1144,9 +1144,11 @@ int orte_util_decode_ppn(orte_job_t *jdata,
     }
 
     /* reset any flags */
-    for (n=0; n < jdata->map->nodes->size; n++) {
-        node = (orte_node_t*)opal_pointer_array_get_item(jdata->map->nodes, n);
-        ORTE_FLAG_UNSET(node, ORTE_NODE_FLAG_MAPPED);
+    for (m=0; m < jdata->map->nodes->size; m++) {
+        node = (orte_node_t*)opal_pointer_array_get_item(jdata->map->nodes, m);
+        if (NULL != node) {
+            ORTE_FLAG_UNSET(node, ORTE_NODE_FLAG_MAPPED);
+        }
     }
 
     return ORTE_SUCCESS;
@@ -1154,9 +1156,11 @@ int orte_util_decode_ppn(orte_job_t *jdata,
   error:
     OBJ_DESTRUCT(&bucket);
     /* reset any flags */
-    for (n=0; n < jdata->map->nodes->size; n++) {
-        node = (orte_node_t*)opal_pointer_array_get_item(jdata->map->nodes, n);
-        ORTE_FLAG_UNSET(node, ORTE_NODE_FLAG_MAPPED);
+    for (m=0; m < jdata->map->nodes->size; m++) {
+        node = (orte_node_t*)opal_pointer_array_get_item(jdata->map->nodes, m);
+        if (NULL != node) {
+            ORTE_FLAG_UNSET(node, ORTE_NODE_FLAG_MAPPED);
+        }
     }
     return rc;
 }
