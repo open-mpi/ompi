@@ -1088,6 +1088,7 @@ int orte_util_decode_ppn(orte_job_t *jdata,
             }
         } else {
             bytes = boptr->bytes;
+            sz = boptr->size;
             boptr->bytes = NULL;
             boptr->size = 0;
         }
@@ -1134,6 +1135,7 @@ int orte_util_decode_ppn(orte_job_t *jdata,
                 /* flag the proc as ready for launch */
                 proc->state = ORTE_PROC_STATE_INIT;
                 opal_pointer_array_add(node->procs, proc);
+                node->num_procs++;
                 /* we will add the proc to the jdata array when we
                  * compute its rank */
             }
@@ -1141,6 +1143,9 @@ int orte_util_decode_ppn(orte_job_t *jdata,
             cnt = 1;
         }
         OBJ_DESTRUCT(&bucket);
+    }
+    if (OPAL_ERR_UNPACK_READ_PAST_END_OF_BUFFER != rc) {
+        ORTE_ERROR_LOG(rc);
     }
 
     /* reset any flags */
@@ -1150,7 +1155,6 @@ int orte_util_decode_ppn(orte_job_t *jdata,
             ORTE_FLAG_UNSET(node, ORTE_NODE_FLAG_MAPPED);
         }
     }
-
     return ORTE_SUCCESS;
 
   error:
