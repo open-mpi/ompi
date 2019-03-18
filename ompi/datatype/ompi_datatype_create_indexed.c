@@ -15,6 +15,7 @@
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2019      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -34,8 +35,9 @@ int32_t ompi_datatype_create_indexed( int count, const int* pBlockLength, const 
                                       const ompi_datatype_t* oldType, ompi_datatype_t** newType )
 {
     ompi_datatype_t* pdt;
-    int i, dLength, endat, disp;
-    ptrdiff_t extent;
+    int i;
+    ptrdiff_t extent, disp, endat;
+    size_t dLength;
 
     if( 0 == count ) {
         return ompi_datatype_duplicate( &ompi_mpi_datatype_null.dt, newType);
@@ -70,8 +72,9 @@ int32_t ompi_datatype_create_hindexed( int count, const int* pBlockLength, const
                                        const ompi_datatype_t* oldType, ompi_datatype_t** newType )
 {
     ompi_datatype_t* pdt;
-    int i, dLength;
+    int i;
     ptrdiff_t extent, disp, endat;
+    size_t dLength;
 
     if( 0 == count ) {
         *newType = ompi_datatype_create( 0 );
@@ -108,8 +111,9 @@ int32_t ompi_datatype_create_indexed_block( int count, int bLength, const int* p
                                             const ompi_datatype_t* oldType, ompi_datatype_t** newType )
 {
     ompi_datatype_t* pdt;
-    int i, dLength, endat, disp;
-    ptrdiff_t extent;
+    int i;
+    ptrdiff_t extent, disp, endat;
+    size_t dLength;
 
     ompi_datatype_type_extent( oldType, &extent );
     if( (count == 0) || (bLength == 0) ) {
@@ -147,8 +151,9 @@ int32_t ompi_datatype_create_hindexed_block( int count, int bLength, const ptrdi
                                              const ompi_datatype_t* oldType, ompi_datatype_t** newType )
 {
     ompi_datatype_t* pdt;
-    int i, dLength;
+    int i;
     ptrdiff_t extent, disp, endat;
+    size_t dLength;
 
     ompi_datatype_type_extent( oldType, &extent );
     if( (count == 0) || (bLength == 0) ) {
