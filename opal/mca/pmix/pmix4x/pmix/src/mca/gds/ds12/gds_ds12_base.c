@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2015-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2016-2018 IBM Corporation.  All rights reserved.
- * Copyright (c) 2016-2018 Mellanox Technologies, Inc.
+ * Copyright (c) 2016-2019 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2018      Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
@@ -119,10 +119,10 @@ static pmix_status_t ds12_store(const pmix_proc_t *proc,
  * always contains data solely from remote procs, and we
  * shall store it accordingly */
 static pmix_status_t ds12_store_modex(struct pmix_namespace_t *nspace,
-                                      pmix_list_t *cbs,
-                                      pmix_buffer_t *buf)
+                                      pmix_buffer_t *buf,
+                                      void *cbdata)
 {
-    return pmix_common_dstor_store_modex(ds12_ctx, nspace, cbs, buf);
+    return pmix_common_dstor_store_modex(ds12_ctx, nspace, buf, cbdata);
 }
 
 static pmix_status_t ds12_fetch(const pmix_proc_t *proc,

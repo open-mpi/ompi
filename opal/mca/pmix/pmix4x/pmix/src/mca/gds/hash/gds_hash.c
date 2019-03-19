@@ -1,9 +1,9 @@
 /*
- * Copyright (c) 2015-2018 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2016-2018 IBM Corporation.  All rights reserved.
  * Copyright (c) 2018      Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
- * Copyright (c) 2018      Mellanox Technologies, Inc.
+ * Copyright (c) 2018-2019 Mellanox Technologies, Inc.
  *                         All rights reserved.
  *
  * $COPYRIGHT$
@@ -37,7 +37,7 @@
 #include "src/client/pmix_client_ops.h"
 #include "src/server/pmix_server_ops.h"
 #include "src/util/argv.h"
-#include "src/util/compress.h"
+#include "src/mca/pcompress/base/base.h"
 #include "src/util/error.h"
 #include "src/util/hash.h"
 #include "src/util/output.h"
@@ -67,13 +67,12 @@ static pmix_status_t hash_store(const pmix_proc_t *proc,
                                 pmix_kval_t *kv);
 
 static pmix_status_t hash_store_modex(struct pmix_namespace_t *ns,
-                                      pmix_list_t *cbs,
-                                      pmix_buffer_t *buff);
+                                      pmix_buffer_t *buff,
+                                      void *cbdata);
 
-static pmix_status_t _hash_store_modex(void * cbdata,
-                                       struct pmix_namespace_t *ns,
-                                       pmix_list_t *cbs,
-                                       pmix_byte_object_t *bo);
+static pmix_status_t _hash_store_modex(pmix_gds_base_ctx_t ctx,
+                                       pmix_proc_t *proc,
+                                       pmix_buffer_t *pbkt);
 
 static pmix_status_t hash_fetch(const pmix_proc_t *proc,
                                 pmix_scope_t scope, bool copy,
@@ -487,7 +486,7 @@ pmix_status_t hash_cache_job_info(struct pmix_namespace_t *ns,
                 /* if the value contains a string that is longer than the
                  * limit, then compress it */
                 if (PMIX_STRING_SIZE_CHECK(kp2->value)) {
-                    if (pmix_util_compress_string(kp2->value->data.string, &tmp, &len)) {
+                    if (pmix_compress.compress_string(kp2->value->data.string, &tmp, &len)) {
                         if (NULL == tmp) {
                             PMIX_ERROR_LOG(PMIX_ERR_NOMEM);
                             rc = PMIX_ERR_NOMEM;
@@ -524,7 +523,7 @@ pmix_status_t hash_cache_job_info(struct pmix_namespace_t *ns,
             /* if the value contains a string that is longer than the
              * limit, then compress it */
             if (PMIX_STRING_SIZE_CHECK(kp2->value)) {
-                if (pmix_util_compress_string(kp2->value->data.string, &tmp, &len)) {
+                if (pmix_compress.compress_string(kp2->value->data.string, &tmp, &len)) {
                     if (NULL == tmp) {
                         rc = PMIX_ERR_NOMEM;
                         PMIX_ERROR_LOG(rc);
@@ -852,7 +851,7 @@ static pmix_status_t hash_store_job_info(const char *nspace,
                 /* if the value contains a string that is longer than the
                  * limit, then compress it */
                 if (PMIX_STRING_SIZE_CHECK(kp2->value)) {
-                    if (pmix_util_compress_string(kp2->value->data.string, &tmp, &len)) {
+                    if (pmix_compress.compress_string(kp2->value->data.string, &tmp, &len)) {
                         if (NULL == tmp) {
                             PMIX_ERROR_LOG(PMIX_ERR_NOMEM);
                             rc = PMIX_ERR_NOMEM;
@@ -1032,7 +1031,7 @@ static pmix_status_t hash_store_job_info(const char *nspace,
             /* if the value contains a string that is longer than the
              * limit, then compress it */
             if (PMIX_STRING_SIZE_CHECK(kptr->value)) {
-                if (pmix_util_compress_string(kptr->value->data.string, &tmp, &len)) {
+                if (pmix_compress.compress_string(kptr->value->data.string, &tmp, &len)) {
                     if (NULL == tmp) {
                         PMIX_ERROR_LOG(PMIX_ERR_NOMEM);
                         rc = PMIX_ERR_NOMEM;
@@ -1190,33 +1189,30 @@ static pmix_status_t hash_store(const pmix_proc_t *proc,
  * always contains data solely from remote procs, and we
  * shall store it accordingly */
 static pmix_status_t hash_store_modex(struct pmix_namespace_t *nspace,
-                                      pmix_list_t *cbs,
-                                      pmix_buffer_t *buf) {
-    return pmix_gds_base_store_modex(nspace, cbs, buf, _hash_store_modex, NULL);
+                                      pmix_buffer_t *buf,
+                                      void *cbdata) {
+    return pmix_gds_base_store_modex(nspace, buf, NULL,
+                                     _hash_store_modex, cbdata);
 }
 
-static pmix_status_t _hash_store_modex(void * cbdata,
-                                       struct pmix_namespace_t *nspace,
-                                       pmix_list_t *cbs,
-                                       pmix_byte_object_t *bo)
+static pmix_status_t _hash_store_modex(pmix_gds_base_ctx_t ctx,
+                                       pmix_proc_t *proc,
+                                       pmix_buffer_t *pbkt)
 {
-    pmix_namespace_t *ns = (pmix_namespace_t*)nspace;
     pmix_hash_trkr_t *trk, *t;
     pmix_status_t rc = PMIX_SUCCESS;
     int32_t cnt;
-    pmix_buffer_t pbkt;
-    pmix_proc_t proc;
     pmix_kval_t *kv;
 
     pmix_output_verbose(2, pmix_gds_base_framework.framework_output,
                         "[%s:%d] gds:hash:store_modex for nspace %s",
                         pmix_globals.myid.nspace, pmix_globals.myid.rank,
-                        ns->nspace);
+                        proc->nspace);
 
     /* find the hash table for this nspace */
     trk = NULL;
     PMIX_LIST_FOREACH(t, &myhashes, pmix_hash_trkr_t) {
-        if (0 == strcmp(ns->nspace, t->ns)) {
+        if (0 == strcmp(proc->nspace, t->ns)) {
             trk = t;
             break;
         }
@@ -1224,7 +1220,7 @@ static pmix_status_t _hash_store_modex(void * cbdata,
     if (NULL == trk) {
         /* create one */
         trk = PMIX_NEW(pmix_hash_trkr_t);
-        trk->ns = strdup(ns->nspace);
+        trk->ns = strdup(proc->nspace);
         pmix_list_append(&myhashes, &trk->super);
     }
 
@@ -1234,41 +1230,26 @@ static pmix_status_t _hash_store_modex(void * cbdata,
      * the rank followed by pmix_kval_t's. The list of callbacks
      * contains all local participants. */
 
-    /* setup the byte object for unpacking */
-    PMIX_CONSTRUCT(&pbkt, pmix_buffer_t);
-    /* the next step unfortunately NULLs the byte object's
-     * entries, so we need to ensure we restore them! */
-    PMIX_LOAD_BUFFER(pmix_globals.mypeer, &pbkt, bo->bytes, bo->size);
-    /* unload the proc that provided this data */
-    cnt = 1;
-    PMIX_BFROPS_UNPACK(rc, pmix_globals.mypeer, &pbkt, &proc, &cnt, PMIX_PROC);
+    PMIX_BFROPS_UNPACK(rc, pmix_globals.mypeer, pbkt, proc, &cnt, PMIX_PROC);
     if (PMIX_SUCCESS != rc) {
         PMIX_ERROR_LOG(rc);
-        bo->bytes = pbkt.base_ptr;
-        bo->size = pbkt.bytes_used; // restore the incoming data
-        pbkt.base_ptr = NULL;
-        PMIX_DESTRUCT(&pbkt);
         return rc;
     }
     /* unpack the remaining values until we hit the end of the buffer */
     cnt = 1;
     kv = PMIX_NEW(pmix_kval_t);
-    PMIX_BFROPS_UNPACK(rc, pmix_globals.mypeer, &pbkt, kv, &cnt, PMIX_KVAL);
+    PMIX_BFROPS_UNPACK(rc, pmix_globals.mypeer, pbkt, kv, &cnt, PMIX_KVAL);
     while (PMIX_SUCCESS == rc) {
         /* store this in the hash table */
-        if (PMIX_SUCCESS != (rc = pmix_hash_store(&trk->remote, proc.rank, kv))) {
+        if (PMIX_SUCCESS != (rc = pmix_hash_store(&trk->remote, proc->rank, kv))) {
             PMIX_ERROR_LOG(rc);
-            bo->bytes = pbkt.base_ptr;
-            bo->size = pbkt.bytes_used; // restore the incoming data
-            pbkt.base_ptr = NULL;
-            PMIX_DESTRUCT(&pbkt);
             return rc;
         }
         PMIX_RELEASE(kv);  // maintain accounting as the hash increments the ref count
         /* continue along */
         kv = PMIX_NEW(pmix_kval_t);
         cnt = 1;
-        PMIX_BFROPS_UNPACK(rc, pmix_globals.mypeer, &pbkt, kv, &cnt, PMIX_KVAL);
+        PMIX_BFROPS_UNPACK(rc, pmix_globals.mypeer, pbkt, kv, &cnt, PMIX_KVAL);
     }
     PMIX_RELEASE(kv);  // maintain accounting
     if (PMIX_ERR_UNPACK_READ_PAST_END_OF_BUFFER != rc) {
@@ -1276,10 +1257,6 @@ static pmix_status_t _hash_store_modex(void * cbdata,
     } else {
         rc = PMIX_SUCCESS;
     }
-    bo->bytes = pbkt.base_ptr;
-    bo->size = pbkt.bytes_used; // restore the incoming data
-    pbkt.base_ptr = NULL;
-    PMIX_DESTRUCT(&pbkt);
     return rc;
 }
 

@@ -694,7 +694,7 @@ PMIX_EXPORT pmix_status_t PMIx_IOF_deregister(size_t iofhdlr,
                                               pmix_op_cbfunc_t cbfunc, void *cbdata);
 
 /* Push data collected locally (typically from stdin) to
- * target recipients.
+ * stdin of target recipients.
  *
  * targets - array of process identifiers to which the data is to be delivered. Note
  *           that a WILDCARD rank indicates that all procs in the given nspace are
@@ -768,7 +768,7 @@ PMIX_EXPORT pmix_status_t PMIx_IOF_push(const pmix_proc_t targets[], size_t ntar
  * Any participant that returns PMIX_GROUP_CONSTRUCT_ABORT from the leader failed
  * event handler will cause the construct process to abort. Those processes
  * engaged in the blocking construct will return from the call with the
- * PMIX_GROUP_CONSTRUCT_ABORT status. Non-blocking partipants will have
+ * PMIX_GROUP_CONSTRUCT_ABORT status. Non-blocking participants will have
  * their callback function executed with that status.
  *
  * Some relevant attributes for this operation:
@@ -790,7 +790,6 @@ PMIX_EXPORT pmix_status_t PMIx_IOF_push(const pmix_proc_t targets[], size_t ntar
  *                   specified number of seconds. Targets the scenario where a
  *                   process fails to call PMIx_Group_connect due to hanging
  *
- * Recognizing
  */
 PMIX_EXPORT pmix_status_t PMIx_Group_construct(const char grp[],
                                                const pmix_proc_t procs[], size_t nprocs,

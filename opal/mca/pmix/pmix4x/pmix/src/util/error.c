@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -151,7 +151,10 @@ PMIX_EXPORT const char* PMIx_Error_string(pmix_status_t errnum)
         return "UNPACK-PAST-END";
     case PMIX_ERR_CONFLICTING_CLEANUP_DIRECTIVES:
         return "PMIX CONFLICTING CLEANUP DIRECTIVES";
-
+    case PMIX_ERR_IOF_FAILURE:
+        return "IOF FAILURE";
+    case PMIX_ERR_IOF_COMPLETE:
+        return "IOF COMPLETE";
 
     case PMIX_ERR_LOST_CONNECTION_TO_SERVER:
         return "LOST_CONNECTION_TO_SERVER";
@@ -230,6 +233,9 @@ PMIX_EXPORT const char* PMIx_Error_string(pmix_status_t errnum)
         return "GROUP-LEADER-FAILED";
     case PMIX_GROUP_CONTEXT_ID_ASSIGNED:
         return "GROUP-CONTEXT-ID-ASSIGNED";
+
+    case PMIX_ERR_REPEAT_ATTR_REGISTRATION:
+        return "REPEAT-ATTRIBUTE-REGISTRATION";
 
     case PMIX_ERR_NODE_DOWN:
         return "NODE-DOWN";

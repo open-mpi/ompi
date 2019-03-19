@@ -50,7 +50,7 @@
 static pmix_status_t tcp_init(void);
 static void tcp_finalize(void);
 static pmix_status_t allocate(pmix_namespace_t *nptr,
-                              pmix_info_t *info,
+                              pmix_info_t info[], size_t ninfo,
                               pmix_list_t *ilist);
 static pmix_status_t setup_local_network(pmix_namespace_t *nptr,
                                          pmix_info_t info[],
@@ -298,7 +298,7 @@ static inline void generate_key(uint64_t* unique_key) {
  * undoubtedly be vastly improved/optimized */
 
 static pmix_status_t allocate(pmix_namespace_t *nptr,
-                              pmix_info_t *info,
+                              pmix_info_t info[], size_t ninfo,
                               pmix_list_t *ilist)
 {
     uint64_t unique_key[2];
@@ -308,7 +308,7 @@ static pmix_status_t allocate(pmix_namespace_t *nptr,
     pmix_status_t rc;
     pmix_info_t *requests = NULL;
     char **reqs, *cptr;
-    bool allocated = false, seckey = false;
+    bool allocated = false, seckey = false, envars = false;
     tcp_port_tracker_t *trk;
     tcp_available_ports_t *avail, *aptr;
     pmix_list_t mylist;
@@ -330,41 +330,49 @@ static pmix_status_t allocate(pmix_namespace_t *nptr,
 
     /* check directives to see if a crypto key and/or
      * network resource allocations requested */
-    PMIX_CONSTRUCT(&mylist, pmix_list_t);
-    if (PMIX_CHECK_KEY(info, PMIX_SETUP_APP_ENVARS) ||
-        PMIX_CHECK_KEY(info, PMIX_SETUP_APP_ALL)) {
+    for (n=0; n < ninfo; n++) {
+        if (PMIX_CHECK_KEY(&info[n], PMIX_SETUP_APP_ENVARS) ||
+            PMIX_CHECK_KEY(&info[n], PMIX_SETUP_APP_ALL)) {
+            envars = PMIX_INFO_TRUE(&info[n]);
+        } else if (PMIX_CHECK_KEY(info, PMIX_ALLOC_NETWORK)) {
+            /* this info key includes an array of pmix_info_t, each providing
+             * a key (that is to be used as the key for the allocated ports) and
+             * a number of ports to allocate for that key */
+            if (PMIX_DATA_ARRAY != info->value.type ||
+                NULL == info->value.data.darray ||
+                PMIX_INFO != info->value.data.darray->type ||
+                NULL == info->value.data.darray->array) {
+                /* they made an error */
+                PMIX_ERROR_LOG(PMIX_ERR_BAD_PARAM);
+                return PMIX_ERR_BAD_PARAM;
+            }
+            requests = (pmix_info_t*)info->value.data.darray->array;
+            nreqs = info->value.data.darray->size;
+        }
+    }
+
+    if (envars) {
         if (NULL != mca_pnet_tcp_component.include) {
-        pmix_output_verbose(2, pmix_pnet_base_framework.framework_output,
-                            "pnet: tcp harvesting envars %s excluding %s",
-                            (NULL == mca_pnet_tcp_component.incparms) ? "NONE" : mca_pnet_tcp_component.incparms,
-                            (NULL == mca_pnet_tcp_component.excparms) ? "NONE" : mca_pnet_tcp_component.excparms);
+            pmix_output_verbose(2, pmix_pnet_base_framework.framework_output,
+                                "pnet: tcp harvesting envars %s excluding %s",
+                                (NULL == mca_pnet_tcp_component.incparms) ? "NONE" : mca_pnet_tcp_component.incparms,
+                                (NULL == mca_pnet_tcp_component.excparms) ? "NONE" : mca_pnet_tcp_component.excparms);
             rc = pmix_pnet_base_harvest_envars(mca_pnet_tcp_component.include,
                                                mca_pnet_tcp_component.exclude,
                                                ilist);
-            return rc;
+            if (PMIX_SUCCESS != rc) {
+                return rc;
+            }
         }
-        return PMIX_SUCCESS;
-    } else if (!PMIX_CHECK_KEY(info, PMIX_ALLOC_NETWORK)) {
-        /* not a network allocation request */
-        return PMIX_SUCCESS;
+    }
+
+    if (NULL == requests) {
+        return PMIX_ERR_TAKE_NEXT_OPTION;
     }
 
     pmix_output_verbose(2, pmix_pnet_base_framework.framework_output,
                         "pnet:tcp:allocate alloc_network for nspace %s",
                         nptr->nspace);
-    /* this info key includes an array of pmix_info_t, each providing
-     * a key (that is to be used as the key for the allocated ports) and
-     * a number of ports to allocate for that key */
-    if (PMIX_DATA_ARRAY != info->value.type ||
-        NULL == info->value.data.darray ||
-        PMIX_INFO != info->value.data.darray->type ||
-        NULL == info->value.data.darray->array) {
-        /* they made an error */
-        PMIX_ERROR_LOG(PMIX_ERR_BAD_PARAM);
-        return PMIX_ERR_BAD_PARAM;
-    }
-    requests = (pmix_info_t*)info->value.data.darray->array;
-    nreqs = info->value.data.darray->size;
     /* cycle thru the provided array and see if this refers to
      * tcp/udp-based resources - there is no required ordering
      * of the keys, so just have to do a search */
@@ -408,6 +416,7 @@ static pmix_status_t allocate(pmix_namespace_t *nptr,
         return PMIX_ERR_BAD_PARAM;
     }
 
+    PMIX_CONSTRUCT(&mylist, pmix_list_t);
     /* must include the idkey */
     kv = PMIX_NEW(pmix_kval_t);
     if (NULL == kv) {

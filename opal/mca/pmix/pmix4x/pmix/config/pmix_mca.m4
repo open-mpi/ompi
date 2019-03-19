@@ -11,7 +11,7 @@ dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2010-2015 Cisco Systems, Inc.  All rights reserved.
-dnl Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
+dnl Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -261,11 +261,6 @@ AC_DEFUN([PMIX_MCA],[
                           m4_ifdef([MCA_pmix_]mca_framework[_CONFIG],
                                    [MCA_pmix_]mca_framework[_CONFIG](mca_framework),
                                    [MCA_CONFIGURE_FRAMEWORK(mca_framework, 1)])])])
-
-    # note that mca_wrapper_extra_* is a running list, and we take checkpoints at the end of our project
-    pmix_mca_wrapper_extra_cppflags="$mca_wrapper_extra_cppflags"
-    pmix_mca_wrapper_extra_ldflags="$mca_wrapper_extra_ldflags"
-    pmix_mca_wrapper_extra_libs="$mca_wrapper_extra_libs"
 
     AC_SUBST(MCA_pmix_FRAMEWORKS)
     AC_SUBST(MCA_pmix_FRAMEWORKS_SUBDIRS)
@@ -622,14 +617,6 @@ AC_DEFUN([MCA_CONFIGURE_ALL_CONFIG_COMPONENTS],[
                         AC_MSG_WARN([MCA component configure script told me to abort])
                         AC_MSG_ERROR([cannot continue])
                     fi
-
-                    m4_foreach(flags, [LDFLAGS, LIBS],
-                        [[line="`$GREP WRAPPER_EXTRA_]flags[= $infile | cut -d= -f2-`"]
-                            eval "line=$line"
-                            if test -n "$line"; then
-                                $2[_]$3[_WRAPPER_EXTRA_]flags[="$line"]
-                            fi
-                        ])dnl
                 fi
 
                 MCA_PROCESS_COMPONENT($1, $component, $2, $3, $4, $5, $compile_mode)
@@ -754,38 +741,6 @@ AC_MSG_ERROR([*** $1 component $2 was supposed to be direct-called, but
 *** Aborting])
         fi
     fi
-
-    # if the component is building, add it's WRAPPER_EXTRA_LDFLAGS and
-    # WRAPPER_EXTRA_LIBS.  If the component doesn't specify it's
-    # WRAPPER_EXTRA_LIBS and WRAPPER_EXTRA_LDFLAGS, try using LDFLAGS and LIBS if
-    # component didn't have it's own configure script (in which case,
-    # we know it didn't set LDFLAGS and LIBS because it can't) Don't
-    # have to do this if the component is building dynamically,
-    # because it will link against these (without a dependency from
-    # libmpi.so to these flags)
-    if test "$7" = "static"; then
-        AS_LITERAL_IF([$2],
-            [m4_foreach(flags, [LDFLAGS, LIBS],
-                    [AS_IF([test "$$1_$2_WRAPPER_EXTRA_]flags[" = ""],
-                           [PMIX_FLAGS_APPEND_UNIQ([mca_wrapper_extra_]m4_tolower(flags), [$$1_$2_]flags)],
-                           [PMIX_FLAGS_APPEND_UNIQ([mca_wrapper_extra_]m4_tolower(flags), [$$1_$2_WRAPPER_EXTRA_]flags)])
-                        ])],
-            [m4_foreach(flags, [LDFLAGS, LIBS],
-                    [[str="line=\$$1_$2_WRAPPER_EXTRA_]flags["]
-                      eval "$str"
-                      PMIX_FLAGS_APPEND_UNIQ([mca_wrapper_extra_]m4_tolower(flags), [$line])])])
-    fi
-
-    # if needed, copy over WRAPPER_EXTRA_CPPFLAGS.  Since a configure script
-    # component can never be used in a STOP_AT_FIRST framework, we
-    # don't have to implement the else clause in the literal check...
-    AS_LITERAL_IF([$2],
-        [AS_IF([test "$$1_$2_WRAPPER_EXTRA_CPPFLAGS" != ""],
-           [m4_if(PMIX_EVAL_ARG([MCA_pmix_$1_CONFIGURE_MODE]), [STOP_AT_FIRST], [stop_at_first=1], [stop_at_first=0])
-            AS_IF([test "$7" = "static" && test "$stop_at_first" = "1"],
-              [AS_IF([test "$with_devel_headers" = "yes"],
-                     [PMIX_FLAGS_APPEND_UNIQ([mca_wrapper_extra_cppflags], [$$1_$2_WRAPPER_EXTRA_CPPFLAGS])])],
-              [AC_MSG_WARN([ignoring $1_$2_WRAPPER_EXTRA_CPPFLAGS ($$1_$2_WRAPPER_EXTRA_CPPFLAGS): component conditions not met])])])])
 ])
 
 

@@ -15,6 +15,8 @@
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Mellanox Technologies, Inc.  All rights reserved.
+ * Copyright (c) 2019      Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -113,7 +115,7 @@ static void model_registration_callback(pmix_status_t status,
                                         size_t evhandler_ref,
                                         void *cbdata)
 {
-    volatile int *active = (volatile int*)cbdata;
+    volatile bool *active = (volatile bool*)cbdata;
 
     fprintf(stderr, "simpclient EVENT HANDLER REGISTRATION RETURN STATUS %d, ref=%lu\n",
                status, (unsigned long)evhandler_ref);

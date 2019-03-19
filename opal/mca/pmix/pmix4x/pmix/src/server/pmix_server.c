@@ -1,11 +1,11 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
- * Copyright (c) 2014-2018 Research Organization for Information Science
+ * Copyright (c) 2014-2019 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2014-2015 Artem Y. Polyakov <artpol84@gmail.com>.
  *                         All rights reserved.
- * Copyright (c) 2016      Mellanox Technologies, Inc.
+ * Copyright (c) 2016-2019 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2016-2018 IBM Corporation.  All rights reserved.
  * Copyright (c) 2018      Cisco Systems, Inc.  All rights reserved
@@ -18,7 +18,6 @@
 
 #include <src/include/pmix_config.h>
 
-#include <src/include/types.h>
 #include <src/include/pmix_stdint.h>
 #include <src/include/pmix_socket_errno.h>
 
@@ -49,9 +48,9 @@
 #endif
 #include <ctype.h>
 #include <sys/stat.h>
-#include PMIX_EVENT_HEADER
-#include PMIX_EVENT2_THREAD_HEADER
 
+
+#include "src/common/pmix_attributes.h"
 #include "src/util/argv.h"
 #include "src/util/error.h"
 #include "src/util/name_fns.h"
@@ -408,6 +407,12 @@ PMIX_EXPORT pmix_status_t PMIx_server_init(pmix_server_module_t *module,
                              2, PMIX_FWD_STDERR_CHANNEL, pmix_iof_write_handler);
     }
 
+    /* register our attributes */
+    if (PMIX_SUCCESS != (rc = pmix_register_server_attrs())) {
+        PMIX_RELEASE_THREAD(&pmix_global_lock);
+        return rc;
+    }
+
     /* start listening for connections */
     if (PMIX_SUCCESS != pmix_ptl_base_start_listening(info, ninfo)) {
         pmix_show_help("help-pmix-server.txt", "listener-thread-start", true);
@@ -503,7 +508,6 @@ PMIX_EXPORT pmix_status_t PMIx_server_finalize(void)
     (void)pmix_mca_base_framework_close(&pmix_psensor_base_framework);
     /* close the pnet framework */
     (void)pmix_mca_base_framework_close(&pmix_pnet_base_framework);
-
 
     PMIX_RELEASE_THREAD(&pmix_global_lock);
     PMIX_DESTRUCT_LOCK(&pmix_global_lock);
@@ -2299,11 +2303,6 @@ static void _mdxcbfunc(int sd, short argc, void *cbdata)
     /* if we get here, then there are processes waiting
      * for a response */
 
-    /* if the timer is active, clear it */
-    if (tracker->event_active) {
-        pmix_event_del(&tracker->ev);
-    }
-
     /* pass the blobs being returned */
     PMIX_CONSTRUCT(&xfer, pmix_buffer_t);
     PMIX_LOAD_BUFFER(pmix_globals.mypeer, &xfer, scd->data, scd->ndata);
@@ -2345,7 +2344,7 @@ static void _mdxcbfunc(int sd, short argc, void *cbdata)
     }
 
     PMIX_LIST_FOREACH(nptr, &nslist, pmix_nspace_caddy_t) {
-        PMIX_GDS_STORE_MODEX(rc, nptr->ns, &tracker->local_cbs, &xfer);
+        PMIX_GDS_STORE_MODEX(rc, nptr->ns, &xfer, tracker);
         if (PMIX_SUCCESS != rc) {
             PMIX_ERROR_LOG(rc);
             break;
@@ -2388,12 +2387,7 @@ static void _mdxcbfunc(int sd, short argc, void *cbdata)
     xfer.bytes_used = 0;
     PMIX_DESTRUCT(&xfer);
 
-    if (!tracker->lost_connection) {
-        /* if this tracker has gone thru the "lost_connection" procedure,
-         * then it has already been removed from the list - otherwise,
-         * remove it now */
-        pmix_list_remove_item(&pmix_server_globals.collectives, &tracker->super);
-    }
+    pmix_list_remove_item(&pmix_server_globals.collectives, &tracker->super);
     PMIX_RELEASE(tracker);
     PMIX_LIST_DESTRUCT(&nslist);
 
@@ -2646,12 +2640,7 @@ static void _cnct(int sd, short args, void *cbdata)
     if (NULL != nspaces) {
       pmix_argv_free(nspaces);
     }
-    if (!tracker->lost_connection) {
-        /* if this tracker has gone thru the "lost_connection" procedure,
-         * then it has already been removed from the list - otherwise,
-         * remove it now */
-        pmix_list_remove_item(&pmix_server_globals.collectives, &tracker->super);
-    }
+    pmix_list_remove_item(&pmix_server_globals.collectives, &tracker->super);
     PMIX_RELEASE(tracker);
 
     /* we are done */
@@ -2728,12 +2717,7 @@ static void _discnct(int sd, short args, void *cbdata)
   cleanup:
     /* cleanup the tracker -- the host RM is responsible for
      * telling us when to remove the nspace from our data */
-    if (!tracker->lost_connection) {
-        /* if this tracker has gone thru the "lost_connection" procedure,
-         * then it has already been removed from the list - otherwise,
-         * remove it now */
-        pmix_list_remove_item(&pmix_server_globals.collectives, &tracker->super);
-    }
+    pmix_list_remove_item(&pmix_server_globals.collectives, &tracker->super);
     PMIX_RELEASE(tracker);
 
     /* we are done */
@@ -2886,7 +2870,7 @@ static void query_cbfunc(pmix_status_t status,
     pmix_status_t rc;
 
     pmix_output_verbose(2, pmix_server_globals.base_output,
-                        "pmix:query callback with status %d", status);
+                        "pmix:query callback with status %s", PMIx_Error_string(status));
 
     reply = PMIX_NEW(pmix_buffer_t);
     if (NULL == reply) {

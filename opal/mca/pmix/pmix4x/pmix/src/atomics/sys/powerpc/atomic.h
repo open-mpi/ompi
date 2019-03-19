@@ -13,7 +13,7 @@
  * Copyright (c) 2010-2017 IBM Corporation.  All rights reserved.
  * Copyright (c) 2015-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2018      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2018-2019 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -99,27 +99,7 @@ void pmix_atomic_isync(void)
     ISYNC();
 }
 
-#elif PMIX_XLC_INLINE_ASSEMBLY /* end PMIX_GCC_INLINE_ASSEMBLY */
-
-/* Yeah, I don't know who thought this was a reasonable syntax for
- * inline assembly.  Do these because they are used so often and they
- * are fairly simple (aka: there is a tech pub on IBM's web site
- * containing the right hex for the instructions).
- */
-
-#undef PMIX_HAVE_INLINE_ATOMIC_MEM_BARRIER
-#define PMIX_HAVE_INLINE_ATOMIC_MEM_BARRIER 0
-
-#pragma mc_func pmix_atomic_mb { "7c0004ac" }          /* sync  */
-#pragma reg_killed_by pmix_atomic_mb                   /* none */
-
-#pragma mc_func pmix_atomic_rmb { "7c2004ac" }         /* lwsync  */
-#pragma reg_killed_by pmix_atomic_rmb                  /* none */
-
-#pragma mc_func pmix_atomic_wmb { "7c2004ac" }         /* lwsync */
-#pragma reg_killed_by pmix_atomic_wmb                  /* none */
-
-#endif
+#endif /* end PMIX_GCC_INLINE_ASSEMBLY */
 
 /**********************************************************************
  *
@@ -297,7 +277,7 @@ static inline bool pmix_atomic_compare_exchange_strong_64 (pmix_atomic_int64_t *
 #define pmix_atomic_sc_64(addr, value, ret)                             \
     do {                                                                \
         pmix_atomic_int64_t *_addr = (addr);                               \
-        int64_t _foo, _newval = (int64_t) value;                        \
+        int64_t _newval = (int64_t) value;                        \
         int32_t _ret;                                                   \
                                                                         \
         __asm__ __volatile__ ("   stdcx.  %2, 0, %1  \n\t"              \

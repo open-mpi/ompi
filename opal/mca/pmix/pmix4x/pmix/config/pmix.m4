@@ -18,8 +18,8 @@ dnl                         reserved.
 dnl Copyright (c) 2009-2011 Oak Ridge National Labs.  All rights reserved.
 dnl Copyright (c) 2011-2013 NVIDIA Corporation.  All rights reserved.
 dnl Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
-dnl Copyright (c) 2015-2017 Research Organization for Information Science
-dnl                         and Technology (RIST). All rights reserved.
+dnl Copyright (c) 2015-2019 Research Organization for Information Science
+dnl                         and Technology (RIST).  All rights reserved.
 dnl Copyright (c) 2016      Mellanox Technologies, Inc.
 dnl                         All rights reserved.
 dnl
@@ -120,9 +120,11 @@ AC_DEFUN([PMIX_SETUP_CORE],[
     pmixmajor=${PMIX_MAJOR_VERSION}L
     pmixminor=${PMIX_MINOR_VERSION}L
     pmixrelease=${PMIX_RELEASE_VERSION}L
+    pmixnumeric=$(printf 0x%4.4x%2.2x%2.2x $PMIX_MAJOR_VERSION $PMIX_MINOR_VERSION $PMIX_RELEASE_VERSION)
     AC_SUBST(pmixmajor)
     AC_SUBST(pmixminor)
     AC_SUBST(pmixrelease)
+    AC_SUBST(pmixnumeric)
     AC_CONFIG_FILES(pmix_config_prefix[include/pmix_version.h])
 
     PMIX_GREEK_VERSION="`$PMIX_top_srcdir/config/pmix_get_version.sh $PMIX_top_srcdir/VERSION --greek`"
@@ -414,7 +416,7 @@ AC_DEFUN([PMIX_SETUP_CORE],[
                       time.h unistd.h dirent.h \
                       crt_externs.h signal.h \
                       ioLib.h sockLib.h hostLib.h limits.h \
-                      sys/statfs.h sys/statvfs.h \
+                      sys/fcntl.h sys/statfs.h sys/statvfs.h \
                       netdb.h ucred.h zlib.h sys/auxv.h \
                       sys/sysctl.h])
 
@@ -752,9 +754,23 @@ AC_DEFUN([PMIX_SETUP_CORE],[
     ##################################
     # Libevent
     ##################################
-    pmix_show_title "Libevent"
+    pmix_show_title "Event libraries"
 
+    PMIX_LIBEV_CONFIG
     PMIX_LIBEVENT_CONFIG
+
+    AS_IF([test $pmix_libevent_support -eq 1 && test $pmix_libev_support -eq 1],
+      [AC_MSG_WARN([Both libevent and libev support have been specified.])
+       AC_MSG_WARN([Only one can be configured against at a time. Please])
+       AC_MSG_WARN([remove one from the configure command line.])
+       AC_MSG_ERROR([Cannot continue])])
+
+    AS_IF([test $pmix_libevent_support -eq 0 && test $pmix_libev_support -eq 0],
+          [AC_MSG_WARN([Either libevent or libev support is required, but neither])
+           AC_MSG_WARN([was found. Please use the configure options to point us])
+           AC_MSG_WARN([to where we can find one or the other library])
+           AC_MSG_ERROR([Cannot continue])])
+
 
     ##################################
     # HWLOC
@@ -763,13 +779,6 @@ AC_DEFUN([PMIX_SETUP_CORE],[
 
     PMIX_HWLOC_CONFIG
 
-
-    ##################################
-    # ZLIB COMPRESSION
-    ##################################
-    pmix_show_title "ZLIB"
-
-    PMIX_ZLIB_CONFIG
 
     ##################################
     # MCA
@@ -874,6 +883,7 @@ AC_DEFUN([PMIX_SETUP_CORE],[
         pmix_config_prefix[src/tools/pmix_info/Makefile]
         pmix_config_prefix[src/tools/plookup/Makefile]
         pmix_config_prefix[src/tools/pps/Makefile]
+        pmix_config_prefix[src/tools/pattrs/Makefile]
         )
 
     # publish any embedded flags so external wrappers can use them

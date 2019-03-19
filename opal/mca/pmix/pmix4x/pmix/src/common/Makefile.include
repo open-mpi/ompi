@@ -1,6 +1,6 @@
 # -*- makefile -*-
 #
-# Copyright (c) 2015-2018 Intel, Inc. All rights reserved.
+# Copyright (c) 2015-2019 Intel, Inc.  All rights reserved.
 # Copyright (c) 2016      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 #
@@ -16,7 +16,9 @@ sources += \
         common/pmix_control.c \
         common/pmix_data.c \
         common/pmix_security.c \
-        common/pmix_iof.c
+        common/pmix_iof.c \
+        common/pmix_attributes.c
 
 headers += \
-        common/pmix_iof.h
+        common/pmix_iof.h \
+        common/pmix_attributes.h

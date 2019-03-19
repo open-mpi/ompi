@@ -17,8 +17,8 @@
  * Copyright (c) 2010-2014 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2014      Hochschule Esslingen.  All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015-2019 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2015-2018 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2016-2019 Intel, Inc.  All rights reserved.
@@ -31,7 +31,6 @@
 
 #include "pmix_config.h"
 
-#include "src/include/types.h"
 #include "src/mca/base/pmix_mca_base_var.h"
 #include "src/runtime/pmix_rte.h"
 #include "src/util/timings.h"

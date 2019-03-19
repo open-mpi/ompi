@@ -14,6 +14,8 @@
  * Copyright (c) 201-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2019      Mellanox Technologies, Inc.
+ *                         All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -444,13 +446,15 @@ int pmix12_v2_to_v1_datatype(pmix_data_type_t v2type)
     return v1type;
 }
 
-pmix_status_t pmix12_bfrop_store_data_type(pmix_buffer_t *buffer, pmix_data_type_t type)
+pmix_status_t pmix12_bfrop_store_data_type(pmix_pointer_array_t *regtypes,
+                                          pmix_buffer_t *buffer,
+                                          pmix_data_type_t type)
 {
     int v1type;
 
     v1type = pmix12_v2_to_v1_datatype(type);
 
-    return pmix12_bfrop_pack_datatype(buffer, &v1type, 1, PMIX_INT);
+    return pmix12_bfrop_pack_datatype(regtypes, buffer, &v1type, 1, PMIX_INT);
 }
 
 pmix_data_type_t pmix12_v1_to_v2_datatype(int v1type)
@@ -491,13 +495,14 @@ pmix_data_type_t pmix12_v1_to_v2_datatype(int v1type)
     return v2type;
 }
 
-pmix_status_t pmix12_bfrop_get_data_type(pmix_buffer_t *buffer, pmix_data_type_t *type)
+pmix_status_t pmix12_bfrop_get_data_type(pmix_pointer_array_t *regtypes,
+                                         pmix_buffer_t *buffer, pmix_data_type_t *type)
 {
     int32_t n=1;
     int v1type;
     pmix_status_t rc;
 
-    rc = pmix12_bfrop_unpack_datatype(buffer, &v1type, &n, PMIX_INT);
+    rc = pmix12_bfrop_unpack_datatype(regtypes, buffer, &v1type, &n, PMIX_INT);
     if (UINT16_MAX < v1type) {
         *type = 0;
         return PMIX_ERR_UNKNOWN_DATA_TYPE;

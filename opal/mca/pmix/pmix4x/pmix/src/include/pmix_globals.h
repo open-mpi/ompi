@@ -11,6 +11,10 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2019      Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
+ * Copyright (c) 2019      Mellanox Technologies, Inc.
+ *                         All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -22,6 +26,8 @@
 #define PMIX_GLOBALS_H
 
 #include <src/include/pmix_config.h>
+
+#include <pmix_common.h>
 
 #include <src/include/types.h>
 
@@ -216,6 +222,11 @@ typedef struct {
 } pmix_info_caddy_t;
 PMIX_CLASS_DECLARATION(pmix_info_caddy_t);
 
+typedef struct {
+    pmix_list_item_t super;
+    pmix_info_t info;
+} pmix_infolist_t;
+PMIX_CLASS_DECLARATION(pmix_infolist_t);
 
 /* object for tracking peers - each peer can have multiple
  * connections. This can occur if the initial app executes
@@ -269,6 +280,7 @@ typedef struct {
     size_t ntargets;
     pmix_info_t *info;
     size_t ninfo;
+    pmix_list_t results;
     pmix_byte_object_t bo;
     pmix_info_cbfunc_t cbfunc;
     pmix_value_cbfunc_t valcbfunc;
@@ -285,7 +297,7 @@ typedef struct {
     pmix_list_item_t super;
     pmix_event_t ev;
     bool event_active;
-    bool lost_connection;           // tracker went thru lost connection procedure
+    bool host_called;               // tracker has been passed up to host
     bool local;                     // operation is strictly local
     char *id;                       // string identifier for the collective
     pmix_cmd_t type;
@@ -293,6 +305,7 @@ typedef struct {
     bool hybrid;                    // true if participating procs are from more than one nspace
     pmix_proc_t *pcs;               // copy of the original array of participants
     size_t   npcs;                  // number of procs in the array
+    pmix_list_t nslist;             // unique nspace list of participants
     pmix_lock_t lock;               // flag for waiting for completion
     bool def_complete;              // all local procs have been registered and the trk definition is complete
     pmix_list_t local_cbs;          // list of pmix_server_caddy_t for sending result to the local participants
@@ -479,6 +492,8 @@ typedef struct {
      * look them up */
     pmix_gds_base_module_t *mygds;
     /* IOF controls */
+    bool pushstdin;
+    pmix_list_t stdin_targets;          // list of pmix_namelist_t
     bool tag_output;
     bool xml_output;
     bool timestamp_output;
