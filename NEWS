@@ -61,6 +61,10 @@ included in the vX.Y.Z section and be denoted as:
 --------------------
 
 - Update embedded PMIx to 3.1.2.
+- Fix an issue with Vader (shared-memory) transport on OS-X. Thanks
+  to Daniel Vollmer for reporting.
+- Fix a problem with the usNIC BTL Makefile.  Thanks to George Marselis
+  for reporting.
 - Fix an issue when using --enable-visibility configure option
   and older versions of hwloc.  Thanks to Ben Menadue for reporting
   and providing a fix.
