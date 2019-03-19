@@ -495,7 +495,7 @@ static inline int
 opal_atomic_trylock(opal_atomic_lock_t *lock)
 {
     int32_t unlocked = OPAL_ATOMIC_LOCK_UNLOCKED;
-    bool ret = opal_atomic_compare_exchange_strong_32 (&lock->u.lock, &unlocked, OPAL_ATOMIC_LOCK_LOCKED);
+    bool ret = opal_atomic_compare_exchange_strong_acq_32 (&lock->u.lock, &unlocked, OPAL_ATOMIC_LOCK_LOCKED);
     return (ret == false) ? 1 : 0;
 }
 
