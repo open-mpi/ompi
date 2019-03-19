@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Artem Y. Polyakov <artpol84@gmail.com>.
  *                         All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
@@ -778,6 +778,28 @@ PMIX_EXPORT pmix_status_t PMIx_server_collect_inventory(pmix_info_t directives[]
 PMIX_EXPORT pmix_status_t PMIx_server_deliver_inventory(pmix_info_t info[], size_t ninfo,
                                                         pmix_info_t directives[], size_t ndirs,
                                                         pmix_op_cbfunc_t cbfunc, void *cbdata);
+
+/******      ATTRIBUTE REGISTRATION      ******/
+/**
+ * This function is used by the host environment to register with its
+ * server library the attributes it supports for each pmix_server_module_t
+ * function.
+ *
+ * Parameters include:
+ *
+ * function - the string name of the server module function
+ *            (e.g., "register_events", "validate_credential",
+ *            or "allocate") whose attributes are being registered.
+ *
+ * attrs - array of pmix_regattr_t describing the attributes supported
+ *         by the host environment for the specified function
+ *
+ * nattrs - number of elements in the attrs array
+ *
+ */
+PMIX_EXPORT pmix_status_t PMIx_Register_attributes(char *function,
+                                                   pmix_regattr_t attrs[], size_t nattrs);
+
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

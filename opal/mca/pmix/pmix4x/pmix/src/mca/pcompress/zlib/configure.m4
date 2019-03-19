@@ -2,7 +2,7 @@
 #
 # Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2013      Los Alamos National Security, LLC.  All rights reserved.
-# Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
+# Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -10,10 +10,13 @@
 # $HEADER$
 #
 
-# MCA_zlib_CONFIG([action-if-found], [action-if-not-found])
-# --------------------------------------------------------------------
-AC_DEFUN([PMIX_ZLIB_CONFIG],[
-    PMIX_VAR_SCOPE_PUSH([pmix_zlib_dir pmix_zlib_libdir pmix_zlib_standard_lib_location pmix_zlib_standard_header_location])
+# MCA_pcompress_zlib_CONFIG([action-if-can-compile],
+#                           [action-if-cant-compile])
+# ------------------------------------------------
+AC_DEFUN([MCA_pmix_pcompress_zlib_CONFIG],[
+    AC_CONFIG_FILES([src/mca/pcompress/zlib/Makefile])
+
+    PMIX_VAR_SCOPE_PUSH([pmix_zlib_dir pmix_zlib_libdir pmix_zlib_standard_lib_location pmix_zlib_standard_header_location pmix_check_zlib_save_CPPFLAGS pmix_check_zlib_save_LDFLAGS pmix_check_zlib_save_LIBS])
 
     AC_ARG_WITH([zlib],
                 [AC_HELP_STRING([--with-zlib=DIR],
@@ -23,12 +26,17 @@ AC_DEFUN([PMIX_ZLIB_CONFIG],[
                 [AC_HELP_STRING([--with-zlib-libdir=DIR],
                                 [Search for zlib libraries in DIR ])])
 
+    pmix_check_zlib_save_CPPFLAGS="$CPPFLAGS"
+    pmix_check_zlib_save_LDFLAGS="$LDFLAGS"
+    pmix_check_zlib_save_LIBS="$LIBS"
+
     pmix_zlib_support=0
 
     if test "$with_zlib" != "no"; then
         AC_MSG_CHECKING([for zlib in])
         if test ! -z "$with_zlib" && test "$with_zlib" != "yes"; then
             pmix_zlib_dir=$with_zlib
+            pmix_zlib_source=$with_zlib
             pmix_zlib_standard_header_location=no
             pmix_zlib_standard_lib_location=no
             AS_IF([test -z "$with_zlib_libdir" || test "$with_zlib_libdir" = "yes"],
@@ -44,6 +52,7 @@ AC_DEFUN([PMIX_ZLIB_CONFIG],[
                   [AC_MSG_RESULT([$with_zlib_libdir])])
         else
             AC_MSG_RESULT([(default search paths)])
+            pmix_zlib_source=standard
             pmix_zlib_standard_header_location=yes
             pmix_zlib_standard_lib_location=yes
         fi
@@ -51,7 +60,7 @@ AC_DEFUN([PMIX_ZLIB_CONFIG],[
               [pmix_zlib_libdir="$with_zlib_libdir"
                pmix_zlib_standard_lib_location=no])
 
-        PMIX_CHECK_PACKAGE([pmix_zlib],
+        PMIX_CHECK_PACKAGE([pcompress_zlib],
                            [zlib.h],
                            [z],
                            [deflate],
@@ -60,18 +69,6 @@ AC_DEFUN([PMIX_ZLIB_CONFIG],[
                            [$pmix_zlib_libdir],
                            [pmix_zlib_support=1],
                            [pmix_zlib_support=0])
-        if test $pmix_zlib_support = "1"; then
-            LIBS="$LIBS -lz"
-            PMIX_EMBEDDED_LIBS="$PMIX_EMBEDDED_LIBS -lz"
-            if test "$pmix_zlib_standard_header_location" != "yes"; then
-                PMIX_EMBEDDED_CPPFLAGS="$PMIX_EMBEDDED_CPPFLAGS $pmix_zlib_CPPFLAGS"
-                CPPFLAGS="$CPPFLAGS $pmix_zlib_CPPFLAGS"
-            fi
-            if test "$pmix_zlib_standard_lib_location" != "yes"; then
-                PMIX_EMBEDDED_LDFLAGS="$PMIX_EMBEDDED_LDFLAGS $pmix_zlib_LDFLAGS"
-                LDFLAGS="$LDFLAGS $pmix_zlib_LDFLAGS"
-            fi
-        fi
     fi
 
     if test ! -z "$with_zlib" && test "$with_zlib" != "no" && test "$pmix_zlib_support" != "1"; then
@@ -86,7 +83,20 @@ AC_DEFUN([PMIX_ZLIB_CONFIG],[
         AC_MSG_RESULT([yes])
     fi
 
-    AC_DEFINE_UNQUOTED([PMIX_HAVE_ZLIB], [$pmix_zlib_support],
-                       [Whether or not we have zlib support])
+    CPPFLAGS="$pmix_check_zlib_save_CPPFLAGS"
+    LDFLAGS="$pmix_check_zlib_save_LDFLAGS"
+    LIBS="$pmix_check_zlib_save_LIBS"
+
+    AS_IF([test "$pmix_zlib_support" = "1"],
+          [$1
+           PMIX_SUMMARY_ADD([[External Packages]],[[ZLIB]], [pmix_zlib], [yes ($pmix_zlib_source)])],
+          [$2])
+
+    # substitute in the things needed to build psm2
+    AC_SUBST([pcompress_zlib_CFLAGS])
+    AC_SUBST([pcompress_zlib_CPPFLAGS])
+    AC_SUBST([pcompress_zlib_LDFLAGS])
+    AC_SUBST([pcompress_zlib_LIBS])
+
     PMIX_VAR_SCOPE_POP
 ])dnl

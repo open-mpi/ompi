@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2018      Intel, Inc. All rights reserved.
+ * Copyright (c) 2018-2019 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -61,7 +61,7 @@ typedef void (*pmix_pnet_base_module_fini_fn_t)(void);
  * for forwarding to compute nodes, or allocation of static endpts
  */
 typedef pmix_status_t (*pmix_pnet_base_module_allocate_fn_t)(pmix_namespace_t *nptr,
-                                                             pmix_info_t *info,
+                                                             pmix_info_t info[], size_t ninfo,
                                                              pmix_list_t *ilist);
 
 /**

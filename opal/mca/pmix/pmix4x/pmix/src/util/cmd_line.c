@@ -15,7 +15,7 @@
  * Copyright (c) 2012-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2016-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2016-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
@@ -725,11 +725,6 @@ char *pmix_cmd_line_get_usage_msg(pmix_cmd_line_t *cmd)
                 free(desc);
             }
         }
-    }
-    if(otype == PMIX_CMD_LINE_OTYPE_NULL || otype == PMIX_CMD_LINE_OTYPE_GENERAL) {
-        char *argument_line = "\nFor additional mpirun arguments, run 'mpirun --help <category>'\n\nThe following categories exist: general (Defaults to this option), debug,\n    output, input, mapping, ranking, binding, devel (arguments useful to PMIX\n    Developers), compatibility (arguments supported for backwards compatibility),\n    launch (arguments to modify launch options), and dvm (Distributed Virtual\n    Machine arguments).";
-
-        pmix_argv_append(&argc, &argv, argument_line);
     }
     if (NULL != argv) {
         ret = pmix_argv_join(argv, '\n');

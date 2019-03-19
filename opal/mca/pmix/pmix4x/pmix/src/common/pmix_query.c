@@ -4,6 +4,8 @@
  * Copyright (c) 2016      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2019      Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -12,7 +14,6 @@
  */
 #include <src/include/pmix_config.h>
 
-#include <src/include/types.h>
 #include <src/include/pmix_stdint.h>
 #include <src/include/pmix_socket_errno.h>
 
@@ -28,6 +29,7 @@
 #include "src/util/output.h"
 #include "src/mca/bfrops/bfrops.h"
 #include "src/mca/ptl/ptl.h"
+#include "src/common/pmix_attributes.h"
 
 #include "src/client/pmix_client_ops.h"
 #include "src/server/pmix_server_ops.h"
@@ -107,7 +109,7 @@ static void query_cbfunc(struct pmix_peer_t *peer,
 
   complete:
     pmix_output_verbose(2, pmix_globals.debug_output,
-                        "pmix:query cback from server releasing");
+                        "pmix:query cback from server releasing with status %s", PMIx_Error_string(results->status));
     /* release the caller */
     if (NULL != cd->cbfunc) {
         cd->cbfunc(results->status, results->info, results->ninfo, cd->cbdata, relcbfunc, results);
@@ -186,10 +188,25 @@ PMIX_EXPORT pmix_status_t PMIx_Query_info_nb(pmix_query_t queries[], size_t nque
      * more, we would check each query and allow those that don't
      * want to be refreshed to be executed locally, and those that
      * did would be sent to the host. However, for now we simply
-     * */
+     * assume that any requirement to refresh will force all to
+     * do so */
     memset(proc.nspace, 0, PMIX_MAX_NSLEN+1);
     proc.rank = PMIX_RANK_INVALID;
     for (n=0; n < nqueries; n++) {
+        /* check for requests to report supported attributes */
+        if (0 == strcmp(queries[n].keys[0], PMIX_QUERY_ATTRIBUTE_SUPPORT)) {
+            cd = PMIX_NEW(pmix_query_caddy_t);
+            cd->queries = queries;
+            cd->nqueries = nqueries;
+            cd->cbfunc = cbfunc;
+            cd->cbdata = cbdata;
+            PMIX_THREADSHIFT(cd, pmix_attrs_query_support);
+            /* regardless of the result of the query, we return
+             * PMIX_SUCCESS here to indicate that the operation
+             * was accepted for processing */
+            PMIX_RELEASE_THREAD(&pmix_global_lock);
+            return PMIX_SUCCESS;
+        }
         for (p=0; p < queries[n].nqual; p++) {
             if (PMIX_CHECK_KEY(&queries[n].qualifiers[p], PMIX_QUERY_REFRESH_CACHE)) {
                 if (PMIX_INFO_TRUE(&queries[n].qualifiers[p])) {

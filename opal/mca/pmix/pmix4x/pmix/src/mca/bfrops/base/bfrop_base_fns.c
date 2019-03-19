@@ -9,7 +9,9 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2015-2018 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015-2019 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2019      Mellanox Technologies, Inc.
+ *                         All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -59,6 +61,8 @@ void pmix_bfrops_base_value_load(pmix_value_t *v, const void *data,
     pmix_envar_t *envar;
     pmix_data_array_t *darray;
     pmix_status_t rc;
+    pmix_coord_t *coord;
+    pmix_regattr_t *regattr;
 
     v->type = type;
     if (NULL == data) {
@@ -201,6 +205,20 @@ void pmix_bfrops_base_value_load(pmix_value_t *v, const void *data,
                 PMIX_ERROR_LOG(rc);
             }
             break;
+        case PMIX_COORD:
+            coord = (pmix_coord_t*)data;
+            rc = pmix_bfrops_base_copy_coord(&v->data.coord, coord, PMIX_COORD);
+            if (PMIX_SUCCESS != rc) {
+                PMIX_ERROR_LOG(rc);
+            }
+            break;
+        case PMIX_REGATTR:
+            regattr = (pmix_regattr_t*)data;
+            rc = pmix_bfrops_base_copy_regattr((pmix_regattr_t**)&v->data.ptr, regattr, PMIX_REGATTR);
+            if (PMIX_SUCCESS != rc) {
+                PMIX_ERROR_LOG(rc);
+            }
+            break;
 
         default:
             /* silence warnings */
@@ -217,6 +235,8 @@ pmix_status_t pmix_bfrops_base_value_unload(pmix_value_t *kv,
     pmix_status_t rc;
     pmix_envar_t *envar;
     pmix_data_array_t **darray;
+    pmix_coord_t *coord;
+    pmix_regattr_t *regattr, *r;
 
     rc = PMIX_SUCCESS;
     if (NULL == data ||
@@ -353,6 +373,32 @@ pmix_status_t pmix_bfrops_base_value_unload(pmix_value_t *kv,
             envar->separator = kv->data.envar.separator;
             *data = envar;
             *sz = sizeof(pmix_envar_t);
+            break;
+        case PMIX_COORD:
+            coord = (pmix_coord_t*)malloc(sizeof(pmix_coord_t));
+            if (NULL == coord) {
+                return PMIX_ERR_NOMEM;
+            }
+            memcpy(coord, kv->data.coord, sizeof(pmix_coord_t));
+            *data = coord;
+            break;
+        case PMIX_REGATTR:
+            PMIX_REGATTR_CREATE(regattr, 1);
+            if (NULL == regattr) {
+                return PMIX_ERR_NOMEM;
+            }
+            r = (pmix_regattr_t*)kv->data.ptr;
+            if (NULL != r->name) {
+                regattr->name = strdup(r->name);
+            }
+            PMIX_LOAD_KEY(regattr->string, r->string);
+            regattr->type = r->type;
+            if (NULL != r->info) {
+                PMIX_INFO_XFER(regattr->info, r->info);
+            }
+            regattr->ninfo = r->ninfo;
+            regattr->description = pmix_argv_copy(r->description);
+            *data = regattr;
             break;
         default:
             /* silence warnings */
@@ -501,6 +547,27 @@ pmix_value_cmp_t pmix_bfrops_base_value_cmp(pmix_value_t *p,
             }
             rc = PMIX_EQUAL;
             break;
+        case PMIX_COORD:
+            rc = memcmp(p->data.coord, p1->data.coord, sizeof(pmix_coord_t));
+            if (0 > rc) {
+                rc = PMIX_VALUE2_GREATER;
+            } else if (0 < rc) {
+                rc = PMIX_VALUE1_GREATER;
+            } else {
+                rc = PMIX_EQUAL;
+            }
+            break;
+        case PMIX_REGATTR:
+            rc = memcmp(p->data.ptr, p1->data.ptr, sizeof(pmix_regattr_t));
+            if (0 > rc) {
+                rc = PMIX_VALUE2_GREATER;
+            } else if (0 < rc) {
+                rc = PMIX_VALUE1_GREATER;
+            } else {
+                rc = PMIX_EQUAL;
+            }
+            break;
+
         default:
             pmix_output(0, "COMPARE-PMIX-VALUE: UNSUPPORTED TYPE %d", (int)p->type);
     }
@@ -639,7 +706,12 @@ pmix_status_t pmix_bfrops_base_value_xfer(pmix_value_t *p,
         }
         p->data.envar.separator = src->data.envar.separator;
         break;
-
+    case PMIX_COORD:
+        pmix_bfrops_base_copy_coord(&p->data.coord, src->data.coord, PMIX_COORD);
+        break;
+    case PMIX_REGATTR:
+        pmix_bfrops_base_copy_regattr((pmix_regattr_t**)&p->data.ptr, src->data.ptr, PMIX_REGATTR);
+        break;
     default:
         pmix_output(0, "PMIX-XFER-VALUE: UNSUPPORTED TYPE %d", (int)src->type);
         return PMIX_ERROR;
@@ -727,39 +799,23 @@ bool pmix_bfrop_too_small(pmix_buffer_t *buffer, size_t bytes_reqd)
     return false;
 }
 
-pmix_status_t pmix_bfrop_store_data_type(pmix_buffer_t *buffer, pmix_data_type_t type)
+pmix_status_t pmix_bfrop_store_data_type(pmix_pointer_array_t *regtypes,
+                                         pmix_buffer_t *buffer, pmix_data_type_t type)
 {
-    uint16_t tmp;
-    char *dst;
+    pmix_status_t ret;
 
-    /* check to see if buffer needs extending */
-     if (NULL == (dst = pmix_bfrop_buffer_extend(buffer, sizeof(tmp)))) {
-        return PMIX_ERR_OUT_OF_RESOURCE;
-    }
-    tmp = pmix_htons(type);
-    memcpy(dst, &tmp, sizeof(tmp));
-    buffer->pack_ptr += sizeof(tmp);
-    buffer->bytes_used += sizeof(tmp);
-
-    return PMIX_SUCCESS;
+    PMIX_BFROPS_PACK_TYPE(ret, buffer, &type, 1, PMIX_UINT16, regtypes);
+    return ret;
 }
 
-pmix_status_t pmix_bfrop_get_data_type(pmix_buffer_t *buffer, pmix_data_type_t *type)
+pmix_status_t pmix_bfrop_get_data_type(pmix_pointer_array_t *regtypes,
+                                       pmix_buffer_t *buffer, pmix_data_type_t *type)
 {
-    uint16_t tmp;
+    pmix_status_t ret;
+    int32_t m = 1;
 
-    /* check to see if there's enough data in buffer */
-    if (pmix_bfrop_too_small(buffer, sizeof(tmp))) {
-        return PMIX_ERR_UNPACK_READ_PAST_END_OF_BUFFER;
-    }
-
-    /* unpack the data */
-    memcpy(&tmp, buffer->unpack_ptr, sizeof(tmp));
-    tmp = pmix_ntohs(tmp);
-    memcpy(type, &tmp, sizeof(tmp));
-    buffer->unpack_ptr += sizeof(tmp);
-
-    return PMIX_SUCCESS;
+    PMIX_BFROPS_UNPACK_TYPE(ret, buffer, type, &m, PMIX_UINT16, regtypes);
+    return ret;
 }
 
 const char* pmix_bfrops_base_data_type_string(pmix_pointer_array_t *regtypes,

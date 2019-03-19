@@ -38,7 +38,6 @@
 #include <sys/wait.h>
 #include <errno.h>
 #include <signal.h>
-#include PMIX_EVENT_HEADER
 
 #if PMIX_HAVE_HWLOC
 #include <src/hwloc/hwloc-internal.h>
@@ -513,9 +512,9 @@ int main(int argc, char **argv)
 
     /* setup to see sigchld on the forked tests */
     PMIX_CONSTRUCT(&children, pmix_list_t);
-    event_assign(&handler, pmix_globals.evbase, SIGCHLD,
-                 EV_SIGNAL|EV_PERSIST,wait_signal_callback, &handler);
-    event_add(&handler, NULL);
+    pmix_event_assign(&handler, pmix_globals.evbase, SIGCHLD,
+                      EV_SIGNAL|EV_PERSIST,wait_signal_callback, &handler);
+    pmix_event_add(&handler, NULL);
 
     /* we have a single namespace for all clients */
     atmp = NULL;
@@ -1224,7 +1223,7 @@ static void wait_signal_callback(int fd, short event, void *arg)
     pid_t pid;
     wait_tracker_t *t2;
 
-    if (SIGCHLD != event_get_signal(sig)) {
+    if (SIGCHLD != pmix_event_get_signal(sig)) {
         return;
     }
 

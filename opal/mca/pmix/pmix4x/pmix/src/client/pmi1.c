@@ -1,8 +1,8 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2014-2018 Intel, Inc.  All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2014-2019 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2016      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
@@ -13,8 +13,6 @@
  */
 
 #include <src/include/pmix_config.h>
-
-#include <src/include/types.h>
 
 #include <pmix.h>
 #include <pmi.h>

@@ -13,7 +13,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
@@ -41,8 +41,6 @@
 #include <pwd.h>
 #include <sys/stat.h>
 #include <dirent.h>
-
-#include PMIX_EVENT_HEADER
 
 #include "src/class/pmix_list.h"
 #include "src/util/pmix_environ.h"
@@ -266,9 +264,9 @@ int main(int argc, char **argv)
 
     /* setup to see sigchld on the forked tests */
     PMIX_CONSTRUCT(&children, pmix_list_t);
-    event_assign(&handler, pmix_globals.evbase, SIGCHLD,
-                 EV_SIGNAL|EV_PERSIST,wait_signal_callback, &handler);
-    event_add(&handler, NULL);
+    pmix_event_assign(&handler, pmix_globals.evbase, SIGCHLD,
+                      EV_SIGNAL|EV_PERSIST,wait_signal_callback, &handler);
+    pmix_event_add(&handler, NULL);
 
     /* see if we were passed the number of procs to run or
      * the executable to use */
@@ -871,7 +869,7 @@ static void wait_signal_callback(int fd, short event, void *arg)
     pid_t pid;
     wait_tracker_t *t2;
 
-    if (SIGCHLD != event_get_signal(sig)) {
+    if (SIGCHLD != pmix_event_get_signal(sig)) {
         return;
     }
 

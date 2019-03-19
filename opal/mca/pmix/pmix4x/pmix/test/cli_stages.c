@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2015-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015-2018 Mellanox Technologies, Inc.
@@ -58,7 +58,7 @@ void cli_init(int nprocs)
     }
 }
 
-void cli_connect(cli_info_t *cli, int sd, struct event_base * ebase, event_callback_fn callback)
+void cli_connect(cli_info_t *cli, int sd, pmix_event_base_t * ebase, event_callback_fn callback)
 {
     if( CLI_CONNECTED != cli->next_state[cli->state] ){
         TEST_ERROR(("Rank %d has bad next state: expect %d have %d!",
@@ -68,9 +68,9 @@ void cli_connect(cli_info_t *cli, int sd, struct event_base * ebase, event_callb
     }
 
     cli->sd = sd;
-    cli->ev = event_new(ebase, sd,
+    cli->ev = pmix_event_new(ebase, sd,
                       EV_READ|EV_PERSIST, callback, cli);
-    event_add(cli->ev,NULL);
+    pmix_event_add(cli->ev,NULL);
     pmix_ptl_base_set_nonblocking(sd);
     TEST_VERBOSE(("Connection accepted from rank %d", cli_rank(cli) ));
     cli->state = CLI_CONNECTED;
@@ -109,8 +109,8 @@ void cli_disconnect(cli_info_t *cli)
         test_abort = true;
     } else {
         TEST_VERBOSE(("remove event of rank %d from event queue", cli_rank(cli)));
-        event_del(cli->ev);
-        event_free(cli->ev);
+        pmix_event_del(cli->ev);
+        pmix_event_free(cli->ev);
         cli->ev = NULL;
     }
 

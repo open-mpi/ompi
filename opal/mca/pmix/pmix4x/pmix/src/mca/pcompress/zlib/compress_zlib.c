@@ -1,6 +1,13 @@
 /*
- * Copyright (c) 2016      Intel, Inc. All rights reserved.
- * Copyright (c) 2017      Cisco Systems, Inc. All rights reserved.
+ * Copyright (c) 2004-2010 The Trustees of Indiana University.
+ *                         All rights reserved.
+ * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
+ *
+ * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
+ * Copyright (c) 2019      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -8,24 +15,43 @@
  * $HEADER$
  */
 
-#include <src/include/pmix_config.h>
+#include "pmix_config.h"
 
-
-#include <stdlib.h>
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif
-#ifdef HAVE_ZLIB_H
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <sys/stat.h>
+#if HAVE_UNISTD_H
+#include <unistd.h>
+#endif  /* HAVE_UNISTD_H */
 #include <zlib.h>
-#endif
 
-#include "src/include/pmix_globals.h"
-#include "src/util/compress.h"
+#include "src/util/pmix_environ.h"
+#include "src/util/output.h"
+#include "src/util/argv.h"
+#include "src/util/pmix_environ.h"
+#include "src/util/printf.h"
 
-#if PMIX_HAVE_ZLIB
-bool pmix_util_compress_string(char *instring,
-                               uint8_t **outbytes,
-                               size_t *nbytes)
+#include "pmix_common.h"
+#include "src/util/basename.h"
+
+#include "src/mca/pcompress/base/base.h"
+
+#include "compress_zlib.h"
+
+int pmix_compress_zlib_module_init(void)
+{
+    return PMIX_SUCCESS;
+}
+
+int pmix_compress_zlib_module_finalize(void)
+{
+    return PMIX_SUCCESS;
+}
+
+bool pmix_compress_zlib_compress_block(char *instring,
+                                       uint8_t **outbytes,
+                                       size_t *nbytes)
 {
     z_stream strm;
     size_t len, outlen;
@@ -75,23 +101,14 @@ bool pmix_util_compress_string(char *instring,
     /* bring over the compressed data */
     memcpy(ptr, tmp, outlen-sizeof(uint32_t));
     free(tmp);
-    pmix_output_verbose(10, pmix_globals.debug_output,
-                        "JOBDATA COMPRESS INPUT STRING OF LEN %d OUTPUT SIZE %lu",
+    pmix_output_verbose(2, pmix_pcompress_base_framework.framework_output,
+                        "COMPRESS INPUT STRING OF LEN %d OUTPUT SIZE %lu",
                         inlen, outlen-sizeof(uint32_t));
     return true;  // we did the compression
 }
-#else
-bool pmix_util_compress_string(char *instring,
-                               uint8_t **outbytes,
-                               size_t *nbytes)
-{
-    return false;  // we did not compress
-}
-#endif
 
-#if PMIX_HAVE_ZLIB
-void pmix_util_uncompress_string(char **outstring,
-                                 uint8_t *inbytes, size_t len)
+bool pmix_compress_zlib_uncompress_block(char **outstring,
+                                         uint8_t *inbytes, size_t len)
 {
     uint8_t *dest;
     int32_t len2;
@@ -104,21 +121,21 @@ void pmix_util_uncompress_string(char **outstring,
     /* the first 4 bytes contains the uncompressed size */
     memcpy(&len2, inbytes, sizeof(uint32_t));
 
-    pmix_output_verbose(10, pmix_globals.debug_output,
+    pmix_output_verbose(2, pmix_pcompress_base_framework.framework_output,
                         "DECOMPRESSING INPUT OF LEN %lu OUTPUT %d", len, len2);
 
     /* setting destination to the fully decompressed size, +1 to
      * hold the NULL terminator */
     dest = (uint8_t*)malloc(len2+1);
     if (NULL == dest) {
-        return;
+        return false;
     }
     memset(dest, 0, len2+1);
 
     memset (&strm, 0, sizeof (strm));
     if (Z_OK != inflateInit(&strm)) {
         free(dest);
-        return;
+        return false;
     }
     strm.avail_in = len;
     strm.next_in = (uint8_t*)(inbytes + sizeof(uint32_t));
@@ -130,19 +147,7 @@ void pmix_util_uncompress_string(char **outstring,
     /* ensure this is NULL terminated! */
     dest[len2] = '\0';
     *outstring = (char*)dest;
-    pmix_output_verbose(10, pmix_globals.debug_output,
+    pmix_output_verbose(2, pmix_pcompress_base_framework.framework_output,
                         "\tFINAL LEN: %lu CODE: %d", strlen(*outstring), rc);
-    return;
+    return true;
 }
-#else
-/* this can never actually be used - there is no way we should
- * receive a PMIX_COMPRESSED_STRING unless we compressed it,
- * which means PMIX_HAVE_ZLIB must have been true. Still, we
- * include the stub just to avoid requiring #if's in the rest
- * of the code */
-void pmix_util_uncompress_string(char **outstring,
-                                 uint8_t *inbytes, size_t len)
-{
-    *outstring = NULL;
-}
-#endif

@@ -1,8 +1,8 @@
 /*
  * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2017      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017-2019 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -11,7 +11,6 @@
  */
 
 #include <src/include/pmix_config.h>
-#include "src/include/types.h"
 
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
@@ -47,6 +46,12 @@ typedef struct {
 
     bool engine_constructed;
     pmix_thread_t engine;
+#if PMIX_HAVE_LIBEV
+    ev_async async;
+    pthread_mutex_t mutex;
+    pthread_cond_t cond;
+    pmix_list_t list;
+#endif
 } pmix_progress_tracker_t;
 
 static void tracker_constructor(pmix_progress_tracker_t *p)
@@ -56,6 +61,10 @@ static void tracker_constructor(pmix_progress_tracker_t *p)
     p->ev_base = NULL;
     p->ev_active = false;
     p->engine_constructed = false;
+#if PMIX_HAVE_LIBEV
+    pthread_mutex_init(&p->mutex, NULL);
+    PMIX_CONSTRUCT(&p->list, pmix_list_t);
+#endif
 }
 
 static void tracker_destructor(pmix_progress_tracker_t *p)
@@ -71,12 +80,124 @@ static void tracker_destructor(pmix_progress_tracker_t *p)
     if (p->engine_constructed) {
         PMIX_DESTRUCT(&p->engine);
     }
+#if PMIX_HAVE_LIBEV
+    pthread_mutex_destroy(&p->mutex);
+    PMIX_LIST_DESTRUCT(&p->list);
+#endif
 }
 
 static PMIX_CLASS_INSTANCE(pmix_progress_tracker_t,
                           pmix_list_item_t,
                           tracker_constructor,
                           tracker_destructor);
+
+#if PMIX_HAVE_LIBEV
+
+typedef enum {
+    PMIX_EVENT_ACTIVE,
+    PMIX_EVENT_ADD,
+    PMIX_EVENT_DEL
+} pmix_event_type_t;
+
+typedef struct {
+    pmix_list_item_t super;
+    struct event *ev;
+    struct timeval *tv;
+    int res;
+    short ncalls;
+    pmix_event_type_t type;
+} pmix_event_caddy_t;
+
+static PMIX_CLASS_INSTANCE(pmix_event_caddy_t,
+                           pmix_list_item_t,
+                           NULL, NULL);
+
+static pmix_progress_tracker_t* pmix_progress_tracker_get_by_base(struct event_base *);
+
+static void pmix_libev_ev_async_cb (EV_P_ ev_async *w, int revents)
+{
+    pmix_progress_tracker_t *trk = pmix_progress_tracker_get_by_base((struct event_base *)EV_A);
+    assert(NULL != trk);
+    pthread_mutex_lock (&trk->mutex);
+    pmix_event_caddy_t *cd, *next;
+    PMIX_LIST_FOREACH_SAFE(cd, next, &trk->list, pmix_event_caddy_t) {
+        switch (cd->type) {
+            case PMIX_EVENT_ADD:
+                (void)event_add(cd->ev, cd->tv);
+                break;
+            case PMIX_EVENT_DEL:
+                (void)event_del(cd->ev);
+                break;
+            case PMIX_EVENT_ACTIVE:
+                (void)event_active(cd->ev, cd->res, cd->ncalls);
+                break;
+        }
+        pmix_list_remove_item(&trk->list, &cd->super);
+        PMIX_RELEASE(cd);
+    }
+    pthread_mutex_unlock (&trk->mutex);
+}
+
+int pmix_event_add(struct event *ev, struct timeval *tv) {
+    int res;
+    pmix_progress_tracker_t *trk = pmix_progress_tracker_get_by_base(ev->ev_base);
+    if ((NULL != trk) && !pthread_equal(pthread_self(), trk->engine.t_handle)) {
+        pmix_event_caddy_t *cd = PMIX_NEW(pmix_event_caddy_t);
+        cd->type = PMIX_EVENT_ADD;
+        cd->ev = ev;
+        cd->tv = tv;
+        pthread_mutex_lock(&trk->mutex);
+        pmix_list_append(&trk->list, &cd->super);
+        ev_async_send ((struct ev_loop *)trk->ev_base, &trk->async);
+        pthread_mutex_unlock(&trk->mutex);
+        res = PMIX_SUCCESS;
+    } else {
+        res = event_add(ev, tv);
+    }
+    return res;
+}
+
+int pmix_event_del(struct event *ev) {
+    int res;
+    pmix_progress_tracker_t *trk = pmix_progress_tracker_get_by_base(ev->ev_base);
+    if ((NULL != trk) && !pthread_equal(pthread_self(), trk->engine.t_handle)) {
+        pmix_event_caddy_t *cd = PMIX_NEW(pmix_event_caddy_t);
+        cd->type = PMIX_EVENT_DEL;
+        cd->ev = ev;
+        pthread_mutex_lock(&trk->mutex);
+        pmix_list_append(&trk->list, &cd->super);
+        ev_async_send ((struct ev_loop *)trk->ev_base, &trk->async);
+        pthread_mutex_unlock(&trk->mutex);
+        res = PMIX_SUCCESS;
+    } else {
+        res = event_del(ev);
+    }
+    return res;
+}
+
+void pmix_event_active (struct event *ev, int res, short ncalls) {
+    pmix_progress_tracker_t *trk = pmix_progress_tracker_get_by_base(ev->ev_base);
+    if ((NULL != trk) && !pthread_equal(pthread_self(), trk->engine.t_handle)) {
+        pmix_event_caddy_t *cd = PMIX_NEW(pmix_event_caddy_t);
+        cd->type = PMIX_EVENT_ACTIVE;
+        cd->ev = ev;
+        cd->res = res;
+        cd->ncalls = ncalls;
+        pthread_mutex_lock(&trk->mutex);
+        pmix_list_append(&trk->list, &cd->super);
+        ev_async_send ((struct ev_loop *)trk->ev_base, &trk->async);
+        pthread_mutex_unlock(&trk->mutex);
+    } else {
+        event_active(ev, res, ncalls);
+    }
+}
+
+void pmix_event_base_loopbreak (pmix_event_base_t *ev_base) {
+    pmix_progress_tracker_t *trk = pmix_progress_tracker_get_by_base(ev_base);
+    assert(NULL != trk);
+    ev_async_send ((struct ev_loop *)trk->ev_base, &trk->async);
+}
+#endif
 
 static bool inited = false;
 static pmix_list_t tracking;
@@ -116,7 +237,6 @@ static void stop_progress_engine(pmix_progress_tracker_t *trk)
 {
     assert(trk->ev_active);
     trk->ev_active = false;
-
     /* break the event loop - this will cause the loop to exit upon
        completion of any current event */
     pmix_event_base_loopbreak(trk->ev_base);
@@ -189,6 +309,11 @@ pmix_event_base_t *pmix_progress_thread_init(const char *name)
     pmix_event_assign(&trk->block, trk->ev_base, -1, PMIX_EV_PERSIST,
                    dummy_timeout_cb, trk);
     pmix_event_add(&trk->block, &long_timeout);
+
+#if PMIX_HAVE_LIBEV
+    ev_async_init (&trk->async, pmix_libev_ev_async_cb);
+    ev_async_start((struct ev_loop *)trk->ev_base, &trk->async);
+#endif
 
     /* construct the thread object */
     PMIX_CONSTRUCT(&trk->engine, pmix_thread_t);
@@ -299,6 +424,21 @@ int pmix_progress_thread_pause(const char *name)
 
     return PMIX_ERR_NOT_FOUND;
 }
+
+#if PMIX_HAVE_LIBEV
+static pmix_progress_tracker_t* pmix_progress_tracker_get_by_base(pmix_event_base_t *base) {
+    pmix_progress_tracker_t *trk;
+
+    if (inited)  {
+        PMIX_LIST_FOREACH(trk, &tracking, pmix_progress_tracker_t) {
+            if(trk->ev_base == base) {
+                return trk;
+            }
+        }
+    }
+    return NULL;
+}
+#endif
 
 int pmix_progress_thread_resume(const char *name)
 {

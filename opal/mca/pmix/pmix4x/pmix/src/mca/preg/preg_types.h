@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, Inc. All rights reserved.
- * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2019      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *

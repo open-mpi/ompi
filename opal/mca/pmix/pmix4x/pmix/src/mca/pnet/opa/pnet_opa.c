@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  *
  * $COPYRIGHT$
@@ -53,7 +53,7 @@
 static pmix_status_t opa_init(void);
 static void opa_finalize(void);
 static pmix_status_t allocate(pmix_namespace_t *nptr,
-                              pmix_info_t *info,
+                              pmix_info_t info[], size_t ninfo,
                               pmix_list_t *ilist);
 static pmix_status_t setup_local_network(pmix_namespace_t *nptr,
                                          pmix_info_t info[],
@@ -230,19 +230,22 @@ static char* transports_print(uint64_t *unique_key)
  * this function MUST pack it for transport as the host will
  * not know how to do so */
 static pmix_status_t allocate(pmix_namespace_t *nptr,
-                              pmix_info_t *info,
+                              pmix_info_t info[], size_t ninfo,
                               pmix_list_t *ilist)
 {
     uint64_t unique_key[2];
     char *string_key, *cs_env;
     int fd_rand;
-    size_t bytes_read;
+    size_t bytes_read, n, m, p;
     pmix_kval_t *kv;
-    bool envars, seckeys;
+    bool envars = false, seckeys = false, netalloc = false;
     pmix_status_t rc;
-
-    envars = false;
-    seckeys = false;
+    pmix_proc_t pname;
+    pmix_coord_t coord;
+    pmix_buffer_t bucket;
+    pmix_info_t *iptr;
+    pmix_pnet_node_t *nd;
+    pmix_pnet_local_procs_t *lp;
 
     pmix_output_verbose(2, pmix_pnet_base_framework.framework_output,
                         "pnet:opa:allocate for nspace %s", nptr->nspace);
@@ -251,14 +254,33 @@ static pmix_status_t allocate(pmix_namespace_t *nptr,
         return PMIX_ERR_TAKE_NEXT_OPTION;
     }
 
-    if (PMIX_CHECK_KEY(info, PMIX_SETUP_APP_ENVARS)) {
-        envars = PMIX_INFO_TRUE(info);
-    } else if (PMIX_CHECK_KEY(info, PMIX_SETUP_APP_ALL)) {
-        envars = PMIX_INFO_TRUE(info);
-        seckeys = PMIX_INFO_TRUE(info);
-    } else if (PMIX_CHECK_KEY(info, PMIX_SETUP_APP_NONENVARS) ||
-               PMIX_CHECK_KEY(info, PMIX_ALLOC_NETWORK_SEC_KEY)) {
-        seckeys = PMIX_INFO_TRUE(info);
+    for (n=0; n < ninfo; n++) {
+        if (PMIX_CHECK_KEY(&info[n], PMIX_SETUP_APP_ENVARS)) {
+            envars = PMIX_INFO_TRUE(&info[n]);
+        } else if (PMIX_CHECK_KEY(&info[n], PMIX_SETUP_APP_ALL)) {
+            envars = PMIX_INFO_TRUE(&info[n]);
+            seckeys = PMIX_INFO_TRUE(&info[n]);
+        } else if (PMIX_CHECK_KEY(&info[n], PMIX_SETUP_APP_NONENVARS)) {
+            seckeys = PMIX_INFO_TRUE(&info[n]);
+        } else if (PMIX_CHECK_KEY(&info[n], PMIX_ALLOC_NETWORK)) {
+            iptr = (pmix_info_t*)info[n].value.data.darray->array;
+            m = info[n].value.data.darray->size;
+            for (p=0; p < m; p++) {
+                if (PMIX_CHECK_KEY(&iptr[p], PMIX_ALLOC_NETWORK_SEC_KEY)) {
+                    seckeys = PMIX_INFO_TRUE(&iptr[p]);
+                } else if (PMIX_CHECK_KEY(&iptr[p], PMIX_ALLOC_NETWORK_ID)) {
+                    /* need to track the request by this ID */
+                } else if (PMIX_CHECK_KEY(&iptr[p], PMIX_SETUP_APP_ENVARS)) {
+                    envars = PMIX_INFO_TRUE(&iptr[p]);
+                } else if (PMIX_CHECK_KEY(&iptr[p], PMIX_SETUP_APP_ALL)) {
+                    envars = PMIX_INFO_TRUE(&iptr[p]);
+                    seckeys = PMIX_INFO_TRUE(&iptr[p]);
+                } else if (PMIX_CHECK_KEY(&iptr[p], PMIX_SETUP_APP_NONENVARS)) {
+                    seckeys = PMIX_INFO_TRUE(&iptr[p]);
+                }
+            }
+            netalloc = true;
+        }
     }
 
     if (seckeys) {
@@ -307,10 +329,6 @@ static pmix_status_t allocate(pmix_namespace_t *nptr,
         pmix_list_append(ilist, &kv->super);
         free(cs_env);
         free(string_key);
-        if (!envars) {
-            /* providing envars does not constitute allocating resources */
-            return PMIX_ERR_TAKE_NEXT_OPTION;
-        }
     }
 
     if (envars) {
@@ -323,11 +341,68 @@ static pmix_status_t allocate(pmix_namespace_t *nptr,
             rc = pmix_pnet_base_harvest_envars(mca_pnet_opa_component.include,
                                                mca_pnet_opa_component.exclude,
                                                ilist);
-            if (PMIX_SUCCESS == rc) {
-                return PMIX_ERR_TAKE_NEXT_OPTION;
+            if (PMIX_SUCCESS != rc) {
+                return rc;
             }
-            return rc;
         }
+    }
+
+    if (netalloc) {
+        /* assign a simulated coordinate to each process. For now, we
+         * assume there is one device per node. Thus, the coordinate of
+         * all procs on a node will be the network coord of the device
+         * on that node. We'll assign device coordinates with a simple
+         * round-robin algo */
+        coord.y = 0;
+        coord.z = 0;
+        PMIX_LOAD_NSPACE(pname.nspace, nptr->nspace);
+        PMIX_CONSTRUCT(&bucket, pmix_buffer_t);
+        PMIX_LIST_FOREACH(nd, &pmix_pnet_globals.nodes, pmix_pnet_node_t) {
+            /* find the job on this node */
+            PMIX_LIST_FOREACH(lp, &nd->local_jobs, pmix_pnet_local_procs_t) {
+                if (0 == strcmp(nptr->nspace, lp->nspace)) {
+                    /* assign the coord for each proc - in our case,
+                     * we shall assign an x-coord based on local rank
+                     * and the y-coord will represent the node */
+                    for (n=0; n < lp->np; n++) {
+                        coord.x = n;
+                        pname.rank = lp->ranks[n];
+                        /* pack this value */
+                        PMIX_BFROPS_PACK(rc, pmix_globals.mypeer, &bucket, &pname, 1, PMIX_PROC);
+                        if (PMIX_SUCCESS != rc) {
+                            PMIX_ERROR_LOG(rc);
+                            PMIX_DESTRUCT(&bucket);
+                            return rc;
+                        }
+                        PMIX_BFROPS_PACK(rc, pmix_globals.mypeer, &bucket, &coord, 1, PMIX_COORD);
+                        if (PMIX_SUCCESS != rc) {
+                            PMIX_ERROR_LOG(rc);
+                            PMIX_DESTRUCT(&bucket);
+                            return rc;
+                        }
+                    }
+                    break;
+                }
+            }
+            coord.y++;
+        }
+        /* pass that up */
+        kv = PMIX_NEW(pmix_kval_t);
+        if (NULL == kv) {
+            PMIX_DESTRUCT(&bucket);
+            return PMIX_ERR_OUT_OF_RESOURCE;
+        }
+        kv->key = strdup(PMIX_PNET_OPA_BLOB);
+        kv->value = (pmix_value_t*)malloc(sizeof(pmix_value_t));
+        if (NULL == kv->value) {
+            PMIX_DESTRUCT(&bucket);
+            PMIX_RELEASE(kv);
+            return PMIX_ERR_OUT_OF_RESOURCE;
+        }
+        kv->value->type = PMIX_BYTE_OBJECT;
+        /* unload the buffer into a byte object */
+        PMIX_UNLOAD_BUFFER(&bucket, kv->value->data.bo.bytes, kv->value->data.bo.size);
+        pmix_list_append(ilist, &kv->super);
     }
 
     /* we don't currently manage OPA resources */
@@ -343,15 +418,14 @@ static pmix_status_t setup_local_network(pmix_namespace_t *nptr,
 
 
     pmix_output_verbose(2, pmix_pnet_base_framework.framework_output,
-                        "pnet: opa setup_local_network");
+                        "pnet: opa setup_local_network for nspace %s", nptr->nspace);
 
     if (NULL != info) {
         for (n=0; n < ninfo; n++) {
             if (0 == strncmp(info[n].key, PMIX_PNET_OPA_BLOB, PMIX_MAX_KEYLEN)) {
                 /* the byte object contains a packed blob that needs to be
                  * cached until we determine we have local procs for this
-                 * nspace, and then delivered to the local OPA driver when
-                 * we have a means for doing so */
+                 * nspace */
                 kv = PMIX_NEW(pmix_kval_t);
                 if (NULL == kv) {
                     return PMIX_ERR_NOMEM;
@@ -384,9 +458,16 @@ static pmix_status_t setup_fork(pmix_namespace_t *nptr,
                                 char ***env)
 {
     pmix_kval_t *kv, *next;
+    pmix_data_array_t dinfo;
+    pmix_info_t info[2], stinfo;
+    int cnt;
+    pmix_status_t rc;
+    pmix_buffer_t bkt;
+    pmix_proc_t pname;
+    pmix_coord_t coord;
 
     pmix_output_verbose(2, pmix_pnet_base_framework.framework_output,
-                        "pnet: opa setup fork");
+                        "pnet: opa setup fork for nspace: %s", nptr->nspace);
 
     /* if there are any cached nspace prep blobs, execute them,
      * ensuring that we only do so once per nspace - note that
@@ -395,8 +476,44 @@ static pmix_status_t setup_fork(pmix_namespace_t *nptr,
     PMIX_LIST_FOREACH_SAFE(kv, next, &nptr->setup_data, pmix_kval_t) {
         if (0 == strcmp(kv->key, PMIX_PNET_OPA_BLOB)) {
             pmix_list_remove_item(&nptr->setup_data, &kv->super);
-            /* deliver to the local lib */
+            /* setup to unpack the blob */
+            PMIX_CONSTRUCT(&bkt,pmix_buffer_t);
+            PMIX_LOAD_BUFFER(pmix_globals.mypeer, &bkt,
+                             kv->value->data.bo.bytes,
+                             kv->value->data.bo.size);
+            /* there will be an entry for each proc in the nspace */
+            PMIX_INFO_CONSTRUCT(&stinfo);
+            PMIX_LOAD_KEY(stinfo.key, PMIX_PROC_DATA);
+            stinfo.value.type = PMIX_DATA_ARRAY;
+            stinfo.value.data.darray = &dinfo;
+            dinfo.type = PMIX_INFO;
+            dinfo.size = 2;
+            dinfo.array = info;
+            /* unpack all the entries */
+            cnt = 1;
+            PMIX_BFROPS_UNPACK(rc, pmix_globals.mypeer,
+                               &bkt, &pname, &cnt, PMIX_PROC);
+            while (PMIX_SUCCESS == rc) {
+                /* unpack the coord of this proc */
+                cnt = 1;
+                PMIX_BFROPS_UNPACK(rc, pmix_globals.mypeer,
+                                   &bkt, &coord, &cnt, PMIX_COORD);
+                if (PMIX_SUCCESS != rc) {
+                    PMIX_ERROR_LOG(rc);
+                    break;
+                }
+                /* cache the info on the job */
+                PMIX_INFO_LOAD(&info[0], PMIX_RANK, &pname.rank, PMIX_PROC_RANK);
+                PMIX_INFO_LOAD(&info[1], PMIX_NETWORK_COORDINATE, &coord, PMIX_COORD);
+                PMIX_GDS_CACHE_JOB_INFO(rc, pmix_globals.mypeer, nptr,
+                                        &stinfo, 1);
+                /* unpack next entry */
+                cnt = 1;
+                PMIX_BFROPS_UNPACK(rc, pmix_globals.mypeer,
+                                   &bkt, &pname, &cnt, PMIX_PROC);
+            }
             PMIX_RELEASE(kv);
+            break;
         }
     }
     return PMIX_SUCCESS;

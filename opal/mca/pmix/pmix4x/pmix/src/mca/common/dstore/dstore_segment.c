@@ -3,7 +3,7 @@
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * Copyright (c) 2016-2017 Mellanox Technologies, Inc.
  *                         All rights reserved.
- * Copyright (c) 2018      Research Organization for Information Science
+ * Copyright (c) 2018-2019 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
  *
  * $COPYRIGHT$
@@ -30,6 +30,11 @@
 
 #ifdef HAVE_SYS_AUXV_H
 #include <sys/auxv.h>
+#if PMIX_HAVE_LIBEV
+/* EV_NONE is macro-defined in <elf.h> that is included by <sys/auxv.h>
+ * and used in an enum in <event.h> from libev, so #undef it to fix an issue*/
+#undef EV_NONE
+#endif
 #endif
 
 #include <pmix_common.h>

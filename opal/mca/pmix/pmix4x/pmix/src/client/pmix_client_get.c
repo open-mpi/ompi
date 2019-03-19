@@ -1,8 +1,8 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
- * Copyright (c) 2014-2016 Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2019 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2014      Artem Y. Polyakov <artpol84@gmail.com>.
  *                         All rights reserved.
  * Copyright (c) 2016-2018 Mellanox Technologies, Inc.
@@ -17,7 +17,6 @@
 
 #include <src/include/pmix_config.h>
 
-#include <src/include/types.h>
 #include <src/include/pmix_stdint.h>
 
 #include <pmix.h>
@@ -45,16 +44,13 @@
 #include <sys/types.h>
 #endif
 
-#if PMIX_HAVE_ZLIB
-#include <zlib.h>
-#endif
 #include PMIX_EVENT_HEADER
 
 #include "src/class/pmix_list.h"
 #include "src/mca/bfrops/bfrops.h"
+#include "src/mca/pcompress/base/base.h"
 #include "src/threads/threads.h"
 #include "src/util/argv.h"
-#include "src/util/compress.h"
 #include "src/util/error.h"
 #include "src/util/hash.h"
 #include "src/util/output.h"
@@ -453,7 +449,9 @@ static void infocb(pmix_status_t status,
                     /* if this is a compressed string, then uncompress it */
                     if (PMIX_COMPRESSED_STRING == info[0].value.type) {
                         kv->type = PMIX_STRING;
-                        pmix_util_uncompress_string(&kv->data.string, (uint8_t*)info[0].value.data.bo.bytes, info[0].value.data.bo.size);
+                        pmix_compress.decompress_string(&kv->data.string,
+                                                        (uint8_t*)info[0].value.data.bo.bytes,
+                                                        info[0].value.data.bo.size);
                         if (NULL == kv->data.string) {
                             PMIX_ERROR_LOG(PMIX_ERR_NOMEM);
                             rc = PMIX_ERR_NOMEM;

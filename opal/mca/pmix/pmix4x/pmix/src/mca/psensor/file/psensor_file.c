@@ -7,6 +7,8 @@
  *                         All rights reserved.
  *
  * Copyright (c) 2017-2018 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2019      Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -15,7 +17,6 @@
  */
 
 #include <src/include/pmix_config.h>
-#include <src/include/types.h>
 #include <pmix_common.h>
 
 #include <stdio.h>

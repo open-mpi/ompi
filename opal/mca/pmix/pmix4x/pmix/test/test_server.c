@@ -2,8 +2,8 @@
  * Copyright (c) 2015-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015-2018 Mellanox Technologies, Inc.
  *                         All rights reserved.
- * Copyright (c) 2016      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016-2019 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -38,7 +38,7 @@ static void sdes(server_info_t *s)
     close(s->rd_fd);
     close(s->wr_fd);
     if (s->evread) {
-        event_del(s->evread);
+        pmix_event_del(s->evread);
     }
     s->evread = NULL;
 }
@@ -77,7 +77,7 @@ PMIX_CLASS_INSTANCE(server_nspace_t,
                     nscon, nsdes);
 
 static int server_send_procs(void);
-static void server_read_cb(evutil_socket_t fd, short event, void *arg);
+static void server_read_cb(int fd, short event, void *arg);
 static int srv_wait_all(double timeout);
 static int server_fwd_msg(msg_hdr_t *msg_hdr, char *buf, size_t size);
 static int server_send_msg(msg_hdr_t *msg_hdr, char *data, size_t size);
@@ -459,7 +459,7 @@ static void _libpmix_cb(void *cbdata)
     }
 }
 
-static void server_read_cb(evutil_socket_t fd, short event, void *arg)
+static void server_read_cb(int fd, short event, void *arg)
 {
     server_info_t *server = (server_info_t*)arg;
     msg_hdr_t msg_hdr;
@@ -790,9 +790,9 @@ int server_init(test_params *params)
     if (params->nservers && pmix_list_get_size(server_list)) {
         server_info_t *server;
         PMIX_LIST_FOREACH(server, server_list, server_info_t) {
-            server->evread = event_new(pmix_globals.evbase, server->rd_fd,
-                              EV_READ|EV_PERSIST, server_read_cb, server);
-            event_add(server->evread, NULL);
+            server->evread = pmix_event_new(pmix_globals.evbase, server->rd_fd,
+                                            EV_READ|EV_PERSIST, server_read_cb, server);
+            pmix_event_add(server->evread, NULL);
         }
     }
 

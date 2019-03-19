@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2019 Intel, Inc.  All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -24,6 +24,7 @@ typedef struct {
     char *excparms;
     char **include;
     char **exclude;
+    int radix;
 } pmix_pnet_opa_component_t;
 
 /* the component must be visible data for the linker to find it */

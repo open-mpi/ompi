@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2015-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2016-2018 IBM Corporation.  All rights reserved.
- * Copyright (c) 2016-2018 Mellanox Technologies, Inc.
+ * Copyright (c) 2016-2019 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2018-2019 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
@@ -42,7 +42,7 @@
 #include "src/client/pmix_client_ops.h"
 #include "src/server/pmix_server_ops.h"
 #include "src/util/argv.h"
-#include "src/util/compress.h"
+#include "src/mca/pcompress/pcompress.h"
 #include "src/util/error.h"
 #include "src/util/output.h"
 #include "src/util/pmix_environ.h"
@@ -108,9 +108,8 @@ static inline pmix_peer_t * _client_peer(pmix_common_dstore_ctx_t *ds_ctx);
 static inline int _my_client(const char *nspace, pmix_rank_t rank);
 
 static pmix_status_t _dstor_store_modex_cb(pmix_common_dstore_ctx_t *ds_ctx,
-                                                struct pmix_namespace_t *nspace,
-                                                pmix_list_t *cbs,
-                                                pmix_byte_object_t *bo);
+                                           pmix_proc_t *proc,
+                                           pmix_buffer_t *pbkt);
 
 static pmix_status_t _dstore_store_nolock(pmix_common_dstore_ctx_t *ds_ctx,
                                    ns_map_data_t *ns_map,
@@ -2520,9 +2519,9 @@ static inline int _my_client(const char *nspace, pmix_rank_t rank)
  * always contains data solely from remote procs, and we
  * shall store it accordingly */
 PMIX_EXPORT pmix_status_t pmix_common_dstor_store_modex(pmix_common_dstore_ctx_t *ds_ctx,
-                                                            struct pmix_namespace_t *nspace,
-                                                            pmix_list_t *cbs,
-                                                            pmix_buffer_t *buf)
+                                                        struct pmix_namespace_t *nspace,
+                                                        pmix_buffer_t *buf,
+                                                        void *cbdata)
 {
     pmix_status_t rc = PMIX_SUCCESS;
     pmix_status_t rc1 = PMIX_SUCCESS;
@@ -2542,7 +2541,9 @@ PMIX_EXPORT pmix_status_t pmix_common_dstor_store_modex(pmix_common_dstore_ctx_t
         return rc;
     }
 
-    rc = pmix_gds_base_store_modex(nspace, cbs, buf, (pmix_gds_base_store_modex_cb_fn_t)_dstor_store_modex_cb, ds_ctx);
+    rc = pmix_gds_base_store_modex(nspace,  buf, ds_ctx,
+                    (pmix_gds_base_store_modex_cb_fn_t)_dstor_store_modex_cb,
+                    cbdata);
     if (PMIX_SUCCESS != rc) {
         PMIX_ERROR_LOG(rc);
     }
@@ -2560,15 +2561,11 @@ PMIX_EXPORT pmix_status_t pmix_common_dstor_store_modex(pmix_common_dstore_ctx_t
 }
 
 static pmix_status_t _dstor_store_modex_cb(pmix_common_dstore_ctx_t *ds_ctx,
-                                                struct pmix_namespace_t *nspace,
-                                                pmix_list_t *cbs,
-                                                pmix_byte_object_t *bo)
+                                           pmix_proc_t *proc,
+                                           pmix_buffer_t *pbkt)
 {
-    pmix_namespace_t *ns = (pmix_namespace_t*)nspace;
     pmix_status_t rc = PMIX_SUCCESS;
     int32_t cnt;
-    pmix_buffer_t pbkt;
-    pmix_proc_t proc;
     pmix_kval_t *kv;
     ns_map_data_t *ns_map;
     pmix_buffer_t tmp;
@@ -2576,7 +2573,7 @@ static pmix_status_t _dstor_store_modex_cb(pmix_common_dstore_ctx_t *ds_ctx,
     pmix_output_verbose(2, pmix_gds_base_framework.framework_output,
                         "[%s:%d] gds:dstore:store_modex for nspace %s",
                         pmix_globals.myid.nspace, pmix_globals.myid.rank,
-                        ns->nspace);
+                        proc->nspace);
 
     /* NOTE: THE BYTE OBJECT DELIVERED HERE WAS CONSTRUCTED
      * BY A SERVER, AND IS THEREFORE PACKED USING THE SERVER'S
@@ -2588,28 +2585,8 @@ static pmix_status_t _dstor_store_modex_cb(pmix_common_dstore_ctx_t *ds_ctx,
      * the rank followed by pmix_kval_t's. The list of callbacks
      * contains all local participants. */
 
-    /* setup the byte object for unpacking */
-    PMIX_CONSTRUCT(&pbkt, pmix_buffer_t);
-    /* the next step unfortunately NULLs the byte object's
-     * entries, so we need to ensure we restore them! */
-    PMIX_LOAD_BUFFER(pmix_globals.mypeer, &pbkt, bo->bytes, bo->size);
-    /* unload the proc that provided this data */
-    cnt = 1;
-    PMIX_BFROPS_UNPACK(rc, pmix_globals.mypeer, &pbkt, &proc, &cnt, PMIX_PROC);
-    if (PMIX_SUCCESS != rc) {
-        PMIX_ERROR_LOG(rc);
-        bo->bytes = pbkt.base_ptr;
-        bo->size = pbkt.bytes_used; // restore the incoming data
-        pbkt.base_ptr = NULL;
-        PMIX_DESTRUCT(&pbkt);
-        return rc;
-    }
     /* don't store blobs to the sm dstore from local clients */
-    if (_my_client(proc.nspace, proc.rank)) {
-        bo->bytes = pbkt.base_ptr;
-        bo->size = pbkt.bytes_used; // restore the incoming data
-        pbkt.base_ptr = NULL;
-        PMIX_DESTRUCT(&pbkt);
+    if (_my_client(proc->nspace, proc->rank)) {
         return PMIX_SUCCESS;
     }
 
@@ -2619,16 +2596,12 @@ static pmix_status_t _dstor_store_modex_cb(pmix_common_dstore_ctx_t *ds_ctx,
     /* unpack the remaining values until we hit the end of the buffer */
     cnt = 1;
     kv = PMIX_NEW(pmix_kval_t);
-    PMIX_BFROPS_UNPACK(rc, pmix_globals.mypeer, &pbkt, kv, &cnt, PMIX_KVAL);
+    PMIX_BFROPS_UNPACK(rc, pmix_globals.mypeer, pbkt, kv, &cnt, PMIX_KVAL);
     while (PMIX_SUCCESS == rc) {
         /* store this in the hash table */
-        PMIX_GDS_STORE_KV(rc, pmix_globals.mypeer, &proc, PMIX_REMOTE, kv);
+        PMIX_GDS_STORE_KV(rc, pmix_globals.mypeer, proc, PMIX_REMOTE, kv);
         if (PMIX_SUCCESS != rc) {
             PMIX_ERROR_LOG(rc);
-            bo->bytes = pbkt.base_ptr;
-            bo->size = pbkt.bytes_used; // restore the incoming data
-            pbkt.base_ptr = NULL;
-            PMIX_DESTRUCT(&pbkt);
             return rc;
         }
 
@@ -2642,7 +2615,7 @@ static pmix_status_t _dstor_store_modex_cb(pmix_common_dstore_ctx_t *ds_ctx,
         /* proceed to the next element */
         kv = PMIX_NEW(pmix_kval_t);
         cnt = 1;
-        PMIX_BFROPS_UNPACK(rc, pmix_globals.mypeer, &pbkt, kv, &cnt, PMIX_KVAL);
+        PMIX_BFROPS_UNPACK(rc, pmix_globals.mypeer, pbkt, kv, &cnt, PMIX_KVAL);
     }
 
     /* Release the kv that didn't received the value
@@ -2662,18 +2635,14 @@ static pmix_status_t _dstor_store_modex_cb(pmix_common_dstore_ctx_t *ds_ctx,
     PMIX_UNLOAD_BUFFER(&tmp, kv->value->data.bo.bytes, kv->value->data.bo.size);
 
     /* Get the namespace map element for the process "proc" */
-    if (NULL == (ns_map = ds_ctx->session_map_search(ds_ctx, proc.nspace))) {
+    if (NULL == (ns_map = ds_ctx->session_map_search(ds_ctx, proc->nspace))) {
         rc = PMIX_ERROR;
         PMIX_ERROR_LOG(rc);
-        bo->bytes = pbkt.base_ptr;
-        bo->size = pbkt.bytes_used; // restore the incoming data
-        pbkt.base_ptr = NULL;
-        PMIX_DESTRUCT(&pbkt);
         return rc;
     }
 
     /* Store all keys at once */
-    rc = _dstore_store_nolock(ds_ctx, ns_map, proc.rank, kv);
+    rc = _dstore_store_nolock(ds_ctx, ns_map, proc->rank, kv);
     if (PMIX_SUCCESS != rc) {
         PMIX_ERROR_LOG(rc);
     }
@@ -2681,12 +2650,6 @@ static pmix_status_t _dstor_store_modex_cb(pmix_common_dstore_ctx_t *ds_ctx,
     /* Release all resources */
     PMIX_RELEASE(kv);
     PMIX_DESTRUCT(&tmp);
-
-    /* Reset the input buffer */
-    bo->bytes = pbkt.base_ptr;
-    bo->size = pbkt.bytes_used;
-    pbkt.base_ptr = NULL;
-    PMIX_DESTRUCT(&pbkt);
 
     return rc;
 }

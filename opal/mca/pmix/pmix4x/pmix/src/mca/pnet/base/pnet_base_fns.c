@@ -101,16 +101,14 @@ pmix_status_t pmix_pnet_base_allocate(char *nspace,
                 }
             }
             /* process the allocation request */
-            for (n=0; n < ninfo; n++) {
-                PMIX_LIST_FOREACH(active, &pmix_pnet_globals.actives, pmix_pnet_base_active_module_t) {
-                    if (NULL != active->module->allocate) {
-                        if (PMIX_SUCCESS == (rc = active->module->allocate(nptr, &info[n], ilist))) {
-                            break;
-                        }
-                        if (PMIX_ERR_TAKE_NEXT_OPTION != rc) {
-                            /* true error */
-                            return rc;
-                        }
+            PMIX_LIST_FOREACH(active, &pmix_pnet_globals.actives, pmix_pnet_base_active_module_t) {
+                if (NULL != active->module->allocate) {
+                    if (PMIX_SUCCESS == (rc = active->module->allocate(nptr, info, ninfo, ilist))) {
+                        break;
+                    }
+                    if (PMIX_ERR_TAKE_NEXT_OPTION != rc) {
+                        /* true error */
+                        return rc;
                     }
                 }
             }

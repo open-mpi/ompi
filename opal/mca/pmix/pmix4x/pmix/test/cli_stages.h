@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2015-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015-2018 Mellanox Technologies, Inc.
@@ -25,7 +25,6 @@
 #include <sys/wait.h>
 #include <sys/time.h>
 #include <time.h>
-#include PMIX_EVENT_HEADER
 #include <errno.h>
 #include "src/include/pmix_globals.h"
 #include "pmix_server.h"
