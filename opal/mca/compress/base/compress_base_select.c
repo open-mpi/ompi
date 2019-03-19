@@ -7,6 +7,7 @@
  *
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2019      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -29,16 +30,9 @@
 
 int opal_compress_base_select(void)
 {
-    int ret, exit_status = OPAL_SUCCESS;
+    int ret = OPAL_SUCCESS;
     opal_compress_base_component_t *best_component = NULL;
     opal_compress_base_module_t *best_module = NULL;
-
-    /* Compression currently only used with C/R */
-    if( !opal_cr_is_enabled ) {
-        opal_output_verbose(10, opal_compress_base_framework.framework_output,
-                            "compress:open: FT is not enabled, skipping!");
-        return OPAL_SUCCESS;
-    }
 
     /*
      * Select the best component
@@ -47,8 +41,8 @@ int opal_compress_base_select(void)
                                         &opal_compress_base_framework.framework_components,
                                         (mca_base_module_t **) &best_module,
                                         (mca_base_component_t **) &best_component, NULL) ) {
-        /* This will only happen if no component was selected */
-        exit_status = OPAL_ERROR;
+        /* This will only happen if no component was selected,
+         * in which case we use the default one */
         goto cleanup;
     }
 
@@ -58,12 +52,11 @@ int opal_compress_base_select(void)
     /* Initialize the winner */
     if (NULL != best_module) {
         if (OPAL_SUCCESS != (ret = best_module->init()) ) {
-            exit_status = ret;
             goto cleanup;
         }
         opal_compress = *best_module;
     }
 
  cleanup:
-    return exit_status;
+    return ret;
 }

@@ -6,6 +6,7 @@
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  *
+ * Copyright (c) 2019      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -83,6 +84,20 @@ typedef int (*opal_compress_base_module_decompress_nb_fn_t)
     (char * cname, char **fname, pid_t *child_pid);
 
 /**
+ * Compress a string
+ *
+ * Arguments:
+ *
+ */
+typedef bool (*opal_compress_base_module_compress_string_fn_t)(uint8_t *inbytes,
+                                                               size_t inlen,
+                                                               uint8_t **outbytes,
+                                                               size_t *olen);
+typedef bool (*opal_compress_base_module_decompress_string_fn_t)(uint8_t **outbytes, size_t olen,
+                                                                 uint8_t *inbytes, size_t len);
+
+
+/**
  * Structure for COMPRESS components.
  */
 struct opal_compress_base_component_2_0_0_t {
@@ -117,6 +132,10 @@ struct opal_compress_base_module_1_0_0_t {
     /** Decompress Interface */
     opal_compress_base_module_decompress_fn_t     decompress;
     opal_compress_base_module_decompress_nb_fn_t  decompress_nb;
+
+    /* COMPRESS STRING */
+    opal_compress_base_module_compress_string_fn_t      compress_block;
+    opal_compress_base_module_decompress_string_fn_t    decompress_block;
 };
 typedef struct opal_compress_base_module_1_0_0_t opal_compress_base_module_1_0_0_t;
 typedef struct opal_compress_base_module_1_0_0_t opal_compress_base_module_t;

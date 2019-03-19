@@ -14,7 +14,7 @@
  * Copyright (c) 2011-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2017 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2013-2018 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2017-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -67,7 +67,6 @@
 #include "orte/mca/grpcomm/base/base.h"
 #include "orte/mca/iof/base/base.h"
 #include "orte/mca/ras/base/base.h"
-#include "orte/mca/regx/base/base.h"
 #include "orte/mca/plm/base/base.h"
 #include "orte/mca/plm/plm.h"
 #include "orte/mca/odls/base/base.h"
@@ -554,16 +553,6 @@ static int rte_init(void)
     if (ORTE_SUCCESS != (ret = orte_rmaps_base_select())) {
         ORTE_ERROR_LOG(ret);
         error = "orte_rmaps_base_find_available";
-        goto error;
-    }
-    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_regx_base_framework, 0))) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_regx_base_open";
-        goto error;
-    }
-    if (ORTE_SUCCESS != (ret = orte_regx_base_select())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_regx_base_select";
         goto error;
     }
 

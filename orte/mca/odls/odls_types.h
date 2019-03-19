@@ -12,7 +12,7 @@
  * Copyright (c) 2011-2016 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2018      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -92,6 +92,9 @@ typedef uint8_t orte_daemon_cmd_flag_t;
 
 /* tell DVM daemons to cleanup resources from job */
 #define ORTE_DAEMON_DVM_CLEANUP_JOB_CMD     (orte_daemon_cmd_flag_t) 34
+
+/* pass node info */
+#define ORTE_DAEMON_PASS_NODE_INFO_CMD      (orte_daemon_cmd_flag_t) 35
 
 /*
  * Struct written up the pipe from the child to the parent.

@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2011-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2016-2018 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2016-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2017      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -32,8 +32,8 @@
 
 
 #include "opal/dss/dss.h"
+#include "opal/mca/compress/compress.h"
 
-#include "orte/util/compress.h"
 #include "orte/util/proc_info.h"
 #include "orte/util/error_strings.h"
 #include "orte/mca/errmgr/errmgr.h"
@@ -506,8 +506,8 @@ static int pack_xcast(orte_grpcomm_signature_t *sig,
     }
 
     /* see if we want to compress this message */
-    if (orte_util_compress_block((uint8_t*)data.base_ptr, data.bytes_used,
-                                 &cmpdata, &cmplen)) {
+    if (opal_compress.compress_block((uint8_t*)data.base_ptr, data.bytes_used,
+                                     &cmpdata, &cmplen)) {
         /* the data was compressed - mark that we compressed it */
         flag = 1;
         if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, &flag, 1, OPAL_INT8))) {

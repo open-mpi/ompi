@@ -14,7 +14,7 @@
  *                         reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc. All rights reserved.
  * Copyright (c) 2010-2011 Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2014-2018 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2016-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -47,6 +47,7 @@
 
 #include "opal/mca/event/event.h"
 #include "opal/mca/base/base.h"
+#include "opal/mca/compress/compress.h"
 #include "opal/mca/pstat/pstat.h"
 #include "opal/util/output.h"
 #include "opal/util/opal_environ.h"
@@ -58,7 +59,7 @@
 #include "orte/util/proc_info.h"
 #include "orte/util/session_dir.h"
 #include "orte/util/name_fns.h"
-#include "orte/util/compress.h"
+#include "orte/util/nidmap.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/grpcomm/base/base.h"
@@ -126,7 +127,7 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
     char *coprocessors;
     orte_job_map_t *map;
     int8_t flag;
-    uint8_t *cmpdata;
+    uint8_t *cmpdata, u8;
     size_t cmplen;
 
     /* unpack the command */
@@ -240,6 +241,31 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
             ORTE_ERROR_LOG(ret);
         }
         break;
+
+    case ORTE_DAEMON_PASS_NODE_INFO_CMD:
+        if (orte_debug_daemons_flag) {
+            opal_output(0, "%s orted_cmd: received pass_node_info",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+        }
+        if (!ORTE_PROC_IS_HNP) {
+            n = 1;
+            if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &u8, &n, OPAL_UINT8))) {
+                ORTE_ERROR_LOG(ret);
+                goto CLEANUP;
+            }
+            if (1 == u8) {
+                if (ORTE_SUCCESS != (ret = orte_util_decode_nidmap(buffer))) {
+                    ORTE_ERROR_LOG(ret);
+                    goto CLEANUP;
+                }
+            }
+            if (ORTE_SUCCESS != (ret = orte_util_parse_node_info(buffer))) {
+                ORTE_ERROR_LOG(ret);
+                goto CLEANUP;
+            }
+        }
+        break;
+
 
         /****    ADD_LOCAL_PROCS   ****/
     case ORTE_DAEMON_ADD_LOCAL_PROCS:
@@ -639,8 +665,8 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
             free(coprocessors);
         }
         answer = OBJ_NEW(opal_buffer_t);
-        if (orte_util_compress_block((uint8_t*)data.base_ptr, data.bytes_used,
-                             &cmpdata, &cmplen)) {
+        if (opal_compress.compress_block((uint8_t*)data.base_ptr, data.bytes_used,
+                                         &cmpdata, &cmplen)) {
             /* the data was compressed - mark that we compressed it */
             flag = 1;
             if (ORTE_SUCCESS != (ret = opal_dss.pack(answer, &flag, 1, OPAL_INT8))) {

@@ -4,6 +4,8 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  *
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
+ * Copyright (c) 2019      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -34,6 +36,7 @@
 #include "opal/util/os_dirpath.h"
 #include "opal/util/output.h"
 #include "opal/util/argv.h"
+#include "opal/util/printf.h"
 
 #include "opal/mca/compress/compress.h"
 #include "opal/mca/compress/base/base.h"
@@ -54,12 +57,12 @@ int opal_compress_base_tar_create(char ** target)
     pid_t child_pid = 0;
     int status = 0;
 
-    asprintf(&tar_target, "%s.tar", *target);
+    opal_asprintf(&tar_target, "%s.tar", *target);
 
     child_pid = fork();
     if( 0 == child_pid ) { /* Child */
         char *cmd;
-        asprintf(&cmd, "tar -cf %s %s", tar_target, *target);
+        opal_asprintf(&cmd, "tar -cf %s %s", tar_target, *target);
 
         argv = opal_argv_split(cmd, ' ');
         status = execvp(argv[0], argv);
@@ -101,7 +104,7 @@ int opal_compress_base_tar_extract(char ** target)
     child_pid = fork();
     if( 0 == child_pid ) { /* Child */
         char *cmd;
-        asprintf(&cmd, "tar -xf %s", *target);
+        opal_asprintf(&cmd, "tar -xf %s", *target);
 
         argv = opal_argv_split(cmd, ' ');
         status = execvp(argv[0], argv);

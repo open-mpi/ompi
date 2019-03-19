@@ -11,7 +11,7 @@
 #                         All rights reserved.
 # Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
 # Copyright (c) 2014      Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2014-2018 Intel, Inc.  All rights reserved.
+# Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
 # Copyright (c) 2016      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
@@ -58,8 +58,8 @@ headers += \
         util/comm/comm.h \
         util/attr.h \
         util/listener.h \
-        util/compress.h \
-        util/threads.h
+        util/threads.h \
+        util/nidmap.h
 
 lib@ORTE_LIB_PREFIX@open_rte_la_SOURCES += \
         util/error_strings.c \
@@ -77,7 +77,7 @@ lib@ORTE_LIB_PREFIX@open_rte_la_SOURCES += \
         util/comm/comm.c \
         util/attr.c \
         util/listener.c \
-        util/compress.c
+        util/nidmap.c
 
 # Remove the generated man pages
 distclean-local:
