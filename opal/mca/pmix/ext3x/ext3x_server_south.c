@@ -12,6 +12,7 @@
  * Copyright (c) 2018      The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2019      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -131,11 +132,6 @@ int ext3x_server_init(opal_pmix_server_module_t *module,
             ext3x_value_load(&pinfo[n].value, kv);
             ++n;
         }
-    }
-
-    /* check for direct modex use-case */
-    if (opal_pmix_base_async_modex && !opal_pmix_collect_all_data) {
-        opal_setenv("PMIX_MCA_gds", "hash", true, &environ);
     }
 
     /* insert ourselves into our list of jobids - it will be the
