@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2017-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2017-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2017      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -61,7 +61,6 @@ typedef struct {
     opal_buffer_t tree_spawn_cmd;
     /* daemon nodes assigned at launch */
     bool daemon_nodes_assigned_at_launch;
-    size_t node_regex_threshold;
 } orte_plm_globals_t;
 /**
  * Global instance of PLM framework data

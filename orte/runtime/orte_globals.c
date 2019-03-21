@@ -13,7 +13,7 @@
  * Copyright (c) 2009-2010 Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2018 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
@@ -159,7 +159,6 @@ char *orte_default_hostfile = NULL;
 bool orte_default_hostfile_given = false;
 char *orte_rankfile = NULL;
 int orte_num_allocated_nodes = 0;
-char *orte_node_regex = NULL;
 char *orte_default_dash_host = NULL;
 
 /* tool communication controls */

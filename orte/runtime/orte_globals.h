@@ -13,7 +13,7 @@
  * Copyright (c) 2007-2017 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  * Copyright (c) 2017-2018 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
@@ -543,7 +543,6 @@ ORTE_DECLSPEC extern char *orte_default_hostfile;
 ORTE_DECLSPEC extern bool orte_default_hostfile_given;
 ORTE_DECLSPEC extern char *orte_rankfile;
 ORTE_DECLSPEC extern int orte_num_allocated_nodes;
-ORTE_DECLSPEC extern char *orte_node_regex;
 ORTE_DECLSPEC extern char *orte_default_dash_host;
 
 /* PMI version control */

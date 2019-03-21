@@ -13,7 +13,7 @@
  * Copyright (c) 2009-2010 Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved
- * Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2018 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
@@ -405,14 +405,6 @@ int orte_register_params(void)
         free(orte_default_dash_host);
         orte_default_dash_host = NULL;
     }
-
-    /* regex of nodes in system */
-    orte_node_regex = NULL;
-    (void) mca_base_var_register ("orte", "orte", NULL, "node_regex",
-                                  "Regular expression defining nodes in the system",
-                                  MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
-                                  OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
-                                  &orte_node_regex);
 
     /* whether or not to keep FQDN hostnames */
     orte_keep_fqdn_hostnames = false;

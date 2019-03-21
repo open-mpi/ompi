@@ -1014,10 +1014,6 @@ int orte_daemon(int argc, char *argv[])
                 i += 2;
             }
         }
-        if (NULL != orte_node_regex) {
-            /* now launch any child daemons of ours */
-            orte_plm.remote_spawn();
-        }
     }
 
     if (orte_debug_daemons_flag) {

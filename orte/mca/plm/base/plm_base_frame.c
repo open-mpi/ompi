@@ -13,6 +13,7 @@
  *                         All rights reserved.
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2019      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -54,14 +55,6 @@ orte_plm_base_module_t orte_plm = {0};
 
 static int mca_plm_base_register(mca_base_register_flag_t flags)
 {
-    orte_plm_globals.node_regex_threshold = 1024;
-    (void) mca_base_framework_var_register (&orte_plm_base_framework, "node_regex_threshold",
-                                 "Only pass the node regex on the orted command line if smaller than this threshold",
-                                 MCA_BASE_VAR_TYPE_SIZE_T, NULL, 0,
-                                 MCA_BASE_VAR_FLAG_INTERNAL,
-                                 OPAL_INFO_LVL_9,
-                                 MCA_BASE_VAR_SCOPE_READONLY,
-                                 &orte_plm_globals.node_regex_threshold);
     return ORTE_SUCCESS;
 }
 
