@@ -182,7 +182,7 @@ extern sshmem_mkey_t *mca_spml_ikrit_register(void* addr,
                                                 uint64_t shmid,
                                                 int *count);
 extern int mca_spml_ikrit_deregister(sshmem_mkey_t *mkeys);
-extern int mca_spml_ikrit_oob_get_mkeys(shmem_ctx_t ctx, int pe,
+extern int mca_spml_ikrit_oob_get_mkeys(int pe,
                                         uint32_t segno,
                                         sshmem_mkey_t *mkeys);
 

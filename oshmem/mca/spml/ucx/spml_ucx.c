@@ -41,9 +41,6 @@
 #define SPML_UCX_PUT_DEBUG    0
 #endif
 
-static
-spml_ucx_mkey_t * mca_spml_ucx_get_mkey_slow(shmem_ctx_t ctx, int pe, void *va, void **rva);
-
 mca_spml_ucx_t mca_spml_ucx = {
     .super = {
         /* Init mca_spml_base_module_t */
@@ -77,10 +74,8 @@ mca_spml_ucx_t mca_spml_ucx = {
     .num_disconnect         = 1,
     .heap_reg_nb            = 0,
     .enabled                = 0,
-    .get_mkey_slow          = mca_spml_ucx_get_mkey_slow
+    .get_mkey_slow          = NULL
 };
-
-OBJ_CLASS_INSTANCE(mca_spml_ucx_ctx_list_item_t, opal_list_item_t, NULL, NULL);
 
 mca_spml_ucx_ctx_t mca_spml_ucx_ctx_default = {
     .ucp_worker = NULL,
@@ -217,7 +212,7 @@ static char spml_ucx_transport_ids[1] = { 0 };
 
 int mca_spml_ucx_add_procs(ompi_proc_t** procs, size_t nprocs)
 {
-    size_t i, n;
+    size_t i, j, n;
     int rc = OSHMEM_ERROR;
     int my_rank = oshmem_my_proc_id();
     ucs_status_t err;
@@ -246,7 +241,7 @@ int mca_spml_ucx_add_procs(ompi_proc_t** procs, size_t nprocs)
         goto error;
     }
 
-    opal_progress_register(spml_ucx_progress);
+    opal_progress_register(spml_ucx_default_progress);
 
     mca_spml_ucx.remote_addrs_tbl = (char **)calloc(nprocs, sizeof(char *));
     memset(mca_spml_ucx.remote_addrs_tbl, 0, nprocs * sizeof(char *));
@@ -269,6 +264,10 @@ int mca_spml_ucx_add_procs(ompi_proc_t** procs, size_t nprocs)
 
         OSHMEM_PROC_DATA(procs[i])->num_transports = 1;
         OSHMEM_PROC_DATA(procs[i])->transport_ids = spml_ucx_transport_ids;
+
+        for (j = 0; j < MCA_MEMHEAP_SEG_COUNT; j++) {
+            mca_spml_ucx_ctx_default.ucp_peers[i].mkeys[j].key.rkey = NULL;
+        }
 
         mca_spml_ucx.remote_addrs_tbl[i] = (char *)malloc(wk_rsizes[i]);
         memcpy(mca_spml_ucx.remote_addrs_tbl[i], (char *)(wk_raddrs + wk_roffs[i]),
@@ -304,22 +303,6 @@ error:
     SPML_UCX_ERROR("add procs FAILED rc=%d", rc);
     return rc;
 
-}
-
-
-static
-spml_ucx_mkey_t * mca_spml_ucx_get_mkey_slow(shmem_ctx_t ctx, int pe, void *va, void **rva)
-{
-    sshmem_mkey_t *r_mkey;
-
-    r_mkey = mca_memheap_base_get_cached_mkey(ctx, pe, va, 0, rva);
-    if (OPAL_UNLIKELY(!r_mkey)) {
-        SPML_UCX_ERROR("pe=%d: %p is not address of symmetric variable",
-                       pe, va);
-        oshmem_shmem_abort(-1);
-        return NULL;
-    }
-    return (spml_ucx_mkey_t *)(r_mkey->spml_context);
 }
 
 void mca_spml_ucx_rmkey_free(sshmem_mkey_t *mkey)
@@ -366,7 +349,9 @@ void mca_spml_ucx_rmkey_unpack(shmem_ctx_t ctx, sshmem_mkey_t *mkey, uint32_t se
         goto error_fatal;
     }
 
-    mkey->spml_context = ucx_mkey;
+    if (ucx_ctx == &mca_spml_ucx_ctx_default) {
+        mkey->spml_context = ucx_mkey;
+    }
     mca_spml_ucx_cache_mkey(ucx_ctx, mkey, segno, pe);
     return;
 
@@ -492,12 +477,14 @@ int mca_spml_ucx_deregister(sshmem_mkey_t *mkeys)
 {
     spml_ucx_mkey_t   *ucx_mkey;
     map_segment_t *mem_seg;
+    int segno;
+    int my_pe = oshmem_my_proc_id();
 
     MCA_SPML_CALL(quiet(oshmem_ctx_default));
     if (!mkeys)
         return OSHMEM_SUCCESS;
 
-    if (!mkeys[0].spml_context) 
+    if (!mkeys[0].spml_context)
         return OSHMEM_SUCCESS;
 
     mem_seg  = memheap_find_va(mkeys[0].va_base);
@@ -511,25 +498,68 @@ int mca_spml_ucx_deregister(sshmem_mkey_t *mkeys)
         ucp_mem_unmap(mca_spml_ucx.ucp_context, ucx_mkey->mem_h);
     }
     ucp_rkey_destroy(ucx_mkey->rkey);
+    ucx_mkey->rkey = NULL;
 
     if (0 < mkeys[0].len) {
         ucp_rkey_buffer_release(mkeys[0].u.data);
     }
 
+    free(mkeys);
+
     return OSHMEM_SUCCESS;
+}
+
+static inline void _ctx_add(mca_spml_ucx_ctx_array_t *array, mca_spml_ucx_ctx_t *ctx)
+{
+    int i;
+
+    if (array->ctxs_count < array->ctxs_num) {
+        array->ctxs[array->ctxs_count] = ctx;
+    } else {
+        array->ctxs = realloc(array->ctxs, (array->ctxs_num + MCA_SPML_UCX_CTXS_ARRAY_INC) * sizeof(mca_spml_ucx_ctx_t *));
+        opal_atomic_wmb ();
+        for (i = array->ctxs_num; i < array->ctxs_num + MCA_SPML_UCX_CTXS_ARRAY_INC; i++) {
+            array->ctxs[i] = NULL;
+        }
+        array->ctxs[array->ctxs_num] = ctx;
+        array->ctxs_num += MCA_SPML_UCX_CTXS_ARRAY_INC;
+    }
+
+    opal_atomic_wmb ();
+    array->ctxs_count++;
+}
+
+static inline void _ctx_remove(mca_spml_ucx_ctx_array_t *array, mca_spml_ucx_ctx_t *ctx)
+{
+    int i;
+
+    for (i = 0; i < array->ctxs_count; i++) {
+        if (array->ctxs[i] == ctx) {
+            array->ctxs[i] = array->ctxs[array->ctxs_count-1];
+            array->ctxs[array->ctxs_count-1] = NULL;
+            break;
+        }
+    }
+
+    array->ctxs_count--;
+    opal_atomic_wmb ();
 }
 
 int mca_spml_ucx_ctx_create(long options, shmem_ctx_t *ctx)
 {
-    mca_spml_ucx_ctx_list_item_t *ctx_item;
+    mca_spml_ucx_ctx_t *ucx_ctx;
     ucp_worker_params_t params;
     ucp_ep_params_t ep_params;
-    size_t i, nprocs = oshmem_num_procs();
+    size_t i, j, nprocs = oshmem_num_procs();
     ucs_status_t err;
+    int my_pe = oshmem_my_proc_id();
+    size_t len;
+    spml_ucx_mkey_t *ucx_mkey;
+    sshmem_mkey_t *mkey;
     int rc = OSHMEM_ERROR;
 
-    ctx_item = OBJ_NEW(mca_spml_ucx_ctx_list_item_t);
-    ctx_item->ctx.options = options;
+    ucx_ctx = malloc(sizeof(mca_spml_ucx_ctx_t));
+    ucx_ctx->options = options;
 
     params.field_mask  = UCP_WORKER_PARAM_FIELD_THREAD_MODE;
     if (oshmem_mpi_thread_provided == SHMEM_THREAD_SINGLE || options & SHMEM_CTX_PRIVATE || options & SHMEM_CTX_SERIALIZED) {
@@ -539,52 +569,66 @@ int mca_spml_ucx_ctx_create(long options, shmem_ctx_t *ctx)
     }
 
     err = ucp_worker_create(mca_spml_ucx.ucp_context, &params,
-                            &ctx_item->ctx.ucp_worker);
+                            &ucx_ctx->ucp_worker);
     if (UCS_OK != err) {
-        OBJ_RELEASE(ctx_item);
+        free(ucx_ctx);
         return OSHMEM_ERROR;
     }
 
-    ctx_item->ctx.ucp_peers = (ucp_peer_t *) calloc(nprocs, sizeof(*(ctx_item->ctx.ucp_peers)));
-    if (NULL == ctx_item->ctx.ucp_peers) {
+    ucx_ctx->ucp_peers = (ucp_peer_t *) calloc(nprocs, sizeof(*(ucx_ctx->ucp_peers)));
+    if (NULL == ucx_ctx->ucp_peers) {
         goto error;
+    }
+
+    if (mca_spml_ucx.active_array.ctxs_count == 0) {
+        opal_progress_register(spml_ucx_ctx_progress);
     }
 
     for (i = 0; i < nprocs; i++) {
         ep_params.field_mask = UCP_EP_PARAM_FIELD_REMOTE_ADDRESS;
         ep_params.address    = (ucp_address_t *)(mca_spml_ucx.remote_addrs_tbl[i]);
-        err = ucp_ep_create(ctx_item->ctx.ucp_worker, &ep_params,
-                            &ctx_item->ctx.ucp_peers[i].ucp_conn);
+        err = ucp_ep_create(ucx_ctx->ucp_worker, &ep_params,
+                            &ucx_ctx->ucp_peers[i].ucp_conn);
         if (UCS_OK != err) {
             SPML_ERROR("ucp_ep_create(proc=%d/%d) failed: %s", i, nprocs,
                        ucs_status_string(err));
             goto error2;
         }
+
+        for (j = 0; j < MCA_MEMHEAP_SEG_COUNT; j++) {
+            mkey = &memheap_map->mem_segs[j].mkeys_cache[i][0];
+            ucx_mkey = &ucx_ctx->ucp_peers[i].mkeys[j].key;
+            err = ucp_ep_rkey_unpack(ucx_ctx->ucp_peers[i].ucp_conn,
+                                     mkey->u.data,
+                                     &ucx_mkey->rkey);
+            if (UCS_OK != err) {
+                SPML_UCX_ERROR("failed to unpack rkey");
+                goto error2;
+            }
+            mca_spml_ucx_cache_mkey(ucx_ctx, mkey, j, i);
+        }
     }
 
     SHMEM_MUTEX_LOCK(mca_spml_ucx.internal_mutex);
-
-    opal_list_append(&(mca_spml_ucx.ctx_list), &ctx_item->super);
-
+    _ctx_add(&mca_spml_ucx.active_array, ucx_ctx);
     SHMEM_MUTEX_UNLOCK(mca_spml_ucx.internal_mutex);
 
-    (*ctx) = (shmem_ctx_t)(&ctx_item->ctx);
-
+    (*ctx) = (shmem_ctx_t)ucx_ctx;
     return OSHMEM_SUCCESS;
 
  error2:
     for (i = 0; i < nprocs; i++) {
-        if (ctx_item->ctx.ucp_peers[i].ucp_conn) {
-            ucp_ep_destroy(ctx_item->ctx.ucp_peers[i].ucp_conn);
+        if (ucx_ctx->ucp_peers[i].ucp_conn) {
+            ucp_ep_destroy(ucx_ctx->ucp_peers[i].ucp_conn);
         }
     }
 
-    if (ctx_item->ctx.ucp_peers)
-        free(ctx_item->ctx.ucp_peers);
+    if (ucx_ctx->ucp_peers)
+        free(ucx_ctx->ucp_peers);
 
  error:
-    ucp_worker_destroy(ctx_item->ctx.ucp_worker);
-    OBJ_RELEASE(ctx_item);
+    ucp_worker_destroy(ucx_ctx->ucp_worker);
+    free(ucx_ctx);
     rc = OSHMEM_ERR_OUT_OF_RESOURCE;
     SPML_ERROR("ctx create FAILED rc=%d", rc);
     return rc;
@@ -592,29 +636,16 @@ int mca_spml_ucx_ctx_create(long options, shmem_ctx_t *ctx)
 
 void mca_spml_ucx_ctx_destroy(shmem_ctx_t ctx)
 {
-    mca_spml_ucx_ctx_list_item_t *ctx_item, *next;
-    size_t i, nprocs = oshmem_num_procs();
-
     MCA_SPML_CALL(quiet(ctx));
 
     SHMEM_MUTEX_LOCK(mca_spml_ucx.internal_mutex);
-
-    /* delete context object from list */
-    OPAL_LIST_FOREACH_SAFE(ctx_item, next, &(mca_spml_ucx.ctx_list),
-                           mca_spml_ucx_ctx_list_item_t) {
-        if ((shmem_ctx_t)(&ctx_item->ctx) == ctx) {
-            opal_list_remove_item(&(mca_spml_ucx.ctx_list), &ctx_item->super);
-            for (i = 0; i < nprocs; i++) {
-                ucp_ep_destroy(ctx_item->ctx.ucp_peers[i].ucp_conn);
-            }
-            free(ctx_item->ctx.ucp_peers);
-            ucp_worker_destroy(ctx_item->ctx.ucp_worker);
-            OBJ_RELEASE(ctx_item);
-            break;
-        }
-    }
-
+    _ctx_remove(&mca_spml_ucx.active_array, (mca_spml_ucx_ctx_t *)ctx);
+    _ctx_add(&mca_spml_ucx.idle_array, (mca_spml_ucx_ctx_t *)ctx);
     SHMEM_MUTEX_UNLOCK(mca_spml_ucx.internal_mutex);
+
+    if (!mca_spml_ucx.active_array.ctxs_count) {
+        opal_progress_unregister(spml_ucx_ctx_progress);
+    }
 }
 
 int mca_spml_ucx_get(shmem_ctx_t ctx, void *src_addr, size_t size, void *dst_addr, int src)
