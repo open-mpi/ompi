@@ -1031,7 +1031,7 @@ int pmix_bfrops_base_print_status(char **output, char *prefix,
             r = (pmix_regattr_t*)src->data.ptr;
             rc = asprintf(output, "%sPMIX_VALUE: Data type: PMIX_REGATTR\tName: %s\tString: %s",
                           prefx, (NULL == r->name) ? "NULL" : r->name,
-                          (NULL == r->string) ? "NULL" : r->string);
+                          (0 == strlen(r->string)) ? "NULL" : r->string);
             break;
 
         default:
@@ -1751,7 +1751,7 @@ pmix_status_t pmix_bfrops_base_print_regattr(char **output, char *prefix,
 
     ret = asprintf(output, "%sData type: PMIX_REGATTR\tName: %s\tString: %s",
                    prefx, (NULL == src->name) ? "NULL" : src->name,
-                   (NULL == src->string) ? "NULL" : src->string);
+                   (0 == strlen(src->string)) ? "NULL" : src->string);
 
     if (prefx != prefix) {
         free(prefx);

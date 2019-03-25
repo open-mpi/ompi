@@ -427,7 +427,6 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
             nspace = NULL;
             rc = parse_uri_file(&suri[5], &suri2, &nspace, &rank);
             if (PMIX_SUCCESS != rc) {
-                free(suri);
                 rc = PMIX_ERR_UNREACH;
                 goto cleanup;
             }
@@ -437,7 +436,6 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
             /* we need to extract the nspace/rank of the server from the string */
             p = strchr(suri, ';');
             if (NULL == p) {
-                free(suri);
                 rc = PMIX_ERR_BAD_PARAM;
                 goto cleanup;
             }
@@ -449,7 +447,6 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
             p = strchr(suri, '.');
             if (NULL == p) {
                 free(suri2);
-                free(suri);
                 rc = PMIX_ERR_BAD_PARAM;
                 goto cleanup;
             }
@@ -465,9 +462,6 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
                             "ptl:tcp:tool attempt connect using given URI %s", suri);
         /* go ahead and try to connect */
         if (PMIX_SUCCESS != (rc = try_connect(suri, &sd, iptr, niptr))) {
-            if (NULL != nspace) {
-                free(nspace);
-            }
             goto cleanup;
         }
         /* cleanup */
@@ -486,9 +480,6 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
             /* go ahead and try to connect */
             if (PMIX_SUCCESS == try_connect(suri, &sd, iptr, niptr)) {
                 /* don't free nspace - we will use it below */
-                if (NULL != rendfile) {
-                    free(rendfile);
-                }
                 if (NULL != iptr) {
                     PMIX_INFO_FREE(iptr, niptr);
                 }
@@ -522,6 +513,7 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
                 goto complete;
             }
             free(nspace);
+            nspace = NULL;
         }
     }
 
@@ -683,7 +675,6 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
     }
     if (NULL != server_nspace) {
         free(server_nspace);
-        server_nspace = NULL;
     }
     return rc;
 }

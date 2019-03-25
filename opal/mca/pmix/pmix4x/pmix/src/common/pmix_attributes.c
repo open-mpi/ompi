@@ -664,6 +664,7 @@ static void _get_attrs(pmix_list_t *lst,
         }
         pmix_list_append(lst, &ip->super);
     }
+    pmix_argv_free(fns);
 }
 
 static void _get_fns(pmix_list_t *lst,
