@@ -13,7 +13,7 @@
  * Copyright (c) 2010-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2018      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2018-2019 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -496,7 +496,7 @@ static inline int
 pmix_atomic_trylock(pmix_atomic_lock_t *lock)
 {
     int32_t unlocked = PMIX_ATOMIC_LOCK_UNLOCKED;
-    bool ret = pmix_atomic_compare_exchange_strong_32 (&lock->u.lock, &unlocked, PMIX_ATOMIC_LOCK_LOCKED);
+    bool ret = pmix_atomic_compare_exchange_strong_acq_32 (&lock->u.lock, &unlocked, PMIX_ATOMIC_LOCK_LOCKED);
     return (ret == false) ? 1 : 0;
 }
 

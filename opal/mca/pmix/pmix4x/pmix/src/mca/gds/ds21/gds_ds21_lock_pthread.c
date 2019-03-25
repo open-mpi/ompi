@@ -234,6 +234,7 @@ pmix_status_t pmix_gds_ds21_lock_init(pmix_common_dstor_lock_ctx_t *ctx, const c
                 rc = PMIX_ERR_NOT_FOUND;
                 goto error;
             }
+            seg_hdr = (segment_hdr_t*)lock_item->seg_desc->seg_info.seg_base_addr;
         }
 
         lock_item->num_locks = seg_hdr->num_locks;

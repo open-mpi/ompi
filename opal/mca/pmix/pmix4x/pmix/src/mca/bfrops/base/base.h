@@ -12,8 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, Inc.  All rights reserved.
  * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015-2019 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2019      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
@@ -227,8 +227,10 @@ PMIX_EXPORT extern pmix_bfrops_globals_t pmix_bfrops_globals;
         int32_t i;                                                          \
         tmptype *tmpbuf = (tmptype*)malloc(sizeof(tmptype) * (*num_vals));  \
         PMIX_BFROPS_UNPACK_TYPE(ret, buffer, tmpbuf, num_vals, tmpbfroptype, reg_types);        \
-        for (i = 0 ; i < *num_vals ; ++i) {                                 \
-            ((unpack_type*) dest)[i] = (unpack_type)(tmpbuf[i]);            \
+        if (PMIX_ERR_UNKNOWN_DATA_TYPE != ret) {                            \
+            for (i = 0 ; i < *num_vals ; ++i) {                             \
+                ((unpack_type*) dest)[i] = (unpack_type)(tmpbuf[i]);        \
+            }                                                               \
         }                                                                   \
         free(tmpbuf);                                                       \
     } while (0)

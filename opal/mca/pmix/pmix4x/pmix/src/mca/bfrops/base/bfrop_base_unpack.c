@@ -11,8 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, Inc.  All rights reserved.
  * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015-2019 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2016-2019 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
@@ -904,7 +904,7 @@ pmix_status_t pmix_bfrops_base_unpack_app(pmix_pointer_array_t *regtypes,
         if (0 < ptr[i].ninfo) {
             PMIX_INFO_CREATE(ptr[i].info, ptr[i].ninfo);
             m = ptr[i].ninfo;
-            PMIX_BFROPS_UNPACK_TYPE(ret, buffer, &ptr[i].info, &m, PMIX_INFO, regtypes);
+            PMIX_BFROPS_UNPACK_TYPE(ret, buffer, ptr[i].info, &m, PMIX_INFO, regtypes);
             if (PMIX_SUCCESS != ret) {
                 return ret;
             }

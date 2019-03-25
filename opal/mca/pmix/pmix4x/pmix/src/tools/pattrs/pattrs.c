@@ -355,7 +355,11 @@ int main(int argc, char **argv)
         pmix_pattrs_globals.client || pmix_pattrs_globals.server || pmix_pattrs_globals.tool) {
         PMIX_INFO_CREATE(info, 1);
         PMIX_INFO_LOAD(&info[0], PMIX_TOOL_DO_NOT_CONNECT, NULL, PMIX_BOOL);
-        PMIx_tool_init(&myproc, info, 1);
+        rc = PMIx_tool_init(&myproc, info, 1);
+        if (PMIX_SUCCESS != rc) {
+            fprintf(stderr, "PMIx_tool_init failed: %s\n", PMIx_Error_string(rc));
+            exit(rc);
+        }
         if (pmix_pattrs_globals.clientfns) {
             pmix_register_client_attrs();
             fns = pmix_attributes_print_functions(PMIX_CLIENT_FUNCTIONS);
