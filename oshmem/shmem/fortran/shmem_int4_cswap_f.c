@@ -4,6 +4,7 @@
  * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2019      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -42,7 +43,7 @@ ompi_fortran_integer4_t shmem_int4_cswap_f(FORTRAN_POINTER_T target, MPI_Fint *c
         (void *)&out_value,
         FPTR_2_INT(cond, sizeof(ompi_fortran_integer4_t)),
         FPTR_2_INT(value, sizeof(ompi_fortran_integer4_t)),
-        sizeof(out_value),
+        sizeof(ompi_fortran_integer4_t),
         OMPI_FINT_2_INT(*pe)));
 
     return out_value;
