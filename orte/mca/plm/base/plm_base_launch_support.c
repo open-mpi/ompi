@@ -1325,7 +1325,7 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
             t = OBJ_NEW(orte_topology_t);
             t->sig = sig;
-            opal_pointer_array_add(orte_node_topologies, t);
+            t->index = opal_pointer_array_add(orte_node_topologies, t);
             daemon->node->topology = t;
             if (NULL != topo) {
                 t->topo = topo;
