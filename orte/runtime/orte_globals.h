@@ -216,6 +216,7 @@ struct orte_job_map_t;
 /* define an object for storing node topologies */
 typedef struct {
     opal_object_t super;
+    int index;
     hwloc_topology_t topo;
     char *sig;
 } orte_topology_t;
