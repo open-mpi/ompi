@@ -12,7 +12,7 @@ Copyright (c) 2006-2018 Cisco Systems, Inc.  All rights reserved.
 Copyright (c) 2006-2011 Mellanox Technologies. All rights reserved.
 Copyright (c) 2006-2012 Oracle and/or its affiliates.  All rights reserved.
 Copyright (c) 2007      Myricom, Inc.  All rights reserved.
-Copyright (c) 2008-2018 IBM Corporation.  All rights reserved.
+Copyright (c) 2008-2019 IBM Corporation.  All rights reserved.
 Copyright (c) 2010      Oak Ridge National Labs.  All rights reserved.
 Copyright (c) 2011      University of Houston. All rights reserved.
 Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
@@ -523,14 +523,20 @@ MPI Functionality and Features
       deprecated over 20 years ago, and finally removed from the MPI
       specification in MPI-3.0 (in 2012).
 
-  *** The Open MPI FAQ (https://www.open-mpi.org/faq/) contains
-      examples of how to update legacy MPI applications using these
-      deleted symbols to use the "new" symbols.
+  *** The Open MPI FAQ (https://www.open-mpi.org/faq/?category=mpi-removed)
+      contains examples of how to update legacy MPI applications using
+      these deleted symbols to use the "new" symbols.
 
   All that being said, if you are unable to immediately update your
   application to stop using these legacy MPI-1 symbols, you can
   re-enable them in mpi.h by configuring Open MPI with the
   --enable-mpi1-compatibility flag.
+
+  NOTE: Open MPI v4.0.0 had an error where these symbols were not
+        included in the library if configured without --enable-mpi1-compatibility
+        (see https://github.com/open-mpi/ompi/issues/6114).
+        This is fixed in v4.0.1, where --enable-mpi1-compatibility
+        flag only controls what declarations are present in the MPI header.
 
 - Rank reordering support is available using the TreeMatch library. It
   is activated for the graph and dist_graph topologies.
