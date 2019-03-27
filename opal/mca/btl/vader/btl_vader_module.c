@@ -15,8 +15,8 @@
  * Copyright (c) 2010-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
- * Copyright (c) 2014-2015 Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2014-2019 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2018-2019 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
@@ -379,11 +379,6 @@ static int vader_finalize(struct mca_btl_base_module_t *btl)
         OBJ_RELEASE(mca_btl_vader_component.vma_module);
     }
 #endif
-
-    if (component->mpool) {
-        component->mpool->mpool_finalize (component->mpool);
-        component->mpool = NULL;
-    }
 
     return OPAL_SUCCESS;
 }
