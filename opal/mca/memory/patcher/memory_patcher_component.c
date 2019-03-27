@@ -15,7 +15,7 @@
  *                         reserved.
  * Copyright (c) 2016-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2016      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2016-2019 IBM Corporation.  All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -47,6 +47,9 @@
 #endif
 #if defined(HAVE_LINUX_MMAN_H)
 #include <linux/mman.h>
+#endif
+#if defined(HAVE_SYS_IPC_H)
+#include <sys/ipc.h>
 #endif
 
 #include "memory_patcher.h"
@@ -104,15 +107,7 @@ opal_memory_patcher_component_t mca_memory_patcher_component = {
  * data. If this can be resolved the two levels can be joined.
  */
 
-/*
- * The following block of code is #if 0'ed out because we do not need
- * to intercept mmap() any more (mmap() only deals with memory
- * protection; it does not invalidate any rcache entries for a given
- * region).  But if we do someday, this is the code that we'll need.
- * It's a little non-trivial, so we might as well keep it (and #if 0
- * it out).
- */
-#if 0
+#if defined (SYS_mmap)
 
 #if defined(HAVE___MMAP) && !HAVE_DECL___MMAP
 /* prototype for Apple's internal mmap function */
@@ -121,12 +116,11 @@ void *__mmap (void *start, size_t length, int prot, int flags, int fd, off_t off
 
 static void *(*original_mmap)(void *, size_t, int, int, int, off_t);
 
-static void *intercept_mmap(void *start, size_t length, int prot, int flags, int fd, off_t offset)
+static void *_intercept_mmap(void *start, size_t length, int prot, int flags, int fd, off_t offset)
 {
-    OPAL_PATCHER_BEGIN;
     void *result = 0;
 
-    if (prot == PROT_NONE) {
+    if ((flags & MAP_FIXED) && (start != NULL)) {
         opal_mem_hooks_release_hook (start, length, true);
     }
 
@@ -137,19 +131,20 @@ static void *intercept_mmap(void *start, size_t length, int prot, int flags, int
 #else
         result = (void*)(intptr_t) memory_patcher_syscall(SYS_mmap, start, length, prot, flags, fd, offset);
 #endif
-
-        // I thought we had some issue in the past with the above line for IA32,
-        // like maybe syscall() wouldn't handle that many arguments. But just now
-        // I used gcc -m32 and it worked on a recent system. But there's a possibility
-        // that older ia32 systems may need some other code to make the above syscall.
     } else {
         result = original_mmap (start, length, prot, flags, fd, offset);
     }
 
-    OPAL_PATCHER_END;
     return result;
 }
 
+static void *intercept_mmap(void *start, size_t length, int prot, int flags, int fd, off_t offset)
+{
+    OPAL_PATCHER_BEGIN;
+    void *result = _intercept_mmap (start, length, prot, flags, fd, offset);
+    OPAL_PATCHER_END;
+    return result;
+}
 #endif
 
 #if defined (SYS_munmap)
@@ -256,6 +251,9 @@ static int _intercept_madvise (void *start, size_t length, int advice)
     int result = 0;
 
     if (advice == MADV_DONTNEED ||
+#ifdef MADV_FREE
+        advice == MADV_FREE ||
+#endif
 #ifdef MADV_REMOVE
         advice == MADV_REMOVE ||
 #endif
@@ -341,7 +339,12 @@ static int intercept_brk (void *addr)
 
 #endif
 
-#if defined(SYS_shmdt) && defined(__linux__)
+#define HAS_SHMDT (defined(SYS_shmdt) || \
+    (defined(IPCOP_shmdt) && defined(SYS_ipc)))
+#define HAS_SHMAT (defined(SYS_shmat) || \
+    (defined(IPCOP_shmat) && defined(SYS_ipc)))
+
+#if (HAS_SHMDT || HAS_SHMAT) && defined(__linux__)
 
 #include <stdio.h>
 #include <fcntl.h>
@@ -404,6 +407,68 @@ static size_t memory_patcher_get_shm_seg_size (const void *shmaddr)
     return seg_size;
 }
 
+static size_t get_shm_size(int shmid)
+{
+    struct shmid_ds ds;
+    int ret;
+
+    ret = shmctl(shmid, IPC_STAT, &ds);
+    if (ret < 0) {
+        return 0;
+    }
+
+    return ds.shm_segsz;
+}
+#endif
+
+#if HAS_SHMAT && defined(__linux__)
+static void *(*original_shmat)(int shmid, const void *shmaddr, int shmflg);
+
+static void *_intercept_shmat(int shmid, const void *shmaddr, int shmflg)
+{
+    void *result = 0;
+
+    size_t size = get_shm_size(shmid);
+
+    if ((shmflg & SHM_REMAP) && (shmaddr != NULL)) {
+// I don't really know what REMAP combined with SHM_RND does, so I'll just
+// guess it remaps all the way down to the lower attach_addr, and all the
+// way up to the original shmaddr+size
+        uintptr_t attach_addr = (uintptr_t)shmaddr;
+
+        if (shmflg & SHM_RND) {
+            attach_addr -= ((uintptr_t)shmaddr) % SHMLBA;
+            size += ((uintptr_t)shmaddr) % SHMLBA;
+        }
+        opal_mem_hooks_release_hook ((void*)attach_addr, size, false);
+    }
+
+    if (!original_shmat) {
+#if defined(SYS_shmat)
+        result = memory_patcher_syscall(SYS_shmat, shmid, shmaddr, shmflg);
+#else // IPCOP_shmat
+        unsigned long ret;
+        ret = memory_patcher_syscall(SYS_ipc, IPCOP_shmat,
+                                     shmid, shmflg, &shmaddr, shmaddr);
+        result = (ret > -(unsigned long)SHMLBA) ? (void *)ret : (void *)shmaddr;
+#endif
+    } else {
+        result = original_shmat (shmid, shmaddr, shmflg);
+    }
+
+    return result;
+}
+
+static void* intercept_shmat (int shmid, const void * shmaddr, int shmflg)
+{
+    OPAL_PATCHER_BEGIN;
+    void *result = _intercept_shmat (shmid, shmaddr, shmflg);
+    OPAL_PATCHER_END;
+    return result;
+}
+#endif
+
+#if HAS_SHMDT && defined(__linux__)
 static int (*original_shmdt) (const void *);
 
 static int _intercept_shmdt (const void *shmaddr)
@@ -417,7 +482,11 @@ static int _intercept_shmdt (const void *shmaddr)
     if (original_shmdt) {
         result = original_shmdt (shmaddr);
     } else {
+#if defined(SYS_shmdt)
         result = memory_patcher_syscall (SYS_shmdt, shmaddr);
+#else // IPCOP_shmdt
+        result = memory_patcher_syscall(SYS_ipc, IPCOP_shmdt, 0, 0, 0, shmaddr);
+#endif
     }
 
     return result;
@@ -478,9 +547,7 @@ static int patcher_open (void)
     /* set memory hooks support level */
     opal_mem_hooks_set_support (OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT);
 
-#if 0
-    /* See above block to see why mmap() functionality is #if 0'ed
-       out */
+#if defined (SYS_mmap)
     rc = opal_patcher->patch_symbol ("mmap", (uintptr_t) intercept_mmap, (uintptr_t *) &original_mmap);
     if (OPAL_SUCCESS != rc) {
         return rc;
@@ -508,7 +575,14 @@ static int patcher_open (void)
     }
 #endif
 
-#if defined(SYS_shmdt) && defined(__linux__)
+#if HAS_SHMAT && defined(__linux__)
+    rc = opal_patcher->patch_symbol ("shmat", (uintptr_t) intercept_shmat, (uintptr_t *) &original_shmat);
+    if (OPAL_SUCCESS != rc) {
+        return rc;
+    }
+#endif
+
+#if HAS_SHMDT && defined(__linux__)
     rc = opal_patcher->patch_symbol ("shmdt", (uintptr_t) intercept_shmdt, (uintptr_t *) &original_shmdt);
     if (OPAL_SUCCESS != rc) {
         return rc;
