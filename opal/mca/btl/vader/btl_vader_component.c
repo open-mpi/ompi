@@ -16,8 +16,8 @@
  *                         All rights reserved.
  * Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
- * Copyright (c) 2014-2018 Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2014-2019 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * Copyright (c) 2018      Triad National Security, LLC. All rights
  *                         reserved.
@@ -340,6 +340,11 @@ static int mca_btl_vader_component_close(void)
 #if OPAL_BTL_VADER_HAVE_KNEM
     mca_btl_vader_knem_fini ();
 #endif
+
+    if (mca_btl_vader_component.mpool) {
+        mca_btl_vader_component.mpool->mpool_finalize (mca_btl_vader_component.mpool);
+        mca_btl_vader_component.mpool = NULL;
+    }
 
     return OPAL_SUCCESS;
 }
