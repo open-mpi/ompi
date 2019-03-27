@@ -69,7 +69,7 @@ included in the vX.Y.Z section and be denoted as:
   and older versions of hwloc.  Thanks to Ben Menadue for reporting
   and providing a fix.
 - Fix an issue with MPI_WIN_CREATE_DYNAMIC and MPI_GET from self.
-  thanks to Bart Janssens for reporting.
+  Thanks to Bart Janssens for reporting.
 - Fix an issue of excessive compiler warning messages from mpi.h
   when using newer C++ compilers.  Thanks to @Shadow-fax for
   reporting.
