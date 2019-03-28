@@ -550,6 +550,7 @@ static void mca_btl_vader_endpoint_constructor (mca_btl_vader_endpoint_t *ep)
     OBJ_CONSTRUCT(&ep->pending_frags_lock, opal_mutex_t);
     ep->fifo = NULL;
     ep->fbox_out.fbox = NULL;
+    OBJ_CONSTRUCT(&ep->regs, opal_list_t);
 }
 
 #if OPAL_BTL_VADER_HAVE_XPMEM
@@ -557,6 +558,7 @@ static void mca_btl_vader_endpoint_constructor (mca_btl_vader_endpoint_t *ep)
 
 static void mca_btl_vader_endpoint_destructor (mca_btl_vader_endpoint_t *ep)
 {
+    OBJ_DESTRUCT(&ep->regs);
     OBJ_DESTRUCT(&ep->pending_frags);
     OBJ_DESTRUCT(&ep->pending_frags_lock);
 

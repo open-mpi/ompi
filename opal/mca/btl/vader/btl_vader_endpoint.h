@@ -88,6 +88,7 @@ typedef struct mca_btl_base_endpoint_t {
 
     opal_mutex_t pending_frags_lock; /**< protect pending_frags */
     opal_list_t pending_frags; /**< fragments pending fast box space */
+    opal_list_t regs; /**< registration objects to be freed */
     bool waiting;           /**< endpoint is on the component wait list */
 } mca_btl_base_endpoint_t;
 

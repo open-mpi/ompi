@@ -159,8 +159,9 @@ static int mca_btl_vader_endpoint_xpmem_rcache_cleanup (mca_rcache_base_registra
     OBJ_CHECK(reg);
     if ((intptr_t) reg->alloc_base == ep->peer_smp_rank) {
         /* otherwise dereg will fail on assert */
-        reg->ref_count = 0;
-        OBJ_RELEASE(reg);
+        if (0 == OPAL_THREAD_FETCH_ADD32(&reg->ref_count, -1)) {
+            opal_list_append(&ep->regs, &reg->super.super);
+        }
     }
 
     return OPAL_SUCCESS;
@@ -168,11 +169,17 @@ static int mca_btl_vader_endpoint_xpmem_rcache_cleanup (mca_rcache_base_registra
 
 void mca_btl_vader_xpmem_cleanup_endpoint (struct mca_btl_base_endpoint_t *ep)
 {
+    mca_rcache_base_registration_t *reg, *next;
     /* clean out the registration cache */
     (void) mca_rcache_base_vma_iterate (mca_btl_vader_component.vma_module,
                                         NULL, (size_t) -1, true,
                                         mca_btl_vader_endpoint_xpmem_rcache_cleanup,
                                         (void *) ep);
+    OPAL_LIST_FOREACH_SAFE(reg, next, &ep->regs, mca_rcache_base_registration_t) {
+        mca_rcache_base_vma_delete(mca_btl_vader_component.vma_module, reg);
+        opal_list_remove_item(&ep->regs, &reg->super.super);
+        OBJ_RELEASE(reg);
+    }
     if (ep->segment_base) {
         xpmem_release (ep->segment_data.xpmem.apid);
         ep->segment_data.xpmem.apid = 0;
