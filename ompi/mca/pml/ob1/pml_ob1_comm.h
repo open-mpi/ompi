@@ -82,6 +82,16 @@ static inline mca_pml_ob1_comm_proc_t *mca_pml_ob1_peer_lookup (struct ompi_comm
 {
     mca_pml_ob1_comm_t *pml_comm = (mca_pml_ob1_comm_t *)comm->c_pml_comm;
 
+    /**
+     * We have very few ways to validate the correct, and collective, creation of
+     * the communicator, and ensure all processes have the same cid. The least we
+     * can do is to check that we are not using a rank that is outside the scope
+     * of the communicator.
+     */
+    if( OPAL_UNLIKELY(rank >= (int)pml_comm->num_procs) ) {
+        ompi_rte_abort(-1, "PML OB1 received a message from a rank outside the"
+                       " valid range of the communicator. Please submit a bug request!");
+    }
     if (OPAL_UNLIKELY(NULL == pml_comm->procs[rank])) {
         OPAL_THREAD_LOCK(&pml_comm->proc_lock);
         if (NULL == pml_comm->procs[rank]) {
