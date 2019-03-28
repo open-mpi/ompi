@@ -11,8 +11,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2014 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2014-2019 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
@@ -284,10 +284,10 @@ static inline opal_object_t *opal_obj_new_debug(opal_class_t* type, const char* 
         assert(NULL != ((opal_object_t *) (object))->obj_class);        \
         assert(OPAL_OBJ_MAGIC_ID == ((opal_object_t *) (object))->obj_magic_id); \
         opal_obj_update((opal_object_t *) (object), 1);                 \
-        assert(((opal_object_t *) (object))->obj_reference_count >= 0); \
+        assert(((opal_object_t *) (object))->obj_reference_count > 1); \
     } while (0)
 #else
-#define OBJ_RETAIN(object)  opal_obj_update((opal_object_t *) (object), 1);
+#define OBJ_RETAIN(object)  opal_obj_update((opal_object_t *) (object), 1)
 #endif
 
 /**
