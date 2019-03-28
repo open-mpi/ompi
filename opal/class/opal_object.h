@@ -291,6 +291,22 @@ static inline opal_object_t *opal_obj_new_debug(opal_class_t* type, const char* 
 #endif
 
 /**
+ * Check an object is still valid
+ *
+ * @param object        Pointer to the object
+ */
+#if OPAL_ENABLE_DEBUG
+#define OBJ_CHECK(object)                                              \
+    do {                                                                \
+        assert(NULL != ((opal_object_t *) (object))->obj_class);        \
+        assert(OPAL_OBJ_MAGIC_ID == ((opal_object_t *) (object))->obj_magic_id); \
+        assert(((opal_object_t *) (object))->obj_reference_count > 0); \
+    } while (0)
+#else
+#define OBJ_CHECK(object)
+#endif
+
+/**
  * Helper macro for the debug mode to store the locations where the status of
  * an object change.
  */
