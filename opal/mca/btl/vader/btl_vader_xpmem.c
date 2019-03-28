@@ -5,6 +5,8 @@
  * Copyright (c) 2014      The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2019      Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -154,6 +156,7 @@ mca_rcache_base_registration_t *vader_get_registation (struct mca_btl_base_endpo
 static int mca_btl_vader_endpoint_xpmem_rcache_cleanup (mca_rcache_base_registration_t *reg, void *ctx)
 {
     mca_btl_vader_endpoint_t *ep = (mca_btl_vader_endpoint_t *) ctx;
+    OBJ_CHECK(reg);
     if ((intptr_t) reg->alloc_base == ep->peer_smp_rank) {
         /* otherwise dereg will fail on assert */
         reg->ref_count = 0;
