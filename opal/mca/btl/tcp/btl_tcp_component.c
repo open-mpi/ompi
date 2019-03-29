@@ -1515,11 +1515,13 @@ static void mca_btl_tcp_component_recv_handler(int sd, short flags, void* user)
 
     /* lookup peer address */
     if(getpeername(sd, (struct sockaddr*)&addr, &addr_len) != 0) {
-        opal_show_help("help-mpi-btl-tcp.txt",
-                       "server getpeername failed",
-                       true, opal_process_info.nodename,
-                       getpid(),
-                       strerror(opal_socket_errno), opal_socket_errno);
+        if (ENOTCONN != opal_socket_errno) {
+            opal_show_help("help-mpi-btl-tcp.txt",
+                           "server getpeername failed",
+                           true, opal_process_info.nodename,
+                           getpid(),
+                           strerror(opal_socket_errno), opal_socket_errno);
+        }
         CLOSE_THE_SOCKET(sd);
         return;
     }
