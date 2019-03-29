@@ -37,6 +37,8 @@
 #include "opal/memoryhooks/memory.h"
 #include "opal/runtime/opal_params.h"
 
+static int use_safety_valve = 0;
+
 mca_rcache_base_module_t *
 mca_rcache_base_module_create(const char *name, void *user_data,
                               struct mca_rcache_base_resources_t *resources)
@@ -70,6 +72,7 @@ mca_rcache_base_module_create(const char *name, void *user_data,
                     opal_leave_pinned = !opal_leave_pinned_pipeline;
                 }
                 opal_mem_hooks_register_release(mca_rcache_base_mem_cb, NULL);
+                use_safety_valve = 1;
             } else if (1 == opal_leave_pinned || opal_leave_pinned_pipeline) {
                 opal_show_help("help-rcache-base.txt", "leave pinned failed", true, name,
                                OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), opal_process_info.nodename);
@@ -120,4 +123,11 @@ int mca_rcache_base_module_destroy(mca_rcache_base_module_t *module)
     }
 
     return OPAL_ERR_NOT_FOUND;
+}
+
+static void safety_valve(void) __attribute__((destructor));
+void safety_valve(void) {
+    if (use_safety_valve) {
+        opal_mem_hooks_unregister_release(mca_rcache_base_mem_cb);
+    }
 }
