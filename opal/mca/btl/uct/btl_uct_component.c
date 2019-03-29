@@ -43,6 +43,8 @@
 #include "btl_uct_am.h"
 #include "btl_uct_device_context.h"
 
+static int use_safety_valve = 0;
+
 static int mca_btl_uct_component_register(void)
 {
     mca_btl_uct_module_t *module = &mca_btl_uct_module_template;
@@ -143,6 +145,7 @@ static int mca_btl_uct_component_open(void)
                 & opal_mem_hooks_support_level()))) {
         ucm_set_external_event(UCM_EVENT_VM_UNMAPPED);
         opal_mem_hooks_register_release(mca_btl_uct_mem_release_cb, NULL);
+        use_safety_valve = 1;
     }
 
     return OPAL_SUCCESS;
@@ -667,3 +670,10 @@ mca_btl_uct_component_t mca_btl_uct_component = {
         .btl_init = mca_btl_uct_component_init,
         .btl_progress = mca_btl_uct_component_progress,
     }};
+
+static void safety_valve(void) __attribute__((destructor));
+void safety_valve(void) {
+    if (use_safety_valve) {
+        opal_mem_hooks_unregister_release(mca_btl_uct_mem_release_cb);
+    }
+}
