@@ -20,7 +20,7 @@ int MPI_Type_get_name(MPI_Datatype \fItype\fP, char *\fItype_name\fP,
 .nf
 USE MPI
 ! or the older form: INCLUDE 'mpif.h'
-TYPE_GET_NAME(\fITYPE, TYPE_NAME, RESULTLEN, IERROR\fP)
+MPI_TYPE_GET_NAME(\fITYPE, TYPE_NAME, RESULTLEN, IERROR\fP)
 	INTEGER	\fITYPE, RESULTLEN, IERROR \fP
 	CHARACTER*(*) \fITYPE_NAME\fP
 
