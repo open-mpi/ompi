@@ -402,6 +402,7 @@ static int mca_pml_ob1_recv_request_put_frag (mca_pml_ob1_rdma_frag_t *frag)
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
     ompi_proc_t* proc = (ompi_proc_t*)recvreq->req_recv.req_base.req_proc;
 #endif
+    mca_btl_base_registration_handle_t *local_handle = NULL;
     mca_bml_base_btl_t *bml_btl = frag->rdma_bml;
     mca_btl_base_descriptor_t *ctl;
     mca_pml_ob1_rdma_hdr_t *hdr;
@@ -409,6 +410,12 @@ static int mca_pml_ob1_recv_request_put_frag (mca_pml_ob1_rdma_frag_t *frag)
     int rc;
 
     reg_size = bml_btl->btl->btl_registration_handle_size;
+
+    if (frag->local_handle) {
+        local_handle = frag->local_handle;
+    } else if (recvreq->local_handle) {
+        local_handle = recvreq->local_handle;
+    }
 
     /* prepare a descriptor for rdma control message */
     mca_bml_base_alloc (bml_btl, &ctl, MCA_BTL_NO_ORDER, sizeof (mca_pml_ob1_rdma_hdr_t) + reg_size,
@@ -423,7 +430,7 @@ static int mca_pml_ob1_recv_request_put_frag (mca_pml_ob1_rdma_frag_t *frag)
     hdr = (mca_pml_ob1_rdma_hdr_t *) ctl->des_segments->seg_addr.pval;
     mca_pml_ob1_rdma_hdr_prepare (hdr, (!recvreq->req_ack_sent) ? MCA_PML_OB1_HDR_TYPE_ACK : 0,
                                   recvreq->remote_req_send.lval, frag, recvreq, frag->rdma_offset,
-                                  frag->local_address, frag->rdma_length, frag->local_handle,
+                                  frag->local_address, frag->rdma_length, local_handle,
                                   reg_size);
     ob1_hdr_hton(hdr, MCA_PML_OB1_HDR_TYPE_PUT, proc);
 
