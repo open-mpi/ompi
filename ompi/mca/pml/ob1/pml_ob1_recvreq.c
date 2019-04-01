@@ -336,7 +336,9 @@ static int mca_pml_ob1_recv_request_get_frag_failed (mca_pml_ob1_rdma_frag_t *fr
     if (OMPI_ERR_NOT_AVAILABLE == rc) {
         /* get isn't supported for this transfer. tell peer to fallback on put */
         rc = mca_pml_ob1_recv_request_put_frag (frag);
-        if (OMPI_ERR_OUT_OF_RESOURCE == rc) {
+        if (OMPI_SUCCESS == rc){
+            return OMPI_SUCCESS;
+        } else if (OMPI_ERR_OUT_OF_RESOURCE == rc) {
             OPAL_THREAD_LOCK(&mca_pml_ob1.lock);
             opal_list_append (&mca_pml_ob1.rdma_pending, (opal_list_item_t*)frag);
             OPAL_THREAD_UNLOCK(&mca_pml_ob1.lock);
