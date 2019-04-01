@@ -75,13 +75,13 @@ typedef struct mca_spml_ucx_ctx mca_spml_ucx_ctx_t;
 
 extern mca_spml_ucx_ctx_t mca_spml_ucx_ctx_default;
 
-struct mca_spml_ucx_ctx_list_item {
-    opal_list_item_t super;
-    mca_spml_ucx_ctx_t ctx;
-};
-typedef struct mca_spml_ucx_ctx_list_item mca_spml_ucx_ctx_list_item_t;
+typedef spml_ucx_mkey_t * (*mca_spml_ucx_get_mkey_slow_fn_t)(shmem_ctx_t ctx, int pe, void *va, void **rva);
 
-typedef spml_ucx_mkey_t * (*mca_spml_ucx_get_mkey_slow_fn_t)(int pe, void *va, void **rva);
+typedef struct mca_spml_ucx_ctx_array {
+    int                      ctxs_count;
+    int                      ctxs_num;
+    mca_spml_ucx_ctx_t       **ctxs;
+} mca_spml_ucx_ctx_array_t;
 
 struct mca_spml_ucx {
     mca_spml_base_module_t   super;
@@ -91,7 +91,8 @@ struct mca_spml_ucx {
     bool                     enabled;
     mca_spml_ucx_get_mkey_slow_fn_t get_mkey_slow;
     char                     **remote_addrs_tbl;
-    opal_list_t              ctx_list;
+    mca_spml_ucx_ctx_array_t active_array;
+    mca_spml_ucx_ctx_array_t idle_array;
     int                      priority; /* component priority */
     shmem_internal_mutex_t   internal_mutex;
 };
@@ -143,7 +144,7 @@ extern int mca_spml_ucx_deregister(sshmem_mkey_t *mkeys);
 
 extern void mca_spml_ucx_memuse_hook(void *addr, size_t length);
 
-extern void mca_spml_ucx_rmkey_unpack(sshmem_mkey_t *mkey, uint32_t segno, int pe, int tr_id);
+extern void mca_spml_ucx_rmkey_unpack(shmem_ctx_t ctx, sshmem_mkey_t *mkey, uint32_t segno, int pe, int tr_id);
 extern void mca_spml_ucx_rmkey_free(sshmem_mkey_t *mkey);
 extern void *mca_spml_ucx_rmkey_ptr(const void *dst_addr, sshmem_mkey_t *, int pe);
 
@@ -151,20 +152,26 @@ extern int mca_spml_ucx_add_procs(ompi_proc_t** procs, size_t nprocs);
 extern int mca_spml_ucx_del_procs(ompi_proc_t** procs, size_t nprocs);
 extern int mca_spml_ucx_fence(shmem_ctx_t ctx);
 extern int mca_spml_ucx_quiet(shmem_ctx_t ctx);
-extern int spml_ucx_progress(void);
+extern int spml_ucx_default_progress(void);
+extern int spml_ucx_ctx_progress(void);
 
+static void mca_spml_ucx_cache_mkey(mca_spml_ucx_ctx_t *ucx_ctx, sshmem_mkey_t *mkey, uint32_t segno, int dst_pe)
+{
+    ucp_peer_t *peer;
+
+    peer = &(ucx_ctx->ucp_peers[dst_pe]);
+    mkey_segment_init(&peer->mkeys[segno].super, mkey, segno);
+}
 
 static inline spml_ucx_mkey_t * 
-mca_spml_ucx_get_mkey(mca_spml_ucx_ctx_t *ucx_ctx, int pe, void *va, void **rva, mca_spml_ucx_t* module)
+mca_spml_ucx_get_mkey(shmem_ctx_t ctx, int pe, void *va, void **rva, mca_spml_ucx_t* module)
 {
     spml_ucx_cached_mkey_t *mkey;
+    mca_spml_ucx_ctx_t *ucx_ctx = (mca_spml_ucx_ctx_t *)ctx;
 
     mkey = ucx_ctx->ucp_peers[pe].mkeys;
     mkey = (spml_ucx_cached_mkey_t *)map_segment_find_va(&mkey->super.super, sizeof(*mkey), va);
-    if (OPAL_UNLIKELY(NULL == mkey)) {
-        assert(module->get_mkey_slow);
-        return module->get_mkey_slow(pe, va, rva);
-    }
+    assert(mkey != NULL);
     *rva = map_segment_va2rva(&mkey->super, va);
     return &mkey->key;
 }
@@ -186,6 +193,9 @@ static inline int ucx_status_to_oshmem_nb(ucs_status_t status)
     return OSHMEM_SUCCESS;
 #endif
 }
+
+#define MCA_SPML_UCX_CTXS_ARRAY_SIZE 64
+#define MCA_SPML_UCX_CTXS_ARRAY_INC 64
 
 END_C_DECLS
 

@@ -69,7 +69,8 @@ void memheap_oob_destruct(void);
 OSHMEM_DECLSPEC int mca_memheap_base_is_symmetric_addr(const void* va);
 OSHMEM_DECLSPEC sshmem_mkey_t *mca_memheap_base_get_mkey(void* va,
                                                            int tr_id);
-OSHMEM_DECLSPEC sshmem_mkey_t * mca_memheap_base_get_cached_mkey_slow(map_segment_t *s,
+OSHMEM_DECLSPEC sshmem_mkey_t * mca_memheap_base_get_cached_mkey_slow(shmem_ctx_t ctx,
+                                                                      map_segment_t *s,
                                                                       int pe,
                                                                       void* va,
                                                                       int btl_id,
@@ -243,7 +244,8 @@ static inline map_segment_t *memheap_find_va(void* va)
     return s;
 }
 
-static inline  sshmem_mkey_t *mca_memheap_base_get_cached_mkey(int pe,
+static inline  sshmem_mkey_t *mca_memheap_base_get_cached_mkey(shmem_ctx_t ctx,
+                                                               int pe,
                                                                 void* va,
                                                                 int btl_id,
                                                                 void** rva)
@@ -273,7 +275,7 @@ static inline  sshmem_mkey_t *mca_memheap_base_get_cached_mkey(int pe,
         return mkey;
     }
 
-    return mca_memheap_base_get_cached_mkey_slow(s, pe, va, btl_id, rva);
+    return mca_memheap_base_get_cached_mkey_slow(ctx, s, pe, va, btl_id, rva);
 }
 
 static inline int mca_memheap_base_num_transports(void) 

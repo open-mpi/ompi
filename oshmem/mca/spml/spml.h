@@ -132,7 +132,7 @@ typedef int (*mca_spml_base_module_test_fn_t)(void* addr,
  *
  * @param mkey remote mkey
  */
-typedef void (*mca_spml_base_module_mkey_unpack_fn_t)(sshmem_mkey_t *, uint32_t segno, int remote_pe, int tr_id);
+typedef void (*mca_spml_base_module_mkey_unpack_fn_t)(shmem_ctx_t ctx, sshmem_mkey_t *, uint32_t segno, int remote_pe, int tr_id);
 
 /**
  * If possible, get a pointer to the remote memory described by the mkey
@@ -180,7 +180,7 @@ typedef int (*mca_spml_base_module_deregister_fn_t)(sshmem_mkey_t *mkeys);
  *
  * @return OSHMEM_SUCCSESS if keys are found
  */
-typedef int (*mca_spml_base_module_oob_get_mkeys_fn_t)(int pe,
+typedef int (*mca_spml_base_module_oob_get_mkeys_fn_t)(shmem_ctx_t ctx, int pe,
                                                        uint32_t seg,
                                                        sshmem_mkey_t *mkeys);
 

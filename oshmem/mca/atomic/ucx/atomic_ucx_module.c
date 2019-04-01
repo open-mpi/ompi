@@ -47,7 +47,7 @@ int mca_atomic_ucx_op(shmem_ctx_t ctx,
 
     assert((8 == size) || (4 == size));
 
-    ucx_mkey = mca_spml_ucx_get_mkey(ucx_ctx, pe, target, (void *)&rva, mca_spml_self);
+    ucx_mkey = mca_spml_ucx_get_mkey(ctx, pe, target, (void *)&rva, mca_spml_self);
     status = ucp_atomic_post(ucx_ctx->ucp_peers[pe].ucp_conn,
                              op, value, size, rva,
                              ucx_mkey->rkey);
@@ -70,7 +70,7 @@ int mca_atomic_ucx_fop(shmem_ctx_t ctx,
 
     assert((8 == size) || (4 == size));
 
-    ucx_mkey = mca_spml_ucx_get_mkey(ucx_ctx, pe, target, (void *)&rva, mca_spml_self);
+    ucx_mkey = mca_spml_ucx_get_mkey(ctx, pe, target, (void *)&rva, mca_spml_self);
     status_ptr = ucp_atomic_fetch_nb(ucx_ctx->ucp_peers[pe].ucp_conn,
                                      op, value, prev, size,
                                      rva, ucx_mkey->rkey,
