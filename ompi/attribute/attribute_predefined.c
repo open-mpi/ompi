@@ -92,6 +92,7 @@
 #include "ompi/errhandler/errcode.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/mca/pml/pml.h"
+#include "opal/runtime/opal.h"
 
 /*
  * Private functions
@@ -108,8 +109,12 @@ static int set_f(int keyval, MPI_Fint value);
 int ompi_attr_create_predefined(void)
 {
     int ret;
+    int rc;
     char *univ_size;
-    int usize;
+    unsigned int usize, *usizeptr;
+    long int strtol_result;
+
+    usizeptr = &usize;
 
     /* Create all the keyvals */
 
@@ -165,14 +170,23 @@ int ompi_attr_create_predefined(void)
 
     /* If the universe size is set, then use it. Otherwise default
      * to the size of MPI_COMM_WORLD */
-    univ_size = getenv("OMPI_UNIVERSE_SIZE");
-    if (NULL == univ_size || (usize = strtol(univ_size, NULL, 0)) <= 0) {
-        ret = set_f(MPI_UNIVERSE_SIZE, ompi_comm_size(MPI_COMM_WORLD));
+    opal_process_name_t wildcard = {OMPI_PROC_MY_NAME->jobid, OPAL_VPID_WILDCARD};
+    OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, OPAL_PMIX_UNIV_SIZE, &wildcard, &usizeptr, OPAL_UINT32);
+    if ( 0 == rc && usize != 0) {
+       ret = set_f(MPI_UNIVERSE_SIZE, usize);
     } else {
-        ret = set_f(MPI_UNIVERSE_SIZE, usize);
+       univ_size = getenv("OMPI_UNIVERSE_SIZE");
+       if (NULL == univ_size || (strtol_result = strtol(univ_size, NULL, 0)) <= 0) {
+           ret = set_f(MPI_UNIVERSE_SIZE, ompi_comm_size(MPI_COMM_WORLD));
+       } else {
+           /* PMIx only supports sizes up to unsigned int and so will 
+            * environment variable approach */
+           usize = (unsigned int) strtol_result;
+           ret = set_f(MPI_UNIVERSE_SIZE, usize);
+       }
     }
     if (OMPI_SUCCESS != ret) {
-        return ret;
+         return ret;
     }
 
     ret = set_f(MPI_APPNUM, ompi_process_info.app_num);
