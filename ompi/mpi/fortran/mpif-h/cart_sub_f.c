@@ -12,6 +12,7 @@
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2019 IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -101,5 +102,5 @@ void ompi_cart_sub_f(MPI_Fint *comm, ompi_fortran_logical_t *remain_dims,
         *new_comm = PMPI_Comm_c2f(c_new_comm);
     }
 
-    OMPI_ARRAY_INT_2_LOGICAL(remain_dims, ndims);
+    OMPI_ARRAY_LOGICAL_2_INT_CLEANUP(remain_dims); 
 }
