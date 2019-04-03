@@ -19,6 +19,7 @@
 
 #include "oshmem/constants.h"
 #include "oshmem/include/shmem.h"
+#include "oshmem/mca/spml/spml.h"
 #include "oshmem/runtime/params.h"
 #include "oshmem/runtime/runtime.h"
 #include "oshmem/shmem/shmem_api_logger.h"
