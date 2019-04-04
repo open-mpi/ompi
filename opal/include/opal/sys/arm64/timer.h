@@ -16,8 +16,6 @@
 #ifndef OPAL_SYS_ARCH_TIMER_H
 #define OPAL_SYS_ARCH_TIMER_H 1
 
-#include <sys/times.h>
-
 typedef uint64_t opal_timer_t;
 
 static inline opal_timer_t
