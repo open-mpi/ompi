@@ -98,6 +98,10 @@ BEGIN_C_DECLS
 
 typedef long opal_timer_t;
 #endif
+
+#ifndef OPAL_HAVE_SYS_TIMER_GET_FREQ
+#define OPAL_HAVE_SYS_TIMER_GET_FREQ 0
+#endif
 #endif
 
 #ifndef OPAL_HAVE_SYS_TIMER_IS_MONOTONIC

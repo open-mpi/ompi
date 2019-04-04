@@ -31,7 +31,7 @@ opal_sys_timer_get_cycles(void)
 
 
 static inline opal_timer_t
-opal_sys_timer_freq(void)
+opal_sys_timer_get_freq(void)
 {
     opal_timer_t freq;
     __asm__ __volatile__ ("mrs %0,  CNTFRQ_EL0" : "=r" (freq));
@@ -39,5 +39,6 @@ opal_sys_timer_freq(void)
 }
 
 #define OPAL_HAVE_SYS_TIMER_GET_CYCLES 1
+#define OPAL_HAVE_SYS_TIMER_GET_FREQ 1
 
 #endif /* ! OPAL_SYS_ARCH_TIMER_H */

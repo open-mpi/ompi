@@ -117,8 +117,8 @@ static int opal_timer_linux_find_freq(void)
 
     opal_timer_linux_freq = 0;
 
-#if OPAL_ASSEMBLY_ARCH == OPAL_ARM64
-	opal_timer_linux_freq = opal_sys_timer_freq();
+#if OPAL_HAVE_SYS_TIMER_GET_FREQ
+    opal_timer_linux_freq = opal_sys_timer_get_freq();
 #endif
 
     if (0 == opal_timer_linux_freq) {
