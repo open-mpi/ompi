@@ -7,8 +7,8 @@
 # Copyright (c) 2012-2013 Inria.  All rights reserved.
 # Copyright (c) 2013-2018 Los Alamos National Security, LLC. All rights
 #                         reserved.
-# Copyright (c) 2015-2018 Research Organization for Information Science
-#                         and Technology (RIST). All rights reserved.
+# Copyright (c) 2015-2019 Research Organization for Information Science
+#                         and Technology (RIST).  All rights reserved.
 # Copyright (c) 2016      IBM Corporation.  All rights reserved.
 # Copyright (c) 2017-2018 FUJITSU LIMITED.  All rights reserved.
 # Copyright (c) 2019      Triad National Security, LLC. All rights
@@ -32,6 +32,7 @@ AM_FCFLAGS = -I$(top_builddir)/ompi/include \
              $(OMPI_FC_MODULE_FLAG)$(top_builddir)/ompi/$(OMPI_FORTRAN_USEMPI_DIR) \
              $(OMPI_FC_MODULE_FLAG)mod \
              $(OMPI_FC_MODULE_FLAG)bindings \
+             $(OMPI_FC_MODULE_FLAG)cdesc \
              -I$(top_srcdir) $(FCFLAGS_f90)
 
 MOSTLYCLEANFILES = *.mod
@@ -43,6 +44,11 @@ lib_LTLIBRARIES = lib@OMPI_LIBMPI_NAME@_usempif08.la
 module_sentinel_file = \
         mod/libforce_usempif08_internal_modules_to_be_built.la \
         bindings/libforce_usempif08_internal_bindings_to_be_built.la
+
+if OMPI_FORTRAN_HAVE_C_ISO_FORTRAN
+module_sentinel_file += \
+        cdesc/libusempif08_cdesc.la
+endif
 
 mpi-f08.lo: $(module_sentinel_file)
 mpi-f08.lo: mpi-f08.F90
