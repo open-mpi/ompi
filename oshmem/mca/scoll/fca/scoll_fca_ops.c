@@ -88,6 +88,7 @@ int mca_scoll_fca_broadcast(struct oshmem_group_t *group,
             source,
             nlong,
             pSync,
+            nlong_type,
             SCOLL_DEFAULT_ALG);
     return rc;
 }
