@@ -36,7 +36,7 @@ This file contains notable changes between releases for each release since
 Open MPI 1.0.  Because Open MPI maintains multiple release branches at any time,
 it is possible for items to appear more than once in the list.
 
-3.0.4 -- March, 2019
+3.0.4 -- April, 2019
 --------------------
 
 - Fix compile error when configured with --enable-mpi-java and
