@@ -101,7 +101,6 @@ typedef uint16_t orte_job_flags_t;
 #define ORTE_JOB_LAUNCH_MSG_SENT        (ORTE_JOB_START_KEY + 1)     // timeval - time launch message was sent
 #define ORTE_JOB_LAUNCH_MSG_RECVD       (ORTE_JOB_START_KEY + 2)     // timeval - time launch message was recvd
 #define ORTE_JOB_MAX_LAUNCH_MSG_RECVD   (ORTE_JOB_START_KEY + 3)     // timeval - max time for launch msg to be received
-#define ORTE_JOB_FILE_MAPS              (ORTE_JOB_START_KEY + 4)     // opal_buffer_t - file maps associates with this job
 #define ORTE_JOB_CKPT_STATE             (ORTE_JOB_START_KEY + 5)     // size_t - ckpt state
 #define ORTE_JOB_SNAPSHOT_REF           (ORTE_JOB_START_KEY + 6)     // string - snapshot reference
 #define ORTE_JOB_SNAPSHOT_LOC           (ORTE_JOB_START_KEY + 7)     // string - snapshot location

@@ -269,8 +269,6 @@ const char *orte_attr_key_to_str(orte_attribute_key_t key)
             return "JOB-LAUNCH-MSG-RECVD";
         case ORTE_JOB_MAX_LAUNCH_MSG_RECVD:
             return "JOB-MAX-LAUNCH-MSG-RECVD";
-        case ORTE_JOB_FILE_MAPS:
-            return "JOB-FILE-MAPS";
         case ORTE_JOB_CKPT_STATE:
             return "JOB-CKPT-STATE";
         case ORTE_JOB_SNAPSHOT_REF:
