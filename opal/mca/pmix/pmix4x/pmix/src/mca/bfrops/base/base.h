@@ -225,7 +225,7 @@ PMIX_EXPORT extern pmix_bfrops_globals_t pmix_bfrops_globals;
 #define PMIX_BFROP_UNPACK_SIZE_MISMATCH_FOUND(reg_types, unpack_type, tmptype, tmpbfroptype)    \
     do {                                                                    \
         int32_t i;                                                          \
-        tmptype *tmpbuf = (tmptype*)malloc(sizeof(tmptype) * (*num_vals));  \
+        tmptype *tmpbuf = (tmptype*)calloc(*num_vals, sizeof(tmptype));     \
         PMIX_BFROPS_UNPACK_TYPE(ret, buffer, tmpbuf, num_vals, tmpbfroptype, reg_types);        \
         if (PMIX_ERR_UNKNOWN_DATA_TYPE != ret) {                            \
             for (i = 0 ; i < *num_vals ; ++i) {                             \

@@ -11,7 +11,7 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2012      Los Alamos National Security, Inc.  All rights reserved.
-# Copyright (c) 2013-2016 Intel, Inc. All rights reserved
+# Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -46,7 +46,7 @@ mcacomponentdir = $(pmixlibdir)
 mcacomponent_LTLIBRARIES = $(component)
 mca_psec_munge_la_SOURCES = $(component_sources)
 mca_psec_munge_la_LDFLAGS = -module -avoid-version $(psec_munge_LDFLAGS)
-mca_psec_munge_la_LIBADD = $(psec_munge_LIBS)
+mca_psec_munge_la_LIBADD = $(psec_munge_LIBS) $(top_builddir)/src/libpmix.la
 
 noinst_LTLIBRARIES = $(lib)
 libmca_psec_munge_la_SOURCES = $(lib_sources)

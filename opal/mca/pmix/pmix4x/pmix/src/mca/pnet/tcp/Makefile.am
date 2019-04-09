@@ -11,7 +11,7 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2012      Los Alamos National Security, Inc.  All rights reserved.
-# Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
+# Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
 # Copyright (c) 2017      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
@@ -47,7 +47,7 @@ endif
 mcacomponentdir = $(pmixlibdir)
 mcacomponent_LTLIBRARIES = $(component)
 mca_pnet_tcp_la_SOURCES = $(component_sources)
-mca_pnet_tcp_la_LIBADD = $(pnet_tcp_LIBS)
+mca_pnet_tcp_la_LIBADD = $(pnet_tcp_LIBS) $(top_builddir)/src/libpmix.la
 mca_pnet_tcp_la_LDFLAGS = -module -avoid-version $(pnet_tcp_LDFLAGS)
 
 noinst_LTLIBRARIES = $(lib)

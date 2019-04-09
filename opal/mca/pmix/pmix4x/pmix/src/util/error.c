@@ -273,6 +273,8 @@ PMIX_EXPORT const char* PMIx_Error_string(pmix_status_t errnum)
     case PMIX_ERR_TEMP_UNAVAILABLE:
         return "PMIX TEMPORARILY UNAVAILABLE";
 
+    case PMIX_LAUNCH_COMPLETE:
+        return "PMIX LAUNCH COMPLETE";
 
     case PMIX_MAX_ERR_CONSTANT:
         return "PMIX_ERR_WILDCARD";

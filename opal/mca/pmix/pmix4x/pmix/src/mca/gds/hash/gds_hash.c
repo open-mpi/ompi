@@ -72,6 +72,8 @@ static pmix_status_t hash_store_modex(struct pmix_namespace_t *ns,
 
 static pmix_status_t _hash_store_modex(pmix_gds_base_ctx_t ctx,
                                        pmix_proc_t *proc,
+                                       pmix_gds_modex_key_fmt_t key_fmt,
+                                       char **kmap,
                                        pmix_buffer_t *pbkt);
 
 static pmix_status_t hash_fetch(const pmix_proc_t *proc,
@@ -1197,11 +1199,12 @@ static pmix_status_t hash_store_modex(struct pmix_namespace_t *nspace,
 
 static pmix_status_t _hash_store_modex(pmix_gds_base_ctx_t ctx,
                                        pmix_proc_t *proc,
+                                       pmix_gds_modex_key_fmt_t key_fmt,
+                                       char **kmap,
                                        pmix_buffer_t *pbkt)
 {
     pmix_hash_trkr_t *trk, *t;
     pmix_status_t rc = PMIX_SUCCESS;
-    int32_t cnt;
     pmix_kval_t *kv;
 
     pmix_output_verbose(2, pmix_gds_base_framework.framework_output,
@@ -1230,15 +1233,10 @@ static pmix_status_t _hash_store_modex(pmix_gds_base_ctx_t ctx,
      * the rank followed by pmix_kval_t's. The list of callbacks
      * contains all local participants. */
 
-    PMIX_BFROPS_UNPACK(rc, pmix_globals.mypeer, pbkt, proc, &cnt, PMIX_PROC);
-    if (PMIX_SUCCESS != rc) {
-        PMIX_ERROR_LOG(rc);
-        return rc;
-    }
     /* unpack the remaining values until we hit the end of the buffer */
-    cnt = 1;
     kv = PMIX_NEW(pmix_kval_t);
-    PMIX_BFROPS_UNPACK(rc, pmix_globals.mypeer, pbkt, kv, &cnt, PMIX_KVAL);
+    rc = pmix_gds_base_modex_unpack_kval(key_fmt, pbkt, kmap, kv);
+
     while (PMIX_SUCCESS == rc) {
         /* store this in the hash table */
         if (PMIX_SUCCESS != (rc = pmix_hash_store(&trk->remote, proc->rank, kv))) {
@@ -1248,8 +1246,7 @@ static pmix_status_t _hash_store_modex(pmix_gds_base_ctx_t ctx,
         PMIX_RELEASE(kv);  // maintain accounting as the hash increments the ref count
         /* continue along */
         kv = PMIX_NEW(pmix_kval_t);
-        cnt = 1;
-        PMIX_BFROPS_UNPACK(rc, pmix_globals.mypeer, pbkt, kv, &cnt, PMIX_KVAL);
+        rc = pmix_gds_base_modex_unpack_kval(key_fmt, pbkt, kmap, kv);
     }
     PMIX_RELEASE(kv);  // maintain accounting
     if (PMIX_ERR_UNPACK_READ_PAST_END_OF_BUFFER != rc) {

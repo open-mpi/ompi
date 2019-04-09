@@ -146,7 +146,7 @@ PMIX_EXPORT PMIX_CLASS_DECLARATION(pmix_buffer_t);
 /* Convenience macro to check for empty buffer without
  * exposing the internals */
 #define PMIX_BUFFER_IS_EMPTY(b)     \
-    0 == (b)->bytes_used
+    (0 == (b)->bytes_used)
 
 END_C_DECLS
 

@@ -1,8 +1,8 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
- * Copyright (c) 2016-2018 Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016-2019 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * Copyright (c) 2016-2019 Mellanox Technologies, Inc.
  *                         All rights reserved.
@@ -326,6 +326,8 @@ typedef uint32_t pmix_rank_t;
                                                                     //        specified operation
 #define PMIX_JOB_TERM_STATUS                "pmix.job.term.status"  // (pmix_status_t) status returned upon job termination
 #define PMIX_PROC_STATE_STATUS              "pmix.proc.state"       // (pmix_proc_state_t) process state
+#define PMIX_NOTIFY_LAUNCH                  "pmix.note.lnch"        // (bool) notify the requestor upon launch of the child job and return
+                                                                    //        its namespace in the event
 
 
 /* attributes used by host server to pass data to the server convenience library - the
@@ -888,6 +890,7 @@ typedef int pmix_status_t;
 #define PMIX_ERR_REPEAT_ATTR_REGISTRATION           -170
 #define PMIX_ERR_IOF_FAILURE                        -171
 #define PMIX_ERR_IOF_COMPLETE                       -172
+#define PMIX_LAUNCH_COMPLETE                        -173     // include nspace of the launched job with notification
 
 /* system failures */
 #define PMIX_ERR_NODE_DOWN                          -231
@@ -1977,17 +1980,16 @@ typedef struct pmix_regattr_t {
  *
  * @param argv Pointer to an argv array.
  * @param str Pointer to the string to append.
- * @param bool Whether or not to overwrite a matching value if found
  *
  * @retval PMIX_SUCCESS On success
  * @retval PMIX_ERROR On failure
  *
  * This function is identical to the pmix_argv_append_nosize() function
  * except that it only appends the provided argument if it does not already
- * exist in the provided array, or overwrites it if it is.
+ * exist in the provided array.
  */
-#define PMIX_ARGV_APPEND_UNIQUE(r, a, b, c) \
-    (r) = pmix_argv_append_unique_nosize(a, b, c)
+#define PMIX_ARGV_APPEND_UNIQUE(r, a, b) \
+    (r) = pmix_argv_append_unique_nosize(a, b)
 
 /* Free a NULL-terminated argv array.
  *
