@@ -13,8 +13,8 @@
  * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2015-2018 Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015-2019 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -29,6 +29,7 @@
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/datatype/ompi_datatype.h"
+#include "ompi/mca/coll/base/coll_base_util.h"
 #include "ompi/mpiext/pcollreq/c/mpiext_pcollreq_c.h"
 #include "ompi/memchecker.h"
 #include "ompi/runtime/ompi_spc.h"
@@ -199,5 +200,24 @@ int MPIX_Gatherv_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
                                           recvcounts, displs, recvtype,
                                           root, comm, info, request,
                                           comm->c_coll->coll_gatherv_init_module);
+    if (OPAL_LIKELY(OMPI_SUCCESS == err)) {
+        if (OMPI_COMM_IS_INTRA(comm)) {
+            if (MPI_IN_PLACE == sendbuf) {
+                sendtype = NULL;
+            } else if (ompi_comm_rank(comm) != root) {
+                recvtype = NULL;
+            }
+        } else {
+            if (MPI_ROOT == root) {
+                sendtype = NULL;
+            } else if (MPI_PROC_NULL == root) {
+                sendtype = NULL;
+                recvtype = NULL;
+            } else {
+                recvtype = NULL;
+            }
+        }
+        ompi_coll_base_retain_datatypes(*request, sendtype, recvtype);
+    }
     OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);
 }

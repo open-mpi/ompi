@@ -14,8 +14,8 @@
  * Copyright (c) 2012      Oak Rigde National Laboratory. All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2015-2018 Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015-2019 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -32,6 +32,7 @@
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/datatype/ompi_datatype.h"
+#include "ompi/mca/coll/base/coll_base_util.h"
 #include "ompi/memchecker.h"
 #include "ompi/mca/topo/topo.h"
 #include "ompi/mca/topo/base/base.h"
@@ -124,6 +125,9 @@ int MPI_Ineighbor_allgather(const void *sendbuf, int sendcount, MPI_Datatype sen
     err = comm->c_coll->coll_ineighbor_allgather(sendbuf, sendcount, sendtype, recvbuf,
                                                 recvcount, recvtype, comm, request,
                                                 comm->c_coll->coll_ineighbor_allgather_module);
+    if (OPAL_LIKELY(OMPI_SUCCESS == err)) {
+        ompi_coll_base_retain_datatypes(*request, sendtype, recvtype);
+    }
 
     OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);
 }
