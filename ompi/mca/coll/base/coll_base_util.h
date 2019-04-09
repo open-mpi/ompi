@@ -9,8 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2014-2017 Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2014-2019 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -27,9 +27,40 @@
 #include "ompi/mca/mca.h"
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/request/request.h"
+#include "ompi/op/op.h"
 #include "ompi/mca/pml/pml.h"
 
 BEGIN_C_DECLS
+
+struct ompi_coll_base_nbc_request_t {
+    ompi_request_t super;
+    union {
+        ompi_request_complete_fn_t req_complete_cb;
+        ompi_request_free_fn_t req_free;
+    } cb;
+    void *req_complete_cb_data;
+    union {
+        struct {
+            ompi_op_t *op;
+            ompi_datatype_t *datatype;
+        } op;
+        struct {
+            ompi_datatype_t *stype;
+            ompi_datatype_t *rtype;
+        } types;
+        struct {
+            opal_object_t *objs[2];
+        } objs;
+        struct {
+            ompi_datatype_t **stypes;
+            ompi_datatype_t **rtypes;
+        } vecs;
+    } data;
+};
+
+OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_coll_base_nbc_request_t);
+
+typedef struct ompi_coll_base_nbc_request_t ompi_coll_base_nbc_request_t;
 
 /**
  * A MPI_like function doing a send and a receive simultaneously.
@@ -83,6 +114,18 @@ unsigned int ompi_mirror_perm(unsigned int x, int nbits);
  *     rounddown(10,4) = 8, rounddown(6,3) = 6, rounddown(14,3) = 12
  */
 int ompi_rounddown(int num, int factor);
+
+int ompi_coll_base_retain_op( ompi_request_t *request,
+                              ompi_op_t *op,
+                              ompi_datatype_t *type);
+
+int ompi_coll_base_retain_datatypes( ompi_request_t *request,
+                                      ompi_datatype_t *stype,
+                                     ompi_datatype_t *rtype);
+
+int ompi_coll_base_retain_datatypes_w( ompi_request_t *request,
+                                       ompi_datatype_t *stypes[],
+                                       ompi_datatype_t *rtypes[]);
 
 END_C_DECLS
 #endif /* MCA_COLL_BASE_UTIL_EXPORT_H */
