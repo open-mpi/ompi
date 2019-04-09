@@ -34,7 +34,7 @@ mcacomponentdir = $(pmixlibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_pcompress_zlib_la_SOURCES = $(sources)
 mca_pcompress_zlib_la_LDFLAGS = -module -avoid-version $(pcompress_zlib_LDFLAGS)
-mca_pcompress_zlib_la_LIBADD = $(pcompress_zlib_LIBS)
+mca_pcompress_zlib_la_LIBADD = $(pcompress_zlib_LIBS) $(top_builddir)/src/libpmix.la
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_pcompress_zlib_la_SOURCES = $(sources)

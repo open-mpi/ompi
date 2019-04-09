@@ -14,6 +14,7 @@
  * Copyright (c) 2011-2014 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2019      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -26,6 +27,10 @@
 
 #include "src/mca/bfrops/base/base.h"
 #include "bfrop_pmix4.h"
+
+#include "src/mca/psquash/psquash.h"
+#include "src/mca/psquash/base/base.h"
+#include "src/util/error.h"
 
 static pmix_status_t init(void);
 static void finalize(void);
@@ -46,6 +51,31 @@ static pmix_status_t register_type(const char *name,
                                    pmix_bfrop_print_fn_t print);
 static const char* data_type_string(pmix_data_type_t type);
 
+static pmix_status_t
+pmix4_bfrops_base_pack_general_int(pmix_pointer_array_t *regtypes,
+                                   pmix_buffer_t *buffer, const void *src,
+                                   int32_t num_vals, pmix_data_type_t type);
+static pmix_status_t
+pmix4_bfrops_base_pack_int(pmix_pointer_array_t *regtypes,
+                           pmix_buffer_t *buffer, const void *src,
+                           int32_t num_vals, pmix_data_type_t type);
+static pmix_status_t
+pmix4_bfrops_base_pack_sizet(pmix_pointer_array_t *regtypes,
+                             pmix_buffer_t *buffer, const void *src,
+                             int32_t num_vals, pmix_data_type_t type);
+static pmix_status_t
+pmix4_bfrops_base_unpack_general_int(pmix_pointer_array_t *regtypes,
+                                     pmix_buffer_t *buffer, void *dest,
+                                     int32_t *num_vals, pmix_data_type_t type);
+static pmix_status_t
+pmix4_bfrops_base_unpack_int(pmix_pointer_array_t *regtypes,
+                             pmix_buffer_t *buffer, void *dest,
+                             int32_t *num_vals, pmix_data_type_t type);
+static pmix_status_t
+pmix4_bfrops_base_unpack_sizet(pmix_pointer_array_t *regtypes,
+                               pmix_buffer_t *buffer, void *dest,
+                               int32_t *num_vals, pmix_data_type_t type);
+
 pmix_bfrops_module_t pmix_bfrops_pmix4_module = {
     .version = "v4",
     .init = init,
@@ -65,6 +95,24 @@ pmix_bfrops_module_t pmix_bfrops_pmix4_module = {
 
 static pmix_status_t init(void)
 {
+    pmix_status_t rc;
+
+    if( PMIX_SUCCESS != (rc = pmix_mca_base_framework_open(&pmix_psquash_base_framework, 0)) ) {
+        PMIX_ERROR_LOG(rc);
+        return rc;
+    }
+
+    if( PMIX_SUCCESS != (rc = pmix_psquash_base_select()) ) {
+        PMIX_ERROR_LOG(rc);
+        return rc;
+    }
+
+    rc = pmix_psquash.init();
+    if (PMIX_SUCCESS != rc) {
+        PMIX_ERROR_LOG(rc);
+        return rc;
+    }
+
     /* some standard types don't require anything special */
     PMIX_REGISTER_TYPE("PMIX_BOOL", PMIX_BOOL,
                        pmix_bfrops_base_pack_bool,
@@ -89,8 +137,8 @@ static pmix_status_t init(void)
 
     /* Register the rest of the standard generic types to point to internal functions */
     PMIX_REGISTER_TYPE("PMIX_SIZE", PMIX_SIZE,
-                       pmix_bfrops_base_pack_sizet,
-                       pmix_bfrops_base_unpack_sizet,
+                       pmix4_bfrops_base_pack_sizet,
+                       pmix4_bfrops_base_unpack_sizet,
                        pmix_bfrops_base_std_copy,
                        pmix_bfrops_base_print_size,
                        &mca_bfrops_v4_component.types);
@@ -103,8 +151,8 @@ static pmix_status_t init(void)
                        &mca_bfrops_v4_component.types);
 
     PMIX_REGISTER_TYPE("PMIX_INT", PMIX_INT,
-                       pmix_bfrops_base_pack_int,
-                       pmix_bfrops_base_unpack_int,
+                       pmix4_bfrops_base_pack_int,
+                       pmix4_bfrops_base_unpack_int,
                        pmix_bfrops_base_std_copy,
                        pmix_bfrops_base_print_int,
                        &mca_bfrops_v4_component.types);
@@ -118,29 +166,29 @@ static pmix_status_t init(void)
                        &mca_bfrops_v4_component.types);
 
     PMIX_REGISTER_TYPE("PMIX_INT16", PMIX_INT16,
-                       pmix_bfrops_base_pack_int16,
-                       pmix_bfrops_base_unpack_int16,
+                       pmix4_bfrops_base_pack_general_int,
+                       pmix4_bfrops_base_unpack_general_int,
                        pmix_bfrops_base_std_copy,
                        pmix_bfrops_base_print_int16,
                        &mca_bfrops_v4_component.types);
 
     PMIX_REGISTER_TYPE("PMIX_INT32", PMIX_INT32,
-                       pmix_bfrops_base_pack_int32,
-                       pmix_bfrops_base_unpack_int32,
+                       pmix4_bfrops_base_pack_general_int,
+                       pmix4_bfrops_base_unpack_general_int,
                        pmix_bfrops_base_std_copy,
                        pmix_bfrops_base_print_int32,
                        &mca_bfrops_v4_component.types);
 
     PMIX_REGISTER_TYPE("PMIX_INT64", PMIX_INT64,
-                       pmix_bfrops_base_pack_int64,
-                       pmix_bfrops_base_unpack_int64,
+                       pmix4_bfrops_base_pack_general_int,
+                       pmix4_bfrops_base_unpack_general_int,
                        pmix_bfrops_base_std_copy,
                        pmix_bfrops_base_print_int64,
                        &mca_bfrops_v4_component.types);
 
     PMIX_REGISTER_TYPE("PMIX_UINT", PMIX_UINT,
-                       pmix_bfrops_base_pack_int,
-                       pmix_bfrops_base_unpack_int,
+                       pmix4_bfrops_base_pack_int,
+                       pmix4_bfrops_base_unpack_int,
                        pmix_bfrops_base_std_copy,
                        pmix_bfrops_base_print_uint,
                        &mca_bfrops_v4_component.types);
@@ -153,22 +201,22 @@ static pmix_status_t init(void)
                        &mca_bfrops_v4_component.types);
 
     PMIX_REGISTER_TYPE("PMIX_UINT16", PMIX_UINT16,
-                       pmix_bfrops_base_pack_int16,
-                       pmix_bfrops_base_unpack_int16,
+                       pmix4_bfrops_base_pack_general_int,
+                       pmix4_bfrops_base_unpack_general_int,
                        pmix_bfrops_base_std_copy,
                        pmix_bfrops_base_print_uint16,
                        &mca_bfrops_v4_component.types);
 
     PMIX_REGISTER_TYPE("PMIX_UINT32", PMIX_UINT32,
-                       pmix_bfrops_base_pack_int32,
-                       pmix_bfrops_base_unpack_int32,
+                       pmix4_bfrops_base_pack_general_int,
+                       pmix4_bfrops_base_unpack_general_int,
                        pmix_bfrops_base_std_copy,
                        pmix_bfrops_base_print_uint32,
                        &mca_bfrops_v4_component.types);
 
     PMIX_REGISTER_TYPE("PMIX_UINT64", PMIX_UINT64,
-                       pmix_bfrops_base_pack_int64,
-                       pmix_bfrops_base_unpack_int64,
+                       pmix4_bfrops_base_pack_general_int,
+                       pmix4_bfrops_base_unpack_general_int,
                        pmix_bfrops_base_std_copy,
                        pmix_bfrops_base_print_uint64,
                        &mca_bfrops_v4_component.types);
@@ -404,12 +452,19 @@ static void finalize(void)
 {
     int n;
     pmix_bfrop_type_info_t *info;
+    pmix_status_t rc;
 
     for (n=0; n < mca_bfrops_v4_component.types.size; n++) {
         if (NULL != (info = (pmix_bfrop_type_info_t*)pmix_pointer_array_get_item(&mca_bfrops_v4_component.types, n))) {
             PMIX_RELEASE(info);
             pmix_pointer_array_set_item(&mca_bfrops_v4_component.types, n, NULL);
         }
+    }
+
+    /* close the psquash framework */
+    pmix_psquash.finalize();
+    if( PMIX_SUCCESS != (rc = pmix_mca_base_framework_close(&pmix_psquash_base_framework)) ) {
+        PMIX_ERROR_LOG(rc);
     }
 }
 
@@ -460,4 +515,226 @@ static pmix_status_t register_type(const char *name, pmix_data_type_t type,
 static const char* data_type_string(pmix_data_type_t type)
 {
     return pmix_bfrops_base_data_type_string(&mca_bfrops_v4_component.types, type);
+}
+
+/*
+ * INT16, INT32, INT64
+ */
+static pmix_status_t
+pmix4_bfrops_base_pack_general_int(pmix_pointer_array_t *regtypes,
+                                   pmix_buffer_t *buffer, const void *src,
+                                   int32_t num_vals, pmix_data_type_t type)
+{
+    pmix_status_t rc;
+    int32_t i;
+    char *dst;
+    size_t val_size, max_size, pkg_size;
+
+    pmix_output_verbose(20, pmix_bfrops_base_framework.framework_output,
+                        "pmix_bfrops_base_pack_integer * %d\n", num_vals);
+
+    PMIX_SQUASH_TYPE_SIZEOF(rc, type, val_size);
+    if (PMIX_SUCCESS != rc) {
+        PMIX_ERROR_LOG(rc);
+        return rc;
+    }
+
+    rc = pmix_psquash.get_max_size(type, &max_size);
+    if (PMIX_SUCCESS != rc) {
+        PMIX_ERROR_LOG(rc);
+        return rc;
+    }
+
+    /* check to see if buffer needs extending */
+    if (NULL == (dst = pmix_bfrop_buffer_extend(buffer, num_vals*max_size))) {
+        rc = PMIX_ERR_OUT_OF_RESOURCE;
+        PMIX_ERROR_LOG(rc);
+        return rc;
+    }
+
+    for (i = 0; i < num_vals; ++i) {
+        rc = (pmix_psquash.encode_int)(type, (uint8_t*)src+i*val_size,
+                                       dst, &pkg_size);
+        if (PMIX_SUCCESS != rc) {
+            PMIX_ERROR_LOG(rc);
+            return rc;
+        }
+        dst += pkg_size;
+        buffer->pack_ptr += pkg_size;
+        buffer->bytes_used += pkg_size;
+    }
+
+    return PMIX_SUCCESS;
+}
+
+/*
+ * INT
+ */
+static pmix_status_t
+pmix4_bfrops_base_pack_int(pmix_pointer_array_t *regtypes,
+                           pmix_buffer_t *buffer, const void *src,
+                           int32_t num_vals, pmix_data_type_t type)
+{
+    pmix_status_t ret;
+
+    if (false == pmix_psquash.int_type_is_encoded) {
+        /* System types need to always be described so we can properly
+           unpack them */
+        if (PMIX_SUCCESS != (ret = pmix_bfrop_store_data_type(regtypes, buffer, BFROP_TYPE_INT))) {
+            return ret;
+        }
+    }
+
+    /* Turn around and pack the real type */
+    PMIX_BFROPS_PACK_TYPE(ret, buffer, src, num_vals, BFROP_TYPE_INT, regtypes);
+    return ret;
+}
+
+/*
+ * SIZE_T
+ */
+static pmix_status_t
+pmix4_bfrops_base_pack_sizet(pmix_pointer_array_t *regtypes,
+                             pmix_buffer_t *buffer, const void *src,
+                             int32_t num_vals, pmix_data_type_t type)
+{
+    int ret;
+
+    if (false == pmix_psquash.int_type_is_encoded) {
+        /* System types need to always be described so we can properly
+           unpack them. */
+        if (PMIX_SUCCESS != (ret = pmix_bfrop_store_data_type(regtypes, buffer, BFROP_TYPE_SIZE_T))) {
+            return ret;
+        }
+    }
+
+    PMIX_BFROPS_PACK_TYPE(ret, buffer, src, num_vals, BFROP_TYPE_SIZE_T, regtypes);
+    return ret;
+}
+
+/*
+ * INT16, INT32, INT64
+ */
+static pmix_status_t
+pmix4_bfrops_base_unpack_general_int(pmix_pointer_array_t *regtypes,
+                                     pmix_buffer_t *buffer, void *dest,
+                                     int32_t *num_vals, pmix_data_type_t type)
+{
+    pmix_status_t rc;
+    size_t val_size, avail_size, unpack_size, max_size;
+    int32_t i;
+
+    pmix_output_verbose(20, pmix_bfrops_base_framework.framework_output,
+                        "pmix_bfrops_base_unpack_integer * %d\n", (int)*num_vals);
+
+    /* check to see if there's enough data in buffer */
+    if (buffer->pack_ptr == buffer->unpack_ptr) {
+        return PMIX_ERR_UNPACK_READ_PAST_END_OF_BUFFER;
+    }
+
+    PMIX_SQUASH_TYPE_SIZEOF(rc, type, val_size);
+    if (PMIX_SUCCESS != rc) {
+        PMIX_ERROR_LOG(rc);
+        return rc;
+    }
+
+    rc = pmix_psquash.get_max_size(type, &max_size);
+    if (PMIX_SUCCESS != rc) {
+        PMIX_ERROR_LOG(rc);
+        return rc;
+    }
+
+    /* unpack the data */
+    for (i = 0; i < (*num_vals); ++i) {
+        avail_size = buffer->pack_ptr - buffer->unpack_ptr;
+        rc = (pmix_psquash.decode_int)(type, buffer->unpack_ptr, avail_size,
+                                       (uint8_t*)dest+i*val_size, &unpack_size);
+        if (PMIX_SUCCESS != rc) {
+            PMIX_ERROR_LOG(rc);
+            return rc;
+        }
+        /* sanity checks */
+        if (unpack_size > max_size) {
+            rc = PMIX_ERR_UNPACK_FAILURE;
+            PMIX_ERROR_LOG(rc);
+            return rc;
+        }
+        if (unpack_size > avail_size) {
+            rc = PMIX_ERR_FATAL;
+            PMIX_ERROR_LOG(rc);
+            return rc;
+        }
+        buffer->unpack_ptr += unpack_size;
+    }
+
+    return PMIX_SUCCESS;
+}
+
+/*
+ * INT
+ */
+static pmix_status_t
+pmix4_bfrops_base_unpack_int(pmix_pointer_array_t *regtypes,
+                             pmix_buffer_t *buffer, void *dest,
+                             int32_t *num_vals, pmix_data_type_t type)
+{
+    pmix_status_t ret;
+    pmix_data_type_t remote_type;
+
+    if (false == pmix_psquash.int_type_is_encoded) {
+        if (PMIX_SUCCESS != (ret = pmix_bfrop_get_data_type(regtypes, buffer, &remote_type))) {
+            return ret;
+        }
+        if (remote_type == BFROP_TYPE_INT) {
+            /* fast path it if the sizes are the same */
+            /* Turn around and unpack the real type */
+            PMIX_BFROPS_UNPACK_TYPE(ret, buffer, dest, num_vals, BFROP_TYPE_INT, regtypes);
+        } else {
+            /* slow path - types are different sizes */
+            PMIX_BFROP_UNPACK_SIZE_MISMATCH(regtypes, int, remote_type, ret);
+        }
+    } else {
+        PMIX_BFROPS_UNPACK_TYPE(ret, buffer, dest, num_vals, BFROP_TYPE_INT, regtypes);
+    }
+
+    return ret;
+}
+
+/*
+ * SIZE_T
+ */
+static pmix_status_t
+pmix4_bfrops_base_unpack_sizet(pmix_pointer_array_t *regtypes,
+                               pmix_buffer_t *buffer, void *dest,
+                               int32_t *num_vals, pmix_data_type_t type)
+{
+    pmix_status_t ret;
+    pmix_data_type_t remote_type;
+
+    if (false == pmix_psquash.int_type_is_encoded) {
+        if (PMIX_SUCCESS != (ret = pmix_bfrop_get_data_type(regtypes, buffer,
+                                                            &remote_type))) {
+            PMIX_ERROR_LOG(ret);
+            return ret;
+        }
+        if (remote_type == BFROP_TYPE_SIZE_T) {
+            /* fast path it if the sizes are the same */
+            /* Turn around and unpack the real type */
+            PMIX_BFROPS_UNPACK_TYPE(ret, buffer, dest, num_vals, BFROP_TYPE_SIZE_T,
+                                    regtypes);
+            if (PMIX_SUCCESS != ret) {
+                PMIX_ERROR_LOG(ret);
+            }
+        } else {
+            /* slow path - types are different sizes */
+            PMIX_BFROP_UNPACK_SIZE_MISMATCH(regtypes, size_t, remote_type, ret);
+        }
+    } else {
+        PMIX_BFROPS_UNPACK_TYPE(ret, buffer, dest, num_vals, BFROP_TYPE_SIZE_T,
+                                regtypes);
+        if (PMIX_SUCCESS != ret) {
+            PMIX_ERROR_LOG(ret);
+        }
+    }
+    return ret;
 }

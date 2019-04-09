@@ -109,6 +109,8 @@ static inline int _my_client(const char *nspace, pmix_rank_t rank);
 
 static pmix_status_t _dstor_store_modex_cb(pmix_common_dstore_ctx_t *ds_ctx,
                                            pmix_proc_t *proc,
+                                           pmix_gds_modex_key_fmt_t key_fmt,
+                                           char **kmap,
                                            pmix_buffer_t *pbkt);
 
 static pmix_status_t _dstore_store_nolock(pmix_common_dstore_ctx_t *ds_ctx,
@@ -2541,7 +2543,7 @@ PMIX_EXPORT pmix_status_t pmix_common_dstor_store_modex(pmix_common_dstore_ctx_t
         return rc;
     }
 
-    rc = pmix_gds_base_store_modex(nspace,  buf, ds_ctx,
+    rc = pmix_gds_base_store_modex(nspace, buf, ds_ctx,
                     (pmix_gds_base_store_modex_cb_fn_t)_dstor_store_modex_cb,
                     cbdata);
     if (PMIX_SUCCESS != rc) {
@@ -2562,10 +2564,11 @@ PMIX_EXPORT pmix_status_t pmix_common_dstor_store_modex(pmix_common_dstore_ctx_t
 
 static pmix_status_t _dstor_store_modex_cb(pmix_common_dstore_ctx_t *ds_ctx,
                                            pmix_proc_t *proc,
+                                           pmix_gds_modex_key_fmt_t key_fmt,
+                                           char **kmap,
                                            pmix_buffer_t *pbkt)
 {
     pmix_status_t rc = PMIX_SUCCESS;
-    int32_t cnt;
     pmix_kval_t *kv;
     ns_map_data_t *ns_map;
     pmix_buffer_t tmp;
@@ -2594,9 +2597,9 @@ static pmix_status_t _dstor_store_modex_cb(pmix_common_dstore_ctx_t *ds_ctx,
     PMIX_CONSTRUCT(&tmp, pmix_buffer_t);
 
     /* unpack the remaining values until we hit the end of the buffer */
-    cnt = 1;
     kv = PMIX_NEW(pmix_kval_t);
-    PMIX_BFROPS_UNPACK(rc, pmix_globals.mypeer, pbkt, kv, &cnt, PMIX_KVAL);
+    rc = pmix_gds_base_modex_unpack_kval(key_fmt, pbkt, kmap, kv);
+
     while (PMIX_SUCCESS == rc) {
         /* store this in the hash table */
         PMIX_GDS_STORE_KV(rc, pmix_globals.mypeer, proc, PMIX_REMOTE, kv);
@@ -2614,8 +2617,10 @@ static pmix_status_t _dstor_store_modex_cb(pmix_common_dstore_ctx_t *ds_ctx,
 
         /* proceed to the next element */
         kv = PMIX_NEW(pmix_kval_t);
-        cnt = 1;
-        PMIX_BFROPS_UNPACK(rc, pmix_globals.mypeer, pbkt, kv, &cnt, PMIX_KVAL);
+        rc = pmix_gds_base_modex_unpack_kval(key_fmt, pbkt, kmap, kv);
+        if (PMIX_SUCCESS != rc) {
+            break;
+        }
     }
 
     /* Release the kv that didn't received the value

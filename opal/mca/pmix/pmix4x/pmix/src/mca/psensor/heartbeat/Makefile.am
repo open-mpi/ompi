@@ -1,7 +1,7 @@
 #
 # Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
 #
-# Copyright (c) 2017      Intel, Inc.  All rights reserved.
+# Copyright (c) 2017-2019 Intel, Inc.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -32,6 +32,7 @@ mcacomponentdir = $(pmixlibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_psensor_heartbeat_la_SOURCES = $(sources)
 mca_psensor_heartbeat_la_LDFLAGS = -module -avoid-version
+mca_psensor_heartbeat_la_LIBADD = $(top_builddir)/src/libpmix.la
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_psensor_heartbeat_la_SOURCES =$(sources)

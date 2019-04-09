@@ -2,8 +2,8 @@
  * Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Artem Y. Polyakov <artpol84@gmail.com>.
  *                         All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015-2019 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Redistribution and use in source and binary forms, with or without
@@ -91,7 +91,7 @@ pmix_status_t pmix_argv_append_nosize(char ***argv, const char *arg);
 
 pmix_status_t pmix_argv_prepend_nosize(char ***argv, const char *arg);
 
-pmix_status_t pmix_argv_append_unique_nosize(char ***argv, const char *arg, bool overwrite);
+pmix_status_t pmix_argv_append_unique_nosize(char ***argv, const char *arg);
 
 void pmix_argv_free(char **argv);
 

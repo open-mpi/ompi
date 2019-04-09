@@ -14,8 +14,8 @@
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015-2019 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -221,7 +221,7 @@ static char *append_filename_to_list(const char *filename)
 {
     int i, count;
 
-    (void) pmix_argv_append_unique_nosize(&pmix_mca_base_var_file_list, filename, false);
+    (void) pmix_argv_append_unique_nosize(&pmix_mca_base_var_file_list, filename);
 
     count = pmix_argv_count(pmix_mca_base_var_file_list);
 

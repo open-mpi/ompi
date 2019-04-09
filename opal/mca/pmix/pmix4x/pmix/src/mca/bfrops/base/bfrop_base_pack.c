@@ -895,7 +895,7 @@ pmix_status_t pmix_bfrops_base_pack_query(pmix_pointer_array_t *regtypes,
     for (i=0; i < num_vals; i++) {
         /* pack the number of keys */
         nkeys = pmix_argv_count(pq[i].keys);
-        PMIX_BFROPS_PACK_TYPE(ret, buffer, &nkeys, 1, PMIX_UINT32, regtypes);
+        PMIX_BFROPS_PACK_TYPE(ret, buffer, &nkeys, 1, PMIX_INT32, regtypes);
         if (PMIX_SUCCESS != ret) {
             return ret;
         }
