@@ -168,6 +168,9 @@ OSHMEM_DECLSPEC void shmemx_int16_prod_to_all(int16_t *target, const int16_t *so
 OSHMEM_DECLSPEC void shmemx_int32_prod_to_all(int32_t *target, const int32_t *source, int nreduce, int PE_start, int logPE_stride, int PE_size, int32_t *pWrk, long *pSync);
 OSHMEM_DECLSPEC void shmemx_int64_prod_to_all(int64_t *target, const int64_t *source, int nreduce, int PE_start, int logPE_stride, int PE_size, int64_t *pWrk, long *pSync);
 
+/* Alltoall put with atomic counter increase */
+OSHMEM_DECLSPEC void shmemx_put_with_long_inc_all(void *target, const void *source, size_t size, long *counter);
+
 /*
  * Backward compatibility section
  */

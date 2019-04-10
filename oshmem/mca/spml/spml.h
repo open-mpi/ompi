@@ -315,6 +315,29 @@ typedef int (*mca_spml_base_module_send_fn_t)(void *buf,
                                               mca_spml_base_put_mode_t mode);
 
 /**
+ * The routine transfers the data asynchronously from the source PE to all PEs
+ * in the OpenSHMEM job. The routine returns immediately. The source and target
+ * buffers are reusable only after the completion of the routine. After the data
+ * is transferred to the target buffers, the counter object is updated atomically.
+ * The counter object can be read either using atomic operations such as
+ * shmem_atomic_fetch or can use point-to-point synchronization routines such as
+ * shmem_wait_until and shmem_test.
+ *
+ *  @param target      The array of remote PE addresses of the objects being written.
+ *  @param source      The array of addresses on the local PE holdng the values
+ *                     to be written to all other PEs.
+ *  @param size        The number of bytes to be sent to each PE in the job.
+ *  @param counter     The array of counters (one for every PE in the job) to be
+ *                     incremented after the data transfer.
+ *
+ *  @return            OSHMEM_SUCCESS or failure status.
+ */
+typedef int (*mca_spml_base_module_put_all_nb_fn_t)(void *target,
+                                                    const void *source,
+                                                    size_t size,
+                                                    long *counter);
+
+/**
  * Assures ordering of delivery of put() requests
  *
  * @param ctx      - The context object this routine is working on.
@@ -381,6 +404,7 @@ struct mca_spml_base_module_1_0_0_t {
     mca_spml_base_module_mkey_ptr_fn_t    spml_rmkey_ptr;
 
     mca_spml_base_module_memuse_hook_fn_t spml_memuse_hook;
+    mca_spml_base_module_put_all_nb_fn_t  spml_put_all_nb;
     void *self;
 };
 

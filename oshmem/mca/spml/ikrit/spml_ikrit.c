@@ -181,6 +181,7 @@ mca_spml_ikrit_t mca_spml_ikrit = {
         mca_spml_base_rmkey_free,
         mca_spml_base_rmkey_ptr,
         mca_spml_base_memuse_hook,
+        mca_spml_base_put_all_nb,
 
         (void*)&mca_spml_ikrit
     },
