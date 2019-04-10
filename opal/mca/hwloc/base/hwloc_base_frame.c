@@ -3,6 +3,7 @@
  * Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2016-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2019 IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -217,7 +218,14 @@ static int opal_hwloc_base_open(mca_base_open_flag_t flags)
          * we do bind to the given cpus if provided, otherwise this would be
          * ignored if someone didn't also specify a binding policy
          */
-        OPAL_SET_BINDING_POLICY(opal_hwloc_binding_policy, OPAL_BIND_TO_CPUSET);
+// Restoring pre ef86707fbe3392c8ed15f79cc4892f0313b409af behavior.
+// Formerly -cpu-set #,#,# along with -use_hwthread-cpus resulted
+// in the binding policy staying OPAL_BIND_TO_HWTHREAD
+// I think that should be right because I thought -cpu-set was a contraint you put
+// on another binding policy, not a binding policy in itself.
+        if (!OPAL_BINDING_POLICY_IS_SET(opal_hwloc_binding_policy)) {
+            OPAL_SET_BINDING_POLICY(opal_hwloc_binding_policy, OPAL_BIND_TO_CPUSET);
+        }
     }
 
     /* if we are binding to hwthreads, then we must use hwthreads as cpus */
