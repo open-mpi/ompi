@@ -164,9 +164,9 @@
 interface
 
 subroutine ompi_bsend_f(buf,count,datatype,dest,tag,comm,ierror) &
-   BIND(C, name="ompi_bsend_f")
+   BIND(C, name="ompi_bsend_@OMPI_F08_BINDINGS_EXTENSION@")
    implicit none
-   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: buf
+   OMPI_F08_IGNORE_TKR_TYPE, INTENT(IN) :: buf
    INTEGER, INTENT(IN) :: count, dest, tag
    INTEGER, INTENT(IN) :: datatype
    INTEGER, INTENT(IN) :: comm
@@ -174,9 +174,9 @@ subroutine ompi_bsend_f(buf,count,datatype,dest,tag,comm,ierror) &
 end subroutine ompi_bsend_f
 
 subroutine ompi_bsend_init_f(buf,count,datatype,dest,tag,comm,request,ierror) &
-   BIND(C, name="ompi_bsend_init_f")
+   BIND(C, name="ompi_bsend_init_@OMPI_F08_BINDINGS_EXTENSION@")
    implicit none
-   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: buf
+   OMPI_F08_IGNORE_TKR_TYPE, INTENT(IN) :: buf
    INTEGER, INTENT(IN) :: count, dest, tag
    INTEGER, INTENT(IN) :: datatype
    INTEGER, INTENT(IN) :: comm
@@ -222,9 +222,9 @@ subroutine ompi_get_count_f(status,datatype,count,ierror) &
 end subroutine ompi_get_count_f
 
 subroutine ompi_ibsend_f(buf,count,datatype,dest,tag,comm,request,ierror) &
-   BIND(C, name="ompi_ibsend_f")
+   BIND(C, name="ompi_ibsend_@OMPI_F08_BINDINGS_EXTENSION@")
    implicit none
-   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: buf
+   OMPI_F08_IGNORE_TKR_TYPE, INTENT(IN) :: buf
    INTEGER, INTENT(IN) :: count, dest, tag
    INTEGER, INTENT(IN) :: datatype
    INTEGER, INTENT(IN) :: comm
@@ -233,9 +233,9 @@ subroutine ompi_ibsend_f(buf,count,datatype,dest,tag,comm,request,ierror) &
 end subroutine ompi_ibsend_f
 
 subroutine ompi_irecv_f(buf,count,datatype,source,tag,comm,request,ierror) &
-   BIND(C, name="ompi_irecv_f")
+   BIND(C, name="ompi_irecv_@OMPI_F08_BINDINGS_EXTENSION@")
    implicit none
-   OMPI_FORTRAN_IGNORE_TKR_TYPE :: buf
+   OMPI_F08_IGNORE_TKR_TYPE :: buf
    INTEGER, INTENT(IN) :: count, source, tag
    INTEGER, INTENT(IN) :: datatype
    INTEGER, INTENT(IN) :: comm
@@ -244,9 +244,9 @@ subroutine ompi_irecv_f(buf,count,datatype,source,tag,comm,request,ierror) &
 end subroutine ompi_irecv_f
 
 subroutine ompi_irsend_f(buf,count,datatype,dest,tag,comm,request,ierror) &
-   BIND(C, name="ompi_irsend_f")
+   BIND(C, name="ompi_irsend_@OMPI_F08_BINDINGS_EXTENSION@")
    implicit none
-   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: buf
+   OMPI_F08_IGNORE_TKR_TYPE, INTENT(IN) :: buf
    INTEGER, INTENT(IN) :: count, dest, tag
    INTEGER, INTENT(IN) :: datatype
    INTEGER, INTENT(IN) :: comm
@@ -255,9 +255,9 @@ subroutine ompi_irsend_f(buf,count,datatype,dest,tag,comm,request,ierror) &
 end subroutine ompi_irsend_f
 
 subroutine ompi_isend_f(buf,count,datatype,dest,tag,comm,request,ierror) &
-   BIND(C, name="ompi_isend_f")
+   BIND(C, name="ompi_isend_@OMPI_F08_BINDINGS_EXTENSION@")
    implicit none
-   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: buf
+   OMPI_F08_IGNORE_TKR_TYPE, INTENT(IN) :: buf
    INTEGER, INTENT(IN) :: count, dest, tag
    INTEGER, INTENT(IN) :: datatype
    INTEGER, INTENT(IN) :: comm
@@ -266,9 +266,9 @@ subroutine ompi_isend_f(buf,count,datatype,dest,tag,comm,request,ierror) &
 end subroutine ompi_isend_f
 
 subroutine ompi_issend_f(buf,count,datatype,dest,tag,comm,request,ierror) &
-   BIND(C, name="ompi_issend_f")
+   BIND(C, name="ompi_issend_@OMPI_F08_BINDINGS_EXTENSION@")
    implicit none
-   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: buf
+   OMPI_F08_IGNORE_TKR_TYPE, INTENT(IN) :: buf
    INTEGER, INTENT(IN) :: count, dest, tag
    INTEGER, INTENT(IN) :: datatype
    INTEGER, INTENT(IN) :: comm
@@ -287,10 +287,10 @@ subroutine ompi_probe_f(source,tag,comm,status,ierror) &
 end subroutine ompi_probe_f
 
 subroutine ompi_recv_f(buf,count,datatype,source,tag,comm,status,ierror) &
-   BIND(C, name="ompi_recv_f")
+   BIND(C, name="ompi_recv_@OMPI_F08_BINDINGS_EXTENSION@")
    use :: mpi_f08_types, only : MPI_Status
    implicit none
-   OMPI_FORTRAN_IGNORE_TKR_TYPE :: buf
+   OMPI_F08_IGNORE_TKR_TYPE :: buf
    INTEGER, INTENT(IN) :: count, source, tag
    INTEGER, INTENT(IN) :: datatype
    INTEGER, INTENT(IN) :: comm
@@ -299,9 +299,9 @@ subroutine ompi_recv_f(buf,count,datatype,source,tag,comm,status,ierror) &
 end subroutine ompi_recv_f
 
 subroutine ompi_recv_init_f(buf,count,datatype,source,tag,comm,request,ierror) &
-   BIND(C, name="ompi_recv_init_f")
+   BIND(C, name="ompi_recv_init_@OMPI_F08_BINDINGS_EXTENSION@")
    implicit none
-   OMPI_FORTRAN_IGNORE_TKR_TYPE :: buf
+   OMPI_F08_IGNORE_TKR_TYPE :: buf
    INTEGER, INTENT(IN) :: count, source, tag
    INTEGER, INTENT(IN) :: datatype
    INTEGER, INTENT(IN) :: comm
@@ -317,9 +317,9 @@ subroutine ompi_request_free_f(request,ierror) &
 end subroutine ompi_request_free_f
 
 subroutine ompi_rsend_f(buf,count,datatype,dest,tag,comm,ierror) &
-   BIND(C, name="ompi_rsend_f")
+   BIND(C, name="ompi_rsend_@OMPI_F08_BINDINGS_EXTENSION@")
    implicit none
-   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: buf
+   OMPI_F08_IGNORE_TKR_TYPE, INTENT(IN) :: buf
    INTEGER, INTENT(IN) :: count, dest, tag
    INTEGER, INTENT(IN) :: datatype
    INTEGER, INTENT(IN) :: comm
@@ -327,9 +327,9 @@ subroutine ompi_rsend_f(buf,count,datatype,dest,tag,comm,ierror) &
 end subroutine ompi_rsend_f
 
 subroutine ompi_rsend_init_f(buf,count,datatype,dest,tag,comm,request,ierror) &
-   BIND(C, name="ompi_rsend_init_f")
+   BIND(C, name="ompi_rsend_init_@OMPI_F08_BINDINGS_EXTENSION@")
    implicit none
-   OMPI_FORTRAN_IGNORE_TKR_TYPE :: buf
+   OMPI_F08_IGNORE_TKR_TYPE :: buf
    INTEGER, INTENT(IN) :: count, dest, tag
    INTEGER, INTENT(IN) :: datatype
    INTEGER, INTENT(IN) :: comm
@@ -338,9 +338,9 @@ subroutine ompi_rsend_init_f(buf,count,datatype,dest,tag,comm,request,ierror) &
 end subroutine ompi_rsend_init_f
 
 subroutine ompi_send_f(buf,count,datatype,dest,tag,comm,ierror) &
-   BIND(C, name="ompi_send_f")
+   BIND(C, name="ompi_send_@OMPI_F08_BINDINGS_EXTENSION@")
    implicit none
-   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: buf
+   OMPI_F08_IGNORE_TKR_TYPE, INTENT(IN) :: buf
    INTEGER, INTENT(IN) :: count, dest, tag
    INTEGER, INTENT(IN) :: datatype
    INTEGER, INTENT(IN) :: comm
@@ -349,11 +349,11 @@ end subroutine ompi_send_f
 
 subroutine ompi_sendrecv_f(sendbuf,sendcount,sendtype,dest,sendtag,recvbuf, &
                            recvcount,recvtype,source,recvtag,comm,status,ierror) &
-   BIND(C, name="ompi_sendrecv_f")
+   BIND(C, name="ompi_sendrecv_@OMPI_F08_BINDINGS_EXTENSION@")
    use :: mpi_f08_types, only : MPI_Status
    implicit none
-   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: sendbuf
-   OMPI_FORTRAN_IGNORE_TKR_TYPE :: recvbuf
+   OMPI_F08_IGNORE_TKR_TYPE, INTENT(IN) :: sendbuf
+   OMPI_F08_IGNORE_TKR_TYPE :: recvbuf
    INTEGER, INTENT(IN) :: sendcount, dest, sendtag, recvcount, source, recvtag
    INTEGER, INTENT(IN) :: sendtype
    INTEGER, INTENT(IN) :: recvtype
@@ -364,10 +364,10 @@ end subroutine ompi_sendrecv_f
 
 subroutine ompi_sendrecv_replace_f(buf,count,datatype,dest,sendtag,source, &
                                    recvtag,comm,status,ierror) &
-   BIND(C, name="ompi_sendrecv_replace_f")
+   BIND(C, name="ompi_sendrecv_replace_@OMPI_F08_BINDINGS_EXTENSION@")
    use :: mpi_f08_types, only : MPI_Status
    implicit none
-   OMPI_FORTRAN_IGNORE_TKR_TYPE :: buf
+   OMPI_F08_IGNORE_TKR_TYPE :: buf
    INTEGER, INTENT(IN) :: count, dest, sendtag, source, recvtag
    INTEGER, INTENT(IN) :: datatype
    INTEGER, INTENT(IN) :: comm
@@ -376,9 +376,9 @@ subroutine ompi_sendrecv_replace_f(buf,count,datatype,dest,sendtag,source, &
 end subroutine ompi_sendrecv_replace_f
 
 subroutine ompi_send_init_f(buf,count,datatype,dest,tag,comm,request,ierror) &
-   BIND(C, name="ompi_send_init_f")
+   BIND(C, name="ompi_send_init_@OMPI_F08_BINDINGS_EXTENSION@")
    implicit none
-   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: buf
+   OMPI_F08_IGNORE_TKR_TYPE, INTENT(IN) :: buf
    INTEGER, INTENT(IN) :: count, dest, tag
    INTEGER, INTENT(IN) :: datatype
    INTEGER, INTENT(IN) :: comm
@@ -387,9 +387,9 @@ subroutine ompi_send_init_f(buf,count,datatype,dest,tag,comm,request,ierror) &
 end subroutine ompi_send_init_f
 
 subroutine ompi_ssend_f(buf,count,datatype,dest,tag,comm,ierror) &
-   BIND(C, name="ompi_ssend_f")
+   BIND(C, name="ompi_ssend_@OMPI_F08_BINDINGS_EXTENSION@")
    implicit none
-   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: buf
+   OMPI_F08_IGNORE_TKR_TYPE, INTENT(IN) :: buf
    INTEGER, INTENT(IN) :: count, dest, tag
    INTEGER, INTENT(IN) :: datatype
    INTEGER, INTENT(IN) :: comm
@@ -397,9 +397,9 @@ subroutine ompi_ssend_f(buf,count,datatype,dest,tag,comm,ierror) &
 end subroutine ompi_ssend_f
 
 subroutine ompi_ssend_init_f(buf,count,datatype,dest,tag,comm,request,ierror) &
-   BIND(C, name="ompi_ssend_init_f")
+   BIND(C, name="ompi_ssend_init_@OMPI_F08_BINDINGS_EXTENSION@")
    implicit none
-   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: buf
+   OMPI_F08_IGNORE_TKR_TYPE, INTENT(IN) :: buf
    INTEGER, INTENT(IN) :: count, dest, tag
    INTEGER, INTENT(IN) :: datatype
    INTEGER, INTENT(IN) :: comm
@@ -3339,9 +3339,9 @@ subroutine ompi_mprobe_f(source,tag,comm,message,status,ierror) &
 end subroutine ompi_mprobe_f
 
 subroutine ompi_imrecv_f(buf,count,datatype,message,request,ierror) &
-   BIND(C, name="ompi_imrecv_f")
+   BIND(C, name="ompi_imrecv_@OMPI_F08_BINDINGS_EXTENSION@")
    implicit none
-   OMPI_FORTRAN_IGNORE_TKR_TYPE OMPI_ASYNCHRONOUS :: buf
+   OMPI_F08_IGNORE_TKR_TYPE OMPI_ASYNCHRONOUS :: buf
    INTEGER, INTENT(IN) :: count
    INTEGER, INTENT(IN) :: datatype
    INTEGER, INTENT(INOUT) :: message
@@ -3350,10 +3350,10 @@ subroutine ompi_imrecv_f(buf,count,datatype,message,request,ierror) &
 end subroutine ompi_imrecv_f
 
 subroutine ompi_mrecv_f(buf,count,datatype,message,status,ierror) &
-   BIND(C, name="ompi_mrecv_f")
+   BIND(C, name="ompi_mrecv_@OMPI_F08_BINDINGS_EXTENSION@")
    use :: mpi_f08_types, only : MPI_Status
    implicit none
-   OMPI_FORTRAN_IGNORE_TKR_TYPE :: buf
+   OMPI_F08_IGNORE_TKR_TYPE :: buf
    INTEGER, INTENT(IN) :: count
    INTEGER, INTENT(IN) :: datatype
    INTEGER, INTENT(INOUT) :: message

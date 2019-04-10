@@ -38,7 +38,27 @@ endif
 libusempif08_cdesc_la_SOURCES = \
         bindings.h \
         cdesc.h \
-        cdesc.c
+        cdesc.c \
+        \
+        bsend_cdesc.c \
+        bsend_init_cdesc.c \
+        ibsend_cdesc.c \
+        imrecv_cdesc.c \
+        irecv_cdesc.c \
+        irsend_cdesc.c \
+        isend_cdesc.c \
+        issend_cdesc.c \
+        mrecv_cdesc.c \
+        recv_cdesc.c \
+        recv_init_cdesc.c \
+        rsend_cdesc.c \
+        rsend_init_cdesc.c \
+        send_cdesc.c \
+        send_init_cdesc.c \
+        sendrecv_cdesc.c \
+        sendrecv_replace_cdesc.c \
+        ssend_cdesc.c \
+        ssend_init_cdesc.c
 
 noinst_LTLIBRARIES = $(module_sentinel_file)
 
