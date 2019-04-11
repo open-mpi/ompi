@@ -8,6 +8,8 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
+ * Copyright (c) 2018-2019 Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -24,6 +26,7 @@
 
 #include "opal/class/opal_pointer_array.h"
 #include "opal/class/opal_hash_table.h"
+#include "opal/threads/thread_usage.h"
 
 static opal_hash_table_t mca_base_event_index_hash;
 static opal_pointer_array_t registered_events;
@@ -343,8 +346,8 @@ int mca_base_event_mark_invalid (mca_base_event_t *event)
     return OPAL_SUCCESS;
 }
 
-int mca_base_event_registration_alloc (mca_base_event_t *event, void *obj_registration, void *user_data,
-                                 mca_base_event_cb_fn_t event_cbfn, mca_base_event_registration_t **registration)
+int mca_base_event_registration_alloc (mca_base_event_t *event, void *obj_registration, opal_info_t *info,
+                                       mca_base_event_registration_t **registration)
 {
     mca_base_event_registration_t *event_registration = NULL;
 
@@ -364,12 +367,25 @@ int mca_base_event_registration_alloc (mca_base_event_t *event, void *obj_regist
 
     event_registration->obj_registration = (NULL == obj_registration ? NULL : *(void**)obj_registration);
     event_registration->event = event;
-    event_registration->user_data = user_data;
-    event_registration->event_cb = event_cbfn;
     event_registration->obj_registration = obj_registration;
 
     *registration = event_registration;
     opal_list_append (&event->event_bound_registrations, &event_registration->super);
+
+    return OPAL_SUCCESS;
+}
+
+int mca_base_event_register_callback (mca_base_event_registration_t *registration, mca_base_cb_safety_t cb_safety,
+                                      opal_info_t *info, void *user_data, mca_base_event_cb_fn_t event_cbfn)
+{
+    if (cb_safety >= MCA_BASE_CB_SAFETY_MAX || cb_safety < 0) {
+        return OPAL_ERR_BAD_PARAM;
+    }
+
+    registration->user_data[cb_safety] = user_data;
+    /* ensure the user data is commited before setting the callback function */
+    opal_atomic_wmb();
+    opal_atomic_swap_ptr ((volatile intptr_t *) (registration->event_cbs + cb_safety), (intptr_t) event_cbfn);
 
     return OPAL_SUCCESS;
 }
@@ -485,7 +501,17 @@ void mca_base_event_raise_internal (mca_base_event_t *event, mca_base_cb_safety_
             continue;
         }
 
-        registration->event_cb (&revent, registration, cb_safety, registration->user_data);
+        for (mca_base_cb_safety_t i = cb_safety ; i < MCA_BASE_CB_SAFETY_MAX ; ++i) {
+            mca_base_event_cb_fn_t cb = registration->event_cbs[i];
+
+            if (NULL == cb) {
+                continue;
+            }
+
+            /* call only the least restrictive callback allowed by the raise */
+            cb (&revent, registration, cb_safety, registration->user_data[i]);
+            break;
+        }
     }
 }
 
@@ -526,7 +552,7 @@ static void mca_base_event_registration_destructor (mca_base_event_registration_
     }
 
     if (registration->free_cb) {
-        registration->free_cb (registration, MCA_BASE_CALLBACK_SAFETY_BASIC, registration->user_data);
+        registration->free_cb (registration, MCA_BASE_CB_REQUIRE_NONE, registration->user_data);
     }
 }
 

@@ -21,7 +21,7 @@
 #endif
 
 int MPI_T_source_get_info (int source_id, char *name, int *name_len, char *desc, int *desc_len, MPI_T_order *ordering,
-                           MPI_Count *ticks_per_second)
+                           MPI_Count *ticks_per_second, MPI_Count *max_timestamp, MPI_Info *info)
 {
     mca_base_source_t *source;
     if (!mpit_is_initialized ()) {
@@ -51,6 +51,14 @@ int MPI_T_source_get_info (int source_id, char *name, int *name_len, char *desc,
 
     if (ticks_per_second) {
         *ticks_per_second = source->source_ticks;
+    }
+
+    if (max_timestamp) {
+        *max_timestamp = SIZE_T_MAX;
+    }
+
+    if (*info) {
+        *info = OBJ_NEW(ompi_info_t);
     }
 
     return MPI_SUCCESS;

@@ -18,6 +18,8 @@
 # Copyright (c) 2015      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 #                         reserved.
+# Copyright (c) 2018-2019 Triad National Security, LLC. All rights
+#                         reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -82,8 +84,9 @@ nodist_libmpi_pmpit_la_SOURCES = \
 	pevent_get_num.c \
 	pevent_get_source.c \
 	pevent_get_timestamp.c \
-	pevent_registration_alloc.c \
-	pevent_registration_free.c \
+	pevent_register_callback.c \
+	pevent_handle_alloc.c \
+	pevent_handle_free.c \
 	pevent_read.c \
 	pevent_copy.c \
 	pevent_set_dropped_handler.c \

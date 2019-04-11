@@ -63,8 +63,9 @@
 #define MPI_T_event_get_num PMPI_T_event_get_num
 #define MPI_T_event_get_info PMPI_T_event_get_info
 #define MPI_T_event_get_index PMPI_T_event_get_index
-#define MPI_T_event_registration_alloc PMPI_T_event_registration_alloc
-#define MPI_T_event_registration_free PMPI_T_event_registration_free
+#define MPI_T_event_register_callback PMPI_T_event_register_callback
+#define MPI_T_event_handle_alloc PMPI_T_event_handle_alloc
+#define MPI_T_event_handle_free PMPI_T_event_handle_free
 #define MPI_T_event_set_dropped_handler PMPI_T_event_set_dropped_handler
 #define MPI_T_event_read PMPI_T_event_read
 #define MPI_T_event_copy PMPI_T_event_copy

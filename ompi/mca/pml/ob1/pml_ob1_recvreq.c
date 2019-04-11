@@ -78,7 +78,7 @@ static int mca_pml_ob1_recv_request_free(struct ompi_request_t** request)
 
     recvreq->req_recv.req_base.req_free_called = true;
     mca_base_event_raise (mca_pml_ob1_events[MCA_PML_OB1_EVENT_REQUEST_FREE].event,
-                          MCA_BASE_CALLBACK_SAFETY_ASYNC_SIGNAL_SAFE,
+                          MCA_BASE_CB_REQUIRE_MPI_RESTRICTED,
                           recvreq->req_recv.req_base.req_comm, NULL, &recvreq);
 
     if( true == recvreq->req_recv.req_base.req_pml_complete ) {
@@ -125,8 +125,7 @@ static int mca_pml_ob1_recv_request_cancel(struct ompi_request_t* ompi_request, 
 
     void *req = &(request->req_recv.req_base);
     mca_base_event_raise (mca_pml_ob1_events[MCA_PML_OB1_EVENT_RECEIVE_CANCELED].event,
-                          MCA_BASE_CALLBACK_SAFETY_ASYNC_SIGNAL_SAFE, comm, NULL, &req);
-
+                          MCA_BASE_CB_REQUIRE_MPI_RESTRICTED, comm, NULL, &req);
     /**
      * As now the PML is done with this request we have to force the pml_complete
      * to true. Otherwise, the request will never be freed.
@@ -456,7 +455,7 @@ static int mca_pml_ob1_recv_request_put_frag (mca_pml_ob1_rdma_frag_t *frag)
     recvreq->req_ack_sent = true;
 
     mca_base_event_raise (mca_pml_ob1_events[MCA_PML_OB1_EVENT_TRANSFER].event,
-                          MCA_BASE_CALLBACK_SAFETY_ASYNC_SIGNAL_SAFE, comm, NULL,
+                          MCA_BASE_CB_REQUIRE_MPI_RESTRICTED, comm, NULL,
                           &((mca_pml_ob1_transfer_event_t) {.request = recvreq, .length = frag->rdma_length}));
 
 
@@ -1096,7 +1095,7 @@ static inline void append_recv_req_to_queue(opal_list_t *queue,
         req->req_recv.req_base.req_type != MCA_PML_REQUEST_MPROBE) {
         ompi_communicator_t *comm = req->req_recv.req_base.req_comm;
         mca_base_event_raise (mca_pml_ob1_events[MCA_PML_OB1_EVENT_POSTED_INSERT].event,
-                              MCA_BASE_CALLBACK_SAFETY_ASYNC_SIGNAL_SAFE, comm, NULL, &req);
+                              MCA_BASE_CB_REQUIRE_MPI_RESTRICTED, comm, NULL, &req);
     }
 }
 
@@ -1261,7 +1260,7 @@ void mca_pml_ob1_recv_req_start(mca_pml_ob1_recv_request_t *req)
      * the cost of the request lock.
      */
     mca_base_event_raise (mca_pml_ob1_events[MCA_PML_OB1_EVENT_SEARCH_UNEX_BEGIN].event,
-                          MCA_BASE_CALLBACK_SAFETY_ASYNC_SIGNAL_SAFE, comm, NULL, &req);
+                          MCA_BASE_CB_REQUIRE_MPI_RESTRICTED, comm, NULL, &req);
 
     /* assign sequence number */
     req->req_recv.req_base.req_sequence = ob1_comm->recv_sequence++;
@@ -1300,7 +1299,7 @@ void mca_pml_ob1_recv_req_start(mca_pml_ob1_recv_request_t *req)
 
     if(OPAL_UNLIKELY(NULL == frag)) {
         mca_base_event_raise (mca_pml_ob1_events[MCA_PML_OB1_EVENT_SEARCH_UNEX_END].event,
-                              MCA_BASE_CALLBACK_SAFETY_ASYNC_SIGNAL_SAFE, comm, NULL, &req);
+                              MCA_BASE_CB_REQUIRE_MPI_RESTRICTED, comm, NULL, &req);
         /* We didn't find any matches.  Record this irecv so we can match
            it when the message comes in. */
         if(OPAL_LIKELY(req->req_recv.req_base.req_type != MCA_PML_REQUEST_IPROBE &&
@@ -1319,10 +1318,10 @@ void mca_pml_ob1_recv_req_start(mca_pml_ob1_recv_request_t *req)
             hdr = (mca_pml_ob1_hdr_t*)frag->segments->seg_addr.pval;
 
             mca_base_event_raise (mca_pml_ob1_events[MCA_PML_OB1_EVENT_UNEX_REMOVE].event,
-                                  MCA_BASE_CALLBACK_SAFETY_ASYNC_SIGNAL_SAFE, comm, NULL, &hdr->hdr_match);
+                                  MCA_BASE_CB_REQUIRE_MPI_RESTRICTED, comm, NULL, &hdr->hdr_match);
 
             mca_base_event_raise (mca_pml_ob1_events[MCA_PML_OB1_EVENT_SEARCH_UNEX_END].event,
-                                  MCA_BASE_CALLBACK_SAFETY_ASYNC_SIGNAL_SAFE, comm, NULL, &req);
+                                  MCA_BASE_CB_REQUIRE_MPI_RESTRICTED, comm, NULL, &req);
 
 #if MCA_PML_OB1_CUSTOM_MATCH
             custom_match_umq_remove_hold(req->req_recv.req_base.req_comm->c_pml_comm->umq, hold_prev, hold_elem, hold_index);

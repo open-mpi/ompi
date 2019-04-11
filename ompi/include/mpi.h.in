@@ -21,6 +21,8 @@
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2017-2019 IBM Corporation.  All rights reserved.
  * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
+ * Copyright (c) 2018-2019 Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -820,9 +822,10 @@ enum {
  * MPIT callback safety levels
  */
 typedef enum {
-  MPI_T_CALLBACK_REQUIRE_MPI_RESTRICTED,
-  MPI_T_CALLBACK_REQUIRE_THREAD_SAFE,
-  MPI_T_CALLBACK_REQUIRE_ASYNC_SIGNAL_SAFE
+  MPI_T_CB_REQUIRE_NONE,
+  MPI_T_CB_REQUIRE_MPI_RESTRICTED,
+  MPI_T_CB_REQUIRE_THREAD_SAFE,
+  MPI_T_CB_REQUIRE_ASYNC_SIGNAL_SAFE
 } MPI_T_cb_safety;
 
 /*
@@ -2690,26 +2693,28 @@ OMPI_DECLSPEC  int PMPI_T_enum_get_item(MPI_T_enum enumtype, int index, int *val
 OMPI_DECLSPEC  int PMPI_T_event_get_num (int *num_events);
 OMPI_DECLSPEC  int PMPI_T_event_get_info (int event_index, char *name, int *name_len,
                                           int *verbosity, MPI_Datatype *array_of_datatypes,
-                                          MPI_Aint *array_of_displacements, int *num_datatypes,
-                                          MPI_T_enum *enumtype, int *extent, char *desc, int *desc_len,
-                                          int *bind);
+                                          MPI_Aint *array_of_displacements, int *num_elements,
+                                          MPI_Aint *extent, MPI_T_enum *enumtype, MPI_Info *info,
+                                          char *desc, int *desc_len, int *bind);
 OMPI_DECLSPEC  int PMPI_T_event_get_index (const char *name, int *event_index);
-OMPI_DECLSPEC  int PMPI_T_event_registration_alloc (int event_index, void *obj_handle,
-                                                    void *user_data, MPI_T_event_cb_function event_cb_function,
-                                                    MPI_T_event_registration *event_registration);
-OMPI_DECLSPEC  int PMPI_T_event_registration_free (MPI_T_event_free_cb_function free_cb_function,
-                                                   MPI_T_event_registration *handle);
+OMPI_DECLSPEC  int PMPI_T_event_handle_alloc (int event_index, void *obj_handle,
+                                              MPI_Info info, MPI_T_event_registration *event_registration);
+OMPI_DECLSPEC  int PMPI_T_event_register_callback (MPI_T_event_registration event_registration,
+                                                   MPI_T_cb_safety cb_safety, MPI_Info info, void *user_data,
+                                                   MPI_T_event_cb_function event_cb_function);
+OMPI_DECLSPEC  int PMPI_T_event_handle_free (MPI_T_event_registration event_registration,
+                                             MPI_T_event_free_cb_function free_cb_function);
 OMPI_DECLSPEC  int PMPI_T_event_set_dropped_handler (MPI_T_event_registration handle,
                                                      MPI_T_event_dropped_cb_function dropped_cb_function);
 OMPI_DECLSPEC  int PMPI_T_event_read (MPI_T_event_instance event, int element_index, void *buffer);
 OMPI_DECLSPEC  int PMPI_T_event_copy (MPI_T_event_instance event, void *buffer);
 OMPI_DECLSPEC  int PMPI_T_event_get_timestamp (MPI_T_event_instance event, MPI_Count *event_time);
 OMPI_DECLSPEC  int PMPI_T_event_get_source (MPI_T_event_instance event, int *source_index);
-
 OMPI_DECLSPEC  int PMPI_T_source_get_num (int *num_source);
 OMPI_DECLSPEC  int PMPI_T_source_get_info (int source_id, char *name, int *name_len,
                                            char *desc, int *desc_len, MPI_T_order *ordering,
-                                           MPI_Count *ticks_per_second);
+                                           MPI_Count *ticks_per_second, MPI_Count *max_timestamp,
+                                           MPI_Info *info);
 OMPI_DECLSPEC  int PMPI_T_source_get_timestamp (int source_id, MPI_Count *timestamp);
 
   /*
@@ -2781,15 +2786,17 @@ OMPI_DECLSPEC  int PMPI_Attr_put(MPI_Comm comm, int keyval, void *attribute_val)
 OMPI_DECLSPEC  int MPI_T_event_get_num (int *num_events);
 OMPI_DECLSPEC  int MPI_T_event_get_info (int event_index, char *name, int *name_len,
                                          int *verbosity, MPI_Datatype *array_of_datatypes,
-                                         MPI_Aint *array_of_displacements, int *num_datatypes,
-                                         MPI_T_enum *enumtype, int *extent, char *desc, int *desc_len,
-                                         int *bind);
+                                         MPI_Aint *array_of_displacements, int *num_elements,
+                                         MPI_Aint *extent, MPI_T_enum *enumtype, MPI_Info *info,
+                                         char *desc, int *desc_len, int *bind);
 OMPI_DECLSPEC  int MPI_T_event_get_index (const char *name, int *event_index);
-OMPI_DECLSPEC  int MPI_T_event_registration_alloc (int event_index, void *obj_handle,
-                                             void *user_data, MPI_T_event_cb_function event_cb_function,
-                                             MPI_T_event_registration *event_registration);
-OMPI_DECLSPEC  int MPI_T_event_registration_free (MPI_T_event_free_cb_function free_cb_function,
-                                            MPI_T_event_registration *handle);
+OMPI_DECLSPEC  int MPI_T_event_handle_alloc (int event_index, void *obj_handle,
+                                             MPI_Info info, MPI_T_event_registration *event_registration);
+OMPI_DECLSPEC  int MPI_T_event_handle_free (MPI_T_event_registration event_registration,
+                                            MPI_T_event_free_cb_function free_cb_function);
+OMPI_DECLSPEC  int MPI_T_event_register_callback (MPI_T_event_registration event_registration,
+                                                  MPI_T_cb_safety cb_safety, MPI_Info info, void *user_data,
+                                                  MPI_T_event_cb_function event_cb_function);
 OMPI_DECLSPEC  int MPI_T_event_set_dropped_handler (MPI_T_event_registration handle,
                                                     MPI_T_event_dropped_cb_function dropped_cb_function);
 OMPI_DECLSPEC  int MPI_T_event_read (MPI_T_event_instance event, int element_index, void *buffer);
@@ -2800,7 +2807,8 @@ OMPI_DECLSPEC  int MPI_T_event_get_source (MPI_T_event_instance event, int *sour
 OMPI_DECLSPEC  int MPI_T_source_get_num (int *num_source);
 OMPI_DECLSPEC  int MPI_T_source_get_info (int source_id, char *name, int *name_len,
                                           char *desc, int *desc_len, MPI_T_order *ordering,
-                                          MPI_Count *ticks_per_second);
+                                          MPI_Count *ticks_per_second, MPI_Count *max_timestamp,
+                                          MPI_Info *info);
 OMPI_DECLSPEC  int MPI_T_source_get_timestamp (int source_id, MPI_Count *timestamp);
 
 /*

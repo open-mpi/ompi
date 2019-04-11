@@ -382,7 +382,7 @@ void mca_pml_ob1_recv_frag_callback_match (mca_btl_base_module_t *btl,
      * order (if multiple network interfaces).
      */
     mca_base_event_raise (mca_pml_ob1_events[MCA_PML_OB1_EVENT_MESSAGE_ARRIVED].event,
-                          MCA_BASE_CALLBACK_SAFETY_ASYNC_SIGNAL_SAFE, comm_ptr, NULL, hdr);
+                          MCA_BASE_CB_REQUIRE_MPI_RESTRICTED, comm_ptr, NULL, hdr);
 
     /* get next expected message sequence number - if threaded
      * run, lock to make sure that if another thread is processing
@@ -417,7 +417,7 @@ void mca_pml_ob1_recv_frag_callback_match (mca_btl_base_module_t *btl,
      * generation until we reach the correct sequence number.
      */
     mca_base_event_raise (mca_pml_ob1_events[MCA_PML_OB1_EVENT_SEARCH_POSTED_BEGIN].event,
-                          MCA_BASE_CALLBACK_SAFETY_ASYNC_SIGNAL_SAFE, comm_ptr, NULL, hdr);
+                          MCA_BASE_CB_REQUIRE_MPI_RESTRICTED, comm_ptr, NULL, hdr);
 
     match = match_one(btl, hdr, segments, num_segments, comm_ptr, proc, NULL);
 
@@ -426,7 +426,7 @@ void mca_pml_ob1_recv_frag_callback_match (mca_btl_base_module_t *btl,
      * a difference for the searching time for all messages.
      */
     mca_base_event_raise (mca_pml_ob1_events[MCA_PML_OB1_EVENT_SEARCH_POSTED_END].event,
-                          MCA_BASE_CALLBACK_SAFETY_ASYNC_SIGNAL_SAFE, comm_ptr, NULL, hdr);
+                          MCA_BASE_CB_REQUIRE_MPI_RESTRICTED, comm_ptr, NULL, hdr);
 
     /* release matching lock before processing fragment */
     OB1_MATCHING_UNLOCK(&comm->matching_lock);
@@ -731,7 +731,7 @@ static mca_pml_ob1_recv_request_t *match_incomming(const mca_pml_ob1_match_hdr_t
         if(req_tag == tag || (req_tag == OMPI_ANY_TAG && tag >= 0)) {
             opal_list_remove_item(queue, (opal_list_item_t*)(*match));
             mca_base_event_raise (mca_pml_ob1_events[MCA_PML_OB1_EVENT_POSTED_REMOVE].event,
-                                  MCA_BASE_CALLBACK_SAFETY_ASYNC_SIGNAL_SAFE,
+                                  MCA_BASE_CB_REQUIRE_MPI_RESTRICTED,
                                   (*match)->req_recv.req_base.req_comm, NULL, match);
             return *match;
         }
@@ -760,7 +760,7 @@ static mca_pml_ob1_recv_request_t *match_incomming_no_any_source (const mca_pml_
         if (req_tag == tag || (req_tag == OMPI_ANY_TAG && tag >= 0)) {
             opal_list_remove_item (&proc->specific_receives, (opal_list_item_t *) recv_req);
             mca_base_event_raise (mca_pml_ob1_events[MCA_PML_OB1_EVENT_POSTED_REMOVE].event,
-                                  MCA_BASE_CALLBACK_SAFETY_ASYNC_SIGNAL_SAFE,
+                                  MCA_BASE_CB_REQUIRE_MPI_RESTRICTED,
                                   recv_req->req_recv.req_base.req_comm, NULL, &recv_req);
             return recv_req;
         }
@@ -847,10 +847,8 @@ static mca_pml_ob1_recv_request_t *match_one (mca_btl_base_module_t *btl,
         SPC_UPDATE_WATERMARK(OMPI_SPC_MAX_UNEXPECTED_IN_QUEUE, OMPI_SPC_UNEXPECTED_IN_QUEUE);
 
         mca_base_event_raise (mca_pml_ob1_events[MCA_PML_OB1_EVENT_UNEX_INSERT].event,
-                              MCA_BASE_CALLBACK_SAFETY_ASYNC_SIGNAL_SAFE,
-                              match->req_recv.req_base.req_comm, NULL, hdr);
-
-        SPC_TIMER_STOP(OMPI_SPC_MATCH_TIME, &timer);
+                              MCA_BASE_CB_REQUIRE_MPI_RESTRICTED, comm, NULL, hdr);
+	SPC_TIMER_STOP(OMPI_SPC_MATCH_TIME, &timer);
         return NULL;
     } while(true);
 }
@@ -924,7 +922,7 @@ static int mca_pml_ob1_recv_frag_match (mca_btl_base_module_t *btl,
      * order (if multiple network interfaces).
      */
     mca_base_event_raise (mca_pml_ob1_events[MCA_PML_OB1_EVENT_MESSAGE_ARRIVED].event,
-                          MCA_BASE_CALLBACK_SAFETY_ASYNC_SIGNAL_SAFE, comm_ptr, NULL, hdr);
+                          MCA_BASE_CB_REQUIRE_MPI_RESTRICTED, comm_ptr, NULL, hdr);
 
     /* get next expected message sequence number - if threaded
      * run, lock to make sure that if another thread is processing
@@ -999,7 +997,7 @@ mca_pml_ob1_recv_frag_match_proc (mca_btl_base_module_t *btl,
      * generation until we reach the correct sequence number.
      */
     mca_base_event_raise (mca_pml_ob1_events[MCA_PML_OB1_EVENT_SEARCH_POSTED_BEGIN].event,
-                          MCA_BASE_CALLBACK_SAFETY_ASYNC_SIGNAL_SAFE, comm_ptr, NULL, hdr);
+                          MCA_BASE_CB_REQUIRE_MPI_RESTRICTED, comm_ptr, NULL, hdr);
 
     match = match_one(btl, hdr, segments, num_segments, comm_ptr, proc, frag);
 
@@ -1008,7 +1006,7 @@ mca_pml_ob1_recv_frag_match_proc (mca_btl_base_module_t *btl,
      * difference for the searching time for all messages.
      */
     mca_base_event_raise (mca_pml_ob1_events[MCA_PML_OB1_EVENT_SEARCH_POSTED_END].event,
-                          MCA_BASE_CALLBACK_SAFETY_ASYNC_SIGNAL_SAFE, comm_ptr, NULL, hdr);
+                          MCA_BASE_CB_REQUIRE_MPI_RESTRICTED, comm_ptr, NULL, hdr);
 
     /* release matching lock before processing fragment */
     OB1_MATCHING_UNLOCK(&comm->matching_lock);

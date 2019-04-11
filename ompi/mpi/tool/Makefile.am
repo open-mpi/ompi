@@ -6,6 +6,8 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2012-2018 Los Alamos National Security, LLC. All rights
 #                         reserved.
+# Copyright (c) 2018-2019 Triad National Security, LLC. All rightsa
+#                         reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -41,9 +43,9 @@ libmpi_mpit_la_SOURCES = init_thread.c finalize.c cvar_get_num.c \
                      pvar_get_index.c category_get_index.c \
                      event_get_index.c event_copy.c \
                      event_get_info.c event_get_num.c event_get_source.c \
-                     event_get_timestamp.c event_registration_alloc.c event_registration_free.c \
-                     event_read.c event_set_dropped_handler.c source_get_num.c \
-                     source_get_info.c source_get_timestamp.c
+                     event_get_timestamp.c event_handle_alloc.c event_handle_free.c \
+                     event_read.c event_register_callback.c event_set_dropped_handler.c \
+                     source_get_num.c source_get_info.c source_get_timestamp.c
 
 # Conditionally install the header files
 

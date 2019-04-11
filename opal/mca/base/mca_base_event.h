@@ -2,6 +2,8 @@
 /*
  * Copyright (c) 2018      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2018-2019 Triad National Security, LLC. All rights
+ *                         reserved.
  *
  * Additional copyrights may follow
  *
@@ -12,6 +14,7 @@
 #define MCA_BASE_EVENT_H
 
 #include "opal/datatype/opal_datatype.h"
+#include "opal/util/info.h"
 #include "mca_base_pvar.h"
 #include "mca_base_source.h"
 
@@ -42,9 +45,11 @@ typedef enum {
  * If these are modified then similar modifications will be needed in mpi.h.in.
  */
 typedef enum {
-    MCA_BASE_CALLBACK_SAFETY_BASIC,
-    MCA_BASE_CALLBACK_SAFETY_THREAD_SAFE,
-    MCA_BASE_CALLBACK_SAFETY_ASYNC_SIGNAL_SAFE,
+    MCA_BASE_CB_REQUIRE_NONE,
+    MCA_BASE_CB_REQUIRE_MPI_RESTRICTED,
+    MCA_BASE_CB_REQUIRE_THREAD_SAFE,
+    MCA_BASE_CB_REQUIRE_ASYNC_SIGNAL_SAFE,
+    MCA_BASE_CB_SAFETY_MAX,
 } mca_base_cb_safety_t;
 
 typedef void (*mca_base_event_cb_fn_t) (struct mca_base_raised_event_t *event, struct mca_base_event_registration_t *registration,
@@ -146,7 +151,7 @@ typedef struct mca_base_event_registration_t {
     mca_base_event_t *event;
 
     /** user callback to trigger on event */
-    mca_base_event_cb_fn_t event_cb;
+    mca_base_event_cb_fn_t event_cbs[MCA_BASE_CB_SAFETY_MAX];
 
     /** user callback to trigger when an event was dropped */
     mca_base_event_dropped_cb_fn_t dropped_cb;
@@ -155,7 +160,7 @@ typedef struct mca_base_event_registration_t {
     mca_base_event_registration_free_cb_fn_t free_cb;
 
     /** user data specified when this registration was created */
-    void *user_data;
+    void *user_data[MCA_BASE_CB_SAFETY_MAX];
 
     /** bound object registration */
     void *obj_registration;
@@ -193,8 +198,10 @@ OPAL_DECLSPEC void mca_base_event_raise_internal (mca_base_event_t *event, mca_b
         }                                                               \
     } while (0);
 
-OPAL_DECLSPEC int mca_base_event_registration_alloc (mca_base_event_t *event, void *obj_registration, void *user_data,
-                                               mca_base_event_cb_fn_t event_cbfn, mca_base_event_registration_t **registration);
+OPAL_DECLSPEC int mca_base_event_registration_alloc (mca_base_event_t *event, void *obj_registration, opal_info_t *info,
+                                                     mca_base_event_registration_t **registration);
+OPAL_DECLSPEC int mca_base_event_register_callback (mca_base_event_registration_t *registration, mca_base_cb_safety_t cb_safety,
+                                                    opal_info_t *info, void *user_data, mca_base_event_cb_fn_t event_cbfn);
 
 OPAL_DECLSPEC void mca_base_event_registration_free (mca_base_event_registration_t *registration, mca_base_event_registration_free_cb_fn_t cbfn);
 
