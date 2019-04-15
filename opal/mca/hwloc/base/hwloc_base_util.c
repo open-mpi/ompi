@@ -765,15 +765,34 @@ static hwloc_obj_t df_search(hwloc_topology_t topo,
         return found;
     }
     if (OPAL_HWLOC_AVAILABLE == rtype) {
+// The previous (3.x) code included a check for
+// available = opal_hwloc_base_get_available_cpus(topo, start)
+// and skipped objs that had hwloc_bitmap_iszero(available)
+        hwloc_obj_t root;
+        opal_hwloc_topo_data_t *rdata;
+        root = hwloc_get_root_obj(topo);
+        rdata = (opal_hwloc_topo_data_t*)root->userdata;
+        hwloc_cpuset_t constrained_cpuset;
+
+        constrained_cpuset = hwloc_bitmap_alloc();
+        if (rdata && rdata->available) {
+            hwloc_bitmap_and(constrained_cpuset, start->cpuset, rdata->available);
+        } else {
+            hwloc_bitmap_copy(constrained_cpuset, start->cpuset);
+        }
+
         unsigned idx = 0;
         if (num_objs)
-            *num_objs = hwloc_get_nbobjs_inside_cpuset_by_depth(topo, start->cpuset, search_depth);
+            *num_objs = hwloc_get_nbobjs_inside_cpuset_by_depth(topo, constrained_cpuset, search_depth);
         obj = NULL;
-        while ((obj = hwloc_get_next_obj_inside_cpuset_by_depth(topo, start->cpuset, search_depth, obj)) != NULL) {
-            if (idx == nobj)
+        while ((obj = hwloc_get_next_obj_inside_cpuset_by_depth(topo, constrained_cpuset, search_depth, obj)) != NULL) {
+            if (idx == nobj) {
+                hwloc_bitmap_free(constrained_cpuset);
                 return obj;
+            }
             idx++;
         }
+        hwloc_bitmap_free(constrained_cpuset);
         return NULL;
     }
     return NULL;

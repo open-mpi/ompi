@@ -13,6 +13,7 @@
  * Copyright (c) 2014-2018 Intel, Inc.  All rights reserved.
  * Copyright (c) 2017      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2019 IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -377,8 +378,25 @@ static int rank_by(orte_job_t *jdata,
              * Perhaps someday someone will come up with a more efficient
              * algorithm, but this works for now.
              */
+// In 3.x this was two loops:
+//     while (cnt < app->num_procs)
+//         for (i=0; i<num_objs; ...)
+// Then in 4.x it switched to
+//    while (cnt < app->num_procs && i < (int)node->num_procs)
+// where that extra i part seems wrong to me.  First of all if anything
+// it seems like it should be i<num_objs since that's the array i is
+// cycling through, but even then all the usage of i below is
+// (i % num_objs) so I think i is intended to wrap and you should
+// keep looping until you've made all the assignments you can for
+// this node.
+//
+// So that's what I added the other loop counter for, figuring if it
+// cycles through the whole array of objs without making an assignment
+// it's time for this loop to end and the outer loop to take us to the
+// next node.
             i = 0;
-            while (cnt < app->num_procs && i < (int)node->num_procs) {
+            int niters_of_i_without_assigning_a_proc = 0;
+            while (cnt < app->num_procs && niters_of_i_without_assigning_a_proc <= num_objs) {
                 /* get the next object */
                 obj = (hwloc_obj_t)opal_pointer_array_get_item(&objs, i % num_objs);
                 if (NULL == obj) {
@@ -446,6 +464,7 @@ static int rank_by(orte_job_t *jdata,
                         return rc;
                     }
                     num_ranked++;
+                    niters_of_i_without_assigning_a_proc = 0;
                     /* track where the highest vpid landed - this is our
                      * new bookmark
                      */
@@ -454,6 +473,7 @@ static int rank_by(orte_job_t *jdata,
                     break;
                 }
                 i++;
+                ++niters_of_i_without_assigning_a_proc;
             }
         }
         /* cleanup */
