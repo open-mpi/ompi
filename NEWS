@@ -55,6 +55,9 @@ included in the vX.Y.Z section and be denoted as:
    (** also appeared: A.B.C)  -- indicating that this item was previously
                                  included in release version vA.B.C.
 
+3.1.5 -- October, 2019
+----------------------
+
 3.1.4 -- April, 2019
 --------------------
 
