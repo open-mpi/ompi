@@ -14,10 +14,6 @@ noinst_LTLIBRARIES =
 # installed.
 ompidir = $(ompiincludedir)/mpiext
 
-# If we are, build the convenience libtool library that will be
-# slurped up into libmpi_mpifh.la.
-noinst_LTLIBRARIES += libmpiext_shortfloat_mpifh.la
-
 # Just like noinst_LTLIBRARIES, set this macro to empty and
 # conditionally add to it later.
 ompi_HEADERS =
@@ -26,11 +22,16 @@ ompi_HEADERS =
 # bindings.
 if OMPI_BUILD_FORTRAN_MPIFH_BINDINGS
 
+# If we are, build the convenience libtool library that will be
+# slurped up into libmpi_mpifh.la.
+noinst_LTLIBRARIES += libmpiext_shortfloat_mpifh.la
+
 # This is the header file that is installed.
 ompi_HEADERS += mpiext_shortfloat_mpifh.h
 
 # Sources for the convenience libtool library.
-libmpiext_shortfloat_mpifh_la_SOURCES = $(ompi_HEADERS)
+libmpiext_shortfloat_mpifh_la_SOURCES = \
+    $(ompi_HEADERS) mpiext_shortfloat_mpifh_dummy.c
 libmpiext_shortfloat_mpifh_la_LDFLAGS = -module -avoid-version
 
 endif
