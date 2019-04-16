@@ -400,6 +400,23 @@ opal/mca/pmix/pmix*/pmix/examples/jctrl
 opal/mca/pmix/pmix*/pmix/examples/pub
 opal/mca/pmix/pmix*/pmix/examples/server
 opal/mca/pmix/pmix*/pmix/examples/tool
+opal/mca/pmix/pmix4x/pmix/config/test-driver
+opal/mca/pmix/pmix4x/pmix/test/run_tests00.pl
+opal/mca/pmix/pmix4x/pmix/test/run_tests01.pl
+opal/mca/pmix/pmix4x/pmix/test/run_tests02.pl
+opal/mca/pmix/pmix4x/pmix/test/run_tests03.pl
+opal/mca/pmix/pmix4x/pmix/test/run_tests04.pl
+opal/mca/pmix/pmix4x/pmix/test/run_tests05.pl
+opal/mca/pmix/pmix4x/pmix/test/run_tests06.pl
+opal/mca/pmix/pmix4x/pmix/test/run_tests07.pl
+opal/mca/pmix/pmix4x/pmix/test/run_tests08.pl
+opal/mca/pmix/pmix4x/pmix/test/run_tests09.pl
+opal/mca/pmix/pmix4x/pmix/test/run_tests10.pl
+opal/mca/pmix/pmix4x/pmix/test/run_tests11.pl
+opal/mca/pmix/pmix4x/pmix/test/run_tests12.pl
+opal/mca/pmix/pmix4x/pmix/test/run_tests13.pl
+opal/mca/pmix/pmix4x/pmix/test/run_tests14.pl
+opal/mca/pmix/pmix4x/pmix/test/run_tests15.pl
 
 opal/mca/pmix/ext4x/ext4x.c
 opal/mca/pmix/ext4x/ext4x.h

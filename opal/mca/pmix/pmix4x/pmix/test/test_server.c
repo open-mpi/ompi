@@ -93,56 +93,6 @@ static void release_cb(pmix_status_t status, void *cbdata)
     *ptr = 0;
 }
 
-static void set_namespace(int local_size, int univ_size, char *ranks, char *name)
-{
-    size_t ninfo;
-    pmix_info_t *info;
-    ninfo = 8;
-    char *regex, *ppn;
-
-    PMIX_INFO_CREATE(info, ninfo);
-    pmix_strncpy(info[0].key, PMIX_UNIV_SIZE, PMIX_MAX_KEYLEN);
-    info[0].value.type = PMIX_UINT32;
-    info[0].value.data.uint32 = univ_size;
-
-    pmix_strncpy(info[1].key, PMIX_SPAWNED, PMIX_MAX_KEYLEN);
-    info[1].value.type = PMIX_UINT32;
-    info[1].value.data.uint32 = 0;
-
-    pmix_strncpy(info[2].key, PMIX_LOCAL_SIZE, PMIX_MAX_KEYLEN);
-    info[2].value.type = PMIX_UINT32;
-    info[2].value.data.uint32 = local_size;
-
-    pmix_strncpy(info[3].key, PMIX_LOCAL_PEERS, PMIX_MAX_KEYLEN);
-    info[3].value.type = PMIX_STRING;
-    info[3].value.data.string = strdup(ranks);
-
-    PMIx_generate_regex(NODE_NAME, &regex);
-    pmix_strncpy(info[4].key, PMIX_NODE_MAP, PMIX_MAX_KEYLEN);
-    info[4].value.type = PMIX_STRING;
-    info[4].value.data.string = regex;
-
-    PMIx_generate_ppn(ranks, &ppn);
-    pmix_strncpy(info[5].key, PMIX_PROC_MAP, PMIX_MAX_KEYLEN);
-    info[5].value.type = PMIX_STRING;
-    info[5].value.data.string = ppn;
-
-    pmix_strncpy(info[6].key, PMIX_JOB_SIZE, PMIX_MAX_KEYLEN);
-    info[6].value.type = PMIX_UINT32;
-    info[6].value.data.uint32 = univ_size;
-
-    pmix_strncpy(info[7].key, PMIX_APPNUM, PMIX_MAX_KEYLEN);
-    info[7].value.type = PMIX_UINT32;
-    info[7].value.data.uint32 = getpid ();
-
-    int in_progress = 1, rc;
-    if (PMIX_SUCCESS == (rc = PMIx_server_register_nspace(name, local_size,
-                                    info, ninfo, release_cb, &in_progress))) {
-        PMIX_WAIT_FOR_COMPLETION(in_progress);
-    }
-    PMIX_INFO_FREE(info, ninfo);
-}
-
 static void fill_seq_ranks_array(size_t nprocs, int base_rank, char **ranks)
 {
     uint32_t i;
@@ -163,6 +113,70 @@ static void fill_seq_ranks_array(size_t nprocs, int base_rank, char **ranks)
         *ranks = NULL;
         TEST_ERROR(("Not enough allocated space for global ranks array."));
     }
+}
+
+static void set_namespace(int local_size, int univ_size,
+                          int base_rank, char *name)
+{
+    size_t ninfo;
+    pmix_info_t *info;
+    ninfo = 8;
+    char *regex, *ppn;
+    char *ranks = NULL;
+
+    PMIX_INFO_CREATE(info, ninfo);
+    pmix_strncpy(info[0].key, PMIX_UNIV_SIZE, PMIX_MAX_KEYLEN);
+    info[0].value.type = PMIX_UINT32;
+    info[0].value.data.uint32 = univ_size;
+
+    pmix_strncpy(info[1].key, PMIX_SPAWNED, PMIX_MAX_KEYLEN);
+    info[1].value.type = PMIX_UINT32;
+    info[1].value.data.uint32 = 0;
+
+    pmix_strncpy(info[2].key, PMIX_LOCAL_SIZE, PMIX_MAX_KEYLEN);
+    info[2].value.type = PMIX_UINT32;
+    info[2].value.data.uint32 = local_size;
+
+    /* generate the array of local peers */
+    fill_seq_ranks_array(local_size, base_rank, &ranks);
+    if (NULL == ranks) {
+        return;
+    }
+    pmix_strncpy(info[3].key, PMIX_LOCAL_PEERS, PMIX_MAX_KEYLEN);
+    info[3].value.type = PMIX_STRING;
+    info[3].value.data.string = strdup(ranks);
+    free(ranks);
+
+    PMIx_generate_regex(NODE_NAME, &regex);
+    pmix_strncpy(info[4].key, PMIX_NODE_MAP, PMIX_MAX_KEYLEN);
+    info[4].value.type = PMIX_STRING;
+    info[4].value.data.string = regex;
+
+    /* generate the global proc map */
+    fill_seq_ranks_array(univ_size, 0, &ranks);
+    if (NULL == ranks) {
+        return;
+    }
+    PMIx_generate_ppn(ranks, &ppn);
+    free(ranks);
+    pmix_strncpy(info[5].key, PMIX_PROC_MAP, PMIX_MAX_KEYLEN);
+    info[5].value.type = PMIX_STRING;
+    info[5].value.data.string = ppn;
+
+    pmix_strncpy(info[6].key, PMIX_JOB_SIZE, PMIX_MAX_KEYLEN);
+    info[6].value.type = PMIX_UINT32;
+    info[6].value.data.uint32 = univ_size;
+
+    pmix_strncpy(info[7].key, PMIX_APPNUM, PMIX_MAX_KEYLEN);
+    info[7].value.type = PMIX_UINT32;
+    info[7].value.data.uint32 = getpid ();
+
+    int in_progress = 1, rc;
+    if (PMIX_SUCCESS == (rc = PMIx_server_register_nspace(name, local_size,
+                                    info, ninfo, release_cb, &in_progress))) {
+        PMIX_WAIT_FOR_COMPLETION(in_progress);
+    }
+    PMIX_INFO_FREE(info, ninfo);
 }
 
 static void server_unpack_procs(char *buf, size_t size)
@@ -878,14 +892,8 @@ int server_launch_clients(int local_size, int univ_size, int base_rank,
                   univ_size));
 
     TEST_VERBOSE(("Setting job info"));
-    fill_seq_ranks_array(local_size, base_rank, &ranks);
-    if (NULL == ranks) {
-        PMIx_server_finalize();
-        TEST_ERROR(("fill_seq_ranks_array failed"));
-        return PMIX_ERROR;
-    }
     (void)snprintf(proc.nspace, PMIX_MAX_NSLEN, "%s-%d", TEST_NAMESPACE, num_ns);
-    set_namespace(local_size, univ_size, ranks, proc.nspace);
+    set_namespace(local_size, univ_size, base_rank, proc.nspace);
     if (NULL != ranks) {
         free(ranks);
     }

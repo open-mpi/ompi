@@ -860,6 +860,32 @@ AC_DEFUN([PMIX_SETUP_CORE],[
     AC_SUBST(pmixincludedir)
 
     ############################################################################
+    # setup "make check"
+    ############################################################################
+    PMIX_BUILT_TEST_PREFIX=$PMIX_top_builddir
+    AC_SUBST(PMIX_BUILT_TEST_PREFIX)
+    # expose the mca component library paths in the build system
+    pathfile=$PMIX_top_srcdir/config/mca_library_paths.txt
+    PMIX_COMPONENT_LIBRARY_PATHS=`cat $pathfile`
+    AC_SUBST(PMIX_COMPONENT_LIBRARY_PATHS)
+    AC_CONFIG_FILES(pmix_config_prefix[test/run_tests00.pl], [chmod +x test/run_tests00.pl])
+    AC_CONFIG_FILES(pmix_config_prefix[test/run_tests01.pl], [chmod +x test/run_tests01.pl])
+    AC_CONFIG_FILES(pmix_config_prefix[test/run_tests02.pl], [chmod +x test/run_tests02.pl])
+    AC_CONFIG_FILES(pmix_config_prefix[test/run_tests03.pl], [chmod +x test/run_tests03.pl])
+    AC_CONFIG_FILES(pmix_config_prefix[test/run_tests04.pl], [chmod +x test/run_tests04.pl])
+    AC_CONFIG_FILES(pmix_config_prefix[test/run_tests05.pl], [chmod +x test/run_tests05.pl])
+    AC_CONFIG_FILES(pmix_config_prefix[test/run_tests06.pl], [chmod +x test/run_tests06.pl])
+    AC_CONFIG_FILES(pmix_config_prefix[test/run_tests07.pl], [chmod +x test/run_tests07.pl])
+    AC_CONFIG_FILES(pmix_config_prefix[test/run_tests08.pl], [chmod +x test/run_tests08.pl])
+    AC_CONFIG_FILES(pmix_config_prefix[test/run_tests09.pl], [chmod +x test/run_tests09.pl])
+    AC_CONFIG_FILES(pmix_config_prefix[test/run_tests10.pl], [chmod +x test/run_tests10.pl])
+    AC_CONFIG_FILES(pmix_config_prefix[test/run_tests11.pl], [chmod +x test/run_tests11.pl])
+    AC_CONFIG_FILES(pmix_config_prefix[test/run_tests12.pl], [chmod +x test/run_tests12.pl])
+    AC_CONFIG_FILES(pmix_config_prefix[test/run_tests13.pl], [chmod +x test/run_tests13.pl])
+    AC_CONFIG_FILES(pmix_config_prefix[test/run_tests14.pl], [chmod +x test/run_tests14.pl])
+    AC_CONFIG_FILES(pmix_config_prefix[test/run_tests15.pl], [chmod +x test/run_tests15.pl])
+
+    ############################################################################
     # final output
     ############################################################################
 

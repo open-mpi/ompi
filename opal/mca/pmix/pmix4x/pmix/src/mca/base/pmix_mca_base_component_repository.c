@@ -10,12 +10,12 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2019 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2016-2018 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2016-2019 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -43,6 +43,7 @@
 #include "pmix_common.h"
 #include "src/class/pmix_hash_table.h"
 #include "src/util/basename.h"
+#include "src/util/show_help.h"
 
 #if PMIX_HAVE_PDL_SUPPORT
 
@@ -220,8 +221,13 @@ int pmix_mca_base_component_repository_add (const char *path)
             dir = pmix_mca_base_system_default_path;
         }
 
-        if (0 != pmix_pdl_foreachfile(dir, process_repository_item, NULL)) {
-            break;
+        if (0 != pmix_pdl_foreachfile(dir, process_repository_item, NULL) &&
+            !(0 == strcmp(dir, pmix_mca_base_system_default_path) || 0 == strcmp(dir, pmix_mca_base_user_default_path))) {
+            // It is not an error if a directory fails to add (e.g.,
+            // if it doesn't exist).  But we should warn about it as
+            // it is something related to "show_load_errors"
+            pmix_show_help("help-pmix-mca-base.txt",
+                           "failed to add component dir", true, dir);
         }
     } while (NULL != (dir = strtok_r (NULL, sep, &ctx)));
 
