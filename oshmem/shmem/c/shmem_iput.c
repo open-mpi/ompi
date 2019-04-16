@@ -23,6 +23,25 @@
  * been copied out of the source array on the local PE but not necessarily before the data has
  * been delivered to the remote data object.
  */
+
+/* Some transports (IB, etc) may guarantee delivery to remote HCA only, not remote memory,
+ * which may cause incorrect data. To workaround this add 'read' request of last put
+ * chunk which guarantee flush completion after remote memory is updated. */
+#if OSHMEM_SPEC_COMPAT == 1
+#  define SHMEM_REMOTE_DELIVERY(ctx, type, target, tst, nelemes, pe)       \
+        do {                                                               \
+            static type _tmp;                                              \
+            rc = MCA_SPML_CALL(get_nb(ctx,                                 \
+                                      (void*)(target + nelemes - 1 * tst), \
+                                      element_size,                        \
+                                      (void*)(&_tmp),                      \
+                                      pe, NULL));                          \
+        }while(0)
+#else
+#  define SHMEM_REMOTE_DELIVERY(ctx, type, target, tst, nelemes, pe) \
+        do {} while(0)
+#endif
+
 #define DO_SHMEM_TYPE_IPUT(ctx, type, target, source, tst, sst, nelemes, pe) do { \
         int rc = OSHMEM_SUCCESS;                                    \
         size_t element_size = 0;                                    \
@@ -42,6 +61,7 @@
                 (void*)(source + i * sst),                          \
                 pe));                                               \
         }                                                           \
+        SHMEM_REMOTE_DELIVERY(ctx, type, target, tst, nelemes, pe); \
         RUNTIME_CHECK_RC(rc);                                       \
     } while (0)
 
