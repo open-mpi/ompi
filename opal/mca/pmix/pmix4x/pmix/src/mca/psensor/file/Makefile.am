@@ -31,7 +31,6 @@ mcacomponentdir = $(pmixlibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_psensor_file_la_SOURCES = $(sources)
 mca_psensor_file_la_LDFLAGS = -module -avoid-version
-mca_psensor_file_la_LIBADD = $(top_builddir)/src/libpmix.la
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_psensor_file_la_SOURCES =$(sources)

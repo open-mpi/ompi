@@ -51,7 +51,6 @@ mcacomponentdir = $(pmixlibdir)
 mcacomponent_LTLIBRARIES = $(component)
 mca_bfrops_v12_la_SOURCES = $(component_sources)
 mca_bfrops_v12_la_LDFLAGS = -module -avoid-version
-mca_bfrops_v12_la_LIBADD = $(top_builddir)/src/libpmix.la
 
 noinst_LTLIBRARIES = $(lib)
 libmca_bfrops_v12_la_SOURCES = $(lib_sources)

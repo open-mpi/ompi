@@ -64,7 +64,6 @@ mcacomponent_LTLIBRARIES = $(component)
 mca_gds_ds12_la_SOURCES = $(component_sources)
 mca_gds_ds12_la_LDFLAGS = -module -avoid-version \
     $(PMIX_TOP_BUILDDIR)/src/mca/common/dstore/libmca_common_dstore.la
-mca_gds_ds12_la_LIBADD = $(top_builddir)/src/libpmix.la
 
 noinst_LTLIBRARIES = $(lib)
 libmca_gds_ds12_la_SOURCES = $(lib_sources)

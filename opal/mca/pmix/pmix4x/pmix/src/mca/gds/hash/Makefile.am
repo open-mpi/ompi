@@ -47,7 +47,7 @@ endif
 mcacomponentdir = $(pmixlibdir)
 mcacomponent_LTLIBRARIES = $(component)
 mca_gds_hash_la_SOURCES = $(component_sources)
-mca_gds_hash_la_LIBADD = $(gds_hash_LIBS) $(top_builddir)/src/libpmix.la
+mca_gds_hash_la_LIBADD = $(gds_hash_LIBS)
 mca_gds_hash_la_LDFLAGS = -module -avoid-version $(gds_hash_LDFLAGS)
 
 noinst_LTLIBRARIES = $(lib)
