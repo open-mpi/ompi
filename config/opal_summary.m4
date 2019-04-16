@@ -70,7 +70,7 @@ EOF
         if test $WANT_MPI_JAVA_BINDINGS -eq 1 ; then
             echo "Build MPI Java bindings (experimental): yes"
         else
-            echo "MPI Build Java bindings (experimental): no"
+            echo "Build MPI Java bindings (experimental): no"
         fi
     fi
 
