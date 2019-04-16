@@ -40,7 +40,6 @@ mcacomponentdir = $(pmixlibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_plog_stdfd_la_SOURCES = $(sources)
 mca_plog_stdfd_la_LDFLAGS = -module -avoid-version
-mca_plog_stdfd_la_LIBADD = $(top_builddir)/src/libpmix.la
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_plog_stdfd_la_SOURCES =$(sources)

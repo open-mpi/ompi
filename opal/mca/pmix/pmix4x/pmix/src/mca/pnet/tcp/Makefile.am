@@ -47,7 +47,7 @@ endif
 mcacomponentdir = $(pmixlibdir)
 mcacomponent_LTLIBRARIES = $(component)
 mca_pnet_tcp_la_SOURCES = $(component_sources)
-mca_pnet_tcp_la_LIBADD = $(pnet_tcp_LIBS) $(top_builddir)/src/libpmix.la
+mca_pnet_tcp_la_LIBADD = $(pnet_tcp_LIBS)
 mca_pnet_tcp_la_LDFLAGS = -module -avoid-version $(pnet_tcp_LDFLAGS)
 
 noinst_LTLIBRARIES = $(lib)
