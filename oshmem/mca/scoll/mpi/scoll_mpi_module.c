@@ -110,7 +110,7 @@ mca_scoll_mpi_comm_query(oshmem_group_t *osh_group, int *priority)
     mca_scoll_mpi_module_t *mpi_module;
     int err, i;
     int tag;
-    ompi_group_t* parent_group, *new_group;
+    ompi_group_t* world_group, *new_group;
     ompi_communicator_t* newcomm = NULL;
     *priority = 0;
     mca_scoll_mpi_component_t *cm;
@@ -129,7 +129,7 @@ mca_scoll_mpi_comm_query(oshmem_group_t *osh_group, int *priority)
         osh_group->ompi_comm = &(ompi_mpi_comm_world.comm);
         OPAL_TIMING_ENV_NEXT(comm_query, "ompi_mpi_comm_world");
     } else {
-        err = ompi_comm_group(&(ompi_mpi_comm_world.comm), &parent_group);
+        err = ompi_comm_group(&(ompi_mpi_comm_world.comm), &world_group);
         if (OPAL_UNLIKELY(OMPI_SUCCESS != err)) {
             return NULL;
         }
@@ -143,20 +143,14 @@ mca_scoll_mpi_comm_query(oshmem_group_t *osh_group, int *priority)
 
         OPAL_TIMING_ENV_NEXT(comm_query, "malloc");
 
+        /* Fill the map "group_rank-to-world_rank" in order to create a new proc group */
         for (i = 0; i < osh_group->proc_count; i++) {
-            ompi_proc_t* ompi_proc;
-            for( int j = 0; j < ompi_group_size(parent_group); j++ ) {
-                ompi_proc = ompi_group_peer_lookup(parent_group, j);
-                if( 0 == opal_compare_proc(ompi_proc->super.proc_name, osh_group->proc_array[i]->super.proc_name)) {
-                    ranks[i] = j;
-                    break;
-                }
-            }
+            ranks[i] = osh_group->proc_array[i]->super.proc_name.vpid;
         }
 
         OPAL_TIMING_ENV_NEXT(comm_query, "build_ranks");
 
-        err = ompi_group_incl(parent_group, osh_group->proc_count, ranks, &new_group);
+        err = ompi_group_incl(world_group, osh_group->proc_count, ranks, &new_group);
         if (OPAL_UNLIKELY(OMPI_SUCCESS != err)) {
             free(ranks);
             return NULL;
