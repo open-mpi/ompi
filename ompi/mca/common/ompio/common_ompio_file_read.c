@@ -152,7 +152,9 @@ int mca_common_ompio_file_read (ompio_file_t *fh,
                                           &i,
                                           &j,
                                           &total_bytes_read, 
-                                          &spc);
+                                          &spc,
+                                          &fh->f_io_array,
+                                          &fh->f_num_of_io_entries);
 
         if (fh->f_num_of_io_entries) {
             ret_code = fh->f_fbtl->fbtl_preadv (fh);
@@ -305,7 +307,9 @@ int mca_common_ompio_file_iread (ompio_file_t *fh,
                                           &i,
                                           &j,
                                           &total_bytes_read, 
-                                          &spc);
+                                          &spc,
+                                          &fh->f_io_array,
+                                          &fh->f_num_of_io_entries);
 
 	if (fh->f_num_of_io_entries) {
 	  fh->f_fbtl->fbtl_ipreadv (fh, (ompi_request_t *) ompio_req);
