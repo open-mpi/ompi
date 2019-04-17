@@ -603,7 +603,7 @@ int ompi_osc_ucx_fetch_and_op(const void *origin_addr, void *result_addr,
     if (op == &ompi_mpi_op_no_op.op || op == &ompi_mpi_op_replace.op ||
         op == &ompi_mpi_op_sum.op) {
         uint64_t remote_addr = (module->addrs[target]) + target_disp * OSC_UCX_GET_DISP(module, target);
-        uint64_t value = *(uint64_t *)origin_addr;
+        uint64_t value = origin_addr ? *(uint64_t *)origin_addr : 0;
         ucp_atomic_fetch_op_t opcode;
         size_t dt_bytes;
 
@@ -631,7 +631,7 @@ int ompi_osc_ucx_fetch_and_op(const void *origin_addr, void *result_addr,
         }
 
         ret = opal_common_ucx_wpmem_fetch(module->mem, opcode, value, target,
-                                        (void *)origin_addr, dt_bytes, remote_addr);
+                                        (void *)result_addr, dt_bytes, remote_addr);
         if (ret != OMPI_SUCCESS) {
             return ret;
         }
