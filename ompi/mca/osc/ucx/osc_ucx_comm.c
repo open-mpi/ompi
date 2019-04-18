@@ -673,7 +673,7 @@ int ompi_osc_ucx_fetch_and_op(const void *origin_addr, void *result_addr,
         ucp_ep_h ep = OSC_UCX_GET_EP(module->comm, target);
         uint64_t remote_addr = (module->win_info_array[target]).addr + target_disp * OSC_UCX_GET_DISP(module, target);
         ucp_rkey_h rkey;
-        uint64_t value = *(uint64_t *)origin_addr;
+        uint64_t value = origin_addr ? *(uint64_t *)origin_addr : 0;
         ucp_atomic_fetch_op_t opcode;
         size_t dt_bytes;
         ompi_osc_ucx_internal_request_t *req = NULL;
