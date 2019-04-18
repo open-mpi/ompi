@@ -134,7 +134,9 @@ int mca_common_ompio_file_write (ompio_file_t *fh,
                                           &i,
                                           &j,
                                           &total_bytes_written, 
-                                          &spc);
+                                          &spc,
+                                          &fh->f_io_array,
+                                          &fh->f_num_of_io_entries);
 
         if (fh->f_num_of_io_entries) {
             ret_code =fh->f_fbtl->fbtl_pwritev (fh);
@@ -283,7 +285,9 @@ int mca_common_ompio_file_iwrite (ompio_file_t *fh,
                                           &i,
                                           &j,
                                           &total_bytes_written, 
-                                          &spc);
+                                          &spc,
+                                          &fh->f_io_array,
+                                          &fh->f_num_of_io_entries);
         
         if (fh->f_num_of_io_entries) {
             fh->f_fbtl->fbtl_ipwritev (fh, (ompi_request_t *) ompio_req);
@@ -411,7 +415,8 @@ int mca_common_ompio_file_iwrite_at_all (ompio_file_t *fp,
 int mca_common_ompio_build_io_array ( ompio_file_t *fh, int index, int cycles,
                                       size_t bytes_per_cycle, int  max_data, uint32_t iov_count,
                                       struct iovec *decoded_iov, int *ii, int *jj, size_t *tbw, 
-                                      size_t *spc)
+                                      size_t *spc, mca_common_ompio_io_array_t **io_array,
+                                      int *num_io_entries)
 {
     ptrdiff_t disp;
     int block = 1;
@@ -424,7 +429,9 @@ int mca_common_ompio_build_io_array ( ompio_file_t *fh, int index, int cycles,
     int k = 0; /* index into the io_array */
     int i = *ii;
     int j = *jj;
-
+    mca_common_ompio_io_array_t *f_io_array=NULL;
+    int f_num_io_entries=0;
+    
     sum_previous_length = fh->f_position_in_file_view;
 
     if ((index == cycles-1) && (max_data % bytes_per_cycle)) {
@@ -434,9 +441,9 @@ int mca_common_ompio_build_io_array ( ompio_file_t *fh, int index, int cycles,
 	bytes_to_write_in_cycle = bytes_per_cycle;
     }
 
-    fh->f_io_array = (mca_common_ompio_io_array_t *)malloc
+    f_io_array = (mca_common_ompio_io_array_t *)malloc
 	(OMPIO_IOVEC_INITIAL_SIZE * sizeof (mca_common_ompio_io_array_t));
-    if (NULL == fh->f_io_array) {
+    if (NULL == f_io_array) {
 	opal_output(1, "OUT OF MEMORY\n");
 	return OMPI_ERR_OUT_OF_RESOURCE;
     }
@@ -445,10 +452,10 @@ int mca_common_ompio_build_io_array ( ompio_file_t *fh, int index, int cycles,
 	/* reallocate if needed  */
 	if (OMPIO_IOVEC_INITIAL_SIZE*block <= k) {
 	    block ++;
-	    fh->f_io_array = (mca_common_ompio_io_array_t *)realloc
-		(fh->f_io_array, OMPIO_IOVEC_INITIAL_SIZE *
+	    f_io_array = (mca_common_ompio_io_array_t *)realloc
+		(f_io_array, OMPIO_IOVEC_INITIAL_SIZE *
 		 block * sizeof (mca_common_ompio_io_array_t));
-	    if (NULL == fh->f_io_array) {
+	    if (NULL == f_io_array) {
 		opal_output(1, "OUT OF MEMORY\n");
 		return OMPI_ERR_OUT_OF_RESOURCE;
 	    }
@@ -462,15 +469,15 @@ int mca_common_ompio_build_io_array ( ompio_file_t *fh, int index, int cycles,
 
 	disp = (ptrdiff_t)decoded_iov[i].iov_base +
 	    (total_bytes_written - sum_previous_counts);
-	fh->f_io_array[k].memory_address = (IOVBASE_TYPE *)disp;
+	f_io_array[k].memory_address = (IOVBASE_TYPE *)disp;
 
 	if (decoded_iov[i].iov_len -
 	    (total_bytes_written - sum_previous_counts) >=
 	    bytes_to_write_in_cycle) {
-	    fh->f_io_array[k].length = bytes_to_write_in_cycle;
+	    f_io_array[k].length = bytes_to_write_in_cycle;
 	}
 	else {
-	    fh->f_io_array[k].length =  decoded_iov[i].iov_len -
+	    f_io_array[k].length =  decoded_iov[i].iov_len -
 		(total_bytes_written - sum_previous_counts);
 	}
 
@@ -492,36 +499,36 @@ int mca_common_ompio_build_io_array ( ompio_file_t *fh, int index, int cycles,
 
 	disp = (ptrdiff_t)fh->f_decoded_iov[j].iov_base +
 	    (fh->f_total_bytes - sum_previous_length);
-	fh->f_io_array[k].offset = (IOVBASE_TYPE *)(intptr_t)(disp + fh->f_offset);
+	f_io_array[k].offset = (IOVBASE_TYPE *)(intptr_t)(disp + fh->f_offset);
 
 	if (! (fh->f_flags & OMPIO_CONTIGUOUS_FVIEW)) {
 	    if (fh->f_decoded_iov[j].iov_len -
 		(fh->f_total_bytes - sum_previous_length)
-		< fh->f_io_array[k].length) {
-		fh->f_io_array[k].length = fh->f_decoded_iov[j].iov_len -
+		< f_io_array[k].length) {
+		f_io_array[k].length = fh->f_decoded_iov[j].iov_len -
 		    (fh->f_total_bytes - sum_previous_length);
 	    }
 	}
 
-	total_bytes_written += fh->f_io_array[k].length;
-	fh->f_total_bytes += fh->f_io_array[k].length;
-	bytes_to_write_in_cycle -= fh->f_io_array[k].length;
+	total_bytes_written += f_io_array[k].length;
+	fh->f_total_bytes += f_io_array[k].length;
+	bytes_to_write_in_cycle -= f_io_array[k].length;
 	k = k + 1;
     }
     fh->f_position_in_file_view = sum_previous_length;
     fh->f_index_in_file_view = j;
-    fh->f_num_of_io_entries = k;
+    f_num_io_entries = k;
 
 #if 0
     if (fh->f_rank == 0) {
 	int d;
-	printf("*************************** %d\n", fh->f_num_of_io_entries);
+	printf("*************************** %d\n", f_num_io_entries);
 
-	for (d=0 ; d<fh->f_num_of_io_entries ; d++) {
+	for (d=0 ; d<f_num_of_entries ; d++) {
 	    printf(" ADDRESS: %p  OFFSET: %p   LENGTH: %d prev_count=%ld prev_length=%ld\n",
-		   fh->f_io_array[d].memory_address,
-		   fh->f_io_array[d].offset,
-		   fh->f_io_array[d].length, 
+		   f_io_array[d].memory_address,
+		   f_io_array[d].offset,
+		   f_io_array[d].length, 
                    sum_previous_counts, sum_previous_length);
 	}
     }
@@ -530,7 +537,9 @@ int mca_common_ompio_build_io_array ( ompio_file_t *fh, int index, int cycles,
     *jj = j;
     *tbw = total_bytes_written;
     *spc = sum_previous_counts;
-
+    *io_array = f_io_array;
+    *num_io_entries = f_num_io_entries;
+    
     return OMPI_SUCCESS;
 }
 
