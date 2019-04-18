@@ -58,7 +58,12 @@ libusempif08_cdesc_la_SOURCES = \
         sendrecv_cdesc.c \
         sendrecv_replace_cdesc.c \
         ssend_cdesc.c \
-        ssend_init_cdesc.c
+        ssend_init_cdesc.c \
+        \
+        pack_cdesc.c \
+        pack_external_cdesc.c \
+        unpack_cdesc.c \
+        unpack_external_cdesc.c
 
 noinst_LTLIBRARIES = $(module_sentinel_file)
 

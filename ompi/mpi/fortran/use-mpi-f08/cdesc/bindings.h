@@ -94,4 +94,21 @@ void ompi_ssend_init_cdesc(CFI_cdesc_t* x, MPI_Fint *count, MPI_Fint *datatype,
 		           MPI_Fint *dest, MPI_Fint *tag,
 		           MPI_Fint *comm, MPI_Fint *request, MPI_Fint *ierr);
 
+void ompi_pack_cdesc(CFI_cdesc_t* x, MPI_Fint *incount, MPI_Fint *datatype,
+		     char *outbuf, MPI_Fint *outsize, MPI_Fint *position,
+		     MPI_Fint *comm, MPI_Fint *ierr);
+
+void ompi_pack_external_cdesc(char *datarep, CFI_cdesc_t* x, MPI_Fint *incount,
+			      MPI_Fint *datatype, char *outbuf,
+			      MPI_Aint *outsize, MPI_Aint *position,
+			      MPI_Fint *ierr, int datarep_len);
+
+void ompi_unpack_cdesc(char *inbuf, MPI_Fint *insize, MPI_Fint *position,
+		       CFI_cdesc_t* x, MPI_Fint *outcount, MPI_Fint *datatype,
+		       MPI_Fint *comm, MPI_Fint *ierr);
+
+void ompi_unpack_external_cdesc(char *datarep, char *inbuf, MPI_Aint *insize,
+			        MPI_Aint *position, CFI_cdesc_t* x,
+			        MPI_Fint *outcount, MPI_Fint *datatype,
+			        MPI_Fint *ierr, int datarep_len);
 #endif /* OMPI_CDESC_BINDINGS_H */

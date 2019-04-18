@@ -580,11 +580,12 @@ subroutine MPI_Pack_f08(inbuf,incount,datatype,outbuf,outsize,position,comm,ierr
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: inbuf, outbuf
-   !GCC$ ATTRIBUTES NO_ARG_CHECK :: inbuf, outbuf
+   OMPI_F08_GCC_ATTRIBUTES(inbuf)
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: outbuf
    !$PRAGMA IGNORE_TKR inbuf, outbuf
    !DIR$ IGNORE_TKR inbuf, outbuf
    !IBM* IGNORE_TKR inbuf, outbuf
-   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: inbuf
+   OMPI_F08_IGNORE_TKR_TYPE, INTENT(IN) :: inbuf
    OMPI_FORTRAN_IGNORE_TKR_TYPE :: outbuf
    INTEGER, INTENT(IN) :: incount, outsize
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
@@ -601,11 +602,12 @@ subroutine MPI_Pack_external_f08(datarep,inbuf,incount,datatype,outbuf,outsize, 
    implicit none
    CHARACTER(LEN=*), INTENT(IN) :: datarep
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: inbuf, outbuf
-   !GCC$ ATTRIBUTES NO_ARG_CHECK :: inbuf, outbuf
+   OMPI_F08_GCC_ATTRIBUTES(inbuf)
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: outbuf
    !$PRAGMA IGNORE_TKR inbuf, outbuf
    !DIR$ IGNORE_TKR inbuf, outbuf
    !IBM* IGNORE_TKR inbuf, outbuf
-   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: inbuf
+   OMPI_F08_IGNORE_TKR_TYPE, INTENT(IN) :: inbuf
    OMPI_FORTRAN_IGNORE_TKR_TYPE :: outbuf
    INTEGER, INTENT(IN) :: incount
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
@@ -901,12 +903,13 @@ subroutine MPI_Unpack_f08(inbuf,insize,position,outbuf,outcount,datatype,comm, &
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: inbuf, outbuf
-   !GCC$ ATTRIBUTES NO_ARG_CHECK :: inbuf, outbuf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: inbuf
+   OMPI_F08_GCC_ATTRIBUTES(outbuf)
    !$PRAGMA IGNORE_TKR inbuf, outbuf
    !DIR$ IGNORE_TKR inbuf, outbuf
    !IBM* IGNORE_TKR inbuf, outbuf
    OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: inbuf
-   OMPI_FORTRAN_IGNORE_TKR_TYPE :: outbuf
+   OMPI_F08_IGNORE_TKR_TYPE :: outbuf
    INTEGER, INTENT(IN) :: insize, outcount
    INTEGER, INTENT(INOUT) :: position
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
@@ -923,12 +926,13 @@ subroutine MPI_Unpack_external_f08(datarep,inbuf,insize,position,outbuf,outcount
    implicit none
    CHARACTER(LEN=*), INTENT(IN) :: datarep
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: inbuf, outbuf
-   !GCC$ ATTRIBUTES NO_ARG_CHECK :: inbuf, outbuf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: inbuf
+   OMPI_F08_GCC_ATTRIBUTES(outbuf)
    !$PRAGMA IGNORE_TKR inbuf, outbuf
    !DIR$ IGNORE_TKR inbuf, outbuf
    !IBM* IGNORE_TKR inbuf, outbuf
    OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: inbuf
-   OMPI_FORTRAN_IGNORE_TKR_TYPE :: outbuf
+   OMPI_F08_IGNORE_TKR_TYPE :: outbuf
    INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: insize
    INTEGER(MPI_ADDRESS_KIND), INTENT(INOUT) :: position
    INTEGER, INTENT(IN) :: outcount

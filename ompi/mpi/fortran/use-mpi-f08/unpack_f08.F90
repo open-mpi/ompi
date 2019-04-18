@@ -3,7 +3,7 @@
 ! Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
 ! Copyright (c) 2009-2012 Los Alamos National Security, LLC.
 !                         All rights reserved.
-! Copyright (c) 2018      Research Organization for Information Science
+! Copyright (c) 2018-2019 Research Organization for Information Science
 !                         and Technology (RIST).  All rights reserved.
 ! Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
 ! $COPYRIGHT$
@@ -15,7 +15,7 @@ subroutine MPI_Unpack_f08(inbuf,insize,position,outbuf,outcount,datatype,comm,ie
    use :: ompi_mpifh_bindings, only : ompi_unpack_f
    implicit none
    OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: inbuf
-   OMPI_FORTRAN_IGNORE_TKR_TYPE :: outbuf
+   OMPI_F08_IGNORE_TKR_TYPE :: outbuf
    INTEGER, INTENT(IN) :: insize, outcount
    INTEGER, INTENT(INOUT) :: position
    TYPE(MPI_Datatype), INTENT(IN) :: datatype

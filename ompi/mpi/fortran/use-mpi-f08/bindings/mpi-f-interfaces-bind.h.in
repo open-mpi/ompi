@@ -496,10 +496,10 @@ end subroutine ompi_get_elements_x_f
 
 subroutine ompi_pack_f(inbuf,incount,datatype,outbuf,outsize, &
                        position,comm,ierror) &
-   BIND(C, name="ompi_pack_f")
+   BIND(C, name="ompi_pack_@OMPI_F08_BINDINGS_EXTENSION@")
    implicit none
-   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: inbuf
-   OMPI_FORTRAN_IGNORE_TKR_TYPE :: outbuf
+   OMPI_F08_IGNORE_TKR_TYPE, INTENT(IN) :: inbuf
+   OMPI_F08_IGNORE_TKR_TYPE :: outbuf
    INTEGER, INTENT(IN) :: incount, outsize
    INTEGER, INTENT(IN) :: datatype
    INTEGER, INTENT(INOUT) :: position
@@ -509,13 +509,13 @@ end subroutine ompi_pack_f
 
 subroutine ompi_pack_external_f(datarep,inbuf,incount,datatype, &
                                 outbuf,outsize,position,ierror,datarep_len) &
-   BIND(C, name="ompi_pack_external_f")
+   BIND(C, name="ompi_pack_external_@OMPI_F08_BINDINGS_EXTENSION@")
    use, intrinsic :: ISO_C_BINDING, only : C_CHAR
    use :: mpi_f08_types, only : MPI_ADDRESS_KIND
    implicit none
    CHARACTER(KIND=C_CHAR), DIMENSION(*), INTENT(IN) :: datarep
-   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: inbuf
-   OMPI_FORTRAN_IGNORE_TKR_TYPE :: outbuf
+   OMPI_F08_IGNORE_TKR_TYPE, INTENT(IN) :: inbuf
+   OMPI_F08_IGNORE_TKR_TYPE :: outbuf
    INTEGER, INTENT(IN) :: incount
    INTEGER, INTENT(IN) :: datatype
    INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: outsize
@@ -770,10 +770,10 @@ end subroutine ompi_type_vector_f
 
 subroutine ompi_unpack_f(inbuf,insize,position,outbuf,outcount, &
                          datatype,comm,ierror) &
-   BIND(C, name="ompi_unpack_f")
+   BIND(C, name="ompi_unpack_@OMPI_F08_BINDINGS_EXTENSION@")
    implicit none
-   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: inbuf
-   OMPI_FORTRAN_IGNORE_TKR_TYPE :: outbuf
+   OMPI_F08_IGNORE_TKR_TYPE, INTENT(IN) :: inbuf
+   OMPI_F08_IGNORE_TKR_TYPE :: outbuf
    INTEGER, INTENT(IN) :: insize, outcount
    INTEGER, INTENT(INOUT) :: position
    INTEGER, INTENT(IN) :: datatype
@@ -783,13 +783,13 @@ end subroutine ompi_unpack_f
 
 subroutine ompi_unpack_external_f(datarep,inbuf,insize,position, &
                                   outbuf,outcount,datatype,ierror,datarep_len) &
-   BIND(C, name="ompi_unpack_external_f")
+   BIND(C, name="ompi_unpack_external_@OMPI_F08_BINDINGS_EXTENSION@")
    use, intrinsic :: ISO_C_BINDING, only : C_CHAR
    use :: mpi_f08_types, only : MPI_ADDRESS_KIND
    implicit none
    CHARACTER(KIND=C_CHAR), DIMENSION(*), INTENT(IN) :: datarep
-   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: inbuf
-   OMPI_FORTRAN_IGNORE_TKR_TYPE :: outbuf
+   OMPI_F08_IGNORE_TKR_TYPE, INTENT(IN) :: inbuf
+   OMPI_F08_IGNORE_TKR_TYPE :: outbuf
    INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: insize
    INTEGER(MPI_ADDRESS_KIND), INTENT(INOUT) :: position
    INTEGER, INTENT(IN) :: outcount
