@@ -7,7 +7,7 @@
 !                         of Tennessee Research Foundation.  All rights
 !                         reserved.
 ! Copyright (c) 2012      Inria.  All rights reserved.
-! Copyright (c) 2015-2018 Research Organization for Information Science
+! Copyright (c) 2015-2019 Research Organization for Information Science
 !                         and Technology (RIST).  All rights reserved.
 ! $COPYRIGHT$
 !
@@ -498,7 +498,8 @@ subroutine ompi_pack_f(inbuf,incount,datatype,outbuf,outsize, &
                        position,comm,ierror) &
    BIND(C, name="ompi_pack_f")
    implicit none
-   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: inbuf, outbuf
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: inbuf
+   OMPI_FORTRAN_IGNORE_TKR_TYPE :: outbuf
    INTEGER, INTENT(IN) :: incount, outsize
    INTEGER, INTENT(IN) :: datatype
    INTEGER, INTENT(INOUT) :: position
@@ -513,7 +514,8 @@ subroutine ompi_pack_external_f(datarep,inbuf,incount,datatype, &
    use :: mpi_f08_types, only : MPI_ADDRESS_KIND
    implicit none
    CHARACTER(KIND=C_CHAR), DIMENSION(*), INTENT(IN) :: datarep
-   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: inbuf, outbuf
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: inbuf
+   OMPI_FORTRAN_IGNORE_TKR_TYPE :: outbuf
    INTEGER, INTENT(IN) :: incount
    INTEGER, INTENT(IN) :: datatype
    INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: outsize
@@ -770,7 +772,8 @@ subroutine ompi_unpack_f(inbuf,insize,position,outbuf,outcount, &
                          datatype,comm,ierror) &
    BIND(C, name="ompi_unpack_f")
    implicit none
-   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: inbuf, outbuf
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: inbuf
+   OMPI_FORTRAN_IGNORE_TKR_TYPE :: outbuf
    INTEGER, INTENT(IN) :: insize, outcount
    INTEGER, INTENT(INOUT) :: position
    INTEGER, INTENT(IN) :: datatype
@@ -785,7 +788,8 @@ subroutine ompi_unpack_external_f(datarep,inbuf,insize,position, &
    use :: mpi_f08_types, only : MPI_ADDRESS_KIND
    implicit none
    CHARACTER(KIND=C_CHAR), DIMENSION(*), INTENT(IN) :: datarep
-   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: inbuf, outbuf
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: inbuf
+   OMPI_FORTRAN_IGNORE_TKR_TYPE :: outbuf
    INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: insize
    INTEGER(MPI_ADDRESS_KIND), INTENT(INOUT) :: position
    INTEGER, INTENT(IN) :: outcount
