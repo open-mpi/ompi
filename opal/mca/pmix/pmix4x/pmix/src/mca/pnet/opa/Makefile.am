@@ -49,6 +49,9 @@ mcacomponent_LTLIBRARIES = $(component)
 mca_pnet_opa_la_SOURCES = $(component_sources)
 mca_pnet_opa_la_LIBADD = $(pnet_opa_LIBS)
 mca_pnet_opa_la_LDFLAGS = -module -avoid-version $(pnet_opa_LDFLAGS)
+if NEED_LIBPMIX
+mca_pnet_opa_la_LIBADD += $(top_builddir)/src/libpmix.la
+endif
 
 noinst_LTLIBRARIES = $(lib)
 libmca_pnet_opa_la_SOURCES = $(lib_sources)

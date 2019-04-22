@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2008-2014 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2008-2019 Cisco Systems, Inc.  All rights reserved
 # Copyright (c) 2018      Intel, Inc. All rights reserved.
 # $COPYRIGHT$
 #
@@ -60,3 +60,12 @@ all components *except* a and b", while "c,d" specifies the inclusive
 behavior and means "use *only* components c and d."
 
 You cannot mix inclusive and exclusive behavior.
+#
+[failed to add component dir]
+The pmix_mca_base_component_path MCA variable was used to add paths to
+search for PMIX components.  At least one directory failed to add
+properly:
+
+    %s
+
+Check to make sure that this directory exists, is readable, etc.

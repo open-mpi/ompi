@@ -257,9 +257,7 @@ static void job_data(struct pmix_peer_t *pr,
 PMIX_EXPORT int PMIx_tool_init(pmix_proc_t *proc,
                                pmix_info_t info[], size_t ninfo)
 {
-    pmix_kval_t *kptr;
     pmix_status_t rc;
-    char hostname[PMIX_MAX_NSLEN];
     char *evar, *nspace = NULL;
     pmix_rank_t rank = PMIX_RANK_UNDEF;
     bool gdsfound, do_not_connect = false;
@@ -735,318 +733,38 @@ PMIX_EXPORT int PMIx_tool_init(pmix_proc_t *proc,
             PMIX_RELEASE_THREAD(&pmix_global_lock);
             return rc;
         }
+        /* quick check to see if we got something back. If this
+         * is a launcher that is being executed multiple times
+         * in a job-script, then the original registration data
+         * will have been deleted after the first invocation. In
+         * such a case, we simply regenerate it locally as it is
+         * well-known */
+        pmix_cb_t cb;
+        PMIX_CONSTRUCT(&cb, pmix_cb_t);
+        pmix_strncpy(wildcard.nspace, pmix_globals.myid.nspace, PMIX_MAX_NSLEN);
+        wildcard.rank = PMIX_RANK_WILDCARD;
+        cb.proc = &wildcard;
+        cb.copy = true;
+        PMIX_GDS_FETCH_KV(rc, pmix_globals.mypeer, &cb);
+        if (PMIX_SUCCESS != rc) {
+            pmix_output_verbose(5, pmix_client_globals.get_output,
+                                "pmix:tool:client data not found in internal storage");
+            rc = pmix_tool_init_info();
+            if (PMIX_SUCCESS != rc) {
+                PMIX_RELEASE_THREAD(&pmix_global_lock);
+                return rc;
+            }
+        }
     } else {
         /* now finish the initialization by filling our local
          * datastore with typical job-related info. No point
          * in having the server generate these as we are
          * obviously a singleton, and so the values are well-known */
-        pmix_strncpy(wildcard.nspace, pmix_globals.myid.nspace, PMIX_MAX_NSLEN);
-        wildcard.rank = pmix_globals.myid.rank;
-
-        /* the jobid is just our nspace */
-        kptr = PMIX_NEW(pmix_kval_t);
-        kptr->key = strdup(PMIX_JOBID);
-        PMIX_VALUE_CREATE(kptr->value, 1);
-        kptr->value->type = PMIX_STRING;
-        kptr->value->data.string = strdup(pmix_globals.myid.nspace);
-        PMIX_GDS_STORE_KV(rc, pmix_globals.mypeer,
-                          &wildcard,
-                          PMIX_INTERNAL, kptr);
+        rc = pmix_tool_init_info();
         if (PMIX_SUCCESS != rc) {
-            PMIX_ERROR_LOG(rc);
             PMIX_RELEASE_THREAD(&pmix_global_lock);
             return rc;
         }
-        PMIX_RELEASE(kptr); // maintain accounting
-
-        /* our rank */
-        kptr = PMIX_NEW(pmix_kval_t);
-        kptr->key = strdup(PMIX_RANK);
-        PMIX_VALUE_CREATE(kptr->value, 1);
-        kptr->value->type = PMIX_INT;
-        kptr->value->data.integer = 0;
-        PMIX_GDS_STORE_KV(rc, pmix_globals.mypeer,
-                          &pmix_globals.myid,
-                          PMIX_INTERNAL, kptr);
-        if (PMIX_SUCCESS != rc) {
-            PMIX_ERROR_LOG(rc);
-            PMIX_RELEASE_THREAD(&pmix_global_lock);
-            return rc;
-        }
-        PMIX_RELEASE(kptr); // maintain accounting
-
-        /* nproc offset */
-        kptr = PMIX_NEW(pmix_kval_t);
-        kptr->key = strdup(PMIX_NPROC_OFFSET);
-        PMIX_VALUE_CREATE(kptr->value, 1);
-        kptr->value->type = PMIX_UINT32;
-        kptr->value->data.uint32 = 0;
-        PMIX_GDS_STORE_KV(rc, pmix_globals.mypeer,
-                          &wildcard,
-                          PMIX_INTERNAL, kptr);
-        if (PMIX_SUCCESS != rc) {
-            PMIX_ERROR_LOG(rc);
-            PMIX_RELEASE_THREAD(&pmix_global_lock);
-            return rc;
-        }
-        PMIX_RELEASE(kptr); // maintain accounting
-
-        /* node size */
-        kptr = PMIX_NEW(pmix_kval_t);
-        kptr->key = strdup(PMIX_NODE_SIZE);
-        PMIX_VALUE_CREATE(kptr->value, 1);
-        kptr->value->type = PMIX_UINT32;
-        kptr->value->data.uint32 = 1;
-        PMIX_GDS_STORE_KV(rc, pmix_globals.mypeer,
-                          &wildcard,
-                          PMIX_INTERNAL, kptr);
-        if (PMIX_SUCCESS != rc) {
-            PMIX_ERROR_LOG(rc);
-            PMIX_RELEASE_THREAD(&pmix_global_lock);
-            return rc;
-        }
-        PMIX_RELEASE(kptr); // maintain accounting
-
-        /* local peers */
-        kptr = PMIX_NEW(pmix_kval_t);
-        kptr->key = strdup(PMIX_LOCAL_PEERS);
-        PMIX_VALUE_CREATE(kptr->value, 1);
-        kptr->value->type = PMIX_STRING;
-        kptr->value->data.string = strdup("0");
-        PMIX_GDS_STORE_KV(rc, pmix_globals.mypeer,
-                          &wildcard,
-                          PMIX_INTERNAL, kptr);
-        if (PMIX_SUCCESS != rc) {
-            PMIX_ERROR_LOG(rc);
-            PMIX_RELEASE_THREAD(&pmix_global_lock);
-            return rc;
-        }
-        PMIX_RELEASE(kptr); // maintain accounting
-
-        /* local leader */
-        kptr = PMIX_NEW(pmix_kval_t);
-        kptr->key = strdup(PMIX_LOCALLDR);
-        PMIX_VALUE_CREATE(kptr->value, 1);
-        kptr->value->type = PMIX_UINT32;
-        kptr->value->data.uint32 = 0;
-        PMIX_GDS_STORE_KV(rc, pmix_globals.mypeer,
-                          &wildcard,
-                          PMIX_INTERNAL, kptr);
-        if (PMIX_SUCCESS != rc) {
-            PMIX_ERROR_LOG(rc);
-            PMIX_RELEASE_THREAD(&pmix_global_lock);
-            return rc;
-        }
-        PMIX_RELEASE(kptr); // maintain accounting
-
-        /* universe size */
-        kptr = PMIX_NEW(pmix_kval_t);
-        kptr->key = strdup(PMIX_UNIV_SIZE);
-        PMIX_VALUE_CREATE(kptr->value, 1);
-        kptr->value->type = PMIX_UINT32;
-        kptr->value->data.uint32 = 1;
-        PMIX_GDS_STORE_KV(rc, pmix_globals.mypeer,
-                          &wildcard,
-                          PMIX_INTERNAL, kptr);
-        if (PMIX_SUCCESS != rc) {
-            PMIX_ERROR_LOG(rc);
-            PMIX_RELEASE_THREAD(&pmix_global_lock);
-            return rc;
-        }
-        PMIX_RELEASE(kptr); // maintain accounting
-
-        /* job size - we are our very own job, so we have no peers */
-        kptr = PMIX_NEW(pmix_kval_t);
-        kptr->key = strdup(PMIX_JOB_SIZE);
-        PMIX_VALUE_CREATE(kptr->value, 1);
-        kptr->value->type = PMIX_UINT32;
-        kptr->value->data.uint32 = 1;
-        PMIX_GDS_STORE_KV(rc, pmix_globals.mypeer,
-                          &wildcard,
-                          PMIX_INTERNAL, kptr);
-        if (PMIX_SUCCESS != rc) {
-            PMIX_ERROR_LOG(rc);
-            PMIX_RELEASE_THREAD(&pmix_global_lock);
-            return rc;
-        }
-        PMIX_RELEASE(kptr); // maintain accounting
-
-        /* local size - only us in our job */
-        kptr = PMIX_NEW(pmix_kval_t);
-        kptr->key = strdup(PMIX_LOCAL_SIZE);
-        PMIX_VALUE_CREATE(kptr->value, 1);
-        kptr->value->type = PMIX_UINT32;
-        kptr->value->data.uint32 = 1;
-        PMIX_GDS_STORE_KV(rc, pmix_globals.mypeer,
-                          &wildcard,
-                          PMIX_INTERNAL, kptr);
-        if (PMIX_SUCCESS != rc) {
-            PMIX_ERROR_LOG(rc);
-            PMIX_RELEASE_THREAD(&pmix_global_lock);
-            return rc;
-        }
-        PMIX_RELEASE(kptr); // maintain accounting
-
-        /* max procs - since we are a self-started tool, there is no
-         * allocation within which we can grow ourselves */
-        kptr = PMIX_NEW(pmix_kval_t);
-        kptr->key = strdup(PMIX_MAX_PROCS);
-        PMIX_VALUE_CREATE(kptr->value, 1);
-        kptr->value->type = PMIX_UINT32;
-        kptr->value->data.uint32 = 1;
-        PMIX_GDS_STORE_KV(rc, pmix_globals.mypeer,
-                          &wildcard,
-                          PMIX_INTERNAL, kptr);
-        if (PMIX_SUCCESS != rc) {
-            PMIX_ERROR_LOG(rc);
-            PMIX_RELEASE_THREAD(&pmix_global_lock);
-            return rc;
-        }
-        PMIX_RELEASE(kptr); // maintain accounting
-
-        /* app number */
-        kptr = PMIX_NEW(pmix_kval_t);
-        kptr->key = strdup(PMIX_APPNUM);
-        PMIX_VALUE_CREATE(kptr->value, 1);
-        kptr->value->type = PMIX_UINT32;
-        kptr->value->data.uint32 = 0;
-        PMIX_GDS_STORE_KV(rc, pmix_globals.mypeer,
-                          &pmix_globals.myid,
-                          PMIX_INTERNAL, kptr);
-        if (PMIX_SUCCESS != rc) {
-            PMIX_ERROR_LOG(rc);
-            PMIX_RELEASE_THREAD(&pmix_global_lock);
-            return rc;
-        }
-        PMIX_RELEASE(kptr); // maintain accounting
-
-        /* app leader */
-        kptr = PMIX_NEW(pmix_kval_t);
-        kptr->key = strdup(PMIX_APPLDR);
-        PMIX_VALUE_CREATE(kptr->value, 1);
-        kptr->value->type = PMIX_UINT32;
-        kptr->value->data.uint32 = 0;
-        PMIX_GDS_STORE_KV(rc, pmix_globals.mypeer,
-                          &pmix_globals.myid,
-                          PMIX_INTERNAL, kptr);
-        if (PMIX_SUCCESS != rc) {
-            PMIX_ERROR_LOG(rc);
-            PMIX_RELEASE_THREAD(&pmix_global_lock);
-            return rc;
-        }
-        PMIX_RELEASE(kptr); // maintain accounting
-
-        /* app rank */
-        kptr = PMIX_NEW(pmix_kval_t);
-        kptr->key = strdup(PMIX_APP_RANK);
-        PMIX_VALUE_CREATE(kptr->value, 1);
-        kptr->value->type = PMIX_UINT32;
-        kptr->value->data.uint32 = 0;
-        PMIX_GDS_STORE_KV(rc, pmix_globals.mypeer,
-                          &pmix_globals.myid,
-                          PMIX_INTERNAL, kptr);
-        if (PMIX_SUCCESS != rc) {
-            PMIX_ERROR_LOG(rc);
-            PMIX_RELEASE_THREAD(&pmix_global_lock);
-            return rc;
-        }
-        PMIX_RELEASE(kptr); // maintain accounting
-
-        /* global rank */
-        kptr = PMIX_NEW(pmix_kval_t);
-        kptr->key = strdup(PMIX_GLOBAL_RANK);
-        PMIX_VALUE_CREATE(kptr->value, 1);
-        kptr->value->type = PMIX_UINT32;
-        kptr->value->data.uint32 = 0;
-        PMIX_GDS_STORE_KV(rc, pmix_globals.mypeer,
-                          &pmix_globals.myid,
-                          PMIX_INTERNAL, kptr);
-        if (PMIX_SUCCESS != rc) {
-            PMIX_ERROR_LOG(rc);
-            PMIX_RELEASE_THREAD(&pmix_global_lock);
-            return rc;
-        }
-        PMIX_RELEASE(kptr); // maintain accounting
-
-        /* local rank - we are alone in our job */
-        kptr = PMIX_NEW(pmix_kval_t);
-        kptr->key = strdup(PMIX_LOCAL_RANK);
-        PMIX_VALUE_CREATE(kptr->value, 1);
-        kptr->value->type = PMIX_UINT16;
-        kptr->value->data.uint32 = 0;
-        PMIX_GDS_STORE_KV(rc, pmix_globals.mypeer,
-                          &pmix_globals.myid,
-                          PMIX_INTERNAL, kptr);
-        if (PMIX_SUCCESS != rc) {
-            PMIX_ERROR_LOG(rc);
-            PMIX_RELEASE_THREAD(&pmix_global_lock);
-            return rc;
-        }
-        PMIX_RELEASE(kptr); // maintain accounting
-
-        /* we cannot know the node rank as we don't know what
-         * other processes are executing on this node - so
-         * we'll add that info to the server-tool handshake
-         * and load it from there */
-
-        /* hostname */
-        if (NULL != pmix_globals.hostname) {
-            pmix_strncpy(hostname, pmix_globals.hostname, PMIX_MAX_NSLEN);
-        } else {
-            gethostname(hostname, PMIX_MAX_NSLEN);
-        }
-        kptr = PMIX_NEW(pmix_kval_t);
-        kptr->key = strdup(PMIX_HOSTNAME);
-        PMIX_VALUE_CREATE(kptr->value, 1);
-        kptr->value->type = PMIX_STRING;
-        kptr->value->data.string = strdup(hostname);
-        PMIX_GDS_STORE_KV(rc, pmix_globals.mypeer,
-                          &pmix_globals.myid,
-                          PMIX_INTERNAL, kptr);
-        if (PMIX_SUCCESS != rc) {
-            PMIX_ERROR_LOG(rc);
-            PMIX_RELEASE_THREAD(&pmix_global_lock);
-            return rc;
-        }
-        PMIX_RELEASE(kptr); // maintain accounting
-
-        /* we cannot know the RM's nodeid for this host, so
-         * we'll add that info to the server-tool handshake
-         * and load it from there */
-
-        /* the nodemap is simply our hostname as there is no
-         * regex to generate */
-        kptr = PMIX_NEW(pmix_kval_t);
-        kptr->key = strdup(PMIX_NODE_MAP);
-        PMIX_VALUE_CREATE(kptr->value, 1);
-        kptr->value->type = PMIX_STRING;
-        kptr->value->data.string = strdup(hostname);
-        PMIX_GDS_STORE_KV(rc, pmix_globals.mypeer,
-                          &wildcard,
-                          PMIX_INTERNAL, kptr);
-        if (PMIX_SUCCESS != rc) {
-            PMIX_ERROR_LOG(rc);
-            PMIX_RELEASE_THREAD(&pmix_global_lock);
-            return rc;
-        }
-        PMIX_RELEASE(kptr); // maintain accounting
-
-        /* likewise, the proc map is just our rank as we are
-         * the only proc in this job */
-        kptr = PMIX_NEW(pmix_kval_t);
-        kptr->key = strdup(PMIX_PROC_MAP);
-        PMIX_VALUE_CREATE(kptr->value, 1);
-        kptr->value->type = PMIX_STRING;
-        kptr->value->data.string = strdup("0");
-        PMIX_GDS_STORE_KV(rc, pmix_globals.mypeer,
-                          &wildcard,
-                          PMIX_INTERNAL, kptr);
-        if (PMIX_SUCCESS != rc) {
-            PMIX_ERROR_LOG(rc);
-            PMIX_RELEASE_THREAD(&pmix_global_lock);
-            return rc;
-        }
-        PMIX_RELEASE(kptr); // maintain accounting
     }
     PMIX_RELEASE_THREAD(&pmix_global_lock);
 
@@ -1063,6 +781,307 @@ PMIX_EXPORT int PMIx_tool_init(pmix_proc_t *proc,
     rc = pmix_register_tool_attrs();
     return rc;
 }
+
+pmix_status_t pmix_tool_init_info(void)
+{
+    pmix_kval_t *kptr;
+    pmix_status_t rc;
+    pmix_proc_t wildcard;
+    char hostname[PMIX_MAX_NSLEN];
+
+    pmix_strncpy(wildcard.nspace, pmix_globals.myid.nspace, PMIX_MAX_NSLEN);
+    wildcard.rank = pmix_globals.myid.rank;
+
+    /* the jobid is just our nspace */
+    kptr = PMIX_NEW(pmix_kval_t);
+    kptr->key = strdup(PMIX_JOBID);
+    PMIX_VALUE_CREATE(kptr->value, 1);
+    kptr->value->type = PMIX_STRING;
+    kptr->value->data.string = strdup(pmix_globals.myid.nspace);
+    PMIX_GDS_STORE_KV(rc, pmix_globals.mypeer,
+                      &wildcard,
+                      PMIX_INTERNAL, kptr);
+    if (PMIX_SUCCESS != rc) {
+        PMIX_ERROR_LOG(rc);
+        return rc;
+    }
+    PMIX_RELEASE(kptr); // maintain accounting
+
+    /* our rank */
+    kptr = PMIX_NEW(pmix_kval_t);
+    kptr->key = strdup(PMIX_RANK);
+    PMIX_VALUE_CREATE(kptr->value, 1);
+    kptr->value->type = PMIX_INT;
+    kptr->value->data.integer = 0;
+    PMIX_GDS_STORE_KV(rc, pmix_globals.mypeer,
+                      &pmix_globals.myid,
+                      PMIX_INTERNAL, kptr);
+    if (PMIX_SUCCESS != rc) {
+        PMIX_ERROR_LOG(rc);
+        return rc;
+    }
+    PMIX_RELEASE(kptr); // maintain accounting
+
+    /* nproc offset */
+    kptr = PMIX_NEW(pmix_kval_t);
+    kptr->key = strdup(PMIX_NPROC_OFFSET);
+    PMIX_VALUE_CREATE(kptr->value, 1);
+    kptr->value->type = PMIX_UINT32;
+    kptr->value->data.uint32 = 0;
+    PMIX_GDS_STORE_KV(rc, pmix_globals.mypeer,
+                      &wildcard,
+                      PMIX_INTERNAL, kptr);
+    if (PMIX_SUCCESS != rc) {
+        PMIX_ERROR_LOG(rc);
+        return rc;
+    }
+    PMIX_RELEASE(kptr); // maintain accounting
+
+    /* node size */
+    kptr = PMIX_NEW(pmix_kval_t);
+    kptr->key = strdup(PMIX_NODE_SIZE);
+    PMIX_VALUE_CREATE(kptr->value, 1);
+    kptr->value->type = PMIX_UINT32;
+    kptr->value->data.uint32 = 1;
+    PMIX_GDS_STORE_KV(rc, pmix_globals.mypeer,
+                      &wildcard,
+                      PMIX_INTERNAL, kptr);
+    if (PMIX_SUCCESS != rc) {
+        PMIX_ERROR_LOG(rc);
+        return rc;
+    }
+    PMIX_RELEASE(kptr); // maintain accounting
+
+    /* local peers */
+    kptr = PMIX_NEW(pmix_kval_t);
+    kptr->key = strdup(PMIX_LOCAL_PEERS);
+    PMIX_VALUE_CREATE(kptr->value, 1);
+    kptr->value->type = PMIX_STRING;
+    kptr->value->data.string = strdup("0");
+    PMIX_GDS_STORE_KV(rc, pmix_globals.mypeer,
+                      &wildcard,
+                      PMIX_INTERNAL, kptr);
+    if (PMIX_SUCCESS != rc) {
+        PMIX_ERROR_LOG(rc);
+        return rc;
+    }
+    PMIX_RELEASE(kptr); // maintain accounting
+
+    /* local leader */
+    kptr = PMIX_NEW(pmix_kval_t);
+    kptr->key = strdup(PMIX_LOCALLDR);
+    PMIX_VALUE_CREATE(kptr->value, 1);
+    kptr->value->type = PMIX_UINT32;
+    kptr->value->data.uint32 = 0;
+    PMIX_GDS_STORE_KV(rc, pmix_globals.mypeer,
+                      &wildcard,
+                      PMIX_INTERNAL, kptr);
+    if (PMIX_SUCCESS != rc) {
+        PMIX_ERROR_LOG(rc);
+        return rc;
+    }
+    PMIX_RELEASE(kptr); // maintain accounting
+
+    /* universe size */
+    kptr = PMIX_NEW(pmix_kval_t);
+    kptr->key = strdup(PMIX_UNIV_SIZE);
+    PMIX_VALUE_CREATE(kptr->value, 1);
+    kptr->value->type = PMIX_UINT32;
+    kptr->value->data.uint32 = 1;
+    PMIX_GDS_STORE_KV(rc, pmix_globals.mypeer,
+                      &wildcard,
+                      PMIX_INTERNAL, kptr);
+    if (PMIX_SUCCESS != rc) {
+        PMIX_ERROR_LOG(rc);
+        return rc;
+    }
+    PMIX_RELEASE(kptr); // maintain accounting
+
+    /* job size - we are our very own job, so we have no peers */
+    kptr = PMIX_NEW(pmix_kval_t);
+    kptr->key = strdup(PMIX_JOB_SIZE);
+    PMIX_VALUE_CREATE(kptr->value, 1);
+    kptr->value->type = PMIX_UINT32;
+    kptr->value->data.uint32 = 1;
+    PMIX_GDS_STORE_KV(rc, pmix_globals.mypeer,
+                      &wildcard,
+                      PMIX_INTERNAL, kptr);
+    if (PMIX_SUCCESS != rc) {
+        PMIX_ERROR_LOG(rc);
+        return rc;
+    }
+    PMIX_RELEASE(kptr); // maintain accounting
+
+    /* local size - only us in our job */
+    kptr = PMIX_NEW(pmix_kval_t);
+    kptr->key = strdup(PMIX_LOCAL_SIZE);
+    PMIX_VALUE_CREATE(kptr->value, 1);
+    kptr->value->type = PMIX_UINT32;
+    kptr->value->data.uint32 = 1;
+    PMIX_GDS_STORE_KV(rc, pmix_globals.mypeer,
+                      &wildcard,
+                      PMIX_INTERNAL, kptr);
+    if (PMIX_SUCCESS != rc) {
+        PMIX_ERROR_LOG(rc);
+        return rc;
+    }
+    PMIX_RELEASE(kptr); // maintain accounting
+
+    /* max procs - since we are a self-started tool, there is no
+     * allocation within which we can grow ourselves */
+    kptr = PMIX_NEW(pmix_kval_t);
+    kptr->key = strdup(PMIX_MAX_PROCS);
+    PMIX_VALUE_CREATE(kptr->value, 1);
+    kptr->value->type = PMIX_UINT32;
+    kptr->value->data.uint32 = 1;
+    PMIX_GDS_STORE_KV(rc, pmix_globals.mypeer,
+                      &wildcard,
+                      PMIX_INTERNAL, kptr);
+    if (PMIX_SUCCESS != rc) {
+        PMIX_ERROR_LOG(rc);
+        return rc;
+    }
+    PMIX_RELEASE(kptr); // maintain accounting
+
+    /* app number */
+    kptr = PMIX_NEW(pmix_kval_t);
+    kptr->key = strdup(PMIX_APPNUM);
+    PMIX_VALUE_CREATE(kptr->value, 1);
+    kptr->value->type = PMIX_UINT32;
+    kptr->value->data.uint32 = 0;
+    PMIX_GDS_STORE_KV(rc, pmix_globals.mypeer,
+                      &pmix_globals.myid,
+                      PMIX_INTERNAL, kptr);
+    if (PMIX_SUCCESS != rc) {
+        PMIX_ERROR_LOG(rc);
+        return rc;
+    }
+    PMIX_RELEASE(kptr); // maintain accounting
+
+    /* app leader */
+    kptr = PMIX_NEW(pmix_kval_t);
+    kptr->key = strdup(PMIX_APPLDR);
+    PMIX_VALUE_CREATE(kptr->value, 1);
+    kptr->value->type = PMIX_UINT32;
+    kptr->value->data.uint32 = 0;
+    PMIX_GDS_STORE_KV(rc, pmix_globals.mypeer,
+                      &pmix_globals.myid,
+                      PMIX_INTERNAL, kptr);
+    if (PMIX_SUCCESS != rc) {
+        PMIX_ERROR_LOG(rc);
+        return rc;
+    }
+    PMIX_RELEASE(kptr); // maintain accounting
+
+    /* app rank */
+    kptr = PMIX_NEW(pmix_kval_t);
+    kptr->key = strdup(PMIX_APP_RANK);
+    PMIX_VALUE_CREATE(kptr->value, 1);
+    kptr->value->type = PMIX_UINT32;
+    kptr->value->data.uint32 = 0;
+    PMIX_GDS_STORE_KV(rc, pmix_globals.mypeer,
+                      &pmix_globals.myid,
+                      PMIX_INTERNAL, kptr);
+    if (PMIX_SUCCESS != rc) {
+        PMIX_ERROR_LOG(rc);
+        return rc;
+    }
+    PMIX_RELEASE(kptr); // maintain accounting
+
+    /* global rank */
+    kptr = PMIX_NEW(pmix_kval_t);
+    kptr->key = strdup(PMIX_GLOBAL_RANK);
+    PMIX_VALUE_CREATE(kptr->value, 1);
+    kptr->value->type = PMIX_UINT32;
+    kptr->value->data.uint32 = 0;
+    PMIX_GDS_STORE_KV(rc, pmix_globals.mypeer,
+                      &pmix_globals.myid,
+                      PMIX_INTERNAL, kptr);
+    if (PMIX_SUCCESS != rc) {
+        PMIX_ERROR_LOG(rc);
+        return rc;
+    }
+    PMIX_RELEASE(kptr); // maintain accounting
+
+    /* local rank - we are alone in our job */
+    kptr = PMIX_NEW(pmix_kval_t);
+    kptr->key = strdup(PMIX_LOCAL_RANK);
+    PMIX_VALUE_CREATE(kptr->value, 1);
+    kptr->value->type = PMIX_UINT16;
+    kptr->value->data.uint32 = 0;
+    PMIX_GDS_STORE_KV(rc, pmix_globals.mypeer,
+                      &pmix_globals.myid,
+                      PMIX_INTERNAL, kptr);
+    if (PMIX_SUCCESS != rc) {
+        PMIX_ERROR_LOG(rc);
+        return rc;
+    }
+    PMIX_RELEASE(kptr); // maintain accounting
+
+    /* we cannot know the node rank as we don't know what
+     * other processes are executing on this node - so
+     * we'll add that info to the server-tool handshake
+     * and load it from there */
+
+    /* hostname */
+    if (NULL != pmix_globals.hostname) {
+        pmix_strncpy(hostname, pmix_globals.hostname, PMIX_MAX_NSLEN);
+    } else {
+        gethostname(hostname, PMIX_MAX_NSLEN);
+    }
+    kptr = PMIX_NEW(pmix_kval_t);
+    kptr->key = strdup(PMIX_HOSTNAME);
+    PMIX_VALUE_CREATE(kptr->value, 1);
+    kptr->value->type = PMIX_STRING;
+    kptr->value->data.string = strdup(hostname);
+    PMIX_GDS_STORE_KV(rc, pmix_globals.mypeer,
+                      &pmix_globals.myid,
+                      PMIX_INTERNAL, kptr);
+    if (PMIX_SUCCESS != rc) {
+        PMIX_ERROR_LOG(rc);
+        return rc;
+    }
+    PMIX_RELEASE(kptr); // maintain accounting
+
+    /* we cannot know the RM's nodeid for this host, so
+     * we'll add that info to the server-tool handshake
+     * and load it from there */
+
+    /* the nodemap is simply our hostname as there is no
+     * regex to generate */
+    kptr = PMIX_NEW(pmix_kval_t);
+    kptr->key = strdup(PMIX_NODE_MAP);
+    PMIX_VALUE_CREATE(kptr->value, 1);
+    kptr->value->type = PMIX_STRING;
+    kptr->value->data.string = strdup(hostname);
+    PMIX_GDS_STORE_KV(rc, pmix_globals.mypeer,
+                      &wildcard,
+                      PMIX_INTERNAL, kptr);
+    if (PMIX_SUCCESS != rc) {
+        PMIX_ERROR_LOG(rc);
+        return rc;
+    }
+    PMIX_RELEASE(kptr); // maintain accounting
+
+    /* likewise, the proc map is just our rank as we are
+     * the only proc in this job */
+    kptr = PMIX_NEW(pmix_kval_t);
+    kptr->key = strdup(PMIX_PROC_MAP);
+    PMIX_VALUE_CREATE(kptr->value, 1);
+    kptr->value->type = PMIX_STRING;
+    kptr->value->data.string = strdup("0");
+    PMIX_GDS_STORE_KV(rc, pmix_globals.mypeer,
+                      &wildcard,
+                      PMIX_INTERNAL, kptr);
+    if (PMIX_SUCCESS != rc) {
+        PMIX_ERROR_LOG(rc);
+        return rc;
+    }
+    PMIX_RELEASE(kptr); // maintain accounting
+
+    return PMIX_SUCCESS;
+}
+
 
 typedef struct {
     pmix_lock_t lock;
