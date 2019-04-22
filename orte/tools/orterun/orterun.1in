@@ -265,7 +265,7 @@ error (without beginning execution of the application) otherwise.
 .
 .
 .TP
-.B —map-by ppr:N:<object>
+.B --map-by ppr:N:<object>
 Launch N times the number of objects of the specified type on each node.
 .
 .
@@ -298,8 +298,9 @@ To map processes:
 .TP
 .B --map-by \fR<foo>\fP
 Map to the specified object, defaults to \fIsocket\fP. Supported options
-include slot, hwthread, core, L1cache, L2cache, L3cache, socket, numa,
-board, node, sequential, distance, and ppr. Any object can include
+include \fIslot\fP, \fIhwthread\fP, \fIcore\fP, \fIL1cache\fP, \fIL2cache\fP,
+\fIL3cache\fP, \fIsocket\fP, \fInuma\fP, \fIboard\fP, \fInode\fP,
+\fIsequential\fP, \fIdistance\fP, and \fIppr\fP. Any object can include
 modifiers by adding a \fR:\fP and any combination of PE=n (bind n
 processing elements to each proc), SPAN (load
 balance the processes across the allocation), OVERSUBSCRIBE (allow
@@ -719,6 +720,7 @@ Comma-separated list of programming model, languages, and containers being used 
 .TP
 .B --ppr \fR<list>\fP
 Comma-separated list of number of processes on a given resource type [default: none].
+(deprecated in favor of --map-by ppr:<list>)
 .
 .
 .TP
