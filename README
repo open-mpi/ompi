@@ -831,6 +831,10 @@ INSTALLATION OPTIONS
   This rpath/runpath behavior can be disabled via
   --disable-wrapper-rpath.
 
+  If you would like to keep the rpath option, but not enable runpath
+  a different configure option is avalabile
+  --disable-wrapper-runpath.
+
 --enable-dlopen
   Build all of Open MPI's components as standalone Dynamic Shared
   Objects (DSO's) that are loaded at run-time (this is the default).
