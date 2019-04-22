@@ -111,4 +111,40 @@ void ompi_unpack_external_cdesc(char *datarep, char *inbuf, MPI_Aint *insize,
 			        MPI_Aint *position, CFI_cdesc_t* x,
 			        MPI_Fint *outcount, MPI_Fint *datatype,
 			        MPI_Fint *ierr, int datarep_len);
+
+void ompi_bcast_cdesc(CFI_cdesc_t* x, MPI_Fint *count, MPI_Fint *datatype,
+		      MPI_Fint *root, MPI_Fint *comm, MPI_Fint *ierr);
+
+void ompi_gather_cdesc(CFI_cdesc_t* x1, MPI_Fint *sendcount, MPI_Fint *sendtype,
+		       CFI_cdesc_t* x2, MPI_Fint *recvcount, MPI_Fint *recvtype,
+		       MPI_Fint *root, MPI_Fint *comm, MPI_Fint *ierr);
+
+void ompi_gatherv_cdesc(CFI_cdesc_t* x1, MPI_Fint *sendcount, MPI_Fint *sendtype,
+		        char *recvbuf, MPI_Fint *recvcounts, MPI_Fint *displs,
+		        MPI_Fint *recvtype, MPI_Fint *root, MPI_Fint *comm,
+		        MPI_Fint *ierr);
+
+void ompi_allgather_cdesc(CFI_cdesc_t* x1, MPI_Fint *sendcount, MPI_Fint *sendtype,
+		          CFI_cdesc_t* x2, MPI_Fint *recvcount, MPI_Fint *recvtype,
+		          MPI_Fint *comm, MPI_Fint *ierr);
+
+void ompi_allgatherv_cdesc(CFI_cdesc_t* x1, MPI_Fint *sendcount, MPI_Fint *sendtype,
+		           char *recvbuf, MPI_Fint *recvcounts, MPI_Fint *displs,
+		           MPI_Fint *recvtype, MPI_Fint *comm, MPI_Fint *ierr);
+
+void ompi_scatter_cdesc(char *sendbuf, MPI_Fint *sendcount,
+		        MPI_Fint *sendtype, CFI_cdesc_t *x,
+		        MPI_Fint *recvcount, MPI_Fint *recvtype,
+		        MPI_Fint *root, MPI_Fint *comm, MPI_Fint *ierr);
+
+void ompi_scatterv_cdesc(char *sendbuf, MPI_Fint *sendcounts,
+		         MPI_Fint *displs, MPI_Fint *sendtype,
+		         CFI_cdesc_t *x, MPI_Fint *recvcount,
+		         MPI_Fint *recvtype, MPI_Fint *root,
+		         MPI_Fint *comm, MPI_Fint *ierr);
+
+void ompi_alltoall_cdesc(CFI_cdesc_t* x1, MPI_Fint *sendcount, MPI_Fint *sendtype,
+		         CFI_cdesc_t* x2, MPI_Fint *recvcount, MPI_Fint *recvtype,
+		         MPI_Fint *comm, MPI_Fint *ierr);
+
 #endif /* OMPI_CDESC_BINDINGS_H */

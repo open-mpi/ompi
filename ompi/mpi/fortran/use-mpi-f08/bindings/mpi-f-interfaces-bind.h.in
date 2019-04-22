@@ -800,10 +800,10 @@ end subroutine ompi_unpack_external_f
 
 subroutine ompi_allgather_f(sendbuf,sendcount,sendtype,recvbuf, &
                             recvcount,recvtype,comm,ierror) &
-   BIND(C, name="ompi_allgather_f")
+   BIND(C, name="ompi_allgather_@OMPI_F08_BINDINGS_EXTENSION@")
    implicit none
-   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: sendbuf
-   OMPI_FORTRAN_IGNORE_TKR_TYPE :: recvbuf
+   OMPI_F08_IGNORE_TKR_TYPE, INTENT(IN) :: sendbuf
+   OMPI_F08_IGNORE_TKR_TYPE :: recvbuf
    INTEGER, INTENT(IN) :: sendcount, recvcount
    INTEGER, INTENT(IN) :: sendtype
    INTEGER, INTENT(IN) :: recvtype
@@ -827,10 +827,10 @@ end subroutine ompi_iallgather_f
 
 subroutine ompi_allgatherv_f(sendbuf,sendcount,sendtype,recvbuf, &
                              recvcounts,displs,recvtype,comm,ierror) &
-   BIND(C, name="ompi_allgatherv_f")
+   BIND(C, name="ompi_allgatherv_@OMPI_F08_BINDINGS_EXTENSION@")
    implicit none
-   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: sendbuf
-   OMPI_FORTRAN_IGNORE_TKR_TYPE :: recvbuf
+   OMPI_F08_IGNORE_TKR_TYPE, INTENT(IN) :: sendbuf
+   OMPI_F08_IGNORE_TKR_TYPE :: recvbuf
    INTEGER, INTENT(IN) :: sendcount
    INTEGER, INTENT(IN) :: recvcounts(*), displs(*)
    INTEGER, INTENT(IN) :: sendtype
@@ -881,10 +881,10 @@ end subroutine ompi_iallreduce_f
 
 subroutine ompi_alltoall_f(sendbuf,sendcount,sendtype,recvbuf, &
                            recvcount,recvtype,comm,ierror) &
-   BIND(C, name="ompi_alltoall_f")
+   BIND(C, name="ompi_alltoall_@OMPI_F08_BINDINGS_EXTENSION@")
    implicit none
-   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: sendbuf
-   OMPI_FORTRAN_IGNORE_TKR_TYPE :: recvbuf
+   OMPI_F08_IGNORE_TKR_TYPE, INTENT(IN) :: sendbuf
+   OMPI_F08_IGNORE_TKR_TYPE :: recvbuf
    INTEGER, INTENT(IN) :: sendcount, recvcount
    INTEGER, INTENT(IN) :: sendtype
    INTEGER, INTENT(IN) :: recvtype
@@ -976,9 +976,9 @@ subroutine ompi_ibarrier_f(comm,request,ierror) &
 end subroutine ompi_ibarrier_f
 
 subroutine ompi_bcast_f(buffer,count,datatype,root,comm,ierror) &
-   BIND(C, name="ompi_bcast_f")
+   BIND(C, name="ompi_bcast_@OMPI_F08_BINDINGS_EXTENSION@")
    implicit none
-   OMPI_FORTRAN_IGNORE_TKR_TYPE :: buffer
+   OMPI_F08_IGNORE_TKR_TYPE :: buffer
    INTEGER, INTENT(IN) :: count, root
    INTEGER, INTENT(IN) :: datatype
    INTEGER, INTENT(IN) :: comm
@@ -1023,10 +1023,10 @@ end subroutine ompi_iexscan_f
 
 subroutine ompi_gather_f(sendbuf,sendcount,sendtype,recvbuf, &
                          recvcount,recvtype,root,comm,ierror) &
-   BIND(C, name="ompi_gather_f")
+   BIND(C, name="ompi_gather_@OMPI_F08_BINDINGS_EXTENSION@")
    implicit none
-   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: sendbuf
-   OMPI_FORTRAN_IGNORE_TKR_TYPE :: recvbuf
+   OMPI_F08_IGNORE_TKR_TYPE, INTENT(IN) :: sendbuf
+   OMPI_F08_IGNORE_TKR_TYPE :: recvbuf
    INTEGER, INTENT(IN) :: sendcount, recvcount, root
    INTEGER, INTENT(IN) :: sendtype
    INTEGER, INTENT(IN) :: recvtype
@@ -1050,10 +1050,10 @@ end subroutine ompi_igather_f
 
 subroutine ompi_gatherv_f(sendbuf,sendcount,sendtype,recvbuf, &
                           recvcounts,displs,recvtype,root,comm,ierror) &
-   BIND(C, name="ompi_gatherv_f")
+   BIND(C, name="ompi_gatherv_@OMPI_F08_BINDINGS_EXTENSION@")
    implicit none
-   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: sendbuf
-   OMPI_FORTRAN_IGNORE_TKR_TYPE :: recvbuf
+   OMPI_F08_IGNORE_TKR_TYPE, INTENT(IN) :: sendbuf
+   OMPI_F08_IGNORE_TKR_TYPE :: recvbuf
    INTEGER, INTENT(IN) :: sendcount, root
    INTEGER, INTENT(IN) :: recvcounts(*), displs(*)
    INTEGER, INTENT(IN) :: sendtype
@@ -1201,10 +1201,10 @@ end subroutine ompi_iscan_f
 
 subroutine ompi_scatter_f(sendbuf,sendcount,sendtype,recvbuf, &
                           recvcount,recvtype,root,comm,ierror) &
-   BIND(C, name="ompi_scatter_f")
+   BIND(C, name="ompi_scatter_@OMPI_F08_BINDINGS_EXTENSION@")
    implicit none
-   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: sendbuf
-   OMPI_FORTRAN_IGNORE_TKR_TYPE :: recvbuf
+   OMPI_F08_IGNORE_TKR_TYPE, INTENT(IN) :: sendbuf
+   OMPI_F08_IGNORE_TKR_TYPE :: recvbuf
    INTEGER, INTENT(IN) :: sendcount, recvcount, root
    INTEGER, INTENT(IN) :: sendtype
    INTEGER, INTENT(IN) :: recvtype
@@ -1228,10 +1228,10 @@ end subroutine ompi_iscatter_f
 
 subroutine ompi_scatterv_f(sendbuf,sendcounts,displs,sendtype, &
                            recvbuf,recvcount,recvtype,root,comm,ierror) &
-   BIND(C, name="ompi_scatterv_f")
+   BIND(C, name="ompi_scatterv_@OMPI_F08_BINDINGS_EXTENSION@")
    implicit none
    OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: sendbuf
-   OMPI_FORTRAN_IGNORE_TKR_TYPE :: recvbuf
+   OMPI_F08_IGNORE_TKR_TYPE :: recvbuf
    INTEGER, INTENT(IN) :: recvcount, root
    INTEGER, INTENT(IN) :: sendcounts(*), displs(*)
    INTEGER, INTENT(IN) :: sendtype

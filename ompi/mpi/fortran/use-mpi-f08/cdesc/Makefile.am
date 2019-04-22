@@ -63,7 +63,16 @@ libusempif08_cdesc_la_SOURCES = \
         pack_cdesc.c \
         pack_external_cdesc.c \
         unpack_cdesc.c \
-        unpack_external_cdesc.c
+        unpack_external_cdesc.c \
+        \
+        bcast_cdesc.c \
+        gather_cdesc.c \
+        gatherv_cdesc.c \
+        allgather_cdesc.c \
+        allgatherv_cdesc.c \
+        scatter_cdesc.c \
+        scatterv_cdesc.c \
+        alltoall_cdesc.c
 
 noinst_LTLIBRARIES = $(module_sentinel_file)
 
