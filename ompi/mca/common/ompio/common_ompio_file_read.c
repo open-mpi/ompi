@@ -376,6 +376,21 @@ int mca_common_ompio_file_iread_at (ompio_file_t *fh,
 
 
 /* Infrastructure for collective operations  */
+int mca_common_ompio_file_read_all (ompio_file_t *fh,
+                                    void *buf,
+                                    int count,
+                                    struct ompi_datatype_t *datatype,
+                                    ompi_status_public_t * status)
+{
+    int ret = OMPI_SUCCESS;
+    ret = fh->f_fcoll->fcoll_file_read_all (fh,
+                                            buf,
+                                            count,
+                                            datatype,
+                                            status);
+    return ret;
+}
+
 int mca_common_ompio_file_read_at_all (ompio_file_t *fh,
 				     OMPI_MPI_OFFSET_TYPE offset,
 				     void *buf,
@@ -388,13 +403,38 @@ int mca_common_ompio_file_read_at_all (ompio_file_t *fh,
     mca_common_ompio_file_get_position (fh, &prev_offset );
 
     mca_common_ompio_set_explicit_offset (fh, offset);
-    ret = fh->f_fcoll->fcoll_file_read_all (fh,
-                                            buf,
-                                            count,
-                                            datatype,
-                                            status);
-
+    ret = mca_common_ompio_file_read_all (fh,
+                                          buf,
+                                          count,
+                                          datatype,
+                                          status);
+    
     mca_common_ompio_set_explicit_offset (fh, prev_offset);
+    return ret;
+}
+
+int mca_common_ompio_file_iread_all (ompio_file_t *fp,
+                                     void *buf,
+                                     int count,
+                                     struct ompi_datatype_t *datatype,
+                                     ompi_request_t **request)
+{
+    int ret = OMPI_SUCCESS;
+
+    if ( NULL != fp->f_fcoll->fcoll_file_iread_all ) {
+	ret = fp->f_fcoll->fcoll_file_iread_all (fp,
+						 buf,
+						 count,
+						 datatype,
+						 request);
+    }
+    else {
+	/* this fcoll component does not support non-blocking
+	   collective I/O operations. WE fake it with
+	   individual non-blocking I/O operations. */
+	ret = mca_common_ompio_file_iread ( fp, buf, count, datatype, request );
+    }
+
     return ret;
 }
 
@@ -411,24 +451,16 @@ int mca_common_ompio_file_iread_at_all (ompio_file_t *fp,
     mca_common_ompio_file_get_position (fp, &prev_offset );
     mca_common_ompio_set_explicit_offset (fp, offset);
 
-    if ( NULL != fp->f_fcoll->fcoll_file_iread_all ) {
-	ret = fp->f_fcoll->fcoll_file_iread_all (fp,
-						 buf,
-						 count,
-						 datatype,
-						 request);
-    }
-    else {
-	/* this fcoll component does not support non-blocking
-	   collective I/O operations. WE fake it with
-	   individual non-blocking I/O operations. */
-	ret = mca_common_ompio_file_iread ( fp, buf, count, datatype, request );
-    }
-
-
+    ret = mca_common_ompio_file_iread_all (fp,
+                                           buf,
+                                           count,
+                                           datatype,
+                                           request);
+    
     mca_common_ompio_set_explicit_offset (fp, prev_offset);
     return ret;
 }
+
 
 int mca_common_ompio_set_explicit_offset (ompio_file_t *fh,
                                           OMPI_MPI_OFFSET_TYPE offset)

@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2018 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2019 University of Houston. All rights reserved.
  * Copyright (c) 2017-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -137,12 +137,11 @@ int mca_io_ompio_file_read_all (ompi_file_t *fh,
     data = (mca_common_ompio_data_t *) fh->f_io_selected_data;
 
     OPAL_THREAD_LOCK(&fh->f_lock);
-    ret = data->ompio_fh.
-        f_fcoll->fcoll_file_read_all (&data->ompio_fh,
-                                     buf,
-                                     count,
-                                     datatype,
-                                     status);
+    ret = mca_common_ompio_file_read_all (&data->ompio_fh,
+                                          buf,
+                                          count,
+                                          datatype,
+                                          status);
     OPAL_THREAD_UNLOCK(&fh->f_lock);
     if ( MPI_STATUS_IGNORE != status ) {
 	size_t size;
@@ -168,19 +167,11 @@ int mca_io_ompio_file_iread_all (ompi_file_t *fh,
     fp = &data->ompio_fh;
 
     OPAL_THREAD_LOCK(&fh->f_lock);
-    if ( NULL != fp->f_fcoll->fcoll_file_iread_all ) {
-	ret = fp->f_fcoll->fcoll_file_iread_all (&data->ompio_fh,
-						 buf,
-						 count,
-						 datatype,
-						 request);
-    }
-    else {
-	/* this fcoll component does not support non-blocking
-	   collective I/O operations. WE fake it with
-	   individual non-blocking I/O operations. */
-	ret = mca_common_ompio_file_iread ( fp, buf, count, datatype, request );
-    }
+    ret = mca_common_ompio_file_iread_all (&data->ompio_fh,
+                                           buf,
+                                           count,
+                                           datatype,
+                                           request);
     OPAL_THREAD_UNLOCK(&fh->f_lock);
 
     return ret;

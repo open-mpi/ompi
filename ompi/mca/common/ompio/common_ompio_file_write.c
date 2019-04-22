@@ -352,6 +352,20 @@ int mca_common_ompio_file_iwrite_at (ompio_file_t *fh,
 
 /* Collective operations                                          */
 /******************************************************************/
+int mca_common_ompio_file_write_all (ompio_file_t *fh,
+                                     const void *buf,
+                                     int count,
+                                     struct ompi_datatype_t *datatype,
+                                     ompi_status_public_t *status)
+{
+    int ret = OMPI_SUCCESS;
+    ret = fh->f_fcoll->fcoll_file_write_all (fh,
+                                             buf,
+                                             count,
+                                             datatype,
+                                             status);
+    return ret;
+}
 
 int mca_common_ompio_file_write_at_all (ompio_file_t *fh,
 				      OMPI_MPI_OFFSET_TYPE offset,
@@ -365,30 +379,23 @@ int mca_common_ompio_file_write_at_all (ompio_file_t *fh,
     mca_common_ompio_file_get_position (fh, &prev_offset );
 
     mca_common_ompio_set_explicit_offset (fh, offset);
-    ret = fh->f_fcoll->fcoll_file_write_all (fh,
-                                             buf,
-                                             count,
-                                             datatype,
-                                             status);
-
+    ret = mca_common_ompio_file_write_all (fh,
+                                           buf,
+                                           count,
+                                           datatype,
+                                           status);
+    
     mca_common_ompio_set_explicit_offset (fh, prev_offset);
     return ret;
 }
 
-int mca_common_ompio_file_iwrite_at_all (ompio_file_t *fp,
-				       OMPI_MPI_OFFSET_TYPE offset,
-				       const void *buf,
-				       int count,
-				       struct ompi_datatype_t *datatype,
-				       ompi_request_t **request)
+int mca_common_ompio_file_iwrite_all (ompio_file_t *fp,
+                                      const void *buf,
+                                      int count,
+                                      struct ompi_datatype_t *datatype,
+                                      ompi_request_t **request)
 {
-
     int ret = OMPI_SUCCESS;
-    OMPI_MPI_OFFSET_TYPE prev_offset;
-
-    mca_common_ompio_file_get_position (fp, &prev_offset );
-
-    mca_common_ompio_set_explicit_offset (fp, offset);
 
     if ( NULL != fp->f_fcoll->fcoll_file_iwrite_all ) {
 	ret = fp->f_fcoll->fcoll_file_iwrite_all (fp,
@@ -404,9 +411,30 @@ int mca_common_ompio_file_iwrite_at_all (ompio_file_t *fp,
 	ret = mca_common_ompio_file_iwrite ( fp, buf, count, datatype, request );
     }
 
+    return ret;
+}
+
+
+int mca_common_ompio_file_iwrite_at_all (ompio_file_t *fp,
+				       OMPI_MPI_OFFSET_TYPE offset,
+				       const void *buf,
+				       int count,
+				       struct ompi_datatype_t *datatype,
+				       ompi_request_t **request)
+{
+
+    int ret = OMPI_SUCCESS;
+    OMPI_MPI_OFFSET_TYPE prev_offset;
+
+    mca_common_ompio_file_get_position (fp, &prev_offset );
+    mca_common_ompio_set_explicit_offset (fp, offset);
+    
+    ret = mca_common_ompio_file_iwrite_all ( fp, buf, count, datatype, request );
+
     mca_common_ompio_set_explicit_offset (fp, prev_offset);
     return ret;
 }
+
 
 
 /* Helper function used by both read and write operations     */
