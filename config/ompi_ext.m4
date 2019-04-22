@@ -5,7 +5,7 @@ dnl                         University Research and Technology
 dnl                         Corporation.  All rights reserved.
 dnl Copyright (c) 2009-2017 Cisco Systems, Inc.  All rights reserved
 dnl Copyright (c) 2011-2012 Oak Ridge National Labs.  All rights reserved.
-dnl Copyright (c) 2015-2018 Research Organization for Information Science
+dnl Copyright (c) 2015-2019 Research Organization for Information Science
 dnl                         and Technology (RIST).  All rights reserved.
 dnl Copyright (c) 2017      The University of Tennessee and The University
 dnl                         of Tennessee Research Foundation.  All rights
@@ -259,7 +259,8 @@ EOF
                                                   [OMPI_MPIEXT_C],
                                                   [OMPI_MPIEXT_MPIFH],
                                                   [OMPI_MPIEXT_USEMPI],
-                                                  [OMPI_MPIEXT_USEMPIF08])])])
+                                                  [OMPI_MPIEXT_USEMPIF08],
+                                                  [OMPI_MPIEXT_ARCHIVE])])])
 
     ###############
     # C Bindings
@@ -344,10 +345,10 @@ EOF
 
     OMPI_EXT_MAKE_DIR_LIST(OMPI_MPIEXT_ALL_SUBDIRS, $OMPI_MPIEXT_ALL)
 
-    OMPI_EXT_MAKE_LISTS(OMPI_MPIEXT_C, $OMPI_MPIEXT_C, c, c)
-    OMPI_EXT_MAKE_LISTS(OMPI_MPIEXT_MPIFH, $OMPI_MPIEXT_MPIFH, mpif-h, mpifh)
-    OMPI_EXT_MAKE_LISTS(OMPI_MPIEXT_USEMPI, $OMPI_MPIEXT_USEMPI, use-mpi, usempi)
-    OMPI_EXT_MAKE_LISTS(OMPI_MPIEXT_USEMPIF08, $OMPI_MPIEXT_USEMPIF08, use-mpi-f08, usempif08)
+    OMPI_EXT_MAKE_LISTS(OMPI_MPIEXT_C, $OMPI_MPIEXT_C, $OMPI_MPIEXT_ARCHIVE, c, c)
+    OMPI_EXT_MAKE_LISTS(OMPI_MPIEXT_MPIFH, $OMPI_MPIEXT_MPIFH, $OMPI_MPIEXT_ARCHIVE, mpif-h, mpifh)
+    OMPI_EXT_MAKE_LISTS(OMPI_MPIEXT_USEMPI, $OMPI_MPIEXT_USEMPI, $OMPI_MPIEXT_ARCHIVE, use-mpi, usempi)
+    OMPI_EXT_MAKE_LISTS(OMPI_MPIEXT_USEMPIF08, $OMPI_MPIEXT_USEMPIF08, $OMPI_MPIEXT_ARCHIVE, use-mpi-f08, usempif08)
 
     comps=`echo $OMPI_MPIEXT_C | sed -e 's/^[ \t]*//;s/[ \t]*$//;s/ /, /g'`
     AC_DEFINE_UNQUOTED([OMPI_MPIEXT_COMPONENTS], ["$comps"],
@@ -366,7 +367,8 @@ EOF
 #                                     (3) c_components_variable,
 #                                     (4) mpifh_components_variable,
 #                                     (5) usempi_components_variable,
-#                                     (6) usempif08_components_variable)
+#                                     (6) usempif08_components_variable,
+#                                     (7) archive_components_variable)
 #
 # - component_name is a single, naked string (no prefix)
 # - all others are naked component names (e.g., "example").  If an
@@ -386,7 +388,7 @@ AC_DEFUN([EXT_CONFIGURE_M4_CONFIG_COMPONENT],[
     OMPI_MPIEXT_$1_CONFIG([should_build=${should_build}], [should_build=0])
 
     AS_IF([test $should_build -eq 1],
-          [EXT_PROCESS_COMPONENT([$1], [$2], [$3], [$4], [$5], [$6])],
+          [EXT_PROCESS_COMPONENT([$1], [$2], [$3], [$4], [$5], [$6], [$7])],
           [EXT_PROCESS_DEAD_COMPONENT([$1], [$2])])
 ])
 
@@ -403,7 +405,8 @@ AC_DEFUN([EXT_CONFIGURE_M4_CONFIG_COMPONENT],[
 #                                       (3) c_components_variable,
 #                                       (4) mpifh_components_variable,
 #                                       (5) usempi_components_variable,
-#                                       (6) usempif08_components_variable)
+#                                       (6) usempif08_components_variable,
+#                                       (7) archive_components_variable)
 #
 # C bindings are mandatory.  Other bindings are optional / built if
 # they are found.  Here's the files that the m4 expects:
@@ -615,7 +618,7 @@ EOF
         m4_ifdef([OMPI_MPIEXT_]$1[_INCLUDE_MPIFH_IN_USEMPI],
                  [include_mpifh=OMPI_MPIEXT_$1_INCLUDE_MPIFH_IN_USEMPI],
                  [include_mpifh=1])
-        if test "$enabled_mpifh" = 1 && test "$include_mpifh" != 0; then
+        if test $enabled_mpifh -eq 1 && test $include_mpifh -ne 0; then
             mpifh_component_header="mpiext_${component}_mpifh.h"
             cat >> $mpiusempi_ext_h <<EOF
 #include "${mpifh_component_header_path}"
@@ -677,7 +680,7 @@ EOF
         m4_ifdef([OMPI_MPIEXT_]$1[_INCLUDE_MPIFH_IN_USEMPIF08],
                  [include_mpifh=OMPI_MPIEXT_$1_INCLUDE_MPIFH_IN_USEMPIF08],
                  [include_mpifh=1])
-        if test "$enabled_mpifh" = 1 && test "$include_mpifh" != 0; then
+        if test $enabled_mpifh -eq 1 && test $include_mpifh -ne 0; then
             mpifh_component_header="mpiext_${component}_mpifh.h"
             cat >> $mpiusempif08_ext_h <<EOF
 #include "${mpifh_component_header_path}"
@@ -703,6 +706,13 @@ EOF
     m4_ifdef([OMPI_MPIEXT_]$1[_NEED_INIT],
              [echo "extern const ompi_mpiext_component_t ompi_mpiext_${component};" >> $outfile.extern
               echo "  &ompi_mpiext_${component}, " >> $outfile.struct])
+
+    m4_ifdef([OMPI_MPIEXT_]$1[_HAVE_OBJECT],
+             [have_object=OMPI_MPIEXT_$1_HAVE_OBJECT],
+             [have_object=1])
+    if test $have_object -ne 0; then
+        $7="$$7 $component"
+    fi
 
     # now add the flags that were set in the environment variables
     # framework_component_FOO (for example, the flags set by
@@ -804,7 +814,7 @@ AC_DEFUN([EXT_COMPONENT_BUILD_CHECK],[
         fi
     fi
 
-    AS_IF([test "$want_component" = "1"], [$2], [$3])
+    AS_IF([test $want_component -eq 1], [$2], [$3])
 ])
 
 
@@ -821,9 +831,10 @@ AC_DEFUN([OMPI_EXT_MAKE_DIR_LIST],[
 ])
 
 # OMPI_EXT_MAKE_LISTS((1) subst'ed variable prefix,
-#                     (2) shell list,
-#                     (3) bindings dir name,
-#                     (4) bindings suffix)
+#                     (2) shell list of extensions of which the bindings are enabled,
+#                     (3) shell list of extensions which needs libtool archive,
+#                     (4) bindings dir name,
+#                     (5) bindings suffix)
 #
 # Prefix every extension name with "mpiext/".
 # -------------------------------------------------------------------------
@@ -831,7 +842,7 @@ AC_DEFUN([OMPI_EXT_MAKE_LISTS],[
     # Make the directory list
     tmp=
     for item in $2 ; do
-       tmp="$tmp mpiext/$item/$3"
+       tmp="$tmp mpiext/$item/$4"
     done
     $1_DIRS=$tmp
     AC_SUBST($1_DIRS)
@@ -839,7 +850,12 @@ AC_DEFUN([OMPI_EXT_MAKE_LISTS],[
     # Make the list of libraries
     tmp=
     for item in $2 ; do
-       tmp="$tmp "'$(top_builddir)'"/ompi/mpiext/$item/$3/libmpiext_${item}_$4.la"
+        for item2 in $3 ; do
+            if test $item = $item2; then
+                tmp="$tmp "'$(top_builddir)'"/ompi/mpiext/$item/$4/libmpiext_${item}_$5.la"
+                break
+            fi
+        done
     done
     $1_LIBS=$tmp
     AC_SUBST($1_LIBS)
