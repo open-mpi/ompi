@@ -121,6 +121,9 @@ typedef uint8_t pmix_cmd_t;
 /* provide a "pretty-print" function for cmds */
 const char* pmix_command_string(pmix_cmd_t cmd);
 
+/* provide a hook to init tool data */
+PMIX_EXPORT extern pmix_status_t pmix_tool_init_info(void);
+
 /* define a set of flags to direct collection
  * of data during operations */
 typedef enum {

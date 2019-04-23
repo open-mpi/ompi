@@ -37,6 +37,9 @@ mcacomponentdir = $(pmixlibdir)
 mcacomponent_LTLIBRARIES = $(component)
 mca_pshmem_mmap_la_SOURCES = $(component_sources)
 mca_pshmem_mmap_la_LDFLAGS = -module -avoid-version
+if NEED_LIBPMIX
+mca_pshmem_mmap_la_LIBADD = $(top_builddir)/src/libpmix.la
+endif
 
 noinst_LTLIBRARIES = $(lib)
 libmca_pshmem_mmap_la_SOURCES = $(lib_sources)

@@ -860,6 +860,32 @@ AC_DEFUN([PMIX_SETUP_CORE],[
     AC_SUBST(pmixincludedir)
 
     ############################################################################
+    # setup "make check"
+    ############################################################################
+    PMIX_BUILT_TEST_PREFIX=$PMIX_top_builddir
+    AC_SUBST(PMIX_BUILT_TEST_PREFIX)
+    # expose the mca component library paths in the build system
+    pathfile=$PMIX_top_srcdir/config/mca_library_paths.txt
+    PMIX_COMPONENT_LIBRARY_PATHS=`cat $pathfile`
+    AC_SUBST(PMIX_COMPONENT_LIBRARY_PATHS)
+    AC_CONFIG_FILES(pmix_config_prefix[test/run_tests00.pl], [chmod +x test/run_tests00.pl])
+    AC_CONFIG_FILES(pmix_config_prefix[test/run_tests01.pl], [chmod +x test/run_tests01.pl])
+    AC_CONFIG_FILES(pmix_config_prefix[test/run_tests02.pl], [chmod +x test/run_tests02.pl])
+    AC_CONFIG_FILES(pmix_config_prefix[test/run_tests03.pl], [chmod +x test/run_tests03.pl])
+    AC_CONFIG_FILES(pmix_config_prefix[test/run_tests04.pl], [chmod +x test/run_tests04.pl])
+    AC_CONFIG_FILES(pmix_config_prefix[test/run_tests05.pl], [chmod +x test/run_tests05.pl])
+    AC_CONFIG_FILES(pmix_config_prefix[test/run_tests06.pl], [chmod +x test/run_tests06.pl])
+    AC_CONFIG_FILES(pmix_config_prefix[test/run_tests07.pl], [chmod +x test/run_tests07.pl])
+    AC_CONFIG_FILES(pmix_config_prefix[test/run_tests08.pl], [chmod +x test/run_tests08.pl])
+    AC_CONFIG_FILES(pmix_config_prefix[test/run_tests09.pl], [chmod +x test/run_tests09.pl])
+    AC_CONFIG_FILES(pmix_config_prefix[test/run_tests10.pl], [chmod +x test/run_tests10.pl])
+    AC_CONFIG_FILES(pmix_config_prefix[test/run_tests11.pl], [chmod +x test/run_tests11.pl])
+    AC_CONFIG_FILES(pmix_config_prefix[test/run_tests12.pl], [chmod +x test/run_tests12.pl])
+    AC_CONFIG_FILES(pmix_config_prefix[test/run_tests13.pl], [chmod +x test/run_tests13.pl])
+    AC_CONFIG_FILES(pmix_config_prefix[test/run_tests14.pl], [chmod +x test/run_tests14.pl])
+    AC_CONFIG_FILES(pmix_config_prefix[test/run_tests15.pl], [chmod +x test/run_tests15.pl])
+
+    ############################################################################
     # final output
     ############################################################################
 
@@ -920,7 +946,7 @@ AC_DEFUN([PMIX_DEFINE_ARGS],[
     AC_ARG_ENABLE([embedded-mode],
         [AC_HELP_STRING([--enable-embedded-mode],
                 [Using --enable-embedded-mode causes PMIx to skip a few configure checks and install nothing.  It should only be used when building PMIx within the scope of a larger package.])])
-    AS_IF([test ! -z "$enable_embedded_mode" && test "$enable_embedded_mode" = "yes"],
+    AS_IF([test "$enable_embedded_mode" = "yes"],
           [pmix_mode=embedded
            pmix_install_primary_headers=no
            AC_MSG_RESULT([yes])],
@@ -1207,6 +1233,24 @@ if test "$WANT_PYTHON_BINDINGS" = "1"; then
     fi
 fi
 
+# see if they want to disable non-RTLD_GLOBAL dlopen
+AC_MSG_CHECKING([if want to support dlopen of non-global namespaces])
+AC_ARG_ENABLE([nonglobal-dlopen],
+              AC_HELP_STRING([--enable-nonglobal-dlopen],
+                             [enable non-global dlopen (default: enabled)]))
+if test "$enable_nonglobal_dlopen" == "no"; then
+    AC_MSG_RESULT([no])
+    pmix_need_libpmix=0
+else
+    AC_MSG_RESULT([yes])
+    pmix_need_libpmix=1
+fi
+
+# if someone enables embedded mode but doesn't want to install the
+# devel headers, then default nonglobal-dlopen to false
+AS_IF([test -z "$enable_nonglobal_dlopen" && test "x$pmix_mode" = "xembedded" && test $WANT_INSTALL_HEADERS -eq 0 && test $pmix_need_libpmix -eq 1],
+      [pmix_need_libpmix=0])
+
 ])dnl
 
 # This must be a standalone routine so that it can be called both by
@@ -1222,6 +1266,7 @@ AC_DEFUN([PMIX_DO_AM_CONDITIONALS],[
         AM_CONDITIONAL([WANT_PRIMARY_HEADERS], [test "x$pmix_install_primary_headers" = "xyes"])
         AM_CONDITIONAL(WANT_INSTALL_HEADERS, test "$WANT_INSTALL_HEADERS" = 1)
         AM_CONDITIONAL(WANT_PMI_BACKWARD, test "$WANT_PMI_BACKWARD" = 1)
+        AM_CONDITIONAL(NEED_LIBPMIX, [test "$pmix_need_libpmix" = "1"])
     ])
     pmix_did_am_conditionals=yes
 ])dnl

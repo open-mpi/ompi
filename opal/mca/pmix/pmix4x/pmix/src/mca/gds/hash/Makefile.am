@@ -49,6 +49,9 @@ mcacomponent_LTLIBRARIES = $(component)
 mca_gds_hash_la_SOURCES = $(component_sources)
 mca_gds_hash_la_LIBADD = $(gds_hash_LIBS)
 mca_gds_hash_la_LDFLAGS = -module -avoid-version $(gds_hash_LDFLAGS)
+if NEED_LIBPMIX
+mca_gds_hash_la_LIBADD += $(top_builddir)/src/libpmix.la
+endif
 
 noinst_LTLIBRARIES = $(lib)
 libmca_gds_hash_la_SOURCES = $(lib_sources)
