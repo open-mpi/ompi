@@ -29,7 +29,7 @@ GetOptions("skip-ok" => \$skip_ok,
 # directory and make life easier.
 chdir($srcdir);
 
-if (! -d ".git") {
+if (! -e ".git") {
     if ($skip_ok == 0) {
 	print STDERR "I don't seem to be in a git repo :(\n";
 	exit(1);
