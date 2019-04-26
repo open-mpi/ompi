@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2013 The University of Tennessee and The University
+ * Copyright (c) 2004-2019 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -46,7 +46,8 @@ struct mca_pml_ob1_rdma_frag_t {
     mca_bml_base_btl_t *rdma_bml;
     mca_pml_ob1_hdr_t rdma_hdr;
     mca_pml_ob1_rdma_state_t rdma_state;
-    size_t rdma_length;
+    size_t rdma_length;  /* how much the fragment will transfer */
+    opal_atomic_size_t rdma_bytes_remaining;  /* how much is left to be transferred */
     void *rdma_req;
     uint32_t retries;
     mca_pml_ob1_rdma_frag_callback_t cbfunc;
@@ -71,7 +72,6 @@ OBJ_CLASS_DECLARATION(mca_pml_ob1_rdma_frag_t);
 
 #define MCA_PML_OB1_RDMA_FRAG_RETURN(frag)                              \
     do {                                                                \
-        /* return fragment */                                           \
         if (frag->local_handle) {                                       \
             mca_bml_base_deregister_mem (frag->rdma_bml, frag->local_handle); \
             frag->local_handle = NULL;                                  \
