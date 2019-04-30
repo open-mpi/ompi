@@ -385,7 +385,6 @@ PN2(void, MPI_Type_get_extent_x, mpi_type_get_extent_x, MPI_TYPE_GET_EXTENT_X, (
 PN2(void, MPI_Type_get_name, mpi_type_get_name, MPI_TYPE_GET_NAME, (MPI_Fint *type, char *type_name, MPI_Fint *resultlen, MPI_Fint *ierr, int name_len));
 PN2(void, MPI_Type_get_true_extent, mpi_type_get_true_extent, MPI_TYPE_GET_TRUE_EXTENT, (MPI_Fint *datatype, MPI_Aint *true_lb, MPI_Aint *true_extent, MPI_Fint *ierr));
 PN2(void, MPI_Type_get_true_extent_x, mpi_type_get_true_extent_x, MPI_TYPE_GET_TRUE_EXTENT_X, (MPI_Fint *datatype, MPI_Count *true_lb, MPI_Count *true_extent, MPI_Fint *ierr));
-PN2(void, MPI_Type_hvector, mpi_type_hvector, MPI_TYPE_HVECTOR, (MPI_Fint *count, MPI_Fint *blocklength, MPI_Fint *stride, MPI_Fint *oldtype, MPI_Fint *newtype, MPI_Fint *ierr));
 PN2(void, MPI_Type_indexed, mpi_type_indexed, MPI_TYPE_INDEXED, (MPI_Fint *count, MPI_Fint *array_of_blocklengths, MPI_Fint *array_of_displacements, MPI_Fint *oldtype, MPI_Fint *newtype, MPI_Fint *ierr));
 PN2(void, MPI_Type_lb, mpi_type_lb, MPI_TYPE_LB, (MPI_Fint *type, MPI_Fint *lb, MPI_Fint *ierr));
 PN2(void, MPI_Type_match_size, mpi_type_match_size, MPI_TYPE_MATCH_SIZE, (MPI_Fint *typeclass, MPI_Fint *size, MPI_Fint *type, MPI_Fint *ierr));
