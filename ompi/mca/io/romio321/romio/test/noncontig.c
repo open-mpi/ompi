@@ -75,7 +75,7 @@ int main(int argc, char **argv)
     t[2] = MPI_UB;
 
     /* keep the struct, ditch the vector */
-    MPI_Type_struct(3, b, d, t, &newtype);
+    MPI_Type_create_struct(3, b, d, t, &newtype);
     MPI_Type_commit(&newtype);
     MPI_Type_free(&typevec);
 

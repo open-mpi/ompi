@@ -191,7 +191,7 @@ following:
 	base = disp[0];
 	for (i = 0; i < 2; ++i)
 		disp[i] -= base;
-	MPI_Type_struct(2, blocklen, disp, type, &sspair);
+	MPI_Type_create_struct(2, blocklen, disp, type, &sspair);
 	MPI_Type_commit(&sspair);
 
 	/*

@@ -384,7 +384,7 @@ int test_file(char *filename, int mynod, int nprocs, char * cb_hosts, const char
     t[1] = typevec;
     t[2] = MPI_UB;
 
-    MPI_Type_struct(3, b, d, t, &newtype);
+    MPI_Type_create_struct(3, b, d, t, &newtype);
     MPI_Type_commit(&newtype);
     MPI_Type_free(&typevec);
 

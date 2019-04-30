@@ -391,7 +391,6 @@ PN2(void, MPI_Type_set_attr, mpi_type_set_attr, MPI_TYPE_SET_ATTR, (MPI_Fint *ty
 PN2(void, MPI_Type_set_name, mpi_type_set_name, MPI_TYPE_SET_NAME, (MPI_Fint *type, char *type_name, MPI_Fint *ierr, int name_len));
 PN2(void, MPI_Type_size, mpi_type_size, MPI_TYPE_SIZE, (MPI_Fint *type, MPI_Fint *size, MPI_Fint *ierr));
 PN2(void, MPI_Type_size_x, mpi_type_size_x, MPI_TYPE_SIZE_X, (MPI_Fint *type, MPI_Count *size, MPI_Fint *ierr));
-PN2(void, MPI_Type_struct, mpi_type_struct, MPI_TYPE_STRUCT, (MPI_Fint *count, MPI_Fint *array_of_blocklengths, MPI_Fint *array_of_displacements, MPI_Fint *array_of_types, MPI_Fint *newtype, MPI_Fint *ierr));
 PN2(void, MPI_Type_ub, mpi_type_ub, MPI_TYPE_UB, (MPI_Fint *mtype, MPI_Fint *ub, MPI_Fint *ierr));
 PN2(void, MPI_Type_vector, mpi_type_vector, MPI_TYPE_VECTOR, (MPI_Fint *count, MPI_Fint *blocklength, MPI_Fint *stride, MPI_Fint *oldtype, MPI_Fint *newtype, MPI_Fint *ierr));
 PN2(void, MPI_Unpack, mpi_unpack, MPI_UNPACK, (char *inbuf, MPI_Fint *insize, MPI_Fint *position, char *outbuf, MPI_Fint *outcount, MPI_Fint *datatype, MPI_Fint *comm, MPI_Fint *ierr));

@@ -255,7 +255,7 @@ Note that a different amount of data is received from each process.
       disp[0] = 0;       disp[1] = 150*sizeof(int);
       type[0] = MPI_INT; type[1] = MPI_UB;
       blocklen[0] = 1;   blocklen[1] = 1;
-      MPI_Type_struct( 2, blocklen, disp, type, &stype );
+      MPI_Type_create_struct( 2, blocklen, disp, type, &stype );
       MPI_Type_commit( &stype );
       sptr = &sendarray[0][myrank];
       MPI_Gatherv(sptr, 100-myrank, stype, rbuf, rcounts,
@@ -341,7 +341,7 @@ we make the  stride between received blocks vary from block to block.
       disp[0] = 0;       disp[1] = 150*sizeof(int);
       type[0] = MPI_INT; type[1] = MPI_UB;
       blocklen[0] = 1;   blocklen[1] = 1;
-      MPI_Type_struct( 2, blocklen, disp, type, &stype );
+      MPI_Type_create_struct( 2, blocklen, disp, type, &stype );
       MPI_Type_commit( &stype );
       sptr = &sendarray[0][myrank];
       MPI_Gatherv(sptr, num, stype, rbuf, rcounts,
