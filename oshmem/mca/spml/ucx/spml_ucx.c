@@ -630,12 +630,12 @@ int mca_spml_ucx_ctx_create(long options, shmem_ctx_t *ctx)
     mca_spml_ucx_ctx_t *ucx_ctx;
     int rc;
 
-    /* Take a lock controlling aux context. AUX context may set specific
+    /* Take a lock controlling context creation. AUX context may set specific
      * UCX parameters affecting worker creation, which are not needed for
      * regular contexts. */
-    mca_spml_ucx_aux_lock();
+    pthread_mutex_lock(&mca_spml_ucx.ctx_create_mutex);
     rc = mca_spml_ucx_ctx_create_common(options, &ucx_ctx);
-    mca_spml_ucx_aux_unlock();
+    pthread_mutex_unlock(&mca_spml_ucx.ctx_create_mutex);
     if (rc != OSHMEM_SUCCESS) {
         return rc;
     }
@@ -813,6 +813,7 @@ int mca_spml_ucx_send(void* buf,
     return rc;
 }
 
+/* this can be called with request==NULL in case of immediate completion */
 static void mca_spml_ucx_put_all_complete_cb(void *request, ucs_status_t status)
 {
     if (mca_spml_ucx.async_progress && (--mca_spml_ucx.aux_refcnt == 0)) {
@@ -838,14 +839,14 @@ static int mca_spml_ucx_create_aux_ctx(void)
     rand_dci_supp = UCX_VERSION(major, minor, rel_number) >= UCX_VERSION(1, 6, 0);
 
     if (rand_dci_supp) {
-        opal_setenv("UCX_DC_TX_POLICY", "rand", 1, &environ);
+        pthread_mutex_lock(&mca_spml_ucx.ctx_create_mutex);
         opal_setenv("UCX_DC_MLX5_TX_POLICY", "rand", 1, &environ);
     }
 
     rc = mca_spml_ucx_ctx_create_common(SHMEM_CTX_PRIVATE, &mca_spml_ucx.aux_ctx);
 
     if (rand_dci_supp) {
-        opal_unsetenv("UCX_DC_TX_POLICY", &environ);
+        pthread_mutex_unlock(&mca_spml_ucx.ctx_create_mutex);
         opal_unsetenv("UCX_DC_MLX5_TX_POLICY", &environ);
     }
 
@@ -871,14 +872,13 @@ int mca_spml_ucx_put_all_nb(void *dest, const void *source, size_t size, long *c
             }
         }
 
-        if (!mca_spml_ucx.aux_refcnt) {
+        if (mca_spml_ucx.aux_refcnt++ == 0) {
             tv.tv_sec  = 0;
             tv.tv_usec = mca_spml_ucx.async_tick;
             opal_event_evtimer_add(mca_spml_ucx.tick_event, &tv);
             opal_progress_register(spml_ucx_progress_aux_ctx);
         }
         ctx = (shmem_ctx_t)mca_spml_ucx.aux_ctx;
-        ++mca_spml_ucx.aux_refcnt;
     } else {
         ctx = oshmem_ctx_default;
     }

@@ -150,18 +150,20 @@ int spml_ucx_default_progress(void)
 
 int spml_ucx_progress_aux_ctx(void)
 {
+    unsigned count;
+
     if (OPAL_UNLIKELY(!mca_spml_ucx.aux_ctx)) {
-        return 1;
+        return 0;
     }
 
     if (pthread_spin_trylock(&mca_spml_ucx.async_lock)) {
-        return 1;
+        return 0;
     }
 
-    ucp_worker_progress(mca_spml_ucx.aux_ctx->ucp_worker);
+    count = ucp_worker_progress(mca_spml_ucx.aux_ctx->ucp_worker);
     pthread_spin_unlock(&mca_spml_ucx.async_lock);
 
-    return 1;
+    return count;
 }
 
 void mca_spml_ucx_async_cb(int fd, short event, void *cbdata)
@@ -240,6 +242,7 @@ static int spml_ucx_init(void)
                                           sizeof(mca_spml_ucx_ctx_t *));
 
     SHMEM_MUTEX_INIT(mca_spml_ucx.internal_mutex);
+    pthread_mutex_init(&mca_spml_ucx.ctx_create_mutex, NULL);
 
     wkr_params.field_mask  = UCP_WORKER_PARAM_FIELD_THREAD_MODE;
     if (oshmem_mpi_thread_requested == SHMEM_THREAD_MULTIPLE) {
@@ -265,7 +268,7 @@ static int spml_ucx_init(void)
     if (mca_spml_ucx.async_progress) {
         pthread_spin_init(&mca_spml_ucx.async_lock, 0);
         mca_spml_ucx.async_event_base = opal_progress_thread_init(NULL);
-        if (NULL ==  mca_spml_ucx.async_event_base) {
+        if (NULL == mca_spml_ucx.async_event_base) {
             SPML_UCX_ERROR("failed to init async progress thread");
             return OSHMEM_ERROR;
         }
@@ -274,6 +277,7 @@ static int spml_ucx_init(void)
         opal_event_set(mca_spml_ucx.async_event_base, mca_spml_ucx.tick_event,
                        -1, EV_PERSIST, mca_spml_ucx_async_cb, NULL);
     }
+
     mca_spml_ucx.aux_ctx    = NULL;
     mca_spml_ucx.aux_refcnt = 0;
 
@@ -342,8 +346,8 @@ static int mca_spml_ucx_component_fini(void)
         return OSHMEM_SUCCESS; /* never selected.. return success.. */
 
     if (mca_spml_ucx.async_progress) {
-        opal_event_evtimer_del(mca_spml_ucx.tick_event);
         opal_progress_thread_finalize(NULL);
+        opal_event_evtimer_del(mca_spml_ucx.tick_event);
         if (mca_spml_ucx.aux_ctx != NULL) {
             _ctx_cleanup(mca_spml_ucx.aux_ctx);
         }
@@ -408,6 +412,7 @@ static int mca_spml_ucx_component_fini(void)
     free(mca_spml_ucx.aux_ctx);
 
     SHMEM_MUTEX_DESTROY(mca_spml_ucx.internal_mutex);
+    pthread_mutex_destroy(&mca_spml_ucx.ctx_create_mutex);
 
     if (mca_spml_ucx.ucp_context) {
         ucp_cleanup(mca_spml_ucx.ucp_context);

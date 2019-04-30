@@ -94,6 +94,7 @@ struct mca_spml_ucx {
     mca_spml_ucx_ctx_array_t idle_array;
     int                      priority; /* component priority */
     shmem_internal_mutex_t   internal_mutex;
+    pthread_mutex_t          ctx_create_mutex;
     /* Fields controlling aux context for put_all_nb SPML routine */
     bool                     async_progress;
     int                      async_tick;
@@ -169,16 +170,18 @@ extern int spml_ucx_ctx_progress(void);
 extern int spml_ucx_progress_aux_ctx(void);
 void mca_spml_ucx_async_cb(int fd, short event, void *cbdata);
 
-static inline int mca_spml_ucx_aux_lock(void)
+static inline void mca_spml_ucx_aux_lock(void)
 {
-    return mca_spml_ucx.async_progress ?
-           pthread_spin_lock(&mca_spml_ucx.async_lock) : 0;
+    if (mca_spml_ucx.async_progress) {
+        pthread_spin_lock(&mca_spml_ucx.async_lock);
+    }
 }
 
-static inline int mca_spml_ucx_aux_unlock(void)
+static inline void mca_spml_ucx_aux_unlock(void)
 {
-    return mca_spml_ucx.async_progress ?
-           pthread_spin_unlock(&mca_spml_ucx.async_lock) : 0;
+    if (mca_spml_ucx.async_progress) {
+        pthread_spin_unlock(&mca_spml_ucx.async_lock);
+    }
 }
 
 static void mca_spml_ucx_cache_mkey(mca_spml_ucx_ctx_t *ucx_ctx, sshmem_mkey_t *mkey, uint32_t segno, int dst_pe)
