@@ -92,8 +92,6 @@
 #define MPI_Dims_create PMPI_Dims_create
 #undef MPI_Errhandler_free
 #define MPI_Errhandler_free PMPI_Errhandler_free
-#undef MPI_Errhandler_get
-#define MPI_Errhandler_get PMPI_Errhandler_get
 #undef MPI_Errhandler_set
 #define MPI_Errhandler_set PMPI_Errhandler_set
 #undef MPI_Error_class
