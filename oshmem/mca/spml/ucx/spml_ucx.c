@@ -840,14 +840,14 @@ static int mca_spml_ucx_create_aux_ctx(void)
 
     if (rand_dci_supp) {
         pthread_mutex_lock(&mca_spml_ucx.ctx_create_mutex);
-        opal_setenv("UCX_DC_MLX5_TX_POLICY", "rand", 1, &environ);
+        opal_setenv("UCX_DC_MLX5_TX_POLICY", "rand", 0, &environ);
     }
 
     rc = mca_spml_ucx_ctx_create_common(SHMEM_CTX_PRIVATE, &mca_spml_ucx.aux_ctx);
 
     if (rand_dci_supp) {
-        pthread_mutex_unlock(&mca_spml_ucx.ctx_create_mutex);
         opal_unsetenv("UCX_DC_MLX5_TX_POLICY", &environ);
+        pthread_mutex_unlock(&mca_spml_ucx.ctx_create_mutex);
     }
 
     return rc;

@@ -329,7 +329,7 @@ typedef int (*mca_spml_base_module_send_fn_t)(void *buf,
  *  shmemx_alltoall_global calls.
  *
  *  @param dest        A symmetric data object that is large enough to receive
- *                     “size” bytes of data.
+ *                     “size” bytes of data from each PE in the OpenSHMEM job.
  *  @param source      A symmetric data object that contains “size” bytes of data
  *                     for each PE in the OpenSHMEM job.
  *  @param size        The number of bytes to be sent to each PE in the job.
