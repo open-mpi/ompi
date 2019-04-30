@@ -12,7 +12,7 @@
 //                         All rights reserved.
 // Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
 // Copyright (c) 2011      FUJITSU LIMITED.  All rights reserved.
-// Copyright (c) 2017      Research Organization for Information Science
+// Copyright (c) 2017-2019 Research Organization for Information Science
 //                         and Technology (RIST). All rights reserved.
 // $COPYRIGHT$
 //
@@ -180,13 +180,10 @@ static const int COMBINER_NAMED = MPI_COMBINER_NAMED;
 static const int COMBINER_DUP = MPI_COMBINER_DUP;
 static const int COMBINER_CONTIGUOUS = MPI_COMBINER_CONTIGUOUS;
 static const int COMBINER_VECTOR = MPI_COMBINER_VECTOR;
-static const int COMBINER_HVECTOR_INTEGER = MPI_COMBINER_HVECTOR_INTEGER;
 static const int COMBINER_HVECTOR = MPI_COMBINER_HVECTOR;
 static const int COMBINER_INDEXED = MPI_COMBINER_INDEXED;
-static const int COMBINER_HINDEXED_INTEGER = MPI_COMBINER_HINDEXED_INTEGER;
 static const int COMBINER_HINDEXED = MPI_COMBINER_HINDEXED;
 static const int COMBINER_INDEXED_BLOCK = MPI_COMBINER_INDEXED_BLOCK;
-static const int COMBINER_STRUCT_INTEGER = MPI_COMBINER_STRUCT_INTEGER;
 static const int COMBINER_STRUCT = MPI_COMBINER_STRUCT;
 static const int COMBINER_SUBARRAY = MPI_COMBINER_SUBARRAY;
 static const int COMBINER_DARRAY = MPI_COMBINER_DARRAY;

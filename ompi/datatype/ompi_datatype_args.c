@@ -138,7 +138,6 @@ int32_t ompi_datatype_set_args( ompi_datatype_t* pData,
         pArgs->i[2] = i[2][0];
         break;
 
-    case MPI_COMBINER_HVECTOR_INTEGER:
     case MPI_COMBINER_HVECTOR:
         pArgs->i[0] = i[0][0];
         pArgs->i[1] = i[1][0];
@@ -152,7 +151,6 @@ int32_t ompi_datatype_set_args( ompi_datatype_t* pData,
         memcpy( pArgs->i + pos, i[2], i[0][0] * sizeof(int) );
         break;
 
-    case MPI_COMBINER_HINDEXED_INTEGER:
     case MPI_COMBINER_HINDEXED:
         pArgs->i[0] = i[0][0];
         memcpy( pArgs->i + 1, i[1], i[0][0] * sizeof(int) );
@@ -164,7 +162,6 @@ int32_t ompi_datatype_set_args( ompi_datatype_t* pData,
         memcpy( pArgs->i + 2, i[2], i[0][0] * sizeof(int) );
         break;
 
-    case MPI_COMBINER_STRUCT_INTEGER:
     case MPI_COMBINER_STRUCT:
         pArgs->i[0] = i[0][0];
         memcpy( pArgs->i + 1, i[1], i[0][0] * sizeof(int) );
@@ -707,7 +704,6 @@ static ompi_datatype_t* __ompi_datatype_create_from_args( int32_t* i, MPI_Aint* 
         }
         break;
         /******************************************************************/
-    case MPI_COMBINER_HVECTOR_INTEGER:
     case MPI_COMBINER_HVECTOR:
         ompi_datatype_create_hvector( i[0], i[1], a[0], d[0], &datatype );
         {
@@ -724,7 +720,6 @@ static ompi_datatype_t* __ompi_datatype_create_from_args( int32_t* i, MPI_Aint* 
         }
         break;
         /******************************************************************/
-    case MPI_COMBINER_HINDEXED_INTEGER:
     case MPI_COMBINER_HINDEXED:
         ompi_datatype_create_hindexed( i[0], &(i[1]), a, d[0], &datatype );
         {
@@ -741,7 +736,6 @@ static ompi_datatype_t* __ompi_datatype_create_from_args( int32_t* i, MPI_Aint* 
         }
         break;
         /******************************************************************/
-    case MPI_COMBINER_STRUCT_INTEGER:
     case MPI_COMBINER_STRUCT:
         ompi_datatype_create_struct( i[0], &(i[1]), a, d, &datatype );
         {

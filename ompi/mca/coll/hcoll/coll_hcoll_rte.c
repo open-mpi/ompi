@@ -7,8 +7,8 @@
  *                         reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2015      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015-2019 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -402,7 +402,6 @@ hcoll_mpi_type_combiner_t ompi_combiner_2_hcoll_combiner(int ompi_combiner) {
         return HCOLL_MPI_COMBINER_HVECTOR;
     case MPI_COMBINER_INDEXED:
         return HCOLL_MPI_COMBINER_INDEXED;
-    case MPI_COMBINER_HINDEXED_INTEGER:
     case MPI_COMBINER_HINDEXED:
         return HCOLL_MPI_COMBINER_HINDEXED;
     case MPI_COMBINER_DUP:
@@ -424,7 +423,6 @@ hcoll_mpi_type_combiner_t ompi_combiner_2_hcoll_combiner(int ompi_combiner) {
     case MPI_COMBINER_RESIZED:
         return HCOLL_MPI_COMBINER_RESIZED;
     case MPI_COMBINER_STRUCT:
-    case MPI_COMBINER_STRUCT_INTEGER:
         return HCOLL_MPI_COMBINER_STRUCT;
     default:
         break;

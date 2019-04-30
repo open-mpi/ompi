@@ -351,16 +351,6 @@ int convert_mpi_pvfs2_dtype(MPI_Datatype *mpi_dtype,
 		fprintf(stderr, "convert_mpi_pvfs2_dtype: "
 			"HINDEXED_BLOCK is unsupported\n");
 		break;
-	    case MPI_COMBINER_HINDEXED_INTEGER:
-		ADIOI_Free(old_pvfs_dtype);
-		fprintf(stderr, "convert_mpi_pvfs2_dtype: "
-			"HINDEXED_INTEGER is unsupported\n"); 
-		break;
-	    case MPI_COMBINER_STRUCT_INTEGER:
-		ADIOI_Free(old_pvfs_dtype);
-		fprintf(stderr, "convert_mpi_pvfs2_dtype: "
-			"STRUCT_INTEGER is unsupported\n"); 
-		break;
 	    case MPI_COMBINER_SUBARRAY:
 		ADIOI_Free(old_pvfs_dtype);
 		fprintf(stderr, "convert_mpi_pvfs2_dtype: "

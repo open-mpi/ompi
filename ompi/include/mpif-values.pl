@@ -1,8 +1,8 @@
 #!/usr/bin/env perl
 #
 # Copyright (c) 2011-2014 Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2016-2017 Research Organization for Information Science
-#                         and Technology (RIST). All rights reserved.
+# Copyright (c) 2016-2019 Research Organization for Information Science
+#                         and Technology (RIST).  All rights reserved.
 # Copyright (c) 2016-2018 FUJITSU LIMITED.  All rights reserved.
 # $COPYRIGHT$
 #
@@ -354,21 +354,18 @@ $constants->{MPI_COMBINER_NAMED} = 0;
 $constants->{MPI_COMBINER_DUP} = 1;
 $constants->{MPI_COMBINER_CONTIGUOUS} = 2;
 $constants->{MPI_COMBINER_VECTOR} = 3;
-$constants->{MPI_COMBINER_HVECTOR_INTEGER} = 4;
-$constants->{MPI_COMBINER_HVECTOR} = 5;
-$constants->{MPI_COMBINER_INDEXED} = 6;
-$constants->{MPI_COMBINER_HINDEXED_INTEGER} = 7;
-$constants->{MPI_COMBINER_HINDEXED} = 8;
-$constants->{MPI_COMBINER_INDEXED_BLOCK} = 9;
-$constants->{MPI_COMBINER_STRUCT_INTEGER} = 10;
-$constants->{MPI_COMBINER_STRUCT} = 11;
-$constants->{MPI_COMBINER_SUBARRAY} = 12;
-$constants->{MPI_COMBINER_DARRAY} = 13;
-$constants->{MPI_COMBINER_F90_REAL} = 14;
-$constants->{MPI_COMBINER_F90_COMPLEX} = 15;
-$constants->{MPI_COMBINER_F90_INTEGER} = 16;
-$constants->{MPI_COMBINER_RESIZED} = 17;
-$constants->{MPI_COMBINER_HINDEXED_BLOCK} = 18;
+$constants->{MPI_COMBINER_HVECTOR} = 4;
+$constants->{MPI_COMBINER_INDEXED} = 5;
+$constants->{MPI_COMBINER_HINDEXED} = 6;
+$constants->{MPI_COMBINER_INDEXED_BLOCK} = 7;
+$constants->{MPI_COMBINER_STRUCT} = 8;
+$constants->{MPI_COMBINER_SUBARRAY} = 9;
+$constants->{MPI_COMBINER_DARRAY} = 10;
+$constants->{MPI_COMBINER_F90_REAL} = 11;
+$constants->{MPI_COMBINER_F90_COMPLEX} = 12;
+$constants->{MPI_COMBINER_F90_INTEGER} = 13;
+$constants->{MPI_COMBINER_RESIZED} = 14;
+$constants->{MPI_COMBINER_HINDEXED_BLOCK} = 15;
 
 $constants->{MPI_COMM_TYPE_SHARED} = 0;
 $constants->{OMPI_COMM_TYPE_HWTHREAD} = 1;

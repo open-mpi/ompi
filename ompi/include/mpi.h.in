@@ -17,8 +17,8 @@
  *                         reserved.
  * Copyright (c) 2011-2013 INRIA.  All rights reserved.
  * Copyright (c) 2015      University of Houston. All rights reserved.
- * Copyright (c) 2015-2018 Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015-2019 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2017-2019 IBM Corporation.  All rights reserved.
  * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
@@ -630,13 +630,10 @@ enum {
   MPI_COMBINER_DUP,
   MPI_COMBINER_CONTIGUOUS,
   MPI_COMBINER_VECTOR,
-  MPI_COMBINER_HVECTOR_INTEGER,
   MPI_COMBINER_HVECTOR,
   MPI_COMBINER_INDEXED,
-  MPI_COMBINER_HINDEXED_INTEGER,
   MPI_COMBINER_HINDEXED,
   MPI_COMBINER_INDEXED_BLOCK,
-  MPI_COMBINER_STRUCT_INTEGER,
   MPI_COMBINER_STRUCT,
   MPI_COMBINER_SUBARRAY,
   MPI_COMBINER_DARRAY,
