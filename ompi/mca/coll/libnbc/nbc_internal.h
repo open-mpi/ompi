@@ -10,7 +10,7 @@
  *
  * Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2014      NVIDIA Corporation.  All rights reserved.
- * Copyright (c) 2015-2018 Research Organization for Information Science
+ * Copyright (c) 2015-2019 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
@@ -530,7 +530,7 @@ static inline int NBC_Unpack(void *src, int srccount, MPI_Datatype srctype, void
      * types are contiguous), we can just use a single memcpy */
     res = ompi_datatype_get_extent (srctype, &lb, &ext);
     if (OMPI_SUCCESS != res) {
-      NBC_Error ("MPI Error in MPI_Type_extent() (%i)", res);
+      NBC_Error ("MPI Error in MPI_Type_get_extent() (%i)", res);
       return res;
     }
 

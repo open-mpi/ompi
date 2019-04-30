@@ -624,7 +624,7 @@ typedef struct view_state
     ADIO_Offset disp;      /* file view params*/
     ADIO_Offset byte_off;
     ADIO_Offset sz;
-    ADIO_Offset ext;       /* preserved extent from MPI_Type_extent */
+    ADIO_Offset ext;       /* preserved extent from MPI_Type_get_extent */
     ADIO_Offset type_sz;
 
     /* Current state */

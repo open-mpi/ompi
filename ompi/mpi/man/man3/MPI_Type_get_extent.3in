@@ -74,10 +74,6 @@ Fortran only: Error status (integer).
 .ft R
 MPI_Type_get_extent returns the lower bound and the extent of \fIdatatype\fP. For either function, if either the \fIlb\fP or \fIextent\fP parameter cannot express the value to be returned (e.g., if the parameter is too small to hold the output value), it is set to MPI_UNDEFINED.
 
-.SH NOTE
-.ft R
-Use of MPI_Type_get_extent is strongly recommended over the old MPI-1 functions MPI_Type_extent and MPI_Type_lb.
-
 .SH FORTRAN 77 NOTES
 .ft R
 The MPI standard prescribes portable Fortran syntax for

@@ -375,7 +375,6 @@ PN2(void, MPI_Type_create_subarray, mpi_type_create_subarray, MPI_TYPE_CREATE_SU
 PN2(void, MPI_Type_create_resized, mpi_type_create_resized, MPI_TYPE_CREATE_RESIZED, (MPI_Fint *oldtype, MPI_Aint *lb, MPI_Aint *extent, MPI_Fint *newtype, MPI_Fint *ierr));
 PN2(void, MPI_Type_delete_attr, mpi_type_delete_attr, MPI_TYPE_DELETE_ATTR, (MPI_Fint *type, MPI_Fint *type_keyval, MPI_Fint *ierr));
 PN2(void, MPI_Type_dup, mpi_type_dup, MPI_TYPE_DUP, (MPI_Fint *type, MPI_Fint *newtype, MPI_Fint *ierr));
-PN2(void, MPI_Type_extent, mpi_type_extent, MPI_TYPE_EXTENT, (MPI_Fint *type, MPI_Fint *extent, MPI_Fint *ierr));
 PN2(void, MPI_Type_free, mpi_type_free, MPI_TYPE_FREE, (MPI_Fint *type, MPI_Fint *ierr));
 PN2(void, MPI_Type_free_keyval, mpi_type_free_keyval, MPI_TYPE_FREE_KEYVAL, (MPI_Fint *type_keyval, MPI_Fint *ierr));
 PN2(void, MPI_Type_get_attr, mpi_type_get_attr, MPI_TYPE_GET_ATTR, (MPI_Fint *type, MPI_Fint *type_keyval, MPI_Aint *attribute_val, ompi_fortran_logical_t *flag, MPI_Fint *ierr));
