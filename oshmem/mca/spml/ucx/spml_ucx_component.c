@@ -176,7 +176,7 @@ void mca_spml_ucx_async_cb(int fd, short event, void *cbdata)
 
     do {
         count = ucp_worker_progress(mca_spml_ucx.aux_ctx->ucp_worker);
-    }  while(count);
+    }  while (count);
 
     pthread_spin_unlock(&mca_spml_ucx.async_lock);
 }
