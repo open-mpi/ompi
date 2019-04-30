@@ -14,8 +14,8 @@
  * Copyright (c) 2011-2013 Universite Bordeaux 1
  * Copyright (c) 2013-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2016-2017 Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016-2019 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -86,7 +86,6 @@ PN2(void, MPI_Accumulate, mpi_accumulate, MPI_ACCUMULATE, (char *origin_addr, MP
 PN2(void, MPI_Add_error_class, mpi_add_error_class, MPI_ADD_ERROR_CLASS, (MPI_Fint *errorclass, MPI_Fint *ierr));
 PN2(void, MPI_Add_error_code, mpi_add_error_code, MPI_ADD_ERROR_CODE, (MPI_Fint *errorclass, MPI_Fint *errorcode, MPI_Fint *ierr));
 PN2(void, MPI_Add_error_string, mpi_add_error_string, MPI_ADD_ERROR_STRING, (MPI_Fint *errorcode, char *string, MPI_Fint *ierr, int l));
-PN2(void, MPI_Address, mpi_address, MPI_ADDRESS, (char *location, MPI_Fint *address, MPI_Fint *ierr));
 PN2(MPI_Aint, MPI_Aint_add, mpi_aint_add, MPI_AINT_ADD, (MPI_Aint *base, MPI_Aint *diff));
 PN2(MPI_Aint, MPI_Aint_diff, mpi_aint_diff, MPI_AINT_DIFF, (MPI_Aint *addr1, MPI_Aint *addr2));
 PN2(void, MPI_Allgather, mpi_allgather, MPI_ALLGATHER, (char *sendbuf, MPI_Fint *sendcount, MPI_Fint *sendtype, char *recvbuf, MPI_Fint *recvcount, MPI_Fint *recvtype, MPI_Fint *comm, MPI_Fint *ierr));
