@@ -191,12 +191,6 @@ int print_test_params (test_param_t *test)
 	if (test->type_oldtypes[i] == MPI_BYTE) {
 	    printf ( "%s)\n", "MPI_BYTE");
 	}
-	else if (test->type_oldtypes[i] == MPI_UB) {
-	    printf ( "%s)\n", "MPI_UB");
-	}
-	else if (test->type_oldtypes[i] == MPI_LB) {
-	    printf ( "%s)\n", "MPI_LB");
-	}
     }
     printf (
 	"Expected Start offset:  %lld\n"

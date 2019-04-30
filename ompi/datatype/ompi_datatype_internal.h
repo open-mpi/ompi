@@ -92,9 +92,6 @@
 #define OMPI_DATATYPE_MPI_C_DOUBLE_COMPLEX        0x2B
 #define OMPI_DATATYPE_MPI_C_LONG_DOUBLE_COMPLEX   0x2C
 
-#define OMPI_DATATYPE_MPI_LB                      0x2D
-#define OMPI_DATATYPE_MPI_UB                      0x2E
-
 /*
  * Datatypes from the MPI 3.0 standard
  */

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2015 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2015-2018 Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015-2019 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  *
  * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
@@ -72,8 +72,6 @@ OMPI_DECLSPEC ompi_fortran_08_handle_t OMPI_F08_HANDLE_ALIGNED ompi_f08_mpi_file
 OMPI_DECLSPEC ompi_fortran_08_handle_t OMPI_F08_HANDLE_ALIGNED ompi_f08_mpi_aint              = {OMPI_MPI_AINT};
 OMPI_DECLSPEC ompi_fortran_08_handle_t OMPI_F08_HANDLE_ALIGNED ompi_f08_mpi_byte              = {OMPI_MPI_BYTE};
 OMPI_DECLSPEC ompi_fortran_08_handle_t OMPI_F08_HANDLE_ALIGNED ompi_f08_mpi_packed            = {OMPI_MPI_PACKED};
-OMPI_DECLSPEC ompi_fortran_08_handle_t OMPI_F08_HANDLE_ALIGNED ompi_f08_mpi_ub                = {OMPI_MPI_UB};
-OMPI_DECLSPEC ompi_fortran_08_handle_t OMPI_F08_HANDLE_ALIGNED ompi_f08_mpi_lb                = {OMPI_MPI_LB};
 OMPI_DECLSPEC ompi_fortran_08_handle_t OMPI_F08_HANDLE_ALIGNED ompi_f08_mpi_char              = {OMPI_MPI_CHAR};
 OMPI_DECLSPEC ompi_fortran_08_handle_t OMPI_F08_HANDLE_ALIGNED ompi_f08_mpi_signed_char       = {OMPI_MPI_SIGNED_CHAR};
 OMPI_DECLSPEC ompi_fortran_08_handle_t OMPI_F08_HANDLE_ALIGNED ompi_f08_mpi_unsigned_char     = {OMPI_MPI_UNSIGNED_CHAR};

@@ -350,10 +350,10 @@ int main(int argc, char **argv)
 
 int test_file(char *filename, int mynod, int nprocs, char * cb_hosts, const char *msg, int verbose) 
 {
-    MPI_Datatype typevec, newtype, t[3];
-    int *buf, i, b[3], errcode, errors=0;
+    MPI_Datatype typevec, typevec2, newtype;
+    int *buf, i, b, errcode, errors=0;
     MPI_File fh;
-    MPI_Aint d[3];
+    MPI_Aint d;
     MPI_Status status;
     int SIZE = (STARTING_SIZE/nprocs)*nprocs;
     MPI_Info info;
@@ -376,15 +376,11 @@ int test_file(char *filename, int mynod, int nprocs, char * cb_hosts, const char
 
     MPI_Type_vector(SIZE/nprocs, 1, nprocs, MPI_INT, &typevec);
 
-    b[0] = b[1] = b[2] = 1;
-    d[0] = 0;
-    d[1] = mynod*sizeof(int);
-    d[2] = SIZE*sizeof(int);
-    t[0] = MPI_LB;
-    t[1] = typevec;
-    t[2] = MPI_UB;
+    b = 1;
+    d = mynod*sizeof(int);
 
-    MPI_Type_create_struct(3, b, d, t, &newtype);
+    MPI_Type_create_struct(1, &b, &d, typevec, &typevec2);
+    MPI_Type_create_resized(typevec2, 0, SIZE*sizeof(int), &newtype);
     MPI_Type_commit(&newtype);
     MPI_Type_free(&typevec);
 

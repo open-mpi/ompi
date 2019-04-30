@@ -68,8 +68,6 @@ ompi_predefined_datatype_t ompi_mpi_datatype_null =
 
 ompi_predefined_datatype_t ompi_mpi_unavailable =    OMPI_DATATYPE_INIT_PREDEFINED (UNAVAILABLE, 0);
 
-ompi_predefined_datatype_t ompi_mpi_lb =             OMPI_DATATYPE_INIT_PREDEFINED (LB, 0);
-ompi_predefined_datatype_t ompi_mpi_ub =             OMPI_DATATYPE_INIT_PREDEFINED (UB, 0);
 ompi_predefined_datatype_t ompi_mpi_char =           OMPI_DATATYPE_INIT_PREDEFINED (CHAR, OMPI_DATATYPE_FLAG_DATA_C);
 ompi_predefined_datatype_t ompi_mpi_signed_char =    OMPI_DATATYPE_INIT_PREDEFINED (SIGNED_CHAR, OMPI_DATATYPE_FLAG_DATA_C | OMPI_DATATYPE_FLAG_DATA_INT );
 ompi_predefined_datatype_t ompi_mpi_unsigned_char =  OMPI_DATATYPE_INIT_PREDEFINED (UNSIGNED_CHAR, OMPI_DATATYPE_FLAG_DATA_C | OMPI_DATATYPE_FLAG_DATA_INT );
@@ -363,9 +361,6 @@ const ompi_datatype_t* ompi_datatype_basicDatatypes[OMPI_DATATYPE_MPI_MAX_PREDEF
     [OMPI_DATATYPE_MPI_C_DOUBLE_COMPLEX] = &ompi_mpi_c_double_complex.dt,
     [OMPI_DATATYPE_MPI_C_LONG_DOUBLE_COMPLEX] = &ompi_mpi_c_long_double_complex.dt,
 
-    [OMPI_DATATYPE_MPI_LB] = &ompi_mpi_lb.dt,
-    [OMPI_DATATYPE_MPI_UB] = &ompi_mpi_ub.dt,
-
     /* MPI 3.0 types */
     [OMPI_DATATYPE_MPI_COUNT] = &ompi_mpi_count.dt,
 
@@ -557,98 +552,96 @@ int32_t ompi_datatype_init( void )
     MOOG(datatype_null, 0);
     MOOG(byte, 1);
     MOOG(packed, 2);
-    MOOG(ub, 3);
-    MOOG(lb, 4);
-    MOOG(character, 5);
-    MOOG(logical, 6);
-    MOOG(integer, 7);
-    MOOG(integer1, 8);
-    MOOG(integer2, 9);
-    MOOG(integer4, 10);
-    MOOG(integer8, 11);
-    MOOG(integer16, 12);
-    MOOG(real, 13);
-    MOOG(real4, 14);
-    MOOG(real8, 15);
-    MOOG(real16, 16);
-    MOOG(dblprec, 17);
-    MOOG(cplex, 18);
-    MOOG(complex8, 19);
-    MOOG(complex16, 20);
-    MOOG(complex32, 21);
-    MOOG(dblcplex, 22);
-    MOOG(2real, 23);
-    MOOG(2dblprec, 24);
-    MOOG(2integer, 25);
-    MOOG(2cplex, 26);
-    MOOG(2dblcplex, 27);
-    MOOG(real2, 28);
-    MOOG(logical1, 29);
-    MOOG(logical2, 30);
-    MOOG(logical4, 31);
-    MOOG(logical8, 32);
+    MOOG(character, 3);
+    MOOG(logical, 4);
+    MOOG(integer, 5);
+    MOOG(integer1, 6);
+    MOOG(integer2, 7);
+    MOOG(integer4, 8);
+    MOOG(integer8, 9);
+    MOOG(integer16, 10);
+    MOOG(real, 11);
+    MOOG(real4, 12);
+    MOOG(real8, 13);
+    MOOG(real16, 14);
+    MOOG(dblprec, 15);
+    MOOG(cplex, 16);
+    MOOG(complex8, 17);
+    MOOG(complex16, 18);
+    MOOG(complex32, 19);
+    MOOG(dblcplex, 20);
+    MOOG(2real, 21);
+    MOOG(2dblprec, 22);
+    MOOG(2integer, 23);
+    MOOG(2cplex, 24);
+    MOOG(2dblcplex, 25);
+    MOOG(real2, 26);
+    MOOG(logical1, 27);
+    MOOG(logical2, 28);
+    MOOG(logical4, 29);
+    MOOG(logical8, 30);
 
     /* Now the C types */
 
-    MOOG(wchar, 33);
-    MOOG(char, 34);
-    MOOG(unsigned_char, 35);
-    MOOG(signed_char, 36);
-    MOOG(short, 37);
-    MOOG(unsigned_short, 38);
-    MOOG(int, 39);
-    MOOG(unsigned, 40);
-    MOOG(long, 41);
-    MOOG(unsigned_long, 42);
-    MOOG(long_long_int, 43);
-    MOOG(unsigned_long_long, 44);
+    MOOG(wchar, 31);
+    MOOG(char, 32);
+    MOOG(unsigned_char, 33);
+    MOOG(signed_char, 34);
+    MOOG(short, 35);
+    MOOG(unsigned_short, 36);
+    MOOG(int, 37);
+    MOOG(unsigned, 38);
+    MOOG(long, 39);
+    MOOG(unsigned_long, 40);
+    MOOG(long_long_int, 41);
+    MOOG(unsigned_long_long, 42);
 
-    MOOG(float, 45);
-    MOOG(double, 46);
-    MOOG(long_double, 47);
+    MOOG(float, 43);
+    MOOG(double, 44);
+    MOOG(long_double, 45);
 
-    MOOG(float_int, 48);
-    MOOG(double_int, 49);
-    MOOG(longdbl_int, 50);
-    MOOG(long_int, 51);
-    MOOG(2int, 52);
-    MOOG(short_int, 53);
+    MOOG(float_int, 46);
+    MOOG(double_int, 47);
+    MOOG(longdbl_int, 48);
+    MOOG(long_int, 49);
+    MOOG(2int, 50);
+    MOOG(short_int, 51);
 
     /* C++ types */
 
-    MOOG(cxx_bool, 54);
-    MOOG(cxx_cplex, 55);
-    MOOG(cxx_dblcplex, 56);
-    MOOG(cxx_ldblcplex, 57);
+    MOOG(cxx_bool, 52);
+    MOOG(cxx_cplex, 53);
+    MOOG(cxx_dblcplex, 54);
+    MOOG(cxx_ldblcplex, 55);
 
     /* MPI 2.2 types */
-    MOOG(int8_t, 58);
-    MOOG(uint8_t, 59);
-    MOOG(int16_t, 60);
-    MOOG(uint16_t, 61);
-    MOOG(int32_t, 62);
-    MOOG(uint32_t, 63);
-    MOOG(int64_t, 64);
-    MOOG(uint64_t, 65);
-    MOOG(aint, 66);
-    MOOG(offset, 67);
-    MOOG(c_bool, 68);
-    MOOG(c_float_complex, 69);
-    MOOG(c_double_complex, 70);
-    MOOG(c_long_double_complex, 71);
+    MOOG(int8_t, 56);
+    MOOG(uint8_t, 57);
+    MOOG(int16_t, 58);
+    MOOG(uint16_t, 59);
+    MOOG(int32_t, 60);
+    MOOG(uint32_t, 61);
+    MOOG(int64_t, 62);
+    MOOG(uint64_t, 63);
+    MOOG(aint, 64);
+    MOOG(offset, 65);
+    MOOG(c_bool, 66);
+    MOOG(c_float_complex, 67);
+    MOOG(c_double_complex, 68);
+    MOOG(c_long_double_complex, 69);
 
     /* MPI 3.0 types */
-    MOOG(count, 72);
+    MOOG(count, 70);
 
     /* Datatype missing in old Open MPI */
-    MOOG(complex4, 73);
+    MOOG(complex4, 71);
 
     /* Datatypes proposed to the MPI Forum in June 2017 for proposal in
      * the MPI 4.0 standard. As of February 2019, it is not accepted yet.
      * See https://github.com/mpi-forum/mpi-issues/issues/65 */
-    MOOG(short_float, 74);
-    MOOG(c_short_float_complex, 75);
-    MOOG(cxx_sfltcplex, 76);
+    MOOG(short_float, 72);
+    MOOG(c_short_float_complex, 73);
+    MOOG(cxx_sfltcplex, 74);
 
     /**
      * Now make sure all non-contiguous types are marked as such.
