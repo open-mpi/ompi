@@ -158,7 +158,6 @@ PN2(void, MPI_Dist_graph_create_adjacent, mpi_dist_graph_create_adjacent, MPI_DI
 PN2(void, MPI_Dist_graph_neighbors, mpi_dist_graph_neighbors, MPI_DIST_GRAPH_NEIGHBORS, (MPI_Fint* comm, MPI_Fint* maxindegree, MPI_Fint* sources, MPI_Fint* sourceweights, MPI_Fint* maxoutdegree, MPI_Fint* destinations, MPI_Fint* destweights, MPI_Fint *ierr));
 PN2(void, MPI_Dist_graph_neighbors_count, mpi_dist_graph_neighbors_count, MPI_DIST_GRAPH_NEIGHBORS_COUNT, (MPI_Fint *comm, MPI_Fint *inneighbors, MPI_Fint *outneighbors, ompi_fortran_logical_t *weighted, MPI_Fint *ierr));
 PN2(void, MPI_Errhandler_free, mpi_errhandler_free, MPI_ERRHANDLER_FREE, (MPI_Fint *errhandler, MPI_Fint *ierr));
-PN2(void, MPI_Errhandler_set, mpi_errhandler_set, MPI_ERRHANDLER_SET, (MPI_Fint *comm, MPI_Fint *errhandler, MPI_Fint *ierr));
 PN2(void, MPI_Error_class, mpi_error_class, MPI_ERROR_CLASS, (MPI_Fint *errorcode, MPI_Fint *errorclass, MPI_Fint *ierr));
 PN2(void, MPI_Error_string, mpi_error_string, MPI_ERROR_STRING, (MPI_Fint *errorcode, char *string, MPI_Fint *resultlen, MPI_Fint *ierr, int string_len));
 PN2(void, MPI_Exscan, mpi_exscan, MPI_EXSCAN, (char *sendbuf, char *recvbuf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *op, MPI_Fint *comm, MPI_Fint *ierr));
