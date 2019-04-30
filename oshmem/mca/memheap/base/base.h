@@ -221,10 +221,10 @@ static inline map_segment_t *memheap_find_va(void* va)
         s = &memheap_map->mem_segs[SYMB_SEG_INDEX];
     } else if (memheap_is_va_in_segment(va, HEAP_SEG_INDEX)) {
         s = &memheap_map->mem_segs[HEAP_SEG_INDEX];
-    } else if (memheap_map->n_segments - 2 > 0) {
+    } else if (memheap_map->n_segments >= MCA_MEMHEAP_SEG_COUNT) {
         s = bsearch(va,
-                    &memheap_map->mem_segs[SYMB_SEG_INDEX+1],
-                    memheap_map->n_segments - 2,
+                    &memheap_map->mem_segs[MCA_MEMHEAP_SEG_COUNT],
+                    memheap_map->n_segments - MCA_MEMHEAP_SEG_COUNT,
                     sizeof(*s),
                     mca_memheap_seg_cmp);
     } else {

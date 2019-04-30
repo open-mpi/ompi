@@ -389,10 +389,8 @@ void mca_spml_ucx_memuse_hook(void *addr, size_t length)
     }
 }
 
-sshmem_mkey_t *mca_spml_ucx_register(void* addr,
-                                         size_t size,
-                                         uint64_t shmid,
-                                         int *count)
+sshmem_mkey_t *mca_spml_ucx_register(void* addr, size_t size, uint64_t shmid,
+                                     int *count)
 {
     sshmem_mkey_t *mkeys;
     ucs_status_t status;
@@ -414,7 +412,7 @@ sshmem_mkey_t *mca_spml_ucx_register(void* addr,
     mem_seg = memheap_find_seg(segno);
 
     ucx_mkey = &mca_spml_ucx_ctx_default.ucp_peers[my_pe].mkeys[segno].key;
-    mkeys[0].spml_context = ucx_mkey;
+    mkeys->spml_context = ucx_mkey;
 
     /* if possible use mem handle already created by ucx allocator */
     if (MAP_SEGMENT_ALLOC_UCX != mem_seg->type) {
@@ -439,8 +437,8 @@ sshmem_mkey_t *mca_spml_ucx_register(void* addr,
         ucx_mkey->mem_h = (ucp_mem_h)mem_seg->context;
     }
 
-    status = ucp_rkey_pack(mca_spml_ucx.ucp_context, ucx_mkey->mem_h, 
-                           &mkeys[0].u.data, &len); 
+    status = ucp_rkey_pack(mca_spml_ucx.ucp_context, ucx_mkey->mem_h,
+                           &mkeys->u.data, &len);
     if (UCS_OK != status) {
         goto error_unmap;
     }
@@ -452,17 +450,16 @@ sshmem_mkey_t *mca_spml_ucx_register(void* addr,
     }
 
     status = ucp_ep_rkey_unpack(mca_spml_ucx_ctx_default.ucp_peers[oshmem_group_self->my_pe].ucp_conn,
-                                mkeys[0].u.data,
-                                &ucx_mkey->rkey);
+                                mkeys->u.data, &ucx_mkey->rkey);
     if (UCS_OK != status) {
         SPML_UCX_ERROR("failed to unpack rkey");
         goto error_unmap;
     }
 
-    mkeys[0].len     = len;
-    mkeys[0].va_base = addr;
-    *count = 1;
-    mca_spml_ucx_cache_mkey(&mca_spml_ucx_ctx_default, &mkeys[0], segno, my_pe);
+    mkeys->len     = len;
+    mkeys->va_base = addr;
+    *count         = 1;
+    mca_spml_ucx_cache_mkey(&mca_spml_ucx_ctx_default, mkeys, segno, my_pe);
     return mkeys;
 
 error_unmap:
@@ -477,31 +474,29 @@ int mca_spml_ucx_deregister(sshmem_mkey_t *mkeys)
 {
     spml_ucx_mkey_t   *ucx_mkey;
     map_segment_t *mem_seg;
-    int segno;
-    int my_pe = oshmem_my_proc_id();
 
     MCA_SPML_CALL(quiet(oshmem_ctx_default));
     if (!mkeys)
         return OSHMEM_SUCCESS;
 
-    if (!mkeys[0].spml_context)
+    if (!mkeys->spml_context)
         return OSHMEM_SUCCESS;
 
-    mem_seg  = memheap_find_va(mkeys[0].va_base);
-    ucx_mkey = (spml_ucx_mkey_t*)mkeys[0].spml_context;
+    mem_seg  = memheap_find_va(mkeys->va_base);
+    ucx_mkey = (spml_ucx_mkey_t*)mkeys->spml_context;
 
     if (OPAL_UNLIKELY(NULL == mem_seg)) {
         return OSHMEM_ERROR;
     }
-    
+
     if (MAP_SEGMENT_ALLOC_UCX != mem_seg->type) {
         ucp_mem_unmap(mca_spml_ucx.ucp_context, ucx_mkey->mem_h);
     }
     ucp_rkey_destroy(ucx_mkey->rkey);
     ucx_mkey->rkey = NULL;
 
-    if (0 < mkeys[0].len) {
-        ucp_rkey_buffer_release(mkeys[0].u.data);
+    if (0 < mkeys->len) {
+        ucp_rkey_buffer_release(mkeys->u.data);
     }
 
     free(mkeys);
@@ -552,8 +547,6 @@ int mca_spml_ucx_ctx_create(long options, shmem_ctx_t *ctx)
     ucp_ep_params_t ep_params;
     size_t i, j, nprocs = oshmem_num_procs();
     ucs_status_t err;
-    int my_pe = oshmem_my_proc_id();
-    size_t len;
     spml_ucx_mkey_t *ucx_mkey;
     sshmem_mkey_t *mkey;
     int rc = OSHMEM_ERROR;
