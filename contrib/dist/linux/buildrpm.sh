@@ -58,6 +58,9 @@
 #    file from the tarball specified on the command line. By default,
 #    the script will look for the specfile in the current directory.
 #
+# -R directory
+#    Specifies the top level RPM build direcotry.
+#
 # -h
 #    Prints script usage information.
 #
@@ -107,7 +110,7 @@ orig_param="$@"
 #
 # usage information
 #
-usage="Usage: $0 [-b][-o][-m][-d][-u][-s][-h] [-n name][-f lf_location][-t tm_location] tarball
+usage="Usage: $0 [-b][-o][-m][-d][-u][-s][-h] [-n name][-f lf_location][-t tm_location][-R directory] tarball
 
   -b
              build all-in-one binary RPM only (required for all other flags to work)
@@ -146,6 +149,9 @@ usage="Usage: $0 [-b][-o][-m][-d][-u][-s][-h] [-n name][-f lf_location][-t tm_lo
   -r parameter
              add custom RPM build parameter
 
+  -R directory
+             Specifies the top level RPM build direcotry.
+
   -h         print this message and exit
 
   tarball    path to Open MPI source tarball
@@ -155,8 +161,9 @@ usage="Usage: $0 [-b][-o][-m][-d][-u][-s][-h] [-n name][-f lf_location][-t tm_lo
 # parse args
 #
 libfabric_path=""
+rpmtopdir=
 
-while getopts bn:omif:t:dc:r:sh flag; do
+while getopts bn:omif:t:dc:r:sR:h flag; do
     case "$flag" in
       b) build_srpm="no"
          build_single="yes"
@@ -179,6 +186,8 @@ while getopts bn:omif:t:dc:r:sh flag; do
       c) configure_options="$configure_options $OPTARG"
          ;;
       r) configure_options="$rpmbuild_options $OPTARG"
+         ;;
+      R) rpmtopdir="$OPTARG"
          ;;
       s) unpack_spec="1"
          ;;
@@ -267,11 +276,16 @@ fi
 # Find where the top RPM-building directory is
 #
 
-rpmtopdir=
-file=~/.rpmmacros
-if test -r $file; then
-    rpmtopdir=${rpmtopdir:-"`grep %_topdir $file | awk '{ print $2 }'`"}
+# if the user did not specify an $rpmtopdir, check for an .rpmmacros file.
+if test "$rpmtopdir" == ""; then
+    file=~/.rpmmacros
+    if test -r $file; then
+        rpmtopdir=${rpmtopdir:-"`grep %_topdir $file | awk '{ print $2 }'`"}
+    fi
 fi
+
+# If needed, initialize the $rpmtopdir directory. If no $rpmtopdir was
+# specified, try various system-level defaults.
 if test "$rpmtopdir" != ""; then
 	rpmbuild_options="$rpmbuild_options --define '_topdir $rpmtopdir'"
     if test ! -d "$rpmtopdir"; then
