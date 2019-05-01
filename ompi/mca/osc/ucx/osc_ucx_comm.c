@@ -881,7 +881,7 @@ int ompi_osc_ucx_rput(const void *origin_addr, int origin_count,
 
     CHECK_VALID_RKEY(module, target, target_count);
 
-    rkey = (module->win_info_array[target]).rkey;
+    rkey = (module->state_info_array[target]).rkey;
 
     OMPI_OSC_UCX_REQUEST_ALLOC(win, ucx_req);
     assert(NULL != ucx_req);
@@ -942,7 +942,7 @@ int ompi_osc_ucx_rget(void *origin_addr, int origin_count,
 
     CHECK_VALID_RKEY(module, target, target_count);
 
-    rkey = (module->win_info_array[target]).rkey;
+    rkey = (module->state_info_array[target]).rkey;
 
     OMPI_OSC_UCX_REQUEST_ALLOC(win, ucx_req);
     assert(NULL != ucx_req);
