@@ -39,6 +39,9 @@ BEGIN_C_DECLS
 #define MCA_COMMON_UCX_PER_TARGET_OPS_THRESHOLD 1000
 #define MCA_COMMON_UCX_GLOBAL_OPS_THRESHOLD 1000
 
+#define UCX_VERSION(_major, _minor, _build) (((_major) * 100) + (_minor))
+
+
 #define _MCA_COMMON_UCX_QUOTE(_x) \
     # _x
 #define MCA_COMMON_UCX_QUOTE(_x) \

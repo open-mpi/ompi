@@ -226,3 +226,12 @@ SHMEM_TYPE_PUTMEM_NB(_put32, 4, shmem)
 SHMEM_TYPE_PUTMEM_NB(_put64, 8, shmem)
 SHMEM_TYPE_PUTMEM_NB(_put128, 16, shmem)
 SHMEM_TYPE_PUTMEM_NB(_putmem, 1, shmem)
+
+void shmemx_alltoall_global_nb(void *dest,
+                               const void *source,
+                               size_t size,
+                               long *counter)
+{
+    int rc = MCA_SPML_CALL(put_all_nb(dest, source, size, counter));
+    RUNTIME_CHECK_RC(rc);
+}
