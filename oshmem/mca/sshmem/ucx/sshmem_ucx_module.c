@@ -36,6 +36,11 @@ segment_create(map_segment_t *ds_buf,
                const char *file_name,
                size_t size);
 
+static int
+segment_hint_create(map_segment_t *ds_buf,
+                    const char *file_name,
+                    size_t size, long hint);
+
 static void *
 segment_attach(map_segment_t *ds_buf, sshmem_mkey_t *mkey);
 
@@ -54,12 +59,13 @@ module_finalize(void);
 mca_sshmem_ucx_module_t mca_sshmem_ucx_module = {
     /* super */
     {
-        module_init,
-        segment_create,
-        segment_attach,
-        segment_detach,
-        segment_unlink,
-        module_finalize
+        .module_init         = module_init,
+        .segment_create      = segment_create,
+        .segment_hint_create = segment_hint_create,
+        .segment_attach      = segment_attach,
+        .segment_detach      = segment_detach,
+        .unlink              = segment_unlink,
+        .module_finalize     = module_finalize
     }
 };
 
@@ -81,13 +87,11 @@ module_finalize(void)
 /* ////////////////////////////////////////////////////////////////////////// */
 
 static int
-segment_create(map_segment_t *ds_buf,
-               const char *file_name,
-               size_t size)
+segment_create_internal(map_segment_t *ds_buf, ucp_mem_map_params_t *params)
 {
     int rc = OSHMEM_SUCCESS;
     mca_spml_ucx_t *spml = (mca_spml_ucx_t *)mca_spml.self;
-    ucp_mem_map_params_t mem_map_params;
+    ucp_mem_attr_t mem_attr;
     ucp_mem_h mem_h;
     ucs_status_t status;
 
@@ -96,26 +100,21 @@ segment_create(map_segment_t *ds_buf,
     /* init the contents of map_segment_t */
     shmem_ds_reset(ds_buf);
 
-    mem_map_params.field_mask = UCP_MEM_MAP_PARAM_FIELD_ADDRESS |
-                                UCP_MEM_MAP_PARAM_FIELD_LENGTH |
-                                UCP_MEM_MAP_PARAM_FIELD_FLAGS;
-
-    mem_map_params.address    = (void *)mca_sshmem_base_start_address;
-    mem_map_params.length     = size;
-    mem_map_params.flags      = UCP_MEM_MAP_ALLOCATE|UCP_MEM_MAP_FIXED;
-
     if (spml->heap_reg_nb) {
-        mem_map_params.flags |= UCP_MEM_MAP_NONBLOCK;
+        params->flags |= UCP_MEM_MAP_NONBLOCK;
     }
 
-    status = ucp_mem_map(spml->ucp_context, &mem_map_params, &mem_h);
+    status = ucp_mem_map(spml->ucp_context, params, &mem_h);
     if (UCS_OK != status) {
         rc = OSHMEM_ERROR;
         goto out;
     }
 
-    ds_buf->super.va_base = mem_map_params.address;
-    ds_buf->seg_size      = size;
+    mem_attr.field_mask = UCP_MEM_ATTR_FIELD_ADDRESS | UCP_MEM_ATTR_FIELD_LENGTH;
+    status = ucp_mem_query(mem_h, &mem_attr);
+
+    ds_buf->super.va_base = mem_attr.address;
+    ds_buf->seg_size      = mem_attr.length;
     ds_buf->super.va_end  = (void*)((uintptr_t)ds_buf->super.va_base + ds_buf->seg_size);
     ds_buf->context       = mem_h;
     ds_buf->type          = MAP_SEGMENT_ALLOC_UCX;
@@ -131,6 +130,46 @@ out:
            ds_buf->seg_id, ds_buf->super.va_base, (unsigned long)ds_buf->seg_size)
       );
     return rc;
+}
+
+static int
+segment_create(map_segment_t *ds_buf,
+               const char *file_name,
+               size_t size)
+{
+    ucp_mem_map_params_t mem_map_params = {
+        .field_mask = UCP_MEM_MAP_PARAM_FIELD_ADDRESS |
+                      UCP_MEM_MAP_PARAM_FIELD_LENGTH |
+                      UCP_MEM_MAP_PARAM_FIELD_FLAGS,
+
+        .address    = (void *)mca_sshmem_base_start_address,
+        .length     = size,
+        .flags      = UCP_MEM_MAP_ALLOCATE|UCP_MEM_MAP_FIXED,
+    };
+
+    return segment_create_internal(ds_buf, &mem_map_params);
+}
+
+static int
+segment_hint_create(map_segment_t *ds_buf,
+                    const char *file_name,
+                    size_t size, long hint)
+{
+    return OSHMEM_ERR_NOT_IMPLEMENTED;
+#if 0
+    /* TODO: enable DM allocation when implemented */
+    ucp_mem_map_params_t mem_map_params = {
+        .field_mask = UCP_MEM_MAP_PARAM_FIELD_ADDRESS |
+                      UCP_MEM_MAP_PARAM_FIELD_LENGTH |
+                      UCP_MEM_MAP_PARAM_FIELD_FLAGS,
+
+        .address    = NULL,
+        .length     = size,
+        .flags      = UCP_MEM_MAP_ALLOCATE,
+    };
+
+    return segment_create_internal(ds_buf, &mem_map_params);
+#endif
 }
 
 static void *

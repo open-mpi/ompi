@@ -117,6 +117,7 @@ typedef struct map_segment {
     segment_type_t       type;           /* type of the segment */
     void                *context;        /* allocator can use this field to store
                                             its own private data */
+    struct mca_memheap_base_module_t *memheap;  /* memheap interface to manage memory */
 } map_segment_t;
 
 END_C_DECLS

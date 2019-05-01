@@ -61,7 +61,7 @@ typedef struct spml_ucx_cached_mkey spml_ucx_cached_mkey_t;
 
 struct ucp_peer {
     ucp_ep_h                 ucp_conn;
-    spml_ucx_cached_mkey_t   mkeys[MCA_MEMHEAP_SEG_COUNT];
+    spml_ucx_cached_mkey_t   mkeys[MCA_MEMHEAP_MAX_SEGMENTS];
 };
 typedef struct ucp_peer ucp_peer_t;
  
@@ -153,14 +153,6 @@ extern int mca_spml_ucx_fence(shmem_ctx_t ctx);
 extern int mca_spml_ucx_quiet(shmem_ctx_t ctx);
 extern int spml_ucx_default_progress(void);
 extern int spml_ucx_ctx_progress(void);
-
-static void mca_spml_ucx_cache_mkey(mca_spml_ucx_ctx_t *ucx_ctx, sshmem_mkey_t *mkey, uint32_t segno, int dst_pe)
-{
-    ucp_peer_t *peer;
-
-    peer = &(ucx_ctx->ucp_peers[dst_pe]);
-    mkey_segment_init(&peer->mkeys[segno].super, mkey, segno);
-}
 
 static inline spml_ucx_mkey_t * 
 mca_spml_ucx_get_mkey(shmem_ctx_t ctx, int pe, void *va, void **rva, mca_spml_ucx_t* module)

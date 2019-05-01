@@ -93,6 +93,27 @@ typedef int
                                               size_t size);
 
 /**
+ * create a new shared memory segment with hint and initialize members
+ * in structure pointed to by ds_buf.
+ *
+ * @param ds_buf               pointer to map_segment_t typedef'd structure
+ *                             defined in shmem_types.h (OUT).
+ *
+ * @param file_name file_name  unique string identifier that must be a valid,
+ *                             writable path (IN).
+ *
+ * @param size                 size of the shared memory segment.
+ *
+ * @param size                 hint of the shared memory segment.
+ *
+ * @return OSHMEM_SUCCESS on success.
+ */
+typedef int
+(*mca_sshmem_base_module_segment_hint_create_fn_t)(map_segment_t *ds_buf,
+                                                   const char *file_name,
+                                                   size_t size, long hint);
+
+/**
  * attach to an existing shared memory segment initialized by segment_create.
  *
  * @param ds_buf  pointer to initialized map_segment_t typedef'd
@@ -136,12 +157,13 @@ typedef int (*mca_sshmem_base_module_finalize_fn_t)(void);
  * structure for shmem modules
  */
 struct mca_sshmem_base_module_2_0_0_t {
-    mca_sshmem_base_module_init_fn_t            module_init;
-    mca_sshmem_base_module_segment_create_fn_t  segment_create;
-    mca_sshmem_base_module_segment_attach_fn_t  segment_attach;
-    mca_sshmem_base_module_segment_detach_fn_t  segment_detach;
-    mca_sshmem_base_module_unlink_fn_t          unlink;
-    mca_sshmem_base_module_finalize_fn_t        module_finalize;
+    mca_sshmem_base_module_init_fn_t                 module_init;
+    mca_sshmem_base_module_segment_create_fn_t       segment_create;
+    mca_sshmem_base_module_segment_hint_create_fn_t  segment_hint_create;
+    mca_sshmem_base_module_segment_attach_fn_t       segment_attach;
+    mca_sshmem_base_module_segment_detach_fn_t       segment_detach;
+    mca_sshmem_base_module_unlink_fn_t               unlink;
+    mca_sshmem_base_module_finalize_fn_t             module_finalize;
 };
 
 /**

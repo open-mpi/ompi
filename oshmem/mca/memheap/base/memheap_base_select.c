@@ -21,6 +21,14 @@
 #include "oshmem/util/oshmem_util.h"
 #include "oshmem/mca/memheap/memheap.h"
 #include "oshmem/mca/memheap/base/base.h"
+#include "oshmem/include/shmemx.h"
+
+
+static struct {
+    long atomic_heap_size;
+} mca_memheap_base_config = {
+    .atomic_heap_size = 4096
+};
 
 mca_memheap_base_module_t mca_memheap = {0};
 
@@ -48,6 +56,13 @@ int mca_memheap_base_select()
     memheap_context_t *context;
     mca_memheap_base_component_t *best_component = NULL;
     mca_memheap_base_module_t *best_module = NULL;
+
+    mca_base_var_register("oshmem", "memheap", "base", "atomic_heap_size",
+                          "Size of heap used for atomic operations",
+                          MCA_BASE_VAR_TYPE_LONG, NULL, 0,
+                          MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_3,
+                          MCA_BASE_VAR_SCOPE_LOCAL,
+                          &mca_memheap_base_config.atomic_heap_size);
 
     if( OPAL_SUCCESS != mca_base_select("memheap", oshmem_memheap_base_framework.framework_output,
                                         &oshmem_memheap_base_framework.framework_components,
@@ -90,6 +105,19 @@ static size_t _memheap_size(void)
     return (size_t) memheap_align(oshmem_shmem_info_env.symmetric_heap_size);
 }
 
+static size_t _memheap_hint_size(long hint)
+{
+    switch(hint) {
+    case SHMEM_HINT_NONE:
+        return _memheap_size();
+    case SHMEM_HINT_ATOMICS:
+        return mca_memheap_base_config.atomic_heap_size;
+    default:
+        return 0;
+    }
+    return (size_t) memheap_align(oshmem_shmem_info_env.symmetric_heap_size);
+}
+
 static memheap_context_t* _memheap_create(void)
 {
     int rc = OSHMEM_SUCCESS;
@@ -102,10 +130,22 @@ static memheap_context_t* _memheap_create(void)
                       (unsigned long long)user_size, MEMHEAP_BASE_MIN_SIZE);
         return NULL ;
     }
+
     /* Inititialize symmetric area */
     if (OSHMEM_SUCCESS == rc) {
         rc = mca_memheap_base_alloc_init(&mca_memheap_base_map,
                                          user_size + MEMHEAP_BASE_PRIVATE_SIZE);
+    }
+
+    /* Inititialize atomic symmetric area */
+    if (OSHMEM_SUCCESS == rc) {
+        rc = mca_memheap_base_hint_alloc_init(&mca_memheap_base_map,
+                                              _memheap_hint_size(SHMEM_HINT_ATOMICS),
+                                              SHMEM_HINT_ATOMICS);
+        if (rc == OSHMEM_ERR_NOT_IMPLEMENTED) {
+            /* do not treat NOT_IMPLEMENTED as error */
+            rc = OSHMEM_SUCCESS;
+        }
     }
 
     /* Inititialize static/global variables area */

@@ -33,6 +33,31 @@ int mca_memheap_base_alloc_init(mca_memheap_map_t *map, size_t size)
 
     if (OSHMEM_SUCCESS == ret) {
         map->n_segments++;
+        s->memheap = &mca_memheap;
+        MEMHEAP_VERBOSE(1,
+                        "Memheap alloc memory: %llu byte(s), %d segments by method: %d",
+                        (unsigned long long)size, map->n_segments, s->type);
+    }
+
+    free(seg_filename);
+
+    return ret;
+}
+
+int mca_memheap_base_hint_alloc_init(mca_memheap_map_t *map, size_t size, long hint)
+{
+    int ret = OSHMEM_SUCCESS;
+    char * seg_filename = NULL;
+
+    assert(map);
+    assert(SYMB_SEG_INDEX <= map->n_segments);
+
+    map_segment_t *s = &map->mem_segs[map->n_segments];
+    seg_filename = oshmem_get_unique_file_name(oshmem_my_proc_id());
+    ret = mca_sshmem_segment_hint_create(s, seg_filename, size, hint);
+
+    if (OSHMEM_SUCCESS == ret) {
+        map->n_segments++;
         MEMHEAP_VERBOSE(1,
                         "Memheap alloc memory: %llu byte(s), %d segments by method: %d",
                         (unsigned long long)size, map->n_segments, s->type);

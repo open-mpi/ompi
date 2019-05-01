@@ -29,6 +29,22 @@ mca_sshmem_segment_create(map_segment_t *ds_buf,
     return mca_sshmem_base_module->segment_create(ds_buf, file_name, size);
 }
 
+int
+mca_sshmem_segment_hint_create(map_segment_t *ds_buf,
+                               const char *file_name,
+                               size_t size, long hint)
+{
+    if (!mca_sshmem_base_selected) {
+        return OSHMEM_ERROR;
+    }
+
+    if (!mca_sshmem_base_module->segment_hint_create) {
+        return OSHMEM_ERR_NOT_IMPLEMENTED;
+    }
+
+    return mca_sshmem_base_module->segment_hint_create(ds_buf, file_name, size, hint);
+}
+
 void *
 mca_sshmem_segment_attach(map_segment_t *ds_buf, sshmem_mkey_t *mkey)
 {

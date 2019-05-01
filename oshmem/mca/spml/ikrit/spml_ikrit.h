@@ -75,7 +75,7 @@ struct mxm_peer {
     uint8_t             need_fence;
     int32_t             n_active_puts;
     opal_list_item_t    link;
-    spml_ikrit_mkey_t   mkeys[MCA_MEMHEAP_SEG_COUNT];
+    spml_ikrit_mkey_t   mkeys[MCA_MEMHEAP_MAX_SEGMENTS];
 };
 
 typedef struct mxm_peer mxm_peer_t;
