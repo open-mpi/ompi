@@ -86,6 +86,9 @@ Please, do NOT set the same settings with parameters and config vars.
    file from the tarball specified on the command line. By default,
    the script will look for the specfile in the current directory.
 
+-R directory
+   Specifies the top level RPM build direcotry.
+
 -h
    Prints script usage information.
 
