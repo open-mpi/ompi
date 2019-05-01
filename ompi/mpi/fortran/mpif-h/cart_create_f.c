@@ -12,6 +12,7 @@
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2019 IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -96,5 +97,5 @@ void ompi_cart_create_f(MPI_Fint *old_comm, MPI_Fint *ndims, MPI_Fint *dims,
      * Need to convert back into Fortran, to not surprise the user
      */
     OMPI_ARRAY_FINT_2_INT_CLEANUP(dims);
-    OMPI_ARRAY_INT_2_LOGICAL(periods, size);
+    OMPI_ARRAY_LOGICAL_2_INT_CLEANUP(periods); 
 }
