@@ -216,10 +216,7 @@ static inline void mca_pml_ob1_send_request_fini (mca_pml_ob1_send_request_t *se
 {
     /*  Let the base handle the reference counts */
     MCA_PML_BASE_SEND_REQUEST_FINI((&(sendreq)->req_send));
-    if (sendreq->rdma_frag) {
-        MCA_PML_OB1_RDMA_FRAG_RETURN (sendreq->rdma_frag);
-        sendreq->rdma_frag = NULL;
-    }
+    assert( NULL == sendreq->rdma_frag );
 }
 
 /*

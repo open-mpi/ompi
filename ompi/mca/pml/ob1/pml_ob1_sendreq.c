@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2018 The University of Tennessee and The University
+ * Copyright (c) 2004-2019 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
@@ -40,7 +40,6 @@
 #include "pml_ob1_recvreq.h"
 #include "ompi/mca/bml/base/base.h"
 #include "ompi/memchecker.h"
-
 
 OBJ_CLASS_INSTANCE(mca_pml_ob1_send_range_t, opal_free_list_item_t,
         NULL, NULL);
@@ -148,10 +147,7 @@ static void mca_pml_ob1_send_request_destruct(mca_pml_ob1_send_request_t* req)
 {
     OBJ_DESTRUCT(&req->req_send_ranges);
     OBJ_DESTRUCT(&req->req_send_range_lock);
-    if (req->rdma_frag) {
-        MCA_PML_OB1_RDMA_FRAG_RETURN(req->rdma_frag);
-        req->rdma_frag = NULL;
-    }
+    assert( NULL == req->rdma_frag );
 }
 
 OBJ_CLASS_INSTANCE( mca_pml_ob1_send_request_t,
@@ -262,12 +258,20 @@ mca_pml_ob1_rget_completion (mca_pml_ob1_rdma_frag_t *frag, int64_t rdma_length)
 {
     mca_pml_ob1_send_request_t *sendreq = (mca_pml_ob1_send_request_t *) frag->rdma_req;
     mca_bml_base_btl_t *bml_btl = frag->rdma_bml;
+    size_t frag_remaining;
 
     /* count bytes of user data actually delivered and check for request completion */
     if (OPAL_LIKELY(0 < rdma_length)) {
-        OPAL_THREAD_ADD_FETCH_SIZE_T(&sendreq->req_bytes_delivered, (size_t) rdma_length);
+        frag_remaining = OPAL_THREAD_SUB_FETCH_SIZE_T(&frag->rdma_bytes_remaining, (size_t)rdma_length);
         SPC_USER_OR_MPI(sendreq->req_send.req_base.req_ompi.req_status.MPI_TAG, (ompi_spc_value_t)rdma_length,
                         OMPI_SPC_BYTES_SENT_USER, OMPI_SPC_BYTES_SENT_MPI);
+
+        if( 0 == frag_remaining ) {  /* this frag is now completed. Update the request and be done */
+            OPAL_THREAD_ADD_FETCH_SIZE_T(&sendreq->req_bytes_delivered, frag->rdma_length);
+            if( sendreq->rdma_frag == frag )
+                sendreq->rdma_frag = NULL;
+            MCA_PML_OB1_RDMA_FRAG_RETURN(frag);
+        }
     }
 
     send_request_pml_complete_check(sendreq);
@@ -701,6 +705,7 @@ int mca_pml_ob1_send_request_start_rdma( mca_pml_ob1_send_request_t* sendreq,
     frag->rdma_req = sendreq;
     frag->rdma_bml = bml_btl;
     frag->rdma_length = size;
+    frag->rdma_bytes_remaining = size;
     frag->cbfunc = mca_pml_ob1_rget_completion;
     /* do not store the local handle in the fragment. it will be released by mca_pml_ob1_free_rdma_resources */
 

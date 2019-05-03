@@ -577,10 +577,6 @@ void mca_pml_ob1_recv_frag_callback_ack(mca_btl_base_module_t* btl,
      * then throttle sends */
     if(hdr->hdr_common.hdr_flags & MCA_PML_OB1_HDR_FLAGS_NORDMA) {
         if (NULL != sendreq->rdma_frag) {
-            if (NULL != sendreq->rdma_frag->local_handle) {
-                mca_bml_base_deregister_mem (sendreq->req_rdma[0].bml_btl, sendreq->rdma_frag->local_handle);
-                sendreq->rdma_frag->local_handle = NULL;
-            }
             MCA_PML_OB1_RDMA_FRAG_RETURN(sendreq->rdma_frag);
             sendreq->rdma_frag = NULL;
         }
