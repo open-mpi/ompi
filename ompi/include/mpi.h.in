@@ -17,8 +17,8 @@
  *                         reserved.
  * Copyright (c) 2011-2013 INRIA.  All rights reserved.
  * Copyright (c) 2015      University of Houston. All rights reserved.
- * Copyright (c) 2015-2018 Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015-2019 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2017-2019 IBM Corporation.  All rights reserved.
  * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
@@ -702,13 +702,25 @@ enum {
   MPI_COMBINER_DUP,
   MPI_COMBINER_CONTIGUOUS,
   MPI_COMBINER_VECTOR,
+#if (OMPI_ENABLE_MPI1_COMPAT || OMPI_BUILDING)
   MPI_COMBINER_HVECTOR_INTEGER,
+#else
+  OMPI_WAS_MPI_COMBINER_HVECTOR_INTEGER, /* preserve ABI compatibility */
+#endif
   MPI_COMBINER_HVECTOR,
   MPI_COMBINER_INDEXED,
+#if (OMPI_ENABLE_MPI1_COMPAT || OMPI_BUILDING)
   MPI_COMBINER_HINDEXED_INTEGER,
+#else
+  OMPI_WAS_MPI_COMBINER_HINDEXED_INTEGER, /* preserve ABI compatibility */
+#endif
   MPI_COMBINER_HINDEXED,
   MPI_COMBINER_INDEXED_BLOCK,
+#if (OMPI_ENABLE_MPI1_COMPAT || OMPI_BUILDING)
   MPI_COMBINER_STRUCT_INTEGER,
+#else
+  OMPI_WAS_MPI_COMBINER_STRUCT_INTEGER, /* preserve ABI compatibility */
+#endif
   MPI_COMBINER_STRUCT,
   MPI_COMBINER_SUBARRAY,
   MPI_COMBINER_DARRAY,
@@ -718,6 +730,20 @@ enum {
   MPI_COMBINER_RESIZED,
   MPI_COMBINER_HINDEXED_BLOCK
 };
+
+#if (OMPI_ENABLE_MPI1_COMPAT || OMPI_BUILDING)
+#else
+/* If not building or configured --enable-mpi1-compatibility, then
+ * we don't want these datatypes, instead we define MPI_COMBINER_*_INTEGER
+ * to our Static Assert message if the compiler supports
+ * that staticly assert with a nice message.
+ */
+#    if (OMPI_REMOVED_USE_STATIC_ASSERT)
+#        define MPI_COMBINER_HVECTOR_INTEGER THIS_SYMBOL_WAS_REMOVED_IN_MPI30(MPI_COMBINER_HVECTOR_INTEGER, MPI_COMBINER_HVECTOR);
+#        define MPI_COMBINER_HINDEXED_INTEGER THIS_SYMBOL_WAS_REMOVED_IN_MPI30(MPI_COMBINER_HINDEXED_INTEGER, MPI_COMBINER_HINDEXED);
+#        define MPI_COMBINER_STRUCT_INTEGER THIS_SYMBOL_WAS_REMOVED_IN_MPI30(MPI_COMBINER_STRUCT_INTEGER, MPI_COMBINER_STRUCT);
+#    endif /* OMPI_REMOVED_USE_STATIC_ASSERT */
+#endif /* Removed datatypes */
 
 /*
  * Communicator split type constants.
