@@ -39,6 +39,7 @@
 #include "orte/util/show_help.h"
 
 #include "oshmem/mca/spml/ucx/spml_ucx_component.h"
+#include "oshmem/mca/sshmem/ucx/sshmem_ucx.h"
 
 /* Turn ON/OFF debug output from build (default 0) */
 #ifndef SPML_UCX_PUT_DEBUG
@@ -270,7 +271,7 @@ int mca_spml_ucx_add_procs(ompi_proc_t** procs, size_t nprocs)
         OSHMEM_PROC_DATA(procs[i])->num_transports = 1;
         OSHMEM_PROC_DATA(procs[i])->transport_ids = spml_ucx_transport_ids;
 
-        for (j = 0; j < MCA_MEMHEAP_SEG_COUNT; j++) {
+        for (j = 0; j < MCA_MEMHEAP_MAX_SEGMENTS; j++) {
             mca_spml_ucx_ctx_default.ucp_peers[i].mkeys[j].key.rkey = NULL;
         }
 
@@ -441,7 +442,8 @@ sshmem_mkey_t *mca_spml_ucx_register(void* addr,
         }
 
     } else {
-        ucx_mkey->mem_h = (ucp_mem_h)mem_seg->context;
+        mca_sshmem_ucx_segment_context_t *ctx = mem_seg->context;
+        ucx_mkey->mem_h = ctx->ucp_memh;
     }
 
     status = ucp_rkey_pack(mca_spml_ucx.ucp_context, ucx_mkey->mem_h,
@@ -592,17 +594,19 @@ static int mca_spml_ucx_ctx_create_common(long options, mca_spml_ucx_ctx_t **ucx
             goto error2;
         }
 
-        for (j = 0; j < MCA_MEMHEAP_SEG_COUNT; j++) {
+        for (j = 0; j < memheap_map->n_segments; j++) {
             mkey = &memheap_map->mem_segs[j].mkeys_cache[i][0];
             ucx_mkey = &ucx_ctx->ucp_peers[i].mkeys[j].key;
-            err = ucp_ep_rkey_unpack(ucx_ctx->ucp_peers[i].ucp_conn,
-                                     mkey->u.data,
-                                     &ucx_mkey->rkey);
-            if (UCS_OK != err) {
-                SPML_UCX_ERROR("failed to unpack rkey");
-                goto error2;
+            if (mkey->u.data) {
+                err = ucp_ep_rkey_unpack(ucx_ctx->ucp_peers[i].ucp_conn,
+                                         mkey->u.data,
+                                         &ucx_mkey->rkey);
+                if (UCS_OK != err) {
+                    SPML_UCX_ERROR("failed to unpack rkey");
+                    goto error2;
+                }
+                mca_spml_ucx_cache_mkey(ucx_ctx, mkey, j, i);
             }
-            mca_spml_ucx_cache_mkey(ucx_ctx, mkey, j, i);
         }
     }
 
@@ -750,6 +754,8 @@ int mca_spml_ucx_fence(shmem_ctx_t ctx)
     ucs_status_t err;
     mca_spml_ucx_ctx_t *ucx_ctx = (mca_spml_ucx_ctx_t *)ctx;
 
+    opal_atomic_wmb();
+
     err = ucp_worker_fence(ucx_ctx->ucp_worker);
     if (UCS_OK != err) {
          SPML_UCX_ERROR("fence failed: %s", ucs_status_string(err));
@@ -763,6 +769,8 @@ int mca_spml_ucx_quiet(shmem_ctx_t ctx)
 {
     int ret;
     mca_spml_ucx_ctx_t *ucx_ctx = (mca_spml_ucx_ctx_t *)ctx;
+
+    opal_atomic_wmb();
 
     ret = opal_common_ucx_worker_flush(ucx_ctx->ucp_worker);
     if (OMPI_SUCCESS != ret) {

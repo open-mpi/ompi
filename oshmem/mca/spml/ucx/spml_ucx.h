@@ -62,7 +62,7 @@ typedef struct spml_ucx_cached_mkey spml_ucx_cached_mkey_t;
 
 struct ucp_peer {
     ucp_ep_h                 ucp_conn;
-    spml_ucx_cached_mkey_t   mkeys[MCA_MEMHEAP_SEG_COUNT];
+    spml_ucx_cached_mkey_t   mkeys[MCA_MEMHEAP_MAX_SEGMENTS];
 };
 typedef struct ucp_peer ucp_peer_t;
  

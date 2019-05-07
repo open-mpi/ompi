@@ -138,6 +138,8 @@ typedef struct mca_memheap_base_module_t mca_memheap_base_module_t;
 
 OSHMEM_DECLSPEC extern mca_memheap_base_module_t mca_memheap;
 
+int mca_memheap_alloc_with_hint(size_t size, long hint, void**);
+
 static inline int mca_memheap_base_mkey_is_shm(sshmem_mkey_t *mkey)
 {
     return (0 == mkey->len) && (MAP_SEGMENT_SHM_INVALID != (int)mkey->u.key);

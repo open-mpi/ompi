@@ -18,13 +18,13 @@
 int
 mca_sshmem_segment_create(map_segment_t *ds_buf,
                           const char *file_name,
-                          size_t size)
+                          size_t size, long hint)
 {
     if (!mca_sshmem_base_selected) {
         return OSHMEM_ERROR;
     }
 
-    return mca_sshmem_base_module->segment_create(ds_buf, file_name, size);
+    return mca_sshmem_base_module->segment_create(ds_buf, file_name, size, hint);
 }
 
 void *
