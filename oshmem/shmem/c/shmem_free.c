@@ -18,6 +18,7 @@
 #include "oshmem/runtime/runtime.h"
 
 #include "oshmem/mca/memheap/memheap.h"
+#include "oshmem/mca/memheap/base/base.h"
 
 #if OSHMEM_PROFILING
 #include "oshmem/include/pshmem.h"
@@ -41,6 +42,7 @@ void shfree(void* ptr)
 static inline void _shfree(void* ptr)
 {
     int rc;
+    map_segment_t *s;
 
     RUNTIME_CHECK_INIT();
     if (NULL == ptr) {
@@ -55,7 +57,17 @@ static inline void _shfree(void* ptr)
 
     SHMEM_MUTEX_LOCK(shmem_internal_mutex_alloc);
 
-    rc = MCA_MEMHEAP_CALL(free(ptr));
+    if (ptr) {
+        s = memheap_find_va(ptr);
+    } else {
+        s = NULL;
+    }
+
+    if (s && s->allocator) {
+        rc = s->allocator->free(s, ptr);
+    } else {
+        rc = MCA_MEMHEAP_CALL(free(ptr));
+    }
 
     SHMEM_MUTEX_UNLOCK(shmem_internal_mutex_alloc);
 

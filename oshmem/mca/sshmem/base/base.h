@@ -31,7 +31,7 @@ extern char* mca_sshmem_base_backing_file_dir;
 OSHMEM_DECLSPEC int
 mca_sshmem_segment_create(map_segment_t *ds_buf,
                           const char *file_name,
-                          size_t size);
+                          size_t size, long hint);
 
 OSHMEM_DECLSPEC void *
 mca_sshmem_segment_attach(map_segment_t *ds_buf, sshmem_mkey_t *mkey);

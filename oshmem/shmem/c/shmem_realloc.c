@@ -18,6 +18,7 @@
 
 #include "oshmem/shmem/shmem_api_logger.h"
 #include "oshmem/mca/memheap/memheap.h"
+#include "oshmem/mca/memheap/base/base.h"
 
 #if OSHMEM_PROFILING
 #include "oshmem/include/pshmem.h"
@@ -42,12 +43,23 @@ static inline void* _shrealloc(void *ptr, size_t size)
 {
     int rc;
     void* pBuff = NULL;
+    map_segment_t *s;
 
     RUNTIME_CHECK_INIT();
 
     SHMEM_MUTEX_LOCK(shmem_internal_mutex_alloc);
 
-    rc = MCA_MEMHEAP_CALL(realloc(size, ptr, &pBuff));
+    if (ptr) {
+        s = memheap_find_va(ptr);
+    } else {
+        s = NULL;
+    }
+
+    if (s && s->allocator) {
+        rc = s->allocator->realloc(s, size, ptr, &pBuff);
+    } else {
+        rc = MCA_MEMHEAP_CALL(realloc(size, ptr, &pBuff));
+    }
 
     SHMEM_MUTEX_UNLOCK(shmem_internal_mutex_alloc);
 

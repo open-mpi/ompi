@@ -314,7 +314,7 @@ static void _ctx_cleanup(mca_spml_ucx_ctx_t *ctx)
     del_procs = malloc(sizeof(*del_procs) * nprocs);
 
     for (i = 0; i < nprocs; ++i) {
-        for (j = 0; j < MCA_MEMHEAP_SEG_COUNT; j++) {
+        for (j = 0; j < memheap_map->n_segments; j++) {
             if (ctx->ucp_peers[i].mkeys[j].key.rkey != NULL) {
                 ucp_rkey_destroy(ctx->ucp_peers[i].mkeys[j].key.rkey);
             }

@@ -58,6 +58,8 @@
 #define shrealloc                    pshrealloc /* shmem-compat.h */
 #define shfree                       pshfree /* shmem-compat.h */
 
+#define shmemx_malloc_with_hint      pshmemx_malloc_with_hint
+
 /*
  * Remote pointer operations
  */
