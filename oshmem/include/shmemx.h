@@ -168,6 +168,21 @@ OSHMEM_DECLSPEC void shmemx_int16_prod_to_all(int16_t *target, const int16_t *so
 OSHMEM_DECLSPEC void shmemx_int32_prod_to_all(int32_t *target, const int32_t *source, int nreduce, int PE_start, int logPE_stride, int PE_size, int32_t *pWrk, long *pSync);
 OSHMEM_DECLSPEC void shmemx_int64_prod_to_all(int64_t *target, const int64_t *source, int nreduce, int PE_start, int logPE_stride, int PE_size, int64_t *pWrk, long *pSync);
 
+/* shmemx_alltoall_global_nb is a nonblocking collective routine, where each PE
+ * exchanges “size” bytes of data with all other PEs in the OpenSHMEM job.
+
+ *  @param dest        A symmetric data object that is large enough to receive
+ *                     “size” bytes of data from each PE in the OpenSHMEM job.
+ *  @param source      A symmetric data object that contains “size” bytes of data
+ *                     for each PE in the OpenSHMEM job.
+ *  @param size        The number of bytes to be sent to each PE in the job.
+ *  @param counter     A symmetric data object to be atomically incremented after
+ *                     the target buffer is updated.
+ *
+ *  @return            OSHMEM_SUCCESS or failure status.
+ */
+OSHMEM_DECLSPEC void shmemx_alltoall_global_nb(void *dest, const void *source, size_t size, long *counter);
+
 /*
  * Backward compatibility section
  */

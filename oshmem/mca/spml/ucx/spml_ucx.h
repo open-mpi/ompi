@@ -95,9 +95,18 @@ struct mca_spml_ucx {
     mca_spml_ucx_ctx_array_t idle_array;
     int                      priority; /* component priority */
     shmem_internal_mutex_t   internal_mutex;
+    pthread_mutex_t          ctx_create_mutex;
+    /* Fields controlling aux context for put_all_nb SPML routine */
+    bool                     async_progress;
+    int                      async_tick;
+    opal_event_base_t        *async_event_base;
+    opal_event_t             *tick_event;
+    mca_spml_ucx_ctx_t       *aux_ctx;
+    pthread_spinlock_t       async_lock;
+    int                      aux_refcnt;
+
 };
 typedef struct mca_spml_ucx mca_spml_ucx_t;
-
 
 extern mca_spml_ucx_t mca_spml_ucx;
 
@@ -118,23 +127,28 @@ extern int mca_spml_ucx_get_nb(shmem_ctx_t ctx,
                               void **handle);
 
 extern int mca_spml_ucx_put(shmem_ctx_t ctx,
-                              void* dst_addr,
-                              size_t size,
-                              void* src_addr,
-                              int dst);
+                            void* dst_addr,
+                            size_t size,
+                            void* src_addr,
+                            int dst);
 
 extern int mca_spml_ucx_put_nb(shmem_ctx_t ctx,
-                                 void* dst_addr,
-                                 size_t size,
-                                 void* src_addr,
-                                 int dst,
-                                 void **handle);
+                               void* dst_addr,
+                               size_t size,
+                               void* src_addr,
+                               int dst,
+                               void **handle);
 
 extern int mca_spml_ucx_recv(void* buf, size_t size, int src);
 extern int mca_spml_ucx_send(void* buf,
-                               size_t size,
-                               int dst,
-                               mca_spml_base_put_mode_t mode);
+                             size_t size,
+                             int dst,
+                             mca_spml_base_put_mode_t mode);
+
+extern int mca_spml_ucx_put_all_nb(void *target,
+                                   const void *source,
+                                   size_t size,
+                                   long *counter);
 
 extern sshmem_mkey_t *mca_spml_ucx_register(void* addr,
                                                 size_t size,
@@ -154,6 +168,22 @@ extern int mca_spml_ucx_fence(shmem_ctx_t ctx);
 extern int mca_spml_ucx_quiet(shmem_ctx_t ctx);
 extern int spml_ucx_default_progress(void);
 extern int spml_ucx_ctx_progress(void);
+extern int spml_ucx_progress_aux_ctx(void);
+void mca_spml_ucx_async_cb(int fd, short event, void *cbdata);
+
+static inline void mca_spml_ucx_aux_lock(void)
+{
+    if (mca_spml_ucx.async_progress) {
+        pthread_spin_lock(&mca_spml_ucx.async_lock);
+    }
+}
+
+static inline void mca_spml_ucx_aux_unlock(void)
+{
+    if (mca_spml_ucx.async_progress) {
+        pthread_spin_unlock(&mca_spml_ucx.async_lock);
+    }
+}
 
 static void mca_spml_ucx_cache_mkey(mca_spml_ucx_ctx_t *ucx_ctx, sshmem_mkey_t *mkey, uint32_t segno, int dst_pe)
 {

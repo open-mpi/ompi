@@ -34,6 +34,8 @@ BEGIN_C_DECLS
 #  define MCA_COMMON_UCX_ASSERT(_x)
 #endif
 
+#define UCX_VERSION(_major, _minor, _build) (((_major) * 100) + (_minor))
+
 #define _MCA_COMMON_UCX_QUOTE(_x) \
     # _x
 #define MCA_COMMON_UCX_QUOTE(_x) \

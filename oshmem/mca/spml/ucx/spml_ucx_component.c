@@ -24,6 +24,7 @@
 
 #include "orte/util/show_help.h"
 #include "opal/util/opal_environ.h"
+#include "opal/runtime/opal_progress_threads.h"
 
 static int mca_spml_ucx_component_register(void);
 static int mca_spml_ucx_component_open(void);
@@ -90,11 +91,26 @@ static inline void  mca_spml_ucx_param_register_string(const char* param_name,
                                            storage);
 }
 
+static inline void  mca_spml_ucx_param_register_bool(const char* param_name,
+                                                     bool default_value,
+                                                     const char *help_msg,
+                                                     bool *storage)
+{
+    *storage = default_value;
+    (void) mca_base_component_var_register(&mca_spml_ucx_component.spmlm_version,
+                                           param_name,
+                                           help_msg,
+                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           storage);
+}
+
 static int mca_spml_ucx_component_register(void)
 {
     mca_spml_ucx_param_register_int("priority", 21,
-                                      "[integer] ucx priority",
-                                      &mca_spml_ucx.priority);
+                                    "[integer] ucx priority",
+                                    &mca_spml_ucx.priority);
 
     mca_spml_ucx_param_register_int("num_disconnect", 1,
                                     "How may disconnects go in parallel",
@@ -103,6 +119,14 @@ static int mca_spml_ucx_component_register(void)
     mca_spml_ucx_param_register_int("heap_reg_nb", 0,
                                     "Use non-blocking memory registration for shared heap",
                                     &mca_spml_ucx.heap_reg_nb);
+
+    mca_spml_ucx_param_register_bool("async_progress", 0,
+                                     "Enable asynchronous progress thread",
+                                     &mca_spml_ucx.async_progress);
+
+    mca_spml_ucx_param_register_int("async_tick_usec", 3000,
+                                    "Asynchronous progress tick granularity (in usec)",
+                                    &mca_spml_ucx.async_tick);
 
     opal_common_ucx_mca_var_register(&mca_spml_ucx_component.spmlm_version);
 
@@ -122,6 +146,39 @@ int spml_ucx_default_progress(void)
 {
     ucp_worker_progress(mca_spml_ucx_ctx_default.ucp_worker);
     return 1;
+}
+
+int spml_ucx_progress_aux_ctx(void)
+{
+    unsigned count;
+
+    if (OPAL_UNLIKELY(!mca_spml_ucx.aux_ctx)) {
+        return 0;
+    }
+
+    if (pthread_spin_trylock(&mca_spml_ucx.async_lock)) {
+        return 0;
+    }
+
+    count = ucp_worker_progress(mca_spml_ucx.aux_ctx->ucp_worker);
+    pthread_spin_unlock(&mca_spml_ucx.async_lock);
+
+    return count;
+}
+
+void mca_spml_ucx_async_cb(int fd, short event, void *cbdata)
+{
+    int count = 0;
+
+    if (pthread_spin_trylock(&mca_spml_ucx.async_lock)) {
+        return;
+    }
+
+    do {
+        count = ucp_worker_progress(mca_spml_ucx.aux_ctx->ucp_worker);
+    }  while (count);
+
+    pthread_spin_unlock(&mca_spml_ucx.async_lock);
 }
 
 static int mca_spml_ucx_component_open(void)
@@ -185,6 +242,7 @@ static int spml_ucx_init(void)
                                           sizeof(mca_spml_ucx_ctx_t *));
 
     SHMEM_MUTEX_INIT(mca_spml_ucx.internal_mutex);
+    pthread_mutex_init(&mca_spml_ucx.ctx_create_mutex, NULL);
 
     wkr_params.field_mask  = UCP_WORKER_PARAM_FIELD_THREAD_MODE;
     if (oshmem_mpi_thread_requested == SHMEM_THREAD_MULTIPLE) {
@@ -206,6 +264,22 @@ static int spml_ucx_init(void)
         wkr_attr.thread_mode != UCS_THREAD_MODE_MULTI) {
         oshmem_mpi_thread_provided = SHMEM_THREAD_SINGLE;
     }
+
+    if (mca_spml_ucx.async_progress) {
+        pthread_spin_init(&mca_spml_ucx.async_lock, 0);
+        mca_spml_ucx.async_event_base = opal_progress_thread_init(NULL);
+        if (NULL == mca_spml_ucx.async_event_base) {
+            SPML_UCX_ERROR("failed to init async progress thread");
+            return OSHMEM_ERROR;
+        }
+
+        mca_spml_ucx.tick_event = opal_event_alloc();
+        opal_event_set(mca_spml_ucx.async_event_base, mca_spml_ucx.tick_event,
+                       -1, EV_PERSIST, mca_spml_ucx_async_cb, NULL);
+    }
+
+    mca_spml_ucx.aux_ctx    = NULL;
+    mca_spml_ucx.aux_refcnt = 0;
 
     oshmem_ctx_default = (shmem_ctx_t) &mca_spml_ucx_ctx_default;
 
@@ -252,8 +326,8 @@ static void _ctx_cleanup(mca_spml_ucx_ctx_t *ctx)
     }
 
     opal_common_ucx_del_procs_nofence(del_procs, nprocs, oshmem_my_proc_id(),
-                                 mca_spml_ucx.num_disconnect,
-                                 ctx->ucp_worker);
+                                      mca_spml_ucx.num_disconnect,
+                                      ctx->ucp_worker);
     free(del_procs);
     free(ctx->ucp_peers);
 }
@@ -271,6 +345,16 @@ static int mca_spml_ucx_component_fini(void)
     if(!mca_spml_ucx.enabled)
         return OSHMEM_SUCCESS; /* never selected.. return success.. */
 
+    if (mca_spml_ucx.async_progress) {
+        opal_progress_thread_finalize(NULL);
+        opal_event_evtimer_del(mca_spml_ucx.tick_event);
+        if (mca_spml_ucx.aux_ctx != NULL) {
+            _ctx_cleanup(mca_spml_ucx.aux_ctx);
+        }
+        opal_progress_unregister(spml_ucx_progress_aux_ctx);
+        pthread_spin_destroy(&mca_spml_ucx.async_lock);
+    }
+
     /* delete context objects from list */
     for (i = 0; i < mca_spml_ucx.active_array.ctxs_count; i++) {
         _ctx_cleanup(mca_spml_ucx.active_array.ctxs[i]);
@@ -279,6 +363,7 @@ static int mca_spml_ucx_component_fini(void)
     for (i = 0; i < mca_spml_ucx.idle_array.ctxs_count; i++) {
         _ctx_cleanup(mca_spml_ucx.idle_array.ctxs[i]);
     }
+
 
     ret = opal_common_ucx_mca_pmix_fence_nb(&fenced);
     if (OPAL_SUCCESS != ret) {
@@ -295,6 +380,10 @@ static int mca_spml_ucx_component_fini(void)
         }
 
         ucp_worker_progress(mca_spml_ucx_ctx_default.ucp_worker);
+
+        if (mca_spml_ucx.aux_ctx != NULL) {
+            ucp_worker_progress(mca_spml_ucx.aux_ctx->ucp_worker);
+        }
     }
 
     /* delete all workers */
@@ -312,12 +401,18 @@ static int mca_spml_ucx_component_fini(void)
         ucp_worker_destroy(mca_spml_ucx_ctx_default.ucp_worker);
     }
 
+    if (mca_spml_ucx.aux_ctx != NULL) {
+        ucp_worker_destroy(mca_spml_ucx.aux_ctx->ucp_worker);
+    }
+
     mca_spml_ucx.enabled = false;  /* not anymore */
 
     free(mca_spml_ucx.active_array.ctxs);
     free(mca_spml_ucx.idle_array.ctxs);
+    free(mca_spml_ucx.aux_ctx);
 
     SHMEM_MUTEX_DESTROY(mca_spml_ucx.internal_mutex);
+    pthread_mutex_destroy(&mca_spml_ucx.ctx_create_mutex);
 
     if (mca_spml_ucx.ucp_context) {
         ucp_cleanup(mca_spml_ucx.ucp_context);

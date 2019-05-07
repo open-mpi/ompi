@@ -280,3 +280,9 @@ int mca_spml_base_get_nb(void *dst_addr, size_t size,
 void mca_spml_base_memuse_hook(void *addr, size_t length)
 {
 }
+
+int mca_spml_base_put_all_nb(void *target, const void *source,
+                             size_t size, long *counter)
+{
+    return OSHMEM_ERR_NOT_IMPLEMENTED;
+}

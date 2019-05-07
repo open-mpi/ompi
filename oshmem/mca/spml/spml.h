@@ -315,6 +315,35 @@ typedef int (*mca_spml_base_module_send_fn_t)(void *buf,
                                               mca_spml_base_put_mode_t mode);
 
 /**
+ *  The routine transfers the data asynchronously from the source PE to all
+ *  PEs in the OpenSHMEM job. The routine returns immediately. The source and
+ *  target buffers are reusable only after the completion of the routine.
+ *  After the data is transferred to the target buffers, the counter object
+ *  is updated atomically. The counter object can be read either using atomic
+ *  operations such as shmem_atomic_fetch or can use point-to-point synchronization
+ *  routines such as shmem_wait_until and shmem_test.
+ *
+ *  Shmem_quiet may be used for completing the operation, but not required for
+ *  progress or completion. In a multithreaded OpenSHMEM program, the user
+ *  (the OpenSHMEM program) should ensure the correct ordering of
+ *  shmemx_alltoall_global calls.
+ *
+ *  @param dest        A symmetric data object that is large enough to receive
+ *                     “size” bytes of data from each PE in the OpenSHMEM job.
+ *  @param source      A symmetric data object that contains “size” bytes of data
+ *                     for each PE in the OpenSHMEM job.
+ *  @param size        The number of bytes to be sent to each PE in the job.
+ *  @param counter     A symmetric data object to be atomically incremented after
+ *                     the target buffer is updated.
+ *
+ *  @return            OSHMEM_SUCCESS or failure status.
+ */
+typedef int (*mca_spml_base_module_put_all_nb_fn_t)(void *dest,
+                                                    const void *source,
+                                                    size_t size,
+                                                    long *counter);
+
+/**
  * Assures ordering of delivery of put() requests
  *
  * @param ctx      - The context object this routine is working on.
@@ -381,6 +410,7 @@ struct mca_spml_base_module_1_0_0_t {
     mca_spml_base_module_mkey_ptr_fn_t    spml_rmkey_ptr;
 
     mca_spml_base_module_memuse_hook_fn_t spml_memuse_hook;
+    mca_spml_base_module_put_all_nb_fn_t  spml_put_all_nb;
     void *self;
 };
 
