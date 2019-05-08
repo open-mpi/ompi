@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2017 The University of Tennessee and The University
+ * Copyright (c) 2004-2019 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
@@ -730,14 +730,14 @@ void ompi_datatype_dump( const ompi_datatype_t* pData )
     length = length * 100 + 500;
     buffer = (char*)malloc( length );
     index += snprintf( buffer, length - index,
-                       "Datatype %p[%s] id %d size %ld align %d opal_id %d length %d used %d\n"
-                       "true_lb %ld true_ub %ld (true_extent %ld) lb %ld ub %ld (extent %ld)\n"
-                       "nbElems %d loops %d flags %X (",
-                     (void*)pData, pData->name, pData->id,
-                     (long)pData->super.size, (int)pData->super.align, pData->super.id, (int)pData->super.desc.length, (int)pData->super.desc.used,
-                     (long)pData->super.true_lb, (long)pData->super.true_ub, (long)(pData->super.true_ub - pData->super.true_lb),
-                     (long)pData->super.lb, (long)pData->super.ub, (long)(pData->super.ub - pData->super.lb),
-                     (int)pData->super.nbElems, (int)pData->super.loops, (int)pData->super.flags );
+                       "Datatype %p[%s] id %d size %" PRIsize_t " align %u opal_id %u length %" PRIsize_t " used %" PRIsize_t "\n"
+                       "true_lb %td true_ub %td (true_extent %td) lb %td ub %td (extent %td)\n"
+                       "nbElems %" PRIsize_t " loops %u flags %X (",
+                       (void*)pData, pData->name, pData->id,
+                       pData->super.size, pData->super.align, (uint32_t)pData->super.id, pData->super.desc.length, pData->super.desc.used,
+                       pData->super.true_lb, pData->super.true_ub, pData->super.true_ub - pData->super.true_lb,
+                       pData->super.lb, pData->super.ub, pData->super.ub - pData->super.lb,
+                       pData->super.nbElems, pData->super.loops, (int)pData->super.flags );
     /* dump the flags */
     if( ompi_datatype_is_predefined(pData) ) {
         index += snprintf( buffer + index, length - index, "predefined " );

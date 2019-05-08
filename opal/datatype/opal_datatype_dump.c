@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2017 The University of Tennessee and The University
+ * Copyright (c) 2004-2019 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
@@ -64,7 +64,7 @@ int opal_datatype_dump_data_flags( unsigned short usflags, char* ptr, size_t len
     int index = 0;
     if( length < 22 ) return 0;
     index = snprintf( ptr, 22, "-----------[---][---]" );  /* set everything to - */
-    if( usflags & OPAL_DATATYPE_FLAG_COMMITTED )   ptr[1]  = 'c';
+    if( usflags & OPAL_DATATYPE_FLAG_COMMITTED )  ptr[1]  = 'c';
     if( usflags & OPAL_DATATYPE_FLAG_CONTIGUOUS ) ptr[2]  = 'C';
     if( usflags & OPAL_DATATYPE_FLAG_OVERLAP )    ptr[3]  = 'o';
     if( usflags & OPAL_DATATYPE_FLAG_USER_LB )    ptr[4]  = 'l';
@@ -90,17 +90,17 @@ int opal_datatype_dump_data_desc( dt_elem_desc_t* pDesc, int nbElems, char* ptr,
         index += snprintf( ptr + index, length - index, "%15s ", opal_datatype_basicDatatypes[pDesc->elem.common.type]->name );
         if( length <= (size_t)index ) break;
         if( OPAL_DATATYPE_LOOP == pDesc->elem.common.type )
-            index += snprintf( ptr + index, length - index, "%d times the next %d elements extent %d\n",
-                               (int)pDesc->loop.loops, (int)pDesc->loop.items,
-                               (int)pDesc->loop.extent );
+            index += snprintf( ptr + index, length - index, "%u times the next %u elements extent %td\n",
+                               pDesc->loop.loops, pDesc->loop.items,
+                               pDesc->loop.extent );
         else if( OPAL_DATATYPE_END_LOOP == pDesc->elem.common.type )
-            index += snprintf( ptr + index, length - index, "prev %d elements first elem displacement %ld size of data %d\n",
-                           (int)pDesc->end_loop.items, (long)pDesc->end_loop.first_elem_disp,
-                           (int)pDesc->end_loop.size );
+            index += snprintf( ptr + index, length - index, "prev %u elements first elem displacement %td size of data %" PRIsize_t "\n",
+                               pDesc->end_loop.items, pDesc->end_loop.first_elem_disp,
+                               pDesc->end_loop.size );
         else
-            index += snprintf( ptr + index, length - index, "count %" PRIsize_t " disp 0x%lx (%ld) blen %d extent %ld (size %ld)\n",
-                               pDesc->elem.count, (long)pDesc->elem.disp, (long)pDesc->elem.disp, (int)pDesc->elem.blocklen,
-                               pDesc->elem.extent, (long)(pDesc->elem.count * opal_datatype_basicDatatypes[pDesc->elem.common.type]->size) );
+            index += snprintf( ptr + index, length - index, "count %" PRIsize_t " disp 0x%tx (%td) blen %u extent %td (size %zd)\n",
+                               pDesc->elem.count, pDesc->elem.disp, pDesc->elem.disp, pDesc->elem.blocklen,
+                               pDesc->elem.extent, (pDesc->elem.count * pDesc->elem.blocklen * opal_datatype_basicDatatypes[pDesc->elem.common.type]->size) );
         pDesc++;
 
         if( length <= (size_t)index ) break;
@@ -118,13 +118,13 @@ void opal_datatype_dump( const opal_datatype_t* pData )
     length = pData->opt_desc.used + pData->desc.used;
     length = length * 100 + 500;
     buffer = (char*)malloc( length );
-    index += snprintf( buffer, length - index, "Datatype %p[%s] size %ld align %d id %d length %d used %d\n"
-                                               "true_lb %ld true_ub %ld (true_extent %ld) lb %ld ub %ld (extent %ld)\n"
-                                               "nbElems %" PRIsize_t " loops %d flags %X (",
-                     (void*)pData, pData->name, (long)pData->size, (int)pData->align, pData->id, (int)pData->desc.length, (int)pData->desc.used,
-                     (long)pData->true_lb, (long)pData->true_ub, (long)(pData->true_ub - pData->true_lb),
-                     (long)pData->lb, (long)pData->ub, (long)(pData->ub - pData->lb),
-                     pData->nbElems, (int)pData->loops, (int)pData->flags );
+    index += snprintf( buffer, length - index, "Datatype %p[%s] size %" PRIsize_t " align %u id %u length %" PRIsize_t " used %" PRIsize_t "\n"
+                                               "true_lb %td true_ub %td (true_extent %td) lb %td ub %td (extent %td)\n"
+                                               "nbElems %" PRIsize_t " loops %u flags %X (",
+                       (void*)pData, pData->name, pData->size, pData->align, (uint32_t)pData->id, pData->desc.length, pData->desc.used,
+                       pData->true_lb, pData->true_ub, pData->true_ub - pData->true_lb,
+                       pData->lb, pData->ub, pData->ub - pData->lb,
+                       pData->nbElems, pData->loops, (int)pData->flags );
     /* dump the flags */
     if( pData->flags == OPAL_DATATYPE_FLAG_PREDEFINED )
         index += snprintf( buffer + index, length - index, "predefined " );

@@ -700,12 +700,12 @@ int opal_convertor_clone( const opal_convertor_t* source,
 
 void opal_convertor_dump( opal_convertor_t* convertor )
 {
-    opal_output( 0, "Convertor %p count %" PRIsize_t" stack position %d bConverted %" PRIsize_t "\n"
-                 "\tlocal_size %ld remote_size %ld flags %X stack_size %d pending_length %" PRIsize_t "\n"
+    opal_output( 0, "Convertor %p count %" PRIsize_t " stack position %u bConverted %" PRIsize_t "\n"
+                 "\tlocal_size %" PRIsize_t " remote_size %" PRIsize_t " flags %X stack_size %u pending_length %" PRIsize_t "\n"
                  "\tremote_arch %u local_arch %u\n",
                  (void*)convertor,
                  convertor->count, convertor->stack_pos, convertor->bConverted,
-                 (unsigned long)convertor->local_size, (unsigned long)convertor->remote_size,
+                 convertor->local_size, convertor->remote_size,
                  convertor->flags, convertor->stack_size, convertor->partial_length,
                  convertor->remoteArch, opal_local_arch );
     if( convertor->flags & CONVERTOR_RECV ) opal_output( 0, "unpack ");
