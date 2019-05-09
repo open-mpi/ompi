@@ -5,6 +5,9 @@
  * Copyright (c) 2016-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2019      Triad National Security, LLC. All rights
+ *                         reserved.
+ * Copyright (c) 2019      Google, LLC. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -476,11 +479,12 @@ static inline int ompi_osc_rdma_cas_atomic (ompi_osc_rdma_sync_t *sync, const vo
                                             bool lock_acquired)
 {
     ompi_osc_rdma_module_t *module = sync->module;
+    int32_t atomic_flags = module->selected_btl->btl_atomic_flags;
     const size_t size = datatype->super.size;
     int64_t compare, source;
     int ret, flags;
 
-    if (8 != size && !(4 == size && (MCA_BTL_ATOMIC_SUPPORTS_32BIT & module->selected_btl->btl_flags))) {
+    if (8 != size && !(4 == size && (MCA_BTL_ATOMIC_SUPPORTS_32BIT & atomic_flags))) {
         return OMPI_ERR_NOT_SUPPORTED;
     }
 
