@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2013 The University of Tennessee and The University
+ * Copyright (c) 2004-2019 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
@@ -29,13 +29,12 @@ int32_t ompi_datatype_create_contiguous( int count, const ompi_datatype_t* oldTy
 {
     ompi_datatype_t* pdt;
 
-    if( 0 == count ) {
-        pdt = ompi_datatype_create( 0 );
-        ompi_datatype_add( pdt, &ompi_mpi_datatype_null.dt, 0, 0, 0 );
-    } else {
-        pdt = ompi_datatype_create( oldType->super.desc.used + 2 );
-        opal_datatype_add( &(pdt->super), &(oldType->super), count, 0, (oldType->super.ub - oldType->super.lb) );
+    if( (0 == count) || (0 == oldType->super.size) ) {
+        return ompi_datatype_duplicate( &ompi_mpi_datatype_null.dt, newType);
     }
+
+    pdt = ompi_datatype_create( oldType->super.desc.used + 2 );
+    opal_datatype_add( &(pdt->super), &(oldType->super), count, 0, (oldType->super.ub - oldType->super.lb) );
     *newType = pdt;
     return OMPI_SUCCESS;
 }
