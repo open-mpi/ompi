@@ -2,6 +2,9 @@
 /*
  * Copyright (c) 2014-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2019      Triad National Security, LLC. All rights
+ *                         reserved.
+ * Copyright (c) 2019      Google, LLC. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -144,7 +147,7 @@ int mca_btl_ugni_acswap (struct mca_btl_base_module_t *btl, struct mca_btl_base_
     size_t size;
     int gni_op;
 
-    gni_op = (MCA_BTL_ATOMIC_FLAG_32BIT & flags) ? GNI_FMA_ATOMIC2_CSWAP_S : GNI_FMA_ATOMIC_CSWAP;
+    gni_op = (MCA_BTL_ATOMIC_FLAG_32BIT & flags) ? GNI_FMA_ATOMIC2_FCSWAP_S : GNI_FMA_ATOMIC_CSWAP;
     size = (MCA_BTL_ATOMIC_FLAG_32BIT & flags) ? 4 : 8;
 
     init_post_desc (&post_desc, endpoint, order, GNI_POST_AMO, (intptr_t) local_address,
