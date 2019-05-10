@@ -542,7 +542,8 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
     local_size = ompi_comm_size (shared_comm);
 
     /* CPU atomics can be used if every process is on the same node or the NIC allows mixing CPU and NIC atomics */
-    module->use_cpu_atomics = local_size == global_size || (module->selected_btl->btl_flags & MCA_BTL_ATOMIC_SUPPORTS_GLOB);
+    module->single_node     = local_size == global_size;
+    module->use_cpu_atomics = module->single_node || (module->selected_btl->btl_flags & MCA_BTL_ATOMIC_SUPPORTS_GLOB);
 
     if (1 == local_size) {
         /* no point using a shared segment if there are no other processes on this node */
