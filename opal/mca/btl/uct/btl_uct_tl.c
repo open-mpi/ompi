@@ -614,6 +614,7 @@ int mca_btl_uct_query_tls (mca_btl_uct_module_t *module, mca_btl_uct_md_t *md, u
 	module->super.btl_get = NULL;
 	module->super.btl_atomic_fop = NULL;
 	module->super.btl_atomic_op = NULL;
+	module->super.btl_flags &= ~(MCA_BTL_FLAGS_RDMA | MCA_BTL_FLAGS_ATOMIC_FOPS | MCA_BTL_FLAGS_ATOMIC_OPS);
     }
 
     if (NULL == module->am_tl) {
