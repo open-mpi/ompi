@@ -278,7 +278,7 @@ static void launch_daemons(int fd, short args, void *cbdata)
      * constraint, but will ensure it doesn't get
      * bound to only one processor
      */
-    opal_argv_append(&argc, &argv, "--cpu_bind=none");
+    opal_argv_append(&argc, &argv, "--cpu-bind=none");
 
 #if SLURM_CRAY_ENV
     /*
