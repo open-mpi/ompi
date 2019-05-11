@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
- * Copyright (c) 2008-2017 Cisco Systems, Inc.  All rights reserved
+ * Copyright (c) 2008-2019 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * $COPYRIGHT$
@@ -29,13 +29,8 @@
 #include "opal/mca/memchecker/base/base.h"
 #include "opal/constants.h"
 
-#if BTL_IN_OPAL
 #include "opal/mca/btl/btl.h"
 #include "opal/mca/btl/base/base.h"
-#else
-#include "ompi/mca/btl/btl.h"
-#include "ompi/mca/btl/base/base.h"
-#endif
 
 #include "btl_usnic.h"
 #include "btl_usnic_frag.h"
@@ -231,7 +226,7 @@ void opal_btl_usnic_recv_call(opal_btl_usnic_module_t *module,
                     fip->rfi_data_in_pool = false;
                 }
                 if (fip->rfi_data == NULL) {
-                    abort();
+                    opal_btl_usnic_util_abort("malloc failed", __FILE__, __LINE__);
                 }
 #if MSGDEBUG1
                 opal_output(0, "Start large recv to %p, size=%"PRIu32"\n",

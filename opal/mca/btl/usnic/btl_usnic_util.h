@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2017 Cisco Systems, Inc.  All rights reserved
+ * Copyright (c) 2013-2019 Cisco Systems, Inc.  All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -17,6 +17,38 @@
 #ifndef MIN
 #  define MIN(a,b)                ((a) < (b) ? (a) : (b))
 #endif
+
+/*
+ * Safely (but abnornmally) exit this process without abort()'ing (and
+ * leaving a corefile).
+ */
+struct opal_btl_usnic_module_t;
+void opal_btl_usnic_exit(struct opal_btl_usnic_module_t *module);
+
+/*
+ * Print a show_help message and then call opal_btl_usnic_exit().
+ */
+void opal_btl_usnic_util_abort(const char *msg, const char *file, int line);
+
+/*
+ * Long enough to hold "xxx.xxx.xxx.xxx/xx"
+ */
+#define IPV4STRADDRLEN 20
+
+/*
+ * If netmask==0, it is not included in the output string.  addr is
+ * expected to be in network byte order.
+ */
+void opal_btl_usnic_snprintf_ipv4_addr(char *out, size_t maxlen,
+                                       uint32_t addr_be, uint32_t netmask_be);
+
+void opal_btl_usnic_snprintf_bool_array(char *s, size_t slen, bool a[], size_t alen);
+
+void opal_btl_usnic_dump_hex(int verbose_level, int output_id,
+                             void *vaddr, int len);
+
+size_t opal_btl_usnic_convertor_pack_peek(const opal_convertor_t *conv,
+                                          size_t max_len);
 
 /* avoid "defined but not used" warnings */
 static inline int __opal_attribute_always_inline__ usnic_fls(int x)
@@ -69,8 +101,7 @@ usnic_convertor_pack_simple(
     *bytes_packed = max_bytes_to_pack;
     rc = opal_convertor_pack(convertor, &iov, &iov_count, bytes_packed);
     if (OPAL_UNLIKELY(rc < 0)) {
-        BTL_ERROR(("opal_convertor_pack error"));
-        abort();    /* XXX */
+        opal_btl_usnic_util_abort("opal_convertor_pack error", __FILE__, __LINE__);
     }
 }
 
@@ -90,37 +121,5 @@ usnic_cidrlen_to_netmask(
     mask = ~0 << (32 - cidrlen);
     return htonl(mask);
 }
-
-/*
- * Safely (but abnornmally) exit this process without abort()'ing (and
- * leaving a corefile).
- */
-struct opal_btl_usnic_module_t;
-void opal_btl_usnic_exit(struct opal_btl_usnic_module_t *module);
-
-/*
- * Print a show_help message and then call opal_btl_usnic_exit().
- */
-void opal_btl_usnic_util_abort(const char *msg, const char *file, int line);
-
-/*
- * Long enough to hold "xxx.xxx.xxx.xxx/xx"
- */
-#define IPV4STRADDRLEN 20
-
-/*
- * If netmask==0, it is not included in the output string.  addr is
- * expected to be in network byte order.
- */
-void opal_btl_usnic_snprintf_ipv4_addr(char *out, size_t maxlen,
-                                       uint32_t addr_be, uint32_t netmask_be);
-
-void opal_btl_usnic_snprintf_bool_array(char *s, size_t slen, bool a[], size_t alen);
-
-void opal_btl_usnic_dump_hex(int verbose_level, int output_id,
-                             void *vaddr, int len);
-
-size_t opal_btl_usnic_convertor_pack_peek(const opal_convertor_t *conv,
-                                          size_t max_len);
 
 #endif /* BTL_USNIC_UTIL_H */

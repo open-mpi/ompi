@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
- * Copyright (c) 2013-2017 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013-2019 Cisco Systems, Inc.  All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -105,7 +105,7 @@ struct mca_btl_base_registration_handle_t {
  * usnic local registration
  */
 typedef struct opal_btl_usnic_reg_t {
-    mca_mpool_base_registration_t base;
+    mca_rcache_base_registration_t base;
     struct fid_mr *ur_mr;
 } opal_btl_usnic_reg_t;
 

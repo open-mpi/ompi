@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
- * Copyright (c) 2009-2017 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009-2019 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2014-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved
@@ -41,19 +41,12 @@
 #include "opal/util/printf.h"
 #include "opal/mca/memchecker/base/base.h"
 
-#if BTL_IN_OPAL
 #include "opal/mca/btl/btl.h"
 #include "opal/mca/btl/base/btl_base_error.h"
 #include "opal/mca/mpool/base/base.h"
 #include "opal/mca/mpool/mpool.h"
 #include "opal/mca/rcache/base/base.h"
 #include "opal/mca/rcache/rcache.h"
-#else
-#include "ompi/mca/btl/btl.h"
-#include "ompi/mca/btl/base/btl_base_error.h"
-#include "ompi/mca/mpool/base/base.h"
-#include "ompi/mca/mpool/mpool.h"
-#endif
 
 #include "btl_usnic_compat.h"
 #include "btl_usnic.h"
@@ -808,8 +801,8 @@ pack_chunk_seg_from_frag(
         /* TODO look at ways to deal with this case more gracefully, possibly as
          * part of capping the overall BTL memory consumption.  Watch out for
          * possible MPI-layer deadlock. */
-        BTL_ERROR(("chunk segment allocation error"));
-        abort(); /* XXX */
+        opal_btl_usnic_util_abort("chunk segment allocation error",
+                                  __FILE__, __LINE__);
     }
 
     seg_space = module->max_chunk_payload;
@@ -929,11 +922,7 @@ static int usnic_finalize(struct mca_btl_base_module_t* btl)
     OBJ_DESTRUCT(&module->chunk_segs);
     OBJ_DESTRUCT(&module->senders);
 
-#if RCACHE_VERSION == 30
     mca_rcache_base_module_destroy(module->rcache);
-#else
-    mca_mpool_base_module_destroy(module->super.btl_mpool);
-#endif
 
     if (NULL != module->av) {
         fi_close(&module->av->fid);
@@ -1008,8 +997,7 @@ usnic_do_resends(
         ret = opal_hotel_checkin(&endpoint->endpoint_hotel,
                 sseg, &sseg->ss_hotel_room);
         if (OPAL_UNLIKELY(OPAL_SUCCESS != ret)) {
-            BTL_ERROR(("hotel checkin failed\n"));
-            abort();    /* should not be possible */
+            opal_btl_usnic_util_abort("hotel checkin failed\n", __FILE__, __LINE__);
         }
     }
 }
@@ -1423,7 +1411,7 @@ static int usnic_sendi(struct mca_btl_base_module_t* btl,
  * RDMA Memory Pool (de)register callbacks
  */
 static int usnic_reg_mr(void* reg_data, void* base, size_t size,
-                        mca_mpool_base_registration_t* reg)
+                        mca_rcache_base_registration_t* reg)
 {
     opal_btl_usnic_module_t* mod = (opal_btl_usnic_module_t*)reg_data;
     opal_btl_usnic_reg_t* ur = (opal_btl_usnic_reg_t*)reg;
@@ -1438,7 +1426,7 @@ static int usnic_reg_mr(void* reg_data, void* base, size_t size,
 }
 
 static int usnic_dereg_mr(void* reg_data,
-                          mca_mpool_base_registration_t* reg)
+                          mca_rcache_base_registration_t* reg)
 {
     opal_btl_usnic_reg_t* ur = (opal_btl_usnic_reg_t*)reg;
 
@@ -2149,13 +2137,13 @@ static void init_connectivity_checker(opal_btl_usnic_module_t *module)
     int rc = opal_btl_usnic_connectivity_listen(module);
     if (OPAL_SUCCESS != rc) {
         OPAL_ERROR_LOG(rc);
-        ABORT("Failed to notify connectivity agent to listen");
+        opal_btl_usnic_util_abort("Failed to notify connectivity agent to listen",
+                                  __FILE__, __LINE__);
     }
 }
 
 static void init_hwloc(opal_btl_usnic_module_t *module)
 {
-#if OPAL_HAVE_HWLOC
     /* If this process is bound to a single NUMA locality, calculate
        its NUMA distance from this usNIC device */
     if (mca_btl_usnic_component.want_numa_device_assignment) {
@@ -2164,10 +2152,6 @@ static void init_hwloc(opal_btl_usnic_module_t *module)
         opal_output_verbose(5, USNIC_OUT,
                             "btl:usnic: not sorting devices by NUMA distance (MCA btl_usnic_want_numa_device_assignment)");
     }
-#else
-    opal_output_verbose(5, USNIC_OUT,
-                        "btl:usnic: not sorting devices by NUMA distance (topology support not included)");
-#endif
 }
 
 static void init_procs(opal_btl_usnic_module_t *module)
@@ -2183,17 +2167,16 @@ static void init_procs(opal_btl_usnic_module_t *module)
  */
 static int init_mpool(opal_btl_usnic_module_t *module)
 {
-    struct mca_mpool_base_resources_t mpool_resources;
+    struct mca_rcache_base_resources_t rcache_resources;
 
-    mpool_resources.reg_data = (void*)module;
-    mpool_resources.sizeof_reg = sizeof(opal_btl_usnic_reg_t);
-    mpool_resources.register_mem = usnic_reg_mr;
-    mpool_resources.deregister_mem = usnic_dereg_mr;
-#if RCACHE_VERSION == 30
-    mpool_resources.cache_name = mca_btl_usnic_component.usnic_rcache_name;
+    rcache_resources.reg_data = (void*)module;
+    rcache_resources.sizeof_reg = sizeof(opal_btl_usnic_reg_t);
+    rcache_resources.register_mem = usnic_reg_mr;
+    rcache_resources.deregister_mem = usnic_dereg_mr;
+    rcache_resources.cache_name = mca_btl_usnic_component.usnic_rcache_name;
     module->rcache =
         mca_rcache_base_module_create (mca_btl_usnic_component.usnic_rcache_name,
-                                       &module->super, &mpool_resources);
+                                       &module->super, &rcache_resources);
     if (NULL == module->rcache) {
         opal_show_help("help-mpi-btl-usnic.txt",
                        "internal error during init",
@@ -2205,13 +2188,6 @@ static int init_mpool(opal_btl_usnic_module_t *module)
     }
     module->super.btl_mpool =
         mca_mpool_base_module_lookup (mca_btl_usnic_component.usnic_mpool_hints);
-#else
-    opal_asprintf(&mpool_resources.pool_name, "%s",
-             module->linux_device_name);
-    module->super.btl_mpool =
-        mca_mpool_base_module_create(mca_btl_usnic_component.usnic_mpool_name,
-                                     &module->super, &mpool_resources);
-#endif
     if (NULL == module->super.btl_mpool) {
         opal_show_help("help-mpi-btl-usnic.txt",
                        "internal error during init",
@@ -2519,11 +2495,7 @@ int opal_btl_usnic_module_init(opal_btl_usnic_module_t *module)
     int ret;
     if (OPAL_SUCCESS != (ret = init_mpool(module)) ||
         OPAL_SUCCESS != (ret = init_channels(module))) {
-#if RCACHE_VERSION == 30
         mca_rcache_base_module_destroy (module->rcache);
-#else
-        mca_mpool_base_module_destroy(module->super.btl_mpool);
-#endif
         return ret;
     }
 
@@ -2539,7 +2511,8 @@ int opal_btl_usnic_module_init(opal_btl_usnic_module_t *module)
         int rc = opal_btl_usnic_connectivity_listen(module);
         if (OPAL_SUCCESS != rc) {
             OPAL_ERROR_LOG(rc);
-            ABORT("Failed to notify connectivity agent to listen");
+            opal_btl_usnic_util_abort("Failed to notify connectivity agent to listen",
+                                      __FILE__, __LINE__);
         }
     } else {
         /* If we're not doing a connectivity check, just set the port
