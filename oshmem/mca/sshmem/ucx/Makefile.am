@@ -15,7 +15,8 @@ AM_CPPFLAGS = $(sshmem_ucx_CPPFLAGS)
 sources = \
         sshmem_ucx.h \
         sshmem_ucx_component.c \
-        sshmem_ucx_module.c
+        sshmem_ucx_module.c \
+        sshmem_ucx_shadow.c
 
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la

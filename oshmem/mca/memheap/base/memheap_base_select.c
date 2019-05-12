@@ -21,6 +21,14 @@
 #include "oshmem/util/oshmem_util.h"
 #include "oshmem/mca/memheap/memheap.h"
 #include "oshmem/mca/memheap/base/base.h"
+#include "orte/mca/errmgr/errmgr.h"
+#include "oshmem/include/shmemx.h"
+#include "oshmem/mca/sshmem/base/base.h"
+
+
+mca_memheap_base_config_t mca_memheap_base_config = {
+    .device_nic_mem_seg_size = 0
+};
 
 mca_memheap_base_module_t mca_memheap = {0};
 
@@ -94,7 +102,7 @@ static memheap_context_t* _memheap_create(void)
 {
     int rc = OSHMEM_SUCCESS;
     static memheap_context_t context;
-    size_t user_size;
+    size_t user_size, size;
 
     user_size = _memheap_size();
     if (user_size < MEMHEAP_BASE_MIN_SIZE) {
@@ -105,7 +113,18 @@ static memheap_context_t* _memheap_create(void)
     /* Inititialize symmetric area */
     if (OSHMEM_SUCCESS == rc) {
         rc = mca_memheap_base_alloc_init(&mca_memheap_base_map,
-                                         user_size + MEMHEAP_BASE_PRIVATE_SIZE);
+                                         user_size + MEMHEAP_BASE_PRIVATE_SIZE, 0);
+    }
+
+    /* Initialize atomic symmetric area */
+    size = mca_memheap_base_config.device_nic_mem_seg_size;
+    if ((OSHMEM_SUCCESS == rc) && (size > 0)) {
+        rc = mca_memheap_base_alloc_init(&mca_memheap_base_map, size,
+                                         SHMEM_HINT_DEVICE_NIC_MEM);
+        if (rc == OSHMEM_ERR_NOT_IMPLEMENTED) {
+            /* do not treat NOT_IMPLEMENTED as error */
+            rc = OSHMEM_SUCCESS;
+        }
     }
 
     /* Inititialize static/global variables area */

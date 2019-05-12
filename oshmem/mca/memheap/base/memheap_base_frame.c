@@ -52,6 +52,12 @@ static int mca_memheap_base_register(mca_base_register_flag_t flags)
                                  MCA_BASE_VAR_SCOPE_READONLY,
                                  &mca_memheap_base_key_exchange);
 
+    mca_base_var_register("oshmem", "memheap", "base", "device_nic_mem_seg_size",
+                          "Size of memory block used for allocations with hint SHMEM_HINT_DEVICE_NIC_MEM",
+                          MCA_BASE_VAR_TYPE_LONG, NULL, 0,
+                          MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_3,
+                          MCA_BASE_VAR_SCOPE_LOCAL,
+                          &mca_memheap_base_config.device_nic_mem_seg_size);
 
     return OSHMEM_SUCCESS;
 }

@@ -107,6 +107,8 @@ typedef struct mkey_segment {
     void               *rva_base;     /* base va on remote pe */
 } mkey_segment_t;
 
+typedef struct segment_allocator segment_allocator_t;
+
 typedef struct map_segment {
     map_base_segment_t   super;
     sshmem_mkey_t      **mkeys_cache;    /* includes remote segment bases in va_base */
@@ -115,9 +117,16 @@ typedef struct map_segment {
     int                  seg_id;
     size_t               seg_size;       /* length of the segment */
     segment_type_t       type;           /* type of the segment */
+    long                 alloc_hints;    /* allocation hints this segment supports */
     void                *context;        /* allocator can use this field to store
                                             its own private data */
+    segment_allocator_t *allocator;      /* segment-specific allocator */
 } map_segment_t;
+
+struct segment_allocator {
+    int      (*realloc)(map_segment_t*, size_t newsize, void *, void **);
+    int         (*free)(map_segment_t*, void*);
+};
 
 END_C_DECLS
 
