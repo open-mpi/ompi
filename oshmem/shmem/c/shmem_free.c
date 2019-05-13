@@ -59,8 +59,6 @@ static inline void _shfree(void* ptr)
 
     if (ptr) {
         s = memheap_find_va(ptr);
-    } else {
-        s = NULL;
     }
 
     if (s && s->allocator) {
