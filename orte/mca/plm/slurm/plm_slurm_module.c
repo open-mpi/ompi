@@ -31,6 +31,9 @@
 
 #include <string.h>
 #include <sys/types.h>
+#include <sys/wait.h>
+#include <errno.h>
+#include <sysexits.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
@@ -165,6 +168,44 @@ static int plm_slurm_launch_job(orte_job_t *jdata)
     return ORTE_SUCCESS;
 }
 
+/* Slurm 19 has removed support for --cpu_bind, and now only
+*  uses --cpu-bind. Use this function to test for
+*  supported srun parameters.
+*/
+int srun_check_parms(char *const argv[])
+{
+    int status;
+    int srun_pid;
+
+    srun_pid = fork();
+    if (0 == srun_pid) {
+        FILE* file = fopen("/dev/null", "w");
+        int fd = fileno(file);
+
+        dup2(fd, 1);
+        dup2(fd, 2);
+
+        execvp(argv[0], argv);
+
+        close(fd);
+        exit(errno);
+    }
+    else{
+        /* Wait for child process to end */
+        wait(&status);
+
+        /* Once child process, srun, has ended check exit code */
+        if (WIFEXITED(status)) {
+            if (255 == WEXITSTATUS(status)) {
+                return(0);
+            }
+        }
+    }
+    /* All other exit codes mean parms are good */
+    return(1);
+}
+
+
 static void launch_daemons(int fd, short args, void *cbdata)
 {
     orte_app_context_t *app;
@@ -278,7 +319,18 @@ static void launch_daemons(int fd, short args, void *cbdata)
      * constraint, but will ensure it doesn't get
      * bound to only one processor
      */
-    opal_argv_append(&argc, &argv, "--cpu-bind=none");
+    int srun_good_parms;
+    /* Use dummy job to check srun parms */
+    char *const srun_argv[] = {"srun","--cpu_bind=none","--test-only", NULL};
+    /* Check srun params, returns 0 if bad */
+    srun_good_parms = srun_check_parms(srun_argv);
+
+    if (1 == srun_good_parms) {
+        opal_argv_append(&argc, &argv, "--cpu_bind=none");
+    }
+    else {
+        opal_argv_append(&argc, &argv, "--cpu-bind=none");
+    }
 
 #if SLURM_CRAY_ENV
     /*
