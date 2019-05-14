@@ -135,7 +135,7 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
     int *lindex_to_grank = NULL;
     int *nodes_roots = NULL, *k = NULL;
     int *localrank_to_objnum  = NULL;
-    int depth, effective_depth = 0, obj_rank = -1;
+    int depth = 0, effective_depth = 0, obj_rank = -1;
     int num_objs_in_node = 0, num_pus_in_node = 0;
     int numlevels = 0, num_nodes = 0, num_procs_in_node = 0;
     int rank, size, newrank = -1, hwloc_err, i, j, idx;
