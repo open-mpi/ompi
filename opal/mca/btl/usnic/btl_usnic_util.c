@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2017 Cisco Systems, Inc.  All rights reserved
+ * Copyright (c) 2013-2019 Cisco Systems, Inc.  All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -20,6 +20,10 @@
 #include "btl_usnic_util.h"
 
 
+// The following comment tells Coverity that this function does not return.
+// See https://scan.coverity.com/tune.
+
+/* coverity[+kill] */
 void opal_btl_usnic_exit(opal_btl_usnic_module_t *module)
 {
     if (NULL == module) {
@@ -61,7 +65,14 @@ void opal_btl_usnic_exit(opal_btl_usnic_module_t *module)
 /*
  * Simple utility in a .c file, mainly so that inline functions in .h
  * files don't need to include the show_help header file.
+ *
+ * The following comment tells Coverity that this function does not
+ * return.  See https://scan.coverity.com/tune.  Technically, we
+ * shouldn't need this, because opal_btl_usnic_exit() has the same
+ * annotation, but let's just help Coverity out.
  */
+
+/* coverity[+kill] */
 void opal_btl_usnic_util_abort(const char *msg, const char *file, int line)
 {
     opal_show_help("help-mpi-btl-usnic.txt", "internal error after init",
