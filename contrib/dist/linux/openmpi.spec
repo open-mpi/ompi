@@ -600,18 +600,18 @@ grep -v -f devel.files remaining.files > docs.files
 
 # runtime sub package
 %if !%{sysconfdir_in_prefix}
-grep -v %{_sysconfdir} runtime.files > tmp.files
+grep -v %{_sysconfdir} runtime.files > tmp.files | /bin/true
 mv tmp.files runtime.files
 %endif
-grep -v %{_pkgdatadir} runtime.files > tmp.files
+grep -v %{_pkgdatadir} runtime.files > tmp.files | /bin/true
 mv tmp.files runtime.files
 
 # devel sub package
-grep -v %{_includedir} devel.files > tmp.files
+grep -v %{_includedir} devel.files > tmp.files | /bin/true
 mv tmp.files devel.files
 
 # docs sub package
-grep -v %{_mandir} docs.files > tmp.files
+grep -v %{_mandir} docs.files > tmp.files | /bin/true
 mv tmp.files docs.files
 
 %endif
