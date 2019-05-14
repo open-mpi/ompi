@@ -586,6 +586,11 @@ MPI Functionality and Features
       examples of how to update legacy MPI applications using these
       deleted symbols to use the "new" symbols.
 
+  All that being said, if you are unable to immediately update your
+  application to stop using these legacy MPI-1 symbols, you can
+  re-enable them in mpi.h by configuring Open MPI with the
+  --enable-mpi1-compatibility flag.
+
 - Rank reordering support is available using the TreeMatch library. It
   is activated for the graph and dist_graph topologies.
 
