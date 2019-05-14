@@ -60,4 +60,13 @@ module mpi
   include "mpi-tkr-sizeof.h"
 #endif
 
+#if !defined(OMPI_ENABLE_MPI1_COMPAT)
+
+#error "Remove MPI-1 compat code"
+
+#elif OMPI_ENABLE_MPI1_COMPAT
+  include "mpi-f90-removed-interfaces.h"
+  include "pmpi-f90-removed-interfaces.h"
+#endif
+
 end module mpi

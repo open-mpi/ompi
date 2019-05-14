@@ -398,6 +398,20 @@ linked_files = \
         pwin_flush_local_f.c \
         pwin_flush_local_all_f.c
 
+if OMPI_ENABLE_MPI1_COMPAT
+linked_files += \
+        paddress_f.c \
+        perrhandler_create_f.c \
+        perrhandler_get_f.c \
+        perrhandler_set_f.c \
+        ptype_extent_f.c \
+        ptype_hindexed_f.c \
+        ptype_hvector_f.c \
+        ptype_lb_f.c \
+        ptype_struct_f.c \
+        ptype_ub_f.c
+endif
+
 #
 # Sym link in the sources from the real MPI directory
 #

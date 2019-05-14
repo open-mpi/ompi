@@ -60,10 +60,12 @@ lib_LTLIBRARIES += lib@OMPI_LIBMPI_NAME@_usempi.la
 mpi.lo: mpi.F90
 mpi.lo: mpi-f90-interfaces.h
 mpi.lo: mpi-f90-file-interfaces.h
+mpi.lo: mpi-f90-removed-interfaces.h
 mpi.lo: $(top_builddir)/ompi/mpi/fortran/configure-fortran-output.h
 mpi.lo: mpi-f90-cptr-interfaces.h
 mpi.lo: pmpi-f90-interfaces.h
 mpi.lo: pmpi-f90-file-interfaces.h
+mpi.lo: pmpi-f90-removed-interfaces.h
 mpi.lo: pmpi-f90-cptr-interfaces.h
 
 # Per MPI-3 p610:34-41, if we're building a TKR mpi module, we should
@@ -173,8 +175,10 @@ endif
 EXTRA_DIST = \
      mpi-f90-interfaces.h \
      mpi-f90-file-interfaces.h \
+     mpi-f90-removed-interfaces.h \
      mpi-f90-cptr-interfaces.h \
      pmpi-f90-interfaces.h \
      pmpi-f90-file-interfaces.h \
+     pmpi-f90-removed-interfaces.h \
      pmpi-f90-cptr-interfaces.h
 

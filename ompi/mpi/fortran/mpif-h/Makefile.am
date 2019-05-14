@@ -483,6 +483,21 @@ lib@OMPI_LIBMPI_NAME@_mpifh_la_SOURCES += \
         win_flush_all_f.c \
         win_flush_local_f.c \
         win_flush_local_all_f.c
+
+
+if OMPI_ENABLE_MPI1_COMPAT
+lib@OMPI_LIBMPI_NAME@_mpifh_la_SOURCES += \
+        address_f.c \
+        errhandler_create_f.c \
+        errhandler_get_f.c \
+        errhandler_set_f.c \
+        type_extent_f.c \
+        type_hindexed_f.c \
+        type_hvector_f.c \
+        type_lb_f.c \
+        type_struct_f.c \
+        type_ub_f.c
+endif
 endif
 
 #
