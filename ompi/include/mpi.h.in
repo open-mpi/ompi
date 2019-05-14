@@ -1037,7 +1037,13 @@ OMPI_DECLSPEC extern MPI_Fint *MPI_F_STATUSES_IGNORE;
 #define MPI_LONG_INT OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_long_int)
 #define MPI_SHORT_INT OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_short_int)
 #define MPI_2INT OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_2int)
-
+#if !OMPI_OMIT_MPI1_COMPAT_DECLS
+/*
+ * Removed datatypes
+ */
+#define MPI_UB OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_ub)
+#define MPI_LB OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_lb)
+#endif
 #define MPI_WCHAR OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_wchar)
 #if OPAL_HAVE_LONG_LONG
 #define MPI_LONG_LONG_INT OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_long_long_int)
