@@ -190,7 +190,6 @@ static uct_ib_device_mem_h alloc_device_mem(mca_spml_ucx_t *spml, size_t size,
     uct_md_h uct_md;
     void *address;
     size_t length;
-    int ret;
 
     uct_md = ucp_context_find_tl_md(spml->ucp_context, "mlx5");
     if (uct_md == NULL) {
@@ -354,8 +353,9 @@ static int sshmem_ucx_memheap_realloc(map_segment_t *s, size_t size,
                                       void* old_ptr, void** new_ptr)
 {
     mca_sshmem_ucx_segment_context_t *ctx = s->context;
-    unsigned alloc_count, index;
+    unsigned alloc_count, index, old_index, old_alloc_count;
     int res;
+    int inplace;
 
     if (size > s->seg_size) {
         return OSHMEM_ERR_OUT_OF_RESOURCE;
@@ -372,7 +372,15 @@ static int sshmem_ucx_memheap_realloc(map_segment_t *s, size_t size,
     /* Allocate new element. Zero-size allocation should still return a unique
      * pointer, so allocate 1 byte */
     alloc_count = max((size + ALLOC_ELEM_SIZE - 1) / ALLOC_ELEM_SIZE, 1);
-    res = sshmem_ucx_shadow_alloc(ctx->shadow_allocator, alloc_count, &index);
+
+    if (!old_ptr) {
+        res = sshmem_ucx_shadow_alloc(ctx->shadow_allocator, alloc_count, &index);
+    } else {
+        old_index = sshmem_ucx_memheap_ptr2index(s, old_ptr);
+        res       = sshmem_ucx_shadow_realloc(ctx->shadow_allocator, alloc_count,
+                                              old_index, &index, &inplace);
+    }
+
     if (res != OSHMEM_SUCCESS) {
         return res;
     }
@@ -380,10 +388,8 @@ static int sshmem_ucx_memheap_realloc(map_segment_t *s, size_t size,
     *new_ptr = sshmem_ucx_memheap_index2ptr(s, index);
 
     /* Copy to new segment and release old*/
-    if (old_ptr) {
-        unsigned old_index       = sshmem_ucx_memheap_ptr2index(s, old_ptr);
-        unsigned old_alloc_count = sshmem_ucx_shadow_size(ctx->shadow_allocator,
-                                                          old_index);
+    if (old_ptr && !inplace) {
+        old_alloc_count = sshmem_ucx_shadow_size(ctx->shadow_allocator, old_index);
         sshmem_ucx_memheap_wordcopy(*new_ptr, old_ptr,
                                     min(size, old_alloc_count * ALLOC_ELEM_SIZE));
         sshmem_ucx_shadow_free(ctx->shadow_allocator, old_index);
