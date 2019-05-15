@@ -107,6 +107,66 @@ static void sshmem_ucx_shadow_merge_blocks(sshmem_ucx_shadow_allocator_t *alloca
     }
 }
 
+
+
+int sshmem_ucx_shadow_realloc(sshmem_ucx_shadow_allocator_t *allocator,
+                              unsigned count, unsigned old_index, unsigned *index,
+                              int *inplace)
+{
+    sshmem_ucx_shadow_alloc_elem_t *end  = &allocator->elems[allocator->num_elems];
+    sshmem_ucx_shadow_alloc_elem_t *elem = &allocator->elems[old_index];
+    sshmem_ucx_shadow_alloc_elem_t *next = &elem[elem->block_size];
+    unsigned old_count                   = elem->block_size;
+
+    assert(count > 0);
+    assert(!sshmem_ucx_shadow_is_free(elem));
+
+    *inplace = 1;
+
+    if (count == old_count) {
+        *index = old_index;
+        return OSHMEM_SUCCESS;
+    }
+
+    if (count < elem->block_size) {
+        /* requested block is shorter than allocated block
+         * then just cut current buffer */
+        sshmem_ucx_shadow_set_elem(elem + count,
+                                   SSHMEM_UCX_SHADOW_ELEM_FLAG_FREE,
+                                   elem->block_size - count);
+        elem->block_size = count;
+        *index           = old_index;
+        sshmem_ucx_shadow_merge_blocks(allocator);
+        return OSHMEM_SUCCESS;
+    }
+
+    assert(count > old_count);
+
+    /* try to check if next element is free & has enough length */
+    if ((next < end)                    && /* non-last element? */
+        sshmem_ucx_shadow_is_free(next) && /* next is free */
+        (old_count + next->block_size >= count))
+    {
+        assert(elem < next);
+        assert(elem + count > next);
+        assert(elem + count <= end);
+        assert(next + next->block_size <= end);
+
+        if (old_count + next->block_size > count) {
+            sshmem_ucx_shadow_set_elem(elem + count, SSHMEM_UCX_SHADOW_ELEM_FLAG_FREE,
+                                       old_count + next->block_size - count);
+        }
+
+        sshmem_ucx_shadow_set_elem(next, 0, 0);
+        elem->block_size = count;
+        *index           = old_index;
+        return OSHMEM_SUCCESS;
+    }
+
+    *inplace = 0;
+    return sshmem_ucx_shadow_alloc(allocator, count, index);
+}
+
 int sshmem_ucx_shadow_free(sshmem_ucx_shadow_allocator_t *allocator,
                            unsigned index)
 {
@@ -117,8 +177,8 @@ int sshmem_ucx_shadow_free(sshmem_ucx_shadow_allocator_t *allocator,
     return OSHMEM_SUCCESS;
 }
 
-size_t sshmem_ucx_shadow_size(sshmem_ucx_shadow_allocator_t *allocator,
-                              unsigned index)
+unsigned sshmem_ucx_shadow_size(sshmem_ucx_shadow_allocator_t *allocator,
+                                unsigned index)
 {
     sshmem_ucx_shadow_alloc_elem_t *elem = &allocator->elems[index];
 
