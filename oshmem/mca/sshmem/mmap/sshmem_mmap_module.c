@@ -119,6 +119,10 @@ segment_create(map_segment_t *ds_buf,
 
     assert(ds_buf);
 
+    if (hint) {
+        return OSHMEM_ERR_NOT_IMPLEMENTED;
+    }
+
     /* init the contents of map_segment_t */
     shmem_ds_reset(ds_buf);
 
