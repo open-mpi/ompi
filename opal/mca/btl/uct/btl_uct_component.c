@@ -17,6 +17,7 @@
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * Copyright (c) 2018      Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2019      Google, LLC. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -129,7 +130,10 @@ static int mca_btl_uct_component_open(void)
         mca_btl_uct_component.num_contexts_per_module = MCA_BTL_UCT_MAX_WORKERS;
     }
 
-    if (mca_btl_uct_component.disable_ucx_memory_hooks) {
+    if (mca_btl_uct_component.disable_ucx_memory_hooks &&
+        ((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT) ==
+        ((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT) &
+         opal_mem_hooks_support_level()))) {
         ucm_set_external_event(UCM_EVENT_VM_UNMAPPED);
         opal_mem_hooks_register_release(mca_btl_uct_mem_release_cb, NULL);
     }
