@@ -50,13 +50,11 @@ pack_predefined_data( opal_convertor_t* CONVERTOR,
      */
     do_now = (total_count - *(COUNT));  /* done elements */
     if( 0 != do_now ) {
-        _memory += (do_now / _elem->blocklen) * _elem->extent;  /* account for all the full blocklen */
         do_now = do_now % _elem->blocklen;  /* partial blocklen? */
 
         if( 0 != do_now ) {
-            _memory  += (do_now * opal_datatype_basicDatatypes[_elem->common.type]->size);
-
-            do_now       = _elem->blocklen - do_now;  /* left in the current blocklen */
+            size_t left_in_block = _elem->blocklen - do_now;  /* left in the current blocklen */
+            do_now = (left_in_block > cando_count ) ? cando_count : left_in_block;
             do_now_bytes = do_now * opal_datatype_basicDatatypes[_elem->common.type]->size;
 
             OPAL_DATATYPE_SAFEGUARD_POINTER( _memory, do_now_bytes, (CONVERTOR)->pBaseBuf,
@@ -64,7 +62,10 @@ pack_predefined_data( opal_convertor_t* CONVERTOR,
             DO_DEBUG( opal_output( 0, "pack 1. memcpy( %p, %p, %lu ) => space %lu [prolog]\n",
                                    (void*)*(packed), (void*)_memory, (unsigned long)do_now_bytes, (unsigned long)(*(SPACE)) ); );
             MEMCPY_CSUM( *(packed), _memory, do_now_bytes, (CONVERTOR) );
-            _memory      = (*memory) + _elem->disp + _elem->extent;
+            _memory      = (*memory) + _elem->disp + (ptrdiff_t)do_now_bytes;
+            /* compensate if we just completed a blocklen */
+            if( do_now == left_in_block )
+                _memory += _elem->extent - (_elem->blocklen * opal_datatype_basicDatatypes[_elem->common.type]->size);
             *(packed)   += do_now_bytes;
             *(SPACE)    -= do_now_bytes;
             *(COUNT)    -= do_now;
@@ -103,6 +104,7 @@ pack_predefined_data( opal_convertor_t* CONVERTOR,
         DO_DEBUG( opal_output( 0, "pack 3. memcpy( %p, %p, %lu ) => space %lu [epilog]\n",
                                (void*)*(packed), (void*)_memory, (unsigned long)do_now_bytes, (unsigned long)(*(SPACE)) ); );
         MEMCPY_CSUM( *(packed), _memory, do_now_bytes, (CONVERTOR) );
+        _memory   += do_now_bytes;
         *(packed) += do_now_bytes;
         *(SPACE)  -= do_now_bytes;
         *(COUNT)  -= do_now;

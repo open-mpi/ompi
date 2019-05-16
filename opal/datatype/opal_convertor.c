@@ -324,8 +324,9 @@ complete_contiguous_data_unpack:
     return pConv->fAdvance( pConv, iov, out_size, max_data );
 }
 
-static inline int opal_convertor_create_stack_with_pos_contig( opal_convertor_t* pConvertor,
-                                                               size_t starting_point, const size_t* sizes )
+static inline int
+opal_convertor_create_stack_with_pos_contig( opal_convertor_t* pConvertor,
+                                             size_t starting_point, const size_t* sizes )
 {
     dt_stack_t* pStack;   /* pointer to the position on the stack */
     const opal_datatype_t* pData = pConvertor->pDesc;
@@ -349,7 +350,7 @@ static inline int opal_convertor_create_stack_with_pos_contig( opal_convertor_t*
     pStack[0].disp     = count * extent;
 
     /* now compute the number of pending bytes */
-    count = starting_point - count * pData->size;
+    count = starting_point % pData->size;
     /**
      * We save the current displacement starting from the begining
      * of this data.
@@ -370,9 +371,9 @@ static inline int opal_convertor_create_stack_with_pos_contig( opal_convertor_t*
     return OPAL_SUCCESS;
 }
 
-static inline
-int opal_convertor_create_stack_at_begining( opal_convertor_t* convertor,
-                                             const size_t* sizes )
+static inline int
+opal_convertor_create_stack_at_begining( opal_convertor_t* convertor,
+                                         const size_t* sizes )
 {
     dt_stack_t* pStack = convertor->pStack;
     dt_elem_desc_t* pElems;

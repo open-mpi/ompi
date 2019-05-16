@@ -285,13 +285,14 @@ int32_t opal_datatype_add( opal_datatype_t* pdtBase, const opal_datatype_t* pdtA
         pLast->elem.common.flags     = pdtAdd->flags & ~(OPAL_DATATYPE_FLAG_COMMITTED);
         pLast->elem.common.type      = pdtAdd->id;
         pLast->elem.disp             = disp;
-        pLast->elem.extent           = extent;
+        pLast->elem.extent           = count * extent;
         /* assume predefined datatypes without extent, aka. contiguous */
         pLast->elem.count            = 1;
         pLast->elem.blocklen         = count;
         if( extent != (ptrdiff_t)pdtAdd->size ) {  /* not contiguous: let's fix */
             pLast->elem.count            = count;
             pLast->elem.blocklen         = 1;
+            pLast->elem.extent           = extent;
             if( count > 1 ) {  /* gaps around the predefined datatype */
                 pLast->elem.common.flags &= ~(OPAL_DATATYPE_FLAG_CONTIGUOUS | OPAL_DATATYPE_FLAG_NO_GAPS);
             }
@@ -309,15 +310,37 @@ int32_t opal_datatype_add( opal_datatype_t* pdtBase, const opal_datatype_t* pdtA
         if( 1 == pdtAdd->desc.used ) {
             pLast->elem        = pdtAdd->desc.desc[0].elem;
             pLast->elem.disp  += disp;
-            if( (ptrdiff_t)pdtAdd->size == (pdtAdd->true_ub - pdtAdd->true_lb)  ) {
-                assert(1 == pdtAdd->desc.desc[0].elem.count);
-                pLast->elem.count  *= count;
-                pLast->elem.extent  = extent;
-            } else if( (extent == (pdtAdd->ub - pdtAdd->lb)) && (extent == pdtAdd->desc.desc[0].elem.extent) ){
+            if( 1 == count ) {
+                /* Extent only has a meaning when there are multiple elements. Bail out */
+            } else if( 1 == pLast->elem.count ) {
+                /* The size and true_extent of the added datatype are identical, signaling a datatype
+                 * that is mostly contiguous with the exception of the initial and final gaps. These
+                 * gaps do not matter here as they will amended (the initial gaps being shifted by the
+                 * new displacement and the final gap being replaced with the new gap
+                 */
+                if( pdtAdd->desc.desc[0].elem.extent == extent ) {
+                    /* pure bliss everything is fully contiguous and we can collapse
+                     * everything by updating the blocklen and extent
+                     */
+                    pLast->elem.blocklen *= count;
+                    pLast->elem.extent   *= count;
+                } else {
+                    pLast->elem.count = count;
+                    pLast->elem.extent = extent;
+                }
+            } else if( extent == (ptrdiff_t)(pLast->elem.count * pLast->elem.extent) ) {
+                /* It's just a repetition of the same element, increase the count */
                 pLast->elem.count *= count;
+            } else {
+                /* No luck here, no optimization can be applied. Fall back to the
+                 * normal case where we add a loop around the datatype.
+                 */
+                goto build_loop;
             }
             pdtBase->desc.used++;
         } else {
+
+build_loop:
             /* if the extent of the datatype is the same as the extent of the loop
              * description of the datatype then we simply have to update the main loop.
              */

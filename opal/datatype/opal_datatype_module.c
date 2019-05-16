@@ -254,6 +254,7 @@ int32_t opal_datatype_init( void )
         datatype->desc.desc[0].elem.common.type  = i;
         /* datatype->desc.desc[0].elem.blocklen XXX not set at the moment, it will be needed later */
         datatype->desc.desc[0].elem.count        = 1;
+        datatype->desc.desc[0].elem.blocklen     = 1;
         datatype->desc.desc[0].elem.disp         = 0;
         datatype->desc.desc[0].elem.extent       = datatype->size;
 
