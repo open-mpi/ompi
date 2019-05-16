@@ -16,7 +16,6 @@
 #include "opal/memoryhooks/memory.h"
 
 #include <ucm/api/ucm.h>
-#include <ucs/sys/math.h>
 
 /***********************************************************************/
 
@@ -102,8 +101,9 @@ OPAL_DECLSPEC void opal_common_ucx_mca_register(void)
             return;
         }
 
-        if (ucs_test_all_flags(opal_mem_hooks_support_level(),
-                               OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT)) {
+        if ((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT) ==
+            ((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT) &
+             opal_mem_hooks_support_level())) {
             MCA_COMMON_UCX_VERBOSE(1, "%s", "using OPAL memory hooks as external events");
             ucm_set_external_event(UCM_EVENT_VM_UNMAPPED);
             opal_mem_hooks_register_release(opal_common_ucx_mem_release_cb, NULL);
