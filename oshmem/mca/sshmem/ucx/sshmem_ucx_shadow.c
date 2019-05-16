@@ -128,7 +128,7 @@ int sshmem_ucx_shadow_realloc(sshmem_ucx_shadow_allocator_t *allocator,
         return OSHMEM_SUCCESS;
     }
 
-    if (count < elem->block_size) {
+    if (count < old_count) {
         /* requested block is shorter than allocated block
          * then just cut current buffer */
         sshmem_ucx_shadow_set_elem(elem + count,
