@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2018 The University of Tennessee and The University
+ * Copyright (c) 2004-2019 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
@@ -402,7 +402,7 @@ int opal_convertor_create_stack_at_begining( opal_convertor_t* convertor,
         pStack[1].count = pElems[0].loop.loops;
         pStack[1].type  = OPAL_DATATYPE_LOOP;
     } else {
-        pStack[1].count = pElems[0].elem.count;
+        pStack[1].count = pElems[0].elem.count * pElems[0].elem.blocklen;
         pStack[1].type  = pElems[0].elem.common.type;
     }
     return OPAL_SUCCESS;

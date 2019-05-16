@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2017 The University of Tennessee and The University
+ * Copyright (c) 2004-2019 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
@@ -123,6 +123,7 @@ int32_t opal_datatype_add( opal_datatype_t* pdtBase, const opal_datatype_t* pdtA
      */
     if( extent == -1 ) extent = (pdtAdd->ub - pdtAdd->lb);
 
+#if defined(OMPI_ENABLE_MPI1_COMPAT) && OMPI_ENABLE_MPI1_COMPAT
     /* Deal with the special markers (OPAL_DATATYPE_LB and OPAL_DATATYPE_UB) */
     if( OPAL_DATATYPE_LB == pdtAdd->id ) {
         pdtBase->bdt_used |= (((uint32_t)1) << OPAL_DATATYPE_LB);
@@ -149,6 +150,7 @@ int32_t opal_datatype_add( opal_datatype_t* pdtBase, const opal_datatype_t* pdtA
         }
         return OPAL_SUCCESS; /* Just ignore the OPAL_DATATYPE_LOOP and OPAL_DATATYPE_END_LOOP */
     }
+#endif  /* defined(OMPI_ENABLE_MPI1_COMPAT) && OMPI_ENABLE_MPI1_COMPAT */
 
     /* Compute the number of entries we need in the datatype description */
     OPAL_DATATYPE_COMPUTE_REQUIRED_ENTRIES( pdtAdd, count, extent, place_needed );
@@ -184,6 +186,7 @@ int32_t opal_datatype_add( opal_datatype_t* pdtBase, const opal_datatype_t* pdtA
     }
 #endif
 
+#if defined(OMPI_ENABLE_MPI1_COMPAT) && OMPI_ENABLE_MPI1_COMPAT
     /* The lower bound should be inherited from the parent if and only
      * if the USER has explicitly set it. The result lb is the MIN between
      * the all lb + disp if and only if all or nobody flags's contain the LB.
@@ -193,11 +196,14 @@ int32_t opal_datatype_add( opal_datatype_t* pdtBase, const opal_datatype_t* pdtA
             lb = pdtBase->lb;  /* base type has a user provided lb */
         }
         pdtBase->flags |= OPAL_DATATYPE_FLAG_USER_LB;
-    } else {
+    } else
+#endif  /* defined(OMPI_ENABLE_MPI1_COMPAT) && OMPI_ENABLE_MPI1_COMPAT */
+    {
         /* both of them have the LB flag or both of them dont have it */
         lb = LMIN( pdtBase->lb, lb );
     }
 
+#if defined(OMPI_ENABLE_MPI1_COMPAT) && OMPI_ENABLE_MPI1_COMPAT
     /* the same apply for the upper bound except for the case where
      * either of them has the flag UB, in which case we should
      * compute the UB including the natural alignement of the data.
@@ -207,7 +213,9 @@ int32_t opal_datatype_add( opal_datatype_t* pdtBase, const opal_datatype_t* pdtA
             ub = pdtBase->ub;
         }
         pdtBase->flags |= OPAL_DATATYPE_FLAG_USER_UB;
-    } else {
+    } else
+#endif  /* defined(OMPI_ENABLE_MPI1_COMPAT) && OMPI_ENABLE_MPI1_COMPAT */
+    {
         /* both of them have the UB flag or both of them dont have it */
         /* we should compute the extent depending on the alignement */
         ub = LMAX( pdtBase->ub, ub );
@@ -281,15 +289,24 @@ int32_t opal_datatype_add( opal_datatype_t* pdtBase, const opal_datatype_t* pdtA
     if( (pdtAdd->flags & (OPAL_DATATYPE_FLAG_PREDEFINED | OPAL_DATATYPE_FLAG_DATA)) == (OPAL_DATATYPE_FLAG_PREDEFINED | OPAL_DATATYPE_FLAG_DATA) ) {
         if( NULL != pdtBase->ptypes )
             pdtBase->ptypes[pdtAdd->id] += count;
+
+        pLast->elem.common.flags     = pdtAdd->flags & ~(OPAL_DATATYPE_FLAG_COMMITTED);
         pLast->elem.common.type      = pdtAdd->id;
-        pLast->elem.count            = count;
         pLast->elem.disp             = disp;
         pLast->elem.extent           = extent;
-        pdtBase->desc.used++;
-        pLast->elem.common.flags     = pdtAdd->flags & ~(OPAL_DATATYPE_FLAG_COMMITTED);
-        if( (extent != (ptrdiff_t)pdtAdd->size) && (count > 1) ) {  /* gaps around the datatype */
-            pLast->elem.common.flags &= ~(OPAL_DATATYPE_FLAG_CONTIGUOUS | OPAL_DATATYPE_FLAG_NO_GAPS);
+        if( extent != (ptrdiff_t)pdtAdd->size ) {  /* continous predefined types? */
+            pLast->elem.count            = count;
+            pLast->elem.blocklen         = 1;
+            if( count > 1 ) {  /* gaps around the predefined datatype */
+                pLast->elem.common.flags &= ~(OPAL_DATATYPE_FLAG_CONTIGUOUS | OPAL_DATATYPE_FLAG_NO_GAPS);
+            }
+        } else {
+            /* predefined datatypes without extent, aka. contiguous */
+            pLast->elem.count            = 1;
+            pLast->elem.blocklen         = count;
+            pLast->elem.extent          *= count;
         }
+        pdtBase->desc.used++;
     } else {
         /* keep trace of the total number of basic datatypes in the datatype definition */
         pdtBase->loops += pdtAdd->loops;

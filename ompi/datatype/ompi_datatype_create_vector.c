@@ -40,7 +40,7 @@ int32_t ompi_datatype_create_vector( int count, int bLength, int stride,
 
     pData = ompi_datatype_create( oldType->super.desc.used + 2 );
     if( (bLength == stride) || (1 >= count) ) {  /* the elements are contiguous */
-        ompi_datatype_add( pData, oldType, (size_t)count * bLength, 0, extent );
+        ompi_datatype_add( pData, oldType, (size_t)count * bLength, 0, extent * count );
     } else {
         if( 1 == bLength ) {
             ompi_datatype_add( pData, oldType, count, 0, extent * stride );
@@ -70,7 +70,7 @@ int32_t ompi_datatype_create_hvector( int count, int bLength, ptrdiff_t stride,
     pTempData = ompi_datatype_create( oldType->super.desc.used + 2 );
     if( ((extent * bLength) == stride) || (1 >= count) ) {  /* contiguous */
         pData = pTempData;
-        ompi_datatype_add( pData, oldType, count * bLength, 0, extent );
+        ompi_datatype_add( pData, oldType, count * bLength, 0, extent * count );
     } else {
         if( 1 == bLength ) {
             pData = pTempData;
