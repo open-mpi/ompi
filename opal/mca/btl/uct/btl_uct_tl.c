@@ -6,6 +6,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2018      Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2019      Google, LLC. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -270,10 +271,18 @@ static void mca_btl_uct_context_enable_progress (mca_btl_uct_device_context_t *c
 
 mca_btl_uct_device_context_t *mca_btl_uct_context_create (mca_btl_uct_module_t *module, mca_btl_uct_tl_t *tl, int context_id, bool enable_progress)
 {
+#if UCT_API >= UCT_VERSION(1, 6)
+    uct_iface_params_t iface_params = {.field_mask = UCT_IFACE_PARAM_FIELD_OPEN_MODE |
+                                                     UCT_IFACE_PARAM_FIELD_DEVICE,
+                                       .open_mode = UCT_IFACE_OPEN_MODE_DEVICE,
+                                       .mode = {.device = {.tl_name = tl->uct_tl_name,
+                                                           .dev_name = tl->uct_dev_name}}};
+#else
     uct_iface_params_t iface_params = {.rndv_cb = NULL, .eager_cb = NULL, .stats_root = NULL,
                                        .rx_headroom = 0, .open_mode = UCT_IFACE_OPEN_MODE_DEVICE,
                                        .mode = {.device = {.tl_name = tl->uct_tl_name,
                                                            .dev_name = tl->uct_dev_name}}};
+#endif
     mca_btl_uct_device_context_t *context;
     ucs_status_t ucs_status;
     int rc;
@@ -610,6 +619,7 @@ int mca_btl_uct_query_tls (mca_btl_uct_module_t *module, mca_btl_uct_md_t *md, u
 	/* no rdma tls */
 	BTL_VERBOSE(("no rdma tl matched supplied filter. disabling RDMA support"));
 
+        module->super.btl_flags &= ~MCA_BTL_FLAGS_RDMA;
 	module->super.btl_put = NULL;
 	module->super.btl_get = NULL;
 	module->super.btl_atomic_fop = NULL;
