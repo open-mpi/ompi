@@ -123,7 +123,6 @@ int32_t opal_datatype_add( opal_datatype_t* pdtBase, const opal_datatype_t* pdtA
      */
     if( extent == -1 ) extent = (pdtAdd->ub - pdtAdd->lb);
 
-#if defined(OMPI_ENABLE_MPI1_COMPAT) && OMPI_ENABLE_MPI1_COMPAT
     /* Deal with the special markers (OPAL_DATATYPE_LB and OPAL_DATATYPE_UB) */
     if( OPAL_DATATYPE_LB == pdtAdd->id ) {
         pdtBase->bdt_used |= (((uint32_t)1) << OPAL_DATATYPE_LB);
@@ -150,7 +149,6 @@ int32_t opal_datatype_add( opal_datatype_t* pdtBase, const opal_datatype_t* pdtA
         }
         return OPAL_SUCCESS; /* Just ignore the OPAL_DATATYPE_LOOP and OPAL_DATATYPE_END_LOOP */
     }
-#endif  /* defined(OMPI_ENABLE_MPI1_COMPAT) && OMPI_ENABLE_MPI1_COMPAT */
 
     /* Compute the number of entries we need in the datatype description */
     OPAL_DATATYPE_COMPUTE_REQUIRED_ENTRIES( pdtAdd, count, extent, place_needed );
@@ -186,7 +184,6 @@ int32_t opal_datatype_add( opal_datatype_t* pdtBase, const opal_datatype_t* pdtA
     }
 #endif
 
-#if defined(OMPI_ENABLE_MPI1_COMPAT) && OMPI_ENABLE_MPI1_COMPAT
     /* The lower bound should be inherited from the parent if and only
      * if the USER has explicitly set it. The result lb is the MIN between
      * the all lb + disp if and only if all or nobody flags's contain the LB.
@@ -196,14 +193,11 @@ int32_t opal_datatype_add( opal_datatype_t* pdtBase, const opal_datatype_t* pdtA
             lb = pdtBase->lb;  /* base type has a user provided lb */
         }
         pdtBase->flags |= OPAL_DATATYPE_FLAG_USER_LB;
-    } else
-#endif  /* defined(OMPI_ENABLE_MPI1_COMPAT) && OMPI_ENABLE_MPI1_COMPAT */
-    {
+    } else {
         /* both of them have the LB flag or both of them dont have it */
         lb = LMIN( pdtBase->lb, lb );
     }
 
-#if defined(OMPI_ENABLE_MPI1_COMPAT) && OMPI_ENABLE_MPI1_COMPAT
     /* the same apply for the upper bound except for the case where
      * either of them has the flag UB, in which case we should
      * compute the UB including the natural alignement of the data.
@@ -213,9 +207,7 @@ int32_t opal_datatype_add( opal_datatype_t* pdtBase, const opal_datatype_t* pdtA
             ub = pdtBase->ub;
         }
         pdtBase->flags |= OPAL_DATATYPE_FLAG_USER_UB;
-    } else
-#endif  /* defined(OMPI_ENABLE_MPI1_COMPAT) && OMPI_ENABLE_MPI1_COMPAT */
-    {
+    } else {
         /* both of them have the UB flag or both of them dont have it */
         /* we should compute the extent depending on the alignement */
         ub = LMAX( pdtBase->ub, ub );
@@ -294,17 +286,15 @@ int32_t opal_datatype_add( opal_datatype_t* pdtBase, const opal_datatype_t* pdtA
         pLast->elem.common.type      = pdtAdd->id;
         pLast->elem.disp             = disp;
         pLast->elem.extent           = extent;
-        if( extent != (ptrdiff_t)pdtAdd->size ) {  /* continous predefined types? */
+        /* assume predefined datatypes without extent, aka. contiguous */
+        pLast->elem.count            = 1;
+        pLast->elem.blocklen         = count;
+        if( extent != (ptrdiff_t)pdtAdd->size ) {  /* not contiguous: let's fix */
             pLast->elem.count            = count;
             pLast->elem.blocklen         = 1;
             if( count > 1 ) {  /* gaps around the predefined datatype */
                 pLast->elem.common.flags &= ~(OPAL_DATATYPE_FLAG_CONTIGUOUS | OPAL_DATATYPE_FLAG_NO_GAPS);
             }
-        } else {
-            /* predefined datatypes without extent, aka. contiguous */
-            pLast->elem.count            = 1;
-            pLast->elem.blocklen         = count;
-            pLast->elem.extent          *= count;
         }
         pdtBase->desc.used++;
     } else {
@@ -316,11 +306,16 @@ int32_t opal_datatype_add( opal_datatype_t* pdtBase, const opal_datatype_t* pdtA
             for( i = OPAL_DATATYPE_FIRST_TYPE; i < OPAL_DATATYPE_MAX_PREDEFINED; i++ )
                 if( pdtAdd->ptypes[i] != 0 ) pdtBase->ptypes[i] += (count * pdtAdd->ptypes[i]);
         }
-        if( (1 == pdtAdd->desc.used) && (extent == (pdtAdd->ub - pdtAdd->lb)) &&
-            (extent == pdtAdd->desc.desc[0].elem.extent) ){
+        if( 1 == pdtAdd->desc.used ) {
             pLast->elem        = pdtAdd->desc.desc[0].elem;
-            pLast->elem.count *= count;
             pLast->elem.disp  += disp;
+            if( (ptrdiff_t)pdtAdd->size == (pdtAdd->true_ub - pdtAdd->true_lb)  ) {
+                assert(1 == pdtAdd->desc.desc[0].elem.count);
+                pLast->elem.count  *= count;
+                pLast->elem.extent  = extent;
+            } else if( (extent == (pdtAdd->ub - pdtAdd->lb)) && (extent == pdtAdd->desc.desc[0].elem.extent) ){
+                pLast->elem.count *= count;
+            }
             pdtBase->desc.used++;
         } else {
             /* if the extent of the datatype is the same as the extent of the loop
