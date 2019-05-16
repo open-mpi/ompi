@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2018 Cisco Systems, Inc.  All rights reserved
+ * Copyright (c) 2006-2019 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2007-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2014-2018 Intel, Inc.  All rights reserved.
@@ -272,14 +272,6 @@ static void launch_daemons(int fd, short args, void *cbdata)
         opal_argv_append(&argc, &argv, "--kill-on-bad-exit");
     }
 
-    /* ensure the orteds are not bound to a single processor,
-     * just in case the TaskAffinity option is set by default.
-     * This will *not* release the orteds from any cpu-set
-     * constraint, but will ensure it doesn't get
-     * bound to only one processor
-     */
-    opal_argv_append(&argc, &argv, "--cpu_bind=none");
-
 #if SLURM_CRAY_ENV
     /*
      * If in a SLURM/Cray env. make sure that Cray PMI is not pulled in,
@@ -419,6 +411,23 @@ static void launch_daemons(int fd, short args, void *cbdata)
 
     /* setup environment */
     env = opal_argv_copy(orte_launch_environ);
+
+    /* ensure the orteds are not bound to a single processor,
+     * just in case the TaskAffinity option is set by default.
+     * This will *not* release the orteds from any cpu-set
+     * constraint, but will ensure it doesn't get
+     * bound to only one processor
+     *
+     * NOTE: We used to pass --cpu_bind=none on the command line.  But
+     * SLURM 19 changed this to --cpu-bind.  There is no easy way to
+     * test at run time which of these two parameters is used (see
+     * https://github.com/open-mpi/ompi/pull/6654).  There was
+     * discussion of using --test-only to see which one works, but
+     * --test-only is only effective if you're not already inside a
+     * SLURM allocation.  Instead, set the env var SLURM_CPU_BIND to
+     * "none", which should do the same thing as --cpu*bind=none.
+     */
+    opal_setenv("SLURM_CPU_BIND", "none", true, &env);
 
     if (0 < opal_output_get_verbosity(orte_plm_base_framework.framework_output)) {
         param = opal_argv_join(argv, ' ');
