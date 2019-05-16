@@ -50,9 +50,9 @@ void sshmem_ucx_shadow_destroy(sshmem_ucx_shadow_allocator_t *allocator);
 int sshmem_ucx_shadow_alloc(sshmem_ucx_shadow_allocator_t *allocator,
                             unsigned count, unsigned *index);
 
-/* reallocate existing allocated buffer. if possible - used inplace
+/* Reallocate existing allocated buffer. If possible - used inplace
  * reallocation.
- * parameter 'inplace' - out, in case if zero - new buffer was allocated
+ * Parameter 'inplace' - out, in case if zero - new buffer was allocated
  * (inplace is not possible), user should remove original buffer after data
  * is copied, else (if inplace == 0) - no additional action required */
 int sshmem_ucx_shadow_realloc(sshmem_ucx_shadow_allocator_t *allocator,
