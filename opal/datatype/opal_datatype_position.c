@@ -61,22 +61,77 @@ position_predefined_data( opal_convertor_t* CONVERTOR,
                           unsigned char** POINTER,
                           size_t* SPACE )
 {
-    size_t _copy_count = *(COUNT);
-    size_t _copy_blength;
-    ddt_elem_desc_t* _elem = &((ELEM)->elem);
+    const ddt_elem_desc_t* _elem = &((ELEM)->elem);
+    size_t total_count = _elem->count * _elem->blocklen;
+    size_t cando_count = (*SPACE) / opal_datatype_basicDatatypes[_elem->common.type]->size;
+    size_t do_now, do_now_bytes;
+    unsigned char* _memory = (*POINTER) + _elem->disp;
 
-    _copy_blength =  opal_datatype_basicDatatypes[_elem->common.type]->size;
-    if( (_copy_count * _copy_blength) > *(SPACE) ) {
-        _copy_count = *(SPACE) / _copy_blength;
-        if( 0 == _copy_count ) return;  /* nothing to do */
+    assert( *(COUNT) <= _elem->count * _elem->blocklen);
+
+    if( cando_count > *(COUNT) )
+        cando_count = *(COUNT);
+
+    /**
+     * First check if we already did something on this element ?
+     */
+    do_now = (total_count - *(COUNT));  /* done elements */
+    if( 0 != do_now ) {
+        do_now = do_now % _elem->blocklen;  /* partial blocklen? */
+
+        if( 0 != do_now ) {
+            size_t left_in_block = _elem->blocklen - do_now;  /* left in the current blocklen */
+            do_now = (left_in_block > cando_count ) ? cando_count : left_in_block;
+            do_now_bytes = do_now * opal_datatype_basicDatatypes[_elem->common.type]->size;
+
+            OPAL_DATATYPE_SAFEGUARD_POINTER( _memory, do_now_bytes, (CONVERTOR)->pBaseBuf,
+                                            (CONVERTOR)->pDesc, (CONVERTOR)->count );
+            DO_DEBUG( opal_output( 0, "position( %p, %lu ) => space %lu [prolog]\n",
+                                   (void*)_memory, (unsigned long)do_now_bytes, (unsigned long)(*(SPACE)) ); );
+            _memory      = *(POINTER) + _elem->disp + (ptrdiff_t)do_now_bytes;
+            /* compensate if we just completed a blocklen */
+            if( do_now == left_in_block )
+                _memory += _elem->extent - (_elem->blocklen * opal_datatype_basicDatatypes[_elem->common.type]->size);
+            *(SPACE)    -= do_now_bytes;
+            *(COUNT)    -= do_now;
+            cando_count -= do_now;
+        }
     }
-    _copy_blength *= _copy_count;
 
-    OPAL_DATATYPE_SAFEGUARD_POINTER( *(POINTER) + _elem->disp, _copy_blength, (CONVERTOR)->pBaseBuf,
-                                (CONVERTOR)->pDesc, (CONVERTOR)->count );
-    *(POINTER) += (_copy_count * _elem->extent);
-    *(SPACE)   -= _copy_blength;
-    *(COUNT)   -= _copy_count;
+    /**
+     * Compute how many full blocklen we need to do and do them.
+     */
+    do_now = cando_count / _elem->blocklen;
+    if( 0 != do_now ) {
+        do_now_bytes = _elem->blocklen * opal_datatype_basicDatatypes[_elem->common.type]->size;
+        for(size_t _i = 0; _i < do_now; _i++ ) {
+            OPAL_DATATYPE_SAFEGUARD_POINTER( _memory, do_now_bytes, (CONVERTOR)->pBaseBuf,
+                                            (CONVERTOR)->pDesc, (CONVERTOR)->count );
+            DO_DEBUG( opal_output( 0, "position( %p, %lu ) => space %lu\n",
+                                   (void*)_memory, (unsigned long)do_now_bytes, (unsigned long)*(SPACE) ); );
+            _memory     += _elem->extent;
+            *(SPACE)    -= do_now_bytes;
+            *(COUNT)    -= _elem->blocklen;
+            cando_count -= _elem->blocklen;
+        }
+    }
+
+    /**
+     * As an epilog do anything left from the last blocklen.
+     */
+    do_now = cando_count;
+    if( 0 != do_now ) {
+        do_now_bytes = do_now * opal_datatype_basicDatatypes[_elem->common.type]->size;
+        OPAL_DATATYPE_SAFEGUARD_POINTER( _memory, do_now_bytes, (CONVERTOR)->pBaseBuf,
+                                        (CONVERTOR)->pDesc, (CONVERTOR)->count );
+        DO_DEBUG( opal_output( 0, "position( %p, %lu ) => space %lu [epilog]\n",
+                               (void*)_memory, (unsigned long)do_now_bytes, (unsigned long)(*(SPACE)) ); );
+        _memory   += do_now_bytes;
+        *(SPACE)  -= do_now_bytes;
+        *(COUNT)  -= do_now;
+    }
+
+    *(POINTER)  = _memory - _elem->disp;
 }
 
 /**
@@ -128,8 +183,8 @@ int opal_convertor_generic_simple_position( opal_convertor_t* pConvertor,
 
     /* We dont want to have to parse the datatype multiple times. What we are interested in
      * here is to compute the number of completed datatypes that we can move forward, update
-     * the  counters and finally compute the position taking in account only the remaining
-     * elements. The only problem is that we have to modify all the elements on the stack.
+     * the counters and compute the position taking in account only the remaining elements.
+     * The only problem is that we have to modify all the elements on the stack.
      */
     iov_len_local = *position - pConvertor->bConverted;
     if( iov_len_local > pConvertor->pDesc->size ) {

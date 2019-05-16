@@ -69,14 +69,14 @@ ssize_t opal_datatype_get_element_count( const opal_datatype_t* datatype, size_t
         while( pElems[pos_desc].elem.common.flags & OPAL_DATATYPE_FLAG_DATA ) {
             /* now here we have a basic datatype */
             const opal_datatype_t* basic_type = BASIC_DDT_FROM_ELEM(pElems[pos_desc]);
-            local_size = pElems[pos_desc].elem.count * basic_type->size;
+            local_size = (pElems[pos_desc].elem.count * pElems[pos_desc].elem.blocklen) * basic_type->size;
             if( local_size >= iSize ) {
                 local_size = iSize / basic_type->size;
                 nbElems += (int32_t)local_size;
                 iSize -= local_size * basic_type->size;
                 return (iSize == 0 ? nbElems : -1);
             }
-            nbElems += pElems[pos_desc].elem.count;
+            nbElems += (pElems[pos_desc].elem.count * pElems[pos_desc].elem.blocklen);
             iSize -= local_size;
             pos_desc++;  /* advance to the next data */
         }
@@ -131,7 +131,7 @@ int32_t opal_datatype_set_element_count( const opal_datatype_t* datatype, size_t
         while( pElems[pos_desc].elem.common.flags & OPAL_DATATYPE_FLAG_DATA ) {
             /* now here we have a basic datatype */
             const opal_datatype_t* basic_type = BASIC_DDT_FROM_ELEM(pElems[pos_desc]);
-            local_length = pElems[pos_desc].elem.count;
+            local_length = (pElems[pos_desc].elem.count * pElems[pos_desc].elem.blocklen);
             if( local_length >= count ) {
                 *length += count * basic_type->size;
                 return 0;
@@ -188,8 +188,8 @@ int opal_datatype_compute_ptypes( opal_datatype_t* datatype )
         }
         while( pElems[pos_desc].elem.common.flags & OPAL_DATATYPE_FLAG_DATA ) {
             /* now here we have a basic datatype */
-            datatype->ptypes[pElems[pos_desc].elem.common.type] += pElems[pos_desc].elem.count;
-            nbElems += pElems[pos_desc].elem.count;
+            datatype->ptypes[pElems[pos_desc].elem.common.type] += pElems[pos_desc].elem.count * pElems[pos_desc].elem.blocklen;
+            nbElems += pElems[pos_desc].elem.count * pElems[pos_desc].elem.blocklen;
 
             DUMP( "  compute_ptypes-add: type %d count %"PRIsize_t" (total type %"PRIsize_t" total %lld)\n",
                   pElems[pos_desc].elem.common.type, datatype->ptypes[pElems[pos_desc].elem.common.type],

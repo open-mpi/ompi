@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2017 The University of Tennessee and The University
+ * Copyright (c) 2004-2019 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
@@ -324,8 +324,9 @@ complete_contiguous_data_unpack:
     return pConv->fAdvance( pConv, iov, out_size, max_data );
 }
 
-static inline int opal_convertor_create_stack_with_pos_contig( opal_convertor_t* pConvertor,
-                                                               size_t starting_point, const size_t* sizes )
+static inline int
+opal_convertor_create_stack_with_pos_contig( opal_convertor_t* pConvertor,
+                                             size_t starting_point, const size_t* sizes )
 {
     dt_stack_t* pStack;   /* pointer to the position on the stack */
     const opal_datatype_t* pData = pConvertor->pDesc;
@@ -349,7 +350,7 @@ static inline int opal_convertor_create_stack_with_pos_contig( opal_convertor_t*
     pStack[0].disp     = count * extent;
 
     /* now compute the number of pending bytes */
-    count = starting_point - count * pData->size;
+    count = starting_point % pData->size;
     /**
      * We save the current displacement starting from the begining
      * of this data.
@@ -370,9 +371,9 @@ static inline int opal_convertor_create_stack_with_pos_contig( opal_convertor_t*
     return OPAL_SUCCESS;
 }
 
-static inline
-int opal_convertor_create_stack_at_begining( opal_convertor_t* convertor,
-                                             const size_t* sizes )
+static inline int
+opal_convertor_create_stack_at_begining( opal_convertor_t* convertor,
+                                         const size_t* sizes )
 {
     dt_stack_t* pStack = convertor->pStack;
     dt_elem_desc_t* pElems;
@@ -402,7 +403,7 @@ int opal_convertor_create_stack_at_begining( opal_convertor_t* convertor,
         pStack[1].count = pElems[0].loop.loops;
         pStack[1].type  = OPAL_DATATYPE_LOOP;
     } else {
-        pStack[1].count = pElems[0].elem.count;
+        pStack[1].count = pElems[0].elem.count * pElems[0].elem.blocklen;
         pStack[1].type  = pElems[0].elem.common.type;
     }
     return OPAL_SUCCESS;

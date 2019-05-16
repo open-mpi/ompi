@@ -167,17 +167,17 @@ int32_t ompi_datatype_create_hindexed_block( int count, int bLength, const ptrdi
     pdt = ompi_datatype_create( count * (2 + oldType->super.desc.used) );
     disp = pDisp[0];
     dLength = bLength;
-    endat = disp + dLength;
+    endat = disp + dLength * extent;
     for( i = 1; i < count; i++ ) {
         if( endat == pDisp[i] ) {
             /* contiguous with the previsious */
             dLength += bLength;
-            endat += bLength;
+            endat += bLength * extent;
         } else {
             ompi_datatype_add( pdt, oldType, dLength, disp, extent );
             disp = pDisp[i];
             dLength = bLength;
-            endat = disp + bLength;
+            endat = disp + bLength * extent;
         }
     }
     ompi_datatype_add( pdt, oldType, dLength, disp, extent );
