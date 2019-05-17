@@ -18,10 +18,28 @@
 extern "C" {
 #endif
 
+enum {
+    SHMEM_HINT_NONE           = 0,
+    SHMEM_HINT_LOW_LAT_MEM    = 1 << 0,
+    SHMEM_HINT_HIGH_BW_MEM    = 1 << 1,
+    SHMEM_HINT_NEAR_NIC_MEM   = 1 << 2,
+    SHMEM_HINT_DEVICE_GPU_MEM = 1 << 3,
+    SHMEM_HINT_DEVICE_NIC_MEM = 1 << 4,
+
+    SHMEM_HINT_PSYNC          = 1 << 16,
+    SHMEM_HINT_PWORK          = 1 << 17,
+    SHMEM_HINT_ATOMICS        = 1 << 18
+};
+
 /*
  * All OpenSHMEM extension APIs that are not part of this specification must be defined in the shmemx.h include
  * file. These extensions shall use the shmemx_ prefix for all routine, variable, and constant names.
  */
+
+/*
+ * Symmetric heap routines
+ */
+OSHMEM_DECLSPEC  void* shmemx_malloc_with_hint(size_t size, long hint);
 
 /*
  * Elemental put routines

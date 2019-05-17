@@ -83,14 +83,19 @@ typedef int
  * @param file_name file_name  unique string identifier that must be a valid,
  *                             writable path (IN).
  *
+ * @param address              address to attach the segment at, or 0 allocate
+ *                             any available address in the process.
+ *
  * @param size                 size of the shared memory segment.
+ *
+ * @param hint                 hint of the shared memory segment.
  *
  * @return OSHMEM_SUCCESS on success.
  */
 typedef int
 (*mca_sshmem_base_module_segment_create_fn_t)(map_segment_t *ds_buf,
                                               const char *file_name,
-                                              size_t size);
+                                              size_t size, long hint);
 
 /**
  * attach to an existing shared memory segment initialized by segment_create.

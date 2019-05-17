@@ -62,7 +62,7 @@ module_init(void);
 static int
 segment_create(map_segment_t *ds_buf,
                const char *file_name,
-               size_t size);
+               size_t size, long hint);
 
 static void *
 segment_attach(map_segment_t *ds_buf, sshmem_mkey_t *mkey);
@@ -111,12 +111,16 @@ module_finalize(void)
 static int
 segment_create(map_segment_t *ds_buf,
                const char *file_name,
-               size_t size)
+               size_t size, long hint)
 {
     int rc = OSHMEM_SUCCESS;
     void *addr = NULL;
 
     assert(ds_buf);
+
+    if (hint) {
+        return OSHMEM_ERR_NOT_IMPLEMENTED;
+    }
 
     /* init the contents of map_segment_t */
     shmem_ds_reset(ds_buf);
