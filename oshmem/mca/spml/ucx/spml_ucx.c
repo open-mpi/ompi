@@ -886,8 +886,10 @@ int mca_spml_ucx_put_all_nb(void *dest, const void *source, size_t size, long *c
         ctx = oshmem_ctx_default;
     }
 
+    assert(ctx != NULL); /* make coverity happy */
+
     for (peer = 0; peer < oshmem_num_procs(); peer++) {
-        dst_pe = (peer + my_pe) % oshmem_group_all->proc_count;
+        dst_pe = (peer + my_pe) % oshmem_num_procs();
         rc = mca_spml_ucx_put_nb(ctx,
                                  (void*)((uintptr_t)dest + my_pe * size),
                                  size,
