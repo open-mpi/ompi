@@ -24,6 +24,11 @@
 #undef MEMCPY_CSUM
 #define MEMCPY_CSUM( DST, SRC, BLENGTH, CONVERTOR ) \
     CONVERTOR->cbmemcpy( (DST), (SRC), (BLENGTH), (CONVERTOR) )
+
+#undef BASIC_DTT_MEMCPY_CSUM
+#define BASIC_DTT_MEMCPY_CSUM( DST, SRC, BLENGTH, CONVERTOR ) \
+    MEMCPY_CSUM( (DST), (SRC), (BLENGTH), (CONVERTOR) )
+
 #endif
 
 static inline void
@@ -52,7 +57,7 @@ unpack_predefined_data( opal_convertor_t* CONVERTOR,  /* the convertor */
                                     (CONVERTOR)->pDesc, (CONVERTOR)->count );
         DO_DEBUG( opal_output( 0, "unpack 1. memcpy( %p, %p, %lu ) => space %lu\n",
                                (void*)_destination, (void*)*(SOURCE), (unsigned long)_copy_blength, (unsigned long)(*(SPACE)) ); );
-        MEMCPY_CSUM( _destination, *(SOURCE), _copy_blength, (CONVERTOR) );
+        BASIC_DTT_MEMCPY_CSUM( _destination, *(SOURCE), _copy_blength, (CONVERTOR) );
         *(SOURCE)    += _copy_blength;
         _destination += _copy_blength;
     } else {
