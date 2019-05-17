@@ -90,11 +90,11 @@ static int mca_pml_ucx_component_close(void)
 
 static mca_pml_base_module_t*
 mca_pml_ucx_component_init(int* priority, bool enable_progress_threads,
-                             bool enable_mpi_threads)
+                           bool enable_mpi_threads)
 {
     int ret;
 
-    if ( (ret = mca_pml_ucx_init()) != 0) {
+    if ( (ret = mca_pml_ucx_init(enable_mpi_threads)) != 0) {
         return NULL;
     }
 

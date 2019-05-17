@@ -64,7 +64,7 @@ extern mca_pml_ucx_module_t ompi_pml_ucx;
 
 int mca_pml_ucx_open(void);
 int mca_pml_ucx_close(void);
-int mca_pml_ucx_init(void);
+int mca_pml_ucx_init(int enable_mpi_threads);
 int mca_pml_ucx_cleanup(void);
 
 int mca_pml_ucx_add_procs(struct ompi_proc_t **procs, size_t nprocs);
