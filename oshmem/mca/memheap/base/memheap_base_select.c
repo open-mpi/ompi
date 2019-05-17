@@ -21,7 +21,6 @@
 #include "oshmem/util/oshmem_util.h"
 #include "oshmem/mca/memheap/memheap.h"
 #include "oshmem/mca/memheap/base/base.h"
-#include "orte/mca/errmgr/errmgr.h"
 #include "oshmem/include/shmemx.h"
 #include "oshmem/mca/sshmem/base/base.h"
 
