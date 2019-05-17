@@ -276,7 +276,7 @@ void ompi_spc_events_init(void)
  */
 void ompi_spc_init(void)
 {
-    int i, j, ret, found = 0, all_on = 0;
+    int i, j, ret, found = 0, all_on = 0, matched = 0;
 
     /* Initialize the clock frequency variable as the CPU's frequency in MHz */
     sys_clock_freq_mhz = opal_timer_base_get_freq() / 1000000;
@@ -286,6 +286,14 @@ void ompi_spc_init(void)
     /* Get the MCA params string of counters to turn on */
     char **arg_strings = opal_argv_split(ompi_mpi_spc_attach_string, ',');
     int num_args       = opal_argv_count(arg_strings);
+
+    /* Reset all timer-based counters */
+    for(i = 0; i < OMPI_SPC_NUM_COUNTERS; i++) {
+        CLEAR_SPC_BIT(ompi_spc_timer_event, i);
+    }
+
+    /* If this is a timer event, set the corresponding timer_event entry */
+    SET_SPC_BIT(ompi_spc_timer_event, OMPI_SPC_MATCH_TIME);
 
     /* If there is only one argument and it is 'all', then all counters
      * should be turned on.  If the size is 0, then no counters will be enabled.
@@ -299,49 +307,44 @@ void ompi_spc_init(void)
     /* Turn on only the counters that were specified in the MCA parameter */
     for(i = 0; i < OMPI_SPC_NUM_COUNTERS; i++) {
         if(all_on) {
-            SET_SPC_BIT(ompi_spc_attached_event, i);
-            mpi_t_enabled = true;
             found++;
         } else {
+            matched = 0;
             /* Note: If no arguments were given, this will be skipped */
             for(j = 0; j < num_args; j++) {
                 if( 0 == strcmp(ompi_spc_events_names[i].counter_name, arg_strings[j]) ) {
-                    SET_SPC_BIT(ompi_spc_attached_event, i);
-                    mpi_t_enabled = true;
                     found++;
+                    matched = 1;
                     break;
                 }
             }
         }
 
-        /* ########################################################################
-         * ################## Add Timer-Based Counter Enums Here ##################
-         * ########################################################################
-         */
-        CLEAR_SPC_BIT(ompi_spc_timer_event, i);
+        if (all_on || matched) {
+            SET_SPC_BIT(ompi_spc_attached_event, i);
+            mpi_t_enabled = true;
 
-        /* Registers the current counter as an MPI_T pvar regardless of whether it's been turned on or not */
-        ret = mca_base_pvar_register("ompi", "runtime", "spc", ompi_spc_events_names[i].counter_name, ompi_spc_events_names[i].counter_description,
-                                     OPAL_INFO_LVL_4, MPI_T_PVAR_CLASS_SIZE,
-                                     MCA_BASE_VAR_TYPE_UNSIGNED_LONG_LONG, NULL, MPI_T_BIND_NO_OBJECT,
-                                     MCA_BASE_PVAR_FLAG_READONLY | MCA_BASE_PVAR_FLAG_CONTINUOUS,
-                                     ompi_spc_get_count, NULL, ompi_spc_notify, NULL);
+            /* Registers the current counter as an MPI_T pvar regardless of whether it's been turned on or not */
+            ret = mca_base_pvar_register("ompi", "runtime", "spc", ompi_spc_events_names[i].counter_name, ompi_spc_events_names[i].counter_description,
+                                         OPAL_INFO_LVL_4, MPI_T_PVAR_CLASS_SIZE,
+                                         MCA_BASE_VAR_TYPE_UNSIGNED_LONG_LONG, NULL, MPI_T_BIND_NO_OBJECT,
+                                         MCA_BASE_PVAR_FLAG_READONLY | MCA_BASE_PVAR_FLAG_CONTINUOUS,
+                                         ompi_spc_get_count, NULL, ompi_spc_notify, NULL);
 
-        /* Check to make sure that ret is a valid index and not an error code.
-         */
-        if( ret >= 0 ) {
-            if( mpi_t_offset == -1 ) {
-                mpi_t_offset = ret;
+            /* Check to make sure that ret is a valid index and not an error code */
+            if( ret >= 0 ) {
+                if( mpi_t_offset == -1 ) {
+                    mpi_t_offset = ret;
+                }
+            }
+            if( (ret < 0) || (ret != (mpi_t_offset + found - 1)) ) {
+                mpi_t_enabled = false;
+                opal_show_help("help-mpi-runtime.txt", "spc: MPI_T disabled", true);
+                break;
             }
         }
-        if( (ret < 0) || (ret != (mpi_t_offset + found - 1)) ) {
-            mpi_t_enabled = false;
-            opal_show_help("help-mpi-runtime.txt", "spc: MPI_T disabled", true);
-            break;
-        }
     }
-    /* If this is a timer event, sent the corresponding timer_event entry to 1 */
-    SET_SPC_BIT(ompi_spc_timer_event, OMPI_SPC_MATCH_TIME);
+
     opal_argv_free(arg_strings);
 }
 
