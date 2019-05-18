@@ -357,7 +357,7 @@ opal_convertor_create_stack_with_pos_contig( opal_convertor_t* pConvertor,
      */
     if( OPAL_LIKELY(0 == count) ) {
         pStack[1].type     = pElems->elem.common.type;
-        pStack[1].count    = pElems->elem.count;
+        pStack[1].count    = pElems->elem.blocklen;
     } else {
         pStack[1].type  = OPAL_DATATYPE_UINT1;
         pStack[1].count = pData->size - count;

@@ -33,16 +33,12 @@ mca_common_ompio_decode_datatype ( ompi_datatype_t *datatype,
                                    uint32_t *iovec_count,
                                    int increment)
 {
-
-
-
     opal_convertor_t *convertor;
     size_t remaining_length = 0;
     uint32_t i;
     uint32_t temp_count;
     struct iovec *temp_iov=NULL;
     size_t temp_data;
-
 
     convertor = opal_convertor_create( opal_local_arch, 0 );
 
@@ -55,9 +51,9 @@ mca_common_ompio_decode_datatype ( ompi_datatype_t *datatype,
     }
 
     if ( 0 == datatype->super.size ) {
-	*iovec_count = 0;
-	*iov = NULL;
-	return OMPI_SUCCESS;
+        *iovec_count = 0;
+        *iov = NULL;
+        return OMPI_SUCCESS;
     }
 
     remaining_length = count * datatype->super.size;
@@ -69,10 +65,8 @@ mca_common_ompio_decode_datatype ( ompi_datatype_t *datatype,
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
-    while (0 == opal_convertor_raw(convertor,
-				   temp_iov,
-                                   &temp_count,
-                                   &temp_data)) {
+    while (0 == opal_convertor_raw(convertor, temp_iov,
+                                   &temp_count, &temp_data)) {
         *iovec_count = *iovec_count + temp_count;
         *iov = (struct iovec *) realloc (*iov, *iovec_count * sizeof(struct iovec));
         if (NULL == *iov) {
@@ -80,7 +74,7 @@ mca_common_ompio_decode_datatype ( ompi_datatype_t *datatype,
             free(temp_iov);
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
-        for (i=0 ; i<temp_count ; i++) {
+        for (i = 0 ; i < temp_count ; i++) {
             (*iov)[i+(*iovec_count-temp_count)].iov_base = temp_iov[i].iov_base;
             (*iov)[i+(*iovec_count-temp_count)].iov_len = temp_iov[i].iov_len;
         }
@@ -90,12 +84,12 @@ mca_common_ompio_decode_datatype ( ompi_datatype_t *datatype,
     }
     *iovec_count = *iovec_count + temp_count;
     if ( temp_count > 0 ) {
-	*iov = (struct iovec *) realloc (*iov, *iovec_count * sizeof(struct iovec));
-	if (NULL == *iov) {
-	    opal_output(1, "OUT OF MEMORY\n");
+        *iov = (struct iovec *) realloc (*iov, *iovec_count * sizeof(struct iovec));
+        if (NULL == *iov) {
+            opal_output(1, "OUT OF MEMORY\n");
             free(temp_iov);
-	    return OMPI_ERR_OUT_OF_RESOURCE;
-	}
+            return OMPI_ERR_OUT_OF_RESOURCE;
+        }
     }
     for (i=0 ; i<temp_count ; i++) {
         (*iov)[i+(*iovec_count-temp_count)].iov_base = temp_iov[i].iov_base;
@@ -341,7 +335,6 @@ int main (int argc, char *argv[]) {
     uint32_t iovec_count_1 = 0;
     struct iovec * iov_1 = NULL;
     mca_common_ompio_decode_datatype ( datatype, 1, &iov_1, &iovec_count_1, 1);
-
 
     assert(iovec_count_300 == iovec_count_10);
     assert(iovec_count_300 == iovec_count_1);
