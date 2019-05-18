@@ -157,8 +157,7 @@ static int local_copy_ddt_count( opal_datatype_t const * const pdt, int count )
     osrc = (char*)malloc( malloced_size );
 
     {
-        for( size_t i = 0; i < malloced_size; i++ )
-            osrc[i] = i % 128 + 32;
+        for( size_t i = 0; i < malloced_size; i++ ) osrc[i] = i % 128 + 32;
         memcpy(odst, osrc, malloced_size);
     }
     pdst = odst - lb;

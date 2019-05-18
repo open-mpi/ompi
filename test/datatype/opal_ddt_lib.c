@@ -445,7 +445,7 @@ static int32_t opal_datatype_create_vector( int count, int bLength, int stride,
     }
 
     pData = opal_datatype_create( oldType->desc.used + 2 );
-    if( (bLength == stride) || (1 >= count) ) {  /* the elements are contiguous */
+    if( (bLength == stride) || (1 == count) ) {  /* the elements are contiguous */
         opal_datatype_add( pData, oldType, count * bLength, 0, extent );
     } else {
         if( 1 == bLength ) {
@@ -476,7 +476,7 @@ static int32_t opal_datatype_create_hvector( int count, int bLength, ptrdiff_t s
     }
 
     pTempData = opal_datatype_create( oldType->desc.used + 2 );
-    if( ((extent * bLength) == stride) || (1 >= count) ) {  /* contiguous */
+    if( ((extent * bLength) == stride) || (1 == count) ) {  /* contiguous */
         pData = pTempData;
         opal_datatype_add( pData, oldType, count * bLength, 0, extent );
     } else {
