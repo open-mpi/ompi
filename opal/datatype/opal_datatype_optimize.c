@@ -167,15 +167,18 @@ opal_datatype_optimize_short( opal_datatype_t* pData,
             if( ((last.blocklen * opal_datatype_basicDatatypes[last.common.type]->size) ==
                   (current->blocklen * opal_datatype_basicDatatypes[current->common.type]->size)) &&
                 (current->disp == (last.disp + (ptrdiff_t)last.count * last.extent)) &&
-                ((last.count == 1) || (current->count == 1) || (last.extent == current->extent)) ) {
+                ((current->count == 1) || (last.extent == current->extent)) ) {
                 last.count += current->count;
-                if( last.count == 1 ) {
-                    last.extent = current->extent;
-                }  /* otherwise keep the last.extent */
                 /* find the lowest common denomitaor type */
                 if( last.common.type != current->common.type ) {
-                    last.common.type  = OPAL_DATATYPE_UINT1;
                     last.blocklen    *= opal_datatype_basicDatatypes[last.common.type]->size;
+                    last.common.type  = OPAL_DATATYPE_UINT1;
+                }
+                /* maximize the contiguous pieces */
+                if( last.extent == (ptrdiff_t)(last.blocklen * opal_datatype_basicDatatypes[last.common.type]->size) ) {
+                    last.blocklen *= last.count;
+                    last.count = 1;
+                    last.extent = last.blocklen * opal_datatype_basicDatatypes[last.common.type]->size;
                 }
                 continue;  /* next data */
             }

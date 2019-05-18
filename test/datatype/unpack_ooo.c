@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
- * Copyright (c) 2014      The University of Tennessee and The University
+ * Copyright (c) 2014-2019 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2014      Research Organization for Information Science
@@ -18,7 +18,6 @@
 #include "opal/runtime/opal.h"
 #include "opal/datatype/opal_convertor.h"
 #include "opal/datatype/opal_datatype_internal.h"
-// #include <mpi.h>
 #include <time.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -59,6 +58,18 @@ static void print_bar_pbar(struct foo_t* bar, struct pfoo_t* pbar)
     print_hex(&pbar->d[0], sizeof(double), 1);
     print_hex(&pbar->d[1], sizeof(double), 1);
     fprintf(stderr, "\n");
+}
+
+static void print_stack(opal_convertor_t* conv)
+{
+    printf("Stack pos %d [converted %" PRIsize_t "/%" PRIsize_t "]\n",
+           conv->stack_pos, conv->bConverted, conv->local_size);
+    for( uint32_t i = 0; i <= conv->stack_pos; i++ ) {
+        printf( "[%u] index %d, type %s count %" PRIsize_t " disp %p\n",
+                i, conv->pStack[i].index, opal_datatype_basicDatatypes[conv->pStack[i].type]->name,
+                conv->pStack[i].count, (void*)conv->pStack[i].disp);
+    }
+    printf("\n");
 }
 
 static int testcase(ompi_datatype_t * newtype, size_t arr[10][2]) {
@@ -104,6 +115,7 @@ static int testcase(ompi_datatype_t * newtype, size_t arr[10][2]) {
         max_data = a.iov_len;
         pos = arr[i][1];
         opal_convertor_set_position(pConv, &pos);
+        print_stack(pConv);
         assert(arr[i][1] == pos);
         opal_convertor_unpack( pConv, &a, &iov_count, &max_data );
         a.iov_base = (char*)a.iov_base - 1024;
@@ -118,9 +130,10 @@ static int testcase(ompi_datatype_t * newtype, size_t arr[10][2]) {
             bar[j].d[1] != 0.0 ||
             bar[j].d[2] != pbar[j].d[1]) {
             if(0 == errors) {
-                fprintf(stderr, "ERROR ! count=%d, position=%d, ptr = %p"
+                (void)opal_datatype_dump(&newtype->super);
+                fprintf(stderr, "ERROR ! position=%d/%d, ptr = %p"
                         " got (%d,%d,%d,%g,%g,%g) expected (%d,%d,%d,%g,%g,%g)\n",
-                        N, j, (void*)&bar[j],
+                        j, N, (void*)&bar[j],
                         bar[j].i[0],
                         bar[j].i[1],
                         bar[j].i[2],
