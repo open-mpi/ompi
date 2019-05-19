@@ -42,6 +42,7 @@ static inline int start_shared(ompi_osc_ucx_module_t *module, int target) {
         } else {
             break;
         }
+        ucp_worker_progress(mca_osc_ucx_component.wpool->dflt_worker);
     }
 
     return ret;
@@ -58,7 +59,7 @@ static inline int start_exclusive(ompi_osc_ucx_module_t *module, int target) {
     uint64_t remote_addr = (module->state_addrs)[target] + OSC_UCX_STATE_LOCK_OFFSET;
     int ret = OMPI_SUCCESS;
 
-    while (result_value != TARGET_LOCK_UNLOCKED) {
+    for (;;) {
         ret = opal_common_ucx_wpmem_cmpswp(module->state_mem,
                                          TARGET_LOCK_UNLOCKED, TARGET_LOCK_EXCLUSIVE,
                                          target, &result_value, sizeof(result_value),
@@ -66,9 +67,12 @@ static inline int start_exclusive(ompi_osc_ucx_module_t *module, int target) {
         if (OMPI_SUCCESS != ret) {
             return ret;
         }
-    }
+        if (result_value == TARGET_LOCK_UNLOCKED) {
+            return OMPI_SUCCESS;
+        }
 
-    return ret;
+        ucp_worker_progress(mca_osc_ucx_component.wpool->dflt_worker);
+    }
 }
 
 static inline int end_exclusive(ompi_osc_ucx_module_t *module, int target) {
