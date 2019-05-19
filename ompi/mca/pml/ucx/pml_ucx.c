@@ -245,7 +245,7 @@ int mca_pml_ucx_close(void)
     return OMPI_SUCCESS;
 }
 
-int mca_pml_ucx_init(void)
+int mca_pml_ucx_init(int enable_mpi_threads)
 {
     ucp_worker_params_t params;
     ucp_worker_attr_t attr;
@@ -256,8 +256,7 @@ int mca_pml_ucx_init(void)
 
     /* TODO check MPI thread mode */
     params.field_mask  = UCP_WORKER_PARAM_FIELD_THREAD_MODE;
-    params.thread_mode = UCS_THREAD_MODE_SINGLE;
-    if (ompi_mpi_thread_multiple) {
+    if (enable_mpi_threads) {
         params.thread_mode = UCS_THREAD_MODE_MULTI;
     } else {
         params.thread_mode = UCS_THREAD_MODE_SINGLE;
@@ -279,10 +278,11 @@ int mca_pml_ucx_init(void)
         goto err_destroy_worker;
     }
 
-    if (ompi_mpi_thread_multiple && (attr.thread_mode != UCS_THREAD_MODE_MULTI)) {
+    if (enable_mpi_threads && (attr.thread_mode != UCS_THREAD_MODE_MULTI)) {
         /* UCX does not support multithreading, disqualify current PML for now */
         /* TODO: we should let OMPI to fallback to THREAD_SINGLE mode */
-        PML_UCX_ERROR("UCP worker does not support MPI_THREAD_MULTIPLE");
+        PML_UCX_VERBOSE(1, "UCP worker does not support MPI_THREAD_MULTIPLE. "
+                           "PML UCX could not be selected");
         rc = OMPI_ERR_NOT_SUPPORTED;
         goto err_destroy_worker;
     }
