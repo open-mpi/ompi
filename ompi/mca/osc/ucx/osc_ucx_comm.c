@@ -281,7 +281,7 @@ static inline int start_atomicity(ompi_osc_ucx_module_t *module, ucp_ep_h ep, in
     uint64_t remote_addr = (module->state_info_array)[target].addr + OSC_UCX_STATE_ACC_LOCK_OFFSET;
     ucs_status_t status;
 
-    while (result_value != TARGET_LOCK_UNLOCKED) {
+    for (;;) {
         status = opal_common_ucx_atomic_cswap(ep, TARGET_LOCK_UNLOCKED, TARGET_LOCK_EXCLUSIVE,
                                               &result_value, sizeof(result_value),
                                               remote_addr, rkey,
@@ -290,9 +290,13 @@ static inline int start_atomicity(ompi_osc_ucx_module_t *module, ucp_ep_h ep, in
             OSC_UCX_VERBOSE(1, "ucp_atomic_cswap64 failed: %d", status);
             return OMPI_ERROR;
         }
+        if (result_value == TARGET_LOCK_UNLOCKED) {
+            return OMPI_SUCCESS;
+        }
+
+        ucp_worker_progress(mca_osc_ucx_component.ucp_worker);
     }
 
-    return OMPI_SUCCESS;
 }
 
 static inline int end_atomicity(ompi_osc_ucx_module_t *module, ucp_ep_h ep, int target) {
