@@ -60,6 +60,7 @@ static mca_base_var_enum_value_t iallreduce_algorithms[] = {
     {1, "ring"},
     {2, "binomial"},
     {3, "rabenseifner"},
+    {4, "recursive_doubling"},
     {0, NULL}
 };
 
@@ -225,7 +226,7 @@ libnbc_register(void)
     (void) mca_base_var_enum_create("coll_libnbc_iallreduce_algorithms", iallreduce_algorithms, &new_enum);
     mca_base_component_var_register(&mca_coll_libnbc_component.super.collm_version,
                                     "iallreduce_algorithm",
-                                    "Which iallreduce algorithm is used: 0 ignore, 1 ring, 2 binomial, 3 rabenseifner",
+                                    "Which iallreduce algorithm is used: 0 ignore, 1 ring, 2 binomial, 3 rabenseifner, 4 recursive_doubling",
                                     MCA_BASE_VAR_TYPE_INT, new_enum, 0, MCA_BASE_VAR_FLAG_SETTABLE,
                                     OPAL_INFO_LVL_5, MCA_BASE_VAR_SCOPE_ALL,
                                     &libnbc_iallreduce_algorithm);
