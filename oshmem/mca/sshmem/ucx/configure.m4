@@ -50,7 +50,10 @@ AC_DEFUN([MCA_oshmem_sshmem_ucx_CONFIG],[
            sshmem_ucx_LIBS+=" $alloc_dm_LIBS"
            sshmem_ucx_LDFLAGS+=" $alloc_dm_LDFLAGS"
           ],
-          [AC_MSG_NOTICE([UCX device memory allocation is not supported])])
+          [
+           AC_MSG_NOTICE([UCX device memory allocation is not supported])
+           AC_DEFINE([HAVE_UCX_DEVICE_MEM], [0], [Support for device memory allocation])
+          ])
     AC_LANG_POP([C])
 
     CPPFLAGS="$save_CPPFLAGS"

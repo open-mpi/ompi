@@ -184,7 +184,8 @@ static inline void mca_spml_ucx_aux_unlock(void)
     }
 }
 
-static void mca_spml_ucx_cache_mkey(mca_spml_ucx_ctx_t *ucx_ctx, sshmem_mkey_t *mkey, uint32_t segno, int dst_pe)
+static inline void mca_spml_ucx_cache_mkey(mca_spml_ucx_ctx_t *ucx_ctx,
+                                           sshmem_mkey_t *mkey, uint32_t segno, int dst_pe)
 {
     ucp_peer_t *peer;
 

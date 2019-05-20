@@ -225,7 +225,6 @@ segment_create(map_segment_t *ds_buf,
 {
     mca_spml_ucx_t *spml = (mca_spml_ucx_t*)mca_spml.self;
     unsigned flags;
-    int ret;
 
 #if HAVE_UCX_DEVICE_MEM
     if (hint & SHMEM_HINT_DEVICE_NIC_MEM) {
@@ -337,7 +336,7 @@ static unsigned sshmem_ucx_memheap_ptr2index(map_segment_t *s, void *ptr)
     return ((char*)ptr - (char*)s->super.va_base) / ALLOC_ELEM_SIZE;
 }
 
-void sshmem_ucx_memheap_wordcopy(void *dst, void *src, size_t size)
+static void sshmem_ucx_memheap_wordcopy(void *dst, void *src, size_t size)
 {
     const size_t count = (size + sizeof(uint64_t) - 1) / sizeof(uint64_t);
     uint64_t *dst64 = (uint64_t*)dst;
