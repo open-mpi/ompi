@@ -31,8 +31,8 @@
 #endif /* OPAL_ENABLE_DEBUG */
 
 /* Take a new iovec (base + len) and try to merge it with what we already
- * have. If we succeed return 0 and move forward, if not save it into a new
- * iovec location. If we need to go to a new position and we reach the end
+ * have. If we succeed return 0 and move forward, otherwise save it into a new
+ * iovec location. If we need to advance position and we reach the end
  * of the iovec array, return 1 to signal we did not saved the last iovec.
  */
 static inline int
@@ -46,7 +46,7 @@ opal_convertor_merge_iov( struct iovec* iov, uint32_t* iov_count,
             return 0;
         }  /* cannot merge, move to the next position */
         *idx = *idx + 1;
-        if( *idx == *iov_count ) return 1;  /* do not overwrite outside the iove array boundaries */
+        if( *idx == *iov_count ) return 1;  /* do not overwrite outside the iovec array boundaries */
     }
     iov[*idx].iov_base = base;
     iov[*idx].iov_len = len;
