@@ -88,17 +88,33 @@ int mca_common_ompio_file_read (ompio_file_t *fh,
         return ret;
     }
 
-
+    bool need_to_copy = false;    
+    opal_convertor_t convertor;
 #if OPAL_CUDA_SUPPORT
     int is_gpu, is_managed;
-    opal_convertor_t convertor;
     mca_common_ompio_check_gpu_buf ( fh, buf, &is_gpu, &is_managed);
     if ( is_gpu && !is_managed ) {
+        need_to_copy = true;
+    }
+#endif
+
+    if ( !( fh->f_flags & OMPIO_DATAREP_NATIVE ) &&
+         !(datatype == &ompi_mpi_byte.dt  ||
+           datatype == &ompi_mpi_char.dt   )) {
+        /* only need to copy if any of these conditions are given:
+           1. buffer is an unmanaged CUDA buffer (checked above).
+           2. Datarepresentation is anything other than 'native' and
+           3. datatype is not byte or char (i.e it does require some actual
+              work to be done e.g. for external32.
+        */
+        need_to_copy = true;
+    }         
+    
+    if ( need_to_copy ) {
         char *tbuf=NULL;
 
-        OMPIO_CUDA_PREPARE_BUF(fh,buf,count,datatype,tbuf,&convertor,max_data,decoded_iov,iov_count);        
-        
-   }
+        OMPIO_PREPARE_READ_BUF(fh,buf,count,datatype,tbuf,&convertor,max_data,decoded_iov,iov_count);        
+    }
     else {
         mca_common_ompio_decode_datatype (fh,
                                           datatype,
@@ -109,16 +125,7 @@ int mca_common_ompio_file_read (ompio_file_t *fh,
                                           &decoded_iov,
                                           &iov_count);
     }
-#else
-    mca_common_ompio_decode_datatype (fh,
-                                      datatype,
-                                      count,
-                                      buf,
-                                      &max_data,
-                                      fh->f_mem_convertor,
-                                      &decoded_iov,
-                                      &iov_count);
-#endif
+
     if ( 0 < max_data && 0 == fh->f_iov_count  ) {
         if ( MPI_STATUS_IGNORE != status ) {
             status->_ucount = 0;
@@ -170,15 +177,14 @@ int mca_common_ompio_file_read (ompio_file_t *fh,
         }
     }
 
-#if OPAL_CUDA_SUPPORT
-    if ( is_gpu && !is_managed ) {
+    if ( need_to_copy ) {
         size_t pos=0;
 
         opal_convertor_unpack (&convertor, decoded_iov, &iov_count, &pos );
         opal_convertor_cleanup (&convertor);
         mca_common_ompio_release_buf (fh, decoded_iov->iov_base);
     }
-#endif
+
     if (NULL != decoded_iov) {
         free (decoded_iov);
         decoded_iov = NULL;
@@ -257,13 +263,32 @@ int mca_common_ompio_file_iread (ompio_file_t *fh,
         int i = 0; /* index into the decoded iovec of the buffer */
         int j = 0; /* index into the file vie iovec */
         
+        bool need_to_copy = false;    
+    
 #if OPAL_CUDA_SUPPORT
         int is_gpu, is_managed;
         mca_common_ompio_check_gpu_buf ( fh, buf, &is_gpu, &is_managed);
         if ( is_gpu && !is_managed ) {
+            need_to_copy = true;
+        }
+#endif
+
+        if ( !( fh->f_flags & OMPIO_DATAREP_NATIVE ) &&
+             !(datatype == &ompi_mpi_byte.dt  ||
+               datatype == &ompi_mpi_char.dt   )) {
+            /* only need to copy if any of these conditions are given:
+               1. buffer is an unmanaged CUDA buffer (checked above).
+               2. Datarepresentation is anything other than 'native' and
+               3. datatype is not byte or char (i.e it does require some actual
+               work to be done e.g. for external32.
+            */
+            need_to_copy = true;
+        }         
+        
+        if ( need_to_copy ) {
             char *tbuf=NULL;
             
-            OMPIO_CUDA_PREPARE_BUF(fh,buf,count,datatype,tbuf,&ompio_req->req_convertor,max_data,decoded_iov,iov_count);        
+            OMPIO_PREPARE_READ_BUF(fh,buf,count,datatype,tbuf,&ompio_req->req_convertor,max_data,decoded_iov,iov_count); 
             
             ompio_req->req_tbuf = tbuf;
             ompio_req->req_size = max_data;
@@ -278,16 +303,7 @@ int mca_common_ompio_file_iread (ompio_file_t *fh,
                                               &decoded_iov,
                                               &iov_count);
         }
-#else
-        mca_common_ompio_decode_datatype (fh,
-                                          datatype,
-                                          count,
-                                          buf,
-                                          &max_data,
-                                          fh->f_mem_convertor,
-                                          &decoded_iov,
-                                          &iov_count);
-#endif
+    
         if ( 0 < max_data && 0 == fh->f_iov_count  ) {
             ompio_req->req_ompi.req_status.MPI_ERROR = OMPI_SUCCESS;
             ompio_req->req_ompi.req_status._ucount = 0;
