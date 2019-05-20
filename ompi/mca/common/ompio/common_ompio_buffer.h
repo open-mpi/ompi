@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2018 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2019 University of Houston. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -22,7 +22,7 @@
 #define MCA_COMMON_OMPIO_CUDA_H
 
 
-#define OMPIO_CUDA_PREPARE_BUF(_fh,_buf,_count,_datatype,_tbuf,_convertor,_max_data,_decoded_iov,_iov_count){ \
+#define OMPIO_PREPARE_BUF(_fh,_buf,_count,_datatype,_tbuf,_convertor,_max_data,_decoded_iov,_iov_count){ \
     opal_convertor_clone ( _fh->f_convertor, _convertor, 0);                          \
     opal_convertor_prepare_for_send ( _convertor, &(_datatype->super), _count, _buf );\
     opal_convertor_get_packed_size( _convertor, &_max_data );           \
@@ -40,11 +40,12 @@
     _decoded_iov->iov_len  = _max_data;                                 \
     _iov_count=1;}
 
-
+#if OPAL_CUDA_SUPPORT
 void mca_common_ompio_check_gpu_buf ( ompio_file_t *fh, const void *buf, 
 				      int *is_gpu, int *is_managed);
-int mca_common_ompio_cuda_alloc_init ( void );
-int mca_common_ompio_cuda_alloc_fini ( void );
+#endif
+int mca_common_ompio_buffer_alloc_init ( void );
+int mca_common_ompio_buffer_alloc_fini ( void );
 
 
 void* mca_common_ompio_alloc_buf ( ompio_file_t *fh, size_t bufsize);

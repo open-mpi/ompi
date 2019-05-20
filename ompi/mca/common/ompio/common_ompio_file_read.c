@@ -33,12 +33,10 @@
 
 #include "common_ompio.h"
 #include "common_ompio_request.h"
+#include "common_ompio_buffer.h"
 #include <unistd.h>
 #include <math.h>
 
-#if OPAL_CUDA_SUPPORT
-#include "common_ompio_cuda.h"
-#endif
 
 /* Read and write routines are split into two interfaces.
 **   The

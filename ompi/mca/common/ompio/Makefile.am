@@ -25,6 +25,7 @@ headers = \
 	common_ompio_aggregators.h \
 	common_ompio_print_queue.h \
 	common_ompio_request.h \
+	common_ompio_buffer.h  \
 	common_ompio.h
 
 sources = \
@@ -34,6 +35,7 @@ sources = \
 	common_ompio_file_open.c   \
 	common_ompio_file_view.c   \
 	common_ompio_file_read.c   \
+	common_ompio_buffer.c      \
 	common_ompio_file_write.c
 
 
@@ -74,10 +76,6 @@ else
 ompidir = $(includedir)
 endif
 
-if OPAL_cuda_support
-headers += common_ompio_cuda.h
-sources += common_ompio_cuda.c
-endif
 
 # These two rules will sym link the "noinst" libtool library filename
 # to the installable libtool library filename in the case where we are
