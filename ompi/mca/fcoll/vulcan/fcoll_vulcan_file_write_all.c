@@ -185,6 +185,7 @@ int mca_fcoll_vulcan_file_write_all (ompio_file_t *fh,
                                               count,
                                               buf,
                                               &max_data,
+                                              fh->f_mem_convertor,
                                               &decoded_iov,
                                               &iov_count);
     if (OMPI_SUCCESS != ret ){

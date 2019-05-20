@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2016 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2019 University of Houston. All rights reserved.
  * Copyright (c) 2018      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2018      DataDirect Networks. All rights reserved.
@@ -157,7 +157,8 @@ struct ompio_file_t {
     ompi_communicator_t   *f_comm;
     const char            *f_filename;
     char                  *f_datarep;
-    opal_convertor_t      *f_convertor;
+    opal_convertor_t      *f_mem_convertor;
+    opal_convertor_t      *f_file_convertor;
     opal_info_t           *f_info;
     int32_t                f_flags;
     void                  *f_fs_ptr;
@@ -330,6 +331,7 @@ OMPI_DECLSPEC int mca_common_ompio_decode_datatype (struct ompio_file_t *fh,
                                                     int count,
                                                     const void *buf,
                                                     size_t *max_data,
+                                                    opal_convertor_t *convertor,
                                                     struct iovec **iov,
                                                     uint32_t *iov_count);
 

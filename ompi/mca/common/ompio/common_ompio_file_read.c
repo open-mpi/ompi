@@ -105,6 +105,7 @@ int mca_common_ompio_file_read (ompio_file_t *fh,
                                           count,
                                           buf,
                                           &max_data,
+                                          fh->f_mem_convertor,
                                           &decoded_iov,
                                           &iov_count);
     }
@@ -114,6 +115,7 @@ int mca_common_ompio_file_read (ompio_file_t *fh,
                                       count,
                                       buf,
                                       &max_data,
+                                      fh->f_mem_convertor,
                                       &decoded_iov,
                                       &iov_count);
 #endif
@@ -272,6 +274,7 @@ int mca_common_ompio_file_iread (ompio_file_t *fh,
                                               count,
                                               buf,
                                               &max_data,
+                                              fh->f_mem_convertor,
                                               &decoded_iov,
                                               &iov_count);
         }
@@ -281,6 +284,7 @@ int mca_common_ompio_file_iread (ompio_file_t *fh,
                                           count,
                                           buf,
                                           &max_data,
+                                          fh->f_mem_convertor,
                                           &decoded_iov,
                                           &iov_count);
 #endif

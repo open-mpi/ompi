@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2018 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2019 University of Houston. All rights reserved.
  * Copyright (c) 2017-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
@@ -91,6 +91,12 @@ int mca_common_ompio_set_view (ompio_file_t *fh,
         fh->f_datarep = NULL;
     }
 
+    if (NULL != fh->f_file_convertor) {
+        opal_convertor_cleanup (fh->f_file_convertor);
+        //free (fh->f_file_convertor);
+        fh->f_file_convertor = NULL;
+    }
+    
     /* Reset the flags first */
     if ( fh->f_flags & OMPIO_CONTIGUOUS_FVIEW ) {
         fh->f_flags &= ~OMPIO_CONTIGUOUS_FVIEW;
@@ -99,8 +105,19 @@ int mca_common_ompio_set_view (ompio_file_t *fh,
         fh->f_flags &= ~OMPIO_UNIFORM_FVIEW;
     }
     fh->f_datarep = strdup (datarep);
-    datatype_duplicate (filetype, &fh->f_orig_filetype );
 
+    if ( !(strcmp(datarep, "external32") && strcmp(datarep, "EXTERNAL32"))) {
+        fh->f_file_convertor = malloc (sizeof(opal_convertor_t));
+        if ( NULL == fh->f_file_convertor ) {
+            return OMPI_ERR_OUT_OF_RESOURCE;
+        }
+        opal_convertor_clone (ompi_mpi_external32_convertor, fh->f_file_convertor, 0);
+    }
+    else {
+        fh->f_file_convertor = opal_convertor_create (opal_local_arch, 0);
+    }
+    
+    datatype_duplicate (filetype, &fh->f_orig_filetype );
     opal_datatype_get_extent(&filetype->super, &lb, &ftype_extent);
     opal_datatype_type_size (&filetype->super, &ftype_size);
 
@@ -129,6 +146,7 @@ int mca_common_ompio_set_view (ompio_file_t *fh,
                                       1,
                                       NULL,
                                       &max_data,
+                                      fh->f_file_convertor,
                                       &fh->f_decoded_iov,
                                       &fh->f_iov_count);
 
