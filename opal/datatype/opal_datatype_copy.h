@@ -51,11 +51,9 @@ static inline void _predefined_data( const dt_elem_desc_t* ELEM,
     const ddt_elem_desc_t* _elem = &((ELEM)->elem);
     unsigned char* _source = (SOURCE) + _elem->disp;
     unsigned char* _destination = (DESTINATION) + _elem->disp;
-    size_t total_count = _elem->count * _elem->blocklen;
-    size_t do_now, do_now_bytes;
+    size_t do_now = _elem->count, do_now_bytes;
 
-    assert( (COUNT) == total_count);
-    assert( total_count <= ((*SPACE) / opal_datatype_basicDatatypes[_elem->common.type]->size) );
+    assert( (COUNT) == (do_now * _elem->blocklen));
 
     /* We don't a prologue and epilogue here as we are __always__ working
      * with full copies of the data description.
@@ -64,21 +62,19 @@ static inline void _predefined_data( const dt_elem_desc_t* ELEM,
     /**
      * Compute how many full blocklen we need to do and do them.
      */
-    do_now = _elem->count;
-    if( 0 != do_now ) {
-        do_now_bytes = _elem->blocklen * opal_datatype_basicDatatypes[_elem->common.type]->size;
-        for(size_t _i = 0; _i < do_now; _i++ ) {
-            OPAL_DATATYPE_SAFEGUARD_POINTER( _source, do_now_bytes, (SOURCE_BASE),
-                                            (DATATYPE), (TOTAL_COUNT) );
-            DO_DEBUG( opal_output( 0, "copy %s( %p, %p, %" PRIsize_t " ) => space %" PRIsize_t "\n",
-                                   STRINGIFY(MEM_OP_NAME), (void*)_destination, (void*)_source, do_now_bytes, *(SPACE) ); );
-            MEM_OP( _destination, _source, do_now_bytes );
-            _destination += _elem->extent;
-            _source      += _elem->extent;
-            *(SPACE)     -= do_now_bytes;
-        }
-        (COUNT)      -= total_count;
+    do_now_bytes = _elem->blocklen * opal_datatype_basicDatatypes[_elem->common.type]->size;
+    assert( (do_now * do_now_bytes) <= (*SPACE) );
+
+    for(size_t _i = 0; _i < do_now; _i++ ) {
+        OPAL_DATATYPE_SAFEGUARD_POINTER( _source, do_now_bytes, (SOURCE_BASE),
+                                         (DATATYPE), (TOTAL_COUNT) );
+        DO_DEBUG( opal_output( 0, "copy %s( %p, %p, %" PRIsize_t " ) => space %" PRIsize_t "\n",
+                               STRINGIFY(MEM_OP_NAME), (void*)_destination, (void*)_source, do_now_bytes, *(SPACE) - _i * do_now_bytes ); );
+        MEM_OP( _destination, _source, do_now_bytes );
+        _destination += _elem->extent;
+        _source      += _elem->extent;
     }
+    *(SPACE) -= (do_now_bytes * do_now);
 }
 
 static inline void _contiguous_loop( const dt_elem_desc_t* ELEM,
