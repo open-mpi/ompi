@@ -159,11 +159,11 @@ int mca_common_ompio_file_write (ompio_file_t *fh,
             fh->f_io_array = NULL;
         }
     }
-#if OPAL_CUDA_SUPPORT
-    if ( is_gpu && !is_managed ) {
+
+    if ( need_to_copy ) {
         mca_common_ompio_release_buf (fh, decoded_iov->iov_base);
     }
-#endif
+
 
     if (NULL != decoded_iov) {
         free (decoded_iov);
@@ -378,11 +378,53 @@ int mca_common_ompio_file_write_all (ompio_file_t *fh,
                                      ompi_status_public_t *status)
 {
     int ret = OMPI_SUCCESS;
-    ret = fh->f_fcoll->fcoll_file_write_all (fh,
-                                             buf,
-                                             count,
-                                             datatype,
-                                             status);
+    
+    if ( !( fh->f_flags & OMPIO_DATAREP_NATIVE ) &&
+         !(datatype == &ompi_mpi_byte.dt  ||
+           datatype == &ompi_mpi_char.dt   )) {
+        /* No need to check for GPU buffer for collective I/O.
+           Most algorithms first copy data to aggregators, and send/recv
+           to/from GPU buffers works if ompi was compiled was GPU support.
+           
+           If the individual fcoll component is used: there are no aggregators 
+           in that concept. However, since they call common_ompio_file_write, 
+           CUDA buffers are handled by that routine.
+
+           Thus, we only check for
+           1. Datarepresentation is anything other than 'native' and
+           2. datatype is not byte or char (i.e it does require some actual
+              work to be done e.g. for external32.
+        */
+        size_t pos=0, max_data=0;
+        char *tbuf=NULL;
+        opal_convertor_t convertor;
+        struct iovec *decoded_iov = NULL;
+        uint32_t iov_count = 0;
+        
+        OMPIO_PREPARE_BUF(fh,buf,count,datatype,tbuf,&convertor,max_data,decoded_iov,iov_count);     
+        opal_convertor_pack (&convertor, decoded_iov, &iov_count, &pos );
+        opal_convertor_cleanup ( &convertor);
+
+        ret = fh->f_fcoll->fcoll_file_write_all (fh,
+                                                 decoded_iov->iov_base,
+                                                 decoded_iov->iov_len,
+                                                 MPI_BYTE,
+                                                 status);
+
+
+        mca_common_ompio_release_buf (fh, decoded_iov->iov_base);
+        if (NULL != decoded_iov) {
+            free (decoded_iov);
+            decoded_iov = NULL;
+        }
+    }
+    else {
+        ret = fh->f_fcoll->fcoll_file_write_all (fh,
+                                                 buf,
+                                                 count,
+                                                 datatype,
+                                                 status);
+    }
     return ret;
 }
 

@@ -401,11 +401,52 @@ int mca_common_ompio_file_read_all (ompio_file_t *fh,
                                     ompi_status_public_t * status)
 {
     int ret = OMPI_SUCCESS;
-    ret = fh->f_fcoll->fcoll_file_read_all (fh,
-                                            buf,
-                                            count,
-                                            datatype,
-                                            status);
+
+
+    if ( !( fh->f_flags & OMPIO_DATAREP_NATIVE ) &&
+         !(datatype == &ompi_mpi_byte.dt  ||
+           datatype == &ompi_mpi_char.dt   )) {
+        /* No need to check for GPU buffer for collective I/O.
+           Most algorithms copy data from aggregators, and send/recv
+           to/from GPU buffers works if ompi was compiled was GPU support.
+           
+           If the individual fcoll component is used: there are no aggregators 
+           in that concept. However, since they call common_ompio_file_write, 
+           CUDA buffers are handled by that routine.
+
+           Thus, we only check for
+           1. Datarepresentation is anything other than 'native' and
+           2. datatype is not byte or char (i.e it does require some actual
+              work to be done e.g. for external32.
+        */
+        size_t pos=0, max_data=0;
+        char *tbuf=NULL;
+        opal_convertor_t convertor;
+        struct iovec *decoded_iov = NULL;
+        uint32_t iov_count = 0;
+
+        OMPIO_PREPARE_READ_BUF(fh,buf,count,datatype,tbuf,&convertor,max_data,decoded_iov,iov_count);   
+        ret = fh->f_fcoll->fcoll_file_read_all (fh,
+                                                decoded_iov->iov_base,
+                                                decoded_iov->iov_len,
+                                                MPI_BYTE,
+                                                status);
+        opal_convertor_unpack (&convertor, decoded_iov, &iov_count, &pos );
+
+        opal_convertor_cleanup (&convertor);
+        mca_common_ompio_release_buf (fh, decoded_iov->iov_base);
+        if (NULL != decoded_iov) {
+            free (decoded_iov);
+            decoded_iov = NULL;
+        }
+    }
+    else {
+        ret = fh->f_fcoll->fcoll_file_read_all (fh,
+                                                buf,
+                                                count,
+                                                datatype,
+                                                status);
+    }
     return ret;
 }
 
