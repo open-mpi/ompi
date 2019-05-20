@@ -209,29 +209,10 @@ static int hcoll_open(void)
 {
     mca_coll_hcoll_component_t *cm;
     cm  = &mca_coll_hcoll_component;
-
     mca_coll_hcoll_output = opal_output_open(NULL);
     opal_output_set_verbosity(mca_coll_hcoll_output, cm->hcoll_verbose);
-
     hcoll_rte_fns_setup();
-
     cm->libhcoll_initialized = false;
-
-    (void)mca_base_framework_open(&opal_memory_base_framework, 0);
-
-    /* Register memory hooks */
-    if ((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT) ==
-        ((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT) &
-         opal_mem_hooks_support_level()))
-    {
-        setenv("MXM_HCOLL_MEM_ON_DEMAND_MAP", "y", 0);
-        HCOL_VERBOSE(1, "Enabling on-demand memory mapping");
-        cm->using_mem_hooks = 1;
-    } else {
-        HCOL_VERBOSE(1, "Disabling on-demand memory mapping");
-        cm->using_mem_hooks = 0;
-    }
-
     return OMPI_SUCCESS;
 }
 
