@@ -128,6 +128,10 @@ static int mca_spml_ucx_component_register(void)
                                     "Asynchronous progress tick granularity (in usec)",
                                     &mca_spml_ucx.async_tick);
 
+    mca_spml_ucx_param_register_bool("synchronized_quiet", 0,
+                                     "Use synchronized quiet on shmem_quiet or shmem_barrier_all operations",
+                                     &mca_spml_ucx.synchronized_quiet);
+
     opal_common_ucx_mca_var_register(&mca_spml_ucx_component.spmlm_version);
 
     return OSHMEM_SUCCESS;
@@ -329,6 +333,7 @@ static void _ctx_cleanup(mca_spml_ucx_ctx_t *ctx)
                                       mca_spml_ucx.num_disconnect,
                                       ctx->ucp_worker);
     free(del_procs);
+    mca_spml_ucx_clear_put_op_mask(ctx);
     free(ctx->ucp_peers);
 }
 
