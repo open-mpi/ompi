@@ -45,6 +45,11 @@ int mca_atomic_ucx_cswap(shmem_ctx_t ctx,
                                      UCP_ATOMIC_FETCH_OP_CSWAP, cond, prev, size,
                                      rva, ucx_mkey->rkey,
                                      opal_common_ucx_empty_complete_cb);
+
+    if (OPAL_LIKELY(!UCS_PTR_IS_ERR(status_ptr))) {
+        mca_spml_ucx_remote_op_posted(ucx_ctx, pe);
+    }
+
     return opal_common_ucx_wait_request(status_ptr, ucx_ctx->ucp_worker,
                                         "ucp_atomic_fetch_nb");
 }
