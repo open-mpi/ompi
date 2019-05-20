@@ -326,13 +326,13 @@ int mca_common_ompio_file_close (ompio_file_t *ompio_fh)
 
     if (NULL != ompio_fh->f_mem_convertor) {
         opal_convertor_cleanup (ompio_fh->f_mem_convertor);
-        //free (ompio_fh->f_mem_convertor);
+        free (ompio_fh->f_mem_convertor);
         ompio_fh->f_mem_convertor = NULL;
     }
 
     if (NULL != ompio_fh->f_file_convertor) {
         opal_convertor_cleanup (ompio_fh->f_file_convertor);
-        //free (ompio_fh->f_file_convertor);
+        free (ompio_fh->f_file_convertor);
         ompio_fh->f_file_convertor = NULL;
     }
     
@@ -391,6 +391,13 @@ int mca_common_ompio_file_get_position (ompio_file_t *fh,
 {
     OMPI_MPI_OFFSET_TYPE off;
 
+    if ( 0 == fh->f_view_extent ||
+         0 == fh->f_view_size   ||
+         0 == fh->f_etype_size ) {
+        /* not sure whether we should raise an error here */
+        *offset = 0;
+        return OMPI_SUCCESS;
+    }
     /* No. of copies of the entire file view */
     off = (fh->f_offset - fh->f_disp)/fh->f_view_extent;
 

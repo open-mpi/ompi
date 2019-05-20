@@ -93,7 +93,7 @@ int mca_common_ompio_set_view (ompio_file_t *fh,
 
     if (NULL != fh->f_file_convertor) {
         opal_convertor_cleanup (fh->f_file_convertor);
-        //free (fh->f_file_convertor);
+        free (fh->f_file_convertor);
         fh->f_file_convertor = NULL;
     }
     
@@ -104,10 +104,13 @@ int mca_common_ompio_set_view (ompio_file_t *fh,
     if ( fh->f_flags & OMPIO_UNIFORM_FVIEW ) {
         fh->f_flags &= ~OMPIO_UNIFORM_FVIEW;
     }
+    if ( fh->f_flags & OMPIO_DATAREP_NATIVE ) {
+        fh->f_flags &= ~OMPIO_DATAREP_NATIVE;
+    }
     fh->f_datarep = strdup (datarep);
 
     if ( !(strcmp(datarep, "external32") && strcmp(datarep, "EXTERNAL32"))) {
-        fh->f_file_convertor = malloc (sizeof(opal_convertor_t));
+        fh->f_file_convertor = malloc ( sizeof(struct opal_convertor_t) );
         if ( NULL == fh->f_file_convertor ) {
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
@@ -115,6 +118,7 @@ int mca_common_ompio_set_view (ompio_file_t *fh,
     }
     else {
         fh->f_file_convertor = opal_convertor_create (opal_local_arch, 0);
+        fh->f_flags |= OMPIO_DATAREP_NATIVE;
     }
     
     datatype_duplicate (filetype, &fh->f_orig_filetype );

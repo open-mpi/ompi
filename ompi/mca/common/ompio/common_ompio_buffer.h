@@ -23,8 +23,8 @@
 
 
 #define OMPIO_PREPARE_BUF(_fh,_buf,_count,_datatype,_tbuf,_convertor,_max_data,_decoded_iov,_iov_count){ \
-    opal_convertor_clone ( _fh->f_file_convertor, _convertor, 0);                          \
-    opal_convertor_prepare_for_send ( _convertor, &(_datatype->super), _count, _buf );\
+        OBJ_CONSTRUCT( _convertor, opal_convertor_t);                                    \
+    opal_convertor_copy_and_prepare_for_send ( _fh->f_file_convertor,  &(_datatype->super), _count, _buf, CONVERTOR_SEND_CONVERSION, _convertor ); \
     opal_convertor_get_packed_size( _convertor, &_max_data );           \
     _tbuf = mca_common_ompio_alloc_buf (_fh, _max_data);                \
     if ( NULL == _tbuf ) {                                              \
