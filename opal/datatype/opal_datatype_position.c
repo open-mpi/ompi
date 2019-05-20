@@ -49,10 +49,24 @@
  * - the DT_CONTIGUOUS flag for the type OPAL_DATATYPE_END_LOOP is meaningless.
  */
 
+static inline void
+position_single_block(opal_convertor_t* CONVERTOR,
+                      unsigned char** mem, ptrdiff_t mem_update,
+                      size_t* space, size_t space_update,
+                      size_t* cnt, size_t cnt_update)
+{
+    OPAL_DATATYPE_SAFEGUARD_POINTER( *mem, mem_update, (CONVERTOR)->pBaseBuf,
+                                     (CONVERTOR)->pDesc, (CONVERTOR)->count );
+    DO_DEBUG( opal_output( 0, "position( %p, %lu ) => space %lu [prolog]\n",
+                           (void*)*mem, (unsigned long)space_update, (unsigned long)(*space) ); );
+    *mem   += mem_update;
+    *space -= space_update;
+    *cnt   -= cnt_update;
+}
+
 /**
- * Advance the current position in the convertor based using the
- * current element and a left-over counter. Update the head pointer
- * and the leftover byte space.
+ * Advance the convertors' position according. Update the pointer and the remaining space
+ * accordingly.
  */
 static inline void
 position_predefined_data( opal_convertor_t* CONVERTOR,
@@ -64,13 +78,22 @@ position_predefined_data( opal_convertor_t* CONVERTOR,
     const ddt_elem_desc_t* _elem = &((ELEM)->elem);
     size_t total_count = _elem->count * _elem->blocklen;
     size_t cando_count = (*SPACE) / opal_datatype_basicDatatypes[_elem->common.type]->size;
-    size_t do_now, do_now_bytes;
+    size_t do_now, do_now_bytes = opal_datatype_basicDatatypes[_elem->common.type]->size;
     unsigned char* _memory = (*POINTER) + _elem->disp;
 
     assert( *(COUNT) <= _elem->count * _elem->blocklen);
 
     if( cando_count > *(COUNT) )
         cando_count = *(COUNT);
+
+    if( 1 == _elem->blocklen ) {
+        DO_DEBUG( opal_output( 0, "position( %p, %" PRIsize_t " ) x (count %" PRIsize_t ", extent %ld) => space %lu [prolog]\n",
+                               (void*)_memory, (unsigned long)do_now_bytes, cando_count, _elem->extent, (unsigned long)(*SPACE) ); );
+        _memory     += cando_count * _elem->extent;
+        *SPACE      -= cando_count * do_now_bytes;
+        *COUNT      -= cando_count;
+        goto update_and_return;
+    }
 
     /**
      * First check if we already did something on this element ?
@@ -84,16 +107,12 @@ position_predefined_data( opal_convertor_t* CONVERTOR,
             do_now = (left_in_block > cando_count ) ? cando_count : left_in_block;
             do_now_bytes = do_now * opal_datatype_basicDatatypes[_elem->common.type]->size;
 
-            OPAL_DATATYPE_SAFEGUARD_POINTER( _memory, do_now_bytes, (CONVERTOR)->pBaseBuf,
-                                            (CONVERTOR)->pDesc, (CONVERTOR)->count );
-            DO_DEBUG( opal_output( 0, "position( %p, %lu ) => space %lu [prolog]\n",
-                                   (void*)_memory, (unsigned long)do_now_bytes, (unsigned long)(*(SPACE)) ); );
-            _memory      = *(POINTER) + _elem->disp + (ptrdiff_t)do_now_bytes;
+            position_single_block( CONVERTOR, &_memory, do_now_bytes,
+                                   SPACE, do_now_bytes, COUNT, do_now );
+
             /* compensate if we just completed a blocklen */
             if( do_now == left_in_block )
                 _memory += _elem->extent - (_elem->blocklen * opal_datatype_basicDatatypes[_elem->common.type]->size);
-            *(SPACE)    -= do_now_bytes;
-            *(COUNT)    -= do_now;
             cando_count -= do_now;
         }
     }
@@ -105,13 +124,8 @@ position_predefined_data( opal_convertor_t* CONVERTOR,
     if( 0 != do_now ) {
         do_now_bytes = _elem->blocklen * opal_datatype_basicDatatypes[_elem->common.type]->size;
         for(size_t _i = 0; _i < do_now; _i++ ) {
-            OPAL_DATATYPE_SAFEGUARD_POINTER( _memory, do_now_bytes, (CONVERTOR)->pBaseBuf,
-                                            (CONVERTOR)->pDesc, (CONVERTOR)->count );
-            DO_DEBUG( opal_output( 0, "position( %p, %lu ) => space %lu\n",
-                                   (void*)_memory, (unsigned long)do_now_bytes, (unsigned long)*(SPACE) ); );
-            _memory     += _elem->extent;
-            *(SPACE)    -= do_now_bytes;
-            *(COUNT)    -= _elem->blocklen;
+            position_single_block( CONVERTOR, &_memory, _elem->extent,
+                                   SPACE, do_now_bytes, COUNT, _elem->blocklen );
             cando_count -= _elem->blocklen;
         }
     }
@@ -122,15 +136,11 @@ position_predefined_data( opal_convertor_t* CONVERTOR,
     do_now = cando_count;
     if( 0 != do_now ) {
         do_now_bytes = do_now * opal_datatype_basicDatatypes[_elem->common.type]->size;
-        OPAL_DATATYPE_SAFEGUARD_POINTER( _memory, do_now_bytes, (CONVERTOR)->pBaseBuf,
-                                        (CONVERTOR)->pDesc, (CONVERTOR)->count );
-        DO_DEBUG( opal_output( 0, "position( %p, %lu ) => space %lu [epilog]\n",
-                               (void*)_memory, (unsigned long)do_now_bytes, (unsigned long)(*(SPACE)) ); );
-        _memory   += do_now_bytes;
-        *(SPACE)  -= do_now_bytes;
-        *(COUNT)  -= do_now;
+        position_single_block( CONVERTOR, &_memory, do_now_bytes,
+                               SPACE, do_now_bytes, COUNT, do_now );
     }
 
+ update_and_return:
     *(POINTER)  = _memory - _elem->disp;
 }
 
