@@ -13,7 +13,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2017-2018 FUJITSU LIMITED.  All rights reserved.
+ * Copyright (c) 2017-2019 FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -2400,24 +2400,51 @@ public class Comm implements Freeable, Cloneable
 	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
 	 */
 	public final void allToAllw(
-			Buffer sendBuf, int[] sendCount, int[] sDispls, Datatype[] sendTypes,
-			Buffer recvBuf, int[] recvCount, int[] rDispls, Datatype[] recvTypes)
+			Object sendBuf, int[] sendCount, int[] sDispls, Datatype[] sendTypes,
+			Object recvBuf, int[] recvCount, int[] rDispls, Datatype[] recvTypes)
 					throws MPIException
 	{
 		MPI.check();
-		assertDirectBuffer(sendBuf, recvBuf);
+
+		int[] sendoffs = new int[sendTypes.length];
+		int[] recvoffs = new int[recvTypes.length];
+
+		boolean sdb = false,
+				rdb = false;
+
+		if(sendBuf instanceof Buffer && !(sdb = ((Buffer)sendBuf).isDirect()))
+		{
+
+			for (int i = 0; i < sendTypes.length; i++){
+				sendoffs[i] = sendTypes[i].getOffset(sendBuf);
+			}
+			sendBuf = ((Buffer)sendBuf).array();
+		}
+
+		if(recvBuf instanceof Buffer && !(rdb = ((Buffer)recvBuf).isDirect()))
+		{
+			for (int i = 0; i < recvTypes.length; i++){
+				recvoffs[i] = recvTypes[i].getOffset(recvBuf);
+			}
+			recvBuf = ((Buffer)recvBuf).array();
+		}
 
 		long[] sendHandles = convertTypeArray(sendTypes);
 		long[] recvHandles = convertTypeArray(recvTypes);
+		int[]  sendHandles_btypes = convertTypeArrayBtype(sendTypes);
+		int[]  recvHandles_btypes = convertTypeArrayBtype(recvTypes);
 
-		allToAllw(handle, sendBuf, sendCount, sDispls,
-				sendHandles, recvBuf, recvCount, rDispls,
-				recvHandles);
+		allToAllw(handle, sendBuf, sdb, sendoffs, sendCount, sDispls,
+				sendHandles, sendHandles_btypes,
+				recvBuf, rdb, recvoffs, recvCount, rDispls,
+				recvHandles, recvHandles_btypes);
 	}
 
 	private native void allToAllw(long comm,
-			Buffer sendBuf, int[] sendCount, int[] sDispls, long[] sendTypes,
-			Buffer recvBuf, int[] recvCount, int[] rDispls, long[] recvTypes)
+			Object sendBuf, boolean sdb, int[] sendOffsets,
+			int[] sendCount, int[] sDispls, long[] sendTypes, int[] sendBaseTypes,
+			Object recvBuf, boolean rdb, int[] recvOffsets,
+			int[] recvCount, int[] rDispls, long[] recvTypes, int[] recvBaseTypes)
 					throws MPIException;
 
 	/**
@@ -3416,6 +3443,23 @@ public class Comm implements Freeable, Cloneable
 		for(int i = 0; i < lArray.length; i++) {
 			if(dArray[i] != null) {
 				lArray[i] = dArray[i].handle;
+			}
+		}
+		return lArray;
+	}
+
+	/**
+	 * A helper method to convert an array of Datatypes to
+	 * an array of ints (basetypes).
+	 * @param dArray	Array of Datatypes
+	 * @return converted basetypes
+	 */
+	private int[] convertTypeArrayBtype(Datatype[] dArray) {
+		int[] lArray = new int[dArray.length];
+
+		for(int i = 0; i < lArray.length; i++) {
+			if(dArray[i] != null) {
+				lArray[i] = dArray[i].baseType;
 			}
 		}
 		return lArray;
