@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2018 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2019 University of Houston. All rights reserved.
  * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      Cisco Systems, Inc.  All rights reserved.
@@ -75,7 +75,8 @@ int mca_common_ompio_file_open (ompi_communicator_t *comm,
     ompio_fh->f_rank     = ompi_comm_rank (comm);
     ompio_fh->f_size     = ompi_comm_size (comm);
     remote_arch = opal_local_arch;
-    ompio_fh->f_convertor = opal_convertor_create (remote_arch, 0);
+    ompio_fh->f_mem_convertor = opal_convertor_create (remote_arch, 0);
+    ompio_fh->f_file_convertor = opal_convertor_create (remote_arch, 0);
 
     if ( true == use_sharedfp ) {
 	ret = ompi_comm_dup (comm, &ompio_fh->f_comm);
@@ -323,16 +324,22 @@ int mca_common_ompio_file_close (ompio_file_t *ompio_fh)
         ompio_fh->f_decoded_iov = NULL;
     }
 
-    if (NULL != ompio_fh->f_convertor) {
-        free (ompio_fh->f_convertor);
-        ompio_fh->f_convertor = NULL;
+    if (NULL != ompio_fh->f_mem_convertor) {
+        opal_convertor_cleanup (ompio_fh->f_mem_convertor);
+        free (ompio_fh->f_mem_convertor);
+        ompio_fh->f_mem_convertor = NULL;
     }
 
+    if (NULL != ompio_fh->f_file_convertor) {
+        opal_convertor_cleanup (ompio_fh->f_file_convertor);
+        free (ompio_fh->f_file_convertor);
+        ompio_fh->f_file_convertor = NULL;
+    }
+    
     if (NULL != ompio_fh->f_datarep) {
         free (ompio_fh->f_datarep);
         ompio_fh->f_datarep = NULL;
     }
-
 
     if ( NULL != ompio_fh->f_coll_write_time ) {
         free ( ompio_fh->f_coll_write_time );
@@ -384,6 +391,13 @@ int mca_common_ompio_file_get_position (ompio_file_t *fh,
 {
     OMPI_MPI_OFFSET_TYPE off;
 
+    if ( 0 == fh->f_view_extent ||
+         0 == fh->f_view_size   ||
+         0 == fh->f_etype_size ) {
+        /* not sure whether we should raise an error here */
+        *offset = 0;
+        return OMPI_SUCCESS;
+    }
     /* No. of copies of the entire file view */
     off = (fh->f_offset - fh->f_disp)/fh->f_view_extent;
 
@@ -557,6 +571,7 @@ int mca_common_ompio_decode_datatype (struct ompio_file_t *fh,
                                       int count,
                                       const void *buf,
                                       size_t *max_data,
+                                      opal_convertor_t *conv,
                                       struct iovec **iov,
                                       uint32_t *iovec_count)
 {
@@ -571,7 +586,7 @@ int mca_common_ompio_decode_datatype (struct ompio_file_t *fh,
     size_t temp_data;
 
 
-    opal_convertor_clone (fh->f_convertor, &convertor, 0);
+    opal_convertor_clone (conv, &convertor, 0);
 
     if (OMPI_SUCCESS != opal_convertor_prepare_for_send (&convertor,
                                                          &(datatype->super),
@@ -667,7 +682,8 @@ int mca_common_ompio_decode_datatype (struct ompio_file_t *fh,
     }
 
     free (temp_iov);
-
+    opal_convertor_cleanup (&convertor);
+    
     return OMPI_SUCCESS;
 }
 

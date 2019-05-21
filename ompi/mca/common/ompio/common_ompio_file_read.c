@@ -33,12 +33,10 @@
 
 #include "common_ompio.h"
 #include "common_ompio_request.h"
+#include "common_ompio_buffer.h"
 #include <unistd.h>
 #include <math.h>
 
-#if OPAL_CUDA_SUPPORT
-#include "common_ompio_cuda.h"
-#endif
 
 /* Read and write routines are split into two interfaces.
 **   The
@@ -90,35 +88,44 @@ int mca_common_ompio_file_read (ompio_file_t *fh,
         return ret;
     }
 
-
+    bool need_to_copy = false;    
+    opal_convertor_t convertor;
 #if OPAL_CUDA_SUPPORT
     int is_gpu, is_managed;
-    opal_convertor_t convertor;
     mca_common_ompio_check_gpu_buf ( fh, buf, &is_gpu, &is_managed);
     if ( is_gpu && !is_managed ) {
+        need_to_copy = true;
+    }
+#endif
+
+    if ( !( fh->f_flags & OMPIO_DATAREP_NATIVE ) &&
+         !(datatype == &ompi_mpi_byte.dt  ||
+           datatype == &ompi_mpi_char.dt   )) {
+        /* only need to copy if any of these conditions are given:
+           1. buffer is an unmanaged CUDA buffer (checked above).
+           2. Datarepresentation is anything other than 'native' and
+           3. datatype is not byte or char (i.e it does require some actual
+              work to be done e.g. for external32.
+        */
+        need_to_copy = true;
+    }         
+    
+    if ( need_to_copy ) {
         char *tbuf=NULL;
 
-        OMPIO_CUDA_PREPARE_BUF(fh,buf,count,datatype,tbuf,&convertor,max_data,decoded_iov,iov_count);        
-        
-   }
+        OMPIO_PREPARE_READ_BUF(fh,buf,count,datatype,tbuf,&convertor,max_data,decoded_iov,iov_count);        
+    }
     else {
         mca_common_ompio_decode_datatype (fh,
                                           datatype,
                                           count,
                                           buf,
                                           &max_data,
+                                          fh->f_mem_convertor,
                                           &decoded_iov,
                                           &iov_count);
     }
-#else
-    mca_common_ompio_decode_datatype (fh,
-                                      datatype,
-                                      count,
-                                      buf,
-                                      &max_data,
-                                      &decoded_iov,
-                                      &iov_count);
-#endif
+
     if ( 0 < max_data && 0 == fh->f_iov_count  ) {
         if ( MPI_STATUS_IGNORE != status ) {
             status->_ucount = 0;
@@ -170,15 +177,14 @@ int mca_common_ompio_file_read (ompio_file_t *fh,
         }
     }
 
-#if OPAL_CUDA_SUPPORT
-    if ( is_gpu && !is_managed ) {
+    if ( need_to_copy ) {
         size_t pos=0;
 
         opal_convertor_unpack (&convertor, decoded_iov, &iov_count, &pos );
         opal_convertor_cleanup (&convertor);
         mca_common_ompio_release_buf (fh, decoded_iov->iov_base);
     }
-#endif
+
     if (NULL != decoded_iov) {
         free (decoded_iov);
         decoded_iov = NULL;
@@ -257,13 +263,32 @@ int mca_common_ompio_file_iread (ompio_file_t *fh,
         int i = 0; /* index into the decoded iovec of the buffer */
         int j = 0; /* index into the file vie iovec */
         
+        bool need_to_copy = false;    
+    
 #if OPAL_CUDA_SUPPORT
         int is_gpu, is_managed;
         mca_common_ompio_check_gpu_buf ( fh, buf, &is_gpu, &is_managed);
         if ( is_gpu && !is_managed ) {
+            need_to_copy = true;
+        }
+#endif
+
+        if ( !( fh->f_flags & OMPIO_DATAREP_NATIVE ) &&
+             !(datatype == &ompi_mpi_byte.dt  ||
+               datatype == &ompi_mpi_char.dt   )) {
+            /* only need to copy if any of these conditions are given:
+               1. buffer is an unmanaged CUDA buffer (checked above).
+               2. Datarepresentation is anything other than 'native' and
+               3. datatype is not byte or char (i.e it does require some actual
+               work to be done e.g. for external32.
+            */
+            need_to_copy = true;
+        }         
+        
+        if ( need_to_copy ) {
             char *tbuf=NULL;
             
-            OMPIO_CUDA_PREPARE_BUF(fh,buf,count,datatype,tbuf,&ompio_req->req_convertor,max_data,decoded_iov,iov_count);        
+            OMPIO_PREPARE_READ_BUF(fh,buf,count,datatype,tbuf,&ompio_req->req_convertor,max_data,decoded_iov,iov_count); 
             
             ompio_req->req_tbuf = tbuf;
             ompio_req->req_size = max_data;
@@ -274,18 +299,11 @@ int mca_common_ompio_file_iread (ompio_file_t *fh,
                                               count,
                                               buf,
                                               &max_data,
+                                              fh->f_mem_convertor,
                                               &decoded_iov,
                                               &iov_count);
         }
-#else
-        mca_common_ompio_decode_datatype (fh,
-                                          datatype,
-                                          count,
-                                          buf,
-                                          &max_data,
-                                          &decoded_iov,
-                                          &iov_count);
-#endif
+    
         if ( 0 < max_data && 0 == fh->f_iov_count  ) {
             ompio_req->req_ompi.req_status.MPI_ERROR = OMPI_SUCCESS;
             ompio_req->req_ompi.req_status._ucount = 0;
@@ -376,6 +394,62 @@ int mca_common_ompio_file_iread_at (ompio_file_t *fh,
 
 
 /* Infrastructure for collective operations  */
+int mca_common_ompio_file_read_all (ompio_file_t *fh,
+                                    void *buf,
+                                    int count,
+                                    struct ompi_datatype_t *datatype,
+                                    ompi_status_public_t * status)
+{
+    int ret = OMPI_SUCCESS;
+
+
+    if ( !( fh->f_flags & OMPIO_DATAREP_NATIVE ) &&
+         !(datatype == &ompi_mpi_byte.dt  ||
+           datatype == &ompi_mpi_char.dt   )) {
+        /* No need to check for GPU buffer for collective I/O.
+           Most algorithms copy data from aggregators, and send/recv
+           to/from GPU buffers works if ompi was compiled was GPU support.
+           
+           If the individual fcoll component is used: there are no aggregators 
+           in that concept. However, since they call common_ompio_file_write, 
+           CUDA buffers are handled by that routine.
+
+           Thus, we only check for
+           1. Datarepresentation is anything other than 'native' and
+           2. datatype is not byte or char (i.e it does require some actual
+              work to be done e.g. for external32.
+        */
+        size_t pos=0, max_data=0;
+        char *tbuf=NULL;
+        opal_convertor_t convertor;
+        struct iovec *decoded_iov = NULL;
+        uint32_t iov_count = 0;
+
+        OMPIO_PREPARE_READ_BUF(fh,buf,count,datatype,tbuf,&convertor,max_data,decoded_iov,iov_count);   
+        ret = fh->f_fcoll->fcoll_file_read_all (fh,
+                                                decoded_iov->iov_base,
+                                                decoded_iov->iov_len,
+                                                MPI_BYTE,
+                                                status);
+        opal_convertor_unpack (&convertor, decoded_iov, &iov_count, &pos );
+
+        opal_convertor_cleanup (&convertor);
+        mca_common_ompio_release_buf (fh, decoded_iov->iov_base);
+        if (NULL != decoded_iov) {
+            free (decoded_iov);
+            decoded_iov = NULL;
+        }
+    }
+    else {
+        ret = fh->f_fcoll->fcoll_file_read_all (fh,
+                                                buf,
+                                                count,
+                                                datatype,
+                                                status);
+    }
+    return ret;
+}
+
 int mca_common_ompio_file_read_at_all (ompio_file_t *fh,
 				     OMPI_MPI_OFFSET_TYPE offset,
 				     void *buf,
@@ -388,13 +462,38 @@ int mca_common_ompio_file_read_at_all (ompio_file_t *fh,
     mca_common_ompio_file_get_position (fh, &prev_offset );
 
     mca_common_ompio_set_explicit_offset (fh, offset);
-    ret = fh->f_fcoll->fcoll_file_read_all (fh,
-                                            buf,
-                                            count,
-                                            datatype,
-                                            status);
-
+    ret = mca_common_ompio_file_read_all (fh,
+                                          buf,
+                                          count,
+                                          datatype,
+                                          status);
+    
     mca_common_ompio_set_explicit_offset (fh, prev_offset);
+    return ret;
+}
+
+int mca_common_ompio_file_iread_all (ompio_file_t *fp,
+                                     void *buf,
+                                     int count,
+                                     struct ompi_datatype_t *datatype,
+                                     ompi_request_t **request)
+{
+    int ret = OMPI_SUCCESS;
+
+    if ( NULL != fp->f_fcoll->fcoll_file_iread_all ) {
+	ret = fp->f_fcoll->fcoll_file_iread_all (fp,
+						 buf,
+						 count,
+						 datatype,
+						 request);
+    }
+    else {
+	/* this fcoll component does not support non-blocking
+	   collective I/O operations. WE fake it with
+	   individual non-blocking I/O operations. */
+	ret = mca_common_ompio_file_iread ( fp, buf, count, datatype, request );
+    }
+
     return ret;
 }
 
@@ -411,24 +510,16 @@ int mca_common_ompio_file_iread_at_all (ompio_file_t *fp,
     mca_common_ompio_file_get_position (fp, &prev_offset );
     mca_common_ompio_set_explicit_offset (fp, offset);
 
-    if ( NULL != fp->f_fcoll->fcoll_file_iread_all ) {
-	ret = fp->f_fcoll->fcoll_file_iread_all (fp,
-						 buf,
-						 count,
-						 datatype,
-						 request);
-    }
-    else {
-	/* this fcoll component does not support non-blocking
-	   collective I/O operations. WE fake it with
-	   individual non-blocking I/O operations. */
-	ret = mca_common_ompio_file_iread ( fp, buf, count, datatype, request );
-    }
-
-
+    ret = mca_common_ompio_file_iread_all (fp,
+                                           buf,
+                                           count,
+                                           datatype,
+                                           request);
+    
     mca_common_ompio_set_explicit_offset (fp, prev_offset);
     return ret;
 }
+
 
 int mca_common_ompio_set_explicit_offset (ompio_file_t *fh,
                                           OMPI_MPI_OFFSET_TYPE offset)

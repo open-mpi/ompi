@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2016 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2019 University of Houston. All rights reserved.
  * Copyright (c) 2018      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2018      DataDirect Networks. All rights reserved.
@@ -66,7 +66,7 @@
 #define OMPIO_LOCK_ENTIRE_FILE       0x00000080
 #define OMPIO_LOCK_NEVER             0x00000100
 #define OMPIO_LOCK_NOT_THIS_OP       0x00000200
-
+#define OMPIO_DATAREP_NATIVE         0x00000400
 
 #define OMPIO_ROOT                    0
 
@@ -157,7 +157,8 @@ struct ompio_file_t {
     ompi_communicator_t   *f_comm;
     const char            *f_filename;
     char                  *f_datarep;
-    opal_convertor_t      *f_convertor;
+    opal_convertor_t      *f_mem_convertor;
+    opal_convertor_t      *f_file_convertor;
     opal_info_t           *f_info;
     int32_t                f_flags;
     void                  *f_fs_ptr;
@@ -253,10 +254,16 @@ OMPI_DECLSPEC int mca_common_ompio_file_iwrite_at (ompio_file_t *fh,  OMPI_MPI_O
                                                    const void *buf,  int count,  struct ompi_datatype_t *datatype,
                                                    ompi_request_t **request);
 
+OMPI_DECLSPEC int mca_common_ompio_file_write_all (ompio_file_t *fh, const void *buf,
+                                                   int count, struct ompi_datatype_t *datatype, 
+                                                   ompi_status_public_t *status);
+
 OMPI_DECLSPEC int mca_common_ompio_file_write_at_all (ompio_file_t *fh, OMPI_MPI_OFFSET_TYPE offset, const void *buf,
                                                       int count, struct ompi_datatype_t *datatype, 
                                                       ompi_status_public_t *status);
 
+OMPI_DECLSPEC int mca_common_ompio_file_iwrite_all (ompio_file_t *fp, const void *buf,
+                                                    int count, struct ompi_datatype_t *datatype, ompi_request_t **request);
 
 OMPI_DECLSPEC int mca_common_ompio_file_iwrite_at_all (ompio_file_t *fp, OMPI_MPI_OFFSET_TYPE offset, const void *buf,
                                                        int count, struct ompi_datatype_t *datatype, ompi_request_t **request);
@@ -282,9 +289,15 @@ OMPI_DECLSPEC int mca_common_ompio_file_iread_at (ompio_file_t *fh, OMPI_MPI_OFF
                                                   void *buf, int count, struct ompi_datatype_t *datatype,
                                                   ompi_request_t **request);
 
+OMPI_DECLSPEC int mca_common_ompio_file_read_all (ompio_file_t *fh, void *buf, int count, struct ompi_datatype_t *datatype,
+                                                  ompi_status_public_t * status);
+
 OMPI_DECLSPEC int mca_common_ompio_file_read_at_all (ompio_file_t *fh, OMPI_MPI_OFFSET_TYPE offset,
                                                      void *buf, int count, struct ompi_datatype_t *datatype,
                                                      ompi_status_public_t * status);
+
+OMPI_DECLSPEC int mca_common_ompio_file_iread_all (ompio_file_t *fp, void *buf, int count, struct ompi_datatype_t *datatype,
+                                                   ompi_request_t **request);
 
 OMPI_DECLSPEC int mca_common_ompio_file_iread_at_all (ompio_file_t *fp, OMPI_MPI_OFFSET_TYPE offset,
                                                       void *buf, int count, struct ompi_datatype_t *datatype,
@@ -318,6 +331,7 @@ OMPI_DECLSPEC int mca_common_ompio_decode_datatype (struct ompio_file_t *fh,
                                                     int count,
                                                     const void *buf,
                                                     size_t *max_data,
+                                                    opal_convertor_t *convertor,
                                                     struct iovec **iov,
                                                     uint32_t *iov_count);
 

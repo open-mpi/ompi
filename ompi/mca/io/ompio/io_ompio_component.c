@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2018 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2019 University of Houston. All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2015-2018 Research Organization for Information Science
@@ -34,14 +34,12 @@
 #include "ompi/mca/fs/base/base.h"
 #include "io_ompio.h"
 #include "ompi/mca/common/ompio/common_ompio_request.h"
+#include "ompi/mca/common/ompio/common_ompio_buffer.h"
 
 #ifdef HAVE_IME_NATIVE_H
 #include "ompi/mca/fs/ime/fs_ime.h"
 #endif
 
-#if OPAL_CUDA_SUPPORT
-#include "ompi/mca/common/ompio/common_ompio_cuda.h"
-#endif
 
 int mca_io_ompio_cycle_buffer_size = OMPIO_DEFAULT_CYCLE_BUF_SIZE;
 int mca_io_ompio_bytes_per_agg = OMPIO_PREALLOC_MAX_BUF_SIZE;
@@ -280,11 +278,7 @@ static int open_component(void)
 static int close_component(void)
 {
     mca_common_ompio_request_fini ();
-
-#if OPAL_CUDA_SUPPORT
-    mca_common_ompio_cuda_alloc_fini();
-#endif
-
+    mca_common_ompio_buffer_alloc_fini();
     OBJ_DESTRUCT(&mca_io_ompio_mutex);
 
 #ifdef HAVE_IME_NATIVE_H
