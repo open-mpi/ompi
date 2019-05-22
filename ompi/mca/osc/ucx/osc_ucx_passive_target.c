@@ -44,6 +44,7 @@ static inline int start_shared(ompi_osc_ucx_module_t *module, int target) {
         } else {
             break;
         }
+        ucp_worker_progress(mca_osc_ucx_component.ucp_worker);
     }
 
     return OMPI_SUCCESS;
@@ -72,7 +73,7 @@ static inline int start_exclusive(ompi_osc_ucx_module_t *module, int target) {
     uint64_t remote_addr = (module->state_info_array)[target].addr + OSC_UCX_STATE_LOCK_OFFSET;
     ucs_status_t status;
 
-    while (result_value != TARGET_LOCK_UNLOCKED) {
+    for (;;) {
         status = opal_common_ucx_atomic_cswap(ep, TARGET_LOCK_UNLOCKED, TARGET_LOCK_EXCLUSIVE,
                                               &result_value, sizeof(result_value),
                                               remote_addr, rkey,
@@ -80,9 +81,12 @@ static inline int start_exclusive(ompi_osc_ucx_module_t *module, int target) {
         if (status != UCS_OK) {
             return OMPI_ERROR;
         }
-    }
+        if (result_value == TARGET_LOCK_UNLOCKED) {
+            return OMPI_SUCCESS;
+        }
 
-    return OMPI_SUCCESS;
+        ucp_worker_progress(mca_osc_ucx_component.ucp_worker);
+    }
 }
 
 static inline int end_exclusive(ompi_osc_ucx_module_t *module, int target) {

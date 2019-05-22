@@ -276,6 +276,7 @@ int ompi_osc_ucx_post(struct ompi_group_t *group, int assert, struct ompi_win_t 
                     ompi_osc_ucx_handle_incoming_post(module, &(module->state.post_state[j]), NULL, 0);
                 }
 
+                ucp_worker_progress(mca_osc_ucx_component.ucp_worker);
                 usleep(100);
             } while (1);
         }
