@@ -130,6 +130,10 @@ int mca_common_ompio_file_read (ompio_file_t *fh,
         if ( MPI_STATUS_IGNORE != status ) {
             status->_ucount = 0;
         }
+        if (NULL != decoded_iov) {
+            free (decoded_iov);
+            decoded_iov = NULL;
+        }
         return OMPI_SUCCESS;
     }
 
@@ -309,6 +313,11 @@ int mca_common_ompio_file_iread (ompio_file_t *fh,
             ompio_req->req_ompi.req_status._ucount = 0;
             ompi_request_complete (&ompio_req->req_ompi, false);
             *request = (ompi_request_t *) ompio_req;
+            if (NULL != decoded_iov) {
+                free (decoded_iov);
+                decoded_iov = NULL;
+            }
+
             return OMPI_SUCCESS;
         }
 
