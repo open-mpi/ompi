@@ -113,10 +113,10 @@ int sshmem_ucx_shadow_realloc(sshmem_ucx_shadow_allocator_t *allocator,
                               unsigned count, unsigned old_index, unsigned *index,
                               int *inplace)
 {
-    sshmem_ucx_shadow_alloc_elem_t *end  = &allocator->elems[allocator->num_elems];
     sshmem_ucx_shadow_alloc_elem_t *elem = &allocator->elems[old_index];
-    sshmem_ucx_shadow_alloc_elem_t *next = &elem[elem->block_size];
     unsigned old_count                   = elem->block_size;
+    sshmem_ucx_shadow_alloc_elem_t *end;
+    sshmem_ucx_shadow_alloc_elem_t *next;
 
     assert(count > 0);
     assert(!sshmem_ucx_shadow_is_free(elem));
@@ -142,8 +142,10 @@ int sshmem_ucx_shadow_realloc(sshmem_ucx_shadow_allocator_t *allocator,
 
     assert(count > old_count);
 
+    end  = &allocator->elems[allocator->num_elems];
+    next = &elem[old_count];
     /* try to check if next element is free & has enough length */
-    if ((next < end)                    && /* non-last element? */
+    if ((next < end) &&                    /* non-last element? */
         sshmem_ucx_shadow_is_free(next) && /* next is free */
         (old_count + next->block_size >= count))
     {
