@@ -332,8 +332,10 @@ opal_convertor_set_position( opal_convertor_t* convertor,
     /* Remove the completed flag if it's already set */
     convertor->flags &= ~CONVERTOR_COMPLETED;
 
-    if( !(convertor->flags & CONVERTOR_WITH_CHECKSUM) &&
-        (convertor->flags & OPAL_DATATYPE_FLAG_NO_GAPS) &&
+    if( (convertor->flags & OPAL_DATATYPE_FLAG_NO_GAPS) &&
+#if defined(CHECKSUM)
+        !(convertor->flags & CONVERTOR_WITH_CHECKSUM) &&
+#endif  /* defined(CHECKSUM) */
         (convertor->flags & (CONVERTOR_SEND | CONVERTOR_HOMOGENEOUS)) ) {
         /* Contiguous and no checkpoint and no homogeneous unpack */
         convertor->bConverted = *position;
