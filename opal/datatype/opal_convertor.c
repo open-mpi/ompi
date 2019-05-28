@@ -579,8 +579,9 @@ int32_t opal_convertor_prepare_for_recv( opal_convertor_t* convertor,
     assert(! (convertor->flags & CONVERTOR_SEND));
     OPAL_CONVERTOR_PREPARE( convertor, datatype, count, pUserBuf );
 
-    if( convertor->flags & CONVERTOR_WITH_CHECKSUM ) {
-        if( !(convertor->flags & CONVERTOR_HOMOGENEOUS) ) {
+#if defined(CHECKSUM)
+    if( OPAL_UNLIKELY(convertor->flags & CONVERTOR_WITH_CHECKSUM) ) {
+        if( OPAL_UNLIKELY(!(convertor->flags & CONVERTOR_HOMOGENEOUS)) ) {
             convertor->fAdvance = opal_unpack_general_checksum;
         } else {
             if( convertor->pDesc->flags & OPAL_DATATYPE_FLAG_CONTIGUOUS ) {
@@ -589,8 +590,9 @@ int32_t opal_convertor_prepare_for_recv( opal_convertor_t* convertor,
                 convertor->fAdvance = opal_generic_simple_unpack_checksum;
             }
         }
-    } else {
-        if( !(convertor->flags & CONVERTOR_HOMOGENEOUS) ) {
+    } else
+#endif  /* defined(CHECKSUM) */
+        if( OPAL_UNLIKELY(!(convertor->flags & CONVERTOR_HOMOGENEOUS)) ) {
             convertor->fAdvance = opal_unpack_general;
         } else {
             if( convertor->pDesc->flags & OPAL_DATATYPE_FLAG_CONTIGUOUS ) {
@@ -599,7 +601,6 @@ int32_t opal_convertor_prepare_for_recv( opal_convertor_t* convertor,
                 convertor->fAdvance = opal_generic_simple_unpack;
             }
         }
-    }
     return OPAL_SUCCESS;
 }
 
