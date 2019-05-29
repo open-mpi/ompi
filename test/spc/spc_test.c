@@ -44,8 +44,8 @@ int main(int argc, char **argv)
     char name[256], description[256];
 
     /* Counter names to be read by ranks 0 and 1 */
-    char *counter_names[] = { "runtime_spc_OMPI_BYTES_SENT_USER",
-                              "runtime_spc_OMPI_BYTES_RECEIVED_USER" };
+    char *counter_names[] = { "runtime_spc_OMPI_SPC_BYTES_SENT_USER",
+                              "runtime_spc_OMPI_SPC_BYTES_RECEIVED_USER" };
 
     MPI_Init(NULL, NULL);
     MPI_result = MPI_T_init_thread(MPI_THREAD_SINGLE, &provided);
