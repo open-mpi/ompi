@@ -33,6 +33,7 @@
 
 #include "opal/class/opal_free_list.h"
 #include "opal/class/opal_list.h"
+#include "opal/class/opal_bitmap.h"
 
 #include "opal/mca/common/ucx/common_ucx.h"
 
@@ -69,6 +70,9 @@ struct mca_spml_ucx_ctx {
     ucp_worker_h             ucp_worker;
     ucp_peer_t              *ucp_peers;
     long                     options;
+    opal_bitmap_t            put_op_bitmap;
+    int                     *put_proc_indexes;
+    unsigned                 put_proc_count;
 };
 typedef struct mca_spml_ucx_ctx mca_spml_ucx_ctx_t;
 
@@ -103,7 +107,7 @@ struct mca_spml_ucx {
     mca_spml_ucx_ctx_t       *aux_ctx;
     pthread_spinlock_t       async_lock;
     int                      aux_refcnt;
-
+    bool                     synchronized_quiet;
 };
 typedef struct mca_spml_ucx mca_spml_ucx_t;
 
@@ -170,6 +174,9 @@ extern int spml_ucx_ctx_progress(void);
 extern int spml_ucx_progress_aux_ctx(void);
 void mca_spml_ucx_async_cb(int fd, short event, void *cbdata);
 
+int mca_spml_ucx_init_put_op_mask(mca_spml_ucx_ctx_t *ctx, size_t nprocs);
+int mca_spml_ucx_clear_put_op_mask(mca_spml_ucx_ctx_t *ctx);
+
 static inline void mca_spml_ucx_aux_lock(void)
 {
     if (mca_spml_ucx.async_progress) {
@@ -222,6 +229,16 @@ static inline int ucx_status_to_oshmem_nb(ucs_status_t status)
 #else
     return OSHMEM_SUCCESS;
 #endif
+}
+
+static inline void mca_spml_ucx_remote_op_posted(mca_spml_ucx_ctx_t *ctx, int dst)
+{
+    if (OPAL_UNLIKELY(mca_spml_ucx.synchronized_quiet)) {
+        if (!opal_bitmap_is_set_bit(&ctx->put_op_bitmap, dst)) {
+            ctx->put_proc_indexes[ctx->put_proc_count++] = dst;
+            opal_bitmap_set_bit(&ctx->put_op_bitmap, dst);
+        }
+    }
 }
 
 #define MCA_SPML_UCX_CTXS_ARRAY_SIZE 64
