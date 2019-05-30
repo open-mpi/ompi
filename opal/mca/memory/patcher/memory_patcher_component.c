@@ -341,11 +341,23 @@ static int intercept_brk (void *addr)
 
 #endif
 
-#if defined(SYS_shmdt) && defined(__linux__)
+#if defined(__linux__)
 
 #include <stdio.h>
 #include <fcntl.h>
 #include <sys/shm.h>
+
+#if !defined(SYS_shmat)
+#  ifndef IPCOP_shmat
+#    define IPCOP_shmat 21
+#  endif
+#endif
+
+#if !defined(SYS_shmdt)
+#  ifndef IPCOP_shmdt
+#    define IPCOP_shmdt 22
+#  endif
+#endif
 
 static size_t memory_patcher_get_shm_seg_size (const void *shmaddr)
 {
@@ -404,6 +416,44 @@ static size_t memory_patcher_get_shm_seg_size (const void *shmaddr)
     return seg_size;
 }
 
+static void* (*original_shmat) (int, const void *, int);
+
+static void* _intercept_shmat (int shmid, const void *shmaddr, int shmflg)
+{
+    uintptr_t attach_addr;
+
+    if ((shmflg & SHM_REMAP) && (shmaddr != NULL)) {
+        attach_addr = (uintptr_t)shmaddr;
+        if (shmflg & SHM_RND) {
+            attach_addr -= attach_addr % SHMLBA;
+        }
+        opal_mem_hooks_release_hook((void *)attach_addr,
+                                    memory_patcher_get_shm_seg_size((void*)attach_addr),
+                                    false);
+    }
+
+    if (original_shmat) {
+        return original_shmat (shmid, shmaddr, shmflg);
+    } else {
+#if defined(SYS_shmat)
+        return (void*)memory_patcher_syscall(SYS_shmat, shmid, shmaddr, shmflg);
+#else
+        void *addr;
+        return memory_patcher_syscall(SYS_ipc, IPCOP_shmat, shmid, shmflg, &addr, shmaddr) ?
+               MAP_FAILED : addr;
+#endif
+    }
+
+}
+
+static void* intercept_shmat (int shmid, const void *shmaddr, int shmflg)
+{
+    OPAL_PATCHER_BEGIN;
+    void* result = _intercept_shmat (shmid, shmaddr, shmflg);
+    OPAL_PATCHER_END;
+    return result;
+}
+
 static int (*original_shmdt) (const void *);
 
 static int _intercept_shmdt (const void *shmaddr)
@@ -417,7 +467,11 @@ static int _intercept_shmdt (const void *shmaddr)
     if (original_shmdt) {
         result = original_shmdt (shmaddr);
     } else {
-        result = memory_patcher_syscall (SYS_shmdt, shmaddr);
+#if defined(SYS_shmat)
+        result = memory_patcher_syscall(SYS_shmdt, shmaddr);
+#else
+        result = memory_patcher_syscall(SYS_ipc, IPCOP_shmdt, 0, 0, 0, shmaddr);
+#endif
     }
 
     return result;
@@ -508,7 +562,14 @@ static int patcher_open (void)
     }
 #endif
 
-#if defined(SYS_shmdt) && defined(__linux__)
+#if defined(__linux__)
+    rc = opal_patcher->patch_symbol ("shmat", (uintptr_t) intercept_shmat, (uintptr_t *) &original_shmat);
+    if (OPAL_SUCCESS != rc) {
+        return rc;
+    }
+#endif
+
+#if defined(__linux__)
     rc = opal_patcher->patch_symbol ("shmdt", (uintptr_t) intercept_shmdt, (uintptr_t *) &original_shmdt);
     if (OPAL_SUCCESS != rc) {
         return rc;
