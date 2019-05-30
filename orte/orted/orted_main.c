@@ -1161,6 +1161,7 @@ static void node_regex_report(int status, orte_process_name_t* sender,
                               orte_rml_tag_t tag, void *cbdata) {
     int rc;
     bool * active = (bool *)cbdata;
+    opal_vpid_t parent_vpid;
 
     /* extract the node info if needed, and update the routing tree */
     if (ORTE_SUCCESS != (rc = orte_util_decode_nidmap(buffer))) {
@@ -1168,9 +1169,14 @@ static void node_regex_report(int status, orte_process_name_t* sender,
         return;
     }
 
+    /* keep the ORTE_PROC_MY_PARENT->vpid as the update_routing_plan may change the origin parent */
+    parent_vpid = ORTE_PROC_MY_PARENT->vpid;
+
     /* update the routing tree so any tree spawn operation
      * properly gets the number of children underneath us */
     orte_routed.update_routing_plan();
+
+    ORTE_PROC_MY_PARENT->vpid = parent_vpid;
 
     *active = false;
 
