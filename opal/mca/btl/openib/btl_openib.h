@@ -18,8 +18,8 @@
  * Copyright (c) 2009-2010 Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2013-2014 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2014      Bull SAS.  All rights reserved.
- * Copyright (c) 2015-2016 Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015-2018 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -163,6 +163,9 @@ struct mca_btl_openib_component_t {
 
     int                                ib_num_btls;
     /**< number of devices available to the openib component */
+
+    int                                ib_allowed_btls;
+    /**< number of devices allowed to the openib component */
 
     struct mca_btl_openib_module_t             **openib_btls;
     /**< array of available BTLs */
@@ -389,6 +392,7 @@ typedef struct mca_btl_openib_device_t {
     /* Whether this device supports eager RDMA */
     uint8_t use_eager_rdma;
     uint8_t btls;              /** < number of btls using this device */
+    uint8_t allowed_btls;      /** < number of allowed btls using this device */
     opal_pointer_array_t *endpoints;
     opal_pointer_array_t *device_btls;
     uint16_t hp_cq_polls;
@@ -480,6 +484,7 @@ struct mca_btl_openib_module_t {
     uint8_t num_cpcs;
 
     mca_btl_openib_device_t *device;
+    char * device_name;
     uint8_t port_num;                  /**< ID of the PORT */
     uint16_t pkey_index;
     struct ibv_port_attr ib_port_attr;
@@ -501,6 +506,8 @@ struct mca_btl_openib_module_t {
     int local_procs;                   /** number of local procs */
 
     bool atomic_ops_be;                /** atomic result is big endian */
+
+    bool allowed;                      /** is this port allowed */
 };
 typedef struct mca_btl_openib_module_t mca_btl_openib_module_t;
 

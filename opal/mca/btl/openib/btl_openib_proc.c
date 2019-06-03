@@ -13,8 +13,8 @@
  * Copyright (c) 2007-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
  * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
- * Copyright (c) 2015-2016 Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015-2018 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2015      Mellanox Technologies. All rights reserved.
  * Copyright (c) 2016-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
