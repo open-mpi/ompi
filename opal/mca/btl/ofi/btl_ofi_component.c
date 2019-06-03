@@ -43,7 +43,11 @@
 
 #define MCA_BTL_OFI_REQUESTED_MR_MODE   (FI_MR_ALLOCATED | FI_MR_PROV_KEY | FI_MR_VIRT_ADDR)
 
+#define MCA_BTL_OFI_PROV_EXCLUDE_DEFAULT \
+    "shm,sockets,tcp,udp,rstream,psm2"
+
 static char *prov_include;
+static char *prov_exclude;
 static char *ofi_progress_mode;
 static bool disable_sep;
 static int mca_btl_ofi_init_device(struct fi_info *info);
@@ -117,12 +121,21 @@ static int mca_btl_ofi_component_register(void)
                                           "provider_include",
                                           "OFI provider that ofi btl will query for. This parameter only "
                                           "accept ONE provider name. "
-                                          "(e.g., \"psm2\"; an empty value means that all providers will "
+                                          "(e.g., \"gni\"; an empty value means that all providers will "
                                           "be considered.",
                                           MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
                                           OPAL_INFO_LVL_4,
                                           MCA_BASE_VAR_SCOPE_READONLY,
                                           &prov_include);
+
+    prov_exclude = MCA_BTL_OFI_PROV_EXCLUDE_DEFAULT;
+    (void) mca_base_component_var_register(&mca_btl_ofi_component.super.btl_version,
+                                           "provider_exclude",
+                                           "Comma-delimited list of OFI providers that are not considered for use (default: \"" MCA_BTL_OFI_PROV_EXCLUDE_DEFAULT "\"; empty value means that all providers will be considered). Mutually exclusive with btl_ofi_provider_include.",
+                                           MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                           OPAL_INFO_LVL_4,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &prov_exclude);
 
     mca_btl_ofi_component.num_cqe_read = MCA_BTL_OFI_NUM_CQE_READ;
     (void) mca_base_component_var_register(&mca_btl_ofi_component.super.btl_version,
@@ -211,6 +224,20 @@ void mca_btl_ofi_exit(void)
 {
     BTL_ERROR(("BTL OFI will now abort."));
     exit(1);
+}
+
+static int is_in_list(char * const *list, const char *item)
+{
+    int i;
+
+    if (!list)
+        return 0;
+    for (i = 0; list[i]; i++) {
+        if (!strcmp(list[i], item))
+            return 1;
+    }
+
+    return 0;
 }
 
 /*
@@ -325,19 +352,38 @@ static mca_btl_base_module_t **mca_btl_ofi_component_init (int *num_btl_modules,
     }
     BTL_VERBOSE(("ofi btl found %d possible resources.", resource_count));
 
-    info = info_list;
+    char **exclude_list = NULL;
+    char *prov_name;
 
-    while(info) {
-        rc = validate_info(info, required_caps);
-        if (OPAL_SUCCESS == rc) {
-            /* Device passed sanity check, let's make a module.
-             * We only pick the first device we found valid */
-            rc = mca_btl_ofi_init_device(info);
-            if (OPAL_SUCCESS == rc)
-                break;
+    if (prov_exclude)
+        exclude_list = opal_argv_split(prov_exclude, ',');
+    for (info = info_list; info; info = info->next) {
+        prov_name = info->fabric_attr->prov_name;
+        opal_output_verbose(1, opal_btl_base_framework.framework_output,
+                            "%s:%d: btl:ofi: trying \"%s\"\n",
+                            __FILE__, __LINE__, prov_name);
+        /* prov_include wins; same behavior as mtl_ofi */
+        if ((exclude_list && is_in_list(exclude_list, prov_name)) &&
+            !(prov_include && !strcmp(prov_include, prov_name))) {
+            opal_output_verbose(1, opal_btl_base_framework.framework_output,
+                                "%s:%d: btl:ofi: \"%s\" in exclude list\n",
+                                __FILE__, __LINE__, prov_name);
+            continue;
         }
-        info = info->next;
+        rc = validate_info(info, required_caps);
+        if (OPAL_SUCCESS != rc)
+            continue;
+        /* Device passed sanity check, let's make a module.
+         * We only pick the first device we found valid */
+        rc = mca_btl_ofi_init_device(info);
+        if (OPAL_SUCCESS == rc) {
+            opal_output_verbose(1, opal_btl_base_framework.framework_output,
+                                "%s:%d: btl:ofi: using \"%s\"\n",
+                                __FILE__, __LINE__, prov_name);
+            break;
+        }
     }
+    free(exclude_list);
 
     /* We are done with the returned info. */
     fi_freeinfo(info_list);
