@@ -257,8 +257,8 @@ int mca_pml_ucx_init(void)
 
 err_destroy_worker:
     ucp_worker_destroy(ompi_pml_ucx.ucp_worker);
-    ompi_pml_ucx.ucp_worker = NULL;
 err:
+    ompi_pml_ucx.ucp_worker = NULL;
     return rc;
 }
 
@@ -288,7 +288,7 @@ int mca_pml_ucx_cleanup(void)
     OBJ_DESTRUCT(&ompi_pml_ucx.convs);
     OBJ_DESTRUCT(&ompi_pml_ucx.persistent_reqs);
 
-    if (ompi_pml_ucx.ucp_worker) {
+    if (ompi_pml_ucx.ucp_worker != NULL) {
         ucp_worker_destroy(ompi_pml_ucx.ucp_worker);
         ompi_pml_ucx.ucp_worker = NULL;
     }
