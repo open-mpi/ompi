@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2019       FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -94,6 +95,15 @@ void ompi_java_getReadPtrv(
         jobject buf, jboolean db, int off, int *counts, int *displs,
         int size, int rank, MPI_Datatype type, int baseType);
 
+/* Gets a buffer pointer for reading, but it
+ * 'size' is the number of processes.
+ * if rank == -1 it copies all data from Java.
+ * if rank != -1 it only copies from Java the rank data. */
+void ompi_java_getReadPtrw(
+        void **ptr, ompi_java_buffer_t **item, JNIEnv *env,
+        jobject buf, jboolean db, int *offs, int *counts, int *displs,
+        int size, int rank, MPI_Datatype *types, int *baseTypes);
+
 /* Releases a buffer used for reading. */
 void ompi_java_releaseReadPtr(
         void *ptr, ompi_java_buffer_t *item, jobject buf, jboolean db);
@@ -109,6 +119,12 @@ void ompi_java_getWritePtrv(
         void **ptr, ompi_java_buffer_t **item, JNIEnv *env, jobject buf,
         jboolean db, int *counts, int *displs, int size, MPI_Datatype type);
 
+/* Gets a buffer pointer for writing.
+ * 'size' is the number of processes. */
+void ompi_java_getWritePtrw(
+        void **ptr, ompi_java_buffer_t **item, JNIEnv *env, jobject buf,
+        jboolean db, int *counts, int *displs, int size, MPI_Datatype *types);
+
 /* Releases a buffer used for writing.
  * It copies data to Java. */
 void ompi_java_releaseWritePtr(
@@ -122,6 +138,14 @@ void ompi_java_releaseWritePtrv(
         void *ptr, ompi_java_buffer_t *item, JNIEnv *env,
         jobject buf, jboolean db, int off, int *counts, int *displs,
         int size, MPI_Datatype type, int baseType);
+
+/* Releases a buffer used for writing.
+ * It copies data to Java.
+ * 'size' is the number of processes. */
+void ompi_java_releaseWritePtrw(
+        void *ptr, ompi_java_buffer_t *item, JNIEnv *env,
+        jobject buf, jboolean db, int *offs, int *counts, int *displs,
+        int size, MPI_Datatype *types, int *baseTypes);
 
 void ompi_java_setStaticLongField(JNIEnv *env, jclass c,
                                   char *field, jlong value);

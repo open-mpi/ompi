@@ -17,6 +17,7 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation.  All rights reserved.
+ * Copyright (c) 2019       FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -672,6 +673,39 @@ static void* getReadPtrvRank(
     return ptr;
 }
 
+static void* getReadPtrwRank(
+        ompi_java_buffer_t **item, JNIEnv *env, jobject buf,
+        int *offsets, int *counts, int *displs, int size,
+        int rank, MPI_Datatype *types, int *baseTypes)
+{
+    int  extent  = getTypeExtent(env, types[rank]),
+         length  = getCountv(counts, displs, size);
+    void *ptr    = getBuffer(env, item, length);
+    int  rootOff = offsets[rank] + displs[rank];
+
+    if(opal_datatype_is_contiguous_memory_layout(&types[rank]->super, counts[rank]))
+    {
+        int  rootLength = extent * counts[rank];
+        void *rootPtr   = (char*)ptr + displs[rank];
+        getArrayRegion(env, buf, baseTypes[rank], rootOff, rootLength, rootPtr);
+    }
+    else
+    {
+        void *inBuf, *inBase;
+        inBuf = ompi_java_getArrayCritical(&inBase, env, buf, rootOff);
+
+        int rc = opal_datatype_copy_content_same_ddt(
+                 &types[rank]->super, counts[rank], ptr, inBuf);
+
+        ompi_java_exceptionCheck(env,
+                rc==OPAL_SUCCESS ? OMPI_SUCCESS : OMPI_ERROR);
+
+        (*env)->ReleasePrimitiveArrayCritical(env, buf, inBase, JNI_ABORT);
+    }
+
+    return ptr;
+}
+
 static void* getReadPtrvAll(
         ompi_java_buffer_t **item, JNIEnv *env, jobject buf,
         int offset, int *counts, int *displs, int size,
@@ -716,6 +750,49 @@ static void* getReadPtrvAll(
     return ptr;
 }
 
+static void* getReadPtrwAll(
+        ompi_java_buffer_t **item, JNIEnv *env, jobject buf,
+        int *offsets, int *counts, int *displs, int size,
+        MPI_Datatype *types, int *baseTypes)
+{
+
+    int length  = getCountv(counts, displs, size);
+    void *ptr    = getBuffer(env, item, length);
+
+    for(int i = 0; i < size; i++)
+    {
+        int extent  = getTypeExtent(env, types[i]);
+
+        if(opal_datatype_is_contiguous_memory_layout(&types[i]->super, 2))
+        {
+            int   iOff = offsets[i] + displs[i],
+                  iLen = extent * counts[i];
+            void *iPtr = (char*)ptr + displs[i];
+            getArrayRegion(env, buf, baseTypes[i], iOff, iLen, iPtr);
+        }
+        else
+        {
+            void *bufPtr, *bufBase;
+            bufPtr = ompi_java_getArrayCritical(&bufBase, env, buf, offsets[i]);
+
+            int   iOff = displs[i];
+            char *iBuf = iOff + (char*)bufPtr,
+                 *iPtr = iOff + (char*)ptr;
+
+            int rc = opal_datatype_copy_content_same_ddt(
+                     &types[i]->super, counts[i], iPtr, iBuf);
+
+            ompi_java_exceptionCheck(env,
+                    rc==OPAL_SUCCESS ? OMPI_SUCCESS : OMPI_ERROR);
+
+            (*env)->ReleasePrimitiveArrayCritical(env, buf, bufBase, JNI_ABORT);
+        }
+
+    }
+
+    return ptr;
+}
+
 static void* getWritePtr(ompi_java_buffer_t **item, JNIEnv *env,
                          int count, MPI_Datatype type)
 {
@@ -731,6 +808,14 @@ static void* getWritePtrv(ompi_java_buffer_t **item, JNIEnv *env,
     int extent = getTypeExtent(env, type),
         count  = getCountv(counts, displs, size),
         length = extent * count;
+
+    return getBuffer(env, item, length);
+}
+
+static void* getWritePtrw(ompi_java_buffer_t **item, JNIEnv *env,
+                          int *counts, int *displs, int size, MPI_Datatype *types)
+{
+    int length = getCountv(counts, displs, size);
 
     return getBuffer(env, item, length);
 }
@@ -810,6 +895,39 @@ void ompi_java_getReadPtrv(
     }
 }
 
+void ompi_java_getReadPtrw(
+        void **ptr, ompi_java_buffer_t **item, JNIEnv *env,
+        jobject buf, jboolean db, int *offsets, int *counts, int *displs,
+        int size, int rank, MPI_Datatype *types, int *baseTypes)
+{
+    int i;
+
+    if(buf == NULL)
+    {
+        /* Allow NULL buffers to send/recv 0 items as control messages. */
+        *ptr  = NULL;
+        *item = NULL;
+    }
+    else if(db)
+    {
+        for(i = 0; i < size; i++){
+            assert(offsets[i] == 0);
+        }
+        *ptr  = (*env)->GetDirectBufferAddress(env, buf);
+        *item = NULL;
+    }
+    else if(rank == -1)
+    {
+        *ptr = getReadPtrwAll(item, env, buf, offsets, counts,
+                              displs, size, types, baseTypes);
+    }
+    else
+    {
+        *ptr = getReadPtrwRank(item, env, buf, offsets, counts,
+                               displs, size, rank, types, baseTypes);
+    }
+}
+
 void ompi_java_releaseReadPtr(
         void *ptr, ompi_java_buffer_t *item, jobject buf, jboolean db)
 {
@@ -856,6 +974,27 @@ void ompi_java_getWritePtrv(
     else
     {
         *ptr = getWritePtrv(item, env, counts, displs, size, type);
+    }
+}
+
+void ompi_java_getWritePtrw(
+        void **ptr, ompi_java_buffer_t **item, JNIEnv *env, jobject buf,
+        jboolean db, int *counts, int *displs, int size, MPI_Datatype *types)
+{
+    if(buf == NULL)
+    {
+        /* Allow NULL buffers to send/recv 0 items as control messages. */
+        *ptr  = NULL;
+        *item = NULL;
+    }
+    else if(db)
+    {
+        *ptr  = (*env)->GetDirectBufferAddress(env, buf);
+        *item = NULL;
+    }
+    else
+    {
+        *ptr = getWritePtrw(item, env, counts, displs, size, types);
     }
 }
 
@@ -930,6 +1069,49 @@ void ompi_java_releaseWritePtrv(
         (*env)->ReleasePrimitiveArrayCritical(env, buf, bufBase, 0);
     }
 
+    releaseBuffer(ptr, item);
+}
+
+void ompi_java_releaseWritePtrw(
+        void *ptr, ompi_java_buffer_t *item, JNIEnv *env,
+        jobject buf, jboolean db, int *offsets, int *counts, int *displs,
+        int size, MPI_Datatype *types, int *baseTypes)
+{
+    if(db || !buf || !ptr)
+        return;
+
+    int i;
+
+    for(i = 0; i < size; i++)
+    {
+        int extent = getTypeExtent(env, types[i]);
+
+        if(opal_datatype_is_contiguous_memory_layout(&types[i]->super, 2))
+        {
+            int   iOff = offsets[i] + displs[i],
+                  iLen = extent * counts[i];
+            void *iPtr = (char*)ptr + displs[i];
+            setArrayRegion(env, buf, baseTypes[i], iOff, iLen, iPtr);
+        }
+        else
+        {
+            void *bufPtr, *bufBase;
+
+            bufPtr = ompi_java_getArrayCritical(&bufBase, env, buf, offsets[i]);
+            int   iOff = displs[i];
+            char *iBuf = iOff + (char*)bufPtr,
+                 *iPtr = iOff + (char*)ptr;
+
+            int rc = opal_datatype_copy_content_same_ddt(
+                     &types[i]->super, counts[i], iBuf, iPtr);
+
+            ompi_java_exceptionCheck(env,
+                    rc==OPAL_SUCCESS ? OMPI_SUCCESS : OMPI_ERROR);
+
+            (*env)->ReleasePrimitiveArrayCritical(env, buf, bufBase, 0);
+        }
+
+    }
     releaseBuffer(ptr, item);
 }
 
