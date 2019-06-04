@@ -9,8 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2017 University of Houston. All rights reserved.
- * Copyright (c) 2015-2017 Research Organization for Information Science
+ * Copyright (c) 2008-2019 University of Houston. All rights reserved.
+ * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
@@ -378,6 +378,13 @@ int mca_common_ompio_file_get_position (mca_io_ompio_file_t *fh,
 {
     OMPI_MPI_OFFSET_TYPE off;
 
+    if ( 0 == fh->f_view_extent ||
+         0 == fh->f_view_size   ||
+         0 == fh->f_etype_size ) {
+        *offset = 0;
+        return OMPI_SUCCESS;
+    }
+    
     /* No. of copies of the entire file view */
     off = (fh->f_offset - fh->f_disp)/fh->f_view_extent;
 
