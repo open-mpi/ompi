@@ -226,18 +226,20 @@ void mca_btl_ofi_exit(void)
     exit(1);
 }
 
-static int is_in_list(char * const *list, const char *item)
+static bool is_in_list(char * const *list, const char *item)
 {
     int i;
 
-    if (!list)
-        return 0;
+    if (!list) {
+        return false;
+    }
     for (i = 0; list[i]; i++) {
-        if (!strcmp(list[i], item))
-            return 1;
+        if (!strcmp(list[i], item)) {
+            return true;
+        }
     }
 
-    return 0;
+    return false;
 }
 
 /*
@@ -355,8 +357,9 @@ static mca_btl_base_module_t **mca_btl_ofi_component_init (int *num_btl_modules,
     char **exclude_list = NULL;
     char *prov_name;
 
-    if (prov_exclude)
+    if (prov_exclude) {
         exclude_list = opal_argv_split(prov_exclude, ',');
+    }
     for (info = info_list; info; info = info->next) {
         prov_name = info->fabric_attr->prov_name;
         opal_output_verbose(1, opal_btl_base_framework.framework_output,
@@ -371,8 +374,9 @@ static mca_btl_base_module_t **mca_btl_ofi_component_init (int *num_btl_modules,
             continue;
         }
         rc = validate_info(info, required_caps);
-        if (OPAL_SUCCESS != rc)
+        if (OPAL_SUCCESS != rc) {
             continue;
+        }
         /* Device passed sanity check, let's make a module.
          * We only pick the first device we found valid */
         rc = mca_btl_ofi_init_device(info);
