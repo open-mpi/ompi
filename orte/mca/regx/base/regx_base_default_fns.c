@@ -1056,7 +1056,11 @@ static int regex_parse_node_range(char *base, char *range, int num_digits, char 
     for (found = false, i = 0; i < len; ++i) {
         if (isdigit((int) range[i])) {
             if (!found) {
+<<<<<<< HEAD
                 start = strtol(range + i, NULL, 10);
+=======
+		start = strtol(range + i, NULL, 10);
+>>>>>>> f50c0fc... fixed orted double free or corruption
                 found = true;
                 break;
             }
