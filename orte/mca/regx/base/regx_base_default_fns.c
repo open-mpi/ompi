@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2016-2018 Intel, Inc.  All rights reserved.
- * Copyright (c) 2018      Research Organization for Information Science
+ * Copyright (c) 2018-2019 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -1056,7 +1056,7 @@ static int regex_parse_node_range(char *base, char *range, int num_digits, char 
     for (found = false, i = 0; i < len; ++i) {
         if (isdigit((int) range[i])) {
             if (!found) {
-                start = atoi(range + i);
+                start = strtol(range + i, NULL, 10);
                 found = true;
                 break;
             }
