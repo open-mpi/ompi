@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2017      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2017-2019 IBM Corporation. All rights reserved.
  * Copyright (c) 2017      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -50,6 +50,8 @@ mca_io_base_module_2_0_0_t mca_io_romio321_module = {
     mca_io_romio321_file_preallocate,
     mca_io_romio321_file_get_size,
     mca_io_romio321_file_get_amode,
+    mca_io_romio321_file_set_info,
+    mca_io_romio321_file_get_info,
     mca_io_romio321_file_set_view,
     mca_io_romio321_file_get_view,
 

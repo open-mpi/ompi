@@ -16,7 +16,7 @@
  * Copyright (c) 2015      University of Houston. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
+ * Copyright (c) 2016-2019 IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -153,6 +153,10 @@ typedef int (*mca_io_base_module_file_get_size_fn_t)
     (struct ompi_file_t *fh, MPI_Offset *size);
 typedef int (*mca_io_base_module_file_get_amode_fn_t)
     (struct ompi_file_t *fh, int *amode);
+typedef int (*mca_io_base_module_file_set_info_fn_t)
+    (struct ompi_file_t *fh, struct ompi_info_t *info);
+typedef int (*mca_io_base_module_file_get_info_fn_t)
+    (struct ompi_file_t *fh, struct ompi_info_t **info_used);
 
 typedef int (*mca_io_base_module_file_set_view_fn_t)
     (struct ompi_file_t *fh, MPI_Offset disp, struct ompi_datatype_t *etype,
@@ -307,6 +311,8 @@ struct mca_io_base_module_2_0_0_t {
     mca_io_base_module_file_preallocate_fn_t io_module_file_preallocate;
     mca_io_base_module_file_get_size_fn_t    io_module_file_get_size;
     mca_io_base_module_file_get_amode_fn_t   io_module_file_get_amode;
+    mca_io_base_module_file_set_info_fn_t    io_module_file_set_info;
+    mca_io_base_module_file_get_info_fn_t    io_module_file_get_info;
 
     mca_io_base_module_file_set_view_fn_t    io_module_file_set_view;
     mca_io_base_module_file_get_view_fn_t    io_module_file_get_view;
