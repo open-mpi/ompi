@@ -596,7 +596,8 @@ static int mca_spml_ucx_ctx_create_common(long options, mca_spml_ucx_ctx_t **ucx
 {
     ucp_worker_params_t params;
     ucp_ep_params_t ep_params;
-    size_t i, j, nprocs = oshmem_num_procs();
+    size_t i, nprocs = oshmem_num_procs();
+    int j;
     ucs_status_t err;
     spml_ucx_mkey_t *ucx_mkey;
     sshmem_mkey_t *mkey;
