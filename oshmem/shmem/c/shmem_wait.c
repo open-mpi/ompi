@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2019      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -117,10 +118,10 @@ SHMEM_TYPE_WAIT_UNTIL(_ushort, volatile unsigned short, SHMEM_SHORT, shmem)
 SHMEM_TYPE_WAIT_UNTIL(_uint, volatile unsigned int, SHMEM_INT, shmem)
 SHMEM_TYPE_WAIT_UNTIL(_ulong, volatile unsigned long, SHMEM_LONG, shmem)
 SHMEM_TYPE_WAIT_UNTIL(_ulonglong, volatile unsigned long long, SHMEM_LLONG, shmem)
-SHMEM_TYPE_WAIT_UNTIL(_int32, volatile int32_t, SHMEM_LLONG, shmem)
-SHMEM_TYPE_WAIT_UNTIL(_int64, volatile int64_t, SHMEM_LLONG, shmem)
-SHMEM_TYPE_WAIT_UNTIL(_uint32, volatile uint32_t, SHMEM_LLONG, shmem)
-SHMEM_TYPE_WAIT_UNTIL(_uint64, volatile uint64_t, SHMEM_LLONG, shmem)
+SHMEM_TYPE_WAIT_UNTIL(_int32, volatile int32_t, SHMEM_INT32_T, shmem)
+SHMEM_TYPE_WAIT_UNTIL(_int64, volatile int64_t, SHMEM_INT64_T, shmem)
+SHMEM_TYPE_WAIT_UNTIL(_uint32, volatile uint32_t, SHMEM_INT32_T, shmem)
+SHMEM_TYPE_WAIT_UNTIL(_uint64, volatile uint64_t, SHMEM_INT64_T, shmem)
 SHMEM_TYPE_WAIT_UNTIL(_size, volatile size_t, SHMEM_LLONG, shmem)
 SHMEM_TYPE_WAIT_UNTIL(_ptrdiff, volatile ptrdiff_t, SHMEM_LLONG, shmem)
 
@@ -153,9 +154,9 @@ SHMEM_TYPE_TEST(_ushort, volatile unsigned short, SHMEM_SHORT, shmem)
 SHMEM_TYPE_TEST(_uint, volatile unsigned int, SHMEM_INT, shmem)
 SHMEM_TYPE_TEST(_ulong, volatile unsigned long, SHMEM_LONG, shmem)
 SHMEM_TYPE_TEST(_ulonglong, volatile unsigned long long, SHMEM_LLONG, shmem)
-SHMEM_TYPE_TEST(_int32, volatile int32_t, SHMEM_LLONG, shmem)
-SHMEM_TYPE_TEST(_int64, volatile int64_t, SHMEM_LLONG, shmem)
-SHMEM_TYPE_TEST(_uint32, volatile uint32_t, SHMEM_LLONG, shmem)
-SHMEM_TYPE_TEST(_uint64, volatile uint64_t, SHMEM_LLONG, shmem)
+SHMEM_TYPE_TEST(_int32, volatile int32_t, SHMEM_INT32_T, shmem)
+SHMEM_TYPE_TEST(_int64, volatile int64_t, SHMEM_INT64_T, shmem)
+SHMEM_TYPE_TEST(_uint32, volatile uint32_t, SHMEM_INT32_T, shmem)
+SHMEM_TYPE_TEST(_uint64, volatile uint64_t, SHMEM_INT64_T, shmem)
 SHMEM_TYPE_TEST(_size, volatile size_t, SHMEM_LLONG, shmem)
 SHMEM_TYPE_TEST(_ptrdiff, volatile ptrdiff_t, SHMEM_LLONG, shmem)
