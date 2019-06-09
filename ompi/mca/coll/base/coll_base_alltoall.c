@@ -399,22 +399,22 @@ int ompi_coll_base_alltoall_intra_linear_sync(const void *sbuf, int scount,
     prcv = (char *) rbuf;
     psnd = (char *) sbuf;
 
-    /* Post first batch or ireceive and isend requests  */
+    /* Post first batch of irecv and isend requests  */
     for (nreqs = 0, nrreqs = 0, ri = (rank + 1) % size; nreqs < total_reqs;
          ri = (ri + 1) % size, ++nrreqs) {
-        nreqs++;
         error = MCA_PML_CALL(irecv
                              (prcv + (ptrdiff_t)ri * rext, rcount, rdtype, ri,
                               MCA_COLL_BASE_TAG_ALLTOALL, comm, &reqs[nreqs]));
+        nreqs++;
         if (MPI_SUCCESS != error) { line = __LINE__; goto error_hndl; }
     }
     for (nsreqs = 0, si =  (rank + size - 1) % size; nreqs < 2 * total_reqs;
-          si = (si + size - 1) % size, ++nsreqs) {
-        nreqs++;
+         si = (si + size - 1) % size, ++nsreqs) {
         error = MCA_PML_CALL(isend
                              (psnd + (ptrdiff_t)si * sext, scount, sdtype, si,
                               MCA_COLL_BASE_TAG_ALLTOALL,
                               MCA_PML_BASE_SEND_STANDARD, comm, &reqs[nreqs]));
+        nreqs++;
         if (MPI_SUCCESS != error) { line = __LINE__; goto error_hndl; }
     }
 
