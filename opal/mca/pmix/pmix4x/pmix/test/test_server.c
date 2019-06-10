@@ -150,7 +150,7 @@ static void set_namespace(int local_size, int univ_size,
     PMIx_generate_regex(NODE_NAME, &regex);
     pmix_strncpy(info[4].key, PMIX_NODE_MAP, PMIX_MAX_KEYLEN);
     info[4].value.type = PMIX_STRING;
-    info[4].value.data.string = regex;
+    info[4].value.data.string = strdup(regex);
 
     /* generate the global proc map */
     fill_seq_ranks_array(univ_size, 0, &ranks);
@@ -161,7 +161,7 @@ static void set_namespace(int local_size, int univ_size,
     free(ranks);
     pmix_strncpy(info[5].key, PMIX_PROC_MAP, PMIX_MAX_KEYLEN);
     info[5].value.type = PMIX_STRING;
-    info[5].value.data.string = ppn;
+    info[5].value.data.string = strdup(ppn);
 
     pmix_strncpy(info[6].key, PMIX_JOB_SIZE, PMIX_MAX_KEYLEN);
     info[6].value.type = PMIX_UINT32;
@@ -671,6 +671,8 @@ static void _dmdx_cb(int status, char *data, size_t sz, void *cbdata)
     msg_hdr.src_id = my_server_id;
     msg_hdr.size = sz;
     msg_hdr.dst_id = *sender_id;
+    TEST_VERBOSE(("srv #%d: DMDX RESPONSE: receiver=%d, size=%d,",
+                  my_server_id, *sender_id, sz));
     free(sender_id);
 
     server_send_msg(&msg_hdr, data, sz);
@@ -825,10 +827,10 @@ error:
     return rc;
 }
 
-int server_finalize(test_params *params)
+int server_finalize(test_params *params, int local_fail)
 {
     int rc = PMIX_SUCCESS;
-    int total_ret = 0;
+    int total_ret = local_fail;
 
     if (0 != (rc = server_barrier())) {
         total_ret++;
@@ -841,15 +843,11 @@ int server_finalize(test_params *params)
     }
 
     if (params->nservers && 0 == my_server_id) {
-        int ret;
         /* wait for all servers are finished */
-        ret = srv_wait_all(10.0);
-        if (!pmix_list_is_empty(server_list)) {
-            total_ret += ret;
-        }
+        total_ret += srv_wait_all(10.0);
         PMIX_LIST_RELEASE(server_list);
         TEST_VERBOSE(("SERVER %d FINALIZE PID:%d with status %d",
-                    my_server_id, getpid(), ret));
+                        my_server_id, getpid(), total_ret));
         if (0 == total_ret) {
             TEST_OUTPUT(("Test finished OK!"));
         } else {
@@ -917,17 +915,18 @@ int server_launch_clients(int local_size, int univ_size, int base_rank,
     /* fork/exec the test */
     for (n = 0; n < local_size; n++) {
         proc.rank = base_rank + rank_counter;
+        rc = PMIx_server_register_client(&proc, myuid, mygid, NULL, NULL, NULL);
+        if (PMIX_SUCCESS != rc && PMIX_OPERATION_SUCCEEDED != rc) {
+            TEST_ERROR(("Server register client failed with error %d", rc));
+            PMIx_server_finalize();
+            cli_kill_all();
+            return 0;
+        }
         if (PMIX_SUCCESS != (rc = PMIx_server_setup_fork(&proc, client_env))) {//n
             TEST_ERROR(("Server fork setup failed with error %d", rc));
             PMIx_server_finalize();
             cli_kill_all();
             return rc;
-        }
-        if (PMIX_SUCCESS != (rc = PMIx_server_register_client(&proc, myuid, mygid, NULL, NULL, NULL))) {//n
-            TEST_ERROR(("Server fork setup failed with error %d", rc));
-            PMIx_server_finalize();
-            cli_kill_all();
-            return 0;
         }
 
         cli_info[cli_counter].pid = fork();

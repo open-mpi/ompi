@@ -270,7 +270,7 @@ int main(int argc, char **argv)
     pmix_info_t *info;
     mylock_t mylock;
     pmix_cmd_line_t cmd_line;
-    char **fns;
+    char **fns = NULL;
     size_t n, m;
     myquery_data_t mq;
     pmix_query_t query;

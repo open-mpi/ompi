@@ -12,8 +12,8 @@
 #                         All rights reserved.
 # Copyright (c) 2012      Los Alamos National Security, Inc.  All rights reserved.
 # Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
-# Copyright (c) 2017      Research Organization for Information Science
-#                         and Technology (RIST). All rights reserved.
+# Copyright (c) 2019      Mellanox Technologies, Inc.
+#                         All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -21,24 +21,24 @@
 # $HEADER$
 #
 
-AM_CPPFLAGS = $(pnet_opa_CPPFLAGS)
+if MCA_BUILD_PSEC_DUMMY_HANDSHAKE
 
-headers = pnet_opa.h
+headers = psec_dummy_handshake.h
 sources = \
-        pnet_opa_component.c \
-        pnet_opa.c
+        psec_dummy_handshake_component.c \
+        psec_dummy_handshake.c
 
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
 # (for static builds).
 
-if MCA_BUILD_pmix_pnet_opa_DSO
+if MCA_BUILD_pmix_psec_dummy_handshake_DSO
 lib =
 lib_sources =
-component = mca_pnet_opa.la
+component = mca_psec_dummy_handshake.la
 component_sources = $(headers) $(sources)
 else
-lib = libmca_pnet_opa.la
+lib = libmca_psec_dummy_handshake.la
 lib_sources = $(headers) $(sources)
 component =
 component_sources =
@@ -46,14 +46,14 @@ endif
 
 mcacomponentdir = $(pmixlibdir)
 mcacomponent_LTLIBRARIES = $(component)
-mca_pnet_opa_la_SOURCES = $(component_sources)
-mca_pnet_opa_la_LIBADD = $(pnet_opa_LIBS)
-mca_pnet_opa_la_LDFLAGS = -module -avoid-version $(pnet_opa_LDFLAGS)
+mca_psec_dummy_handshake_la_SOURCES = $(component_sources)
+mca_psec_dummy_handshake_la_LDFLAGS = -module -avoid-version
 if NEED_LIBPMIX
-mca_pnet_opa_la_LIBADD += $(top_builddir)/src/libpmix.la
+mca_psec_dummy_handshake_la_LIBADD = $(top_builddir)/src/libpmix.la
 endif
 
 noinst_LTLIBRARIES = $(lib)
-libmca_pnet_opa_la_SOURCES = $(lib_sources)
-libmca_pnet_opa_la_LIBADD = $(pnet_opa_LIBS)
-libmca_pnet_opa_la_LDFLAGS = -module -avoid-version $(pnet_opa_LDFLAGS)
+libmca_psec_dummy_handshake_la_SOURCES = $(lib_sources)
+libmca_psec_dummy_handshake_la_LDFLAGS = -module -avoid-version
+
+endif

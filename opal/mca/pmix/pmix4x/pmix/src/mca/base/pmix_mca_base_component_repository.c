@@ -94,6 +94,7 @@ static pmix_hash_table_t pmix_mca_base_component_repository;
 
 static int process_repository_item (const char *filename, void *data)
 {
+    (void)data;
     char name[PMIX_MCA_BASE_MAX_COMPONENT_NAME_LEN + 1];
     char type[PMIX_MCA_BASE_MAX_TYPE_NAME_LEN + 1];
     pmix_mca_base_component_repository_item_t *ri;

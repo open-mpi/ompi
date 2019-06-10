@@ -48,6 +48,7 @@ static bool use_separate_thread = false;
 
 static int pmix_psensor_register(pmix_mca_base_register_flag_t flags)
 {
+    (void)flags;
     (void) pmix_mca_base_var_register("pmix", "psensor", "base", "use_separate_thread",
                                       "Use a separate thread for monitoring local procs",
                                       PMIX_MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,

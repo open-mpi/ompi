@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, Inc.  All rights reserved.
- * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -98,6 +98,18 @@ typedef struct {
     pmix_pointer_array_t nodes;
 } pmix_pnet_job_t;
 PMIX_EXPORT PMIX_CLASS_DECLARATION(pmix_pnet_job_t);
+
+typedef struct {
+    pmix_object_t super;
+    /* provide access to the component
+     * APIs that are managing this
+     * fabric plane */
+    pmix_pnet_module_t *module;
+    /* allow the component to add
+     * whatever structures it needs */
+    void *payload;
+} pmix_pnet_fabric_t;
+PMIX_EXPORT PMIX_CLASS_DECLARATION(pmix_pnet_fabric_t);
 
 /* framework globals */
 struct pmix_pnet_globals_t {

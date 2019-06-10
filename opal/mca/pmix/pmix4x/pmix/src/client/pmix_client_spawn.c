@@ -53,6 +53,7 @@
 #include "src/util/error.h"
 #include "src/util/output.h"
 #include "src/mca/gds/gds.h"
+#include "src/mca/pfexec/pfexec.h"
 #include "src/mca/ptl/ptl.h"
 
 #include "pmix_client_ops.h"
@@ -63,15 +64,15 @@ static void wait_cbfunc(struct pmix_peer_t *pr,
 static void spawn_cbfunc(pmix_status_t status, char nspace[], void *cbdata);
 
 PMIX_EXPORT pmix_status_t PMIx_Spawn(const pmix_info_t job_info[], size_t ninfo,
-                           const pmix_app_t apps[], size_t napps,
-                           pmix_nspace_t nspace)
+                                     const pmix_app_t apps[], size_t napps,
+                                     pmix_nspace_t nspace)
 {
     pmix_status_t rc;
     pmix_cb_t *cb;
 
     PMIX_ACQUIRE_THREAD(&pmix_global_lock);
 
-    pmix_output_verbose(2, pmix_globals.debug_output,
+    pmix_output_verbose(2, pmix_client_globals.spawn_output,
                         "pmix: spawn called");
 
     if (pmix_globals.init_cntr <= 0) {
@@ -80,7 +81,7 @@ PMIX_EXPORT pmix_status_t PMIx_Spawn(const pmix_info_t job_info[], size_t ninfo,
     }
 
     /* if we aren't connected, don't attempt to send */
-    if (!pmix_globals.connected) {
+    if (!pmix_globals.connected && !PMIX_PROC_IS_TOOL(pmix_globals.mypeer)) {
         PMIX_RELEASE_THREAD(&pmix_global_lock);
         return PMIX_ERR_UNREACH;
     }
@@ -96,6 +97,8 @@ PMIX_EXPORT pmix_status_t PMIx_Spawn(const pmix_info_t job_info[], size_t ninfo,
     cb = PMIX_NEW(pmix_cb_t);
 
     if (PMIX_SUCCESS != (rc = PMIx_Spawn_nb(job_info, ninfo, apps, napps, spawn_cbfunc, cb))) {
+        /* note: the call may have return PMIX_OPERATION_SUCCEEDED thus indicating
+         * that the spawn was atomically completed */
         PMIX_RELEASE(cb);
         return rc;
     }
@@ -122,14 +125,15 @@ PMIX_EXPORT pmix_status_t PMIx_Spawn_nb(const pmix_info_t job_info[], size_t nin
     size_t n, m;
     pmix_app_t *aptr;
     bool jobenvars = false;
+    bool forkexec = false;
     char *harvest[2] = {"PMIX_MCA_", NULL};
     pmix_kval_t *kv;
     pmix_list_t ilist;
 
     PMIX_ACQUIRE_THREAD(&pmix_global_lock);
 
-    pmix_output_verbose(2, pmix_globals.debug_output,
-                        "pmix: spawn called");
+    pmix_output_verbose(2, pmix_client_globals.spawn_output,
+                        "pmix: spawn_nb called");
 
     if (pmix_globals.init_cntr <= 0) {
         PMIX_RELEASE_THREAD(&pmix_global_lock);
@@ -138,8 +142,13 @@ PMIX_EXPORT pmix_status_t PMIx_Spawn_nb(const pmix_info_t job_info[], size_t nin
 
     /* if we aren't connected, don't attempt to send */
     if (!pmix_globals.connected) {
-        PMIX_RELEASE_THREAD(&pmix_global_lock);
-        return PMIX_ERR_UNREACH;
+        /* if I am a tool, we default to local fork/exec */
+        if (PMIX_PROC_IS_TOOL(pmix_globals.mypeer)) {
+            forkexec = true;
+        } else {
+            PMIX_RELEASE_THREAD(&pmix_global_lock);
+            return PMIX_ERR_UNREACH;
+        }
     }
     PMIX_RELEASE_THREAD(&pmix_global_lock);
 
@@ -205,6 +214,14 @@ PMIX_EXPORT pmix_status_t PMIx_Spawn_nb(const pmix_info_t job_info[], size_t nin
                 }
             }
         }
+    }
+
+    /* if I am a tool and not connected, then just fork/exec
+     * the specified application */
+    if (forkexec) {
+        rc = pmix_pfexec.spawn_proc(job_info, ninfo,
+                                    apps, napps);
+        return rc;
     }
 
     msg = PMIX_NEW(pmix_buffer_t);

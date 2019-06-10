@@ -12,10 +12,11 @@
  *                         All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2016-2018 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2016-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2017      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2018      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2019      Mellanox Technologies, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -150,7 +151,11 @@ pmix_status_t component_close(void)
 
 static int component_query(pmix_mca_base_module_t **module, int *priority)
 {
+    if (PMIX_PROC_IS_TOOL(pmix_globals.mypeer)) {
+        return PMIX_ERR_NOT_SUPPORTED;
+    }
     *module = (pmix_mca_base_module_t*)&pmix_ptl_usock_module;
+    *priority = mca_ptl_usock_component.super.priority;
     return PMIX_SUCCESS;
 }
 
@@ -339,7 +344,7 @@ static void connection_handler(int sd, short args, void *cbdata)
 {
     pmix_pending_connection_t *pnd = (pmix_pending_connection_t*)cbdata;
     char *msg, *ptr, *nspace, *version, *sec, *bfrops, *gds;
-    pmix_status_t rc;
+    pmix_status_t rc, reply;
     unsigned int rank;
     pmix_usock_hdr_t hdr;
     pmix_namespace_t *nptr, *tmp;
@@ -354,6 +359,7 @@ static void connection_handler(int sd, short args, void *cbdata)
     unsigned int msglen;
     pmix_info_t ginfo;
     pmix_byte_object_t cred;
+    uint32_t u32;
 
     /* acquire the object */
     PMIX_ACQUIRE_OBJECT(pnd);
@@ -687,12 +693,34 @@ static void connection_handler(int sd, short args, void *cbdata)
      * record it here for future use */
     nptr->compat.ptl = &pmix_ptl_usock_module;
 
-    /* validate the connection - the macro will send the status result to the client */
-    PMIX_PSEC_VALIDATE_CONNECTION(rc, psave, NULL, 0, NULL, 0, &cred);
     /* now done with the msg */
     free(msg);
 
-    if (PMIX_SUCCESS != rc) {
+    /* validate the connection - the macro will send the status result to the client */
+    PMIX_PSEC_VALIDATE_CONNECTION(reply, psave, NULL, 0, NULL, 0, &cred);
+    pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
+                        "client connection validated with status=%d", reply);
+
+    /* Communicate the result of validation to the client */
+    u32 = htonl(reply);
+    if (PMIX_SUCCESS != (rc = pmix_ptl_base_send_blocking(pnd->sd, (char*)&u32, sizeof(uint32_t)))) {
+        PMIX_ERROR_LOG(rc);
+        info->proc_cnt--;
+        PMIX_RELEASE(info);
+        pmix_pointer_array_set_item(&pmix_server_globals.clients, psave->index, NULL);
+        PMIX_RELEASE(psave);
+        /* error reply was sent by the above macro */
+        CLOSE_THE_SOCKET(pnd->sd);
+        PMIX_RELEASE(pnd);
+        return;
+    }
+
+    /* If needed perform the handshake. The macro will update reply */
+    PMIX_PSEC_SERVER_HANDSHAKE_IFNEED(reply, psave, NULL, 0, NULL, 0, &cred);
+
+    /* It is possible that connection validation failed
+     * We need to reply to the client first and cleanup after */
+    if (PMIX_SUCCESS != reply) {
         pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
                             "validation of client credentials failed: %s",
                             PMIx_Error_string(rc));
@@ -705,6 +733,8 @@ static void connection_handler(int sd, short args, void *cbdata)
         PMIX_RELEASE(pnd);
         return;
     }
+
+
 
     /* send the client's array index */
     if (PMIX_SUCCESS != (rc = pmix_ptl_base_send_blocking(pnd->sd, (char*)&psave->index, sizeof(int)))) {

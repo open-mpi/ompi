@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, Inc.  All rights reserved.
- * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -181,3 +181,12 @@ static void rdes(pmix_pnet_resource_t *p)
 PMIX_CLASS_INSTANCE(pmix_pnet_resource_t,
                     pmix_list_item_t,
                     rcon, rdes);
+
+static void ftcon(pmix_pnet_fabric_t *p)
+{
+    p->module = NULL;
+    p->payload = NULL;
+}
+PMIX_CLASS_INSTANCE(pmix_pnet_fabric_t,
+                    pmix_object_t,
+                    ftcon, NULL);

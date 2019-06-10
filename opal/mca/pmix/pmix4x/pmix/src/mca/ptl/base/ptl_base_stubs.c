@@ -124,6 +124,8 @@ pmix_status_t pmix_ptl_base_connect_to_peer(struct pmix_peer_t *peer,
 
 static void post_recv(int fd, short args, void *cbdata)
 {
+    (void)fd;
+    (void)args;
     pmix_ptl_posted_recv_t *req = (pmix_ptl_posted_recv_t*)cbdata;
     pmix_ptl_recv_t *msg, *nmsg;
     pmix_buffer_t buf;
@@ -161,6 +163,7 @@ pmix_status_t pmix_ptl_base_register_recv(struct pmix_peer_t *peer,
                                           pmix_ptl_cbfunc_t cbfunc,
                                           pmix_ptl_tag_t tag)
 {
+    (void)peer;
     pmix_ptl_posted_recv_t *req;
 
     req = PMIX_NEW(pmix_ptl_posted_recv_t);
@@ -179,6 +182,8 @@ pmix_status_t pmix_ptl_base_register_recv(struct pmix_peer_t *peer,
 
 static void cancel_recv(int fd, short args, void *cbdata)
 {
+    (void)fd;
+    (void)args;
     pmix_ptl_posted_recv_t *req = (pmix_ptl_posted_recv_t*)cbdata;
     pmix_ptl_posted_recv_t *rcv;
 
@@ -196,6 +201,7 @@ static void cancel_recv(int fd, short args, void *cbdata)
 pmix_status_t pmix_ptl_base_cancel_recv(struct pmix_peer_t *peer,
                                         pmix_ptl_tag_t tag)
 {
+    (void)peer;
     pmix_ptl_posted_recv_t *req;
 
     req = PMIX_NEW(pmix_ptl_posted_recv_t);

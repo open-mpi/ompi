@@ -1,6 +1,6 @@
 # -*- makefile -*-
 #
-# Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
+# Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
 # Copyright (c) 2014      Artem Y. Polyakov <artpol84@gmail.com>.
 #                         All rights reserved.
 # Copyright (c) 2016      Cisco Systems, Inc.  All rights reserved.
@@ -19,4 +19,5 @@ headers += \
 sources += \
         server/pmix_server.c \
         server/pmix_server_ops.c \
-        server/pmix_server_get.c
+        server/pmix_server_get.c \
+	server/pmix_sched.c

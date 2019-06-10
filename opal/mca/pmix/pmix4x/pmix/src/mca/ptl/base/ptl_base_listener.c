@@ -181,6 +181,7 @@ void pmix_ptl_base_stop_listening(void)
 
 static void* listen_thread(void *obj)
 {
+    (void)obj;
     int rc, max, accepted_connections;
     socklen_t addrlen = sizeof(struct sockaddr_storage);
     pmix_pending_connection_t *pending_connection;

@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2016-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2016-2019 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -36,6 +36,7 @@
 static pmix_status_t component_open(void);
 static pmix_status_t component_close(void);
 static pmix_status_t component_query(pmix_mca_base_module_t **module, int *priority);
+static pmix_status_t component_register(void);
 
 /*
  * Instantiate the public struct with all of our public information
@@ -57,15 +58,37 @@ pmix_pnet_test_component_t mca_pnet_test_component = {
             .pmix_mca_open_component = component_open,
             .pmix_mca_close_component = component_close,
             .pmix_mca_query_component = component_query,
+            .pmix_mca_register_component_params = component_register
         },
         .data = {
             /* The component is checkpoint ready */
             PMIX_MCA_BASE_METADATA_PARAM_CHECKPOINT
         }
     },
-    .include = NULL,
-    .exclude = NULL
+    .cfg_file = NULL,
+    .nverts = NULL,
+    .costmatrix = NULL
 };
+
+static pmix_status_t component_register(void)
+{
+    pmix_mca_base_component_t *component = &mca_pnet_test_component.super.base;
+
+    (void)pmix_mca_base_component_var_register(component, "cfg_file",
+                                               "Comma-delimited list of files containing descriptions of the test fabric, one plane per file",
+                                               PMIX_MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                               PMIX_INFO_LVL_2,
+                                               PMIX_MCA_BASE_VAR_SCOPE_READONLY,
+                                               &mca_pnet_test_component.cfg_file);
+
+    (void)pmix_mca_base_component_var_register(component, "nverts",
+                                               "Comma-delimited list of number of vertices in each fabric plane (if no cfg file given)",
+                                               PMIX_MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                               PMIX_INFO_LVL_2,
+                                               PMIX_MCA_BASE_VAR_SCOPE_READONLY,
+                                               &mca_pnet_test_component.nverts);
+    return PMIX_SUCCESS;
+}
 
 static pmix_status_t component_open(void)
 {

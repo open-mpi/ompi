@@ -413,6 +413,12 @@ int main(int argc, char **argv)
     if (NULL == executable) {
         executable = strdup("./simpclient");
     }
+    /* check for executable existence and permissions */
+    if (0 != access(executable, X_OK)) {
+        fprintf(stderr, "Executable %s not found or missing executable permissions\n", executable);
+        exit(1);
+    }
+
     if (cross_version && nprocs < 2) {
         fprintf(stderr, "Cross-version testing requires at least two clients\n");
         exit(1);
@@ -702,41 +708,131 @@ static void set_namespace(int nprocs, char *ranks, char *nspace,
 {
     char *regex, *ppn;
     char hostname[PMIX_MAXHOSTNAMELEN];
+    int n, m, k;
+    pmix_data_array_t *array;
+    pmix_info_t *info;
 
     gethostname(hostname, sizeof(hostname));
-    x->ninfo = 7;
+    x->ninfo = 16 + nprocs;
 
     PMIX_INFO_CREATE(x->info, x->ninfo);
-    (void)strncpy(x->info[0].key, PMIX_UNIV_SIZE, PMIX_MAX_KEYLEN);
-    x->info[0].value.type = PMIX_UINT32;
-    x->info[0].value.data.uint32 = nprocs;
+    n = 0;
 
-    (void)strncpy(x->info[1].key, PMIX_SPAWNED, PMIX_MAX_KEYLEN);
-    x->info[1].value.type = PMIX_UINT32;
-    x->info[1].value.data.uint32 = 0;
+    (void)strncpy(x->info[n].key, PMIX_UNIV_SIZE, PMIX_MAX_KEYLEN);
+    x->info[n].value.type = PMIX_UINT32;
+    x->info[n].value.data.uint32 = nprocs;
+    ++n;
 
-    (void)strncpy(x->info[2].key, PMIX_LOCAL_SIZE, PMIX_MAX_KEYLEN);
-    x->info[2].value.type = PMIX_UINT32;
-    x->info[2].value.data.uint32 = nprocs;
+    (void)strncpy(x->info[n].key, PMIX_SPAWNED, PMIX_MAX_KEYLEN);
+    x->info[n].value.type = PMIX_UINT32;
+    x->info[n].value.data.uint32 = 0;
+    ++n;
 
-    (void)strncpy(x->info[3].key, PMIX_LOCAL_PEERS, PMIX_MAX_KEYLEN);
-    x->info[3].value.type = PMIX_STRING;
-    x->info[3].value.data.string = strdup(ranks);
+    (void)strncpy(x->info[n].key, PMIX_LOCAL_SIZE, PMIX_MAX_KEYLEN);
+    x->info[n].value.type = PMIX_UINT32;
+    x->info[n].value.data.uint32 = nprocs;
+    ++n;
+
+    (void)strncpy(x->info[n].key, PMIX_LOCAL_PEERS, PMIX_MAX_KEYLEN);
+    x->info[n].value.type = PMIX_STRING;
+    x->info[n].value.data.string = strdup(ranks);
+    ++n;
 
     PMIx_generate_regex(hostname, &regex);
-    (void)strncpy(x->info[4].key, PMIX_NODE_MAP, PMIX_MAX_KEYLEN);
-    x->info[4].value.type = PMIX_STRING;
-    x->info[4].value.data.string = regex;
+    (void)strncpy(x->info[n].key, PMIX_NODE_MAP, PMIX_MAX_KEYLEN);
+    x->info[n].value.type = PMIX_STRING;
+    x->info[n].value.data.string = regex;
+    ++n;
 
     PMIx_generate_ppn(ranks, &ppn);
-    (void)strncpy(x->info[5].key, PMIX_PROC_MAP, PMIX_MAX_KEYLEN);
-    x->info[5].value.type = PMIX_STRING;
-    x->info[5].value.data.string = ppn;
+    (void)strncpy(x->info[n].key, PMIX_PROC_MAP, PMIX_MAX_KEYLEN);
+    x->info[n].value.type = PMIX_STRING;
+    x->info[n].value.data.string = ppn;
+    ++n;
 
-    (void)strncpy(x->info[6].key, PMIX_JOB_SIZE, PMIX_MAX_KEYLEN);
-    x->info[6].value.type = PMIX_UINT32;
-    x->info[6].value.data.uint32 = nprocs;
+    (void)strncpy(x->info[n].key, PMIX_JOB_SIZE, PMIX_MAX_KEYLEN);
+    x->info[n].value.type = PMIX_UINT32;
+    x->info[n].value.data.uint32 = nprocs;
+    ++n;
 
+    (void)strncpy(x->info[n].key, PMIX_JOBID, PMIX_MAX_KEYLEN);
+    x->info[n].value.type = PMIX_STRING;
+    x->info[n].value.data.string = strdup("1234");
+    ++n;
+
+    (void)strncpy(x->info[n].key, PMIX_NPROC_OFFSET, PMIX_MAX_KEYLEN);
+    x->info[n].value.type = PMIX_UINT32;
+    x->info[n].value.data.uint32 = 0;
+    ++n;
+
+    (void)strncpy(x->info[n].key, PMIX_NODEID, PMIX_MAX_KEYLEN);
+    x->info[n].value.type = PMIX_UINT32;
+    x->info[n].value.data.uint32 = 0;
+    ++n;
+
+    (void)strncpy(x->info[n].key, PMIX_NODE_SIZE, PMIX_MAX_KEYLEN);
+    x->info[n].value.type = PMIX_UINT32;
+    x->info[n].value.data.uint32 = nprocs;
+    ++n;
+
+    (void)strncpy(x->info[n].key, PMIX_NUM_NODES, PMIX_MAX_KEYLEN);
+    x->info[n].value.type = PMIX_UINT32;
+    x->info[n].value.data.uint32 = 1;
+    ++n;
+
+    (void)strncpy(x->info[n].key, PMIX_UNIV_SIZE, PMIX_MAX_KEYLEN);
+    x->info[n].value.type = PMIX_UINT32;
+    x->info[n].value.data.uint32 = nprocs;
+    ++n;
+
+    (void)strncpy(x->info[n].key, PMIX_MAX_PROCS, PMIX_MAX_KEYLEN);
+    x->info[n].value.type = PMIX_UINT32;
+    x->info[n].value.data.uint32 = nprocs;
+    ++n;
+
+    (void)strncpy(x->info[n].key, PMIX_JOB_NUM_APPS, PMIX_MAX_KEYLEN);
+    x->info[n].value.type = PMIX_UINT32;
+    x->info[n].value.data.uint32 = 1;
+    ++n;
+
+    (void)strncpy(x->info[n].key, PMIX_LOCALLDR, PMIX_MAX_KEYLEN);
+    x->info[n].value.type = PMIX_PROC_RANK;
+    x->info[n].value.data.uint32 = 0;
+    ++n;
+
+    /* add the proc-specific data */
+    for (m=0; m < nprocs; m++) {
+        (void)strncpy(x->info[n].key, PMIX_PROC_DATA, PMIX_MAX_KEYLEN);
+        x->info[n].value.type = PMIX_DATA_ARRAY;
+        PMIX_DATA_ARRAY_CREATE(array, 5, PMIX_INFO);
+        x->info[n].value.data.darray = array;
+        info = (pmix_info_t*)array->array;
+        k = 0;
+        (void)strncpy(info[k].key, PMIX_RANK, PMIX_MAX_KEYLEN);
+        info[k].value.type = PMIX_PROC_RANK;
+        info[k].value.data.rank = m;
+        ++k;
+        (void)strncpy(info[k].key, PMIX_GLOBAL_RANK, PMIX_MAX_KEYLEN);
+        info[k].value.type = PMIX_PROC_RANK;
+        info[k].value.data.rank = m;
+        ++k;
+        (void)strncpy(info[k].key, PMIX_LOCAL_RANK, PMIX_MAX_KEYLEN);
+        info[k].value.type = PMIX_UINT16;
+        info[k].value.data.uint16 = m;
+        ++k;
+
+        (void)strncpy(info[k].key, PMIX_NODE_RANK, PMIX_MAX_KEYLEN);
+        info[k].value.type = PMIX_UINT16;
+        info[k].value.data.uint16 = m;
+        ++k;
+
+        (void)strncpy(info[k].key, PMIX_NODEID, PMIX_MAX_KEYLEN);
+        info[k].value.type = PMIX_UINT32;
+        info[k].value.data.uint32 = 0;
+        ++k;
+        /* move to next proc */
+        ++n;
+    }
     PMIx_server_register_nspace(nspace, nprocs, x->info, x->ninfo,
                                 cbfunc, x);
 }

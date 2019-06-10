@@ -80,7 +80,8 @@ pmix_status_t pmix_gds_base_setup_fork(const pmix_proc_t *proc,
         if (NULL == active->module->setup_fork) {
             continue;
         }
-        if (PMIX_SUCCESS != (rc = active->module->setup_fork(proc, env))) {
+        rc = active->module->setup_fork(proc, env);
+        if (PMIX_SUCCESS != rc && PMIX_ERR_NOT_AVAILABLE != rc) {
             return rc;
         }
     }
@@ -94,6 +95,7 @@ pmix_status_t pmix_gds_base_store_modex(struct pmix_namespace_t *nspace,
                                         pmix_gds_base_store_modex_cb_fn_t cb_fn,
                                         void *cbdata)
 {
+    (void)nspace;
     pmix_status_t rc = PMIX_SUCCESS;
     pmix_buffer_t bkt;
     pmix_byte_object_t bo, bo2;

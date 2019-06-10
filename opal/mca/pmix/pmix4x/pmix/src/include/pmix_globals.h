@@ -473,6 +473,7 @@ typedef struct {
     uid_t uid;                          // my effective uid
     gid_t gid;                          // my effective gid
     char *hostname;                     // my hostname
+    pid_t pid;                          // my local pid
     uint32_t nodeid;                    // my nodeid, if given
     int pindex;
     pmix_event_base_t *evbase;

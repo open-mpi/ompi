@@ -56,7 +56,7 @@ pmix_status_t pmix_pnet_base_allocate(char *nspace,
     if (NULL == nspace || NULL == ilist) {
         return PMIX_ERR_BAD_PARAM;
     }
-    if (PMIX_PROC_IS_GATEWAY(pmix_globals.mypeer)) {
+    if (PMIX_PROC_IS_SCHEDULER(pmix_globals.mypeer)) {
         nptr = NULL;
         /* find this nspace - note that it may not have
          * been registered yet */
@@ -207,7 +207,8 @@ pmix_status_t pmix_pnet_base_setup_fork(const pmix_proc_t *proc, char ***env)
 
     PMIX_LIST_FOREACH(active, &pmix_pnet_globals.actives, pmix_pnet_base_active_module_t) {
         if (NULL != active->module->setup_fork) {
-            if (PMIX_SUCCESS != (rc = active->module->setup_fork(nptr, proc, env))) {
+            rc = active->module->setup_fork(nptr, proc, env);
+            if (PMIX_SUCCESS != rc && PMIX_ERR_NOT_AVAILABLE != rc) {
                 return rc;
             }
         }

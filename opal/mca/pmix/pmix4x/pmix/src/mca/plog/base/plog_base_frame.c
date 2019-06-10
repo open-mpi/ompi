@@ -38,6 +38,7 @@ pmix_plog_API_module_t pmix_plog = {
 static char *order = NULL;
 static int pmix_plog_register(pmix_mca_base_register_flag_t flags)
 {
+    (void)flags;
     pmix_mca_base_var_register("pmix", "plog", "base", "order",
                                "Comma-delimited, prioritized list of logging channels",
                                PMIX_MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,

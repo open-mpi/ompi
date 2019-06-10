@@ -28,12 +28,18 @@ static bool compress_block(char *instring,
                            uint8_t **outbytes,
                            size_t *nbytes)
 {
+    (void)instring;
+    (void)outbytes;
+    (void)nbytes;
     return false;
 }
 
 static bool decompress_block(char **outstring,
                              uint8_t *inbytes, size_t len)
 {
+    (void)outstring;
+    (void)inbytes;
+    (void)len;
     return false;
 }
 
@@ -53,6 +59,7 @@ pmix_compress_base_component_t pmix_compress_base_selected_component = {{0}};
 
 static int pmix_compress_base_register(pmix_mca_base_register_flag_t flags)
 {
+    (void)flags;
     pmix_compress_base.compress_limit = 4096;
     (void) pmix_mca_base_var_register("pmix", "compress", "base", "limit",
                                       "Threshold beyond which data will be compressed",

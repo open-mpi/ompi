@@ -63,6 +63,7 @@ static size_t max_msg_size = PMIX_MAX_MSG_SIZE;
 
 static int pmix_ptl_register(pmix_mca_base_register_flag_t flags)
 {
+    (void)flags;
     pmix_mca_base_var_register("pmix", "ptl", "base", "max_msg_size",
                                "Max size (in Mbytes) of a client/server msg",
                                PMIX_MCA_BASE_VAR_TYPE_SIZE_T, NULL, 0, 0,

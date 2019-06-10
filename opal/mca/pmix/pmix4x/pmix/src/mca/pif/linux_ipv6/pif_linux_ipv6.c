@@ -80,7 +80,9 @@ static int if_linux_ipv6_open(void)
 {
     FILE *f;
     if ((f = fopen("/proc/net/if_inet6", "r"))) {
-        char ifname[IF_NAMESIZE];
+        /* IF_NAMESIZE is normally 16 on Linux,
+           but the next scanf allows up to 21 bytes */
+        char ifname[21];
         unsigned int idx, pfxlen, scope, dadstat;
         struct in6_addr a6;
         int iter;

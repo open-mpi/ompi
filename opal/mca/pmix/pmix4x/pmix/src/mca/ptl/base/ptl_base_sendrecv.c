@@ -50,12 +50,14 @@
 
 static void _notify_complete(pmix_status_t status, void *cbdata)
 {
+    (void)status;
     pmix_event_chain_t *chain = (pmix_event_chain_t*)cbdata;
     PMIX_RELEASE(chain);
 }
 
 static void lcfn(pmix_status_t status, void *cbdata)
 {
+    (void)status;
     pmix_peer_t *peer = (pmix_peer_t*)cbdata;
     PMIX_RELEASE(peer);
 }
@@ -385,6 +387,8 @@ static pmix_status_t read_bytes(int sd, char **buf, size_t *remain)
  */
 void pmix_ptl_base_send_handler(int sd, short flags, void *cbdata)
 {
+    (void)sd;
+    (void)flags;
     pmix_peer_t *peer = (pmix_peer_t*)cbdata;
     pmix_ptl_send_t *msg = peer->send_msg;
     pmix_status_t rc;
@@ -463,6 +467,7 @@ void pmix_ptl_base_send_handler(int sd, short flags, void *cbdata)
 
 void pmix_ptl_base_recv_handler(int sd, short flags, void *cbdata)
 {
+    (void)flags;
     pmix_status_t rc;
     pmix_peer_t *peer = (pmix_peer_t*)cbdata;
     pmix_ptl_recv_t *msg = NULL;
@@ -625,6 +630,8 @@ void pmix_ptl_base_recv_handler(int sd, short flags, void *cbdata)
 
 void pmix_ptl_base_send(int sd, short args, void *cbdata)
 {
+    (void)sd;
+    (void)args;
     pmix_ptl_queue_t *queue = (pmix_ptl_queue_t*)cbdata;
     pmix_ptl_send_t *snd;
 
@@ -681,6 +688,8 @@ void pmix_ptl_base_send(int sd, short args, void *cbdata)
 
 void pmix_ptl_base_send_recv(int fd, short args, void *cbdata)
 {
+    (void)fd;
+    (void)args;
     pmix_ptl_sr_t *ms = (pmix_ptl_sr_t*)cbdata;
     pmix_ptl_posted_recv_t *req;
     pmix_ptl_send_t *snd;
@@ -759,6 +768,8 @@ void pmix_ptl_base_send_recv(int fd, short args, void *cbdata)
 
 void pmix_ptl_base_process_msg(int fd, short flags, void *cbdata)
 {
+    (void)fd;
+    (void)flags;
     pmix_ptl_recv_t *msg = (pmix_ptl_recv_t*)cbdata;
     pmix_ptl_posted_recv_t *rcv;
     pmix_buffer_t buf;

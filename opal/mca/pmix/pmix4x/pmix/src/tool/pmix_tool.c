@@ -59,6 +59,7 @@
 #include "src/runtime/pmix_rte.h"
 #include "src/mca/bfrops/base/base.h"
 #include "src/mca/gds/base/base.h"
+#include "src/mca/pfexec/base/base.h"
 #include "src/mca/pnet/base/base.h"
 #include "src/mca/ptl/base/base.h"
 #include "src/mca/psec/psec.h"
@@ -265,6 +266,7 @@ PMIX_EXPORT int PMIx_tool_init(pmix_proc_t *proc,
     bool nspace_in_enviro = false;
     bool rank_given = false;
     bool fwd_stdin = false;
+    bool connect_optional = false;
     pmix_info_t ginfo;
     size_t n;
     pmix_ptl_posted_recv_t *rcv;
@@ -321,13 +323,17 @@ PMIX_EXPORT int PMIx_tool_init(pmix_proc_t *proc,
                 rank_given = true;
             } else if (0 == strncmp(info[n].key, PMIX_FWD_STDIN, PMIX_MAX_KEYLEN)) {
                 /* they want us to forward our stdin to someone */
-                fwd_stdin = true;
+                fwd_stdin = PMIX_INFO_TRUE(&info[n]);
             } else if (0 == strncmp(info[n].key, PMIX_LAUNCHER, PMIX_MAX_KEYLEN)) {
-                ptype |= PMIX_PROC_LAUNCHER;
+                if (PMIX_INFO_TRUE(&info[n])) {
+                    ptype |= PMIX_PROC_LAUNCHER;
+                }
             } else if (0 == strncmp(info[n].key, PMIX_SERVER_TMPDIR, PMIX_MAX_KEYLEN)) {
                 pmix_server_globals.tmpdir = strdup(info[n].value.data.string);
             } else if (0 == strncmp(info[n].key, PMIX_SYSTEM_TMPDIR, PMIX_MAX_KEYLEN)) {
                 pmix_server_globals.system_tmpdir = strdup(info[n].value.data.string);
+            } else if (0 == strncmp(info[n].key, PMIX_TOOL_CONNECT_OPTIONAL, PMIX_MAX_KEYLEN)) {
+                connect_optional = PMIX_INFO_TRUE(&info[n]);
             }
         }
     }
@@ -398,24 +404,6 @@ PMIX_EXPORT int PMIx_tool_init(pmix_proc_t *proc,
             PMIX_RELEASE_THREAD(&pmix_global_lock);
             return PMIX_ERR_BAD_PARAM;
         }
-    }
-
-    /* if we are a launcher, then we also need to act as a server,
-     * so setup the server-related structures here */
-    if (PMIX_PROC_LAUNCHER_ACT & ptype) {
-        if (PMIX_SUCCESS != (rc = pmix_server_initialize())) {
-            PMIX_ERROR_LOG(rc);
-            if (NULL != nspace) {
-                free(nspace);
-            }
-            if (gdsfound) {
-                PMIX_INFO_DESTRUCT(&ginfo);
-            }
-            PMIX_RELEASE_THREAD(&pmix_global_lock);
-            return rc;
-        }
-        /* setup the function pointers */
-        memset(&pmix_host_server, 0, sizeof(pmix_server_module_t));
     }
 
     /* setup the runtime - this init's the globals,
@@ -571,20 +559,54 @@ PMIX_EXPORT int PMIx_tool_init(pmix_proc_t *proc,
         return PMIX_ERR_INIT;
     }
 
+    /* if we are a launcher, then we also need to act as a server,
+     * so setup the server-related structures here */
+    if (PMIX_PROC_LAUNCHER_ACT & ptype) {
+        if (PMIX_SUCCESS != (rc = pmix_server_initialize())) {
+            PMIX_ERROR_LOG(rc);
+            if (NULL != nspace) {
+                free(nspace);
+            }
+            if (gdsfound) {
+                PMIX_INFO_DESTRUCT(&ginfo);
+            }
+            PMIX_RELEASE_THREAD(&pmix_global_lock);
+            return rc;
+        }
+        /* setup the function pointers */
+        memset(&pmix_host_server, 0, sizeof(pmix_server_module_t));
+    }
+
     if (do_not_connect) {
         /* ensure we mark that we are not connected */
         pmix_globals.connected = false;
         /* it is an error if we were not given an nspace/rank */
         if (!nspace_given || !rank_given) {
             PMIX_RELEASE_THREAD(&pmix_global_lock);
-            return PMIX_ERR_INIT;
+            goto regattr;
         }
     } else {
         /* connect to the server */
         rc = pmix_ptl_base_connect_to_peer((struct pmix_peer_t*)pmix_client_globals.myserver, info, ninfo);
-        if (PMIX_SUCCESS != rc){
-            PMIX_RELEASE_THREAD(&pmix_global_lock);
-            return rc;
+        if (PMIX_SUCCESS != rc) {
+            if (!connect_optional) {
+                PMIX_RELEASE_THREAD(&pmix_global_lock);
+                return rc;
+            }
+            /* if connection was optional, then we need to self-assign
+             * a namespace and rank for ourselves. Use our hostname:pid
+             * for the nspace, and rank clearly is 0 */
+            snprintf(pmix_globals.myid.nspace, PMIX_MAX_NSLEN-1, "%s:%lu", pmix_globals.hostname, (unsigned long)pmix_globals.pid);
+            pmix_globals.myid.rank = 0;
+            nspace_given = false;
+            rank_given = false;
+            /* also setup the client myserver to point to ourselves */
+            pmix_client_globals.myserver->nptr->nspace = strdup(pmix_globals.myid.nspace);
+            pmix_client_globals.myserver->info = PMIX_NEW(pmix_rank_info_t);
+            pmix_client_globals.myserver->info->pname.nspace = strdup(pmix_globals.myid.nspace);
+            pmix_client_globals.myserver->info->pname.rank = pmix_globals.myid.rank;
+            pmix_client_globals.myserver->info->uid = pmix_globals.uid;
+            pmix_client_globals.myserver->info->gid = pmix_globals.gid;
         }
     }
     if (!nspace_given) {
@@ -736,7 +758,7 @@ PMIX_EXPORT int PMIx_tool_init(pmix_proc_t *proc,
         /* quick check to see if we got something back. If this
          * is a launcher that is being executed multiple times
          * in a job-script, then the original registration data
-         * will have been deleted after the first invocation. In
+         * may have been deleted after the first invocation. In
          * such a case, we simply regenerate it locally as it is
          * well-known */
         pmix_cb_t cb;
@@ -768,6 +790,14 @@ PMIX_EXPORT int PMIx_tool_init(pmix_proc_t *proc,
     }
     PMIX_RELEASE_THREAD(&pmix_global_lock);
 
+    /* setup the fork/exec framework */
+    if (PMIX_SUCCESS != (rc = pmix_mca_base_framework_open(&pmix_pfexec_base_framework, 0)) ) {
+        return rc;
+    }
+    if (PMIX_SUCCESS != (rc = pmix_pfexec_base_select()) ) {
+        return rc;
+    }
+
     /* if we are acting as a server, then start listening */
     if (PMIX_PROC_IS_LAUNCHER(pmix_globals.mypeer)) {
         /* start listening for connections */
@@ -777,6 +807,7 @@ PMIX_EXPORT int PMIx_tool_init(pmix_proc_t *proc,
         }
     }
 
+  regattr:
     /* register the tool supported attrs */
     rc = pmix_register_tool_attrs();
     return rc;
@@ -790,7 +821,7 @@ pmix_status_t pmix_tool_init_info(void)
     char hostname[PMIX_MAX_NSLEN];
 
     pmix_strncpy(wildcard.nspace, pmix_globals.myid.nspace, PMIX_MAX_NSLEN);
-    wildcard.rank = pmix_globals.myid.rank;
+    wildcard.rank = PMIX_RANK_WILDCARD;
 
     /* the jobid is just our nspace */
     kptr = PMIX_NEW(pmix_kval_t);
@@ -1145,8 +1176,6 @@ PMIX_EXPORT pmix_status_t PMIx_tool_finalize(void)
     /* flush anything that is still trying to be written out */
     pmix_iof_static_dump_output(&pmix_client_globals.iof_stdout);
     pmix_iof_static_dump_output(&pmix_client_globals.iof_stderr);
-    PMIX_DESTRUCT(&pmix_client_globals.iof_stdout);
-    PMIX_DESTRUCT(&pmix_client_globals.iof_stderr);
 
     /* if we are connected, then disconnect */
     if (pmix_globals.connected) {
@@ -1230,6 +1259,7 @@ PMIX_EXPORT pmix_status_t PMIx_tool_finalize(void)
     }
 
     /* shutdown services */
+    (void)pmix_mca_base_framework_close(&pmix_pfexec_base_framework);
     pmix_rte_finalize();
     if (NULL != pmix_globals.mypeer) {
         PMIX_RELEASE(pmix_globals.mypeer);
