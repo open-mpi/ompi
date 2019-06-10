@@ -28,6 +28,9 @@
 
 static inline int allred_sched_diss(int rank, int p, int count, MPI_Datatype datatype, ptrdiff_t gap, const void *sendbuf,
                                     void *recvbuf, MPI_Op op, char inplace, NBC_Schedule *schedule, void *tmpbuf);
+static inline int allred_sched_recursivedoubling(int rank, int p, const void *sendbuf, void *recvbuf,
+                                                 int count, MPI_Datatype datatype, ptrdiff_t gap, MPI_Op op,
+                                                 char inplace, NBC_Schedule *schedule, void *tmpbuf);
 static inline int allred_sched_ring(int rank, int p, int count, MPI_Datatype datatype, const void *sendbuf,
                                     void *recvbuf, MPI_Op op, int size, int ext, NBC_Schedule *schedule,
                                     void *tmpbuf);
@@ -69,7 +72,7 @@ static int nbc_allreduce_init(const void* sendbuf, void* recvbuf, int count, MPI
 #ifdef NBC_CACHE_SCHEDULE
   NBC_Allreduce_args *args, *found, search;
 #endif
-  enum { NBC_ARED_BINOMIAL, NBC_ARED_RING, NBC_ARED_REDSCAT_ALLGATHER } alg;
+  enum { NBC_ARED_BINOMIAL, NBC_ARED_RING, NBC_ARED_REDSCAT_ALLGATHER, NBC_ARED_RDBL } alg;
   char inplace;
   void *tmpbuf = NULL;
   ompi_coll_libnbc_module_t *libnbc_module = (ompi_coll_libnbc_module_t*) module;
@@ -124,9 +127,11 @@ static int nbc_allreduce_init(const void* sendbuf, void* recvbuf, int count, MPI
       alg = NBC_ARED_RING;
     else if (libnbc_iallreduce_algorithm == 2)
       alg = NBC_ARED_BINOMIAL;
-    else if (libnbc_iallreduce_algorithm == 3 && count >= nprocs_pof2 && ompi_op_is_commute(op)) {
+    else if (libnbc_iallreduce_algorithm == 3 && count >= nprocs_pof2 && ompi_op_is_commute(op))
       alg = NBC_ARED_REDSCAT_ALLGATHER;
-    } else
+    else if (libnbc_iallreduce_algorithm == 4)
+      alg = NBC_ARED_RDBL;
+    else
       alg = NBC_ARED_RING;
   }
 #ifdef NBC_CACHE_SCHEDULE
@@ -158,6 +163,9 @@ static int nbc_allreduce_init(const void* sendbuf, void* recvbuf, int count, MPI
           break;
         case NBC_ARED_RING:
           res = allred_sched_ring(rank, p, count, datatype, sendbuf, recvbuf, op, size, ext, schedule, tmpbuf);
+          break;
+        case NBC_ARED_RDBL:
+          res = allred_sched_recursivedoubling(rank, p, sendbuf, recvbuf, count, datatype, gap, op, inplace, schedule, tmpbuf);
           break;
       }
     }
@@ -467,6 +475,161 @@ static inline int allred_sched_diss(int rank, int p, int count, MPI_Datatype dat
   }
 
   /* end of the bcast */
+  return OMPI_SUCCESS;
+}
+
+/*
+ *   allred_sched_recursivedoubling
+ *
+ *   Function:       Recursive doubling algorithm for iallreduce operation
+ *
+ *   Description:    Implements recursive doubling algorithm for iallreduce.
+ *                   The algorithm preserves order of operations so it can
+ *                   be used both by commutative and non-commutative operations.
+ *   Schedule length: O(\log(p))
+ *   Memory requirements:
+ *     Each process requires a temporary buffer: count * typesize = O(count)
+ *
+ *   Example on 7 nodes:
+ *   Initial state
+ *   #      0       1      2       3      4       5      6
+ *         [0]     [1]    [2]     [3]    [4]     [5]    [6]
+ *   Initial adjustment step for non-power of two nodes.
+ *   old rank      1              3              5      6
+ *   new rank      0              1              2      3
+ *               [0+1]          [2+3]          [4+5]   [6]
+ *   Step 1
+ *   old rank      1              3              5      6
+ *   new rank      0              1              2      3
+ *               [0+1+]         [0+1+]         [4+5+]  [4+5+]
+ *               [2+3+]         [2+3+]         [6   ]  [6   ]
+ *   Step 2
+ *   old rank      1              3              5      6
+ *   new rank      0              1              2      3
+ *               [0+1+]         [0+1+]         [0+1+]  [0+1+]
+ *               [2+3+]         [2+3+]         [2+3+]  [2+3+]
+ *               [4+5+]         [4+5+]         [4+5+]  [4+5+]
+ *               [6   ]         [6   ]         [6   ]  [6   ]
+ *   Final adjustment step for non-power of two nodes
+ *   #      0       1      2       3      4       5      6
+ *        [0+1+] [0+1+] [0+1+]  [0+1+] [0+1+]  [0+1+] [0+1+]
+ *        [2+3+] [2+3+] [2+3+]  [2+3+] [2+3+]  [2+3+] [2+3+]
+ *        [4+5+] [4+5+] [4+5+]  [4+5+] [4+5+]  [4+5+] [4+5+]
+ *        [6   ] [6   ] [6   ]  [6   ] [6   ]  [6   ] [6   ]
+ *
+ */
+static inline int allred_sched_recursivedoubling(int rank, int p, const void *sendbuf, void *recvbuf,
+                                                 int count, MPI_Datatype datatype, ptrdiff_t gap, MPI_Op op,
+                                                 char inplace, NBC_Schedule *schedule, void *tmpbuf)
+{
+  int res, pof2, nprocs_rem, vrank;
+  char *tmpsend = NULL, *tmprecv = NULL, *tmpswap = NULL;
+
+  tmpsend = (char*) tmpbuf - gap;
+  tmprecv = (char*) recvbuf;
+
+  if (inplace) {
+    res = NBC_Sched_copy(recvbuf, false, count, datatype, 
+                         tmpsend, false, count, datatype, schedule, true);
+  } else {
+    res = NBC_Sched_copy((void *)sendbuf, false, count, datatype,
+                         tmpsend, false, count, datatype, schedule, true);
+  }
+  if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) { return res; }
+
+  /* Get nearest power of two less than or equal to comm size */
+  pof2 = opal_next_poweroftwo(p) >> 1;
+
+  /* Handle non-power-of-two case:
+    - Even ranks less than 2 * nprocs_rem send their data to (rank + 1), and
+    sets new rank to -1.
+    - Odd ranks less than 2 * nprocs_rem receive data from (rank - 1),
+    apply appropriate operation, and set new rank to rank/2
+    - Everyone else sets rank to rank - nprocs_rem
+  */
+  nprocs_rem = p - pof2;
+  if (rank < 2 * nprocs_rem) {
+    if (0 == rank % 2) {    /* Even */
+      res = NBC_Sched_send(tmpsend, false, count, datatype, rank + 1, schedule, true);
+      if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) { return res; }
+      vrank = -1;
+    } else {                /* Odd */
+      res = NBC_Sched_recv(tmprecv, false, count, datatype, rank - 1, schedule, true);
+      if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) { return res; }
+
+      /* tmpsend = tmprecv (op) tmpsend */
+      res = NBC_Sched_op(tmprecv, false, tmpsend, false, count, datatype, op, schedule, true);
+      if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) { return res; }
+
+      vrank = rank >> 1;
+    }
+  } else {
+    vrank = rank - nprocs_rem;
+  }
+
+  /* Communication/Computation loop
+      - Exchange message with remote node.
+      - Perform appropriate operation taking in account order of operations:
+      result = value (op) result
+  */
+  if (0 <= vrank) {
+    for (int distance = 1; distance < pof2; distance <<= 1) {
+      int remote = vrank ^ distance;
+
+      /* Find real rank of remote node */
+      if (remote < nprocs_rem) {
+          remote = remote * 2 + 1;
+      } else {
+          remote += nprocs_rem;
+      }
+
+      /* Exchange the data */
+      res = NBC_Sched_send(tmpsend, false, count, datatype, remote, schedule, false);
+      if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) { return res; }
+
+      res = NBC_Sched_recv(tmprecv, false, count, datatype, remote, schedule, true);
+      if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) { return res; }
+
+      /* Apply operation */
+      if (rank < remote) {
+        /* tmprecv = tmpsend (op) tmprecv */
+        res = NBC_Sched_op(tmpsend, false, tmprecv, false,
+                           count, datatype, op, schedule, true);
+        if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) { return res; }
+        
+        /* Swap tmpsend and tmprecv buffers */
+        tmpswap = tmprecv; tmprecv = tmpsend; tmpsend = tmpswap;
+      } else {
+        /* tmpsend = tmprecv (op) tmpsend */
+        res = NBC_Sched_op(tmprecv, false, tmpsend, false,
+                           count, datatype, op, schedule, true);
+        if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) { return res; }
+      }
+    }
+  }
+
+  /* Handle non-power-of-two case:
+      - Even ranks less than 2 * nprocs_rem receive result from (rank + 1)
+      - Odd ranks less than 2 * nprocs_rem send result from tmpsend to (rank - 1)
+  */
+  if (rank < 2 * nprocs_rem) {
+    if (0 == rank % 2) {    /* Even */
+      res = NBC_Sched_recv(recvbuf, false, count, datatype, rank + 1, schedule, false);
+      if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) { return res; }
+      tmpsend = (char *)recvbuf;
+    } else {                /* Odd */
+      res = NBC_Sched_send(tmpsend, false, count, datatype, rank - 1, schedule, false);
+      if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) { return res; }
+    }
+  }
+
+  /* Copy result back into recvbuf */
+  if (tmpsend != recvbuf) {
+    res = NBC_Sched_copy(tmpsend, false, count, datatype,
+                         recvbuf, false, count, datatype, schedule, false);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) { return res; }
+  }
+
   return OMPI_SUCCESS;
 }
 
@@ -1044,4 +1207,3 @@ int ompi_coll_libnbc_allreduce_inter_init(const void* sendbuf, void* recvbuf, in
 
     return OMPI_SUCCESS;
 }
-
