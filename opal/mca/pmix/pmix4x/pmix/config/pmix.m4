@@ -418,7 +418,8 @@ AC_DEFUN([PMIX_SETUP_CORE],[
                       ioLib.h sockLib.h hostLib.h limits.h \
                       sys/fcntl.h sys/statfs.h sys/statvfs.h \
                       netdb.h ucred.h zlib.h sys/auxv.h \
-                      sys/sysctl.h])
+                      sys/sysctl.h termio.h termios.h pty.h \
+                      libutil.h util.h grp.h sys/cdefs.h utmp.h stropts.h])
 
     AC_CHECK_HEADERS([sys/mount.h], [], [],
                      [AC_INCLUDES_DEFAULT
@@ -663,7 +664,7 @@ AC_DEFUN([PMIX_SETUP_CORE],[
     # -lrt might be needed for clock_gettime
     PMIX_SEARCH_LIBS_CORE([clock_gettime], [rt])
 
-    AC_CHECK_FUNCS([asprintf snprintf vasprintf vsnprintf strsignal socketpair strncpy_s usleep statfs statvfs getpeereid getpeerucred strnlen posix_fallocate tcgetpgrp])
+    AC_CHECK_FUNCS([asprintf snprintf vasprintf vsnprintf strsignal socketpair strncpy_s usleep statfs statvfs getpeereid getpeerucred strnlen posix_fallocate tcgetpgrp setpgid ptsname openpty])
 
     # On some hosts, htonl is a define, so the AC_CHECK_FUNC will get
     # confused.  On others, it's in the standard library, but stubbed with
@@ -909,6 +910,10 @@ AC_DEFUN([PMIX_SETUP_CORE],[
         pmix_config_prefix[src/tools/pps/Makefile]
         pmix_config_prefix[src/tools/pattrs/Makefile]
         )
+    if test "$WANT_PYTHON_BINDINGS" = "1"; then
+        AC_CONFIG_FILES(pmix_config_prefix[bindings/python/server.py], [chmod +x bindings/python/server.py])
+        AC_CONFIG_FILES(pmix_config_prefix[bindings/python/client.py], [chmod +x bindings/python/client.py])
+    fi
 
     # publish any embedded flags so external wrappers can use them
     AC_SUBST(PMIX_EMBEDDED_LIBS)
@@ -1215,6 +1220,7 @@ if test "$WANT_PYTHON_BINDINGS" = "1"; then
     fi
     python_version=`python --version 2>&1`
     PMIX_SUMMARY_ADD([[Bindings]],[[Python]], [pmix_python], [yes ($python_version)])
+    AC_SUBST([PMIX_PYTHON_PATH], [#!"$PYTHON"], "Full Python executable path")
 
     AC_MSG_CHECKING([if Cython package installed])
     have_cython=`$srcdir/config/pmix_check_cython.py 2> /dev/null`
@@ -1251,6 +1257,40 @@ fi
 AS_IF([test -z "$enable_nonglobal_dlopen" && test "x$pmix_mode" = "xembedded" && test $WANT_INSTALL_HEADERS -eq 0 && test $pmix_need_libpmix -eq 1],
       [pmix_need_libpmix=0])
 
+#
+# Do we want PTY support?
+#
+
+AC_MSG_CHECKING([if want pty support])
+AC_ARG_ENABLE(pty-support,
+    AC_HELP_STRING([--enable-pty-support],
+                   [Enable/disable PTY support for STDIO forwarding.  (default: enabled)]))
+if test "$enable_pty_support" = "no" ; then
+    AC_MSG_RESULT([no])
+    PMIX_ENABLE_PTY_SUPPORT=0
+else
+    AC_MSG_RESULT([yes])
+    PMIX_ENABLE_PTY_SUPPORT=1
+fi
+AC_DEFINE_UNQUOTED([PMIX_ENABLE_PTY_SUPPORT], [$PMIX_ENABLE_PTY_SUPPORT],
+                   [Whether user wants PTY support or not])
+
+#
+# psec/dummy_handshake
+#
+
+AC_MSG_CHECKING([if want build psec/dummy_handshake])
+AC_ARG_ENABLE(dummy-handshake,
+              AC_HELP_STRING([--enable-dummy-handshake],
+                             [Enables psec dummy component intended to check the PTL handshake scenario (default: disabled)]))
+if test "$enable_dummy_handshake" != "yes"; then
+    AC_MSG_RESULT([no])
+    eval "DISABLE_psec_dummy_handshake=1"
+else
+    AC_MSG_RESULT([yes])
+    eval "DISABLE_psec_dummy_handshake=0"
+fi
+AM_CONDITIONAL(MCA_BUILD_PSEC_DUMMY_HANDSHAKE, test "$DISABLE_psec_dummy_handshake" = "0")
 ])dnl
 
 # This must be a standalone routine so that it can be called both by

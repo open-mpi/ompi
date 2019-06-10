@@ -231,6 +231,22 @@ scalability.
 
 This RPM contains all the tools necessary to compile and link against PMIx.
 
+# if build_all_in_one_rpm = 0, build split packages
+%if !%{build_all_in_one_rpm}
+%package libpmi
+Summary: PMI-1 and PMI-2 compatibility libraries
+Requires: %{name}%{?_isa} = %{version}-%{release}
+Conflicts: slurm-libpmi
+
+%description libpmi
+The %{name}-libpmi package contains libpmi and libpmi2 libraries that provide
+the respective APIs and a copy of the PMIx library – each API is translated
+into its PMIx equivalent. This is especially targeted at apps/libs that are
+hardcoded to dlopen “libpmi” or “libpmi2”.
+This package conflicts sith slurm-libpmi, which provides its own, incompatible 
+versions of libpmi.so and libpmi2.so.
+%endif
+
 #############################################################################
 #
 # Prepatory Section
@@ -346,6 +362,10 @@ export CFLAGS CXXFLAGS FCFLAGS
 # We've had cases of config.log being left in the installation tree.
 # We don't need that in an RPM.
 find $RPM_BUILD_ROOT -name config.log -exec rm -f {} \;
+
+# If we build separate RPMs, then move the libpmi.* and libpmi2.* compat libs 
+# out of the way
+find $RPM_BUILD_ROOT -name 'libpmi.' | xargs rm -f
 
 # First, the [optional] modulefile
 
@@ -491,6 +511,19 @@ test "x$RPM_BUILD_ROOT" != "x" && rm -rf $RPM_BUILD_ROOT
 %endif
 %doc README INSTALL LICENSE
 
+# if building separate RPMs, split the compatibility libs
+%if !%{build_all_in_one_rpm}
+%exclude %{_libdir}/libpmi.*
+%exclude %{_libdir}/libpmi2.*
+%exclude %{_includedir}/pmi.*
+%exclude %{_includedir}/pmi2.*
+
+%files libpmi
+%{_libdir}/libpmi.*
+%{_libdir}/libpmi2.*
+%{_includedir}/pmi.*
+%{_includedir}/pmi2.*
+%endif
 
 #############################################################################
 #
@@ -498,6 +531,11 @@ test "x$RPM_BUILD_ROOT" != "x" && rm -rf $RPM_BUILD_ROOT
 #
 #############################################################################
 %changelog
+* Tue Apr 30 2019 Kilian Cavalotti <kilian@stanford.edu>
+- Enable multiple RPMs build to allow backward compatibility PMI-1 and PMI-2
+  libs to be built separate. "rpmbuild --define 'build_all_in_one_rpm 0' ..."
+  will build separate pmix and pmix-libpmi RPMs.
+
 * Tue Oct 17 2017 Ralph Castain <rhc@open-mpi.org>
 - Add PMIx bin directory
 

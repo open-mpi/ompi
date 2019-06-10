@@ -21,6 +21,8 @@
 
 static void local_eviction_callback(int fd, short flags, void *arg)
 {
+    (void)fd;
+    (void)flags;
     pmix_hotel_room_eviction_callback_arg_t *eargs =
         (pmix_hotel_room_eviction_callback_arg_t*) arg;
     void *occupant = eargs->hotel->rooms[eargs->room_num].occupant;

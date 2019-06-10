@@ -12,7 +12,7 @@
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2016-2018 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2016-2019 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -48,15 +48,6 @@ static char **search_dirs = NULL;
 /*
  * Local functions
  */
-static int pmix_show_vhelp_internal(const char *filename, const char *topic,
-                                    int want_error_header, va_list arglist);
-static int pmix_show_help_internal(const char *filename, const char *topic,
-                                   int want_error_header, ...);
-
-pmix_show_help_fn_t pmix_show_help = pmix_show_help_internal;
-pmix_show_vhelp_fn_t pmix_show_vhelp = pmix_show_vhelp_internal;
-
-
 int pmix_show_help_init(void)
 {
     pmix_output_stream_t lds;
@@ -337,8 +328,8 @@ char *pmix_show_help_string(const char *filename, const char *topic,
     return output;
 }
 
-static int pmix_show_vhelp_internal(const char *filename, const char *topic,
-                                    int want_error_header, va_list arglist)
+int pmix_show_vhelp(const char *filename, const char *topic,
+                    int want_error_header, va_list arglist)
 {
     char *output;
 
@@ -355,18 +346,25 @@ static int pmix_show_vhelp_internal(const char *filename, const char *topic,
     return (NULL == output) ? PMIX_ERROR : PMIX_SUCCESS;
 }
 
-static int pmix_show_help_internal(const char *filename, const char *topic,
-                                   int want_error_header, ...)
+int pmix_show_help(const char *filename, const char *topic,
+                   int want_error_header, ...)
 {
     va_list arglist;
-    int rc;
+    char *output;
 
-    /* Convert it to a single string */
     va_start(arglist, want_error_header);
-    rc = pmix_show_vhelp(filename, topic, want_error_header, arglist);
+    output = pmix_show_help_vstring(filename, topic, want_error_header,
+                                    arglist);
     va_end(arglist);
 
-    return rc;
+    /* If nothing came back, there's nothing to do */
+    if (NULL == output) {
+        return PMIX_SUCCESS;
+    }
+
+    fprintf(stderr, "%s\n", output);
+    free(output);
+    return PMIX_SUCCESS;
 }
 
 int pmix_show_help_add_dir(const char *directory)

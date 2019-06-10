@@ -118,9 +118,9 @@ int test_resolve_peers(char *my_nspace, int my_rank, test_params params)
         /* disconnect from the processes of this namespace. */
         rc = PMIx_Disconnect(procs, 2, NULL, 0);
         if (PMIX_SUCCESS == rc) {
-            TEST_VERBOSE(("%s:%d: Disconnect from %s succeeded %s.", my_nspace, my_rank, nspace));
+            TEST_VERBOSE(("%s:%d: Disconnect from %s succeeded.", my_nspace, my_rank, nspace));
         } else {
-            TEST_ERROR(("%s:%d: Disconnect from %s failed %s.", my_nspace, my_rank, nspace));
+            TEST_ERROR(("%s:%d: Disconnect from %s failed.", my_nspace, my_rank, nspace));
             return PMIX_ERROR;
         }
     }

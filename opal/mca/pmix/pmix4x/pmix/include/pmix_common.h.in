@@ -157,6 +157,7 @@ typedef uint32_t pmix_rank_t;
 #define PMIX_SERVER_GATEWAY                 "pmix.srv.gway"         // (bool) Server is acting as a gateway for PMIx requests
                                                                     //        that cannot be serviced on backend nodes
                                                                     //        (e.g., logging to email)
+#define PMIX_SERVER_SCHEDULER               "pmix.src.sched"        // (bool) Server supports system scheduler
 
 /* tool-related attributes */
 #define PMIX_TOOL_NSPACE                    "pmix.tool.nspace"      // (char*) Name of the nspace to use for this tool
@@ -172,6 +173,8 @@ typedef uint32_t pmix_rank_t;
 #define PMIX_TOOL_DO_NOT_CONNECT            "pmix.tool.nocon"       // (bool) the tool wants to use internal PMIx support, but does
                                                                     //        not want to connect to a PMIx server
                                                                     //        from the specified processes to this tool
+#define PMIX_TOOL_CONNECT_OPTIONAL          "pmix.tool.conopt"      // (bool) tool shall connect to a server if available, but otherwise
+                                                                    //        continue to operate unconnected
 #define PMIX_RECONNECT_SERVER               "pmix.cnct.recon"       // (bool) tool is requesting to change server connections
 #define PMIX_LAUNCHER                       "pmix.tool.launcher"    // (bool) tool is a launcher and needs rendezvous files created
 #define PMIX_LAUNCHER_RENDEZVOUS_FILE       "pmix.tool.lncrnd"      // (char*) Pathname of file where connection info is to be stored
@@ -268,7 +271,11 @@ typedef uint32_t pmix_rank_t;
 #define PMIX_NETWORK_COORDINATE             "pmix.net.coord"        // (pmix_coord_t*) Network coordinate of the specified process
 #define PMIX_NETWORK_COORD_SYSTEM           "pmix.net.coordsys"     // (pmix_coord_system_t) Network coordinate system being employed to
                                                                     //                describe the specified network plane
-
+#define PMIX_NETWORK_PLANE                  "pmix.net.plane"        // (char*) string ID of a network plane
+#define PMIX_NETWORK_SWITCH                 "pmix.net.switch"       // (char*) string ID of a network switch
+#define PMIX_NETWORK_NIC                    "pmix.net.nic"          // (char*) string ID of a NIC
+#define PMIX_NETWORK_ENDPT                  "pmix.net.endpt"        // (assigned) network endpt for process - type assigned by
+                                                                    //            fabric provider
 
 /* size info */
 #define PMIX_UNIV_SIZE                      "pmix.univ.size"        // (uint32_t) #procs in this nspace
@@ -426,6 +433,9 @@ typedef uint32_t pmix_rank_t;
                                                                     //        from the spawned processes to this process (typically used by a tool)
 #define PMIX_SPAWN_TOOL                     "pmix.spwn.tool"        // (bool) job being spawned is a tool
 #define PMIX_CMD_LINE                       "pmix.cmd.line"         // (char*) command line executing in the specified nspace
+#define PMIX_FORK_EXEC_AGENT                "pmix.fe.agnt"          // (char*) command line of fork/exec agent to be used for starting
+                                                                    //         local processes
+
 
 /* query attributes */
 #define PMIX_QUERY_REFRESH_CACHE            "pmix.qry.rfsh"         // (bool) retrieve updated information from server
@@ -891,6 +901,7 @@ typedef int pmix_status_t;
 #define PMIX_ERR_IOF_FAILURE                        -171
 #define PMIX_ERR_IOF_COMPLETE                       -172
 #define PMIX_LAUNCH_COMPLETE                        -173     // include nspace of the launched job with notification
+#define PMIX_FABRIC_UPDATED                         -174
 
 /* system failures */
 #define PMIX_ERR_NODE_DOWN                          -231

@@ -21,7 +21,7 @@
 # $HEADER$
 #
 
-helpers = setup.py client.py server.py pmix.pyx
+helpers = setup.py pmix.pyx
 
 if WANT_PYTHON_BINDINGS
 

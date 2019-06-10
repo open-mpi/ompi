@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2019 Intel, Inc.  All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -20,8 +20,9 @@ BEGIN_C_DECLS
 
 typedef struct {
     pmix_pnet_base_component_t super;
-    char **include;
-    char **exclude;
+    char *cfg_file;
+    char *nverts;
+    uint16_t **costmatrix;
 } pmix_pnet_test_component_t;
 
 /* the component must be visible data for the linker to find it */

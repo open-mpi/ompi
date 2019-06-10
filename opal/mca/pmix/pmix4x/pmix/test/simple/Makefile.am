@@ -25,7 +25,7 @@ headers = simptest.h
 
 noinst_PROGRAMS = simptest simpclient simppub simpdyn simpft simpdmodex \
                   test_pmix simptool simpdie simplegacy simptimeout \
-                  gwtest gwclient stability quietclient simpjctrl simpio
+                  gwtest gwclient stability quietclient simpjctrl simpio simpsched
 
 simptest_SOURCES = \
         simptest.c
@@ -127,4 +127,10 @@ simpio_SOURCES = \
         simpio.c
 simpio_LDFLAGS = $(PMIX_PKG_CONFIG_LDFLAGS)
 simpio_LDADD = \
+    $(top_builddir)/src/libpmix.la
+
+simpsched_SOURCES = \
+        simpsched.c
+simpsched_LDFLAGS = $(PMIX_PKG_CONFIG_LDFLAGS)
+simpsched_LDADD = \
     $(top_builddir)/src/libpmix.la

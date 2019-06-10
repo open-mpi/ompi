@@ -19,7 +19,7 @@
 # Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
 # Copyright (c) 2013      Mellanox Technologies, Inc.
 #                         All rights reserved.
-# Copyright (c) 2014-2018 Intel, Inc.  All rights reserved.
+# Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
 # Copyright (c) 2016      IBM Corporation.  All rights reserved.
 # Copyright (c) 2016-2018 Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
@@ -50,6 +50,11 @@ AC_CONFIG_AUX_DIR(./config)
 # Note that this directory must *exactly* match what was specified via
 # -I in ACLOCAL_AMFLAGS in the top-level Makefile.am.
 AC_CONFIG_MACRO_DIR(./config)
+
+# autotools expects to perform tests without interference
+# from user-provided CFLAGS, so preserve them here
+PMIX_CFLAGS_user=$CFLAGS
+CFLAGS=
 
 PMIX_CAPTURE_CONFIGURE_CLI([PMIX_CONFIGURE_CLI])
 
@@ -205,7 +210,17 @@ AS_IF([test -z "$CC_FOR_BUILD"],[
     AC_SUBST([CC_FOR_BUILD], [$CC])
 ])
 
+# restore any user-provided flags
+AS_IF([test ! -z "$PMIX_CFLAGS_user"], [CFLAGS="$CFLAGS $PMIX_CFLAGS_user"])
+
+# Delay setting pickyness until here so we
+# don't break configure code tests
+#if test "$WANT_PICKY_COMPILER" = "1"; then
+#    CFLAGS="$CFLAGS -Wall -Wextra -Werror"
+#fi
+
 # Cleanup duplicate flags
+PMIX_FLAGS_UNIQ(CFLAGS)
 PMIX_FLAGS_UNIQ(CPPFLAGS)
 PMIX_FLAGS_UNIQ(LDFLAGS)
 PMIX_FLAGS_UNIQ(LIBS)
@@ -231,6 +246,17 @@ AC_MSG_RESULT([$LDFLAGS])
 
 AC_MSG_CHECKING([final LIBS])
 AC_MSG_RESULT([$LIBS])
+
+####################################################################
+# -Werror for CI scripts
+####################################################################
+
+AC_ARG_ENABLE(werror,
+    AC_HELP_STRING([--enable-werror],
+                   [Treat compiler warnings as errors]),
+[
+    CFLAGS="$CFLAGS -Werror"
+])
 
 ####################################################################
 # Version information

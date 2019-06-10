@@ -40,6 +40,7 @@ PMIX_MCA_BASE_FRAMEWORK_DECLARE(pmix, pif, NULL, pmix_pif_base_register, pmix_pi
 
 static int pmix_pif_base_register (pmix_mca_base_register_flag_t flags)
 {
+    (void)flags;
     pmix_if_do_not_resolve = false;
     (void) pmix_mca_base_framework_var_register (&pmix_pif_base_framework, "do_not_resolve",
                                                  "If nonzero, do not attempt to resolve interfaces",

@@ -142,7 +142,7 @@ pmix_status_t dmodex_fn(const pmix_proc_t *proc,
 {
     TEST_VERBOSE(("Getting data for %s:%d", proc->nspace, proc->rank));
 
-    /* return not_found fot single server mode */
+    /* return not_found for single server mode */
     if ((pmix_list_get_size(server_list) == 1) && (my_server_id == 0)) {
         return PMIX_ERR_NOT_FOUND;
     }

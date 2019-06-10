@@ -48,6 +48,7 @@ static int enum_get_value (pmix_mca_base_var_enum_t *self, int index, int *value
 
 static int pmix_mca_base_var_enum_bool_get_count (pmix_mca_base_var_enum_t *enumerator, int *count)
 {
+    (void)enumerator;
     *count = 2;
     return PMIX_SUCCESS;
 }
@@ -55,6 +56,7 @@ static int pmix_mca_base_var_enum_bool_get_count (pmix_mca_base_var_enum_t *enum
 static int pmix_mca_base_var_enum_bool_get_value (pmix_mca_base_var_enum_t *self, int index,
                                              int *value, const char **string_value)
 {
+    (void)self;
     if (1 < index) {
         return PMIX_ERR_VALUE_OUT_OF_BOUNDS;
     }
@@ -68,6 +70,7 @@ static int pmix_mca_base_var_enum_bool_get_value (pmix_mca_base_var_enum_t *self
 static int pmix_mca_base_var_enum_bool_vfs (pmix_mca_base_var_enum_t *self, const char *string_value,
                                        int *value)
 {
+    (void)self;
     char *tmp;
     int v;
 
@@ -95,6 +98,7 @@ static int pmix_mca_base_var_enum_bool_vfs (pmix_mca_base_var_enum_t *self, cons
 static int pmix_mca_base_var_enum_bool_sfv (pmix_mca_base_var_enum_t *self, const int value,
                                        char **string_value)
 {
+    (void)self;
     if (string_value) {
         *string_value = strdup (value ? "true" : "false");
     }
@@ -104,6 +108,7 @@ static int pmix_mca_base_var_enum_bool_sfv (pmix_mca_base_var_enum_t *self, cons
 
 static int pmix_mca_base_var_enum_bool_dump (pmix_mca_base_var_enum_t *self, char **out)
 {
+    (void)self;
     *out = strdup ("0: f|false|disabled|no, 1: t|true|enabled|yes");
     return *out ? PMIX_SUCCESS : PMIX_ERR_OUT_OF_RESOURCE;
 }
@@ -135,6 +140,7 @@ static pmix_mca_base_var_enum_value_t verbose_values[] = {
 static int pmix_mca_base_var_enum_verbose_vfs (pmix_mca_base_var_enum_t *self, const char *string_value,
                                           int *value)
 {
+    (void)self;
     char *tmp;
     int v;
 
@@ -165,6 +171,7 @@ static int pmix_mca_base_var_enum_verbose_vfs (pmix_mca_base_var_enum_t *self, c
 static int pmix_mca_base_var_enum_verbose_sfv (pmix_mca_base_var_enum_t *self, const int value,
                                           char **string_value)
 {
+    (void)self;
     int ret;
 
     if (value < 0 || value > 100) {

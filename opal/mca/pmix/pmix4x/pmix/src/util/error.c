@@ -234,6 +234,8 @@ PMIX_EXPORT const char* PMIx_Error_string(pmix_status_t errnum)
     case PMIX_GROUP_CONTEXT_ID_ASSIGNED:
         return "GROUP-CONTEXT-ID-ASSIGNED";
 
+    case PMIX_FABRIC_UPDATED:
+        return "FABRIC-UPDATED";
     case PMIX_ERR_REPEAT_ATTR_REGISTRATION:
         return "REPEAT-ATTRIBUTE-REGISTRATION";
 

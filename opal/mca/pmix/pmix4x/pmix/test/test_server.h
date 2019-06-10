@@ -65,7 +65,7 @@ extern server_info_t *my_server_info;
 extern pmix_list_t *server_nspace;
 
 int server_init(test_params *params);
-int server_finalize(test_params *params);
+int server_finalize(test_params *params, int local_fail);
 int server_barrier(void);
 int server_fence_contrib(char *data, size_t ndata,
                          pmix_modex_cbfunc_t cbfunc, void *cbdata);

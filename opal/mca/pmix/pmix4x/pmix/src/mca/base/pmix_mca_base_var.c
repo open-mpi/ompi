@@ -792,6 +792,7 @@ static int var_set_from_string (pmix_mca_base_var_t *var, char *src)
 int pmix_mca_base_var_set_value (int vari, const void *value, size_t size, pmix_mca_base_var_source_t source,
                             const char *source_file)
 {
+    (void)size;
     pmix_mca_base_var_t *var;
     int ret;
 
@@ -952,6 +953,7 @@ static int var_find (const char *project_name, const char *framework_name,
                      const char *component_name, const char *variable_name,
                      bool invalidok)
 {
+    (void)project_name;
     char *full_name;
     int ret, vari;
 
@@ -1608,6 +1610,7 @@ int pmix_mca_base_var_register_synonym (int synonym_for, const char *project_nam
 
 static int var_get_env (pmix_mca_base_var_t *var, const char *name, char **source, char **value)
 {
+    (void)var;
     char *source_env, *value_env;
     int ret;
 

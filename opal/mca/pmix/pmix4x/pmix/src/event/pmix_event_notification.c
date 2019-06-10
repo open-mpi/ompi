@@ -71,7 +71,7 @@ PMIX_EXPORT pmix_status_t PMIx_Notify_event(pmix_status_t status,
     }
 
     /* if we aren't connected, don't attempt to send */
-    if (!pmix_globals.connected) {
+    if (!pmix_globals.connected && PMIX_RANGE_PROC_LOCAL != range) {
         PMIX_RELEASE_THREAD(&pmix_global_lock);
         return PMIX_ERR_UNREACH;
     }
@@ -93,6 +93,7 @@ PMIX_EXPORT pmix_status_t PMIx_Notify_event(pmix_status_t status,
 static void notify_event_cbfunc(struct pmix_peer_t *pr, pmix_ptl_hdr_t *hdr,
                                 pmix_buffer_t *buf, void *cbdata)
 {
+    (void)hdr;
     pmix_status_t rc, ret;
     int32_t cnt = 1;
     pmix_cb_t *cb = (pmix_cb_t*)cbdata;
@@ -806,6 +807,8 @@ static void local_cbfunc(pmix_status_t status, void *cbdata)
 
 static void _notify_client_event(int sd, short args, void *cbdata)
 {
+    (void)sd;
+    (void)args;
     pmix_notify_caddy_t *cd = (pmix_notify_caddy_t*)cbdata;
     pmix_regevents_info_t *reginfoptr;
     pmix_peer_events_info_t *pr;
@@ -1255,6 +1258,8 @@ bool pmix_notify_check_affected(pmix_proc_t *interested, size_t ninterested,
 
 void pmix_event_timeout_cb(int fd, short flags, void *arg)
 {
+    (void)fd;
+    (void)flags;
     pmix_event_chain_t *ch = (pmix_event_chain_t*)arg;
 
     /* need to acquire the object from its originating thread */

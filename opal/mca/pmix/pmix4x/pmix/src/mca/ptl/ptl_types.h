@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, Inc. All rights reserved.
- * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -78,6 +78,8 @@ typedef uint16_t pmix_proc_type_t;
 #define PMIX_PROC_CLIENT_TOOL       (PMIX_PROC_TOOL | PMIX_PROC_CLIENT | PMIX_PROC_CLIENT_TOOL_ACT)
 #define PMIX_PROC_GATEWAY_ACT       0x4000
 #define PMIX_PROC_GATEWAY           (PMIX_PROC_SERVER | PMIX_PROC_GATEWAY_ACT)
+#define PMIX_PROC_SCHEDULER_ACT     0x8000
+#define PMIX_PROC_SCHEDULER         (PMIX_PROC_SERVER | PMIX_PROC_SCHEDULER_ACT)
 
 /* defins some convenience macros for testing proc type */
 #define PMIX_PROC_IS_CLIENT(p)      (PMIX_PROC_CLIENT & (p)->proc_type)
@@ -90,6 +92,7 @@ typedef uint16_t pmix_proc_type_t;
 #define PMIX_PROC_IS_LAUNCHER(p)    (PMIX_PROC_LAUNCHER_ACT & (p)->proc_type)
 #define PMIX_PROC_IS_CLIENT_TOOL(p) (PMIX_PROC_CLIENT_TOOL_ACT & (p)->proc_type)
 #define PMIX_PROC_IS_GATEWAY(p)     (PMIX_PROC_GATEWAY_ACT & (p)->proc_type)
+#define PMIX_PROC_IS_SCHEDULER(p)   (PMIX_PROC_SCHEDULER_ACT & (p)->proc_type)
 
 
 /****    MESSAGING STRUCTURES    ****/
@@ -110,7 +113,10 @@ typedef uint32_t pmix_ptl_tag_t;
 typedef struct {
     int32_t pindex;
     pmix_ptl_tag_t tag;
-    size_t nbytes;
+    uint32_t nbytes;
+#if SIZEOF_SIZE_T == 8
+    uint32_t padding;
+#endif
 } pmix_ptl_hdr_t;
 
 /* define the messaging cbfunc */

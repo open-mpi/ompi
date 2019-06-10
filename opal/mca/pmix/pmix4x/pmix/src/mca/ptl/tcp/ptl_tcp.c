@@ -128,7 +128,7 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
     char *evar, **uri, *suri = NULL, *suri2 = NULL;
     char *filename, *nspace=NULL;
     pmix_rank_t rank = PMIX_RANK_WILDCARD;
-    char *p, *p2, *server_nspace = NULL, *rendfile = NULL;
+    char *p = NULL, *p2, *server_nspace = NULL, *rendfile = NULL;
     int sd, rc;
     size_t n;
     char myhost[PMIX_MAXHOSTNAMELEN];
@@ -1298,7 +1298,10 @@ static pmix_status_t recv_connect_ack(int sd, uint8_t myflag)
         if (NULL == pmix_client_globals.myserver->nptr) {
             pmix_client_globals.myserver->nptr = PMIX_NEW(pmix_namespace_t);
         }
-        pmix_ptl_base_recv_blocking(sd, (char*)nspace, PMIX_MAX_NSLEN+1);
+        rc = pmix_ptl_base_recv_blocking(sd, (char*)nspace, PMIX_MAX_NSLEN+1);
+        if (PMIX_SUCCESS != rc) {
+            return rc;
+        }
         if (NULL != pmix_client_globals.myserver->nptr->nspace) {
             free(pmix_client_globals.myserver->nptr->nspace);
         }
@@ -1307,7 +1310,10 @@ static pmix_status_t recv_connect_ack(int sd, uint8_t myflag)
             free(pmix_client_globals.myserver->info->pname.nspace);
         }
         pmix_client_globals.myserver->info->pname.nspace = strdup(nspace);
-        pmix_ptl_base_recv_blocking(sd, (char*)&u32, sizeof(uint32_t));
+        rc = pmix_ptl_base_recv_blocking(sd, (char*)&u32, sizeof(uint32_t));
+        if (PMIX_SUCCESS != rc) {
+            return rc;
+        }
         pmix_client_globals.myserver->info->pname.rank = htonl(u32);
 
         pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
@@ -1317,7 +1323,18 @@ static pmix_status_t recv_connect_ack(int sd, uint8_t myflag)
                             pmix_client_globals.myserver->info->pname.rank);
 
         /* get the returned status from the security handshake */
-        pmix_ptl_base_recv_blocking(sd, (char*)&reply, sizeof(pmix_status_t));
+        rc = pmix_ptl_base_recv_blocking(sd, (char*)&u32, sizeof(pmix_status_t));
+        if (PMIX_SUCCESS != rc) {
+            if (sockopt) {
+                /* return the socket to normal */
+                if (0 != setsockopt(sd, SOL_SOCKET, SO_RCVTIMEO, &save, sz)) {
+                    return PMIX_ERR_UNREACH;
+                }
+            }
+            return rc;
+        }
+
+        reply = ntohl(u32);
         if (PMIX_SUCCESS != reply) {
             /* see if they want us to do the handshake */
             if (PMIX_ERR_READY_FOR_HANDSHAKE == reply) {

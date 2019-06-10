@@ -15,6 +15,8 @@
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Mellanox Technologies, Inc.  All rights reserved.
+ * Copyright (c) 2019      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -45,7 +47,7 @@ static void notification_fn(size_t evhdlr_registration_id,
 {
     myrel_t *lock;
     bool found;
-    int exit_code;
+    int exit_code = 0;
     size_t n;
     pmix_proc_t *affected = NULL;
 

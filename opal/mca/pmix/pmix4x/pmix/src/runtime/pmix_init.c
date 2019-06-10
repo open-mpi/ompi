@@ -166,6 +166,7 @@ int pmix_rte_init(pmix_proc_type_t type,
     /* setup the globals structure */
     gethostname(hostname, PMIX_MAXHOSTNAMELEN);
     pmix_globals.hostname = strdup(hostname);
+    pmix_globals.pid = getpid();
     memset(&pmix_globals.myid.nspace, 0, PMIX_MAX_NSLEN+1);
     pmix_globals.myid.rank = PMIX_RANK_INVALID;
     PMIX_CONSTRUCT(&pmix_globals.events, pmix_events_t);
@@ -302,6 +303,10 @@ int pmix_rte_init(pmix_proc_type_t type,
     }
 
     /* open the ptl and select the active plugins */
+    if (NULL != (evar = getenv("PMIX_PTL_MODULE"))) {
+        /* convert to an MCA param, but don't overwrite something already there */
+        pmix_setenv("PMIX_MCA_ptl", evar, false, &environ);
+    }
     if (PMIX_SUCCESS != (ret = pmix_mca_base_framework_open(&pmix_ptl_base_framework, 0)) ) {
         error = "pmix_ptl_base_open";
         goto return_error;
@@ -317,6 +322,10 @@ int pmix_rte_init(pmix_proc_type_t type,
     }
 
     /* open the psec and select the active plugins */
+    if (NULL != (evar = getenv("PMIX_SECURITY_MODE"))) {
+        /* convert to an MCA param, but don't overwrite something already there */
+        pmix_setenv("PMIX_MCA_psec", evar, false, &environ);
+    }
     if (PMIX_SUCCESS != (ret = pmix_mca_base_framework_open(&pmix_psec_base_framework, 0))) {
         error = "pmix_psec_base_open";
         goto return_error;
@@ -327,6 +336,10 @@ int pmix_rte_init(pmix_proc_type_t type,
     }
 
     /* open the gds and select the active plugins */
+    if (NULL != (evar = getenv("PMIX_GDS_MODULE"))) {
+        /* convert to an MCA param, but don't overwrite something already there */
+        pmix_setenv("PMIX_MCA_gds", evar, false, &environ);
+    }
     if (PMIX_SUCCESS != (ret = pmix_mca_base_framework_open(&pmix_gds_base_framework, 0)) ) {
         error = "pmix_gds_base_open";
         goto return_error;

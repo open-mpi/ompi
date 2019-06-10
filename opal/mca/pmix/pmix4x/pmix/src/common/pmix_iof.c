@@ -36,6 +36,7 @@
 #include "src/util/name_fns.h"
 #include "src/util/output.h"
 #include "src/mca/bfrops/bfrops.h"
+#include "src/mca/pfexec/base/base.h"
 #include "src/mca/ptl/ptl.h"
 
 #include "src/client/pmix_client_ops.h"
@@ -689,7 +690,7 @@ void pmix_iof_static_dump_output(pmix_iof_sink_t *sink)
         dump = false;
         /* make one last attempt to write this out */
         while (NULL != (output = (pmix_iof_write_output_t*)pmix_list_remove_first(&wev->outputs))) {
-            if (!dump) {
+            if (!dump && 0 < output->numbytes) {
                 num_written = write(wev->fd, output->data, output->numbytes);
                 if (num_written < output->numbytes) {
                     /* don't retry - just cleanout the list and dump it */
@@ -720,7 +721,7 @@ void pmix_iof_write_handler(int _fd, short event, void *cbdata)
         output = (pmix_iof_write_output_t*)item;
         if (0 == output->numbytes) {
             /* indicates we are to close this stream */
-            PMIX_RELEASE(sink);
+            PMIX_DESTRUCT(sink);
             return;
         }
         num_written = write(wev->fd, output->data, output->numbytes);
@@ -851,19 +852,20 @@ void pmix_iof_read_local_handler(int unusedfd, short event, void *cbdata)
     pmix_iof_read_event_t *rev = (pmix_iof_read_event_t*)cbdata;
     unsigned char data[PMIX_IOF_BASE_MSG_MAX];
     int32_t numbytes;
-    int fd;
     pmix_status_t rc;
     pmix_buffer_t *msg;
     pmix_cmd_t cmd = PMIX_IOF_PUSH_CMD;
     pmix_byte_object_t bo;
+    int fd;
+    pmix_pfexec_child_t *child = (pmix_pfexec_child_t*)rev->childproc;
 
     PMIX_ACQUIRE_OBJECT(rev);
 
-    /* As we may use timer events, fd can be bogus (-1)
-     * use the right one here
-     */
-    fd = fileno(stdin);
-
+    if (0 > rev->fd) {
+        fd = fileno(stdin);
+    } else {
+        fd = rev->fd;
+    }
     /* read up to the fragment size */
     memset(data, 0, PMIX_IOF_BASE_MSG_MAX);
     numbytes = read(fd, data, sizeof(data));
@@ -890,6 +892,19 @@ void pmix_iof_read_local_handler(int unusedfd, short event, void *cbdata)
     /* The event has fired, so it's no longer active until we
        re-add it */
     rev->active = false;
+
+    /* if this is from our own child proc, then
+     * just push it to the corresponding sink */
+    if (NULL != child) {
+        bo.bytes = (char*)data;
+        bo.size = numbytes;
+        pmix_iof_write_output(&rev->name, rev->channel, &bo, NULL);
+        if (0 == numbytes) {
+            PMIX_PFEXEC_CHK_COMPLETE(child);
+            return;
+        }
+        goto reactivate;
+    }
 
     /* pass the data to our PMIx server so it can relay it
      * to the host RM for distribution */
@@ -960,6 +975,12 @@ void pmix_iof_read_local_handler(int unusedfd, short event, void *cbdata)
         PMIX_ERROR_LOG(rc);
         PMIX_RELEASE(msg);
     }
+
+  reactivate:
+    if (0 < numbytes) {
+        PMIX_IOF_READ_ACTIVATE(rev);
+    }
+
     /* nothing more to do */
     return;
 }
@@ -992,6 +1013,7 @@ static void iof_read_event_construct(pmix_iof_read_event_t* rev)
 {
     rev->fd = -1;
     rev->active = false;
+    rev->childproc = NULL;
     rev->tv.tv_sec = 0;
     rev->tv.tv_usec = 0;
     rev->targets = NULL;

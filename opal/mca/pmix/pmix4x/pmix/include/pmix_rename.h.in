@@ -444,6 +444,7 @@
 #define pmix_output_close                                       @PMIX_RENAME@pmix_output_close
 #define pmix_output_finalize                                    @PMIX_RENAME@pmix_output_finalize
 #define pmix_output_get_verbosity                               @PMIX_RENAME@pmix_output_get_verbosity
+#define pmix_output_check_verbosity                             @PMIX_RENAME@pmix_output_check_verbosity
 #define pmix_output_hexdump                                     @PMIX_RENAME@pmix_output_hexdump
 #define pmix_output_init                                        @PMIX_RENAME@pmix_output_init
 #define pmix_output_open                                        @PMIX_RENAME@pmix_output_open
@@ -452,7 +453,6 @@
 #define pmix_output_set_output_file_info                        @PMIX_RENAME@pmix_output_set_output_file_info
 #define pmix_output_set_verbosity                               @PMIX_RENAME@pmix_output_set_verbosity
 #define pmix_output_switch                                      @PMIX_RENAME@pmix_output_switch
-#define pmix_output_verbose                                     @PMIX_RENAME@pmix_output_verbose
 #define pmix_output_vverbose                                    @PMIX_RENAME@pmix_output_vverbose
 #define pmix_path_access                                        @PMIX_RENAME@pmix_path_access
 #define pmix_path_df                                            @PMIX_RENAME@pmix_path_df

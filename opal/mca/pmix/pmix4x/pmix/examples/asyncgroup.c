@@ -15,6 +15,8 @@
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2013-2018 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Mellanox Technologies, Inc.  All rights reserved.
+ * Copyright (c) 2019      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -126,7 +128,7 @@ static void invitefn(size_t evhdlr_registration_id,
                      void *cbdata)
 {
     size_t n;
-    char *grp;
+    char *grp = NULL;
     pmix_status_t rc;
 
     /* if I am the leader, I can ignore this event */
