@@ -141,6 +141,9 @@ static int component_init(bool enable_progress_threads, bool enable_mpi_threads)
 
 static int component_finalize(void) {
     opal_common_ucx_mca_deregister();
+    if (mca_osc_ucx_component.env_initialized) {
+        opal_common_ucx_wpool_finalize(mca_osc_ucx_component.wpool);
+    }
     opal_common_ucx_wpool_free(mca_osc_ucx_component.wpool);
     return OMPI_SUCCESS;
 }
@@ -575,8 +578,6 @@ int ompi_osc_ucx_free(struct ompi_win_t *win) {
     }
 
     opal_common_ucx_wpctx_release(module->ctx);
- 
-    opal_common_ucx_wpool_finalize(mca_osc_ucx_component.wpool);
 
     if (module->disp_units) free(module->disp_units);
     ompi_comm_free(&module->comm);
