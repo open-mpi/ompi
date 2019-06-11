@@ -211,7 +211,9 @@ static int bind_generic(orte_job_t *jdata,
                 data = OBJ_NEW(opal_hwloc_obj_data_t);
                 trg_obj->userdata = data;
             }
-            data->num_bound++;
+            if (0 < ncpus) {
+                data->num_bound++;
+            }
             /* error out if adding a proc would cause overload and that wasn't allowed,
              * and it wasn't a default binding policy (i.e., the user requested it)
              */
