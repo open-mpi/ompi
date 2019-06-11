@@ -174,8 +174,9 @@ static int bind_generic(orte_job_t *jdata,
             root = hwloc_get_root_obj(node->topology->topo);
             rdata = (opal_hwloc_topo_data_t*)root->userdata;
 
-            if (!hwloc_bitmap_intersects(locale->cpuset, tmp_obj->cpuset))
+            if (!hwloc_bitmap_intersects(locale->cpuset, tmp_obj->cpuset)) {
                 continue;
+            }
 // From the old 3.x code trg_obj was picked via a call to
 // opal_hwloc_base_find_min_bound_target_under_obj() which
 // skiped over unavailable objects (via opal_hwloc_base_get_npus).
@@ -223,7 +224,9 @@ static int bind_generic(orte_job_t *jdata,
                 data = OBJ_NEW(opal_hwloc_obj_data_t);
                 trg_obj->userdata = data;
             }
-            data->num_bound++;
+            if (0 < ncpus) {
+                data->num_bound++;
+            }
             /* error out if adding a proc would cause overload and that wasn't allowed,
              * and it wasn't a default binding policy (i.e., the user requested it)
              */
