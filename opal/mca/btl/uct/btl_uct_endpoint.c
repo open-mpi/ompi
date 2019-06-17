@@ -4,6 +4,7 @@
  *                         reserved.
  * Copyright (c) 2018      Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2019      Google, LLC. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -101,6 +102,28 @@ static void mca_btl_uct_process_modex (mca_btl_uct_module_t *uct_btl, unsigned c
     }
 }
 
+static inline ucs_status_t mca_btl_uct_ep_create_connected_compat (uct_iface_h iface, uct_device_addr_t *device_addr,
+                                                                   uct_iface_addr_t *iface_addr, uct_ep_h *uct_ep)
+{
+#if UCT_API >= UCT_VERSION(1, 6)
+    uct_ep_params_t ep_params = {.field_mask = UCT_EP_PARAM_FIELD_IFACE | UCT_EP_PARAM_FIELD_DEV_ADDR | UCT_EP_PARAM_FIELD_IFACE_ADDR,
+                                 .iface = iface, .dev_addr = device_addr, .iface_addr = iface_addr};
+    return uct_ep_create (&ep_params, uct_ep);
+#else
+    return uct_ep_create_connected (iface, device_addr, iface_addr, uct_ep);
+#endif
+}
+
+static inline ucs_status_t mca_btl_uct_ep_create_compat (uct_iface_h iface, uct_ep_h *uct_ep)
+{
+#if UCT_API >= UCT_VERSION(1, 6)
+    uct_ep_params_t ep_params = {.field_mask = UCT_EP_PARAM_FIELD_IFACE, .iface = iface};
+    return uct_ep_create (&ep_params, uct_ep);
+#else
+    return uct_ep_create (iface, uct_ep);
+#endif
+}
+
 static int mca_btl_uct_endpoint_connect_iface (mca_btl_uct_module_t *uct_btl, mca_btl_uct_tl_t *tl,
                                                mca_btl_uct_device_context_t *tl_context,
                                                mca_btl_uct_tl_endpoint_t *tl_endpoint, uint8_t *tl_data)
@@ -116,7 +139,7 @@ static int mca_btl_uct_endpoint_connect_iface (mca_btl_uct_module_t *uct_btl, mc
     BTL_VERBOSE(("connecting endpoint to interface"));
 
     mca_btl_uct_context_lock (tl_context);
-    ucs_status = uct_ep_create_connected (tl_context->uct_iface, device_addr, iface_addr, &tl_endpoint->uct_ep);
+    ucs_status = mca_btl_uct_ep_create_connected_compat (tl_context->uct_iface, device_addr, iface_addr, &tl_endpoint->uct_ep);
     tl_endpoint->flags = MCA_BTL_UCT_ENDPOINT_FLAG_CONN_READY;
     mca_btl_uct_context_unlock (tl_context);
 
@@ -240,8 +263,8 @@ static int mca_btl_uct_endpoint_connect_endpoint (mca_btl_uct_module_t *uct_btl,
 
         /* create a temporary endpoint for setting up the rdma endpoint */
         MCA_BTL_UCT_CONTEXT_SERIALIZE(conn_tl_context, {
-                ucs_status = uct_ep_create_connected  (conn_tl_context->uct_iface, device_addr, iface_addr,
-                                                       &conn_ep->uct_ep);
+                ucs_status = mca_btl_uct_ep_create_connected_compat (conn_tl_context->uct_iface, device_addr, iface_addr,
+                                                                     &conn_ep->uct_ep);
             });
         if (UCS_OK != ucs_status) {
             BTL_VERBOSE(("could not create an endpoint for forming connection to remote peer. code = %d",
@@ -263,7 +286,7 @@ static int mca_btl_uct_endpoint_connect_endpoint (mca_btl_uct_module_t *uct_btl,
                      opal_process_name_print (endpoint->ep_proc->proc_name)));
 
         MCA_BTL_UCT_CONTEXT_SERIALIZE(tl_context, {
-                ucs_status = uct_ep_create (tl_context->uct_iface, &tl_endpoint->uct_ep);
+                ucs_status = mca_btl_uct_ep_create_compat (tl_context->uct_iface, &tl_endpoint->uct_ep);
             });
         if (UCS_OK != ucs_status) {
             OBJ_RELEASE(endpoint->conn_ep);
@@ -309,7 +332,8 @@ int mca_btl_uct_endpoint_connect (mca_btl_uct_module_t *uct_btl, mca_btl_uct_end
                                   void *ep_addr, int tl_index)
 {
     mca_btl_uct_tl_endpoint_t *tl_endpoint = endpoint->uct_eps[context_id] + tl_index;
-    mca_btl_uct_tl_t *tl = (tl_index == uct_btl->rdma_tl->tl_index) ? uct_btl->rdma_tl : uct_btl->am_tl;
+    mca_btl_uct_tl_t *tl = (uct_btl->rdma_tl && tl_index == uct_btl->rdma_tl->tl_index) ?
+        uct_btl->rdma_tl : uct_btl->am_tl;
     mca_btl_uct_device_context_t *tl_context = mca_btl_uct_module_get_tl_context_specific (uct_btl, tl, context_id);
     uint8_t *rdma_tl_data = NULL, *conn_tl_data = NULL, *am_tl_data = NULL, *tl_data;
     mca_btl_uct_connection_ep_t *conn_ep = NULL;
