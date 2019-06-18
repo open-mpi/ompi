@@ -14,6 +14,11 @@
 #ifndef OPAL_DATATYPE_MEMCPY_H_HAS_BEEN_INCLUDED
 #define OPAL_DATATYPE_MEMCPY_H_HAS_BEEN_INCLUDED
 
+#ifdef __ARM_FEATURE_SVE
+#include <arm_sve.h>
+#endif /* __ARM_FEATURE_SVE */ 
+
+#include <stdio.h> 
 /*
  * This macro is called whenever we are packing/unpacking a DDT that
  * that is built with basic datatypes.
@@ -36,8 +41,15 @@
                 memcpy((DST), (SRC), (BLENGTH));                    \
             }                                                       \
         } else {                                                    \
-            memcpy((DST), (SRC), (BLENGTH));                        \
-        }                                                           \
+            if( (BLENGTH) >= 128 ) {                                \
+                for(size_t i=0; i<BLENGTH; i+=svcntb()*4)               \
+                {   printf("H%d,%d ", BLENGTH, i);                                      \
+                    svbool_t Pg = svwhilelt_b8_u64(i, BLENGTH);         \
+                    svuint8x4_t  vsrc = svld4(Pg, (uint8_t*)(SRC + i) );           \
+                    svst4(Pg, (uint8_t*)(DST + i), vsrc);               \
+                }                                                       \
+            }                                                           \
+            else { memcpy((DST), (SRC), (BLENGTH)); }                   \
+        }                                                               \
     } while (0)
-
 #endif  /* OPAL_DATATYPE_MEMCPY_H_HAS_BEEN_INCLUDED */
