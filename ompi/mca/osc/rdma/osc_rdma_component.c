@@ -523,6 +523,19 @@ struct _local_data {
     size_t size;
 };
 
+static int synchronize_errorcode(int errorcode, ompi_communicator_t *comm)
+{
+    int ret;
+    int err = errorcode;
+    /* This assumes that error codes are negative integers */
+    ret = comm->c_coll->coll_allreduce (MPI_IN_PLACE, &err, 1, MPI_INT, MPI_MIN,
+                                        comm, comm->c_coll->coll_allreduce_module);
+    if (OPAL_UNLIKELY (OMPI_SUCCESS != ret)) {
+        err = ret;
+    }
+    return err;
+}
+
 static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, size_t size)
 {
     ompi_communicator_t *shared_comm;
@@ -593,21 +606,24 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
                             OMPI_PROC_MY_NAME->jobid, ompi_comm_get_cid(module->comm));
             if (0 > ret) {
                 ret = OMPI_ERR_OUT_OF_RESOURCE;
-                break;
-            }
-
-            /* allocate enough space for the state + data for all local ranks */
-            ret = opal_shmem_segment_create (&module->seg_ds, data_file, total_size);
-            free (data_file);
-            if (OPAL_SUCCESS != ret) {
-                OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_ERROR, "failed to create shared memory segment");
-                break;
+            } else {
+              /* allocate enough space for the state + data for all local ranks */
+              ret = opal_shmem_segment_create (&module->seg_ds, data_file, total_size);
+              free (data_file);
+              if (OPAL_SUCCESS != ret) {
+                  OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_ERROR, "failed to create shared memory segment");
+              }
             }
         }
 
-        ret = module->comm->c_coll->coll_bcast (&module->seg_ds, sizeof (module->seg_ds), MPI_BYTE, 0,
+        ret = synchronize_errorcode(ret, shared_comm);
+        if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
+            break;
+        }
+
+        ret = shared_comm->c_coll->coll_bcast (&module->seg_ds, sizeof (module->seg_ds), MPI_BYTE, 0,
                                                shared_comm, shared_comm->c_coll->coll_bcast_module);
-        if (OMPI_SUCCESS != ret) {
+        if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
             break;
         }
 
@@ -615,6 +631,10 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
         if (NULL == module->segment_base) {
             OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_ERROR, "failed to attach to the shared memory segment");
             ret = OPAL_ERROR;
+        }
+
+        ret = synchronize_errorcode(ret, shared_comm);
+        if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
             break;
         }
 
@@ -643,27 +663,23 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
             /* just go ahead and register the whole segment */
             ret = ompi_osc_rdma_register (module, MCA_BTL_ENDPOINT_ANY, module->segment_base, total_size, MCA_BTL_REG_FLAG_ACCESS_ANY,
                                           &module->state_handle);
-            if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
-                break;
-            }
-
-            state_region->base = (intptr_t) module->segment_base;
-            if (module->state_handle) {
-                memcpy (state_region->btl_handle_data, module->state_handle, module->selected_btl->btl_registration_handle_size);
+            if (OPAL_LIKELY(OMPI_SUCCESS == ret)) {
+                state_region->base = (intptr_t) module->segment_base;
+                if (module->state_handle) {
+                    memcpy (state_region->btl_handle_data, module->state_handle, module->selected_btl->btl_registration_handle_size);
+                }
             }
         }
 
-        /* barrier to make sure memory is registered */
-        shared_comm->c_coll->coll_barrier(shared_comm, shared_comm->c_coll->coll_barrier_module);
+        /* synchronization to make sure memory is registered */
+        ret = synchronize_errorcode(ret, shared_comm);
+        if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
+            break;
+        }
 
         if (MPI_WIN_FLAVOR_CREATE == module->flavor) {
             ret = ompi_osc_rdma_initialize_region (module, base, size);
-            if (OMPI_SUCCESS != ret) {
-                break;
-            }
-        }
-
-        if (MPI_WIN_FLAVOR_ALLOCATE == module->flavor) {
+        } else if (MPI_WIN_FLAVOR_ALLOCATE == module->flavor) {
             ompi_osc_rdma_region_t *region = (ompi_osc_rdma_region_t *) module->state->regions;
             module->state->disp_unit = module->disp_unit;
             module->state->region_count = 1;
@@ -674,8 +690,11 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
             }
         }
 
-        /* barrier to make sure all ranks have set up their region data */
-        shared_comm->c_coll->coll_barrier(shared_comm, shared_comm->c_coll->coll_barrier_module);
+        /* synchronization to make sure all ranks have set up their region data */
+        ret = synchronize_errorcode(ret, shared_comm);
+        if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
+            break;
+        }
 
         offset = data_base;
         for (int i = 0 ; i < local_size ; ++i) {
@@ -994,13 +1013,7 @@ static int ompi_osc_rdma_share_data (ompi_osc_rdma_module_t *module)
         free (temp);
     } while (0);
 
-
-    ret = module->comm->c_coll->coll_allreduce (&ret, &global_result, 1, MPI_INT, MPI_MIN, module->comm,
-                                               module->comm->c_coll->coll_allreduce_module);
-
-    if (OMPI_SUCCESS != ret) {
-        global_result = ret;
-    }
+    global_result = synchronize_errorcode(ret, module->comm);
 
     /* none of these communicators are needed anymore so free them now*/
     if (MPI_COMM_NULL != module->local_leaders) {
@@ -1235,6 +1248,9 @@ static int ompi_osc_rdma_component_select (struct ompi_win_t *win, void **base, 
 
     /* fill in our part */
     ret = allocate_state_shared (module, base, size);
+
+    /* notify all others if something went wrong */
+    ret = synchronize_errorcode(ret, module->comm);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
         OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_ERROR, "failed to allocate internal state");
         ompi_osc_rdma_free (win);
