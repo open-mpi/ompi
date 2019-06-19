@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016 Cisco Systems, Inc.  All rights reserved.
@@ -373,6 +373,7 @@ static int flux_init(opal_list_t *ilist)
     char *str;
 
     if (0 < pmix_init_count) {
+        pmix_init_count++;
         return OPAL_SUCCESS;
     }
 
@@ -585,10 +586,9 @@ static int flux_fini(void) {
 
     if (0 == --pmix_init_count) {
         PMI_Finalize ();
+        // teardown hash table
+        opal_pmix_base_hash_finalize();
     }
-
-    // teardown hash table
-    opal_pmix_base_hash_finalize();
 
     return OPAL_SUCCESS;
 }
