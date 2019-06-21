@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2014 The University of Tennessee and The University
+ * Copyright (c) 2004-2019 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
@@ -123,11 +123,18 @@ position_predefined_data( opal_convertor_t* CONVERTOR,
     do_now = cando_count / _elem->blocklen;
     if( 0 != do_now ) {
         do_now_bytes = _elem->blocklen * opal_datatype_basicDatatypes[_elem->common.type]->size;
+#if OPAL_ENABLE_DEBUG
         for(size_t _i = 0; _i < do_now; _i++ ) {
             position_single_block( CONVERTOR, &_memory, _elem->extent,
                                    SPACE, do_now_bytes, COUNT, _elem->blocklen );
             cando_count -= _elem->blocklen;
         }
+#else
+        _memory     += do_now * _elem->extent;
+        *SPACE      -= do_now * do_now_bytes;
+        *COUNT      -= do_now * _elem->blocklen;
+        cando_count -= do_now * _elem->blocklen;
+#endif  /* OPAL_ENABLE_DEBUG */
     }
 
     /**
@@ -144,48 +151,16 @@ position_predefined_data( opal_convertor_t* CONVERTOR,
     *(POINTER)  = _memory - _elem->disp;
 }
 
-/**
- * Advance the current position in the convertor based using the
- * current contiguous loop and a left-over counter. Update the head
- * pointer and the leftover byte space.
- */
-static inline void
-position_contiguous_loop( opal_convertor_t* CONVERTOR,
-                          dt_elem_desc_t* ELEM,
-                          size_t* COUNT,
-                          unsigned char** POINTER,
-                          size_t* SPACE )
-{
-    ddt_loop_desc_t *_loop = (ddt_loop_desc_t*)(ELEM);
-    ddt_endloop_desc_t* _end_loop = (ddt_endloop_desc_t*)((ELEM) + (ELEM)->loop.items);
-    size_t _copy_loops = *(COUNT);
-
-    if( (_copy_loops * _end_loop->size) > *(SPACE) )
-        _copy_loops = *(SPACE) / _end_loop->size;
-    OPAL_DATATYPE_SAFEGUARD_POINTER( *(POINTER) + _end_loop->first_elem_disp,
-                                (_copy_loops - 1) * _loop->extent + _end_loop->size,
-                                (CONVERTOR)->pBaseBuf, (CONVERTOR)->pDesc, (CONVERTOR)->count );
-    *(POINTER) += _copy_loops * _loop->extent;
-    *(SPACE)   -= _copy_loops * _end_loop->size;
-    *(COUNT)   -= _copy_loops;
-}
-
-#define POSITION_PREDEFINED_DATATYPE( CONVERTOR, ELEM, COUNT, POSITION, SPACE ) \
-    position_predefined_data( (CONVERTOR), (ELEM), &(COUNT), &(POSITION), &(SPACE) )
-
-#define POSITION_CONTIGUOUS_LOOP( CONVERTOR, ELEM, COUNT, POSITION, SPACE ) \
-    position_contiguous_loop( (CONVERTOR), (ELEM), &(COUNT), &(POSITION), &(SPACE) )
-
 int opal_convertor_generic_simple_position( opal_convertor_t* pConvertor,
                                             size_t* position )
 {
     dt_stack_t* pStack;       /* pointer to the position on the stack */
     uint32_t pos_desc;        /* actual position in the description of the derived datatype */
     size_t count_desc;       /* the number of items already done in the actual pos_desc */
+    size_t iov_len_local;
     dt_elem_desc_t* description = pConvertor->use_desc->desc;
     dt_elem_desc_t* pElem;    /* current position */
     unsigned char *base_pointer = pConvertor->pBaseBuf;
-    size_t iov_len_local;
     ptrdiff_t extent = pConvertor->pDesc->ub - pConvertor->pDesc->lb;
 
     DUMP( "opal_convertor_generic_simple_position( %p, &%ld )\n", (void*)pConvertor, (long)*position );
@@ -236,21 +211,19 @@ int opal_convertor_generic_simple_position( opal_convertor_t* pConvertor,
             assert(pConvertor->partial_length < element_length);
             return 0;
         }
-        pConvertor->partial_length = (pConvertor->partial_length + missing_length) % element_length;
-        assert(pConvertor->partial_length == 0);
+        pConvertor->partial_length = 0;
         pConvertor->bConverted += missing_length;
         iov_len_local -= missing_length;
         count_desc--;
     }
     while( 1 ) {
-        if( OPAL_DATATYPE_END_LOOP == pElem->elem.common.type ) { /* end of the current loop */
+        if( OPAL_DATATYPE_END_LOOP == pElem->elem.common.type ) { /* end of the the entire datatype */
             DO_DEBUG( opal_output( 0, "position end_loop count %" PRIsize_t " stack_pos %d pos_desc %d disp %lx space %lu\n",
                                    pStack->count, pConvertor->stack_pos, pos_desc,
                                    pStack->disp, (unsigned long)iov_len_local ); );
             if( --(pStack->count) == 0 ) { /* end of loop */
                 if( pConvertor->stack_pos == 0 ) {
                     pConvertor->flags |= CONVERTOR_COMPLETED;
-                    pConvertor->partial_length = 0;
                     goto complete_loop;  /* completed */
                 }
                 pConvertor->stack_pos--;
@@ -259,11 +232,13 @@ int opal_convertor_generic_simple_position( opal_convertor_t* pConvertor,
             } else {
                 if( pStack->index == -1 ) {
                     pStack->disp += extent;
+                    pos_desc = 0;  /* back to the first element */
                 } else {
                     assert( OPAL_DATATYPE_LOOP == description[pStack->index].loop.common.type );
                     pStack->disp += description[pStack->index].loop.extent;
+                    pos_desc = pStack->index;  /* go back to the loop start itself to give a chance 
+                                                * to move forward by entire loops */
                 }
-                pos_desc = pStack->index + 1;
             }
             base_pointer = pConvertor->pBaseBuf + pStack->disp;
             UPDATE_INTERNAL_COUNTERS( description, pos_desc, pElem, count_desc );
@@ -273,9 +248,14 @@ int opal_convertor_generic_simple_position( opal_convertor_t* pConvertor,
         }
         if( OPAL_DATATYPE_LOOP == pElem->elem.common.type ) {
             ptrdiff_t local_disp = (ptrdiff_t)base_pointer;
-            if( pElem->loop.common.flags & OPAL_DATATYPE_FLAG_CONTIGUOUS ) {
-                POSITION_CONTIGUOUS_LOOP( pConvertor, pElem, count_desc,
-                                          base_pointer, iov_len_local );
+            ddt_endloop_desc_t* end_loop = (ddt_endloop_desc_t*)(pElem + pElem->loop.items);
+            size_t full_loops = iov_len_local / end_loop->size;
+            full_loops = count_desc <= full_loops ? count_desc : full_loops;
+            if( full_loops ) {
+                base_pointer  += full_loops * pElem->loop.extent;
+                iov_len_local -= full_loops * end_loop->size;
+                count_desc    -= full_loops;
+
                 if( 0 == count_desc ) {  /* completed */
                     pos_desc += pElem->loop.items + 1;
                     goto update_loop_description;
@@ -297,8 +277,7 @@ int opal_convertor_generic_simple_position( opal_convertor_t* pConvertor,
         }
         while( pElem->elem.common.flags & OPAL_DATATYPE_FLAG_DATA ) {
             /* now here we have a basic datatype */
-            POSITION_PREDEFINED_DATATYPE( pConvertor, pElem, count_desc,
-                                          base_pointer, iov_len_local );
+            position_predefined_data( pConvertor, pElem, &count_desc, &base_pointer, &iov_len_local );
             if( 0 != count_desc ) {  /* completed */
                 pConvertor->partial_length = iov_len_local;
                 goto complete_loop;
