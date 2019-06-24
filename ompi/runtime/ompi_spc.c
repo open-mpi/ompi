@@ -1,11 +1,13 @@
 /*
- * Copyright (c) 2018      The University of Tennessee and The University
+ * Copyright (c) 2018-2019 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  *
  * Copyright (c) 2018      Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2018      Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
+ * Copyright (c) 2019      Mellanox Technologies, Inc.
+ *                         All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -20,10 +22,8 @@ opal_timer_t sys_clock_freq_mhz = 0;
 static void ompi_spc_dump(void);
 
 /* Array for converting from SPC indices to MPI_T indices */
-OMPI_DECLSPEC int mpi_t_offset = -1;
-OMPI_DECLSPEC bool mpi_t_enabled = false;
-
-OPAL_DECLSPEC ompi_communicator_t *comm = NULL;
+static bool mpi_t_enabled = false;
+static ompi_communicator_t *ompi_spc_comm = NULL;
 
 typedef struct ompi_spc_event_t {
     const char* counter_name;
@@ -185,6 +185,8 @@ static int ompi_spc_notify(mca_base_pvar_t *pvar, mca_base_pvar_event_t event, v
         return MPI_SUCCESS;
     }
 
+    index = (int)(uintptr_t)pvar->ctx;  /* Convert from MPI_T pvar index to SPC index */
+
     /* For this event, we need to set count to the number of long long type
      * values for this counter.  All SPC counters are one long long, so we
      * always set count to 1.
@@ -194,14 +196,10 @@ static int ompi_spc_notify(mca_base_pvar_t *pvar, mca_base_pvar_event_t event, v
     }
     /* For this event, we need to turn on the counter */
     else if(MCA_BASE_PVAR_HANDLE_START == event) {
-        /* Convert from MPI_T pvar index to SPC index */
-        index = pvar->pvar_index - mpi_t_offset;
         SET_SPC_BIT(ompi_spc_attached_event, index);
     }
     /* For this event, we need to turn off the counter */
     else if(MCA_BASE_PVAR_HANDLE_STOP == event) {
-        /* Convert from MPI_T pvar index to SPC index */
-        index = pvar->pvar_index - mpi_t_offset;
         CLEAR_SPC_BIT(ompi_spc_attached_event, index);
     }
 
@@ -231,7 +229,7 @@ static int ompi_spc_get_count(const struct mca_base_pvar_t *pvar, void *value, v
     }
 
     /* Convert from MPI_T pvar index to SPC index */
-    int index = pvar->pvar_index - mpi_t_offset;
+    int index = (int)(uintptr_t)pvar->ctx;
     /* Set the counter value to the current SPC value */
     *counter_value = (long long)ompi_spc_events[index].value;
     /* If this is a timer-based counter, convert from cycles to microseconds */
@@ -268,7 +266,7 @@ void ompi_spc_events_init(void)
         ompi_spc_events[i].value = 0;
     }
 
-    ompi_comm_dup(&ompi_mpi_comm_world.comm, &comm);
+    ompi_comm_dup(&ompi_mpi_comm_world.comm, &ompi_spc_comm);
 }
 
 /* Initializes the SPC data structures and registers all counters as MPI_T pvars.
@@ -276,7 +274,7 @@ void ompi_spc_events_init(void)
  */
 void ompi_spc_init(void)
 {
-    int i, j, ret, found = 0, all_on = 0;
+    int i, j, ret, found = 0, all_on = 0, matched = 0;
 
     /* Initialize the clock frequency variable as the CPU's frequency in MHz */
     sys_clock_freq_mhz = opal_timer_base_get_freq() / 1000000;
@@ -296,52 +294,43 @@ void ompi_spc_init(void)
         }
     }
 
-    /* Turn on only the counters that were specified in the MCA parameter */
     for(i = 0; i < OMPI_SPC_NUM_COUNTERS; i++) {
-        if(all_on) {
-            SET_SPC_BIT(ompi_spc_attached_event, i);
-            mpi_t_enabled = true;
-            found++;
-        } else {
-            /* Note: If no arguments were given, this will be skipped */
+        /* Reset all timer-based counters */
+        CLEAR_SPC_BIT(ompi_spc_timer_event, i);
+        matched = all_on;
+
+        if( !matched ) {
+            /* Turn on only the counters that were specified in the MCA parameter */
             for(j = 0; j < num_args; j++) {
                 if( 0 == strcmp(ompi_spc_events_names[i].counter_name, arg_strings[j]) ) {
-                    SET_SPC_BIT(ompi_spc_attached_event, i);
-                    mpi_t_enabled = true;
-                    found++;
+                    matched = 1;
                     break;
                 }
             }
         }
 
-        /* ########################################################################
-         * ################## Add Timer-Based Counter Enums Here ##################
-         * ########################################################################
-         */
-        CLEAR_SPC_BIT(ompi_spc_timer_event, i);
+        if (matched) {
+            SET_SPC_BIT(ompi_spc_attached_event, i);
+            mpi_t_enabled = true;
+            found++;
+        }
 
         /* Registers the current counter as an MPI_T pvar regardless of whether it's been turned on or not */
         ret = mca_base_pvar_register("ompi", "runtime", "spc", ompi_spc_events_names[i].counter_name, ompi_spc_events_names[i].counter_description,
                                      OPAL_INFO_LVL_4, MPI_T_PVAR_CLASS_SIZE,
                                      MCA_BASE_VAR_TYPE_UNSIGNED_LONG_LONG, NULL, MPI_T_BIND_NO_OBJECT,
                                      MCA_BASE_PVAR_FLAG_READONLY | MCA_BASE_PVAR_FLAG_CONTINUOUS,
-                                     ompi_spc_get_count, NULL, ompi_spc_notify, NULL);
-
-        /* Check to make sure that ret is a valid index and not an error code.
-         */
-        if( ret >= 0 ) {
-            if( mpi_t_offset == -1 ) {
-                mpi_t_offset = ret;
-            }
-        }
-        if( (ret < 0) || (ret != (mpi_t_offset + found - 1)) ) {
+                                     ompi_spc_get_count, NULL, ompi_spc_notify, (void*)(uintptr_t)i);
+        if( ret < 0 ) {
             mpi_t_enabled = false;
             opal_show_help("help-mpi-runtime.txt", "spc: MPI_T disabled", true);
             break;
         }
     }
-    /* If this is a timer event, sent the corresponding timer_event entry to 1 */
+
+    /* If this is a timer event, set the corresponding timer_event entry */
     SET_SPC_BIT(ompi_spc_timer_event, OMPI_SPC_MATCH_TIME);
+
     opal_argv_free(arg_strings);
 }
 
@@ -353,8 +342,8 @@ static void ompi_spc_dump(void)
     int i, j, world_size, offset;
     long long *recv_buffer = NULL, *send_buffer;
 
-    int rank = ompi_comm_rank(comm);
-    world_size = ompi_comm_size(comm);
+    int rank = ompi_comm_rank(ompi_spc_comm);
+    world_size = ompi_comm_size(ompi_spc_comm);
 
     /* Convert from cycles to usecs before sending */
     for(i = 0; i < OMPI_SPC_NUM_COUNTERS; i++) {
@@ -381,10 +370,10 @@ static void ompi_spc_dump(void)
             return;
         }
     }
-    (void)comm->c_coll->coll_gather(send_buffer, OMPI_SPC_NUM_COUNTERS, MPI_LONG_LONG,
+    (void)ompi_spc_comm->c_coll->coll_gather(send_buffer, OMPI_SPC_NUM_COUNTERS, MPI_LONG_LONG,
                                     recv_buffer, OMPI_SPC_NUM_COUNTERS, MPI_LONG_LONG,
-                                    0, comm,
-                                    comm->c_coll->coll_gather_module);
+                                    0, ompi_spc_comm,
+                                    ompi_spc_comm->c_coll->coll_gather_module);
 
     /* Once rank 0 has all of the information, print the aggregated counter values for each rank in order */
     if(rank == 0) {
@@ -410,7 +399,7 @@ static void ompi_spc_dump(void)
     }
     free(send_buffer);
 
-    comm->c_coll->coll_barrier(comm, comm->c_coll->coll_barrier_module);
+    ompi_spc_comm->c_coll->coll_barrier(ompi_spc_comm, ompi_spc_comm->c_coll->coll_barrier_module);
 }
 
 /* Frees any dynamically alocated OMPI SPC data structures */
@@ -421,7 +410,7 @@ void ompi_spc_fini(void)
     }
 
     free(ompi_spc_events); ompi_spc_events = NULL;
-    ompi_comm_free(&comm);
+    ompi_comm_free(&ompi_spc_comm);
 }
 
 /* Records an update to a counter using an atomic add operation. */
