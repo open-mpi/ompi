@@ -240,11 +240,12 @@ static pmix_status_t test_init(void)
 {
     int n, m, r, ns, nplane, nnodes, nports;
     uint64_t n64, m64;
-    char **system, **ptr;
+    char **system=NULL, **ptr;
     pnet_plane_t *p;
     pnet_switch_t *s, *s2;
     pnet_nic_t *nic, *nic2;
     pnet_node_t *node;
+    pmix_status_t rc;
 
     pmix_output_verbose(2, pmix_pnet_base_framework.framework_output,
                         "pnet: test init");
@@ -288,7 +289,9 @@ static pmix_status_t test_init(void)
                 for (n=0; n < nnodes; n++) {
                     node = PMIX_NEW(pnet_node_t);
                     if (0 > asprintf(&node->name, "test%03d", n)) {
-                        return PMIX_ERR_NOMEM;
+                        rc = PMIX_ERR_NOMEM;
+                        PMIX_RELEASE(node);
+                        goto cleanup;
                     }
                     pmix_list_append(&mynodes, &node->super);
                 }
@@ -313,8 +316,8 @@ static pmix_status_t test_init(void)
                 pmix_list_append(&myplanes, &p->super);
             } else {
                 PMIX_ERROR_LOG(PMIX_ERR_BAD_PARAM);
-                pmix_argv_free(system);
-                return PMIX_ERR_BAD_PARAM;
+                rc = PMIX_ERR_BAD_PARAM;
+                goto cleanup;
             }
         }
         /* setup the ports in each switch for each plane */
@@ -322,7 +325,8 @@ static pmix_status_t test_init(void)
         PMIX_LIST_FOREACH(p, &myplanes, pnet_plane_t) {
             /* assign a name to the plane */
             if (0 > asprintf(&p->name, "plane%03d", nplane)) {
-                return PMIX_ERR_NOMEM;
+                rc = PMIX_ERR_NOMEM;
+                goto cleanup;
             }
             /* setup the ports on the switches */
             nports = nnodes / p->nswitches;
@@ -334,20 +338,24 @@ static pmix_status_t test_init(void)
             for (n=0; n < p->nswitches; n++) {
                 s = PMIX_NEW(pnet_switch_t);
                 if (0 > asprintf(&s->name, "%s:switch%03d", p->name, n)) {
-                    return PMIX_ERR_NOMEM;
+                    rc = PMIX_ERR_NOMEM;
+                    goto cleanup;
                 }
                 s->index = n;
                 pmix_list_append(&p->switches, &s->super);
                 if (0 > asprintf(&s->leftport.name, "%s:port000", s->name)) {
-                    return PMIX_ERR_NOMEM;
+                    rc = PMIX_ERR_NOMEM;
+                    goto cleanup;
                 }
                 if (0 > asprintf(&s->rightport.name, "%s:port%03d", s->name, nports+1)) {
-                    return PMIX_ERR_NOMEM;
+                    rc = PMIX_ERR_NOMEM;
+                    goto cleanup;
                 }
                 for (m=0; m < nports; m++) {
                     nic = PMIX_NEW(pnet_nic_t);
                     if (0 > asprintf(&nic->name, "%s:port%03d", s->name, m+1)) {
-                        return PMIX_ERR_NOMEM;
+                        rc = PMIX_ERR_NOMEM;
+                        goto cleanup;
                     }
                     nic->s = s;
                     nic->plane = p;
@@ -409,7 +417,8 @@ static pmix_status_t test_init(void)
                 PMIX_LIST_FOREACH(node, &mynodes, pnet_node_t) {
                     nic2 = PMIX_NEW(pnet_nic_t);
                     if (0 > asprintf(&nic2->name, "%s:nic%03d", node->name, n)) {
-                        return PMIX_ERR_NOMEM;
+                        rc = PMIX_ERR_NOMEM;
+                        goto cleanup;
                     }
                     ++n;
                     --ns;
@@ -471,9 +480,16 @@ static pmix_status_t test_init(void)
             ++nplane;
         }
         pmix_argv_free(system);
+        system = NULL;
+    }
+    rc = PMIX_SUCCESS;
+
+  cleanup:
+    if (NULL != system) {
+        pmix_argv_free(system);
     }
 
-    return PMIX_SUCCESS;
+    return rc;
 }
 
 static void test_finalize(void)
@@ -513,7 +529,7 @@ static pmix_status_t allocate(pmix_namespace_t *nptr,
     pmix_list_t mylist;
     size_t n, m, p, q, nreqs=0;
     pmix_info_t *requests = NULL, *iptr, *ip2;
-    char *idkey = NULL, **locals;
+    char *idkey = NULL, **locals = NULL;
     uint64_t unique_key = 12345;
     pmix_buffer_t buf;
     pmix_status_t rc;
@@ -617,7 +633,8 @@ static pmix_status_t allocate(pmix_namespace_t *nptr,
             if (PMIX_STRING != requests[n].value.type ||
                 NULL == requests[n].value.data.string) {
                 PMIX_ERROR_LOG(PMIX_ERR_BAD_PARAM);
-                return PMIX_ERR_BAD_PARAM;
+                rc = PMIX_ERR_BAD_PARAM;
+                goto cleanup;
             }
             idkey = requests[n].value.data.string;
         } else if (PMIX_CHECK_KEY(&requests[n], PMIX_ALLOC_NETWORK_SEC_KEY)) {
@@ -693,12 +710,10 @@ static pmix_status_t allocate(pmix_namespace_t *nptr,
      * for each proc on the node - we assume the same
      * list of static endpoints on each node */
     for (n=0; NULL != nodes[n]; n++) {
-        pmix_output(0, "WORKING NODE %s", nodes[n]);
         /* split the procs for this node */
         locals = pmix_argv_split(procs[n], ',');
         if (NULL == locals) {
             /* aren't any on this node */
-            pmix_output(0, "NO PROCS ON THIS NODE");
             continue;
         }
         /* find this node in our list */
@@ -711,7 +726,6 @@ static pmix_status_t allocate(pmix_namespace_t *nptr,
         }
         if (NULL == nd) {
             /* we don't have this node in our list */
-            pmix_output(0, "DO NOT KNOW THIS NODE");
             rc = PMIX_ERR_NOT_FOUND;
             goto cleanup;
         }
@@ -762,6 +776,7 @@ static pmix_status_t allocate(pmix_namespace_t *nptr,
             }
         }
         pmix_argv_free(locals);
+        locals = NULL;
         pmix_list_append(&mylist, &kv->super);
     }
 
@@ -802,6 +817,9 @@ static pmix_status_t allocate(pmix_namespace_t *nptr,
     if (NULL != procs) {
         pmix_argv_free(procs);
     }
+    if (NULL != locals) {
+        pmix_argv_free(locals);
+    }
     return rc;
 }
 
@@ -825,6 +843,8 @@ static pmix_status_t setup_local_network(pmix_namespace_t *nptr,
         for (n=0; n < ninfo; n++) {
             /* look for my key */
             if (PMIX_CHECK_KEY(&info[n], "pmix-pnet-test-blob")) {
+                pmix_output_verbose(2, pmix_pnet_base_framework.framework_output,
+                                    "pnet:test:setup_local_network found my blob");
                 /* this macro NULLs and zero's the incoming bo */
                 PMIX_LOAD_BUFFER(pmix_globals.mypeer, &bkt,
                                  info[n].value.data.bo.bytes,
@@ -839,6 +859,11 @@ static pmix_status_t setup_local_network(pmix_namespace_t *nptr,
                                         "recvd KEY %s %s", kv->key, PMIx_Data_type_string(kv->value->type));
                     /* check for the network ID */
                     if (PMIX_CHECK_KEY(kv, PMIX_ALLOC_NETWORK_ID)) {
+                        if (NULL != idkey) {
+                            PMIX_ERROR_LOG(PMIX_ERR_BAD_PARAM);
+                            free(idkey);
+                            return PMIX_ERR_BAD_PARAM;
+                        }
                         idkey = strdup(kv->value->data.string);
                         pmix_output_verbose(2, pmix_pnet_base_framework.framework_output,
                                             "pnet:test:setup_local_network idkey %s", idkey);
@@ -861,6 +886,9 @@ static pmix_status_t setup_local_network(pmix_namespace_t *nptr,
                         PMIX_GDS_CACHE_JOB_INFO(rc, pmix_globals.mypeer, nptr, iptr, nvals);
                         if (PMIX_SUCCESS != rc) {
                             PMIX_RELEASE(kv);
+                            if (NULL != idkey) {
+                                free(idkey);
+                            }
                             return rc;
                         }
                     }
@@ -880,6 +908,9 @@ static pmix_status_t setup_local_network(pmix_namespace_t *nptr,
         }
     }
 
+    if (NULL != idkey) {
+        free(idkey);
+    }
     return PMIX_SUCCESS;
 }
 

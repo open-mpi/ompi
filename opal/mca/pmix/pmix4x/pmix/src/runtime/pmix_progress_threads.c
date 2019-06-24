@@ -194,7 +194,7 @@ void pmix_event_active (struct event *ev, int res, short ncalls) {
     }
 }
 
-void pmix_event_base_loopbreak (pmix_event_base_t *ev_base) {
+void pmix_event_base_loopexit (pmix_event_base_t *ev_base) {
     pmix_progress_tracker_t *trk = pmix_progress_tracker_get_by_base(ev_base);
     assert(NULL != trk);
     ev_async_send ((struct ev_loop *)trk->ev_base, &trk->async);
