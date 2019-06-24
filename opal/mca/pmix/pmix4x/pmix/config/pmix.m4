@@ -913,6 +913,7 @@ AC_DEFUN([PMIX_SETUP_CORE],[
     if test "$WANT_PYTHON_BINDINGS" = "1"; then
         AC_CONFIG_FILES(pmix_config_prefix[bindings/python/server.py], [chmod +x bindings/python/server.py])
         AC_CONFIG_FILES(pmix_config_prefix[bindings/python/client.py], [chmod +x bindings/python/client.py])
+        AC_CONFIG_FILES(pmix_config_prefix[bindings/python/sched.py],  [chmod +x bindings/python/sched.py])
     fi
 
     # publish any embedded flags so external wrappers can use them

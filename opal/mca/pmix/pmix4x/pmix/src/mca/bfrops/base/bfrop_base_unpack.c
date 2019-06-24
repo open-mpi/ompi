@@ -944,7 +944,14 @@ pmix_status_t pmix_bfrops_base_unpack_app(pmix_pointer_array_t *regtypes,
         }
         /* unpack argc */
         m=1;
-        PMIX_BFROPS_UNPACK_TYPE(ret, buffer, &nval, &m, PMIX_INT32, regtypes);
+        /* although nval is technically an int32, we have to unpack it
+         * as a generic int due to a typo in earlier release series. This
+         * preserves the ordering of bytes in the packed buffer as it
+         * includes a tag indicating the actual size of the value. No
+         * harm is done as generic int is equivalent to int32 on all
+         * current systems - just something to watch out for in the
+         * future should someone someday change the size of "int" */
+        PMIX_BFROPS_UNPACK_TYPE(ret, buffer, &nval, &m, PMIX_INT, regtypes);
         if (PMIX_SUCCESS != ret) {
             return ret;
         }

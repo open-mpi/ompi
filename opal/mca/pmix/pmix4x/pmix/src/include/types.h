@@ -253,7 +253,6 @@ typedef struct event pmix_event_t;
 
 #define pmix_event_base_free(b) event_base_free(b)
 
-#define pmix_event_base_loopexit(b) event_base_loopexit(b, NULL)
 
 #if PMIX_HAVE_LIBEV
 #define pmix_event_use_threads()
@@ -279,12 +278,12 @@ PMIX_EXPORT int pmix_event_assign(struct event *ev, pmix_event_base_t *evbase,
 PMIX_EXPORT int pmix_event_add(struct event *ev, struct timeval *tv);
 PMIX_EXPORT int pmix_event_del(struct event *ev);
 PMIX_EXPORT void pmix_event_active (struct event *ev, int res, short ncalls);
-PMIX_EXPORT void pmix_event_base_loopbreak (pmix_event_base_t *b);
+PMIX_EXPORT void pmix_event_base_loopexit (pmix_event_base_t *b);
 #else
 #define pmix_event_add(ev, tv) event_add((ev), (tv))
 #define pmix_event_del(ev) event_del((ev))
 #define pmix_event_active(x, y, z) event_active((x), (y), (z))
-#define pmix_event_base_loopbreak(b) event_base_loopbreak(b)
+#define pmix_event_base_loopexit(b) event_base_loopexit(b, NULL)
 #endif
 
 PMIX_EXPORT pmix_event_t* pmix_event_new(pmix_event_base_t *b, int fd,

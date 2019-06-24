@@ -1143,6 +1143,7 @@ static pmix_status_t deliver_inventory(pmix_info_t info[], size_t ninfo,
                                &bkt, &pbo, &cnt, PMIX_BYTE_OBJECT);
             while (PMIX_SUCCESS == rc) {
                 /* load the byte object for unpacking */
+                PMIX_CONSTRUCT(&pbkt, pmix_buffer_t);
                 PMIX_LOAD_BUFFER(pmix_globals.mypeer, &pbkt, pbo.bytes, pbo.size);
                 /* unpack the name of the device */
                 cnt = 1;
@@ -1150,7 +1151,7 @@ static pmix_status_t deliver_inventory(pmix_info_t info[], size_t ninfo,
                                    &pbkt, &device, &cnt, PMIX_STRING);
                 if (PMIX_SUCCESS != rc) {
                     PMIX_ERROR_LOG(rc);
-                    PMIX_DATA_BUFFER_DESTRUCT(&pbkt);
+                    PMIX_DESTRUCT(&pbkt);
                     /* must _not_ destruct bkt as we don't
                      * own the bytes! */
                     return rc;
@@ -1161,7 +1162,7 @@ static pmix_status_t deliver_inventory(pmix_info_t info[], size_t ninfo,
                                    &pbkt, &address, &cnt, PMIX_STRING);
                 if (PMIX_SUCCESS != rc) {
                     PMIX_ERROR_LOG(rc);
-                    PMIX_DATA_BUFFER_DESTRUCT(&pbkt);
+                    PMIX_DESTRUCT(&pbkt);
                     /* must _not_ destruct bkt as we don't
                      * own the bytes! */
                     return rc;
@@ -1171,12 +1172,11 @@ static pmix_status_t deliver_inventory(pmix_info_t info[], size_t ninfo,
                 res->device = device;
                 res->address = address;
                 pmix_list_append(&prts->devices, &res->super);
-                PMIX_DATA_BUFFER_DESTRUCT(&pbkt);
+                PMIX_DESTRUCT(&pbkt);
                 cnt = 1;
                 PMIX_BFROPS_UNPACK(rc, pmix_globals.mypeer,
                                    &bkt, &pbo, &cnt, PMIX_BYTE_OBJECT);
             }
-            PMIX_DATA_BUFFER_DESTRUCT(&bkt);
             if (5 < pmix_output_get_verbosity(pmix_pnet_base_framework.framework_output)) {
                 /* dump the resulting node resources */
                 pmix_output(0, "TCP resources for node: %s", nd->name);
