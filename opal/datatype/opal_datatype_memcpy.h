@@ -16,9 +16,9 @@
 
 #ifdef __ARM_FEATURE_SVE
 #include <arm_sve.h>
-#endif /* __ARM_FEATURE_SVE */ 
+#endif /* __ARM_FEATURE_SVE */
 
-#include <stdio.h> 
+#include <stdio.h>
 /*
  * This macro is called whenever we are packing/unpacking a DDT that
  * that is built with basic datatypes.
@@ -41,13 +41,18 @@
                 memcpy((DST), (SRC), (BLENGTH));                    \
             }                                                       \
         } else {                                                    \
-            if( (BLENGTH) >= 128 ) {                                \
-                for(size_t i=0; i<BLENGTH; i+=svcntb()*4)               \
-                {   printf("H%d,%d ", BLENGTH, i);                                      \
-                    svbool_t Pg = svwhilelt_b8_u64(i, BLENGTH);         \
+            /* min value when length > 4* VL */                     \
+            if( (BLENGTH) >= svcntb() * 4 ) {                       \
+                svbool_t Pg = svptrue_b8();                         \
+                uint64_t i;                                         \
+                for(i=0; i<BLENGTH; i+=svcntb() * 4)                \
+                {   /*printf("H%d,%d ", BLENGTH, i); */             \
                     svuint8x4_t  vsrc = svld4(Pg, (uint8_t*)(SRC + i) );           \
                     svst4(Pg, (uint8_t*)(DST + i), vsrc);               \
                 }                                                       \
+                Pg = svwhilelt_b8_u64(i, BLENGTH);                 \
+                svuint8x4_t  vsrc = svld4(Pg, (uint8_t*)(SRC+i));  \
+                svst4(Pg, (uint8_t*)(DST+i), vsrc);                \
             }                                                           \
             else { memcpy((DST), (SRC), (BLENGTH)); }                   \
         }                                                               \
