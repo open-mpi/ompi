@@ -79,17 +79,58 @@ pack_predefined_data( opal_convertor_t* CONVERTOR,
     do_now = cando_count / _elem->blocklen;
     if( 0 != do_now ) {
         do_now_bytes = _elem->blocklen * opal_datatype_basicDatatypes[_elem->common.type]->size;
-        for(size_t _i = 0; _i < do_now; _i++ ) {
-            OPAL_DATATYPE_SAFEGUARD_POINTER( _memory, do_now_bytes, (CONVERTOR)->pBaseBuf,
-                                            (CONVERTOR)->pDesc, (CONVERTOR)->count );
-            DO_DEBUG( opal_output( 0, "pack 2. memcpy( %p, %p, %lu ) => space %lu\n",
-                                   (void*)*(packed), (void*)_memory, (unsigned long)do_now_bytes, (unsigned long)*(SPACE) ); );
-            MEMCPY_CSUM( *(packed), _memory, do_now_bytes, (CONVERTOR) );
-            *(packed)   += do_now_bytes;
-            _memory     += _elem->extent;
-            *(SPACE)    -= do_now_bytes;
-            *(COUNT)    -= _elem->blocklen;
-            cando_count -= _elem->blocklen;
+
+        /* each block can full fill vector, we use 4x version */
+        if(svcntb() < do_now_bytes) {
+            DO_DEBUG( opal_output( 0, "block in bytes is larger than VL in bytes, use 4x version"); );
+            for(size_t _i = 0; _i < do_now; _i++ ) {
+                OPAL_DATATYPE_SAFEGUARD_POINTER( _memory, do_now_bytes, (CONVERTOR)->pBaseBuf,
+                        (CONVERTOR)->pDesc, (CONVERTOR)->count );
+                DO_DEBUG( opal_output( 0, "pack 2. memcpy( %p, %p, %lu ) => space %lu\n",
+                            (void*)*(packed), (void*)_memory, (unsigned long)do_now_bytes, (unsigned long)*(SPACE) ); );
+                MEMCPY_CSUM( *(packed), _memory, do_now_bytes, (CONVERTOR) );
+                *(packed)   += do_now_bytes;
+                _memory     += _elem->extent;
+                *(SPACE)    -= do_now_bytes;
+                *(COUNT)    -= _elem->blocklen;
+                cando_count -= _elem->blocklen;
+            }
+        }
+        /* each vector can deal with multi blocks */
+        else {
+            DO_DEBUG( opal_output( 0, "block in bytes is smaller than VL in bytes, use gather_load version"); );
+            /* how many full blocks can be processed in each vector */
+            int blocks_in_VL = svcntb()/do_now_bytes;
+
+            /* max VL 2048/8/4 = 64 offsets */
+            uint32_t off_sets[64];
+            int start = 0;
+            for(int j=0; j<blocks_in_VL; j++){
+                for(size_t i =0; i<do_now_bytes; i++)
+                {
+                    /* offset in bytes offset=offset in block + extend in bytes*j */
+                    off_sets[start] = (i+j*(_elem->extent*opal_datatype_basicDatatypes[_elem->common.type]->size));
+                    start++;
+                }
+            }
+            /* cannot totally fullfill the vector but almost full, best we can do */
+            svbool_t Pg = svwhilelt_b8_u32(0, do_now_bytes*blocks_in_VL);
+            svuint32_t xt = svld1(Pg, off_sets);
+
+            /* loop thru how many vector copy we need instead of do_now */
+            int num_of_copys = cando_count/ (do_now_bytes*blocks_in_VL);
+            for(int i=0; i < num_of_copys; i++)
+            {
+                svuint32_t vsrc = svld1ub_gather_offset_u32(Pg, (uint8_t*)_memory, xt);
+                /* need to store with 1b, because vsrc can only be 32_t */
+                svst1b(Pg, *(packed), vsrc);
+
+                *(packed)   += do_now_bytes*blocks_in_VL;
+                _memory     += _elem->extent*blocks_in_VL;
+                *(SPACE)    -= do_now_bytes*blocks_in_VL;
+                *(COUNT)    -= _elem->blocklen*blocks_in_VL;
+                cando_count -= _elem->blocklen*blocks_in_VL;
+            }
         }
     }
 
