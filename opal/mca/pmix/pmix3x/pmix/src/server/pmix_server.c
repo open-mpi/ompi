@@ -157,6 +157,8 @@ pmix_status_t pmix_server_initialize(void)
     return PMIX_SUCCESS;
 }
 
+static pmix_server_module_t myhostserver = {0};
+
 PMIX_EXPORT pmix_status_t PMIx_server_init(pmix_server_module_t *module,
                                            pmix_info_t info[], size_t ninfo)
 {
@@ -185,7 +187,11 @@ PMIX_EXPORT pmix_status_t PMIx_server_init(pmix_server_module_t *module,
                         "pmix:server init called");
 
     /* setup the function pointers */
-    pmix_host_server = *module;
+    if (NULL == module) {
+        pmix_host_server = myhostserver;
+    } else {
+        pmix_host_server = *module;
+    }
 
     if (NULL != info) {
         for (n=0; n < ninfo; n++) {
@@ -520,6 +526,13 @@ PMIX_EXPORT pmix_status_t PMIx_server_finalize(void)
     return PMIX_SUCCESS;
 }
 
+static void opcbfunc(pmix_status_t status, void *cbdata)
+{
+    pmix_lock_t *lock = (pmix_lock_t*)cbdata;
+    lock->status = status;
+    PMIX_WAKEUP_THREAD(lock);
+}
+
 static void _register_nspace(int sd, short args, void *cbdata)
 {
     pmix_setup_caddy_t *cd = (pmix_setup_caddy_t*)cbdata;
@@ -579,9 +592,7 @@ static void _register_nspace(int sd, short args, void *cbdata)
                             cd->info, cd->ninfo);
 
   release:
-    if (NULL != cd->opcbfunc) {
-        cd->opcbfunc(rc, cd->cbdata);
-    }
+    cd->opcbfunc(rc, cd->cbdata);
     PMIX_RELEASE(cd);
 }
 
@@ -591,6 +602,8 @@ PMIX_EXPORT pmix_status_t PMIx_server_register_nspace(const pmix_nspace_t nspace
                                                       pmix_op_cbfunc_t cbfunc, void *cbdata)
 {
     pmix_setup_caddy_t *cd;
+    pmix_status_t rc;
+    pmix_lock_t mylock;
 
     PMIX_ACQUIRE_THREAD(&pmix_global_lock);
     if (pmix_globals.init_cntr <= 0) {
@@ -608,6 +621,22 @@ PMIX_EXPORT pmix_status_t PMIx_server_register_nspace(const pmix_nspace_t nspace
     if (0 < ninfo) {
         cd->ninfo = ninfo;
         cd->info = info;
+    }
+
+    /* if the provided callback is NULL, then substitute
+     * our own internal cbfunc and block here */
+    if (NULL == cbfunc) {
+        PMIX_CONSTRUCT_LOCK(&mylock);
+        cd->opcbfunc = opcbfunc;
+        cd->cbdata = &mylock;
+        PMIX_THREADSHIFT(cd, _register_nspace);
+        PMIX_WAIT_THREAD(&mylock);
+        rc = mylock.status;
+        PMIX_DESTRUCT_LOCK(&mylock);
+        if (PMIX_SUCCESS == rc) {
+            rc = PMIX_OPERATION_SUCCEEDED;
+        }
+        return rc;
     }
 
     /* we have to push this into our event library to avoid
@@ -747,9 +776,7 @@ static void _deregister_nspace(int sd, short args, void *cbdata)
     }
 
     /* release the caller */
-    if (NULL != cd->opcbfunc) {
-        cd->opcbfunc(rc, cd->cbdata);
-    }
+    cd->opcbfunc(rc, cd->cbdata);
     PMIX_RELEASE(cd);
 }
 
@@ -758,6 +785,7 @@ PMIX_EXPORT void PMIx_server_deregister_nspace(const pmix_nspace_t nspace,
                                                void *cbdata)
 {
     pmix_setup_caddy_t *cd;
+    pmix_lock_t mylock;
 
     pmix_output_verbose(2, pmix_server_globals.base_output,
                         "pmix:server deregister nspace %s",
@@ -777,6 +805,18 @@ PMIX_EXPORT void PMIx_server_deregister_nspace(const pmix_nspace_t nspace,
     PMIX_LOAD_PROCID(&cd->proc, nspace, PMIX_RANK_WILDCARD);
     cd->opcbfunc = cbfunc;
     cd->cbdata = cbdata;
+
+    /* if the provided callback is NULL, then substitute
+     * our own internal cbfunc and block here */
+    if (NULL == cbfunc) {
+        PMIX_CONSTRUCT_LOCK(&mylock);
+        cd->opcbfunc = opcbfunc;
+        cd->cbdata = &mylock;
+        PMIX_THREADSHIFT(cd, _deregister_nspace);
+        PMIX_WAIT_THREAD(&mylock);
+        PMIX_DESTRUCT_LOCK(&mylock);
+        return;
+    }
 
     /* we have to push this into our event library to avoid
      * potential threading issues */
@@ -1054,9 +1094,7 @@ static void _register_client(int sd, short args, void *cbdata)
 
   cleanup:
     /* let the caller know we are done */
-    if (NULL != cd->opcbfunc) {
-        cd->opcbfunc(rc, cd->cbdata);
-    }
+    cd->opcbfunc(rc, cd->cbdata);
     PMIX_RELEASE(cd);
 }
 
@@ -1065,6 +1103,8 @@ PMIX_EXPORT pmix_status_t PMIx_server_register_client(const pmix_proc_t *proc,
                                                       pmix_op_cbfunc_t cbfunc, void *cbdata)
 {
     pmix_setup_caddy_t *cd;
+    pmix_status_t rc;
+    pmix_lock_t mylock;
 
     PMIX_ACQUIRE_THREAD(&pmix_global_lock);
     if (pmix_globals.init_cntr <= 0) {
@@ -1088,6 +1128,22 @@ PMIX_EXPORT pmix_status_t PMIx_server_register_client(const pmix_proc_t *proc,
     cd->server_object = server_object;
     cd->opcbfunc = cbfunc;
     cd->cbdata = cbdata;
+
+    /* if the provided callback is NULL, then substitute
+     * our own internal cbfunc and block here */
+    if (NULL == cbfunc) {
+        PMIX_CONSTRUCT_LOCK(&mylock);
+        cd->opcbfunc = opcbfunc;
+        cd->cbdata = &mylock;
+        PMIX_THREADSHIFT(cd, _register_client);
+        PMIX_WAIT_THREAD(&mylock);
+        rc = mylock.status;
+        PMIX_DESTRUCT_LOCK(&mylock);
+        if (PMIX_SUCCESS == rc) {
+            rc = PMIX_OPERATION_SUCCEEDED;
+        }
+        return rc;
+    }
 
     /* we have to push this into our event library to avoid
      * potential threading issues */
@@ -1169,9 +1225,7 @@ static void _deregister_client(int sd, short args, void *cbdata)
     }
 
   cleanup:
-    if (NULL != cd->opcbfunc) {
-        cd->opcbfunc(PMIX_SUCCESS, cd->cbdata);
-    }
+    cd->opcbfunc(PMIX_SUCCESS, cd->cbdata);
     PMIX_RELEASE(cd);
 }
 
@@ -1179,6 +1233,7 @@ PMIX_EXPORT void PMIx_server_deregister_client(const pmix_proc_t *proc,
                                                pmix_op_cbfunc_t cbfunc, void *cbdata)
 {
     pmix_setup_caddy_t *cd;
+    pmix_lock_t mylock;
 
     PMIX_ACQUIRE_THREAD(&pmix_global_lock);
     if (pmix_globals.init_cntr <= 0) {
@@ -1205,6 +1260,18 @@ PMIX_EXPORT void PMIx_server_deregister_client(const pmix_proc_t *proc,
     cd->proc.rank = proc->rank;
     cd->opcbfunc = cbfunc;
     cd->cbdata = cbdata;
+
+    /* if the provided callback is NULL, then substitute
+     * our own internal cbfunc and block here */
+    if (NULL == cbfunc) {
+        PMIX_CONSTRUCT_LOCK(&mylock);
+        cd->opcbfunc = opcbfunc;
+        cd->cbdata = &mylock;
+        PMIX_THREADSHIFT(cd, _deregister_client);
+        PMIX_WAIT_THREAD(&mylock);
+        PMIX_DESTRUCT_LOCK(&mylock);
+        return;
+    }
 
     /* we have to push this into our event library to avoid
      * potential threading issues */
@@ -2386,12 +2453,7 @@ static void _mdxcbfunc(int sd, short argc, void *cbdata)
     xfer.bytes_used = 0;
     PMIX_DESTRUCT(&xfer);
 
-    if (!tracker->lost_connection) {
-        /* if this tracker has gone thru the "lost_connection" procedure,
-         * then it has already been removed from the list - otherwise,
-         * remove it now */
-        pmix_list_remove_item(&pmix_server_globals.collectives, &tracker->super);
-    }
+    pmix_list_remove_item(&pmix_server_globals.collectives, &tracker->super);
     PMIX_RELEASE(tracker);
     PMIX_LIST_DESTRUCT(&nslist);
 
@@ -2644,12 +2706,7 @@ static void _cnct(int sd, short args, void *cbdata)
     if (NULL != nspaces) {
       pmix_argv_free(nspaces);
     }
-    if (!tracker->lost_connection) {
-        /* if this tracker has gone thru the "lost_connection" procedure,
-         * then it has already been removed from the list - otherwise,
-         * remove it now */
-        pmix_list_remove_item(&pmix_server_globals.collectives, &tracker->super);
-    }
+    pmix_list_remove_item(&pmix_server_globals.collectives, &tracker->super);
     PMIX_RELEASE(tracker);
 
     /* we are done */
@@ -2726,12 +2783,7 @@ static void _discnct(int sd, short args, void *cbdata)
   cleanup:
     /* cleanup the tracker -- the host RM is responsible for
      * telling us when to remove the nspace from our data */
-    if (!tracker->lost_connection) {
-        /* if this tracker has gone thru the "lost_connection" procedure,
-         * then it has already been removed from the list - otherwise,
-         * remove it now */
-        pmix_list_remove_item(&pmix_server_globals.collectives, &tracker->super);
-    }
+    pmix_list_remove_item(&pmix_server_globals.collectives, &tracker->super);
     PMIX_RELEASE(tracker);
 
     /* we are done */

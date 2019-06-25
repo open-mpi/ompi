@@ -1411,7 +1411,18 @@ static pmix_status_t recv_connect_ack(int sd, uint8_t myflag)
                             pmix_client_globals.myserver->info->pname.rank);
 
         /* get the returned status from the security handshake */
-        pmix_ptl_base_recv_blocking(sd, (char*)&reply, sizeof(pmix_status_t));
+        rc = pmix_ptl_base_recv_blocking(sd, (char*)&u32, sizeof(pmix_status_t));
+        if (PMIX_SUCCESS != rc) {
+            if (sockopt) {
+                /* return the socket to normal */
+                if (0 != setsockopt(sd, SOL_SOCKET, SO_RCVTIMEO, &save, sz)) {
+                    return PMIX_ERR_UNREACH;
+                }
+            }
+            return rc;
+        }
+
+        reply = ntohl(u32);
         if (PMIX_SUCCESS != reply) {
             /* see if they want us to do the handshake */
             if (PMIX_ERR_READY_FOR_HANDSHAKE == reply) {

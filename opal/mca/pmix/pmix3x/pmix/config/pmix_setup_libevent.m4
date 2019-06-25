@@ -19,11 +19,7 @@ AC_DEFUN([PMIX_LIBEVENT_CONFIG],[
                 [AC_HELP_STRING([--with-libevent-header=HEADER],
                                 [The value that should be included in C files to include event.h])])
 
-    AC_ARG_ENABLE([embedded-libevent],
-                  [AC_HELP_STRING([--enable-embedded-libevent],
-                                  [Enable use of locally embedded libevent])])
-
-    AS_IF([test "$enable_embedded_libevent" = "yes"],
+    AS_IF([test "$pmix_mode" = "embedded"],
           [_PMIX_LIBEVENT_EMBEDDED_MODE],
           [_PMIX_LIBEVENT_EXTERNAL])
 

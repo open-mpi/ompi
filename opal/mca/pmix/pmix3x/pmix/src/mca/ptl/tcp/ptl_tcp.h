@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2016-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2016-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2018      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -48,6 +48,7 @@ typedef struct {
     struct sockaddr_storage connection;
     char *session_filename;
     char *nspace_filename;
+    char *pid_filename;
     char *system_filename;
     char *rendezvous_filename;
     int wait_to_connect;

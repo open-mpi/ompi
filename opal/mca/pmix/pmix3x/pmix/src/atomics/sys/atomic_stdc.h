@@ -2,7 +2,7 @@
 /*
  * Copyright (c) 2018      Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2018      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2018-2019 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -72,7 +72,14 @@ static inline void pmix_atomic_wmb (void)
 
 static inline void pmix_atomic_rmb (void)
 {
+#if PMIX_ASSEMBLY_ARCH == PMIX_X86_64
+    /* work around a bug in older gcc versions (observed in gcc 6.x)
+     * where acquire seems to get treated as a no-op instead of being
+     * equivalent to __asm__ __volatile__("": : :"memory") on x86_64 */
+    pmix_atomic_mb ();
+#else
     atomic_thread_fence (memory_order_acquire);
+#endif
 }
 
 #define pmix_atomic_compare_exchange_strong_32(addr, compare, value) atomic_compare_exchange_strong_explicit (addr, compare, value, memory_order_relaxed, memory_order_relaxed)

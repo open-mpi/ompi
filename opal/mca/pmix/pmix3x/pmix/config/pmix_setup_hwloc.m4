@@ -17,11 +17,7 @@ AC_DEFUN([PMIX_HWLOC_CONFIG],[
                 [AC_HELP_STRING([--with-hwloc-header=HEADER],
                                 [The value that should be included in C files to include hwloc.h])])
 
-    AC_ARG_ENABLE([embedded-hwloc],
-                  [AC_HELP_STRING([--enable-embedded-hwloc],
-                                  [Enable use of locally embedded hwloc])])
-
-    AS_IF([test "$enable_embedded_hwloc" = "yes"],
+    AS_IF([test "$pmix_mode" = "embedded"],
           [_PMIX_HWLOC_EMBEDDED_MODE],
           [_PMIX_HWLOC_EXTERNAL])
 

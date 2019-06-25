@@ -4,7 +4,7 @@
 # Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
 # Copyright (c) 2013      Mellanox Technologies, Inc.
 #                         All rights reserved.
-# Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
+# Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
 # Copyright (c) 2015      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # Copyright (c) 2015      IBM Corporation.  All rights reserved.
@@ -37,6 +37,9 @@ my $m4;
 # Sanity check file
 my $topdir_file = "include/pmix.h";
 my $dnl_line = "dnl ---------------------------------------------------------------------------";
+# The text file we'll write at the end that will contain
+# all the mca component directory paths
+my $mca_library_paths_file = "config/mca_library_paths.txt";
 
 # Data structures to fill up with all the stuff we find
 my $mca_found;
@@ -137,6 +140,9 @@ sub mca_process_component {
     push(@{$mca_found->{$framework}->{"components"}},
          $found_component);
 
+    # save the directory for later to create the paths
+    # to all the component libraries
+    push(@subdirs, $cdir);
 }
 
 ##############################################################################
@@ -721,6 +727,15 @@ unlink($m4_output_file);
 open(M4, ">$m4_output_file") ||
     my_die "Can't open $m4_output_file";
 print M4 $m4;
+close(M4);
+
+# Remove the old library path file and write the new one
+verbose "==> Writing txt file with all the mca component paths\n";
+unlink($mca_library_paths_file);
+open(M4, ">$mca_library_paths_file") ||
+    my_die "Cannot open $mca_library_paths_file";
+my $paths = join(":", @subdirs);
+print M4 $paths;
 close(M4);
 
 # Run autoreconf
