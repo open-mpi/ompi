@@ -217,10 +217,8 @@ union dt_elem_desc {
 
 
 /**
- * Create one or more elements depending on the value of _count. If the value
- * is too large for the type of elem.count then use oth the elem.count and
- * elem.blocklen to create it. If the number is prime then create a second
- * element to account for the difference.
+ * Create an element entry in the description. If the element is contiguous
+ * collapse everything into the blocklen.
  */
 #define CREATE_ELEM(_place, _type, _flags, _blocklen, _count, _disp, _extent)  \
     do {                                                                       \
@@ -230,6 +228,12 @@ union dt_elem_desc {
         (_place)->elem.count        = (_count);                                \
         (_place)->elem.extent       = (_extent);                               \
         (_place)->elem.disp         = (_disp);                                 \
+        if( _extent == (ptrdiff_t)(_blocklen * opal_datatype_basicDatatypes[_type]->size) ) { \
+            /* collapse it into a single large blocklen */              \
+            (_place)->elem.blocklen *= _count;                          \
+            (_place)->elem.extent   *= _count;                          \
+            (_place)->elem.count     = 1;                               \
+        }                                                               \
     } while(0)
 /*
  * This array holds the descriptions desc.desc[2] of the predefined basic datatypes.
