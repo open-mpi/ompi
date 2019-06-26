@@ -44,12 +44,26 @@ m4_include([config/autogen_found_items.m4])
 
 AC_INIT([pmix],
         [m4_normalize(esyscmd([config/pmix_get_version.sh VERSION --tarball]))],
-        [http://pmix.github.io/master], [pmix])
+        [https://github.com/pmix/pmix/issues], [pmix])
 AC_PREREQ(2.69)
 AC_CONFIG_AUX_DIR(./config)
 # Note that this directory must *exactly* match what was specified via
 # -I in ACLOCAL_AMFLAGS in the top-level Makefile.am.
 AC_CONFIG_MACRO_DIR(./config)
+
+# autotools expects to perform tests without interference
+# from user-provided CFLAGS, particularly -Werror flags.
+# Search for them here and cache any we find
+PMIX_CFLAGS_cache=
+PMIX_CFLAGS_pass=
+for val in $CFLAGS; do
+    if echo "$val" | grep -q -e "-W"; then
+        PMIX_CFLAGS_cache="$PMIX_CFLAGS_cache $val";
+    else
+        PMIX_CFLAGS_pass="$PMIX_CFLAGS_pass $val";
+    fi
+done
+CFLAGS=$PMIX_CFLAGS_pass
 
 PMIX_CAPTURE_CONFIGURE_CLI([PMIX_CONFIGURE_CLI])
 
@@ -208,7 +222,17 @@ AS_IF([test -z "$CC_FOR_BUILD"],[
     AC_SUBST([CC_FOR_BUILD], [$CC])
 ])
 
+# restore any user-provided Werror flags
+AS_IF([test ! -z "$PMIX_CFLAGS_cache"], [CFLAGS="$CFLAGS $PMIX_CFLAGS_cache"])
+
+# Delay setting pickyness until here so we
+# don't break configure code tests
+#if test "$WANT_PICKY_COMPILER" = "1"; then
+#    CFLAGS="$CFLAGS -Wall -Wextra -Werror"
+#fi
+
 # Cleanup duplicate flags
+PMIX_FLAGS_UNIQ(CFLAGS)
 PMIX_FLAGS_UNIQ(CPPFLAGS)
 PMIX_FLAGS_UNIQ(LDFLAGS)
 PMIX_FLAGS_UNIQ(LIBS)
@@ -234,6 +258,17 @@ AC_MSG_RESULT([$LDFLAGS])
 
 AC_MSG_CHECKING([final LIBS])
 AC_MSG_RESULT([$LIBS])
+
+####################################################################
+# -Werror for CI scripts
+####################################################################
+
+AC_ARG_ENABLE(werror,
+    AC_HELP_STRING([--enable-werror],
+                   [Treat compiler warnings as errors]),
+[
+    CFLAGS="$CFLAGS -Werror"
+])
 
 ####################################################################
 # Version information
