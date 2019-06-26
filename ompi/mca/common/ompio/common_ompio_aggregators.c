@@ -1491,13 +1491,12 @@ static double cost_calc (int P, int P_a, size_t d_p, size_t b_c, int dim )
 	}	  
 	case DIM2:
 	{
-	    int P_x, P_y, c;
+	    int P_x, P_y;
 	    
 	    P_x = P_y = (int) sqrt(P);
-	    c = (float) P_a / (float)P_x;
+	    n_as = (float) P_a / (float)P_x;
 	    
 	    n_ar = (float) P_y;
-	    n_as = (float) c;
 	    if ( d_p > (P_a*b_c/P )) {
 		m_s = fmin(b_c / P_y, d_p);
 	    }
