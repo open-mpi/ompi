@@ -80,9 +80,9 @@ pack_predefined_data( opal_convertor_t* CONVERTOR,
     if( 0 != do_now ) {
         do_now_bytes = _elem->blocklen * opal_datatype_basicDatatypes[_elem->common.type]->size;
 
-        /* each block can full fill vector, we use 4x version */
-        if(svcntb() < do_now_bytes) {
-            DO_DEBUG( opal_output( 0, "block in bytes is larger than VL in bytes, use 4x version"); );
+        /* each block can full fill vector, we use 4x version, or just copy once */
+        if(svcntb() < do_now_bytes || do_now == 1) {
+            DO_DEBUG( opal_output( 5, "block in bytes is larger than VL in bytes, use 4x version"); );
             for(size_t _i = 0; _i < do_now; _i++ ) {
                 OPAL_DATATYPE_SAFEGUARD_POINTER( _memory, do_now_bytes, (CONVERTOR)->pBaseBuf,
                         (CONVERTOR)->pDesc, (CONVERTOR)->count );
@@ -98,13 +98,37 @@ pack_predefined_data( opal_convertor_t* CONVERTOR,
         }
         /* each vector can deal with multi blocks */
         else {
-            DO_DEBUG( opal_output( 0, "block in bytes is smaller than VL in bytes, use gather_load version"); );
+            DO_DEBUG( opal_output( 5, "block in bytes is smaller than VL in bytes, use gather_load version"); );
             /* how many full blocks can be processed in each vector */
             int blocks_in_VL = svcntb()/do_now_bytes;
 
+            /*  cannot fullfill a whole vector to copy
+             *
+             *  |__-|__-|
+             *
+             *  |__|__|__|__|
+             *
+             */
+            if(blocks_in_VL>do_now) {
+                blocks_in_VL = do_now;
+            }
+
+            DO_DEBUG( opal_output( 5, "blength %d extend %d block bytes %d blocks %d do_now %d",
+                        _elem->blocklen, _elem->extent, do_now_bytes, blocks_in_VL, do_now); );
             /* max VL 2048/8/4 = 64 offsets */
-            uint32_t off_sets[64];
+            uint32_t off_sets[256];
             int start = 0;
+
+            /*  get offsets for block items
+             *
+             *  blocks  "__":useful data; "-":no-copy
+             *  |__-|__-|__-|__-|
+             *  |   / /
+             *  |  / /
+             *  |__|__|__|__|
+             *
+             *  get offsets for block items
+             */
             for(int j=0; j<blocks_in_VL; j++){
                 for(size_t i =0; i<do_now_bytes; i++)
                 {
@@ -117,14 +141,35 @@ pack_predefined_data( opal_convertor_t* CONVERTOR,
             svbool_t Pg = svwhilelt_b8_u32(0, do_now_bytes*blocks_in_VL);
             svuint32_t xt = svld1(Pg, off_sets);
 
-            /* loop thru how many vector copy we need instead of do_now */
-            int num_of_copys = cando_count/ (do_now_bytes*blocks_in_VL);
+            /* loop thru how many vector copy need to do
+             *
+             * blocks  "__":useful data; "-":no-copy
+             * |__-|__-|__-|__-|__-|__-|__-|__-|__-|__-|
+             * |-------VL------|-------VL------|--rem--|
+             *
+             */
+
+            int num_of_copys = cando_count/ (_elem->blocklen*blocks_in_VL);
             for(int i=0; i < num_of_copys; i++)
             {
                 svuint32_t vsrc = svld1ub_gather_offset_u32(Pg, (uint8_t*)_memory, xt);
                 /* need to store with 1b, because vsrc can only be 32_t */
                 svst1b(Pg, *(packed), vsrc);
 
+                *(packed)   += do_now_bytes*blocks_in_VL;
+                _memory     += _elem->extent*blocks_in_VL;
+                *(SPACE)    -= do_now_bytes*blocks_in_VL;
+                *(COUNT)    -= _elem->blocklen*blocks_in_VL;
+                cando_count -= _elem->blocklen*blocks_in_VL;
+            }
+
+            /* remaining blocks */
+            blocks_in_VL = cando_count % (_elem->blocklen*blocks_in_VL);
+            if (blocks_in_VL != 0) {
+                svbool_t Pg = svwhilelt_b8_u32(0, do_now_bytes*blocks_in_VL);
+                svuint32_t vsrc = svld1ub_gather_offset_u32(Pg, (uint8_t*)_memory, xt);
+                /* need to store with 1b, because vsrc can only be 32_t */
+                svst1b(Pg, *(packed), vsrc);
                 *(packed)   += do_now_bytes*blocks_in_VL;
                 _memory     += _elem->extent*blocks_in_VL;
                 *(SPACE)    -= do_now_bytes*blocks_in_VL;
