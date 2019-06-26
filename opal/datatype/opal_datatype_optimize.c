@@ -60,27 +60,27 @@ opal_datatype_optimize_short( opal_datatype_t* pData,
                 CREATE_ELEM( pElemDesc, last.common.type, OPAL_DATATYPE_FLAG_BASIC,
                              last.blocklen, last.count, last.disp, last.extent );
                 pElemDesc++; nbElems++;
-                last.disp += last.count;
                 last.count= 0;
             }
             CREATE_LOOP_END( pElemDesc, nbElems - pStack->index + 1,  /* # of elems in this loop */
                              end_loop->first_elem_disp, end_loop->size, end_loop->common.flags );
-            pElemDesc++; nbElems++;
             if( --stack_pos >= 0 ) {  /* still something to do ? */
                 ddt_loop_desc_t* pStartLoop = &(pTypeDesc->desc[pStack->index - 1].loop);
-                pStartLoop->items = end_loop->items;
+                pStartLoop->items = pElemDesc->end_loop.items;
                 total_disp = pStack->disp;  /* update the displacement position */
             }
+            pElemDesc++; nbElems++;
             pStack--;  /* go down one position on the stack */
             pos_desc++;
             continue;
         }
         if( OPAL_DATATYPE_LOOP == pData->desc.desc[pos_desc].elem.common.type ) {
             ddt_loop_desc_t* loop = (ddt_loop_desc_t*)&(pData->desc.desc[pos_desc]);
-            ddt_endloop_desc_t* end_loop = (ddt_endloop_desc_t*)&(pData->desc.desc[pos_desc + loop->items]);
             int index = GET_FIRST_NON_LOOP( &(pData->desc.desc[pos_desc]) );
 
             if( loop->common.flags & OPAL_DATATYPE_FLAG_CONTIGUOUS ) {
+                ddt_endloop_desc_t* end_loop = (ddt_endloop_desc_t*)&(pData->desc.desc[pos_desc + loop->items]);
+
                 assert(pData->desc.desc[pos_desc + index].elem.disp == end_loop->first_elem_disp);
                 compress.common.flags = loop->common.flags;
                 compress.common.type =  pData->desc.desc[pos_desc + index].elem.common.type;
@@ -99,7 +99,12 @@ opal_datatype_optimize_short( opal_datatype_t* pData,
                 compress.count = loop->loops;
                 compress.extent = loop->extent;
                 compress.disp = end_loop->first_elem_disp;
-
+                if( compress.extent == (ptrdiff_t)(compress.blocklen * opal_datatype_basicDatatypes[compress.common.type]->size) ) {
+                    /* The compressed element is contiguous: collapse it into a single large blocklen */
+                    compress.blocklen *= compress.count;
+                    compress.extent   *= compress.count;
+                    compress.count     = 1;
+                }
                 /**
                  * The current loop has been compressed and can now be treated as if it
                  * was a data element. We can now look if it can be fused with last,
@@ -161,26 +166,43 @@ opal_datatype_optimize_short( opal_datatype_t* pData,
             }
 
             /* are the two elements compatible: aka they have very similar values and they
-             * can be merged together by increasing the count. This optimizes the memory
-             * required for storing the datatype description.
+             * can be merged together by increasing the count, and/or changing the extent.
              */
-            if( ((last.blocklen * opal_datatype_basicDatatypes[last.common.type]->size) ==
-                  (current->blocklen * opal_datatype_basicDatatypes[current->common.type]->size)) &&
-                (current->disp == (last.disp + (ptrdiff_t)last.count * last.extent)) &&
-                ((current->count == 1) || (last.extent == current->extent)) ) {
-                last.count += current->count;
-                /* find the lowest common denomitaor type */
+            if( (last.blocklen * opal_datatype_basicDatatypes[last.common.type]->size) ==
+                (current->blocklen * opal_datatype_basicDatatypes[current->common.type]->size) ) {
+                ddt_elem_desc_t save = last;  /* safekeep the type and blocklen */
                 if( last.common.type != current->common.type ) {
                     last.blocklen    *= opal_datatype_basicDatatypes[last.common.type]->size;
                     last.common.type  = OPAL_DATATYPE_UINT1;
                 }
-                /* maximize the contiguous pieces */
-                if( last.extent == (ptrdiff_t)(last.blocklen * opal_datatype_basicDatatypes[last.common.type]->size) ) {
-                    last.blocklen *= last.count;
-                    last.count = 1;
-                    last.extent = last.blocklen * opal_datatype_basicDatatypes[last.common.type]->size;
+
+                if( 1 == last.count ) {
+                    /* we can ignore the extent of the element with count == 1 and merge them together if their displacements match */
+                    if( 1 == current->count ) {
+                        last.extent = current->disp - last.disp;
+                        last.count++;
+                        continue;
+                    }
+                    /* can we compute a matching displacement ? */
+                    if( (last.disp + current->extent) == current->disp ) {
+                        last.extent = current->extent;
+                        last.count = current->count + 1;
+                        continue;
+                    }
                 }
-                continue;  /* next data */
+                if( (last.extent * (ptrdiff_t)last.count + last.disp) == current->disp ) {
+                    if( 1 == current->count ) {
+                        last.count++;
+                        continue;
+                    }
+                    if( last.extent == current->extent ) {
+                        last.count += current->count;
+                        continue;
+                    }
+                }
+                last.blocklen = save.blocklen;
+                last.common.type = save.common.type;
+                /* try other optimizations */
             }
             /* are the elements fusionable such that we can fusion the last blocklen of one with the first
              * blocklen of the other.
