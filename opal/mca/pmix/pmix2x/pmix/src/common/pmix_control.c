@@ -1,9 +1,11 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2016      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2019      Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -24,6 +26,7 @@
 #include "src/threads/threads.h"
 #include "src/util/argv.h"
 #include "src/util/error.h"
+#include "src/util/name_fns.h"
 #include "src/util/output.h"
 #include "src/mca/bfrops/bfrops.h"
 #include "src/mca/ptl/ptl.h"
@@ -104,6 +107,8 @@ static void query_cbfunc(struct pmix_peer_t *peer,
     /* release the caller */
     if (NULL != cd->cbfunc) {
         cd->cbfunc(results->status, results->info, results->ninfo, cd->cbdata, relcbfunc, results);
+    } else {
+        PMIX_RELEASE(results);
     }
     PMIX_RELEASE(cd);
 }
@@ -129,7 +134,8 @@ PMIX_EXPORT pmix_status_t PMIx_Job_control_nb(const pmix_proc_t targets[], size_
 
     /* if we are the server, then we just issue the request and
      * return the response */
-    if (PMIX_PROC_IS_SERVER(pmix_globals.mypeer)) {
+    if (PMIX_PROC_IS_SERVER(pmix_globals.mypeer) &&
+        !PMIX_PROC_IS_LAUNCHER(pmix_globals.mypeer)) {
         PMIX_RELEASE_THREAD(&pmix_global_lock);
         if (NULL == pmix_host_server.job_control) {
             /* nothing we can do */
@@ -246,7 +252,8 @@ PMIX_EXPORT pmix_status_t PMIx_Process_monitor_nb(const pmix_info_t *monitor, pm
 
     /* if we are the server, then we just issue the request and
      * return the response */
-    if (PMIX_PROC_IS_SERVER(pmix_globals.mypeer)) {
+    if (PMIX_PROC_IS_SERVER(pmix_globals.mypeer) &&
+        !PMIX_PROC_IS_LAUNCHER(pmix_globals.mypeer)) {
         PMIX_RELEASE_THREAD(&pmix_global_lock);
         if (NULL == pmix_host_server.monitor) {
             /* nothing we can do */

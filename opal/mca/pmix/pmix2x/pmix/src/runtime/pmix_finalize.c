@@ -12,8 +12,8 @@
  * Copyright (c) 2008-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
- * Copyright (c) 2016      Research Organization for Information Science
+ * Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2016-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -49,19 +49,11 @@
 extern int pmix_initialized;
 extern bool pmix_init_called;
 
-static void __pmix_attribute_destructor__ pmix_cleanup (void)
-{
-    if (!pmix_initialized) {
-        /* nothing to do */
-        return;
-    }
-
-    /* finalize the class/object system */
-    pmix_class_finalize();
-}
-
 void pmix_rte_finalize(void)
 {
+    int i;
+    pmix_notify_caddy_t *cd;
+
     if( --pmix_initialized != 0 ) {
         if( pmix_initialized < 0 ) {
             fprintf(stderr, "PMIx Finalize called too many times\n");
@@ -79,9 +71,6 @@ void pmix_rte_finalize(void)
 
     /* close the security framework */
     (void)pmix_mca_base_framework_close(&pmix_psec_base_framework);
-
-    /* close the pnet framework */
-    (void)pmix_mca_base_framework_close(&pmix_pnet_base_framework);
 
     /* close bfrops */
     (void)pmix_mca_base_framework_close(&pmix_bfrops_base_framework);
@@ -114,16 +103,18 @@ void pmix_rte_finalize(void)
     PMIX_RELEASE(pmix_globals.mypeer);
     PMIX_DESTRUCT(&pmix_globals.events);
     PMIX_LIST_DESTRUCT(&pmix_globals.cached_events);
+    /* clear any notifications */
+    for (i=0; i < pmix_globals.max_events; i++) {
+        pmix_hotel_checkout_and_return_occupant(&pmix_globals.notifications, i, (void**)&cd);
+        if (NULL != cd) {
+            PMIX_RELEASE(cd);
+        }
+    }
     PMIX_DESTRUCT(&pmix_globals.notifications);
 
     /* now safe to release the event base */
     if (!pmix_globals.external_evbase) {
         (void)pmix_progress_thread_stop(NULL);
     }
-
-
-#if PMIX_NO_LIB_DESTRUCTOR
-    pmix_cleanup();
-#endif
 
 }

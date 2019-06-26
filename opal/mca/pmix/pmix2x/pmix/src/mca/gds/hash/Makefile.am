@@ -11,7 +11,7 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2012      Los Alamos National Security, Inc.  All rights reserved.
-# Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
+# Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
 # Copyright (c) 2017      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
@@ -49,6 +49,9 @@ mcacomponent_LTLIBRARIES = $(component)
 mca_gds_hash_la_SOURCES = $(component_sources)
 mca_gds_hash_la_LIBADD = $(gds_hash_LIBS)
 mca_gds_hash_la_LDFLAGS = -module -avoid-version $(gds_hash_LDFLAGS)
+if NEED_LIBPMIX
+mca_gds_hash_la_LIBADD += $(top_builddir)/src/libpmix.la
+endif
 
 noinst_LTLIBRARIES = $(lib)
 libmca_gds_hash_la_SOURCES = $(lib_sources)

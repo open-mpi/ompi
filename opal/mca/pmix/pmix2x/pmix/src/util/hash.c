@@ -6,8 +6,8 @@
  *                         reserved.
  * Copyright (c) 2011-2014 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      Mellanox Technologies, Inc.
  *                         All rights reserved.
@@ -172,7 +172,7 @@ pmix_status_t pmix_hash_fetch(pmix_hash_table_t *table, pmix_rank_t rank,
             /* copy the list elements */
             n=0;
             PMIX_LIST_FOREACH(hv, &proc_data->data, pmix_kval_t) {
-                (void)strncpy(info[n].key, hv->key, PMIX_MAX_KEYLEN);
+                pmix_strncpy(info[n].key, hv->key, PMIX_MAX_KEYLEN);
                 pmix_value_xfer(&info[n].value, hv->value);
                 ++n;
             }
@@ -282,7 +282,7 @@ pmix_status_t pmix_hash_remove_data(pmix_hash_table_t *table,
 
     /* if the rank is wildcard, we want to apply this to
      * all rank entries */
-    if (PMIX_RANK_UNDEF == rank) {
+    if (PMIX_RANK_WILDCARD == rank) {
         rc = pmix_hash_table_get_first_key_uint64(table, &id,
                 (void**)&proc_data, (void**)&node);
         while (PMIX_SUCCESS == rc) {
@@ -302,6 +302,7 @@ pmix_status_t pmix_hash_remove_data(pmix_hash_table_t *table,
             rc = pmix_hash_table_get_next_key_uint64(table, &id,
                     (void**)&proc_data, node, (void**)&node);
         }
+        return PMIX_SUCCESS;
     }
 
     /* lookup the specified proc */

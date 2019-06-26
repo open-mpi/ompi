@@ -8,7 +8,7 @@
  * Copyright (c) 2016      Mellanox Technologies. All rights reserved.
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2017-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2017-2019 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -28,7 +28,7 @@
 BEGIN_C_DECLS
 
 typedef struct pmix_wait_sync_t {
-    int32_t count;
+    pmix_atomic_int32_t count;
     int32_t status;
     pthread_cond_t condition;
     pthread_mutex_t lock;

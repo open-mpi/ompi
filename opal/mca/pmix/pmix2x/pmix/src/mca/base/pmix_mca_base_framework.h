@@ -2,7 +2,7 @@
 /*
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2016-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2016-2019 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -156,6 +156,8 @@ typedef struct pmix_mca_base_framework_t {
     /** List of selected components (filled in by pmix_mca_base_framework_register()
         or pmix_mca_base_framework_open() */
     pmix_list_t                              framework_components;
+    /** List of components that failed to load */
+    pmix_list_t                              framework_failed_components;
 } pmix_mca_base_framework_t;
 
 

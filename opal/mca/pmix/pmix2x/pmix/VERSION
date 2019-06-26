@@ -4,6 +4,7 @@
 # Copyright (c) 2013      Mellanox Technologies, Inc.
 #                         All rights reserved.
 # Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
+# Copyright (c) 2018      IBM Corporation.  All rights reserved.
 
 # This is the VERSION file for PMIx, describing the precise
 # version of PMIx in this distribution.  The various components of
@@ -14,8 +15,8 @@
 # <major>.<minor>.<release>.
 
 major=2
-minor=1
-release=4
+minor=2
+release=3
 
 # greek is used for alpha or beta release tags.  If it is non-empty,
 # it will be appended to the version number.  It does not have to be
@@ -23,14 +24,14 @@ release=4
 # The only requirement is that it must be entirely printable ASCII
 # characters and have no white space.
 
-greek=
+greek=rc1
 
 # If repo_rev is empty, then the repository version number will be
 # obtained during "make dist" via the "git describe --tags --always"
 # command, or with the date (if "git describe" fails) in the form of
 # "date<date>".
 
-repo_rev=git1d605654
+repo_rev=git8aac6645
 
 # If tarball_version is not empty, it is used as the version string in
 # the tarball filename, regardless of all other versions listed in
@@ -44,7 +45,7 @@ tarball_version=
 
 # The date when this release was created
 
-date="Sep 18, 2018"
+date="Jun 26, 2019"
 
 # The shared library version of each of PMIx's public libraries.
 # These versions are maintained in accordance with the "Library
@@ -75,6 +76,13 @@ date="Sep 18, 2018"
 # Version numbers are described in the Libtool current:revision:age
 # format.
 
-libpmix_so_version=3:14:1
+libpmix_so_version=3:22:1
 libpmi_so_version=1:0:0
 libpmi2_so_version=1:0:0
+
+# "Common" components install standalone libraries that are run-time
+# # linked by one or more components.  So they need to be versioned as
+# # well.  Yuck; this somewhat breaks the
+# # components-don't-affect-the-build-system abstraction.
+#
+libmca_common_dstore_so_version=1:0:0

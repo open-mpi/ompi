@@ -12,7 +12,7 @@
 #                         All rights reserved.
 # Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
 # Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2017-2018 Intel, Inc. All rights reserved.
+# Copyright (c) 2017-2019 Intel, Inc.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -59,12 +59,31 @@ by any of the following:
 
 Please check your installation and environment.
 #
-[ptl:message-too-large]
-A message has been received that exceeds the size limit:
+[ptl:msg_size]
+A received msg header indicates a size that is too large:
 
-  Message size:  %lu
-  Size limit:    %lu
+  Requested size:  %lu
+  Size limit:      %lu
 
-The limit is enforced to protect against bad actors. If you believe that
-the message was likely legitimate, then adjust the message size by
-setting the ptl_base_max_msg_size MCA parameter.
+If you believe this msg is legitimate, please increase the
+max msg size via the ptl_base_max_msg_size parameter.
+#
+[tool:no-server]
+A call was made to PMIx_tool_connect_to_server, but no information
+was given as to which server the tool should be connected. Accepted
+attributes include:
+
+  - PMIX_CONNECT_TO_SYSTEM: connect solely to the system server
+
+  - PMIX_CONNECT_SYSTEM_FIRST: a request to use the system server first,
+      if existing, and then look for the server specified in a different
+      attribute
+
+  - PMIX_SERVER_URI: connect to the server at the given URI
+
+  - PMIX_SERVER_NSPACE: connect to the server of a given nspace
+
+  - PMIX_SERVER_PIDINFO: connect to a server embedded in the process with
+      the given pid
+
+Please correct your program and try again.

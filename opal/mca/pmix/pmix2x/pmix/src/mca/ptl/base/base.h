@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, Inc.  All rights reserved.
- * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -100,7 +100,7 @@ PMIX_EXPORT pmix_status_t pmix_ptl_base_cancel_recv(struct pmix_peer_t *peer,
 
 PMIX_EXPORT pmix_status_t pmix_ptl_base_start_listening(pmix_info_t *info, size_t ninfo);
 PMIX_EXPORT void pmix_ptl_base_stop_listening(void);
-
+PMIX_EXPORT pmix_status_t pmix_ptl_base_setup_fork(const pmix_proc_t *proc, char ***env);
 
 /* base support functions */
 PMIX_EXPORT void pmix_ptl_base_send(int sd, short args, void *cbdata);

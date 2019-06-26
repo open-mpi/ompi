@@ -13,7 +13,7 @@
  * Copyright (c) 2008-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -330,7 +330,7 @@ static void process_env_list(char *env_list, char ***argv, char sep)
         if (NULL == (ptr = strchr(tokens[i], '='))) {
             value = getenv(tokens[i]);
             if (NULL == value) {
-                pmix_show_help("help-mca-var.txt", "incorrect-env-list-param",
+                pmix_show_help("help-pmix-mca-var.txt", "incorrect-env-list-param",
                                true, tokens[i], env_list);
                 break;
             }
@@ -368,7 +368,7 @@ int pmix_mca_base_var_process_env_list(char ***argv)
         if (1 == strlen(pmix_mca_base_env_list_sep)) {
             sep = pmix_mca_base_env_list_sep[0];
         } else {
-            pmix_show_help("help-mca-var.txt", "incorrect-env-list-sep",
+            pmix_show_help("help-pmix-mca-var.txt", "incorrect-env-list-sep",
                     true, pmix_mca_base_env_list_sep);
             return PMIX_SUCCESS;
         }
@@ -558,7 +558,7 @@ int pmix_mca_base_var_cache_files(bool rel_path_search)
     if (NULL != pmix_mca_base_var_file_prefix) {
        resolve_relative_paths(&pmix_mca_base_var_file_prefix, pmix_mca_base_param_file_path, rel_path_search, &pmix_mca_base_var_files, PMIX_ENV_SEP);
     }
-    read_files (pmix_mca_base_var_files, &pmix_mca_base_var_file_values, PMIX_ENV_SEP);
+    read_files (pmix_mca_base_var_files, &pmix_mca_base_var_file_values, ',');
 
     if (NULL != pmix_mca_base_envar_file_prefix) {
        resolve_relative_paths(&pmix_mca_base_envar_file_prefix, pmix_mca_base_param_file_path, rel_path_search, &pmix_mca_base_envar_files, ',');
@@ -742,11 +742,11 @@ static int var_set_from_string (pmix_mca_base_var_t *var, char *src)
             if (var->mbv_enumerator) {
                 char *valid_values;
                 (void) var->mbv_enumerator->dump(var->mbv_enumerator, &valid_values);
-                pmix_show_help("help-mca-var.txt", "invalid-value-enum",
+                pmix_show_help("help-pmix-mca-var.txt", "invalid-value-enum",
                                true, var->mbv_full_name, src, valid_values);
                 free(valid_values);
             } else {
-                pmix_show_help("help-mca-var.txt", "invalid-value",
+                pmix_show_help("help-pmix-mca-var.txt", "invalid-value",
                                true, var->mbv_full_name, src);
             }
 
@@ -1229,7 +1229,7 @@ static int fixup_files(char **file_list, char * path, bool rel_path_search, char
         }
 
         if (NULL == tmp_file) {
-            pmix_show_help("help-mca-var.txt", "missing-param-file",
+            pmix_show_help("help-pmix-mca-var.txt", "missing-param-file",
                            true, getpid(), files[i], msg_path);
             exit_status = PMIX_ERROR;
             break;
@@ -1365,7 +1365,10 @@ static int register_variable (const char *project_name, const char *framework_na
 
     /* Initialize the array if it has never been initialized */
     if (!pmix_mca_base_var_initialized) {
-        pmix_mca_base_var_init();
+        ret = pmix_mca_base_var_init();
+        if (PMIX_SUCCESS != ret) {
+            return ret;
+        }
     }
 
     /* See if this entry is already in the array */
@@ -1383,7 +1386,7 @@ static int register_variable (const char *project_name, const char *framework_na
         /* Read-only and constant variables can't be settable */
         if (scope < PMIX_MCA_BASE_VAR_SCOPE_LOCAL || (flags & PMIX_MCA_BASE_VAR_FLAG_DEFAULT_ONLY)) {
             if ((flags & PMIX_MCA_BASE_VAR_FLAG_DEFAULT_ONLY) && (flags & PMIX_MCA_BASE_VAR_FLAG_SETTABLE)) {
-                pmix_show_help("help-mca-var.txt", "invalid-flag-combination",
+                pmix_show_help("help-pmix-mca-var.txt", "invalid-flag-combination",
                                true, "PMIX_MCA_BASE_VAR_FLAG_DEFAULT_ONLY", "PMIX_MCA_BASE_VAR_FLAG_SETTABLE");
                 return PMIX_ERROR;
             }
@@ -1473,7 +1476,7 @@ static int register_variable (const char *project_name, const char *framework_na
         if (0 != compare_strings(framework_name, group->group_framework) ||
             0 != compare_strings(component_name, group->group_component) ||
             0 != compare_strings(variable_name, var->mbv_variable_name)) {
-            pmix_show_help("help-mca-var.txt", "var-name-conflict",
+            pmix_show_help("help-pmix-mca-var.txt", "var-name-conflict",
                            true, var->mbv_full_name, framework_name,
                            component_name, variable_name,
                            group->group_framework, group->group_component,
@@ -1485,7 +1488,7 @@ static int register_variable (const char *project_name, const char *framework_na
 
         if (var->mbv_type != type) {
 #if PMIX_ENABLE_DEBUG
-            pmix_show_help("help-mca-var.txt",
+            pmix_show_help("help-pmix-mca-var.txt",
                            "re-register-with-different-type",
                            true, var->mbv_full_name);
 #endif
@@ -1657,7 +1660,7 @@ static int var_set_from_env (pmix_mca_base_var_t *var, pmix_mca_base_var_t *orig
     /* we found an environment variable but this variable is default-only. print
        a warning. */
     if (PMIX_VAR_IS_DEFAULT_ONLY(original[0])) {
-        pmix_show_help("help-mca-var.txt", "default-only-param-set",
+        pmix_show_help("help-pmix-mca-var.txt", "default-only-param-set",
                        true, var_full_name);
 
         return PMIX_ERR_NOT_FOUND;
@@ -1665,7 +1668,7 @@ static int var_set_from_env (pmix_mca_base_var_t *var, pmix_mca_base_var_t *orig
 
     if (PMIX_MCA_BASE_VAR_SOURCE_OVERRIDE == original->mbv_source) {
         if (!pmix_mca_base_var_suppress_override_warning) {
-            pmix_show_help("help-mca-var.txt", "overridden-param-set",
+            pmix_show_help("help-pmix-mca-var.txt", "overridden-param-set",
                            true, var_full_name);
         }
 
@@ -1696,16 +1699,16 @@ static int var_set_from_env (pmix_mca_base_var_t *var, pmix_mca_base_var_t *orig
 
         switch (var->mbv_source) {
         case PMIX_MCA_BASE_VAR_SOURCE_ENV:
-            pmix_show_help("help-mca-var.txt", "deprecated-mca-env",
+            pmix_show_help("help-pmix-mca-var.txt", "deprecated-mca-env",
                            true, var_full_name, new_variable);
             break;
         case PMIX_MCA_BASE_VAR_SOURCE_COMMAND_LINE:
-            pmix_show_help("help-mca-var.txt", "deprecated-mca-cli",
+            pmix_show_help("help-pmix-mca-var.txt", "deprecated-mca-cli",
                            true, var_full_name, new_variable);
             break;
         case PMIX_MCA_BASE_VAR_SOURCE_FILE:
         case PMIX_MCA_BASE_VAR_SOURCE_OVERRIDE:
-            pmix_show_help("help-mca-var.txt", "deprecated-mca-file",
+            pmix_show_help("help-pmix-mca-var.txt", "deprecated-mca-file",
                            true, var_full_name, pmix_mca_base_var_source_file (var),
                            new_variable);
             break;
@@ -1744,14 +1747,14 @@ static int var_set_from_file (pmix_mca_base_var_t *var, pmix_mca_base_var_t *ori
 
         /* found it */
         if (PMIX_VAR_IS_DEFAULT_ONLY(var[0])) {
-            pmix_show_help("help-mca-var.txt", "default-only-param-set",
+            pmix_show_help("help-pmix-mca-var.txt", "default-only-param-set",
                            true, var_full_name);
 
             return PMIX_ERR_NOT_FOUND;
         }
 
         if (PMIX_MCA_BASE_VAR_FLAG_ENVIRONMENT_ONLY & original->mbv_flags) {
-            pmix_show_help("help-mca-var.txt", "environment-only-param",
+            pmix_show_help("help-pmix-mca-var.txt", "environment-only-param",
                            true, var_full_name, fv->mbvfv_value,
                            fv->mbvfv_file);
 
@@ -1760,7 +1763,7 @@ static int var_set_from_file (pmix_mca_base_var_t *var, pmix_mca_base_var_t *ori
 
         if (PMIX_MCA_BASE_VAR_SOURCE_OVERRIDE == original->mbv_source) {
             if (!pmix_mca_base_var_suppress_override_warning) {
-                pmix_show_help("help-mca-var.txt", "overridden-param-set",
+                pmix_show_help("help-pmix-mca-var.txt", "overridden-param-set",
                                true, var_full_name);
             }
 
@@ -1774,7 +1777,7 @@ static int var_set_from_file (pmix_mca_base_var_t *var, pmix_mca_base_var_t *ori
                 new_variable = original->mbv_full_name;
             }
 
-            pmix_show_help("help-mca-var.txt", "deprecated-mca-file",
+            pmix_show_help("help-pmix-mca-var.txt", "deprecated-mca-file",
                            true, var_full_name, fv->mbvfv_file,
                            new_variable);
         }
@@ -2038,7 +2041,7 @@ int pmix_mca_base_var_check_exclusive (const char *project,
         str_b = source_name(var_b);
 
         /* Print it all out */
-        pmix_show_help("help-mca-var.txt",
+        pmix_show_help("help-pmix-mca-var.txt",
                        "mutually-exclusive-vars",
                        true, var_a->mbv_full_name,
                        str_a, var_b->mbv_full_name,

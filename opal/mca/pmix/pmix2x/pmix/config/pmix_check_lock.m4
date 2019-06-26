@@ -5,7 +5,7 @@ dnl                         All rights reserved.
 dnl Copyright (c) 2017      IBM Corporation.  All rights reserved.
 dnl Copyright (c) 2017      Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
-dnl Copyright (c) 2017      Intel, Inc. All rights reserved.
+dnl Copyright (c) 2017-2019 Intel, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -57,4 +57,6 @@ AC_DEFUN([PMIX_CHECK_DSTOR_LOCK],[
         fi
     fi
     LIBS="$orig_libs"
+    AM_CONDITIONAL([HAVE_DSTORE_PTHREAD_LOCK], [test "$_x_ac_pthread_lock_found" = "1"])
+    AM_CONDITIONAL([HAVE_DSTORE_FCNTL_LOCK], [test "$_x_ac_fcntl_lock_found" = "1"])
 ])

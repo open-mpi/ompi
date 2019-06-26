@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014      Artem Y. Polyakov <artpol84@gmail.com>.
@@ -49,6 +49,7 @@
 #include "src/class/pmix_list.h"
 #include "src/threads/threads.h"
 #include "src/mca/bfrops/bfrops.h"
+#include "src/mca/pnet/base/base.h"
 #include "src/util/argv.h"
 #include "src/util/error.h"
 #include "src/util/output.h"
@@ -64,7 +65,7 @@ static void spawn_cbfunc(pmix_status_t status, char nspace[], void *cbdata);
 
 PMIX_EXPORT pmix_status_t PMIx_Spawn(const pmix_info_t job_info[], size_t ninfo,
                            const pmix_app_t apps[], size_t napps,
-                           char nspace[])
+                           pmix_nspace_t nspace)
 {
     pmix_status_t rc;
     pmix_cb_t *cb;
@@ -104,7 +105,7 @@ PMIX_EXPORT pmix_status_t PMIx_Spawn(const pmix_info_t job_info[], size_t ninfo,
     PMIX_WAIT_THREAD(&cb->lock);
     rc = cb->status;
     if (NULL != nspace) {
-        (void)strncpy(nspace, cb->pname.nspace, PMIX_MAX_NSLEN);
+        pmix_strncpy(nspace, cb->pname.nspace, PMIX_MAX_NSLEN);
     }
     PMIX_RELEASE(cb);
 
@@ -240,27 +241,25 @@ static void wait_cbfunc(struct pmix_peer_t *pr,
         PMIX_ERROR_LOG(rc);
         ret = rc;
     }
-    if (PMIX_SUCCESS == ret) {
-        /* unpack the namespace */
-        cnt = 1;
-        PMIX_BFROPS_UNPACK(rc, pmix_client_globals.myserver,
-                           buf, &n2, &cnt, PMIX_STRING);
+    /* unpack the namespace */
+    cnt = 1;
+    PMIX_BFROPS_UNPACK(rc, pmix_client_globals.myserver,
+                       buf, &n2, &cnt, PMIX_STRING);
+    if (PMIX_SUCCESS != rc && PMIX_ERR_UNPACK_READ_PAST_END_OF_BUFFER != rc) {
+        PMIX_ERROR_LOG(rc);
+        ret = rc;
+    }
+    pmix_output_verbose(1, pmix_globals.debug_output,
+                    "pmix:client recv '%s'", n2);
+
+    if (NULL != n2) {
+        /* protect length */
+        pmix_strncpy(nspace, n2, PMIX_MAX_NSLEN);
+        free(n2);
+        PMIX_GDS_STORE_JOB_INFO(rc, pmix_globals.mypeer, nspace, buf);
+        /* extract and process any job-related info for this nspace */
         if (PMIX_SUCCESS != rc) {
             PMIX_ERROR_LOG(rc);
-            ret = rc;
-        }
-        pmix_output_verbose(1, pmix_globals.debug_output,
-                        "pmix:client recv '%s'", n2);
-
-        if (NULL != n2) {
-            /* protect length */
-            (void)strncpy(nspace, n2, PMIX_MAX_NSLEN);
-            free(n2);
-            PMIX_GDS_STORE_JOB_INFO(rc, pmix_globals.mypeer, nspace, buf);
-            /* extract and process any job-related info for this nspace */
-            if (PMIX_SUCCESS != rc) {
-                PMIX_ERROR_LOG(rc);
-            }
         }
     }
 

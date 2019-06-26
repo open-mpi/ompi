@@ -3,7 +3,7 @@
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2016-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2016-2019 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -67,6 +67,7 @@ int pmix_mca_base_framework_register (struct pmix_mca_base_framework_t *framewor
     }
 
     PMIX_CONSTRUCT(&framework->framework_components, pmix_list_t);
+    PMIX_CONSTRUCT(&framework->framework_failed_components, pmix_list_t);
 
     if (framework->framework_flags & PMIX_MCA_BASE_FRAMEWORK_FLAG_NO_DSO) {
         flags |= PMIX_MCA_BASE_REGISTER_STATIC_ONLY;
@@ -239,6 +240,7 @@ int pmix_mca_base_framework_close (struct pmix_mca_base_framework_t *framework) 
     framework->framework_flags &= ~(PMIX_MCA_BASE_FRAMEWORK_FLAG_REGISTERED | PMIX_MCA_BASE_FRAMEWORK_FLAG_OPEN);
 
     PMIX_DESTRUCT(&framework->framework_components);
+    PMIX_LIST_DESTRUCT(&framework->framework_failed_components);
 
     framework_close_output (framework);
 

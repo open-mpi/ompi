@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2008-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      Sandia National Laboratories. All rights reserved.
- * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -20,6 +20,12 @@
 #endif
 #include <errno.h>
 #include <fcntl.h>
+#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_STAT_H
+#include <sys/stat.h>
+#endif
 
 #include "src/util/error.h"
 #include "src/util/fd.h"
@@ -92,4 +98,32 @@ pmix_status_t pmix_fd_set_cloexec(int fd)
 #endif
 
     return PMIX_SUCCESS;
+}
+
+
+bool pmix_fd_is_regular(int fd)
+{
+    struct stat buf;
+    if (fstat(fd, &buf)) {
+        return false;
+    }
+    return S_ISREG(buf.st_mode);
+}
+
+bool pmix_fd_is_chardev(int fd)
+{
+    struct stat buf;
+    if (fstat(fd, &buf)) {
+        return false;
+    }
+    return S_ISCHR(buf.st_mode);
+}
+
+bool pmix_fd_is_blkdev(int fd)
+{
+    struct stat buf;
+    if (fstat(fd, &buf)) {
+        return false;
+    }
+    return S_ISBLK(buf.st_mode);
 }
