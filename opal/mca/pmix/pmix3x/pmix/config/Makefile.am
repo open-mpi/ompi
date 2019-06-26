@@ -1,4 +1,4 @@
-# Copyright (c) 2013-2016 Intel, Inc. All rights reserved
+# Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
 # Copyright (c) 2016      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # Copyright (c) 2006-2016 Cisco Systems, Inc.  All rights reserved.
@@ -44,7 +44,8 @@ EXTRA_DIST = \
 	pmix_setup_cc.m4 \
 	pmix_setup_zlib.m4 \
 	pmix_setup_libevent.m4 \
-	pmix_mca_priority_sort.pl
+	pmix_mca_priority_sort.pl \
+	mca_library_paths.txt
 
 
 maintainer-clean-local:

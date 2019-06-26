@@ -293,7 +293,7 @@ static pmix_status_t notify_server_of_event(pmix_status_t status,
             PMIX_RELEASE(cb);
             goto cleanup;
         }
-    } else {
+    } else if (NULL != cbfunc) {
         cbfunc(PMIX_SUCCESS, cbdata);
     }
 
@@ -977,16 +977,6 @@ static void _notify_client_event(int sd, short args, void *cbdata)
                     if (!pmix_notify_check_range(&rngtrk, &proc)) {
                         continue;
                     }
-                    if (NULL != cd->targets) {
-                        /* track the number of targets we have left to notify */
-                        --cd->nleft;
-                        /* if the event was cached and this is the last one,
-                         * then evict this event from the cache */
-                        if (0 == cd->nleft) {
-                            pmix_hotel_checkout(&pmix_globals.notifications, cd->room);
-                            PMIX_RELEASE(cd);
-                        }
-                    }
                     pmix_output_verbose(2, pmix_server_globals.event_output,
                                         "pmix_server: notifying client %s:%u on status %s",
                                         pr->peer->info->pname.nspace, pr->peer->info->pname.rank,
@@ -1043,6 +1033,17 @@ static void _notify_client_event(int sd, short args, void *cbdata)
                     PMIX_SERVER_QUEUE_REPLY(rc, pr->peer, 0, bfr);
                     if (PMIX_SUCCESS != rc) {
                         PMIX_RELEASE(bfr);
+                    }
+                    if (NULL != cd->targets && 0 < cd->nleft) {
+                        /* track the number of targets we have left to notify */
+                        --cd->nleft;
+                        /* if the event was cached and this is the last one,
+                         * then evict this event from the cache */
+                        if (0 == cd->nleft) {
+                            pmix_hotel_checkout(&pmix_globals.notifications, cd->room);
+                            holdcd = false;
+                            break;
+                        }
                     }
                 }
             }

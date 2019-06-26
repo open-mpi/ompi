@@ -262,7 +262,7 @@ typedef struct {
     TEST_VERBOSE(("%s:%d want to get from %s:%d key %s", my_nspace, my_rank, ns, r, key));                          \
     if (blocking) {                                                                                                 \
         if (PMIX_SUCCESS != (rc = PMIx_Get(&foobar, key, NULL, 0, &val))) {                                         \
-            if( !( rc == PMIX_ERR_NOT_FOUND && ok_notfnd ) ){                                                       \
+            if( !( (rc == PMIX_ERR_NOT_FOUND || rc == PMIX_ERR_PROC_ENTRY_NOT_FOUND) && ok_notfnd ) ){                                                       \
                 TEST_ERROR(("%s:%d: PMIx_Get failed: %d from %s:%d, key %s", my_nspace, my_rank, rc, ns, r, key));  \
             }                                                                                                       \
             rc = PMIX_ERROR;                                                                                        \
@@ -289,7 +289,7 @@ typedef struct {
     }                                                                                                               \
     if (PMIX_SUCCESS == rc) {                                                                                       \
         if( PMIX_SUCCESS != cbdata.status ){                                                                        \
-            if( !( cbdata.status == PMIX_ERR_NOT_FOUND && ok_notfnd ) ){                                                       \
+            if( !( (cbdata.status == PMIX_ERR_NOT_FOUND || cbdata.status == PMIX_ERR_PROC_ENTRY_NOT_FOUND) && ok_notfnd ) ){                                                       \
                 TEST_ERROR(("%s:%d: PMIx_Get_nb failed: %d from %s:%d, key=%s",                                   \
                             my_nspace, my_rank, rc, my_nspace, r));                                                 \
             }                                                                                                       \

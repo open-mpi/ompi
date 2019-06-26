@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
- * Copyright (c) 2015-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -414,12 +414,13 @@ PMIX_EXPORT void pmix_output(int output_id, const char *format, ...) __pmix_attr
  *
  * @see pmix_output_set_verbosity()
  */
-PMIX_EXPORT void pmix_output_verbose(int verbose_level, int output_id,
-                                     const char *format, ...) __pmix_attribute_format__(__printf__, 3, 4);
+#define pmix_output_verbose(verbose_level, output_id, ...) \
+    if (pmix_output_check_verbosity(verbose_level, output_id)) { \
+        pmix_output(output_id, __VA_ARGS__); \
+    }
 
-/**
-* Same as pmix_output_verbose(), but takes a va_list form of varargs.
-*/
+PMIX_EXPORT bool pmix_output_check_verbosity(int verbose_level, int output_id);
+
 PMIX_EXPORT void pmix_output_vverbose(int verbose_level, int output_id,
                                       const char *format, va_list ap) __pmix_attribute_format__(__printf__, 3, 0);
 

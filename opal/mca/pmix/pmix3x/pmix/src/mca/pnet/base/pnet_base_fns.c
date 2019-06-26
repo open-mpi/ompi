@@ -209,7 +209,8 @@ pmix_status_t pmix_pnet_base_setup_fork(const pmix_proc_t *proc, char ***env)
 
     PMIX_LIST_FOREACH(active, &pmix_pnet_globals.actives, pmix_pnet_base_active_module_t) {
         if (NULL != active->module->setup_fork) {
-            if (PMIX_SUCCESS != (rc = active->module->setup_fork(nptr, proc, env))) {
+            rc = active->module->setup_fork(nptr, proc, env);
+            if (PMIX_SUCCESS != rc && PMIX_ERR_NOT_AVAILABLE != rc) {
                 return rc;
             }
         }

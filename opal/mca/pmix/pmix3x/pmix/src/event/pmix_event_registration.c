@@ -78,6 +78,8 @@ PMIX_CLASS_INSTANCE(pmix_rshift_caddy_t,
 
 static void check_cached_events(pmix_rshift_caddy_t *cd);
 
+/* catch the event registration response message from the
+ * server and process it */
 static void regevents_cbfunc(struct pmix_peer_t *peer, pmix_ptl_hdr_t *hdr,
                              pmix_buffer_t *buf, void *cbdata)
 {
@@ -100,7 +102,9 @@ static void regevents_cbfunc(struct pmix_peer_t *peer, pmix_ptl_hdr_t *hdr,
         } else {
             PMIX_ERROR_LOG(ret);
         }
-        /* remove the err handler and call the error handler reg completion callback fn.*/
+        /* remove the err handler and call the error handler
+         * reg completion callback fn so the requestor
+         * doesn't hang */
         if (NULL == rb->list) {
             if (NULL != rb->hdlr) {
                 PMIX_RELEASE(rb->hdlr);
@@ -834,7 +838,7 @@ static void reg_event_hdlr(int sd, short args, void *cbdata)
         cd->evregcbfn(rc, index, cd->cbdata);
     }
 
-    /* check if any matching notifications have been cached */
+    /* check if any matching notifications have been locally cached */
     check_cached_events(cd);
     if (NULL != cd->codes) {
         free(cd->codes);

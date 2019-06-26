@@ -110,6 +110,9 @@ typedef uint8_t pmix_cmd_t;
 /* provide a "pretty-print" function for cmds */
 const char* pmix_command_string(pmix_cmd_t cmd);
 
+/* provide a hook to init tool data */
+PMIX_EXPORT extern pmix_status_t pmix_tool_init_info(void);
+
 /* define a set of flags to direct collection
  * of data during operations */
 typedef enum {
@@ -280,7 +283,7 @@ typedef struct {
     pmix_list_item_t super;
     pmix_event_t ev;
     bool event_active;
-    bool lost_connection;           // tracker went thru lost connection procedure
+    bool host_called;               // tracker has been passed up to host
     bool local;                     // operation is strictly local
     char *id;                       // string identifier for the collective
     pmix_cmd_t type;
