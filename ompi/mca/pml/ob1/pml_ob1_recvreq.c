@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2018 The University of Tennessee and The University
+ * Copyright (c) 2004-2019 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
@@ -313,7 +313,12 @@ static int mca_pml_ob1_recv_request_ack(
             return OMPI_SUCCESS;
     }
 
-    /* let know to shedule function there is no need to put ACK flag */
+    /* let know to shedule function there is no need to put ACK flag. If not all message went over
+     * RDMA then we cancel the GET protocol in order to switch back to send/recv. In this case send
+     * back the remote send request, the peer kept a poointer to the frag locally. In the future we
+     * might want to cancel the fragment itself, in which case we will have to send back the remote
+     * fragment instead of the remote request.
+     */
     recvreq->req_ack_sent = true;
     return mca_pml_ob1_recv_request_ack_send(proc, hdr->hdr_src_req.lval,
                                              recvreq, recvreq->req_send_offset, 0,
@@ -402,6 +407,7 @@ static int mca_pml_ob1_recv_request_put_frag (mca_pml_ob1_rdma_frag_t *frag)
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
     ompi_proc_t* proc = (ompi_proc_t*)recvreq->req_recv.req_base.req_proc;
 #endif
+    mca_btl_base_registration_handle_t *local_handle = NULL;
     mca_bml_base_btl_t *bml_btl = frag->rdma_bml;
     mca_btl_base_descriptor_t *ctl;
     mca_pml_ob1_rdma_hdr_t *hdr;
@@ -409,6 +415,12 @@ static int mca_pml_ob1_recv_request_put_frag (mca_pml_ob1_rdma_frag_t *frag)
     int rc;
 
     reg_size = bml_btl->btl->btl_registration_handle_size;
+
+    if (frag->local_handle) {
+        local_handle = frag->local_handle;
+    } else if (recvreq->local_handle) {
+        local_handle = recvreq->local_handle;
+    }
 
     /* prepare a descriptor for rdma control message */
     mca_bml_base_alloc (bml_btl, &ctl, MCA_BTL_NO_ORDER, sizeof (mca_pml_ob1_rdma_hdr_t) + reg_size,
@@ -423,7 +435,7 @@ static int mca_pml_ob1_recv_request_put_frag (mca_pml_ob1_rdma_frag_t *frag)
     hdr = (mca_pml_ob1_rdma_hdr_t *) ctl->des_segments->seg_addr.pval;
     mca_pml_ob1_rdma_hdr_prepare (hdr, (!recvreq->req_ack_sent) ? MCA_PML_OB1_HDR_TYPE_ACK : 0,
                                   recvreq->remote_req_send.lval, frag, recvreq, frag->rdma_offset,
-                                  frag->local_address, frag->rdma_length, frag->local_handle,
+                                  frag->local_address, frag->rdma_length, local_handle,
                                   reg_size);
     ob1_hdr_hton(hdr, MCA_PML_OB1_HDR_TYPE_PUT, proc);
 
@@ -645,7 +657,6 @@ void mca_pml_ob1_recv_request_progress_rget( mca_pml_ob1_recv_request_t* recvreq
     int rc;
 
     prev_sent = offset = 0;
-    bytes_remaining = hdr->hdr_rndv.hdr_msg_length;
     recvreq->req_recv.req_bytes_packed = hdr->hdr_rndv.hdr_msg_length;
     recvreq->req_send_offset = 0;
     recvreq->req_rdma_offset = 0;

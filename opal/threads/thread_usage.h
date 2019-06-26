@@ -88,6 +88,10 @@ static inline bool opal_set_using_threads(bool have)
 }
 
 
+// Back-ported from master (2019-05-04) as part of
+// a16cf0e4dd6df4dea820fecedd5920df632935b8
+typedef volatile size_t opal_atomic_size_t;
+
 /**
  * Use an atomic operation for increment/decrement if opal_using_threads()
  * indicates that threads are in use by the application or library.
