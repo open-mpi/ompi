@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2015-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2019 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -33,7 +33,6 @@
 #define PMIX_ERR_FATAL                                  (PMIX_INTERNAL_ERR_BASE - 29)
 #define PMIX_ERR_VALUE_OUT_OF_BOUNDS                    (PMIX_INTERNAL_ERR_BASE - 30)
 #define PMIX_ERR_PERM                                   (PMIX_INTERNAL_ERR_BASE - 31)
-#define PMIX_ERR_OPERATION_IN_PROGRESS                  (PMIX_INTERNAL_ERR_BASE - 32)
 #define PMIX_ERR_NETWORK_NOT_PARSEABLE                  (PMIX_INTERNAL_ERR_BASE - 33)
 #define PMIX_ERR_FILE_OPEN_FAILURE                      (PMIX_INTERNAL_ERR_BASE - 34)
 #define PMIX_ERR_FILE_READ_FAILURE                      (PMIX_INTERNAL_ERR_BASE - 35)

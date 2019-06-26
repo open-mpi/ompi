@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2013-2016 Intel, Inc. All rights reserved
+# Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
 # Copyright (c) 2016      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 #
@@ -24,6 +24,7 @@
 
 # Source code files
 headers += \
+        class/pmix_bitmap.h \
         class/pmix_object.h \
         class/pmix_list.h \
         class/pmix_pointer_array.h \
@@ -33,6 +34,7 @@ headers += \
         class/pmix_value_array.h
 
 sources += \
+        class/pmix_bitmap.c \
         class/pmix_object.c \
         class/pmix_list.c \
         class/pmix_pointer_array.c \

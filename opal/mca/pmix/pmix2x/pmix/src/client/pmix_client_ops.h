@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2018 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015-2019 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -24,6 +24,27 @@ typedef struct {
     pmix_peer_t *myserver;          // messaging support to/from my server
     pmix_list_t pending_requests;   // list of pmix_cb_t pending data requests
     pmix_pointer_array_t peers;     // array of pmix_peer_t cached for data ops
+    // verbosity for client get operations
+    int get_output;
+    int get_verbose;
+    // verbosity for client connect operations
+    int connect_output;
+    int connect_verbose;
+    // verbosity for client fence operations
+    int fence_output;
+    int fence_verbose;
+    // verbosity for client pub operations
+    int pub_output;
+    int pub_verbose;
+    // verbosity for client spawn operations
+    int spawn_output;
+    int spawn_verbose;
+    // verbosity for client event operations
+    int event_output;
+    int event_verbose;
+    // verbosity for basic client functions
+    int base_output;
+    int base_verbose;
 } pmix_client_globals_t;
 
 PMIX_EXPORT extern pmix_client_globals_t pmix_client_globals;

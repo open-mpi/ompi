@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, Inc.  All rights reserved.
- * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      Mellanox Technologies, Inc.
@@ -111,6 +111,7 @@ pmix_status_t pmix_bfrops_base_unpack(pmix_pointer_array_t *regtypes,
         }
         if (PMIX_INT32 != local_type) { /* if the length wasn't first, then error */
             *num_vals = 0;
+            PMIX_ERROR_LOG(PMIX_ERR_UNPACK_FAILURE);
             return PMIX_ERR_UNPACK_FAILURE;
         }
     }
@@ -753,26 +754,14 @@ pmix_status_t pmix_bfrops_base_unpack_val(pmix_buffer_t *buffer,
                 return ret;
             }
             break;
-        case PMIX_QUERY:
-            if (PMIX_SUCCESS != (ret = pmix_bfrops_base_unpack_query(buffer, val->data.darray, &m, PMIX_QUERY))) {
+        case PMIX_ALLOC_DIRECTIVE:
+            if (PMIX_SUCCESS != (ret = pmix_bfrops_base_unpack_alloc_directive(buffer, &val->data.adir, &m, PMIX_ALLOC_DIRECTIVE))) {
                 return ret;
             }
             break;
-        /**** DEPRECATED ****/
-        case PMIX_INFO_ARRAY:
-            /* this field is now a pointer, so we must allocate storage for it */
-            val->data.array = (pmix_info_array_t*)malloc(sizeof(pmix_info_array_t));
-            if (NULL == val->data.array) {
-                return PMIX_ERR_NOMEM;
-            }
-            if (PMIX_SUCCESS != (ret = pmix_bfrops_base_unpack_array(buffer, val->data.array, &m, PMIX_INFO_ARRAY))) {
-                return ret;
-            }
-            break;
-            /********************/
         default:
-        pmix_output(0, "UNPACK-PMIX-VALUE: UNSUPPORTED TYPE %d", (int)val->type);
-        return PMIX_ERROR;
+            pmix_output(0, "UNPACK-PMIX-VALUE: UNSUPPORTED TYPE %d", (int)val->type);
+            return PMIX_ERROR;
     }
 
     return PMIX_SUCCESS;
@@ -830,7 +819,7 @@ pmix_status_t pmix_bfrops_base_unpack_info(pmix_buffer_t *buffer, void *dest,
         if (NULL == tmp) {
             return PMIX_ERROR;
         }
-        (void)strncpy(ptr[i].key, tmp, PMIX_MAX_KEYLEN);
+        pmix_strncpy(ptr[i].key, tmp, PMIX_MAX_KEYLEN);
         free(tmp);
         /* unpack the directives */
         m=1;
@@ -884,7 +873,7 @@ pmix_status_t pmix_bfrops_base_unpack_pdata(pmix_buffer_t *buffer, void *dest,
             PMIX_ERROR_LOG(PMIX_ERROR);
             return PMIX_ERROR;
         }
-        (void)strncpy(ptr[i].key, tmp, PMIX_MAX_KEYLEN);
+        pmix_strncpy(ptr[i].key, tmp, PMIX_MAX_KEYLEN);
         free(tmp);
         /* unpack value - since the value structure is statically-defined
          * instead of a pointer in this struct, we directly unpack it to
@@ -976,7 +965,7 @@ pmix_status_t pmix_bfrops_base_unpack_proc(pmix_buffer_t *buffer, void *dest,
             PMIX_ERROR_LOG(PMIX_ERROR);
             return PMIX_ERROR;
         }
-        (void)strncpy(ptr[i].nspace, tmp, PMIX_MAX_NSLEN);
+        pmix_strncpy(ptr[i].nspace, tmp, PMIX_MAX_NSLEN);
         free(tmp);
         /* unpack the rank */
         m=1;
@@ -1104,38 +1093,6 @@ pmix_status_t pmix_bfrops_base_unpack_kval(pmix_buffer_t *buffer, void *dest,
     }
     return PMIX_SUCCESS;
 }
-
-pmix_status_t pmix_bfrops_base_unpack_modex(pmix_buffer_t *buffer, void *dest,
-                                            int32_t *num_vals, pmix_data_type_t type)
-{
-    pmix_modex_data_t *ptr;
-    int32_t i, n, m;
-    pmix_status_t ret;
-
-    pmix_output_verbose(20, pmix_bfrops_base_framework.framework_output,
-                        "pmix_bfrop_unpack: %d modex", *num_vals);
-
-    ptr = (pmix_modex_data_t *) dest;
-    n = *num_vals;
-
-    for (i = 0; i < n; ++i) {
-        memset(&ptr[i], 0, sizeof(pmix_modex_data_t));
-        /* unpack the number of bytes */
-        m=1;
-        if (PMIX_SUCCESS != (ret = pmix_bfrops_base_unpack_sizet(buffer, &ptr[i].size, &m, PMIX_SIZE))) {
-            return ret;
-        }
-        if (0 < ptr[i].size) {
-            ptr[i].blob = (uint8_t*)malloc(ptr[i].size * sizeof(uint8_t));
-            m=ptr[i].size;
-            if (PMIX_SUCCESS != (ret = pmix_bfrops_base_unpack_byte(buffer, ptr[i].blob, &m, PMIX_UINT8))) {
-                return ret;
-            }
-        }
-    }
-    return PMIX_SUCCESS;
-}
-
 
 pmix_status_t pmix_bfrops_base_unpack_persist(pmix_buffer_t *buffer, void *dest,
                                               int32_t *num_vals, pmix_data_type_t type)
@@ -1524,17 +1481,6 @@ pmix_status_t pmix_bfrops_base_unpack_darray(pmix_buffer_t *buffer, void *dest,
                     return ret;
                 }
                 break;
-            /**** DEPRECATED ****/
-            case PMIX_INFO_ARRAY:
-                ptr[i].array = (pmix_info_array_t*)malloc(m * sizeof(pmix_info_array_t));
-                if (NULL == ptr[i].array) {
-                    return PMIX_ERR_NOMEM;
-                }
-                if (PMIX_SUCCESS != (ret = pmix_bfrops_base_unpack_array(buffer, ptr[i].array, &m, ptr[i].type))) {
-                    return ret;
-                }
-                break;
-            /********************/
             default:
                 return PMIX_ERR_NOT_SUPPORTED;
         }
@@ -1601,39 +1547,4 @@ pmix_status_t pmix_bfrops_base_unpack_alloc_directive(pmix_buffer_t *buffer, voi
                                                       int32_t *num_vals, pmix_data_type_t type)
 {
     return pmix_bfrops_base_unpack_byte(buffer, dest, num_vals, PMIX_UINT8);
-}
-
-
-/**** DEPRECATED ****/
-pmix_status_t pmix_bfrops_base_unpack_array(pmix_buffer_t *buffer, void *dest,
-                                            int32_t *num_vals, pmix_data_type_t type)
-{
-    pmix_info_array_t *ptr;
-    int32_t i, n, m;
-    pmix_status_t ret;
-
-    pmix_output_verbose(20, pmix_bfrops_base_framework.framework_output,
-                        "pmix_bfrop_unpack: %d info arrays", *num_vals);
-
-    ptr = (pmix_info_array_t*) dest;
-    n = *num_vals;
-
-    for (i = 0; i < n; ++i) {
-        pmix_output_verbose(20, pmix_bfrops_base_framework.framework_output,
-                            "pmix_bfrop_unpack: init array[%d]", i);
-        memset(&ptr[i], 0, sizeof(pmix_info_array_t));
-        /* unpack the size of this array */
-        m=1;
-        if (PMIX_SUCCESS != (ret = pmix_bfrops_base_unpack_sizet(buffer, &ptr[i].size, &m, PMIX_SIZE))) {
-            return ret;
-        }
-        if (0 < ptr[i].size) {
-            ptr[i].array = (pmix_info_t*)malloc(ptr[i].size * sizeof(pmix_info_t));
-            m=ptr[i].size;
-            if (PMIX_SUCCESS != (ret = pmix_bfrops_base_unpack_value(buffer, ptr[i].array, &m, PMIX_INFO))) {
-                return ret;
-            }
-        }
-    }
-    return PMIX_SUCCESS;
 }

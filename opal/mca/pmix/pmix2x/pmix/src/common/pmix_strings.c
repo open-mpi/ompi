@@ -11,7 +11,9 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2018      Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -139,6 +141,8 @@ PMIX_EXPORT const char* PMIx_Data_range_string(pmix_data_range_t range)
             return "AVAIL TO ANYONE WITH AUTHORIZATION";
         case PMIX_RANGE_CUSTOM:
             return "AVAIL AS SPECIFIED IN DIRECTIVES";
+        case PMIX_RANGE_PROC_LOCAL:
+            return "AVAIL ON LOCAL PROC ONLY";
         default:
             return "UNKNOWN";
     }
@@ -206,6 +210,14 @@ PMIX_EXPORT const char* pmix_command_string(pmix_cmd_t cmd)
             return "DEREGISTER EVENT HANDLER";
         case PMIX_QUERY_CMD:
             return "QUERY";
+        case PMIX_LOG_CMD:
+            return "LOG";
+        case PMIX_ALLOC_CMD:
+            return "ALLOCATE";
+        case PMIX_JOB_CONTROL_CMD:
+            return "JOB CONTROL";
+        case PMIX_MONITOR_CMD:
+            return "MONITOR";
         default:
             return "UNKNOWN";
     }

@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2014-2018 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -31,11 +31,12 @@
 #endif
 #include PMIX_EVENT_HEADER
 
+#include <pmix.h>
 #include <pmix_common.h>
 
 #include "src/class/pmix_hash_table.h"
 #include "src/class/pmix_list.h"
-#include "src/class/pmix_ring_buffer.h"
+#include "src/class/pmix_hotel.h"
 #include "src/event/pmix_event.h"
 #include "src/threads/threads.h"
 
@@ -47,13 +48,19 @@
 BEGIN_C_DECLS
 
 /* some limits */
-#define PMIX_MAX_CRED_SIZE      131072              // set max at 128kbytes
 #define PMIX_MAX_ERR_CONSTANT   INT_MIN
+#define PMIX_MAX_CRED_SIZE      131072              // set max at 128kbytes
 
 /* internal-only attributes */
 #define PMIX_BFROPS_MODULE                  "pmix.bfrops.mod"       // (char*) name of bfrops plugin in-use by a given nspace
 #define PMIX_PNET_SETUP_APP                 "pmix.pnet.setapp"      // (pmix_byte_object_t) blob containing info to be given to
                                                                     //      pnet framework on remote nodes
+
+#define PMIX_INFO_OP_COMPLETE    0x80000000
+#define PMIX_INFO_OP_COMPLETED(m)            \
+    ((pmix_info_t*)(m))->flags |= PMIX_INFO_OP_COMPLETE
+#define PMIX_INFO_OP_IS_COMPLETE(m)          \
+    ((m)->flags & PMIX_INFO_OP_COMPLETE)
 
 /* define an internal-only process name that has
  * a dynamically-sized nspace field to save memory */
@@ -75,26 +82,26 @@ PMIX_CLASS_DECLARATION(pmix_namelist_t);
 typedef uint8_t pmix_cmd_t;
 
 /* define some commands */
-#define PMIX_REQ_CMD             0
-#define PMIX_ABORT_CMD           1
-#define PMIX_COMMIT_CMD          2
-#define PMIX_FENCENB_CMD         3
-#define PMIX_GETNB_CMD           4
-#define PMIX_FINALIZE_CMD        5
-#define PMIX_PUBLISHNB_CMD       6
-#define PMIX_LOOKUPNB_CMD        7
-#define PMIX_UNPUBLISHNB_CMD     8
-#define PMIX_SPAWNNB_CMD         9
-#define PMIX_CONNECTNB_CMD      10
-#define PMIX_DISCONNECTNB_CMD   11
-#define PMIX_NOTIFY_CMD         12
-#define PMIX_REGEVENTS_CMD      13
-#define PMIX_DEREGEVENTS_CMD    14
-#define PMIX_QUERY_CMD          15
-#define PMIX_LOG_CMD            16
-#define PMIX_ALLOC_CMD          17
-#define PMIX_JOB_CONTROL_CMD    18
-#define PMIX_MONITOR_CMD        19
+#define PMIX_REQ_CMD                 0
+#define PMIX_ABORT_CMD               1
+#define PMIX_COMMIT_CMD              2
+#define PMIX_FENCENB_CMD             3
+#define PMIX_GETNB_CMD               4
+#define PMIX_FINALIZE_CMD            5
+#define PMIX_PUBLISHNB_CMD           6
+#define PMIX_LOOKUPNB_CMD            7
+#define PMIX_UNPUBLISHNB_CMD         8
+#define PMIX_SPAWNNB_CMD             9
+#define PMIX_CONNECTNB_CMD          10
+#define PMIX_DISCONNECTNB_CMD       11
+#define PMIX_NOTIFY_CMD             12
+#define PMIX_REGEVENTS_CMD          13
+#define PMIX_DEREGEVENTS_CMD        14
+#define PMIX_QUERY_CMD              15
+#define PMIX_LOG_CMD                16
+#define PMIX_ALLOC_CMD              17
+#define PMIX_JOB_CONTROL_CMD        18
+#define PMIX_MONITOR_CMD            19
 
 /* provide a "pretty-print" function for cmds */
 const char* pmix_command_string(pmix_cmd_t cmd);
@@ -123,6 +130,29 @@ typedef struct pmix_personality_t {
     pmix_gds_base_module_t *gds;
 } pmix_personality_t;
 
+/* define a set of structs for tracking post-termination cleanup */
+typedef struct pmix_epilog_t {
+    uid_t uid;
+    gid_t gid;
+    pmix_list_t cleanup_dirs;
+    pmix_list_t cleanup_files;
+    pmix_list_t ignores;
+} pmix_epilog_t;
+
+typedef struct {
+    pmix_list_item_t super;
+    char *path;
+} pmix_cleanup_file_t;
+PMIX_CLASS_DECLARATION(pmix_cleanup_file_t);
+
+typedef struct {
+    pmix_list_item_t super;
+    char *path;
+    bool recurse;
+    bool leave_topdir;
+} pmix_cleanup_dir_t;
+PMIX_CLASS_DECLARATION(pmix_cleanup_dir_t);
+
 /* objects used by servers for tracking active nspaces */
 typedef struct {
     pmix_list_item_t super;
@@ -133,20 +163,25 @@ typedef struct {
     bool version_stored;         // the version string used by this nspace has been stored
     pmix_buffer_t *jobbkt;       // packed version of jobinfo
     size_t ndelivered;           // count of #local clients that have received the jobinfo
+    size_t nfinalized;           // count of #local clients that have finalized
     pmix_list_t ranks;           // list of pmix_rank_info_t for connection support of my clients
     /* all members of an nspace are required to have the
      * same personality, but it can differ between nspaces.
      * Since servers may support clients from multiple nspaces,
      * track their respective compatibility modules here */
     pmix_personality_t compat;
-} pmix_nspace_t;
-PMIX_CLASS_DECLARATION(pmix_nspace_t);
+    pmix_epilog_t epilog;       // things to do upon termination of all local clients
+                                // from this nspace
+    pmix_list_t setup_data;     // list of pmix_kval_t containing info structs having blobs
+                                // for setting up the local node for this nspace/application
+} pmix_namespace_t;
+PMIX_CLASS_DECLARATION(pmix_namespace_t);
 
-/* define a caddy for quickly creating a list of pmix_nspace_t
+/* define a caddy for quickly creating a list of pmix_namespace_t
  * objects for local, dedicated purposes */
 typedef struct {
     pmix_list_item_t super;
-    pmix_nspace_t *ns;
+    pmix_namespace_t *ns;
 } pmix_nspace_caddy_t;
 PMIX_CLASS_DECLARATION(pmix_nspace_caddy_t);
 
@@ -162,6 +197,17 @@ typedef struct pmix_rank_info_t {
 } pmix_rank_info_t;
 PMIX_CLASS_DECLARATION(pmix_rank_info_t);
 
+
+/* define a very simple caddy for dealing with pmix_info_t
+ * objects when transferring portions of arrays */
+typedef struct {
+    pmix_list_item_t super;
+    pmix_info_t *info;
+    size_t ninfo;
+} pmix_info_caddy_t;
+PMIX_CLASS_DECLARATION(pmix_info_caddy_t);
+
+
 /* object for tracking peers - each peer can have multiple
  * connections. This can occur if the initial app executes
  * a fork/exec, and the child initiates its own connection
@@ -169,9 +215,10 @@ PMIX_CLASS_DECLARATION(pmix_rank_info_t);
  * by the socket, not the process nspace/rank */
 typedef struct pmix_peer_t {
     pmix_object_t super;
-    pmix_nspace_t *nptr;            // point to the nspace object for this process
+    pmix_namespace_t *nptr;            // point to the nspace object for this process
     pmix_rank_info_t *info;
     pmix_proc_type_t proc_type;
+    pmix_listener_protocol_t protocol;
     int proc_cnt;
     int index;                      // index into the local clients array on the server
     int sd;
@@ -184,19 +231,11 @@ typedef struct pmix_peer_t {
     pmix_ptl_send_t *send_msg;      /**< current send in progress */
     pmix_ptl_recv_t *recv_msg;      /**< current recv in progress */
     int commit_cnt;
+    pmix_epilog_t epilog;           /**< things to be performed upon
+                                         termination of this peer */
 } pmix_peer_t;
 PMIX_CLASS_DECLARATION(pmix_peer_t);
 
-
-/* define an object for moving a send
- * request into the server's event base
- * - instanced in pmix_server_ops.c */
-typedef struct {
-    pmix_list_item_t super;
-    pmix_ptl_hdr_t hdr;
-    pmix_peer_t *peer;
-} pmix_server_caddy_t;
-PMIX_CLASS_DECLARATION(pmix_server_caddy_t);
 
 /* caddy for query requests */
 typedef struct {
@@ -210,6 +249,7 @@ typedef struct {
     size_t ntargets;
     pmix_info_t *info;
     size_t ninfo;
+    pmix_byte_object_t bo;
     pmix_info_cbfunc_t cbfunc;
     pmix_value_cbfunc_t valcbfunc;
     pmix_release_cbfunc_t relcbfunc;
@@ -221,7 +261,13 @@ PMIX_CLASS_DECLARATION(pmix_query_caddy_t);
  * - instanced in pmix_server_ops.c */
 typedef struct {
     pmix_list_item_t super;
+    pmix_event_t ev;
+    bool event_active;
+    bool host_called;               // tracker has been passed up to host
+    bool local;                     // operation is strictly local
+    char *id;                       // string identifier for the collective
     pmix_cmd_t type;
+    pmix_proc_t pname;
     bool hybrid;                    // true if participating procs are from more than one nspace
     pmix_proc_t *pcs;               // copy of the original array of participants
     size_t   npcs;                  // number of procs in the array
@@ -237,8 +283,23 @@ typedef struct {
     pmix_collect_t collect_type;    // whether or not data is to be returned at completion
     pmix_modex_cbfunc_t modexcbfunc;
     pmix_op_cbfunc_t op_cbfunc;
+    void *cbdata;
 } pmix_server_trkr_t;
 PMIX_CLASS_DECLARATION(pmix_server_trkr_t);
+
+/* define an object for moving a send
+ * request into the server's event base and
+ * dealing with some request timeouts
+ * - instanced in pmix_server_ops.c */
+typedef struct {
+    pmix_list_item_t super;
+    pmix_event_t ev;
+    bool event_active;
+    pmix_server_trkr_t *trk;
+    pmix_ptl_hdr_t hdr;
+    pmix_peer_t *peer;
+} pmix_server_caddy_t;
+PMIX_CLASS_DECLARATION(pmix_server_caddy_t);
 
 /****    THREAD-RELATED    ****/
  /* define a caddy for thread-shifting operations */
@@ -265,9 +326,9 @@ PMIX_CLASS_DECLARATION(pmix_server_trkr_t);
     bool enviro;
     union {
        pmix_release_cbfunc_t relfn;
-       pmix_evhdlr_reg_cbfunc_t evregcbfn;
+       pmix_evhdlr_reg_cbfunc_t hdlrregcbfn;
        pmix_op_cbfunc_t opcbfn;
-       pmix_evhdlr_reg_cbfunc_t errregcbfn;
+       pmix_modex_cbfunc_t modexcbfunc;
     } cbfunc;
     void *cbdata;
     size_t ref;
@@ -290,7 +351,7 @@ typedef struct {
         pmix_value_cbfunc_t valuefn;
         pmix_lookup_cbfunc_t lookupfn;
         pmix_spawn_cbfunc_t spawnfn;
-        pmix_evhdlr_reg_cbfunc_t errregfn;
+        pmix_evhdlr_reg_cbfunc_t hdlrregfn;
     } cbfunc;
     size_t errhandler_ref;
     void *cbdata;
@@ -309,14 +370,6 @@ typedef struct {
 } pmix_cb_t;
 PMIX_CLASS_DECLARATION(pmix_cb_t);
 
-/* define a very simple caddy for dealing with pmix_info_t
- * objects when transferring portions of arrays */
-typedef struct {
-    pmix_list_item_t super;
-    pmix_info_t *info;
-} pmix_info_caddy_t;
-PMIX_CLASS_DECLARATION(pmix_info_caddy_t);
-
 #define PMIX_THREADSHIFT(r, c)                              \
  do {                                                       \
     pmix_event_assign(&((r)->ev), pmix_globals.evbase,      \
@@ -326,18 +379,15 @@ PMIX_CLASS_DECLARATION(pmix_info_caddy_t);
 } while (0)
 
 
-#define PMIX_WAIT_FOR_COMPLETION(a)             \
-    do {                                        \
-        while ((a)) {                           \
-            usleep(10);                         \
-        }                                       \
-        PMIX_ACQUIRE_OBJECT((a));               \
-    } while (0)
-
 typedef struct {
     pmix_object_t super;
     pmix_event_t ev;
     pmix_lock_t lock;
+    /* timestamp receipt of the notification so we
+     * can evict the oldest one if we get overwhelmed */
+    time_t ts;
+    /* what room of the hotel they are in */
+    int room;
     pmix_status_t status;
     pmix_proc_t source;
     pmix_data_range_t range;
@@ -347,6 +397,7 @@ typedef struct {
      */
     pmix_proc_t *targets;
     size_t ntargets;
+    size_t nleft;   // number of targets left to be notified
     /* When generating a notification, the originator can
      * specify the range of procs affected by this event.
      * For example, when creating a JOB_TERMINATED event,
@@ -382,6 +433,8 @@ typedef struct {
     pmix_peer_t *mypeer;                // my own peer object
     uid_t uid;                          // my effective uid
     gid_t gid;                          // my effective gid
+    char *hostname;                     // my hostname
+    uint32_t nodeid;                    // my nodeid, if given
     int pindex;
     pmix_event_base_t *evbase;
     bool external_evbase;
@@ -391,7 +444,9 @@ typedef struct {
     bool commits_pending;
     struct timeval event_window;
     pmix_list_t cached_events;          // events waiting in the window prior to processing
-    pmix_ring_buffer_t notifications;   // ring buffer of pending notifications
+    int max_events;                     // size of the notifications hotel
+    int event_eviction_time;            // max time to cache notifications
+    pmix_hotel_t notifications;         // hotel of pending notifications
     /* processes also need a place where they can store
      * their own internal data - e.g., data provided by
      * the user via the store_internal interface, as well
@@ -401,6 +456,8 @@ typedef struct {
     pmix_gds_base_module_t *mygds;
 } pmix_globals_t;
 
+/* provide access to a function to cleanup epilogs */
+PMIX_EXPORT void pmix_execute_epilog(pmix_epilog_t *ep);
 
 PMIX_EXPORT extern pmix_globals_t pmix_globals;
 PMIX_EXPORT extern pmix_lock_t pmix_global_lock;

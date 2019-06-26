@@ -19,9 +19,9 @@
 # Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
 # Copyright (c) 2013      Mellanox Technologies, Inc.
 #                         All rights reserved.
-# Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
+# Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
 # Copyright (c) 2016      IBM Corporation.  All rights reserved.
-# Copyright (c) 2016      Research Organization for Information Science
+# Copyright (c) 2016-2018 Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
@@ -44,12 +44,28 @@ m4_include([config/autogen_found_items.m4])
 
 AC_INIT([pmix],
         [m4_normalize(esyscmd([config/pmix_get_version.sh VERSION --tarball]))],
-        [http://pmix.github.io/master], [pmix])
+        [https://github.com/pmix/pmix/issues], [pmix])
 AC_PREREQ(2.69)
 AC_CONFIG_AUX_DIR(./config)
 # Note that this directory must *exactly* match what was specified via
 # -I in ACLOCAL_AMFLAGS in the top-level Makefile.am.
 AC_CONFIG_MACRO_DIR(./config)
+
+# autotools expects to perform tests without interference
+# from user-provided CFLAGS, particularly -Werror flags.
+# Search for them here and cache any we find
+PMIX_CFLAGS_cache=
+PMIX_CFLAGS_pass=
+for val in $CFLAGS; do
+    if echo "$val" | grep -q -e "-W"; then
+        PMIX_CFLAGS_cache="$PMIX_CFLAGS_cache $val";
+    else
+        PMIX_CFLAGS_pass="$PMIX_CFLAGS_pass $val";
+    fi
+done
+CFLAGS=$PMIX_CFLAGS_pass
+
+PMIX_CAPTURE_CONFIGURE_CLI([PMIX_CONFIGURE_CLI])
 
 # Get our platform support file.  This has to be done very, very early
 # because it twiddles random bits of autoconf
@@ -57,10 +73,12 @@ PMIX_LOAD_PLATFORM
 
 PMIX_TOP_BUILDDIR="`pwd`"
 AC_SUBST(PMIX_TOP_BUILDDIR)
+top_buildir=`pwd`
 cd "$srcdir"
 PMIX_TOP_SRCDIR="`pwd`"
 AC_SUBST(PMIX_TOP_SRCDIR)
 cd "$PMIX_TOP_BUILDDIR"
+top_srcdir=`pwd`
 
 AC_MSG_NOTICE([builddir: $PMIX_TOP_BUILDDIR])
 AC_MSG_NOTICE([srcdir: $PMIX_TOP_SRCDIR])
@@ -153,6 +171,9 @@ LT_PREREQ([2.2.6])
 
 pmix_enable_shared="$enable_shared"
 pmix_enable_static="$enable_static"
+AS_IF([test ! -z "$enable_static" && test "$enable_static" == "yes"],
+      [CFLAGS="$CFLAGS -fPIC"])
+
 AM_ENABLE_SHARED
 AM_DISABLE_STATIC
 
@@ -164,6 +185,10 @@ AM_PROG_LEX
 ############################################################################
 # Configuration options
 ############################################################################
+
+# Set the MCA prefix
+PMIX_SET_MCA_PREFIX([PMIX_MCA_])
+PMIX_SET_MCA_CMD_LINE_ID([pmca])
 
 # Define PMIx configure arguments
 PMIX_DEFINE_ARGS
@@ -197,9 +222,17 @@ AS_IF([test -z "$CC_FOR_BUILD"],[
     AC_SUBST([CC_FOR_BUILD], [$CC])
 ])
 
-PMIX_SETUP_CC
+# restore any user-provided Werror flags
+AS_IF([test ! -z "$PMIX_CFLAGS_cache"], [CFLAGS="$CFLAGS $PMIX_CFLAGS_cache"])
+
+# Delay setting pickyness until here so we
+# don't break configure code tests
+#if test "$WANT_PICKY_COMPILER" = "1"; then
+#    CFLAGS="$CFLAGS -Wall -Wextra -Werror"
+#fi
 
 # Cleanup duplicate flags
+PMIX_FLAGS_UNIQ(CFLAGS)
 PMIX_FLAGS_UNIQ(CPPFLAGS)
 PMIX_FLAGS_UNIQ(LDFLAGS)
 PMIX_FLAGS_UNIQ(LIBS)
@@ -239,13 +272,15 @@ AC_SUBST([CONFIGURE_DEPENDENCIES], ['$(top_srcdir)/VERSION'])
 AC_SUBST([libpmix_so_version])
 AC_SUBST([libpmi_so_version])
 AC_SUBST([libpmi2_so_version])
+AC_SUBST([libmca_common_dstore_so_version])
 
 AC_CONFIG_FILES(pmix_config_prefix[contrib/Makefile]
                 pmix_config_prefix[examples/Makefile]
-                pmix_config_prefix[man/Makefile]
                 pmix_config_prefix[test/Makefile]
                 pmix_config_prefix[test/simple/Makefile])
 
 pmix_show_title "Configuration complete"
 
 AC_OUTPUT
+
+PMIX_SUMMARY_PRINT

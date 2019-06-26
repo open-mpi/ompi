@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, Inc.  All rights reserved.
- * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -205,7 +205,6 @@ PMIX_EXPORT extern pmix_bfrops_globals_t pmix_bfrops_globals;
         free(tmpbuf);                                                       \
     } while (0)
 
-
 /**
  * Internal struct used for holding registered bfrop functions
  */
@@ -268,7 +267,7 @@ PMIX_EXPORT pmix_status_t pmix_bfrops_stub_copy_payload(struct pmix_peer_t *peer
                                                         pmix_buffer_t *src);
 PMIX_EXPORT pmix_status_t pmix_bfrops_stub_value_xfer(struct pmix_peer_t *peer,
                                                       pmix_value_t *dest,
-                                                      pmix_value_t *src);
+                                                      const pmix_value_t *src);
 PMIX_EXPORT void pmix_bfrops_stub_value_load(struct pmix_peer_t *peer,
                                              pmix_value_t *v, void *data,
                                              pmix_data_type_t type);
@@ -488,9 +487,6 @@ PMIX_EXPORT pmix_status_t pmix_bfrops_base_copy_string(char **dest, char *src,
 PMIX_EXPORT pmix_status_t pmix_bfrops_base_copy_value(pmix_value_t **dest,
                                                       pmix_value_t *src,
                                                       pmix_data_type_t type);
-PMIX_EXPORT pmix_status_t pmix_bfrops_base_copy_array(pmix_info_array_t **dest,
-                                                      pmix_info_array_t *src,
-                                                      pmix_data_type_t type);
 PMIX_EXPORT pmix_status_t pmix_bfrops_base_copy_proc(pmix_proc_t **dest,
                                                      pmix_proc_t *src,
                                                      pmix_data_type_t type);
@@ -506,9 +502,6 @@ PMIX_EXPORT pmix_status_t pmix_bfrops_base_copy_buf(pmix_buffer_t **dest,
 PMIX_EXPORT pmix_status_t pmix_bfrops_base_copy_kval(pmix_kval_t **dest,
                                                      pmix_kval_t *src,
                                                      pmix_data_type_t type);
-PMIX_EXPORT pmix_status_t pmix_bfrops_base_copy_modex(pmix_modex_data_t **dest,
-                                                      pmix_modex_data_t *src,
-                                                      pmix_data_type_t type);
 PMIX_EXPORT pmix_status_t pmix_bfrop_base_copy_persist(pmix_persistence_t **dest,
                                                        pmix_persistence_t *src,
                                                        pmix_data_type_t type);
@@ -526,10 +519,6 @@ PMIX_EXPORT pmix_status_t pmix_bfrops_base_copy_darray(pmix_data_array_t **dest,
                                                        pmix_data_type_t type);
 PMIX_EXPORT pmix_status_t pmix_bfrops_base_copy_query(pmix_query_t **dest,
                                                       pmix_query_t *src,
-                                                      pmix_data_type_t type);
-/**** DEPRECATED ****/
-PMIX_EXPORT pmix_status_t pmix_bfrops_base_copy_array(pmix_info_array_t **dest,
-                                                      pmix_info_array_t *src,
                                                       pmix_data_type_t type);
 
 /*
@@ -585,8 +574,6 @@ PMIX_EXPORT pmix_status_t pmix_bfrops_base_print_status(char **output, char *pre
 
 PMIX_EXPORT pmix_status_t pmix_bfrops_base_print_value(char **output, char *prefix,
                                                        pmix_value_t *src, pmix_data_type_t type);
-PMIX_EXPORT pmix_status_t pmix_bfrops_base_print_array(char **output, char *prefix,
-                                                       pmix_info_array_t *src, pmix_data_type_t type);
 PMIX_EXPORT pmix_status_t pmix_bfrops_base_print_proc(char **output, char *prefix,
                                                       pmix_proc_t *src, pmix_data_type_t type);
 PMIX_EXPORT pmix_status_t pmix_bfrops_base_print_app(char **output, char *prefix,
@@ -597,8 +584,6 @@ PMIX_EXPORT pmix_status_t pmix_bfrops_base_print_buf(char **output, char *prefix
                                                      pmix_buffer_t *src, pmix_data_type_t type);
 PMIX_EXPORT pmix_status_t pmix_bfrops_base_print_kval(char **output, char *prefix,
                                                       pmix_kval_t *src, pmix_data_type_t type);
-PMIX_EXPORT pmix_status_t pmix_bfrops_base_print_modex(char **output, char *prefix,
-                                                       pmix_modex_data_t *src, pmix_data_type_t type);
 PMIX_EXPORT pmix_status_t pmix_bfrops_base_print_persist(char **output, char *prefix,
                                                          pmix_persistence_t *src, pmix_data_type_t type);
 PMIX_EXPORT pmix_status_t pmix_bfrops_base_print_bo(char **output, char *prefix,
@@ -661,7 +646,7 @@ PMIX_EXPORT pmix_status_t pmix_bfrops_base_value_unload(pmix_value_t *kv,
                                                         size_t *sz);
 
 PMIX_EXPORT pmix_status_t pmix_bfrops_base_value_xfer(pmix_value_t *p,
-                                                      pmix_value_t *src);
+                                                      const pmix_value_t *src);
 
 PMIX_EXPORT pmix_value_cmp_t pmix_bfrops_base_value_cmp(pmix_value_t *p,
                                                         pmix_value_t *p1);

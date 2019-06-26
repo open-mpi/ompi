@@ -2,7 +2,7 @@
 /*
  * Copyright (c) 2006-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2016-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2016-2019 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -54,7 +54,7 @@ struct pmix_pinstall_dirs_t {
 typedef struct pmix_pinstall_dirs_t pmix_pinstall_dirs_t;
 
 /* Install directories.  Only available after pmix_init() */
-extern pmix_pinstall_dirs_t pmix_pinstall_dirs;
+PMIX_EXPORT extern pmix_pinstall_dirs_t pmix_pinstall_dirs;
 
 /**
  * Expand out path variables (such as ${prefix}) in the input string

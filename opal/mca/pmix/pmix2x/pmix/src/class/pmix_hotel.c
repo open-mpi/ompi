@@ -2,7 +2,7 @@
 /*
  * Copyright (c) 2012-2016 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC. All rights reserved
- * Copyright (c) 2015-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2019 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -44,11 +44,10 @@ static void local_eviction_callback(int fd, short flags, void *arg)
 }
 
 
-int pmix_hotel_init(pmix_hotel_t *h, int num_rooms,
-                    pmix_event_base_t *evbase,
-                    uint32_t eviction_timeout,
-                    int eviction_event_priority,
-                    pmix_hotel_eviction_callback_fn_t evict_callback_fn)
+pmix_status_t pmix_hotel_init(pmix_hotel_t *h, int num_rooms,
+                              pmix_event_base_t *evbase,
+                              uint32_t eviction_timeout,
+                              pmix_hotel_eviction_callback_fn_t evict_callback_fn)
 {
     int i;
 

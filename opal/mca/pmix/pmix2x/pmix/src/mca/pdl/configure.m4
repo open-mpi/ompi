@@ -1,8 +1,8 @@
 dnl -*- shell-script -*-
 dnl
 dnl Copyright (c) 2010-2015 Cisco Systems, Inc.  All rights reserved.
-dnl Copyright (c) 2016-2017 Intel, Inc. All rights reserved.
-dnl Copyright (c) 2016      Research Organization for Information Science
+dnl Copyright (c) 2016-2019 Intel, Inc.  All rights reserved.
+dnl Copyright (c) 2016-2019 Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
 dnl $COPYRIGHT$
 dnl
@@ -27,7 +27,7 @@ AC_DEFUN([MCA_pmix_pdl_CONFIG],[
     # (we still need to configure them all so that things like "make
     # dist" work", but we just want the MCA system to (artificially)
     # conclude that it can't build any of the components.
-    AS_IF([test "$enable_dlopen" = "no"],
+    AS_IF([test $PMIX_ENABLE_DLOPEN_SUPPORT -eq 0],
           [want_pdl=0], [want_pdl=1])
 
     MCA_CONFIGURE_FRAMEWORK([pdl], [$want_pdl])
@@ -35,7 +35,7 @@ AC_DEFUN([MCA_pmix_pdl_CONFIG],[
     # If we found no suitable static pdl component and dlopen support
     # was not specifically disabled, this is an error.
     AS_IF([test "$MCA_pmix_pdl_STATIC_COMPONENTS" = "" && \
-           test "$enable_dlopen" != "no"],
+           test $PMIX_ENABLE_DLOPEN_SUPPORT -eq 1],
           [AC_MSG_WARN([Did not find a suitable static pmix pdl component])
            AC_MSG_WARN([You might need to install libltld (and its headers) or])
            AC_MSG_WARN([specify --disable-dlopen to configure.])

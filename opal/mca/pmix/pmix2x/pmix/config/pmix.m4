@@ -17,9 +17,9 @@ dnl Copyright (c) 2009      Los Alamos National Security, LLC.  All rights
 dnl                         reserved.
 dnl Copyright (c) 2009-2011 Oak Ridge National Labs.  All rights reserved.
 dnl Copyright (c) 2011-2013 NVIDIA Corporation.  All rights reserved.
-dnl Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
-dnl Copyright (c) 2015-2017 Research Organization for Information Science
-dnl                         and Technology (RIST). All rights reserved.
+dnl Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
+dnl Copyright (c) 2015-2019 Research Organization for Information Science
+dnl                         and Technology (RIST).  All rights reserved.
 dnl Copyright (c) 2016      Mellanox Technologies, Inc.
 dnl                         All rights reserved.
 dnl
@@ -120,10 +120,30 @@ AC_DEFUN([PMIX_SETUP_CORE],[
     pmixmajor=${PMIX_MAJOR_VERSION}L
     pmixminor=${PMIX_MINOR_VERSION}L
     pmixrelease=${PMIX_RELEASE_VERSION}L
+    pmixnumeric=$(printf 0x%4.4x%2.2x%2.2x $PMIX_MAJOR_VERSION $PMIX_MINOR_VERSION $PMIX_RELEASE_VERSION)
     AC_SUBST(pmixmajor)
     AC_SUBST(pmixminor)
     AC_SUBST(pmixrelease)
+    AC_SUBST(pmixnumeric)
     AC_CONFIG_FILES(pmix_config_prefix[include/pmix_version.h])
+
+    PMIX_GREEK_VERSION="`$PMIX_top_srcdir/config/pmix_get_version.sh $PMIX_top_srcdir/VERSION --greek`"
+    if test "$?" != "0"; then
+        AC_MSG_ERROR([Cannot continue])
+    fi
+    AC_SUBST(PMIX_GREEK_VERSION)
+
+    PMIX_REPO_REV="`$PMIX_top_srcdir/config/pmix_get_version.sh $PMIX_top_srcdir/VERSION --repo-rev`"
+    if test "$?" != "0"; then
+        AC_MSG_ERROR([Cannot continue])
+    fi
+    AC_SUBST(PMIX_REPO_REV)
+
+    PMIX_RELEASE_DATE="`$PMIX_top_srcdir/config/pmix_get_version.sh $PMIX_top_srcdir/VERSION --release-date`"
+    if test "$?" != "0"; then
+        AC_MSG_ERROR([Cannot continue])
+    fi
+    AC_SUBST(PMIX_RELEASE_DATE)
 
     # Debug mode?
     AC_MSG_CHECKING([if want pmix maintainer support])
@@ -171,11 +191,50 @@ AC_DEFUN([PMIX_SETUP_CORE],[
                                [Link the output PMIx library to this extra lib (used in embedded mode)]))
     AC_MSG_CHECKING([for extra lib])
     AS_IF([test ! -z "$with_pmix_extra_lib"],
-          [AC_MSG_RESULT([$with_pmix_extra_lib])
-           PMIX_EXTRA_LIB=$with_pmix_extra_lib],
+          [AS_IF([test "$with_pmix_extra_lib" == "yes" || test "$with_pmix_extra_lib" == "no"],
+                 [AC_MSG_RESULT([ERROR])
+                  AC_MSG_WARN([Invalid value for --with-extra-pmix-lib:])
+                  AC_MSG_WARN([    $with_pmix_extra_lib])
+                  AC_MSG_WARN([Must be path name of the library to add])
+                  AC_MSG_ERROR([Cannot continue])],
+                 [AC_MSG_RESULT([$with_pmix_extra_lib])
+                  PMIX_EXTRA_LIB=$with_pmix_extra_lib])],
           [AC_MSG_RESULT([no])
            PMIX_EXTRA_LIB=])
     AC_SUBST(PMIX_EXTRA_LIB)
+
+    # Add any extra libtool lib?
+    AC_ARG_WITH([pmix-extra-ltlib],
+                AC_HELP_STRING([--with-pmix-extra-ltlib=LIB],
+                               [Link any embedded components/tools that require it to the provided libtool lib (used in embedded mode)]))
+    AC_MSG_CHECKING([for extra ltlib])
+    AS_IF([test ! -z "$with_pmix_extra_ltlib"],
+          [AS_IF([test "$with_pmix_extra_ltlib" == "yes" || test "$with_pmix_extra_ltlib" == "no"],
+                 [AC_MSG_RESULT([ERROR])
+                  AC_MSG_WARN([Invalid value for --with-pmix-extra-ltlib:])
+                  AC_MSG_WARN([    $with_pmix_extra_ltlib])
+                  AC_MSG_WARN([Must be path name of the library to add])
+                  AC_MSG_ERROR([Cannot continue])],
+                 [AC_MSG_RESULT([$with_pmix_extra_ltlib])
+                  PMIX_EXTRA_LTLIB=$with_pmix_extra_ltlib])],
+          [AC_MSG_RESULT([no])
+           PMIX_EXTRA_LTLIB=])
+    AC_SUBST(PMIX_EXTRA_LTLIB)
+
+    #
+    # Package/brand string
+    #
+    AC_MSG_CHECKING([if want package/brand string])
+    AC_ARG_WITH([pmix-package-string],
+         [AC_HELP_STRING([--with-pmix-package-string=STRING],
+                         [Use a branding string throughout PMIx])])
+    if test "$with_pmix_package_string" = "" || test "$with_pmix_package_string" = "no"; then
+        with_package_string="PMIx $PMIX_CONFIGURE_USER@$PMIX_CONFIGURE_HOST Distribution"
+    fi
+    AC_DEFINE_UNQUOTED([PMIX_PACKAGE_STRING], ["$with_package_string"],
+         [package/branding string for PMIx])
+    AC_MSG_RESULT([$with_package_string])
+
 
     # GCC specifics.
     if test "x$GCC" = "xyes"; then
@@ -358,7 +417,8 @@ AC_DEFUN([PMIX_SETUP_CORE],[
                       crt_externs.h signal.h \
                       ioLib.h sockLib.h hostLib.h limits.h \
                       sys/statfs.h sys/statvfs.h \
-                      netdb.h ucred.h zlib.h])
+                      netdb.h ucred.h zlib.h sys/auxv.h \
+                      sys/sysctl.h])
 
     AC_CHECK_HEADERS([sys/mount.h], [], [],
                      [AC_INCLUDES_DEFAULT
@@ -587,6 +647,11 @@ AC_DEFUN([PMIX_SETUP_CORE],[
 
     pmix_show_title "Library and Function tests"
 
+    # Darwin doesn't need -lutil, as it's something other than this -lutil.
+    PMIX_SEARCH_LIBS_CORE([openpty], [util])
+
+    PMIX_SEARCH_LIBS_CORE([gethostbyname], [nsl])
+
     PMIX_SEARCH_LIBS_CORE([socket], [socket])
 
     # IRIX and CentOS have dirname in -lgen, usually in libc
@@ -595,7 +660,10 @@ AC_DEFUN([PMIX_SETUP_CORE],[
     # Darwin doesn't need -lm, as it's a symlink to libSystem.dylib
     PMIX_SEARCH_LIBS_CORE([ceil], [m])
 
-    AC_CHECK_FUNCS([asprintf snprintf vasprintf vsnprintf strsignal socketpair strncpy_s usleep statfs statvfs getpeereid getpeerucred strnlen posix_fallocate])
+    # -lrt might be needed for clock_gettime
+    PMIX_SEARCH_LIBS_CORE([clock_gettime], [rt])
+
+    AC_CHECK_FUNCS([asprintf snprintf vasprintf vsnprintf strsignal socketpair strncpy_s usleep statfs statvfs getpeereid getpeerucred strnlen posix_fallocate tcgetpgrp])
 
     # On some hosts, htonl is a define, so the AC_CHECK_FUNC will get
     # confused.  On others, it's in the standard library, but stubbed with
@@ -621,10 +689,6 @@ AC_DEFUN([PMIX_SETUP_CORE],[
     AS_IF([test "$pmix_cv_htonl_define" = "yes" || test "$pmix_have_htonl" = "yes"],
           [AC_DEFINE_UNQUOTED([HAVE_UNIX_BYTESWAP], [1],
                               [whether unix byteswap routines -- htonl, htons, nothl, ntohs -- are available])])
-
-    # check pandoc separately so we can setup an AM_CONDITIONAL off it
-    AC_CHECK_PROG([pmix_have_pandoc], [pandoc], [yes], [no])
-    AM_CONDITIONAL([PMIX_HAVE_PANDOC], [test "x$pmix_have_pandoc" = "xyes"])
 
     #
     # Make sure we can copy va_lists (need check declared, not linkable)
@@ -661,8 +725,6 @@ AC_DEFUN([PMIX_SETUP_CORE],[
 
     CFLAGS="$CFLAGS $THREAD_CFLAGS"
     CPPFLAGS="$CPPFLAGS $THREAD_CPPFLAGS"
-    CXXFLAGS="$CXXFLAGS $THREAD_CXXFLAGS"
-    CXXCPPFLAGS="$CXXCPPFLAGS $THREAD_CXXCPPFLAGS"
     LDFLAGS="$LDFLAGS $THREAD_LDFLAGS"
     LIBS="$LIBS $THREAD_LIBS"
 
@@ -672,9 +734,9 @@ AC_DEFUN([PMIX_SETUP_CORE],[
 
     AC_PROG_LN_S
 
+    # Check for some common system programs that we need
     AC_PROG_GREP
     AC_PROG_EGREP
-
 
     ##################################
     # Visibility
@@ -817,6 +879,10 @@ AC_DEFUN([PMIX_DEFINE_ARGS],[
                         [Whether build should attempt to use dlopen (or
                          similar) to dynamically load components.
                          (default: enabled)])])
+    AS_IF([test "$enable_dlopen" = "unknown"],
+          [AC_MSG_WARN([enable_dlopen variable has been overwritten by configure])
+           AC_MSG_WARN([This is an internal error that should be reported to PMIx developers])
+           AC_MSG_ERROR([Cannot continue])])
     AS_IF([test "$enable_dlopen" = "no"],
           [enable_mca_dso="no"
            enable_mca_static="yes"
@@ -832,7 +898,7 @@ AC_DEFUN([PMIX_DEFINE_ARGS],[
     AC_ARG_ENABLE([embedded-mode],
         [AC_HELP_STRING([--enable-embedded-mode],
                 [Using --enable-embedded-mode causes PMIx to skip a few configure checks and install nothing.  It should only be used when building PMIx within the scope of a larger package.])])
-    AS_IF([test ! -z "$enable_embedded_mode" && test "$enable_embedded_mode" = "yes"],
+    AS_IF([test "$enable_embedded_mode" = "yes"],
           [pmix_mode=embedded
            pmix_install_primary_headers=no
            AC_MSG_RESULT([yes])],
@@ -844,8 +910,16 @@ AC_DEFUN([PMIX_DEFINE_ARGS],[
 # Is this a developer copy?
 #
 
-if test -d .git; then
+if test -e $PMIX_TOP_SRCDIR/.git; then
     PMIX_DEVEL=1
+    # check for Flex
+    AC_PROG_LEX
+    if test "x$LEX" != xflex; then
+        AC_MSG_WARN([PMIx requires Flex to build from non-tarball sources,])
+        AC_MSG_WARN([but Flex was not found. Please install Flex into])
+        AC_MSG_WARN([your path and try again])
+        AC_MSG_ERROR([Cannot continue])
+    fi
 else
     PMIX_DEVEL=0
 fi
@@ -896,7 +970,6 @@ fi
 #################### Early development override ####################
 if test "$WANT_DEBUG" = "0"; then
     CFLAGS="-DNDEBUG $CFLAGS"
-    CXXFLAGS="-DNDEBUG $CXXFLAGS"
 fi
 AC_DEFINE_UNQUOTED(PMIX_ENABLE_DEBUG, $WANT_DEBUG,
                    [Whether we want developer-level debugging code or not])
@@ -1033,20 +1106,6 @@ AC_DEFINE_UNQUOTED([PMIX_ENABLE_TIMING], [$WANT_PMIX_TIMING],
                    [Whether we want developer-level timing support or not])
 
 #
-# Install header files
-#
-AC_MSG_CHECKING([if want to head developer-level header files])
-AC_ARG_WITH(devel-headers,
-              AC_HELP_STRING([--with-devel-headers],
-                             [also install developer-level header files (only for internal PMIx developers, default: disabled)]))
-if test "$with_devel_headers" = "yes"; then
-    AC_MSG_RESULT([yes])
-    WANT_INSTALL_HEADERS=1
-else
-    AC_MSG_RESULT([no])
-    WANT_INSTALL_HEADERS=0
-fi
-
 #
 # Install backward compatibility support for PMI-1 and PMI-2
 #
@@ -1063,6 +1122,59 @@ else
 fi
 
 AM_CONDITIONAL([WANT_INSTALL_HEADERS], [test $WANT_INSTALL_HEADERS -eq 1])
+
+#
+# Do we want to install binaries?
+#
+AC_MSG_CHECKING([if want to disable binaries])
+AC_ARG_ENABLE(pmix-binaries,
+              AC_HELP_STRING([--enable-pmix-binaries],
+                             [enable PMIx tools]))
+if test "$enable_pmix_binaries" = "no"; then
+    AC_MSG_RESULT([no])
+    WANT_PMIX_BINARIES=0
+else
+    AC_MSG_RESULT([yes])
+    WANT_PMIX_BINARIES=1
+fi
+
+AM_CONDITIONAL([PMIX_INSTALL_BINARIES], [test $WANT_PMIX_BINARIES -eq 1])
+
+#
+# psec/dummy_handshake
+#
+
+AC_MSG_CHECKING([if want build psec/dummy_handshake])
+AC_ARG_ENABLE(dummy-handshake,
+              AC_HELP_STRING([--enable-dummy-handshake],
+                             [Enables psec dummy component intended to check the PTL handshake scenario (default: disabled)]))
+if test "$enable_dummy_handshake" != "yes"; then
+    AC_MSG_RESULT([no])
+    eval "DISABLE_psec_dummy_handshake=1"
+else
+    AC_MSG_RESULT([yes])
+    eval "DISABLE_psec_dummy_handshake=0"
+fi
+AM_CONDITIONAL(MCA_BUILD_PSEC_DUMMY_HANDSHAKE, test "$DISABLE_psec_dummy_handshake" = "0")
+
+# see if they want to disable non-RTLD_GLOBAL dlopen
+AC_MSG_CHECKING([if want to support dlopen of non-global namespaces])
+AC_ARG_ENABLE([nonglobal-dlopen],
+              AC_HELP_STRING([--enable-nonglobal-dlopen],
+                             [enable non-global dlopen (default: enabled)]))
+if test "$enable_nonglobal_dlopen" == "no"; then
+    AC_MSG_RESULT([no])
+    pmix_need_libpmix=0
+else
+    AC_MSG_RESULT([yes])
+    pmix_need_libpmix=1
+fi
+
+# if someone enables embedded mode but doesn't want to install the
+# devel headers, then default nonglobal-dlopen to false
+AS_IF([test -z "$enable_nonglobal_dlopen" && test "x$pmix_mode" = "xembedded" && test $WANT_INSTALL_HEADERS -eq 0 && test $pmix_need_libpmix -eq 1],
+      [pmix_need_libpmix=0])
+
 ])dnl
 
 # This must be a standalone routine so that it can be called both by
@@ -1078,6 +1190,7 @@ AC_DEFUN([PMIX_DO_AM_CONDITIONALS],[
         AM_CONDITIONAL([WANT_PRIMARY_HEADERS], [test "x$pmix_install_primary_headers" = "xyes"])
         AM_CONDITIONAL(WANT_INSTALL_HEADERS, test "$WANT_INSTALL_HEADERS" = 1)
         AM_CONDITIONAL(WANT_PMI_BACKWARD, test "$WANT_PMI_BACKWARD" = 1)
+        AM_CONDITIONAL(NEED_LIBPMIX, [test "$pmix_need_libpmix" = "1"])
     ])
     pmix_did_am_conditionals=yes
 ])dnl

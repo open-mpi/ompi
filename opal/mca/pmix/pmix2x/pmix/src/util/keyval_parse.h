@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2016      Intel, Inc. All rights reserved
+ * Copyright (c) 2016-2019 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -26,7 +26,7 @@
 
 BEGIN_C_DECLS
 
-extern int pmix_util_keyval_parse_lineno;
+PMIX_EXPORT extern int pmix_util_keyval_parse_lineno;
 
 /**
  * Callback triggered for each key = value pair
@@ -46,14 +46,14 @@ typedef void (*pmix_keyval_parse_fn_t)(const char *key, const char *value);
  * called exactly once.  In a multithreaded context, calls to
  * pmix_util_keyval_parse() will serialize multiple calls.
  */
-int pmix_util_keyval_parse(const char *filename,
-                                         pmix_keyval_parse_fn_t callback);
+PMIX_EXPORT int pmix_util_keyval_parse(const char *filename,
+                                       pmix_keyval_parse_fn_t callback);
 
-int pmix_util_keyval_parse_init(void);
+PMIX_EXPORT int pmix_util_keyval_parse_init(void);
 
-int pmix_util_keyval_parse_finalize(void);
+PMIX_EXPORT int pmix_util_keyval_parse_finalize(void);
 
-int pmix_util_keyval_save_internal_envars(pmix_keyval_parse_fn_t callback);
+PMIX_EXPORT int pmix_util_keyval_save_internal_envars(pmix_keyval_parse_fn_t callback);
 
 END_C_DECLS
 

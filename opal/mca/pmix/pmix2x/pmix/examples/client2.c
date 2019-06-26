@@ -13,7 +13,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Mellanox Technologies, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -31,6 +31,7 @@
 #include <time.h>
 
 #include <pmix.h>
+#include "examples.h"
 
 static pmix_proc_t myproc;
 
@@ -62,25 +63,27 @@ static void evhandler_reg_callbk(pmix_status_t status,
                                  size_t evhandler_ref,
                                  void *cbdata)
 {
-    volatile int *active = (volatile int*)cbdata;
+    mylock_t *lock = (mylock_t*)cbdata;
 
     if (PMIX_SUCCESS != status) {
         fprintf(stderr, "Client %s:%d EVENT HANDLER REGISTRATION FAILED WITH STATUS %d, ref=%lu\n",
                    myproc.nspace, myproc.rank, status, (unsigned long)evhandler_ref);
     }
-    *active = status;
+    lock->status = status;
+    lock->evhandler_ref = evhandler_ref;
+    DEBUG_WAKEUP_THREAD(lock);
 }
 
 int main(int argc, char **argv)
 {
-    int rc;
+    pmix_status_t rc;
     pmix_value_t value;
     pmix_value_t *val, *vptr;
     pmix_proc_t proc;
     uint32_t nprocs, n, k;
     pmix_info_t *info;
     bool flag;
-    volatile int active;
+    mylock_t mylock;
     pmix_data_array_t da, *dptr;
 
     /* init us - note that the call to "init" includes the return of
@@ -97,15 +100,16 @@ int main(int argc, char **argv)
 
     /* register our default event handler - again, this isn't strictly
      * required, but is generally good practice */
-    active = -1;
+    DEBUG_CONSTRUCT_LOCK(&mylock);
     PMIx_Register_event_handler(NULL, 0, NULL, 0,
-                                notification_fn, evhandler_reg_callbk, (void*)&active);
-    while (-1 == active) {
-        sleep(1);
-    }
-    if (0 != active) {
+                                notification_fn, evhandler_reg_callbk, (void*)&mylock);
+    DEBUG_WAIT_THREAD(&mylock);
+    rc = mylock.status;
+    DEBUG_DESTRUCT_LOCK(&mylock);
+
+    if (PMIX_SUCCESS != rc) {
         fprintf(stderr, "[%s:%d] Default handler registration failed\n", myproc.nspace, myproc.rank);
-        exit(active);
+        goto done;
     }
 
     /* job-related info is found in our nspace, assigned to the

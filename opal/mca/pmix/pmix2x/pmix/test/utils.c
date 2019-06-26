@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 2015-2017 Intel, Inc. All rights reserved.
- * Copyright (c) 2015-2017 Mellanox Technologies, Inc.
+ * Copyright (c) 2015-2019 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015-2019 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -88,7 +88,9 @@ static void set_namespace(int nprocs, char *ranks, char *name)
     info[7].value.data.uint32 = getpid ();
 
     int in_progress = 1, rc;
-    if (PMIX_SUCCESS == (rc = PMIx_server_register_nspace(name, nprocs, info, ninfo, release_cb, &in_progress))) {
+    if (PMIX_SUCCESS == (rc = PMIx_server_register_nspace(name, nprocs, info,
+                                                          ninfo, release_cb,
+                                                          &in_progress))) {
         PMIX_WAIT_FOR_COMPLETION(in_progress);
     }
     PMIX_INFO_FREE(info, ninfo);
@@ -171,7 +173,7 @@ void set_client_argv(test_params *params, char ***argv)
     }
 }
 
-int launch_clients(int num_procs, char *binary, char *** client_env, char ***base_argv)
+int launch_clients(int nprocs, char *binary, char *** client_env, char ***base_argv)
 {
     int n;
     uid_t myuid;
@@ -182,16 +184,17 @@ int launch_clients(int num_procs, char *binary, char *** client_env, char ***bas
     static int counter = 0;
     static int num_ns = 0;
     pmix_proc_t proc;
+    int base_rank = 0;
 
     TEST_VERBOSE(("Setting job info"));
-    fill_seq_ranks_array(num_procs, counter, &ranks);
+    fill_seq_ranks_array(nprocs, base_rank, &ranks);
     if (NULL == ranks) {
         PMIx_server_finalize();
         TEST_ERROR(("fill_seq_ranks_array failed"));
         return PMIX_ERROR;
     }
     (void)snprintf(proc.nspace, PMIX_MAX_NSLEN, "%s-%d", TEST_NAMESPACE, num_ns);
-    set_namespace(num_procs, ranks, proc.nspace);
+    set_namespace(nprocs, ranks, proc.nspace);
     if (NULL != ranks) {
         free(ranks);
     }
@@ -200,15 +203,16 @@ int launch_clients(int num_procs, char *binary, char *** client_env, char ***bas
     mygid = getgid();
 
     /* fork/exec the test */
-    for (n = 0; n < num_procs; n++) {
-        proc.rank = counter;
+    for (n = 0; n < nprocs; n++) {
+        proc.rank = n;
         if (PMIX_SUCCESS != (rc = PMIx_server_setup_fork(&proc, client_env))) {//n
             TEST_ERROR(("Server fork setup failed with error %d", rc));
             PMIx_server_finalize();
             cli_kill_all();
             return rc;
         }
-        if (PMIX_SUCCESS != (rc = PMIx_server_register_client(&proc, myuid, mygid, NULL, NULL, NULL))) {//n
+        rc = PMIx_server_register_client(&proc, myuid, mygid, NULL, NULL, NULL);
+        if (PMIX_SUCCESS != rc && PMIX_OPERATION_SUCCEEDED != rc) {//n
             TEST_ERROR(("Server fork setup failed with error %d", rc));
             PMIx_server_finalize();
             cli_kill_all();
@@ -222,20 +226,20 @@ int launch_clients(int num_procs, char *binary, char *** client_env, char ***bas
             cli_kill_all();
             return -1;
         }
-        cli_info[counter].rank = counter;//n
+        cli_info[counter].rank = proc.rank;
         cli_info[counter].ns = strdup(proc.nspace);
 
         char **client_argv = pmix_argv_copy(*base_argv);
 
         /* add two last arguments: -r <rank> */
-        sprintf(digit, "%d", counter);//n
+        sprintf(digit, "%d", proc.rank);
         pmix_argv_append_nosize(&client_argv, "-r");
         pmix_argv_append_nosize(&client_argv, digit);
 
         pmix_argv_append_nosize(&client_argv, "-s");
         pmix_argv_append_nosize(&client_argv, proc.nspace);
 
-        sprintf(digit, "%d", num_procs);
+        sprintf(digit, "%d", nprocs);
         pmix_argv_append_nosize(&client_argv, "--ns-size");
         pmix_argv_append_nosize(&client_argv, digit);
 
@@ -243,7 +247,7 @@ int launch_clients(int num_procs, char *binary, char *** client_env, char ***bas
         pmix_argv_append_nosize(&client_argv, "--ns-id");
         pmix_argv_append_nosize(&client_argv, digit);
 
-        sprintf(digit, "%d", (counter-n));
+        sprintf(digit, "%d", base_rank);
         pmix_argv_append_nosize(&client_argv, "--base-rank");
         pmix_argv_append_nosize(&client_argv, digit);
 
