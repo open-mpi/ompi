@@ -52,9 +52,18 @@ AC_CONFIG_AUX_DIR(./config)
 AC_CONFIG_MACRO_DIR(./config)
 
 # autotools expects to perform tests without interference
-# from user-provided CFLAGS, so preserve them here
-PMIX_CFLAGS_user=$CFLAGS
-CFLAGS=
+# from user-provided CFLAGS, particularly -Werror flags.
+# Search for them here and cache any we find
+PMIX_CFLAGS_cache=
+PMIX_CFLAGS_pass=
+for val in $CFLAGS; do
+    if echo "$val" | grep -q -e "-W"; then
+        PMIX_CFLAGS_cache="$PMIX_CFLAGS_cache $val";
+    else
+        PMIX_CFLAGS_pass="$PMIX_CFLAGS_pass $val";
+    fi
+done
+CFLAGS=$PMIX_CFLAGS_pass
 
 PMIX_CAPTURE_CONFIGURE_CLI([PMIX_CONFIGURE_CLI])
 
@@ -162,6 +171,9 @@ LT_PREREQ([2.2.6])
 
 pmix_enable_shared="$enable_shared"
 pmix_enable_static="$enable_static"
+AS_IF([test ! -z "$enable_static" && test "$enable_static" == "yes"],
+      [CFLAGS="$CFLAGS -fPIC"])
+
 AM_ENABLE_SHARED
 AM_DISABLE_STATIC
 
@@ -210,8 +222,8 @@ AS_IF([test -z "$CC_FOR_BUILD"],[
     AC_SUBST([CC_FOR_BUILD], [$CC])
 ])
 
-# restore any user-provided flags
-AS_IF([test ! -z "$PMIX_CFLAGS_user"], [CFLAGS="$CFLAGS $PMIX_CFLAGS_user"])
+# restore any user-provided Werror flags
+AS_IF([test ! -z "$PMIX_CFLAGS_cache"], [CFLAGS="$CFLAGS $PMIX_CFLAGS_cache"])
 
 # Delay setting pickyness until here so we
 # don't break configure code tests
