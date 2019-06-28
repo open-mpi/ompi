@@ -70,8 +70,8 @@ ORTE_DECLSPEC extern mca_base_framework_t orte_state_base_framework;
         if (!orte_abnormal_term_ordered) {                                          \
             orte_errmgr.abort((x), "%s FORCE-TERMINATE AT %s:%d - error %s(%d)",    \
                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),                 \
-                                ORTE_ERROR_NAME((x)), (x),                          \
-                                __FILE__, __LINE__);                                \
+                                __FILE__, __LINE__,                                 \
+                                ORTE_ERROR_NAME((x)), (x));                         \
         }                                                                           \
     } while(0);
 
