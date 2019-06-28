@@ -147,6 +147,9 @@ struct ompi_osc_rdma_module_t {
 
     bool acc_use_amo;
 
+    /** whether the group is located on a single node */
+    bool single_node;
+
     /** flavor of this window */
     int flavor;
 
