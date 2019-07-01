@@ -132,8 +132,8 @@ pack_predefined_data( opal_convertor_t* CONVERTOR,
             for(int j=0; j<blocks_in_VL; j++){
                 for(size_t i =0; i<do_now_bytes; i++)
                 {
-                    /* offset in bytes offset=offset in block + extend in bytes*j */
-                    off_sets[start] = (i+j*(_elem->extent*opal_datatype_basicDatatypes[_elem->common.type]->size));
+                    /* offset in bytes offset=offset in block + extend(bytes)*j */
+                    off_sets[start] = (i+j*_elem->extent);
                     start++;
                 }
             }
@@ -164,7 +164,7 @@ pack_predefined_data( opal_convertor_t* CONVERTOR,
             }
 
             /* remaining blocks */
-            blocks_in_VL = cando_count % (_elem->blocklen*blocks_in_VL);
+            blocks_in_VL = cando_count / _elem->blocklen;
             if (blocks_in_VL != 0) {
                 svbool_t Pg = svwhilelt_b8_u32(0, do_now_bytes*blocks_in_VL);
                 svuint32_t vsrc = svld1ub_gather_offset_u32(Pg, (uint8_t*)_memory, xt);
