@@ -21,7 +21,7 @@ example, a bug might be fixed in the master, and then moved to
 multiple release branches.
 
 
-3.1.3 -- TBD
+3.1.3 -- 2 July 2019
 ----------------------
 - PR #1096: Restore PMIX_NUM_SLOTS for backward compatibility
 - PR #1106: Automatically generate PMIX_NUMERIC_VERSION
@@ -64,6 +64,7 @@ multiple release branches.
 - PR #1311: Work around memory bug in older gcc compilers
 - PR #1321: Provide memory op hooks in user-facing macros
 - PR #1329: Add -fPIC to static builds
+- PR #1340: Do not use '==' in m4 test statements
 
 
 3.1.2 -- 24 Jan 2019
