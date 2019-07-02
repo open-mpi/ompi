@@ -38,6 +38,9 @@ extern int   ompi_coll_tuned_init_chain_fanout;
 extern int   ompi_coll_tuned_init_max_requests;
 extern int   ompi_coll_tuned_alltoall_small_msg;
 extern int   ompi_coll_tuned_alltoall_intermediate_msg;
+extern int   ompi_coll_tuned_alltoall_large_msg;
+extern int   ompi_coll_tuned_alltoall_min_procs;
+extern int   ompi_coll_tuned_alltoall_max_reqs;
 
 /* forced algorithm choices */
 /* this structure is for storing the indexes to the forced algorithm mca params... */

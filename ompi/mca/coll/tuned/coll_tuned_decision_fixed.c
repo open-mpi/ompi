@@ -136,6 +136,12 @@ int ompi_coll_tuned_alltoall_intra_dec_fixed(const void *sbuf, int scount,
         return ompi_coll_base_alltoall_intra_basic_linear(sbuf, scount, sdtype,
                                                           rbuf, rcount, rdtype,
                                                           comm, module);
+    } else if ((block_dsize < (size_t) ompi_coll_tuned_alltoall_large_msg) &&
+               (communicator_size <= ompi_coll_tuned_alltoall_min_procs)) {
+        return ompi_coll_base_alltoall_intra_linear_sync(sbuf, scount, sdtype,
+                                                         rbuf, rcount, rdtype,
+                                                         comm, module,
+                                                         ompi_coll_tuned_alltoall_max_reqs);
     }
 
     return ompi_coll_base_alltoall_intra_pairwise(sbuf, scount, sdtype,
