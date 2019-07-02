@@ -28,7 +28,6 @@
 /* alltoall algorithm variables */
 static int coll_tuned_alltoall_forced_algorithm = 0;
 static int coll_tuned_alltoall_segment_size = 0;
-static int coll_tuned_alltoall_max_requests;
 static int coll_tuned_alltoall_tree_fanout;
 static int coll_tuned_alltoall_chain_fanout;
 
@@ -115,7 +114,22 @@ int ompi_coll_tuned_alltoall_intra_check_forced_init (coll_tuned_force_algorithm
                                       MCA_BASE_VAR_SCOPE_ALL,
                                       &coll_tuned_alltoall_chain_fanout);
 
-    coll_tuned_alltoall_max_requests = 0; /* no limit for alltoall by default */
+    (void) mca_base_component_var_register(&mca_coll_tuned_component.super.collm_version,
+                                           "alltoall_large_msg",
+                                           "threshold (if supported) to decide if large MSGs alltoall algorithm will be used",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_6,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &ompi_coll_tuned_alltoall_large_msg);
+
+    (void) mca_base_component_var_register(&mca_coll_tuned_component.super.collm_version,
+                                           "alltoall_min_procs",
+                                           "threshold (if supported) to decide if many processes alltoall algorithm will be used",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_6,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &ompi_coll_tuned_alltoall_min_procs);
+
     mca_param_indices->max_requests_param_index =
       mca_base_component_var_register(&mca_coll_tuned_component.super.collm_version,
                                       "alltoall_algorithm_max_requests",
@@ -123,17 +137,16 @@ int ompi_coll_tuned_alltoall_intra_check_forced_init (coll_tuned_force_algorithm
                                       MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
                                       OPAL_INFO_LVL_5,
                                       MCA_BASE_VAR_SCOPE_ALL,
-                                      &coll_tuned_alltoall_max_requests);
+                                      &ompi_coll_tuned_alltoall_max_reqs);
     if (mca_param_indices->max_requests_param_index < 0) {
         return mca_param_indices->max_requests_param_index;
     }
 
-    if (coll_tuned_alltoall_max_requests < 0) {
+    if (ompi_coll_tuned_alltoall_max_reqs < 0) {
         if( 0 == ompi_comm_rank( MPI_COMM_WORLD ) ) {
-            opal_output( 0, "Maximum outstanding requests must be positive number greater than 1.  Switching to system level default %d \n",
-                         ompi_coll_tuned_init_max_requests );
+            opal_output( 0, "Maximum outstanding requests must be positive number greater than 1.  Switching to 0 \n");
         }
-        coll_tuned_alltoall_max_requests = 0;
+        ompi_coll_tuned_alltoall_max_reqs = 0;
     }
 
     return (MPI_SUCCESS);
