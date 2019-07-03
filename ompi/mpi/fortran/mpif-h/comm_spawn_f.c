@@ -10,8 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010-2018 Cisco Systems, Inc.  All rights reserved
- * Copyright (c) 2015-2017 Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015-2019 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -76,7 +76,7 @@ void ompi_comm_spawn_f(char *command, char *argv, MPI_Fint *maxprocs,
 {
     MPI_Comm c_comm, c_new_comm;
     MPI_Info c_info;
-    int size, c_ierr;
+    int c_ierr;
     int *c_errs;
     char **c_argv;
     char *c_command;
@@ -84,7 +84,6 @@ void ompi_comm_spawn_f(char *command, char *argv, MPI_Fint *maxprocs,
 
     c_comm = PMPI_Comm_f2c(*comm);
     c_info = PMPI_Info_f2c(*info);
-    PMPI_Comm_size(c_comm, &size);
     ompi_fortran_string_f2c(command, cmd_len, &c_command);
 
     /* It's allowed to ignore the errcodes */
@@ -92,7 +91,7 @@ void ompi_comm_spawn_f(char *command, char *argv, MPI_Fint *maxprocs,
     if (OMPI_IS_FORTRAN_ERRCODES_IGNORE(array_of_errcodes)) {
         c_errs = MPI_ERRCODES_IGNORE;
     } else {
-        OMPI_ARRAY_FINT_2_INT_ALLOC(array_of_errcodes, size);
+        OMPI_ARRAY_FINT_2_INT_ALLOC(array_of_errcodes, OMPI_FINT_2_INT(*maxprocs));
         c_errs = OMPI_ARRAY_NAME_CONVERT(array_of_errcodes);
     }
 
@@ -119,9 +118,7 @@ void ompi_comm_spawn_f(char *command, char *argv, MPI_Fint *maxprocs,
         opal_argv_free(c_argv);
     }
     if (!OMPI_IS_FORTRAN_ERRCODES_IGNORE(array_of_errcodes)) {
-	OMPI_ARRAY_INT_2_FINT(array_of_errcodes, size);
-    } else {
-	OMPI_ARRAY_FINT_2_INT_CLEANUP(array_of_errcodes);
+	OMPI_ARRAY_INT_2_FINT(array_of_errcodes, OMPI_FINT_2_INT(*maxprocs));
     }
 }
 
