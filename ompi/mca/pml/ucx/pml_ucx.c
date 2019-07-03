@@ -72,8 +72,8 @@ mca_pml_ucx_module_t ompi_pml_ucx = {
         .pml_mrecv         = mca_pml_ucx_mrecv,
         .pml_dump          = mca_pml_ucx_dump,
         .pml_ft_event      = NULL,
-        .pml_max_contextid = 1ul << (PML_UCX_CONTEXT_BITS),
-        .pml_max_tag       = 1ul << (PML_UCX_TAG_BITS - 1)
+        .pml_max_contextid = (1ul << (PML_UCX_CONTEXT_BITS)) - 1,
+        .pml_max_tag       = (1ul << (PML_UCX_TAG_BITS - 1)) - 1
     },
     .ucp_context           = NULL,
     .ucp_worker            = NULL
