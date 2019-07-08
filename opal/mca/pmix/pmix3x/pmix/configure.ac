@@ -44,7 +44,7 @@ m4_include([config/autogen_found_items.m4])
 
 AC_INIT([pmix],
         [m4_normalize(esyscmd([config/pmix_get_version.sh VERSION --tarball]))],
-        [https://github.com/pmix/pmix/issues], [pmix])
+        [http://pmix.github.io/master], [pmix])
 AC_PREREQ(2.69)
 AC_CONFIG_AUX_DIR(./config)
 # Note that this directory must *exactly* match what was specified via
@@ -171,7 +171,7 @@ LT_PREREQ([2.2.6])
 
 pmix_enable_shared="$enable_shared"
 pmix_enable_static="$enable_static"
-AS_IF([test ! -z "$enable_static" && test "$enable_static" == "yes"],
+AS_IF([test ! -z "$enable_static" && test "$enable_static" = "yes"],
       [CFLAGS="$CFLAGS -fPIC"])
 
 AM_ENABLE_SHARED
@@ -232,7 +232,6 @@ AS_IF([test ! -z "$PMIX_CFLAGS_cache"], [CFLAGS="$CFLAGS $PMIX_CFLAGS_cache"])
 #fi
 
 # Cleanup duplicate flags
-PMIX_FLAGS_UNIQ(CFLAGS)
 PMIX_FLAGS_UNIQ(CPPFLAGS)
 PMIX_FLAGS_UNIQ(LDFLAGS)
 PMIX_FLAGS_UNIQ(LIBS)
@@ -258,17 +257,6 @@ AC_MSG_RESULT([$LDFLAGS])
 
 AC_MSG_CHECKING([final LIBS])
 AC_MSG_RESULT([$LIBS])
-
-####################################################################
-# -Werror for CI scripts
-####################################################################
-
-AC_ARG_ENABLE(werror,
-    AC_HELP_STRING([--enable-werror],
-                   [Treat compiler warnings as errors]),
-[
-    CFLAGS="$CFLAGS -Werror"
-])
 
 ####################################################################
 # Version information

@@ -12,7 +12,7 @@
 #                         All rights reserved.
 # Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2013      Sandia National Laboratories.  All rights reserved.
-# Copyright (c) 2014-2018 Intel, Inc.  All rights reserved.
+# Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -46,7 +46,7 @@ AC_DEFUN([MCA_pmix_pnet_opa_CONFIG],[
     pmix_check_opamgt_dir=
 
     AC_MSG_CHECKING([if opamgt requested])
-    AS_IF([test "$with_opamgt" == "no"],
+    AS_IF([test "$with_opamgt" = "no"],
           [AC_MSG_RESULT([no])
            pmix_check_opamgt_happy=no],
           [AC_MSG_RESULT([yes])
