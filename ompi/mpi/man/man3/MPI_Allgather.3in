@@ -141,7 +141,7 @@ After the call, every process has the group-wide concatenation of the sets of da
 When the communicator is an intracommunicator, you can perform an all-gather operation in-place (the output buffer is used as the input buffer).  Use the variable MPI_IN_PLACE as the value of \fIsendbuf\fR.  In this case, \fIsendcount\fR and \fIsendtype\fR are ignored.  The input data of each process is assumed to be in the area where that process would receive its own contribution to the receive buffer.  Specifically, the outcome of a call to MPI_Allgather that used the in-place option is identical to the case in which all processes executed \fIn\fR calls to
 .sp
 .nf
-   MPI_GATHER ( MPI_IN_PLACE, 0, MPI_DATATYPE_NULL, recvbuf,
+   MPI_ALLGATHER ( MPI_IN_PLACE, 0, MPI_DATATYPE_NULL, recvbuf,
    recvcount, recvtype, root, comm )
 
 for root =0, ... , n-1.
@@ -155,11 +155,6 @@ Because the in-place option converts the receive buffer into a send-and-receive 
 .sp
 When the communicator is an inter-communicator, the gather operation occurs in two phases.  The data is gathered from all the members of the first group and received by all the members of the second group.  Then the data is gathered from all the members of the second group and received by all the members of the first.  The operation, however, need not be symmetric.  The number of items sent by the processes in first group need not be equal to the number of items sent by the the processes in the second group.  You can move data in only one direction by giving \fIsendcount\fR a value of 0 for communication in the reverse direction.
 .sp
-The first group defines the root process.  The root process uses MPI_ROOT as the value of \fIroot\fR.  All other processes in the first group use MPI_PROC_NULL as the value of \fIroot\fR.  All processes in the second group use the rank of the root process in the first group as the value of \fIroot\fR.
-.sp
-When the communicator is an intra-communicator, these groups are the same, and the operation occurs in a single phase.
-.sp
-
 
 .SH ERRORS
 Almost all MPI routines return an error value; C routines as the value of the function and Fortran routines in the last argument. C++ functions do not return errors. If the default error handler is set to MPI::ERRORS_THROW_EXCEPTIONS, then on error the C++ exception mechanism will be used to throw an MPI::Exception object.
