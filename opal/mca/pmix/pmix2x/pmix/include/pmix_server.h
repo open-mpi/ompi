@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Artem Y. Polyakov <artpol84@gmail.com>.
  *                         All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
@@ -442,7 +442,7 @@ PMIX_EXPORT pmix_status_t PMIx_generate_ppn(const char *input, char **ppn);
  * for the PMIx server library to correctly handle collectives
  * as a collective operation call can occur before all the
  * procs have been started */
-PMIX_EXPORT pmix_status_t PMIx_server_register_nspace(const char nspace[], int nlocalprocs,
+PMIX_EXPORT pmix_status_t PMIx_server_register_nspace(const pmix_nspace_t nspace, int nlocalprocs,
                                           pmix_info_t info[], size_t ninfo,
                                           pmix_op_cbfunc_t cbfunc, void *cbdata);
 
@@ -451,7 +451,7 @@ PMIX_EXPORT pmix_status_t PMIx_server_register_nspace(const char nspace[], int n
  * intended to support persistent PMIx servers by providing
  * an opportunity for the host RM to tell the PMIx server
  * library to release all memory for a completed job */
-PMIX_EXPORT void PMIx_server_deregister_nspace(const char nspace[],
+PMIX_EXPORT void PMIx_server_deregister_nspace(const pmix_nspace_t nspace,
                                                pmix_op_cbfunc_t cbfunc, void *cbdata);
 
 /* Register a client process with the PMIx server library. The
@@ -521,7 +521,7 @@ typedef void (*pmix_setup_application_cbfunc_t)(pmix_status_t status,
  * is defined as a non-blocking operation in case network
  * libraries need to perform some action before responding. The
  * returned env will be distributed along with the application */
-PMIX_EXPORT pmix_status_t PMIx_server_setup_application(const char nspace[],
+PMIX_EXPORT pmix_status_t PMIx_server_setup_application(const pmix_nspace_t nspace,
                                                         pmix_info_t info[], size_t ninfo,
                                                         pmix_setup_application_cbfunc_t cbfunc, void *cbdata);
 
@@ -530,7 +530,7 @@ PMIX_EXPORT pmix_status_t PMIx_server_setup_application(const char nspace[],
  * clients of a given application. For example, a network library
  * might need to setup the local driver for "instant on" addressing.
  */
-PMIX_EXPORT pmix_status_t PMIx_server_setup_local_support(const char nspace[],
+PMIX_EXPORT pmix_status_t PMIx_server_setup_local_support(const pmix_nspace_t nspace,
                                                           pmix_info_t info[], size_t ninfo,
                                                           pmix_op_cbfunc_t cbfunc, void *cbdata);
 

@@ -2,7 +2,7 @@
 /*
  * Copyright (c) 2012-2016 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC. All rights reserved
- * Copyright (c) 2015-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2019 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -142,7 +142,6 @@ PMIX_CLASS_DECLARATION(pmix_hotel_t);
  * @param evbase Pointer to event base used for eviction timeout
  * @param eviction_timeout Max length of a stay at the hotel before
  * the eviction callback is invoked (in microseconds)
- * @param eviction_event_priority Event lib priority for the eviction timeout
  * @param evict_callback_fn Callback function invoked if an occupant
  * does not check out before the eviction_timeout.
  *
@@ -158,11 +157,10 @@ PMIX_CLASS_DECLARATION(pmix_hotel_t);
  * @return PMIX_SUCCESS if all initializations were succesful. Otherwise,
  *  the error indicate what went wrong in the function.
  */
-PMIX_EXPORT int pmix_hotel_init(pmix_hotel_t *hotel, int num_rooms,
-                                  pmix_event_base_t *evbase,
-                                  uint32_t eviction_timeout,
-                                  int eviction_event_priority,
-                                  pmix_hotel_eviction_callback_fn_t evict_callback_fn);
+PMIX_EXPORT pmix_status_t pmix_hotel_init(pmix_hotel_t *hotel, int num_rooms,
+                                          pmix_event_base_t *evbase,
+                                          uint32_t eviction_timeout,
+                                          pmix_hotel_eviction_callback_fn_t evict_callback_fn);
 
 /**
  * Check in an occupant to the hotel.
@@ -184,14 +182,15 @@ PMIX_EXPORT int pmix_hotel_init(pmix_hotel_t *hotel, int num_rooms,
  * @return PMIX_ERR_TEMP_OUT_OF_RESOURCE is the hotel is full.  Try
  * again later.
  */
-static inline int pmix_hotel_checkin(pmix_hotel_t *hotel,
-                                     void *occupant,
-                                     int *room_num)
+static inline pmix_status_t pmix_hotel_checkin(pmix_hotel_t *hotel,
+                                               void *occupant,
+                                               int *room_num)
 {
     pmix_hotel_room_t *room;
 
     /* Do we have any rooms available? */
     if (PMIX_UNLIKELY(hotel->last_unoccupied_room < 0)) {
+        *room_num = -1;
         return PMIX_ERR_OUT_OF_RESOURCE;
     }
 
@@ -214,8 +213,8 @@ static inline int pmix_hotel_checkin(pmix_hotel_t *hotel,
  * caller *knows* that there is a room available.
  */
 static inline void pmix_hotel_checkin_with_res(pmix_hotel_t *hotel,
-                                     void *occupant,
-                                     int *room_num)
+                                               void *occupant,
+                                               int *room_num)
 {
     pmix_hotel_room_t *room;
 
@@ -249,6 +248,10 @@ static inline void pmix_hotel_checkout(pmix_hotel_t *hotel, int room_num)
 
     /* Bozo check */
     assert(room_num < hotel->num_rooms);
+    if (0 > room_num) {
+        /* occupant wasn't checked in */
+        return;
+    }
 
     /* If there's an occupant in the room, check them out */
     room = &(hotel->rooms[room_num]);
@@ -287,6 +290,11 @@ static inline void pmix_hotel_checkout_and_return_occupant(pmix_hotel_t *hotel, 
 
     /* Bozo check */
     assert(room_num < hotel->num_rooms);
+    if (0 > room_num) {
+        /* occupant wasn't checked in */
+        *occupant = NULL;
+        return;
+    }
 
     /* If there's an occupant in the room, check them out */
     room = &(hotel->rooms[room_num]);
@@ -341,6 +349,10 @@ static inline void pmix_hotel_knock(pmix_hotel_t *hotel, int room_num, void **oc
     assert(room_num < hotel->num_rooms);
 
     *occupant = NULL;
+    if (0 > room_num) {
+        /* occupant wasn't checked in */
+        return;
+    }
 
     /* If there's an occupant in the room, have them come to the door */
     room = &(hotel->rooms[room_num]);

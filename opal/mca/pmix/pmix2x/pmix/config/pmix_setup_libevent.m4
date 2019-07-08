@@ -2,7 +2,7 @@
 #
 # Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2013      Los Alamos National Security, LLC.  All rights reserved.
-# Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
+# Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
 # Copyright (c) 2017      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
@@ -19,11 +19,7 @@ AC_DEFUN([PMIX_LIBEVENT_CONFIG],[
                 [AC_HELP_STRING([--with-libevent-header=HEADER],
                                 [The value that should be included in C files to include event.h])])
 
-    AC_ARG_ENABLE([embedded-libevent],
-                  [AC_HELP_STRING([--enable-embedded-libevent],
-                                  [Enable use of locally embedded libevent])])
-
-    AS_IF([test "$enable_embedded_libevent" = "yes"],
+    AS_IF([test "$pmix_mode" = "embedded"],
           [_PMIX_LIBEVENT_EMBEDDED_MODE],
           [_PMIX_LIBEVENT_EXTERNAL])
 
@@ -35,6 +31,8 @@ AC_DEFUN([PMIX_LIBEVENT_CONFIG],[
     AC_DEFINE_UNQUOTED([PMIX_EVENT2_THREAD_HEADER], [$PMIX_EVENT2_THREAD_HEADER],
                        [Location of event2/thread.h])
     AC_MSG_RESULT([$PMIX_EVENT2_THREAD_HEADER])
+
+    PMIX_SUMMARY_ADD([[External Packages]],[[Libevent]], [pmix_libevent], [yes ($pmix_libevent_source)])
 ])
 
 AC_DEFUN([_PMIX_LIBEVENT_EMBEDDED_MODE],[
@@ -47,6 +45,7 @@ AC_DEFUN([_PMIX_LIBEVENT_EMBEDDED_MODE],[
           [PMIX_EVENT_HEADER="$with_libevent_header"
            PMIX_EVENT2_THREAD_HEADER="$with_libevent_header"])
 
+    pmix_libevent_source=embedded
  ])
 
 AC_DEFUN([_PMIX_LIBEVENT_EXTERNAL],[
@@ -65,18 +64,22 @@ AC_DEFUN([_PMIX_LIBEVENT_EXTERNAL],[
                 [AC_HELP_STRING([--with-libevent-libdir=DIR],
                                 [Search for libevent libraries in DIR ])])
 
+    # get rid of the trailing slash(es)
+    libevent_prefix=$(echo $with_libevent | sed -e 'sX/*$XXg')
+    libeventdir_prefix=$(echo $with_libevent_libdir | sed -e 'sX/*$XXg')
+
     AC_MSG_CHECKING([for libevent in])
-    if test ! -z "$with_libevent" && test "$with_libevent" != "yes"; then
+    if test ! -z "$libevent_prefix" && test "$libevent_prefix" != "yes"; then
         pmix_event_defaults=no
-        pmix_event_dir=$with_libevent
-        if test -d $with_libevent/lib; then
-            pmix_event_libdir=$with_libevent/lib
-        elif test -d $with_libevent/lib64; then
-            pmix_event_libdir=$with_libevent/lib64
-        elif test -d $with_libevent; then
-            pmix_event_libdir=$with_libevent
+        pmix_event_dir=$libevent_prefix
+        if test -d $libevent_prefix/lib; then
+            pmix_event_libdir=$libevent_prefix/lib
+        elif test -d $libevent_prefix/lib64; then
+            pmix_event_libdir=$libevent_prefix/lib64
+        elif test -d $libevent_prefix; then
+            pmix_event_libdir=$libevent_prefix
         else
-            AC_MSG_RESULT([Could not find $with_libevent/lib, $with_libevent/lib64, or $with_libevent])
+            AC_MSG_RESULT([Could not find $libevent_prefix/lib, $libevent_prefix/lib64, or $libevent_prefix])
             AC_MSG_ERROR([Can not continue])
         fi
         AC_MSG_RESULT([$pmix_event_dir and $pmix_event_libdir])
@@ -90,13 +93,13 @@ AC_DEFUN([_PMIX_LIBEVENT_EXTERNAL],[
         else
             AC_MSG_RESULT([not found])
             AC_MSG_WARN([Could not find /usr/lib or /usr/lib64 - you may])
-            AC_MSG_WARN([to specify --with-libevent-libdir=<path>])
+            AC_MSG_WARN([need to specify --with-libevent-libdir=<path>])
             AC_MSG_ERROR([Can not continue])
         fi
         AC_MSG_RESULT([(default search paths)])
     fi
-    AS_IF([test ! -z "$with_libevent_libdir" && "$with_libevent_libdir" != "yes"],
-          [pmix_event_libdir="$with_libevent_libdir"])
+    AS_IF([test ! -z "$libeventdir_prefix" && "$libeventdir_prefix" != "yes"],
+          [pmix_event_libdir="$libeventdir_prefix"])
 
     PMIX_CHECK_PACKAGE([pmix_libevent],
                        [event.h],
@@ -111,9 +114,8 @@ AC_DEFUN([_PMIX_LIBEVENT_EXTERNAL],[
 
     AS_IF([test "$pmix_event_defaults" = "no"],
           [PMIX_FLAGS_APPEND_UNIQ(CPPFLAGS, $pmix_libevent_CPPFLAGS)
-           PMIX_FLAGS_APPEND_UNIQ(LIBS, $pmix_libevent_LIBS)
            PMIX_FLAGS_APPEND_UNIQ(LDFLAGS, $pmix_libevent_LDFLAGS)])
-
+    PMIX_FLAGS_APPEND_UNIQ(LIBS, $pmix_libevent_LIBS)
 
     # Ensure that this libevent has the symbol
     # "evthread_set_lock_callbacks", which will only exist if
@@ -134,6 +136,7 @@ AC_DEFUN([_PMIX_LIBEVENT_EXTERNAL],[
     # Set output variables
     PMIX_EVENT_HEADER="<event.h>"
     PMIX_EVENT2_THREAD_HEADER="<event2/thread.h>"
+    pmix_libevent_source=$pmix_event_dir
 
     PMIX_VAR_SCOPE_POP
 ])dnl

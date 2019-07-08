@@ -9,7 +9,7 @@ Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 Copyright (c) 2004-2005 The Regents of the University of California.
                         All rights reserved.
 Copyright (c) 2008-2015 Cisco Systems, Inc.  All rights reserved.
-Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
+Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
 $COPYRIGHT$
 
 Additional copyrights may follow
@@ -22,9 +22,9 @@ For More Information
 
 This file is a *very* short overview of building and installing
 the PMIx library.  Much more information is available in the
-FAQ section on the PMIx web site:
+How-To section on the PMIx web site:
 
-    http://pmix.github.io/pmix/faq
+    https://pmix.org/support/how-to/
 
 
 Developer Builds
@@ -55,6 +55,12 @@ system from within the directory at the top of the tree:
 shell$ ./configure --prefix=/where/to/install
 [...lots of output...]
 shell$ make all install
+
+NOTE: this version of PMIx requires the Libevent package to build
+and operate. Any version of Libevent greater than or equal to
+2.0.21 is acceptable. You must point configure at the libevent
+installation using the --with-libevent=<dir> option if it is in
+a non-standard location.
 
 If you need special access to install, then you can execute "make
 all" as a user with write permissions in the build tree, and a

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2008-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      Sandia National Laboratories. All rights reserved.
- * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
  *
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -66,6 +66,37 @@ PMIX_EXPORT pmix_status_t pmix_fd_write(int fd, int len, const void *buffer);
  * to setting a file descriptor to be close-on-exec.
  */
 PMIX_EXPORT pmix_status_t pmix_fd_set_cloexec(int fd);
+
+/**
+ * Convenience function to check if fd point to an accessible regular file.
+ *
+ * @param fd File descriptor
+ *
+ * @returns true if "fd" points to a regular file.
+ * @returns false otherwise.
+ */
+PMIX_EXPORT bool pmix_fd_is_regular(int fd);
+
+/**
+ * Convenience function to check if fd point to an accessible character device.
+ *
+ * @param fd File descriptor
+ *
+ * @returns true if "fd" points to a regular file.
+ * @returns false otherwise.
+ */
+PMIX_EXPORT bool pmix_fd_is_chardev(int fd);
+
+/**
+ * Convenience function to check if fd point to an accessible block device.
+ *
+ * @param fd File descriptor
+ *
+ * @returns true if "fd" points to a regular file.
+ * @returns false otherwise.
+ */
+PMIX_EXPORT bool pmix_fd_is_blkdev(int fd);
+
 
 END_C_DECLS
 

@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, Inc.  All rights reserved.
- * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2016      Mellanox Technologies, Inc.
  *                         All rights reserved.
  *
@@ -1014,12 +1014,7 @@ int pmix_bfrops_base_print_status(char **output, char *prefix,
             rc = asprintf(output, "%sPMIX_VALUE: Data type: DATA_ARRAY\tARRAY SIZE: %ld",
                           prefx, (long)src->data.darray->size);
             break;
-        /**** DEPRECATED ****/
-        case PMIX_INFO_ARRAY:
-            rc = asprintf(output, "%sPMIX_VALUE: Data type: INFO_ARRAY\tARRAY SIZE: %ld",
-                          prefx, (long)src->data.array->size);
-            break;
-        /********************/
+
         default:
             rc = asprintf(output, "%sPMIX_VALUE: Data type: UNKNOWN\tValue: UNPRINTABLE", prefx);
             break;
@@ -1132,12 +1127,6 @@ int pmix_bfrops_base_print_proc(char **output, char *prefix,
 
 int pmix_bfrops_base_print_kval(char **output, char *prefix,
                                 pmix_kval_t *src, pmix_data_type_t type)
-{
-    return PMIX_SUCCESS;
-}
-
-pmix_status_t pmix_bfrops_base_print_modex(char **output, char *prefix,
-                                           pmix_modex_data_t *src, pmix_data_type_t type)
 {
     return PMIX_SUCCESS;
 }
@@ -1635,37 +1624,3 @@ pmix_status_t pmix_bfrops_base_print_alloc_directive(char **output, char *prefix
         return PMIX_SUCCESS;
     }
 }
-
-
-/**** DEPRECATED ****/
-pmix_status_t pmix_bfrops_base_print_array(char **output, char *prefix,
-                                           pmix_info_array_t *src, pmix_data_type_t type)
-{
-    size_t j;
-    char *tmp, *tmp2, *tmp3, *pfx;
-    pmix_info_t *s1;
-
-    if (0 > asprintf(&tmp, "%sARRAY SIZE: %ld", prefix, (long)src->size)) {
-        return PMIX_ERR_NOMEM;
-    }
-    if (0 > asprintf(&pfx, "\n%s\t",  (NULL == prefix) ? "" : prefix)) {
-        free(tmp);
-        return PMIX_ERR_NOMEM;
-    }
-    s1 = (pmix_info_t*)src->array;
-
-    for (j=0; j < src->size; j++) {
-        pmix_bfrops_base_print_info(&tmp2, pfx, &s1[j], PMIX_INFO);
-        if (0 > asprintf(&tmp3, "%s%s", tmp, tmp2)) {
-            free(tmp);
-            free(tmp2);
-            return PMIX_ERR_NOMEM;
-        }
-        free(tmp);
-        free(tmp2);
-        tmp = tmp3;
-    }
-    *output = tmp;
-    return PMIX_SUCCESS;
-}
-/********************/

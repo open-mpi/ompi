@@ -12,7 +12,7 @@
 #                         All rights reserved.
 # Copyright (c) 2007-2016 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
-# Copyright (c) 2013-2016 Intel, Inc. All rights reserved
+# Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
 # Copyright (c) 2016      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
@@ -30,6 +30,7 @@ LEX_OUTPUT_ROOT = lex.pmix_show_help_yy
 headers += \
         util/alfg.h \
         util/argv.h \
+        util/cmd_line.h \
         util/error.h \
         util/printf.h \
         util/output.h \
@@ -46,15 +47,16 @@ headers += \
         util/getid.h \
         util/strnlen.h \
         util/hash.h \
+        util/name_fns.h \
         util/net.h \
         util/pif.h \
-        util/tsd.h \
         util/parse_options.h \
         util/compress.h
 
 sources += \
         util/alfg.c \
         util/argv.c \
+        util/cmd_line.c \
         util/error.c \
         util/printf.c \
         util/output.c \
@@ -70,6 +72,7 @@ sources += \
         util/path.c \
         util/getid.c \
         util/hash.c \
+        util/name_fns.c \
         util/net.c \
         util/pif.c \
         util/parse_options.c \

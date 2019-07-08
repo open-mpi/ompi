@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2015-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015-2019 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -38,8 +38,15 @@ PMIX_EXPORT void pmix_value_load(pmix_value_t *v, const void *data,
     pmix_bfrops_base_value_load(v, data, type);
 }
 
+PMIX_EXPORT pmix_status_t pmix_value_unload(pmix_value_t *kv,
+                                            void **data,
+                                            size_t *sz)
+{
+    return pmix_bfrops_base_value_unload(kv, data, sz);
+}
+
 PMIX_EXPORT pmix_status_t pmix_value_xfer(pmix_value_t *dest,
-                                          pmix_value_t *src)
+                                          const pmix_value_t *src)
 {
     return pmix_bfrops_base_value_xfer(dest, src);
 }
@@ -49,6 +56,8 @@ void pmix_bfrops_base_value_load(pmix_value_t *v, const void *data,
 {
     pmix_byte_object_t *bo;
     pmix_proc_info_t *pi;
+    pmix_data_array_t *darray;
+    pmix_status_t rc;
 
     v->type = type;
     if (NULL == data) {
@@ -172,8 +181,16 @@ void pmix_bfrops_base_value_load(pmix_value_t *v, const void *data,
             memcpy(&(v->data.pinfo->exit_code), &pi->exit_code, sizeof(int));
             break;
         case PMIX_POINTER:
-            memcpy(&(v->data.ptr), data, sizeof(void*));
+            v->data.ptr = (void*)data;
             break;
+        case PMIX_DATA_ARRAY:
+            darray = (pmix_data_array_t*)data;
+            rc = pmix_bfrops_base_copy_darray(&v->data.darray, darray, PMIX_DATA_ARRAY);
+            if (PMIX_SUCCESS != rc) {
+                PMIX_ERROR_LOG(rc);
+            }
+            break;
+
         default:
             /* silence warnings */
             break;
@@ -187,6 +204,7 @@ pmix_status_t pmix_bfrops_base_value_unload(pmix_value_t *kv,
                                             size_t *sz)
 {
     pmix_status_t rc;
+    pmix_data_array_t **darray;
 
     rc = PMIX_SUCCESS;
     if (NULL == data ||
@@ -301,8 +319,13 @@ pmix_status_t pmix_bfrops_base_value_unload(pmix_value_t *kv,
             *sz = sizeof(pmix_proc_state_t);
             break;
         case PMIX_POINTER:
-            memcpy(*data, &(kv->data.ptr), sizeof(void*));
+            *data = (void*)kv->data.ptr;
             *sz = sizeof(void*);
+            break;
+        case PMIX_DATA_ARRAY:
+            darray = (pmix_data_array_t**)data;
+            rc = pmix_bfrops_base_copy_darray(darray, kv->data.darray, PMIX_DATA_ARRAY);
+            *sz = sizeof(pmix_data_array_t);
             break;
         default:
             /* silence warnings */
@@ -398,11 +421,12 @@ pmix_value_cmp_t pmix_bfrops_base_value_cmp(pmix_value_t *p,
             }
             break;
         case PMIX_COMPRESSED_STRING:
-            if (p->data.bo.size != p1->data.bo.size) {
-                return false;
+            if (p->data.bo.size > p1->data.bo.size) {
+                return PMIX_VALUE2_GREATER;
             } else {
-                return true;
+                return PMIX_VALUE1_GREATER;
             }
+            break;
         case PMIX_STATUS:
             if (p->data.status == p1->data.status) {
                 rc = PMIX_EQUAL;
@@ -416,22 +440,8 @@ pmix_value_cmp_t pmix_bfrops_base_value_cmp(pmix_value_t *p,
 
 /* Xfer FUNCTIONS FOR GENERIC PMIX TYPES */
 pmix_status_t pmix_bfrops_base_value_xfer(pmix_value_t *p,
-                                          pmix_value_t *src)
+                                          const pmix_value_t *src)
 {
-    size_t n, m;
-    pmix_status_t rc;
-    char **prarray, **strarray;
-    pmix_value_t *pv, *sv;
-    pmix_info_t *p1, *s1;
-    pmix_app_t *pa, *sa;
-    pmix_pdata_t *pd, *sd;
-    pmix_buffer_t *pb, *sb;
-    pmix_byte_object_t *pbo, *sbo;
-    pmix_kval_t *pk, *sk;
-    pmix_modex_data_t *pm, *sm;
-    pmix_proc_info_t *pi, *si;
-    pmix_query_t *pq, *sq;
-
     /* copy the right field */
     p->type = src->type;
     switch (src->type) {
@@ -544,414 +554,15 @@ pmix_status_t pmix_bfrops_base_value_xfer(pmix_value_t *p,
         memcpy(&p->data.state, &src->data.state, sizeof(pmix_proc_state_t));
         break;
     case PMIX_PROC_INFO:
-        PMIX_PROC_INFO_CREATE(p->data.pinfo, 1);
-        if (NULL != src->data.pinfo->hostname) {
-            p->data.pinfo->hostname = strdup(src->data.pinfo->hostname);
-        }
-        if (NULL != src->data.pinfo->executable_name) {
-            p->data.pinfo->executable_name = strdup(src->data.pinfo->executable_name);
-        }
-        memcpy(&p->data.pinfo->pid, &src->data.pinfo->pid, sizeof(pid_t));
-        memcpy(&p->data.pinfo->exit_code, &src->data.pinfo->exit_code, sizeof(int));
-        memcpy(&p->data.pinfo->state, &src->data.pinfo->state, sizeof(pmix_proc_state_t));
-        break;
+        return pmix_bfrops_base_copy_pinfo(&p->data.pinfo, src->data.pinfo, PMIX_PROC_INFO);
     case PMIX_DATA_ARRAY:
-        p->data.darray = (pmix_data_array_t*)calloc(1, sizeof(pmix_data_array_t));
-        p->data.darray->type = src->data.darray->type;
-        p->data.darray->size = src->data.darray->size;
-        if (0 == p->data.darray->size || NULL == src->data.darray->array) {
-            p->data.darray->array = NULL;
-            p->data.darray->size = 0;
-            break;
-        }
-        /* allocate space and do the copy */
-        switch (src->data.darray->type) {
-            case PMIX_UINT8:
-            case PMIX_INT8:
-            case PMIX_BYTE:
-                p->data.darray->array = (char*)malloc(src->data.darray->size);
-                if (NULL == p->data.darray->array) {
-                    return PMIX_ERR_NOMEM;
-                }
-                memcpy(p->data.darray->array, src->data.darray->array, src->data.darray->size);
-                break;
-            case PMIX_UINT16:
-            case PMIX_INT16:
-                p->data.darray->array = (char*)malloc(src->data.darray->size * sizeof(uint16_t));
-                if (NULL == p->data.darray->array) {
-                    return PMIX_ERR_NOMEM;
-                }
-                memcpy(p->data.darray->array, src->data.darray->array, src->data.darray->size * sizeof(uint16_t));
-                break;
-            case PMIX_UINT32:
-            case PMIX_INT32:
-                p->data.darray->array = (char*)malloc(src->data.darray->size * sizeof(uint32_t));
-                if (NULL == p->data.darray->array) {
-                    return PMIX_ERR_NOMEM;
-                }
-                memcpy(p->data.darray->array, src->data.darray->array, src->data.darray->size * sizeof(uint32_t));
-                break;
-            case PMIX_UINT64:
-            case PMIX_INT64:
-                p->data.darray->array = (char*)malloc(src->data.darray->size * sizeof(uint64_t));
-                if (NULL == p->data.darray->array) {
-                    return PMIX_ERR_NOMEM;
-                }
-                memcpy(p->data.darray->array, src->data.darray->array, src->data.darray->size * sizeof(uint64_t));
-                break;
-            case PMIX_BOOL:
-                p->data.darray->array = (char*)malloc(src->data.darray->size * sizeof(bool));
-                if (NULL == p->data.darray->array) {
-                    return PMIX_ERR_NOMEM;
-                }
-                memcpy(p->data.darray->array, src->data.darray->array, src->data.darray->size * sizeof(bool));
-                break;
-            case PMIX_SIZE:
-                p->data.darray->array = (char*)malloc(src->data.darray->size * sizeof(size_t));
-                if (NULL == p->data.darray->array) {
-                    return PMIX_ERR_NOMEM;
-                }
-                memcpy(p->data.darray->array, src->data.darray->array, src->data.darray->size * sizeof(size_t));
-                break;
-            case PMIX_PID:
-                p->data.darray->array = (char*)malloc(src->data.darray->size * sizeof(pid_t));
-                if (NULL == p->data.darray->array) {
-                    return PMIX_ERR_NOMEM;
-                }
-                memcpy(p->data.darray->array, src->data.darray->array, src->data.darray->size * sizeof(pid_t));
-                break;
-            case PMIX_STRING:
-                p->data.darray->array = (char**)malloc(src->data.darray->size * sizeof(char*));
-                if (NULL == p->data.darray->array) {
-                    return PMIX_ERR_NOMEM;
-                }
-                prarray = (char**)p->data.darray->array;
-                strarray = (char**)src->data.darray->array;
-                for (n=0; n < src->data.darray->size; n++) {
-                    if (NULL != strarray[n]) {
-                        prarray[n] = strdup(strarray[n]);
-                    }
-                }
-                break;
-            case PMIX_INT:
-            case PMIX_UINT:
-                p->data.darray->array = (char*)malloc(src->data.darray->size * sizeof(int));
-                if (NULL == p->data.darray->array) {
-                    return PMIX_ERR_NOMEM;
-                }
-                memcpy(p->data.darray->array, src->data.darray->array, src->data.darray->size * sizeof(int));
-                break;
-            case PMIX_FLOAT:
-                p->data.darray->array = (char*)malloc(src->data.darray->size * sizeof(float));
-                if (NULL == p->data.darray->array) {
-                    return PMIX_ERR_NOMEM;
-                }
-                memcpy(p->data.darray->array, src->data.darray->array, src->data.darray->size * sizeof(float));
-                break;
-            case PMIX_DOUBLE:
-                p->data.darray->array = (char*)malloc(src->data.darray->size * sizeof(double));
-                if (NULL == p->data.darray->array) {
-                    return PMIX_ERR_NOMEM;
-                }
-                memcpy(p->data.darray->array, src->data.darray->array, src->data.darray->size * sizeof(double));
-                break;
-            case PMIX_TIMEVAL:
-                p->data.darray->array = (struct timeval*)malloc(src->data.darray->size * sizeof(struct timeval));
-                if (NULL == p->data.darray->array) {
-                    return PMIX_ERR_NOMEM;
-                }
-                memcpy(p->data.darray->array, src->data.darray->array, src->data.darray->size * sizeof(struct timeval));
-                break;
-            case PMIX_TIME:
-                p->data.darray->array = (time_t*)malloc(src->data.darray->size * sizeof(time_t));
-                if (NULL == p->data.darray->array) {
-                    return PMIX_ERR_NOMEM;
-                }
-                memcpy(p->data.darray->array, src->data.darray->array, src->data.darray->size * sizeof(time_t));
-                break;
-            case PMIX_STATUS:
-                p->data.darray->array = (pmix_status_t*)malloc(src->data.darray->size * sizeof(pmix_status_t));
-                if (NULL == p->data.darray->array) {
-                    return PMIX_ERR_NOMEM;
-                }
-                memcpy(p->data.darray->array, src->data.darray->array, src->data.darray->size * sizeof(pmix_status_t));
-                break;
-            case PMIX_VALUE:
-                PMIX_VALUE_CREATE(p->data.darray->array, src->data.darray->size);
-                if (NULL == p->data.darray->array) {
-                    return PMIX_ERR_NOMEM;
-                }
-                pv = (pmix_value_t*)p->data.darray->array;
-                sv = (pmix_value_t*)src->data.darray->array;
-                for (n=0; n < src->data.darray->size; n++) {
-                    if (PMIX_SUCCESS != (rc = pmix_value_xfer(&pv[n], &sv[n]))) {
-                        PMIX_VALUE_FREE(pv, src->data.darray->size);
-                        return rc;
-                    }
-                }
-                break;
-            case PMIX_PROC:
-                PMIX_PROC_CREATE(p->data.darray->array, src->data.darray->size);
-                if (NULL == p->data.darray->array) {
-                    return PMIX_ERR_NOMEM;
-                }
-                memcpy(p->data.darray->array, src->data.darray->array, src->data.darray->size * sizeof(pmix_proc_t));
-                break;
-            case PMIX_APP:
-                PMIX_APP_CREATE(p->data.darray->array, src->data.darray->size);
-                if (NULL == p->data.darray->array) {
-                    return PMIX_ERR_NOMEM;
-                }
-                pa = (pmix_app_t*)p->data.darray->array;
-                sa = (pmix_app_t*)src->data.darray->array;
-                for (n=0; n < src->data.darray->size; n++) {
-                    if (NULL != sa[n].cmd) {
-                        pa[n].cmd = strdup(sa[n].cmd);
-                    }
-                    if (NULL != sa[n].argv) {
-                        pa[n].argv = pmix_argv_copy(sa[n].argv);
-                    }
-                    if (NULL != sa[n].env) {
-                        pa[n].env = pmix_argv_copy(sa[n].env);
-                    }
-                    if (NULL != sa[n].cwd) {
-                        pa[n].cwd = strdup(sa[n].cwd);
-                    }
-                    pa[n].maxprocs = sa[n].maxprocs;
-                    if (0 < sa[n].ninfo && NULL != sa[n].info) {
-                        PMIX_INFO_CREATE(pa[n].info, sa[n].ninfo);
-                        if (NULL == pa[n].info) {
-                            PMIX_APP_FREE(pa, src->data.darray->size);
-                            return PMIX_ERR_NOMEM;
-                        }
-                        pa[n].ninfo = sa[n].ninfo;
-                        for (m=0; m < pa[n].ninfo; m++) {
-                            PMIX_INFO_XFER(&pa[n].info[m], &sa[n].info[m]);
-                        }
-                    }
-                }
-                break;
-            case PMIX_INFO:
-                PMIX_INFO_CREATE(p->data.darray->array, src->data.darray->size);
-                p1 = (pmix_info_t*)p->data.darray->array;
-                s1 = (pmix_info_t*)src->data.darray->array;
-                for (n=0; n < src->data.darray->size; n++) {
-                    PMIX_INFO_XFER(&p1[n], &s1[n]);
-                }
-                break;
-            case PMIX_PDATA:
-                PMIX_PDATA_CREATE(p->data.darray->array, src->data.darray->size);
-                if (NULL == p->data.darray->array) {
-                    return PMIX_ERR_NOMEM;
-                }
-                pd = (pmix_pdata_t*)p->data.darray->array;
-                sd = (pmix_pdata_t*)src->data.darray->array;
-                for (n=0; n < src->data.darray->size; n++) {
-                    PMIX_PDATA_XFER(&pd[n], &sd[n]);
-                }
-                break;
-            case PMIX_BUFFER:
-                p->data.darray->array = (pmix_buffer_t*)malloc(src->data.darray->size * sizeof(pmix_buffer_t));
-                if (NULL == p->data.darray->array) {
-                    return PMIX_ERR_NOMEM;
-                }
-                pb = (pmix_buffer_t*)p->data.darray->array;
-                sb = (pmix_buffer_t*)src->data.darray->array;
-                for (n=0; n < src->data.darray->size; n++) {
-                    PMIX_CONSTRUCT(&pb[n], pmix_buffer_t);
-                    pmix_bfrops_base_copy_payload(&pb[n], &sb[n]);
-                }
-                break;
-            case PMIX_BYTE_OBJECT:
-            case PMIX_COMPRESSED_STRING:
-                p->data.darray->array = (pmix_byte_object_t*)malloc(src->data.darray->size * sizeof(pmix_byte_object_t));
-                if (NULL == p->data.darray->array) {
-                    return PMIX_ERR_NOMEM;
-                }
-                pbo = (pmix_byte_object_t*)p->data.darray->array;
-                sbo = (pmix_byte_object_t*)src->data.darray->array;
-                for (n=0; n < src->data.darray->size; n++) {
-                    if (NULL != sbo[n].bytes && 0 < sbo[n].size) {
-                        pbo[n].size = sbo[n].size;
-                        pbo[n].bytes = (char*)malloc(pbo[n].size);
-                        memcpy(pbo[n].bytes, sbo[n].bytes, pbo[n].size);
-                    } else {
-                        pbo[n].bytes = NULL;
-                        pbo[n].size = 0;
-                    }
-                }
-                break;
-            case PMIX_KVAL:
-                p->data.darray->array = (pmix_kval_t*)calloc(src->data.darray->size , sizeof(pmix_kval_t));
-                if (NULL == p->data.darray->array) {
-                    return PMIX_ERR_NOMEM;
-                }
-                pk = (pmix_kval_t*)p->data.darray->array;
-                sk = (pmix_kval_t*)src->data.darray->array;
-                for (n=0; n < src->data.darray->size; n++) {
-                    if (NULL != sk[n].key) {
-                        pk[n].key = strdup(sk[n].key);
-                    }
-                    if (NULL != sk[n].value) {
-                        PMIX_VALUE_CREATE(pk[n].value, 1);
-                        if (NULL == pk[n].value) {
-                            free(p->data.darray->array);
-                            return PMIX_ERR_NOMEM;
-                        }
-                        if (PMIX_SUCCESS != (rc = pmix_value_xfer(pk[n].value, sk[n].value))) {
-                            return rc;
-                        }
-                    }
-                }
-                break;
-            case PMIX_MODEX:
-                PMIX_MODEX_CREATE(p->data.darray->array, src->data.darray->size);
-                if (NULL == p->data.darray->array) {
-                    return PMIX_ERR_NOMEM;
-                }
-                pm = (pmix_modex_data_t*)p->data.darray->array;
-                sm = (pmix_modex_data_t*)src->data.darray->array;
-                for (n=0; n < src->data.darray->size; n++) {
-                    memcpy(&pm[n], &sm[n], sizeof(pmix_modex_data_t));
-                    if (NULL != sm[n].blob && 0 < sm[n].size) {
-                        pm[n].blob = (uint8_t*)malloc(sm[n].size);
-                        if (NULL == pm[n].blob) {
-                            return PMIX_ERR_NOMEM;
-                        }
-                        memcpy(pm[n].blob, sm[n].blob, sm[n].size);
-                        pm[n].size = sm[n].size;
-                    } else {
-                        pm[n].blob = NULL;
-                        pm[n].size = 0;
-                    }
-                }
-                break;
-            case PMIX_PERSIST:
-                p->data.darray->array = (pmix_persistence_t*)malloc(src->data.darray->size * sizeof(pmix_persistence_t));
-                if (NULL == p->data.darray->array) {
-                    return PMIX_ERR_NOMEM;
-                }
-                memcpy(p->data.darray->array, src->data.darray->array, src->data.darray->size * sizeof(pmix_persistence_t));
-                break;
-            case PMIX_POINTER:
-                p->data.darray->array = (char**)malloc(src->data.darray->size * sizeof(char*));
-                if (NULL == p->data.darray->array) {
-                    return PMIX_ERR_NOMEM;
-                }
-                prarray = (char**)p->data.darray->array;
-                strarray = (char**)src->data.darray->array;
-                for (n=0; n < src->data.darray->size; n++) {
-                    prarray[n] = strarray[n];
-                }
-                break;
-            case PMIX_SCOPE:
-                p->data.darray->array = (pmix_scope_t*)malloc(src->data.darray->size * sizeof(pmix_scope_t));
-                if (NULL == p->data.darray->array) {
-                    return PMIX_ERR_NOMEM;
-                }
-                memcpy(p->data.darray->array, src->data.darray->array, src->data.darray->size * sizeof(pmix_scope_t));
-                break;
-            case PMIX_DATA_RANGE:
-                p->data.darray->array = (pmix_data_range_t*)malloc(src->data.darray->size * sizeof(pmix_data_range_t));
-                if (NULL == p->data.darray->array) {
-                    return PMIX_ERR_NOMEM;
-                }
-                memcpy(p->data.darray->array, src->data.darray->array, src->data.darray->size * sizeof(pmix_data_range_t));
-                break;
-            case PMIX_COMMAND:
-                p->data.darray->array = (pmix_cmd_t*)malloc(src->data.darray->size * sizeof(pmix_cmd_t));
-                if (NULL == p->data.darray->array) {
-                    return PMIX_ERR_NOMEM;
-                }
-                memcpy(p->data.darray->array, src->data.darray->array, src->data.darray->size * sizeof(pmix_cmd_t));
-                break;
-            case PMIX_INFO_DIRECTIVES:
-                p->data.darray->array = (pmix_info_directives_t*)malloc(src->data.darray->size * sizeof(pmix_info_directives_t));
-                if (NULL == p->data.darray->array) {
-                    return PMIX_ERR_NOMEM;
-                }
-                memcpy(p->data.darray->array, src->data.darray->array, src->data.darray->size * sizeof(pmix_info_directives_t));
-                break;
-            case PMIX_PROC_INFO:
-                PMIX_PROC_INFO_CREATE(p->data.darray->array, src->data.darray->size);
-                if (NULL == p->data.darray->array) {
-                    return PMIX_ERR_NOMEM;
-                }
-                pi = (pmix_proc_info_t*)p->data.darray->array;
-                si = (pmix_proc_info_t*)src->data.darray->array;
-                for (n=0; n < src->data.darray->size; n++) {
-                    memcpy(&pi[n].proc, &si[n].proc, sizeof(pmix_proc_t));
-                    if (NULL != si[n].hostname) {
-                        pi[n].hostname = strdup(si[n].hostname);
-                    } else {
-                        pi[n].hostname = NULL;
-                    }
-                    if (NULL != si[n].executable_name) {
-                        pi[n].executable_name = strdup(si[n].executable_name);
-                    } else {
-                        pi[n].executable_name = NULL;
-                    }
-                    pi[n].pid = si[n].pid;
-                    pi[n].exit_code = si[n].exit_code;
-                    pi[n].state = si[n].state;
-                }
-                break;
-            case PMIX_DATA_ARRAY:
-                PMIX_ERROR_LOG(PMIX_ERR_NOT_SUPPORTED);
-                return PMIX_ERR_NOT_SUPPORTED;  // don't support iterative arrays
-            case PMIX_QUERY:
-                PMIX_QUERY_CREATE(p->data.darray->array, src->data.darray->size);
-                if (NULL == p->data.darray->array) {
-                    return PMIX_ERR_NOMEM;
-                }
-                pq = (pmix_query_t*)p->data.darray->array;
-                sq = (pmix_query_t*)src->data.darray->array;
-                for (n=0; n < src->data.darray->size; n++) {
-                    if (NULL != sq[n].keys) {
-                        pq[n].keys = pmix_argv_copy(sq[n].keys);
-                    }
-                    if (NULL != sq[n].qualifiers && 0 < sq[n].nqual) {
-                        PMIX_INFO_CREATE(pq[n].qualifiers, sq[n].nqual);
-                        if (NULL == pq[n].qualifiers) {
-                            PMIX_QUERY_FREE(pq, src->data.darray->size);
-                            return PMIX_ERR_NOMEM;
-                        }
-                        for (m=0; m < sq[n].nqual; m++) {
-                            PMIX_INFO_XFER(&pq[n].qualifiers[m], &sq[n].qualifiers[m]);
-                        }
-                        pq[n].nqual = sq[n].nqual;
-                    } else {
-                        pq[n].qualifiers = NULL;
-                        pq[n].nqual = 0;
-                    }
-                }
-                break;
-            default:
-                return PMIX_ERR_UNKNOWN_DATA_TYPE;
-        }
-        break;
+        return pmix_bfrops_base_copy_darray(&p->data.darray, src->data.darray, PMIX_DATA_ARRAY);
     case PMIX_POINTER:
-        memcpy(&p->data.ptr, &src->data.ptr, sizeof(void*));
+        p->data.ptr = src->data.ptr;
         break;
-    /**** DEPRECATED ****/
-    case PMIX_INFO_ARRAY:
-        p->data.array->size = src->data.array->size;
-        if (0 < src->data.array->size) {
-            p->data.array->array = (pmix_info_t*)malloc(src->data.array->size * sizeof(pmix_info_t));
-            if (NULL == p->data.array->array) {
-                return PMIX_ERR_NOMEM;
-            }
-            p1 = (pmix_info_t*)p->data.array->array;
-            s1 = (pmix_info_t*)src->data.array->array;
-            for (n=0; n < src->data.darray->size; n++) {
-                PMIX_INFO_XFER(&p1[n], &s1[n]);
-            }
-        }
-        break;
-    /********************/
+
     default:
-        pmix_output(0, "XFER-PMIX-VALUE: UNSUPPORTED TYPE %d", (int)src->type);
-        assert(0);
+        pmix_output(0, "PMIX-XFER-VALUE: UNSUPPORTED TYPE %d", (int)src->type);
         return PMIX_ERROR;
     }
     return PMIX_SUCCESS;

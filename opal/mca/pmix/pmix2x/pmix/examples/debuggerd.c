@@ -13,7 +13,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Mellanox Technologies, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -133,6 +133,11 @@ int main(int argc, char **argv)
     size_t nq, n;
     myquery_data_t myquery_data;
 
+fprintf(stderr, "I AM HERE\n");
+fflush(stderr);
+    sleep(10);
+    exit(0);
+
     /* init us - since we were launched by the RM, our connection info
      * will have been provided at startup. */
     if (PMIX_SUCCESS != (rc = PMIx_tool_init(&myproc, NULL, 0))) {
@@ -210,7 +215,7 @@ int main(int argc, char **argv)
     n = 0;
     fprintf(stderr, "[%s:%u] Hanging around awhile, doing debugger magic\n", myproc.nspace, myproc.rank);
     while (n < 5) {
-        usleep(10);
+        usleep(1000);
         ++n;
     }
 

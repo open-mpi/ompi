@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Artem Y. Polyakov <artpol84@gmail.com>.
  *                         All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
@@ -32,6 +32,13 @@
 
 #define TEST_NAMESPACE "smoky_nspace"
 #define TEST_CREDENTIAL "dummy"
+
+#define PMIX_WAIT_FOR_COMPLETION(m) \
+    do {                            \
+        while ((m)) {               \
+            usleep(10);             \
+        }                           \
+    } while(0)
 
 /* WARNING: pmix_test_output_prepare is currently not threadsafe!
  * fix it once needed!
@@ -250,7 +257,7 @@ typedef struct {
     TEST_VERBOSE(("%s:%d want to get from %s:%d key %s", my_nspace, my_rank, ns, r, key));                          \
     if (blocking) {                                                                                                 \
         if (PMIX_SUCCESS != (rc = PMIx_Get(&foobar, key, NULL, 0, &val))) {                                         \
-            if( !( rc == PMIX_ERR_NOT_FOUND && ok_notfnd ) ){                                                       \
+            if( !( (rc == PMIX_ERR_NOT_FOUND || rc == PMIX_ERR_PROC_ENTRY_NOT_FOUND) && ok_notfnd ) ){                                                       \
                 TEST_ERROR(("%s:%d: PMIx_Get failed: %d from %s:%d, key %s", my_nspace, my_rank, rc, ns, r, key));  \
             }                                                                                                       \
             rc = PMIX_ERROR;                                                                                        \
@@ -277,7 +284,7 @@ typedef struct {
     }                                                                                                               \
     if (PMIX_SUCCESS == rc) {                                                                                       \
         if( PMIX_SUCCESS != cbdata.status ){                                                                        \
-            if( !( cbdata.status == PMIX_ERR_NOT_FOUND && ok_notfnd ) ){                                                       \
+            if( !( (cbdata.status == PMIX_ERR_NOT_FOUND || cbdata.status == PMIX_ERR_PROC_ENTRY_NOT_FOUND) && ok_notfnd ) ){                                                       \
                 TEST_ERROR(("%s:%d: PMIx_Get_nb failed: %d from %s:%d, key=%s",                                   \
                             my_nspace, my_rank, rc, my_nspace, r));                                                 \
             }                                                                                                       \

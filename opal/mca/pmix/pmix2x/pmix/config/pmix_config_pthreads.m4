@@ -10,7 +10,7 @@ dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2012      Cisco Systems, Inc.  All rights reserved.
-dnl Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
+dnl Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
 dnl Copyright (c) 2014-2016 Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
 dnl $COPYRIGHT$
@@ -71,104 +71,6 @@ int main(int argc, char* argv[])
 # END: PMIX_INTL_PTHREAD_TRY_LINK
 ])dnl
 
-
-AC_DEFUN([PMIX_INTL_PTHREAD_TRY_LINK_FORTRAN], [
-# BEGIN: PMIX_INTL_PTHREAD_TRY_LINK_FORTRAN
-#
-# Make sure that we can run a small application in Fortran, with
-# pthreads living in a C object file
-
-# Fortran module
-cat > conftestf.f <<EOF
-      program fpthread
-      call pthreadtest
-      end
-EOF
-
-# C module
-if test -f conftest.h; then
-    pmix_conftest_h="#include \"conftest.h\""
-else
-    pmix_conftest_h=""
-fi
-cat > conftest.c <<EOF
-#include <stdio.h>
-#include <stdlib.h>
-#include <pthread.h>
-$pmix_conftest_h
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-int i = 3;
-pthread_t me, newthread;
-
-void cleanup_routine(void *foo);
-void *thread_main(void *foo);
-void pthreadtest_f(void);
-
-void cleanup_routine(void *foo) { i = 4; }
-void *thread_main(void *foo) { i = 2; return (void*) &i; }
-
-void pthreadtest_f(void)
-{
-    pthread_attr_t attr;
-
-    me = pthread_self();
-    pthread_atfork(NULL, NULL, NULL);
-    pthread_attr_init(&attr);
-    pthread_cleanup_push(cleanup_routine, 0);
-    pthread_create(&newthread, &attr, thread_main, 0);
-    pthread_join(newthread, 0);
-    pthread_cleanup_pop(0);
-}
-
-void pthreadtest(void)
-{ pthreadtest_f(); }
-
-void pthreadtest_(void)
-{ pthreadtest_f(); }
-
-void pthreadtest__(void)
-{ pthreadtest_f(); }
-
-void PTHREADTEST(void)
-{ pthreadtest_f(); }
-
-#ifdef __cplusplus
-}
-#endif
-EOF
-
-# Try the compile
-PMIX_LOG_COMMAND(
-    [$CC $CFLAGS -I. -c conftest.c],
-    PMIX_LOG_COMMAND(
-        [$FC $FCFLAGS conftestf.f conftest.o -o conftest $LDFLAGS $LIBS],
-        [HAPPY=1],
-	[HAPPY=0]),
-    [HAPPY=0])
-
-if test "$HAPPY" = "1"; then
-   $1
-else
-    PMIX_LOG_MSG([here is the C program:], 1)
-    PMIX_LOG_FILE([conftest.c])
-    if test -f conftest.h; then
-	PMIX_LOG_MSG([here is contest.h:], 1)
-	PMIX_LOG_FILE([conftest.h])
-    fi
-    PMIX_LOG_MSG([here is the fortran program:], 1)
-    PMIX_LOG_FILE([conftestf.f])
-    $2
-fi
-
-unset HAPPY pmix_conftest_h
-rm -rf conftest*
-# END: PMIX_INTL_PTHREAD_TRY_LINK_FORTRAN
-])dnl
-
-
 # ********************************************************************
 #
 # Try to compile thread support without any special flags
@@ -194,48 +96,6 @@ fi
 ])dnl
 
 
-AC_DEFUN([PMIX_INTL_POSIX_THREADS_PLAIN_CXX], [
-#
-# C++ compiler
-#
-if test "$pmix_pthread_cxx_success" = "0"; then
-  AC_MSG_CHECKING([if C++ compiler and POSIX threads work as is])
-
-  AC_LANG_PUSH(C++)
-  PMIX_INTL_PTHREAD_TRY_LINK(pmix_pthread_cxx_success=1,
-                            pmix_pthread_cxx_success=0)
-  AC_LANG_POP(C++)
-  if test "$pmix_pthread_cxx_success" = "1"; then
-    AC_MSG_RESULT([yes])
-  else
-    AC_MSG_RESULT([no])
-  fi
-fi
-])dnl
-
-
-AC_DEFUN([PMIX_INTL_POSIX_THREADS_PLAIN_FC], [
-#
-# Fortran compiler
-#
-if test "$pmix_pthread_fortran_success" = "0" && \
-   test "$OMPI_TRY_FORTRAN_BINDINGS" -gt "$OMPI_FORTRAN_NO_BINDINGS" && \
-   test $ompi_fortran_happy -eq 1; then
-  AC_MSG_CHECKING([if Fortran compiler and POSIX threads work as is])
-
-  AC_LANG_PUSH(C)
-  PMIX_INTL_PTHREAD_TRY_LINK_FORTRAN(pmix_pthread_fortran_success=1,
-                                     pmix_pthread_fortran_success=0)
-  AC_LANG_POP(C)
-  if test "$pmix_pthread_fortran_success" = "1"; then
-    AC_MSG_RESULT([yes])
-  else
-    AC_MSG_RESULT([no])
-  fi
-fi
-])dnl
-
-
 AC_DEFUN([PMIX_INTL_POSIX_THREADS_PLAIN], [
 # BEGIN: PMIX_INTL_POSIX_THREADS_PLAIN
 #
@@ -246,18 +106,9 @@ AC_DEFUN([PMIX_INTL_POSIX_THREADS_PLAIN], [
 # why take chances?
 #
 
-# Only run C++ and Fortran if those compilers already configured
 AC_PROVIDE_IFELSE([AC_PROG_CC],
                   [PMIX_INTL_POSIX_THREADS_PLAIN_C],
                   [pmix_pthread_c_success=1])
-
-AC_PROVIDE_IFELSE([AC_PROG_CXX],
-                  [PMIX_INTL_POSIX_THREADS_PLAIN_CXX],
-                  [pmix_pthread_cxx_success=1])
-
-AC_PROVIDE_IFELSE([AC_PROG_FC],
-                  [PMIX_INTL_POSIX_THREADS_PLAIN_FC],
-                  [pmix_pthread_fortran_success=1])
 
 # End: PMIX_INTL_POSIX_THREADS_PLAIN
 ])dnl
@@ -294,60 +145,6 @@ fi
 ])
 
 
-AC_DEFUN([PMIX_INTL_POSIX_THREADS_SPECIAL_FLAGS_CXX], [
-#
-# C++ compiler
-#
-if test "$pmix_pthread_cxx_success" = "0"; then
-  for pf in $pflags; do
-    AC_MSG_CHECKING([if C++ compiler and POSIX threads work with $pf])
-    CXXFLAGS="$orig_CXXFLAGS $pf"
-    AC_LANG_PUSH(C++)
-    PMIX_INTL_PTHREAD_TRY_LINK(pmix_pthread_cxx_success=1,
-                              pmix_pthread_cxx_success=0)
-    AC_LANG_POP(C++)
-    if test "$pmix_pthread_cxx_success" = "1"; then
-      PTHREAD_CXXFLAGS="$pf"
-      AC_MSG_RESULT([yes])
-      break
-    else
-      PTHREAD_CXXFLAGS=
-      CXXFLAGS="$orig_CXXFLAGS"
-      AC_MSG_RESULT([no])
-    fi
-  done
-fi
-])
-
-
-AC_DEFUN([PMIX_INTL_POSIX_THREADS_SPECIAL_FLAGS_FC], [
-#
-# Fortran compiler
-#
-if test "$pmix_pthread_fortran_success" = "0" && \
-   test "$OMPI_TRY_FORTRAN_BINDINGS" -gt "$OMPI_FORTRAN_NO_BINDINGS" && \
-   test $ompi_fortran_happy -eq 1; then
-  for pf in $pflags; do
-    AC_MSG_CHECKING([if Fortran compiler and POSIX threads work with $pf])
-    FCFLAGS="$orig_FCFLAGS $pf"
-    AC_LANG_PUSH(C)
-    PMIX_INTL_PTHREAD_TRY_LINK_FORTRAN(pmix_pthread_fortran_success=1,
-                                       pmix_pthread_fortran_success=0)
-    AC_LANG_POP(C)
-    if test "$pmix_pthread_fortran_success" = "1"; then
-      PTHREAD_FCFLAGS="$pf"
-      AC_MSG_RESULT([yes])
-      break
-    else
-      PTHREAD_FCFLAGS=
-      FCFLAGS="$orig_FCFLAGS"
-      AC_MSG_RESULT([no])
-    fi
-  done
-fi
-])
-
-
 AC_DEFUN([PMIX_INTL_POSIX_THREADS_SPECIAL_FLAGS],[
 # Begin: PMIX_INTL_POSIX_THREADS_SPECIAL_FLAGS
 #
@@ -374,18 +171,9 @@ case "${host_cpu}-${host_os}" in
   ;;
 esac
 
-# Only run C++ and Fortran if those compilers already configured
 AC_PROVIDE_IFELSE([AC_PROG_CC],
                   [PMIX_INTL_POSIX_THREADS_SPECIAL_FLAGS_C],
                   [pmix_pthread_c_success=1])
-
-AC_PROVIDE_IFELSE([AC_PROG_CXX],
-                  [PMIX_INTL_POSIX_THREADS_SPECIAL_FLAGS_CXX],
-                  [pmix_pthread_cxx_success=1])
-
-AC_PROVIDE_IFELSE([AC_PROG_FC],
-                  [PMIX_INTL_POSIX_THREADS_SPECIAL_FLAGS_FC],
-                  [pmix_pthread_fortran_success=1])
 
 # End: PMIX_INTL_POSIX_THREADS_SPECIAL_FLAGS
 ])dnl
@@ -435,121 +223,6 @@ if test "$pmix_pthread_c_success" = "0"; then
 fi
 ])dnl
 
-
-AC_DEFUN([PMIX_INTL_POSIX_THREADS_LIBS_CXX],[
-#
-# C++ compiler
-#
-if test "$pmix_pthread_cxx_success" = "0"; then
-  if test ! "$pmix_pthread_c_success" = "0" && test ! "$PTHREAD_LIBS" = "" ; then
-    AC_MSG_CHECKING([if C++ compiler and POSIX threads work with $PTHREAD_LIBS])
-    case "${host_cpu}-${host-_os}" in
-      *-aix* | *-freebsd*)
-        if test "`echo $CXXCPPFLAGS | $GREP 'D_THREAD_SAFE'`" = ""; then
-          PTHREAD_CXXCPPFLAGS="-D_THREAD_SAFE"
-          CXXCPPFLAGS="$CXXCPPFLAGS $PTHREAD_CXXCPPFLAGS"
-        fi
-      ;;
-      *)
-        if test "`echo $CXXCPPFLAGS | $GREP 'D_REENTRANT'`" = ""; then
-          PTHREAD_CXXCPPFLAGS="-D_REENTRANT"
-          CXXCPPFLAGS="$CXXCPPFLAGS $PTHREAD_CXXCPPFLAGS"
-        fi
-      ;;
-    esac
-    LIBS="$orig_LIBS $PTHREAD_LIBS"
-    AC_LANG_PUSH(C++)
-    PMIX_INTL_PTHREAD_TRY_LINK(pmix_pthread_cxx_success=1,
-                              pmix_pthread_cxx_success=0)
-    AC_LANG_POP(C++)
-    if test "$pmix_pthread_cxx_success" = "1"; then
-      AC_MSG_RESULT([yes])
-    else
-      CXXCPPFLAGS="$orig_CXXCPPFLAGS"
-      LIBS="$orig_LIBS"
-      AC_MSG_RESULT([no])
-      AC_MSG_ERROR([Can not find working threads configuration.  aborting])
-    fi
-  else
-    for pl in $plibs; do
-      AC_MSG_CHECKING([if C++ compiler and POSIX threads work with $pl])
-      case "${host_cpu}-${host-_os}" in
-        *-aix* | *-freebsd*)
-          if test "`echo $CXXCPPFLAGS | $GREP 'D_THREAD_SAFE'`" = ""; then
-            PTHREAD_CXXCPPFLAGS="-D_THREAD_SAFE"
-            CXXCPPFLAGS="$CXXCPPFLAGS $PTHREAD_CXXCPPFLAGS"
-          fi
-        ;;
-        *)
-          if test "`echo $CXXCPPFLAGS | $GREP 'D_REENTRANT'`" = ""; then
-            PTHREAD_CXXCPPFLAGS="-D_REENTRANT"
-            CXXCPPFLAGS="$CXXCPPFLAGS $PTHREAD_CXXCPPFLAGS"
-          fi
-        ;;
-      esac
-      LIBS="$orig_LIBS $pl"
-      AC_LANG_PUSH(C++)
-      PMIX_INTL_PTHREAD_TRY_LINK(pmix_pthread_cxx_success=1,
-                                pmix_pthread_cxx_success=0)
-      AC_LANG_POP(C++)
-      if test "$pmix_pthread_cxx_success" = "1"; then
-	PTHREAD_LIBS="$pl"
-        AC_MSG_RESULT([yes])
-      else
-        PTHREAD_CXXCPPFLAGS=
-        CXXCPPFLAGS="$orig_CXXCPPFLAGS"
-        LIBS="$orig_LIBS"
-        AC_MSG_RESULT([no])
-      fi
-    done
-  fi
-fi
-])dnl
-
-
-AC_DEFUN([PMIX_INTL_POSIX_THREADS_LIBS_FC],[
-#
-# Fortran compiler
-#
-if test "$pmix_pthread_fortran_success" = "0" && \
-   test "$OMPI_TRY_FORTRAN_BINDINGS" -gt "$OMPI_FORTRAN_NO_BINDINGS" && \
-   test $ompi_fortran_happy -eq 1; then
-  if test ! "$pmix_pthread_c_success" = "0" && test ! "$PTHREAD_LIBS" = "" ; then
-    AC_MSG_CHECKING([if Fortran compiler and POSIX threads work with $PTHREAD_LIBS])
-    LIBS="$orig_LIBS $PTHREAD_LIBS"
-    AC_LANG_PUSH(C)
-    PMIX_INTL_PTHREAD_TRY_LINK_FORTRAN(pmix_pthread_fortran_success=1,
-                                       pmix_pthread_fortran_success=0)
-    AC_LANG_POP(C)
-    if test "$pmix_pthread_fortran_success" = "1"; then
-      AC_MSG_RESULT([yes])
-    else
-      LIBS="$orig_LIBS"
-      AC_MSG_RESULT([no])
-      AC_MSG_ERROR([Can not find working threads configuration.  aborting])
-    fi
-  else
-    for pl in $plibs; do
-      AC_MSG_CHECKING([if Fortran compiler and POSIX threads work with $pl])
-      LIBS="$orig_LIBS $pl"
-      AC_LANG_PUSH(C)
-      PMIX_INTL_PTHREAD_TRY_LINK_FORTRAN(pmix_pthread_fortran_success=1,
-                                         pmix_pthread_fortran_success=0)
-      AC_LANG_POP(C)
-      if test "$pmix_pthread_fortran_success" = "1"; then
-	PTHREAD_LIBS="$pl"
-        AC_MSG_RESULT([yes])
-        break
-      else
-        LIBS="$orig_LIBS"
-        AC_MSG_RESULT([no])
-      fi
-    done
-  fi
-fi
-])dnl
-
-
 AC_DEFUN([PMIX_INTL_POSIX_THREADS_LIBS],[
 # Begin: PMIX_INTL_POSIX_THREADS_LIBS
 #
@@ -563,18 +236,9 @@ AC_DEFUN([PMIX_INTL_POSIX_THREADS_LIBS],[
 # libpthread:  The usual place (like we can define usual!)
 plibs="-lpthreads -llthread -lpthread"
 
-# Only run C++ and Fortran if those compilers already configured
 AC_PROVIDE_IFELSE([AC_PROG_CC],
                   [PMIX_INTL_POSIX_THREADS_LIBS_C],
                   [pmix_pthread_c_success=1])
-
-AC_PROVIDE_IFELSE([AC_PROG_CXX],
-                  [PMIX_INTL_POSIX_THREADS_LIBS_CXX],
-                  [pmix_pthread_cxx_success=1])
-
-AC_PROVIDE_IFELSE([AC_PROG_FC],
-                  [PMIX_INTL_POSIX_THREADS_LIBS_FC],
-                  [pmix_pthread_fortran_success=1])
 
 # End: PMIX_INTL_POSIX_THREADS_LIBS]
 )dnl
@@ -589,21 +253,14 @@ AC_DEFUN([PMIX_CONFIG_POSIX_THREADS],[
     AC_REQUIRE([AC_PROG_GREP])
 
 pmix_pthread_c_success=0
-pmix_pthread_cxx_success=0
 
 orig_CFLAGS="$CFLAGS"
-orig_FCFLAGS="$FCFLAGS"
-orig_CXXFLAGS="$CXXFLAGS"
 orig_CPPFLAGS="$CPPFLAGS"
-orig_CXXCPPFLAGS="$CXXCPPFLAGS"
 orig_LDFLAGS="$LDFLAGS"
 orig_LIBS="$LIBS"
 
 PTHREAD_CFLAGS=
-PTHREAD_FCFLAGS=
-PTHREAD_CXXFLAGS=
 PTHREAD_CPPFLAGS=
-PTHREAD_CXXCPPFLAGS=
 PTHREAD_LDFLAGS=
 PTHREAD_LIBS=
 
@@ -648,15 +305,11 @@ AC_DEFINE_UNQUOTED([PMIX_HAVE_PTHREAD_MUTEX_ERRORCHECK], [$defval],
             [If PTHREADS implementation supports PTHREAD_MUTEX_ERRORCHECK])
 
 CFLAGS="$orig_CFLAGS"
-FCFLAGS="$orig_FCFLAGS"
-CXXFLAGS="$orig_CXXFLAGS"
 CPPFLAGS="$orig_CPPFLAGS"
-CXXCPPFLAGS="$orig_CXXCPPFLAGS"
 LDFLAGS="$orig_LDFLAGS"
 LIBS="$orig_LIBS"
 
-if test "$pmix_pthread_c_success" = "1" && \
-   test "$pmix_pthread_cxx_success" = "1"; then
+if test "$pmix_pthread_c_success" = "1"; then
   internal_useless=1
   $1
 else
@@ -664,6 +317,6 @@ else
   $2
 fi
 
-unset pmix_pthread_c_success pmix_pthread_fortran_success pmix_pthread_cxx_success
+unset pmix_pthread_c_success
 unset internal_useless
 ])dnl

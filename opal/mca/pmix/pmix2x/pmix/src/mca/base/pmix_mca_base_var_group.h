@@ -13,7 +13,7 @@
  * Copyright (c) 2008-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2016      Intel, Inc. All rights reserved
+ * Copyright (c) 2016-2019 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -58,7 +58,7 @@ typedef struct pmix_mca_base_var_group_t pmix_mca_base_var_group_t;
 /**
  * Object declaration for pmix_mca_base_var_group_t
  */
-PMIX_CLASS_DECLARATION(pmix_mca_base_var_group_t);
+PMIX_EXPORT PMIX_CLASS_DECLARATION(pmix_mca_base_var_group_t);
 
 /**
  * Register an MCA variable group
@@ -74,10 +74,10 @@ PMIX_CLASS_DECLARATION(pmix_mca_base_var_group_t);
  * Create an MCA variable group. If the group already exists
  * this call is equivalent to pmix_mca_base_ver_find_group().
  */
-int pmix_mca_base_var_group_register(const char *project_name,
-                                              const char *framework_name,
-                                              const char *component_name,
-                                              const char *description);
+PMIX_EXPORT int pmix_mca_base_var_group_register(const char *project_name,
+                                                 const char *framework_name,
+                                                 const char *component_name,
+                                                 const char *description);
 
 /**
  * Register an MCA variable group for a component
@@ -89,8 +89,8 @@ int pmix_mca_base_var_group_register(const char *project_name,
  * @retval index Unique group index
  * @return pmix error code on Error
  */
-int pmix_mca_base_var_group_component_register (const pmix_mca_base_component_t *component,
-                                                         const char *description);
+PMIX_EXPORT int pmix_mca_base_var_group_component_register (const pmix_mca_base_component_t *component,
+                                                            const char *description);
 
 /**
  * Deregister an MCA param group
@@ -100,7 +100,7 @@ int pmix_mca_base_var_group_component_register (const pmix_mca_base_component_t 
  *
  * This call deregisters all associated variables and subgroups.
  */
-int pmix_mca_base_var_group_deregister (int group_index);
+PMIX_EXPORT int pmix_mca_base_var_group_deregister (int group_index);
 
 /**
  * Find an MCA group
@@ -112,9 +112,9 @@ int pmix_mca_base_var_group_deregister (int group_index);
  * @returns PMIX_SUCCESS if found
  * @returns PMIX_ERR_NOT_FOUND if not found
  */
-int pmix_mca_base_var_group_find (const char *project_name,
-                                           const char *framework_name,
-                                           const char *component_name);
+PMIX_EXPORT int pmix_mca_base_var_group_find (const char *project_name,
+                                              const char *framework_name,
+                                              const char *component_name);
 
 /**
  * Find an MCA group by its full name
@@ -125,7 +125,7 @@ int pmix_mca_base_var_group_find (const char *project_name,
  * @returns PMIX_SUCCESS if found
  * @returns PMIX_ERR_NOT_FOUND if not found
  */
-int pmix_mca_base_var_group_find_by_name (const char *full_name, int *index);
+PMIX_EXPORT int pmix_mca_base_var_group_find_by_name (const char *full_name, int *index);
 
 /**
  * Get the group at a specified index
@@ -139,8 +139,8 @@ int pmix_mca_base_var_group_find_by_name (const char *full_name, int *index);
  * The returned pointer belongs to the MCA variable system. Do not modify/release/retain
  * the pointer.
  */
-int pmix_mca_base_var_group_get (const int group_index,
-                                          const pmix_mca_base_var_group_t **group);
+PMIX_EXPORT int pmix_mca_base_var_group_get (const int group_index,
+                                             const pmix_mca_base_var_group_t **group);
 
 /**
  * Set/unset a flags for all variables in a group.
@@ -151,15 +151,15 @@ int pmix_mca_base_var_group_get (const int group_index,
  *
  * Set a flag for every variable in a group. See pmix_mca_base_var_set_flag() for more info.
  */
-int pmix_mca_base_var_group_set_var_flag (const int group_index, int flags,
-                                                   bool set);
+PMIX_EXPORT int pmix_mca_base_var_group_set_var_flag (const int group_index, int flags,
+                                                      bool set);
 
 /**
  * Get the number of registered MCA groups
  *
  * @retval count Number of registered MCA groups
  */
-int pmix_mca_base_var_group_get_count (void);
+PMIX_EXPORT int pmix_mca_base_var_group_get_count (void);
 
 /**
  * Get a relative timestamp for the MCA group system
@@ -168,6 +168,6 @@ int pmix_mca_base_var_group_get_count (void);
  *
  * This value will change if groups or variables are either added or removed.
  */
-int pmix_mca_base_var_group_get_stamp (void);
+PMIX_EXPORT int pmix_mca_base_var_group_get_stamp (void);
 
 #endif /* PMIX_MCA_BASE_VAR_GROUP_H */

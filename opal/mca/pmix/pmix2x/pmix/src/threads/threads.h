@@ -13,7 +13,7 @@
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2017      Intel, Inc. All rights reserved.
+ * Copyright (c) 2017-2019 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -65,6 +65,7 @@ typedef pthread_cond_t pmix_condition_t;
 #define PMIX_CONDITION_STATIC_INIT PTHREAD_COND_INITIALIZER
 
 typedef struct {
+    pmix_status_t status;
     pmix_mutex_t mutex;
     pmix_condition_t cond;
     volatile bool active;

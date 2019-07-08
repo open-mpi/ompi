@@ -13,7 +13,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Mellanox Technologies, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -132,7 +132,8 @@ int main(int argc, char **argv)
         pmix_output(0, "Client ns %s rank %d: PMIx_Connect failed: %d", myproc.nspace, myproc.rank, rc);
         goto done;
     }
-    pmix_output(0, "Client ns %s rank %d: PMIx_Connect succeeded", myproc.nspace, myproc.rank);
+    pmix_output(0, "Client ns %s rank %d: PMIx_Connect succeeded",
+                myproc.nspace, myproc.rank);
     if (PMIX_SUCCESS != (rc = PMIx_Disconnect(&proc, 1, NULL, 0))) {
         pmix_output(0, "Client ns %s rank %d: PMIx_Disonnect failed: %d", myproc.nspace, myproc.rank, rc);
         goto done;
