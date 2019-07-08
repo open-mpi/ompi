@@ -10,8 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010-2018 Cisco Systems, Inc.  All rights reserved
- * Copyright (c) 2015-2017 Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015-2019 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
@@ -82,25 +82,29 @@ void ompi_comm_spawn_multiple_f(MPI_Fint *count, char *array_commands,
 {
     MPI_Comm c_comm, c_new_comm;
     MPI_Info *c_info;
-    int size, array_size, i, c_ierr;
+    int array_size, i, c_ierr;
     int *c_errs;
     char **c_array_commands;
     char ***c_array_argv;
+    int maxprocs;
     OMPI_ARRAY_NAME_DECL(array_maxprocs);
     OMPI_ARRAY_NAME_DECL(array_errcds);
 
     c_comm = PMPI_Comm_f2c(*comm);
 
-    PMPI_Comm_size(c_comm, &size);
-
     array_size = OMPI_FINT_2_INT(*count);
+    OMPI_ARRAY_FINT_2_INT(array_maxprocs, array_size);
 
     /* It's allowed to ignore the errcodes */
 
     if (OMPI_IS_FORTRAN_ERRCODES_IGNORE(array_errcds)) {
         c_errs = MPI_ERRCODES_IGNORE;
     } else {
-        OMPI_ARRAY_FINT_2_INT_ALLOC(array_errcds, size);
+        maxprocs = 0;
+        for (i=0; i<array_size; i++) {
+            maxprocs += OMPI_ARRAY_NAME_CONVERT(array_maxprocs)[i];
+        }
+        OMPI_ARRAY_FINT_2_INT_ALLOC(array_errcds, maxprocs);
         c_errs = OMPI_ARRAY_NAME_CONVERT(array_errcds);
     }
 
@@ -112,8 +116,6 @@ void ompi_comm_spawn_multiple_f(MPI_Fint *count, char *array_commands,
 	ompi_fortran_multiple_argvs_f2c(OMPI_FINT_2_INT(*count), array_argv,
 					argv_string_len, &c_array_argv);
     }
-
-    OMPI_ARRAY_FINT_2_INT(array_maxprocs, array_size);
 
     ompi_fortran_argv_count_f2c(array_commands, array_size, cmd_string_len,
                                 cmd_string_len, &c_array_commands);
@@ -138,9 +140,7 @@ void ompi_comm_spawn_multiple_f(MPI_Fint *count, char *array_commands,
     }
 
     if (!OMPI_IS_FORTRAN_ERRCODES_IGNORE(array_errcds)) {
-	OMPI_ARRAY_INT_2_FINT(array_errcds, size);
-    } else {
-	OMPI_ARRAY_FINT_2_INT_CLEANUP(array_errcds);
+	OMPI_ARRAY_INT_2_FINT(array_errcds, maxprocs);
     }
     OMPI_ARRAY_FINT_2_INT_CLEANUP(array_maxprocs);
 
