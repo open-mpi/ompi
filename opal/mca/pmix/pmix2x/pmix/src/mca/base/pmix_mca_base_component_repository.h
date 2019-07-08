@@ -13,7 +13,7 @@
  * Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2016      Intel, Inc. All rights reserved.
+ * Copyright (c) 2016-2019 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -59,7 +59,18 @@ struct pmix_mca_base_component_repository_item_t {
 };
 typedef struct pmix_mca_base_component_repository_item_t pmix_mca_base_component_repository_item_t;
 
-PMIX_CLASS_DECLARATION(pmix_mca_base_component_repository_item_t);
+PMIX_EXPORT PMIX_CLASS_DECLARATION(pmix_mca_base_component_repository_item_t);
+
+/*
+ * Structure to track information about why a component failed to load.
+ */
+struct pmix_mca_base_failed_component_t {
+    pmix_list_item_t super;
+    pmix_mca_base_component_repository_item_t *comp;
+    char *error_msg;
+};
+typedef struct pmix_mca_base_failed_component_t pmix_mca_base_failed_component_t;
+PMIX_EXPORT PMIX_CLASS_DECLARATION(pmix_mca_base_failed_component_t);
 
 /**
  * @brief initialize the component repository
@@ -70,14 +81,14 @@ PMIX_CLASS_DECLARATION(pmix_mca_base_component_repository_item_t);
  * pmix_mca_base_component_path MCA parameter. pmix_mca_base_open () is a
  * prerequisite call as it registers the pmix_mca_base_component_path parameter.
  */
-int pmix_mca_base_component_repository_init(void);
+PMIX_EXPORT int pmix_mca_base_component_repository_init(void);
 
 /**
  * @brief add search path for dynamically loaded components
  *
  * @param[in] path        delimited list of search paths to add
  */
-int pmix_mca_base_component_repository_add(const char *path);
+PMIX_EXPORT int pmix_mca_base_component_repository_add(const char *path);
 
 
 /**
@@ -89,13 +100,13 @@ int pmix_mca_base_component_repository_add(const char *path);
  * The list returned in {framework_components} is owned by the component
  * repository and CAN NOT be modified by the caller.
  */
-int pmix_mca_base_component_repository_get_components(pmix_mca_base_framework_t *framework,
-                                                      pmix_list_t **framework_components);
+PMIX_EXPORT int pmix_mca_base_component_repository_get_components(pmix_mca_base_framework_t *framework,
+                                                                  pmix_list_t **framework_components);
 
 /**
  * @brief finalize the mca component repository
  */
-void pmix_mca_base_component_repository_finalize(void);
+PMIX_EXPORT void pmix_mca_base_component_repository_finalize(void);
 
 /**
  * @brief open the repository item and add it to the framework's component
@@ -104,14 +115,14 @@ void pmix_mca_base_component_repository_finalize(void);
  * @param[in] framework   framework that matches the component
  * @param[in] ri          dynamic component to open
  */
-int pmix_mca_base_component_repository_open(pmix_mca_base_framework_t *framework,
-                                            pmix_mca_base_component_repository_item_t *ri);
+PMIX_EXPORT int pmix_mca_base_component_repository_open(pmix_mca_base_framework_t *framework,
+                                                        pmix_mca_base_component_repository_item_t *ri);
 
 
 /**
  * @brief Reduce the reference count of a component and dlclose it if necessary
  */
-void pmix_mca_base_component_repository_release(const pmix_mca_base_component_t *component);
+PMIX_EXPORT void pmix_mca_base_component_repository_release(const pmix_mca_base_component_t *component);
 
 /**
  * @brief Increase the reference count of a component
@@ -126,7 +137,7 @@ void pmix_mca_base_component_repository_release(const pmix_mca_base_component_t 
  * @note all components are automatically unloaded by the
  * pmix_mca_base_component_repository_finalize() call.
  */
-int pmix_mca_base_component_repository_retain_component(const char *type, const char *name);
+PMIX_EXPORT int pmix_mca_base_component_repository_retain_component(const char *type, const char *name);
 
 END_C_DECLS
 

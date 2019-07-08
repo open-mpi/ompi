@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2015-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2019 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -29,6 +29,26 @@
 #include "src/include/pmix_globals.h"
 
 #include "src/mca/ptl/base/base.h"
+
+pmix_status_t pmix_ptl_base_setup_fork(const pmix_proc_t *proc, char ***env)
+{
+    pmix_ptl_base_active_t *active;
+    pmix_status_t rc;
+
+    if (!pmix_ptl_globals.initialized) {
+        return PMIX_ERR_INIT;
+    }
+
+    PMIX_LIST_FOREACH(active, &pmix_ptl_globals.actives, pmix_ptl_base_active_t) {
+        if (NULL != active->component->setup_fork) {
+            rc = active->component->setup_fork(proc, env);
+            if (PMIX_SUCCESS != rc && PMIX_ERR_NOT_AVAILABLE != rc) {
+                return rc;
+            }
+        }
+    }
+    return PMIX_SUCCESS;
+}
 
 pmix_status_t pmix_ptl_base_set_notification_cbfunc(pmix_ptl_cbfunc_t cbfunc)
 {

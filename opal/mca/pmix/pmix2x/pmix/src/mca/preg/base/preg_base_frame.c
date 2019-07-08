@@ -11,9 +11,10 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, Inc.  All rights reserved.
- * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2019      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -98,6 +99,7 @@ static void rvcon(pmix_regex_value_t *p)
     p->prefix = NULL;
     p->suffix = NULL;
     p->num_digits = 0;
+    p->skip = false;
     PMIX_CONSTRUCT(&p->ranges, pmix_list_t);
 }
 static void rvdes(pmix_regex_value_t *p)

@@ -16,7 +16,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2016      Intel, Inc. All rights reserved.
+ * Copyright (c) 2016-2019 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -341,7 +341,7 @@ static int component_find_check (pmix_mca_base_framework_t *framework, char **re
         if (!found) {
             char h[MAXHOSTNAMELEN];
             gethostname(h, sizeof(h));
-            pmix_show_help("help-mca-base.txt",
+            pmix_show_help("help-pmix-mca-base.txt",
                            "find-available:not-valid", true,
                            h, framework->framework_name, requested_component_names[i]);
             return PMIX_ERR_NOT_FOUND;
@@ -375,7 +375,7 @@ int pmix_mca_base_component_parse_requested (const char *requested, bool *includ
     /* Double check to ensure that the user did not specify the negate
        character anywhere else in the value. */
     if (NULL != strstr (requested, negate)) {
-        pmix_show_help("help-mca-base.txt",
+        pmix_show_help("help-pmix-mca-base.txt",
                        "framework-param:too-many-negates",
                        true, requested_orig);
         return PMIX_ERROR;

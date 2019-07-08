@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2016-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015-2017 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
@@ -63,7 +63,7 @@ int test_fence(test_params params, char *my_nspace, pmix_rank_t my_rank)
     pmix_proc_t *pcs;
     bool participate;
     int fence_num = 0;
-    char sval[50];
+    char *sval;
     int put_ind;
 
     if (NULL != params.noise) {
@@ -98,13 +98,14 @@ int test_fence(test_params params, char *my_nspace, pmix_rank_t my_rank)
             /*run fence test on this range */
             /* first put value (my_ns, my_rank) with key based on fence_num to split results of different fences*/
             put_ind = 0;
-            (void)snprintf(sval, 50, "%d:%s:%d", fence_num, my_nspace, my_rank);
+            (void)asprintf(&sval, "%d:%s:%d", fence_num, my_nspace, my_rank);
             PUT(string, sval, PMIX_GLOBAL, fence_num, put_ind++, params.use_same_keys);
             if (PMIX_SUCCESS != rc) {
                 TEST_ERROR(("%s:%d: PMIx_Put failed: %d", my_nspace, my_rank, rc));
                 PMIX_LIST_DESTRUCT(&test_fences);
                 return rc;
             }
+            free(sval);
 
             PUT(int, fence_num+my_rank, PMIX_GLOBAL, fence_num, put_ind++, params.use_same_keys);
             if (PMIX_SUCCESS != rc) {
@@ -186,7 +187,7 @@ int test_fence(test_params params, char *my_nspace, pmix_rank_t my_rank)
             /* get data from all participating in this fence clients */
             PMIX_LIST_FOREACH(p, desc->participants, participant_t) {
                 put_ind = 0;
-                snprintf(sval, 50, "%d:%s:%d", fence_num, p->proc.nspace, p->proc.rank);
+                asprintf(&sval, "%d:%s:%d", fence_num, p->proc.nspace, p->proc.rank);
                 GET(string, sval, p->proc.nspace, p->proc.rank, fence_num, put_ind++, params.use_same_keys, 1, 0);
                 if (PMIX_SUCCESS != rc) {
                     TEST_ERROR(("%s:%d: PMIx_Get failed (%d) from %s:%d", my_nspace, my_rank, rc, p->proc.nspace, p->proc.rank));
@@ -194,6 +195,7 @@ int test_fence(test_params params, char *my_nspace, pmix_rank_t my_rank)
                     PMIX_LIST_DESTRUCT(&test_fences);
                     return rc;
                 }
+                free(sval);
                 GET(int, (int)(fence_num+p->proc.rank), p->proc.nspace, p->proc.rank, fence_num, put_ind++, params.use_same_keys, 0, 0);
                 if (PMIX_SUCCESS != rc) {
                     TEST_ERROR(("%s:%d: PMIx_Get failed (%d) from %s:%d", my_nspace, my_rank, rc, p->proc.nspace, p->proc.rank));
@@ -384,7 +386,7 @@ int test_job_fence(test_params params, char *my_nspace, pmix_rank_t my_rank)
             if( local ){
                 GET(int, (12340+j), my_nspace, i+params.base_rank, 100, j, 0, 0, 0);
                 if (PMIX_SUCCESS != rc) {
-                    TEST_ERROR(("%s:%d: PMIx_Get failed: %d", my_nspace, my_rank, rc));
+                    TEST_ERROR(("%s:%d: PMIx_Get failed: %s", my_nspace, my_rank, PMIx_Error_string(rc)));
                     return PMIX_ERROR;
                 }
 
@@ -423,9 +425,10 @@ int test_job_fence(test_params params, char *my_nspace, pmix_rank_t my_rank)
                         my_nspace, my_rank));
             return PMIX_ERROR;
         }
-        if (PMIX_ERR_NOT_FOUND != rc) {
-            TEST_ERROR(("%s:%d [ERROR]: PMIx_Get returned %d instead of not_found",
-                        my_nspace, my_rank, rc));
+        if (PMIX_ERR_NOT_FOUND != rc && PMIX_ERR_PROC_ENTRY_NOT_FOUND != rc) {
+            TEST_ERROR(("%s:%d [ERROR]: PMIx_Get returned %s instead of not_found",
+                        my_nspace, my_rank, PMIx_Error_string(rc)));
+            return PMIX_ERROR;
         }
         if (NULL != val) {
             TEST_ERROR(("%s:%d [ERROR]: PMIx_Get did not return NULL value", my_nspace, my_rank));

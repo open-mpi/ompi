@@ -13,7 +13,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Mellanox Technologies, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -69,6 +69,7 @@ int main(int argc, char **argv)
 
     /* publish something */
     if (0 == myproc.rank) {
+        fprintf(stderr, "%s:%d publishing two keys\n", myproc.nspace, myproc.rank);
         PMIX_INFO_CREATE(info, 2);
         (void)strncpy(info[0].key, "FOOBAR", PMIX_MAX_KEYLEN);
         info[0].value.type = PMIX_UINT8;
@@ -80,6 +81,7 @@ int main(int argc, char **argv)
             fprintf(stderr, "Client ns %s rank %d: PMIx_Publish failed: %d\n", myproc.nspace, myproc.rank, rc);
             goto done;
         }
+        fprintf(stderr, "%s:%d publish complete\n", myproc.nspace, myproc.rank);
         PMIX_INFO_FREE(info, 2);
     }
 
@@ -93,6 +95,7 @@ int main(int argc, char **argv)
     /* lookup something */
     if (0 != myproc.rank) {
         PMIX_PDATA_CREATE(pdata, 1);
+        fprintf(stderr, "%s:%d looking up key FOOBAR\n", myproc.nspace, myproc.rank);
         (void)strncpy(pdata[0].key, "FOOBAR", PMIX_MAX_KEYLEN);
         if (PMIX_SUCCESS != (rc = PMIx_Lookup(pdata, 1, NULL, 0))) {
             fprintf(stderr, "Client ns %s rank %d: PMIx_Lookup failed: %d\n", myproc.nspace, myproc.rank, rc);
@@ -136,6 +139,7 @@ int main(int argc, char **argv)
         keys[1] = "PANDA";
         keys[2] = NULL;
 
+        fprintf(stderr, "%s:%d unpublishing two keys\n", myproc.nspace, myproc.rank);
         if (PMIX_SUCCESS != (rc = PMIx_Unpublish(keys, NULL, 0))) {
             fprintf(stderr, "Client ns %s rank %d: PMIx_Unpublish failed: %d\n", myproc.nspace, myproc.rank, rc);
             free(keys);

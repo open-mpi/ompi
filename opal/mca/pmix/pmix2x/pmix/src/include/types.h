@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
@@ -232,6 +232,8 @@ typedef struct event pmix_event_t;
 
 #define pmix_event_base_free(b) event_base_free(b)
 
+#define pmix_event_free(x) event_free(x)
+
 #define pmix_event_base_loopbreak(b) event_base_loopbreak(b)
 
 #define pmix_event_base_loopexit(b) event_base_loopexit(b, NULL)
@@ -243,6 +245,8 @@ typedef struct event pmix_event_t;
 #define pmix_event_enable_debug_mode() event_enable_debug_mode()
 
 #define pmix_event_assign(x, b, fd, fg, cb, arg) event_assign((x), (b), (fd), (fg), (event_callback_fn) (cb), (arg))
+
+#define pmix_event_set(b, x, fd, fg, cb, arg) event_assign((x), (b), (fd), (fg), (event_callback_fn) (cb), (arg))
 
 #define pmix_event_add(ev, tv) event_add((ev), (tv))
 
@@ -264,5 +268,6 @@ typedef struct event pmix_event_t;
 
 #define pmix_event_evtimer_del(x) pmix_event_del((x))
 
+#define pmix_event_signal_set(b, x, fd, cb, arg) event_assign((x), (b), (fd), EV_SIGNAL|EV_PERSIST, (event_callback_fn) (cb), (arg))
 
 #endif /* PMIX_TYPES_H */

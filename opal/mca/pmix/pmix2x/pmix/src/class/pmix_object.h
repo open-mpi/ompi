@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -192,7 +192,7 @@ struct pmix_object_t {
     uint64_t obj_magic_id;
 #endif
     pmix_class_t *obj_class;            /**< class descriptor */
-    volatile int32_t obj_reference_count;   /**< reference count */
+    pmix_atomic_int32_t obj_reference_count;   /**< reference count */
 #if PMIX_ENABLE_DEBUG
    const char* cls_init_file_name;        /**< In debug mode store the file where the object get contructed */
    int   cls_init_lineno;           /**< In debug mode store the line number where the object get contructed */

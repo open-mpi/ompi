@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  *
  * $COPYRIGHT$
@@ -63,8 +63,7 @@ static pmix_status_t create_cred(pmix_listener_protocol_t protocol,
     gid_t egid;
     char *tmp, *ptr;
 
-    if (PMIX_PROTOCOL_V1 == protocol ||
-        PMIX_PROTOCOL_V3 == protocol) {
+    if (PMIX_PROTOCOL_V1 == protocol) {
         /* these are usock protocols - nothing to do */
         *cred = NULL;
         *len = 0;
@@ -112,8 +111,7 @@ static pmix_status_t validate_cred(int sd, uid_t uid, gid_t gid,
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "psec: native validate_cred %s", cred ? cred : "NULL");
 
-    if (PMIX_PROTOCOL_V1 == protocol ||
-        PMIX_PROTOCOL_V3 == protocol) {
+    if (PMIX_PROTOCOL_V1 == protocol) {
         /* these are usock protocols - get the remote side's uid/gid */
 #if defined(SO_PEERCRED) && (defined(HAVE_STRUCT_UCRED_UID) || defined(HAVE_STRUCT_UCRED_CR_UID))
         /* Ignore received 'cred' and validate ucred for socket instead. */

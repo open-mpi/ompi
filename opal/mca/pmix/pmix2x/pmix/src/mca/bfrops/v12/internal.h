@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, Inc.  All rights reserved.
- * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
@@ -58,7 +58,7 @@ pmix_status_t pmix12_bfrop_print(char **output, char *prefix, void *src, pmix_da
 
 pmix_status_t pmix12_bfrop_copy_payload(pmix_buffer_t *dest, pmix_buffer_t *src);
 
-pmix_status_t pmix12_bfrop_value_xfer(pmix_value_t *p, pmix_value_t *src);
+pmix_status_t pmix12_bfrop_value_xfer(pmix_value_t *p, const pmix_value_t *src);
 
 void pmix12_bfrop_value_load(pmix_value_t *v, const void *data,
                             pmix_data_type_t type);

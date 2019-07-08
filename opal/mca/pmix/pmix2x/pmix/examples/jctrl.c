@@ -13,7 +13,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Mellanox Technologies, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -32,6 +32,7 @@
 #include <signal.h>
 
 #include <pmix.h>
+#include "examples.h"
 
 static pmix_proc_t myproc;
 
@@ -63,13 +64,15 @@ static void evhandler_reg_callbk(pmix_status_t status,
                                  size_t evhandler_ref,
                                  void *cbdata)
 {
-    volatile int *active = (volatile int*)cbdata;
+    mylock_t *lock = (mylock_t*)cbdata;
 
     if (PMIX_SUCCESS != status) {
         fprintf(stderr, "Client %s:%d EVENT HANDLER REGISTRATION FAILED WITH STATUS %d, ref=%lu\n",
                    myproc.nspace, myproc.rank, status, (unsigned long)evhandler_ref);
     }
-    *active = status;
+    lock->status = status;
+    lock->evhandler_ref = evhandler_ref;
+    DEBUG_WAKEUP_THREAD(lock);
 }
 
 static void infocbfunc(pmix_status_t status,
@@ -78,26 +81,27 @@ static void infocbfunc(pmix_status_t status,
                        pmix_release_cbfunc_t release_fn,
                        void *release_cbdata)
 {
-    volatile int *active = (volatile int*)cbdata;
+    mylock_t *lock = (mylock_t*)cbdata;
 
     /* release the caller */
     if (NULL != release_fn) {
         release_fn(release_cbdata);
     }
 
-    *active = status;
+    lock->status = status;
+    DEBUG_WAKEUP_THREAD(lock);
 }
 
 int main(int argc, char **argv)
 {
-    int rc;
+    pmix_status_t rc;
     pmix_value_t value;
     pmix_value_t *val = &value;
     pmix_proc_t proc;
     uint32_t nprocs, n;
     pmix_info_t *info, *iptr;
     bool flag;
-    volatile int active;
+    mylock_t mylock;
     pmix_data_array_t *dptr;
 
     /* init us - note that the call to "init" includes the return of
@@ -111,15 +115,16 @@ int main(int argc, char **argv)
 
     /* register our default event handler - again, this isn't strictly
      * required, but is generally good practice */
-    active = -1;
+    DEBUG_CONSTRUCT_LOCK(&mylock);
     PMIx_Register_event_handler(NULL, 0, NULL, 0,
-                                notification_fn, evhandler_reg_callbk, (void*)&active);
-    while (-1 == active) {
-        sleep(1);
-    }
-    if (0 != active) {
+                                notification_fn, evhandler_reg_callbk, (void*)&mylock);
+    /* wait for registration to complete */
+    DEBUG_WAIT_THREAD(&mylock);
+    rc = mylock.status;
+    DEBUG_DESTRUCT_LOCK(&mylock);
+    if (PMIX_SUCCESS != rc) {
         fprintf(stderr, "[%s:%d] Default handler registration failed\n", myproc.nspace, myproc.rank);
-        exit(active);
+        goto done;
     }
 
     /* job-related info is found in our nspace, assigned to the
@@ -145,12 +150,8 @@ int main(int argc, char **argv)
     PMIX_INFO_LOAD(&info[0], PMIX_JOB_CTRL_PREEMPTIBLE, (void*)&flag, PMIX_BOOL);
     /* can't use "load" to load a pmix_data_array_t */
     (void)strncpy(info[1].key, PMIX_JOB_CTRL_CHECKPOINT_METHOD, PMIX_MAX_KEYLEN);
-    info[1].value.type = PMIX_DATA_ARRAY;
-    dptr = (pmix_data_array_t*)malloc(sizeof(pmix_data_array_t));
-    info[1].value.data.darray = dptr;
-    dptr->type = PMIX_INFO;
-    dptr->size = 2;
-    PMIX_INFO_CREATE(dptr->array, dptr->size);
+    PMIX_DATA_ARRAY_CREATE(info[1].value.data.darray, 2, PMIX_INFO);
+    dptr = info[1].value.data.darray;
     rc = SIGUSR2;
     iptr = (pmix_info_t*)dptr->array;
     PMIX_INFO_LOAD(&iptr[0], PMIX_JOB_CTRL_CHECKPOINT_SIGNAL, &rc, PMIX_INT);
@@ -159,18 +160,19 @@ int main(int argc, char **argv)
 
     /* since this is informational and not a requested operation, the target parameter
      * doesn't mean anything and can be ignored */
-    active = -1;
-    if (PMIX_SUCCESS != (rc = PMIx_Job_control_nb(NULL, 0, info, 2, infocbfunc, (void*)&active))) {
+    DEBUG_CONSTRUCT_LOCK(&mylock);
+    if (PMIX_SUCCESS != (rc = PMIx_Job_control_nb(NULL, 0, info, 2, infocbfunc, (void*)&mylock))) {
         fprintf(stderr, "Client ns %s rank %d: PMIx_Job_control_nb failed: %d\n", myproc.nspace, myproc.rank, rc);
+        DEBUG_DESTRUCT_LOCK(&mylock);
         goto done;
     }
-    while (-1 == active) {
-        sleep(1);
-    }
+    DEBUG_WAIT_THREAD(&mylock);
     PMIX_INFO_FREE(info, 2);
-    if (0 != active) {
+    rc = mylock.status;
+    DEBUG_DESTRUCT_LOCK(&mylock);
+    if (PMIX_SUCCESS != rc) {
         fprintf(stderr, "Client ns %s rank %d: PMIx_Job_control_nb failed: %d\n", myproc.nspace, myproc.rank, rc);
-        exit(active);
+        goto done;
     }
 
     /* now request that this process be monitored using heartbeats */
@@ -185,20 +187,21 @@ int main(int argc, char **argv)
     PMIX_INFO_LOAD(&info[2], PMIX_MONITOR_HEARTBEAT_DROPS, &n, PMIX_UINT32);
 
     /* make the request */
-    active = -1;
+    DEBUG_CONSTRUCT_LOCK(&mylock);
     if (PMIX_SUCCESS != (rc = PMIx_Process_monitor_nb(iptr, PMIX_MONITOR_HEARTBEAT_ALERT,
-                                                      info, 3, infocbfunc, (void*)&active))) {
+                                                      info, 3, infocbfunc, (void*)&mylock))) {
         fprintf(stderr, "Client ns %s rank %d: PMIx_Process_monitor_nb failed: %d\n", myproc.nspace, myproc.rank, rc);
+        DEBUG_DESTRUCT_LOCK(&mylock);
         goto done;
     }
-    while (-1 == active) {
-        sleep(1);
-    }
+    DEBUG_WAIT_THREAD(&mylock);
     PMIX_INFO_FREE(iptr, 1);
     PMIX_INFO_FREE(info, 3);
-    if (0 != active) {
+    rc = mylock.status;
+    DEBUG_DESTRUCT_LOCK(&mylock);
+    if (PMIX_SUCCESS != rc) {
         fprintf(stderr, "Client ns %s rank %d: PMIx_Process_monitor_nb failed: %d\n", myproc.nspace, myproc.rank, rc);
-        exit(active);
+        goto done;
     }
 
     /* send a heartbeat */

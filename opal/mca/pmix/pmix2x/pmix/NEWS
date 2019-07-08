@@ -1,5 +1,5 @@
-Copyright (c) 2015-2018 Intel, Inc. All rights reserved.
-Copyright (c) 2017      IBM Corporation.  All rights reserved.
+Copyright (c) 2015-2019 Intel, Inc.  All rights reserved.
+Copyright (c) 2017-2018 IBM Corporation.  All rights reserved.
 $COPYRIGHT$
 
 Additional copyrights may follow
@@ -19,6 +19,80 @@ to only bug fixes.  Since these series are semi-independent of each
 other, a single NEWS-worthy item might apply to different series. For
 example, a bug might be fixed in the master, and then moved to the
 current release as well as the "stable" bug fix release branch.
+
+
+2.2.3 -- TBD
+----------------------
+- PR #1162: Fix race condition when clients fail while in a PMIx
+            collective operation
+- PR #1163: Fix a compiler warning in atomics on POWER arch
+- PR #1165: Add BuildRequires: libevent-devel to spec file
+- PR #1180: Remove dependency on C++ compiler for thread detection
+- PR #1180: Add detection for Flex when building in non-tarball situations
+- PR #1182: configury: use PMIX_ENABLE_DLOPEN_SUPPORT instead of enable_dlopen
+- PR #1188: Link libpmix.so to MCA component libraries
+- PR #1190: Ensure any cached notifications arrive after reg completes
+- PR #1194: Ensure any cached notifications arrive after registration completes
+- PR #1209: Update configure logic for clock_gettime
+- PR #1213/#1217/#1221: Add configure option "--enable-nonglobal-dlopen"
+  If the MCA component libraries should link back to libpmix.so
+- PR #1231: SPEC: Allow splitting PMIx in pmix and pmix-libpmi packages
+- PR #1253: Preserve user-provided CFLAGS to protect autotools
+- PR #1267: Correct dmodex example
+- PR #1275: IPv6 IF Read: Buffer Overflow
+- PR #1295: Fix comment: IPv6 IF_NAMESIZE
+- PR #1296: Allow setup_fork to proceed even if gdds and pnet don't contribute
+- PR #1296: Allow servers to pass NULL module
+- PR #1297: Provide internal blocking ability to the register/deregister fns
+- PR #1298: Add dummy handshake component to psec framework for testing
+- PR #1303: Allow jobs to not specify proc-level info
+- PR #1304: Provide proc data in cases where host does not
+- PR #1305: Add some more values that can be computed
+- PR #1308: Add missing tool rendezvous file
+- PR #1309: Fix potential integer overflow in regex
+- PR #1311: Work around memory bug in older gcc compilers
+- PR #1329: Add -fPIC to static builds
+- PR #1334: Cache only -W CFLAG entries to fix 32-bit builds
+
+
+2.2.2 -- 24 Jan 2019
+----------------------
+ - Fix a bug in macro identifying system events
+
+
+2.2.1 -- 18 Jan 2019
+----------------------
+ - Fix a bug in registration of default event handlers
+   that somehow slipped thru testing
+
+
+2.2.0 -- 17 Jan 2019
+----------------------
+**** THIS RELEASE MARKS THE STARTING POINT FOR FULL COMPLIANCE
+**** WITH THE PMIX v2.2 STANDARD. ALL API BEHAVIORS AND ATTRIBUTE
+**** DEFINITIONS MEET THE v2.2 STANDARD SPECIFICATIONS.
+ - Add a new, faster dstore GDS component 'ds21'
+ - Performance optimizations for the dstore GDS components.
+ - Plug miscellaneous memory leaks
+ - Silence an unnecessary warning message when checking connection
+   to a non-supporting server
+ - Ensure lost-connection events get delivered to default event
+   handlers
+ - Correctly handle cache refresh for queries
+ - Protect against race conditions between host and internal library
+   when dealing with async requests
+ - Cleanup tool operations and add support for connections to
+   remote servers.
+ - Automatically store the server URI for easy access by client
+ - Provide MCA parameter to control TCP connect retry/timeout
+ - Update event notification system to properly evict oldest events
+   when more space is needed
+ - Fix a number of error paths
+ - Handle setsockopt(SO_RCVTIMEO) not being supported
+ - Pass the tool's command line to the server so it can be returned
+   in queries
+ - Add support for C11 atomics
+ - Fix a bug when registering default event handlers
 
 
 2.1.4 -- 18 Sep 2018

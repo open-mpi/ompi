@@ -13,7 +13,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Mellanox Technologies, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -163,6 +163,15 @@ int main(int argc, char **argv)
     }
     PMIX_VALUE_RELEASE(val);
 
+    /* test something */
+    if (PMIX_SUCCESS != (rc = PMIx_Get(&myproc, PMIX_SERVER_URI, NULL, 0, &val))) {
+        pmix_output(0, "Client ns %s rank %d: PMIx_Get failed: %s",
+                    myproc.nspace, myproc.rank, PMIx_Error_string(rc));
+        exit(rc);
+    }
+    pmix_output(0, "CLIENT SERVER URI: %s", val->data.string);
+    PMIX_VALUE_RELEASE(val);
+
     /* register a handler specifically for when models declare */
     active = true;
     ninfo = 1;
@@ -183,6 +192,7 @@ int main(int argc, char **argv)
     while (active) {
         usleep(10);
     }
+
 
     /* get our universe size */
     (void)strncpy(proc.nspace, myproc.nspace, PMIX_MAX_NSLEN);
@@ -320,13 +330,16 @@ int main(int argc, char **argv)
 
     /* log something */
     PMIX_INFO_CONSTRUCT(&info);
-    (void)strncpy(info.key, "foobar", PMIX_MAX_KEYLEN);
-    info.value.type = PMIX_BOOL;
-    info.value.data.flag = true;
+    PMIX_INFO_LOAD(&info, PMIX_LOG_STDERR, "test log msg", PMIX_STRING);
     active = true;
-    PMIx_Log_nb(&info, 1, NULL, 0, opcbfunc, (void*)&active);
-    while (active) {
-        usleep(10);
+    rc = PMIx_Log_nb(&info, 1, NULL, 0, opcbfunc, (void*)&active);
+    if (PMIX_SUCCESS != rc) {
+        pmix_output(0, "Client ns %s rank %d - log_nb returned %s",
+                    myproc.nspace, myproc.rank, PMIx_Error_string(rc));
+    } else {
+        while (active) {
+            usleep(10);
+        }
     }
     PMIX_INFO_DESTRUCT(&info);
 

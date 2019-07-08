@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, Inc. All rights reserved.
- * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      Mellanox Technologies, Inc.
@@ -32,7 +32,7 @@
 #define PMIX_BFROP_H_
 
 #include <src/include/pmix_config.h>
-
+#include <pmix_common.h>
 #include <src/include/types.h>
 
 #include "src/mca/mca.h"
@@ -100,11 +100,6 @@ BEGIN_C_DECLS
  * NOTE: THESE FUNCTIONS ARE NOT TO BE USED INTERNALLY -
  * USE THE MACROS INSTEAD
  */
-pmix_status_t pmix_value_xfer(pmix_value_t *kv, pmix_value_t *src);
-void pmix_value_load(pmix_value_t *v, const void *data,
-                     pmix_data_type_t type);
-pmix_status_t pmix_value_unload(pmix_value_t *kv, void **data,
-                                size_t *sz, pmix_data_type_t type);
 bool pmix_value_cmp(pmix_value_t *p, pmix_value_t *p1);
 
 
@@ -329,7 +324,7 @@ typedef pmix_status_t (*pmix_bfrop_print_fn_t)(char **output, char *prefix,
  * @retval PMIX_ERROR(s) An appropriate error code
  */
 typedef pmix_status_t (*pmix_bfrop_value_xfer_fn_t)(pmix_value_t *dest,
-                                                    pmix_value_t *src);
+                                                    const pmix_value_t *src);
 
 
 /**

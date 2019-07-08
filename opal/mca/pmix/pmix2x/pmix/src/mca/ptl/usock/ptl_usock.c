@@ -13,7 +13,7 @@
  * Copyright (c) 2011-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -103,6 +103,9 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
     int sd;
     pmix_socklen_t len;
     bool retried = false;
+    pmix_kval_t *urikv;
+    char *nspace, *suri;
+    pmix_rank_t rank;
 
     pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
                         "[%s:%d] connect to server",
@@ -140,12 +143,13 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
         PMIX_ERROR_LOG(PMIX_ERROR);
         return PMIX_ERROR;
     }
+
     /* set the server nspace */
     if (NULL == pmix_client_globals.myserver->info) {
         pmix_client_globals.myserver->info = PMIX_NEW(pmix_rank_info_t);
     }
     if (NULL == pmix_client_globals.myserver->nptr) {
-        pmix_client_globals.myserver->nptr = PMIX_NEW(pmix_nspace_t);
+        pmix_client_globals.myserver->nptr = PMIX_NEW(pmix_namespace_t);
     }
     if (NULL == pmix_client_globals.myserver->nptr->nspace) {
         pmix_client_globals.myserver->nptr->nspace = strdup(uri[0]);
@@ -156,6 +160,10 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
 
     /* set the server rank */
     pmix_client_globals.myserver->info->pname.rank = strtoull(uri[1], NULL, 10);
+
+    nspace = strdup(pmix_client_globals.myserver->nptr->nspace);
+    rank = pmix_client_globals.myserver->info->pname.rank;
+    suri = strdup(evar);
 
     /* setup the path to the daemon rendezvous point */
     memset(&mca_ptl_usock_component.connection, 0, sizeof(struct sockaddr_storage));
@@ -203,6 +211,19 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
 
     /* mark the connection as made */
     pmix_globals.connected = true;
+
+    /* store the URI for subsequent lookups */
+    urikv = PMIX_NEW(pmix_kval_t);
+    urikv->key = strdup(PMIX_SERVER_URI);
+    PMIX_VALUE_CREATE(urikv->value, 1);
+    urikv->value->type = PMIX_STRING;
+    asprintf(&urikv->value->data.string, "%s.%u;%s", nspace, rank, suri);
+    PMIX_GDS_STORE_KV(rc, pmix_globals.mypeer,
+                      &pmix_globals.myid, PMIX_INTERNAL,
+                      urikv);
+    PMIX_RELEASE(urikv);  // maintain accounting
+    free(nspace);
+    free(suri);
 
     pmix_ptl_base_set_nonblocking(sd);
 

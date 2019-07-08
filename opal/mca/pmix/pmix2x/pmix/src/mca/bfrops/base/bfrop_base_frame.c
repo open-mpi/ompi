@@ -11,8 +11,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, Inc.  All rights reserved.
- * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -90,7 +90,7 @@ static pmix_status_t pmix_bfrop_close(void)
     pmix_bfrops_globals.initialized = false;
 
     /* the components will cleanup when closed */
-    PMIX_DESTRUCT(&pmix_bfrops_globals.actives);
+    PMIX_LIST_DESTRUCT(&pmix_bfrops_globals.actives);
 
     return pmix_mca_base_framework_components_close(&pmix_bfrops_base_framework, NULL);
 }
