@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2010-2019 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights
  *                         reserved.
@@ -48,9 +48,12 @@
 #include "opal/constants.h"
 #include "opal/util/if.h"
 #include "opal/util/output.h"
+#include "opal/util/show_help.h"
 #include "opal/util/string_copy.h"
 #include "opal/mca/if/if.h"
 #include "opal/mca/if/base/base.h"
+
+#define LOG_PREFIX "mca: if: linux_ipv6: "
 
 static int if_linux_ipv6_open(void);
 
@@ -77,7 +80,36 @@ opal_if_base_component_t mca_if_linux_ipv6_component = {
     },
 };
 
-/* configure using getifaddrs(3) */
+#if OPAL_ENABLE_IPV6
+static bool hex2int(char hex, int *dst)
+{
+    if ('0' <= hex && hex <= '9') {
+        *dst = hex - '0';
+    } else if ('A' <= hex && hex <= 'F') {
+        *dst = hex - 'A' + 10;
+    } else if ('a' <= hex && hex <= 'f') {
+        *dst = hex - 'a' + 10;
+    } else {
+        return false;
+    }
+    return true;
+
+}
+
+static bool hexdecode(const char *src, uint8_t *dst, size_t dstsize)
+{
+    int hi, lo;
+    for (size_t i = 0; i < dstsize; i++) {
+        if (hex2int(src[i * 2], &hi) && hex2int(src[i * 2 + 1], &lo)) {
+            dst[i] = 16 * hi + lo;
+        } else {
+            return false;
+        }
+    }
+    return true;
+}
+#endif
+
 static int if_linux_ipv6_open(void)
 {
 #if OPAL_ENABLE_IPV6
@@ -86,48 +118,44 @@ static int if_linux_ipv6_open(void)
         char ifname[IF_NAMESIZE];
         unsigned int idx, pfxlen, scope, dadstat;
         struct in6_addr a6;
-        int iter;
         uint32_t flag;
-        unsigned int addrbyte[16];
+        char addrhex[sizeof a6.s6_addr * 2 + 1];
+        char addrstr[INET6_ADDRSTRLEN];
 
-        while (fscanf(f, "%2x%2x%2x%2x%2x%2x%2x%2x%2x%2x%2x%2x%2x%2x%2x%2x %x %x %x %x %20s\n",
-                      &addrbyte[0], &addrbyte[1], &addrbyte[2], &addrbyte[3],
-                      &addrbyte[4], &addrbyte[5], &addrbyte[6], &addrbyte[7],
-                      &addrbyte[8], &addrbyte[9], &addrbyte[10], &addrbyte[11],
-                      &addrbyte[12], &addrbyte[13], &addrbyte[14], &addrbyte[15],
+        while (fscanf(f, "%s %x %x %x %x %s\n", addrhex,
                       &idx, &pfxlen, &scope, &dadstat, ifname) != EOF) {
             opal_if_t *intf;
 
+            if (!hexdecode(addrhex, a6.s6_addr, sizeof a6.s6_addr)) {
+                char hostname[OPAL_MAXHOSTNAMELEN] = {0};
+                gethostname(hostname, sizeof(hostname));
+                opal_show_help("help-opal-if-linux-ipv6.txt",
+                               "fail to parse if_inet6", true,
+                               hostname, ifname, addrhex);
+                continue;
+            };
+            inet_ntop(AF_INET6, a6.s6_addr, addrstr, sizeof addrstr);
+
             opal_output_verbose(1, opal_if_base_framework.framework_output,
-                                "found interface %2x%2x:%2x%2x:%2x%2x:%2x%2x:%2x%2x:%2x%2x:%2x%2x:%2x%2x scope %x\n",
-                                addrbyte[0], addrbyte[1], addrbyte[2], addrbyte[3],
-                                addrbyte[4], addrbyte[5], addrbyte[6], addrbyte[7],
-                                addrbyte[8], addrbyte[9], addrbyte[10], addrbyte[11],
-                                addrbyte[12], addrbyte[13], addrbyte[14], addrbyte[15], scope);
+                                LOG_PREFIX "found interface %s inet6 %s scope %x\n",
+                                ifname, addrstr, scope);
 
             /* Only interested in global (0x00) scope */
             if (scope != 0x00)  {
                 opal_output_verbose(1, opal_if_base_framework.framework_output,
-                                    "skipping interface %2x%2x:%2x%2x:%2x%2x:%2x%2x:%2x%2x:%2x%2x:%2x%2x:%2x%2x scope %x\n",
-                                    addrbyte[0], addrbyte[1], addrbyte[2], addrbyte[3],
-                                    addrbyte[4], addrbyte[5], addrbyte[6], addrbyte[7],
-                                    addrbyte[8], addrbyte[9], addrbyte[10], addrbyte[11],
-                                    addrbyte[12], addrbyte[13], addrbyte[14], addrbyte[15], scope);
+                                    LOG_PREFIX "skipped interface %s inet6 %s scope %x\n",
+                                    ifname, addrstr, scope);
                 continue;
             }
 
             intf = OBJ_NEW(opal_if_t);
             if (NULL == intf) {
-                opal_output(0, "opal_ifinit: unable to allocate %lu bytes\n",
+                opal_output(0, LOG_PREFIX "unable to allocate %lu bytes\n",
                             (unsigned long)sizeof(opal_if_t));
                 fclose(f);
                 return OPAL_ERR_OUT_OF_RESOURCE;
             }
             intf->af_family = AF_INET6;
-
-            for (iter = 0; iter < 16; iter++) {
-                a6.s6_addr[iter] = addrbyte[iter];
-            }
 
             /* now construct the opal_if_t */
             opal_string_copy(intf->if_name, ifname, IF_NAMESIZE);
@@ -147,11 +175,8 @@ static int if_linux_ipv6_open(void)
                to list */
             opal_list_append(&opal_if_list, &(intf->super));
             opal_output_verbose(1, opal_if_base_framework.framework_output,
-                                "added interface %2x%2x:%2x%2x:%2x%2x:%2x%2x:%2x%2x:%2x%2x:%2x%2x:%2x%2x\n",
-                                addrbyte[0], addrbyte[1], addrbyte[2], addrbyte[3],
-                                addrbyte[4], addrbyte[5], addrbyte[6], addrbyte[7],
-                                addrbyte[8], addrbyte[9], addrbyte[10], addrbyte[11],
-                                addrbyte[12], addrbyte[13], addrbyte[14], addrbyte[15]);
+                                LOG_PREFIX "added interface %s inet6 %s scope %x\n",
+                                ifname, addrstr, scope);
         } /* of while */
         fclose(f);
     }
@@ -159,5 +184,3 @@ static int if_linux_ipv6_open(void)
 
     return OPAL_SUCCESS;
 }
-
-
