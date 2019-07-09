@@ -242,7 +242,7 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
         int i, flag;
         size_t pagesize;
         size_t state_size;
-        size_t posts_size, post_size = (comm_size + 63) / 64;
+        size_t posts_size, post_size = (comm_size + OSC_SM_POST_MASK) / (OSC_SM_POST_MASK + 1);
 
         OPAL_OUTPUT_VERBOSE((1, ompi_osc_base_framework.framework_output,
                              "allocating shared memory region of size %ld\n", (long) size));
