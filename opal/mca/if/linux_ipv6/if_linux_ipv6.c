@@ -127,7 +127,7 @@ static int if_linux_ipv6_open(void)
             opal_if_t *intf;
 
             if (!hexdecode(addrhex, a6.s6_addr, sizeof a6.s6_addr)) {
-                char hostname[OPAL_MAXHOSTNAMELEN] = {0};
+                char hostname[OPAL_MAXHOSTNAMELEN];
                 gethostname(hostname, sizeof(hostname));
                 opal_show_help("help-opal-if-linux-ipv6.txt",
                                "fail to parse if_inet6", true,
