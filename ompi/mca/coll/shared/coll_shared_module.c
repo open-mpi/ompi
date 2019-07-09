@@ -1,35 +1,12 @@
 /*
- * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
- *                         University Research and Technology
- *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2017 The University of Tennessee and The University
+ * Copyright (c) 2019      The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
- *                         University of Stuttgart.  All rights reserved.
- * Copyright (c) 2004-2005 The Regents of the University of California.
- *                         All rights reserved.
- * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
- * Copyright (c) 2009-2013 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2010-2012 Los Alamos National Security, LLC.
- *                         All rights reserved.
- * Copyright (c) 2014-2015 Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
  *
  * $HEADER$
- */
-/**
- * @file
- *
- * Warning: this is not for the faint of heart -- don't even bother
- * reading this source code if you don't have a strong understanding
- * of nested data structures and pointer math (remember that
- * associativity and order of C operations is *critical* in terms of
- * pointer math!).
  */
 
 #include "ompi_config.h"
@@ -188,7 +165,8 @@ mca_coll_base_module_t *mca_coll_shared_comm_query(struct
     if (OMPI_COMM_IS_INTER(comm) || 1 == ompi_comm_size(comm)
         || ompi_group_have_remote_peers(comm->c_local_group)) {
         opal_output_verbose(10, ompi_coll_base_framework.framework_output,
-                            "coll:shared:comm_query (%d/%s): intercomm, comm is too small, or not all peers local; disqualifying myself",
+                            "coll:shared:comm_query (%d/%s): intercomm, comm is too small, 
+                            or not all peers local; disqualifying myself",
                             comm->c_contextid, comm->c_name);
         return NULL;
     }
@@ -196,7 +174,7 @@ mca_coll_base_module_t *mca_coll_shared_comm_query(struct
     /* Get the priority level attached to this module. If priority is less
      * than or equal to 0, then the module is unavailable. */
     *priority = mca_coll_shared_component.shared_priority;
-    if (mca_coll_shared_component.shared_priority <= 0) {
+    if (0 >= mca_coll_shared_component.shared_priority) {
         opal_output_verbose(10, ompi_coll_base_framework.framework_output,
                             "coll:shared:comm_query (%d/%s): priority too low; disqualifying myself",
                             comm->c_contextid, comm->c_name);
@@ -214,16 +192,16 @@ mca_coll_base_module_t *mca_coll_shared_comm_query(struct
     shared_module->super.ft_event = NULL;
     shared_module->super.coll_allgather = NULL;
     shared_module->super.coll_allgatherv = NULL;
-    shared_module->super.coll_allreduce = mca_coll_shared_allreduce_intra;      //mca_coll_shared_allreduce_intra
+    shared_module->super.coll_allreduce = mca_coll_shared_allreduce_intra;
     shared_module->super.coll_alltoall = NULL;
     shared_module->super.coll_alltoallv = NULL;
     shared_module->super.coll_alltoallw = NULL;
-    shared_module->super.coll_barrier = NULL;   //mca_coll_shared_barrier_intra;
-    shared_module->super.coll_bcast = mca_coll_shared_bcast_intra;      //mca_coll_shared_bcast_linear_intra mca_coll_shared_bcast_linear_nofence_intra mca_coll_shared_bcast_binary
+    shared_module->super.coll_barrier = NULL;
+    shared_module->super.coll_bcast = mca_coll_shared_bcast_intra;
     shared_module->super.coll_exscan = NULL;
     shared_module->super.coll_gather = NULL;
     shared_module->super.coll_gatherv = NULL;
-    shared_module->super.coll_reduce = mca_coll_shared_reduce_intra;    //mca_coll_shared_reduce_intra; //mca_coll_shared_reduce_intra;
+    shared_module->super.coll_reduce = mca_coll_shared_reduce_intra;
     shared_module->super.coll_reduce_scatter = NULL;
     shared_module->super.coll_scan = NULL;
     shared_module->super.coll_scatter = NULL;

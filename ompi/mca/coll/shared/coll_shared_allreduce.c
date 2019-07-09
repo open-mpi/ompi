@@ -1,3 +1,14 @@
+/*
+ * Copyright (c) 2019      The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
+
 #include "coll_shared.h"
 
 int mca_coll_shared_allreduce_intra(const void *sbuf, void *rbuf,
