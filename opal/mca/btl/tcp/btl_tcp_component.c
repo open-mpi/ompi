@@ -19,7 +19,8 @@
  * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
+ * Copyright (c) 2018-2019 Amazon.com, Inc. or its affiliates.  All Rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -69,6 +70,7 @@
 #include "opal/util/net.h"
 #include "opal/util/fd.h"
 #include "opal/util/show_help.h"
+#include "opal/util/string_copy.h"
 #include "opal/util/printf.h"
 #include "opal/constants.h"
 #include "opal/mca/btl/btl.h"
@@ -76,6 +78,7 @@
 #include "opal/mca/mpool/base/base.h"
 #include "opal/mca/btl/base/btl_base_error.h"
 #include "opal/mca/pmix/pmix.h"
+#include "opal/mca/reachable/base/base.h"
 #include "opal/threads/threads.h"
 
 #include "opal/constants.h"
@@ -368,6 +371,7 @@ static int mca_btl_tcp_component_open(void)
     mca_btl_tcp_component.tcp_btls = NULL;
 
     /* initialize objects */
+    OBJ_CONSTRUCT(&mca_btl_tcp_component.local_ifs, opal_list_t);
     OBJ_CONSTRUCT(&mca_btl_tcp_component.tcp_lock, opal_mutex_t);
     OBJ_CONSTRUCT(&mca_btl_tcp_component.tcp_procs, opal_proc_table_t);
     OBJ_CONSTRUCT(&mca_btl_tcp_component.tcp_events, opal_list_t);
@@ -477,6 +481,7 @@ static int mca_btl_tcp_component_close(void)
     OBJ_DESTRUCT(&mca_btl_tcp_component.tcp_frag_max);
     OBJ_DESTRUCT(&mca_btl_tcp_component.tcp_frag_user);
     OBJ_DESTRUCT(&mca_btl_tcp_component.tcp_lock);
+    OBJ_DESTRUCT(&mca_btl_tcp_component.local_ifs);
 
 #if OPAL_CUDA_SUPPORT
     mca_common_cuda_fini();
@@ -493,8 +498,9 @@ static int mca_btl_tcp_component_close(void)
 static int mca_btl_tcp_create(const int if_kindex, const char* if_name)
 {
     struct mca_btl_tcp_module_t* btl;
+    opal_if_t *copied_interface, *selected_interface;
     char param[256];
-    int i;
+    int i, if_index;
     struct sockaddr_storage addr;
     bool found = false;
 
@@ -515,18 +521,15 @@ static int mca_btl_tcp_create(const int if_kindex, const char* if_name)
      * 10.1.0.1 as the one that is published in the modex and used for
      * connection.
      */
-    for (i = opal_ifbegin() ; i >= 0 ; i = opal_ifnext(i)) {
-        int ret;
-
-        if (if_kindex != opal_ifindextokindex(i)) {
+    OPAL_LIST_FOREACH(selected_interface, &opal_if_list, opal_if_t) {
+        if (if_kindex != selected_interface->if_kernel_index) {
             continue;
         }
 
-        ret = opal_ifindextoaddr(i, (struct sockaddr*)&addr,
-                                 sizeof(struct sockaddr_storage));
-        if (OPAL_SUCCESS != ret) {
-            return ret;
-        }
+        if_index = selected_interface->if_index;
+
+        memcpy((struct sockaddr*)&addr, &selected_interface->if_addr,
+               MIN(sizeof(struct sockaddr_storage), sizeof(selected_interface->if_addr)));
 
         if (addr.ss_family == AF_INET &&
             4 != mca_btl_tcp_component.tcp_disable_family) {
@@ -548,12 +551,19 @@ static int mca_btl_tcp_create(const int if_kindex, const char* if_name)
         btl = (struct mca_btl_tcp_module_t *)malloc(sizeof(mca_btl_tcp_module_t));
         if(NULL == btl)
             return OPAL_ERR_OUT_OF_RESOURCE;
+        copied_interface = OBJ_NEW(opal_if_t);
+        if (NULL == copied_interface) {
+            free(btl);
+            return OPAL_ERR_OUT_OF_RESOURCE;
+        }
         memcpy(btl, &mca_btl_tcp_module, sizeof(mca_btl_tcp_module));
         OBJ_CONSTRUCT(&btl->tcp_endpoints, opal_list_t);
         OBJ_CONSTRUCT(&btl->tcp_endpoints_mutex, opal_mutex_t);
         mca_btl_tcp_component.tcp_btls[mca_btl_tcp_component.tcp_num_btls++] = btl;
 
         /* initialize the btl */
+        /* This index is used as a key for a hash table used for interface matching. */
+        btl->btl_index = mca_btl_tcp_component.tcp_num_btls - 1;
         btl->tcp_ifkindex = (uint16_t) if_kindex;
 #if MCA_BTL_TCP_STATISTICS
         btl->tcp_bytes_recv = 0;
@@ -562,6 +572,7 @@ static int mca_btl_tcp_create(const int if_kindex, const char* if_name)
 #endif
 
         memcpy(&btl->tcp_ifaddr, &addr, sizeof(struct sockaddr_storage));
+        btl->tcp_ifmask = selected_interface->if_mask;
 
         /* allow user to specify interface bandwidth */
         sprintf(param, "bandwidth_%s", if_name);
@@ -602,6 +613,21 @@ static int mca_btl_tcp_create(const int if_kindex, const char* if_name)
                 btl->super.btl_latency <<= 1;
             }
         }
+
+        /* Add another entry to the local interface list */
+        opal_string_copy(copied_interface->if_name, if_name, OPAL_IF_NAMESIZE);
+        copied_interface->if_index = if_index;
+        copied_interface->if_kernel_index = btl->tcp_ifkindex;
+        copied_interface->af_family = btl->tcp_ifaddr.ss_family;
+        copied_interface->if_flags = selected_interface->if_flags;
+        copied_interface->if_speed = selected_interface->if_speed;
+        memcpy(&copied_interface->if_addr, &btl->tcp_ifaddr, sizeof(struct sockaddr_storage));
+        copied_interface->if_mask = selected_interface->if_mask;
+        copied_interface->if_bandwidth = btl->super.btl_bandwidth;
+        memcpy(&copied_interface->if_mac, &selected_interface->if_mac, sizeof(copied_interface->if_mac));
+        copied_interface->ifmtu = selected_interface->ifmtu;
+
+        opal_list_append(&mca_btl_tcp_component.local_ifs, &(copied_interface->super));
 
         opal_output_verbose(5, opal_btl_base_framework.framework_output,
                             "btl:tcp: %p: if %s kidx %d cnt %i addr %s %s bw %d lt %d\n",
@@ -1188,7 +1214,6 @@ static int mca_btl_tcp_component_exchange(void)
              memcpy(&addrs[i].addr, &(inaddr6->sin6_addr),
                     sizeof(struct in6_addr));
              addrs[i].addr_port = mca_btl_tcp_component.tcp6_listen_port;
-             addrs[i].addr_ifkindex = btl->tcp_ifkindex;
              addrs[i].addr_family = MCA_BTL_TCP_AF_INET6;
              opal_output_verbose(5, opal_btl_base_framework.framework_output,
                                  "btl: tcp: exchange: %d %d IPv6 %s",
@@ -1202,7 +1227,6 @@ static int mca_btl_tcp_component_exchange(void)
              memcpy(&addrs[i].addr, &(inaddr->sin_addr),
                     sizeof(struct in_addr));
              addrs[i].addr_port = mca_btl_tcp_component.tcp_listen_port;
-             addrs[i].addr_ifkindex = btl->tcp_ifkindex;
              addrs[i].addr_family = MCA_BTL_TCP_AF_INET;
              opal_output_verbose(5, opal_btl_base_framework.framework_output,
                                  "btl: tcp: exchange: %d %d IPv4 %s",
@@ -1212,6 +1236,10 @@ static int mca_btl_tcp_component_exchange(void)
              BTL_ERROR(("Unexpected address family: %d", addr->sa_family));
              return OPAL_ERR_BAD_PARAM;
          }
+
+         addrs[i].addr_ifkindex = btl->tcp_ifkindex;
+         addrs[i].addr_mask = btl->tcp_ifmask;
+         addrs[i].addr_bandwidth =  btl->super.btl_bandwidth;
      }
 
      OPAL_MODEX_SEND(rc, OPAL_PMIX_GLOBAL,
