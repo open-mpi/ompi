@@ -35,19 +35,24 @@ pack_predefined_data( opal_convertor_t* CONVERTOR,
                       size_t* SPACE )
 {
     const ddt_elem_desc_t* _elem = &((ELEM)->elem);
-    size_t cando_count = (*SPACE) / opal_datatype_basicDatatypes[_elem->common.type]->size;
-    size_t do_now, do_now_bytes;
     size_t blocklen_bytes = opal_datatype_basicDatatypes[_elem->common.type]->size;
+    size_t cando_count = *(COUNT), do_now, do_now_bytes;
     unsigned char* _memory = (*memory) + _elem->disp;
     unsigned char* _packed = *packed;
 
     assert( *(COUNT) <= _elem->count * _elem->blocklen);
 
-    if( cando_count > *(COUNT) )
-        cando_count = *(COUNT);
+    if( (blocklen_bytes * cando_count) > *(SPACE) )
+        cando_count = (*SPACE) / blocklen_bytes;
 
+    do_now = *(COUNT);  /* save the COUNT for later */
+    /* premptively update the number of COUNT we will return. */
+    *(COUNT) -= cando_count;
+
+    if( 1 == _elem->count ) {  /* Everything is contiguous, handle it as a prologue */
+        goto do_epilog;
+    }
     if( 1 == _elem->blocklen ) { /* Do as many full blocklen as possible */
-        *(COUNT) -= cando_count;
         for(; cando_count > 0; cando_count--) {
             OPAL_DATATYPE_SAFEGUARD_POINTER( _memory, blocklen_bytes, (CONVERTOR)->pBaseBuf,
                                              (CONVERTOR)->pDesc, (CONVERTOR)->count );
@@ -59,17 +64,19 @@ pack_predefined_data( opal_convertor_t* CONVERTOR,
         }
         goto update_and_return;
     }
-    blocklen_bytes *= _elem->blocklen;
 
+    blocklen_bytes *= _elem->blocklen;
+    if( (_elem->count * _elem->blocklen) == cando_count ) {
+        goto skip_prolog;
+    }
     /**
      * First check if we already did something on this element ? The COUNT is the number
      * of remaining predefined types in the current elem, not how many predefined types
      * should be manipulated in the current call (this number is instead reflected on the
      * SPACE).
      */
-    do_now = *(COUNT) % _elem->blocklen;  /* any partial elements ? */
-    /* premptively update the number of COUNT we will return. */
-    *(COUNT) -= cando_count;
+    do_now = do_now % _elem->blocklen;  /* any partial elements ? */
+
     if( 0 != do_now ) {
         size_t left_in_block = do_now;  /* left in the current blocklen */
         do_now = (do_now > cando_count ) ? cando_count : do_now;
@@ -88,6 +95,7 @@ pack_predefined_data( opal_convertor_t* CONVERTOR,
         cando_count -= do_now;
     }
 
+ skip_prolog:
     /* Do as many full blocklen as possible */
     for(size_t _i = 0; _elem->blocklen <= cando_count; _i++ ) {
         OPAL_DATATYPE_SAFEGUARD_POINTER( _memory, blocklen_bytes, (CONVERTOR)->pBaseBuf,
@@ -104,6 +112,8 @@ pack_predefined_data( opal_convertor_t* CONVERTOR,
      * As an epilog do anything left from the last blocklen.
      */
     if( 0 != cando_count ) {
+
+    do_epilog:
         assert( cando_count < _elem->blocklen );
         do_now_bytes = cando_count * opal_datatype_basicDatatypes[_elem->common.type]->size;
         OPAL_DATATYPE_SAFEGUARD_POINTER( _memory, do_now_bytes, (CONVERTOR)->pBaseBuf,
