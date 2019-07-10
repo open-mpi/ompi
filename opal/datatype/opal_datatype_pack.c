@@ -272,18 +272,32 @@ opal_generic_simple_pack_function( opal_convertor_t* pConvertor,
     for( iov_count = 0; iov_count < (*out_size); iov_count++ ) {
         iov_ptr = (unsigned char *) iov[iov_count].iov_base;
         iov_len_local = iov[iov_count].iov_len;
-        while( 1 ) {
-            while( pElem->elem.common.flags & OPAL_DATATYPE_FLAG_DATA ) {
-                /* now here we have a basic datatype */
-                PACK_PREDEFINED_DATATYPE( pConvertor, pElem, count_desc,
-                                          conv_ptr, iov_ptr, iov_len_local );
-                if( 0 == count_desc ) {  /* completed */
+        
+        if( pElem->elem.common.flags & OPAL_DATATYPE_FLAG_DATA ) {
+            if( (pElem->elem.count * pElem->elem.blocklen) != count_desc ) {
+                /* we have a partial (less than blocklen) basic datatype */
+                int rc = PACK_PARTIAL_BLOCKLEN( pConvertor, pElem, count_desc,
+                                                conv_ptr, iov_ptr, iov_len_local );
+                if( 0 == rc )  /* not done */
+                    goto complete_loop;
+                if( 0 == count_desc ) {
                     conv_ptr = pConvertor->pBaseBuf + pStack->disp;
                     pos_desc++;  /* advance to the next data */
                     UPDATE_INTERNAL_COUNTERS( description, pos_desc, pElem, count_desc );
-                    continue;
                 }
-                goto complete_loop;
+            }
+        }
+
+        while( 1 ) {
+            while( pElem->elem.common.flags & OPAL_DATATYPE_FLAG_DATA ) {
+                /* we have a basic datatype (working on full blocks) */
+                PACK_PREDEFINED_DATATYPE( pConvertor, pElem, count_desc,
+                                          conv_ptr, iov_ptr, iov_len_local );
+                if( 0 != count_desc )  /* completed? */
+                    goto complete_loop;
+                conv_ptr = pConvertor->pBaseBuf + pStack->disp;
+                pos_desc++;  /* advance to the next data */
+                UPDATE_INTERNAL_COUNTERS( description, pos_desc, pElem, count_desc );
             }
             if( OPAL_DATATYPE_END_LOOP == pElem->elem.common.type ) { /* end of the current loop */
                 DO_DEBUG( opal_output( 0, "pack end_loop count %" PRIsize_t " stack_pos %d"

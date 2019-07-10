@@ -26,6 +26,63 @@
     CONVERTOR->cbmemcpy( (DST), (SRC), (BLENGTH), (CONVERTOR) )
 #endif
 
+/**
+ * This function deals only with partial elements. The COUNT points however to the whole leftover count,
+ * but this function is only expected to operate on an amount less than blength, that would allow the rest
+ * of the pack process to handle only entire blength blocks (plus the left over).
+ *
+ * Return 1 if we are now aligned on a block, 0 otherwise.
+ */
+static inline int
+pack_partial_blocklen( opal_convertor_t* CONVERTOR,
+                       const dt_elem_desc_t* ELEM,
+                       size_t* COUNT,
+                       unsigned char** memory,
+                       unsigned char** packed,
+                       size_t* SPACE )
+{
+    const ddt_elem_desc_t* _elem = &((ELEM)->elem);
+    size_t do_now_bytes = opal_datatype_basicDatatypes[_elem->common.type]->size;
+    size_t do_now = *(COUNT);
+    unsigned char* _memory = (*memory) + _elem->disp;
+    unsigned char* _packed = *packed;
+
+    assert( *(COUNT) <= _elem->count * _elem->blocklen);
+
+    /**
+     * First check if we already did something on this element ? The COUNT is the number
+     * of remaining predefined types in the current elem, not how many predefined types
+     * should be manipulated in the current call (this number is instead reflected on the
+     * SPACE).
+     */
+    if( 0 == (do_now = (*COUNT) % _elem->blocklen) )
+        return 1;
+
+    size_t left_in_block = do_now;  /* left in the current blocklen */
+
+    if( (do_now_bytes * do_now) > *(SPACE) )
+        do_now = (*SPACE) / do_now_bytes;
+
+    do_now_bytes *= do_now;
+
+    OPAL_DATATYPE_SAFEGUARD_POINTER( _memory, do_now_bytes, (CONVERTOR)->pBaseBuf,
+                                     (CONVERTOR)->pDesc, (CONVERTOR)->count );
+    DO_DEBUG( opal_output( 0, "pack memcpy( %p, %p, %lu ) => space %lu [partial]\n",
+                           _packed, (void*)_memory, (unsigned long)do_now_bytes, (unsigned long)(*(SPACE)) ); );
+    MEMCPY_CSUM( _packed, _memory, do_now_bytes, (CONVERTOR) );
+    *(memory)     += (ptrdiff_t)do_now_bytes;
+    if( do_now == left_in_block )  /* compensate if completed a blocklen */
+        *(memory) += _elem->extent - (_elem->blocklen * opal_datatype_basicDatatypes[_elem->common.type]->size);
+
+    *(COUNT)  -= do_now;
+    *(SPACE)  -= do_now_bytes;
+    *(packed) += do_now_bytes;
+    return (do_now == left_in_block);
+}
+
+/**
+ * Pack entire blocks, plus a possible remainder if SPACE is constrained to less than COUNT elements.
+ */
 static inline void
 pack_predefined_data( opal_convertor_t* CONVERTOR,
                       const dt_elem_desc_t* ELEM,
@@ -36,27 +93,24 @@ pack_predefined_data( opal_convertor_t* CONVERTOR,
 {
     const ddt_elem_desc_t* _elem = &((ELEM)->elem);
     size_t blocklen_bytes = opal_datatype_basicDatatypes[_elem->common.type]->size;
-    size_t cando_count = *(COUNT), do_now, do_now_bytes;
+    size_t cando_count = *(COUNT), do_now_bytes;
     unsigned char* _memory = (*memory) + _elem->disp;
     unsigned char* _packed = *packed;
 
+    assert( 0 == (cando_count % _elem->blocklen) );  /* no partials here */
     assert( *(COUNT) <= _elem->count * _elem->blocklen);
 
     if( (blocklen_bytes * cando_count) > *(SPACE) )
         cando_count = (*SPACE) / blocklen_bytes;
 
-    do_now = *(COUNT);  /* save the COUNT for later */
     /* premptively update the number of COUNT we will return. */
     *(COUNT) -= cando_count;
 
-    if( 1 == _elem->count ) {  /* Everything is contiguous, handle it as a prologue */
-        goto do_epilog;
-    }
     if( 1 == _elem->blocklen ) { /* Do as many full blocklen as possible */
         for(; cando_count > 0; cando_count--) {
             OPAL_DATATYPE_SAFEGUARD_POINTER( _memory, blocklen_bytes, (CONVERTOR)->pBaseBuf,
                                              (CONVERTOR)->pDesc, (CONVERTOR)->count );
-            DO_DEBUG( opal_output( 0, "pack 2. memcpy( %p, %p, %lu ) => space %lu\n",
+            DO_DEBUG( opal_output( 0, "pack memcpy( %p, %p, %lu ) => space %lu [blen = 1]\n",
                                    (void*)_packed, (void*)_memory, (unsigned long)blocklen_bytes, (unsigned long)(*(SPACE) - (_packed - *(packed))) ); );
             MEMCPY_CSUM( _packed, _memory, blocklen_bytes, (CONVERTOR) );
             _packed     += blocklen_bytes;
@@ -65,61 +119,32 @@ pack_predefined_data( opal_convertor_t* CONVERTOR,
         goto update_and_return;
     }
 
-    blocklen_bytes *= _elem->blocklen;
-    if( (_elem->count * _elem->blocklen) == cando_count ) {
-        goto skip_prolog;
-    }
-    /**
-     * First check if we already did something on this element ? The COUNT is the number
-     * of remaining predefined types in the current elem, not how many predefined types
-     * should be manipulated in the current call (this number is instead reflected on the
-     * SPACE).
-     */
-    do_now = do_now % _elem->blocklen;  /* any partial elements ? */
+    if( (1 < _elem->count) && (_elem->blocklen <= cando_count) ) {
+        blocklen_bytes *= _elem->blocklen;
 
-    if( 0 != do_now ) {
-        size_t left_in_block = do_now;  /* left in the current blocklen */
-        do_now = (do_now > cando_count ) ? cando_count : do_now;
-        do_now_bytes = do_now * opal_datatype_basicDatatypes[_elem->common.type]->size;
-        
-        OPAL_DATATYPE_SAFEGUARD_POINTER( _memory, do_now_bytes, (CONVERTOR)->pBaseBuf,
-                                         (CONVERTOR)->pDesc, (CONVERTOR)->count );
-        DO_DEBUG( opal_output( 0, "pack 1. memcpy( %p, %p, %lu ) => space %lu [prolog]\n",
-                               _packed, (void*)_memory, (unsigned long)do_now_bytes, (unsigned long)(*(SPACE)) ); );
-        MEMCPY_CSUM( _packed, _memory, do_now_bytes, (CONVERTOR) );
-        _memory     += (ptrdiff_t)do_now_bytes;
-        /* compensate if we just completed a blocklen */
-        if( do_now == left_in_block )
-            _memory += _elem->extent - blocklen_bytes;
-        _packed     += do_now_bytes;
-        cando_count -= do_now;
-    }
-
- skip_prolog:
-    /* Do as many full blocklen as possible */
-    for(size_t _i = 0; _elem->blocklen <= cando_count; _i++ ) {
-        OPAL_DATATYPE_SAFEGUARD_POINTER( _memory, blocklen_bytes, (CONVERTOR)->pBaseBuf,
-                                         (CONVERTOR)->pDesc, (CONVERTOR)->count );
-        DO_DEBUG( opal_output( 0, "pack 2. memcpy( %p, %p, %lu ) => space %lu\n",
-                               (void*)_packed, (void*)_memory, (unsigned long)blocklen_bytes, (unsigned long)(*(SPACE) - (_packed - *(packed))) ); );
-        MEMCPY_CSUM( _packed, _memory, blocklen_bytes, (CONVERTOR) );
-        _packed     += blocklen_bytes;
-        _memory     += _elem->extent;
-        cando_count -= _elem->blocklen;
+        do { /* Do as many full blocklen as possible */
+            OPAL_DATATYPE_SAFEGUARD_POINTER( _memory, blocklen_bytes, (CONVERTOR)->pBaseBuf,
+                                             (CONVERTOR)->pDesc, (CONVERTOR)->count );
+            DO_DEBUG( opal_output( 0, "pack 2. memcpy( %p, %p, %lu ) => space %lu\n",
+                                   (void*)_packed, (void*)_memory, (unsigned long)blocklen_bytes, (unsigned long)(*(SPACE) - (_packed - *(packed))) ); );
+            MEMCPY_CSUM( _packed, _memory, blocklen_bytes, (CONVERTOR) );
+            _packed     += blocklen_bytes;
+            _memory     += _elem->extent;
+            cando_count -= _elem->blocklen;
+        } while (_elem->blocklen <= cando_count);
     }
 
     /**
      * As an epilog do anything left from the last blocklen.
      */
     if( 0 != cando_count ) {
-
-    do_epilog:
-        assert( cando_count < _elem->blocklen );
+        assert( (cando_count < _elem->blocklen) ||
+                ((1 == _elem->count) && (cando_count <= _elem->blocklen)) );
         do_now_bytes = cando_count * opal_datatype_basicDatatypes[_elem->common.type]->size;
         OPAL_DATATYPE_SAFEGUARD_POINTER( _memory, do_now_bytes, (CONVERTOR)->pBaseBuf,
                                          (CONVERTOR)->pDesc, (CONVERTOR)->count );
         DO_DEBUG( opal_output( 0, "pack 3. memcpy( %p, %p, %lu ) => space %lu [epilog]\n",
-                               (void*)_packed, (void*)_memory, (unsigned long)do_now_bytes, (unsigned long)(*(SPACE)) ); );
+                               (void*)_packed, (void*)_memory, (unsigned long)do_now_bytes, (unsigned long)(*(SPACE) - (_packed - *(packed))) ); );
         MEMCPY_CSUM( _packed, _memory, do_now_bytes, (CONVERTOR) );
         _memory   += do_now_bytes;
         _packed   += do_now_bytes;
@@ -159,7 +184,15 @@ static inline void pack_contiguous_loop( opal_convertor_t* CONVERTOR,
     *(COUNT) -= _copy_loops;
 }
 
-#define PACK_PREDEFINED_DATATYPE( CONVERTOR,    /* the convertor */                       \
+#define PACK_PARTIAL_BLOCKLEN( CONVERTOR,    /* the convertor */                       \
+                               ELEM,         /* the basic element to be packed */ \
+                               COUNT,        /* the number of elements */ \
+                               MEMORY,       /* the source pointer (char*) */ \
+                               PACKED,       /* the destination pointer (char*) */ \
+                               SPACE )       /* the space in the destination buffer */ \
+pack_partial_blocklen( (CONVERTOR), (ELEM), &(COUNT), &(MEMORY), &(PACKED), &(SPACE) )
+
+#define PACK_PREDEFINED_DATATYPE( CONVERTOR,    /* the convertor */     \
                                   ELEM,         /* the basic element to be packed */      \
                                   COUNT,        /* the number of elements */              \
                                   MEMORY,       /* the source pointer (char*) */          \
