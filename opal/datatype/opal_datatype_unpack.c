@@ -282,6 +282,7 @@ opal_generic_simple_unpack_function( opal_convertor_t* pConvertor,
     for( iov_count = 0; iov_count < (*out_size); iov_count++ ) {
         iov_ptr = (unsigned char *) iov[iov_count].iov_base;
         iov_len_local = iov[iov_count].iov_len;
+        
         if( 0 != pConvertor->partial_length ) {
             size_t element_length = opal_datatype_basicDatatypes[pElem->elem.common.type]->size;
             size_t missing_length = element_length - pConvertor->partial_length;
@@ -302,34 +303,31 @@ opal_generic_simple_unpack_function( opal_convertor_t* pConvertor,
             iov_len_local -= missing_length;
             pConvertor->partial_length = 0;  /* nothing more inside */
         }
-        while( 1 ) {
-            while( pElem->elem.common.flags & OPAL_DATATYPE_FLAG_DATA ) {
-                /* now here we have a basic datatype */
-                UNPACK_PREDEFINED_DATATYPE( pConvertor, pElem, count_desc,
-                                            iov_ptr, conv_ptr, iov_len_local );
-                if( 0 == count_desc ) {  /* completed */
+        if( pElem->elem.common.flags & OPAL_DATATYPE_FLAG_DATA ) {
+            if( (pElem->elem.count * pElem->elem.blocklen) != count_desc ) {
+                /* we have a partial (less than blocklen) basic datatype */
+                int rc = UNPACK_PARTIAL_BLOCKLEN( pConvertor, pElem, count_desc,
+                                                  iov_ptr, conv_ptr, iov_len_local );
+                if( 0 == rc )  /* not done */
+                    goto complete_loop;
+                if( 0 == count_desc ) {
                     conv_ptr = pConvertor->pBaseBuf + pStack->disp;
                     pos_desc++;  /* advance to the next data */
                     UPDATE_INTERNAL_COUNTERS( description, pos_desc, pElem, count_desc );
-                    continue;
                 }
-                assert( pElem->elem.common.type < OPAL_DATATYPE_MAX_PREDEFINED );
-                if( 0 != iov_len_local ) {
-                    unsigned char* temp = conv_ptr;
-                    /* We have some partial data here. Let's copy it into the convertor
-                     * and keep it hot until the next round.
-                     */
-                    assert( iov_len_local < opal_datatype_basicDatatypes[pElem->elem.common.type]->size );
-                    COMPUTE_CSUM( iov_ptr, iov_len_local, pConvertor );
-
-                    opal_unpack_partial_datatype( pConvertor, pElem,
-                                                  iov_ptr, 0, iov_len_local,
-                                                  &temp );
-
-                    pConvertor->partial_length = iov_len_local;
-                    iov_len_local = 0;
-                }
-                goto complete_loop;
+            }
+        }
+        
+        while( 1 ) {
+            while( pElem->elem.common.flags & OPAL_DATATYPE_FLAG_DATA ) {
+                /* we have a basic datatype (working on full blocks) */
+                UNPACK_PREDEFINED_DATATYPE( pConvertor, pElem, count_desc,
+                                            iov_ptr, conv_ptr, iov_len_local );
+                if( 0 != count_desc )  /* completed? */
+                    goto complete_loop;
+                conv_ptr = pConvertor->pBaseBuf + pStack->disp;
+                pos_desc++;  /* advance to the next data */
+                UPDATE_INTERNAL_COUNTERS( description, pos_desc, pElem, count_desc );
             }
             if( OPAL_DATATYPE_END_LOOP == pElem->elem.common.type ) { /* end of the current loop */
                 DO_DEBUG( opal_output( 0, "unpack end_loop count %" PRIsize_t " stack_pos %d pos_desc %d disp %ld space %lu\n",
@@ -337,11 +335,9 @@ opal_generic_simple_unpack_function( opal_convertor_t* pConvertor,
                                        pStack->disp, (unsigned long)iov_len_local ); );
                 if( --(pStack->count) == 0 ) { /* end of loop */
                     if( 0 == pConvertor->stack_pos ) {
-                        /* Do the same thing as when the loop is completed */
-                        iov[iov_count].iov_len -= iov_len_local;  /* update the amount of valid data */
-                        total_unpacked += iov[iov_count].iov_len;
-                        iov_count++;  /* go to the next */
-                        goto complete_conversion;
+                        /* we're done. Force the exit of the main for loop (around iovec) */
+                        *out_size = iov_count;
+                        goto complete_loop;
                     }
                     pConvertor->stack_pos--;
                     pStack--;
@@ -380,14 +376,29 @@ opal_generic_simple_unpack_function( opal_convertor_t* pConvertor,
                 conv_ptr = pConvertor->pBaseBuf + pStack->disp;
                 UPDATE_INTERNAL_COUNTERS( description, pos_desc, pElem, count_desc );
                 DDT_DUMP_STACK( pConvertor->pStack, pConvertor->stack_pos, pElem, "advance loop" );
-                continue;
             }
         }
     complete_loop:
+        assert( pElem->elem.common.type < OPAL_DATATYPE_MAX_PREDEFINED );
+        if( 0 != iov_len_local ) {
+            unsigned char* temp = conv_ptr;
+            /* We have some partial data here. Let's copy it into the convertor
+             * and keep it hot until the next round.
+             */
+            assert( iov_len_local < opal_datatype_basicDatatypes[pElem->elem.common.type]->size );
+            COMPUTE_CSUM( iov_ptr, iov_len_local, pConvertor );
+
+            opal_unpack_partial_datatype( pConvertor, pElem,
+                                          iov_ptr, 0, iov_len_local,
+                                          &temp );
+                
+            pConvertor->partial_length = iov_len_local;
+            iov_len_local = 0;
+        }
+
         iov[iov_count].iov_len -= iov_len_local;  /* update the amount of valid data */
         total_unpacked += iov[iov_count].iov_len;
     }
- complete_conversion:
     *max_data = total_unpacked;
     pConvertor->bConverted += total_unpacked;  /* update the already converted bytes */
     *out_size = iov_count;
@@ -514,11 +525,9 @@ opal_unpack_general_function( opal_convertor_t* pConvertor,
                                        pStack->disp, (unsigned long)iov_len_local ); );
                 if( --(pStack->count) == 0 ) { /* end of loop */
                     if( 0 == pConvertor->stack_pos ) {
-                        /* Do the same thing as when the loop is completed */
-                        iov[iov_count].iov_len -= iov_len_local;  /* update the amount of valid data */
-                        total_unpacked += iov[iov_count].iov_len;
-                        iov_count++;  /* go to the next */
-                        goto complete_conversion;
+                        /* we're done. Force the exit of the main for loop (around iovec) */
+                        *out_size = iov_count;
+                        goto complete_loop;
                     }
                     pConvertor->stack_pos--;
                     pStack--;
@@ -552,7 +561,6 @@ opal_unpack_general_function( opal_convertor_t* pConvertor,
         iov[iov_count].iov_len -= iov_len_local;  /* update the amount of valid data */
         total_unpacked += iov[iov_count].iov_len;
     }
- complete_conversion:
     *max_data = total_unpacked;
     pConvertor->bConverted += total_unpacked;  /* update the already converted bytes */
     *out_size = iov_count;
