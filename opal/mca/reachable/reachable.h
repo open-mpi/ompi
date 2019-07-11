@@ -3,7 +3,7 @@
  * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2017      Amazon.com, Inc. or its affiliates.
+ * Copyright (c) 2017-2019 Amazon.com, Inc. or its affiliates.
  *                         All Rights reserved.
  * $COPYRIGHT$
  *
@@ -58,14 +58,24 @@ typedef int (*opal_reachable_base_module_fini_fn_t)(void);
 /* Build reachability matrix between local and remote ethernet
  * interfaces
  *
+ * @param local_ifs (IN)     Local list of opal_if_t objects
+ *                           The opal_if_t objects must be fully populated
+ * @param remote_ifs (IN)    Remote list of opal_if_t objects
+ *                           The opal_if_t objects must have the following fields populated:
+ *                              uint16_t                 af_family;
+ *                              struct sockaddr_storage  if_addr;
+ *                              uint32_t                 if_mask;
+ *                              uint32_t                 if_bandwidth;
+ * @return opal_reachable_t  The reachability matrix was successfully created
+ * @return NULL              The reachability matrix could not be constructed
+ *
  * Given a list of local interfaces and remote interfaces from a
  * single peer, build a reachability matrix between the two peers.
  * This function does not select the best pairing of local and remote
  * interfaces, but only a (comparable) reachability between any pair
  * of local/remote interfaces.
  *
- * @returns a reachable object containing the reachability matrix on
- * success, NULL on failure.
+ *
  */
 typedef opal_reachable_t*
 (*opal_reachable_base_module_reachable_fn_t)(opal_list_t *local_ifs,
