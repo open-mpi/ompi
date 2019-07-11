@@ -68,8 +68,8 @@ typedef int (*opal_reachable_base_module_fini_fn_t)(void);
  * success, NULL on failure.
  */
 typedef opal_reachable_t*
-(*opal_reachable_base_module_reachable_fn_t)(opal_list_t *local_if,
-                                             opal_list_t *remote_if);
+(*opal_reachable_base_module_reachable_fn_t)(opal_list_t *local_ifs,
+                                             opal_list_t *remote_ifs);
 
 
 /*

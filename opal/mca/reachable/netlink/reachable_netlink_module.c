@@ -59,23 +59,23 @@ static int netlink_fini(void)
  * Higher weightings are given to connections on the same
  * network.
  */
-static opal_reachable_t* netlink_reachable(opal_list_t *local_if,
-                                           opal_list_t *remote_if)
+static opal_reachable_t* netlink_reachable(opal_list_t *local_ifs,
+                                           opal_list_t *remote_ifs)
 {
     opal_reachable_t *reachable_results = NULL;
     int i, j;
     opal_if_t *local_iter, *remote_iter;
 
-    reachable_results = opal_reachable_allocate(local_if->opal_list_length,
-                                                remote_if->opal_list_length);
+    reachable_results = opal_reachable_allocate(local_ifs->opal_list_length,
+                                                remote_ifs->opal_list_length);
     if (NULL == reachable_results) {
         return NULL;
     }
 
     i = 0;
-    OPAL_LIST_FOREACH(local_iter, local_if, opal_if_t) {
+    OPAL_LIST_FOREACH(local_iter, local_ifs, opal_if_t) {
         j = 0;
-        OPAL_LIST_FOREACH(remote_iter, remote_if, opal_if_t) {
+        OPAL_LIST_FOREACH(remote_iter, remote_ifs, opal_if_t) {
             reachable_results->weights[i][j] = get_weights(local_iter, remote_iter);
             j++;
         }

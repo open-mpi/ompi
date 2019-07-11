@@ -35,8 +35,8 @@
 
 static int weighted_init(void);
 static int weighted_fini(void);
-static opal_reachable_t* weighted_reachable(opal_list_t *local_if,
-                                            opal_list_t *remote_if);
+static opal_reachable_t* weighted_reachable(opal_list_t *local_ifs,
+                                            opal_list_t *remote_ifs);
 
 static int get_weights(opal_if_t *local_if, opal_if_t *remote_if);
 static int calculate_weight(int bandwidth_local, int bandwidth_remote,
@@ -83,23 +83,23 @@ static int weighted_fini(void)
 }
 
 
-static opal_reachable_t* weighted_reachable(opal_list_t *local_if,
-                                            opal_list_t *remote_if)
+static opal_reachable_t* weighted_reachable(opal_list_t *local_ifs,
+                                            opal_list_t *remote_ifs)
 {
     opal_reachable_t *reachable_results = NULL;
     int i, j;
     opal_if_t *local_iter, *remote_iter;
 
-    reachable_results = opal_reachable_allocate(opal_list_get_size(local_if),
-                                                opal_list_get_size(remote_if));
+    reachable_results = opal_reachable_allocate(opal_list_get_size(local_ifs),
+                                                opal_list_get_size(remote_ifs));
     if (NULL == reachable_results) {
         return NULL;
     }
 
     i = 0;
-    OPAL_LIST_FOREACH(local_iter, local_if, opal_if_t) {
+    OPAL_LIST_FOREACH(local_iter, local_ifs, opal_if_t) {
         j = 0;
-        OPAL_LIST_FOREACH(remote_iter, remote_if, opal_if_t) {
+        OPAL_LIST_FOREACH(remote_iter, remote_ifs, opal_if_t) {
             reachable_results->weights[i][j] = get_weights(local_iter, remote_iter);
             j++;
         }
