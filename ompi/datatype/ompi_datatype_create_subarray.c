@@ -40,12 +40,6 @@ int32_t ompi_datatype_create_subarray(int ndims,
     int32_t i, step, end_loop;
     MPI_Aint size, displ, extent;
 
-    /**
-     * If the oldtype contains the original MPI_LB and MPI_UB markers then we
-     * are forced to follow the MPI standard suggestion and reset these 2
-     * markers (MPI 3.0 page 96 line 37).  Otherwise we can simply resize the
-     * datatype.
-     */
     ompi_datatype_type_extent( oldtype, &extent );
 
     /* If the ndims is zero then return the NULL datatype */

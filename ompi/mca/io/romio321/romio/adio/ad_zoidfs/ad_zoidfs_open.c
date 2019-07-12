@@ -118,7 +118,7 @@ void ADIOI_ZOIDFS_Open(ADIO_File fd, int *error_code)
     MPI_Get_address(&o_status.error, &offsets[0]);
     MPI_Get_address(&o_status.handle, &offsets[1]);
 
-    MPI_Type_struct(2, lens, offsets, types, &open_status_type);
+    MPI_Type_create_struct(2, lens, offsets, types, &open_status_type);
     MPI_Type_commit(&open_status_type);
 
     /* Assertion: if we hit this Bcast, then all processes collectively

@@ -410,9 +410,8 @@ void ADIOI_Flatten(MPI_Datatype datatype, ADIOI_Flatlist_node *flat,
 	break;
 
     case MPI_COMBINER_HVECTOR: 
-    case MPI_COMBINER_HVECTOR_INTEGER: 
     #ifdef FLATTEN_DEBUG 
-    DBG_FPRINTF(stderr,"ADIOI_Flatten:: MPI_COMBINER_HVECTOR_INTEGER\n");
+    DBG_FPRINTF(stderr,"ADIOI_Flatten:: MPI_COMBINER_HVECTOR\n");
     #endif
 	top_count = ints[0];
         ADIOI_Type_get_envelope(types[0], &old_nints, &old_nadds,
@@ -667,9 +666,8 @@ void ADIOI_Flatten(MPI_Datatype datatype, ADIOI_Flatlist_node *flat,
 	break;
 
     case MPI_COMBINER_HINDEXED: 
-    case MPI_COMBINER_HINDEXED_INTEGER:
     #ifdef FLATTEN_DEBUG 
-    DBG_FPRINTF(stderr,"ADIOI_Flatten:: MPI_COMBINER_HINDEXED_INTEGER\n");
+    DBG_FPRINTF(stderr,"ADIOI_Flatten:: MPI_COMBINER_HINDEXED\n");
     #endif
 	top_count = ints[0];
         ADIOI_Type_get_envelope(types[0], &old_nints, &old_nadds,
@@ -758,9 +756,8 @@ void ADIOI_Flatten(MPI_Datatype datatype, ADIOI_Flatlist_node *flat,
 	break;
 
     case MPI_COMBINER_STRUCT: 
-    case MPI_COMBINER_STRUCT_INTEGER: 
     #ifdef FLATTEN_DEBUG 
-    DBG_FPRINTF(stderr,"ADIOI_Flatten:: MPI_COMBINER_STRUCT_INTEGER\n");
+    DBG_FPRINTF(stderr,"ADIOI_Flatten:: MPI_COMBINER_STRUCT\n");
     #endif
 	top_count = ints[0];
 	for (n=0; n<top_count; n++) {
@@ -1033,7 +1030,6 @@ MPI_Count ADIOI_Count_contiguous_blocks(MPI_Datatype datatype, MPI_Count *curr_i
 
     case MPI_COMBINER_VECTOR:
     case MPI_COMBINER_HVECTOR:
-    case MPI_COMBINER_HVECTOR_INTEGER: 
         top_count = ints[0];
         ADIOI_Type_get_envelope(types[0], &old_nints, &old_nadds,
                                 &old_ntypes, &old_combiner); 
@@ -1068,7 +1064,6 @@ MPI_Count ADIOI_Count_contiguous_blocks(MPI_Datatype datatype, MPI_Count *curr_i
 
     case MPI_COMBINER_INDEXED: 
     case MPI_COMBINER_HINDEXED:
-    case MPI_COMBINER_HINDEXED_INTEGER:
         top_count = ints[0];
         ADIOI_Type_get_envelope(types[0], &old_nints, &old_nadds,
                                 &old_ntypes, &old_combiner); 
@@ -1136,7 +1131,6 @@ MPI_Count ADIOI_Count_contiguous_blocks(MPI_Datatype datatype, MPI_Count *curr_i
 	break;
 
     case MPI_COMBINER_STRUCT: 
-    case MPI_COMBINER_STRUCT_INTEGER: 
         top_count = ints[0];
 	count = 0;
 	for (n=0; n<top_count; n++) {

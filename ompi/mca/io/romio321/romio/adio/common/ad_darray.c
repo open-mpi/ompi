@@ -248,7 +248,7 @@ static int MPIOI_Type_cyclic(int *array_of_gsizes, int dim, int ndims, int nproc
 
     if (rem) {
 	/* if the last block is of size less than blksize, include
-	   it separately using MPI_Type_struct */
+	   it separately using MPI_Type_create_struct */
 
 	types[0] = *type_new;
 	types[1] = type_old;

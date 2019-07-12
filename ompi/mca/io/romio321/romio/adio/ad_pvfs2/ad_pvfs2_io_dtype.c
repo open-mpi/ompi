@@ -351,16 +351,6 @@ int convert_mpi_pvfs2_dtype(MPI_Datatype *mpi_dtype,
 		fprintf(stderr, "convert_mpi_pvfs2_dtype: "
 			"HINDEXED_BLOCK is unsupported\n");
 		break;
-	    case MPI_COMBINER_HINDEXED_INTEGER:
-		ADIOI_Free(old_pvfs_dtype);
-		fprintf(stderr, "convert_mpi_pvfs2_dtype: "
-			"HINDEXED_INTEGER is unsupported\n"); 
-		break;
-	    case MPI_COMBINER_STRUCT_INTEGER:
-		ADIOI_Free(old_pvfs_dtype);
-		fprintf(stderr, "convert_mpi_pvfs2_dtype: "
-			"STRUCT_INTEGER is unsupported\n"); 
-		break;
 	    case MPI_COMBINER_SUBARRAY:
 		ADIOI_Free(old_pvfs_dtype);
 		fprintf(stderr, "convert_mpi_pvfs2_dtype: "
@@ -426,38 +416,7 @@ int convert_mpi_pvfs2_dtype(MPI_Datatype *mpi_dtype,
 	MPI_Aint mpi_lb = -1, mpi_extent = -1;
 	PVFS_offset pvfs_lb = -1;
 	PVFS_size pvfs_extent = -1;
-	int has_lb_ub = 0;
-
-	/* When converting into a PVFS_Request_struct, we no longer
-	 * can use MPI_LB and MPI_UB.  Therfore, we have to do the
-	 * following.  
-	 * We simply ignore all the MPI_LB and MPI_UB types and 
-	 * get the lb and extent and pass it on through a 
-	 * PVFS resized_req */
-
-	arr_count = 0;
-	for (i = 0; i < arr_int[0]; i++)
-	{
-	    if (arr_dtype[i] != MPI_LB &&
-		arr_dtype[i] != MPI_UB)
-	    {
-		arr_count++;
-	    }
-	}
-
-	if (arr_int[0] != arr_count)
-	{
-	    MPI_Type_get_extent(*mpi_dtype, &mpi_lb, &mpi_extent);
-	    pvfs_lb = mpi_lb;
-	    pvfs_extent = mpi_extent;
-	    if ((pvfs_arr_len = ADIOI_Malloc(arr_count*sizeof(int))) 
-		== NULL)
-	    {
-		fprintf(stderr, "convert_mpi_pvfs2_dtype: "
-			"Failed to allocate pvfs_arr_len\n");
-	    }
-	    has_lb_ub = 1;
-	}
+	arr_count = arr_int[0];
 
 	if ((old_pvfs_dtype_arr
 	     = ADIOI_Malloc(arr_count*sizeof(PVFS_Request))) == NULL)
@@ -474,70 +433,15 @@ int convert_mpi_pvfs2_dtype(MPI_Datatype *mpi_dtype,
 	arr_count = 0;
 	for (i = 0; i < arr_int[0]; i++)
 	{
-	    if (arr_dtype[i] != MPI_LB &&
-		arr_dtype[i] != MPI_UB)
-	    {
 		leaf = convert_mpi_pvfs2_dtype(
 		    &arr_dtype[i], &old_pvfs_dtype_arr[arr_count]);
 		if (leaf != 1)
 		    MPI_Type_free(&arr_dtype[i]); 
 		pvfs_arr_disp[arr_count] = 
 		    (PVFS_size) arr_addr[i];
-		if (has_lb_ub)
-		{
-		    pvfs_arr_len[arr_count] = 
-			arr_int[i+1];
-		}
 		arr_count++;
-	    }
 	}
 
-	/* If a MPI_UB or MPI_LB did exist, we have to
-	 * resize the datatype */
-	if (has_lb_ub)
-	{
-	    PVFS_Request *tmp_pvfs_dtype = NULL;
-	    if ((tmp_pvfs_dtype = ADIOI_Malloc(sizeof(PVFS_Request))) == NULL)
-		fprintf(stderr, "convert_mpi_pvfs2_dtype: "
-			"Failed to allocate PVFS_Request\n");
-	    
-	    ret = PVFS_Request_struct(arr_count, pvfs_arr_len, 
-				      pvfs_arr_disp,
-				      old_pvfs_dtype_arr, tmp_pvfs_dtype);
-	    if (ret != 0)
-		fprintf(stderr, "Error in PVFS_Request_struct\n");
-
-	    arr_count = 0;
-	    for (i = 0; i < arr_int[0]; i++)
-	    {
-		if (arr_dtype[i] != MPI_LB &&
-		    arr_dtype[i] != MPI_UB)
-		{
-		    PVFS_Request_free(&old_pvfs_dtype_arr[arr_count]);
-		    arr_count++;
-		}
-	    }
-	    
-#ifdef DEBUG_DTYPE
-	    fprintf(stderr, "STRUCT(WITHOUT %d LB or UB)(%d,[",
-		    arr_int[0] - arr_count, arr_count);
-	    for (i = 0; i < arr_count; i++)
-		fprintf(stderr, "(%d,%Ld) ",
-			pvfs_arr_len[i],
-			pvfs_arr_disp[i]);
-	    fprintf(stderr, "]\n");
-	    fprintf(stderr, "RESIZED(LB = %Ld, EXTENT = %Ld)\n",
-		    pvfs_lb, pvfs_extent);
-#endif 
-	    ret = PVFS_Request_resized(*tmp_pvfs_dtype, 
-				       pvfs_lb, pvfs_extent, pvfs_dtype);
-	    if (ret != 0)
-		fprintf(stderr, "Error in PVFS_Request_resize\n");
-
-	    PVFS_Request_free(tmp_pvfs_dtype);
-	    ADIOI_Free(tmp_pvfs_dtype);
-	}
-	else /* No MPI_LB or MPI_UB datatypes */
 	{
 	    ret = PVFS_Request_struct(arr_int[0], &arr_int[1], 
 				      pvfs_arr_disp,
@@ -547,9 +451,7 @@ int convert_mpi_pvfs2_dtype(MPI_Datatype *mpi_dtype,
 
 	    for (i = 0; i < arr_int[0]; i++)
 	    {
-		if (arr_dtype[i] != MPI_LB &&
-		    arr_dtype[i] != MPI_UB)
-		    PVFS_Request_free(&old_pvfs_dtype_arr[i]);
+	        PVFS_Request_free(&old_pvfs_dtype_arr[i]);
 	    }
 
 #ifdef DEBUG_DTYPE

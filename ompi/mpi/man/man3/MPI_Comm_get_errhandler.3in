@@ -57,7 +57,7 @@ Fortran only: Error status (integer).
 
 .SH DESCRIPTION
 .ft R
-MPI_Comm_get_errhandler retrieves the error handler currently associated with a communicator. This call is identical to MPI_Errhandler_get, the use of which is deprecated.
+MPI_Comm_get_errhandler retrieves the error handler currently associated with a communicator.
 
 .SH ERRORS
 Almost all MPI routines return an error value; C routines as the value of the function and Fortran routines in the last argument. C++ functions do not return errors. If the default error handler is set to MPI::ERRORS_THROW_EXCEPTIONS, then on error the C++ exception mechanism will be used to throw an MPI::Exception object.

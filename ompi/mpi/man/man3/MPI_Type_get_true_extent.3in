@@ -6,7 +6,7 @@
 .\" $COPYRIGHT$
 .TH MPI_Type_get_true_extent 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
-\fBMPI_Type_get_true_extent\fP, \fBMPI_Type_get_true_extent_x\fP \- Returns the true lower bound and extent of a data type's corresponding typemap, ignoring MPI_UB and MPI_LB markers.
+\fBMPI_Type_get_true_extent\fP, \fBMPI_Type_get_true_extent_x\fP \- Returns the true lower bound and extent of a data type's corresponding typemap, ignoring how the datatype was resized.
 
 .SH SYNTAX
 .ft R
@@ -72,7 +72,7 @@ Fortran only: Error status (integer).
 
 .SH DESCRIPTION
 .ft R
-The \fItrue_lb\fP parameter returns the offset of the lowest unit of store that is addressed by the data type, that is, the lower bound of the corresponding typemap, ignoring MPI_LB markers. The \fItrue_extent\fP parameter returns the true size of the data type, that is, the extent of the corresponding typemap, ignoring MPI_LB and MPI_UB markers, and performing no rounding for alignment. For both functions, if either the \fItrue_lb\fP or \fItrue_extent\fP parameter cannot express the value to be returned (e.g., if the parameter is too small to hold the output value), it is set to MPI_UNDEFINED.
+The \fItrue_lb\fP parameter returns the offset of the lowest unit of store that is addressed by the data type, that is, the lower bound of the corresponding typemap, ignoring how it was resized. The \fItrue_extent\fP parameter returns the true size of the data type, that is, the extent of the corresponding typemap, ignoring how the datatype was resized, and performing no rounding for alignment. For both functions, if either the \fItrue_lb\fP or \fItrue_extent\fP parameter cannot express the value to be returned (e.g., if the parameter is too small to hold the output value), it is set to MPI_UNDEFINED.
 .sp
 The \fItrue_extent\fP is the minimum number of bytes of memory necessary to hold a data type, uncompressed.
 .sp

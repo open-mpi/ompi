@@ -3,8 +3,8 @@
 ! Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
 ! Copyright (c) 2009-2012 Los Alamos National Security, LLC.
 !                         All rights reserved.
-! Copyright (c) 2015-2018 Research Organization for Information Science
-!                         and Technology (RIST). All rights reserved.
+! Copyright (c) 2015-2019 Research Organization for Information Science
+!                         and Technology (RIST).  All rights reserved.
 ! Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
 ! $COPYRIGHT$
 !
@@ -130,8 +130,6 @@ module mpi_f08_types
   type(MPI_Datatype), bind(C, name="ompi_f08_mpi_aint") OMPI_PROTECTED              :: MPI_AINT
   type(MPI_Datatype), bind(C, name="ompi_f08_mpi_byte") OMPI_PROTECTED              :: MPI_BYTE
   type(MPI_Datatype), bind(C, name="ompi_f08_mpi_packed") OMPI_PROTECTED            :: MPI_PACKED
-  type(MPI_Datatype), bind(C, name="ompi_f08_mpi_ub") OMPI_PROTECTED                :: MPI_UB
-  type(MPI_Datatype), bind(C, name="ompi_f08_mpi_lb") OMPI_PROTECTED                :: MPI_LB
   type(MPI_Datatype), bind(C, name="ompi_f08_mpi_char") OMPI_PROTECTED              :: MPI_CHAR
   type(MPI_Datatype), bind(C, name="ompi_f08_mpi_signed_char") OMPI_PROTECTED       :: MPI_SIGNED_CHAR
   type(MPI_Datatype), bind(C, name="ompi_f08_mpi_unsigned_char") OMPI_PROTECTED     :: MPI_UNSIGNED_CHAR

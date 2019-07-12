@@ -90,14 +90,8 @@
 #define MPI_Comm_test_inter PMPI_Comm_test_inter
 #undef MPI_Dims_create
 #define MPI_Dims_create PMPI_Dims_create
-#undef MPI_Errhandler_create
-#define MPI_Errhandler_create PMPI_Errhandler_create
 #undef MPI_Errhandler_free
 #define MPI_Errhandler_free PMPI_Errhandler_free
-#undef MPI_Errhandler_get
-#define MPI_Errhandler_get PMPI_Errhandler_get
-#undef MPI_Errhandler_set
-#define MPI_Errhandler_set PMPI_Errhandler_set
 #undef MPI_Error_class
 #define MPI_Error_class PMPI_Error_class
 #undef MPI_Error_string

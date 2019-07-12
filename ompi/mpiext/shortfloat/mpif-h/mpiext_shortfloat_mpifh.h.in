@@ -1,6 +1,8 @@
 ! -*- fortran -*-
 !
 ! Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
+! Copyright (c) 2019 Research Organization for Information Science
+!                         and Technology (RIST).  All rights reserved.
 ! $COPYRIGHT$
 !
 ! Additional copyrights may follow
@@ -13,7 +15,7 @@
         integer MPIX_CXX_SHORT_FLOAT_COMPLEX
 @OMPI_MPIX_C_FLOAT16_FORTRAN_COMMENT_OUT@        integer MPIX_C_FLOAT16
 
-        parameter (MPIX_SHORT_FLOAT=74)
-        parameter (MPIX_C_SHORT_FLOAT_COMPLEX=75)
-        parameter (MPIX_CXX_SHORT_FLOAT_COMPLEX=76)
+        parameter (MPIX_SHORT_FLOAT=72)
+        parameter (MPIX_C_SHORT_FLOAT_COMPLEX=73)
+        parameter (MPIX_CXX_SHORT_FLOAT_COMPLEX=74)
 @OMPI_MPIX_C_FLOAT16_FORTRAN_COMMENT_OUT@        parameter (MPIX_C_FLOAT16=74)

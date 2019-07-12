@@ -105,8 +105,8 @@ int run_test (test_param_t *test) {
 
     MPI_Datatype filetype;
 
-    MPI_Type_struct (test->type_count, test->type_blocklens,
-		     test->type_indices, test->type_oldtypes, &filetype);
+    MPI_Type_create_struct (test->type_count, test->type_blocklens,
+		            test->type_indices, test->type_oldtypes, &filetype);
     MPI_Type_commit (&filetype);
 
     MPI_File_open (MPI_COMM_WORLD, "test_file.txt" , MPI_MODE_RDWR,
@@ -190,12 +190,6 @@ int print_test_params (test_param_t *test)
 	    test->type_indices[i]);
 	if (test->type_oldtypes[i] == MPI_BYTE) {
 	    printf ( "%s)\n", "MPI_BYTE");
-	}
-	else if (test->type_oldtypes[i] == MPI_UB) {
-	    printf ( "%s)\n", "MPI_UB");
-	}
-	else if (test->type_oldtypes[i] == MPI_LB) {
-	    printf ( "%s)\n", "MPI_LB");
 	}
     }
     printf (

@@ -123,7 +123,7 @@ and the root had executed n calls to
              recvcount, recvtype, i, \&...)
 .fi
 .sp
-where extent(recvtype) is the type extent obtained from a call to MPI_Type_extent().
+where extent(recvtype) is the type extent obtained from a call to MPI_Type_get_extent().
 .sp
 An alternative description is that the n messages sent by the processes in the group are concatenated in rank order, and the resulting message is received by the root as if by a call to MPI_RECV(recvbuf, recvcount * n, recvtype, . . . ).
 .sp
