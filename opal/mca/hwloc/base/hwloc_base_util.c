@@ -2021,6 +2021,292 @@ int opal_hwloc_get_sorted_numa_list(hwloc_topology_t topo, char* device_name, op
     return OPAL_ERR_NOT_FOUND;
 }
 
+#if 0
+/*
+ * The below section contains a couple compressions for sorted integer arrays
+ * that are currently unused since this is a release branch and we don't want
+ * to introduce anything risky.
+ *
+ * The usage would be roughly
+ *     int npu;
+ *     int *avail_pus;
+ *     char *avail_pus_string;
+ *     hwloc_obj_t obj = NULL;
+ *     npu = hwloc_get_nbobjs_by_type(topo, HWLOC_OBJ_PU);
+ *     avail_pus = malloc(npu * sizeof(int));
+ *     if (!avail_pus) { return strdup("malloc failed"); }
+ *     npu = 0;
+ *     while ((obj = hwloc_get_next_obj_by_type(topo, HWLOC_OBJ_PU, obj)) != NULL) {
+ *         avail_pus[npu++] = obj->os_index;
+ *     }
+ *     qsort(avail_pus, npu, sizeof(int), &mycompare);
+ *     avail_pus_string = mycompress(avail_pus, npu);
+ *     if (avail_pus_string) { free(avail_pus_string); }
+ */
+
+static int
+mycompare(const void* inta, const void* intb)
+{
+    if (*(int*)inta < *(int*)intb) { return -1; }
+    if (*(int*)inta > *(int*)intb) { return 1; }
+    return 0;
+}
+/*
+ * Patterns to compress adequately:
+ * 1. basic 0,1,2,3 to 0-3
+ * 2. repeated ranges of same len at same offset, eg 0,1,2 10,11,12 20,21,22 = 0,1,2+10*3
+ * note: assumes input is already sorted
+ */
+static char*
+mycompress1(int *a, int n)
+{
+    char *str;
+    int i, maxlen, len;
+
+    maxlen = 128;
+    len = 0;
+    str = malloc(maxlen);
+    if (!str) { return NULL; }
+    str[0] = 0;
+
+    /* start with "L" followed by the list */
+    str[len++] = 'L';
+    str[len] = 0;
+
+    int pattern_blocksize = 0; /* contiguous elements per block */
+    int pattern_blockcount = 0; /* number of blocks */
+    int pattern_stride = 0;
+    int pattern_first_block_starting_offset = -1;
+    int pattern_prev_block_starting_offset = -1;
+    int pattern_nelements = 0;
+    int is_start_of_new_pattern = 0;
+    for (i=0; i<n; ++i) {
+        /*
+         * see if this element a[i] is the start of a new pattern or
+         * if it's adding to the previous, we may increment i further
+         * processing multiple elements into the previous pattern
+         * only update the pattern_* data for the previous pattern
+         * (if we're starting a new pattern, we put it into pattern_*,
+         * later, after printing what was already in pattern_*)
+         *
+         * start by supposing it is a new pattern, change that decision
+         * if we process it into the existing pattern_* below
+         */
+        is_start_of_new_pattern = 1;
+
+        if (pattern_blocksize > 0) {
+            /* detect [pppx] */
+            if (pattern_blockcount == 1 &&
+                a[i] == pattern_prev_block_starting_offset + pattern_blocksize)
+            {
+                ++pattern_blocksize;
+                ++pattern_nelements;
+                is_start_of_new_pattern = 0;
+            } else {
+                /* detect [pppp  xxxx]   or   [pppp  pppp  xxxx]   etc */
+                if (pattern_blockcount == 1 ||
+                   (pattern_blockcount > 1 &&
+                    (a[i] == pattern_prev_block_starting_offset + pattern_stride)))
+                {
+                    /* this a[i] starts at the right offset, now does it contain */
+                    /* pattern_blocksize contiguous entries? */
+                    int j, has_enough_entries = 1;
+                    for (j=1; j<pattern_blocksize; ++j) {
+                        if (i+j >= n) { has_enough_entries = 0; }
+                        else if (a[i+j] != a[i] + j) { has_enough_entries = 0; }
+                    }
+                    if (has_enough_entries) {
+                        pattern_stride = a[i] - pattern_prev_block_starting_offset;
+                        pattern_prev_block_starting_offset = a[i];
+                        ++pattern_blockcount;
+                        pattern_nelements += pattern_blocksize;
+                        is_start_of_new_pattern = 0;
+                        i = i+j-1;
+                    }
+                }
+            }
+        }
+
+        /*
+         * if started_new_pattern || i is the last element
+         *   if previous pattern exists
+         *     print previous pattern
+         *   record new pattern
+         */
+        if (is_start_of_new_pattern || i==n-1) {
+            if (pattern_blocksize > 0) {
+                /*
+                 * print previous pattern
+                 * make sure there's room for 4 ints plus some punctuation
+                 * being conservative in supposing all ints used are <8 chars
+                 */
+                if (len + 40 >= maxlen) {
+                    maxlen *= 1.15;
+                    maxlen += 128;
+                    str = realloc(str, maxlen);
+                    if (!str) { return NULL; }
+                }
+                /* If the string isn't 'long enough' for compressed notation to be worthwhile: */
+                if (!(pattern_nelements > 4 || (pattern_nelements >= 2 && pattern_blockcount == 1))) {
+                    int j, k;
+                    for (j=0; j<pattern_blockcount; ++j) {
+                        for (k=0; k<pattern_blocksize; ++k) {
+                            if (len != 1) { /* the string starts with "L" for list */
+                                sprintf(&str[len], ",");
+                                ++len;
+                            }
+                            sprintf(&str[len], "%d", pattern_first_block_starting_offset + j*pattern_stride + k);
+                            len = strlen(str);
+                        }
+                    }
+                }
+                else {
+                    if (len != 1) { /* the string starts with "L" for list */
+                        sprintf(&str[len], ",");
+                        ++len;
+                    }
+                    if (pattern_blockcount > 1) {
+                        sprintf(&str[len], "%d-%d+%d*%d",
+                            pattern_first_block_starting_offset,
+                            pattern_first_block_starting_offset + pattern_blocksize - 1,
+                            pattern_stride, pattern_blockcount);
+                    } else {
+                        sprintf(&str[len], "%d-%d",
+                            pattern_first_block_starting_offset,
+                            pattern_first_block_starting_offset + pattern_blocksize - 1);
+                    }
+                    len = strlen(str);
+
+                }
+            }
+
+            /* record new pattern */
+            pattern_first_block_starting_offset = a[i];
+            pattern_prev_block_starting_offset = a[i];
+            pattern_blocksize = 1;
+            pattern_blockcount = 1;
+            pattern_stride = 0;
+            pattern_nelements = 1;
+        }
+        /*
+         * The overall logic till this point is
+         * loop i over some of a[], and either
+         * 1. put a[i] in the previous pattern (and print if it's end of a[])
+         * 2. put a[i] in a new pattern and print the previous pattern
+         * This leaves out printing in the case of a[i] being a new pattern
+         * and also being the end of a[]
+         */
+        if (is_start_of_new_pattern && i==n-1) {
+            if (len != 0) {
+                sprintf(&str[len], ",");
+                ++len;
+            }
+            sprintf(&str[len], "%d", pattern_first_block_starting_offset);
+            len = strlen(str);
+        }
+    }   
+            
+    return str;
+}
+/*
+ * This one makes a hex string of the available bits
+ * and does a tiny bit of trivial compression of adjacent hex characters
+ * note: assumes input is already sorted
+ */
+static char*
+mycompress2(int *a, int n)
+{
+    unsigned char *hex_values;
+    char *str, prev_char, *p;
+    int i, len, max, count;
+
+    max = a[n-1];
+    hex_values = malloc((max / 4 + 4) * sizeof(unsigned char));
+    str = malloc(max/4 + 32);
+    if (!str || !hex_values) { return NULL; }
+
+    /* start with "X" followed by the hex bitmask */
+    len = 0;
+    str[len++] = 'X';
+
+    for (i=0; i<=max/4; ++i) {
+        hex_values[i] = 0;
+    }
+    for (i=0; i<n; ++i) {
+        int bit = a[i];
+
+        hex_values[bit/4] |= (unsigned char)(8>>(bit % 4));
+        /* eg if bit = 11 then hex_values[2] |= 8>>3, eg [0000;0000;0001] */
+    }
+
+    for (i=0; i<=max/4; ++i) {
+        sprintf(&str[len], "%x", hex_values[i]);
+        ++len;
+    }
+    free(hex_values);
+    str[len++] = 0;
+
+    /* Add a trivial compression of adjacent chars that are the same so 0000 = 0*4, */
+    p = str;
+    count = 0;
+    prev_char = (char)0;
+    for (i=0; i<len+1; ++i) {
+        if (i==len || str[i] != prev_char) {
+            /*
+             * new section, so print pattern for previously stored stuff,
+             * then store new section
+             */
+            if (prev_char != (char)0) {
+                if (count <= 4) {
+                    int j;
+                    for (j=0; j<count; ++j) {
+                        *p = prev_char;
+                        ++p;
+                    }   
+                } else {
+                    sprintf(p, "%c*%d", prev_char, count);
+                    p += strlen(p);
+                    if (i < len-1) {
+                        *p = ',';
+                        ++p;
+                    }
+                }   
+            }   
+            prev_char = str[i];
+            count = 1;
+        } else {
+            /* new char is part of previous section */
+            ++count;
+        }   
+    }
+    *p = 0;
+
+    return str;
+}
+
+/* Use two completely different compressions and pick the shorter */
+static char*
+mycompress(int *a, int n)
+{
+    char *str1, *str2;
+
+    str1 = mycompress1(a, n);
+    str2 = mycompress2(a, n);
+
+    if (strlen(str2) < strlen(str1)) {
+        free(str1);
+        return str2;
+    }
+    free(str2);
+    return str1;
+}
+#endif
+
+/*
+ * The only parsing of this string I can find is a strrchr(str,":")
+ * to evaluate the endianness of the nodes, so we have to let that
+ * remain as the last entry 
+ */
 char* opal_hwloc_base_get_topo_signature(hwloc_topology_t topo)
 {
     int nnuma, nsocket, nl3, nl2, nl1, ncore, nhwt;
@@ -2057,9 +2343,36 @@ char* opal_hwloc_base_get_topo_signature(hwloc_topology_t topo)
 #else
     endian = "unknown";
 #endif
+/*
+ * The signature used to just contain number of nodes, sockets, cores,
+ * hardware threads, etc.  With heterogeneous cgroups it's not hard to
+ * have the counts come out the same even though the topologies of the
+ * available elements are different enough to matter
+ *
+ * Example hardware:
+ *    [..../..../..../....][..../..../..../....]
+ *     0    4    8    12    16   20   24   28
+ * cgset -r cpuset.cpus=10,11,14,15 mycgroup1
+ * cgset -r cpuset.cpus=26,27,30,31 mycgroup2
+ * the above cgroups would leave only these hardware threads active:
+ *     mycgroup1: [~~~~/~~~~/~~HH/~~HH][~~~~/~~~~/~~~~/~~~~]
+ *     mycgroup2: [~~~~/~~~~/~~~~/~~~~][~~~~/~~~~/~~HH/~~HH]
+ * The non-WHOLE-SYSTEM topology would only contain the availabe part
+ * of the tree and each host would report as 1 socket, 2 cores, etc
+ *
+ * I think a compressed list of the os_indexes in the available mask
+ * should be a modest-sized addition to the string that would suffice
+ * to make the signatures differ for different cgroups
+ */
+    char *avail_pus_string = NULL;
 
-    asprintf(&sig, "%dN:%dS:%dL3:%dL2:%dL1:%dC:%dH:%s:%s",
-             nnuma, nsocket, nl3, nl2, nl1, ncore, nhwt, arch, endian);
+    hwloc_bitmap_list_asprintf(&avail_pus_string, hwloc_topology_get_topology_cpuset(topo));
+    asprintf(&sig, "%dN:%dS:%dL3:%dL2:%dL1:%dC:%dH:H%s:%s:%s",
+             nnuma, nsocket, nl3, nl2, nl1, ncore, nhwt,
+             avail_pus_string?avail_pus_string:"", arch, endian);
+
+    if (avail_pus_string) { free(avail_pus_string); }
+
     return sig;
 }
 
