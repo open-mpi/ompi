@@ -2,6 +2,7 @@
  * Copyright (c) 2014-2018 Intel, Inc.  All rights reserved.
  * Copyright (c) 2017-2018 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2017      Inria.  All rights reserved.
+ * Copyright (c) 2019      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -410,9 +411,15 @@ static void set(orte_job_t *jobdat,
                 if (OPAL_ERR_NOT_BOUND == opal_hwloc_base_cset2str(tmp1, sizeof(tmp1), opal_hwloc_topology, mycpus)) {
                     opal_output(0, "MCW rank %d is not bound (or bound to all available processors)", child->name.vpid);
                 } else {
-                    opal_hwloc_base_cset2mapstr(tmp2, sizeof(tmp2), opal_hwloc_topology, mycpus);
-                    opal_output(0, "MCW rank %d bound to %s: %s",
+                    if (!orte_report_bindings_use_hwview) {
+                        opal_hwloc_base_cset2mapstr(tmp2, sizeof(tmp2), opal_hwloc_topology, mycpus);
+                        opal_output(0, "MCW rank %d bound to %s: %s",
                                 child->name.vpid, tmp1, tmp2);
+                    } else {
+                        opal_hwloc_base_cset2mapstr_with_numa(tmp2, sizeof(tmp2), opal_hwloc_topology, mycpus);
+                        opal_output(0, "MCW rank %d bound to %s",
+                                child->name.vpid, tmp2);
+                    }
                 }
             }
             hwloc_bitmap_free(mycpus);

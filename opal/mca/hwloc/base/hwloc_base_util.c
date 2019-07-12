@@ -1704,6 +1704,24 @@ static int build_map(int *num_sockets_arg, int *num_cores_arg,
     return OPAL_SUCCESS;
 }
 
+// use a cached WHOLE_SYSTEM topology in cset2str / cset2mapstr
+// if the input topology is this system (hwloc_topology_is_thissystem())
+static hwloc_topology_t cached_whole_system_topology = NULL;
+
+static int
+conditionally_modify_the_topology_to_whole_system(hwloc_topology_t *ptopo)
+{
+    if (hwloc_topology_is_thissystem(*ptopo)) {
+        if (cached_whole_system_topology == NULL) {
+            hwloc_topology_init(&cached_whole_system_topology);
+            hwloc_topology_set_flags(cached_whole_system_topology,
+                HWLOC_TOPOLOGY_FLAG_WHOLE_SYSTEM);
+            hwloc_topology_load(cached_whole_system_topology);
+        }
+        *ptopo = cached_whole_system_topology;
+    }
+}
+
 /*
  * Make a prettyprint string for a hwloc_cpuset_t
  */
@@ -1719,6 +1737,8 @@ int opal_hwloc_base_cset2str(char *str, int len,
     int **map=NULL;
     hwloc_obj_t root;
     opal_hwloc_topo_data_t *sum;
+
+    conditionally_modify_the_topology_to_whole_system(&topo);
 
     str[0] = tmp[stmp] = '\0';
 
@@ -1769,17 +1789,106 @@ int opal_hwloc_base_cset2str(char *str, int len,
     return OPAL_SUCCESS;
 }
 
+// given an input obj somewhere in the hwloc tree, look for a
+// numa object that contains it
+static hwloc_obj_t
+find_my_numa(hwloc_obj_t obj)
+{
+    hwloc_obj_t p, numa;
+    int i;
+
+    p = obj;
+    while (p && p->memory_arity == 0) {
+        p = p->parent;
+    }   
+    // p should have either found a level that contains numas or reached NULL
+    if (p == NULL) { return NULL; }
+    for (i=0; i<p->memory_arity; ++i) {
+        numa = &(p->memory_first_child[i]);
+
+        if (hwloc_bitmap_isincluded(obj->cpuset, numa->cpuset)) {
+            return numa;
+        }   
+    }
+    return NULL;
+}
+
+#if 0
+// I added numa-markers to the --report_bindings output but I'm
+// considering the possibility it might look cluttered for the
+// trivial cases.  Eg
+//    [<../../../..>][<../../../..>]
+// So I'm adding a check we could enable for whether the numa
+// markers are interesting enough to print.
+//
+// Using multiple numa nodes under a direct parent is a possible
+// criteria.
+static int
+is_numa_output_worth_printing(hwloc_topology_t topo)
+{
+    hwloc_obj_t p;
+
+    p = hwloc_get_obj_by_type(topo, HWLOC_OBJ_PU, 0);
+    while (p && p->memory_arity == 0) {
+        p = p->parent;
+    }
+    if (p && p->memory_arity > 1) {
+        return 1;
+    }
+
+    return 0;
+}
+#endif
+
+// which level from the set {socket, core, pu} has
+// the first descendent underneath the lowest numa level.
+// returns MACHINE if there is no numa level
+//
+// Eg if an hwloc tree had numas containing sockets like this
+//   <[../..][../..]><[../..][../..]>
+// the tree would be
+//   mach               +memory_children: n n
+//   s   s   s   s
+//   c c c c c c c c
+//   pppppppppppppppp
+// so this should return SOCKET
+static hwloc_obj_type_t
+first_type_under_a_numa(hwloc_topology_t topo)
+{
+    hwloc_obj_t p;
+    hwloc_obj_type_t type;
+
+    p = hwloc_get_obj_by_type(topo, HWLOC_OBJ_PU, 0);
+    while (p && p->memory_arity == 0) {
+        if (p->type == HWLOC_OBJ_PU ||
+            p->type == HWLOC_OBJ_CORE ||
+            p->type == HWLOC_OBJ_SOCKET)
+        {
+            type = p->type;
+        }
+        p = p->parent;
+    }
+    if (p && p->memory_arity > 0) {
+        return type;
+    }
+
+    return HWLOC_OBJ_MACHINE;
+}
+
 /*
  * Make a prettyprint string for a cset in a map format.
  * Example: [B./..]
  * Key:  [] - signifies socket
+ *       <> - signifies numa
  *        / - divider between cores
  *        . - signifies PU a process not bound to
  *        B - signifies PU a process is bound to
+ *        ~ - signifies PU that is disallowed, eg not in our cgroup:
  */
-int opal_hwloc_base_cset2mapstr(char *str, int len,
+static int cset2mapstr(char *str, int len,
                                 hwloc_topology_t topo,
-                                hwloc_cpuset_t cpuset)
+                                hwloc_cpuset_t cpuset,
+                                int print_numa_markers)
 {
     char tmp[BUFSIZ];
     int core_index, pu_index;
@@ -1787,6 +1896,18 @@ int opal_hwloc_base_cset2mapstr(char *str, int len,
     hwloc_obj_t socket, core, pu;
     hwloc_obj_t root;
     opal_hwloc_topo_data_t *sum;
+    hwloc_cpuset_t allowed;
+    hwloc_obj_t prev_numa = NULL;
+    hwloc_obj_t cur_numa = NULL;
+    hwloc_obj_type_t type_under_numa;
+    int a_numa_marker_is_open = 0;
+
+    conditionally_modify_the_topology_to_whole_system(&topo);
+
+    allowed = hwloc_topology_get_allowed_cpuset(topo);
+    if (print_numa_markers) {
+        type_under_numa = first_type_under_a_numa(topo);
+    }
 
     str[0] = tmp[stmp] = '\0';
 
@@ -1807,47 +1928,152 @@ int opal_hwloc_base_cset2mapstr(char *str, int len,
         }
     }
 
+// As far as I know hwloc trees aren't required to have sockets and cores,
+// just a MACHINE at the top and PU at the bottom. The 'fake_*' vars make
+// the loops always iterate at least once, even if the initial socket = ...
+// etc lookup is NULL.
+
+    int fake_on_first_socket;
+    int fake_on_first_core;
+    hwloc_cpuset_t cpuset_for_socket; // can be fake, eg the machine's
+                                      // cpuset if there are no sockets
+    hwloc_cpuset_t cpuset_for_core;
+
     /* Iterate over all existing sockets */
+    fake_on_first_socket = 1;
     for (socket = hwloc_get_obj_by_type(topo, HWLOC_OBJ_SOCKET, 0);
-         NULL != socket;
+         NULL != socket || fake_on_first_socket;
          socket = socket->next_cousin) {
-        strncat(str, "[", len - strlen(str) - 1);
+        fake_on_first_socket = 0;
+
+// if numas contain sockets, example output <[../..][../..]><[../..][../..]>
+        if (print_numa_markers && type_under_numa == HWLOC_OBJ_SOCKET) {
+            prev_numa = cur_numa;
+            cur_numa = find_my_numa(socket);
+            if (cur_numa && cur_numa != prev_numa) {
+                if (a_numa_marker_is_open) {
+                    strncat(str, ">", len - strlen(str) - 1);
+                }
+                strncat(str, "<", len - strlen(str) - 1);
+                a_numa_marker_is_open = 1;
+            }
+        }
+
+        if (socket != NULL) { strncat(str, "[", len - strlen(str) - 1); }
+
+        if (socket != NULL) {
+            cpuset_for_socket = socket->cpuset;
+        } else {
+            cpuset_for_socket = root->cpuset;
+        }
 
         /* Iterate over all existing cores in this socket */
+        fake_on_first_core = 1;
         core_index = 0;
         for (core = hwloc_get_obj_inside_cpuset_by_type(topo,
-                                                        socket->cpuset,
+                                                        cpuset_for_socket,
                                                         HWLOC_OBJ_CORE, core_index);
-             NULL != core;
+             NULL != core || fake_on_first_core;
              core = hwloc_get_obj_inside_cpuset_by_type(topo,
-                                                        socket->cpuset,
+                                                        cpuset_for_socket,
                                                         HWLOC_OBJ_CORE, ++core_index)) {
+            fake_on_first_core = 0;
+
+// if numas contain cores and are contained by sockets,
+// example output [<../..><../..>][<../../../..>]
+            if (print_numa_markers && type_under_numa == HWLOC_OBJ_CORE) {
+                prev_numa = cur_numa;
+                cur_numa = find_my_numa(core);
+                if (cur_numa && cur_numa != prev_numa) {
+                    if (a_numa_marker_is_open) {
+                        strncat(str, ">", len - strlen(str) - 1);
+                    }
+                    strncat(str, "<", len - strlen(str) - 1);
+                    a_numa_marker_is_open = 1;
+                }
+            }
+
+
             if (core_index > 0) {
                 strncat(str, "/", len - strlen(str) - 1);
+            }
+
+            if (core != NULL) {
+                cpuset_for_core = core->cpuset;
+            } else {
+                cpuset_for_core = cpuset_for_socket;
             }
 
             /* Iterate over all existing PUs in this core */
             pu_index = 0;
             for (pu = hwloc_get_obj_inside_cpuset_by_type(topo,
-                                                          core->cpuset,
+                                                          cpuset_for_core,
                                                           HWLOC_OBJ_PU, pu_index);
                  NULL != pu;
                  pu = hwloc_get_obj_inside_cpuset_by_type(topo,
-                                                          core->cpuset,
+                                                          cpuset_for_core,
                                                           HWLOC_OBJ_PU, ++pu_index)) {
+
+// if numas contain PU and are contained by cores (seems unlikely)
+// example output [<..../....>/<..../....>/<..../....>/<..../....>]
+                if (print_numa_markers && type_under_numa == HWLOC_OBJ_PU) {
+                    prev_numa = cur_numa;
+                    cur_numa = find_my_numa(pu);
+                    if (cur_numa && cur_numa != prev_numa) {
+                        if (a_numa_marker_is_open) {
+                            strncat(str, ">", len - strlen(str) - 1);
+                        }
+                        strncat(str, "<", len - strlen(str) - 1);
+                        a_numa_marker_is_open = 1;
+                    }
+                }
 
                 /* Is this PU in the cpuset? */
                 if (hwloc_bitmap_isset(cpuset, pu->os_index)) {
                     strncat(str, "B", len - strlen(str) - 1);
                 } else {
-                    strncat(str, ".", len - strlen(str) - 1);
+                    if (hwloc_bitmap_isset(allowed, pu->os_index)) {
+                        strncat(str, ".", len - strlen(str) - 1);
+                    } else {
+                        strncat(str, "~", len - strlen(str) - 1);
+                    }
+                }
+            }
+            if (print_numa_markers && type_under_numa == HWLOC_OBJ_PU) {
+                if (a_numa_marker_is_open) {
+                    strncat(str, ">", len - strlen(str) - 1);
+                    a_numa_marker_is_open = 0;
                 }
             }
         }
-        strncat(str, "]", len - strlen(str) - 1);
+        if (print_numa_markers && type_under_numa == HWLOC_OBJ_CORE) {
+            if (a_numa_marker_is_open) {
+                strncat(str, ">", len - strlen(str) - 1);
+                a_numa_marker_is_open = 0;
+            }
+        }
+        if (socket != NULL) { strncat(str, "]", len - strlen(str) - 1); }
+    }
+    if (print_numa_markers && type_under_numa == HWLOC_OBJ_SOCKET) {
+        if (a_numa_marker_is_open) {
+            strncat(str, ">", len - strlen(str) - 1);
+            a_numa_marker_is_open = 0;
+        }
     }
 
     return OPAL_SUCCESS;
+}
+int opal_hwloc_base_cset2mapstr(char *str, int len,
+                                hwloc_topology_t topo,
+                                hwloc_cpuset_t cpuset)
+{
+    return cset2mapstr(str, len, topo, cpuset, 0);
+}
+int opal_hwloc_base_cset2mapstr_with_numa(char *str, int len,
+                                hwloc_topology_t topo,
+                                hwloc_cpuset_t cpuset)
+{
+    return cset2mapstr(str, len, topo, cpuset, 1);
 }
 
 static int dist_cmp_fn (opal_list_item_t **a, opal_list_item_t **b)
