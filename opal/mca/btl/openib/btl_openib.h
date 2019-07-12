@@ -20,6 +20,8 @@
  * Copyright (c) 2014      Bull SAS.  All rights reserved.
  * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
+ * Copyrigth (c) 2019      Triad National Security, LLC. All rights reserved.
+ *
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -506,8 +508,6 @@ struct mca_btl_openib_module_t {
     int local_procs;                   /** number of local procs */
 
     bool atomic_ops_be;                /** atomic result is big endian */
-
-    bool allowed;                      /** is this port allowed */
 };
 typedef struct mca_btl_openib_module_t mca_btl_openib_module_t;
 
