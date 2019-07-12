@@ -106,6 +106,8 @@
 #define OMPI_KIND_FORTRAN_COMPLEX32 @OMPI_KIND_FORTRAN_COMPLEX32@
 #define OMPI_SIZEOF_FORTRAN_COMPLEX32 @OMPI_SIZEOF_FORTRAN_COMPLEX32@
 
+#define OMPI_ENABLE_MPI1_COMPAT @OMPI_ENABLE_MPI1_COMPAT@
+
 ! Include some post-processing, based on the values from above
 
 #include "ompi/mpi/fortran/configure-fortran-output-bottom.h"

@@ -163,4 +163,10 @@ const char***      ARGVS_NULL = (const char***) MPI_ARGVS_NULL;
 // empty group
 const Group GROUP_EMPTY(MPI_GROUP_EMPTY);
 
+#if OMPI_ENABLE_MPI1_COMPAT
+// special datatypes for contstruction of derived datatypes
+const Datatype UB(MPI_UB);
+const Datatype LB(MPI_LB);
+#endif
+
 } /* namespace MPI */
