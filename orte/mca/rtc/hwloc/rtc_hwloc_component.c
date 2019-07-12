@@ -50,6 +50,7 @@ orte_rtc_hwloc_component_t mca_rtc_hwloc_component = {
 
 static char *biggest = "biggest";
 static char *vmhole;
+bool orte_report_bindings_use_hwview = false;
 
 static int rtc_hwloc_register(void)
 {
@@ -87,6 +88,13 @@ static int rtc_hwloc_register(void)
         opal_output(0, "INVALID VM HOLE TYPE");
         return ORTE_ERROR;
     }
+
+    (void) mca_base_component_var_register(c, "report_bindings_use_hwview",
+        "Use logical hardware view in --report-bindings output",
+        MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+        OPAL_INFO_LVL_2,
+        MCA_BASE_VAR_SCOPE_READONLY,
+        &orte_report_bindings_use_hwview);
 
     return ORTE_SUCCESS;
 }

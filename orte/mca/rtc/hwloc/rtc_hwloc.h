@@ -45,7 +45,7 @@ typedef struct {
 ORTE_MODULE_DECLSPEC extern orte_rtc_hwloc_component_t mca_rtc_hwloc_component;
 
 extern orte_rtc_base_module_t orte_rtc_hwloc_module;
-
+extern bool orte_report_bindings_use_hwview;
 
 END_C_DECLS
 

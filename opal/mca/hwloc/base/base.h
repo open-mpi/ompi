@@ -3,6 +3,7 @@
  * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2017      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2019 IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -277,6 +278,9 @@ OPAL_DECLSPEC int opal_hwloc_base_cset2str(char *str, int len,
  *        B - signifies PU a process is bound to
  */
 OPAL_DECLSPEC int opal_hwloc_base_cset2mapstr(char *str, int len,
+                                              hwloc_topology_t topo,
+                                              hwloc_cpuset_t cpuset);
+OPAL_DECLSPEC int opal_hwloc_base_cset2mapstr_with_numa(char *str, int len,
                                               hwloc_topology_t topo,
                                               hwloc_cpuset_t cpuset);
 
