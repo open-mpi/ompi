@@ -13,8 +13,8 @@
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2014-2018 Intel, Inc.  All rights reserved.
- * Copyright (c) 2014-2017 Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2014-2019 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -278,6 +278,8 @@ int orte_ess_base_proc_binding(void)
                     }
                 }
             }
+        } else {
+            hwloc_bitmap_free(cpus);
         }
     } else {
         OPAL_OUTPUT_VERBOSE((5, orte_ess_base_framework.framework_output,
