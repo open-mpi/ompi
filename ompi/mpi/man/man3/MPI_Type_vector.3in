@@ -82,7 +82,7 @@ The function MPI_Type_vector is a general constructor that allows replication of
     (double, 80), (char, 88), (double, 96), (char, 104)}
 .fi
 .sp
-That is, two blocks with three copies each of the old type, with a stride of 4 elements (4 x 6 bytes) between the blocks.
+That is, two blocks with three copies each of the old type, with a stride of 4 elements (4 x 16 bytes) between the blocks.
 .sp
 \fBExample 2:\fP  A call to  MPI_Type_vector(3, 1, -2, oldtype, newtype) will create the datatype
 .nf
