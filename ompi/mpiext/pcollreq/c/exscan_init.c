@@ -12,8 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2015-2018 Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015-2019 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -29,6 +29,7 @@
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/op/op.h"
+#include "ompi/mca/coll/base/coll_base_util.h"
 #include "ompi/mpiext/pcollreq/c/mpiext_pcollreq_c.h"
 #include "ompi/memchecker.h"
 #include "ompi/runtime/ompi_spc.h"
@@ -84,10 +85,11 @@ int MPIX_Exscan_init(const void *sendbuf, void *recvbuf, int count,
 
     /* Invoke the coll component to perform the back-end operation */
 
-    OBJ_RETAIN(op);
     err = comm->c_coll->coll_exscan_init(sendbuf, recvbuf, count,
                                          datatype, op, comm, info, request,
                                          comm->c_coll->coll_exscan_init_module);
-    OBJ_RELEASE(op);
+    if (OPAL_LIKELY(OMPI_SUCCESS == err)) {
+        ompi_coll_base_retain_op(*request, op, datatype);
+    }
     OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);
 }

@@ -14,8 +14,8 @@
  * Copyright (c) 2012      Oak Ridge National Laboratory. All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2014-2018 Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2014-2019 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -31,6 +31,7 @@
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/datatype/ompi_datatype.h"
+#include "ompi/mca/coll/base/coll_base_util.h"
 #include "ompi/memchecker.h"
 #include "ompi/mpiext/pcollreq/c/mpiext_pcollreq_c.h"
 #include "ompi/runtime/ompi_spc.h"
@@ -102,5 +103,8 @@ int MPIX_Alltoall_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype
     err = comm->c_coll->coll_alltoall_init(sendbuf, sendcount, sendtype,
                                            recvbuf, recvcount, recvtype, comm, info,
                                            request, comm->c_coll->coll_alltoall_init_module);
+    if (OPAL_LIKELY(OMPI_SUCCESS == err)) {
+        ompi_coll_base_retain_datatypes(*request, (MPI_IN_PLACE==sendbuf)?NULL:sendtype, recvtype);
+    }
     OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);
 }
