@@ -12,7 +12,7 @@
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
  * Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2019 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
@@ -86,10 +86,10 @@ void ompi_mprobe_f(MPI_Fint *source, MPI_Fint *tag, MPI_Fint *comm,
 
     OMPI_FORTRAN_STATUS_SET_POINTER(c_status,c_status2,status)
 
-    c_ierr = OMPI_INT_2_FINT(PMPI_Mprobe(OMPI_FINT_2_INT(*source),
-                                         OMPI_FINT_2_INT(*tag),
-                                         c_comm, &c_message,
-                                         c_status));
+    c_ierr = PMPI_Mprobe(OMPI_FINT_2_INT(*source),
+                         OMPI_FINT_2_INT(*tag),
+                         c_comm, &c_message,
+                         c_status);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {
