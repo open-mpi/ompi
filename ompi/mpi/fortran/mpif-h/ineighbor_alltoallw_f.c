@@ -13,8 +13,8 @@
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2015      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015-2019 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -26,6 +26,7 @@
 
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 #include "ompi/mpi/fortran/base/constants.h"
+#include "ompi/mca/topo/base/base.h"
 
 #if OMPI_BUILD_MPI_PROFILING
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -79,23 +80,30 @@ void ompi_ineighbor_alltoallw_f(char *sendbuf, MPI_Fint *sendcounts,
     MPI_Comm c_comm;
     MPI_Datatype *c_sendtypes, *c_recvtypes;
     MPI_Request c_request;
-    int size, c_ierr;
+    int indegree, outdegree, c_ierr;
     OMPI_ARRAY_NAME_DECL(sendcounts);
     OMPI_ARRAY_NAME_DECL(recvcounts);
 
     c_comm = PMPI_Comm_f2c(*comm);
-    PMPI_Comm_size(c_comm, &size);
+    c_ierr = mca_topo_base_neighbor_count (c_comm, &indegree, &outdegree);
+    if (OMPI_SUCCESS != c_ierr) {
+        if (NULL != ierr) {
+            *ierr = OMPI_INT_2_FINT(c_ierr);
+        }
+        return;
+    }
 
-    c_sendtypes = (MPI_Datatype *) malloc(size * sizeof(MPI_Datatype));
-    c_recvtypes = (MPI_Datatype *) malloc(size * sizeof(MPI_Datatype));
+    c_sendtypes = (MPI_Datatype *) malloc(outdegree * sizeof(MPI_Datatype));
+    c_recvtypes = (MPI_Datatype *) malloc(indegree * sizeof(MPI_Datatype));
 
-    OMPI_ARRAY_FINT_2_INT(sendcounts, size);
-    OMPI_ARRAY_FINT_2_INT(recvcounts, size);
+    OMPI_ARRAY_FINT_2_INT(sendcounts, outdegree);
+    for (int i=0; i<outdegree; i++) {
+        c_sendtypes[i] = PMPI_Type_f2c(sendtypes[i]);
+    }
 
-    while (size > 0) {
-        c_sendtypes[size - 1] = PMPI_Type_f2c(sendtypes[size - 1]);
-        c_recvtypes[size - 1] = PMPI_Type_f2c(recvtypes[size - 1]);
-        --size;
+    OMPI_ARRAY_FINT_2_INT(recvcounts, indegree);
+    for (int i=0; i<indegree; i++) {
+        c_recvtypes[i] = PMPI_Type_f2c(recvtypes[i]);
     }
 
     /* Ineighbor_alltoallw does not support MPI_IN_PLACE */
@@ -103,13 +111,13 @@ void ompi_ineighbor_alltoallw_f(char *sendbuf, MPI_Fint *sendcounts,
     recvbuf = (char *) OMPI_F2C_BOTTOM(recvbuf);
 
     c_ierr = PMPI_Ineighbor_alltoallw(sendbuf,
-                                     OMPI_ARRAY_NAME_CONVERT(sendcounts),
-                                     sdispls,
-                                     c_sendtypes,
-                                     recvbuf,
-                                     OMPI_ARRAY_NAME_CONVERT(recvcounts),
-                                     rdispls,
-                                     c_recvtypes, c_comm, &c_request);
+                                      OMPI_ARRAY_NAME_CONVERT(sendcounts),
+                                      sdispls,
+                                      c_sendtypes,
+                                      recvbuf,
+                                      OMPI_ARRAY_NAME_CONVERT(recvcounts),
+                                      rdispls,
+                                      c_recvtypes, c_comm, &c_request);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
     if (MPI_SUCCESS == c_ierr) *request = PMPI_Request_c2f(c_request);
 

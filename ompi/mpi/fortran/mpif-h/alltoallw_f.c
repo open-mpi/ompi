@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015-2019 Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -74,51 +74,62 @@ void ompi_alltoallw_f(char *sendbuf, MPI_Fint *sendcounts,
 		     MPI_Fint *rdispls, MPI_Fint *recvtypes,
 		     MPI_Fint *comm, MPI_Fint *ierr)
 {
-    MPI_Comm c_comm;
-    MPI_Datatype *c_sendtypes = NULL, *c_recvtypes;
-    int size, c_ierr;
+    int c_ierr;
+    MPI_Comm c_comm = PMPI_Comm_f2c(*comm);
+    MPI_Datatype *c_sendtypes = NULL, *c_recvtypes = NULL;
+    int size = OMPI_COMM_IS_INTER(c_comm)?ompi_comm_remote_size(c_comm):ompi_comm_size(c_comm);
     OMPI_ARRAY_NAME_DECL(sendcounts);
     OMPI_ARRAY_NAME_DECL(sdispls);
     OMPI_ARRAY_NAME_DECL(recvcounts);
     OMPI_ARRAY_NAME_DECL(rdispls);
 
-    c_comm = PMPI_Comm_f2c(*comm);
-    size = OMPI_COMM_IS_INTER(c_comm)?ompi_comm_remote_size(c_comm):ompi_comm_size(c_comm);
+    c_recvtypes = (MPI_Datatype *) malloc(size * sizeof(MPI_Datatype));
+    if (NULL == c_recvtypes) {
+        if (NULL != ierr) *ierr = MPI_ERR_NO_MEM;
+        return;
+    }
 
-    if (!OMPI_IS_FORTRAN_IN_PLACE(sendbuf)) {
+    if (OMPI_COMM_IS_INTER(c_comm) || !OMPI_IS_FORTRAN_IN_PLACE(sendbuf)) {
         c_sendtypes = (MPI_Datatype *) malloc(size * sizeof(MPI_Datatype));
+        if (NULL == c_sendtypes) {
+            if (NULL != ierr) *ierr = MPI_ERR_NO_MEM;
+            free(c_recvtypes);
+            return;
+        }
         OMPI_ARRAY_FINT_2_INT(sendcounts, size);
         OMPI_ARRAY_FINT_2_INT(sdispls, size);
         for (int i=0; i<size; i++) {
             c_sendtypes[i] = PMPI_Type_f2c(sendtypes[i]);
         }
+    } else {
+        sendbuf = MPI_IN_PLACE;
     }
 
-    c_recvtypes = (MPI_Datatype *) malloc(size * sizeof(MPI_Datatype));
     OMPI_ARRAY_FINT_2_INT(recvcounts, size);
     OMPI_ARRAY_FINT_2_INT(rdispls, size);
     for (int i=0; i<size; i++) {
         c_recvtypes[i] = PMPI_Type_f2c(recvtypes[i]);
     }
 
-    sendbuf = (char *) OMPI_F2C_IN_PLACE(sendbuf);
     sendbuf = (char *) OMPI_F2C_BOTTOM(sendbuf);
     recvbuf = (char *) OMPI_F2C_BOTTOM(recvbuf);
 
     c_ierr = PMPI_Alltoallw(sendbuf,
-                           OMPI_ARRAY_NAME_CONVERT(sendcounts),
-                           OMPI_ARRAY_NAME_CONVERT(sdispls),
-                           c_sendtypes,
-                           recvbuf,
-                           OMPI_ARRAY_NAME_CONVERT(recvcounts),
-                           OMPI_ARRAY_NAME_CONVERT(rdispls),
-                           c_recvtypes, c_comm);
+                            OMPI_ARRAY_NAME_CONVERT(sendcounts),
+                            OMPI_ARRAY_NAME_CONVERT(sdispls),
+                            c_sendtypes,
+                            recvbuf,
+                            OMPI_ARRAY_NAME_CONVERT(recvcounts),
+                            OMPI_ARRAY_NAME_CONVERT(rdispls),
+                            c_recvtypes, c_comm);
+
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     OMPI_ARRAY_FINT_2_INT_CLEANUP(sendcounts);
     OMPI_ARRAY_FINT_2_INT_CLEANUP(sdispls);
     OMPI_ARRAY_FINT_2_INT_CLEANUP(recvcounts);
     OMPI_ARRAY_FINT_2_INT_CLEANUP(rdispls);
+
     if (NULL != c_sendtypes) {
         free(c_sendtypes);
     }

@@ -10,8 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015-2019 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -23,6 +23,7 @@
 
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 #include "ompi/mpi/fortran/base/constants.h"
+#include "ompi/communicator/communicator.h"
 
 #if OMPI_BUILD_MPI_PROFILING
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -72,15 +73,20 @@ void ompi_bcast_f(char *buffer, MPI_Fint *count, MPI_Fint *datatype,
 {
     int c_ierr;
     MPI_Comm c_comm;
-    MPI_Datatype c_type;
+    MPI_Datatype c_type = NULL;
+    int c_count = 0;
+    int c_root = OMPI_FINT_2_INT(*root);
 
     c_comm = PMPI_Comm_f2c(*comm);
-    c_type = PMPI_Type_f2c(*datatype);
+    if (OMPI_COMM_IS_INTRA(c_comm) || MPI_PROC_NULL != c_root) {
+        c_type = PMPI_Type_f2c(*datatype);
+        c_count = OMPI_FINT_2_INT(*count);
+    }
 
     c_ierr = PMPI_Bcast(OMPI_F2C_BOTTOM(buffer),
-                       OMPI_FINT_2_INT(*count),
+                       c_count,
                        c_type,
-                       OMPI_FINT_2_INT(*root),
+                       c_root,
                        c_comm);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 }

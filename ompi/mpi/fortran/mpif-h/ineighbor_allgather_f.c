@@ -13,8 +13,8 @@
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2015      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015-2019 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -83,7 +83,7 @@ void ompi_ineighbor_allgather_f(char *sendbuf, MPI_Fint *sendcount, MPI_Fint *se
     c_sendtype = PMPI_Type_f2c(*sendtype);
     c_recvtype = PMPI_Type_f2c(*recvtype);
 
-    sendbuf = (char *) OMPI_F2C_IN_PLACE(sendbuf);
+    /* Ineighbor_allgather does not support MPI_IN_PLACE */
     sendbuf = (char *) OMPI_F2C_BOTTOM(sendbuf);
     recvbuf = (char *) OMPI_F2C_BOTTOM(recvbuf);
 
