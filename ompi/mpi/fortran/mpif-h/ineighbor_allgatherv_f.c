@@ -13,8 +13,8 @@
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2015      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015-2019 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -26,6 +26,7 @@
 
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 #include "ompi/mpi/fortran/base/constants.h"
+#include "ompi/mca/topo/base/base.h"
 
 #if OMPI_BUILD_MPI_PROFILING
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -78,23 +79,30 @@ void ompi_ineighbor_allgatherv_f(char *sendbuf, MPI_Fint *sendcount, MPI_Fint *s
     MPI_Comm c_comm;
     MPI_Datatype c_sendtype, c_recvtype;
     MPI_Request c_request;
-    int size, ierr_c;
+    int indegree, outdegree, c_ierr;
     OMPI_ARRAY_NAME_DECL(recvcounts);
     OMPI_ARRAY_NAME_DECL(displs);
 
     c_comm = PMPI_Comm_f2c(*comm);
+    c_ierr = mca_topo_base_neighbor_count (c_comm, &indegree, &outdegree);
+    if (OMPI_SUCCESS != c_ierr) {
+        if (NULL != ierr) {
+            *ierr = OMPI_INT_2_FINT(c_ierr);
+        }
+        return;
+    }
+
     c_sendtype = PMPI_Type_f2c(*sendtype);
     c_recvtype = PMPI_Type_f2c(*recvtype);
 
-    PMPI_Comm_size(c_comm, &size);
-    OMPI_ARRAY_FINT_2_INT(recvcounts, size);
-    OMPI_ARRAY_FINT_2_INT(displs, size);
+    OMPI_ARRAY_FINT_2_INT(recvcounts, indegree);
+    OMPI_ARRAY_FINT_2_INT(displs, indegree);
 
-    sendbuf = (char *) OMPI_F2C_IN_PLACE(sendbuf);
+    /* Ineighbor_allgatherv does not support MPI_IN_PLACE */
     sendbuf = (char *) OMPI_F2C_BOTTOM(sendbuf);
     recvbuf = (char *) OMPI_F2C_BOTTOM(recvbuf);
 
-    ierr_c = PMPI_Ineighbor_allgatherv(sendbuf,
+    c_ierr = PMPI_Ineighbor_allgatherv(sendbuf,
                                        OMPI_FINT_2_INT(*sendcount),
                                        c_sendtype,
                                        recvbuf,
@@ -102,8 +110,8 @@ void ompi_ineighbor_allgatherv_f(char *sendbuf, MPI_Fint *sendcount, MPI_Fint *s
                                        OMPI_ARRAY_NAME_CONVERT(displs),
                                        c_recvtype, c_comm, &c_request);
 
-    if (NULL != ierr) *ierr = OMPI_INT_2_FINT(ierr_c);
-    if (MPI_SUCCESS == ierr_c) *request = PMPI_Request_c2f(c_request);
+    if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
+    if (MPI_SUCCESS == c_ierr) *request = PMPI_Request_c2f(c_request);
 
     OMPI_ARRAY_FINT_2_INT_CLEANUP(recvcounts);
     OMPI_ARRAY_FINT_2_INT_CLEANUP(displs);

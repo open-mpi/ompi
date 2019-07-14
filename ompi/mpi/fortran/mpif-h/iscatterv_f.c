@@ -10,8 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015-2019 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -24,6 +24,7 @@
 
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 #include "ompi/mpi/fortran/base/constants.h"
+#include "ompi/communicator/communicator.h"
 
 #if OMPI_BUILD_MPI_PROFILING
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -75,31 +76,47 @@ void ompi_iscatterv_f(char *sendbuf, MPI_Fint *sendcounts,
                       MPI_Fint *comm, MPI_Fint *request, MPI_Fint *ierr)
 {
     MPI_Comm c_comm;
-    MPI_Datatype c_sendtype, c_recvtype;
+    MPI_Datatype c_sendtype = NULL, c_recvtype = NULL;
     MPI_Request c_request;
-    int size, c_ierr;
+    int c_root, c_ierr;
     OMPI_ARRAY_NAME_DECL(sendcounts);
     OMPI_ARRAY_NAME_DECL(displs);
 
     c_comm = PMPI_Comm_f2c(*comm);
-    c_sendtype = PMPI_Type_f2c(*sendtype);
-    c_recvtype = PMPI_Type_f2c(*recvtype);
-
-    PMPI_Comm_size(c_comm, &size);
-    OMPI_ARRAY_FINT_2_INT(sendcounts, size);
-    OMPI_ARRAY_FINT_2_INT(displs, size);
+    c_root = OMPI_FINT_2_INT(*root);
+    if (OMPI_COMM_IS_INTER(c_comm)) {
+        if (MPI_ROOT == c_root) {
+            OMPI_COND_STATEMENT(int size = ompi_comm_remote_size(c_comm));
+            c_sendtype = PMPI_Type_f2c(*sendtype);
+            OMPI_ARRAY_FINT_2_INT(sendcounts, size);
+            OMPI_ARRAY_FINT_2_INT(displs, size);
+        } else if (MPI_PROC_NULL != c_root) {
+            c_sendtype = PMPI_Type_f2c(*sendtype);
+        }
+    } else {
+        if (OMPI_IS_FORTRAN_IN_PLACE(recvbuf)) {
+            recvbuf = MPI_IN_PLACE;
+        } else {
+            c_recvtype = PMPI_Type_f2c(*recvtype);
+        }
+        if (ompi_comm_rank(c_comm) == c_root) {
+            OMPI_COND_STATEMENT(int size = ompi_comm_size(c_comm));
+            c_sendtype = PMPI_Type_f2c(*sendtype);
+            OMPI_ARRAY_FINT_2_INT(sendcounts, size);
+            OMPI_ARRAY_FINT_2_INT(displs, size);
+        }
+    }
 
     sendbuf = (char *) OMPI_F2C_BOTTOM(sendbuf);
-    recvbuf = (char *) OMPI_F2C_IN_PLACE(recvbuf);
     recvbuf = (char *) OMPI_F2C_BOTTOM(recvbuf);
 
     c_ierr = PMPI_Iscatterv(sendbuf,
-                           OMPI_ARRAY_NAME_CONVERT(sendcounts),
-                           OMPI_ARRAY_NAME_CONVERT(displs),
-                           c_sendtype, recvbuf,
-                           OMPI_FINT_2_INT(*recvcount),
-                           c_recvtype,
-                           OMPI_FINT_2_INT(*root), c_comm, &c_request);
+                            OMPI_ARRAY_NAME_CONVERT(sendcounts),
+                            OMPI_ARRAY_NAME_CONVERT(displs),
+                            c_sendtype, recvbuf,
+                            OMPI_FINT_2_INT(*recvcount),
+                            c_recvtype,
+                            OMPI_FINT_2_INT(*root), c_comm, &c_request);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
     if (MPI_SUCCESS == c_ierr) *request = PMPI_Request_c2f(c_request);
 
