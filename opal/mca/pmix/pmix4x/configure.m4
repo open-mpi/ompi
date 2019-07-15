@@ -49,7 +49,7 @@ AC_DEFUN([MCA_opal_pmix_pmix4x_CONFIG],[
         opal_pmix_pmix4x_timing_flag=--disable-pmix-timing
     fi
 
-    opal_pmix_pmix4x_args="$opal_pmix_pmix4x_timing_flag --without-tests-examples --with-pmix-symbol-rename=OPAL_MCA_PMIX4X_ --disable-pmix-binaries --disable-pmix-backward-compatibility --disable-visibility --enable-embedded-mode --with-libevent-header=\\\"opal/mca/event/$opal_event_base_include\\\" --with-hwloc-header=\\\"$opal_hwloc_base_include\\\""
+    opal_pmix_pmix4x_args="$opal_pmix_pmix4x_timing_flag --without-tests-examples --with-pmix-symbol-rename=OPAL_MCA_PMIX4X_ --disable-pmix-binaries --disable-pmix-backward-compatibility --disable-visibility --enable-nonglobal-dlopen --enable-embedded-mode --with-libevent-header=\\\"opal/mca/event/$opal_event_base_include\\\" --with-hwloc-header=\\\"$opal_hwloc_base_include\\\""
     AS_IF([test "$enable_debug" = "yes"],
           [opal_pmix_pmix4x_args="--enable-debug $opal_pmix_pmix4x_args"
            CFLAGS="$OPAL_CFLAGS_BEFORE_PICKY $OPAL_VISIBILITY_CFLAGS -g"],
