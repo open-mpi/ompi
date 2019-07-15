@@ -28,13 +28,14 @@
 #include "ompi/mca/coll/base/coll_tags.h"
 
 BEGIN_C_DECLS
-    /**
-     * Structure to hold the shared coll component.  First it holds the
-     * base coll component, and then holds a bunch of
-     * shared-coll-component-specific stuff (e.g., current MCA param
-     * values).
-     */
-    typedef struct mca_coll_shared_component_t {
+
+/**
+ * Structure to hold the shared coll component.  First it holds the
+ * base coll component, and then holds a bunch of
+ * shared-coll-component-specific stuff (e.g., current MCA param
+ * values).
+ */
+typedef struct mca_coll_shared_component_t {
     /** Base coll component */
     mca_coll_base_component_2_0_0_t super;
 
@@ -61,6 +62,9 @@ typedef struct mca_coll_shared_module_t {
     MPI_Win sm_ctrl_win;
     /* Address array of control buf */
     int **ctrl_buf;
+
+    /* Identify which ctrl_buf is used in the MPI_Barrier */
+    int barrier_tag;
 
 } mca_coll_shared_module_t;
 OBJ_CLASS_DECLARATION(mca_coll_shared_module_t);
@@ -96,30 +100,37 @@ void mca_coll_shared_setup_ctrl_buf(mca_coll_shared_module_t *
                                     shared_module,
                                     struct ompi_communicator_t *comm);
 
+int mac_coll_shared_barrier_intra(struct ompi_communicator_t *comm,
+                                  mca_coll_base_module_t * module);
+
 int mca_coll_shared_reduce_intra(const void *sbuf, void *rbuf, int count,
                                  struct ompi_datatype_t *dtype,
                                  struct ompi_op_t *op,
                                  int root,
                                  struct ompi_communicator_t *comm,
                                  mca_coll_base_module_t * module);
+
 int mca_coll_shared_reduce_ring_intra(const void *sbuf, void *rbuf,
                                       int count,
                                       struct ompi_datatype_t *dtype,
                                       struct ompi_op_t *op, int root,
                                       struct ompi_communicator_t *comm,
                                       mca_coll_base_module_t * module);
+
 int mca_coll_shared_allreduce_intra(const void *sbuf, void *rbuf,
                                     int count,
                                     struct ompi_datatype_t *dtype,
                                     struct ompi_op_t *op,
                                     struct ompi_communicator_t *comm,
                                     mca_coll_base_module_t * module);
+
 int mca_coll_shared_allreduce_ring_intra(const void *sbuf,
                                          void *rbuf, int count,
                                          struct ompi_datatype_t
                                          *dtype, struct ompi_op_t *op, struct ompi_communicator_t
                                          *comm,
                                          mca_coll_base_module_t * module);
+                                         
 int mca_coll_shared_bcast_intra(void *buff, int count,
                                 struct ompi_datatype_t *dtype, int root,
                                 struct ompi_communicator_t *comm,

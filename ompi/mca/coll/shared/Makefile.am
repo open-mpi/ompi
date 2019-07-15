@@ -11,6 +11,7 @@
 
 sources = \
         coll_shared.h \
+        coll_shared_barrier.c \
         coll_shared_reduce.c \
         coll_shared_bcast.c \
         coll_shared_allreduce.c \

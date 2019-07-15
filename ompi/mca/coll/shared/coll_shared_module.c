@@ -61,6 +61,7 @@ static void mca_coll_shared_module_construct(mca_coll_shared_module_t *
     module->sm_ctrl_ptr = NULL;
     module->sm_ctrl_win = NULL;
     module->ctrl_buf = NULL;
+    module->barrier_tag = 0;
     module->super.coll_module_disable = mca_coll_shared_module_disable;
 }
 
@@ -85,30 +86,31 @@ static int mca_coll_shared_module_disable(mca_coll_base_module_t * module,
     mca_coll_shared_module_t *m = (mca_coll_shared_module_t *) module;
     m->enabled = false;
 
-    /* If comm is MPI_COMM_WORLD, windows will be free at ompi_mpi_finalize.c:320 ompi_win_finalize() */
-    if (comm != MPI_COMM_WORLD) {
-        int rank = ompi_comm_rank(comm);
+    // /* If comm is MPI_COMM_WORLD, windows will be free at ompi_mpi_finalize.c:320 ompi_win_finalize() */
+    // if (comm != MPI_COMM_WORLD) {
+    //     int rank = ompi_comm_rank(comm);
 
-        /* Detach the memory */
-        m->sm_data_win->w_osc_module->osc_win_detach(m->sm_data_win,
-                                                     m->data_buf[rank]);
+    //     /* Detach the memory */
+    //     m->sm_data_win->w_osc_module->osc_win_detach(m->sm_data_win,
+    //                                                  m->data_buf[rank]);
 
-        /* Free the memory */
+    //     /* Free the memory */
 
-        if (m->data_buf[rank] != NULL) {
-            free(m->data_buf[rank]);
-            m->data_buf[rank] = NULL;
-        }
+    //     if (m->data_buf[rank] != NULL) {
+    //         free(m->data_buf[rank]);
+    //         m->data_buf[rank] = NULL;
+    //     }
 
-        /* Free the windows */
+    //     /* Free the windows */
 
-        if (m->sm_data_win != NULL) {
-            ompi_win_free(m->sm_data_win);
-        }
-        if (m->sm_ctrl_win != NULL) {
-            ompi_win_free(m->sm_ctrl_win);
-        }
-    }
+    //     if (m->sm_data_win != NULL) {
+    //         ompi_win_free(m->sm_data_win);
+    //     }
+    //     if (m->sm_ctrl_win != NULL) {
+    //         ompi_win_free(m->sm_ctrl_win);
+    //     }
+    // }
+    
 
     if (m->data_buf != NULL) {
         free(m->data_buf);
@@ -160,13 +162,12 @@ mca_coll_base_module_t *mca_coll_shared_comm_query(struct
     mca_coll_shared_module_t *shared_module;
 
     /* If we're intercomm, or if there's only one process in the
-       communicator, or if not all the processes in the communicator
-       are not on this node, then we don't want to run */
+     * communicator, or if not all the processes in the communicator
+     * are not on this node, then we don't want to run */
     if (OMPI_COMM_IS_INTER(comm) || 1 == ompi_comm_size(comm)
         || ompi_group_have_remote_peers(comm->c_local_group)) {
         opal_output_verbose(10, ompi_coll_base_framework.framework_output,
-                            "coll:shared:comm_query (%d/%s): intercomm, comm is too small, 
-                            or not all peers local; disqualifying myself",
+                            "coll:shared:comm_query (%d/%s): intercomm, comm is too small, or not all peers local; disqualifying myself",
                             comm->c_contextid, comm->c_name);
         return NULL;
     }
@@ -196,7 +197,7 @@ mca_coll_base_module_t *mca_coll_shared_comm_query(struct
     shared_module->super.coll_alltoall = NULL;
     shared_module->super.coll_alltoallv = NULL;
     shared_module->super.coll_alltoallw = NULL;
-    shared_module->super.coll_barrier = NULL;
+    shared_module->super.coll_barrier = mac_coll_shared_barrier_intra;
     shared_module->super.coll_bcast = mca_coll_shared_bcast_intra;
     shared_module->super.coll_exscan = NULL;
     shared_module->super.coll_gather = NULL;
@@ -304,8 +305,9 @@ void mca_coll_shared_setup_ctrl_buf(mca_coll_shared_module_t *
                                     struct ompi_communicator_t *comm)
 {
     int i;
+    int rank = ompi_comm_rank(comm);
     int size = ompi_comm_size(comm);
-    ompi_win_allocate_shared(1 * sizeof(int), sizeof(int),
+    ompi_win_allocate_shared(3 * sizeof(int), sizeof(int),
                              (opal_info_t *) (&ompi_mpi_info_null), comm,
                              &shared_module->sm_ctrl_ptr,
                              &shared_module->sm_ctrl_win);
@@ -321,4 +323,14 @@ void mca_coll_shared_setup_ctrl_buf(mca_coll_shared_module_t *
                                                &(shared_module->
                                                  ctrl_buf[i]));
     }
+    /* Init ctrl_buf with 0 */
+    shared_module->sm_ctrl_win->w_osc_module->osc_fence(0,
+                                                        shared_module->
+                                                        sm_ctrl_win);
+    shared_module->ctrl_buf[rank][0] = 0;
+    shared_module->ctrl_buf[rank][1] = 0;
+    shared_module->ctrl_buf[rank][2] = 0;
+    shared_module->sm_ctrl_win->w_osc_module->osc_fence(0,
+                                                        shared_module->
+                                                        sm_ctrl_win);
 }
