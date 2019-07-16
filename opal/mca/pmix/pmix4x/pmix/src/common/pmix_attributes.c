@@ -1072,6 +1072,8 @@ void pmix_attributes_print_headers(char ***ans, char *level)
     left = PMIX_PRINT_NAME_COLUMN_WIDTH + PMIX_PRINT_STRING_COLUMN_WIDTH + PMIX_PRINT_TYPE_COLUMN_WIDTH +
            ((PMIX_PRINT_ATTR_COLUMN_WIDTH-PMIX_PRINT_NAME_COLUMN_WIDTH-PMIX_PRINT_STRING_COLUMN_WIDTH-PMIX_PRINT_TYPE_COLUMN_WIDTH)/2) - 3 - strlen("DESCRIPTION")/2;
     memcpy(&line[left], "DESCRIPTION", strlen("DESCRIPTION"));
+    left += strlen("DESCRIPTION") + 1;
+    line[left] = '\0';
     pmix_argv_append_nosize(ans, line);
 
     /* print the dashes under the column headers */

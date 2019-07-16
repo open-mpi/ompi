@@ -421,6 +421,7 @@ pmix_status_t pmix_bfrops_base_copy_darray(pmix_data_array_t **dest,
     pmix_query_t *pq, *sq;
     pmix_envar_t *pe, *se;
     pmix_regattr_t *pr, *sr;
+    pmix_coord_t *pc, *sc;
 
     if (PMIX_DATA_ARRAY != type) {
         return PMIX_ERR_BAD_PARAM;
@@ -844,7 +845,21 @@ pmix_status_t pmix_bfrops_base_copy_darray(pmix_data_array_t **dest,
                 free(p);
                 return PMIX_ERR_NOMEM;
             }
-            memcpy(p->array, src->array, src->size * sizeof(pmix_coord_t));
+            pc = (pmix_coord_t*)p->array;
+            sc = (pmix_coord_t*)src->array;
+            for (n=0; n < src->size; n++) {
+                pc[n].view = sc[n].view;
+                pc[n].dims = sc[n].dims;
+                if (0 < pc[n].dims) {
+                    pc[n].coord = (int*)malloc(pc[n].dims * sizeof(int));
+                    if (NULL == pc[n].coord) {
+                        free(p->array);
+                        free(p);
+                        return PMIX_ERR_NOMEM;
+                    }
+                    memcpy(pc[n].coord, sc[n].coord, pc[n].dims * sizeof(int));
+                }
+            }
             break;
         case PMIX_REGATTR:
             PMIX_REGATTR_CREATE(p->array, src->size);
@@ -924,11 +939,26 @@ pmix_status_t pmix_bfrops_base_copy_coord(pmix_coord_t **dest,
                                           pmix_coord_t *src,
                                           pmix_data_type_t type)
 {
+    pmix_coord_t *d;
+
     if (PMIX_COORD != type) {
         return PMIX_ERR_BAD_PARAM;
     }
-    *dest = (pmix_coord_t*)malloc(sizeof(pmix_coord_t));
-    memcpy(*dest, src, sizeof(pmix_coord_t));
+    d = (pmix_coord_t*)malloc(sizeof(pmix_coord_t));
+    if (NULL == d) {
+        return PMIX_ERR_NOMEM;
+    }
+    d->view = src->view;
+    d->dims = src->dims;
+    if (0 < d->dims) {
+        d->coord = (int*)malloc(d->dims * sizeof(int));
+        if (NULL == d->coord) {
+            free(d);
+            return PMIX_ERR_NOMEM;
+        }
+        memcpy(d->coord, src->coord, d->dims * sizeof(int));
+    }
+    *dest = d;
     return PMIX_SUCCESS;
 }
 

@@ -187,7 +187,7 @@ static void server_unpack_procs(char *buf, size_t size)
     char *nspace;
 
     while ((size_t)(ptr - buf) < size) {
-        ns_count = (size_t)*ptr;
+        ns_count = *(size_t *)ptr;
         ptr += sizeof(size_t);
 
         for (i = 0; i < ns_count; i++) {
@@ -195,16 +195,16 @@ static void server_unpack_procs(char *buf, size_t size)
             size_t ltasks, ntasks;
             int server_id;
 
-            server_id = *ptr;
+            server_id = *(int *)ptr;
             ptr += sizeof(int);
 
             nspace = ptr;
             ptr += PMIX_MAX_NSLEN+1;
 
-            ntasks = (size_t)*ptr;
+            ntasks = *(size_t *)ptr;
             ptr += sizeof(size_t);
 
-            ltasks = (size_t)*ptr;
+            ltasks = *(size_t *)ptr;
             ptr += sizeof(size_t);
 
             PMIX_LIST_FOREACH(tmp, server_nspace, server_nspace_t) {
@@ -226,7 +226,7 @@ static void server_unpack_procs(char *buf, size_t size)
             }
             size_t i;
             for (i = 0; i < ltasks; i++) {
-                int rank = (int)*ptr;
+                int rank = *(int *)ptr;
                 ptr += sizeof(int);
                 if (ns_item->task_map[rank] >= 0) {
                     continue;
@@ -505,8 +505,8 @@ static void server_read_cb(int fd, short event, void *arg)
     switch(msg_hdr.cmd) {
         case CMD_BARRIER_REQUEST:
             barrier_cnt++;
-            TEST_VERBOSE(("CMD_BARRIER_REQ req from %d cnt %d", msg_hdr.src_id,
-                          barrier_cnt));
+            TEST_VERBOSE(("CMD_BARRIER_REQ req from %d cnt %lu", msg_hdr.src_id,
+                          (unsigned long)barrier_cnt));
             if (pmix_list_get_size(server_list) == barrier_cnt) {
                 barrier_cnt = 0; /* reset barrier counter */
                 server_info_t *tmp_server;
@@ -535,8 +535,8 @@ static void server_read_cb(int fd, short event, void *arg)
                 msg_buf = NULL;
             }
 
-            TEST_VERBOSE(("CMD_FENCE_CONTRIB req from %d cnt %d size %d",
-                        msg_hdr.src_id, contrib_cnt, msg_hdr.size));
+            TEST_VERBOSE(("CMD_FENCE_CONTRIB req from %d cnt %lu size %d",
+                        msg_hdr.src_id, (unsigned long)contrib_cnt, msg_hdr.size));
             if (pmix_list_get_size(server_list) == contrib_cnt) {
                 server_info_t *tmp_server;
                 PMIX_LIST_FOREACH(tmp_server, server_list, server_info_t) {
@@ -547,8 +547,8 @@ static void server_read_cb(int fd, short event, void *arg)
                     resp_hdr.size = fence_buf_offset;
                     server_send_msg(&resp_hdr, fence_buf, fence_buf_offset);
                 }
-                TEST_VERBOSE(("CMD_FENCE_CONTRIB complete, size %d",
-                              fence_buf_offset));
+                TEST_VERBOSE(("CMD_FENCE_CONTRIB complete, size %lu",
+                              (unsigned long)fence_buf_offset));
                 if (fence_buf) {
                     free(fence_buf);
                     fence_buf = NULL;
@@ -651,13 +651,13 @@ static void server_unpack_dmdx(char *buf, int *sender, pmix_proc_t *proc)
 {
     char *ptr = buf;
 
-    *sender = (int)*ptr;
+    *sender = *(int *)ptr;
     ptr += sizeof(int);
 
     memcpy(proc->nspace, ptr, PMIX_MAX_NSLEN +1);
     ptr += PMIX_MAX_NSLEN +1;
 
-    proc->rank = (int)*ptr;
+    proc->rank = *(int *)ptr;
     ptr += sizeof(int);
 }
 
@@ -671,8 +671,8 @@ static void _dmdx_cb(int status, char *data, size_t sz, void *cbdata)
     msg_hdr.src_id = my_server_id;
     msg_hdr.size = sz;
     msg_hdr.dst_id = *sender_id;
-    TEST_VERBOSE(("srv #%d: DMDX RESPONSE: receiver=%d, size=%d,",
-                  my_server_id, *sender_id, sz));
+    TEST_VERBOSE(("srv #%d: DMDX RESPONSE: receiver=%d, size=%lu,",
+                  my_server_id, *sender_id, (unsigned long)sz));
     free(sender_id);
 
     server_send_msg(&msg_hdr, data, sz);

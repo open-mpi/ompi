@@ -63,6 +63,11 @@ PMIX_EXPORT pmix_status_t PMIx_server_register_fabric(pmix_fabric_t *fabric,
     pmix_pnet_base_active_module_t *active;
     pmix_status_t rc;
 
+    /* ensure our fields of the fabric object are initialized */
+    fabric->commcost = NULL;
+    fabric->nverts = 0;
+    fabric->module = NULL;
+
     PMIX_ACQUIRE_THREAD(&pmix_pnet_globals.lock);
 
     if (0 == pmix_list_get_size(&pmix_pnet_globals.actives)) {
@@ -108,50 +113,6 @@ PMIX_EXPORT pmix_status_t PMIx_server_deregister_fabric(pmix_fabric_t *fabric)
     return rc;
 }
 
-PMIX_EXPORT pmix_status_t PMIx_server_get_num_vertices(pmix_fabric_t *fabric,
-                                                       uint32_t *nverts)
-{
-    pmix_status_t ret;
-    pmix_pnet_fabric_t *ft;
-    pmix_pnet_module_t *module;
-
-    if (NULL == fabric || NULL == fabric->module) {
-        return PMIX_ERR_BAD_PARAM;
-    }
-    ft = (pmix_pnet_fabric_t*)fabric->module;
-    module = (pmix_pnet_module_t*)ft->module;
-
-    if (NULL == module->get_num_vertices) {
-        return PMIX_ERR_NOT_SUPPORTED;
-    }
-    ret = module->get_num_vertices(fabric, nverts);
-
-    return ret;
-}
-
-PMIX_EXPORT pmix_status_t PMIx_server_get_comm_cost(pmix_fabric_t *fabric,
-                                                    uint32_t src, uint32_t dest,
-                                                    uint16_t *cost)
-{
-    pmix_status_t ret;
-    pmix_pnet_fabric_t *ft;
-    pmix_pnet_module_t *module;
-
-    if (NULL == fabric || NULL == fabric->module) {
-        return PMIX_ERR_BAD_PARAM;
-    }
-    ft = (pmix_pnet_fabric_t*)fabric->module;
-    module = (pmix_pnet_module_t*)ft->module;
-
-    if (NULL == module->get_cost) {
-        return PMIX_ERR_NOT_SUPPORTED;
-    }
-
-    ret = module->get_cost(fabric, src, dest, cost);
-
-    return ret;
-}
-
 PMIX_EXPORT pmix_status_t PMIx_server_get_vertex_info(pmix_fabric_t *fabric,
                                                       uint32_t i, pmix_value_t *vertex,
                                                       char **nodename)
@@ -176,8 +137,7 @@ PMIX_EXPORT pmix_status_t PMIx_server_get_vertex_info(pmix_fabric_t *fabric,
 }
 
 PMIX_EXPORT pmix_status_t PMIx_server_get_index(pmix_fabric_t *fabric,
-                                                pmix_value_t *vertex, uint32_t *i,
-                                                char **nodename)
+                                                pmix_value_t *vertex, uint32_t *i)
 {
     pmix_status_t ret;
     pmix_pnet_fabric_t *ft;
@@ -193,7 +153,7 @@ PMIX_EXPORT pmix_status_t PMIx_server_get_index(pmix_fabric_t *fabric,
         return PMIX_ERR_NOT_SUPPORTED;
     }
 
-    ret = module->get_index(fabric, vertex, i, nodename);
+    ret = module->get_index(fabric, vertex, i);
 
     return ret;
 }

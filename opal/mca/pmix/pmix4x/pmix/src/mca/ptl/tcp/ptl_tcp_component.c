@@ -376,8 +376,8 @@ static pmix_status_t setup_listener(pmix_info_t info[], size_t ninfo,
     bool session_tool = false;
     bool system_tool = false;
     pmix_socklen_t addrlen;
-    char *prefix, myhost[PMIX_MAXHOSTNAMELEN];
-    char myconnhost[PMIX_MAXHOSTNAMELEN];
+    char *prefix, myhost[PMIX_MAXHOSTNAMELEN] = {0};
+    char myconnhost[PMIX_MAXHOSTNAMELEN] = {0};
     int myport;
     pmix_kval_t *urikv;
 
@@ -643,17 +643,17 @@ static pmix_status_t setup_listener(pmix_info_t info[], size_t ninfo,
         goto sockerror;
     }
 
-    gethostname(myhost, sizeof(myhost));
+    gethostname(myhost, sizeof(myhost)-1);
     if (AF_INET == mca_ptl_tcp_component.connection.ss_family) {
         prefix = "tcp4://";
         myport = ntohs(((struct sockaddr_in*) &mca_ptl_tcp_component.connection)->sin_port);
         inet_ntop(AF_INET, &((struct sockaddr_in*) &mca_ptl_tcp_component.connection)->sin_addr,
-                  myconnhost, PMIX_MAXHOSTNAMELEN);
+                  myconnhost, PMIX_MAXHOSTNAMELEN-1);
     } else if (AF_INET6 == mca_ptl_tcp_component.connection.ss_family) {
         prefix = "tcp6://";
         myport = ntohs(((struct sockaddr_in6*) &mca_ptl_tcp_component.connection)->sin6_port);
         inet_ntop(AF_INET6, &((struct sockaddr_in6*) &mca_ptl_tcp_component.connection)->sin6_addr,
-                  myconnhost, PMIX_MAXHOSTNAMELEN);
+                  myconnhost, PMIX_MAXHOSTNAMELEN-1);
     } else {
         goto sockerror;
     }

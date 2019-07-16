@@ -11,7 +11,7 @@
 #                         All rights reserved.
 # Copyright (c) 2006-2016 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2012-2013 Los Alamos National Security, Inc.  All rights reserved.
-# Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
+# Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -42,6 +42,8 @@ sources =
 nodist_headers =
 EXTRA_DIST =
 dist_pmixdata_DATA =
+nobase_pmix_HEADERS =
+pmixdir = $(pmixincludedir)/$(subdir)
 
 # place to capture sources for backward compatibility libs
 pmi1_sources =
@@ -104,6 +106,11 @@ include tool/Makefile.include
 include tools/Makefile.include
 include common/Makefile.include
 include hwloc/Makefile.include
+
+if WANT_INSTALL_HEADERS
+nobase_pmix_HEADERS += $(headers)
+endif
+
 
 MAINTAINERCLEANFILES = Makefile.in config.h config.h.in
 DISTCLEANFILES = Makefile

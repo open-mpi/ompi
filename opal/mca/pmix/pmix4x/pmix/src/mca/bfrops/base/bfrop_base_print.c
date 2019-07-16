@@ -936,6 +936,7 @@ int pmix_bfrops_base_print_status(char **output, char *prefix,
     char *prefx;
     int rc;
     pmix_regattr_t *r;
+    char *tp;
 
     if (PMIX_VALUE != type) {
         return PMIX_ERR_BAD_PARAM;
@@ -1086,8 +1087,17 @@ int pmix_bfrops_base_print_status(char **output, char *prefix,
             break;
 
         case PMIX_COORD:
-            rc = asprintf(output, "%sPMIX_VALUE: Data type: PMIX_COORD\tx-axis: %d\ty-axis: %d\tz-axis: %d",
-                          prefx, src->data.coord->x, src->data.coord->y, src->data.coord->z);
+            if (PMIX_COORD_VIEW_UNDEF == src->data.coord->view) {
+                tp = "UNDEF";
+            } else if (PMIX_COORD_LOGICAL_VIEW == src->data.coord->view) {
+                tp = "LOGICAL";
+            } else if (PMIX_COORD_PHYSICAL_VIEW == src->data.coord->view) {
+                tp = "PHYSICAL";
+            } else {
+                tp = "UNRECOGNIZED";
+            }
+            rc = asprintf(output, "%sPMIX_VALUE: Data type: PMIX_COORD\tView: %s\tDims: %lu",
+                          prefx, tp, (unsigned long)src->data.coord->dims);
             break;
 
         case PMIX_REGATTR:
@@ -1842,6 +1852,7 @@ pmix_status_t pmix_bfrops_base_print_coord(char **output, char *prefix,
 {
     char *prefx;
     int ret;
+    char *tp;
 
     if (PMIX_COORD != type) {
         return PMIX_ERR_BAD_PARAM;
@@ -1855,8 +1866,17 @@ pmix_status_t pmix_bfrops_base_print_coord(char **output, char *prefix,
         prefx = prefix;
     }
 
-    ret = asprintf(output, "%sData type: PMIX_COORD\tx-axis: %d\ty-axis: %d\tz-axis: %d",
-                   prefx, src->x, src->y, src->z);
+    if (PMIX_COORD_VIEW_UNDEF == src->view) {
+        tp = "UNDEF";
+    } else if (PMIX_COORD_LOGICAL_VIEW == src->view) {
+        tp = "LOGICAL";
+    } else if (PMIX_COORD_PHYSICAL_VIEW == src->view) {
+        tp = "PHYSICAL";
+    } else {
+        tp = "UNRECOGNIZED";
+    }
+    ret = asprintf(output, "%sData type: PMIX_COORD\tView: %s\tDims: %lu",
+                   prefx, tp, (unsigned long)src->dims);
     if (prefx != prefix) {
         free(prefx);
     }

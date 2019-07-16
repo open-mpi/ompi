@@ -496,7 +496,9 @@ static pmix_status_t _getfn_fastpath(const pmix_proc_t *proc, const pmix_key_t k
         for (n=0; n < ninfo; n++) {
             if (0 == strncmp(info[n].key, PMIX_DATA_SCOPE, PMIX_MAX_KEYLEN)) {
                 cb->scope = info[n].value.data.scope;
-                break;
+            } else {
+                /* we cannot handle any other directives via this path */
+                return PMIX_ERR_NOT_SUPPORTED;
             }
         }
     }
@@ -561,11 +563,11 @@ static void _getnbfn(int fd, short flags, void *cbdata)
     /* scan the incoming directives */
     if (NULL != cb->info) {
         for (n=0; n < cb->ninfo; n++) {
-            if (0 == strncmp(cb->info[n].key, PMIX_OPTIONAL, PMIX_MAX_KEYLEN)) {
+            if (PMIX_CHECK_KEY(&cb->info[n], PMIX_OPTIONAL)) {
                 optional = PMIX_INFO_TRUE(&cb->info[n]);
-            } else if (0 == strncmp(cb->info[n].key, PMIX_IMMEDIATE, PMIX_MAX_KEYLEN)) {
+            } else if (PMIX_CHECK_KEY(&cb->info[n], PMIX_IMMEDIATE)) {
                 immediate = PMIX_INFO_TRUE(&cb->info[n]);
-            } else if (0 == strncmp(cb->info[n].key, PMIX_TIMEOUT, PMIX_MAX_KEYLEN)) {
+            } else if (PMIX_CHECK_KEY(&cb->info[n], PMIX_TIMEOUT)) {
                 /* set a timer to kick us out if we don't
                  * have an answer within their window */
                 if (0 < cb->info[n].value.data.integer) {
@@ -576,8 +578,16 @@ static void _getnbfn(int fd, short flags, void *cbdata)
                     pmix_event_evtimer_add(&cb->ev, &tv);
                     cb->timer_running = true;
                 }
-            } else if (0 == strncmp(cb->info[n].key, PMIX_DATA_SCOPE, PMIX_MAX_KEYLEN)) {
+            } else if (PMIX_CHECK_KEY(&cb->info[n], PMIX_DATA_SCOPE)) {
                 cb->scope = cb->info[n].value.data.scope;
+            } else if (PMIX_CHECK_KEY(&cb->info[n], PMIX_SESSION_INFO)) {
+                cb->level = PMIX_LEVEL_SESSION;
+            } else if (PMIX_CHECK_KEY(&cb->info[n], PMIX_JOB_INFO)) {
+                cb->level = PMIX_LEVEL_JOB;
+            } else if (PMIX_CHECK_KEY(&cb->info[n], PMIX_APP_INFO)) {
+                cb->level = PMIX_LEVEL_APP;
+            } else if (PMIX_CHECK_KEY(&cb->info[n], PMIX_NODE_INFO)) {
+                cb->level = PMIX_LEVEL_NODE;
             }
         }
     }

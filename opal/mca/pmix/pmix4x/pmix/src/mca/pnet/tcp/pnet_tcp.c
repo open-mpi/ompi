@@ -746,6 +746,7 @@ static pmix_status_t setup_local_network(pmix_namespace_t *nptr,
                         "pnet:tcp:setup_local_network");
 
     if (NULL != info) {
+        idkey = strdup("default");
         for (n=0; n < ninfo; n++) {
             /* look for my key */
             if (0 == strncmp(info[n].key, PMIX_TCP_SETUP_APP_KEY, PMIX_MAX_KEYLEN)) {
@@ -875,8 +876,8 @@ static pmix_status_t collect_inventory(pmix_info_t directives[], size_t ndirs,
                                        pmix_inventory_cbfunc_t cbfunc, void *cbdata)
 {
     pmix_inventory_rollup_t *cd = (pmix_inventory_rollup_t*)cbdata;
-    char *prefix, myhost[PMIX_MAXHOSTNAMELEN];
-    char myconnhost[PMIX_MAXHOSTNAMELEN];
+    char *prefix, myhost[PMIX_MAXHOSTNAMELEN] = {0};
+    char myconnhost[PMIX_MAXHOSTNAMELEN] = {0};
     char name[32], uri[2048];
     struct sockaddr_storage my_ss;
     char *foo;
@@ -893,7 +894,7 @@ static pmix_status_t collect_inventory(pmix_info_t directives[], size_t ndirs,
     /* setup the bucket - we will pass the results as a blob */
     PMIX_CONSTRUCT(&bucket, pmix_buffer_t);
     /* add our hostname */
-    gethostname(myhost, sizeof(myhost));
+    gethostname(myhost, sizeof(myhost)-1);
     foo = &myhost[0];
     PMIX_BFROPS_PACK(rc, pmix_globals.mypeer, &bucket, &foo, 1, PMIX_STRING);
     if (PMIX_SUCCESS != rc) {
@@ -928,11 +929,11 @@ static pmix_status_t collect_inventory(pmix_info_t directives[], size_t ndirs,
         if (AF_INET == my_ss.ss_family) {
             prefix = "tcp4://";
             inet_ntop(AF_INET, &((struct sockaddr_in*) &my_ss)->sin_addr,
-                      myconnhost, PMIX_MAXHOSTNAMELEN);
+                      myconnhost, PMIX_MAXHOSTNAMELEN-1);
         } else if (AF_INET6 == my_ss.ss_family) {
             prefix = "tcp6://";
             inet_ntop(AF_INET6, &((struct sockaddr_in6*) &my_ss)->sin6_addr,
-                      myconnhost, PMIX_MAXHOSTNAMELEN);
+                      myconnhost, PMIX_MAXHOSTNAMELEN-1);
         } else {
             continue;
         }

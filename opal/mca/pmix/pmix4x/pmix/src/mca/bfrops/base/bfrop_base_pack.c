@@ -1248,18 +1248,18 @@ pmix_status_t pmix_bfrops_base_pack_coord(pmix_pointer_array_t *regtypes,
         return PMIX_ERR_BAD_PARAM;
     }
     for (i=0; i < num_vals; ++i) {
-        /* pack the x-coord */
-        PMIX_BFROPS_PACK_TYPE(ret, buffer, &ptr[i].x, 1, PMIX_INT, regtypes);
+        /* pack the view */
+        PMIX_BFROPS_PACK_TYPE(ret, buffer, &ptr[i].view, 1, PMIX_UINT8, regtypes);
         if (PMIX_SUCCESS != ret) {
             return ret;
         }
-        /* pack the y-coord */
-        PMIX_BFROPS_PACK_TYPE(ret, buffer, &ptr[i].y, 1, PMIX_INT, regtypes);
+        /* pack the number of dimensions */
+        PMIX_BFROPS_PACK_TYPE(ret, buffer, &ptr[i].dims, 1, PMIX_SIZE, regtypes);
         if (PMIX_SUCCESS != ret) {
             return ret;
         }
-        /* pack the z-coord */
-        PMIX_BFROPS_PACK_TYPE(ret, buffer, &ptr[i].z, 1, PMIX_INT, regtypes);
+        /* pack the array of coordinates */
+        PMIX_BFROPS_PACK_TYPE(ret, buffer, ptr[i].coord, ptr[i].dims, PMIX_INT, regtypes);
         if (PMIX_SUCCESS != ret) {
             return ret;
         }

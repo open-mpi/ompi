@@ -623,6 +623,16 @@ static pmix_status_t process_maps(char *nspace, char *nregex, char *pregex)
         return rc;
     }
 
+    /* bozo check */
+    if (pmix_argv_count(nodes) != pmix_argv_count(procs)) {
+        rc = PMIX_ERR_BAD_PARAM;
+        PMIX_ERROR_LOG(rc);
+        pmix_argv_free(nodes);
+        pmix_argv_free(procs);
+        PMIX_RELEASE_THREAD(&pmix_pnet_globals.lock);
+        return rc;
+    }
+
     /* see if we already know about this job */
     job = NULL;
     if (0 < pmix_list_get_size(&pmix_pnet_globals.jobs)) {

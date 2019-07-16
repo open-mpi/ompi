@@ -16,7 +16,7 @@
  *                         reserved.
  * Copyright (c) 2017      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2018      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2018-2019 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -52,7 +52,7 @@
 #ifndef PMIX_SYS_ATOMIC_H
 #define PMIX_SYS_ATOMIC_H 1
 
-#include "pmix_config.h"
+#include "src/include/pmix_config.h"
 
 #include <stdbool.h>
 

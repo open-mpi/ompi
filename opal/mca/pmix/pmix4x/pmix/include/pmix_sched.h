@@ -64,15 +64,19 @@ extern "C" {
 typedef struct pmix_fabric_s {
     /* user-supplied name for this fabric */
     char *name;
-    /* revision - tracks how many times the
-     * fabric info has been updated. Used to detect
-     * that a change has occurred since the last
-     * time the data was accessed. Restricted to
-     * PMIx-internal use */
-    uint64_t revision;
-    /* PMIx server-defined object for internal use */
+    /* communication cost array - the number of vertices
+     * (nverts) equals the number of interfaces in the
+     * fabric. This equates to the number of columns & rows
+     * in the commcost array as the matrix is symmetric */
+    uint16_t **commcost;
+    uint32_t nverts;
+    /* object pointer for use by the PMIx server library */
     void *module;
 } pmix_fabric_t;
+
+/* convenience macros to support pmix_fabric_t */
+#define PMIX_FABRIC_CONSTRUCT(x) \
+    memset(x, 0, sizeof(pmix_fabric_t))
 
 /* Register for access to fabric-related information, including
  * communication cost matrix. This call must be made prior to
@@ -83,9 +87,9 @@ typedef struct pmix_fabric_s {
  *          utilize this field
  *
  * directives - an optional array of values indicating desired
- *              behaviors and/or fabric to be accessed via
- *              the returned struct. If NULL, then the highest
- *              priority available fabric will return the struct
+ *              behaviors and/or fabric to be accessed. If NULL,
+ *              then the highest priority available fabric will
+ *              be used
  *
  * ndirs - number of elements in the directives array
  *
@@ -106,62 +110,9 @@ PMIX_EXPORT pmix_status_t PMIx_server_register_fabric(pmix_fabric_t *fabric,
  */
 PMIX_EXPORT pmix_status_t PMIx_server_deregister_fabric(pmix_fabric_t *fabric);
 
-/* Get the number of vertices in the provided fabric.
- * To avoid blocking the caller, this function will
- * always return immediately, returning a PMIX_ERR_RESOURCE_BUSY
- * status if the matrix is in the process of being updated.
- *
- * fabric - pointer to the pmix_fabric_t struct provided
- *          to the registration function
- *
- * nverts - pointer to the location where the number of
- *          vertices is to be returned
- *
- * Return values include:
- *
- * PMIX_SUCCESS - indicates return of a valid value
- * PMIX_ERR_RESOURCE_BUSY - matrix is being updated
- * PMIX_ERR_FABRIC_UPDATED - fabric info has been updated since
- *                           last call involving this pmix_fabric_t
- */
-PMIX_EXPORT pmix_status_t PMIx_server_get_num_vertices(pmix_fabric_t *fabric,
-                                                       uint32_t *nverts);
-
-/* Obtain communication cost for messages transmitted from indicated
- * source to destination across the provided fabric - i.e.,
- * the value of the (src,dest) entry of that fabric's communication
- * cost matrix. To avoid blocking the caller, this function will
- * always return immediately, returning a PMIX_ERR_RESOURCE_BUSY
- * status if the matrix is in the process of being updated.
- *
- * fabric - pointer to the pmix_fabric_t struct provided to
- *          the registration function
- *
- * src - the index of the originating vertex for the communication
- *
- * dest - the index of the destination vertex for the communication
- *
- * cost - pointer to the location where the cost is to be returned
- *
- * Return values include:
- *
- * PMIX_SUCCESS - indicates return of a valid value
- * PMIX_ERR_BAD_PARAM - src and/or dest is out of bounds
- * PMIX_ERR_RESOURCE_BUSY - matrix is being updated
- * PMIX_ERR_FABRIC_UPDATED - fabric info has been updated since
- *                           last call involving this pmix_fabric_t
- */
-PMIX_EXPORT pmix_status_t PMIx_server_get_comm_cost(pmix_fabric_t *fabric,
-                                                    uint32_t src, uint32_t dest,
-                                                    uint16_t *cost);
-
-/* Given a communication cost matrix index, return the corresponding
- * vertex info in the provided fabric and the name of the node upon
+/* Given a communication cost matrix index for a specified fabric,
+ * return the corresponding vertex info and the name of the node upon
  * which it resides.
- * If the PMIX_ERR_RESOURCE_BUSY or PMIX_ERR_FABRIC_UPDATED status is
- * returned, then the caller should update their cost information
- * before re-issuing this request to ensure accurate correlation
- * between cost and LID
  *
  * fabric - pointer to the pmix_fabric_t struct provided to
  *          the registration function
@@ -179,20 +130,14 @@ PMIX_EXPORT pmix_status_t PMIx_server_get_comm_cost(pmix_fabric_t *fabric,
  *
  * PMIX_SUCCESS - indicates return of a valid value
  * PMIX_ERR_BAD_PARAM - provided index is out of bounds
- * PMIX_ERR_RESOURCE_BUSY - matrix is being updated
- * PMIX_ERR_FABRIC_UPDATED - fabric info has been updated since
- *                           last call involving this pmix_fabric_t
  */
 PMIX_EXPORT pmix_status_t PMIx_server_get_vertex_info(pmix_fabric_t *fabric,
                                                       uint32_t i, pmix_value_t *vertex,
                                                       char **nodename);
 
-/* Given vertex info, return the corresponding communication cost matrix
- * index and the name of the node upon which it resides.
- * If the PMIX_ERR_RESOURCE_BUSY or PMIX_ERR_FABRIC_UPDATED status is
- * returned, then the caller should update their cost information
- * before re-issuing this request to ensure accurate correlation
- * between cost and LID
+/* Given vertex info and the name of the device upon which that
+ * vertex resides, return the corresponding communication cost matrix
+ * index
  *
  * fabric - pointer to the pmix_fabric_t struct provided to
  *          the registration function
@@ -200,10 +145,6 @@ PMIX_EXPORT pmix_status_t PMIx_server_get_vertex_info(pmix_fabric_t *fabric,
  * vertex - pointer to the vertex info whose index is being requested
  *
  * i - pointer to the location where the index is to be returned
- *
- * nodename - pointer to the location where the string nodename
- *            is to be returned. The caller is responsible for
- *            releasing the string when done
  *
  * Return values include:
  *
@@ -214,8 +155,7 @@ PMIX_EXPORT pmix_status_t PMIx_server_get_vertex_info(pmix_fabric_t *fabric,
  *                           last call involving this pmix_fabric_t
   */
 PMIX_EXPORT pmix_status_t PMIx_server_get_index(pmix_fabric_t *fabric,
-                                                pmix_value_t *vertex, uint32_t *i,
-                                                char **nodename);
+                                                pmix_value_t *vertex, uint32_t *i);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }
