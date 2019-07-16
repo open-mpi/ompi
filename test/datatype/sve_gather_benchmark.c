@@ -367,8 +367,8 @@ static int do_test_for_ddt( MPI_Datatype sddt, MPI_Datatype rddt, int length )
 #define DO_OPTIMIZED_INDEXED_GAP        0x08
 #define DO_STRUCT_CONSTANT_GAP_RESIZED  0x10
 
-#define MIN_LENGTH   1024*32
-#define MAX_LENGTH   (1024*1024)
+#define MIN_LENGTH   1024
+#define MAX_LENGTH   (1024*1024*8)
 
 int main( int argc, char* argv[] )
 {
