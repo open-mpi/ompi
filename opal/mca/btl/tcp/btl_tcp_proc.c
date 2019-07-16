@@ -17,7 +17,7 @@
  * Copyright (c) 2015-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2015-2018 Cisco Systems, Inc.  All rights reserved
- * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
+ * Copyright (c) 2018-2019 Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -198,8 +198,6 @@ mca_btl_tcp_proc_t* mca_btl_tcp_proc_create(opal_proc_t* proc)
         }
     }
 
-    free(remote_addrs);
-
     /* allocate space for endpoint array - one for each exported address */
     btl_proc->proc_endpoints = (mca_btl_base_endpoint_t**)
         malloc((1 + btl_proc->proc_addr_count) *
@@ -221,6 +219,10 @@ cleanup:
             OBJ_RELEASE(proc);      /* and the ref on the OMPI proc */
             btl_proc = NULL;
         }
+    }
+
+    if (NULL != remote_addrs) {
+        free(remote_addrs);
     }
 
     OPAL_THREAD_UNLOCK(&mca_btl_tcp_component.tcp_lock);
