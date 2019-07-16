@@ -268,14 +268,19 @@ typedef uint32_t pmix_rank_t;
 #define PMIX_PARENT_ID                      "pmix.parent"           // (pmix_proc_t*) identifier of the process that called PMIx_Spawn
                                                                     //                to launch this proc's application
 #define PMIX_EXIT_CODE                      "pmix.exit.code"        // (int) exit code returned when proc terminated
-#define PMIX_NETWORK_COORDINATE             "pmix.net.coord"        // (pmix_coord_t*) Network coordinate of the specified process
-#define PMIX_NETWORK_COORD_SYSTEM           "pmix.net.coordsys"     // (pmix_coord_system_t) Network coordinate system being employed to
-                                                                    //                describe the specified network plane
+#define PMIX_NETWORK_COORDINATE             "pmix.net.coord"        // (pmix_coord_t*) Network coordinate of the specified process in
+                                                                    //       the given view type (e.g., logical vs physical)
+#define PMIX_NETWORK_VIEW                   "pmix.net.view"         // (pmix_coord_view_t) Requested view type (e.g., logical vs physical)
+#define PMIX_NETWORK_DIMS                   "pmix.net.dims"         // (uint32_t) Number of dimensions in the specified network plane/view
 #define PMIX_NETWORK_PLANE                  "pmix.net.plane"        // (char*) string ID of a network plane
 #define PMIX_NETWORK_SWITCH                 "pmix.net.switch"       // (char*) string ID of a network switch
 #define PMIX_NETWORK_NIC                    "pmix.net.nic"          // (char*) string ID of a NIC
 #define PMIX_NETWORK_ENDPT                  "pmix.net.endpt"        // (assigned) network endpt for process - type assigned by
                                                                     //            fabric provider
+#define PMIX_NETWORK_SHAPE                  "pmix.net.shape"        // (pmix_data_array_t*) number of interfaces (uint32_t) on each dimension of the
+                                                                    //        specified network plane in the requested view
+#define PMIX_NETWORK_SHAPE_STRING           "pmix.net.shapestr"     // (char*) network shape expressed as a string (e.g., "10x12x2")
+
 
 /* size info */
 #define PMIX_UNIV_SIZE                      "pmix.univ.size"        // (uint32_t) #procs in this nspace
@@ -1079,19 +1084,6 @@ typedef enum {
 } pmix_group_operation_t;
 
 
-/* define a structure for a proc's network coordinate */
-typedef struct pmix_coord {
-    int x;
-    int y;
-    int z;
-} pmix_coord_t;
-
-/* define coordinate system values */
-typedef uint8_t pmix_coord_system_t;
-#define PMIX_COORD_CARTESIAN    0x00
-#define PMIX_COORD_TOROID       0x01
-#define PMIX_COORD_CYLINDRICAL  0x02
-
 
 /* define some "hooks" external libraries can use to
  * intercept memory allocation/release operations */
@@ -1141,6 +1133,60 @@ static inline void* pmix_calloc(size_t n, size_t m)
 /* define a convenience macro for checking names */
 #define PMIX_CHECK_PROCID(a, b) \
     (PMIX_CHECK_NSPACE((a)->nspace, (b)->nspace) && ((a)->rank == (b)->rank || (PMIX_RANK_WILDCARD == (a)->rank || PMIX_RANK_WILDCARD == (b)->rank)))
+
+
+/****    PMIX COORD    ****/
+/* define coordinate system views */
+typedef uint8_t pmix_coord_view_t;
+#define PMIX_COORD_VIEW_UNDEF       0x00
+#define PMIX_COORD_LOGICAL_VIEW     0x01
+#define PMIX_COORD_PHYSICAL_VIEW    0x02
+
+/* define a structure for a proc's network coordinate */
+typedef struct pmix_coord {
+    pmix_coord_view_t view;
+    int *coord;
+    size_t dims;
+} pmix_coord_t;
+
+#define PMIX_COORD_CREATE(m, d, n)                                      \
+    do {                                                                \
+        (m) = (pmix_coord_t*)pmix_calloc((n), sizeof(pmix_coord_t));    \
+        if (NULL != (m)) {                                              \
+            (m)->view = PMIX_COORD_VIEW_UNDEF;                          \
+            (m)->dims = (d);                                            \
+            (m)->coord = (int*)pmix_calloc((m)->dims, sizeof(int));     \
+        }                                                               \
+    } while(0)
+
+#define PMIX_COORD_CONSTRUCT(m, d)          \
+    do {                                    \
+        (m)->view = PMIX_COORD_VIEW_UNDEF;  \
+        (m)->coord = NULL;                  \
+        (m)->dims = 0;                      \
+    } while(0)
+
+#define PMIX_COORD_DESTRUCT(m)              \
+    do {                                    \
+        (m)->view = PMIX_COORD_VIEW_UNDEF;  \
+        if (NULL != (m)->coord) {           \
+            pmix_free((m)->coord);          \
+            (m)->coord = NULL;              \
+            (m)->dims = 0;                  \
+        }                                   \
+    } while(0)
+
+#define PMIX_COORD_FREE(m, n)                       \
+    do {                                            \
+        size_t _nc_;                                \
+        if (NULL != (m)) {                          \
+            for (_nc_ = 0; _nc_ < (n); _nc_++) {    \
+                PMIX_COORD_DESTRUCT(&(m)[_nc_]);    \
+            }                                       \
+            free((m));                              \
+            (m) = NULL;                             \
+        }                                           \
+    } while(0)
 
 
 /****    PMIX BYTE OBJECT    ****/

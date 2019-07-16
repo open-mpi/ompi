@@ -504,6 +504,7 @@ pmix_status_t pmix_pfexec_base_setup_child(pmix_pfexec_child_t *child)
         if (fd != fileno(stdin)) {
             ret = dup2(fd, fileno(stdin));
             if (ret < 0) {
+                close(fd);
                 return PMIX_ERR_SYS_OTHER;
             }
         }

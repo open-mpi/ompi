@@ -76,14 +76,11 @@ static void setup_cbfunc(pmix_status_t status,
     mycaddy_t *mq = (mycaddy_t*)provided_cbdata;
     size_t n;
 
-    /* print out what came back */
-    pmix_output(0, "SETUP_APP RETURNED %d INFO", (int)ninfo);
     /* transfer it to the caddy for return to the main thread */
     if (0 < ninfo) {
         PMIX_INFO_CREATE(mq->info, ninfo);
         mq->ninfo = ninfo;
         for (n=0; n < ninfo; n++) {
-            fprintf(stderr, "Key %s Type %s(%d)\n", info[n].key, PMIx_Data_type_string(info[n].value.type), info[n].value.type);
             PMIX_INFO_XFER(&mq->info[n], &info[n]);
         }
     }
@@ -102,8 +99,7 @@ int main(int argc, char **argv)
     pmix_info_t *info, *iptr;
     pmix_status_t rc;
     pmix_fabric_t myfabric;
-    uint32_t nverts, n32, m32;
-    uint16_t cost;
+    uint32_t n32, m32;
     pmix_value_t val;
     size_t ninfo;
     int exit_code=0;
@@ -120,7 +116,11 @@ int main(int argc, char **argv)
         exit(1);
     }
 
-    fprintf(stderr, "Testing version %s\n", PMIx_Get_version());
+    fprintf(stderr, "PID: %lu Testing version %s\n", (unsigned long)getpid(), PMIx_Get_version());
+
+    /* set a known network configuration for the pnet/test component */
+    putenv("PMIX_MCA_pnet_test_nverts=nodes:5;plane:d:3");
+    putenv("PMIX_MCA_pnet=test");
 
     ninfo = 1;
     PMIX_INFO_CREATE(info, ninfo);
@@ -138,24 +138,17 @@ int main(int argc, char **argv)
         goto cleanup;
     }
 
-    /* get the number of vertices in the fabric */
-    rc = PMIx_server_get_num_vertices(&myfabric, &nverts);
-    if (PMIX_SUCCESS != rc) {
-        fprintf(stderr, "Fabric get_num_vertices failed with error: %s\n", PMIx_Error_string(rc));
-        goto cleanup;
-    }
-    fprintf(stderr, "Number of fabric vertices: %u\n", nverts);
+    fprintf(stderr, "Number of fabric vertices: %u\n", myfabric.nverts);
 
-    for (n32=0; n32 < nverts; n32++) {
+    for (n32=0; n32 < myfabric.nverts; n32++) {
         fprintf(stderr, "%u:", n32);
-        for (m32=0; m32 < nverts; m32++) {
-            rc = PMIx_server_get_comm_cost(&myfabric, n32, m32, &cost);
-            fprintf(stderr, "   %u", cost);
+        for (m32=0; m32 < myfabric.nverts; m32++) {
+            fprintf(stderr, "   %u", myfabric.commcost[n32][m32]);
         }
         fprintf(stderr, "\n");
     }
 
-    rc = PMIx_server_get_vertex_info(&myfabric, nverts/2, &val, &nodename);
+    rc = PMIx_server_get_vertex_info(&myfabric, myfabric.nverts/2, &val, &nodename);
     if (PMIX_SUCCESS != rc) {
         fprintf(stderr, "Fabric get vertex info failed with error: %s\n", PMIx_Error_string(rc));
         goto cleanup;
@@ -164,7 +157,7 @@ int main(int argc, char **argv)
         fprintf(stderr, "Fabric get vertex info returned wrong type: %s\n", PMIx_Data_type_string(val.type));
         goto cleanup;
     }
-    fprintf(stderr, "Vertex info for index %u on node %s:\n", nverts/2, nodename);
+    fprintf(stderr, "Vertex info for index %u on node %s:\n", myfabric.nverts/2, nodename);
     info = (pmix_info_t*)val.data.darray->array;
     for (n=0; n < val.data.darray->size; n++) {
         fprintf(stderr, "\t%s:\t%s\n", info[n].key, info[n].value.data.string);
@@ -177,12 +170,12 @@ int main(int argc, char **argv)
     val.type = PMIX_DATA_ARRAY;
     PMIX_DATA_ARRAY_CREATE(val.data.darray, 1, PMIX_INFO);
     val.data.darray->array = info;
-    rc = PMIx_server_get_index(&myfabric, &val, &n32, &nodename);
+    rc = PMIx_server_get_index(&myfabric, &val, &n32);
     if (PMIX_SUCCESS != rc) {
         fprintf(stderr, "Fabric get index failed with error: %s\n", PMIx_Error_string(rc));
         goto cleanup;
     }
-    fprintf(stderr, "Index %u on host %s\n", n32, nodename);
+    fprintf(stderr, "Index %u for NIC %s\n", n32, "test002:nic002");
 
     /* setup an application */
     PMIX_INFO_CREATE(iptr, 4);
@@ -217,7 +210,7 @@ int main(int argc, char **argv)
 
     /* setup the local subsystem */
     DEBUG_CONSTRUCT_LOCK(&lock);
-        if (PMIX_SUCCESS != (rc = PMIx_server_setup_local_support("SIMPSCHED", cd.info, cd.ninfo,
+    if (PMIX_SUCCESS != (rc = PMIx_server_setup_local_support("SIMPSCHED", cd.info, cd.ninfo,
                                                                   local_cbfunc, &lock))) {
         pmix_output(0, "[%s:%d] PMIx_server_setup_local_support failed: %s", __FILE__, __LINE__, PMIx_Error_string(rc));
         DEBUG_DESTRUCT_LOCK(&lock);

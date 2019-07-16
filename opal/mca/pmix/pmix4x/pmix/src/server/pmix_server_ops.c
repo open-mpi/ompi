@@ -918,10 +918,15 @@ pmix_status_t pmix_server_fence(pmix_server_caddy_t *cd,
         /* see if we are to collect data or enforce a timeout - we don't internally care
          * about any other directives */
         for (n=0; n < ninfo; n++) {
-            if (0 == strcmp(info[n].key, PMIX_COLLECT_DATA)) {
-                collect_data = true;
-            } else if (0 == strncmp(info[n].key, PMIX_TIMEOUT, PMIX_MAX_KEYLEN)) {
-                tv.tv_sec = info[n].value.data.uint32;
+            if (PMIX_CHECK_KEY(&info[n], PMIX_COLLECT_DATA)) {
+                collect_data = PMIX_INFO_TRUE(&info[n]);
+            } else if (PMIX_CHECK_KEY(&info[n], PMIX_TIMEOUT)) {
+                PMIX_VALUE_GET_NUMBER(rc, &info[n].value, tv.tv_sec, uint32_t);
+                if (PMIX_SUCCESS != rc) {
+                    PMIX_PROC_FREE(procs, nprocs);
+                    PMIX_INFO_FREE(info, ninfo);
+                    return rc;
+                }
             }
         }
     }
@@ -3087,7 +3092,7 @@ pmix_status_t pmix_server_job_ctrl(pmix_peer_t *peer,
 
     cnt = 0;  // track how many infos are cleanup related
     for (n=0; n < cd->ninfo; n++) {
-        if (0 == strncmp(cd->info[n].key, PMIX_REGISTER_CLEANUP, PMIX_MAX_KEYLEN)) {
+        if (PMIX_CHECK_KEY(&cd->info[n], PMIX_REGISTER_CLEANUP)) {
             ++cnt;
             if (PMIX_STRING != cd->info[n].value.type ||
                 NULL == cd->info[n].value.data.string) {
@@ -3103,7 +3108,7 @@ pmix_status_t pmix_server_job_ctrl(pmix_peer_t *peer,
             }
             cf->path = strdup(cd->info[n].value.data.string);
             pmix_list_append(&cachefiles, &cf->super);
-        } else if (0 == strncmp(cd->info[n].key, PMIX_REGISTER_CLEANUP_DIR, PMIX_MAX_KEYLEN)) {
+        } else if (PMIX_CHECK_KEY(&cd->info[n], PMIX_REGISTER_CLEANUP_DIR)) {
             ++cnt;
             if (PMIX_STRING != cd->info[n].value.type ||
                 NULL == cd->info[n].value.data.string) {
@@ -3119,10 +3124,10 @@ pmix_status_t pmix_server_job_ctrl(pmix_peer_t *peer,
             }
             cdir->path = strdup(cd->info[n].value.data.string);
             pmix_list_append(&cachedirs, &cdir->super);
-        } else if (0 == strncmp(cd->info[n].key, PMIX_CLEANUP_RECURSIVE, PMIX_MAX_KEYLEN)) {
+        } else if (PMIX_CHECK_KEY(&cd->info[n], PMIX_CLEANUP_RECURSIVE)) {
             recurse = PMIX_INFO_TRUE(&cd->info[n]);
             ++cnt;
-        } else if (0 == strncmp(cd->info[n].key, PMIX_CLEANUP_IGNORE, PMIX_MAX_KEYLEN)) {
+        } else if (PMIX_CHECK_KEY(&cd->info[n], PMIX_CLEANUP_IGNORE)) {
             if (PMIX_STRING != cd->info[n].value.type ||
                 NULL == cd->info[n].value.data.string) {
                 /* return an error */
@@ -3138,7 +3143,7 @@ pmix_status_t pmix_server_job_ctrl(pmix_peer_t *peer,
             cf->path = strdup(cd->info[n].value.data.string);
             pmix_list_append(&ignorefiles, &cf->super);
             ++cnt;
-        } else if (0 == strncmp(cd->info[n].key, PMIX_CLEANUP_LEAVE_TOPDIR, PMIX_MAX_KEYLEN)) {
+        } else if (PMIX_CHECK_KEY(&cd->info[n], PMIX_CLEANUP_LEAVE_TOPDIR)) {
             leave_topdir = PMIX_INFO_TRUE(&cd->info[n]);
             ++cnt;
         }
@@ -3556,8 +3561,7 @@ pmix_status_t pmix_server_iofreg(pmix_peer_t *peer,
                 continue;
             }
             /* do we already have this source for this peer? */
-            if (0 == strncmp(cd->procs[n].nspace, req->pname.nspace, PMIX_MAX_NSLEN) &&
-                (PMIX_RANK_WILDCARD == req->pname.rank || cd->procs[n].rank == req->pname.rank)) {
+            if (PMIX_CHECK_PROCID(&cd->procs[n], &req->pname)) {
                 match = true;
                 if ((req->channels & cd->channels) != cd->channels) {
                     /* this is a channel update */

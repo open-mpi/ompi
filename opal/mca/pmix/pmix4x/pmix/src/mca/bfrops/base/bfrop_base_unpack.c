@@ -1470,23 +1470,26 @@ pmix_status_t pmix_bfrops_base_unpack_coord(pmix_pointer_array_t *regtypes,
     n = *num_vals;
 
     for (i = 0; i < n; ++i) {
-        /* unpack the x-axis */
+        /* unpack the view */
         m=1;
-        PMIX_BFROPS_UNPACK_TYPE(ret, buffer, &ptr[i].x, &m, PMIX_INT, regtypes);
+        PMIX_BFROPS_UNPACK_TYPE(ret, buffer, &ptr[i].view, &m, PMIX_UINT8, regtypes);
         if (PMIX_SUCCESS != ret) {
             return ret;
         }
-        /* unpack the y-coord */
+        /* unpack the dims */
         m=1;
-        PMIX_BFROPS_UNPACK_TYPE(ret, buffer, &ptr[i].y, &m, PMIX_INT, regtypes);
+        PMIX_BFROPS_UNPACK_TYPE(ret, buffer, &ptr[i].dims, &m, PMIX_SIZE, regtypes);
         if (PMIX_SUCCESS != ret) {
             return ret;
         }
-        /* unpack the z-coord */
-        m=1;
-        PMIX_BFROPS_UNPACK_TYPE(ret, buffer, &ptr[i].z, &m, PMIX_INT, regtypes);
-        if (PMIX_SUCCESS != ret) {
-            return ret;
+        if (0 < ptr[i].dims) {
+            ptr[i].coord = (int*)malloc(ptr[i].dims * sizeof(int));
+            /* unpack the coords */
+            m=ptr[i].dims;
+            PMIX_BFROPS_UNPACK_TYPE(ret, buffer, ptr[i].coord, &m, PMIX_INT, regtypes);
+            if (PMIX_SUCCESS != ret) {
+                return ret;
+            }
         }
     }
     return PMIX_SUCCESS;

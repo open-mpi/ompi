@@ -162,17 +162,6 @@ typedef pmix_status_t (*pmix_pnet_base_module_register_fabric_fn_t)(pmix_fabric_
 /* Deregister the fabric, giving the associated module a chance to cleanup */
 typedef pmix_status_t (*pmix_pnet_base_deregister_fabric_fn_t)(pmix_fabric_t *fabric);
 
-/* Get the number of vertices in the fabric */
-typedef pmix_status_t (*pmix_pnet_base_module_get_num_verts_fn_t)(pmix_fabric_t *fabric,
-                                                                  uint32_t *nverts);
-
-/* Get the cost of communicating from the src to the dest
- * index - i.e., return the [src,dest] location in the
- * communication cost array */
-typedef pmix_status_t (*pmix_pnet_base_module_get_cost_fn_t)(pmix_fabric_t *fabric,
-                                                             uint32_t src, uint32_t dest,
-                                                             uint16_t *cost);
-
 /* Get the identifier and nodename corresponding to the provided
  * index of the communication cost array - caller must provide
  * the address of an allocated pmix_value_t structure */
@@ -182,11 +171,9 @@ typedef pmix_status_t (*pmix_pnet_base_module_get_vertex_fn_t)(pmix_fabric_t *fa
                                                                char **nodename);
 
 /* Get the index in the communication cost array corresponding
- * to the provided identifier and the node upon which it resides */
+ * to the provided identifier(s) */
 typedef pmix_status_t (*pmix_pnet_base_module_get_index_fn_t)(pmix_fabric_t *fabric,
-                                                              pmix_value_t *identifier,
-                                                              uint32_t *i,
-                                                              char **nodename);
+                                                              pmix_value_t *vertex, uint32_t *i);
 /**
  * Base structure for a PNET module. Each component should malloc a
  * copy of the module structure for each fabric plane they support.
@@ -208,8 +195,6 @@ typedef struct {
     pmix_pnet_base_module_deliver_inventory_fn_t    deliver_inventory;
     pmix_pnet_base_module_register_fabric_fn_t      register_fabric;
     pmix_pnet_base_deregister_fabric_fn_t           deregister_fabric;
-    pmix_pnet_base_module_get_num_verts_fn_t        get_num_vertices;
-    pmix_pnet_base_module_get_cost_fn_t             get_cost;
     pmix_pnet_base_module_get_vertex_fn_t           get_vertex;
     pmix_pnet_base_module_get_index_fn_t            get_index;
 } pmix_pnet_module_t;

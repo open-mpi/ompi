@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2015-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015-2019 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -31,13 +31,112 @@
 
 #include "src/mca/bfrops/base/base.h"
 
+static const char* basic_type_string(pmix_data_type_t type)
+{
+    switch(type) {
+        case PMIX_BOOL:
+            return "PMIX_BOOL";
+        case PMIX_BYTE:
+            return "PMIX_BYTE";
+        case PMIX_STRING:
+            return "PMIX_STRING";
+        case PMIX_SIZE:
+            return "PMIX_SIZE";
+        case PMIX_PID:
+            return "PMIX_PID";
+        case PMIX_INT:
+            return "PMIX_INT";
+        case PMIX_INT8:
+            return "PMIX_INT8";
+        case PMIX_INT16:
+            return "PMIX_INT16";
+        case PMIX_INT32:
+            return "PMIX_INT32";
+        case PMIX_INT64:
+            return "PMIX_INT64";
+        case PMIX_UINT:
+            return "PMIX_UINT";
+        case PMIX_UINT8:
+            return "PMIX_UINT8";
+        case PMIX_UINT16:
+            return "PMIX_UINT16";
+        case PMIX_UINT32:
+            return "PMIX_UINT32";
+        case PMIX_UINT64:
+            return "PMIX_UINT64";
+        case PMIX_FLOAT:
+            return "PMIX_FLOAT";
+        case PMIX_DOUBLE:
+            return "PMIX_DOUBLE";
+        case PMIX_TIMEVAL:
+            return "PMIX_TIMEVAL";
+        case PMIX_TIME:
+            return "PMIX_TIME";
+        case PMIX_STATUS:
+            return "PMIX_STATUS";
+        case PMIX_VALUE:
+            return "PMIX_VALUE";
+        case PMIX_PROC:
+            return "PMIX_PROC";
+        case PMIX_APP:
+            return "PMIX_APP";
+        case PMIX_INFO:
+            return "PMIX_INFO";
+        case PMIX_PDATA:
+            return "PMIX_PDATA";
+        case PMIX_BUFFER:
+            return "PMIX_BUFFER";
+        case PMIX_BYTE_OBJECT:
+            return "PMIX_BYTE_OBJECT";
+        case PMIX_KVAL:
+            return "PMIX_KVAL";
+        case PMIX_PERSIST:
+            return "PMIX_PERSIST";
+        case PMIX_POINTER:
+            return "PMIX_POINTER";
+        case PMIX_SCOPE:
+            return "PMIX_SCOPE";
+        case PMIX_DATA_RANGE:
+            return "PMIX_DATA_RANGE";
+        case PMIX_COMMAND:
+            return "PMIX_COMMAND";
+        case PMIX_INFO_DIRECTIVES:
+            return "PMIX_INFO_DIRECTIVES";
+        case PMIX_DATA_TYPE:
+            return "PMIX_DATA_TYPE";
+        case PMIX_PROC_STATE:
+            return "PMIX_PROC_STATE";
+        case PMIX_PROC_INFO:
+            return "PMIX_PROC_INFO";
+        case PMIX_DATA_ARRAY:
+            return "PMIX_DATA_ARRAY";
+        case PMIX_PROC_RANK:
+            return "PMIX_PROC_RANK";
+        case PMIX_QUERY:
+            return "PMIX_QUERY";
+        case PMIX_COMPRESSED_STRING:
+            return "PMIX_COMPRESSED_STRING";
+        case PMIX_ALLOC_DIRECTIVE:
+            return "PMIX_ALLOC_DIRECTIVE";
+        case PMIX_IOF_CHANNEL:
+            return "PMIX_IOF_CHANNEL";
+        case PMIX_ENVAR:
+            return "PMIX_ENVAR";
+        case PMIX_COORD:
+            return "PMIX_COORD";
+        case PMIX_REGATTR:
+            return "PMIX_REGATTR";
+        default:
+            return "NOT INITIALIZED";
+    }
+}
 PMIX_EXPORT const char* PMIx_Data_type_string(pmix_data_type_t type)
 {
     pmix_bfrops_base_active_module_t *active;
     char *reply;
 
     if (!pmix_bfrops_globals.initialized) {
-        return "NOT INITIALIZED";
+        return basic_type_string(type);
     }
 
     PMIX_LIST_FOREACH(active, &pmix_bfrops_globals.actives, pmix_bfrops_base_active_module_t) {

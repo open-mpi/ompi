@@ -26,7 +26,7 @@
 #if !defined(PMIX_THREAD_USAGE_H)
 #define PMIX_THREAD_USAGE_H
 
-#include "pmix_config.h"
+#include "src/include/pmix_config.h"
 
 #include "src/atomics/sys/atomic.h"
 #include "src/include/prefetch.h"

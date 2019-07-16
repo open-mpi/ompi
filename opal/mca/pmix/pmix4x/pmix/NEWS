@@ -76,6 +76,45 @@ Master (not on release branches yet)
  - Fix a bug when registering default event handlers
 
 
+3.1.0 -- 17 Jan 2019
+----------------------
+**** THIS RELEASE MARKS THE STARTING POINT FOR FULL COMPLIANCE
+**** WITH THE PMIX v3 STANDARD. ALL API BEHAVIORS AND ATTRIBUTE
+**** DEFINITIONS MEET THE v3 STANDARD SPECIFICATIONS.
+ - Add a new, faster dstore GDS component 'ds21'
+ - Performance optimizations for the dstore GDS components.
+ - Plug miscellaneous memory leaks
+ - Silence an unnecessary warning message when checking connection
+   to a non-supporting server
+ - Ensure lost-connection events get delivered to default event
+   handlers
+ - Correctly handle cache refresh for queries
+ - Protect against race conditions between host and internal library
+   when dealing with async requests
+ - Cleanup tool operations and add support for connections to
+   remote servers. Initial support for debugger direct/indirect
+   launch verified with PRRTE. Cleanup setting of tmpdir options.
+   Drop rendezvous files when acting as a launcher
+ - Automatically store the server URI for easy access by client
+ - Provide MCA parameter to control TCP connect retry/timeout
+ - Update event notification system to properly evict oldest events
+   when more space is needed
+ - Fix a number of error paths
+ - Update IOF cache code to properly drop oldest message. Provide
+   MCA parameter for setting cache size.
+ - Handle setsockopt(SO_RCVTIMEO) not being supported
+ - Ensure that epilogs get run even when connections unexpectedly
+   terminate. Properly split epilog strings to process multiple
+   paths
+ - Pass the tool's command line to the server so it can be returned
+   in queries
+ - Add support for C11 atomics
+ - Support collection and forwarding of fabric-specific envars
+ - Improve handling of hwloc configure option
+ - Fix PMIx_server_generate_regex to preserve node ordering
+ - Fix a bug when registering default event handlers
+
+
 3.0.2 -- 18 Sept 2018
 ----------------------
 - Ensure we cleanup any active sensors when a peer departs. Allow the

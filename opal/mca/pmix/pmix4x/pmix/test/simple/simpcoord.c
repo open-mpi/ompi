@@ -129,13 +129,14 @@ int main(int argc, char **argv)
     pmix_value_t *val = &value;
     char *tmp;
     pmix_proc_t proc;
-    uint32_t nprocs, n;
+    uint32_t nprocs, n, *u32;
     int cnt, j;
     bool doabort = false;
     volatile bool active;
     pmix_info_t info, *iptr;
-    size_t ninfo;
+    size_t ninfo, m;
     pmix_status_t code;
+    pmix_coord_t *coords;
 
     if (1 < argc) {
         if (0 == strcmp("-abort", argv[1])) {
@@ -207,6 +208,61 @@ int main(int argc, char **argv)
     nprocs = val->data.uint32;
     PMIX_VALUE_RELEASE(val);
     pmix_output(0, "Client %s:%d universe size %d", myproc.nspace, myproc.rank, nprocs);
+
+    /* get our assigned network endpts */
+    if (PMIX_SUCCESS != (rc = PMIx_Get(&myproc, PMIX_NETWORK_ENDPT, NULL, 0, &val))) {
+        pmix_output(0, "Client ns %s rank %d: PMIx_Get network endpt failed: %s",
+                    myproc.nspace, myproc.rank, PMIx_Error_string(rc));
+        goto done;
+    }
+    pmix_output(0, "Client %s:%d was assigned %lu endpts",
+                myproc.nspace, myproc.rank,
+                (unsigned long)val->data.darray->size);
+
+    u32 = (uint32_t*)val->data.darray->array;
+    ninfo = val->data.darray->size;
+    {
+        char **foo = NULL;
+        for (n=0; n < ninfo; n++) {
+            asprintf(&tmp, "%d", u32[n]);
+            pmix_argv_append_nosize(&foo, tmp);
+            free(tmp);
+        }
+        tmp = pmix_argv_join(foo, ',');
+        pmix_argv_free(foo);
+        pmix_output(0, "ASSIGNED ENDPTS: %s", tmp);
+        free(tmp);
+    }
+
+    /* get our assigned network coordinates */
+    if (PMIX_SUCCESS != (rc = PMIx_Get(&myproc, PMIX_NETWORK_COORDINATE, NULL, 0, &val))) {
+        pmix_output(0, "Client ns %s rank %d: PMIx_Get network endpt failed: %s",
+                    myproc.nspace, myproc.rank, PMIx_Error_string(rc));
+        goto done;
+    }
+    pmix_output(0, "Client %s:%d was assigned %lu coordinates",
+                myproc.nspace, myproc.rank,
+                (unsigned long)val->data.darray->size);
+    coords = (pmix_coord_t*)val->data.darray->array;
+    ninfo = val->data.darray->size;
+    for (m=0; m < ninfo; m++) {
+        char **foo = NULL;
+        char *view;
+        for (n=0; n < coords[m].dims; n++) {
+            asprintf(&tmp, "%d", coords[m].coord[n]);
+            pmix_argv_append_nosize(&foo, tmp);
+            free(tmp);
+        }
+        tmp = pmix_argv_join(foo, ',');
+        pmix_argv_free(foo);
+        if (PMIX_COORD_LOGICAL_VIEW == coords[m].view) {
+            view = "LOGICAL";
+        } else {
+            view = "PHYSICAL";
+        }
+        pmix_output(0, "COORD[%d] VIEW %s: %s", (int)m, view, tmp);
+        free(tmp);
+    }
 
     /* put a few values */
     (void)asprintf(&tmp, "%s-%d-internal", myproc.nspace, myproc.rank);

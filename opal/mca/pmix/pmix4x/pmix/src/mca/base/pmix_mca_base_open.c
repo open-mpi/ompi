@@ -13,7 +13,7 @@
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2016-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2016-2019 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -68,7 +68,7 @@ int pmix_mca_base_open(void)
 {
     char *value;
     pmix_output_stream_t lds;
-    char hostname[64];
+    char hostname[PMIX_MAXHOSTNAMELEN] = {0};
     int var_id;
     int rc;
 
@@ -155,7 +155,7 @@ int pmix_mca_base_open(void)
     } else {
         set_defaults(&lds);
     }
-    gethostname(hostname, 64);
+    gethostname(hostname, PMIX_MAXHOSTNAMELEN-1);
     rc = asprintf(&lds.lds_prefix, "[%s:%05d] ", hostname, getpid());
     if (0 > rc) {
         return PMIX_ERR_OUT_OF_RESOURCE;
