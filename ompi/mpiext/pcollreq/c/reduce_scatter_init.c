@@ -13,8 +13,8 @@
  * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2015-2018 Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015-2019 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
@@ -32,6 +32,7 @@
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/op/op.h"
+#include "ompi/mca/coll/base/coll_base_util.h"
 #include "ompi/memchecker.h"
 #include "ompi/mpiext/pcollreq/c/mpiext_pcollreq_c.h"
 #include "ompi/runtime/ompi_spc.h"
@@ -135,10 +136,11 @@ int MPIX_Reduce_scatter_init(const void *sendbuf, void *recvbuf, const int recvc
 
     /* Invoke the coll component to perform the back-end operation */
 
-    OBJ_RETAIN(op);
     err = comm->c_coll->coll_reduce_scatter_init(sendbuf, recvbuf, recvcounts,
                                                  datatype, op, comm, info, request,
                                                  comm->c_coll->coll_reduce_scatter_init_module);
-    OBJ_RELEASE(op);
+    if (OPAL_LIKELY(OMPI_SUCCESS == err)) {
+        ompi_coll_base_retain_op(*request, op, datatype);
+    }
     OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);
 }

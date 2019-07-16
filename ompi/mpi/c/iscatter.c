@@ -15,8 +15,8 @@
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2015      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015-2019 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -31,6 +31,7 @@
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/datatype/ompi_datatype.h"
+#include "ompi/mca/coll/base/coll_base_util.h"
 #include "ompi/memchecker.h"
 #include "ompi/runtime/ompi_spc.h"
 
@@ -156,5 +157,24 @@ int MPI_Iscatter(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
     err = comm->c_coll->coll_iscatter(sendbuf, sendcount, sendtype, recvbuf,
                                      recvcount, recvtype, root, comm, request,
                                      comm->c_coll->coll_iscatter_module);
+    if (OPAL_LIKELY(OMPI_SUCCESS == err)) {
+        if (OMPI_COMM_IS_INTRA(comm)) {
+            if (MPI_IN_PLACE == recvbuf) {
+                recvtype = NULL;
+            } else if (ompi_comm_rank(comm) != root) {
+                sendtype = NULL;
+            }
+        } else {
+            if (MPI_ROOT == root) {
+                recvtype = NULL;
+            } else if (MPI_PROC_NULL == root) {
+                sendtype = NULL;
+                recvtype = NULL;
+            } else {
+                sendtype = NULL;
+            }
+        }
+        ompi_coll_base_retain_datatypes(*request, sendtype, recvtype);
+    }
     OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);
 }

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2012      Oak Rigde National Laboratory. All rights reserved.
- * Copyright (c) 2015-2018 Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015-2019 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2017-2018 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
@@ -19,6 +19,7 @@
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/datatype/ompi_datatype.h"
+#include "ompi/mca/coll/base/coll_base_util.h"
 #include "ompi/memchecker.h"
 #include "ompi/mpiext/pcollreq/c/mpiext_pcollreq_c.h"
 #include "ompi/runtime/ompi_spc.h"
@@ -87,5 +88,13 @@ int MPIX_Bcast_init(void *buffer, int count, MPI_Datatype datatype,
     err = comm->c_coll->coll_bcast_init(buffer, count, datatype, root, comm,
                                         info, request,
                                         comm->c_coll->coll_bcast_init_module);
+    if (OPAL_LIKELY(OMPI_SUCCESS == err)) {
+        if (!OMPI_COMM_IS_INTRA(comm)) {
+            if (MPI_PROC_NULL == root) {
+                datatype = NULL;
+            }
+        }
+        ompi_coll_base_retain_datatypes(*request, datatype, NULL);
+    }
     OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);
 }

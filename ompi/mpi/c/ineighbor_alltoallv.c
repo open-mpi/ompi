@@ -31,6 +31,7 @@
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/datatype/ompi_datatype.h"
+#include "ompi/mca/coll/base/coll_base_util.h"
 #include "ompi/memchecker.h"
 #include "ompi/mca/topo/topo.h"
 #include "ompi/mca/topo/base/base.h"
@@ -147,6 +148,9 @@ int MPI_Ineighbor_alltoallv(const void *sendbuf, const int sendcounts[], const i
     err = comm->c_coll->coll_ineighbor_alltoallv(sendbuf, sendcounts, sdispls,
                                                 sendtype, recvbuf, recvcounts, rdispls,
                                                 recvtype, comm, request, comm->c_coll->coll_ineighbor_alltoallv_module);
+    if (OPAL_LIKELY(OMPI_SUCCESS == err)) {
+        ompi_coll_base_retain_datatypes(*request, sendtype, recvtype);
+    }
     OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);
 }
 

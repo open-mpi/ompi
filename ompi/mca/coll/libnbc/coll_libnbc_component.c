@@ -13,8 +13,8 @@
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2016-2017 Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016-2019 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * Copyright (c) 2017      Ian Bradley Morgan and Anthony Skjellum. All
  *                         rights reserved.
@@ -328,21 +328,21 @@ ompi_coll_libnbc_progress(void)
                 /* done, remove and complete */
                 OPAL_THREAD_LOCK(&mca_coll_libnbc_component.lock);
                 opal_list_remove_item(&mca_coll_libnbc_component.active_requests,
-                                      &request->super.super.super);
+                                      &request->super.super.super.super);
                 OPAL_THREAD_UNLOCK(&mca_coll_libnbc_component.lock);
 
                 if( OMPI_SUCCESS == res || NBC_OK == res || NBC_SUCCESS == res ) {
-                    request->super.req_status.MPI_ERROR = OMPI_SUCCESS;
+                    request->super.super.req_status.MPI_ERROR = OMPI_SUCCESS;
                 }
                 else {
-                    request->super.req_status.MPI_ERROR = res;
+                    request->super.super.req_status.MPI_ERROR = res;
                 }
-                if(request->super.req_persistent) {
+                if(request->super.super.req_persistent) {
                     /* reset for the next communication */
                     request->row_offset = 0;
                 }
-                if(!request->super.req_persistent || !REQUEST_COMPLETE(&request->super)) {
-            	    ompi_request_complete(&request->super, true);
+                if(!request->super.super.req_persistent || !REQUEST_COMPLETE(&request->super.super)) {
+            	    ompi_request_complete(&request->super.super, true);
                 }
             }
             OPAL_THREAD_LOCK(&mca_coll_libnbc_component.lock);
@@ -407,7 +407,7 @@ request_start(size_t count, ompi_request_t ** requests)
         NBC_DEBUG(5, "tmpbuf address=%p size=%u\n", handle->tmpbuf, sizeof(handle->tmpbuf));
         NBC_DEBUG(5, "--------------------------------\n");
 
-        handle->super.req_complete = REQUEST_PENDING;
+        handle->super.super.req_complete = REQUEST_PENDING;
         handle->nbc_complete = false;
 
         res = NBC_Start(handle);
@@ -437,7 +437,7 @@ request_free(struct ompi_request_t **ompi_req)
     ompi_coll_libnbc_request_t *request =
         (ompi_coll_libnbc_request_t*) *ompi_req;
 
-    if( !REQUEST_COMPLETE(&request->super) ) {
+    if( !REQUEST_COMPLETE(&request->super.super) ) {
         return MPI_ERR_REQUEST;
     }
 
@@ -451,11 +451,11 @@ request_free(struct ompi_request_t **ompi_req)
 static void
 request_construct(ompi_coll_libnbc_request_t *request)
 {
-    request->super.req_type = OMPI_REQUEST_COLL;
-    request->super.req_status._cancelled = 0;
-    request->super.req_start = request_start;
-    request->super.req_free = request_free;
-    request->super.req_cancel = request_cancel;
+    request->super.super.req_type = OMPI_REQUEST_COLL;
+    request->super.super.req_status._cancelled = 0;
+    request->super.super.req_start = request_start;
+    request->super.super.req_free = request_free;
+    request->super.super.req_cancel = request_cancel;
 }
 
 
