@@ -75,7 +75,7 @@ void ompi_ialltoallw_f(char *sendbuf, MPI_Fint *sendcounts,
                        MPI_Fint *comm, MPI_Fint *request, MPI_Fint *ierr)
 {
     MPI_Comm c_comm;
-    MPI_Datatype *c_sendtypes, *c_recvtypes;
+    MPI_Datatype *c_sendtypes = NULL, *c_recvtypes;
     MPI_Request c_request;
     int size, c_ierr;
     OMPI_ARRAY_NAME_DECL(sendcounts);
@@ -101,7 +101,6 @@ void ompi_ialltoallw_f(char *sendbuf, MPI_Fint *sendcounts,
     for (int i=0; i<size; i++) {
         c_recvtypes[i] = PMPI_Type_f2c(recvtypes[i]);
     }
-    c_recvtypes = (MPI_Datatype *) malloc(size * sizeof(MPI_Datatype));
 
     sendbuf = (char *) OMPI_F2C_IN_PLACE(sendbuf);
     sendbuf = (char *) OMPI_F2C_BOTTOM(sendbuf);
@@ -122,7 +121,7 @@ void ompi_ialltoallw_f(char *sendbuf, MPI_Fint *sendcounts,
     OMPI_ARRAY_FINT_2_INT_CLEANUP(sdispls);
     OMPI_ARRAY_FINT_2_INT_CLEANUP(recvcounts);
     OMPI_ARRAY_FINT_2_INT_CLEANUP(rdispls);
-    if (MPI_IN_PLACE != sendbuf) {
+    if (NULL != c_sendtypes) {
         free(c_sendtypes);
     }
     free(c_recvtypes);
