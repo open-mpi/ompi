@@ -231,6 +231,10 @@ int opal_hwloc_base_filter_cpus(hwloc_topology_t topo)
     /* cache this info */
     sum->available = avail;
 
+    /* Treat --cpu-set analogously to how a cgroup is treated, eg make
+     * the loaded topolog only contain what is available. */
+    hwloc_topology_restrict(topo, avail, 0);
+
     return OPAL_SUCCESS;
 }
 
@@ -320,7 +324,7 @@ int opal_hwloc_base_get_topology(void)
                                                 0, (void*)addr, size, 0)) {
                 if (4 < opal_output_get_verbosity(opal_hwloc_base_framework.framework_output)) {
                     FILE *file = fopen("/proc/self/maps", "r");
-                    if (file) {
+                    if (NULL != file) {
                         char line[256];
                         opal_output(0, "Dumping /proc/self/maps");
 
@@ -731,17 +735,20 @@ static hwloc_obj_t df_search(hwloc_topology_t topo,
 #if HWLOC_API_VERSION >= 0x20000
         return NULL;
 #else
-        if (cache_level != HWLOC_OBJ_CACHE)
+        if (cache_level != HWLOC_OBJ_CACHE) {
             return NULL;
+        }
         search_depth = hwloc_get_cache_type_depth(topo, cache_level, (hwloc_obj_cache_type_t) -1);
 #endif
     }
-    if (HWLOC_TYPE_DEPTH_UNKNOWN == search_depth)
+    if (HWLOC_TYPE_DEPTH_UNKNOWN == search_depth) {
         return NULL;
+    }
 
     if (OPAL_HWLOC_LOGICAL == rtype) {
-        if (num_objs)
+        if (NULL != num_objs) {
             *num_objs = hwloc_get_nbobjs_by_depth(topo, search_depth);
+        }
         return hwloc_get_obj_by_depth(topo, search_depth, nobj);
     }
     if (OPAL_HWLOC_PHYSICAL == rtype) {
@@ -758,23 +765,27 @@ static hwloc_obj_t df_search(hwloc_topology_t topo,
          */
         hwloc_obj_t found = NULL;
         obj = NULL;
-        if (num_objs)
+        if (NULL != num_objs) {
             *num_objs = 0;
+        }
         while ((obj = hwloc_get_next_obj_by_depth(topo, search_depth, obj)) != NULL) {
-            if (num_objs && obj->os_index > *num_objs)
+            if (num_objs && obj->os_index > *num_objs) {
                 *num_objs = obj->os_index;
-            if (obj->os_index == nobj)
+            }
+            if (obj->os_index == nobj) {
                 found = obj;
+            }
         }
         return found;
     }
     if (OPAL_HWLOC_AVAILABLE == rtype) {
         unsigned idx = 0;
-        if (num_objs)
+        if (NULL != num_objs) {
             *num_objs = hwloc_get_nbobjs_inside_cpuset_by_depth(topo, start->cpuset, search_depth);
+        }
         obj = NULL;
         while ((obj = hwloc_get_next_obj_inside_cpuset_by_depth(topo, start->cpuset, search_depth, obj)) != NULL) {
-            if (idx == nobj)
+            if (idx == nobj) {
                 return obj;
             idx++;
         }

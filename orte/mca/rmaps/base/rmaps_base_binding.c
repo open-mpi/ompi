@@ -168,8 +168,9 @@ static int bind_generic(orte_job_t *jdata,
         trg_obj = NULL;
         min_bound = UINT_MAX;
         while (NULL != (tmp_obj = hwloc_get_next_obj_by_depth(node->topology->topo, target_depth, tmp_obj))) {
-            if (!hwloc_bitmap_intersects(locale->cpuset, tmp_obj->cpuset))
+            if (!hwloc_bitmap_intersects(locale->cpuset, tmp_obj->cpuset)) {
                 continue;
+            }
             data = (opal_hwloc_obj_data_t*)tmp_obj->userdata;
             if (NULL == data) {
                 data = OBJ_NEW(opal_hwloc_obj_data_t);
