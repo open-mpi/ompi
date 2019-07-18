@@ -174,12 +174,30 @@ static void orte_debugger_init_before_spawn(orte_job_t *jdata);
 
 ORTE_DECLSPEC void* __opal_attribute_optnone__ MPIR_Breakpoint(void);
 
+/* 
+ * Attempt to prevent the compiler from optimizing out
+ * MPIR_Breakpoint().
+ *
+ * Some older versions of automake can add -O3 to every
+ * file via CFLAGS (which was demonstrated in automake v1.13.4),
+ * so there is a possibility that the compiler will see
+ * this function as a NOOP and optimize it out on older versions.
+ * While using the current/recommended version of automake
+ * does not do this, the following will help those
+ * stuck with an older version, as well as guard against
+ * future regressions.
+ *
+ * See the following git issue for more discussion:
+ * https://github.com/open-mpi/ompi/issues/5501
+ */
+static volatile void* volatile noop_mpir_breakpoint_ptr = NULL;
+
 /*
  * Breakpoint function for parallel debuggers
  */
 void* MPIR_Breakpoint(void)
 {
-    return NULL;
+    return noop_mpir_breakpoint_ptr;
 }
 
 /* local objects */
