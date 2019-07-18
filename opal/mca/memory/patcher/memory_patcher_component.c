@@ -591,6 +591,9 @@ static int patcher_open (void)
 
 #if defined (SYS_brk)
     rc = opal_patcher->patch_symbol ("brk", (uintptr_t)intercept_brk, (uintptr_t *) &original_brk);
+    if (OPAL_SUCCESS != rc) {
+        return rc;
+    }
 #endif
 
     return rc;
