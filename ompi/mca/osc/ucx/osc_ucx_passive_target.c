@@ -99,6 +99,11 @@ int ompi_osc_ucx_lock(int lock_type, int target, int assert, struct ompi_win_t *
     ompi_osc_ucx_epoch_t original_epoch = module->epoch_type.access;
     int ret = OMPI_SUCCESS;
 
+    if (module->no_locks) {
+        OSC_UCX_VERBOSE(1, "attempted to lock with no_locks set");
+        return OMPI_ERR_RMA_SYNC;
+    }
+
     if (module->lock_count == 0) {
         if (module->epoch_type.access != NONE_EPOCH &&
             module->epoch_type.access != FENCE_EPOCH) {
@@ -187,6 +192,11 @@ int ompi_osc_ucx_unlock(int target, struct ompi_win_t *win) {
 int ompi_osc_ucx_lock_all(int assert, struct ompi_win_t *win) {
     ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t*) win->w_osc_module;
     int ret = OMPI_SUCCESS;
+
+    if (module->no_locks) {
+        OSC_UCX_VERBOSE(1, "attempted to lock with no_locks set");
+        return OMPI_ERR_RMA_SYNC;
+    }
 
     if (module->epoch_type.access != NONE_EPOCH &&
         module->epoch_type.access != FENCE_EPOCH) {
