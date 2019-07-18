@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2018 The University of Tennessee and The University
+ * Copyright (c) 2004-2019 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
@@ -514,6 +514,9 @@ OPAL_DECLSPEC int opal_datatype_dump_data_desc( union dt_elem_desc* pDesc, int n
 extern bool opal_position_debug;
 extern bool opal_copy_debug;
 #endif  /* OPAL_ENABLE_DEBUG */
+
+extern size_t opal_datatype_memop_block_size;
+extern size_t opal_datatype_cuda_memop_block_size;
 
 END_C_DECLS
 #endif  /* OPAL_DATATYPE_INTERNAL_H_HAS_BEEN_INCLUDED */
