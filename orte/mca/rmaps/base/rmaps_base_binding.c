@@ -169,20 +169,9 @@ static int bind_generic(orte_job_t *jdata,
         trg_obj = NULL;
         min_bound = UINT_MAX;
         while (NULL != (tmp_obj = hwloc_get_next_obj_by_depth(node->topology->topo, target_depth, tmp_obj))) {
-            hwloc_obj_t root;
-            opal_hwloc_topo_data_t *rdata;
-            root = hwloc_get_root_obj(node->topology->topo);
-            rdata = (opal_hwloc_topo_data_t*)root->userdata;
-
             if (!hwloc_bitmap_intersects(locale->cpuset, tmp_obj->cpuset)) {
                 continue;
             }
-// From the old 3.x code trg_obj was picked via a call to
-// opal_hwloc_base_find_min_bound_target_under_obj() which
-// skiped over unavailable objects (via opal_hwloc_base_get_npus).
-            if (rdata && rdata->available && !hwloc_bitmap_intersects(rdata->available, tmp_obj->cpuset))
-                continue;
-
             data = (opal_hwloc_obj_data_t*)tmp_obj->userdata;
             if (NULL == data) {
                 data = OBJ_NEW(opal_hwloc_obj_data_t);
