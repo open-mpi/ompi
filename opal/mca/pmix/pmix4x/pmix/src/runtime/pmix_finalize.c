@@ -13,8 +13,8 @@
  * Copyright (c) 2010-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
- * Copyright (c) 2016-2018 Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016-2019 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -124,6 +124,8 @@ void pmix_rte_finalize(void)
     PMIX_DESTRUCT(&pmix_globals.notifications);
     PMIX_LIST_DESTRUCT(&pmix_globals.iof_requests);
     PMIX_LIST_DESTRUCT(&pmix_globals.stdin_targets);
+    free(pmix_globals.hostname);
+    PMIX_LIST_DESTRUCT(&pmix_globals.nspaces);
 
     /* now safe to release the event base */
     if (!pmix_globals.external_evbase) {

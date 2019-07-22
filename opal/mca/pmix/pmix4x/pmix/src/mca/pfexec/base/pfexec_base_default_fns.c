@@ -155,7 +155,7 @@ void pmix_pfexec_base_spawn_proc(int sd, short args, void *cbdata)
 
     /* ensure our nspace is on the server global list */
     nptr = NULL;
-    PMIX_LIST_FOREACH(n2, &pmix_server_globals.nspaces, pmix_namespace_t) {
+    PMIX_LIST_FOREACH(n2, &pmix_globals.nspaces, pmix_namespace_t) {
         if (0 == strcmp(n2->nspace, pmix_globals.myid.nspace)) {
             nptr = n2;
             break;
@@ -165,7 +165,7 @@ void pmix_pfexec_base_spawn_proc(int sd, short args, void *cbdata)
         /* add it */
         nptr = PMIX_NEW(pmix_namespace_t);
         nptr->nspace = strdup(pmix_globals.myid.nspace);
-        pmix_list_append(&pmix_server_globals.nspaces, &nptr->super);
+        pmix_list_append(&pmix_globals.nspaces, &nptr->super);
     }
     /* mark all children as "registered" so collectives don't falter */
     nptr->all_registered = true;

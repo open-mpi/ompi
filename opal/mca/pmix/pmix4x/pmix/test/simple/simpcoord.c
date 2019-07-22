@@ -197,17 +197,17 @@ int main(int argc, char **argv)
     }
 
 
-    /* get our universe size */
+    /* get our job size */
     (void)strncpy(proc.nspace, myproc.nspace, PMIX_MAX_NSLEN);
     proc.rank = PMIX_RANK_WILDCARD;
-    if (PMIX_SUCCESS != (rc = PMIx_Get(&proc, PMIX_UNIV_SIZE, NULL, 0, &val))) {
-        pmix_output(0, "Client ns %s rank %d: PMIx_Get universe size failed: %s",
+    if (PMIX_SUCCESS != (rc = PMIx_Get(&proc, PMIX_JOB_SIZE, NULL, 0, &val))) {
+        pmix_output(0, "Client ns %s rank %d: PMIx_Get job size failed: %s",
                     myproc.nspace, myproc.rank, PMIx_Error_string(rc));
         goto done;
     }
     nprocs = val->data.uint32;
     PMIX_VALUE_RELEASE(val);
-    pmix_output(0, "Client %s:%d universe size %d", myproc.nspace, myproc.rank, nprocs);
+    pmix_output(0, "Client %s:%d job size %d", myproc.nspace, myproc.rank, nprocs);
 
     /* get our assigned network endpts */
     if (PMIX_SUCCESS != (rc = PMIx_Get(&myproc, PMIX_NETWORK_ENDPT, NULL, 0, &val))) {

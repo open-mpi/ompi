@@ -693,9 +693,14 @@ static pmix_status_t allocate(pmix_namespace_t *nptr,
             }
         }
         if (NULL == nd) {
-            /* we don't have this node in our list */
-            rc = PMIX_ERR_NOT_FOUND;
-            goto cleanup;
+            /* we don't have this node in our list - so since this
+             * is a mockup, take the nth node in the list of nodes
+             * we know about */
+            p = n % pmix_list_get_size(&mynodes);
+            nd = (pnet_node_t*)pmix_list_get_first(&mynodes);
+            for (m=0; m < p; m++) {
+                nd = (pnet_node_t*)pmix_list_get_next(&nd->super);
+            }
         }
         kv = PMIX_NEW(pmix_kval_t);
         if (NULL == kv) {
@@ -731,6 +736,9 @@ static pmix_status_t allocate(pmix_namespace_t *nptr,
             ip2 = (pmix_info_t*)d2->array;
             /* start with the rank */
             rank = strtoul(locals[m], NULL, 10);
+            pmix_output_verbose(2, pmix_pnet_base_framework.framework_output,
+                                "pnet:test:allocate assigning %d endpoints for rank %u",
+                                (int)q, rank);
             PMIX_INFO_LOAD(&ip2[0], PMIX_RANK, &rank, PMIX_PROC_RANK);
             /* the second element in this array will itself
              * be a data array of endpts */
@@ -761,6 +769,9 @@ static pmix_status_t allocate(pmix_namespace_t *nptr,
             ip2[2].value.data.darray = d3;
             coords = (pmix_coord_t*)d3->array;
             nic = (pnet_nic_t*)pmix_list_get_first(&nd->nics);
+            pmix_output_verbose(2, pmix_pnet_base_framework.framework_output,
+                                "pnet:test:allocate assigning %d coordinates for rank %u",
+                                (int)q, rank);
             for (p=0; p < q; p++) {
                 coords[p].view = PMIX_COORD_LOGICAL_VIEW;
                 coords[p].dims = 3;
@@ -881,6 +892,8 @@ static pmix_status_t setup_local_network(pmix_namespace_t *nptr,
                          * the rank and the endpts and coords assigned to that rank. This is
                          * precisely the data we need to cache for the job, so
                          * just do so) */
+                        pmix_output_verbose(2, pmix_pnet_base_framework.framework_output,
+                                            "pnet:test:setup_local_network caching %d endpts", (int)nvals);
                         PMIX_GDS_CACHE_JOB_INFO(rc, pmix_globals.mypeer, nptr, iptr, nvals);
                         if (PMIX_SUCCESS != rc) {
                             PMIX_RELEASE(kv);
@@ -932,24 +945,28 @@ static pmix_status_t setup_fork(pmix_namespace_t *nptr,
 
 static void child_finalized(pmix_proc_t *peer)
 {
-    pmix_output(0, "pnet:test CHILD %s:%d FINALIZED",
-                peer->nspace, peer->rank);
+    pmix_output_verbose(2, pmix_pnet_base_framework.framework_output,
+                        "pnet:test CHILD %s:%d FINALIZED",
+                        peer->nspace, peer->rank);
 }
 
 static void local_app_finalized(pmix_namespace_t *nptr)
 {
-    pmix_output(0, "pnet:test NSPACE %s LOCALLY FINALIZED", nptr->nspace);
+    pmix_output_verbose(2, pmix_pnet_base_framework.framework_output,
+                        "pnet:test NSPACE %s LOCALLY FINALIZED", nptr->nspace);
 }
 
 static void deregister_nspace(pmix_namespace_t *nptr)
 {
-    pmix_output(0, "pnet:test DEREGISTER NSPACE %s", nptr->nspace);
+    pmix_output_verbose(2, pmix_pnet_base_framework.framework_output,
+                        "pnet:test DEREGISTER NSPACE %s", nptr->nspace);
 }
 
 static pmix_status_t collect_inventory(pmix_info_t directives[], size_t ndirs,
                                        pmix_inventory_cbfunc_t cbfunc, void *cbdata)
 {
-    pmix_output(0, "pnet:test COLLECT INVENTORY");
+    pmix_output_verbose(2, pmix_pnet_base_framework.framework_output,
+                        "pnet:test COLLECT INVENTORY");
     return PMIX_ERR_NOT_SUPPORTED;
 }
 

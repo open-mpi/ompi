@@ -513,6 +513,7 @@ typedef struct {
     bool xml_output;
     bool timestamp_output;
     size_t output_limit;
+    pmix_list_t nspaces;
 } pmix_globals_t;
 
 /* provide access to a function to cleanup epilogs */
