@@ -61,9 +61,9 @@ my $include_list;
 my $exclude_list;
 
 # Minimum versions
-my $ompi_automake_version = "1.13.4";
+my $ompi_automake_version = "1.15";
 my $ompi_autoconf_version = "2.69";
-my $ompi_libtool_version = "2.4.2";
+my $ompi_libtool_version = "2.4.6";
 
 # Search paths
 my $ompi_autoconf_search = "autoconf";
