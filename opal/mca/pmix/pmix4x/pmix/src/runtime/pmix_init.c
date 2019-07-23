@@ -178,6 +178,8 @@ int pmix_rte_init(pmix_proc_type_t type,
     ret = pmix_hotel_init(&pmix_globals.notifications, pmix_globals.max_events,
                           pmix_globals.evbase, pmix_globals.event_eviction_time,
                           _notification_eviction_cbfunc);
+    PMIX_CONSTRUCT(&pmix_globals.nspaces, pmix_list_t);
+
     if (PMIX_SUCCESS != ret) {
         error = "notification hotel init";
         goto return_error;

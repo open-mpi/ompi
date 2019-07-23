@@ -442,7 +442,7 @@ static pmix_server_trkr_t* new_tracker(char *id, pmix_proc_t *procs,
         }
         /* is this nspace known to us? */
         nptr = NULL;
-        PMIX_LIST_FOREACH(ns, &pmix_server_globals.nspaces, pmix_namespace_t) {
+        PMIX_LIST_FOREACH(ns, &pmix_globals.nspaces, pmix_namespace_t) {
             if (0 == strcmp(procs[i].nspace, ns->nspace)) {
                 nptr = ns;
                 break;
@@ -3025,7 +3025,7 @@ pmix_status_t pmix_server_job_ctrl(pmix_peer_t *peer,
         for (n=0; n < cd->ntargets; n++) {
             /* find the nspace of this proc */
             nptr = NULL;
-            PMIX_LIST_FOREACH(tmp, &pmix_server_globals.nspaces, pmix_namespace_t) {
+            PMIX_LIST_FOREACH(tmp, &pmix_globals.nspaces, pmix_namespace_t) {
                 if (0 == strcmp(tmp->nspace, cd->targets[n].nspace)) {
                     nptr = tmp;
                     break;
@@ -3038,7 +3038,7 @@ pmix_status_t pmix_server_job_ctrl(pmix_peer_t *peer,
                     goto exit;
                 }
                 nptr->nspace = strdup(cd->targets[n].nspace);
-                pmix_list_append(&pmix_server_globals.nspaces, &nptr->super);
+                pmix_list_append(&pmix_globals.nspaces, &nptr->super);
             }
             /* if the rank is wildcard, then we use the epilog for the nspace */
             if (PMIX_RANK_WILDCARD == cd->targets[n].rank) {

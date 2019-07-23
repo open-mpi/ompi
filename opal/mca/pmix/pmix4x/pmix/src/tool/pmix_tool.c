@@ -1254,7 +1254,6 @@ PMIX_EXPORT pmix_status_t PMIx_tool_finalize(void)
         PMIX_LIST_DESTRUCT(&pmix_server_globals.local_reqs);
         PMIX_LIST_DESTRUCT(&pmix_server_globals.gdata);
         PMIX_LIST_DESTRUCT(&pmix_server_globals.events);
-        PMIX_LIST_DESTRUCT(&pmix_server_globals.nspaces);
         PMIX_LIST_DESTRUCT(&pmix_server_globals.iof);
     }
 
