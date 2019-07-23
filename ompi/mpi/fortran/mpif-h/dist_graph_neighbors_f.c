@@ -4,8 +4,8 @@
  *                         reserved.
  * Copyright (c) 2011-2013 Inria.  All rights reserved.
  * Copyright (c) 2011-2013 Université Bordeaux 1
- * Copyright (c) 2015      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015-2019 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -74,6 +74,7 @@ void ompi_dist_graph_neighbors_f(MPI_Fint* comm, MPI_Fint* maxindegree,
     OMPI_ARRAY_NAME_DECL(sourceweights);
     OMPI_ARRAY_NAME_DECL(destinations);
     OMPI_ARRAY_NAME_DECL(destweights);
+    int c_ierr;
 
     c_comm = PMPI_Comm_f2c(*comm);
 
@@ -86,12 +87,14 @@ void ompi_dist_graph_neighbors_f(MPI_Fint* comm, MPI_Fint* maxindegree,
         OMPI_ARRAY_FINT_2_INT_ALLOC(destweights, *maxoutdegree);
     }
 
-    *ierr = OMPI_INT_2_FINT(PMPI_Dist_graph_neighbors(c_comm, OMPI_FINT_2_INT(*maxindegree),
-                                                      OMPI_ARRAY_NAME_CONVERT(sources),
-                                                      OMPI_IS_FORTRAN_UNWEIGHTED(sourceweights) ? MPI_UNWEIGHTED : OMPI_ARRAY_NAME_CONVERT(sourceweights),
-                                                      OMPI_FINT_2_INT(*maxoutdegree), OMPI_ARRAY_NAME_CONVERT(destinations),
-                                                      OMPI_IS_FORTRAN_UNWEIGHTED(destweights) ? MPI_UNWEIGHTED : OMPI_ARRAY_NAME_CONVERT(destweights)));
-    if (OMPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
+    c_ierr = PMPI_Dist_graph_neighbors(c_comm, OMPI_FINT_2_INT(*maxindegree),
+                                       OMPI_ARRAY_NAME_CONVERT(sources),
+                                       OMPI_IS_FORTRAN_UNWEIGHTED(sourceweights) ? MPI_UNWEIGHTED : OMPI_ARRAY_NAME_CONVERT(sourceweights),
+                                       OMPI_FINT_2_INT(*maxoutdegree), OMPI_ARRAY_NAME_CONVERT(destinations),
+                                       OMPI_IS_FORTRAN_UNWEIGHTED(destweights) ? MPI_UNWEIGHTED : OMPI_ARRAY_NAME_CONVERT(destweights));
+    if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
+
+    if (OMPI_SUCCESS == c_ierr) {
         OMPI_ARRAY_INT_2_FINT(sources, *maxindegree);
         if( !OMPI_IS_FORTRAN_UNWEIGHTED(sourceweights) ) {
             OMPI_ARRAY_INT_2_FINT(sourceweights, *maxindegree);

@@ -11,8 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2012      Sandia National Laboratories. All rights reserved.
  * Copyright (c) 2012      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015-2019 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -77,11 +77,11 @@ void ompi_comm_split_type_f(MPI_Fint *comm, MPI_Fint *split_type, MPI_Fint *key,
 
     c_info = PMPI_Info_f2c(*info);
 
-    c_ierr = OMPI_INT_2_FINT(PMPI_Comm_split_type(c_comm,
-                                                  OMPI_FINT_2_INT(*split_type),
-                                                  OMPI_FINT_2_INT(*key),
-                                                  c_info,
-                                                  &c_newcomm ));
+    c_ierr = PMPI_Comm_split_type(c_comm,
+                                  OMPI_FINT_2_INT(*split_type),
+                                  OMPI_FINT_2_INT(*key),
+                                  c_info,
+                                  &c_newcomm);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {
