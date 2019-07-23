@@ -33,6 +33,7 @@ typedef struct ompi_osc_ucx_component {
     bool env_initialized; /* UCX environment is initialized or not */
     int num_incomplete_req_ops;
     int num_modules;
+    bool no_locks; /* Default value of the no_locks info key for new windows */
     unsigned int priority;
 } ompi_osc_ucx_component_t;
 
@@ -113,6 +114,7 @@ typedef struct ompi_osc_ucx_module {
     uint64_t req_result;
     int *start_grp_ranks;
     bool lock_all_is_nocheck;
+    bool no_locks;
     opal_common_ucx_ctx_t *ctx;
     opal_common_ucx_wpmem_t *mem;
     opal_common_ucx_wpmem_t *state_mem;

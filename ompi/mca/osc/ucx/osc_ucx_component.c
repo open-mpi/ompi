@@ -114,6 +114,28 @@ ompi_osc_ucx_module_t ompi_osc_ucx_module_template = {
     }
 };
 
+/* look up parameters for configuring this window.  The code first
+   looks in the info structure passed by the user, then it checks
+   for a matching MCA variable. */
+static bool check_config_value_bool (char *key, opal_info_t *info)
+{
+    int ret, flag, param;
+    bool result = false;
+    const bool *flag_value = &result;
+
+    ret = opal_info_get_bool (info, key, &result, &flag);
+    if (OMPI_SUCCESS == ret && flag) {
+        return result;
+    }
+
+    param = mca_base_var_find("ompi", "osc", "ucx", key);
+    if (0 <= param) {
+        (void) mca_base_var_get_value(param, &flag_value, NULL, NULL);
+    }
+
+    return flag_value[0];
+}
+
 static int component_open(void) {
     return OMPI_SUCCESS;
 }
@@ -133,6 +155,16 @@ static int component_register(void) {
     (void) mca_base_component_var_register(&mca_osc_ucx_component.super.osc_version, "priority", description_str,
                                            MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL, 0, 0, OPAL_INFO_LVL_3,
                                            MCA_BASE_VAR_SCOPE_GROUP, &mca_osc_ucx_component.priority);
+    free(description_str);
+
+    mca_osc_ucx_component.no_locks = false;
+
+    opal_asprintf(&description_str, "Enable optimizations available only if MPI_LOCK is "
+             "not used. Info key of same name overrides this value (default: %s)",
+             mca_osc_ucx_component.no_locks  ? "true" : "false");
+    (void) mca_base_component_var_register(&mca_osc_ucx_component.super.osc_version, "no_locks", description_str,
+                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0, OPAL_INFO_LVL_5,
+                                           MCA_BASE_VAR_SCOPE_GROUP, &mca_osc_ucx_component.no_locks);
     free(description_str);
 
     opal_common_ucx_mca_var_register(&mca_osc_ucx_component.super.osc_version);
@@ -220,6 +252,38 @@ static void ompi_osc_ucx_unregister_progress()
     }
 
     _osc_ucx_init_unlock();
+}
+
+static char* ompi_osc_ucx_set_no_lock_info(opal_infosubscriber_t *obj, char *key, char *value)
+{
+
+    struct ompi_win_t *win = (struct ompi_win_t*) obj;
+    ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t *)win->w_osc_module;
+    bool temp;
+
+    temp = opal_str_to_bool(value);
+
+    if (temp && !module->no_locks) {
+        /* clean up the lock hash. it is up to the user to ensure no lock is
+         * outstanding from this process when setting the info key */
+        OBJ_DESTRUCT(&module->outstanding_locks);
+        module->no_locks = true;
+        win->w_flags |= OMPI_WIN_NO_LOCKS;
+    } else if (!temp && module->no_locks) {
+        int comm_size = ompi_comm_size (module->comm);
+        int ret;
+
+        OBJ_CONSTRUCT(&module->outstanding_locks, opal_hash_table_t);
+        ret = opal_hash_table_init (&module->outstanding_locks, comm_size);
+        if (OPAL_SUCCESS != ret) {
+            module->no_locks = true;
+        } else {
+            module->no_locks = false;
+        }
+        win->w_flags &= ~OMPI_WIN_NO_LOCKS;
+    }
+    module->comm->c_coll->coll_barrier(module->comm, module->comm->c_coll->coll_barrier_module);
+    return module->no_locks ? "true" : "false";
 }
 
 static int component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit,
@@ -324,6 +388,7 @@ select_unlock:
 
     module->flavor = flavor;
     module->size = size;
+    module->no_locks = check_config_value_bool ("no_locks", info);
 
     /* share everyone's displacement units. Only do an allgather if
        strictly necessary, since it requires O(p) state. */
@@ -442,17 +507,23 @@ select_unlock:
     module->post_count = 0;
     module->start_group = NULL;
     module->post_group = NULL;
-    OBJ_CONSTRUCT(&module->outstanding_locks, opal_hash_table_t);
     OBJ_CONSTRUCT(&module->pending_posts, opal_list_t);
     module->start_grp_ranks = NULL;
     module->lock_all_is_nocheck = false;
 
-    ret = opal_hash_table_init(&module->outstanding_locks, comm_size);
-    if (ret != OPAL_SUCCESS) {
-        goto error;
+    if (!module->no_locks) {
+        OBJ_CONSTRUCT(&module->outstanding_locks, opal_hash_table_t);
+        ret = opal_hash_table_init(&module->outstanding_locks, comm_size);
+        if (ret != OPAL_SUCCESS) {
+            goto error;
+        }
+    } else {
+        win->w_flags |= OMPI_WIN_NO_LOCKS;
     }
 
     win->w_osc_module = &module->super;
+
+    opal_infosubscribe_subscribe(&win->super, "no_locks", "false", ompi_osc_ucx_set_no_lock_info);
 
     /* sync with everyone */
 
@@ -598,7 +669,9 @@ int ompi_osc_ucx_free(struct ompi_win_t *win) {
 
     assert(module->lock_count == 0);
     assert(opal_list_is_empty(&module->pending_posts) == true);
-    OBJ_DESTRUCT(&module->outstanding_locks);
+    if(!module->no_locks) {
+        OBJ_DESTRUCT(&module->outstanding_locks);
+    }
     OBJ_DESTRUCT(&module->pending_posts);
 
     opal_common_ucx_wpmem_flush(module->mem, OPAL_COMMON_UCX_SCOPE_WORKER, 0);
