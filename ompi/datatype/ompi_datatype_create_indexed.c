@@ -87,10 +87,10 @@ int32_t ompi_datatype_create_hindexed( int count, const int* pBlockLength, const
         return ompi_datatype_duplicate( &ompi_mpi_datatype_null.dt, newType);
     }
 
+    ompi_datatype_type_extent( oldType, &extent );
     disp = pDisp[i];
     dLength = pBlockLength[i];
     endat = disp + dLength * extent;
-    ompi_datatype_type_extent( oldType, &extent );
 
     pdt = ompi_datatype_create( (count - i) * (2 + oldType->super.desc.used) );
     for( i += 1; i < count; i++ ) {
@@ -162,17 +162,17 @@ int32_t ompi_datatype_create_hindexed_block( int count, int bLength, const ptrdi
     pdt = ompi_datatype_create( count * (2 + oldType->super.desc.used) );
     disp = pDisp[0];
     dLength = bLength;
-    endat = disp + dLength;
+    endat = disp + dLength * extent;
     for( i = 1; i < count; i++ ) {
         if( endat == pDisp[i] ) {
             /* contiguous with the previsious */
             dLength += bLength;
-            endat += bLength;
+            endat += bLength * extent;
         } else {
             ompi_datatype_add( pdt, oldType, dLength, disp, extent );
             disp = pDisp[i];
             dLength = bLength;
-            endat = disp + bLength;
+            endat = disp + bLength * extent;
         }
     }
     ompi_datatype_add( pdt, oldType, dLength, disp, extent );

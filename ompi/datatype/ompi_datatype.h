@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2009-2013 The University of Tennessee and The University
+ * Copyright (c) 2009-2019 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
@@ -76,7 +76,7 @@ struct ompi_datatype_t {
     struct opal_hash_table_t *d_keyhash;         /**< Attribute fields */
 
     void*              args;                     /**< Data description for the user */
-    opal_atomic_intptr_t packed_description;       /**< Packed description of the datatype */
+    opal_atomic_intptr_t packed_description;     /**< Packed description of the datatype */
     uint64_t           pml_data;                 /**< PML-specific information */
     /* --- cacheline 6 boundary (384 bytes) --- */
     char               name[MPI_MAX_OBJECT_NAME];/**< Externally visible name */
