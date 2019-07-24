@@ -141,7 +141,7 @@ int ompi_coll_tuned_alltoall_intra_dec_fixed(const void *sbuf, int scount,
         return ompi_coll_base_alltoall_intra_linear_sync(sbuf, scount, sdtype,
                                                          rbuf, rcount, rdtype,
                                                          comm, module,
-                                                         ompi_coll_tuned_alltoall_max_reqs);
+                                                         ompi_coll_tuned_alltoall_max_requests);
     }
 
     return ompi_coll_base_alltoall_intra_pairwise(sbuf, scount, sdtype,
