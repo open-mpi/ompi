@@ -116,7 +116,7 @@ int ompi_coll_tuned_alltoall_intra_check_forced_init (coll_tuned_force_algorithm
 
     (void) mca_base_component_var_register(&mca_coll_tuned_component.super.collm_version,
                                            "alltoall_large_msg",
-                                           "threshold (if supported) to decide if large MSGs alltoall algorithm will be used",
+                                           "use pairwise exchange algorithm for messages larger than this value",
                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
                                            OPAL_INFO_LVL_6,
                                            MCA_BASE_VAR_SCOPE_READONLY,
@@ -124,7 +124,7 @@ int ompi_coll_tuned_alltoall_intra_check_forced_init (coll_tuned_force_algorithm
 
     (void) mca_base_component_var_register(&mca_coll_tuned_component.super.collm_version,
                                            "alltoall_min_procs",
-                                           "threshold (if supported) to decide if many processes alltoall algorithm will be used",
+                                           "use pairwise exchange algorithm for communicators larger than this value",
                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
                                            OPAL_INFO_LVL_6,
                                            MCA_BASE_VAR_SCOPE_READONLY,
@@ -137,16 +137,16 @@ int ompi_coll_tuned_alltoall_intra_check_forced_init (coll_tuned_force_algorithm
                                       MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
                                       OPAL_INFO_LVL_5,
                                       MCA_BASE_VAR_SCOPE_ALL,
-                                      &ompi_coll_tuned_alltoall_max_reqs);
+                                      &ompi_coll_tuned_alltoall_max_requests);
     if (mca_param_indices->max_requests_param_index < 0) {
         return mca_param_indices->max_requests_param_index;
     }
 
-    if (ompi_coll_tuned_alltoall_max_reqs < 0) {
+    if (ompi_coll_tuned_alltoall_max_requests < 0) {
         if( 0 == ompi_comm_rank( MPI_COMM_WORLD ) ) {
             opal_output( 0, "Maximum outstanding requests must be positive number greater than 1.  Switching to 0 \n");
         }
-        ompi_coll_tuned_alltoall_max_reqs = 0;
+        ompi_coll_tuned_alltoall_max_requests = 0;
     }
 
     return (MPI_SUCCESS);
