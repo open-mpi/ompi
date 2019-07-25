@@ -41,6 +41,10 @@
 #include "btl_vader_fbox.h"
 #include "btl_vader_xpmem.h"
 
+#ifdef HAVE_SYS_STAT_H
+#include <sys/stat.h>
+#endif
+
 #include <sys/mman.h>
 #include <fcntl.h>
 
@@ -350,6 +354,25 @@ static int mca_btl_vader_component_close(void)
     return OPAL_SUCCESS;
 }
 
+/*
+ * mca_btl_vader_parse_proc_ns_user() tries to get the user namespace ID
+ * of the current process.
+ * Returns the ID of the user namespace. In the case of an error '0' is returned.
+ */
+ino_t mca_btl_vader_get_user_ns_id(void)
+{
+    struct stat buf;
+
+    if (0 > stat("/proc/self/ns/user", &buf)) {
+        /*
+         * Something went wrong, probably an old kernel that does not support namespaces
+         * simply assume all processes are in the same user namespace and return 0
+         */
+        return 0;
+    }
+
+    return buf.st_ino;
+}
 static int mca_btl_base_vader_modex_send (void)
 {
     union vader_modex_t modex;
@@ -363,8 +386,16 @@ static int mca_btl_base_vader_modex_send (void)
         modex_size = sizeof (modex.xpmem);
     } else {
 #endif
-        modex_size = opal_shmem_sizeof_shmem_ds (&mca_btl_vader_component.seg_ds);
-        memmove (&modex.seg_ds, &mca_btl_vader_component.seg_ds, modex_size);
+        modex.other.seg_ds_size = opal_shmem_sizeof_shmem_ds (&mca_btl_vader_component.seg_ds);
+        memmove (&modex.other.seg_ds, &mca_btl_vader_component.seg_ds, modex.other.seg_ds_size);
+        modex.other.user_ns_id = mca_btl_vader_get_user_ns_id();
+        /*
+         * If modex.other.user_ns_id is '0' something did not work out
+         * during user namespace detection. Assuming there are no
+         * namespaces available it will return '0' for all processes and
+         * the check later will see '0' everywhere and not disable CMA.
+         */
+        modex_size = sizeof (modex.other);
 
 #if OPAL_BTL_VADER_HAVE_XPMEM
     }

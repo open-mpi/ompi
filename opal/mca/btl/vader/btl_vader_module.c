@@ -27,6 +27,7 @@
  */
 
 #include "opal_config.h"
+#include "opal/util/show_help.h"
 
 #include "btl_vader.h"
 #include "btl_vader_endpoint.h"
@@ -78,6 +79,28 @@ mca_btl_vader_t mca_btl_vader = {
         .btl_ft_event = vader_ft_event
     }
 };
+
+/*
+ * Exit function copied from btl_usnic_util.c
+ *
+ * The following comment tells Coverity that this function does not return.
+ * See https://scan.coverity.com/tune.
+ */
+
+/* coverity[+kill] */
+static void vader_btl_exit(mca_btl_vader_t *btl)
+{
+    if (NULL != btl && NULL != btl->error_cb) {
+        btl->error_cb(&btl->super, MCA_BTL_ERROR_FLAGS_FATAL,
+                      (opal_proc_t*) opal_proc_local_get(),
+                      "The vader BTL is aborting the MPI job (via PML error callback).");
+    }
+
+    /* If the PML error callback returns (or if there wasn't one), just exit. Shrug. */
+    fprintf(stderr, "*** The Open MPI vader BTL is aborting the MPI job (via exit(3)).\n");
+    fflush(stderr);
+    exit(1);
+}
 
 static int vader_btl_first_time_init(mca_btl_vader_t *vader_btl, int n)
 {
@@ -173,6 +196,7 @@ static int vader_btl_first_time_init(mca_btl_vader_t *vader_btl, int n)
 static int init_vader_endpoint (struct mca_btl_base_endpoint_t *ep, struct opal_proc_t *proc, int remote_rank) {
     mca_btl_vader_component_t *component = &mca_btl_vader_component;
     union vader_modex_t *modex;
+    ino_t my_user_ns_id;
     size_t msg_size;
     int rc;
 
@@ -197,16 +221,57 @@ static int init_vader_endpoint (struct mca_btl_base_endpoint_t *ep, struct opal_
         } else {
 #endif
             /* store a copy of the segment information for detach */
-            ep->segment_data.other.seg_ds = malloc (msg_size);
+            ep->segment_data.other.seg_ds = malloc (modex->other.seg_ds_size);
             if (NULL == ep->segment_data.other.seg_ds) {
                 return OPAL_ERR_OUT_OF_RESOURCE;
             }
 
-            memcpy (ep->segment_data.other.seg_ds, &modex->seg_ds, msg_size);
+            memcpy (ep->segment_data.other.seg_ds, &modex->other.seg_ds, modex->other.seg_ds_size);
 
             ep->segment_base = opal_shmem_segment_attach (ep->segment_data.other.seg_ds);
             if (NULL == ep->segment_base) {
                 return OPAL_ERROR;
+            }
+
+            if (MCA_BTL_VADER_CMA == mca_btl_vader_component.single_copy_mechanism) {
+                my_user_ns_id = mca_btl_vader_get_user_ns_id();
+                if (my_user_ns_id != modex->other.user_ns_id) {
+                    mca_base_var_source_t source;
+                    int vari;
+                    rc = mca_base_var_find_by_name("btl_vader_single_copy_mechanism", &vari);
+                    if (OPAL_ERROR == rc) {
+                        return OPAL_ERROR;
+                    }
+                    rc = mca_base_var_get_value(vari, NULL, &source, NULL);
+                    if (OPAL_ERROR == rc) {
+                        return OPAL_ERROR;
+                    }
+                    /*
+                     * CMA is not possible as different user namespaces are in use.
+                     * Currently the kernel does not allow * process_vm_{read,write}v()
+                     * for processes running in different user namespaces even if
+                     * all involved user IDs are mapped to the same user ID.
+                     *
+                     * Fallback to MCA_BTL_VADER_EMUL.
+                     */
+                    if (MCA_BASE_VAR_SOURCE_DEFAULT != source) {
+                        /* If CMA has been explicitly selected we want to error out */
+                        opal_show_help("help-btl-vader.txt", "cma-different-user-namespace-error",
+                                       true, opal_process_info.nodename);
+                        vader_btl_exit(&mca_btl_vader);
+                    }
+                    /*
+                     * If CMA has been selected because it is the default or
+                     * some fallback, this falls back even further.
+                     */
+                    opal_show_help("help-btl-vader.txt", "cma-different-user-namespace-warning",
+                                   true, opal_process_info.nodename);
+                    mca_btl_vader_component.single_copy_mechanism = MCA_BTL_VADER_EMUL;
+                    mca_btl_vader.super.btl_get = mca_btl_vader_get_sc_emu;
+                    mca_btl_vader.super.btl_put = mca_btl_vader_put_sc_emu;
+                    mca_btl_vader.super.btl_put_limit = mca_btl_vader.super.btl_max_send_size - sizeof (mca_btl_vader_sc_emu_hdr_t);
+                    mca_btl_vader.super.btl_get_limit = mca_btl_vader.super.btl_max_send_size - sizeof (mca_btl_vader_sc_emu_hdr_t);
+                }
             }
 #if OPAL_BTL_VADER_HAVE_XPMEM
         }

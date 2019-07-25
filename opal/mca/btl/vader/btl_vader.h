@@ -84,7 +84,12 @@ union vader_modex_t {
         void *segment_base;
     } xpmem;
 #endif
-    opal_shmem_ds_t seg_ds;
+    struct vader_modex_other_t {
+        ino_t user_ns_id;
+        int seg_ds_size;
+        /* seg_ds needs to be the last element */
+        opal_shmem_ds_t seg_ds;
+    } other;
 };
 
 /**
@@ -269,6 +274,8 @@ int mca_btl_vader_get_knem (mca_btl_base_module_t *btl, mca_btl_base_endpoint_t 
                             mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
                             int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata);
 #endif
+
+ino_t mca_btl_vader_get_user_ns_id(void);
 
 int mca_btl_vader_get_sc_emu (mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpoint, void *local_address,
                                uint64_t remote_address, mca_btl_base_registration_handle_t *local_handle,
