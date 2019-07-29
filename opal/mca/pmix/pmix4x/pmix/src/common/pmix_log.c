@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2016      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
@@ -83,14 +83,18 @@ PMIX_EXPORT pmix_status_t PMIx_Log(const pmix_info_t data[], size_t ndata,
      * recv routine so we know which callback to use when
      * the return message is recvd */
     PMIX_CONSTRUCT(&cb, pmix_cb_t);
-    if (PMIX_SUCCESS != (rc = PMIx_Log_nb(data, ndata, directives,
-                                          ndirs, opcbfunc, &cb))) {
+    rc = PMIx_Log_nb(data, ndata, directives, ndirs, opcbfunc, &cb);
+    if (PMIX_SUCCESS == rc) {
+        /* wait for the operation to complete */
+        PMIX_WAIT_THREAD(&cb.lock);
+    } else {
         PMIX_DESTRUCT(&cb);
+        if (PMIX_OPERATION_SUCCEEDED == rc) {
+            rc = PMIX_SUCCESS;
+        }
         return rc;
     }
 
-    /* wait for the operation to complete */
-    PMIX_WAIT_THREAD(&cb.lock);
     rc = cb.status;
     PMIX_DESTRUCT(&cb);
 

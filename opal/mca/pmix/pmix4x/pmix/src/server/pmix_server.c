@@ -1381,8 +1381,8 @@ static void _dmodex_req(int sd, short args, void *cbdata)
     PMIX_ACQUIRE_OBJECT(cd);
 
     pmix_output_verbose(2, pmix_server_globals.base_output,
-                        "DMODX LOOKING FOR %s:%d",
-                        cd->proc.nspace, cd->proc.rank);
+                        "DMODX LOOKING FOR %s",
+                        PMIX_NAME_PRINT(&cd->proc));
 
     /* this should be one of my clients, but a race condition
      * could cause this request to arrive prior to us having
@@ -1515,8 +1515,9 @@ PMIX_EXPORT pmix_status_t PMIx_server_dmodex_request(const pmix_proc_t *proc,
     }
 
     pmix_output_verbose(2, pmix_server_globals.base_output,
-                        "pmix:server dmodex request%s:%d",
-                        proc->nspace, proc->rank);
+                        "%s pmix:server dmodex request for proc %s",
+                        PMIX_NAME_PRINT(&pmix_globals.myid),
+                        PMIX_NAME_PRINT(proc));
 
     cd = PMIX_NEW(pmix_setup_caddy_t);
     pmix_strncpy(cd->proc.nspace, proc->nspace, PMIX_MAX_NSLEN);
