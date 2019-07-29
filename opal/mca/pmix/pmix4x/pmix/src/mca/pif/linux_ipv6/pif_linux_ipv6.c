@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
- * Copyright (c) 2018      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2018-2019 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -82,12 +82,15 @@ static int if_linux_ipv6_open(void)
     if ((f = fopen("/proc/net/if_inet6", "r"))) {
         /* IF_NAMESIZE is normally 16 on Linux,
            but the next scanf allows up to 21 bytes */
-        char ifname[21];
+        char ifname[PMIX_IF_NAMESIZE];
         unsigned int idx, pfxlen, scope, dadstat;
         struct in6_addr a6;
         int iter;
         uint32_t flag;
-        unsigned int addrbyte[16];
+        unsigned int addrbyte[PMIX_IF_NAMESIZE];
+
+        memset(addrbyte, 0, PMIX_IF_NAMESIZE*sizeof(unsigned int));
+        memset(ifname, 0, PMIX_IF_NAMESIZE*sizeof(char));
 
         while (fscanf(f, "%2x%2x%2x%2x%2x%2x%2x%2x%2x%2x%2x%2x%2x%2x%2x%2x %x %x %x %x %20s\n",
                       &addrbyte[0], &addrbyte[1], &addrbyte[2], &addrbyte[3],
@@ -129,7 +132,7 @@ static int if_linux_ipv6_open(void)
             }
 
             /* now construct the pmix_pif_t */
-            pmix_strncpy(intf->if_name, ifname, IF_NAMESIZE-1);
+            pmix_strncpy(intf->if_name, ifname, PMIX_IF_NAMESIZE-1);
             intf->if_index = pmix_list_get_size(&pmix_if_list)+1;
             intf->if_kernel_index = (uint16_t) idx;
             ((struct sockaddr_in6*) &intf->if_addr)->sin6_addr = a6;

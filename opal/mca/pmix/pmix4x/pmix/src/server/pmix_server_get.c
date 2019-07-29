@@ -126,6 +126,7 @@ pmix_status_t pmix_server_get(pmix_buffer_t *buf,
     pmix_dmdx_request_t *req;
     bool local;
     bool localonly = false;
+    bool diffnspace = false;
     struct timeval tv = {0, 0};
     pmix_buffer_t pbkt, pkt;
     pmix_byte_object_t bo;
@@ -133,10 +134,10 @@ pmix_status_t pmix_server_get(pmix_buffer_t *buf,
     pmix_proc_t proc;
     char *data;
     size_t sz, n;
-    pmix_peer_t *peer;
 
     pmix_output_verbose(2, pmix_server_globals.get_output,
-                        "recvd GET");
+                        "%s recvd GET",
+                        PMIX_NAME_PRINT(&pmix_globals.myid));
 
     /* setup */
     memset(nspace, 0, sizeof(nspace));
@@ -196,6 +197,12 @@ pmix_status_t pmix_server_get(pmix_buffer_t *buf,
             nptr = ns;
             break;
         }
+    }
+
+    /* check if the nspace of the requestor is different from
+     * the nspace of the target process */
+    if (!PMIX_CHECK_NSPACE(nspace, cd->peer->info->pname.nspace)) {
+        diffnspace = true;
     }
 
     pmix_output_verbose(2, pmix_server_globals.get_output,
@@ -294,10 +301,10 @@ pmix_status_t pmix_server_get(pmix_buffer_t *buf,
         return PMIX_SUCCESS;
     }
 
-    /* this nspace is known, so we can process the request.
-     * if the rank is wildcard, then they are asking for the
-     * job-level info for this nspace - provide it */
-    if (PMIX_RANK_WILDCARD == rank) {
+    /* the target nspace is known, so we can process the request.
+     * if the rank is wildcard, or the nspace is different, then
+     * they are asking for the job-level info for this nspace - provide it */
+    if (PMIX_RANK_WILDCARD == rank || diffnspace) {
         /* see if we have the job-level info - we won't have it
          * if we have no local procs and haven't already asked
          * for it, so there is no guarantee we have it */
@@ -309,21 +316,32 @@ pmix_status_t pmix_server_get(pmix_buffer_t *buf,
          * can retrieve the info from that GDS. Otherwise,
          * we need to retrieve it from our own */
         PMIX_CONSTRUCT(&cb, pmix_cb_t);
-        peer = pmix_globals.mypeer;
         /* this data is for a local client, so give the gds the
          * option of returning a complete copy of the data,
          * or returning a pointer to local storage */
         cb.proc = &proc;
         cb.scope = PMIX_SCOPE_UNDEF;
         cb.copy = false;
-        PMIX_GDS_FETCH_KV(rc, peer, &cb);
+        PMIX_GDS_FETCH_KV(rc, pmix_globals.mypeer, &cb);
         if (PMIX_SUCCESS != rc) {
             PMIX_DESTRUCT(&cb);
             return rc;
         }
+        /* if the requested rank is not WILDCARD, then retrieve the
+         * job-specific data for that rank - a scope of UNDEF
+         * will direct the GDS to provide it. Anything found will
+         * simply be added to the cb.kvs list */
+        if (PMIX_RANK_WILDCARD != rank) {
+            proc.rank = rank;
+            PMIX_GDS_FETCH_KV(rc, pmix_globals.mypeer, &cb);
+            if (PMIX_SUCCESS != rc) {
+                PMIX_DESTRUCT(&cb);
+                return rc;
+            }
+        }
         PMIX_CONSTRUCT(&pkt, pmix_buffer_t);
         /* assemble the provided data into a byte object */
-        PMIX_GDS_ASSEMB_KVS_REQ(rc, peer, &proc, &cb.kvs, &pkt, cd);
+        PMIX_GDS_ASSEMB_KVS_REQ(rc, pmix_globals.mypeer, &proc, &cb.kvs, &pkt, cd);
         if (PMIX_SUCCESS != rc) {
             PMIX_ERROR_LOG(rc);
             PMIX_DESTRUCT(&cb);
@@ -333,7 +351,7 @@ pmix_status_t pmix_server_get(pmix_buffer_t *buf,
         PMIX_DESTRUCT(&pkt);
         /* pack it into the payload */
         PMIX_CONSTRUCT(&pbkt, pmix_buffer_t);
-        PMIX_BFROPS_PACK(rc, cd->peer, &pbkt, &bo, 1, PMIX_BYTE_OBJECT);
+        PMIX_BFROPS_PACK(rc, pmix_globals.mypeer, &pbkt, &bo, 1, PMIX_BYTE_OBJECT);
         free(bo.bytes);
         if (PMIX_SUCCESS != rc) {
             PMIX_ERROR_LOG(rc);

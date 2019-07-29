@@ -101,7 +101,7 @@ PMIX_EXPORT pmix_status_t PMIx_Get(const pmix_proc_t *proc,
                         (NULL == key) ? "NULL" : key);
 
     /* try to get data directly, without threadshift */
-    if (PMIX_RANK_UNDEF != proc->rank) {
+    if (PMIX_RANK_UNDEF != proc->rank && NULL != key) {
         if (PMIX_SUCCESS == (rc = _getfn_fastpath(proc, key, info, ninfo, val))) {
             goto done;
         }
@@ -327,7 +327,6 @@ static void _getnb_cbfunc(struct pmix_peer_t *pr,
     }
 
     if (PMIX_SUCCESS != ret) {
-        PMIX_ERROR_LOG(ret);
         goto done;
     }
     if (PMIX_RANK_UNDEF == proc.rank) {
