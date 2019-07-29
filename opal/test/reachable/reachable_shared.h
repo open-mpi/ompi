@@ -24,7 +24,7 @@ BEGIN_C_DECLS
 opal_if_t* create_if(int af_family, char *address, int mask, int bandwidth)
 {
     opal_if_t *interface = OBJ_NEW(opal_if_t);
-    opal_string_copy(interface->if_name, "interface0", IF_NAMESIZE);
+    opal_string_copy(interface->if_name, "interface0", OPAL_IF_NAMESIZE);
     interface->af_family = af_family;
     ((struct sockaddr *)&(interface->if_addr))->sa_family = af_family; 
 

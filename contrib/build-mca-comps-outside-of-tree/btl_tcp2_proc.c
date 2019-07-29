@@ -235,7 +235,7 @@ static void mca_btl_tcp2_initialise_interface(mca_btl_tcp2_interface_t* interfac
 static mca_btl_tcp2_interface_t** mca_btl_tcp2_retrieve_local_interfaces(void)
 {
     struct sockaddr_storage local_addr;
-    char local_if_name[IF_NAMESIZE];
+    char local_if_name[OPAL_IF_NAMESIZE];
     char **include, **exclude, **argv;
     int idx;
 

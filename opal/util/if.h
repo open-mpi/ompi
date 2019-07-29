@@ -37,9 +37,15 @@
 #include <netinet/in.h>
 #endif
 
-#ifndef IF_NAMESIZE
-#define IF_NAMESIZE 32
-#endif
+/*
+ * We previously defined IF_NAMESIZE to 32 if not already defined.
+ * Due to this macro being reused from net/if.h, we could encounter
+ * a macro mismatch. In particular, in cases where opal/util/if.h was
+ * included, but net/if.h was not, IF_NAMESIZE would be 32. If net/if.h
+ * was included on Linux systems, IF_NAMESIZE would be 16. To avoid this
+ * issue, we define our own OPAL_IF_NAMESIZE macro instead.
+ */
+#define OPAL_IF_NAMESIZE 32
 
 BEGIN_C_DECLS
 

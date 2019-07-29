@@ -401,7 +401,7 @@ static char **split_and_resolve(char **orig_str, char *name)
 {
     int i, ret, save, if_index;
     char **argv, *str, *tmp;
-    char if_name[IF_NAMESIZE];
+    char if_name[OPAL_IF_NAMESIZE];
     struct sockaddr_storage argv_inaddr, if_inaddr;
     uint32_t argv_prefix;
 
@@ -593,8 +593,8 @@ static int mca_btl_tcp2_component_create_instances(void)
     {
         int i;
         for(i = 0; i < kif_count; i++) {
-            /* IF_NAMESIZE is defined in opal/util/if.h */
-            char if_name[IF_NAMESIZE];
+            /* OPAL_IF_NAMESIZE is defined in opal/util/if.h */
+            char if_name[OPAL_IF_NAMESIZE];
             if_index = kindexes[i];
 
             opal_ifkindextoname(if_index, if_name, sizeof(if_name));

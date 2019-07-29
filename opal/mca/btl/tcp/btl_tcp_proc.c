@@ -295,7 +295,7 @@ static void mca_btl_tcp_initialise_interface(mca_btl_tcp_interface_t* tcp_interf
 static mca_btl_tcp_interface_t** mca_btl_tcp_retrieve_local_interfaces(mca_btl_tcp_proc_data_t *proc_data)
 {
     struct sockaddr_storage local_addr;
-    char local_if_name[IF_NAMESIZE];
+    char local_if_name[OPAL_IF_NAMESIZE];
     char **include, **exclude, **argv;
     int idx;
     mca_btl_tcp_interface_t * local_interface;

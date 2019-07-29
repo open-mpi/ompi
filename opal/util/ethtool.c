@@ -64,7 +64,7 @@ opal_ethtool_get_speed (const char *if_name)
     }
 
     memset(&ifr, 0, sizeof(struct ifreq));
-    opal_string_copy(ifr.ifr_name, if_name, IF_NAMESIZE);
+    opal_string_copy(ifr.ifr_name, if_name, OPAL_IF_NAMESIZE);
     ifr.ifr_data = (char *)&edata;
 
     if (ioctl(sockfd, SIOCETHTOOL, &ifr) < 0) {

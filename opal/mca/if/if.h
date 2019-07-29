@@ -74,7 +74,7 @@ BEGIN_C_DECLS
 
 typedef struct opal_if_t {
     opal_list_item_t     super;
-    char                if_name[IF_NAMESIZE];
+    char                if_name[OPAL_IF_NAMESIZE];
     int                 if_index;
     uint16_t            if_kernel_index;
     uint16_t            af_family;

@@ -115,7 +115,7 @@ static int if_linux_ipv6_open(void)
 #if OPAL_ENABLE_IPV6
     FILE *f;
     if ((f = fopen("/proc/net/if_inet6", "r"))) {
-        char ifname[IF_NAMESIZE];
+        char ifname[OPAL_IF_NAMESIZE];
         unsigned int idx, pfxlen, scope, dadstat;
         struct in6_addr a6;
         uint32_t flag;
@@ -158,7 +158,7 @@ static int if_linux_ipv6_open(void)
             intf->af_family = AF_INET6;
 
             /* now construct the opal_if_t */
-            opal_string_copy(intf->if_name, ifname, IF_NAMESIZE);
+            opal_string_copy(intf->if_name, ifname, OPAL_IF_NAMESIZE);
             intf->if_index = opal_list_get_size(&opal_if_list)+1;
             intf->if_kernel_index = (uint16_t) idx;
             ((struct sockaddr_in6*) &intf->if_addr)->sin6_addr = a6;
