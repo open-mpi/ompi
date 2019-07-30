@@ -57,6 +57,13 @@ int   ompi_coll_tuned_init_max_requests = 128;
 int   ompi_coll_tuned_alltoall_small_msg = 200;
 int   ompi_coll_tuned_alltoall_intermediate_msg = 3000;
 
+/* Set it to the same value as intermediate msg by default, so it does not affect
+ * default algorithm selection. Changing this value will force using linear with
+ * sync algorithm on certain message sizes. */
+int   ompi_coll_tuned_alltoall_large_msg = 3000;
+int   ompi_coll_tuned_alltoall_min_procs = 0; /* disable by default */
+int   ompi_coll_tuned_alltoall_max_requests  = 0; /* no limit for alltoall by default */
+
 /* forced alogrithm variables */
 /* indices for the MCA parameters */
 coll_tuned_force_algorithm_mca_param_indices_t ompi_coll_tuned_forced_params[COLLCOUNT] = {{0}};
