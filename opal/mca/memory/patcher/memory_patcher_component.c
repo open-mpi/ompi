@@ -125,12 +125,7 @@ static void *_intercept_mmap(void *start, size_t length, int prot, int flags, in
     }
 
     if (!original_mmap) {
-#ifdef HAVE___MMAP
-        /* the darwin syscall returns an int not a long so call the underlying __mmap function */
-        result = __mmap (start, length, prot, flags, fd, offset);
-#else
         result = (void*)(intptr_t) memory_patcher_syscall(SYS_mmap, start, length, prot, flags, fd, offset);
-#endif
     } else {
         result = original_mmap (start, length, prot, flags, fd, offset);
     }
