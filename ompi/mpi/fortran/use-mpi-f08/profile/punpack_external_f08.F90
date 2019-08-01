@@ -3,7 +3,7 @@
 ! Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
 ! Copyright (c) 2009-2012 Los Alamos National Security, LLC.
 !                         All rights reserved.
-! Copyright (c) 2018      Research Organization for Information Science
+! Copyright (c) 2018-2019 Research Organization for Information Science
 !                         and Technology (RIST).  All rights reserved.
 ! Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
 ! $COPYRIGHT$
@@ -16,7 +16,7 @@ subroutine PMPI_Unpack_external_f08(datarep,inbuf,insize,position,outbuf,outcoun
    implicit none
    CHARACTER(LEN=*), INTENT(IN) :: datarep
    OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: inbuf
-   OMPI_FORTRAN_IGNORE_TKR_TYPE :: outbuf
+   OMPI_F08_IGNORE_TKR_TYPE :: outbuf
    INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: insize
    INTEGER(MPI_ADDRESS_KIND), INTENT(INOUT) :: position
    INTEGER, INTENT(IN) :: outcount

@@ -3,7 +3,7 @@
 ! Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
 ! Copyright (c) 2009-2012 Los Alamos National Security, LLC.
 !                         All rights reserved.
-! Copyright (c) 2018      Research Organization for Information Science
+! Copyright (c) 2018-2019 Research Organization for Information Science
 !                         and Technology (RIST).  All rights reserved.
 ! Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
 ! $COPYRIGHT$
@@ -14,7 +14,7 @@ subroutine MPI_Bcast_f08(buffer,count,datatype,root,comm,ierror)
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm
    use :: ompi_mpifh_bindings, only : ompi_bcast_f
    implicit none
-   OMPI_FORTRAN_IGNORE_TKR_TYPE :: buffer
+   OMPI_F08_IGNORE_TKR_TYPE :: buffer
    INTEGER, INTENT(IN) :: count, root
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
    TYPE(MPI_Comm), INTENT(IN) :: comm

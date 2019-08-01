@@ -3,8 +3,8 @@
 ! Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
 ! Copyright (c) 2009-2012 Los Alamos National Security, LLC.
 !                         All rights reserved.
-! Copyright (c) 2017-2018 Research Organization for Information Science
-!                         and Technology (RIST). All rights reserved.
+! Copyright (c) 2017-2019 Research Organization for Information Science
+!                         and Technology (RIST).  All rights reserved.
 !
 ! $COPYRIGHT$
 !
@@ -46,6 +46,17 @@
 ! Line 2 of the ignore TKR syntax
 #define OMPI_FORTRAN_IGNORE_TKR_TYPE @OMPI_FORTRAN_IGNORE_TKR_TYPE@
 
+! C ISO Fortran type is 'type(*), dimension(..)'
+! but existing ignore_tkr type is $OMPI_FORTRAN_IGNORE_TKR_TYPE
+#define OMPI_F08_IGNORE_TKR_TYPE @OMPI_F08_IGNORE_TKR_TYPE@
+
+! C ISO Fortran bindings have the _cdesc extension
+! but existing Fortran bindings have the _f C bindings
+#define OMPI_F08_BINDINGS_EXTENSION @OMPI_F08_BINDINGS_EXTENSION@
+
+! ignore_tkr require the '!GCC$ ATTRIBUTES NO_ARG_CHECK :: buf' attribute
+! but the C ISO Fortran cannot have that attribute
+#define OMPI_F08_GCC_ATTRIBUTES(buf) @OMPI_F08_GCC_ATTRIBUTES@
 
 #define OMPI_FORTRAN_BUILD_SIZEOF @OMPI_FORTRAN_BUILD_SIZEOF@
 ! Integers
