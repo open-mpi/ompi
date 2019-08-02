@@ -566,12 +566,13 @@ int ompi_osc_ucx_accumulate(const void *origin_addr, int origin_count,
             if ((op != &ompi_mpi_op_maxloc.op && op != &ompi_mpi_op_minloc.op) ||
                 ompi_datatype_is_contiguous_memory_layout(temp_dt, temp_count)) {
                 size_t temp_size;
+                char *curr_temp_addr = (char *)temp_addr;
                 ompi_datatype_type_size(temp_dt, &temp_size);
                 while (origin_ucx_iov_idx < origin_ucx_iov_count) {
                     int curr_count = origin_ucx_iov[origin_ucx_iov_idx].len / temp_size;
                     ompi_op_reduce(op, origin_ucx_iov[origin_ucx_iov_idx].addr,
-                                   temp_addr, curr_count, temp_dt);
-                    temp_addr = (void *)((char *)temp_addr + curr_count * temp_size);
+                                   curr_temp_addr, curr_count, temp_dt);
+                    curr_temp_addr += curr_count * temp_size;
                     origin_ucx_iov_idx++;
                 }
             } else {
@@ -811,12 +812,13 @@ int ompi_osc_ucx_get_accumulate(const void *origin_addr, int origin_count,
                 if ((op != &ompi_mpi_op_maxloc.op && op != &ompi_mpi_op_minloc.op) ||
                     ompi_datatype_is_contiguous_memory_layout(temp_dt, temp_count)) {
                     size_t temp_size;
+                    char *curr_temp_addr = (char *)temp_addr;
                     ompi_datatype_type_size(temp_dt, &temp_size);
                     while (origin_ucx_iov_idx < origin_ucx_iov_count) {
                         int curr_count = origin_ucx_iov[origin_ucx_iov_idx].len / temp_size;
                         ompi_op_reduce(op, origin_ucx_iov[origin_ucx_iov_idx].addr,
-                                       temp_addr, curr_count, temp_dt);
-                        temp_addr = (void *)((char *)temp_addr + curr_count * temp_size);
+                                       curr_temp_addr, curr_count, temp_dt);
+                        curr_temp_addr += curr_count * temp_size;
                         origin_ucx_iov_idx++;
                     }
                 } else {
