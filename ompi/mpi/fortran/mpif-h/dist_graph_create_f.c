@@ -7,8 +7,8 @@
  * Copyright (c) 2011-2013 Université Bordeaux 1
  * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2015      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015-2019 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -75,6 +75,7 @@ void ompi_dist_graph_create_f(MPI_Fint *comm_old, MPI_Fint *n, MPI_Fint *sources
     int count = 0, i;
     MPI_Info c_info;
     int *c_weights;
+    int c_ierr;
 
     OMPI_ARRAY_NAME_DECL(sources);
     OMPI_ARRAY_NAME_DECL(degrees);
@@ -98,10 +99,11 @@ void ompi_dist_graph_create_f(MPI_Fint *comm_old, MPI_Fint *n, MPI_Fint *sources
     }
 
 
-    *ierr = OMPI_INT_2_FINT(PMPI_Dist_graph_create(c_comm_old, OMPI_FINT_2_INT(*n), OMPI_ARRAY_NAME_CONVERT(sources),
-                                                   OMPI_ARRAY_NAME_CONVERT(degrees), OMPI_ARRAY_NAME_CONVERT(destinations),
-                                                   c_weights, c_info, OMPI_LOGICAL_2_INT(*reorder), &c_comm_graph));
-    if (OMPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
+    c_ierr = PMPI_Dist_graph_create(c_comm_old, OMPI_FINT_2_INT(*n), OMPI_ARRAY_NAME_CONVERT(sources),
+                                    OMPI_ARRAY_NAME_CONVERT(degrees), OMPI_ARRAY_NAME_CONVERT(destinations),
+                                    c_weights, c_info, OMPI_LOGICAL_2_INT(*reorder), &c_comm_graph);
+    if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
+    if (OMPI_SUCCESS == c_ierr) {
         *comm_graph = PMPI_Comm_c2f(c_comm_graph);
     }
 
