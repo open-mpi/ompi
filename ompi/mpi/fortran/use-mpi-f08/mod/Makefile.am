@@ -7,8 +7,8 @@
 # Copyright (c) 2012-2013 Inria.  All rights reserved.
 # Copyright (c) 2013      Los Alamos National Security, LLC. All rights
 #                         reserved.
-# Copyright (c) 2015-2018 Research Organization for Information Science
-#                         and Technology (RIST). All rights reserved.
+# Copyright (c) 2015-2019 Research Organization for Information Science
+#                         and Technology (RIST).  All rights reserved.
 # Copyright (c) 2016      IBM Corporation.  All rights reserved.
 #
 # $COPYRIGHT$
@@ -36,19 +36,21 @@ CLEANFILES += *.i90
 
 ###########################################################################
 
-module_sentinel_file = \
-        libforce_usempif08_internal_modules_to_be_built.la
 
-noinst_LTLIBRARIES = $(module_sentinel_file)
+noinst_LTLIBRARIES = libusempif08_internal_modules.la libforce_usempif08_internal_modules_to_be_built.la
 
 # f08 support modules
 
-libforce_usempif08_internal_modules_to_be_built_la_SOURCES = \
+libusempif08_internal_modules_la_SOURCES = \
         mpi-f08-types.F90 \
+        mpi-f08-callbacks.F90
+
+libforce_usempif08_internal_modules_to_be_built_la_SOURCES = \
         mpi-f08-interfaces.F90 \
-        mpi-f08-interfaces-callbacks.F90 \
-        mpi-f08-callbacks.F90 \
-        pmpi-f08-interfaces.F90
+        pmpi-f08-interfaces.F90 \
+        mpi-f08-interfaces-callbacks.F90
+
+libforce_usempi_internal_modules_to_be_built.la: libusempif08_internal_modules.la
 
 config_h = \
     $(top_builddir)/ompi/mpi/fortran/configure-fortran-output.h \
