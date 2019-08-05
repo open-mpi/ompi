@@ -212,14 +212,23 @@ static int spml_ucx_init(void)
     opal_common_ucx_mca_register();
 
     memset(&params, 0, sizeof(params));
-    params.field_mask = UCP_PARAM_FIELD_FEATURES|UCP_PARAM_FIELD_ESTIMATED_NUM_EPS|UCP_PARAM_FIELD_MT_WORKERS_SHARED;
-    params.features   = UCP_FEATURE_RMA|UCP_FEATURE_AMO32|UCP_FEATURE_AMO64;
+    params.field_mask        = UCP_PARAM_FIELD_FEATURES          |
+                               UCP_PARAM_FIELD_ESTIMATED_NUM_EPS |
+                               UCP_PARAM_FIELD_MT_WORKERS_SHARED;
+    params.features          = UCP_FEATURE_RMA   |
+                               UCP_FEATURE_AMO32 |
+                               UCP_FEATURE_AMO64;
     params.estimated_num_eps = ompi_proc_world_size();
     if (oshmem_mpi_thread_requested == SHMEM_THREAD_MULTIPLE) {
         params.mt_workers_shared = 1;
     } else {
         params.mt_workers_shared = 0;
     }
+
+#if HAVE_DECL_UCP_PARAM_FIELD_ESTIMATED_NUM_PPN
+    params.estimated_num_ppn = opal_process_info.num_local_peers + 1;
+    params.field_mask       |= UCP_PARAM_FIELD_ESTIMATED_NUM_PPN;
+#endif
 
     err = ucp_init(&params, ucp_config, &mca_spml_ucx.ucp_context);
     ucp_config_release(ucp_config);
