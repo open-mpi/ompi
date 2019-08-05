@@ -1227,7 +1227,7 @@ static char **split_and_resolve(char **orig_str, char *name)
 {
     int i, ret, save, if_index;
     char **argv, *str, *tmp;
-    char if_name[IF_NAMESIZE];
+    char if_name[OPAL_IF_NAMESIZE];
     struct sockaddr_storage argv_inaddr, if_inaddr;
     uint32_t argv_prefix;
 

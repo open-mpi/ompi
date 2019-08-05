@@ -141,7 +141,7 @@ static int if_solaris_ipv6_open(void)
                 }
                 intf->af_family = AF_INET6;
 
-                opal_string_copy (intf->if_name, lifreq->lifr_name, IF_NAMESIZE);
+                opal_string_copy (intf->if_name, lifreq->lifr_name, OPAL_IF_NAMESIZE);
                 intf->if_index = opal_list_get_size(&opal_if_list)+1;
                 memcpy(&intf->if_addr, my_addr, sizeof (*my_addr));
                 intf->if_mask = 64;
