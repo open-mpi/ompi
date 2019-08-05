@@ -40,11 +40,11 @@ CLEANFILES += *.i90
 
 lib_LTLIBRARIES = lib@OMPI_LIBMPI_NAME@_usempif08.la
 
-module_sentinel_file = \
+module_sentinel_files = \
         mod/libforce_usempif08_internal_modules_to_be_built.la \
         bindings/libforce_usempif08_internal_bindings_to_be_built.la
 
-mpi-f08.lo: $(module_sentinel_file)
+mpi-f08.lo: $(module_sentinel_files)
 mpi-f08.lo: mpi-f08.F90
 mpi-f08.lo: sizeof_f08.h
 
@@ -824,8 +824,9 @@ endif
 lib@OMPI_LIBMPI_NAME@_usempif08_la_LIBADD = \
         $(OMPI_MPIEXT_USEMPIF08_LIBS) \
         $(top_builddir)/ompi/mpi/fortran/mpif-h/lib@OMPI_LIBMPI_NAME@_mpifh.la \
-        $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la
-lib@OMPI_LIBMPI_NAME@_usempif08_la_DEPENDENCIES = $(module_sentinel_file)
+        $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
+        mod/libusempif08_internal_modules.la
+lib@OMPI_LIBMPI_NAME@_usempif08_la_DEPENDENCIES = $(module_sentinel_files)
 lib@OMPI_LIBMPI_NAME@_usempif08_la_LDFLAGS = -version-info $(libmpi_usempif08_so_version)
 
 #
@@ -839,7 +840,7 @@ pmpi_api_lo_files = $(pmpi_api_files:.F90=.lo)
 $(mpi_api_lo_files): mpi-f08.lo bindings/libforce_usempif08_internal_bindings_to_be_built.la
 $(pmpi_api_lo_files): mpi-f08.lo bindings/libforce_usempif08_internal_bindings_to_be_built.la
 
-mpi-f08.lo: $(module_sentinel_file) $(SIZEOF_H)
+mpi-f08.lo: $(module_sentinel_files) $(SIZEOF_H)
 
 ###########################################################################
 
