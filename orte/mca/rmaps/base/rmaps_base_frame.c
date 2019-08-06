@@ -557,6 +557,7 @@ static int check_modifiers(char *ck, orte_mapping_policy_t *tmp)
     for (i=0; NULL != ck2[i]; i++) {
         if (0 == strncasecmp(ck2[i], "span", strlen(ck2[i]))) {
             ORTE_SET_MAPPING_DIRECTIVE(*tmp, ORTE_MAPPING_SPAN);
+            ORTE_SET_MAPPING_DIRECTIVE(*tmp, ORTE_MAPPING_GIVEN);
             found = true;
         } else if (0 == strncasecmp(ck2[i], "pe", strlen("pe"))) {
             /* break this at the = sign to get the number */
