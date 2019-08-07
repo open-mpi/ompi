@@ -168,6 +168,11 @@ opal_common_ucx_wpool_init(opal_common_ucx_wpool_t *wpool,
     context_params.request_init = opal_common_ucx_req_init;
     context_params.request_size = sizeof(opal_common_ucx_request_t);
 
+#if HAVE_DECL_UCP_PARAM_FIELD_ESTIMATED_NUM_PPN
+    context_params.estimated_num_ppn = opal_process_info.num_local_peers + 1;
+    context_params.field_mask       |= UCP_PARAM_FIELD_ESTIMATED_NUM_PPN;
+#endif
+
     status = ucp_init(&context_params, config, &wpool->ucp_ctx);
     ucp_config_release(config);
     if (UCS_OK != status) {
