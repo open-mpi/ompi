@@ -108,9 +108,11 @@ int ompi_rounddown(int num, int factor)
 static void release_objs_callback(struct ompi_coll_base_nbc_request_t *request) {
     if (NULL != request->data.objs.objs[0]) {
         OBJ_RELEASE(request->data.objs.objs[0]);
+        request->data.objs.objs[0] = NULL;
     }
     if (NULL != request->data.objs.objs[1]) {
         OBJ_RELEASE(request->data.objs.objs[1]);
+        request->data.objs.objs[1] = NULL;
     }
 }
 
@@ -207,15 +209,21 @@ static void release_vecs_callback(ompi_coll_base_nbc_request_t *request) {
     } else {
         scount = rcount = OMPI_COMM_IS_INTER(comm)?ompi_comm_remote_size(comm):ompi_comm_size(comm);
     }
-    for (int i=0; i<scount; i++) {
-        if (NULL != request->data.vecs.stypes && NULL != request->data.vecs.stypes[i]) {
-            OMPI_DATATYPE_RELEASE(request->data.vecs.stypes[i]);
+    if (NULL != request->data.vecs.stypes) {
+        for (int i=0; i<scount; i++) {
+            if (NULL != request->data.vecs.stypes[i]) {
+                OMPI_DATATYPE_RELEASE(request->data.vecs.stypes[i]);
+            }
         }
+        request->data.vecs.stypes = NULL;
     }
-    for (int i=0; i<rcount; i++) {
-        if (NULL != request->data.vecs.rtypes && NULL != request->data.vecs.rtypes[i]) {
-            OMPI_DATATYPE_RELEASE(request->data.vecs.rtypes[i]);
+    if (NULL != request->data.vecs.rtypes) {
+        for (int i=0; i<rcount; i++) {
+            if (NULL != request->data.vecs.rtypes[i]) {
+                OMPI_DATATYPE_RELEASE(request->data.vecs.rtypes[i]);
+            }
         }
+        request->data.vecs.rtypes = NULL;
     }
 }
 
