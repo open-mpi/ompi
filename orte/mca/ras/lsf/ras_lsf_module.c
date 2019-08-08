@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2017 Cisco Systems, Inc.  All rights reserved
- * Copyright (c) 2014      Intel, Inc. All rights reserved
+ * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -36,6 +36,7 @@
 
 #include "orte/mca/rmaps/rmaps_types.h"
 #include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/rmaps/base/base.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/util/show_help.h"
 
@@ -70,6 +71,7 @@ static int allocate(orte_job_t *jdata, opal_list_t *nodes)
     char *affinity_file;
     struct stat buf;
     char *ptr;
+    bool directives_given = false;
 
     /* get the list of allocated nodes */
     if ((num_nodes = lsb_getalloc(&nodelist)) < 0) {
@@ -112,8 +114,19 @@ static int allocate(orte_job_t *jdata, opal_list_t *nodes)
     /* release the nodelist from lsf */
     opal_argv_free(nodelist);
 
+    /* check to see if any mapping or binding directives were given */
+    if (NULL != jdata && NULL != jdata->map) {
+        if ((ORTE_MAPPING_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(jdata->map->mapping)) ||
+            OPAL_BINDING_POLICY_IS_SET(jdata->map->binding)) {
+            directives_given = true;
+        }
+    } else if ((ORTE_MAPPING_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping)) ||
+               OPAL_BINDING_POLICY_IS_SET(opal_hwloc_binding_policy)) {
+            directives_given = true;
+    }
+
     /* check for an affinity file */
-    if (NULL != (affinity_file = getenv("LSB_AFFINITY_HOSTFILE"))) {
+    if (!directives_given && NULL != (affinity_file = getenv("LSB_AFFINITY_HOSTFILE"))) {
         /* check to see if the file is empty - if it is,
          * then affinity wasn't actually set for this job */
         if (0 != stat(affinity_file, &buf)) {
