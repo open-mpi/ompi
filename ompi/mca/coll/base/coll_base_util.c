@@ -141,6 +141,9 @@ int ompi_coll_base_retain_op( ompi_request_t *req, ompi_op_t *op,
                               ompi_datatype_t *type) {
     ompi_coll_base_nbc_request_t *request = (ompi_coll_base_nbc_request_t *)req;
     bool retain = false;
+    if (REQUEST_COMPLETE(req)) {
+        return OMPI_SUCCESS;
+    }
     if (!ompi_op_is_intrinsic(op)) {
         OBJ_RETAIN(op);
         request->data.op.op = op;
@@ -177,6 +180,9 @@ int ompi_coll_base_retain_datatypes( ompi_request_t *req, ompi_datatype_t *stype
                                      ompi_datatype_t *rtype) {
     ompi_coll_base_nbc_request_t *request = (ompi_coll_base_nbc_request_t *)req;
     bool retain = false;
+    if (REQUEST_COMPLETE(req)) {
+        return OMPI_SUCCESS;
+    }
     if (NULL != stype && !ompi_datatype_is_predefined(stype)) {
         OBJ_RETAIN(stype);
         request->data.types.stype = stype;
@@ -254,6 +260,9 @@ int ompi_coll_base_retain_datatypes_w( ompi_request_t *req,
     bool retain = false;
     ompi_communicator_t *comm = request->super.req_mpi_object.comm;
     int scount, rcount;
+    if (REQUEST_COMPLETE(req)) {
+        return OMPI_SUCCESS;
+    }
     if (OMPI_COMM_IS_TOPO(comm)) {
         (void)mca_topo_base_neighbor_count (comm, &rcount, &scount);
     } else {
