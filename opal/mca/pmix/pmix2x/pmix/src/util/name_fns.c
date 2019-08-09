@@ -98,6 +98,7 @@ char* pmix_util_print_name_args(const pmix_proc_t *name)
 {
     pmix_print_args_buffers_t *ptr;
     char *rank;
+    int index;
 
     /* get the next buffer */
     ptr = get_print_name_buffer();
@@ -105,29 +106,36 @@ char* pmix_util_print_name_args(const pmix_proc_t *name)
         PMIX_ERROR_LOG(PMIX_ERR_OUT_OF_RESOURCE);
         return pmix_print_args_null;
     }
-    /* cycle around the ring */
-    if (PMIX_PRINT_NAME_ARG_NUM_BUFS == ptr->cntr) {
-        ptr->cntr = 0;
-    }
 
     /* protect against NULL names */
     if (NULL == name) {
-        snprintf(ptr->buffers[ptr->cntr++], PMIX_PRINT_NAME_ARGS_MAX_SIZE, "[NO-NAME]");
-        return ptr->buffers[ptr->cntr-1];
+        index = ptr->cntr;
+        snprintf(ptr->buffers[index], PMIX_PRINT_NAME_ARGS_MAX_SIZE, "[NO-NAME]");
+        ptr->cntr++;
+        if (PMIX_PRINT_NAME_ARG_NUM_BUFS == ptr->cntr) {
+            ptr->cntr = 0;
+        }
+        return ptr->buffers[index];
     }
 
     rank = pmix_util_print_rank(name->rank);
 
-    snprintf(ptr->buffers[ptr->cntr++],
+    index = ptr->cntr;
+    snprintf(ptr->buffers[index],
              PMIX_PRINT_NAME_ARGS_MAX_SIZE,
-             "[%s,%s]", name->nspace, rank);
+             "[%s:%s]", name->nspace, rank);
+    ptr->cntr++;
+    if (PMIX_PRINT_NAME_ARG_NUM_BUFS == ptr->cntr) {
+        ptr->cntr = 0;
+    }
 
-    return ptr->buffers[ptr->cntr-1];
+    return ptr->buffers[index];
 }
 
 char* pmix_util_print_rank(const pmix_rank_t vpid)
 {
     pmix_print_args_buffers_t *ptr;
+    int index;
 
     ptr = get_print_name_buffer();
 
@@ -136,19 +144,19 @@ char* pmix_util_print_rank(const pmix_rank_t vpid)
         return pmix_print_args_null;
     }
 
-    /* cycle around the ring */
-    if (PMIX_PRINT_NAME_ARG_NUM_BUFS == ptr->cntr) {
-        ptr->cntr = 0;
-    }
-
+    index = ptr->cntr;
     if (PMIX_RANK_UNDEF == vpid) {
-        snprintf(ptr->buffers[ptr->cntr++], PMIX_PRINT_NAME_ARGS_MAX_SIZE, "UNDEF");
+        snprintf(ptr->buffers[index], PMIX_PRINT_NAME_ARGS_MAX_SIZE, "UNDEF");
     } else if (PMIX_RANK_WILDCARD == vpid) {
-        snprintf(ptr->buffers[ptr->cntr++], PMIX_PRINT_NAME_ARGS_MAX_SIZE, "WILDCARD");
+        snprintf(ptr->buffers[index], PMIX_PRINT_NAME_ARGS_MAX_SIZE, "WILDCARD");
     } else {
-        snprintf(ptr->buffers[ptr->cntr++],
+        snprintf(ptr->buffers[index],
                  PMIX_PRINT_NAME_ARGS_MAX_SIZE,
                  "%ld", (long)vpid);
     }
-    return ptr->buffers[ptr->cntr-1];
+    ptr->cntr++;
+    if (PMIX_PRINT_NAME_ARG_NUM_BUFS == ptr->cntr) {
+        ptr->cntr = 0;
+    }
+    return ptr->buffers[index];
 }

@@ -191,7 +191,7 @@ AC_DEFUN([PMIX_SETUP_CORE],[
                                [Link the output PMIx library to this extra lib (used in embedded mode)]))
     AC_MSG_CHECKING([for extra lib])
     AS_IF([test ! -z "$with_pmix_extra_lib"],
-          [AS_IF([test "$with_pmix_extra_lib" == "yes" || test "$with_pmix_extra_lib" == "no"],
+          [AS_IF([test "$with_pmix_extra_lib" = "yes" || test "$with_pmix_extra_lib" = "no"],
                  [AC_MSG_RESULT([ERROR])
                   AC_MSG_WARN([Invalid value for --with-extra-pmix-lib:])
                   AC_MSG_WARN([    $with_pmix_extra_lib])
@@ -209,7 +209,7 @@ AC_DEFUN([PMIX_SETUP_CORE],[
                                [Link any embedded components/tools that require it to the provided libtool lib (used in embedded mode)]))
     AC_MSG_CHECKING([for extra ltlib])
     AS_IF([test ! -z "$with_pmix_extra_ltlib"],
-          [AS_IF([test "$with_pmix_extra_ltlib" == "yes" || test "$with_pmix_extra_ltlib" == "no"],
+          [AS_IF([test "$with_pmix_extra_ltlib" = "yes" || test "$with_pmix_extra_ltlib" = "no"],
                  [AC_MSG_RESULT([ERROR])
                   AC_MSG_WARN([Invalid value for --with-pmix-extra-ltlib:])
                   AC_MSG_WARN([    $with_pmix_extra_ltlib])
@@ -663,7 +663,7 @@ AC_DEFUN([PMIX_SETUP_CORE],[
     # -lrt might be needed for clock_gettime
     PMIX_SEARCH_LIBS_CORE([clock_gettime], [rt])
 
-    AC_CHECK_FUNCS([asprintf snprintf vasprintf vsnprintf strsignal socketpair strncpy_s usleep statfs statvfs getpeereid getpeerucred strnlen posix_fallocate tcgetpgrp])
+    AC_CHECK_FUNCS([asprintf snprintf vasprintf vsnprintf strsignal socketpair strncpy_s usleep statfs statvfs getpeereid getpeerucred strnlen posix_fallocate tcgetpgrp setpgid ptsname openpty setenv])
 
     # On some hosts, htonl is a define, so the AC_CHECK_FUNC will get
     # confused.  On others, it's in the standard library, but stubbed with
@@ -1162,7 +1162,7 @@ AC_MSG_CHECKING([if want to support dlopen of non-global namespaces])
 AC_ARG_ENABLE([nonglobal-dlopen],
               AC_HELP_STRING([--enable-nonglobal-dlopen],
                              [enable non-global dlopen (default: enabled)]))
-if test "$enable_nonglobal_dlopen" == "no"; then
+if test "$enable_nonglobal_dlopen" = "no"; then
     AC_MSG_RESULT([no])
     pmix_need_libpmix=0
 else

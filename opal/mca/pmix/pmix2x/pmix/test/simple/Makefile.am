@@ -85,7 +85,7 @@ simplegacy_SOURCES = \
         simplegacy.c
 simplegacy_LDFLAGS = $(PMIX_PKG_CONFIG_LDFLAGS)
 simplegacy_LDADD = \
-    $(top_builddir)/src/libpmix.la
+    $(top_builddir)/src/libpmi.la
 
 simptimeout_SOURCES = \
         simptimeout.c

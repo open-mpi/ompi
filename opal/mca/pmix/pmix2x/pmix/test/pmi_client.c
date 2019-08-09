@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
@@ -24,6 +24,9 @@ static int _legacy = 0;
 /* Verbose level 0-silent, 1-fatal, 2-error, 3+ debug*/
 static int _verbose = 1;
 
+static int spawned, size, rank=-1, appnum;
+static char jobid[255];
+
 static void log_fatal(const char *format, ...)
 {
     va_list arglist;
@@ -36,7 +39,7 @@ static void log_fatal(const char *format, ...)
             va_end(arglist);
             return;
         }
-        fprintf(stderr, "FATAL: %s", output);
+        fprintf(stderr, "%d:FATAL: %s", rank, output);
         free(output);
     }
     va_end(arglist);
@@ -54,7 +57,7 @@ static void log_error(const char *format, ...)
             va_end(arglist);
             return;
         }
-        fprintf(stderr, "ERROR: %s", output);
+        fprintf(stderr, "%d:ERROR: %s", rank, output);
         free(output);
     }
     va_end(arglist);
@@ -72,7 +75,7 @@ static void log_info(const char *format, ...)
             va_end(arglist);
             return;
         }
-        fprintf(stderr, "INFO: %s", output);
+        fprintf(stderr, "%d:INFO: %s", rank, output);
         free(output);
     }
     va_end(arglist);
@@ -81,7 +84,7 @@ static void log_info(const char *format, ...)
 #define log_assert(e, msg) \
     do {                                                                \
         if (!(e)) {                                                     \
-            log_fatal("%s at %s:%d\n", msg, __func__, __LINE__);    \
+            log_fatal("%d:%s at %s:%d\n", rank, msg, __func__, __LINE__);    \
             rc = -1;                                                    \
         }                                                               \
     } while (0)
@@ -98,10 +101,6 @@ static int test_item4(void);
 static int test_item5(void);
 static int test_item6(void);
 static int test_item7(void);
-
-static int spawned, size, rank, appnum;
-static char jobid[255];
-
 
 int main(int argc, char **argv)
 {
@@ -372,21 +371,24 @@ static int test_item6(void)
 {
     int rc = 0;
     char val[100];
-    const char *tkey = __func__;
+    char *tkey;
     const char *tval = __FILE__;
 
+    asprintf(&tkey, "%d:%s", rank, __func__);
     if (PMI_SUCCESS != (rc = PMI_KVS_Put(jobid, tkey, tval))) {
         log_fatal("PMI_KVS_Put %d\n", rc);
+        free(tkey);
         return rc;
     }
 
     if (PMI_SUCCESS != (rc = PMI_KVS_Get(jobid, tkey, val, sizeof(val)))) {
         log_fatal("PMI_KVS_Get %d\n", rc);
+        free(tkey);
         return rc;
     }
 
     log_info("tkey=%s tval=%s val=%s\n", tkey, tval, val);
-
+    free(tkey);
     log_assert(!strcmp(tval, val), "value does not meet expectation");
 
     return rc;
@@ -398,16 +400,16 @@ static int test_item7(void)
     char tkey[100];
     char tval[100];
     char val[100];
-    int i = 0;
+    int i = 0, j;
+
+log_info("TEST7\n");
 
     for (i = 0; i < size; i++) {
-        sprintf(tkey, "KEY-%d", i);
+        sprintf(tkey, "%d:KEY-%d", rank, i);
         sprintf(tval, "VALUE-%d", i);
-        if (i == rank) {
-            if (PMI_SUCCESS != (rc = PMI_KVS_Put(jobid, tkey, tval))) {
-                log_fatal("PMI_KVS_Put [%s=%s] %d\n", tkey, tval, rc);
-                return rc;
-            }
+        if (PMI_SUCCESS != (rc = PMI_KVS_Put(jobid, tkey, tval))) {
+            log_fatal("PMI_KVS_Put [%s=%s] %d\n", tkey, tval, rc);
+            return rc;
         }
     }
 
@@ -416,22 +418,27 @@ static int test_item7(void)
         return rc;
     }
 
+
+    log_info("BARRIER\n");
     if (PMI_SUCCESS != (rc = PMI_Barrier())) {
         log_fatal("PMI_Barrier %d\n", rc);
         return rc;
     }
 
     for (i = 0; i < size; i++) {
-        sprintf(tkey, "KEY-%d", i);
-        sprintf(tval, "VALUE-%d", i);
-        if (PMI_SUCCESS != (rc = PMI_KVS_Get(jobid, tkey, val, sizeof(val)))) {
-            log_fatal("PMI_KVS_Get [%s=?] %d\n", tkey, rc);
-            return rc;
+        for (j=0; j < size; j++) {
+            sprintf(tkey, "%d:KEY-%d", i, j);
+            sprintf(tval, "VALUE-%d", j);
+            log_info("Get key %s\n", tkey);
+            if (PMI_SUCCESS != (rc = PMI_KVS_Get(jobid, tkey, val, sizeof(val)))) {
+                log_fatal("PMI_KVS_Get [%s=?] %d\n", tkey, rc);
+                return rc;
+            }
+
+            log_info("tkey=%s tval=%s val=%s\n", tkey, tval, val);
+
+            log_assert(!strcmp(tval, val), "value does not meet expectation");
         }
-
-        log_info("tkey=%s tval=%s val=%s\n", tkey, tval, val);
-
-        log_assert(!strcmp(tval, val), "value does not meet expectation");
     }
 
     return rc;

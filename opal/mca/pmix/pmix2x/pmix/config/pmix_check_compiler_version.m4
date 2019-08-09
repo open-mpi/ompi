@@ -2,6 +2,8 @@ dnl -*- shell-script -*-
 dnl
 dnl Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
 dnl Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
+dnl Copyright (c) 2019      Research Organization for Information Science
+dnl                         and Technology (RIST).  All rights reserved.
 dnl
 dnl $COPYRIGHT$
 dnl
@@ -43,6 +45,7 @@ int main (int argc, char * argv[])
     f=fopen("conftestval", "w");
     if (!f) exit(1);
     fprintf (f, "%d", PLATFORM_COMPILER_$1);
+    fclose(f);
     return 0;
 }
             ], [
@@ -75,6 +78,7 @@ int main (int argc, char * argv[])
     f=fopen("conftestval", "w");
     if (!f) exit(1);
     fprintf (f, "%s", PLATFORM_COMPILER_$1);
+    fclose(f);
     return 0;
 }
             ], [
@@ -110,6 +114,7 @@ int main (int argc, char * argv[])
     f=fopen("conftestval", "w");
     if (!f) exit(1);
     fprintf (f, "%s", _STRINGIFY(PLATFORM_COMPILER_$1));
+    fclose(f);
     return 0;
 }
             ], [

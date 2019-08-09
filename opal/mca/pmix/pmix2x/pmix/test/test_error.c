@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015-2019 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -38,7 +38,7 @@ static void timeout_errhandler(size_t evhdlr_registration_id,
                                void *cbdata)
 {
     TEST_ERROR(("timeout errhandler called for error status = %d ninfo = %d",
-                  status, ninfo));
+                  status, (int)ninfo));
     if (NULL != cbfunc) {
         cbfunc(PMIX_SUCCESS, NULL, 0, NULL, NULL, cbdata);
     }
@@ -58,7 +58,7 @@ static void errhandler_reg_callbk1 (pmix_status_t status,
     size_t *ref = (size_t*) cbdata;
     *ref = errhandler_ref;
     TEST_VERBOSE(("PMIX client ERRHANDLER REGISTRATION CALLED WITH STATUS %d, ref=%lu",
-                  status, *ref, (unsigned long)errhandler_ref));
+                  status, (unsigned long)errhandler_ref));
 
 }
 

@@ -560,7 +560,7 @@ static void connection_handler(int sd, short args, void *cbdata)
 
     /* see if we know this nspace */
     nptr = NULL;
-    PMIX_LIST_FOREACH(tmp, &pmix_server_globals.nspaces, pmix_namespace_t) {
+    PMIX_LIST_FOREACH(tmp, &pmix_globals.nspaces, pmix_namespace_t) {
         if (0 == strcmp(tmp->nspace, nspace)) {
             nptr = tmp;
             break;
