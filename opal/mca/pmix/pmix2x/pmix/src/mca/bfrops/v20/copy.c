@@ -431,10 +431,15 @@ pmix_status_t pmix20_bfrop_value_xfer(pmix_value_t *p, const pmix_value_t *src)
             memcpy(&p->data.status, &src->data.status, sizeof(pmix_status_t));
             break;
         case PMIX_PROC:
-            memcpy(&p->data.proc, &src->data.proc, sizeof(pmix_proc_t));
+            /* create the storage */
+            p->data.proc = (pmix_proc_t*)malloc(sizeof(pmix_proc_t));
+            if (NULL == p->data.proc) {
+                return PMIX_ERR_NOMEM;
+            }
+            memcpy(p->data.proc, src->data.proc, sizeof(pmix_proc_t));
             break;
         case PMIX_PROC_RANK:
-            memcpy(&p->data.proc, &src->data.rank, sizeof(pmix_rank_t));
+            memcpy(&p->data.rank, &src->data.rank, sizeof(pmix_rank_t));
             break;
         case PMIX_BYTE_OBJECT:
         case PMIX_COMPRESSED_STRING:
@@ -653,7 +658,12 @@ pmix_status_t pmix20_bfrop_value_xfer(pmix_value_t *p, const pmix_value_t *src)
                     p1 = (pmix_info_t*)p->data.darray->array;
                     s1 = (pmix_info_t*)src->data.darray->array;
                     for (n=0; n < src->data.darray->size; n++) {
-                        PMIX_INFO_LOAD(&p1[n], s1[n].key, &s1[n].value.data.flag, s1[n].value.type);
+                        PMIX_LOAD_KEY(p1[n].key, s1[n].key);
+                        rc = pmix_value_xfer(&p1[n].value, &s1[n].value);
+                        if (PMIX_SUCCESS != rc) {
+                            PMIX_INFO_FREE(p1, src->data.darray->size);
+                            return rc;
+                        }
                     }
                     break;
                 case PMIX_PDATA:
@@ -664,7 +674,13 @@ pmix_status_t pmix20_bfrop_value_xfer(pmix_value_t *p, const pmix_value_t *src)
                     pd = (pmix_pdata_t*)p->data.darray->array;
                     sd = (pmix_pdata_t*)src->data.darray->array;
                     for (n=0; n < src->data.darray->size; n++) {
-                        PMIX_PDATA_LOAD(&pd[n], &sd[n].proc, sd[n].key, &sd[n].value.data.flag, sd[n].value.type);
+                        memcpy(&pd[n].proc, &sd[n].proc, sizeof(pmix_proc_t));
+                        PMIX_LOAD_KEY(pd[n].key, sd[n].key);
+                        rc = pmix_value_xfer(&pd[n].value, &sd[n].value);
+                        if (PMIX_SUCCESS != rc) {
+                            PMIX_INFO_FREE(pd, src->data.darray->size);
+                            return rc;
+                        }
                     }
                     break;
                 case PMIX_BUFFER:

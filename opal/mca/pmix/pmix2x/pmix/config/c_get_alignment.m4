@@ -11,9 +11,9 @@ dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
-dnl Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
-dnl Copyright (c) 2015      Research Organization for Information Science
-dnl                         and Technology (RIST). All rights reserved.
+dnl Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
+dnl Copyright (c) 2015-2019 Research Organization for Information Science
+dnl                         and Technology (RIST).  All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -44,7 +44,9 @@ AC_DEFUN([PMIX_C_GET_ALIGNMENT],[
     FILE *f=fopen("conftestval", "w");
     if (!f) exit(1);
     diff = ((char *)&p->x) - ((char *)&p->c);
+    free(p);
     fprintf(f, "%d\n", (diff >= 0) ? diff : -diff);
+    fclose(f);
 ]])],                         [AS_TR_SH([pmix_cv_c_align_$1])=`cat conftestval`],
                                [AC_MSG_WARN([*** Problem running configure test!])
                                 AC_MSG_WARN([*** See config.log for details.])

@@ -97,7 +97,7 @@ int pmix_rte_init(pmix_proc_type_t type,
     int ret, debug_level;
     char *error = NULL, *evar;
     size_t n;
-    char hostname[PMIX_MAXHOSTNAMELEN];
+    char hostname[PMIX_MAXHOSTNAMELEN] = {0};
 
     if( ++pmix_initialized != 1 ) {
         if( pmix_initialized < 1 ) {
@@ -158,7 +158,7 @@ int pmix_rte_init(pmix_proc_type_t type,
     }
 
     /* setup the globals structure */
-    gethostname(hostname, PMIX_MAXHOSTNAMELEN);
+    gethostname(hostname, PMIX_MAXHOSTNAMELEN-1);
     pmix_globals.hostname = strdup(hostname);
     memset(&pmix_globals.myid.nspace, 0, PMIX_MAX_NSLEN+1);
     pmix_globals.myid.rank = PMIX_RANK_INVALID;
@@ -171,6 +171,8 @@ int pmix_rte_init(pmix_proc_type_t type,
     ret = pmix_hotel_init(&pmix_globals.notifications, pmix_globals.max_events,
                           pmix_globals.evbase, pmix_globals.event_eviction_time,
                           _notification_eviction_cbfunc);
+    PMIX_CONSTRUCT(&pmix_globals.nspaces, pmix_list_t);
+
     if (PMIX_SUCCESS != ret) {
         error = "notification hotel init";
         goto return_error;

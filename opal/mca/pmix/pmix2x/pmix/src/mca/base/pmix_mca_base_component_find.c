@@ -339,8 +339,8 @@ static int component_find_check (pmix_mca_base_framework_t *framework, char **re
         }
 
         if (!found) {
-            char h[MAXHOSTNAMELEN];
-            gethostname(h, sizeof(h));
+            char h[PMIX_MAXHOSTNAMELEN] = {0};
+            gethostname(h, sizeof(h)-1);
             pmix_show_help("help-pmix-mca-base.txt",
                            "find-available:not-valid", true,
                            h, framework->framework_name, requested_component_names[i]);

@@ -254,6 +254,9 @@ int main(int argc, char **argv)
         fprintf(stderr, "Client ns %s rank %d: PMIx_Commit failed: %d\n", myproc.nspace, myproc.rank, rc);
         goto done;
     }
+    if (0 == myproc.rank) {
+        sleep(2);
+    }
 
     /* call fence to synchronize with our peers - instruct
      * the fence operation to collect and return all "put"

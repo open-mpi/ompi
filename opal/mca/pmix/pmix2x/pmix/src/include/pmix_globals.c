@@ -285,6 +285,7 @@ static void cbcon(pmix_cb_t *p)
     PMIX_CONSTRUCT(&p->kvs, pmix_list_t);
     p->copy = false;
     p->timer_running = false;
+    p->level = PMIX_LEVEL_UNDEF;
 }
 static void cbdes(pmix_cb_t *p)
 {

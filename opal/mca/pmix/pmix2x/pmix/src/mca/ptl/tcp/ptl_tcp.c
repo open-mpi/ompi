@@ -131,7 +131,7 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
     char *p, *p2, *server_nspace = NULL, *rendfile = NULL;
     int sd, rc;
     size_t n;
-    char myhost[PMIX_MAXHOSTNAMELEN];
+    char myhost[PMIX_MAXHOSTNAMELEN] = {0};
     bool system_level = false;
     bool system_level_only = false;
     pid_t pid = 0, mypid;
@@ -305,7 +305,7 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
 
     /* mark that we are using the V2 protocol */
     pmix_globals.mypeer->protocol = PMIX_PROTOCOL_V2;
-    gethostname(myhost, sizeof(myhost));
+    gethostname(myhost, sizeof(myhost)-1);
     /* if we were given a URI via MCA param, then look no further */
     if (NULL != suri) {
         if (NULL != server_nspace) {

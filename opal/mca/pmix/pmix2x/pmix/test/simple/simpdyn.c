@@ -62,16 +62,17 @@ int main(int argc, char **argv)
     }
     pmix_output(0, "Client ns %s rank %d: Running", myproc.nspace, myproc.rank);
 
-    /* get our universe size */
+    /* get our job size */
     (void)strncpy(proc.nspace, myproc.nspace, PMIX_MAX_NSLEN);
     proc.rank = PMIX_RANK_WILDCARD;
-    if (PMIX_SUCCESS != (rc = PMIx_Get(&proc, PMIX_UNIV_SIZE, NULL, 0, &val))) {
-        pmix_output(0, "Client ns %s rank %d: PMIx_Get universe size failed: %d", myproc.nspace, myproc.rank, rc);
+    if (PMIX_SUCCESS != (rc = PMIx_Get(&proc, PMIX_JOB_SIZE, NULL, 0, &val))) {
+        pmix_output(0, "Client ns %s rank %d: PMIx_Get job size failed: %s",
+                    myproc.nspace, myproc.rank, PMIx_Error_string(rc));
         goto done;
     }
     nprocs = val->data.uint32;
     PMIX_VALUE_RELEASE(val);
-    pmix_output(0, "Client %s:%d universe size %d", myproc.nspace, myproc.rank, nprocs);
+    pmix_output(0, "Client %s:%d job size %d", myproc.nspace, myproc.rank, nprocs);
 
     /* call fence to sync */
     PMIX_PROC_CONSTRUCT(&proc);
@@ -85,19 +86,12 @@ int main(int argc, char **argv)
     /* rank=0 calls spawn */
     if (0 == myproc.rank) {
         PMIX_APP_CREATE(app, 1);
-        app->cmd = strdup("gumby");
+        app->cmd = strdup("./simpclient");
         app->maxprocs = 2;
-        pmix_argv_append_nosize(&app->argv, "gumby");
+        pmix_argv_append_nosize(&app->argv, "simpclient");
         pmix_argv_append_nosize(&app->argv, "-n");
         pmix_argv_append_nosize(&app->argv, "2");
         pmix_setenv("PMIX_ENV_VALUE", "3", true, &app->env);
-        PMIX_INFO_CREATE(app->info, 2);
-        (void)strncpy(app->info[0].key, "DARTH", PMIX_MAX_KEYLEN);
-        app->info[0].value.type = PMIX_INT8;
-        app->info[0].value.data.int8 = 12;
-        (void)strncpy(app->info[1].key, "VADER", PMIX_MAX_KEYLEN);
-        app->info[1].value.type = PMIX_DOUBLE;
-        app->info[1].value.data.dval = 12.34;
 
         pmix_output(0, "Client ns %s rank %d: calling PMIx_Spawn", myproc.nspace, myproc.rank);
         if (PMIX_SUCCESS != (rc = PMIx_Spawn(NULL, 0, app, 1, nsp2))) {
@@ -106,25 +100,18 @@ int main(int argc, char **argv)
         }
         PMIX_APP_FREE(app, 1);
 
-        /* check to see if we got the expected info back */
-        if (0 != strncmp(nsp2, "DYNSPACE", PMIX_MAX_NSLEN)) {
-            pmix_output(0, "Client ns %s rank %d: PMIx_Spawn returned incorrect nspace: %s", myproc.nspace, myproc.rank, nsp2);
-            goto done;
-        } else {
-            pmix_output(0, "Client ns %s rank %d: PMIx_Spawn succeeded returning nspace: %s", myproc.nspace, myproc.rank, nsp2);
-        }
-        /* get their universe size */
+        /* get their job size */
         (void)strncpy(proc.nspace, nsp2, PMIX_MAX_NSLEN);
         proc.rank = PMIX_RANK_WILDCARD;
         val = NULL;
-        if (PMIX_SUCCESS != (rc = PMIx_Get(&proc, PMIX_UNIV_SIZE, NULL, 0, &val)) ||
+        if (PMIX_SUCCESS != (rc = PMIx_Get(&proc, PMIX_JOB_SIZE, NULL, 0, &val)) ||
             NULL == val) {
-            pmix_output(0, "Client ns %s rank %d: PMIx_Get universe size failed: %d", myproc.nspace, myproc.rank, rc);
+            pmix_output(0, "Client ns %s rank %d: PMIx_Get job %s size failed: %d", myproc.nspace, myproc.rank, nsp2, rc);
             goto done;
         }
         ntmp = val->data.uint32;
         PMIX_VALUE_RELEASE(val);
-        pmix_output(0, "Client %s:%d universe %s size %d", myproc.nspace, myproc.rank, nsp2, (int)ntmp);
+        pmix_output(0, "Client %s:%d job %s size %d", myproc.nspace, myproc.rank, nsp2, (int)ntmp);
     }
 
     /* just cycle the connect/disconnect functions */
