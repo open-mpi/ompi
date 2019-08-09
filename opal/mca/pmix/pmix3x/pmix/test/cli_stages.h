@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2015-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015-2018 Mellanox Technologies, Inc.
@@ -56,7 +56,7 @@ extern bool test_abort;
 
 int cli_rank(cli_info_t *cli);
 void cli_init(int nprocs);
-void cli_connect(cli_info_t *cli, int sd, struct event_base * ebase, event_callback_fn callback);
+void cli_connect(cli_info_t *cli, int sd, pmix_event_base_t * ebase, event_callback_fn callback);
 void cli_finalize(cli_info_t *cli);
 void cli_disconnect(cli_info_t *cli);
 void cli_terminate(cli_info_t *cli);

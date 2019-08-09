@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2018      Intel, Inc. All rights reserved.
+ * Copyright (c) 2018-2019 Intel, Inc.  All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -109,8 +109,8 @@ pmix_status_t pmix_plog_base_log(const pmix_proc_t *source,
          * channel that can successfully handle this request,
          * and any channel directives */
         for (n=0; n < ndirs; n++) {
-            if (0 == strncmp(directives[n].key, PMIX_LOG_ONCE, PMIX_MAX_KEYLEN)) {
-                logonce = true;
+            if (PMIX_CHECK_KEY(&directives[n], PMIX_LOG_ONCE)) {
+                logonce = PMIX_INFO_TRUE(&directives[n]);
                 break;
             }
         }
@@ -237,14 +237,10 @@ pmix_status_t pmix_plog_base_log(const pmix_proc_t *source,
 
     rc = mycount->status;  // save the status as it could change when the lock is released
     if (0 == mycount->nreqs) {
-        /* execute their callback */
-        if (NULL != mycount->cbfunc) {
-            mycount->cbfunc(mycount->status, mycount->cbdata);
-        }
         PMIX_RELEASE_THREAD(&mycount->lock);
         PMIX_RELEASE(mycount);
         PMIX_RELEASE_THREAD(&pmix_plog_globals.lock);
-        return PMIX_SUCCESS;
+        return PMIX_OPERATION_SUCCEEDED;
     }
     PMIX_RELEASE_THREAD(&mycount->lock);
     PMIX_RELEASE_THREAD(&pmix_plog_globals.lock);

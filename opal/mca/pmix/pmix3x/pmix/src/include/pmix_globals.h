@@ -122,6 +122,16 @@ typedef enum {
     PMIX_COLLECT_MAX
 } pmix_collect_t;
 
+/* define a set of flags indicating the level
+ * of information being stored/requested */
+typedef enum {
+    PMIX_LEVEL_UNDEF,
+    PMIX_LEVEL_SESSION,
+    PMIX_LEVEL_JOB,
+    PMIX_LEVEL_APP,
+    PMIX_LEVEL_NODE
+} pmix_level_t;
+
 /****    PEER STRUCTURES    ****/
 
 /* clients can only talk to their server, and servers are
@@ -268,6 +278,7 @@ typedef struct {
     pmix_info_t *info;
     size_t ninfo;
     pmix_byte_object_t bo;
+    pmix_list_t results;
     pmix_info_cbfunc_t cbfunc;
     pmix_value_cbfunc_t valcbfunc;
     pmix_release_cbfunc_t relcbfunc;
@@ -388,6 +399,7 @@ typedef struct {
     pmix_list_t kvs;
     bool copy;
     bool timer_running;
+    pmix_level_t level;
 } pmix_cb_t;
 PMIX_CLASS_DECLARATION(pmix_cb_t);
 
@@ -481,6 +493,7 @@ typedef struct {
     bool xml_output;
     bool timestamp_output;
     size_t output_limit;
+    pmix_list_t nspaces;
 } pmix_globals_t;
 
 /* provide access to a function to cleanup epilogs */

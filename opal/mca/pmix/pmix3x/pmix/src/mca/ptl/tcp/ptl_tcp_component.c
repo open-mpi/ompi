@@ -360,8 +360,8 @@ static pmix_status_t setup_listener(pmix_info_t info[], size_t ninfo,
     bool session_tool = false;
     bool system_tool = false;
     pmix_socklen_t addrlen;
-    char *prefix, myhost[PMIX_MAXHOSTNAMELEN];
-    char myconnhost[PMIX_MAXHOSTNAMELEN];
+    char *prefix, myhost[PMIX_MAXHOSTNAMELEN] = {0};
+    char myconnhost[PMIX_MAXHOSTNAMELEN] = {0};
     int myport;
     pmix_kval_t *urikv;
 
@@ -624,17 +624,17 @@ static pmix_status_t setup_listener(pmix_info_t info[], size_t ninfo,
         goto sockerror;
     }
 
-    gethostname(myhost, sizeof(myhost));
+    gethostname(myhost, sizeof(myhost)-1);
     if (AF_INET == mca_ptl_tcp_component.connection.ss_family) {
         prefix = "tcp4://";
         myport = ntohs(((struct sockaddr_in*) &mca_ptl_tcp_component.connection)->sin_port);
         inet_ntop(AF_INET, &((struct sockaddr_in*) &mca_ptl_tcp_component.connection)->sin_addr,
-                  myconnhost, PMIX_MAXHOSTNAMELEN);
+                  myconnhost, PMIX_MAXHOSTNAMELEN-1);
     } else if (AF_INET6 == mca_ptl_tcp_component.connection.ss_family) {
         prefix = "tcp6://";
         myport = ntohs(((struct sockaddr_in6*) &mca_ptl_tcp_component.connection)->sin6_port);
         inet_ntop(AF_INET6, &((struct sockaddr_in6*) &mca_ptl_tcp_component.connection)->sin6_addr,
-                  myconnhost, PMIX_MAXHOSTNAMELEN);
+                  myconnhost, PMIX_MAXHOSTNAMELEN-1);
     } else {
         goto sockerror;
     }
@@ -898,7 +898,7 @@ static char **split_and_resolve(char **orig_str, char *name)
 {
     int i, ret, save, if_index;
     char **argv, *str, *tmp;
-    char if_name[IF_NAMESIZE];
+    char if_name[PMIX_IF_NAMESIZE];
     struct sockaddr_storage argv_inaddr, if_inaddr;
     uint32_t argv_prefix;
 
@@ -1384,7 +1384,7 @@ static void connection_handler(int sd, short args, void *cbdata)
              * of local clients. So let's start by searching for
              * the nspace object */
             nptr = NULL;
-            PMIX_LIST_FOREACH(tmp, &pmix_server_globals.nspaces, pmix_namespace_t) {
+            PMIX_LIST_FOREACH(tmp, &pmix_globals.nspaces, pmix_namespace_t) {
                 if (0 == strcmp(tmp->nspace, nspace)) {
                     nptr = tmp;
                     break;
@@ -1534,7 +1534,7 @@ static void connection_handler(int sd, short args, void *cbdata)
 
     /* see if we know this nspace */
     nptr = NULL;
-    PMIX_LIST_FOREACH(tmp, &pmix_server_globals.nspaces, pmix_namespace_t) {
+    PMIX_LIST_FOREACH(tmp, &pmix_globals.nspaces, pmix_namespace_t) {
         if (0 == strcmp(tmp->nspace, nspace)) {
             nptr = tmp;
             break;
@@ -1838,7 +1838,7 @@ static void process_cbfunc(int sd, short args, void *cbdata)
     if (5 != pnd->flag && 8 != pnd->flag) {
         PMIX_RETAIN(nptr);
         nptr->nspace = strdup(cd->proc.nspace);
-        pmix_list_append(&pmix_server_globals.nspaces, &nptr->super);
+        pmix_list_append(&pmix_globals.nspaces, &nptr->super);
         info = PMIX_NEW(pmix_rank_info_t);
         info->pname.nspace = strdup(nptr->nspace);
         info->pname.rank = cd->proc.rank;
@@ -1866,7 +1866,7 @@ static void process_cbfunc(int sd, short args, void *cbdata)
     peer->nptr->compat.psec = pmix_psec_base_assign_module(pnd->psec);
     if (NULL == peer->nptr->compat.psec) {
         PMIX_RELEASE(peer);
-        pmix_list_remove_item(&pmix_server_globals.nspaces, &nptr->super);
+        pmix_list_remove_item(&pmix_globals.nspaces, &nptr->super);
         PMIX_RELEASE(nptr);  // will release the info object
         CLOSE_THE_SOCKET(pnd->sd);
         goto done;
@@ -1881,7 +1881,7 @@ static void process_cbfunc(int sd, short args, void *cbdata)
     PMIX_INFO_DESTRUCT(&ginfo);
     if (NULL == peer->nptr->compat.gds) {
         PMIX_RELEASE(peer);
-        pmix_list_remove_item(&pmix_server_globals.nspaces, &nptr->super);
+        pmix_list_remove_item(&pmix_globals.nspaces, &nptr->super);
         PMIX_RELEASE(nptr);  // will release the info object
         CLOSE_THE_SOCKET(pnd->sd);
         goto done;
@@ -1900,7 +1900,7 @@ static void process_cbfunc(int sd, short args, void *cbdata)
     req = PMIX_NEW(pmix_iof_req_t);
     if (NULL == req) {
         PMIX_RELEASE(peer);
-        pmix_list_remove_item(&pmix_server_globals.nspaces, &nptr->super);
+        pmix_list_remove_item(&pmix_globals.nspaces, &nptr->super);
         PMIX_RELEASE(nptr);  // will release the info object
         CLOSE_THE_SOCKET(pnd->sd);
         goto done;
@@ -1936,7 +1936,7 @@ static void process_cbfunc(int sd, short args, void *cbdata)
                             "validation of tool credentials failed: %s",
                             PMIx_Error_string(rc));
         PMIX_RELEASE(peer);
-        pmix_list_remove_item(&pmix_server_globals.nspaces, &nptr->super);
+        pmix_list_remove_item(&pmix_globals.nspaces, &nptr->super);
         PMIX_RELEASE(nptr);  // will release the info object
         CLOSE_THE_SOCKET(pnd->sd);
         goto done;
@@ -1949,7 +1949,7 @@ static void process_cbfunc(int sd, short args, void *cbdata)
         PMIX_RELEASE(pnd);
         PMIX_RELEASE(cd);
         PMIX_RELEASE(peer);
-        pmix_list_remove_item(&pmix_server_globals.nspaces, &nptr->super);
+        pmix_list_remove_item(&pmix_globals.nspaces, &nptr->super);
         PMIX_RELEASE(nptr);  // will release the info object
         /* probably cannot send an error reply if we are out of memory */
         return;

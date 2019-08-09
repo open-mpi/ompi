@@ -13,7 +13,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2018 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Mellanox Technologies, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -98,9 +98,12 @@ int main(int argc, char **argv)
     pmix_value_t *val = &value;
     char *tmp;
     pmix_proc_t proc;
-    uint32_t n, num_gets;
+    uint32_t n, num_gets, k, nlocal;
     bool active;
     bool dofence = true;
+    bool local, all_local;
+    char **peers;
+    pmix_rank_t *locals;
 
     if (NULL != getenv("PMIX_SIMPDMODEX_ASYNC")) {
         dofence = false;
@@ -113,16 +116,17 @@ int main(int argc, char **argv)
     }
     pmix_output(0, "Client ns %s rank %d: Running", myproc.nspace, myproc.rank);
 
-    /* get our universe size */
+    /* get our job size */
     (void)strncpy(proc.nspace, myproc.nspace, PMIX_MAX_NSLEN);
     proc.rank = PMIX_RANK_WILDCARD;
-    if (PMIX_SUCCESS != (rc = PMIx_Get(&proc, PMIX_UNIV_SIZE, NULL, 0, &val))) {
-        pmix_output(0, "Client ns %s rank %d: PMIx_Get universe size failed: %d", myproc.nspace, myproc.rank, rc);
+    if (PMIX_SUCCESS != (rc = PMIx_Get(&proc, PMIX_JOB_SIZE, NULL, 0, &val))) {
+        pmix_output(0, "Client ns %s rank %d: PMIx_Get job size failed: %s",
+                    myproc.nspace, myproc.rank, PMIx_Error_string(rc));
         goto done;
     }
     nprocs = val->data.uint32;
     PMIX_VALUE_RELEASE(val);
-    pmix_output(0, "Client %s:%d universe size %d", myproc.nspace, myproc.rank, nprocs);
+    pmix_output(0, "Client %s:%d job size %d", myproc.nspace, myproc.rank, nprocs);
 
     /* put a few values */
     (void)asprintf(&tmp, "%s-%d-internal", myproc.nspace, myproc.rank);
@@ -174,24 +178,60 @@ int main(int argc, char **argv)
         }
     }
 
+    /* get a list of our local peers */
+    if (PMIX_SUCCESS != (rc = PMIx_Get(&proc, PMIX_LOCAL_PEERS, NULL, 0, &val))) {
+        pmix_output(0, "Client ns %s rank %d: PMIx_Get local peers failed: %s",
+                    myproc.nspace, myproc.rank, PMIx_Error_string(rc));
+        goto done;
+    }
+    /* split the returned string to get the rank of each local peer */
+    peers = pmix_argv_split(val->data.string, ',');
+    PMIX_VALUE_RELEASE(val);
+    nlocal = pmix_argv_count(peers);
+    if (nprocs == nlocal) {
+        all_local = true;
+    } else {
+        all_local = false;
+        locals = (pmix_rank_t*)malloc(pmix_argv_count(peers) * sizeof(pmix_rank_t));
+        for (n=0; NULL != peers[n]; n++) {
+            locals[n] = strtoul(peers[n], NULL, 10);
+        }
+    }
+    pmix_argv_free(peers);
+
     /* get the committed data - ask for someone who doesn't exist as well */
     num_gets = 0;
     for (n=0; n < nprocs; n++) {
-        (void)asprintf(&tmp, "%s-%d-local", myproc.nspace, n);
-        proc.rank = n;
-        if (PMIX_SUCCESS != (rc = PMIx_Get_nb(&proc, tmp,
-                                              NULL, 0, valcbfunc, tmp))) {
-            pmix_output(0, "Client ns %s rank %d: PMIx_Get %s failed: %d", myproc.nspace, n, tmp, rc);
-            goto done;
+        if (all_local) {
+            local = true;
+        } else {
+            local = false;
+            /* see if this proc is local to us */
+            for (k=0; k < nlocal; k++) {
+                if (proc.rank == locals[k]) {
+                    local = true;
+                    break;
+                }
+            }
         }
-        ++num_gets;
-        (void)asprintf(&tmp, "%s-%d-remote", myproc.nspace, n);
-        if (PMIX_SUCCESS != (rc = PMIx_Get_nb(&proc, tmp,
-                                              NULL, 0, valcbfunc, tmp))) {
-            pmix_output(0, "Client ns %s rank %d: PMIx_Get %s failed: %d", myproc.nspace, n, tmp, rc);
-            goto done;
+        if (local) {
+            (void)asprintf(&tmp, "%s-%d-local", myproc.nspace, n);
+            proc.rank = n;
+            if (PMIX_SUCCESS != (rc = PMIx_Get_nb(&proc, tmp,
+                                                  NULL, 0, valcbfunc, tmp))) {
+                pmix_output(0, "Client ns %s rank %d: PMIx_Get %s failed: %d", myproc.nspace, n, tmp, rc);
+                goto done;
+            }
+            ++num_gets;
+        } else {
+            (void)asprintf(&tmp, "%s-%d-remote", myproc.nspace, n);
+            if (PMIX_SUCCESS != (rc = PMIx_Get_nb(&proc, tmp,
+                                                  NULL, 0, valcbfunc, tmp))) {
+                pmix_output(0, "Client ns %s rank %d: PMIx_Get %s failed: %d", myproc.nspace, n, tmp, rc);
+                goto done;
+            }
+            ++num_gets;
         }
-        ++num_gets;
     }
 
     if (dofence) {

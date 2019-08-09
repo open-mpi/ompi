@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
- * Copyright (c) 2018      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2018-2019 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -158,7 +158,7 @@ static int if_bsdx_open(void)
         /* fill values into the pmix_pif_t */
         memcpy(&a4, &(sin_addr->sin_addr), sizeof(struct in_addr));
 
-        pmix_strncpy(intf->if_name, cur_ifaddrs->ifa_name, IF_NAMESIZE-1);
+        pmix_strncpy(intf->if_name, cur_ifaddrs->ifa_name, PMIX_IF_NAMESIZE-1);
         intf->if_index = pmix_list_get_size(&pmix_if_list) + 1;
         ((struct sockaddr_in*) &intf->if_addr)->sin_addr = a4;
         ((struct sockaddr_in*) &intf->if_addr)->sin_family = AF_INET;
