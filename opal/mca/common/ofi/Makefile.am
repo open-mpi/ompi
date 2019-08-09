@@ -14,6 +14,7 @@
 # Copyright (c) 2015      Intel, Inc. All rights reserved.
 # Copyright (c) 2017      Los Alamos National Security, LLC.  All rights
 #                         reserved.
+# Copyright (c) 2019      Hewlett Packard Enterprise. All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -28,7 +29,7 @@
 # Note that building this common component statically and linking
 # against other dynamic components is *not* supported!
 
-AM_CPPFLAGS = $(opal_common_ofi_CPPFLAGS)
+AM_CPPFLAGS = $(opal_ofi_CPPFLAGS)
 
 # Header files
 
@@ -69,13 +70,13 @@ endif
 
 lib@OPAL_LIB_PREFIX@mca_common_ofi_la_SOURCES = $(headers) $(sources)
 lib@OPAL_LIB_PREFIX@mca_common_ofi_la_LDFLAGS = \
-        $(opal_common_ofi_LDFLAGS) \
+        $(opal_ofi_LDFLAGS) \
         -version-info $(libmca_opal_common_ofi_so_version)
-lib@OPAL_LIB_PREFIX@mca_common_ofi_la_LIBADD = $(opal_common_ofi_LIBS)
+lib@OPAL_LIB_PREFIX@mca_common_ofi_la_LIBADD = $(opal_ofi_LIBS)
 
 lib@OPAL_LIB_PREFIX@mca_common_ofi_noinst_la_SOURCES = $(headers) $(sources)
-lib@OPAL_LIB_PREFIX@mca_common_ofi_noinst_la_LDFLAGS = $(opal_common_ofi_LDFLAGS)
-lib@OPAL_LIB_PREFIX@mca_common_ofi_noinst_la_LIBADD = $(opal_common_ofi_LIBS)
+lib@OPAL_LIB_PREFIX@mca_common_ofi_noinst_la_LDFLAGS = $(opal_ofi_LDFLAGS)
+lib@OPAL_LIB_PREFIX@mca_common_ofi_noinst_la_LIBADD = $(opal_ofi_LIBS)
 
 # Conditionally install the header files
 
