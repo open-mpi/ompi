@@ -12,6 +12,7 @@
 
 #ifndef OPAL_MCA_COMMON_OFI_H
 #define OPAL_MCA_COMMON_OFI_H
+#include <rdma/fabric.h>
 
 OPAL_DECLSPEC int mca_common_ofi_register_mca_variables(void);
 

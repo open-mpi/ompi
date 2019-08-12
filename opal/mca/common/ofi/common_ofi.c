@@ -19,5 +19,9 @@
 
 int mca_common_ofi_register_mca_variables(void)
 {
-    return OPAL_SUCCESS;
+    if (fi_version() >= FI_VERSION(1,0)) {
+        return OPAL_SUCCESS;
+    } else {
+        return OPAL_ERROR;
+    }
 }
