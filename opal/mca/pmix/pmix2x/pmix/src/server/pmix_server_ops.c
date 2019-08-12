@@ -423,7 +423,7 @@ static pmix_server_trkr_t* new_tracker(char *id, pmix_proc_t *procs,
         }
         /* is this nspace known to us? */
         nptr = NULL;
-        PMIX_LIST_FOREACH(ns, &pmix_server_globals.nspaces, pmix_namespace_t) {
+        PMIX_LIST_FOREACH(ns, &pmix_globals.nspaces, pmix_namespace_t) {
             if (0 == strcmp(procs[i].nspace, ns->nspace)) {
                 nptr = ns;
                 break;
@@ -2433,7 +2433,6 @@ pmix_status_t pmix_server_job_ctrl(pmix_peer_t *peer,
     }
     cd->cbdata = cbdata;
 
-    /* unpack the number of targets */
     cnt = 1;
     PMIX_BFROPS_UNPACK(rc, peer, buf, &cd->ntargets, &cnt, PMIX_SIZE);
     if (PMIX_SUCCESS != rc) {

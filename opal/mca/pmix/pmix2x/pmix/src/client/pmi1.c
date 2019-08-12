@@ -1,8 +1,8 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2014-2019 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2016      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
@@ -85,7 +85,7 @@ PMIX_EXPORT int PMI_Init(int *spawned)
 
     /* getting internal key requires special rank value */
     memcpy(&proc, &myproc, sizeof(myproc));
-    proc.rank = PMIX_RANK_UNDEF;
+    proc.rank = PMIX_RANK_WILDCARD;
 
     /* set controlling parameters
      * PMIX_OPTIONAL - expect that these keys should be available on startup
@@ -394,8 +394,6 @@ PMIX_EXPORT int PMI_Get_appnum(int *appnum)
     pmix_value_t *val;
     pmix_info_t info[1];
     bool  val_optinal = 1;
-    pmix_proc_t proc = myproc;
-    proc.rank = PMIX_RANK_WILDCARD;
 
     PMI_CHECK();
 
@@ -414,11 +412,11 @@ PMIX_EXPORT int PMI_Get_appnum(int *appnum)
     PMIX_INFO_CONSTRUCT(&info[0]);
     PMIX_INFO_LOAD(&info[0], PMIX_OPTIONAL, &val_optinal, PMIX_BOOL);
 
-    rc = PMIx_Get(&proc, PMIX_APPNUM, info, 1, &val);
+    rc = PMIx_Get(&myproc, PMIX_APPNUM, info, 1, &val);
     if (PMIX_SUCCESS == rc) {
         rc = convert_int(appnum, val);
         PMIX_VALUE_RELEASE(val);
-    } else if( PMIX_ERR_NOT_FOUND == rc ){
+    } else {
         /* this is optional value, set to 0 */
         *appnum = 0;
         rc = PMIX_SUCCESS;
@@ -445,7 +443,7 @@ PMIX_EXPORT int PMI_Publish_name(const char service_name[], const char port[])
     }
 
     /* pass the service/port */
-           pmix_strncpy(info.key, service_name, PMIX_MAX_KEYLEN);
+    pmix_strncpy(info.key, service_name, PMIX_MAX_KEYLEN);
     info.value.type = PMIX_STRING;
     info.value.data.string = (char*) port;
 
@@ -497,7 +495,7 @@ PMIX_EXPORT int PMI_Lookup_name(const char service_name[], char port[])
     PMIX_PDATA_CONSTRUCT(&pdata);
 
     /* pass the service */
-           pmix_strncpy(pdata.key, service_name, PMIX_MAX_KEYLEN);
+    pmix_strncpy(pdata.key, service_name, PMIX_MAX_KEYLEN);
 
     /* PMI-1 doesn't want the nspace back */
     if (PMIX_SUCCESS != (rc = PMIx_Lookup(&pdata, 1, NULL, 0))) {
@@ -514,7 +512,7 @@ PMIX_EXPORT int PMI_Lookup_name(const char service_name[], char port[])
      * potential we could overrun it. As this feature
      * isn't widely supported in PMI-1, try being
      * conservative */
-           pmix_strncpy(port, pdata.value.data.string, PMIX_MAX_KEYLEN);
+    pmix_strncpy(port, pdata.value.data.string, PMIX_MAX_KEYLEN);
     PMIX_PDATA_DESTRUCT(&pdata);
 
     return PMIX_SUCCESS;

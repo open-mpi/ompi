@@ -53,6 +53,24 @@ current release as well as the "stable" bug fix release branch.
 - PR #1311: Work around memory bug in older gcc compilers
 - PR #1329: Add -fPIC to static builds
 - PR #1334: Cache only -W CFLAG entries to fix 32-bit builds
+- PR #1341: Do not use '==' in m4 test statements
+- PR #1342: Fix if_linux_ipv6_open interface filter
+- PR #1344: Remove unnecessary libtool init for c++
+- PR #1346: Fix incorrect pointer casts/deref
+- PR #1347/#1348: Fix use of gethostname
+- PR #1353/#1357: util/environ: use setenv() if available
+- PR #1354: Plug a misc memory leak in the pmix_query_caddy_t destructor
+- PR #1356: Fix another pointer cast/deref in test suite
+- PR #1358: Implement support for class-based info arrays
+- PR #1359: Plug misc minor memory leaks
+- PR #1369: Fix legacy support for PMI-1
+- PR #1370: Cleanup handling of data requests for different nspaces
+- PR #1193: Resolve get of proc-specific job-level info from another nspace
+- PR #1377: Skip fastpath/dstore for NULL keys
+- PR #1379: Change IF_NAMESIZE to PMIX_IF_NAMESIZE and set to safe size
+- PR #1385: Check for EINVAL return from posix_fallocate
+- PR #1389: Plug misc memory leaks in configure
+
 
 
 2.2.2 -- 24 Jan 2019

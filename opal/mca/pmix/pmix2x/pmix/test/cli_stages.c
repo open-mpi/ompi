@@ -105,7 +105,7 @@ void cli_disconnect(cli_info_t *cli)
     }
 
     if( NULL == cli->ev ){
-        TEST_ERROR(("Bad ev = NULL of rank = %d ", cli->sd, cli_rank(cli)));
+        TEST_ERROR(("Bad ev = NULL of rank = %d ", cli_rank(cli)));
         test_abort = true;
     } else {
         TEST_VERBOSE(("remove event of rank %d from event queue", cli_rank(cli)));

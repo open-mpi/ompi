@@ -125,7 +125,7 @@ PMIX_CLASS_INSTANCE(pmix_output_stream_t, pmix_object_t, construct, destruct);
 bool pmix_output_init(void)
 {
     int i;
-    char hostname[PMIX_MAXHOSTNAMELEN];
+    char hostname[PMIX_MAXHOSTNAMELEN] = {0};
     char *str;
 
     if (initialized) {
@@ -176,7 +176,7 @@ bool pmix_output_init(void)
     } else {
         verbose.lds_want_stderr = true;
     }
-    gethostname(hostname, sizeof(hostname));
+    gethostname(hostname, sizeof(hostname)-1);
     hostname[sizeof(hostname)-1] = '\0';
     if (0 > asprintf(&verbose.lds_prefix, "[%s:%05d] ", hostname, getpid())) {
         return PMIX_ERR_NOMEM;
@@ -256,7 +256,7 @@ bool pmix_output_switch(int output_id, bool enable)
 void pmix_output_reopen_all(void)
 {
     char *str;
-    char hostname[PMIX_MAXHOSTNAMELEN];
+    char hostname[PMIX_MAXHOSTNAMELEN] = {0};
 
     str = getenv("PMIX_OUTPUT_STDERR_FD");
     if (NULL != str) {
