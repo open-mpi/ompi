@@ -144,6 +144,7 @@ PMIX_EXPORT pmix_status_t PMIx_Query_info_nb(pmix_query_t queries[], size_t nque
     pmix_list_t results;
     pmix_kval_t *kv, *kvnxt;
     pmix_proc_t proc;
+    bool rank_given;
 
     PMIX_ACQUIRE_THREAD(&pmix_global_lock);
 
@@ -181,37 +182,41 @@ PMIX_EXPORT pmix_status_t PMIx_Query_info_nb(pmix_query_t queries[], size_t nque
             } else if (PMIX_CHECK_KEY(&queries[n].qualifiers[p], PMIX_PROCID)) {
                 PMIX_LOAD_NSPACE(proc.nspace, queries[n].qualifiers[p].value.data.proc->nspace);
                 proc.rank = queries[n].qualifiers[p].value.data.proc->rank;
+                rank_given = true;
             } else if (PMIX_CHECK_KEY(&queries[n].qualifiers[p], PMIX_NSPACE)) {
                 PMIX_LOAD_NSPACE(proc.nspace, queries[n].qualifiers[p].value.data.string);
             } else if (PMIX_CHECK_KEY(&queries[n].qualifiers[p], PMIX_RANK)) {
                 proc.rank = queries[n].qualifiers[p].value.data.rank;
-            } else if (PMIX_CHECK_KEY(&queries[n].qualifiers[p], PMIX_HOSTNAME)) {
-                if (0 != strcmp(queries[n].qualifiers[p].value.data.string, pmix_globals.hostname)) {
-                    /* asking about a different host, so ask for the info */
-                    PMIX_LIST_DESTRUCT(&results);
-                    goto query;
-                }
+                rank_given = true;
             }
         }
         /* we get here if a refresh isn't required - first try a local
          * "get" on the data to see if we already have it */
         PMIX_CONSTRUCT(&cb, pmix_cb_t);
         cb.copy = false;
-        /* set the proc */
-        if (PMIX_RANK_INVALID == proc.rank &&
-            0 == strlen(proc.nspace)) {
-            /* use our id */
-            cb.proc = &pmix_globals.myid;
-        } else {
-            if (0 == strlen(proc.nspace)) {
-                /* use our nspace */
-                PMIX_LOAD_NSPACE(cb.proc->nspace, pmix_globals.myid.nspace);
-            }
-            if (PMIX_RANK_INVALID == proc.rank) {
-                /* user the wildcard rank */
-                proc.rank = PMIX_RANK_WILDCARD;
-            }
+        /* if they are querying about node or app values not directly
+         * associated with a proc (i.e., they didn't specify the proc),
+         * then we obtain those by leaving the proc info as undefined */
+        if (!rank_given) {
+            proc.rank = PMIX_RANK_UNDEF;
             cb.proc = &proc;
+        } else {
+            /* set the proc */
+            if (PMIX_RANK_INVALID == proc.rank &&
+                0 == strlen(proc.nspace)) {
+                /* use our id */
+                cb.proc = &pmix_globals.myid;
+            } else {
+                if (0 == strlen(proc.nspace)) {
+                    /* use our nspace */
+                    PMIX_LOAD_NSPACE(cb.proc->nspace, pmix_globals.myid.nspace);
+                }
+                if (PMIX_RANK_INVALID == proc.rank) {
+                    /* user the wildcard rank */
+                    proc.rank = PMIX_RANK_WILDCARD;
+                }
+                cb.proc = &proc;
+            }
         }
         for (p=0; NULL != queries[n].keys[p]; p++) {
             cb.key = queries[n].keys[p];

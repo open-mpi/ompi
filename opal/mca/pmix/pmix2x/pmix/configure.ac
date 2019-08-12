@@ -171,7 +171,7 @@ LT_PREREQ([2.2.6])
 
 pmix_enable_shared="$enable_shared"
 pmix_enable_static="$enable_static"
-AS_IF([test ! -z "$enable_static" && test "$enable_static" == "yes"],
+AS_IF([test ! -z "$enable_static" && test "$enable_static" = "yes"],
       [CFLAGS="$CFLAGS -fPIC"])
 
 AM_ENABLE_SHARED
@@ -201,7 +201,6 @@ AS_IF([test "$pmix_debug" = "1"],
 
 LT_INIT()
 LT_LANG([C])
-LT_LANG([C++])
 
 ############################################################################
 # Setup the core

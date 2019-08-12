@@ -13,7 +13,7 @@
  *                         reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2013      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2016      Intel, Inc. All rights reserved.
+ * Copyright (c) 2016-2019 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -38,9 +38,7 @@
 #include <netinet/in.h>
 #endif
 
-#ifndef IF_NAMESIZE
-#define IF_NAMESIZE 32
-#endif
+#define PMIX_IF_NAMESIZE 256
 
 BEGIN_C_DECLS
 

@@ -215,7 +215,7 @@ PMIX_EXPORT int PMIx_tool_init(pmix_proc_t *proc,
 {
     pmix_kval_t *kptr;
     pmix_status_t rc;
-    char hostname[PMIX_MAX_NSLEN];
+    char hostname[PMIX_MAXHOSTNAMELEN] = {0};
     char *evar, *nspace = NULL;
     pmix_rank_t rank = PMIX_RANK_UNDEF;
     bool gdsfound, do_not_connect = false;
@@ -848,7 +848,11 @@ PMIX_EXPORT int PMIx_tool_init(pmix_proc_t *proc,
          * and load it from there */
 
         /* hostname */
-        gethostname(hostname, PMIX_MAX_NSLEN);
+        if (NULL != pmix_globals.hostname) {
+            pmix_strncpy(hostname, pmix_globals.hostname, PMIX_MAXHOSTNAMELEN);
+        } else {
+            gethostname(hostname, PMIX_MAXHOSTNAMELEN-1);
+        }
         kptr = PMIX_NEW(pmix_kval_t);
         kptr->key = strdup(PMIX_HOSTNAME);
         PMIX_VALUE_CREATE(kptr->value, 1);
