@@ -580,6 +580,6 @@ request_construct(ompi_coll_libnbc_request_t *request)
 
 
 OBJ_CLASS_INSTANCE(ompi_coll_libnbc_request_t,
-                   ompi_request_t,
+                   ompi_coll_base_nbc_request_t,
                    request_construct,
                    NULL);
