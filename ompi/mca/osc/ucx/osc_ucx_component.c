@@ -356,7 +356,7 @@ static int component_select(struct ompi_win_t *win, void **base, size_t size, in
         ret = opal_progress_register(progress_callback);
         if (OMPI_SUCCESS != ret) {
             OSC_UCX_VERBOSE(1, "opal_progress_register failed: %d", ret);
-            goto error;
+            goto select_unlock;
         }
     }
 
