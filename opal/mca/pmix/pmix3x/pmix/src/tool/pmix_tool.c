@@ -50,7 +50,9 @@
 #endif  /* HAVE_DIRENT_H */
 
 #include PMIX_EVENT_HEADER
+#if ! PMIX_HAVE_LIBEV
 #include PMIX_EVENT2_THREAD_HEADER
+#endif
 
 #include "src/class/pmix_list.h"
 #include "src/util/argv.h"
@@ -789,7 +791,7 @@ pmix_status_t pmix_tool_init_info(void)
     pmix_kval_t *kptr;
     pmix_status_t rc;
     pmix_proc_t wildcard;
-    char hostname[PMIX_MAX_NSLEN];
+    char hostname[PMIX_MAXHOSTNAMELEN] = {0};
 
     pmix_strncpy(wildcard.nspace, pmix_globals.myid.nspace, PMIX_MAX_NSLEN);
     wildcard.rank = pmix_globals.myid.rank;
@@ -1027,9 +1029,9 @@ pmix_status_t pmix_tool_init_info(void)
 
     /* hostname */
     if (NULL != pmix_globals.hostname) {
-        pmix_strncpy(hostname, pmix_globals.hostname, PMIX_MAX_NSLEN);
+        pmix_strncpy(hostname, pmix_globals.hostname, PMIX_MAXHOSTNAMELEN);
     } else {
-        gethostname(hostname, PMIX_MAX_NSLEN);
+        gethostname(hostname, PMIX_MAXHOSTNAMELEN-1);
     }
     kptr = PMIX_NEW(pmix_kval_t);
     kptr->key = strdup(PMIX_HOSTNAME);
@@ -1227,7 +1229,6 @@ PMIX_EXPORT pmix_status_t PMIx_tool_finalize(void)
         PMIX_LIST_DESTRUCT(&pmix_server_globals.local_reqs);
         PMIX_LIST_DESTRUCT(&pmix_server_globals.gdata);
         PMIX_LIST_DESTRUCT(&pmix_server_globals.events);
-        PMIX_LIST_DESTRUCT(&pmix_server_globals.nspaces);
         PMIX_LIST_DESTRUCT(&pmix_server_globals.iof);
     }
 

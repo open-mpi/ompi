@@ -13,7 +13,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015-2019 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
@@ -38,7 +38,6 @@
 #include <sys/wait.h>
 #include <errno.h>
 #include <signal.h>
-#include PMIX_EVENT_HEADER
 
 #if PMIX_HAVE_HWLOC
 #include <src/hwloc/hwloc-internal.h>
@@ -230,8 +229,6 @@ static void dlcbfunc(int sd, short flags, void *cbdata)
 {
     myxfer_t *x = (myxfer_t*)cbdata;
 
-    pmix_output(0, "INVENTORY READY FOR DELIVERY");
-
     PMIx_server_deliver_inventory(x->info, x->ninfo, NULL, 0, opcbfunc, (void*)x);
 }
 
@@ -244,8 +241,6 @@ static void infocbfunc(pmix_status_t status,
     mylock_t *lock = (mylock_t*)cbdata;
     myxfer_t *x;
     size_t n;
-
-    pmix_output(0, "INVENTORY RECEIVED");
 
     /* we don't have any place to send this, so for test
      * purposes only, let's push it back down for processing.
@@ -343,12 +338,14 @@ int main(int argc, char **argv)
     pmix_info_t *info;
     size_t ninfo;
     bool cross_version = false;
+    bool usock = true;
     bool hwloc = false;
 #if PMIX_HAVE_HWLOC
     char *hwloc_file = NULL;
 #endif
     mylock_t mylock;
     pmix_status_t code;
+    sigset_t unblock;
 
     /* smoke test */
     if (PMIX_SUCCESS != 0) {
@@ -378,6 +375,25 @@ int main(int argc, char **argv)
             /* cross-version test - we will set one child to
              * run at a different version. Requires -n >= 2 */
             cross_version = true;
+            usock = false;
+        } else if (0 == strcmp("-u", argv[n])) {
+            /* enable usock */
+            usock = false;
+#if PMIX_HAVE_HWLOC
+        } else if (0 == strcmp("-hwloc", argv[n]) ||
+                   0 == strcmp("--hwloc", argv[n])) {
+            /* test hwloc support */
+            hwloc = true;
+        } else if (0 == strcmp("-hwloc-file", argv[n]) ||
+                   0 == strcmp("--hwloc-file", argv[n])) {
+            if (NULL == argv[n+1]) {
+                fprintf(stderr, "The --hwloc-file option requires an argument\n");
+                exit(1);
+            }
+            hwloc_file = strdup(argv[n+1]);
+            hwloc = true;
+            ++n;
+#endif
         } else if (0 == strcmp("-h", argv[n])) {
             /* print the options and exit */
             fprintf(stderr, "usage: simptest <options>\n");
@@ -393,6 +409,12 @@ int main(int argc, char **argv)
     if (NULL == executable) {
         executable = strdup("./simpclient");
     }
+    /* check for executable existence and permissions */
+    if (0 != access(executable, X_OK)) {
+        fprintf(stderr, "Executable %s not found or missing executable permissions\n", executable);
+        exit(1);
+    }
+
     if (cross_version && nprocs < 2) {
         fprintf(stderr, "Cross-version testing requires at least two clients\n");
         exit(1);
@@ -406,6 +428,21 @@ int main(int argc, char **argv)
 #endif
 
     fprintf(stderr, "Testing version %s\n", PMIx_Get_version());
+
+    /* ensure that SIGCHLD is unblocked as we need to capture it */
+    if (0 != sigemptyset(&unblock)) {
+        fprintf(stderr, "SIGEMPTYSET FAILED\n");
+        exit(1);
+    }
+    if (0 != sigaddset(&unblock, SIGCHLD)) {
+        fprintf(stderr, "SIGADDSET FAILED\n");
+        exit(1);
+    }
+    if (0 != sigprocmask(SIG_UNBLOCK, &unblock, NULL)) {
+        fprintf(stderr, "SIG_UNBLOCK FAILED\n");
+        exit(1);
+    }
+
 
     /* setup the server library and tell it to support tool connections */
 #if PMIX_HAVE_HWLOC
@@ -477,9 +514,9 @@ int main(int argc, char **argv)
 
     /* setup to see sigchld on the forked tests */
     PMIX_CONSTRUCT(&children, pmix_list_t);
-    event_assign(&handler, pmix_globals.evbase, SIGCHLD,
-                 EV_SIGNAL|EV_PERSIST,wait_signal_callback, &handler);
-    event_add(&handler, NULL);
+    pmix_event_assign(&handler, pmix_globals.evbase, SIGCHLD,
+                      EV_SIGNAL|EV_PERSIST,wait_signal_callback, &handler);
+    pmix_event_add(&handler, NULL);
 
     /* we have a single namespace for all clients */
     atmp = NULL;
@@ -539,6 +576,9 @@ int main(int argc, char **argv)
             } else {
                 pmix_setenv("PMIX_MCA_ptl", "usock", true, &client_env);
             }
+        } else if (!usock) {
+            /* don't disable usock => enable it on client */
+            pmix_setenv("PMIX_MCA_ptl", "usock", true, &client_env);
         }
         x = PMIX_NEW(myxfer_t);
         if (PMIX_SUCCESS != (rc = PMIx_server_register_client(&proc, myuid, mygid,
@@ -616,6 +656,24 @@ int main(int argc, char **argv)
     DEBUG_DESTRUCT_LOCK(&globallock);
     PMIX_INFO_FREE(info, ninfo);
 
+#if 0
+    fprintf(stderr, "TEST NONDEFAULT NOTIFICATION\n");
+    /* verify that notifications don't recirculate */
+    ninfo = 1;
+    PMIX_INFO_CREATE(info, ninfo);
+     /* mark that it is not to go to any default handlers */
+    PMIX_INFO_LOAD(&info[0], PMIX_EVENT_NON_DEFAULT, NULL, PMIX_BOOL);
+    PMIx_Notify_event(PMIX_ERR_DEBUGGER_RELEASE,
+                      &pmix_globals.myid, PMIX_RANGE_LOCAL,
+                      info, ninfo, NULL, NULL);
+    PMIX_INFO_FREE(info, ninfo);
+    /* wait a little in case we get notified */
+    for (ninfo=0; ninfo < 100000; ninfo++) {
+        struct timespec t = {0, 100};
+        nanosleep(&t, NULL);
+    }
+#endif
+
   done:
     /* deregister the event handlers */
     PMIx_Deregister_event_handler(0, NULL, NULL);
@@ -645,42 +703,132 @@ static void set_namespace(int nprocs, char *ranks, char *nspace,
                           pmix_op_cbfunc_t cbfunc, myxfer_t *x)
 {
     char *regex, *ppn;
-    char hostname[PMIX_MAXHOSTNAMELEN];
+    int n, m, k;
+    pmix_info_t *info;
+    pmix_data_array_t *array;
 
-    gethostname(hostname, sizeof(hostname));
-    x->ninfo = 7;
+    x->ninfo = 16 + nprocs;
 
     PMIX_INFO_CREATE(x->info, x->ninfo);
-    (void)strncpy(x->info[0].key, PMIX_UNIV_SIZE, PMIX_MAX_KEYLEN);
-    x->info[0].value.type = PMIX_UINT32;
-    x->info[0].value.data.uint32 = nprocs;
+    n = 0;
 
-    (void)strncpy(x->info[1].key, PMIX_SPAWNED, PMIX_MAX_KEYLEN);
-    x->info[1].value.type = PMIX_UINT32;
-    x->info[1].value.data.uint32 = 0;
+    PMIx_generate_regex("test000,test001,test002", &regex);
+    PMIx_generate_ppn("0;1;2", &ppn);
 
-    (void)strncpy(x->info[2].key, PMIX_LOCAL_SIZE, PMIX_MAX_KEYLEN);
-    x->info[2].value.type = PMIX_UINT32;
-    x->info[2].value.data.uint32 = nprocs;
+    (void)strncpy(x->info[n].key, PMIX_NODE_MAP, PMIX_MAX_KEYLEN);
+    x->info[n].value.type = PMIX_STRING;
+    x->info[n].value.data.string = regex;
+    ++n;
 
-    (void)strncpy(x->info[3].key, PMIX_LOCAL_PEERS, PMIX_MAX_KEYLEN);
-    x->info[3].value.type = PMIX_STRING;
-    x->info[3].value.data.string = strdup(ranks);
+    /* if we have some empty nodes, then fill their spots */
+    (void)strncpy(x->info[n].key, PMIX_PROC_MAP, PMIX_MAX_KEYLEN);
+    x->info[n].value.type = PMIX_STRING;
+    x->info[n].value.data.string = ppn;
+    ++n;
 
-    PMIx_generate_regex(hostname, &regex);
-    (void)strncpy(x->info[4].key, PMIX_NODE_MAP, PMIX_MAX_KEYLEN);
-    x->info[4].value.type = PMIX_STRING;
-    x->info[4].value.data.string = regex;
+    (void)strncpy(x->info[n].key, PMIX_UNIV_SIZE, PMIX_MAX_KEYLEN);
+    x->info[n].value.type = PMIX_UINT32;
+    x->info[n].value.data.uint32 = nprocs;
+    ++n;
 
-    PMIx_generate_ppn(ranks, &ppn);
-    (void)strncpy(x->info[5].key, PMIX_PROC_MAP, PMIX_MAX_KEYLEN);
-    x->info[5].value.type = PMIX_STRING;
-    x->info[5].value.data.string = ppn;
+    (void)strncpy(x->info[n].key, PMIX_SPAWNED, PMIX_MAX_KEYLEN);
+    x->info[n].value.type = PMIX_UINT32;
+    x->info[n].value.data.uint32 = 0;
+    ++n;
 
-    (void)strncpy(x->info[6].key, PMIX_JOB_SIZE, PMIX_MAX_KEYLEN);
-    x->info[6].value.type = PMIX_UINT32;
-    x->info[6].value.data.uint32 = nprocs;
+    (void)strncpy(x->info[n].key, PMIX_LOCAL_SIZE, PMIX_MAX_KEYLEN);
+    x->info[n].value.type = PMIX_UINT32;
+    x->info[n].value.data.uint32 = nprocs;
+    ++n;
 
+    (void)strncpy(x->info[n].key, PMIX_LOCAL_PEERS, PMIX_MAX_KEYLEN);
+    x->info[n].value.type = PMIX_STRING;
+    x->info[n].value.data.string = strdup(ranks);
+    ++n;
+
+    (void)strncpy(x->info[n].key, PMIX_JOB_SIZE, PMIX_MAX_KEYLEN);
+    x->info[n].value.type = PMIX_UINT32;
+    x->info[n].value.data.uint32 = nprocs;
+    ++n;
+
+    (void)strncpy(x->info[n].key, PMIX_JOBID, PMIX_MAX_KEYLEN);
+    x->info[n].value.type = PMIX_STRING;
+    x->info[n].value.data.string = strdup("1234");
+    ++n;
+
+    (void)strncpy(x->info[n].key, PMIX_NPROC_OFFSET, PMIX_MAX_KEYLEN);
+    x->info[n].value.type = PMIX_UINT32;
+    x->info[n].value.data.uint32 = 0;
+    ++n;
+
+    (void)strncpy(x->info[n].key, PMIX_NODEID, PMIX_MAX_KEYLEN);
+    x->info[n].value.type = PMIX_UINT32;
+    x->info[n].value.data.uint32 = 0;
+    ++n;
+
+    (void)strncpy(x->info[n].key, PMIX_NODE_SIZE, PMIX_MAX_KEYLEN);
+    x->info[n].value.type = PMIX_UINT32;
+    x->info[n].value.data.uint32 = nprocs;
+    ++n;
+
+    (void)strncpy(x->info[n].key, PMIX_NUM_NODES, PMIX_MAX_KEYLEN);
+    x->info[n].value.type = PMIX_UINT32;
+    x->info[n].value.data.uint32 = 1;
+    ++n;
+
+    (void)strncpy(x->info[n].key, PMIX_UNIV_SIZE, PMIX_MAX_KEYLEN);
+    x->info[n].value.type = PMIX_UINT32;
+    x->info[n].value.data.uint32 = nprocs;
+    ++n;
+
+    (void)strncpy(x->info[n].key, PMIX_MAX_PROCS, PMIX_MAX_KEYLEN);
+    x->info[n].value.type = PMIX_UINT32;
+    x->info[n].value.data.uint32 = nprocs;
+    ++n;
+
+    (void)strncpy(x->info[n].key, PMIX_JOB_NUM_APPS, PMIX_MAX_KEYLEN);
+    x->info[n].value.type = PMIX_UINT32;
+    x->info[n].value.data.uint32 = 1;
+    ++n;
+
+    (void)strncpy(x->info[n].key, PMIX_LOCALLDR, PMIX_MAX_KEYLEN);
+    x->info[n].value.type = PMIX_PROC_RANK;
+    x->info[n].value.data.uint32 = 0;
+    ++n;
+
+    /* add the proc-specific data */
+    for (m=0; m < nprocs; m++) {
+        (void)strncpy(x->info[n].key, PMIX_PROC_DATA, PMIX_MAX_KEYLEN);
+        x->info[n].value.type = PMIX_DATA_ARRAY;
+        PMIX_DATA_ARRAY_CREATE(array, 5, PMIX_INFO);
+        x->info[n].value.data.darray = array;
+        info = (pmix_info_t*)array->array;
+        k = 0;
+        (void)strncpy(info[k].key, PMIX_RANK, PMIX_MAX_KEYLEN);
+        info[k].value.type = PMIX_PROC_RANK;
+        info[k].value.data.rank = m;
+        ++k;
+        (void)strncpy(info[k].key, PMIX_GLOBAL_RANK, PMIX_MAX_KEYLEN);
+        info[k].value.type = PMIX_PROC_RANK;
+        info[k].value.data.rank = m;
+        ++k;
+        (void)strncpy(info[k].key, PMIX_LOCAL_RANK, PMIX_MAX_KEYLEN);
+        info[k].value.type = PMIX_UINT16;
+        info[k].value.data.uint16 = m;
+        ++k;
+
+        (void)strncpy(info[k].key, PMIX_NODE_RANK, PMIX_MAX_KEYLEN);
+        info[k].value.type = PMIX_UINT16;
+        info[k].value.data.uint16 = m;
+        ++k;
+
+        (void)strncpy(info[k].key, PMIX_NODEID, PMIX_MAX_KEYLEN);
+        info[k].value.type = PMIX_UINT32;
+        info[k].value.data.uint32 = 0;
+        ++k;
+        /* move to next proc */
+        ++n;
+    }
     PMIx_server_register_nspace(nspace, nprocs, x->info, x->ninfo,
                                 cbfunc, x);
 }
@@ -694,6 +842,12 @@ static void errhandler(size_t evhdlr_registration_id,
                        void *cbdata)
 {
     pmix_output(0, "SERVER: ERRHANDLER CALLED WITH STATUS %d", status);
+    /* we must NOT tell the event handler state machine that we
+     * are the last step as that will prevent it from notifying
+     * anyone else that might be listening for declarations */
+    if (NULL != cbfunc) {
+        cbfunc(PMIX_SUCCESS, NULL, 0, NULL, NULL, cbdata);
+    }
 }
 
 static void errhandler_reg_callbk (pmix_status_t status,
@@ -702,8 +856,6 @@ static void errhandler_reg_callbk (pmix_status_t status,
 {
     mylock_t *lock = (mylock_t*)cbdata;
 
-    pmix_output(0, "SERVER: ERRHANDLER REGISTRATION CALLBACK CALLED WITH STATUS %d, ref=%lu",
-                status, (unsigned long)errhandler_ref);
     lock->status = status;
     DEBUG_WAKEUP_THREAD(lock);
 }
@@ -716,8 +868,6 @@ static pmix_status_t connected(const pmix_proc_t *proc, void *server_object,
 static pmix_status_t finalized(const pmix_proc_t *proc, void *server_object,
                      pmix_op_cbfunc_t cbfunc, void *cbdata)
 {
-    pmix_output(0, "SERVER: FINALIZED %s:%d WAKEUP %d",
-                proc->nspace, proc->rank, wakeup);
     return PMIX_OPERATION_SUCCEEDED;
 }
 
@@ -793,7 +943,6 @@ static pmix_status_t fencenb_fn(const pmix_proc_t procs[], size_t nprocs,
 {
     pmix_shift_caddy_t *scd;
 
-    pmix_output(0, "SERVER: FENCENB");
     scd = PMIX_NEW(pmix_shift_caddy_t);
     scd->status = PMIX_SUCCESS;
     scd->data = data;
@@ -810,8 +959,6 @@ static pmix_status_t dmodex_fn(const pmix_proc_t *proc,
                      pmix_modex_cbfunc_t cbfunc, void *cbdata)
 {
     pmix_shift_caddy_t *scd;
-
-    pmix_output(0, "SERVER: DMODEX");
 
     /* if this is a timeout test, then do nothing */
     if (istimeouttest) {
@@ -834,8 +981,6 @@ static pmix_status_t publish_fn(const pmix_proc_t *proc,
 {
     pmix_locdat_t *p;
     size_t n;
-
-    pmix_output(0, "SERVER: PUBLISH");
 
     for (n=0; n < ninfo; n++) {
         p = PMIX_NEW(pmix_locdat_t);
@@ -876,8 +1021,6 @@ static pmix_status_t lookup_fn(const pmix_proc_t *proc, char **keys,
     pmix_pdata_t *pd = NULL;
     pmix_status_t ret = PMIX_ERR_NOT_FOUND;
     lkobj_t *lk;
-
-    pmix_output(0, "SERVER: LOOKUP");
 
     PMIX_CONSTRUCT(&results, pmix_list_t);
 
@@ -928,8 +1071,6 @@ static pmix_status_t unpublish_fn(const pmix_proc_t *proc, char **keys,
     pmix_locdat_t *p, *p2;
     size_t n;
 
-    pmix_output(0, "SERVER: UNPUBLISH");
-
     for (n=0; NULL != keys[n]; n++) {
         PMIX_LIST_FOREACH_SAFE(p, p2, &pubdata, pmix_locdat_t) {
             if (0 == strncmp(keys[n], p->pdata.key, PMIX_MAX_KEYLEN)) {
@@ -960,8 +1101,6 @@ static pmix_status_t spawn_fn(const pmix_proc_t *proc,
     size_t n;
     pmix_proc_t *pptr;
     bool spawned;
-
-    pmix_output(0, "SERVER: SPAWN");
 
     /* check the job info for parent and spawned keys */
     for (n=0; n < ninfo; n++) {
@@ -996,8 +1135,6 @@ static pmix_status_t connect_fn(const pmix_proc_t procs[], size_t nprocs,
                                 const pmix_info_t info[], size_t ninfo,
                                 pmix_op_cbfunc_t cbfunc, void *cbdata)
 {
-    pmix_output(0, "SERVER: CONNECT");
-
     /* in practice, we would pass this request to the local
      * resource manager for handling */
 
@@ -1011,8 +1148,6 @@ static pmix_status_t disconnect_fn(const pmix_proc_t procs[], size_t nprocs,
                                    const pmix_info_t info[], size_t ninfo,
                                    pmix_op_cbfunc_t cbfunc, void *cbdata)
 {
-    pmix_output(0, "SERVER: DISCONNECT");
-
     return PMIX_OPERATION_SUCCEEDED;
 }
 
@@ -1035,7 +1170,6 @@ static pmix_status_t notify_event(pmix_status_t code,
                                   pmix_info_t info[], size_t ninfo,
                                   pmix_op_cbfunc_t cbfunc, void *cbdata)
 {
-    pmix_output(0, "SERVER: NOTIFY EVENT");
     return PMIX_OPERATION_SUCCEEDED;
 }
 
@@ -1064,8 +1198,6 @@ static pmix_status_t query_fn(pmix_proc_t *proct,
     pmix_info_t *info;
     query_data_t qd;
 
-    pmix_output(0, "SERVER: QUERY");
-
     if (NULL == cbfunc) {
         return PMIX_ERROR;
     }
@@ -1093,8 +1225,6 @@ static void tool_connect_fn(pmix_info_t *info, size_t ninfo,
 {
     pmix_proc_t proc;
 
-    pmix_output(0, "SERVER: TOOL CONNECT");
-
     /* just pass back an arbitrary nspace */
     (void)strncpy(proc.nspace, "TOOL", PMIX_MAX_NSLEN);
     proc.rank = 0;
@@ -1121,8 +1251,6 @@ static void log_fn(const pmix_proc_t *client,
                    pmix_op_cbfunc_t cbfunc, void *cbdata)
 {
     mylog_t *lg = (mylog_t *)malloc(sizeof(mylog_t));
-
-    pmix_output(0, "SERVER: LOG");
 
     lg->cbfunc = cbfunc;
     lg->cbdata = cbdata;
@@ -1161,7 +1289,7 @@ static void wait_signal_callback(int fd, short event, void *arg)
     pid_t pid;
     wait_tracker_t *t2;
 
-    if (SIGCHLD != event_get_signal(sig)) {
+    if (SIGCHLD != pmix_event_get_signal(sig)) {
         return;
     }
 

@@ -306,6 +306,7 @@ static void cbcon(pmix_cb_t *p)
     PMIX_CONSTRUCT(&p->kvs, pmix_list_t);
     p->copy = false;
     p->timer_running = false;
+    p->level = PMIX_LEVEL_UNDEF;
 }
 static void cbdes(pmix_cb_t *p)
 {
@@ -342,6 +343,7 @@ static void qcon(pmix_query_caddy_t *p)
     p->relcbfunc = NULL;
     p->credcbfunc = NULL;
     p->validcbfunc = NULL;
+    PMIX_CONSTRUCT(&p->results, pmix_list_t);
 }
 static void qdes(pmix_query_caddy_t *p)
 {
@@ -349,6 +351,8 @@ static void qdes(pmix_query_caddy_t *p)
     PMIX_BYTE_OBJECT_DESTRUCT(&p->bo);
     PMIX_PROC_FREE(p->targets, p->ntargets);
     PMIX_INFO_FREE(p->info, p->ninfo);
+    PMIX_LIST_DESTRUCT(&p->results);
+    PMIX_QUERY_FREE(p->queries, p->nqueries);
 }
 PMIX_EXPORT PMIX_CLASS_INSTANCE(pmix_query_caddy_t,
                                 pmix_object_t,
@@ -565,4 +569,31 @@ static bool dirpath_is_empty(const char *path )
     }
 
     return true;
+}
+
+int pmix_event_assign(struct event *ev, pmix_event_base_t *evbase,
+                      int fd, short arg, event_callback_fn cbfn, void *cbd)
+{
+#if PMIX_HAVE_LIBEV
+    event_set(ev, fd, arg, cbfn, cbd);
+    event_base_set(evbase, ev);
+#else
+    event_assign(ev, evbase, fd, arg, cbfn, cbd);
+#endif
+    return 0;
+}
+
+pmix_event_t* pmix_event_new(pmix_event_base_t *b, int fd,
+                             short fg, event_callback_fn cbfn, void *cbd)
+{
+    pmix_event_t *ev = NULL;
+
+#if PMIX_HAVE_LIBEV
+    ev = (pmix_event_t*)calloc(1, sizeof(pmix_event_t));
+    ev->ev_base = b;
+#else
+    ev = event_new(b, fd, fg, (event_callback_fn) cbfn, cbd);
+#endif
+
+    return ev;
 }

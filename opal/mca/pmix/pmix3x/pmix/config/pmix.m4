@@ -663,7 +663,7 @@ AC_DEFUN([PMIX_SETUP_CORE],[
     # -lrt might be needed for clock_gettime
     PMIX_SEARCH_LIBS_CORE([clock_gettime], [rt])
 
-    AC_CHECK_FUNCS([asprintf snprintf vasprintf vsnprintf strsignal socketpair strncpy_s usleep statfs statvfs getpeereid getpeerucred strnlen posix_fallocate tcgetpgrp])
+    AC_CHECK_FUNCS([asprintf snprintf vasprintf vsnprintf strsignal socketpair strncpy_s usleep statfs statvfs getpeereid getpeerucred strnlen posix_fallocate tcgetpgrp setpgid ptsname openpty setenv])
 
     # On some hosts, htonl is a define, so the AC_CHECK_FUNC will get
     # confused.  On others, it's in the standard library, but stubbed with
@@ -754,7 +754,21 @@ AC_DEFUN([PMIX_SETUP_CORE],[
     ##################################
     pmix_show_title "Libevent"
 
+    PMIX_LIBEV_CONFIG
     PMIX_LIBEVENT_CONFIG
+
+    AS_IF([test $pmix_libevent_support -eq 1 && test $pmix_libev_support -eq 1],
+      [AC_MSG_WARN([Both libevent and libev support have been specified.])
+       AC_MSG_WARN([Only one can be configured against at a time. Please])
+       AC_MSG_WARN([remove one from the configure command line.])
+       AC_MSG_ERROR([Cannot continue])])
+
+    AS_IF([test $pmix_libevent_support -eq 0 && test $pmix_libev_support -eq 0],
+          [AC_MSG_WARN([Either libevent or libev support is required, but neither])
+           AC_MSG_WARN([was found. Please use the configure options to point us])
+           AC_MSG_WARN([to where we can find one or the other library])
+           AC_MSG_ERROR([Cannot continue])])
+
 
     ##################################
     # HWLOC

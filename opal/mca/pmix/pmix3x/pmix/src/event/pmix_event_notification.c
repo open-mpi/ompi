@@ -883,7 +883,7 @@ static void _notify_client_event(int sd, short args, void *cbdata)
             } else {
                 /* look up the nspace for this proc */
                 nptr = NULL;
-                PMIX_LIST_FOREACH(tmp, &pmix_server_globals.nspaces, pmix_namespace_t) {
+                PMIX_LIST_FOREACH(tmp, &pmix_globals.nspaces, pmix_namespace_t) {
                     if (PMIX_CHECK_NSPACE(tmp->nspace, cd->targets[n].nspace)) {
                         nptr = tmp;
                         break;

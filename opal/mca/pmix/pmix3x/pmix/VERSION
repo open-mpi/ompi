@@ -15,7 +15,7 @@
 
 major=3
 minor=1
-release=3
+release=4
 
 # greek is used for alpha or beta release tags.  If it is non-empty,
 # it will be appended to the version number.  It does not have to be
@@ -30,7 +30,7 @@ greek=
 # command, or with the date (if "git describe" fails) in the form of
 # "date<date>".
 
-repo_rev=gitc10fd1d4
+repo_rev=gite6837057
 
 # If tarball_version is not empty, it is used as the version string in
 # the tarball filename, regardless of all other versions listed in
@@ -44,7 +44,7 @@ tarball_version=
 
 # The date when this release was created
 
-date="Jul 02, 2019"
+date="Aug 09, 2019"
 
 # The shared library version of each of PMIx's public libraries.
 # These versions are maintained in accordance with the "Library
@@ -75,8 +75,8 @@ date="Jul 02, 2019"
 # Version numbers are described in the Libtool current:revision:age
 # format.
 
-libpmix_so_version=4:23:2
-libpmi_so_version=1:0:0
+libpmix_so_version=4:24:2
+libpmi_so_version=1:1:0
 libpmi2_so_version=1:0:0
 
 # "Common" components install standalone libraries that are run-time
@@ -84,4 +84,4 @@ libpmi2_so_version=1:0:0
 # # well.  Yuck; this somewhat breaks the
 # # components-don't-affect-the-build-system abstraction.
 #
-libmca_common_dstore_so_version=1:0:0
+libmca_common_dstore_so_version=1:1:0

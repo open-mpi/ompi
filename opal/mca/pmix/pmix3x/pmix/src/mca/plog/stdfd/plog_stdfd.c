@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
- * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -101,6 +101,9 @@ static pmix_status_t mylog(const pmix_proc_t *source,
     /* check to see if there are any stdfd entries */
     rc = PMIX_ERR_TAKE_NEXT_OPTION;
     for (n=0; n < ndata; n++) {
+        if (PMIX_INFO_OP_IS_COMPLETE(&data[n])) {
+            continue;
+        }
         if (0 == strncmp(data[n].key, PMIX_LOG_STDERR, PMIX_MAX_KEYLEN)) {
             bo.bytes = data[n].value.data.string;
             bo.size = strlen(bo.bytes);
@@ -117,6 +120,5 @@ static pmix_status_t mylog(const pmix_proc_t *source,
             rc = PMIX_SUCCESS;
         }
     }
-
     return rc;
 }

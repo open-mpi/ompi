@@ -435,7 +435,7 @@ static pmix_status_t collect_inventory(pmix_info_t directives[], size_t ndirs,
     pmix_buffer_t bucket, pbkt;
     bool found = false;
     pmix_byte_object_t pbo;
-    char nodename[PMIX_MAXHOSTNAMELEN], *foo;
+    char nodename[PMIX_MAXHOSTNAMELEN] = {0}, *foo;
 
     pmix_output_verbose(2, pmix_pnet_base_framework.framework_output,
                         "pnet:opa collect inventory");
@@ -443,7 +443,7 @@ static pmix_status_t collect_inventory(pmix_info_t directives[], size_t ndirs,
     /* setup the bucket - we will pass the results as a blob */
     PMIX_CONSTRUCT(&bucket, pmix_buffer_t);
     /* pack our node name */
-    gethostname(nodename, sizeof(nodename));
+    gethostname(nodename, sizeof(nodename)-1);
     foo = &nodename[0];
     PMIX_BFROPS_PACK(rc, pmix_globals.mypeer, &bucket, &foo, 1, PMIX_STRING);
     if (PMIX_SUCCESS != rc) {

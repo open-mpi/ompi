@@ -13,7 +13,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
@@ -183,6 +183,8 @@ static pmix_list_t pubdata;
 static pmix_event_t handler;
 static pmix_list_t children;
 static bool istimeouttest = false;
+static bool nettest = false;
+static bool arrays = false;
 
 static void set_namespace(int nprocs, char *ranks, char *nspace,
                           pmix_op_cbfunc_t cbfunc, myxfer_t *x);
@@ -209,6 +211,32 @@ static void opcbfunc(pmix_status_t status, void *cbdata)
     DEBUG_WAKEUP_THREAD(&x->lock);
 }
 
+static void setup_cbfunc(pmix_status_t status,
+                         pmix_info_t info[], size_t ninfo,
+                         void *provided_cbdata,
+                         pmix_op_cbfunc_t cbfunc, void *cbdata)
+{
+    myxfer_t *x = (myxfer_t*)provided_cbdata;
+    size_t n;
+
+    /* transfer it to the caddy for return to the main thread */
+    if (0 < ninfo) {
+        PMIX_INFO_CREATE(x->info, ninfo);
+        x->ninfo = ninfo;
+        for (n=0; n < ninfo; n++) {
+            PMIX_INFO_XFER(&x->info[n], &info[n]);
+        }
+    }
+
+    /* let the library release the data and cleanup from
+     * the operation */
+    if (NULL != cbfunc) {
+        cbfunc(PMIX_SUCCESS, cbdata);
+    }
+
+    DEBUG_WAKEUP_THREAD(&x->lock);
+}
+
 int main(int argc, char **argv)
 {
     char **client_env=NULL;
@@ -225,6 +253,11 @@ int main(int argc, char **argv)
     size_t ninfo;
     mylock_t mylock;
     int ncycles=1, m, delay=0;
+    bool hwloc = false;
+#if PMIX_HAVE_HWLOC
+    char *hwloc_file = NULL;
+#endif
+    sigset_t unblock;
 
     /* smoke test */
     if (PMIX_SUCCESS != 0) {
@@ -260,30 +293,115 @@ int main(int argc, char **argv)
                    0 == strcmp("--sleep", argv[n])) &&
                    NULL != argv[n+1]) {
             delay = strtol(argv[n+1], NULL, 10);
+#if PMIX_HAVE_HWLOC
+        } else if (0 == strcmp("-hwloc", argv[n]) ||
+                   0 == strcmp("--hwloc", argv[n])) {
+            /* test hwloc support */
+            hwloc = true;
+        } else if (0 == strcmp("-hwloc-file", argv[n]) ||
+                   0 == strcmp("--hwloc-file", argv[n])) {
+            if (NULL == argv[n+1]) {
+                fprintf(stderr, "The --hwloc-file option requires an argument\n");
+                exit(1);
+            }
+            hwloc_file = strdup(argv[n+1]);
+            hwloc = true;
+            ++n;
+#endif
         } else if (0 == strcmp("-h", argv[n])) {
             /* print the options and exit */
             fprintf(stderr, "usage: simptest <options>\n");
             fprintf(stderr, "    -n N     Number of clients to run\n");
             fprintf(stderr, "    -e foo   Name of the client executable to run (default: simpclient\n");
             fprintf(stderr, "    -reps N  Cycle for N repetitions");
+            fprintf(stderr, "    -hwloc   Test hwloc support\n");
+            fprintf(stderr, "    -hwloc-file FILE   Use file to import topology\n");
+            fprintf(stderr, "    -net-test  Test network endpt assignments\n");
+            fprintf(stderr, "    -arrays  Use the job session array to pass registration info\n");
             exit(0);
+        } else if (0 == strcmp("-net-test", argv[n]) ||
+                   0 == strcmp("--net-test", argv[n])) {
+            /* test network support */
+            nettest = true;
+        } else if (0 == strcmp("-arrays", argv[n]) ||
+                   0 == strcmp("--arrays", argv[n])) {
+            /* test network support */
+            arrays = true;
         }
     }
     if (NULL == executable) {
-        executable = strdup("./quietclient");
+        if (nettest) {
+            executable = strdup("./simpcoord");
+        } else {
+            executable = strdup("./quietclient");
+        }
     }
+    /* check for executable existence and permissions */
+    if (0 != access(executable, X_OK)) {
+        fprintf(stderr, "Executable %s not found or missing executable permissions\n", executable);
+        exit(1);
+    }
+
+    /* ensure that SIGCHLD is unblocked as we need to capture it */
+    if (0 != sigemptyset(&unblock)) {
+        fprintf(stderr, "SIGEMPTYSET FAILED\n");
+        exit(1);
+    }
+    if (0 != sigaddset(&unblock, SIGCHLD)) {
+        fprintf(stderr, "SIGADDSET FAILED\n");
+        exit(1);
+    }
+    if (0 != sigprocmask(SIG_UNBLOCK, &unblock, NULL)) {
+        fprintf(stderr, "SIG_UNBLOCK FAILED\n");
+        exit(1);
+    }
+
     /* setup the server library and tell it to support tool connections */
+#if PMIX_HAVE_HWLOC
+    if (hwloc) {
+#if HWLOC_API_VERSION < 0x20000
+        ninfo = 4;
+#else
+        ninfo = 5;
+#endif
+    } else {
+        ninfo = 4;
+    }
+#else
     ninfo = 3;
+#endif
 
     PMIX_INFO_CREATE(info, ninfo);
     PMIX_INFO_LOAD(&info[0], PMIX_SERVER_TOOL_SUPPORT, NULL, PMIX_BOOL);
     PMIX_INFO_LOAD(&info[1], PMIX_USOCK_DISABLE, NULL, PMIX_BOOL);
     PMIX_INFO_LOAD(&info[2], PMIX_SERVER_GATEWAY, NULL, PMIX_BOOL);
+#if PMIX_HAVE_HWLOC
+    if (hwloc) {
+        if (NULL != hwloc_file) {
+            PMIX_INFO_LOAD(&info[3], PMIX_TOPOLOGY_FILE, hwloc_file, PMIX_STRING);
+        } else {
+            PMIX_INFO_LOAD(&info[3], PMIX_TOPOLOGY, NULL, PMIX_STRING);
+        }
+#if HWLOC_API_VERSION >= 0x20000
+        PMIX_INFO_LOAD(&info[4], PMIX_HWLOC_SHARE_TOPO, NULL, PMIX_BOOL);
+#endif
+    }
+#endif
+    if (nettest) {
+        /* set a known network configuration for the pnet/test component */
+        putenv("PMIX_MCA_pnet_test_nverts=nodes:5;plane:d:3;plane:s:2;plane:d:5");
+        putenv("PMIX_MCA_pnet=test");
+    }
+
     if (PMIX_SUCCESS != (rc = PMIx_server_init(&mymodule, info, ninfo))) {
         fprintf(stderr, "Init failed with error %d\n", rc);
         return rc;
     }
     PMIX_INFO_FREE(info, ninfo);
+    if (nettest) {
+        unsetenv("PMIX_MCA_pnet");
+        unsetenv("PMIX_MCA_pnet_test_nverts");
+    }
 
     /* register the default errhandler */
     DEBUG_CONSTRUCT_LOCK(&mylock);
@@ -304,9 +422,9 @@ int main(int argc, char **argv)
 
     /* setup to see sigchld on the forked tests */
     PMIX_CONSTRUCT(&children, pmix_list_t);
-    event_assign(&handler, pmix_globals.evbase, SIGCHLD,
-                 EV_SIGNAL|EV_PERSIST,wait_signal_callback, &handler);
-    event_add(&handler, NULL);
+    pmix_event_assign(&handler, pmix_globals.evbase, SIGCHLD,
+                      EV_SIGNAL|EV_PERSIST,wait_signal_callback, &handler);
+    pmix_event_add(&handler, NULL);
 
     for (m=0; m < ncycles; m++) {
         fprintf(stderr, "Running cycle %d\n", m);
@@ -445,43 +563,186 @@ int main(int argc, char **argv)
 static void set_namespace(int nprocs, char *ranks, char *nspace,
                           pmix_op_cbfunc_t cbfunc, myxfer_t *x)
 {
-    char *regex, *ppn;
-    char hostname[PMIX_MAXHOSTNAMELEN];
+    char *regex, *ppn, *rks;
+    int n, m, k;
+    pmix_data_array_t *array;
+    pmix_info_t *info, *iptr, *ip;
+    myxfer_t cd, lock;
+    pmix_status_t rc;
 
-    gethostname(hostname, sizeof(hostname));
-    x->ninfo = 7;
+    if (arrays) {
+        x->ninfo = 15 + nprocs;
+    } else {
+        x->ninfo = 16 + nprocs;
+    }
 
     PMIX_INFO_CREATE(x->info, x->ninfo);
-    (void)strncpy(x->info[0].key, PMIX_UNIV_SIZE, PMIX_MAX_KEYLEN);
-    x->info[0].value.type = PMIX_UINT32;
-    x->info[0].value.data.uint32 = nprocs;
+    n = 0;
 
-    (void)strncpy(x->info[1].key, PMIX_SPAWNED, PMIX_MAX_KEYLEN);
-    x->info[1].value.type = PMIX_UINT32;
-    x->info[1].value.data.uint32 = 0;
+    PMIx_generate_regex("test000,test001,test002", &regex);
+    PMIx_generate_ppn("0;1;2", &ppn);
 
-    (void)strncpy(x->info[2].key, PMIX_LOCAL_SIZE, PMIX_MAX_KEYLEN);
-    x->info[2].value.type = PMIX_UINT32;
-    x->info[2].value.data.uint32 = nprocs;
+    if (arrays) {
+        (void)strncpy(x->info[n].key, PMIX_JOB_INFO_ARRAY, PMIX_MAX_KEYLEN);
+        x->info[n].value.type = PMIX_DATA_ARRAY;
+        PMIX_DATA_ARRAY_CREATE(x->info[n].value.data.darray, 2, PMIX_INFO);
+        iptr = (pmix_info_t*)x->info[n].value.data.darray->array;
+        (void)strncpy(iptr[0].key, PMIX_NODE_MAP, PMIX_MAX_KEYLEN);
+        iptr[0].value.type = PMIX_STRING;
+        iptr[0].value.data.string = regex;
+        (void)strncpy(iptr[1].key, PMIX_PROC_MAP, PMIX_MAX_KEYLEN);
+        iptr[1].value.type = PMIX_STRING;
+        iptr[1].value.data.string = ppn;
+        ++n;
+    } else {
+        (void)strncpy(x->info[n].key, PMIX_NODE_MAP, PMIX_MAX_KEYLEN);
+        x->info[n].value.type = PMIX_STRING;
+        x->info[n].value.data.string = regex;
+        ++n;
 
-    (void)strncpy(x->info[3].key, PMIX_LOCAL_PEERS, PMIX_MAX_KEYLEN);
-    x->info[3].value.type = PMIX_STRING;
-    x->info[3].value.data.string = strdup(ranks);
+        /* if we have some empty nodes, then fill their spots */
+        (void)strncpy(x->info[n].key, PMIX_PROC_MAP, PMIX_MAX_KEYLEN);
+        x->info[n].value.type = PMIX_STRING;
+        x->info[n].value.data.string = ppn;
+        ++n;
+    }
 
-    PMIx_generate_regex(hostname, &regex);
-    (void)strncpy(x->info[4].key, PMIX_NODE_MAP, PMIX_MAX_KEYLEN);
-    x->info[4].value.type = PMIX_STRING;
-    x->info[4].value.data.string = regex;
+    /* we have the required info to run setup_app, so do that now */
+    PMIX_INFO_CREATE(iptr, 4);
+    PMIX_INFO_XFER(&iptr[0], &x->info[0]);
+    PMIX_INFO_XFER(&iptr[1], &x->info[1]);
+    PMIX_INFO_LOAD(&iptr[2], PMIX_SETUP_APP_ENVARS, NULL, PMIX_BOOL);
+    PMIX_LOAD_KEY(iptr[3].key, PMIX_ALLOC_NETWORK);
+    iptr[3].value.type = PMIX_DATA_ARRAY;
+    PMIX_DATA_ARRAY_CREATE(iptr[3].value.data.darray, 2, PMIX_INFO);
+    ip = (pmix_info_t*)iptr[3].value.data.darray->array;
+    asprintf(&rks, "%s.net", nspace);
+    PMIX_INFO_LOAD(&ip[0], PMIX_ALLOC_NETWORK_ID, rks, PMIX_STRING);
+    free(rks);
+    PMIX_INFO_LOAD(&ip[1], PMIX_ALLOC_NETWORK_SEC_KEY, NULL, PMIX_BOOL);
+    PMIX_CONSTRUCT(&cd, myxfer_t);
+    if (PMIX_SUCCESS != (rc = PMIx_server_setup_application(nspace, iptr, 4,
+                                                             setup_cbfunc, &cd))) {
+        pmix_output(0, "[%s:%d] PMIx_server_setup_application failed: %s", __FILE__, __LINE__, PMIx_Error_string(rc));
+        DEBUG_DESTRUCT_LOCK(&cd.lock);
+    } else {
+        DEBUG_WAIT_THREAD(&cd.lock);
+    }
 
-    PMIx_generate_ppn(ranks, &ppn);
-    (void)strncpy(x->info[5].key, PMIX_PROC_MAP, PMIX_MAX_KEYLEN);
-    x->info[5].value.type = PMIX_STRING;
-    x->info[5].value.data.string = ppn;
+    /* use the results to setup the local subsystems */
+    PMIX_CONSTRUCT(&lock, myxfer_t);
+    if (PMIX_SUCCESS != (rc = PMIx_server_setup_local_support(nspace, cd.info, cd.ninfo,
+                                                                  opcbfunc, &lock))) {
+        pmix_output(0, "[%s:%d] PMIx_server_setup_local_support failed: %s", __FILE__, __LINE__, PMIx_Error_string(rc));
+    } else {
+        DEBUG_WAIT_THREAD(&lock.lock);
+    }
+    PMIX_DESTRUCT(&lock);
+    PMIX_DESTRUCT(&cd);
 
-    (void)strncpy(x->info[6].key, PMIX_JOB_SIZE, PMIX_MAX_KEYLEN);
-    x->info[6].value.type = PMIX_UINT32;
-    x->info[6].value.data.uint32 = nprocs;
+    (void)strncpy(x->info[n].key, PMIX_UNIV_SIZE, PMIX_MAX_KEYLEN);
+    x->info[n].value.type = PMIX_UINT32;
+    x->info[n].value.data.uint32 = nprocs;
+    ++n;
 
+    (void)strncpy(x->info[n].key, PMIX_SPAWNED, PMIX_MAX_KEYLEN);
+    x->info[n].value.type = PMIX_UINT32;
+    x->info[n].value.data.uint32 = 0;
+    ++n;
+
+    (void)strncpy(x->info[n].key, PMIX_LOCAL_SIZE, PMIX_MAX_KEYLEN);
+    x->info[n].value.type = PMIX_UINT32;
+    x->info[n].value.data.uint32 = nprocs;
+    ++n;
+
+    (void)strncpy(x->info[n].key, PMIX_LOCAL_PEERS, PMIX_MAX_KEYLEN);
+    x->info[n].value.type = PMIX_STRING;
+    x->info[n].value.data.string = strdup(ranks);
+    ++n;
+
+    (void)strncpy(x->info[n].key, PMIX_JOB_SIZE, PMIX_MAX_KEYLEN);
+    x->info[n].value.type = PMIX_UINT32;
+    x->info[n].value.data.uint32 = nprocs;
+    ++n;
+
+    (void)strncpy(x->info[n].key, PMIX_JOBID, PMIX_MAX_KEYLEN);
+    x->info[n].value.type = PMIX_STRING;
+    x->info[n].value.data.string = strdup("1234");
+    ++n;
+
+    (void)strncpy(x->info[n].key, PMIX_NPROC_OFFSET, PMIX_MAX_KEYLEN);
+    x->info[n].value.type = PMIX_UINT32;
+    x->info[n].value.data.uint32 = 0;
+    ++n;
+
+    (void)strncpy(x->info[n].key, PMIX_NODEID, PMIX_MAX_KEYLEN);
+    x->info[n].value.type = PMIX_UINT32;
+    x->info[n].value.data.uint32 = 0;
+    ++n;
+
+    (void)strncpy(x->info[n].key, PMIX_NODE_SIZE, PMIX_MAX_KEYLEN);
+    x->info[n].value.type = PMIX_UINT32;
+    x->info[n].value.data.uint32 = nprocs;
+    ++n;
+
+    (void)strncpy(x->info[n].key, PMIX_NUM_NODES, PMIX_MAX_KEYLEN);
+    x->info[n].value.type = PMIX_UINT32;
+    x->info[n].value.data.uint32 = 1;
+    ++n;
+
+    (void)strncpy(x->info[n].key, PMIX_UNIV_SIZE, PMIX_MAX_KEYLEN);
+    x->info[n].value.type = PMIX_UINT32;
+    x->info[n].value.data.uint32 = nprocs;
+    ++n;
+
+    (void)strncpy(x->info[n].key, PMIX_MAX_PROCS, PMIX_MAX_KEYLEN);
+    x->info[n].value.type = PMIX_UINT32;
+    x->info[n].value.data.uint32 = nprocs;
+    ++n;
+
+    (void)strncpy(x->info[n].key, PMIX_JOB_NUM_APPS, PMIX_MAX_KEYLEN);
+    x->info[n].value.type = PMIX_UINT32;
+    x->info[n].value.data.uint32 = 1;
+    ++n;
+
+    (void)strncpy(x->info[n].key, PMIX_LOCALLDR, PMIX_MAX_KEYLEN);
+    x->info[n].value.type = PMIX_PROC_RANK;
+    x->info[n].value.data.uint32 = 0;
+    ++n;
+
+    /* add the proc-specific data */
+    for (m=0; m < nprocs; m++) {
+        (void)strncpy(x->info[n].key, PMIX_PROC_DATA, PMIX_MAX_KEYLEN);
+        x->info[n].value.type = PMIX_DATA_ARRAY;
+        PMIX_DATA_ARRAY_CREATE(array, 5, PMIX_INFO);
+        x->info[n].value.data.darray = array;
+        info = (pmix_info_t*)array->array;
+        k = 0;
+        (void)strncpy(info[k].key, PMIX_RANK, PMIX_MAX_KEYLEN);
+        info[k].value.type = PMIX_PROC_RANK;
+        info[k].value.data.rank = m;
+        ++k;
+        (void)strncpy(info[k].key, PMIX_GLOBAL_RANK, PMIX_MAX_KEYLEN);
+        info[k].value.type = PMIX_PROC_RANK;
+        info[k].value.data.rank = m;
+        ++k;
+        (void)strncpy(info[k].key, PMIX_LOCAL_RANK, PMIX_MAX_KEYLEN);
+        info[k].value.type = PMIX_UINT16;
+        info[k].value.data.uint16 = m;
+        ++k;
+
+        (void)strncpy(info[k].key, PMIX_NODE_RANK, PMIX_MAX_KEYLEN);
+        info[k].value.type = PMIX_UINT16;
+        info[k].value.data.uint16 = m;
+        ++k;
+
+        (void)strncpy(info[k].key, PMIX_NODEID, PMIX_MAX_KEYLEN);
+        info[k].value.type = PMIX_UINT32;
+        info[k].value.data.uint32 = 0;
+        ++k;
+        /* move to next proc */
+        ++n;
+    }
     PMIx_server_register_nspace(nspace, nprocs, x->info, x->ninfo,
                                 cbfunc, x);
 }
@@ -852,7 +1113,7 @@ static void wait_signal_callback(int fd, short event, void *arg)
     pid_t pid;
     wait_tracker_t *t2;
 
-    if (SIGCHLD != event_get_signal(sig)) {
+    if (SIGCHLD != pmix_event_get_signal(sig)) {
         return;
     }
 

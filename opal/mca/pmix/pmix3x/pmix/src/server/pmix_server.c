@@ -50,7 +50,9 @@
 #include <ctype.h>
 #include <sys/stat.h>
 #include PMIX_EVENT_HEADER
+#if ! PMIX_HAVE_LIBEV
 #include PMIX_EVENT2_THREAD_HEADER
+#endif
 
 #include "src/util/argv.h"
 #include "src/util/error.h"
@@ -97,7 +99,6 @@ pmix_status_t pmix_server_initialize(void)
     PMIX_CONSTRUCT(&pmix_server_globals.gdata, pmix_list_t);
     PMIX_CONSTRUCT(&pmix_server_globals.events, pmix_list_t);
     PMIX_CONSTRUCT(&pmix_server_globals.local_reqs, pmix_list_t);
-    PMIX_CONSTRUCT(&pmix_server_globals.nspaces, pmix_list_t);
     PMIX_CONSTRUCT(&pmix_server_globals.iof, pmix_list_t);
 
     pmix_output_verbose(2, pmix_server_globals.base_output,
@@ -361,7 +362,7 @@ PMIX_EXPORT pmix_status_t PMIx_server_init(pmix_server_module_t *module,
         pmix_globals.mypeer->nptr = PMIX_NEW(pmix_namespace_t);
         /* ensure our own nspace is first on the list */
         PMIX_RETAIN(pmix_globals.mypeer->nptr);
-        pmix_list_prepend(&pmix_server_globals.nspaces, &pmix_globals.mypeer->nptr->super);
+        pmix_list_prepend(&pmix_globals.nspaces, &pmix_globals.mypeer->nptr->super);
     }
     pmix_globals.mypeer->nptr->nspace = strdup(pmix_globals.myid.nspace);
     rinfo->pname.nspace = strdup(pmix_globals.mypeer->nptr->nspace);
@@ -474,13 +475,12 @@ PMIX_EXPORT pmix_status_t PMIx_server_finalize(void)
     PMIX_LIST_DESTRUCT(&pmix_server_globals.local_reqs);
     PMIX_LIST_DESTRUCT(&pmix_server_globals.gdata);
     PMIX_LIST_DESTRUCT(&pmix_server_globals.events);
-    PMIX_LIST_FOREACH(ns, &pmix_server_globals.nspaces, pmix_namespace_t) {
+    PMIX_LIST_FOREACH(ns, &pmix_globals.nspaces, pmix_namespace_t) {
         /* ensure that we do the specified cleanup - if this is an
          * abnormal termination, then the nspace object may not be
          * at zero refcount */
         pmix_execute_epilog(&ns->epilog);
     }
-    PMIX_LIST_DESTRUCT(&pmix_server_globals.nspaces);
     PMIX_LIST_DESTRUCT(&pmix_server_globals.iof);
 
     pmix_hwloc_cleanup();
@@ -547,7 +547,7 @@ static void _register_nspace(int sd, short args, void *cbdata)
 
     /* see if we already have this nspace */
     nptr = NULL;
-    PMIX_LIST_FOREACH(tmp, &pmix_server_globals.nspaces, pmix_namespace_t) {
+    PMIX_LIST_FOREACH(tmp, &pmix_globals.nspaces, pmix_namespace_t) {
         if (0 == strcmp(tmp->nspace, cd->proc.nspace)) {
             nptr = tmp;
             break;
@@ -560,7 +560,7 @@ static void _register_nspace(int sd, short args, void *cbdata)
             goto release;
         }
         nptr->nspace = strdup(cd->proc.nspace);
-        pmix_list_append(&pmix_server_globals.nspaces, &nptr->super);
+        pmix_list_append(&pmix_globals.nspaces, &nptr->super);
     }
     nptr->nlocalprocs = cd->nlocalprocs;
 
@@ -764,12 +764,12 @@ static void _deregister_nspace(int sd, short args, void *cbdata)
     pmix_server_purge_events(NULL, &cd->proc);
 
     /* release this nspace */
-    PMIX_LIST_FOREACH(tmp, &pmix_server_globals.nspaces, pmix_namespace_t) {
+    PMIX_LIST_FOREACH(tmp, &pmix_globals.nspaces, pmix_namespace_t) {
         if (PMIX_CHECK_NSPACE(tmp->nspace, cd->proc.nspace)) {
             /* perform any nspace-level epilog */
             pmix_execute_epilog(&tmp->epilog);
             /* remove and release it */
-            pmix_list_remove_item(&pmix_server_globals.nspaces, &tmp->super);
+            pmix_list_remove_item(&pmix_globals.nspaces, &tmp->super);
             PMIX_RELEASE(tmp);
             break;
         }
@@ -997,7 +997,7 @@ static void _register_client(int sd, short args, void *cbdata)
 
     /* see if we already have this nspace */
     nptr = NULL;
-    PMIX_LIST_FOREACH(ns, &pmix_server_globals.nspaces, pmix_namespace_t) {
+    PMIX_LIST_FOREACH(ns, &pmix_globals.nspaces, pmix_namespace_t) {
         if (0 == strcmp(ns->nspace, cd->proc.nspace)) {
             nptr = ns;
             break;
@@ -1010,7 +1010,7 @@ static void _register_client(int sd, short args, void *cbdata)
             goto cleanup;
         }
         nptr->nspace = strdup(cd->proc.nspace);
-        pmix_list_append(&pmix_server_globals.nspaces, &nptr->super);
+        pmix_list_append(&pmix_globals.nspaces, &nptr->super);
     }
     /* setup a peer object for this client - since the host server
      * only deals with the original processes and not any clones,
@@ -1051,7 +1051,7 @@ static void _register_client(int sd, short args, void *cbdata)
                  * if the nspaces are all defined */
                 if (all_def) {
                     /* so far, they have all been defined - check this one */
-                    PMIX_LIST_FOREACH(ns, &pmix_server_globals.nspaces, pmix_namespace_t) {
+                    PMIX_LIST_FOREACH(ns, &pmix_globals.nspaces, pmix_namespace_t) {
                         if (0 < ns->nlocalprocs &&
                             0 == strcmp(trk->pcs[i].nspace, ns->nspace)) {
                             all_def = ns->all_registered;
@@ -1166,7 +1166,7 @@ static void _deregister_client(int sd, short args, void *cbdata)
 
     /* see if we already have this nspace */
     nptr = NULL;
-    PMIX_LIST_FOREACH(tmp, &pmix_server_globals.nspaces, pmix_namespace_t) {
+    PMIX_LIST_FOREACH(tmp, &pmix_globals.nspaces, pmix_namespace_t) {
         if (0 == strcmp(tmp->nspace, cd->proc.nspace)) {
             nptr = tmp;
             break;
@@ -1368,15 +1368,15 @@ static void _dmodex_req(int sd, short args, void *cbdata)
     PMIX_ACQUIRE_OBJECT(cd);
 
     pmix_output_verbose(2, pmix_server_globals.base_output,
-                        "DMODX LOOKING FOR %s:%d",
-                        cd->proc.nspace, cd->proc.rank);
+                        "DMODX LOOKING FOR %s",
+                        PMIX_NAME_PRINT(&cd->proc));
 
     /* this should be one of my clients, but a race condition
      * could cause this request to arrive prior to us having
      * been informed of it - so first check to see if we know
      * about this nspace yet */
     nptr = NULL;
-    PMIX_LIST_FOREACH(ns, &pmix_server_globals.nspaces, pmix_namespace_t) {
+    PMIX_LIST_FOREACH(ns, &pmix_globals.nspaces, pmix_namespace_t) {
         if (0 == strcmp(ns->nspace, cd->proc.nspace)) {
             nptr = ns;
             break;
@@ -1502,8 +1502,9 @@ PMIX_EXPORT pmix_status_t PMIx_server_dmodex_request(const pmix_proc_t *proc,
     }
 
     pmix_output_verbose(2, pmix_server_globals.base_output,
-                        "pmix:server dmodex request%s:%d",
-                        proc->nspace, proc->rank);
+                        "%s pmix:server dmodex request for proc %s",
+                        PMIX_NAME_PRINT(&pmix_globals.myid),
+                        PMIX_NAME_PRINT(proc));
 
     cd = PMIX_NEW(pmix_setup_caddy_t);
     pmix_strncpy(cd->proc.nspace, proc->nspace, PMIX_MAX_NSLEN);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016      Intel, Inc. All rights reserved.
+ * Copyright (c) 2016-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2017      Cisco Systems, Inc. All rights reserved.
  * $COPYRIGHT$
  *
@@ -31,6 +31,7 @@ bool pmix_util_compress_string(char *instring,
     size_t len, outlen;
     uint8_t *tmp, *ptr;
     uint32_t inlen;
+    int rc;
 
     /* set default output */
     *outbytes = NULL;
@@ -43,7 +44,6 @@ bool pmix_util_compress_string(char *instring,
     /* get an upper bound on the required output storage */
     len = deflateBound(&strm, inlen);
     if (NULL == (tmp = (uint8_t*)malloc(len))) {
-        *outbytes = NULL;
         return false;
     }
     strm.next_in = (uint8_t*)instring;
@@ -54,8 +54,12 @@ bool pmix_util_compress_string(char *instring,
     strm.avail_out = len;
     strm.next_out = tmp;
 
-    deflate (&strm, Z_FINISH);
+    rc = deflate (&strm, Z_FINISH);
     deflateEnd (&strm);
+    if (Z_OK != rc) {
+        free(tmp);
+        return false;
+    }
 
     /* allocate 4 bytes beyond the size reqd by zlib so we
      * can pass the size of the uncompressed string to the
