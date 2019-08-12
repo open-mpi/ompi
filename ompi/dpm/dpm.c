@@ -482,6 +482,9 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
         if (NULL != mycpuset) {
             free(mycpuset);
         }
+        if (NULL != peer_ranks) {
+            free(peer_ranks);
+        }
         /* call add_procs on the new ones */
         rc = MCA_PML_CALL(add_procs(new_proc_list, opal_list_get_size(&ilist)));
         free(new_proc_list);
