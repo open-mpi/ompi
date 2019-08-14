@@ -31,7 +31,7 @@
 #if OPAL_ENABLE_DEBUG
 #include "opal/util/output.h"
 
-#define DO_DEBUG(INST)  if( opal_pack_debug ) { INST }
+#define DO_DEBUG(INST)  if( opal_ddt_pack_debug ) { INST }
 #else
 #define DO_DEBUG(INST)
 #endif  /* OPAL_ENABLE_DEBUG */
@@ -272,7 +272,7 @@ opal_generic_simple_pack_function( opal_convertor_t* pConvertor,
     for( iov_count = 0; iov_count < (*out_size); iov_count++ ) {
         iov_ptr = (unsigned char *) iov[iov_count].iov_base;
         iov_len_local = iov[iov_count].iov_len;
-        
+
         if( pElem->elem.common.flags & OPAL_DATATYPE_FLAG_DATA ) {
             if( (pElem->elem.count * pElem->elem.blocklen) != count_desc ) {
                 /* we have a partial (less than blocklen) basic datatype */

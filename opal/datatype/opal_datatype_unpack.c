@@ -33,7 +33,7 @@
 #if OPAL_ENABLE_DEBUG
 #include "opal/util/output.h"
 
-#define DO_DEBUG(INST)  if( opal_unpack_debug ) { INST }
+#define DO_DEBUG(INST)  if( opal_ddt_unpack_debug ) { INST }
 #else
 #define DO_DEBUG(INST)
 #endif  /* OPAL_ENABLE_DEBUG */

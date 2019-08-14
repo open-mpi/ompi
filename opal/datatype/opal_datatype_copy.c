@@ -36,7 +36,7 @@
 
 
 #if OPAL_ENABLE_DEBUG
-#define DO_DEBUG(INST)  if( opal_copy_debug ) { INST }
+#define DO_DEBUG(INST)  if( opal_ddt_copy_debug ) { INST }
 #else
 #define DO_DEBUG(INST)
 #endif  /* OPAL_ENABLE_DEBUG */
