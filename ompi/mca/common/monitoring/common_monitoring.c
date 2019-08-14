@@ -268,7 +268,7 @@ void mca_common_monitoring_register(void*pml_monitoring_component)
                                 &mca_common_monitoring_enabled);
 
     mca_common_monitoring_current_state = mca_common_monitoring_enabled;
-    
+
     (void)mca_base_var_register("ompi", "pml", "monitoring", "enable_output",
                                 "Enable the PML monitoring textual output at MPI_Finalize "
                                 "(it will be automatically turned off when MPIT is used to "
@@ -278,7 +278,7 @@ void mca_common_monitoring_register(void*pml_monitoring_component)
                                 MCA_BASE_VAR_FLAG_DWG, OPAL_INFO_LVL_9,
                                 MCA_BASE_VAR_SCOPE_READONLY,
                                 &mca_common_monitoring_output_enabled);
-    
+
     (void)mca_base_var_register("ompi", "pml", "monitoring", "filename",
                                 /*&mca_common_monitoring_component.pmlm_version, "filename",*/
                                 "The name of the file where the monitoring information "
@@ -292,7 +292,7 @@ void mca_common_monitoring_register(void*pml_monitoring_component)
 
     /* Now that the MCA variables are automatically unregistered when
      * their component close, we need to keep a safe copy of the
-     * filename.  
+     * filename.
      * Keep the copy completely separated in order to let the initial
      * filename to be handled by the framework. It's easier to deal
      * with the string lifetime.
