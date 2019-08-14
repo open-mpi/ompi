@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2017 The University of Tennessee and The University
+ * Copyright (c) 2004-2019 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
@@ -300,7 +300,8 @@ int32_t opal_datatype_add( opal_datatype_t* pdtBase, const opal_datatype_t* pdtA
                 if( pdtAdd->ptypes[i] != 0 ) pdtBase->ptypes[i] += (count * pdtAdd->ptypes[i]);
         }
         if( (1 == pdtAdd->desc.used) && (extent == (pdtAdd->ub - pdtAdd->lb)) &&
-            (extent == pdtAdd->desc.desc[0].elem.extent) ){
+            (extent == pdtAdd->desc.desc[0].elem.extent) &&
+            (extent == (pdtAdd->true_ub - pdtAdd->true_lb)) ) {
             pLast->elem        = pdtAdd->desc.desc[0].elem;
             pLast->elem.count *= count;
             pLast->elem.disp  += disp;
