@@ -43,6 +43,22 @@
 ! Line 2 of the ignore TKR syntax
 #define OMPI_FORTRAN_IGNORE_TKR_TYPE @OMPI_FORTRAN_IGNORE_TKR_TYPE@
 
+! The Fortran ISO C type type(*), dimension(..) is not (yet) supported by all compilers.
+! If it is supported, OMPI_F08_IGNORE_TKR_TYPE will be type(*), dimension(..).
+! Otherwise, it will be the same value as OMPI_FORTRAN_IGNORE_TKR_TYPE.
+#define OMPI_F08_IGNORE_TKR_TYPE @OMPI_F08_IGNORE_TKR_TYPE@
+
+! If the Fortran compiler supports type(*), dimension(..), this macro will be "_desc"
+! so that the F08 descriptor-enabled Open MPI Fortran back-end functions are invoked.
+! Otherwise, it will be "_f" so that the non-F08-descriptor Open MPI Fortran back-end functions are invoked.
+#define OMPI_F08_BINDINGS_EXTENSION @OMPI_F08_BINDINGS_EXTENSION@
+
+! If the Fortran compiler supports type(*), dimension(..), this macro will be empty
+! (i.e., we do not want to ignore the TKR of the buf parameter).
+! Otherwise, it will be set to !GCC$ ATTRIBUTES NO_ARG_CHECK :: buf so that the GCC compiler
+! (and related compilers, such as the Intel compiler) will ignore the TKR of the buf dummy argument.
+
+#define OMPI_F08_GCC_ATTRIBUTES(buf) @OMPI_F08_GCC_ATTRIBUTES@
 
 #define OMPI_FORTRAN_BUILD_SIZEOF @OMPI_FORTRAN_BUILD_SIZEOF@
 ! Integers
