@@ -3,9 +3,11 @@
 ! Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
 ! Copyright (c) 2009-2013 Los Alamos National Security, LLC.
 !                         All rights reserved.
-! Copyright (c) 2015-2018 Research Organization for Information Science
-!                         and Technology (RIST). All rights reserved.
+! Copyright (c) 2015-2020 Research Organization for Information Science
+!                         and Technology (RIST).  All rights reserved.
 ! $COPYRIGHT$
+
+#include "mpi-f08-rename.h"
 
 subroutine MPI_Type_size_x_f08(datatype,size,ierror)
    use :: mpi_f08_types, only : MPI_Datatype, MPI_COUNT_KIND

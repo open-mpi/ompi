@@ -3,11 +3,13 @@
 ! Copyright (c) 2010-2014 Cisco Systems, Inc.  All rights reserved.
 ! Copyright (c) 2009-2014 Los Alamos National Security, LLC.
 !               All Rights reserved.
-! Copyright (c) 2018      Research Organization for Information Science
+! Copyright (c) 2018-2020 Research Organization for Information Science
 !                         and Technology (RIST).  All rights reserved.
 ! $COPYRIGHT$
 
 #include "ompi/mpi/fortran/configure-fortran-output.h"
+
+#include "mpi-f08-rename.h"
 
 subroutine MPI_Compare_and_swap_f08(origin_addr,compare_addr,result_addr,&
                                     datatype,target_rank,target_disp,win,&

@@ -3,11 +3,13 @@
 ! Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
 ! Copyright (c) 2009-2012 Los Alamos National Security, LLC.
 !                         All rights reserved.
-! Copyright (c) 2018      Research Organization for Information Science
+! Copyright (c) 2018-2020 Research Organization for Information Science
 !                         and Technology (RIST).  All rights reserved.
 ! $COPYRIGHT$
 
 #include "ompi/mpi/fortran/configure-fortran-output.h"
+
+#include "mpi-f08-rename.h"
 
 subroutine MPI_Allgatherv_f08(sendbuf,sendcount,sendtype,recvbuf,recvcounts,&
                               displs,recvtype,comm,ierror)

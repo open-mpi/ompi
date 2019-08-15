@@ -1,8 +1,10 @@
 ! -*- f90 -*-
 !
-! Copyright (c) 2015-2018 Research Organization for Information Science
-!                         and Technology (RIST). All rights reserved.
+! Copyright (c) 2015-2020 Research Organization for Information Science
+!                         and Technology (RIST).  All rights reserved.
 ! $COPYRIGHT$
+
+#include "mpi-f08-rename.h"
 
 subroutine MPI_Win_get_info_f08(win,info,ierror)
    use :: mpi_f08_types, only : MPI_Win, MPI_Info

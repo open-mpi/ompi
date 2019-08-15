@@ -62,6 +62,9 @@ libforce_usempif08_internal_modules_to_be_built_la_SOURCES = \
         pmpi-f08-interfaces.F90 \
         mpi-f08-interfaces-callbacks.F90
 
+noinst_HEADERS = mpi-f08-interfaces.h mpi-f08-rename.h
+
+
 libforce_usempi_internal_modules_to_be_built.la: libusempif08_internal_modules.la
 
 config_h = \
@@ -78,6 +81,7 @@ mpi-f08-types.lo: mpi-f08-types.F90
 mpi-f08-interfaces.lo: $(config_h)
 mpi-f08-interfaces.lo: mpi-f08-interfaces.F90
 mpi-f08-interfaces.lo: mpi-f08-interfaces-callbacks.lo
+mpi-f08-interfaces.lo: mpi-f08-interfaces.h
 mpi-f08-interfaces-callbacks.lo: $(config_h)
 mpi-f08-interfaces-callbacks.lo: mpi-f08-interfaces-callbacks.F90
 mpi-f08-interfaces-callbacks.lo: mpi-f08-types.lo
@@ -87,6 +91,8 @@ mpi-f08-callbacks.lo: mpi-f08-types.lo
 pmpi-f08-interfaces.lo: $(config_h)
 pmpi-f08-interfaces.lo: pmpi-f08-interfaces.F90
 pmpi-f08-interfaces.lo: mpi-f08-interfaces-callbacks.lo
+pmpi-f08-interfaces.lo: mpi-f08-interfaces.h
+pmpi-f08-interfaces.lo: mpi-f08-rename.h
 
 ###########################################################################
 

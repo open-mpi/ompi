@@ -3,7 +3,11 @@
 ! Copyright (c) 2010-2013 Cisco Systems, Inc.  All rights reserved.
 ! Copyright (c) 2009-2012 Los Alamos National Security, LLC.
 !                         All rights reserved.
+! Copyright (c) 2019-2020 Research Organization for Information Science
+!                         and Technology (RIST).  All rights reserved.
 ! $COPYRIGHT$
+
+#include "mpi-f08-rename.h"
 
 subroutine MPI_Win_get_attr_f08(win,win_keyval,attribute_val,flag,ierror)
    use :: mpi_f08_types, only : MPI_Win, MPI_ADDRESS_KIND

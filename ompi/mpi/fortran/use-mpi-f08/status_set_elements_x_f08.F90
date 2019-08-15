@@ -3,9 +3,11 @@
 ! Copyright (c) 2010-2012 Cisco Systems, Inc.  All rights reserved.
 ! Copyright (c) 2009-2013 Los Alamos National Security, LLC.
 !               All Rights reserved.
-! Copyright (c) 2018      Research Organization for Information Science
+! Copyright (c) 2018-2020 Research Organization for Information Science
 !                         and Technology (RIST).  All rights reserved.
 ! $COPYRIGHT$
+
+#include "mpi-f08-rename.h"
 
 subroutine MPI_Status_set_elements_x_f08(status,datatype,count,ierror)
    use :: mpi_f08_types, only : MPI_Status, MPI_Datatype, MPI_COUNT_KIND

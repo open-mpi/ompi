@@ -1,11 +1,13 @@
 ! Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
 ! Copyright (c) 2009-2012 Los Alamos National Security, LLC.
 !                         All Rights reserved.
-! Copyright (c) 2015-2018 Research Organization for Information Science
-!                         and Technology (RIST). All rights reserved.
+! Copyright (c) 2015-2020 Research Organization for Information Science
+!                         and Technology (RIST).  All rights reserved.
 ! $COPYRIGHT$
 
 #include "ompi/mpi/fortran/configure-fortran-output.h"
+
+#include "mpi-f08-rename.h"
 
 subroutine MPI_Free_mem_f08(base,ierror)
    use :: ompi_mpifh_bindings, only : ompi_free_mem_f

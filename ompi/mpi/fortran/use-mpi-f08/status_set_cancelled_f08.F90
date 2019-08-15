@@ -4,7 +4,11 @@
 ! Copyright (c) 2009-2012 Los Alamos National Security, LLC.
 !               All Rights reserved.
 ! Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
+! Copyright (c) 2019-2020 Research Organization for Information Science
+!                         and Technology (RIST).  All rights reserved.
 ! $COPYRIGHT$
+
+#include "mpi-f08-rename.h"
 
 subroutine MPI_Status_set_cancelled_f08(status,flag,ierror)
    use :: mpi_f08_types, only : MPI_Status
