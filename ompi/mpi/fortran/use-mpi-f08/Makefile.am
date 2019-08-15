@@ -37,14 +37,14 @@ AM_CPPFLAGS =
 # MPI bindings.
 if OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS
 
-AM_FCFLAGS = -I$(top_srcdir)/ompi/mpi/fortran/use-mpi-f08/mod \
-             -I$(top_builddir)/ompi/include \
+AM_FCFLAGS = -I$(top_builddir)/ompi/include \
              -I$(top_srcdir)/ompi/include \
              $(OMPI_FC_MODULE_FLAG)$(top_builddir)/ompi/mpi/fortran/use-mpi \
              $(OMPI_FC_MODULE_FLAG)$(top_builddir)/ompi/$(OMPI_FORTRAN_USEMPI_DIR) \
              $(OMPI_FC_MODULE_FLAG)mod \
              $(OMPI_FC_MODULE_FLAG)bindings \
-             -I$(top_srcdir) -I$(top_builddir) $(FCFLAGS_f90) \
+             $(OMPI_FC_MODULE_FLAG)ts \
+             -I$(top_srcdir) $(FCFLAGS_f90) \
              -DOMPI_BUILD_MPI_PROFILING=0
 
 MOSTLYCLEANFILES = *.mod
@@ -539,6 +539,14 @@ lib@OMPI_LIBMPI_NAME@_usempif08_la_LIBADD = \
         base/libusempif08_ccode.la
 lib@OMPI_LIBMPI_NAME@_usempif08_la_DEPENDENCIES = $(module_sentinel_files)
 lib@OMPI_LIBMPI_NAME@_usempif08_la_LDFLAGS = -version-info $(libmpi_usempif08_so_version)
+
+if OMPI_FORTRAN_HAVE_TS
+lib@OMPI_LIBMPI_NAME@_usempif08_la_LIBADD += \
+        ts/libusempif08_ts.la
+
+lib@OMPI_LIBMPI_NAME@_usempif08_la_DEPENDENCIES += \
+        ts/libusempif08_ts.la
+endif
 
 #
 # Automake doesn't do Fortran dependency analysis, so must list them

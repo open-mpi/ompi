@@ -790,4 +790,6 @@
 #define MPI_Neighbor_alltoallw_init PMPI_Neighbor_alltoallw_init
 #define MPI_Neighbor_alltoallw_init_f08 PMPI_Neighbor_alltoallw_init_f08
 
+#elif @OMPI_FORTRAN_HAVE_TS@
+
 #endif
