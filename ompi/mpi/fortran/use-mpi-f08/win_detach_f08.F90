@@ -1,11 +1,15 @@
 ! -*- f90 -*-
 !
-! Copyright (c) 2015-2018 Research Organization for Information Science
-!                         and Technology (RIST). All rights reserved.
+! Copyright (c) 2015-2019 Research Organization for Information Science
+!                         and Technology (RIST).  All rights reserved.
 ! Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
 ! $COPYRIGHT$
 
 #include "ompi/mpi/fortran/configure-fortran-output.h"
+
+#if OMPI_BUILD_MPI_PROFILING
+#define MPI_Win_detach_f08 PMPI_Win_detach_f08
+#endif
 
 subroutine MPI_Win_detach_f08(win,base,ierror)
    use :: mpi_f08_types, only : MPI_Win, MPI_ADDRESS_KIND

@@ -3,7 +3,13 @@
 ! Copyright (c) 2010-2013 Cisco Systems, Inc.  All rights reserved.
 ! Copyright (c) 2009-2012 Los Alamos National Security, LLC.
 !               All Rights reserved.
+! Copyright (c) 2019      Research Organization for Information Science
+!                         and Technology (RIST).  All rights reserved.
 ! $COPYRIGHT$
+
+#if OMPI_BUILD_MPI_PROFILING
+#define MPI_Initialized_f08 PMPI_Initialized_f08
+#endif
 
 subroutine MPI_Initialized_f08(flag,ierror)
    ! See note in mpi-f-interfaces-bind.h for why we "use mpi" here and

@@ -3,9 +3,13 @@
 ! Copyright (c) 2010-2014 Cisco Systems, Inc.  All rights reserved.
 ! Copyright (c) 2010-2012 Los Alamos National Security, LLC.
 !               All Rights reserved.
-! Copyright (c) 2018      Research Organization for Information Science
+! Copyright (c) 2018-2019 Research Organization for Information Science
 !                         and Technology (RIST).  All rights reserved.
 ! $COPYRIGHT$
+
+#if OMPI_BUILD_MPI_PROFILING
+#define MPI_Get_library_version_f08 PMPI_Get_library_version_f08
+#endif
 
 subroutine MPI_Get_library_version_f08(version,resultlen,ierror)
    use :: mpi_f08_types, only : MPI_MAX_LIBRARY_VERSION_STRING

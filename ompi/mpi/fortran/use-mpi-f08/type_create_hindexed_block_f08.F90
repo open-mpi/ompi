@@ -5,9 +5,13 @@
 !                         reserved.
 ! Copyright (c) 2012      Inria.  All rights reserved.
 ! Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
-! Copyright (c) 2018      Research Organization for Information Science
+! Copyright (c) 2018-2019 Research Organization for Information Science
 !                         and Technology (RIST).  All rights reserved.
 ! $COPYRIGHT$
+
+#if OMPI_BUILD_MPI_PROFILING
+#define MPI_Type_create_hindexed_block_f08 PMPI_Type_create_hindexed_block_f08
+#endif
 
 subroutine MPI_Type_create_hindexed_block_f08(count,blocklength, &
                            array_of_displacements,oldtype,newtype,ierror)
