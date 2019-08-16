@@ -50,11 +50,6 @@ opal_convertor_master_t* opal_convertor_find_or_create_master( uint32_t remote_a
 void opal_convertor_destroy_masters( void );
 
 
-#if OPAL_ENABLE_DEBUG
-extern bool opal_pack_debug;
-extern bool opal_unpack_debug;
-#endif  /* OPAL_ENABLE_DEBUG */
-
 END_C_DECLS
 
 #endif  /* OPAL_CONVERTOR_INTERNAL_HAS_BEEN_INCLUDED */

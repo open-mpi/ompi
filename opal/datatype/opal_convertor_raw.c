@@ -25,7 +25,7 @@
 #if OPAL_ENABLE_DEBUG
 #include "opal/util/output.h"
 
-#define DO_DEBUG(INST)  if( opal_pack_debug ) { INST }
+#define DO_DEBUG(INST)  if( opal_ddt_raw_debug ) { INST }
 #else
 #define DO_DEBUG(INST)
 #endif /* OPAL_ENABLE_DEBUG */
@@ -126,8 +126,8 @@ opal_convertor_raw( opal_convertor_t* pConvertor,
         const ddt_elem_desc_t* current = &(pElem->elem);
 
         if( count_desc != (current->count * current->blocklen) ) {  /* Not the full element description */
-            do_now = current->blocklen - (count_desc % current->blocklen);  /* how much left in the block */
-            if( do_now ) {
+            if( (do_now = count_desc % current->blocklen) ) {
+                do_now = current->blocklen - do_now;  /* how much left in the block */
                 source_base += current->disp;
                 blength = do_now * opal_datatype_basicDatatypes[current->common.type]->size;
                 OPAL_DATATYPE_SAFEGUARD_POINTER( source_base, blength, pConvertor->pBaseBuf,
@@ -136,12 +136,12 @@ opal_convertor_raw( opal_convertor_t* pConvertor,
                                        index, (void*)source_base, blength ); );
                 opal_convertor_merge_iov( iov, iov_count,
                                           (IOVBASE_TYPE *) source_base, blength, &index );
-                /* not check the return value, we know there was at least one element in the iovec */
+                /* ignore the return value, we know there was at least one element in the iovec */
                 sum_iov_len += blength;
                 count_desc -= do_now;
 
-                source_base += (current->extent - current->disp +
-                                (current->blocklen - do_now) * opal_datatype_basicDatatypes[current->common.type]->size);
+                source_base += (blength - current->blocklen * opal_datatype_basicDatatypes[current->common.type]->size +
+                                current->extent - current->disp);
             }
         }
     }
@@ -258,7 +258,7 @@ opal_convertor_raw( opal_convertor_t* pConvertor,
     }
     /* I complete an element, next step I should go to the next one */
     PUSH_STACK( pStack, pConvertor->stack_pos, pos_desc, OPAL_DATATYPE_UINT1, count_desc,
-                source_base - pStack->disp - pConvertor->pBaseBuf );
+                source_base - pConvertor->pBaseBuf );
     DO_DEBUG( opal_output( 0, "raw save stack stack_pos %d pos_desc %d count_desc %" PRIsize_t " disp %ld\n",
                            pConvertor->stack_pos, pStack->index, pStack->count, (long)pStack->disp ); );
     return 0;
