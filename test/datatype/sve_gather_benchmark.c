@@ -3,6 +3,8 @@
  * Copyright (c) 2004-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (C) 2019      Arm Ltd.  ALL RIGHTS RESERVED.
+ *
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -367,8 +369,8 @@ static int do_test_for_ddt( MPI_Datatype sddt, MPI_Datatype rddt, int length )
 #define DO_OPTIMIZED_INDEXED_GAP        0x08
 #define DO_STRUCT_CONSTANT_GAP_RESIZED  0x10
 
-#define MIN_LENGTH   1024
-#define MAX_LENGTH   (1024*1024*8)
+#define MIN_LENGTH   1024*1024
+#define MAX_LENGTH   (1024*1024*4)
 
 int main( int argc, char* argv[] )
 {
