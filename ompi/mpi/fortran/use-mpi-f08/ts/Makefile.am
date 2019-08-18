@@ -50,10 +50,31 @@ libusempif08_ts_la_SOURCES = \
         gather_ts.c \
         gatherv_ts.c \
         get_address_ts.c \
+        iallgather_ts.c \
+        iallgatherv_ts.c \
+        iallreduce_ts.c \
+        ialltoall_ts.c \
+        ialltoallv_ts.c \
+        ialltoallw_ts.c \
+        ibcast_ts.c \
         ibsend_ts.c \
+        iexscan_ts.c \
+        igather_ts.c \
+        igatherv_ts.c \
         imrecv_ts.c \
+        ineighbor_allgather_ts.c \
+        ineighbor_allgatherv_ts.c \
+        ineighbor_alltoall_ts.c \
+        ineighbor_alltoallv_ts.c \
+        ineighbor_alltoallw_ts.c \
         irecv_ts.c \
+        ireduce_ts.c \
+        ireduce_scatter_block_ts.c \
+        ireduce_scatter_ts.c \
         irsend_ts.c \
+        iscan_ts.c \
+        iscatter_ts.c \
+        iscatterv_ts.c \
         isend_ts.c \
         issend_ts.c \
         mrecv_ts.c \
