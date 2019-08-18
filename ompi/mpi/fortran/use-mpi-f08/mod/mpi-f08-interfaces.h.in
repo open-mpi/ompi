@@ -671,39 +671,39 @@ end subroutine MPI_Get_elements_x_f08
 end interface  MPI_Get_elements_x
 
 interface  MPI_Pack
-subroutine MPI_Pack_f08(inbuf,incount,datatype,outbuf,outsize,position,comm,ierror)
+subroutine MPI_Pack_f08@OMPI_F08_BINDINGS_TS_SUFFIX@(inbuf,incount,datatype,outbuf,outsize,position,comm,ierror)
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm
    implicit none
-   @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ inbuf, outbuf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) :: inbuf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: outbuf
+   @OMPI_F08_IGNORE_TKR_PREDECL@ inbuf, outbuf
+   @OMPI_F08_IGNORE_TKR_TYPE@, INTENT(IN) :: inbuf
+   @OMPI_F08_IGNORE_TKR_TYPE@ :: outbuf
    INTEGER, INTENT(IN) :: incount, outsize
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
    INTEGER, INTENT(INOUT) :: position
    TYPE(MPI_Comm), INTENT(IN) :: comm
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-end subroutine MPI_Pack_f08
+end subroutine MPI_Pack_f08@OMPI_F08_BINDINGS_TS_SUFFIX@
 end interface  MPI_Pack
 
 interface  MPI_Pack_external
-subroutine MPI_Pack_external_f08(datarep,inbuf,incount,datatype,outbuf,outsize, &
+subroutine MPI_Pack_external_f08@OMPI_F08_BINDINGS_TS_SUFFIX@(datarep,inbuf,incount,datatype,outbuf,outsize, &
                                  position,ierror)
    use :: mpi_f08_types, only : MPI_Datatype, MPI_ADDRESS_KIND
    implicit none
    CHARACTER(LEN=*), INTENT(IN) :: datarep
-   @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ inbuf, outbuf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) :: inbuf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: outbuf
+   @OMPI_F08_IGNORE_TKR_PREDECL@ inbuf, outbuf
+   @OMPI_F08_IGNORE_TKR_TYPE@, INTENT(IN) :: inbuf
+   @OMPI_F08_IGNORE_TKR_TYPE@ :: outbuf
    INTEGER, INTENT(IN) :: incount
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
    INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: outsize
    INTEGER(MPI_ADDRESS_KIND), INTENT(INOUT) :: position
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-end subroutine MPI_Pack_external_f08
+end subroutine MPI_Pack_external_f08@OMPI_F08_BINDINGS_TS_SUFFIX@
 end interface  MPI_Pack_external
 
 interface  MPI_Pack_external_size
-subroutine MPI_Pack_external_size_f08(datarep,incount,datatype,size,ierror &
+subroutine MPI_Pack_external_size_f08@OMPI_F08_BINDINGS_TS_SUFFIX@(datarep,incount,datatype,size,ierror &
            )
    use :: mpi_f08_types, only : MPI_Datatype, MPI_ADDRESS_KIND
    implicit none
@@ -712,7 +712,7 @@ subroutine MPI_Pack_external_size_f08(datarep,incount,datatype,size,ierror &
    CHARACTER(LEN=*), INTENT(IN) :: datarep
    INTEGER(MPI_ADDRESS_KIND), INTENT(OUT) :: size
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-end subroutine MPI_Pack_external_size_f08
+end subroutine MPI_Pack_external_size_f08@OMPI_F08_BINDINGS_TS_SUFFIX@
 end interface  MPI_Pack_external_size
 
 interface  MPI_Pack_size
@@ -983,37 +983,37 @@ end subroutine MPI_Type_vector_f08
 end interface  MPI_Type_vector
 
 interface  MPI_Unpack
-subroutine MPI_Unpack_f08(inbuf,insize,position,outbuf,outcount,datatype,comm, &
+subroutine MPI_Unpack_f08@OMPI_F08_BINDINGS_TS_SUFFIX@(inbuf,insize,position,outbuf,outcount,datatype,comm, &
                           ierror)
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm
    implicit none
-   @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ inbuf, outbuf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) :: inbuf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: outbuf
+   @OMPI_F08_IGNORE_TKR_PREDECL@ inbuf, outbuf
+   @OMPI_F08_IGNORE_TKR_TYPE@, INTENT(IN) :: inbuf
+   @OMPI_F08_IGNORE_TKR_TYPE@ :: outbuf
    INTEGER, INTENT(IN) :: insize, outcount
    INTEGER, INTENT(INOUT) :: position
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
    TYPE(MPI_Comm), INTENT(IN) :: comm
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-end subroutine MPI_Unpack_f08
+end subroutine MPI_Unpack_f08@OMPI_F08_BINDINGS_TS_SUFFIX@
 end interface  MPI_Unpack
 
 interface  MPI_Unpack_external
-subroutine MPI_Unpack_external_f08(datarep,inbuf,insize,position,outbuf,outcount, &
+subroutine MPI_Unpack_external_f08@OMPI_F08_BINDINGS_TS_SUFFIX@(datarep,inbuf,insize,position,outbuf,outcount, &
                                    datatype,ierror &
            )
    use :: mpi_f08_types, only : MPI_Datatype, MPI_ADDRESS_KIND
    implicit none
    CHARACTER(LEN=*), INTENT(IN) :: datarep
-   @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ inbuf, outbuf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) :: inbuf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: outbuf
+   @OMPI_F08_IGNORE_TKR_PREDECL@ inbuf, outbuf
+   @OMPI_F08_IGNORE_TKR_TYPE@, INTENT(IN) :: inbuf
+   @OMPI_F08_IGNORE_TKR_TYPE@ :: outbuf
    INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: insize
    INTEGER(MPI_ADDRESS_KIND), INTENT(INOUT) :: position
    INTEGER, INTENT(IN) :: outcount
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-end subroutine MPI_Unpack_external_f08
+end subroutine MPI_Unpack_external_f08@OMPI_F08_BINDINGS_TS_SUFFIX@
 end interface  MPI_Unpack_external
 
 interface  MPI_Allgather

@@ -92,6 +92,24 @@ void ompi_ssend_init_ts(CFI_cdesc_t* x, MPI_Fint *count, MPI_Fint *datatype,
 
 void ompi_get_address_ts(CFI_cdesc_t *x, MPI_Aint *address, MPI_Fint *ierr);
 
+void ompi_pack_ts(CFI_cdesc_t* x1, MPI_Fint *incount, MPI_Fint *datatype,
+                  CFI_cdesc_t* x2, MPI_Fint *outsize, MPI_Fint *position,
+                  MPI_Fint *comm, MPI_Fint *ierr);
+
+void ompi_pack_external_ts(char *datarep, CFI_cdesc_t* x1, MPI_Fint *incount,
+                           MPI_Fint *datatype, CFI_cdesc_t* x2,
+                           MPI_Aint *outsize, MPI_Aint *position,
+                           MPI_Fint *ierr, int datarep_len);
+
+void ompi_unpack_ts(CFI_cdesc_t* x1, MPI_Fint *insize, MPI_Fint *position,
+                           CFI_cdesc_t* x2, MPI_Fint *outcount, MPI_Fint *datatype,
+                           MPI_Fint *comm, MPI_Fint *ierr);
+
+void ompi_unpack_external_ts(char *datarep, CFI_cdesc_t* x1, MPI_Aint *insize,
+                             MPI_Aint *position, CFI_cdesc_t* x2,
+                             MPI_Fint *outcount, MPI_Fint *datatype,
+                             MPI_Fint *ierr, int datarep_len);
+
 void ompi_free_mem_ts(CFI_cdesc_t *x, MPI_Fint *ierr);
 
 void ompi_f_sync_reg_ts(CFI_cdesc_t *x);
