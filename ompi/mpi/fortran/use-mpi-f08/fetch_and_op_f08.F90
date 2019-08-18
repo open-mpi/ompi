@@ -16,8 +16,8 @@ subroutine MPI_Fetch_and_op_f08(origin_addr,result_addr,datatype,target_rank, &
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Op, MPI_Win, MPI_ADDRESS_KIND
    use :: ompi_mpifh_bindings, only : ompi_fetch_and_op_f
    implicit none
-   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) OMPI_ASYNCHRONOUS :: origin_addr
-   OMPI_FORTRAN_IGNORE_TKR_TYPE OMPI_ASYNCHRONOUS :: result_addr
+   OMPI_F08_IGNORE_TKR_TYPE, INTENT(IN) OMPI_ASYNCHRONOUS :: origin_addr
+   OMPI_F08_IGNORE_TKR_TYPE OMPI_ASYNCHRONOUS :: result_addr
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
    INTEGER, INTENT(IN) :: target_rank
    INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: target_disp

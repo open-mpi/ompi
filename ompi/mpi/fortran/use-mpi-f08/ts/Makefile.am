@@ -34,6 +34,7 @@ libusempif08_ts_la_SOURCES = \
         ts.h \
         ts.c \
         \
+        accumulate_ts.c \
         allgather_ts.c \
         allgatherv_ts.c \
         allreduce_ts.c \
@@ -44,12 +45,16 @@ libusempif08_ts_la_SOURCES = \
         bsend_ts.c \
         bsend_init_ts.c \
         buffer_attach_ts.c \
+        compare_and_swap_ts.c \
         exscan_ts.c \
         f_sync_reg_ts.c \
+        fetch_and_op_ts.c \
         free_mem_ts.c \
         gather_ts.c \
         gatherv_ts.c \
         get_address_ts.c \
+        get_accumulate_ts.c \
+        get_ts.c \
         iallgather_ts.c \
         iallgatherv_ts.c \
         iallreduce_ts.c \
@@ -85,12 +90,17 @@ libusempif08_ts_la_SOURCES = \
         neighbor_alltoallw_ts.c \
         pack_ts.c \
         pack_external_ts.c \
+        put_ts.c \
+        raccumulate_ts.c \
         recv_ts.c \
         recv_init_ts.c \
         reduce_ts.c \
         reduce_local_ts.c \
         reduce_scatter_block_ts.c \
         reduce_scatter_ts.c \
+        rget_accumulate_ts.c \
+        rget_ts.c \
+        rput_ts.c \
         rsend_ts.c \
         rsend_init_ts.c \
         scan_ts.c \
@@ -103,4 +113,7 @@ libusempif08_ts_la_SOURCES = \
         ssend_ts.c \
         ssend_init_ts.c \
         unpack_ts.c \
-        unpack_external_ts.c
+        unpack_external_ts.c \
+        win_attach_ts.c \
+        win_create_ts.c \
+        win_detach_ts.c
