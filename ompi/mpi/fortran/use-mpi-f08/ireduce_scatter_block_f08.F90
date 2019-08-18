@@ -15,8 +15,8 @@ subroutine MPI_Ireduce_scatter_block_f08(sendbuf,recvbuf,recvcount,datatype,op,c
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Op, MPI_Comm, MPI_Request
    use :: ompi_mpifh_bindings, only : ompi_ireduce_scatter_block_f
    implicit none
-   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) OMPI_ASYNCHRONOUS :: sendbuf
-   OMPI_FORTRAN_IGNORE_TKR_TYPE OMPI_ASYNCHRONOUS :: recvbuf
+   OMPI_F08_IGNORE_TKR_TYPE, INTENT(IN) OMPI_ASYNCHRONOUS :: sendbuf
+   OMPI_F08_IGNORE_TKR_TYPE OMPI_ASYNCHRONOUS :: recvbuf
    INTEGER, INTENT(IN) :: recvcount
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
    TYPE(MPI_Op), INTENT(IN) :: op
