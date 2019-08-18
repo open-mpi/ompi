@@ -3253,7 +3253,7 @@ end subroutine MPI_Unpublish_name_f08
 end interface  MPI_Unpublish_name
 
 interface  MPI_Accumulate
-subroutine MPI_Accumulate_f08(origin_addr,origin_count,origin_datatype,target_rank, &
+subroutine MPI_Accumulate_f08@OMPI_F08_BINDINGS_TS_SUFFIX@(origin_addr,origin_count,origin_datatype,target_rank, &
                               target_disp,target_count,target_datatype,op,win,ierror)
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Op, MPI_Win, MPI_ADDRESS_KIND
    implicit none
@@ -3266,11 +3266,11 @@ subroutine MPI_Accumulate_f08(origin_addr,origin_count,origin_datatype,target_ra
    TYPE(MPI_Op), INTENT(IN) :: op
    TYPE(MPI_Win), INTENT(IN) :: win
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-end subroutine MPI_Accumulate_f08
+end subroutine MPI_Accumulate_f08@OMPI_F08_BINDINGS_TS_SUFFIX@
 end interface  MPI_Accumulate
 
 interface  MPI_Raccumulate
-subroutine MPI_Raccumulate_f08(origin_addr,origin_count,origin_datatype,target_rank, &
+subroutine MPI_Raccumulate_f08@OMPI_F08_BINDINGS_TS_SUFFIX@(origin_addr,origin_count,origin_datatype,target_rank, &
                                target_disp,target_count,target_datatype,op,win,request, &
                                ierror)
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Op, MPI_Win, MPI_Request, MPI_ADDRESS_KIND
@@ -3285,12 +3285,12 @@ subroutine MPI_Raccumulate_f08(origin_addr,origin_count,origin_datatype,target_r
    TYPE(MPI_Win), INTENT(IN) :: win
    TYPE(MPI_Request), INTENT(OUT) :: request
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-end subroutine MPI_Raccumulate_f08
+end subroutine MPI_Raccumulate_f08@OMPI_F08_BINDINGS_TS_SUFFIX@
 end interface  MPI_Raccumulate
 
 interface  MPI_Get
-subroutine MPI_Get_f08(origin_addr,origin_count,origin_datatype,target_rank, &
-                               target_disp,target_count,target_datatype,win,ierror)
+subroutine MPI_Get_f08@OMPI_F08_BINDINGS_TS_SUFFIX@(origin_addr,origin_count,origin_datatype,target_rank, &
+                       target_disp,target_count,target_datatype,win,ierror)
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Win, MPI_ADDRESS_KIND
    implicit none
    @OMPI_F08_IGNORE_TKR_PREDECL@ origin_addr
@@ -3301,11 +3301,11 @@ subroutine MPI_Get_f08(origin_addr,origin_count,origin_datatype,target_rank, &
    TYPE(MPI_Datatype), INTENT(IN) :: target_datatype
    TYPE(MPI_Win), INTENT(IN) :: win
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-end subroutine MPI_Get_f08
+end subroutine MPI_Get_f08@OMPI_F08_BINDINGS_TS_SUFFIX@
 end interface  MPI_Get
 
 interface  MPI_Rget
-subroutine MPI_Rget_f08(origin_addr,origin_count,origin_datatype,target_rank, &
+subroutine MPI_Rget_f08@OMPI_F08_BINDINGS_TS_SUFFIX@(origin_addr,origin_count,origin_datatype,target_rank, &
                         target_disp,target_count,target_datatype,win,request,ierror)
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Request, MPI_Win, MPI_ADDRESS_KIND
    implicit none
@@ -3318,11 +3318,11 @@ subroutine MPI_Rget_f08(origin_addr,origin_count,origin_datatype,target_rank, &
    TYPE(MPI_Win), INTENT(IN) :: win
    TYPE(MPI_Request), INTENT(OUT) :: request
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-end subroutine MPI_Rget_f08
+end subroutine MPI_Rget_f08@OMPI_F08_BINDINGS_TS_SUFFIX@
 end interface  MPI_Rget
 
 interface  MPI_Get_accumulate
-subroutine MPI_Get_accumulate_f08(origin_addr,origin_count,origin_datatype,result_addr, &
+subroutine MPI_Get_accumulate_f08@OMPI_F08_BINDINGS_TS_SUFFIX@(origin_addr,origin_count,origin_datatype,result_addr, &
                                   result_count,result_datatype,target_rank,target_disp, &
                                   target_count,target_datatype,op,win,ierror)
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Op, MPI_Win, MPI_ADDRESS_KIND
@@ -3338,11 +3338,11 @@ subroutine MPI_Get_accumulate_f08(origin_addr,origin_count,origin_datatype,resul
    TYPE(MPI_Op), INTENT(IN) :: op
    TYPE(MPI_Win), INTENT(IN) :: win
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-end subroutine MPI_Get_accumulate_f08
+end subroutine MPI_Get_accumulate_f08@OMPI_F08_BINDINGS_TS_SUFFIX@
 end interface  MPI_Get_accumulate
 
 interface  MPI_Rget_accumulate
-subroutine MPI_Rget_accumulate_f08(origin_addr,origin_count,origin_datatype,result_addr, &
+subroutine MPI_Rget_accumulate_f08@OMPI_F08_BINDINGS_TS_SUFFIX@(origin_addr,origin_count,origin_datatype,result_addr, &
                                    result_count,result_datatype,target_rank,target_disp, &
                                    target_count,target_datatype,op,win,request,ierror)
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Op, MPI_Request, MPI_Win, MPI_ADDRESS_KIND
@@ -3359,12 +3359,12 @@ subroutine MPI_Rget_accumulate_f08(origin_addr,origin_count,origin_datatype,resu
    TYPE(MPI_Win), INTENT(IN) :: win
    TYPE(MPI_Request), INTENT(OUT) :: request
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-end subroutine MPI_Rget_accumulate_f08
+end subroutine MPI_Rget_accumulate_f08@OMPI_F08_BINDINGS_TS_SUFFIX@
 end interface  MPI_Rget_accumulate
 
 interface  MPI_Put
-subroutine MPI_Put_f08(origin_addr,origin_count,origin_datatype,target_rank, &
-                               target_disp,target_count,target_datatype,win,ierror)
+subroutine MPI_Put_f08@OMPI_F08_BINDINGS_TS_SUFFIX@(origin_addr,origin_count,origin_datatype,target_rank, &
+                       target_disp,target_count,target_datatype,win,ierror)
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Win, MPI_ADDRESS_KIND
    implicit none
    @OMPI_F08_IGNORE_TKR_PREDECL@ origin_addr
@@ -3375,11 +3375,11 @@ subroutine MPI_Put_f08(origin_addr,origin_count,origin_datatype,target_rank, &
    TYPE(MPI_Datatype), INTENT(IN) :: target_datatype
    TYPE(MPI_Win), INTENT(IN) :: win
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-end subroutine MPI_Put_f08
+end subroutine MPI_Put_f08@OMPI_F08_BINDINGS_TS_SUFFIX@
 end interface  MPI_Put
 
 interface  MPI_Rput
-subroutine MPI_Rput_f08(origin_addr,origin_count,origin_datatype,target_rank, &
+subroutine MPI_Rput_f08@OMPI_F08_BINDINGS_TS_SUFFIX@(origin_addr,origin_count,origin_datatype,target_rank, &
                         target_disp,target_count,target_datatype,win,request,ierror)
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Win, MPI_Request, MPI_ADDRESS_KIND
    implicit none
@@ -3392,11 +3392,11 @@ subroutine MPI_Rput_f08(origin_addr,origin_count,origin_datatype,target_rank, &
    TYPE(MPI_Win), INTENT(IN) :: win
    TYPE(MPI_Request), INTENT(OUT) :: request
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-end subroutine MPI_Rput_f08
+end subroutine MPI_Rput_f08@OMPI_F08_BINDINGS_TS_SUFFIX@
 end interface  MPI_Rput
 
 interface  MPI_Fetch_and_op
-subroutine MPI_Fetch_and_op_f08(origin_addr,result_addr,datatype,target_rank, &
+subroutine MPI_Fetch_and_op_f08@OMPI_F08_BINDINGS_TS_SUFFIX@(origin_addr,result_addr,datatype,target_rank, &
                                 target_disp,op,win,ierror)
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Op, MPI_Win, MPI_ADDRESS_KIND
    implicit none
@@ -3409,11 +3409,11 @@ subroutine MPI_Fetch_and_op_f08(origin_addr,result_addr,datatype,target_rank, &
    TYPE(MPI_Op), INTENT(IN) :: op
    TYPE(MPI_Win), INTENT(IN) :: win
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-end subroutine MPI_Fetch_and_op_f08
+end subroutine MPI_Fetch_and_op_f08@OMPI_F08_BINDINGS_TS_SUFFIX@
 end interface  MPI_Fetch_and_op
 
 interface  MPI_Compare_and_swap
-subroutine MPI_Compare_and_swap_f08(origin_addr,compare_addr,result_addr,datatype, &
+subroutine MPI_Compare_and_swap_f08@OMPI_F08_BINDINGS_TS_SUFFIX@(origin_addr,compare_addr,result_addr,datatype, &
                                     target_rank,target_disp,win,ierror)
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Win, MPI_ADDRESS_KIND
    implicit none
@@ -3425,7 +3425,7 @@ subroutine MPI_Compare_and_swap_f08(origin_addr,compare_addr,result_addr,datatyp
    INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: target_disp
    TYPE(MPI_Win), INTENT(IN) :: win
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-end subroutine MPI_Compare_and_swap_f08
+end subroutine MPI_Compare_and_swap_f08@OMPI_F08_BINDINGS_TS_SUFFIX@
 end interface  MPI_Compare_and_swap
 
 interface  MPI_Win_complete
@@ -3438,7 +3438,7 @@ end subroutine MPI_Win_complete_f08
 end interface  MPI_Win_complete
 
 interface  MPI_Win_create
-subroutine MPI_Win_create_f08(base,size,disp_unit,info,comm,win,ierror)
+subroutine MPI_Win_create_f08@OMPI_F08_BINDINGS_TS_SUFFIX@(base,size,disp_unit,info,comm,win,ierror)
    use :: mpi_f08_types, only : MPI_Info, MPI_Comm, MPI_Win, MPI_ADDRESS_KIND
    implicit none
    @OMPI_F08_IGNORE_TKR_PREDECL@ base
@@ -3449,7 +3449,7 @@ subroutine MPI_Win_create_f08(base,size,disp_unit,info,comm,win,ierror)
    TYPE(MPI_Comm), INTENT(IN) :: comm
    TYPE(MPI_Win), INTENT(OUT) :: win
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-end subroutine MPI_Win_create_f08
+end subroutine MPI_Win_create_f08@OMPI_F08_BINDINGS_TS_SUFFIX@
 end interface  MPI_Win_create
 
 interface  MPI_Win_create_dynamic
@@ -3464,7 +3464,7 @@ end subroutine MPI_Win_create_dynamic_f08
 end interface  MPI_Win_create_dynamic
 
 interface  MPI_Win_attach
-subroutine MPI_Win_attach_f08(win,base,size,ierror)
+subroutine MPI_Win_attach_f08@OMPI_F08_BINDINGS_TS_SUFFIX@(win,base,size,ierror)
    use :: mpi_f08_types, only : MPI_Win, MPI_ADDRESS_KIND
    implicit none
    @OMPI_F08_IGNORE_TKR_PREDECL@ base
@@ -3472,18 +3472,18 @@ subroutine MPI_Win_attach_f08(win,base,size,ierror)
    INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: size
    TYPE(MPI_Win), INTENT(IN) :: win
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-end subroutine MPI_Win_attach_f08
+end subroutine MPI_Win_attach_f08@OMPI_F08_BINDINGS_TS_SUFFIX@
 end interface  MPI_Win_attach
 
 interface  MPI_Win_detach
-subroutine MPI_Win_detach_f08(win,base,ierror)
+subroutine MPI_Win_detach_f08@OMPI_F08_BINDINGS_TS_SUFFIX@(win,base,ierror)
    use :: mpi_f08_types, only : MPI_Win, MPI_ADDRESS_KIND
    implicit none
    @OMPI_F08_IGNORE_TKR_PREDECL@ base
    @OMPI_F08_IGNORE_TKR_TYPE@ OMPI_ASYNCHRONOUS :: base
    TYPE(MPI_Win), INTENT(IN) :: win
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-end subroutine MPI_Win_detach_f08
+end subroutine MPI_Win_detach_f08@OMPI_F08_BINDINGS_TS_SUFFIX@
 end interface  MPI_Win_detach
 
 interface  MPI_Win_fence

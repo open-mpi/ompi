@@ -315,4 +315,72 @@ void ompi_ineighbor_alltoallw_ts(CFI_cdesc_t *x1, MPI_Fint *sendcounts,
                                  MPI_Aint *rdispls, MPI_Fint *recvtypes,
                                  MPI_Fint *comm, MPI_Fint *request, MPI_Fint *ierr);
 
+void ompi_win_attach_ts(MPI_Fint *win, CFI_cdesc_t *x, MPI_Aint *size,
+                        MPI_Fint *ierr);
+
+void ompi_win_create_ts(CFI_cdesc_t *x, MPI_Aint *size, MPI_Fint *disp_unit,
+                        MPI_Fint *info, MPI_Fint *comm, MPI_Fint *win,
+                        MPI_Fint *ierr);
+
+void ompi_win_detach_ts(MPI_Fint *win, CFI_cdesc_t *x,
+                        MPI_Fint *ierr);
+
+void ompi_accumulate_ts(CFI_cdesc_t *x, MPI_Fint *origin_count,
+                        MPI_Fint *origin_datatype, MPI_Fint *target_rank,
+                        MPI_Aint *target_disp, MPI_Fint *target_count,
+                        MPI_Fint *target_datatype, MPI_Fint *op, MPI_Fint *win,
+                        MPI_Fint *ierr);
+
+void ompi_raccumulate_ts(CFI_cdesc_t *x, MPI_Fint *origin_count,
+                         MPI_Fint *origin_datatype, MPI_Fint *target_rank,
+                         MPI_Aint *target_disp, MPI_Fint *target_count,
+                         MPI_Fint *target_datatype, MPI_Fint *op, MPI_Fint *win,
+                         MPI_Fint *request, MPI_Fint *ierr);
+
+void ompi_get_ts(CFI_cdesc_t *x, MPI_Fint *origin_count,
+                 MPI_Fint *origin_datatype, MPI_Fint *target_rank,
+                 MPI_Aint *target_disp, MPI_Fint *target_count,
+                 MPI_Fint *target_datatype, MPI_Fint *win, MPI_Fint *ierr);
+
+
+void ompi_rget_ts(CFI_cdesc_t *x, MPI_Fint *origin_count,
+                  MPI_Fint *origin_datatype, MPI_Fint *target_rank,
+                  MPI_Aint *target_disp, MPI_Fint *target_count,
+                  MPI_Fint *target_datatype, MPI_Fint *win, MPI_Fint *request,
+                  MPI_Fint *ierr);
+
+void ompi_get_accumulate_ts(CFI_cdesc_t *x1, MPI_Fint *origin_count,
+                            MPI_Fint *origin_datatype, CFI_cdesc_t *x2,
+                            MPI_Fint *result_count, MPI_Fint *result_datatype,
+                            MPI_Fint *target_rank, MPI_Aint *target_disp,
+                            MPI_Fint *target_count, MPI_Fint *target_datatype,
+                            MPI_Fint *op, MPI_Fint *win, MPI_Fint *ierr);
+
+void ompi_rget_accumulate_ts(CFI_cdesc_t *x1, MPI_Fint *origin_count,
+                             MPI_Fint *origin_datatype, CFI_cdesc_t *x2,
+                             MPI_Fint *result_count, MPI_Fint *result_datatype,
+                             MPI_Fint *target_rank, MPI_Aint *target_disp,
+                             MPI_Fint *target_count, MPI_Fint *target_datatype,
+                             MPI_Fint *op, MPI_Fint *win, MPI_Fint *request,
+                             MPI_Fint *ierr);
+
+void ompi_put_ts(CFI_cdesc_t *x, MPI_Fint *origin_count,
+                 MPI_Fint *origin_datatype, MPI_Fint *target_rank,
+                 MPI_Aint *target_disp, MPI_Fint *target_count,
+                 MPI_Fint *target_datatype, MPI_Fint *win, MPI_Fint *ierr);
+
+void ompi_rput_ts(CFI_cdesc_t *x, MPI_Fint *origin_count,
+                  MPI_Fint *origin_datatype, MPI_Fint *target_rank,
+                  MPI_Aint *target_disp, MPI_Fint *target_count,
+                  MPI_Fint *target_datatype, MPI_Fint *win, MPI_Fint *request,
+                  MPI_Fint *ierr);
+
+void ompi_fetch_and_op_ts(CFI_cdesc_t *x1, CFI_cdesc_t *x2, MPI_Fint *datatype,
+                          MPI_Fint *target_rank, MPI_Aint *target_disp,
+                          MPI_Fint *op, MPI_Fint *win, MPI_Fint *ierr);
+
+void ompi_compare_and_swap_ts(CFI_cdesc_t *x1, CFI_cdesc_t *x2, CFI_cdesc_t *x3,
+                              MPI_Fint *datatype, MPI_Fint *target_rank, MPI_Aint *target_disp,
+                              MPI_Fint *win, MPI_Fint *ierr);
+
 #endif /* OMPI_CDESC_BINDINGS_H */
