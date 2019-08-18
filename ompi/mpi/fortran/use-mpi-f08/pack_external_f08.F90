@@ -18,8 +18,8 @@ subroutine MPI_Pack_external_f08(datarep,inbuf,incount,datatype,outbuf,outsize, 
    use :: ompi_mpifh_bindings, only : ompi_pack_external_f
    implicit none
    CHARACTER(LEN=*), INTENT(IN) :: datarep
-   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: inbuf
-   OMPI_FORTRAN_IGNORE_TKR_TYPE :: outbuf
+   OMPI_F08_IGNORE_TKR_TYPE, INTENT(IN) :: inbuf
+   OMPI_F08_IGNORE_TKR_TYPE :: outbuf
    INTEGER, INTENT(IN) :: incount
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
    INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: outsize

@@ -47,6 +47,8 @@ libusempif08_ts_la_SOURCES = \
         isend_ts.c \
         issend_ts.c \
         mrecv_ts.c \
+        pack_ts.c \
+        pack_external_ts.c \
         recv_ts.c \
         recv_init_ts.c \
         rsend_ts.c \
@@ -56,4 +58,6 @@ libusempif08_ts_la_SOURCES = \
         sendrecv_ts.c \
         sendrecv_replace_ts.c \
         ssend_ts.c \
-        ssend_init_ts.c
+        ssend_init_ts.c \
+        unpack_ts.c \
+        unpack_external_ts.c
