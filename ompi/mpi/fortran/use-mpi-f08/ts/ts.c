@@ -92,3 +92,47 @@ fn_exit:
         PMPI_Type_free(&types[j]);
     return mpi_errno;
 }
+
+static void copy(CFI_dim_t *dim, int rank, char * base, char **dest, size_t len) {
+    for (size_t i=0; i<dim->extent; i++) {
+        if (rank > 1) {
+            copy(dim-1, rank-1, base, dest, len);
+        } else {
+            int v;
+            memcpy(*dest, base, len);
+            *dest += len;
+        }
+        base += dim->sm;
+    }
+}
+
+int ompi_ts_copy(CFI_cdesc_t *cdesc, char *buffer) {
+    copy(&cdesc->dim[cdesc->rank - 1], cdesc->rank, cdesc->base_addr, &buffer, cdesc->elem_len);
+    return OMPI_SUCCESS;
+}
+
+static void copy_back(CFI_dim_t *dim, int rank, char * base, char **source, size_t len) {
+    for (size_t i=0; i<dim->extent; i++) {
+        if (rank > 1) {
+            copy_back(dim-1, rank-1, base, source, len);
+        } else {
+            int v;
+            memcpy(base, *source, len);
+            *source += len;
+        }
+        base += dim->sm;
+    }
+}
+
+int ompi_ts_copy_back(char *buffer, CFI_cdesc_t *cdesc) {
+    copy_back(&cdesc->dim[cdesc->rank - 1], cdesc->rank, cdesc->base_addr, &buffer, cdesc->elem_len);
+    return OMPI_SUCCESS;
+}
+
+size_t ompi_ts_size(CFI_cdesc_t *cdesc) {
+    size_t res = cdesc->elem_len;
+    for (int i=0; i<cdesc->rank; i++) {
+         res *= cdesc->dim[i].extent;
+    }
+    return res;
+}

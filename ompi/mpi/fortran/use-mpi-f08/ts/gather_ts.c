@@ -37,8 +37,8 @@ void ompi_gather_ts(CFI_cdesc_t *x1, MPI_Fint *sendcount, MPI_Fint *sendtype,
     MPI_Datatype c_senddatatype = NULL, c_sendtype = NULL;
     void *sendbuf = x1->base_addr;
     int c_sendcount =  0, c_recvcount = 0;
-    MPI_Datatype c_recvtype = NULL;
-    void *recvbuf = x2->base_addr;
+    MPI_Datatype c_recvtype = NULL, c_recvdatatype = NULL;
+    char *recvbuf = NULL;
 
     c_comm = PMPI_Comm_f2c(*comm);
     c_root = OMPI_FINT_2_INT(*root);
@@ -47,7 +47,7 @@ void ompi_gather_ts(CFI_cdesc_t *x1, MPI_Fint *sendcount, MPI_Fint *sendtype,
         if (MPI_ROOT == c_root) {
             c_recvtype = PMPI_Type_f2c(*recvtype);
             c_recvcount = OMPI_FINT_2_INT(*recvcount);
-            OMPI_CFI_CHECK_CONTIGUOUS(x2, c_ierr);
+            OMPI_CFI_2_C_ALLOC(x2, recvbuf, c_recvcount, c_recvtype, c_recvdatatype, c_ierr);
             if (MPI_SUCCESS != c_ierr) {
                 if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
                 OMPI_ERRHANDLER_INVOKE(c_comm, c_ierr, FUNC_NAME)
@@ -67,16 +67,19 @@ void ompi_gather_ts(CFI_cdesc_t *x1, MPI_Fint *sendcount, MPI_Fint *sendtype,
         if (ompi_comm_rank(c_comm) == c_root) {
             c_recvtype = PMPI_Type_f2c(*recvtype);
             c_recvcount = OMPI_FINT_2_INT(*recvcount);
-            OMPI_CFI_CHECK_CONTIGUOUS(x2, c_ierr);
+            if (OMPI_IS_FORTRAN_IN_PLACE(sendbuf)) {
+                sendbuf = MPI_IN_PLACE;
+                OMPI_CFI_2_C_COPY(x2, recvbuf, c_recvcount, c_recvtype, c_recvdatatype, c_ierr);
+            } else {
+                OMPI_CFI_2_C_ALLOC(x2, recvbuf, c_recvcount, c_recvtype, c_recvdatatype, c_ierr);
+            }
             if (MPI_SUCCESS != c_ierr) {
                 if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
                 OMPI_ERRHANDLER_INVOKE(c_comm, c_ierr, FUNC_NAME)
                 return;
             }
         }
-        if (OMPI_IS_FORTRAN_IN_PLACE(sendbuf)) {
-            sendbuf = MPI_IN_PLACE;
-        } else {
+        if (!OMPI_IS_FORTRAN_IN_PLACE(sendbuf)) {
             c_sendtype = PMPI_Type_f2c(*sendtype);
             c_sendcount = OMPI_FINT_2_INT(*sendcount);
             OMPI_CFI_2_C(x1, c_sendcount, c_sendtype, c_senddatatype, c_ierr);
@@ -95,11 +98,15 @@ void ompi_gather_ts(CFI_cdesc_t *x1, MPI_Fint *sendcount, MPI_Fint *sendtype,
     c_ierr = PMPI_Gather(sendbuf, c_sendcount,
                         c_senddatatype, recvbuf,
                         c_recvcount,
-                        c_recvtype,
+                        c_recvdatatype,
                         c_root,
                         c_comm);
     if (c_senddatatype != c_sendtype) {
         ompi_datatype_destroy(&c_senddatatype);
     }
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
+    if ((OMPI_COMM_IS_INTER(c_comm) && (MPI_ROOT == c_root)) ||
+        (!OMPI_COMM_IS_INTER(c_comm) && (ompi_comm_rank(c_comm) == c_root))) {
+        OMPI_C_2_CFI_COPY(x2, recvbuf, c_recvcount, c_recvtype, c_recvdatatype, c_ierr);
+    }   
 }

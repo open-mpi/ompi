@@ -45,6 +45,7 @@ AC_DEFUN([OMPI_CONFIG_FILES],[
         ompi/mpi/fortran/use-mpi-f08/bindings/Makefile
         ompi/mpi/fortran/use-mpi-f08/ts/Makefile
         ompi/mpi/fortran/use-mpi-f08/mod/Makefile
+        ompi/mpi/fortran/use-mpi-f08/mod/mpi-f08-subarrays-config.h
         ompi/mpi/fortran/use-mpi-f08/mod/mpi-f08-interfaces.h
         ompi/mpi/fortran/use-mpi-f08/mod/mpi-f08-rename.h
         ompi/mpi/fortran/mpiext-use-mpi/Makefile

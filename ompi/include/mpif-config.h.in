@@ -15,6 +15,8 @@
 !                         reserved.
 ! Copyright (c) 2019      Triad National Security, LLC. All rights
 !                         reserved.
+! Copyright (c) 2019      Research Organization for Information Science
+!                         and Technology (RIST).  All rights reserved.
 ! $COPYRIGHT$
 !
 ! Additional copyrights may follow
@@ -84,4 +86,3 @@
       parameter (MPI_SUBARRAYS_SUPPORTED= .false.)
       ! Hard-coded for .false. for now
       parameter (MPI_ASYNC_PROTECTS_NONBLOCKING = .false.)
-

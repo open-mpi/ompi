@@ -25,6 +25,7 @@ module mpi_f08_types
    use mpi_types
 
    include "mpif-config.h"
+   include "mpi-f08-subarrays-config.h"
    include "mpif-constants.h"
    include "mpif-io-constants.h"
 
