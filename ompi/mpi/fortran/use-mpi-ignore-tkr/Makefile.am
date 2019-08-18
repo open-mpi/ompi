@@ -33,22 +33,31 @@ AM_FCFLAGS = -I$(top_builddir)/ompi/include -I$(top_srcdir)/ompi/include \
 lib_LTLIBRARIES = lib@OMPI_LIBMPI_NAME@_usempi_ignore_tkr.la
 
 mpi-ignore-tkr-interfaces.h: mpi-ignore-tkr-interfaces.h.in
+pmpi-ignore-tkr-interfaces.h: mpi-ignore-tkr-interfaces.h
 mpi-ignore-tkr-file-interfaces.h: mpi-ignore-tkr-file-interfaces.h.in
+pmpi-ignore-tkr-file-interfaces.h: mpi-ignore-tkr-file-interfaces.h
 mpi-ignore-tkr-removed-interfaces.h: mpi-ignore-tkr-removed-interfaces.h.in
+pmpi-ignore-tkr-removed-interfaces.h: mpi-ignore-tkr-removed-interfaces.h
 
 mpi-ignore-tkr.lo: $(top_srcdir)/ompi/mpi/fortran/base/attr-fn-int-callback-interfaces.h
 mpi-ignore-tkr.lo: $(top_srcdir)/ompi/mpi/fortran/base/conversion-fn-null-int-interface.h
 mpi-ignore-tkr.lo: mpi-ignore-tkr-interfaces.h
 mpi-ignore-tkr.lo: mpi-ignore-tkr-status.h
+mpi-ignore-tkr.lo: pmpi-ignore-tkr-interfaces.h
 mpi-ignore-tkr.lo: mpi-ignore-tkr-file-interfaces.h
+mpi-ignore-tkr.lo: pmpi-ignore-tkr-file-interfaces.h
 mpi-ignore-tkr.lo: mpi-ignore-tkr-removed-interfaces.h
+mpi-ignore-tkr.lo: pmpi-ignore-tkr-removed-interfaces.h
 mpi-ignore-tkr.lo: mpi-ignore-tkr-sizeof.h
 mpi-ignore-tkr.lo: mpi-ignore-tkr-sizeof.f90
 mpi-ignore-tkr.lo: mpi-ignore-tkr.F90
 
 lib@OMPI_LIBMPI_NAME@_usempi_ignore_tkr_la_SOURCES = \
         mpi-ignore-tkr.F90 \
-        mpi-ignore-tkr-status.h
+        mpi-ignore-tkr-status.h \
+        pmpi-ignore-tkr-interfaces.h \
+        pmpi-ignore-tkr-file-interfaces.h \
+        pmpi-ignore-tkr-removed-interfaces.h
 
 nodist_lib@OMPI_LIBMPI_NAME@_usempi_ignore_tkr_la_SOURCES = \
         mpi-ignore-tkr-interfaces.h \
