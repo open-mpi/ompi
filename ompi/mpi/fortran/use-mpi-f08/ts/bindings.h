@@ -110,6 +110,79 @@ void ompi_unpack_external_ts(char *datarep, CFI_cdesc_t* x1, MPI_Aint *insize,
                              MPI_Fint *outcount, MPI_Fint *datatype,
                              MPI_Fint *ierr, int datarep_len);
 
+void ompi_allgather_ts(CFI_cdesc_t* x1, MPI_Fint *sendcount, MPI_Fint *sendtype,
+                       CFI_cdesc_t* x2, MPI_Fint *recvcount, MPI_Fint *recvtype,
+                       MPI_Fint *comm, MPI_Fint *ierr);
+
+void ompi_allgatherv_ts(CFI_cdesc_t *x1, MPI_Fint *sendcount, MPI_Fint *sendtype,
+                        CFI_cdesc_t *x2, MPI_Fint *recvcounts, MPI_Fint *displs,
+                        MPI_Fint *recvtype, MPI_Fint *comm, MPI_Fint *ierr);
+
+void ompi_allreduce_ts(CFI_cdesc_t *x1, CFI_cdesc_t *x2, MPI_Fint *count,
+                       MPI_Fint *datatype, MPI_Fint *op, MPI_Fint *comm,
+                       MPI_Fint *ierr);
+
+void ompi_alltoall_ts(CFI_cdesc_t* x1, MPI_Fint *sendcount, MPI_Fint *sendtype,
+                      CFI_cdesc_t* x2, MPI_Fint *recvcount, MPI_Fint *recvtype,
+                      MPI_Fint *comm, MPI_Fint *ierr);
+
+void ompi_alltoallv_ts(CFI_cdesc_t *x1, MPI_Fint *sendcounts, MPI_Fint *sdispls,
+                       MPI_Fint *sendtype, CFI_cdesc_t *x2, MPI_Fint *recvcounts,
+                       MPI_Fint *rdispls, MPI_Fint *recvtype,
+                       MPI_Fint *comm, MPI_Fint *ierr);
+
+void ompi_alltoallw_ts(CFI_cdesc_t *x1, MPI_Fint *sendcounts,
+                       MPI_Fint *sdispls, MPI_Fint *sendtypes,
+                       CFI_cdesc_t *x2, MPI_Fint *recvcounts,
+                       MPI_Fint *rdispls, MPI_Fint *recvtypes,
+                       MPI_Fint *comm, MPI_Fint *ierr);
+
+void ompi_bcast_ts(CFI_cdesc_t* x, MPI_Fint *count, MPI_Fint *datatype,
+                   MPI_Fint *root, MPI_Fint *comm, MPI_Fint *ierr);
+
+void ompi_exscan_ts(CFI_cdesc_t *x1, CFI_cdesc_t *x2, MPI_Fint *count,
+                    MPI_Fint *datatype, MPI_Fint *op, MPI_Fint *comm,
+                    MPI_Fint *ierr);
+
+void ompi_gather_ts(CFI_cdesc_t *x1, MPI_Fint *sendcount, MPI_Fint *sendtype,
+                    CFI_cdesc_t *x2, MPI_Fint *recvcount, MPI_Fint *recvtype,
+                    MPI_Fint *root, MPI_Fint *comm, MPI_Fint *ierr);
+
+void ompi_gatherv_ts(CFI_cdesc_t *x1, MPI_Fint *sendcount, MPI_Fint *sendtype,
+                     CFI_cdesc_t *x2, MPI_Fint *recvcounts, MPI_Fint *displs,
+                     MPI_Fint *recvtype, MPI_Fint *root, MPI_Fint *comm,
+                     MPI_Fint *ierr);
+
+void ompi_reduce_ts(CFI_cdesc_t *x1, CFI_cdesc_t *x2, MPI_Fint *count,
+                    MPI_Fint *datatype, MPI_Fint *op,
+                    MPI_Fint *root, MPI_Fint *comm, MPI_Fint *ierr);
+
+void ompi_reduce_local_ts(CFI_cdesc_t *x1, CFI_cdesc_t *x2, MPI_Fint *count,
+                          MPI_Fint *datatype, MPI_Fint *op, MPI_Fint *ierr);
+
+void ompi_reduce_scatter_ts(CFI_cdesc_t *x1, CFI_cdesc_t *x2,
+                            MPI_Fint *recvcounts, MPI_Fint *datatype,
+                            MPI_Fint *op, MPI_Fint *comm, MPI_Fint *ierr);
+
+void ompi_reduce_scatter_block_ts(CFI_cdesc_t *x1, CFI_cdesc_t *x2,
+                                  MPI_Fint *recvcount, MPI_Fint *datatype,
+                                  MPI_Fint *op, MPI_Fint *comm, MPI_Fint *ierr);
+
+void ompi_scan_ts(CFI_cdesc_t *x1, CFI_cdesc_t *x2, MPI_Fint *count,
+                  MPI_Fint *datatype, MPI_Fint *op, MPI_Fint *comm,
+                  MPI_Fint *ierr);
+
+void ompi_scatter_ts(CFI_cdesc_t *x1, MPI_Fint *sendcount,
+                     MPI_Fint *sendtype, CFI_cdesc_t *x2,
+                     MPI_Fint *recvcount, MPI_Fint *recvtype,
+                     MPI_Fint *root, MPI_Fint *comm, MPI_Fint *ierr);
+
+void ompi_scatterv_ts(CFI_cdesc_t *x1, MPI_Fint *sendcounts,
+                      MPI_Fint *displs, MPI_Fint *sendtype,
+                      CFI_cdesc_t *x2, MPI_Fint *recvcount,
+                      MPI_Fint *recvtype, MPI_Fint *root,
+                      MPI_Fint *comm, MPI_Fint *ierr);
+
 void ompi_free_mem_ts(CFI_cdesc_t *x, MPI_Fint *ierr);
 
 void ompi_f_sync_reg_ts(CFI_cdesc_t *x);
@@ -119,5 +192,28 @@ void ompi_imrecv_ts(CFI_cdesc_t* x, MPI_Fint *count, MPI_Fint *datatype,
 
 void ompi_mrecv_ts(CFI_cdesc_t* x, MPI_Fint *count, MPI_Fint *datatype,
                    MPI_Fint *message, MPI_Fint *status, MPI_Fint *ierr);
+
+void ompi_neighbor_allgather_ts(CFI_cdesc_t *x1, MPI_Fint *sendcount, MPI_Fint *sendtype,
+                                CFI_cdesc_t *x2, MPI_Fint *recvcount, MPI_Fint *recvtype,
+                                MPI_Fint *comm, MPI_Fint *ierr);
+
+void ompi_neighbor_allgatherv_ts(CFI_cdesc_t *x1, MPI_Fint *sendcount, MPI_Fint *sendtype,
+                                 CFI_cdesc_t *x2, MPI_Fint *recvcounts, MPI_Fint *displs,
+                                 MPI_Fint *recvtype, MPI_Fint *comm, MPI_Fint *ierr);
+
+void ompi_neighbor_alltoall_ts(CFI_cdesc_t *x1, MPI_Fint *sendcount, MPI_Fint *sendtype,
+                               CFI_cdesc_t *x2, MPI_Fint *recvcount, MPI_Fint *recvtype,
+                               MPI_Fint *comm, MPI_Fint *ierr);
+
+void ompi_neighbor_alltoallv_ts(CFI_cdesc_t *x1, MPI_Fint *sendcounts, MPI_Fint *sdispls,
+                                MPI_Fint *sendtype, CFI_cdesc_t *x2, MPI_Fint *recvcounts,
+                                MPI_Fint *rdispls, MPI_Fint *recvtype,
+                                MPI_Fint *comm, MPI_Fint *ierr);
+
+void ompi_neighbor_alltoallw_ts(CFI_cdesc_t *x1, MPI_Fint *sendcounts,
+                                MPI_Aint *sdispls, MPI_Fint *sendtypes,
+                                CFI_cdesc_t *x2, MPI_Fint *recvcounts,
+                                MPI_Aint *rdispls, MPI_Fint *recvtypes,
+                                MPI_Fint *comm, MPI_Fint *ierr);
 
 #endif /* OMPI_CDESC_BINDINGS_H */
