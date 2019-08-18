@@ -15,7 +15,7 @@ subroutine MPI_Rsend_f08(buf,count,datatype,dest,tag,comm,ierror)
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm
    use :: ompi_mpifh_bindings, only : ompi_rsend_f
    implicit none
-   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: buf
+   OMPI_F08_IGNORE_TKR_TYPE, INTENT(IN) :: buf
    INTEGER, INTENT(IN) :: count, dest, tag
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
    TYPE(MPI_Comm), INTENT(IN) :: comm
