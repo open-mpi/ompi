@@ -41,7 +41,8 @@ include_HEADERS += \
         mpif-handles.h \
         mpif-io-constants.h \
         mpif-io-handles.h \
-        mpif-sentinels.h
+        mpif-sentinels.h \
+        mpif-subarrays-config.h
 
 endif
 

@@ -417,11 +417,27 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
     # If we got all the stuff from above, then also look for the new
     # F08 syntax that we can use for the use_mpif08 module.
 
-    # We need to have ignore TKR functionality to build the mpi_f08
+    OMPI_FORTRAN_HAVE_TS=0
+    OMPI_MPI_SUBARRAYS_SUPPORTED=.false.
+    OMPI_MPI_ASYNC_PROTECTS_NONBLOCKING=.false.
+    AS_IF([test $OMPI_TRY_FORTRAN_BINDINGS -ge $OMPI_FORTRAN_USEMPIF08_BINDINGS],
+          [OMPI_FORTRAN_CHECK_TS([OMPI_FORTRAN_HAVE_TS=1])])
+
+    AC_SUBST(OMPI_MPI_SUBARRAYS_SUPPORTED)
+    AC_SUBST(OMPI_MPI_ASYNC_PROTECTS_NONBLOCKING)
+
+    # We need to have ignore TKR or the ISO Fortran bindings functionality to build the mpi_f08
     # module
-    AS_IF([test $OMPI_TRY_FORTRAN_BINDINGS -ge $OMPI_FORTRAN_USEMPIF08_BINDINGS && \
-           test $OMPI_FORTRAN_HAVE_IGNORE_TKR -eq 1],
-          [OMPI_BUILD_FORTRAN_BINDINGS=$OMPI_FORTRAN_USEMPIF08_BINDINGS])
+    AS_IF([test $OMPI_TRY_FORTRAN_BINDINGS -ge $OMPI_FORTRAN_USEMPIF08_BINDINGS],
+          [AS_IF([test $OMPI_FORTRAN_HAVE_IGNORE_TKR -eq 1],
+                 [OMPI_BUILD_FORTRAN_BINDINGS=$OMPI_FORTRAN_USEMPIF08_BINDINGS
+                  OMPI_FORTRAN_F08_PREDECL=$OMPI_FORTRAN_IGNORE_TKR_PREDECL
+                  OMPI_FORTRAN_F08_TYPE=$OMPI_FORTRAN_IGNORE_TKR_TYPE
+                 ])
+           AS_IF([test $OMPI_FORTRAN_HAVE_TS -eq 1],
+                 [OMPI_BUILD_FORTRAN_BINDINGS=$OMPI_FORTRAN_USEMPIF08_BINDINGS
+                  OMPI_MPI_SUBARRAYS_SUPPORTED=.true.
+                  OMPI_MPI_ASYNC_PROTECTS_NONBLOCKING=.true.])])
 
     # The overall "_BIND_C" variable will be set to 1 if we have all
     # the necessary forms of BIND(C)
