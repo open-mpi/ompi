@@ -34,11 +34,21 @@ libusempif08_ts_la_SOURCES = \
         ts.h \
         ts.c \
         \
+        allgather_ts.c \
+        allgatherv_ts.c \
+        allreduce_ts.c \
+        alltoall_ts.c \
+        alltoallv_ts.c \
+        alltoallw_ts.c \
+        bcast_ts.c \
         bsend_ts.c \
         bsend_init_ts.c \
         buffer_attach_ts.c \
+        exscan_ts.c \
         f_sync_reg_ts.c \
         free_mem_ts.c \
+        gather_ts.c \
+        gatherv_ts.c \
         get_address_ts.c \
         ibsend_ts.c \
         imrecv_ts.c \
@@ -47,12 +57,24 @@ libusempif08_ts_la_SOURCES = \
         isend_ts.c \
         issend_ts.c \
         mrecv_ts.c \
+        neighbor_allgather_ts.c \
+        neighbor_allgatherv_ts.c \
+        neighbor_alltoall_ts.c \
+        neighbor_alltoallv_ts.c \
+        neighbor_alltoallw_ts.c \
         pack_ts.c \
         pack_external_ts.c \
         recv_ts.c \
         recv_init_ts.c \
+        reduce_ts.c \
+        reduce_local_ts.c \
+        reduce_scatter_block_ts.c \
+        reduce_scatter_ts.c \
         rsend_ts.c \
         rsend_init_ts.c \
+        scan_ts.c \
+        scatter_ts.c \
+        scatterv_ts.c \
         send_ts.c \
         send_init_ts.c \
         sendrecv_ts.c \
