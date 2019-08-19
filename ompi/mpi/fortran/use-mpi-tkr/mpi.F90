@@ -58,11 +58,11 @@ module mpi
 ! This file is generated, and is *huge*.  Its size is directly related
 ! to the --with-f90-max-array-dim configure parameter.
 
-  include "mpi-f90-interfaces.h"
-  include "pmpi-f90-interfaces.h"
+# include "mpi-f90-interfaces.h"
+# include "pmpi-f90-interfaces.h"
 #if OMPI_PROVIDE_MPI_FILE_INTEFACE
-  include "mpi-f90-file-interfaces.h"
-  include "pmpi-f90-file-interfaces.h"
+# include "mpi-f90-file-interfaces.h"
+# include "pmpi-f90-file-interfaces.h"
 #endif
 
 #if OMPI_FORTRAN_BUILD_SIZEOF
@@ -74,8 +74,8 @@ module mpi
 #error "Remove MPI-1 compat code"
 
 #elif OMPI_ENABLE_MPI1_COMPAT
-  include "mpi-f90-removed-interfaces.h"
-  include "pmpi-f90-removed-interfaces.h"
+# include "mpi-f90-removed-interfaces.h"
+# include "pmpi-f90-removed-interfaces.h"
 #endif
 
 end module mpi
