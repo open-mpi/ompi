@@ -111,7 +111,7 @@ endif # CASE_SENSITIVE_FS
 
 if PROJECT_ORTE
 targets_install_exec += install-exec-rte
-targets_uninstall_local += uninstall-rte
+targets_uninstall_local += uninstall-local-rte
 endif # PROJECT_ORTE
 
 install-exec-hook: $(targets_install_exec)
