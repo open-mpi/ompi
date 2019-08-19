@@ -137,37 +137,6 @@ int orterun(int argc, char *argv[])
         exit(1);
     }
 
-    /* check if we are running as root - if we are, then only allow
-     * us to proceed if the allow-run-as-root flag was given. Otherwise,
-     * exit with a giant warning flag
-     */
-    if (0 == geteuid() && !orte_cmd_options.run_as_root) {
-        char *r1, *r2;
-        if (NULL != (r1 = getenv("OMPI_ALLOW_RUN_AS_ROOT")) &&
-            NULL != (r2 = getenv("OMPI_ALLOW_RUN_AS_ROOT_CONFIRM"))) {
-            if (0 == strcmp(r1, "1") && 0 == strcmp(r2, "1")) {
-                goto moveon;
-            }
-        }
-
-        fprintf(stderr, "--------------------------------------------------------------------------\n");
-        if (NULL != orte_cmd_options.help) {
-            fprintf(stderr, "%s cannot provide the help message when run as root.\n", orte_basename);
-        } else {
-            /* show_help is not yet available, so print an error manually */
-            fprintf(stderr, "%s has detected an attempt to run as root.\n", orte_basename);
-        }
-        fprintf(stderr, "Running at root is *strongly* discouraged as any mistake (e.g., in\n");
-        fprintf(stderr, "defining TMPDIR) or bug can result in catastrophic damage to the OS\n");
-        fprintf(stderr, "file system, leaving your system in an unusable state.\n\n");
-        fprintf(stderr, "You can override this protection by adding the --allow-run-as-root\n");
-        fprintf(stderr, "option to your cmd line. However, we reiterate our strong advice\n");
-        fprintf(stderr, "against doing so - please do so at your own risk.\n");
-        fprintf(stderr, "--------------------------------------------------------------------------\n");
-        exit(1);
-    }
-
-  moveon:
     /* setup to listen for commands sent specifically to me, even though I would probably
      * be the one sending them! Unfortunately, since I am a participating daemon,
      * there are times I need to send a command to "all daemons", and that means *I* have
