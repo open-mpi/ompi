@@ -21,7 +21,7 @@ example, a bug might be fixed in the master, and then moved to the
 current release as well as the "stable" bug fix release branch.
 
 
-2.2.3 -- TBD
+2.2.3 -- 15 Aug 2019
 ----------------------
 - PR #1162: Fix race condition when clients fail while in a PMIx
             collective operation
