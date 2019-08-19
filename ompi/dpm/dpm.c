@@ -15,7 +15,7 @@
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2011-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -404,9 +404,43 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
         goto exit;
     }
     if (0 < opal_list_get_size(&ilist)) {
+        uint32_t *peer_ranks = NULL;
+        int prn, nprn;
+        char *val, *mycpuset;
+        uint16_t u16;
+        opal_process_name_t wildcard_rank;
         /* convert the list of new procs to a proc_t array */
         new_proc_list = (ompi_proc_t**)calloc(opal_list_get_size(&ilist),
                                               sizeof(ompi_proc_t *));
+        /* get the list of local peers for the new procs */
+        cd = (ompi_dpm_proct_caddy_t*)opal_list_get_first(&ilist);
+        proc = cd->p;
+        wildcard_rank.jobid = proc->super.proc_name.jobid;
+        wildcard_rank.vpid = OMPI_NAME_WILDCARD->vpid;
+        /* retrieve the local peers */
+        OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, OPAL_PMIX_LOCAL_PEERS,
+                                       &wildcard_rank, &val, OPAL_STRING);
+        if (OPAL_SUCCESS == rc && NULL != val) {
+            char **peers = opal_argv_split(val, ',');
+            free(val);
+            nprn = opal_argv_count(peers);
+            peer_ranks = (uint32_t*)calloc(nprn, sizeof(uint32_t));
+            for (prn = 0; NULL != peers[prn]; prn++) {
+                peer_ranks[prn] = strtoul(peers[prn], NULL, 10);
+            }
+            opal_argv_free(peers);
+        }
+
+        /* get my locality string */
+        val = NULL;
+        OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, OPAL_PMIX_LOCALITY_STRING,
+                                       OMPI_PROC_MY_NAME, &val, OPAL_STRING);
+        if (OPAL_SUCCESS == rc && NULL != val) {
+            mycpuset = val;
+        } else {
+            mycpuset = NULL;
+        }
+
         i = 0;
         OPAL_LIST_FOREACH(cd, &ilist, ompi_dpm_proct_caddy_t) {
             opal_value_t *kv;
@@ -416,14 +450,40 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
              * OPAL_PMIX_LOCALITY and OPAL_PMIX_HOSTNAME. since we can live without
              * them, we are just fine */
             ompi_proc_complete_init_single(proc);
-            /* save the locality for later */
-            kv = OBJ_NEW(opal_value_t);
-            kv->key = strdup(OPAL_PMIX_LOCALITY);
-            kv->type = OPAL_UINT16;
-            kv->data.uint16 = proc->super.proc_flags;
-            opal_pmix.store_local(&proc->super.proc_name, kv);
-            OBJ_RELEASE(kv); // maintain accounting
+            /* if this proc is local, then get its locality */
+            if (NULL != peer_ranks) {
+                for (prn=0; prn < nprn; prn++) {
+                    if (peer_ranks[prn] == proc->super.proc_name.vpid) {
+                        /* get their locality string */
+                        val = NULL;
+                        OPAL_MODEX_RECV_VALUE_IMMEDIATE(rc, OPAL_PMIX_LOCALITY_STRING,
+                                                       &proc->super.proc_name, &val, OPAL_STRING);
+                        if (OPAL_SUCCESS == rc && NULL != val) {
+                            u16 = opal_hwloc_compute_relative_locality(mycpuset, val);
+                            free(val);
+                        } else {
+                            /* all we can say is that it shares our node */
+                            u16 = OPAL_PROC_ON_CLUSTER | OPAL_PROC_ON_CU | OPAL_PROC_ON_NODE;
+                        }
+                        proc->super.proc_flags = u16;
+                        /* save the locality for later */
+                        kv = OBJ_NEW(opal_value_t);
+                        kv->key = strdup(OPAL_PMIX_LOCALITY);
+                        kv->type = OPAL_UINT16;
+                        kv->data.uint16 = proc->super.proc_flags;
+                        opal_pmix.store_local(&proc->super.proc_name, kv);
+                        OBJ_RELEASE(kv); // maintain accounting
+                        break;
+                    }
+                }
+            }
             ++i;
+        }
+        if (NULL != mycpuset) {
+            free(mycpuset);
+        }
+        if (NULL != peer_ranks) {
+            free(peer_ranks);
         }
         /* call add_procs on the new ones */
         rc = MCA_PML_CALL(add_procs(new_proc_list, opal_list_get_size(&ilist)));
