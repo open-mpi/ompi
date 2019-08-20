@@ -327,5 +327,9 @@ static int nidmap_create(opal_pointer_array_t *pool, char **regex)
     free(nodenames);
     free(tmp);
     *regex = tmp2;
+    opal_output_verbose(5, orte_regx_base_framework.framework_output,
+                        "%s Final regex: <%s>",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                        *regex);
     return ORTE_SUCCESS;
 }
