@@ -383,4 +383,126 @@ void ompi_compare_and_swap_ts(CFI_cdesc_t *x1, CFI_cdesc_t *x2, CFI_cdesc_t *x3,
                               MPI_Fint *datatype, MPI_Fint *target_rank, MPI_Aint *target_disp,
                               MPI_Fint *win, MPI_Fint *ierr);
 
+void ompi_file_iread_ts(MPI_Fint *fh, CFI_cdesc_t *x, MPI_Fint *count,
+                        MPI_Fint *datatype, MPI_Fint *request, MPI_Fint *ierr);
+
+void ompi_file_iread_at_ts(MPI_Fint *fh, MPI_Offset *offset,
+                           CFI_cdesc_t *x, MPI_Fint *count,
+                           MPI_Fint *datatype, MPI_Fint *request, MPI_Fint *ierr);
+
+void ompi_file_iread_all_ts(MPI_Fint *fh, CFI_cdesc_t *x, MPI_Fint *count,
+                            MPI_Fint *datatype, MPI_Fint *request, MPI_Fint *ierr);
+
+void ompi_file_iread_at_all_ts(MPI_Fint *fh, MPI_Offset *offset,
+                               CFI_cdesc_t *x, MPI_Fint *count,
+                               MPI_Fint *datatype, MPI_Fint *request, MPI_Fint *ierr);
+
+void ompi_file_iread_shared_ts(MPI_Fint *fh, CFI_cdesc_t *x, MPI_Fint *count,
+                               MPI_Fint *datatype, MPI_Fint *request,
+                               MPI_Fint *ierr);
+
+void ompi_file_iwrite_ts(MPI_Fint *fh, CFI_cdesc_t *x, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *request, MPI_Fint *ierr);
+
+
+void ompi_file_iwrite_at_ts(MPI_Fint *fh, MPI_Offset *offset, CFI_cdesc_t *x,
+                            MPI_Fint *count, MPI_Fint *datatype,
+                            MPI_Fint *request, MPI_Fint *ierr);
+
+void ompi_file_iwrite_all_ts(MPI_Fint *fh, CFI_cdesc_t *x, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *request, MPI_Fint *ierr);
+
+void ompi_file_iwrite_at_all_ts(MPI_Fint *fh, MPI_Offset *offset, CFI_cdesc_t *x,
+                                MPI_Fint *count, MPI_Fint *datatype,
+                                MPI_Fint *request, MPI_Fint *ierr);
+
+void ompi_file_iwrite_shared_ts(MPI_Fint *fh, CFI_cdesc_t *x, MPI_Fint *count,
+                                MPI_Fint *datatype, MPI_Fint *request,
+                                MPI_Fint *ierr);
+
+void ompi_file_read_all_begin_ts(MPI_Fint *fh, CFI_cdesc_t *x,
+                                 MPI_Fint *count, MPI_Fint *datatype,
+                                 MPI_Fint *ierr);
+
+void ompi_file_read_all_ts(MPI_Fint *fh, CFI_cdesc_t *x, MPI_Fint *count,
+                           MPI_Fint *datatype, MPI_Fint *status, MPI_Fint *ierr);
+
+void ompi_file_read_all_end_ts(MPI_Fint *fh, CFI_cdesc_t *x, MPI_Fint *status,
+                               MPI_Fint *ierr);
+
+void ompi_file_read_at_all_begin_ts(MPI_Fint *fh, MPI_Offset *offset,
+                                    CFI_cdesc_t *x, MPI_Fint *count,
+                                    MPI_Fint *datatype, MPI_Fint *ierr);
+
+void ompi_file_read_at_all_ts(MPI_Fint *fh, MPI_Offset *offset,
+                              CFI_cdesc_t *x, MPI_Fint *count,
+                              MPI_Fint *datatype, MPI_Fint *status,
+                              MPI_Fint *ierr);
+
+void ompi_file_read_at_all_end_ts(MPI_Fint *fh, CFI_cdesc_t *x,
+                                  MPI_Fint *status, MPI_Fint *ierr);
+
+void ompi_file_read_at_ts(MPI_Fint *fh, MPI_Offset *offset, CFI_cdesc_t *x,
+                          MPI_Fint *count, MPI_Fint *datatype,
+                          MPI_Fint *status, MPI_Fint *ierr);
+
+void ompi_file_read_ts(MPI_Fint *fh, CFI_cdesc_t *x, MPI_Fint *count,
+                       MPI_Fint *datatype, MPI_Fint *status, MPI_Fint *ierr);
+
+void ompi_file_read_ordered_begin_ts(MPI_Fint *fh, CFI_cdesc_t *x, MPI_Fint *count,
+                                     MPI_Fint *datatype, MPI_Fint *ierr);
+
+void ompi_file_read_ordered_ts(MPI_Fint *fh, CFI_cdesc_t *x, MPI_Fint *count,
+                               MPI_Fint *datatype, MPI_Fint *status,
+                               MPI_Fint *ierr);
+
+void ompi_file_read_ordered_end_ts(MPI_Fint *fh, CFI_cdesc_t *x,
+                                   MPI_Fint *status, MPI_Fint *ierr);
+
+void ompi_file_read_shared_ts(MPI_Fint *fh, CFI_cdesc_t *x, MPI_Fint *count,
+                              MPI_Fint *datatype, MPI_Fint *status,
+                              MPI_Fint *ierr);
+
+void ompi_file_write_all_begin_ts(MPI_Fint *fh, CFI_cdesc_t *x,
+                                  MPI_Fint *count, MPI_Fint *datatype,
+                                  MPI_Fint *ierr);
+
+void ompi_file_write_all_ts(MPI_Fint *fh, CFI_cdesc_t *x, MPI_Fint *count,
+                            MPI_Fint *datatype, MPI_Fint *status, MPI_Fint *ierr);
+
+void ompi_file_write_all_end_ts(MPI_Fint *fh, CFI_cdesc_t *x, MPI_Fint *status,
+                                MPI_Fint *ierr);
+
+void ompi_file_write_at_all_begin_ts(MPI_Fint *fh, MPI_Offset *offset,
+                                     CFI_cdesc_t *x, MPI_Fint *count,
+                                     MPI_Fint *datatype, MPI_Fint *ierr);
+
+void ompi_file_write_at_all_ts(MPI_Fint *fh, MPI_Offset *offset,
+                               CFI_cdesc_t *x, MPI_Fint *count,
+                               MPI_Fint *datatype, MPI_Fint *status,
+                               MPI_Fint *ierr);
+
+void ompi_file_write_at_all_end_ts(MPI_Fint *fh, CFI_cdesc_t *x,
+                                   MPI_Fint *status, MPI_Fint *ierr);
+
+void ompi_file_write_at_ts(MPI_Fint *fh, MPI_Offset *offset,
+                           CFI_cdesc_t *x, MPI_Fint *count,
+                           MPI_Fint *datatype, MPI_Fint *status, MPI_Fint *ierr);
+
+void ompi_file_write_ts(MPI_Fint *fh, CFI_cdesc_t *x, MPI_Fint *count,
+                        MPI_Fint *datatype, MPI_Fint *status, MPI_Fint *ierr);
+
+void ompi_file_write_ordered_begin_ts(MPI_Fint *fh, CFI_cdesc_t *x,
+                                      MPI_Fint *count, MPI_Fint *datatype,
+                                      MPI_Fint *ierr);
+
+void ompi_file_write_ordered_ts(MPI_Fint *fh, CFI_cdesc_t *x, MPI_Fint *count,
+                                MPI_Fint *datatype, MPI_Fint *status,
+                                MPI_Fint *ierr);
+
+void ompi_file_write_ordered_end_ts(MPI_Fint *fh, CFI_cdesc_t *x,
+                                    MPI_Fint *status, MPI_Fint *ierr);
+
+void ompi_file_write_shared_ts(MPI_Fint *fh, CFI_cdesc_t *x, MPI_Fint *count,
+                               MPI_Fint *datatype, MPI_Fint *status,
+                               MPI_Fint *ierr);
+
 #endif /* OMPI_CDESC_BINDINGS_H */

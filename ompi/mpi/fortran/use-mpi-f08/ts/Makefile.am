@@ -49,6 +49,40 @@ libusempif08_ts_la_SOURCES = \
         exscan_ts.c \
         f_sync_reg_ts.c \
         fetch_and_op_ts.c \
+        file_iread_ts.c \
+        file_iread_at_ts.c \
+        file_iread_all_ts.c \
+        file_iread_at_all_ts.c \
+        file_iread_shared_ts.c \
+        file_iwrite_ts.c \
+        file_iwrite_at_ts.c \
+        file_iwrite_all_ts.c \
+        file_iwrite_at_all_ts.c \
+        file_iwrite_shared_ts.c \
+        file_read_all_begin_ts.c \
+        file_read_all_ts.c \
+        file_read_all_end_ts.c \
+        file_read_at_all_begin_ts.c \
+        file_read_at_all_ts.c \
+        file_read_at_all_end_ts.c \
+        file_read_at_ts.c \
+        file_read_ts.c \
+        file_read_ordered_begin_ts.c \
+        file_read_ordered_ts.c \
+        file_read_ordered_end_ts.c \
+        file_read_shared_ts.c \
+        file_write_all_begin_ts.c \
+        file_write_all_ts.c \
+        file_write_all_end_ts.c \
+        file_write_at_all_begin_ts.c \
+        file_write_at_all_ts.c \
+        file_write_at_all_end_ts.c \
+        file_write_at_ts.c \
+        file_write_ts.c \
+        file_write_ordered_begin_ts.c \
+        file_write_ordered_ts.c \
+        file_write_ordered_end_ts.c \
+        file_write_shared_ts.c \
         free_mem_ts.c \
         gather_ts.c \
         gatherv_ts.c \
