@@ -282,13 +282,6 @@ int pmix_server_spawn_fn(opal_process_name_t *requestor,
 
         /***   MAP-BY   ***/
         } else if (0 == strcmp(info->key, OPAL_PMIX_MAPBY)) {
-            if (ORTE_MAPPING_POLICY_IS_SET(jdata->map->mapping)) {
-                /* not allowed to provide multiple mapping policies */
-                orte_show_help("help-orte-rmaps-base.txt", "redefining-policy",
-                               true, "mapping", info->data.string,
-                               orte_rmaps_base_print_mapping(orte_rmaps_base.mapping));
-                return ORTE_ERR_BAD_PARAM;
-            }
             rc = orte_rmaps_base_set_mapping_policy(jdata, &jdata->map->mapping,
                                                     NULL, info->data.string);
             if (ORTE_SUCCESS != rc) {
@@ -297,13 +290,6 @@ int pmix_server_spawn_fn(opal_process_name_t *requestor,
 
         /***   RANK-BY   ***/
         } else if (0 == strcmp(info->key, OPAL_PMIX_RANKBY)) {
-            if (ORTE_RANKING_POLICY_IS_SET(jdata->map->ranking)) {
-                /* not allowed to provide multiple ranking policies */
-                orte_show_help("help-orte-rmaps-base.txt", "redefining-policy",
-                               true, "ranking", info->data.string,
-                               orte_rmaps_base_print_ranking(orte_rmaps_base.ranking));
-                return ORTE_ERR_BAD_PARAM;
-            }
             rc = orte_rmaps_base_set_ranking_policy(&jdata->map->ranking,
                                                     jdata->map->mapping,
                                                     info->data.string);
@@ -313,13 +299,6 @@ int pmix_server_spawn_fn(opal_process_name_t *requestor,
 
         /***   BIND-TO   ***/
         } else if (0 == strcmp(info->key, OPAL_PMIX_BINDTO)) {
-            if (OPAL_BINDING_POLICY_IS_SET(jdata->map->binding)) {
-                /* not allowed to provide multiple mapping policies */
-                orte_show_help("help-opal-hwloc-base.txt", "redefining-policy", true,
-                               info->data.string,
-                               opal_hwloc_base_print_binding(opal_hwloc_binding_policy));
-                return ORTE_ERR_BAD_PARAM;
-            }
             rc = opal_hwloc_base_set_binding_policy(&jdata->map->binding,
                                                     info->data.string);
             if (ORTE_SUCCESS != rc) {
