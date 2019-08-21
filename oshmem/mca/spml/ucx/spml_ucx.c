@@ -124,17 +124,15 @@ int mca_spml_ucx_del_procs(ompi_proc_t** procs, size_t nprocs)
         mca_spml_ucx_ctx_default.ucp_peers[i].ucp_conn = NULL;
     }
 
-    ret = opal_common_ucx_del_procs(del_procs, nprocs, oshmem_my_proc_id(),
-                                    mca_spml_ucx.num_disconnect,
-                                    mca_spml_ucx_ctx_default.ucp_worker);
-
+    ret = opal_common_ucx_del_procs_nofence(del_procs, nprocs, oshmem_my_proc_id(),
+                                            mca_spml_ucx.num_disconnect,
+                                            mca_spml_ucx_ctx_default.ucp_worker);
+    /* Do not barrier here - barrier is called in _shmem_finalize */
     free(del_procs);
     free(mca_spml_ucx.remote_addrs_tbl);
     free(mca_spml_ucx_ctx_default.ucp_peers);
 
     mca_spml_ucx_ctx_default.ucp_peers = NULL;
-
-    opal_common_ucx_mca_proc_added();
 
     return ret;
 }
@@ -323,6 +321,8 @@ int mca_spml_ucx_add_procs(ompi_proc_t** procs, size_t nprocs)
     free(wk_roffs);
 
     SPML_UCX_VERBOSE(50, "*** ADDED PROCS ***");
+
+    opal_common_ucx_mca_proc_added();
     return OSHMEM_SUCCESS;
 
 error2:
