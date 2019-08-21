@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2018 The University of Tennessee and The University
+ * Copyright (c) 2004-2019 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
@@ -215,19 +215,23 @@ union dt_elem_desc {
 
 
 /**
- * Create one or more elements depending on the value of _count. If the value
- * is too large for the type of elem.count then use oth the elem.count and
- * elem.blocklen to create it. If the number is prime then create a second
- * element to account for the difference.
+ * Create an element entry in the description. If the element is contiguous
+ * collapse everything into the blocklen.
  */
-#define CREATE_ELEM( _place, _type, _flags, _count, _disp, _extent )           \
+#define CREATE_ELEM(_place, _type, _flags, _blocklen, _count, _disp, _extent)  \
     do {                                                                       \
         (_place)->elem.common.flags = (_flags) | OPAL_DATATYPE_FLAG_DATA;      \
         (_place)->elem.common.type  = (_type);                                 \
-        (_place)->elem.disp         = (_disp);                                 \
-        (_place)->elem.extent       = (_extent);                               \
+        (_place)->elem.blocklen     = (_blocklen);                             \
         (_place)->elem.count        = (_count);                                \
-        (_place)->elem.blocklen     = 1;                                       \
+        (_place)->elem.extent       = (_extent);                               \
+        (_place)->elem.disp         = (_disp);                                 \
+        if( _extent == (ptrdiff_t)(_blocklen * opal_datatype_basicDatatypes[_type]->size) ) { \
+            /* collapse it into a single large blocklen */              \
+            (_place)->elem.blocklen *= _count;                          \
+            (_place)->elem.extent   *= _count;                          \
+            (_place)->elem.count     = 1;                               \
+        }                                                               \
     } while(0)
 /*
  * This array holds the descriptions desc.desc[2] of the predefined basic datatypes.
@@ -480,22 +484,23 @@ static inline int GET_FIRST_NON_LOOP( const union dt_elem_desc* _pElem )
 }
 
 #define UPDATE_INTERNAL_COUNTERS( DESCRIPTION, POSITION, ELEMENT, COUNTER ) \
-    do {                                                                \
-        (ELEMENT) = &((DESCRIPTION)[(POSITION)]);                       \
-        if( OPAL_DATATYPE_LOOP == (ELEMENT)->elem.common.type )         \
-            (COUNTER) = (ELEMENT)->loop.loops;                          \
-        else                                                            \
-            (COUNTER) = (ELEMENT)->elem.count;                          \
+    do {                                                                    \
+        (ELEMENT) = &((DESCRIPTION)[(POSITION)]);                           \
+        if( OPAL_DATATYPE_LOOP == (ELEMENT)->elem.common.type )             \
+            (COUNTER) = (ELEMENT)->loop.loops;                              \
+        else                                                                \
+            (COUNTER) = (ELEMENT)->elem.count * (ELEMENT)->elem.blocklen;   \
     } while (0)
 
 OPAL_DECLSPEC int opal_datatype_contain_basic_datatypes( const struct opal_datatype_t* pData, char* ptr, size_t length );
 OPAL_DECLSPEC int opal_datatype_dump_data_flags( unsigned short usflags, char* ptr, size_t length );
 OPAL_DECLSPEC int opal_datatype_dump_data_desc( union dt_elem_desc* pDesc, int nbElems, char* ptr, size_t length );
 
-#if OPAL_ENABLE_DEBUG
-extern bool opal_position_debug;
-extern bool opal_copy_debug;
-#endif  /* OPAL_ENABLE_DEBUG */
+extern bool opal_ddt_position_debug;
+extern bool opal_ddt_copy_debug;
+extern bool opal_ddt_unpack_debug;
+extern bool opal_ddt_pack_debug;
+extern bool opal_ddt_raw_debug;
 
 END_C_DECLS
 #endif  /* OPAL_DATATYPE_INTERNAL_H_HAS_BEEN_INCLUDED */

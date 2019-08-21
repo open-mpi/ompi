@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2013 The University of Tennessee and The University
+ * Copyright (c) 2004-2019 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
@@ -71,7 +71,7 @@ static int test_upper( unsigned int length )
         iov_count = 5;
         max_data = 0;
         opal_convertor_raw( pConv, iov, &iov_count, &max_data );
-	i -= max_data;
+        i -= max_data;
     }
     GET_TIME( end );
     total_time = ELAPSED_TIME( start, end );
@@ -85,12 +85,12 @@ static int test_upper( unsigned int length )
 }
 
 /**
- *  Conversion function. They deal with data-types in 3 ways, always making local copies.
+ * Conversion function. They deal with datatypes in 3 ways, always making local copies.
  * In order to allow performance testings, there are 3 functions:
  *  - one copying directly from one memory location to another one using the
- *    data-type copy function.
- *  - one which use a 2 convertors created with the same data-type
- *  - and one using 2 convertors created from different data-types.
+ *    datatype copy function.
+ *  - one which use a 2 convertors created with the same datatype
+ *  - and one using 2 convertors created from different datatypes.
  *
  */
 static int local_copy_ddt_raw( ompi_datatype_t* pdt, int count, int iov_num )
@@ -114,13 +114,13 @@ static int local_copy_ddt_raw( ompi_datatype_t* pdt, int count, int iov_num )
     GET_TIME( start );
     while( 0 == opal_convertor_raw(convertor, iov, &iov_count, &max_data) ) {
 #if 0
-	printf( "New raw extraction (iov_count = %d, max_data = %zu)\n",
-		iov_count, max_data );
-	for( i = 0; i < iov_count; i++ ) {
-	    printf( "\t{%p, %d}\n", iov[i].iov_base, iov[i].iov_len );
-	}
+        printf( "New raw extraction (iov_count = %d, max_data = %zu)\n",
+                iov_count, max_data );
+        for( i = 0; i < iov_count; i++ ) {
+            printf( "\t{%p, %d}\n", iov[i].iov_base, iov[i].iov_len );
+        }
 #endif
-	remaining_length -= max_data;
+        remaining_length -= max_data;
         iov_count = iov_num;
     }
     remaining_length -= max_data;
@@ -129,19 +129,23 @@ static int local_copy_ddt_raw( ompi_datatype_t* pdt, int count, int iov_num )
     printf( "raw extraction in %ld microsec\n", total_time );
     OBJ_RELEASE( convertor );
     if( remaining_length != 0 ) {
-	printf( "Not all raw description was been extracted (%lu bytes missing)\n",
-		(unsigned long) remaining_length );
+        printf( "Not all raw description was been extracted (%lu bytes missing)\n",
+                (unsigned long) remaining_length );
     }
     free(iov);
     return OMPI_SUCCESS;
 }
 
 /**
- * Main function. Call several tests and print-out the results. It try to stress the convertor
- * using difficult data-type constructions as well as strange segment sizes for the conversion.
- * Usually, it is able to detect most of the data-type and convertor problems. Any modifications
- * on the data-type engine should first pass all the tests from this file, before going into other
- * tests.
+ * Go over a set of datatypes and copy them using the raw functionality provided by the
+ * convertor. The goal of this test is to stress the convertor using several more or less
+ * difficult datatype, with a large set of segment sizes for the conversion. It can be used
+ * to highlight the raw capability of the convertor as well as detecting datatype convertor
+ * problems.
+ *
+ * This test is part of the testing infrastructure for the core datatype engine. As such any
+ * modifications on the datatype engine should first pass all the tests from this file,
+ * before going into other tests.
  */
 int main( int argc, char* argv[] )
 {
@@ -226,7 +230,7 @@ int main( int argc, char* argv[] )
     OBJ_RELEASE( pdt3 ); assert( pdt3 == NULL );
 
     printf( ">>--------------------------------------------<<\n" );
-    printf( " Contiguous data-type (MPI_DOUBLE)\n" );
+    printf( " Contiguous datatype (MPI_DOUBLE)\n" );
     pdt = MPI_DOUBLE;
     if( outputFlags & CHECK_PACK_UNPACK ) {
         local_copy_ddt_raw(pdt, 4500, iov_num);
@@ -235,37 +239,37 @@ int main( int argc, char* argv[] )
 
     printf( ">>--------------------------------------------<<\n" );
     if( outputFlags & CHECK_PACK_UNPACK ) {
-        printf( "Contiguous multiple data-type (4500*1)\n" );
+        printf( "Contiguous multiple datatype (4500*1)\n" );
         pdt = create_contiguous_type( MPI_DOUBLE, 4500 );
         local_copy_ddt_raw(pdt, 1, iov_num);
         OBJ_RELEASE( pdt ); assert( pdt == NULL );
-        printf( "Contiguous multiple data-type (450*10)\n" );
+        printf( "Contiguous multiple datatype (450*10)\n" );
         pdt = create_contiguous_type( MPI_DOUBLE, 450 );
         local_copy_ddt_raw(pdt, 10, iov_num);
         OBJ_RELEASE( pdt ); assert( pdt == NULL );
-        printf( "Contiguous multiple data-type (45*100)\n" );
+        printf( "Contiguous multiple datatype (45*100)\n" );
         pdt = create_contiguous_type( MPI_DOUBLE, 45 );
         local_copy_ddt_raw(pdt, 100, iov_num);
         OBJ_RELEASE( pdt ); assert( pdt == NULL );
-        printf( "Contiguous multiple data-type (100*45)\n" );
+        printf( "Contiguous multiple datatype (100*45)\n" );
         pdt = create_contiguous_type( MPI_DOUBLE, 100 );
         local_copy_ddt_raw(pdt, 45, iov_num);
         OBJ_RELEASE( pdt ); assert( pdt == NULL );
-        printf( "Contiguous multiple data-type (10*450)\n" );
+        printf( "Contiguous multiple datatype (10*450)\n" );
         pdt = create_contiguous_type( MPI_DOUBLE, 10 );
         local_copy_ddt_raw(pdt, 450, iov_num);
         OBJ_RELEASE( pdt ); assert( pdt == NULL );
-        printf( "Contiguous multiple data-type (1*4500)\n" );
+        printf( "Contiguous multiple datatype (1*4500)\n" );
         pdt = create_contiguous_type( MPI_DOUBLE, 1 );
         local_copy_ddt_raw(pdt, 4500, iov_num);
         OBJ_RELEASE( pdt ); assert( pdt == NULL );
     }
     printf( ">>--------------------------------------------<<\n" );
     printf( ">>--------------------------------------------<<\n" );
-    printf( "Vector data-type (450 times 10 double stride 11)\n" );
+    printf( "Vector datatype (450 times 10 double stride 11)\n" );
     pdt = create_vector_type( MPI_DOUBLE, 450, 10, 11 );
     if( outputFlags & DUMP_DATA_AFTER_COMMIT ) {
-	ompi_datatype_dump( pdt );
+        ompi_datatype_dump( pdt );
     }
     if( outputFlags & CHECK_PACK_UNPACK ) {
         local_copy_ddt_raw(pdt, 1, iov_num);
@@ -292,9 +296,9 @@ int main( int argc, char* argv[] )
     printf( ">>--------------------------------------------<<\n" );
     pdt = test_create_blacs_type();
     if( outputFlags & CHECK_PACK_UNPACK ) {
-	if( outputFlags & DUMP_DATA_AFTER_COMMIT ) {
-	    ompi_datatype_dump( pdt );
-	}
+        if( outputFlags & DUMP_DATA_AFTER_COMMIT ) {
+            ompi_datatype_dump( pdt );
+        }
         local_copy_ddt_raw(pdt, 4500, iov_num);
     }
     printf( ">>--------------------------------------------<<\n" );
