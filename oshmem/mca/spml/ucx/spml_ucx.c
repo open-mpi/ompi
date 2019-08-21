@@ -130,7 +130,7 @@ int mca_spml_ucx_del_procs(ompi_proc_t** procs, size_t nprocs)
     ret = opal_common_ucx_del_procs_nofence(del_procs, nprocs, oshmem_my_proc_id(),
                                             mca_spml_ucx.num_disconnect,
                                             mca_spml_ucx_ctx_default.ucp_worker);
-    /* Do not barrier here - barrier is called in _shmem_finalize */
+    /* No need to barrier here - barrier is called in _shmem_finalize */
     free(del_procs);
     free(mca_spml_ucx.remote_addrs_tbl);
     free(mca_spml_ucx_ctx_default.ucp_peers);
