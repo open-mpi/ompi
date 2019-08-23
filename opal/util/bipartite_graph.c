@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2014      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2017      Amazon.com, Inc. or its affiliates.  All Rights
+ * Copyright (c) 2017-2019 Amazon.com, Inc. or its affiliates.  All Rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -407,6 +407,21 @@ int opal_bp_graph_add_vertex(opal_bp_graph_t *g,
     if (NULL != index_out) {
         *index_out = v->v_index;
     }
+
+    return OPAL_SUCCESS;
+}
+
+int opal_bp_graph_get_vertex_data(opal_bp_graph_t *g,
+                                  int v_index,
+                                  void** v_data_out)
+{
+    opal_bp_graph_vertex_t* v;
+
+    v = V_ID_TO_PTR(g, v_index);
+    if (NULL == v) {
+        return OPAL_ERR_BAD_PARAM;
+    }
+    *v_data_out = v->v_data;
 
     return OPAL_SUCCESS;
 }
