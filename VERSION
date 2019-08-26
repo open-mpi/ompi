@@ -5,7 +5,9 @@
 #                         All rights reserved.
 # Copyright (c) 2017      Los Alamos National Security, LLC.  All rights
 #                         reserved.
-# Copyright (c) 2018      IBM Corporation.  All rights reserved.
+# Copyright (c) 2019      Triad National Security, LLC. All rights
+#                         reserved.
+# Copyright (c) 2018-2019 IBM Corporation.  All rights reserved.
 # Copyright (c) 2018      Research Organization for Information Science
 #                         and Technology (RIST).  All rights reserved.
 
@@ -28,7 +30,7 @@ release=2
 # requirement is that it must be entirely printable ASCII characters
 # and have no white space.
 
-greek=a1
+greek=rc1
 
 # If repo_rev is empty, then the repository version number will be
 # obtained during "make dist" via the "git describe --tags --always"
@@ -86,16 +88,16 @@ date="Unreleased developer copy"
 # Version numbers are described in the Libtool current:revision:age
 # format.
 
-libmpi_so_version=60:1:20
-libmpi_cxx_so_version=60:0:20
-libmpi_mpifh_so_version=60:1:20
+libmpi_so_version=60:2:20
+libmpi_cxx_so_version=60:1:20
+libmpi_mpifh_so_version=60:2:20
 libmpi_usempi_tkr_so_version=60:0:20
 libmpi_usempi_ignore_tkr_so_version=60:0:20
-libmpi_usempif08_so_version=60:0:20
-libopen_rte_so_version=60:1:20
-libopen_pal_so_version=60:1:20
+libmpi_usempif08_so_version=60:1:20
+libopen_rte_so_version=60:2:20
+libopen_pal_so_version=60:2:20
 libmpi_java_so_version=60:0:20
-liboshmem_so_version=61:0:21
+liboshmem_so_version=62:0:22
 libompitrace_so_version=60:0:20
 
 # "Common" components install standalone libraries that are run-time
@@ -104,7 +106,7 @@ libompitrace_so_version=60:0:20
 # components-don't-affect-the-build-system abstraction.
 
 # OMPI layer
-libmca_ompi_common_ompio_so_version=60:1:19
+libmca_ompi_common_ompio_so_version=60:2:19
 libmca_ompi_common_monitoring_so_version=60:0:10
 
 # ORTE layer
@@ -113,6 +115,6 @@ libmca_orte_common_alps_so_version=60:0:20
 # OPAL layer
 libmca_opal_common_cuda_so_version=60:0:20
 libmca_opal_common_sm_so_version=60:0:20
-libmca_opal_common_ucx_so_version=60:0:20
+libmca_opal_common_ucx_so_version=60:1:20
 libmca_opal_common_ugni_so_version=60:0:20
 libmca_opal_common_verbs_so_version=60:0:20
