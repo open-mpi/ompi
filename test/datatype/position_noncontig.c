@@ -181,9 +181,9 @@ unpack_segments( ompi_datatype_t* datatype, int count,
 }
 
 #if (OPAL_ENABLE_DEBUG == 1) && (OPAL_C_HAVE_VISIBILITY == 0)
-extern bool opal_unpack_debug;
-extern bool opal_pack_debug;
-extern bool opal_position_debug ;
+extern bool opal_ddt_unpack_debug;
+extern bool opal_ddt_pack_debug;
+extern bool opal_ddt_position_debug ;
 #endif  /* OPAL_ENABLE_DEBUG */
 
 int main( int argc, char* argv[] )
@@ -209,9 +209,9 @@ int main( int argc, char* argv[] )
     ompi_datatype_commit(&datatype);
 
 #if (OPAL_ENABLE_DEBUG == 1) && (OPAL_C_HAVE_VISIBILITY == 0)
-    opal_unpack_debug   = false;
-    opal_pack_debug     = false;
-    opal_position_debug = false;
+    opal_ddt_unpack_debug   = false;
+    opal_ddt_pack_debug     = false;
+    opal_ddt_position_debug = false;
 #endif  /* OPAL_ENABLE_DEBUG */
 
     create_segments( datatype, 1, fragment_size,

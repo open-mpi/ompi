@@ -200,9 +200,9 @@ static void dump_ldi( ddt_ldi_t* buffer, int start_pos, int end_pos )
 #endif
 
 #if (OPAL_ENABLE_DEBUG == 1) && (OPAL_C_HAVE_VISIBILITY == 0)
-extern bool opal_unpack_debug;
-extern bool opal_pack_debug;
-extern bool opal_position_debug ;
+extern bool opal_ddt_unpack_debug;
+extern bool opal_ddt_pack_debug;
+extern bool opal_ddt_position_debug ;
 #endif  /* OPAL_ENABLE_DEBUG */
 
 static char* bytes_dump( void* src, size_t cnt )
@@ -238,9 +238,9 @@ int main( int argc, char* argv[] )
     ompi_datatype_init();
 
 #if (OPAL_ENABLE_DEBUG == 1) && (OPAL_C_HAVE_VISIBILITY == 0)
-    opal_unpack_debug   = false;
-    opal_pack_debug     = false;
-    opal_position_debug = false;
+    opal_ddt_unpack_debug   = false;
+    opal_ddt_pack_debug     = false;
+    opal_ddt_position_debug = false;
 #endif  /* OPAL_ENABLE_DEBUG */
 
     create_segments( datatype, data_count, fragment_size,
