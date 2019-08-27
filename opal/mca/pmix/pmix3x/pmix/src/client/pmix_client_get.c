@@ -331,7 +331,6 @@ static void _getnb_cbfunc(struct pmix_peer_t *pr,
     }
 
     if (PMIX_SUCCESS != ret) {
-        PMIX_ERROR_LOG(ret);
         goto done;
     }
     if (PMIX_RANK_UNDEF == proc.rank) {
