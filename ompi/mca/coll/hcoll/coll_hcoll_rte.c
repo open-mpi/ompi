@@ -39,7 +39,7 @@
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/datatype/ompi_datatype_internal.h"
 #include "ompi/mca/pml/pml.h"
-
+#include "ompi/mca/coll/base/coll_base_util.h"
 
 #include "hcoll/api/hcoll_dte.h"
 #include "hcoll/api/hcoll_api.h"
@@ -151,25 +151,13 @@ void hcoll_rte_fns_setup(void)
 {
     init_module_fns();
     OBJ_CONSTRUCT(&mca_coll_hcoll_component.requests, opal_free_list_t);
-    opal_free_list_init(
-                &(mca_coll_hcoll_component.requests),
-                sizeof(ompi_request_t),
-                /* no special alignment needed */
-                8,
-                OBJ_CLASS(ompi_request_t),
-                /* no payload data */
-                0, 0,
-                /* NOTE: hack - need to parametrize this */
-                10,
-                -1,
-                10,
-                /* No Mpool or init function */
-                NULL,
-                0,
-                NULL,
-                NULL,
-                NULL
-                );
+    opal_free_list_init(&(mca_coll_hcoll_component.requests),
+                        sizeof(ompi_coll_base_nbc_request_t),
+                        opal_cache_line_size, OBJ_CLASS(ompi_coll_base_nbc_request_t),
+                        /* no payload data */
+                        0, 0, 10, -1, 10,
+                        /* No Mpool or init function */
+                        NULL, 0, NULL, NULL, NULL);
 }
 
 static int recv_nb(struct dte_data_representation_t data,
@@ -349,20 +337,23 @@ request_free(struct ompi_request_t **ompi_req)
 
 static void* get_coll_handle(void)
 {
-    ompi_request_t *ompi_req;
+    ompi_coll_base_nbc_request_t *ompi_req;
     opal_free_list_item_t *item;
     item = opal_free_list_wait (&(mca_coll_hcoll_component.requests));
     if (OPAL_UNLIKELY(NULL == item)) {
         HCOL_ERROR("Wait for free list failed.\n");
         return NULL;
     }
-    ompi_req = (ompi_request_t *)item;
-    OMPI_REQUEST_INIT(ompi_req,false);
-    ompi_req->req_complete_cb = NULL;
-    ompi_req->req_status.MPI_ERROR = MPI_SUCCESS;
-    ompi_req->req_state = OMPI_REQUEST_ACTIVE;
-    ompi_req->req_free = request_free;
-    ompi_req->req_type = OMPI_REQUEST_COLL;
+    ompi_req = (ompi_coll_base_nbc_request_t *)item;
+    OMPI_REQUEST_INIT(&ompi_req->super,false);
+    ompi_req->super.req_complete_cb      = NULL;
+    ompi_req->super.req_complete_cb_data = NULL;
+    ompi_req->super.req_status.MPI_ERROR = MPI_SUCCESS;
+    ompi_req->super.req_state            = OMPI_REQUEST_ACTIVE;
+    ompi_req->super.req_free             = request_free;
+    ompi_req->super.req_type             = OMPI_REQUEST_COLL;
+    ompi_req->data.objs.objs[0]          = NULL;
+    ompi_req->data.objs.objs[1]          = NULL;
     return (void *)ompi_req;
 }
 
