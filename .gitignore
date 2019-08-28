@@ -212,6 +212,10 @@ ompi/mpi/fortran/mpiext-use-mpi-f08/mpi-f08-ext-module.F90
 ompi/mpi/fortran/mpif-h/sizeof_f.f90
 ompi/mpi/fortran/mpif-h/profile/p*.c
 ompi/mpi/fortran/mpif-h/profile/psizeof_f.f90
+ompi/mpi/fortran/mpif-h/bcast_f.c
+ompi/mpi/fortran/mpif-h/gather_f.c
+ompi/mpi/fortran/mpif-h/ibcast_f.c
+ompi/mpi/fortran/mpif-h/igather_f.c
 
 ompi/mpi/fortran/use-mpi-f08/constants.h
 ompi/mpi/fortran/use-mpi-f08/sizeof_f08.f90
@@ -279,6 +283,8 @@ ompi/mpiext/pcollreq/c/profile/pscatter_init.c
 ompi/mpiext/pcollreq/c/profile/pscatterv_init.c
 ompi/mpiext/pcollreq/c/profile/ppcollreq_c.h
 
+ompi/mpiext/pcollreq/mpif-h/bcast_init_f.c
+ompi/mpiext/pcollreq/mpif-h/gather_init_f.c
 ompi/mpiext/pcollreq/mpif-h/profile/pallgather_init_f.c
 ompi/mpiext/pcollreq/mpif-h/profile/pallgatherv_init_f.c
 ompi/mpiext/pcollreq/mpif-h/profile/pallreduce_init_f.c

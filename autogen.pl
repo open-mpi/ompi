@@ -1312,6 +1312,7 @@ verbose "\n$step. Running template-generating scripts\n\n";
 
 my @scripts;
 push(@scripts, "ompi/include/mpif-values.pl");
+push(@scripts, "ompi/templates/generate_collectives.sh");
 
 foreach my $s (@scripts) {
     verbose "=== $s\n";
