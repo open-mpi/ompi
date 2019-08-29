@@ -343,11 +343,12 @@ static int setup_launch(int *argcptr, char ***argvptr,
     char *orted_cmd, *orted_prefix, *final_cmd;
     int orted_index;
     int rc;
-    int i, j;
+    int i, j, cnt;
     bool found;
     char *lib_base=NULL, *bin_base=NULL;
     char *opal_prefix = getenv("OPAL_PREFIX");
     char* full_orted_cmd = NULL;
+    char * rtmod;
 
     /* Figure out the basenames for the libdir and bindir.  This
        requires some explanation:
@@ -609,6 +610,18 @@ static int setup_launch(int *argcptr, char ***argvptr,
          (mca_plm_rsh_component.using_llspawn && mca_plm_rsh_component.daemonize_llspawn))) {
     }
 
+    if (!mca_plm_rsh_component.no_tree_spawn) {
+        // Remove problematic and/or conflicting command line arguments that
+        // should not be passed on to our children.
+        cnt = opal_argv_count(orted_cmd_line);
+        for (i=0; i < cnt; i+=3) {
+            if (0 == strcmp(orted_cmd_line[i+1], "routed")) {
+                opal_argv_delete(&cnt, &orted_cmd_line, i, 3);
+                break;
+            }
+        }
+    }
+
     /*
      * Add the basic arguments to the orted command line, including
      * all debug options
@@ -627,6 +640,16 @@ static int setup_launch(int *argcptr, char ***argvptr,
     if (!mca_plm_rsh_component.no_tree_spawn) {
         opal_argv_append(&argc, &argv, "--tree-spawn");
         orte_oob_base_get_addr(&param);
+
+        // When tree-spawn'ing we need to force the remote daemons to use
+        // the routing component that was used to setup the launch tree.
+        // Otherwise the orte_parent_uri will not match the orted they
+        // expect to find in the routing tree.
+        rtmod = orte_rml.get_routed(orte_coll_conduit);
+        opal_argv_append(&argc, &argv, "-"OPAL_MCA_CMD_LINE_ID);
+        opal_argv_append(&argc, &argv, "routed");
+        opal_argv_append(&argc, &argv, rtmod);
+
         opal_argv_append(&argc, &argv, "-"OPAL_MCA_CMD_LINE_ID);
         opal_argv_append(&argc, &argv, "orte_parent_uri");
         opal_argv_append(&argc, &argv, param);
@@ -1187,6 +1210,10 @@ static void launch_daemons(int fd, short args, void *cbdata)
         OBJ_CONSTRUCT(&coll, opal_list_t);
         rtmod = orte_rml.get_routed(orte_coll_conduit);
         orte_routed.get_routing_list(rtmod, &coll);
+
+        OPAL_OUTPUT_VERBOSE((1, orte_plm_base_framework.framework_output,
+                             "%s plm:rsh:launch Tree Launch using routed/%s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), rtmod));
     }
 
     /* setup the launch */
