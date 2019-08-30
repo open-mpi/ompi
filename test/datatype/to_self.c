@@ -24,6 +24,26 @@ extern void ompi_datatype_dump( MPI_Datatype ddt );
 #define MPI_DDT_DUMP(ddt)
 #endif  /* OPEN_MPI */
 
+static MPI_Datatype
+create_merged_contig_with_gaps(int count)  /* count of the basic datatype */
+{
+    int array_of_blocklengths[] = {1, 1, 1};
+    MPI_Aint array_of_displacements[] = {0, 8, 16};
+    MPI_Datatype array_of_types[] = {MPI_DOUBLE, MPI_LONG, MPI_CHAR};
+    MPI_Datatype type;
+
+    MPI_Type_create_struct(3, array_of_blocklengths,
+                           array_of_displacements, array_of_types,
+                           &type);
+    if( 1 < count ) {
+        MPI_Datatype temp = type;
+        MPI_Type_contiguous(count, temp, &type);
+    }
+    MPI_Type_commit(&type);
+    MPI_DDT_DUMP( type );
+    return type;
+}
+
 /* Create a non-contiguous resized datatype */
 struct structure {
     double not_transfered;
@@ -183,11 +203,12 @@ create_indexed_gap_optimized_ddt( void )
 /********************************************************************
  *******************************************************************/
 
-#define DO_CONTIG                       0x00000001
-#define DO_CONSTANT_GAP                 0x00000002
-#define DO_INDEXED_GAP                  0x00000004
-#define DO_OPTIMIZED_INDEXED_GAP        0x00000008
-#define DO_STRUCT_CONSTANT_GAP_RESIZED  0x00000010
+#define DO_CONTIG                         0x00000001
+#define DO_CONSTANT_GAP                   0x00000002
+#define DO_INDEXED_GAP                    0x00000004
+#define DO_OPTIMIZED_INDEXED_GAP          0x00000008
+#define DO_STRUCT_CONSTANT_GAP_RESIZED    0x00000010
+#define DO_STRUCT_MERGED_WITH_GAP_RESIZED 0x00000020
 
 #define DO_PACK                         0x01000000
 #define DO_UNPACK                       0x02000000
@@ -483,7 +504,7 @@ static int do_test_for_ddt( int doop, MPI_Datatype sddt, MPI_Datatype rddt, int 
 
 int main( int argc, char* argv[] )
 {
-    int run_tests = 0xffff;  /* do all datatype tests by default */
+    int run_tests = DO_STRUCT_MERGED_WITH_GAP_RESIZED;  /* do all datatype tests by default */
     int rank, size;
     MPI_Datatype ddt;
 
@@ -539,6 +560,14 @@ int main( int argc, char* argv[] )
     if( run_tests & DO_STRUCT_CONSTANT_GAP_RESIZED ) {
         printf( "\nstruct constant gap resized\n\n" );
         ddt = create_struct_constant_gap_resized_ddt( 0 /* unused */, 0 /* unused */, 0 /* unused */ );
+        MPI_DDT_DUMP( ddt );
+        do_test_for_ddt( run_tests, ddt, ddt, MAX_LENGTH );
+        MPI_Type_free( &ddt );
+    }
+
+    if( run_tests & DO_STRUCT_MERGED_WITH_GAP_RESIZED ) {
+        printf( "\nstruct constant gap resized\n\n" );
+        ddt = create_merged_contig_with_gaps( 1 );
         MPI_DDT_DUMP( ddt );
         do_test_for_ddt( run_tests, ddt, ddt, MAX_LENGTH );
         MPI_Type_free( &ddt );
