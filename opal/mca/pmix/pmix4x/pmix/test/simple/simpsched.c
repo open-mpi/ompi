@@ -133,60 +133,57 @@ int main(int argc, char **argv)
 
     /* register a fabric */
     rc = PMIx_server_register_fabric(&myfabric, NULL, 0);
-    if (PMIX_SUCCESS != rc) {
-        fprintf(stderr, "Fabric registration failed with error: %s\n", PMIx_Error_string(rc));
-        goto cleanup;
-    }
+    if (PMIX_SUCCESS == rc) {
+        fprintf(stderr, "Number of fabric vertices: %u\n", myfabric.nverts);
 
-    fprintf(stderr, "Number of fabric vertices: %u\n", myfabric.nverts);
-
-    for (n32=0; n32 < myfabric.nverts; n32++) {
-        fprintf(stderr, "%u:", n32);
-        for (m32=0; m32 < myfabric.nverts; m32++) {
-            fprintf(stderr, "   %u", myfabric.commcost[n32][m32]);
+        for (n32=0; n32 < myfabric.nverts; n32++) {
+            fprintf(stderr, "%u:", n32);
+            for (m32=0; m32 < myfabric.nverts; m32++) {
+                fprintf(stderr, "   %u", myfabric.commcost[n32][m32]);
+            }
+            fprintf(stderr, "\n");
         }
-        fprintf(stderr, "\n");
-    }
 
-    rc = PMIx_server_get_vertex_info(&myfabric, myfabric.nverts/2, &val, &nodename);
-    if (PMIX_SUCCESS != rc) {
-        fprintf(stderr, "Fabric get vertex info failed with error: %s\n", PMIx_Error_string(rc));
-        goto cleanup;
-    }
-    if (PMIX_DATA_ARRAY != val.type) {
-        fprintf(stderr, "Fabric get vertex info returned wrong type: %s\n", PMIx_Data_type_string(val.type));
-        goto cleanup;
-    }
-    fprintf(stderr, "Vertex info for index %u on node %s:\n", myfabric.nverts/2, nodename);
-    info = (pmix_info_t*)val.data.darray->array;
-    for (n=0; n < val.data.darray->size; n++) {
-        fprintf(stderr, "\t%s:\t%s\n", info[n].key, info[n].value.data.string);
-    }
-    PMIX_VALUE_DESTRUCT(&val);
-    free(nodename);
+        rc = PMIx_server_get_vertex_info(&myfabric, myfabric.nverts/2, &val, &nodename);
+        if (PMIX_SUCCESS != rc) {
+            fprintf(stderr, "Fabric get vertex info failed with error: %s\n", PMIx_Error_string(rc));
+            goto cleanup;
+        }
+        if (PMIX_DATA_ARRAY != val.type) {
+            fprintf(stderr, "Fabric get vertex info returned wrong type: %s\n", PMIx_Data_type_string(val.type));
+            goto cleanup;
+        }
+        fprintf(stderr, "Vertex info for index %u on node %s:\n", myfabric.nverts/2, nodename);
+        info = (pmix_info_t*)val.data.darray->array;
+        for (n=0; n < val.data.darray->size; n++) {
+            fprintf(stderr, "\t%s:\t%s\n", info[n].key, info[n].value.data.string);
+        }
+        PMIX_VALUE_DESTRUCT(&val);
+        free(nodename);
 
-    PMIX_INFO_CREATE(info, 1);
-    PMIX_INFO_LOAD(&info[0], PMIX_NETWORK_NIC, "test002:nic002", PMIX_STRING);
-    val.type = PMIX_DATA_ARRAY;
-    PMIX_DATA_ARRAY_CREATE(val.data.darray, 1, PMIX_INFO);
-    val.data.darray->array = info;
-    rc = PMIx_server_get_index(&myfabric, &val, &n32);
-    if (PMIX_SUCCESS != rc) {
-        fprintf(stderr, "Fabric get index failed with error: %s\n", PMIx_Error_string(rc));
-        goto cleanup;
+        PMIX_INFO_CREATE(info, 1);
+        PMIX_INFO_LOAD(&info[0], PMIX_NETWORK_NIC, "test002:nic002", PMIX_STRING);
+        val.type = PMIX_DATA_ARRAY;
+        PMIX_DATA_ARRAY_CREATE(val.data.darray, 1, PMIX_INFO);
+        val.data.darray->array = info;
+        rc = PMIx_server_get_index(&myfabric, &val, &n32);
+        if (PMIX_SUCCESS != rc) {
+            fprintf(stderr, "Fabric get index failed with error: %s\n", PMIx_Error_string(rc));
+            goto cleanup;
+        }
+        fprintf(stderr, "Index %u for NIC %s\n", n32, "test002:nic002");
     }
-    fprintf(stderr, "Index %u for NIC %s\n", n32, "test002:nic002");
 
     /* setup an application */
     PMIX_INFO_CREATE(iptr, 4);
     hosts = "test000,test001,test002";
     PMIx_generate_regex(hosts, &regex);
-    PMIX_INFO_LOAD(&iptr[0], PMIX_NODE_MAP, regex, PMIX_STRING);
+    PMIX_INFO_LOAD(&iptr[0], PMIX_NODE_MAP, regex, PMIX_REGEX);
     free(regex);
 
     procs = "0,1,2;3,4,5;6,7";
     PMIx_generate_ppn(procs, &ppn);
-    PMIX_INFO_LOAD(&iptr[1], PMIX_PROC_MAP, ppn, PMIX_STRING);
+    PMIX_INFO_LOAD(&iptr[1], PMIX_PROC_MAP, ppn, PMIX_REGEX);
     free(ppn);
 
     PMIX_LOAD_KEY(iptr[2].key, PMIX_ALLOC_NETWORK);

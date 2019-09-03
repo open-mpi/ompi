@@ -148,9 +148,7 @@ static void set_namespace(int local_size, int univ_size,
     free(ranks);
 
     PMIx_generate_regex(NODE_NAME, &regex);
-    pmix_strncpy(info[4].key, PMIX_NODE_MAP, PMIX_MAX_KEYLEN);
-    info[4].value.type = PMIX_STRING;
-    info[4].value.data.string = strdup(regex);
+    PMIX_INFO_LOAD(&info[4], PMIX_NODE_MAP, regex, PMIX_REGEX);
 
     /* generate the global proc map */
     fill_seq_ranks_array(univ_size, 0, &ranks);
@@ -159,9 +157,7 @@ static void set_namespace(int local_size, int univ_size,
     }
     PMIx_generate_ppn(ranks, &ppn);
     free(ranks);
-    pmix_strncpy(info[5].key, PMIX_PROC_MAP, PMIX_MAX_KEYLEN);
-    info[5].value.type = PMIX_STRING;
-    info[5].value.data.string = strdup(ppn);
+    PMIX_INFO_LOAD(&info[5], PMIX_PROC_MAP, ppn, PMIX_REGEX);
 
     pmix_strncpy(info[6].key, PMIX_JOB_SIZE, PMIX_MAX_KEYLEN);
     info[6].value.type = PMIX_UINT32;

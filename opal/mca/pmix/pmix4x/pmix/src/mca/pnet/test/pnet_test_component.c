@@ -65,8 +65,7 @@ pmix_pnet_test_component_t mca_pnet_test_component = {
             PMIX_MCA_BASE_METADATA_PARAM_CHECKPOINT
         }
     },
-    .cfg_file = NULL,
-    .nverts = NULL,
+    .planes = NULL,
     .costmatrix = NULL
 };
 
@@ -74,19 +73,14 @@ static pmix_status_t component_register(void)
 {
     pmix_mca_base_component_t *component = &mca_pnet_test_component.super.base;
 
-    (void)pmix_mca_base_component_var_register(component, "cfg_file",
-                                               "Comma-delimited list of files containing descriptions of the test fabric, one plane per file",
+    (void)pmix_mca_base_component_var_register(component, "planes",
+                                               "Comma-delimited list describing each fabric plane in format\n"
+                                               "plane:<(d)ense or (s)parse>:#switches:#ports(defaults to 3+fit) - examples:\n"
+                                               "\tplane:d:3:4,plane:s:2,plane:3",
                                                PMIX_MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
                                                PMIX_INFO_LVL_2,
                                                PMIX_MCA_BASE_VAR_SCOPE_READONLY,
-                                               &mca_pnet_test_component.cfg_file);
-
-    (void)pmix_mca_base_component_var_register(component, "nverts",
-                                               "Comma-delimited list of number of vertices in each fabric plane (if no cfg file given)",
-                                               PMIX_MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
-                                               PMIX_INFO_LVL_2,
-                                               PMIX_MCA_BASE_VAR_SCOPE_READONLY,
-                                               &mca_pnet_test_component.nverts);
+                                               &mca_pnet_test_component.planes);
     return PMIX_SUCCESS;
 }
 
@@ -95,6 +89,12 @@ static pmix_status_t component_open(void)
     int index;
     const pmix_mca_base_var_storage_t *value=NULL;
 
+    if (NULL == mca_pnet_test_component.planes) {
+        /* nothing we can do without a description
+         * of the fabric topology */
+        return PMIX_ERROR;
+    }
+
     /* we only allow ourselves to be considered IF the user
      * specifically requested so */
     if (0 > (index = pmix_mca_base_var_find("pmix", "pnet", NULL, NULL))) {
@@ -102,7 +102,7 @@ static pmix_status_t component_open(void)
     }
     pmix_mca_base_var_get_value(index, &value, NULL, NULL);
     if (NULL != value && NULL != value->stringval && '\0' != value->stringval[0]) {
-        if (NULL != strstr(value->stringval, "test")) {
+        if (NULL != strcasestr(value->stringval, "test")) {
             return PMIX_SUCCESS;
         }
     }

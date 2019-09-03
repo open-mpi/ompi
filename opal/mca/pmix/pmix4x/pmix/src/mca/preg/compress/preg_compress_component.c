@@ -29,9 +29,9 @@
 #include <src/include/pmix_config.h>
 #include "pmix_common.h"
 
-
+#include "src/mca/pcompress/pcompress.h"
 #include "src/mca/preg/preg.h"
-#include "preg_native.h"
+#include "preg_compress.h"
 
 static pmix_status_t component_open(void);
 static pmix_status_t component_close(void);
@@ -41,11 +41,11 @@ static pmix_status_t component_query(pmix_mca_base_module_t **module, int *prior
  * Instantiate the public struct with all of our public information
  * and pointers to our public functions in it
  */
-pmix_mca_base_component_t mca_preg_native_component = {
+pmix_mca_base_component_t mca_preg_compress_component = {
     PMIX_PREG_BASE_VERSION_1_0_0,
 
     /* Component name and version */
-    .pmix_mca_component_name = "native",
+    .pmix_mca_component_name = "compress",
     PMIX_MCA_BASE_MAKE_VERSION(component,
                                PMIX_MAJOR_VERSION,
                                PMIX_MINOR_VERSION,
@@ -66,8 +66,12 @@ static int component_open(void)
 
 static int component_query(pmix_mca_base_module_t **module, int *priority)
 {
-    *priority = 50;
-    *module = (pmix_mca_base_module_t *)&pmix_preg_native_module;
+    if (NULL == pmix_compress.compress_string) {
+        return PMIX_ERROR;
+    }
+    /* we should always be first in priority */
+    *priority = 100;
+    *module = (pmix_mca_base_module_t *)&pmix_preg_compress_module;
     return PMIX_SUCCESS;
 }
 

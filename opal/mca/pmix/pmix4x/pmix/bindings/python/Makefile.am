@@ -21,7 +21,7 @@
 # $HEADER$
 #
 
-helpers = setup.py pmix.pyx
+helpers = setup.py pmix.pyx pmix.pxi construct.py
 
 if WANT_PYTHON_BINDINGS
 

@@ -201,16 +201,13 @@ pmix_status_t pmix_server_get(pmix_buffer_t *buf,
 
     /* check if the nspace of the requestor is different from
      * the nspace of the target process */
-    if (!PMIX_CHECK_NSPACE(nspace, cd->peer->info->pname.nspace)) {
-        diffnspace = true;
-    }
+    diffnspace = !PMIX_CHECK_NSPACE(nspace, cd->peer->info->pname.nspace);
 
     pmix_output_verbose(2, pmix_server_globals.get_output,
-                        "%s:%d EXECUTE GET FOR %s:%d ON BEHALF OF %s:%d",
-                        pmix_globals.myid.nspace,
-                        pmix_globals.myid.rank, nspace, rank,
-                        cd->peer->info->pname.nspace,
-                        cd->peer->info->pname.rank);
+                        "%s EXECUTE GET FOR %s:%d ON BEHALF OF %s",
+                        PMIX_NAME_PRINT(&pmix_globals.myid),
+                        nspace, rank,
+                        PMIX_PNAME_PRINT(&cd->peer->info->pname));
 
     /* This call flows upward from a local client If we don't
      * know about this nspace, then it cannot refer to the
@@ -237,6 +234,9 @@ pmix_status_t pmix_server_get(pmix_buffer_t *buf,
         if (localonly) {
             /* the user doesn't want us to look for the info,
              * so we simply return at this point */
+            pmix_output_verbose(5, pmix_server_globals.get_output,
+                                "%s UNKNOWN NSPACE: LOCAL ONLY - NOT FOUND",
+                                PMIX_NAME_PRINT(&pmix_globals.myid));
             return PMIX_ERR_NOT_FOUND;
         }
         /* this is for an nspace we don't know about yet, so
@@ -254,6 +254,9 @@ pmix_status_t pmix_server_get(pmix_buffer_t *buf,
             return rc;
         }
         if (PMIX_SUCCESS == rc) {
+            pmix_output_verbose(5, pmix_server_globals.get_output,
+                                "%s UNKNOWN NSPACE: DUPLICATE REQUEST - WAITING",
+                                PMIX_NAME_PRINT(&pmix_globals.myid));
             /* if they specified a timeout for this specific
              * request, set it up now */
             if (0 < tv.tv_sec) {
@@ -275,6 +278,9 @@ pmix_status_t pmix_server_get(pmix_buffer_t *buf,
          * up on its own, but at worst the direct modex
          * will simply overwrite the info later */
         if (NULL != pmix_host_server.direct_modex) {
+            pmix_output_verbose(5, pmix_server_globals.get_output,
+                                "%s UNKNOWN NSPACE: REQUEST PASSED TO HOST",
+                                PMIX_NAME_PRINT(&pmix_globals.myid));
             rc = pmix_host_server.direct_modex(&lcd->proc, info, ninfo, dmdx_cbfunc, lcd);
             if (PMIX_SUCCESS != rc) {
                 PMIX_INFO_FREE(info, ninfo);
@@ -291,7 +297,10 @@ pmix_status_t pmix_server_get(pmix_buffer_t *buf,
                 req->event_active = true;
             }
         } else {
-        /* if we don't have direct modex feature, just respond with "not found" */
+            /* if we don't have direct modex feature, just respond with "not found" */
+            pmix_output_verbose(5, pmix_server_globals.get_output,
+                                "%s UNKNOWN NSPACE: NO DMODEX AVAILABLE - NOT FOUND",
+                                PMIX_NAME_PRINT(&pmix_globals.myid));
             PMIX_INFO_FREE(info, ninfo);
             pmix_list_remove_item(&pmix_server_globals.local_reqs, &lcd->super);
             PMIX_RELEASE(lcd);
@@ -305,6 +314,10 @@ pmix_status_t pmix_server_get(pmix_buffer_t *buf,
      * if the rank is wildcard, or the nspace is different, then
      * they are asking for the job-level info for this nspace - provide it */
     if (PMIX_RANK_WILDCARD == rank || diffnspace) {
+        pmix_output_verbose(5, pmix_server_globals.get_output,
+                            "%s LOOKING FOR %s",
+                            PMIX_NAME_PRINT(&pmix_globals.myid),
+                            diffnspace ? "WILDCARD RANK" : "DIFF NSPACE");
         /* see if we have the job-level info - we won't have it
          * if we have no local procs and haven't already asked
          * for it, so there is no guarantee we have it */
@@ -333,6 +346,10 @@ pmix_status_t pmix_server_get(pmix_buffer_t *buf,
          * simply be added to the cb.kvs list */
         if (PMIX_RANK_WILDCARD != rank) {
             proc.rank = rank;
+            pmix_output_verbose(5, pmix_server_globals.get_output,
+                                "%s GETTING JOB-DATA FOR %s",
+                                PMIX_NAME_PRINT(&pmix_globals.myid),
+                                PMIX_NAME_PRINT(&proc));
             PMIX_GDS_FETCH_KV(rc, pmix_globals.mypeer, &cb);
             if (PMIX_SUCCESS != rc) {
                 PMIX_DESTRUCT(&cb);

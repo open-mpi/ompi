@@ -30,6 +30,7 @@
 #include "src/util/argv.h"
 #include "src/util/error.h"
 #include "src/include/pmix_globals.h"
+#include "src/mca/preg/preg.h"
 
 #include "src/mca/bfrops/base/base.h"
 
@@ -219,7 +220,13 @@ void pmix_bfrops_base_value_load(pmix_value_t *v, const void *data,
                 PMIX_ERROR_LOG(rc);
             }
             break;
-
+        case PMIX_REGEX:
+            /* load it into the byte object */
+            rc = pmix_preg.copy(&v->data.bo.bytes, &v->data.bo.size, (char*)data);
+            if (PMIX_SUCCESS != rc) {
+                PMIX_ERROR_LOG(rc);
+            }
+            break;
         default:
             /* silence warnings */
             break;
@@ -399,6 +406,15 @@ pmix_status_t pmix_bfrops_base_value_unload(pmix_value_t *kv,
             regattr->ninfo = r->ninfo;
             regattr->description = pmix_argv_copy(r->description);
             *data = regattr;
+            break;
+        case PMIX_REGEX:
+            if (NULL != kv->data.bo.bytes && 0 < kv->data.bo.size) {
+                *data = kv->data.bo.bytes;
+                *sz = kv->data.bo.size;
+            } else {
+                *data = NULL;
+                *sz = 0;
+            }
             break;
         default:
             /* silence warnings */
@@ -667,6 +683,7 @@ pmix_status_t pmix_bfrops_base_value_xfer(pmix_value_t *p,
         break;
     case PMIX_BYTE_OBJECT:
     case PMIX_COMPRESSED_STRING:
+    case PMIX_REGEX:
         memset(&p->data.bo, 0, sizeof(pmix_byte_object_t));
         if (NULL != src->data.bo.bytes && 0 < src->data.bo.size) {
             p->data.bo.bytes = malloc(src->data.bo.size);

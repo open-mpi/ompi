@@ -74,11 +74,6 @@ PMIX_EXPORT extern pmix_compress_base_t pmix_compress_base;
     PMIX_EXPORT extern pmix_mca_base_framework_t pmix_pcompress_base_framework;
     PMIX_EXPORT extern pmix_compress_base_module_t pmix_compress;
 
-    /**
-     *
-     */
-    PMIX_EXPORT int pmix_compress_base_tar_create(char ** target);
-    PMIX_EXPORT int pmix_compress_base_tar_extract(char ** target);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

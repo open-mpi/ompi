@@ -35,10 +35,11 @@
 #include "src/util/error.h"
 #include "src/util/output.h"
 #include "src/class/pmix_list.h"
+#include "src/mca/bfrops/base/base.h"
 #include "src/mca/gds/gds.h"
 #include "src/client/pmix_client_ops.h"
 
-#include "src/mca/preg/preg.h"
+#include "src/mca/preg/base/base.h"
 #include "preg_native.h"
 
 static pmix_status_t generate_node_regex(const char *input,
@@ -49,11 +50,9 @@ static pmix_status_t parse_nodes(const char *regexp,
                                  char ***names);
 static pmix_status_t parse_procs(const char *regexp,
                                  char ***procs);
-static pmix_status_t resolve_peers(const char *nodename,
-                                   const char *nspace,
-                                   pmix_proc_t **procs, size_t *nprocs);
-static pmix_status_t resolve_nodes(const char *nspace,
-                                   char **nodelist);
+static pmix_status_t copy(char **dest, size_t *len, const char *input);
+static pmix_status_t pack(pmix_buffer_t *buffer, const char *input);
+static pmix_status_t unpack(pmix_buffer_t *buffer, char **regex);
 
 pmix_preg_module_t pmix_preg_native_module = {
     .name = "pmix",
@@ -61,8 +60,11 @@ pmix_preg_module_t pmix_preg_native_module = {
     .generate_ppn = generate_ppn,
     .parse_nodes = parse_nodes,
     .parse_procs = parse_procs,
-    .resolve_peers = resolve_peers,
-    .resolve_nodes = resolve_nodes
+    .resolve_peers = pmix_preg_base_std_resolve_peers,
+    .resolve_nodes = pmix_preg_base_std_resolve_nodes,
+    .copy = copy,
+    .pack = pack,
+    .unpack = unpack
 };
 
 static pmix_status_t regex_parse_value_ranges(char *base, char *ranges,
@@ -517,159 +519,60 @@ static pmix_status_t parse_procs(const char *regexp,
     return rc;
 }
 
-static pmix_status_t resolve_peers(const char *nodename,
-                                   const char *nspace,
-                                   pmix_proc_t **procs, size_t *nprocs)
+static pmix_status_t copy(char **dest, size_t *len, const char *input)
 {
-    pmix_cb_t cb;
-    pmix_status_t rc;
-    pmix_kval_t *kv;
-    pmix_proc_t proc;
-    char **ptr;
-    pmix_info_t *info;
-    pmix_proc_t *p=NULL;
-    size_t ninfo, np=0, n, j;
-
-    PMIX_CONSTRUCT(&cb, pmix_cb_t);
-
-    cb.key = strdup(nodename);
-    /* this data isn't going anywhere, so we don't require a copy */
-    cb.copy = false;
-    /* scope is irrelevant as the info we seek must be local */
-    cb.scope = PMIX_SCOPE_UNDEF;
-    /* let the proc point to the nspace */
-    pmix_strncpy(proc.nspace, nspace, PMIX_MAX_NSLEN);
-    proc.rank = PMIX_RANK_WILDCARD;
-    cb.proc = &proc;
-
-    PMIX_GDS_FETCH_KV(rc, pmix_client_globals.myserver, &cb);
-    if (PMIX_SUCCESS != rc) {
-        if (PMIX_ERR_INVALID_NAMESPACE != rc) {
-            PMIX_ERROR_LOG(rc);
-        }
-        goto complete;
-    }
-    /* should just be the one value on the list */
-    if (1 != pmix_list_get_size(&cb.kvs)) {
-        PMIX_ERROR_LOG(PMIX_ERR_BAD_PARAM);
-        rc = PMIX_ERR_BAD_PARAM;
-        goto complete;
-    }
-    kv = (pmix_kval_t*)pmix_list_get_first(&cb.kvs);
-    /* the hostname used as a key with wildcard rank will return
-     * a pmix_data_array_t of pmix_info_t structs */
-    if (NULL == kv->value ||
-        PMIX_DATA_ARRAY != kv->value->type ||
-        NULL == kv->value->data.darray ||
-        PMIX_INFO != kv->value->data.darray->type) {
-        PMIX_ERROR_LOG(PMIX_ERR_DATA_VALUE_NOT_FOUND);
-        rc = PMIX_ERR_DATA_VALUE_NOT_FOUND;
-        goto complete;
-    }
-    info = (pmix_info_t*)kv->value->data.darray->array;
-    ninfo = kv->value->data.darray->size;
-    /* find the PMIX_LOCAL_PEERS key */
-    for (n=0; n < ninfo; n++) {
-        if (0 == strncmp(info[n].key, PMIX_LOCAL_PEERS, PMIX_MAX_KEYLEN)) {
-            /* split the string */
-            ptr = pmix_argv_split(info[n].value.data.string, ',');
-            np = pmix_argv_count(ptr);
-            PMIX_PROC_CREATE(p, np);
-            if (NULL == p) {
-                rc = PMIX_ERR_NOMEM;
-                pmix_argv_free(ptr);
-                goto complete;
-            }
-            for (j=0; j < np; j++) {
-                pmix_strncpy(p[j].nspace, nspace, PMIX_MAX_NSLEN);
-                p[j].rank = strtoul(ptr[j], NULL, 10);
-            }
-            rc = PMIX_SUCCESS;
-            pmix_argv_free(ptr);
-            break;
-        }
+    if (0 != strncmp(input, "pmix", 4)) {
+        return PMIX_ERR_TAKE_NEXT_OPTION;
     }
 
-  complete:
-    if (NULL != cb.info) {
-        PMIX_INFO_FREE(cb.info, cb.ninfo);
-    }
-    if (NULL != cb.key) {
-        free(cb.key);
-        cb.key = NULL;
-    }
-    PMIX_DESTRUCT(&cb);
-    *procs = p;
-    *nprocs = np;
-
-    return rc;
+    *dest = strdup(input);
+    *len = strlen(input);
+    return PMIX_SUCCESS;
 }
 
-static pmix_status_t resolve_nodes(const char *nspace,
-                                   char **nodelist)
+static pmix_status_t pack(pmix_buffer_t *buffer, const char *input)
 {
-    pmix_cb_t cb;
-    pmix_status_t rc;
-    pmix_kval_t *kv;
-    pmix_proc_t proc;
+    size_t slen;
+    char *ptr;
 
-    PMIX_CONSTRUCT(&cb, pmix_cb_t);
+    if (0 != strncmp(input, "pmix", 4)) {
+        return PMIX_ERR_TAKE_NEXT_OPTION;
+    }
 
-    /* setup default answer */
-    *nodelist = NULL;
+    /* extract the size */
+    slen = strlen(input) + 1;  // retain the NULL terminator
 
-    /* create a pmix_info_t so we can pass the nspace
-    * into the fetch as a qualifier */
-    PMIX_INFO_CREATE(cb.info, 1);
-    if (NULL == cb.info) {
-        PMIX_DESTRUCT(&cb);
+    /* ensure the buffer has enough space */
+    ptr = pmix_bfrop_buffer_extend(buffer, slen);
+    if (NULL == ptr) {
         return PMIX_ERR_NOMEM;
     }
-    cb.ninfo = 1;
-    PMIX_INFO_LOAD(&cb.info[0], PMIX_NSPACE, nspace, PMIX_STRING);
 
-    /* tell the GDS what we want */
-    cb.key = PMIX_NODE_MAP;
-    /* this data isn't going anywhere, so we don't require a copy */
-    cb.copy = false;
-    /* scope is irrelevant as the info we seek must be local */
-    cb.scope = PMIX_SCOPE_UNDEF;
-    /* put the nspace in the proc field */
-    pmix_strncpy(proc.nspace, nspace, PMIX_MAX_NSLEN);
-    /* the info will be associated with PMIX_RANK_WILDCARD */
-    proc.rank = PMIX_RANK_WILDCARD;
-    cb.proc = &proc;
+    /* xfer the data */
+    memcpy(ptr, input, slen);
+    buffer->bytes_used += slen;
+    buffer->pack_ptr += slen;
 
-    PMIX_GDS_FETCH_KV(rc, pmix_client_globals.myserver, &cb);
-    if (PMIX_SUCCESS != rc) {
-        PMIX_ERROR_LOG(rc);
-        goto complete;
-    }
-    /* should just be the one value on the list */
-    if (1 != pmix_list_get_size(&cb.kvs)) {
-        PMIX_ERROR_LOG(PMIX_ERR_BAD_PARAM);
-        rc = PMIX_ERR_BAD_PARAM;
-        goto complete;
-    }
-    kv = (pmix_kval_t*)pmix_list_get_first(&cb.kvs);
-    /* the PMIX_NODE_MAP key is supposed to return
-    * a regex string  - check that it did */
-    if (NULL == kv->value ||
-        PMIX_STRING != kv->value->type) {
-        PMIX_ERROR_LOG(PMIX_ERR_DATA_VALUE_NOT_FOUND);
-        rc = PMIX_ERR_DATA_VALUE_NOT_FOUND;
-        goto complete;
-    }
-    /* return the string */
-    if (NULL != kv->value->data.string) {
-        *nodelist = strdup(kv->value->data.string);
+    return PMIX_SUCCESS;
+}
+
+static pmix_status_t unpack(pmix_buffer_t *buffer, char **regex)
+{
+    char *ptr;
+
+    ptr = buffer->unpack_ptr;
+
+    if (0 != strncmp(ptr, "pmix", 4)) {
+        return PMIX_ERR_TAKE_NEXT_OPTION;
     }
 
-  complete:
-    if (NULL != cb.info) {
-      PMIX_INFO_FREE(cb.info, cb.ninfo);
+    *regex = strdup(ptr);
+    buffer->unpack_ptr += strlen(ptr) + 1;
+
+    if (NULL == *regex) {
+        return PMIX_ERR_NOMEM;
     }
-    return rc;
+    return PMIX_SUCCESS;
 }
 
 static pmix_status_t pmix_regex_extract_nodes(char *regexp, char ***names)

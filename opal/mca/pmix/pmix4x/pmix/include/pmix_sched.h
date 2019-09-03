@@ -64,6 +64,8 @@ extern "C" {
 typedef struct pmix_fabric_s {
     /* user-supplied name for this fabric */
     char *name;
+    /* a PMIx-supplied index identifying this registration object */
+    size_t index;
     /* communication cost array - the number of vertices
      * (nverts) equals the number of interfaces in the
      * fabric. This equates to the number of columns & rows

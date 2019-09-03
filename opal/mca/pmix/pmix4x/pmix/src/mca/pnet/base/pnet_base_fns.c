@@ -28,7 +28,7 @@
 #include "src/mca/pnet/base/base.h"
 
 
-static pmix_status_t process_maps(char *nspace, char *nregex, char *pregex);
+static pmix_status_t process_maps(char *nspace, char **nodes, char **procs);
 
 /* NOTE: a tool (e.g., prun) may call this function to
  * harvest local envars for inclusion in a call to
@@ -42,7 +42,7 @@ pmix_status_t pmix_pnet_base_allocate(char *nspace,
     pmix_status_t rc = PMIX_SUCCESS;
     pmix_namespace_t *nptr, *ns;
     size_t n;
-    char *nregex, *pregex;
+    char **nodes, **procs;
     char *params[2] = {"PMIX_MCA_", NULL};
 
     if (!pmix_pnet_globals.initialized) {
@@ -78,16 +78,22 @@ pmix_status_t pmix_pnet_base_allocate(char *nspace,
 
         if (NULL != info) {
             /* check for description of the node and proc maps */
-            nregex = NULL;
-            pregex = NULL;
+            nodes = NULL;
+            procs = NULL;
             for (n=0; n < ninfo; n++) {
-                if (0 == strncmp(info[n].key, PMIX_NODE_MAP, PMIX_MAX_KEYLEN)) {
-                    nregex = info[n].value.data.string;
-                } else if (0 == strncmp(info[n].key, PMIX_PROC_MAP, PMIX_MAX_KEYLEN)) {
-                    pregex = info[n].value.data.string;
+                if (PMIX_CHECK_KEY(&info[n], PMIX_NODE_MAP)) {
+                    rc = pmix_preg.parse_nodes(info[n].value.data.bo.bytes, &nodes);
+                    if (PMIX_SUCCESS != rc) {
+                        return rc;
+                    }
+                } else if (PMIX_CHECK_KEY(&info[n], PMIX_PROC_MAP)) {
+                    rc = pmix_preg.parse_procs(info[n].value.data.bo.bytes, &procs);
+                    if (PMIX_SUCCESS != rc) {
+                        return rc;
+                    }
                 }
             }
-            if (NULL != nregex && NULL != pregex) {
+            if (NULL != nodes && NULL != procs) {
                 /* assemble the pnet node and proc descriptions
                  * NOTE: this will eventually be folded into the
                  * new shared memory system, but we do it here
@@ -95,7 +101,9 @@ pmix_status_t pmix_pnet_base_allocate(char *nspace,
                  * the host will not have registered the clients
                  * and nspace prior to calling allocate
                  */
-                rc = process_maps(nspace, nregex, pregex);
+                rc = process_maps(nspace, nodes, procs);
+                pmix_argv_free(nodes);
+                pmix_argv_free(procs);
                 if (PMIX_SUCCESS != rc) {
                     return rc;
                 }
@@ -596,9 +604,9 @@ pmix_status_t pmix_pnet_base_harvest_envars(char **incvars, char **excvars,
     return PMIX_SUCCESS;
 }
 
-static pmix_status_t process_maps(char *nspace, char *nregex, char *pregex)
+static pmix_status_t process_maps(char *nspace, char **nodes, char **procs)
 {
-    char **nodes, **procs, **ranks;
+    char **ranks;
     pmix_status_t rc;
     size_t m, n;
     pmix_pnet_job_t *jptr, *job;
@@ -608,27 +616,10 @@ static pmix_status_t process_maps(char *nspace, char *nregex, char *pregex)
 
     PMIX_ACQUIRE_THREAD(&pmix_pnet_globals.lock);
 
-    /* parse the regex to get the argv array of node names */
-    if (PMIX_SUCCESS != (rc = pmix_preg.parse_nodes(nregex, &nodes))) {
-        PMIX_ERROR_LOG(rc);
-        PMIX_RELEASE_THREAD(&pmix_pnet_globals.lock);
-        return rc;
-    }
-
-    /* parse the regex to get the argv array of proc ranks on each node */
-    if (PMIX_SUCCESS != (rc = pmix_preg.parse_procs(pregex, &procs))) {
-        PMIX_ERROR_LOG(rc);
-        pmix_argv_free(nodes);
-        PMIX_RELEASE_THREAD(&pmix_pnet_globals.lock);
-        return rc;
-    }
-
     /* bozo check */
     if (pmix_argv_count(nodes) != pmix_argv_count(procs)) {
         rc = PMIX_ERR_BAD_PARAM;
         PMIX_ERROR_LOG(rc);
-        pmix_argv_free(nodes);
-        pmix_argv_free(procs);
         PMIX_RELEASE_THREAD(&pmix_pnet_globals.lock);
         return rc;
     }
@@ -704,9 +695,6 @@ static pmix_status_t process_maps(char *nspace, char *nregex, char *pregex)
         pmix_list_append(&nd->local_jobs, &lp->super);
         pmix_argv_free(ranks);
     }
-
-    pmix_argv_free(nodes);
-    pmix_argv_free(procs);
 
     PMIX_RELEASE_THREAD(&pmix_pnet_globals.lock);
     return PMIX_SUCCESS;

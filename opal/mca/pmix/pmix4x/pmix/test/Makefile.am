@@ -25,6 +25,11 @@ if !WANT_HIDDEN
 # these tests use internal symbols
 # use --disable-visibility
 SUBDIRS = simple
+
+if WANT_PYTHON_BINDINGS
+SUBDIRS += python
+endif
+
 endif
 
 headers = test_common.h cli_stages.h server_callbacks.h utils.h test_fence.h \

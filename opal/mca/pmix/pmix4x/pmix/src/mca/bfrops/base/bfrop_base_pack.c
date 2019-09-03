@@ -32,6 +32,7 @@
 #include "src/util/error.h"
 #include "src/util/output.h"
 #include "src/include/pmix_globals.h"
+#include "src/mca/preg/preg.h"
 
 #include "src/mca/bfrops/base/base.h"
 
@@ -1248,6 +1249,16 @@ pmix_status_t pmix_bfrops_base_pack_coord(pmix_pointer_array_t *regtypes,
         return PMIX_ERR_BAD_PARAM;
     }
     for (i=0; i < num_vals; ++i) {
+        /* pack the fabric name */
+        PMIX_BFROPS_PACK_TYPE(ret, buffer, &ptr[i].fabric, 1, PMIX_STRING, regtypes);
+        if (PMIX_SUCCESS != ret) {
+            return ret;
+        }
+        /* pack the plane */
+        PMIX_BFROPS_PACK_TYPE(ret, buffer, &ptr[i].plane, 1, PMIX_STRING, regtypes);
+        if (PMIX_SUCCESS != ret) {
+            return ret;
+        }
         /* pack the view */
         PMIX_BFROPS_PACK_TYPE(ret, buffer, &ptr[i].view, 1, PMIX_UINT8, regtypes);
         if (PMIX_SUCCESS != ret) {
@@ -1324,6 +1335,29 @@ pmix_status_t pmix_bfrops_base_pack_regattr(pmix_pointer_array_t *regtypes,
         PMIX_BFROPS_PACK_TYPE(ret, buffer, ptr[i].description, nd, PMIX_STRING, regtypes);
         if (PMIX_SUCCESS != ret) {
             PMIX_ERROR_LOG(ret);
+            return ret;
+        }
+    }
+    return PMIX_SUCCESS;
+}
+
+pmix_status_t pmix_bfrops_base_pack_regex(pmix_pointer_array_t *regtypes,
+                                          pmix_buffer_t *buffer, const void *src,
+                                          int32_t num_vals, pmix_data_type_t type)
+{
+    char **ptr = (char**)src;
+    int32_t i;
+    pmix_status_t ret;
+
+    if (NULL == regtypes) {
+        return PMIX_ERR_BAD_PARAM;
+    }
+    if (PMIX_REGEX != type) {
+        return PMIX_ERR_BAD_PARAM;
+    }
+    for (i=0; i < num_vals; ++i) {
+        ret = pmix_preg.pack(buffer, ptr[i]);
+        if (PMIX_SUCCESS != ret) {
             return ret;
         }
     }

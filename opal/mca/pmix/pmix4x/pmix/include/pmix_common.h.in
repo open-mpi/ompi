@@ -157,7 +157,7 @@ typedef uint32_t pmix_rank_t;
 #define PMIX_SERVER_GATEWAY                 "pmix.srv.gway"         // (bool) Server is acting as a gateway for PMIx requests
                                                                     //        that cannot be serviced on backend nodes
                                                                     //        (e.g., logging to email)
-#define PMIX_SERVER_SCHEDULER               "pmix.src.sched"        // (bool) Server supports system scheduler
+#define PMIX_SERVER_SCHEDULER               "pmix.srv.sched"        // (bool) Server supports system scheduler
 
 /* tool-related attributes */
 #define PMIX_TOOL_NSPACE                    "pmix.tool.nspace"      // (char*) Name of the nspace to use for this tool
@@ -281,7 +281,6 @@ typedef uint32_t pmix_rank_t;
                                                                     //        specified network plane in the requested view
 #define PMIX_NETWORK_SHAPE_STRING           "pmix.net.shapestr"     // (char*) network shape expressed as a string (e.g., "10x12x2")
 
-
 /* size info */
 #define PMIX_UNIV_SIZE                      "pmix.univ.size"        // (uint32_t) #procs in this nspace
 #define PMIX_JOB_SIZE                       "pmix.job.size"         // (uint32_t) #procs in this job
@@ -337,6 +336,7 @@ typedef uint32_t pmix_rank_t;
 #define PMIX_EMBED_BARRIER                  "pmix.embed.barrier"    // (bool) execute a blocking fence operation before executing the
                                                                     //        specified operation
 #define PMIX_JOB_TERM_STATUS                "pmix.job.term.status"  // (pmix_status_t) status returned upon job termination
+#define PMIX_PROC_TERM_STATUS               "pmix.proc.term.status" // (pmix_status_t) status returned upon process termination
 #define PMIX_PROC_STATE_STATUS              "pmix.proc.state"       // (pmix_proc_state_t) process state
 #define PMIX_NOTIFY_LAUNCH                  "pmix.note.lnch"        // (bool) notify the requestor upon launch of the child job and return
                                                                     //        its namespace in the event
@@ -907,15 +907,17 @@ typedef int pmix_status_t;
 #define PMIX_ERR_IOF_COMPLETE                       -172
 #define PMIX_LAUNCH_COMPLETE                        -173     // include nspace of the launched job with notification
 #define PMIX_FABRIC_UPDATED                         -174
+#define PMIX_FABRIC_UPDATE_PENDING                  -175
 
 /* system failures */
+#define PMIX_ERR_SYS_BASE                           -230
 #define PMIX_ERR_NODE_DOWN                          -231
 #define PMIX_ERR_NODE_OFFLINE                       -232
 #define PMIX_ERR_SYS_OTHER                          -330
 
 /* define a macro for identifying system event values */
 #define PMIX_SYSTEM_EVENT(a)   \
-    ((a) <= PMIX_ERR_NODE_DOWN && PMIX_ERR_SYS_OTHER <= (a))
+    ((a) <= PMIX_ERR_SYS_BASE && PMIX_ERR_SYS_OTHER <= (a))
 
 /* used by event handlers */
 #define PMIX_EVENT_NO_ACTION_TAKEN                  -331
@@ -987,6 +989,7 @@ typedef uint16_t pmix_data_type_t;
 #define PMIX_ENVAR              46
 #define PMIX_COORD              47
 #define PMIX_REGATTR            48
+#define PMIX_REGEX              49
 /********************/
 
 /* define a boundary for implementers so they can add their own data types */
@@ -1144,6 +1147,8 @@ typedef uint8_t pmix_coord_view_t;
 
 /* define a structure for a proc's network coordinate */
 typedef struct pmix_coord {
+    char *fabric;
+    char *plane;
     pmix_coord_view_t view;
     int *coord;
     size_t dims;
@@ -1153,14 +1158,18 @@ typedef struct pmix_coord {
     do {                                                                \
         (m) = (pmix_coord_t*)pmix_calloc((n), sizeof(pmix_coord_t));    \
         if (NULL != (m)) {                                              \
+            (m)->fabric = NULL;                                         \
+            (m)->plane = NULL;                                          \
             (m)->view = PMIX_COORD_VIEW_UNDEF;                          \
             (m)->dims = (d);                                            \
             (m)->coord = (int*)pmix_calloc((m)->dims, sizeof(int));     \
         }                                                               \
     } while(0)
 
-#define PMIX_COORD_CONSTRUCT(m, d)          \
+#define PMIX_COORD_CONSTRUCT(m)             \
     do {                                    \
+        (m)->fabric = NULL;                 \
+        (m)->plane = NULL;                  \
         (m)->view = PMIX_COORD_VIEW_UNDEF;  \
         (m)->coord = NULL;                  \
         (m)->dims = 0;                      \
@@ -1170,6 +1179,12 @@ typedef struct pmix_coord {
     do {                                    \
         (m)->view = PMIX_COORD_VIEW_UNDEF;  \
         if (NULL != (m)->coord) {           \
+            if (NULL != (m)->fabric) {      \
+                free((m)->fabric);          \
+            }                               \
+            if (NULL != (m)->plane) {       \
+                free((m)->plane);           \
+            };                              \
             pmix_free((m)->coord);          \
             (m)->coord = NULL;              \
             (m)->dims = 0;                  \

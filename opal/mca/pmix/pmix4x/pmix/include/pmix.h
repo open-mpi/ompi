@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  *
@@ -411,9 +411,6 @@ PMIX_EXPORT pmix_status_t PMIx_Resolve_nodes(const pmix_nspace_t nspace, char **
  * executing on a given node. We assume that the host RM will
  * exercise appropriate access control on the information.
  *
- * NOTE: there is no blocking form of this API as the structures
- * passed to query info differ from those for receiving the results
- *
  * The following return status codes are provided in the callback:
  *
  * PMIX_SUCCESS - all data has been returned
@@ -421,6 +418,9 @@ PMIX_EXPORT pmix_status_t PMIx_Resolve_nodes(const pmix_nspace_t nspace, char **
  * PMIX_ERR_PARTIAL_SUCCESS - some of the data has been returned
  * PMIX_ERR_NOT_SUPPORTED - the host RM does not support this function
  */
+PMIX_EXPORT pmix_status_t PMIx_Query_info(pmix_query_t queries[], size_t nqueries,
+                                          pmix_info_t **results, size_t *nresults);
+
 PMIX_EXPORT pmix_status_t PMIx_Query_info_nb(pmix_query_t queries[], size_t nqueries,
                                              pmix_info_cbfunc_t cbfunc, void *cbdata);
 

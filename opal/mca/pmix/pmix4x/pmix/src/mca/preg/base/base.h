@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, Inc.  All rights reserved.
- * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -91,6 +91,18 @@ PMIX_EXPORT pmix_status_t pmix_preg_base_resolve_peers(const char *nodename,
 PMIX_EXPORT pmix_status_t pmix_preg_base_resolve_nodes(const char *nspace,
                                                        char **nodelist);
 
+PMIX_EXPORT pmix_status_t pmix_preg_base_copy(char **dest, size_t *len, const char *input);
+
+PMIX_EXPORT pmix_status_t pmix_preg_base_pack(pmix_buffer_t *buffer, const char *input);
+
+PMIX_EXPORT pmix_status_t pmix_preg_base_unpack(pmix_buffer_t *buffer, char **regex);
+
+PMIX_EXPORT pmix_status_t pmix_preg_base_std_resolve_peers(const char *nodename,
+                                                           const char *nspace,
+                                                           pmix_proc_t **procs, size_t *nprocs);
+
+PMIX_EXPORT pmix_status_t pmix_preg_base_std_resolve_nodes(const char *nspace,
+                                                           char **nodelist);
 
 END_C_DECLS
 

@@ -133,6 +133,69 @@ static void _local_cbfunc(int sd, short args, void *cbdata)
     PMIX_RELEASE(cd);
 }
 
+static void qinfocb(pmix_status_t status, pmix_info_t info[], size_t ninfo,
+					void *cbdata, pmix_release_cbfunc_t release_fn, void *release_cbdata)
+{
+    pmix_cb_t *cb = (pmix_cb_t*)cbdata;
+    size_t n;
+
+    cb->status = status;
+    if (NULL != info) {
+    	cb->ninfo = ninfo;
+    	PMIX_INFO_CREATE(cb->info, cb->ninfo);
+    	for (n=0; n < ninfo; n++) {
+    		PMIX_INFO_XFER(&cb->info[n], &info[n]);
+    	}
+    }
+    if (NULL != release_fn) {
+        release_fn(release_cbdata);
+    }
+    PMIX_WAKEUP_THREAD(&cb->lock);
+}
+
+PMIX_EXPORT pmix_status_t PMIx_Query_info(pmix_query_t queries[], size_t nqueries,
+									      pmix_info_t **results, size_t *nresults)
+{
+    pmix_cb_t cb;
+    pmix_status_t rc;
+
+    PMIX_ACQUIRE_THREAD(&pmix_global_lock);
+
+    if (pmix_globals.init_cntr <= 0) {
+        PMIX_RELEASE_THREAD(&pmix_global_lock);
+        return PMIX_ERR_INIT;
+    }
+    PMIX_RELEASE_THREAD(&pmix_global_lock);
+
+    pmix_output_verbose(2, pmix_globals.debug_output,
+                        "%s pmix:query", PMIX_NAME_PRINT(&pmix_globals.myid));
+
+    /* create a callback object as we need to pass it to the
+     * recv routine so we know which callback to use when
+     * the return message is recvd */
+    PMIX_CONSTRUCT(&cb, pmix_cb_t);
+    if (PMIX_SUCCESS != (rc = PMIx_Query_info_nb(queries, nqueries,
+                                                 qinfocb, &cb))) {
+        PMIX_DESTRUCT(&cb);
+        return rc;
+    }
+
+    /* wait for the operation to complete */
+    PMIX_WAIT_THREAD(&cb.lock);
+    rc = cb.status;
+    if (NULL != cb.info) {
+    	*results = cb.info;
+    	*nresults = cb.ninfo;
+    	cb.info = NULL;
+    	cb.ninfo = 0;
+    }
+    PMIX_DESTRUCT(&cb);
+
+    pmix_output_verbose(2, pmix_globals.debug_output,
+                        "pmix:job_ctrl completed");
+
+    return rc;
+}
 PMIX_EXPORT pmix_status_t PMIx_Query_info_nb(pmix_query_t queries[], size_t nqueries,
                                              pmix_info_cbfunc_t cbfunc, void *cbdata)
 

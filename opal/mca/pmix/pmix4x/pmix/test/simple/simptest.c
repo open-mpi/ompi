@@ -518,7 +518,7 @@ int main(int argc, char **argv)
 #endif
     if (nettest) {
         /* set a known network configuration for the pnet/test component */
-        putenv("PMIX_MCA_pnet_test_nverts=nodes:5;plane:d:3;plane:s:2;plane:d:5");
+        putenv("PMIX_MCA_pnet_test_planes=plane:d:3;plane:s:2;plane:d:5:2");
         putenv("PMIX_MCA_pnet=test");
     }
     if (PMIX_SUCCESS != (rc = PMIx_server_init(&mymodule, info, ninfo))) {
@@ -528,7 +528,7 @@ int main(int argc, char **argv)
     PMIX_INFO_FREE(info, ninfo);
     if (nettest) {
         unsetenv("PMIX_MCA_pnet");
-        unsetenv("PMIX_MCA_pnet_test_nverts");
+        unsetenv("PMIX_MCA_pnet_test_planes");
     }
 
     /* register the default errhandler */
@@ -759,6 +759,14 @@ static void set_namespace(int nprocs, char *ranks, char *nspace,
     pmix_info_t *info, *iptr, *ip;
     myxfer_t cd, lock;
     pmix_status_t rc;
+    char *hostnames[] = {
+        "test000",
+        "test001",
+        "test002",
+        NULL
+    };
+    char **map[3] = {NULL, NULL, NULL};
+    char tmp[50] , **agg = NULL;
 
     if (arrays) {
         x->ninfo = 15 + nprocs;
@@ -767,33 +775,53 @@ static void set_namespace(int nprocs, char *ranks, char *nspace,
     }
 
     PMIX_INFO_CREATE(x->info, x->ninfo);
+
+    if (nprocs < 3) {
+        /* take only the number of hostnames equal to
+         * the number of procs */
+        for (m=0; m < nprocs; m++) {
+            pmix_argv_append_nosize(&agg, hostnames[m]);
+        }
+        ppn = pmix_argv_join(agg, ',');
+        pmix_argv_free(agg);
+        agg = NULL;
+    } else {
+        ppn = pmix_argv_join(hostnames, ',');
+    }
+    PMIx_generate_regex(ppn, &regex);
+    free(ppn);
+    /* compute the placement of the procs */
+    for (m=0; m < nprocs; m++) {
+        snprintf(tmp, 50, "%d", m);
+        pmix_argv_append_nosize(&map[m%3], tmp);
+        memset(tmp, 0, 50);
+    }
+    for (m=0; m < 3; m++) {
+        if (NULL != map[m]) {
+            rks = pmix_argv_join(map[m], ',');
+            pmix_argv_append_nosize(&agg, rks);
+            free(rks);
+            pmix_argv_free(map[m]);
+        }
+    }
+    rks = pmix_argv_join(agg, ';');
+    pmix_argv_free(agg);
+    PMIx_generate_ppn(rks, &ppn);
+    free(rks);
+
     n = 0;
-
-    PMIx_generate_regex("test000,test001,test002", &regex);
-    PMIx_generate_ppn("0;1;2", &ppn);
-
     if (arrays) {
         (void)strncpy(x->info[n].key, PMIX_JOB_INFO_ARRAY, PMIX_MAX_KEYLEN);
         x->info[n].value.type = PMIX_DATA_ARRAY;
         PMIX_DATA_ARRAY_CREATE(x->info[n].value.data.darray, 2, PMIX_INFO);
         iptr = (pmix_info_t*)x->info[n].value.data.darray->array;
-        (void)strncpy(iptr[0].key, PMIX_NODE_MAP, PMIX_MAX_KEYLEN);
-        iptr[0].value.type = PMIX_STRING;
-        iptr[0].value.data.string = regex;
-        (void)strncpy(iptr[1].key, PMIX_PROC_MAP, PMIX_MAX_KEYLEN);
-        iptr[1].value.type = PMIX_STRING;
-        iptr[1].value.data.string = ppn;
+        PMIX_INFO_LOAD(&iptr[0], PMIX_NODE_MAP, regex, PMIX_REGEX);
+        PMIX_INFO_LOAD(&iptr[1], PMIX_PROC_MAP, ppn, PMIX_REGEX);
         ++n;
     } else {
-        (void)strncpy(x->info[n].key, PMIX_NODE_MAP, PMIX_MAX_KEYLEN);
-        x->info[n].value.type = PMIX_STRING;
-        x->info[n].value.data.string = regex;
+        PMIX_INFO_LOAD(&x->info[n], PMIX_NODE_MAP, regex, PMIX_REGEX);
         ++n;
-
-        /* if we have some empty nodes, then fill their spots */
-        (void)strncpy(x->info[n].key, PMIX_PROC_MAP, PMIX_MAX_KEYLEN);
-        x->info[n].value.type = PMIX_STRING;
-        x->info[n].value.data.string = ppn;
+        PMIX_INFO_LOAD(&x->info[n], PMIX_PROC_MAP, ppn, PMIX_REGEX);
         ++n;
     }
 
@@ -904,7 +932,7 @@ static void set_namespace(int nprocs, char *ranks, char *nspace,
     for (m=0; m < nprocs; m++) {
         (void)strncpy(x->info[n].key, PMIX_PROC_DATA, PMIX_MAX_KEYLEN);
         x->info[n].value.type = PMIX_DATA_ARRAY;
-        PMIX_DATA_ARRAY_CREATE(array, 5, PMIX_INFO);
+        PMIX_DATA_ARRAY_CREATE(array, 6, PMIX_INFO);
         x->info[n].value.data.darray = array;
         info = (pmix_info_t*)array->array;
         k = 0;
@@ -928,7 +956,12 @@ static void set_namespace(int nprocs, char *ranks, char *nspace,
 
         (void)strncpy(info[k].key, PMIX_NODEID, PMIX_MAX_KEYLEN);
         info[k].value.type = PMIX_UINT32;
-        info[k].value.data.uint32 = 0;
+        info[k].value.data.uint32 = m % 3;
+        ++k;
+
+        (void)strncpy(info[k].key, PMIX_HOSTNAME, PMIX_MAX_KEYLEN);
+        info[k].value.type = PMIX_STRING;
+        info[k].value.data.string = strdup(hostnames[m % 3]);
         ++k;
         /* move to next proc */
         ++n;
