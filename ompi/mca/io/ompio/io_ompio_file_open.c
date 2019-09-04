@@ -392,6 +392,45 @@ int mca_io_ompio_file_sync (ompi_file_t *fh)
     return ret;
 }
 
+static void mca_io_ompio_file_get_eof_offset (mca_io_ompio_file_t *fh,
+                                              OMPI_MPI_OFFSET_TYPE in_offset,
+                                              OMPI_MPI_OFFSET_TYPE *out_offset)
+{
+    /* a file_seek with SEEK_END might require an actual offset that is 
+       not lined up with the end of the file, depending on the file view.
+       This routine determines the closest (smaller or equal) offset to 
+       the provided in_offset value, avoiding gaps in the file view and avoiding to 
+       break up an etype. 
+    */
+    OMPI_MPI_OFFSET_TYPE offset=0, prev_offset=0, start_offset=0;
+    size_t k=0, blocklen=0;
+    size_t index_in_file_view=0;
+
+    in_offset -= fh->f_disp;
+    if ( fh->f_view_size  > 0 ) {
+        /* starting offset of the current copy of the filew view */
+        start_offset = in_offset / fh->f_view_extent;
+        
+        index_in_file_view = 0;
+        /* determine block id that the offset is located in and
+           the starting offset of that block */
+        while ( offset <= in_offset && index_in_file_view < fh->f_iov_count) {
+            prev_offset = offset;
+            offset = start_offset + (OMPI_MPI_OFFSET_TYPE)(intptr_t) fh->f_decoded_iov[index_in_file_view++].iov_base;
+        }
+        
+        offset = prev_offset;
+        blocklen = fh->f_decoded_iov[index_in_file_view-1].iov_len;
+        while (  offset <= in_offset && k <= blocklen )  {
+            prev_offset = offset;
+            offset += fh->f_etype_size;
+            k += fh->f_etype_size;
+        }
+
+        *out_offset = prev_offset;
+    } 
+    return;
+}
 
 int mca_io_ompio_file_seek (ompi_file_t *fh,
                             OMPI_MPI_OFFSET_TYPE off,
@@ -399,7 +438,7 @@ int mca_io_ompio_file_seek (ompi_file_t *fh,
 {
     int ret = OMPI_SUCCESS;
     mca_io_ompio_data_t *data;
-    OMPI_MPI_OFFSET_TYPE offset, temp_offset;
+    OMPI_MPI_OFFSET_TYPE offset, temp_offset, temp_offset2;
 
     data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
 
@@ -414,8 +453,10 @@ int mca_io_ompio_file_seek (ompi_file_t *fh,
         }
         break;
     case MPI_SEEK_CUR:
-        offset += data->ompio_fh.f_position_in_file_view;
-        offset += data->ompio_fh.f_disp;
+        ret = mca_common_ompio_file_get_position (&data->ompio_fh,
+                                                  &temp_offset);
+        offset += temp_offset * data->ompio_fh.f_etype_size;
+
         if (offset < 0) {
             OPAL_THREAD_UNLOCK(&fh->f_mutex);
             return OMPI_ERROR;
@@ -423,7 +464,9 @@ int mca_io_ompio_file_seek (ompi_file_t *fh,
         break;
     case MPI_SEEK_END:
         ret = data->ompio_fh.f_fs->fs_file_get_size (&data->ompio_fh,
-                                                     &temp_offset);
+                                                     &temp_offset2);
+        mca_io_ompio_file_get_eof_offset (&data->ompio_fh,
+                                          temp_offset2, &temp_offset);
         offset += temp_offset;
         if (offset < 0 || OMPI_SUCCESS != ret) {
             OPAL_THREAD_UNLOCK(&fh->f_mutex);
@@ -441,6 +484,7 @@ int mca_io_ompio_file_seek (ompi_file_t *fh,
 
     return ret;
 }
+
 
 int mca_io_ompio_file_get_position (ompi_file_t *fd,
                                     OMPI_MPI_OFFSET_TYPE *offset)
