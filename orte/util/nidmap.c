@@ -1078,6 +1078,8 @@ int orte_util_generate_ppn(orte_job_t *jdata,
             }
         }
         opal_dss.unload(&bucket, (void**)&bytes, &nbytes);
+        OBJ_DESTRUCT(&bucket);
+        OBJ_CONSTRUCT(&bucket, opal_buffer_t);
 
         if (opal_compress.compress_block(bytes, (size_t)nbytes,
                                          (uint8_t**)&bo.bytes, &sz)) {
