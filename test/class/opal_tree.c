@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2011      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2019      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -214,8 +215,7 @@ int main(int argc, char **argv)
     /* serialize tree */
     serial_tree = OBJ_NEW(opal_buffer_t);
 
-    if (OPAL_SUCCESS == opal_tree_serialize(opal_tree_get_root(&tree),
-					    serial_tree)) {
+    if (OPAL_SUCCESS == opal_tree_serialize(opal_tree_get_root(&tree), serial_tree)) {
         opal_tree_t tmp_tree;
         opal_buffer_t *serial2_tree;
 
@@ -227,29 +227,28 @@ int main(int argc, char **argv)
         /* deserialize tree */
         opal_tree_deserialize(serial_tree, &(tmp_tree.opal_tree_sentinel));
         /* serialize tmp tree */
-	serial2_tree = OBJ_NEW(opal_buffer_t);
-        if (OPAL_SUCCESS == opal_tree_serialize(opal_tree_get_root(&tmp_tree),
-						serial2_tree)) {
-	    void *payload1, *payload2;
-	    int32_t size1, size2;
+        serial2_tree = OBJ_NEW(opal_buffer_t);
+        if (OPAL_SUCCESS == opal_tree_serialize(opal_tree_get_root(&tmp_tree), serial2_tree)) {
+            void *payload1, *payload2;
+            int32_t size1, size2;
 
-	    /* compare new with original serialization */
-        serial_tree->unpack_ptr = serial_tree->base_ptr;
-        serial2_tree->unpack_ptr = serial2_tree->unpack_ptr;
-	    opal_dss.unload(serial_tree, &payload1, &size1);
-	    opal_dss.unload(serial2_tree, &payload2, &size2);
-	    if (size1 == size2) {
-		if (0 == memcmp(payload1, payload2, size1)) {
-		    test_success();
-		} else {
-		    test_failure(" failed tree deserialization data compare");
-		}
-	    } else {
-		test_failure(" failed tree deserialization size compare");
-	    }
-	} else {
-	    test_failure(" failed tree second pass serialization");
-	}
+	       /* compare new with original serialization */
+            serial_tree->unpack_ptr = serial_tree->base_ptr;
+            serial2_tree->unpack_ptr = serial2_tree->unpack_ptr;
+            opal_dss.unload(serial_tree, &payload1, &size1);
+            opal_dss.unload(serial2_tree, &payload2, &size2);
+            if (size1 == size2) {
+              if (0 == memcmp(payload1, payload2, size1)) {
+                  test_success();
+              } else {
+                  test_failure(" failed tree deserialization data compare");
+              }
+            } else {
+                test_failure(" failed tree deserialization size compare");
+            }
+    	} else {
+    	    test_failure(" failed tree second pass serialization");
+    	}
     } else {
         test_failure(" failed tree serialization");
     }
