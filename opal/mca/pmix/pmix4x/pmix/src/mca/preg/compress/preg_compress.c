@@ -76,12 +76,10 @@ static pmix_status_t generate_node_regex(const char *input,
     uint8_t *tmp;
 
     if (!pmix_compress.compress_string((char*)input, &tmp, &len)) {
-        PMIX_ERROR_LOG(PMIX_ERR_TAKE_NEXT_OPTION);
         return PMIX_ERR_TAKE_NEXT_OPTION;
     }
 
     if (NULL == tmp) {
-        PMIX_ERROR_LOG(PMIX_ERR_NOMEM);
         return PMIX_ERR_NOMEM;
     }
 
@@ -112,12 +110,10 @@ static pmix_status_t generate_ppn(const char *input,
     uint8_t *tmp;
 
     if (!pmix_compress.compress_string((char*)input, &tmp, &len)) {
-        PMIX_ERROR_LOG(PMIX_ERR_TAKE_NEXT_OPTION);
         return PMIX_ERR_TAKE_NEXT_OPTION;
     }
 
     if (NULL == tmp) {
-        PMIX_ERROR_LOG(PMIX_ERR_NOMEM);
         return PMIX_ERR_NOMEM;
     }
 

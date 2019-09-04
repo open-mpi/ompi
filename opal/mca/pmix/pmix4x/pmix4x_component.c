@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2018 Cisco Systems, Inc.  All rights reserved
@@ -20,6 +20,7 @@
 
 #include "opal/constants.h"
 #include "opal/class/opal_list.h"
+#include "opal/util/opal_environ.h"
 #include "opal/util/proc.h"
 #include "opal/util/show_help.h"
 #include "opal/mca/pmix/pmix.h"
@@ -126,6 +127,8 @@ static int external_open(void)
                        "incorrect-pmix", true, version, "v4.x");
         return OPAL_ERROR;
     }
+    /* we are going to be used, so set an envar */
+    opal_setenv("PMIX_MCA_preg", "native", true, &environ);
     return OPAL_SUCCESS;
 }
 

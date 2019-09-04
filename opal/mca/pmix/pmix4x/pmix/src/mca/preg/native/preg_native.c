@@ -457,7 +457,6 @@ static pmix_status_t parse_nodes(const char *regexp,
     /* the regex generator used to create this regex
      * is tagged at the beginning of the string */
     if (NULL == (ptr = strchr(tmp, '['))) {
-        PMIX_ERROR_LOG(PMIX_ERR_BAD_PARAM);
         free(tmp);
         return PMIX_ERR_BAD_PARAM;
     }
@@ -499,7 +498,6 @@ static pmix_status_t parse_procs(const char *regexp,
     /* the regex generator used to create this regex
      * is tagged at the beginning of the string */
     if (NULL == (ptr = strchr(tmp, '['))) {
-        PMIX_ERROR_LOG(PMIX_ERR_BAD_PARAM);
         free(tmp);
         return PMIX_ERR_BAD_PARAM;
     }
