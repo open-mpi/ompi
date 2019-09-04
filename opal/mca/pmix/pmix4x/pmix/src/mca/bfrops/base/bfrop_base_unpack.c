@@ -28,6 +28,8 @@
 #include "src/util/error.h"
 #include "src/util/output.h"
 #include "src/include/pmix_globals.h"
+#include "src/mca/preg/preg.h"
+
 #include "src/mca/bfrops/bfrops_types.h"
 #include "src/mca/bfrops/base/base.h"
 
@@ -1470,6 +1472,19 @@ pmix_status_t pmix_bfrops_base_unpack_coord(pmix_pointer_array_t *regtypes,
     n = *num_vals;
 
     for (i = 0; i < n; ++i) {
+        PMIX_COORD_CONSTRUCT(&ptr[i]);
+        /* unpack the fabric name */
+        m=1;
+        PMIX_BFROPS_UNPACK_TYPE(ret, buffer, &ptr[i].fabric, &m, PMIX_STRING, regtypes);
+        if (PMIX_SUCCESS != ret) {
+            return ret;
+        }
+        /* unpack the plane */
+        m=1;
+        PMIX_BFROPS_UNPACK_TYPE(ret, buffer, &ptr[i].plane, &m, PMIX_STRING, regtypes);
+        if (PMIX_SUCCESS != ret) {
+            return ret;
+        }
         /* unpack the view */
         m=1;
         PMIX_BFROPS_UNPACK_TYPE(ret, buffer, &ptr[i].view, &m, PMIX_UINT8, regtypes);
@@ -1577,6 +1592,34 @@ pmix_status_t pmix_bfrops_base_unpack_regattr(pmix_pointer_array_t *regtypes,
                 PMIX_ERROR_LOG(ret);
                 return ret;
             }
+        }
+    }
+    return PMIX_SUCCESS;
+}
+
+pmix_status_t pmix_bfrops_base_unpack_regex(pmix_pointer_array_t *regtypes,
+                                            pmix_buffer_t *buffer, void *dest,
+                                            int32_t *num_vals, pmix_data_type_t type)
+{
+    char **ptr;
+    int32_t i, n;
+    pmix_status_t ret;
+
+    pmix_output_verbose(20, pmix_bfrops_base_framework.framework_output,
+                        "pmix_bfrop_unpack: %d regex", *num_vals);
+
+    if (PMIX_REGEX != type) {
+        return PMIX_ERR_BAD_PARAM;
+    }
+
+    ptr = (char **) dest;
+    n = *num_vals;
+
+    for (i = 0; i < n; ++i) {
+        ret = pmix_preg.unpack(buffer, &ptr[n]);
+        if (PMIX_SUCCESS != ret) {
+            *num_vals = n;
+            return ret;
         }
     }
     return PMIX_SUCCESS;

@@ -49,6 +49,7 @@ int main(int argc, char **argv)
     uint32_t nprocs, n, *u32;
     size_t ninfo, m;
     pmix_coord_t *coords;
+    char *hostname;
 
     if (PMIX_SUCCESS != (rc = PMIx_Init(&myproc, NULL, 0))) {
         pmix_output(0, "Client ns %s rank %d: PMIx_Init failed: %s",
@@ -79,6 +80,15 @@ int main(int argc, char **argv)
     PMIX_VALUE_RELEASE(val);
     pmix_output(0, "Client %s:%d job size %d", myproc.nspace, myproc.rank, nprocs);
 
+    /* get our assumed hostname */
+    if (PMIX_SUCCESS != (rc = PMIx_Get(&myproc, PMIX_HOSTNAME, NULL, 0, &val))) {
+        pmix_output(0, "Client ns %s rank %d: PMIx_Get hostname failed: %s",
+                    myproc.nspace, myproc.rank, PMIx_Error_string(rc));
+        goto done;
+    }
+    hostname = strdup(val->data.string);
+    PMIX_VALUE_RELEASE(val);
+
     /* get our assigned network endpts */
     if (PMIX_SUCCESS != (rc = PMIx_Get(&myproc, PMIX_NETWORK_ENDPT, NULL, 0, &val))) {
         pmix_output(0, "Client ns %s rank %d: PMIx_Get network endpt failed: %s",
@@ -100,7 +110,7 @@ int main(int argc, char **argv)
         }
         tmp = pmix_argv_join(foo, ',');
         pmix_argv_free(foo);
-        pmix_output(0, "ASSIGNED ENDPTS: %s", tmp);
+        pmix_output(0, "Rank %u[%s]: ASSIGNED ENDPTS: %s", myproc.rank, hostname, tmp);
         free(tmp);
     }
 
@@ -110,9 +120,6 @@ int main(int argc, char **argv)
                     myproc.nspace, myproc.rank, PMIx_Error_string(rc));
         goto done;
     }
-    pmix_output(0, "Client %s:%d was assigned %lu coordinates",
-                myproc.nspace, myproc.rank,
-                (unsigned long)val->data.darray->size);
     coords = (pmix_coord_t*)val->data.darray->array;
     ninfo = val->data.darray->size;
     for (m=0; m < ninfo; m++) {
@@ -130,7 +137,7 @@ int main(int argc, char **argv)
         } else {
             view = "PHYSICAL";
         }
-        pmix_output(0, "COORD[%d] VIEW %s: %s", (int)m, view, tmp);
+        pmix_output(0, "Rank %u[%s]: COORD[%d] VIEW %s: %s", myproc.rank, hostname, (int)m, view, tmp);
         free(tmp);
     }
 

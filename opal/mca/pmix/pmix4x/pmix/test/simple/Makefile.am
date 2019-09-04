@@ -26,7 +26,7 @@ headers = simptest.h
 noinst_PROGRAMS = simptest simpclient simppub simpdyn simpft simpdmodex \
                   test_pmix simptool simpdie simplegacy simptimeout \
                   gwtest gwclient stability quietclient simpjctrl simpio simpsched \
-		  simpcoord
+		          simpcoord
 
 simptest_SOURCES = \
         simptest.c

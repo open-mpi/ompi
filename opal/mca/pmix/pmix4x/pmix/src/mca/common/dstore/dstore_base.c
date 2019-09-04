@@ -2157,9 +2157,10 @@ static pmix_status_t _dstore_fetch(pmix_common_dstore_ctx_t *ds_ctx,
                     break;
                 }
             } else if (NULL == key) {
+                char *kname_ptr = PMIX_DS_KNAME_PTR(ds_ctx, addr);
                 PMIX_OUTPUT_VERBOSE((10, pmix_gds_base_framework.framework_output,
                             "%s:%d:%s: for rank %s:%u, found target key %s",
-                            __FILE__, __LINE__, __func__, nspace, cur_rank, PMIX_DS_KNAME_PTR(ds_ctx, addr)));
+                            __FILE__, __LINE__, __func__, nspace, cur_rank, kname_ptr));
 
                 uint8_t *data_ptr = PMIX_DS_DATA_PTR(ds_ctx, addr);
                 size_t data_size = PMIX_DS_DATA_SIZE(ds_ctx, addr, data_ptr);
@@ -2173,8 +2174,8 @@ static pmix_status_t _dstore_fetch(pmix_common_dstore_ctx_t *ds_ctx,
                     PMIX_ERROR_LOG(rc);
                     goto done;
                 }
-                pmix_strncpy(info[kval_cnt - 1].key, PMIX_DS_KNAME_PTR(ds_ctx, addr),
-                        PMIX_DS_KNAME_LEN(ds_ctx, addr));
+                pmix_strncpy(info[kval_cnt - 1].key, kname_ptr,
+                        PMIX_DS_KNAME_LEN(ds_ctx, kname_ptr));
                 pmix_value_xfer(&info[kval_cnt - 1].value, &val);
                 PMIX_VALUE_DESTRUCT(&val);
                 buffer.base_ptr = NULL;

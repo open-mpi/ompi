@@ -571,34 +571,41 @@ PMIX_EXPORT pmix_status_t PMIx_server_init(pmix_server_module_t *module,
  * memory usage is released */
 PMIX_EXPORT pmix_status_t PMIx_server_finalize(void);
 
-/* given a semicolon-separated list of input values, generate
- * a regex that can be passed down to the client for parsing.
- * The caller is responsible for free'ing the resulting
- * string
+/* Given a comma-separated list of \refarg{input} values, generate
+ * a reduced size representation of the input that can be passed
+ * down to PMIx_server_register_nspace for parsing. The order of
+ * the individual values in the \refarg{input} string is preserved
+ * across the operation. The caller is responsible for releasing
+ * the returned data.
  *
- * If values have leading zero's, then that is preserved. You
- * have to add back any prefix/suffix for node names
- * odin[009-015,017-023,076-086]
- *
- *     "pmix:odin[009-015,017-023,076-086]"
- *
- * Note that the "pmix" at the beginning of each regex indicates
- * that the PMIx native parser is to be used by the client for
- * parsing the provided regex. Other parsers may be supported - see
- * the pmix_client.h header for a list.
+ * The returned representation may be an arbitrary array of bytes
+ * as opposed to a valid NULL-terminated string. However, the
+ * method used to generate the representation shall be identified
+ * with a colon-delimited string at the beginning of the output.
+ * For example, an output starting with "pmix:" indicates that
+ * the representation is a PMIx-defined regular expression.
+ * In contrast, an output starting with "blob:" is a compressed
+ * binary array.
  */
 PMIX_EXPORT pmix_status_t PMIx_generate_regex(const char *input, char **regex);
 
-/* The input is expected to consist of a comma-separated list
- * of ranges. Thus, an input of:
- *     "1-4;2-5;8,10,11,12;6,7,9"
- * would generate a regex of
- *     "[pmix:2x(3);8,10-12;6-7,9]"
+/* The input shall consist of a semicolon-separated list of ranges
+ * representing the ranks of processes on each node of the job -
+ * e.g.,  "1-4;2-5;8,10,11,12;6,7,9". Each field of the input must
+ * correspond to the node name provided at that position in the
+ * input to PMIx_generate_regex. Thus, in the example, ranks 1-4
+ * would be located on the first node of the comma-separated list
+ * of names provided to PMIx_generate_regex, and ranks 2-5 would
+ * be on the second name in the list.
  *
- * Note that the "pmix" at the beginning of each regex indicates
- * that the PMIx native parser is to be used by the client for
- * parsing the provided regex. Other parsers may be supported - see
- * the pmix_client.h header for a list.
+ * The returned representation may be an arbitrary array of bytes
+ * as opposed to a valid NULL-terminated string. However, the
+ * method used to generate the representation shall be identified
+ * with a colon-delimited string at the beginning of the output.
+ * For example, an output starting with "pmix:" indicates that
+ * the representation is a PMIx-defined regular expression.
+ * In contrast, an output starting with "blob:" is a compressed
+ * binary array.
  */
 PMIX_EXPORT pmix_status_t PMIx_generate_ppn(const char *input, char **ppn);
 

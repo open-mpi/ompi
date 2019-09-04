@@ -552,7 +552,7 @@ static pmix_status_t process_job_array(pmix_info_t *info,
                 return PMIX_ERR_BAD_PARAM;
             }
             /* parse the regex to get the argv array containing proc ranks on each node */
-            if (PMIX_SUCCESS != (rc = pmix_preg.parse_procs(iptr[j].value.data.string, procs))) {
+            if (PMIX_SUCCESS != (rc = pmix_preg.parse_procs(iptr[j].value.data.bo.bytes, procs))) {
                 PMIX_ERROR_LOG(rc);
                 return rc;
             }
@@ -564,22 +564,8 @@ static pmix_status_t process_job_array(pmix_info_t *info,
                 PMIX_ERROR_LOG(PMIX_ERR_BAD_PARAM);
                 return PMIX_ERR_BAD_PARAM;
             }
-            /* store the node map itself since that is
-             * what v3 uses */
-            kp2 = PMIX_NEW(pmix_kval_t);
-            kp2->key = strdup(PMIX_NODE_MAP);
-            kp2->value = (pmix_value_t*)malloc(sizeof(pmix_value_t));
-            kp2->value->type = PMIX_STRING;
-            kp2->value->data.string = strdup(iptr[j].value.data.string);
-            if (PMIX_SUCCESS != (rc = pmix_hash_store(&trk->internal, PMIX_RANK_WILDCARD, kp2))) {
-                PMIX_ERROR_LOG(rc);
-                PMIX_RELEASE(kp2);
-                return rc;
-            }
-            PMIX_RELEASE(kp2);  // maintain acctg
-
             /* parse the regex to get the argv array of node names */
-            if (PMIX_SUCCESS != (rc = pmix_preg.parse_nodes(iptr[j].value.data.string, nodes))) {
+            if (PMIX_SUCCESS != (rc = pmix_preg.parse_nodes(iptr[j].value.data.bo.bytes, nodes))) {
                 PMIX_ERROR_LOG(rc);
                 return rc;
             }
@@ -1120,22 +1106,8 @@ pmix_status_t hash_cache_job_info(struct pmix_namespace_t *ns,
                 PMIX_ERROR_LOG(PMIX_ERR_BAD_PARAM);
                 return PMIX_ERR_BAD_PARAM;
             }
-            /* store the node map itself since that is
-             * what v3 uses */
-            kp2 = PMIX_NEW(pmix_kval_t);
-            kp2->key = strdup(PMIX_NODE_MAP);
-            kp2->value = (pmix_value_t*)malloc(sizeof(pmix_value_t));
-            kp2->value->type = PMIX_STRING;
-            kp2->value->data.string = strdup(info[n].value.data.string);
-            if (PMIX_SUCCESS != (rc = pmix_hash_store(ht, PMIX_RANK_WILDCARD, kp2))) {
-                PMIX_ERROR_LOG(rc);
-                PMIX_RELEASE(kp2);
-                return rc;
-            }
-            PMIX_RELEASE(kp2);  // maintain acctg
-
             /* parse the regex to get the argv array of node names */
-            if (PMIX_SUCCESS != (rc = pmix_preg.parse_nodes(info[n].value.data.string, &nodes))) {
+            if (PMIX_SUCCESS != (rc = pmix_preg.parse_nodes(info[n].value.data.bo.bytes, &nodes))) {
                 PMIX_ERROR_LOG(rc);
                 goto release;
             }
@@ -1148,13 +1120,13 @@ pmix_status_t hash_cache_job_info(struct pmix_namespace_t *ns,
                 return PMIX_ERR_BAD_PARAM;
             }
             /* parse the regex to get the argv array containing proc ranks on each node */
-            if (PMIX_SUCCESS != (rc = pmix_preg.parse_procs(info[n].value.data.string, &procs))) {
+            if (PMIX_SUCCESS != (rc = pmix_preg.parse_procs(info[n].value.data.bo.bytes, &procs))) {
                 PMIX_ERROR_LOG(rc);
                 goto release;
             }
             /* mark that we got the map */
             flags |= PMIX_HASH_PROC_MAP;
-        } else if (0 == strcmp(info[n].key, PMIX_PROC_DATA)) {
+        } else if (PMIX_CHECK_KEY(&info[n], PMIX_PROC_DATA)) {
             flags |= PMIX_HASH_PROC_DATA;
             /* an array of data pertaining to a specific proc */
             if (PMIX_DATA_ARRAY != info[n].value.type) {
@@ -1290,14 +1262,10 @@ pmix_status_t hash_cache_job_info(struct pmix_namespace_t *ns,
     }
 
     /* we must have the proc AND node maps */
-    if (NULL == procs || NULL == nodes) {
-        rc = PMIX_ERR_NOT_FOUND;
-        goto release;
-    }
-
-    if (PMIX_SUCCESS != (rc = store_map(ht, nodes, procs, flags))) {
-        PMIX_ERROR_LOG(rc);
-        goto release;
+    if (NULL != procs && NULL != nodes) {
+        if (PMIX_SUCCESS != (rc = store_map(ht, nodes, procs, flags))) {
+            PMIX_ERROR_LOG(rc);
+        }
     }
 
   release:
@@ -1841,6 +1809,10 @@ static pmix_status_t hash_store(const pmix_proc_t *proc,
     pmix_status_t rc;
     pmix_kval_t *kp;
     pmix_namespace_t *ns, *nptr;
+    pmix_rank_t rank;
+    size_t j, size, len;
+    pmix_info_t *iptr;
+    uint8_t *tmp;
 
     pmix_output_verbose(2, pmix_gds_base_framework.framework_output,
                         "%s gds:hash:hash_store for proc %s key %s type %s scope %s",
@@ -1887,9 +1859,10 @@ static pmix_status_t hash_store(const pmix_proc_t *proc,
         pmix_list_append(&myjobs, &trk->super);
     }
 
-    /* see if the proc is me */
+    /* see if the proc is me - cannot use CHECK_PROCID as
+     * we don't want rank=wildcard to match */
     if (proc->rank == pmix_globals.myid.rank &&
-        0 == strncmp(proc->nspace, pmix_globals.myid.nspace, PMIX_MAX_NSLEN)) {
+        PMIX_CHECK_NSPACE(proc->nspace, pmix_globals.myid.nspace)) {
         if (PMIX_INTERNAL != scope) {
             /* always maintain a copy of my own info here to simplify
              * later retrieval */
@@ -1924,6 +1897,67 @@ static pmix_status_t hash_store(const pmix_proc_t *proc,
 
     /* store it in the corresponding hash table */
     if (PMIX_INTERNAL == scope) {
+        /* if this is proc data, then we have to expand it and
+         * store the values on that rank */
+        if (PMIX_CHECK_KEY(kv, PMIX_PROC_DATA)) {
+            /* an array of data pertaining to a specific proc */
+            if (PMIX_DATA_ARRAY != kv->value->type) {
+                PMIX_ERROR_LOG(PMIX_ERR_TYPE_MISMATCH);
+                return PMIX_ERR_TYPE_MISMATCH;
+            }
+            size = kv->value->data.darray->size;
+            iptr = (pmix_info_t*)kv->value->data.darray->array;
+            /* first element of the array must be the rank */
+            if (0 != strcmp(iptr[0].key, PMIX_RANK) ||
+                PMIX_PROC_RANK != iptr[0].value.type) {
+                rc = PMIX_ERR_TYPE_MISMATCH;
+                PMIX_ERROR_LOG(rc);
+                return rc;
+            }
+            rank = iptr[0].value.data.rank;
+            /* cycle thru the values for this rank and store them */
+            for (j=1; j < size; j++) {
+                kp = PMIX_NEW(pmix_kval_t);
+                if (NULL == kp) {
+                    rc = PMIX_ERR_NOMEM;
+                    return rc;
+                }
+                kp->key = strdup(iptr[j].key);
+                PMIX_VALUE_XFER(rc, kp->value, &iptr[j].value);
+                if (PMIX_SUCCESS != rc) {
+                    PMIX_ERROR_LOG(rc);
+                    PMIX_RELEASE(kp);
+                    return rc;
+                }
+                /* if the value contains a string that is longer than the
+                 * limit, then compress it */
+                if (PMIX_STRING_SIZE_CHECK(kp->value)) {
+                    if (pmix_compress.compress_string(kp->value->data.string, &tmp, &len)) {
+                        if (NULL == tmp) {
+                            PMIX_ERROR_LOG(PMIX_ERR_NOMEM);
+                            rc = PMIX_ERR_NOMEM;
+                            return rc;
+                        }
+                        kp->value->type = PMIX_COMPRESSED_STRING;
+                        free(kp->value->data.string);
+                        kp->value->data.bo.bytes = (char*)tmp;
+                        kp->value->data.bo.size = len;
+                    }
+                }
+                pmix_output_verbose(2, pmix_gds_base_framework.framework_output,
+                                    "%s gds:hash:STORE data for nspace %s rank %u: key %s",
+                                    PMIX_NAME_PRINT(&pmix_globals.myid),
+                                    trk->ns, rank, kp->key);
+                /* store it in the hash_table */
+                if (PMIX_SUCCESS != (rc = pmix_hash_store(&trk->internal, rank, kp))) {
+                    PMIX_ERROR_LOG(rc);
+                    PMIX_RELEASE(kp);
+                    return rc;
+                }
+                PMIX_RELEASE(kp);  // maintain acctg
+            }
+            return PMIX_SUCCESS;
+        }
         if (PMIX_SUCCESS != (rc = pmix_hash_store(&trk->internal, proc->rank, kv))) {
             PMIX_ERROR_LOG(rc);
             return rc;
@@ -2080,7 +2114,7 @@ static pmix_status_t _hash_store_modex(pmix_gds_base_ctx_t ctx,
 static pmix_status_t dohash(pmix_hash_table_t *ht,
                             const char *key,
                             pmix_rank_t rank,
-                            bool skip_genvals,
+                            int skip_genvals,
                             pmix_list_t *kvs)
 {
     pmix_status_t rc;
@@ -2102,12 +2136,24 @@ static pmix_status_t dohash(pmix_hash_table_t *ht,
                 PMIX_RELEASE(val);
                 return PMIX_ERR_NOT_FOUND;
             }
+            /* if they want the value returned in its array form,
+             * then we are done */
+            if (2 == skip_genvals) {
+                kv = PMIX_NEW(pmix_kval_t);
+                if (NULL == kv) {
+                    PMIX_VALUE_RELEASE(val);
+                    return PMIX_ERR_NOMEM;
+                }
+                kv->value = val;
+                pmix_list_append(kvs, &kv->super);
+                return PMIX_SUCCESS;
+            }
             info = (pmix_info_t*)val->data.darray->array;
             ninfo = val->data.darray->size;
             for (n=0; n < ninfo; n++) {
                 /* if the rank is UNDEF, then we don't want
                  * anything that starts with "pmix" */
-                if (skip_genvals &&
+                if (1 == skip_genvals &&
                     0 == strncmp(info[n].key, "pmix", 4)) {
                     continue;
                 }
@@ -2314,14 +2360,14 @@ static pmix_status_t hash_fetch(const pmix_proc_t *proc,
 {
     pmix_job_t *trk, *t;
     pmix_status_t rc;
-    pmix_value_t *val;
     pmix_kval_t *kv, *kvptr;
-    pmix_info_t *info;
-    size_t n, ninfo;
+    pmix_info_t *info, *iptr;
+    size_t n, ninfo, niptr;
     pmix_hash_table_t *ht;
     pmix_session_t *sptr;
     uint32_t sid;
     pmix_rank_t rnk;
+    pmix_list_t rkvs;
 
     pmix_output_verbose(2, pmix_gds_base_framework.framework_output,
                         "%s pmix:gds:hash fetch %s for proc %s on scope %s",
@@ -2346,48 +2392,56 @@ static pmix_status_t hash_fetch(const pmix_proc_t *proc,
             /* let the caller know */
             return PMIX_ERR_INVALID_NAMESPACE;
         }
-        /* the job data is stored on the internal hash table */
-        ht = &trk->internal;
         /* fetch all values from the hash table tied to rank=wildcard */
-        val = NULL;
-        rc = pmix_hash_fetch(ht, PMIX_RANK_WILDCARD, NULL, &val);
-        if (PMIX_SUCCESS != rc) {
-            if (NULL != val) {
-                PMIX_VALUE_RELEASE(val);
-            }
-            return rc;
-        }
-        if (NULL == val) {
-            return PMIX_ERR_NOT_FOUND;
-        }
-        /* the data is returned in a pmix_data_array_t of pmix_info_t
-         * structs. cycle thru and transfer them to the list */
-        if (PMIX_DATA_ARRAY != val->type ||
-            NULL == val->data.darray ||
-            PMIX_INFO != val->data.darray->type) {
-            PMIX_VALUE_RELEASE(val);
-            return PMIX_ERR_INVALID_VAL;
-        }
-        info = (pmix_info_t*)val->data.darray->array;
-        ninfo = val->data.darray->size;
-        for (n=0; n < ninfo; n++) {
+        dohash(&trk->internal, NULL, PMIX_RANK_WILDCARD, 0, kvs);
+        /* also need to add any job-level info */
+        PMIX_LIST_FOREACH(kvptr, &trk->jobinfo, pmix_kval_t) {
             kv = PMIX_NEW(pmix_kval_t);
-            if (NULL == kv) {
-                rc = PMIX_ERR_NOMEM;
-                PMIX_VALUE_RELEASE(val);
-                return rc;
-            }
-            kv->key = strdup(info[n].key);
-            PMIX_VALUE_XFER(rc, kv->value, &info[n].value);
+            kv->key = strdup(kvptr->key);
+            kv->value = (pmix_value_t*)malloc(sizeof(pmix_value_t));
+            PMIX_VALUE_XFER(rc, kv->value, kvptr->value);
             if (PMIX_SUCCESS != rc) {
-                PMIX_ERROR_LOG(rc);
                 PMIX_RELEASE(kv);
-                PMIX_VALUE_RELEASE(val);
                 return rc;
             }
             pmix_list_append(kvs, &kv->super);
         }
-        PMIX_VALUE_RELEASE(val);
+        /* finally, we need the job-level info for each rank in the job */
+        for (rnk=0; rnk < trk->nptr->nprocs; rnk++) {
+            PMIX_CONSTRUCT(&rkvs, pmix_list_t);
+            rc = dohash(&trk->internal, NULL, rnk, 2, &rkvs);
+            if (PMIX_ERR_NOMEM == rc) {
+                return rc;
+            }
+            if (0 == pmix_list_get_size(&rkvs)) {
+                PMIX_DESTRUCT(&rkvs);
+                continue;
+            }
+            /* should only have one entry on list */
+            kvptr = (pmix_kval_t*)pmix_list_get_first(&rkvs);
+            /* we have to assemble the results into a proc blob
+             * so the remote end will know what to do with it */
+            info = (pmix_info_t*)kvptr->value->data.darray->array;
+            ninfo = kvptr->value->data.darray->size;
+            /* setup to return the result */
+            kv = PMIX_NEW(pmix_kval_t);
+            kv->key = strdup(PMIX_PROC_DATA);
+            kv->value = (pmix_value_t*)malloc(sizeof(pmix_value_t));
+            kv->value->type = PMIX_DATA_ARRAY;
+            niptr = ninfo + 1;  // need space for the rank
+            PMIX_DATA_ARRAY_CREATE(kv->value->data.darray, niptr, PMIX_INFO);
+            iptr = (pmix_info_t*)kv->value->data.darray->array;
+            /* start with the rank */
+            PMIX_INFO_LOAD(&iptr[0], PMIX_RANK, &rnk, PMIX_PROC_RANK);
+            /* now transfer rest of data across */
+            for (n=0; n < ninfo; n++) {
+                PMIX_INFO_XFER(&iptr[n+1], &info[n]);
+            }
+            /* add to the results */
+            pmix_list_append(kvs, &kv->super);
+            /* release the search result */
+            PMIX_LIST_DESTRUCT(&rkvs);
+        }
         return PMIX_SUCCESS;
     }
 

@@ -3,7 +3,7 @@
  *                         All rights reserved.
  * Copyright (c) 2017      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2017-2018 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2017-2019 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -82,9 +82,9 @@ static int _mmap_segment_create(pmix_pshmem_seg_t *sm_seg, const char *file_name
         if (ENOSPC == rc) {
             rc = PMIX_ERR_OUT_OF_RESOURCE;
             goto out;
-        } else if ((ENOTSUP != rc)
+        } else if (EINVAL != rc && ENOTSUP != rc
 #ifdef EOPNOTSUPP
-                            && (EOPNOTSUPP != rc)
+                            && EOPNOTSUPP != rc
 #endif
         ){
             rc = PMIX_ERROR;

@@ -498,7 +498,7 @@ static pmix_server_trkr_t* new_tracker(char *id, pmix_proc_t *procs,
         }
 
         trk->nlocal += ns_local;
-        if (!ns_local) {
+        if (0 == ns_local) {
             trk->local = false;
         } else if (PMIX_RANK_WILDCARD == procs[i].rank) {
             /* If proc is a wildcard we need to additionally check
@@ -1001,7 +1001,7 @@ pmix_status_t pmix_server_fence(pmix_server_caddy_t *cd,
     if (trk->def_complete &&
         pmix_list_get_size(&trk->local_cbs) == trk->nlocal) {
         pmix_output_verbose(2, pmix_server_globals.fence_output,
-                            "fence complete");
+                            "fence LOCALLY complete");
         /* if this is a purely local fence (i.e., all participants are local),
          * then it is done and we notify accordingly */
         if (trk->local) {

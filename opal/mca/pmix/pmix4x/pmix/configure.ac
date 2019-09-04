@@ -287,7 +287,8 @@ AC_SUBST([libmca_common_dstore_so_version])
 AC_CONFIG_FILES(pmix_config_prefix[contrib/Makefile]
                 pmix_config_prefix[examples/Makefile]
                 pmix_config_prefix[test/Makefile]
-                pmix_config_prefix[test/simple/Makefile])
+                pmix_config_prefix[test/simple/Makefile]
+                pmix_config_prefix[test/python/Makefile])
 
 pmix_show_title "Configuration complete"
 

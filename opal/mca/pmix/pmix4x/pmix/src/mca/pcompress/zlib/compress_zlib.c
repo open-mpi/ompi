@@ -82,7 +82,7 @@ bool pmix_compress_zlib_compress_block(char *instring,
 
     rc = deflate (&strm, Z_FINISH);
     deflateEnd (&strm);
-    if (Z_OK != rc) {
+    if (Z_OK != rc && Z_STREAM_END != rc) {
         free(tmp);
         return false;
     }
