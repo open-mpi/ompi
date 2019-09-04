@@ -34,6 +34,7 @@ typedef struct ompi_osc_ucx_component {
     int num_incomplete_req_ops;
     int num_modules;
     bool no_locks; /* Default value of the no_locks info key for new windows */
+    bool acc_single_intrinsic;
     unsigned int priority;
 } ompi_osc_ucx_component_t;
 
@@ -115,6 +116,7 @@ typedef struct ompi_osc_ucx_module {
     int *start_grp_ranks;
     bool lock_all_is_nocheck;
     bool no_locks;
+    bool acc_single_intrinsic;
     opal_common_ucx_ctx_t *ctx;
     opal_common_ucx_wpmem_t *mem;
     opal_common_ucx_wpmem_t *state_mem;
