@@ -12,7 +12,7 @@
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
+ * Copyright (c) 2016-2019 IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -61,6 +61,24 @@ int MPI_File_set_info(MPI_File fh, MPI_Info info)
     }
 
     OPAL_CR_ENTER_LIBRARY();
+
+// Some components we're still letting handle info internally, eg romio321.
+// Components that want to handle it themselves will fill in the get/set
+// info function pointers, components that don't will use NULL.
+    if (fh->f_io_selected_module.v2_0_0.io_module_file_set_info != NULL) {
+        int rc;
+        switch (fh->f_io_version) {
+        case MCA_IO_BASE_V_2_0_0:
+            rc = fh->f_io_selected_module.v2_0_0.
+              io_module_file_set_info(fh, info);
+            break;
+
+        default:
+            rc = MPI_ERR_INTERN;
+            break;
+        }
+        OMPI_ERRHANDLER_RETURN(rc, fh, rc, FUNC_NAME);
+    }
 
     ret = opal_infosubscribe_change_info(&fh->super, &info->super);
 
