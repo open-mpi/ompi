@@ -603,7 +603,7 @@ int orte_util_pass_node_info(opal_buffer_t *buffer)
         } else {
             /* mark that this was not compressed */
             compressed = false;
-            bo.bytes = bucket.base_ptr;
+            bo.bytes = (uint8_t*)bucket.base_ptr;
             bo.size = bucket.bytes_used;
         }
         /* indicate compression */
