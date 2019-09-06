@@ -171,7 +171,7 @@ int mca_common_ompio_file_open (ompi_communicator_t *comm,
         ** are used by his application.	
         */
 	if ( NULL != ompio_fh->f_sharedfp ) {
-	    ret = ompio_fh->f_sharedfp->sharedfp_file_open(comm,
+	    ret = ompio_fh->f_sharedfp->sharedfp_file_open(ompio_fh->f_comm,
 							   filename,
 							   amode,
 							   info,
@@ -367,11 +367,8 @@ int mca_common_ompio_file_close (ompio_file_t *ompio_fh)
 	ompi_datatype_destroy (&ompio_fh->f_orig_filetype);
     }
 
-
-    if (MPI_COMM_NULL != ompio_fh->f_comm && !(ompio_fh->f_flags & OMPIO_SHAREDFP_IS_SET) )  {
-        ompi_comm_free (&ompio_fh->f_comm);
-    }
-
+    ompi_comm_free (&ompio_fh->f_comm);
+        
     return ret;
 }
 
