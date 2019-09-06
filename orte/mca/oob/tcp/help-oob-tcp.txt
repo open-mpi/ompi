@@ -10,8 +10,8 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
-# Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
+# Copyright (c) 2015-2018 Cisco Systems, Inc.  All rights reserved
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -113,3 +113,27 @@ The connection was rejected.
 Static ports were requested while orte_fwd_mpirun_port was set.
 Both options cannot be simultaneously set. Please either set
 orte_fwd_mpirun_port=false or remove any static port directives.
+#
+[version mismatch]
+Open MPI detected a mismatch in versions between two processes.  This
+typically means that you executed "mpirun" (or "mpiexec") from one
+version of Open MPI on on node, but your default path on one of the
+other nodes upon which you launched found a different version of Open
+MPI.
+
+Open MPI only supports running exactly the same version between all
+processes in a single job.
+
+This will almost certainly cause unpredictable behavior, and may end
+up aborting your job.
+
+  Local host:             %s
+  Local process name:     %s
+  Local Open MPI version: %s
+  Peer host:              %s
+  Peer process name:      %s
+  Peer Open MPI version:  %s
+#
+[no-listeners]
+No sockets were able to be opened on the available protocols
+(IPv4 and/or IPv6). Please check your network and retry.
