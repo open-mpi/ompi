@@ -60,7 +60,7 @@ int32_t ompi_datatype_number_of_predefined_data = 0;
 ompi_predefined_datatype_t ompi_mpi_datatype_null =
     {
         {
-            OPAL_DATATYPE_INITIALIZER_EMPTY(OMPI_DATATYPE_FLAG_PREDEFINED),
+            OPAL_DATATYPE_INITIALIZER_EMPTY(OMPI_DATATYPE_FLAG_PREDEFINED|OPAL_DATATYPE_FLAG_CONTIGUOUS),
             OMPI_DATATYPE_EMPTY_DATA(EMPTY),
         },
         {0, } /* padding */
