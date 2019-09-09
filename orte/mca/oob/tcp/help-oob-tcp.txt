@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
+# Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
 # Copyright (c) 2015-2018 Cisco Systems, Inc.  All rights reserved
 # $COPYRIGHT$
 #
@@ -132,3 +132,7 @@ up aborting your job.
   Peer host:              %s
   Peer process name:      %s
   Peer Open MPI version:  %s
+#
+[no-listeners]
+No sockets were able to be opened on the available protocols
+(IPv4 and/or IPv6). Please check your network and retry.
