@@ -121,6 +121,7 @@ opal_pack_homogeneous_contig_with_gaps_function( opal_convertor_t* pConv,
      * how much we should jump between elements.
      */
     assert( (pData->flags & OPAL_DATATYPE_FLAG_CONTIGUOUS) && ((ptrdiff_t)pData->size != extent) );
+    assert( pData->opt_desc.used <= 1 );
     DO_DEBUG( opal_output( 0, "pack_homogeneous_contig( pBaseBuf %p, iov_count %d )\n",
                            (void*)pConv->pBaseBuf, *out_size ); );
     if( stack[1].type != opal_datatype_uint1.id ) {
