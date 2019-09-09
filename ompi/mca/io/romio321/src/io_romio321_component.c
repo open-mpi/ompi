@@ -13,8 +13,8 @@
  * Copyright (c) 2008-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2015-2017 Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015-2019 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
@@ -249,9 +249,7 @@ static int delete_select(const char *filename, struct opal_info_t *info,
     opal_info_t *opal_info = &(ompi_info->super);
     opal_info_dup (info, &opal_info);
 
-    OPAL_THREAD_LOCK (&mca_io_romio321_mutex);
     ret = ROMIO_PREFIX(MPI_File_delete)(filename, ompi_info);
-    OPAL_THREAD_UNLOCK (&mca_io_romio321_mutex);
 
     ompi_info_free(&ompi_info);
     return ret;
@@ -267,10 +265,18 @@ register_datarep(const char * datarep,
 {
     int ret;
 
-    OPAL_THREAD_LOCK(&mca_io_romio321_mutex);
     ret = ROMIO_PREFIX(MPI_Register_datarep(datarep, read_fn, write_fn,
                                             extent_fn, state));
-    OPAL_THREAD_UNLOCK(&mca_io_romio321_mutex);
 
     return ret;
+}
+
+void mca_io_romio321_lock()
+{
+    OPAL_THREAD_LOCK(&mca_io_romio321_mutex);
+}
+
+void mca_io_romio321_unlock()
+{
+    OPAL_THREAD_UNLOCK(&mca_io_romio321_mutex);
 }

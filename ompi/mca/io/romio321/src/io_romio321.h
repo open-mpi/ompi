@@ -293,6 +293,10 @@ int mca_io_romio321_file_get_atomicity (struct ompi_file_t *fh,
                                      int *flag);
 int mca_io_romio321_file_sync (struct ompi_file_t *fh);
 
+void mca_io_romio321_lock(void);
+
+void mca_io_romio321_unlock(void);
+
 /* End Prototypes */
 
 END_C_DECLS

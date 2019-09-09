@@ -35,8 +35,10 @@
    error reporting features provided by MPICH must implement these 
    four functions.  Defining these as empty should not change the behavior 
    of correct programs */
-#define ROMIO_THREAD_CS_ENTER()
-#define ROMIO_THREAD_CS_EXIT()
+extern void mca_io_romio321_lock(void);
+extern void mca_io_romio321_unlock(void);
+#define ROMIO_THREAD_CS_ENTER() mca_io_romio321_lock()
+#define ROMIO_THREAD_CS_EXIT() mca_io_romio321_unlock()
 #define ROMIO_THREAD_CS_YIELD()
 /* The MPI_DATATYPE_ISCOMMITTED macro now always sets err_=0.
    This is an optimistic approach for Open MPI, but it is likely other
