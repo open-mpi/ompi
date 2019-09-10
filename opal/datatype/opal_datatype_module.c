@@ -56,7 +56,7 @@ extern int opal_cuda_verbose;
  * into an array, which is initialized at runtime.
  * Everything is constant.
  */
-OPAL_DECLSPEC const opal_datatype_t opal_datatype_empty =       OPAL_DATATYPE_INITIALIZER_EMPTY(0);
+OPAL_DECLSPEC const opal_datatype_t opal_datatype_empty =       OPAL_DATATYPE_INITIALIZER_EMPTY(OPAL_DATATYPE_FLAG_CONTIGUOUS);
 
 OPAL_DECLSPEC const opal_datatype_t opal_datatype_loop =        OPAL_DATATYPE_INITIALIZER_LOOP(0);
 OPAL_DECLSPEC const opal_datatype_t opal_datatype_end_loop =    OPAL_DATATYPE_INITIALIZER_END_LOOP(0);
