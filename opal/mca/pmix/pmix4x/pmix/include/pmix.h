@@ -474,7 +474,8 @@ PMIX_EXPORT pmix_status_t PMIx_Log_nb(const pmix_info_t data[], size_t ndata,
  *   previously released is included.
  */
 PMIX_EXPORT pmix_status_t PMIx_Allocation_request(pmix_alloc_directive_t directive,
-                                                  pmix_info_t *info, size_t ninfo);
+                                                  pmix_info_t *info, size_t ninfo,
+                                                  pmix_info_t **results, size_t *nresults);
 
 PMIX_EXPORT pmix_status_t PMIx_Allocation_request_nb(pmix_alloc_directive_t directive,
                                                      pmix_info_t *info, size_t ninfo,

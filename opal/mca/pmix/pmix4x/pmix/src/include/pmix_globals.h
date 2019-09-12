@@ -133,16 +133,6 @@ typedef enum {
     PMIX_COLLECT_MAX
 } pmix_collect_t;
 
-/* define a set of flags indicating the level
- * of information being stored/requested */
-typedef enum {
-    PMIX_LEVEL_UNDEF,
-    PMIX_LEVEL_SESSION,
-    PMIX_LEVEL_JOB,
-    PMIX_LEVEL_APP,
-    PMIX_LEVEL_NODE
-} pmix_level_t;
-
 /****    PEER STRUCTURES    ****/
 
 /* clients can only talk to their server, and servers are
@@ -416,7 +406,6 @@ typedef struct {
     pmix_list_t kvs;
     bool copy;
     bool timer_running;
-    pmix_level_t level;
 } pmix_cb_t;
 PMIX_CLASS_DECLARATION(pmix_cb_t);
 

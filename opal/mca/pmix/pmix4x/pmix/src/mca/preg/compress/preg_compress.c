@@ -61,8 +61,6 @@ pmix_preg_module_t pmix_preg_compress_module = {
     .generate_ppn = generate_ppn,
     .parse_nodes = parse_nodes,
     .parse_procs = parse_procs,
-    .resolve_peers = pmix_preg_base_std_resolve_peers,
-    .resolve_nodes = pmix_preg_base_std_resolve_nodes,
     .copy = copy,
     .pack = pack,
     .unpack = unpack
@@ -97,7 +95,6 @@ static pmix_status_t generate_node_regex(const char *input,
     memcpy(&result[6 + strlen(slen) + 1], tmp, len);
     free(tmp);
     free(slen);
-
     *regexp = result;
     return PMIX_SUCCESS;
 }
@@ -150,9 +147,6 @@ static pmix_status_t parse_nodes(const char *regexp,
 
     len = strtoul(&regexp[6], &ptr, 10);
     ++ptr;  // step over NULL
-    if (NULL == ptr) {
-        return PMIX_ERR_BAD_PARAM;
-    }
     /* malloc the space */
     tmp = malloc(len);
     if (NULL == tmp) {

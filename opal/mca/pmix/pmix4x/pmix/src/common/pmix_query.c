@@ -439,7 +439,22 @@ static void acb(pmix_status_t status,
                 void *release_cbdata)
 {
     pmix_cb_t *cb = (pmix_cb_t*)cbdata;
+    size_t n;
+
     cb->status = status;
+    if (NULL != info) {
+        PMIX_INFO_CREATE(cb->info, ninfo);
+        if (NULL == cb->info) {
+            cb->status = PMIX_ERR_NOMEM;
+            goto done;
+        }
+        cb->ninfo = ninfo;
+        for (n=0; n < ninfo; n++) {
+            PMIX_INFO_XFER(&cb->info[n], &info[n]);
+        }
+    }
+
+  done:
     if (NULL != release_fn) {
         release_fn(release_cbdata);
     }
@@ -447,7 +462,8 @@ static void acb(pmix_status_t status,
 }
 
 PMIX_EXPORT pmix_status_t PMIx_Allocation_request(pmix_alloc_directive_t directive,
-                                                  pmix_info_t *info, size_t ninfo)
+                                                  pmix_info_t *info, size_t ninfo,
+                                                  pmix_info_t **results, size_t *nresults)
 {
     pmix_cb_t cb;
     pmix_status_t rc;
@@ -463,6 +479,10 @@ PMIX_EXPORT pmix_status_t PMIx_Allocation_request(pmix_alloc_directive_t directi
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "%s pmix:allocate", PMIX_NAME_PRINT(&pmix_globals.myid));
 
+    /* set the default response */
+    *results = NULL;
+    *nresults = 0;
+
     /* create a callback object as we need to pass it to the
      * recv routine so we know which callback to use when
      * the return message is recvd */
@@ -476,6 +496,13 @@ PMIX_EXPORT pmix_status_t PMIx_Allocation_request(pmix_alloc_directive_t directi
     /* wait for the operation to complete */
     PMIX_WAIT_THREAD(&cb.lock);
     rc = cb.status;
+    if (NULL != cb.info) {
+        *results = cb.info;
+        *nresults = cb.ninfo;
+        /* protect the data */
+        cb.info = NULL;
+        cb.ninfo = 0;
+    }
     PMIX_DESTRUCT(&cb);
 
     pmix_output_verbose(2, pmix_globals.debug_output,

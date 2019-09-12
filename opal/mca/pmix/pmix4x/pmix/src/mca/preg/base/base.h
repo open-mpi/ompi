@@ -85,24 +85,11 @@ PMIX_EXPORT pmix_status_t pmix_preg_base_parse_nodes(const char *regexp,
                                                      char ***names);
 PMIX_EXPORT pmix_status_t pmix_preg_base_parse_procs(const char *regexp,
                                                      char ***procs);
-PMIX_EXPORT pmix_status_t pmix_preg_base_resolve_peers(const char *nodename,
-                                                       const char *nspace,
-                                                       pmix_proc_t **procs, size_t *nprocs);
-PMIX_EXPORT pmix_status_t pmix_preg_base_resolve_nodes(const char *nspace,
-                                                       char **nodelist);
-
 PMIX_EXPORT pmix_status_t pmix_preg_base_copy(char **dest, size_t *len, const char *input);
 
 PMIX_EXPORT pmix_status_t pmix_preg_base_pack(pmix_buffer_t *buffer, const char *input);
 
 PMIX_EXPORT pmix_status_t pmix_preg_base_unpack(pmix_buffer_t *buffer, char **regex);
-
-PMIX_EXPORT pmix_status_t pmix_preg_base_std_resolve_peers(const char *nodename,
-                                                           const char *nspace,
-                                                           pmix_proc_t **procs, size_t *nprocs);
-
-PMIX_EXPORT pmix_status_t pmix_preg_base_std_resolve_nodes(const char *nspace,
-                                                           char **nodelist);
 
 END_C_DECLS
 

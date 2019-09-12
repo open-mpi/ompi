@@ -60,8 +60,6 @@ pmix_preg_module_t pmix_preg_native_module = {
     .generate_ppn = generate_ppn,
     .parse_nodes = parse_nodes,
     .parse_procs = parse_procs,
-    .resolve_peers = pmix_preg_base_std_resolve_peers,
-    .resolve_nodes = pmix_preg_base_std_resolve_nodes,
     .copy = copy,
     .pack = pack,
     .unpack = unpack
@@ -305,6 +303,13 @@ static pmix_status_t generate_node_regex(const char *input,
 
     /* assemble final result */
     tmp = pmix_argv_join(regexargs, ',');
+    /* if this results in a longer answer, then don't do it */
+    if (strlen(tmp) >= strlen(input)) {
+        free(tmp);
+        pmix_argv_free(regexargs);
+        PMIX_DESTRUCT(&vids);
+        return PMIX_ERR_TAKE_NEXT_OPTION;
+    }
     if (0 > asprintf(regexp, "pmix[%s]", tmp)) {
         return PMIX_ERR_NOMEM;
     }
@@ -427,6 +432,13 @@ static pmix_status_t generate_ppn(const char *input,
 
     /* replace the final semi-colon */
     tmp[strlen(tmp)-1] = ']';
+
+    /* if this results in a longer answer, then don't do it */
+    if (strlen(tmp) > strlen(input)) {
+        free(tmp);
+        PMIX_LIST_DESTRUCT(&nodes);
+        return PMIX_ERR_TAKE_NEXT_OPTION;
+    }
 
     /* assemble final result */
     *regexp = tmp;

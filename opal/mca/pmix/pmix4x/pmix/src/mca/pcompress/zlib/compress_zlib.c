@@ -69,7 +69,15 @@ bool pmix_compress_zlib_compress_block(char *instring,
 
     /* get an upper bound on the required output storage */
     len = deflateBound(&strm, inlen);
+    /* if this isn't going to result in a smaller footprint,
+     * then don't do it */
+    if (len >= inlen) {
+        (void)deflateEnd(&strm);
+        return false;
+    }
+
     if (NULL == (tmp = (uint8_t*)malloc(len))) {
+        (void)deflateEnd(&strm);
         return false;
     }
     strm.next_in = (uint8_t*)instring;
@@ -81,7 +89,7 @@ bool pmix_compress_zlib_compress_block(char *instring,
     strm.next_out = tmp;
 
     rc = deflate (&strm, Z_FINISH);
-    deflateEnd (&strm);
+    (void)deflateEnd (&strm);
     if (Z_OK != rc && Z_STREAM_END != rc) {
         free(tmp);
         return false;

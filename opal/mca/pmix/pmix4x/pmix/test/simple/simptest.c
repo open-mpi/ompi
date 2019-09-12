@@ -200,6 +200,7 @@ static bool istimeouttest = false;
 static mylock_t globallock;
 static bool nettest = false;
 static bool arrays = false;
+static bool model = false;
 
 static void set_namespace(int nprocs, char *ranks, char *nspace,
                           pmix_op_cbfunc_t cbfunc, myxfer_t *x);
@@ -442,6 +443,10 @@ int main(int argc, char **argv)
                    0 == strcmp("--arrays", argv[n])) {
             /* test network support */
             arrays = true;
+        }  else if (0 == strcmp("-model", argv[n]) ||
+                   0 == strcmp("--model", argv[n])) {
+            /* test network support */
+            model = true;
         }
     }
     if (NULL == executable) {
@@ -580,6 +585,11 @@ int main(int argc, char **argv)
     pmix_argv_free(atmp);
     x = PMIX_NEW(myxfer_t);
     set_namespace(nprocs, tmp, "foobar", opcbfunc, x);
+    /* if the nspace registration hasn't completed yet,
+     * wait for it here */
+    DEBUG_WAIT_THREAD(&x->lock);
+    free(tmp);
+    PMIX_RELEASE(x);
 
     /* set common argv and env */
     client_env = pmix_argv_copy(environ);
@@ -604,11 +614,6 @@ int main(int argc, char **argv)
     }
     DEBUG_DESTRUCT_LOCK(&mylock);
 
-    /* if the nspace registration hasn't completed yet,
-     * wait for it here */
-    DEBUG_WAIT_THREAD(&x->lock);
-    free(tmp);
-    PMIX_RELEASE(x);
 
     /* fork/exec the test */
     (void)strncpy(proc.nspace, "foobar", PMIX_MAX_NSLEN);
@@ -773,6 +778,9 @@ static void set_namespace(int nprocs, char *ranks, char *nspace,
     } else {
         x->ninfo = 16 + nprocs;
     }
+    if (model) {
+      x->ninfo++;
+    }
 
     PMIX_INFO_CREATE(x->info, x->ninfo);
 
@@ -927,6 +935,13 @@ static void set_namespace(int nprocs, char *ranks, char *nspace,
     x->info[n].value.type = PMIX_PROC_RANK;
     x->info[n].value.data.uint32 = 0;
     ++n;
+
+    if (model) {
+        (void)strncpy(x->info[n].key, PMIX_PROGRAMMING_MODEL, PMIX_MAX_KEYLEN);
+        x->info[n].value.type = PMIX_STRING;
+        x->info[n].value.data.string = strdup("ompi");
+        ++n;
+    }
 
     /* add the proc-specific data */
     for (m=0; m < nprocs; m++) {

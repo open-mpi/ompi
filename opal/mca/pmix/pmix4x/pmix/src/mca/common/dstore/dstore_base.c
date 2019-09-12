@@ -2689,7 +2689,7 @@ static pmix_status_t _store_job_info(pmix_common_dstore_ctx_t *ds_ctx, ns_map_da
     }
 
     PMIX_LIST_FOREACH(kv, &cb.kvs, pmix_kval_t) {
-      if ((PMIX_PROC_IS_V1(_client_peer(ds_ctx)) || PMIX_PROC_IS_V20(_client_peer(ds_ctx))) &&
+        if ((PMIX_PROC_IS_V1(_client_peer(ds_ctx)) || PMIX_PROC_IS_V20(_client_peer(ds_ctx))) &&
            0 != strncmp("pmix.", kv->key, 4) &&
            kv->value->type == PMIX_DATA_ARRAY) {
             pmix_info_t *info;

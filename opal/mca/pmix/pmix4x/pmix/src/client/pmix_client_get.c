@@ -86,6 +86,7 @@ PMIX_EXPORT pmix_status_t PMIx_Get(const pmix_proc_t *proc,
 {
     pmix_cb_t *cb;
     pmix_status_t rc;
+    size_t n;
 
     PMIX_ACQUIRE_THREAD(&pmix_global_lock);
 
@@ -100,13 +101,25 @@ PMIX_EXPORT pmix_status_t PMIx_Get(const pmix_proc_t *proc,
                         (NULL == proc) ? "NULL" : PMIX_NAME_PRINT(proc),
                         (NULL == key) ? "NULL" : key);
 
-    /* try to get data directly, without threadshift */
-    if (PMIX_RANK_UNDEF != proc->rank && NULL != key) {
-        if (PMIX_SUCCESS == (rc = _getfn_fastpath(proc, key, info, ninfo, val))) {
-            goto done;
-        }
+    if (PMIX_RANK_UNDEF == proc->rank || NULL == key) {
+        goto doget;
     }
 
+    /* see if they are requesting session, node, or app-level info */
+    for (n=0; n < ninfo; n++) {
+        if (PMIX_CHECK_KEY(info, PMIX_NODE_INFO) ||
+            PMIX_CHECK_KEY(info, PMIX_APP_INFO) ||
+            PMIX_CHECK_KEY(info, PMIX_SESSION_INFO)) {
+            goto doget;
+        }
+
+    }
+    /* try to get data directly, without threadshift */
+    if (PMIX_SUCCESS == (rc = _getfn_fastpath(proc, key, info, ninfo, val))) {
+        goto done;
+    }
+
+  doget:
     /* create a callback object as we need to pass it to the
      * recv routine so we know which callback to use when
      * the return message is recvd */
@@ -598,14 +611,6 @@ static void _getnbfn(int fd, short flags, void *cbdata)
                 }
             } else if (PMIX_CHECK_KEY(&cb->info[n], PMIX_DATA_SCOPE)) {
                 cb->scope = cb->info[n].value.data.scope;
-            } else if (PMIX_CHECK_KEY(&cb->info[n], PMIX_SESSION_INFO)) {
-                cb->level = PMIX_LEVEL_SESSION;
-            } else if (PMIX_CHECK_KEY(&cb->info[n], PMIX_JOB_INFO)) {
-                cb->level = PMIX_LEVEL_JOB;
-            } else if (PMIX_CHECK_KEY(&cb->info[n], PMIX_APP_INFO)) {
-                cb->level = PMIX_LEVEL_APP;
-            } else if (PMIX_CHECK_KEY(&cb->info[n], PMIX_NODE_INFO)) {
-                cb->level = PMIX_LEVEL_NODE;
             }
         }
     }
@@ -765,9 +770,9 @@ static void _getnbfn(int fd, short flags, void *cbdata)
     }
 
     pmix_output_verbose(2, pmix_client_globals.get_output,
-                        "%s REQUESTING DATA FROM SERVER FOR %s KEY %s",
+                        "%s REQUESTING DATA FROM SERVER FOR %s:%s KEY %s",
                         PMIX_NAME_PRINT(&pmix_globals.myid),
-                        PMIX_NAME_PRINT(cb->proc), cb->key);
+                        cb->proc->nspace, PMIX_RANK_PRINT(proc.rank), cb->key);
 
     /* track the callback object */
     pmix_list_append(&pmix_client_globals.pending_requests, &cb->super);

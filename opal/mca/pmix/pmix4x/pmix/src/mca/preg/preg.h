@@ -79,13 +79,6 @@ typedef pmix_status_t (*pmix_preg_base_module_parse_nodes_fn_t)(const char *rege
 typedef pmix_status_t (*pmix_preg_base_module_parse_procs_fn_t)(const char *regexp,
                                                                 char ***procs);
 
-typedef pmix_status_t (*pmix_preg_base_module_resolve_peers_fn_t)(const char *nodename,
-                                                                  const char *nspace,
-                                                                  pmix_proc_t **procs, size_t *nprocs);
-
-typedef pmix_status_t (*pmix_preg_base_module_resolve_nodes_fn_t)(const char *nspace,
-                                                                  char **nodelist);
-
 typedef pmix_status_t (*pmix_preg_base_module_copy_fn_t)(char **dest, size_t *len, const char *input);
 
 typedef pmix_status_t (*pmix_preg_base_module_pack_fn_t)(pmix_buffer_t *buffer, const char *regex);
@@ -101,8 +94,6 @@ typedef struct {
     pmix_preg_base_module_generate_ppn_fn_t             generate_ppn;
     pmix_preg_base_module_parse_nodes_fn_t              parse_nodes;
     pmix_preg_base_module_parse_procs_fn_t              parse_procs;
-    pmix_preg_base_module_resolve_peers_fn_t            resolve_peers;
-    pmix_preg_base_module_resolve_nodes_fn_t            resolve_nodes;
     pmix_preg_base_module_copy_fn_t                     copy;
     pmix_preg_base_module_pack_fn_t                     pack;
     pmix_preg_base_module_unpack_fn_t                   unpack;
