@@ -998,6 +998,7 @@ int ompi_osc_ucx_rput(const void *origin_addr, int origin_count,
                                          sizeof(uint64_t), remote_addr,
                                          req_completion, ucx_req);
     if (ret != OMPI_SUCCESS) {
+        OMPI_OSC_UCX_REQUEST_RETURN(ucx_req);
         return ret;
     }
 
@@ -1049,6 +1050,7 @@ int ompi_osc_ucx_rget(void *origin_addr, int origin_count,
                                          sizeof(uint64_t), remote_addr,
                                          req_completion, ucx_req);
     if (ret != OMPI_SUCCESS) {
+        OMPI_OSC_UCX_REQUEST_RETURN(ucx_req);
         return ret;
     }
 
@@ -1077,6 +1079,7 @@ int ompi_osc_ucx_raccumulate(const void *origin_addr, int origin_count,
     ret = ompi_osc_ucx_accumulate(origin_addr, origin_count, origin_dt, target, target_disp,
                                   target_count, target_dt, op, win);
     if (ret != OMPI_SUCCESS) {
+        OMPI_OSC_UCX_REQUEST_RETURN(ucx_req);
         return ret;
     }
 
@@ -1111,6 +1114,7 @@ int ompi_osc_ucx_rget_accumulate(const void *origin_addr, int origin_count,
                                       target, target_disp, target_count,
                                       target_datatype, op, win);
     if (ret != OMPI_SUCCESS) {
+        OMPI_OSC_UCX_REQUEST_RETURN(ucx_req);
         return ret;
     }
 
