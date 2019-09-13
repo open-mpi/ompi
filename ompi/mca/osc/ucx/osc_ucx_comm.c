@@ -417,21 +417,22 @@ static int atomic_op_cswap(
     for (int i = 0; i < origin_count; ++i) {
 
         uint64_t tmp_val;
+        uint64_t target_val = 0;
+
+        // get the value from the origin
+        ret = opal_common_ucx_wpmem_putget(module->mem, OPAL_COMMON_UCX_GET,
+                                            target, &target_val, origin_dt_bytes,
+                                            remote_addr);
+        if (ret != OMPI_SUCCESS) {
+            return ret;
+        }
+
+        ret = opal_common_ucx_wpmem_flush(module->mem, OPAL_COMMON_UCX_SCOPE_EP, target);
+        if (ret != OMPI_SUCCESS) {
+            return ret;
+          }
+
         do {
-            uint64_t target_val = 0;
-
-            // get the value from the origin
-            ret = opal_common_ucx_wpmem_putget(module->mem, OPAL_COMMON_UCX_GET,
-                                               target, &target_val, origin_dt_bytes,
-                                               remote_addr);
-            if (ret != OMPI_SUCCESS) {
-                return ret;
-            }
-
-            ret = opal_common_ucx_wpmem_flush(module->mem, OPAL_COMMON_UCX_SCOPE_EP, target);
-            if (ret != OMPI_SUCCESS) {
-                return ret;
-            }
 
             tmp_val = target_val;
             // compute the result value
