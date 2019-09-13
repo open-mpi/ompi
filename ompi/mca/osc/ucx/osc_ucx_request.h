@@ -43,7 +43,7 @@ OBJ_CLASS_DECLARATION(ompi_osc_ucx_request_t);
 
 #define OMPI_OSC_UCX_REQUEST_RETURN(req)                                \
     do {                                                                \
-        OMPI_REQUEST_FINI(&request->super);                             \
+        OMPI_REQUEST_FINI(&req->super);                                 \
         opal_free_list_return (&mca_osc_ucx_component.requests,         \
                                (opal_free_list_item_t*) req);           \
     } while (0)
