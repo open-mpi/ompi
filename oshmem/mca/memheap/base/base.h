@@ -36,13 +36,14 @@ OSHMEM_DECLSPEC int mca_memheap_base_select(void);
 #define MEMHEAP_BASE_MIN_ORDER         3                                /* forces 64 bit alignment */
 #define MEMHEAP_BASE_PAGE_ORDER        21
 #define MEMHEAP_BASE_PRIVATE_SIZE      (1ULL << MEMHEAP_BASE_PAGE_ORDER) /* should be at least the same as a huge page size */
-#define MEMHEAP_BASE_MIN_SIZE          (1ULL << MEMHEAP_BASE_PAGE_ORDER)    /* must fit into at least one huge page */
+#define MEMHEAP_BASE_MIN_SIZE          (1ULL << MEMHEAP_BASE_PAGE_ORDER) /* must fit into at least one huge page */
 
 extern int mca_memheap_base_already_opened;
 extern int mca_memheap_base_key_exchange;
 
 #define MCA_MEMHEAP_MAX_SEGMENTS    8
 #define HEAP_SEG_INDEX              0
+#define MCA_MEMHEAP_SEG_COUNT       2
 
 #define MEMHEAP_SEG_INVALID  0xFFFF
 
