@@ -808,12 +808,27 @@ int ompi_osc_ucx_compare_and_swap(const void *origin_addr, const void *compare_a
     }
 
     ompi_datatype_type_size(dt, &dt_bytes);
-    ret = opal_common_ucx_wpmem_cmpswp(module->mem,*(uint64_t *)compare_addr,
-                                     *(uint64_t *)origin_addr, target,
-                                     result_addr, dt_bytes, remote_addr);
+    if (sizeof(uint64_t) < dt_bytes) {
+        return OMPI_ERR_NOT_SUPPORTED;
+    }
+
+    uint64_t compare_val;
+    memcpy(&compare_val, compare_addr, dt_bytes);
+    memcpy(result_addr, origin_addr, dt_bytes);
+    ret = opal_common_ucx_wpmem_fetch_nb(module->mem, UCP_ATOMIC_FETCH_OP_CSWAP,
+                                         compare_val, target,
+                                         result_addr, dt_bytes, remote_addr,
+                                         NULL, NULL);
 
     if (module->acc_single_intrinsic) {
         return ret;
+    }
+
+    // fence before releasing the accumulate lock
+    ret = opal_common_ucx_wpmem_fence(module->mem);
+    if (ret != OMPI_SUCCESS) {
+        OSC_UCX_VERBOSE(1, "opal_common_ucx_mem_fence failed: %d", ret);
+        // don't return error, try to release the accumulate lock
     }
 
     return end_atomicity(module, target);
