@@ -174,7 +174,7 @@ char MPIR_attach_fifo[MPIR_MAX_PATH_LENGTH] = {0};
 int MPIR_force_to_main = 0;
 static void orte_debugger_init_before_spawn(orte_job_t *jdata);
 
-ORTE_DECLSPEC void* __opal_attribute_optnone__ MPIR_Breakpoint(void);
+ORTE_DECLSPEC void __opal_attribute_optnone__ MPIR_Breakpoint(void);
 
 /* 
  * Attempt to prevent the compiler from optimizing out
@@ -192,14 +192,26 @@ ORTE_DECLSPEC void* __opal_attribute_optnone__ MPIR_Breakpoint(void);
  * See the following git issue for more discussion:
  * https://github.com/open-mpi/ompi/issues/5501
  */
-static volatile void* volatile noop_mpir_breakpoint_ptr = NULL;
+volatile void* volatile noop_mpir_breakpoint_ptr = NULL;
 
 /*
  * Breakpoint function for parallel debuggers
  */
-void* MPIR_Breakpoint(void)
+void MPIR_Breakpoint(void)
 {
-    return noop_mpir_breakpoint_ptr;
+    /* 
+     * Actually do something with this pointer to make
+     * sure the compiler does not optimize out this function.
+     * The compiler should be forced to keep this
+     * function around due to the volatile void* type.
+     *
+     * This pointer doesn't actually do anything other than
+     * prevent unwanted optimization, and
+     * *should not* be used anywhere else in the code.
+     * So pointing this to the weeds should be OK.
+     */
+    noop_mpir_breakpoint_ptr = (volatile void *) 0x42;
+    return;
 }
 
 /* local objects */
