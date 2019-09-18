@@ -50,6 +50,7 @@ static int grequestx_progress(void) {
             }
             OPAL_THREAD_LOCK(&lock);
         }
+        in_progress = false;
     }
     OPAL_THREAD_UNLOCK(&lock);
 
