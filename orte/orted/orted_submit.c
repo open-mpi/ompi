@@ -191,7 +191,7 @@ ORTE_DECLSPEC void __opal_attribute_optnone__ MPIR_Breakpoint(void);
  * See the following git issue for more discussion:
  * https://github.com/open-mpi/ompi/issues/5501
  */
-volatile void* volatile noop_mpir_breakpoint_ptr = NULL;
+volatile void* volatile orte_noop_mpir_breakpoint_ptr = NULL;
 
 /*
  * Breakpoint function for parallel debuggers
@@ -209,7 +209,7 @@ void MPIR_Breakpoint(void)
      * *should not* be used anywhere else in the code.
      * So pointing this to the weeds should be OK.
      */
-    noop_mpir_breakpoint_ptr = (volatile void *) 0x42;
+    orte_noop_mpir_breakpoint_ptr = (volatile void *) 0x42;
     return;
 }
 
