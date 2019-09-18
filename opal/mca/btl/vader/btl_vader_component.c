@@ -21,6 +21,7 @@
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * Copyright (c) 2018      Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2019      Google, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -476,12 +477,6 @@ static void mca_btl_vader_check_single_copy (void)
         mca_btl_vader.super.btl_flags &= ~MCA_BTL_FLAGS_RDMA;
         mca_btl_vader.super.btl_get = NULL;
         mca_btl_vader.super.btl_put = NULL;
-    }
-
-    if (MCA_BTL_VADER_EMUL == mca_btl_vader_component.single_copy_mechanism) {
-        /* limit to the maximum fragment size */
-        mca_btl_vader.super.btl_put_limit = mca_btl_vader.super.btl_max_send_size - sizeof (mca_btl_vader_sc_emu_hdr_t);
-        mca_btl_vader.super.btl_get_limit = mca_btl_vader.super.btl_max_send_size - sizeof (mca_btl_vader_sc_emu_hdr_t);
     }
 }
 
