@@ -358,10 +358,14 @@ static int do_atomic_op_replace_sum(
     }
 
     ucp_atomic_fetch_op_t opcode;
+    bool is_no_op = false;
     if (op == &ompi_mpi_op_replace.op) {
         opcode = UCP_ATOMIC_FETCH_OP_SWAP;
     } else {
         opcode = UCP_ATOMIC_FETCH_OP_FADD;
+        if (op == &ompi_mpi_op_no_op.op) {
+            is_no_op = true;
+        }
     }
 
     opal_common_ucx_user_req_handler_t user_req_cb = NULL;
@@ -381,7 +385,11 @@ static int do_atomic_op_replace_sum(
                 }
             }
         }
-        memcpy(&value, origin_addr, origin_dt_bytes);
+        if (is_no_op) {
+            value = 0;
+        } else {
+            memcpy(&value, origin_addr, origin_dt_bytes);
+        }
         ret = opal_common_ucx_wpmem_fetch_nb(module->mem, opcode, value, target,
                                              result_addr ? result_addr : &(module->req_result),
                                              origin_dt_bytes, remote_addr, user_req_cb, user_req_ptr);
@@ -507,7 +515,9 @@ int do_atomic_op(
 {
     int ret;
 
-    if (op == &ompi_mpi_op_replace.op || op == &ompi_mpi_op_sum.op) {
+    if (op == &ompi_mpi_op_replace.op ||
+        op == &ompi_mpi_op_sum.op     ||
+        op == &ompi_mpi_op_no_op.op) {
         ret = do_atomic_op_replace_sum(module, op, target,
                                        origin_addr, origin_count, origin_dt,
                                        target_disp, target_count, target_dt,
