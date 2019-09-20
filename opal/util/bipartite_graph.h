@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2014      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2017      Amazon.com, Inc. or its affiliates.  All Rights
+ * Copyright (c) 2017-2019 Amazon.com, Inc. or its affiliates.  All Rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -125,6 +125,20 @@ int opal_bp_graph_add_edge(opal_bp_graph_t *g,
 int opal_bp_graph_add_vertex(opal_bp_graph_t *g,
 			     void *v_data,
 			     int *index_out);
+
+/**
+ * Get a pointer to the vertex data given the graph and vertex index
+ * associated with the vertex.
+ *
+ * @param[in]  g          graph the vertex belongs to
+ * @param[in]  v_index    integer index of the vertex
+ * @param[out] v_data_out data associated with the new vertex, may be NULL.
+ *
+ * @returns OPAL_SUCCESS or an OMPI error code
+ */
+int opal_bp_graph_get_vertex_data(opal_bp_graph_t *g,
+                                  int v_index,
+                                  void** v_data_out);
 
 /**
  * compute the order of a graph (number of vertices)
