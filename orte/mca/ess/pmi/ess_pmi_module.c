@@ -17,6 +17,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2018      Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -464,7 +465,7 @@ static int rte_init(void)
         error = "orte_state_base_select";
         goto error;
     }
-    OPAL_TIMING_ENV_NEXT(ess_base_setup, "state_framework_open");
+    OPAL_TIMING_ENV_NEXT(rte_init, "state_framework_open");
 
     /* open the errmgr */
     if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_errmgr_base_framework, 0))) {
@@ -472,7 +473,7 @@ static int rte_init(void)
         error = "orte_errmgr_base_open";
         goto error;
     }
-    OPAL_TIMING_ENV_NEXT(ess_base_setup, "errmgr_framework_open");
+    OPAL_TIMING_ENV_NEXT(rte_init, "errmgr_framework_open");
 
     /* setup my session directory */
     if (orte_create_session_dirs) {
@@ -508,7 +509,7 @@ static int rte_init(void)
             }
         }
     }
-    OPAL_TIMING_ENV_NEXT(ess_base_setup, "create_session_dirs");
+    OPAL_TIMING_ENV_NEXT(rte_init, "create_session_dirs");
 
     /* if we have info on the HNP and local daemon, process it */
     if (NULL != orte_process_info.my_hnp_uri) {
@@ -560,7 +561,7 @@ static int rte_init(void)
         error = "orte_errmgr_base_select";
         goto error;
     }
-    OPAL_TIMING_ENV_NEXT(ess_base_setup, "errmgr_select");
+    OPAL_TIMING_ENV_NEXT(rte_init, "errmgr_select");
 
     /* setup process binding */
     if (ORTE_SUCCESS != (ret = orte_ess_base_proc_binding())) {
