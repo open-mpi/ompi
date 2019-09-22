@@ -126,6 +126,25 @@ mechanism if one is available. This may result in lower performance.
 
   Local host: %s
 #
+[cma-different-user-namespace-error]
+ERROR: Linux kernel CMA support was requested via the
+btl_vader_single_copy_mechanism MCA variable, but CMA support is
+not available due to different user namespaces.
+
+Your MPI job will abort now. Please select another value for
+btl_vader_single_copy_mechanism.
+
+  Local host: %s
+#
+[cma-different-user-namespace-warning]
+WARNING: The default btl_vader_single_copy_mechanism CMA is
+not available due to different user namespaces.
+
+The vader shared memory BTL will fall back on another single-copy
+mechanism if one is available. This may result in lower performance.
+
+  Local host: %s
+#
 [xpmem-make-failed]
 WARNING: Could not generate an xpmem segment id for this process'
 address space.
