@@ -16,3 +16,5 @@ unusual; your job may behave unpredictably (and/or abort) after this.
   Local host: %s
   Location: %s:%d
   Error: %s (%zd)
+[message too big]
+Message size %llu bigger than supported by selected transport. Max = %llu
