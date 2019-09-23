@@ -881,9 +881,10 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
     }
 
     /**
-     * Save the maximum inject size.
+     * Save the maximum sizes.
      */
     ompi_mtl_ofi.max_inject_size = prov->tx_attr->inject_size;
+    ompi_mtl_ofi.max_msg_size = prov->ep_attr->max_msg_size;
 
     /**
      * The user is not allowed to exceed MTL_OFI_MAX_PROG_EVENT_COUNT.

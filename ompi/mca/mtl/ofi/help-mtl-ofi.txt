@@ -75,3 +75,5 @@ recoverable and your application is likely to abort.
   Local host: %s
   Remote host: %s
   Error: %s (%d)
+[message too big]
+Message size %llu bigger than supported by selected transport. Max = %llu
