@@ -421,12 +421,21 @@ ompi_mtl_ofi_send_generic(struct mca_mtl_base_module_t *mtl,
     sep_peer_fiaddr = fi_rx_addr(endpoint->peer_fiaddr, ctxt_id, ompi_mtl_ofi.rx_ctx_bits);
 
     ompi_ret = ompi_mtl_datatype_pack(convertor, &start, &length, &free_after);
-    if (OMPI_SUCCESS != ompi_ret) return ompi_ret;
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != ompi_ret)) {
+        return ompi_ret;
+    }
 
     ofi_req.buffer = (free_after) ? start : NULL;
     ofi_req.length = length;
     ofi_req.status.MPI_ERROR = OMPI_SUCCESS;
     ofi_req.completion_count = 0;
+
+    if (OPAL_UNLIKELY(length > endpoint->mtl_ofi_module->max_msg_size)) {
+        opal_show_help("help-mtl-ofi.txt",
+            "message too big", false,
+            length, endpoint->mtl_ofi_module->max_msg_size);
+        return OMPI_ERROR;
+    }
 
     if (ofi_cq_data) {
         match_bits = mtl_ofi_create_send_tag_CQD(comm->c_contextid, tag);
@@ -553,12 +562,19 @@ ompi_mtl_ofi_isend_generic(struct mca_mtl_base_module_t *mtl,
     sep_peer_fiaddr = fi_rx_addr(endpoint->peer_fiaddr, ctxt_id, ompi_mtl_ofi.rx_ctx_bits);
 
     ompi_ret = ompi_mtl_datatype_pack(convertor, &start, &length, &free_after);
-    if (OMPI_SUCCESS != ompi_ret) return ompi_ret;
+    if (OMPI_UNLIKELY(OMPI_SUCCESS != ompi_ret)) return ompi_ret;
 
     ofi_req->buffer = (free_after) ? start : NULL;
     ofi_req->length = length;
     ofi_req->status.MPI_ERROR = OMPI_SUCCESS;
     ofi_req->completion_count = 1;
+
+    if (OPAL_UNLIKELY(length > endpoint->mtl_ofi_module->max_msg_size)) {
+        opal_show_help("help-mtl-ofi.txt",
+            "message too big", false,
+            length, endpoint->mtl_ofi_module->max_msg_size);
+        return OMPI_ERROR;
+    }
 
     if (ofi_cq_data) {
         match_bits = mtl_ofi_create_send_tag_CQD(comm->c_contextid, tag);

@@ -70,6 +70,9 @@ typedef struct mca_mtl_ofi_module_t {
     /** Maximum inject size */
     size_t max_inject_size;
 
+    /** Largest message that can be sent in a single send. */
+    size_t max_msg_size;
+
     /** Maximum number of CQ events to read in OFI Progress */
     int ofi_progress_event_count;
 
