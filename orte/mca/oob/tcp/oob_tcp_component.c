@@ -143,12 +143,8 @@ mca_oob_tcp_component_t mca_oob_tcp_component = {
  */
 static int tcp_component_open(void)
 {
-    mca_oob_tcp_component.next_base = 0;
     OBJ_CONSTRUCT(&mca_oob_tcp_component.peers, opal_hash_table_t);
     opal_hash_table_init(&mca_oob_tcp_component.peers, 32);
-    OBJ_CONSTRUCT(&mca_oob_tcp_component.ev_bases, opal_pointer_array_t);
-    opal_pointer_array_init(&mca_oob_tcp_component.ev_bases,
-                            orte_oob_base.num_threads, 256, 8);
 
     OBJ_CONSTRUCT(&mca_oob_tcp_component.listeners, opal_list_t);
     if (ORTE_PROC_IS_HNP) {
@@ -204,8 +200,6 @@ static int tcp_component_close(void)
         opal_argv_free(mca_oob_tcp_component.ipv6ports);
     }
 #endif
-
-    OBJ_DESTRUCT(&mca_oob_tcp_component.ev_bases);
 
     return ORTE_SUCCESS;
 }
@@ -663,26 +657,10 @@ static orte_rml_pathway_t* component_query_transports(void)
 static int component_startup(void)
 {
     int rc = ORTE_SUCCESS;
-    int i;
-    char *tmp;
-    opal_event_base_t *evb;
 
     opal_output_verbose(2, orte_oob_base_framework.framework_output,
                         "%s TCP STARTUP",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-
-    /* initialize state */
-    if (0 == orte_oob_base.num_threads) {
-        opal_pointer_array_add(&mca_oob_tcp_component.ev_bases, orte_oob_base.ev_base);
-    } else {
-        for (i=0; i < orte_oob_base.num_threads; i++) {
-            asprintf(&tmp, "OOB-TCP-%d", i);
-            evb = opal_progress_thread_init(tmp);
-            opal_pointer_array_add(&mca_oob_tcp_component.ev_bases, evb);
-            opal_argv_append_nosize(&mca_oob_tcp_component.ev_threads, tmp);
-            free(tmp);
-        }
-    }
 
     /* if we are a daemon/HNP, or we are a standalone app,
      * then it is possible that someone else may initiate a
@@ -710,14 +688,6 @@ static void component_shutdown(void)
     opal_output_verbose(2, orte_oob_base_framework.framework_output,
                         "%s TCP SHUTDOWN",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-
-    if (0 < orte_oob_base.num_threads) {
-        for (i=0; i < orte_oob_base.num_threads; i++) {
-            opal_progress_thread_finalize(mca_oob_tcp_component.ev_threads[i]);
-            opal_pointer_array_set_item(&mca_oob_tcp_component.ev_bases, i, NULL);
-        }
-        opal_argv_free(mca_oob_tcp_component.ev_threads);
-    }
 
     if (ORTE_PROC_IS_HNP && mca_oob_tcp_component.listen_thread_active) {
         mca_oob_tcp_component.listen_thread_active = false;
@@ -1359,7 +1329,6 @@ static char **split_and_resolve(char **orig_str, char *name)
 
 static void peer_cons(mca_oob_tcp_peer_t *peer)
 {
-    peer->ev_base = NULL;
     peer->auth_method = NULL;
     peer->sd = -1;
     OBJ_CONSTRUCT(&peer->addrs, opal_list_t);
