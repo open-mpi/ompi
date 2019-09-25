@@ -12,7 +12,7 @@
  * Copyright (c) 2006-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2010-2011 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -60,14 +60,14 @@ OBJ_CLASS_DECLARATION(mca_oob_tcp_conn_op_t);
                             ORTE_NAME_PRINT((&(p)->name)));             \
         cop = OBJ_NEW(mca_oob_tcp_conn_op_t);                           \
         cop->peer = (p);                                                \
-        ORTE_THREADSHIFT(cop, (p)->ev_base, (cbfunc), ORTE_MSG_PRI);    \
+        ORTE_THREADSHIFT(cop, orte_event_base, (cbfunc), ORTE_MSG_PRI);    \
     } while(0);
 
 #define ORTE_ACTIVATE_TCP_ACCEPT_STATE(s, a, cbfunc)            \
     do {                                                        \
         mca_oob_tcp_conn_op_t *cop;                             \
         cop = OBJ_NEW(mca_oob_tcp_conn_op_t);                   \
-        opal_event_set(orte_oob_base.ev_base, &cop->ev, s,      \
+        opal_event_set(orte_event_base, &cop->ev, s,            \
                        OPAL_EV_READ, (cbfunc), cop);            \
         opal_event_set_priority(&cop->ev, ORTE_MSG_PRI);        \
         ORTE_POST_OBJECT(cop);                                  \
@@ -84,7 +84,7 @@ OBJ_CLASS_DECLARATION(mca_oob_tcp_conn_op_t);
                             ORTE_NAME_PRINT((&(p)->name)));             \
         cop = OBJ_NEW(mca_oob_tcp_conn_op_t);                           \
         cop->peer = (p);                                                \
-        opal_event_evtimer_set((p)->ev_base,                            \
+        opal_event_evtimer_set(orte_event_base,                         \
                                &cop->ev,                                \
                                (cbfunc), cop);                          \
         ORTE_POST_OBJECT(cop);                                          \
