@@ -52,7 +52,6 @@ typedef struct {
     mca_oob_tcp_addr_t *active_addr;
     mca_oob_tcp_state_t state;
     int num_retries;
-    opal_event_base_t *ev_base; // progress thread this peer is assigned to
     opal_event_t send_event;    /**< registration with event thread for send events */
     bool send_ev_active;
     opal_event_t recv_event;    /**< registration with event thread for recv events */
@@ -88,7 +87,7 @@ OBJ_CLASS_DECLARATION(mca_oob_tcp_peer_op_t);
         if (NULL != proxy) {                                            \
             pop->rtmod = strdup(proxy);                                 \
         }                                                               \
-        ORTE_THREADSHIFT(pop, orte_oob_base.ev_base,                    \
+        ORTE_THREADSHIFT(pop, orte_event_base,                          \
                          (cbfunc), ORTE_MSG_PRI);                       \
     } while(0);
 
