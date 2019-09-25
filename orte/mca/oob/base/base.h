@@ -63,7 +63,6 @@ typedef struct {
     opal_list_t actives;
     int max_uri_length;
     opal_hash_table_t peers;
-    int num_threads;
 #if OPAL_ENABLE_TIMING
     bool timing;
 #endif
