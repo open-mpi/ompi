@@ -2,6 +2,8 @@
  * Copyright (c) 2013-2018 Intel, Inc. All rights reserved
  * Copyright (c) 2017      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2019      Triad National Security, LLC. All rights
+ *                         reserved.
  *
  * $COPYRIGHT$
  *
@@ -447,7 +449,7 @@ ompi_mtl_ofi_isend(struct mca_mtl_base_module_t *mtl,
     endpoint = ompi_mtl_ofi_get_endpoint(mtl, ompi_proc);
 
     ompi_ret = ompi_mtl_datatype_pack(convertor, &start, &length, &free_after);
-    if (OMPI_UNLIKELY(OMPI_SUCCESS != ompi_ret)) return ompi_ret;
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != ompi_ret)) return ompi_ret;
 
     ofi_req->buffer = (free_after) ? start : NULL;
     ofi_req->length = length;
