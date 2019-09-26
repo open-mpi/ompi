@@ -180,9 +180,6 @@ static int tcp_component_open(void)
  */
 static int tcp_component_close(void)
 {
-    /* cleanup listen event list */
-    OPAL_LIST_DESTRUCT(&mca_oob_tcp_component.listeners);
-
     OBJ_DESTRUCT(&mca_oob_tcp_component.peers);
 
     if (NULL != mca_oob_tcp_component.ipv4conns) {
@@ -705,6 +702,9 @@ static void component_shutdown(void)
         rc = opal_hash_table_get_next_key_uint64(&mca_oob_tcp_component.peers, &key,
                                                  (void **) &peer, node, &node);
     }
+
+    /* cleanup listen event list */
+    OPAL_LIST_DESTRUCT(&mca_oob_tcp_component.listeners);
 
     opal_output_verbose(2, orte_oob_base_framework.framework_output,
                         "%s TCP SHUTDOWN done",
