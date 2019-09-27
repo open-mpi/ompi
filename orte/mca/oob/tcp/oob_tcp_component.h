@@ -12,7 +12,7 @@
  * Copyright (c) 2006-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2010-2011 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -48,9 +48,6 @@ typedef struct {
     int                  max_retries;        /**< max number of retries before declaring peer gone */
     opal_list_t          events;             /**< events for monitoring connections */
     int                  peer_limit;         /**< max size of tcp peer cache */
-    opal_pointer_array_t ev_bases;           // event base array for progress threads
-    char**               ev_threads;         // event progress thread names
-    int                  next_base;          // counter to load-level thread use
     opal_hash_table_t    peers;              // connection addresses for peers
 
     /* Port specifications */
@@ -95,14 +92,5 @@ ORTE_MODULE_DECLSPEC void mca_oob_tcp_component_lost_connection(int fd, short ar
 ORTE_MODULE_DECLSPEC void mca_oob_tcp_component_failed_to_connect(int fd, short args, void *cbdata);
 ORTE_MODULE_DECLSPEC void mca_oob_tcp_component_no_route(int fd, short args, void *cbdata);
 ORTE_MODULE_DECLSPEC void mca_oob_tcp_component_hop_unknown(int fd, short args, void *cbdata);
-
-#define ORTE_OOB_TCP_NEXT_BASE(p)                                                       \
-    do {                                                                                \
-        ++mca_oob_tcp_component.next_base;                                              \
-        if (orte_oob_base.num_threads <= mca_oob_tcp_component.next_base) {             \
-            mca_oob_tcp_component.next_base = 0;                                        \
-        }                                                                               \
-        (p)->ev_base = (opal_event_base_t*)opal_pointer_array_get_item(&mca_oob_tcp_component.ev_bases, mca_oob_tcp_component.next_base); \
-    } while(0)
 
 #endif /* _MCA_OOB_TCP_COMPONENT_H_ */
