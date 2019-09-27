@@ -175,7 +175,8 @@ int mca_btl_uct_send_frag (mca_btl_uct_module_t *uct_btl, mca_btl_uct_base_frag_
     if (!context->in_am_callback) {
         mca_btl_uct_context_lock (context);
         /* attempt to post the fragment */
-        if (NULL != frag->base.super.registration) {
+        if (NULL != frag->base.super.registration &&
+            (context->uct_iface_attr.cap.flags & UCT_IFACE_FLAG_AM_ZCOPY)) {
             frag->comp.dev_context = context;
             ucs_status = uct_ep_am_zcopy (ep_handle, MCA_BTL_UCT_FRAG, &frag->header, sizeof (frag->header),
                                           &frag->uct_iov, 1, 0, &frag->comp.uct_comp);
