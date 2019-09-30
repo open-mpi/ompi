@@ -56,7 +56,6 @@ BEGIN_C_DECLS
  * Convenience Typedef
  */
 typedef struct {
-    opal_event_base_t *ev_base;
     char *include;
     char *exclude;
     opal_list_t components;
@@ -121,7 +120,7 @@ ORTE_DECLSPEC void orte_oob_base_send_nb(int fd, short args, void *cbdata);
                             __FILE__, __LINE__);                        \
         cd = OBJ_NEW(orte_oob_send_t);                                  \
         cd->msg = (m);                                                  \
-        ORTE_THREADSHIFT(cd, orte_oob_base.ev_base,                     \
+        ORTE_THREADSHIFT(cd, orte_event_base,                           \
                          orte_oob_base_send_nb, ORTE_MSG_PRI);          \
     }while(0)
 
