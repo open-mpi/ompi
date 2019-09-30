@@ -210,7 +210,8 @@ opal_datatype_optimize_short( opal_datatype_t* pData,
             continuity = ((last_disp + (ptrdiff_t)last_length * (ptrdiff_t)opal_datatype_basicDatatypes[last_type]->size)
                           == (total_disp + pData->desc.desc[pos_desc].elem.disp));
 
-            if( (pData->desc.desc[pos_desc].elem.common.flags & OPAL_DATATYPE_FLAG_CONTIGUOUS) && continuity &&
+            if( ((pData->desc.desc[pos_desc].elem.common.flags & OPAL_DATATYPE_FLAG_CONTIGUOUS) && continuity) &&
+                ((0 == last_length) || (last_extent == (int32_t)opal_datatype_basicDatatypes[last_type]->size)) &&
                 (pData->desc.desc[pos_desc].elem.extent == (int32_t)opal_datatype_basicDatatypes[type]->size) ) {
                 if( type == last_type ) {
                     last_length += pData->desc.desc[pos_desc].elem.count;
