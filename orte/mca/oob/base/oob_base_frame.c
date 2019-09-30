@@ -16,6 +16,8 @@
  * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017-2019 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2019      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -109,6 +111,8 @@ static int orte_oob_base_open(mca_base_open_flag_t flags)
     OBJ_CONSTRUCT(&orte_oob_base.peers, opal_hash_table_t);
     opal_hash_table_init(&orte_oob_base.peers, 128);
     OBJ_CONSTRUCT(&orte_oob_base.actives, opal_list_t);
+
+    orte_oob_base.ev_base = orte_event_base;
 
 #if OPAL_ENABLE_FT_CR == 1
     /* register the FT events callback */
