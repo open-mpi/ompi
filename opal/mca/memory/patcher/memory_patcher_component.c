@@ -334,12 +334,20 @@ static int intercept_brk (void *addr)
 
 #endif
 
-#define HAS_SHMDT (defined(SYS_shmdt) || \
-    (defined(IPCOP_shmdt) && defined(SYS_ipc)))
-#define HAS_SHMAT (defined(SYS_shmat) || \
-    (defined(IPCOP_shmat) && defined(SYS_ipc)))
+#if defined(SYS_shmdt) || (defined(IPCOP_shmdt) && defined(SYS_ipc))
+#define HAS_SHMDT 1
+#else
+#define HAS_SHMDT 0
+#endif
 
-#if (HAS_SHMDT || HAS_SHMAT) && defined(__linux__)
+#if defined(SYS_shmat) ||(defined(IPCOP_shmat) && defined(SYS_ipc))
+#define HAS_SHMAT 1
+#else
+#define HAS_SHMAT 0
+#endif
+
+#if HAS_SHMDT || HAS_SHMAT
+#if defined(__linux__)
 
 #include <stdio.h>
 #include <fcntl.h>
@@ -415,8 +423,10 @@ static size_t get_shm_size(int shmid)
     return ds.shm_segsz;
 }
 #endif
+#endif
 
-#if HAS_SHMAT && defined(__linux__)
+#if HAS_SHMAT
+#if defined(__linux__)
 static void *(*original_shmat)(int shmid, const void *shmaddr, int shmflg);
 
 static void *_intercept_shmat(int shmid, const void *shmaddr, int shmflg)
@@ -462,8 +472,10 @@ static void* intercept_shmat (int shmid, const void * shmaddr, int shmflg)
     return result;
 }
 #endif
+#endif
 
-#if HAS_SHMDT && defined(__linux__)
+#if HAS_SHMDT
+#if defined(__linux__)
 static int (*original_shmdt) (const void *);
 
 static int _intercept_shmdt (const void *shmaddr)
@@ -494,6 +506,7 @@ static int intercept_shmdt (const void *shmaddr)
     OPAL_PATCHER_END;
     return result;
 }
+#endif
 #endif
 
 static int patcher_register (void)
@@ -570,18 +583,22 @@ static int patcher_open (void)
     }
 #endif
 
-#if HAS_SHMAT && defined(__linux__)
+#if HAS_SHMAT
+#if defined(__linux__)
     rc = opal_patcher->patch_symbol ("shmat", (uintptr_t) intercept_shmat, (uintptr_t *) &original_shmat);
     if (OPAL_SUCCESS != rc) {
         return rc;
     }
 #endif
+#endif
 
-#if HAS_SHMDT && defined(__linux__)
+#if defined(__linux__)
+#if HAS_SHMDT
     rc = opal_patcher->patch_symbol ("shmdt", (uintptr_t) intercept_shmdt, (uintptr_t *) &original_shmdt);
     if (OPAL_SUCCESS != rc) {
         return rc;
     }
+#endif
 #endif
 
 #if defined (SYS_brk)

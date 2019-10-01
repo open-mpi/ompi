@@ -52,13 +52,14 @@ int opal_malloc_debug_level = OPAL_MALLOC_DEBUG_LEVEL;
 int opal_malloc_output = -1;
 
 
+
+#if OPAL_ENABLE_DEBUG
+
 /*
  * Private variables
  */
 static opal_output_stream_t malloc_stream;
 
-
-#if OPAL_ENABLE_DEBUG
 /*
  * Finalize the malloc debug interface
  */
