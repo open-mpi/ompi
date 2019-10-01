@@ -59,7 +59,7 @@ AC_DEFUN([MCA_opal_pmix_pmix4x_CONFIG],[
           [opal_pmix_pmix4x_args="--with-devel-headers  $opal_pmix_pmix4x_args"])
     CPPFLAGS="-I$OPAL_TOP_SRCDIR -I$OPAL_TOP_BUILDDIR -I$OPAL_TOP_SRCDIR/opal/include -I$OPAL_TOP_BUILDDIR/opal/include $CPPFLAGS"
 
-    OPAL_CONFIG_SUBDIR([$opal_pmix_pmix4x_basedir/pmix],
+    OPAL_CONFIG_SUBDIR([$opal_pmix_pmix4x_basedir/openpmix],
                        [$opal_pmix_pmix4x_args $opal_subdir_args 'CFLAGS=$CFLAGS' 'CPPFLAGS=$CPPFLAGS'],
                        [opal_pmix_pmix4x_happy=1], [opal_pmix_pmix4x_happy=0])
 
@@ -83,9 +83,9 @@ AC_DEFUN([MCA_opal_pmix_pmix4x_CONFIG],[
                   AC_MSG_ERROR([CANNOT CONTINUE])])
            # Build flags for our Makefile.am
            opal_pmix_pmix4x_LDFLAGS=
-           opal_pmix_pmix4x_LIBS="$OPAL_TOP_BUILDDIR/$opal_pmix_pmix4x_basedir/pmix/src/libpmix.la"
-           opal_pmix_pmix4x_CPPFLAGS="-I$OPAL_TOP_BUILDDIR/$opal_pmix_pmix4x_basedir/pmix/include -I$OPAL_TOP_BUILDDIR/$opal_pmix_pmix4x_basedir/pmix -I$OPAL_TOP_SRCDIR/$opal_pmix_pmix4x_basedir/pmix/include -I$OPAL_TOP_SRCDIR/$opal_pmix_pmix4x_basedir/pmix"
-           opal_pmix_pmix4x_DEPENDENCIES="$OPAL_TOP_BUILDDIR/$opal_pmix_pmix4x_basedir/pmix/src/libpmix.la"])
+           opal_pmix_pmix4x_LIBS="$OPAL_TOP_BUILDDIR/$opal_pmix_pmix4x_basedir/openpmix/src/libpmix.la"
+           opal_pmix_pmix4x_CPPFLAGS="-I$OPAL_TOP_BUILDDIR/$opal_pmix_pmix4x_basedir/openpmix/include -I$OPAL_TOP_BUILDDIR/$opal_pmix_pmix4x_basedir/openpmix -I$OPAL_TOP_SRCDIR/$opal_pmix_pmix4x_basedir/openpmix/include -I$OPAL_TOP_SRCDIR/$opal_pmix_pmix4x_basedir/openpmix"
+           opal_pmix_pmix4x_DEPENDENCIES="$OPAL_TOP_BUILDDIR/$opal_pmix_pmix4x_basedir/openpmix/src/libpmix.la"])
 
    AC_SUBST([opal_pmix_pmix4x_LIBS])
    AC_SUBST([opal_pmix_pmix4x_CPPFLAGS])
@@ -94,7 +94,7 @@ AC_DEFUN([MCA_opal_pmix_pmix4x_CONFIG],[
 
    # Finally, add some flags to the wrapper compiler so that our
    # headers can be found.
-   pmix_pmix4x_status_filename="$OPAL_TOP_BUILDDIR/$opal_pmix_pmix4x_basedir/pmix/config.status"
+   pmix_pmix4x_status_filename="$OPAL_TOP_BUILDDIR/$opal_pmix_pmix4x_basedir/openpmix/config.status"
    pmix_pmix4x_WRAPPER_EXTRA_CPPFLAGS=`egrep PMIX_EMBEDDED_CPPFLAGS $pmix_pmix4x_status_filename | cut -d\" -f4`
    pmix_pmix4x_WRAPPER_EXTRA_LDFLAGS=`egrep PMIX_EMBEDDED_LDFLAGS $pmix_pmix4x_status_filename | cut -d\" -f4`
    pmix_pmix4x_WRAPPER_EXTRA_LIBS=`egrep PMIX_EMBEDDED_LIBS $pmix_pmix4x_status_filename | cut -d\" -f4`
