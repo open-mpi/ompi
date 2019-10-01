@@ -15,7 +15,7 @@ EXTRA_DIST = autogen.subdirs
 
 dist_opaldata_DATA = help-pmix-pmix4x.txt
 
-SUBDIRS = pmix
+SUBDIRS = openpmix
 
 sources = \
         pmix4x.h \
@@ -43,7 +43,7 @@ mcacomponent_LTLIBRARIES = $(component_install)
 mca_pmix_pmix4x_la_SOURCES = $(sources)
 mca_pmix_pmix4x_la_CFLAGS = $(opal_pmix_pmix4x_CFLAGS)
 mca_pmix_pmix4x_la_CPPFLAGS = \
-        -I$(srcdir)/pmix/include $(opal_pmix_pmix4x_CPPFLAGS)
+        -I$(srcdir)/openpmix/include $(opal_pmix_pmix4x_CPPFLAGS)
 mca_pmix_pmix4x_la_LDFLAGS = -module -avoid-version $(opal_pmix_pmix4x_LDFLAGS)
 mca_pmix_pmix4x_la_LIBADD = $(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la \
 	$(opal_pmix_pmix4x_LIBS)
