@@ -228,6 +228,10 @@ int opal_hwloc_base_filter_cpus(hwloc_topology_t topo)
     /* cache this info */
     sum->available = avail;
 
+    /* Treat --cpu-set analogously to how a cgroup is treated, eg make
+     * the loaded topolog only contain what is available. */
+    hwloc_topology_restrict(topo, avail, 0);
+
     return OPAL_SUCCESS;
 }
 
