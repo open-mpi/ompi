@@ -114,7 +114,7 @@ opal_btl_usnic_update_window(
 
     /* give this process a chance to send something before ACKing */
     if (0 == endpoint->endpoint_acktime) {
-        endpoint->endpoint_acktime = get_nsec() + 50000;    /* 50 usec */
+        endpoint->endpoint_acktime = get_ticks() + 50000;
     }
 
     /* Save this incoming segment in the received segmentss array on the
