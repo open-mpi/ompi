@@ -57,7 +57,7 @@ extern uint64_t opal_btl_usnic_ticks;
 extern opal_recursive_mutex_t btl_usnic_lock;
 
 static inline uint64_t
-get_nsec(void)
+get_ticks(void)
 {
     return opal_btl_usnic_ticks;
 }
