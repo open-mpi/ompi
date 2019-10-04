@@ -1236,7 +1236,7 @@ opal_btl_usnic_module_progress_sends(
 
         /* Is it time to send ACK? */
         if (endpoint->endpoint_acktime == 0 ||
-            endpoint->endpoint_acktime <= get_nsec()) {
+            endpoint->endpoint_acktime <= get_ticks()) {
             if (OPAL_LIKELY(opal_btl_usnic_ack_send(module, endpoint) == OPAL_SUCCESS)) {
                 opal_btl_usnic_remove_from_endpoints_needing_ack(endpoint);
             } else {
