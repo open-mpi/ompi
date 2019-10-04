@@ -206,6 +206,10 @@ typedef struct opal_btl_usnic_component_t {
     /** retrans characteristics */
     int retrans_timeout;
 
+    /** max number of messages re-sent during a single progress
+        iteration */
+    int max_resends_per_iteration;
+
     /** minimum number of times through component progress before
         checking to see if standalone ACKs need to be sent */
     int ack_iteration_delay;
