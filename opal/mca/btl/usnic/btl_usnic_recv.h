@@ -112,9 +112,12 @@ opal_btl_usnic_update_window(
         opal_btl_usnic_add_to_endpoints_needing_ack(endpoint);
     }
 
-    /* give this process a chance to send something before ACKing */
+    /* A hueristic: set to send this ACK after we have checked our
+       incoming DATA_CHANNEL component.act_iteration_delay times
+       (i.e., so we can piggyback an ACK on an outgoing send) */
     if (0 == endpoint->endpoint_acktime) {
-        endpoint->endpoint_acktime = get_ticks() + 50000;
+        endpoint->endpoint_acktime =
+            get_ticks() + mca_btl_usnic_component.ack_iteration_delay;
     }
 
     /* Save this incoming segment in the received segmentss array on the
