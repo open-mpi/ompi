@@ -138,18 +138,24 @@ typedef struct {
        the length of the packet to meet a minimum size */
     uint16_t payload_len;
 
-    /* If this is an emulated PUT, store at this address on receiver */
-    char *put_addr;
-
     /* Type of BTL header (see enum, above) */
     uint8_t payload_type;
 
     /* true if there is piggy-backed ACK */
     uint8_t ack_present;
 
+    /* This field is ordered here so that we have no holes in the
+       struct.  Technically this doesn't matter, because we're using
+       the __packed__ attribute (so there will be no holes anyway),
+       but ordering things nicely in the struct prevents the need for
+       unaligned reads/writes when using _packed__. */
+    /* If this is an emulated PUT, store at this address on
+       receiver */
+    char *put_addr;
+
     /* tag for upper layer */
     mca_btl_base_tag_t tag;
-} opal_btl_usnic_btl_header_t;
+} __opal_attribute_packed__ opal_btl_usnic_btl_header_t;
 
 /**
  * BTL header for a chunk of a fragment
