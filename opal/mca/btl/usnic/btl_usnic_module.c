@@ -2347,14 +2347,14 @@ static void init_freelists(opal_btl_usnic_module_t *module)
     uint32_t segsize;
 
     segsize = (module->local_modex.max_msg_size +
-           opal_cache_line_size - 1) &
+               mca_btl_usnic_component.prefix_send_offset +
+               opal_cache_line_size - 1) &
         ~(opal_cache_line_size - 1);
 
     /* Send frags freelists */
     OBJ_CONSTRUCT(&module->small_send_frags, opal_free_list_t);
     rc = usnic_compat_free_list_init(&module->small_send_frags,
-                             sizeof(opal_btl_usnic_small_send_frag_t) +
-                                 mca_btl_usnic_component.prefix_send_offset,
+                             sizeof(opal_btl_usnic_small_send_frag_t),
                              opal_cache_line_size,
                              OBJ_CLASS(opal_btl_usnic_small_send_frag_t),
                              segsize,
@@ -2371,8 +2371,7 @@ static void init_freelists(opal_btl_usnic_module_t *module)
 
     OBJ_CONSTRUCT(&module->large_send_frags, opal_free_list_t);
     rc = usnic_compat_free_list_init(&module->large_send_frags,
-                             sizeof(opal_btl_usnic_large_send_frag_t) +
-                                 mca_btl_usnic_component.prefix_send_offset,
+                             sizeof(opal_btl_usnic_large_send_frag_t),
                              opal_cache_line_size,
                              OBJ_CLASS(opal_btl_usnic_large_send_frag_t),
                              0,  /* payload size */
@@ -2389,8 +2388,7 @@ static void init_freelists(opal_btl_usnic_module_t *module)
 
     OBJ_CONSTRUCT(&module->put_dest_frags, opal_free_list_t);
     rc = usnic_compat_free_list_init(&module->put_dest_frags,
-                             sizeof(opal_btl_usnic_put_dest_frag_t) +
-                                 mca_btl_usnic_component.prefix_send_offset,
+                             sizeof(opal_btl_usnic_put_dest_frag_t),
                              opal_cache_line_size,
                              OBJ_CLASS(opal_btl_usnic_put_dest_frag_t),
                              0,  /* payload size */
@@ -2408,8 +2406,7 @@ static void init_freelists(opal_btl_usnic_module_t *module)
     /* list of segments to use for sending */
     OBJ_CONSTRUCT(&module->chunk_segs, opal_free_list_t);
     rc = usnic_compat_free_list_init(&module->chunk_segs,
-                             sizeof(opal_btl_usnic_chunk_segment_t) +
-                                 mca_btl_usnic_component.prefix_send_offset,
+                             sizeof(opal_btl_usnic_chunk_segment_t),
                              opal_cache_line_size,
                              OBJ_CLASS(opal_btl_usnic_chunk_segment_t),
                              segsize,
@@ -2427,11 +2424,11 @@ static void init_freelists(opal_btl_usnic_module_t *module)
     /* ACK segments freelist */
     uint32_t ack_segment_len;
     ack_segment_len = (sizeof(opal_btl_usnic_btl_header_t) +
+                       mca_btl_usnic_component.prefix_send_offset +
             opal_cache_line_size - 1) & ~(opal_cache_line_size - 1);
     OBJ_CONSTRUCT(&module->ack_segs, opal_free_list_t);
     rc = usnic_compat_free_list_init(&module->ack_segs,
-                             sizeof(opal_btl_usnic_ack_segment_t) +
-                                 mca_btl_usnic_component.prefix_send_offset,
+                             sizeof(opal_btl_usnic_ack_segment_t),
                              opal_cache_line_size,
                              OBJ_CLASS(opal_btl_usnic_ack_segment_t),
                              ack_segment_len,
