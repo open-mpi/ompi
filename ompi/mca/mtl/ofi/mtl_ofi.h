@@ -247,13 +247,20 @@ ompi_mtl_ofi_send_start(struct mca_mtl_base_module_t *mtl,
     endpoint = ompi_mtl_ofi_get_endpoint(mtl, ompi_proc);
 
     ompi_ret = ompi_mtl_datatype_pack(convertor, &start, &length, &free_after);
-    if (OMPI_SUCCESS != ompi_ret) return ompi_ret;
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != ompi_ret)) {
+        return ompi_ret;
+    }
 
     ofi_req->buffer = (free_after) ? start : NULL;
     ofi_req->length = length;
     ofi_req->status.MPI_ERROR = OMPI_SUCCESS;
 
-    if (OPAL_UNLIKELY(MCA_PML_BASE_SEND_SYNCHRONOUS == mode)) {
+    if (OPAL_UNLIKELY(length > endpoint->mtl_ofi_module->max_msg_size)) {
+        opal_show_help("help-mtl-ofi.txt",
+            "message too big", false,
+            length, endpoint->mtl_ofi_module->max_msg_size);
+        return OMPI_ERROR;
+    } else if (OPAL_UNLIKELY(MCA_PML_BASE_SEND_SYNCHRONOUS == mode)) {
         ack_req = malloc(sizeof(ompi_mtl_ofi_request_t));
         assert(ack_req);
         ack_req->parent = ofi_req;
