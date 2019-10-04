@@ -380,8 +380,9 @@ static int check_usnic_config(opal_btl_usnic_module_t *module,
 
 static void usnic_clock_callback(int fd, short flags, void *timeout)
 {
-    /* 1ms == 1,000,000 ns */
-    opal_btl_usnic_ticks += 1000000;
+    /* Increase by so many ticks that we will definitely force sending
+       any ACKs that are pending */
+    opal_btl_usnic_ticks += 1000;
 
     /* run progress to make sure time change gets noticed */
     usnic_component_progress();
@@ -1128,7 +1129,7 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
  */
 static int usnic_handle_completion(opal_btl_usnic_module_t* module,
     opal_btl_usnic_channel_t *channel, struct fi_cq_entry *completion);
-static int usnic_component_progress_2(void);
+static int usnic_component_progress_2(bool check_priority);
 static void usnic_handle_cq_error(opal_btl_usnic_module_t* module,
     opal_btl_usnic_channel_t *channel, int cq_ret);
 
@@ -1141,9 +1142,7 @@ static int usnic_component_progress(void)
     struct fi_cq_entry completion;
     opal_btl_usnic_channel_t *channel;
     static bool fastpath_ok = true;
-
-    /* update our simulated clock */
-    opal_btl_usnic_ticks += 5000;
+    bool check_priority = true;
 
     count = 0;
     if (fastpath_ok) {
@@ -1176,10 +1175,11 @@ static int usnic_component_progress(void)
                 usnic_handle_cq_error(module, channel, ret);
             }
         }
+        check_priority = false;
     }
 
     fastpath_ok = true;
-    return count + usnic_component_progress_2();
+    return count + usnic_component_progress_2(check_priority);
 }
 
 static int usnic_handle_completion(
@@ -1300,7 +1300,7 @@ usnic_handle_cq_error(opal_btl_usnic_module_t* module,
     }
 }
 
-static int usnic_component_progress_2(void)
+static int usnic_component_progress_2(bool check_priority)
 {
     int i, j, count = 0, num_events, ret;
     opal_btl_usnic_module_t* module;
@@ -1309,15 +1309,18 @@ static int usnic_component_progress_2(void)
     int rc;
     int c;
 
-    /* update our simulated clock */
-    opal_btl_usnic_ticks += 5000;
+    opal_btl_usnic_ticks += 1;
+
+    /* If we need to check priority, start with the priority channel.
+       Otherwise, just check the data channel. */
+    int c_start = check_priority ? USNIC_PRIORITY_CHANNEL : USNIC_DATA_CHANNEL;
 
     /* Poll for completions */
     for (i = 0; i < mca_btl_usnic_component.num_modules; i++) {
         module = mca_btl_usnic_component.usnic_active_modules[i];
 
         /* poll each channel */
-        for (c=0; c<USNIC_NUM_CHANNELS; ++c) {
+        for (c=c_start; c<USNIC_NUM_CHANNELS; ++c) {
             channel = &module->mod_channels[c];
 
             if (channel->chan_deferred_recv != NULL) {

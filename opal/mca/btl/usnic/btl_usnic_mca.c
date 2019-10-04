@@ -246,8 +246,16 @@ int opal_btl_usnic_component_register(void)
     mca_btl_usnic_component.udp_port_base = (int) udp_port_base;
 
     CHECK(reg_int("retrans_timeout", "Number of microseconds before retransmitting a frame",
-                  5000, &mca_btl_usnic_component.retrans_timeout,
+                  100000, &mca_btl_usnic_component.retrans_timeout,
                   REGINT_GE_ONE, OPAL_INFO_LVL_5));
+
+    CHECK(reg_int("max_resends_per_iteration", "Maximum number of frames to resend in a single iteration through usNIC component progress",
+                  16, &mca_btl_usnic_component.max_resends_per_iteration,
+                  REGINT_GE_ONE, OPAL_INFO_LVL_5));
+
+    CHECK(reg_int("ack_iteration_delay", "Minimum number of times through usNIC \"progress\" function before checking to see if standalone ACKs need to be sent",
+                  0, &mca_btl_usnic_component.ack_iteration_delay,
+                  REGINT_GE_ZERO, OPAL_INFO_LVL_5));
 
     CHECK(reg_int("priority_limit", "Max size of \"priority\" messages (0 = use pre-set defaults; depends on number and type of devices available)",
                   0, &max_tiny_msg_size,
