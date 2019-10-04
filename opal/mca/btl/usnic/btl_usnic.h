@@ -190,6 +190,10 @@ typedef struct opal_btl_usnic_component_t {
     /** retrans characteristics */
     int retrans_timeout;
 
+    /** minimum number of times through component progress before
+        checking to see if standalone ACKs need to be sent */
+    int ack_iteration_delay;
+
     /** transport header length for all usNIC devices on this server
         (it is guaranteed that all usNIC devices on a single server
         will have the same underlying transport, and therefore the
