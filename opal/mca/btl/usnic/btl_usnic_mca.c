@@ -246,7 +246,7 @@ int opal_btl_usnic_component_register(void)
     mca_btl_usnic_component.udp_port_base = (int) udp_port_base;
 
     CHECK(reg_int("retrans_timeout", "Number of microseconds before retransmitting a frame",
-                  5000, &mca_btl_usnic_component.retrans_timeout,
+                  100000, &mca_btl_usnic_component.retrans_timeout,
                   REGINT_GE_ONE, OPAL_INFO_LVL_5));
 
     CHECK(reg_int("ack_iteration_delay", "Minimum number of times through usNIC \"progress\" function before checking to see if standalone ACKs need to be sent",
