@@ -963,11 +963,12 @@ usnic_do_resends(
     opal_btl_usnic_send_segment_t *sseg;
     opal_btl_usnic_endpoint_t *endpoint;
     struct opal_btl_usnic_channel_t *data_channel;
-    int ret;
+    int ret, count;
 
     data_channel = &module->mod_channels[USNIC_DATA_CHANNEL];
 
-    while ((get_send_credits(data_channel) > 1) &&
+    count = mca_btl_usnic_component.max_resends_per_iteration;
+    while (count > 0 && (get_send_credits(data_channel) > 1) &&
            !opal_list_is_empty(&module->pending_resend_segs)) {
 
         /*
@@ -1009,6 +1010,8 @@ usnic_do_resends(
             BTL_ERROR(("hotel checkin failed\n"));
             abort();    /* should not be possible */
         }
+
+        --count;
     }
 }
 
