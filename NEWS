@@ -60,6 +60,12 @@ included in the vX.Y.Z section and be denoted as:
 4.0.2 -- September, 2019
 ------------------------
 - Update embedded PMIx to 3.1.4
+- Enhance Open MPI to detect when processes are running in
+  different name spaces on the same node, in which case the
+  vader CMA single copy mechanism is disabled.  Thanks
+  to Adrian Reber for reporting and providing a fix.
+- Fix an issue with ORTE job tree launch mechanism.  Thanks
+  to @lanyangyang for reporting.
 - Fix an issue with env processing when running as root.
   Thanks to Simon Byrne for reporting and providing a fix.
 - Fix Fortran MPI_FILE_GET_POSITION return code bug.
@@ -101,6 +107,13 @@ included in the vX.Y.Z section and be denoted as:
 - Add compilation flag to allow unwinding through files that are
   present in the stack when attaching with MPIR.
   Thanks to James A Clark for reporting and providing a fix.
+
+Known issues:
+
+- There is a known issue with the OFI libfabric and PSM2 MTLs when trying to send
+  very long (> 4 GBytes) messages.  In this release, these MTLs will catch
+  this case and abort the transfer.  A future release will provide a
+  better solution to this issue.
 
 4.0.1 -- March, 2019
 --------------------
