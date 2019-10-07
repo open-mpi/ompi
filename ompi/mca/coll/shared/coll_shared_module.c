@@ -56,11 +56,10 @@ static void mca_coll_shared_module_construct(mca_coll_shared_module_t *
                                              module)
 {
     module->enabled = false;
-    module->sm_data_win = NULL;
-    module->data_buf = NULL;
-    module->sm_ctrl_ptr = NULL;
-    module->sm_ctrl_win = NULL;
+    module->dynamic_win = NULL;
+    module->static_win = NULL;
     module->ctrl_buf = NULL;
+    module->data_buf = NULL;
     module->barrier_tag = 0;
     module->super.coll_module_disable = mca_coll_shared_module_disable;
 }
@@ -83,42 +82,31 @@ static int mca_coll_shared_module_disable(mca_coll_base_module_t * module,
     if (module->base_data != NULL) {
         OBJ_RELEASE(module->base_data);
     }
-    mca_coll_shared_module_t *m = (mca_coll_shared_module_t *) module;
-    m->enabled = false;
+    mca_coll_shared_module_t *shared_module = (mca_coll_shared_module_t *) module;
+    shared_module->enabled = false;
 
     // /* If comm is MPI_COMM_WORLD, windows will be free at ompi_mpi_finalize.c:320 ompi_win_finalize() */
     // if (comm != MPI_COMM_WORLD) {
     //     int rank = ompi_comm_rank(comm);
 
-    //     /* Detach the memory */
-    //     m->sm_data_win->w_osc_module->osc_win_detach(m->sm_data_win,
-    //                                                  m->data_buf[rank]);
-
-    //     /* Free the memory */
-
-    //     if (m->data_buf[rank] != NULL) {
-    //         free(m->data_buf[rank]);
-    //         m->data_buf[rank] = NULL;
-    //     }
-
     //     /* Free the windows */
 
-    //     if (m->sm_data_win != NULL) {
-    //         ompi_win_free(m->sm_data_win);
+    //     if (m->dynamic_win != NULL) {
+    //         ompi_win_free(m->dynamic_win);
     //     }
-    //     if (m->sm_ctrl_win != NULL) {
-    //         ompi_win_free(m->sm_ctrl_win);
+    //     if (m->static_win != NULL) {
+    //         ompi_win_free(m->static_win);
     //     }
     // }
     
-
-    if (m->data_buf != NULL) {
-        free(m->data_buf);
-        m->data_buf = NULL;
+    if (shared_module->ctrl_buf != NULL) {
+        free(shared_module->ctrl_buf);
+        shared_module->ctrl_buf = NULL;
     }
-    if (m->ctrl_buf != NULL) {
-        free(m->ctrl_buf);
-        m->ctrl_buf = NULL;
+
+    if (shared_module->data_buf != NULL) {
+        free(shared_module->data_buf);
+        shared_module->data_buf = NULL;
     }
 
     return OMPI_SUCCESS;
@@ -230,12 +218,11 @@ static int mca_coll_shared_module_enable(mca_coll_base_module_t * module,
 }
 
 int mca_coll_shared_lazy_enable(mca_coll_base_module_t * module,
-                                struct ompi_communicator_t *comm,
-                                size_t data_buf_size)
+                                struct ompi_communicator_t *comm)
 {
     mca_coll_shared_module_t *shared_module =
-        (mca_coll_shared_module_t *) module;
-
+        (mca_coll_shared_module_t *) module;    
+    
     /* Temporarily use tuned module to prevent the collective operations 
        in this module are invoked before the initialization. */
     int var_id;
@@ -251,18 +238,17 @@ int mca_coll_shared_lazy_enable(mca_coll_base_module_t * module,
     comm->c_coll->coll_allreduce =
         ompi_coll_base_allreduce_intra_recursivedoubling;
 
-    int rank = ompi_comm_rank(comm);
-    int size = ompi_comm_size(comm);
+    /* Create the mpool */
+    if (mca_coll_shared_component.shared_mpool == NULL) {
+        mca_coll_shared_component.shared_mpool = OBJ_NEW(mca_coll_shared_mpool_t);
+    }
 
-    /* Create a shared memory region to store data for every process */
-    shared_module->data_buf = (char **) malloc(sizeof(char *) * size);
-    shared_module->data_buf[rank] = NULL;
+    /* Create a dynamic windows */
     ompi_win_create_dynamic((opal_info_t *) (&ompi_mpi_info_null), comm,
-                            &shared_module->sm_data_win);
-    mca_coll_shared_attach_data_buf(shared_module, comm, data_buf_size);
+                            &shared_module->dynamic_win);
 
-    /* create a shared memory to store control message on every node */
-    mca_coll_shared_setup_ctrl_buf(shared_module, comm);
+    /* Create a static window  with shared memory allocation */
+    mca_coll_shared_setup_static_win(shared_module, comm, COLL_SHARED_STATIC_BLOCK_SIZE);
 
     shared_module->enabled = true;
 
@@ -273,64 +259,79 @@ int mca_coll_shared_lazy_enable(mca_coll_base_module_t * module,
     return OMPI_SUCCESS;
 }
 
-void mca_coll_shared_attach_data_buf(mca_coll_shared_module_t *
-                                     shared_module,
-                                     struct ompi_communicator_t *comm,
-                                     size_t data_buf_size)
+char **mca_coll_shared_attach_buf(mca_coll_shared_module_t *shared_module,
+                                struct ompi_communicator_t *comm,
+                                char *local_buf,
+                                size_t local_buf_size) 
 {
     int rank = ompi_comm_rank(comm);
-    if (shared_module->data_buf[rank] != NULL) {
-        free(shared_module->data_buf[rank]);
-        shared_module->data_buf[rank] = NULL;
-    }
+    int size = ompi_comm_size(comm);
 
-    char *local_buf = malloc(data_buf_size * sizeof(char));
-    shared_module->data_buf[rank] = local_buf;
-
+    char **attached_bufs = (char **)malloc(sizeof(char *) * size);
+    attached_bufs[rank] = local_buf;
     ompi_coll_base_allgather_intra_recursivedoubling(MPI_IN_PLACE, 0,
                                                      MPI_DATATYPE_NULL,
-                                                     shared_module->data_buf,
+                                                     attached_bufs,
                                                      1, MPI_AINT, comm,
                                                      (mca_coll_base_module_t
                                                       *) shared_module);
 
-    shared_module->sm_data_win->
-        w_osc_module->osc_win_attach(shared_module->sm_data_win, local_buf,
-                                     data_buf_size);
-    shared_module->data_buf_size = data_buf_size;
+    shared_module->dynamic_win->w_osc_module->osc_win_attach(shared_module->dynamic_win, local_buf,
+                                     local_buf_size);
+    
+    return attached_bufs;
 }
 
-void mca_coll_shared_setup_ctrl_buf(mca_coll_shared_module_t *
+void mca_coll_shared_detach_buf(mca_coll_shared_module_t *shared_module,
+                                struct ompi_communicator_t *comm,
+                                char *local_buf,
+                                char ***attached_bufs) 
+{
+    if (local_buf != NULL) {
+        shared_module->dynamic_win->w_osc_module->osc_win_detach(shared_module->dynamic_win, local_buf);
+    }
+    
+    free(*attached_bufs);
+    *attached_bufs = NULL;
+    return;
+}
+
+void mca_coll_shared_setup_static_win(mca_coll_shared_module_t *
                                     shared_module,
-                                    struct ompi_communicator_t *comm)
+                                    struct ompi_communicator_t *comm,
+                                    size_t data_buf_size)
 {
     int i;
     int rank = ompi_comm_rank(comm);
     int size = ompi_comm_size(comm);
-    ompi_win_allocate_shared(3 * sizeof(int), sizeof(int),
+    int *ptr;
+    ompi_win_allocate_shared(3 * opal_cache_line_size + data_buf_size, sizeof(char),
                              (opal_info_t *) (&ompi_mpi_info_null), comm,
-                             &shared_module->sm_ctrl_ptr,
-                             &shared_module->sm_ctrl_win);
-    size_t ctrl_size[size];
-    int ctrl_disp[size];
-    shared_module->ctrl_buf = (int **) malloc(sizeof(int *) * size);
-    /* Get ctrl shared memory */
+                             &ptr,
+                             &shared_module->static_win);
+    size_t static_size[size];
+    int static_disp[size];
+    shared_module->ctrl_buf = (char **) malloc(sizeof(char *) * size);
+    shared_module->data_buf = (char **) malloc(sizeof(char *) * size);
+    /* Get shared memory address created with the static window */
     for (i = 0; i < size; i++) {
-        shared_module->sm_ctrl_win->
-            w_osc_module->osc_win_shared_query(shared_module->sm_ctrl_win,
-                                               i, &(ctrl_size[i]),
-                                               &(ctrl_disp[i]),
+        shared_module->static_win->
+            w_osc_module->osc_win_shared_query(shared_module->static_win,
+                                               i, &(static_size[i]),
+                                               &(static_disp[i]),
                                                &(shared_module->
                                                  ctrl_buf[i]));
+        shared_module->data_buf[i] = (char *)(shared_module->ctrl_buf[i]) + 3 * opal_cache_line_size;
     }
-    /* Init ctrl_buf with 0 */
-    shared_module->sm_ctrl_win->w_osc_module->osc_fence(0,
+    /* Init ctrl_buf with 0s */
+    shared_module->static_win->w_osc_module->osc_fence(0,
                                                         shared_module->
-                                                        sm_ctrl_win);
-    shared_module->ctrl_buf[rank][0] = 0;
-    shared_module->ctrl_buf[rank][1] = 0;
-    shared_module->ctrl_buf[rank][2] = 0;
-    shared_module->sm_ctrl_win->w_osc_module->osc_fence(0,
+                                                        static_win);
+    for (i = 0; i < 3; i++) {
+        char *ptr = shared_module->ctrl_buf[rank] + i * opal_cache_line_size;
+        *((int *)ptr) = 0;
+    }
+    shared_module->static_win->w_osc_module->osc_fence(0,
                                                         shared_module->
-                                                        sm_ctrl_win);
+                                                        static_win);
 }

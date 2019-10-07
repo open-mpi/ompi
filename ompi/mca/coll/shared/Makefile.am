@@ -11,12 +11,14 @@
 
 sources = \
         coll_shared.h \
+        coll_shared_mpool.h \
         coll_shared_barrier.c \
         coll_shared_reduce.c \
         coll_shared_bcast.c \
         coll_shared_allreduce.c \
         coll_shared_component.c \
-        coll_shared_module.c 
+        coll_shared_module.c \
+        coll_shared_mpool.c
 
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la

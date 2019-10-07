@@ -47,7 +47,7 @@ int mca_coll_shared_reduce_intra(const void *sbuf, void *rbuf, int count,
  * |  P3  |  P0  |  P1  |  P2  |
  * At last, root copies data back from the shared data buffer.
  */
-int mca_coll_shared_reduce_ring_intra(const void *sbuf, void *rbuf,
+int mca_coll_shared_reduce_ring_intra_memcpy(const void *sbuf, void *rbuf,
                                       int count,
                                       struct ompi_datatype_t *dtype,
                                       struct ompi_op_t *op, int root,
@@ -153,5 +153,15 @@ int mca_coll_shared_reduce_ring_intra(const void *sbuf, void *rbuf,
                                                         shared_module->
                                                         sm_data_win);
 
+    return OMPI_SUCCESS;
+}
+
+int mca_coll_shared_reduce_ring_intra_osc(const void *sbuf, void *rbuf,
+                                      int count,
+                                      struct ompi_datatype_t *dtype,
+                                      struct ompi_op_t *op, int root,
+                                      struct ompi_communicator_t *comm,
+                                      mca_coll_base_module_t * module)
+{
     return OMPI_SUCCESS;
 }

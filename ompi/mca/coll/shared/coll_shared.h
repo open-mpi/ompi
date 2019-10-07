@@ -26,8 +26,10 @@
 #include "opal/runtime/opal_progress.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/coll/base/coll_tags.h"
+#include "coll_shared_mpool.h"
 
 BEGIN_C_DECLS
+#define COLL_SHARED_STATIC_BLOCK_SIZE 4096
 
 /**
  * Structure to hold the shared coll component.  First it holds the
@@ -41,6 +43,10 @@ typedef struct mca_coll_shared_component_t {
 
     /** MCA parameter: Priority of this component */
     int shared_priority;
+
+    /* Shared memory pool */
+    mca_coll_shared_mpool_t *shared_mpool;
+
 } mca_coll_shared_component_t;
 
 /** Coll shared module */
@@ -51,17 +57,14 @@ typedef struct mca_coll_shared_module_t {
     /* Whether this module has been lazily initialized or not yet */
     bool enabled;
 
-    /* Shared memory window of data buf */
-    MPI_Win sm_data_win;
-    /* Address array of data buf */
-    char **data_buf;
-    size_t data_buf_size;
+    /* Dynamic window */
+    MPI_Win dynamic_win;
 
-    /* Shared memory control buf */
-    int *sm_ctrl_ptr;
-    MPI_Win sm_ctrl_win;
-    /* Address array of control buf */
-    int **ctrl_buf;
+    /* Static window */
+    MPI_Win static_win;
+    /* Shared memory buffer of static_win used for control message and small message */
+    char **ctrl_buf;
+    char **data_buf;
 
     /* Identify which ctrl_buf is used in the MPI_Barrier */
     int barrier_tag;
@@ -88,17 +91,22 @@ mca_coll_base_module_t *mca_coll_shared_comm_query(struct
 /* Lazily enable a module (since it involves expensive/slow mmap
    allocation, etc.) */
 int mca_coll_shared_lazy_enable(mca_coll_base_module_t * module,
+                                struct ompi_communicator_t *comm);
+
+char **mca_coll_shared_attach_buf(mca_coll_shared_module_t *shared_module,
                                 struct ompi_communicator_t *comm,
-                                size_t data_buf_size);
+                                char *local_buf,
+                                size_t local_buf_size);
 
-void mca_coll_shared_attach_data_buf(mca_coll_shared_module_t *
-                                     shared_module,
-                                     struct ompi_communicator_t *comm,
-                                     size_t data_buf_size);
-
-void mca_coll_shared_setup_ctrl_buf(mca_coll_shared_module_t *
+void mca_coll_shared_detach_buf(mca_coll_shared_module_t *shared_module,
+                                struct ompi_communicator_t *comm,
+                                char *local_buf,
+                                char ***attached_bufs);
+                                
+void mca_coll_shared_setup_static_win(mca_coll_shared_module_t *
                                     shared_module,
-                                    struct ompi_communicator_t *comm);
+                                    struct ompi_communicator_t *comm,
+                                    size_t data_buf_size);
 
 int mac_coll_shared_barrier_intra(struct ompi_communicator_t *comm,
                                   mca_coll_base_module_t * module);
@@ -136,7 +144,13 @@ int mca_coll_shared_bcast_intra(void *buff, int count,
                                 struct ompi_communicator_t *comm,
                                 mca_coll_base_module_t * module);
 
-int mca_coll_shared_bcast_linear_intra(void *buff, int count,
+int mca_coll_shared_bcast_linear_intra_memcpy(void *buff, int count,
+                                       struct ompi_datatype_t *dtype,
+                                       int root,
+                                       struct ompi_communicator_t *comm,
+                                       mca_coll_base_module_t * module);
+
+int mca_coll_shared_bcast_linear_intra_osc(void *buff, int count,
                                        struct ompi_datatype_t *dtype,
                                        int root,
                                        struct ompi_communicator_t *comm,

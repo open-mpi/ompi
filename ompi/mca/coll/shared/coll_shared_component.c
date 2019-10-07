@@ -66,10 +66,13 @@ mca_coll_shared_component_t mca_coll_shared_component = {
      .collm_comm_query = mca_coll_shared_comm_query,
      },
 
-    /* shared-component specifc information */
+    /* Shared-component specifc information */
 
     /* (default) priority */
     0,
+
+    /* Shared mpool */
+    NULL
 };
 
 
