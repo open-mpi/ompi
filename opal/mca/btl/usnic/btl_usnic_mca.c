@@ -254,7 +254,7 @@ int opal_btl_usnic_component_register(void)
                   REGINT_GE_ONE, OPAL_INFO_LVL_5));
 
     CHECK(reg_int("ack_iteration_delay", "Minimum number of times through usNIC \"progress\" function before checking to see if standalone ACKs need to be sent",
-                  0, &mca_btl_usnic_component.ack_iteration_delay,
+                  4, &mca_btl_usnic_component.ack_iteration_delay,
                   REGINT_GE_ZERO, OPAL_INFO_LVL_5));
 
     CHECK(reg_int("priority_limit", "Max size of \"priority\" messages (0 = use pre-set defaults; depends on number and type of devices available)",
