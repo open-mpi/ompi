@@ -13,6 +13,8 @@
 #include "pml_ucx.h"
 
 
+#define PML_UCX_DATATYPE_INVALID   0
+
 struct pml_ucx_convertor {
     opal_free_list_item_t     super;
     ompi_datatype_t           *datatype;
@@ -23,6 +25,9 @@ struct pml_ucx_convertor {
 
 ucp_datatype_t mca_pml_ucx_init_datatype(ompi_datatype_t *datatype);
 
+int mca_pml_ucx_datatype_attr_del_fn(ompi_datatype_t* datatype, int keyval,
+                                     void *attr_val, void *extra);
+
 OBJ_CLASS_DECLARATION(mca_pml_ucx_convertor_t);
 
 
@@ -30,7 +35,7 @@ static inline ucp_datatype_t mca_pml_ucx_get_datatype(ompi_datatype_t *datatype)
 {
     ucp_datatype_t ucp_type = datatype->pml_data;
 
-    if (OPAL_LIKELY(ucp_type != 0)) {
+    if (OPAL_LIKELY(ucp_type != PML_UCX_DATATYPE_INVALID)) {
         return ucp_type;
     }
 
