@@ -48,7 +48,7 @@ OMPI_DECLSPEC int mca_common_ompio_file_iwrite_at_all (mca_io_ompio_file_t *fp, 
                                                        int count, struct ompi_datatype_t *datatype, ompi_request_t **request);
 
 OMPI_DECLSPEC int mca_common_ompio_build_io_array ( mca_io_ompio_file_t *fh, int index, int cycles,
-                                                    size_t bytes_per_cycle, int max_data, uint32_t iov_count,
+                                                    size_t bytes_per_cycle, size_t max_data, uint32_t iov_count,
                                                     struct iovec *decoded_iov, int *ii, int *jj, size_t *tbw,
                                                     size_t *spc );
 
