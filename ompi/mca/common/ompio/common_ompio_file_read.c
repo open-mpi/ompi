@@ -362,8 +362,8 @@ int mca_common_ompio_file_iread_at_all (mca_io_ompio_file_t *fp,
 int mca_common_ompio_set_explicit_offset (mca_io_ompio_file_t *fh,
                                           OMPI_MPI_OFFSET_TYPE offset)
 {
-    int i = 0;
-    int k = 0;
+    size_t i = 0;
+    size_t k = 0;
 
     if ( fh->f_view_size  > 0 ) {
 	/* starting offset of the current copy of the filew view */
