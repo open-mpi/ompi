@@ -15,6 +15,7 @@
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/pml/base/base.h"
 #include "ompi/datatype/ompi_datatype.h"
+#include "ompi/datatype/ompi_datatype_internal.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/request/request.h"
 
@@ -36,6 +37,10 @@ struct mca_pml_ucx_module {
     /* UCX global objects */
     ucp_context_h             ucp_context;
     ucp_worker_h              ucp_worker;
+
+    /* Datatypes */
+    int                       datatype_attr_keyval;
+    ucp_datatype_t            predefined_types[OMPI_DATATYPE_MPI_MAX_PREDEFINED];
 
     /* Requests */
     mca_pml_ucx_freelist_t    persistent_reqs;
