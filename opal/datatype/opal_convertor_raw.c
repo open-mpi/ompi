@@ -41,7 +41,7 @@ opal_convertor_merge_iov( struct iovec* iov, uint32_t* iov_count,
                           uint32_t* idx )
 {
     if( 0 != iov[*idx].iov_len ) {
-        if( (base == ((char*)iov[*idx].iov_base + iov[*idx].iov_len)) ) {
+        if( base == ((char*)iov[*idx].iov_base + iov[*idx].iov_len) ) {
             iov[*idx].iov_len += len;  /* merge with previous iovec */
             return 0;
         }  /* cannot merge, move to the next position */

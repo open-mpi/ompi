@@ -247,9 +247,7 @@ static long int init_mat_mmap(char *filename,int N, double **mat, double *sum_ro
   return nnz;
 }
 
-
-
-
+#ifdef __MACH__ 
 static long int init_mat_long(char *filename,int N, double **mat, double *sum_row){
   int i;
   unsigned int vl = tm_get_verbose_level();
@@ -275,7 +273,7 @@ static long int init_mat_long(char *filename,int N, double **mat, double *sum_ro
   fclose (pf);
   return nnz;
 }
-
+#endif
 
 tm_affinity_mat_t * new_affinity_mat(double **mat, double *sum_row, int order, long int nnz){
   tm_affinity_mat_t * aff_mat;
