@@ -15,6 +15,7 @@
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
+ * Copyright (c) 2019      Google, LLC. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -67,7 +68,7 @@ mca_coll_basic_neighbor_alltoall_cart(const void *sbuf, int scount, struct ompi_
         if (MPI_PROC_NULL != srank) {
             nreqs++;
             rc = MCA_PML_CALL(irecv(rbuf, rcount, rdtype, srank,
-                                    MCA_COLL_BASE_TAG_ALLTOALL,
+                                    MCA_COLL_BASE_TAG_NONBLOCKING_BASE - 2 * dim,
                                     comm, preqs++));
             if (OMPI_SUCCESS != rc) break;
         }
@@ -77,7 +78,7 @@ mca_coll_basic_neighbor_alltoall_cart(const void *sbuf, int scount, struct ompi_
         if (MPI_PROC_NULL != drank) {
             nreqs++;
             rc = MCA_PML_CALL(irecv(rbuf, rcount, rdtype, drank,
-                                    MCA_COLL_BASE_TAG_ALLTOALL,
+                                    MCA_COLL_BASE_TAG_NONBLOCKING_BASE - 2 * dim - 1,
                                     comm, preqs++));
             if (OMPI_SUCCESS != rc) break;
         }
@@ -104,7 +105,7 @@ mca_coll_basic_neighbor_alltoall_cart(const void *sbuf, int scount, struct ompi_
              * a const for the send buffer. */
             nreqs++;
             rc = MCA_PML_CALL(isend((void *) sbuf, scount, sdtype, srank,
-                                    MCA_COLL_BASE_TAG_ALLTOALL,
+                                    MCA_COLL_BASE_TAG_NONBLOCKING_BASE - 2 * dim - 1,
                                     MCA_PML_BASE_SEND_STANDARD,
                                     comm, preqs++));
             if (OMPI_SUCCESS != rc) break;
@@ -115,7 +116,7 @@ mca_coll_basic_neighbor_alltoall_cart(const void *sbuf, int scount, struct ompi_
         if (MPI_PROC_NULL != drank) {
             nreqs++;
             rc = MCA_PML_CALL(isend((void *) sbuf, scount, sdtype, drank,
-                                    MCA_COLL_BASE_TAG_ALLTOALL,
+                                    MCA_COLL_BASE_TAG_NONBLOCKING_BASE - 2 * dim,
                                     MCA_PML_BASE_SEND_STANDARD,
                                     comm, preqs++));
             if (OMPI_SUCCESS != rc) break;
