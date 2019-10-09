@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2010-2015 Sandia National Laboratories.  All rights reserved.
+ * Copyright (c) 2010-2019 Sandia National Laboratories.  All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
@@ -551,12 +551,12 @@ ompi_mtl_portals4_finalize(struct mca_mtl_base_module_t *mtl)
     if (0 == ompi_mtl_portals4.need_init) {
         opal_progress_unregister(ompi_mtl_portals4_progress);
         while (0 != ompi_mtl_portals4_progress()) { }
-    }
 
 #if OMPI_MTL_PORTALS4_FLOW_CONTROL
-    ompi_mtl_portals4_flowctl_fini();
+        ompi_mtl_portals4_flowctl_fini();
 #endif
-    ompi_mtl_portals4_recv_short_fini();
+        ompi_mtl_portals4_recv_short_fini();
+    }
 
     if (!PtlHandleIsEqual(ompi_mtl_portals4.long_overflow_me_h, PTL_INVALID_HANDLE)) {
         PtlMEUnlink(ompi_mtl_portals4.long_overflow_me_h);
