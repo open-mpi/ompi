@@ -19,7 +19,7 @@ $HEADER$
 Overview
 ========
 
-This file exists  for those who are building/exploring OMPI in
+This file exists for those who are building/exploring OMPI in
 source code form, most likely through a developer's tree (i.e., a
 Git clone).
 
@@ -60,7 +60,7 @@ Use of GNU Autoconf, Automake, and Libtool (and m4)
 You need to read/care about this section *ONLY* if you are building
 from a developer's tree (i.e., a Git clone of the Open MPI source
 tree).  If you have an Open MPI distribution tarball, the contents of
-this section are optional -- you can (and probably should) skip
+this section is optional -- you can (and probably should) skip
 reading this section.
 
 If you are building Open MPI from a developer's tree, you must first
