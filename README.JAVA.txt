@@ -255,7 +255,7 @@ interface. Otherwise a memory leak is produced.
 
 Specifying offsets in buffers
 
-In a C program, it is common to specify an offset in a array with
+In a C program, it is common to specify an offset in an array with
 "&array[i]" or "array+i", for instance to send data starting from
 a given position in the array. The equivalent form in the Java bindings
 is to "slice()" the buffer to start at an offset. Making a "slice()"
