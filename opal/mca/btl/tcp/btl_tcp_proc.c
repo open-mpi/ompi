@@ -986,8 +986,8 @@ bool mca_btl_tcp_proc_tosocks(mca_btl_tcp_addr_t* proc_addr,
         {
             struct sockaddr_in6* inaddr = (struct sockaddr_in6*)output;
             output->ss_family = AF_INET6;
-            memcpy(&inaddr->sin6_addr, &proc_addr->addr_union.addr_inet,
-                   sizeof (proc_addr->addr_union.addr_inet));
+            memcpy(&inaddr->sin6_addr, &proc_addr->addr_union.addr_inet6,
+                   sizeof (proc_addr->addr_union.addr_inet6));
             inaddr->sin6_port = proc_addr->addr_port;
             inaddr->sin6_scope_id = 0;
             inaddr->sin6_flowinfo = 0;
