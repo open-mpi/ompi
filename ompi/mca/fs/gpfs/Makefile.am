@@ -33,14 +33,9 @@ endif
 
 fs_gpfs_sources = \
 		fs_gpfs_component.c \
-		fs_gpfs_file_close.c \
-		fs_gpfs_file_delete.c \
-		fs_gpfs_file_get_size.c \
 		fs_gpfs_file_open.c \
 		fs_gpfs_file_set_info.c\
 		fs_gpfs_file_get_info.c\
-		fs_gpfs_file_set_size.c \
-		fs_gpfs_file_sync.c \
 		fs_gpfs.c \
 		fs_gpfs.h
 

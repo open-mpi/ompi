@@ -11,9 +11,9 @@
  *                         All rights reserved.
  * Copyright (c) 2008-2011 University of Houston. All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -38,11 +38,18 @@
  *  Accepts:    - same arguments as MPI_File_get_info()
  *  Returns:    - new info object
  */
- 
- int mca_fs_gpfs_file_get_info(mca_io_ompio_file_t *fh,
-                         ompi_info_t **info_used) {
-    fprintf(stderr, "GPFS GET INFO\n");
-	int ret = OMPI_SUCCESS;
-    ret = MPI_Info_dup(fh->f_info, *info_used);
+
+int mca_fs_gpfs_file_get_info(ompio_file_t *fh,
+                        ompi_info_t **info_used)
+{
+    int ret = OMPI_SUCCESS;
+
+    *info_used = OBJ_NEW(ompi_info_t);
+    if (NULL == *info_used) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+
+    ret = ompi_info_dup ((ompi_info_t *)fh->f_info, info_used);
+
     return ret;
 }

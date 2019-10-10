@@ -41,10 +41,10 @@
 
 int
 mca_fs_gpfs_file_open (struct ompi_communicator_t *comm,
-                        char* filename,
+                        const char* filename,
                         int access_mode,
-                        struct ompi_info_t *info,
-                        mca_io_ompio_file_t *fh)
+                        struct opal_info_t *info,
+                        ompio_file_t *fh)
 {
     int amode;
     int old_mask, perm;
@@ -84,7 +84,7 @@ mca_fs_gpfs_file_open (struct ompi_communicator_t *comm,
     }
 
     fh->f_amode=access_mode;
-    mca_fs_gpfs_file_set_info(fh, info);
+    mca_fs_gpfs_file_set_info(fh, (struct ompi_info_t *) info);
 
     return OMPI_SUCCESS;
 }
@@ -93,9 +93,9 @@ int
 mca_fs_gpfs_file_get_amode (ompi_file_t *fh,
                              int *amode)
 {
-    mca_io_ompio_data_t *data;
+    mca_common_ompio_data_t *data;
 
-    data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
+    data = (mca_common_ompio_data_t *) fh->f_io_selected_data;
 
     *amode = data->ompio_fh.f_amode;
 
@@ -107,10 +107,10 @@ int
 mca_fs_gpfs_file_seek(ompi_file_t *fh, OMPI_MPI_OFFSET_TYPE off, int whence) {
     //DEBUG: fprintf(stderr, "GPFS FILE SEEK!");
     int ret = OMPI_SUCCESS;
-    mca_io_ompio_data_t *data;
+    mca_common_ompio_data_t *data;
     OMPI_MPI_OFFSET_TYPE offset, temp_offset;
 
-    data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
+    data = (mca_common_ompio_data_t *) fh->f_io_selected_data;
 
     offset = off * data->ompio_fh.f_etype_size;
 
@@ -139,15 +139,15 @@ mca_fs_gpfs_file_seek(ompi_file_t *fh, OMPI_MPI_OFFSET_TYPE off, int whence) {
             return OMPI_ERROR;
     }
 
-    ret = ompi_io_ompio_set_explicit_offset(&data->ompio_fh, offset
+    ret = mca_common_ompio_set_explicit_offset(&data->ompio_fh, offset
             / data->ompio_fh.f_etype_size);
     return ret;
 }
 
 int mca_fs_gpfs_file_get_position(ompi_file_t *fh, OMPI_MPI_OFFSET_TYPE *offset) {
-    mca_io_ompio_data_t *data;
+    mca_common_ompio_data_t *data;
 
-    data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
+    data = (mca_common_ompio_data_t *) fh->f_io_selected_data;
 
     *offset = data->ompio_fh.f_position_in_file_view
             / data->ompio_fh.f_etype_size;

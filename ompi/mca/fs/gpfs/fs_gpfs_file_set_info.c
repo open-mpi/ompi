@@ -31,6 +31,8 @@
 #include <errno.h>
 #include <gpfs_fcntl.h>
 
+#define DATASHIPPING_ENABLED 0
+
 /*
  *  file_set_info_gpfs
  *
@@ -69,6 +71,7 @@ struct {
     gpfsCancelHints_t gpfsCancelHints;
 } gpfs_hint_CancelHints;
 
+#if DATASHIPPING_ENABLED
 struct {
     gpfsFcntlHeader_t gpfsFcntlHeader;
     gpfsDataShipStart_t gpfsDataShipStart;
@@ -88,6 +91,7 @@ struct {
     gpfsFcntlHeader_t gpfsFcntlHeader;
     gpfsDataShipStop_t gpfsDataShipStop;
 } gpfs_hint_DataShipStop;
+#endif
 
 struct {
     gpfsFcntlHeader_t gpfsFcntlHeader;
@@ -167,21 +171,21 @@ struct {
 
 
 
-int mca_fs_gpfs_file_set_info(mca_io_ompio_file_t *fh, struct ompi_info_t *info) {
-    //DEBUG: fprintf(stderr, "GPFS SET INFO\n");
+int mca_fs_gpfs_file_set_info(ompio_file_t *fh, struct ompi_info_t *info)
+{
     int rc = 0;
     int flag;
     int valueLen = MPI_MAX_INFO_VAL;
     char value[MPI_MAX_INFO_VAL + 1];
-	char gpfsHintsKey[50];
+    char gpfsHintsKey[50];
     const char* split = ",";
     char* token;
     int ret = OMPI_SUCCESS;
     ompi_info_t *info_selected;
     info_selected = info;
     gpfs_file_t gpfs_file_handle = fh->fd;
-    
-	strcpy(gpfsHintsKey, "useSIOXLib");
+
+    strcpy(gpfsHintsKey, "useSIOXLib");
     ompi_info_get(info_selected, gpfsHintsKey, valueLen, value, &flag);
     if (flag) {
         if(strcmp(value, "true") == 0) {
@@ -259,7 +263,7 @@ int mca_fs_gpfs_file_set_info(mca_io_ompio_file_t *fh, struct ompi_info_t *info)
     //Setting GPFS Hint - gpfsClearFileCache
     strcpy(gpfsHintsKey, "gpfsClearFileCache");
     ompi_info_get(info_selected, gpfsHintsKey, valueLen, value, &flag);
-    if (flag & strcmp(value, "true") == 0) {
+    if (flag & (strcmp(value, "true") == 0)) {
         printf("GPFS Clear File Cache is set: %s: %s\n", gpfsHintsKey, value);
         gpfs_hint_ClearFileCache.gpfsFcntlHeader.totalLength = sizeof(gpfs_hint_ClearFileCache);
         gpfs_hint_ClearFileCache.gpfsFcntlHeader.fcntlVersion = GPFS_FCNTL_CURRENT_VERSION;
@@ -282,7 +286,7 @@ int mca_fs_gpfs_file_set_info(mca_io_ompio_file_t *fh, struct ompi_info_t *info)
     //Setting GPFS Hint - gpfsCancelHints
     strcpy(gpfsHintsKey, "gpfsCancelHints");
     ompi_info_get(info_selected, gpfsHintsKey, valueLen, value, &flag);
-    if (flag & strcmp(value, "true") == 0) {
+    if (flag & (strcmp(value, "true") == 0)) {
         printf("GPFS Cancel Hints is set: %s: %s\n", gpfsHintsKey, value);
         gpfs_hint_CancelHints.gpfsFcntlHeader.totalLength = sizeof(gpfs_hint_CancelHints);
         gpfs_hint_CancelHints.gpfsFcntlHeader.fcntlVersion = GPFS_FCNTL_CURRENT_VERSION;
@@ -302,6 +306,7 @@ int mca_fs_gpfs_file_set_info(mca_io_ompio_file_t *fh, struct ompi_info_t *info)
         }
     }
 
+#if DATASHIPPING_ENABLED
     //Setting GPFS Hint - gpfsDataShipStart
     strcpy(gpfsHintsKey, "gpfsDataShipStart");
     ompi_info_get(info_selected, gpfsHintsKey, valueLen, value, &flag);
@@ -354,6 +359,7 @@ int mca_fs_gpfs_file_set_info(mca_io_ompio_file_t *fh, struct ompi_info_t *info)
             ret = OMPI_ERROR;
         }
     }
+#endif
 
     //Setting GPFS Hint - gpfsSetReplication
     strcpy(gpfsHintsKey, "gpfsSetReplication");
@@ -450,14 +456,14 @@ int mca_fs_gpfs_file_set_info(mca_io_ompio_file_t *fh, struct ompi_info_t *info)
     //Setting GPFS Hint - gpfsGetExpTime
     //Setting GPFS Hint - gpfsSetAppendOnly
     //Setting GPFS Hint - gpfsGetAppendOnly
-	
-	return ret;
+
+    return ret;
 }
 
 //CN: Will this function set info keys with siox prefix?
 //CN: Where shall the knowledge of the optimization of GPFS hints go? Into Open MPI or into SIOX?
 //CN: Never ever exit! Open MPI requires error propagation.
-int mca_fs_gpfs_io_selection(mca_io_ompio_file_t *fh,
+int mca_fs_gpfs_io_selection(ompio_file_t *fh,
         struct ompi_info_t *info, struct ompi_info_t *info_selected) {
 
 //CN: configure option to enable/disable SIOX support?

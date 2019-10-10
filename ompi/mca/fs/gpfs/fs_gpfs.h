@@ -35,11 +35,11 @@ BEGIN_C_DECLS
 int mca_fs_gpfs_component_init_query(bool enable_progress_threads,
 		bool enable_mpi_threads);
 struct mca_fs_base_module_1_0_0_t *
-mca_fs_gpfs_component_file_query(mca_io_ompio_file_t *fh, int *priority);
-int mca_fs_gpfs_component_file_unquery(mca_io_ompio_file_t *file);
+mca_fs_gpfs_component_file_query(ompio_file_t *fh, int *priority);
+int mca_fs_gpfs_component_file_unquery(ompio_file_t *file);
 
-int mca_fs_gpfs_module_init(mca_io_ompio_file_t *file);
-int mca_fs_gpfs_module_finalize(mca_io_ompio_file_t *file);
+int mca_fs_gpfs_module_init(ompio_file_t *file);
+int mca_fs_gpfs_module_finalize(ompio_file_t *file);
 OMPI_MODULE_DECLSPEC extern mca_fs_base_component_2_0_0_t mca_fs_gpfs_component;
 
 /*
@@ -48,22 +48,22 @@ OMPI_MODULE_DECLSPEC extern mca_fs_base_component_2_0_0_t mca_fs_gpfs_component;
  * ******************************************************************
  */
 
-int mca_fs_gpfs_file_open(struct ompi_communicator_t *comm, char *filename,
-		int amode, struct ompi_info_t *info, struct mca_io_ompio_file_t *fh);
-int mca_fs_gpfs_file_close(struct mca_io_ompio_file_t *fh);
+int mca_fs_gpfs_file_open(struct ompi_communicator_t *comm, const char *filename,
+		int amode, struct opal_info_t *info, struct ompio_file_t *fh);
+int mca_fs_gpfs_file_close(struct ompio_file_t *fh);
 int mca_fs_gpfs_file_delete(char *filename, struct ompi_info_t *info);
-int mca_fs_gpfs_file_set_size(struct mca_io_ompio_file_t *fh,
+int mca_fs_gpfs_file_set_size(struct ompio_file_t *fh,
 		OMPI_MPI_OFFSET_TYPE size);
-int mca_fs_gpfs_file_get_size(struct mca_io_ompio_file_t *fh,
+int mca_fs_gpfs_file_get_size(struct ompio_file_t *fh,
 		OMPI_MPI_OFFSET_TYPE * size);
 int mca_fs_gpfs_file_get_amode(struct ompi_file_t *fh, int *amode);
-int mca_fs_gpfs_file_set_info(struct mca_io_ompio_file_t *fh,
+int mca_fs_gpfs_file_set_info(struct ompio_file_t *fh,
 		struct ompi_info_t *info);
-int mca_fs_gpfs_file_get_info(struct mca_io_ompio_file_t *fh,
+int mca_fs_gpfs_file_get_info(struct ompio_file_t *fh,
 		struct ompi_info_t **info_used);
 int mca_fs_gpfs_prefetch_hints(int access_mode,
-		mca_io_ompio_file_t *fh, struct ompi_info_t *info);
-int mca_fs_gpfs_io_selection(mca_io_ompio_file_t *fh,
+		ompio_file_t *fh, struct ompi_info_t *info);
+int mca_fs_gpfs_io_selection(ompio_file_t *fh,
 		struct ompi_info_t *info, struct ompi_info_t *info_selected);
 int mca_fs_gpfs_file_sync(struct ompi_file_t *fh);
 //CN: Is mca_fs_gpfs_file_seek needed at all. Not used anywhere!

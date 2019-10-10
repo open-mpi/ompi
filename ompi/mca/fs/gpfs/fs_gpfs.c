@@ -90,7 +90,7 @@ mca_fs_gpfs_component_file_query (ompio_file_t *fh, int *priority)
     tmp = strchr (fh->f_filename, ':');
     if (!tmp) {
         if (OMPIO_ROOT == fh->f_rank) {
-            fh->f_fstype = mca_fs_base_get_fstype ( fh->f_filename );
+            fh->f_fstype = mca_fs_base_get_fstype ( (char *) fh->f_filename );
         }
 	fh->f_comm->c_coll->coll_bcast (&(fh->f_fstype),
 				       1,
