@@ -1105,7 +1105,7 @@ NETWORKING SUPPORT / OPTIONS
   knem is a Linux kernel module that allows direct process-to-process
   memory copies (optionally using hardware offload), potentially
   increasing bandwidth for large messages sent between messages on the
-  same server.  See http://runtime.bordeaux.inria.fr/knem/ for
+  same server.  See http://knem.gforge.inria.fr/ for
   details.
 
 --with-libfabric=<directory>
