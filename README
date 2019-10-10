@@ -877,9 +877,9 @@ Open MPI Extensions
     MPIX_SHORT_FLOAT, and MPIX_CXX_SHORT_FLOAT_COMPLEX if corresponding
     language types are available. See ompi/mpiext/shortfloat/README.txt
     for details.
-  - affinity: Provides the OMPI_Affinity_str() routine on retrieving
-    a string that contains what resources a process is bound to.  See
-    its man page for more details.
+  - affinity: Provides the OMPI_Affinity_str() a string indicating the
+    resources which a process is bound. For more details, see its man
+    page.
   - cr: Provides routines to access to checkpoint restart routines.
     See ompi/mpiext/cr/mpiext_cr_c.h for a listing of available
     functions.
