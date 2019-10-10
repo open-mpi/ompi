@@ -608,9 +608,7 @@ MPI Functionality and Features
   deprecated_example.c:4: warning: 'MPI_Type_struct' is deprecated (declared at /opt/openmpi/include/mpi.h:1522)
   shell$
 
-- MPI_THREAD_MULTIPLE is supported with some exceptions.  Note that
-  Open MPI must be configured with --enable-mpi-thread-multiple to get
-  this level of thread safety support.
+- MPI_THREAD_MULTIPLE is supported with some exceptions.
 
   The following PMLs support MPI_THREAD_MULTIPLE:
   - cm (see list (1) of supported MTLs, below)
