@@ -535,6 +535,8 @@ General Run-Time Support Notes
   (for example, sending a 4 byte MPI_DOUBLE and receiving an 8 byte
   MPI_DOUBLE will fail).
 
+- Jeff Squyres told me to do this to celebrate #hacktoberfest
+
 
 MPI Functionality and Features
 ------------------------------
