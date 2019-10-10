@@ -294,7 +294,7 @@ Compiler Notes
   module.
 
 - Open MPI does not support the Sparc v8 CPU target.  However,
-  as of Solaris Studio 12.1,  and later compilers, one should not
+  as of Solaris Studio 12.1, and later compilers, one should not
   specify -xarch=v8plus or -xarch=v9.  The use of the options
   -m32 and -m64 for producing 32 and 64 bit targets, respectively,
   are now preferred by the Solaris Studio compilers.  GCC may
