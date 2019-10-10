@@ -670,10 +670,6 @@ OpenSHMEM Functionality and Features
 MPI Collectives
 ---------------
 
-- The "fca" coll component: the Mellanox Fabric Collective Accelerator
-  (FCA) is a solution for offloading collective operations from the
-  MPI process onto Mellanox QDR InfiniBand switch CPUs and HCAs.
-
 - The "cuda" coll component provides CUDA-aware support for the
   reduction type collectives with GPU buffers. This component is only
   compiled into the library when the library has been configured with
