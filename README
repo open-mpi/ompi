@@ -188,7 +188,7 @@ General notes
   - Oracle Solaris 10 and 11, 32 and 64 bit (SPARC, i386, x86_64),
     with Oracle Solaris Studio 12.5
   - OpenBSD.  Requires configure options --enable-mca-no-build=patcher
-    and --disable-slopen with this release.
+    and --disable-dlopen with this release.
   - Problems have been reported when building Open MPI on FreeBSD 11.1
     using the clang-4.0 system compiler. A workaround is to build
     Open MPI using the GNU compiler.
