@@ -375,6 +375,18 @@ int mca_base_event_registration_alloc (mca_base_event_t *event, void *obj_regist
     return OPAL_SUCCESS;
 }
 
+int mca_base_event_handle_set_info (mca_base_event_registration_t *registration, opal_info_t *info)
+{
+    /* nothing to do at this time */
+    return OPAL_SUCCESS;
+}
+
+int mca_base_event_handle_get_info (mca_base_event_registration_t *registration, opal_info_t *info_used)
+{
+    /* nothing to do at this time */
+    return OPAL_SUCCESS;
+}
+
 int mca_base_event_register_callback (mca_base_event_registration_t *registration, mca_base_cb_safety_t cb_safety,
                                       opal_info_t *info, void *user_data, mca_base_event_cb_fn_t event_cbfn)
 {
@@ -385,8 +397,22 @@ int mca_base_event_register_callback (mca_base_event_registration_t *registratio
     registration->user_data[cb_safety] = user_data;
     /* ensure the user data is commited before setting the callback function */
     opal_atomic_wmb();
-    opal_atomic_swap_ptr ((volatile intptr_t *) (registration->event_cbs + cb_safety), (intptr_t) event_cbfn);
+    opal_atomic_swap_ptr ((opal_atomic_intptr_t *) (registration->event_cbs + cb_safety), (intptr_t) event_cbfn);
 
+    return OPAL_SUCCESS;
+}
+
+int mca_base_event_callback_set_info (mca_base_event_registration_t *registration, mca_base_cb_safety_t cb_safety,
+                                      opal_info_t *info)
+{
+    /* nothing to do */
+    return OPAL_SUCCESS;
+}
+
+int mca_base_event_callback_get_info (mca_base_event_registration_t *registration, mca_base_cb_safety_t cb_safety,
+                                      opal_info_t *info_used)
+{
+    /* nothing to do */
     return OPAL_SUCCESS;
 }
 

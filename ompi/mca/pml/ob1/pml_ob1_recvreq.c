@@ -497,7 +497,7 @@ int mca_pml_ob1_recv_request_get_frag (mca_pml_ob1_rdma_frag_t *frag)
     }
 
     mca_base_event_raise (mca_pml_ob1_events[MCA_PML_OB1_EVENT_TRANSFER].event,
-                          MCA_BASE_CALLBACK_SAFETY_ASYNC_SIGNAL_SAFE, recvreq->req_recv.req_base.req_comm, NULL,
+                          MCA_BASE_CB_REQUIRE_ASYNC_SIGNAL_SAFE, recvreq->req_recv.req_base.req_comm, NULL,
                           &((mca_pml_ob1_transfer_event_t){.request = frag->rdma_req, .length = frag->rdma_length}));
 
     /* queue up get request */

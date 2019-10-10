@@ -41,8 +41,9 @@ libmpi_mpit_la_SOURCES = init_thread.c finalize.c cvar_get_num.c \
                      pvar_start.c pvar_stop.c pvar_write.c \
                      enum_get_info.c enum_get_item.c cvar_get_index.c \
                      pvar_get_index.c category_get_index.c \
-                     event_get_index.c event_copy.c \
-                     event_get_info.c event_get_num.c event_get_source.c \
+                     event_get_index.c event_copy.c event_callback_get_info.c \
+                     event_callback_set_info.c event_handle_get_info.c \
+                     event_handle_set_info.c event_get_info.c event_get_num.c event_get_source.c \
                      event_get_timestamp.c event_handle_alloc.c event_handle_free.c \
                      event_read.c event_register_callback.c event_set_dropped_handler.c \
                      source_get_num.c source_get_info.c source_get_timestamp.c

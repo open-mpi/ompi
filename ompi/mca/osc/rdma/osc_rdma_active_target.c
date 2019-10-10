@@ -208,7 +208,7 @@ static void ompi_osc_rdma_handle_post (ompi_osc_rdma_module_t *module, int rank,
                              rank, (int) (npeers - state->num_post_msgs - 1));
             /* an atomic is not really necessary as this function is currently used but it doesn't hurt */
             ompi_osc_rdma_counter_add (&state->num_post_msgs, 1);
-            mca_base_event_raise(mca_osc_rdma_events[OMPI_OSC_RDMA_EVENT_PSCW_ACCESS_START].event, MCA_BASE_CALLBACK_SAFETY_ASYNC_SIGNAL_SAFE,
+            mca_base_event_raise(mca_osc_rdma_events[OMPI_OSC_RDMA_EVENT_PSCW_ACCESS_START].event, MCA_BASE_CB_REQUIRE_ASYNC_SIGNAL_SAFE,
                                  module->win, NULL, &rank);
             return;
         }
@@ -335,7 +335,7 @@ int ompi_osc_rdma_post_atomic (ompi_group_t *group, int assert, ompi_win_t *win)
         return OMPI_SUCCESS;
     }
 
-    mca_base_event_raise(mca_osc_rdma_events[OMPI_OSC_RDMA_EVENT_PSCW_EXPOSE_START].event, MCA_BASE_CALLBACK_SAFETY_ASYNC_SIGNAL_SAFE,
+    mca_base_event_raise(mca_osc_rdma_events[OMPI_OSC_RDMA_EVENT_PSCW_EXPOSE_START].event, MCA_BASE_CB_REQUIRE_ASYNC_SIGNAL_SAFE,
                          module->win, NULL, NULL);
 
     /* translate group ranks into the communicator */
@@ -424,7 +424,7 @@ int ompi_osc_rdma_start_atomic (ompi_group_t *group, int assert, ompi_win_t *win
                                      "from %d processes", peer->rank, (int) (group_size - state->num_post_msgs - 1));
                     opal_list_remove_item (&module->pending_posts, &pending_post->super);
                     OBJ_RELEASE(pending_post);
-                    mca_base_event_raise(mca_osc_rdma_events[OMPI_OSC_RDMA_EVENT_PSCW_ACCESS_START].event, MCA_BASE_CALLBACK_SAFETY_ASYNC_SIGNAL_SAFE,
+                    mca_base_event_raise(mca_osc_rdma_events[OMPI_OSC_RDMA_EVENT_PSCW_ACCESS_START].event, MCA_BASE_CB_REQUIRE_ASYNC_SIGNAL_SAFE,
                                          module->win, NULL, &peer->rank);
                     ompi_osc_rdma_counter_add (&state->num_post_msgs, 1);
                     break;
@@ -494,7 +494,7 @@ int ompi_osc_rdma_complete_atomic (ompi_win_t *win)
         ompi_osc_rdma_peer_t *peer = peers[i];
         intptr_t target = (intptr_t) peer->state + offsetof (ompi_osc_rdma_state_t, num_complete_msgs);
 
-        mca_base_event_raise(mca_osc_rdma_events[OMPI_OSC_RDMA_EVENT_PSCW_ACCESS_COMPLETE].event, MCA_BASE_CALLBACK_SAFETY_ASYNC_SIGNAL_SAFE,
+        mca_base_event_raise(mca_osc_rdma_events[OMPI_OSC_RDMA_EVENT_PSCW_ACCESS_COMPLETE].event, MCA_BASE_CB_REQUIRE_ASYNC_SIGNAL_SAFE,
                              module->win, NULL, &peer->rank);
 
         if (!ompi_osc_rdma_peer_local_state (peer)) {
@@ -540,7 +540,7 @@ int ompi_osc_rdma_wait_atomic (ompi_win_t *win)
         opal_atomic_mb ();
     }
 
-    mca_base_event_raise(mca_osc_rdma_events[OMPI_OSC_RDMA_EVENT_PSCW_EXPOSE_COMPLETE].event, MCA_BASE_CALLBACK_SAFETY_ASYNC_SIGNAL_SAFE,
+    mca_base_event_raise(mca_osc_rdma_events[OMPI_OSC_RDMA_EVENT_PSCW_EXPOSE_COMPLETE].event, MCA_BASE_CB_REQUIRE_ASYNC_SIGNAL_SAFE,
                          module->win, NULL, NULL);
 
     OPAL_THREAD_LOCK(&module->lock);
@@ -592,7 +592,7 @@ int ompi_osc_rdma_test_atomic (ompi_win_t *win, int *flag)
     module->pw_group = NULL;
     OPAL_THREAD_UNLOCK(&(module->lock));
 
-    mca_base_event_raise(mca_osc_rdma_events[OMPI_OSC_RDMA_EVENT_PSCW_EXPOSE_COMPLETE].event, MCA_BASE_CALLBACK_SAFETY_ASYNC_SIGNAL_SAFE,
+    mca_base_event_raise(mca_osc_rdma_events[OMPI_OSC_RDMA_EVENT_PSCW_EXPOSE_COMPLETE].event, MCA_BASE_CB_REQUIRE_ASYNC_SIGNAL_SAFE,
                          module->win, NULL, NULL);
 
     OBJ_RELEASE(group);

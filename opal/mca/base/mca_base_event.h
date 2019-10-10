@@ -220,4 +220,11 @@ OPAL_DECLSPEC void mca_base_event_copy (mca_base_raised_event_t *revent, void *b
 OPAL_DECLSPEC int mca_base_event_read_some (mca_base_raised_event_t *revent, void *array_of_buffers[]);
 OPAL_DECLSPEC int mca_base_event_read_all (mca_base_raised_event_t *revent, void *array_of_buffers[]);
 
+OPAL_DECLSPEC int mca_base_event_handle_set_info (mca_base_event_registration_t *registration, opal_info_t *info);
+OPAL_DECLSPEC int mca_base_event_handle_get_info (mca_base_event_registration_t *registration, opal_info_t *info_used);
+OPAL_DECLSPEC int mca_base_event_callback_set_info (mca_base_event_registration_t *registration, mca_base_cb_safety_t cb_safety,
+                                                    opal_info_t *info);
+OPAL_DECLSPEC int mca_base_event_callback_get_info (mca_base_event_registration_t *registration, mca_base_cb_safety_t cb_safety,
+                                                    opal_info_t *info_used);
+
 #endif /* !defined(MCA_BASE_EVENT_H) */
