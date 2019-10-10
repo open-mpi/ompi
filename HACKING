@@ -212,6 +212,8 @@ NOTE: On MacOS/X, the default "libtool" program is different than the
    5b. You do *NOT* need to re-run autogen.pl if you modify a
        Makefile.am.
 
+- Jeff Squyres told me to do this to celebrate #hacktoberfest
+
 Use of Flex
 ===========
 
