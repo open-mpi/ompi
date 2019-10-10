@@ -880,9 +880,6 @@ Open MPI Extensions
   - affinity: Provides the OMPI_Affinity_str() routine on retrieving
     a string that contains what resources a process is bound to.  See
     its man page for more details.
-  - cr: Provides routines to access to checkpoint restart routines.
-    See ompi/mpiext/cr/mpiext_cr_c.h for a listing of available
-    functions.
   - cuda: When the library is compiled with CUDA-aware support, it
     provides two things.  First, a macro
     MPIX_CUDA_AWARE_SUPPORT. Secondly, the function
