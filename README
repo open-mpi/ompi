@@ -1262,36 +1262,6 @@ RUN-TIME SYSTEM SUPPORT
 
 MISCELLANEOUS SUPPORT LIBRARIES
 
---with-blcr=<directory>
-  Specify the directory where the Berkeley Labs Checkpoint / Restart
-  (BLCR) libraries and header files are located.  This option is
-  generally only necessary if the BLCR headers and libraries are not
-  in default compiler/linker search paths.
-
-  This option is only meaningful if the --with-ft option is also used
-  to active Open MPI's fault tolerance behavior.
-
---with-blcr-libdir=<directory>
-  Look in directory for the BLCR libraries.  By default, Open MPI will
-  look in <blcr directory>/lib and <blcr directory>/lib64, which
-  covers most cases.  This option is only needed for special
-  configurations.
-
---with-dmtcp=<directory>
-  Specify the directory where the Distributed MultiThreaded
-  Checkpointing (DMTCP) libraries and header files are located.  This
-  option is generally only necessary if the DMTCP headers and
-  libraries are not in default compiler/linker search paths.
-
-  This option is only meaningful if the --with-ft option is also used
-  to active Open MPI's fault tolerance behavior.
-
---with-dmtcp-libdir=<directory>
-  Look in directory for the DMTCP libraries.  By default, Open MPI
-  will look in <dmtcp directory>/lib and <dmtcp directory>/lib64,
-  which covers most cases.  This option is only needed for special
-  configurations.
-
 --with-libevent(=value)
   This option specifies where to find the libevent support headers and
   library.  The following VALUEs are permitted:
