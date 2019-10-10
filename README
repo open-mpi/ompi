@@ -592,7 +592,7 @@ MPI Functionality and Features
   --enable-mpi1-compatibility flag.
 
 - Rank reordering support is available using the TreeMatch library. It
-  is activated for the graph and dist_graph topologies.
+  is activated for the graph and dist_graph communicator topologies.
 
 - When using MPI deprecated functions, some compilers will emit
   warnings.  For example:
