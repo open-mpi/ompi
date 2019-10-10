@@ -97,7 +97,7 @@ $ cd openmpi-<version>
 $ mkdir build
 $ cd build
 $ ../configure --prefix=<path> |& tee config.out
-...etc.
+....etc.
 
 The rest of this README file contains:
 
