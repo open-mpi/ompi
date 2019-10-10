@@ -19,12 +19,12 @@ $HEADER$
 Overview
 ========
 
-This file is here for those who are building/exploring OMPI in its
+This file exists  for those who are building/exploring OMPI in
 source code form, most likely through a developer's tree (i.e., a
 Git clone).
 
 
-Developer Builds: Compiler Pickyness by Default
+Developer Builds: Compiler Pickiness by Default
 ===============================================
 
 If you are building Open MPI from a Git clone (i.e., there is a ".git"
