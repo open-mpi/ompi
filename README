@@ -109,7 +109,7 @@ The rest of this README file contains:
   are related to backwards compatibility guarantees.
 - Information on how to both query and validate your Open MPI
   installation.
-- Description of Open MPI extensions.
+- Description of all Open MPI extensions.
 - Examples showing how to compile and run Open MPI applications.
 - Summary information on the various plugin frameworks inside Open
   MPI and OpenSHMEM.
