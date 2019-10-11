@@ -255,7 +255,7 @@ typedef struct ompi_op_base_module_1_0_0_t ompi_op_base_module_t;
  * repeated code, but it's better this way (and this typedef will
  * never change, so there's not much of a maintenance worry).
  */
-typedef void (*ompi_op_base_handler_fn_1_0_0_t)(void *, void *, int *,
+typedef void (*ompi_op_base_handler_fn_1_0_0_t)(const void *, void *, int *,
                                                 struct ompi_datatype_t **,
                                                 struct ompi_op_base_module_1_0_0_t *);
 
@@ -264,8 +264,8 @@ typedef ompi_op_base_handler_fn_1_0_0_t ompi_op_base_handler_fn_t;
 /*
  * Typedef for 3-buffer (two input and one output) op functions.
  */
-typedef void (*ompi_op_base_3buff_handler_fn_1_0_0_t)(void *,
-                                                      void *,
+typedef void (*ompi_op_base_3buff_handler_fn_1_0_0_t)(const void *,
+                                                      const void *,
                                                       void *, int *,
                                                       struct ompi_datatype_t **,
                                                       struct ompi_op_base_module_1_0_0_t *);
