@@ -16,7 +16,7 @@
 
 if PROJECT_OMPI
     MPI_TESTS = checksum position position_noncontig ddt_test ddt_raw ddt_raw2 unpack_ooo ddt_pack external32 large_data
-    MPI_CHECKS = to_self
+    MPI_CHECKS = to_self reduce_local
 endif
 TESTS = opal_datatype_test unpack_hetero $(MPI_TESTS)
 
@@ -94,6 +94,12 @@ external32_LDADD = \
 unpack_hetero_SOURCES = unpack_hetero.c
 unpack_hetero_LDFLAGS = $(OMPI_PKG_CONFIG_LDFLAGS)
 unpack_hetero_LDADD = \
+        $(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la
+
+reduce_local_SOURCES = reduce_local.c
+reduce_local_LDFLAGS = $(OMPI_PKG_CONFIG_LDFLAGS)
+reduce_local_LDADD = \
+        $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
         $(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la
 
 distclean:

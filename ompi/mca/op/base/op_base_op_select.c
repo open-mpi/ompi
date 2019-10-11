@@ -14,6 +14,8 @@
  *                         rights reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2008-2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2020      Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -206,8 +208,8 @@ int ompi_op_base_op_select(ompi_op_t *op)
 static int avail_op_compare(opal_list_item_t **itema,
                             opal_list_item_t **itemb)
 {
-    avail_op_t *availa = (avail_op_t *) itema;
-    avail_op_t *availb = (avail_op_t *) itemb;
+    avail_op_t *availa = (avail_op_t *) *itema;
+    avail_op_t *availb = (avail_op_t *) *itemb;
 
     if (availa->ao_priority > availb->ao_priority) {
         return 1;

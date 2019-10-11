@@ -37,7 +37,7 @@
  * This macro is for (out op in).
  */
 #define OP_FUNC(name, type_name, type, op) \
-  static void ompi_op_base_2buff_##name##_##type_name(void *in, void *out, int *count, \
+  static void ompi_op_base_2buff_##name##_##type_name(const void *in, void *out, int *count, \
                                                       struct ompi_datatype_t **dtype, \
                                                       struct ompi_op_base_module_1_0_0_t *module) \
   {                                                                      \
@@ -57,7 +57,7 @@
  * This macro is for (out = op(out, in))
  */
 #define FUNC_FUNC(name, type_name, type) \
-  static void ompi_op_base_2buff_##name##_##type_name(void *in, void *out, int *count, \
+  static void ompi_op_base_2buff_##name##_##type_name(const void *in, void *out, int *count, \
                                                 struct ompi_datatype_t **dtype, \
                                                 struct ompi_op_base_module_1_0_0_t *module) \
   {                                                                      \
@@ -85,7 +85,7 @@
   } ompi_op_predefined_##type_name##_t;
 
 #define LOC_FUNC(name, type_name, op) \
-    static void ompi_op_base_2buff_##name##_##type_name(void *in, void *out, int *count, \
+    static void ompi_op_base_2buff_##name##_##type_name(const void *in, void *out, int *count, \
                                                         struct ompi_datatype_t **dtype, \
                                                         struct ompi_op_base_module_1_0_0_t *module) \
     {                                                                   \
@@ -101,6 +101,49 @@
             }                                                           \
         }                                                               \
     }
+
+/*
+ * Define a function to calculate sum of complex numbers using a real
+ * number floating-point type (float, double, etc.).  This macro is used
+ * when the compiler supports a real number floating-point type but does
+ * not supports the corresponding complex number type.
+ */
+#define COMPLEX_SUM_FUNC(type_name, type) \
+  static void ompi_op_base_2buff_sum_##type_name(const void *in, void *out, int *count, \
+                                                 struct ompi_datatype_t **dtype, \
+                                                 struct ompi_op_base_module_1_0_0_t *module) \
+  {                                                                      \
+      int i;                                                             \
+      type (*a)[2] = (type (*)[2]) in;                                   \
+      type (*b)[2] = (type (*)[2]) out;                                  \
+      for (i = 0; i < *count; ++i, ++a, ++b) {                           \
+          (*b)[0] += (*a)[0];                                            \
+          (*b)[1] += (*a)[1];                                            \
+      }                                                                  \
+  }
+
+/*
+ * Define a function to calculate product of complex numbers using a real
+ * number floating-point type (float, double, etc.).  This macro is used
+ * when the compiler supports a real number floating-point type but does
+ * not supports the corresponding complex number type.
+ */
+#define COMPLEX_PROD_FUNC(type_name, type) \
+  static void ompi_op_base_2buff_prod_##type_name(const void *in, void *out, int *count, \
+                                                  struct ompi_datatype_t **dtype, \
+                                                  struct ompi_op_base_module_1_0_0_t *module) \
+  {                                                                      \
+      int i;                                                             \
+      type (*a)[2] = (type (*)[2]) in;                                   \
+      type (*b)[2] = (type (*)[2]) out;                                  \
+      type c[2];                                                         \
+      for (i = 0; i < *count; ++i, ++a, ++b) {                           \
+          c[0] = (*a)[0] * (*b)[0] - (*a)[1] * (*b)[1];                  \
+          c[1] = (*a)[0] * (*b)[1] + (*a)[1] * (*b)[0];                  \
+          (*b)[0] = c[0];                                                \
+          (*b)[1] = c[1];                                                \
+      }                                                                  \
+  }
 
 /*************************************************************************
  * Max
@@ -604,8 +647,8 @@ LOC_FUNC(minloc, long_double_int, <)
  *    routines, needed for some optimizations.
  */
 #define OP_FUNC_3BUF(name, type_name, type, op) \
-    static void ompi_op_base_3buff_##name##_##type_name(void * restrict in1,   \
-                                                        void * restrict in2, void * restrict out, int *count, \
+    static void ompi_op_base_3buff_##name##_##type_name(const void * restrict in1,   \
+                                                        const void * restrict in2, void * restrict out, int *count, \
                                                         struct ompi_datatype_t **dtype, \
                                                         struct ompi_op_base_module_1_0_0_t *module) \
     {                                                                   \
@@ -626,8 +669,8 @@ LOC_FUNC(minloc, long_double_int, <)
  * This macro is for (out = op(in1, in2))
  */
 #define FUNC_FUNC_3BUF(name, type_name, type)                           \
-    static void ompi_op_base_3buff_##name##_##type_name(void * restrict in1, \
-                                                        void * restrict in2, void * restrict out, int *count, \
+    static void ompi_op_base_3buff_##name##_##type_name(const void * restrict in1, \
+                                                        const void * restrict in2, void * restrict out, int *count, \
                                                         struct ompi_datatype_t **dtype, \
                                                         struct ompi_op_base_module_1_0_0_t *module) \
     {                                                                   \
@@ -659,8 +702,8 @@ LOC_FUNC(minloc, long_double_int, <)
 */
 
 #define LOC_FUNC_3BUF(name, type_name, op) \
-  static void ompi_op_base_3buff_##name##_##type_name(void * restrict in1,      \
-                                                      void * restrict in2, void * restrict out, int *count, \
+  static void ompi_op_base_3buff_##name##_##type_name(const void * restrict in1,      \
+                                                      const void * restrict in2, void * restrict out, int *count, \
                                                       struct ompi_datatype_t **dtype, \
                                                       struct ompi_op_base_module_1_0_0_t *module) \
   {                                                                     \
@@ -680,6 +723,50 @@ LOC_FUNC(minloc, long_double_int, <)
               b->k = a2->k;                                             \
           }                                                             \
       }                                                                 \
+  }
+
+/*
+ * Define a function to calculate sum of complex numbers using a real
+ * number floating-point type (float, double, etc.).  This macro is used
+ * when the compiler supports a real number floating-point type but does
+ * not supports the corresponding complex number type.
+ */
+#define COMPLEX_SUM_FUNC_3BUF(type_name, type) \
+  static void ompi_op_base_3buff_sum_##type_name(const void * restrict in1,    \
+                                                 const void * restrict in2, void * restrict out, int *count, \
+                                                 struct ompi_datatype_t **dtype, \
+                                                 struct ompi_op_base_module_1_0_0_t *module) \
+  {                                                                      \
+      int i;                                                             \
+      type (*a1)[2] = (type (*)[2]) in1;                                 \
+      type (*a2)[2] = (type (*)[2]) in2;                                 \
+      type (*b)[2] = (type (*)[2]) out;                                  \
+      for (i = 0; i < *count; ++i, ++a1, ++a2, ++b) {                    \
+          (*b)[0] = (*a1)[0] + (*a2)[0];                                 \
+          (*b)[1] = (*a1)[1] + (*a2)[1];                                 \
+      }                                                                  \
+  }
+
+/*
+ * Define a function to calculate product of complex numbers using a real
+ * number floating-point type (float, double, etc.).  This macro is used
+ * when the compiler supports a real number floating-point type but does
+ * not supports the corresponding complex number type.
+ */
+#define COMPLEX_PROD_FUNC_3BUF(type_name, type) \
+  static void ompi_op_base_3buff_prod_##type_name(const void * restrict in1,   \
+                                                  const void * restrict in2, void * restrict out, int *count, \
+                                                  struct ompi_datatype_t **dtype, \
+                                                  struct ompi_op_base_module_1_0_0_t *module) \
+  {                                                                      \
+      int i;                                                             \
+      type (*a1)[2] = (type (*)[2]) in1;                                 \
+      type (*a2)[2] = (type (*)[2]) in2;                                 \
+      type (*b)[2] = (type (*)[2]) out;                                  \
+      for (i = 0; i < *count; ++i, ++a1, ++a2, ++b) {                    \
+          (*b)[0] = (*a1)[0] * (*a2)[0] - (*a1)[1] * (*a2)[1];           \
+          (*b)[1] = (*a1)[0] * (*a2)[1] + (*a1)[1] * (*a2)[0];           \
+      }                                                                  \
   }
 
 /*************************************************************************

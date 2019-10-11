@@ -2,7 +2,7 @@ dnl
 dnl Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
 dnl                         University Research and Technology
 dnl                         Corporation.  All rights reserved.
-dnl Copyright (c) 2004-2018 The University of Tennessee and The University
+dnl Copyright (c) 2004-2020 The University of Tennessee and The University
 dnl                         of Tennessee Research Foundation.  All rights
 dnl                         reserved.
 dnl Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
@@ -1245,7 +1245,7 @@ AC_MSG_ERROR([Can not continue.])
 
     # Check for RDTSCP support
     result=0
-    AS_IF([test "$opal_cv_asm_arch" = "OPAL_X86_64" || test "$opal_cv_asm_arch" = "OPAL_IA32"],
+    AS_IF([test "$opal_cv_asm_arch" = "X86_64" || test "$opal_cv_asm_arch" = "IA32"],
           [AC_MSG_CHECKING([for RDTSCP assembly support])
            AC_LANG_PUSH([C])
            AC_TRY_RUN([[
