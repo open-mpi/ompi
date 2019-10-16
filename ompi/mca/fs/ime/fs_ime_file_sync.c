@@ -25,7 +25,7 @@ int mca_fs_ime_file_sync (ompio_file_t *fh)
 
     ret = ime_native_fsync(fh->fd);
     if (ret != 0) {
-        return mca_fs_ime_get_mpi_err(errno);
+        return mca_fs_base_get_mpi_err(errno);
     }
 
     return OMPI_SUCCESS;

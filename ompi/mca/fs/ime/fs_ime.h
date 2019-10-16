@@ -33,7 +33,6 @@ int mca_fs_ime_component_file_unquery (ompio_file_t *file);
 int mca_fs_ime_module_init (ompio_file_t *file);
 int mca_fs_ime_module_finalize (ompio_file_t *file);
 
-int mca_fs_ime_get_mpi_err(int errno_val);
 int mca_fs_ime_native_fini();
 
 OMPI_MODULE_DECLSPEC extern mca_fs_base_component_2_0_0_t mca_fs_ime_component;
@@ -62,9 +61,6 @@ int mca_fs_ime_file_get_size (ompio_file_t *fh,
 
 int mca_fs_ime_file_sync (ompio_file_t *fh);
 
-int mca_fs_ime_file_seek (ompio_file_t *fh,
-                          OMPI_MPI_OFFSET_TYPE offset,
-                          int whence);
 /*
  * ******************************************************************
  * ************ functions implemented in this module end ************

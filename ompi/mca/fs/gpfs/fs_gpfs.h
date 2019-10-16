@@ -50,31 +50,12 @@ OMPI_MODULE_DECLSPEC extern mca_fs_base_component_2_0_0_t mca_fs_gpfs_component;
 
 int mca_fs_gpfs_file_open(struct ompi_communicator_t *comm, const char *filename,
 		int amode, struct opal_info_t *info, struct ompio_file_t *fh);
-int mca_fs_gpfs_file_close(struct ompio_file_t *fh);
-int mca_fs_gpfs_file_delete(char *filename, struct ompi_info_t *info);
-int mca_fs_gpfs_file_set_size(struct ompio_file_t *fh,
-		OMPI_MPI_OFFSET_TYPE size);
-int mca_fs_gpfs_file_get_size(struct ompio_file_t *fh,
-		OMPI_MPI_OFFSET_TYPE * size);
-int mca_fs_gpfs_file_get_amode(struct ompi_file_t *fh, int *amode);
 int mca_fs_gpfs_file_set_info(struct ompio_file_t *fh,
 		struct ompi_info_t *info);
 int mca_fs_gpfs_file_get_info(struct ompio_file_t *fh,
 		struct ompi_info_t **info_used);
-int mca_fs_gpfs_prefetch_hints(int access_mode,
-		ompio_file_t *fh, struct ompi_info_t *info);
 int mca_fs_gpfs_io_selection(ompio_file_t *fh,
 		struct ompi_info_t *info, struct ompi_info_t *info_selected);
-int mca_fs_gpfs_file_sync(struct ompi_file_t *fh);
-//CN: Is mca_fs_gpfs_file_seek needed at all. Not used anywhere!
-int
-mca_fs_gpfs_file_seek(struct ompi_file_t *fh, OMPI_MPI_OFFSET_TYPE off,
-		int whence);
-int
-mca_fs_gpfs_file_get_position(struct ompi_file_t *fh,
-		OMPI_MPI_OFFSET_TYPE *offset);
-
-int mca_fs_gpfs_file_get_mpi_err (int errno_val);
 
 /*
  * ******************************************************************

@@ -29,6 +29,7 @@
 #include "mpi.h"
 #include "ompi/constants.h"
 #include "ompi/mca/fs/fs.h"
+#include "ompi/mca/fs/base/base.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/info/info.h"
 
@@ -63,8 +64,7 @@ mca_fs_lustre_file_open (struct ompi_communicator_t *comm,
                      struct opal_info_t *info,
                      ompio_file_t *fh)
 {
-    int amode, rank;
-    int old_mask, perm;
+    int amode, perm;
     int rc, ret=OMPI_SUCCESS;
     int flag;
     int fs_lustre_stripe_size = -1;
@@ -73,24 +73,8 @@ mca_fs_lustre_file_open (struct ompi_communicator_t *comm,
 
     struct lov_user_md *lump=NULL;
 
-    if (fh->f_perm == OMPIO_PERM_NULL) {
-        old_mask = umask(022);
-        umask(old_mask);
-        perm = old_mask ^ 0666;
-    }
-    else {
-        perm = fh->f_perm;
-    }
-    
-    rank = fh->f_rank;
-
-    amode = 0;
-    if (access_mode & MPI_MODE_RDONLY)
-        amode = amode | O_RDONLY;
-    if (access_mode & MPI_MODE_WRONLY)
-        amode = amode | O_WRONLY;
-    if (access_mode & MPI_MODE_RDWR)
-        amode = amode | O_RDWR;
+    perm = mca_fs_base_get_file_perm(fh);
+    amode = mca_fs_base_get_file_amode(fh->f_rank, access_mode);
 
     opal_info_get (info, "stripe_size", MPI_MAX_INFO_VAL, char_stripe, &flag);
     if ( flag ) {
@@ -113,13 +97,7 @@ mca_fs_lustre_file_open (struct ompi_communicator_t *comm,
     
     /* Reset errno */
     errno = 0;
-    if (0 == fh->f_rank) {
-       /* MODE_CREATE and MODE_EXCL can only be set by one process */
-        if ( access_mode & MPI_MODE_CREATE )
-            amode = amode | O_CREAT;
-        if (access_mode & MPI_MODE_EXCL)
-            amode = amode | O_EXCL;
-
+    if (OMPIO_ROOT == fh->f_rank) {
         if ( (fs_lustre_stripe_size>0 || fs_lustre_stripe_width>0) &&
              ( amode&O_CREAT)                                      && 
              ( (amode&O_RDWR)|| amode&O_WRONLY) ) {
@@ -134,28 +112,9 @@ mca_fs_lustre_file_open (struct ompi_communicator_t *comm,
         else {
             fh->fd = open (filename, amode, perm);
         }
+
         if ( 0 > fh->fd ) {
-            if ( EACCES == errno ) {
-                ret = MPI_ERR_ACCESS;
-            }
-            else if ( ENAMETOOLONG == errno ) {
-                ret = MPI_ERR_BAD_FILE;
-            }
-            else if ( ENOENT == errno ) {
-                ret = MPI_ERR_NO_SUCH_FILE;
-            }
-            else if ( EISDIR == errno ) {
-                ret = MPI_ERR_BAD_FILE;
-            }
-            else if ( EROFS == errno ) {
-                ret = MPI_ERR_READ_ONLY;
-            }
-            else if ( EEXIST == errno ) {
-                ret = MPI_ERR_FILE_EXISTS;
-            }
-            else {
-                ret = MPI_ERR_OTHER;
-            }
+            ret = mca_fs_base_get_mpi_err(errno);
         }
     }
 
@@ -165,39 +124,17 @@ mca_fs_lustre_file_open (struct ompi_communicator_t *comm,
         return ret;
     }
 
-    if ( 0 != rank ) {
+    if (OMPIO_ROOT != fh->f_rank) {
         fh->fd = open (filename, amode, perm);
         if ( 0 > fh->fd) {
-            if ( EACCES == errno ) {
-                ret = MPI_ERR_ACCESS;
-            }
-            else if ( ENAMETOOLONG == errno ) {
-                ret = MPI_ERR_BAD_FILE;
-            }
-            else if ( ENOENT == errno ) {
-                ret = MPI_ERR_NO_SUCH_FILE;
-            }
-            else if ( EISDIR == errno ) {
-                ret = MPI_ERR_BAD_FILE;
-            }
-            else if ( EROFS == errno ) {
-                ret = MPI_ERR_READ_ONLY;
-            }
-            else if ( EEXIST == errno ) {
-                ret = MPI_ERR_FILE_EXISTS;
-            }
-            else {
-                ret = MPI_ERR_OTHER;
-            }
+            return mca_fs_base_get_mpi_err(errno);
         }
     }
 
-
-
     lump = alloc_lum();
     if (NULL == lump ){
-	fprintf(stderr,"Cannot allocate memory for extracting stripe size\n");
-	return OMPI_ERROR;
+        fprintf(stderr,"Cannot allocate memory for extracting stripe size\n");
+        return OMPI_ERROR;
     }
     rc = llapi_file_get_stripe(filename, lump);
     if (rc != 0) {
