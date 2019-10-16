@@ -68,7 +68,7 @@ extern uint64_t opal_btl_usnic_ticks;
 extern opal_recursive_mutex_t btl_usnic_lock;
 
 static inline uint64_t
-get_nsec(void)
+get_ticks(void)
 {
     return opal_btl_usnic_ticks;
 }
@@ -205,6 +205,14 @@ typedef struct opal_btl_usnic_component_t {
 
     /** retrans characteristics */
     int retrans_timeout;
+
+    /** max number of messages re-sent during a single progress
+        iteration */
+    int max_resends_per_iteration;
+
+    /** minimum number of times through component progress before
+        checking to see if standalone ACKs need to be sent */
+    int ack_iteration_delay;
 
     /** transport header length for all usNIC devices on this server
         (it is guaranteed that all usNIC devices on a single server
