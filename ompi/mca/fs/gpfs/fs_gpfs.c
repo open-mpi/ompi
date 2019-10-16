@@ -138,3 +138,43 @@ int mca_fs_gpfs_module_finalize (ompio_file_t *file)
 {
     return OMPI_SUCCESS;
 }
+
+int
+mca_fs_gpfs_file_get_mpi_err (int errno_val)
+{
+    int ret;
+    switch (errno_val) {
+        case EACCES:
+            ret = MPI_ERR_ACCESS;
+            break;
+	case EISDIR:
+        case ENAMETOOLONG:
+            ret = MPI_ERR_BAD_FILE;
+            break;
+        case ENOENT:
+            ret = MPI_ERR_NO_SUCH_FILE;
+            break;
+        case EROFS:
+            ret = MPI_ERR_READ_ONLY;
+            break;
+        case EEXIST:
+            ret = MPI_ERR_FILE_EXISTS;
+            break;
+        case ENOSPC:
+            ret = MPI_ERR_NO_SPACE;
+            break;
+        case EDQUOT:
+            ret = MPI_ERR_QUOTA;
+            break;
+        case ETXTBSY:
+            ret = MPI_ERR_FILE_IN_USE;
+            break;
+        case EBADF:
+            ret = MPI_ERR_FILE;
+            break;
+        default:
+            ret = MPI_ERR_OTHER;
+            break;
+    }
+    return ret;
+}

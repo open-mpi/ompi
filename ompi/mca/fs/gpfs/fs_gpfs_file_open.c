@@ -48,6 +48,7 @@ mca_fs_gpfs_file_open (struct ompi_communicator_t *comm,
 {
     int amode;
     int old_mask, perm;
+    int ret = OMPI_SUCCESS;
 
     if (fh->f_perm == OMPIO_PERM_NULL)  {
         old_mask = umask(022);
@@ -60,9 +61,6 @@ mca_fs_gpfs_file_open (struct ompi_communicator_t *comm,
 
     amode = 0;
 
-    if (access_mode & MPI_MODE_CREATE) {
-        amode = amode | O_CREAT;
-    }
     if (access_mode & MPI_MODE_RDONLY) {
         amode = amode | O_RDONLY;
     }
@@ -72,15 +70,33 @@ mca_fs_gpfs_file_open (struct ompi_communicator_t *comm,
     if (access_mode & MPI_MODE_RDWR) {
         amode = amode | O_RDWR;
     }
-    if (access_mode & MPI_MODE_EXCL) {
-        amode = amode | O_EXCL;
+
+    if(OMPIO_ROOT == fh->f_rank) {
+        if (access_mode & MPI_MODE_CREATE) {
+            amode = amode | O_CREAT;
+        }
+        if (access_mode & MPI_MODE_EXCL) {
+            amode = amode | O_EXCL;
+        }
+
+        fh->fd = open (filename, amode, perm);
+
+        if ( 0 > fh->fd ) {
+            ret = mca_fs_gpfs_file_get_mpi_err(errno);
+        }
     }
 
-    //DEBUG: fprintf(stderr, "Opening a file using Linux open() within fs_gpfs_file_open\n");
+    comm->c_coll->coll_bcast ( &ret, 1, MPI_INT, 0, comm, comm->c_coll->coll_bcast_module);
+    if ( OMPI_SUCCESS != ret ) {
+        fh->fd = -1;
+        return ret;
+    }
 
-    fh->fd = open (filename, amode, perm);
-    if (-1 == fh->fd) {
-        return OMPI_ERROR;
+    if ( OMPIO_ROOT != fh->f_rank ) {
+        fh->fd = open (filename, amode, perm);
+        if ( 0 > fh->fd) {
+            return mca_fs_gpfs_file_get_mpi_err(errno);
+        }
     }
 
     fh->f_amode=access_mode;

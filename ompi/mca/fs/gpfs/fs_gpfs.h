@@ -74,6 +74,8 @@ int
 mca_fs_gpfs_file_get_position(struct ompi_file_t *fh,
 		OMPI_MPI_OFFSET_TYPE *offset);
 
+int mca_fs_gpfs_file_get_mpi_err (int errno_val);
+
 /*
  * ******************************************************************
  * ************ functions implemented in this module end ************
