@@ -132,7 +132,7 @@ int mca_btl_uct_get (mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpoi
 
     BTL_VERBOSE(("get issued. status = %d", ucs_status));
 
-    uct_rkey_release (&rkey);
+    mca_btl_uct_rkey_release (uct_btl, &rkey);
 
     return OPAL_LIKELY(UCS_OK == ucs_status) ? OPAL_SUCCESS : OPAL_ERR_RESOURCE_BUSY;
 }
@@ -237,7 +237,7 @@ int mca_btl_uct_put (mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpoi
         mca_btl_uct_uct_completion_release (comp);
     }
 
-    uct_rkey_release (&rkey);
+    mca_btl_uct_rkey_release (uct_btl, &rkey);
 
     return OPAL_LIKELY(UCS_OK == ucs_status) ? OPAL_SUCCESS : OPAL_ERR_RESOURCE_BUSY;
 }

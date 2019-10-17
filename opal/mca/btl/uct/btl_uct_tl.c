@@ -461,8 +461,14 @@ static void mca_btl_uct_set_tl_am (mca_btl_uct_module_t *module, mca_btl_uct_tl_
 	tl->max_device_contexts = mca_btl_uct_component.num_contexts_per_module;
     }
 
-    module->super.btl_max_send_size = MCA_BTL_UCT_TL_ATTR(tl, 0).cap.am.max_zcopy - sizeof (mca_btl_uct_am_header_t);
-    module->super.btl_eager_limit = MCA_BTL_UCT_TL_ATTR(tl, 0).cap.am.max_bcopy - sizeof (mca_btl_uct_am_header_t);
+    module->super.btl_eager_limit = MCA_BTL_UCT_TL_ATTR(tl, 0).cap.am.max_bcopy -
+        sizeof (mca_btl_uct_am_header_t);
+    if (MCA_BTL_UCT_TL_ATTR(tl, 0).cap.flags & UCT_IFACE_FLAG_AM_ZCOPY) {
+        module->super.btl_max_send_size = MCA_BTL_UCT_TL_ATTR(tl, 0).cap.am.max_zcopy -
+            sizeof (mca_btl_uct_am_header_t);
+    } else {
+        module->super.btl_max_send_size = module->super.btl_eager_limit;
+    }
 }
 
 static int mca_btl_uct_set_tl_conn (mca_btl_uct_module_t *module, mca_btl_uct_tl_t *tl)
@@ -516,7 +522,13 @@ static int mca_btl_uct_evaluate_tl (mca_btl_uct_module_t *module, mca_btl_uct_tl
 	 * come up with a better estimate. */
 
 	/* UCT bandwidth is in bytes/sec, BTL is in MB/sec */
+#if UCT_API > UCT_VERSION(1, 7)
+	module->super.btl_bandwidth = (uint32_t) ((MCA_BTL_UCT_TL_ATTR(tl, 0).bandwidth.dedicated +
+                                                   MCA_BTL_UCT_TL_ATTR(tl, 0).bandwidth.shared /
+                                                   (opal_process_info.num_local_peers + 1)) / 1048576.0);
+#else
 	module->super.btl_bandwidth = (uint32_t) (MCA_BTL_UCT_TL_ATTR(tl, 0).bandwidth / 1048576.0);
+#endif
 	/* TODO -- figure out how to translate UCT latency to us */
 	module->super.btl_latency = 1;
     }
