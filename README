@@ -1972,16 +1972,17 @@ equivalent) to launch MPI applications.  For example:
   or
   shell$ mpiexec -np 1 hello_world_mpi : -np 1 hello_world_mpi
 
-are equivalent.  Some of mpiexec's switches (such as -host and -arch)
-are not yet functional, although they will not error if you try to use
-them.
+are equivalent. 
 
-The rsh launcher (which defaults to using ssh) accepts a -hostfile
-parameter (the option "-machinefile" is equivalent); you can specify a
--hostfile parameter indicating an standard mpirun-style hostfile (one
+
+
+
+The rsh launcher (which defaults to using ssh) accepts a --hostfile
+parameter (the option "--machinefile" is equivalent); you can specify a
+--hostfile parameter indicating an standard mpirun-style hostfile (one
 hostname per line):
 
-  shell$ mpirun -hostfile my_hostfile -np 2 hello_world_mpi
+  shell$ mpirun --hostfile my_hostfile -np 2 hello_world_mpi
 
 If you intend to run more than one process on a node, the hostfile can
 use the "slots" attribute.  If "slots" is not specified, a count of 1
