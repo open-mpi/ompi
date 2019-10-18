@@ -33,7 +33,7 @@
  * because ROMIO just expects these functions to exist.
  */
 int MPIR_Status_set_bytes(ompi_status_public_t *status,
-                          struct ompi_datatype_t *datatype, int size);
+                          struct ompi_datatype_t *datatype, MPI_Count size);
 void ADIOI_Datatype_iscontig(MPI_Datatype datatype, int *flag);
 
 
@@ -117,7 +117,7 @@ mca_io_base_module_2_0_0_t mca_io_romio321_module = {
  * MPI_Status_set_elements (almost like they planned that... hmmm...).
  */
 int MPIR_Status_set_bytes(ompi_status_public_t *status,
-                          struct ompi_datatype_t *datatype, int nbytes)
+                          struct ompi_datatype_t *datatype, MPI_Count nbytes)
 {
     /* Note that ROMIO is going to give a number of *bytes* here, but
        MPI_STATUS_SET_ELEMENTS requires a number of *elements*.  So
@@ -127,7 +127,7 @@ int MPIR_Status_set_bytes(ompi_status_public_t *status,
        we do the right calculations there.  This prevents roundoff
        errors here, potentially "losing" bytes in the process. */
 
-    MPI_Status_set_elements(status, MPI_CHAR, nbytes);
+    MPI_Status_set_elements_x(status, MPI_CHAR, nbytes);
     return MPI_SUCCESS;
 }
 
