@@ -101,6 +101,7 @@ AC_DEFUN([OPAL_CHECK_ALPS],[
                                     [opal_check_cray_alps_happy="no"])],
               [AS_IF([test "$with_alps" = "no"],
                      [AC_MSG_RESULT([no])
+                      opal_check_cray_alps_happy=no
                       $3],
                      [AS_IF([test "$with_alps" = "auto" || test "$with_alps" = "yes"],
                             [PKG_CHECK_MODULES_STATIC([CRAY_ALPSLLI], [cray-alpslli],
