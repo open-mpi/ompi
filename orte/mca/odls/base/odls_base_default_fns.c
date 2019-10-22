@@ -1767,7 +1767,7 @@ int orte_odls_base_default_kill_local_procs(opal_pointer_array_t *procs,
     orte_proc_t *child;
     opal_list_t procs_killed;
     orte_proc_t *proc, proctmp;
-    int i, j;
+    int i, j, ret;
     opal_pointer_array_t procarray, *procptr;
     bool do_cleanup;
     orte_odls_quick_caddy_t *cd;
@@ -1913,7 +1913,17 @@ int orte_odls_base_default_kill_local_procs(opal_pointer_array_t *procs,
     /* if we are issuing signals, then we need to wait a little
      * and send the next in sequence */
     if (0 < opal_list_get_size(&procs_killed)) {
-        sleep(orte_odls_globals.timeout_before_sigkill);
+        /* Wait a little. Do so in a loop since sleep() can be interrupted by a
+         * signal. Most likely SIGCHLD in this case */
+        ret = orte_odls_globals.timeout_before_sigkill;
+        while( ret > 0 ) {
+            OPAL_OUTPUT_VERBOSE((5, orte_odls_base_framework.framework_output,
+                                 "%s Sleep %d sec (total = %d)",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ret, orte_odls_globals.timeout_before_sigkill));
+            ret = sleep(ret);
+        }
+
         /* issue a SIGTERM to all */
         OPAL_LIST_FOREACH(cd, &procs_killed, orte_odls_quick_caddy_t) {
             OPAL_OUTPUT_VERBOSE((5, orte_odls_base_framework.framework_output,
@@ -1922,8 +1932,18 @@ int orte_odls_base_default_kill_local_procs(opal_pointer_array_t *procs,
                                  ORTE_NAME_PRINT(&cd->child->name)));
             kill_local(cd->child->pid, SIGTERM);
         }
-        /* wait a little again */
-        sleep(orte_odls_globals.timeout_before_sigkill);
+
+        /* Wait a little. Do so in a loop since sleep() can be interrupted by a
+         * signal. Most likely SIGCHLD in this case */
+        ret = orte_odls_globals.timeout_before_sigkill;
+        while( ret > 0 ) {
+            OPAL_OUTPUT_VERBOSE((5, orte_odls_base_framework.framework_output,
+                                 "%s Sleep %d sec (total = %d)",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ret, orte_odls_globals.timeout_before_sigkill));
+            ret = sleep(ret);
+        }
+
         /* issue a SIGKILL to all */
         OPAL_LIST_FOREACH(cd, &procs_killed, orte_odls_quick_caddy_t) {
             OPAL_OUTPUT_VERBOSE((5, orte_odls_base_framework.framework_output,
