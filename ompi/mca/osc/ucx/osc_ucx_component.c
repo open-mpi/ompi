@@ -696,6 +696,7 @@ int ompi_osc_ucx_free(struct ompi_win_t *win) {
     }
 
     opal_common_ucx_wpctx_release(module->ctx);
+    mca_osc_ucx_component.env_initialized = false;
 
     if (module->disp_units) free(module->disp_units);
     ompi_comm_free(&module->comm);
