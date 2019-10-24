@@ -5,6 +5,7 @@
  *                         reserved.
  * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
+ * Copyright (c) 2019      Mellanox Technologies. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -41,6 +42,10 @@ extern int   ompi_coll_tuned_alltoall_intermediate_msg;
 extern int   ompi_coll_tuned_alltoall_large_msg;
 extern int   ompi_coll_tuned_alltoall_min_procs;
 extern int   ompi_coll_tuned_alltoall_max_requests;
+extern int   ompi_coll_tuned_scatter_intermediate_msg;
+extern int   ompi_coll_tuned_scatter_large_msg;
+extern int   ompi_coll_tuned_scatter_min_procs;
+extern int   ompi_coll_tuned_scatter_blocking_send_ratio;
 
 /* forced algorithm choices */
 /* this structure is for storing the indexes to the forced algorithm mca params... */

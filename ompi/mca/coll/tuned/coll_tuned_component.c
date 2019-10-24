@@ -16,6 +16,7 @@
  *                         reserved.
  * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2019      Mellanox Technologies. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -63,6 +64,12 @@ int   ompi_coll_tuned_alltoall_intermediate_msg = 3000;
 int   ompi_coll_tuned_alltoall_large_msg = 3000;
 int   ompi_coll_tuned_alltoall_min_procs = 0; /* disable by default */
 int   ompi_coll_tuned_alltoall_max_requests  = 0; /* no limit for alltoall by default */
+
+/* Disable by default */
+int   ompi_coll_tuned_scatter_intermediate_msg = 0;
+int   ompi_coll_tuned_scatter_large_msg = 0;
+int   ompi_coll_tuned_scatter_min_procs = 0;
+int   ompi_coll_tuned_scatter_blocking_send_ratio = 0;
 
 /* forced alogrithm variables */
 /* indices for the MCA parameters */
