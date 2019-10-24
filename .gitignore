@@ -213,6 +213,7 @@ ompi/mpi/fortran/mpif-h/sizeof_f.f90
 ompi/mpi/fortran/mpif-h/profile/p*.c
 ompi/mpi/fortran/mpif-h/profile/psizeof_f.f90
 
+ompi/mpi/fortran/use-mpi-f08/mod/mpi-f08-constants.h
 ompi/mpi/fortran/use-mpi-f08/constants.h
 ompi/mpi/fortran/use-mpi-f08/sizeof_f08.f90
 ompi/mpi/fortran/use-mpi-f08/sizeof_f08.h
