@@ -48,6 +48,7 @@ libforce_usempif08_internal_modules_to_be_built_la_SOURCES = \
         mpi-f08-interfaces.F90 \
         mpi-f08-interfaces-callbacks.F90 \
         mpi-f08-callbacks.F90 \
+        mpi-f08-constants.h \
         pmpi-f08-interfaces.F90
 
 config_h = \
