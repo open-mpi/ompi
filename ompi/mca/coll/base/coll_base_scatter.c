@@ -14,6 +14,7 @@
  *                         reserved.
  * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2019      Mellanox Technologies. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -273,5 +274,114 @@ ompi_coll_base_scatter_intra_basic_linear(const void *sbuf, int scount,
     return MPI_SUCCESS;
 }
 
-
 /* copied function (with appropriate renaming) ends here */
+
+/*
+ * Use isends for distributing the data with periodic sync by blocking send.
+ * Blocking send acts like a local resources flush, because it ensures
+ * progression until the message is sent/(copied to some sort of transmit buffer).
+ */
+int
+ompi_coll_base_scatter_intra_linear_nb(const void *sbuf, int scount,
+                                       struct ompi_datatype_t *sdtype,
+                                       void *rbuf, int rcount,
+                                       struct ompi_datatype_t *rdtype,
+                                       int root,
+                                       struct ompi_communicator_t *comm,
+                                       mca_coll_base_module_t *module,
+                                       int max_reqs)
+{
+    int i, rank, size, err, line, nreqs;
+    ptrdiff_t incr;
+    char *ptmp;
+    ompi_request_t **reqs = NULL, **preq;
+
+    rank = ompi_comm_rank(comm);
+    size = ompi_comm_size(comm);
+
+    /* If not root, receive data. */
+    if (rank != root) {
+        err = MCA_PML_CALL(recv(rbuf, rcount, rdtype, root,
+                                MCA_COLL_BASE_TAG_SCATTER,
+                                comm, MPI_STATUS_IGNORE));
+        if (MPI_SUCCESS != err) {
+            line = __LINE__; goto err_hndl;
+        }
+
+        return MPI_SUCCESS;
+    }
+
+    if (max_reqs <= 1) {
+        max_reqs = 0;
+        nreqs = size - 1; /* no send for myself */
+    } else {
+        /* We use blocking MPI_Send (which does not need a request)
+         * every max_reqs send operation (which is size/max_reqs at most),
+         * therefore no need to allocate requests for these sends. */
+        nreqs = size - (size / max_reqs);
+    }
+
+    reqs = ompi_coll_base_comm_get_reqs(module->base_data, nreqs);
+    if (NULL == reqs) {
+        err = OMPI_ERR_OUT_OF_RESOURCE;
+        line = __LINE__; goto err_hndl;
+    }
+
+    err = ompi_datatype_type_extent(sdtype, &incr);
+    if (OMPI_SUCCESS != err) {
+        line = __LINE__; goto err_hndl;
+    }
+    incr *= scount;
+
+    /* I am the root, loop sending data. */
+    for (i = 0, ptmp = (char *)sbuf, preq = reqs; i < size; ++i, ptmp += incr) {
+        /* simple optimization */
+        if (i == rank) {
+            if (MPI_IN_PLACE != rbuf) {
+                err = ompi_datatype_sndrcv(ptmp, scount, sdtype, rbuf, rcount,
+                                           rdtype);
+            }
+        } else {
+            if (!max_reqs || (i % max_reqs)) {
+                err = MCA_PML_CALL(isend(ptmp, scount, sdtype, i,
+                                         MCA_COLL_BASE_TAG_SCATTER,
+                                         MCA_PML_BASE_SEND_STANDARD,
+                                         comm, preq++));
+            } else {
+                err = MCA_PML_CALL(send(ptmp, scount, sdtype, i,
+                                        MCA_COLL_BASE_TAG_SCATTER,
+                                        MCA_PML_BASE_SEND_STANDARD,
+                                        comm));
+            }
+        }
+        if (MPI_SUCCESS != err) {
+            line = __LINE__; goto err_hndl;
+        }
+    }
+
+    err = ompi_request_wait_all(preq - reqs, reqs, MPI_STATUSES_IGNORE);
+    if (MPI_SUCCESS != err) {
+        line = __LINE__; goto err_hndl;
+    }
+
+    return MPI_SUCCESS;
+
+err_hndl:
+    if (NULL != reqs) {
+        /* find a real error code */
+        if (MPI_ERR_IN_STATUS == err) {
+            for (i = 0; i < nreqs; i++) {
+                if (MPI_REQUEST_NULL == reqs[i]) continue;
+                if (MPI_ERR_PENDING == reqs[i]->req_status.MPI_ERROR) continue;
+                err = reqs[i]->req_status.MPI_ERROR;
+                break;
+            }
+        }
+        ompi_coll_base_free_reqs(reqs, nreqs);
+    }
+    OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+                "%s:%4d\tError occurred %d, rank %2d", __FILE__, line, err, rank));
+    (void)line;  /* silence compiler warning */
+    return err;
+}
+

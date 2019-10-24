@@ -15,6 +15,7 @@
  *                         reserved.
  * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2019      Mellanox Technologies. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -780,6 +781,7 @@ int ompi_coll_tuned_scatter_intra_dec_fixed(const void *sbuf, int scount,
 {
     const size_t small_block_size = 300;
     const int small_comm_size = 10;
+    const int intermediate_comm_size = 64;
     int communicator_size, rank;
     size_t dsize, block_size;
 
@@ -802,7 +804,16 @@ int ompi_coll_tuned_scatter_intra_dec_fixed(const void *sbuf, int scount,
         return ompi_coll_base_scatter_intra_binomial(sbuf, scount, sdtype,
                                                      rbuf, rcount, rdtype,
                                                      root, comm, module);
+    } else if ((communicator_size < ompi_coll_tuned_scatter_min_procs) &&
+               (communicator_size > intermediate_comm_size) &&
+               (block_size >= ompi_coll_tuned_scatter_intermediate_msg) &&
+               (block_size < ompi_coll_tuned_scatter_large_msg)) {
+        return ompi_coll_base_scatter_intra_linear_nb(sbuf, scount, sdtype,
+                                                      rbuf, rcount, rdtype,
+                                                      root, comm, module,
+                                                      ompi_coll_tuned_scatter_blocking_send_ratio);
     }
+
     return ompi_coll_base_scatter_intra_basic_linear(sbuf, scount, sdtype,
                                                      rbuf, rcount, rdtype,
                                                      root, comm, module);
