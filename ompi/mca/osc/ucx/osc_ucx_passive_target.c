@@ -76,21 +76,10 @@ static inline int start_exclusive(ompi_osc_ucx_module_t *module, int target) {
 }
 
 static inline int end_exclusive(ompi_osc_ucx_module_t *module, int target) {
-    uint64_t result_value = 0;
     uint64_t remote_addr = (module->state_addrs)[target] + OSC_UCX_STATE_LOCK_OFFSET;
-    int ret = OMPI_SUCCESS;
-
-    ret = opal_common_ucx_wpmem_fetch(module->state_mem,
-                                    UCP_ATOMIC_FETCH_OP_SWAP, TARGET_LOCK_UNLOCKED,
-                                    target, &result_value, sizeof(result_value),
-                                    remote_addr);
-    if (OMPI_SUCCESS != ret) {
-        return ret;
-    }
-
-    assert(result_value >= TARGET_LOCK_EXCLUSIVE);
-
-    return ret;
+    return opal_common_ucx_wpmem_post(module->state_mem, UCP_ATOMIC_POST_OP_ADD,
+                                      -((int64_t)TARGET_LOCK_EXCLUSIVE), target,
+                                      sizeof(uint64_t), remote_addr);
 }
 
 int ompi_osc_ucx_lock(int lock_type, int target, int assert, struct ompi_win_t *win) {
