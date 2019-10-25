@@ -672,34 +672,46 @@ static inline int
 mca_btl_ugni_progress_wait_list (mca_btl_ugni_module_t *ugni_module)
 {
     int rc = OPAL_SUCCESS;
+    opal_list_t tmplist;
+    opal_list_t *waitlist = &ugni_module->ep_wait_list;
     mca_btl_base_endpoint_t *endpoint = NULL;
     int count;
 
-    if (0 == opal_list_get_size(&ugni_module->ep_wait_list)) {
-        return 0;
-    }
-
     /* check the count before taking the lock to avoid unnecessary locking */
-    count = opal_list_get_size(&ugni_module->ep_wait_list);
+    count = opal_list_get_size(waitlist);
     if (0 == count) {
         return 0;
     }
 
+    /* Don't hold the wait-list lock while processing the list as that may lead
+     * to a deadlock.
+     * Instead, move the wait_list elements into a temporary list and work on that.*/
+    OBJ_CONSTRUCT(&tmplist, opal_list_t);
     OPAL_THREAD_LOCK(&ugni_module->ep_wait_list_lock);
-    count = opal_list_get_size(&ugni_module->ep_wait_list);
+    opal_list_join(&tmplist, opal_list_get_end(&tmplist), waitlist);
+    OPAL_THREAD_UNLOCK(&ugni_module->ep_wait_list_lock);
+    count = opal_list_get_size(&tmplist);
     do {
-        endpoint = (mca_btl_base_endpoint_t *) opal_list_remove_first (&ugni_module->ep_wait_list);
+        endpoint = (mca_btl_base_endpoint_t *) opal_list_remove_first (&tmplist);
         if (endpoint != NULL) {
             rc = mca_btl_ugni_progress_send_wait_list (endpoint);
 
             if (OPAL_SUCCESS != rc) {
-                opal_list_append (&ugni_module->ep_wait_list, &endpoint->super);
+                opal_list_append (&tmplist, &endpoint->super);
             } else {
                 endpoint->wait_listed = false;
             }
         }
     } while (endpoint != NULL && --count > 0) ;
-    OPAL_THREAD_UNLOCK(&ugni_module->ep_wait_list_lock);
+
+    /* reinsert unfinished elements into the wait-list */
+    count = opal_list_get_size(&tmplist);
+    if (0 < count) {
+        OPAL_THREAD_LOCK(&ugni_module->ep_wait_list_lock);
+        opal_list_join(waitlist, opal_list_get_end(waitlist), &tmplist);
+        OPAL_THREAD_UNLOCK(&ugni_module->ep_wait_list_lock);
+    }
+    OBJ_DESTRUCT(&tmplist);
 
     return rc;
 }
