@@ -11,8 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2017 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2014-2017 Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2014-2019 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2015      Intel, Inc. All rights reserved
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
@@ -199,7 +199,6 @@ void ompi_info_do_config(bool want_all)
     fortran_have_bind_c_type_name = OMPI_FORTRAN_HAVE_BIND_C_TYPE_NAME ?
         "yes" : "no";
     fortran_have_private = OMPI_FORTRAN_HAVE_PRIVATE ? "yes" : "no";
-    fortran_have_protected = OMPI_FORTRAN_HAVE_PROTECTED ? "yes" : "no";
     fortran_have_abstract = OMPI_FORTRAN_HAVE_ABSTRACT ? "yes" : "no";
     fortran_have_asynchronous = OMPI_FORTRAN_HAVE_ASYNCHRONOUS ? "yes" : "no";
     fortran_have_procedure = OMPI_FORTRAN_HAVE_PROCEDURE ? "yes" : "no";
@@ -443,9 +442,6 @@ void ompi_info_do_config(bool want_all)
     opal_info_out("Fort PRIVATE",
                   "compiler:fortran:private",
                   fortran_have_private);
-    opal_info_out("Fort PROTECTED",
-                  "compiler:fortran:protected",
-                  fortran_have_protected);
     opal_info_out("Fort ABSTRACT",
                   "compiler:fortran:abstract",
                   fortran_have_abstract);

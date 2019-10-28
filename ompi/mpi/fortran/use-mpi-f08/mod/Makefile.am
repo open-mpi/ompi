@@ -43,7 +43,8 @@ noinst_LTLIBRARIES = libusempif08_internal_modules.la libforce_usempif08_interna
 
 libusempif08_internal_modules_la_SOURCES = \
         mpi-f08-types.F90 \
-        mpi-f08-callbacks.F90
+        mpi-f08-callbacks.F90 \
+        mpi-f08-constants.h
 
 libforce_usempif08_internal_modules_to_be_built_la_SOURCES = \
         mpi-f08-interfaces.F90 \

@@ -802,9 +802,7 @@ lib@OMPI_LIBMPI_NAME@_usempif08_la_SOURCES = \
         $(mpi_api_files) \
         $(pmpi_api_files) \
         mpi-f08.F90 \
-        buffer_detach.c \
-        constants.h \
-        constants.c
+        buffer_detach.c
 
 # These are generated; do not ship them
 nodist_lib@OMPI_LIBMPI_NAME@_usempif08_la_SOURCES =

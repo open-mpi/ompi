@@ -38,11 +38,4 @@
 #define OMPI_PRIVATE
 #endif
 
-! PROTECTED or not
-#if OMPI_FORTRAN_HAVE_PROTECTED
-#define OMPI_PROTECTED , PROTECTED
-#else
-#define OMPI_PROTECTED
-#endif
-
 #endif
