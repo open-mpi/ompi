@@ -111,7 +111,7 @@ module mpi_f08_types
   !
 
   type(MPI_Comm), parameter      :: MPI_COMM_NULL                = MPI_Comm(OMPI_MPI_COMM_NULL)
-  type(MPI_Datatype), parameter  :: MPI_DATATYPE_NULL            = MPI_Datatype(OMPI_MPI_COMM_NULL)
+  type(MPI_Datatype), parameter  :: MPI_DATATYPE_NULL            = MPI_Datatype(OMPI_MPI_DATATYPE_NULL)
   type(MPI_Errhandler), parameter:: MPI_ERRHANDLER_NULL          = MPI_Errhandler(OMPI_MPI_ERRHANDLER_NULL)
   type(MPI_Group),  parameter    :: MPI_GROUP_NULL               = MPI_Group(OMPI_MPI_GROUP_NULL)
   type(MPI_Info), parameter      :: MPI_INFO_NULL                = MPI_Info(OMPI_MPI_INFO_NULL)
@@ -182,7 +182,7 @@ module mpi_f08_types
   type(MPI_Datatype), parameter   :: MPI_COMPLEX8                = MPI_Datatype(OMPI_MPI_COMPLEX8)
   type(MPI_Datatype), parameter   :: MPI_COMPLEX16               = MPI_Datatype(OMPI_MPI_COMPLEX16)
   type(MPI_Datatype), parameter   :: MPI_COMPLEX32               = MPI_Datatype(OMPI_MPI_COMPLEX32)
-  type(MPI_Datatype), parameter   :: MPI_DOUBLE_COMPLEX          = MPI_Datatype(OMPI_MPI_COMPLEX)
+  type(MPI_Datatype), parameter   :: MPI_DOUBLE_COMPLEX          = MPI_Datatype(OMPI_MPI_DOUBLE_COMPLEX)
   type(MPI_Datatype), parameter   :: MPI_FLOAT_INT               = MPI_Datatype(OMPI_MPI_FLOAT_INT)
   type(MPI_Datatype), parameter   :: MPI_DOUBLE_INT              = MPI_Datatype(OMPI_MPI_DOUBLE_INT)
   type(MPI_Datatype), parameter   :: MPI_2REAL                   = MPI_Datatype(OMPI_MPI_2REAL)
@@ -199,7 +199,7 @@ module mpi_f08_types
   type(MPI_Datatype), parameter   :: MPI_LOGICAL2                = MPI_Datatype(OMPI_MPI_LOGICAL2)
   type(MPI_Datatype), parameter   :: MPI_LOGICAL4                = MPI_Datatype(OMPI_MPI_LOGICAL4)
   type(MPI_Datatype), parameter   :: MPI_LOGICAL8                = MPI_Datatype(OMPI_MPI_LOGICAL8)
-  type(MPI_Datatype), parameter   :: MPI_C_BOOL                  =  MPI_Datatype(OMPI_MPI_C_BOOL)
+  type(MPI_Datatype), parameter   :: MPI_C_BOOL                  = MPI_Datatype(OMPI_MPI_C_BOOL)
   type(MPI_Datatype), parameter   :: MPI_CXX_BOOL                = MPI_Datatype(OMPI_MPI_CXX_BOOL)
   type(MPI_Datatype), parameter   :: MPI_COUNT                   = MPI_Datatype(OMPI_MPI_COUNT)
   type(MPI_Datatype), parameter   :: MPI_OFFSET                  = MPI_Datatype(OMPI_MPI_OFFSET)
