@@ -848,7 +848,7 @@ static int mca_btl_tcp_endpoint_complete_connect(mca_btl_base_endpoint_t* btl_en
         opal_show_help("help-mpi-btl-tcp.txt", "client connect fail",
                        true, opal_process_info.nodename,
                        getpid(), msg,
-                       strerror(opal_socket_errno), opal_socket_errno);
+                       strerror(so_error), so_error);
         free(msg);
         mca_btl_tcp_endpoint_close(btl_endpoint);
         return OPAL_ERROR;
