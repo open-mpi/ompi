@@ -826,7 +826,7 @@ mca_btl_tcp_proc_t* mca_btl_tcp_proc_lookup(const opal_process_name_t *name)
         mca_btl_base_endpoint_t *endpoint;
         opal_proc_t *opal_proc;
 
-        BTL_VERBOSE(("adding tcp proc for unknown peer {%s}",
+        BTL_VERBOSE(("adding tcp proc for peer {%s}",
                      OPAL_NAME_PRINT(*name)));
 
         opal_proc = opal_proc_for_name (*name);
