@@ -369,7 +369,11 @@ static int do_atomic_op_replace_sum(
     }
 
     opal_common_ucx_user_req_handler_t user_req_cb = NULL;
-    void* user_req_ptr = NULL;
+    void *user_req_ptr = NULL;
+    void *output_addr  = &(module->req_result);
+    if( result_addr ) {
+        output_addr = result_addr;
+    }
     for (int i = 0; i < origin_count; ++i) {
         uint64_t value = 0;
         if ((origin_count - 1) == i && NULL != ucx_req) {
@@ -391,14 +395,14 @@ static int do_atomic_op_replace_sum(
             memcpy(&value, origin_addr, origin_dt_bytes);
         }
         ret = opal_common_ucx_wpmem_fetch_nb(module->mem, opcode, value, target,
-                                             result_addr ? result_addr : &(module->req_result),
-                                             origin_dt_bytes, remote_addr, user_req_cb, user_req_ptr);
+                                             output_addr, origin_dt_bytes, remote_addr,
+                                             user_req_cb, user_req_ptr);
 
         // advance origin and remote address
         origin_addr  = (void*)((intptr_t)origin_addr + origin_dt_bytes);
         remote_addr += origin_dt_bytes;
         if (result_addr) {
-            result_addr = (void*)((intptr_t)result_addr + origin_dt_bytes);
+            output_addr = (void*)((intptr_t)output_addr + origin_dt_bytes);
         }
     }
 
