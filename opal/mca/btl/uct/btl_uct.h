@@ -12,6 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2015-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2019      Google, LLC. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -85,7 +86,7 @@ struct mca_btl_uct_module_t {
     /** array containing the am_tl and rdma_tl */
     mca_btl_uct_tl_t *comm_tls[2];
 
-#if UCT_API > UCT_VERSION(1, 7)
+#if UCT_API >= UCT_VERSION(1, 7)
     uct_component_h uct_component;
 #endif
 
