@@ -235,6 +235,7 @@ segment_create(map_segment_t *ds_buf,
         uct_ib_device_mem_h dev_mem = alloc_device_mem(spml, size,
                                                        &dev_mem_address);
         if (dev_mem != NULL) {
+            int ret;
             ret = segment_create_internal(ds_buf, dev_mem_address, size, 0,
                                           hint, dev_mem);
             if (ret == OSHMEM_SUCCESS) {
