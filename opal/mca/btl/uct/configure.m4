@@ -16,6 +16,8 @@
 #                         All rights reserved.
 # Copyright (c) 2018      Research Organization for Information Science
 #                         and Technology (RIST).  All rights reserved.
+# Copyright (c) 2019      Triad National Security, LLC. All rights
+#                         reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -35,6 +37,41 @@ AC_DEFUN([MCA_opal_btl_uct_CONFIG],[
     OMPI_CHECK_UCX([btl_uct],
                    [btl_uct_happy="yes"],
                    [btl_uct_happy="no"])
+dnl
+dnl check UCT version.  UCT API can change at any given release
+dnl so we only allow compiling against ones we know work.
+dnl
+    AC_ARG_ENABLE([uct-version-check],
+       [AC_HELP_STRING([--enable-uct-version-check],
+           [enable UCT version check (default: enabled)])])
+    AC_MSG_CHECKING([check uct version])
+    if test "$enable_uct_version_check" != "no"; then
+        AC_MSG_RESULT([yes])
+    else
+        AC_MSG_RESULT([no])
+    fi
+
+    max_allowed_uct_major=1
+    max_allowed_uct_minor=7
+    if test "$btl_uct_happy" = "yes" && test "$enable_uct_version_check" != "no"; then
+        AC_MSG_CHECKING([UCT version compatibility])
+        OPAL_VAR_SCOPE_PUSH([CPPFLAGS_save])
+        CPPFLAGS_save="$CPPFLAGS"
+        CPPFLAGS="$CPPFLAGS $btl_uct_CPPFLAGS"
+        AC_PREPROC_IFELSE([AC_LANG_PROGRAM([#include <uct/api/version.h>
+                                            #if (UCT_VERNO_MAJOR > $max_allowed_uct_major)
+                                            #error "UCT MAJOR VERNO > $max_allowed_uct_major"
+                                            #endif
+                                            #if (UCT_VERNO_MINOR > $max_allowed_uct_minor)
+                                            #error "UCT MINOR VERNO > $max_allowed_uct_minor"
+                                            #endif], [])],
+                           [AC_MSG_RESULT([UCT version compatible])],
+                           [AC_MSG_RESULT([UCT version not compatible - need UCX $max_allowed_uct_major.$max_allowed_uct_minor or older])
+                            btl_uct_happy="no"])
+        CPPFLAGS="$CPPFLAGS_save"
+        OPAL_VAR_SCOPE_POP
+    fi
+
     if test "$btl_uct_happy" = "yes" ; then
         OPAL_VAR_SCOPE_PUSH([CPPFLAGS_save])
 
