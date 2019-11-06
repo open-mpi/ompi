@@ -20,6 +20,8 @@
 # $HEADER$
 #
 
+dist_ompidata_DATA = help-mpi-coll-tuned.txt
+
 sources = \
         coll_tuned.h \
         coll_tuned_dynamic_file.h \
