@@ -68,11 +68,12 @@ struct ucp_peer {
 typedef struct ucp_peer ucp_peer_t;
  
 struct mca_spml_ucx_ctx {
-    ucp_worker_h             ucp_worker;
+    ucp_worker_h            *ucp_worker;
     ucp_peer_t              *ucp_peers;
     long                     options;
     opal_bitmap_t            put_op_bitmap;
     unsigned long            nb_progress_cnt;
+    unsigned int             ucp_workers;
     int                     *put_proc_indexes;
     unsigned                 put_proc_count;
 };
@@ -95,7 +96,7 @@ struct mca_spml_ucx {
     int                      heap_reg_nb;
     bool                     enabled;
     mca_spml_ucx_get_mkey_slow_fn_t get_mkey_slow;
-    char                     **remote_addrs_tbl;
+    char                     ***remote_addrs_tbl;
     mca_spml_ucx_ctx_array_t active_array;
     mca_spml_ucx_ctx_array_t idle_array;
     int                      priority; /* component priority */
@@ -114,6 +115,8 @@ struct mca_spml_ucx {
     unsigned long            nb_put_progress_thresh;
     unsigned long            nb_get_progress_thresh;
     unsigned long            nb_ucp_worker_progress;
+    unsigned int             ucp_workers;
+    unsigned int             ucp_worker_cnt;
 };
 typedef struct mca_spml_ucx mca_spml_ucx_t;
 

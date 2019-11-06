@@ -75,6 +75,21 @@ static inline void mca_spml_ucx_param_register_ulong(const char* param_name,
                                            storage);
 }
 
+static inline void mca_spml_ucx_param_register_uint(const char* param_name,
+                                                    unsigned int default_value,
+                                                    const char *help_msg,
+                                                    unsigned int *storage)
+{
+    *storage = default_value;
+    (void) mca_base_component_var_register(&mca_spml_ucx_component.spmlm_version,
+                                           param_name,
+                                           help_msg,
+                                           MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           storage);
+}
+
 static inline void mca_spml_ucx_param_register_int(const char* param_name,
                                                     int default_value,
                                                     const char *help_msg,
@@ -161,6 +176,9 @@ static int mca_spml_ucx_component_register(void)
     mca_spml_ucx_param_register_ulong("nb_ucp_worker_progress", 32,
                                     "Maximum number of ucx worker progress calls if triggered during nb_put or nb_get",
                                     &mca_spml_ucx.nb_ucp_worker_progress);
+    mca_spml_ucx_param_register_uint("default_ctx_ucp_workers", 1,
+                                    "Number of ucp workers per default context",
+                                    &mca_spml_ucx.ucp_workers);
 
     opal_common_ucx_mca_var_register(&mca_spml_ucx_component.spmlm_version);
 
@@ -171,14 +189,17 @@ int spml_ucx_ctx_progress(void)
 {
     int i;
     for (i = 0; i < mca_spml_ucx.active_array.ctxs_count; i++) {
-        ucp_worker_progress(mca_spml_ucx.active_array.ctxs[i]->ucp_worker);
+        ucp_worker_progress(mca_spml_ucx.active_array.ctxs[i]->ucp_worker[0]);
     }
     return 1;
 }
 
 int spml_ucx_default_progress(void)
 {
-    ucp_worker_progress(mca_spml_ucx_ctx_default.ucp_worker);
+    unsigned int i=0;
+    for (i = 0; i < mca_spml_ucx.ucp_workers; i++) {
+        ucp_worker_progress(mca_spml_ucx_ctx_default.ucp_worker[i]);
+    }
     return 1;
 }
 
@@ -194,7 +215,7 @@ int spml_ucx_progress_aux_ctx(void)
         return 0;
     }
 
-    count = ucp_worker_progress(mca_spml_ucx.aux_ctx->ucp_worker);
+    count = ucp_worker_progress(mca_spml_ucx.aux_ctx->ucp_worker[0]);
     pthread_spin_unlock(&mca_spml_ucx.async_lock);
 
     return count;
@@ -209,7 +230,7 @@ void mca_spml_ucx_async_cb(int fd, short event, void *cbdata)
     }
 
     do {
-        count = ucp_worker_progress(mca_spml_ucx.aux_ctx->ucp_worker);
+        count = ucp_worker_progress(mca_spml_ucx.aux_ctx->ucp_worker[0]);
     }  while (count);
 
     pthread_spin_unlock(&mca_spml_ucx.async_lock);
@@ -227,12 +248,13 @@ static int mca_spml_ucx_component_close(void)
 
 static int spml_ucx_init(void)
 {
+    unsigned int i;
     ucs_status_t err;
     ucp_config_t *ucp_config;
     ucp_params_t params;
     ucp_context_attr_t attr;
     ucp_worker_params_t wkr_params;
-    ucp_worker_attr_t wkr_attr;
+    ucp_worker_attr_t wrk_attr;
 
     err = ucp_config_read("OSHMEM", NULL, &ucp_config);
     if (UCS_OK != err) {
@@ -293,18 +315,22 @@ static int spml_ucx_init(void)
     } else {
         wkr_params.thread_mode = UCS_THREAD_MODE_SINGLE;
     }
-
-    err = ucp_worker_create(mca_spml_ucx.ucp_context, &wkr_params,
-                            &mca_spml_ucx_ctx_default.ucp_worker);
-    if (UCS_OK != err) {
-        return OSHMEM_ERROR;
+    
+    mca_spml_ucx_ctx_default.ucp_worker = calloc(mca_spml_ucx.ucp_workers, sizeof(ucp_worker_h));
+    for (i = 0; i < mca_spml_ucx.ucp_workers; i++) {
+        err = ucp_worker_create(mca_spml_ucx.ucp_context, &wkr_params,
+                                &mca_spml_ucx_ctx_default.ucp_worker[i]);
+        if (UCS_OK != err) {
+            return OSHMEM_ERROR;
+        }
+        mca_spml_ucx_ctx_default.ucp_workers++;
     }
 
-    wkr_attr.field_mask = UCP_WORKER_ATTR_FIELD_THREAD_MODE;
-    err = ucp_worker_query(mca_spml_ucx_ctx_default.ucp_worker, &wkr_attr);
+    wrk_attr.field_mask = UCP_WORKER_ATTR_FIELD_THREAD_MODE;
+    err = ucp_worker_query(mca_spml_ucx_ctx_default.ucp_worker[0], &wrk_attr);
 
     if (oshmem_mpi_thread_requested == SHMEM_THREAD_MULTIPLE &&
-        wkr_attr.thread_mode != UCS_THREAD_MODE_MULTI) {
+        wrk_attr.thread_mode != UCS_THREAD_MODE_MULTI) {
         oshmem_mpi_thread_provided = SHMEM_THREAD_SINGLE;
     }
 
@@ -377,7 +403,7 @@ static void _ctx_cleanup(mca_spml_ucx_ctx_t *ctx)
 
     opal_common_ucx_del_procs_nofence(del_procs, nprocs, oshmem_my_proc_id(),
                                       mca_spml_ucx.num_disconnect,
-                                      ctx->ucp_worker);
+                                      ctx->ucp_worker[0]);
     free(del_procs);
     mca_spml_ucx_clear_put_op_mask(ctx);
     free(ctx->ucp_peers);
@@ -423,37 +449,45 @@ static int mca_spml_ucx_component_fini(void)
 
     while (!fenced) {
         for (i = 0; i < mca_spml_ucx.active_array.ctxs_count; i++) {
-            ucp_worker_progress(mca_spml_ucx.active_array.ctxs[i]->ucp_worker);
+            ucp_worker_progress(mca_spml_ucx.active_array.ctxs[i]->ucp_worker[0]);
         }
 
         for (i = 0; i < mca_spml_ucx.idle_array.ctxs_count; i++) {
-            ucp_worker_progress(mca_spml_ucx.idle_array.ctxs[i]->ucp_worker);
+            ucp_worker_progress(mca_spml_ucx.idle_array.ctxs[i]->ucp_worker[0]);
+        }
+        
+        for (i = 0; i < (signed int)mca_spml_ucx.ucp_workers; i++) {
+            ucp_worker_progress(mca_spml_ucx_ctx_default.ucp_worker[i]);
         }
 
-        ucp_worker_progress(mca_spml_ucx_ctx_default.ucp_worker);
-
         if (mca_spml_ucx.aux_ctx != NULL) {
-            ucp_worker_progress(mca_spml_ucx.aux_ctx->ucp_worker);
+            ucp_worker_progress(mca_spml_ucx.aux_ctx->ucp_worker[0]);
         }
     }
 
     /* delete all workers */
     for (i = 0; i < mca_spml_ucx.active_array.ctxs_count; i++) {
-        ucp_worker_destroy(mca_spml_ucx.active_array.ctxs[i]->ucp_worker);
+        ucp_worker_destroy(mca_spml_ucx.active_array.ctxs[i]->ucp_worker[0]);
+        free(mca_spml_ucx.active_array.ctxs[i]->ucp_worker);
         free(mca_spml_ucx.active_array.ctxs[i]);
     }
 
     for (i = 0; i < mca_spml_ucx.idle_array.ctxs_count; i++) {
-        ucp_worker_destroy(mca_spml_ucx.idle_array.ctxs[i]->ucp_worker);
+        ucp_worker_destroy(mca_spml_ucx.idle_array.ctxs[i]->ucp_worker[0]);
+        free(mca_spml_ucx.idle_array.ctxs[i]->ucp_worker);
         free(mca_spml_ucx.idle_array.ctxs[i]);
     }
 
     if (mca_spml_ucx_ctx_default.ucp_worker) {
-        ucp_worker_destroy(mca_spml_ucx_ctx_default.ucp_worker);
+        for (i = 0; i < (signed int)mca_spml_ucx.ucp_workers; i++) {
+            ucp_worker_destroy(mca_spml_ucx_ctx_default.ucp_worker[i]);
+        }
+        free(mca_spml_ucx_ctx_default.ucp_worker);
     }
 
     if (mca_spml_ucx.aux_ctx != NULL) {
-        ucp_worker_destroy(mca_spml_ucx.aux_ctx->ucp_worker);
+        ucp_worker_destroy(mca_spml_ucx.aux_ctx->ucp_worker[0]);
+        free(mca_spml_ucx.aux_ctx->ucp_worker);
     }
 
     mca_spml_ucx.enabled = false;  /* not anymore */
@@ -472,4 +506,3 @@ static int mca_spml_ucx_component_fini(void)
 
     return OSHMEM_SUCCESS;
 }
-
