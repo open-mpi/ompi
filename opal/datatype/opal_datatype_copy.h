@@ -128,7 +128,7 @@ static inline int32_t _copy_content_same_ddt( const opal_datatype_t* datatype, i
     DO_DEBUG( opal_output( 0, "_copy_content_same_ddt( %p, %d, dst %p, src %p )\n",
                            (void*)datatype, count, (void*)destination_base, (void*)source_base ); );
 
-    iov_len_local = count * datatype->size;
+    iov_len_local = (size_t)count * datatype->size;
 
     /* If we have to copy a contiguous datatype then simply
      * do a MEM_OP.

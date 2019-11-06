@@ -156,8 +156,8 @@ typedef struct ddt_elem_id_description ddt_elem_id_description;
  */
 struct ddt_elem_desc {
     ddt_elem_id_description common;           /**< basic data description and flags */
-    uint32_t                blocklen;         /**< number of elements on each block */
-    size_t                  count;            /**< number of blocks */
+    size_t                  blocklen;         /**< number of elements on each block */
+    uint32_t                count;            /**< number of blocks */
     ptrdiff_t               extent;           /**< extent of each block (in bytes) */
     ptrdiff_t               disp;             /**< displacement of the first block */
 };
