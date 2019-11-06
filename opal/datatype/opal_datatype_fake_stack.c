@@ -44,7 +44,7 @@ int opal_convertor_create_stack_with_pos_general( opal_convertor_t* pConvertor,
     int pos_desc;         /* actual position in the description of the derived datatype */
     size_t lastLength = 0;
     const opal_datatype_t* pData = pConvertor->pDesc;
-	size_t loop_length, *remoteLength, remote_size;
+    size_t loop_length, *remoteLength, remote_size;
     size_t resting_place = starting_point;
     dt_elem_desc_t* pElems;
     size_t count;
@@ -152,7 +152,7 @@ int opal_convertor_create_stack_with_pos_general( opal_convertor_t* pConvertor,
         if( OPAL_DATATYPE_LOOP == pElems->elem.common.type ) {
             remoteLength[pConvertor->stack_pos] += loop_length;
             PUSH_STACK( pStack, pConvertor->stack_pos, pos_desc, OPAL_DATATYPE_LOOP,
-				        pElems->loop.loops, pStack->disp );
+                        pElems->loop.loops, pStack->disp );
             pos_desc++;
             pElems++;
             remoteLength[pConvertor->stack_pos] = 0;
@@ -161,7 +161,7 @@ int opal_convertor_create_stack_with_pos_general( opal_convertor_t* pConvertor,
         while( pElems->elem.common.flags & OPAL_DATATYPE_FLAG_DATA ) {
             /* now here we have a basic datatype */
             const opal_datatype_t* basic_type = BASIC_DDT_FROM_ELEM( (*pElems) );
-            lastLength = pElems->elem.count * basic_type->size;
+            lastLength = (size_t)pElems->elem.count * basic_type->size;
             if( resting_place < lastLength ) {
                 int32_t cnt = (int32_t)(resting_place / basic_type->size);
                 loop_length += (cnt * basic_type->size);

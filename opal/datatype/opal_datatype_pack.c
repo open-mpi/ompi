@@ -275,7 +275,7 @@ opal_generic_simple_pack_function( opal_convertor_t* pConvertor,
         iov_len_local = iov[iov_count].iov_len;
 
         if( pElem->elem.common.flags & OPAL_DATATYPE_FLAG_DATA ) {
-            if( (pElem->elem.count * pElem->elem.blocklen) != count_desc ) {
+            if( ((size_t)pElem->elem.count * pElem->elem.blocklen) != count_desc ) {
                 /* we have a partial (less than blocklen) basic datatype */
                 int rc = PACK_PARTIAL_BLOCKLEN( pConvertor, pElem, count_desc,
                                                 conv_ptr, iov_ptr, iov_len_local );
