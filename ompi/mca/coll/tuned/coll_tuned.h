@@ -34,6 +34,7 @@ extern int   ompi_coll_tuned_stream;
 extern int   ompi_coll_tuned_priority;
 extern bool  ompi_coll_tuned_use_dynamic_rules;
 extern char* ompi_coll_tuned_dynamic_rules_filename;
+extern int   ompi_coll_tuned_dynamic_rules_fileformat;
 extern int   ompi_coll_tuned_init_tree_fanout;
 extern int   ompi_coll_tuned_init_chain_fanout;
 extern int   ompi_coll_tuned_init_max_requests;
@@ -220,5 +221,13 @@ struct mca_coll_tuned_module_t {
 };
 typedef struct mca_coll_tuned_module_t mca_coll_tuned_module_t;
 OBJ_CLASS_DECLARATION(mca_coll_tuned_module_t);
+
+/* hostname item used to get the number of nodes of a communicator */
+struct ompi_coll_tuned_hostname_item_t {
+    opal_list_item_t super;
+    char* hostname;
+};
+typedef struct ompi_coll_tuned_hostname_item_t ompi_coll_tuned_hostname_item_t ;
+OBJ_CLASS_DECLARATION(ompi_coll_tuned_hostname_item_t);
 
 #endif  /* MCA_COLL_TUNED_EXPORT_H */

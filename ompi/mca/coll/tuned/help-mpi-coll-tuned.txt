@@ -1,0 +1,83 @@
+# -*- text -*-
+#
+# Copyright (c) 2019 Bull SAS. All rights reserved.
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
+#
+# This is the US/English help file for Open MPI's tuned collective component
+# (which use base collective implementations).
+#
+[file fail]
+The coll/tuned module was unable to load rules contained in file %s.
+The rule configuration format specified was %d.
+For further informations on occurred error,
+you can enable debug output by setting verbosity level as follows:
+
+export OMPI_MCA_coll_tuned_verbose=1
+
+Error is potentially due to:
+
+* File missing.
+  Check if the file path defined by the mca parameter
+  OMPI_MCA_coll_tuned_dynamic_rules_filename is valid.
+
+* format mismatch.
+  Verify the value of the mca parameter OMPI_MCA_coll_tuned_dynamic_rules_fileformat.
+  0: Rules are defined according to a combination of
+      collective_id, communicator size and message size.
+      For example:
+
+  1              # collective number
+  9                # gather (1st level)
+  2                # comm size config number
+  1                  # Ranks number >= 1 (2nd level)
+  1                  # msg size config number
+  0 1 0 0              # Msgsize >= 0 (3rd level): basic linear
+  8                  # Ranks number >= 8 (2nd level)
+  3                  # msg size config number
+  0 1 0 0              # Msgsize >= 0 (3rd level): basic linear
+  8192 2 0 0           # Msgsize >= 8192 (3rd level): binomial
+  4194304 3 0 1024     # Msgsize >= 4194304 (3rd level): linearsync (segsize of 1024 bytes)
+
+  1: Rules are defined according to a combination of
+      collective_id, communicator nodes number, communicator size and message size.
+      For example:
+  1              # collective number
+  9                # gather (1st level)
+  2                # nodes nb config number
+  1                  # nodes number >= 1 (2nd level)
+  2                  # comm size config number
+  1                    # Ranks number >= 1 (3rd level)
+  1                    # msg size config number
+  0 1 0 0                # Msgsize >= 0 (4th level): basic linear
+  8                    # Ranks number >= 8 (3rd level)
+  3                    # msg size config number
+  0 1 0 0                # Msgsize >= 0 (4th level): basic linear
+  8192 2 0 0             # Msgsize >= 8192 (4th level): binomial
+  4194304 3 0 1024       # Msgsize >= 4194304 (4th level): linearsync (segsize of 1024 bytes)
+  8                  # nodes number >= 8 (2nd level)
+  1                  # comm size config number
+  8                    # ranks number >= 8 (3rd level)
+  3                    # msg size config number
+  0 1 0 0                # Msgsize >= 0 (4th level): basic linear
+  8192 2 0 0             # Msgsize >= 8192 (4th level): binomial
+  4194304 3 0 1024       # Msgsize >= 4194304 (4th level): linearsync (segsize of 1024 bytes)
+
+* Incorrect collective ID(s).
+  Check if collective IDs on the config file match with the following list:
+  ALLGATHER = 0, ALLGATHERV = 1, ALLREDUCE = 2, ALLTOALL  = 3, ALLTOALLV = 4, ALLTOALLW = 5,
+  BARRIER = 6, BCAST = 7, EXSCAN = 8, GATHER = 9, GATHERV = 10,
+  REDUCE = 11, REDUCESCATTER = 12, REDUCESCATTERBLOCK = 13, SCAN = 14,
+  SCATTER = 15, SCATTERV = 16, NEIGHBOR_ALLGATHER = 17, NEIGHBOR_ALLGATHERV = 18,
+  NEIGHBOR_ALLTOALL = 19, NEIGHBOR_ALLTOALLV = 20, NEIGHBOR_ALLTOALLW = 21.
+
+This error leads to tuned component to ignore the provided dynamic rules.
+Once error has been fixed you can check obtained rules using verbosity.
+The following verbosity level threshold are defined:
+OMPI_MCA_coll_tuned_verbose >= 10 (basic summary print)
+OMPI_MCA_coll_tuned_verbose >= 50 (rules print)
+OMPI_MCA_coll_tuned_verbose >= 100 (file parsing logs print)
+#

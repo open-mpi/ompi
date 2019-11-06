@@ -160,7 +160,7 @@ ompi_coll_tuned_forced_getvalues( enum COLLTYPE type,
         if( NULL != mca_coll_tuned_component.all_base_rules ) {         \
             (TMOD)->com_rules[(TYPE)]                                   \
                 = ompi_coll_tuned_get_com_rule_ptr( mca_coll_tuned_component.all_base_rules, \
-                                                    (TYPE), size );     \
+                                                    (TYPE), nnodes, size );                  \
             if( NULL != (TMOD)->com_rules[(TYPE)] ) {                   \
                 need_dynamic_decision = 1;                              \
             }                                                           \
@@ -171,6 +171,72 @@ ompi_coll_tuned_forced_getvalues( enum COLLTYPE type,
         }                                                               \
     }
 
+OBJ_CLASS_INSTANCE(ompi_coll_tuned_hostname_item_t, opal_list_item_t, NULL, NULL);
+
+static int
+ompi_coll_tuned_get_nnodes(struct ompi_communicator_t *comm)
+{
+    ompi_group_t* group;
+    ompi_proc_t *proc;
+    opal_list_t hostname_list;
+    ompi_coll_tuned_hostname_item_t *host_item, *next, *new_item;
+    bool already_in_the_list;
+    char* hostname;
+    int i, cmp, group_size, nodes_nb;
+
+    OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:module_init get_nnodes called."));
+    OBJ_CONSTRUCT(&hostname_list, opal_list_t);
+    /* Is inter communicator ? */
+    if (OMPI_COMM_IS_INTER(comm)) {
+        group = comm->c_remote_group;
+    } else {
+        group = comm->c_local_group;
+    }
+    /* allocate an array of node id */
+    group_size = ompi_group_size(group);
+    OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:module_init get_nnodes group size %d.", group_size));
+    /* For each rank */
+    for (i=0 ; i<group_size ; i++) {
+        proc = ompi_group_get_proc_ptr (group, i, true);
+        hostname = opal_get_proc_hostname(&proc->super);
+        OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:module_init get_nnodes host %s.", hostname));
+        /* Check if hostname is OK. */
+        if(0 == strcmp(hostname,"unknown")) {
+            /* Do not consider this rank */
+            OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:module_init get_nnodes ignoring unknown host."));
+            continue;
+        }
+        already_in_the_list = false;
+        /* Try to find eleme in the list */
+        /* List is sorted we stop if current elem is "higher" than the one we expect to find */
+        /* In this case this element is inserted at this position. */
+        /* If element is found, no insertion is performed, element is inserted at the end otherwise. */
+        OPAL_LIST_FOREACH_SAFE(host_item, next, &hostname_list, ompi_coll_tuned_hostname_item_t) {
+            cmp = strcmp(host_item->hostname, hostname);
+            if(cmp > 0) {
+                /* no match found, insert at this position */
+                break;
+            }
+            else if(0 == cmp) {
+                /* Found, do not insert this hostname */
+                already_in_the_list = true;
+                break;
+            }
+            /* continue comparing elements otherwise */
+        }
+        if (false == already_in_the_list) {
+            /* Insert a new element at current position */
+            new_item = OBJ_NEW(ompi_coll_tuned_hostname_item_t);
+            new_item->hostname = hostname;
+            OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:module_init get_nnodes insert host %s", new_item->hostname));
+            opal_list_insert_pos(&hostname_list, &host_item->super, &new_item->super);
+        }
+    }
+    nodes_nb = opal_list_get_size(&hostname_list);
+    OPAL_LIST_DESTRUCT(&hostname_list);
+    return nodes_nb;
+}
+
 /*
  * Init module on the communicator
  */
@@ -178,7 +244,9 @@ static int
 tuned_module_enable( mca_coll_base_module_t *module,
                      struct ompi_communicator_t *comm )
 {
-    int size;
+    /* Variables used in COLL_TUNED_EXECUTE_IF_DYNAMIC macro */
+    int size, nnodes;
+
     mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t *) module;
     mca_coll_base_comm_t *data = NULL;
 
@@ -191,6 +259,9 @@ tuned_module_enable( mca_coll_base_module_t *module,
         size = ompi_comm_size(comm);
     }
 
+    /* Get the number of nodes in communicator */
+    nnodes = ompi_coll_tuned_get_nnodes(comm);
+    OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:module_init nnodes %d.", nnodes));
     /**
      * we still malloc data as it is used by the TUNED modules
      * if we don't allocate it and fall back to a BASIC module routine then confuses debuggers

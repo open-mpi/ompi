@@ -27,7 +27,7 @@
 
 BEGIN_C_DECLS
 
-int ompi_coll_tuned_read_rules_config_file (char *fname, ompi_coll_alg_rule_t** rules, int n_collectives);
+int ompi_coll_tuned_read_rules_config_file (char *fname, int format_version, ompi_coll_alg_rule_t** rules, int n_collectives);
 
 
 END_C_DECLS
