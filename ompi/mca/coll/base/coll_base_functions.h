@@ -18,6 +18,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation.  All rights reserved.
  * Copyright (c) 2017      FUJITSU LIMITED.  All rights reserved.
+ * Copyright (c) 2019      Mellanox Technologies. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -291,6 +292,7 @@ int ompi_coll_base_scan_intra_recursivedoubling(SCAN_ARGS);
 /* Scatter */
 int ompi_coll_base_scatter_intra_basic_linear(SCATTER_ARGS);
 int ompi_coll_base_scatter_intra_binomial(SCATTER_ARGS);
+int ompi_coll_base_scatter_intra_linear_nb(SCATTER_ARGS, int max_reqs);
 
 /* ScatterV */
 
