@@ -314,7 +314,12 @@ ucs_status_t mca_btl_uct_am_handler (void *arg, void *data, size_t length, unsig
     return UCS_OK;
 }
 
+#if UCT_API >= UCT_VERSION(1, 7)
+static int mca_btl_uct_component_process_uct_md (uct_component_h component, uct_md_resource_desc_t *md_desc,
+                                                 char **allowed_ifaces)
+#else
 static int mca_btl_uct_component_process_uct_md (uct_md_resource_desc_t *md_desc, char **allowed_ifaces)
+#endif
 {
     mca_rcache_base_resources_t rcache_resources;
     uct_tl_resource_desc_t *tl_desc;
@@ -348,8 +353,14 @@ static int mca_btl_uct_component_process_uct_md (uct_md_resource_desc_t *md_desc
 
     md = OBJ_NEW(mca_btl_uct_md_t);
 
+
+#if UCT_API >= UCT_VERSION(1, 7)
+    uct_md_config_read (component, NULL, NULL, &uct_config);
+    uct_md_open (component, md_desc->md_name, uct_config, &md->uct_md);
+#else
     uct_md_config_read (md_desc->md_name, NULL, NULL, &uct_config);
     uct_md_open (md_desc->md_name, uct_config, &md->uct_md);
+#endif
     uct_config_release (uct_config);
 
     uct_md_query (md->uct_md, &md_attr);
@@ -374,6 +385,10 @@ static int mca_btl_uct_component_process_uct_md (uct_md_resource_desc_t *md_desc
         mca_btl_uct_finalize (&module->super);
         return OPAL_ERR_NOT_AVAILABLE;
     }
+
+#if UCT_API >= UCT_VERSION(1, 7)
+    module->uct_component = component;
+#endif
 
     mca_btl_uct_component.modules[mca_btl_uct_component.module_count++] = module;
 
@@ -400,6 +415,42 @@ static int mca_btl_uct_component_process_uct_md (uct_md_resource_desc_t *md_desc
     return OPAL_SUCCESS;
 }
 
+#if UCT_API >= UCT_VERSION(1, 7)
+static int mca_btl_uct_component_process_uct_component (uct_component_h component, char **allowed_ifaces)
+{
+    uct_component_attr_t attr = {.field_mask = UCT_COMPONENT_ATTR_FIELD_NAME |
+                                 UCT_COMPONENT_ATTR_FIELD_MD_RESOURCE_COUNT};
+    ucs_status_t ucs_status;
+    int rc;
+
+    ucs_status = uct_component_query (component, &attr);
+    if (UCS_OK != ucs_status) {
+        return OPAL_ERROR;
+    }
+
+    BTL_VERBOSE(("processing uct component %s", attr.name));
+
+    attr.md_resources = calloc (attr.md_resource_count, sizeof (*attr.md_resources));
+    attr.field_mask |= UCT_COMPONENT_ATTR_FIELD_MD_RESOURCES;
+    ucs_status = uct_component_query (component, &attr);
+    if (UCS_OK != ucs_status) {
+        return OPAL_ERROR;
+    }
+
+    for (int i = 0 ; i < attr.md_resource_count ; ++i) {
+        rc = mca_btl_uct_component_process_uct_md (component, attr.md_resources + i,
+                                                   allowed_ifaces);
+        if (OPAL_SUCCESS != rc) {
+            break;
+        }
+    }
+
+    free (attr.md_resources);
+
+    return OPAL_SUCCESS;
+}
+#endif /* UCT_API >= UCT_VERSION(1, 7) */
+
 /*
  *  UCT component initialization:
  *  (1) read interface list from kernel and compare against component parameters
@@ -415,6 +466,7 @@ static mca_btl_base_module_t **mca_btl_uct_component_init (int *num_btl_modules,
     struct mca_btl_base_module_t **base_modules;
     uct_md_resource_desc_t *resources;
     unsigned resource_count;
+    ucs_status_t ucs_status;
     char **allowed_ifaces;
     int rc;
 
@@ -431,9 +483,31 @@ static mca_btl_base_module_t **mca_btl_uct_component_init (int *num_btl_modules,
         return NULL;
     }
 
-    uct_query_md_resources (&resources, &resource_count);
-
     mca_btl_uct_component.module_count = 0;
+
+#if UCT_API >= UCT_VERSION(1, 7)
+    uct_component_h *components;
+    unsigned num_components;
+
+    ucs_status = uct_query_components(&components, &num_components);
+    if (UCS_OK != ucs_status) {
+        BTL_ERROR(("could not query UCT components"));
+        return NULL;
+    }
+
+    /* generate all suitable btl modules */
+    for (unsigned i = 0 ; i < num_components ; ++i) {
+        rc = mca_btl_uct_component_process_uct_component (components[i], allowed_ifaces);
+        if (OPAL_SUCCESS != rc) {
+            break;
+        }
+    }
+
+    uct_release_component_list (components);
+
+#else /* UCT 1.6 and older */
+
+    uct_query_md_resources (&resources, &resource_count);
 
     /* generate all suitable btl modules */
     for (unsigned i = 0 ; i < resource_count ; ++i) {
@@ -443,9 +517,11 @@ static mca_btl_base_module_t **mca_btl_uct_component_init (int *num_btl_modules,
         }
     }
 
-    opal_argv_free (allowed_ifaces);
     uct_release_md_resource_list (resources);
 
+#endif /* UCT_API >= UCT_VERSION(1, 7) */
+
+    opal_argv_free (allowed_ifaces);
     mca_btl_uct_modex_send ();
 
     /* pass module array back to caller */

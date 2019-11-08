@@ -516,7 +516,13 @@ static int mca_btl_uct_evaluate_tl (mca_btl_uct_module_t *module, mca_btl_uct_tl
 	 * come up with a better estimate. */
 
 	/* UCT bandwidth is in bytes/sec, BTL is in MB/sec */
+#if UCT_API >= UCT_VERSION(1, 7)
+	module->super.btl_bandwidth = (uint32_t) ((MCA_BTL_UCT_TL_ATTR(tl, 0).bandwidth.dedicated +
+                                                   MCA_BTL_UCT_TL_ATTR(tl, 0).bandwidth.shared /
+                                                   (opal_process_info.num_local_peers + 1)) / 1048576.0);
+#else
 	module->super.btl_bandwidth = (uint32_t) (MCA_BTL_UCT_TL_ATTR(tl, 0).bandwidth / 1048576.0);
+#endif
 	/* TODO -- figure out how to translate UCT latency to us */
 	module->super.btl_latency = 1;
     }
