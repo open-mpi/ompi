@@ -454,11 +454,22 @@ static int do_child(orte_odls_spawn_caddy_t *cd, int write_fd)
 
     /* Exec the new executable */
     execve(cd->cmd, cd->argv, cd->env);
-    getcwd(dir, sizeof(dir));
+    /* If we get here, an error has occurred. */
+    (void) getcwd(dir, sizeof(dir));
+    struct stat stats;
+    char* msg;
+    /* If errno is ENOENT, that indicates either cd->cmd does not exist, or
+     * cd->cmd is a script, but has a bad interpreter specified. */
+    if (ENOENT == errno && 0 == stat(cd->app->app, &stats)) {
+        asprintf(&msg, "%s has a bad interpreter on the first line.",
+                 cd->app->app);
+    } else {
+        msg = strdup(strerror(errno));
+    }
     send_error_show_help(write_fd, 1,
                          "help-orte-odls-default.txt", "execve error",
-                         orte_process_info.nodename, dir, cd->app->app, strerror(errno));
-    /* Does not return */
+                         orte_process_info.nodename, dir, cd->app->app, msg);
+    free(msg);
 }
 
 
