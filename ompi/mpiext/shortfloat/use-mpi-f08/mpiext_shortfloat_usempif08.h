@@ -1,0 +1,22 @@
+! -*- fortran -*-
+!
+! Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
+! Copyright (c) 2019      Research Organization for Information Science
+!                         and Technology (RIST).  All rights reserved.
+! $COPYRIGHT$
+!
+! Additional copyrights may follow
+!
+! $HEADER$
+!
+
+! This whole file will be included in the mpi_f08_ext module interface
+! section.
+
+type(MPI_Datatype), parameter   ::  MPIX_SHORT_FLOAT             = MPI_Datatype(74)
+type(MPI_Datatype), parameter   ::  MPIX_C_SHORT_FLOAT_COMPLEX   = MPI_Datatype(75)
+type(MPI_Datatype), parameter   ::  MPIX_CXX_SHORT_FLOAT_COMPLEX = MPI_Datatype(76)
+
+#if 0
+type(MPI_Datatype), parameter   ::  MPIX_C_FLOAT16               = MPI_Datatype(74)
+#endif

@@ -1,0 +1,25 @@
+# Copyright (c) 2010 Cisco Systems, Inc.  All rights reserved.
+#
+Name: Open Portability Access Layer (PMIX)
+Description: Lowest layer abstractions for the Open MPI software package
+Version: 4.0.0a1
+URL: http://www.open-mpi.org/
+#
+prefix=/home/wbailey2/my-test-ompi-install
+exec_prefix=${prefix}
+includedir=${prefix}/include
+libdir=${exec_prefix}/lib
+pkgincludedir=${includedir}/pmix
+#
+# Note that the EXTRA_LIBS are only necessary when static linking
+# (they're pulled in via libopen-pal.so's implicit dependencies), so
+# list them in Libs.private.
+#
+Libs: -L${libdir}  -lopen-pal
+Libs.private: 
+#
+# It is safe to hard-wire the -I before the EXTRA_INCLUDES because we
+# will not be installing this .pc file unless --enable-devel-headers is
+# selected, meaning that there will definitely be a value in EXTRA_INCLUDES.
+#
+Cflags: -I${includedir}  -pthread
