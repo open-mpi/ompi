@@ -3178,6 +3178,8 @@ list_sysfsnode(struct hwloc_linux_backend_data_s *data,
   return indexes;
 }
 
+
+
 static int
 look_sysfsnode(struct hwloc_topology *topology,
 	       struct hwloc_linux_backend_data_s *data,
@@ -3240,6 +3242,7 @@ look_sysfsnode(struct hwloc_topology *topology,
 	    } else {
 	      hwloc_bitmap_or(nodes_cpuset, nodes_cpuset, cpuset);
 	    }
+
 
 	    node = hwloc_alloc_setup_object(topology, HWLOC_OBJ_NUMANODE, osnode);
 	    node->cpuset = cpuset;
@@ -3419,6 +3422,86 @@ look_sysfsnode(struct hwloc_topology *topology,
   return 0;
 }
 
+//HACK: prevent get not-allowed cpu
+void set_allowed(int* allowed, int num1, int num2)
+{
+    for(int i = num1; i<= num2; i++)
+    {
+        allowed[i] = 1;
+    }
+}
+
+int read_num(char* begin)
+{
+    if(*begin < '0' || *begin > '9') return atoi(begin+1);
+    return atoi(begin);
+}
+
+
+char* find_next_deli(char* begin)
+{
+    char* comma = strchr(begin, ',');
+    char* dash = strchr(begin, '-');
+    char* ret = dash; 
+    if(comma != NULL)
+    {
+        if(dash == NULL || comma < dash) ret = comma;
+    }
+
+    return ret;
+}
+
+
+
+void parse_cpus(int *allowed, char* buf)
+{
+    char *last_explore, *current_explore;
+
+    current_explore = buf;
+    last_explore = current_explore; //last_explore는 마지막으로 탐색한 숫자 첫 자리에 위치
+
+    while( *(++current_explore) != '\n' && *current_explore != '\0')
+    {
+        current_explore = find_next_deli(current_explore);
+        if( current_explore == NULL) current_explore = buf + strlen(buf) - 1;
+
+        int num1, num2;
+
+        num1 = read_num(last_explore);
+        num2 = num1;
+
+        if(*current_explore == '-')
+        {
+            num2 = read_num(current_explore + 1);
+            current_explore = find_next_deli(current_explore+1);
+            if(current_explore == NULL) current_explore = buf + strlen(buf) - 1;
+        }
+
+        last_explore = current_explore;
+        set_allowed(allowed, num1, num2);
+    }
+}
+
+void read_cpuset_cpus(char* buf, char* path)
+{
+    FILE *fd = fopen(path, "r");
+    fgets(buf, 20, fd);
+    fclose(fd);
+}
+
+int is_allowed_cpu(int* allowed, int cpu)
+{
+    return allowed[cpu];
+}
+
+
+void init_allowed_parsing(int* allowed, unsigned int numprocs)
+{
+    char buffer[20];
+    read_cpuset_cpus(buffer, "/sys/fs/cgroup/cpuset/cpuset.cpus");
+    parse_cpus(allowed, buffer);
+}
+
 /* Look at Linux' /sys/devices/system/cpu/cpu%d/topology/ */
 static int
 look_sysfscpu(struct hwloc_topology *topology,
@@ -3443,6 +3526,10 @@ look_sysfscpu(struct hwloc_topology *topology,
     struct dirent *dirent;
     cpuset = hwloc_bitmap_alloc();
 
+    int allow[20];
+    memset(allow,0,sizeof(allow));
+    init_allowed_parsing(allow, cpuinfo_numprocs);
+
     while ((dirent = readdir(dir)) != NULL) {
       unsigned long cpu;
       char online[2];
@@ -3454,6 +3541,9 @@ look_sysfscpu(struct hwloc_topology *topology,
       /* Maybe we don't have topology information but at least it exists */
       hwloc_bitmap_set(topology->levels[0][0]->complete_cpuset, cpu);
 
+      /* HACK: filtering cpu */
+      if(!is_allowed_cpu(allow, cpu)) continue;
+      
       /* check whether this processor is online */
       sprintf(str, "%s/cpu%lu/online", path, cpu);
       if (hwloc_read_path_by_length(str, online, sizeof(online), data->root_fd) == 0) {
