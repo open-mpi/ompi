@@ -1,3 +1,7 @@
+#ifdef OMPI_BUILDING_CXX_BINDINGS_LIBRARY
+#include_next <version>
+#else
+#
 # Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
 # Copyright (c) 2008-2019 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
@@ -6,6 +10,8 @@
 # Copyright (c) 2016      IBM Corporation.  All rights reserved.
 # Copyright (c) 2017      Los Alamos National Security, LLC.  All rights
 #                         reserved.
+# Copyright (c) 2019      Research Organization for Information Science
+#                         and Technology (RIST).  All rights reserved.
 
 # This is the VERSION file for Open MPI, describing the precise
 # version of Open MPI in this distribution.  The various components of
@@ -114,3 +120,5 @@ libmca_opal_common_ofi_so_version=0:0:0
 libmca_opal_common_sm_so_version=0:0:0
 libmca_opal_common_ucx_so_version=0:0:0
 libmca_opal_common_ugni_so_version=0:0:0
+
+#endif
