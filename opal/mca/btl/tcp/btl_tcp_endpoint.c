@@ -1095,6 +1095,8 @@ static void mca_btl_tcp_endpoint_send_handler(int sd, short flags, void* user)
         }
         break;
     case MCA_BTL_TCP_FAILED:
+        MCA_BTL_TCP_ENDPOINT_DUMP(1, btl_endpoint, true, "event_del(send) [endpoint_send_handler:error]");
+        opal_event_del(&btl_endpoint->endpoint_send_event);
         break;
     default:
         BTL_ERROR(("invalid connection state (%d)", btl_endpoint->endpoint_state));
