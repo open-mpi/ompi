@@ -209,6 +209,10 @@ opal_cmd_line_init_t orte_cmd_line_opts[] = {
       &orted_globals.singleton_died_pipe, OPAL_CMD_LINE_TYPE_INT,
       "Watch on indicated pipe for singleton termination"},
 
+    { "orte_output_directory", '\0', "output-directory", "output-directory", 1,
+      NULL, OPAL_CMD_LINE_TYPE_STRING,
+      "Redirect output from application processes into filename/job/rank/std[out,err,diag]." },
+
     { "orte_output_filename", '\0', "output-filename", "output-filename", 1,
       NULL, OPAL_CMD_LINE_TYPE_STRING,
       "Redirect output from application processes into filename.rank" },

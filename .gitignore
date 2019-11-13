@@ -418,6 +418,8 @@ opal/mca/pmix/pmix*/openpmix/test/run_tests12.pl
 opal/mca/pmix/pmix*/openpmix/test/run_tests13.pl
 opal/mca/pmix/pmix*/openpmix/test/run_tests14.pl
 opal/mca/pmix/pmix*/openpmix/test/run_tests15.pl
+opal/mca/pmix/pmix*/openpmix/src/tools/wrapper/pmix.pc
+opal/mca/pmix/pmix*/openpmix/src/tools/wrapper/pmixcc-wrapper-data.txt
 
 
 opal/mca/pmix/ext4x/ext4x.c

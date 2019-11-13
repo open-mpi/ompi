@@ -1,7 +1,7 @@
 .\" -*- nroff -*-
 .\" Copyright (c) 2009-2018 Cisco Systems, Inc.  All rights reserved.
 .\" Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
-.\" Copyright (c) 2017-2018 Intel, Inc. All rights reserved.
+.\" Copyright (c) 2017-2019 Intel, Inc.  All rights reserved.
 .\" Copyright (c) 2017      Los Alamos National Security, LLC.  All rights
 .\"                         reserved.
 .\" $COPYRIGHT$
@@ -418,10 +418,25 @@ Redirect the stdout, stderr, and stddiag of all processes to a process-unique ve
 the specified filename. Any directories in the filename will automatically be created.
 Each output file will consist of filename.id, where the id will be the
 processes' rank in MPI_COMM_WORLD, left-filled with
-zero's for correct ordering in listings. A relative path value will be converted to an
+zero's for correct ordering in listings. Both stdout and stderr will be redirected to the file.
+A relative path value will be converted to an
 absolute path based on the cwd where mpirun is executed. Note that this \fIwill not\fP work
 on environments where the file system on compute nodes differs from that where mpirun
-is executed.
+is executed. This option accepts one case-insensitive directive, specified after a colon: NOCOPY
+indicates that the output is not to be echoed to the terminal.
+.
+.
+.TP
+.B -output-directory\fR,\fP --output-directory \fR<path>\fP
+Redirect the stdout, stderr, and stddiag of all processes to a process-unique location
+consisting of "<path>/<jobid>/rank.id/stdout[err]", where the id will be the
+processes' rank in MPI_COMM_WORLD, left-filled with
+zero's for correct ordering in listings. Any directories in the filename will automatically be created.
+A relative path value will be converted to an
+absolute path based on the cwd where mpirun is executed. Note that this \fIwill not\fP work
+on environments where the file system on compute nodes differs from that where mpirun
+is executed. This option also supports two case-insensitive directives, specified in comma-delimited form after a colon: NOJOBID (omits the jobid directory layer) and NOCOPY (do
+not copy the output to the terminal).
 .
 .
 .TP

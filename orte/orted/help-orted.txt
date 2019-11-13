@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2014-2018 Intel, Inc.  All rights reserved.
+# Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -107,3 +107,12 @@ mechanisms.
 You may wish to contact your debugger vendor to inquire about support
 for PMIx-based debugger attachment mechanisms. Meantime, you can
 disable this warning by setting the OMPI_MPIR_DO_NOT_WARN envar to 1.
+#
+[both-file-and-dir-set]
+Both the "output-directory" and "output-filename" options have been
+set:
+
+  Directory:      %s
+  Filename:       %s
+
+Only one of these can be set - please fix the options and try again.
