@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2016-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2016-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  * Copyright (c) 2017      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -63,10 +63,13 @@
 #include "opal/util/opal_environ.h"
 #include "opal/util/os_dirpath.h"
 #include "opal/util/output.h"
+#include "opal/util/printf.h"
+#include "opal/util/basename.h"
 #include "opal/util/argv.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/util/name_fns.h"
+#include "orte/util/show_help.h"
 #include "orte/runtime/orte_globals.h"
 
 #include "orte/mca/iof/iof.h"
@@ -290,9 +293,9 @@ int orte_iof_base_setup_output_files(const orte_process_name_t* dst_name,
     char *p, **s;
     bool usejobid = true;
 
-    /* see if we are to output to a file */
+    /* see if we are to output to a directory */
     dirname = NULL;
-    if (orte_get_attribute(&jobdat->attributes, ORTE_JOB_OUTPUT_TO_FILE, (void**)&dirname, OPAL_STRING) &&
+    if (orte_get_attribute(&jobdat->attributes, ORTE_JOB_OUTPUT_TO_DIRECTORY, (void**)&dirname, OPAL_STRING) &&
         NULL != dirname) {
         np = jobdat->num_procs / 10;
         /* determine the number of digits required for max vpid */
@@ -312,6 +315,12 @@ int orte_iof_base_setup_output_files(const orte_process_name_t* dst_name,
                     usejobid = false;
                 } else if (0 == strcasecmp(s[i], "nocopy")) {
                     proct->copy = false;
+                } else {
+                    orte_show_help("help-iof-base",
+                                   "unrecognized-directive",
+                                   true, "output-directory", s[i]);
+                    opal_argv_free(s);
+                    return ORTE_ERROR;
                 }
             }
         }
@@ -378,7 +387,80 @@ int orte_iof_base_setup_output_files(const orte_process_name_t* dst_name,
             proct->revstddiag->sink = proct->revstderr->sink;
         }
 #endif
+        return ORTE_SUCCESS;
     }
 
+    /* see if we are to output to a file */
+    dirname = NULL;
+    if (orte_get_attribute(&jobdat->attributes, ORTE_JOB_OUTPUT_TO_FILE, (void**)&dirname, OPAL_STRING) &&
+        NULL != dirname) {
+        np = jobdat->num_procs / 10;
+        /* determine the number of digits required for max vpid */
+        numdigs = 1;
+        while (np > 0) {
+            numdigs++;
+            np = np / 10;
+        }
+        /* check for a conditional in the directory name */
+        if (NULL != (p = strchr(dirname, ':'))) {
+            *p = '\0';
+            ++p;
+            /* could me more than one directive */
+            s = opal_argv_split(p, ',');
+            for (i=0; NULL != s[i]; i++) {
+                if (0 == strcasecmp(s[i], "nocopy")) {
+                    proct->copy = false;
+                } else {
+                    orte_show_help("help-iof-base",
+                                   "unrecognized-directive",
+                                   true, "output-filename", s[i]);
+                    opal_argv_free(s);
+                    return ORTE_ERROR;
+                }
+            }
+        }
+
+        /* construct the directory where the output files will go */
+        outdir = opal_dirname(dirname);
+
+        /* ensure the directory exists */
+        if (OPAL_SUCCESS != (rc = opal_os_dirpath_create(outdir, S_IRWXU|S_IRGRP|S_IXGRP))) {
+            ORTE_ERROR_LOG(rc);
+            free(outdir);
+            return rc;
+        }
+        if (NULL != proct->revstdout && NULL == proct->revstdout->sink) {
+            /* setup the stdout sink */
+            opal_asprintf(&outfile, "%s.%d.%0*lu", dirname,
+                          (int)ORTE_LOCAL_JOBID(proct->name.jobid),
+                          numdigs, (unsigned long)proct->name.vpid);
+            fdout = open(outfile, O_CREAT|O_RDWR|O_TRUNC, 0644);
+            free(outfile);
+            if (fdout < 0) {
+                /* couldn't be opened */
+                ORTE_ERROR_LOG(ORTE_ERR_FILE_OPEN_FAILURE);
+                return ORTE_ERR_FILE_OPEN_FAILURE;
+            }
+            /* define a sink to that file descriptor */
+            ORTE_IOF_SINK_DEFINE(&proct->revstdout->sink, dst_name,
+                                 fdout, ORTE_IOF_STDOUTALL,
+                                 orte_iof_base_write_handler);
+        }
+
+        if (NULL != proct->revstderr && NULL == proct->revstderr->sink) {
+            /* we only create one file - all output goes there */
+            OBJ_RETAIN(proct->revstdout->sink);
+            proct->revstdout->sink->tag = ORTE_IOF_STDMERGE;  // show that it is merged
+            proct->revstderr->sink = proct->revstdout->sink;
+       }
+#if OPAL_PMIX_V1
+        if (NULL != proct->revstddiag && NULL == proct->revstddiag->sink) {
+            /* always tie the sink for stddiag to stderr */
+            OBJ_RETAIN(proct->revstderr->sink);
+            proct->revstddiag->sink = proct->revstderr->sink;
+        }
+#endif
+        return ORTE_SUCCESS;
+    }
     return ORTE_SUCCESS;
 }

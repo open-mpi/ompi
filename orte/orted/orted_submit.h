@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2016      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2017      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -90,6 +90,7 @@ struct orte_cmd_options_t {
     bool debug;
     bool tag_output;
     bool timestamp_output;
+    char *output_directory;
     char *output_filename;
     bool merge;
     bool continuous;

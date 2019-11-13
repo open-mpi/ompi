@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -379,6 +379,8 @@ const char *orte_attr_key_to_str(orte_attribute_key_t key)
             return "ORTE_APP_ADD_ENVAR";
         case ORTE_JOB_APP_SETUP_DATA:
             return "ORTE_JOB_APP_SETUP_DATA";
+        case ORTE_JOB_OUTPUT_TO_DIRECTORY:
+            return "ORTE_JOB_OUTPUT_TO_DIRECTORY";
 
         case ORTE_PROC_NOBARRIER:
             return "PROC-NOBARRIER";
