@@ -1,3 +1,4 @@
+# -*- text -*-
 #
 # Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
@@ -9,23 +10,22 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2013      Los Alamos National Security, LLC. All rights reserved.
-# Copyright (c) 2019      Intel, Inc.  All rights reserved.
+# Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
+# Copyright (c) 2017      IBM Corporation.  All rights reserved.
+# Copyright (c) 2018      Research Organization for Information Science
+#                         and Technology (RIST).  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
 #
 # $HEADER$
 #
+#
+[unrecognized-directive]
+The following directive was given to "--%s":
 
-dist_ortedata_DATA = base/help-iof-base.txt
+  Directive:     %s
 
-headers += \
-        base/base.h \
-	base/iof_base_setup.h
-
-libmca_iof_la_SOURCES += \
-        base/iof_base_frame.c \
-	base/iof_base_select.c \
-        base/iof_base_output.c \
-	base/iof_base_setup.c
+This directive is not recognized. Please check your spelling
+and/or use the "--help" option to find the supported values.
+#
