@@ -1092,7 +1092,7 @@ sub patch_autotools_output {
 
 sub in_tarball {
     my $tarball = 0;
-    open(IN, "VERSION") || my_die "Can't open VERSION";
+    open(IN, "VERSION.txt") || my_die "Can't open VERSION.txt";
     # If repo_rev is not an empty string, we are in a tarball
     while (<IN>) {
           my $line = $_;
@@ -1334,7 +1334,7 @@ verbose "\n$step. Searching for projects, MCA frameworks, and MCA components\n";
 my $ret;
 
 # Figure out if we're at the top level of the OMPI tree or not.
-if (! (-f "VERSION" && -f "configure.ac" && -f $topdir_file)) {
+if (! (-f "VERSION.txt" && -f "configure.ac" && -f $topdir_file)) {
     print("\n\nYou must run this script from the top-level directory of the Open MPI tree.\n\n");
     my_exit(1);
 }

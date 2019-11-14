@@ -52,7 +52,7 @@ AC_LANG([C])
 # was set during autogen.pl.
 
 AC_INIT([project_name_long],
-        [m4_normalize(esyscmd([config/opal_get_version.sh VERSION --tarball]))],
+        [m4_normalize(esyscmd([config/opal_get_version.sh VERSION.txt --tarball]))],
         [http://www.open-mpi.org/community/help/], [project_name_short])
 AC_PREREQ(2.60)
 AC_CONFIG_AUX_DIR(config)
@@ -110,32 +110,32 @@ AM_INIT_AUTOMAKE([foreign dist-bzip2 subdir-objects no-define 1.13.4 tar-ustar])
 AM_SILENT_RULES([yes])
 
 # Make configure depend on the VERSION file, since it's used in AC_INIT
-AC_SUBST([CONFIGURE_DEPENDENCIES], ['$(top_srcdir)/VERSION'])
+AC_SUBST([CONFIGURE_DEPENDENCIES], ['$(top_srcdir)/VERSION'.txt])
 
 opal_show_subtitle "Checking versions"
 
 # Get the version of OMPI that we are installing
 
 m4_ifdef([project_ompi],
-         [OPAL_SAVE_VERSION([OMPI], [Open MPI], [$srcdir/VERSION],
+         [OPAL_SAVE_VERSION([OMPI], [Open MPI], [$srcdir/VERSION.txt],
                             [ompi/include/ompi/version.h])])
 
 m4_ifdef([project_orte],
          [OPAL_SAVE_VERSION([ORTE], [Open MPI Run-Time Environment],
-                            [$srcdir/VERSION],
+                            [$srcdir/VERSION.txt],
                             [orte/include/orte/version.h])])
 
 m4_ifdef([project_oshmem],
          [OPAL_SAVE_VERSION([OSHMEM], [Open SHMEM],
-                            [$srcdir/VERSION],
+                            [$srcdir/VERSION.txt],
                             [oshmem/include/oshmem/version.h])])
 
-OPAL_SAVE_VERSION([OPAL], [Open Portable Access Layer], [$srcdir/VERSION],
+OPAL_SAVE_VERSION([OPAL], [Open Portable Access Layer], [$srcdir/VERSION.txt],
                   [opal/include/opal/version.h])
 
 # Get shared library version numbers
 
-. $srcdir/VERSION
+. $srcdir/VERSION.txt
 m4_ifdef([project_ompi],
          [AC_SUBST(libmpi_so_version)
           AC_SUBST(libmpi_cxx_so_version)
