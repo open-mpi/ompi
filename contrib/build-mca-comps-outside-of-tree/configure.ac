@@ -117,7 +117,7 @@ AC_ARG_WITH([openmpi-source],
              # fix, but I'm outta time today...
 
              AC_MSG_CHECKING([for Open MPI source tree])
-             AS_IF([test -d "$withval" -a -d "$withval/opal" -a -d "$withval/orte" -a -d "$withval/ompi" -a -f "$withval/VERSION" -a -f "$withval/Makefile.ompi-rules" -a -f "$withval/opal/include/opal_config.h" -a -x "$withval/config.status"],
+             AS_IF([test -d "$withval" -a -d "$withval/opal" -a -d "$withval/orte" -a -d "$withval/ompi" -a -f "$withval/VERSION.txt" -a -f "$withval/Makefile.ompi-rules" -a -f "$withval/opal/include/opal_config.h" -a -x "$withval/config.status"],
                     [AC_MSG_RESULT([$withval])],
                     [AC_MSG_RESULT([not found; double check --with-openmpi-source value])
                      AC_MSG_ERROR([Cannot continue])])

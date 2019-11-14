@@ -332,7 +332,7 @@ check_gnu_version flex $FLEX_TARGET_VERSION
 # Verify that we're in a top Open MPI dir
 #
 echo "*** Checking to ensure in top-level Open MPI directory..."
-if test -f VERSION -a -f configure.ac -a -f config/opal_get_version.m4 ; then
+if test -f VERSION.txt -a -f configure.ac -a -f config/opal_get_version.m4 ; then
     happy=1
 else
     echo "Do not appear to be in an Open MPI top directory.  Abort!"
@@ -375,10 +375,10 @@ fi
 #
 # Get our repo_rev
 #
-echo "*** Removing old VERSION file..."
-rm -f VERSION
-echo "*** Restoring pristine VERSION file..."
-git checkout VERSION
+echo "*** Removing old VERSION.txt file..."
+rm -f VERSION.txt
+echo "*** Restoring pristine VERSION.txt file..."
+git checkout VERSION.txt
 echo "*** Getting git version..."
 repo_rev=`git describe --tags --always`
 echo "    Repo rev number: $repo_rev"
@@ -393,10 +393,10 @@ elif test "`echo $repo_rev | grep ' '`" != ""; then
 fi
 
 #
-# Set final values in VERSION
+# Set final values in VERSION.txt
 #
-echo "*** Removing version numbers from VERSION..."
-version_files=VERSION
+echo "*** Removing version numbers from VERSION.txt ..."
+version_files=VERSION.txt
 release_date=`date '+%b %d, %Y'`
 echo "    Release date: $release_date"
 for file in $version_files; do
@@ -446,9 +446,9 @@ if test $greekonly -eq 0; then
     make_tarball
 fi
 
-# Put the VERSION file back the way it was
-rm -f VERSION
-git checkout VERSION
+# Put the VERSION.txt file back the way it was
+rm -f VERSION.txt
+git checkout VERSION.txt
 
 echo " "
 echo "*** Start time:  $start"

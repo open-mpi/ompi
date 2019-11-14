@@ -43,7 +43,7 @@ sub mkdir_p {
 }
 
 # Check that we have what we need
-if (!(-f "VERSION" && -f "ompi/include/mpi.h.in")) {
+if (!(-f "VERSION.txt" && -f "ompi/include/mpi.h.in")) {
     print "Run this script from the top-level Open MPI directory\n";
     exit(1);
 }
