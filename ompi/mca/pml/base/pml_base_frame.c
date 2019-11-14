@@ -15,6 +15,7 @@
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2018 IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -78,7 +79,8 @@ mca_pml_base_module_t mca_pml = {
     NULL,                    /* pml_dump */
     NULL,                    /* pml_ft_event */
     0,                       /* pml_max_contextid */
-    0                        /* pml_max_tag */
+    0,                       /* pml_max_tag */
+    0                        /* pml_flags */
 };
 
 mca_pml_base_component_t mca_pml_base_selected_component = {{0}};

@@ -6,6 +6,7 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
+ * Copyright (c) 2018 IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -43,7 +44,8 @@ mca_pml_example_t mca_pml_example = {
         mca_pml_example_ft_event,
 
         32768,
-        (0x7fffffff)
+        (0x7fffffff),
+        0 /* flags */
     }
 };
 
