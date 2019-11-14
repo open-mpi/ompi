@@ -14,6 +14,8 @@
 # Copyright (c) 2014      Intel, Inc. All rights reserved.
 # Copyright (c) 2017-2018 Amazon.com, Inc. or its affiliates.
 #                         All Rights reserved.
+# Copyright (c) 2019      Research Organization for Information Science
+#                         and Technology (RIST).  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -23,7 +25,7 @@
 
 SUBDIRS = config contrib $(MCA_PROJECT_SUBDIRS) test
 DIST_SUBDIRS = config contrib $(MCA_PROJECT_DIST_SUBDIRS) test
-EXTRA_DIST = README INSTALL VERSION Doxyfile LICENSE autogen.pl README.JAVA.txt AUTHORS
+EXTRA_DIST = README INSTALL VERSION.txt Doxyfile LICENSE autogen.pl README.JAVA.txt AUTHORS
 
 include examples/Makefile.include
 

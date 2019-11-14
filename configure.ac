@@ -20,8 +20,8 @@
 # Copyright (c) 2013      Mellanox Technologies, Inc.
 #                         All rights reserved.
 # Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
-# Copyright (c) 2014-2017 Research Organization for Information Science
-#                         and Technology (RIST). All rights reserved.
+# Copyright (c) 2014-2019 Research Organization for Information Science
+#                         and Technology (RIST).  All rights reserved.
 # Copyright (c) 2016-2017 IBM Corporation.  All rights reserved.
 # Copyright (c) 2018      Amazon.com, Inc. or its affiliates.
 #                         All Rights reserved.
@@ -109,8 +109,8 @@ AM_INIT_AUTOMAKE([foreign dist-bzip2 subdir-objects no-define 1.13.4 tar-ustar])
 # (even though they're supposed to be identical).  Shrug.
 AM_SILENT_RULES([yes])
 
-# Make configure depend on the VERSION file, since it's used in AC_INIT
-AC_SUBST([CONFIGURE_DEPENDENCIES], ['$(top_srcdir)/VERSION'.txt])
+# Make configure depend on the VERSION.txt file, since it's used in AC_INIT
+AC_SUBST([CONFIGURE_DEPENDENCIES], ['$(top_srcdir)/VERSION.txt'])
 
 opal_show_subtitle "Checking versions"
 

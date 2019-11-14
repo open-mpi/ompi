@@ -12,8 +12,8 @@ dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2008-2014 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2014      Intel, Inc. All rights reserved.
-dnl Copyright (c) 2014      Research Organization for Information Science
-dnl                         and Technology (RIST). All rights reserved.
+dnl Copyright (c) 2014-2019 Research Organization for Information Science
+dnl                         and Technology (RIST).  All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -69,7 +69,7 @@ m4_define([OPAL_GET_VERSION],[
         m4_ifdef([AC_MSG_CHECKING],
                  [AC_MSG_CHECKING([for repo version])])
 
-        # If repo_rev was not set in the VERSION file, then get it now
+        # If repo_rev was not set in the VERSION.txt file, then get it now
         if test "$$2_REPO_REV" = ""; then
             # See if we can find the "git" command.
             git_happy=0

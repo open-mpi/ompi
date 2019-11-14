@@ -11,8 +11,8 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2015      Research Organization for Information Science
-#                         and Technology (RIST). All rights reserved.
+# Copyright (c) 2015-2019 Research Organization for Information Science
+#                         and Technology (RIST).  All rights reserved.
 # Copyright (c) 2015      Los Alamos National Security, LLC. All rights
 #                         reserved.
 # $COPYRIGHT$
@@ -42,15 +42,15 @@ fi
 # or two corner cases in (but otherwise VPATH builds won't work).
 repo_rev=$OMPI_REPO_REV
 if test -d .git ; then
-    repo_rev=$(config/opal_get_version.sh VERSION --repo-rev)
+    repo_rev=$(config/opal_get_version.sh VERSION.txt --repo-rev)
 fi
 
 #
 # Update VERSION:repo_rev with the best value we have.
 #
-perl -pi -e 's/^repo_rev=.*/repo_rev='$repo_rev'/' -- "${distdir}/VERSION"
+perl -pi -e 's/^repo_rev=.*/repo_rev='$repo_rev'/' -- "${distdir}/VERSION.txt"
 # need to reset the timestamp to not annoy AM dependencies
-touch -r "${srcdir}/VERSION" "${distdir}/VERSION"
+touch -r "${srcdir}/VERSION.txt" "${distdir}/VERSION.txt"
 
-echo "*** Updated VERSION file with repo rev: $repo_rev"
+echo "*** Updated VERSION.txt file with repo rev: $repo_rev"
 echo "*** (via dist-hook / config/distscript.sh)"
