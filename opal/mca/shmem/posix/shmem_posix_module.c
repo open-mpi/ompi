@@ -14,6 +14,8 @@
  * Copyright (c) 2010-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2019      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -47,6 +49,7 @@
 #include <netdb.h>
 #endif /* HAVE_NETDB_H */
 
+#include "opal/runtime/opal.h"
 #include "opal/constants.h"
 #include "opal_stdint.h"
 #include "opal/util/output.h"
@@ -203,8 +206,8 @@ segment_create(opal_shmem_ds_t *ds_buf,
     /* size backing file - note the use of real_size here */
     else if (0 != ftruncate(ds_buf->seg_id, real_size)) {
         int err = errno;
-        char hn[OPAL_MAXHOSTNAMELEN];
-        gethostname(hn, sizeof(hn));
+        const char *hn;
+        hn = opal_gethostname();
         opal_show_help("help-opal-shmem-posix.txt", "sys call fail", 1, hn,
                        "ftruncate(2)", "", strerror(err), err);
         rc = OPAL_ERROR;
@@ -214,8 +217,8 @@ segment_create(opal_shmem_ds_t *ds_buf,
                                                                    PROT_READ | PROT_WRITE, MAP_SHARED,
                                                                    ds_buf->seg_id, 0))) {
         int err = errno;
-        char hn[OPAL_MAXHOSTNAMELEN];
-        gethostname(hn, sizeof(hn));
+        const char *hn;
+        hn = opal_gethostname();
         opal_show_help("help-opal-shmem-posix.txt", "sys call fail", 1, hn,
                        "mmap(2)", "", strerror(err), err);
         rc = OPAL_ERROR;
@@ -265,8 +268,8 @@ out:
     if (-1 != ds_buf->seg_id) {
         if (0 != close(ds_buf->seg_id)) {
             int err = errno;
-            char hn[OPAL_MAXHOSTNAMELEN];
-            gethostname(hn, sizeof(hn));
+            const char *hn;
+            hn = opal_gethostname();
             opal_show_help("help-opal-shmem-mmap.txt", "sys call fail", 1, hn,
                            "close(2)", "", strerror(err), err);
             rc = OPAL_ERROR;
@@ -304,8 +307,8 @@ segment_attach(opal_shmem_ds_t *ds_buf)
     if (my_pid != ds_buf->seg_cpid) {
         if (-1 == (ds_buf->seg_id = shm_open(ds_buf->seg_name, O_RDWR, 0600))) {
             int err = errno;
-            char hn[OPAL_MAXHOSTNAMELEN];
-            gethostname(hn, sizeof(hn));
+            const char *hn;
+            hn = opal_gethostname();
             opal_show_help("help-opal-shmem-posix.txt", "sys call fail", 1, hn,
                            "open(2)", "", strerror(err), err);
             return NULL;
@@ -315,8 +318,8 @@ segment_attach(opal_shmem_ds_t *ds_buf)
                                                      PROT_READ | PROT_WRITE, MAP_SHARED,
                                                      ds_buf->seg_id, 0))) {
             int err = errno;
-            char hn[OPAL_MAXHOSTNAMELEN];
-            gethostname(hn, sizeof(hn));
+            const char *hn;
+            hn = opal_gethostname();
             opal_show_help("help-opal-shmem-posix.txt", "sys call fail", 1, hn,
                            "mmap(2)", "", strerror(err), err);
             /* mmap failed, so shm_unlink and return NULL - no error check here
@@ -332,8 +335,8 @@ segment_attach(opal_shmem_ds_t *ds_buf)
              */
             if (0 != close(ds_buf->seg_id)) {
                 int err = errno;
-                char hn[OPAL_MAXHOSTNAMELEN];
-                gethostname(hn, sizeof(hn));
+                const char *hn;
+                hn = opal_gethostname();
                 opal_show_help("help-opal-shmem-mmap.txt", "sys call fail", 1,
                                hn, "close(2)", "", strerror(err), err);
              }
@@ -373,8 +376,8 @@ segment_detach(opal_shmem_ds_t *ds_buf)
 
     if (0 != munmap((void*)ds_buf->seg_base_addr, ds_buf->seg_size)) {
         int err = errno;
-        char hn[OPAL_MAXHOSTNAMELEN];
-        gethostname(hn, sizeof(hn));
+        const char *hn;
+        hn = opal_gethostname();
         opal_show_help("help-opal-shmem-posix.txt", "sys call fail", 1, hn,
                        "munmap(2)", "", strerror(err), err);
         rc = OPAL_ERROR;
@@ -401,8 +404,8 @@ segment_unlink(opal_shmem_ds_t *ds_buf)
 
     if (-1 == shm_unlink(ds_buf->seg_name)) {
         int err = errno;
-        char hn[OPAL_MAXHOSTNAMELEN];
-        gethostname(hn, sizeof(hn));
+        const char *hn;
+        hn = opal_gethostname();
         opal_show_help("help-opal-shmem-posix.txt", "sys call fail", 1, hn,
                        "shm_unlink(2)", ds_buf->seg_name, strerror(err), err);
         return OPAL_ERROR;

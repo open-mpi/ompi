@@ -37,7 +37,7 @@
 #include <unistd.h>
 #endif
 
-#include "opal_config.h"
+#include "opal/include/opal_config.h"
 
 #include "opal/util/malloc.h"
 #include "opal/util/arch.h"
@@ -94,6 +94,108 @@ int opal_util_initialized = 0;
    hwloc data is loaded. */
 int opal_cache_line_size = 128;
 bool opal_warn_on_fork = true;
+
+/* If there is a preprocessor macro that redefined the call to
+ * gethostname, we undefine that here */
+#ifdef gethostname
+#undef gethostname
+#endif
+
+#define NUM_TRIES_FOR_NULL_HOSTNAME 8
+
+/*
+ * This gethostname wrapper does not return the full-length hostname in
+ * those rare cases where it is too long for the buffer. It does, however,
+ * guarantee a null-terminated hostname is returned, even if it's
+ * truncated. It also tries again in the case where gethostname returns an
+ * error because the buffer is initially too short.
+ */
+static int opal_init_gethostname(void)
+{
+    size_t count, length = OPAL_LOCAL_MAXHOSTNAMELEN;
+    int ret_val, num_tries = 0;
+
+    char *buf = calloc( 1, length );
+    if( NULL == buf ) {
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
+
+    while( num_tries < NUM_TRIES_FOR_NULL_HOSTNAME) {
+        ++num_tries;
+
+        /*
+         * Offer all but the last byte of the buffer to gethostname.
+         */
+        ret_val = gethostname( buf, length - 1 );
+        /*
+         * Terminate the buffer in the last position.
+         */
+        buf[length - 1] = '\0';
+        if( 0 == ret_val ) {
+            count = strlen( buf );
+            /* The result was not truncated */
+            if( count > 0 && count < length - 1 ) {
+                /*
+                 * If we got a good result, save it.  This value may
+                 * be longer than what callers to opal_gethostname()
+                 * are expecting, so that should be checked by the
+                 * caller.
+                 */
+                opal_process_info.nodename = buf;
+                return OPAL_SUCCESS;
+            }
+            /*
+             * "Good" cases:
+             *
+             * 0 == count: The buffer is empty. In some gethostname
+             *             implementations, this can be because the
+             *             buffer was too small.
+             * (length-1) == count: The result *may* be truncated.
+             *
+             * If it's one of these cases, we'll fall through to
+             * increase the length of the buffer and try again.
+             *
+             * If it's not one of these good cases, it's an error:
+             * return.
+             */
+            else if( !(0 == count || count == length - 1) ) {
+                free(buf);
+                return OPAL_ERR_IN_ERRNO;
+            }
+        }
+        /*
+         * "Good" cases:
+         *
+         * errno == EINVAL or ENAMETOOLONG: hostname was truncated and
+         *              there was an error. Perhaps there is something
+         *              in the buffer and perhaps not.
+         *
+         * If it's one of these cases, we'll fall through to
+         * increase the length of the buffer and try again.
+         *
+         * If it's not one of these good cases, it's an error: return.
+         */
+        else if( !(EINVAL == errno || ENAMETOOLONG == errno) ) {
+            free(buf);
+            return OPAL_ERR_IN_ERRNO;
+        }
+
+        /*
+         * If we get here, it means we want to double the length of
+         * the buffer and try again.
+         */
+        length *= 2;
+        buf = realloc( buf, length );
+        if( NULL == buf ) {
+            return OPAL_ERR_OUT_OF_RESOURCE;
+        }
+    } /* end while */
+
+    /* If we got here, it means that we tried too many times and are
+     * giving up. */
+    free(buf);
+    return OPAL_ERR_NOT_FOUND;
+}
 
 static int
 opal_err2str(int errnum, const char **errmsg)
@@ -367,7 +469,6 @@ opal_init_util(int* pargc, char*** pargv)
 {
     int ret;
     char *error = NULL;
-    char hostname[OPAL_MAXHOSTNAMELEN];
     OPAL_TIMING_ENV_INIT(otmng);
 
     if( ++opal_util_initialized != 1 ) {
@@ -390,8 +491,12 @@ opal_init_util(int* pargc, char*** pargv)
      * that we don't bother with fqdn and prefix issues here - we let
      * the RTE later replace this with a modified name if the user
      * requests it */
-    gethostname(hostname, sizeof(hostname));
-    opal_process_info.nodename = strdup(hostname);
+    ret = opal_init_gethostname();
+    if (OPAL_SUCCESS != ret) {
+        fprintf(stderr, "opal_init_gethostname() failed -- process will likely abort (%s:%d, returned %d instead of OPAL_SUCCESS)\n",
+                __FILE__, __LINE__, ret);
+        return ret;
+    }
 
     /* initialize the memory allocator */
     opal_malloc_init();

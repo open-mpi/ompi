@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2019      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -59,7 +61,7 @@ test_ifaddrtoname(char *addr)
 int
 main(int argc, char *argv[])
 {
-    char hostname[OPAL_MAXHOSTNAMELEN];
+    const char *hostname;
 
     opal_init(&argc, &argv);
     test_init("opal_if");
@@ -117,7 +119,7 @@ main(int argc, char *argv[])
     }
 
     /* local host name */
-    gethostname(hostname, sizeof(hostname));
+    hostname = opal_gethostname();
     if (test_ifaddrtoname(hostname)) {
         test_success();
     } else {

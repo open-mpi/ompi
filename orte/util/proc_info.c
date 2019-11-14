@@ -14,6 +14,8 @@
  *                         All rights reserved.
  * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2019      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -42,6 +44,7 @@
 #include "opal/util/net.h"
 #include "opal/util/output.h"
 #include "opal/util/proc.h"
+#include "opal/runtime/opal.h"
 
 #include "orte/util/attr.h"
 
@@ -96,7 +99,7 @@ int orte_proc_info(void)
 
     int idx, i;
     char *ptr;
-    char hostname[OPAL_MAXHOSTNAMELEN];
+    char *local_hostname = NULL;
     char **prefixes;
     bool match;
 
@@ -164,17 +167,21 @@ int orte_proc_info(void)
     /* get the process id */
     orte_process_info.pid = getpid();
 
-    /* get the nodename */
-    gethostname(hostname, sizeof(hostname));
+    /* get the nodename (retrieves from a global variable) */
+    /* copy into a local version so that we can manipulate it */
+    local_hostname = strdup(opal_gethostname());
+    if (NULL == local_hostname) {
+        return OPAL_ERR_BUFFER;
+    }
     /* add this to our list of aliases */
-    opal_argv_append_nosize(&orte_process_info.aliases, hostname);
+    opal_argv_append_nosize(&orte_process_info.aliases, local_hostname);
 
     // Strip off the FQDN if present, ignore IP addresses
-    if( !orte_keep_fqdn_hostnames && !opal_net_isaddr(hostname) ) {
-        if (NULL != (ptr = strchr(hostname, '.'))) {
+    if( !orte_keep_fqdn_hostnames && !opal_net_isaddr(local_hostname) ) {
+        if (NULL != (ptr = strchr(local_hostname, '.'))) {
             *ptr = '\0';
             /* add this to our list of aliases */
-            opal_argv_append_nosize(&orte_process_info.aliases, hostname);
+            opal_argv_append_nosize(&orte_process_info.aliases, local_hostname);
         }
     }
 
@@ -192,18 +199,18 @@ int orte_proc_info(void)
         prefixes = opal_argv_split(orte_strip_prefix, ',');
         match = false;
         for (i=0; NULL != prefixes[i]; i++) {
-            if (0 == strncmp(hostname, prefixes[i], strlen(prefixes[i]))) {
+            if (0 == strncmp(local_hostname, prefixes[i], strlen(prefixes[i]))) {
                 /* remove the prefix and leading zeroes */
                 idx = strlen(prefixes[i]);
-                while (idx < (int)strlen(hostname) &&
-                       (hostname[idx] <= '0' || '9' < hostname[idx])) {
+                while (idx < (int)strlen(local_hostname) &&
+                       (local_hostname[idx] <= '0' || '9' < local_hostname[idx])) {
                     idx++;
                 }
-                if ((int)strlen(hostname) <= idx) {
+                if ((int)strlen(local_hostname) <= idx) {
                     /* there were no non-zero numbers in the name */
-                    orte_process_info.nodename = strdup(&hostname[strlen(prefixes[i])]);
+                    orte_process_info.nodename = strdup(&local_hostname[strlen(prefixes[i])]);
                 } else {
-                    orte_process_info.nodename = strdup(&hostname[idx]);
+                    orte_process_info.nodename = strdup(&local_hostname[idx]);
                 }
                 /* add this to our list of aliases */
                 opal_argv_append_nosize(&orte_process_info.aliases, orte_process_info.nodename);
@@ -213,11 +220,11 @@ int orte_proc_info(void)
         }
         /* if we didn't find a match, then just use the hostname as-is */
         if (!match) {
-            orte_process_info.nodename = strdup(hostname);
+            orte_process_info.nodename = strdup(local_hostname);
         }
         opal_argv_free(prefixes);
     } else {
-        orte_process_info.nodename = strdup(hostname);
+        orte_process_info.nodename = strdup(local_hostname);
     }
 
     /* add "localhost" to our list of aliases */
@@ -263,7 +270,7 @@ int orte_proc_info(void)
                                   MCA_BASE_VAR_SCOPE_CONSTANT,
                                   &orte_ess_node_rank);
     orte_process_info.my_node_rank = (orte_node_rank_t) orte_ess_node_rank;
-
+    free(local_hostname);
     return ORTE_SUCCESS;
 }
 

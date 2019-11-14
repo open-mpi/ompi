@@ -11,6 +11,7 @@
 #include <unistd.h>
 #include <sched.h>
 #include "opal/mca/hwloc/base/base.h"
+#include "opal/runtime/opal.h"
 #include "mpi.h"
 
 #include "orte/util/proc_info.h"
@@ -23,13 +24,13 @@ int main(int argc, char* argv[])
     cpu_set_t *mask;
     int nrcpus, c;
     size_t csize;
-    char hostname[1024];
+    const char *hostname;
 
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-    gethostname(hostname, 1024);
+    hostname = opal_gethostname();
 
     if (OPAL_SUCCESS == opal_hwloc_base_get_topology()) {
         cpus = hwloc_bitmap_alloc();

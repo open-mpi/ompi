@@ -30,6 +30,9 @@
 #include "opal_config.h"
 #include "opal/types.h"
 #include "opal/class/opal_list.h"
+#include "opal/util/proc.h"
+
+#include <assert.h>
 
 BEGIN_C_DECLS
 
@@ -110,6 +113,19 @@ OPAL_DECLSPEC void opal_warn_fork(void);
  * Internal function.  Only valid when called from opal_init_util().
  */
 OPAL_DECLSPEC int opal_register_params(void);
+
+/**
+ * Wrapper to return the hostname value that is in
+   opal_process_info.nodename, as opposed to calling gethostname()
+   directly, which is not guaranteed to be null-terminated and
+   varies in its behavior depending on implementation. The 
+   opal_process_info.nodename value is first populated in 
+   opal/runtime/opal_init.c
+ */
+static inline const char *opal_gethostname( void ) {
+    assert( NULL != opal_process_info.nodename );
+    return opal_process_info.nodename;
+}
 
 /* finalize cleanup */
 /**

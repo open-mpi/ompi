@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <unistd.h>
 
+#include "opal/runtime/opal.h"
 #include "opal/mca/pmix/pmix.h"
 #include "orte/runtime/runtime.h"
 #include "orte/util/proc_info.h"
@@ -50,13 +51,20 @@ int main(int argc, char* argv[])
     int rc;
     opal_value_t *kv;
     opal_list_t info;
+    const char *local_hostname;
 
     if (0 > (rc = orte_init(&argc, &argv, ORTE_PROC_NON_MPI))) {
         fprintf(stderr, "orte_abort: couldn't init orte - error code %d\n", rc);
         return rc;
     }
     pid = getpid();
-    gethostname(hostname, sizeof(hostname));
+
+    /* Because hostname variable is static, we need to copy it from another variable that gets the
+       return of opal_gethostname. Truncate it if it is longer than OPAL_MAXHOSTNAMELEN. 
+     */
+    local_hostname = opal_gethostname();
+    strncpy(hostname, local_hostname, OPAL_MAXHOSTNAMELEN - 1);
+    local_hostname[OPAL_MAXHOSTNAMELEN - 1] = '\0';
 
     printf("orte_notify: Name %s Host: %s Pid %ld\n",
            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),

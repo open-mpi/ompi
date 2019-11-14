@@ -7,6 +7,8 @@
 
 #include "orte_config.h"
 
+#include "opal/runtime/opal.h"
+
 #include <stdio.h>
 #include <unistd.h>
 #include "mpi.h"
@@ -14,13 +16,13 @@
 int main(int argc, char* argv[])
 {
     int rank, size;
-    char hostname[OPAL_MAXHOSTNAMELEN];
+    const char *hostname;
 
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-    gethostname(hostname, sizeof(hostname));
+    hostname = opal_gethostname();
     printf("%s: I am %d of %d. pid=%d\n", hostname, rank, size, getpid());
 
     if (rank%3 == 0) {

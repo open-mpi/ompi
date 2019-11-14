@@ -13,6 +13,8 @@
  * Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  * Copyright (c) 2017      FUJITSU LIMITED.  All rights reserved.
+ * Copyright (c) 2019      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -43,6 +45,7 @@
 #include <string.h>
 #include <signal.h>
 
+#include "opal/runtime/opal.h"
 #include "opal/util/stacktrace.h"
 #include "opal/mca/backtrace/backtrace.h"
 #include "opal/constants.h"
@@ -63,6 +66,7 @@ int    opal_stacktrace_output_fileno = -1;
 static char  *opal_stacktrace_output_filename_base = NULL;
 static size_t opal_stacktrace_output_filename_max_len = 0;
 static char stacktrace_hostname[OPAL_MAXHOSTNAMELEN];
+static const char *stacktrace_hostname_full;
 static char *unable_to_print_msg = "Unable to print stack trace!\n";
 
 /*
@@ -534,7 +538,9 @@ int opal_util_register_stackhandlers (void)
     int i;
     bool complain, showed_help = false;
 
-    gethostname(stacktrace_hostname, sizeof(stacktrace_hostname));
+    stacktrace_hostname_full = opal_gethostname();
+    strncpy(stacktrace_hostname, stacktrace_hostname_full, OPAL_MAXHOSTNAMELEN - 1);
+    stacktrace_hostname[OPAL_MAXHOSTNAMELEN - 1] = '\0';
     /* to keep these somewhat readable, only print the machine name */
     for (i = 0 ; i < (int)strlen(stacktrace_hostname) ; ++i) {
         if (stacktrace_hostname[i] == '.') {
