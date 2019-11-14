@@ -117,6 +117,26 @@ AC_DEFUN([OPAL_PROG_CC_C11],[
     OPAL_VAR_SCOPE_POP
 ])
 
+# OPAL_CHECK_CC_IQUOTE()
+# ----------------------
+# Check if the compiler supports the -iquote option. This options
+# removes the specified directory from the search path when using
+# #include <>. This check works around an issue caused by C++20
+# which added a <version> header. This conflicts with the
+# VERSION file at the base of our source directory on case-
+# insensitive filesystems.
+AC_DEFUN([OPAL_CHECK_CC_IQUOTE],[
+    OPAL_VAR_SCOPE_PUSH([opal_check_cc_iquote_CFLAGS_save])
+    opal_check_cc_iquote_CFLAGS_save=${CFLAGS}
+    CFLAGS="${CFLAGS} -iquote ."
+    AC_MSG_CHECKING([for $CC option to add a directory only to the search path for the quote form of include])
+    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]],[])],
+		      [opal_cc_iquote="-iquote"],
+		      [opal_cc_iquote="-I"])
+    CFLAGS=${opal_check_cc_iquote_CFLAGS_save}
+    OPAL_VAR_SCOPE_POP
+    AC_MSG_RESULT([$opal_cc_iquote])
+])
 
 # OPAL_SETUP_CC()
 # ---------------
@@ -139,6 +159,8 @@ AC_DEFUN([OPAL_SETUP_CC],[
     AC_SUBST([WRAPPER_CC])
 
     OPAL_PROG_CC_C11
+
+    OPAL_CHECK_CC_IQUOTE
 
     if test $opal_cv_c11_supported = no ; then
         # It is not currently an error if C11 support is not available. Uncomment the
