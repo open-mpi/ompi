@@ -19,7 +19,7 @@
 #ifndef OPAL_MCA_TIMER_ALTIX_TIMER_ALTIX_H
 #define OPAL_MCA_TIMER_ALTIX_TIMER_ALTIX_H
 
-#include <opal/sys/timer.h>
+#include "opal/sys/timer.h"
 
 extern opal_timer_t opal_timer_altix_freq;
 extern opal_timer_t opal_timer_altix_usec_conv;

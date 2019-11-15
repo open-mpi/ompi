@@ -27,8 +27,8 @@
   typedef int64_t xpmem_apid_t;
 #endif
 
-#include <opal/mca/rcache/base/rcache_base_vma.h>
-#include <opal/mca/rcache/rcache.h>
+#include "opal/mca/rcache/base/rcache_base_vma.h"
+#include "opal/mca/rcache/rcache.h"
 
 /* look up the remote pointer in the peer rcache and attach if
  * necessary */

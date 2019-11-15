@@ -1,5 +1,7 @@
 /*
  * Copyright (c) 2016-2017 Inria.  All rights reserved.
+ * Copyright (c) 2019      Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -12,9 +14,9 @@
 
 BEGIN_C_DECLS
 
-#include <ompi_config.h>
-#include <ompi/mca/osc/osc.h>
-#include <ompi/mca/common/monitoring/common_monitoring.h>
+#include "ompi_config.h"
+#include "ompi/mca/osc/osc.h"
+#include "ompi/mca/common/monitoring/common_monitoring.h"
 
 struct ompi_osc_monitoring_component_t {
     ompi_osc_base_component_t super;

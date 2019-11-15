@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2016-2017 Inria.  All rights reserved.
- * Copyright (c) 2017      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017-2019 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2017      Amazon.com, Inc. or its affiliates.  All Rights
  *                         reserved.
  * $COPYRIGHT$
@@ -14,9 +14,9 @@
 #ifndef MCA_OSC_MONITORING_MODULE_H
 #define MCA_OSC_MONITORING_MODULE_H
 
-#include <ompi/info/info.h>
-#include <ompi/win/win.h>
-#include <ompi/mca/osc/osc.h>
+#include "ompi/info/info.h"
+#include "ompi/win/win.h"
+#include "ompi/mca/osc/osc.h"
 
 /* Define once and for all the module_template variable name */
 #define OMPI_OSC_MONITORING_MODULE_VARIABLE(template)	\

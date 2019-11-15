@@ -2,8 +2,8 @@
  * Copyright (c) 2014-2018 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved
- * Copyright (c) 2016      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016-2019 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2017      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -48,7 +48,7 @@
 #define OSHMEM_HAVE_C11 0
 #endif
 
-#include <shmem-compat.h>
+#include "shmem-compat.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {

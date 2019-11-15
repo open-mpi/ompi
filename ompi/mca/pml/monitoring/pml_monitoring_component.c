@@ -4,8 +4,8 @@
  *                         reserved.
  * Copyright (c) 2013-2017 Inria.  All rights reserved.
  * Copyright (c) 2015      Bull SAS.  All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015-2019 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2018 IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
@@ -14,12 +14,12 @@
  * $HEADER$
  */
 
-#include <ompi_config.h>
+#include "ompi_config.h"
 #include "pml_monitoring.h"
-#include <ompi/constants.h>
-#include <ompi/mca/pml/base/base.h>
-#include <ompi/mca/common/monitoring/common_monitoring.h>
-#include <opal/mca/base/mca_base_component_repository.h>
+#include "ompi/constants.h"
+#include "ompi/mca/pml/base/base.h"
+#include "ompi/mca/common/monitoring/common_monitoring.h"
+#include "opal/mca/base/mca_base_component_repository.h"
 
 static int mca_pml_monitoring_active = 0;
 

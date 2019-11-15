@@ -20,7 +20,7 @@
 
 BEGIN_C_DECLS
 
-#include <opal_config.h>
+#include "opal_config.h"
 
 /* Top-level configure will always configure the embedded hwloc
  * component, even if we already know that we'll be using an external

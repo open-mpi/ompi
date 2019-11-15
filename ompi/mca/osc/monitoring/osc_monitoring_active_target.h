@@ -1,5 +1,7 @@
 /*
  * Copyright (c) 2016 Inria.  All rights reserved.
+ * Copyright (c) 2019      Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -10,8 +12,8 @@
 #ifndef MCA_OSC_MONITORING_ACTIVE_TARGET_H
 #define MCA_OSC_MONITORING_ACTIVE_TARGET_H
 
-#include <ompi/group/group.h>
-#include <ompi/win/win.h>
+#include "ompi/group/group.h"
+#include "ompi/win/win.h"
 
 #define OSC_MONITORING_GENERATE_TEMPLATE_ACTIVE_TARGET(template)        \
                                                                         \

@@ -1,5 +1,7 @@
 /*
  * Copyright (c) 2016-2017 Inria.  All rights reserved.
+ * Copyright (c) 2019      Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -7,17 +9,17 @@
  * $HEADER$
  */
 
-#include <ompi_config.h>
+#include "ompi_config.h"
 #include <string.h>
 #include "osc_monitoring.h"
-#include <ompi/constants.h>
-#include <ompi/communicator/communicator.h>
-#include <ompi/info/info.h>
-#include <ompi/win/win.h>
-#include <ompi/info/info.h>
-#include <ompi/mca/osc/osc.h>
-#include <ompi/mca/osc/base/base.h>
-#include <opal/mca/base/mca_base_component_repository.h>
+#include "ompi/constants.h"
+#include "ompi/communicator/communicator.h"
+#include "ompi/info/info.h"
+#include "ompi/win/win.h"
+#include "ompi/info/info.h"
+#include "ompi/mca/osc/osc.h"
+#include "ompi/mca/osc/base/base.h"
+#include "opal/mca/base/mca_base_component_repository.h"
 
 /**************************************************/
 /* Include templated macros and inlined functions */

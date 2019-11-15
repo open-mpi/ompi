@@ -26,7 +26,7 @@
 #include <string.h>
 #include <errno.h>
 
-#include <opal/event/event.h>
+#include "opal/event/event.h"
 
 int lasttime;
 

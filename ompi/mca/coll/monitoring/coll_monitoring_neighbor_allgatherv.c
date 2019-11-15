@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2016-2018 Inria. All rights reserved.
- * Copyright (c) 2017      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017-2019 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -9,11 +9,11 @@
  * $HEADER$
  */
 
-#include <ompi_config.h>
-#include <ompi/request/request.h>
-#include <ompi/datatype/ompi_datatype.h>
-#include <ompi/communicator/communicator.h>
-#include <ompi/mca/topo/base/base.h>
+#include "ompi_config.h"
+#include "ompi/request/request.h"
+#include "ompi/datatype/ompi_datatype.h"
+#include "ompi/communicator/communicator.h"
+#include "ompi/mca/topo/base/base.h"
 #include "coll_monitoring.h"
 
 int mca_coll_monitoring_neighbor_allgatherv(const void *sbuf, int scount,

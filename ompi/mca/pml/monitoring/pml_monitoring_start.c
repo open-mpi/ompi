@@ -3,6 +3,8 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2013-2018 Inria.  All rights reserved.
+ * Copyright (c) 2019      Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -10,9 +12,9 @@
  * $HEADER$
  */
 
-#include <ompi_config.h>
+#include "ompi_config.h"
 #include "pml_monitoring.h"
-#include <ompi/mca/pml/base/pml_base_request.h>
+#include "ompi/mca/pml/base/pml_base_request.h"
 
 /* manage persistant requests*/
 int mca_pml_monitoring_start(size_t count,

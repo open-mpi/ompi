@@ -5,8 +5,8 @@
  *                         reserved.
  * Copyright (c) 2013-2017 Inria.  All rights reserved.
  * Copyright (c) 2015      Bull SAS.  All rights reserved.
- * Copyright (c) 2016-2017 Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016-2019 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2017-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
@@ -18,14 +18,14 @@
  * $HEADER$
  */
 
-#include <ompi_config.h>
+#include "ompi_config.h"
 #include "common_monitoring.h"
 #include "common_monitoring_coll.h"
-#include <ompi/constants.h>
-#include <ompi/communicator/communicator.h>
-#include <opal/mca/base/mca_base_component_repository.h>
-#include <opal/class/opal_hash_table.h>
-#include <opal/util/output.h>
+#include "ompi/constants.h"
+#include "ompi/communicator/communicator.h"
+#include "opal/mca/base/mca_base_component_repository.h"
+#include "opal/class/opal_hash_table.h"
+#include "opal/util/output.h"
 #include "opal/util/printf.h"
 #include "opal/runtime/opal.h"
 #include <math.h>
