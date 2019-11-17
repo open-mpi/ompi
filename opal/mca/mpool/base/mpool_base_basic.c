@@ -88,7 +88,7 @@ static mca_mpool_base_module_t mca_mpool_basic_template = {
     .flags = MCA_MPOOL_FLAGS_MPI_ALLOC_MEM,
 };
 
-mca_mpool_base_module_t *mca_mpool_basic_create (void *base, size_t size, unsigned min_align)
+mca_mpool_base_module_t *mca_mpool_basic_create (mca_mpool_base_module_address_fn_t base, size_t size, unsigned min_align)
 {
     mca_mpool_base_basic_module_t *basic_module = calloc (1, sizeof (*basic_module));
 
