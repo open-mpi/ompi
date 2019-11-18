@@ -647,9 +647,11 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
                             __FILE__, __LINE__);
         goto error;
     }
+    /* Make sure to get a RDM provider that can do the tagged matching
+       interface and local communication and remote communication. */
     hints->mode               = FI_CONTEXT;
-    hints->ep_attr->type      = FI_EP_RDM;      /* Reliable datagram         */
-    hints->caps               = FI_TAGGED;      /* Tag matching interface    */
+    hints->ep_attr->type      = FI_EP_RDM;
+    hints->caps               = FI_TAGGED | FI_LOCAL_COMM | FI_REMOTE_COMM;
     hints->tx_attr->msg_order = FI_ORDER_SAS;
     hints->rx_attr->msg_order = FI_ORDER_SAS;
     hints->rx_attr->op_flags = FI_COMPLETION;
@@ -697,8 +699,13 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
      * FI_VERSION provides binary backward and forward compatibility support
      * Specify the version of OFI is coded to, the provider will select struct
      * layouts that are compatible with this version.
+     *
+     * Note: API version 1.5 is the first version that supports
+     * FI_LOCAL_COMM / FI_REMOTE_COMM checking (and we definitely need
+     * that checking -- e.g., some providers are suitable for RXD or
+     * RXM, but can't provide local communication).
      */
-    fi_version = FI_VERSION(1, 0);
+    fi_version = FI_VERSION(1, 5);
 
     /**
      * fi_getinfo:  returns information about fabric  services for reaching a
