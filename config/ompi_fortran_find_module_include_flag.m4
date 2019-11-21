@@ -11,6 +11,8 @@ dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2010-2012 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2019      Triad National Security, LLC. All rights
+dnl                         reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -67,7 +69,12 @@ EOF
             if test "$ofi_module_flag" = ""; then
                 OPAL_LOG_COMMAND([$FC $FCFLAGS $FCFLAGS_f90 conftest.f90 ${flag}subdir $LDFLAGS $LIBS],
                         [AS_VAR_SET(fortran_inc_var, [$flag])
-                        ofi_module_flag="$flag"])
+                        ofi_module_flag="$flag"],
+dnl try and see if we need to link in a possible object file
+                        [OPAL_LOG_COMMAND([$FC $FCFLAGS $FCFLAGS_f90 conftest.f90 subdir/conftest-module.o \
+                                          ${flag}subdir $LDFLAGS $LIBS],
+                                          [AS_VAR_SET(fortran_inc_var, [$flag])
+                                           ofi_module_flag="$flag"],[])])
             fi
         done
         cd ..
