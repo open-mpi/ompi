@@ -92,7 +92,7 @@ mca_fs_lustre_component_file_query (ompio_file_t *fh, int *priority)
     if (!tmp) {
         /* The communicator might be NULL if we only want to delete the file */
         if (OMPIO_ROOT == fh->f_rank || MPI_COMM_NULL == fh->f_comm) {
-            fh->f_fstype = mca_fs_base_get_fstype ( fh->f_filename );
+            fh->f_fstype = mca_fs_base_get_fstype ( (char *)fh->f_filename );
         }
         if (fh->f_comm != MPI_COMM_NULL) {
             fh->f_comm->c_coll->coll_bcast (&(fh->f_fstype),

@@ -34,11 +34,11 @@
 
 #include <sys/ioctl.h>
 
-static void *alloc_lum();
+static void *alloc_lum(void);
 
-static void *alloc_lum()
+static void *alloc_lum(void)
 {
-  int v1, v3, join;
+  int v1, v3;
 
   v1 = sizeof(struct lov_user_md_v1) +
     LOV_MAX_STRIPE_COUNT * sizeof(struct lov_user_ost_data_v1);
