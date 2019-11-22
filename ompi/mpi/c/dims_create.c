@@ -240,7 +240,7 @@ getfactors(int num, int *nfactors, int **factors) {
     }
     /* determine all occurences of uneven prime numbers up to sqrt(num) */
     d = 3;
-    for(d = 3; (num > 1) && (d < sqrtnum); d += 2) {
+    for(d = 3; (num > 1) && (d <= sqrtnum); d += 2) {
         while((num % d) == 0) {
             num /= d;
             (*factors)[i++] = d;
