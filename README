@@ -614,7 +614,6 @@ MPI Functionality and Features
   - cm (see list (1) of supported MTLs, below)
   - ob1 (see list (2) of supported BTLs, below)
   - ucx
-  - yalla
 
   (1) The cm PML and the following MTLs support MPI_THREAD_MULTIPLE:
       - ofi (Libfabric)
@@ -693,7 +692,7 @@ Network Support
 ---------------
 
 - There are several main MPI network models available: "ob1", "cm",
-  "ucx", and "yalla".  "ob1" uses BTL ("Byte Transfer Layer")
+  and "ucx".  "ob1" uses BTL ("Byte Transfer Layer")
   components for each supported network.  "cm" uses MTL ("Matching
   Transport Layer") components for each supported network.  "ucx" uses
   the OpenUCX transport.
@@ -745,10 +744,7 @@ Network Support
      transport devices are available (e.g., Cray uGNI), use the "cm"
      PML and a single appropriate corresponding "mtl" module.
 
-  3. If MXM/InfiniBand devices are availble, use the "yalla" PML
-     (NOTE: the "yalla"/MXM PML is deprecated -- see below).
-
-  4. Otherwise, use the ob1 PML and one or more appropriate "btl"
+  3. Otherwise, use the ob1 PML and one or more appropriate "btl"
      modules.
 
   Users can override Open MPI's default selection algorithms and force
@@ -762,23 +758,8 @@ Network Support
       or
       shell$ mpirun --mca pml ucx ...
 
-  As alluded to above, there is actually a fourth MPI point-to-point
-  transport, but it is deprecated and will likely be removed in a
-  future Open MPI release:
-
-  - "yalla" uses the Mellanox MXM transport library.  MXM is the
-     deprecated Mellanox Messaging Accelerator library, utilizing a
-     full range of IB transports to provide the following messaging
-     services to the upper level MPI/OpenSHMEM libraries.  MXM is only
-     included in this release of Open MPI for backwards compatibility;
-     the "ucx" PML should be used insead.
-
 - The main OpenSHMEM network model is "ucx"; it interfaces directly
   with UCX.
-
-  The "ikrit" OpenSHMEM network model is also available, but is
-  deprecated; it uses the deprecated Mellanox Message Accelerator
-  (MXM) library.
 
 - In prior versions of Open MPI, InfiniBand and RoCE support was
   provided through the openib BTL and ob1 PML plugins.  Starting with
@@ -1114,19 +1095,6 @@ NETWORKING SUPPORT / OPTIONS
   will look in <libfabric directory>/lib and <libfabric
   directory>/lib64, which covers most cases.  This option is only
   needed for special configurations.
-
---with-mxm=<directory>
-  Specify the directory where the Mellanox MXM library and header
-  files are located.  This option is generally only necessary if the
-  MXM headers and libraries are not in default compiler/linker search
-  paths.
-
-  MXM is the support library for Mellanox Network adapters.
-
---with-mxm-libdir=<directory>
-  Look in directory for the MXM libraries.  By default, Open MPI will
-  look in <mxm directory>/lib and <mxm directory>/lib64, which covers
-  most cases.  This option is only needed for special configurations.
 
 --with-portals4=<directory>
   Specify the directory where the Portals4 libraries and header files
