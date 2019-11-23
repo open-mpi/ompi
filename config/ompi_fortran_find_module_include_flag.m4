@@ -68,15 +68,15 @@ EOF
         for flag in $ofi_possible_flags; do
             if test "$ofi_module_flag" = ""; then
                 OPAL_LOG_COMMAND([$FC $FCFLAGS $FCFLAGS_f90 conftest.f90 ${flag}subdir $LDFLAGS $LIBS],
-                        [AS_VAR_SET(fortran_inc_var, [$flag])
-                        ofi_module_flag="$flag"],
+                        [ofi_module_flag=$flag],
 dnl try and see if we need to link in a possible object file
                         [OPAL_LOG_COMMAND([$FC $FCFLAGS $FCFLAGS_f90 conftest.f90 subdir/conftest-module.o \
                                           ${flag}subdir $LDFLAGS $LIBS],
-                                          [AS_VAR_SET(fortran_inc_var, [$flag])
-                                           ofi_module_flag="$flag"],[])])
+                                          [ofi_module_flag=$flag])])
             fi
         done
+        AS_IF([test -n "$ofi_module_flag"],
+              [AS_VAR_SET(fortran_inc_var, [$ofi_module_flag])])
         cd ..
         rm -rf conftest.$$
     ])
