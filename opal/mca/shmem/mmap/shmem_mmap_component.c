@@ -14,6 +14,7 @@
  * Copyright (c) 2010-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2016      Intel, Inc. All rights reserved.
+ * Copyright (c) 2019      Sylabs, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -110,6 +111,9 @@ mmap_register(void)
                                            OPAL_INFO_LVL_3,
                                            MCA_BASE_VAR_SCOPE_ALL_EQ,
                                            &mca_shmem_mmap_component.priority);
+    if (0 > ret) {
+        return ret;
+    }
 
     /*
      * Do we want the "warning: your mmap file is on NFS!" message?  Per a
