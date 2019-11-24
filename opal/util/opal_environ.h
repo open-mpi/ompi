@@ -79,7 +79,7 @@ OPAL_DECLSPEC char **opal_environ_merge(char **minor, char **major) __opal_attri
  *
  * \em env is expected to be a NULL-terminated array of pointers
  * (argv-style).  Note that unlike some implementations of
- * putenv(3), if \em value is insertted in \em env, it is copied.
+ * putenv(3), if \em value is inserted in \em env, it is copied.
  * So the caller can modify/free both \em name and \em value after
  * opal_setenv() returns.
  *

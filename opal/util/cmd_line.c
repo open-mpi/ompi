@@ -383,7 +383,7 @@ int opal_cmd_line_parse(opal_cmd_line_t *cmd, bool ignore_unknown, bool ignore_u
                 /* Suck down the following parameters that belong to
                    this option.  If we run out of parameters, or find
                    that any of them are the special_empty_param
-                   (insertted by split_shorts()), then print an error
+                   (inserted by split_shorts()), then print an error
                    and return. */
 
                 param = OBJ_NEW(ompi_cmd_line_param_t);
