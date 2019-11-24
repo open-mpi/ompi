@@ -142,7 +142,7 @@ bool opal_list_insert(opal_list_t *list, opal_list_item_t *item, long long idx)
 
 #if OPAL_ENABLE_DEBUG
         /* Spot check: ensure this item is only on the list that we
-           just insertted it into */
+           just inserted it into */
 
         (void)opal_atomic_add( &(item->opal_list_item_refcount), 1 );
         assert(1 == item->opal_list_item_refcount);
