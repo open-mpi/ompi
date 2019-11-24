@@ -298,7 +298,7 @@ char *opal_path_access(char *fname, char *path, int mode)
  *  Loads argument array with $PATH env var.
  *
  *  Accepts
- *      -path String contiaing the $PATH
+ *      -path String containing the $PATH
  *      -argc Pointer to argc
  *      -argv Pointer to list of argv
  */
