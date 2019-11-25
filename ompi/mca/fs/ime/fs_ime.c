@@ -133,44 +133,6 @@ int mca_fs_ime_module_finalize (ompio_file_t *file)
     return OMPI_SUCCESS;
 }
 
-int mca_fs_ime_get_mpi_err(int errno_val)
-{
-    switch (errno_val) {
-        case EACCES:
-            return MPI_ERR_ACCESS;
-
-        case ENAMETOOLONG:
-            return MPI_ERR_BAD_FILE;
-
-        case ENOENT:
-            return MPI_ERR_NO_SUCH_FILE;
-
-        case EISDIR:
-            return MPI_ERR_BAD_FILE;
-
-        case EROFS:
-            return MPI_ERR_READ_ONLY;
-
-        case EEXIST:
-            return MPI_ERR_FILE_EXISTS;
-
-        case ENOSPC:
-            return MPI_ERR_NO_SPACE;
-
-        case EDQUOT:
-            return MPI_ERR_QUOTA;
-
-        case ETXTBSY:
-            return MPI_ERR_FILE_IN_USE;
-
-        case EBADF:
-            return MPI_ERR_FILE;
-
-        default:
-            return MPI_ERR_OTHER;
-    }
-}
-
 int mca_fs_ime_native_fini()
 {
     int ret;

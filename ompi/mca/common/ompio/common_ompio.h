@@ -107,7 +107,8 @@ enum ompio_fs_type
     PVFS2 = 2,
     LUSTRE = 3,
     PLFS = 4,
-    IME = 5
+    IME = 5,
+    GPFS = 6
 };
 
 typedef struct mca_common_ompio_io_array_t {

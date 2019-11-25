@@ -89,9 +89,6 @@ int mca_fs_pvfs2_file_get_size (ompio_file_t *fh,
 
 int mca_fs_pvfs2_file_sync (ompio_file_t *fh);
 
-int mca_fs_pvfs2_file_seek (ompio_file_t *fh,
-                            OMPI_MPI_OFFSET_TYPE offset,
-                            int whence);
 /*
  * ******************************************************************
  * ************ functions implemented in this module end ************

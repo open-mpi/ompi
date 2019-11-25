@@ -43,7 +43,7 @@ int mca_fs_ime_file_set_size (ompio_file_t *fh,
                                    fh->f_comm->c_coll->coll_bcast_module);
 
     if (ret < 0) {
-        return mca_fs_ime_get_mpi_err(errno);
+        return mca_fs_base_get_mpi_err(errno);
     }
     return OMPI_SUCCESS;
 }

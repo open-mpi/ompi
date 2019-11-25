@@ -33,7 +33,7 @@ int mca_fs_ime_file_delete (char* file_name,
 
     ret = ime_native_unlink(file_name);
     if (ret != 0) {
-        return mca_fs_ime_get_mpi_err(errno);
+        return mca_fs_base_get_mpi_err(errno);
     }
 
     return OMPI_SUCCESS;
