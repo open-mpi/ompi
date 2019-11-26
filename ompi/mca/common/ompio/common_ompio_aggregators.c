@@ -126,17 +126,17 @@ int mca_common_ompio_simple_grouping(ompio_file_t *fh,
     }
 
     P_a = 1;
-    time_prev = cost_calc ( fh->f_size, P_a, fh->f_view_size, (size_t) fh->f_bytes_per_agg, mode );
+    time_prev = cost_calc ( fh->f_size, P_a, fh->f_cc_size, (size_t) fh->f_bytes_per_agg, mode );
     P_a_prev = P_a;
     for ( P_a = incr; P_a <= fh->f_size; P_a += incr ) {
-	time = cost_calc ( fh->f_size, P_a, fh->f_view_size, (size_t) fh->f_bytes_per_agg, mode );
+	time = cost_calc ( fh->f_size, P_a, fh->f_cc_size, (size_t) fh->f_bytes_per_agg, mode );
 	dtime_abs = (time_prev - time);
 	dtime = dtime_abs / time_prev;
 	dtime_diff = ( P_a == incr ) ? dtime : (dtime_prev - dtime);
 #ifdef OMPIO_DEBUG
 	if ( 0 == fh->f_rank  ){
 	    printf(" d_p = %ld P_a = %d time = %lf dtime = %lf dtime_abs =%lf dtime_diff=%lf\n", 
-		   fh->f_view_size, P_a, time, dtime, dtime_abs, dtime_diff );
+		   fh->f_cc_size, P_a, time, dtime, dtime_abs, dtime_diff );
 	}
 #endif
 	if ( dtime_diff < dtime_threshold ) {
@@ -171,7 +171,7 @@ int mca_common_ompio_simple_grouping(ompio_file_t *fh,
     num_groups = P_a_prev;
 #ifdef OMPIO_DEBUG
     printf(" For P=%d d_p=%ld b_c=%d threshold=%f chosen P_a = %d \n", 
-	   fh->f_size, fh->f_view_size, fh->f_bytes_per_agg, dtime_threshold, P_a_prev);
+	   fh->f_size, fh->f_cc_size, fh->f_bytes_per_agg, dtime_threshold, P_a_prev);
 #endif
     
     /* Cap the maximum number of aggregators.*/
@@ -183,6 +183,7 @@ int mca_common_ompio_simple_grouping(ompio_file_t *fh,
     }
     
     *num_groups_out = num_groups;
+
     return mca_common_ompio_forced_grouping ( fh, num_groups, contg_groups);
 }
 
@@ -576,7 +577,7 @@ int mca_common_ompio_create_groups(ompio_file_t *fh,
         opal_output (1, "mca_common_ompio_create_groups: error in mca_common_ompio_prepare_to_group\n");
         goto exit;
     }
-
+    
     switch(ompio_grouping_flag){
 
         case OMPIO_SPLIT:
