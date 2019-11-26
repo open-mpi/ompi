@@ -36,8 +36,11 @@ This file contains notable changes between releases for each release since
 Open MPI 1.0.  Because Open MPI maintains multiple release branches at any time,
 it is possible for items to appear more than once in the list.
 
+3.0.6 -- TBD
+------------
+
 3.0.5 -- November, 2019
-----------------------
+-----------------------
 
 - Fix OMPIO issue limiting file reads/writes to 2GB.  Thanks to
   Richard Warren for reporting the issue.
