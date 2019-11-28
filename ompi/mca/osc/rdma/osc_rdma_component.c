@@ -46,6 +46,7 @@
 #include "opal/util/argv.h"
 #include "opal/util/printf.h"
 #include "opal/align.h"
+#include "opal/util/sys_limits.h"
 #if OPAL_CUDA_SUPPORT
 #include "opal/datatype/opal_datatype_cuda.h"
 #endif /* OPAL_CUDA_SUPPORT */
@@ -574,9 +575,10 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
     data_base = state_base + leader_peer_data_size + module->state_size * local_size;
 
     /* ensure proper alignment */
-    data_base += OPAL_ALIGN_PAD_AMOUNT(data_base, OPAL_ALIGN_MIN);
+    int page_size = opal_getpagesize();
+    data_base += OPAL_ALIGN_PAD_AMOUNT(data_base, page_size);
     if (MPI_WIN_FLAVOR_ALLOCATE == module->flavor) {
-        size += OPAL_ALIGN_PAD_AMOUNT(size, OPAL_ALIGN_MIN);
+        size += OPAL_ALIGN_PAD_AMOUNT(size, page_size);
     }
 
     do {
@@ -668,8 +670,8 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
         if (0 == local_rank) {
             /* unlink the shared memory backing file */
             opal_shmem_unlink (&module->seg_ds);
-            /* just go ahead and register the whole segment */
-            ret = ompi_osc_rdma_register (module, MCA_BTL_ENDPOINT_ANY, module->segment_base, total_size, MCA_BTL_REG_FLAG_ACCESS_ANY,
+            /* for all window allocation flavors allocate only the state part of the segment */
+            ret = ompi_osc_rdma_register (module, MCA_BTL_ENDPOINT_ANY, module->segment_base, data_base, MCA_BTL_REG_FLAG_ACCESS_ANY,
                                           &module->state_handle);
             if (OPAL_LIKELY(OMPI_SUCCESS == ret)) {
                 state_region->base = (intptr_t) module->segment_base;
@@ -693,9 +695,14 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
             module->state->region_count = 1;
             region->base = state_region->base + my_base_offset;
             region->len = size;
-            if (module->selected_btl->btl_register_mem) {
-                memcpy (region->btl_handle_data, state_region->btl_handle_data, module->selected_btl->btl_registration_handle_size);
+
+            ret = ompi_osc_rdma_register (module, MCA_BTL_ENDPOINT_ANY, *base, size, MCA_BTL_REG_FLAG_ACCESS_ANY,
+                                          &module->base_handle);
+            if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
+                 return OMPI_ERR_OUT_OF_RESOURCE;
             }
+
+            memcpy (region->btl_handle_data, module->base_handle, module->selected_btl->btl_registration_handle_size);            
         }
 
         /* synchronization to make sure all ranks have set up their region data */
