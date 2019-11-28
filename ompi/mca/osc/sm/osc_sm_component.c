@@ -340,7 +340,7 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
             }
 
             module->sizes[i] = rbuf[i];
-            if (module->sizes[i]) {
+            if (module->sizes[i] || !module->noncontig) {
                 module->bases[i] = ((char *) module->segment_base) + total;
                 total += rbuf[i];
             } else {
