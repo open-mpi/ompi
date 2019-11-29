@@ -34,7 +34,7 @@ AC_DEFUN([OMPI_MPIEXT_shortfloat_CONFIG],[
     AS_IF([test "$opal_short_float_type" = "_Float16"],
           [AC_SUBST([OMPI_MPIX_SHORT_FLOAT_IS_C_FLOAT16], 1)
            AC_SUBST([OMPI_MPIX_C_FLOAT16_FORTRAN_COMMENT_OUT], [])],
-          [AC_SUBST([OMPI_MPIX_SHORT_FLOAT_IS_C_FLOAT16], 0),
+          [AC_SUBST([OMPI_MPIX_SHORT_FLOAT_IS_C_FLOAT16], 0)
            AC_SUBST([OMPI_MPIX_C_FLOAT16_FORTRAN_COMMENT_OUT], [!])])
 ])
 
