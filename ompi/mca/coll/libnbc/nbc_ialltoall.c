@@ -70,7 +70,7 @@ static int nbc_alltoall_init(const void* sendbuf, int sendcount, MPI_Datatype se
   enum {NBC_A2A_LINEAR, NBC_A2A_PAIRWISE, NBC_A2A_DISS, NBC_A2A_INPLACE} alg;
   void *tmpbuf = NULL;
   ompi_coll_libnbc_module_t *libnbc_module = (ompi_coll_libnbc_module_t*) module;
-  ptrdiff_t span, gap;
+  ptrdiff_t span, gap = 0;
 
   NBC_IN_PLACE(sendbuf, recvbuf, inplace);
 
