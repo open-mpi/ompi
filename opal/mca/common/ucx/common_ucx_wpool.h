@@ -1,3 +1,8 @@
+/*
+*2019.12.30-Modification for coll_ucx
+*        Huawei Technologies Co., Ltd. 2019.
+*/
+
 #ifndef COMMON_UCX_WPOOL_H
 #define COMMON_UCX_WPOOL_H
 
@@ -238,7 +243,8 @@ OPAL_DECLSPEC int opal_common_ucx_winfo_flush(opal_common_ucx_winfo_t *winfo, in
                                               ucs_status_ptr_t *req_ptr);
 
 static inline
-int opal_common_ucx_wait_request_mt(ucs_status_ptr_t request, const char *msg)
+int opal_common_ucx_wait_request_mt(ucs_status_ptr_t request,
+        enum opal_common_ucx_req_type type, const char *msg)
 {
     ucs_status_t status;
     int ctr = 0, ret = 0;
@@ -262,7 +268,7 @@ int opal_common_ucx_wait_request_mt(ucs_status_ptr_t request, const char *msg)
         opal_mutex_lock(&winfo->mutex);
         do {
             ret = ucp_worker_progress(winfo->worker);
-            status = opal_common_ucx_request_status(request);
+            status = opal_common_ucx_request_status(request, type);
             if (status != UCS_INPROGRESS) {
                 ucp_request_free(request);
                 if (OPAL_UNLIKELY(UCS_OK != status)) {
@@ -298,6 +304,7 @@ static inline int _periodical_flush_nb(opal_common_ucx_wpmem_t *mem,
 
         if (winfo->inflight_req != UCS_OK) {
             rc = opal_common_ucx_wait_request_mt(winfo->inflight_req,
+                                                 OPAL_COMMON_UCX_REQUEST_TYPE_UCP,
                                                  "opal_common_ucx_flush_nb");
             if(OPAL_UNLIKELY(OPAL_SUCCESS != rc)){
                 MCA_COMMON_UCX_VERBOSE(1, "opal_common_ucx_wait_request failed: %d", rc);

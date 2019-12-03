@@ -169,6 +169,7 @@ static int mca_coll_hcoll_save_coll_handlers(mca_coll_hcoll_module_t *hcoll_modu
 {
     ompi_communicator_t *comm;
     comm = hcoll_module->comm;
+	comm->c_coll;
 
     HCOL_SAVE_PREV_COLL_API(barrier);
     HCOL_SAVE_PREV_COLL_API(bcast);

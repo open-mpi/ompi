@@ -7,6 +7,10 @@
  * 
  * $HEADER$
  */
+/*
+*2019.12.30-Modification for coll_ucx
+*        Huawei Technologies Co., Ltd. 2019.
+*/
 
 #include "oshmem_config.h"
 #include <stdio.h>
@@ -51,5 +55,6 @@ int mca_atomic_ucx_cswap(shmem_ctx_t ctx,
     }
 
     return opal_common_ucx_wait_request(status_ptr, ucx_ctx->ucp_worker,
+                                        OPAL_COMMON_UCX_REQUEST_TYPE_UCP,
                                         "ucp_atomic_fetch_nb");
 }
