@@ -234,7 +234,10 @@ opal_delay_abort(void)
                      "[%s:%05d] Looping forever "
                      "(MCA parameter opal_abort_delay is < 0)\n",
                      opal_process_info.nodename, (int) pid);
-            write(STDERR_FILENO, msg, strlen(msg));
+        #pragma GCC diagnostic push
+        #pragma GCC diagnostic ignored "-Wunused-result"
+            write(STDERR_FILENO, msg, strlen(msg)); /* this specific unused result warning gets ignored during compilation */
+        #pragma GCC diagnostic pop    
             while (1) {
                 sleep(5);
             }
