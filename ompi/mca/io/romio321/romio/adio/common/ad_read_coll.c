@@ -826,17 +826,17 @@ static void ADIOI_R_Exchange_data(ADIO_File fd, void *buf, ADIOI_Flatlist_node
 	    if (recv_size[i]) recv_buf[i] = 
                                   (char *) ADIOI_Malloc(recv_size[i]);
 
-	    j = 0;
-	    for (i=0; i < nprocs; i++) 
-		if (recv_size[i]) {
-		    MPI_Irecv(recv_buf[i], recv_size[i], MPI_BYTE, i, 
-			      myrank+i+100*iter, fd->comm, requests+j);
-		    j++;
+        j = 0;
+        for (i=0; i < nprocs; i++)
+            if (recv_size[i]) {
+                MPI_Irecv(recv_buf[i], recv_size[i], MPI_BYTE, i,
+                          myrank+i+100*iter, fd->comm, requests+j);
+                j++;
 #ifdef RDCOLL_DEBUG
-		    DBG_FPRINTF(stderr, "node %d, recv_size %d, tag %d \n", 
-		       myrank, recv_size[i], myrank+i+100*iter); 
+                DBG_FPRINTF(stderr, "node %d, recv_size %d, tag %d \n",
+                            myrank, recv_size[i], myrank+i+100*iter);
 #endif
-		}
+            }
     }
 
 /* create derived datatypes and send data */
