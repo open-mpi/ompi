@@ -81,7 +81,15 @@ static void mca_mpool_base_basic_finalize (struct mca_mpool_base_module_t *mpool
     free (mpool);
 }
 
+static void *mca_mpool_base_basic_base(mca_mpool_base_module_t *mpool)
+{
+    mca_mpool_base_basic_module_t *basic_module = (mca_mpool_base_basic_module_t *) mpool;
+
+    return (void*) basic_module->ptr;
+}
+
 static mca_mpool_base_module_t mca_mpool_basic_template = {
+    .mpool_base = mca_mpool_base_basic_base,
     .mpool_alloc = mca_mpool_base_basic_alloc,
     .mpool_free = mca_mpool_base_basic_free,
     .mpool_finalize = mca_mpool_base_basic_finalize,
@@ -100,7 +108,6 @@ mca_mpool_base_module_t *mca_mpool_basic_create (void *base, size_t size, unsign
 
     OBJ_CONSTRUCT(&basic_module->lock, opal_mutex_t);
 
-    basic_module->super.mpool_base = base;
     basic_module->ptr = (uintptr_t) base;
     basic_module->size = basic_module->avail = size;
     basic_module->min_align = min_align;
