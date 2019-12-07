@@ -34,6 +34,7 @@
 #include "orte/constants.h"
 
 #include <stdlib.h>
+#include <ctype.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
@@ -51,6 +52,9 @@
 #include <time.h>
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
+#endif
+#ifdef HAVE_DIRENT_H
+#include <dirent.h>
 #endif
 #ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
@@ -709,6 +713,38 @@ static int setup_launch(int *argcptr, char ***argvptr,
     return ORTE_SUCCESS;
 }
 
+/* close all open file descriptors w/ exception of stdin/stdout/stderr */
+static int close_open_file_descriptors(void) {
+    DIR *dir = opendir("/proc/self/fd");
+    if (NULL == dir) {
+        return ORTE_ERR_FILE_OPEN_FAILURE;
+    }
+    struct dirent *files;
+
+    /* grab the fd of the opendir above so we don't close in the 
+     * middle of the scan. */
+    int dir_scan_fd = dirfd(dir);
+    if(dir_scan_fd < 0) {
+        return ORTE_ERR_FILE_OPEN_FAILURE;
+    }
+
+    while (NULL != (files = readdir(dir))) {
+        if (!isdigit(files->d_name[0])) {
+            continue;
+        }
+        int fd = strtol(files->d_name, NULL, 10);
+        if (errno == EINVAL || errno == ERANGE) {
+            closedir(dir);
+            return ORTE_ERR_TYPE_MISMATCH;
+        }
+        if (fd >= 3 && fd != dir_scan_fd) {
+            close(fd);
+        }
+    }
+    closedir(dir);
+    return ORTE_SUCCESS;
+}
+
 /* actually ssh the child */
 static void ssh_child(int argc, char **argv)
 {
@@ -743,8 +779,10 @@ static void ssh_child(int argc, char **argv)
     close(fdin);
 
     /* close all file descriptors w/ exception of stdin/stdout/stderr */
-    for(fd=3; fd<fdmax; fd++)
-        close(fd);
+    if(close_open_file_descriptors() != ORTE_SUCCESS) {
+        for(fd=3; fd<fdmax; fd++)
+            close(fd);
+    }
 
     /* Set signal handlers back to the default.  Do this close
      to the execve() because the event library may (and likely
