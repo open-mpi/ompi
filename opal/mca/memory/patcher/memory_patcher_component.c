@@ -440,7 +440,7 @@ static void *_intercept_shmat(int shmid, const void *shmaddr, int shmflg)
 
     if (!original_shmat) {
 #if defined(SYS_shmat)
-        result = memory_patcher_syscall(SYS_shmat, shmid, shmaddr, shmflg);
+        result = (void*) memory_patcher_syscall(SYS_shmat, shmid, shmaddr, shmflg);
 #else // IPCOP_shmat
         unsigned long ret;
         ret = memory_patcher_syscall(SYS_ipc, IPCOP_shmat,
