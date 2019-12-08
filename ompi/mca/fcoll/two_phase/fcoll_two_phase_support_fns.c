@@ -174,7 +174,7 @@ int mca_fcoll_two_phase_calc_aggregator(ompio_file_t *fh,
        fprintf(stderr,
 	       "Error in mca_fcoll_two_phase_calc_aggregator:");
        fprintf(stderr,
-	       "rank_index(%d) >= num_aggregators(%d) fd_size=%ld off=%ld min_off=%ld striping_unit=%d\n",
+	       "rank_index(%d) >= num_aggregators(%d) fd_size=%lld off=%lld min_off=%lld striping_unit=%d\n",
 	       rank_index, num_aggregators, fd_size, off, min_off, striping_unit);
        ompi_mpi_abort(&ompi_mpi_comm_world.comm, 1);
     }
