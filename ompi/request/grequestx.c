@@ -34,6 +34,7 @@ static opal_mutex_t lock;
 
 static int grequestx_progress(void) {
     ompi_grequest_t *request, *next;
+    int completed = 0;
 
     OPAL_THREAD_LOCK(&lock);
     if (!in_progress) {
@@ -47,6 +48,7 @@ static int grequestx_progress(void) {
                 OPAL_THREAD_LOCK(&lock);
                 opal_list_remove_item(&requests, &request->greq_base.super.super);
                 OPAL_THREAD_UNLOCK(&lock);
+                completed++;
             }
             OPAL_THREAD_LOCK(&lock);
         }
@@ -54,7 +56,7 @@ static int grequestx_progress(void) {
     }
     OPAL_THREAD_UNLOCK(&lock);
 
-    return OMPI_SUCCESS;
+    return completed;
 }
 
 int ompi_grequestx_start(

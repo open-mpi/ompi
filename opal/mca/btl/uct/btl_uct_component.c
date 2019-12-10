@@ -563,6 +563,7 @@ static int mca_btl_uct_tl_progress (mca_btl_uct_tl_t *tl, int starting_index)
 static int mca_btl_uct_component_progress_pending (mca_btl_uct_module_t *uct_btl)
 {
     mca_btl_uct_base_frag_t *frag, *next;
+    int completed = 0;
     size_t count;
 
     if (0 == (count = opal_list_get_size (&uct_btl->pending_frags))) {
@@ -579,11 +580,13 @@ static int mca_btl_uct_component_progress_pending (mca_btl_uct_module_t *uct_btl
 
         if (OPAL_SUCCESS > mca_btl_uct_send_frag (uct_btl, frag, false)) {
             opal_list_prepend (&uct_btl->pending_frags, (opal_list_item_t *) frag);
+        } else {
+            completed++;
         }
     }
     OPAL_THREAD_UNLOCK(&uct_btl->lock);
 
-    return OPAL_SUCCESS;
+    return completed;
 }
 
 /**

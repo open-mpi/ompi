@@ -403,7 +403,7 @@ int ompi_mtl_psm2_progress( void ) {
     mca_mtl_psm2_request_t* mtl_psm2_request;
     psm2_mq_status2_t psm2_status;
     psm2_mq_req_t req;
-    int completed = 1;
+    int completed = 0;
 
     do {
         OPAL_THREAD_LOCK(&mtl_psm2_mq_mutex);
