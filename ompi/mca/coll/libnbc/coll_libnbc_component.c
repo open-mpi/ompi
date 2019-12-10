@@ -307,6 +307,7 @@ ompi_coll_libnbc_progress(void)
 {
     ompi_coll_libnbc_request_t* request, *next;
     int res;
+    int completed = 0;
 
     if (0 == opal_list_get_size (&mca_coll_libnbc_component.active_requests)) {
         /* no requests -- nothing to do. do not grab a lock */
@@ -344,6 +345,7 @@ ompi_coll_libnbc_progress(void)
                 if(!request->super.super.req_persistent || !REQUEST_COMPLETE(&request->super.super)) {
             	    ompi_request_complete(&request->super.super, true);
                 }
+                completed++;
             }
             OPAL_THREAD_LOCK(&mca_coll_libnbc_component.lock);
         }
@@ -351,7 +353,7 @@ ompi_coll_libnbc_progress(void)
     }
     OPAL_THREAD_UNLOCK(&mca_coll_libnbc_component.lock);
 
-    return 0;
+    return completed;
 }
 
 

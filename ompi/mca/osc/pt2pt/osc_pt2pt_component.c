@@ -153,6 +153,7 @@ static int component_register (void)
 
 static int component_progress (void)
 {
+    int completed = 0;
     int pending_count = opal_list_get_size (&mca_osc_pt2pt_component.pending_operations);
     int recv_count = opal_list_get_size (&mca_osc_pt2pt_component.pending_receives);
     ompi_osc_pt2pt_pending_t *pending, *next;
@@ -167,6 +168,7 @@ static int component_progress (void)
             }
 
             (void) ompi_osc_pt2pt_process_receive (recv);
+            completed++;
         }
     }
 
@@ -194,12 +196,13 @@ static int component_progress (void)
             if (OMPI_SUCCESS == ret) {
                 opal_list_remove_item (&mca_osc_pt2pt_component.pending_operations, &pending->super);
                 OBJ_RELEASE(pending);
+                completed++;
             }
         }
         OPAL_THREAD_UNLOCK(&mca_osc_pt2pt_component.pending_operations_lock);
     }
 
-    return 1;
+    return completed;
 }
 
 static int
