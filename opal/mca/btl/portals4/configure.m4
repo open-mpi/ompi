@@ -11,7 +11,7 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2010      Sandia National Laboratories.  All rights reserved.
+# Copyright (c) 2010-2019 Sandia National Laboratories.  All rights reserved.
 # Copyright (c) 2014      Bull SAS.  All rights reserved.
 # $COPYRIGHT$
 #
@@ -44,9 +44,9 @@ AC_DEFUN([MCA_opal_btl_portals4_CONFIG],[
        [AC_HELP_STRING([--enable-btl-portals4-flow-control],
            [enable flow control for Portals 4 BTL (default: disabled)])])
     AC_MSG_CHECKING([whether to enable flow control])
-    if test "$enable_btl_portals4_flow_control" != "yes"; then
-        AC_MSG_RESULT([no])
-        btl_portals4_flow_control_enabled=0
+    if test "$enable_btl_portals4_flow_control" != "no"; then
+        AC_MSG_RESULT([yes])
+        btl_portals4_flow_control_enabled=1
     else
         AC_MSG_RESULT([no])
         btl_portals4_flow_control_enabled=0
