@@ -8,9 +8,9 @@ pr:
 pool:
   vmImage: 'ubuntu-16.04'
 
-container:
-  image: docker.io/centos7:latest
-  endpoint: itemko_private_dockerhub
+# container:
+  # image: docker.io/centos7:latest
+  # endpoint: itemko_private_dockerhub
 
 steps:
   - script: echo Hello, world!
@@ -38,4 +38,6 @@ steps:
       docker images
       echo "==============================================================================="
       docker ps -a
+      echo "==============================================================================="
+      docker image prune -a --force
       echo "==============================================================================="
