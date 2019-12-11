@@ -8,7 +8,7 @@ pr:
 pool:
   vmImage: 'ubuntu-16.04'
 
-container: centos7
+container: centos7:latest
 
 steps:
   - script: echo Hello, world!
