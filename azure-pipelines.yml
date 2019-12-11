@@ -15,10 +15,10 @@ steps:
     displayName: 'Run a one-line script'
 
   - bash: |
-    set -eE
-    printenv
-    cat /proc/1/cgroup
-    cat /etc/*release*
-    pwd
-    df -kh .
-    ls -al
+      set -eE
+      printenv
+      cat /proc/1/cgroup
+      cat /etc/*release*
+      pwd
+      df -kh .
+      ls -al
