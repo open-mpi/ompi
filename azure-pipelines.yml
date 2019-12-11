@@ -9,7 +9,7 @@ pool:
   vmImage: 'ubuntu-16.04'
 
 container:
-  image: centos7:latest
+  image: docker.io/centos7:latest
   endpoint: itemko_private_dockerhub
 
 steps:
