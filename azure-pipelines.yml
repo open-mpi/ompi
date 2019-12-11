@@ -14,7 +14,8 @@ steps:
   - script: echo Hello, world!
     displayName: 'Run a one-line script'
 
-  - script: |
+  - bash: |
+    set -eE
     printenv
     cat /proc/1/cgroup
     cat /etc/*release*
