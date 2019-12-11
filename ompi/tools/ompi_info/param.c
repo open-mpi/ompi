@@ -102,7 +102,6 @@ void ompi_info_do_config(bool want_all)
     char *fortran_have_bind_c_type;
     char *fortran_have_bind_c_type_name;
     char *fortran_have_private;
-    char *fortran_have_protected;
     char *fortran_have_abstract;
     char *fortran_have_asynchronous;
     char *fortran_have_procedure;
