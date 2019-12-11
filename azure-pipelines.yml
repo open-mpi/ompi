@@ -8,7 +8,9 @@ pr:
 pool:
   vmImage: 'ubuntu-16.04'
 
-# container: ucfconsort.azurecr.io/ucx/centos7::latest
+container:
+  image: centos7:latest
+  endpoint: itemko_private_dockerhub
 
 steps:
   - script: echo Hello, world!
@@ -36,9 +38,4 @@ steps:
       docker images
       echo "==============================================================================="
       docker ps -a
-      echo "==============================================================================="
-      sudo su -
-      id
-      pwd
-      ls -al
       echo "==============================================================================="
