@@ -15,7 +15,7 @@ resources:
     - repository: jenkins_scripts
       type: github
       endpoint: itemko
-      name: mellanox-hpc/jenkins_scripts
+      name: itemko/jenkins_scripts
       ref: artemry/ompi_review
 
 steps:
