@@ -12,8 +12,11 @@ container: centos:7
 
 steps:
   - checkout: self
+    submodules: true
+    endpoint: itemko
   - checkout: github://mellanox-hpc/jenkins_scripts
     path: jenkins_scripts
+    endpoint: itemko
   - script: echo Hello, world!
     displayName: 'Run a one-line script'
   - bash: |
