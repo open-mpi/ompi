@@ -72,6 +72,7 @@ jobs:
           docker ps -a
           echo "==============================================================================="
   - job: BuildAndTest
+    container: centos_ompi:$(Build.BuildId)
     steps:
       - bash: |
           set -x
