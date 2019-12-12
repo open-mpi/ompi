@@ -8,6 +8,8 @@ pr:
 pool:
   vmImage: 'ubuntu-16.04'
 
+container: centos:7.6.1810
+
 # container:
   # image: docker.io/centos7:latest
   # endpoint: itemko_private_dockerhub
