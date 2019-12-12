@@ -41,8 +41,8 @@ steps:
       echo "==============================================================================="
       id
       echo "==============================================================================="
-      find ${PIPELINE_WORKSPACE}/jenkins_scripts
+      find ${BUILD_SOURCESDIRECTORY}/jenkins_scripts
       echo "==============================================================================="
   - bash: |
-      export WORKSPACE=${PIPELINE_WORKSPACE}/ompi
-      ${PIPELINE_WORKSPACE}/jenkins_scripts/jenkins/ompi/ompi_jenkins.sh
+      export WORKSPACE=${BUILD_SOURCESDIRECTORY}/ompi
+      ${BUILD_SOURCESDIRECTORY}/jenkins_scripts/jenkins/ompi/ompi_jenkins.sh
