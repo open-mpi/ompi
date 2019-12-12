@@ -27,7 +27,7 @@ steps:
     path: ompi
   - bash: |
       set -x
-      export DOCKER_BUILD_CONTEXT_DIR="/tmp/ompi_build_docker_image_${BUILD_BUILDID}"
+      DOCKER_BUILD_CONTEXT_DIR="/tmp/ompi_build_docker_image_${BUILD_BUILDID}"
       rm -rf ${DOCKER_BUILD_CONTEXT_DIR}
       mkdir -p ${DOCKER_BUILD_CONTEXT_DIR}
       echo "##vso[task.setvariable variable=docker_build_context_dir]${DOCKER_BUILD_CONTEXT_DIR}"
@@ -58,6 +58,10 @@ steps:
       ls -al
       echo "==============================================================================="
       id
+      echo "==============================================================================="
+      docker images
+      echo "==============================================================================="
+      docker ps -a
       echo "==============================================================================="
   - bash: |
       set -x
