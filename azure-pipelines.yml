@@ -16,11 +16,12 @@ resources:
       type: github
       endpoint: itemko
       name: mellanox-hpc/jenkins_scripts
+      ref: artemry/ompi_review
 
 steps:
   - checkout: self
     submodules: true
-  - checkout: jenkins_scripts@artemry/ompi_review
+  - checkout: jenkins_scripts
     path: jenkins_scripts
   - bash: |
       set -eE
