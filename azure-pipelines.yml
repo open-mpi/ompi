@@ -22,7 +22,6 @@ steps:
   - checkout: self
     submodules: true
   - checkout: jenkins_scripts
-    path: jenkins_scripts
   - bash: |
       set -eE
       echo "==============================================================================="
