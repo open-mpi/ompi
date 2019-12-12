@@ -23,11 +23,11 @@ pool:
 
 steps:
   - task: Docker@2
-      displayName: Build docker image
-      inputs:
-        command: build
-        Dockerfile: Dockerfile
-        arguments: --no-cache --network=host --rm --force-rm --label=ompi --build-arg OMPI_CI_OS=${OMPI_CI_OS} --build-arg OMPI_CI_OFED=${OMPI_CI_OFED}
+    displayName: Build docker image
+    inputs:
+      command: build
+      Dockerfile: Dockerfile
+      arguments: --no-cache --network=host --rm --force-rm --label=ompi --build-arg OMPI_CI_OS=${OMPI_CI_OS} --build-arg OMPI_CI_OFED=${OMPI_CI_OFED}
   - checkout: self
     submodules: true
 #  - checkout: jenkins_scripts
