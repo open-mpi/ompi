@@ -22,7 +22,7 @@ pool:
 #      ref: artemry/ompi_review
 
 variables:
-  docker_build_context_dir: /tmp/ompi_build_docker_image_$(build_buildid)
+  docker_build_context_dir: /tmp/ompi_build_docker_image_$(BUILD_BUILDID)
 
 steps:
   - checkout: self
