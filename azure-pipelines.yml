@@ -24,6 +24,7 @@ pool:
 steps:
   - checkout: self
     submodules: true
+    path: ompi
   - task: Docker@2
     displayName: Build docker image
     inputs:
