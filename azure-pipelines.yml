@@ -8,6 +8,7 @@ pr:
 
 pool:
 #  vmImage: 'ubuntu-16.04'
+  name: Default
   demands: CUSTOM_CAPABILITY -equals qqq
 
 #container: centos:7
