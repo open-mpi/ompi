@@ -14,7 +14,7 @@
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2015-2016 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2019 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -31,7 +31,7 @@
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/errhandler/errhandler_predefined.h"
 #include "opal/class/opal_pointer_array.h"
-#include "opal/mca/pmix/pmix.h"
+#include "opal/mca/pmix/pmix-internal.h"
 #include "opal/util/string_copy.h"
 
 
@@ -165,7 +165,7 @@ int ompi_errhandler_finalize(void)
 
     /* JMS Add stuff here checking for unreleased errorhandlers,
        similar to communicators, info handles, etc. */
-    opal_pmix.deregister_evhandler(default_errhandler_id, NULL, NULL);
+    PMIx_Deregister_event_handler(default_errhandler_id, NULL, NULL);
 
     /* Remove errhandler F2C table */
 
@@ -237,16 +237,17 @@ void ompi_errhandler_registration_callback(int status,
 /**
  * Default errhandler callback
  */
-void ompi_errhandler_callback(int status,
-                              const opal_process_name_t *source,
-                              opal_list_t *info, opal_list_t *results,
-                              opal_pmix_notification_complete_fn_t cbfunc,
+void ompi_errhandler_callback(size_t refid, pmix_status_t status,
+                              const pmix_proc_t *source,
+                              pmix_info_t *info, size_t ninfo,
+                              pmix_info_t *results, size_t nresults,
+                              pmix_event_notification_cbfunc_fn_t cbfunc,
                               void *cbdata)
 {
     /* tell the event chain engine to go no further - we
      * will handle this */
     if (NULL != cbfunc) {
-        cbfunc(OMPI_ERR_HANDLERS_COMPLETE, NULL, NULL, NULL, cbdata);
+        cbfunc(PMIX_EVENT_ACTION_COMPLETE, NULL, 0, NULL, NULL, cbdata);
     }
     /* our default action is to abort */
     ompi_mpi_abort(MPI_COMM_WORLD, status);

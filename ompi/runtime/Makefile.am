@@ -10,7 +10,7 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2014      Intel, Inc. All rights reserved.
+# Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
 # Copyright (c) 2016      IBM Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
@@ -28,7 +28,8 @@ headers += \
 	runtime/ompi_cr.h \
         runtime/params.h \
 	runtime/ompi_info_support.h \
-	runtime/ompi_spc.h
+	runtime/ompi_spc.h \
+	runtime/ompi_rte.h
 
 lib@OMPI_LIBMPI_NAME@_la_SOURCES += \
         runtime/ompi_mpi_abort.c \
@@ -38,7 +39,8 @@ lib@OMPI_LIBMPI_NAME@_la_SOURCES += \
         runtime/ompi_mpi_preconnect.c \
 	runtime/ompi_cr.c \
 	runtime/ompi_info_support.c \
-	runtime/ompi_spc.c
+	runtime/ompi_spc.c \
+	runtime/ompi_rte.c
 
 # The MPIR portion of the library must be built with flags to
 # enable stepping out of MPI_INIT into main.

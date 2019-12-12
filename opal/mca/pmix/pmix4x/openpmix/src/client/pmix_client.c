@@ -237,14 +237,6 @@ static void job_data(struct pmix_peer_t *pr,
                             pmix_client_globals.myserver,
                             nspace, buf);
 
-    /* if anything is left in the buffer, let the
-     * internal hash component have it - e.g., we
-     * may have been passed node and app info for
-     * our own nspace */
-    PMIX_GDS_STORE_JOB_INFO(cb->status,
-                            pmix_globals.mypeer,
-                            nspace, buf);
-
     free(nspace);
     cb->status = PMIX_SUCCESS;
     PMIX_POST_OBJECT(cb);
@@ -396,14 +388,18 @@ static void client_iof_handler(struct pmix_peer_t *pr,
     pmix_byte_object_t bo;
     int32_t cnt;
     pmix_status_t rc;
+    size_t refid, ninfo=0;
+    pmix_iof_req_t *req;
+    pmix_info_t *info=NULL;
 
     pmix_output_verbose(2, pmix_client_globals.iof_output,
-                        "recvd IOF");
+                        "recvd IOF with %d bytes", (int)buf->bytes_used);
 
-    /* if the buffer is empty, they are simply closing the channel */
+    /* if the buffer is empty, they are simply closing the socket */
     if (0 == buf->bytes_used) {
         return;
     }
+    PMIX_BYTE_OBJECT_CONSTRUCT(&bo);
 
     cnt = 1;
     PMIX_BFROPS_UNPACK(rc, peer, buf, &source, &cnt, PMIX_PROC);
@@ -418,13 +414,52 @@ static void client_iof_handler(struct pmix_peer_t *pr,
         return;
     }
     cnt = 1;
-    PMIX_BFROPS_UNPACK(rc, peer, buf, &bo, &cnt, PMIX_BYTE_OBJECT);
+    PMIX_BFROPS_UNPACK(rc, peer, buf, &refid, &cnt, PMIX_SIZE);
     if (PMIX_SUCCESS != rc) {
         PMIX_ERROR_LOG(rc);
         return;
     }
-    if (NULL != bo.bytes && 0 < bo.size) {
-        pmix_iof_write_output(&source, channel, &bo, NULL);
+    cnt = 1;
+    PMIX_BFROPS_UNPACK(rc, peer, buf, &ninfo, &cnt, PMIX_SIZE);
+    if (PMIX_SUCCESS != rc) {
+        PMIX_ERROR_LOG(rc);
+        return;
+    }
+    if (0 < ninfo) {
+        PMIX_INFO_CREATE(info, ninfo);
+        cnt = ninfo;
+        PMIX_BFROPS_UNPACK(rc, peer, buf, info, &cnt, PMIX_INFO);
+        if (PMIX_SUCCESS != rc) {
+            PMIX_ERROR_LOG(rc);
+            goto cleanup;
+        }
+    }
+    cnt = 1;
+    PMIX_BFROPS_UNPACK(rc, peer, buf, &bo, &cnt, PMIX_BYTE_OBJECT);
+    if (PMIX_SUCCESS != rc) {
+        PMIX_ERROR_LOG(rc);
+        goto cleanup;
+    }
+    /* lookup the handler for this IOF package */
+    if (NULL == (req = (pmix_iof_req_t*)pmix_pointer_array_get_item(&pmix_globals.iof_requests, refid))) {
+        /* something wrong here - should not happen */
+        PMIX_ERROR_LOG(PMIX_ERR_NOT_FOUND);
+        goto cleanup;
+    }
+    /* if the handler invokes a callback function, do so */
+    if (NULL != req->cbfunc) {
+        req->cbfunc(refid, channel, &source, &bo, info, ninfo);
+    } else {
+        /* otherwise, simply write it out to the specified std IO channel */
+        if (NULL != bo.bytes && 0 < bo.size) {
+            pmix_iof_write_output(&source, channel, &bo, NULL);
+        }
+    }
+
+  cleanup:
+    /* cleanup the memory */
+    if (0 < ninfo) {
+        PMIX_INFO_FREE(info, ninfo);
     }
     PMIX_BYTE_OBJECT_DESTRUCT(&bo);
 }
@@ -445,11 +480,12 @@ PMIX_EXPORT pmix_status_t PMIx_Init(pmix_proc_t *proc,
     size_t n;
     bool found;
     pmix_ptl_posted_recv_t *rcv;
+    pid_t pid;
 
     PMIX_ACQUIRE_THREAD(&pmix_global_lock);
 
     if (0 < pmix_globals.init_cntr ||
-        (NULL != pmix_globals.mypeer && PMIX_PROC_IS_SERVER(pmix_globals.mypeer))) {
+        (NULL != pmix_globals.mypeer && PMIX_PEER_IS_SERVER(pmix_globals.mypeer))) {
         /* since we have been called before, the nspace and
          * rank should be known. So return them here if
          * requested */
@@ -468,13 +504,6 @@ PMIX_EXPORT pmix_status_t PMIx_Init(pmix_proc_t *proc,
         return pmix_init_result;
     }
     ++pmix_globals.init_cntr;
-
-    /* if we don't see the required info, then we cannot init */
-    if (NULL == (evar = getenv("PMIX_NAMESPACE"))) {
-        pmix_init_result = PMIX_ERR_INVALID_NAMESPACE;
-        PMIX_RELEASE_THREAD(&pmix_global_lock);
-        return PMIX_ERR_INVALID_NAMESPACE;
-    }
 
     /* setup the runtime - this init's the globals,
      * opens and initializes the required frameworks */
@@ -529,24 +558,39 @@ PMIX_EXPORT pmix_status_t PMIx_Init(pmix_proc_t *proc,
     pmix_output_verbose(2, pmix_client_globals.base_output,
                         "pmix: init called");
 
-    /* we require our nspace */
-    if (NULL != proc) {
-        pmix_strncpy(proc->nspace, evar, PMIX_MAX_NSLEN);
-    }
-    PMIX_LOAD_NSPACE(pmix_globals.myid.nspace, evar);
-    /* set the global pmix_namespace_t object for our peer */
-    pmix_globals.mypeer->nptr->nspace = strdup(evar);
+    /* see if the required info is present */
+    if (NULL == (evar = getenv("PMIX_NAMESPACE"))) {
+        /* if we didn't see a PMIx server (e.g., missing envar),
+         * then allow us to run as a singleton */
+        pid = getpid();
+        snprintf(pmix_globals.myid.nspace, PMIX_MAX_NSLEN, "singleton.%lu", (unsigned long)pid);
+        pmix_globals.myid.rank = 0;
+        /* mark that we shouldn't connect to a server */
+        pmix_client_globals.singleton = true;
+        if (NULL != proc) {
+            PMIX_LOAD_PROCID(proc, pmix_globals.myid.nspace, pmix_globals.myid.rank);
+        }
+        pmix_globals.mypeer->nptr->nspace = strdup(pmix_globals.myid.nspace);
+    } else {
+        if (NULL != proc) {
+            pmix_strncpy(proc->nspace, evar, PMIX_MAX_NSLEN);
+        }
+        PMIX_LOAD_NSPACE(pmix_globals.myid.nspace, evar);
+        /* set the global pmix_namespace_t object for our peer */
+        pmix_globals.mypeer->nptr->nspace = strdup(evar);
 
-    /* we also require our rank */
-    if (NULL == (evar = getenv("PMIX_RANK"))) {
-        /* let the caller know that the server isn't available yet */
-        pmix_init_result = PMIX_ERR_DATA_VALUE_NOT_FOUND;
-        PMIX_RELEASE_THREAD(&pmix_global_lock);
-        return PMIX_ERR_DATA_VALUE_NOT_FOUND;
-    }
-    pmix_globals.myid.rank = strtol(evar, NULL, 10);
-    if (NULL != proc) {
-        proc->rank = pmix_globals.myid.rank;
+        /* we also require our rank */
+        if (NULL == (evar = getenv("PMIX_RANK"))) {
+            /* let the caller know that the server isn't available yet */
+            pmix_init_result = PMIX_ERR_DATA_VALUE_NOT_FOUND;
+            PMIX_RELEASE_THREAD(&pmix_global_lock);
+            return PMIX_ERR_DATA_VALUE_NOT_FOUND;
+        } else {
+            pmix_globals.myid.rank = strtol(evar, NULL, 10);
+        }
+        if (NULL != proc) {
+            proc->rank = pmix_globals.myid.rank;
+        }
     }
     pmix_globals.pindex = -1;
     /* setup a rank_info object for us */
@@ -629,42 +673,55 @@ PMIX_EXPORT pmix_status_t PMIx_Init(pmix_proc_t *proc,
     }
     PMIX_INFO_DESTRUCT(&ginfo);
 
-    /* connect to the server */
-    rc = pmix_ptl_base_connect_to_peer((struct pmix_peer_t*)pmix_client_globals.myserver, info, ninfo);
-    if (PMIX_SUCCESS != rc) {
-        pmix_init_result = rc;
-        PMIX_RELEASE_THREAD(&pmix_global_lock);
-        return rc;
-    }
-    /* mark that we are using the same module as used for the server */
-    pmix_globals.mypeer->nptr->compat.ptl = pmix_client_globals.myserver->nptr->compat.ptl;
+    if (pmix_client_globals.singleton) {
+        pmix_globals.mypeer->nptr->compat.ptl = pmix_ptl_base_assign_module();
+        pmix_globals.mypeer->nptr->compat.bfrops = pmix_bfrops_base_assign_module(NULL);
+        pmix_client_globals.myserver->nptr->compat.bfrops = pmix_bfrops_base_assign_module(NULL);
+        /* initialize our data values */
+        rc = pmix_tool_init_info();
+        if (PMIX_SUCCESS != rc) {
+            pmix_init_result = rc;
+            PMIX_RELEASE_THREAD(&pmix_global_lock);
+            return rc;
+        }
+    } else {
+        /* connect to the server */
+        rc = pmix_ptl_base_connect_to_peer((struct pmix_peer_t*)pmix_client_globals.myserver, info, ninfo);
+        if (PMIX_SUCCESS != rc) {
+            pmix_init_result = rc;
+            PMIX_RELEASE_THREAD(&pmix_global_lock);
+            return rc;
+        }
+        /* mark that we are using the same module as used for the server */
+        pmix_globals.mypeer->nptr->compat.ptl = pmix_client_globals.myserver->nptr->compat.ptl;
 
-    /* send a request for our job info - we do this as a non-blocking
-     * transaction because some systems cannot handle very large
-     * blocking operations and error out if we try them. */
-     req = PMIX_NEW(pmix_buffer_t);
-     PMIX_BFROPS_PACK(rc, pmix_client_globals.myserver,
-                      req, &cmd, 1, PMIX_COMMAND);
-     if (PMIX_SUCCESS != rc) {
-        PMIX_ERROR_LOG(rc);
-        PMIX_RELEASE(req);
-        pmix_init_result = rc;
-        PMIX_RELEASE_THREAD(&pmix_global_lock);
-        return rc;
+        /* send a request for our job info - we do this as a non-blocking
+         * transaction because some systems cannot handle very large
+         * blocking operations and error out if we try them. */
+         req = PMIX_NEW(pmix_buffer_t);
+         PMIX_BFROPS_PACK(rc, pmix_client_globals.myserver,
+                          req, &cmd, 1, PMIX_COMMAND);
+         if (PMIX_SUCCESS != rc) {
+            PMIX_ERROR_LOG(rc);
+            PMIX_RELEASE(req);
+            pmix_init_result = rc;
+            PMIX_RELEASE_THREAD(&pmix_global_lock);
+            return rc;
+        }
+        /* send to the server */
+        PMIX_CONSTRUCT(&cb, pmix_cb_t);
+        PMIX_PTL_SEND_RECV(rc, pmix_client_globals.myserver,
+                           req, job_data, (void*)&cb);
+        if (PMIX_SUCCESS != rc) {
+            pmix_init_result = rc;
+            PMIX_RELEASE_THREAD(&pmix_global_lock);
+            return rc;
+        }
+        /* wait for the data to return */
+        PMIX_WAIT_THREAD(&cb.lock);
+        rc = cb.status;
+        PMIX_DESTRUCT(&cb);
     }
-    /* send to the server */
-    PMIX_CONSTRUCT(&cb, pmix_cb_t);
-    PMIX_PTL_SEND_RECV(rc, pmix_client_globals.myserver,
-                       req, job_data, (void*)&cb);
-    if (PMIX_SUCCESS != rc) {
-        pmix_init_result = rc;
-        PMIX_RELEASE_THREAD(&pmix_global_lock);
-        return rc;
-    }
-    /* wait for the data to return */
-    PMIX_WAIT_THREAD(&cb.lock);
-    rc = cb.status;
-    PMIX_DESTRUCT(&cb);
 
     if (PMIX_SUCCESS == rc) {
         pmix_init_result = PMIX_SUCCESS;
@@ -1214,8 +1271,14 @@ static void _commitfn(int sd, short args, void *cbdata)
         return PMIX_ERR_INIT;
     }
 
+    /* if we are a singleton, there is nothing to do */
+    if (pmix_client_globals.singleton) {
+        PMIX_RELEASE_THREAD(&pmix_global_lock);
+        return PMIX_SUCCESS;
+    }
+
     /* if we are a server, or we aren't connected, don't attempt to send */
-    if (PMIX_PROC_IS_SERVER(pmix_globals.mypeer)) {
+    if (PMIX_PEER_IS_SERVER(pmix_globals.mypeer)) {
         PMIX_RELEASE_THREAD(&pmix_global_lock);
         return PMIX_SUCCESS;  // not an error
     }
@@ -1243,13 +1306,13 @@ PMIX_EXPORT pmix_status_t PMIx_Resolve_peers(const char *nodename,
                                              const pmix_nspace_t nspace,
                                              pmix_proc_t **procs, size_t *nprocs)
 {
-    pmix_info_t info[2];
+    pmix_info_t info[2], *iptr;
     pmix_status_t rc;
     pmix_proc_t proc;
     pmix_value_t *val;
     char **p, **tmp=NULL, *prs;
     pmix_proc_t *pa;
-    size_t m, n, np;
+    size_t m, n, np, ninfo;
     pmix_namespace_t *ns;
 
     /* set default response */
@@ -1263,9 +1326,21 @@ PMIX_EXPORT pmix_status_t PMIx_Resolve_peers(const char *nodename,
     }
     PMIX_RELEASE_THREAD(&pmix_global_lock);
 
-    proc.rank = PMIX_RANK_UNDEF;
-    PMIX_INFO_LOAD(&info[0], PMIX_NODE_INFO, NULL, PMIX_BOOL);
-    PMIX_INFO_LOAD(&info[1], PMIX_HOSTNAME, nodename, PMIX_STRING);
+    /* if I am a client and my server is earlier than v3.1.5, then
+     * I need to look for this data under rank=PMIX_RANK_WILDCARD
+     * with a key equal to the nodename */
+    if (PMIX_PEER_IS_CLIENT(pmix_globals.mypeer) &&
+        PMIX_PEER_IS_EARLIER(pmix_client_globals.myserver, 3, 1, 5)) {
+        proc.rank = PMIX_RANK_WILDCARD;
+        iptr = NULL;
+        ninfo = 0;
+    } else {
+        proc.rank = PMIX_RANK_UNDEF;
+        PMIX_INFO_LOAD(&info[0], PMIX_NODE_INFO, NULL, PMIX_BOOL);
+        PMIX_INFO_LOAD(&info[1], PMIX_HOSTNAME, nodename, PMIX_STRING);
+        iptr = info;
+        ninfo = 2;
+    }
 
     if (NULL == nspace || 0 == strlen(nspace)) {
         rc = PMIX_ERR_NOT_FOUND;
@@ -1273,7 +1348,7 @@ PMIX_EXPORT pmix_status_t PMIx_Resolve_peers(const char *nodename,
         /* cycle across all known nspaces and aggregate the results */
         PMIX_LIST_FOREACH(ns, &pmix_globals.nspaces, pmix_namespace_t) {
             PMIX_LOAD_NSPACE(proc.nspace, ns->nspace);
-            rc = PMIx_Get(&proc, PMIX_LOCAL_PEERS, info, 2, &val);
+            rc = PMIx_Get(&proc, PMIX_LOCAL_PEERS, iptr, ninfo, &val);
             if (PMIX_SUCCESS != rc) {
                 continue;
             }
@@ -1341,7 +1416,7 @@ PMIX_EXPORT pmix_status_t PMIx_Resolve_peers(const char *nodename,
     /* get the list of local peers for this nspace and node */
     PMIX_LOAD_NSPACE(proc.nspace, nspace);
 
-    rc = PMIx_Get(&proc, PMIX_LOCAL_PEERS, info, 2, &val);
+    rc = PMIx_Get(&proc, PMIX_LOCAL_PEERS, iptr, ninfo, &val);
     if (PMIX_SUCCESS != rc) {
         goto done;
     }
@@ -1380,8 +1455,10 @@ PMIX_EXPORT pmix_status_t PMIx_Resolve_peers(const char *nodename,
     *nprocs = np;
 
   done:
-    PMIX_INFO_DESTRUCT(&info[0]);
-    PMIX_INFO_DESTRUCT(&info[1]);
+    if (NULL != iptr) {
+        PMIX_INFO_DESTRUCT(&info[0]);
+        PMIX_INFO_DESTRUCT(&info[1]);
+    }
     return rc;
 }
 

@@ -7,8 +7,8 @@
  *                         reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2015      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015-2019 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -316,7 +316,7 @@ static rte_grp_handle_t get_world_group_handle(void)
 }
 
 static uint32_t jobid(void){
-    return ORTE_PROC_MY_NAME->jobid;
+    return OMPI_PROC_MY_NAME->jobid;
 }
 
 static int group_id(rte_grp_handle_t group){

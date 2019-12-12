@@ -101,11 +101,6 @@ static void regevents_cbfunc(struct pmix_peer_t *peer, pmix_ptl_hdr_t *hdr,
     PMIX_BFROPS_UNPACK(rc, peer, buf, &ret, &cnt, PMIX_STATUS);
     if ((PMIX_SUCCESS != rc) ||
         (PMIX_SUCCESS != ret)) {
-        if (PMIX_SUCCESS != rc) {
-            PMIX_ERROR_LOG(rc);
-        } else {
-            PMIX_ERROR_LOG(ret);
-        }
         /* remove the err handler and call the error handler
          * reg completion callback fn so the requestor
          * doesn't hang */
@@ -127,12 +122,12 @@ static void regevents_cbfunc(struct pmix_peer_t *peer, pmix_ptl_hdr_t *hdr,
     }
 
     /* call the callback */
-    if (NULL != cd && NULL != cd->evregcbfn) {
-        cd->evregcbfn(ret, index, cd->cbdata);
-    }
     if (NULL != cd) {
         /* check this event against anything in our cache */
         check_cached_events(cd);
+        if (NULL != cd->evregcbfn) {
+            cd->evregcbfn(ret, index, cd->cbdata);
+        }
     }
 
     /* release any info we brought along as they are
@@ -314,9 +309,9 @@ static pmix_status_t _add_hdlr(pmix_rshift_caddy_t *cd, pmix_list_t *xfer)
      * type with our server, or if we have directives, then we need to notify
      * the server - however, don't do this for a v1 server as the event
      * notification system there doesn't work */
-    if ((!PMIX_PROC_IS_SERVER(pmix_globals.mypeer) || PMIX_PROC_IS_LAUNCHER(pmix_globals.mypeer)) &&
+    if ((!PMIX_PEER_IS_SERVER(pmix_globals.mypeer) || PMIX_PEER_IS_LAUNCHER(pmix_globals.mypeer)) &&
         pmix_globals.connected &&
-        !PMIX_PROC_IS_V1(pmix_client_globals.myserver) &&
+        !PMIX_PEER_IS_V1(pmix_client_globals.myserver) &&
        (need_register || 0 < pmix_list_get_size(xfer))) {
         pmix_output_verbose(2, pmix_client_globals.event_output,
                             "pmix: _add_hdlr sending to server");
@@ -336,8 +331,8 @@ static pmix_status_t _add_hdlr(pmix_rshift_caddy_t *cd, pmix_list_t *xfer)
 
     /* if we are a server and are registering for events, then we only contact
      * our host if we want environmental events */
-    if (PMIX_PROC_IS_SERVER(pmix_globals.mypeer) &&
-        !PMIX_PROC_IS_LAUNCHER(pmix_globals.mypeer) && cd->enviro &&
+    if (PMIX_PEER_IS_SERVER(pmix_globals.mypeer) &&
+        !PMIX_PEER_IS_LAUNCHER(pmix_globals.mypeer) && cd->enviro &&
         NULL != pmix_host_server.register_events) {
         pmix_output_verbose(2, pmix_client_globals.event_output,
                             "pmix: _add_hdlr registering with server");
@@ -626,28 +621,7 @@ static void reg_event_hdlr(int sd, short args, void *cbdata)
         cd->list = NULL;
         cd->hdlr = evhdlr;
         cd->firstoverall = firstoverall;
-        rc = _add_hdlr(cd, &xfer);
-        PMIX_LIST_DESTRUCT(&xfer);
-        if (PMIX_SUCCESS != rc &&
-            PMIX_ERR_WOULD_BLOCK != rc) {
-                /* unable to register */
-            --pmix_globals.events.nhdlrs;
-            rc = PMIX_ERR_EVENT_REGISTRATION;
-            index = UINT_MAX;
-            if (firstoverall) {
-                pmix_globals.events.first = NULL;
-            } else {
-                pmix_globals.events.last = NULL;
-            }
-            PMIX_RELEASE(evhdlr);
-            goto ack;
-        }
-        if (PMIX_ERR_WOULD_BLOCK == rc) {
-            /* the callback will provide our response */
-            PMIX_RELEASE(cd);
-            return;
-        }
-        goto ack;
+        goto addtolist;
     }
 
     /* get here if this isn't an overall first or last event - start
@@ -714,23 +688,8 @@ static void reg_event_hdlr(int sd, short args, void *cbdata)
     cd->index = index;
     cd->hdlr = evhdlr;
     cd->firstoverall = false;
-    /* tell the server about it, if necessary - any actions
-     * will be deferred until after this event completes */
-    if (PMIX_RANGE_PROC_LOCAL == range) {
-        rc = PMIX_SUCCESS;
-    } else {
-        rc = _add_hdlr(cd, &xfer);
-    }
-    PMIX_LIST_DESTRUCT(&xfer);
-    if (PMIX_SUCCESS != rc &&
-        PMIX_ERR_WOULD_BLOCK != rc) {
-        /* unable to register */
-        --pmix_globals.events.nhdlrs;
-        rc = PMIX_ERR_EVENT_REGISTRATION;
-        index = UINT_MAX;
-        PMIX_RELEASE(evhdlr);
-        goto ack;
-    }
+
+  addtolist:
     /* now add this event to the appropriate list - if the registration
      * subsequently fails, it will be removed */
 
@@ -829,6 +788,30 @@ static void reg_event_hdlr(int sd, short args, void *cbdata)
             goto ack;
         }
     }
+
+    /* tell the server about it, if necessary - any actions
+     * will be deferred until after this event completes */
+    if (PMIX_RANGE_PROC_LOCAL == range) {
+        rc = PMIX_SUCCESS;
+    } else {
+        rc = _add_hdlr(cd, &xfer);
+    }
+    PMIX_LIST_DESTRUCT(&xfer);
+    if (PMIX_SUCCESS != rc &&
+        PMIX_ERR_WOULD_BLOCK != rc) {
+        /* unable to register */
+        --pmix_globals.events.nhdlrs;
+        rc = PMIX_ERR_EVENT_REGISTRATION;
+        index = UINT_MAX;
+        if (firstoverall) {
+            pmix_globals.events.first = NULL;
+        } else if (lastoverall) {
+            pmix_globals.events.last = NULL;
+        } else {
+            pmix_list_remove_item(cd->list, &evhdlr->super);
+        }
+        PMIX_RELEASE(evhdlr);
+    }
     if (PMIX_ERR_WOULD_BLOCK == rc) {
         /* the callback will provide our response */
         PMIX_RELEASE(cd);
@@ -836,12 +819,6 @@ static void reg_event_hdlr(int sd, short args, void *cbdata)
     }
 
   ack:
-    /* acknowledge the registration so the caller can release
-     * their data AND record the event handler index */
-    if (NULL != cd->evregcbfn) {
-        cd->evregcbfn(rc, index, cd->cbdata);
-    }
-
     /* check if any matching notifications have been locally cached */
     check_cached_events(cd);
     if (NULL != cd->codes) {
@@ -849,8 +826,12 @@ static void reg_event_hdlr(int sd, short args, void *cbdata)
         cd->codes = NULL;
     }
 
-    /* all done */
-    PMIX_RELEASE(cd);
+    /* acknowledge the registration so the caller can release
+     * their data AND record the event handler index */
+    if (NULL != cd->evregcbfn) {
+        cd->evregcbfn(rc, index, cd->cbdata);
+        PMIX_RELEASE(cd);
+    }
 }
 
 static void mycbfn(pmix_status_t status,
@@ -864,7 +845,7 @@ static void mycbfn(pmix_status_t status,
         cd->status = refid;
     } else {
         cd->status = status;
-    }
+     }
     PMIX_WAKEUP_THREAD(&cd->lock);
 }
 
@@ -907,20 +888,19 @@ PMIX_EXPORT pmix_status_t PMIx_Register_event_handler(pmix_status_t codes[], siz
     cd->info = info;
     cd->ninfo = ninfo;
     cd->evhdlr = event_hdlr;
-    if (NULL == cbfunc) {
-        cd->evregcbfn = mycbfn;
-        cd->cbdata = cd;
-    } else {
+
+    if (NULL != cbfunc) {
+        pmix_output_verbose(2, pmix_client_globals.event_output,
+                            "pmix_register_event_hdlr shifting to progress thread");
+
         cd->evregcbfn = cbfunc;
         cd->cbdata = cbdata;
-    }
-
-    pmix_output_verbose(2, pmix_client_globals.event_output,
-                        "pmix_register_event_hdlr shifting to progress thread");
-
-    PMIX_THREADSHIFT(cd, reg_event_hdlr);
-
-    if (NULL == cbfunc) {
+        PMIX_THREADSHIFT(cd, reg_event_hdlr);
+    } else {
+    	cd->evregcbfn = mycbfn;
+    	cd->cbdata = cd;
+    	PMIX_RETAIN(cd);
+        reg_event_hdlr(0, 0, (void*)cd);
         PMIX_WAIT_THREAD(&cd->lock);
         rc = cd->status;
         PMIX_RELEASE(cd);
@@ -944,7 +924,7 @@ static void dereg_event_hdlr(int sd, short args, void *cbdata)
 
     /* if I am not the server, and I am connected, then I need
      * to notify the server to remove my registration */
-    if ((!PMIX_PROC_IS_SERVER(pmix_globals.mypeer) || PMIX_PROC_IS_LAUNCHER(pmix_globals.mypeer)) &&
+    if ((!PMIX_PEER_IS_SERVER(pmix_globals.mypeer) || PMIX_PEER_IS_LAUNCHER(pmix_globals.mypeer)) &&
         pmix_globals.connected) {
         msg = PMIX_NEW(pmix_buffer_t);
         PMIX_BFROPS_PACK(rc, pmix_client_globals.myserver,

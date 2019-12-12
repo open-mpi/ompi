@@ -36,6 +36,7 @@ typedef struct {
 struct server_info_t
 {
     pmix_list_item_t super;
+    char *hostname;
     pid_t pid;
     int idx;
     int rd_fd;

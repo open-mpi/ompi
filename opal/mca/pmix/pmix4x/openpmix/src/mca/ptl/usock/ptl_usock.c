@@ -13,7 +13,7 @@
  * Copyright (c) 2011-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2013-2018 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2019      Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
@@ -110,21 +110,25 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
                         __FILE__, __LINE__);
 
     /* if we are not a client, there is nothing we can do */
-    if (!PMIX_PROC_IS_CLIENT(pmix_globals.mypeer)) {
+    if (!PMIX_PEER_IS_CLIENT(pmix_globals.mypeer)) {
         return PMIX_ERR_NOT_SUPPORTED;
     }
 
+    PMIX_SET_PEER_TYPE(pmix_client_globals.myserver, PMIX_PROC_SERVER);
     /* if we don't have a path to the daemon rendezvous point,
      * then we need to return an error */
     if (NULL != (evar = getenv("PMIX_SERVER_URI2USOCK"))) {
         /* this is a v2.1+ server */
         pmix_globals.mypeer->nptr->compat.bfrops = pmix_bfrops_base_assign_module("v21");
+        PMIX_SET_PEER_MAJOR(pmix_client_globals.myserver, 2);
         if (NULL == pmix_globals.mypeer->nptr->compat.bfrops) {
             return PMIX_ERR_INIT;
         }
     } else if (NULL != (evar = getenv("PMIX_SERVER_URI"))) {
         /* this is a pre-v2.1 server - must use the v12 bfrops module */
         pmix_globals.mypeer->nptr->compat.bfrops = pmix_bfrops_base_assign_module("v12");
+        PMIX_SET_PEER_MAJOR(pmix_client_globals.myserver, 1);
+        PMIX_SET_PEER_MINOR(pmix_client_globals.myserver, 2);
         if (NULL == pmix_globals.mypeer->nptr->compat.bfrops) {
             return PMIX_ERR_INIT;
         }
@@ -568,7 +572,7 @@ void pmix_usock_send_handler(int sd, short flags, void *cbdata)
 
     if (NULL != msg) {
         if (!msg->hdr_sent) {
-            if (PMIX_PROC_IS_SERVER(pmix_globals.mypeer)) {
+            if (PMIX_PEER_IS_SERVER(pmix_globals.mypeer)) {
             /* we have to convert the header back to host-byte order */
                 msg->hdr.pindex = ntohl(msg->hdr.pindex);
                 msg->hdr.tag = ntohl(msg->hdr.tag);
@@ -600,7 +604,7 @@ void pmix_usock_send_handler(int sd, short flags, void *cbdata)
                 /* exit this event and let the event lib progress */
                 pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
                                     "usock:send_handler RES BUSY OR WOULD BLOCK");
-                if (PMIX_PROC_IS_SERVER(pmix_globals.mypeer)) {
+                if (PMIX_PEER_IS_SERVER(pmix_globals.mypeer)) {
                     /* have to convert back again so we are correct when we re-enter */
                     msg->hdr.pindex = htonl(msg->hdr.pindex);
                     msg->hdr.tag = htonl(msg->hdr.tag);

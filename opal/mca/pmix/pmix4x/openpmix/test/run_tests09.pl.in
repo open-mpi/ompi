@@ -23,14 +23,15 @@ my @tests = ("-n 4 --ns-dist 3:1 --fence \"[db | 0:0-2;1:0]\"",
              "-n 5 --test-resolve-peers --ns-dist \"1:2:2\"",
              "-n 5 --test-replace 100:0,1,10,50,99",
              "-n 5 --test-internal 10",
-             "-s 2 -n 2 --job-fence",
-             "-s 2 -n 2 --job-fence -c");
+             "-s 1 -n 2 --job-fence",
+             "-s 1 -n 2 --job-fence -c");
 
 my $test;
 my $cmd;
 my $output;
 my $status = 0;
 my $testnum;
+my $timeout_cmd = "";
 
 # We are running tests against the build tree (vs. the installation
 # tree).  Autogen gives us a full list of all possible component
@@ -63,7 +64,24 @@ $testnum =~ s/.pl//;
 $testnum = substr($testnum, -2);
 $test = @tests[$testnum];
 
-$cmd = "./pmix_test " . $test . " 2>&1";
+# find the timeout or gtimeout cmd so we can timeout the
+# test if it hangs
+my @paths = split(/:/, $ENV{PATH});
+foreach my $p (@paths) {
+    my $fullpath = $p . "/" . "gtimeout";
+    if ((-e $fullpath) && (-f $fullpath)) {
+        $timeout_cmd = $fullpath . " --preserve-status -k 35 30 ";
+        last;
+    } else {
+        my $fullpath = $p . "/" . "timeout";
+        if ((-e $fullpath) && (-f $fullpath)) {
+            $timeout_cmd = $fullpath . " --preserve-status -k 35 30 ";
+            last;
+        }
+    }
+}
+
+$cmd = $timeout_cmd . " ./pmix_test " . $test . " 2>&1";
 print $cmd . "\n";
 $output = `$cmd`;
 print $output . "\n";

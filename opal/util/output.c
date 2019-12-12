@@ -16,7 +16,7 @@
  * Copyright (c) 2015-2019 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
- * Copyright (c) 2017-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2017-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * Copyright (c) 2018      Triad National Security, LLC. All rights
  *                         reserved.
@@ -50,7 +50,7 @@
 #include "opal/util/printf.h"
 #include "opal/threads/mutex.h"
 #include "opal/constants.h"
-#include "opal/mca/pmix/pmix.h"
+#include "opal/mca/pmix/pmix-internal.h"
 
 /*
  * Private data
@@ -806,9 +806,7 @@ static int open_file(int i)
         }
 
         /* register it to be ignored */
-        if (NULL != opal_pmix.register_cleanup) {
-            opal_pmix.register_cleanup(filename, false, true, false);
-        }
+        opal_pmix_register_cleanup(filename, false, true, false);
         free(filename);  /* release the filename in all cases */
     }
 

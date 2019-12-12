@@ -13,7 +13,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015-2018 Mellanox Technologies, Inc.
@@ -30,6 +30,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <signal.h>
 
 #include "src/util/pmix_environ.h"
 #include "src/util/output.h"
@@ -45,18 +46,14 @@ int main(int argc, char **argv)
 {
     char **client_env=NULL;
     char **client_argv=NULL;
-    int rc;
+    int rc, i;
     struct stat stat_buf;
-    struct timeval tv;
-    double test_start;
-    test_params params;
-    INIT_TEST_PARAMS(params);
     int test_fail = 0;
     char *tmp;
     int ns_nprocs;
+    sigset_t unblock;
 
-    gettimeofday(&tv, NULL);
-    test_start = tv.tv_sec + 1E-6*tv.tv_usec;
+    INIT_TEST_PARAMS(params);
 
     /* smoke test */
     if (PMIX_SUCCESS != 0) {
@@ -90,6 +87,20 @@ int main(int argc, char **argv)
         TEST_ERROR(("Client executable \"%s\": has no executable flag", params.binary));
         FREE_TEST_PARAMS(params);
         return 0;
+    }
+
+    /* ensure that SIGCHLD is unblocked as we need to capture it */
+    if (0 != sigemptyset(&unblock)) {
+        fprintf(stderr, "SIGEMPTYSET FAILED\n");
+        exit(1);
+    }
+    if (0 != sigaddset(&unblock, SIGCHLD)) {
+        fprintf(stderr, "SIGADDSET FAILED\n");
+        exit(1);
+    }
+    if (0 != sigprocmask(SIG_UNBLOCK, &unblock, NULL)) {
+        fprintf(stderr, "SIG_UNBLOCK FAILED\n");
+        exit(1);
     }
 
     if (PMIX_SUCCESS != (rc = server_init(&params))) {
@@ -136,26 +147,15 @@ int main(int argc, char **argv)
         TEST_ERROR(("srv #%d: Total number of processes doesn't correspond number specified by ns_dist parameter.", my_server_id));
         cli_kill_all();
         test_fail = 1;
+        goto done;
     }
 
     /* hang around until the client(s) finalize */
-    while (!test_terminated()) {
-        // To avoid test hang we want to interrupt the loop each 0.1s
-        double test_current;
-
-        // check if we exceed the max time
-        gettimeofday(&tv, NULL);
-        test_current = tv.tv_sec + 1E-6*tv.tv_usec;
-        if( (test_current - test_start) > params.timeout ){
-            break;
-        }
-        cli_wait_all(0);
-    }
-
-    if( !test_terminated() ){
-        TEST_ERROR(("srv #%d: Test exited by a timeout!", my_server_id));
-        cli_kill_all();
-        test_fail = 1;
+    while (!test_complete) {
+        struct timespec ts;
+        ts.tv_sec = 0;
+        ts.tv_nsec = 100000;
+        nanosleep(&ts, NULL);
     }
 
     if( test_abort ){
@@ -170,20 +170,26 @@ int main(int argc, char **argv)
     if (0 != params.test_spawn) {
         PMIX_WAIT_FOR_COMPLETION(spawn_wait);
     }
+    for(i=0; i < cli_info_cnt; i++){
+        if (cli_info[i].exit_code != 0) {
+            ++test_fail;
+        }
+    }
 
     /* deregister the errhandler */
     PMIx_Deregister_event_handler(0, op_callbk, NULL);
 
-    TEST_VERBOSE(("srv #%d: call cli_wait_all!", my_server_id));
-    cli_wait_all(1.0);
-
+  done:
     TEST_VERBOSE(("srv #%d: call server_finalize!", my_server_id));
     test_fail += server_finalize(&params, test_fail);
 
-    TEST_VERBOSE(("srv #%d: exit seqence!", my_server_id));
+    TEST_VERBOSE(("srv #%d: exit sequence!", my_server_id));
     FREE_TEST_PARAMS(params);
     pmix_argv_free(client_argv);
     pmix_argv_free(client_env);
 
+    if (0 == test_fail) {
+        TEST_OUTPUT(("Test SUCCEEDED!"));
+    }
     return test_fail;
 }

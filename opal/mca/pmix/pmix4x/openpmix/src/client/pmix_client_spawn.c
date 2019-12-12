@@ -81,7 +81,7 @@ PMIX_EXPORT pmix_status_t PMIx_Spawn(const pmix_info_t job_info[], size_t ninfo,
     }
 
     /* if we aren't connected, don't attempt to send */
-    if (!pmix_globals.connected && !PMIX_PROC_IS_TOOL(pmix_globals.mypeer)) {
+    if (!pmix_globals.connected && !PMIX_PEER_IS_TOOL(pmix_globals.mypeer)) {
         PMIX_RELEASE_THREAD(&pmix_global_lock);
         return PMIX_ERR_UNREACH;
     }
@@ -143,7 +143,7 @@ PMIX_EXPORT pmix_status_t PMIx_Spawn_nb(const pmix_info_t job_info[], size_t nin
     /* if we aren't connected, don't attempt to send */
     if (!pmix_globals.connected) {
         /* if I am a tool, we default to local fork/exec */
-        if (PMIX_PROC_IS_TOOL(pmix_globals.mypeer)) {
+        if (PMIX_PEER_IS_TOOL(pmix_globals.mypeer)) {
             forkexec = true;
         } else {
             PMIX_RELEASE_THREAD(&pmix_global_lock);

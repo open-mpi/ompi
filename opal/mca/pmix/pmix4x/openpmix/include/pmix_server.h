@@ -449,7 +449,10 @@ typedef pmix_status_t (*pmix_server_validate_cred_fn_t)(const pmix_proc_t *proc,
  *
  * This call serves as a registration with the host RM for the given IO channels from
  * the specified procs - the host RM is expected to ensure that this local PMIx server
- * is on the distribution list for the channel/proc combination
+ * is on the distribution list for the channel/proc combination. IF the PMIX_IOF_STOP
+ * is included in the directives, then the local PMIx server is requesting that the
+ * host RM remove the server from the distribution list for the specified channel/proc
+ * combination.
  */
 typedef pmix_status_t (*pmix_server_iof_fn_t)(const pmix_proc_t procs[], size_t nprocs,
                                               const pmix_info_t directives[], size_t ndirs,

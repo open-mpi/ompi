@@ -1,0 +1,14 @@
+# Copyright (c) 2017     Cisco Systems, Inc.  All rights reserved
+# Copyright (c) 2019      Intel, Inc.  All rights reserved.
+# $COPYRIGHT$
+#
+
+# Per https://github.com/open-mpi/ompi/issues/2616, we cannot have an
+# "pmix.h" in the framework directory (due to conflicts of finding
+# the system pmix.h file when using "--with-pmix=external").  Hence,
+# we need to deviate from the framework norm of having
+# framework/framework.h (i.e., pmix/pmix.h).  Instead, we'll have
+# pmix/pmix-internal.h to make sure that this header file can never
+# be mistaken for a system-level pmix.h.
+
+framework_header = pmix-internal.h

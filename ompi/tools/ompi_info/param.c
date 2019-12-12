@@ -13,7 +13,7 @@
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2014-2019 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
- * Copyright (c) 2015      Intel, Inc. All rights reserved
+ * Copyright (c) 2015-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
@@ -124,9 +124,6 @@ void ompi_info_do_config(bool want_all)
     char *cxxexceptions;
     char *threads;
     char *have_dl;
-#if OMPI_RTE_ORTE
-    char *mpirun_prefix_by_default;
-#endif
     char *sparse_groups;
     char *wtime_support;
     char *symbol_visibility;
@@ -278,9 +275,6 @@ void ompi_info_do_config(bool want_all)
     fortran_usempi_profiling = (OMPI_BUILD_FORTRAN_BINDINGS >= OMPI_FORTRAN_USEMPI_BINDINGS) ? "yes" : "no";
     fortran_usempif08_profiling = (OMPI_BUILD_FORTRAN_BINDINGS >= OMPI_FORTRAN_USEMPIF08_BINDINGS) ? "yes" : "no";
     have_dl = OPAL_HAVE_DL_SUPPORT ? "yes" : "no";
-#if OMPI_RTE_ORTE
-    mpirun_prefix_by_default = ORTE_WANT_ORTERUN_PREFIX_BY_DEFAULT ? "yes" : "no";
-#endif
     sparse_groups = OMPI_GROUP_SPARSE ? "yes" : "no";
     wtime_support = OPAL_TIMER_USEC_NATIVE ? "native" : "gettimeofday";
     symbol_visibility = OPAL_C_HAVE_VISIBILITY ? "yes" : "no";
@@ -309,13 +303,8 @@ void ompi_info_do_config(bool want_all)
         fortran_have_ignore_tkr = strdup("no");
     }
 
-#if OMPI_RTE_ORTE
-    (void)opal_asprintf(&threads, "%s (MPI_THREAD_MULTIPLE: yes, OPAL support: yes, OMPI progress: %s, ORTE progress: yes, Event lib: yes)",
-                   "posix", OPAL_ENABLE_PROGRESS_THREADS ? "yes" : "no");
-#else
     (void)opal_asprintf(&threads, "%s (MPI_THREAD_MULTIPLE: yes, OPAL support: yes, OMPI progress: %s, Event lib: yes)",
                    "posix", OPAL_ENABLE_PROGRESS_THREADS ? "yes" : "no");
-#endif
 
     (void)opal_asprintf(&ft_support, "%s (checkpoint thread: %s)",
                    OPAL_ENABLE_FT ? "yes" : "no", OPAL_ENABLE_FT_THREAD ? "yes" : "no");
@@ -656,10 +645,6 @@ void ompi_info_do_config(bool want_all)
     opal_info_out("Memory debugging support", "option:mem-debug", memdebug);
     opal_info_out("dl support", "option:dlopen", have_dl);
     opal_info_out("Heterogeneous support", "options:heterogeneous", heterogeneous);
-#if OMPI_RTE_ORTE
-    opal_info_out("mpirun default --prefix", "mpirun:prefix_by_default",
-                  mpirun_prefix_by_default);
-#endif
     opal_info_out("MPI_WTIME support", "options:mpi-wtime", wtime_support);
     opal_info_out("Symbol vis. support", "options:visibility", symbol_visibility);
     opal_info_out("Host topology support", "options:host-topology",

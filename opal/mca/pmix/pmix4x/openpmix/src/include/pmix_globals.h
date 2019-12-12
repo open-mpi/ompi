@@ -117,6 +117,7 @@ typedef uint8_t pmix_cmd_t;
 #define PMIX_GROUP_INVITE_CMD       26
 #define PMIX_GROUP_LEAVE_CMD        27
 #define PMIX_GROUP_DESTRUCT_CMD     28
+#define PMIX_IOF_DEREG_CMD          29
 
 /* provide a "pretty-print" function for cmds */
 const char* pmix_command_string(pmix_cmd_t cmd);
@@ -262,9 +263,12 @@ PMIX_CLASS_DECLARATION(pmix_peer_t);
 
 /* tracker for IOF requests */
 typedef struct {
-    pmix_list_item_t super;
-    pmix_peer_t *peer;
-    pmix_name_t pname;
+    pmix_object_t super;
+    pmix_peer_t *requestor;
+    size_t local_id;
+    size_t remote_id;
+    pmix_proc_t *procs;
+    size_t nprocs;
     pmix_iof_channel_t channels;
     pmix_iof_cbfunc_t cbfunc;
 } pmix_iof_req_t;
@@ -336,6 +340,8 @@ typedef struct {
     pmix_server_trkr_t *trk;
     pmix_ptl_hdr_t hdr;
     pmix_peer_t *peer;
+    pmix_info_t *info;
+    size_t ninfo;
 } pmix_server_caddy_t;
 PMIX_CLASS_DECLARATION(pmix_server_caddy_t);
 
@@ -484,7 +490,7 @@ typedef struct {
     bool commits_pending;
     struct timeval event_window;
     pmix_list_t cached_events;          // events waiting in the window prior to processing
-    pmix_list_t iof_requests;           // list of pmix_iof_req_t IOF requests
+    pmix_pointer_array_t iof_requests;  // array of pmix_iof_req_t IOF requests
     int max_events;                     // size of the notifications hotel
     int event_eviction_time;            // max time to cache notifications
     pmix_hotel_t notifications;         // hotel of pending notifications
@@ -510,6 +516,40 @@ PMIX_EXPORT void pmix_execute_epilog(pmix_epilog_t *ep);
 
 PMIX_EXPORT extern pmix_globals_t pmix_globals;
 PMIX_EXPORT extern pmix_lock_t pmix_global_lock;
+
+static inline bool pmix_check_node_info(const char* key)
+{
+    char *keys[] = {
+        PMIX_LOCAL_PEERS,
+        PMIX_LOCAL_SIZE,
+        NULL
+    };
+    size_t n;
+
+    for (n=0; NULL != keys[n]; n++) {
+        if (0 == strncmp(key, keys[n], PMIX_MAX_KEYLEN)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+static inline bool pmix_check_app_info(const char* key)
+{
+    char *keys[] = {
+        PMIX_APP_SIZE,
+        NULL
+    };
+    size_t n;
+
+    for (n=0; NULL != keys[n]; n++) {
+        if (0 == strncmp(key, keys[n], PMIX_MAX_KEYLEN)) {
+            return true;
+        }
+    }
+    return false;
+}
+
 
 END_C_DECLS
 

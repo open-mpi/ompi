@@ -14,7 +14,7 @@
 # Copyright (c) 2010-2011 Sandia National Laboratories. All rights reserved.
 # Copyright (c) 2013-2015 Los Alamos National Security, LLC. All rights
 #                         reserved.
-# Copyright (c) 2015-2017 Intel, Inc. All rights reserved.
+# Copyright (c) 2015-2019 Intel, Inc.  All rights reserved.
 # Copyright (c) 2015-2018 Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # Copyright (c) 2016      IBM Corporation.  All rights reserved.
@@ -150,10 +150,6 @@ lib@OMPI_LIBMPI_NAME@_la_LIBADD = \
         $(OMPI_LIBMPI_EXTRA_LIBS)
 
 
-if OMPI_RTE_ORTE
-lib@OMPI_LIBMPI_NAME@_la_LIBADD += \
-        $(OMPI_TOP_BUILDDIR)/orte/lib@ORTE_LIB_PREFIX@open-rte.la
-endif
 lib@OMPI_LIBMPI_NAME@_la_LIBADD += \
         $(OMPI_TOP_BUILDDIR)/opal/lib@OPAL_LIB_PREFIX@open-pal.la
 lib@OMPI_LIBMPI_NAME@_la_DEPENDENCIES = $(lib@OMPI_LIBMPI_NAME@_la_LIBADD)

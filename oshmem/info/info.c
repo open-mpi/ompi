@@ -22,7 +22,7 @@
 #include "opal/util/output.h"
 #include "opal/util/printf.h"
 
-#include "ompi/mca/rte/rte.h"
+#include "ompi/runtime/ompi_rte.h"
 
 #include "oshmem/version.h"
 #include "oshmem/constants.h"

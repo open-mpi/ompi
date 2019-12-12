@@ -857,7 +857,7 @@ AC_DEFUN([PMIX_SETUP_CORE],[
     ############################################################################
     # final wrapper compiler config
     ############################################################################
-    opal_show_subtitle "Wrapper compiler final setup"
+    pmix_show_subtitle "Wrapper compiler final setup"
 
     # The PMIx wrapper script (i.e., not the C-compiled
     # executables) need perl.

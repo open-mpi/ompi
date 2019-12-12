@@ -36,6 +36,7 @@
 #include "src/class/pmix_object.h"
 #include "src/util/output.h"
 #include "src/util/printf.h"
+#include "src/include/pmix_globals.h"
 
 #define MAXCNT 1
 
@@ -55,17 +56,6 @@ static void notification_fn(size_t evhdlr_registration_id,
         cbfunc(PMIX_SUCCESS, NULL, 0, NULL, NULL, cbdata);
     }
     completed = true;
-}
-
-static void errhandler_reg_callbk(pmix_status_t status,
-                                  size_t errhandler_ref,
-                                  void *cbdata)
-{
-    volatile bool *active = (volatile bool*)cbdata;
-
-    pmix_output(0, "Client: ERRHANDLER REGISTRATION CALLBACK CALLED WITH STATUS %d, ref=%lu",
-                status, (unsigned long)errhandler_ref);
-    *active = false;
 }
 
 static void opcbfunc(pmix_status_t status, void *cbdata)
@@ -110,18 +100,6 @@ static void model_callback(size_t evhdlr_registration_id,
     }
 }
 
-/* event handler registration is done asynchronously */
-static void model_registration_callback(pmix_status_t status,
-                                        size_t evhandler_ref,
-                                        void *cbdata)
-{
-    volatile bool *active = (volatile bool*)cbdata;
-
-    fprintf(stderr, "simpclient EVENT HANDLER REGISTRATION RETURN STATUS %d, ref=%lu\n",
-               status, (unsigned long)evhandler_ref);
-    *active = false;
-}
-
 int main(int argc, char **argv)
 {
     int rc;
@@ -156,21 +134,23 @@ int main(int argc, char **argv)
         exit(rc);
     }
     PMIX_INFO_FREE(iptr, 2);
-    pmix_output(0, "Client ns %s rank %d: Running", myproc.nspace, myproc.rank);
+    pmix_output(0, "Client ns %s rank %d: Running on node %s", myproc.nspace, myproc.rank, pmix_globals.hostname);
 
     /* test something */
     (void)strncpy(proc.nspace, myproc.nspace, PMIX_MAX_NSLEN);
     proc.rank = PMIX_RANK_WILDCARD;
     if (PMIX_SUCCESS != (rc = PMIx_Get(&proc, PMIX_JOB_SIZE, NULL, 0, &val))) {
-        pmix_output(0, "Client ns %s rank %d: PMIx_Get failed: %s",
+        pmix_output(0, "Client ns %s rank %d: PMIx_Get job size failed: %s",
                     myproc.nspace, myproc.rank, PMIx_Error_string(rc));
         exit(rc);
     }
+    nprocs = val->data.uint32;
     PMIX_VALUE_RELEASE(val);
+    pmix_output(0, "Client %s:%d job size %d", myproc.nspace, myproc.rank, nprocs);
 
     /* test something */
     if (PMIX_SUCCESS != (rc = PMIx_Get(&myproc, PMIX_SERVER_URI, NULL, 0, &val))) {
-        pmix_output(0, "Client ns %s rank %d: PMIx_Get failed: %s",
+        pmix_output(0, "Client ns %s rank %d: PMIx_Get server URI failed: %s",
                     myproc.nspace, myproc.rank, PMIx_Error_string(rc));
         exit(rc);
     }
@@ -178,38 +158,17 @@ int main(int argc, char **argv)
     PMIX_VALUE_RELEASE(val);
 
     /* register a handler specifically for when models declare */
-    active = true;
     ninfo = 1;
     PMIX_INFO_CREATE(iptr, ninfo);
     PMIX_INFO_LOAD(&iptr[0], PMIX_EVENT_HDLR_NAME, "SIMPCLIENT-MODEL", PMIX_STRING);
     code = PMIX_MODEL_DECLARED;
     PMIx_Register_event_handler(&code, 1, iptr, ninfo,
-                                model_callback, model_registration_callback, (void*)&active);
-    while (active) {
-        usleep(10);
-    }
+                                model_callback, NULL, NULL);
     PMIX_INFO_FREE(iptr, ninfo);
 
     /* register our errhandler */
-    active = true;
     PMIx_Register_event_handler(NULL, 0, NULL, 0,
-                                notification_fn, errhandler_reg_callbk, (void*)&active);
-    while (active) {
-        usleep(10);
-    }
-
-
-    /* get our job size */
-    (void)strncpy(proc.nspace, myproc.nspace, PMIX_MAX_NSLEN);
-    proc.rank = PMIX_RANK_WILDCARD;
-    if (PMIX_SUCCESS != (rc = PMIx_Get(&proc, PMIX_JOB_SIZE, NULL, 0, &val))) {
-        pmix_output(0, "Client ns %s rank %d: PMIx_Get job size failed: %s",
-                    myproc.nspace, myproc.rank, PMIx_Error_string(rc));
-        goto done;
-    }
-    nprocs = val->data.uint32;
-    PMIX_VALUE_RELEASE(val);
-    pmix_output(0, "Client %s:%d job size %d", myproc.nspace, myproc.rank, nprocs);
+                                notification_fn, NULL, NULL);
 
     /* put a few values */
     (void)asprintf(&tmp, "%s-%d-internal", myproc.nspace, myproc.rank);
@@ -218,14 +177,14 @@ int main(int argc, char **argv)
     if (PMIX_SUCCESS != (rc = PMIx_Store_internal(&myproc, tmp, &value))) {
         pmix_output(0, "Client ns %s rank %d: PMIx_Store_internal failed: %s",
                     myproc.nspace, myproc.rank, PMIx_Error_string(rc));
-        goto done;
+        exit(rc);
     }
 
     /* get a list of our local peers */
     if (PMIX_SUCCESS != (rc = PMIx_Get(&proc, PMIX_LOCAL_PEERS, NULL, 0, &val))) {
         pmix_output(0, "Client ns %s rank %d: PMIx_Get local peers failed: %s",
                     myproc.nspace, myproc.rank, PMIx_Error_string(rc));
-        goto done;
+        exit(rc);
     }
     /* split the returned string to get the rank of each local peer */
     peers = pmix_argv_split(val->data.string, ',');
@@ -243,13 +202,14 @@ int main(int argc, char **argv)
     pmix_argv_free(peers);
 
     for (cnt=0; cnt < MAXCNT; cnt++) {
+        pmix_output(0, "Client %s:%d executing loop %d", myproc.nspace, myproc.rank, cnt);
         (void)asprintf(&tmp, "%s-%d-local-%d", myproc.nspace, myproc.rank, cnt);
         value.type = PMIX_UINT64;
         value.data.uint64 = 1234;
         if (PMIX_SUCCESS != (rc = PMIx_Put(PMIX_LOCAL, tmp, &value))) {
             pmix_output(0, "Client ns %s rank %d: PMIx_Put internal failed: %s",
                         myproc.nspace, myproc.rank, PMIx_Error_string(rc));
-            goto done;
+            exit(rc);
         }
 
         (void)asprintf(&tmp, "%s-%d-remote-%d", myproc.nspace, myproc.rank, cnt);
@@ -258,13 +218,13 @@ int main(int argc, char **argv)
         if (PMIX_SUCCESS != (rc = PMIx_Put(PMIX_REMOTE, tmp, &value))) {
             pmix_output(0, "Client ns %s rank %d: PMIx_Put internal failed: %s",
                         myproc.nspace, myproc.rank, PMIx_Error_string(rc));
-            goto done;
+            exit(rc);
         }
 
         if (PMIX_SUCCESS != (rc = PMIx_Commit())) {
             pmix_output(0, "Client ns %s rank %d cnt %d: PMIx_Commit failed: %s",
                         myproc.nspace, myproc.rank, cnt, PMIx_Error_string(rc));
-            goto done;
+            exit(rc);
         }
 
         /* call fence to ensure the data is received */
@@ -274,7 +234,7 @@ int main(int argc, char **argv)
         if (PMIX_SUCCESS != (rc = PMIx_Fence(&proc, 1, NULL, 0))) {
             pmix_output(0, "Client ns %s rank %d cnt %d: PMIx_Fence failed: %s",
                         myproc.nspace, myproc.rank, cnt, PMIx_Error_string(rc));
-            goto done;
+            exit(rc);
         }
 
         /* check the returned data */
@@ -304,19 +264,19 @@ int main(int argc, char **argv)
                     if (NULL == val) {
                         pmix_output(0, "Client ns %s rank %d: NULL value returned",
                                     myproc.nspace, myproc.rank);
-                        break;
+                        exit(1);
                     }
                     if (PMIX_UINT64 != val->type) {
                         pmix_output(0, "Client ns %s rank %d cnt %d: PMIx_Get %s returned wrong type: %d", myproc.nspace, myproc.rank, j, tmp, val->type);
                         PMIX_VALUE_RELEASE(val);
                         free(tmp);
-                        continue;
+                        exit(1);
                     }
                     if (1234 != val->data.uint64) {
                         pmix_output(0, "Client ns %s rank %d cnt %d: PMIx_Get %s returned wrong value: %d", myproc.nspace, myproc.rank, j, tmp, (int)val->data.uint64);
                         PMIX_VALUE_RELEASE(val);
                         free(tmp);
-                        continue;
+                        exit(1);
                     }
                     pmix_output(0, "Client ns %s rank %d cnt %d: PMIx_Get %s returned correct", myproc.nspace, myproc.rank, j, tmp);
                     PMIX_VALUE_RELEASE(val);
@@ -333,6 +293,7 @@ int main(int argc, char **argv)
                         } else {
                             pmix_output(0, "ERROR: Client ns %s rank %d cnt %d: PMIx_Get %s returned remote data for a local proc",
                                         myproc.nspace, myproc.rank, j, tmp);
+                            exit(1);
                         }
                         if (NULL != val) {
                             PMIX_VALUE_RELEASE(val);
@@ -340,14 +301,18 @@ int main(int argc, char **argv)
                         free(tmp);
                     }
                 } else {
+                    val = NULL;
                     (void)asprintf(&tmp, "%s-%d-remote-%d", proc.nspace, n, j);
-                    if (PMIX_SUCCESS == (rc = PMIx_Get(&proc, tmp, NULL, 0, &val))) {
+                    if (PMIX_SUCCESS != (rc = PMIx_Get(&proc, tmp, NULL, 0, &val))) {
                         pmix_output(0, "Client ns %s rank %d cnt %d: PMIx_Get %s returned correct", myproc.nspace, myproc.rank, j, tmp);
                     } else {
                         pmix_output(0, "Client ns %s rank %d cnt %d: PMIx_Get %s failed for remote proc",
                                     myproc.nspace, myproc.rank, j, tmp);
+                        exit(1);
                     }
-                    PMIX_VALUE_RELEASE(val);
+                    if (NULL != val) {
+                        PMIX_VALUE_RELEASE(val);
+                    }
                     free(tmp);
                 }
             }
@@ -362,14 +327,17 @@ int main(int argc, char **argv)
             pmix_output(0, "Client ns %s rank %d did not return an array for its internal modex blob",
                         myproc.nspace, myproc.rank);
             PMIX_VALUE_RELEASE(val);
+            exit(1);
         } else if (PMIX_INFO != val->data.darray->type) {
             pmix_output(0, "Client ns %s rank %d returned an internal modex array of type %s instead of PMIX_INFO",
                         myproc.nspace, myproc.rank, PMIx_Data_type_string(val->data.darray->type));
             PMIX_VALUE_RELEASE(val);
+            exit(1);
         } else if (0 == val->data.darray->size) {
             pmix_output(0, "Client ns %s rank %d returned an internal modex array of zero length",
                         myproc.nspace, myproc.rank);
             PMIX_VALUE_RELEASE(val);
+            exit(1);
         } else {
             pmix_info_t *iptr = (pmix_info_t*)val->data.darray->array;
             for (n=0; n < val->data.darray->size; n++) {
@@ -380,6 +348,7 @@ int main(int argc, char **argv)
     } else {
         pmix_output(0, "Client ns %s rank %d internal modex blob FAILED with error %s(%d)",
                     myproc.nspace, myproc.rank, PMIx_Error_string(rc), rc);
+        exit(rc);
     }
 
     /* log something */
@@ -390,6 +359,7 @@ int main(int argc, char **argv)
     if (PMIX_SUCCESS != rc) {
         pmix_output(0, "Client ns %s rank %d - log_nb returned %s",
                     myproc.nspace, myproc.rank, PMIx_Error_string(rc));
+        exit(rc);
     } else {
         while (active) {
             usleep(10);
@@ -408,7 +378,6 @@ int main(int argc, char **argv)
         }
     }
 
- done:
     /* finalize us */
     pmix_output(0, "Client ns %s rank %d: Finalizing", myproc.nspace, myproc.rank);
     if (PMIX_SUCCESS != (rc = PMIx_Finalize(NULL, 0))) {

@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2015-2019 Intel, Inc.  All rights reserved.
- * Copyright (c) 2016-2018 IBM Corporation.  All rights reserved.
+ * Copyright (c) 2016-2019 IBM Corporation.  All rights reserved.
  * Copyright (c) 2016-2019 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2018-2019 Research Organization for Information Science
@@ -48,7 +48,7 @@
 #include "src/util/pmix_environ.h"
 #include "src/util/hash.h"
 #include "src/mca/preg/preg.h"
-
+#include "src/mca/ptl/base/base.h"
 #include "src/mca/gds/base/base.h"
 #include "src/mca/pshmem/base/base.h"
 #include "dstore_common.h"
@@ -516,7 +516,7 @@ static int _esh_session_init(pmix_common_dstore_ctx_t *ds_ctx, size_t idx, ns_ma
     s->jobuid = jobuid;
     s->nspace_path = strdup(ds_ctx->base_path);
 
-    if (PMIX_PROC_IS_SERVER(pmix_globals.mypeer)) {
+    if (PMIX_PEER_IS_SERVER(pmix_globals.mypeer)) {
         if (0 != mkdir(s->nspace_path, 0770)) {
             if (EEXIST != errno) {
                 pmix_output(0, "session init: can not create session directory \"%s\": %s",
@@ -568,7 +568,7 @@ static void _esh_session_release(pmix_common_dstore_ctx_t *ds_ctx, size_t idx)
     ds_ctx->lock_cbs->finalize(&_ESH_SESSION_lock(ds_ctx->session_array, idx));
 
     if (NULL != s->nspace_path) {
-        if(PMIX_PROC_IS_SERVER(pmix_globals.mypeer)) {
+        if(PMIX_PEER_IS_SERVER(pmix_globals.mypeer)) {
             _esh_dir_del(s->nspace_path);
         }
         free(s->nspace_path);
@@ -651,7 +651,7 @@ static int _update_ns_elem(pmix_common_dstore_ctx_t *ds_ctx, ns_track_elem_t *ns
 
     /* synchronize number of meta segments for the target namespace. */
     for (i = ns_elem->num_meta_seg; i < info->num_meta_seg; i++) {
-        if (PMIX_PROC_IS_SERVER(pmix_globals.mypeer)) {
+        if (PMIX_PEER_IS_SERVER(pmix_globals.mypeer)) {
             seg = pmix_common_dstor_create_new_segment(PMIX_DSTORE_NS_META_SEGMENT, ds_ctx->base_path,
                                                        info->ns_map.name, i, ds_ctx->jobuid,
                                                        ds_ctx->setjobuid);
@@ -686,7 +686,7 @@ static int _update_ns_elem(pmix_common_dstore_ctx_t *ds_ctx, ns_track_elem_t *ns
     }
     /* synchronize number of data segments for the target namespace. */
     for (i = ns_elem->num_data_seg; i < info->num_data_seg; i++) {
-        if (PMIX_PROC_IS_SERVER(pmix_globals.mypeer)) {
+        if (PMIX_PEER_IS_SERVER(pmix_globals.mypeer)) {
             seg = pmix_common_dstor_create_new_segment(PMIX_DSTORE_NS_DATA_SEGMENT, ds_ctx->base_path,
                                                        info->ns_map.name, i, ds_ctx->jobuid,
                                                        ds_ctx->setjobuid);
@@ -1593,7 +1593,7 @@ pmix_common_dstore_ctx_t *pmix_common_dstor_init(const char *ds_name, pmix_info_
     ds_ctx->ds_name = strdup(ds_name);
 
     /* find the temp dir */
-    if (PMIX_PROC_IS_SERVER(pmix_globals.mypeer)) {
+    if (PMIX_PEER_IS_SERVER(pmix_globals.mypeer)) {
         ds_ctx->session_map_search = (session_map_search_fn_t)_esh_session_map_search_server;
 
         /* scan incoming info for directives */
@@ -1764,7 +1764,7 @@ PMIX_EXPORT void pmix_common_dstor_finalize(pmix_common_dstore_ctx_t *ds_ctx)
     pmix_pshmem.finalize();
 
     if (NULL != ds_ctx->base_path){
-        if(PMIX_PROC_IS_SERVER(pmix_globals.mypeer)) {
+        if(PMIX_PEER_IS_SERVER(pmix_globals.mypeer)) {
             /* coverity[toctou] */
             if (lstat(ds_ctx->base_path, &st) >= 0){
                 if (PMIX_SUCCESS != (rc = _esh_dir_del(ds_ctx->base_path))) {
@@ -1881,7 +1881,7 @@ PMIX_EXPORT pmix_status_t pmix_common_dstor_store(pmix_common_dstore_ctx_t *ds_c
                         "[%s:%d] gds: dstore store for key '%s' scope %d",
                         proc->nspace, proc->rank, kv->key, scope);
 
-    if (PMIX_PROC_IS_CLIENT(pmix_globals.mypeer)) {
+    if (PMIX_PEER_IS_CLIENT(pmix_globals.mypeer)) {
         rc = PMIX_ERR_NOT_SUPPORTED;
         PMIX_ERROR_LOG(rc);
         return rc;
@@ -1968,7 +1968,7 @@ static pmix_status_t _dstore_fetch(pmix_common_dstore_ctx_t *ds_ctx,
                          __FILE__, __LINE__, __func__, nspace, rank, key));
 
     /* protect info of dstore segments before it will be updated */
-    if (!PMIX_PROC_IS_SERVER(pmix_globals.mypeer)) {
+    if (!PMIX_PEER_IS_SERVER(pmix_globals.mypeer)) {
         if (0 != (rc = pthread_mutex_lock(&ds_ctx->lock))) {
             goto error;
         }
@@ -2444,7 +2444,6 @@ PMIX_EXPORT pmix_status_t pmix_common_dstor_del_nspace(pmix_common_dstore_ctx_t 
 {
     pmix_status_t rc = PMIX_SUCCESS;
     size_t map_idx, size;
-    int in_use = 0;
     ns_map_data_t *ns_map_data = NULL;
     ns_map_t *ns_map;
     session_t *session_tbl = NULL;
@@ -2471,32 +2470,28 @@ PMIX_EXPORT pmix_status_t pmix_common_dstor_del_nspace(pmix_common_dstore_ctx_t 
                 _esh_session_map_clean(ds_ctx, &ns_map[map_idx]);
                 continue;
             }
-            in_use++;
         }
     }
 
-    /* A lot of nspaces may be using same session info
-     * session record can only be deleted once all references are gone */
-    if (!in_use) {
-        session_tbl = PMIX_VALUE_ARRAY_GET_BASE(ds_ctx->session_array, session_t);
-        PMIX_OUTPUT_VERBOSE((10, pmix_gds_base_framework.framework_output,
-                             "%s:%d:%s delete session for jobuid: %d",
-                             __FILE__, __LINE__, __func__, session_tbl[session_tbl_idx].jobuid));
-        size = pmix_value_array_get_size(ds_ctx->ns_track_array);
-        if (size && (dstor_track_idx >= 0)) {
-            if((dstor_track_idx + 1) > (int)size) {
-                rc = PMIX_ERR_VALUE_OUT_OF_BOUNDS;
-                PMIX_ERROR_LOG(rc);
-                goto exit;
-            }
-            trk = pmix_value_array_get_item(ds_ctx->ns_track_array, dstor_track_idx);
-            if (true == trk->in_use) {
-                PMIX_DESTRUCT(trk);
-                pmix_value_array_remove_item(ds_ctx->ns_track_array, dstor_track_idx);
-            }
+    session_tbl = PMIX_VALUE_ARRAY_GET_BASE(ds_ctx->session_array, session_t);
+    PMIX_OUTPUT_VERBOSE((10, pmix_gds_base_framework.framework_output,
+                         "%s:%d:%s delete session for jobuid: %d",
+                         __FILE__, __LINE__, __func__, session_tbl[session_tbl_idx].jobuid));
+    size = pmix_value_array_get_size(ds_ctx->ns_track_array);
+    if (size && (dstor_track_idx >= 0)) {
+        if((dstor_track_idx + 1) > (int)size) {
+            rc = PMIX_ERR_VALUE_OUT_OF_BOUNDS;
+            PMIX_ERROR_LOG(rc);
+            goto exit;
         }
-        _esh_session_release(ds_ctx, session_tbl_idx);
-     }
+        trk = pmix_value_array_get_item(ds_ctx->ns_track_array, dstor_track_idx);
+        if (true == trk->in_use) {
+            PMIX_DESTRUCT(trk);
+            pmix_value_array_remove_item(ds_ctx->ns_track_array, dstor_track_idx);
+        }
+    }
+    _esh_session_release(ds_ctx, session_tbl_idx);
+
 exit:
     return rc;
 }
@@ -2668,8 +2663,9 @@ static pmix_status_t _store_job_info(pmix_common_dstore_ctx_t *ds_ctx, ns_map_da
     pmix_cb_t cb;
     pmix_kval_t *kv;
     pmix_buffer_t buf;
-    pmix_kval_t *kv2 = NULL, *kvp;
+    pmix_kval_t kv2, *kvp;
     pmix_status_t rc = PMIX_SUCCESS;
+    pmix_info_t *ihost;
 
     PMIX_CONSTRUCT(&cb, pmix_cb_t);
     PMIX_CONSTRUCT(&buf, pmix_buffer_t);
@@ -2691,33 +2687,55 @@ static pmix_status_t _store_job_info(pmix_common_dstore_ctx_t *ds_ctx, ns_map_da
     }
 
     PMIX_LIST_FOREACH(kv, &cb.kvs, pmix_kval_t) {
-        if ((PMIX_PROC_IS_V1(_client_peer(ds_ctx)) || PMIX_PROC_IS_V20(_client_peer(ds_ctx))) &&
-           0 != strncmp("pmix.", kv->key, 4) &&
-           kv->value->type == PMIX_DATA_ARRAY) {
-            pmix_info_t *info;
-            size_t size, i;
-            info = kv->value->data.darray->array;
-            size = kv->value->data.darray->size;
-
-            for (i = 0; i < size; i++) {
-                if (0 == strcmp(PMIX_LOCAL_PEERS, info[i].key)) {
-                    kv2 = PMIX_NEW(pmix_kval_t);
-                    kv2->key = strdup(kv->key);
-                    PMIX_VALUE_XFER(rc, kv2->value, &info[i].value);
+    	if (PMIX_CHECK_KEY(kv, PMIX_NODE_INFO_ARRAY)) {
+    		/* earlier PMIx versions don't know how to handle
+    		 * the info arrays - what they need is a key-value
+    		 * pair where the key is the name of the node and
+    		 * the value is the local peers. So if the peer
+    		 * is earlier than 3.1.5, construct the necessary
+    		 * translation. Otherwise, ignore it as the hash
+             * component will handle it for them */
+    		if (PMIX_PEER_IS_EARLIER(ds_ctx->clients_peer, 3, 1, 5)) {
+	            pmix_info_t *info;
+	            size_t size, i;
+                /* if it is our local node, then we are going to pass
+                 * all info */
+	            info = kv->value->data.darray->array;
+	            size = kv->value->data.darray->size;
+                ihost = NULL;
+	            for (i = 0; i < size; i++) {
+                    if (PMIX_CHECK_KEY(&info[i], PMIX_HOSTNAME)) {
+                        ihost = &info[i];
+                        break;
+                    }
+	            }
+                if (NULL != ihost) {
+                    PMIX_CONSTRUCT(&kv2, pmix_kval_t);
+                    kv2.key = ihost->value.data.string;
+                    kv2.value = kv->value;
+                    PMIX_BFROPS_PACK(rc, pmix_globals.mypeer, &buf, &kv2, 1, PMIX_KVAL);
                     if (PMIX_SUCCESS != rc) {
                         PMIX_ERROR_LOG(rc);
-                        PMIX_RELEASE(kv2);
                         goto exit;
                     }
-                    PMIX_BFROPS_PACK(rc, pmix_globals.mypeer, &buf, kv2, 1, PMIX_KVAL);
-                    if (PMIX_SUCCESS != rc) {
-                        PMIX_ERROR_LOG(rc);
-                        PMIX_RELEASE(kv2);
-                        goto exit;
+                    /* if this host is us, then store each value as its own key */
+                    if (0 == strcmp(kv2.key, pmix_globals.hostname)) {
+                        for (i = 0; i < size; i++) {
+                            kv2.key = info[i].key;
+                            kv2.value = &info[i].value;
+                            PMIX_BFROPS_PACK(rc, pmix_globals.mypeer, &buf, &kv2, 1, PMIX_KVAL);
+                            if (PMIX_SUCCESS != rc) {
+                                PMIX_ERROR_LOG(rc);
+                                goto exit;
+                            }
+                        }
                     }
-                    PMIX_RELEASE(kv2);
                 }
-            }
+    		}
+        } else if (PMIX_CHECK_KEY(kv, PMIX_APP_INFO_ARRAY) ||
+                   PMIX_CHECK_KEY(kv, PMIX_JOB_INFO_ARRAY) ||
+                   PMIX_CHECK_KEY(kv, PMIX_SESSION_INFO_ARRAY)) {
+            continue;
         } else {
             PMIX_BFROPS_PACK(rc, pmix_globals.mypeer, &buf, kv, 1, PMIX_KVAL);
             if (PMIX_SUCCESS != rc) {
@@ -2775,12 +2793,14 @@ PMIX_EXPORT pmix_status_t pmix_common_dstor_register_job_info(pmix_common_dstore
             return rc;
         }
 
+        /* pickup all the job-level info by using rank=wildcard */
         rc = _store_job_info(ds_ctx, ns_map, &proc);
         if (PMIX_SUCCESS != rc) {
             PMIX_ERROR_LOG(rc);
             return rc;
         }
 
+        /* get the rank-level info for each rank in the job */
         for (rank=0; rank < ns->nprocs; rank++) {
             proc.rank = rank;
             rc = _store_job_info(ds_ctx, ns_map, &proc);

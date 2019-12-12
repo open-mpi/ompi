@@ -192,14 +192,18 @@ static void tool_iof_handler(struct pmix_peer_t *pr,
     pmix_byte_object_t bo;
     int32_t cnt;
     pmix_status_t rc;
+    size_t refid, ninfo=0;
+    pmix_iof_req_t *req;
+    pmix_info_t *info;
 
     pmix_output_verbose(2, pmix_client_globals.iof_output,
                         "recvd IOF with %d bytes", (int)buf->bytes_used);
 
-    /* if the buffer is empty, they are simply closing the channel */
+    /* if the buffer is empty, they are simply closing the socket */
     if (0 == buf->bytes_used) {
         return;
     }
+    PMIX_BYTE_OBJECT_CONSTRUCT(&bo);
 
     cnt = 1;
     PMIX_BFROPS_UNPACK(rc, peer, buf, &source, &cnt, PMIX_PROC);
@@ -214,13 +218,52 @@ static void tool_iof_handler(struct pmix_peer_t *pr,
         return;
     }
     cnt = 1;
-    PMIX_BFROPS_UNPACK(rc, peer, buf, &bo, &cnt, PMIX_BYTE_OBJECT);
+    PMIX_BFROPS_UNPACK(rc, peer, buf, &refid, &cnt, PMIX_SIZE);
     if (PMIX_SUCCESS != rc) {
         PMIX_ERROR_LOG(rc);
         return;
     }
-    if (NULL != bo.bytes && 0 < bo.size) {
-        pmix_iof_write_output(&source, channel, &bo, NULL);
+    cnt = 1;
+    PMIX_BFROPS_UNPACK(rc, peer, buf, &ninfo, &cnt, PMIX_SIZE);
+    if (PMIX_SUCCESS != rc) {
+        PMIX_ERROR_LOG(rc);
+        return;
+    }
+    if (0 < ninfo) {
+        PMIX_INFO_CREATE(info, ninfo);
+        cnt = ninfo;
+        PMIX_BFROPS_UNPACK(rc, peer, buf, info, &cnt, PMIX_INFO);
+        if (PMIX_SUCCESS != rc) {
+            PMIX_ERROR_LOG(rc);
+            goto cleanup;
+        }
+    }
+    cnt = 1;
+    PMIX_BFROPS_UNPACK(rc, peer, buf, &bo, &cnt, PMIX_BYTE_OBJECT);
+    if (PMIX_SUCCESS != rc) {
+        PMIX_ERROR_LOG(rc);
+        goto cleanup;
+    }
+    /* lookup the handler for this IOF package */
+    if (NULL == (req = (pmix_iof_req_t*)pmix_pointer_array_get_item(&pmix_globals.iof_requests, refid))) {
+        /* something wrong here - should not happen */
+        PMIX_ERROR_LOG(PMIX_ERR_NOT_FOUND);
+        goto cleanup;
+    }
+    /* if the handler invokes a callback function, do so */
+    if (NULL != req->cbfunc) {
+        req->cbfunc(refid, channel, &source, &bo, info, ninfo);
+    } else {
+        /* otherwise, simply write it out to the specified std IO channel */
+        if (NULL != bo.bytes && 0 < bo.size) {
+            pmix_iof_write_output(&source, channel, &bo, NULL);
+        }
+    }
+
+  cleanup:
+    /* cleanup the memory */
+    if (0 < ninfo) {
+        PMIX_INFO_FREE(info, ninfo);
     }
     PMIX_BYTE_OBJECT_DESTRUCT(&bo);
 }
@@ -272,10 +315,11 @@ PMIX_EXPORT int PMIx_tool_init(pmix_proc_t *proc,
     pmix_ptl_posted_recv_t *rcv;
     pmix_proc_t wildcard;
     int fd;
-    pmix_proc_type_t ptype;
+    pmix_proc_type_t ptype = PMIX_PROC_TYPE_STATIC_INIT;
     pmix_cb_t cb;
     pmix_buffer_t *req;
     pmix_cmd_t cmd = PMIX_REQ_CMD;
+    pmix_iof_req_t *iofreq;
 
     PMIX_ACQUIRE_THREAD(&pmix_global_lock);
 
@@ -298,7 +342,7 @@ PMIX_EXPORT int PMIx_tool_init(pmix_proc_t *proc,
 
     /* parse the input directives */
     gdsfound = false;
-    ptype = PMIX_PROC_TOOL;
+    PMIX_SET_PROC_TYPE(&ptype, PMIX_PROC_TOOL);
     if (NULL != info) {
         for (n=0; n < ninfo; n++) {
             if (0 == strncmp(info[n].key, PMIX_GDS_MODULE, PMIX_MAX_KEYLEN)) {
@@ -326,7 +370,7 @@ PMIX_EXPORT int PMIx_tool_init(pmix_proc_t *proc,
                 fwd_stdin = PMIX_INFO_TRUE(&info[n]);
             } else if (0 == strncmp(info[n].key, PMIX_LAUNCHER, PMIX_MAX_KEYLEN)) {
                 if (PMIX_INFO_TRUE(&info[n])) {
-                    ptype |= PMIX_PROC_LAUNCHER;
+                    PMIX_SET_PROC_TYPE(&ptype, PMIX_PROC_LAUNCHER);
                 }
             } else if (0 == strncmp(info[n].key, PMIX_SERVER_TMPDIR, PMIX_MAX_KEYLEN)) {
                 pmix_server_globals.tmpdir = strdup(info[n].value.data.string);
@@ -390,7 +434,11 @@ PMIX_EXPORT int PMIx_tool_init(pmix_proc_t *proc,
                 return PMIX_ERR_BAD_PARAM;
             }
             /* flag that this tool is also a client */
-            ptype |= PMIX_PROC_CLIENT_TOOL;
+            if (PMIX_PROC_IS_LAUNCHER(&ptype)) {
+                PMIX_SET_PROC_TYPE(&ptype, PMIX_PROC_CLIENT_LAUNCHER);
+            } else {
+                PMIX_SET_PROC_TYPE(&ptype, PMIX_PROC_CLIENT_TOOL);
+            }
         } else if (nspace_in_enviro) {
             /* this is an error - we can't have one and not
              * the other */
@@ -408,7 +456,7 @@ PMIX_EXPORT int PMIx_tool_init(pmix_proc_t *proc,
 
     /* setup the runtime - this init's the globals,
      * opens and initializes the required frameworks */
-    if (PMIX_SUCCESS != (rc = pmix_rte_init(ptype, info, ninfo,
+    if (PMIX_SUCCESS != (rc = pmix_rte_init(ptype.type, info, ninfo,
                                             pmix_tool_notify_recv))) {
         PMIX_ERROR_LOG(rc);
         if (NULL != nspace) {
@@ -469,7 +517,7 @@ PMIX_EXPORT int PMIx_tool_init(pmix_proc_t *proc,
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix: init called");
 
-    if (PMIX_PROC_IS_CLIENT(pmix_globals.mypeer)) {
+    if (PMIX_PEER_IS_CLIENT(pmix_globals.mypeer)) {
         /* if we are a client, then we need to pickup the
          * rest of the envar-based server assignments */
         pmix_globals.pindex = -1;
@@ -561,7 +609,8 @@ PMIX_EXPORT int PMIx_tool_init(pmix_proc_t *proc,
 
     /* if we are a launcher, then we also need to act as a server,
      * so setup the server-related structures here */
-    if (PMIX_PROC_LAUNCHER_ACT & ptype) {
+    if (PMIX_PROC_IS_LAUNCHER(&ptype) ||
+        PMIX_PROC_IS_CLIENT_LAUNCHER(&ptype)) {
         if (PMIX_SUCCESS != (rc = pmix_server_initialize())) {
             PMIX_ERROR_LOG(rc);
             if (NULL != nspace) {
@@ -630,7 +679,7 @@ PMIX_EXPORT int PMIx_tool_init(pmix_proc_t *proc,
     pmix_globals.mypeer->info->pname.rank = pmix_globals.myid.rank;
 
     /* if we are acting as a server, then start listening */
-    if (PMIX_PROC_IS_LAUNCHER(pmix_globals.mypeer)) {
+    if (PMIX_PEER_IS_LAUNCHER(pmix_globals.mypeer)) {
         /* setup the wildcard recv for inbound messages from clients */
         rcv = PMIX_NEW(pmix_ptl_posted_recv_t);
         rcv->tag = UINT32_MAX;
@@ -651,6 +700,11 @@ PMIX_EXPORT int PMIx_tool_init(pmix_proc_t *proc,
                          1, PMIX_FWD_STDOUT_CHANNEL, pmix_iof_write_handler);
     PMIX_IOF_SINK_DEFINE(&pmix_client_globals.iof_stderr, &pmix_globals.myid,
                          2, PMIX_FWD_STDERR_CHANNEL, pmix_iof_write_handler);
+    /* create the default iof handler */
+    iofreq = PMIX_NEW(pmix_iof_req_t);
+    iofreq->channels = PMIX_FWD_STDOUT_CHANNEL | PMIX_FWD_STDERR_CHANNEL | PMIX_FWD_STDDIAG_CHANNEL;
+    pmix_pointer_array_set_item(&pmix_globals.iof_requests, 0, iofreq);
+
     if (fwd_stdin) {
         /* setup the read - we don't want to set nonblocking on our
          * stdio stream.  If we do so, we set the file descriptor to
@@ -729,7 +783,7 @@ PMIX_EXPORT int PMIx_tool_init(pmix_proc_t *proc,
      * job info - we do this as a non-blocking
      * transaction because some systems cannot handle very large
      * blocking operations and error out if we try them. */
-    if (PMIX_PROC_IS_CLIENT(pmix_globals.mypeer)) {
+    if (PMIX_PEER_IS_CLIENT(pmix_globals.mypeer)) {
          req = PMIX_NEW(pmix_buffer_t);
          PMIX_BFROPS_PACK(rc, pmix_client_globals.myserver,
                           req, &cmd, 1, PMIX_COMMAND);
@@ -799,7 +853,7 @@ PMIX_EXPORT int PMIx_tool_init(pmix_proc_t *proc,
     }
 
     /* if we are acting as a server, then start listening */
-    if (PMIX_PROC_IS_LAUNCHER(pmix_globals.mypeer)) {
+    if (PMIX_PEER_IS_LAUNCHER(pmix_globals.mypeer)) {
         /* start listening for connections */
         if (PMIX_SUCCESS != pmix_ptl_base_start_listening(info, ninfo)) {
             pmix_show_help("help-pmix-server.txt", "listener-thread-start", true);
@@ -1238,7 +1292,7 @@ PMIX_EXPORT pmix_status_t PMIx_tool_finalize(void)
         }
     }
 
-    if (PMIX_PROC_IS_LAUNCHER(pmix_globals.mypeer)) {
+    if (PMIX_PEER_IS_LAUNCHER(pmix_globals.mypeer)) {
         pmix_ptl_base_stop_listening();
 
         for (n=0; n < pmix_server_globals.clients.size; n++) {

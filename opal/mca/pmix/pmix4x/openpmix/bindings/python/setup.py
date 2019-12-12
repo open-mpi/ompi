@@ -3,6 +3,8 @@ from distutils.extension import Extension
 from Cython.Build import cythonize
 from sys import platform, maxsize, version_info
 import os
+from Cython.Compiler.Main import default_options
+default_options['emit_linenums'] = True
 from subprocess import check_output, CalledProcessError
 
 def getVersion():

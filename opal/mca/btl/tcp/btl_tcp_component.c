@@ -16,7 +16,7 @@
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2013-2015 NVIDIA Corporation.  All rights reserved.
- * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
@@ -75,7 +75,7 @@
 #include "opal/mca/btl/base/base.h"
 #include "opal/mca/mpool/base/base.h"
 #include "opal/mca/btl/base/btl_base_error.h"
-#include "opal/mca/pmix/pmix.h"
+#include "opal/mca/pmix/pmix-internal.h"
 #include "opal/threads/threads.h"
 
 #include "opal/constants.h"
@@ -1214,7 +1214,7 @@ static int mca_btl_tcp_component_exchange(void)
          }
      }
 
-     OPAL_MODEX_SEND(rc, OPAL_PMIX_GLOBAL,
+     OPAL_MODEX_SEND(rc, PMIX_GLOBAL,
                      &mca_btl_tcp_component.super.btl_version,
                      addrs, size);
      free(addrs);

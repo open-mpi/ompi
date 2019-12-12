@@ -793,7 +793,7 @@ PMIX_EXPORT void pmix_attrs_query_support(int sd, short args, void *cbdata)
             if (NULL == cd->queries[n].qualifiers ||
                 PMIX_CHECK_KEY(&cd->queries[n].qualifiers[m], PMIX_SERVER_ATTRIBUTES)) {
                 /* if I am a server, add in my attrs */
-                if (PMIX_PROC_IS_SERVER(pmix_globals.mypeer)) {
+                if (PMIX_PEER_IS_SERVER(pmix_globals.mypeer)) {
                     _get_attrs(&kyresults, &cd->queries[n].qualifiers[m], &server_attrs);
                  } else {
                     /* we need to ask our server for them */
@@ -804,7 +804,7 @@ PMIX_EXPORT void pmix_attrs_query_support(int sd, short args, void *cbdata)
             if (NULL == cd->queries[n].qualifiers ||
                 PMIX_CHECK_KEY(&cd->queries[n].qualifiers[m], PMIX_SERVER_FUNCTIONS)) {
                 /* if I am a server, add in my fns */
-                if (PMIX_PROC_IS_SERVER(pmix_globals.mypeer)) {
+                if (PMIX_PEER_IS_SERVER(pmix_globals.mypeer)) {
                     _get_fns(&kyresults, &cd->queries[n].qualifiers[m], &server_attrs);
                  } else {
                     /* we need to ask our server for them */
@@ -814,20 +814,20 @@ PMIX_EXPORT void pmix_attrs_query_support(int sd, short args, void *cbdata)
             }
             if (NULL == cd->queries[n].qualifiers ||
                 PMIX_CHECK_KEY(&cd->queries[n].qualifiers[m], PMIX_TOOL_ATTRIBUTES)) {
-                if (PMIX_PROC_IS_TOOL(pmix_globals.mypeer)) {
+                if (PMIX_PEER_IS_TOOL(pmix_globals.mypeer)) {
                     _get_attrs(&kyresults, &cd->queries[n].qualifiers[m], &tool_attrs);
                 }
             }
             if (NULL == cd->queries[n].qualifiers ||
                 PMIX_CHECK_KEY(&cd->queries[n].qualifiers[m], PMIX_TOOL_FUNCTIONS)) {
-                if (PMIX_PROC_IS_TOOL(pmix_globals.mypeer)) {
+                if (PMIX_PEER_IS_TOOL(pmix_globals.mypeer)) {
                     _get_fns(&kyresults, &cd->queries[n].qualifiers[m], &tool_attrs);
                 }
             }
             if (NULL == cd->queries[n].qualifiers ||
                 PMIX_CHECK_KEY(&cd->queries[n].qualifiers[m], PMIX_HOST_ATTRIBUTES)) {
                 /* if I am a server, add in the host's */
-                if (PMIX_PROC_IS_SERVER(pmix_globals.mypeer)) {
+                if (PMIX_PEER_IS_SERVER(pmix_globals.mypeer)) {
                     _get_attrs(&kyresults, &cd->queries[n].qualifiers[m], &host_attrs);
                 } else {
                     /* we need to ask our server for them */
@@ -838,7 +838,7 @@ PMIX_EXPORT void pmix_attrs_query_support(int sd, short args, void *cbdata)
             if (NULL == cd->queries[n].qualifiers ||
                 PMIX_CHECK_KEY(&cd->queries[n].qualifiers[m], PMIX_HOST_FUNCTIONS)) {
                 /* if I am a server, add in the host's */
-                if (PMIX_PROC_IS_SERVER(pmix_globals.mypeer)) {
+                if (PMIX_PEER_IS_SERVER(pmix_globals.mypeer)) {
                     _get_fns(&kyresults, &cd->queries[n].qualifiers[m], &host_attrs);
                 } else {
                     /* we need to ask our server for them */

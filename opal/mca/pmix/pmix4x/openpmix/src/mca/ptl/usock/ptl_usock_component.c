@@ -151,7 +151,7 @@ pmix_status_t component_close(void)
 
 static int component_query(pmix_mca_base_module_t **module, int *priority)
 {
-    if (PMIX_PROC_IS_TOOL(pmix_globals.mypeer)) {
+    if (PMIX_PEER_IS_TOOL(pmix_globals.mypeer)) {
         return PMIX_ERR_NOT_SUPPORTED;
     }
     *module = (pmix_mca_base_module_t*)&pmix_ptl_usock_module;
@@ -177,7 +177,7 @@ static pmix_status_t setup_listener(pmix_info_t info[], size_t ninfo,
     pmix_status_t rc;
     socklen_t addrlen;
     struct sockaddr_un *address;
-    bool disabled = false;
+    bool disabled = true;
     char *pmix_pid;
     pid_t mypid;
 
@@ -185,7 +185,7 @@ static pmix_status_t setup_listener(pmix_info_t info[], size_t ninfo,
                         "ptl:usock setup_listener");
 
     /* if we are not a server, then we shouldn't be doing this */
-    if (!PMIX_PROC_IS_SERVER(pmix_globals.mypeer)) {
+    if (!PMIX_PEER_IS_SERVER(pmix_globals.mypeer)) {
         return PMIX_ERR_NOT_SUPPORTED;
     }
 
@@ -592,24 +592,11 @@ static void connection_handler(int sd, short args, void *cbdata)
         goto error;
     }
     /* mark it as being a client of the correct type */
-    if (1 == major) {
-        psave->proc_type = PMIX_PROC_CLIENT | PMIX_PROC_V1;
-    } else if (2 == major && 0 == minor) {
-        psave->proc_type = PMIX_PROC_CLIENT | PMIX_PROC_V20;
-    } else if (2 == major && 1 == minor) {
-        psave->proc_type = PMIX_PROC_CLIENT | PMIX_PROC_V21;
-    } else if (3 == major) {
-        psave->proc_type = PMIX_PROC_CLIENT | PMIX_PROC_V3;
-    } else {
-        /* we don't recognize this version */
-        pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
-                            "connection request from client of unrecognized version %s", version);
-        free(msg);
-        PMIX_RELEASE(psave);
-        CLOSE_THE_SOCKET(pnd->sd);
-        PMIX_RELEASE(pnd);
-        return;
-    }
+    PMIX_SET_PROC_TYPE(&psave->proc_type, PMIX_PROC_CLIENT);
+    PMIX_SET_PROC_MAJOR(&psave->proc_type, major);
+    PMIX_SET_PROC_MINOR(&psave->proc_type, minor);
+    PMIX_SET_PROC_RELEASE(&psave->proc_type, rel);
+
     /* save the protocol */
     psave->protocol = pnd->protocol;
     /* add the nspace tracker */

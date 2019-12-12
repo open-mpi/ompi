@@ -1,7 +1,7 @@
 /**
   Copyright (c) 2011      Mellanox Technologies. All rights reserved.
-  Copyright (c) 2015      Research Organization for Information Science
-                          and Technology (RIST). All rights reserved.
+  Copyright (c) 2015-2019 Research Organization for Information Science
+                          and Technology (RIST).  All rights reserved.
   $COPYRIGHT$
 
   Additional copyrights may follow
@@ -15,6 +15,7 @@
 #include "ompi_config.h"
 
 #include "mpi.h"
+#include "ompi/runtime/ompi_rte.h"
 #include "ompi/mca/mca.h"
 #include "opal/memoryhooks/memory.h"
 #include "opal/mca/memory/base/base.h"
@@ -25,8 +26,6 @@
 #include "ompi/communicator/communicator.h"
 #include "ompi/attribute/attribute.h"
 #include "ompi/op/op.h"
-
-#include "orte/runtime/orte_globals.h"
 
 #include "hcoll/api/hcoll_api.h"
 #include "hcoll/api/hcoll_constants.h"

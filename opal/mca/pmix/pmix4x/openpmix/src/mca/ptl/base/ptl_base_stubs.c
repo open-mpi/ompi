@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2015-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2019 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -29,6 +29,52 @@
 #include "src/include/pmix_globals.h"
 
 #include "src/mca/ptl/base/base.h"
+
+bool pmix_ptl_base_peer_is_earlier(pmix_peer_t *peer, uint8_t major,
+                                   uint8_t minor, uint8_t release)
+{
+    /* if they don't care, then don't check */
+    if (PMIX_MAJOR_WILDCARD != major) {
+        if (PMIX_PEER_MAJOR_VERSION(peer) == PMIX_MAJOR_WILDCARD) {
+            /* we don't know what it is - assume earlier */
+            return true;
+        }
+        if (PMIX_PEER_MAJOR_VERSION(peer) > major) {
+            return false;
+        }
+        if (PMIX_PEER_MAJOR_VERSION(peer) < major) {
+            return true;
+        }
+    }
+    /* major value must be equal, so check minor */
+    if (PMIX_MINOR_WILDCARD != minor) {
+        if (PMIX_PEER_MINOR_VERSION(peer) == PMIX_MINOR_WILDCARD) {
+            /* we don't know what it is - assume earlier */
+            return true;
+        }
+        if (PMIX_PEER_MINOR_VERSION(peer) > minor) {
+            return false;
+        }
+        if (PMIX_PEER_MINOR_VERSION(peer) < minor) {
+            return true;
+        }
+    }
+    /* major and minor must be equal - check release */
+    if (PMIX_RELEASE_WILDCARD != release) {
+        if (PMIX_PEER_REL_VERSION(peer) == PMIX_RELEASE_WILDCARD) {
+            /* we don't know what it is - assume earlier */
+            return true;
+        }
+        if (PMIX_PEER_REL_VERSION(peer) > release) {
+            return false;
+        }
+        if (PMIX_PEER_REL_VERSION(peer) < release) {
+            return true;
+        }
+    }
+    /* must be equal */
+    return false;
+}
 
 pmix_status_t pmix_ptl_base_setup_fork(const pmix_proc_t *proc, char ***env)
 {

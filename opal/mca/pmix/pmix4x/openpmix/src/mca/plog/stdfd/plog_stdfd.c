@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
- * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -83,7 +83,7 @@ static pmix_status_t mylog(const pmix_proc_t *source,
     }
 
     /* if we are not a gateway, then we don't handle this */
-    if (!PMIX_PROC_IS_GATEWAY(pmix_globals.mypeer)) {
+    if (!PMIX_PEER_IS_GATEWAY(pmix_globals.mypeer)) {
         return PMIX_ERR_TAKE_NEXT_OPTION;
     }
 

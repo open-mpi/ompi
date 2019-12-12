@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2019 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -45,14 +45,14 @@ int test_connect_disconnect(char *my_nspace, int my_rank)
     rc = PMIx_Connect(&proc, 1, NULL, 0);
     if (PMIX_SUCCESS != rc) {
         TEST_ERROR(("%s:%d: Connect blocking test failed.", my_nspace, my_rank));
-        return PMIX_ERROR;
+        exit(PMIX_ERROR);
     }
     TEST_VERBOSE(("%s:%d: Connect blocking test succeded", my_nspace, my_rank));
 
     rc = PMIx_Disconnect(&proc, 1, NULL, 0);
     if (PMIX_SUCCESS != rc) {
         TEST_ERROR(("%s:%d: Disconnect blocking test failed.", my_nspace, my_rank));
-        return PMIX_ERROR;
+        exit(PMIX_ERROR);
     }
     TEST_VERBOSE(("%s:%d: Disconnect blocking test succeded.", my_nspace, my_rank));
 
@@ -64,7 +64,7 @@ int test_connect_disconnect(char *my_nspace, int my_rank)
     }
     if (PMIX_SUCCESS != rc) {
         TEST_ERROR(("%s:%d: Connect non-blocking test failed.", my_nspace, my_rank));
-        return PMIX_ERROR;
+        exit(PMIX_ERROR);
     }
     TEST_VERBOSE(("%s:%d: Connect non-blocking test succeded.", my_nspace, my_rank));
 
@@ -76,7 +76,7 @@ int test_connect_disconnect(char *my_nspace, int my_rank)
     }
     if (PMIX_SUCCESS != rc) {
         TEST_ERROR(("%s:%d: Disconnect non-blocking test failed.", my_nspace, my_rank));
-        return PMIX_ERROR;
+        exit(PMIX_ERROR);
     }
     TEST_VERBOSE(("%s:%d: Disconnect non-blocking test succeded.", my_nspace, my_rank));
     return PMIX_SUCCESS;

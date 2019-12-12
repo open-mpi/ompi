@@ -11,7 +11,7 @@
 #                         All rights reserved.
 # Copyright (c) 2006-2016 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2012-2015 Los Alamos National Security, Inc.  All rights reserved.
-# Copyright (c) 2014      Intel, Inc. All rights reserved.
+# Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
 # Copyright (c) 2017-2018 Amazon.com, Inc. or its affiliates.
 #                         All Rights reserved.
 # $COPYRIGHT$
@@ -21,8 +21,8 @@
 # $HEADER$
 #
 
-SUBDIRS = config contrib $(MCA_PROJECT_SUBDIRS) test
-DIST_SUBDIRS = config contrib $(MCA_PROJECT_DIST_SUBDIRS) test
+SUBDIRS = config contrib $(MCA_PROJECT_SUBDIRS) prrte test
+DIST_SUBDIRS = config contrib $(MCA_PROJECT_DIST_SUBDIRS) prrte test
 EXTRA_DIST = README INSTALL VERSION Doxyfile LICENSE autogen.pl README.JAVA.txt AUTHORS
 
 include examples/Makefile.include

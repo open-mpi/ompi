@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2014-2019 Cisco Systems, Inc.  All rights reserved
- * Copyright (c) 2015      Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2019 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -27,7 +27,7 @@ void usnic_compat_modex_send(int *rc,
                              opal_btl_usnic_modex_t *modexes,
                              size_t size)
 {
-    OPAL_MODEX_SEND(*rc, OPAL_PMIX_REMOTE, component,
+    OPAL_MODEX_SEND(*rc, PMIX_REMOTE, component,
                     modexes, size);
 }
 

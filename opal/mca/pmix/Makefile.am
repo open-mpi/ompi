@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014      Intel, Inc.  All rights reserved.
+# Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -7,17 +7,15 @@
 # $HEADER$
 #
 
-AM_CPPFLAGS = $(LTDLINCL) $(pmix_CPPFLAGS)
+EXTRA_DIST = autogen.options
+dist_opaldata_DATA =
 
 # main library setup
 noinst_LTLIBRARIES = libmca_pmix.la
 libmca_pmix_la_SOURCES =
 
-# pkgdata setup
-dist_opaldata_DATA =
-
 # local files
-headers = pmix.h pmix_types.h pmix_server.h
+headers = pmix-internal.h
 libmca_pmix_la_SOURCES += $(headers)
 
 # Conditionally install the header files

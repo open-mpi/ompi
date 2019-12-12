@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2010-2012 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -59,7 +59,7 @@ extern const char pmix_version_string[];
  * @retval PMIX_ERROR Upon failure.
  *
  */
-PMIX_EXPORT pmix_status_t pmix_rte_init(pmix_proc_type_t type,
+PMIX_EXPORT pmix_status_t pmix_rte_init(uint32_t type,
                                         pmix_info_t info[], size_t ninfo,
                                         pmix_ptl_cbfunc_t cbfunc);
 

@@ -1,0 +1,3 @@
+[submodule "prrte"]
+	path = prrte
+	url = https://github.com/openpmix/prrte

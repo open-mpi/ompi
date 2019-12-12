@@ -2,6 +2,7 @@ from libc.string cimport memset, strncpy, strcpy, strlen, strdup
 from libc.stdlib cimport malloc, realloc, free
 from libc.string cimport memcpy
 from cpython.mem cimport PyMem_Malloc, PyMem_Realloc, PyMem_Free
+from cpython.pycapsule cimport PyCapsule_New, PyCapsule_GetPointer
 
 # pull in all the constant definitions - we
 # store them in a separate file for neatness
@@ -55,32 +56,164 @@ class myLock(threading.Event):
         for x in self.info:
             info.append(x)
 
-ctypedef struct pmix_pyshift_fence_t:
+ctypedef struct pmix_pyshift_t:
     char *op
-    pmix_byte_object_t bo
+    pmix_byte_object_t *payload
+    size_t idx
     pmix_modex_cbfunc_t modex
+    pmix_status_t status
+    pmix_byte_object_t bo
+    pmix_byte_object_t *cred
+    pmix_iof_channel_t channel
+    pmix_nspace_t nspace
+    pmix_proc_t source
+    pmix_proc_t *proc
+    pmix_pdata_t *pdata
+    pmix_info_t *results
+    size_t nresults
+    pmix_info_t *info
+    const char *data
+    size_t ndata
+    pmix_op_cbfunc_t op_cbfunc
+    pmix_iof_cbfunc_t iof
+    pmix_info_cbfunc_t query
+    pmix_spawn_cbfunc_t spawn
+    pmix_lookup_cbfunc_t lookup
+    pmix_release_cbfunc_t release_fn
+    pmix_event_notification_cbfunc_fn_t event_handler
+    pmix_tool_connection_cbfunc_t toolconnected
+    pmix_credential_cbfunc_t getcredential
+    pmix_validation_cbfunc_t validationcredential
+    pmix_info_cbfunc_t allocate
+    void *notification_cbdata
     void *cbdata
 
-ctypedef struct pmix_pyshift_lookup_t:
-    char *op
-    pmix_pdata_t *pdata
-    size_t ndata
-    pmix_lookup_cbfunc_t lookup
-    void *cbdata
+cdef void iofhdlr_cache(capsule, ret):
+    cdef pmix_pyshift_t *shifter
+    shifter = <pmix_pyshift_t*>PyCapsule_GetPointer(capsule, "iofhdlr_cache")
+    pyiofhandler(shifter[0].idx, shifter[0].channel, &shifter[0].source,
+            shifter[0].payload, shifter[0].info, shifter[0].ndata)
+    print("SHIFTER:", shifter[0].op)
+    if 0 < shifter[0].ndata:
+        pmix_free_info(shifter[0].info, shifter[0].ndata)
+    return
+
+cdef void validationcredential_cb(capsule, ret):
+    cdef pmix_pyshift_t *shifter
+    shifter = <pmix_pyshift_t*>PyCapsule_GetPointer(capsule, "validationcredential")
+    shifter[0].validationcredential(shifter[0].status, shifter[0].info, shifter[0].ndata,
+            shifter[0].cbdata)
+    print("SHIFTER:", shifter[0].op)
+    if 0 < shifter[0].ndata:
+        pmix_free_info(shifter[0].info, shifter[0].ndata)
+    return
+
+cdef void getcredential_cb(capsule, ret):
+    cdef pmix_pyshift_t *shifter
+    shifter = <pmix_pyshift_t*>PyCapsule_GetPointer(capsule, "getcredential")
+    shifter[0].getcredential(shifter[0].status, shifter[0].cred, shifter[0].info, 
+                        shifter[0].ndata, shifter[0].cbdata)
+    print("SHIFTER:", shifter[0].op)
+    if 0 < shifter[0].ndata:
+        pmix_free_info(shifter[0].info, shifter[0].ndata)
+    return
+
+cdef void allocate_cb(capsule, ret):
+    cdef pmix_pyshift_t *shifter
+    shifter = <pmix_pyshift_t*>PyCapsule_GetPointer(capsule, "allocate")
+    shifter[0].allocate(shifter[0].status, shifter[0].info, shifter[0].ndata, 
+                        shifter[0].cbdata, shifter[0].release_fn, 
+                        shifter[0].notification_cbdata)
+    print("SHIFTER:", shifter[0].op)
+    if 0 < shifter[0].ndata:
+        pmix_free_info(shifter[0].info, shifter[0].ndata)
+    return
+
+cdef void toolconnected_cb(capsule, ret):
+    cdef pmix_pyshift_t *shifter
+    shifter = <pmix_pyshift_t*>PyCapsule_GetPointer(capsule, "toolconnected")
+    shifter[0].toolconnected(shifter[0].status, shifter[0].proc, shifter[0].cbdata)
+    print("SHIFTER:", shifter[0].op)
+    return
+
+cdef void spawn_cb(capsule, ret):
+    cdef pmix_pyshift_t *shifter
+    shifter = <pmix_pyshift_t*>PyCapsule_GetPointer(capsule, "spawn")
+    shifter[0].spawn(shifter[0].status, shifter[0].nspace, shifter[0].cbdata)
+    print("SHIFTER:", shifter[0].op)
+    return
+
+cdef void event_cache_cb(capsule, ret):
+    cdef pmix_pyshift_t *shifter
+    shifter = <pmix_pyshift_t*>PyCapsule_GetPointer(capsule, "event_handler")
+    pyeventhandler(shifter[0].idx, shifter[0].status, &shifter[0].source,
+                   shifter[0].info, shifter[0].ndata,
+                   shifter[0].results, shifter[0].nresults,
+                   shifter[0].event_handler, shifter[0].notification_cbdata)
+
+cdef void event_handler_cb(capsule, ret):
+    cdef pmix_pyshift_t *shifter
+    shifter = <pmix_pyshift_t*>PyCapsule_GetPointer(capsule, "event_handler")
+    shifter[0].event_handler(shifter[0].status, shifter[0].results, shifter[0].nresults,
+                             shifter[0].op_cbfunc, shifter[0].cbdata,
+                             shifter[0].notification_cbdata)
+    print("SHIFTER:", shifter[0].op)
+    if 0 < shifter[0].nresults:
+        pmix_free_info(shifter[0].results, shifter[0].nresults)
+    return
+
+cdef void query_cb(capsule, ret):
+    cdef pmix_pyshift_t *shifter
+    shifter = <pmix_pyshift_t*>PyCapsule_GetPointer(capsule, "query")
+    shifter[0].query(ret, shifter[0].info, shifter[0].ndata, shifter[0].cbdata, NULL, NULL)
+    print("SHIFTER:", shifter[0].op)
+    if 0 < shifter[0].ndata:
+        pmix_free_info(shifter[0].info, shifter[0].ndata)
+    return
+
+cdef void lookup_cb(capsule, ret):
+    cdef pmix_pyshift_t *shifter
+    shifter = <pmix_pyshift_t*>PyCapsule_GetPointer(capsule, "lookup")
+    shifter[0].lookup(ret, shifter[0].pdata, shifter[0].ndata, shifter[0].cbdata)
+    print("SHIFTER:", shifter[0].op)
+    if 0 < shifter[0].ndata:
+        pmix_free_pdata(shifter[0].pdata, shifter[0].ndata)
+    return
+
+cdef void fence_cb(capsule, ret):
+    cdef pmix_pyshift_t *shifter
+    shifter = <pmix_pyshift_t*>PyCapsule_GetPointer(capsule, "fence")
+    shifter[0].modex(ret, shifter[0].bo.bytes, shifter[0].bo.size, 
+                     shifter[0].cbdata, NULL, NULL)
+    print("SHIFTER:", shifter[0].op)
+    return
+
+cdef void dmodex_cb(capsule, ret):
+    cdef pmix_pyshift_t *shifter
+    shifter = <pmix_pyshift_t*>PyCapsule_GetPointer(capsule, "dmodex")
+    shifter[0].modex(shifter[0].status, shifter[0].data, shifter[0].ndata,
+                     shifter[0].cbdata, NULL, NULL)
+    print("SHIFTER:", shifter[0].op)
+    if 0 < shifter[0].ndata:
+        PyMem_Free(&(shifter[0].data))
+    return
 
 cdef void pmix_unload_argv(char **keys, argv:list):
     n = 0
     while NULL != keys[n]:
-        mykey = str(keys[n])
+        mykey = keys[n].decode('ascii')
         argv.append(mykey)
         n += 1
 
 cdef int pmix_load_argv(char **keys, argv:list):
     n = 0
     for a in argv:
-        pya = str(a).encode('ascii')
+        pya = a
+        if isinstance(a, str):
+            pya = a.encode('ascii')
         keys[n] = strdup(pya)
         n += 1
+    keys[n] = NULL
     return PMIX_SUCCESS
 
 # TODO: implement support for PMIX_BOOL and PMIX_BYTE
@@ -390,16 +523,16 @@ cdef int pmix_load_darray(pmix_data_array_t *array, mytype, mylist:list):
 # arrays into Python lists of objects
 
 def pmix_bool_convert(f):
+    int_bool = PMIX_ERR_INVALID_VAL
     if isinstance(f, str):
         if f.startswith('t') or f.startswith('T'):
-            return 1
+            int_bool = 1
         elif f.startswith('f') or f.startswith('F'):
-            return 0
+            int_bool = 0
         else:
             print("Incorrect boolean value provided")
-            return PMIX_ERR_DATA_VALUE_NOT_FOUND
-    else:
-        return f
+            int_bool = PMIX_ERR_DATA_VALUE_NOT_FOUND
+    return int_bool
 
 pmix_int_types = (int, long)
 
@@ -440,11 +573,23 @@ cdef void pmix_copy_key(pmix_key_t key, ky):
 # object (a dict with value and val_type as keys)
 # to a pmix_value_t
 cdef int pmix_load_value(pmix_value_t *value, val:dict):
+    if not isinstance(val['val_type'], pmix_int_types):
+        return PMIX_ERR_INVALID_VAL
     print("LOADING VALUE TYPE ", PMIx_Data_type_string(val['val_type']))
     value[0].type = val['val_type']
     if val['val_type'] == PMIX_BOOL:
-        value[0].data.flag = pmix_bool_convert(val['value'])
+        int_bool = pmix_bool_convert(val['value'])
+        if int_bool != 0 and int_bool != 1:
+            return PMIX_ERR_INVALID_VAL
+        value[0].data.flag = int_bool
     elif val['val_type'] == PMIX_BYTE:
+        # byte val is uint8 type
+        if not isinstance(val['value'], pmix_int_types):
+            print("uint8 value declared but non-integer provided")
+            return PMIX_ERR_TYPE_MISMATCH
+        if val['value'] > 255:
+            print("uint8 value is out of bounds")
+            return PMIX_ERR_INVALID_VAL
         value[0].data.byte = val['value']
     elif val['val_type'] == PMIX_STRING:
         if isinstance(val['value'], str):
@@ -510,12 +655,15 @@ cdef int pmix_load_value(pmix_value_t *value, val:dict):
         if not isinstance(val['value'], pmix_int_types):
             print("integer value declared but non-integer provided")
             return PMIX_ERR_TYPE_MISMATCH
+        if val['value'] < 0:
+            print("uint value out of bounds")
+            return PMIX_ERR_INVALID_VAL
         value[0].data.uint = val['value']
     elif val['val_type'] == PMIX_UINT8:
         if not isinstance(val['value'], pmix_int_types):
             print("uint8 value declared but non-integer provided")
             return PMIX_ERR_TYPE_MISMATCH
-        if val['value'] > 255:
+        if val['value'] > 255 or val['value'] < 0:
             print("uint8 value is out of bounds")
             return PMIX_ERR_INVALID_VAL
         value[0].data.uint8 = val['value']
@@ -523,7 +671,7 @@ cdef int pmix_load_value(pmix_value_t *value, val:dict):
         if not isinstance(val['value'], pmix_int_types):
             print("uint16 value declared but non-integer provided")
             return PMIX_ERR_TYPE_MISMATCH
-        if val['value'] > 65536:
+        if val['value'] > 65536 or val['value'] < 0:
             print("uint16 value is out of bounds")
             return PMIX_ERR_INVALID_VAL
         value[0].data.uint16 = val['value']
@@ -531,7 +679,7 @@ cdef int pmix_load_value(pmix_value_t *value, val:dict):
         if not isinstance(val['value'], pmix_int_types):
             print("uint32 value declared but non-integer provided")
             return PMIX_ERR_TYPE_MISMATCH
-        if val['value'] > (65536*65536):
+        if val['value'] > (65536*65536) or val['value'] < 0:
             print("uint32 value is out of bounds")
             return PMIX_ERR_INVALID_VAL
         value[0].data.uint32 = val['value']
@@ -544,9 +692,16 @@ cdef int pmix_load_value(pmix_value_t *value, val:dict):
             return PMIX_ERR_INVALID_VAL
         value[0].data.uint64 = val['value']
     elif val['val_type'] == PMIX_FLOAT:
-        value[0].data.fval = float(val['value'])
+        float_val = float(val['value'])
+        if not isinstance(float_val, float):
+            return PMIX_ERR_TYPE_MISMATCH
+        value[0].data.fval = float_val
     elif val['val_type'] == PMIX_DOUBLE:
-        value[0].data.dval = float(val['value'])
+        double_val = float(val['value'])
+        if not isinstance(double_val, float):
+            return PMIX_ERR_TYPE_MISMATCH
+        value[0].data.dval = double_val
+    # TODO: need a way to verify usable timevals passed in?
     elif val['val_type'] == PMIX_TIMEVAL:
         if isinstance(val['value'], tuple):
             value[0].data.tv.tv_sec  = val['value'][0]
@@ -557,14 +712,29 @@ cdef int pmix_load_value(pmix_value_t *value, val:dict):
     elif val['val_type'] == PMIX_TIME:
         value[0].data.time = val['val_type']
     elif val['val_type'] == PMIX_STATUS:
-        value[0].data.status = val['val_type']
+        if not isinstance(val['value'], int):
+            return PMIX_ERR_TYPE_MISMATCH
+        value[0].data.status = val['value']
     elif val['val_type'] == PMIX_PROC_RANK:
+        if not isinstance(val['value'], int):
+            return PMIX_ERR_TYPE_MISMATCH
+        if val['value'] > (65536*65536) or val['value'] < 0:
+            print("uint32 value is out of bounds")
+            return PMIX_ERR_INVALID_VAL
         value[0].data.rank = val['value']
     elif val['val_type'] == PMIX_PROC:
         value[0].data.proc = <pmix_proc_t*> PyMem_Malloc(sizeof(pmix_proc_t))
         if not value[0].data.proc:
             return PMIX_ERR_NOMEM
+        # TODO: check nspace val is a char here
         pmix_copy_nspace(value[0].data.proc[0].nspace, val['value'][0])
+        # pmix_rank_t is defined as uint32
+        if not isinstance(val['value'][1], pmix_int_types):
+            print("uint32 value declared but non-integer provided")
+            return PMIX_ERR_TYPE_MISMATCH
+        if val['value'][1] > (65536*65536):
+            print("uint32 value is out of bounds")
+            return PMIX_ERR_INVALID_VAL
         value[0].data.proc[0].rank = val['value'][1]
     elif val['val_type'] == PMIX_BYTE_OBJECT:
         value[0].data.bo.bytes = <char*> PyMem_Malloc(value[0].data.bo.size)
@@ -573,22 +743,68 @@ cdef int pmix_load_value(pmix_value_t *value, val:dict):
         pyptr = <char*>val['value'][0]
         memcpy(value[0].data.bo.bytes, pyptr, value[0].data.bo.size)
     elif val['val_type'] == PMIX_PERSISTENCE:
+        # pmix_persistence_t is defined as uint8
+        if not isinstance(val['value'], pmix_int_types):
+            print("uint8 value declared but non-integer provided")
+            return PMIX_ERR_TYPE_MISMATCH
+        if val['value'] > 255 or val['value'] < 0:
+            print("uint8 value is out of bounds")
+            return PMIX_ERR_INVALID_VAL
         value[0].data.persist = val['val_type']
     elif val['val_type'] == PMIX_SCOPE:
+        # pmix_scope_t is defined as uint8
+        if not isinstance(val['value'], pmix_int_types):
+            print("uint8 value declared but non-integer provided")
+            return PMIX_ERR_TYPE_MISMATCH
+        if val['value'] > 255:
+            print("uint8 value is out of bounds")
+            return PMIX_ERR_INVALID_VAL
         value[0].data.scope = val['value']
     elif val['val_type'] == PMIX_RANGE:
+        # pmix_data_range_t is defined as uint8
+        if not isinstance(val['value'], pmix_int_types):
+            print("uint8 value declared but non-integer provided")
+            return PMIX_ERR_TYPE_MISMATCH
+        if val['value'] > 255:
+            print("uint8 value is out of bounds")
+            return PMIX_ERR_INVALID_VAL
         value[0].data.range = val['value']
     elif val['val_type'] == PMIX_PROC_STATE:
+        # pmix_proc_state_t is defined as uint8
+        if not isinstance(val['value'], pmix_int_types):
+            print("uint8 value declared but non-integer provided")
+            return PMIX_ERR_TYPE_MISMATCH
+        if val['value'] > 255:
+            print("uint8 value is out of bounds")
+            return PMIX_ERR_INVALID_VAL
         value[0].data.state = val['value']
     elif val['val_type'] == PMIX_PROC_INFO:
         value[0].data.pinfo = <pmix_proc_info_t*> PyMem_Malloc(sizeof(pmix_proc_info_t))
         if not value[0].data.pinfo:
             return PMIX_ERR_NOMEM
+        # TODO: verify nspace is copied correctly
         pmix_copy_nspace(value[0].data.pinfo[0].proc.nspace, val['value']['proc'][0])
+        if not isinstance(val['value']['proc'][1], pmix_int_types):
+            print("uint32 value declared but non-integer provided")
+            return PMIX_ERR_TYPE_MISMATCH
+        if val['value']['proc'][1] > (65536*65536):
+            print("uint32 value is out of bounds")
+            return PMIX_ERR_INVALID_VAL
         value[0].data.pinfo[0].proc.rank = val['value']['proc'][1]
+        # TODO: check char type for hostname
         value[0].data.pinfo[0].hostname = strdup(val['value']['hostname'])
+        # TODO: check this is a pid type
         value[0].data.pinfo[0].pid = val['value']['pid']
+        if not isinstance(val['value']['exitcode'], int):
+            print("value declared but non-integer provided")
+            return PMIX_ERR_TYPE_MISMATCH
         value[0].data.pinfo[0].exit_code = val['value']['exitcode']
+        if not isinstance(val['value']['state'], pmix_int_types):
+            print("uint8 value declared but non-integer provided")
+            return PMIX_ERR_TYPE_MISMATCH
+        if val['value']['state'] > 255:
+            print("uint8 value is out of bounds")
+            return PMIX_ERR_INVALID_VAL
         value[0].data.pinfo[0].state = val['value']['state']
     elif val['val_type'] == PMIX_DATA_ARRAY:
         value[0].data.darray = <pmix_data_array_t*> PyMem_Malloc(sizeof(pmix_data_array_t))
@@ -597,6 +813,9 @@ cdef int pmix_load_value(pmix_value_t *value, val:dict):
         value[0].data.darray[0].type = val['value']['type']
         value[0].data.darray[0].size = len(val['value']['array'])
         try:
+            # assume pmix_load_darray does own type checks
+            # it should return with an error code inside that
+            # function if there is one
             pmix_load_darray(value[0].data.darray,
             value[0].data.darray[0].type, val['value']['array'])
         except:
@@ -624,6 +843,7 @@ cdef int pmix_load_value(pmix_value_t *value, val:dict):
             pyns = enval
         pynsptr = <const char *>(pyns)
         value[0].data.envar.value = strdup(pynsptr)
+        # TODO: way/function to verify char type
         value[0].data.envar.separator = val['value']['separator']
     elif val['val_type'] == PMIX_REGEX:
         if not isinstance(val['value'], bytearray):
@@ -727,7 +947,6 @@ cdef dict pmix_unload_value(const pmix_value_t *value):
         print("Unload_value: provided type is unknown")
         return PMIX_ERR_TYPE_MISMATCH
 
-
 cdef void pmix_destruct_value(pmix_value_t *value):
     if value[0].type == PMIX_STRING:
         free(value[0].data.string);
@@ -735,7 +954,6 @@ cdef void pmix_destruct_value(pmix_value_t *value):
 cdef void pmix_free_value(self, pmix_value_t *value):
     pmix_destruct_value(value);
     PyMem_Free(value)
-
 
 # Convert a dictionary of key-value pairs into an
 # array of pmix_info_t structs
@@ -867,7 +1085,7 @@ cdef int pmix_unload_pdata(const pmix_pdata_t *pdata, size_t npdata, ilist:list)
     cdef char* kystr
     cdef size_t n = 0
     while n < npdata:
-        print("UNLOADING INFO ", pdata[n].key, " TYPE ", 
+        print("UNLOADING INFO ", pdata[n].key, " TYPE ",
                 PMIx_Data_type_string(pdata[n].value.type))
         val = pmix_unload_value(&pdata[n].value)
         if val['val_type'] == PMIX_UNDEF:
@@ -877,8 +1095,8 @@ cdef int pmix_unload_pdata(const pmix_pdata_t *pdata, size_t npdata, ilist:list)
         pykey = kystr.decode("ascii")
         free(kystr)
         d['key']      = pykey
-        myns = str(pdata[n].proc.nspace)
-        proc = {'nspace':myns, 'rank':pdata[n].proc.rank}
+        myns = (pdata[n].proc.nspace).decode('ascii')
+        proc = {'nspace':myns, 'rank': pdata[n].proc.rank}
         d['proc']     = proc
         d['value']    = val['value']
         d['val_type'] = val['val_type']
@@ -903,6 +1121,67 @@ cdef void pmix_free_pdata(pmix_pdata_t *array, size_t sz):
         n += 1
     PyMem_Free(array)
 
+cdef int pmix_unload_queries(const pmix_query_t *queries, size_t nqueries, ilist:list):
+    cdef char* kystr
+    cdef size_t n = 0
+    keylist = []
+    qualist = []
+    query = {}
+    while n < nqueries:
+        rc = pmix_unload_argv(queries[n].keys, keylist)
+        pmix_unload_info(queries[n].qualifiers, queries[n].nqual, qualist)
+        query['keys']       = keylist
+        query['qualifiers'] = qualist
+        ilist.append(query)
+        n += 1
+    return PMIX_SUCCESS
+
+# Free a malloc'd array of pmix_regattr_t structs to free
+#
+# @array [INPUT]
+#        - pmix_regattr_t structs to be free'd
+#
+# @sz [INPUT]
+#     - number of elements in array
+cdef void pmix_free_regattrs(pmix_regattr_t *regattrs, size_t sz):
+    n = 0
+    while n < sz:
+        if regattrs[n].description != NULL:
+            j = 0
+            while NULL != regattrs[n].description[j]:
+                PyMem_Free(regattrs[n].description[j])
+                j += 1
+            PyMem_Free(regattrs[n].description)
+        if regattrs[n].info != NULL:
+            pmix_free_info(regattrs[n].info, regattrs[n].ninfo)
+        if regattrs[n].name != NULL:
+            PyMem_Free(regattrs[n].name)
+        n += 1
+    if regattrs != NULL:
+        PyMem_Free(regattrs)
+
+# Free a malloc'd array of pmix_query_t structs to free
+#
+# @array [INPUT]
+#        - pmix_query_t queries to be free'd
+#
+# @sz [INPUT]
+#     - number of elements in array
+cdef void pmix_free_queries(pmix_query_t *queries, size_t sz):
+    n = 0
+    while n < sz:
+        if queries[n].keys != NULL:
+            j = 0
+            while NULL != queries[n].keys[j]:
+                PyMem_Free(queries[n].keys[j])
+                j += 1
+            PyMem_Free(queries[n].keys)
+        if queries[n].qualifiers != NULL:
+            pmix_free_info(queries[n].qualifiers, queries[n].nqual)
+        n += 1
+    if queries != NULL:
+        PyMem_Free(queries)
+
 # Convert a list of (nspace, rank) tuples into an
 # array of pmix_proc_t structs
 #
@@ -923,7 +1202,7 @@ cdef int pmix_load_procs(pmix_proc_t *proc, peers:list):
 cdef int pmix_unload_procs(const pmix_proc_t *procs, size_t nprocs, peers:list):
     n = 0
     while n < nprocs:
-        myns = str(procs[n].nspace)
+        myns = (procs[n].nspace).decode('ascii')
         peers.append({'nspace':myns, 'rank':procs[n].rank})
         n += 1
     return PMIX_SUCCESS

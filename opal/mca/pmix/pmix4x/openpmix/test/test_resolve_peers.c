@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
@@ -21,33 +21,33 @@ static int resolve_nspace(char *nspace, test_params params, char *my_nspace, int
     pmix_proc_t *procs;
     size_t nprocs, nranks, i;
     pmix_proc_t *ranks;
-    rc = PMIx_Resolve_peers(NODE_NAME, nspace, &procs, &nprocs);
+
+    rc = PMIx_Resolve_peers(pmix_globals.hostname, nspace, &procs, &nprocs);
     if (PMIX_SUCCESS != rc) {
         TEST_ERROR(("%s:%d: Resolve peers test failed: rc = %d", my_nspace, my_rank, rc));
-        return rc;
+        exit(rc);
     }
     if (NULL == procs || 0 == nprocs) {
         TEST_ERROR(("%s:%d: Resolve peers didn't find any process from ns %s at this node\n", my_nspace, my_rank,my_nspace));
-        return PMIX_ERROR;
+        exit(PMIX_ERROR);
     }
     rc = get_all_ranks_from_namespace(params, nspace, &ranks, &nranks);
     if (PMIX_SUCCESS != rc) {
         TEST_ERROR(("%s:%d: get_all_ranks_from_namespace function failed", my_nspace, my_rank));
         PMIX_PROC_FREE(procs, nprocs);
-        return rc;
+        exit(rc);
     }
     if (nprocs != nranks) {
         TEST_ERROR(("%s:%d: Resolve peers returned incorect result: returned %lu processes, expected %lu", my_nspace, my_rank, nprocs, nranks));
         PMIX_PROC_FREE(procs, nprocs);
         PMIX_PROC_FREE(ranks, nranks);
-        return PMIX_ERROR;
+        exit(PMIX_ERROR);
     }
     for (i = 0; i < nprocs; i++) {
         if (procs[i].rank != ranks[i].rank) {
             TEST_ERROR(("%s:%d: Resolve peers returned incorrect result: returned value %s:%d, expected rank %d",
                         my_nspace, my_rank, procs[i].nspace, procs[i].rank, ranks[i].rank));
-            rc = PMIX_ERROR;
-            break;
+            exit(PMIX_ERROR);
         }
     }
     PMIX_PROC_FREE(procs, nprocs);
@@ -68,14 +68,14 @@ int test_resolve_peers(char *my_nspace, int my_rank, test_params params)
         TEST_VERBOSE(("%s:%d: Resolve peers succeeded for the own namespace\n", my_nspace, my_rank));
     } else {
         TEST_ERROR(("%s:%d: Resolve peers failed for the own namespace\n", my_nspace, my_rank));
-        return PMIX_ERROR;
+        exit(rc);
     }
 
     /* then get number of namespaces and try to resolve peers from them. */
     ns_num = get_total_ns_number(params);
     if (0 >= ns_num) {
         TEST_ERROR(("%s:%d: get_total_ns_number function failed", my_nspace, my_rank));
-        return PMIX_ERROR;
+        exit(PMIX_ERROR);
     }
     for (n = 0; n < ns_num; n++) {
         memset(nspace, 0, PMIX_MAX_NSLEN+1);
@@ -103,16 +103,19 @@ int test_resolve_peers(char *my_nspace, int my_rank, test_params params)
             TEST_VERBOSE(("%s:%d: Connect to %s succeeded.", my_nspace, my_rank, nspace));
         } else {
             TEST_ERROR(("%s:%d: Connect to %s failed.", my_nspace, my_rank, nspace));
-            return PMIX_ERROR;
+            exit(rc);
         }
 
-        /* then resolve peers from this namespace. */
-        rc = resolve_nspace(nspace, params, my_nspace, my_rank);
-        if (PMIX_SUCCESS == rc) {
-            TEST_VERBOSE(("%s:%d: Resolve peers succeeded for ns %s\n", my_nspace, my_rank, nspace));
-        } else {
-            PMIx_Disconnect(procs, 2, NULL, 0);
-            break;
+        /* then resolve peers from this namespace - earlier versions cannot handle
+         * cross-nspace peer resolution because their test servers don't provide
+         * the info. So check for a marker of either 3.1.5 or above */
+        if (NULL != getenv("PMIX_VERSION")) {
+            rc = resolve_nspace(nspace, params, my_nspace, my_rank);
+            if (PMIX_SUCCESS == rc) {
+                TEST_VERBOSE(("%s:%d: Resolve peers succeeded for ns %s\n", my_nspace, my_rank, nspace));
+            } else {
+                exit(rc);
+            }
         }
 
         /* disconnect from the processes of this namespace. */
@@ -121,7 +124,7 @@ int test_resolve_peers(char *my_nspace, int my_rank, test_params params)
             TEST_VERBOSE(("%s:%d: Disconnect from %s succeeded.", my_nspace, my_rank, nspace));
         } else {
             TEST_ERROR(("%s:%d: Disconnect from %s failed.", my_nspace, my_rank, nspace));
-            return PMIX_ERROR;
+            exit(rc);
         }
     }
     if (PMIX_SUCCESS == rc) {

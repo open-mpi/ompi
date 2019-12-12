@@ -18,6 +18,7 @@
  * Copyright (c) 2018      Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2019      Google, LLC. All rights reserved.
+ * Copyright (c) 2019      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -254,7 +255,7 @@ static int mca_btl_uct_modex_send (void)
         }
     }
 
-    OPAL_MODEX_SEND(rc, OPAL_PMIX_GLOBAL, &mca_btl_uct_component.super.btl_version, modex, modex_size);
+    OPAL_MODEX_SEND(rc, PMIX_GLOBAL, &mca_btl_uct_component.super.btl_version, modex, modex_size);
     return rc;
 }
 

@@ -89,7 +89,6 @@ pmix_status_t pmix12_bfrop_unpack(pmix_buffer_t *buffer,
         *num_vals = 0;
         /* don't error log here as the user may be unpacking past
          * the end of the buffer, which isn't necessarily an error */
-        PMIX_ERROR_LOG(rc);
         return rc;
     }
 

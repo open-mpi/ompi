@@ -2,7 +2,7 @@
  * Copyright (c) 2018      Mellanox Technologies, Inc.
  *                         All rights reserved.
  *
- * Copyright (c) 2018      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2018-2019 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -88,7 +88,7 @@ static void ncon(lock_item_t *p) {
 static void ldes(lock_item_t *p) {
     uint32_t i;
 
-    if(PMIX_PROC_IS_SERVER(pmix_globals.mypeer)) {
+    if(PMIX_PEER_IS_SERVER(pmix_globals.mypeer)) {
         segment_hdr_t *seg_hdr = (segment_hdr_t *)p->seg_desc->seg_info.seg_base_addr;
         if (p->lockfile) {
             unlink(p->lockfile);
@@ -150,7 +150,7 @@ pmix_status_t pmix_gds_ds21_lock_init(pmix_common_dstor_lock_ctx_t *ctx, const c
     PMIX_OUTPUT_VERBOSE((10, pmix_gds_base_framework.framework_output,
         "%s:%d:%s local_size %d", __FILE__, __LINE__, __func__, local_size));
 
-    if (PMIX_PROC_IS_SERVER(pmix_globals.mypeer)) {
+    if (PMIX_PEER_IS_SERVER(pmix_globals.mypeer)) {
         size_t seg_align_size;
         size_t seg_hdr_size;
 

@@ -14,6 +14,7 @@
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
+ * Copyright (c) 2019      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -52,7 +53,7 @@
 #include "opal/util/printf.h"
 #include "opal/mca/installdirs/installdirs.h"
 #include "debuggers.h"
-#include "ompi/mca/rte/rte.h"
+#include "ompi/runtime/ompi_rte.h"
 /**
  * BEWARE: The following headers are required by optimized builds in order
  * to get access to the type information. Some compilers remove all type

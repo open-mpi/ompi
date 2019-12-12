@@ -143,7 +143,7 @@ bool pmix_list_insert(pmix_list_t *list, pmix_list_item_t *item, long long idx)
 
 #if PMIX_ENABLE_DEBUG
         /* Spot check: ensure this item is only on the list that we
-           just insertted it into */
+           just inserted it into */
 
         item->pmix_list_item_refcount += 1;
         assert(1 == item->pmix_list_item_refcount);

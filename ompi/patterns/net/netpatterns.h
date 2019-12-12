@@ -4,6 +4,7 @@
  * Copyright (c) 2012      Los Alamos National Security, LLC.
  *                         All rights reserved.
   * Copyright (c) 2017      IBM Corporation. All rights reserved.
+  * Copyright (c) 2019      Intel, Inc.  All rights reserved.
   * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -16,7 +17,7 @@
 
 #include "ompi_config.h"
 
-#include "ompi/mca/rte/rte.h"
+#include "ompi/runtime/ompi_rte.h"
 #include "netpatterns_knomial_tree.h"
 
 BEGIN_C_DECLS

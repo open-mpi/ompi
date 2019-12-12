@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+#
+# Copyright (c) 2019      Intel, Inc. All rights reserved
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
+
+
+ompi_instdir=`dirname $0`
+shift
+
+${ompi_instdir}/prte &
+
+sleep 2
+
+${ompi_instdir}/prun $@
+
+# Cleanup
+${ompi_instdir}/prun --terminate

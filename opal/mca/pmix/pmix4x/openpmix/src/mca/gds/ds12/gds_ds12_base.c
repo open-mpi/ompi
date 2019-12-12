@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2016-2018 IBM Corporation.  All rights reserved.
  * Copyright (c) 2016-2019 Mellanox Technologies, Inc.
  *                         All rights reserved.
@@ -33,7 +33,7 @@ static pmix_status_t ds12_init(pmix_info_t info[], size_t ninfo)
     pmix_status_t rc = PMIX_SUCCESS;
     pmix_common_dstore_file_cbs_t *dstore_file_cbs = NULL;
 
-    if (!PMIX_PROC_IS_SERVER(pmix_globals.mypeer)) {
+    if (!PMIX_PEER_IS_SERVER(pmix_globals.mypeer)) {
         dstore_file_cbs = &pmix_ds20_file_module;
     }
     ds12_ctx = pmix_common_dstor_init("ds12", info, ninfo,
@@ -94,7 +94,7 @@ static pmix_status_t ds12_cache_job_info(struct pmix_namespace_t *ns,
 static pmix_status_t ds12_register_job_info(struct pmix_peer_t *pr,
                                             pmix_buffer_t *reply)
 {
-    if (PMIX_PROC_IS_V1(pr)) {
+    if (PMIX_PEER_IS_V1(pr)) {
         ds12_ctx->file_cbs = &pmix_ds12_file_module;
     } else {
         ds12_ctx->file_cbs = &pmix_ds20_file_module;

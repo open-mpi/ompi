@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2015-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2019 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -200,7 +200,7 @@ void pmix_event_timeout_cb(int fd, short flags, void *arg);
                              (p)->info->pname.rank);                                    \
             /* if I'm a client or tool and this is my server, then we don't */          \
             /* set the targets - otherwise, we do */                                    \
-            if (!PMIX_PROC_IS_SERVER(pmix_globals.mypeer) &&                            \
+            if (!PMIX_PEER_IS_SERVER(pmix_globals.mypeer) &&                            \
                 !PMIX_CHECK_PROCID(&pmix_client_globals.myserver->info->pname,          \
                                   &(p)->info->pname)) {                                 \
                 PMIX_PROC_CREATE(ch->targets, 1);                                       \
