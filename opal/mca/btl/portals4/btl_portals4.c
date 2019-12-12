@@ -13,7 +13,7 @@
  * Copyright (c) 2010-2012 Sandia National Laboratories.  All rights reserved.
  * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      Bull SAS.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -34,7 +34,7 @@
 #include "opal/mca/btl/btl.h"
 #include "opal/datatype/opal_convertor.h"
 #include "opal/util/proc.h"
-#include "opal/mca/pmix/pmix.h"
+#include "opal/mca/pmix/pmix-internal.h"
 
 #include "btl_portals4.h"
 #include "btl_portals4_recv.h"

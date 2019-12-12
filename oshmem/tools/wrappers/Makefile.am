@@ -1,7 +1,7 @@
 # Copyright (c) 2013      Mellanox Technologies, Inc.
 #                         All rights reserved.
 # Copyright (c) 2013-2014 Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2014      Intel, Inc.  All rights reserved.
+# Copyright (c) 2014-2020 Intel, Inc.  All rights reserved.
 # Copyright (c) 2014-2019 Research Organization for Information Science
 #                         and Technology (RIST).  All rights reserved.
 # $COPYRIGHT$
@@ -13,10 +13,6 @@
 include $(top_srcdir)/Makefile.ompi-rules
 
 man_pages = oshcc.1 shmemcc.1 oshc++.1 shmemc++.1 oshcxx.1 shmemcxx.1 oshfort.1 shmemfort.1
-
-if PROJECT_ORTE
-man_pages += oshrun.1 shmemrun.1
-endif
 
 if PROJECT_OSHMEM
 man_MANS = $(man_pages)
@@ -47,8 +43,8 @@ install-exec-always: mk_bindir
 	(cd $(DESTDIR)$(bindir); rm -f oshfort$(EXEEXT); $(LN_S) opal_wrapper$(EXEEXT) oshfort$(EXEEXT))
 
 install-exec-rte: mk_bindir
-	(cd $(DESTDIR)$(bindir); rm -f shmemrun$(EXEEXT); $(LN_S) mpirun$(EXEEXT) shmemrun$(EXEEXT))
-	(cd $(DESTDIR)$(bindir); rm -f oshrun$(EXEEXT); $(LN_S) mpirun$(EXEEXT) oshrun$(EXEEXT))
+	(cd $(DESTDIR)$(bindir); rm -f shmemrun$(EXEEXT); $(LN_S) prun$(EXEEXT) shmemrun$(EXEEXT))
+	(cd $(DESTDIR)$(bindir); rm -f oshrun$(EXEEXT); $(LN_S) prun$(EXEEXT) oshrun$(EXEEXT))
 
 install-data-always: mk_pkgdatadir
 	(cd $(DESTDIR)$(pkgdatadir); rm -f oshcc-wrapper-data.txt; $(LN_S) shmemcc-wrapper-data.txt oshcc-wrapper-data.txt)
@@ -109,11 +105,6 @@ targets_install_data += install-data-cs
 targets_uninstall_local += uninstall-local-cs
 endif # CASE_SENSITIVE_FS
 
-if PROJECT_ORTE
-targets_install_exec += install-exec-rte
-targets_uninstall_local += uninstall-local-rte
-endif # PROJECT_ORTE
-
 install-exec-hook: $(targets_install_exec)
 install-data-hook: $(targets_install_data)
 uninstall-local: $(targets_uninstall_local)
@@ -161,14 +152,5 @@ oshfort.1: $(top_builddir)/opal/tools/wrappers/generic_wrapper.1
 shmemfort.1: $(top_builddir)/opal/tools/wrappers/generic_wrapper.1
 	rm -f shmemfort.1
 	sed -e 's/#COMMAND#/shmemfort/g' -e 's/#PROJECT#/Open SHMEM/g' -e 's/#PROJECT_SHORT#/OSHMEM/g' -e 's/#LANGUAGE#/Fortran/g' < $(top_builddir)/opal/tools/wrappers/generic_wrapper.1 > shmemfort.1
-
-$(top_builddir)/orte/tools/orterun/orterun.1:
-	(cd $(top_builddir)/orte/tools/orterun && $(MAKE) $(AM_MAKEFLAGS) orterun.1)
-
-oshrun.1: $(top_builddir)/orte/tools/orterun/orterun.1
-	cp -f $(top_builddir)/orte/tools/orterun/orterun.1 oshrun.1
-
-shmemrun.1: $(top_builddir)/orte/tools/orterun/orterun.1
-	cp -f $(top_builddir)/orte/tools/orterun/orterun.1 shmemrun.1
 
 endif # PROJECT_OSHMEM

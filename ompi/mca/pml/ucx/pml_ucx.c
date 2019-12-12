@@ -3,9 +3,10 @@
  * Copyright (c) 2016      The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2018      Research Organization for Information Science
+ * Copyright (c) 2018-2019 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2018 IBM Corporation. All rights reserved.
+ * Copyright (c) 2019      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -16,7 +17,7 @@
 #include "pml_ucx.h"
 
 #include "opal/runtime/opal.h"
-#include "opal/mca/pmix/pmix.h"
+#include "opal/mca/pmix/pmix-internal.h"
 #include "ompi/attribute/attribute.h"
 #include "ompi/message/message.h"
 #include "ompi/mca/pml/base/pml_base_bsend.h"
@@ -111,7 +112,7 @@ static int mca_pml_ucx_send_worker_address_type(int addr_flags, int modex_scope)
     }
 
     PML_UCX_VERBOSE(2, "Pack %s worker address, size %ld",
-                    (modex_scope == OPAL_PMIX_LOCAL) ? "local" : "remote",
+                    (modex_scope == PMIX_LOCAL) ? "local" : "remote",
                     attrs.address_length);
 
     return OMPI_SUCCESS;
@@ -135,7 +136,7 @@ static int mca_pml_ucx_send_worker_address(void)
 
     PML_UCX_VERBOSE(2, "Pack worker address, size %ld", addrlen);
 
-    OPAL_MODEX_SEND(rc, OPAL_PMIX_GLOBAL,
+    OPAL_MODEX_SEND(rc, PMIX_GLOBAL,
                     &mca_pml_ucx_component.pmlm_version, (void*)address, addrlen);
 
     ucp_worker_release_address(ompi_pml_ucx.ucp_worker, address);
@@ -146,12 +147,12 @@ static int mca_pml_ucx_send_worker_address(void)
 #else
     /* Pack just network device addresses for remote node peers */
     status = mca_pml_ucx_send_worker_address_type(UCP_WORKER_ADDRESS_FLAG_NET_ONLY,
-                                                  OPAL_PMIX_REMOTE);
+                                                  PMIX_REMOTE);
     if (UCS_OK != status) {
         goto err;
     }
 
-    status = mca_pml_ucx_send_worker_address_type(0, OPAL_PMIX_LOCAL);
+    status = mca_pml_ucx_send_worker_address_type(0, PMIX_LOCAL);
     if (UCS_OK != status) {
         goto err;
     }

@@ -18,7 +18,7 @@
  * Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2015-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015-2019 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -243,7 +243,7 @@ smcuda_btl_first_time_init(mca_btl_smcuda_t *smcuda_btl,
     /* see if we were given a topology signature */
     wildcard_rank.jobid = OPAL_PROC_MY_NAME.jobid;
     wildcard_rank.vpid = OPAL_VPID_WILDCARD;
-    OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, OPAL_PMIX_TOPOLOGY_SIGNATURE,
+    OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, PMIX_TOPOLOGY_SIGNATURE,
                                    &wildcard_rank, &loc, OPAL_STRING);
     if (OPAL_SUCCESS == rc) {
         /* the number of NUMA nodes is right at the front */
@@ -266,7 +266,7 @@ smcuda_btl_first_time_init(mca_btl_smcuda_t *smcuda_btl,
         }
     }
     /* see if we were given our location */
-    OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, OPAL_PMIX_LOCALITY_STRING,
+    OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, PMIX_LOCALITY_STRING,
                                    &OPAL_PROC_MY_NAME, &loc, OPAL_STRING);
     if (OPAL_SUCCESS == rc) {
         if (NULL == loc) {

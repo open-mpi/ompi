@@ -7,6 +7,7 @@
  * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
+ * Copyright (c) 2019      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -28,7 +29,7 @@
 
 #include "ompi/constants.h"
 
-#include "ompi/mca/rte/rte.h"
+#include "ompi/runtime/ompi_rte.h"
 
 #include "netpatterns.h"
 

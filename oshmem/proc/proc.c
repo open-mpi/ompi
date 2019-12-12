@@ -208,10 +208,10 @@ oshmem_group_t* oshmem_proc_group_create(int pe_start, int pe_stride, int pe_siz
     /* Prepare peers list */
     OBJ_CONSTRUCT(&(group->peer_list), opal_list_t);
     {
-        ompi_namelist_t *peer = NULL;
+        opal_namelist_t *peer = NULL;
 
         for (i = 0; i < group->proc_count; i++) {
-            peer = OBJ_NEW(ompi_namelist_t);
+            peer = OBJ_NEW(opal_namelist_t);
             peer->name.jobid = OSHMEM_PROC_JOBID(group->proc_array[i]);
             peer->name.vpid = OSHMEM_PROC_VPID(group->proc_array[i]);
             opal_list_append(&(group->peer_list), &peer->super);

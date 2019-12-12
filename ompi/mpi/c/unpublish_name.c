@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2015-2016 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
@@ -26,7 +26,7 @@
 #include <stdio.h>
 
 #include "opal/class/opal_list.h"
-#include "opal/mca/pmix/pmix.h"
+#include "opal/mca/pmix/pmix-internal.h"
 #include "opal/util/argv.h"
 #include "opal/util/show_help.h"
 
@@ -49,11 +49,12 @@ static const char FUNC_NAME[] = "MPI_Unpublish_name";
 int MPI_Unpublish_name(const char *service_name, MPI_Info info,
                        const char *port_name)
 {
-    int rc;
+    int ret;
     char range[OPAL_MAX_INFO_VAL];
     int flag=0;
-    opal_list_t pinfo;
-    opal_value_t *rng;
+    pmix_status_t rc;
+    pmix_info_t pinfo;
+    pmix_data_range_t rng = PMIX_RANGE_SESSION;
     char **keys = NULL;
 
     if ( MPI_PARAM_CHECK ) {
@@ -73,19 +74,7 @@ int MPI_Unpublish_name(const char *service_name, MPI_Info info,
         }
     }
 
-    if (NULL == opal_pmix.publish) {
-        opal_show_help("help-mpi-api.txt",
-                       "MPI function not supported",
-                       true,
-                       FUNC_NAME,
-                       "Underlying runtime environment does not support name publishing functionality");
-        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD,
-                                      OMPI_ERR_NOT_SUPPORTED,
-                                      FUNC_NAME);
-    }
-
     OPAL_CR_ENTER_LIBRARY();
-    OBJ_CONSTRUCT(&pinfo, opal_list_t);
 
     /* OMPI supports info keys to pass the range to
      * be searched for the given key */
@@ -93,20 +82,11 @@ int MPI_Unpublish_name(const char *service_name, MPI_Info info,
         ompi_info_get (info, "range", sizeof(range) - 1, range, &flag);
         if (flag) {
             if (0 == strcmp(range, "nspace")) {
-                rng = OBJ_NEW(opal_value_t);
-                rng->key = strdup(OPAL_PMIX_RANGE);
-                rng->type = OPAL_INT;
-                rng->data.integer = OPAL_PMIX_RANGE_NAMESPACE;  // share only with procs in same nspace
-                opal_list_append(&pinfo, &rng->super);
+                rng = PMIX_RANGE_NAMESPACE;  // share only with procs in same nspace
             } else if (0 == strcmp(range, "session")) {
-                rng = OBJ_NEW(opal_value_t);
-                rng->key = strdup(OPAL_PMIX_RANGE);
-                rng->type = OPAL_INT;
-                rng->data.integer = OPAL_PMIX_RANGE_SESSION; // share only with procs in same session
-                opal_list_append(&pinfo, &rng->super);
+                rng = PMIX_RANGE_SESSION; // share only with procs in same session
             } else {
                 /* unrecognized scope */
-                OPAL_LIST_DESTRUCT(&pinfo);
                 return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
                                             FUNC_NAME);
             }
@@ -115,32 +95,33 @@ int MPI_Unpublish_name(const char *service_name, MPI_Info info,
 
     /* unpublish the service_name */
     opal_argv_append_nosize(&keys, service_name);
+    PMIX_INFO_LOAD(&pinfo, PMIX_RANGE, &rng, PMIX_DATA_RANGE);
 
-    rc = opal_pmix.unpublish(keys, &pinfo);
+    rc = PMIx_Unpublish(keys, &pinfo, 1);
     opal_argv_free(keys);
-    OPAL_LIST_DESTRUCT(&pinfo);
+    PMIX_INFO_DESTRUCT(&pinfo);
 
-    if ( OPAL_SUCCESS != rc ) {
-        if (OPAL_ERR_NOT_FOUND == rc) {
+    if ( PMIX_SUCCESS != rc ) {
+        if (PMIX_ERR_NOT_FOUND == rc) {
             /* service couldn't be found */
-            rc = MPI_ERR_SERVICE;
-        } else if (OPAL_ERR_PERM == rc) {
+            ret = MPI_ERR_SERVICE;
+        } else if (PMIX_ERR_NO_PERMISSIONS == rc) {
             /* this process didn't own the specified service */
-            rc = MPI_ERR_ACCESS;
-        } else if (OPAL_ERR_NOT_SUPPORTED == rc) {
+            ret = MPI_ERR_ACCESS;
+        } else if (PMIX_ERR_NOT_SUPPORTED == rc) {
             /* this PMIX environment doesn't support publishing */
-            rc = OMPI_ERR_NOT_SUPPORTED;
+            ret = OMPI_ERR_NOT_SUPPORTED;
             opal_show_help("help-mpi-api.txt",
                            "MPI function not supported",
                            true,
                            FUNC_NAME,
                            "Underlying runtime environment does not support name publishing functionality");
         } else {
-            rc = MPI_ERR_INTERN;
+            ret = MPI_ERR_INTERN;
         }
 
         OPAL_CR_EXIT_LIBRARY();
-        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, rc, FUNC_NAME);
+        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, ret, FUNC_NAME);
     }
 
     OPAL_CR_EXIT_LIBRARY();

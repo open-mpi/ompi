@@ -56,7 +56,7 @@
 #include "opal/util/show_help.h"
 #include "opal/util/printf.h"
 #include "opal/threads/tsd.h"
-#include "opal/mca/pmix/pmix.h"
+#include "opal/mca/pmix/pmix-internal.h"
 
 #include "opal/mca/hwloc/hwloc-internal.h"
 #include "opal/mca/hwloc/base/base.h"
@@ -294,75 +294,69 @@ int opal_hwloc_base_get_topology(void)
     wildcard_rank.jobid = OPAL_PROC_MY_NAME.jobid;
     wildcard_rank.vpid = OPAL_VPID_WILDCARD;
 
-    if (NULL != opal_pmix.get) {
 #if HWLOC_API_VERSION >= 0x20000
-        opal_output_verbose(2, opal_hwloc_base_framework.framework_output,
-                             "hwloc:base: looking for topology in shared memory");
+    opal_output_verbose(2, opal_hwloc_base_framework.framework_output,
+                         "hwloc:base: looking for topology in shared memory");
 
-        /* first try to get the shmem link, if available */
-        aptr = &addr;
-        sptr = &size;
-        OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, OPAL_PMIX_HWLOC_SHMEM_FILE,
-                                       &wildcard_rank, (void**)&shmemfile, OPAL_STRING);
-        OPAL_MODEX_RECV_VALUE_OPTIONAL(rc2, OPAL_PMIX_HWLOC_SHMEM_ADDR,
-                                       &wildcard_rank, (void**)&aptr, OPAL_SIZE);
-        OPAL_MODEX_RECV_VALUE_OPTIONAL(rc3, OPAL_PMIX_HWLOC_SHMEM_SIZE,
-                                       &wildcard_rank, (void**)&sptr, OPAL_SIZE);
-        if (OPAL_SUCCESS == rc && OPAL_SUCCESS == rc2 && OPAL_SUCCESS == rc3) {
-            if (0 > (fd = open(shmemfile, O_RDONLY))) {
-                free(shmemfile);
-                OPAL_ERROR_LOG(OPAL_ERR_FILE_OPEN_FAILURE)
-                return OPAL_ERR_FILE_OPEN_FAILURE;
-            }
+    /* first try to get the shmem link, if available */
+    aptr = &addr;
+    sptr = &size;
+    OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, PMIX_HWLOC_SHMEM_FILE,
+                                   &wildcard_rank, (void**)&shmemfile, PMIX_STRING);
+    OPAL_MODEX_RECV_VALUE_OPTIONAL(rc2, PMIX_HWLOC_SHMEM_ADDR,
+                                   &wildcard_rank, (void**)&aptr, PMIX_SIZE);
+    OPAL_MODEX_RECV_VALUE_OPTIONAL(rc3, PMIX_HWLOC_SHMEM_SIZE,
+                                   &wildcard_rank, (void**)&sptr, PMIX_SIZE);
+    if (OPAL_SUCCESS == rc && OPAL_SUCCESS == rc2 && OPAL_SUCCESS == rc3) {
+        if (0 > (fd = open(shmemfile, O_RDONLY))) {
             free(shmemfile);
-            if (0 != hwloc_shmem_topology_adopt(&opal_hwloc_topology, fd,
-                                                0, (void*)addr, size, 0)) {
-                if (4 < opal_output_get_verbosity(opal_hwloc_base_framework.framework_output)) {
-                    FILE *file = fopen("/proc/self/maps", "r");
-                    if (file) {
-                        char line[256];
-                        opal_output(0, "Dumping /proc/self/maps");
+            OPAL_ERROR_LOG(OPAL_ERR_FILE_OPEN_FAILURE)
+            return OPAL_ERR_FILE_OPEN_FAILURE;
+        }
+        free(shmemfile);
+        if (0 != hwloc_shmem_topology_adopt(&opal_hwloc_topology, fd,
+                                            0, (void*)addr, size, 0)) {
+            if (4 < opal_output_get_verbosity(opal_hwloc_base_framework.framework_output)) {
+                FILE *file = fopen("/proc/self/maps", "r");
+                if (file) {
+                    char line[256];
+                    opal_output(0, "Dumping /proc/self/maps");
 
-                        while (fgets(line, sizeof(line), file) != NULL) {
-                            char *end = strchr(line, '\n');
-                            if (end) {
-                                *end = '\0';
-                            }
-                            opal_output(0, "%s", line);
+                    while (fgets(line, sizeof(line), file) != NULL) {
+                        char *end = strchr(line, '\n');
+                        if (end) {
+                            *end = '\0';
                         }
-                        fclose(file);
+                        opal_output(0, "%s", line);
                     }
+                    fclose(file);
                 }
-                /* failed to adopt from shmem, fallback to other ways to get the topology */
-            } else {
-                opal_output_verbose(2, opal_hwloc_base_framework.framework_output,
-                                    "hwloc:base: topology in shared memory");
-                topo_in_shmem = true;
-                return OPAL_SUCCESS;
             }
+            /* failed to adopt from shmem, fallback to other ways to get the topology */
+        } else {
+            opal_output_verbose(2, opal_hwloc_base_framework.framework_output,
+                                "hwloc:base: topology in shared memory");
+            topo_in_shmem = true;
+            return OPAL_SUCCESS;
         }
+    }
 #endif
-        /* if that isn't available, then try to retrieve
-         * the xml representation from the PMIx data store */
-        opal_output_verbose(1, opal_hwloc_base_framework.framework_output,
-                            "hwloc:base[%s:%d] getting topology XML string",
-                            __FILE__, __LINE__);
+    /* if that isn't available, then try to retrieve
+     * the xml representation from the PMIx data store */
+    opal_output_verbose(1, opal_hwloc_base_framework.framework_output,
+                        "hwloc:base[%s:%d] getting topology XML string",
+                        __FILE__, __LINE__);
 #if HWLOC_API_VERSION >= 0x20000
-        OPAL_MODEX_RECV_VALUE_IMMEDIATE(rc, OPAL_PMIX_HWLOC_XML_V2,
-                                        &wildcard_rank, &val, OPAL_STRING);
+    OPAL_MODEX_RECV_VALUE_IMMEDIATE(rc, PMIX_HWLOC_XML_V2,
+                                    &wildcard_rank, &val, PMIX_STRING);
 #else
-        OPAL_MODEX_RECV_VALUE_IMMEDIATE(rc, OPAL_PMIX_HWLOC_XML_V1,
-                                        &wildcard_rank, &val, OPAL_STRING);
+    OPAL_MODEX_RECV_VALUE_IMMEDIATE(rc, PMIX_HWLOC_XML_V1,
+                                    &wildcard_rank, &val, PMIX_STRING);
 #endif
-        if (rc != OPAL_SUCCESS) {
-            /* check the old topo key to keep compatibility with older RMs */
-            OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, OPAL_PMIX_LOCAL_TOPO,
-                                           &wildcard_rank, &val, OPAL_STRING);
-        }
-    } else {
-        opal_output_verbose(1, opal_hwloc_base_framework.framework_output,
-                            "hwloc:base PMIx not available");
-        rc = OPAL_ERR_NOT_SUPPORTED;
+    if (rc != OPAL_SUCCESS) {
+        /* check the old topo key to keep compatibility with older RMs */
+        OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, PMIX_LOCAL_TOPO,
+                                       &wildcard_rank, &val, PMIX_STRING);
     }
 
     if (OPAL_SUCCESS == rc && NULL != val) {

@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2008-2018 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
- * Copyright (c) 2015-2016 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2016      Research Organization for Information Science
@@ -35,7 +35,7 @@
 #include "opal/prefetch.h"
 #include "opal/class/opal_object.h"
 #include "opal/class/opal_pointer_array.h"
-#include "opal/mca/pmix/pmix.h"
+#include "opal/mca/pmix/pmix-internal.h"
 
 #include "ompi/runtime/mpiruntime.h"
 #include "ompi/errhandler/errhandler_predefined.h"
@@ -392,10 +392,11 @@ typedef struct {
     int status;
 } ompi_errhandler_errtrk_t;
 
-OMPI_DECLSPEC void ompi_errhandler_callback(int status,
-                                            const opal_process_name_t *source,
-                                            opal_list_t *info, opal_list_t *results,
-                                            opal_pmix_notification_complete_fn_t cbfunc,
+OMPI_DECLSPEC void ompi_errhandler_callback(size_t refid, pmix_status_t status,
+                                            const pmix_proc_t *source,
+                                            pmix_info_t *info, size_t ninfo,
+                                            pmix_info_t *results, size_t nresults,
+                                            pmix_event_notification_cbfunc_fn_t cbfunc,
                                             void *cbdata);
 
 OMPI_DECLSPEC void ompi_errhandler_registration_callback(int status,

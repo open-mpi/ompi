@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010-2012 Sandia National Laboratories.  All rights reserved.
- * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      Bull SAS.  All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
@@ -26,7 +26,7 @@
 
 #include "opal/mca/event/event.h"
 #include "opal/util/output.h"
-#include "opal/mca/pmix/pmix.h"
+#include "opal/mca/pmix/pmix-internal.h"
 #include "opal/util/show_help.h"
 #include "opal/mca/btl/btl.h"
 #include "opal/mca/btl/base/base.h"
@@ -457,7 +457,7 @@ static mca_btl_base_module_t** mca_btl_portals4_component_init(int *num_btls,
                   ptl_process_ids[interface].rank,
                   ptl_process_ids[interface].phys.nid, ptl_process_ids[interface].phys.pid));
     }
-    OPAL_MODEX_SEND(ret, OPAL_PMIX_GLOBAL,
+    OPAL_MODEX_SEND(ret, PMIX_GLOBAL,
                     &mca_btl_portals4_component.super.btl_version,
                     ptl_process_ids, mca_btl_portals4_component.num_btls * sizeof(ptl_process_t));
     if (OPAL_SUCCESS != ret) {

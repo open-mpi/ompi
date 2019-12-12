@@ -5,7 +5,7 @@
  *                         reserved.
  * Copyright (c) 2011-2018 Inria.  All rights reserved.
  * Copyright (c) 2011-2018 Bordeaux Polytechnic Institute
- * Copyright (c) 2015-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
@@ -34,7 +34,7 @@
 
 #include "ompi/mca/pml/pml.h"
 
-#include "opal/mca/pmix/pmix.h"
+#include "opal/mca/pmix/pmix-internal.h"
 
 /* #define __DEBUG__ 1  */
 
@@ -170,8 +170,8 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
             vpids[num_procs_in_node++] = i;
 
         pval = &val;
-        OPAL_MODEX_RECV_VALUE(err, OPAL_PMIX_NODEID, &(proc->super.proc_name), &pval, OPAL_UINT32);
-        if( OPAL_SUCCESS != err ) {
+        OPAL_MODEX_RECV_VALUE(err, PMIX_NODEID, &(proc->super.proc_name), &pval, PMIX_UINT32);
+        if( PMIX_SUCCESS != err ) {
             opal_output(0, "Unable to extract peer %s nodeid from the modex.\n",
                         OMPI_NAME_PRINT(&(proc->super.proc_name)));
             colors[i] = -1;

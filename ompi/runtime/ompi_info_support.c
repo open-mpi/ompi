@@ -15,6 +15,7 @@
  * Copyright (c) 2010-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
+ * Copyright (c) 2019      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -32,10 +33,6 @@
 
 #include "opal/runtime/opal_info_support.h"
 #include "ompi/runtime/ompi_info_support.h"
-
-#if OMPI_RTE_ORTE
-#include "orte/runtime/orte_info_support.h"
-#endif
 
 #include "opal/util/show_help.h"
 #include "opal/util/printf.h"
@@ -78,13 +75,6 @@ int ompi_info_register_framework_params(opal_pointer_array_t *component_map)
         return rc;
     }
 
-#if OMPI_RTE_ORTE
-    rc = orte_info_register_framework_params(component_map);
-    if (ORTE_SUCCESS != rc) {
-        return rc;
-    }
-#endif
-
     return opal_info_register_project_frameworks(ompi_info_type_ompi, ompi_frameworks, component_map);
 }
 
@@ -110,11 +100,6 @@ void ompi_info_close_components(void)
         (void) mca_base_framework_close(ompi_frameworks[i]);
     }
 
-#if OMPI_RTE_ORTE
-    /* close the ORTE components */
-    (void) orte_info_close_components();
-#endif
-
     (void) opal_info_close_components();
 }
 
@@ -137,11 +122,6 @@ void ompi_info_show_ompi_version(const char *scope)
     (void)opal_asprintf(&tmp, "%s:version:release_date", ompi_info_type_ompi);
     opal_info_out("Open MPI release date", tmp, OMPI_RELEASE_DATE);
     free(tmp);
-
-#if OMPI_RTE_ORTE
-    /* show the orte version */
-    orte_info_show_orte_version(scope);
-#endif
 
     /* show the opal version */
     opal_info_show_opal_version(scope);

@@ -13,6 +13,7 @@
  * Copyright (c) 2015-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2019      Google, LLC. All rights reserved.
+ * Copyright (c) 2019      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -37,7 +38,7 @@
 #include "opal/mca/rcache/base/base.h"
 #include "opal/class/opal_fifo.h"
 #include "opal/class/opal_hash_table.h"
-#include "opal/mca/pmix/pmix.h"
+#include "opal/mca/pmix/pmix-internal.h"
 #include "opal/threads/tsd.h"
 #include <uct/api/uct.h>
 

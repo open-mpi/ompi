@@ -12,7 +12,7 @@
 #                         All rights reserved.
 # Copyright (c) 2007-2018 Cisco Systems, Inc.  All rights reserved
 # Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
-# Copyright (c) 2017      Intel, Inc. All rights reserved.
+# Copyright (c) 2017-2020 Intel, Inc.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -119,3 +119,12 @@ Aborting...
 There was an error registering software performance counters (SPCs) as
 MPI_T performance variables.  Your job will continue, but SPCs will be
 disabled for MPI_T.
+#
+[no-pmi]
+PMIx_Init failed for the following reason:
+
+  %s
+
+Open MPI requires access to a local PMIx server to execute. Please ensure
+that either you are operating in a PMIx-enabled environment, or use "mpirun"
+to execute the job.

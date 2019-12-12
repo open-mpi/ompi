@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2016      Intel, Inc. All rights reserved.
+ * Copyright (c) 2019      Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -20,13 +22,8 @@
 #ifndef OMPI_CONSTANTS_H
 #define OMPI_CONSTANTS_H
 
-#if defined(OMPI_RTE_ORTE) && OMPI_RTE_ORTE
-#include "orte/constants.h"
-#define OMPI_ERR_BASE   ORTE_ERR_MAX
-#else
 #include "opal/constants.h"
 #define OMPI_ERR_BASE   OPAL_ERR_MAX
-#endif
 
 /* error codes */
 enum {

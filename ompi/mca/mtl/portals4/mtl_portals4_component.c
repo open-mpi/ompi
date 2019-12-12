@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010-2012 Sandia National Laboratories.  All rights reserved.
- * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * $COPYRIGHT$
@@ -25,7 +25,7 @@
 
 #include "opal/mca/event/event.h"
 #include "opal/util/output.h"
-#include "opal/mca/pmix/pmix.h"
+#include "opal/mca/pmix/pmix-internal.h"
 
 #include "mtl_portals4.h"
 #include "mtl_portals4_request.h"
@@ -411,7 +411,7 @@ ompi_mtl_portals4_component_init(bool enable_progress_threads,
     OPAL_OUTPUT_VERBOSE((90, ompi_mtl_base_framework.framework_output,
         "PtlGetPhysId rank=%x nid=%x pid=%x\n", id.rank, id.phys.nid, id.phys.pid));
 
-    OPAL_MODEX_SEND(ret, OPAL_PMIX_GLOBAL,
+    OPAL_MODEX_SEND(ret, PMIX_GLOBAL,
                     &mca_mtl_portals4_component.mtl_version,
                     &id, sizeof(id));
     if (OMPI_SUCCESS != ret) {
