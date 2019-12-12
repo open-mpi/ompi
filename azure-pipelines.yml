@@ -42,4 +42,5 @@ steps:
       id
       echo "==============================================================================="
   - bash: |
-      WORKSPACE=`pwd -P`/ompi ${WORKSPACE}/jenkins_scripts/jenkins/ompi/ompi_jenkins.sh
+      export WORKSPACE=${PIPELINE_WORKSPACE}/ompi
+      ${PIPELINE_WORKSPACE}/jenkins_scripts/jenkins/ompi/ompi_jenkins.sh
