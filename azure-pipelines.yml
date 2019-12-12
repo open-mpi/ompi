@@ -11,20 +11,26 @@ pool:
   name: Default
   demands: CUSTOM_CAPABILITY -equals qqq
 
-container: centos:7
+#container: centos:7
 
-resources:
-  repositories:
-    - repository: jenkins_scripts
-      type: github
-      endpoint: itemko
-      name: itemko/jenkins_scripts
-      ref: artemry/ompi_review
+#resources:
+#  repositories:
+#    - repository: jenkins_scripts
+#      type: github
+#      endpoint: itemko
+#      name: itemko/jenkins_scripts
+#      ref: artemry/ompi_review
 
 steps:
+  - task: Docker@2
+      displayName: Build docker image
+      inputs:
+        command: build
+        Dockerfile: Dockerfile
+        arguments: --no-cache --network=host --rm --force-rm --label=ompi --build-arg OMPI_CI_OS=${OMPI_CI_OS} --build-arg OMPI_CI_OFED=${OMPI_CI_OFED}
   - checkout: self
     submodules: true
-  - checkout: jenkins_scripts
+#  - checkout: jenkins_scripts
   - bash: |
       echo "==============================================================================="
       hostname
@@ -44,5 +50,8 @@ steps:
       id
       echo "==============================================================================="
   - bash: |
+      set -x
+      git clone https://github.com/itemko/jenkins_scripts.git
+      cd jenkins_scripts && git checkout artemry/ompi_review && cd - > /dev/null
       export WORKSPACE=${BUILD_SOURCESDIRECTORY}/ompi
       ${BUILD_SOURCESDIRECTORY}/jenkins_scripts/jenkins/ompi/ompi_jenkins.sh
