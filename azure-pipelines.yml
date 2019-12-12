@@ -10,13 +10,17 @@ pool:
 
 container: centos:7
 
+resources:
+  - repository: jenkins_scripts
+    type: github
+    endpoint: itemko
+    name: mellanox-hpc/jenkins_scripts
+
 steps:
   - checkout: self
     submodules: true
-  # - checkout: github://mellanox-hpc/jenkins_scripts
-    # path: jenkins_scripts
-  - script: echo Hello, world!
-    displayName: 'Run a one-line script'
+  - checkout: jenkins_scripts@artemry/ompi_review
+    path: jenkins_scripts
   - bash: |
       set -eE
       echo "==============================================================================="
