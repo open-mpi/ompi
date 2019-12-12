@@ -22,14 +22,14 @@ pool:
 #      ref: artemry/ompi_review
 
 steps:
+  - checkout: self
+    submodules: true
   - task: Docker@2
     displayName: Build docker image
     inputs:
       command: build
-      Dockerfile: Dockerfile
+      Dockerfile: ompi/Dockerfile
       arguments: --no-cache --network=host --rm --force-rm --label=ompi --build-arg OMPI_CI_OS=${OMPI_CI_OS} --build-arg OMPI_CI_OFED=${OMPI_CI_OFED}
-  - checkout: self
-    submodules: true
 #  - checkout: jenkins_scripts
   - bash: |
       echo "==============================================================================="
