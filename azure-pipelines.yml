@@ -2,13 +2,15 @@
 
 trigger:
   - master
+# TODO all the PRs
 pr:
   - master
 
 pool:
-  vmImage: 'ubuntu-16.04'
+#  vmImage: 'ubuntu-16.04'
+  name: 'Default'
 
-container: centos:7
+#container: centos:7
 
 resources:
   repositories:
@@ -40,9 +42,7 @@ steps:
       ls -al
       echo "==============================================================================="
       id
-      echo "==============================================================================="
-      find ${BUILD_SOURCESDIRECTORY}/jenkins_scripts
-      echo "==============================================================================="
+      echo "===============================================================================
   - bash: |
       export WORKSPACE=${BUILD_SOURCESDIRECTORY}/ompi
       ${BUILD_SOURCESDIRECTORY}/jenkins_scripts/jenkins/ompi/ompi_jenkins.sh
