@@ -10,14 +10,12 @@ pool:
 
 container: centos:7
 
-# container:
-  # image: docker.io/centos7:latest
-  # endpoint: itemko_private_dockerhub
-
 steps:
+  - checkout: self
+  - checkout: github://mellanox-hpc/jenkins_scripts
+    path: jenkins_scripts
   - script: echo Hello, world!
     displayName: 'Run a one-line script'
-
   - bash: |
       set -eE
       echo "==============================================================================="
