@@ -11,10 +11,11 @@ pool:
 container: centos:7
 
 resources:
-  - repository: jenkins_scripts
-    type: github
-    endpoint: itemko
-    name: mellanox-hpc/jenkins_scripts
+  repositories:
+    - repository: jenkins_scripts
+      type: github
+      endpoint: itemko
+      name: mellanox-hpc/jenkins_scripts
 
 steps:
   - checkout: self
