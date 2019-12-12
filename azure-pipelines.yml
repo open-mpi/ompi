@@ -22,15 +22,15 @@ pool:
 #      ref: artemry/ompi_review
 
 variables:
-  ompi_ci_os: 'centos:7'
-  ompi_ci_ofed: 'mofed-4.7-1.0.0.1'
+  ompi_ci_os: centos:7
+  ompi_ci_ofed: mofed-4.7-1.0.0.1
 
 jobs:
-  - job: 'Preparations'
+  - job: Preparations
     steps:
-      - checkout: 'self'
-        submodules: 'true'
-        path: 'ompi'
+      - checkout: self
+        submodules: true
+        path: ompi
       - bash: |
           set -x
           DOCKER_BUILD_CONTEXT_DIR="/tmp/ompi_build_docker_image_${BUILD_BUILDID}"
@@ -39,15 +39,15 @@ jobs:
           echo "##vso[task.setvariable variable=docker_build_context_dir]${DOCKER_BUILD_CONTEXT_DIR}"
       - bash: |
           echo "INFO: DOCKER_BUILD_CONTEXT_DIR = ${DOCKER_BUILD_CONTEXT_DIR}"
-      - task: 'Docker@2'
-        displayName: 'Build docker image'
+      - task: Docker@2
+        displayName: Build docker image
         inputs:
-          command: 'build'
-          Dockerfile: 'Dockerfile'
-          arguments: '--no-cache --network=host --rm --force-rm --label=ompi --build-arg OMPI_CI_OS=${OMPI_CI_OS} --build-arg OMPI_CI_OFED=${OMPI_CI_OFED}'
+          command: build
+          Dockerfile: Dockerfile
+          arguments: --no-cache --network=host --rm --force-rm --label=ompi --build-arg OMPI_CI_OS=${OMPI_CI_OS} --build-arg OMPI_CI_OFED=${OMPI_CI_OFED}
           buildContext: $(DOCKER_BUILD_CONTEXT_DIR)
-          repository: 'centos_ompi'
-          tags: '$(Build.BuildId)'
+          repository: centos_ompi
+          tags: $(Build.BuildId)
     #  - checkout: jenkins_scripts
       - bash: |
           echo "==============================================================================="
@@ -71,7 +71,7 @@ jobs:
           echo "==============================================================================="
           docker ps -a
           echo "==============================================================================="
-  - job: 'Build and test'
+  - job: Build and test
     steps:
       - bash: |
           set -x
