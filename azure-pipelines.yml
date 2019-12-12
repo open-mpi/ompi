@@ -42,7 +42,7 @@ steps:
       ls -al
       echo "==============================================================================="
       id
-      echo "===============================================================================
+      echo "==============================================================================="
   - bash: |
       export WORKSPACE=${BUILD_SOURCESDIRECTORY}/ompi
       ${BUILD_SOURCESDIRECTORY}/jenkins_scripts/jenkins/ompi/ompi_jenkins.sh
