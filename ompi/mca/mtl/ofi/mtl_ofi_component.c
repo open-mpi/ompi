@@ -341,21 +341,12 @@ is_in_list(char **list, char *item)
 }
 
 static struct fi_info*
-select_ofi_provider(struct fi_info *providers)
+select_ofi_provider(struct fi_info *providers,
+                    char **include_list, char **exclude_list)
 {
-    char **include_list = NULL;
-    char **exclude_list = NULL;
     struct fi_info *prov = providers;
 
-    opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
-                        "%s:%d: mtl:ofi:provider_include = \"%s\"\n",
-                        __FILE__, __LINE__, prov_include);
-    opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
-                        "%s:%d: mtl:ofi:provider_exclude = \"%s\"\n",
-                        __FILE__, __LINE__, prov_exclude);
-
-    if (NULL != prov_include) {
-        include_list = opal_argv_split(prov_include, ',');
+    if (NULL != include_list) {
         while ((NULL != prov) &&
                (!is_in_list(include_list, prov->fabric_attr->prov_name))) {
             opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
@@ -364,8 +355,7 @@ select_ofi_provider(struct fi_info *providers)
                                 prov->fabric_attr->prov_name);
             prov = prov->next;
         }
-    } else if (NULL != prov_exclude) {
-        exclude_list = opal_argv_split(prov_exclude, ',');
+    } else if (NULL != exclude_list) {
         while ((NULL != prov) &&
                (is_in_list(exclude_list, prov->fabric_attr->prov_name))) {
             opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
@@ -375,9 +365,6 @@ select_ofi_provider(struct fi_info *providers)
             prov = prov->next;
         }
     }
-
-    opal_argv_free(include_list);
-    opal_argv_free(exclude_list);
 
     opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                         "%s:%d: mtl:ofi:prov: %s\n",
@@ -621,7 +608,9 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
     int ret, fi_version;
     int num_local_ranks, sep_support_in_provider, max_ofi_ctxts;
     int ofi_tag_leading_zeros, ofi_tag_bits_for_cid;
-    struct fi_info *hints;
+    char **include_list = NULL;
+    char **exclude_list = NULL;
+    struct fi_info *hints, *hints_dup = NULL;
     struct fi_info *providers = NULL;
     struct fi_info *prov = NULL;
     struct fi_info *prov_cq_data = NULL;
@@ -629,6 +618,19 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
     size_t namelen;
     int universe_size;
     char *univ_size_str;
+
+    opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+                        "%s:%d: mtl:ofi:provider_include = \"%s\"\n",
+                        __FILE__, __LINE__, prov_include);
+    opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+                        "%s:%d: mtl:ofi:provider_exclude = \"%s\"\n",
+                        __FILE__, __LINE__, prov_exclude);
+
+    if (NULL != prov_include) {
+        include_list = opal_argv_split(prov_include, ',');
+    } else if (NULL != prov_exclude) {
+        exclude_list = opal_argv_split(prov_exclude, ',');
+    }
 
     /**
      * Hints to filter providers
@@ -708,6 +710,52 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
     fi_version = FI_VERSION(1, 5);
 
     /**
+     * The EFA provider in Libfabric versions prior to 1.10 contains a bug
+     * where the FI_LOCAL_COMM and FI_REMOTE_COMM capabilities are not
+     * advertised.  However, we know that this provider supports both local and
+     * remote communication. We must exclude these capability bits in order to
+     * select EFA when we are using a version of Libfabric with this bug.
+     *
+     * Call fi_getinfo() without those capabilities and specifically ask for
+     * the EFA provider. This is safe to do as EFA is only supported on Amazon
+     * EC2 and EC2 only supports EFA and TCP-based networks. We'll also skip
+     * this logic if the user specifies an include list without EFA or adds EFA
+     * to the exclude list.
+     */
+    if ((include_list && is_in_list(include_list, "efa")) ||
+        (exclude_list && !is_in_list(exclude_list, "efa"))) {
+        hints_dup = fi_dupinfo(hints);
+        hints_dup->caps &= ~(FI_LOCAL_COMM | FI_REMOTE_COMM);
+        hints_dup->fabric_attr->prov_name = strdup("efa");
+
+        ret = fi_getinfo(fi_version, NULL, NULL, 0ULL, hints_dup, &providers);
+
+        opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+                            "%s:%d: EFA specific fi_getinfo(): %s\n",
+                            __FILE__, __LINE__, fi_strerror(-ret));
+
+        if (FI_ENODATA == -ret) {
+            /**
+             * EFA is not available so fall through to call fi_getinfo() again
+             * with the local/remote capabilities set.
+             */
+            fi_freeinfo(hints_dup);
+            hints_dup = NULL;
+        } else if (0 != ret) {
+            opal_show_help("help-mtl-ofi.txt", "OFI call fail", true,
+                           "fi_getinfo",
+                           ompi_process_info.nodename, __FILE__, __LINE__,
+                           fi_strerror(-ret), -ret);
+            goto error;
+        } else {
+            fi_freeinfo(hints);
+            hints = hints_dup;
+            hints_dup = NULL;
+            goto select_prov;
+        }
+    }
+
+    /**
      * fi_getinfo:  returns information about fabric  services for reaching a
      * remote node or service.  this does not necessarily allocate resources.
      * Pass NULL for name/service because we want a list of providers supported.
@@ -718,6 +766,11 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
                      0ULL,          /* Optional flag                            */
                      hints,         /* In: Hints to filter providers            */
                      &providers);   /* Out: List of matching providers          */
+
+    opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+                        "%s:%d: fi_getinfo(): %s\n",
+                        __FILE__, __LINE__, fi_strerror(-ret));
+
     if (FI_ENODATA == -ret) {
         // It is not an error if no information is returned.
         goto error;
@@ -729,16 +782,22 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
         goto error;
     }
 
+select_prov:
     /**
      * Select a provider from the list returned by fi_getinfo().
      */
-    prov = select_ofi_provider(providers);
+    prov = select_ofi_provider(providers, include_list, exclude_list);
     if (!prov) {
         opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                             "%s:%d: select_ofi_provider: no provider found\n",
                             __FILE__, __LINE__);
         goto error;
     }
+
+    opal_argv_free(include_list);
+    include_list = NULL;
+    opal_argv_free(exclude_list);
+    exclude_list = NULL;
 
     /**
      * Select the format of the OFI tag
@@ -1013,6 +1072,12 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
     return &ompi_mtl_ofi.base;
 
 error:
+    if (include_list) {
+        opal_argv_free(include_list);
+    }
+    if (exclude_list) {
+        opal_argv_free(exclude_list);
+    }
     if (providers) {
         (void) fi_freeinfo(providers);
     }
@@ -1021,6 +1086,9 @@ error:
     }
     if (hints) {
         (void) fi_freeinfo(hints);
+    }
+    if (hints_dup) {
+        (void) fi_freeinfo(hints_dup);
     }
     if (ompi_mtl_ofi.sep) {
         (void) fi_close((fid_t)ompi_mtl_ofi.sep);
