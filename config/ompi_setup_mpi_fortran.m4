@@ -15,8 +15,8 @@ dnl Copyright (c) 2006-2008 Sun Microsystems, Inc.  All rights reserved.
 dnl Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
 dnl                         reserved.
 dnl Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
-dnl Copyright (c) 2014-2017 Research Organization for Information Science
-dnl                         and Technology (RIST). All rights reserved.
+dnl Copyright (c) 2014-2019 Research Organization for Information Science
+dnl                         and Technology (RIST).  All rights reserved.
 dnl Copyright (c) 2016      IBM Corporation.  All rights reserved.
 dnl $COPYRIGHT$
 dnl
@@ -743,8 +743,7 @@ end type test_mpi_handle],
                        [$OMPI_FORTRAN_HAVE_PRIVATE],
                        [For mpi-f08-types.f90 and ompi_info: whether the compiler supports the "private" keyword or not (used in MPI_Status)])
 
-    # For configure-fortran-output.h, mpi-f08-types.F90 (and ompi_info)
-    AC_SUBST([OMPI_FORTRAN_HAVE_PROTECTED])
+    # For ompi_info only
     AC_DEFINE_UNQUOTED([OMPI_FORTRAN_HAVE_PROTECTED],
                        [$OMPI_FORTRAN_HAVE_PROTECTED],
                        [For mpi-f08-types.f90 and .F90 and ompi_info: whether the compiler supports the "protected" keyword or not])
