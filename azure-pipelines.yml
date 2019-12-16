@@ -73,6 +73,7 @@ jobs:
           docker ps -a
           echo "==============================================================================="
   - job: BuildAndTest
+    dependsOn: Preparations
     pool:
       name: Default
       demands: CUSTOM_CAPABILITY -equals ompi
