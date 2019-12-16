@@ -8,8 +8,8 @@ pr:
 
 pool:
   #vmImage: 'ubuntu-16.04'
-  name: 'Default'
-  demands: 'CUSTOM_CAPABILITY -equals qqq'
+  name: Default
+  demands: CUSTOM_CAPABILITY -equals ompi
 
 #container: centos:7
 
@@ -22,7 +22,8 @@ pool:
 #      ref: artemry/ompi_review
 
 variables:
-  ompi_ci_os: centos:7
+  ompi_ci_os_name: centos
+  ompi_ci_os_version: 7
   ompi_ci_ofed: mofed-4.7-1.0.0.1
 
 jobs:
@@ -44,9 +45,9 @@ jobs:
         inputs:
           command: build
           Dockerfile: Dockerfile
-          arguments: --no-cache --network=host --rm --force-rm --label=ompi --build-arg OMPI_CI_OS=${OMPI_CI_OS} --build-arg OMPI_CI_OFED=${OMPI_CI_OFED}
+          arguments: --no-cache --network=host --rm --force-rm --label=ompi --build-arg OMPI_CI_OS=${OMPI_CI_OS_NAME}:${OMPI_CI_OS_VERSION} --build-arg OMPI_CI_OFED=${OMPI_CI_OFED}
           buildContext: $(DOCKER_BUILD_CONTEXT_DIR)
-          repository: centos_ompi
+          repository: $(OMPI_CI_OS_NAME)_ompi
           tags: $(Build.BuildId)
     #  - checkout: jenkins_scripts
       - bash: |
