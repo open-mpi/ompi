@@ -40,10 +40,6 @@ AC_DEFUN([MCA_opal_memory_patcher_CONFIG],[
 
     AC_CHECK_HEADERS([linux/mman.h sys/syscall.h])
 
-    AC_CHECK_DECLS([__mmap], [], [], [#include <sys/mman.h>])
-
-    AC_CHECK_FUNCS([__mmap])
-
     AC_CHECK_DECLS([__syscall], [], [], [#include <sys/syscall.h>])
 
     AC_CHECK_FUNCS([__syscall])
