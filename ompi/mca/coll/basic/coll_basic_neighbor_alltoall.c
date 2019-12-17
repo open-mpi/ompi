@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2016 The University of Tennessee and The University
+ * Copyright (c) 2004-2019 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -15,6 +15,7 @@
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
+ * Copyright (c) 2019      Google, LLC. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -36,6 +37,10 @@
 #include "coll_basic.h"
 #include "ompi/mca/topo/base/base.h"
 
+/**
+ * We only have 1024 tags for the neighbor collective, so for now we only support
+ * 512 dimensions.
+ */
 static int
 mca_coll_basic_neighbor_alltoall_cart(const void *sbuf, int scount, struct ompi_datatype_t *sdtype, void *rbuf,
                                       int rcount, struct ompi_datatype_t *rdtype, struct ompi_communicator_t *comm,
@@ -67,7 +72,7 @@ mca_coll_basic_neighbor_alltoall_cart(const void *sbuf, int scount, struct ompi_
         if (MPI_PROC_NULL != srank) {
             nreqs++;
             rc = MCA_PML_CALL(irecv(rbuf, rcount, rdtype, srank,
-                                    MCA_COLL_BASE_TAG_ALLTOALL,
+                                    MCA_COLL_BASE_TAG_NEIGHBOR_BASE - 2 * dim,
                                     comm, preqs++));
             if (OMPI_SUCCESS != rc) break;
         }
@@ -77,7 +82,7 @@ mca_coll_basic_neighbor_alltoall_cart(const void *sbuf, int scount, struct ompi_
         if (MPI_PROC_NULL != drank) {
             nreqs++;
             rc = MCA_PML_CALL(irecv(rbuf, rcount, rdtype, drank,
-                                    MCA_COLL_BASE_TAG_ALLTOALL,
+                                    MCA_COLL_BASE_TAG_NEIGHBOR_BASE - 2 * dim - 1,
                                     comm, preqs++));
             if (OMPI_SUCCESS != rc) break;
         }
@@ -104,7 +109,7 @@ mca_coll_basic_neighbor_alltoall_cart(const void *sbuf, int scount, struct ompi_
              * a const for the send buffer. */
             nreqs++;
             rc = MCA_PML_CALL(isend((void *) sbuf, scount, sdtype, srank,
-                                    MCA_COLL_BASE_TAG_ALLTOALL,
+                                    MCA_COLL_BASE_TAG_NEIGHBOR_BASE - 2 * dim - 1,
                                     MCA_PML_BASE_SEND_STANDARD,
                                     comm, preqs++));
             if (OMPI_SUCCESS != rc) break;
@@ -115,7 +120,7 @@ mca_coll_basic_neighbor_alltoall_cart(const void *sbuf, int scount, struct ompi_
         if (MPI_PROC_NULL != drank) {
             nreqs++;
             rc = MCA_PML_CALL(isend((void *) sbuf, scount, sdtype, drank,
-                                    MCA_COLL_BASE_TAG_ALLTOALL,
+                                    MCA_COLL_BASE_TAG_NEIGHBOR_BASE - 2 * dim,
                                     MCA_PML_BASE_SEND_STANDARD,
                                     comm, preqs++));
             if (OMPI_SUCCESS != rc) break;

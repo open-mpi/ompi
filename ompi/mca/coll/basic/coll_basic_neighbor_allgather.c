@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2016 The University of Tennessee and The University
+ * Copyright (c) 2004-2019 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -70,7 +70,7 @@ mca_coll_basic_neighbor_allgather_cart(const void *sbuf, int scount,
         if (MPI_PROC_NULL != srank) {
             nreqs++;
             rc = MCA_PML_CALL(irecv(rbuf, rcount, rdtype, srank,
-                                    MCA_COLL_BASE_TAG_ALLGATHER,
+                                    MCA_COLL_BASE_TAG_NEIGHBOR_BASE - 2 * dim,
                                     comm, preqs++));
             if (OMPI_SUCCESS != rc) break;
 
@@ -78,7 +78,7 @@ mca_coll_basic_neighbor_allgather_cart(const void *sbuf, int scount,
             /* remove cast from const when the pml layer is updated to take
              * a const for the send buffer. */
             rc = MCA_PML_CALL(isend((void *) sbuf, scount, sdtype, srank,
-                                    MCA_COLL_BASE_TAG_ALLGATHER,
+                                    MCA_COLL_BASE_TAG_NEIGHBOR_BASE - 2 * dim - 1,
                                     MCA_PML_BASE_SEND_STANDARD,
                                     comm, preqs++));
             if (OMPI_SUCCESS != rc) break;
@@ -89,13 +89,13 @@ mca_coll_basic_neighbor_allgather_cart(const void *sbuf, int scount,
         if (MPI_PROC_NULL != drank) {
             nreqs++;
             rc = MCA_PML_CALL(irecv(rbuf, rcount, rdtype, drank,
-                                    MCA_COLL_BASE_TAG_ALLGATHER,
+                                    MCA_COLL_BASE_TAG_NEIGHBOR_BASE - 2 * dim - 1,
                                     comm, preqs++));
             if (OMPI_SUCCESS != rc) break;
 
             nreqs++;
             rc = MCA_PML_CALL(isend((void *) sbuf, scount, sdtype, drank,
-                                    MCA_COLL_BASE_TAG_ALLGATHER,
+                                    MCA_COLL_BASE_TAG_NEIGHBOR_BASE - 2 * dim,
                                     MCA_PML_BASE_SEND_STANDARD,
                                     comm, preqs++));
             if (OMPI_SUCCESS != rc) break;
