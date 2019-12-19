@@ -63,10 +63,10 @@ steps:
     echo "==============================================================================="
 - bash: |
     set -eEx
-    git clone $(ompi_jenkins_scripts_git_repo_url)
+    cd ${PIPELINE_WORKSPACE} && git clone $(ompi_jenkins_scripts_git_repo_url)
     cd jenkins_scripts && git checkout $(ompi_jenkins_scripts_git_branch) && cd - > /dev/null
-    export WORKSPACE_JENKINS_SCRIPTS=${BUILD_SOURCESDIRECTORY}/jenkins_scripts
-    export WORKSPACE_OMPI=${BUILD_SOURCESDIRECTORY}/ompi
+    export WORKSPACE_JENKINS_SCRIPTS=${PIPELINE_WORKSPACE}/jenkins_scripts
+    export WORKSPACE_OMPI=${PIPELINE_WORKSPACE}/ompi
     export OMPI_CI_DOCKER_IMAGE_NAME=$(OMPI_CI_OS_NAME)_ompi:$(Build.BuildId)
     ${WORKSPACE_JENKINS_SCRIPTS}/jenkins/ompi/ompi_jenkins_docker_launcher.sh
 #- bash: |
