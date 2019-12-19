@@ -1252,28 +1252,26 @@ MISCELLANEOUS SUPPORT LIBRARIES
   this option is only needed for special configurations.
 
 --with-hwloc(=value)
-  Build hwloc support (default: enabled).  This option specifies where
+  hwloc is a support library that provides processor and memory
+  affinity information for NUMA platforms.  It is required by Open
+  MPI.  Therefore, specifying --with-hwloc=no (or --without-hwloc) is
+  disallowed.
+
+  By default (i.e., if --with-hwloc is not specified, or if
+  --with-hwloc is specified without a value), Open MPI will first try
+  to find/use an hwloc installation on the current system.  If Open
+  MPI cannot find one, it will fall back to build and use the internal
+  copy of hwloc included in the Open MPI source tree.
+
+  Alternatively, the --with-hwloc option can be used to specify where
   to find the hwloc support headers and library.  The following values
   are permitted:
 
-    internal:    Use Open MPI's internal copy of hwloc.
-    external:    Use an external hwloc installation (rely on default
-                 compiler and linker paths to find it)
-    <no value>:  Same as "internal".
-    <directory>: Specify the location of a specific hwloc
-                 installation to use
-
-  By default (or if --with-hwloc is specified with no VALUE), Open MPI
-  will build and use the copy of hwloc that it has in its source tree.
-  However, if the VALUE is "external", Open MPI will look for the
-  relevant hwloc header files and library in default compiler / linker
-  locations.  Or, VALUE can be a directory tree where the hwloc header
-  file and library can be found.  This option allows operating systems
-  to include Open MPI and use their default hwloc installation instead
-  of Open MPI's bundled hwloc.
-
-  hwloc is a support library that provides processor and memory
-  affinity information for NUMA platforms.
+    internal:    Only use Open MPI's internal copy of hwloc.
+    external:    Only use an external hwloc installation (rely on
+                 default compiler and linker paths to find it).
+    <directory>: Only use the specific hwloc installation found in
+                 the specified directory.
 
 --with-hwloc-libdir=<directory>
   Look in directory for the hwloc libraries.  This option is only

@@ -75,6 +75,10 @@ AC_DEFUN([MCA_opal_hwloc_CONFIG_REQUIRE],[
            AC_MSG_WARN([an external copy that you supply.])
            AC_MSG_ERROR([Cannot continue])])
 
+    # check for no-op
+    AS_IF([test "$with_hwloc" = "yes"],
+          [with_hwloc=""])
+
     # set default
     opal_hwloc_base_enable_xml=0
 
