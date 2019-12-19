@@ -18,8 +18,8 @@ variables:
 
 steps:
   - checkout: self
-      submodules: true
-      path: ompi
+    submodules: true
+    path: ompi
   - bash: |
       echo "==============================================================================="
       hostname
