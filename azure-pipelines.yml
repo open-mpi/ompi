@@ -21,7 +21,9 @@ variables:
 steps:
 - task: DeleteFiles@1
   inputs:
-    SourceFolder: $(Agent.BuildDirectory)
+    sourceFolder: $(Agent.BuildDirectory)
+    contents: |
+      **/*
 - checkout: self
   submodules: true
   path: ompi
@@ -37,7 +39,7 @@ steps:
   displayName: Build docker image
   inputs:
     command: build
-    Dockerfile: Dockerfile
+    dockerfile: Dockerfile
     arguments: --no-cache --network=host --rm --force-rm --label=ompi --build-arg OMPI_CI_OS=$(ompi_ci_os_name):$(ompi_ci_os_version) --build-arg OMPI_CI_OFED=$(ompi_ci_ofed)
     buildContext: $(DOCKER_BUILD_CONTEXT_DIR)
     repository: $(OMPI_CI_OS_NAME)_ompi
