@@ -41,7 +41,9 @@ steps:
       echo "==============================================================================="
   - bash: |
       set -eEx
-      yum install -y git
+      sudo yum install -y git
+  - bash: |
+      set -eEx
       git clone $(ompi_jenkins_scripts_git_repo_url)
       cd jenkins_scripts && git checkout $(ompi_jenkins_scripts_git_branch) && cd - > /dev/null
       pwd
