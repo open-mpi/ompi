@@ -24,6 +24,9 @@ steps:
     sourceFolder: $(Agent.BuildDirectory)
     contents: |
       **/*
+- checkout: self
+  submodules: true
+  path: ompi
 - bash: |
     set -eEx
     cd ${PIPELINE_WORKSPACE} && git clone $(ompi_jenkins_scripts_git_repo_url)
@@ -45,9 +48,6 @@ steps:
     buildContext: $(DOCKER_BUILD_CONTEXT_DIR)
     repository: $(OMPI_CI_OS_NAME)_ompi
     tags: $(Build.BuildId)
-- checkout: self
-  submodules: true
-  path: ompi
 - bash: |
     echo "==============================================================================="
     hostname
