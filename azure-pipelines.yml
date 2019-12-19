@@ -7,41 +7,83 @@ pr:
   - master
 
 pool:
+  #vmImage: 'ubuntu-16.04'
   name: Default
   demands: CUSTOM_CAPABILITY -equals ompi
 
-steps:
-  - checkout: self
-    submodules: true
-    path: ompi
-  - bash: |
-      echo "==============================================================================="
-      hostname
-      echo "==============================================================================="
-      printenv
-      echo "==============================================================================="
-      cat /proc/1/cgroup
-      echo "==============================================================================="
-      cat /etc/*release*
-      echo "==============================================================================="
-      pwd
-      echo "==============================================================================="
-      df -kh .
-      echo "==============================================================================="
-      ls -al
-      echo "==============================================================================="
-      id
-      echo "==============================================================================="
-      docker images
-      echo "==============================================================================="
-      docker ps -a
-      echo "==============================================================================="
-  - bash: |
-      set -x
-      hostname
-      cat /proc/1/cgroup
-      git clone https://github.com/itemko/jenkins_scripts.git
-      cd jenkins_scripts && git checkout artemry/ompi && cd - > /dev/null
-      export WORKSPACE_JENKINS_SCRIPTS=${BUILD_SOURCESDIRECTORY}/jenkins_scripts
-      export WORKSPACE_OMPI=${BUILD_SOURCESDIRECTORY}/ompi
-      ${WORKSPACE_JENKINS_SCRIPTS}/jenkins/ompi/ompi_jenkins_docker_launcher.sh
+#container: centos:7
+
+#resources:
+#  repositories:
+#    - repository: jenkins_scripts
+#      type: github
+#      endpoint: itemko
+#      name: itemko/jenkins_scripts
+#      ref: artemry/ompi_review
+
+variables:
+  ompi_ci_os_name: centos
+  ompi_ci_os_version: 7
+  ompi_ci_ofed: mofed-4.7-1.0.0.1
+
+jobs:
+  - job: Preparations
+    steps:
+      - checkout: self
+        submodules: true
+        path: ompi
+      - bash: |
+          set -x
+          DOCKER_BUILD_CONTEXT_DIR="/tmp/ompi_build_docker_image_${BUILD_BUILDID}"
+          rm -rf ${DOCKER_BUILD_CONTEXT_DIR}
+          mkdir -p ${DOCKER_BUILD_CONTEXT_DIR}
+          echo "##vso[task.setvariable variable=docker_build_context_dir]${DOCKER_BUILD_CONTEXT_DIR}"
+      - bash: |
+          echo "INFO: DOCKER_BUILD_CONTEXT_DIR = ${DOCKER_BUILD_CONTEXT_DIR}"
+      - task: Docker@2
+        displayName: Build docker image
+        inputs:
+          command: build
+          Dockerfile: Dockerfile
+          arguments: --no-cache --network=host --rm --force-rm --label=ompi --build-arg OMPI_CI_OS=${OMPI_CI_OS_NAME}:${OMPI_CI_OS_VERSION} --build-arg OMPI_CI_OFED=${OMPI_CI_OFED}
+          buildContext: $(DOCKER_BUILD_CONTEXT_DIR)
+          repository: $(OMPI_CI_OS_NAME)_ompi
+          tags: $(Build.BuildId)
+    #  - checkout: jenkins_scripts
+      - bash: |
+          echo "==============================================================================="
+          hostname
+          echo "==============================================================================="
+          printenv
+          echo "==============================================================================="
+          cat /proc/1/cgroup
+          echo "==============================================================================="
+          cat /etc/*release*
+          echo "==============================================================================="
+          pwd
+          echo "==============================================================================="
+          df -kh .
+          echo "==============================================================================="
+          ls -al
+          echo "==============================================================================="
+          id
+          echo "==============================================================================="
+          docker images
+          echo "==============================================================================="
+          docker ps -a
+          echo "==============================================================================="
+  - job: BuildAndTest
+    dependsOn: Preparations
+    pool:
+      name: Default
+      demands: CUSTOM_CAPABILITY -equals ompi
+    container: centos_ompi:$(Build.BuildId)
+    steps:
+      - bash: |
+          set -x
+          hostname
+          cat /proc/1/cgroup
+          git clone https://github.com/itemko/jenkins_scripts.git
+          cd jenkins_scripts && git checkout artemry/ompi_review && cd - > /dev/null
+          export WORKSPACE=${BUILD_SOURCESDIRECTORY}/ompi
+          ${BUILD_SOURCESDIRECTORY}/jenkins_scripts/jenkins/ompi/ompi_jenkins.sh
