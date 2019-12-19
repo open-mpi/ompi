@@ -13,7 +13,7 @@ pool:
 variables:
   ompi_ci_os_name: centos
   ompi_ci_os_version: 7
-  ompi_ci_ofed: mofed-4.7-1.0.0.1
+  ompi_ci_ofed: 4.7-1.0.0.1
   ompi_jenkins_scripts_git_repo_url: https://github.com/itemko/jenkins_scripts.git
   ompi_jenkins_scripts_git_branch: artemry/ompi
   debug: true
@@ -46,7 +46,7 @@ steps:
   inputs:
     command: build
     dockerfile: ../jenkins_scripts/jenkins/ompi/Dockerfile
-    arguments: --no-cache --network=host --rm --force-rm --label=ompi --build-arg OMPI_CI_OS=$(ompi_ci_os_name):$(ompi_ci_os_version) --build-arg OMPI_CI_OFED=$(ompi_ci_ofed)
+    arguments: --no-cache --network=host --rm --force-rm --label=ompi --build-arg OMPI_CI_OS_NAME=$(ompi_ci_os_name) --build-arg OMPI_CI_OS_VERSION=$(ompi_ci_os_version) --build-arg OMPI_CI_OFED=$(ompi_ci_ofed)
     buildContext: $(DOCKER_BUILD_CONTEXT_DIR)
     repository: $(OMPI_CI_OS_NAME)_ompi
     tags: $(Build.BuildId)
