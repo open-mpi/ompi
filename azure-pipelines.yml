@@ -45,7 +45,7 @@ steps:
   displayName: Build docker image
   inputs:
     command: build
-    dockerfile: ../jenkins_scripts/jenkins/ompi/Dockerfile
+    dockerfile: ../jenkins_scripts/jenkins/ompi/Dockerfile.$(ompi_ci_os_name)$(ompi_ci_os_version)
     arguments: --no-cache --network=host --rm --force-rm --label=ompi --build-arg OMPI_CI_OS_NAME=$(ompi_ci_os_name) --build-arg OMPI_CI_OS_VERSION=$(ompi_ci_os_version) --build-arg OMPI_CI_OFED=$(ompi_ci_ofed)
     buildContext: $(DOCKER_BUILD_CONTEXT_DIR)
     repository: $(OMPI_CI_OS_NAME)_ompi
