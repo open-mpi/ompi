@@ -8,6 +8,7 @@ RUN yum install -y \
     bc \
     environment-modules \
     jq \
-    perl
+    perl \
+    perl-Data-Dumper
 
 RUN echo "/hpc/local/etc/modulefiles" >> /usr/share/Modules/init/.modulespath
