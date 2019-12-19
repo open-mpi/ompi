@@ -7,6 +7,7 @@ RUN echo "swx-jenkins ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 RUN yum install -y \
     bc \
     environment-modules \
-    jq
+    jq \
+    perl
 
 RUN echo "/hpc/local/etc/modulefiles" >> /usr/share/Modules/init/.modulespath
