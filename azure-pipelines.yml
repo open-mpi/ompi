@@ -11,7 +11,7 @@ pool:
   name: Default
   demands: CUSTOM_CAPABILITY -equals ompi
 
-#container: centos:7
+container: centos:7
 
 #resources:
 #  repositories:
@@ -32,23 +32,23 @@ jobs:
       - checkout: self
         submodules: true
         path: ompi
-      - bash: |
-          set -x
-          DOCKER_BUILD_CONTEXT_DIR="/tmp/ompi_build_docker_image_${BUILD_BUILDID}"
-          rm -rf ${DOCKER_BUILD_CONTEXT_DIR}
-          mkdir -p ${DOCKER_BUILD_CONTEXT_DIR}
-          echo "##vso[task.setvariable variable=docker_build_context_dir]${DOCKER_BUILD_CONTEXT_DIR}"
-      - bash: |
-          echo "INFO: DOCKER_BUILD_CONTEXT_DIR = ${DOCKER_BUILD_CONTEXT_DIR}"
-      - task: Docker@2
-        displayName: Build docker image
-        inputs:
-          command: build
-          Dockerfile: Dockerfile
-          arguments: --no-cache --network=host --rm --force-rm --label=ompi --build-arg OMPI_CI_OS=${OMPI_CI_OS_NAME}:${OMPI_CI_OS_VERSION} --build-arg OMPI_CI_OFED=${OMPI_CI_OFED}
-          buildContext: $(DOCKER_BUILD_CONTEXT_DIR)
-          repository: $(OMPI_CI_OS_NAME)_ompi
-          tags: $(Build.BuildId)
+#      - bash: |
+#          set -x
+#          DOCKER_BUILD_CONTEXT_DIR="/tmp/ompi_build_docker_image_${BUILD_BUILDID}"
+#          rm -rf ${DOCKER_BUILD_CONTEXT_DIR}
+#          mkdir -p ${DOCKER_BUILD_CONTEXT_DIR}
+#          echo "##vso[task.setvariable variable=docker_build_context_dir]${DOCKER_BUILD_CONTEXT_DIR}"
+#      - bash: |
+#          echo "INFO: DOCKER_BUILD_CONTEXT_DIR = ${DOCKER_BUILD_CONTEXT_DIR}"
+#      - task: Docker@2
+#        displayName: Build docker image
+#        inputs:
+#          command: build
+#          Dockerfile: Dockerfile
+#          arguments: --no-cache --network=host --rm --force-rm --label=ompi --build-arg OMPI_CI_OS=${OMPI_CI_OS_NAME}:${OMPI_CI_OS_VERSION} --build-arg OMPI_CI_OFED=${OMPI_CI_OFED}
+#          buildContext: $(DOCKER_BUILD_CONTEXT_DIR)
+#          repository: $(OMPI_CI_OS_NAME)_ompi
+#          tags: $(Build.BuildId)
     #  - checkout: jenkins_scripts
       - bash: |
           echo "==============================================================================="
@@ -77,7 +77,8 @@ jobs:
     pool:
       name: Default
       demands: CUSTOM_CAPABILITY -equals ompi
-    container: centos_ompi:$(Build.BuildId)
+#    container: centos_ompi:$(Build.BuildId)
+    container: centos:7
     steps:
       - bash: |
           set -x
