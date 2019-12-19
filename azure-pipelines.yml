@@ -39,12 +39,13 @@ steps:
     echo "##vso[task.setvariable variable=docker_build_context_dir]${DOCKER_BUILD_CONTEXT_DIR}"
 - bash: |
     echo "INFO: DOCKER_BUILD_CONTEXT_DIR = ${DOCKER_BUILD_CONTEXT_DIR}"
+    echo "INFO: Agent.BuildDirectory = $(Agent.BuildDirectory)"
+    echo "INFO: PIPELINE_WORKSPACE = ${PIPELINE_WORKSPACE}"
 - task: Docker@2
   displayName: Build docker image
   inputs:
     command: build
-    dockerfile: ${PIPELINE_WORKSPACE}/jenkins_scripts/jenkins/ompi/Dockerfile
-    arguments: --no-cache --network=host --rm --force-rm --label=ompi --build-arg OMPI_CI_OS=$(ompi_ci_os_name):$(ompi_ci_os_version) --build-arg OMPI_CI_OFED=$(ompi_ci_ofed)
+    arguments: -f ${PIPELINE_WORKSPACE}/jenkins_scripts/jenkins/ompi/Dockerfile --no-cache --network=host --rm --force-rm --label=ompi --build-arg OMPI_CI_OS=$(ompi_ci_os_name):$(ompi_ci_os_version) --build-arg OMPI_CI_OFED=$(ompi_ci_ofed)
     buildContext: $(DOCKER_BUILD_CONTEXT_DIR)
     repository: $(OMPI_CI_OS_NAME)_ompi
     tags: $(Build.BuildId)
