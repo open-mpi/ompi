@@ -12,6 +12,10 @@ pool:
 
 container: centos:7
 
+variables:
+  ompi_jenkins_scripts_git_repo_url: https://github.com/itemko/jenkins_scripts.git
+  ompi_jenkins_scripts_git_branch: artemry/ompi_review
+
 steps:
   - checkout: self
       submodules: true
@@ -36,8 +40,10 @@ steps:
       echo "==============================================================================="
   - bash: |
       set -x
-      git clone https://github.com/itemko/jenkins_scripts.git
-      cd jenkins_scripts && git checkout artemry/ompi_review && cd - > /dev/null
+      echo "DEBUG: ompi_jenkins_scripts_git_repo_url = $(ompi_jenkins_scripts_git_repo_url)"
+      echo "DEBUG: ompi_jenkins_scripts_git_branch = $(ompi_jenkins_scripts_git_branch)"
+      git clone $(ompi_jenkins_scripts_git_repo_url)
+      cd jenkins_scripts && git checkout $(ompi_jenkins_scripts_git_branch) && cd - > /dev/null
       pwd
       ls -al
       export WORKSPACE=${BUILD_SOURCESDIRECTORY}/ompi
