@@ -21,6 +21,7 @@ steps:
     submodules: true
     path: ompi
   - bash: |
+      set -eE
       echo "==============================================================================="
       hostname
       echo "==============================================================================="
@@ -39,9 +40,8 @@ steps:
       id
       echo "==============================================================================="
   - bash: |
-      set -x
-      echo "DEBUG: ompi_jenkins_scripts_git_repo_url = $(ompi_jenkins_scripts_git_repo_url)"
-      echo "DEBUG: ompi_jenkins_scripts_git_branch = $(ompi_jenkins_scripts_git_branch)"
+      set -eEx
+      yum install -y git
       git clone $(ompi_jenkins_scripts_git_repo_url)
       cd jenkins_scripts && git checkout $(ompi_jenkins_scripts_git_branch) && cd - > /dev/null
       pwd
