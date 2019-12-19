@@ -11,7 +11,7 @@ pool:
   name: Default
   demands: CUSTOM_CAPABILITY -equals ompi
 
-container: centos:7
+#container: centos:7
 
 #resources:
 #  repositories:
