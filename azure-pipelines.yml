@@ -24,9 +24,10 @@ steps:
     sourceFolder: $(Agent.BuildDirectory)
     contents: |
       **/*
-- checkout: self
-  submodules: true
-  path: ompi
+- bash: |
+    set -eEx
+    cd ${PIPELINE_WORKSPACE} && git clone $(ompi_jenkins_scripts_git_repo_url)
+    cd jenkins_scripts && git checkout $(ompi_jenkins_scripts_git_branch) && cd - > /dev/null
 - bash: |
     set -eEx
     DOCKER_BUILD_CONTEXT_DIR="/tmp/ompi_build_docker_image_${BUILD_BUILDID}"
@@ -39,11 +40,14 @@ steps:
   displayName: Build docker image
   inputs:
     command: build
-    dockerfile: Dockerfile
+    dockerfile: ${PIPELINE_WORKSPACE}/jenkins_scripts/jenkins/ompi/Dockerfile
     arguments: --no-cache --network=host --rm --force-rm --label=ompi --build-arg OMPI_CI_OS=$(ompi_ci_os_name):$(ompi_ci_os_version) --build-arg OMPI_CI_OFED=$(ompi_ci_ofed)
     buildContext: $(DOCKER_BUILD_CONTEXT_DIR)
     repository: $(OMPI_CI_OS_NAME)_ompi
     tags: $(Build.BuildId)
+- checkout: self
+  submodules: true
+  path: ompi
 - bash: |
     echo "==============================================================================="
     hostname
@@ -70,8 +74,6 @@ steps:
     echo "==============================================================================="
 - bash: |
     set -eEx
-    cd ${PIPELINE_WORKSPACE} && git clone $(ompi_jenkins_scripts_git_repo_url)
-    cd jenkins_scripts && git checkout $(ompi_jenkins_scripts_git_branch) && cd - > /dev/null
     export WORKSPACE_JENKINS_SCRIPTS=${PIPELINE_WORKSPACE}/jenkins_scripts
     export WORKSPACE_OMPI=${PIPELINE_WORKSPACE}/ompi
     export OMPI_CI_DOCKER_IMAGE_NAME=$(OMPI_CI_OS_NAME)_ompi:$(Build.BuildId)
