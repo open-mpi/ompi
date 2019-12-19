@@ -15,7 +15,7 @@ variables:
   ompi_ci_os_version: 7
   ompi_ci_ofed: mofed-4.7-1.0.0.1
   ompi_jenkins_scripts_git_repo_url: https://github.com/itemko/jenkins_scripts.git
-  ompi_jenkins_scripts_git_branch: artemry/ompi_review
+  ompi_jenkins_scripts_git_branch: artemry/ompi
   debug: true
 
 steps:
