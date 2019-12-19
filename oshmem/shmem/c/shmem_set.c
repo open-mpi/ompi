@@ -27,17 +27,18 @@
         int rc = OSHMEM_SUCCESS;                                    \
         size_t size = 0;                                            \
         type out_value;                                             \
-                                                                    \
+        uint64_t value_tmp;                                         \
         RUNTIME_CHECK_INIT();                                       \
         RUNTIME_CHECK_PE(pe);                                       \
         RUNTIME_CHECK_ADDR(target);                                 \
                                                                     \
         size = sizeof(out_value);                                   \
+        memcpy(&value_tmp, &value, size);                           \
         rc = MCA_ATOMIC_CALL(swap(                                  \
             ctx,                                                    \
             (void*)target,                                          \
             (void*)&out_value,                                      \
-            value,                                                  \
+            value_tmp,                                              \
             size,                                                   \
             pe));                                                   \
         RUNTIME_CHECK_RC(rc);                                       \
