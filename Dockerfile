@@ -7,7 +7,9 @@ RUN echo "swx-jenkins ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 RUN yum install -y \
     bc \
     environment-modules \
+    gcc \
     jq \
+    make \
     perl \
     perl-Data-Dumper \
     perl-Thread-Queue
