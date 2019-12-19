@@ -10,18 +10,11 @@ pool:
   name: Default
   demands: CUSTOM_CAPABILITY -equals ompi
 
-container: centos:7
-
-variables:
-  ompi_jenkins_scripts_git_repo_url: https://github.com/itemko/jenkins_scripts.git
-  ompi_jenkins_scripts_git_branch: artemry/ompi_review
-
 steps:
   - checkout: self
     submodules: true
     path: ompi
   - bash: |
-      set -eE
       echo "==============================================================================="
       hostname
       echo "==============================================================================="
@@ -39,14 +32,16 @@ steps:
       echo "==============================================================================="
       id
       echo "==============================================================================="
+      docker images
+      echo "==============================================================================="
+      docker ps -a
+      echo "==============================================================================="
   - bash: |
-      set -eEx
-      sudo yum install -y git
-  - bash: |
-      set -eEx
-      git clone $(ompi_jenkins_scripts_git_repo_url)
-      cd jenkins_scripts && git checkout $(ompi_jenkins_scripts_git_branch) && cd - > /dev/null
-      pwd
-      ls -al
-      export WORKSPACE=${BUILD_SOURCESDIRECTORY}/ompi
-      ${BUILD_SOURCESDIRECTORY}/jenkins_scripts/jenkins/ompi/ompi_jenkins.sh
+      set -x
+      hostname
+      cat /proc/1/cgroup
+      git clone https://github.com/itemko/jenkins_scripts.git
+      cd jenkins_scripts && git checkout artemry/ompi && cd - > /dev/null
+      export WORKSPACE_JENKINS_SCRIPTS=${BUILD_SOURCESDIRECTORY}/jenkins_scripts
+      export WORKSPACE_OMPI=${BUILD_SOURCESDIRECTORY}/ompi
+      ${WORKSPACE_JENKINS_SCRIPTS}/jenkins/ompi/ompi_jenkins_docker_launcher.sh
