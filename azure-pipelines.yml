@@ -40,12 +40,14 @@ jobs:
     submodules: true
     path: ompi
   - bash: |
-      set -eEx
+      set -eE
+      [ "$(debug)" = "true" ] && set -x
       cd ${PIPELINE_WORKSPACE} && git clone $(ompi_jenkins_scripts_git_repo_url)
       cd jenkins_scripts && git checkout $(ompi_jenkins_scripts_git_branch) && cd - > /dev/null
     displayName: Checkout CI scripts
   - bash: |
-      set -eEx
+      set -eE
+      [ "$(debug)" = "true" ] && set -x
       DOCKER_BUILD_CONTEXT_DIR="/tmp/ompi_build_docker_image_${BUILD_BUILDID}"
       rm -rf ${DOCKER_BUILD_CONTEXT_DIR}
       mkdir -p ${DOCKER_BUILD_CONTEXT_DIR}
@@ -64,7 +66,8 @@ jobs:
       repository: $(OMPI_CI_OS_NAME)_ompi
       tags: $(Build.BuildId)
   - bash: |
-      set -eEx
+      set -eE
+      [ "$(debug)" = "true" ] && set -x
       export WORKSPACE_JENKINS_SCRIPTS=${PIPELINE_WORKSPACE}/jenkins_scripts
       export WORKSPACE_OMPI=${PIPELINE_WORKSPACE}/ompi
       export OMPI_CI_DOCKER_IMAGE_NAME=$(OMPI_CI_OS_NAME)_ompi:$(Build.BuildId)
