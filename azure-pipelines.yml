@@ -19,6 +19,7 @@ variables:
   ompi_ci_username: swx-jenkins
   ompi_ci_uid: 6213
   ompi_ci_gid: 11429
+  # Enable debug information, supported values: true, false
   debug: true
 
 jobs:
