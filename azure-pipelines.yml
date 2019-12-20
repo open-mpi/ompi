@@ -16,16 +16,21 @@ variables:
   ompi_ci_ofed: 4.7-1.0.0.1
   ompi_jenkins_scripts_git_repo_url: https://github.com/itemko/jenkins_scripts.git
   ompi_jenkins_scripts_git_branch: artemry/ompi
+  ompi_ci_username: swx-jenkins
+  ompi_ci_uid: 6213
+  ompi_ci_gid: 11429
   debug: true
 
 jobs:
-- job: main
+- job: mellanox_ompi_ci
+  displayName: Mellanox OpenMPI CI
   timeoutInMinutes: 240
   pool:
     name: Default
     demands: CUSTOM_CAPABILITY -equals ompi
   steps:
   - task: DeleteFiles@1
+    displayName: Cleanup workspace folder
     inputs:
       sourceFolder: $(Agent.BuildDirectory)
       contents: |
@@ -37,16 +42,14 @@ jobs:
       set -eEx
       cd ${PIPELINE_WORKSPACE} && git clone $(ompi_jenkins_scripts_git_repo_url)
       cd jenkins_scripts && git checkout $(ompi_jenkins_scripts_git_branch) && cd - > /dev/null
+    displayName: Checkout CI scripts
   - bash: |
       set -eEx
       DOCKER_BUILD_CONTEXT_DIR="/tmp/ompi_build_docker_image_${BUILD_BUILDID}"
       rm -rf ${DOCKER_BUILD_CONTEXT_DIR}
       mkdir -p ${DOCKER_BUILD_CONTEXT_DIR}
       echo "##vso[task.setvariable variable=docker_build_context_dir]${DOCKER_BUILD_CONTEXT_DIR}"
-  - bash: |
-      echo "INFO: DOCKER_BUILD_CONTEXT_DIR = ${DOCKER_BUILD_CONTEXT_DIR}"
-      echo "INFO: Agent.BuildDirectory = $(Agent.BuildDirectory)"
-      echo "INFO: PIPELINE_WORKSPACE = ${PIPELINE_WORKSPACE}"
+    displayName: Create temporary context folder for docker image building
   - task: Docker@2
     displayName: Build docker image
     inputs:
@@ -54,42 +57,22 @@ jobs:
       dockerfile: ../jenkins_scripts/jenkins/ompi/Dockerfile.$(ompi_ci_os_name)$(ompi_ci_os_version)
       arguments: --no-cache --network=host --rm --force-rm --label=ompi --build-arg OMPI_CI_OS_NAME=$(ompi_ci_os_name)
         --build-arg OMPI_CI_OS_VERSION=$(ompi_ci_os_version) --build-arg OMPI_CI_OFED=$(ompi_ci_ofed)
+        --build-arg OMPI_CI_USERNAME=$(ompi_ci_username) --build-arg OMPI_CI_UID=$(ompi_ci_uid)
+        --build-arg OMPI_CI_GID=$(ompi_ci_gid)
       buildContext: $(DOCKER_BUILD_CONTEXT_DIR)
       repository: $(OMPI_CI_OS_NAME)_ompi
       tags: $(Build.BuildId)
-  - bash: |
-      echo "==============================================================================="
-      hostname
-      echo "==============================================================================="
-      printenv
-      echo "==============================================================================="
-      cat /proc/1/cgroup
-      echo "==============================================================================="
-      cat /etc/*release*
-      echo "==============================================================================="
-      pwd
-      echo "==============================================================================="
-      df -kh .
-      echo "==============================================================================="
-      ls -al
-      echo "==============================================================================="
-      id
-      echo "==============================================================================="
-      docker images
-      echo "==============================================================================="
-      docker ps -a
-      echo "==============================================================================="
-      which perl
-      echo "==============================================================================="
   - bash: |
       set -eEx
       export WORKSPACE_JENKINS_SCRIPTS=${PIPELINE_WORKSPACE}/jenkins_scripts
       export WORKSPACE_OMPI=${PIPELINE_WORKSPACE}/ompi
       export OMPI_CI_DOCKER_IMAGE_NAME=$(OMPI_CI_OS_NAME)_ompi:$(Build.BuildId)
       ${WORKSPACE_JENKINS_SCRIPTS}/jenkins/ompi/ompi_jenkins_docker_launcher.sh
+    displayName: Build and test OpenMPI
   - bash: |
       docker images
       docker ps -a
   #    docker rmi $(OMPI_CI_OS_NAME)_ompi:$(Build.BuildId)
   #    docker images
   #    docker ps -a
+    displayName: Information
