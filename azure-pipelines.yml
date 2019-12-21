@@ -1,8 +1,18 @@
-# https://aka.ms/yaml
+# TODO:
+# 1. Run several executors on the agent - workspace might need to be adapted
+# 2. Cover all PRs (not only for master)
+# 3. Cleanup docker artefacts
+# 4. Use docker registry (e.g. Mellanox Harbor)
+# 5. Change centos to rhel
+# 6. Align versions of OS/MLNX_OFED with HPC-X ones
+# 7. Need to reduce CI time (faster CPU, SSD, etc.)
+# 8. Adapt taskset usage in scripts for AzureCI (if applicable - if several executors are allowed on an agent)
+
+# Verification scenarios:
+# 1. Trigger CI several times simultaneously (e.g. from different PRs)
 
 trigger:
   - master
-# TODO all the PRs
 pr:
   - master
 
@@ -33,7 +43,7 @@ jobs:
   - task: DeleteFiles@1
     displayName: Cleanup workspace folder
     inputs:
-      sourceFolder: $(Agent.BuildDirectory)
+      sourceFolder: $(Pipeline.Workspace)
       contents: |
         **/*
   - checkout: self
@@ -42,7 +52,7 @@ jobs:
   - bash: |
       set -eE
       [ "$(debug)" = "true" ] && set -x
-      cd ${PIPELINE_WORKSPACE} && git clone $(ompi_jenkins_scripts_git_repo_url)
+      cd $(Pipeline.Workspace) && git clone $(ompi_jenkins_scripts_git_repo_url)
       cd jenkins_scripts && git checkout $(ompi_jenkins_scripts_git_branch) && cd - > /dev/null
     displayName: Checkout CI scripts
   - bash: |
@@ -63,20 +73,23 @@ jobs:
         --build-arg OMPI_CI_USERNAME=$(ompi_ci_username) --build-arg OMPI_CI_UID=$(ompi_ci_uid)
         --build-arg OMPI_CI_GID=$(ompi_ci_gid)
       buildContext: $(DOCKER_BUILD_CONTEXT_DIR)
-      repository: $(OMPI_CI_OS_NAME)_ompi
+      repository: $(OMPI_CI_OS_NAME)_ompi_ci
       tags: $(Build.BuildId)
   - bash: |
       set -eE
       [ "$(debug)" = "true" ] && set -x
-      export WORKSPACE_JENKINS_SCRIPTS=${PIPELINE_WORKSPACE}/jenkins_scripts
-      export WORKSPACE_OMPI=${PIPELINE_WORKSPACE}/ompi
-      export OMPI_CI_DOCKER_IMAGE_NAME=$(OMPI_CI_OS_NAME)_ompi:$(Build.BuildId)
+      export WORKSPACE_JENKINS_SCRIPTS=$(Pipeline.Workspace)/jenkins_scripts
+      export WORKSPACE_OMPI=$(Pipeline.Workspace)/ompi
+      export OMPI_CI_DOCKER_IMAGE_NAME=$(OMPI_CI_OS_NAME)_ompi_ci:$(Build.BuildId)
       ${WORKSPACE_JENKINS_SCRIPTS}/jenkins/ompi/ompi_jenkins_docker_launcher.sh
     displayName: Build and test OpenMPI
   - bash: |
+      set -eE
+      [ "$(debug)" = "true" ] && set -x
+      rm -rf ${DOCKER_BUILD_CONTEXT_DIR}
       docker images
       docker ps -a
-  #    docker rmi $(OMPI_CI_OS_NAME)_ompi:$(Build.BuildId)
-  #    docker images
-  #    docker ps -a
-    displayName: Information
+#      docker rmi $(OMPI_CI_OS_NAME)_ompi:$(Build.BuildId)
+#      docker images
+#      docker ps -a
+    displayName: Post-actions
