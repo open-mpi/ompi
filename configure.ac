@@ -1189,7 +1189,8 @@ OPAL_CHECK_VISIBILITY
 
 opal_show_title "Setup PRRTE support"
 
-OMPI_SETUP_PRRTE
+m4_ifdef([project_prrte],
+         [OMPI_SETUP_PRRTE])
 
 # checkpoint results
 AC_CACHE_SAVE

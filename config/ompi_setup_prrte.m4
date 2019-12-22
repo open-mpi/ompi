@@ -24,12 +24,15 @@
 #
 
 AC_DEFUN([OMPI_SETUP_PRRTE],[
-    OPAL_VAR_SCOPE_PUSH([opal_prrte_save_CPPFLAGS opal_prrte_save_CFLAGS opal_prrte_save_LDFLAGS opal_prrte_save_LIBS opal_prrte_args])
+    OPAL_VAR_SCOPE_PUSH([opal_prrte_save_CPPFLAGS opal_prrte_save_CFLAGS opal_prrte_save_LDFLAGS opal_prrte_save_LIBS opal_prrte_args opal_prrte_save_enable_dlopen opal_prrte_save_enable_mca_dso opal_prrte_save_enable_mca_static])
 
     opal_prrte_save_CFLAGS=$CFLAGS
     opal_prrte_save_CPPFLAGS=$CPPFLAGS
     opal_prrte_save_LDFLAGS=$LDFLAGS
     opal_prrte_save_LIBS=$LIBS
+    opal_prrte_save_enable_dlopen=enable_dlopen
+    opal_prrte_save_enable_mca_dso=enable_mca_dso
+    opal_prrte_save_enable_mca_static=enable_mca_static
 
     AC_ARG_ENABLE([internal-rte],
                   [AC_HELP_STRING([--enable-internal-rte],
@@ -61,7 +64,7 @@ AC_DEFUN([OMPI_SETUP_PRRTE],[
             opal_prrte_pmix_arg="--with-pmix=$with_pmix"
         fi
 
-        opal_prrte_args="--prefix=$prefix $opal_prrte_libevent_arg $opal_prrte_hwloc_arg $opal_prrte_pmix_arg"
+        opal_prrte_args="--prefix=$prefix --disable-dlopen $opal_prrte_libevent_arg $opal_prrte_hwloc_arg $opal_prrte_pmix_arg"
         AS_IF([test "$enable_debug" = "yes"],
               [opal_prrte_args="--enable-debug $opal_prrte_args"
                CFLAGS="$OPAL_CFLAGS_BEFORE_PICKY $OPAL_VISIBILITY_CFLAGS -g"],
@@ -88,7 +91,10 @@ AC_DEFUN([OMPI_SETUP_PRRTE],[
     CPPFLAGS=$opal_prrte_save_CPPFLAGS
     LDFLAGS=$opal_prrte_save_LDFLAGS
     LIBS=$opal_prrte_save_LIBS
-
+    enable_dlopen=$opal_prrte_save_enable_dlopen
+    enable_mca_dso=$opal_prrte_save_enable_mca_dso
+    enable_mca_static=$opal_prrte_save_enable_mca_static
+    
     OPAL_VAR_SCOPE_POP
 
 ])
