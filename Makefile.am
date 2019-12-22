@@ -21,7 +21,11 @@
 # $HEADER$
 #
 
-SUBDIRS = config contrib $(MCA_PROJECT_SUBDIRS) prrte test
+SUBDIRS = config contrib $(MCA_PROJECT_SUBDIRS) test
+if OMPI_WANT_PRRTE
+SUBDIRS += prrte
+endif
+
 DIST_SUBDIRS = config contrib $(MCA_PROJECT_DIST_SUBDIRS) prrte test
 EXTRA_DIST = README INSTALL VERSION Doxyfile LICENSE autogen.pl README.JAVA.txt AUTHORS
 
