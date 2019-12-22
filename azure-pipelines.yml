@@ -78,7 +78,6 @@ jobs:
   - bash: |
       set -eE
       [ "$(debug)" = "true" ] && set -x
-      export JENKINS_RUN_TESTS=yes
       export WORKSPACE_JENKINS_SCRIPTS=$(Pipeline.Workspace)/jenkins_scripts
       export WORKSPACE_OMPI=$(Pipeline.Workspace)/ompi
       export OMPI_CI_DOCKER_IMAGE_NAME=$(OMPI_CI_OS_NAME)_ompi_ci:$(Build.BuildId)
