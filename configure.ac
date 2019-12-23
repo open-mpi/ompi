@@ -1183,22 +1183,6 @@ opal_show_title "Symbol visibility feature"
 OPAL_CHECK_VISIBILITY
 
 
-##################################
-# PRRTE support
-##################################
-
-opal_show_title "Setup PRRTE support"
-
-m4_ifdef([project_prrte],
-         [OMPI_SETUP_PRRTE
-          ompi_want_prrte=yes],
-         [ompi_want_prrte=no])
-AM_CONDITIONAL(OMPI_WANT_PRRTE, test "$ompi_want_prrte" = "yes")
-
-# checkpoint results
-AC_CACHE_SAVE
-
-
 ############################################################################
 # Final top-level OMPI configuration
 ############################################################################
@@ -1471,6 +1455,21 @@ m4_ifdef([project_ompi], [OMPI_CONFIG_FILES])
 m4_ifdef([project_oshmem], [OSHMEM_CONFIG_FILES])
 
 OPAL_CHECK_LIBNL_SUMMARY
+
+##################################
+# PRRTE support
+##################################
+
+opal_show_title "Setup PRRTE support"
+
+m4_ifdef([project_prrte],
+         [OMPI_SETUP_PRRTE
+          ompi_want_prrte=yes],
+         [ompi_want_prrte=no])
+AM_CONDITIONAL(OMPI_WANT_PRRTE, test "$ompi_want_prrte" = "yes")
+
+# checkpoint results
+AC_CACHE_SAVE
 
 AC_OUTPUT
 
