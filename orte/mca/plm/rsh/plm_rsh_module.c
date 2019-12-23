@@ -780,8 +780,9 @@ static void ssh_child(int argc, char **argv)
 
     /* close all file descriptors w/ exception of stdin/stdout/stderr */
     if(close_open_file_descriptors() != ORTE_SUCCESS) {
-        for(fd=3; fd<fdmax; fd++)
+        for(fd=3; fd<fdmax; fd++) {
             close(fd);
+        }
     }
 
     /* Set signal handlers back to the default.  Do this close
