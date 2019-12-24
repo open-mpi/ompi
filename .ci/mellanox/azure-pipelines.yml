@@ -13,7 +13,7 @@
 # 1. Trigger CI several times simultaneously (e.g. from different PRs)
 # 2. Verify '/azp run' in PR comments by non-Azure users
 
-# TODO: tmp comment
+# TODO: tmp comment 2
 
 # Per-commit
 trigger:
