@@ -46,7 +46,6 @@ jobs:
         **/*
   - checkout: self
     submodules: true
-    endpoint: azure-gh-ci-pat
   - bash: |
       set -eE
       [ "$(debug)" = "true" ] && set -x
