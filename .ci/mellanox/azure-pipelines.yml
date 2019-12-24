@@ -7,6 +7,7 @@
 # 6. Align versions of OS/MLNX_OFED with HPC-X ones
 # 7. Need to reduce CI time (faster CPU, SSD, etc.)
 # 8. Adapt taskset usage in scripts for AzureCI (if applicable - if several executors are allowed on an agent)
+# 9. Use agent hosts with NUMA enabled
 
 # Verification scenarios:
 # 1. Trigger CI several times simultaneously (e.g. from different PRs)

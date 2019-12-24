@@ -568,6 +568,10 @@ function test_mindist()
         if [ $val -gt 0 ]; then
             for hca_dev in $(ibstat -l); do
                 var=$(cat /sys/class/infiniband/${hca_dev}/device/numa_node)
+                if [ "$var" = "-1" ]; then
+                    echo "WARNING: NUMA is not enabled or not available on the test host"
+                    continue
+                fi
                 export TEST_CLOSEST_NUMA=$var
                 $OMPI_HOME/bin/mpirun $mca -np 4 --map-by dist -mca rmaps_dist_device ${hca_dev} -x TEST_CLOSEST_NUMA -x TEST_PHYS_ID_COUNT -x TEST_CORE_ID_COUNT $abs_path/mindist_test
                 val=$?
@@ -583,6 +587,10 @@ function test_mindist()
         else
             for hca_dev in $(ibstat -l); do
                 var=$(cat /sys/class/infiniband/${hca_dev}/device/numa_node)
+                if [ "$var" = "-1" ]; then
+                    echo "WARNING: NUMA is not enabled or not available on the test host"
+                    continue
+                fi
                 export TEST_CLOSEST_NUMA=$var
                 $OMPI_HOME/bin/mpirun -np 4 $mca --map-by dist:${hca_dev} -x TEST_CLOSEST_NUMA -x TEST_PHYS_ID_COUNT -x TEST_CORE_ID_COUNT $abs_path/mindist_test
                 val=$?
