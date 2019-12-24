@@ -2,7 +2,6 @@
 
 # TODO:
 #   1. Check that yalla is not built
-#   2. Split the script into Jenkins pipeline stages (building, testing, coverity, etc.)
 
 if [ "$DEBUG" = "true" ]; then
     set -x
@@ -569,7 +568,7 @@ function test_mindist()
             for hca_dev in $(ibstat -l); do
                 var=$(cat /sys/class/infiniband/${hca_dev}/device/numa_node)
                 if [ "$var" = "-1" ]; then
-                    echo "WARNING: NUMA is not enabled or not available on the test host"
+                    echo "WARNING: NUMA is not enabled or not available on the test host. Skipping test_mindist"
                     continue
                 fi
                 export TEST_CLOSEST_NUMA=$var
@@ -588,7 +587,7 @@ function test_mindist()
             for hca_dev in $(ibstat -l); do
                 var=$(cat /sys/class/infiniband/${hca_dev}/device/numa_node)
                 if [ "$var" = "-1" ]; then
-                    echo "WARNING: NUMA is not enabled or not available on the test host"
+                    echo "WARNING: NUMA is not enabled or not available on the test host. Skipping test_mindist"
                     continue
                 fi
                 export TEST_CLOSEST_NUMA=$var
