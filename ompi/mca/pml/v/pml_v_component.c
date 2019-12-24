@@ -28,6 +28,7 @@
 #include "ompi/mca/vprotocol/base/base.h"
 #include "pml_v_output.h"
 #include "pml_v.h"
+#include "ompi/runtime/mpiruntime.h"
 
 static int mca_pml_v_component_register(void);
 static int mca_pml_v_component_open(void);
@@ -60,9 +61,6 @@ mca_pml_base_component_2_0_0_t mca_pml_v_component =
     .pmlm_init = mca_pml_v_component_init,
     .pmlm_finalize = mca_pml_v_component_finalize,
 };
-
-static bool pml_v_enable_progress_treads = OPAL_ENABLE_PROGRESS_THREADS;
-static bool pml_v_enable_mpi_thread_multiple = 1;
 
 static char *ompi_pml_vprotocol_include_list;
 static char *ompi_pml_v_output;
@@ -205,16 +203,18 @@ static int mca_pml_v_component_parasite_close(void)
 
 
 /*******************************************************************************
- * Init/finalize for MCA PML components
+ * The init function for the V PML is never supposed to be called, as the mechanism
+ * that enables the PML V to work require a real PML to move data across. Thus, a
+ * normal PML should be selected (so the PML V cannot be in the MCA list of PMLs)
+ * and if the PML V is enabled (via the activation of a vprotocol) it will insert
+ * itself before the selected PML (assuming no DIRECT_call PML).
  */
-static mca_pml_base_module_t *mca_pml_v_component_init(int *priority,
-                                                      bool enable_progress_threads,
-                                                      bool enable_mpi_thread_multiple)
+static mca_pml_base_module_t*
+mca_pml_v_component_init(int *priority,
+                         bool enable_progress_threads,
+                         bool enable_mpi_thread_multiple)
 {
     V_OUTPUT_VERBOSE(1, "init: I'm not supposed to be here until BTL loading stuff gets fixed!? That's strange...");
-
-    pml_v_enable_progress_treads = enable_progress_threads;
-    pml_v_enable_mpi_thread_multiple = enable_mpi_thread_multiple;
 
     /* I NEVER want to be the selected PML, so I report less than possible
      * priority and a NULL module
@@ -249,8 +249,8 @@ static int mca_pml_v_enable(bool enable)
     if(enable) {
         /* Check if a protocol have been selected during init */
         if(! mca_vprotocol_base_selected())
-            mca_vprotocol_base_select(pml_v_enable_progress_treads,
-                                      pml_v_enable_mpi_thread_multiple);
+            mca_vprotocol_base_select(OPAL_ENABLE_PROGRESS_THREADS,
+                                      ompi_mpi_thread_multiple);
 
         /* Check if we succeeded selecting a protocol */
         if(mca_vprotocol_base_selected()) {

@@ -100,7 +100,7 @@ static int mca_vprotocol_pessimist_component_register(void)
 static int mca_vprotocol_pessimist_component_open(void)
 {
     V_OUTPUT_VERBOSE(500, "vprotocol_pessimist: component_open: read priority %d", _priority);
-  return OMPI_SUCCESS;
+    return OMPI_SUCCESS;
 }
 
 static int mca_vprotocol_pessimist_component_close(void)
@@ -111,16 +111,22 @@ static int mca_vprotocol_pessimist_component_close(void)
 
 /** VPROTOCOL level functions (same as PML one)
   */
-static mca_vprotocol_base_module_t *mca_vprotocol_pessimist_component_init( int* priority,
-                                                                          bool enable_progress_threads,
-                                                                          bool enable_mpi_threads)
+static mca_vprotocol_base_module_t*
+mca_vprotocol_pessimist_component_init( int* priority,
+                                        bool enable_progress_threads,
+                                        bool enable_mpi_threads)
 {
     V_OUTPUT_VERBOSE(500, "vprotocol_pessimist: component_init");
     *priority = _priority;
 
     /* sanity check */
-    if(enable_mpi_threads)
-    {
+    if(enable_mpi_threads) {
+        /**
+         * Prevent the pessimistic protocol from activating if we are in a potentially multithreaded
+         * applications. The reason is that without tracking the thread initiator of messages it is
+         * extrmely difficult to provide a global message ordering in threaded-scenarios. Thus, the
+         * safe approach is to turn off the logger.
+         */
         opal_output(0, "vprotocol_pessimist: component_init: threads are enabled, and not supported by vprotocol pessimist fault tolerant layer, will not load");
         return NULL;
     }
