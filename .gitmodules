@@ -1,4 +1,4 @@
 [submodule "prrte"]
 	path = prrte
-	url = https://github.com/openpmix/prrte
+	url = https://github.com/ggouaillardet/prrte
 	branch = master
