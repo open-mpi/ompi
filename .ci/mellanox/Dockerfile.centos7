@@ -1,0 +1,55 @@
+ARG OMPI_CI_OS_NAME=centos
+ARG OMPI_CI_OS_VERSION=7
+FROM ${OMPI_CI_OS_NAME}:${OMPI_CI_OS_VERSION}
+
+# Create a user ${OMPI_CI_USERNAME}:${OMPI_CI_UID} with the group ${OMPI_CI_USERNAME}:${OMPI_CI_GID}
+ARG OMPI_CI_USERNAME
+ARG OMPI_CI_UID
+ARG OMPI_CI_GID
+RUN groupadd -g ${OMPI_CI_GID} ${OMPI_CI_USERNAME}
+RUN adduser --uid ${OMPI_CI_UID} --gid ${OMPI_CI_GID} --home /home/${OMPI_CI_USERNAME} ${OMPI_CI_USERNAME}
+
+RUN echo "${OMPI_CI_USERNAME} ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+
+RUN yum install -y \
+    atk \
+    bc \
+    binutils-devel \
+    bzip2 \
+    cairo \
+    environment-modules \
+    flex \
+    gcc \
+    gcc-c++ \
+    gcc-gfortran \
+    git \
+    gtk2 \
+    jq \
+    libmnl \
+    libnl3 \
+    make \
+    numactl-devel \
+    numactl-libs \
+    perl \
+    perl-Data-Dumper \
+    perl-Thread-Queue \
+    sudo \
+    tcsh \
+    tk \
+    valgrind-devel \
+    wget
+
+# Engineering versions of Mellanox HPC-X components are loaded from the Mellanox lab environment modules
+RUN echo "/hpc/local/etc/modulefiles" >> /usr/share/Modules/init/.modulespath
+
+ARG OMPI_CI_OFED=4.7-1.0.0.1
+# TODO: 'rhel7.6' is hardcoded for centos7
+ENV MOFED_DIR MLNX_OFED_LINUX-${OMPI_CI_OFED}-rhel7.6-x86_64
+ENV MOFED_SITE_PLACE MLNX_OFED-${OMPI_CI_OFED}
+ENV MOFED_IMAGE MLNX_OFED_LINUX-${OMPI_CI_OFED}-rhel7.6-x86_64.tgz
+RUN wget --no-verbose http://content.mellanox.com/ofed/${MOFED_SITE_PLACE}/${MOFED_IMAGE} && \
+    tar -xzvf ${MOFED_IMAGE} && \
+    ${MOFED_DIR}/mlnxofedinstall --user-space-only --without-fw-update --all -q --skip-distro-check && \
+    cd .. && \
+    rm -rf ${MOFED_DIR} && \
+    rm -rf *.tgz

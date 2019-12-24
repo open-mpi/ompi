@@ -24,8 +24,6 @@ variables:
   ompi_ci_os_name: centos
   ompi_ci_os_version: 7
   ompi_ci_ofed: 4.7-1.0.0.1
-  ompi_jenkins_scripts_git_repo_url: https://github.com/itemko/jenkins_scripts.git
-  ompi_jenkins_scripts_git_branch: artemry/ompi
   ompi_ci_username: swx-jenkins
   ompi_ci_uid: 6213
   ompi_ci_gid: 11429
@@ -48,13 +46,7 @@ jobs:
         **/*
   - checkout: self
     submodules: true
-    path: ompi
-  - bash: |
-      set -eE
-      [ "$(debug)" = "true" ] && set -x
-      cd $(Pipeline.Workspace) && git clone $(ompi_jenkins_scripts_git_repo_url)
-      cd jenkins_scripts && git checkout $(ompi_jenkins_scripts_git_branch) && cd - > /dev/null
-    displayName: Checkout CI scripts
+    endpoint: azure-gh-ci-pat
   - bash: |
       set -eE
       [ "$(debug)" = "true" ] && set -x
@@ -67,7 +59,7 @@ jobs:
     displayName: Build docker image
     inputs:
       command: build
-      dockerfile: ../jenkins_scripts/jenkins/ompi/Dockerfile.$(ompi_ci_os_name)$(ompi_ci_os_version)
+      dockerfile: .ci/mellanox/Dockerfile.$(ompi_ci_os_name)$(ompi_ci_os_version)
       arguments: --no-cache --network=host --rm --force-rm --label=ompi --build-arg OMPI_CI_OS_NAME=$(ompi_ci_os_name)
         --build-arg OMPI_CI_OS_VERSION=$(ompi_ci_os_version) --build-arg OMPI_CI_OFED=$(ompi_ci_ofed)
         --build-arg OMPI_CI_USERNAME=$(ompi_ci_username) --build-arg OMPI_CI_UID=$(ompi_ci_uid)
@@ -78,10 +70,9 @@ jobs:
   - bash: |
       set -eE
       [ "$(debug)" = "true" ] && set -x
-      export WORKSPACE_JENKINS_SCRIPTS=$(Pipeline.Workspace)/jenkins_scripts
-      export WORKSPACE_OMPI=$(Pipeline.Workspace)/ompi
+      export WORKSPACE=$(Pipeline.Workspace)
       export OMPI_CI_DOCKER_IMAGE_NAME=$(OMPI_CI_OS_NAME)_ompi_ci:$(Build.BuildId)
-      ${WORKSPACE_JENKINS_SCRIPTS}/jenkins/ompi/ompi_jenkins_docker_launcher.sh
+      ${WORKSPACE}/.ci/mellanox/ompi_test_docker_launcher.sh
     displayName: Build and test OpenMPI
   - bash: |
       set -eE
