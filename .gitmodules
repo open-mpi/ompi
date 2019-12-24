@@ -1,0 +1,3 @@
+[submodule "hwloc-20x"]
+	path = opal/mca/hwloc/hwloc2/hwloc
+	url = https://github.com/open-mpi/hwloc.git
