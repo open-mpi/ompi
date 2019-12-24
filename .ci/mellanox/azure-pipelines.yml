@@ -49,7 +49,6 @@ jobs:
   - bash: |
       set -eE
       [ "$(debug)" = "true" ] && set -x
-      printenv
       DOCKER_BUILD_CONTEXT_DIR="/tmp/ompi_build_docker_image_${BUILD_BUILDID}"
       rm -rf ${DOCKER_BUILD_CONTEXT_DIR}
       mkdir -p ${DOCKER_BUILD_CONTEXT_DIR}
@@ -70,7 +69,7 @@ jobs:
   - bash: |
       set -eE
       [ "$(debug)" = "true" ] && set -x
-      export WORKSPACE=$(Pipeline.Workspace)
+      export WORKSPACE=$(Build.SourcesDirectory)
       export OMPI_CI_DOCKER_IMAGE_NAME=$(OMPI_CI_OS_NAME)_ompi_ci:$(Build.BuildId)
       ${WORKSPACE}/.ci/mellanox/ompi_test_docker_launcher.sh
     displayName: Build and test OpenMPI
