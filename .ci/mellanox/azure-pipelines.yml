@@ -13,8 +13,6 @@
 # 1. Trigger CI several times simultaneously (e.g. from different PRs)
 # 2. Verify '/azp run' in PR comments by non-Azure users
 
-# TODO: tmp comment 5
-
 # Per-commit
 trigger:
   - master
@@ -54,40 +52,40 @@ jobs:
         **/*
   - checkout: self
     submodules: true
-#  - bash: |
-#      set -eE
-#      [ "$(debug)" = "true" ] && set -x
-#      DOCKER_BUILD_CONTEXT_DIR="/tmp/ompi_build_docker_image_${BUILD_BUILDID}"
-#      rm -rf ${DOCKER_BUILD_CONTEXT_DIR}
-#      mkdir -p ${DOCKER_BUILD_CONTEXT_DIR}
-#      echo "##vso[task.setvariable variable=docker_build_context_dir]${DOCKER_BUILD_CONTEXT_DIR}"
-#    displayName: Create temporary context folder for docker image building
-#  - task: Docker@2
-#    displayName: Build docker image
-#    inputs:
-#      command: build
-#      dockerfile: .ci/mellanox/Dockerfile.$(ompi_ci_os_name)$(ompi_ci_os_version)
-#      arguments: --no-cache --network=host --rm --force-rm --label=ompi --build-arg OMPI_CI_OS_NAME=$(ompi_ci_os_name)
-#        --build-arg OMPI_CI_OS_VERSION=$(ompi_ci_os_version) --build-arg OMPI_CI_OFED=$(ompi_ci_ofed)
-#        --build-arg OMPI_CI_USERNAME=$(ompi_ci_username) --build-arg OMPI_CI_UID=$(ompi_ci_uid)
-#        --build-arg OMPI_CI_GID=$(ompi_ci_gid)
-#      buildContext: $(DOCKER_BUILD_CONTEXT_DIR)
-#      repository: $(OMPI_CI_OS_NAME)_ompi_ci
-#      tags: $(Build.BuildId)
-#  - bash: |
-#      set -eE
-#      [ "$(debug)" = "true" ] && set -x
-#      export WORKSPACE=$(Build.SourcesDirectory)
-#      export OMPI_CI_DOCKER_IMAGE_NAME=$(OMPI_CI_OS_NAME)_ompi_ci:$(Build.BuildId)
-#      ${WORKSPACE}/.ci/mellanox/ompi_test_docker_launcher.sh
-#    displayName: Build and test OpenMPI
-#  - bash: |
-#      set -eE
-#      [ "$(debug)" = "true" ] && set -x
-#      rm -rf ${DOCKER_BUILD_CONTEXT_DIR}
+  - bash: |
+      set -eE
+      [ "$(debug)" = "true" ] && set -x
+      DOCKER_BUILD_CONTEXT_DIR="/tmp/ompi_build_docker_image_${BUILD_BUILDID}"
+      rm -rf ${DOCKER_BUILD_CONTEXT_DIR}
+      mkdir -p ${DOCKER_BUILD_CONTEXT_DIR}
+      echo "##vso[task.setvariable variable=docker_build_context_dir]${DOCKER_BUILD_CONTEXT_DIR}"
+    displayName: Create temporary context folder for docker image building
+  - task: Docker@2
+    displayName: Build docker image
+    inputs:
+      command: build
+      dockerfile: .ci/mellanox/Dockerfile.$(ompi_ci_os_name)$(ompi_ci_os_version)
+      arguments: --no-cache --network=host --rm --force-rm --label=ompi --build-arg OMPI_CI_OS_NAME=$(ompi_ci_os_name)
+        --build-arg OMPI_CI_OS_VERSION=$(ompi_ci_os_version) --build-arg OMPI_CI_OFED=$(ompi_ci_ofed)
+        --build-arg OMPI_CI_USERNAME=$(ompi_ci_username) --build-arg OMPI_CI_UID=$(ompi_ci_uid)
+        --build-arg OMPI_CI_GID=$(ompi_ci_gid)
+      buildContext: $(DOCKER_BUILD_CONTEXT_DIR)
+      repository: $(OMPI_CI_OS_NAME)_ompi_ci
+      tags: $(Build.BuildId)
+  - bash: |
+      set -eE
+      [ "$(debug)" = "true" ] && set -x
+      export WORKSPACE=$(Build.SourcesDirectory)
+      export OMPI_CI_DOCKER_IMAGE_NAME=$(OMPI_CI_OS_NAME)_ompi_ci:$(Build.BuildId)
+      ${WORKSPACE}/.ci/mellanox/ompi_test_docker_launcher.sh
+    displayName: Build and test OpenMPI
+  - bash: |
+      set -eE
+      [ "$(debug)" = "true" ] && set -x
+      rm -rf ${DOCKER_BUILD_CONTEXT_DIR}
+      docker images
+      docker ps -a
+#      docker rmi $(OMPI_CI_OS_NAME)_ompi:$(Build.BuildId)
 #      docker images
 #      docker ps -a
-##      docker rmi $(OMPI_CI_OS_NAME)_ompi:$(Build.BuildId)
-##      docker images
-##      docker ps -a
-#    displayName: Post-actions
+    displayName: Post-actions
