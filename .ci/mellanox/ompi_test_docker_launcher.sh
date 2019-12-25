@@ -17,14 +17,6 @@ then
     exit 1
 fi
 
-# Check that you are inside a docker container
-cat /proc/1/cgroup
-
-docker images
-docker ps -a
-
-printenv
-
 # Run OMPI CI scenarios (build and test)
 docker run \
     -v /hpc/local:/hpc/local \
