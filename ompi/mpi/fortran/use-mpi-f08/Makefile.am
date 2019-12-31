@@ -1,6 +1,6 @@
 # -*- makefile.am -*-
 #
-# Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2019 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2012-2013 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
@@ -23,6 +23,13 @@
 
 include $(top_srcdir)/Makefile.ompi-rules
 
+# Note that Automake's Fortran-buidling rules uses CPPFLAGS and
+# AM_CPPFLAGS.  This can cause weirdness (e.g.,
+# https://github.com/open-mpi/ompi/issues/7253).  Let's just zero
+# those out and rely on AM_FCFLAGS.
+CPPFLAGS =
+AM_CPPFLAGS =
+
 # This Makefile is only relevant if we're building the "use mpi_f08"
 # MPI bindings.
 if OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS
@@ -32,7 +39,7 @@ AM_FCFLAGS = -I$(top_builddir)/ompi/include \
              $(OMPI_FC_MODULE_FLAG)$(top_builddir)/ompi/$(OMPI_FORTRAN_USEMPI_DIR) \
              $(OMPI_FC_MODULE_FLAG)mod \
              $(OMPI_FC_MODULE_FLAG)bindings \
-             -I$(top_srcdir) $(FCFLAGS_f90)
+             -I$(top_srcdir) -I$(top_builddir) $(FCFLAGS_f90)
 
 MOSTLYCLEANFILES = *.mod
 
@@ -795,10 +802,7 @@ pmpi_api_files = \
 lib@OMPI_LIBMPI_NAME@_usempif08_la_SOURCES = \
         $(mpi_api_files) \
         $(pmpi_api_files) \
-        mpi-f08.F90 \
-        buffer_detach.c \
-        constants.h \
-        constants.c
+        mpi-f08.F90
 
 # These are generated; do not ship them
 nodist_lib@OMPI_LIBMPI_NAME@_usempif08_la_SOURCES =
@@ -814,13 +818,18 @@ endif
 #
 # Include the mpi_f08-based MPI extensions in libmpi_usempif08, too.
 #
+# Also include the one .c file that we need in this library -- because
+# we zero out CPPFLAGS and AM_CPPFLAGS in this Makefile.am, we have to
+# compile that .c file in a separate directory / Makefile.
+#
 
 lib@OMPI_LIBMPI_NAME@_usempif08_la_LIBADD = \
         $(module_sentinel_file) \
         $(OMPI_MPIEXT_USEMPIF08_LIBS) \
         $(top_builddir)/ompi/mpi/fortran/mpif-h/lib@OMPI_LIBMPI_NAME@_mpifh.la \
-        $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la
-lib@OMPI_LIBMPI_NAME@_usempif08_la_DEPENDENCIES = $(module_sentinel_file)
+        $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
+        base/libusempif08_ccode.la
+lib@OMPI_LIBMPI_NAME@_usempif08_la_DEPENDENCIES = $(module_sentinel_files)
 lib@OMPI_LIBMPI_NAME@_usempif08_la_LDFLAGS = -version-info $(libmpi_usempif08_so_version)
 
 #
