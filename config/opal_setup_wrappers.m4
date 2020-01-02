@@ -15,6 +15,8 @@ dnl Copyright (c) 2009-2016 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2015-2017 Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
 dnl Copyright (c) 2016      IBM Corporation.  All rights reserved.
+dnl Copyright (c) 2020      Triad National Security, LLC. All rights
+dnl                         reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -216,6 +218,7 @@ AC_DEFUN([OPAL_SETUP_RUNPATH],[
 
     # Set the output in $runpath_args
     runpath_args=
+    runpath_fc_args=
     LDFLAGS_save=$LDFLAGS
     LDFLAGS="$LDFLAGS -Wl,--enable-new-dtags"
     AS_IF([test x"$enable_wrapper_runpath" = x"yes"],
@@ -226,17 +229,17 @@ AC_DEFUN([OPAL_SETUP_RUNPATH],[
                             runpath_args="-Wl,--enable-new-dtags"
                             AC_MSG_RESULT([yes (-Wl,--enable-new-dtags)])],
                            [AC_MSG_RESULT([no])])
-            AC_LANG_POP([C])])
-    m4_ifdef([project_ompi],[
-        OPAL_LIBTOOL_CONFIG([wl],[wl_fc],[--tag=FC],[])
+            AC_LANG_POP([C])
+            m4_ifdef([project_ompi],
+                     [OPAL_LIBTOOL_CONFIG([wl],[wl_fc],[--tag=FC],[])
+                      LDFLAGS="$LDFLAGS_save ${wl_fc}--enable-new-dtags"
+                      AC_LANG_PUSH([Fortran])
+                      AC_LINK_IFELSE([AC_LANG_SOURCE([[program test end program]])],
+                                     [runpath_fc_args="${wl_fc}--enable-new-dtags"
+                                      AC_MSG_RESULT([yes (-Wl,--enable-new-dtags)])],
+                                     [AC_MSG_RESULT([no])])
+                      AC_LANG_POP([Fortran])])])
 
-        LDFLAGS="$LDFLAGS_save ${wl_fc}--enable-new-dtags"
-        AC_LANG_PUSH([Fortran])
-        AC_LINK_IFELSE([AC_LANG_SOURCE([[program test
-end program]])],
-                       [runpath_fc_args="${wl_fc}--enable-new-dtags"],
-                       [runpath_fc_args=""])
-        AC_LANG_POP([Fortran])])
     LDFLAGS=$LDFLAGS_save
 
     OPAL_VAR_SCOPE_POP
