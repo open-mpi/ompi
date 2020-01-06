@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2016 The University of Tennessee and The University
+ * Copyright (c) 2004-2019 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -65,14 +65,14 @@ mca_coll_basic_neighbor_alltoallw_cart(const void *sbuf, const int scounts[], co
         if (MPI_PROC_NULL != srank) {
             nreqs++;
             rc = MCA_PML_CALL(irecv((char *) rbuf + rdisps[i], rcounts[i], rdtypes[i], srank,
-                                    MCA_COLL_BASE_TAG_ALLTOALL, comm, preqs++));
+                                    MCA_COLL_BASE_TAG_NEIGHBOR_BASE - 2 * dim, comm, preqs++));
             if (OMPI_SUCCESS != rc) break;
         }
 
         if (MPI_PROC_NULL != drank) {
             nreqs++;
             rc = MCA_PML_CALL(irecv((char *) rbuf + rdisps[i+1], rcounts[i+1], rdtypes[i+1], drank,
-                                    MCA_COLL_BASE_TAG_ALLTOALL, comm, preqs++));
+                                    MCA_COLL_BASE_TAG_NEIGHBOR_BASE - 2 * dim - 1, comm, preqs++));
             if (OMPI_SUCCESS != rc) break;
         }
     }
@@ -95,14 +95,14 @@ mca_coll_basic_neighbor_alltoallw_cart(const void *sbuf, const int scounts[], co
             nreqs++;
             /* remove cast from const when the pml layer is updated to take a const for the send buffer */
             rc = MCA_PML_CALL(isend((char *) sbuf + sdisps[i], scounts[i], sdtypes[i], srank,
-                                    MCA_COLL_BASE_TAG_ALLTOALL, MCA_PML_BASE_SEND_STANDARD, comm, preqs++));
+                                    MCA_COLL_BASE_TAG_NEIGHBOR_BASE - 2 * dim - 1, MCA_PML_BASE_SEND_STANDARD, comm, preqs++));
             if (OMPI_SUCCESS != rc) break;
         }
 
         if (MPI_PROC_NULL != drank) {
             nreqs++;
             rc = MCA_PML_CALL(isend((char *) sbuf + sdisps[i+1], scounts[i+1], sdtypes[i+1], drank,
-                                    MCA_COLL_BASE_TAG_ALLTOALL, MCA_PML_BASE_SEND_STANDARD, comm, preqs++));
+                                    MCA_COLL_BASE_TAG_NEIGHBOR_BASE - 2 * dim, MCA_PML_BASE_SEND_STANDARD, comm, preqs++));
             if (OMPI_SUCCESS != rc) break;
         }
     }
