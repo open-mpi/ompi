@@ -145,7 +145,7 @@ The Berkeley Lab Checkpoint/Restart (BLCR) single-process checkpoint is a
 software system developed at Lawrence Berkeley National Laboratory. See the
 project website for more details:
 
-   \fI http://ftg.lbl.gov/CheckpointRestart/CheckpointRestart.shtml \fR
+   \fI https://crd.lbl.gov/departments/computer-science/CLaSS/research/BLCR/ \fR
 .
 .PP
 The \fIblcr\fR component has the following MCA parameters:
