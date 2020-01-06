@@ -89,22 +89,20 @@ static inline int start_exclusive(ompi_osc_ucx_module_t *module, int target) {
 }
 
 static inline int end_exclusive(ompi_osc_ucx_module_t *module, int target) {
-    uint64_t result_value = 0;
     ucp_ep_h ep = OSC_UCX_GET_EP(module->comm, target);
     ucp_rkey_h rkey = (module->state_info_array)[target].rkey;
     uint64_t remote_addr = (module->state_info_array)[target].addr + OSC_UCX_STATE_LOCK_OFFSET;
     ucs_status_t status;
 
-    status = ucp_atomic_swap64(ep, TARGET_LOCK_UNLOCKED,
-                               remote_addr, rkey, &result_value);
-    if (status != UCS_OK) {
+    status = ucp_atomic_post(ep, UCP_ATOMIC_POST_OP_ADD,
+                             -((int64_t)TARGET_LOCK_EXCLUSIVE), sizeof(uint64_t),
+                             remote_addr, rkey);
+    if (UCS_OK != status) {
         opal_output_verbose(1, ompi_osc_base_framework.framework_output,
-                            "%s:%d: ucp_atomic_swap64 failed: %d\n",
+                            "%s:%d: ucp_atomic_post failed: %d\n",
                             __FILE__, __LINE__, status);
         return OMPI_ERROR;
     }
-
-    assert(result_value >= TARGET_LOCK_EXCLUSIVE);
 
     return OMPI_SUCCESS;
 }
