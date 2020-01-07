@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2016 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2019 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2013      Mellanox Technologies, Inc.
 #                         All rights reserved.
 # Copyright (c) 2015      Research Organization for Information Science
@@ -51,7 +51,10 @@
 #############################################################################
 
 # Define this if you want to make this SRPM build in
-# /opt/NAME/VERSION-RELEASE instead of the default /usr/.
+# /opt/NAME/VERSION-RELEASE instead of the default /usr/.  Note that
+# Open MPI will be *entirely* installed in /opt.  One possible
+# exception is the modulefile -- see the description of
+# modulefile_path, below.
 # type: bool (0/1)
 %{!?install_in_opt: %define install_in_opt 0}
 
@@ -67,8 +70,15 @@
 # Define this to 1 if you want this RPM to install a modulefile.
 # type: bool (0/1)
 %{!?install_modulefile: %define install_modulefile 0}
-# type: string (root path to install modulefiles)
-%{!?modulefile_path: %define modulefile_path /usr/share/Modules/modulefiles}
+
+# Root path to install modulefiles.  If the value modulefile_path is
+# set, that directory is the root path for where the modulefile will
+# be installed there (assuming install_modulefile==1), even if
+# install_in_opt==1.  type: string (root path to install modulefile)
+#
+# NOTE: modulefile_path is not actually defined here, because we have
+#       to check/process install_in_opt first.
+
 # type: string (subdir to install modulefile)
 %{!?modulefile_subdir: %define modulefile_subdir %{name}}
 # type: string (name of modulefile)
@@ -152,20 +162,30 @@
 %define _libdir /opt/%{name}/%{version}/lib
 %define _includedir /opt/%{name}/%{version}/include
 %define _mandir /opt/%{name}/%{version}/man
+
 # Note that the name "openmpi" is hard-coded in
 # opal/mca/installdirs/config for pkgdatadir; there is currently no
 # easy way to have OMPI change this directory name internally.  So we
 # just hard-code that name here as well (regardless of the value of
 # %{name} or %{_name}).
 %define _pkgdatadir /opt/%{name}/%{version}/share/openmpi
+
 # Per advice from Doug Ledford at Red Hat, docdir is supposed to be in
 # a fixed location.  But if you're installing a package in /opt, all
 # bets are off.  So feel free to install it anywhere in your tree.  He
 # suggests $prefix/doc.
 %define _defaultdocdir /opt/%{name}/%{version}/doc
-# Also put the modulefile in /opt.
-%define modulefile_path /opt/%{name}/%{version}/share/openmpi/modulefiles
+
+# Also put the modulefile in /opt (unless the user already specified
+# where they want it to go -- the modulefile is a bit different in
+# that the user may want it outside of /opt).
+%{!?modulefile_path: %define modulefile_path /opt/%{name}/%{version}/share/openmpi/modulefiles}
 %endif
+
+# Now that we have processed install_in_opt, we can see if
+# modulefile_path was not set.  If it was not, then set it to a
+# default value.
+%{!?modulefile_path: %define modulefile_path /usr/share/Modules/modulefiles}
 
 %if !%{build_debuginfo_rpm}
 %define debug_package %{nil}
