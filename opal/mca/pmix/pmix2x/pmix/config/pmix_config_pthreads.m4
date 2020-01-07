@@ -10,7 +10,7 @@ dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2012      Cisco Systems, Inc.  All rights reserved.
-dnl Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
+dnl Copyright (c) 2014-2020 Intel, Inc.  All rights reserved.
 dnl Copyright (c) 2014-2016 Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
 dnl $COPYRIGHT$
@@ -272,11 +272,6 @@ PMIX_INTL_POSIX_THREADS_SPECIAL_FLAGS
 
 # Try the normal linking methods (that's no fun)
 PMIX_INTL_POSIX_THREADS_LIBS
-
-#
-# check to see if we can create shared memory mutexes and conditions
-#
-AC_CHECK_FUNCS([pthread_mutexattr_setpshared pthread_condattr_setpshared])
 
 #
 # check to see if we can set error checking mutexes
