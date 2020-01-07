@@ -47,7 +47,7 @@ pack_partial_blocklen( opal_convertor_t* CONVERTOR,
     unsigned char* _memory = (*memory) + _elem->disp;
     unsigned char* _packed = *packed;
 
-    assert( *(COUNT) <= _elem->count * _elem->blocklen);
+    assert( *(COUNT) <= ((size_t)_elem->count * _elem->blocklen) );
 
     /**
      * First check if we already did something on this element ? The COUNT is the number
@@ -98,7 +98,7 @@ pack_predefined_data( opal_convertor_t* CONVERTOR,
     unsigned char* _packed = *packed;
 
     assert( 0 == (cando_count % _elem->blocklen) );  /* no partials here */
-    assert( *(COUNT) <= _elem->count * _elem->blocklen);
+    assert( *(COUNT) <= ((size_t)_elem->count * _elem->blocklen) );
 
     if( (blocklen_bytes * cando_count) > *(SPACE) )
         cando_count = (*SPACE) / blocklen_bytes;

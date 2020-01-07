@@ -285,7 +285,7 @@ int32_t opal_datatype_add( opal_datatype_t* pdtBase, const opal_datatype_t* pdtA
         pLast->elem.common.flags     = pdtAdd->flags & ~(OPAL_DATATYPE_FLAG_COMMITTED);
         pLast->elem.common.type      = pdtAdd->id;
         pLast->elem.disp             = disp;
-        pLast->elem.extent           = count * extent;
+        pLast->elem.extent           = (ptrdiff_t)count * extent;
         /* assume predefined datatypes without extent, aka. contiguous */
         pLast->elem.count            = 1;
         pLast->elem.blocklen         = count;
@@ -328,9 +328,18 @@ int32_t opal_datatype_add( opal_datatype_t* pdtBase, const opal_datatype_t* pdtA
                     pLast->elem.count = count;
                     pLast->elem.extent = extent;
                 }
-            } else if( extent == (ptrdiff_t)(pLast->elem.count * pLast->elem.extent) ) {
+            } else if( extent == ((ptrdiff_t)pLast->elem.count * pLast->elem.extent) ) {
                 /* It's just a repetition of the same element, increase the count */
-                pLast->elem.count *= count;
+                /* We need to protect against the case where the multiplication below results in a
+                 * number larger than the max uint32_t. In the unlikely situation where that's the case
+                 * we should not try to optimize the item further but instead fall back and build a loop
+                 * around it.
+                 */
+                uint32_t cnt = pLast->elem.count * count;
+                if( cnt < pLast->elem.count ) {
+                    goto build_loop;
+                }
+                pLast->elem.count = cnt;  /* we're good, merge the elements */
             } else {
                 /* No luck here, no optimization can be applied. Fall back to the
                  * normal case where we add a loop around the datatype.
