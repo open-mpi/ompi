@@ -94,6 +94,10 @@ int opal_common_verbs_port_bw(struct ibv_port_attr *port_attr,
         /* 12x */
         *bandwidth *= 12;
         break;
+    case 16:
+        /* 16x */
+        *bandwidth *= 16;
+        break;
     default:
         /* Who knows? */
         return OPAL_ERR_NOT_FOUND;
