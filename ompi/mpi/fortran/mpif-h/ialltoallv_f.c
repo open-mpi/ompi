@@ -10,8 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015-2019 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -23,6 +23,7 @@
 
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 #include "ompi/mpi/fortran/base/constants.h"
+#include "ompi/communicator/communicator.h"
 
 #if OMPI_BUILD_MPI_PROFILING
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -73,41 +74,47 @@ void ompi_ialltoallv_f(char *sendbuf, MPI_Fint *sendcounts, MPI_Fint *sdispls,
                        MPI_Fint *comm, MPI_Fint *request, MPI_Fint *ierr)
 {
     MPI_Comm c_comm;
-    MPI_Datatype c_sendtype, c_recvtype;
+    MPI_Datatype c_sendtype = NULL, c_recvtype;
     MPI_Request c_request;
-    int size, c_ierr;
+    int c_ierr;
     OMPI_ARRAY_NAME_DECL(sendcounts);
     OMPI_ARRAY_NAME_DECL(sdispls);
     OMPI_ARRAY_NAME_DECL(recvcounts);
     OMPI_ARRAY_NAME_DECL(rdispls);
 
     c_comm = PMPI_Comm_f2c(*comm);
-    c_sendtype = PMPI_Type_f2c(*sendtype);
-    c_recvtype = PMPI_Type_f2c(*recvtype);
+    OMPI_COND_STATEMENT(int size = OMPI_COMM_IS_INTER(c_comm)?ompi_comm_remote_size(c_comm):ompi_comm_size(c_comm));
 
-    PMPI_Comm_size(c_comm, &size);
-    OMPI_ARRAY_FINT_2_INT(sendcounts, size);
-    OMPI_ARRAY_FINT_2_INT(sdispls, size);
+    if (OMPI_IS_FORTRAN_IN_PLACE(sendbuf)) {
+        sendbuf = MPI_IN_PLACE;
+    } else {
+        c_sendtype = PMPI_Type_f2c(*sendtype);
+        OMPI_ARRAY_FINT_2_INT(sendcounts, size);
+        OMPI_ARRAY_FINT_2_INT(sdispls, size);
+    }
+
+    c_recvtype = PMPI_Type_f2c(*recvtype);
     OMPI_ARRAY_FINT_2_INT(recvcounts, size);
     OMPI_ARRAY_FINT_2_INT(rdispls, size);
 
-    sendbuf = (char *) OMPI_F2C_IN_PLACE(sendbuf);
     sendbuf = (char *) OMPI_F2C_BOTTOM(sendbuf);
     recvbuf = (char *) OMPI_F2C_BOTTOM(recvbuf);
 
     c_ierr = PMPI_Ialltoallv(sendbuf,
-                            OMPI_ARRAY_NAME_CONVERT(sendcounts),
-                            OMPI_ARRAY_NAME_CONVERT(sdispls),
-                            c_sendtype,
-                            recvbuf,
-                            OMPI_ARRAY_NAME_CONVERT(recvcounts),
-                            OMPI_ARRAY_NAME_CONVERT(rdispls),
-                            c_recvtype, c_comm, &c_request);
+                             OMPI_ARRAY_NAME_CONVERT(sendcounts),
+                             OMPI_ARRAY_NAME_CONVERT(sdispls),
+                             c_sendtype,
+                             recvbuf,
+                             OMPI_ARRAY_NAME_CONVERT(recvcounts),
+                             OMPI_ARRAY_NAME_CONVERT(rdispls),
+                             c_recvtype, c_comm, &c_request);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
     if (MPI_SUCCESS == c_ierr) *request = PMPI_Request_c2f(c_request);
 
-    OMPI_ARRAY_FINT_2_INT_CLEANUP(sendcounts);
-    OMPI_ARRAY_FINT_2_INT_CLEANUP(sdispls);
+    if (MPI_IN_PLACE != sendbuf) {
+        OMPI_ARRAY_FINT_2_INT_CLEANUP(sendcounts);
+        OMPI_ARRAY_FINT_2_INT_CLEANUP(sdispls);
+    }
     OMPI_ARRAY_FINT_2_INT_CLEANUP(recvcounts);
     OMPI_ARRAY_FINT_2_INT_CLEANUP(rdispls);
 }

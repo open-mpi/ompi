@@ -3,11 +3,15 @@
 ! Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
 ! Copyright (c) 2009-2012 Los Alamos National Security, LLC.
 !               All Rights reserved.
-! Copyright (c) 2018      Research Organization for Information Science
+! Copyright (c) 2018-2019 Research Organization for Information Science
 !                         and Technology (RIST).  All rights reserved.
 ! $COPYRIGHT$
 
 #include "ompi/mpi/fortran/configure-fortran-output.h"
+
+#if OMPI_BUILD_MPI_PROFILING
+#define MPI_Register_datarep_f08 PMPI_Register_datarep_f08
+#endif
 
 subroutine MPI_Register_datarep_f08(datarep,read_conversion_fn,write_conversion_fn, &
                                     dtype_file_extent_fn,extra_state,ierror)

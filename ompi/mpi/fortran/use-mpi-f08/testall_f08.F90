@@ -3,7 +3,13 @@
 ! Copyright (c) 2009-2013 Cisco Systems, Inc.  All rights reserved.
 ! Copyright (c) 2009-2012 Los Alamos National Security, LLC.
 !                         All rights reserved.
+! Copyright (c) 2019      Research Organization for Information Science
+!                         and Technology (RIST).  All rights reserved.
 ! $COPYRIGHT$
+
+#if OMPI_BUILD_MPI_PROFILING
+#define MPI_Testall_f08 PMPI_Testall_f08
+#endif
 
 subroutine MPI_Testall_f08(count,array_of_requests,flag,array_of_statuses,ierror)
    use :: mpi_f08_types, only : MPI_Request, MPI_Status

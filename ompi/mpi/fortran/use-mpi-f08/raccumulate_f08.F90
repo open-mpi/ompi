@@ -3,11 +3,15 @@
 ! Copyright (c) 2010-2012 Cisco Systems, Inc.  All rights reserved.
 ! Copyright (c) 2009-2014 Los Alamos National Security, LLC.
 !               All Rights reserved.
-! Copyright (c) 2018      Research Organization for Information Science
+! Copyright (c) 2018-2019 Research Organization for Information Science
 !                         and Technology (RIST).  All rights reserved.
 ! $COPYRIGHT$
 
 #include "ompi/mpi/fortran/configure-fortran-output.h"
+
+#if OMPI_BUILD_MPI_PROFILING
+#define MPI_Raccumulate_f08 PMPI_Raccumulate_f08
+#endif
 
 subroutine MPI_Raccumulate_f08(origin_addr,origin_count,origin_datatype,&
                                target_rank,target_disp,target_count,    &

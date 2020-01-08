@@ -3,9 +3,15 @@
 ! Copyright (c) 2010-2014 Cisco Systems, Inc.  All rights reserved.
 ! Copyright (c) 2009-2012 Los Alamos National Security, LLC.
 !                         All rights reserved.
+! Copyright (c) 2019      Research Organization for Information Science
+!                         and Technology (RIST).  All rights reserved.
 ! $COPYRIGHT$
 
 #include "ompi/mpi/fortran/configure-fortran-output.h"
+
+#if OMPI_BUILD_MPI_PROFILING
+#define MPI_Op_create_f08 PMPI_Op_create_f08
+#endif
 
 subroutine MPI_Op_create_f08(user_fn,commute,op,ierror)
    use :: mpi_f08_types, only : MPI_Op

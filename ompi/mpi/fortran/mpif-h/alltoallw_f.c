@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015-2019 Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -85,7 +85,9 @@ void ompi_alltoallw_f(char *sendbuf, MPI_Fint *sendcounts,
     c_comm = PMPI_Comm_f2c(*comm);
     size = OMPI_COMM_IS_INTER(c_comm)?ompi_comm_remote_size(c_comm):ompi_comm_size(c_comm);
 
-    if (!OMPI_IS_FORTRAN_IN_PLACE(sendbuf)) {
+    if (OMPI_IS_FORTRAN_IN_PLACE(sendbuf)) {
+        sendbuf = MPI_IN_PLACE;
+    } else {
         c_sendtypes = (MPI_Datatype *) malloc(size * sizeof(MPI_Datatype));
         OMPI_ARRAY_FINT_2_INT(sendcounts, size);
         OMPI_ARRAY_FINT_2_INT(sdispls, size);

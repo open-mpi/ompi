@@ -3,10 +3,14 @@
 ! Copyright (c) 2009-2018 Cisco Systems, Inc.  All rights reserved
 ! Copyright (c) 2009-2012 Los Alamos National Security, LLC.
 !                         All rights reserved.
-! Copyright (c) 2018      Research Organization for Information Science
+! Copyright (c) 2018-2019 Research Organization for Information Science
 !                         and Technology (RIST).  All rights reserved.
 ! Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
 ! $COPYRIGHT$
+
+#if OMPI_BUILD_MPI_PROFILING
+#define MPI_Type_dup_f08 PMPI_Type_dup_f08
+#endif
 
 subroutine MPI_Type_dup_f08(oldtype,newtype,ierror)
    use :: mpi_f08_types, only : MPI_Datatype

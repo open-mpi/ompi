@@ -3,7 +3,13 @@
 ! Copyright (c) 2010-2013 Cisco Systems, Inc.  All rights reserved.
 ! Copyright (c) 2009-2012 Los Alamos National Security, LLC.
 !                         All rights reserved.
+! Copyright (c) 2019      Research Organization for Information Science
+!                         and Technology (RIST).  All rights reserved.
 ! $COPYRIGHT$
+
+#if OMPI_BUILD_MPI_PROFILING
+#define MPI_Cart_map_f08 PMPI_Cart_map_f08
+#endif
 
 subroutine MPI_Cart_map_f08(comm,ndims,dims,periods,newrank,ierror)
    use :: mpi_f08_types, only : MPI_Comm

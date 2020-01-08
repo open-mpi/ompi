@@ -5,9 +5,13 @@
 !               All Rights reserved.
 ! Copyright (c) 2004-2014 High Performance Computing Center Stuttgart,
 !                         University of Stuttgart.  All rights reserved.
-! Copyright (c) 2018      Research Organization for Information Science
+! Copyright (c) 2018-2019 Research Organization for Information Science
 !                         and Technology (RIST).  All rights reserved.
 ! $COPYRIGHT$
+
+#if OMPI_BUILD_MPI_PROFILING
+#define MPI_Win_allocate_f08 PMPI_Win_allocate_f08
+#endif
 
 subroutine MPI_Win_allocate_f08(size, disp_unit, info, comm, &
       baseptr, win, ierror)

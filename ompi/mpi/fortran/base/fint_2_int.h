@@ -47,6 +47,7 @@
   #define OMPI_SINGLE_FINT_2_INT(in)
   #define OMPI_SINGLE_INT_2_FINT(in)
   #define OMPI_ARRAY_INT_2_FINT(in, n)
+  #define OMPI_COND_STATEMENT(a)
 
 #elif OMPI_SIZEOF_FORTRAN_INTEGER > SIZEOF_INT
   #define OMPI_ARRAY_NAME_DECL(a) int *c_##a
@@ -105,6 +106,8 @@
       } \
       free(OMPI_ARRAY_NAME_CONVERT(in)); \
     } while (0)
+
+  #define OMPI_COND_STATEMENT(a) a
 #else /* int > MPI_Fint  */
   #define OMPI_ARRAY_NAME_DECL(a) int *c_##a
   #define OMPI_2_DIM_ARRAY_NAME_DECL(a, dim2) int (*c_##a)[dim2], dim2_index
@@ -157,6 +160,7 @@
       free(OMPI_ARRAY_NAME_CONVERT(in)); \
     } while (0)
 
+  #define OMPI_COND_STATEMENT(a) a
 #endif
 
 /*

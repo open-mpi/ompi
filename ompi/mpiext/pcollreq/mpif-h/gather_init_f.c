@@ -10,8 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2015-2018 Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015-2019 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -23,6 +23,7 @@
 
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 #include "ompi/mpi/fortran/base/constants.h"
+#include "ompi/communicator/communicator.h"
 #include "ompi/mpiext/pcollreq/mpif-h/mpiext_pcollreq_prototypes.h"
 
 #if OMPI_BUILD_MPI_PROFILING
@@ -73,18 +74,32 @@ void ompix_gather_init_f(char *sendbuf, MPI_Fint *sendcount, MPI_Fint *sendtype,
                     MPI_Fint *root, MPI_Fint *comm, MPI_Fint *info, MPI_Fint *request,
                     MPI_Fint *ierr)
 {
-    int c_ierr;
+    int c_root, c_ierr;
     MPI_Comm c_comm;
-    MPI_Datatype c_sendtype, c_recvtype;
+    MPI_Datatype c_sendtype = NULL, c_recvtype = NULL;
     MPI_Info c_info;
     MPI_Request c_request;
 
+    c_root = OMPI_FINT_2_INT(*root);
     c_comm = PMPI_Comm_f2c(*comm);
-    c_sendtype = PMPI_Type_f2c(*sendtype);
-    c_recvtype = PMPI_Type_f2c(*recvtype);
     c_info = PMPI_Info_f2c(*info);
+    if (OMPI_COMM_IS_INTER(c_comm)) {
+        if (MPI_ROOT == c_root) {
+            c_recvtype = PMPI_Type_f2c(*recvtype);
+        } else if (MPI_PROC_NULL != c_root) {
+            c_sendtype = PMPI_Type_f2c(*sendtype);
+        }
+    } else {
+        if (OMPI_IS_FORTRAN_IN_PLACE(sendbuf)) {
+            sendbuf = MPI_IN_PLACE;
+        } else {
+            c_sendtype = PMPI_Type_f2c(*sendtype);
+        }
+        if (ompi_comm_rank(c_comm) == c_root) {
+            c_recvtype = PMPI_Type_f2c(*recvtype);
+        }
+    }
 
-    sendbuf = (char *) OMPI_F2C_IN_PLACE(sendbuf);
     sendbuf = (char *) OMPI_F2C_BOTTOM(sendbuf);
     recvbuf = (char *) OMPI_F2C_BOTTOM(recvbuf);
 

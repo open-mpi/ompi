@@ -1,10 +1,14 @@
 ! -*- f90 -*-
 !
-! Copyright (c) 2015-2018 Research Organization for Information Science
-!                         and Technology (RIST). All rights reserved.
+! Copyright (c) 2015-2019 Research Organization for Information Science
+!                         and Technology (RIST).  All rights reserved.
 ! $COPYRIGHT$
 
 #include "ompi/mpi/fortran/configure-fortran-output.h"
+
+#if OMPI_BUILD_MPI_PROFILING
+#define MPI_Win_create_dynamic_f08 PMPI_Win_create_dynamic_f08
+#endif
 
 subroutine MPI_Win_create_dynamic_f08(info,comm,win,ierror)
    use :: mpi_f08_types, only : MPI_Info, MPI_Comm, MPI_Win
