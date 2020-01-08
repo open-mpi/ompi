@@ -373,7 +373,7 @@ opal_datatype_create_from_packed_description( void** packed_buffer,
  *          argument, the number of bytes of the gap at the beginning.
  */
 static inline ptrdiff_t
-opal_datatype_span( const opal_datatype_t* pData, int64_t count,
+opal_datatype_span( const opal_datatype_t* pData, size_t count,
                     ptrdiff_t* gap)
 {
     if (OPAL_UNLIKELY(0 == pData->size) || (0 == count)) {
@@ -383,7 +383,7 @@ opal_datatype_span( const opal_datatype_t* pData, int64_t count,
     *gap = pData->true_lb;
     ptrdiff_t extent = (pData->ub - pData->lb);
     ptrdiff_t true_extent = (pData->true_ub - pData->true_lb);
-    return true_extent + (count - 1) * extent;
+    return true_extent + extent * (count - 1);
 }
 
 #if OPAL_ENABLE_DEBUG
