@@ -2,11 +2,15 @@ Thank you for taking the time to submit an issue!
 
 ## Background information
 
-### What version of Open MPI are you using? (e.g., v1.10.3, v2.1.0, git branch name and hash, etc.)
+### What version of Open MPI are you using? (e.g., v3.0.5, v4.0.2, git branch name and hash, etc.)
 
 
 
 ### Describe how Open MPI was installed (e.g., from a source/distribution tarball, from a git clone, from an operating system distribution package, etc.)
+
+
+
+### If you are building/installing from a git clone, please copy-n-paste the output from `git submodule status`.
 
 
 
