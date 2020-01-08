@@ -100,6 +100,7 @@ static int ompi_comm_request_progress (void)
 {
     ompi_comm_request_t *request, *next;
     static opal_atomic_int32_t progressing = 0;
+    int completed = 0;
 
     /* don't allow re-entry */
     if (opal_atomic_swap_32 (&progressing, 1)) {
@@ -126,6 +127,7 @@ static int ompi_comm_request_progress (void)
                     }
                     ompi_request_free (&subreq);
                     request_item->subreq_count--;
+                    completed++;
                 } else {
                     item_complete = false;
                     break;
@@ -163,7 +165,7 @@ static int ompi_comm_request_progress (void)
     opal_mutex_unlock (&ompi_comm_request_mutex);
     progressing = 0;
 
-    return 1;
+    return completed;
 }
 
 void ompi_comm_request_start (ompi_comm_request_t *request)

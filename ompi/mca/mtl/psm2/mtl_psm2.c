@@ -469,5 +469,5 @@ int ompi_mtl_psm2_progress( void ) {
     opal_show_help("help-mtl-psm2.txt",
 		   "error polling network", true,
 		   psm2_error_get_string(err));
-    return 1;
+    return OMPI_ERROR;
 }
