@@ -44,13 +44,11 @@ static int grequestx_progress(void) {
             MPI_Status status;
             OPAL_THREAD_UNLOCK(&lock);
             request->greq_poll.c_poll(request->greq_state, &status);
+            OPAL_THREAD_LOCK(&lock);
             if (REQUEST_COMPLETE(&request->greq_base)) {
-                OPAL_THREAD_LOCK(&lock);
                 opal_list_remove_item(&requests, &request->greq_base.super.super);
-                OPAL_THREAD_UNLOCK(&lock);
                 completed++;
             }
-            OPAL_THREAD_LOCK(&lock);
         }
         in_progress = false;
     }
