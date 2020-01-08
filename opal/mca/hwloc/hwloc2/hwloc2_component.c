@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2011-2017 Cisco Systems, Inc.  All rights reserved
+ * Copyright (c) 2011-2019 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2015-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
@@ -24,20 +24,20 @@
 #include "opal/constants.h"
 
 #include "opal/mca/hwloc/hwloc-internal.h"
-#include "hwloc201.h"
+#include "hwloc2.h"
 
 /*
  * Public string showing the sysinfo ompi_linux component version number
  */
-const char *opal_hwloc_hwloc201_component_version_string =
-    "OPAL hwloc201 hwloc MCA component version " OPAL_VERSION;
+const char *opal_hwloc_hwloc2_component_version_string =
+    "OPAL hwloc2 hwloc MCA component version " OPAL_VERSION;
 
 /*
  * Instantiate the public struct with all of our public information
  * and pointers to our public functions in it
  */
 
-const opal_hwloc_component_t mca_hwloc_hwloc201_component = {
+const opal_hwloc_component_t mca_hwloc_hwloc2_component = {
 
     /* First, the mca_component_t struct containing meta information
        about the component itself */
@@ -46,7 +46,7 @@ const opal_hwloc_component_t mca_hwloc_hwloc201_component = {
         OPAL_HWLOC_BASE_VERSION_2_0_0,
 
         /* Component name and version */
-        .mca_component_name = "hwloc201",
+        .mca_component_name = "hwloc2",
         MCA_BASE_MAKE_VERSION(component,  OPAL_MAJOR_VERSION, OPAL_MINOR_VERSION,
                               OPAL_RELEASE_VERSION),
     },
