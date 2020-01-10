@@ -231,7 +231,7 @@ int orte_util_decode_nidmap(opal_buffer_t *buf)
     orte_node_t *nd;
     orte_job_t *daemons;
     orte_proc_t *proc;
-    orte_topology_t *t;
+    orte_topology_t *t = NULL;
 
     /* unpack the flag indicating if HNP is in allocation */
     cnt = 1;

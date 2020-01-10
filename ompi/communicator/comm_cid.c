@@ -304,8 +304,8 @@ static int ompi_comm_allreduce_getnextcid (ompi_comm_request_t *request)
     ompi_comm_cid_context_t *context = (ompi_comm_cid_context_t *) request->context;
     int64_t my_id = ((int64_t) ompi_comm_get_cid (context->comm) << 32 | context->pml_tag);
     ompi_request_t *subreq;
-    bool flag;
-    int ret;
+    bool flag = false;
+    int ret = OMPI_SUCCESS;
     int participate = (context->newcomm->c_local_group->grp_my_rank != MPI_UNDEFINED);
 
     if (OPAL_THREAD_TRYLOCK(&ompi_cid_lock)) {

@@ -330,7 +330,7 @@ static inline opal_object_t *opal_obj_new_debug(opal_class_t* type, const char* 
             OBJ_SET_MAGIC_ID((object), 0);                              \
             opal_obj_run_destructors((opal_object_t *) (object));       \
             OBJ_REMEMBER_FILE_AND_LINENO( object, __FILE__, __LINE__ ); \
-            free(object);                                               \
+            free((void *) object);                                      \
             object = NULL;                                              \
         }                                                               \
     } while (0)
@@ -339,7 +339,7 @@ static inline opal_object_t *opal_obj_new_debug(opal_class_t* type, const char* 
     do {                                                                \
         if (0 == opal_obj_update((opal_object_t *) (object), -1)) {     \
             opal_obj_run_destructors((opal_object_t *) (object));       \
-            free(object);                                               \
+            free((void *) object);                                      \
             object = NULL;                                              \
         }                                                               \
     } while (0)
