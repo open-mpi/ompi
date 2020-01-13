@@ -16,6 +16,8 @@
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2013-2018 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2019      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -50,6 +52,7 @@
 #endif
 #include <ctype.h>
 
+#include "opal/runtime/opal.h"
 #include "opal/util/show_help.h"
 #include "opal/util/error.h"
 #include "opal/util/output.h"
@@ -193,14 +196,15 @@ static int component_send(orte_rml_send_t *msg)
 
 static char* component_get_addr(void)
 {
-    char hn[OPAL_MAXHOSTNAMELEN], *cptr;
+    const char *hn;
+    char *cptr;
 
     /*
      * TODO: for aries want to plug in GNI addr here instead to
      * eventually be able to support connect/accept using aprun.
      */
 
-    gethostname(hn, sizeof(hn));
+    hn = opal_gethostname();
 
     opal_asprintf(&cptr, "gni://%s:%d", hn, getpid());
 

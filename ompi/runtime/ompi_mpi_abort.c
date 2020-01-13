@@ -19,6 +19,8 @@
  * Copyright (c) 2015      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2017      FUJITSU LIMITED.  All rights reserved.
+ * Copyright (c) 2019      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -42,6 +44,7 @@
 #endif
 #include <errno.h>
 
+#include "opal/runtime/opal.h"
 #include "opal/mca/backtrace/backtrace.h"
 #include "opal/util/error.h"
 #include "opal/runtime/opal_params.h"
@@ -121,7 +124,7 @@ int
 ompi_mpi_abort(struct ompi_communicator_t* comm,
                int errcode)
 {
-    char *host, hostname[OPAL_MAXHOSTNAMELEN];
+    const char *host;
     pid_t pid = 0;
 
     /* Protection for recursive invocation */
@@ -131,12 +134,11 @@ ompi_mpi_abort(struct ompi_communicator_t* comm,
     have_been_invoked = true;
 
     /* If MPI is initialized, we know we have a runtime nodename, so
-       use that.  Otherwise, call gethostname. */
+       use that.  Otherwise, call opal_gethostname. */
     if (ompi_rte_initialized) {
         host = ompi_process_info.nodename;
     } else {
-        gethostname(hostname, sizeof(hostname));
-        host = hostname;
+        host = opal_gethostname();
     }
     pid = getpid();
 

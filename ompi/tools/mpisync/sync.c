@@ -1,6 +1,8 @@
 /*
  * Copyright (C) 2014      Artem Polyakov <artpol84@gmail.com>
  * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2019      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -9,6 +11,7 @@
  */
 
 #include "opal_config.h"
+#include "opal/runtime/opal.h"
 
 #include <stdio.h>
 #include <mpi.h>
@@ -77,7 +80,8 @@ int main(int argc, char **argv)
     int rank, commsize;
     double offs = 0, rtt = 0;
     char hname[OPAL_MAXHOSTNAMELEN];
-
+    const char *local_hname;
+ 
     MPI_Comm_rank(comm, &rank);
     MPI_Comm_size(comm, &commsize);
 
@@ -99,11 +103,20 @@ int main(int argc, char **argv)
         MPI_Finalize();
         exit(1);
     }
+    /* All error checking for getting the hostname is done with the initial
+       populating of opal_process_info.nodename inside opal/runtime/opal_init.c */
+    local_hname = opal_gethostname();
 
-    if( gethostname(hname, sizeof(hname)) ){
-        perror("Cannot get hostname. Abort");
-        MPI_Abort(MPI_COMM_WORLD, 1);
-    }
+    /* Truncate hostname if it is longer than OPAL_MAXHOSTNAMELEN,
+       since we are only reading that length with the MPI_Gather.
+       If full and complete hostnames are necessary in all cases,
+       this could be implemented with MPI_Gatherv rather than
+       MPI_Gather, instead of using the longer but more
+       accurate OPAL_LOCAL_MAXHOSTNAMELEN value, because for very
+       large task counts there is a risk of running out of memory
+       if OPAL_LOCAL_MAXHOSTNAMELEN is used. */
+    strncpy(hname, local_hname, OPAL_MAXHOSTNAMELEN - 1);
+    hname[OPAL_MAXHOSTNAMELEN - 1] = '\0';
 
     int rc = hpctimer_initialize("gettimeofday");
 

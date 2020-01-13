@@ -11,6 +11,8 @@
 #include <stdio.h>
 #include <unistd.h>
 
+#include "opal/runtime/opal.h"
+
 #include "orte/runtime/runtime.h"
 #include "orte/util/proc_info.h"
 #include "orte/util/name_fns.h"
@@ -23,14 +25,14 @@ int main(int argc, char* argv[])
     int i, rc;
     double pi;
     pid_t pid;
-    char hostname[OPAL_MAXHOSTNAMELEN];
+    const char *hostname;
 
     if (0 > (rc = orte_init(&argc, &argv, ORTE_PROC_NON_MPI))) {
         fprintf(stderr, "orte_abort: couldn't init orte - error code %d\n", rc);
         return rc;
     }
     pid = getpid();
-    gethostname(hostname, sizeof(hostname));
+    hostname = opal_gethostname();
 
     if (1 < argc) {
         rc = strtol(argv[1], NULL, 10);

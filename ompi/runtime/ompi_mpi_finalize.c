@@ -21,6 +21,8 @@
  *                         and Technology (RIST). All rights reserved.
  *
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
+ * Copyright (c) 2019      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -119,9 +121,9 @@ int ompi_mpi_finalize(void)
         /* Note that if we're not initialized or already finalized, we
            cannot raise an MPI exception.  The best that we can do is
            write something to stderr. */
-        char hostname[OPAL_MAXHOSTNAMELEN];
+        const char *hostname;
         pid_t pid = getpid();
-        gethostname(hostname, sizeof(hostname));
+        hostname = opal_gethostname();
 
         if (state < OMPI_MPI_STATE_INIT_COMPLETED) {
             opal_show_help("help-mpi-runtime.txt",

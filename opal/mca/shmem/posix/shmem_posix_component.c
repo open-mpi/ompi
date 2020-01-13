@@ -15,6 +15,8 @@
  *                         All rights reserved.
  * Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2016      Intel, Inc. All rights reserved.
+ * Copyright (c) 2019      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -43,6 +45,7 @@
 #include <netdb.h>
 #endif /* HAVE_NETDB_H */
 
+#include "opal/runtime/opal.h"
 #include "opal/constants.h"
 #include "opal/util/show_help.h"
 #include "opal/util/output.h"
@@ -178,8 +181,8 @@ posix_runtime_query(mca_base_module_t **module,
         /* free up allocated resources before we return */
         if (0 != shm_unlink(tmp_buff)) {
             int err = errno;
-            char hn[OPAL_MAXHOSTNAMELEN];
-            gethostname(hn, sizeof(hn));
+            const char *hn;
+            hn = opal_gethostname();
             opal_show_help("help-opal-shmem-posix.txt", "sys call fail", 1,
                            hn, "shm_unlink(2)", "", strerror(err), err);
             /* something strange happened, so consider this a run-time test

@@ -10,6 +10,7 @@
  * Copyright (c) 2017-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
+ * Copyright (c) 2019      Triad National Security, LLC. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -26,6 +27,7 @@
 #include <opal/class/opal_hash_table.h>
 #include <opal/util/output.h>
 #include "opal/util/printf.h"
+#include "opal/runtime/opal.h"
 #include <math.h>
 
 #if SIZEOF_LONG_LONG == SIZEOF_SIZE_T
@@ -213,11 +215,11 @@ int mca_common_monitoring_init( void )
     if( !mca_common_monitoring_enabled ) return OMPI_ERROR;
     if( 1 < opal_atomic_add_fetch_32(&mca_common_monitoring_hold, 1) ) return OMPI_SUCCESS; /* Already initialized */
 
-    char hostname[OPAL_MAXHOSTNAMELEN] = "NA";
+    const char *hostname;
     /* Initialize constant */
     log10_2 = log10(2.);
     /* Open the opal_output stream */
-    gethostname(hostname, sizeof(hostname));
+    hostname = opal_gethostname();
     opal_asprintf(&mca_common_monitoring_output_stream_obj.lds_prefix,
              "[%s:%06d] monitoring: ", hostname, getpid());
     mca_common_monitoring_output_stream_id =

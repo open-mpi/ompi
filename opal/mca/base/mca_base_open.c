@@ -15,7 +15,7 @@
  *                         reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
- * Copyright (c) 2018      Triad National Security, LLC. All rights
+ * Copyright (c) 2018-2019 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -73,7 +73,7 @@ int mca_base_open(void)
 {
     char *value;
     opal_output_stream_t lds;
-    char hostname[OPAL_MAXHOSTNAMELEN];
+    const char *hostname;
     int var_id;
 
     if (mca_base_opened++) {
@@ -159,7 +159,7 @@ int mca_base_open(void)
     } else {
         set_defaults(&lds);
     }
-    gethostname(hostname, sizeof(hostname));
+    hostname = opal_gethostname();
     opal_asprintf(&lds.lds_prefix, "[%s:%05d] ", hostname, getpid());
     opal_output_reopen(0, &lds);
     opal_output_verbose (MCA_BASE_VERBOSE_COMPONENT, 0, "mca: base: opening components");

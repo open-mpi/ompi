@@ -1,5 +1,7 @@
 #include "orte_config.h"
 
+#include "opal/runtime/opal.h"
+
 #include <stdio.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -13,7 +15,7 @@ int main(int argc, char* argv[])
     int msg, rc, i;
     MPI_Comm parent, child;
     int rank, size;
-    char hostname[OPAL_MAXHOSTNAMELEN];
+    const char *hostname;
     pid_t pid;
     MPI_Info info;
     char *keyval, *tmp;
@@ -65,7 +67,7 @@ int main(int argc, char* argv[])
     else {
         MPI_Comm_rank(MPI_COMM_WORLD, &rank);
         MPI_Comm_size(MPI_COMM_WORLD, &size);
-        gethostname(hostname, sizeof(hostname));
+        hostname = opal_gethostname();
         pid = getpid();
         printf("Hello from the child %d of %d on host %s pid %ld\n", rank, 3, hostname, (long)pid);
         if (0 == rank) {

@@ -1,5 +1,7 @@
 #include "orte_config.h"
 
+#include "opal/runtime/opal.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -45,12 +47,13 @@
 
 int main(int argc, char *argv[])
 {
-  char hostname[OPAL_MAXHOSTNAMELEN] ;
+  const char *hostname ;
   char buff[255] ;
 
   int role ;
   int num_clients ;
   int size, rank ;
+  int temp_errno ;
 
   FILE *fp ;
   char server_port_name[MPI_MAX_PORT_NAME] ;
@@ -80,14 +83,9 @@ int main(int argc, char *argv[])
   CHK(MPI_Init(&argc, &argv)) ;
 
   /* get the node name */
-  {
-    int retval = gethostname(hostname, sizeof(hostname));
-    if(retval == -1)
-    {
-      fprintf(stderr, "gethostname failed: %s\n", strerror(errno)) ;
-      exit(1) ;
-    }
-  }
+  /* The opal_gethostname() function is just a wrapper that returns a global
+     variable value that is set earlier, so we don't check for errors here */
+  hostname = opal_gethostname();
 
   /* server */
   if(role == 1)

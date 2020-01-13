@@ -16,6 +16,8 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2019      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -45,6 +47,7 @@
 #include <netdb.h>
 #endif
 
+#include "opal/runtime/opal.h"
 #include "opal/mca/installdirs/installdirs.h"
 #include "opal/util/opal_environ.h"
 #include "opal/util/output.h"
@@ -330,8 +333,8 @@ static int component_find_check (mca_base_framework_t *framework, char **request
         }
 
         if (!found) {
-            char h[OPAL_MAXHOSTNAMELEN];
-            gethostname(h, sizeof(h));
+            const char *h;
+            h = opal_gethostname();
             opal_show_help("help-mca-base.txt",
                            "find-available:not-valid", true,
                            h, framework->framework_name, requested_component_names[i]);
