@@ -5,6 +5,7 @@
  * Copyright (c) 2014      The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2020      Google, LLC. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -44,8 +45,7 @@ static int vader_check_reg (mca_rcache_base_registration_t *reg, void *ctx)
 {
     vader_check_reg_ctx_t *vader_ctx = (vader_check_reg_ctx_t *) ctx;
 
-    if ((intptr_t) reg->alloc_base != vader_ctx->ep->peer_smp_rank ||
-        (reg->flags & MCA_RCACHE_FLAGS_PERSIST)) {
+    if ((intptr_t) reg->alloc_base != vader_ctx->ep->peer_smp_rank) {
         /* ignore this registration */
         return OPAL_SUCCESS;
     }
@@ -53,10 +53,26 @@ static int vader_check_reg (mca_rcache_base_registration_t *reg, void *ctx)
     vader_ctx->reg[0] = reg;
 
     if (vader_ctx->bound <= (uintptr_t) reg->bound && vader_ctx->base >= (uintptr_t) reg->base) {
-        opal_atomic_add (&reg->ref_count, 1);
+        if (0 == opal_atomic_fetch_add_32 (&reg->ref_count, 1)) {
+            /* registration is being deleted by a thread in vader_return_registration. the
+             * VMA tree implementation will block in mca_rcache_delete until we finish
+             * iterating over the VMA tree so it is safe to just ignore this registration
+             * and continue. */
+            vader_ctx->reg[0] = NULL;
+            return OPAL_SUCCESS;
+        }
         return 1;
     }
 
+    if (MCA_RCACHE_FLAGS_INVALID & opal_atomic_fetch_or_32(&reg->flags, MCA_RCACHE_FLAGS_INVALID)) {
+        /* another thread has already marked this registration as invalid. ignore and continue. */
+        vader_ctx->reg[0] = NULL;
+        return OPAL_SUCCESS;
+    }
+
+    /* let the caller know we found an overlapping registration that can be coalesced into
+     * the requested interval. the caller will remove the last reference and delete the
+     * registration. */
     return 2;
 }
 
@@ -67,8 +83,12 @@ void vader_return_registration (mca_rcache_base_registration_t *reg, struct mca_
 
     ref_count = opal_atomic_add_fetch_32 (&reg->ref_count, -1);
     if (OPAL_UNLIKELY(0 == ref_count && !(reg->flags & MCA_RCACHE_FLAGS_PERSIST))) {
-        mca_rcache_base_vma_delete (vma_module, reg);
-
+#if OPAL_DEBUG
+        int ret = mca_rcache_base_vma_delete (vma_module, reg);
+        assert (OPAL_SUCCESS == ret);
+#else
+        (void) mca_rcache_base_vma_delete (vma_module, reg);
+#endif
         opal_memchecker_base_mem_noaccess (reg->rcache_context, (uintptr_t)(reg->bound - reg->base));
         (void)xpmem_detach (reg->rcache_context);
         OBJ_RELEASE (reg);
@@ -100,16 +120,9 @@ mca_rcache_base_registration_t *vader_get_registation (struct mca_btl_base_endpo
     /* several segments may match the base pointer */
     rc = mca_rcache_base_vma_iterate (vma_module, (void *) base, bound - base, true, vader_check_reg, &check_ctx);
     if (2 == rc) {
-        /* remove this pointer from the rcache and decrement its reference count
-           (so it is detached later) */
-        mca_rcache_base_vma_delete (vma_module, reg);
-
-        /* start the new segment from the lower of the two bases */
-        base = (uintptr_t) reg->base < base ? (uintptr_t) reg->base : base;
-
-        /* remove the last reference to this registration */
-        vader_return_registration (reg, ep);
-
+        bound = bound < (uintptr_t) reg->bound ? (uintptr_t) reg->bound : bound;
+        base = base > (uintptr_t) reg->base ? (uintptr_t) reg->base : base;
+        vader_return_registration(reg, ep);
         reg = NULL;
     }
 
@@ -151,13 +164,16 @@ mca_rcache_base_registration_t *vader_get_registation (struct mca_btl_base_endpo
     return reg;
 }
 
+struct vader_cleanup_reg_ctx {
+    mca_btl_vader_endpoint_t *ep;
+    opal_list_t *registrations;
+};
+
 static int mca_btl_vader_endpoint_xpmem_rcache_cleanup (mca_rcache_base_registration_t *reg, void *ctx)
 {
-    mca_btl_vader_endpoint_t *ep = (mca_btl_vader_endpoint_t *) ctx;
-    if ((intptr_t) reg->alloc_base == ep->peer_smp_rank) {
-        /* otherwise dereg will fail on assert */
-        reg->ref_count = 0;
-        OBJ_RELEASE(reg);
+    struct vader_cleanup_reg_ctx *cleanup_ctx = (struct vader_cleanup_reg_ctx *) ctx;
+    if ((intptr_t) reg->alloc_base == cleanup_ctx->ep->peer_smp_rank) {
+        opal_list_append(cleanup_ctx->registrations, &reg->super.super);
     }
 
     return OPAL_SUCCESS;
@@ -165,11 +181,22 @@ static int mca_btl_vader_endpoint_xpmem_rcache_cleanup (mca_rcache_base_registra
 
 void mca_btl_vader_xpmem_cleanup_endpoint (struct mca_btl_base_endpoint_t *ep)
 {
+    mca_rcache_base_registration_t *reg;
+    opal_list_t registrations;
+    struct vader_cleanup_reg_ctx cleanup_ctx = {.ep = ep, .registrations = &registrations};
+
+    OBJ_CONSTRUCT(&registrations, opal_list_t);
+
     /* clean out the registration cache */
     (void) mca_rcache_base_vma_iterate (mca_btl_vader_component.vma_module,
                                         NULL, (size_t) -1, true,
                                         mca_btl_vader_endpoint_xpmem_rcache_cleanup,
-                                        (void *) ep);
+                                        (void *) &cleanup_ctx);
+    while (NULL != (reg = (mca_rcache_base_registration_t *) opal_list_remove_first(&registrations))) {
+        vader_return_registration (reg, ep);
+    }
+    OBJ_DESTRUCT(&registrations);
+
     if (ep->segment_base) {
         xpmem_release (ep->segment_data.xpmem.apid);
         ep->segment_data.xpmem.apid = 0;
