@@ -21,7 +21,7 @@
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * Copyright (c) 2018      Triad National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2019      Google, Inc. All rights reserved.
+ * Copyright (c) 2019-2020 Google, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -382,6 +382,7 @@ static int mca_btl_base_vader_modex_send (void)
     if (MCA_BTL_VADER_XPMEM == mca_btl_vader_component.single_copy_mechanism) {
         modex.xpmem.seg_id = mca_btl_vader_component.my_seg_id;
         modex.xpmem.segment_base = mca_btl_vader_component.my_segment;
+        modex.xpmem.address_max = mca_btl_vader_component.my_address_max;
 
         modex_size = sizeof (modex.xpmem);
     } else {

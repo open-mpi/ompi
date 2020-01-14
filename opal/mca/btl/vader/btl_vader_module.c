@@ -19,6 +19,7 @@
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2018-2019 Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2020      Google, LLC. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -216,6 +217,7 @@ static int init_vader_endpoint (struct mca_btl_base_endpoint_t *ep, struct opal_
         if (MCA_BTL_VADER_XPMEM == mca_btl_vader_component.single_copy_mechanism) {
             /* always use xpmem if it is available */
             ep->segment_data.xpmem.apid = xpmem_get (modex->xpmem.seg_id, XPMEM_RDWR, XPMEM_PERMIT_MODE, (void *) 0666);
+            ep->segment_data.xpmem.address_max = modex->xpmem.address_max;
             (void) vader_get_registation (ep, modex->xpmem.segment_base, mca_btl_vader_component.segment_size,
                                           MCA_RCACHE_FLAGS_PERSIST, (void **) &ep->segment_base);
         } else {

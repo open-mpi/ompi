@@ -78,6 +78,7 @@ typedef struct mca_btl_base_endpoint_t {
 #if OPAL_BTL_VADER_HAVE_XPMEM
         struct {
             xpmem_apid_t    apid;       /**< xpmem apid for remote peer */
+            uintptr_t       address_max; /**< largest address that can be attached */
         } xpmem;
 #endif
         struct {

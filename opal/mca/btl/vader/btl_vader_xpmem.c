@@ -21,7 +21,47 @@
 
 int mca_btl_vader_xpmem_init (void)
 {
-    mca_btl_vader_component.my_seg_id = xpmem_make (0, VADER_MAX_ADDRESS, XPMEM_PERMIT_MODE, (void *)0666);
+    /* Any attachment that goes past the Linux TASK_SIZE will always fail. To prevent this we need to
+     * determine the value of TASK_SIZE. On x86_64 the value was hard-coded in vader to be
+     * 0x7ffffffffffful but this approach does not work with AARCH64 (and possibly other architectures).
+     * Since there is really no way to directly determine the value we can (in all cases?) look through
+     * the mapping for this process to determine what the largest address is. This should be the top
+     * of the stack. No heap allocations should be larger than this value. Since the largest address
+     * may differ between processes the value must be shared as part of the modex and stored in the
+     * endpoint. */
+    FILE *fh = fopen("/proc/self/maps", "r");
+    if (NULL == fh) {
+        BTL_ERROR(("could not open /proc/self/maps for reading. disabling XPMEM"));
+        return OPAL_ERR_NOT_AVAILABLE;
+    }
+
+    char buffer[1024];
+    uintptr_t address_max = 0;
+    while (fgets(buffer, sizeof(buffer), fh)) {
+        uintptr_t low, high;
+        char *tmp;
+        /* each line of /proc/self/maps starts with low-high in hexidecimal (without a 0x) */
+        low = strtoul(buffer, &tmp, 16);
+        high = strtoul(tmp+1, NULL, 16);
+        if (address_max < high) {
+            address_max = high;
+        }
+    }
+
+    fclose (fh);
+
+    if (0 == address_max) {
+        BTL_ERROR(("could not determine the address max"));
+        return OPAL_ERR_NOT_AVAILABLE;
+    }
+
+    /* save the calcuated maximum */
+    mca_btl_vader_component.my_address_max = address_max - 1;
+
+    /* it is safe to use XPMEM_MAXADDR_SIZE here (which is always (size_t)-1 even though
+     * it is not safe for attach */
+    mca_btl_vader_component.my_seg_id = xpmem_make (0, XPMEM_MAXADDR_SIZE, XPMEM_PERMIT_MODE,
+                                                    (void *)0666);
     if (-1 == mca_btl_vader_component.my_seg_id) {
         return OPAL_ERR_NOT_AVAILABLE;
     }
@@ -90,8 +130,8 @@ mca_rcache_base_registration_t *vader_get_registation (struct mca_btl_base_endpo
 
     base = OPAL_DOWN_ALIGN((uintptr_t) rem_ptr, attach_align, uintptr_t);
     bound = OPAL_ALIGN((uintptr_t) rem_ptr + size - 1, attach_align, uintptr_t) + 1;
-    if (OPAL_UNLIKELY(bound > VADER_MAX_ADDRESS)) {
-        bound = VADER_MAX_ADDRESS;
+    if (OPAL_UNLIKELY(bound > ep->segment_data.xpmem.address_max)) {
+        bound = ep->segment_data.xpmem.address_max;
     }
 
     check_ctx.base = base;
