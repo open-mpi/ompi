@@ -32,7 +32,15 @@
 #include <stddef.h>
 #define OPAL_ALIGN_MIN (_Alignof(max_align_t))
 #else
-#define OPAL_ALIGN_MIN (sizeof(long double))
+#if defined(OPAL_ALIGNMENT___FLOAT128)
+#define OPAL_ALIGN_MIN (OPAL_ALIGNMENT___FLOAT128)
+#elif defined(OPAL_ALIGNMENT_LONG_DOUBLE_COMPLEX)
+#define OPAL_ALIGN_MIN (OPAL_ALIGNMENT_LONG_DOUBLE_COMPLEX)
+#elif defined (OPAL_ALIGNMENT_LONG_DOUBLE)
+#define OPAL_ALIGN_MIN (OPAL_ALIGNMENT_LONG_DOUBLE)
+#else
+#define OPAL_ALIGN_MIN (OPAL_ALIGNMENT_DOUBLE)
+#endif
 #endif /* __STDC_VERSION__ >= 201101L */
 
 #endif /* OPAL_ALIGN_H */
