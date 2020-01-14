@@ -6,6 +6,7 @@
 .cdt*
 .project
 .gdb*
+.idea
 
 .hgrc
 .hgignore
