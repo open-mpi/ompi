@@ -175,15 +175,14 @@ static inline bool mca_rcache_grdma_evict_lru_local (mca_rcache_grdma_cache_t *c
     opal_mutex_lock (&cache->vma_module->vma_lock);
     old_reg = (mca_rcache_base_registration_t *)
         opal_list_remove_first (&cache->lru_list);
+    opal_mutex_unlock (&cache->vma_module->vma_lock);
     if (NULL == old_reg) {
-        opal_mutex_unlock (&cache->vma_module->vma_lock);
         return false;
     }
 
     rcache_grdma = (mca_rcache_grdma_module_t *) old_reg->rcache;
 
     (void) dereg_mem (old_reg);
-    opal_mutex_unlock (&cache->vma_module->vma_lock);
 
     rcache_grdma->stat_evicted++;
 
