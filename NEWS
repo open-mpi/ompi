@@ -55,8 +55,26 @@ included in the vX.Y.Z section and be denoted as:
    (** also appeared: A.B.C)  -- indicating that this item was previously
                                  included in release version vA.B.C.
 
-3.1.6 -- TBD
-------------
+3.1.6 -- January, 2020
+----------------------
+
+- Fix PMIX dstore locking compilation issue.  Thanks to Marco Atzeri
+  for reporting the issue.
+- Allow the user to override modulefile_path in the Open MPI SRPM,
+  even if install_in_opt is set to 1.
+- Properly detect ConnectX-6 HCAs in the openib BTL.
+- Fix segfault in the MTL/OFI initialization for large jobs.
+- Fix issue to guarantee to properly release MPI one-sided lock when
+  using UCX transports to avoid a deadlock.
+- Fix potential deadlock when processing outstanding transfers with
+  uGNI transports.
+- Fix various portals4 control flow bugs.
+- Fix communications ordering for alltoall and Cartesian neighborhood
+  collectives.
+- Fix an infinite recursion crash in the memory patcher on systems
+  with glibc v2.26 or later (e.g., Ubuntu 18.04) when using certain
+  OS-bypass interconnects.
+
 
 3.1.5 -- November, 2019
 -----------------------

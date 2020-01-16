@@ -26,7 +26,7 @@ release=6
 # requirement is that it must be entirely printable ASCII characters
 # and have no white space.
 
-greek=a1
+greek=rc1
 
 # If repo_rev is empty, then the repository version number will be
 # obtained during "make dist" via the "git describe --tags --always"
@@ -91,7 +91,7 @@ libmpi_usempi_tkr_so_version=50:2:10
 libmpi_usempi_ignore_tkr_so_version=50:2:10
 libmpi_usempif08_so_version=50:3:10
 libopen_rte_so_version=50:5:10
-libopen_pal_so_version=50:5:10
+libopen_pal_so_version=50:6:10
 libmpi_java_so_version=50:1:10
 liboshmem_so_version=50:2:10
 libompitrace_so_version=50:1:10
@@ -112,4 +112,4 @@ libmca_orte_common_alps_so_version=50:1:10
 libmca_opal_common_cuda_so_version=50:1:10
 libmca_opal_common_sm_so_version=50:1:10
 libmca_opal_common_ugni_so_version=50:1:10
-libmca_opal_common_verbs_so_version=50:1:10
+libmca_opal_common_verbs_so_version=50:2:10
