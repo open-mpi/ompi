@@ -3,6 +3,7 @@
  * Copyright (c) 2013-2014 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2016      ARM, Inc. All rights reserved.
+ * Copyright (c) 2020      Google, LLC. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -31,13 +32,6 @@
 
 /* look up the remote pointer in the peer rcache and attach if
  * necessary */
-
-/* largest address we can attach to using xpmem */
-#if defined(__x86_64__)
-#define VADER_MAX_ADDRESS ((uintptr_t)0x7ffffffff000ul)
-#else
-#define VADER_MAX_ADDRESS XPMEM_MAXADDR_SIZE
-#endif
 
 struct mca_btl_base_endpoint_t;
 
