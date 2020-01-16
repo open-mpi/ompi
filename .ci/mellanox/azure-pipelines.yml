@@ -9,14 +9,13 @@ pr:
 
 pool:
   name: Default
-  demands: AGENT_CI_CAPABILITY -equals ompi
+  demands:
+  - AGENT_CI_TARGET -equals ompi
+  - MLNX_IB_DEVICE -equals yes
 
 variables:
-  # TODO: change to the main repo and master branch
-  #ompi_jenkins_scripts_git_repo_url: https://github.com/mellanox-hpc/jenkins_scripts.git
-  ompi_jenkins_scripts_git_repo_url: https://github.com/itemko/jenkins_scripts.git
-  #ompi_jenkins_scripts_git_branch: master
-  ompi_jenkins_scripts_git_branch: artemry/ompi_review
+  ompi_jenkins_scripts_git_repo_url: https://github.com/mellanox-hpc/jenkins_scripts.git
+  ompi_jenkins_scripts_git_branch: master
   # Enable debug information, supported values: true, false
   debug: true
 
