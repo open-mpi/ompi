@@ -36,8 +36,20 @@ This file contains notable changes between releases for each release since
 Open MPI 1.0.  Because Open MPI maintains multiple release branches at any time,
 it is possible for items to appear more than once in the list.
 
-3.0.6 -- TBD
-------------
+3.0.6 -- January, 2020
+----------------------
+
+- Allow the user to override modulefile_path in the Open MPI SRPM,
+  even if install_in_opt is set to 1.
+- Properly detect ConnectX-6 HCAs in the openib BTL.
+- Fix segfault in the MTL/OFI initialization for large jobs.
+- Fix various portals4 control flow bugs.
+- Fix communications ordering for alltoall and Cartesian neighborhood
+  collectives.
+- Fix an infinite recursion crash in the memory patcher on systems
+  with glibc v2.26 or later (e.g., Ubuntu 18.04) when using certain
+  OS-bypass interconnects.
+
 
 3.0.5 -- November, 2019
 -----------------------
