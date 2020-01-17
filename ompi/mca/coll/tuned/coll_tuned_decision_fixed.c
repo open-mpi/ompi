@@ -806,8 +806,10 @@ int ompi_coll_tuned_scatter_intra_dec_fixed(const void *sbuf, int scount,
                                                      root, comm, module);
     } else if ((communicator_size < ompi_coll_tuned_scatter_min_procs) &&
                (communicator_size > intermediate_comm_size) &&
-               (block_size >= ompi_coll_tuned_scatter_intermediate_msg) &&
-               (block_size < ompi_coll_tuned_scatter_large_msg)) {
+               (ompi_coll_tuned_scatter_intermediate_msg > -1) &&
+               (block_size >= (size_t) ompi_coll_tuned_scatter_intermediate_msg) &&
+               (ompi_coll_tuned_scatter_large_msg > -1) &&
+               (block_size < (size_t) ompi_coll_tuned_scatter_large_msg)) {
         return ompi_coll_base_scatter_intra_linear_nb(sbuf, scount, sdtype,
                                                       rbuf, rcount, rdtype,
                                                       root, comm, module,
