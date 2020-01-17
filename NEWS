@@ -57,6 +57,31 @@ included in the vX.Y.Z section and be denoted as:
    (** also appeared: A.B.C)  -- indicating that this item was previously
                                  included in release version vA.B.C.
 
+4.0.3 -- January, 2020
+------------------------
+- Add support for Mellanox Connectx6.
+- Improve dimensions returned by MPI_Dims_create for certain
+  cases.  Thanks to @aw32 for reporting.
+- Fix an issue when sending messages larger than 4GB. Thanks to
+  Philip Salzmann for reporting this issue.
+- Add ability to specify alternative module file path using
+  Open MPI's RPM spec file.  Thanks to @jschwartz-cray for reporting.
+- Clarify use of --with-hwloc configuration option in the README.
+  Thanks to Marcin Mielniczuk for raising this documentation issue.
+- Fix an issue with shmem_atomic_set.  Thanks to Sameh Sharkawi for reporting.
+- Fix a problem with MPI_Neighbor_alltoall(v,w) for cartesian communicators
+  with cyclic boundary conditions.  Thanks to Ralph Rabenseifner and
+  Tony Skjellum for reporting.
+- Fix an issue using Open MPIO on 32 bit systems.  Thanks to
+  Orion Poplawski for reporting.
+- Fix an issue with NetCDF test deadlocking when using the vulcan
+  Open MPIO component.  Thanks to Orion Poplawski for reporting.
+- Fix an issue with the mpi_yield_when_idle parameter being ignored
+  when set in the Open MPI MCA parameter configuration file.
+  Thanks to @iassiour for reporting.
+- Address an issue with Open MPIO when writing/reading more than 2GB
+  in an operation.  Thanks to Richard Warren for reporting.
+
 4.0.2 -- September, 2019
 ------------------------
 - Update embedded PMIx to 3.1.4
