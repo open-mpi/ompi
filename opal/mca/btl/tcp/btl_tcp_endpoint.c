@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2017 The University of Tennessee and The University
+ * Copyright (c) 2004-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -534,6 +534,19 @@ void mca_btl_tcp_endpoint_close(mca_btl_base_endpoint_t* btl_endpoint)
     btl_endpoint->endpoint_cache_pos    = NULL;
     btl_endpoint->endpoint_cache_length = 0;
 #endif  /* MCA_BTL_TCP_ENDPOINT_CACHE */
+
+    /* send a message before closing to differentiate between failures and
+     * clean disconnect during finalize */
+    if( MCA_BTL_TCP_CONNECTED == btl_endpoint->endpoint_state ) {
+        mca_btl_tcp_hdr_t fin_msg = {
+            .base.tag = 0,
+            .type = MCA_BTL_TCP_HDR_TYPE_FIN,
+            .count = 0,
+            .size = 0,
+        };
+        mca_btl_tcp_endpoint_send_blocking(btl_endpoint,
+                                           &fin_msg, sizeof(fin_msg));
+    }
 
     CLOSE_THE_SOCKET(btl_endpoint->endpoint_sd);
     btl_endpoint->endpoint_sd = -1;

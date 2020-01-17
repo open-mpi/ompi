@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -33,6 +33,7 @@ BEGIN_C_DECLS
 #define MCA_BTL_TCP_HDR_TYPE_SEND 1
 #define MCA_BTL_TCP_HDR_TYPE_PUT  2
 #define MCA_BTL_TCP_HDR_TYPE_GET  3
+#define MCA_BTL_TCP_HDR_TYPE_FIN  4
 
 struct mca_btl_tcp_hdr_t {
     mca_btl_base_header_t base;
