@@ -21,7 +21,7 @@
 
 major=4
 minor=0
-release=2
+release=3
 
 # greek is generally used for alpha or beta release tags.  If it is
 # non-empty, it will be appended to the version number.  It does not
@@ -30,7 +30,7 @@ release=2
 # requirement is that it must be entirely printable ASCII characters
 # and have no white space.
 
-greek=rc3
+greek=rc1
 
 # If repo_rev is empty, then the repository version number will be
 # obtained during "make dist" via the "git describe --tags --always"
@@ -88,16 +88,16 @@ date="Unreleased developer copy"
 # Version numbers are described in the Libtool current:revision:age
 # format.
 
-libmpi_so_version=60:2:20
+libmpi_so_version=60:3:20
 libmpi_cxx_so_version=60:1:20
 libmpi_mpifh_so_version=60:2:20
 libmpi_usempi_tkr_so_version=60:0:20
 libmpi_usempi_ignore_tkr_so_version=60:0:20
-libmpi_usempif08_so_version=60:1:20
-libopen_rte_so_version=60:2:20
-libopen_pal_so_version=60:2:20
+libmpi_usempif08_so_version=61:0:21
+libopen_rte_so_version=60:3:20
+libopen_pal_so_version=60:3:20
 libmpi_java_so_version=60:0:20
-liboshmem_so_version=62:0:22
+liboshmem_so_version=62:1:22
 libompitrace_so_version=60:0:20
 
 # "Common" components install standalone libraries that are run-time
@@ -106,7 +106,7 @@ libompitrace_so_version=60:0:20
 # components-don't-affect-the-build-system abstraction.
 
 # OMPI layer
-libmca_ompi_common_ompio_so_version=60:2:19
+libmca_ompi_common_ompio_so_version=60:3:19
 libmca_ompi_common_monitoring_so_version=60:0:10
 
 # ORTE layer
