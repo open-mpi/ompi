@@ -31,7 +31,7 @@
 
 #include "common_ompio.h"
 #include "ompi/mca/io/ompio/io_ompio.h"
-#include "ompi/mca/io/ompio/io_ompio_request.h"
+#include "common_ompio_request.h"
 #include "math.h"
 #include <unistd.h>
 #include <math.h>
@@ -63,19 +63,19 @@ int mca_common_ompio_file_write (mca_io_ompio_file_t *fh,
 	return ret;
     }
 
-    ompi_io_ompio_decode_datatype (fh,
-                                   datatype,
-                                   count,
-                                   buf,
-                                   &max_data,
-                                   &decoded_iov,
-                                   &iov_count);
-
-    if ( -1 == mca_io_ompio_cycle_buffer_size ) {
+    ompi_common_ompio_decode_datatype (fh,
+                                       datatype,
+                                       count,
+                                       buf,
+                                       &max_data,
+                                       &decoded_iov,
+                                       &iov_count);
+    
+    if ( -1 == OMPIO_MCA_GET(fh, cycle_buffer_size) ) {
 	bytes_per_cycle = max_data;
     }
     else {
-	bytes_per_cycle = mca_io_ompio_cycle_buffer_size;
+	bytes_per_cycle = OMPIO_MCA_GET(fh, cycle_buffer_size);
     }
     cycles = ceil((double)max_data/bytes_per_cycle);
 
@@ -180,13 +180,13 @@ int mca_common_ompio_file_iwrite (mca_io_ompio_file_t *fh,
 	int i = 0; /* index into the decoded iovec of the buffer */
 	int j = 0; /* index into the file vie iovec */
 
-	ompi_io_ompio_decode_datatype (fh,
-				       datatype,
-				       count,
-				       buf,
-				       &max_data,
-				       &decoded_iov,
-				       &iov_count);
+	ompi_common_ompio_decode_datatype (fh,
+                                           datatype,
+                                           count,
+                                           buf,
+                                           &max_data,
+                                           &decoded_iov,
+                                           &iov_count);
 	j = fh->f_index_in_file_view;
 
 	/* Non blocking operations have to occur in a single cycle */
@@ -206,11 +206,11 @@ int mca_common_ompio_file_iwrite (mca_io_ompio_file_t *fh,
 	  fh->f_fbtl->fbtl_ipwritev (fh, (ompi_request_t *) ompio_req);
         }
 
-	if ( false == mca_io_ompio_progress_is_registered ) {
+	if ( false == mca_common_ompio_progress_is_registered ) {
 	    // Lazy initialization of progress function to minimize impact
 	    // on other ompi functionality in case its not used.
-	    opal_progress_register (mca_io_ompio_component_progress);
-	    mca_io_ompio_progress_is_registered=true;
+	    opal_progress_register (mca_common_ompio_component_progress);
+	    mca_common_ompio_progress_is_registered=true;
         }
 
         fh->f_num_of_io_entries = 0;
