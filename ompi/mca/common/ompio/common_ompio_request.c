@@ -18,50 +18,56 @@
  * $HEADER$
  */
 
-#include "io_ompio_request.h"
+#include "common_ompio_request.h"
 
-static void mca_io_ompio_request_construct(mca_ompio_request_t* req);
-static void mca_io_ompio_request_destruct(mca_ompio_request_t *req);
+/*
+ * Global list of requests for this component
+ */
+opal_list_t mca_common_ompio_pending_requests = {{0}};
 
-bool mca_io_ompio_progress_is_registered=false;
 
-static int mca_io_ompio_request_free ( struct ompi_request_t **req)
+static void mca_common_ompio_request_construct(mca_ompio_request_t* req);
+static void mca_common_ompio_request_destruct(mca_ompio_request_t *req);
+
+bool mca_common_ompio_progress_is_registered=false;
+
+static int mca_common_ompio_request_free ( struct ompi_request_t **req)
 {
     mca_ompio_request_t *ompio_req = ( mca_ompio_request_t *)*req;
     if ( NULL != ompio_req->req_free_fn ) {
         ompio_req->req_free_fn (ompio_req );
     }
-    opal_list_remove_item (&mca_io_ompio_pending_requests, &ompio_req->req_item);
+    opal_list_remove_item (&mca_common_ompio_pending_requests, &ompio_req->req_item);
 
     OBJ_RELEASE (*req);
     *req = MPI_REQUEST_NULL;
     return OMPI_SUCCESS;
 }
 
-static int mca_io_ompio_request_cancel ( struct ompi_request_t *req, int flag)
+static int mca_common_ompio_request_cancel ( struct ompi_request_t *req, int flag)
 {
     return OMPI_SUCCESS;
 }
 
 OBJ_CLASS_INSTANCE(mca_ompio_request_t, ompi_request_t,
-                   mca_io_ompio_request_construct,
-                   mca_io_ompio_request_destruct);
+                   mca_common_ompio_request_construct,
+                   mca_common_ompio_request_destruct);
 
-void mca_io_ompio_request_construct(mca_ompio_request_t* req)
+void mca_common_ompio_request_construct(mca_ompio_request_t* req)
 {
     OMPI_REQUEST_INIT (&(req->req_ompi), false );
-    req->req_ompi.req_free   = mca_io_ompio_request_free;
-    req->req_ompi.req_cancel = mca_io_ompio_request_cancel;
+    req->req_ompi.req_free   = mca_common_ompio_request_free;
+    req->req_ompi.req_cancel = mca_common_ompio_request_cancel;
     req->req_ompi.req_type   = OMPI_REQUEST_IO;
     req->req_data            = NULL;
     req->req_progress_fn     = NULL;
     req->req_free_fn         = NULL;
 
     OBJ_CONSTRUCT(&req->req_item, opal_list_item_t);
-    opal_list_append (&mca_io_ompio_pending_requests, &req->req_item);
+    opal_list_append (&mca_common_ompio_pending_requests, &req->req_item);
     return;
 }
-void mca_io_ompio_request_destruct(mca_ompio_request_t* req)
+void mca_common_ompio_request_destruct(mca_ompio_request_t* req)
 {
     OMPI_REQUEST_FINI ( &(req->req_ompi));
     OBJ_DESTRUCT (&req->req_item);
@@ -72,13 +78,30 @@ void mca_io_ompio_request_destruct(mca_ompio_request_t* req)
     return;
 }
 
-int mca_io_ompio_component_progress ( void )
+void mca_common_ompio_request_init ( void )
+{
+    /* Create the list of pending requests */
+    OBJ_CONSTRUCT(&mca_common_ompio_pending_requests, opal_list_t);
+    return;
+}
+
+void mca_common_ompio_request_fini ( void )
+{
+    /* Destroy the list of pending requests */
+    /* JMS: Good opprotunity here to list out all the IO requests that
+       were not destroyed / completed upon MPI_FINALIZE */
+
+    OBJ_DESTRUCT(&mca_common_ompio_pending_requests);
+    return;
+}
+
+int mca_common_ompio_component_progress ( void )
 {
     mca_ompio_request_t *req=NULL;
     opal_list_item_t *litem=NULL;
     int completed=0;
 
-    OPAL_LIST_FOREACH(litem, &mca_io_ompio_pending_requests, opal_list_item_t) {
+    OPAL_LIST_FOREACH(litem, &mca_common_ompio_pending_requests, opal_list_item_t) {
         req = GET_OMPIO_REQ_FROM_ITEM(litem);
         if( REQUEST_COMPLETE(&req->req_ompi) ) {
             continue;

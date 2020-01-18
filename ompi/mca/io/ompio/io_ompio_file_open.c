@@ -102,30 +102,6 @@ int mca_io_ompio_file_close (ompi_file_t *fh)
     return ret;
 }
 
-int mca_io_ompio_file_delete (const char *filename,
-                              struct opal_info_t *info)
-{
-    int ret = OMPI_SUCCESS;
-
-    /* No locking required for file_delete according to my understanding.
-       One thread will succeed, the other ones silently ignore the 
-       error that the file is already deleted.
-    */
-    ret = unlink(filename);
-
-    if (0 > ret ) {
-        if ( ENOENT == errno ) {
-            return MPI_ERR_NO_SUCH_FILE;
-        } else {
-            opal_output (0, "mca_io_ompio_file_delete: Could not remove file %s errno = %d %s\n", filename,
-                         errno, strerror(errno));
-            return MPI_ERR_ACCESS;
-        }
-    }
-
-    return OMPI_SUCCESS;
-}
-
 int mca_io_ompio_file_preallocate (ompi_file_t *fh,
                                    OMPI_MPI_OFFSET_TYPE diskspace)
 {
