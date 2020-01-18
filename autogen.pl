@@ -4,7 +4,7 @@
 # Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
 # Copyright (c) 2013      Mellanox Technologies, Inc.
 #                         All rights reserved.
-# Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
+# Copyright (c) 2013-2020 Intel, Inc.  All rights reserved.
 # Copyright (c) 2015-2019 Research Organization for Information Science
 #                         and Technology (RIST).  All rights reserved.
 # Copyright (c) 2015      IBM Corporation.  All rights reserved.
@@ -172,7 +172,10 @@ sub process_subdir {
     # Chdir to the subdir
     print "\n=== Processing subdir: $dir\n";
     my $start = Cwd::cwd();
-    chdir($dir);
+    my $check = chdir($dir);
+    if (0 == $check) {
+        my_die "Could not change to $dir\n";
+    }
 
     # Run an action depending on what we find in that subdir
     if (-x "autogen.pl") {
