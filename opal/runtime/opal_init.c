@@ -110,7 +110,7 @@ bool opal_warn_on_fork = true;
  * truncated. It also tries again in the case where gethostname returns an
  * error because the buffer is initially too short.
  */
-static int opal_init_gethostname(void)
+int opal_init_gethostname(void)
 {
     size_t count, length = OPAL_LOCAL_MAXHOSTNAMELEN;
     int ret_val, num_tries = 0;

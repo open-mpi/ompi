@@ -115,15 +115,31 @@ OPAL_DECLSPEC void opal_warn_fork(void);
 OPAL_DECLSPEC int opal_register_params(void);
 
 /**
- * Wrapper to return the hostname value that is in
-   opal_process_info.nodename, as opposed to calling gethostname()
-   directly, which is not guaranteed to be null-terminated and
-   varies in its behavior depending on implementation. The 
-   opal_process_info.nodename value is first populated in 
-   opal/runtime/opal_init.c
+ * Internal function.  Should not be called directly (should only be
+ * invoked internally by opal_init() and opal_gethostname()).
  */
-static inline const char *opal_gethostname( void ) {
-    assert( NULL != opal_process_info.nodename );
+OPAL_DECLSPEC int opal_init_gethostname(void);
+
+/**
+ * Wrapper to return the hostname value that is in
+ * opal_process_info.nodename, as opposed to calling gethostname()
+ * directly, which is not guaranteed to be null-terminated and varies
+ * in its behavior depending on implementation. The
+ * opal_process_info.nodename value is first populated in
+ * opal/runtime/opal_init.c.
+ *
+ * NOTE: In some cases (usually: developer debugging), it is possible
+ * that this function is invoked (e.g., via opal_output()) before
+ * opal_init() has been invoked, and therefore
+ * opal_process_info.nodename is still NULL.  In those cases, just
+ * call opal_init_gethostname() directly to fill in
+ * opal_process_info.nodename.
+ */
+static inline const char *opal_gethostname(void)
+{
+    if (NULL == opal_process_info.nodename) {
+        opal_init_gethostname();
+    }
     return opal_process_info.nodename;
 }
 
