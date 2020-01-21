@@ -61,7 +61,7 @@ void ompi_mpi_errors_are_fatal_comm_handler(struct ompi_communicator_t **comm,
 
   va_start(arglist, error_code);
 
-  if (NULL != comm) {
+  if ( (NULL != comm) && (NULL != *comm) ) {
       name = (*comm)->c_name;
       abort_comm = *comm;
   } else {
