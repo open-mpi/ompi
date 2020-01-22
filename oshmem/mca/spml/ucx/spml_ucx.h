@@ -71,6 +71,7 @@ struct mca_spml_ucx_ctx {
     ucp_peer_t              *ucp_peers;
     long                     options;
     opal_bitmap_t            put_op_bitmap;
+    unsigned long            nb_progress_cnt;
     int                     *put_proc_indexes;
     unsigned                 put_proc_count;
 };
@@ -108,6 +109,10 @@ struct mca_spml_ucx {
     pthread_spinlock_t       async_lock;
     int                      aux_refcnt;
     bool                     synchronized_quiet;
+    unsigned long            nb_progress_thresh_global;
+    unsigned long            nb_put_progress_thresh;
+    unsigned long            nb_get_progress_thresh;
+    unsigned long            nb_ucp_worker_progress;
 };
 typedef struct mca_spml_ucx mca_spml_ucx_t;
 
@@ -122,7 +127,15 @@ extern int mca_spml_ucx_get(shmem_ctx_t ctx,
                               size_t size,
                               void* src_addr,
                               int src);
+
 extern int mca_spml_ucx_get_nb(shmem_ctx_t ctx,
+                              void* dst_addr,
+                              size_t size,
+                              void* src_addr,
+                              int src,
+                              void **handle);
+
+extern int mca_spml_ucx_get_nb_wprogress(shmem_ctx_t ctx,
                               void* dst_addr,
                               size_t size,
                               void* src_addr,
@@ -136,6 +149,13 @@ extern int mca_spml_ucx_put(shmem_ctx_t ctx,
                             int dst);
 
 extern int mca_spml_ucx_put_nb(shmem_ctx_t ctx,
+                               void* dst_addr,
+                               size_t size,
+                               void* src_addr,
+                               int dst,
+                               void **handle);
+
+extern int mca_spml_ucx_put_nb_wprogress(shmem_ctx_t ctx,
                                void* dst_addr,
                                size_t size,
                                void* src_addr,
