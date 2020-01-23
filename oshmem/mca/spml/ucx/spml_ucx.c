@@ -323,10 +323,10 @@ int mca_spml_ucx_add_procs(ompi_proc_t** procs, size_t nprocs)
 
     opal_progress_register(spml_ucx_default_progress);
 
-    mca_spml_ucx.remote_addrs_tbl = (char ***)calloc(mca_spml_ucx.ucp_workers, sizeof(char ***));
+    mca_spml_ucx.remote_addrs_tbl = (char ***)calloc(mca_spml_ucx.ucp_workers,
+                                                     sizeof(mca_spml_ucx.remote_addrs_tbl[0]));
     for (w = 0; w < ucp_workers; w++) {
-        mca_spml_ucx.remote_addrs_tbl[w] = (char **)calloc(nprocs, sizeof(char **));
-        memset(mca_spml_ucx.remote_addrs_tbl[w], 0, nprocs * sizeof(char **));
+        mca_spml_ucx.remote_addrs_tbl[w] = (char **)calloc(nprocs, sizeof(mca_spml_ucx.remote_addrs_tbl[w][0]));
     }
 
     /* Store all remote addresses */
@@ -369,6 +369,8 @@ int mca_spml_ucx_add_procs(ompi_proc_t** procs, size_t nprocs)
     free(wk_raddrs);
     free(wk_rsizes);
     free(wk_roffs);
+    free(wk_addr_len);
+    free(wk_local_addr);
 
     SPML_UCX_VERBOSE(50, "*** ADDED PROCS ***");
 
@@ -404,6 +406,8 @@ error2:
     free(wk_rsizes);
     free(wk_roffs);
 error:
+    free(wk_addr_len);
+    free(wk_local_addr);
     rc = OSHMEM_ERR_OUT_OF_RESOURCE;
     SPML_UCX_ERROR("add procs FAILED rc=%d", rc);
     return rc;
