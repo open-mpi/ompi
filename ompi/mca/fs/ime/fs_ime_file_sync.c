@@ -14,6 +14,7 @@
 
 #include "mpi.h"
 #include "ompi/constants.h"
+#include "ompi/mca/fs/base/base.h"
 #include "ompi/mca/fs/fs.h"
 
 int mca_fs_ime_file_sync (ompio_file_t *fh)
