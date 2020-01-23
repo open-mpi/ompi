@@ -34,6 +34,17 @@ BEGIN_C_DECLS
 #define MCA_BTL_TCP_HDR_TYPE_PUT  2
 #define MCA_BTL_TCP_HDR_TYPE_GET  3
 #define MCA_BTL_TCP_HDR_TYPE_FIN  4
+/* The MCA_BTL_TCP_HDR_TYPE_FIN is a special kind of message sent during normal
+ * connexion closing. Before the endpoint closes the socket, it performs a
+ * 1-way handshake by sending a FIN message in the socket. This lets the other
+ * end of the connexion discriminate between the case in which the peer has
+ * closed intentionnally (e.g., during MPI_FINALIZE), or unintentionally (e.g.,
+ * as the result of some transmission or process failure).
+ * The process initiating the close sends the FIN message but does not wait
+ * for a 2-way handshake and closes the socket immediately. Thus, the recipient
+ * of a FIN message can simply close the socket and mark the endpoint as closed
+ * without error, and without answering a FIN message itself.
+ */
 
 struct mca_btl_tcp_hdr_t {
     mca_btl_base_header_t base;
