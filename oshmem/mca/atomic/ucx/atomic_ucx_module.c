@@ -80,7 +80,7 @@ int mca_atomic_ucx_fop(shmem_ctx_t ctx,
                                      op, value, prev, size,
                                      rva, ucx_mkey->rkey,
                                      opal_common_ucx_empty_complete_cb);
-    return opal_common_ucx_wait_request(status_ptr, ucx_ctx->ucp_worker,
+    return opal_common_ucx_wait_request(status_ptr, ucx_ctx->ucp_worker[0],
                                         "ucp_atomic_fetch_nb");
 }
 
