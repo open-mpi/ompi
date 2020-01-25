@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2018      IBM Corporation.  All rights reserved.
@@ -57,10 +57,8 @@ int opal_dss_unload(opal_buffer_t *buffer, void **payload,
         *payload = buffer->base_ptr;
         *bytes_used = buffer->bytes_used;
         buffer->base_ptr = NULL;
-        buffer->unpack_ptr = NULL;
-        buffer->pack_ptr = NULL;
         buffer->bytes_used = 0;
-        return OPAL_SUCCESS;
+        goto cleanup;
     }
 
     /* okay, we have something to provide - pass it back */
@@ -74,8 +72,10 @@ int opal_dss_unload(opal_buffer_t *buffer, void **payload,
         memcpy(*payload, buffer->unpack_ptr, *bytes_used);
     }
 
-    /* All done */
-
+  cleanup:
+    /* All done - reset the buffer */
+    OBJ_DESTRUCT(buffer);
+    OBJ_CONSTRUCT(buffer, opal_buffer_t);
     return OPAL_SUCCESS;
 }
 
@@ -89,17 +89,11 @@ int opal_dss_load(opal_buffer_t *buffer, void *payload,
     }
 
     /* check if buffer already has payload - free it if so */
-    if (NULL != buffer->base_ptr) {
-        free(buffer->base_ptr);
-    }
+    OBJ_DESTRUCT(buffer);
+    OBJ_CONSTRUCT(buffer, opal_buffer_t);
 
     /* if it's a NULL payload, just set things and return */
     if (NULL == payload) {
-        buffer->base_ptr = NULL;
-        buffer->pack_ptr = buffer->base_ptr;
-        buffer->unpack_ptr = buffer->base_ptr;
-        buffer->bytes_used = 0;
-        buffer->bytes_allocated = 0;
         return OPAL_SUCCESS;
     }
 

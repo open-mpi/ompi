@@ -83,7 +83,7 @@ OBJ_CLASS_DECLARATION(mca_oob_tcp_recv_t);
     do {                                                                \
         (s)->peer = (struct mca_oob_tcp_peer_t*)(p);                    \
         (s)->activate = (f);                                            \
-        ORTE_THREADSHIFT((s), (p)->ev_base,                             \
+        ORTE_THREADSHIFT((s), orte_event_base,                          \
                          mca_oob_tcp_queue_msg, ORTE_MSG_PRI);          \
     } while(0)
 
@@ -228,7 +228,7 @@ OBJ_CLASS_DECLARATION(mca_oob_tcp_msg_op_t);
                             ORTE_NAME_PRINT(&((ms)->dst)));             \
         mop = OBJ_NEW(mca_oob_tcp_msg_op_t);                            \
         mop->msg = (ms);                                                \
-        ORTE_THREADSHIFT(mop, (ms)->peer->ev_base,                      \
+        ORTE_THREADSHIFT(mop, orte_event_base,                          \
                          (cbfunc), ORTE_MSG_PRI);                       \
     } while(0);
 
@@ -274,7 +274,7 @@ OBJ_CLASS_DECLARATION(mca_oob_tcp_msg_error_t);
         mop->hop.jobid = (h)->jobid;                                    \
         mop->hop.vpid = (h)->vpid;                                      \
         /* this goes to the OOB framework, so use that event base */    \
-        ORTE_THREADSHIFT(mop, orte_oob_base.ev_base,                    \
+        ORTE_THREADSHIFT(mop, orte_event_base,                          \
                          (cbfunc), ORTE_MSG_PRI);                       \
     } while(0)
 
@@ -292,7 +292,7 @@ OBJ_CLASS_DECLARATION(mca_oob_tcp_msg_error_t);
         mop->hop.vpid = (h)->vpid;                                      \
         /* this goes to the component, so use the framework             \
          * event base */                                                \
-        ORTE_THREADSHIFT(mop, orte_oob_base.ev_base,                    \
+        ORTE_THREADSHIFT(mop, orte_event_base,                          \
                          (c), ORTE_MSG_PRI);                            \
     } while(0)
 

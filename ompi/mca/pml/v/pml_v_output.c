@@ -3,6 +3,8 @@
  *                         All rights reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
+ * Copyright (c) 2019      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -12,6 +14,7 @@
 
 #include "ompi_config.h"
 
+#include "opal/runtime/opal.h"
 #include "opal/util/output.h"
 #include "opal/util/printf.h"
 
@@ -24,7 +27,7 @@
 
 int ompi_pml_v_output_open(char *output, int verbosity) {
     opal_output_stream_t lds;
-    char hostname[OPAL_MAXHOSTNAMELEN] = "NA";
+    const char *hostname;
 
     OBJ_CONSTRUCT(&lds, opal_output_stream_t);
     if(!output) {
@@ -43,7 +46,7 @@ int ompi_pml_v_output_open(char *output, int verbosity) {
             lds.lds_file_suffix = output;
         }
         lds.lds_is_debugging = true;
-        gethostname(hostname, sizeof(hostname));
+        hostname = opal_gethostname();
         opal_asprintf(&lds.lds_prefix, "[%s:%05d] pml_v: ", hostname, getpid());
         lds.lds_verbose_level = verbosity;
         mca_pml_v.output = opal_output_open(&lds);

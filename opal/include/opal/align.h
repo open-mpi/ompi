@@ -28,4 +28,19 @@
 #define OPAL_ALIGN_PTR(x,a,t) ((t)OPAL_ALIGN((uintptr_t)x, a, uintptr_t))
 #define OPAL_ALIGN_PAD_AMOUNT(x,s) ((~((uintptr_t)(x))+1) & ((uintptr_t)(s)-1))
 
+#if __STDC_VERSION__ >= 201101L
+#include <stddef.h>
+#define OPAL_ALIGN_MIN (_Alignof(max_align_t))
+#else
+#if defined(OPAL_ALIGNMENT___FLOAT128)
+#define OPAL_ALIGN_MIN (OPAL_ALIGNMENT___FLOAT128)
+#elif defined(OPAL_ALIGNMENT_LONG_DOUBLE_COMPLEX)
+#define OPAL_ALIGN_MIN (OPAL_ALIGNMENT_LONG_DOUBLE_COMPLEX)
+#elif defined (OPAL_ALIGNMENT_LONG_DOUBLE)
+#define OPAL_ALIGN_MIN (OPAL_ALIGNMENT_LONG_DOUBLE)
+#else
+#define OPAL_ALIGN_MIN (OPAL_ALIGNMENT_DOUBLE)
+#endif
+#endif /* __STDC_VERSION__ >= 201101L */
+
 #endif /* OPAL_ALIGN_H */

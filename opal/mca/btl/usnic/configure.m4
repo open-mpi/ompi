@@ -12,7 +12,7 @@
 #                         All rights reserved.
 # Copyright (c) 2006      Sandia National Laboratories. All rights
 #                         reserved.
-# Copyright (c) 2010-2019 Cisco Systems, Inc.  All rights reserved
+# Copyright (c) 2010-2020 Cisco Systems, Inc.  All rights reserved
 # Copyright (c) 2017      Los Alamos National Security, LLC.  All rights
 #                         reserved.
 # $COPYRIGHT$
@@ -100,25 +100,11 @@ AC_DEFUN([_OPAL_BTL_USNIC_DO_CONFIG],[
            OPAL_CHECK_OFI
            opal_btl_usnic_happy=$opal_ofi_happy])
 
-    # The usnic BTL requires at least OFI libfabric v1.1 (there was a
-    # critical bug in libfabric v1.0).
+    # The usnic BTL requires at least OFI libfabric v1.3.
     AS_IF([test "$opal_btl_usnic_happy" = "yes"],
-          [AC_MSG_CHECKING([whether OFI libfabric is >= v1.1])
-           opal_btl_usnic_CPPFLAGS_save=$CPPFLAGS
-           CPPFLAGS="$opal_ofi_CPPFLAGS $CPPFLAGS"
-           AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <rdma/fabric.h>]],
-[[
-#if !defined(FI_MAJOR_VERSION)
-#error your version of OFI libfabric is too old
-#elif FI_VERSION(FI_MAJOR_VERSION, FI_MINOR_VERSION) < FI_VERSION(1, 1)
-#error your version of OFI libfabric is too old
-#endif
-]])],
-                 [opal_btl_usnic_happy=yes],
-                 [opal_btl_usnic_happy=no])
-           AC_MSG_RESULT([$opal_btl_usnic_happy])
-           CPPFLAGS=$opal_btl_usnic_CPPFLAGS_save
-          ])
+          [OPAL_CHECK_OFI_VERSION_GE([1,3],
+                                     [],
+                                     [opal_btl_usnic_happy=no])])
 
     # Make sure we can find the OFI libfabric usnic extensions header
     AS_IF([test "$opal_btl_usnic_happy" = "yes" ],

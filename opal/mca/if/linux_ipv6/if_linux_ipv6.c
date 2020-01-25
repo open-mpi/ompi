@@ -3,6 +3,8 @@
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights
  *                         reserved.
+ * Copyright (c) 2019      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -45,6 +47,7 @@
 #include <ifaddrs.h>
 #endif
 
+#include "opal/runtime/opal.h"
 #include "opal/constants.h"
 #include "opal/util/if.h"
 #include "opal/util/output.h"
@@ -127,8 +130,8 @@ static int if_linux_ipv6_open(void)
             opal_if_t *intf;
 
             if (!hexdecode(addrhex, a6.s6_addr, sizeof a6.s6_addr)) {
-                char hostname[OPAL_MAXHOSTNAMELEN];
-                gethostname(hostname, sizeof(hostname));
+                const char *hostname;
+                hostname = opal_gethostname();
                 opal_show_help("help-opal-if-linux-ipv6.txt",
                                "fail to parse if_inet6", true,
                                hostname, ifname, addrhex);

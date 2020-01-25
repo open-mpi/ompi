@@ -185,10 +185,8 @@ int mca_io_ompio_file_iwrite_all (ompi_file_t *fh,
 {
     int ret = OMPI_SUCCESS;
     mca_common_ompio_data_t *data=NULL;
-    ompio_file_t *fp=NULL;
 
     data = (mca_common_ompio_data_t *) fh->f_io_selected_data;
-    fp = &data->ompio_fh;
 
     OPAL_THREAD_LOCK(&fh->f_lock);
     ret = mca_common_ompio_file_iwrite_all (&data->ompio_fh,

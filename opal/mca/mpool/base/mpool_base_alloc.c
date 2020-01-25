@@ -31,6 +31,7 @@
 #include "mpool_base_tree.h"
 #include "opal/threads/mutex.h"
 #include "opal/util/info.h"
+#include "opal/align.h"
 
 
 static void unregister_tree_item(mca_mpool_base_tree_item_t *mpool_tree_item)
@@ -76,7 +77,7 @@ void *mca_mpool_base_alloc(size_t size, opal_info_t *info, const char *hints)
 
     mpool = mca_mpool_base_module_lookup (hints);
     if (NULL != mpool) {
-        mem = mpool->mpool_alloc (mpool, size, sizeof(void *), 0);
+        mem = mpool->mpool_alloc (mpool, size, OPAL_ALIGN_MIN, 0);
     }
 
     if (NULL == mem) {

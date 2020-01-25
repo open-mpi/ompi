@@ -17,6 +17,7 @@
  * Copyright (c) 2015      Mellanox Technologies. All rights reserved.
  * Copyright (c) 2018      Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2020      Google, LLC. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -82,9 +83,15 @@ union vader_modex_t {
     struct vader_modex_xpmem_t {
         xpmem_segid_t seg_id;
         void *segment_base;
+        uintptr_t address_max;
     } xpmem;
 #endif
-    opal_shmem_ds_t seg_ds;
+    struct vader_modex_other_t {
+        ino_t user_ns_id;
+        int seg_ds_size;
+        /* seg_ds needs to be the last element */
+        opal_shmem_ds_t seg_ds;
+    } other;
 };
 
 /**
@@ -108,6 +115,7 @@ struct mca_btl_vader_component_t {
     int vader_free_list_inc;                /**< number of elements to alloc when growing free lists */
 #if OPAL_BTL_VADER_HAVE_XPMEM
     xpmem_segid_t my_seg_id;                /**< this rank's xpmem segment id */
+    uintptr_t my_address_max;               /**< largest address */
     mca_rcache_base_vma_module_t *vma_module; /**< registration cache for xpmem segments */
 #endif
     opal_shmem_ds_t seg_ds;                 /**< this rank's shared memory segment (when not using xpmem) */
@@ -269,6 +277,8 @@ int mca_btl_vader_get_knem (mca_btl_base_module_t *btl, mca_btl_base_endpoint_t 
                             mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
                             int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata);
 #endif
+
+ino_t mca_btl_vader_get_user_ns_id(void);
 
 int mca_btl_vader_get_sc_emu (mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpoint, void *local_address,
                                uint64_t remote_address, mca_btl_base_registration_handle_t *local_handle,

@@ -34,41 +34,20 @@ int mca_fs_ime_file_open (struct ompi_communicator_t *comm,
                           struct opal_info_t *info,
                           ompio_file_t *fh)
 {
-    int amode = 0;
-    int old_mask, perm;
-    int rank, ret = OMPI_SUCCESS;
+    int perm, amode;
+    int ret = OMPI_SUCCESS;
 
-    rank = ompi_comm_rank ( comm );
+    perm = mca_fs_base_get_file_perm(fh);
+    amode = mca_fs_base_get_file_amode(fh->f_rank, access_mode);
 
-    if (fh->f_perm == OMPIO_PERM_NULL)  {
-        old_mask = umask(022);
-        umask(old_mask);
-        perm = old_mask ^ 0666;
-    }
-    else {
-        perm = fh->f_perm;
-    }
-
-    if (access_mode & MPI_MODE_RDONLY)
-        amode = amode | O_RDONLY;
-    if (access_mode & MPI_MODE_WRONLY)
-        amode = amode | O_WRONLY;
-    if (access_mode & MPI_MODE_RDWR)
-        amode = amode | O_RDWR;
 
     /* Reset errno */
     errno = 0;
 
-    if ( rank == OMPIO_ROOT ) {
-        /* MODE_CREATE and MODE_EXCL should only be set by one process */
-        if ( access_mode & MPI_MODE_CREATE )
-            amode = amode | O_CREAT;
-        if (access_mode & MPI_MODE_EXCL)
-            amode = amode | O_EXCL;
-
+    if (OMPIO_ROOT == fh->f_rank) {
         fh->fd = ime_native_open(filename, amode, perm);
         if ( fh->fd < 0 ) {
-            ret = mca_fs_ime_get_mpi_err(errno);
+            ret = mca_fs_base_get_mpi_err(errno);
         }
     }
 
@@ -79,11 +58,11 @@ int mca_fs_ime_file_open (struct ompi_communicator_t *comm,
         return ret;
     }
 
-    if ( rank != OMPIO_ROOT ) {
+    if (OMPIO_ROOT != fh->f_rank) {
         errno = 0;
         fh->fd = ime_native_open(filename, amode, perm);
         if ( fh->fd < 0 ) {
-            return mca_fs_ime_get_mpi_err(errno);
+            return mca_fs_base_get_mpi_err(errno);
         }
     }
 

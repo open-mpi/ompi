@@ -507,10 +507,7 @@ static void tcp_peer_event_init(mca_oob_tcp_peer_t* peer)
 {
     if (peer->sd >= 0) {
         assert(!peer->send_ev_active && !peer->recv_ev_active);
-        if (NULL == peer->ev_base) {
-            ORTE_OOB_TCP_NEXT_BASE(peer);
-        }
-        opal_event_set(peer->ev_base,
+        opal_event_set(orte_event_base,
                        &peer->recv_event,
                        peer->sd,
                        OPAL_EV_READ|OPAL_EV_PERSIST,
@@ -522,7 +519,7 @@ static void tcp_peer_event_init(mca_oob_tcp_peer_t* peer)
             peer->recv_ev_active = false;
         }
 
-        opal_event_set(peer->ev_base,
+        opal_event_set(orte_event_base,
                        &peer->send_event,
                        peer->sd,
                        OPAL_EV_WRITE|OPAL_EV_PERSIST,
@@ -803,7 +800,6 @@ int mca_oob_tcp_peer_recv_connect_ack(mca_oob_tcp_peer_t* pr,
                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
             peer = OBJ_NEW(mca_oob_tcp_peer_t);
             peer->name = hdr.origin;
-            ORTE_OOB_TCP_NEXT_BASE(peer);  // assign it an event base
             peer->state = MCA_OOB_TCP_ACCEPTING;
             ui64 = (uint64_t*)(&peer->name);
             if (OPAL_SUCCESS != opal_hash_table_set_value_uint64(&mca_oob_tcp_component.peers, (*ui64), peer)) {

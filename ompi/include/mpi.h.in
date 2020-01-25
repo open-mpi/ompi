@@ -284,7 +284,7 @@
 
          /* For MPI removed APIs, there is no generally portable way to cause
           * the C compiler to error with a nice message, on the _usage_ of
-          * one of these symbols.  We've gone with tiered appraoch:
+          * one of these symbols.  We've gone with tiered approach:
           *
           * If the user configured with --enable-mpi1-compatibility,
           * just emit a compiletime warning (via the deprecation function
@@ -294,7 +294,7 @@
           * that they've used an MPI1 removed function.  If the user's
           * compiler supports C11 _Static_assert feature, we #define
           * the MPI routines to instead be a call to _Static_assert
-          * with an appropreate message suggesting the new MPI3 equivalent.
+          * with an appropriate message suggesting the new MPI3 equivalent.
           *
           * Otherwise, if the user's compiler supports the error function
           * attribute, define the MPI routines with that error attribute.
@@ -354,7 +354,7 @@
 #endif
 
 /*
- * To accomodate programs written for MPI implementations that use a
+ * To accommodate programs written for MPI implementations that use a
  * straight ROMIO import
  */
 #if !OMPI_BUILDING

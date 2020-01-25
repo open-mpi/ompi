@@ -6,6 +6,7 @@
  * Copyright (c) 2015      Bull SAS.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2018 IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -48,7 +49,8 @@ mca_pml_monitoring_module_t mca_pml_monitoring_module = {
     mca_pml_monitoring_dump,
     NULL,
     65535,
-    INT_MAX
+    INT_MAX,
+    0 /* flags */
 };
 
 /**

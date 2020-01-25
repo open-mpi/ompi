@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2019      Triad National Security, LLC. All rights
+ *                         reserved.
  *
  * $COPYRIGHT$
  *
@@ -30,6 +32,7 @@
 #include <sys/time.h>
 #endif
 
+#include "opal/runtime/opal.h"
 #include "opal/mca/pstat/pstat.h"
 #include "opal/mca/pstat/base/base.h"
 #include "opal/util/string_copy.h"
@@ -66,7 +69,7 @@ static int query(pid_t pid,
                  opal_node_stats_t *nstats)
 {
     double dtime;
-    char hostname[OPAL_MAXHOSTNAMELEN];
+    const char *hostname;
 
     if (NULL != stats) {
         /* record the time of this sample */
@@ -84,7 +87,7 @@ static int query(pid_t pid,
     }
 
     if (NULL != stats) {
-        gethostname(hostname, sizeof(hostname));
+        hostname = opal_gethostname();
         opal_string_copy(stats->node, hostname, OPAL_PSTAT_MAX_STRING_LEN);
 
         stats->pid = pid;

@@ -163,6 +163,12 @@ opal_datatype_optimize_short( opal_datatype_t* pData,
             if( 0 == last.count ) {  /* first data of the datatype */
                 last = *current;
                 continue;  /* next data */
+            } else {  /* can we merge it in order to decrease count */
+                if( (ptrdiff_t)last.blocklen * (ptrdiff_t)opal_datatype_basicDatatypes[last.common.type]->size == last.extent ) {
+                    last.extent *= last.count;
+                    last.blocklen *= last.count;
+                    last.count = 1;
+                }
             }
 
             /* are the two elements compatible: aka they have very similar values and they
@@ -176,6 +182,16 @@ opal_datatype_optimize_short( opal_datatype_t* pData,
                     last.common.type  = OPAL_DATATYPE_UINT1;
                 }
 
+                if( (last.extent * (ptrdiff_t)last.count + last.disp) == current->disp ) {
+                    if( 1 == current->count ) {
+                        last.count++;
+                        continue;
+                    }
+                    if( last.extent == current->extent ) {
+                        last.count += current->count;
+                        continue;
+                    }
+                }
                 if( 1 == last.count ) {
                     /* we can ignore the extent of the element with count == 1 and merge them together if their displacements match */
                     if( 1 == current->count ) {
@@ -186,17 +202,7 @@ opal_datatype_optimize_short( opal_datatype_t* pData,
                     /* can we compute a matching displacement ? */
                     if( (last.disp + current->extent) == current->disp ) {
                         last.extent = current->extent;
-                        last.count = current->count + 1;
-                        continue;
-                    }
-                }
-                if( (last.extent * (ptrdiff_t)last.count + last.disp) == current->disp ) {
-                    if( 1 == current->count ) {
-                        last.count++;
-                        continue;
-                    }
-                    if( last.extent == current->extent ) {
-                        last.count += current->count;
+                        last.count = current->count + last.count;
                         continue;
                     }
                 }

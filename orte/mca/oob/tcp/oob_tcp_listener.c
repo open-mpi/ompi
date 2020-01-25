@@ -13,7 +13,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2018 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -98,7 +98,7 @@ static void connection_event_handler(int sd, short flags, void* cbdata);
  */
 int orte_oob_tcp_start_listening(void)
 {
-    int rc;
+    int rc = ORTE_SUCCESS, rc2 = ORTE_SUCCESS;
     mca_oob_tcp_listener_t *listener;
 
     /* if we don't have any TCP interfaces, we shouldn't be here */
@@ -112,18 +112,18 @@ int orte_oob_tcp_start_listening(void)
     }
 
     /* create listen socket(s) for incoming connection attempts */
-    if (ORTE_SUCCESS != (rc = create_listen())) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
+    rc = create_listen();
 
 #if OPAL_ENABLE_IPV6
     /* create listen socket(s) for incoming connection attempts */
-    if (ORTE_SUCCESS != (rc = create_listen6())) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
+    rc2 = create_listen6();
 #endif
+
+    if (ORTE_SUCCESS != rc && ORTE_SUCCESS != rc2) {
+        /* we were unable to open any listening sockets */
+        opal_show_help("help-oob-tcp.txt", "no-listeners", true);
+        return ORTE_ERR_FATAL;
+    }
 
     /* if I am the HNP, start a listening thread so we can
      * harvest connection requests as rapidly as possible
@@ -157,7 +157,7 @@ int orte_oob_tcp_start_listening(void)
     /* otherwise, setup to listen via the event lib */
     OPAL_LIST_FOREACH(listener, &mca_oob_tcp_component.listeners, mca_oob_tcp_listener_t) {
         listener->ev_active = true;
-        opal_event_set(orte_oob_base.ev_base, &listener->event,
+        opal_event_set(orte_event_base, &listener->event,
                        listener->sd,
                        OPAL_EV_READ|OPAL_EV_PERSIST,
                        connection_event_handler,
@@ -744,7 +744,7 @@ static void* listen_thread(opal_object_t *obj)
                  * OS might start rejecting connections due to timeout.
                  */
                 pending_connection = OBJ_NEW(mca_oob_tcp_pending_connection_t);
-                opal_event_set(orte_oob_base.ev_base, &pending_connection->ev, -1,
+                opal_event_set(orte_event_base, &pending_connection->ev, -1,
                                OPAL_EV_WRITE, connection_handler, pending_connection);
                 opal_event_set_priority(&pending_connection->ev, ORTE_MSG_PRI);
                 pending_connection->fd = accept(sd,

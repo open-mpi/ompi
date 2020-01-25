@@ -160,7 +160,7 @@ AC_DEFUN([MCA_opal_hwloc_external_CONFIG],[
                                  ]])],
                              [AC_MSG_RESULT([yes])],
                              [AC_MSG_RESULT([no])
-                              opal_hwloc_summary_msg="internal (external hlwoc version is less than internal version 2.0)"
+                              opal_hwloc_summary_msg="internal (external hwloc version is less than internal version 2.0)"
                               AC_MSG_WARN([external hwloc version is less than internal version 2.0])
                               AC_MSG_WARN([using internal hwloc])
                               opal_hwloc_external_support=no])])])

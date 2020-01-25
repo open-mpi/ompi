@@ -20,6 +20,8 @@
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * Copyright (c) 2018      Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2019      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -44,6 +46,7 @@
 #include <sys/param.h>
 #endif
 
+#include "opal/runtime/opal.h"
 #include "opal/util/opal_environ.h"
 #include "opal/util/output.h"
 #include "opal/util/string_copy.h"
@@ -137,7 +140,7 @@ OBJ_CLASS_INSTANCE(opal_output_stream_t, opal_object_t, construct, destruct);
 bool opal_output_init(void)
 {
     int i;
-    char hostname[OPAL_MAXHOSTNAMELEN];
+    const char *hostname;
     char *str;
 
     if (initialized) {
@@ -193,7 +196,7 @@ bool opal_output_init(void)
             verbose.lds_want_stderr = true;
         }
     }
-    gethostname(hostname, sizeof(hostname));
+    hostname = opal_gethostname();
     opal_asprintf(&verbose.lds_prefix, "[%s:%05d] ", hostname, getpid());
 
     for (i = 0; i < OPAL_OUTPUT_MAX_STREAMS; ++i) {
@@ -274,7 +277,7 @@ bool opal_output_switch(int output_id, bool enable)
 void opal_output_reopen_all(void)
 {
     char *str;
-    char hostname[OPAL_MAXHOSTNAMELEN];
+    const char *hostname;
 
     str = getenv("OPAL_OUTPUT_STDERR_FD");
     if (NULL != str) {
@@ -283,7 +286,7 @@ void opal_output_reopen_all(void)
         default_stderr_fd = -1;
     }
 
-    gethostname(hostname, sizeof(hostname));
+    hostname = opal_gethostname();
     if( NULL != verbose.lds_prefix ) {
         free(verbose.lds_prefix);
         verbose.lds_prefix = NULL;

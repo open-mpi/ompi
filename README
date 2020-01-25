@@ -188,7 +188,7 @@ General notes
   - Oracle Solaris 10 and 11, 32 and 64 bit (SPARC, i386, x86_64),
     with Oracle Solaris Studio 12.5
   - OpenBSD.  Requires configure options --enable-mca-no-build=patcher
-    and --disable-slopen with this release.
+    and --disable-dlopen with this release.
   - Problems have been reported when building Open MPI on FreeBSD 11.1
     using the clang-4.0 system compiler. A workaround is to build
     Open MPI using the GNU compiler.
@@ -294,7 +294,7 @@ Compiler Notes
   module.
 
 - Open MPI does not support the Sparc v8 CPU target.  However,
-  as of Solaris Studio 12.1,  and later compilers, one should not
+  as of Solaris Studio 12.1, and later compilers, one should not
   specify -xarch=v8plus or -xarch=v9.  The use of the options
   -m32 and -m64 for producing 32 and 64 bit targets, respectively,
   are now preferred by the Solaris Studio compilers.  GCC may
@@ -592,7 +592,7 @@ MPI Functionality and Features
   --enable-mpi1-compatibility flag.
 
 - Rank reordering support is available using the TreeMatch library. It
-  is activated for the graph and dist_graph topologies.
+  is activated for the graph and dist_graph communicator topologies.
 
 - When using MPI deprecated functions, some compilers will emit
   warnings.  For example:
@@ -608,15 +608,12 @@ MPI Functionality and Features
   deprecated_example.c:4: warning: 'MPI_Type_struct' is deprecated (declared at /opt/openmpi/include/mpi.h:1522)
   shell$
 
-- MPI_THREAD_MULTIPLE is supported with some exceptions.  Note that
-  Open MPI must be configured with --enable-mpi-thread-multiple to get
-  this level of thread safety support.
+- MPI_THREAD_MULTIPLE is supported with some exceptions.
 
   The following PMLs support MPI_THREAD_MULTIPLE:
   - cm (see list (1) of supported MTLs, below)
   - ob1 (see list (2) of supported BTLs, below)
   - ucx
-  - yalla
 
   (1) The cm PML and the following MTLs support MPI_THREAD_MULTIPLE:
       - ofi (Libfabric)
@@ -672,10 +669,6 @@ OpenSHMEM Functionality and Features
 MPI Collectives
 ---------------
 
-- The "fca" coll component: the Mellanox Fabric Collective Accelerator
-  (FCA) is a solution for offloading collective operations from the
-  MPI process onto Mellanox QDR InfiniBand switch CPUs and HCAs.
-
 - The "cuda" coll component provides CUDA-aware support for the
   reduction type collectives with GPU buffers. This component is only
   compiled into the library when the library has been configured with
@@ -699,7 +692,7 @@ Network Support
 ---------------
 
 - There are several main MPI network models available: "ob1", "cm",
-  "ucx", and "yalla".  "ob1" uses BTL ("Byte Transfer Layer")
+  and "ucx".  "ob1" uses BTL ("Byte Transfer Layer")
   components for each supported network.  "cm" uses MTL ("Matching
   Transport Layer") components for each supported network.  "ucx" uses
   the OpenUCX transport.
@@ -751,10 +744,7 @@ Network Support
      transport devices are available (e.g., Cray uGNI), use the "cm"
      PML and a single appropriate corresponding "mtl" module.
 
-  3. If MXM/InfiniBand devices are availble, use the "yalla" PML
-     (NOTE: the "yalla"/MXM PML is deprecated -- see below).
-
-  4. Otherwise, use the ob1 PML and one or more appropriate "btl"
+  3. Otherwise, use the ob1 PML and one or more appropriate "btl"
      modules.
 
   Users can override Open MPI's default selection algorithms and force
@@ -768,23 +758,8 @@ Network Support
       or
       shell$ mpirun --mca pml ucx ...
 
-  As alluded to above, there is actually a fourth MPI point-to-point
-  transport, but it is deprecated and will likely be removed in a
-  future Open MPI release:
-
-  - "yalla" uses the Mellanox MXM transport library.  MXM is the
-     deprecated Mellanox Messaging Accelerator library, utilizing a
-     full range of IB transports to provide the following messaging
-     services to the upper level MPI/OpenSHMEM libraries.  MXM is only
-     included in this release of Open MPI for backwards compatibility;
-     the "ucx" PML should be used insead.
-
 - The main OpenSHMEM network model is "ucx"; it interfaces directly
   with UCX.
-
-  The "ikrit" OpenSHMEM network model is also available, but is
-  deprecated; it uses the deprecated Mellanox Message Accelerator
-  (MXM) library.
 
 - In prior versions of Open MPI, InfiniBand and RoCE support was
   provided through the openib BTL and ob1 PML plugins.  Starting with
@@ -877,12 +852,9 @@ Open MPI Extensions
     MPIX_SHORT_FLOAT, and MPIX_CXX_SHORT_FLOAT_COMPLEX if corresponding
     language types are available. See ompi/mpiext/shortfloat/README.txt
     for details.
-  - affinity: Provides the OMPI_Affinity_str() routine on retrieving
-    a string that contains what resources a process is bound to.  See
-    its man page for more details.
-  - cr: Provides routines to access to checkpoint restart routines.
-    See ompi/mpiext/cr/mpiext_cr_c.h for a listing of available
-    functions.
+  - affinity: Provides the OMPI_Affinity_str() a string indicating the
+    resources which a process is bound. For more details, see its man
+    page.
   - cuda: When the library is compiled with CUDA-aware support, it
     provides two things.  First, a macro
     MPIX_CUDA_AWARE_SUPPORT. Secondly, the function
@@ -1105,7 +1077,7 @@ NETWORKING SUPPORT / OPTIONS
   knem is a Linux kernel module that allows direct process-to-process
   memory copies (optionally using hardware offload), potentially
   increasing bandwidth for large messages sent between messages on the
-  same server.  See http://runtime.bordeaux.inria.fr/knem/ for
+  same server.  See http://knem.gforge.inria.fr/ for
   details.
 
 --with-libfabric=<directory>
@@ -1123,19 +1095,6 @@ NETWORKING SUPPORT / OPTIONS
   will look in <libfabric directory>/lib and <libfabric
   directory>/lib64, which covers most cases.  This option is only
   needed for special configurations.
-
---with-mxm=<directory>
-  Specify the directory where the Mellanox MXM library and header
-  files are located.  This option is generally only necessary if the
-  MXM headers and libraries are not in default compiler/linker search
-  paths.
-
-  MXM is the support library for Mellanox Network adapters.
-
---with-mxm-libdir=<directory>
-  Look in directory for the MXM libraries.  By default, Open MPI will
-  look in <mxm directory>/lib and <mxm directory>/lib64, which covers
-  most cases.  This option is only needed for special configurations.
 
 --with-portals4=<directory>
   Specify the directory where the Portals4 libraries and header files
@@ -1262,36 +1221,6 @@ RUN-TIME SYSTEM SUPPORT
 
 MISCELLANEOUS SUPPORT LIBRARIES
 
---with-blcr=<directory>
-  Specify the directory where the Berkeley Labs Checkpoint / Restart
-  (BLCR) libraries and header files are located.  This option is
-  generally only necessary if the BLCR headers and libraries are not
-  in default compiler/linker search paths.
-
-  This option is only meaningful if the --with-ft option is also used
-  to active Open MPI's fault tolerance behavior.
-
---with-blcr-libdir=<directory>
-  Look in directory for the BLCR libraries.  By default, Open MPI will
-  look in <blcr directory>/lib and <blcr directory>/lib64, which
-  covers most cases.  This option is only needed for special
-  configurations.
-
---with-dmtcp=<directory>
-  Specify the directory where the Distributed MultiThreaded
-  Checkpointing (DMTCP) libraries and header files are located.  This
-  option is generally only necessary if the DMTCP headers and
-  libraries are not in default compiler/linker search paths.
-
-  This option is only meaningful if the --with-ft option is also used
-  to active Open MPI's fault tolerance behavior.
-
---with-dmtcp-libdir=<directory>
-  Look in directory for the DMTCP libraries.  By default, Open MPI
-  will look in <dmtcp directory>/lib and <dmtcp directory>/lib64,
-  which covers most cases.  This option is only needed for special
-  configurations.
-
 --with-libevent(=value)
   This option specifies where to find the libevent support headers and
   library.  The following VALUEs are permitted:
@@ -1323,28 +1252,26 @@ MISCELLANEOUS SUPPORT LIBRARIES
   this option is only needed for special configurations.
 
 --with-hwloc(=value)
-  Build hwloc support (default: enabled).  This option specifies where
+  hwloc is a support library that provides processor and memory
+  affinity information for NUMA platforms.  It is required by Open
+  MPI.  Therefore, specifying --with-hwloc=no (or --without-hwloc) is
+  disallowed.
+
+  By default (i.e., if --with-hwloc is not specified, or if
+  --with-hwloc is specified without a value), Open MPI will first try
+  to find/use an hwloc installation on the current system.  If Open
+  MPI cannot find one, it will fall back to build and use the internal
+  copy of hwloc included in the Open MPI source tree.
+
+  Alternatively, the --with-hwloc option can be used to specify where
   to find the hwloc support headers and library.  The following values
   are permitted:
 
-    internal:    Use Open MPI's internal copy of hwloc.
-    external:    Use an external hwloc installation (rely on default
-                 compiler and linker paths to find it)
-    <no value>:  Same as "internal".
-    <directory>: Specify the location of a specific hwloc
-                 installation to use
-
-  By default (or if --with-hwloc is specified with no VALUE), Open MPI
-  will build and use the copy of hwloc that it has in its source tree.
-  However, if the VALUE is "external", Open MPI will look for the
-  relevant hwloc header files and library in default compiler / linker
-  locations.  Or, VALUE can be a directory tree where the hwloc header
-  file and library can be found.  This option allows operating systems
-  to include Open MPI and use their default hwloc installation instead
-  of Open MPI's bundled hwloc.
-
-  hwloc is a support library that provides processor and memory
-  affinity information for NUMA platforms.
+    internal:    Only use Open MPI's internal copy of hwloc.
+    external:    Only use an external hwloc installation (rely on
+                 default compiler and linker paths to find it).
+    <directory>: Only use the specific hwloc installation found in
+                 the specified directory.
 
 --with-hwloc-libdir=<directory>
   Look in directory for the hwloc libraries.  This option is only
@@ -2011,16 +1938,14 @@ equivalent) to launch MPI applications.  For example:
   or
   shell$ mpiexec -np 1 hello_world_mpi : -np 1 hello_world_mpi
 
-are equivalent.  Some of mpiexec's switches (such as -host and -arch)
-are not yet functional, although they will not error if you try to use
-them.
+are equivalent. 
 
-The rsh launcher (which defaults to using ssh) accepts a -hostfile
-parameter (the option "-machinefile" is equivalent); you can specify a
--hostfile parameter indicating an standard mpirun-style hostfile (one
+The rsh launcher (which defaults to using ssh) accepts a --hostfile
+parameter (the option "--machinefile" is equivalent); you can specify a
+--hostfile parameter indicating an standard mpirun-style hostfile (one
 hostname per line):
 
-  shell$ mpirun -hostfile my_hostfile -np 2 hello_world_mpi
+  shell$ mpirun --hostfile my_hostfile -np 2 hello_world_mpi
 
 If you intend to run more than one process on a node, the hostfile can
 use the "slots" attribute.  If "slots" is not specified, a count of 1

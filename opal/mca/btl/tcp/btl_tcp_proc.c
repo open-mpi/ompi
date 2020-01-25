@@ -172,7 +172,7 @@ mca_btl_tcp_proc_t* mca_btl_tcp_proc_create(opal_proc_t* proc)
        fields needed in the proc version */
     for (i = 0 ; i < btl_proc->proc_addr_count ; i++) {
         if (MCA_BTL_TCP_AF_INET == remote_addrs[i].addr_family) {
-            memcpy(&btl_proc->proc_addrs[i].addr_inet,
+            memcpy(&btl_proc->proc_addrs[i].addr_union.addr_inet,
                    remote_addrs[i].addr, sizeof(struct in_addr));
             btl_proc->proc_addrs[i].addr_port = remote_addrs[i].addr_port;
             btl_proc->proc_addrs[i].addr_ifkindex = remote_addrs[i].addr_ifkindex;
@@ -180,7 +180,7 @@ mca_btl_tcp_proc_t* mca_btl_tcp_proc_create(opal_proc_t* proc)
             btl_proc->proc_addrs[i].addr_inuse = false;
         } else if (MCA_BTL_TCP_AF_INET6 == remote_addrs[i].addr_family) {
 #if OPAL_ENABLE_IPV6
-            memcpy(&btl_proc->proc_addrs[i].addr_inet6,
+            memcpy(&btl_proc->proc_addrs[i].addr_union.addr_inet6,
                    remote_addrs[i].addr, sizeof(struct in6_addr));
             btl_proc->proc_addrs[i].addr_port = remote_addrs[i].addr_port;
             btl_proc->proc_addrs[i].addr_ifkindex = remote_addrs[i].addr_ifkindex;
@@ -826,7 +826,7 @@ mca_btl_tcp_proc_t* mca_btl_tcp_proc_lookup(const opal_process_name_t *name)
         mca_btl_base_endpoint_t *endpoint;
         opal_proc_t *opal_proc;
 
-        BTL_VERBOSE(("adding tcp proc for unknown peer {%s}",
+        BTL_VERBOSE(("adding tcp proc for peer {%s}",
                      OPAL_NAME_PRINT(*name)));
 
         opal_proc = opal_proc_for_name (*name);
@@ -869,7 +869,7 @@ void mca_btl_tcp_proc_accept(mca_btl_tcp_proc_t* btl_proc, struct sockaddr* addr
         }
         switch (addr->sa_family) {
         case AF_INET:
-            if( memcmp( &btl_endpoint->endpoint_addr->addr_inet,
+            if( memcmp( &btl_endpoint->endpoint_addr->addr_union.addr_inet,
                         &(((struct sockaddr_in*)addr)->sin_addr),
                         sizeof(struct in_addr) ) ) {
                 char tmp[2][16];
@@ -878,7 +878,7 @@ void mca_btl_tcp_proc_accept(mca_btl_tcp_proc_t* btl_proc, struct sockaddr* addr
                                     OPAL_NAME_PRINT(btl_proc->proc_opal->proc_name),
                                     inet_ntop(AF_INET, (void*)&((struct sockaddr_in*)addr)->sin_addr,
                                               tmp[0], 16),
-                                    inet_ntop(AF_INET, (void*)(struct in_addr*)&btl_endpoint->endpoint_addr->addr_inet,
+                                    inet_ntop(AF_INET, (void*)(struct in_addr*)&btl_endpoint->endpoint_addr->addr_union.addr_inet,
                                               tmp[1], 16),
                                     (int)i, (int)btl_proc->proc_endpoint_count);
                 continue;
@@ -890,7 +890,7 @@ void mca_btl_tcp_proc_accept(mca_btl_tcp_proc_t* btl_proc, struct sockaddr* addr
             break;
 #if OPAL_ENABLE_IPV6
         case AF_INET6:
-            if( memcmp( &btl_endpoint->endpoint_addr->addr_inet,
+            if( memcmp( &btl_endpoint->endpoint_addr->addr_union.addr_inet,
                         &(((struct sockaddr_in6*)addr)->sin6_addr),
                         sizeof(struct in6_addr) ) ) {
                 char tmp[2][INET6_ADDRSTRLEN];
@@ -899,7 +899,7 @@ void mca_btl_tcp_proc_accept(mca_btl_tcp_proc_t* btl_proc, struct sockaddr* addr
                                     OPAL_NAME_PRINT(btl_proc->proc_opal->proc_name),
                                     inet_ntop(AF_INET6, (void*)&((struct sockaddr_in6*)addr)->sin6_addr,
                                               tmp[0], INET6_ADDRSTRLEN),
-                                    inet_ntop(AF_INET6, (void*)(struct in6_addr*)&btl_endpoint->endpoint_addr->addr_inet,
+                                    inet_ntop(AF_INET6, (void*)(struct in6_addr*)&btl_endpoint->endpoint_addr->addr_union.addr_inet,
                                               tmp[1], INET6_ADDRSTRLEN),
                                     (int)i, (int)btl_proc->proc_endpoint_count);
                 continue;
@@ -941,7 +941,7 @@ void mca_btl_tcp_proc_accept(mca_btl_tcp_proc_t* btl_proc, struct sockaddr* addr
                 continue;
             }
             inet_ntop(btl_endpoint->endpoint_addr->addr_family,
-                      (void*) &(btl_endpoint->endpoint_addr->addr_inet),
+                      (void*) &(btl_endpoint->endpoint_addr->addr_union.addr_inet),
                       ip, sizeof(ip) - 1);
             if (NULL == addr_str) {
                 opal_asprintf(&tmp, "\n\t%s", ip);
@@ -978,7 +978,7 @@ bool mca_btl_tcp_proc_tosocks(mca_btl_tcp_addr_t* proc_addr,
     case AF_INET:
         output->ss_family = AF_INET;
         memcpy(&((struct sockaddr_in*)output)->sin_addr,
-               &proc_addr->addr_inet, sizeof(struct in_addr));
+               &proc_addr->addr_union.addr_inet, sizeof(struct in_addr));
         ((struct sockaddr_in*)output)->sin_port = proc_addr->addr_port;
         break;
 #if OPAL_ENABLE_IPV6
@@ -986,8 +986,8 @@ bool mca_btl_tcp_proc_tosocks(mca_btl_tcp_addr_t* proc_addr,
         {
             struct sockaddr_in6* inaddr = (struct sockaddr_in6*)output;
             output->ss_family = AF_INET6;
-            memcpy(&inaddr->sin6_addr, &proc_addr->addr_inet,
-                   sizeof (proc_addr->addr_inet));
+            memcpy(&inaddr->sin6_addr, &proc_addr->addr_union.addr_inet6,
+                   sizeof (proc_addr->addr_union.addr_inet6));
             inaddr->sin6_port = proc_addr->addr_port;
             inaddr->sin6_scope_id = 0;
             inaddr->sin6_flowinfo = 0;

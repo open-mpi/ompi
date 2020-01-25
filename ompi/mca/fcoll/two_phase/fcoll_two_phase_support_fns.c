@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2011 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2019 University of Houston. All rights reserved.
  * Copyright (c) 2014-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
@@ -156,23 +156,26 @@ int mca_fcoll_two_phase_calc_aggregator(ompio_file_t *fh,
 {
 
 
-    int rank_index, rank;
+    int rank_index,  rank;
     OMPI_MPI_OFFSET_TYPE avail_bytes;
-
-    rank_index = (int) ((off - min_off + fd_size)/ fd_size - 1);
-
+    long long off_ll = (long long) off;
+    long long min_off_ll = (long long) min_off;
+    long long fd_size_ll = (long long) fd_size;
+    long long rank_index_ll;
+    
+    rank_index_ll = (((off_ll - min_off_ll + fd_size_ll)/ fd_size_ll) - 1);
+    rank_index = (int) rank_index_ll;
     if (striping_unit > 0){
 	rank_index = 0;
 	while (off > fd_end[rank_index]) rank_index++;
     }
 
-
     if (rank_index >= num_aggregators || rank_index < 0) {
        fprintf(stderr,
-	       "Error in ompi_io_ompio_calcl_aggregator():");
+	       "Error in mca_fcoll_two_phase_calc_aggregator:");
        fprintf(stderr,
-	       "rank_index(%d) >= num_aggregators(%d)fd_size=%lld off=%lld\n",
-	       rank_index,num_aggregators,fd_size,off);
+	       "rank_index(%d) >= num_aggregators(%d) fd_size=%lld off=%lld min_off=%lld striping_unit=%d\n",
+	       rank_index, num_aggregators, fd_size, off, min_off, striping_unit);
        ompi_mpi_abort(&ompi_mpi_comm_world.comm, 1);
     }
 
@@ -184,9 +187,9 @@ int mca_fcoll_two_phase_calc_aggregator(ompio_file_t *fh,
 
     rank = aggregator_list[rank_index];
 
-    #if 0
+#if 0
     printf("rank : %d, rank_index : %d\n",rank, rank_index);
-    #endif
+#endif
 
     return rank;
 }

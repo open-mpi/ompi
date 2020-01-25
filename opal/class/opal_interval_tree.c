@@ -12,6 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2015-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2020      Google, LLC. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -39,7 +40,7 @@ static opal_interval_tree_node_t *opal_interval_tree_next (opal_interval_tree_t 
                                                            opal_interval_tree_node_t *node);
 static opal_interval_tree_node_t * opal_interval_tree_find_node(opal_interval_tree_t *tree,
                                                                 uint64_t low, uint64_t high,
-                                                                bool exact, void *data);
+                                                                void *data);
 
 static opal_interval_tree_node_t *left_rotate (opal_interval_tree_t *tree, opal_interval_tree_node_t *x);
 static opal_interval_tree_node_t *right_rotate (opal_interval_tree_t *tree, opal_interval_tree_node_t *x);
@@ -355,31 +356,54 @@ int opal_interval_tree_insert (opal_interval_tree_t *tree, void *value, uint64_t
     return OPAL_SUCCESS;
 }
 
+static int opal_interval_tree_compare_node(opal_interval_tree_node_t *node, uint64_t low, uint64_t high, void *data) {
+    if ((data && node->low == low && node->high == high && node->data == data) ||
+        (!data && node->low <= low && node->high >= high)) {
+        return 0;
+    }
+    if (node->low > low) {
+        return -1;
+    }
+    if (node->low < low) {
+        return 1;
+    }
+    if (node->high < high) {
+        return -1;
+    }
+    if (node->high > high) {
+        return 1;
+    }
+    if (node->data > data) {
+        return -1;
+    }
+    return 1;
+}
+
 static opal_interval_tree_node_t *opal_interval_tree_find_interval(opal_interval_tree_t *tree, opal_interval_tree_node_t *node, uint64_t low,
-                                                                   uint64_t high, bool exact, void *data)
+                                                                   uint64_t high, void *data)
 {
     if (node == &tree->nill) {
         return NULL;
     }
 
-    if (((exact && node->low == low && node->high == high) || (!exact && node->low <= low && node->high >= high)) &&
-        (!data || node->data == data)) {
+    int check = opal_interval_tree_compare_node(node, low, high, data);
+    if (0 == check) {
         return node;
     }
 
-    if (low <= node->low) {
-        return opal_interval_tree_find_interval (tree, node->left, low, high, exact, data);
+    if (-1 == check) {
+        return opal_interval_tree_find_interval (tree, node->left, low, high, data);
     }
 
-    return opal_interval_tree_find_interval (tree, node->right, low, high, exact, data);
+    return opal_interval_tree_find_interval (tree, node->right, low, high, data);
 }
 
 /* Finds the node in the tree based on the key and returns a pointer
  * to the node. This is a bit a code duplication, but this has to be fast
  * so we go ahead with the duplication */
-static opal_interval_tree_node_t *opal_interval_tree_find_node(opal_interval_tree_t *tree, uint64_t low, uint64_t high, bool exact, void *data)
+static opal_interval_tree_node_t *opal_interval_tree_find_node(opal_interval_tree_t *tree, uint64_t low, uint64_t high, void *data)
 {
-    return opal_interval_tree_find_interval (tree, tree->root.left, low, high, exact, data);
+    return opal_interval_tree_find_interval (tree, tree->root.left, low, high, data);
 }
 
 void *opal_interval_tree_find_overlapping (opal_interval_tree_t *tree, uint64_t low, uint64_t high)
@@ -388,7 +412,7 @@ void *opal_interval_tree_find_overlapping (opal_interval_tree_t *tree, uint64_t 
     opal_interval_tree_node_t *node;
 
     token = opal_interval_tree_reader_get_token (tree);
-    node = opal_interval_tree_find_node (tree, low, high, true, NULL);
+    node = opal_interval_tree_find_node (tree, low, high, NULL);
     opal_interval_tree_reader_return_token (tree, token);
 
     return node ? node->data : NULL;
@@ -536,7 +560,7 @@ int opal_interval_tree_delete (opal_interval_tree_t *tree, uint64_t low, uint64_
     opal_interval_tree_node_t *node;
 
     opal_interval_tree_write_lock (tree);
-    node = opal_interval_tree_find_node (tree, low, high, true, data);
+    node = opal_interval_tree_find_node (tree, low, high, data);
     if (NULL == node) {
         opal_interval_tree_write_unlock (tree);
         return OPAL_ERR_NOT_FOUND;
@@ -618,18 +642,23 @@ static void opal_interval_tree_insert_node (opal_interval_tree_t *tree, opal_int
     node->right = nill;
 
     /* find the leaf where we will insert the node */
+    int check = -1;
     while (n != nill) {
+        check = opal_interval_tree_compare_node(n, node->low, node->high, node->data);
+        /* node already exists */
+        assert (0 != check);
+
         if (n->max < node->high) {
             n->max = node->high;
         }
 
         parent = n;
-        n = ((node->low < n->low) ? n->left : n->right);
+        n = (-1 == check) ? n->left : n->right;
         assert (nill == n || n->parent == parent);
     }
 
     /* place it on either the left or the right */
-    if ((node->low < parent->low)) {
+    if (-1 == check) {
         parent->left = node;
     } else {
         parent->right = node;

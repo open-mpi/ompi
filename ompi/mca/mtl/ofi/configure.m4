@@ -2,7 +2,7 @@
 #
 # Copyright (c) 2013-2014 Intel, Inc. All rights reserved
 #
-# Copyright (c) 2014-2019 Cisco Systems, Inc.  All rights reserved
+# Copyright (c) 2014-2020 Cisco Systems, Inc.  All rights reserved
 # Copyright (c) 2017      Los Alamos National Security, LLC.  All rights
 #                         reserved.
 # $COPYRIGHT$
@@ -27,6 +27,12 @@ AC_DEFUN([MCA_ompi_mtl_ofi_CONFIG],[
 
     # Check for OFI
     OPAL_CHECK_OFI
+
+    # The OFI MTL requires at least OFI libfabric v1.5.
+    AS_IF([test "$opal_ofi_happy" = "yes"],
+          [OPAL_CHECK_OFI_VERSION_GE([1,5],
+                                     [],
+                                     [opal_ofi_happy=no])])
 
     AS_IF([test "$opal_ofi_happy" = "yes"],
           [$1],

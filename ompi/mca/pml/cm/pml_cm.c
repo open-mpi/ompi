@@ -11,6 +11,7 @@
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2018 IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -28,6 +29,7 @@
 #include "pml_cm.h"
 #include "pml_cm_sendreq.h"
 #include "pml_cm_recvreq.h"
+#include "pml_cm_component.h"
 
 ompi_pml_cm_t ompi_pml_cm = {
     {
@@ -53,7 +55,8 @@ ompi_pml_cm_t ompi_pml_cm = {
         mca_pml_cm_dump,
         NULL,
         0,
-        0
+        0,
+        0 /* flags */
     }
 };
 

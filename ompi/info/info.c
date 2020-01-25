@@ -17,6 +17,8 @@
  * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
+ * Copyright (c) 2019      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -40,6 +42,7 @@
 #endif
 #include <assert.h>
 
+#include "opal/runtime/opal.h"
 #include "opal/util/argv.h"
 #include "opal/util/opal_getcwd.h"
 #include "opal/util/output.h"
@@ -82,7 +85,7 @@ opal_pointer_array_t ompi_info_f_to_c_table = {{0}};
  */
 int ompi_mpiinfo_init(void)
 {
-    char val[OPAL_MAXHOSTNAMELEN];
+    const char *val;
     char *cptr;
 
     /* initialize table */
@@ -121,7 +124,7 @@ int ompi_mpiinfo_init(void)
     }
 
     /* local host name */
-    gethostname(val, sizeof(val));
+    val = opal_gethostname();
     opal_info_set(&ompi_mpi_info_env.info.super, "host", val);
 
     /* architecture name */

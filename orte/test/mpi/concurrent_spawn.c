@@ -1,6 +1,8 @@
 #define _GNU_SOURCE
 #include "orte_config.h"
 
+#include "opal/runtime/opal.h"
+
 #include <stdio.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -15,7 +17,7 @@ int main(int argc, char* argv[])
     int msg;
     MPI_Comm parent, children[NUM_CHILDREN];
     int rank, size, i;
-    char hostname[OPAL_MAXHOSTNAMELEN];
+    const char *hostname;
     pid_t pid;
     char *child_argv[2] = { "", NULL };
 
@@ -56,7 +58,7 @@ int main(int argc, char* argv[])
     }
     /* Otherwise, we're the child */
     else {
-        gethostname(hostname, sizeof(hostname));
+        hostname = opal_gethostname();
         if (argc == 1) {
             printf("ERROR: child did not receive exepcted argv!\n");
             i = -1;

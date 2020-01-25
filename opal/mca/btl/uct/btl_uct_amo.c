@@ -110,7 +110,7 @@ int mca_btl_uct_afop (struct mca_btl_base_module_t *btl, struct mca_btl_base_end
         mca_btl_uct_uct_completion_release (comp);
     }
 
-    uct_rkey_release (&rkey);
+    mca_btl_uct_rkey_release (uct_btl, &rkey);
 
     return rc;
 }
@@ -184,7 +184,7 @@ int mca_btl_uct_acswap (struct mca_btl_base_module_t *btl, struct mca_btl_base_e
         mca_btl_uct_uct_completion_release (comp);
     }
 
-    uct_rkey_release (&rkey);
+    mca_btl_uct_rkey_release (uct_btl, &rkey);
 
     return rc;
 }

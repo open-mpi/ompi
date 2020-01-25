@@ -29,6 +29,7 @@
 #include "opal_config.h"
 #ifdef HAVE_MEMKIND_H
 #include "opal/constants.h"
+#include "opal/align.h"
 #include "opal/mca/mpool/mpool.h"
 #include "opal/include/opal/frameworks.h"
 #include "opal/runtime/opal.h"
@@ -99,6 +100,11 @@ int main (int argc, char* argv[])
         goto error;
     }
 
+    if (0 != ((uintptr_t)ptr % OPAL_ALIGN_MIN)) {
+        error = "improper memory alignment detected";
+        goto error;
+    }
+
     /*
      * now try policies
      */
@@ -121,6 +127,11 @@ int main (int argc, char* argv[])
 
                 if (OPAL_SUCCESS != mca_mpool_base_free(ptr)) {
                     error = "mca_mpool_base_free() failed";
+                    goto error;
+                }
+
+                if (0 != ((uintptr_t)ptr % OPAL_ALIGN_MIN)) {
+                    error = "improper memory alignment detected";
                     goto error;
                 }
                 mk_ptr++;

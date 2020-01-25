@@ -15,8 +15,8 @@ dnl Copyright (c) 2006-2008 Sun Microsystems, Inc.  All rights reserved.
 dnl Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
 dnl                         reserved.
 dnl Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
-dnl Copyright (c) 2014-2017 Research Organization for Information Science
-dnl                         and Technology (RIST). All rights reserved.
+dnl Copyright (c) 2014-2019 Research Organization for Information Science
+dnl                         and Technology (RIST).  All rights reserved.
 dnl Copyright (c) 2016      IBM Corporation.  All rights reserved.
 dnl Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
 dnl $COPYRIGHT$
@@ -487,14 +487,6 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
                [OMPI_FORTRAN_HAVE_PRIVATE=1],
                [OMPI_FORTRAN_HAVE_PRIVATE=0])])
 
-    OMPI_FORTRAN_HAVE_PROTECTED=0
-    AS_IF([test $OMPI_TRY_FORTRAN_BINDINGS -ge $OMPI_FORTRAN_USEMPIF08_BINDINGS && \
-           test $OMPI_BUILD_FORTRAN_BINDINGS -ge $OMPI_FORTRAN_USEMPIF08_BINDINGS],
-          [ # Does the compiler support "protected"
-           OMPI_FORTRAN_CHECK_PROTECTED(
-               [OMPI_FORTRAN_HAVE_PROTECTED=1],
-               [OMPI_FORTRAN_HAVE_PROTECTED=0])])
-
     OMPI_FORTRAN_HAVE_ABSTRACT=0
     AS_IF([test $OMPI_TRY_FORTRAN_BINDINGS -ge $OMPI_FORTRAN_USEMPIF08_BINDINGS && \
            test $OMPI_BUILD_FORTRAN_BINDINGS -ge $OMPI_FORTRAN_USEMPIF08_BINDINGS],
@@ -753,12 +745,6 @@ end type test_mpi_handle],
     AC_DEFINE_UNQUOTED([OMPI_FORTRAN_HAVE_PRIVATE],
                        [$OMPI_FORTRAN_HAVE_PRIVATE],
                        [For mpi-f08-types.f90 and ompi_info: whether the compiler supports the "private" keyword or not (used in MPI_Status)])
-
-    # For configure-fortran-output.h, mpi-f08-types.F90 (and ompi_info)
-    AC_SUBST([OMPI_FORTRAN_HAVE_PROTECTED])
-    AC_DEFINE_UNQUOTED([OMPI_FORTRAN_HAVE_PROTECTED],
-                       [$OMPI_FORTRAN_HAVE_PROTECTED],
-                       [For mpi-f08-types.f90 and .F90 and ompi_info: whether the compiler supports the "protected" keyword or not])
 
     # For configure-fortran-output.h, mpi-f08-interfaces-callbacks.F90
     # (and ompi_info)

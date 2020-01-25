@@ -19,6 +19,8 @@
  * Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2019      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -48,7 +50,6 @@
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif  /* HAVE_SYS_TIME_H */
-
 
 #include "opal/mca/event/event.h"
 #include "opal/mca/base/base.h"
@@ -209,6 +210,10 @@ opal_cmd_line_init_t orte_cmd_line_opts[] = {
       &orted_globals.singleton_died_pipe, OPAL_CMD_LINE_TYPE_INT,
       "Watch on indicated pipe for singleton termination"},
 
+    { "orte_output_directory", '\0', "output-directory", "output-directory", 1,
+      NULL, OPAL_CMD_LINE_TYPE_STRING,
+      "Redirect output from application processes into filename/job/rank/std[out,err,diag]." },
+
     { "orte_output_filename", '\0', "output-filename", "output-filename", 1,
       NULL, OPAL_CMD_LINE_TYPE_STRING,
       "Redirect output from application processes into filename.rank" },
@@ -232,7 +237,7 @@ int orte_daemon(int argc, char *argv[])
     opal_cmd_line_t *cmd_line = NULL;
     int i;
     opal_buffer_t *buffer;
-    char hostname[OPAL_MAXHOSTNAMELEN];
+    const char *hostname;
 #if OPAL_ENABLE_FT_CR == 1
     char *tmp_env_var = NULL;
 #endif
@@ -300,7 +305,7 @@ int orte_daemon(int argc, char *argv[])
      * away just in case we have a problem along the way
      */
     if (orted_globals.debug) {
-        gethostname(hostname, sizeof(hostname));
+        hostname = opal_gethostname();
         fprintf(stderr, "Daemon was launched on %s - beginning to initialize\n", hostname);
     }
 
@@ -862,12 +867,12 @@ int orte_daemon(int argc, char *argv[])
         if (orte_retain_aliases) {
             char **aliases=NULL;
             uint8_t naliases, ni;
-            char hostname[OPAL_MAXHOSTNAMELEN];
+            const char *hostname;
 
             /* if we stripped the prefix or removed the fqdn,
              * include full hostname as an alias
              */
-            gethostname(hostname, sizeof(hostname));
+            hostname = opal_gethostname();
             if (strlen(orte_process_info.nodename) < strlen(hostname)) {
                 opal_argv_append_nosize(&aliases, hostname);
             }

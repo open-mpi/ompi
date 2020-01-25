@@ -76,12 +76,12 @@ position_predefined_data( opal_convertor_t* CONVERTOR,
                           size_t* SPACE )
 {
     const ddt_elem_desc_t* _elem = &((ELEM)->elem);
-    size_t total_count = _elem->count * _elem->blocklen;
+    size_t total_count = (size_t)_elem->count * _elem->blocklen;
     size_t cando_count = (*SPACE) / opal_datatype_basicDatatypes[_elem->common.type]->size;
     size_t do_now, do_now_bytes = opal_datatype_basicDatatypes[_elem->common.type]->size;
     unsigned char* _memory = (*POINTER) + _elem->disp;
 
-    assert( *(COUNT) <= _elem->count * _elem->blocklen);
+    assert( *(COUNT) <= ((size_t)_elem->count * _elem->blocklen) );
 
     if( cando_count > *(COUNT) )
         cando_count = *(COUNT);

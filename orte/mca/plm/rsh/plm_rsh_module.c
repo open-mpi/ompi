@@ -13,7 +13,7 @@
  * Copyright (c) 2007-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
- * Copyright (c) 2011-2017 IBM Corporation.  All rights reserved.
+ * Copyright (c) 2011-2019 IBM Corporation.  All rights reserved.
  * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -497,10 +497,13 @@ static int setup_launch(int *argcptr, char ***argvptr,
              * we have to insert the orted_prefix in the right place
              */
             opal_asprintf (&final_cmd,
-                            "%s%s%s PATH=%s%s$PATH ; export PATH ; "
+                            "%s%s%s%s%s%s PATH=%s%s$PATH ; export PATH ; "
                             "LD_LIBRARY_PATH=%s%s$LD_LIBRARY_PATH ; export LD_LIBRARY_PATH ; "
                             "DYLD_LIBRARY_PATH=%s%s$DYLD_LIBRARY_PATH ; export DYLD_LIBRARY_PATH ; "
                             "%s %s",
+                            (NULL != mca_plm_rsh_component.chdir ? "cd " : " "),
+                            (NULL != mca_plm_rsh_component.chdir ? mca_plm_rsh_component.chdir : " "),
+                            (NULL != mca_plm_rsh_component.chdir ? " ; " : " "),
                             (opal_prefix != NULL ? "OPAL_PREFIX=" : " "),
                             (opal_prefix != NULL ? opal_prefix : " "),
                             (opal_prefix != NULL ? " ; export OPAL_PREFIX;" : " "),
@@ -527,7 +530,7 @@ static int setup_launch(int *argcptr, char ***argvptr,
              * we have to insert the orted_prefix in the right place
              */
             opal_asprintf (&final_cmd,
-                            "%s%s%s set path = ( %s $path ) ; "
+                            "%s%s%s%s%s%s set path = ( %s $path ) ; "
                             "if ( $?LD_LIBRARY_PATH == 1 ) "
                             "set OMPI_have_llp ; "
                             "if ( $?LD_LIBRARY_PATH == 0 ) "
@@ -541,6 +544,9 @@ static int setup_launch(int *argcptr, char ***argvptr,
                             "if ( $?OMPI_have_dllp == 1 ) "
                             "setenv DYLD_LIBRARY_PATH %s%s$DYLD_LIBRARY_PATH ; "
                             "%s %s",
+                            (NULL != mca_plm_rsh_component.chdir ? "cd " : " "),
+                            (NULL != mca_plm_rsh_component.chdir ? mca_plm_rsh_component.chdir : " "),
+                            (NULL != mca_plm_rsh_component.chdir ? " ; " : " "),
                             (opal_prefix != NULL ? "setenv OPAL_PREFIX " : " "),
                             (opal_prefix != NULL ? opal_prefix : " "),
                             (opal_prefix != NULL ? " ;" : " "),

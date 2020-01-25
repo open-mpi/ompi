@@ -1966,7 +1966,7 @@ printf("iAmUsedAgg - currentRoundFDStart initialized "
       int *sourceAggBlockLengths=NULL;
       MPI_Aint *sourceAggDisplacements=NULL, *recvBufferDisplacements=NULL;
       MPI_Datatype *sourceAggDataTypes=NULL;
-      char *derivedTypePackedSourceBuffer;
+      char *derivedTypePackedSourceBuffer=NULL;
       int derivedTypePackedSourceBufferOffset = 0;
       int allocatedDerivedTypeArrays = 0;
       ADIO_Offset amountOfDataReadThisRoundAgg = 0;

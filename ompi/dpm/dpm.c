@@ -407,7 +407,7 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
     }
     if (0 < opal_list_get_size(&ilist)) {
         uint32_t *peer_ranks = NULL;
-        int prn, nprn;
+        int prn, nprn = 0;
         char *val, *mycpuset;
         uint16_t u16;
         opal_process_name_t wildcard_rank;

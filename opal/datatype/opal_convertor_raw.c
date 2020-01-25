@@ -41,7 +41,7 @@ opal_convertor_merge_iov( struct iovec* iov, uint32_t* iov_count,
                           uint32_t* idx )
 {
     if( 0 != iov[*idx].iov_len ) {
-        if( (base == ((char*)iov[*idx].iov_base + iov[*idx].iov_len)) ) {
+        if( base == ((char*)iov[*idx].iov_base + iov[*idx].iov_len) ) {
             iov[*idx].iov_len += len;  /* merge with previous iovec */
             return 0;
         }  /* cannot merge, move to the next position */
@@ -125,7 +125,7 @@ opal_convertor_raw( opal_convertor_t* pConvertor,
     if( pElem->elem.common.flags & OPAL_DATATYPE_FLAG_DATA ) {
         const ddt_elem_desc_t* current = &(pElem->elem);
 
-        if( count_desc != (current->count * current->blocklen) ) {  /* Not the full element description */
+        if( count_desc != ((size_t)current->count * current->blocklen) ) {  /* Not the full element description */
             if( (do_now = count_desc % current->blocklen) ) {
                 do_now = current->blocklen - do_now;  /* how much left in the block */
                 source_base += current->disp;
@@ -152,7 +152,7 @@ opal_convertor_raw( opal_convertor_t* pConvertor,
             source_base += current->disp;
 
             do_now = current->count;
-            if( count_desc != (current->count * current->blocklen) ) {
+            if( count_desc != ((size_t)current->count * current->blocklen) ) {
                 do_now = count_desc / current->blocklen;
                 assert( 0 == (count_desc % current->blocklen) );
             }

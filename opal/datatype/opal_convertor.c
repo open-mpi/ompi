@@ -403,7 +403,7 @@ opal_convertor_create_stack_at_begining( opal_convertor_t* convertor,
         pStack[1].count = pElems[0].loop.loops;
         pStack[1].type  = OPAL_DATATYPE_LOOP;
     } else {
-        pStack[1].count = pElems[0].elem.count * pElems[0].elem.blocklen;
+        pStack[1].count = (size_t)pElems[0].elem.count * pElems[0].elem.blocklen;
         pStack[1].type  = pElems[0].elem.common.type;
     }
     return OPAL_SUCCESS;

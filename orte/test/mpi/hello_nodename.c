@@ -9,6 +9,8 @@
 
 #include "orte_config.h"
 
+#include "opal/runtime/opal.h"
+
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -18,7 +20,7 @@
 int main(int argc, char* argv[])
 {
     int rank, size;
-    char hostname[OPAL_MAXHOSTNAMELEN];
+    const char *hostname;
     void *appnum;
     void *univ_size;
     char *appstr, *unistr;
@@ -43,7 +45,7 @@ int main(int argc, char* argv[])
         opal_asprintf(&unistr, "%d", *(int*)univ_size);
     }
 
-    gethostname(hostname, sizeof(hostname));
+    hostname = opal_gethostname();
     printf("Hello, World, I am %d of %d on host %s from app number %s universe size %s universe envar %s\n",
            rank, size, hostname, appstr, unistr, (NULL == envar) ? "NULL" : envar);
 

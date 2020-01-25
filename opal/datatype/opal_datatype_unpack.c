@@ -282,7 +282,7 @@ opal_generic_simple_unpack_function( opal_convertor_t* pConvertor,
     for( iov_count = 0; iov_count < (*out_size); iov_count++ ) {
         iov_ptr = (unsigned char *) iov[iov_count].iov_base;
         iov_len_local = iov[iov_count].iov_len;
-        
+
         if( 0 != pConvertor->partial_length ) {
             size_t element_length = opal_datatype_basicDatatypes[pElem->elem.common.type]->size;
             size_t missing_length = element_length - pConvertor->partial_length;
@@ -304,7 +304,7 @@ opal_generic_simple_unpack_function( opal_convertor_t* pConvertor,
             pConvertor->partial_length = 0;  /* nothing more inside */
         }
         if( pElem->elem.common.flags & OPAL_DATATYPE_FLAG_DATA ) {
-            if( (pElem->elem.count * pElem->elem.blocklen) != count_desc ) {
+            if( ((size_t)pElem->elem.count * pElem->elem.blocklen) != count_desc ) {
                 /* we have a partial (less than blocklen) basic datatype */
                 int rc = UNPACK_PARTIAL_BLOCKLEN( pConvertor, pElem, count_desc,
                                                   iov_ptr, conv_ptr, iov_len_local );
@@ -317,7 +317,7 @@ opal_generic_simple_unpack_function( opal_convertor_t* pConvertor,
                 }
             }
         }
-        
+
         while( 1 ) {
             while( pElem->elem.common.flags & OPAL_DATATYPE_FLAG_DATA ) {
                 /* we have a basic datatype (working on full blocks) */

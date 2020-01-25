@@ -121,6 +121,7 @@ opal_pack_homogeneous_contig_with_gaps_function( opal_convertor_t* pConv,
      * how much we should jump between elements.
      */
     assert( (pData->flags & OPAL_DATATYPE_FLAG_CONTIGUOUS) && ((ptrdiff_t)pData->size != extent) );
+    assert( pData->opt_desc.used <= 1 );
     DO_DEBUG( opal_output( 0, "pack_homogeneous_contig( pBaseBuf %p, iov_count %d )\n",
                            (void*)pConv->pBaseBuf, *out_size ); );
     if( stack[1].type != opal_datatype_uint1.id ) {
@@ -274,7 +275,7 @@ opal_generic_simple_pack_function( opal_convertor_t* pConvertor,
         iov_len_local = iov[iov_count].iov_len;
 
         if( pElem->elem.common.flags & OPAL_DATATYPE_FLAG_DATA ) {
-            if( (pElem->elem.count * pElem->elem.blocklen) != count_desc ) {
+            if( ((size_t)pElem->elem.count * pElem->elem.blocklen) != count_desc ) {
                 /* we have a partial (less than blocklen) basic datatype */
                 int rc = PACK_PARTIAL_BLOCKLEN( pConvertor, pElem, count_desc,
                                                 conv_ptr, iov_ptr, iov_len_local );

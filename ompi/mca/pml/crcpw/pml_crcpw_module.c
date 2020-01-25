@@ -13,6 +13,7 @@
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2018 IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -57,7 +58,8 @@ mca_pml_crcpw_module_t mca_pml_crcpw_module = {
         mca_pml_crcpw_ft_event,
 
         32768,
-        INT_MAX
+        INT_MAX,
+        0 /* flags */
     }
 };
 

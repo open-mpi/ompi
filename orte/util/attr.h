@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -142,7 +142,7 @@ typedef uint16_t orte_job_flags_t;
 #define ORTE_JOB_FIXED_DVM              (ORTE_JOB_START_KEY + 42)    // bool - do not change the size of the DVM for this job
 #define ORTE_JOB_DVM_JOB                (ORTE_JOB_START_KEY + 43)    // bool - job is using a DVM
 #define ORTE_JOB_CANCELLED              (ORTE_JOB_START_KEY + 44)    // bool - job was cancelled
-#define ORTE_JOB_OUTPUT_TO_FILE         (ORTE_JOB_START_KEY + 45)    // string - name of directory to which stdout/err is to be directed
+#define ORTE_JOB_OUTPUT_TO_FILE         (ORTE_JOB_START_KEY + 45)    // string - path to use as basename of files to which stdout/err is to be directed
 #define ORTE_JOB_MERGE_STDERR_STDOUT    (ORTE_JOB_START_KEY + 46)    // bool - merge stderr into stdout stream
 #define ORTE_JOB_TAG_OUTPUT             (ORTE_JOB_START_KEY + 47)    // bool - tag stdout/stderr
 #define ORTE_JOB_TIMESTAMP_OUTPUT       (ORTE_JOB_START_KEY + 48)    // bool - timestamp stdout/stderr
@@ -159,6 +159,7 @@ typedef uint16_t orte_job_flags_t;
 #define ORTE_JOB_APPEND_ENVAR           (ORTE_JOB_START_KEY + 58)    // opal_envar_t - append the specified value to the given envar
 #define ORTE_JOB_ADD_ENVAR              (ORTE_JOB_START_KEY + 59)    // opal_envar_t - add envar, do not override pre-existing one
 #define ORTE_JOB_APP_SETUP_DATA         (ORTE_JOB_START_KEY + 60)    // opal_byte_object_t - blob containing app setup data
+#define ORTE_JOB_OUTPUT_TO_DIRECTORY    (ORTE_JOB_START_KEY + 61)    // tring - path of directory to which stdout/err is to be directed
 
 #define ORTE_JOB_MAX_KEY   300
 

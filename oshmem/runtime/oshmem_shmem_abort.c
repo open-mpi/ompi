@@ -4,6 +4,8 @@
  * Copyright (c) 2017      FUJITSU LIMITED.  All rights reserved.
  * Copyright (c) 2019      Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
+ * Copyright (c) 2019      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -28,6 +30,7 @@
 
 #include "opal/mca/backtrace/backtrace.h"
 #include "opal/util/error.h"
+#include "opal/runtime/opal.h"
 #include "opal/runtime/opal_params.h"
 #include "opal/util/show_help.h"
 
@@ -40,7 +43,7 @@ static bool have_been_invoked = false;
 
 int oshmem_shmem_abort(int errcode)
 {
-    char *host, hostname[OPAL_MAXHOSTNAMELEN];
+    const char *host;
     pid_t pid = 0;
 
     /* Protection for recursive invocation */
@@ -50,15 +53,14 @@ int oshmem_shmem_abort(int errcode)
     have_been_invoked = true;
 
     /* If ORTE is initialized, use its nodename.  Otherwise, call
-     gethostname. */
+     opal_gethostname. */
 
     /* If MPI is initialized, we know we have a runtime nodename, so
-       use that.  Otherwise, call gethostname. */
+       use that.  Otherwise, call opal_gethostname. */
     if (ompi_rte_initialized) {
         host = ompi_process_info.nodename;
     } else {
-        gethostname(hostname, sizeof(hostname));
-        host = hostname;
+        host = opal_gethostname();
     }
     pid = getpid();
 

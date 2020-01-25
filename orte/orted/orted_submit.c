@@ -174,9 +174,9 @@ char MPIR_attach_fifo[MPIR_MAX_PATH_LENGTH] = {0};
 int MPIR_force_to_main = 0;
 static void orte_debugger_init_before_spawn(orte_job_t *jdata);
 
-ORTE_DECLSPEC void* __opal_attribute_optnone__ MPIR_Breakpoint(void);
+ORTE_DECLSPEC void __opal_attribute_optnone__ MPIR_Breakpoint(void);
 
-/* 
+/*
  * Attempt to prevent the compiler from optimizing out
  * MPIR_Breakpoint().
  *
@@ -192,14 +192,26 @@ ORTE_DECLSPEC void* __opal_attribute_optnone__ MPIR_Breakpoint(void);
  * See the following git issue for more discussion:
  * https://github.com/open-mpi/ompi/issues/5501
  */
-static volatile void* volatile noop_mpir_breakpoint_ptr = NULL;
+volatile void* volatile orte_noop_mpir_breakpoint_ptr = NULL;
 
 /*
  * Breakpoint function for parallel debuggers
  */
-void* MPIR_Breakpoint(void)
+void MPIR_Breakpoint(void)
 {
-    return noop_mpir_breakpoint_ptr;
+    /*
+     * Actually do something with this pointer to make
+     * sure the compiler does not optimize out this function.
+     * The compiler should be forced to keep this
+     * function around due to the volatile void* type.
+     *
+     * This pointer doesn't actually do anything other than
+     * prevent unwanted optimization, and
+     * *should not* be used anywhere else in the code.
+     * So pointing this to the weeds should be OK.
+     */
+    orte_noop_mpir_breakpoint_ptr = (volatile void *) 0x42;
+    return;
 }
 
 /* local objects */
@@ -840,9 +852,16 @@ int orte_submit_job(char *argv[], int *index,
     if (orte_cmd_options.timestamp_output) {
         orte_set_attribute(&jdata->attributes, ORTE_JOB_TIMESTAMP_OUTPUT, ORTE_ATTR_GLOBAL, NULL, OPAL_BOOL);
     }
-    /* if we were asked to output to files, pass it along */
-    if (NULL != orte_cmd_options.output_filename) {
-        /* if the given filename isn't an absolute path, then
+    /* cannot have both files and directory set for output */
+    if (NULL != orte_cmd_options.output_filename &&
+        NULL != orte_cmd_options.output_directory) {
+        orte_show_help("help-orted.txt", "both-file-and-dir-set", true,
+                       orte_cmd_options.output_directory,
+                       orte_cmd_options.output_filename);
+        return ORTE_ERR_FATAL;
+    } else if (NULL != orte_cmd_options.output_filename) {
+        /* if we were asked to output to files, pass it along.
+         * If the given filename isn't an absolute path, then
          * convert it to one so the name will be relative to
          * the directory where prun was given as that is what
          * the user will have seen */
@@ -854,6 +873,21 @@ int orte_submit_job(char *argv[], int *index,
             free(path);
         } else {
             orte_set_attribute(&jdata->attributes, ORTE_JOB_OUTPUT_TO_FILE, ORTE_ATTR_GLOBAL, orte_cmd_options.output_filename, OPAL_STRING);
+        }
+    } else if (NULL != orte_cmd_options.output_directory) {
+        /* if we were asked to output to a directory, pass it along.
+         * If the given filename isn't an absolute path, then
+         * convert it to one so the name will be relative to
+         * the directory where prun was given as that is what
+         * the user will have seen */
+        if (!opal_path_is_absolute(orte_cmd_options.output_directory)) {
+            char cwd[OPAL_PATH_MAX], *path;
+            getcwd(cwd, sizeof(cwd));
+            path = opal_os_path(false, cwd, orte_cmd_options.output_directory, NULL);
+            orte_set_attribute(&jdata->attributes, ORTE_JOB_OUTPUT_TO_DIRECTORY, ORTE_ATTR_GLOBAL, path, OPAL_STRING);
+            free(path);
+        } else {
+            orte_set_attribute(&jdata->attributes, ORTE_JOB_OUTPUT_TO_DIRECTORY, ORTE_ATTR_GLOBAL, orte_cmd_options.output_directory, OPAL_STRING);
         }
     }
     /* if we were asked to merge stderr to stdout, mark it so */

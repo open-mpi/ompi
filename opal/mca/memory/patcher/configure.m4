@@ -47,13 +47,15 @@ AC_DEFUN([MCA_opal_memory_patcher_CONFIG],[
     esac
     AC_MSG_RESULT([$opal_memory_patcher_happy])
 
+    # syscall interface causes compiler warnings.
+    # Per the above logic, memory patcher no longer supports MacOS/Darwin,
+    # so we no longer support Darwin-specific logic for intercept_mmap.
+    # See issue #6853: mmap infinite recurse in opal/mca/memory/patcher
     AS_IF([test "$opal_memory_patcher_happy" == "yes"], [
         AC_CHECK_FUNCS([__curbrk])
-	AC_CHECK_HEADERS([linux/mman.h sys/syscall.h])
-	AC_CHECK_DECLS([__mmap], [], [], [#include <sys/mman.h>])
-	AC_CHECK_FUNCS([__mmap])
-	AC_CHECK_DECLS([__syscall], [], [], [#include <sys/syscall.h>])
-	AC_CHECK_FUNCS([__syscall])
+        AC_CHECK_HEADERS([linux/mman.h sys/syscall.h])
+        AC_CHECK_DECLS([__syscall], [], [], [#include <sys/syscall.h>])
+        AC_CHECK_FUNCS([__syscall])
         $1], [$2])
 
     AC_CONFIG_FILES([opal/mca/memory/patcher/Makefile])

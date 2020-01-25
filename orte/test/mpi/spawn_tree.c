@@ -1,5 +1,7 @@
 #include "orte_config.h"
 
+#include "opal/runtime/opal.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -11,7 +13,7 @@ int main(int argc, char ** argv){
 
     int i;
     int rank, size, child_rank;
-    char nomehost[OPAL_MAXHOSTNAMELEN];
+    const char *nomehost;
     MPI_Comm parent, intercomm1, intercomm2;
     int erro;
     int level, curr_level;
@@ -62,7 +64,7 @@ int main(int argc, char ** argv){
 
     }
 
-    gethostname(nomehost, sizeof(nomehost));
+    nomehost = opal_gethostname();
     printf("(%d) in %s\n", rank, nomehost);
 
     MPI_Finalize();

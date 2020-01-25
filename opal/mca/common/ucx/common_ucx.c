@@ -187,8 +187,11 @@ static void opal_common_ucx_wait_all_requests(void **reqs, int count, ucp_worker
     }
 }
 
-OPAL_DECLSPEC int opal_common_ucx_del_procs_nofence(opal_common_ucx_del_proc_t *procs, size_t count,
-                                            size_t my_rank, size_t max_disconnect, ucp_worker_h worker) {
+OPAL_DECLSPEC int opal_common_ucx_del_procs_nofence(opal_common_ucx_del_proc_t *procs,
+                                                    size_t count, size_t my_rank,
+                                                    size_t max_disconnect,
+                                                    ucp_worker_h worker)
+{
     size_t num_reqs;
     size_t max_reqs;
     void *dreq, **dreqs;

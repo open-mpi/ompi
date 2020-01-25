@@ -237,6 +237,8 @@ int opal_cmd_line_make_opt3(opal_cmd_line_t *cmd, char short_name,
 
     e.ocl_description = desc;
 
+    e.ocl_otype = OPAL_CMD_LINE_TYPE_NULL;
+
     return make_opt(cmd, &e);
 }
 
@@ -383,7 +385,7 @@ int opal_cmd_line_parse(opal_cmd_line_t *cmd, bool ignore_unknown, bool ignore_u
                 /* Suck down the following parameters that belong to
                    this option.  If we run out of parameters, or find
                    that any of them are the special_empty_param
-                   (insertted by split_shorts()), then print an error
+                   (inserted by split_shorts()), then print an error
                    and return. */
 
                 param = OBJ_NEW(ompi_cmd_line_param_t);

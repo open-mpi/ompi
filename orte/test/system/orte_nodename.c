@@ -12,6 +12,7 @@
 
 #include "opal/class/opal_list.h"
 #include "opal/util/opal_environ.h"
+#include "opal/runtime/opal.h"
 
 #include "orte/util/proc_info.h"
 #include "orte/util/name_fns.h"
@@ -22,7 +23,8 @@
 int main(int argc, char* argv[])
 {
     int rc, i, restart=-1;
-    char hostname[OPAL_MAXHOSTNAMELEN], *rstrt;
+    const char *hostname;
+    char *rstrt;
     pid_t pid;
 
     if (0 > (rc = orte_init(&argc, &argv, ORTE_PROC_NON_MPI))) {
@@ -34,7 +36,7 @@ int main(int argc, char* argv[])
         restart = strtol(rstrt, NULL, 10);
     }
 
-    gethostname(hostname, sizeof(hostname));
+    hostname = opal_gethostname();
     pid = getpid();
 
     printf("orte_nodename: Node %s Name %s Pid %ld Restarts: %d\n",

@@ -21,6 +21,7 @@
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * Copyright (c) 2018      Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2019-2020 Google, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -40,6 +41,10 @@
 #include "btl_vader_fifo.h"
 #include "btl_vader_fbox.h"
 #include "btl_vader_xpmem.h"
+
+#ifdef HAVE_SYS_STAT_H
+#include <sys/stat.h>
+#endif
 
 #include <sys/mman.h>
 #include <fcntl.h>
@@ -350,6 +355,25 @@ static int mca_btl_vader_component_close(void)
     return OPAL_SUCCESS;
 }
 
+/*
+ * mca_btl_vader_parse_proc_ns_user() tries to get the user namespace ID
+ * of the current process.
+ * Returns the ID of the user namespace. In the case of an error '0' is returned.
+ */
+ino_t mca_btl_vader_get_user_ns_id(void)
+{
+    struct stat buf;
+
+    if (0 > stat("/proc/self/ns/user", &buf)) {
+        /*
+         * Something went wrong, probably an old kernel that does not support namespaces
+         * simply assume all processes are in the same user namespace and return 0
+         */
+        return 0;
+    }
+
+    return buf.st_ino;
+}
 static int mca_btl_base_vader_modex_send (void)
 {
     union vader_modex_t modex;
@@ -359,12 +383,21 @@ static int mca_btl_base_vader_modex_send (void)
     if (MCA_BTL_VADER_XPMEM == mca_btl_vader_component.single_copy_mechanism) {
         modex.xpmem.seg_id = mca_btl_vader_component.my_seg_id;
         modex.xpmem.segment_base = mca_btl_vader_component.my_segment;
+        modex.xpmem.address_max = mca_btl_vader_component.my_address_max;
 
         modex_size = sizeof (modex.xpmem);
     } else {
 #endif
-        modex_size = opal_shmem_sizeof_shmem_ds (&mca_btl_vader_component.seg_ds);
-        memmove (&modex.seg_ds, &mca_btl_vader_component.seg_ds, modex_size);
+        modex.other.seg_ds_size = opal_shmem_sizeof_shmem_ds (&mca_btl_vader_component.seg_ds);
+        memmove (&modex.other.seg_ds, &mca_btl_vader_component.seg_ds, modex.other.seg_ds_size);
+        modex.other.user_ns_id = mca_btl_vader_get_user_ns_id();
+        /*
+         * If modex.other.user_ns_id is '0' something did not work out
+         * during user namespace detection. Assuming there are no
+         * namespaces available it will return '0' for all processes and
+         * the check later will see '0' everywhere and not disable CMA.
+         */
+        modex_size = sizeof (modex.other);
 
 #if OPAL_BTL_VADER_HAVE_XPMEM
     }
@@ -477,12 +510,6 @@ static void mca_btl_vader_check_single_copy (void)
         mca_btl_vader.super.btl_flags &= ~MCA_BTL_FLAGS_RDMA;
         mca_btl_vader.super.btl_get = NULL;
         mca_btl_vader.super.btl_put = NULL;
-    }
-
-    if (MCA_BTL_VADER_EMUL == mca_btl_vader_component.single_copy_mechanism) {
-        /* limit to the maximum fragment size */
-        mca_btl_vader.super.btl_put_limit = mca_btl_vader.super.btl_max_send_size - sizeof (mca_btl_vader_sc_emu_hdr_t);
-        mca_btl_vader.super.btl_get_limit = mca_btl_vader.super.btl_max_send_size - sizeof (mca_btl_vader_sc_emu_hdr_t);
     }
 }
 

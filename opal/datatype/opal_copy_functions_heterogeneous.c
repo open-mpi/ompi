@@ -89,13 +89,14 @@ struct bit80 {
 static inline void
 opal_dt_swap_long_double(void *to_p, const void *from_p, const size_t size, size_t count, uint32_t remoteArch)
 {
+
 #ifdef HAVE_IEEE754_H
-    size_t i;
-    long double*to = (long double *) to_p;
 
     if ((opal_local_arch&OPAL_ARCH_LDISINTEL) && !(remoteArch&OPAL_ARCH_LDISINTEL)) {
 #ifdef __x86_64
-        for (i=0; i<count; i++, to++) {
+        long double*to = (long double *) to_p;
+
+        for (size_t i=0; i<count; i++, to++) {
             union ieee854_long_double ld;
             struct bit128 * b = (struct bit128 *)to;
             ld.ieee.empty = 0;
@@ -108,7 +109,9 @@ opal_dt_swap_long_double(void *to_p, const void *from_p, const size_t size, size
 #endif
     } else if (!(opal_local_arch&OPAL_ARCH_LDISINTEL) && (remoteArch&OPAL_ARCH_LDISINTEL)) {
 #ifdef __sparcv9
-        for (i=0; i<count; i++, to++) {
+        long double*to = (long double *) to_p;
+
+        for (size_t i=0; i<count; i++, to++) {
             union ieee854_long_double ld;
             struct bit80 * b = (struct bit80 *)to;
             ld.ieee.mantissa3 = 0;

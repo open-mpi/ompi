@@ -68,7 +68,7 @@ struct mca_btl_tcp_addr_t {
 #if OPAL_ENABLE_IPV6
         struct in6_addr addr_inet6;     /* IPv6 listen address */
 #endif
-    };
+    } addr_union;
     in_port_t   addr_port;     /**< listen port */
     int         addr_ifkindex; /**< remote interface index assigned with
                                     this address */

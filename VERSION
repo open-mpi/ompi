@@ -110,6 +110,7 @@ libmca_orte_common_alps_so_version=0:0:0
 
 # OPAL layer
 libmca_opal_common_cuda_so_version=0:0:0
+libmca_opal_common_ofi_so_version=0:0:0
 libmca_opal_common_sm_so_version=0:0:0
 libmca_opal_common_ucx_so_version=0:0:0
 libmca_opal_common_ugni_so_version=0:0:0

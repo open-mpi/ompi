@@ -141,12 +141,6 @@ static void ping(const orte_process_name_t *proc)
         return;
     }
 
-    /* has this peer had a progress thread assigned yet? */
-    if (NULL == peer->ev_base) {
-        /* nope - assign one */
-        ORTE_OOB_TCP_NEXT_BASE(peer);
-    }
-
     /* if we are already connected, there is nothing to do */
     if (MCA_OOB_TCP_CONNECTED == peer->state) {
         opal_output_verbose(2, orte_oob_base_framework.framework_output,
@@ -204,11 +198,7 @@ static void send_nb(orte_rml_send_t *msg)
                         __FILE__, __LINE__,
                         ORTE_NAME_PRINT(&msg->dst), msg->tag, msg->seq_num,
                         ORTE_NAME_PRINT(&peer->name));
-    /* has this peer had a progress thread assigned yet? */
-    if (NULL == peer->ev_base) {
-        /* nope - assign one */
-        ORTE_OOB_TCP_NEXT_BASE(peer);
-    }
+
     /* add the msg to the hop's send queue */
     if (MCA_OOB_TCP_CONNECTED == peer->state) {
         opal_output_verbose(2, orte_oob_base_framework.framework_output,

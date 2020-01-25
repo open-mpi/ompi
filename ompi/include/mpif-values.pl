@@ -1,8 +1,8 @@
 #!/usr/bin/env perl
 #
 # Copyright (c) 2011-2014 Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2016-2017 Research Organization for Information Science
-#                         and Technology (RIST). All rights reserved.
+# Copyright (c) 2016-2019 Research Organization for Information Science
+#                         and Technology (RIST).  All rights reserved.
 # Copyright (c) 2016-2018 FUJITSU LIMITED.  All rights reserved.
 # $COPYRIGHT$
 #
@@ -469,35 +469,35 @@ write_fortran_file($header, $io_constants, $lio_constants,
 
 # Create preprocessor files
 
-my $output = '/* WARNING! THIS IS A GENERATED FILE!!
- * ANY EDITS YOU PUT HERE WILL BE LOST!
- * Instead, edit topdir/ompi/include/mpif-values.pl
- */
+my $output = '! WARNING! THIS IS A GENERATED FILE!!
+! ANY EDITS YOU PUT HERE WILL BE LOST!
+! Instead, edit topdir/ompi/include/mpif-values.pl
+!
 
-/*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
- *                         University Research and Technology
- *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
- *                         of Tennessee Research Foundation.  All rights
- *                         reserved.
- * Copyright (c) 2004-2007 High Performance Computing Center Stuttgart,
- *                         University of Stuttgart.  All rights reserved.
- * Copyright (c) 2004-2005 The Regents of the University of California.
- *                         All rights reserved.
- * Copyright (c) 2007-2009 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
- * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2009-2012 Los Alamos National Security, LLC.
- *                         All rights reserved.
- * Copyright (c) 2016      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
- * $COPYRIGHT$
- *
- * Additional copyrights may follow
- *
- * $HEADER$
- */
+!
+! Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+!                         University Research and Technology
+!                         Corporation.  All rights reserved.
+! Copyright (c) 2004-2006 The University of Tennessee and The University
+!                         of Tennessee Research Foundation.  All rights
+!                         reserved.
+! Copyright (c) 2004-2007 High Performance Computing Center Stuttgart,
+!                         University of Stuttgart.  All rights reserved.
+! Copyright (c) 2004-2005 The Regents of the University of California.
+!                         All rights reserved.
+! Copyright (c) 2007-2009 Cisco Systems, Inc.  All rights reserved.
+! Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
+! Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
+! Copyright (c) 2009-2012 Los Alamos National Security, LLC.
+!                         All rights reserved.
+! Copyright (c) 2016-2019 Research Organization for Information Science
+!                         and Technology (RIST). All rights reserved.
+! $COPYRIGHT$
+!
+! Additional copyrights may follow
+!
+! $HEADER$
+!
 
 #ifndef USE_MPI_F08_CONSTANTS_H
 #define USE_MPI_F08_CONSTANTS_H
@@ -523,8 +523,8 @@ foreach my $key (sort(keys(%{$io_handles}))) {
     $output .= "#define OMPI_$key $io_handles->{$key}\n";
 }
 $output .= "\n";
-$output .= "#endif /* USE_MPI_F08_CONSTANTS_H */\n";
+$output .= "#endif\n";
 
-write_file("$topdir/ompi/mpi/fortran/use-mpi-f08/constants.h", $output);
+write_file("$topdir/ompi/mpi/fortran/use-mpi-f08/mod/mpi-f08-constants.h", $output);
 
 exit(0);

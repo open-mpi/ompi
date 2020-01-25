@@ -107,7 +107,8 @@ enum ompio_fs_type
     PVFS2 = 2,
     LUSTRE = 3,
     PLFS = 4,
-    IME = 5
+    IME = 5,
+    GPFS = 6
 };
 
 typedef struct mca_common_ompio_io_array_t {
@@ -269,7 +270,7 @@ OMPI_DECLSPEC int mca_common_ompio_file_iwrite_at_all (ompio_file_t *fp, OMPI_MP
                                                        int count, struct ompi_datatype_t *datatype, ompi_request_t **request);
 
 OMPI_DECLSPEC int mca_common_ompio_build_io_array ( ompio_file_t *fh, int index, int cycles,
-                                                    size_t bytes_per_cycle, int max_data, uint32_t iov_count,
+                                                    size_t bytes_per_cycle, size_t max_data, uint32_t iov_count,
                                                     struct iovec *decoded_iov, int *ii, int *jj, size_t *tbw,
                                                     size_t *spc, mca_common_ompio_io_array_t **io_array,
                                                     int *num_io_entries );

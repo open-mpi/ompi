@@ -255,7 +255,7 @@ static int free_vecs_callback(struct ompi_request_t **rptr) {
 }
 
 int ompi_coll_base_retain_datatypes_w( ompi_request_t *req,
-                                       ompi_datatype_t *stypes[], ompi_datatype_t *rtypes[]) {
+                                       ompi_datatype_t * const stypes[], ompi_datatype_t * const rtypes[]) {
     ompi_coll_base_nbc_request_t *request = (ompi_coll_base_nbc_request_t *)req;
     bool retain = false;
     ompi_communicator_t *comm = request->super.req_mpi_object.comm;
@@ -282,8 +282,8 @@ int ompi_coll_base_retain_datatypes_w( ompi_request_t *req,
         }
     }
     if (OPAL_UNLIKELY(retain)) {
-        request->data.vecs.stypes = stypes;
-        request->data.vecs.rtypes = rtypes;
+        request->data.vecs.stypes = (ompi_datatype_t **) stypes;
+        request->data.vecs.rtypes = (ompi_datatype_t **) rtypes;
         if (req->req_persistent) {
             request->cb.req_free = req->req_free;
             req->req_free = free_vecs_callback;
