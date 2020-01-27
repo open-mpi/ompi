@@ -2,8 +2,8 @@
 /*
  * Copyright (c) 2014-2015 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015 Cisco Systems.  All rights reserved.
- * Copyright (c) 2017 Amazon.com, Inc. or its affiliates.
- *                    All Rights reserved.
+ * Copyright (c) 2017-2019 Amazon.com, Inc. or its affiliates.
+ *                         All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -112,6 +112,17 @@ static int get_weights(opal_if_t *local_if, opal_if_t *remote_if)
         remote_ip = (uint32_t)((struct sockaddr_in *)&(remote_if->if_addr))->sin_addr.s_addr;
         outgoing_interface = local_if->if_kernel_index;
 
+        /* If the ips are identical, assume reachable through loopback. This
+           is done artificially due to historical reasons. With this, we can
+           maintain similar behavior to previous implementations. */
+        if (local_ip == remote_ip) {
+            conn_type = "IPv4 SAME NETWORK";
+            weight = calculate_weight(local_if->if_bandwidth,
+                                      remote_if->if_bandwidth,
+                                      CQ_SAME_NETWORK);
+            goto out;
+        }
+
         ret = opal_reachable_netlink_rt_lookup(local_ip,
                                                remote_ip,
                                                outgoing_interface,
@@ -140,6 +151,18 @@ static int get_weights(opal_if_t *local_if, opal_if_t *remote_if)
         local_ip = &((struct sockaddr_in6 *)&(local_if->if_addr))->sin6_addr;
         remote_ip = &((struct sockaddr_in6 *)&(remote_if->if_addr))->sin6_addr;
         outgoing_interface = local_if->if_kernel_index;
+
+        /* If the ips are identical, assume reachable through loopback. This
+           is done artificially due to historical reasons. With this, we can
+           maintain similar behavior to previous implementations. */
+        if (local_ip == remote_ip) {
+            conn_type = "IPv6 SAME NETWORK";
+            weight = calculate_weight(local_if->if_bandwidth,
+                                      remote_if->if_bandwidth,
+                                      CQ_SAME_NETWORK);
+
+            goto out;
+        }
 
         ret = opal_reachable_netlink_rt_lookup6(local_ip,
                                                 remote_ip,
@@ -171,6 +194,7 @@ static int get_weights(opal_if_t *local_if, opal_if_t *remote_if)
         weight = calculate_weight(0, 0, CQ_NO_CONNECTION);
     }
 
+out:
     opal_output_verbose(20, opal_reachable_base_framework.framework_output,
                         "reachable:netlink: path from %s to %s: %s",
                         str_local, str_remote, conn_type);

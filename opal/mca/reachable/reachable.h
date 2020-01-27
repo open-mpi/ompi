@@ -75,6 +75,8 @@ typedef int (*opal_reachable_base_module_fini_fn_t)(void);
  * interfaces, but only a (comparable) reachability between any pair
  * of local/remote interfaces.
  *
+ * This function will show an identical local and remote interface as
+ * reachable.
  *
  */
 typedef opal_reachable_t*
