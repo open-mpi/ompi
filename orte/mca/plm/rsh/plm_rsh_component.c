@@ -16,7 +16,7 @@
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights
  *                         reserved.
  * Copyright (c) 2009-2018 Cisco Systems, Inc.  All rights reserved
- * Copyright (c) 2011-2019 IBM Corporation.  All rights reserved.
+ * Copyright (c) 2011-2020 IBM Corporation.  All rights reserved.
  * Copyright (c) 2015-2018 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -371,6 +371,10 @@ char **orte_plm_rsh_search(const char* agent_list, const char *path)
     char **tokens, *tmp;
     char cwd[OPAL_PATH_MAX];
 
+    if (NULL == agent_list && NULL == mca_plm_rsh_component.agent) {
+        return NULL;
+    }
+
     if (NULL == path) {
         getcwd(cwd, OPAL_PATH_MAX);
     } else {
@@ -420,6 +424,14 @@ static int rsh_launch_agent_lookup(const char *agent_list, char *path)
 {
     char *bname;
     int i;
+
+    if (NULL == agent_list && NULL == mca_plm_rsh_component.agent) {
+        OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
+                             "%s plm:rsh_lookup on agent (null) path %s - No agent specified.",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             (NULL == path) ? "NULL" : path));
+        return ORTE_ERR_NOT_FOUND;
+    }
 
     OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                          "%s plm:rsh_lookup on agent %s path %s",
