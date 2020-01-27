@@ -16,6 +16,7 @@
  * Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2020      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -118,7 +119,9 @@ void orte_errmgr_base_abort(int error_code, char *fmt, ...)
     /* if I am a daemon or the HNP... */
     if (ORTE_PROC_IS_HNP || ORTE_PROC_IS_DAEMON) {
         /* whack my local procs */
-        orte_odls.kill_local_procs(NULL);
+        if( NULL != orte_odls.kill_local_procs ) {
+            orte_odls.kill_local_procs(NULL);
+        }
         /* whack any session directories */
         orte_session_dir_cleanup(ORTE_JOBID_WILDCARD);
     }
