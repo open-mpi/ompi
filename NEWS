@@ -60,6 +60,13 @@ included in the vX.Y.Z section and be denoted as:
 4.0.3 -- January, 2020
 ------------------------
 - Add support for Mellanox Connectx6.
+- Fix a problem with Fortran compiler wrappers ignoring use of
+  disable-wrapper-runpath configure option.  Thanks to David
+  Shrader for reporting.
+- Fixed an issue with trying to use mpirun on systems where neither
+  ssh nor rsh is installed.
+- Address some problems found when using XPMEM for intra-node message
+  transport.
 - Improve dimensions returned by MPI_Dims_create for certain
   cases.  Thanks to @aw32 for reporting.
 - Fix an issue when sending messages larger than 4GB. Thanks to
