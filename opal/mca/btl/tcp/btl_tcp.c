@@ -15,6 +15,8 @@
  * Copyright (c) 2016-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      Intel, Inc. All rights reserved.
+ * Copyright (c) 2019      Amazon.com, Inc. or its affiliates.  All Rights
+ *                         reserved.
  *
  * $COPYRIGHT$
  *
@@ -100,12 +102,6 @@ int mca_btl_tcp_add_procs( struct mca_btl_base_module_t* btl,
         if(NULL == (tcp_proc = mca_btl_tcp_proc_create(opal_proc))) {
             continue;
         }
-
-        /*
-         * Check to make sure that the peer has at least as many interface
-         * addresses exported as we are trying to use. If not, then
-         * don't bind this BTL instance to the proc.
-         */
 
         OPAL_THREAD_LOCK(&tcp_proc->proc_lock);
 
