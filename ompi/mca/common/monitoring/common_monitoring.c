@@ -234,7 +234,7 @@ void mca_common_monitoring_finalize( void )
 {
     if( ! mca_common_monitoring_enabled || /* Don't release if not last */
         0 < opal_atomic_sub_fetch_32(&mca_common_monitoring_hold, 1) ) return;
-    
+
     OPAL_MONITORING_PRINT_INFO("common_component_finish");
     /* Dump monitoring informations */
     mca_common_monitoring_flush(mca_common_monitoring_output_enabled,
@@ -255,7 +255,7 @@ void mca_common_monitoring_finalize( void )
     }
 }
 
-void mca_common_monitoring_register(void*pml_monitoring_component)
+int mca_common_monitoring_register(void)
 {
     /* Because we are playing tricks with the component close, we should not
      * use mca_base_component_var_register but instead stay with the basic
@@ -284,7 +284,6 @@ void mca_common_monitoring_register(void*pml_monitoring_component)
                                 &mca_common_monitoring_output_enabled);
 
     (void)mca_base_var_register("ompi", "pml", "monitoring", "filename",
-                                /*&mca_common_monitoring_component.pmlm_version, "filename",*/
                                 "The name of the file where the monitoring information "
                                 "should be saved (the filename will be extended with the "
                                 "process rank and the \".prof\" extension). If this field "
@@ -301,10 +300,9 @@ void mca_common_monitoring_register(void*pml_monitoring_component)
      * filename to be handled by the framework. It's easier to deal
      * with the string lifetime.
      */
-    if( NULL != mca_common_monitoring_initial_filename )
+    if( NULL != mca_common_monitoring_initial_filename ) {
         mca_common_monitoring_current_filename = strdup(mca_common_monitoring_initial_filename);
-
-    /* Register PVARs */
+    }
 
     /* PML PVARs */
     (void)mca_base_pvar_register("ompi", "pml", "monitoring", "flush", "Flush the monitoring "
@@ -340,7 +338,7 @@ void mca_common_monitoring_register(void*pml_monitoring_component)
                                  MCA_BASE_PVAR_FLAG_READONLY | MCA_BASE_PVAR_FLAG_IWG,
                                  mca_common_monitoring_get_osc_sent_count, NULL,
                                  mca_common_monitoring_comm_size_notify, NULL);
-    
+
     (void)mca_base_pvar_register("ompi", "osc", "monitoring", "messages_sent_size", "Size of "
                                  "messages sent through the OSC framework with each peer.",
                                  OPAL_INFO_LVL_4, MPI_T_PVAR_CLASS_SIZE,
@@ -389,7 +387,7 @@ void mca_common_monitoring_register(void*pml_monitoring_component)
                                  MCA_BASE_PVAR_FLAG_READONLY | MCA_BASE_PVAR_FLAG_IWG,
                                  mca_common_monitoring_coll_get_o2a_count, NULL,
                                  mca_common_monitoring_coll_messages_notify, NULL);
-    
+
     (void)mca_base_pvar_register("ompi", "coll", "monitoring", "o2a_size", "Size of messages "
                                  "exchanged as one-to-all operations in a communicator.",
                                  OPAL_INFO_LVL_4, MPI_T_PVAR_CLASS_AGGREGATE,
@@ -405,7 +403,7 @@ void mca_common_monitoring_register(void*pml_monitoring_component)
                                  MCA_BASE_PVAR_FLAG_READONLY | MCA_BASE_PVAR_FLAG_IWG,
                                  mca_common_monitoring_coll_get_a2o_count, NULL,
                                  mca_common_monitoring_coll_messages_notify, NULL);
-    
+
     (void)mca_base_pvar_register("ompi", "coll", "monitoring", "a2o_size", "Size of messages "
                                  "exchanged as all-to-one operations in a communicator.",
                                  OPAL_INFO_LVL_4, MPI_T_PVAR_CLASS_AGGREGATE,
@@ -421,7 +419,7 @@ void mca_common_monitoring_register(void*pml_monitoring_component)
                                  MCA_BASE_PVAR_FLAG_READONLY | MCA_BASE_PVAR_FLAG_IWG,
                                  mca_common_monitoring_coll_get_a2a_count, NULL,
                                  mca_common_monitoring_coll_messages_notify, NULL);
-    
+
     (void)mca_base_pvar_register("ompi", "coll", "monitoring", "a2a_size", "Size of messages "
                                  "exchanged as all-to-all operations in a communicator.",
                                  OPAL_INFO_LVL_4, MPI_T_PVAR_CLASS_AGGREGATE,
@@ -429,6 +427,8 @@ void mca_common_monitoring_register(void*pml_monitoring_component)
                                  MCA_BASE_PVAR_FLAG_READONLY | MCA_BASE_PVAR_FLAG_IWG,
                                  mca_common_monitoring_coll_get_a2a_size, NULL,
                                  mca_common_monitoring_coll_messages_notify, NULL);
+
+    return OMPI_SUCCESS;
 }
 
 /**
@@ -514,7 +514,7 @@ void mca_common_monitoring_record_pml(int world_rank, size_t data_size, int tag)
             log2_size = max_size_histogram - 2;
         opal_atomic_add_fetch_size_t(&size_histogram[world_rank * max_size_histogram + log2_size + 1], 1);
     }
-        
+
     /* distinguishses positive and negative tags if requested */
     if( (tag < 0) && (mca_common_monitoring_filter()) ) {
         opal_atomic_add_fetch_size_t(&filtered_pml_data[world_rank], data_size);

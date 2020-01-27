@@ -45,10 +45,10 @@ extern int mca_common_monitoring_enabled;
 extern int mca_common_monitoring_current_state;
 extern opal_hash_table_t *common_monitoring_translation_ht;
 
-OMPI_DECLSPEC void mca_common_monitoring_register(void*pml_monitoring_component);
 OMPI_DECLSPEC int mca_common_monitoring_init( void );
 OMPI_DECLSPEC void mca_common_monitoring_finalize( void );
 OMPI_DECLSPEC int mca_common_monitoring_add_procs(struct ompi_proc_t **procs, size_t nprocs);
+OMPI_DECLSPEC int mca_common_monitoring_register(void);
 
 /* Records PML communication */
 OMPI_DECLSPEC void mca_common_monitoring_record_pml(int world_rank, size_t data_size, int tag);
