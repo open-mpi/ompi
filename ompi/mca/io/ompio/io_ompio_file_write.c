@@ -34,7 +34,7 @@
 #include "ompi/mca/sharedfp/base/base.h"
 
 #include "io_ompio.h"
-#include "io_ompio_request.h"
+#include "ompi/mca/common/ompio/common_ompio_request.h"
 #include "math.h"
 #include <unistd.h>
 

@@ -31,6 +31,7 @@
 #include "ompi/mca/io/io.h"
 #include "ompi/mca/fs/base/base.h"
 #include "io_ompio.h"
+#include "ompi/mca/common/ompio/common_ompio_request.h"
 
 int mca_io_ompio_cycle_buffer_size = OMPIO_DEFAULT_CYCLE_BUF_SIZE;
 int mca_io_ompio_bytes_per_agg = OMPIO_PREALLOC_MAX_BUF_SIZE;
@@ -84,12 +85,6 @@ static int delete_priority_param = 30;
  * Global, component-wide OMPIO mutex because OMPIO is not thread safe
  */
 opal_mutex_t mca_io_ompio_mutex = {{0}};
-
-
-/*
- * Global list of requests for this component
- */
-opal_list_t mca_io_ompio_pending_requests = {{0}};
 
 
 /*
@@ -223,22 +218,18 @@ static int open_component(void)
     /* Create the mutex */
     OBJ_CONSTRUCT(&mca_io_ompio_mutex, opal_mutex_t);
 
-    /* Create the list of pending requests */
-
-    OBJ_CONSTRUCT(&mca_io_ompio_pending_requests, opal_list_t);
-
-    return OMPI_SUCCESS;
+    mca_common_ompio_request_init ();
+    
+    return  mca_common_ompio_set_callbacks(ompi_io_ompio_generate_current_file_view,
+                                           mca_io_ompio_get_mca_parameter_value,
+                                           mca_io_ompio_get_num_aggregators,
+                                           mca_io_ompio_get_bytes_per_agg );
 }
 
 
 static int close_component(void)
 {
-    /* Destroy the list of pending requests */
-    /* JMS: Good opprotunity here to list out all the IO requests that
-       were not destroyed / completed upon MPI_FINALIZE */
-
-    OBJ_DESTRUCT(&mca_io_ompio_pending_requests);
-
+    mca_common_ompio_request_fini ();
     OBJ_DESTRUCT(&mca_io_ompio_mutex);
 
     return OMPI_SUCCESS;
@@ -338,7 +329,7 @@ static int delete_select(const char *filename, struct ompi_info_t *info,
     int ret;
 
     OPAL_THREAD_LOCK (&mca_io_ompio_mutex);
-    ret = mca_io_ompio_file_delete (filename, info);
+    ret = mca_common_ompio_file_delete (filename, info);
     OPAL_THREAD_UNLOCK (&mca_io_ompio_mutex);
 
     return ret;

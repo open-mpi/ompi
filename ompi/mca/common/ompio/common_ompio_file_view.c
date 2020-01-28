@@ -62,7 +62,7 @@ int mca_common_ompio_set_view (mca_io_ompio_file_t *fh,
     size_t max_data = 0;
     int i;
     int num_groups = 0;
-    mca_io_ompio_contg *contg_groups;
+    mca_common_ompio_contg *contg_groups=NULL;
 
     size_t ftype_size;
     ptrdiff_t ftype_extent, lb, ub;
@@ -120,7 +120,7 @@ int mca_common_ompio_set_view (mca_io_ompio_file_t *fh,
     fh->f_index_in_file_view=0;
     fh->f_position_in_file_view=0;
 
-    ompi_io_ompio_decode_datatype (fh,
+    ompi_common_ompio_decode_datatype (fh,
                                    newfiletype,
                                    1,
                                    NULL,
@@ -137,7 +137,7 @@ int mca_common_ompio_set_view (mca_io_ompio_file_t *fh,
     // in orig_file type, No need to set args on this one.
     ompi_datatype_duplicate (newfiletype, &fh->f_filetype);
 
-    fh->f_cc_size = get_contiguous_chunk_size (fh);
+        fh->f_cc_size = get_contiguous_chunk_size (fh);
 
     if (opal_datatype_is_contiguous_memory_layout(&etype->super,1)) {
         if (opal_datatype_is_contiguous_memory_layout(&filetype->super,1) &&
@@ -146,7 +146,7 @@ int mca_common_ompio_set_view (mca_io_ompio_file_t *fh,
         }
     }
 
-    contg_groups = (mca_io_ompio_contg*) calloc ( 1, fh->f_size * sizeof(mca_io_ompio_contg));
+    contg_groups = (mca_common_ompio_contg*) calloc ( 1, fh->f_size * sizeof(mca_common_ompio_contg));
     if (NULL == contg_groups) {
         opal_output (1, "OUT OF MEMORY\n");
         return OMPI_ERR_OUT_OF_RESOURCE;
@@ -164,30 +164,30 @@ int mca_common_ompio_set_view (mca_io_ompio_file_t *fh,
        }
     }
 
-    if ( SIMPLE != mca_io_ompio_grouping_option ) {
-        if( OMPI_SUCCESS != mca_io_ompio_fview_based_grouping(fh,
-                                                              &num_groups,
-                                                              contg_groups)){
-            opal_output(1, "mca_common_ompio_set_view: mca_io_ompio_fview_based_grouping failed\n");
+    if ( SIMPLE != OMPIO_MCA_GET(fh, grouping_option )) {
+        if( OMPI_SUCCESS != mca_common_ompio_fview_based_grouping(fh,
+                                                                  &num_groups,
+                                                                  contg_groups)){
+            opal_output(1, "mca_common_ompio_set_view: mca_common_ompio_fview_based_grouping failed\n");
             free(contg_groups);
             return OMPI_ERROR;
         }
     }
     else {
-        if( OMPI_SUCCESS != mca_io_ompio_simple_grouping(fh,
-                                                         &num_groups,
-                                                         contg_groups)){
-            opal_output(1, "mca_common_ompio_set_view: mca_io_ompio_simple_grouping failed\n");
+        if( OMPI_SUCCESS != mca_common_ompio_simple_grouping(fh,
+                                                             &num_groups,
+                                                             contg_groups)){
+            opal_output(1, "mca_common_ompio_set_view: mca_common_ompio_simple_grouping failed\n");
             free(contg_groups);
             return OMPI_ERROR;
         }
     }
     
     
-    if ( OMPI_SUCCESS != mca_io_ompio_finalize_initial_grouping(fh,
-                                                                num_groups,
-                                                                contg_groups) ){
-        opal_output(1, "mca_common_ompio_set_view: mca_io_ompio_finalize_initial_grouping failed\n");
+    if ( OMPI_SUCCESS != mca_common_ompio_finalize_initial_grouping(fh,
+                                                                    num_groups,
+                                                                    contg_groups) ){
+        opal_output(1, "mca_common_ompio_set_view: mca_common_ompio_finalize_initial_grouping failed\n");
         free(contg_groups);
         return OMPI_ERROR;        
     }
