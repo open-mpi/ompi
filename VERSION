@@ -24,7 +24,7 @@ release=6
 # requirement is that it must be entirely printable ASCII characters
 # and have no white space.
 
-greek=rc1
+greek=rc2
 
 # If repo_rev is empty, then the repository version number will be
 # obtained during "make dist" via the "git describe --tags --always"
@@ -100,7 +100,7 @@ libompitrace_so_version=40:1:0
 # components-don't-affect-the-build-system abstraction.
 
 # OMPI layer
-libmca_ompi_common_ompio_so_version=41:3:0
+libmca_ompi_common_ompio_so_version=41:4:0
 
 # ORTE layer
 libmca_orte_common_alps_so_version=40:1:0
