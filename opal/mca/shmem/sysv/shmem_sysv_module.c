@@ -179,11 +179,7 @@ segment_create(opal_shmem_ds_t *ds_buf,
 {
     int rc = OPAL_SUCCESS;
     pid_t my_pid = getpid();
-    /* the real size of the shared memory segment.  this includes enough space
-     * to store our segment header.
-     */
-    size_t real_size = size + sizeof(opal_shmem_seg_hdr_t);
-    opal_shmem_seg_hdr_t *seg_hdrp = MAP_FAILED;
+    void *segment = MAP_FAILED;
 
     /* init the contents of opal_shmem_ds_t */
     shmem_ds_reset(ds_buf);
@@ -192,10 +188,8 @@ segment_create(opal_shmem_ds_t *ds_buf,
      * being located on a network file system... so no check is needed here.
      */
 
-    /* create a new shared memory segment and save the shmid. note the use of
-     * real_size here
-     */
-    if (-1 == (ds_buf->seg_id = shmget(IPC_PRIVATE, real_size,
+    /* create a new shared memory segment and save the shmid. */
+    if (-1 == (ds_buf->seg_id = shmget(IPC_PRIVATE, size,
                                        IPC_CREAT | IPC_EXCL | S_IRWXU))) {
         int err = errno;
         const char *hn;
@@ -206,7 +200,7 @@ segment_create(opal_shmem_ds_t *ds_buf,
         goto out;
     }
     /* attach to the sement */
-    else if ((void *)-1 == (seg_hdrp = shmat(ds_buf->seg_id, NULL, 0))) {
+    else if ((void *)-1 == (segment = shmat(ds_buf->seg_id, NULL, 0))) {
         int err = errno;
         const char *hn;
         hn = opal_gethostname();
@@ -231,20 +225,11 @@ segment_create(opal_shmem_ds_t *ds_buf,
     }
     /* all is well */
     else {
-        /* -- initialize the shared memory segment -- */
-        opal_atomic_rmb();
-
-        /* init segment lock */
-        opal_atomic_lock_init(&seg_hdrp->lock, OPAL_ATOMIC_LOCK_UNLOCKED);
-        /* i was the creator of this segment, so note that fact */
-        seg_hdrp->cpid = my_pid;
-
-        opal_atomic_wmb();
 
         /* -- initialize the contents of opal_shmem_ds_t -- */
         ds_buf->seg_cpid = my_pid;
-        ds_buf->seg_size = real_size;
-        ds_buf->seg_base_addr = (unsigned char *)seg_hdrp;
+        ds_buf->seg_size = size;
+        ds_buf->seg_base_addr = (unsigned char *)segment;
 
         /* notice that we are not setting ds_buf->name here. sysv doesn't use
          * it, so don't worry about it - shmem_ds_reset took care of
@@ -270,8 +255,8 @@ out:
      */
     if (OPAL_SUCCESS != rc) {
         /* best effort to delete the segment. */
-        if ((void *)-1 != seg_hdrp) {
-            shmdt((char*)seg_hdrp);
+        if ((void *)-1 != segment) {
+            shmdt((char*)segment);
         }
         shmctl(ds_buf->seg_id, IPC_RMID, NULL);
 
@@ -316,7 +301,7 @@ segment_attach(opal_shmem_ds_t *ds_buf)
     );
 
     /* update returned base pointer with an offset that hides our stuff */
-    return (ds_buf->seg_base_addr + sizeof(opal_shmem_seg_hdr_t));
+    return ds_buf->seg_base_addr;
 }
 
 /* ////////////////////////////////////////////////////////////////////////// */

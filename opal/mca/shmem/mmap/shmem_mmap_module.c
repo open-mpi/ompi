@@ -136,7 +136,7 @@ shmem_ds_reset(opal_shmem_ds_t *ds_buf)
     ds_buf->seg_id = OPAL_SHMEM_DS_ID_INVALID;
     ds_buf->seg_size = 0;
     memset(ds_buf->seg_name, '\0', OPAL_PATH_MAX);
-    ds_buf->seg_base_addr = (unsigned char *)MAP_FAILED;
+    ds_buf->seg_base_addr = MAP_FAILED;
 }
 
 /* ////////////////////////////////////////////////////////////////////////// */
@@ -306,12 +306,7 @@ segment_create(opal_shmem_ds_t *ds_buf,
     pid_t my_pid = getpid();
     bool space_available = false;
     uint64_t amount_space_avail = 0;
-
-    /* the real size of the shared memory segment.  this includes enough space
-     * to store our segment header.
-     */
-    size_t real_size = size + sizeof(opal_shmem_seg_hdr_t);
-    opal_shmem_seg_hdr_t *seg_hdrp = MAP_FAILED;
+    void *segment = MAP_FAILED;
 
     /* init the contents of opal_shmem_ds_t */
     shmem_ds_reset(ds_buf);
@@ -375,8 +370,7 @@ segment_create(opal_shmem_ds_t *ds_buf,
                        real_file_name);
     }
     /* let's make sure we have enough space for the backing file */
-    if (OPAL_SUCCESS != (rc = enough_space(real_file_name,
-                                           real_size,
+    if (OPAL_SUCCESS != (rc = enough_space(real_file_name, size,
                                            &amount_space_avail,
                                            &space_available))) {
         opal_output(0, "shmem: mmap: an error occurred while determining "
@@ -389,7 +383,7 @@ segment_create(opal_shmem_ds_t *ds_buf,
         hn = opal_gethostname();
         rc = OPAL_ERR_OUT_OF_RESOURCE;
         opal_show_help("help-opal-shmem-mmap.txt", "target full", 1,
-                       real_file_name, hn, (unsigned long)real_size,
+                       real_file_name, hn, (unsigned long)size,
                        (unsigned long long)amount_space_avail);
         goto out;
     }
@@ -403,8 +397,8 @@ segment_create(opal_shmem_ds_t *ds_buf,
         rc = OPAL_ERROR;
         goto out;
     }
-    /* size backing file - note the use of real_size here */
-    if (0 != ftruncate(ds_buf->seg_id, real_size)) {
+    /* size backing file */
+    if (0 != ftruncate(ds_buf->seg_id, size)) {
         int err = errno;
         const char *hn;
         hn = opal_gethostname();
@@ -413,8 +407,7 @@ segment_create(opal_shmem_ds_t *ds_buf,
         rc = OPAL_ERROR;
         goto out;
     }
-    if (MAP_FAILED == (seg_hdrp = (opal_shmem_seg_hdr_t *)
-                                  mmap(NULL, real_size,
+    if (MAP_FAILED == (segment = mmap(NULL, size,
                                        PROT_READ | PROT_WRITE, MAP_SHARED,
                                        ds_buf->seg_id, 0))) {
         int err = errno;
@@ -427,20 +420,11 @@ segment_create(opal_shmem_ds_t *ds_buf,
     }
     /* all is well */
     else {
-        /* -- initialize the shared memory segment -- */
-        opal_atomic_rmb();
-
-        /* init segment lock */
-        opal_atomic_lock_init(&seg_hdrp->lock, OPAL_ATOMIC_LOCK_UNLOCKED);
-        /* i was the creator of this segment, so note that fact */
-        seg_hdrp->cpid = my_pid;
-
-        opal_atomic_wmb();
 
         /* -- initialize the contents of opal_shmem_ds_t -- */
         ds_buf->seg_cpid = my_pid;
-        ds_buf->seg_size = real_size;
-        ds_buf->seg_base_addr = (unsigned char *)seg_hdrp;
+        ds_buf->seg_size = size;
+        ds_buf->seg_base_addr = segment;
         (void)opal_string_copy(ds_buf->seg_name, real_file_name, OPAL_PATH_MAX);
 
         /* set "valid" bit because setment creation was successful */
@@ -474,8 +458,8 @@ out:
      }
     /* an error occured, so invalidate the shmem object and munmap if needed */
     if (OPAL_SUCCESS != rc) {
-        if (MAP_FAILED != seg_hdrp) {
-            munmap((void *)seg_hdrp, real_size);
+        if (MAP_FAILED != segment) {
+            munmap(segment, size);
         }
         shmem_ds_reset(ds_buf);
     }
@@ -504,10 +488,9 @@ segment_attach(opal_shmem_ds_t *ds_buf)
                            "open(2)", "", strerror(err), err);
             return NULL;
         }
-        if (MAP_FAILED == (ds_buf->seg_base_addr = (unsigned char *)
-                              mmap(NULL, ds_buf->seg_size,
-                                   PROT_READ | PROT_WRITE, MAP_SHARED,
-                                   ds_buf->seg_id, 0))) {
+        if (MAP_FAILED == (ds_buf->seg_base_addr = mmap(NULL, ds_buf->seg_size,
+                                                        PROT_READ | PROT_WRITE, MAP_SHARED,
+                                                        ds_buf->seg_id, 0))) {
             int err = errno;
             const char *hn;
             hn = opal_gethostname();
@@ -545,7 +528,7 @@ segment_attach(opal_shmem_ds_t *ds_buf)
     );
 
     /* update returned base pointer with an offset that hides our stuff */
-    return (ds_buf->seg_base_addr + sizeof(opal_shmem_seg_hdr_t));
+    return ds_buf->seg_base_addr;
 }
 
 /* ////////////////////////////////////////////////////////////////////////// */
@@ -563,7 +546,7 @@ segment_detach(opal_shmem_ds_t *ds_buf)
          ds_buf->seg_id, (unsigned long)ds_buf->seg_size, ds_buf->seg_name)
     );
 
-    if (0 != munmap((void *)ds_buf->seg_base_addr, ds_buf->seg_size)) {
+    if (0 != munmap(ds_buf->seg_base_addr, ds_buf->seg_size)) {
         int err = errno;
         const char *hn;
         hn = opal_gethostname();
