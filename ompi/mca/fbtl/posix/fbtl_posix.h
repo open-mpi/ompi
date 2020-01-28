@@ -24,7 +24,7 @@
 #include "ompi/mca/mca.h"
 #include "ompi/mca/fbtl/fbtl.h"
 #include "ompi/mca/common/ompio/common_ompio.h"
-#include "ompi/mca/io/ompio/io_ompio_request.h"
+#include "ompi/mca/common/ompio/common_ompio_request.h"
 
 extern int mca_fbtl_posix_priority;
 

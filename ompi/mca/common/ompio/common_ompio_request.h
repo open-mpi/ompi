@@ -18,18 +18,18 @@
  * $HEADER$
  */
 
-#ifndef MCA_IO_OMPIO_REQUEST_H
-#define MCA_IO_OMPIO_REQUEST_H
+#ifndef MCA_COMMON_OMPIO_REQUEST_H
+#define MCA_COMMON_OMPIO_REQUEST_H
 
 #include "ompi_config.h"
 #include "ompi/request/request.h"
 #include "ompi/mca/fbtl/fbtl.h"
-#include "io_ompio.h"
+#include "common_ompio.h"
 
 BEGIN_C_DECLS
 
-extern opal_list_t mca_io_ompio_pending_requests;
-extern bool mca_io_ompio_progress_is_registered;
+extern opal_list_t mca_common_ompio_pending_requests;
+extern bool mca_common_ompio_progress_is_registered;
 
 /**
  * Type of request.
@@ -58,9 +58,10 @@ OBJ_CLASS_DECLARATION(mca_ompio_request_t);
 
 #define GET_OMPIO_REQ_FROM_ITEM(ITEM) ((mca_ompio_request_t *)((char *)ITEM - offsetof(struct mca_ompio_request_t,req_item)))
 
-
-OMPI_DECLSPEC int mca_io_ompio_component_progress ( void);
+OMPI_DECLSPEC void mca_common_ompio_request_init ( void);
+OMPI_DECLSPEC void mca_common_ompio_request_fini ( void );
+OMPI_DECLSPEC int mca_common_ompio_component_progress ( void);
 
 END_C_DECLS
 
-#endif /* MCA_IO_OMPIO_REQUEST_H */
+#endif /* MCA_COMMON_OMPIO_REQUEST_H */

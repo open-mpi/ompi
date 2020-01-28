@@ -22,7 +22,11 @@
 #define MCA_COMMON_OMPIO_H
 
 #include "ompi/mca/common/ompio/common_ompio_print_queue.h"
+#include "common_ompio_aggregators.h"
 #include "ompi/mca/io/ompio/io_ompio.h"
+
+#define OMPIO_MCA_GET(fh, name) ((fh)->f_get_mca_parameter_value(#name, strlen(#name)+1))
+
 
 OMPI_DECLSPEC int mca_common_ompio_file_write (mca_io_ompio_file_t *fh, const void *buf,  int count,
                                                struct ompi_datatype_t *datatype, 
@@ -87,6 +91,10 @@ OMPI_DECLSPEC int mca_common_ompio_set_file_defaults (mca_io_ompio_file_t *fh);
 OMPI_DECLSPEC int mca_common_ompio_set_view (mca_io_ompio_file_t *fh,  OMPI_MPI_OFFSET_TYPE disp,
                                              ompi_datatype_t *etype,  ompi_datatype_t *filetype, const char *datarep,
                                              opal_info_t *info);
- 
+OMPI_DECLSPEC int ompi_common_ompio_decode_datatype (struct mca_io_ompio_file_t *fh, ompi_datatype_t *datatype,
+                                                     int count, const void *buf,  size_t *max_data,  struct iovec **iov,
+                                                     uint32_t *iovec_count);
 
+OMPI_DECLSPEC int mca_common_ompio_file_delete (const char *filename,
+                                                struct opal_info_t *info);
 #endif /* MCA_COMMON_OMPIO_H */

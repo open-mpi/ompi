@@ -142,6 +142,11 @@ enum ompio_fs_type
     PLFS = 4
 };
 
+/* functions to retrieve the number of aggregators and the size of the
+   temporary buffer on aggregators from the fcoll modules */
+OMPI_DECLSPEC int  mca_io_ompio_get_mca_parameter_value ( char *mca_parameter_name, int name_length);
+
+
 OMPI_DECLSPEC extern mca_io_base_component_2_0_0_t mca_io_ompio_component;
 /*
  * global variables, instantiated in module.c
@@ -178,30 +183,9 @@ typedef struct mca_io_ompio_offlen_array_t{
  * Function that takes in a datatype and buffer, and decodes that datatype
  * into an iovec using the convertor_raw function
  */
+#include "ompi/mca/common/ompio/common_ompio_callbacks.h"
 
 /* forward declaration to keep the compiler happy. */
-struct mca_io_ompio_file_t;
-typedef int (*mca_io_ompio_decode_datatype_fn_t) (struct mca_io_ompio_file_t *fh,
-						  struct ompi_datatype_t *datatype,
-						  int count,
-						  const void *buf,
-						  size_t *max_data,
-						  struct iovec **iov,
-						  uint32_t *iov_count);
-typedef int (*mca_io_ompio_generate_current_file_view_fn_t) (struct mca_io_ompio_file_t *fh,
-							     size_t max_data,
-							     struct iovec **f_iov,
-							     int *iov_count);
-
-/* functions to retrieve the number of aggregators and the size of the
-   temporary buffer on aggregators from the fcoll modules */
-typedef void (*mca_io_ompio_get_num_aggregators_fn_t) ( int *num_aggregators);
-typedef void (*mca_io_ompio_get_bytes_per_agg_fn_t) ( int *bytes_per_agg);
-typedef int (*mca_io_ompio_set_aggregator_props_fn_t) (struct mca_io_ompio_file_t *fh,
-							int num_aggregators,
-							size_t bytes_per_proc);
-
-
 struct mca_common_ompio_print_queue;
 
 /**
@@ -287,12 +271,14 @@ struct mca_io_ompio_file_t {
     int f_final_num_aggrs;
 
     /* internal ompio functions required by fbtl and fcoll */
-    mca_io_ompio_decode_datatype_fn_t                       f_decode_datatype;
-    mca_io_ompio_generate_current_file_view_fn_t f_generate_current_file_view;
+    mca_common_ompio_decode_datatype_fn_t                       f_decode_datatype;
+    mca_common_ompio_generate_current_file_view_fn_t f_generate_current_file_view;
 
-    mca_io_ompio_get_num_aggregators_fn_t               f_get_num_aggregators;
-    mca_io_ompio_get_bytes_per_agg_fn_t                   f_get_bytes_per_agg;
-    mca_io_ompio_set_aggregator_props_fn_t             f_set_aggregator_props;
+    mca_common_ompio_get_num_aggregators_fn_t               f_get_num_aggregators;
+    mca_common_ompio_get_bytes_per_agg_fn_t                   f_get_bytes_per_agg;
+    mca_common_ompio_set_aggregator_props_fn_t             f_set_aggregator_props;
+
+    mca_common_ompio_get_mca_parameter_value_fn_t          f_get_mca_parameter_value;
 };
 typedef struct mca_io_ompio_file_t mca_io_ompio_file_t;
 
@@ -301,9 +287,8 @@ struct mca_io_ompio_data_t {
 };
 typedef struct mca_io_ompio_data_t mca_io_ompio_data_t;
 
-
 #include "ompi/mca/common/ompio/common_ompio.h"
-#include "io_ompio_aggregators.h"
+
 
 /* functions to retrieve the number of aggregators and the size of the
    temporary buffer on aggregators from the fcoll modules */
@@ -366,8 +351,6 @@ int mca_io_ompio_file_open (struct ompi_communicator_t *comm,
                             struct opal_info_t *info,
                             struct ompi_file_t *fh);
 int mca_io_ompio_file_close (struct ompi_file_t *fh);
-int mca_io_ompio_file_delete (const char *filename,
-                              struct opal_info_t *info);
 int mca_io_ompio_file_set_size (struct ompi_file_t *fh,
                                 OMPI_MPI_OFFSET_TYPE size);
 int mca_io_ompio_file_preallocate (struct ompi_file_t *fh,

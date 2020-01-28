@@ -64,7 +64,7 @@ int mca_common_ompio_set_view (mca_io_ompio_file_t *fh,
     size_t max_data = 0;
     int i;
     int num_groups = 0;
-    mca_io_ompio_contg *contg_groups=NULL;
+    mca_common_ompio_contg *contg_groups=NULL;
 
     size_t ftype_size;
     ptrdiff_t ftype_extent, lb, ub;
@@ -122,7 +122,7 @@ int mca_common_ompio_set_view (mca_io_ompio_file_t *fh,
     fh->f_index_in_file_view=0;
     fh->f_position_in_file_view=0;
 
-    ompi_io_ompio_decode_datatype (fh,
+    ompi_common_ompio_decode_datatype (fh,
                                    newfiletype,
                                    1,
                                    NULL,
@@ -140,7 +140,7 @@ int mca_common_ompio_set_view (mca_io_ompio_file_t *fh,
     ompi_datatype_duplicate (newfiletype, &fh->f_filetype);
 
 
-    if( SIMPLE_PLUS == mca_io_ompio_grouping_option ) {
+    if( SIMPLE_PLUS == OMPIO_MCA_GET(fh, grouping_option) ) {
         fh->f_cc_size = get_contiguous_chunk_size (fh, 1);
     }
     else {
@@ -154,7 +154,7 @@ int mca_common_ompio_set_view (mca_io_ompio_file_t *fh,
         }
     }
 
-    contg_groups = (mca_io_ompio_contg*) calloc ( 1, fh->f_size * sizeof(mca_io_ompio_contg));
+    contg_groups = (mca_common_ompio_contg*) calloc ( 1, fh->f_size * sizeof(mca_common_ompio_contg));
     if (NULL == contg_groups) {
         opal_output (1, "OUT OF MEMORY\n");
         return OMPI_ERR_OUT_OF_RESOURCE;
@@ -172,13 +172,13 @@ int mca_common_ompio_set_view (mca_io_ompio_file_t *fh,
        }
     }
 
-    if ( SIMPLE != mca_io_ompio_grouping_option || SIMPLE_PLUS != mca_io_ompio_grouping_option ) {
+    if ( SIMPLE != OMPIO_MCA_GET(fh, grouping_option) || SIMPLE_PLUS != OMPIO_MCA_GET(fh, grouping_option) ) {
 
-        ret = mca_io_ompio_fview_based_grouping(fh,
+        ret = mca_common_ompio_fview_based_grouping(fh,
                                                 &num_groups,
                                                 contg_groups);
         if ( OMPI_SUCCESS != ret ) {
-            opal_output(1, "mca_common_ompio_set_view: mca_io_ompio_fview_based_grouping failed\n");
+            opal_output(1, "mca_common_ompio_set_view: mca_common_ompio_fview_based_grouping failed\n");
             goto exit;
         }
     }
@@ -192,11 +192,11 @@ int mca_common_ompio_set_view (mca_io_ompio_file_t *fh,
                 goto exit;
             }
             if ( ndims > 1 ) { 
-                ret = mca_io_ompio_cart_based_grouping( fh, 
+                ret = mca_common_ompio_cart_based_grouping( fh, 
                                                         &num_groups, 
                                                         contg_groups);
                 if (OMPI_SUCCESS != ret ) {
-                    opal_output(1, "mca_common_ompio_set_view: mca_io_ompio_cart_based_grouping failed\n");
+                    opal_output(1, "mca_common_ompio_set_view: mca_common_ompio_cart_based_grouping failed\n");
                     goto exit;
                 }
                 done=1;
@@ -204,11 +204,11 @@ int mca_common_ompio_set_view (mca_io_ompio_file_t *fh,
         }
 
         if ( !done ) {
-            ret = mca_io_ompio_simple_grouping(fh,
+            ret = mca_common_ompio_simple_grouping(fh,
                                                &num_groups,
                                                contg_groups);
             if ( OMPI_SUCCESS != ret ){
-                opal_output(1, "mca_common_ompio_set_view: mca_io_ompio_simple_grouping failed\n");
+                opal_output(1, "mca_common_ompio_set_view: mca_common_ompio_simple_grouping failed\n");
                 goto exit;
             }
         }
@@ -230,11 +230,11 @@ int mca_common_ompio_set_view (mca_io_ompio_file_t *fh,
     }
 #endif
 
-    ret = mca_io_ompio_finalize_initial_grouping(fh,
+    ret = mca_common_ompio_finalize_initial_grouping(fh,
                                                  num_groups,
                                                  contg_groups);
     if ( OMPI_SUCCESS != ret ) {
-        opal_output(1, "mca_common_ompio_set_view: mca_io_ompio_finalize_initial_grouping failed\n");
+        opal_output(1, "mca_common_ompio_set_view: mca_common_ompio_finalize_initial_grouping failed\n");
         goto exit;
     }
 
