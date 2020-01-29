@@ -192,9 +192,7 @@ int32_t ompi_datatype_create_darray(int size,
     if (ndims < 1) {
         /* Don't just return MPI_DATATYPE_NULL as that can't be
            MPI_TYPE_FREE()ed, and that seems bad */
-        *newtype = ompi_datatype_create(0);
-        ompi_datatype_add(*newtype, &ompi_mpi_datatype_null.dt, 0, 0, 0);
-        return MPI_SUCCESS;
+        return ompi_datatype_duplicate( &ompi_mpi_datatype_null.dt, newtype);
     }
 
     rc = ompi_datatype_type_extent(oldtype, &orig_extent);
