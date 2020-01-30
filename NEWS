@@ -36,9 +36,10 @@ This file contains notable changes between releases for each release since
 Open MPI 1.0.  Because Open MPI maintains multiple release branches at any time,
 it is possible for items to appear more than once in the list.
 
-3.0.6 -- January, 2020
-----------------------
+3.0.6 -- February, 2020
+-----------------------
 
+- Fix run-time linker issues with OMPIO on newer Linux distros.
 - Allow the user to override modulefile_path in the Open MPI SRPM,
   even if install_in_opt is set to 1.
 - Properly detect ConnectX-6 HCAs in the openib BTL.
