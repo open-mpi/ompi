@@ -55,9 +55,11 @@ included in the vX.Y.Z section and be denoted as:
    (** also appeared: A.B.C)  -- indicating that this item was previously
                                  included in release version vA.B.C.
 
-3.1.6 -- January, 2020
-----------------------
+3.1.6 -- February, 2020
+-----------------------
 
+- Fix issue with zero-length blockLength in MPI_TYPE_INDEXED.
+- Fix run-time linker issues with OMPIO on newer Linux distros.
 - Fix PMIX dstore locking compilation issue.  Thanks to Marco Atzeri
   for reporting the issue.
 - Allow the user to override modulefile_path in the Open MPI SRPM,
