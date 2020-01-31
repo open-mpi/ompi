@@ -1,11 +1,9 @@
-# Per-commit
 trigger:
   - master
-# All PRs
+  - v*.*.x
 pr:
-  branches:
-    include:
-    - '*'
+  - master
+  - v*.*.x
 
 pool:
   name: Default
