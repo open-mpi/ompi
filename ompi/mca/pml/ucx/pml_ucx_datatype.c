@@ -10,12 +10,20 @@
  */
 
 #include "pml_ucx_datatype.h"
+#include "pml_ucx_request.h"
 
 #include "ompi/runtime/mpiruntime.h"
 #include "ompi/attribute/attribute.h"
 
 #include <inttypes.h>
+#include <math.h>
 
+#ifdef HAVE_UCP_REQUEST_PARAM_T
+#define PML_UCX_DATATYPE_SET_VALUE(_datatype, _val) \
+    (_datatype)->op_param.send._val; \
+    (_datatype)->op_param.bsend._val; \
+    (_datatype)->op_param.recv._val;
+#endif
 
 static void* pml_ucx_generic_datatype_start_pack(void *context, const void *buffer,
                                                  size_t count)
@@ -135,30 +143,77 @@ int mca_pml_ucx_datatype_attr_del_fn(ompi_datatype_t* datatype, int keyval,
 {
     ucp_datatype_t ucp_datatype = (ucp_datatype_t)attr_val;
 
+#ifdef HAVE_UCP_REQUEST_PARAM_T
+    free((void*)datatype->pml_data);
+#else
     PML_UCX_ASSERT((uint64_t)ucp_datatype == datatype->pml_data);
-
+#endif
     ucp_dt_destroy(ucp_datatype);
     datatype->pml_data = PML_UCX_DATATYPE_INVALID;
     return OMPI_SUCCESS;
 }
 
-ucp_datatype_t mca_pml_ucx_init_datatype(ompi_datatype_t *datatype)
+__opal_attribute_always_inline__
+static inline int mca_pml_ucx_datatype_is_contig(ompi_datatype_t *datatype)
 {
-    ucp_datatype_t ucp_datatype;
-    ucs_status_t status;
     ptrdiff_t lb;
-    size_t size;
-    int ret;
 
     ompi_datatype_type_lb(datatype, &lb);
 
-    if ((datatype->super.flags & OPAL_DATATYPE_FLAG_CONTIGUOUS) &&
-        (datatype->super.flags & OPAL_DATATYPE_FLAG_NO_GAPS) &&
-        (lb == 0))
-    {
+    return (datatype->super.flags & OPAL_DATATYPE_FLAG_CONTIGUOUS) &&
+           (datatype->super.flags & OPAL_DATATYPE_FLAG_NO_GAPS) &&
+           (lb == 0);
+}
+
+#ifdef HAVE_UCP_REQUEST_PARAM_T
+__opal_attribute_always_inline__ static inline
+pml_ucx_datatype_t *mca_pml_ucx_init_nbx_datatype(ompi_datatype_t *datatype,
+                                                  ucp_datatype_t ucp_datatype,
+                                                  size_t size)
+{
+    pml_ucx_datatype_t *pml_datatype;
+    int is_contig_pow2;
+
+    pml_datatype = malloc(sizeof(*pml_datatype));
+    if (pml_datatype == NULL) {
+        PML_UCX_ERROR("Failed to allocate datatype structure");
+        ompi_mpi_abort(&ompi_mpi_comm_world.comm, 1);
+    }
+
+    pml_datatype->datatype                    = ucp_datatype;
+    pml_datatype->op_param.send.op_attr_mask  = UCP_OP_ATTR_FIELD_CALLBACK;
+    pml_datatype->op_param.send.cb.send       = mca_pml_ucx_send_nbx_completion;
+    pml_datatype->op_param.bsend.op_attr_mask = UCP_OP_ATTR_FIELD_CALLBACK;
+    pml_datatype->op_param.bsend.cb.send      = mca_pml_ucx_bsend_nbx_completion;
+    pml_datatype->op_param.recv.op_attr_mask  = UCP_OP_ATTR_FIELD_CALLBACK |
+                                                UCP_OP_ATTR_FLAG_NO_IMM_CMPL;
+    pml_datatype->op_param.recv.cb.recv       = mca_pml_ucx_recv_nbx_completion;
+
+    is_contig_pow2 = mca_pml_ucx_datatype_is_contig(datatype) &&
+                     !(size & (size - 1)); /* is_pow2(size) */
+    if (is_contig_pow2) {
+        pml_datatype->size_shift = (int)(log(size) / log(2.0)); /* log2(size) */
+    } else {
+        pml_datatype->size_shift = 0;
+        PML_UCX_DATATYPE_SET_VALUE(pml_datatype, op_attr_mask |= UCP_OP_ATTR_FIELD_DATATYPE);
+        PML_UCX_DATATYPE_SET_VALUE(pml_datatype, datatype = ucp_datatype);
+    }
+
+    return pml_datatype;
+}
+#endif
+
+ucp_datatype_t mca_pml_ucx_init_datatype(ompi_datatype_t *datatype)
+{
+    size_t size = 0; /* init to suppress compiler warning */
+    ucp_datatype_t ucp_datatype;
+    ucs_status_t status;
+    int ret;
+
+    if (mca_pml_ucx_datatype_is_contig(datatype)) {
         ompi_datatype_type_size(datatype, &size);
-        datatype->pml_data = ucp_dt_make_contig(size);
-        return datatype->pml_data;
+        ucp_datatype = ucp_dt_make_contig(size);
+        goto out;
     }
 
     status = ucp_dt_create_generic(&pml_ucx_generic_datatype_ops,
@@ -167,8 +222,6 @@ ucp_datatype_t mca_pml_ucx_init_datatype(ompi_datatype_t *datatype)
         PML_UCX_ERROR("Failed to create UCX datatype for %s", datatype->name);
         ompi_mpi_abort(&ompi_mpi_comm_world.comm, 1);
     }
-
-    datatype->pml_data = ucp_datatype;
 
     /* Add custom attribute, to clean up UCX resources when OMPI datatype is
      * released.
@@ -186,8 +239,17 @@ ucp_datatype_t mca_pml_ucx_init_datatype(ompi_datatype_t *datatype)
             ompi_mpi_abort(&ompi_mpi_comm_world.comm, 1);
         }
     }
-
+out:
     PML_UCX_VERBOSE(7, "created generic UCX datatype 0x%"PRIx64, ucp_datatype)
+
+#ifdef HAVE_UCP_REQUEST_PARAM_T
+    UCS_STATIC_ASSERT(sizeof(datatype->pml_data) >= sizeof(pml_ucx_datatype_t*));
+    datatype->pml_data = (uint64_t)mca_pml_ucx_init_nbx_datatype(datatype,
+                                                                 ucp_datatype,
+                                                                 size);
+#else
+    datatype->pml_data = ucp_datatype;
+#endif
 
     return ucp_datatype;
 }
