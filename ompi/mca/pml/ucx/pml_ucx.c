@@ -360,10 +360,10 @@ int mca_pml_ucx_cleanup(void)
 
 static ucp_ep_h mca_pml_ucx_add_proc_common(ompi_proc_t *proc)
 {
+    size_t addrlen = 0;
     ucp_ep_params_t ep_params;
     ucp_address_t *address;
     ucs_status_t status;
-    size_t addrlen;
     ucp_ep_h ep;
     int ret;
 
@@ -431,6 +431,7 @@ int mca_pml_ucx_add_procs(struct ompi_proc_t **procs, size_t nprocs)
     return OMPI_SUCCESS;
 }
 
+__opal_attribute_always_inline__
 static inline ucp_ep_h mca_pml_ucx_get_ep(ompi_communicator_t *comm, int rank)
 {
     ucp_ep_h ep;
@@ -556,6 +557,11 @@ int mca_pml_ucx_irecv(void *buf, size_t count, ompi_datatype_t *datatype,
                       int src, int tag, struct ompi_communicator_t* comm,
                       struct ompi_request_t **request)
 {
+#if HAVE_DECL_UCP_TAG_RECV_NBX
+    pml_ucx_datatype_t *op_data = mca_pml_ucx_get_op_data(datatype);
+    ucp_request_param_t *param  = &op_data->op_param.recv;
+#endif
+
     ucp_tag_t ucp_tag, ucp_tag_mask;
     ompi_request_t *req;
 
@@ -563,10 +569,16 @@ int mca_pml_ucx_irecv(void *buf, size_t count, ompi_datatype_t *datatype,
                        (void*)request);
 
     PML_UCX_MAKE_RECV_TAG(ucp_tag, ucp_tag_mask, tag, src, comm);
+#if HAVE_DECL_UCP_TAG_RECV_NBX
+    req = (ompi_request_t*)ucp_tag_recv_nbx(ompi_pml_ucx.ucp_worker, buf,
+                                            mca_pml_ucx_get_data_size(op_data, count),
+                                            ucp_tag, ucp_tag_mask, param);
+#else
     req = (ompi_request_t*)ucp_tag_recv_nb(ompi_pml_ucx.ucp_worker, buf, count,
                                            mca_pml_ucx_get_datatype(datatype),
                                            ucp_tag, ucp_tag_mask,
                                            mca_pml_ucx_recv_completion);
+#endif
     if (UCS_PTR_IS_ERR(req)) {
         PML_UCX_ERROR("ucx recv failed: %s", ucs_status_string(UCS_PTR_STATUS(req)));
         return OMPI_ERROR;
@@ -582,20 +594,34 @@ int mca_pml_ucx_recv(void *buf, size_t count, ompi_datatype_t *datatype, int src
                      int tag, struct ompi_communicator_t* comm,
                      ompi_status_public_t* mpi_status)
 {
+    /* coverity[bad_alloc_arithmetic] */
+    void *req = PML_UCX_REQ_ALLOCA();
+#if HAVE_DECL_UCP_TAG_RECV_NBX
+    pml_ucx_datatype_t *op_data     = mca_pml_ucx_get_op_data(datatype);
+    ucp_request_param_t *recv_param = &op_data->op_param.recv;
+    ucp_request_param_t param;
+
+    param.op_attr_mask = UCP_OP_ATTR_FIELD_REQUEST |
+                         (recv_param->op_attr_mask & UCP_OP_ATTR_FIELD_DATATYPE);
+    param.datatype     = recv_param->datatype;
+    param.request      = req;
+#endif
     ucp_tag_t ucp_tag, ucp_tag_mask;
     ucp_tag_recv_info_t info;
     ucs_status_t status;
-    void *req;
 
     PML_UCX_TRACE_RECV("%s", buf, count, datatype, src, tag, comm, "recv");
 
-    /* coverity[bad_alloc_arithmetic] */
     PML_UCX_MAKE_RECV_TAG(ucp_tag, ucp_tag_mask, tag, src, comm);
-    req = PML_UCX_REQ_ALLOCA();
-    status = ucp_tag_recv_nbr(ompi_pml_ucx.ucp_worker, buf, count,
-                              mca_pml_ucx_get_datatype(datatype),
-                              ucp_tag, ucp_tag_mask, req);
-
+#if HAVE_DECL_UCP_TAG_RECV_NBX
+    ucp_tag_recv_nbx(ompi_pml_ucx.ucp_worker, buf,
+                     mca_pml_ucx_get_data_size(op_data, count),
+                     ucp_tag, ucp_tag_mask, &param);
+#else
+    ucp_tag_recv_nbr(ompi_pml_ucx.ucp_worker, buf, count,
+                     mca_pml_ucx_get_datatype(datatype),
+                     ucp_tag, ucp_tag_mask, req);
+#endif
     MCA_COMMON_UCX_PROGRESS_LOOP(ompi_pml_ucx.ucp_worker) {
         status = ucp_request_test(req, &info);
         if (status != UCS_INPROGRESS) {
@@ -605,6 +631,7 @@ int mca_pml_ucx_recv(void *buf, size_t count, ompi_datatype_t *datatype, int src
     }
 }
 
+__opal_attribute_always_inline__
 static inline const char *mca_pml_ucx_send_mode_name(mca_pml_base_send_mode_t mode)
 {
     switch (mode) {
@@ -726,6 +753,7 @@ mca_pml_ucx_bsend(ucp_ep_h ep, const void *buf, size_t count,
     return NULL;
 }
 
+__opal_attribute_always_inline__
 static inline ucs_status_ptr_t mca_pml_ucx_common_send(ucp_ep_h ep, const void *buf,
                                                        size_t count,
                                                        ompi_datatype_t *datatype,
@@ -742,6 +770,32 @@ static inline ucs_status_ptr_t mca_pml_ucx_common_send(ucp_ep_h ep, const void *
         return ucp_tag_send_nb(ep, buf, count, ucx_datatype, tag, cb);
     }
 }
+
+#if HAVE_DECL_UCP_TAG_SEND_NBX
+__opal_attribute_always_inline__
+static inline ucs_status_ptr_t
+mca_pml_ucx_common_send_nbx(ucp_ep_h ep, const void *buf,
+                            size_t count,
+                            ompi_datatype_t *datatype,
+                            ucp_tag_t tag,
+                            mca_pml_base_send_mode_t mode,
+                            ucp_request_param_t *param)
+{
+    pml_ucx_datatype_t *op_data = mca_pml_ucx_get_op_data(datatype);
+
+    if (OPAL_UNLIKELY(MCA_PML_BASE_SEND_BUFFERED == mode)) {
+        return mca_pml_ucx_bsend(ep, buf, count, datatype, tag);
+    } else if (OPAL_UNLIKELY(MCA_PML_BASE_SEND_SYNCHRONOUS == mode)) {
+        return ucp_tag_send_sync_nb(ep, buf, count,
+                                    mca_pml_ucx_get_datatype(datatype), tag,
+                                    (ucp_send_callback_t)param->cb.send);
+    } else {
+        return ucp_tag_send_nbx(ep, buf,
+                                mca_pml_ucx_get_data_size(op_data, count),
+                                tag, param);
+    }
+}
+#endif
 
 int mca_pml_ucx_isend(const void *buf, size_t count, ompi_datatype_t *datatype,
                       int dst, int tag, mca_pml_base_send_mode_t mode,
@@ -761,10 +815,16 @@ int mca_pml_ucx_isend(const void *buf, size_t count, ompi_datatype_t *datatype,
         return OMPI_ERROR;
     }
 
+#if HAVE_DECL_UCP_TAG_SEND_NBX
+    req = (ompi_request_t*)mca_pml_ucx_common_send_nbx(ep, buf, count, datatype,
+                                                       PML_UCX_MAKE_SEND_TAG(tag, comm), mode,
+                                                       &mca_pml_ucx_get_op_data(datatype)->op_param.send);
+#else
     req = (ompi_request_t*)mca_pml_ucx_common_send(ep, buf, count, datatype,
                                                    mca_pml_ucx_get_datatype(datatype),
                                                    PML_UCX_MAKE_SEND_TAG(tag, comm), mode,
                                                    mca_pml_ucx_send_completion);
+#endif
 
     if (req == NULL) {
         PML_UCX_VERBOSE(8, "returning completed request");
@@ -806,20 +866,40 @@ mca_pml_ucx_send_nb(ucp_ep_h ep, const void *buf, size_t count,
 #if HAVE_DECL_UCP_TAG_SEND_NBR
 static inline __opal_attribute_always_inline__ int
 mca_pml_ucx_send_nbr(ucp_ep_h ep, const void *buf, size_t count,
-                     ucp_datatype_t ucx_datatype, ucp_tag_t tag)
-
+                     ompi_datatype_t *datatype, ucp_tag_t tag)
 {
-    ucs_status_ptr_t req;
-    ucs_status_t status;
-
     /* coverity[bad_alloc_arithmetic] */
-    req    = PML_UCX_REQ_ALLOCA();
-    status = ucp_tag_send_nbr(ep, buf, count, ucx_datatype, tag, req);
+    ucs_status_ptr_t req = PML_UCX_REQ_ALLOCA();
+#if HAVE_DECL_UCP_TAG_SEND_NBX
+    pml_ucx_datatype_t *op_data = mca_pml_ucx_get_op_data(datatype);
+    ucp_request_param_t param   = {
+        .op_attr_mask = UCP_OP_ATTR_FIELD_REQUEST |
+                        (op_data->op_param.send.op_attr_mask & UCP_OP_ATTR_FIELD_DATATYPE) |
+                        UCP_OP_ATTR_FLAG_FAST_CMPL,
+        .datatype     = op_data->op_param.send.datatype,
+        .request      = req
+    };
+
+    req = ucp_tag_send_nbx(ep, buf,
+                           mca_pml_ucx_get_data_size(op_data, count),
+                           tag, &param);
+    if (OPAL_LIKELY(req == UCS_OK)) {
+        return OMPI_SUCCESS;
+    } else if (UCS_PTR_IS_ERR(req)) {
+        PML_UCX_ERROR("%s failed: %d, %s", __func__, UCS_PTR_STATUS(req),
+                      ucs_status_string(UCS_PTR_STATUS(req)));
+        return OPAL_ERROR;
+    }
+#else
+    ucs_status_t status;
+    status = ucp_tag_send_nbr(ep, buf, count,
+                              mca_pml_ucx_get_datatype(datatype), tag, req);
     if (OPAL_LIKELY(status == UCS_OK)) {
         return OMPI_SUCCESS;
     }
+#endif
 
-    MCA_COMMON_UCX_WAIT_LOOP(req, ompi_pml_ucx.ucp_worker, "ucx send", (void)0);
+    MCA_COMMON_UCX_WAIT_LOOP(req, ompi_pml_ucx.ucp_worker, "ucx send nbr", (void)0);
 }
 #endif
 
@@ -840,8 +920,7 @@ int mca_pml_ucx_send(const void *buf, size_t count, ompi_datatype_t *datatype, i
 #if HAVE_DECL_UCP_TAG_SEND_NBR
     if (OPAL_LIKELY((MCA_PML_BASE_SEND_BUFFERED != mode) &&
                     (MCA_PML_BASE_SEND_SYNCHRONOUS != mode))) {
-        return mca_pml_ucx_send_nbr(ep, buf, count,
-                                    mca_pml_ucx_get_datatype(datatype),
+        return mca_pml_ucx_send_nbr(ep, buf, count, datatype,
                                     PML_UCX_MAKE_SEND_TAG(tag, comm));
     }
 #endif

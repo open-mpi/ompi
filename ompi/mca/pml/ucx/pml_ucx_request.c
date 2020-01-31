@@ -34,7 +34,8 @@ static int mca_pml_ucx_request_cancel(ompi_request_t *req, int flag)
     return OMPI_SUCCESS;
 }
 
-void mca_pml_ucx_send_completion(void *request, ucs_status_t status)
+__opal_attribute_always_inline__ static inline void
+mca_pml_ucx_send_completion_internal(void *request, ucs_status_t status)
 {
     ompi_request_t *req = request;
 
@@ -46,7 +47,8 @@ void mca_pml_ucx_send_completion(void *request, ucs_status_t status)
     ompi_request_complete(req, true);
 }
 
-void mca_pml_ucx_bsend_completion(void *request, ucs_status_t status)
+__opal_attribute_always_inline__ static inline void
+mca_pml_ucx_bsend_completion_internal(void *request, ucs_status_t status)
 {
     ompi_request_t *req = request;
 
@@ -59,8 +61,9 @@ void mca_pml_ucx_bsend_completion(void *request, ucs_status_t status)
     mca_pml_ucx_request_free(&req);
 }
 
-void mca_pml_ucx_recv_completion(void *request, ucs_status_t status,
-                                 ucp_tag_recv_info_t *info)
+__opal_attribute_always_inline__ static inline void
+mca_pml_ucx_recv_completion_internal(void *request, ucs_status_t status,
+                                     const ucp_tag_recv_info_t *info)
 {
     ompi_request_t *req = request;
 
@@ -71,6 +74,41 @@ void mca_pml_ucx_recv_completion(void *request, ucs_status_t status,
     mca_pml_ucx_set_recv_status(&req->req_status, status, info);
     PML_UCX_ASSERT( !(REQUEST_COMPLETE(req)));
     ompi_request_complete(req, true);
+}
+
+void mca_pml_ucx_send_completion(void *request, ucs_status_t status)
+{
+    mca_pml_ucx_send_completion_internal(request, status);
+}
+
+void mca_pml_ucx_bsend_completion(void *request, ucs_status_t status)
+{
+    mca_pml_ucx_bsend_completion_internal(request, status);
+}
+
+void mca_pml_ucx_recv_completion(void *request, ucs_status_t status,
+                                 ucp_tag_recv_info_t *info)
+{
+    mca_pml_ucx_recv_completion_internal(request, status, info);
+}
+
+void mca_pml_ucx_send_nbx_completion(void *request, ucs_status_t status,
+                                     void *user_data)
+{
+    mca_pml_ucx_send_completion_internal(request, status);
+}
+
+void mca_pml_ucx_bsend_nbx_completion(void *request, ucs_status_t status,
+                                      void *user_data)
+{
+    mca_pml_ucx_bsend_completion_internal(request, status);
+}
+
+void mca_pml_ucx_recv_nbx_completion(void *request, ucs_status_t status,
+                                     const ucp_tag_recv_info_t *info,
+                                     void *user_data)
+{
+    mca_pml_ucx_recv_completion_internal(request, status, info);
 }
 
 static void mca_pml_ucx_persistent_request_detach(mca_pml_ucx_persistent_request_t *preq,

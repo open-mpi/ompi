@@ -128,6 +128,14 @@ AC_DEFUN([OMPI_CHECK_UCX],[
                                  [AC_DEFINE([HAVE_UCP_WORKER_ADDRESS_FLAGS], [1],
                                             [have worker address attribute])], [],
                                  [#include <ucp/api/ucp.h>])
+                  AC_CHECK_DECLS([ucp_tag_send_nbx,
+                                  ucp_tag_send_sync_nbx,
+                                  ucp_tag_recv_nbx],
+                                 [], [],
+                                 [#include <ucp/api/ucp.h>])
+                  AC_CHECK_TYPES([ucp_request_param_t],
+                                 [], [],
+                                 [[#include <ucp/api/ucp.h>]])
                   CPPFLAGS=$old_CPPFLAGS
 
                   OPAL_SUMMARY_ADD([[Transports]],[[Open UCX]],[$1],[$ompi_check_ucx_happy])])])
