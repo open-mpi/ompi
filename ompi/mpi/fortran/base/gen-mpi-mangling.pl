@@ -2,7 +2,7 @@
 #
 # Copyright (c) 2015      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
-# Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2015-2020 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 #
 # Subroutine to generate a bunch of Fortran declarations and symbols
@@ -62,33 +62,33 @@ $fortran->{in_place} = {
     f_name => "MPI_IN_PLACE",
 };
 $fortran->{unweighted} = {
-    c_type => "int *",
+    c_type => "int",
     c_name => "mpi_fortran_unweighted",
-    f_type => "integer",
+    f_type => "integer, dimension(1)",
     f_name => "MPI_UNWEIGHTED",
 };
 $fortran->{weights_empty} = {
-    c_type => "int *",
+    c_type => "int",
     c_name => "mpi_fortran_weights_empty",
-    f_type => "integer",
+    f_type => "integer, dimension(1)",
     f_name => "MPI_WEIGHTS_EMPTY",
 };
 
 $fortran->{argv_null} = {
-    c_type => "char *",
+    c_type => "char",
     c_name => "mpi_fortran_argv_null",
     f_type => "character, dimension(1)",
     f_name => "MPI_ARGV_NULL",
 };
 $fortran->{argvs_null} = {
-    c_type => "char *",
+    c_type => "char",
     c_name => "mpi_fortran_argvs_null",
     f_type => "character, dimension(1, 1)",
     f_name => "MPI_ARGVS_NULL",
 };
 
 $fortran->{errcodes_ignore} = {
-    c_type => "int *",
+    c_type => "int",
     c_name => "mpi_fortran_errcodes_ignore",
     f_type => "integer, dimension(1)",
     f_name => "MPI_ERRCODES_IGNORE",
