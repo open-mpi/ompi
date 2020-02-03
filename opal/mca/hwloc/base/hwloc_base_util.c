@@ -21,6 +21,7 @@
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * Copyright (c) 2019 IBM Corporation. All rights reserved.
  * Copyright (c) 2019      Inria.  All rights reserved.
+ * Copyright (c) 2020      Triad National Security, LLC. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -59,6 +60,7 @@
 
 #include "opal/mca/hwloc/hwloc-internal.h"
 #include "opal/mca/hwloc/base/base.h"
+#include "opal/util/printf.h"
 
 static bool topo_in_shmem = false;
 
