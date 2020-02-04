@@ -2106,7 +2106,8 @@ char* opal_hwloc_base_get_topo_signature(hwloc_topology_t topo)
 static int opal_hwloc_base_get_locality_string_by_depth(hwloc_topology_t topo,
                                                         int d,
                                                         hwloc_cpuset_t cpuset,
-                                                        hwloc_cpuset_t result)
+                                                        hwloc_cpuset_t result,
+                                                        unsigned int *idx)
 {
     hwloc_obj_t obj;
     unsigned width, w;
@@ -2126,6 +2127,7 @@ static int opal_hwloc_base_get_locality_string_by_depth(hwloc_topology_t topo,
         /* see if the location intersects with it */
         if (hwloc_bitmap_intersects(obj->cpuset, cpuset)) {
             hwloc_bitmap_set(result, w);
+            *idx = w;
         }
     }
 
@@ -2136,9 +2138,12 @@ char* opal_hwloc_base_get_locality_string(hwloc_topology_t topo,
                                           char *bitmap)
 {
     char *locality=NULL, *tmp, *t2;
-    unsigned depth, d;
+    unsigned depth, d, idx;
     hwloc_cpuset_t cpuset, result;
     hwloc_obj_type_t type;
+#if HWLOC_API_VERSION < 0x20000
+    hwloc_obj_t obj = NULL;
+#endif
 
     /* if this proc is not bound, then there is no locality. We
      * know it isn't bound if the cpuset is NULL, or if it is
@@ -2179,7 +2184,7 @@ char* opal_hwloc_base_get_locality_string(hwloc_topology_t topo,
             continue;
         }
 
-        if (opal_hwloc_base_get_locality_string_by_depth(topo, d, cpuset, result) < 0) {
+        if (opal_hwloc_base_get_locality_string_by_depth(topo, d, cpuset, result, &idx) < 0) {
             continue;
         }
 
@@ -2204,6 +2209,8 @@ char* opal_hwloc_base_get_locality_string(hwloc_topology_t topo,
                     break;
 #if HWLOC_API_VERSION < 0x20000
                 case HWLOC_OBJ_CACHE:
+                    obj = hwloc_get_obj_by_depth(topo, d, idx);
+                    assert(NULL != obj);
                     if (3 == obj->attr->cache.depth) {
                         opal_asprintf(&t2, "%sL3%s:", (NULL == locality) ? "" : locality, tmp);
                         if (NULL != locality) {
@@ -2274,7 +2281,7 @@ char* opal_hwloc_base_get_locality_string(hwloc_topology_t topo,
     }
 
 #if HWLOC_API_VERSION >= 0x20000
-    if (opal_hwloc_base_get_locality_string_by_depth(topo, HWLOC_TYPE_DEPTH_NUMANODE, cpuset, result) == 0) {
+    if (opal_hwloc_base_get_locality_string_by_depth(topo, HWLOC_TYPE_DEPTH_NUMANODE, cpuset, result, &idx) == 0) {
         /* it should be impossible, but allow for the possibility
          * that we came up empty at this depth */
         if (!hwloc_bitmap_iszero(result)) {
