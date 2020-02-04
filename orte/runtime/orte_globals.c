@@ -13,7 +13,7 @@
  * Copyright (c) 2009-2010 Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2018 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
@@ -476,9 +476,9 @@ char* orte_get_proc_hostname(orte_process_name_t *proc)
     }
 
     /* if we are an app, get the data from the modex db */
-    OPAL_MODEX_RECV_VALUE(rc, OPAL_PMIX_HOSTNAME,
-                          (opal_process_name_t*)proc,
-                          &hostname, OPAL_STRING);
+    OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, OPAL_PMIX_HOSTNAME,
+                                   (opal_process_name_t*)proc,
+                                   &hostname, OPAL_STRING);
 
     /* user is responsible for releasing the data */
     return hostname;
