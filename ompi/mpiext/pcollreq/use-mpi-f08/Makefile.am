@@ -1,7 +1,7 @@
 #
 # Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2017-2018 Research Organization for Information Science
-#                         and Technology (RIST). All rights reserved.
+# Copyright (c) 2017-2019 Research Organization for Information Science
+#                         and Technology (RIST).  All rights reserved.
 # Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
 # $COPYRIGHT$
 #
@@ -13,10 +13,17 @@
 # This file builds the use_mpi_f08-based bindings for MPI extensions.  It
 # is optional in MPI extensions.
 
+# Note that Automake's Fortran-buidling rules uses CPPFLAGS and
+# AM_CPPFLAGS.  This can cause weirdness (e.g.,
+# https://github.com/open-mpi/ompi/issues/7253).  Let's just zero
+# those out and rely on AM_FCFLAGS.
+CPPFLAGS =
+AM_CPPFLAGS =
+
 # We must set these #defines and include paths so that the inner OMPI
 # MPI prototype header files do the Right Thing.
 AM_FCFLAGS = $(OMPI_FC_MODULE_FLAG)$(top_builddir)/ompi/mpi/fortran/use-mpi-f08/mod \
-             -I$(top_srcdir) $(FCFLAGS_f90)
+             -I$(top_builddir) -I$(top_srcdir) $(FCFLAGS_f90)
 
 # Note that the mpi_f08-based bindings are optional -- they can only
 # be built if OMPI is also building the Fortran-based bindings.  So we
