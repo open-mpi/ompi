@@ -1388,9 +1388,10 @@ opal_hwloc_locality_t opal_hwloc_base_get_relative_locality(hwloc_topology_t top
  */
 char* opal_hwloc_base_find_coprocessors(hwloc_topology_t topo)
 {
+#if HAVE_DECL_HWLOC_OBJ_OSDEV_COPROC
     hwloc_obj_t osdev;
-    unsigned i;
     char **cps = NULL;
+#endif
     char *cpstring = NULL;
     int depth;
 
@@ -1408,6 +1409,7 @@ char* opal_hwloc_base_find_coprocessors(hwloc_topology_t topo)
     while (NULL != osdev) {
         if (HWLOC_OBJ_OSDEV_COPROC == osdev->attr->osdev.type) {
             /* got one! find and save its serial number */
+            unsigned i;
             for (i=0; i < osdev->infos_count; i++) {
                 if (0 == strncmp(osdev->infos[i].name, "MICSerialNumber", strlen("MICSerialNumber"))) {
                     OPAL_OUTPUT_VERBOSE((5, opal_hwloc_base_framework.framework_output,
