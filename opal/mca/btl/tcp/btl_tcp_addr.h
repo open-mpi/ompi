@@ -62,7 +62,9 @@ struct mca_btl_tcp_modex_addr_t {
 };
 typedef struct mca_btl_tcp_modex_addr_t mca_btl_tcp_modex_addr_t;
 
+#if (__STDC_VERSION__ >= 201112L)
 _Static_assert(sizeof(struct mca_btl_tcp_modex_addr_t) == 32, "mca_btl_tcp_modex_addr_t");
+#endif
 
 /**
  * Remote peer address structure
