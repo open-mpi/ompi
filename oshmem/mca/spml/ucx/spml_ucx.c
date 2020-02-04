@@ -101,10 +101,10 @@ int mca_spml_ucx_enable(bool enable)
 
 int mca_spml_ucx_del_procs(ompi_proc_t** procs, size_t nprocs)
 {
+    size_t ucp_workers = mca_spml_ucx.ucp_workers;
     opal_common_ucx_del_proc_t *del_procs;
     size_t i, w, n;
     int ret;
-    int ucp_workers = mca_spml_ucx.ucp_workers;
 
     oshmem_shmem_barrier();
 
@@ -281,16 +281,16 @@ int mca_spml_ucx_clear_put_op_mask(mca_spml_ucx_ctx_t *ctx)
 
 int mca_spml_ucx_add_procs(ompi_proc_t** procs, size_t nprocs)
 {
-    size_t i, j, k, w, n;
-    int rc = OSHMEM_ERROR;
-    int my_rank = oshmem_my_proc_id();
-    int ucp_workers = mca_spml_ucx.ucp_workers;
+    int rc                  = OSHMEM_ERROR;
+    int my_rank             = oshmem_my_proc_id();
+    size_t ucp_workers      = mca_spml_ucx.ucp_workers;
+    unsigned int *wk_roffs  = NULL;
+    unsigned int *wk_rsizes = NULL;
+    char *wk_raddrs         = NULL;
+    size_t i, j, w, n;
     ucs_status_t err;
     ucp_address_t **wk_local_addr;
     unsigned int *wk_addr_len;
-    unsigned int *wk_roffs = NULL;
-    unsigned int *wk_rsizes = NULL;
-    char *wk_raddrs = NULL;
     ucp_ep_params_t ep_params;
 
     wk_local_addr = calloc(mca_spml_ucx.ucp_workers, sizeof(ucp_address_t *));
@@ -749,9 +749,9 @@ static int mca_spml_ucx_ctx_create_common(long options, mca_spml_ucx_ctx_t **ucx
 
 int mca_spml_ucx_ctx_create(long options, shmem_ctx_t *ctx)
 {
-    mca_spml_ucx_ctx_t *ucx_ctx = NULL;
-    mca_spml_ucx_ctx_array_t *idle_array = &mca_spml_ucx.idle_array;
+    mca_spml_ucx_ctx_t *ucx_ctx            = NULL;
     mca_spml_ucx_ctx_array_t *active_array = &mca_spml_ucx.active_array;
+    mca_spml_ucx_ctx_array_t *idle_array   = &mca_spml_ucx.idle_array;
     int i = 0, rc = OSHMEM_SUCCESS;
 
     /* Take a lock controlling context creation. AUX context may set specific
@@ -781,8 +781,8 @@ int mca_spml_ucx_ctx_create(long options, shmem_ctx_t *ctx)
     
     if (!(options & SHMEM_CTX_PRIVATE)) {
         SHMEM_MUTEX_LOCK(mca_spml_ucx.internal_mutex);
-        _ctx_add(&mca_spml_ucx.active_array, ucx_ctx);
-        if (mca_spml_ucx.active_array.ctxs_count == 0) {
+        _ctx_add(active_array, ucx_ctx);
+        if (active_array->ctxs_count == 0) {
             opal_progress_register(spml_ucx_ctx_progress);
         }
         SHMEM_MUTEX_UNLOCK(mca_spml_ucx.internal_mutex);
