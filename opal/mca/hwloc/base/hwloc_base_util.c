@@ -20,7 +20,7 @@
  *                         All rights reserved.
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * Copyright (c) 2019 IBM Corporation. All rights reserved.
- * Copyright (c) 2019      Inria.  All rights reserved.
+ * Copyright (c) 2019-2020 Inria.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -2203,15 +2203,16 @@ char* opal_hwloc_base_get_locality_string(hwloc_topology_t topo,
                     locality = t2;
                     break;
 #if HWLOC_API_VERSION < 0x20000
-                case HWLOC_OBJ_CACHE:
-                    if (3 == obj->attr->cache.depth) {
+                case HWLOC_OBJ_CACHE: {
+                    unsigned cachedepth = hwloc_get_obj_by_depth(topo, d, 0)->attr->cache.depth;
+                    if (3 == cachedepth) {
                         opal_asprintf(&t2, "%sL3%s:", (NULL == locality) ? "" : locality, tmp);
                         if (NULL != locality) {
                             free(locality);
                         }
                         locality = t2;
                         break;
-                    } else if (2 == obj->attr->cache.depth) {
+                    } else if (2 == cachedepth) {
                         opal_asprintf(&t2, "%sL2%s:", (NULL == locality) ? "" : locality, tmp);
                         if (NULL != locality) {
                             free(locality);
@@ -2227,6 +2228,7 @@ char* opal_hwloc_base_get_locality_string(hwloc_topology_t topo,
                         break;
                     }
                     break;
+                }
 #else
                 case HWLOC_OBJ_L3CACHE:
                     opal_asprintf(&t2, "%sL3%s:", (NULL == locality) ? "" : locality, tmp);
