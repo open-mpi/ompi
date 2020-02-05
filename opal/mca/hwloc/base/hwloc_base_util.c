@@ -977,7 +977,7 @@ static int socket_to_cpu_set(char *cpus,
     switch (range_cnt) {
     case 1:  /* no range was present, so just one socket given */
         socket_id = atoi(range[0]);
-        obj = opal_hwloc_base_get_obj_by_type(topo, HWLOC_OBJ_SOCKET, 0, socket_id, rtype);
+        obj = opal_hwloc_base_get_obj_by_type(topo, HWLOC_OBJ_PACKAGE, 0, socket_id, rtype);
         /* get the available cpus for this socket */
         hwloc_bitmap_or(cpumask, cpumask, obj->cpuset);
         break;
@@ -987,7 +987,7 @@ static int socket_to_cpu_set(char *cpus,
         upper_range = atoi(range[1]);
         /* cycle across the range of sockets */
         for (socket_id=lower_range; socket_id<=upper_range; socket_id++) {
-            obj = opal_hwloc_base_get_obj_by_type(topo, HWLOC_OBJ_SOCKET, 0, socket_id, rtype);
+            obj = opal_hwloc_base_get_obj_by_type(topo, HWLOC_OBJ_PACKAGE, 0, socket_id, rtype);
             /* set the available cpus for this socket bits in the bitmask */
             hwloc_bitmap_or(cpumask, cpumask, obj->cpuset);
         }
@@ -1019,7 +1019,7 @@ static int socket_core_to_cpu_set(char *socket_core_list,
     socket_id = atoi(socket_core[0]);
 
     /* get the object for this socket id */
-    if (NULL == (socket = opal_hwloc_base_get_obj_by_type(topo, HWLOC_OBJ_SOCKET, 0,
+    if (NULL == (socket = opal_hwloc_base_get_obj_by_type(topo, HWLOC_OBJ_PACKAGE, 0,
                                                           socket_id, rtype))) {
         opal_argv_free(socket_core);
         return OPAL_ERR_NOT_FOUND;
@@ -1265,10 +1265,10 @@ static void opal_hwloc_base_get_relative_locality_by_depth(hwloc_topology_t topo
         if (sect1 && sect2) {
             *shared = true;
             switch(obj->type) {
-            case HWLOC_OBJ_NODE:
+            case HWLOC_OBJ_NUMANODE:
                 *locality |= OPAL_PROC_ON_NUMA;
                 break;
-            case HWLOC_OBJ_SOCKET:
+            case HWLOC_OBJ_PACKAGE:
                 *locality |= OPAL_PROC_ON_SOCKET;
                 break;
 #if HWLOC_API_VERSION < 0x20000
@@ -1346,8 +1346,8 @@ opal_hwloc_locality_t opal_hwloc_base_get_relative_locality(hwloc_topology_t top
         /* get the object type at this depth */
         type = hwloc_get_depth_type(topo, d);
         /* if it isn't one of interest, then ignore it */
-        if (HWLOC_OBJ_NODE != type &&
-            HWLOC_OBJ_SOCKET != type &&
+        if (HWLOC_OBJ_NUMANODE != type &&
+            HWLOC_OBJ_PACKAGE != type &&
 #if HWLOC_API_VERSION < 0x20000
             HWLOC_OBJ_CACHE != type &&
 #else
@@ -1645,7 +1645,7 @@ static int build_map(int *num_sockets_arg, int *num_cores_arg,
     int **data;
 
     /* Find out how many sockets we have */
-    num_sockets = hwloc_get_nbobjs_by_type(topo, HWLOC_OBJ_SOCKET);
+    num_sockets = hwloc_get_nbobjs_by_type(topo, HWLOC_OBJ_PACKAGE);
     /* some systems (like the iMac) only have one
      * socket and so don't report a socket
      */
@@ -1695,7 +1695,7 @@ static int build_map(int *num_sockets_arg, int *num_cores_arg,
 
         /* Go upward and find the socket this PU belongs to */
         socket = pu;
-        while (NULL != socket && socket->type != HWLOC_OBJ_SOCKET) {
+        while (NULL != socket && socket->type != HWLOC_OBJ_PACKAGE) {
             socket = socket->parent;
         }
         socket_index = 0;
@@ -1816,7 +1816,7 @@ int opal_hwloc_base_cset2mapstr(char *str, int len,
     }
 
     /* Iterate over all existing sockets */
-    for (socket = hwloc_get_obj_by_type(topo, HWLOC_OBJ_SOCKET, 0);
+    for (socket = hwloc_get_obj_by_type(topo, HWLOC_OBJ_PACKAGE, 0);
          NULL != socket;
          socket = socket->next_cousin) {
         strncat(str, "[", len - strlen(str) - 1);
@@ -1896,7 +1896,7 @@ static void sort_by_dist(hwloc_topology_t topo, char* device_name, opal_list_t *
                 /* find numa node containing this device */
                 obj = device_obj->parent;
 #if HWLOC_API_VERSION < 0x20000
-                while ((obj != NULL) && (obj->type != HWLOC_OBJ_NODE)) {
+                while ((obj != NULL) && (obj->type != HWLOC_OBJ_NUMANODE)) {
                     obj = obj->parent;
                 }
 #else
@@ -1918,10 +1918,10 @@ static void sort_by_dist(hwloc_topology_t topo, char* device_name, opal_list_t *
 
                 /* find distance matrix for all numa nodes */
 #if HWLOC_API_VERSION < 0x20000
-                distances = (struct hwloc_distances_s*)hwloc_get_whole_distance_matrix_by_type(topo, HWLOC_OBJ_NODE);
+                distances = (struct hwloc_distances_s*)hwloc_get_whole_distance_matrix_by_type(topo, HWLOC_OBJ_NUMANODE);
                 if (NULL ==  distances) {
                     /* we can try to find distances under group object. This info can be there. */
-                    depth = hwloc_get_type_depth(topo, HWLOC_OBJ_NODE);
+                    depth = hwloc_get_type_depth(topo, HWLOC_OBJ_NUMANODE);
                     if (HWLOC_TYPE_DEPTH_UNKNOWN == depth) {
                         opal_output_verbose(5, opal_hwloc_base_framework.framework_output,
                                 "hwloc:base:get_sorted_numa_list: There is no information about distances on the node.");
@@ -1956,7 +1956,7 @@ static void sort_by_dist(hwloc_topology_t topo, char* device_name, opal_list_t *
                 }
 #else
                 distances_nr = 1;
-                if (0 != hwloc_distances_get_by_type(topo, HWLOC_OBJ_NODE, &distances_nr, &distances,
+                if (0 != hwloc_distances_get_by_type(topo, HWLOC_OBJ_NUMANODE, &distances_nr, &distances,
                                                      HWLOC_DISTANCES_KIND_MEANS_LATENCY, 0) || 0 == distances_nr) {
                     opal_output_verbose(5, opal_hwloc_base_framework.framework_output,
                             "hwloc:base:get_sorted_numa_list: There is no information about distances on the node.");
@@ -2009,7 +2009,7 @@ int opal_hwloc_get_sorted_numa_list(hwloc_topology_t topo, char* device_name, op
     data = (opal_hwloc_topo_data_t*)obj->userdata;
     if (NULL != data) {
         OPAL_LIST_FOREACH(sum, &data->summaries, opal_hwloc_summary_t) {
-            if (HWLOC_OBJ_NODE == sum->type) {
+            if (HWLOC_OBJ_NUMANODE == sum->type) {
                 if (opal_list_get_size(&sum->sorted_by_dist_list) > 0) {
                     OPAL_LIST_FOREACH(numa, &(sum->sorted_by_dist_list), opal_rmaps_numa_node_t) {
                         copy_numa = OBJ_NEW(opal_rmaps_numa_node_t);
@@ -2062,8 +2062,8 @@ char* opal_hwloc_base_get_topo_signature(hwloc_topology_t topo)
     hwloc_obj_t obj;
     unsigned i;
 
-    nnuma = opal_hwloc_base_get_nbobjs_by_type(topo, HWLOC_OBJ_NODE, 0, OPAL_HWLOC_AVAILABLE);
-    nsocket = opal_hwloc_base_get_nbobjs_by_type(topo, HWLOC_OBJ_SOCKET, 0, OPAL_HWLOC_AVAILABLE);
+    nnuma = opal_hwloc_base_get_nbobjs_by_type(topo, HWLOC_OBJ_NUMANODE, 0, OPAL_HWLOC_AVAILABLE);
+    nsocket = opal_hwloc_base_get_nbobjs_by_type(topo, HWLOC_OBJ_PACKAGE, 0, OPAL_HWLOC_AVAILABLE);
     nl3 = opal_hwloc_base_get_nbobjs_by_type(topo, HWLOC_OBJ_L3CACHE, 3, OPAL_HWLOC_AVAILABLE);
     nl2 = opal_hwloc_base_get_nbobjs_by_type(topo, HWLOC_OBJ_L2CACHE, 2, OPAL_HWLOC_AVAILABLE);
     nl1 = opal_hwloc_base_get_nbobjs_by_type(topo, HWLOC_OBJ_L1CACHE, 1, OPAL_HWLOC_AVAILABLE);
@@ -2159,8 +2159,8 @@ char* opal_hwloc_base_get_locality_string(hwloc_topology_t topo,
         /* get the object type at this depth */
         type = hwloc_get_depth_type(topo, d);
         /* if it isn't one of interest, then ignore it */
-        if (HWLOC_OBJ_NODE != type &&
-            HWLOC_OBJ_SOCKET != type &&
+        if (HWLOC_OBJ_NUMANODE != type &&
+            HWLOC_OBJ_PACKAGE != type &&
 #if HWLOC_API_VERSION < 0x20000
             HWLOC_OBJ_CACHE != type &&
 #else
@@ -2182,14 +2182,14 @@ char* opal_hwloc_base_get_locality_string(hwloc_topology_t topo,
         if (!hwloc_bitmap_iszero(result)) {
             hwloc_bitmap_list_asprintf(&tmp, result);
             switch(type) {
-                case HWLOC_OBJ_NODE:
+                case HWLOC_OBJ_NUMANODE:
                     opal_asprintf(&t2, "%sNM%s:", (NULL == locality) ? "" : locality, tmp);
                     if (NULL != locality) {
                         free(locality);
                     }
                     locality = t2;
                     break;
-                case HWLOC_OBJ_SOCKET:
+                case HWLOC_OBJ_PACKAGE:
                     opal_asprintf(&t2, "%sSK%s:", (NULL == locality) ? "" : locality, tmp);
                     if (NULL != locality) {
                         free(locality);
@@ -2308,10 +2308,10 @@ char* opal_hwloc_base_get_location(char *locality,
         return NULL;
     }
     switch(type) {
-        case HWLOC_OBJ_NODE:
+        case HWLOC_OBJ_NUMANODE:
             srch = "NM";
             break;
-        case HWLOC_OBJ_SOCKET:
+        case HWLOC_OBJ_PACKAGE:
             srch = "SK";
             break;
 #if HWLOC_API_VERSION < 0x20000

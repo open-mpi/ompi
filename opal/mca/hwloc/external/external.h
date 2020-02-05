@@ -4,6 +4,7 @@
  *                         and Technology (RIST). All rights reserved.
  *
  * Copyright (c) 2016-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2020      Inria.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -67,11 +68,6 @@ BEGIN_C_DECLS
 /* Do nothing in the 1.x case because the caller doesn't know HWLOC_API_VERSION when it sets OPAL_HWLOC_WANT_SHMEM.
  * Calls to hwloc/shmem.h are protected by HWLOC_API_VERSION >= 0x20000 in the actual code.
  */
-#endif
-
-#if HWLOC_API_VERSION < 0x00010b00
-#define HWLOC_OBJ_NUMANODE HWLOC_OBJ_NODE
-#define HWLOC_OBJ_PACKAGE HWLOC_OBJ_SOCKET
 #endif
 
 END_C_DECLS

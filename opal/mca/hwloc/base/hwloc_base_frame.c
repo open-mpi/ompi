@@ -4,6 +4,7 @@
  * Copyright (c) 2016-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2019 IBM Corporation. All rights reserved.
+ * Copyright (c) 2020      Inria.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -49,8 +50,8 @@ char *opal_hwloc_base_cpu_list=NULL;
 bool opal_hwloc_report_bindings=false;
 hwloc_obj_type_t opal_hwloc_levels[] = {
     HWLOC_OBJ_MACHINE,
-    HWLOC_OBJ_NODE,
-    HWLOC_OBJ_SOCKET,
+    HWLOC_OBJ_NUMANODE,
+    HWLOC_OBJ_PACKAGE,
     HWLOC_OBJ_L3CACHE,
     HWLOC_OBJ_L2CACHE,
     HWLOC_OBJ_L1CACHE,
