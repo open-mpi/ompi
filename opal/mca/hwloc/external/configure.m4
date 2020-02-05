@@ -5,6 +5,7 @@
 #                         and Technology (RIST). All rights reserved.
 #
 # Copyright (c) 2018      Intel, Inc. All rights reserved.
+# Copyright (c) 2020      Inria.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -134,12 +135,12 @@ AC_DEFUN([MCA_opal_hwloc_external_CONFIG],[
                   LDFLAGS="$LDFLAGS $opal_hwloc_external_LDFLAGS"
                   LIBS="$LIBS $opal_hwloc_external_LIBS"
 
-                  AC_MSG_CHECKING([if external hwloc version is 1.5 or greater])
+                  AC_MSG_CHECKING([if external hwloc version is 1.11 or greater])
                   AC_COMPILE_IFELSE(
                       [AC_LANG_PROGRAM([[#include <hwloc.h>]],
                           [[
-#if HWLOC_API_VERSION < 0x00010500
-#error "hwloc API version is less than 0x00010500"
+#if HWLOC_API_VERSION < 0x00010b00
+#error "hwloc API version is less than 0x00010b00"
 #endif
                           ]])],
                       [AC_MSG_RESULT([yes])],
