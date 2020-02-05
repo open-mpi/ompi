@@ -56,7 +56,7 @@ BEGIN_C_DECLS
 #    if defined(HAVE_INFINIBAND_VERBS_H)
 #        include MCA_hwloc_external_openfabrics_header
 #    else
-#        error Tried to include hwloc verbs helper file, but hwloc was compiled with no OpenFabrics support
+#        error Tried to include hwloc verbs helper file, but <infiniband/verbs.h> is missing
 #    endif
 #endif
 
