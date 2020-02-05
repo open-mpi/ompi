@@ -89,9 +89,6 @@ AC_DEFUN([MCA_opal_hwloc_CONFIG_REQUIRE],[
     # REQUIRE.
     MCA_CONFIGURE_FRAMEWORK([opal], [hwloc], 1)
 
-    # Restore the --enable-pci flag
-    enable_pci=$opal_hwloc_hwloc132_save_enable_pci
-
     # Give a blank line to separate these messages from the last
     # component's configure.m4 output.
     echo " "
