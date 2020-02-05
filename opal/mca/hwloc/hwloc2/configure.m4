@@ -202,8 +202,7 @@ AC_DEFUN([MCA_opal_hwloc_hwloc2_CONFIG],[
     AS_IF([test "$opal_hwloc_external_support" = "yes"],
           [AC_MSG_NOTICE([using an external hwloc; disqualifying this component])
            opal_hwloc_hwloc2_support=no],
-          [AC_DEFINE([HAVE_DECL_HWLOC_OBJ_OSDEV_COPROC], [1])
-           AC_DEFINE([HAVE_HWLOC_TOPOLOGY_DUP], [1])])
+          [AC_DEFINE([HAVE_HWLOC_TOPOLOGY_DUP], [1])])
 
     # Done!
     AS_IF([test "$opal_hwloc_hwloc2_support" = "yes"],

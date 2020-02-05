@@ -171,7 +171,6 @@ AC_DEFUN([MCA_opal_hwloc_external_CONFIG],[
                                      [external],
                                      [Version of hwloc])
 
-                  AC_CHECK_DECLS([HWLOC_OBJ_OSDEV_COPROC], [], [], [#include <hwloc.h>])
                   AC_CHECK_FUNCS([hwloc_topology_dup])
 
                   # See if the external hwloc supports XML

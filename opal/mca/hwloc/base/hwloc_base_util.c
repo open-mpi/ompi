@@ -1388,10 +1388,8 @@ opal_hwloc_locality_t opal_hwloc_base_get_relative_locality(hwloc_topology_t top
  */
 char* opal_hwloc_base_find_coprocessors(hwloc_topology_t topo)
 {
-#if HAVE_DECL_HWLOC_OBJ_OSDEV_COPROC
     hwloc_obj_t osdev;
     char **cps = NULL;
-#endif
     char *cpstring = NULL;
     int depth;
 
@@ -1403,7 +1401,6 @@ char* opal_hwloc_base_find_coprocessors(hwloc_topology_t topo)
                              "hwloc:base:find_coprocessors: NONE FOUND IN TOPO"));
         return NULL;
     }
-#if HAVE_DECL_HWLOC_OBJ_OSDEV_COPROC
     /* check the device objects for coprocessors */
     osdev = hwloc_get_obj_by_depth(topo, depth, 0);
     while (NULL != osdev) {
@@ -1428,11 +1425,6 @@ char* opal_hwloc_base_find_coprocessors(hwloc_topology_t topo)
     OPAL_OUTPUT_VERBOSE((5, opal_hwloc_base_framework.framework_output,
                          "hwloc:base:find_coprocessors: hosting coprocessors %s",
                          (NULL == cpstring) ? "NONE" : cpstring));
-#else
-    OPAL_OUTPUT_VERBOSE((5, opal_hwloc_base_framework.framework_output,
-                         "hwloc:base:find_coprocessors: the version of hwloc that Open MPI was built against (v%d.%d.%d) does not support detecting coprocessors",
-                         (HWLOC_API_VERSION>>16)&&0xFF, (HWLOC_API_VERSION>>8)&0xFF, HWLOC_API_VERSION&&0xFF));
-#endif
     return cpstring;
 }
 
