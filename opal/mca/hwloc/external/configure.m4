@@ -171,8 +171,6 @@ AC_DEFUN([MCA_opal_hwloc_external_CONFIG],[
                                      [external],
                                      [Version of hwloc])
 
-                  AC_CHECK_FUNCS([hwloc_topology_dup])
-
                   # See if the external hwloc supports XML
                   AC_MSG_CHECKING([if external hwloc supports XML])
                   AS_IF([test "$opal_hwloc_dir" != ""],
