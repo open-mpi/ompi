@@ -20,7 +20,7 @@
  *                         All rights reserved.
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * Copyright (c) 2019 IBM Corporation. All rights reserved.
- * Copyright (c) 2019      Inria.  All rights reserved.
+ * Copyright (c) 2019-2020 Inria.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -1388,9 +1388,10 @@ opal_hwloc_locality_t opal_hwloc_base_get_relative_locality(hwloc_topology_t top
  */
 char* opal_hwloc_base_find_coprocessors(hwloc_topology_t topo)
 {
+#if HAVE_DECL_HWLOC_OBJ_OSDEV_COPROC
     hwloc_obj_t osdev;
-    unsigned i;
     char **cps = NULL;
+#endif
     char *cpstring = NULL;
     int depth;
 
@@ -1408,6 +1409,7 @@ char* opal_hwloc_base_find_coprocessors(hwloc_topology_t topo)
     while (NULL != osdev) {
         if (HWLOC_OBJ_OSDEV_COPROC == osdev->attr->osdev.type) {
             /* got one! find and save its serial number */
+            unsigned i;
             for (i=0; i < osdev->infos_count; i++) {
                 if (0 == strncmp(osdev->infos[i].name, "MICSerialNumber", strlen("MICSerialNumber"))) {
                     OPAL_OUTPUT_VERBOSE((5, opal_hwloc_base_framework.framework_output,
@@ -2203,15 +2205,16 @@ char* opal_hwloc_base_get_locality_string(hwloc_topology_t topo,
                     locality = t2;
                     break;
 #if HWLOC_API_VERSION < 0x20000
-                case HWLOC_OBJ_CACHE:
-                    if (3 == obj->attr->cache.depth) {
+                case HWLOC_OBJ_CACHE: {
+                    unsigned cachedepth = hwloc_get_obj_by_depth(topo, d, 0)->attr->cache.depth;
+                    if (3 == cachedepth) {
                         opal_asprintf(&t2, "%sL3%s:", (NULL == locality) ? "" : locality, tmp);
                         if (NULL != locality) {
                             free(locality);
                         }
                         locality = t2;
                         break;
-                    } else if (2 == obj->attr->cache.depth) {
+                    } else if (2 == cachedepth) {
                         opal_asprintf(&t2, "%sL2%s:", (NULL == locality) ? "" : locality, tmp);
                         if (NULL != locality) {
                             free(locality);
@@ -2227,6 +2230,7 @@ char* opal_hwloc_base_get_locality_string(hwloc_topology_t topo,
                         break;
                     }
                     break;
+                }
 #else
                 case HWLOC_OBJ_L3CACHE:
                     opal_asprintf(&t2, "%sL3%s:", (NULL == locality) ? "" : locality, tmp);
