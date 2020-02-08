@@ -1,3 +1,0 @@
-#!/bin/sh
-echo Hello world!  I am $MPI_COMM_WORLD_RANK of $MPI_COMM_WORLD_SIZE.
-exit 0

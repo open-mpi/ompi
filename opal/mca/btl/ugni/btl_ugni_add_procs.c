@@ -3,7 +3,7 @@
  * Copyright (c) 2011-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2011      UT-Battelle, LLC. All rights reserved.
- * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -18,7 +18,7 @@
 #include "btl_ugni_smsg.h"
 
 #include "opal/include/opal/align.h"
-#include "opal/mca/pmix/pmix.h"
+#include "opal/mca/pmix/pmix-internal.h"
 
 #define INITIAL_GNI_EPS 1024
 
@@ -309,7 +309,7 @@ mca_btl_ugni_setup_mpools (mca_btl_ugni_module_t *ugni_module)
 
     /* determine how many procs are in the job (might want to check universe size here) */
     u32 = &nprocs;
-    OPAL_MODEX_RECV_VALUE(rc, OPAL_PMIX_UNIV_SIZE, &OPAL_PROC_MY_NAME,
+    OPAL_MODEX_RECV_VALUE(rc, PMIX_UNIV_SIZE, &OPAL_PROC_MY_NAME,
                           &u32, OPAL_UINT32);
     if (OPAL_SUCCESS != rc) {
         /* take a wild conservative guess */

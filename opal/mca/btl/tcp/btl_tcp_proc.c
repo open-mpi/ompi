@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2010 Oracle and/or its affiliates.  All rights reserved
- * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015-2016 Los Alamos National Security, LLC. All rights
@@ -40,7 +40,7 @@
 #include "opal/class/opal_hash_table.h"
 #include "opal/mca/btl/base/btl_base_error.h"
 #include "opal/mca/reachable/base/base.h"
-#include "opal/mca/pmix/pmix.h"
+#include "opal/mca/pmix/pmix-internal.h"
 #include "opal/util/arch.h"
 #include "opal/util/argv.h"
 #include "opal/util/if.h"

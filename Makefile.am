@@ -11,9 +11,10 @@
 #                         All rights reserved.
 # Copyright (c) 2006-2016 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2012-2015 Los Alamos National Security, Inc.  All rights reserved.
-# Copyright (c) 2014      Intel, Inc. All rights reserved.
+# Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
 # Copyright (c) 2017-2018 Amazon.com, Inc. or its affiliates.
 #                         All Rights reserved.
+# Copyright (c) 2020      IBM Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -22,7 +23,14 @@
 #
 
 SUBDIRS = config contrib $(MCA_PROJECT_SUBDIRS) test
+if OMPI_WANT_PRRTE
+SUBDIRS += prrte
+endif
+
 DIST_SUBDIRS = config contrib $(MCA_PROJECT_DIST_SUBDIRS) test
+if OMPI_WANT_PRRTE
+DIST_SUBDIRS += prrte
+endif
 EXTRA_DIST = README INSTALL VERSION Doxyfile LICENSE autogen.pl README.JAVA.txt AUTHORS
 
 include examples/Makefile.include

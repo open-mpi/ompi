@@ -4,7 +4,7 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2013      Inria.  All rights reserved.
- * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
@@ -22,13 +22,14 @@
 #include "opal/util/proc.h"
 #include "opal/util/arch.h"
 #include "opal/util/string_copy.h"
-#include "opal/mca/pmix/pmix.h"
+#include "opal/mca/pmix/pmix-internal.h"
 
 opal_process_name_t opal_name_wildcard = {OPAL_JOBID_WILDCARD, OPAL_VPID_WILDCARD};
 opal_process_name_t opal_name_invalid = {OPAL_JOBID_INVALID, OPAL_VPID_INVALID};
 
 opal_process_info_t opal_process_info = {
     .nodename = NULL,
+    .top_session_dir = NULL,
     .job_session_dir = NULL,
     .proc_session_dir = NULL,
     .num_local_peers = 0,  /* there is nobody else but me */
@@ -204,8 +205,8 @@ char* opal_get_proc_hostname(const opal_proc_t *proc)
     }
 
     /* if we don't already have it, then try to get it */
-    OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, OPAL_PMIX_HOSTNAME, &proc->proc_name,
-                                   (char**)&(proc->proc_hostname), OPAL_STRING);
+    OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, PMIX_HOSTNAME, &proc->proc_name,
+                                   (char**)&(proc->proc_hostname), PMIX_STRING);
     if (OPAL_SUCCESS != ret) {
         return "unknown";  // return something so the caller doesn't segfault
     }

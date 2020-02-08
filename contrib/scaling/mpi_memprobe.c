@@ -9,7 +9,7 @@
 
 #include <stdio.h>
 #include "mpi.h"
-#include "opal/mca/pmix/pmix.h"
+#include "opal/mca/pmix/pmix-internal.h"
 #include "opal/util/argv.h"
 #include "opal/util/printf.h"
 #include "orte/runtime/runtime.h"

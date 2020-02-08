@@ -7,7 +7,7 @@
 # Copyright (c) 2013-2020 Intel, Inc.  All rights reserved.
 # Copyright (c) 2015-2019 Research Organization for Information Science
 #                         and Technology (RIST).  All rights reserved.
-# Copyright (c) 2015      IBM Corporation.  All rights reserved.
+# Copyright (c) 2015-2020 IBM Corporation.  All rights reserved.
 #
 # $COPYRIGHT$
 #
@@ -47,6 +47,7 @@ my @subdirs;
 # Command line parameters
 my $no_ompi_arg = 0;
 my $no_orte_arg = 0;
+my $no_prrte_arg = 0;
 my $no_oshmem_arg = 0;
 my $quiet_arg = 0;
 my $debug_arg = 0;
@@ -1121,6 +1122,7 @@ sub in_tarball {
 
 my $ok = Getopt::Long::GetOptions("no-ompi" => \$no_ompi_arg,
                                   "no-orte" => \$no_orte_arg,
+                                  "no-prrte" => \$no_prrte_arg,
                                   "no-oshmem" => \$no_oshmem_arg,
                                   "quiet|q" => \$quiet_arg,
                                   "debug|d" => \$debug_arg,
@@ -1136,7 +1138,8 @@ if (!$ok || $help_arg) {
         if (!$ok);
     print "Options:
   --no-ompi | -no-ompi          Do not build the Open MPI layer
-  --no-orte | -no-orte          Do not build the ORTE layer
+  --no-orte | -no-orte          Do not build Open MPI's runtime support (alias for --no-prrte)
+  --no-prrte | -no-prrte        Do not build Open MPI's runtime support
   --no-oshmem | -no-oshmem      Do not build the OSHMEM layer
   --quiet | -q                  Do not display normal verbose output
   --debug | -d                  Output lots of debug information
@@ -1164,31 +1167,22 @@ if (! -e "ompi") {
     $no_ompi_arg = 1;
     debug "No ompi subdirectory found - will not build MPI layer\n";
 }
-if (! -e "orte") {
-    $no_orte_arg = 1;
-    debug "No orte subdirectory found - will not build ORTE\n";
+if (! -e "prrte") {
+    $no_prrte_arg = 1;
+    debug "No prrte subdirectory found - will not build PRRTE\n";
 }
 if (! -e "oshmem") {
     $no_oshmem_arg = 1;
     debug "No oshmem subdirectory found - will not build OSHMEM\n";
 }
+# alias --no-orte to --no-prrte
+if ($no_orte_arg == 1) {
+    $no_prrte_arg = 1;
+}
 
-if (-e "orcm") {
-    # bozo check - ORCM requires ORTE
-    if ($no_orte_arg == 1) {
-        print "Cannot build ORCM without ORTE\n";
-        my_exit(1);
-    }
-    $project_name_long = "Open Resilient Cluster Manager";
-    $project_name_short = "open-rcm";
-} elsif ($no_ompi_arg == 1) {
-    if ($no_orte_arg == 0) {
-        $project_name_long = "Open MPI Run Time Environment";
-        $project_name_short = "open-rte";
-    } else {
-        $project_name_long = "Open Portability Access Layer";
-        $project_name_short = "open-pal";
-    }
+if ($no_ompi_arg == 1) {
+    $project_name_long = "Open Portability Access Layer";
+    $project_name_short = "open-pal";
 }
 
 #---------------------------------------------------------------------------
@@ -1393,18 +1387,17 @@ if (! (-f "VERSION" && -f "configure.ac" && -f $topdir_file)) {
 # Top-level projects to examine
 my $projects;
 push(@{$projects}, { name => "opal", dir => "opal", need_base => 1 });
-push(@{$projects}, { name => "orte", dir => "orte", need_base => 1 })
-    if (!$no_orte_arg);
 push(@{$projects}, { name => "ompi", dir => "ompi", need_base => 1 })
     if (!$no_ompi_arg);
 push(@{$projects}, { name => "oshmem", dir => "oshmem", need_base => 1 })
     if (!$no_ompi_arg && !$no_oshmem_arg);
-push(@{$projects}, { name => "orcm", dir => "orcm", need_base => 1 })
-    if (-e "orcm");
 
 $m4 .= "dnl Separate m4 define for each project\n";
 foreach my $p (@$projects) {
     $m4 .= "m4_define([project_$p->{name}], [1])\n";
+}
+if (!$no_prrte_arg) {
+    $m4 .= "m4_define([project_prrte], [1])\n";
 }
 
 $m4 .= "\ndnl Project names
@@ -1432,6 +1425,10 @@ if (!$no_ompi_arg) {
 # Process all subdirs that we found in previous steps
 ++$step;
 verbose "\n$step. Processing autogen.subdirs directories\n";
+
+if (!$no_prrte_arg) {
+    process_autogen_subdirs(".");
+}
 
 if ($#subdirs >= 0) {
     foreach my $d (@subdirs) {

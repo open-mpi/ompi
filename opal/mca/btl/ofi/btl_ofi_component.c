@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2014-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2018      Intel, Inc, All rights reserved
+ * Copyright (c) 2018-2019 Intel, Inc.  All rights reserved.
  *
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
@@ -567,7 +567,7 @@ static int mca_btl_ofi_init_device(struct fi_info *info)
 
     /* post our endpoint name so peer can use it to connect to us */
     OPAL_MODEX_SEND(rc,
-                    OPAL_PMIX_GLOBAL,
+                    PMIX_GLOBAL,
                     &mca_btl_ofi_component.super.btl_version,
                     &ep_name,
                     namelen);

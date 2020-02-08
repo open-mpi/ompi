@@ -3,7 +3,7 @@
  * Copyright (c) 2011-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2011      UT-Battelle, LLC. All rights reserved.
- * Copyright (c) 2014-2015 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -20,7 +20,7 @@
 
 #include "opal/class/opal_list.h"
 #include "opal/dss/dss.h"
-#include "opal/mca/pmix/pmix.h"
+#include "opal/mca/pmix/pmix-internal.h"
 #include "opal/util/bit_ops.h"
 #include "opal/mca/hwloc/base/base.h"
 
@@ -221,7 +221,7 @@ static int mca_btl_ugni_send_modex (void)
      * new ranks started on the same nodes as the spawnee ranks, etc.
      */
 
-    OPAL_MODEX_SEND(rc, OPAL_PMIX_GLOBAL,
+    OPAL_MODEX_SEND(rc, PMIX_GLOBAL,
                     &mca_btl_ugni_component.super.btl_version,
                     modex_msg, modex_size);
 

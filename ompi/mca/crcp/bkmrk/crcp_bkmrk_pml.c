@@ -8,7 +8,7 @@
  * Copyright (c) 2010-2012 Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2015      Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
@@ -35,10 +35,10 @@
 
 #include "opal/util/opal_environ.h"
 #include "ompi/mca/mca.h"
-#include "opal/mca/pmix/pmix.h"
+#include "opal/mca/pmix/pmix-internal.h"
 
 #include "ompi/request/request.h"
-#include "ompi/mca/rte/rte.h"
+#include "ompi/runtime/ompi_rte.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/pml/base/base.h"
 #include "ompi/mca/pml/base/pml_base_request.h"
@@ -3030,7 +3030,7 @@ ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_ft_event(
 
         if( opal_cr_timing_barrier_enabled ) {
             OPAL_CR_SET_TIMER(OPAL_CR_TIMER_CRCPBR0);
-            if( OMPI_SUCCESS != (ret = opal_pmix.fence(NULL, 0))) {
+            if( OMPI_SUCCESS != (ret = PMIx_Fence(NULL, 0,NULL, 0))) {
                 exit_status = ret;
                 goto DONE;
             }
@@ -3101,7 +3101,7 @@ ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_ft_event(
 
         if( opal_cr_timing_barrier_enabled ) {
             OPAL_CR_SET_TIMER(OPAL_CR_TIMER_COREBR1);
-            if( OMPI_SUCCESS != (ret = opal_pmix.fence(NULL, 0))) {
+            if( OMPI_SUCCESS != (ret = PMIx_Fence(NULL, 0,NULL, 0))) {
                 exit_status = ret;
                 goto DONE;
             }
@@ -6222,7 +6222,7 @@ static void display_all_timers(int state) {
             return;
         }
         else if( 2 == timing_enabled ) {
-            if( OPAL_SUCCESS != (ret = opal_pmix.fence(NULL, 0))) {
+            if( OPAL_SUCCESS != (ret = PMIx_Fence(NULL, 0,NULL, 0))) {
                 OPAL_ERROR_LOG(ret);
             }
             return;
@@ -6245,7 +6245,7 @@ static void display_all_timers(int state) {
 
     if( timing_enabled >= 2) {
         barrier_start = get_time();
-        if( OPAL_SUCCESS != (ret = opal_pmix.fence(NULL, 0))) {
+        if( OPAL_SUCCESS != (ret = PMIx_Fence(NULL, 0,NULL, 0))) {
             OPAL_ERROR_LOG(ret);
         }
         barrier_stop = get_time();

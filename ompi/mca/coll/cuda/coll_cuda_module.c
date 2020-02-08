@@ -21,8 +21,8 @@
 
 #include "mpi.h"
 
+
 #include "opal/util/show_help.h"
-#include "ompi/mca/rte/rte.h"
 
 #include "ompi/constants.h"
 #include "ompi/communicator/communicator.h"

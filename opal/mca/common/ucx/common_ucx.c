@@ -1,5 +1,8 @@
 /*
  * Copyright (C) Mellanox Technologies Ltd. 2018. ALL RIGHTS RESERVED.
+ * Copyright (c) 2019      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2019      Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -12,7 +15,7 @@
 #include "common_ucx.h"
 #include "opal/mca/base/mca_base_var.h"
 #include "opal/mca/base/mca_base_framework.h"
-#include "opal/mca/pmix/pmix.h"
+#include "opal/mca/pmix/pmix-internal.h"
 #include "opal/memoryhooks/memory.h"
 
 #include <ucm/api/ucm.h>
@@ -155,7 +158,7 @@ void opal_common_ucx_mca_proc_added(void)
 
 OPAL_DECLSPEC int opal_common_ucx_mca_pmix_fence_nb(int *fenced)
 {
-    return opal_pmix.fence_nb(NULL, 0, opal_common_ucx_mca_fence_complete_cb, (void *)fenced);
+    return PMIx_Fence_nb(NULL, 0, NULL, 0, opal_common_ucx_mca_fence_complete_cb, (void *)fenced);
 }
 
 OPAL_DECLSPEC int opal_common_ucx_mca_pmix_fence(ucp_worker_h worker)
@@ -163,7 +166,7 @@ OPAL_DECLSPEC int opal_common_ucx_mca_pmix_fence(ucp_worker_h worker)
     volatile int fenced = 0;
     int ret = OPAL_SUCCESS;
 
-    if (OPAL_SUCCESS != (ret = opal_pmix.fence_nb(NULL, 0,
+    if (OPAL_SUCCESS != (ret = PMIx_Fence_nb(NULL, 0, NULL, 0,
                     opal_common_ucx_mca_fence_complete_cb, (void*)&fenced))){
         return ret;
     }

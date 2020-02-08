@@ -3,7 +3,7 @@
  * Copyright (c) 2011-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2011-2013 UT-Battelle, LLC. All rights reserved.
- * Copyright (c) 2017      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2017-2019 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -13,7 +13,7 @@
 
 #include "btl_ugni_endpoint.h"
 #include "btl_ugni_smsg.h"
-#include "opal/mca/pmix/pmix.h"
+#include "opal/mca/pmix/pmix-internal.h"
 
 static void mca_btl_ugni_ep_construct (mca_btl_base_endpoint_t *ep)
 {

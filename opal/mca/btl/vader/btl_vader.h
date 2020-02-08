@@ -19,6 +19,7 @@
  *                         reserved.
  * Copyright (c) 2020      Google, LLC. All rights reserved.
  *
+ * Copyright (c) 2019      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -60,7 +61,7 @@
 #include "opal/util/proc.h"
 #include "btl_vader_endpoint.h"
 
-#include "opal/mca/pmix/pmix.h"
+#include "opal/mca/pmix/pmix-internal.h"
 
 #include "btl_vader_xpmem.h"
 #include "btl_vader_knem.h"

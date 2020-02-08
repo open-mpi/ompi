@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2015-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2018      Intel, Inc, All rights reserved
+ * Copyright (c) 2018-2019 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -36,7 +36,7 @@
 #include "opal/mca/mpool/mpool.h"
 #include "opal/mca/btl/base/btl_base_error.h"
 #include "opal/mca/rcache/base/base.h"
-#include "opal/mca/pmix/pmix.h"
+#include "opal/mca/pmix/pmix-internal.h"
 
 #include "opal/class/opal_hash_table.h"
 

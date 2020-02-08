@@ -15,7 +15,7 @@
  *                         All rights reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2015      Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
@@ -58,7 +58,7 @@
 #include "ompi/group/group.h"
 #include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/base.h"
-#include "ompi/mca/rte/rte.h"
+#include "ompi/runtime/ompi_rte.h"
 #include "ompi/proc/proc.h"
 #include "coll_sm.h"
 

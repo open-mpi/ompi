@@ -3,7 +3,7 @@
  *                         All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2015      Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
@@ -14,33 +14,33 @@
 
 #include "ompi_config.h"
 #include "vprotocol_pessimist_eventlog.h"
-#include "opal/mca/pmix/pmix.h"
+#include "opal/mca/pmix/pmix-internal.h"
 #include "opal/util/printf.h"
 #include "ompi/dpm/dpm.h"
 
 int vprotocol_pessimist_event_logger_connect(int el_rank, ompi_communicator_t **el_comm)
 {
     int rc;
-    char *port;
+    pmix_status_t prc;
+    char *port, *tmp;
     int rank;
     vprotocol_pessimist_clock_t connect_info[2];
-    opal_list_t results;
-    opal_pmix_pdata_t *pdat;
+    pmix_pdata_t pdat;
 
-    OBJ_CONSTRUCT(&results, opal_list_t);
-    pdat = OBJ_NEW(opal_pmix_pdata_t);
-    opal_asprintf(&pdat->value.key, VPROTOCOL_EVENT_LOGGER_NAME_FMT, el_rank);
-    opal_list_append(&results, &pdat->super);
+    PMIX_PDATA_CONSTRUCT(&pdat);
+    opal_asprintf(&tmp, VPROTOCOL_EVENT_LOGGER_NAME_FMT, el_rank);
+    PMIX_LOAD_KEY(pdat.key, tmp);
+    free(tmp);
 
-    rc = opal_pmix.lookup(&results, NULL);
-    if (OPAL_SUCCESS != rc ||
-        OPAL_STRING != pdat->value.type ||
-        NULL == pdat->value.data.string) {
-        OPAL_LIST_DESTRUCT(&results);
+    prc = PMIx_Lookup(&pdat, 1, NULL, 0);
+    if (PMIX_SUCCESS != prc ||
+        OPAL_STRING != pdat.value.type ||
+        NULL == pdat.value.data.string) {
+        PMIX_PDATA_DESTRUCT(&pdat);
         return OMPI_ERR_NOT_FOUND;
     }
-    port = strdup(pdat->value.data.string);
-    OPAL_LIST_DESTRUCT(&results);
+    port = strdup(pdat.value.data.string);
+    PMIX_PDATA_DESTRUCT(&pdat);
     V_OUTPUT_VERBOSE(45, "Found port < %s >", port);
 
     rc = ompi_dpm_connect_accept(MPI_COMM_SELF, 0, port, true, el_comm);
