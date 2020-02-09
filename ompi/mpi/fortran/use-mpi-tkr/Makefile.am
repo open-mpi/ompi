@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2018 Cisco Systems, Inc.  All rights reserved
+# Copyright (c) 2006-2019 Cisco Systems, Inc.  All rights reserved
 # Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
 #                         reserved.
 # Copyright (c) 2014-2016 Research Organization for Information Science
@@ -31,6 +31,13 @@ include $(top_srcdir)/Makefile.ompi-rules
 # this directory -- instead, they compile
 # ompi/fortran/use-mpi-ignore-tkr.
 
+# Note that Automake's Fortran-buidling rules uses CPPFLAGS and
+# AM_CPPFLAGS.  This can cause weirdness (e.g.,
+# https://github.com/open-mpi/ompi/issues/7253).  Let's just zero
+# those out and rely on AM_FCFLAGS.
+CPPFLAGS =
+AM_CPPFLAGS =
+
 if OMPI_BUILD_FORTRAN_USEMPI_TKR_BINDINGS
 
 ########################################################################
@@ -40,7 +47,7 @@ if OMPI_BUILD_FORTRAN_USEMPI_TKR_BINDINGS
 # current directory) because it is generated.
 
 AM_FCFLAGS = -I$(top_builddir)/ompi/include -I$(top_srcdir)/ompi/include \
-             $(OMPI_FC_MODULE_FLAG). -I$(srcdir) -I. \
+             $(OMPI_FC_MODULE_FLAG). -I$(top_srcdir) -I$(top_builddir) -I. \
              -I$(top_builddir)/ompi/mpi/fortran/use-mpi-tkr $(FCFLAGS_f90)
 
 # Do different things if the top-level configure decided that we're

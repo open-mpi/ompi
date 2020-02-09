@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2012      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2012-2019 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2017      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
@@ -9,6 +9,13 @@
 #
 # $HEADER$
 #
+
+# Note that Automake's Fortran-buidling rules uses CPPFLAGS and
+# AM_CPPFLAGS.  This can cause weirdness (e.g.,
+# https://github.com/open-mpi/ompi/issues/7253).  Let's just zero
+# those out and rely on AM_FCFLAGS.
+CPPFLAGS =
+AM_CPPFLAGS =
 
 #
 # Only do the stuff in this file if we're going to build
@@ -21,7 +28,8 @@ if OMPI_BUILD_FORTRAN_USEMPI_OR_USEMPIF08_EXT
 
 AM_FCFLAGS = -I$(top_builddir)/ompi/include -I$(top_srcdir)/ompi/include \
              $(OMPI_FC_MODULE_FLAG)$(top_builddir)/ompi/mpi/fortran/base \
-             -I$(top_srcdir) $(FCFLAGS_f90)
+             $(OMPI_FC_MODULE_FLAG)$(top_builddir)/ompi/mpi/fortran/use-mpi-ignore-tkr \
+             -I$(top_srcdir) -I$(top_builddir) $(FCFLAGS_f90)
 
 flibs =
 

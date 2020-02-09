@@ -1,6 +1,6 @@
 # -*- makefile -*-
 #
-# Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2019 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2015-2018 Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # Copyright (c) 2016      IBM Corporation.  All rights reserved.
@@ -14,11 +14,16 @@
 
 include $(top_srcdir)/Makefile.ompi-rules
 
+# Note that Automake's Fortran-buidling rules uses CPPFLAGS and
+# AM_CPPFLAGS.  This can cause weirdness (e.g.,
+# https://github.com/open-mpi/ompi/issues/7253).  Let's just zero
+# those out and rely on AM_FCFLAGS.
+CPPFLAGS =
+AM_CPPFLAGS =
+
 # This Makefile is only relevant if we're building the ignore-TKR "use
 # mpi" MPI bindings.
 if OMPI_BUILD_FORTRAN_USEMPI_IGNORE_TKR_BINDINGS
-
-AM_CPPFLAGS = -DOMPI_PROFILE_LAYER=0 -DOMPI_COMPILING_FORTRAN_WRAPPERS=1
 
 AM_FCFLAGS = -I$(top_builddir)/ompi/include -I$(top_srcdir)/ompi/include \
              -I$(top_builddir) -I$(top_srcdir) $(FCFLAGS_f90)
