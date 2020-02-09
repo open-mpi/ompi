@@ -41,7 +41,7 @@ OSHMEM_DECLSPEC int mca_memheap_base_select(void);
 extern int mca_memheap_base_already_opened;
 extern int mca_memheap_base_key_exchange;
 
-#define MCA_MEMHEAP_MAX_SEGMENTS    8
+#define MCA_MEMHEAP_MAX_SEGMENTS    32
 #define HEAP_SEG_INDEX              0
 #define MCA_MEMHEAP_SEG_COUNT       2
 
