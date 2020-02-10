@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015-2018 Mellanox Technologies, Inc.
@@ -32,9 +32,12 @@ pmix_server_module_t mymodule = {
     .unpublish = unpublish_fn,
     .spawn = spawn_fn,
     .connect = connect_fn,
-    .disconnect = disconnect_fn,
+    .disconnect = disconnect_fn
+#if 0
+,
     .register_events = regevents_fn,
     .deregister_events = deregevents_fn
+#endif
 };
 
 typedef struct {

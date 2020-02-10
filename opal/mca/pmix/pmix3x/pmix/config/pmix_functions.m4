@@ -94,9 +94,19 @@ EOF
 # Save some stats about this build
 #
 
-PMIX_CONFIGURE_USER="`whoami`"
-PMIX_CONFIGURE_HOST="`(hostname || uname -n) 2> /dev/null | sed 1q`"
-PMIX_CONFIGURE_DATE="`date`"
+DATE_FMT="+%Y-%m-%dT%H:%M:%S"
+if test -n "$SOURCE_DATE_EPOCH" ; then
+  PMIX_CONFIGURE_USER="reproduciblebuild"
+  PMIX_CONFIGURE_HOST="reproduciblebuild"
+  PMIX_CONFIGURE_DATE=$(date -u -d "@$SOURCE_DATE_EPOCH" "$DATE_FMT" 2>/dev/null || date -u -r "$SOURCE_DATE_EPOCH" "$DATE_FMT" 2>/dev/null || date -u "$DATE_FMT")
+else
+  PMIX_CONFIGURE_USER="`whoami`"
+  PMIX_CONFIGURE_HOST="`(hostname || uname -n) 2> /dev/null | sed 1q`"
+  PMIX_CONFIGURE_DATE="`date $DATE_FMT`"
+fi
+
+AC_SUBST([SOURCE_DATE_EPOCH])
+AM_CONDITIONAL([SOURCE_DATE_EPOCH_SET], [test -n "$SOURCE_DATE_EPOCH"])
 
 #
 # Save these details so that they can be used in pmix_info later

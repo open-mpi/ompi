@@ -88,6 +88,7 @@ static pmix_status_t generate_node_regex(const char *input,
     pmix_list_t vids;
     char **regexargs = NULL, *tmp, *tmp2;
     char *cptr;
+    pmix_status_t rc;
 
     /* define the default */
     *regexp = NULL;
@@ -302,17 +303,22 @@ static pmix_status_t generate_node_regex(const char *input,
     }
 
     /* assemble final result */
-    tmp = pmix_argv_join(regexargs, ',');
-    if (0 > asprintf(regexp, "pmix[%s]", tmp)) {
-        return PMIX_ERR_NOMEM;
-    }
-    free(tmp);
+    if (NULL != regexargs) {
+        tmp = pmix_argv_join(regexargs, ',');
+        if (0 > asprintf(regexp, "pmix[%s]", tmp)) {
+            return PMIX_ERR_NOMEM;
+        }
+        free(tmp);
 
-    /* cleanup */
-    pmix_argv_free(regexargs);
+        /* cleanup */
+        pmix_argv_free(regexargs);
+        rc = PMIX_SUCCESS;
+    } else {
+        rc = PMIX_ERR_TAKE_NEXT_OPTION;
+    }
 
     PMIX_DESTRUCT(&vids);
-    return PMIX_SUCCESS;
+    return rc;
 }
 
 static pmix_status_t generate_ppn(const char *input,

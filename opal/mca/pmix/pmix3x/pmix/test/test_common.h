@@ -133,6 +133,8 @@ typedef struct {
     uint32_t lsize;
 } test_params;
 
+extern test_params params;
+
 #define INIT_TEST_PARAMS(params) do { \
     params.nprocs = 1;                \
     params.verbose = 0;               \
@@ -219,7 +221,6 @@ extern pmix_list_t test_fences;
 extern pmix_list_t *noise_range;
 extern pmix_list_t key_replace;
 
-#define NODE_NAME "node1"
 int get_total_ns_number(test_params params);
 int get_all_ranks_from_namespace(test_params params, char *nspace, pmix_proc_t **ranks, size_t *nranks);
 
@@ -284,7 +285,8 @@ typedef struct {
                 nanosleep(&ts,NULL);                                                                                \
                 count++;                                                                                            \
             }                                                                                                       \
-            PMIX_ACQUIRE_OBJECT(&cbdata);                                                                            \
+            rc = cbdata.status;                                                                                     \
+            PMIX_ACQUIRE_OBJECT(&cbdata);                                                                           \
         }                                                                                                           \
     }                                                                                                               \
     if (PMIX_SUCCESS == rc) {                                                                                       \

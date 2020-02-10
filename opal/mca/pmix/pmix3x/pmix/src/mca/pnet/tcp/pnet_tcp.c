@@ -200,7 +200,7 @@ static pmix_status_t tcp_init(void)
 
     /* if we are not the "gateway", then there is nothing
      * for us to do */
-    if (!PMIX_PROC_IS_GATEWAY(pmix_globals.mypeer)) {
+    if (!PMIX_PEER_IS_GATEWAY(pmix_globals.mypeer)) {
         return PMIX_SUCCESS;
     }
 
@@ -258,7 +258,7 @@ static void tcp_finalize(void)
 {
     pmix_output_verbose(2, pmix_pnet_base_framework.framework_output,
                         "pnet: tcp finalize");
-    if (PMIX_PROC_IS_GATEWAY(pmix_globals.mypeer)) {
+    if (PMIX_PEER_IS_GATEWAY(pmix_globals.mypeer)) {
         PMIX_LIST_DESTRUCT(&allocations);
         PMIX_LIST_DESTRUCT(&available);
     }
@@ -320,7 +320,7 @@ static pmix_status_t allocate(pmix_namespace_t *nptr,
 
     /* if I am not the gateway, then ignore this call - should never
      * happen, but check to be safe */
-    if (!PMIX_PROC_IS_GATEWAY(pmix_globals.mypeer)) {
+    if (!PMIX_PEER_IS_GATEWAY(pmix_globals.mypeer)) {
         return PMIX_SUCCESS;
     }
 
@@ -847,7 +847,7 @@ static void deregister_nspace(pmix_namespace_t *nptr)
 
     /* if we are not the "gateway", then there is nothing
      * for us to do */
-    if (!PMIX_PROC_IS_GATEWAY(pmix_globals.mypeer)) {
+    if (!PMIX_PEER_IS_GATEWAY(pmix_globals.mypeer)) {
         return;
     }
 

@@ -1,8 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
- * Copyright (c) 2014-2017 Research Organization for Information Science
- * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2020 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2019 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2014-2015 Artem Y. Polyakov <artpol84@gmail.com>.
  *                         All rights reserved.
@@ -100,7 +99,7 @@ static void nscon(pmix_namespace_t *p)
 {
     p->nspace = NULL;
     p->nprocs = 0;
-    p->nlocalprocs = 0;
+    p->nlocalprocs = SIZE_MAX;
     p->all_registered = false;
     p->version_stored = false;
     p->jobbkt = NULL;
@@ -170,7 +169,11 @@ PMIX_EXPORT PMIX_CLASS_INSTANCE(pmix_rank_info_t,
 
 static void pcon(pmix_peer_t *p)
 {
-    p->proc_type = PMIX_PROC_UNDEF;
+    p->proc_type.type = PMIX_PROC_UNDEF;
+    p->proc_type.major = PMIX_MAJOR_WILDCARD;
+    p->proc_type.minor = PMIX_MINOR_WILDCARD;
+    p->proc_type.release = PMIX_RELEASE_WILDCARD;
+    p->proc_type.padding = 0;
     p->protocol = PMIX_PROTOCOL_UNDEF;
     p->finalized = false;
     p->info = NULL;
@@ -228,22 +231,24 @@ PMIX_EXPORT PMIX_CLASS_INSTANCE(pmix_peer_t,
 
 static void iofreqcon(pmix_iof_req_t *p)
 {
-    p->peer = NULL;
-    memset(&p->pname, 0, sizeof(pmix_name_t));
+    p->requestor = NULL;
+    p->refid = 0;
+    p->procs = NULL;
+    p->nprocs = 0;
     p->channels = PMIX_FWD_NO_CHANNELS;
     p->cbfunc = NULL;
 }
 static void iofreqdes(pmix_iof_req_t *p)
 {
-    if (NULL != p->peer) {
-        PMIX_RELEASE(p->peer);
+    if (NULL != p->requestor) {
+        PMIX_RELEASE(p->requestor);
     }
-    if (NULL != p->pname.nspace) {
-        free(p->pname.nspace);
+    if (0 < p->nprocs) {
+        PMIX_PROC_FREE(p->procs, p->nprocs);
     }
 }
 PMIX_EXPORT PMIX_CLASS_INSTANCE(pmix_iof_req_t,
-                                pmix_list_item_t,
+                                pmix_object_t,
                                 iofreqcon, iofreqdes);
 
 
@@ -306,7 +311,6 @@ static void cbcon(pmix_cb_t *p)
     PMIX_CONSTRUCT(&p->kvs, pmix_list_t);
     p->copy = false;
     p->timer_running = false;
-    p->level = PMIX_LEVEL_UNDEF;
 }
 static void cbdes(pmix_cb_t *p)
 {

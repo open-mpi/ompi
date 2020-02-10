@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
@@ -150,29 +150,30 @@ static int test_publish_lookup_common(char *my_nspace, int my_rank, int blocking
     rc = test_publish(my_nspace, my_rank, blocking);
     if (PMIX_SUCCESS != rc) {
         TEST_ERROR(("%s:%d: %s failed.", my_nspace, my_rank, blocking ? "PMIX_Publish" : "PMIX_Publish_nb"));
-        return PMIX_ERROR;
+        exit(rc);
     }
     TEST_VERBOSE(("%s:%d: %s succeeded.", my_nspace, my_rank, blocking ? "PMIX_Publish" : "PMIX_Publish_nb"));
 
     rc = test_lookup(my_nspace, my_rank, blocking);
     if (PMIX_SUCCESS != rc) {
         TEST_ERROR(("%s:%d: %s failed.", my_nspace, my_rank, blocking ? "PMIX_Lookup" : "PMIX_Lookup_nb"));
-        return PMIX_ERROR;
+        exit(rc);
     }
     TEST_VERBOSE(("%s:%d: %s succeeded.\n", my_nspace, my_rank, blocking ? "PMIX_Lookup" : "PMIX_Lookup_nb"));
 
     rc = test_unpublish(my_nspace, my_rank, blocking);
     if (PMIX_SUCCESS != rc) {
         TEST_ERROR(("%s:%d: %s failed.", my_nspace, my_rank, blocking ? "PMIX_Unpublish" : "PMIX_Unpublish_nb"));
-        return PMIX_ERROR;
+        exit(rc);
     }
     TEST_VERBOSE(("%s:%d: %s succeeded.", my_nspace, my_rank, blocking ? "PMIX_Unpublish" : "PMIX_Unpublish_nb"));
 
     rc = test_lookup(my_nspace, my_rank, blocking);
     if (PMIX_ERR_NOT_FOUND != rc) {
         TEST_ERROR(("%s:%d: %s function returned %d instead of PMIX_ERR_NOT_FOUND.", my_nspace, my_rank, blocking ? "PMIX_Lookup" : "PMIX_Lookup_nb", rc));
-        return PMIX_ERROR;
+        exit(rc);
     }
+    TEST_VERBOSE(("%s:%d: %s succeeded.", my_nspace, my_rank, blocking ? "PMIX_Lookup of non-existent key" : "PMIX_Lookup_nb of non-existent key"));
     return PMIX_SUCCESS;
 }
 
@@ -183,13 +184,13 @@ int test_publish_lookup(char *my_nspace, int my_rank)
     rc = test_publish_lookup_common(my_nspace, my_rank, 1);
     if (PMIX_SUCCESS != rc) {
         TEST_ERROR(("%s:%d: Publish/Lookup blocking test failed.", my_nspace, my_rank));
-        return PMIX_ERROR;
+        exit(rc);
     }
     /* test non-blocking */
     rc = test_publish_lookup_common(my_nspace, my_rank, 0);
     if (PMIX_SUCCESS != rc) {
         TEST_ERROR(("%s:%d: Publish/Lookup non-blocking test failed.", my_nspace, my_rank));
-        return PMIX_ERROR;
+        exit(rc);
     }
     return PMIX_SUCCESS;
 }

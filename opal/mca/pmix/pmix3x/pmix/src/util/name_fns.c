@@ -27,6 +27,7 @@
 #include "pmix_common.h"
 
 #include "src/threads/tsd.h"
+#include "src/include/pmix_globals.h"
 #include "src/util/error.h"
 #include "src/util/name_fns.h"
 #include "src/util/printf.h"
@@ -94,7 +95,7 @@ get_print_name_buffer(void)
     return (pmix_print_args_buffers_t*) ptr;
 }
 
-char* pmix_util_print_name_args(const pmix_proc_t *name)
+static char* print_args(char *ns, pmix_rank_t rnk)
 {
     pmix_print_args_buffers_t *ptr;
     char *rank;
@@ -107,8 +108,8 @@ char* pmix_util_print_name_args(const pmix_proc_t *name)
         return pmix_print_args_null;
     }
 
-    /* protect against NULL names */
-    if (NULL == name) {
+    /* protect against NULL nspace */
+    if (NULL == ns) {
         index = ptr->cntr;
         snprintf(ptr->buffers[index], PMIX_PRINT_NAME_ARGS_MAX_SIZE, "[NO-NAME]");
         ptr->cntr++;
@@ -118,18 +119,36 @@ char* pmix_util_print_name_args(const pmix_proc_t *name)
         return ptr->buffers[index];
     }
 
-    rank = pmix_util_print_rank(name->rank);
+    rank = pmix_util_print_rank(rnk);
 
     index = ptr->cntr;
     snprintf(ptr->buffers[index],
              PMIX_PRINT_NAME_ARGS_MAX_SIZE,
-             "[%s:%s]", name->nspace, rank);
+             "[%s:%s]", ns, rank);
     ptr->cntr++;
     if (PMIX_PRINT_NAME_ARG_NUM_BUFS == ptr->cntr) {
         ptr->cntr = 0;
     }
 
     return ptr->buffers[index];
+}
+
+char* pmix_util_print_name_args(const pmix_proc_t *name)
+{
+    if (NULL == name) {
+        return print_args(NULL, PMIX_RANK_UNDEF);
+    }
+
+    return print_args((char*)name->nspace, name->rank);
+}
+
+char *pmix_util_print_pname_args(const pmix_name_t *name)
+{
+    if (NULL == name) {
+        return print_args(NULL, PMIX_RANK_UNDEF);
+    }
+
+    return print_args((char*)name->nspace, name->rank);
 }
 
 char* pmix_util_print_rank(const pmix_rank_t vpid)

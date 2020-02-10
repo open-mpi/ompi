@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2017      Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2019      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -56,7 +57,7 @@ int test_replace(char *my_nspace, pmix_rank_t my_rank, test_params params) {
         if (PMIX_SUCCESS != rc) {
             TEST_ERROR(("%s:%d: PMIx_Put failed: %d", my_nspace, my_rank, rc));
             PMIX_LIST_DESTRUCT(&key_replace);
-            return rc;
+            exit(rc);
         }
     }
 
@@ -69,7 +70,7 @@ int test_replace(char *my_nspace, pmix_rank_t my_rank, test_params params) {
         TEST_ERROR(("%s:%d: PMIx_Commit failed: %d", my_nspace, my_rank, rc));
         PMIX_LIST_DESTRUCT(&key_replace);
         PMIX_PROC_DESTRUCT(&proc);
-        return PMIX_ERROR;
+        exit(rc);
     }
 
     FENCE(1, 1, (&proc), 1);
@@ -77,7 +78,7 @@ int test_replace(char *my_nspace, pmix_rank_t my_rank, test_params params) {
         TEST_ERROR(("%s:%d: PMIx_Fence failed: %d", my_nspace, my_rank, rc));
         PMIX_LIST_DESTRUCT(&key_replace);
         PMIX_PROC_DESTRUCT(&proc);
-        return rc;
+        exit(rc);
     }
 
     PMIX_LIST_FOREACH(item, &key_replace, key_replace_t) {
@@ -89,7 +90,7 @@ int test_replace(char *my_nspace, pmix_rank_t my_rank, test_params params) {
             TEST_ERROR(("%s:%d: PMIx_Put failed: %d", my_nspace, my_rank, rc));
             PMIX_LIST_DESTRUCT(&key_replace);
             PMIX_PROC_DESTRUCT(&proc);
-            return rc;
+            exit(rc);
         }
     }
 
@@ -99,7 +100,7 @@ int test_replace(char *my_nspace, pmix_rank_t my_rank, test_params params) {
         TEST_ERROR(("%s:%d: PMIx_Commit failed: %d", my_nspace, my_rank, rc));
         PMIX_LIST_DESTRUCT(&key_replace);
         PMIX_PROC_DESTRUCT(&proc);
-        return PMIX_ERROR;
+        exit(rc);
     }
 
     FENCE(1, 1, (&proc), 1);
@@ -107,7 +108,7 @@ int test_replace(char *my_nspace, pmix_rank_t my_rank, test_params params) {
         TEST_ERROR(("%s:%d: PMIx_Fence failed: %d", my_nspace, my_rank, rc));
         PMIX_LIST_DESTRUCT(&key_replace);
         PMIX_PROC_DESTRUCT(&proc);
-        return rc;
+        exit(rc);
     }
 
     for (key_idx = 0; key_idx < key_cnt; key_idx++) {
@@ -125,7 +126,7 @@ int test_replace(char *my_nspace, pmix_rank_t my_rank, test_params params) {
             TEST_ERROR(("%s:%d: PMIx_Get of remote key on local proc", my_nspace, my_rank));
             PMIX_LIST_DESTRUCT(&key_replace);
             PMIX_PROC_DESTRUCT(&proc);
-            return PMIX_ERROR;
+            exit(rc);
         }
     }
 

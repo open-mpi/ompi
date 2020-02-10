@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2019 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -23,6 +23,7 @@ BEGIN_C_DECLS
 
 typedef struct {
     pmix_peer_t *myserver;          // messaging support to/from my server
+    bool singleton;                 // no server
     pmix_list_t pending_requests;   // list of pmix_cb_t pending data requests
     pmix_pointer_array_t peers;     // array of pmix_peer_t cached for data ops
     // verbosity for client get operations

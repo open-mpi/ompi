@@ -65,16 +65,22 @@ PMIX_EXPORT int pmix_common_dstor_getpagesize(void)
 
 PMIX_EXPORT size_t pmix_common_dstor_getcacheblocksize(void)
 {
-    size_t cache_line = 0;
+    long cache_line = 0;
 
 #if defined(_SC_LEVEL1_DCACHE_LINESIZE)
     cache_line = sysconf(_SC_LEVEL1_DCACHE_LINESIZE);
 #endif
 #if (defined(HAVE_SYS_AUXV_H)) && (defined(AT_DCACHEBSIZE))
-    if (0 == cache_line) {
-        cache_line = getauxval(AT_DCACHEBSIZE);
+    if (0 >= cache_line) {
+        unsigned long auxval;
+        if( (auxval = getauxval(AT_DCACHEBSIZE)) ){
+            cache_line = auxval;
+        }
     }
 #endif
+    if (0 >= cache_line) {
+        cache_line = 64;
+    }
     return cache_line;
 }
 

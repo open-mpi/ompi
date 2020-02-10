@@ -473,7 +473,8 @@ PMIX_EXPORT pmix_status_t PMIx_Log_nb(const pmix_info_t data[], size_t ndata,
  *   previously released is included.
  */
 PMIX_EXPORT pmix_status_t PMIx_Allocation_request(pmix_alloc_directive_t directive,
-                                                  pmix_info_t *info, size_t ninfo);
+                                                  pmix_info_t *info, size_t ninfo,
+                                                  pmix_info_t **results, size_t *nresults);
 
 PMIX_EXPORT pmix_status_t PMIx_Allocation_request_nb(pmix_alloc_directive_t directive,
                                                      pmix_info_t *info, size_t ninfo,
@@ -620,8 +621,8 @@ PMIX_EXPORT pmix_status_t PMIx_Validate_credential(const pmix_byte_object_t *cre
  *
  * source - the nspace/rank of the process that generated the data
  *
- * payload - pointer to character array containing the data. Note that
- *           multiple strings may be included, and that the array may
+ * payload - pointer to a PMIx byte object containing the data. Note that
+ *           multiple strings may be included, and that the data may
  *           _not_ be NULL terminated
  *
  * info - an optional array of info provided by the source containing
@@ -630,7 +631,7 @@ PMIX_EXPORT pmix_status_t PMIx_Validate_credential(const pmix_byte_object_t *cre
  * ninfo - number of elements in the optional info array
  */
  typedef void (*pmix_iof_cbfunc_t)(size_t iofhdlr, pmix_iof_channel_t channel,
-                                   pmix_proc_t *source, char *payload,
+                                   pmix_proc_t *source, pmix_byte_object_t *payload,
                                    pmix_info_t info[], size_t ninfo);
 
 
@@ -654,7 +655,9 @@ PMIX_EXPORT pmix_status_t PMIx_Validate_credential(const pmix_byte_object_t *cre
  *           NOTE: STDIN is not supported as it will always
  *           be delivered to the stdin file descriptor
  *
- * cbfunc - function to be called when relevant IO is received
+ * cbfunc - function to be called when relevant IO is received. A
+ *          NULL indicates that the IO is to be written to stdout
+ *          or stderr as per the originating channel
  *
  * regcbfunc - since registration is async, this is the
  *             function to be called when registration is

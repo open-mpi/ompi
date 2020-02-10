@@ -148,6 +148,8 @@ typedef struct {
     pmix_proc_t source;
     pmix_iof_channel_t channel;
     pmix_byte_object_t *bo;
+    pmix_info_t *info;
+    size_t ninfo;
 } pmix_iof_cache_t;
 PMIX_CLASS_DECLARATION(pmix_iof_cache_t);
 
@@ -319,6 +321,11 @@ pmix_status_t pmix_server_iofreg(pmix_peer_t *peer,
                                  void *cbdata);
 
 pmix_status_t pmix_server_iofstdin(pmix_peer_t *peer,
+                                   pmix_buffer_t *buf,
+                                   pmix_op_cbfunc_t cbfunc,
+                                   void *cbdata);
+
+pmix_status_t pmix_server_iofdereg(pmix_peer_t *peer,
                                    pmix_buffer_t *buf,
                                    pmix_op_cbfunc_t cbfunc,
                                    void *cbdata);

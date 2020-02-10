@@ -3,6 +3,7 @@
  * Copyright (c) 2012-2016 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC. All rights reserved
  * Copyright (c) 2015-2018 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2020      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -59,8 +60,8 @@ pmix_status_t pmix_hotel_init(pmix_hotel_t *h, int num_rooms,
 
     h->num_rooms = num_rooms;
     h->evbase = evbase;
-    h->eviction_timeout.tv_usec = eviction_timeout % 1000000;
-    h->eviction_timeout.tv_sec = eviction_timeout / 1000000;
+    h->eviction_timeout.tv_usec = 0;
+    h->eviction_timeout.tv_sec = eviction_timeout;
     h->evict_callback_fn = evict_callback_fn;
     h->rooms = (pmix_hotel_room_t*)malloc(num_rooms * sizeof(pmix_hotel_room_t));
     if (NULL != evict_callback_fn) {

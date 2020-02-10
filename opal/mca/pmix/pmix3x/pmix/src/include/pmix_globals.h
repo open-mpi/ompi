@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2020 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -106,6 +106,7 @@ typedef uint8_t pmix_cmd_t;
 #define PMIX_VALIDATE_CRED_CMD      21
 #define PMIX_IOF_PULL_CMD           22
 #define PMIX_IOF_PUSH_CMD           23
+#define PMIX_IOF_DEREG_CMD          29
 
 /* provide a "pretty-print" function for cmds */
 const char* pmix_command_string(pmix_cmd_t cmd);
@@ -121,16 +122,6 @@ typedef enum {
     PMIX_COLLECT_YES,
     PMIX_COLLECT_MAX
 } pmix_collect_t;
-
-/* define a set of flags indicating the level
- * of information being stored/requested */
-typedef enum {
-    PMIX_LEVEL_UNDEF,
-    PMIX_LEVEL_SESSION,
-    PMIX_LEVEL_JOB,
-    PMIX_LEVEL_APP,
-    PMIX_LEVEL_NODE
-} pmix_level_t;
 
 /****    PEER STRUCTURES    ****/
 
@@ -256,9 +247,11 @@ PMIX_CLASS_DECLARATION(pmix_peer_t);
 
 /* tracker for IOF requests */
 typedef struct {
-    pmix_list_item_t super;
-    pmix_peer_t *peer;
-    pmix_name_t pname;
+    pmix_object_t super;
+    pmix_peer_t *requestor;
+    size_t refid;
+    pmix_proc_t *procs;
+    size_t nprocs;
     pmix_iof_channel_t channels;
     pmix_iof_cbfunc_t cbfunc;
 } pmix_iof_req_t;
@@ -302,6 +295,7 @@ typedef struct {
     bool hybrid;                    // true if participating procs are from more than one nspace
     pmix_proc_t *pcs;               // copy of the original array of participants
     size_t   npcs;                  // number of procs in the array
+    pmix_list_t nslist;             // unique nspace list of participants
     pmix_lock_t lock;               // flag for waiting for completion
     bool def_complete;              // all local procs have been registered and the trk definition is complete
     pmix_list_t local_cbs;          // list of pmix_server_caddy_t for sending result to the local participants
@@ -329,6 +323,8 @@ typedef struct {
     pmix_server_trkr_t *trk;
     pmix_ptl_hdr_t hdr;
     pmix_peer_t *peer;
+    pmix_info_t *info;
+    size_t ninfo;
 } pmix_server_caddy_t;
 PMIX_CLASS_DECLARATION(pmix_server_caddy_t);
 
@@ -399,7 +395,6 @@ typedef struct {
     pmix_list_t kvs;
     bool copy;
     bool timer_running;
-    pmix_level_t level;
 } pmix_cb_t;
 PMIX_CLASS_DECLARATION(pmix_cb_t);
 
@@ -477,7 +472,7 @@ typedef struct {
     bool commits_pending;
     struct timeval event_window;
     pmix_list_t cached_events;          // events waiting in the window prior to processing
-    pmix_list_t iof_requests;           // list of pmix_iof_req_t IOF requests
+    pmix_pointer_array_t iof_requests;  // array of pmix_iof_req_t IOF requests
     int max_events;                     // size of the notifications hotel
     int event_eviction_time;            // max time to cache notifications
     pmix_hotel_t notifications;         // hotel of pending notifications
@@ -490,6 +485,7 @@ typedef struct {
     pmix_gds_base_module_t *mygds;
     /* IOF controls */
     bool tag_output;
+    pmix_list_t stdin_targets;          // list of pmix_namelist_t
     bool xml_output;
     bool timestamp_output;
     size_t output_limit;
@@ -501,6 +497,40 @@ PMIX_EXPORT void pmix_execute_epilog(pmix_epilog_t *ep);
 
 PMIX_EXPORT extern pmix_globals_t pmix_globals;
 PMIX_EXPORT extern pmix_lock_t pmix_global_lock;
+
+static inline bool pmix_check_node_info(const char* key)
+{
+    char *keys[] = {
+        PMIX_LOCAL_PEERS,
+        PMIX_LOCAL_SIZE,
+        NULL
+    };
+    size_t n;
+
+    for (n=0; NULL != keys[n]; n++) {
+        if (0 == strncmp(key, keys[n], PMIX_MAX_KEYLEN)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+static inline bool pmix_check_app_info(const char* key)
+{
+    char *keys[] = {
+        PMIX_APP_SIZE,
+        NULL
+    };
+    size_t n;
+
+    for (n=0; NULL != keys[n]; n++) {
+        if (0 == strncmp(key, keys[n], PMIX_MAX_KEYLEN)) {
+            return true;
+        }
+    }
+    return false;
+}
+
 
 END_C_DECLS
 

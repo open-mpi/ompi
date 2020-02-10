@@ -21,6 +21,7 @@
 #include <ctype.h>
 
 int pmix_test_verbose = 0;
+test_params params;
 
 FILE *file;
 
@@ -91,6 +92,10 @@ void parse_cmd(int argc, char **argv, test_params *params)
             i++;
             if (NULL != argv[i]) {
                 params->nservers = atoi(argv[i]);
+            }
+            if (2 < params->nservers) {
+                fprintf(stderr, "Only support up to 2 servers\n");
+                exit(1);
             }
         } else if( 0 == strcmp(argv[i], "--verbose") || 0 == strcmp(argv[i],"-v") ){
             TEST_VERBOSE_ON();

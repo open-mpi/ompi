@@ -52,6 +52,7 @@
 
 #include "src/class/pmix_list.h"
 #include "src/mca/bfrops/bfrops.h"
+#include "src/mca/ptl/base/base.h"
 #include "src/threads/threads.h"
 #include "src/util/argv.h"
 #include "src/util/compress.h"
@@ -60,7 +61,7 @@
 #include "src/util/name_fns.h"
 #include "src/util/output.h"
 #include "src/mca/gds/gds.h"
-#include "src/mca/ptl/ptl.h"
+#include "src/mca/ptl/base/base.h"
 
 #include "pmix_client_ops.h"
 
@@ -90,6 +91,9 @@ PMIX_EXPORT pmix_status_t PMIx_Get(const pmix_proc_t *proc,
 {
     pmix_cb_t *cb;
     pmix_status_t rc;
+    size_t n, nfo;
+    pmix_proc_t p;
+    pmix_info_t nodeinfo, *iptr;
 
     PMIX_ACQUIRE_THREAD(&pmix_global_lock);
 
@@ -104,18 +108,62 @@ PMIX_EXPORT pmix_status_t PMIx_Get(const pmix_proc_t *proc,
                         (NULL == proc) ? "NULL" : PMIX_NAME_PRINT(proc),
                         (NULL == key) ? "NULL" : key);
 
-    /* try to get data directly, without threadshift */
-    if (PMIX_RANK_UNDEF != proc->rank && NULL != key) {
-        if (PMIX_SUCCESS == (rc = _getfn_fastpath(proc, key, info, ninfo, val))) {
-            goto done;
+    memcpy(&p, proc, sizeof(pmix_proc_t));
+    iptr = (pmix_info_t*)info;
+    nfo = ninfo;
+
+    if (!PMIX_PEER_IS_EARLIER(pmix_client_globals.myserver, 3, 1, 5)) {
+        if (PMIX_RANK_UNDEF == proc->rank || NULL == key) {
+            goto doget;
+        }
+        /* if they are asking about a node-level piece of info,
+         * then the rank must be UNDEF */
+        if (pmix_check_node_info(key)) {
+            p.rank = PMIX_RANK_UNDEF;
+            /* see if they told us to get node info */
+            if (NULL == info) {
+                /* guess not - better do it */
+                PMIX_INFO_LOAD(&nodeinfo, PMIX_NODE_INFO, NULL, PMIX_BOOL);
+                iptr = &nodeinfo;
+                nfo = 1;
+            }
+            goto doget;
+        }
+        /* if they are asking about an app-level piece of info,
+         * then the rank must be UNDEF */
+        if (pmix_check_app_info(key)) {
+            p.rank = PMIX_RANK_UNDEF;
+            /* see if they told us to get app info */
+            if (NULL == info) {
+                /* guess not - better do it */
+                PMIX_INFO_LOAD(&nodeinfo, PMIX_APP_INFO, NULL, PMIX_BOOL);
+                iptr = &nodeinfo;
+                nfo = 1;
+            }
+            goto doget;
+        }
+
+        /* see if they are requesting session, node, or app-level info */
+        for (n=0; n < ninfo; n++) {
+            if (PMIX_CHECK_KEY(info, PMIX_NODE_INFO) ||
+                PMIX_CHECK_KEY(info, PMIX_APP_INFO) ||
+                PMIX_CHECK_KEY(info, PMIX_SESSION_INFO)) {
+                goto doget;
+            }
         }
     }
 
+    /* try to get data directly, without threadshift */
+    if (PMIX_SUCCESS == (rc = _getfn_fastpath(&p, key, iptr, nfo, val))) {
+        goto done;
+    }
+
+  doget:
     /* create a callback object as we need to pass it to the
      * recv routine so we know which callback to use when
      * the return message is recvd */
     cb = PMIX_NEW(pmix_cb_t);
-    if (PMIX_SUCCESS != (rc = PMIx_Get_nb(proc, key, info, ninfo, _value_cbfunc, cb))) {
+    if (PMIX_SUCCESS != (rc = PMIx_Get_nb(&p, key, iptr, nfo, _value_cbfunc, cb))) {
         PMIX_RELEASE(cb);
         return rc;
     }
@@ -298,6 +346,7 @@ static void _getnb_cbfunc(struct pmix_peer_t *pr,
     int32_t cnt;
     pmix_proc_t proc;
     pmix_kval_t *kv;
+    bool diffnspace;
 
     pmix_output_verbose(2, pmix_client_globals.get_output,
                         "pmix: get_nb callback recvd");
@@ -311,6 +360,9 @@ static void _getnb_cbfunc(struct pmix_peer_t *pr,
     /* cache the proc id */
     pmix_strncpy(proc.nspace, cb->pname.nspace, PMIX_MAX_NSLEN);
     proc.rank = cb->pname.rank;
+
+    /* check for a different nspace */
+    diffnspace = !PMIX_CHECK_NSPACE(pmix_globals.myid.nspace, proc.nspace);
 
     /* a zero-byte buffer indicates that this recv is being
      * completed due to a lost connection */
@@ -333,7 +385,7 @@ static void _getnb_cbfunc(struct pmix_peer_t *pr,
     if (PMIX_SUCCESS != ret) {
         goto done;
     }
-    if (PMIX_RANK_UNDEF == proc.rank) {
+    if (PMIX_RANK_UNDEF == proc.rank || diffnspace) {
         PMIX_GDS_ACCEPT_KVS_RESP(rc, pmix_globals.mypeer, buf);
     } else {
         PMIX_GDS_ACCEPT_KVS_RESP(rc, pmix_client_globals.myserver, buf);
@@ -356,9 +408,18 @@ static void _getnb_cbfunc(struct pmix_peer_t *pr,
             /* fetch the data from server peer module - since it is passing
              * it back to the user, we need a copy of it */
             cb->copy = true;
-            if (PMIX_RANK_UNDEF == proc.rank) {
+            if (PMIX_RANK_UNDEF == proc.rank || diffnspace) {
+                if (PMIX_PEER_IS_EARLIER(pmix_client_globals.myserver, 3, 1, 5)) {
+                    /* everything is under rank=wildcard */
+                    proc.rank = PMIX_RANK_WILDCARD;
+                }
                 PMIX_GDS_FETCH_KV(rc, pmix_globals.mypeer, cb);
             } else {
+                if (PMIX_RANK_UNDEF == proc.rank &&
+                    PMIX_PEER_IS_EARLIER(pmix_client_globals.myserver, 3, 1, 5)) {
+                    /* everything is under rank=wildcard */
+                    proc.rank = PMIX_RANK_WILDCARD;
+                }
                 PMIX_GDS_FETCH_KV(rc, pmix_client_globals.myserver, cb);
             }
             if (PMIX_SUCCESS == rc) {
@@ -561,6 +622,7 @@ static void _getnbfn(int fd, short flags, void *cbdata)
     pmix_proc_t proc;
     bool optional = false;
     bool immediate = false;
+    bool internal_only = false;
     struct timeval tv;
     pmix_query_caddy_t *cd;
 
@@ -596,14 +658,10 @@ static void _getnbfn(int fd, short flags, void *cbdata)
                 }
             } else if (PMIX_CHECK_KEY(&cb->info[n], PMIX_DATA_SCOPE)) {
                 cb->scope = cb->info[n].value.data.scope;
-            } else if (PMIX_CHECK_KEY(&cb->info[n], PMIX_SESSION_INFO)) {
-                cb->level = PMIX_LEVEL_SESSION;
-            } else if (PMIX_CHECK_KEY(&cb->info[n], PMIX_JOB_INFO)) {
-                cb->level = PMIX_LEVEL_JOB;
-            } else if (PMIX_CHECK_KEY(&cb->info[n], PMIX_APP_INFO)) {
-                cb->level = PMIX_LEVEL_APP;
-            } else if (PMIX_CHECK_KEY(&cb->info[n], PMIX_NODE_INFO)) {
-                cb->level = PMIX_LEVEL_NODE;
+            } else if (PMIX_CHECK_KEY(&cb->info[n], PMIX_NODE_INFO) ||
+                       PMIX_CHECK_KEY(&cb->info[n], PMIX_APP_INFO) ||
+                       PMIX_CHECK_KEY(&cb->info[n], PMIX_SESSION_INFO)) {
+                internal_only = true;
             }
         }
     }
@@ -623,7 +681,7 @@ static void _getnbfn(int fd, short flags, void *cbdata)
 
     /* if the key is NULL or starts with "pmix", then they are looking
      * for data that was provided by the server at startup */
-    if (NULL == cb->key || 0 == strncmp(cb->key, "pmix", 4)) {
+    if (!internal_only && (NULL == cb->key || 0 == strncmp(cb->key, "pmix", 4))) {
         cb->proc = &proc;
         /* fetch the data from my server's module - since we are passing
          * it back to the user, we need a copy of it */
@@ -638,11 +696,13 @@ static void _getnbfn(int fd, short flags, void *cbdata)
         if (PMIX_SUCCESS != rc) {
             pmix_output_verbose(5, pmix_client_globals.get_output,
                                 "pmix:client job-level data NOT found");
-            if (0 != strncmp(cb->pname.nspace, pmix_globals.myid.nspace, PMIX_MAX_NSLEN)) {
+            if (!PMIX_CHECK_NSPACE(cb->pname.nspace, pmix_globals.myid.nspace)) {
                 /* we are asking about the job-level info from another
                  * namespace. It seems that we don't have it - go and
-                 * ask server
+                 * ask server and indicate we only need job-level info
+                 * by setting the rank to WILDCARD
                  */
+                proc.rank = PMIX_RANK_WILDCARD;
                 goto request;
             } else if (NULL != cb->key) {
                 /* if immediate was given, then we are being directed to
@@ -723,8 +783,8 @@ static void _getnbfn(int fd, short flags, void *cbdata)
     /* if we got here, then we don't have the data for this proc. If we
      * are a server, or we are a client and not connected, then there is
      * nothing more we can do */
-    if (PMIX_PROC_IS_SERVER(pmix_globals.mypeer) ||
-        (!PMIX_PROC_IS_SERVER(pmix_globals.mypeer) && !pmix_globals.connected)) {
+    if (PMIX_PEER_IS_SERVER(pmix_globals.mypeer) ||
+        (!PMIX_PEER_IS_SERVER(pmix_globals.mypeer) && !pmix_globals.connected)) {
         rc = PMIX_ERR_NOT_FOUND;
         goto respond;
     }
@@ -744,8 +804,7 @@ static void _getnbfn(int fd, short flags, void *cbdata)
      * this nspace:rank. If we do, then no need to ask again as the
      * request will return _all_ data from that proc */
     PMIX_LIST_FOREACH(cbret, &pmix_client_globals.pending_requests, pmix_cb_t) {
-        if (0 == strncmp(cbret->pname.nspace, cb->pname.nspace, PMIX_MAX_NSLEN) &&
-            cbret->pname.rank == cb->pname.rank) {
+        if (PMIX_CHECK_PROCID(&cbret->pname, &cb->pname)) {
             /* we do have a pending request, but we still need to track this
              * outstanding request so we can satisfy it once the data is returned */
             pmix_list_append(&pmix_client_globals.pending_requests, &cb->super);
@@ -755,16 +814,16 @@ static void _getnbfn(int fd, short flags, void *cbdata)
 
     /* we don't have a pending request, so let's create one - don't worry
      * about packing the key as we return everything from that proc */
-    msg = _pack_get(cb->pname.nspace, cb->pname.rank, cb->info, cb->ninfo, PMIX_GETNB_CMD);
+    msg = _pack_get(cb->pname.nspace, proc.rank, cb->info, cb->ninfo, PMIX_GETNB_CMD);
     if (NULL == msg) {
         rc = PMIX_ERROR;
         goto respond;
     }
 
     pmix_output_verbose(2, pmix_client_globals.get_output,
-                        "%s REQUESTING DATA FROM SERVER FOR %s KEY %s",
+                        "%s REQUESTING DATA FROM SERVER FOR %s:%s KEY %s",
                         PMIX_NAME_PRINT(&pmix_globals.myid),
-                        PMIX_NAME_PRINT(cb->proc), cb->key);
+                        cb->proc->nspace, PMIX_RANK_PRINT(proc.rank), cb->key);
 
     /* track the callback object */
     pmix_list_append(&pmix_client_globals.pending_requests, &cb->super);

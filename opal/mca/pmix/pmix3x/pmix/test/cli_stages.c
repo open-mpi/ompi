@@ -17,6 +17,7 @@
 cli_info_t *cli_info = NULL;
 int cli_info_cnt = 0;
 bool test_abort = false;
+bool test_complete = false;
 
 int cli_rank(cli_info_t *cli)
 {
@@ -176,70 +177,6 @@ void cli_cleanup(cli_info_t *cli)
     }
 }
 
-
-bool test_terminated(void)
-{
-    bool ret = true;
-    int i;
-
-    // All clients should disconnect
-    for(i=0; i < cli_info_cnt; i++){
-        ret = ret && (CLI_TERM <= cli_info[i].state);
-    }
-    return (ret || test_abort);
-}
-
-void cli_wait_all(double timeout)
-{
-    struct timeval tv;
-    double start_time, cur_time;
-
-    gettimeofday(&tv, NULL);
-    start_time = tv.tv_sec + 1E-6*tv.tv_usec;
-    cur_time = start_time;
-
-    //TEST_VERBOSE(("Wait for all children to terminate"))
-
-    // Wait for all children to cleanup after the test.
-    while( !test_terminated() && ( timeout >= (cur_time - start_time) ) ){
-        struct timespec ts;
-        int status, i;
-        pid_t pid;
-        while( 0 < (pid = waitpid(-1, &status, WNOHANG) ) ){
-            TEST_VERBOSE(("waitpid = %d", pid));
-            for(i=0; i < cli_info_cnt; i++){
-                if( cli_info[i].pid == pid ){
-                    TEST_VERBOSE(("the child with pid = %d has rank = %d, ns = %s\n"
-                                "\t\texited = %d, signalled = %d", pid,
-                                  cli_info[i].rank, cli_info[i].ns,
-                                WIFEXITED(status), WIFSIGNALED(status) ));
-                    if( WIFEXITED(status) || WIFSIGNALED(status) ){
-                        cli_cleanup(&cli_info[i]);
-                    }
-                }
-            }
-        }
-        if( pid < 0 ){
-            if( errno == ECHILD ){
-                TEST_VERBOSE(("No more children to wait. Happens on the last cli_wait_all call "
-                            "which is used to ensure that all children terminated.\n"));
-                if (pmix_test_verbose) {
-                    sleep(1);
-                }
-                break;
-            } else {
-                TEST_ERROR(("waitpid(): %d : %s", errno, strerror(errno)));
-                exit(0);
-            }
-        }
-        ts.tv_sec = 0;
-        ts.tv_nsec = 100000;
-        nanosleep(&ts, NULL);
-        // calculate current timestamp
-        gettimeofday(&tv, NULL);
-        cur_time = tv.tv_sec + 1E-6*tv.tv_usec;
-    }
-}
 
 void cli_kill_all(void)
 {
