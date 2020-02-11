@@ -117,7 +117,7 @@ static pmix_status_t allocate(pmix_namespace_t *nptr,
 
     /* if I am not the gateway, then ignore this call - should never
      * happen, but check to be safe */
-    if (!PMIX_PROC_IS_GATEWAY(pmix_globals.mypeer)) {
+    if (!PMIX_PEER_IS_GATEWAY(pmix_globals.mypeer)) {
         return PMIX_SUCCESS;
     }
 

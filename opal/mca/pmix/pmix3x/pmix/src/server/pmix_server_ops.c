@@ -1,13 +1,13 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2018 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2014-2015 Artem Y. Polyakov <artpol84@gmail.com>.
  *                         All rights reserved.
  * Copyright (c) 2016-2017 Mellanox Technologies, Inc.
  *                         All rights reserved.
- * Copyright (c) 2016      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2016-2019 IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -56,6 +56,7 @@
 #include "src/mca/bfrops/bfrops.h"
 #include "src/mca/plog/plog.h"
 #include "src/mca/psensor/psensor.h"
+#include "src/mca/ptl/base/base.h"
 #include "src/util/argv.h"
 #include "src/util/error.h"
 #include "src/util/output.h"
@@ -372,10 +373,11 @@ static pmix_server_trkr_t* new_tracker(char *id, pmix_proc_t *procs,
 {
     pmix_server_trkr_t *trk;
     size_t i;
-    bool all_def;
+    bool all_def, found;
     pmix_namespace_t *nptr, *ns;
     pmix_rank_info_t *info;
-    pmix_rank_t ns_local = 0;
+    pmix_nspace_caddy_t *nm;
+    pmix_nspace_t first;
 
     pmix_output_verbose(5, pmix_server_globals.base_output,
                         "new_tracker called with %d procs", (int)nprocs);
@@ -413,16 +415,12 @@ static pmix_server_trkr_t* new_tracker(char *id, pmix_proc_t *procs,
         trk->npcs = nprocs;
     }
     trk->type = type;
+    trk->local = false;
+    trk->nlocal = 0;
 
     all_def = true;
+    PMIX_LOAD_NSPACE(first, NULL);
     for (i=0; i < nprocs; i++) {
-        if (NULL == id) {
-            pmix_strncpy(trk->pcs[i].nspace, procs[i].nspace, PMIX_MAX_NSLEN);
-            trk->pcs[i].rank = procs[i].rank;
-        }
-        if (!all_def) {
-            continue;
-        }
         /* is this nspace known to us? */
         nptr = NULL;
         PMIX_LIST_FOREACH(ns, &pmix_globals.nspaces, pmix_namespace_t) {
@@ -431,14 +429,96 @@ static pmix_server_trkr_t* new_tracker(char *id, pmix_proc_t *procs,
                 break;
             }
         }
+        /* check if multiple nspaces are involved in this operation */
+        if (0 == strlen(first)) {
+            PMIX_LOAD_NSPACE(first, procs[i].nspace);
+        } else if (!PMIX_CHECK_NSPACE(first, procs[i].nspace)) {
+            trk->hybrid = true;
+        }
         if (NULL == nptr) {
-            /* cannot be a local proc */
+            /* we don't know about this nspace. If there is going to
+             * be at least one local process participating in a fence,
+             * they we require that either at least one process must already
+             * have been registered (via "register client") or that the
+             * nspace itself have been regisered. So either the nspace
+             * wasn't registered because it doesn't include any local
+             * procs, or our host has not been told about this nspace
+             * because it won't host any local procs. We therefore mark
+             * this tracker as including non-local participants.
+             *
+             * NOTE: It is conceivable that someone might want to review
+             * this constraint at a future date. I believe it has to be
+             * required (at least for now) as otherwise we wouldn't have
+             * a way of knowing when all local procs have participated.
+             * It is possible that a new nspace could come along at some
+             * later time and add more local participants - but we don't
+             * know how long to wait.
+             *
+             * The only immediately obvious alternative solutions would
+             * be to either require that RMs always inform all daemons
+             * about the launch of nspaces, regardless of whether or
+             * not they will host local procs; or to drop the aggregation
+             * of local participants and just pass every fence call
+             * directly to the host. Neither of these seems palatable
+             * at this time. */
+            trk->local = false;
+            /* we don't know any more info about this nspace, so
+             * there isn't anything more we can do */
+            continue;
+        }
+        /* it is possible we know about this nspace because the host
+         * has registered one or more clients via "register_client",
+         * but the host has not yet called "register_nspace". There is
+         * a very tiny race condition whereby this can happen due
+         * to event-driven processing, but account for it here */
+        if (SIZE_MAX == nptr->nlocalprocs) {
+            /* delay processing until this nspace is registered */
+            all_def = false;
+            continue;
+        }
+        if (0 == nptr->nlocalprocs) {
+            /* the host has informed us that this nspace has no local procs */
             pmix_output_verbose(5, pmix_server_globals.base_output,
                                 "new_tracker: unknown nspace %s",
                                 procs[i].nspace);
             continue;
         }
-        /* have all the clients for this nspace been defined? */
+        /* check and add uniq ns into trk nslist */
+        found = false;
+        PMIX_LIST_FOREACH(nm, &trk->nslist, pmix_nspace_caddy_t) {
+            if (0 == strcmp(nptr->nspace, nm->ns->nspace)) {
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            nm = PMIX_NEW(pmix_nspace_caddy_t);
+            PMIX_RETAIN(nptr);
+            nm->ns = nptr;
+            pmix_list_append(&trk->nslist, &nm->super);
+        }
+
+        /* if they want all the local members of this nspace, then
+         * add them in here. They told us how many procs will be
+         * local to us from this nspace, but we don't know their
+         * ranks. So as long as they want _all_ of them, we can
+         * handle that case regardless of whether the individual
+         * clients have been "registered" */
+        if (PMIX_RANK_WILDCARD == procs[i].rank) {
+            trk->nlocal += nptr->nlocalprocs;
+            /* the total number of procs in this nspace was provided
+             * in the data blob delivered to register_nspace, so check
+             * to see if all the procs are local */
+            if (nptr->nprocs != nptr->nlocalprocs) {
+                trk->local = false;
+            }
+            continue;
+        }
+
+        /* They don't want all the local clients, or they are at
+         * least listing them individually. Check if all the clients
+         * for this nspace have been registered via "register_client"
+         * so we know the specific ranks on this node */
         if (!nptr->all_registered) {
             /* nope, so no point in going further on this one - we'll
              * process it once all the procs are known */
@@ -446,40 +526,26 @@ static pmix_server_trkr_t* new_tracker(char *id, pmix_proc_t *procs,
             pmix_output_verbose(5, pmix_server_globals.base_output,
                                 "new_tracker: all clients not registered nspace %s",
                                 procs[i].nspace);
-            /* we have to continue processing the list of procs
-             * to setup the trk->pcs array, so don't break out
-             * of the loop */
+            continue;
         }
         /* is this one of my local ranks? */
-        ns_local = 0;
+        found = false;
         PMIX_LIST_FOREACH(info, &nptr->ranks, pmix_rank_info_t) {
-            if (procs[i].rank == info->pname.rank ||
-                PMIX_RANK_WILDCARD == procs[i].rank) {
-                    pmix_output_verbose(5, pmix_server_globals.base_output,
-                                        "adding local proc %s.%d to tracker",
-                                        info->pname.nspace, info->pname.rank);
+            if (procs[i].rank == info->pname.rank) {
+                pmix_output_verbose(5, pmix_server_globals.base_output,
+                                    "adding local proc %s.%d to tracker",
+                                    info->pname.nspace, info->pname.rank);
+                found = true;
                 /* track the count */
-                ns_local++;
-                if (PMIX_RANK_WILDCARD != procs[i].rank) {
-                    break;
-                }
+                trk->nlocal++;
+                break;
             }
         }
-
-        trk->nlocal += ns_local;
-        if (!ns_local) {
+        if (!found) {
             trk->local = false;
-        } else if (PMIX_RANK_WILDCARD == procs[i].rank) {
-            /* If proc is a wildcard we need to additionally check
-             * that all of the processes in the namespace were
-             * locally found.
-             * Otherwise this tracker is not local
-             */
-            if (ns_local != nptr->nprocs) {
-                trk->local = false;
-            }
         }
     }
+
     if (all_def) {
         trk->def_complete = true;
     }
@@ -664,8 +730,8 @@ pmix_status_t pmix_server_fence(pmix_server_caddy_t *cd,
      * across all participants has been completed */
     if (trk->def_complete &&
         pmix_list_get_size(&trk->local_cbs) == trk->nlocal) {
-        pmix_output_verbose(2, pmix_server_globals.base_output,
-                            "fence complete");
+        pmix_output_verbose(2, pmix_server_globals.fence_output,
+                            "fence LOCALLY complete");
         /* if this is a purely local fence (i.e., all participants are local),
          * then it is done and we notify accordingly */
         if (trk->local) {
@@ -1148,11 +1214,12 @@ static void spcbfunc(pmix_status_t status,
             goto cleanup;
         }
         PMIX_RETAIN(cd->peer);
-        req->peer = cd->peer;
-        req->pname.nspace = strdup(nspace);
-        req->pname.rank = PMIX_RANK_WILDCARD;
+        req->requestor = cd->peer;
+        req->nprocs = 1;
+        PMIX_PROC_CREATE(req->procs, req->nprocs);
+        PMIX_LOAD_PROCID(&req->procs[0], nspace, PMIX_RANK_WILDCARD);
         req->channels = cd->channels;
-        pmix_list_append(&pmix_globals.iof_requests, &req->super);
+        req->refid = pmix_pointer_array_add(&pmix_globals.iof_requests, req);
         /* process any cached IO */
         PMIX_LIST_FOREACH_SAFE(iof, ionext, &pmix_server_globals.iof, pmix_iof_cache_t) {
             /* if the channels don't match, then ignore it */
@@ -1160,18 +1227,19 @@ static void spcbfunc(pmix_status_t status,
                 continue;
             }
             /* if the source does not match the request, then ignore it */
-            if (!PMIX_CHECK_PROCID(&iof->source, &req->pname)) {
+            if (!PMIX_CHECK_PROCID(&iof->source, &req->procs[0])) {
                 continue;
             }
             /* never forward back to the source! This can happen if the source
              * is a launcher */
-            if (PMIX_CHECK_PROCID(&iof->source, &req->peer->info->pname)) {
+            if (PMIX_CHECK_PROCID(&iof->source, &req->requestor->info->pname)) {
                 continue;
             }
             pmix_output_verbose(2, pmix_server_globals.iof_output,
                                 "PMIX:SERVER:SPAWN delivering cached IOF from %s:%d to %s:%d",
                                 iof->source.nspace, iof->source.rank,
-                                req->pname.nspace, req->pname.rank);
+                                req->requestor->info->pname.nspace,
+                                req->requestor->info->pname.rank);
             /* setup the msg */
             if (NULL == (msg = PMIX_NEW(pmix_buffer_t))) {
                 PMIX_ERROR_LOG(PMIX_ERR_OUT_OF_RESOURCE);
@@ -1179,28 +1247,28 @@ static void spcbfunc(pmix_status_t status,
                 break;
             }
             /* provide the source */
-            PMIX_BFROPS_PACK(rc, req->peer, msg, &iof->source, 1, PMIX_PROC);
+            PMIX_BFROPS_PACK(rc, req->requestor, msg, &iof->source, 1, PMIX_PROC);
             if (PMIX_SUCCESS != rc) {
                 PMIX_ERROR_LOG(rc);
                 PMIX_RELEASE(msg);
                 break;
             }
             /* provide the channel */
-            PMIX_BFROPS_PACK(rc, req->peer, msg, &iof->channel, 1, PMIX_IOF_CHANNEL);
+            PMIX_BFROPS_PACK(rc, req->requestor, msg, &iof->channel, 1, PMIX_IOF_CHANNEL);
             if (PMIX_SUCCESS != rc) {
                 PMIX_ERROR_LOG(rc);
                 PMIX_RELEASE(msg);
                 break;
             }
             /* pack the data */
-            PMIX_BFROPS_PACK(rc, req->peer, msg, iof->bo, 1, PMIX_BYTE_OBJECT);
+            PMIX_BFROPS_PACK(rc, req->requestor, msg, iof->bo, 1, PMIX_BYTE_OBJECT);
             if (PMIX_SUCCESS != rc) {
                 PMIX_ERROR_LOG(rc);
                 PMIX_RELEASE(msg);
                 break;
             }
             /* send it to the requestor */
-            PMIX_PTL_SEND_ONEWAY(rc, req->peer, msg, PMIX_PTL_TAG_IOF);
+            PMIX_PTL_SEND_ONEWAY(rc, req->requestor, msg, PMIX_PTL_TAG_IOF);
             if (PMIX_SUCCESS != rc) {
                 PMIX_ERROR_LOG(rc);
                 PMIX_RELEASE(msg);
@@ -1310,7 +1378,7 @@ pmix_status_t pmix_server_spawn(pmix_peer_t *peer,
          * as we need the nspace of the spawned application! */
     }
     /* add the directive to the end */
-    if (PMIX_PROC_IS_TOOL(peer)) {
+    if (PMIX_PEER_IS_TOOL(peer)) {
         PMIX_INFO_LOAD(&cd->info[ninfo], PMIX_REQUESTOR_IS_TOOL, NULL, PMIX_BOOL);
         /* if the requestor is a tool, we default to forwarding all
          * output IO channels */
@@ -2541,12 +2609,16 @@ pmix_status_t pmix_server_log(pmix_peer_t *peer,
     }
     cd->cbfunc.opcbfn = cbfunc;
     cd->cbdata = cbdata;
-    /* unpack the timestamp */
-    cnt = 1;
-    PMIX_BFROPS_UNPACK(rc, peer, buf, &timestamp, &cnt, PMIX_TIME);
-    if (PMIX_SUCCESS != rc) {
-        PMIX_ERROR_LOG(rc);
-        goto exit;
+    if (PMIX_PEER_IS_EARLIER(peer, 3, 0, 0)) {
+        timestamp = -1;
+    } else {
+        /* unpack the timestamp */
+        cnt = 1;
+        PMIX_BFROPS_UNPACK(rc, peer, buf, &timestamp, &cnt, PMIX_TIME);
+        if (PMIX_SUCCESS != rc) {
+            PMIX_ERROR_LOG(rc);
+            goto exit;
+        }
     }
 
     /* unpack the number of data */
@@ -3207,10 +3279,6 @@ pmix_status_t pmix_server_iofreg(pmix_peer_t *peer,
     pmix_status_t rc;
     pmix_setup_caddy_t *cd;
     pmix_iof_req_t *req;
-    bool notify, match;
-    size_t n;
-    pmix_buffer_t *msg;
-    pmix_iof_cache_t *iof, *ionext;
 
     pmix_output_verbose(2, pmix_server_globals.iof_output,
                         "recvd IOF PULL request from client");
@@ -3269,107 +3337,104 @@ pmix_status_t pmix_server_iofreg(pmix_peer_t *peer,
         goto exit;
     }
 
-    /* check to see if we have already registered this source/channel combination */
-    notify = false;
-    for (n=0; n < cd->nprocs; n++) {
-        match = false;
-        PMIX_LIST_FOREACH(req, &pmix_globals.iof_requests, pmix_iof_req_t) {
-            /* is this request from the same peer? */
-            if (peer != req->peer) {
-                continue;
-            }
-            /* do we already have this source for this peer? */
-            if (PMIX_CHECK_PROCID(&cd->procs[n], &req->pname)) {
-                match = true;
-                if ((req->channels & cd->channels) != cd->channels) {
-                    /* this is a channel update */
-                    req->channels |= cd->channels;
-                    /* we need to notify the host */
-                    notify = true;
-                }
-                break;
-            }
-        }
-        /* if we didn't find the matching entry, then add it */
-        if (!match) {
-            /* record the request */
-            req = PMIX_NEW(pmix_iof_req_t);
-            if (NULL == req) {
-                rc = PMIX_ERR_NOMEM;
-                goto exit;
-            }
-            PMIX_RETAIN(peer);
-            req->peer = peer;
-            req->pname.nspace = strdup(cd->procs[n].nspace);
-            req->pname.rank = cd->procs[n].rank;
-            req->channels = cd->channels;
-            pmix_list_append(&pmix_globals.iof_requests, &req->super);
-        }
-        /* process any cached IO */
-        PMIX_LIST_FOREACH_SAFE(iof, ionext, &pmix_server_globals.iof, pmix_iof_cache_t) {
-            /* if the channels don't match, then ignore it */
-            if (!(iof->channel & req->channels)) {
-                continue;
-            }
-            /* if the source does not match the request, then ignore it */
-            if (!PMIX_CHECK_PROCID(&iof->source, &req->pname)) {
-                continue;
-            }
-            /* never forward back to the source! This can happen if the source
-             * is a launcher */
-            if (PMIX_CHECK_PROCID(&iof->source, &req->peer->info->pname)) {
-                continue;
-            }
-            pmix_output_verbose(2, pmix_server_globals.iof_output,
-                                "PMIX:SERVER:IOFREQ delivering cached IOF from %s:%d to %s:%d",
-                                iof->source.nspace, iof->source.rank,
-                                req->peer->info->pname.nspace, req->peer->info->pname.rank);
-            /* setup the msg */
-            if (NULL == (msg = PMIX_NEW(pmix_buffer_t))) {
-                PMIX_ERROR_LOG(PMIX_ERR_OUT_OF_RESOURCE);
-                rc = PMIX_ERR_OUT_OF_RESOURCE;
-                break;
-            }
-            /* provide the source */
-            PMIX_BFROPS_PACK(rc, req->peer, msg, &iof->source, 1, PMIX_PROC);
-            if (PMIX_SUCCESS != rc) {
-                PMIX_ERROR_LOG(rc);
-                PMIX_RELEASE(msg);
-                break;
-            }
-            /* provide the channel */
-            PMIX_BFROPS_PACK(rc, req->peer, msg, &iof->channel, 1, PMIX_IOF_CHANNEL);
-            if (PMIX_SUCCESS != rc) {
-                PMIX_ERROR_LOG(rc);
-                PMIX_RELEASE(msg);
-                break;
-            }
-            /* pack the data */
-            PMIX_BFROPS_PACK(rc, req->peer, msg, iof->bo, 1, PMIX_BYTE_OBJECT);
-            if (PMIX_SUCCESS != rc) {
-                PMIX_ERROR_LOG(rc);
-                PMIX_RELEASE(msg);
-                break;
-            }
-            /* send it to the requestor */
-            PMIX_PTL_SEND_ONEWAY(rc, req->peer, msg, PMIX_PTL_TAG_IOF);
-            if (PMIX_SUCCESS != rc) {
-                PMIX_ERROR_LOG(rc);
-                PMIX_RELEASE(msg);
-            }
-            /* remove it from the list since it has now been forwarded */
-            pmix_list_remove_item(&pmix_server_globals.iof, &iof->super);
-            PMIX_RELEASE(iof);
-        }
+    /* add this peer/source/channel combination */
+    req = PMIX_NEW(pmix_iof_req_t);
+    if (NULL == req) {
+        rc = PMIX_ERR_NOMEM;
+        goto exit;
     }
-    if (notify) {
-        /* ask the host to execute the request */
-        if (PMIX_SUCCESS != (rc = pmix_host_server.iof_pull(cd->procs, cd->nprocs,
-                                                            cd->info, cd->ninfo,
-                                                            cd->channels,
-                                                            cbfunc, cd))) {
+    PMIX_RETAIN(peer);
+    req->requestor = peer;
+    req->nprocs = cd->nprocs;
+    if (0 < req->nprocs) {
+        PMIX_PROC_CREATE(req->procs, cd->nprocs);
+        memcpy(req->procs, cd->procs, req->nprocs * sizeof(pmix_proc_t));
+    }
+    req->channels = cd->channels;
+    req->refid = pmix_pointer_array_add(&pmix_globals.iof_requests, req);
+    cd->ncodes = req->refid;
+
+    /* ask the host to execute the request */
+    if (PMIX_SUCCESS != (rc = pmix_host_server.iof_pull(cd->procs, cd->nprocs,
+                                                        cd->info, cd->ninfo,
+                                                        cd->channels,
+                                                        cbfunc, cd))) {
+        goto exit;
+    }
+    return PMIX_SUCCESS;
+
+  exit:
+    PMIX_RELEASE(cd);
+    return rc;
+}
+
+pmix_status_t pmix_server_iofdereg(pmix_peer_t *peer,
+                                   pmix_buffer_t *buf,
+                                   pmix_op_cbfunc_t cbfunc,
+                                   void *cbdata)
+{
+    int32_t cnt;
+    pmix_status_t rc;
+    pmix_setup_caddy_t *cd;
+    pmix_iof_req_t *req;
+    size_t ninfo, refid;
+
+    pmix_output_verbose(2, pmix_server_globals.iof_output,
+                        "recvd IOF DEREGISTER from client");
+
+    if (NULL == pmix_host_server.iof_pull) {
+        return PMIX_ERR_NOT_SUPPORTED;
+    }
+
+    cd = PMIX_NEW(pmix_setup_caddy_t);
+    if (NULL == cd) {
+        return PMIX_ERR_NOMEM;
+    }
+    cd->cbdata = cbdata;  // this is the pmix_server_caddy_t
+
+    /* unpack the number of directives */
+    cnt = 1;
+    PMIX_BFROPS_UNPACK(rc, peer, buf, &ninfo, &cnt, PMIX_SIZE);
+    if (PMIX_SUCCESS != rc) {
+        PMIX_ERROR_LOG(rc);
+        goto exit;
+    }
+    /* unpack the directives - note that we have to add one
+     * to tell the server to stop forwarding to this channel */
+    cd->ninfo = ninfo + 1;
+    PMIX_INFO_CREATE(cd->info, cd->ninfo);
+    if (0 < ninfo) {
+        cnt = ninfo;
+        PMIX_BFROPS_UNPACK(rc, peer, buf, cd->info, &cnt, PMIX_INFO);
+        if (PMIX_SUCCESS != rc) {
+            PMIX_ERROR_LOG(rc);
             goto exit;
         }
+    }
+    /* add the directive to stop forwarding */
+    PMIX_INFO_LOAD(&cd->info[ninfo], PMIX_IOF_STOP, NULL, PMIX_BOOL);
+
+    /* unpack the handler ID */
+    cnt = 1;
+    PMIX_BFROPS_UNPACK(rc, peer, buf, &refid, &cnt, PMIX_SIZE);
+    if (PMIX_SUCCESS != rc) {
+        PMIX_ERROR_LOG(rc);
+        goto exit;
+    }
+
+    /* get the referenced handler */
+    req = (pmix_iof_req_t*)pmix_pointer_array_get_item(&pmix_globals.iof_requests, refid);
+    if (NULL == req) {
+        /* already gone? */
+        rc = PMIX_ERR_NOT_FOUND;
+        goto exit;
+    }
+    /* tell the server to stop */
+    if (PMIX_SUCCESS != (rc = pmix_host_server.iof_pull(cd->procs, cd->nprocs,
+                                                        cd->info, cd->ninfo,
+                                                        cd->channels,
+                                                        cbfunc, cd))) {
+        goto exit;
     }
     return PMIX_SUCCESS;
 
@@ -3502,6 +3567,7 @@ static void tcon(pmix_server_trkr_t *t)
     t->pname.rank = PMIX_RANK_UNDEF;
     t->pcs = NULL;
     t->npcs = 0;
+    PMIX_CONSTRUCT(&t->nslist, pmix_list_t);
     PMIX_CONSTRUCT_LOCK(&t->lock);
     t->def_complete = false;
     PMIX_CONSTRUCT(&t->local_cbs, pmix_list_t);
@@ -3520,6 +3586,7 @@ static void tdes(pmix_server_trkr_t *t)
     if (NULL != t->id) {
         free(t->id);
     }
+    PMIX_LIST_DESTRUCT(&t->nslist);
     PMIX_DESTRUCT_LOCK(&t->lock);
     if (NULL != t->pcs) {
         free(t->pcs);
@@ -3539,6 +3606,8 @@ static void cdcon(pmix_server_caddy_t *cd)
     cd->event_active = false;
     cd->trk = NULL;
     cd->peer = NULL;
+    cd->info = NULL;
+    cd->ninfo = 0;
 }
 static void cddes(pmix_server_caddy_t *cd)
 {
@@ -3555,7 +3624,6 @@ static void cddes(pmix_server_caddy_t *cd)
 PMIX_CLASS_INSTANCE(pmix_server_caddy_t,
                    pmix_list_item_t,
                    cdcon, cddes);
-
 
 static void scadcon(pmix_setup_caddy_t *p)
 {
@@ -3757,10 +3825,15 @@ PMIX_CLASS_INSTANCE(pmix_inventory_rollup_t,
 static void iocon(pmix_iof_cache_t *p)
 {
     p->bo = NULL;
+    p->info = NULL;
+    p->ninfo = 0;
 }
 static void iodes(pmix_iof_cache_t *p)
 {
     PMIX_BYTE_OBJECT_FREE(p->bo, 1);  // macro protects against NULL
+    if (0 < p->ninfo) {
+        PMIX_INFO_FREE(p->info, p->ninfo);
+    }
 }
 PMIX_CLASS_INSTANCE(pmix_iof_cache_t,
                     pmix_list_item_t,

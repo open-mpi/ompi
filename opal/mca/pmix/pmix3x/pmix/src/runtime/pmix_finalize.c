@@ -54,6 +54,7 @@ void pmix_rte_finalize(void)
 {
     int i;
     pmix_notify_caddy_t *cd;
+    pmix_iof_req_t *req;
 
     if( --pmix_initialized != 0 ) {
         if( pmix_initialized < 0 ) {
@@ -115,7 +116,13 @@ void pmix_rte_finalize(void)
         }
     }
     PMIX_DESTRUCT(&pmix_globals.notifications);
-    PMIX_LIST_DESTRUCT(&pmix_globals.iof_requests);
+    for (i=0; i < pmix_globals.iof_requests.size; i++) {
+        if (NULL != (req = (pmix_iof_req_t*)pmix_pointer_array_get_item(&pmix_globals.iof_requests, i))) {
+            PMIX_RELEASE(req);
+        }
+    }
+    PMIX_DESTRUCT(&pmix_globals.iof_requests);
+    PMIX_LIST_DESTRUCT(&pmix_globals.stdin_targets);
     free(pmix_globals.hostname);
     PMIX_LIST_DESTRUCT(&pmix_globals.nspaces);
 

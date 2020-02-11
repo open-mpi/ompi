@@ -254,8 +254,8 @@ static pmix_status_t component_open(void)
 
     /* check for environ-based directives
      * on system tmpdir to use */
-    if (PMIX_PROC_IS_SERVER(pmix_globals.mypeer) ||
-        PMIX_PROC_IS_LAUNCHER(pmix_globals.mypeer)) {
+    if (PMIX_PEER_IS_SERVER(pmix_globals.mypeer) ||
+        PMIX_PEER_IS_LAUNCHER(pmix_globals.mypeer)) {
         mca_ptl_tcp_component.session_tmpdir = strdup(pmix_server_globals.tmpdir);
     } else {
         if (NULL != (tdir = getenv("PMIX_SERVER_TMPDIR"))) {
@@ -265,8 +265,8 @@ static pmix_status_t component_open(void)
         }
     }
 
-    if (PMIX_PROC_IS_SERVER(pmix_globals.mypeer) ||
-        PMIX_PROC_IS_LAUNCHER(pmix_globals.mypeer)) {
+    if (PMIX_PEER_IS_SERVER(pmix_globals.mypeer) ||
+        PMIX_PEER_IS_LAUNCHER(pmix_globals.mypeer)) {
         mca_ptl_tcp_component.system_tmpdir = strdup(pmix_server_globals.system_tmpdir);
     } else {
         if (NULL != (tdir = getenv("PMIX_SYSTEM_TMPDIR"))) {
@@ -281,6 +281,14 @@ static pmix_status_t component_open(void)
         0 != strcmp(mca_ptl_tcp_component.report_uri, "+")) {
         urifile = strdup(mca_ptl_tcp_component.report_uri);
     }
+
+    if (PMIX_PEER_IS_SERVER(pmix_globals.mypeer) ||
+        PMIX_PEER_IS_LAUNCHER(pmix_globals.mypeer)) {
+        if (NULL != (tdir = getenv("PMIX_LAUNCHER_RENDEZVOUS_FILE"))) {
+            mca_ptl_tcp_component.rendezvous_filename = strdup(tdir);
+        }
+    }
+
     return PMIX_SUCCESS;
 }
 
@@ -369,7 +377,7 @@ static pmix_status_t setup_listener(pmix_info_t info[], size_t ninfo,
                         "ptl:tcp setup_listener");
 
     /* if we are not a server, then we shouldn't be doing this */
-    if (!PMIX_PROC_IS_SERVER(pmix_globals.mypeer)) {
+    if (!PMIX_PEER_IS_SERVER(pmix_globals.mypeer)) {
         return PMIX_ERR_NOT_SUPPORTED;
     }
 
@@ -420,7 +428,7 @@ static pmix_status_t setup_listener(pmix_info_t info[], size_t ninfo,
                 session_tool = PMIX_INFO_TRUE(&info[n]);
             } else if (PMIX_CHECK_KEY(&info[n], PMIX_SERVER_SYSTEM_SUPPORT)) {
                 system_tool = PMIX_INFO_TRUE(&info[n]);
-            } else if (PMIX_PROC_IS_LAUNCHER(pmix_globals.mypeer) &&
+            } else if (PMIX_PEER_IS_LAUNCHER(pmix_globals.mypeer) &&
                        PMIX_CHECK_KEY(&info[n], PMIX_LAUNCHER_RENDEZVOUS_FILE)) {
                 mca_ptl_tcp_component.rendezvous_filename = strdup(info[n].value.data.string);
             }
@@ -687,7 +695,16 @@ static pmix_status_t setup_listener(pmix_info_t info[], size_t ninfo,
     /* if we were given a rendezvous file, then drop it */
     if (NULL != mca_ptl_tcp_component.rendezvous_filename) {
         FILE *fp;
-
+        /* if we are a tool and the file already exists, then we
+         * just use it as providing the rendezvous info for our
+         * server */
+        if (PMIX_PEER_IS_TOOL(pmix_globals.mypeer)) {
+            struct stat buf;
+            /* coverity[toctou] */
+            if (0 == stat(mca_ptl_tcp_component.rendezvous_filename, &buf)) {
+                goto nextstep;
+            }
+        }
         pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
                             "WRITING RENDEZVOUS FILE %s",
                             mca_ptl_tcp_component.rendezvous_filename);
@@ -716,6 +733,7 @@ static pmix_status_t setup_listener(pmix_info_t info[], size_t ninfo,
         }
     }
 
+  nextstep:
     /* if we are going to support tools, then drop contact file(s) */
     if (system_tool) {
         FILE *fp;
@@ -859,7 +877,7 @@ static pmix_status_t setup_listener(pmix_info_t info[], size_t ninfo,
         }
     }
     /* if we are a tool and connected, then register any rendezvous files for cleanup */
-    if (PMIX_PROC_IS_TOOL(pmix_globals.mypeer) && pmix_globals.connected) {
+    if (PMIX_PEER_IS_TOOL(pmix_globals.mypeer) && pmix_globals.connected) {
         char **clnup = NULL, *cptr = NULL;
         pmix_info_t dir;
         if (NULL != mca_ptl_tcp_component.nspace_filename) {
@@ -1009,9 +1027,10 @@ static void connection_handler(int sd, short args, void *cbdata)
     pmix_rank_info_t *info;
     pmix_proc_t proc;
     pmix_info_t ginfo;
-    pmix_proc_type_t proc_type;
+    pmix_proc_type_t proc_type = PMIX_PROC_TYPE_STATIC_INIT;
     pmix_byte_object_t cred;
     pmix_buffer_t buf;
+    uint8_t major, minor, release;
 
     /* acquire the object */
     PMIX_ACQUIRE_OBJECT(pnd);
@@ -1118,7 +1137,7 @@ static void connection_handler(int sd, short args, void *cbdata)
 
     if (0 == pnd->flag) {
         /* they must be a client, so get their nspace/rank */
-        proc_type = PMIX_PROC_CLIENT;
+        PMIX_SET_PROC_TYPE(&proc_type, PMIX_PROC_CLIENT);
         PMIX_STRNLEN(msglen, mg, cnt);
         if (msglen < cnt) {
             nspace = mg;
@@ -1145,7 +1164,7 @@ static void connection_handler(int sd, short args, void *cbdata)
         }
     } else if (1 == pnd->flag) {
         /* they are a tool */
-        proc_type = PMIX_PROC_TOOL;
+        PMIX_SET_PROC_TYPE(&proc_type, PMIX_PROC_TOOL);
         /* extract the uid/gid */
         if (sizeof(uint32_t) <= cnt) {
             memcpy(&u32, mg, sizeof(uint32_t));
@@ -1171,7 +1190,7 @@ static void connection_handler(int sd, short args, void *cbdata)
         }
     } else if (2 == pnd->flag) {
         /* they are a launcher */
-        proc_type = PMIX_PROC_LAUNCHER;
+        PMIX_SET_PROC_TYPE(&proc_type, PMIX_PROC_LAUNCHER);
         /* extract the uid/gid */
         if (sizeof(uint32_t) <= cnt) {
             memcpy(&u32, mg, sizeof(uint32_t));
@@ -1198,9 +1217,9 @@ static void connection_handler(int sd, short args, void *cbdata)
     } else if (3 == pnd->flag || 6 == pnd->flag) {
         /* they are a tool or launcher that needs an identifier */
         if (3 == pnd->flag) {
-            proc_type = PMIX_PROC_TOOL;
+            PMIX_SET_PROC_TYPE(&proc_type, PMIX_PROC_TOOL);
         } else {
-            proc_type = PMIX_PROC_LAUNCHER;
+            PMIX_SET_PROC_TYPE(&proc_type, PMIX_PROC_LAUNCHER);
         }
         /* extract the uid/gid */
         if (sizeof(uint32_t) <= cnt) {
@@ -1230,9 +1249,9 @@ static void connection_handler(int sd, short args, void *cbdata)
     } else if (4 == pnd->flag || 5 == pnd->flag || 7 == pnd->flag || 8 == pnd->flag) {
         /* they are a tool or launcher that has an identifier - start with our ACLs */
         if (4 == pnd->flag || 5 == pnd->flag) {
-            proc_type = PMIX_PROC_TOOL;
+            PMIX_SET_PROC_TYPE(&proc_type, PMIX_PROC_TOOL);
         } else {
-            proc_type = PMIX_PROC_LAUNCHER;
+            PMIX_SET_PROC_TYPE(&proc_type, PMIX_PROC_LAUNCHER);
         }
         /* extract the uid/gid */
         if (sizeof(uint32_t) <= cnt) {
@@ -1302,26 +1321,21 @@ static void connection_handler(int sd, short args, void *cbdata)
         rc = PMIX_ERR_BAD_PARAM;
         goto error;
     }
+    major = strtoul(version, &version, 10);
+    ++version;
+    minor = strtoul(version, &version, 10);
+    ++version;
+    release = strtoul(version, NULL, 10);
+    PMIX_SET_PROC_MAJOR(&proc_type, major);
+    PMIX_SET_PROC_MINOR(&proc_type, minor);
+    PMIX_SET_PROC_RELEASE(&proc_type, release);
 
-    if (0 == strncmp(version, "2.0", 3)) {
+    if (2 == major && 0 == minor) {
         /* the 2.0 release handshake ends with the version string */
-        proc_type = proc_type | PMIX_PROC_V20;
         bfrops = "v20";
         bftype = pmix_bfrops_globals.default_type;  // we can't know any better
         gds = "ds12,hash";
     } else {
-        int major;
-        major = strtoul(version, NULL, 10);
-        if (2 == major) {
-            proc_type = proc_type | PMIX_PROC_V21;
-        } else if (3 <= major) {
-            proc_type = proc_type | PMIX_PROC_V3;
-        } else {
-            free(msg);
-            PMIX_ERROR_LOG(PMIX_ERR_NOT_SUPPORTED);
-            rc = PMIX_ERR_NOT_SUPPORTED;
-            goto error;
-        }
         /* extract the name of the bfrops module they used */
         PMIX_STRNLEN(msglen, mg, cnt);
         if (msglen < cnt) {
@@ -1477,7 +1491,7 @@ static void connection_handler(int sd, short args, void *cbdata)
         }
 
         /* pass along the proc_type */
-        pnd->proc_type = proc_type;
+        memcpy(&pnd->proc_type, &proc_type, sizeof(pmix_proc_type_t));
         /* pass along the bfrop, buffer_type, and sec fields so
          * we can assign them once we create a peer object */
         pnd->psec = strdup(sec);
@@ -1577,7 +1591,7 @@ static void connection_handler(int sd, short args, void *cbdata)
         return;
     }
     /* mark that this peer is a client of the given type */
-    peer->proc_type = proc_type;
+    memcpy(&peer->proc_type, &proc_type, sizeof(pmix_proc_type_t));
     /* save the protocol */
     peer->protocol = pnd->protocol;
     /* add in the nspace pointer */
@@ -1850,7 +1864,7 @@ static void process_cbfunc(int sd, short args, void *cbdata)
     }
 
     /* mark the peer proc type */
-    peer->proc_type = pnd->proc_type;
+    memcpy(&peer->proc_type, &pnd->proc_type, sizeof(pmix_proc_type_t));
     /* save the protocol */
     peer->protocol = pnd->protocol;
     /* save the uid/gid */
@@ -1906,11 +1920,12 @@ static void process_cbfunc(int sd, short args, void *cbdata)
         goto done;
     }
     PMIX_RETAIN(peer);
-    req->peer = peer;
-    req->pname.nspace = strdup(pmix_globals.myid.nspace);
-    req->pname.rank = pmix_globals.myid.rank;
+    req->requestor = peer;
+    req->nprocs = 1;
+    PMIX_PROC_CREATE(req->procs, req->nprocs);
+    PMIX_LOAD_PROCID(&req->procs[0], pmix_globals.myid.nspace, pmix_globals.myid.rank);
     req->channels = PMIX_FWD_STDOUT_CHANNEL | PMIX_FWD_STDERR_CHANNEL | PMIX_FWD_STDDIAG_CHANNEL;
-    pmix_list_append(&pmix_globals.iof_requests, &req->super);
+    req->refid = pmix_pointer_array_add(&pmix_globals.iof_requests, req);
 
     /* validate the connection */
     cred.bytes = pnd->cred;

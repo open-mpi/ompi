@@ -48,11 +48,14 @@ typedef struct {
     cli_state_t next_state[CLI_TERM+1];
     pmix_rank_t rank;
     char *ns;
+    int exit_code;
+    bool alive;
 } cli_info_t;
 
 extern cli_info_t *cli_info;
 extern int cli_info_cnt;
 extern bool test_abort;
+extern bool test_complete;
 
 int cli_rank(cli_info_t *cli);
 void cli_init(int nprocs);
@@ -61,10 +64,7 @@ void cli_finalize(cli_info_t *cli);
 void cli_disconnect(cli_info_t *cli);
 void cli_terminate(cli_info_t *cli);
 void cli_cleanup(cli_info_t *cli);
-void cli_wait_all(double timeout);
 void cli_kill_all(void);
-
-bool test_terminated(void);
 
 void errhandler(size_t evhdlr_registration_id,
                 pmix_status_t status,

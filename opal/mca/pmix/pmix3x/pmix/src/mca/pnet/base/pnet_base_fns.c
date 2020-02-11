@@ -56,7 +56,7 @@ pmix_status_t pmix_pnet_base_allocate(char *nspace,
     if (NULL == nspace || NULL == ilist) {
         return PMIX_ERR_BAD_PARAM;
     }
-    if (PMIX_PROC_IS_GATEWAY(pmix_globals.mypeer)) {
+    if (PMIX_PEER_IS_GATEWAY(pmix_globals.mypeer)) {
         nptr = NULL;
         /* find this nspace - note that it may not have
          * been registered yet */

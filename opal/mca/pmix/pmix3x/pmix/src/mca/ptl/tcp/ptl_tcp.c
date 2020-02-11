@@ -141,6 +141,7 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
     pmix_info_t *iptr = NULL, mypidinfo, mycmdlineinfo, launcher;
     size_t niptr = 0;
     pmix_kval_t *urikv = NULL;
+    int major, minor, release;
 
     pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
                         "ptl:tcp: connecting to server");
@@ -151,10 +152,11 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
 
     /* if I am a client, then we need to look for the appropriate
      * connection info in the environment */
-    if (PMIX_PROC_IS_CLIENT(pmix_globals.mypeer)) {
+    if (PMIX_PEER_IS_CLIENT(pmix_globals.mypeer)) {
         if (NULL != (evar = getenv("PMIX_SERVER_URI3"))) {
             /* we are talking to a v3 server */
-            pmix_client_globals.myserver->proc_type = PMIX_PROC_SERVER | PMIX_PROC_V3;
+            PMIX_SET_PEER_TYPE(pmix_client_globals.myserver, PMIX_PROC_SERVER);
+            PMIX_SET_PEER_MAJOR(pmix_client_globals.myserver, 3);
             pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
                                 "V3 SERVER DETECTED");
             /* must use the v3 bfrops module */
@@ -164,7 +166,9 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
             }
         } else if (NULL != (evar = getenv("PMIX_SERVER_URI21"))) {
             /* we are talking to a v2.1 server */
-            pmix_client_globals.myserver->proc_type = PMIX_PROC_SERVER | PMIX_PROC_V21;
+            PMIX_SET_PEER_TYPE(pmix_client_globals.myserver, PMIX_PROC_SERVER);
+            PMIX_SET_PEER_MAJOR(pmix_client_globals.myserver, 2);
+            PMIX_SET_PEER_MINOR(pmix_client_globals.myserver, 1);
             pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
                                 "V21 SERVER DETECTED");
             /* must use the v21 bfrops module */
@@ -174,7 +178,9 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
             }
         } else if (NULL != (evar = getenv("PMIX_SERVER_URI2"))) {
             /* we are talking to a v2.0 server */
-            pmix_client_globals.myserver->proc_type = PMIX_PROC_SERVER | PMIX_PROC_V20;
+            PMIX_SET_PEER_TYPE(pmix_client_globals.myserver, PMIX_PROC_SERVER);
+            PMIX_SET_PEER_MAJOR(pmix_client_globals.myserver, 2);
+            PMIX_SET_PEER_MINOR(pmix_client_globals.myserver, 0);
             pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
                                 "V20 SERVER DETECTED");
             /* must use the v20 bfrops module */
@@ -190,6 +196,18 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
         pmix_client_globals.myserver->nptr->compat.bfrops = pmix_globals.mypeer->nptr->compat.bfrops;
         /* mark that we are using the V2 (i.e., tcp) protocol */
         pmix_globals.mypeer->protocol = PMIX_PROTOCOL_V2;
+
+        /* see if they set their version in the env */
+        if (NULL != (p2 = getenv("PMIX_VERSION"))) {
+            major = strtoul(p2, &p, 10);
+            ++p;
+            minor = strtoul(p, &p, 10);
+            ++p;
+            release = strtoul(p, NULL, 10);
+            PMIX_SET_PEER_MAJOR(pmix_client_globals.myserver, major);
+            PMIX_SET_PEER_MINOR(pmix_client_globals.myserver, minor);
+            PMIX_SET_PEER_RELEASE(pmix_client_globals.myserver, release);
+        }
 
         /* the URI consists of the following elements:
         *    - server nspace.rank
@@ -306,7 +324,7 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
     pmix_list_append(&ilist, &kv->super);
 
     /* if I am a launcher, tell them so */
-    if (PMIX_PROC_IS_LAUNCHER(pmix_globals.mypeer)) {
+    if (PMIX_PEER_IS_LAUNCHER(pmix_globals.mypeer)) {
         kv = PMIX_NEW(pmix_info_caddy_t);
         PMIX_INFO_LOAD(&launcher, PMIX_LAUNCHER, NULL, PMIX_BOOL);
         kv->info = &launcher;
@@ -716,7 +734,7 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
 
     /* tools setup their server info in try_connect because they
      * utilize a broader handshake */
-    if (PMIX_PROC_IS_CLIENT(pmix_globals.mypeer)) {
+    if (PMIX_PEER_IS_CLIENT(pmix_globals.mypeer)) {
         /* setup the server info */
         if (NULL == pmix_client_globals.myserver->info) {
             pmix_client_globals.myserver->info = PMIX_NEW(pmix_rank_info_t);
@@ -827,12 +845,12 @@ static pmix_status_t parse_uri_file(char *filename,
                                     pmix_rank_t *rank)
 {
     FILE *fp;
-    char *srvr, *p, *p2;
+    char *srvr, *p, *p2, *p3;
     pmix_lock_t lock;
     pmix_event_t ev;
     struct timeval tv;
     int retries;
-    int major;
+    int major, minor, release;
 
     fp = fopen(filename, "r");
     if (NULL == fp) {
@@ -881,27 +899,29 @@ static pmix_status_t parse_uri_file(char *filename,
     /* see if this file contains the server's version */
     p2 = pmix_getline(fp);
     if (NULL == p2) {
-        pmix_client_globals.myserver->proc_type = PMIX_PROC_SERVER | PMIX_PROC_V20;
+        PMIX_SET_PEER_TYPE(pmix_client_globals.myserver, PMIX_PROC_SERVER);
+        PMIX_SET_PEER_MAJOR(pmix_client_globals.myserver, 2);
+        PMIX_SET_PEER_MINOR(pmix_client_globals.myserver, 0);
         pmix_client_globals.myserver->protocol = PMIX_PROTOCOL_V2;
         pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
                             "V20 SERVER DETECTED");
     } else {
         /* convert the version to a number */
         if ('v' == p2[0]) {
-            major = strtoul(&p2[1], NULL, 10);
+            major = strtoul(&p2[1], &p3, 10);
         } else {
-            major = strtoul(p2, NULL, 10);
+            major = strtoul(p2, &p3, 10);
         }
-        if (2 == major) {
-            pmix_client_globals.myserver->proc_type = PMIX_PROC_SERVER | PMIX_PROC_V21;
+        minor = strtoul(p3, &p3, 10);
+        release = strtoul(p3, NULL, 10);
+        PMIX_SET_PEER_TYPE(pmix_client_globals.myserver, PMIX_PROC_SERVER);
+        PMIX_SET_PEER_MAJOR(pmix_client_globals.myserver, major);
+        PMIX_SET_PEER_MINOR(pmix_client_globals.myserver, minor);
+        PMIX_SET_PEER_RELEASE(pmix_client_globals.myserver, release);
+        if (2 <= major) {
             pmix_client_globals.myserver->protocol = PMIX_PROTOCOL_V2;
             pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
-                                "V21 SERVER DETECTED");
-        } else if (3 <= major) {
-            pmix_client_globals.myserver->proc_type = PMIX_PROC_SERVER | PMIX_PROC_V3;
-            pmix_client_globals.myserver->protocol = PMIX_PROTOCOL_V2;
-            pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
-                                "V3 SERVER DETECTED");
+                                "V2 PROTOCOL SERVER DETECTED");
         }
     }
     if (NULL != p2) {
@@ -1068,8 +1088,8 @@ static pmix_status_t send_connect_ack(int sd, uint8_t *myflag,
                         "pmix:tcp SEND CONNECT ACK");
 
     /* if we are a server, then we shouldn't be here */
-    if (PMIX_PROC_IS_SERVER(pmix_globals.mypeer) &&
-        !PMIX_PROC_IS_LAUNCHER(pmix_globals.mypeer)) {
+    if (PMIX_PEER_IS_SERVER(pmix_globals.mypeer) &&
+        !PMIX_PEER_IS_LAUNCHER(pmix_globals.mypeer)) {
         PMIX_ERROR_LOG(PMIX_ERR_NOT_SUPPORTED);
         return PMIX_ERR_NOT_SUPPORTED;
     }
@@ -1107,8 +1127,8 @@ static pmix_status_t send_connect_ack(int sd, uint8_t *myflag,
      * 7 => self-started launcher that was given an identifier by caller
      * 8 => launcher that was started by a PMIx server - identifier specified by server
      */
-    if (PMIX_PROC_IS_LAUNCHER(pmix_globals.mypeer)) {
-        if (PMIX_PROC_IS_CLIENT(pmix_globals.mypeer)) {
+    if (PMIX_PEER_IS_LAUNCHER(pmix_globals.mypeer)) {
+        if (PMIX_PEER_IS_CLIENT(pmix_globals.mypeer)) {
             /* if we are both launcher and client, then we need
              * to tell the server we are both */
             flag = 8;
@@ -1129,8 +1149,8 @@ static pmix_status_t send_connect_ack(int sd, uint8_t *myflag,
             }
         }
 
-    } else if (PMIX_PROC_IS_CLIENT(pmix_globals.mypeer) &&
-               !PMIX_PROC_IS_TOOL(pmix_globals.mypeer)) {
+    } else if (PMIX_PEER_IS_CLIENT(pmix_globals.mypeer) &&
+               !PMIX_PEER_IS_TOOL(pmix_globals.mypeer)) {
         /* we are a simple client */
         flag = 0;
         /* reserve space for our nspace and rank info */
@@ -1139,7 +1159,7 @@ static pmix_status_t send_connect_ack(int sd, uint8_t *myflag,
     } else {  // must be a tool of some sort
         /* add space for our uid/gid for ACL purposes */
         sdsize += 2*sizeof(uint32_t);
-        if (PMIX_PROC_IS_CLIENT(pmix_globals.mypeer)) {
+        if (PMIX_PEER_IS_CLIENT(pmix_globals.mypeer)) {
             /* if we are both tool and client, then we need
              * to tell the server we are both */
             flag = 5;

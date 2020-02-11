@@ -1,8 +1,8 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
- * Copyright (c) 2014-2015 Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2019 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2014      Artem Y. Polyakov <artpol84@gmail.com>.
  *                         All rights reserved.
  * Copyright (c) 2016      Mellanox Technologies, Inc.
@@ -523,13 +523,13 @@ static void wait_cbfunc(struct pmix_peer_t *pr,
                         (NULL == buf) ? -1 : (int)buf->bytes_used);
 
     if (NULL == buf) {
-        rc = PMIX_ERR_BAD_PARAM;
+        ret = PMIX_ERR_BAD_PARAM;
         goto report;
     }
     /* a zero-byte buffer indicates that this recv is being
      * completed due to a lost connection */
     if (PMIX_BUFFER_IS_EMPTY(buf)) {
-        rc = PMIX_ERR_UNREACH;
+        ret = PMIX_ERR_UNREACH;
         goto report;
     }
 
@@ -539,11 +539,12 @@ static void wait_cbfunc(struct pmix_peer_t *pr,
                        buf, &ret, &cnt, PMIX_STATUS);
     if (PMIX_SUCCESS != rc) {
         PMIX_ERROR_LOG(rc);
+        ret = rc;
     }
 
   report:
     if (NULL != cb->cbfunc.opfn) {
-        cb->cbfunc.opfn(rc, cb->cbdata);
+        cb->cbfunc.opfn(ret, cb->cbdata);
     }
     PMIX_RELEASE(cb);
 }

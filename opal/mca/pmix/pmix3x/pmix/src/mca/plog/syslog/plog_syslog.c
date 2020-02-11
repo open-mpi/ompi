@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
- * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -129,7 +129,7 @@ static pmix_status_t mylog(const pmix_proc_t *source,
             }
         } else if (0 == strncmp(data[n].key, PMIX_LOG_GLOBAL_SYSLOG, PMIX_MAX_KEYLEN)) {
             /* only do this if we are a gateway server */
-            if (PMIX_PROC_IS_GATEWAY(pmix_globals.mypeer)) {
+            if (PMIX_PEER_IS_GATEWAY(pmix_globals.mypeer)) {
                 rc = write_local(source, timestamp, pri, data[n].value.data.string, data, ndata);
                 if (PMIX_SUCCESS == rc) {
                     /* flag that we did this one */

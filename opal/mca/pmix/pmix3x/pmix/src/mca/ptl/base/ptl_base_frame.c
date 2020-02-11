@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, Inc.  All rights reserved.
- * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -43,6 +43,7 @@
 #include "src/mca/base/pmix_mca_base_framework.h"
 #include "src/class/pmix_list.h"
 #include "src/client/pmix_client_ops.h"
+#include "src/mca/ptl/ptl_types.h"
 #include "src/mca/ptl/base/base.h"
 
 /*
@@ -208,7 +209,11 @@ static void pccon(pmix_pending_connection_t *p)
     p->gds = NULL;
     p->ptl = NULL;
     p->cred = NULL;
-    p->proc_type = PMIX_PROC_UNDEF;
+    p->proc_type.type = PMIX_PROC_UNDEF;
+    p->proc_type.major = PMIX_MAJOR_WILDCARD;
+    p->proc_type.minor = PMIX_MINOR_WILDCARD;
+    p->proc_type.release = PMIX_RELEASE_WILDCARD;
+    p->proc_type.padding = 0;
 }
 static void pcdes(pmix_pending_connection_t *p)
 {

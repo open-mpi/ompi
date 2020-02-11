@@ -676,7 +676,7 @@ typedef uint32_t pmix_rank_t;
 #define PMIX_IOF_TAG_OUTPUT                 "pmix.iof.tag"          // (bool) Tag output with the channel it comes from
 #define PMIX_IOF_TIMESTAMP_OUTPUT           "pmix.iof.ts"           // (bool) Timestamp output
 #define PMIX_IOF_XML_OUTPUT                 "pmix.iof.xml"          // (bool) Format output in XML
-
+#define PMIX_IOF_STOP                       "pmix.iof.stop"         // (bool) Stop forwarding the specified channel(s)
 
 /* Attributes for controlling contents of application setup data */
 #define PMIX_SETUP_APP_ENVARS               "pmix.setup.env"        // (bool) harvest and include relevant envars
@@ -735,7 +735,7 @@ typedef int pmix_status_t;
  * at least defined to ensure older codes will compile */
 #define PMIX_SUCCESS                                 0
 #define PMIX_ERROR                                  -1          // general error
-#define PMIX_ERR_SILENT                             -2          // internal-only
+#define PMIX_ERR_SILENT                             -2
 /* debugger release flag */
 #define PMIX_ERR_DEBUGGER_RELEASE                   -3
 /* fault tolerance */
@@ -749,45 +749,45 @@ typedef int pmix_status_t;
 /* communication failures */
 #define PMIX_ERR_SERVER_FAILED_REQUEST              -10
 #define PMIX_EXISTS                                 -11
-#define PMIX_ERR_INVALID_CRED                       -12         // internal-only
-#define PMIX_ERR_HANDSHAKE_FAILED                   -13         // internal-only
-#define PMIX_ERR_READY_FOR_HANDSHAKE                -14         // internal-only
+#define PMIX_ERR_INVALID_CRED                       -12
+#define PMIX_ERR_HANDSHAKE_FAILED                   -13
+#define PMIX_ERR_READY_FOR_HANDSHAKE                -14
 #define PMIX_ERR_WOULD_BLOCK                        -15
-#define PMIX_ERR_UNKNOWN_DATA_TYPE                  -16         // internal-only
-#define PMIX_ERR_PROC_ENTRY_NOT_FOUND               -17         // internal-only
-#define PMIX_ERR_TYPE_MISMATCH                      -18         // internal-only
-#define PMIX_ERR_UNPACK_INADEQUATE_SPACE            -19         // internal-only
-#define PMIX_ERR_UNPACK_FAILURE                     -20         // internal-only
-#define PMIX_ERR_PACK_FAILURE                       -21         // internal-only
-#define PMIX_ERR_PACK_MISMATCH                      -22         // internal-only
+#define PMIX_ERR_UNKNOWN_DATA_TYPE                  -16
+#define PMIX_ERR_PROC_ENTRY_NOT_FOUND               -17
+#define PMIX_ERR_TYPE_MISMATCH                      -18
+#define PMIX_ERR_UNPACK_INADEQUATE_SPACE            -19
+#define PMIX_ERR_UNPACK_FAILURE                     -20
+#define PMIX_ERR_PACK_FAILURE                       -21
+#define PMIX_ERR_PACK_MISMATCH                      -22
 #define PMIX_ERR_NO_PERMISSIONS                     -23
 #define PMIX_ERR_TIMEOUT                            -24
 #define PMIX_ERR_UNREACH                            -25
-#define PMIX_ERR_IN_ERRNO                           -26         // internal-only
+#define PMIX_ERR_IN_ERRNO                           -26
 #define PMIX_ERR_BAD_PARAM                          -27
-#define PMIX_ERR_RESOURCE_BUSY                      -28         // internal-only
+#define PMIX_ERR_RESOURCE_BUSY                      -28
 #define PMIX_ERR_OUT_OF_RESOURCE                    -29
 #define PMIX_ERR_DATA_VALUE_NOT_FOUND               -30
 #define PMIX_ERR_INIT                               -31
-#define PMIX_ERR_NOMEM                              -32         // internal-only
-#define PMIX_ERR_INVALID_ARG                        -33         // internal-only
-#define PMIX_ERR_INVALID_KEY                        -34         // internal-only
-#define PMIX_ERR_INVALID_KEY_LENGTH                 -35         // internal-only
-#define PMIX_ERR_INVALID_VAL                        -36         // internal-only
-#define PMIX_ERR_INVALID_VAL_LENGTH                 -37         // internal-only
-#define PMIX_ERR_INVALID_LENGTH                     -38         // internal-only
-#define PMIX_ERR_INVALID_NUM_ARGS                   -39         // internal-only
-#define PMIX_ERR_INVALID_ARGS                       -40         // internal-only
-#define PMIX_ERR_INVALID_NUM_PARSED                 -41         // internal-only
-#define PMIX_ERR_INVALID_KEYVALP                    -42         // internal-only
+#define PMIX_ERR_NOMEM                              -32
+#define PMIX_ERR_INVALID_ARG                        -33
+#define PMIX_ERR_INVALID_KEY                        -34
+#define PMIX_ERR_INVALID_KEY_LENGTH                 -35
+#define PMIX_ERR_INVALID_VAL                        -36
+#define PMIX_ERR_INVALID_VAL_LENGTH                 -37
+#define PMIX_ERR_INVALID_LENGTH                     -38
+#define PMIX_ERR_INVALID_NUM_ARGS                   -39
+#define PMIX_ERR_INVALID_ARGS                       -40
+#define PMIX_ERR_INVALID_NUM_PARSED                 -41
+#define PMIX_ERR_INVALID_KEYVALP                    -42
 #define PMIX_ERR_INVALID_SIZE                       -43
 #define PMIX_ERR_INVALID_NAMESPACE                  -44
-#define PMIX_ERR_SERVER_NOT_AVAIL                   -45         // internal-only
+#define PMIX_ERR_SERVER_NOT_AVAIL                   -45
 #define PMIX_ERR_NOT_FOUND                          -46
 #define PMIX_ERR_NOT_SUPPORTED                      -47
 #define PMIX_ERR_NOT_IMPLEMENTED                    -48
 #define PMIX_ERR_COMM_FAILURE                       -49
-#define PMIX_ERR_UNPACK_READ_PAST_END_OF_BUFFER     -50         // internal-only
+#define PMIX_ERR_UNPACK_READ_PAST_END_OF_BUFFER     -50
 #define PMIX_ERR_CONFLICTING_CLEANUP_DIRECTIVES     -51
 
 /* define a starting point for v2.x error values */
@@ -1018,10 +1018,12 @@ static inline void* pmix_calloc(size_t n, size_t m)
     }while(0)
 
 /* define a convenience macro for loading nspaces */
-#define PMIX_LOAD_NSPACE(a, b)                      \
-    do {                                            \
-        memset((a), 0, PMIX_MAX_NSLEN+1);           \
-        pmix_strncpy((a), (b), PMIX_MAX_NSLEN);     \
+#define PMIX_LOAD_NSPACE(a, b)                              \
+    do {                                                    \
+        memset((a), 0, PMIX_MAX_NSLEN+1);                   \
+        if (NULL != (b)) {                                  \
+            pmix_strncpy((char*)(a), (b), PMIX_MAX_NSLEN);  \
+        }                                                   \
     }while(0)
 
 /* define a convenience macro for checking nspaces */
@@ -1239,7 +1241,7 @@ typedef struct pmix_proc {
 #define PMIX_PROC_LOAD(m, n, r)                             \
     do {                                                    \
         PMIX_PROC_CONSTRUCT((m));                           \
-        pmix_strncpy((m)->nspace, (n), PMIX_MAX_NSLEN);    \
+        pmix_strncpy((char*)(m)->nspace, (n), PMIX_MAX_NSLEN);    \
         (m)->rank = (r);                                    \
     } while(0)
 
@@ -1249,9 +1251,9 @@ typedef struct pmix_proc {
         memset((t), 0, PMIX_MAX_NSLEN+1);                                   \
         _len = strlen((c));                                                 \
         if ((_len + strlen((n))) < PMIX_MAX_NSLEN) {                        \
-            pmix_strncpy((t), (c), PMIX_MAX_NSLEN);                         \
+            pmix_strncpy((char*)(t), (c), PMIX_MAX_NSLEN);                         \
             (t)[_len] = ':';                                                \
-            pmix_strncpy(&(t)[_len+1], (n), PMIX_MAX_NSLEN - _len);         \
+            pmix_strncpy((char*)&(t)[_len+1], (n), PMIX_MAX_NSLEN - _len);         \
         }                                                                   \
     } while(0)
 
@@ -1539,7 +1541,7 @@ typedef struct pmix_info {
 #define PMIX_INFO_LOAD(m, k, v, t)                          \
     do {                                                    \
         if (NULL != (k)) {                                  \
-            pmix_strncpy((m)->key, (k), PMIX_MAX_KEYLEN);   \
+            pmix_strncpy((char*)(m)->key, (k), PMIX_MAX_KEYLEN);   \
         }                                                   \
         (m)->flags = 0;                                     \
         pmix_value_load(&((m)->value), (v), (t));           \
@@ -1547,7 +1549,7 @@ typedef struct pmix_info {
 #define PMIX_INFO_XFER(d, s)                                        \
     do {                                                            \
         if (NULL != (s)->key) {                                     \
-            pmix_strncpy((d)->key, (s)->key, PMIX_MAX_KEYLEN);      \
+            pmix_strncpy((char*)(d)->key, (s)->key, PMIX_MAX_KEYLEN);      \
         }                                                           \
         (d)->flags = (s)->flags;                                    \
         pmix_value_xfer(&(d)->value, (pmix_value_t*)&(s)->value);   \
@@ -1628,9 +1630,9 @@ typedef struct pmix_pdata {
     do {                                                                    \
         if (NULL != (m)) {                                                  \
             memset((m), 0, sizeof(pmix_pdata_t));                           \
-            pmix_strncpy((m)->proc.nspace, (p)->nspace, PMIX_MAX_NSLEN);    \
+            pmix_strncpy((char*)(m)->proc.nspace, (p)->nspace, PMIX_MAX_NSLEN);    \
             (m)->proc.rank = (p)->rank;                                     \
-            pmix_strncpy((m)->key, (k), PMIX_MAX_KEYLEN);                   \
+            pmix_strncpy((char*)(m)->key, (k), PMIX_MAX_KEYLEN);                   \
             pmix_value_load(&((m)->value), (v), (t));                       \
         }                                                                   \
     } while (0)
@@ -1639,9 +1641,9 @@ typedef struct pmix_pdata {
     do {                                                                        \
         if (NULL != (d)) {                                                      \
             memset((d), 0, sizeof(pmix_pdata_t));                               \
-            pmix_strncpy((d)->proc.nspace, (s)->proc.nspace, PMIX_MAX_NSLEN);   \
+            pmix_strncpy((char*)(d)->proc.nspace, (s)->proc.nspace, PMIX_MAX_NSLEN);   \
             (d)->proc.rank = (s)->proc.rank;                                    \
-            pmix_strncpy((d)->key, (s)->key, PMIX_MAX_KEYLEN);                  \
+            pmix_strncpy((char*)(d)->key, (s)->key, PMIX_MAX_KEYLEN);                  \
             pmix_value_xfer(&((d)->value), &((s)->value));                      \
         }                                                                       \
     } while (0)
@@ -2657,10 +2659,12 @@ static inline void pmix_darray_destruct(pmix_data_array_t *m)
             (m)->array = NULL;                                      \
         }                                                           \
     } while(0)
-#define PMIX_DATA_ARRAY_CREATE(m, n, t)                                   \
-    do {                                                                  \
-        (m) = (pmix_data_array_t*)pmix_calloc(1, sizeof(pmix_data_array_t));   \
-        PMIX_DATA_ARRAY_CONSTRUCT((m), (n), (t));                         \
+#define PMIX_DATA_ARRAY_CREATE(m, n, t)                                         \
+    do {                                                                        \
+        (m) = (pmix_data_array_t*)pmix_calloc(1, sizeof(pmix_data_array_t));    \
+        if (NULL != (m)) {                                                      \
+            PMIX_DATA_ARRAY_CONSTRUCT((m), (n), (t));                           \
+        }                                                                       \
     } while(0)
 
 #define PMIX_DATA_ARRAY_DESTRUCT(m) pmix_darray_destruct(m)

@@ -3,6 +3,7 @@
  * Copyright (c) 2012-2016 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC. All rights reserved
  * Copyright (c) 2015-2019 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2020      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -141,7 +142,7 @@ PMIX_CLASS_DECLARATION(pmix_hotel_t);
  * @param num_rooms The total number of rooms in the hotel (IN)
  * @param evbase Pointer to event base used for eviction timeout
  * @param eviction_timeout Max length of a stay at the hotel before
- * the eviction callback is invoked (in microseconds)
+ * the eviction callback is invoked (in seconds)
  * @param evict_callback_fn Callback function invoked if an occupant
  * does not check out before the eviction_timeout.
  *

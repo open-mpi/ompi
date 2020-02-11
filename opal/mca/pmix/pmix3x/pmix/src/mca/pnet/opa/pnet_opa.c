@@ -524,7 +524,7 @@ static pmix_status_t collect_inventory(pmix_info_t directives[], size_t ndirs,
   query:
 #if 0
 #if PMIX_WANT_OPAMGT
-    if (PMIX_PROC_IS_GATEWAY(pmix_globals.mypeer)) {
+    if (PMIX_PEER_IS_GATEWAY(pmix_globals.mypeer)) {
         /* collect the switch information from the FM */
         OMGT_STATUS_T status = OMGT_STATUS_SUCCESS;
         struct omgt_port * port = NULL;
@@ -562,7 +562,7 @@ static pmix_status_t collect_inventory(pmix_info_t directives[], size_t ndirs,
 #else  // have_hwloc
 #if 0
 #if PMIX_WANT_OPAMGT
-    if (PMIX_PROC_IS_GATEWAY(pmix_globals.mypeer)) {
+    if (PMIX_PEER_IS_GATEWAY(pmix_globals.mypeer)) {
         /* query the FM for the inventory */
     }
 

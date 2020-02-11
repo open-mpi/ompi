@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2017      Mellanox Technologies, Inc.
  *                         All rights reserved.
- * Copyright (c) 2017      Intel, Inc. All rights reserved.
+ * Copyright (c) 2017-2019 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -50,7 +50,7 @@ int test_internal(char *my_nspace, pmix_rank_t my_rank, test_params params) {
         if (PMIX_SUCCESS != (rc = PMIx_Store_internal(&proc, key, &value))) {
             TEST_ERROR(("%s:%d: PMIx_Store_internal failed: %d", my_nspace, my_rank, rc));
             PMIX_PROC_DESTRUCT(&proc);
-            return PMIX_ERROR;
+            exit(rc);
         }
     }
 
@@ -58,7 +58,7 @@ int test_internal(char *my_nspace, pmix_rank_t my_rank, test_params params) {
     if (PMIX_SUCCESS != (rc = PMIx_Commit())) {
         TEST_ERROR(("%s:%d: PMIx_Commit failed: %d", my_nspace, my_rank, rc));
         PMIX_PROC_DESTRUCT(&proc);
-        return PMIX_ERROR;
+        exit(rc);
     }
 
     proc.rank = PMIX_RANK_WILDCARD;
@@ -66,7 +66,7 @@ int test_internal(char *my_nspace, pmix_rank_t my_rank, test_params params) {
     if (PMIX_SUCCESS != rc) {
         TEST_ERROR(("%s:%d: PMIx_Fence failed: %d", my_nspace, my_rank, rc));
         PMIX_PROC_DESTRUCT(&proc);
-        return rc;
+        exit(rc);
     }
 
     for (idx = 0; idx < params.test_internal; idx++) {
@@ -77,7 +77,7 @@ int test_internal(char *my_nspace, pmix_rank_t my_rank, test_params params) {
         if (PMIX_SUCCESS != rc) {
             TEST_ERROR(("%s:%d: PMIx_Get of remote key on local proc", my_nspace, my_rank));
             PMIX_PROC_DESTRUCT(&proc);
-            return PMIX_ERROR;
+            exit(rc);
         }
     }
 

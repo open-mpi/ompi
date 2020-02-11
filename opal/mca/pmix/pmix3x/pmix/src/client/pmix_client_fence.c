@@ -81,6 +81,12 @@ PMIX_EXPORT pmix_status_t PMIx_Fence(const pmix_proc_t procs[], size_t nprocs,
         return PMIX_ERR_INIT;
     }
 
+    /* if we are a singleton, there is nothing to do */
+    if (pmix_client_globals.singleton) {
+        PMIX_RELEASE_THREAD(&pmix_global_lock);
+        return PMIX_SUCCESS;
+    }
+
     /* if we aren't connected, don't attempt to send */
     if (!pmix_globals.connected) {
         PMIX_RELEASE_THREAD(&pmix_global_lock);

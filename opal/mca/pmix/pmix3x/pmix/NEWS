@@ -1,5 +1,5 @@
 Copyright (c) 2015-2019 Intel, Inc.  All rights reserved.
-Copyright (c) 2017-2019 IBM Corporation.  All rights reserved.
+Copyright (c) 2017-2020 IBM Corporation.  All rights reserved.
 $COPYRIGHT$
 
 Additional copyrights may follow
@@ -19,6 +19,45 @@ to only bug fixes.  Since these series are semi-independent of each
 other, a single NEWS-worthy item might apply to different series. For
 example, a bug might be fixed in the master, and then moved to
 multiple release branches.
+
+
+3.1.6 -- TBD
+----------------------
+
+
+3.1.5 -- 14 Feb 2020
+----------------------
+NOTE: The signature of the PMIx_Allocation_request has changed
+in accordance with an Errata update of the PMIx v3 Standard
+- PR #1413/#1465: Remove unnecessary error log
+- PR #1433: Return the correct status from PMIx_Publish
+- PR #1445: Sync. with master to fix 'get' of data for unknown namespace
+  Includes the following PRs from master
+  - PR #1382: dstore: fixed truncate key-names while restoring 
+  - PR #1405: Fix xnspace dmodex and add verbose debug
+  - PR #1406: Resolve request for job-level data
+  - PR #1407/#1409/#1411: Fix dmodex across nspaces
+  - PR #1434/#1436: Cleanup handling of info arrays
+  - PR #1435: Cleanup example and remove debug
+  - PR #1437: Update blocking Allocation_request signature
+  - PR #1440: Fix 'get' of data for unknown namespace
+  - PR #1442: Fix fences with namespaces where no local processes are running
+- PR #1472: Initialize nlocal and local in the tracker
+- PR #1487: Sync. with master to fix info array and cross-version issues
+- PR #1493/#1497/#1501/#1505/#1589: Info array and Cross-version fixes
+- PR #1511/#1517/#1520/#1523/#1534/#1565: Fix pmix tests
+- PR #1530: Improve handling of servers piror to v3.1.5
+- PR #1531: Update transfer from hash to dstore
+- PR #1538: Fix singleton initialization
+- PR #1547: Add missing PMIx_IOF_deregister function
+- PR #1554/#1591: Fix memory leak on namespace deregister
+- PR #1561: Configury fix for reproducible builds
+- PR #1579: Protect pthread setpshared calls
+- PR #1587: Fix to gds/dstore configure logic
+- PR #1610: Adjust hotel timeout to be in whole seconds
+- PR #1613: dstore: Fix cache size calculation
+- PR #1622: Fix multiple occurrences of unaligned access in pmix tests
+- PR #1620: Re-address the collective tracker problem
 
 
 3.1.4 -- 9 Aug 2019

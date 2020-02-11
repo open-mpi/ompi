@@ -2,7 +2,7 @@
  * Copyright (c) 2018      Mellanox Technologies, Inc.
  *                         All rights reserved.
  *
- * Copyright (c) 2018      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2018-2019 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -37,6 +37,7 @@ typedef struct {
 struct server_info_t
 {
     pmix_list_item_t super;
+    char *hostname;
     pid_t pid;
     int idx;
     int rd_fd;
@@ -64,6 +65,7 @@ extern int my_server_id;
 extern pmix_list_t *server_list;
 extern server_info_t *my_server_info;
 extern pmix_list_t *server_nspace;
+extern int test_fail;
 
 int server_init(test_params *params);
 int server_finalize(test_params *params);

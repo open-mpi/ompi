@@ -200,6 +200,11 @@ PMIX_EXPORT void pmix_iof_stdin_write_handler(int fd, short event, void *cbdata)
 PMIX_EXPORT bool pmix_iof_stdin_check(int fd);
 PMIX_EXPORT void pmix_iof_stdin_cb(int fd, short event, void *cbdata);
 PMIX_EXPORT void pmix_iof_read_local_handler(int fd, short event, void *cbdata);
+PMIX_EXPORT pmix_status_t pmix_iof_process_iof(pmix_iof_channel_t channels,
+                                               const pmix_proc_t *source,
+                                               const pmix_byte_object_t *bo,
+                                               const pmix_info_t *info, size_t ninfo,
+                                               const pmix_iof_req_t *req);
 
 END_C_DECLS
 

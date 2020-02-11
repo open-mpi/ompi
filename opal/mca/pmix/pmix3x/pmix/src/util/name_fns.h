@@ -12,7 +12,7 @@
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2018      Intel, Inc. All rights reserved.
+ * Copyright (c) 2018-2019 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -30,6 +30,7 @@
 #endif
 
 #include "pmix_common.h"
+#include "src/include/pmix_globals.h"
 
 BEGIN_C_DECLS
 
@@ -37,6 +38,10 @@ BEGIN_C_DECLS
 PMIX_EXPORT char* pmix_util_print_name_args(const pmix_proc_t *name);
 #define PMIX_NAME_PRINT(n) \
     pmix_util_print_name_args(n)
+
+PMIX_EXPORT char *pmix_util_print_pname_args(const pmix_name_t *name);
+#define PMIX_PNAME_PRINT(n) \
+    pmix_util_print_pname_args(n)
 
 PMIX_EXPORT char* pmix_util_print_rank(const pmix_rank_t vpid);
 #define PMIX_RANK_PRINT(n) \

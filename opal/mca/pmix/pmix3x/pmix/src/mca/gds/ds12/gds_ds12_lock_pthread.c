@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * Copyright (c) 2016-2018 Mellanox Technologies, Inc.
  *                         All rights reserved.
@@ -105,7 +105,7 @@ pmix_status_t pmix_gds_ds12_lock_init(pmix_common_dstor_lock_ctx_t *ctx, const c
     PMIX_OUTPUT_VERBOSE((10, pmix_gds_base_framework.framework_output,
         "%s:%d:%s _lockfile_name: %s", __FILE__, __LINE__, __func__, lock_ctx->lockfile));
 
-    if (PMIX_PROC_IS_SERVER(pmix_globals.mypeer)) {
+    if (PMIX_PEER_IS_SERVER(pmix_globals.mypeer)) {
         if (PMIX_SUCCESS != (rc = pmix_pshmem.segment_create(lock_ctx->segment,
                                             lock_ctx->lockfile, size))) {
             PMIX_ERROR_LOG(rc);
@@ -138,21 +138,24 @@ pmix_status_t pmix_gds_ds12_lock_init(pmix_common_dstor_lock_ctx_t *ctx, const c
             PMIX_ERROR_LOG(rc);
             goto error;
         }
-#ifdef HAVE_PTHREAD_SETKIND
+#if PMIX_PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP
         if (0 != pthread_rwlockattr_setkind_np(&attr,
                                 PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP)) {
             pthread_rwlockattr_destroy(&attr);
-            PMIX_ERROR_LOG(PMIX_ERR_INIT);
+            rc = PMIX_ERR_INIT;
+            PMIX_ERROR_LOG(rc);
             goto error;
         }
 #endif
         if (0 != pthread_rwlock_init(lock_ctx->rwlock, &attr)) {
             pthread_rwlockattr_destroy(&attr);
-            PMIX_ERROR_LOG(PMIX_ERR_INIT);
+            rc = PMIX_ERR_INIT;
+            PMIX_ERROR_LOG(rc);
             goto error;
         }
         if (0 != pthread_rwlockattr_destroy(&attr)) {
-            PMIX_ERROR_LOG(PMIX_ERR_INIT);
+            rc = PMIX_ERR_INIT;
+            PMIX_ERROR_LOG(rc);
             goto error;
         }
 
