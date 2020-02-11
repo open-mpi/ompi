@@ -19,6 +19,7 @@
  * Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2020      Google, LLC. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -167,24 +168,56 @@ static inline void do_unregistration_gc (mca_rcache_base_module_t *rcache)
         dereg_mem ((mca_rcache_base_registration_t *) item);
     }
 }
+
+static inline mca_rcache_base_registration_t *mca_rcache_grdma_remove_lru_head(mca_rcache_grdma_cache_t *cache) {
+    mca_rcache_base_registration_t *old_reg;
+    int32_t old_flags;
+
+    do {
+        opal_mutex_lock (&cache->vma_module->vma_lock);
+        old_reg = (mca_rcache_base_registration_t *) opal_list_remove_first (&cache->lru_list);
+        if (NULL == old_reg) {
+            opal_mutex_unlock (&cache->vma_module->vma_lock);
+            break;
+        }
+
+        do {
+            int32_t new_flags;
+            old_flags = old_reg->flags;
+            /* registration has been selected for removal and is no longer in the LRU. mark it
+             * as such. */
+            new_flags = (old_flags & ~MCA_RCACHE_GRDMA_REG_FLAG_IN_LRU) | MCA_RCACHE_FLAGS_INVALID;
+            if (opal_atomic_compare_exchange_strong_32(&old_reg->flags, &old_flags, new_flags)) {
+                break;
+            }
+        } while (1);
+        opal_mutex_unlock (&cache->vma_module->vma_lock);
+
+        if (old_flags & MCA_RCACHE_FLAGS_INVALID) {
+            /* registration was already invalidated. in this case its fate is being determined
+             * by another thread. */
+            continue;
+        }
+
+        return old_reg;
+    } while (1);
+
+    return NULL;
+}
+
 static inline bool mca_rcache_grdma_evict_lru_local (mca_rcache_grdma_cache_t *cache)
 {
     mca_rcache_grdma_module_t *rcache_grdma;
     mca_rcache_base_registration_t *old_reg;
 
-    opal_mutex_lock (&cache->vma_module->vma_lock);
-    old_reg = (mca_rcache_base_registration_t *)
-        opal_list_remove_first (&cache->lru_list);
+    old_reg = mca_rcache_grdma_remove_lru_head(cache);
     if (NULL == old_reg) {
-        opal_mutex_unlock (&cache->vma_module->vma_lock);
         return false;
     }
 
     rcache_grdma = (mca_rcache_grdma_module_t *) old_reg->rcache;
 
     (void) dereg_mem (old_reg);
-    opal_mutex_unlock (&cache->vma_module->vma_lock);
-
     rcache_grdma->stat_evicted++;
 
     return true;
@@ -230,11 +263,9 @@ static inline void mca_rcache_grdma_remove_from_lru (mca_rcache_grdma_module_t *
 
     /* opal lists are not thread safe at this time so we must lock :'( */
     opal_mutex_lock (&rcache_grdma->cache->vma_module->vma_lock);
-
     opal_list_remove_item (&rcache_grdma->cache->lru_list, (opal_list_item_t *) grdma_reg);
     /* clear the LRU flag */
     grdma_reg->flags &= ~MCA_RCACHE_GRDMA_REG_FLAG_IN_LRU;
-
     opal_mutex_unlock (&rcache_grdma->cache->vma_module->vma_lock);
 }
 
