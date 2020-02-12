@@ -13,6 +13,7 @@
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2013 Sandia National Laboratories.  All rights reserved.
  * Copyright (c) 2016-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2020      Google, LLC. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -248,7 +249,7 @@ struct ompi_osc_rdma_module_t {
 
     /** registration handles for dynamically attached regions. These are not stored
      * in the state structure as it is entirely local. */
-    ompi_osc_rdma_handle_t *dynamic_handles;
+    ompi_osc_rdma_handle_t **dynamic_handles;
 
     /** shared memory segment. this segment holds this node's portion of the rank -> node
      * mapping array, node communication data (node_comm_info), state for all local ranks,
