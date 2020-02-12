@@ -102,13 +102,19 @@ AC_DEFUN([_OPAL_CHECK_COMPILER_VENDOR], [
     opal_check_compiler_vendor_result="unknown"
 
     # GNU is probably the most common, so check that one as soon as
-    # possible.  Intel pretends to be GNU, so need to check Intel
-    # before checking for GNU.
+    # possible.  Intel and PGI18 pretends to be GNU, so need to check Intel
+    # and PGI before checking for GNU.
 
     # Intel
     AS_IF([test "$opal_check_compiler_vendor_result" = "unknown"],
           [OPAL_IF_IFELSE([defined(__INTEL_COMPILER) || defined(__ICC)],
                [opal_check_compiler_vendor_result="intel"])])
+
+    # Portland Group
+    AS_IF([test "$opal_check_compiler_vendor_result" = "unknown"],
+          [OPAL_IFDEF_IFELSE([__PGI],
+               [opal_check_compiler_vendor_result="portland group"])])
+
 
     # Fujitsu
     AS_IF([test "$opal_check_compiler_vendor_result" = "unknown"],
@@ -242,11 +248,6 @@ AC_DEFUN([_OPAL_CHECK_COMPILER_VENDOR], [
     AS_IF([test "$opal_check_compiler_vendor_result" = "unknown"],
           [OPAL_IFDEF_IFELSE([__POCC__],
                [opal_check_compiler_vendor_result="pelles"])])
-
-    # Portland Group
-    AS_IF([test "$opal_check_compiler_vendor_result" = "unknown"],
-          [OPAL_IFDEF_IFELSE([__PGI],
-               [opal_check_compiler_vendor_result="portland group"])])
 
     # SAS/C
     AS_IF([test "$opal_check_compiler_vendor_result" = "unknown"],
