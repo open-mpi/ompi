@@ -21,6 +21,7 @@
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * Copyright (c) 2019      Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
+ * Copyright (c) 2020      Google, LLC. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -222,7 +223,7 @@ static int ompi_osc_rdma_component_register (void)
     opal_asprintf(&description_str, "Maximum number of buffers that can be attached to a dynamic window. "
              "Keep in mind that each attached buffer will use a potentially limited "
              "resource (default: %d)", mca_osc_rdma_component.max_attach);
-   (void) mca_base_component_var_register (&mca_osc_rdma_component.super.osc_version, "max_attach", description_str,
+    (void) mca_base_component_var_register (&mca_osc_rdma_component.super.osc_version, "max_attach", description_str,
                                            MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL, 0, 0, OPAL_INFO_LVL_3,
                                            MCA_BASE_VAR_SCOPE_GROUP, &mca_osc_rdma_component.max_attach);
     free(description_str);
@@ -1267,8 +1268,8 @@ static int ompi_osc_rdma_component_select (struct ompi_win_t *win, void **base, 
 
     if (MPI_WIN_FLAVOR_DYNAMIC == flavor) {
         /* allocate space to store local btl handles for attached regions */
-        module->dynamic_handles = (ompi_osc_rdma_handle_t *) calloc (mca_osc_rdma_component.max_attach,
-                                                                     sizeof (module->dynamic_handles[0]));
+        module->dynamic_handles = (ompi_osc_rdma_handle_t **) calloc (mca_osc_rdma_component.max_attach,
+                                                                      sizeof (module->dynamic_handles[0]));
         if (NULL == module->dynamic_handles) {
             ompi_osc_rdma_free (win);
             return OMPI_ERR_OUT_OF_RESOURCE;

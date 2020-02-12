@@ -14,6 +14,7 @@
  * Copyright (c) 2017      The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2020      Google, LLC. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -79,7 +80,9 @@ int ompi_osc_rdma_free(ompi_win_t *win)
         int region_count = module->state->region_count & 0xffffffffL;
         if (NULL != module->dynamic_handles) {
             for (int i = 0 ; i < region_count ; ++i) {
-                ompi_osc_rdma_deregister (module, module->dynamic_handles[i].btl_handle);
+                ompi_osc_rdma_handle_t *region_handle = module->dynamic_handles[i];
+                ompi_osc_rdma_deregister (module, region_handle->btl_handle);
+                OBJ_RELEASE(region_handle);
             }
 
             free (module->dynamic_handles);
