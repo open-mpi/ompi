@@ -16,7 +16,8 @@
  * Copyright (c) 2011-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
- * Copyright (c) 2014-2017 Research Organization for Information Science
+ * Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2020 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
@@ -1126,7 +1127,7 @@ int ompi_dpm_dyn_finalize(void)
     ompi_communicator_t *comm=NULL;
 
     if (1 <ompi_comm_num_dyncomm) {
-        objs = (ompi_dpm_disconnect_obj**)malloc(ompi_comm_num_dyncomm*
+        objs = (ompi_dpm_disconnect_obj**)malloc((ompi_comm_num_dyncomm+1)*
                                sizeof(ompi_dpm_disconnect_obj*));
         if (NULL == objs) {
             return OMPI_ERR_OUT_OF_RESOURCE;
@@ -1137,15 +1138,22 @@ int ompi_dpm_dyn_finalize(void)
             comm = (ompi_communicator_t*)opal_pointer_array_get_item(&ompi_mpi_communicators,i);
             if (NULL != comm &&  OMPI_COMM_IS_DYNAMIC(comm)) {
                 objs[j++] = disconnect_init(comm);
+                // printf ("%d/%d = %p\n", j-1, ompi_comm_num_dyncomm + 1, objs[j-1]);
             }
         }
 
         if (j != ompi_comm_num_dyncomm+1) {
+            for(i=0; i<j; i++) {
+                if (NULL != objs[i]->reqs) {
+                    free(objs[i]->reqs);
+                }
+                free(objs[i]);
+            }
             free(objs);
             return OMPI_ERROR;
         }
 
-        disconnect_waitall(ompi_comm_num_dyncomm, objs);
+        disconnect_waitall(ompi_comm_num_dyncomm+1, objs);
         free(objs);
     }
 
@@ -1173,6 +1181,7 @@ static ompi_dpm_disconnect_obj *disconnect_init(ompi_communicator_t *comm)
     int i;
 
     obj = (ompi_dpm_disconnect_obj*)calloc(1,sizeof(ompi_dpm_disconnect_obj));
+    // printf("obj = %p\n", obj);
     if (NULL == obj) {
         opal_output(0, "Could not allocate disconnect object");
         return NULL;
@@ -1269,6 +1278,7 @@ static int disconnect_waitall (int count, ompi_dpm_disconnect_obj **objs)
         if (NULL != objs[i]->reqs ) {
             free(objs[i]->reqs );
         }
+        // printf("%d/%d free %p\n", i, count, objs[i]);
         free(objs[i]);
     }
 
