@@ -53,24 +53,19 @@ int MPI_Alltoallw(const void *sendbuf, const int sendcounts[],
     SPC_RECORD(OMPI_SPC_ALLTOALLW, 1);
 
     MEMCHECKER(
-        ptrdiff_t recv_ext;
-        ptrdiff_t send_ext;
-
         memchecker_comm(comm);
 
         size = OMPI_COMM_IS_INTER(comm)?ompi_comm_remote_size(comm):ompi_comm_size(comm);
         for ( i = 0; i < size; i++ ) {
             if (MPI_IN_PLACE != sendbuf) {
                 memchecker_datatype(sendtypes[i]);
-                ompi_datatype_type_extent(sendtypes[i], &send_ext);
                 memchecker_call(&opal_memchecker_base_isdefined,
-                                (char *)(sendbuf)+sdispls[i]*send_ext,
+                                (char *)(sendbuf)+sdispls[i],
                                 sendcounts[i], sendtypes[i]);
             }
             memchecker_datatype(recvtypes[i]);
-            ompi_datatype_type_extent(recvtypes[i], &recv_ext);
             memchecker_call(&opal_memchecker_base_isaddressable,
-                            (char *)(recvbuf)+rdispls[i]*recv_ext,
+                            (char *)(recvbuf)+rdispls[i],
                             recvcounts[i], recvtypes[i]);
         }
     );

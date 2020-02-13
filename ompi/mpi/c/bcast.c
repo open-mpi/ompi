@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -52,9 +52,10 @@ int MPI_Bcast(void *buffer, int count, MPI_Datatype datatype,
             if (ompi_comm_rank(comm) == root) {
                 /* check whether root's send buffer is defined. */
                 memchecker_call(&opal_memchecker_base_isdefined, buffer, count, datatype);
+            } else {
+                /* check whether receive buffer is addressable. */
+                memchecker_call(&opal_memchecker_base_isaddressable, buffer, count, datatype);
             }
-            /* check whether receive buffer is addressable. */
-            memchecker_call(&opal_memchecker_base_isaddressable, buffer, count, datatype);
         } else {
             if (MPI_ROOT == root) {
                 /* check whether root's send buffer is defined. */

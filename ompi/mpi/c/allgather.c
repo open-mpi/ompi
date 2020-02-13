@@ -14,7 +14,7 @@
  * Copyright (c) 2010      University of Houston.  All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -64,7 +64,7 @@ int MPI_Allgather(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
         /* check whether the actual send buffer is defined. */
         if (MPI_IN_PLACE == sendbuf) {
             memchecker_call(&opal_memchecker_base_isdefined,
-                            (char *)(recvbuf)+rank*ext,
+                            (char *)(recvbuf)+rank*recvcount*ext,
                             recvcount, recvtype);
         } else {
             memchecker_datatype(sendtype);
