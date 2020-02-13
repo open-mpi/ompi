@@ -8,7 +8,6 @@ void display_tab(double **tab,int N);
 void set_node(tm_tree_t *node,tm_tree_t ** child, int arity,tm_tree_t *parent,
 	      int id,double val,tm_tree_t *tab_child,int depth);
 
-
 typedef struct _group_list_t{
   struct _group_list_t *next;
   tm_tree_t **tab;

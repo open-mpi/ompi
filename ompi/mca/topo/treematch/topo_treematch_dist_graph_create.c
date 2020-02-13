@@ -6,8 +6,8 @@
  * Copyright (c) 2011-2018 Inria.  All rights reserved.
  * Copyright (c) 2011-2018 Bordeaux Polytechnic Institute
  * Copyright (c) 2015-2019 Intel, Inc.  All rights reserved.
- * Copyright (c) 2015-2017 Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015-2020 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2017      Cisco Systems, Inc.  All rights reserved
@@ -677,7 +677,7 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
                 free(aff_mat->sum_row);
                 free(aff_mat);
                 tm_free_solution(sol);
-                tm_free_tree(comm_tree);
+                free(comm_tree);
                 tm_free_topology(tm_topology);
             }
         }

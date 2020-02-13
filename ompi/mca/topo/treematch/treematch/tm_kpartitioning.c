@@ -651,7 +651,6 @@ void free_tab_com_mat(com_mat_t **mat,int k)
       FREE( mat[i]->comm[j] );
     FREE( mat[i]->comm );
     FREE(mat[i]);
-
   }
   FREE(mat);
 }
