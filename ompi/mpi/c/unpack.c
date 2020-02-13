@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2013 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2015-2017 Research Organization for Information Science
+ * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -51,7 +51,8 @@ int MPI_Unpack(const void *inbuf, int insize, int *position,
 
     MEMCHECKER(
         memchecker_datatype(datatype);
-        memchecker_call(&opal_memchecker_base_isdefined, outbuf, outcount, datatype);
+        memchecker_call(&opal_memchecker_base_isdefined, inbuf, insize, MPI_PACKED);
+        memchecker_call(&opal_memchecker_base_isaddressable, outbuf, outcount, datatype);
         memchecker_comm(comm);
     );
 
