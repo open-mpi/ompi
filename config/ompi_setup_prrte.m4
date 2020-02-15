@@ -37,6 +37,11 @@ AC_DEFUN([OMPI_SETUP_PRRTE],[
     AC_ARG_ENABLE([internal-rte],
                   [AC_HELP_STRING([--enable-internal-rte],
                                   [Enable internal runtime support and provide mpiexec/mpirun (default: enabled)])])
+
+    AC_ARG_WITH([prrte-platform],
+                [AC_HELP_STRING([--with-prrte-platform],
+                                [Platform file to use when building the internal PRRTE runtime support])])
+
     AC_MSG_CHECKING([if RTE support is enabled])
     if test "$enable_internal_rte" != "no"; then
         AC_MSG_RESULT([yes])
@@ -72,6 +77,9 @@ AC_DEFUN([OMPI_SETUP_PRRTE],[
                CFLAGS="$OPAL_CFLAGS_BEFORE_PICKY $OPAL_VISIBILITY_CFLAGS"])
         AS_IF([test "$with_devel_headers" = "yes"],
               [opal_prrte_args="--with-devel-headers  $opal_prrte_args"])
+        if test ! -z $with_prrte_platform && test "$with_prrte_platform" != "yes"; then
+            opal_prrte_args="$opal_prrte_args --with-platform=$with_prrte_platform"
+        fi
         # add the extra libs
         opal_prrte_args="$opal_prrte_args --with-prrte-extra-lib=$OMPI_TOP_BUILDDIR/opal/libopen-pal.la --with-prrte-extra-ltlib=$OMPI_TOP_BUILDDIR/opal/libopen-pal.la"
 
