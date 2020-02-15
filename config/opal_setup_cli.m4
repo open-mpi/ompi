@@ -2,6 +2,7 @@ dnl -*- shell-script -*-
 dnl
 dnl Copyright (c) 2016      Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
+dnl Copyright (c) 2020 Cisco Systems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -22,7 +23,7 @@ AC_DEFUN([OPAL_CAPTURE_CONFIGURE_CLI],[
     OPAL_VAR_SCOPE_PUSH([sed_quote_subst arg quoted_arg])
     $1=
     for arg in "$[]@"; do
-        sed_quote_subst='s/\(@<:@`"$\\@:>@\)/\\\1/g'
+        sed_quote_subst='s/\(@<:@`"\\@:>@\)/\\\1/g'
         case "$arg" in
           *@<:@\\\`\"\$[]@:>@*)
 	    quoted_arg=\'`echo "$arg" | sed $sed_quote_subst`\' ;;
