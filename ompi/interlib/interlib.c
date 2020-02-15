@@ -14,7 +14,7 @@
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2015-2019 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
@@ -68,12 +68,23 @@ static void model_callback(size_t refid, pmix_status_t status,
     }
 }
 
+static void evhandler_reg_callbk(pmix_status_t status,
+                                 size_t evhandler_ref,
+                                 void *cbdata)
+{
+    opal_pmix_lock_t *lock = (opal_pmix_lock_t*)cbdata;
+
+    lock->status = status;
+    OPAL_PMIX_WAKEUP_THREAD(lock);
+}
+
 int ompi_interlib_declare(int threadlevel, char *version)
 {
     pmix_info_t info[4], directives;
     int ret;
     pmix_status_t rc;
     pmix_status_t code = PMIX_MODEL_DECLARED;
+    opal_pmix_lock_t mylock;
 
     /* Register an event handler for library model declarations  */
     /* give it a name so we can distinguish it */
@@ -82,10 +93,13 @@ int ompi_interlib_declare(int threadlevel, char *version)
      * isn't required so long as the code that generates
      * the event stipulates its range as proc_local. We rely
      * on that here */
-    rc = PMIx_Register_event_handler(&code, 1, &directives, 1, model_callback, NULL, NULL);
+    OPAL_PMIX_CONSTRUCT_LOCK(&mylock);
+    PMIx_Register_event_handler(&code, 1, &directives, 1, model_callback, evhandler_reg_callbk, (void*)&mylock);
+    OPAL_PMIX_WAIT_THREAD(&mylock);
     PMIX_INFO_DESTRUCT(&directives);
-    if (rc < 0) {
-        PMIX_INFO_DESTRUCT(&directives);
+    rc = mylock.status;
+    OPAL_PMIX_DESTRUCT_LOCK(&mylock);
+    if (PMIX_SUCCESS != rc) {
         return OMPI_ERROR;
     }
 

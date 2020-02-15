@@ -370,6 +370,17 @@ static void fence_release(pmix_status_t status, void *cbdata)
     OPAL_POST_OBJECT(active);
 }
 
+static void evhandler_reg_callbk(pmix_status_t status,
+                                 size_t evhandler_ref,
+                                 void *cbdata)
+{
+    opal_pmix_lock_t *lock = (opal_pmix_lock_t*)cbdata;
+
+    lock->status = status;
+    OPAL_PMIX_WAKEUP_THREAD(lock);
+}
+
+
 int ompi_mpi_init(int argc, char **argv, int requested, int *provided,
                   bool reinit_ok)
 {
@@ -382,6 +393,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided,
     pmix_info_t info[2];
     pmix_status_t rc;
     OMPI_TIMING_INIT(64);
+    opal_pmix_lock_t mylock;
 
     ompi_hook_base_mpi_init_top(argc, argv, requested, provided);
 
@@ -523,10 +535,14 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided,
     PMIX_INFO_LOAD(&info[0], PMIX_EVENT_HDLR_PREPEND, NULL, PMIX_BOOL);
     /* give it a name so we can distinguish it */
     PMIX_INFO_LOAD(&info[1], PMIX_EVENT_HDLR_NAME, "MPI-Default", PMIX_STRING);
-    rc = PMIx_Register_event_handler(NULL, 0, info, 2, ompi_errhandler_callback, NULL, NULL);
+    OPAL_PMIX_CONSTRUCT_LOCK(&mylock);
+    PMIx_Register_event_handler(NULL, 0, info, 2, ompi_errhandler_callback, evhandler_reg_callbk, (void*)&mylock);
+    OPAL_PMIX_WAIT_THREAD(&mylock);
+    rc = mylock.status;
+    OPAL_PMIX_DESTRUCT_LOCK(&mylock);
     PMIX_INFO_DESTRUCT(&info[0]);
     PMIX_INFO_DESTRUCT(&info[1]);
-    if (0 > rc) {
+    if (PMIX_SUCCESS != rc) {
         error = "Error handler registration";
         ret = opal_pmix_convert_status(rc);
         goto error;

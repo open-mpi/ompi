@@ -17,7 +17,7 @@
  * Copyright (c) 2012-2016 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
@@ -923,7 +923,7 @@ static int ompi_comm_allreduce_pmix_reduce_complete (ompi_comm_request_t *reques
                              cid_context->port_string,
                              cid_context->pmix_tag,
                              cid_context->iter);
-    PMIX_LOAD_KEY(&info, key);
+    PMIX_LOAD_KEY(info.key, key);
     free(key);
     if (bytes_written == -1) {
         opal_output_verbose (verbosity_level, output_id, "writing info.key failed\n");
@@ -934,7 +934,7 @@ static int ompi_comm_allreduce_pmix_reduce_complete (ompi_comm_request_t *reques
                                  cid_context->port_string,
                                  cid_context->pmix_tag,
                                  cid_context->iter);
-        PMIX_LOAD_KEY(&pdat.key, key);
+        PMIX_LOAD_KEY((char*)pdat.key, key);
         free(key);
         if (bytes_written == -1) {
             opal_output_verbose (verbosity_level, output_id, "writing pdat.value.key failed\n");
