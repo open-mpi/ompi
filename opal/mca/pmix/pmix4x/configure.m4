@@ -13,7 +13,7 @@
 # Copyright (c) 2011-2013 Los Alamos National Security, LLC.
 #                         All rights reserved.
 # Copyright (c) 2010-2017 Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
+# Copyright (c) 2013-2020 Intel, Inc.  All rights reserved.
 # Copyright (c) 2015-2016 Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
@@ -82,6 +82,10 @@ AC_DEFUN([MCA_opal_pmix_pmix4x_CONFIG],[
     AC_ARG_ENABLE([pmix-timing],
                   [AC_HELP_STRING([--enable-pmix-timing],
                                   [Enable PMIx timing measurements (default: disabled)])])
+    AC_ARG_WITH([pmix-platform],
+                [AC_HELP_STRING([--with-pmix-platform],
+                                [Platform file to use when building the internal PMIx support])])
+
     AC_MSG_CHECKING([if PMIx timing is enabled])
     if test "$enable_pmix_timing" = "yes"; then
         AC_MSG_RESULT([yes])
@@ -99,6 +103,9 @@ AC_DEFUN([MCA_opal_pmix_pmix4x_CONFIG],[
            CFLAGS="$OPAL_CFLAGS_BEFORE_PICKY $OPAL_VISIBILITY_CFLAGS"])
     AS_IF([test "$with_devel_headers" = "yes"],
           [opal_pmix_pmix4x_args="--with-devel-headers  $opal_pmix_pmix4x_args"])
+    if test ! -z $with_pmix_platform && test "$with_pix_platform" != "yes"; then
+        opal_pmix_pmix4x_args="$opal_pmix_pmix4x_args --with-platform=$with_pmix_platform"
+    fi
     CPPFLAGS="-I$OPAL_TOP_SRCDIR -I$OPAL_TOP_BUILDDIR -I$OPAL_TOP_SRCDIR/opal/include -I$OPAL_TOP_BUILDDIR/opal/include $CPPFLAGS"
 
     OPAL_CONFIG_SUBDIR([$opal_pmix_pmix4x_basedir/openpmix],
