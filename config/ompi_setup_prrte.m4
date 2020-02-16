@@ -45,6 +45,7 @@ AC_DEFUN([OMPI_SETUP_PRRTE],[
     AC_MSG_CHECKING([if RTE support is enabled])
     if test "$enable_internal_rte" != "no"; then
         AC_MSG_RESULT([yes])
+        ompi_want_prrte=yes
         if test -z $with_libevent || test "$with_libevent" = "internal" || test "$with_libevent" = "yes"; then
             opal_prrte_libevent_arg="--with-libevent-header=$OMPI_TOP_SRCDIR/opal/mca/event/event.h"
         elif test "$with_libevent" = "external"; then
@@ -96,6 +97,7 @@ AC_DEFUN([OMPI_SETUP_PRRTE],[
     else
         OPAL_SUMMARY_ADD([[Miscellaneous]],[[PRRTE]],[prrte],[no (disabled)])
         AC_MSG_RESULT([no (disabled)])
+        ompi_want_prrte=no
     fi
 
     CFLAGS=$opal_prrte_save_CFLAGS

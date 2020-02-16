@@ -2,7 +2,7 @@
 /*
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      Mellanox Technologies, Inc.
@@ -526,6 +526,7 @@ void opal_pmix_value_load(pmix_value_t *v,
             v->data.pinfo->exit_code = kv->data.pinfo.exit_code;
             v->data.pinfo->state = opal_pmix_convert_state(kv->data.pinfo.state);
             break;
+#if PMIX_NUMERIC_VERSION >= 0x00030000
         case OPAL_ENVAR:
             v->type = PMIX_ENVAR;
             PMIX_ENVAR_CONSTRUCT(&v->data.envar);
@@ -537,6 +538,7 @@ void opal_pmix_value_load(pmix_value_t *v,
             }
             v->data.envar.separator = kv->data.envar.separator;
             break;
+#endif
         default:
             /* silence warnings */
             break;
@@ -722,6 +724,7 @@ int opal_pmix_value_unload(opal_value_t *kv,
         kv->data.pinfo.exit_code = v->data.pinfo->exit_code;
         kv->data.pinfo.state = opal_pmix_convert_pstate(v->data.pinfo->state);
         break;
+#if PMIX_NUMERIC_VERSION >= 0x00030000
     case PMIX_ENVAR:
         kv->type = OPAL_ENVAR;
         OBJ_CONSTRUCT(&kv->data.envar, opal_envar_t);
@@ -733,6 +736,7 @@ int opal_pmix_value_unload(opal_value_t *kv,
         }
         kv->data.envar.separator = v->data.envar.separator;
         break;
+#endif
     default:
         /* silence warnings */
         rc = OPAL_ERROR;
@@ -740,6 +744,8 @@ int opal_pmix_value_unload(opal_value_t *kv,
     }
     return rc;
 }
+
+#if PMIX_NUMERIC_VERSION >= 0x00030000
 
 static void cleanup_cbfunc(pmix_status_t status,
                            pmix_info_t *info, size_t ninfo,
@@ -761,9 +767,11 @@ static void cleanup_cbfunc(pmix_status_t status,
     lk->status = status;
     OPAL_PMIX_WAKEUP_THREAD(lk);
 }
+#endif
 
 int opal_pmix_register_cleanup(char *path, bool directory, bool ignore, bool jobscope)
 {
+#if PMIX_NUMERIC_VERSION >= 0x00030000
     opal_pmix_lock_t lk;
     pmix_info_t pinfo[3];
     size_t n, ninfo=0;
@@ -816,6 +824,9 @@ int opal_pmix_register_cleanup(char *path, bool directory, bool ignore, bool job
         PMIX_INFO_DESTRUCT(&pinfo[n]);
     }
     return ret;
+#else
+    return OPAL_SUCCESS;
+#endif
 }
 
 
@@ -824,7 +835,11 @@ static void dsicon(opal_ds_info_t *p)
 {
     PMIX_PROC_CONSTRUCT(&p->source);
     p->info = NULL;
+#if PMIX_NUMERIC_VERSION >= 0x00030000
     p->persistence = PMIX_PERSIST_INVALID;
+#else
+    p->persistence = PMIX_PERSIST_INDEF;
+#endif
 }
 OBJ_CLASS_INSTANCE(opal_ds_info_t,
                    opal_list_item_t,
