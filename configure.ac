@@ -19,7 +19,7 @@
 # Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
 # Copyright (c) 2013      Mellanox Technologies, Inc.
 #                         All rights reserved.
-# Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
+# Copyright (c) 2013-2020 Intel, Inc.  All rights reserved.
 # Copyright (c) 2014-2017 Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # Copyright (c) 2016-2017 IBM Corporation.  All rights reserved.
@@ -1463,8 +1463,7 @@ OPAL_CHECK_LIBNL_SUMMARY
 opal_show_title "Setup PRRTE support"
 
 m4_ifdef([project_prrte],
-         [OMPI_SETUP_PRRTE
-          ompi_want_prrte=yes],
+         [OMPI_SETUP_PRRTE],
          [ompi_want_prrte=no])
 AM_CONDITIONAL(OMPI_WANT_PRRTE, test "$ompi_want_prrte" = "yes")
 
