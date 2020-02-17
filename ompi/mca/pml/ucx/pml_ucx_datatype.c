@@ -114,7 +114,7 @@ int mca_pml_ucx_datatype_attr_del_fn(ompi_datatype_t* datatype, int keyval,
 {
     ucp_datatype_t ucp_datatype = (ucp_datatype_t)attr_val;
 
-    PML_UCX_ASSERT((void*)ucp_datatype == datatype->pml_data);
+    PML_UCX_ASSERT((uint64_t)ucp_datatype == datatype->pml_data);
 
     ucp_dt_destroy(ucp_datatype);
     datatype->pml_data = PML_UCX_DATATYPE_INVALID;
