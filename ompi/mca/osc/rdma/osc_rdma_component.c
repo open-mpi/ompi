@@ -219,7 +219,7 @@ static int ompi_osc_rdma_component_register (void)
                                             MCA_BASE_VAR_SCOPE_LOCAL, &mca_osc_rdma_component.buffer_size);
     free(description_str);
 
-    mca_osc_rdma_component.max_attach = 32;
+    mca_osc_rdma_component.max_attach = 64;
     opal_asprintf(&description_str, "Maximum number of buffers that can be attached to a dynamic window. "
              "Keep in mind that each attached buffer will use a potentially limited "
              "resource (default: %d)", mca_osc_rdma_component.max_attach);
