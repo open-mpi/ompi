@@ -403,9 +403,6 @@ int mca_base_var_cache_files(bool rel_path_search)
     char *tmp;
     int ret;
 
-    /* We may need this later */
-    home = (char*)opal_home_directory();
-
     if (NULL == cwd) {
         cwd = (char *) malloc(sizeof(char) * MAXPATHLEN);
         if( NULL == (cwd = getcwd(cwd, MAXPATHLEN) )) {
@@ -415,6 +412,13 @@ int mca_base_var_cache_files(bool rel_path_search)
     }
 
 #if OPAL_WANT_HOME_CONFIG_FILES
+    /* We may need this later */
+    home = (char*)opal_home_directory();
+    if (NULL == home) {
+        opal_output(0, "Error: Unable to get the user home directory\n");
+        return OPAL_ERROR;
+    }
+
     opal_asprintf(&mca_base_var_files, "%s"OPAL_PATH_SEP".openmpi" OPAL_PATH_SEP
              "mca-params.conf%c%s" OPAL_PATH_SEP "openmpi-mca-params.conf",
              home, ',', opal_install_dirs.sysconfdir);
