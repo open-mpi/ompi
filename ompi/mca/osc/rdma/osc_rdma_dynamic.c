@@ -261,8 +261,8 @@ int ompi_osc_rdma_attach (struct ompi_win_t *win, void *base, size_t len)
         rdma_region_handle->btl_handle = NULL;
     }
 
-    assert(OMPI_SUCCESS == ompi_osc_rdma_add_attachment (rdma_region_handle, (intptr_t) base, len));
-
+    ret = ompi_osc_rdma_add_attachment (rdma_region_handle, (intptr_t) base, len);
+    assert(OMPI_SUCCESS == ret);
     module->dynamic_handles[region_index] = rdma_region_handle;
 
 #if OPAL_ENABLE_DEBUG
