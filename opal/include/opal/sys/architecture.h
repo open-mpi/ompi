@@ -15,6 +15,7 @@
  *                         reserved.
  * Copyright (c) 2017      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2020      Google, LLC. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -41,8 +42,6 @@
 #define OPAL_SPARCV9_64     0062
 #define OPAL_ARM            0100
 #define OPAL_ARM64          0101
-#define OPAL_S390           0110
-#define OPAL_S390X          0111
 #define OPAL_BUILTIN_SYNC   0200
 #define OPAL_BUILTIN_GCC    0202
 #define OPAL_BUILTIN_NO     0203

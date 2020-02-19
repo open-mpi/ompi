@@ -17,6 +17,7 @@ dnl Copyright (c) 2014-2018 Los Alamos National Security, LLC. All rights
 dnl                         reserved.
 dnl Copyright (c) 2017      Amazon.com, Inc. or its affiliates.  All Rights
 dnl                         reserved.
+dnl Copyright (c) 2020      Google, LLC. All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -1250,19 +1251,6 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
                 AC_MSG_ERROR([Could not determine PowerPC word size: $ac_cv_sizeof_long])
             fi
             OPAL_GCC_INLINE_ASSIGN='"1: li %0,0" : "=&r"(ret)'
-            ;;
-        # There is no current difference between s390 and s390x
-        # But use two different defines in case some come later
-        # as s390 is 31bits while s390x is 64bits
-        s390-*)
-            opal_cv_asm_arch="S390"
-            OPAL_CHECK_SYNC_BUILTINS([opal_cv_asm_builtin="BUILTIN_SYNC"],
-              [AC_MSG_ERROR([No atomic primitives available for $host])])
-            ;;
-        s390x-*)
-            opal_cv_asm_arch="S390X"
-            OPAL_CHECK_SYNC_BUILTINS([opal_cv_asm_builtin="BUILTIN_SYNC"],
-              [AC_MSG_ERROR([No atomic primitives available for $host])])
             ;;
         sparc*-*)
             # SPARC v9 (and above) are the only ones with 64bit support
