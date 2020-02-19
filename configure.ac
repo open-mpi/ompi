@@ -192,6 +192,9 @@ if test "$OMPI_TOP_BUILDDIR" != "$OMPI_TOP_SRCDIR"; then
     AC_MSG_NOTICE([Detected VPATH build])
 fi
 
+# Check for deprecated options
+OMPI_CHECK_DEPRECATED_OPTIONS
+
 # Setup the top of the opal/include/opal_config.h file
 
 AH_TOP([/* -*- c -*-
