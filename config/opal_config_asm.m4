@@ -1233,14 +1233,6 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
               [AC_MSG_ERROR([No atomic primitives available for $host])])
             ;;
 
-        mips-*|mips64*)
-            # Should really find some way to make sure that we are on
-            # a MIPS III machine (r4000 and later)
-            opal_cv_asm_arch="MIPS"
-            OPAL_CHECK_SYNC_BUILTINS([opal_cv_asm_builtin="BUILTIN_SYNC"],
-              [AC_MSG_ERROR([No atomic primitives available for $host])])
-            ;;
-
         powerpc-*|powerpc64-*|powerpcle-*|powerpc64le-*|rs6000-*|ppc-*)
             OPAL_CHECK_POWERPC_REG
             if test "$ac_cv_sizeof_long" = "4" ; then
