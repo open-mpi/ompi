@@ -56,6 +56,7 @@ my $platform_arg = 0;
 my $include_arg = 0;
 my $exclude_arg = 0;
 my $force_arg = 0;
+my $automake_jobs;
 
 # Include/exclude lists
 my $include_list;
@@ -1131,6 +1132,7 @@ my $ok = Getopt::Long::GetOptions("no-ompi" => \$no_ompi_arg,
                                   "include=s" => \$include_arg,
                                   "exclude=s" => \$exclude_arg,
                                   "force|f" => \$force_arg,
+                                  "jobs|j=i" => \$automake_jobs,
     );
 
 if (!$ok || $help_arg) {
@@ -1153,7 +1155,8 @@ if (!$ok || $help_arg) {
   --exclude | -e                Comma-separated list of framework or framework-component
                                 to be excluded from the build
   --force | -f                  Run even if invoked from the source tree of an expanded
-                                distribution tarball\n";
+                                distribution tarball
+  --jobs | -j #                 Value to set for AUTOMAKE_JOBS\n";
     my_exit($ok ? 0 : 1);
 }
 
@@ -1183,6 +1186,13 @@ if ($no_orte_arg == 1) {
 if ($no_ompi_arg == 1) {
     $project_name_long = "Open Portability Access Layer";
     $project_name_short = "open-pal";
+}
+
+my_die "Invalid value for --jobs $automake_jobs. Must be greater than 0."
+    if (defined $automake_jobs && $automake_jobs <= 0);
+
+if (defined $automake_jobs) {
+    $ENV{'AUTOMAKE_JOBS'} = $automake_jobs;
 }
 
 #---------------------------------------------------------------------------
