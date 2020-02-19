@@ -65,24 +65,6 @@
 #define __NR_process_vm_readv 270
 #define __NR_process_vm_writev 271
 
-#elif OPAL_ASSEMBLY_ARCH == OPAL_MIPS
-
-#if _MIPS_SIM == _MIPS_SIM_ABI64
-
-#define __NR_process_vm_readv 5304
-#define __NR_process_vm_writev 5305
-
-#elif _MIPS_SIM == _MIPS_SIM_NABI32
-
-#define __NR_process_vm_readv 6309
-#define __NR_process_vm_writev 6310
-
-#else
-
-#error "Unsupported MIPS architecture for process_vm_readv and process_vm_writev syscalls"
-
-#endif
-
 #else
 #error "Unsupported architecture for process_vm_readv and process_vm_writev syscalls"
 #endif
