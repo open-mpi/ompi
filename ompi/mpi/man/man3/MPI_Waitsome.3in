@@ -2,6 +2,7 @@
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .\" Copyright (c) 2011 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright (c) 2020      Google, LLC. All rights reserved.
 .\" $COPYRIGHT$
 .TH MPI_Waitsome 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -39,16 +40,6 @@ MPI_Waitsome(\fIincount\fP, \fIarray_of_requests\fP, \fIoutcount\fP, \fIarray_of
 	INTEGER, INTENT(OUT) :: \fIoutcount\fP, \fIarray_of_indices(*)\fP
 	TYPE(MPI_Status) :: \fIarray_of_statuses(*)\fP
 	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
-
-.fi
-.SH C++ Syntax
-.nf
-#include <mpi.h>
-static int Request::Waitsome(int \fIincount\fP, Request
-	\fIarray_of_requests\fP[], int \fIarray_of_indices\fP[], Status \fIarray_of_statuses\fP[])
-
-static int Request::Waitsome(int \fIincount\fP, Request
-	\fIarray_of_requests\fP[], int \fIarray_of_indices\fP[])
 
 .fi
 .SH INPUT PARAMETERS
@@ -136,11 +127,7 @@ continue past an error.
 .sp
 If the invoked error handler allows MPI_Waitsome to return to the
 caller, the value MPI_ERR_IN_STATUS will be returned in the C and
-Fortran bindings.  In C++, if the predefined error handler
-MPI::ERRORS_THROW_EXCEPTIONS is used, the value MPI::ERR_IN_STATUS
-will be contained in the MPI::Exception object.  The MPI_ERROR field
-can then be examined in the array of returned statuses to determine
-exactly which request(s) generated an exception.
+Fortran bindings.
 
 .SH SEE ALSO
 .ft R

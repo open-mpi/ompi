@@ -5,6 +5,7 @@
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .\" Copyright 2015-2016 Research Organization for Information Science
 .\"                     and Technology (RIST). All rights reserved.
+.\" Copyright (c) 2020      Google, LLC. All rights reserved.
 .\" $COPYRIGHT$
 .TH MPI_Register_datarep 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -49,16 +50,6 @@ MPI_Register_datarep(\fIdatarep\fP, \fIread_conversion_fn\fP, \fIwrite_conversio
 	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
-.SH C++ Syntax
-.nf
-#include <mpi.h>
-void MPI::Register_datarep(const char* \fIdatarep\fP,
-	MPI::Datarep_conversion_function* \fIread_conversion_fn\fP,
-	MPI::Datarep_conversion_function* \fIwrite_conversion_fn\fP,
-	MPI::Datarep_extent_function* \fIdtype_file_extent_fn\fP,
-	void* \fIextra_state\fP)
-
-.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i
@@ -101,10 +92,10 @@ IERROR, which is not defined in the PARAMETERS sections. This argument is used t
 .sp
 The C version of each routine returns an error status as an integer return value.
 .sp
-Error classes are found in mpi.h (for C), mpif.h (for Fortran), and mpi++.h (for C++).
+Error classes are found in mpi.h (for C) and mpif.h (for Fortran).
 
 .SH ERRORS
-Almost all MPI routines return an error value; C routines as the value of the function and Fortran routines in the last argument. C++ functions do not return errors. If the default error handler is set to MPI::ERRORS_THROW_EXCEPTIONS, then on error the C++ exception mechanism will be used to throw an MPI::Exception object.
+Almost all MPI routines return an error value; C routines as the value of the function and Fortran routines in the last argument.
 .sp
 Before the error value is returned, the current MPI error handler is
 called. For MPI I/O function errors, the default error handler is set to MPI_ERRORS_RETURN. The error handler may be changed with MPI_File_set_errhandler; the predefined error handler MPI_ERRORS_ARE_FATAL may be used to make I/O errors fatal. Note that MPI does not guarantee that an MPI program can continue past an error.

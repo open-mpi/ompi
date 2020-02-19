@@ -84,7 +84,6 @@ static void append(char *dest, size_t max, int *first, char *src)
  */
 void ompi_info_do_config(bool want_all)
 {
-    char *cxx;
     char *fortran_mpifh;
     char *fortran_usempi;
     char *fortran_usempif08;
@@ -116,11 +115,9 @@ void ompi_info_do_config(bool want_all)
     char *debug;
     char *mpi_interface_warning;
     char *cprofiling;
-    char *cxxprofiling;
     char *fortran_mpifh_profiling;
     char *fortran_usempi_profiling;
     char *fortran_usempif08_profiling;
-    char *cxxexceptions;
     char *threads;
     char *have_dl;
     char *sparse_groups;
@@ -166,7 +163,6 @@ void ompi_info_do_config(bool want_all)
     const int OMPI_BUILD_FORTRAN_F08_SUBARRAYS = 0;
 
     /* setup the strings that don't require allocations*/
-    cxx = OMPI_BUILD_CXX_BINDINGS ? "yes" : "no";
     if (OMPI_BUILD_FORTRAN_BINDINGS >= OMPI_FORTRAN_USEMPI_BINDINGS) {
         if (OMPI_FORTRAN_HAVE_IGNORE_TKR) {
             fortran_usempi = "yes (full: ignore TKR)";
@@ -268,8 +264,6 @@ void ompi_info_do_config(bool want_all)
     debug = OPAL_ENABLE_DEBUG ? "yes" : "no";
     mpi_interface_warning = OMPI_WANT_MPI_INTERFACE_WARNING ? "yes" : "no";
     cprofiling = "yes";
-    cxxprofiling = OMPI_BUILD_CXX_BINDINGS ? "yes" : "no";
-    cxxexceptions = (OMPI_BUILD_CXX_BINDINGS && OMPI_HAVE_CXX_EXCEPTION_SUPPORT) ? "yes" : "no";
     fortran_mpifh_profiling = (OMPI_BUILD_FORTRAN_BINDINGS >= OMPI_FORTRAN_MPIFH_BINDINGS) ? "yes" : "no";
     fortran_usempi_profiling = (OMPI_BUILD_FORTRAN_BINDINGS >= OMPI_FORTRAN_USEMPI_BINDINGS) ? "yes" : "no";
     fortran_usempif08_profiling = (OMPI_BUILD_FORTRAN_BINDINGS >= OMPI_FORTRAN_USEMPIF08_BINDINGS) ? "yes" : "no";
@@ -322,7 +316,6 @@ void ompi_info_do_config(bool want_all)
     opal_info_out("Built host", "build:host", OMPI_BUILD_HOST);
 
     opal_info_out("C bindings", "bindings:c", "yes");
-    opal_info_out("C++ bindings", "bindings:cxx", cxx);
     opal_info_out("Fort mpif.h", "bindings:mpif.h", fortran_mpifh);
     free(fortran_mpifh);
     opal_info_out("Fort use mpi", "bindings:use_mpi",
@@ -370,14 +363,7 @@ void ompi_info_do_config(bool want_all)
         opal_info_out_int("C long double size", "compiler:c:sizeof:long_double", sizeof(long double));
         opal_info_out_int("C pointer size", "compiler:c:sizeof:pointer", sizeof(void *));
         opal_info_out_int("C char align", "compiler:c:align:char", OPAL_ALIGNMENT_CHAR);
-#if OMPI_BUILD_CXX_BINDINGS
-        /* JMS: See above for note about C++ bool size.  We don't have
-           the bool alignment the way configure currently runs -- need
-           to clean this up when we update for MPI-2.2. */
-        opal_info_out_int("C bool align", "compiler:c:align:bool", OPAL_ALIGNMENT_CXX_BOOL);
-#else
         opal_info_out("C bool align", "compiler:c:align:bool", "skipped");
-#endif
         opal_info_out_int("C int align", "compiler:c:align:int", OPAL_ALIGNMENT_INT);
 #if defined(HAVE_SHORT_FLOAT)
         opal_info_out_int("C short float align", "compiler:c:align:short_float", OPAL_ALIGNMENT_SHORT_FLOAT);
@@ -598,7 +584,6 @@ void ompi_info_do_config(bool want_all)
     }
 
     opal_info_out("C profiling", "option:profiling:c", cprofiling);
-    opal_info_out("C++ profiling", "option:profiling:cxx", cxxprofiling);
     opal_info_out("Fort mpif.h profiling", "option:profiling:mpif.h",
                   fortran_mpifh_profiling);
     opal_info_out("Fort use mpi profiling", "option:profiling:use_mpi",
@@ -607,7 +592,6 @@ void ompi_info_do_config(bool want_all)
                   "option:profiling:use_mpi_f08",
                   fortran_usempif08_profiling);
 
-    opal_info_out("C++ exceptions", "option:cxx_exceptions", cxxexceptions);
     opal_info_out("Thread support", "option:threads", threads);
     free(threads);
     opal_info_out("Sparse Groups", "option:sparse:groups", sparse_groups);
@@ -620,7 +604,6 @@ void ompi_info_do_config(bool want_all)
          */
 
         opal_info_out("Build CFLAGS", "option:build:cflags", OMPI_BUILD_CFLAGS);
-        opal_info_out("Build CXXFLAGS", "option:build:cxxflags", OMPI_BUILD_CXXFLAGS);
         opal_info_out("Build FCFLAGS", "option:build:fcflags", OMPI_BUILD_FCFLAGS);
         opal_info_out("Build LDFLAGS", "option:build:ldflags", OMPI_BUILD_LDFLAGS);
         opal_info_out("Build LIBS", "option:build:libs", OMPI_BUILD_LIBS);

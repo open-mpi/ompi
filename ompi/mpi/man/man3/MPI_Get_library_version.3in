@@ -2,6 +2,7 @@
 .\" Copyright (c) 2010-2012 Cisco Systems, Inc.  All rights reserved.
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
+.\" Copyright (c) 2020      Google, LLC. All rights reserved.
 .\" $COPYRIGHT$
 .TH MPI_Get_library_version 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -31,11 +32,6 @@ MPI_Get_library_version(\fIversion\fP, \fIresulten\fP, \fIierror\fP)
 	CHARACTER(LEN=MPI_MAX_LIBRARY_VERSION_STRING), INTENT(OUT) :: \fIversion\fP
 	INTEGER, INTENT(OUT) :: \fIresultlen\fP
 	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
-
-.fi
-.SH C++ Syntax
-.nf
-There is no C++ binding for this function.
 
 .fi
 .SH OUTPUT PARAMETERS
@@ -74,8 +70,6 @@ MPI_MAX_LIBRARY_VERSION_STRING characters long.
 .sp
 MPI_Get_library_version is one of the few functions that can be called
 before MPI_Init and after MPI_Finalize.
-.sp
-MPI_Get_library_version is an MPI-3 function and has no C++ binding.
 
 .SH ERRORS
 Almost all MPI routines return an error value; C routines as the value

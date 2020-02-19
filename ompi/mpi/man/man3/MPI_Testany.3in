@@ -1,6 +1,7 @@
 .\" -*- nroff -*-
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
+.\" Copyright (c) 2020      Google, LLC. All rights reserved.
 .\" $COPYRIGHT$
 .TH MPI_Testany 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -35,16 +36,6 @@ MPI_Testany(\fIcount\fP, \fIarray_of_requests\fP, \fIindex\fP, \fIflag\fP, \fIst
 	LOGICAL, INTENT(OUT) :: \fIflag\fP
 	TYPE(MPI_Status) :: \fIstatus\fP
 	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
-
-.fi
-.SH C++ Syntax
-.nf
-#include <mpi.h>
-static bool Request::Testany(int \fIcount\fP, Request \fIarray_of_requests\fP[],
-	int& \fIindex\fP, Status& \fIstatus\fP)
-
-static bool Request::Testany(int \fIcount\fP, Request \fIarray_of_requests\fP[],
-	int& \fIindex\fP)
 
 .fi
 .SH INPUT PARAMETERS
@@ -85,7 +76,7 @@ MPI_Testany(count, array_of_requests, index, status) has the same effect as the 
 If your application does not need to examine the \fIstatus\fP field, you can save resources by using the predefined constant MPI_STATUS_IGNORE as a special value for the \fIstatus\fP argument.
 
 .SH ERRORS
-Almost all MPI routines return an error value; C routines as the value of the function and Fortran routines in the last argument. C++ functions do not return errors. If the default error handler is set to MPI::ERRORS_THROW_EXCEPTIONS, then on error the C++ exception mechanism will be used to throw an MPI::Exception object.
+Almost all MPI routines return an error value; C routines as the value of the function and Fortran routines in the last argument.
 .sp
 Before the error value is returned, the current MPI error handler is
 called. By default, this error handler aborts the MPI job, except for

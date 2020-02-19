@@ -166,36 +166,6 @@ case "x$enable_mpi_fortran" in
         ;;
 esac
 
-#
-# C++
-#
-
-AC_MSG_CHECKING([if want C++ bindings])
-AC_ARG_ENABLE(mpi-cxx,
-    AC_HELP_STRING([--enable-mpi-cxx],
-                   [enable C++ MPI bindings (default: disabled)]))
-if test "$enable_mpi_cxx" = "yes"; then
-    AC_MSG_RESULT([yes])
-    WANT_MPI_CXX_SUPPORT=1
-else
-    AC_MSG_RESULT([no])
-    WANT_MPI_CXX_SUPPORT=0
-fi
-
-AC_MSG_CHECKING([if want MPI::SEEK_SET support])
-AC_ARG_ENABLE([mpi-cxx-seek],
-    [AC_HELP_STRING([--enable-mpi-cxx-seek],
-                   [enable support for MPI::SEEK_SET, MPI::SEEK_END, and MPI::SEEK_POS in C++ bindings (default: enabled)])])
-if test "$enable_mpi_cxx_seek" != "no" ; then
-  AC_MSG_RESULT([yes])
-  OMPI_WANT_MPI_CXX_SEEK=1
-else
-  AC_MSG_RESULT([no])
-  OMPI_WANT_MPI_CXX_SEEK=0
-fi
-AC_DEFINE_UNQUOTED([OMPI_WANT_MPI_CXX_SEEK], [$OMPI_WANT_MPI_CXX_SEEK],
-    [do we want to try to work around C++ bindings SEEK_* issue?])
-
 # Remove these when we finally kill them once and for all
 AC_ARG_ENABLE([mpi1-compatibility],
     [AC_HELP_STRING([--enable-mpi1-compatibility],

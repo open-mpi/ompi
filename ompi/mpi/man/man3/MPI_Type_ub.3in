@@ -2,6 +2,7 @@
 .\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
+.\" Copyright (c) 2020      Google, LLC. All rights reserved.
 .\" $COPYRIGHT$
 .TH MPI_Type_ub 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -45,8 +46,6 @@ Fortran only: Error status (integer).
 .ft R
 Note that use of this routine is \fIdeprecated\fP as of MPI-2. Please use MPI_Type_get_extent instead.
 .sp
-This deprecated routine is not available in C++.
-.sp
 MPI_Type_ub returns the upper bound of a data type. This will differ from zero if the type was constructed using MPI_UB. The upper bound will take into account any alignment considerations.
 .sp
 The "pseudo-datatypes," MPI_LB and MPI_UB, can be used, respectively, to mark the upper bound (or the lower bound) of a datatype. These pseudo-datatypes occupy no space (extent (MPI_LB) = extent (MPI_UB) =0. They do not affect the size or count of a datatype, and do not affect the context of a message created with this datatype. However, they do affect the definition of the extent of a datatype and, therefore, affect the outcome of a replication of this datatype by a datatype constructor.
@@ -82,7 +81,7 @@ Then
 If type(i) requires alignment to a byte address that is a multiple of k(i), then e is the least nonnegative increment needed to round extent(Typemap) to the next multiple of max(i) k(i).
 
 .SH ERRORS
-Almost all MPI routines return an error value; C routines as the value of the function and Fortran routines in the last argument. C++ functions do not return errors. If the default error handler is set to MPI::ERRORS_THROW_EXCEPTIONS, then on error the C++ exception mechanism will be used to throw an MPI::Exception object.
+Almost all MPI routines return an error value; C routines as the value of the function and Fortran routines in the last argument.
 .sp
 Before the error value is returned, the current MPI error handler is
 called. By default, this error handler aborts the MPI job, except for I/O function errors. The error handler may be changed with MPI_Comm_set_errhandler; the predefined error handler MPI_ERRORS_RETURN may be used to cause error values to be returned. Note that MPI does not guarantee that an MPI program can continue past an error.

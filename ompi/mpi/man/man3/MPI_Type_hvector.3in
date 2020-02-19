@@ -2,6 +2,7 @@
 .\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
+.\" Copyright (c) 2020      Google, LLC. All rights reserved.
 .\" $COPYRIGHT$
 .TH MPI_Type_hvector 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -54,8 +55,6 @@ Fortran only: Error status (integer).
 .ft R
 Note that use of this routine is \fIdeprecated\fP as of MPI-2. Use MPI_Type_create_hvector instead.
 .sp
-This deprecated routine is not available in C++.
-.sp
 The function MPI_Type_hvector is identical to MPI_Type_vector, except that
 stride is given in bytes, rather than in elements. The use for both types
 of vector constructors is illustrated in the examples in Section 3.12.7 of the MPI-1 Standard.
@@ -83,7 +82,7 @@ with extent ex. Let bl be the blocklength. The newly created datatype has a type
 
 .fi
 .SH ERRORS
-Almost all MPI routines return an error value; C routines as the value of the function and Fortran routines in the last argument. C++ functions do not return errors. If the default error handler is set to MPI::ERRORS_THROW_EXCEPTIONS, then on error the C++ exception mechanism will be used to throw an MPI::Exception object.
+Almost all MPI routines return an error value; C routines as the value of the function and Fortran routines in the last argument.
 .sp
 Before the error value is returned, the current MPI error handler is
 called. By default, this error handler aborts the MPI job, except for I/O function errors. The error handler may be changed with MPI_Comm_set_errhandler; the predefined error handler MPI_ERRORS_RETURN may be used to cause error values to be returned. Note that MPI does not guarantee that an MPI program can continue past an error.

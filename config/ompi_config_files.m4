@@ -1,6 +1,6 @@
 # -*- shell-script -*-
 #
-# Copyright (c) 2009-2019 Cisco Systems, Inc.  All rights reserved
+# Copyright (c) 2009-2020 Cisco Systems, Inc.  All rights reserved
 # Copyright (c) 2017-2018 Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # Copyright (c) 2018      Los Alamos National Security, LLC. All rights
@@ -26,7 +26,6 @@ AC_DEFUN([OMPI_CONFIG_FILES],[
 
         ompi/mpi/c/Makefile
         ompi/mpi/c/profile/Makefile
-        ompi/mpi/cxx/Makefile
         ompi/mpi/fortran/base/Makefile
         ompi/mpi/fortran/mpif-h/Makefile
         ompi/mpi/fortran/mpif-h/profile/Makefile

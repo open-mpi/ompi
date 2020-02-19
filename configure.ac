@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2019 Cisco Systems, Inc.  All rights reserved
+# Copyright (c) 2006-2020 Cisco Systems, Inc.  All rights reserved
 # Copyright (c) 2006-2008 Sun Microsystems, Inc.  All rights reserved.
 # Copyright (c) 2006-2017 Los Alamos National Security, LLC.  All rights
 #                         reserved.
@@ -133,7 +133,6 @@ OPAL_SAVE_VERSION([OPAL], [Open Portable Access Layer], [$srcdir/VERSION],
 . $srcdir/VERSION
 m4_ifdef([project_ompi],
          [AC_SUBST(libmpi_so_version)
-          AC_SUBST(libmpi_cxx_so_version)
           AC_SUBST(libmpi_mpifh_so_version)
           AC_SUBST(libmpi_usempi_tkr_so_version)
           AC_SUBST(libmpi_usempi_ignore_tkr_so_version)
@@ -537,18 +536,11 @@ OPAL_CHECK_OFFSETOF
 # C++ compiler characteristics
 ##################################
 
-# We don't need C++ unless we're building Open MPI and OPAL do
-# not use C++ at all.  The OPAL macro name appears to be a bit of a
-# misnomer; I'm not sure why it was split into a second macro and put
-# into OPAL...?  All it does is setup the C++ compiler (the OMPI macro
-# sets up the C++ MPI bindings, etc.).  Perhaps it was moved to OPAL
-# just on the rationale that all compiler setup should be done in
-# OPAL...?  Shrug.
-m4_ifdef([project_ompi], [OPAL_SETUP_CXX
-                          OMPI_SETUP_CXX])
-# Used in Makefile.ompi-rules
-AM_CONDITIONAL(MAN_PAGE_BUILD_MPI_CXX_BINDINGS,
-               [test "$WANT_MPI_CXX_SUPPORT" = 1])
+# We don't need C++ unless we're building Open MPI, because Open MPI
+# supports an "mpicxx" wrapper compiler (there is no C++ code in Open
+# MPI -- the MPI C++ bindings were removed in Open MPI v5.0 -- so we
+# don't need a C++ compiler for compiling Open MPI itself).
+m4_ifdef([project_ompi], [OMPI_SETUP_CXX])
 
 ##################################
 # Only after setting up both
@@ -960,8 +952,6 @@ OPAL_CONFIG_THREADS
 
 CFLAGS="$CFLAGS $THREAD_CFLAGS"
 CPPFLAGS="$CPPFLAGS $THREAD_CPPFLAGS"
-CXXFLAGS="$CXXFLAGS $THREAD_CXXFLAGS"
-CXXCPPFLAGS="$CXXCPPFLAGS $THREAD_CXXCPPFLAGS"
 LDFLAGS="$LDFLAGS $THREAD_LDFLAGS"
 LIBS="$LIBS $THREAD_LIBS"
 
@@ -1212,9 +1202,8 @@ fi
 # compilers to "no" that we don't want.  Libtool's m4 configry will
 # interpret this as "I won't be using this language; don't bother
 # setting it up."  Note that we do this only for Fortran; we *don't*
-# do this for C++, because even if we're not building the MPI C++
-# bindings, we *do* still want to setup the mpicxx wrapper if we have
-# a C++ compiler.
+# do this for C++, because *do* still want to setup the mpicxx wrapper
+# if we have a C++ compiler.
 AS_IF([test "$OMPI_TRY_FORTRAN_BINDINGS" = "$OMPI_FORTRAN_NO_BINDINGS"],[F77=no FC=no])
 
 LT_INIT([dlopen win32-dll])
@@ -1278,23 +1267,17 @@ if test "$OMPI_TOP_BUILDDIR" != "$OMPI_TOP_SRCDIR"; then
     # variables, lest the $(foo) names try to get evaluated here.
     # Yuck!
     CPPFLAGS='-I$(top_srcdir) -I$(top_builddir) -I$(top_srcdir)/opal/include m4_ifdef([project_ompi], [-I$(top_srcdir)/ompi/include]) m4_ifdef([project_oshmem], [-I$(top_srcdir)/oshmem/include])'" $CPPFLAGS"
-    # C++ is only relevant if we're building OMPI
-    m4_ifdef([project_ompi], [CXXCPPFLAGS='-I$(top_srcdir) -I$(top_builddir) -I$(top_srcdir)/opal/include -I$(top_srcdir)/ompi/include'" $CXXCPPFLAGS"])
 else
     CPPFLAGS='-I$(top_srcdir)'" $CPPFLAGS"
-    # C++ is only relevant if we're building OMPI
-    m4_ifdef([project_ompi], [CXXCPPFLAGS='-I$(top_srcdir)'" $CXXCPPFLAGS"])
 fi
 
 #
-# Delayed the substitution of CFLAGS and CXXFLAGS until now because
+# Delayed the substitution of CFLAGS and friends until now because
 # they may have been modified throughout the course of this script.
 #
 
 AC_SUBST(CFLAGS)
 AC_SUBST(CPPFLAGS)
-AC_SUBST(CXXFLAGS)
-AC_SUBST(CXXCPPFLAGS)
 m4_ifdef([project_ompi], [AC_SUBST(FFLAGS)
                           AC_SUBST(FCFLAGS)
 

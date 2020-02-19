@@ -43,10 +43,10 @@ else
 mpi_fortran_base_lib =
 endif
 
-# Note that the ordering of "." in SUBDIRS is important: the C++,
-# Fortran mpif.h, and use mpi/use mpi_f08 bindings are all in
-# standalone .la files that depend on libmpi.la.  So we must fully
-# build libmpi.la first.
+# Note that the ordering of "." in SUBDIRS is important: the Fortran
+# mpif.h, and use mpi/use mpi_f08 bindings are all in standalone .la
+# files that depend on libmpi.la.  So we must fully build libmpi.la
+# first.
 
 # NOTE: A handful of files in mpi/fortran/base must be included in
 # libmpi.la.  But we wanted to keep all the Fortran sources together
@@ -66,8 +66,8 @@ endif
 # unfortunately).
 
 # The end of the result is that libmpi.la -- including a few sources
-# from mpi/fortran/base -- is fully built before the C++, mpif.h, and
-# use mpi/use mpi_f08 bindings are built.  Therefore, the C++, mpif.h
+# from mpi/fortran/base -- is fully built before the mpif.h, and
+# use mpi/use mpi_f08 bindings are built.  Therefore, the mpif.h
 # and use mpi/use mpi_f08 bindings libraries can all link against
 # libmpi.la.
 
@@ -86,7 +86,6 @@ SUBDIRS = \
         $(MCA_ompi_FRAMEWORKS_SUBDIRS) \
         $(MCA_ompi_FRAMEWORK_COMPONENT_STATIC_SUBDIRS) \
         . \
-        mpi/cxx \
         $(OMPI_MPIEXT_MPIFH_DIRS) \
         mpi/fortran/mpif-h \
         $(OMPI_MPIEXT_USEMPI_DIR) \
@@ -118,7 +117,6 @@ DIST_SUBDIRS = \
         etc \
         mpi/c \
         mpi/tool \
-        mpi/cxx \
         mpi/fortran/base \
         mpi/fortran/mpif-h \
         mpi/fortran/use-mpi-tkr \

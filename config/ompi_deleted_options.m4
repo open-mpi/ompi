@@ -1,6 +1,7 @@
 # -*- shell-script -*-
 #
 # Copyright (c) 2020      Intel, Inc.  All rights reserved.
+# Copyright (c) 2020      Cisco Systems, Inc.  All rights reserved
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -33,6 +34,28 @@ AC_DEFUN([OMPI_CHECK_DELETED_OPTIONS],[
         AC_MSG_WARN([versions.])
         AC_MSG_ERROR([Build cannot continue.])
     fi
+
+    # Open MPI C++ bindings were removed in v5.0
+    cxx=0
+    AC_ARG_ENABLE([mpi-cxx],
+                  [AC_HELP_STRING([--enable-mpi-cxx],
+                                  [*DELETED* Build the MPI C++ bindings])],
+                  [cxx=1])
+    AC_ARG_ENABLE([mpi-cxx-seek],
+                  [AC_HELP_STRING([--enable-mpi-cxx-seek],
+                                  [*DELETED* Build support for MPI::SEEK])],
+                  [cxx=1])
+    AC_ARG_ENABLE([cxx-exceptions],
+                  [AC_HELP_STRING([--enable-cxx-exceptions],
+                                  [*DELETED* Build support for C++ exceptions in the MPI C++ bindings])],
+                  [cxx=1])
+
+    AS_IF([test $cxx -eq 1],
+          [AC_MSG_WARN([The MPI C++ bindings have been removed from Open MPI.])
+           AC_MSG_WARN([If you need support for the MPI C++ bindings, you])
+           AC_MSG_WARN([will need to use an older version of Open MPI.])
+           AC_MSG_ERROR([Build cannot continue.])
+          ])
 
     OPAL_VAR_SCOPE_POP
 ])

@@ -2,6 +2,7 @@
 .\" Copyright (c) 2010-2014 Cisco Systems, Inc.  All rights reserved.
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
+.\" Copyright (c) 2020      Google, LLC. All rights reserved.
 .\" $COPYRIGHT$
 .TH MPI_Attr_put 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -45,7 +46,7 @@ Fortran only: Error status (integer).
 .ft R
 Note that use of this routine is \fIdeprecated\fP as of MPI-2, and
 was \fIdeleted\fP in MPI-3. Please use MPI_Comm_set_attr.  This
-function does not have a C++ or mpi_f08 binding.
+function does not have a mpi_f08 binding.
 .sp
 MPI_Attr_put stores the stipulated attribute value attribute_val for subsequent retrieval by MPI_Attr_get. If the value is already present, then the outcome is as if MPI_Attr_delete was first called to delete the previous value (and the callback function delete_fn was executed), and a new value was next stored. The call is erroneous if there is no key with value keyval; in particular MPI_KEYVAL_INVALID is an erroneous key value. The call will fail if the delete_fn function returned an error code other than MPI_SUCCESS.
 
@@ -59,7 +60,7 @@ The type of the attribute value depends on whether C or Fortran is being used. I
 If an attribute is already present, the delete function (specified when the corresponding keyval was created) will be called.
 
 .SH ERRORS
-Almost all MPI routines return an error value; C routines as the value of the function and Fortran routines in the last argument. C++ functions do not return errors. If the default error handler is set to MPI::ERRORS_THROW_EXCEPTIONS, then on error the C++ exception mechanism will be used to throw an MPI::Exception object.
+Almost all MPI routines return an error value; C routines as the value of the function and Fortran routines in the last argument.
 .sp
 Before the error value is returned, the current MPI error handler is
 called. By default, this error handler aborts the MPI job, except for I/O function errors. The error handler

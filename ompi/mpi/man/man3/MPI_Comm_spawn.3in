@@ -3,6 +3,7 @@
 .\" Copyright (c) 2010 Cisco Systems, Inc.  All rights reserved.
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
+.\" Copyright (c) 2020      Google, LLC. All rights reserved.
 .\" $COPYRIGHT$
 .TH MPI_Comm_spawn 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -42,18 +43,6 @@ MPI_Comm_spawn(\fIcommand\fP, \fIargv\fP, \fImaxprocs\fP, \fIinfo\fP, \fIroot\fP
 	TYPE(MPI_Comm), INTENT(OUT) :: \fIintercomm\fP
 	INTEGER :: \fIarray_of_errcodes(*)\fP
 	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
-
-.fi
-.SH C++ Syntax
-.nf
-#include <mpi.h>
-MPI::Intercomm MPI::Intracomm::Spawn(const char* \fIcommand\fP,
-	const char* \fIargv\fP[], int \fImaxprocs\fP, const MPI::Info& \fIinfo\fP,
-	int \fIroot\fP, int \fIarray_of_errcodes\fP[]) const
-
-MPI::Intercomm MPI::Intracomm::Spawn(const char* \fIcommand\fP,
-	const char* \fIargv\fP[], int \fImaxprocs\fP, const MPI::Info& \fIinfo\fP,
-	int \fIroot\fP) const
 
 .fi
 .SH INPUT PARAMETERS
@@ -104,15 +93,15 @@ The \fIargv\fP Argument
 \fIargv\fP is an array of strings containing arguments that are passed
 to the program. The first element of \fIargv\fP is the first argument
 passed to \fIcommand\fP, not, as is conventional in some contexts, the
-command itself. The argument list is terminated by NULL in C and C++
+command itself. The argument list is terminated by NULL in C
 and an empty string in Fortran (note that it is the MPI application's
 responsibility to ensure that the last entry of the
 .I argv
 array is an empty string; the compiler will not automatically insert
 it). In Fortran, leading and trailing spaces are always stripped, so
 that a string consisting of all spaces is considered an empty
-string. The constant MPI_ARGV_NULL may be used in C, C++ and Fortran
-to indicate an empty argument list. In C and C++, this constant is the
+string. The constant MPI_ARGV_NULL may be used in C and Fortran
+to indicate an empty argument list. In C, this constant is the
 same as NULL.
 .sp
 In C, the MPI_Comm_spawn argument \fIargv\fP differs from the \fIargv\fP argument of \fImain\fP in two respects. First, it is shifted by one element. Specifically, \fIargv\fP[0] of \fImain\fP  contains the name of the program (given by \fIcommand\fP). \fIargv\fP[1] of \fImain\fP corresponds to \fIargv\fP[0] in MPI_Comm_spawn, \fIargv\fP[2] of \fImain\fP to \fIargv\fP[1] of MPI_Comm_spawn, and so on. Second, \fIargv\fP of MPI_Comm_spawn must be null-terminated, so that its length can be determined. Passing an \fIargv\fP of MPI_ARGV_NULL to MPI_Comm_spawn results in \fImain\fP receiving \fIargc\fP of 1 and an \fIargv\fP whose element 0 is the name of the program.
@@ -125,7 +114,7 @@ A spawn call with the default behavior is called hard. A spawn call for which fe
 .sp
 The \fIinfo\fP Argument
 .sp
-The \fIinfo\fP argument is an opaque handle of type MPI_Info in C, MPI::Info in C++ and INTEGER in Fortran. It is a container for a number of user-specified (\fIkey,value\fP) pairs. \fIkey\fP and \fIvalue\fP are strings (null-terminated char* in C, character*(*) in Fortran). Routines to create and manipulate the \fIinfo\fP argument are described in Section 4.10 of the MPI-2 standard.
+The \fIinfo\fP argument is an opaque handle of type MPI_Info in C and INTEGER in Fortran. It is a container for a number of user-specified (\fIkey,value\fP) pairs. \fIkey\fP and \fIvalue\fP are strings (null-terminated char* in C, character*(*) in Fortran). Routines to create and manipulate the \fIinfo\fP argument are described in Section 4.10 of the MPI-2 standard.
 .sp
 For the SPAWN calls, \fIinfo\fP provides additional, implementation-dependent instructions to MPI and the runtime system on how to start processes. An application may pass MPI_INFO_NULL in C or Fortran. Portable programs not requiring detailed control over process locations should use MPI_INFO_NULL.
 .sp
@@ -222,7 +211,7 @@ All arguments before the \fIroot\fP argument are examined only on the process wh
 .sp
 The \fIarray_of_errcodes\fP Argument
 .sp
-The \fIarray_of_errcodes\fP is an array of length \fImaxprocs\fP in which MPI reports the status of the processes that MPI was requested to start. If all \fImaxprocs\fP processes were spawned, \fIarray_of_errcodes\fP is filled in with the value MPI_SUCCESS. If anyof the processes are \fInot\fP spawned, \fIarray_of_errcodes\fP is filled in with the value MPI_ERR_SPAWN. In C or Fortran, an application may pass MPI_ERRCODES_IGNORE if it is not interested in the error codes. In C++ this constant does not exist, and the \fIarray_of_errcodes\fP argument may be omitted from the argument list.
+The \fIarray_of_errcodes\fP is an array of length \fImaxprocs\fP in which MPI reports the status of the processes that MPI was requested to start. If all \fImaxprocs\fP processes were spawned, \fIarray_of_errcodes\fP is filled in with the value MPI_SUCCESS. If anyof the processes are \fInot\fP spawned, \fIarray_of_errcodes\fP is filled in with the value MPI_ERR_SPAWN. In C or Fortran, an application may pass MPI_ERRCODES_IGNORE if it is not interested in the error codes.
 
 .SH NOTES
 .ft R
@@ -230,7 +219,7 @@ Completion of MPI_Comm_spawn in the parent does not necessarily mean that MPI_In
 
 
 .SH ERRORS
-Almost all MPI routines return an error value; C routines as the value of the function and Fortran routines in the last argument. C++ functions do not return errors. If the default error handler is set to MPI::ERRORS_THROW_EXCEPTIONS, then on error the C++ exception mechanism will be used to throw an MPI::Exception object.
+Almost all MPI routines return an error value; C routines as the value of the function and Fortran routines in the last argument.
 .sp
 Before the error value is returned, the current MPI error handler is
 called. By default, this error handler aborts the MPI job, except for I/O function errors. The error handler may be changed with MPI_Comm_set_errhandler; the predefined error handler MPI_ERRORS_RETURN may be used to cause error values to be returned. Note that MPI does not guarantee that an MPI program can continue past an error.

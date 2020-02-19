@@ -2,6 +2,7 @@
 .\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
+.\" Copyright (c) 2020      Google, LLC. All rights reserved.
 .\" $COPYRIGHT$
 .TH MPI_Pack_external_size 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 
@@ -39,13 +40,6 @@ MPI_Pack_external_size(\fIdatarep\fP, \fIincount\fP, \fIdatatype\fP, \fIsize\fP,
 	CHARACTER(LEN=*), INTENT(IN) :: \fIdatarep\fP
 	INTEGER(KIND=MPI_ADDRESS_KIND), INTENT(OUT) :: \fIsize\fP
 	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
-
-.fi
-.SH C++ Syntax
-.nf
-#include <mpi.h>
-MPI::Aint MPI::Datatype::Pack_external_size(const char* \fIdatarep\fP,
-	int \fIincount\fP) const
 
 .fi
 .SH INPUT PARAMETERS
@@ -92,10 +86,7 @@ provided for future extensibility.
 .SH ERRORS
 .ft R
 Almost all MPI routines return an error value; C routines as
-the value of the function and Fortran routines in the last argument. C++
-functions do not return errors. If the default error handler is set to
-MPI::ERRORS_THROW_EXCEPTIONS, then on error the C++ exception mechanism
-will be used to throw an MPI::Exception object.
+the value of the function and Fortran routines in the last argument.
 .sp
 Before the error value is returned, the current MPI error handler is
 called. By default, this error handler aborts the MPI job, except for
