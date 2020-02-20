@@ -23,7 +23,6 @@
 #include "opal/types.h"
 #include "opal/dss/dss.h"
 
-
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
 #include <arpa/inet.h>
 #endif
@@ -105,6 +104,7 @@ typedef struct {
 OBJ_CLASS_DECLARATION(opal_namelist_t);
 
 typedef struct opal_process_info_t {
+    bool nativelaunch;                  /**< launched by mpirun */
     char *nodename;                     /**< string name for this node */
     char *top_session_dir;              /**< Top-level session directory */
     char *job_session_dir;              /**< Session directory for job */

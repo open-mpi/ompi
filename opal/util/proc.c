@@ -28,6 +28,7 @@ opal_process_name_t opal_name_wildcard = {OPAL_JOBID_WILDCARD, OPAL_VPID_WILDCAR
 opal_process_name_t opal_name_invalid = {OPAL_JOBID_INVALID, OPAL_VPID_INVALID};
 
 opal_process_info_t opal_process_info = {
+    .nativelaunch = false,
     .nodename = NULL,
     .top_session_dir = NULL,
     .job_session_dir = NULL,
