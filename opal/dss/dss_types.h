@@ -15,7 +15,7 @@
  *                         reserved.
  * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2020 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -91,8 +91,6 @@ typedef struct {
 #define    OPAL_BYTE_OBJECT         (opal_data_type_t)   20 /**< byte object structure */
 #define    OPAL_DATA_TYPE           (opal_data_type_t)   21 /**< data type */
 #define    OPAL_NULL                (opal_data_type_t)   22 /**< don't interpret data type */
-#define    OPAL_PSTAT               (opal_data_type_t)   23 /**< process statistics */
-#define    OPAL_NODE_STAT           (opal_data_type_t)   24 /**< node statistics */
 #define    OPAL_HWLOC_TOPO          (opal_data_type_t)   25 /**< hwloc topology */
 #define    OPAL_VALUE               (opal_data_type_t)   26 /**< opal value structure */
 #define    OPAL_BUFFER              (opal_data_type_t)   27 /**< pack the remaining contents of a buffer as an object */
@@ -178,82 +176,6 @@ typedef struct {
     } data;
 } opal_value_t;
 OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_value_t);
-
-/* Process statistics object */
-#define OPAL_PSTAT_MAX_STRING_LEN   32
-typedef struct {
-    opal_list_item_t super;                /* required for this to be on a list */
-    /* process ident info */
-    char node[OPAL_PSTAT_MAX_STRING_LEN];
-    int32_t rank;
-    pid_t pid;
-    char cmd[OPAL_PSTAT_MAX_STRING_LEN];
-    /* process stats */
-    char state[2];
-    struct timeval time;
-    float percent_cpu;
-    int32_t priority;
-    int16_t num_threads;
-    float pss;   /* in MBytes */
-    float vsize;  /* in MBytes */
-    float rss;  /* in MBytes */
-    float peak_vsize;  /* in MBytes */
-    int16_t processor;
-    /* time at which sample was taken */
-    struct timeval sample_time;
-} opal_pstats_t;
-OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_pstats_t);
-typedef struct {
-    opal_list_item_t super;
-    char *disk;
-    unsigned long num_reads_completed;
-    unsigned long num_reads_merged;
-    unsigned long num_sectors_read;
-    unsigned long milliseconds_reading;
-    unsigned long num_writes_completed;
-    unsigned long num_writes_merged;
-    unsigned long num_sectors_written;
-    unsigned long milliseconds_writing;
-    unsigned long num_ios_in_progress;
-    unsigned long milliseconds_io;
-    unsigned long weighted_milliseconds_io;
-} opal_diskstats_t;
-OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_diskstats_t);
-typedef struct {
-    opal_list_item_t super;
-    char *net_interface;
-    unsigned long num_bytes_recvd;
-    unsigned long num_packets_recvd;
-    unsigned long num_recv_errs;
-    unsigned long num_bytes_sent;
-    unsigned long num_packets_sent;
-    unsigned long num_send_errs;
-} opal_netstats_t;
-OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_netstats_t);
-typedef struct {
-    opal_object_t super;
-    /* node-level load averages */
-    float la;
-    float la5;
-    float la15;
-    /* memory usage */
-    float total_mem;  /* in MBytes */
-    float free_mem;  /* in MBytes */
-    float buffers;  /* in MBytes */
-    float cached;   /* in MBytes */
-    float swap_cached;  /* in MBytes */
-    float swap_total;   /* in MBytes */
-    float swap_free;    /* in MBytes */
-    float mapped;       /* in MBytes */
-    /* time at which sample was taken */
-    struct timeval sample_time;
-    /* list of disk stats, one per disk */
-    opal_list_t diskstats;
-    /* list of net stats, one per interface */
-    opal_list_t netstats;
-
-} opal_node_stats_t;
-OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_node_stats_t);
 
 /* structured-unstructured data flags */
 #define OPAL_DSS_STRUCTURED     true

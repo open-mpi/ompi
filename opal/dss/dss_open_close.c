@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, Inc.  All rights reserved.
- * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
@@ -147,94 +147,6 @@ static void opal_dss_type_info_destruct(opal_dss_type_info_t *obj)
 OBJ_CLASS_INSTANCE(opal_dss_type_info_t, opal_object_t,
                    opal_dss_type_info_construct,
                    opal_dss_type_info_destruct);
-
-
-static void opal_pstat_construct(opal_pstats_t *obj)
-{
-    memset(obj->node, 0, sizeof(obj->node));
-    memset(obj->cmd, 0, sizeof(obj->cmd));
-    obj->rank = 0;
-    obj->pid = 0;
-    obj->state[0] = 'U';
-    obj->state[1] = '\0';
-    obj->percent_cpu = 0.0;
-    obj->time.tv_sec = 0;
-    obj->time.tv_usec = 0;
-    obj->priority = -1;
-    obj->num_threads = -1;
-    obj->pss = 0.0;
-    obj->vsize = 0.0;
-    obj->rss = 0.0;
-    obj->peak_vsize = 0.0;
-    obj->processor = -1;
-    obj->sample_time.tv_sec = 0;
-    obj->sample_time.tv_usec = 0;
-}
-OBJ_CLASS_INSTANCE(opal_pstats_t, opal_list_item_t,
-                   opal_pstat_construct,
-                   NULL);
-
-static void diskstat_cons(opal_diskstats_t *ptr)
-{
-    ptr->disk = NULL;
-}
-static void diskstat_dest(opal_diskstats_t *ptr)
-{
-    if (NULL != ptr->disk) {
-        free(ptr->disk);
-    }
-}
-OBJ_CLASS_INSTANCE(opal_diskstats_t,
-                   opal_list_item_t,
-                   diskstat_cons, diskstat_dest);
-
-static void netstat_cons(opal_netstats_t *ptr)
-{
-    ptr->net_interface = NULL;
-}
-static void netstat_dest(opal_netstats_t *ptr)
-{
-    if (NULL != ptr->net_interface) {
-        free(ptr->net_interface);
-    }
-}
-OBJ_CLASS_INSTANCE(opal_netstats_t,
-                   opal_list_item_t,
-                   netstat_cons, netstat_dest);
-
-static void opal_node_stats_construct(opal_node_stats_t *obj)
-{
-    obj->la = 0.0;
-    obj->la5 = 0.0;
-    obj->la15 = 0.0;
-    obj->total_mem = 0;
-    obj->free_mem = 0.0;
-    obj->buffers = 0.0;
-    obj->cached = 0.0;
-    obj->swap_cached = 0.0;
-    obj->swap_total = 0.0;
-    obj->swap_free = 0.0;
-    obj->mapped = 0.0;
-    obj->sample_time.tv_sec = 0;
-    obj->sample_time.tv_usec = 0;
-    OBJ_CONSTRUCT(&obj->diskstats, opal_list_t);
-    OBJ_CONSTRUCT(&obj->netstats, opal_list_t);
-}
-static void opal_node_stats_destruct(opal_node_stats_t *obj)
-{
-    opal_list_item_t *item;
-    while (NULL != (item = opal_list_remove_first(&obj->diskstats))) {
-        OBJ_RELEASE(item);
-    }
-    OBJ_DESTRUCT(&obj->diskstats);
-    while (NULL != (item = opal_list_remove_first(&obj->netstats))) {
-        OBJ_RELEASE(item);
-    }
-    OBJ_DESTRUCT(&obj->netstats);
-}
-OBJ_CLASS_INSTANCE(opal_node_stats_t, opal_object_t,
-                   opal_node_stats_construct,
-                   opal_node_stats_destruct);
 
 
 static void opal_envar_construct(opal_envar_t *obj)
@@ -538,27 +450,6 @@ int opal_dss_open(void)
         return rc;
     }
 
-    tmp = OPAL_PSTAT;
-    if (OPAL_SUCCESS != (rc = opal_dss.register_type(opal_dss_pack_pstat,
-                                                     opal_dss_unpack_pstat,
-                                                     (opal_dss_copy_fn_t)opal_dss_copy_pstat,
-                                                     (opal_dss_compare_fn_t)opal_dss_compare_pstat,
-                                                     (opal_dss_print_fn_t)opal_dss_print_pstat,
-                                                     OPAL_DSS_STRUCTURED,
-                                                     "OPAL_PSTAT", &tmp))) {
-        return rc;
-    }
-
-    tmp = OPAL_NODE_STAT;
-    if (OPAL_SUCCESS != (rc = opal_dss.register_type(opal_dss_pack_node_stat,
-                                                     opal_dss_unpack_node_stat,
-                                                     (opal_dss_copy_fn_t)opal_dss_copy_node_stat,
-                                                     (opal_dss_compare_fn_t)opal_dss_compare_node_stat,
-                                                     (opal_dss_print_fn_t)opal_dss_print_node_stat,
-                                                     OPAL_DSS_STRUCTURED,
-                                                     "OPAL_NODE_STAT", &tmp))) {
-        return rc;
-    }
     tmp = OPAL_VALUE;
     if (OPAL_SUCCESS != (rc = opal_dss.register_type(opal_dss_pack_value,
                                                      opal_dss_unpack_value,

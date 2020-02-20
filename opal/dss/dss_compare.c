@@ -12,7 +12,7 @@
  * Copyright (c) 2012      Los Alamos National Security, Inc.  All rights reserved.
  * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2020 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -288,18 +288,6 @@ int opal_dss_compare_byte_object(opal_byte_object_t *value1, opal_byte_object_t 
     if (0 < checksum) return OPAL_VALUE1_GREATER;  /* of value1 bytes was greater */
 
     return OPAL_EQUAL;  /* sum of both value's bytes was identical */
-}
-
-/* OPAL_PSTAT */
-int opal_dss_compare_pstat(opal_pstats_t *value1, opal_pstats_t *value2, opal_data_type_t type)
-{
-    return OPAL_EQUAL;  /* eventually compare field to field */
-}
-
-/* OPAL_NODE_STAT */
-int opal_dss_compare_node_stat(opal_node_stats_t *value1, opal_node_stats_t *value2, opal_data_type_t type)
-{
-    return OPAL_EQUAL;  /* eventually compare field to field */
 }
 
 /* OPAL_VALUE */

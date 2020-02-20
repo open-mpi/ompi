@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, Inc.  All rights reserved.
- * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
@@ -629,70 +629,6 @@ int opal_dss_print_byte_object(char **output, char *prefix, opal_byte_object_t *
     }
 
     opal_asprintf(output, "%sData type: OPAL_BYTE_OBJECT\tSize: %lu", prefx, (unsigned long) src->size);
-    if (prefx != prefix) {
-        free(prefx);
-    }
-
-    return OPAL_SUCCESS;
-}
-
-/*
- * OPAL_PSTAT
- */
-int opal_dss_print_pstat(char **output, char *prefix, opal_pstats_t *src, opal_data_type_t type)
-{
-    char *prefx;
-
-    /* deal with NULL prefix */
-    if (NULL == prefix) opal_asprintf(&prefx, " ");
-    else prefx = prefix;
-
-    /* if src is NULL, just print data type and return */
-    if (NULL == src) {
-        opal_asprintf(output, "%sData type: OPAL_PSTATS\tValue: NULL pointer", prefx);
-        if (prefx != prefix) {
-            free(prefx);
-        }
-        return OPAL_SUCCESS;
-    }
-    opal_asprintf(output, "%sOPAL_PSTATS SAMPLED AT: %ld.%06ld\n%snode: %s rank: %d pid: %d cmd: %s state: %c pri: %d #threads: %d Processor: %d\n"
-             "%s\ttime: %ld.%06ld cpu: %5.2f  PSS: %8.2f  VMsize: %8.2f PeakVMSize: %8.2f RSS: %8.2f\n",
-             prefx, (long)src->sample_time.tv_sec, (long)src->sample_time.tv_usec,
-             prefx, src->node, src->rank, src->pid, src->cmd, src->state[0], src->priority, src->num_threads, src->processor,
-             prefx, (long)src->time.tv_sec, (long)src->time.tv_usec, src->percent_cpu, src->pss, src->vsize, src->peak_vsize, src->rss);
-    if (prefx != prefix) {
-        free(prefx);
-    }
-
-    return OPAL_SUCCESS;
-}
-
-/*
- * OPAL_NODE_STAT
- */
-int opal_dss_print_node_stat(char **output, char *prefix, opal_node_stats_t *src, opal_data_type_t type)
-{
-    char *prefx;
-
-    /* deal with NULL prefix */
-    if (NULL == prefix) opal_asprintf(&prefx, " ");
-    else prefx = prefix;
-
-    /* if src is NULL, just print data type and return */
-    if (NULL == src) {
-        opal_asprintf(output, "%sData type: OPAL_NODE_STATS\tValue: NULL pointer", prefx);
-        if (prefx != prefix) {
-            free(prefx);
-        }
-        return OPAL_SUCCESS;
-    }
-    opal_asprintf(output, "%sOPAL_NODE_STATS SAMPLED AT: %ld.%06ld\n%sTotal Mem: %5.2f Free Mem: %5.2f Buffers: %5.2f Cached: %5.2f\n"
-             "%sSwapCached: %5.2f SwapTotal: %5.2f SwapFree: %5.2f Mapped: %5.2f\n"
-             "%s\tla: %5.2f\tla5: %5.2f\tla15: %5.2f\n",
-             prefx, (long)src->sample_time.tv_sec, (long)src->sample_time.tv_usec,
-             prefx, src->total_mem, src->free_mem, src->buffers, src->cached,
-             prefx, src->swap_cached, src->swap_total, src->swap_free, src->mapped,
-             prefx, src->la, src->la5, src->la15);
     if (prefx != prefix) {
         free(prefx);
     }

@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -194,62 +194,6 @@ int opal_dss_copy_byte_object(opal_byte_object_t **dest, opal_byte_object_t *src
         memcpy((*dest)->bytes, src->bytes, src->size);
     }
 
-    return OPAL_SUCCESS;
-}
-
-/* OPAL_PSTAT */
-int opal_dss_copy_pstat(opal_pstats_t **dest, opal_pstats_t *src,
-                        opal_data_type_t type)
-{
-    opal_pstats_t *p;
-
-    /* create the new object */
-    *dest = OBJ_NEW(opal_pstats_t);
-    if (NULL == *dest) {
-        return OPAL_ERR_OUT_OF_RESOURCE;
-    }
-    p = *dest;
-
-    /* copy the individual fields */
-    memcpy(p->node, src->node, sizeof(src->node));
-    p->rank = src->rank;
-    p->pid = src->pid;
-    memcpy(p->cmd, src->cmd, sizeof(src->cmd));
-    p->state[0] = src->state[0];
-    p->time = src->time;
-    p->priority = src->priority;
-    p->num_threads = src->num_threads;
-    p->pss = src->pss;
-    p->vsize = src->vsize;
-    p->rss = src->rss;
-    p->peak_vsize = src->peak_vsize;
-    p->processor = src->processor;
-    p->sample_time.tv_sec = src->sample_time.tv_sec;
-    p->sample_time.tv_usec = src->sample_time.tv_usec;
-    return OPAL_SUCCESS;
-}
-
-/* OPAL_NODE_STAT */
-int opal_dss_copy_node_stat(opal_node_stats_t **dest, opal_node_stats_t *src,
-                            opal_data_type_t type)
-{
-    opal_node_stats_t *p;
-
-    /* create the new object */
-    *dest = OBJ_NEW(opal_node_stats_t);
-    if (NULL == *dest) {
-        return OPAL_ERR_OUT_OF_RESOURCE;
-    }
-    p = *dest;
-
-    /* copy the individual fields */
-    p->la = src->la;
-    p->la5 = src->la5;
-    p->la15 = src->la15;
-    p->total_mem = src->total_mem;
-    p->free_mem = src->free_mem;
-    p->sample_time.tv_sec = src->sample_time.tv_sec;
-    p->sample_time.tv_usec = src->sample_time.tv_usec;
     return OPAL_SUCCESS;
 }
 
