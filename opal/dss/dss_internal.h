@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, Inc.  All rights reserved.
- * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
@@ -299,12 +299,6 @@ int opal_dss_pack_data_type(opal_buffer_t *buffer, const void *src,
 int opal_dss_pack_byte_object(opal_buffer_t *buffer, const void *src,
                               int32_t num_vals, opal_data_type_t type);
 
-int opal_dss_pack_pstat(opal_buffer_t *buffer, const void *src,
-                        int32_t num_vals, opal_data_type_t type);
-
-int opal_dss_pack_node_stat(opal_buffer_t *buffer, const void *src,
-                            int32_t num_vals, opal_data_type_t type);
-
 int opal_dss_pack_value(opal_buffer_t *buffer, const void *src,
                         int32_t num_vals, opal_data_type_t type);
 
@@ -373,12 +367,6 @@ int opal_dss_unpack_data_type(opal_buffer_t *buffer, void *dest,
 int opal_dss_unpack_byte_object(opal_buffer_t *buffer, void *dest,
                                 int32_t *num_vals, opal_data_type_t type);
 
-int opal_dss_unpack_pstat(opal_buffer_t *buffer, void *dest,
-                          int32_t *num_vals, opal_data_type_t type);
-
-int opal_dss_unpack_node_stat(opal_buffer_t *buffer, void *dest,
-                              int32_t *num_vals, opal_data_type_t type);
-
 int opal_dss_unpack_value(opal_buffer_t *buffer, void *dest,
                           int32_t *num_vals, opal_data_type_t type);
 
@@ -424,12 +412,6 @@ int opal_dss_copy_string(char **dest, char *src, opal_data_type_t type);
 
 int opal_dss_copy_byte_object(opal_byte_object_t **dest, opal_byte_object_t *src,
                               opal_data_type_t type);
-
-int opal_dss_copy_pstat(opal_pstats_t **dest, opal_pstats_t *src,
-                        opal_data_type_t type);
-
-int opal_dss_copy_node_stat(opal_node_stats_t **dest, opal_node_stats_t *src,
-                            opal_data_type_t type);
 
 int opal_dss_copy_value(opal_value_t **dest, opal_value_t *src,
                         opal_data_type_t type);
@@ -480,10 +462,6 @@ int opal_dss_compare_string(char *value1, char *value2, opal_data_type_t type);
 int opal_dss_compare_dt(opal_data_type_t *value1, opal_data_type_t *value2, opal_data_type_t type);
 
 int opal_dss_compare_byte_object(opal_byte_object_t *value1, opal_byte_object_t *value2, opal_data_type_t type);
-
-int opal_dss_compare_pstat(opal_pstats_t *value1, opal_pstats_t *value2, opal_data_type_t type);
-
-int opal_dss_compare_node_stat(opal_node_stats_t *value1, opal_node_stats_t *value2, opal_data_type_t type);
 
 int opal_dss_compare_value(opal_value_t *value1, opal_value_t *value2, opal_data_type_t type);
 
@@ -540,8 +518,6 @@ int opal_dss_print_int64(char **output, char *prefix, void *src, opal_data_type_
 int opal_dss_print_null(char **output, char *prefix, void *src, opal_data_type_t type);
 int opal_dss_print_data_type(char **output, char *prefix, opal_data_type_t *src, opal_data_type_t type);
 int opal_dss_print_byte_object(char **output, char *prefix, opal_byte_object_t *src, opal_data_type_t type);
-int opal_dss_print_pstat(char **output, char *prefix, opal_pstats_t *src, opal_data_type_t type);
-int opal_dss_print_node_stat(char **output, char *prefix, opal_node_stats_t *src, opal_data_type_t type);
 int opal_dss_print_value(char **output, char *prefix, opal_value_t *src, opal_data_type_t type);
 int opal_dss_print_buffer_contents(char **output, char *prefix, opal_buffer_t *src, opal_data_type_t type);
 int opal_dss_print_float(char **output, char *prefix, float *src, opal_data_type_t type);
