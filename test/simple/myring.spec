@@ -1,0 +1,3 @@
+Name: myring
+Exec: ./ring
+
