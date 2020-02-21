@@ -13,6 +13,7 @@
  * Copyright (c) 2016      Broadcom Limited. All rights reserved.
  * Copyright (c) 2016-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2020      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -88,8 +89,6 @@ BEGIN_C_DECLS
 #include "opal/sys/sparcv9/timer.h"
 #elif OPAL_ASSEMBLY_ARCH == OPAL_SPARCV9_64
 #include "opal/sys/sparcv9/timer.h"
-#elif OPAL_ASSEMBLY_ARCH == OPAL_MIPS
-#include "opal/sys/mips/timer.h"
 #endif
 
 #ifndef DOXYGEN
