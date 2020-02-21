@@ -42,6 +42,10 @@ AC_DEFUN([OMPI_SETUP_PRRTE],[
                 [AC_HELP_STRING([--with-prrte-platform],
                                 [Platform file to use when building the internal PRRTE runtime support])])
 
+    AC_ARG_ENABLE([prte-prefix-by-default],
+        [AC_HELP_STRING([--enable-prte-prefix-by-default],
+            [Make "mpirun ..." behave exactly the same as "mpirun --prefix \$prefix" (where \$prefix is the value given to --prefix in configure) (default:enabled)])])
+
     AC_MSG_CHECKING([if RTE support is enabled])
     if test "$enable_internal_rte" != "no"; then
         AC_MSG_RESULT([yes])
@@ -70,7 +74,14 @@ AC_DEFUN([OMPI_SETUP_PRRTE],[
             opal_prrte_pmix_arg="--with-pmix=$with_pmix"
         fi
 
-        opal_prrte_args="--prefix=$prefix --disable-dlopen $opal_prrte_libevent_arg $opal_prrte_hwloc_arg $opal_prrte_pmix_arg"
+        if test -z $enable_prte_prefix_by_default || test "$enable_prte_prefix_by_default" = "yes" ||
+           test "$enable_orterun_prefix_given" = "yes"; then
+           opal_prrte_prefix_arg="--enable-prte-prefix-by-default"
+        else
+            opal_prrte_prefix_arg=
+        fi
+
+        opal_prrte_args="--prefix=$prefix --disable-dlopen $opal_prrte_prefix_arg $opal_prrte_libevent_arg $opal_prrte_hwloc_arg $opal_prrte_pmix_arg"
         AS_IF([test "$enable_debug" = "yes"],
               [opal_prrte_args="--enable-debug $opal_prrte_args"
                CFLAGS="$OPAL_CFLAGS_BEFORE_PICKY $OPAL_VISIBILITY_CFLAGS -g"],

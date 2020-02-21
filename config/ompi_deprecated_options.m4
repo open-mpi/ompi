@@ -9,28 +9,25 @@
 #
 
 AC_DEFUN([OMPI_CHECK_DEPRECATED_OPTIONS],[
-    OPAL_VAR_SCOPE_PUSH(with_pmi_given with_pmi_libdir_given)
+    OPAL_VAR_SCOPE_PUSH([enable_orterun_prefix_given])
 
-    AC_ARG_WITH([pmi],
-                [AC_HELP_STRING([--with-pmi(=DIR)],
-                                [*DEPRECATED* Build PMI support, optionally adding DIR to the search path (default: no)])],
-                [with_pmi_given=yes])
+    # --enable-orterun-prefix-by-default was deprecated in v5 in favor of --enable-prte-prefix-by-default
+    AC_ARG_ENABLE([orterun-prefix-by-default],
+        [AC_HELP_STRING([--enable-orterun-prefix-by-default],
+            [*DEPRECATED* Please use --enable-prte-prefix-by-default in the future)])],
+        [enable_orterun_prefix_given=yes])
+    AC_ARG_ENABLE([mpirun-prefix-by-default],
+        [AC_HELP_STRING([--enable-mpirun-prefix-by-default],
+            [*DEPRECATED* Please use --enable-prte-prefix-by-default in the future])],
+        [enable_orterun_prefix_given=yes])
 
-    AC_ARG_WITH([pmi-libdir],
-                [AC_HELP_STRING([--with-pmi-libdir=DIR],
-                                [*DEPRECATED* Look for libpmi or libpmi2 in the given directory DIR, DIR/lib or DIR/lib64])],
-                [with_pmi_libdir_given=yes])
-
-    if test "$with_pmi_given" = "yes" || test "$with_pmi_libdir_given" = "yes"; then
-        AC_MSG_WARN([Open MPI no longer supports PMI-1 or PMI-2 libraries.])
-        AC_MSG_WARN([PMIx is now required. Either the internal version or an])
-        AC_MSG_WARN([external version of PMIx may be used, so long as the])
-        AC_MSG_WARN([external version is compatible with the PMIx v2.2])
-        AC_MSG_WARN([Standard or higher. Note that cross-version support])
-        AC_MSG_WARN([within the OpenPMIx library can be used by this OMPI])
-        AC_MSG_WARN([to interact with environments based on other PMIx])
-        AC_MSG_WARN([versions.])
-        AC_MSG_ERROR([Build cannot continue.])
+    if test "$enable_orterun_prefix_given" = "yes"; then
+        AC_MSG_WARN([Open MPI no longer uses the ORTE environment - it has been])
+        AC_MSG_WARN([replaced by PRRTE. Accordingly, the "--enable-orterun-prefix-by-default"])
+        AC_MSG_WARN([and "--enable-mpirun-prefix-by-default" options have been replaced])
+        AC_MSG_WARN([by "--enable-prte-prefix-by-default". We will do the translation for])
+        AC_MSG_WARN([you now, but these older options are deprecated and will be removed])
+        AC_MSG_WARN([in a later release, so please update your build scripts.])
     fi
 
     OPAL_VAR_SCOPE_POP
