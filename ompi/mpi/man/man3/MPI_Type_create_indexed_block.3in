@@ -15,7 +15,7 @@
 #include <mpi.h>
 int MPI_Type_create_indexed_block(int \fIcount\fP, int \fIblocklength\fP, const int \fIarray_of_displacements\fP[], MPI_Datatype \fIoldtype\fP, MPI_Datatype *\fInewtype\fP)
 
-int MPI_Type_create_hindexed_block(int \fIcount\fP, int \fIblocklength\fP, const int \fIarray_of_displacements\fP[], MPI_Datatype \fIoldtype\fP, MPI_Datatype *\fInewtype\fP)
+int MPI_Type_create_hindexed_block(int \fIcount\fP, int \fIblocklength\fP, const MPI_Aint \fIarray_of_displacements\fP[], MPI_Datatype \fIoldtype\fP, MPI_Datatype *\fInewtype\fP)
 
 .fi
 .SH Fortran Syntax
@@ -29,8 +29,9 @@ MPI_TYPE_CREATE_INDEXED_BLOCK(\fICOUNT, BLOCKLENGTH,
 
 MPI_TYPE_CREATE_HINDEXED_BLOCK(\fICOUNT, BLOCKLENGTH,
 		ARRAY_OF_DISPLACEMENTS, OLDTYPE, NEWTYPE, IERROR\fP)
-	INTEGER	\fICOUNT, BLOCKLENGTH, ARRAY_OF_DISPLACEMENTS(*),
-	        OLDTYPE, NEWTYPE, IERROR \fP
+	INTEGER	\fICOUNT, BLOCKLENGTH, OLDTYPE, NEWTYPE\fP
+	INTEGER(KIND=MPI_ADDRESS_KIND) \fIARRAY_OF_DISPLACEMENTS(*)\fP
+	INTEGER	\fIIERROR\fP
 
 .fi
 .SH Fortran 2008 Syntax
