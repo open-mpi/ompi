@@ -77,6 +77,83 @@ int opal_pmix_base_exchange(pmix_info_t *indat,
     return opal_pmix_convert_status(rc);
 }
 
+typedef struct {
+    opal_list_item_t super;
+    pmix_nspace_t nspace;
+    opal_jobid_t jobid;
+} opal_nptr_t;
+static OBJ_CLASS_INSTANCE(opal_nptr_t,
+                          opal_list_item_t,
+                          NULL, NULL);
+
+static opal_list_t localnspaces;
+
+void opal_pmix_setup_nspace_tracker(void)
+{
+    /* check if we were launched by PRRTE */
+    if (NULL != getenv("PRRTE_LAUNCHED")) {
+        opal_process_info.nativelaunch = true;
+    }
+
+    OBJ_CONSTRUCT(&localnspaces, opal_list_t);
+}
+
+void opal_pmix_finalize_nspace_tracker(void)
+{
+    OPAL_LIST_DESTRUCT(&localnspaces);
+}
+
+int opal_pmix_convert_jobid(pmix_nspace_t nspace, opal_jobid_t jobid)
+{
+    opal_nptr_t *nptr;
+
+    /* zero out the nspace */
+    PMIX_LOAD_NSPACE(nspace, NULL);
+
+    if (opal_process_info.nativelaunch) {
+        opal_snprintf_jobid(nspace, PMIX_MAX_NSLEN, jobid);
+        return OPAL_SUCCESS;
+    } else {
+        /* cycle across our list of known jobids */
+        OPAL_LIST_FOREACH(nptr, &localnspaces, opal_nptr_t) {
+            if (jobid == nptr->jobid) {
+                PMIX_LOAD_NSPACE(nspace, nptr->nspace);
+                return OPAL_SUCCESS;
+            }
+        }
+    }
+    return OPAL_ERR_NOT_FOUND;
+}
+
+int opal_pmix_convert_nspace(opal_jobid_t *jobid, pmix_nspace_t nspace)
+{
+    opal_nptr_t *nptr;
+    opal_jobid_t jid;
+
+    /* set a default */
+    *jobid = OPAL_JOBID_INVALID;
+
+    if (opal_process_info.nativelaunch) {
+        return opal_convert_string_to_jobid(jobid, nspace);
+    } else {
+        /* cycle across our list of known jobids */
+        OPAL_LIST_FOREACH(nptr, &localnspaces, opal_nptr_t) {
+            if (PMIX_CHECK_NSPACE(nspace, nptr->nspace)) {
+                *jobid = nptr->jobid;
+                return OPAL_SUCCESS;
+            }
+        }
+        /* if we get here, we don't know this nspace */
+        OPAL_HASH_STR(nspace, jid);
+        *jobid = jid;
+        nptr = OBJ_NEW(opal_nptr_t);
+        nptr->jobid = jid;
+        PMIX_LOAD_NSPACE(nptr->nspace, nspace);
+        opal_list_append(&localnspaces, &nptr->super);
+    }
+    return OPAL_SUCCESS;
+}
+
 pmix_status_t opal_pmix_convert_rc(int rc)
 {
     switch (rc) {

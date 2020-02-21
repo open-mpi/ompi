@@ -65,6 +65,8 @@ pmix_process_info_t pmix_process_info = {0};
 bool pmix_proc_is_bound = false;
 bool ompi_singleton = false;
 
+static pmix_proc_t myprocid;
+
 static bool added_transport_keys = false;
 static bool added_num_procs = false;
 static bool added_app_ctx = false;
@@ -498,7 +500,7 @@ int ompi_rte_init(int *pargc, char ***pargv)
     int ret;
     char *error = NULL;
     opal_process_name_t pname;
-    pmix_proc_t myproc, rproc;
+    pmix_proc_t rproc;
     int u32, *u32ptr;
     uint16_t u16, *u16ptr;
     char **peers=NULL;
@@ -530,8 +532,11 @@ int ompi_rte_init(int *pargc, char ***pargv)
         goto error;
     }
 
+    /* setup our internal nspace hack */
+    opal_pmix_setup_nspace_tracker();
+
     /* initialize the selected module */
-    if (!PMIx_Initialized() && (PMIX_SUCCESS != (ret = PMIx_Init(&myproc, NULL, 0)))) {
+    if (!PMIx_Initialized() && (PMIX_SUCCESS != (ret = PMIx_Init(&myprocid, NULL, 0)))) {
         /* we cannot run - this could be due to being direct launched
          * without the required PMI support being built, so print
          * out a help message indicating it */
@@ -539,8 +544,8 @@ int ompi_rte_init(int *pargc, char ***pargv)
         return OPAL_ERR_SILENT;
     }
 
-    /* setup the process name fields */
-    OPAL_PMIX_CONVERT_PROCT(rc, &pname, &myproc);
+    /* setup the process name fields - also registers the new nspace */
+    OPAL_PMIX_CONVERT_PROCT(rc, &pname, &myprocid);
     if (OPAL_SUCCESS != rc) {
         return rc;
     }
@@ -548,6 +553,7 @@ int ompi_rte_init(int *pargc, char ***pargv)
     OPAL_PROC_MY_NAME.vpid = pname.vpid;
     pmix_process_info.my_name.jobid = OPAL_PROC_MY_NAME.jobid;
     pmix_process_info.my_name.vpid = OPAL_PROC_MY_NAME.vpid;
+
     /* set our hostname */
     OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, PMIX_HOSTNAME, &OPAL_PROC_MY_NAME,
                                    (char**)&ev1, PMIX_STRING);
@@ -827,6 +833,10 @@ int ompi_rte_finalize(void)
 
     free (pmix_process_info.cpuset);
     pmix_process_info.cpuset = NULL;
+
+    /* cleanup our internal nspace hack */
+    opal_pmix_finalize_nspace_tracker();
+
 
     return OMPI_SUCCESS;
 }

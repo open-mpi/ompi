@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2019      Research Organization for Information Science
@@ -442,9 +442,13 @@ OPAL_DECLSPEC pmix_proc_state_t opal_pmix_convert_state(int state);
 OPAL_DECLSPEC int opal_pmix_convert_pstate(pmix_proc_state_t);
 OPAL_DECLSPEC pmix_status_t opal_pmix_convert_rc(int rc);
 OPAL_DECLSPEC int opal_pmix_convert_status(pmix_status_t status);
+OPAL_DECLSPEC int opal_pmix_convert_jobid(pmix_nspace_t nspace, opal_jobid_t jobid);
+OPAL_DECLSPEC int opal_pmix_convert_nspace(opal_jobid_t *jobid, pmix_nspace_t nspace);
+OPAL_DECLSPEC void opal_pmix_setup_nspace_tracker(void);
+OPAL_DECLSPEC void opal_pmix_finalize_nspace_tracker(void);
 
 #define OPAL_PMIX_CONVERT_JOBID(n, j) \
-    (void)opal_snprintf_jobid((n), PMIX_MAX_NSLEN, (j))
+    opal_pmix_convert_jobid((n), (j))
 
 #define OPAL_PMIX_CONVERT_VPID(r, v)        \
     do {                                    \
@@ -454,6 +458,7 @@ OPAL_DECLSPEC int opal_pmix_convert_status(pmix_status_t status);
             (r) = (v);                      \
         }                                   \
     } while(0)
+
 #define OPAL_PMIX_CONVERT_NAME(p, n)                        \
     do {                                                    \
         OPAL_PMIX_CONVERT_JOBID((p)->nspace, (n)->jobid);   \
@@ -462,15 +467,17 @@ OPAL_DECLSPEC int opal_pmix_convert_status(pmix_status_t status);
 
 
 #define OPAL_PMIX_CONVERT_NSPACE(r, j, n)       \
-    (r) = opal_convert_string_to_jobid((j), (n))
+    (r) = opal_pmix_convert_nspace((j), (n))
 
-#define OPAL_PMIX_CONVERT_RANK(v, r)        \
-    do {                                    \
-        if (PMIX_RANK_WILDCARD == (r)) {    \
-            (v) = OPAL_VPID_WILDCARD;       \
-        } else {                            \
-            (v) = (r);                      \
-        }                                   \
+#define OPAL_PMIX_CONVERT_RANK(v, r)            \
+    do {                                        \
+        if (PMIX_RANK_WILDCARD == (r)) {        \
+            (v) = OPAL_VPID_WILDCARD;           \
+        } else if (PMIX_RANK_INVALID == (r)) {  \
+            (v) = OPAL_VPID_INVALID;            \
+        } else {                                \
+            (v) = (r);                          \
+        }                                       \
     } while(0)
 
 #define OPAL_PMIX_CONVERT_PROCT(r, n, p)                            \
