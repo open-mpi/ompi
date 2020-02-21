@@ -194,6 +194,7 @@ fi
 
 # Check for deprecated/deleted options
 OMPI_CHECK_DELETED_OPTIONS
+OMPI_CHECK_DEPRECATED_OPTIONS
 
 # Setup the top of the opal/include/opal_config.h file
 
