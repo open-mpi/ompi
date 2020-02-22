@@ -135,6 +135,7 @@ AC_DEFUN([OPAL_ATOMIC_COMPARE_EXCHANGE_STRONG_TEST_SOURCE],[[
 typedef union {
     uint64_t fake@<:@2@:>@;
     _Atomic __int128 real;
+    __int128 real2;
 } ompi128;
 
 static void test1(void)
@@ -145,9 +146,8 @@ static void test1(void)
     ompi128 ptr      = { .fake = { 0xFFEEDDCCBBAA0099, 0x8877665544332211 }};
     ompi128 expected = { .fake = { 0x11EEDDCCBBAA0099, 0x88776655443322FF }};
     ompi128 desired  = { .fake = { 0x1122DDCCBBAA0099, 0x887766554433EEFF }};
-    bool r = atomic_compare_exchange_strong (&ptr.real, &expected.real,
-                                             desired.real, true,
-					     atomic_relaxed, atomic_relaxed);
+    bool r = atomic_compare_exchange_strong (&ptr.real, &expected.real2,
+                                             desired.real);
     if ( !(r == false && ptr.real == expected.real)) {
         exit(1);
     }
@@ -158,9 +158,8 @@ static void test2(void)
     ompi128 ptr =      { .fake = { 0xFFEEDDCCBBAA0099, 0x8877665544332211 }};
     ompi128 expected = ptr;
     ompi128 desired =  { .fake = { 0x1122DDCCBBAA0099, 0x887766554433EEFF }};
-    bool r = atomic_compare_exchange_strong (&ptr.real, &expected.real,
-                                             desired.real, true,
-					     atomic_relaxed, atomic_relaxed);
+    bool r = atomic_compare_exchange_strong (&ptr.real, &expected.real2,
+                                             desired.real);
     if (!(r == true && ptr.real == desired.real)) {
         exit(2);
     }
