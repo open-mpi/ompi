@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 
 # Copyright (c) 2017      IBM Corporation. All rights reserved.
+# Copyright (c) 2020      Intel, Inc.  All rights reserved.
 # $COPYRIGHT$
 #
 
 import glob, os, re, shutil
 
 projects= {'opal' : ["$(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la"],
-           'orte' : ["$(top_builddir)/orte/lib@ORTE_LIB_PREFIX@open-rte.la"],
            'ompi' : ["$(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la"],
            'oshmem' : ["$(top_builddir)/oshmem/liboshmem.la"],
           }
