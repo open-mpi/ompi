@@ -31,10 +31,11 @@ jobs:
     inputs:
       sourceFolder: $(Pipeline.Workspace)
       contents: |
-        **/*
+        **/jenkins_scripts
   - checkout: self
     submodules: true
     path: ompi
+    clean: true
   - bash: |
       set -eE
       [ "$(debug)" = "true" ] && set -x
