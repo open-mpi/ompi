@@ -1,6 +1,7 @@
 # -*- makefile -*-
 # Copyright (c) 2008-2018 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
+# Copyright (c) 2020      Intel, Inc.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -25,7 +26,6 @@ endif
 	  --package-version='@PACKAGE_VERSION@' \
 	  --ompi-date='@OMPI_RELEASE_DATE@' \
 	  --opal-date='@OPAL_RELEASE_DATE@' \
-	  --orte-date='@ORTE_RELEASE_DATE@' \
 	  --input=$< \
 	  --output=$@
 
@@ -35,7 +35,6 @@ endif
 	  --package-version='@PACKAGE_VERSION@' \
 	  --ompi-date='@OMPI_RELEASE_DATE@' \
 	  --opal-date='@OPAL_RELEASE_DATE@' \
-	  --orte-date='@ORTE_RELEASE_DATE@' \
 	  $(TRIM_OPTIONS) \
 	  --input=$< \
 	  --output=$@
@@ -46,7 +45,6 @@ endif
 	  --package-version='@PACKAGE_VERSION@' \
 	  --ompi-date='@OMPI_RELEASE_DATE@' \
 	  --opal-date='@OPAL_RELEASE_DATE@' \
-	  --orte-date='@ORTE_RELEASE_DATE@' \
 	  --input=$< \
 	  --output=$@
 
