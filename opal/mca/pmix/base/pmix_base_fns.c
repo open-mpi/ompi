@@ -145,6 +145,7 @@ int opal_pmix_convert_nspace(opal_jobid_t *jobid, pmix_nspace_t nspace)
         }
         /* if we get here, we don't know this nspace */
         OPAL_HASH_STR(nspace, jid);
+        jid &= ~(0x8000);
         *jobid = jid;
         nptr = OBJ_NEW(opal_nptr_t);
         nptr->jobid = jid;
