@@ -54,23 +54,25 @@ int mca_sharedfp_individual_write (ompio_file_t *fh,
     /*Retrieve data structure for shared file pointer operations*/
     sh = fh->f_sharedfp_data;
     headnode = (mca_sharedfp_individual_header_record*)sh->selected_module_data;
-
-    if (headnode)  {
-        /*Insert metadata record into a queue*/
-        mca_sharedfp_individual_insert_metadata(OMPI_FILE_WRITE_SHARED, totalbytes, sh);
-
-        /*Write the data into individual file*/
-        ret = mca_common_ompio_file_write_at ( headnode->datafilehandle,
-                                               headnode->datafile_offset,
-                                               buf, count, datatype, status);
-        if ( OMPI_SUCCESS != ret ) {
-            opal_output(0,"mca_sharedfp_individual_write: Error while writing the datafile \n");
-            return -1;
-        }
-
-        /* Update the datafileoffset*/
-        headnode->datafile_offset = headnode->datafile_offset + totalbytes;
+    if ( NULL == headnode)  {
+	opal_output (0, "sharedfp_individual_write_ordered: headnode is NULL but file is open\n");
+	return OMPI_ERROR;
     }
+
+    /*Insert metadata record into a queue*/
+    mca_sharedfp_individual_insert_metadata(OMPI_FILE_WRITE_SHARED, totalbytes, sh);
+    
+    /*Write the data into individual file*/
+    ret = mca_common_ompio_file_write_at ( headnode->datafilehandle,
+                                           headnode->datafile_offset,
+                                           buf, count, datatype, status);
+    if ( OMPI_SUCCESS != ret ) {
+        opal_output(0,"mca_sharedfp_individual_write: Error while writing the datafile \n");
+        return -1;
+    }
+
+    /* Update the datafileoffset*/
+    headnode->datafile_offset = headnode->datafile_offset + totalbytes;
 
     return ret;
 }

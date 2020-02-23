@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2013-2018 University of Houston. All rights reserved.
+ * Copyright (c) 2013-2019 University of Houston. All rights reserved.
  * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
@@ -92,11 +92,18 @@ int mca_sharedfp_individual_file_open (struct ompi_communicator_t *comm,
                                      MPI_MODE_RDWR | MPI_MODE_CREATE | MPI_MODE_DELETE_ON_CLOSE,
                                      &(MPI_INFO_NULL->super), datafilehandle, false);
     if ( OMPI_SUCCESS != err) {
-        opal_output(0, "mca_sharedfp_individual_file_open: Error during datafile file open\n");
+       opal_output(ompi_sharedfp_base_framework.framework_output,
+                   "mca_sharedfp_individual_file_open: Error during datafile file open. Continuing anyway. \n");
         free (sh);
 	free (datafilename);
         free (datafilehandle);
-        return err;
+
+        // We reset the error code here to OMPI_SUCCESS since the individual component can act as
+        // a dummy component, in case no sharedfp operations are used by the code. Invoking any write/read
+        // operations will however lead to an error, since the sharedfp_data pointer will be NULL.
+        sh = NULL;
+        err = OMPI_SUCCESS;
+        goto exit;
     }
 
     /*----------------------------------------------------------*/
@@ -113,9 +120,13 @@ int mca_sharedfp_individual_file_open (struct ompi_communicator_t *comm,
     if ( NULL == metadatafilename ) {
         free (sh);
 	free (datafilename);
+        mca_common_ompio_file_close ( datafilehandle);
         free (datafilehandle);
         opal_output(0, "mca_sharedfp_individual_file_open: Error during memory allocation\n");
-        return OMPI_ERR_OUT_OF_RESOURCE;
+
+        sh=NULL;
+        err = OMPI_ERR_OUT_OF_RESOURCE;
+        goto exit;
     }
     snprintf ( metadatafilename, len, "%s%s%d", filename, ".metadata.",fh->f_rank);
 
@@ -123,22 +134,34 @@ int mca_sharedfp_individual_file_open (struct ompi_communicator_t *comm,
     if ( NULL == metadatafilehandle ) {
         free (sh);
         free (datafilename);
+        mca_common_ompio_file_close ( datafilehandle);
         free (datafilehandle);
         free (metadatafilename);
         opal_output(0, "mca_sharedfp_individual_file_open: Error during memory allocation\n");
-        return OMPI_ERR_OUT_OF_RESOURCE;
+
+        sh = NULL;
+        err = OMPI_ERR_OUT_OF_RESOURCE;
+        goto exit;
     }
     err = mca_common_ompio_file_open ( MPI_COMM_SELF,metadatafilename,
                                        MPI_MODE_RDWR | MPI_MODE_CREATE | MPI_MODE_DELETE_ON_CLOSE,
                                        &(MPI_INFO_NULL->super), metadatafilehandle, false);
     if ( OMPI_SUCCESS != err) {
-        opal_output(0, "mca_sharedfp_individual_file_open: Error during metadatafile file open\n");
+       opal_output(ompi_sharedfp_base_framework.framework_output,
+                   "mca_sharedfp_individual_file_open: Error during metadatafile file open. Continuing anyway. \n");
         free (sh);
         free (datafilename);
+        mca_common_ompio_file_close ( datafilehandle);
         free (datafilehandle);
         free (metadatafilename);
         free (metadatafilehandle);
-        return err;
+
+        // We reset the error code here to OMPI_SUCCESS since the individual component can act as
+        // a dummy component, in case no sharedfp operations are used by the code. Invoking any write/read
+        // operations will however lead to an error, since the sharedfp_data pointer will be NULL.
+        sh = NULL;
+        err = OMPI_SUCCESS;
+        goto exit;
     }
 
     /*save the datafilehandle and metadatahandle in the sharedfp individual module data structure*/
@@ -150,6 +173,8 @@ int mca_sharedfp_individual_file_open (struct ompi_communicator_t *comm,
         headnode->metadatafilename   = metadatafilename;
     }
 
+
+exit:
     /*save the sharedfp individual module data structure in the ompio filehandle structure*/
     fh->f_sharedfp_data = sh;
 
