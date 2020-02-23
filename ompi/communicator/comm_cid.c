@@ -909,9 +909,8 @@ static int ompi_comm_allreduce_pmix_reduce_complete (ompi_comm_request_t *reques
     }
 
     PMIX_PDATA_CONSTRUCT(&pdat);
-
-    info.value.type = OPAL_BYTE_OBJECT;
-    pdat.value.type = OPAL_BYTE_OBJECT;
+    PMIX_INFO_CONSTRUCT(&info);
+    info.value.type = PMIX_BYTE_OBJECT;
 
     opal_dss.unload(&sbuf, (void**)&info.value.data.bo.bytes, &rc);
     info.value.data.bo.size = rc;
@@ -958,6 +957,10 @@ static int ompi_comm_allreduce_pmix_reduce_complete (ompi_comm_request_t *reques
     if (OPAL_SUCCESS != rc) {
         OBJ_DESTRUCT(&pdat);
         return rc;
+    }
+    if (PMIX_BYTE_OBJECT != pdat.value.type) {
+        OBJ_DESTRUCT(&pdat);
+        return OPAL_ERR_TYPE_MISMATCH;
     }
 
     OBJ_CONSTRUCT(&sbuf, opal_buffer_t);
