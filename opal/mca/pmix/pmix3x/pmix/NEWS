@@ -1,4 +1,4 @@
-Copyright (c) 2015-2019 Intel, Inc.  All rights reserved.
+Copyright (c) 2015-2020 Intel, Inc.  All rights reserved.
 Copyright (c) 2017-2020 IBM Corporation.  All rights reserved.
 $COPYRIGHT$
 
@@ -58,6 +58,11 @@ in accordance with an Errata update of the PMIx v3 Standard
 - PR #1613: dstore: Fix cache size calculation
 - PR #1622: Fix multiple occurrences of unaligned access in pmix tests
 - PR #1620: Re-address the collective tracker problem
+- PR #1625: Fix library triplet
+- PR #1630: Fix support for PGI compiler pgcc18
+- PR #1637: Realign behavior of PMIx_Get and PMIx_Get_nb
+- PR #1640: Properly handle forwarded output when no handler registered
+
 
 
 3.1.4 -- 9 Aug 2019

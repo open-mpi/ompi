@@ -25,14 +25,14 @@ release=5
 # The only requirement is that it must be entirely printable ASCII
 # characters and have no white space.
 
-greek=rc2
+greek=
 
 # If repo_rev is empty, then the repository version number will be
 # obtained during "make dist" via the "git describe --tags --always"
 # command, or with the date (if "git describe" fails) in the form of
 # "date<date>".
 
-repo_rev=git1fca232
+repo_rev=gitedebb24
 
 # If tarball_version is not empty, it is used as the version string in
 # the tarball filename, regardless of all other versions listed in
@@ -46,7 +46,7 @@ tarball_version=
 
 # The date when this release was created
 
-date="Feb 10, 2020"
+date="Feb 19, 2020"
 
 # The shared library version of each of PMIx's public libraries.
 # These versions are maintained in accordance with the "Library
@@ -82,8 +82,8 @@ libpmi_so_version=1:1:0
 libpmi2_so_version=1:0:0
 
 # "Common" components install standalone libraries that are run-time
-# # linked by one or more components.  So they need to be versioned as
-# # well.  Yuck; this somewhat breaks the
-# # components-don't-affect-the-build-system abstraction.
+# linked by one or more components.  So they need to be versioned as
+# well.  Yuck; this somewhat breaks the
+# components-don't-affect-the-build-system abstraction.
 #
 libmca_common_dstore_so_version=1:2:0
