@@ -14,7 +14,7 @@
  * Copyright (c) 2010-2011 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
- * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2019      Triad National Security, LLC. All rights
  *                         reserved.
  *
@@ -91,8 +91,6 @@ shmem_posix_shm_open(char *posix_file_name_buff, size_t size)
              * of here. we can't be selected :-(.
              */
             else {
-                const char *hn;
-                hn = opal_gethostname();
                 opal_output_verbose(10, opal_shmem_base_framework.framework_output,
                      "shmem_posix_shm_open: disqualifying posix because "
                      "shm_open(2) failed with error: %s (errno %d)\n",
