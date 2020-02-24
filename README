@@ -21,6 +21,7 @@ Copyright (c) 2017-2018 Los Alamos National Security, LLC.  All rights
                         reserved.
 Copyright (c) 2017      Research Organization for Information Science
                         and Technology (RIST). All rights reserved.
+Copyright (c) 2020      Google, LLC. All rights reserved.
 
 $COPYRIGHT$
 
@@ -174,8 +175,8 @@ General notes
   - Oracle Grid Engine (OGE) 6.1, 6.2 and open source Grid Engine
 
 - Systems that have been tested are:
-  - Linux (various flavors/distros), 64 bit (x86), with gcc, Absoft,
-    Intel, and Portland (*)
+  - Linux (various flavors/distros), 64 bit (x86, ppc, aarch64),
+    with gcc (4.8.x+), Absoft (fortran), Intel, and Portland (*)
   - macOS (10.12), 64 bit (x85_64) with XCode compilers
 
   (*) Be sure to read the Compiler Notes, below.
@@ -183,8 +184,8 @@ General notes
 - Other systems have been lightly (but not fully tested):
   - Linux (various flavors/distros), 32 bit, with gcc
   - Cygwin 32 & 64 bit with gcc
-  - ARMv6, ARMv7, ARMv8 (aarch64)
-  - Other 64 bit platforms (e.g., Linux on PPC64)
+  - ARMv6, ARMv7
+  - Other 64 bit platforms.
   - Oracle Solaris 10 and 11, 32 and 64 bit (SPARC, i386, x86_64),
     with Oracle Solaris Studio 12.5
   - OpenBSD.  Requires configure options --enable-mca-no-build=patcher
