@@ -92,12 +92,14 @@ mca_fs_gpfs_component_file_query (ompio_file_t *fh, int *priority)
         if (OMPIO_ROOT == fh->f_rank) {
             fh->f_fstype = mca_fs_base_get_fstype ( (char *) fh->f_filename );
         }
-	fh->f_comm->c_coll->coll_bcast (&(fh->f_fstype),
-				       1,
-				       MPI_INT,
-				       OMPIO_ROOT,
-				       fh->f_comm,
-				       fh->f_comm->c_coll->coll_bcast_module);
+        if (MPI_COMM_NULL != fh->f_comm) {
+            fh->f_comm->c_coll->coll_bcast (&(fh->f_fstype),
+                              				       1,
+                              				       MPI_INT,
+                              				       OMPIO_ROOT,
+                              				       fh->f_comm,
+                              				       fh->f_comm->c_coll->coll_bcast_module);
+        }
     }
     else {
 	if (!strncmp(fh->f_filename, "gpfs:", 5) ||
