@@ -98,6 +98,8 @@ mca_pml_ucx_component_init(int* priority, bool enable_progress_threads,
         return NULL;
     }
 
+    ompi_pml_ucx.super.pml_flags |= MCA_PML_BASE_FLAG_REQUIRE_WORLD;
+
     *priority = ompi_pml_ucx.priority;
     return &ompi_pml_ucx.super;
 }
