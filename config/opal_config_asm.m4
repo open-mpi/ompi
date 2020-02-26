@@ -1222,13 +1222,6 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
             OPAL_GCC_INLINE_ASSIGN='"mov %0, #0" : "=&r"(ret)'
             ;;
 
-        armv5*linux*|armv4*linux*|arm-*-linux-gnueabi)
-            # uses Linux kernel helpers for some atomic operations
-            opal_cv_asm_arch="ARM"
-            OPAL_CHECK_SYNC_BUILTINS([opal_cv_asm_builtin="BUILTIN_SYNC"],
-              [AC_MSG_ERROR([No atomic primitives available for $host])])
-            ;;
-
         powerpc-*|powerpc64-*|powerpcle-*|powerpc64le-*|rs6000-*|ppc-*)
             OPAL_CHECK_POWERPC_REG
             if test "$ac_cv_sizeof_long" = "4" ; then
