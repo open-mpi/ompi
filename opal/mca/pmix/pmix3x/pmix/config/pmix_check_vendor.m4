@@ -11,7 +11,7 @@ dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
-dnl Copyright (c) 2013      Intel, Inc. All rights reserved
+dnl Copyright (c) 2013-2020 Intel, Inc.  All rights reserved.
 dnl Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2015      Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
@@ -45,7 +45,7 @@ AC_DEFUN([PMIX_C_COMPILER_VENDOR], [
 
 # workaround to avoid syntax error with Autoconf < 2.68:
 m4_ifndef([AC_LANG_DEFINES_PROVIDED],
-	  [m4_define([AC_LANG_DEFINES_PROVIDED])])
+      [m4_define([AC_LANG_DEFINES_PROVIDED])])
 
 # PMIX_IFDEF_IFELSE(symbol, [action-if-defined],
 #                   [action-if-not-defined])
@@ -85,13 +85,18 @@ AC_DEFUN([_PMIX_CHECK_COMPILER_VENDOR], [
     pmix_check_compiler_vendor_result="unknown"
 
     # GNU is probably the most common, so check that one as soon as
-    # possible.  Intel pretends to be GNU, so need to check Intel
-    # before checking for GNU.
+    # possible.  Intel and PGI18 pretend to be GNU, so need to check Intel
+    # and PGI before checking for GNU.
 
     # Intel
     AS_IF([test "$pmix_check_compiler_vendor_result" = "unknown"],
           [PMIX_IF_IFELSE([defined(__INTEL_COMPILER) || defined(__ICC)],
                [pmix_check_compiler_vendor_result="intel"])])
+
+    # Portland Group
+    AS_IF([test "$pmix_check_compiler_vendor_result" = "unknown"],
+          [PMIX_IFDEF_IFELSE([__PGI],
+               [pmix_check_compiler_vendor_result="portland group"])])
 
     # Fujitsu
     AS_IF([test "$pmix_check_compiler_vendor_result" = "unknown"],
@@ -211,11 +216,6 @@ AC_DEFUN([_PMIX_CHECK_COMPILER_VENDOR], [
     AS_IF([test "$pmix_check_compiler_vendor_result" = "unknown"],
           [PMIX_IFDEF_IFELSE([__POCC__],
                [pmix_check_compiler_vendor_result="pelles"])])
-
-    # Portland Group
-    AS_IF([test "$pmix_check_compiler_vendor_result" = "unknown"],
-          [PMIX_IFDEF_IFELSE([__PGI],
-               [pmix_check_compiler_vendor_result="portland group"])])
 
     # SAS/C
     AS_IF([test "$pmix_check_compiler_vendor_result" = "unknown"],
