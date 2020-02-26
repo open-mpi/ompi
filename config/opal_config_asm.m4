@@ -135,6 +135,7 @@ AC_DEFUN([OPAL_ATOMIC_COMPARE_EXCHANGE_STRONG_TEST_SOURCE],[[
 typedef union {
     uint64_t fake@<:@2@:>@;
     _Atomic __int128 real;
+    __int128 real2;
 } ompi128;
 
 static void test1(void)
@@ -145,9 +146,8 @@ static void test1(void)
     ompi128 ptr      = { .fake = { 0xFFEEDDCCBBAA0099, 0x8877665544332211 }};
     ompi128 expected = { .fake = { 0x11EEDDCCBBAA0099, 0x88776655443322FF }};
     ompi128 desired  = { .fake = { 0x1122DDCCBBAA0099, 0x887766554433EEFF }};
-    bool r = atomic_compare_exchange_strong (&ptr.real, &expected.real,
-                                             desired.real, true,
-					     atomic_relaxed, atomic_relaxed);
+    bool r = atomic_compare_exchange_strong (&ptr.real, &expected.real2,
+                                             desired.real);
     if ( !(r == false && ptr.real == expected.real)) {
         exit(1);
     }
@@ -158,9 +158,8 @@ static void test2(void)
     ompi128 ptr =      { .fake = { 0xFFEEDDCCBBAA0099, 0x8877665544332211 }};
     ompi128 expected = ptr;
     ompi128 desired =  { .fake = { 0x1122DDCCBBAA0099, 0x887766554433EEFF }};
-    bool r = atomic_compare_exchange_strong (&ptr.real, &expected.real,
-                                             desired.real, true,
-					     atomic_relaxed, atomic_relaxed);
+    bool r = atomic_compare_exchange_strong (&ptr.real, &expected.real2,
+                                             desired.real);
     if (!(r == true && ptr.real == desired.real)) {
         exit(2);
     }
@@ -285,37 +284,6 @@ AC_DEFUN([OPAL_CHECK_SYNC_BUILTIN_CSWAP_INT128], [
   OPAL_VAR_SCOPE_POP
 ])
 
-AC_DEFUN([OPAL_CHECK_SYNC_BUILTINS], [
-  AC_MSG_CHECKING([for __sync builtin atomics])
-
-  AC_TRY_LINK([long tmp;], [__sync_synchronize();
-__sync_bool_compare_and_swap(&tmp, 0, 1);
-__sync_add_and_fetch(&tmp, 1);],
-    [AC_MSG_RESULT([yes])
-     $1],
-    [AC_MSG_RESULT([no])
-     $2])
-
-  AC_MSG_CHECKING([for 64-bit __sync builtin atomics])
-
-  AC_TRY_LINK([
-#include <stdint.h>
-uint64_t tmp;], [
-__sync_bool_compare_and_swap(&tmp, 0, 1);
-__sync_add_and_fetch(&tmp, 1);],
-    [AC_MSG_RESULT([yes])
-     opal_asm_sync_have_64bit=1],
-    [AC_MSG_RESULT([no])
-     opal_asm_sync_have_64bit=0])
-
-  AC_DEFINE_UNQUOTED([OPAL_ASM_SYNC_HAVE_64BIT],[$opal_asm_sync_have_64bit],
-                     [Whether 64-bit is supported by the __sync builtin atomics])
-
-  # Check for 128-bit support
-  OPAL_CHECK_SYNC_BUILTIN_CSWAP_INT128
-])
-
-
 AC_DEFUN([OPAL_CHECK_GCC_BUILTIN_CSWAP_INT128], [
   OPAL_VAR_SCOPE_PUSH([atomic_compare_exchange_n_128_result atomic_compare_exchange_n_128_CFLAGS_save atomic_compare_exchange_n_128_LIBS_save])
 
@@ -361,9 +329,10 @@ AC_DEFUN([OPAL_CHECK_GCC_BUILTIN_CSWAP_INT128], [
 ])
 
 AC_DEFUN([OPAL_CHECK_GCC_ATOMIC_BUILTINS], [
-  AC_MSG_CHECKING([for __atomic builtin atomics])
+  if test -z "$opal_cv_have___atomic" ; then
+    AC_MSG_CHECKING([for 32-bit GCC built-in atomics])
 
-  AC_TRY_LINK([
+    AC_TRY_LINK([
 #include <stdint.h>
 uint32_t tmp, old = 0;
 uint64_t tmp64, old64 = 0;], [
@@ -372,13 +341,39 @@ __atomic_compare_exchange_n(&tmp, &old, 1, 0, __ATOMIC_RELAXED, __ATOMIC_RELAXED
 __atomic_add_fetch(&tmp, 1, __ATOMIC_RELAXED);
 __atomic_compare_exchange_n(&tmp64, &old64, 1, 0, __ATOMIC_RELAXED, __ATOMIC_RELAXED);
 __atomic_add_fetch(&tmp64, 1, __ATOMIC_RELAXED);],
-    [AC_MSG_RESULT([yes])
-     $1],
-    [AC_MSG_RESULT([no])
-     $2])
+		[opal_cv_have___atomic=yes],
+		[opal_cv_have___atomic=no])
 
-  # Check for 128-bit support
-  OPAL_CHECK_GCC_BUILTIN_CSWAP_INT128
+    AC_MSG_RESULT([$opal_cv_have___atomic])
+
+    if test $opal_cv_have___atomic = "yes" ; then
+	AC_MSG_CHECKING([for 64-bit GCC built-in atomics])
+
+	AC_TRY_LINK([
+#include <stdint.h>
+uint64_t tmp64, old64 = 0;], [
+__atomic_compare_exchange_n(&tmp64, &old64, 1, 0, __ATOMIC_RELAXED, __ATOMIC_RELAXED);
+__atomic_add_fetch(&tmp64, 1, __ATOMIC_RELAXED);],
+		    [opal_cv_have___atomic_64=yes],
+		    [opal_cv_have___atomic_64=no])
+
+	AC_MSG_RESULT([$opal_cv_have___atomic_64])
+
+	if test $opal_cv_have___atomic_64 = "yes" ; then
+	    AC_MSG_CHECKING([if 64-bit GCC built-in atomics are lock-free])
+	    AC_RUN_IFELSE([AC_LANG_PROGRAM([], [if (!__atomic_is_lock_free (8, 0)) { return 1; }])],
+			  [AC_MSG_RESULT([yes])],
+			  [AC_MSG_RESULT([no])
+			   opal_cv_have___atomic_64=no],
+			  [AC_MSG_RESULT([cannot test -- assume yes (cross compiling)])])
+	fi
+    else
+	opal_cv_have___atomic_64=no
+    fi
+
+    # Check for 128-bit support
+    OPAL_CHECK_GCC_BUILTIN_CSWAP_INT128
+  fi
 ])
 
 AC_DEFUN([OPAL_CHECK_C11_CSWAP_INT128], [
@@ -424,28 +419,6 @@ AC_DEFUN([OPAL_CHECK_C11_CSWAP_INT128], [
 
   OPAL_VAR_SCOPE_POP
 ])
-
-AC_DEFUN([OPAL_CHECK_GCC_ATOMIC_BUILTINS], [
-  AC_MSG_CHECKING([for __atomic builtin atomics])
-
-  AC_TRY_LINK([
-#include <stdint.h>
-uint32_t tmp, old = 0;
-uint64_t tmp64, old64 = 0;], [
-__atomic_thread_fence(__ATOMIC_SEQ_CST);
-__atomic_compare_exchange_n(&tmp, &old, 1, 0, __ATOMIC_RELAXED, __ATOMIC_RELAXED);
-__atomic_add_fetch(&tmp, 1, __ATOMIC_RELAXED);
-__atomic_compare_exchange_n(&tmp64, &old64, 1, 0, __ATOMIC_RELAXED, __ATOMIC_RELAXED);
-__atomic_add_fetch(&tmp64, 1, __ATOMIC_RELAXED);],
-    [AC_MSG_RESULT([yes])
-     $1],
-    [AC_MSG_RESULT([no])
-     $2])
-
-  # Check for 128-bit support
-  OPAL_CHECK_GCC_BUILTIN_CSWAP_INT128
-])
-
 
 dnl #################################################################
 dnl
@@ -954,29 +927,6 @@ AC_DEFUN([OPAL_CHECK_POWERPC_64BIT],[
 
 dnl #################################################################
 dnl
-dnl OPAL_CHECK_SPARCV8PLUS
-dnl
-dnl #################################################################
-AC_DEFUN([OPAL_CHECK_SPARCV8PLUS],[
-    AC_MSG_CHECKING([if have Sparc v8+/v9 support])
-    sparc_result=0
-    OPAL_TRY_ASSEMBLE([$opal_cv_asm_text
-        casa [%o0] 0x80, %o1, %o2],
-                [sparc_result=1],
-                [sparc_result=0])
-    if test "$sparc_result" = "1" ; then
-        AC_MSG_RESULT([yes])
-        ifelse([$1],,:,[$1])
-    else
-        AC_MSG_RESULT([no])
-        ifelse([$2],,:,[$2])
-    fi
-
-    unset sparc_result
-])dnl
-
-dnl #################################################################
-dnl
 dnl OPAL_CHECK_CMPXCHG16B
 dnl
 dnl #################################################################
@@ -1142,9 +1092,11 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
 
     AC_ARG_ENABLE([builtin-atomics],
       [AC_HELP_STRING([--enable-builtin-atomics],
-         [Enable use of __sync builtin atomics (default: disabled)])])
+         [Enable use of GCC built-in atomics (default: autodetect)])])
 
     OPAL_CHECK_C11_CSWAP_INT128
+    opal_cv_asm_builtin="BUILTIN_NO"
+    OPAL_CHECK_GCC_ATOMIC_BUILTINS
 
     if test "x$enable_c11_atomics" != "xno" && test "$opal_cv_c11_supported" = "yes" ; then
         opal_cv_asm_builtin="BUILTIN_C11"
@@ -1152,14 +1104,13 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
     elif test "x$enable_c11_atomics" = "xyes"; then
         AC_MSG_WARN([C11 atomics were requested but are not supported])
         AC_MSG_ERROR([Cannot continue])
-    else
-        opal_cv_asm_builtin="BUILTIN_NO"
-        AS_IF([test "$opal_cv_asm_builtin" = "BUILTIN_NO" && test "$enable_builtin_atomics" = "yes"],
-              [OPAL_CHECK_GCC_ATOMIC_BUILTINS([opal_cv_asm_builtin="BUILTIN_GCC"], [])])
-        AS_IF([test "$opal_cv_asm_builtin" = "BUILTIN_NO" && test "$enable_builtin_atomics" = "yes"],
-              [OPAL_CHECK_SYNC_BUILTINS([opal_cv_asm_builtin="BUILTIN_SYNC"], [])])
-        AS_IF([test "$opal_cv_asm_builtin" = "BUILTIN_NO" && test "$enable_builtin_atomics" = "yes"],
-              [AC_MSG_ERROR([__sync builtin atomics requested but not found.])])
+    elif test "$enable_builtin_atomics" = "yes" ; then
+	if test $opal_cv_have___atomic = "yes" ; then
+	   opal_cv_asm_builtin="BUILTIN_GCC"
+	else
+	    AC_MSG_WARN([GCC built-in atomics requested but not found.])
+	    AC_MSG_ERROR([Cannot continue])
+	fi
     fi
 
         OPAL_CHECK_ASM_PROC
@@ -1176,7 +1127,12 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
         # find our architecture for purposes of assembly stuff
         opal_cv_asm_arch="UNSUPPORTED"
         OPAL_GCC_INLINE_ASSIGN=""
-        OPAL_ASM_SUPPORT_64BIT=0
+	if test "$opal_cv_have___atomic_64" ; then
+            OPAL_ASM_SUPPORT_64BIT=1
+	else
+	    OPAL_ASM_SUPPORT_64BIT=0
+	fi
+
         case "${host}" in
         x86_64-*x32)
             opal_cv_asm_arch="X86_64"
@@ -1194,17 +1150,10 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
             OPAL_CHECK_CMPXCHG16B
             ;;
 
-        ia64-*)
-            opal_cv_asm_arch="IA64"
-            OPAL_CHECK_SYNC_BUILTINS([opal_cv_asm_builtin="BUILTIN_SYNC"],
-              [AC_MSG_ERROR([No atomic primitives available for $host])])
-            ;;
         aarch64*)
             opal_cv_asm_arch="ARM64"
             OPAL_ASM_SUPPORT_64BIT=1
             OPAL_ASM_ARM_VERSION=8
-            AC_DEFINE_UNQUOTED([OPAL_ASM_ARM_VERSION], [$OPAL_ASM_ARM_VERSION],
-                               [What ARM assembly version to use])
             OPAL_GCC_INLINE_ASSIGN='"mov %0, #0" : "=&r"(ret)'
             ;;
 
@@ -1212,8 +1161,6 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
             opal_cv_asm_arch="ARM"
             OPAL_ASM_SUPPORT_64BIT=1
             OPAL_ASM_ARM_VERSION=7
-            AC_DEFINE_UNQUOTED([OPAL_ASM_ARM_VERSION], [$OPAL_ASM_ARM_VERSION],
-                               [What ARM assembly version to use])
             OPAL_GCC_INLINE_ASSIGN='"mov %0, #0" : "=&r"(ret)'
             ;;
 
@@ -1222,16 +1169,7 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
             OPAL_ASM_SUPPORT_64BIT=0
             OPAL_ASM_ARM_VERSION=6
             CCASFLAGS="$CCASFLAGS -march=armv7-a"
-            AC_DEFINE_UNQUOTED([OPAL_ASM_ARM_VERSION], [$OPAL_ASM_ARM_VERSION],
-                               [What ARM assembly version to use])
             OPAL_GCC_INLINE_ASSIGN='"mov %0, #0" : "=&r"(ret)'
-            ;;
-
-        armv5*linux*|armv4*linux*|arm-*-linux-gnueabi)
-            # uses Linux kernel helpers for some atomic operations
-            opal_cv_asm_arch="ARM"
-            OPAL_CHECK_SYNC_BUILTINS([opal_cv_asm_builtin="BUILTIN_SYNC"],
-              [AC_MSG_ERROR([No atomic primitives available for $host])])
             ;;
 
         powerpc-*|powerpc64-*|powerpcle-*|powerpc64le-*|rs6000-*|ppc-*)
@@ -1252,66 +1190,28 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
             fi
             OPAL_GCC_INLINE_ASSIGN='"1: li %0,0" : "=&r"(ret)'
             ;;
-        sparc*-*)
-            # SPARC v9 (and above) are the only ones with 64bit support
-            # if compiling 32 bit, see if we are v9 (aka v8plus) or
-            # earlier (casa is v8+/v9).
-            if test "$ac_cv_sizeof_long" = "4" ; then
-                have_v8plus=0
-                OPAL_CHECK_SPARCV8PLUS([have_v8plus=1])
-                if test "$have_v8plus" = "0" ; then
-                    OPAL_ASM_SUPPORT_64BIT=0
-                    opal_cv_asm_arch="SPARC"
-AC_MSG_WARN([Sparc v8 target is not supported in this release of Open MPI.])
-AC_MSG_WARN([You must specify the target architecture v8plus to compile])
-AC_MSG_WARN([Open MPI in 32 bit mode on Sparc processors (see the README).])
-AC_MSG_ERROR([Can not continue.])
-                else
-                    OPAL_ASM_SUPPORT_64BIT=1
-                    opal_cv_asm_arch="SPARCV9_32"
-                fi
-
-            elif test "$ac_cv_sizeof_long" = "8" ; then
-                OPAL_ASM_SUPPORT_64BIT=1
-                opal_cv_asm_arch="SPARCV9_64"
-            else
-                AC_MSG_ERROR([Could not determine Sparc word size: $ac_cv_sizeof_long])
-            fi
-            OPAL_GCC_INLINE_ASSIGN='"mov 0,%0" : "=&r"(ret)'
-            ;;
-
         *)
-            OPAL_CHECK_SYNC_BUILTINS([opal_cv_asm_builtin="BUILTIN_SYNC"],
-              [AC_MSG_ERROR([No atomic primitives available for $host])])
-            ;;
+	    if test $opal_cv_have___atomic = "yes" ; then
+		opal_cv_asm_builtin="BUILTIN_GCC"
+	    else
+		AC_MSG_ERROR([No atomic primitives available for $host])
+	    fi
+	    ;;
         esac
 
-        if test "x$OPAL_ASM_SUPPORT_64BIT" = "x1" && test "$opal_cv_asm_builtin" = "BUILTIN_SYNC" &&
-                test "$opal_asm_sync_have_64bit" = "0" ; then
-            # __sync builtins exist but do not implement 64-bit support. Fall back on inline asm.
-            opal_cv_asm_builtin="BUILTIN_NO"
-        fi
+	if ! test -z "$OPAL_ASM_ARM_VERSION" ; then
+	    AC_DEFINE_UNQUOTED([OPAL_ASM_ARM_VERSION], [$OPAL_ASM_ARM_VERSION],
+                               [What ARM assembly version to use])
+	fi
 
-      if test "$opal_cv_asm_builtin" = "BUILTIN_SYNC" || test "$opal_cv_asm_builtin" = "BUILTIN_GCC" ; then
-        AC_DEFINE([OPAL_C_GCC_INLINE_ASSEMBLY], [1],
-          [Whether C compiler supports GCC style inline assembly])
-      else
-        AC_DEFINE_UNQUOTED([OPAL_ASM_SUPPORT_64BIT],
-            [$OPAL_ASM_SUPPORT_64BIT],
-            [Whether we can do 64bit assembly operations or not.  Should not be used outside of the assembly header files])
-        AC_SUBST([OPAL_ASM_SUPPORT_64BIT])
-
-        #
-        # figure out if we need any special function start / stop code
-        #
-        case $host_os in
-        aix*)
-            opal_asm_arch_config="aix"
-            ;;
-        *)
-            opal_asm_arch_config="default"
-            ;;
-         esac
+	if test "$opal_cv_asm_builtin" = "BUILTIN_GCC" ; then
+         AC_DEFINE([OPAL_C_GCC_INLINE_ASSEMBLY], [1],
+		   [Whether C compiler supports GCC style inline assembly])
+	else
+         AC_DEFINE_UNQUOTED([OPAL_ASM_SUPPORT_64BIT],
+			    [$OPAL_ASM_SUPPORT_64BIT],
+			    [Whether we can do 64bit assembly operations or not.  Should not be used outside of the assembly header files])
+         AC_SUBST([OPAL_ASM_SUPPORT_64BIT])
 
          opal_cv_asm_inline_supported="no"
          # now that we know our architecture, try to inline assemble
@@ -1319,7 +1219,7 @@ AC_MSG_ERROR([Can not continue.])
 
          # format:
          #   config_file-text-global-label_suffix-gsym-lsym-type-size-align_log-ppc_r_reg-64_bit-gnu_stack
-         asm_format="${opal_asm_arch_config}"
+         asm_format="default"
          asm_format="${asm_format}-${opal_cv_asm_text}-${opal_cv_asm_global}"
          asm_format="${asm_format}-${opal_cv_asm_label_suffix}-${opal_cv_asm_gsym}"
          asm_format="${asm_format}-${opal_cv_asm_lsym}"
@@ -1342,7 +1242,7 @@ AC_MSG_ERROR([Can not continue.])
         AC_DEFINE_UNQUOTED([OPAL_ASSEMBLY_FORMAT], ["$OPAL_ASSEMBLY_FORMAT"],
                            [Format of assembly file])
         AC_SUBST([OPAL_ASSEMBLY_FORMAT])
-      fi # if opal_cv_asm_builtin = BUILTIN_SYNC
+      fi # if opal_cv_asm_builtin = BUILTIN_GCC
 
     result="OPAL_$opal_cv_asm_arch"
     OPAL_ASSEMBLY_ARCH="$opal_cv_asm_arch"
@@ -1400,7 +1300,7 @@ AC_DEFUN([OPAL_ASM_FIND_FILE], [
     AC_REQUIRE([AC_PROG_GREP])
     AC_REQUIRE([AC_PROG_FGREP])
 
-if test "$opal_cv_asm_arch" != "WINDOWS" && test "$opal_cv_asm_builtin" != "BUILTIN_SYNC" && test "$opal_cv_asm_builtin" != "BUILTIN_GCC" && test "$opal_cv_asm_builtin" != "BUILTIN_OSX"  && test "$opal_cv_asm_inline_arch" = "no" ; then
+if test "$opal_cv_asm_arch" != "WINDOWS" && test "$opal_cv_asm_builtin" != "BUILTIN_GCC" && test "$opal_cv_asm_builtin" != "BUILTIN_OSX"  && test "$opal_cv_asm_inline_arch" = "no" ; then
     AC_MSG_ERROR([no atomic support available. exiting])
 else
     # On windows with VC++, atomics are done with compiler primitives

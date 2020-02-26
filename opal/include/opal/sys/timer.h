@@ -14,6 +14,7 @@
  * Copyright (c) 2016-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2020      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2020      Google, LLC. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -79,16 +80,10 @@ BEGIN_C_DECLS
 #include "opal/sys/arm64/timer.h"
 #elif OPAL_ASSEMBLY_ARCH == OPAL_IA32
 #include "opal/sys/ia32/timer.h"
-#elif OPAL_ASSEMBLY_ARCH == OPAL_IA64
-#include "opal/sys/ia64/timer.h"
 #elif OPAL_ASSEMBLY_ARCH == OPAL_POWERPC32
 #include "opal/sys/powerpc/timer.h"
 #elif OPAL_ASSEMBLY_ARCH == OPAL_POWERPC64
 #include "opal/sys/powerpc/timer.h"
-#elif OPAL_ASSEMBLY_ARCH == OPAL_SPARCV9_32
-#include "opal/sys/sparcv9/timer.h"
-#elif OPAL_ASSEMBLY_ARCH == OPAL_SPARCV9_64
-#include "opal/sys/sparcv9/timer.h"
 #endif
 
 #ifndef DOXYGEN
