@@ -44,8 +44,5 @@
 
 /* Formats */
 #define OPAL_DEFAULT        1000  /* standard for given architecture */
-#define OPAL_DARWIN         1001  /* Darwin / OS X on PowerPC */
-#define OPAL_PPC_LINUX      1002  /* Linux on PowerPC */
-#define OPAL_AIX            1003  /* AIX on Power / PowerPC */
 
 #endif /* #ifndef OPAL_SYS_ARCHITECTURE_H */

@@ -1220,7 +1220,7 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
 
          # format:
          #   config_file-text-global-label_suffix-gsym-lsym-type-size-align_log-ppc_r_reg-64_bit-gnu_stack
-         asm_format="${opal_asm_arch_config}"
+         asm_format="default"
          asm_format="${asm_format}-${opal_cv_asm_text}-${opal_cv_asm_global}"
          asm_format="${asm_format}-${opal_cv_asm_label_suffix}-${opal_cv_asm_gsym}"
          asm_format="${asm_format}-${opal_cv_asm_lsym}"
