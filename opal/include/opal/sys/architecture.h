@@ -36,9 +36,6 @@
 #define OPAL_X86_64         0030
 #define OPAL_POWERPC32      0050
 #define OPAL_POWERPC64      0051
-#define OPAL_SPARC          0060
-#define OPAL_SPARCV9_32     0061
-#define OPAL_SPARCV9_64     0062
 #define OPAL_ARM            0100
 #define OPAL_ARM64          0101
 #define OPAL_BUILTIN_GCC    0202

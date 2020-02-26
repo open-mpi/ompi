@@ -928,29 +928,6 @@ AC_DEFUN([OPAL_CHECK_POWERPC_64BIT],[
 
 dnl #################################################################
 dnl
-dnl OPAL_CHECK_SPARCV8PLUS
-dnl
-dnl #################################################################
-AC_DEFUN([OPAL_CHECK_SPARCV8PLUS],[
-    AC_MSG_CHECKING([if have Sparc v8+/v9 support])
-    sparc_result=0
-    OPAL_TRY_ASSEMBLE([$opal_cv_asm_text
-        casa [%o0] 0x80, %o1, %o2],
-                [sparc_result=1],
-                [sparc_result=0])
-    if test "$sparc_result" = "1" ; then
-        AC_MSG_RESULT([yes])
-        ifelse([$1],,:,[$1])
-    else
-        AC_MSG_RESULT([no])
-        ifelse([$2],,:,[$2])
-    fi
-
-    unset sparc_result
-])dnl
-
-dnl #################################################################
-dnl
 dnl OPAL_CHECK_CMPXCHG16B
 dnl
 dnl #################################################################
@@ -1214,34 +1191,6 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
             fi
             OPAL_GCC_INLINE_ASSIGN='"1: li %0,0" : "=&r"(ret)'
             ;;
-        sparc*-*)
-            # SPARC v9 (and above) are the only ones with 64bit support
-            # if compiling 32 bit, see if we are v9 (aka v8plus) or
-            # earlier (casa is v8+/v9).
-            if test "$ac_cv_sizeof_long" = "4" ; then
-                have_v8plus=0
-                OPAL_CHECK_SPARCV8PLUS([have_v8plus=1])
-                if test "$have_v8plus" = "0" ; then
-                    OPAL_ASM_SUPPORT_64BIT=0
-                    opal_cv_asm_arch="SPARC"
-AC_MSG_WARN([Sparc v8 target is not supported in this release of Open MPI.])
-AC_MSG_WARN([You must specify the target architecture v8plus to compile])
-AC_MSG_WARN([Open MPI in 32 bit mode on Sparc processors (see the README).])
-AC_MSG_ERROR([Can not continue.])
-                else
-                    OPAL_ASM_SUPPORT_64BIT=1
-                    opal_cv_asm_arch="SPARCV9_32"
-                fi
-
-            elif test "$ac_cv_sizeof_long" = "8" ; then
-                OPAL_ASM_SUPPORT_64BIT=1
-                opal_cv_asm_arch="SPARCV9_64"
-            else
-                AC_MSG_ERROR([Could not determine Sparc word size: $ac_cv_sizeof_long])
-            fi
-            OPAL_GCC_INLINE_ASSIGN='"mov 0,%0" : "=&r"(ret)'
-            ;;
-
         *)
 	    if test $opal_cv_have___atomic = "yes" ; then
 		opal_cv_asm_builtin="BUILTIN_GCC"

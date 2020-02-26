@@ -84,10 +84,6 @@ BEGIN_C_DECLS
 #include "opal/sys/powerpc/timer.h"
 #elif OPAL_ASSEMBLY_ARCH == OPAL_POWERPC64
 #include "opal/sys/powerpc/timer.h"
-#elif OPAL_ASSEMBLY_ARCH == OPAL_SPARCV9_32
-#include "opal/sys/sparcv9/timer.h"
-#elif OPAL_ASSEMBLY_ARCH == OPAL_SPARCV9_64
-#include "opal/sys/sparcv9/timer.h"
 #endif
 
 #ifndef DOXYGEN

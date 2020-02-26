@@ -38,5 +38,4 @@ include opal/sys/arm/Makefile.am
 include opal/sys/arm64/Makefile.am
 include opal/sys/ia32/Makefile.am
 include opal/sys/powerpc/Makefile.am
-include opal/sys/sparcv9/Makefile.am
 include opal/sys/gcc_builtin/Makefile.am

@@ -180,12 +180,6 @@ enum {
 #include "opal/sys/powerpc/atomic.h"
 #elif OPAL_ASSEMBLY_ARCH == OPAL_POWERPC64
 #include "opal/sys/powerpc/atomic.h"
-#elif OPAL_ASSEMBLY_ARCH == OPAL_SPARC
-#include "opal/sys/sparc/atomic.h"
-#elif OPAL_ASSEMBLY_ARCH == OPAL_SPARCV9_32
-#include "opal/sys/sparcv9/atomic.h"
-#elif OPAL_ASSEMBLY_ARCH == OPAL_SPARCV9_64
-#include "opal/sys/sparcv9/atomic.h"
 #endif
 
 #ifndef DOXYGEN
