@@ -24,6 +24,7 @@
  *                         All rights reserved.
  * Copyright (c) 2018-2019 Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2020      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -470,10 +471,11 @@ opal_init_util(int* pargc, char*** pargv)
     char *error = NULL;
     OPAL_TIMING_ENV_INIT(otmng);
 
-    if( ++opal_util_initialized != 1 ) {
-        if( opal_util_initialized < 1 ) {
+    if( opal_util_initialized != 0 ) {
+        if( opal_util_initialized < 0 ) {
             return OPAL_ERROR;
         }
+        ++opal_util_initialized;
         return OPAL_SUCCESS;
     }
 
@@ -615,6 +617,8 @@ opal_init_util(int* pargc, char*** pargv)
 
     OPAL_TIMING_ENV_NEXT(otmng, "opal_if_init");
 
+    ++opal_util_initialized;
+
     return OPAL_SUCCESS;
 }
 
@@ -635,10 +639,11 @@ opal_init(int* pargc, char*** pargv)
 {
     int ret;
 
-    if( ++opal_initialized != 1 ) {
-        if( opal_initialized < 1 ) {
+    if( opal_initialized != 0 ) {
+        if( opal_initialized < 0 ) {
             return OPAL_ERROR;
         }
+        ++opal_initialized;
         return OPAL_SUCCESS;
     }
 
@@ -687,6 +692,8 @@ opal_init(int* pargc, char*** pargv)
     if (OPAL_SUCCESS != (ret = opal_reachable_base_select())) {
         return opal_init_error ("opal_reachable_base_select", ret);
     }
+
+    ++opal_initialized;
 
     return OPAL_SUCCESS;
 }
