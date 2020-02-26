@@ -57,9 +57,15 @@ included in the vX.Y.Z section and be denoted as:
    (** also appeared: A.B.C)  -- indicating that this item was previously
                                  included in release version vA.B.C.
 
-4.0.3 -- February, 2020
+4.0.3 -- March, 2020
 -----------------------
-- Add support for Mellanox Connectx6.
+- Update embedded PMIx to 3.1.5
+- Add support for Mellanox ConnectX-6.
+- Fix an issue in OpenMPI IO when using shared file pointers.
+  Thanks to Romain Hild for reporting.
+- Fix a problem with Open MPI using a previously installed
+  Fortran mpi module during compilation.  Thanks to Marcin
+  Mielniczuk for reporting
 - Fix a problem with Fortran compiler wrappers ignoring use of
   disable-wrapper-runpath configure option.  Thanks to David
   Shrader for reporting.
