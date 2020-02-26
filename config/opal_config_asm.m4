@@ -1194,11 +1194,6 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
             OPAL_CHECK_CMPXCHG16B
             ;;
 
-        ia64-*)
-            opal_cv_asm_arch="IA64"
-            OPAL_CHECK_SYNC_BUILTINS([opal_cv_asm_builtin="BUILTIN_SYNC"],
-              [AC_MSG_ERROR([No atomic primitives available for $host])])
-            ;;
         aarch64*)
             opal_cv_asm_arch="ARM64"
             OPAL_ASM_SUPPORT_64BIT=1

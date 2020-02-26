@@ -33,7 +33,6 @@
 /* Architectures */
 #define OPAL_UNSUPPORTED    0000
 #define OPAL_IA32           0010
-#define OPAL_IA64           0020
 #define OPAL_X86_64         0030
 #define OPAL_POWERPC32      0050
 #define OPAL_POWERPC64      0051
