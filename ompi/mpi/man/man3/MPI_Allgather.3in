@@ -3,6 +3,7 @@
 .\" Copyright (c) 2010-2014 Cisco Systems, Inc.  All rights reserved.
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
+.\" Copyright (c) 2020      Google, LLC. All rights reserved.
 .\" $COPYRIGHT$
 .TH MPI_Allgather 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -60,14 +61,6 @@ MPI_Iallgather(\fIsendbuf\fP, \fIsendcount\fP, \fIsendtype\fP, \fIrecvbuf\fP, \f
 	TYPE(MPI_Comm), INTENT(IN) :: \fIcomm\fP
 	TYPE(MPI_Request), INTENT(OUT) :: \fIrequest\fP
 	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
-
-.fi
-.SH C++ Syntax
-.nf
-#include <mpi.h>
-void MPI::Comm::Allgather(const void* \fIsendbuf\fP, int \fIsendcount\fP, const
-	MPI::Datatype& \fIsendtype\fP, void* \fIrecvbuf\fP, int \fIrecvcount\fP,
-	const MPI::Datatype& \fIrecvtype\fP) const = 0
 
 .fi
 .SH INPUT PARAMETERS
@@ -157,7 +150,7 @@ When the communicator is an inter-communicator, the gather operation occurs in t
 .sp
 
 .SH ERRORS
-Almost all MPI routines return an error value; C routines as the value of the function and Fortran routines in the last argument. C++ functions do not return errors. If the default error handler is set to MPI::ERRORS_THROW_EXCEPTIONS, then on error the C++ exception mechanism will be used to throw an MPI::Exception object.
+Almost all MPI routines return an error value; C routines as the value of the function and Fortran routines in the last argument.
 .sp
 Before the error value is returned, the current MPI error handler is
 called. By default, this error handler aborts the MPI job, except for I/O function errors. The error handler

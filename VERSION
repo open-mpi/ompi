@@ -70,12 +70,7 @@ date="Unreleased developer copy"
 # functions over time; these technically did not change the interface
 # because Fortran 77 does not link by parameter type.
 
-# 4. Similar to libmpi, libmpi_cxx's version number refers to the
-# public MPI interfaces.  Note that this version number may or may not
-# be affected by changes to inlined functions in OMPI's
-# header-file-based C++ bindings implementation.
-
-# 5. The ORTE and OPAL libraries will change versions when their
+# 4. The ORTE and OPAL libraries will change versions when their
 # public interfaces change (as relative to the layer(s) above them).
 # None of the ORTE and OPAL interfaces are public to MPI applications,
 # but they are "public" within the OMPI code base and select 3rd party
@@ -85,7 +80,6 @@ date="Unreleased developer copy"
 # format.
 
 libmpi_so_version=0:0:0
-libmpi_cxx_so_version=0:0:0
 libmpi_mpifh_so_version=0:0:0
 libmpi_usempi_tkr_so_version=0:0:0
 libmpi_usempi_ignore_tkr_so_version=0:0:0

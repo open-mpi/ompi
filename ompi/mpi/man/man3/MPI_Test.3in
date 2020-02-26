@@ -2,6 +2,7 @@
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .\" Copyright 2007-2008 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright (c) 2020      Google, LLC. All rights reserved.
 .\" $COPYRIGHT$
 .TH MPI_Test 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -32,14 +33,6 @@ MPI_Test(\fIrequest\fP, \fIflag\fP, \fIstatus\fP, \fIierror\fP)
 	LOGICAL, INTENT(OUT) :: \fIflag\fP
 	TYPE(MPI_Status) :: \fIstatus\fP
 	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
-
-.fi
-.SH C++ Syntax
-.nf
-#include <mpi.h>
-bool Request::Test(Status& \fIstatus\fP)
-
-bool Request::Test()
 
 .fi
 .SH INPUT PARAMETER
@@ -78,7 +71,7 @@ receives.
 The use of the nonblocking MPI_Test call allows the user to schedule alternative activities within a single thread of execution. An event-driven thread scheduler can be emulated with periodic calls to MPI_Test.
 
 .SH ERRORS
-Almost all MPI routines return an error value; C routines as the value of the function and Fortran routines in the last argument. C++ functions do not return errors. If the default error handler is set to MPI::ERRORS_THROW_EXCEPTIONS, then on error the C++ exception mechanism will be used to throw an MPI::Exception object.
+Almost all MPI routines return an error value; C routines as the value of the function and Fortran routines in the last argument.
 .sp
 Before the error value is returned, the current MPI error handler is
 called. By default, this error handler aborts the MPI job, except for

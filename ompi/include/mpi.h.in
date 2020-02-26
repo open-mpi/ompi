@@ -167,15 +167,6 @@
 /* type to use for ptrdiff_t, if it does not exist, set to ptrdiff_t if it does exist */
 #undef ptrdiff_t
 
-/* Whether we want MPI cxx support or not */
-#undef OMPI_BUILD_CXX_BINDINGS
-
-/* do we want to try to work around C++ bindings SEEK_* issue? */
-#undef OMPI_WANT_MPI_CXX_SEEK
-
-/* Whether a const_cast on a 2-d array will work with the C++ compiler */
-#undef OMPI_CXX_SUPPORTS_2D_CONST_CAST
-
 /* Whether OMPI was built with parameter checking or not */
 #undef OMPI_PARAM_CHECK
 
@@ -183,9 +174,6 @@
 #ifndef OMPI_WANT_MPI_INTERFACE_WARNING
 #undef OMPI_WANT_MPI_INTERFACE_WARNING
 #endif
-
-/* Whether or not we have compiled with C++ exceptions support */
-#undef OMPI_HAVE_CXX_EXCEPTION_SUPPORT
 
 /* Major, minor, and release version of Open MPI */
 #undef OMPI_MAJOR_VERSION
@@ -254,9 +242,7 @@
  * only relevant if we're not building Open MPI (i.e., we're compiling an
  * MPI application).
  */
-#if !(OMPI_BUILDING || \
-      (defined(OMPI_BUILDING_CXX_BINDINGS_LIBRARY) && \
-       OMPI_BUILDING_CXX_BINDINGS_LIBRARY))
+#if !OMPI_BUILDING \
 
      /*
       * Figure out which compiler is being invoked (in order to compare if
@@ -2830,20 +2816,6 @@ OMPI_DECLSPEC  int PMPI_Type_ub(MPI_Datatype mtype, MPI_Aint *ub)
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }
-#endif
-
-/*
- * Conditional MPI 2 C++ bindings support.  Include if:
- *   - The user does not explicitly request us to skip it (when a C++ compiler
- *       is used to compile C code).
- *   - We want C++ bindings support
- *   - We are not building OMPI itself
- *   - We are using a C++ compiler
- */
-#if !defined(OMPI_SKIP_MPICXX) && OMPI_BUILD_CXX_BINDINGS && !OMPI_BUILDING
-#if defined(c_plusplus) || defined(__cplusplus)
-#include "openmpi/ompi/mpi/cxx/mpicxx.h"
-#endif
 #endif
 
 #endif /* OMPI_MPI_H */

@@ -2,6 +2,7 @@
 .\" Copyright (c) 2010-2014 Cisco Systems, Inc.  All rights reserved.
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
+.\" Copyright (c) 2020      Google, LLC. All rights reserved.
 .\" $COPYRIGHT$
 .TH MPI_Attr_delete 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -41,7 +42,7 @@ Fortran only: Error status (integer).
 .SH DESCRIPTION
 Note that use of this routine is \fIdeprecated\fP as of MPI-2, and
 was \fIdeleted\fP in MPI-3. Please use MPI_Comm_delete_attr.  This
-function does not have a C++ or mpi_f08 binding.
+function does not have a mpi_f08 binding.
 .sp
 Delete attribute from cache by key. This function invokes the attribute delete function delete_fn specified when the keyval was created. The call will fail if the delete_fn function returns an error code other than MPI_SUCCESS.
 
@@ -57,7 +58,7 @@ is being invoked.
 
 
 .SH ERRORS
-Almost all MPI routines return an error value; C routines as the value of the function and Fortran routines in the last argument. C++ functions do not return errors. If the default error handler is set to MPI::ERRORS_THROW_EXCEPTIONS, then on error the C++ exception mechanism will be used to throw an MPI::Exception object.
+Almost all MPI routines return an error value; C routines as the value of the function and Fortran routines in the last argument.
 .sp
 Before the error value is returned, the current MPI error handler is
 called. By default, this error handler aborts the MPI job, except for I/O function errors. The error handler

@@ -3,6 +3,7 @@
 .\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
+.\" Copyright (c) 2020      Google, LLC. All rights reserved.
 .\" $COPYRIGHT$
 .TH MPI_Group_translate_ranks 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -36,13 +37,6 @@ MPI_Group_translate_ranks(\fIgroup1\fP, \fIn\fP, \fIranks1\fP, \fIgroup2\fP, \fI
 	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
-.SH C++ Syntax
-.nf
-#include <mpi.h>
-static void Group::Translate_ranks (const Group& \fIgroup1\fP, int \fIn\fP,
-	const int \fIranks1\fP[], const Group& \fIgroup2\fP, int \fIranks2\fP[])
-
-.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i
@@ -73,7 +67,7 @@ Fortran only: Error status (integer).
 This function is important for determining the relative numbering of the same processes in two different groups. For instance, if one knows the ranks of certain processes in the group of MPI_COMM_WORLD, one might want to know their ranks in a subset of that group.
 
 .SH ERRORS
-Almost all MPI routines return an error value; C routines as the value of the function and Fortran routines in the last argument. C++ functions do not return errors. If the default error handler is set to MPI::ERRORS_THROW_EXCEPTIONS, then on error the C++ exception mechanism will be used to throw an MPI::Exception object.
+Almost all MPI routines return an error value; C routines as the value of the function and Fortran routines in the last argument.
 .sp
 Before the error value is returned, the current MPI error handler is
 called. By default, this error handler aborts the MPI job, except for I/O function errors. The error handler may be changed with MPI_Comm_set_errhandler; the predefined error handler MPI_ERRORS_RETURN may be used to cause error values to be returned. Note that MPI does not guarantee that an MPI program can continue past an error.

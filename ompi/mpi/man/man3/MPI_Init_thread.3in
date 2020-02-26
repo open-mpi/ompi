@@ -2,6 +2,7 @@
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .\" Copyright (c) 2010-2015 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright (c) 2020      Google, LLC. All rights reserved.
 .\" $COPYRIGHT$
 .TH MPI_Init_thread 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .
@@ -35,21 +36,14 @@ MPI_Init_thread(\fIrequired\fP, \fIprovided\fP, \fIierror\fP)
 	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
-.SH C++ Syntax
-.nf
-#include <mpi.h>
-int MPI::Init_thread(int& \fIargc\fP, char**& \fIargv\fP, int \fIrequired\fP)
-int MPI::Init_thread(int \fIrequired\fP)
-
-.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i
 argc
-C/C++ only: Pointer to the number of arguments.
+C only: Pointer to the number of arguments.
 .TP 1i
 argv
-C/C++ only: Argument vector.
+C only: Argument vector.
 .TP 1i
 required
 Desired level of thread support (integer).
@@ -92,8 +86,7 @@ with no restrictions.
 .
 .PP
 The level of thread support available to the program is set in
-\fIprovided\fP, except in C++, where it is the return value of the
-function. In Open MPI, the value is dependent on how the library was
+\fIprovided\fP. In Open MPI, the value is dependent on how the library was
 configured and built. Note that there is no guarantee that
 \fIprovided\fP will be greater than or equal to \fIrequired\fP.
 .sp
@@ -104,7 +97,7 @@ value of
 is equivalent to calling MPI_Init.
 .sp
 All MPI programs must contain a call to MPI_Init or
-MPI_Init_thread. Open MPI accepts the C/C++ \fIargc\fP and \fIargv\fP
+MPI_Init_thread. Open MPI accepts the C \fIargc\fP and \fIargv\fP
 arguments to main, but neither modifies, interprets, nor distributes
 them:
 .sp
@@ -186,10 +179,7 @@ not
 .SH ERRORS
 .ft R
 Almost all MPI routines return an error value; C routines as
-the value of the function and Fortran routines in the last argument. C++
-functions do not return errors. If the default error handler is set to
-MPI::ERRORS_THROW_EXCEPTIONS, then on error the C++ exception mechanism
-will be used to throw an MPI::Exception object.
+the value of the function and Fortran routines in the last argument.
 .sp
 Before the error value is returned, the current MPI error handler is
 called. By default, this error handler aborts the MPI job, except for

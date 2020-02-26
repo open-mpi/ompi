@@ -2,6 +2,7 @@
 .\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
+.\" Copyright (c) 2020      Google, LLC. All rights reserved.
 .\" $COPYRIGHT$
 .TH MPI_Address 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -44,8 +45,6 @@ Fortran only: Error status (integer).
 .ft R
 Note that use of this routine is \fIdeprecated\fP as of MPI-2. Please use MPI_Get_address instead.
 .sp
-This deprecated routine is not available in C++.
-.sp
 The address of a location in memory can be found by invoking this function. Returns the (byte) address of location.
 .sp
 Example: Using MPI_Address for an array.
@@ -82,7 +81,7 @@ MPI_Address to "reference" C variables guarantees portability to
 such machines as well.
 
 .SH ERRORS
-Almost all MPI routines return an error value; C routines as the value of the function and Fortran routines in the last argument. C++ functions do not return errors. If the default error handler is set to MPI::ERRORS_THROW_EXCEPTIONS, then on error the C++ exception mechanism will be used to throw an MPI::Exception object.
+Almost all MPI routines return an error value; C routines as the value of the function and Fortran routines in the last argument.
 .sp
 Before the error value is returned, the current MPI error handler is
 called. By default, this error handler aborts the MPI job, except for I/O function errors. The error handler

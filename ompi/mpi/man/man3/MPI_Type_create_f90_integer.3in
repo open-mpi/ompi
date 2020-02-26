@@ -2,6 +2,7 @@
 .\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines
+.\" Copyright (c) 2020      Google, LLC. All rights reserved.
 .\" $COPYRIGHT$
 .TH MPI_Type_create_f90_integer 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 
@@ -34,12 +35,6 @@ MPI_Type_create_f90_integer(\fIr\fP, \fInewtype\fP, \fIierror\fP)
 	INTEGER, INTENT(IN) :: \fIr\fP
 	TYPE(MPI_Datatype), INTENT(OUT) :: \fInewtype\fP
 	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
-
-.fi
-.SH C++ Syntax
-.nf
-#include <mpi.h>
-static MPI::Datatype MPI::Datatype::Create_f90_integer(int \fIr\fP)
 
 .fi
 .SH INPUT PARAMETER
@@ -116,10 +111,7 @@ MPI_Sizeof and MPI_Type_match_size.
 .SH ERRORS
 .ft R
 Almost all MPI routines return an error value; C routines as
-the value of the function and Fortran routines in the last argument. C++
-functions do not return errors. If the default error handler is set to
-MPI::ERRORS_THROW_EXCEPTIONS, then on error the C++ exception mechanism
-will be used to throw an MPI::Exception object.
+the value of the function and Fortran routines in the last argument.
 .sp
 Before the error value is returned, the current MPI error handler is
 called. By default, this error handler aborts the MPI job, except for

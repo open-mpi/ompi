@@ -2,6 +2,7 @@
 .\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
+.\" Copyright (c) 2020      Google, LLC. All rights reserved.
 .\" $COPYRIGHT$
 .TH MPI_Win_call_errhandler 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 
@@ -33,12 +34,6 @@ MPI_Win_call_errhandler(\fIwin\fP, \fIerrorcode\fP, \fIierror\fP)
 	TYPE(MPI_Win), INTENT(IN) :: \fIwin\fP
 	INTEGER, INTENT(IN) :: \fIerrorcode\fP
 	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
-
-.fi
-.SH C++ Syntax
-.nf
-#include <mpi.h>
-void MPI::Win::Call_errhandler(int \fIerrorcode\fP) const
 
 .fi
 .SH INPUT PARAMETERS
@@ -74,10 +69,7 @@ this window.
 .SH ERRORS
 .ft R
 Almost all MPI routines return an error value; C routines as
-the value of the function and Fortran routines in the last argument. C++
-functions do not return errors. If the default error handler is set to
-MPI::ERRORS_THROW_EXCEPTIONS, then on error the C++ exception mechanism
-will be used to throw an MPI::Exception object.
+the value of the function and Fortran routines in the last argument.
 .sp
 See the MPI man page for a full list of MPI error codes.
 

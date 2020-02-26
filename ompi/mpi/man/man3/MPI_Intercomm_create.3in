@@ -2,6 +2,7 @@
 .\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
+.\" Copyright (c) 2020      Google, LLC. All rights reserved.
 .\" $COPYRIGHT$
 .TH MPI_Intercomm_create 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -35,13 +36,6 @@ MPI_Intercomm_create(\fIlocal_comm\fP, \fIlocal_leader\fP, \fIpeer_comm\fP, \fIr
 	INTEGER, INTENT(IN) :: \fIlocal_leader\fP, \fIremote_leader\fP, \fItag\fP
 	TYPE(MPI_Comm), INTENT(OUT) :: \fInewintercomm\fP
 	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
-
-.fi
-.SH C++ Syntax
-.nf
-#include <mpi.h>
-Intercomm Intracomm::Create_intercomm(int \fIlocal_leader\fP, const
-	Comm& \fIpeer_comm\fP, int \fIremote_leader\fP, int \fItag\fP) const
 
 .fi
 .SH INPUT PARAMETERS
@@ -101,7 +95,7 @@ intercommunicators (like
 groups are not disjoint.
 
 .SH ERRORS
-Almost all MPI routines return an error value; C routines as the value of the function and Fortran routines in the last argument. C++ functions do not return errors. If the default error handler is set to MPI::ERRORS_THROW_EXCEPTIONS, then on error the C++ exception mechanism will be used to throw an MPI::Exception object.
+Almost all MPI routines return an error value; C routines as the value of the function and Fortran routines in the last argument.
 .sp
 Before the error value is returned, the current MPI error handler is
 called. By default, this error handler aborts the MPI job, except for I/O function errors. The error handler may be changed with MPI_Comm_set_errhandler; the predefined error handler MPI_ERRORS_RETURN may be used to cause error values to be returned. Note that MPI does not guarantee that an MPI program can continue past an error.

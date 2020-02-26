@@ -17,7 +17,6 @@ my $package_name;
 my $package_version;
 my $ompi_date;
 my $opal_date;
-my $cxx = '1';
 my $fortran = '1';
 my $f08 = '1';
 my $input;
@@ -29,7 +28,6 @@ my $ok = Getopt::Long::GetOptions("package-name=s" => \$package_name,
                                   "package-version=s" => \$package_version,
                                   "ompi-date=s" => \$ompi_date,
                                   "opal-date=s" => \$opal_date,
-                                  "cxx!" => \$cxx,
                                   "fortran!" => \$fortran,
                                   "f08!" => \$f08,
                                   "input=s" => \$input,
@@ -57,10 +55,6 @@ $file =~ s/#PACKAGE_NAME#/$package_name/g;
 $file =~ s/#PACKAGE_VERSION#/$package_version/g;
 $file =~ s/#OMPI_DATE#/$ompi_date/g;
 $file =~ s/#OPAL_DATE#/$opal_date/g;
-
-if ($cxx == 0) {
-    $file =~ s/\n\.SH C\+\+ Syntax.+?\n\.SH/\n\.SH/s;
-}
 
 if ($fortran == 0) {
     $file =~ s/\n\.SH Fortran Syntax.+?\n\.SH/\n\.SH/s;

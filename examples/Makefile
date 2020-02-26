@@ -10,7 +10,7 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2006-2007 Sun Microsystems, Inc.  All rights reserved.
-# Copyright (c) 2011-2016 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2011-2020 Cisco Systems, Inc.  All rights reserved
 # Copyright (c) 2012      Los Alamos National Security, Inc.  All rights reserved.
 # Copyright (c) 2013      Mellanox Technologies, Inc.  All rights reserved.
 # Copyright (c) 2017-2018 Research Organization for Information Science
@@ -25,7 +25,6 @@
 # Use the Open MPI-provided wrapper compilers.
 
 MPICC = mpicc
-MPICXX = mpic++
 MPIFC = mpifort
 MPIJAVAC = mpijavac
 SHMEMCC = shmemcc
@@ -46,7 +45,6 @@ FCFLAGS += -g
 
 EXAMPLES = \
 	 hello_c \
-	 hello_cxx \
 	 hello_mpifh \
 	 hello_usempi \
 	 hello_usempif08 \
@@ -55,7 +53,6 @@ EXAMPLES = \
 	 hello_oshmemfh \
 	 Hello.class \
 	 ring_c \
-	 ring_cxx \
 	 ring_mpifh \
 	 ring_usempi \
 	 ring_usempif08 \
@@ -86,9 +83,6 @@ all: hello_c ring_c connectivity_c spc_example
 # MPI examples
 
 mpi:
-	@ if ompi_info --parsable | grep -q bindings:cxx:yes >/dev/null; then \
-	    $(MAKE) hello_cxx ring_cxx; \
-	fi
 	@ if ompi_info --parsable | grep -q bindings:mpif.h:yes >/dev/null; then \
 	    $(MAKE) hello_mpifh ring_mpifh; \
 	fi
@@ -135,11 +129,6 @@ connectivity_c: connectivity_c.c
 	$(MPICC) $(CFLAGS) $(LDFLAGS) $? $(LDLIBS) -o $@
 spc_example: spc_example.c
 	$(MPICC) $(CFLAGS) $(LDFLAGS) $? $(LDLIBS) -o $@
-
-hello_cxx: hello_cxx.cc
-	$(MPICXX) $(CXXFLAGS) $(LDFLAGS) $? $(LDLIBS) -o $@
-ring_cxx: ring_cxx.cc
-	$(MPICXX) $(CXXFLAGS) $(LDFLAGS) $? $(LDLIBS) -o $@
 
 hello_mpifh: hello_mpifh.f
 	$(MPIFC) $(FCFLAGS) $(LDFLAGS) $? $(LDLIBS) -o $@

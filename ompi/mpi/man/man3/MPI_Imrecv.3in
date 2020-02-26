@@ -2,6 +2,7 @@
 .\" Copyright 2012 Cisco Systems, Inc.  All rights reserved.
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
+.\" Copyright (c) 2020      Google, LLC. All rights reserved.
 .\" $COPYRIGHT$
 .TH MPI_Imrecv 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -35,11 +36,6 @@ MPI_Imrecv(\fIbuf\fP, \fIcount\fP, \fIdatatype\fP, \fImessage\fP, \fIrequest\fP,
 	TYPE(MPI_Message), INTENT(INOUT) :: \fImessage\fP
 	TYPE(MPI_Request), INTENT(OUT) :: \fIrequest\fP
 	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
-
-.fi
-.SH C++ Syntax
-.nf
-There is no C++ binding for this function.
 
 .fi
 .SH INPUT PARAMETERS
@@ -94,13 +90,9 @@ ordering rules (e.g., if another message matching the same message
 signature has matched -- and possible received -- before this
 MPI_Imrecv is canceled).
 
-.SH NOTE
-This is an MPI-3 function and has no C++ binding.
-
 .SH ERRORS
 Almost all MPI routines return an error value; C routines as the value
-of the function and Fortran routines in the last argument. C++
-functions do not return errors.
+of the function and Fortran routines in the last argument.
 .sp
 Before the error value is returned, the current MPI error handler is
 called. By default, this error handler aborts the MPI job, except for

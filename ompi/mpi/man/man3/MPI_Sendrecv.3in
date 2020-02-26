@@ -3,6 +3,7 @@
 .\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
+.\" Copyright (c) 2020      Google, LLC. All rights reserved.
 .\" $COPYRIGHT$
 .TH MPI_Sendrecv 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -45,20 +46,6 @@ MPI_Sendrecv(\fIsendbuf\fP, \fIsendcount\fP, \fIsendtype\fP, \fIdest\fP, \fIsend
 	TYPE(MPI_Comm), INTENT(IN) :: \fIcomm\fP
 	TYPE(MPI_Status) :: \fIstatus\fP
 	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
-
-.fi
-.SH C++ Syntax
-.nf
-#include <mpi.h>
-void Comm::Sendrecv(const void *\fIsendbuf\fP, int \fIsendcount\fP, const
-	Datatype& \fIsendtype\fP, int \fIdest\fP, int \fIsendtag\fP, void *\fIrecvbuf\fP,
-	int \fIrecvcount\fP, const Datatype& \fIrecvtype\fP, int \fIsource\fP,
-	int \fIrecvtag\fP, Status& \fIstatus\fP) const
-
-void Comm::Sendrecv(const void *\fIsendbuf\fP, int \fIsendcount\fP, const
-	Datatype& \fIsendtype\fP, int \fIdest\fP, int \fIsendtag\fP, void *\fIrecvbuf\fP,
-	int \fIrecvcount\fP, const Datatype& \fIrecvtype\fP, int \fIsource\fP,
-	int \fIrecvtag\fP) const
 
 .fi
 .SH INPUT PARAMETERS
@@ -118,7 +105,7 @@ MPI_Sendrecv executes a blocking send and receive operation. Both send and recei
 If your application does not need to examine the \fIstatus\fP field, you can save resources by using the predefined constant MPI_STATUS_IGNORE as a special value for the \fIstatus\fP argument.
 
 .SH ERRORS
-Almost all MPI routines return an error value; C routines as the value of the function and Fortran routines in the last argument. C++ functions do not return errors. If the default error handler is set to MPI::ERRORS_THROW_EXCEPTIONS, then on error the C++ exception mechanism will be used to throw an MPI::Exception object.
+Almost all MPI routines return an error value; C routines as the value of the function and Fortran routines in the last argument.
 .sp
 Before the error value is returned, the current MPI error handler is
 called. By default, this error handler aborts the MPI job, except for I/O function errors. The error handler may be changed with MPI_Comm_set_errhandler; the predefined error handler MPI_ERRORS_RETURN may be used to cause error values to be returned. Note that MPI does not guarantee that an MPI program can continue past an error.

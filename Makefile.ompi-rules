@@ -10,9 +10,6 @@
 #
 
 TRIM_OPTIONS=
-if ! MAN_PAGE_BUILD_MPI_CXX_BINDINGS
-    TRIM_OPTIONS += --nocxx
-endif
 if ! MAN_PAGE_BUILD_MPIFH_BINDINGS
     TRIM_OPTIONS += --nofortran
 endif

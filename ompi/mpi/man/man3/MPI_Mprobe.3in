@@ -3,6 +3,7 @@
 .\" Copyright 2012 Cisco Systems, Inc.  All rights reserved.
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
+.\" Copyright (c) 2020      Google, LLC. All rights reserved.
 .\" $COPYRIGHT$
 .TH MPI_Mprobe 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -35,11 +36,6 @@ MPI_Mprobe(\fIsource\fP, \fItag\fP, \fIcomm\fP, \fImessage\fP, \fIstatus\fP, \fI
 	TYPE(MPI_Message), INTENT(OUT) :: \fImessage\fP
 	TYPE(MPI_Status) :: \fIstatus\fP
 	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
-
-.fi
-.SH C++ Syntax
-.nf
-There is no C++ binding for this function.
 
 .fi
 .SH INPUT PARAMETERS
@@ -88,13 +84,9 @@ When MPI_Mprobe returns (from a non-MPI_PROC_NULL \fIsource\fP), the
 matched message can then be received by passing the \fImessage\fP
 handle to the MPI_Mrecv or MPI_Imrecv functions.
 
-.SH NOTE
-This is an MPI-3 function and has no C++ binding.
-
 .SH ERRORS
 Almost all MPI routines return an error value; C routines as the value
-of the function and Fortran routines in the last argument. C++
-functions do not return errors.
+of the function and Fortran routines in the last argument.
 .sp
 Before the error value is returned, the current MPI error handler is
 called. By default, this error handler aborts the MPI job, except for

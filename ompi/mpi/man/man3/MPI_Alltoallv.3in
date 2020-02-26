@@ -3,6 +3,7 @@
 .\" Copyright (c) 2010-2014 Cisco Systems, Inc.  All rights reserved.
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
+.\" Copyright (c) 2020      Google, LLC. All rights reserved.
 .\" $COPYRIGHT$
 .TH MPI_Alltoallv 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 
@@ -72,16 +73,6 @@ MPI_Ialltoallv(\fIsendbuf\fP, \fIsendcounts\fP, \fIsdispls\fP, \fIsendtype\fP, \
 	TYPE(MPI_Comm), INTENT(IN) :: \fIcomm\fP
 	TYPE(MPI_Request), INTENT(OUT) :: \fIrequest\fP
 	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
-
-.fi
-.SH C++ Syntax
-.nf
-#include <mpi.h>
-void MPI::Comm::Alltoallv(const void* \fIsendbuf\fP,
-	const int \fIsendcounts\fP[], const int \fIdispls\fP[],
-	const MPI::Datatype& \fIsendtype\fP, void* \fIrecvbuf\fP,
-	const int \fIrecvcounts\fP[], const int \fIrdispls\fP[],
-	const MPI::Datatype& \fIrecvtype\fP)
 
 .fi
 .SH INPUT PARAMETERS
@@ -192,10 +183,7 @@ MPI_Alltoallw, where these offsets are measured in bytes.
 .SH ERRORS
 .ft R
 Almost all MPI routines return an error value; C routines as
-the value of the function and Fortran routines in the last argument. C++
-functions do not return errors. If the default error handler is set to
-MPI::ERRORS_THROW_EXCEPTIONS, then on error the C++ exception mechanism
-will be used to throw an MPI::Exception object.
+the value of the function and Fortran routines in the last argument.
 .sp
 Before the error value is returned, the current MPI error handler is
 called. By default, this error handler aborts the MPI job, except for

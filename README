@@ -347,11 +347,6 @@ Compiler Notes
   version of the Intel 12.1 Linux compiler suite, the problem will go
   away.
 
-- Early versions of the Portland Group 6.0 compiler have problems
-  creating the C++ MPI bindings as a shared library (e.g., v6.0-1).
-  Tests with later versions show that this has been fixed (e.g.,
-  v6.0-5).
-
 - The Portland Group compilers prior to version 7.0 require the
   "-Msignextend" compiler flag to extend the sign bit when converting
   from a shorter to longer integer.  This is is different than other
@@ -369,24 +364,6 @@ Compiler Notes
 
 - It has been reported that Pathscale 5.0.5 and 6.0.527 compilers
   give an internal compiler error when trying to Open MPI.
-
-- Using the MPI C++ bindings with older versions of the Pathscale
-  compiler on some platforms is an old issue that seems to be a
-  problem when Pathscale uses a back-end GCC 3.x compiler. Here's a
-  proposed solution from the Pathscale support team (from July 2010):
-
-      The proposed work-around is to install gcc-4.x on the system and
-      use the pathCC -gnu4 option. Newer versions of the compiler (4.x
-      and beyond) should have this fixed, but we'll have to test to
-      confirm it's actually fixed and working correctly.
-
-  We don't anticipate that this will be much of a problem for Open MPI
-  users these days (our informal testing shows that not many users are
-  still using GCC 3.x).  Contact Pathscale support if you continue to
-  have problems with Open MPI's C++ bindings.
-
-  Note the MPI C++ bindings have been deprecated by the MPI Forum and
-  may not be supported in future releases.
 
 - As of July 2017, the Pathscale compiler suite apparently has no
   further commercial support, and it does not look like there will be
@@ -1340,12 +1317,6 @@ MPI FUNCTIONALITY
   Disable the MPI thread level MPI_THREAD_MULTIPLE (it is enabled by
   default).
 
---enable-mpi-cxx
-  Enable building the C++ MPI bindings (default: disabled).
-
-  The MPI C++ bindings were deprecated in MPI-2.2, and removed from
-  the MPI standard in MPI-3.0.
-
 --enable-mpi-java
   Enable building of an EXPERIMENTAL Java MPI interface (disabled by
   default).  You may also need to specify --with-jdk-dir,
@@ -1914,7 +1885,7 @@ each different wrapper compiler (language):
 ompi       Synonym for "ompi-c"; Open MPI applications using the C
            MPI bindings
 ompi-c     Open MPI applications using the C MPI bindings
-ompi-cxx   Open MPI applications using the C or C++ MPI bindings
+ompi-cxx   Open MPI applications using the C MPI bindings
 ompi-fort  Open MPI applications using the Fortran MPI bindings
 ------------------------------------------------------------------------
 
