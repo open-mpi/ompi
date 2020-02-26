@@ -41,7 +41,6 @@
 #define OPAL_SPARCV9_64     0062
 #define OPAL_ARM            0100
 #define OPAL_ARM64          0101
-#define OPAL_BUILTIN_SYNC   0200
 #define OPAL_BUILTIN_GCC    0202
 #define OPAL_BUILTIN_NO     0203
 #define OPAL_BUILTIN_C11    0204

@@ -15,6 +15,7 @@
 #                         reserved.
 # Copyright (c) 2017      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
+# Copyright (c) 2020      Google, LLC. All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -38,5 +39,4 @@ include opal/sys/arm64/Makefile.am
 include opal/sys/ia32/Makefile.am
 include opal/sys/powerpc/Makefile.am
 include opal/sys/sparcv9/Makefile.am
-include opal/sys/sync_builtin/Makefile.am
 include opal/sys/gcc_builtin/Makefile.am
