@@ -22,6 +22,7 @@
 #include "mpi.h"
 #include "ompi/constants.h"
 #include "ompi/mca/fs/fs.h"
+#include "ompi/mca/fs/base/base.h"
 
 #include <unistd.h>
 #include <string.h>
@@ -31,8 +32,6 @@
 #include <errno.h>
 #include <gpfs_fcntl.h>
 
-#define DATASHIPPING_ENABLED 0
-
 /*
  *  file_set_info_gpfs
  *
@@ -40,136 +39,6 @@
  *  Accepts:    - same arguments as MPI_File_set_info()
  *  Returns:    - Success if info is set
  */
-
-struct {
-    gpfsFcntlHeader_t gpfsFcntlHeader;
-    gpfsAccessRange_t gpfsAccessRange;
-} gpfs_hint_AccessRange;
-
-struct {
-    gpfsFcntlHeader_t gpfsFcntlHeader;
-    gpfsFreeRange_t gpfsFreeRange;
-} gpfs_hint_FreeRange;
-
-struct {
-    gpfsFcntlHeader_t gpfsFcntlHeader;
-    gpfsRangeArray_t gpfsRangeArray;
-} gpfs_hint_RangeArray;
-
-struct {
-    gpfsFcntlHeader_t gpfsFcntlHeader;
-    gpfsMultipleAccessRange_t gpfsMultipleAccessRange;
-} gpfs_hint_MultipleAccessRange;
-
-struct {
-    gpfsFcntlHeader_t gpfsFcntlHeader;
-    gpfsClearFileCache_t gpfsClearFileCache;
-} gpfs_hint_ClearFileCache;
-
-struct {
-    gpfsFcntlHeader_t gpfsFcntlHeader;
-    gpfsCancelHints_t gpfsCancelHints;
-} gpfs_hint_CancelHints;
-
-#if DATASHIPPING_ENABLED
-struct {
-    gpfsFcntlHeader_t gpfsFcntlHeader;
-    gpfsDataShipStart_t gpfsDataShipStart;
-} gpfs_hint_DataShipStart;
-
-struct {
-    gpfsFcntlHeader_t gpfsFcntlHeader;
-    gpfsDataShipMap_t gpfsDataShipMap;
-} gpfs_hint_DataShipMap;
-
-struct {
-    gpfsFcntlHeader_t gpfsFcntlHeader;
-    gpfsDataShipMapVariable_t gpfsDataShipMapVariable;
-} gpfs_hint_DataShipMapVariable;
-
-struct {
-    gpfsFcntlHeader_t gpfsFcntlHeader;
-    gpfsDataShipStop_t gpfsDataShipStop;
-} gpfs_hint_DataShipStop;
-#endif
-
-struct {
-    gpfsFcntlHeader_t gpfsFcntlHeader;
-    gpfsSetReplication_t gpfsSetReplication;
-} gpfs_hint_SetReplication;
-
-struct {
-    gpfsFcntlHeader_t gpfsFcntlHeader;
-    gpfsSetStoragePool_t gpfsSetStoragePool;
-} gpfs_hint_SetStoragePool;
-
-struct {
-    gpfsFcntlHeader_t gpfsFcntlHeader;
-    gpfsByteRange_t gpfsByteRange;
-} gpfs_hint_ByteRange;
-
-struct {
-    gpfsFcntlHeader_t gpfsFcntlHeader;
-    gpfsRestripeData_t gpfsRestripeData;
-} gpfs_hint_RestripeData;
-
-//CN: TODO: Implement the following currently unused GPFS hints
-struct {
-    gpfsFcntlHeader_t gpfsFcntlHeader;
-    gpfsRestripeRange_t gpfsRestripeRange;
-} gpfs_hint_RestripeRange;
-
-struct {
-    gpfsFcntlHeader_t gpfsFcntlHeader;
-    gpfsGetReplication_t gpfsGetReplication;
-} gpfs_hint_GetReplication;
-
-struct {
-    gpfsFcntlHeader_t gpfsFcntlHeader;
-    gpfsGetStoragePool_t gpfsGetStoragePool;
-} gpfs_hint_GetStoragePool;
-
-struct {
-    gpfsFcntlHeader_t gpfsFcntlHeader;
-    gpfsGetFilesetName_t gpfsGetFilesetName;
-} gpfs_hint_GetFilesetName;
-
-struct {
-    gpfsFcntlHeader_t gpfsFcntlHeader;
-    gpfsGetSnapshotName_t gpfsGetSnapshotName;
-} gpfs_hint_GetSnapshotName;
-
-struct {
-    gpfsFcntlHeader_t gpfsFcntlHeader;
-    gpfsSetImmutable_t gpfsSetImmutable;
-} gpfs_hint_SetImmutable;
-
-struct {
-    gpfsFcntlHeader_t gpfsFcntlHeader;
-    gpfsGetImmutable_t gpfsGetImmutable;
-} gpfs_hint_GetImmutable;
-
-struct {
-    gpfsFcntlHeader_t gpfsFcntlHeader;
-    gpfsSetExpTime_t gpfsSetExpTime;
-} gpfs_hint_SetExpTime;
-
-struct {
-    gpfsFcntlHeader_t gpfsFcntlHeader;
-    gpfsGetExpTime_t gpfsGetExpTime;
-} gpfs_hint_GetExpTime;
-
-struct {
-    gpfsFcntlHeader_t gpfsFcntlHeader;
-    gpfsSetAppendOnly_t gpfsSetAppendOnly;
-} gpfs_hint_SetAppendOnly;
-
-struct {
-    gpfsFcntlHeader_t gpfsFcntlHeader;
-    gpfsGetAppendOnly_t gpfsGetAppendOnly;
-} gpfs_hint_GetAppendOnly;
-
-
 
 int mca_fs_gpfs_file_set_info(ompio_file_t *fh, struct ompi_info_t *info)
 {
@@ -184,6 +53,114 @@ int mca_fs_gpfs_file_set_info(ompio_file_t *fh, struct ompi_info_t *info)
     ompi_info_t *info_selected;
     info_selected = info;
     gpfs_file_t gpfs_file_handle = fh->fd;
+
+    struct {
+        gpfsFcntlHeader_t gpfsFcntlHeader;
+        gpfsAccessRange_t gpfsAccessRange;
+    } gpfs_hint_AccessRange;
+
+    struct {
+        gpfsFcntlHeader_t gpfsFcntlHeader;
+        gpfsFreeRange_t gpfsFreeRange;
+    } gpfs_hint_FreeRange;
+
+    struct {
+        gpfsFcntlHeader_t gpfsFcntlHeader;
+        gpfsClearFileCache_t gpfsClearFileCache;
+    } gpfs_hint_ClearFileCache;
+
+    struct {
+        gpfsFcntlHeader_t gpfsFcntlHeader;
+        gpfsCancelHints_t gpfsCancelHints;
+    } gpfs_hint_CancelHints;
+
+    struct {
+        gpfsFcntlHeader_t gpfsFcntlHeader;
+        gpfsSetReplication_t gpfsSetReplication;
+    } gpfs_hint_SetReplication;
+
+    struct {
+        gpfsFcntlHeader_t gpfsFcntlHeader;
+        gpfsByteRange_t gpfsByteRange;
+    } gpfs_hint_ByteRange;
+
+    struct {
+        gpfsFcntlHeader_t gpfsFcntlHeader;
+        gpfsRestripeData_t gpfsRestripeData;
+    } gpfs_hint_RestripeData;
+
+    //CN: TODO: Implement the following currently unused GPFS hints
+    /*
+    struct {
+        gpfsFcntlHeader_t gpfsFcntlHeader;
+        gpfsRestripeRange_t gpfsRestripeRange;
+    } gpfs_hint_RestripeRange;
+
+    struct {
+        gpfsFcntlHeader_t gpfsFcntlHeader;
+        gpfsGetReplication_t gpfsGetReplication;
+    } gpfs_hint_GetReplication;
+
+    struct {
+        gpfsFcntlHeader_t gpfsFcntlHeader;
+        gpfsGetStoragePool_t gpfsGetStoragePool;
+    } gpfs_hint_GetStoragePool;
+
+    struct {
+        gpfsFcntlHeader_t gpfsFcntlHeader;
+        gpfsGetFilesetName_t gpfsGetFilesetName;
+    } gpfs_hint_GetFilesetName;
+
+    struct {
+        gpfsFcntlHeader_t gpfsFcntlHeader;
+        gpfsGetSnapshotName_t gpfsGetSnapshotName;
+    } gpfs_hint_GetSnapshotName;
+
+    struct {
+        gpfsFcntlHeader_t gpfsFcntlHeader;
+        gpfsSetImmutable_t gpfsSetImmutable;
+    } gpfs_hint_SetImmutable;
+
+    struct {
+        gpfsFcntlHeader_t gpfsFcntlHeader;
+        gpfsGetImmutable_t gpfsGetImmutable;
+    } gpfs_hint_GetImmutable;
+
+    struct {
+        gpfsFcntlHeader_t gpfsFcntlHeader;
+        gpfsSetExpTime_t gpfsSetExpTime;
+    } gpfs_hint_SetExpTime;
+
+    struct {
+        gpfsFcntlHeader_t gpfsFcntlHeader;
+        gpfsGetExpTime_t gpfsGetExpTime;
+    } gpfs_hint_GetExpTime;
+
+    struct {
+        gpfsFcntlHeader_t gpfsFcntlHeader;
+        gpfsSetAppendOnly_t gpfsSetAppendOnly;
+    } gpfs_hint_SetAppendOnly;
+
+    struct {
+        gpfsFcntlHeader_t gpfsFcntlHeader;
+        gpfsGetAppendOnly_t gpfsGetAppendOnly;
+    } gpfs_hint_GetAppendOnly;
+
+    struct {
+        gpfsFcntlHeader_t gpfsFcntlHeader;
+        gpfsSetStoragePool_t gpfsSetStoragePool;
+    } gpfs_hint_SetStoragePool;
+
+    struct {
+        gpfsFcntlHeader_t gpfsFcntlHeader;
+        gpfsRangeArray_t gpfsRangeArray;
+    } gpfs_hint_RangeArray;
+
+    struct {
+        gpfsFcntlHeader_t gpfsFcntlHeader;
+        gpfsMultipleAccessRange_t gpfsMultipleAccessRange;
+    } gpfs_hint_MultipleAccessRange;
+    */
 
     strcpy(gpfsHintsKey, "useSIOXLib");
     ompi_info_get(info_selected, gpfsHintsKey, valueLen, value, &flag);
@@ -204,7 +181,8 @@ int mca_fs_gpfs_file_set_info(ompio_file_t *fh, struct ompi_info_t *info)
     strcpy(gpfsHintsKey, "gpfsAccessRange");
     ompi_info_get(info_selected, gpfsHintsKey, valueLen, value, &flag);
     if (flag) {
-        printf("GPFS Access Range is set: %s: %s\n", gpfsHintsKey, value);
+        opal_output(ompi_fs_base_framework.framework_output,
+                    "GPFS Access Range is set: %s: %s\n", gpfsHintsKey, value);
         gpfs_hint_AccessRange.gpfsFcntlHeader.totalLength = sizeof(gpfs_hint_AccessRange);
         gpfs_hint_AccessRange.gpfsFcntlHeader.fcntlVersion = GPFS_FCNTL_CURRENT_VERSION;
         gpfs_hint_AccessRange.gpfsFcntlHeader.fcntlReserved = 0;
@@ -222,7 +200,7 @@ int mca_fs_gpfs_file_set_info(ompio_file_t *fh, struct ompi_info_t *info)
         rc = gpfs_fcntl(gpfs_file_handle, &gpfs_hint_AccessRange);
         if (rc != 0) {
             rc = errno;
-            printf(
+            opal_output(ompi_fs_base_framework.framework_output,
                     "gpfs_hint_AccessRange gpfs_fcntl(file handle: %d): Error number is %d, %s\n",
                     gpfs_file_handle, rc, strerror(rc));
             ret = OMPI_ERROR;
@@ -233,7 +211,8 @@ int mca_fs_gpfs_file_set_info(ompio_file_t *fh, struct ompi_info_t *info)
     strcpy(gpfsHintsKey, "gpfsFreeRange");
     ompi_info_get(info_selected, gpfsHintsKey, valueLen, value, &flag);
     if (flag) {
-        printf("GPFS Free Range is set: %s: %s\n", gpfsHintsKey, value);
+        opal_output(ompi_fs_base_framework.framework_output,
+                    "GPFS Free Range is set: %s: %s\n", gpfsHintsKey, value);
         gpfs_hint_FreeRange.gpfsFcntlHeader.totalLength = sizeof(gpfs_hint_FreeRange);
         gpfs_hint_FreeRange.gpfsFcntlHeader.fcntlVersion = GPFS_FCNTL_CURRENT_VERSION;
         gpfs_hint_FreeRange.gpfsFcntlHeader.fcntlReserved = 0;
@@ -249,7 +228,7 @@ int mca_fs_gpfs_file_set_info(ompio_file_t *fh, struct ompi_info_t *info)
         rc = gpfs_fcntl(gpfs_file_handle, &gpfs_hint_FreeRange);
         if (rc != 0) {
             rc = errno;
-            printf(
+            opal_output(ompi_fs_base_framework.framework_output,
                     "gpfs_hint_FreeRange gpfs_fcntl(file handle: %d): Error number is %d, %s\n",
                     gpfs_file_handle, rc, strerror(rc));
             ret = OMPI_ERROR;
@@ -264,7 +243,8 @@ int mca_fs_gpfs_file_set_info(ompio_file_t *fh, struct ompi_info_t *info)
     strcpy(gpfsHintsKey, "gpfsClearFileCache");
     ompi_info_get(info_selected, gpfsHintsKey, valueLen, value, &flag);
     if (flag & (strcmp(value, "true") == 0)) {
-        printf("GPFS Clear File Cache is set: %s: %s\n", gpfsHintsKey, value);
+        opal_output(ompi_fs_base_framework.framework_output,
+                    "GPFS Clear File Cache is set: %s: %s\n", gpfsHintsKey, value);
         gpfs_hint_ClearFileCache.gpfsFcntlHeader.totalLength = sizeof(gpfs_hint_ClearFileCache);
         gpfs_hint_ClearFileCache.gpfsFcntlHeader.fcntlVersion = GPFS_FCNTL_CURRENT_VERSION;
         gpfs_hint_ClearFileCache.gpfsFcntlHeader.fcntlReserved = 0;
@@ -276,7 +256,7 @@ int mca_fs_gpfs_file_set_info(ompio_file_t *fh, struct ompi_info_t *info)
         rc = gpfs_fcntl(gpfs_file_handle, &gpfs_hint_ClearFileCache);
         if (rc != 0) {
             rc = errno;
-            printf(
+            opal_output(ompi_fs_base_framework.framework_output,
                     "gpfs_hint_ClearFileCache gpfs_fcntl(file handle: %d): Error number is %d, %s\n",
                     gpfs_file_handle, rc, strerror(rc));
             ret = OMPI_ERROR;
@@ -287,7 +267,8 @@ int mca_fs_gpfs_file_set_info(ompio_file_t *fh, struct ompi_info_t *info)
     strcpy(gpfsHintsKey, "gpfsCancelHints");
     ompi_info_get(info_selected, gpfsHintsKey, valueLen, value, &flag);
     if (flag & (strcmp(value, "true") == 0)) {
-        printf("GPFS Cancel Hints is set: %s: %s\n", gpfsHintsKey, value);
+        opal_output(ompi_fs_base_framework.framework_output,
+                    "GPFS Cancel Hints is set: %s: %s\n", gpfsHintsKey, value);
         gpfs_hint_CancelHints.gpfsFcntlHeader.totalLength = sizeof(gpfs_hint_CancelHints);
         gpfs_hint_CancelHints.gpfsFcntlHeader.fcntlVersion = GPFS_FCNTL_CURRENT_VERSION;
         gpfs_hint_CancelHints.gpfsFcntlHeader.fcntlReserved = 0;
@@ -299,73 +280,19 @@ int mca_fs_gpfs_file_set_info(ompio_file_t *fh, struct ompi_info_t *info)
         rc = gpfs_fcntl(gpfs_file_handle, &gpfs_hint_CancelHints);
         if (rc != 0) {
             rc = errno;
-            printf(
+            opal_output(ompi_fs_base_framework.framework_output,
                     "gpfs_hint_CancelHints gpfs_fcntl(file handle: %d): Error number is %d, %s\n",
                     gpfs_file_handle, rc, strerror(rc));
             ret = OMPI_ERROR;
         }
     }
 
-#if DATASHIPPING_ENABLED
-    //Setting GPFS Hint - gpfsDataShipStart
-    strcpy(gpfsHintsKey, "gpfsDataShipStart");
-    ompi_info_get(info_selected, gpfsHintsKey, valueLen, value, &flag);
-    if (flag) {
-        printf("GPFS Data Ship Start is set: %s: %s\n", gpfsHintsKey, value);
-        gpfs_hint_DataShipStart.gpfsFcntlHeader.totalLength = sizeof(gpfs_hint_DataShipStart);
-        gpfs_hint_DataShipStart.gpfsFcntlHeader.fcntlVersion = GPFS_FCNTL_CURRENT_VERSION;
-        gpfs_hint_DataShipStart.gpfsFcntlHeader.fcntlReserved = 0;
-
-        gpfs_hint_DataShipStart.gpfsDataShipStart.structLen =
-                sizeof(gpfs_hint_DataShipStart.gpfsDataShipStart);
-        gpfs_hint_DataShipStart.gpfsDataShipStart.structType = GPFS_DATA_SHIP_START;
-        token = strtok(value, split);
-        gpfs_hint_DataShipStart.gpfsDataShipStart.numInstances = atoi(token);
-        gpfs_hint_DataShipStart.gpfsDataShipStart.reserved = 0;
-
-        rc = gpfs_fcntl(gpfs_file_handle, &gpfs_hint_DataShipStart);
-        if (rc != 0) {
-            rc = errno;
-            printf(
-                    "gpfs_hint_DataShipStart gpfs_fcntl(file handle: %d): Error number is %d, %s\n",
-                    gpfs_file_handle, rc, strerror(rc));
-            ret = OMPI_ERROR;
-        }
-    }
-
-    //CN: TODO
-    //Setting GPFS Hint - gpfsDataShipMap
-    //Setting GPFS Hint - gpfsDataShipMapVariable
-
-    //Setting GPFS Hint - gpfsDataShipStop
-    strcpy(gpfsHintsKey, "gpfsDataShipStop");
-    ompi_info_get(info_selected, gpfsHintsKey, valueLen, value, &flag);
-    if (flag & strcmp(value, "true") == 0) {
-        printf("GPFS Data Ship Stop is set: %s: %s\n", gpfsHintsKey, value);
-        gpfs_hint_DataShipStop.gpfsFcntlHeader.totalLength = sizeof(gpfs_hint_DataShipStop);
-        gpfs_hint_DataShipStop.gpfsFcntlHeader.fcntlVersion = GPFS_FCNTL_CURRENT_VERSION;
-        gpfs_hint_DataShipStop.gpfsFcntlHeader.fcntlReserved = 0;
-
-        gpfs_hint_DataShipStop.gpfsDataShipStop.structLen =
-                sizeof(gpfs_hint_DataShipStop.gpfsDataShipStop);
-        gpfs_hint_DataShipStop.gpfsDataShipStop.structType = GPFS_DATA_SHIP_STOP;
-
-        rc = gpfs_fcntl(gpfs_file_handle, &gpfs_hint_DataShipStop);
-        if (rc != 0) {
-            rc = errno;
-            printf(
-                    "gpfs_hint_DataShipStop gpfs_fcntl(file handle: %d): Error number is %d, %s\n",
-                    gpfs_file_handle, rc, strerror(rc));
-            ret = OMPI_ERROR;
-        }
-    }
-#endif
-
     //Setting GPFS Hint - gpfsSetReplication
     strcpy(gpfsHintsKey, "gpfsSetReplication");
     ompi_info_get(info_selected, gpfsHintsKey, valueLen, value, &flag);
     if (flag) {
-        printf("GPFS Set Replication is set: %s: %s\n", gpfsHintsKey, value);
+        opal_output(ompi_fs_base_framework.framework_output,
+                    "GPFS Set Replication is set: %s: %s\n", gpfsHintsKey, value);
         gpfs_hint_SetReplication.gpfsFcntlHeader.totalLength = sizeof(gpfs_hint_SetReplication);
         gpfs_hint_SetReplication.gpfsFcntlHeader.fcntlVersion = GPFS_FCNTL_CURRENT_VERSION;
         gpfs_hint_SetReplication.gpfsFcntlHeader.fcntlReserved = 0;
@@ -383,7 +310,7 @@ int mca_fs_gpfs_file_set_info(ompio_file_t *fh, struct ompi_info_t *info)
         rc = gpfs_fcntl(gpfs_file_handle, &gpfs_hint_SetReplication);
         if (rc != 0) {
             rc = errno;
-            printf(
+            opal_output(ompi_fs_base_framework.framework_output,
                     "gpfs_hint_SetReplication gpfs_fcntl(file handle: %d): Error number is %d, %s\n",
                     gpfs_file_handle, rc, strerror(rc));
             ret = OMPI_ERROR;
@@ -397,7 +324,8 @@ int mca_fs_gpfs_file_set_info(ompio_file_t *fh, struct ompi_info_t *info)
     strcpy(gpfsHintsKey, "gpfsByteRange");
     ompi_info_get(info_selected, gpfsHintsKey, valueLen, value, &flag);
     if (flag) {
-        printf("GPFS Byte Range is set: %s: %s\n", gpfsHintsKey, value);
+        opal_output(ompi_fs_base_framework.framework_output,
+                    "GPFS Byte Range is set: %s: %s\n", gpfsHintsKey, value);
         gpfs_hint_ByteRange.gpfsFcntlHeader.totalLength = sizeof(gpfs_hint_ByteRange);
         gpfs_hint_ByteRange.gpfsFcntlHeader.fcntlVersion = GPFS_FCNTL_CURRENT_VERSION;
         gpfs_hint_ByteRange.gpfsFcntlHeader.fcntlReserved = 0;
@@ -410,7 +338,7 @@ int mca_fs_gpfs_file_set_info(ompio_file_t *fh, struct ompi_info_t *info)
         rc = gpfs_fcntl(gpfs_file_handle, &gpfs_hint_ByteRange);
         if (rc != 0) {
             rc = errno;
-            printf(
+            opal_output(ompi_fs_base_framework.framework_output,
                     "gpfs_hint_ByteRange gpfs_fcntl(file handle: %d): Error number is %d, %s\n",
                     gpfs_file_handle, rc, strerror(rc));
             ret = OMPI_ERROR;
@@ -421,7 +349,8 @@ int mca_fs_gpfs_file_set_info(ompio_file_t *fh, struct ompi_info_t *info)
     strcpy(gpfsHintsKey, "gpfsRestripeData");
     ompi_info_get(info_selected, gpfsHintsKey, valueLen, value, &flag);
     if (flag) {
-        printf("GPFS Restripe Data is set: %s: %s\n", gpfsHintsKey, value);
+        opal_output(ompi_fs_base_framework.framework_output,
+                    "GPFS Restripe Data is set: %s: %s\n", gpfsHintsKey, value);
         gpfs_hint_RestripeData.gpfsFcntlHeader.totalLength = sizeof(gpfs_hint_RestripeData);
         gpfs_hint_RestripeData.gpfsFcntlHeader.fcntlVersion = GPFS_FCNTL_CURRENT_VERSION;
         gpfs_hint_RestripeData.gpfsFcntlHeader.fcntlReserved = 0;
@@ -437,7 +366,7 @@ int mca_fs_gpfs_file_set_info(ompio_file_t *fh, struct ompi_info_t *info)
         rc = gpfs_fcntl(gpfs_file_handle, &gpfs_hint_RestripeData);
         if (rc != 0) {
             rc = errno;
-            printf(
+            opal_output(ompi_fs_base_framework.framework_output,
                     "gpfs_hint_RestripeData gpfs_fcntl(file handle: %d): Error number is %d, %s\n",
                     gpfs_file_handle, rc, strerror(rc));
             ret = OMPI_ERROR;
