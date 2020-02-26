@@ -127,13 +127,6 @@ mca_pml_cm_add_procs(struct ompi_proc_t** procs, size_t nprocs)
     }
 #endif
 
-    /* make sure remote procs are using the same PML as us */
-    if (OMPI_SUCCESS != (ret = mca_pml_base_pml_check_selected("cm",
-                                                              procs,
-                                                              nprocs))) {
-        return ret;
-    }
-
     ret = OMPI_MTL_CALL(add_procs(ompi_mtl, nprocs, procs));
     return ret;
 }

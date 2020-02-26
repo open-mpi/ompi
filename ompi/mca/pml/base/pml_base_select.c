@@ -44,8 +44,6 @@ typedef struct opened_component_t {
   mca_pml_base_component_t *om_component;
 } opened_component_t;
 
-static bool modex_reqd=false;
-
 /**
  * Function for selecting one component from all those that are
  * available.
@@ -59,7 +57,7 @@ static bool modex_reqd=false;
 int mca_pml_base_select(bool enable_progress_threads,
                         bool enable_mpi_threads)
 {
-    int i, priority = 0, best_priority = 0, num_pml = 0;
+    int i, priority = 0, best_priority = 0;
     opal_list_item_t *item = NULL;
     mca_base_component_list_item_t *cli = NULL;
     mca_pml_base_component_t *component = NULL, *best_component = NULL;
@@ -113,9 +111,6 @@ int mca_pml_base_select(bool enable_progress_threads,
                                  component->pmlm_version.mca_component_name );
             continue;
         }
-
-        /* this is a pml that could be considered */
-        num_pml++;
 
         /* Init component to get its priority */
         opal_output_verbose( 10, ompi_pml_base_framework.framework_output,
@@ -185,13 +180,6 @@ int mca_pml_base_select(bool enable_progress_threads,
     opal_output_verbose( 10, ompi_pml_base_framework.framework_output,
                          "selected %s best priority %d\n",
                          best_component->pmlm_version.mca_component_name, best_priority);
-
-    /* if more than one PML could be considered, then we still need the
-     * modex since we cannot know which one will be selected on all procs
-     */
-    if (1 < num_pml) {
-        modex_reqd = true;
-    }
 
     /* Save the winner */
 
@@ -286,11 +274,6 @@ int mca_pml_base_select(bool enable_progress_threads,
         opal_progress_register(mca_pml.pml_progress);
     }
 
-    /* register winner in the modex */
-    if (modex_reqd && 0 == OMPI_PROC_MY_NAME->vpid) {
-        mca_pml_base_pml_selected(best_component->pmlm_version.mca_component_name);
-    }
-
     /* All done */
 
     return OMPI_SUCCESS;
@@ -305,79 +288,3 @@ static mca_base_component_t pml_base_component = {
     .mca_component_minor_version = 0,
     .mca_component_release_version = 0,
 };
-
-
-int
-mca_pml_base_pml_selected(const char *name)
-{
-    int rc;
-
-    OPAL_MODEX_SEND(rc, PMIX_GLOBAL, &pml_base_component, name, strlen(name) + 1);
-    return rc;
-}
-
-int
-mca_pml_base_pml_check_selected(const char *my_pml,
-                                ompi_proc_t **procs,
-                                size_t nprocs)
-{
-    size_t size;
-    int ret;
-    char *remote_pml;
-
-    /* if no modex was required by the PML, then
-     * we can assume success
-     */
-    if (!modex_reqd) {
-        opal_output_verbose( 10, ompi_pml_base_framework.framework_output,
-                            "check:select: modex not reqd");
-        return OMPI_SUCCESS;
-    }
-
-    /* if we are rank=0, then we can also assume success */
-    if (0 == OMPI_PROC_MY_NAME->vpid) {
-        opal_output_verbose( 10, ompi_pml_base_framework.framework_output,
-                            "check:select: rank=0");
-        return OMPI_SUCCESS;
-    }
-
-    /* get the name of the PML module selected by rank=0 */
-    OPAL_MODEX_RECV(ret, &pml_base_component,
-                    &procs[0]->super.proc_name, (void**) &remote_pml, &size);
-
-    /* if this key wasn't found, then just assume all is well... */
-    if (OMPI_SUCCESS != ret) {
-        opal_output_verbose( 10, ompi_pml_base_framework.framework_output,
-                            "check:select: modex data not found");
-        return OMPI_SUCCESS;
-    }
-
-    /* the remote pml returned should never be NULL if an error
-     * wasn't returned, but just to be safe, and since the check
-     * is fast...let's be sure
-     */
-    if (NULL == remote_pml) {
-        opal_output_verbose( 10, ompi_pml_base_framework.framework_output,
-                            "check:select: got a NULL pml from rank=0");
-        return OMPI_ERR_UNREACH;
-    }
-
-    opal_output_verbose( 10, ompi_pml_base_framework.framework_output,
-                        "check:select: checking my pml %s against rank=0 pml %s",
-                        my_pml, remote_pml);
-
-    /* if that module doesn't match my own, return an error */
-    if ((size != strlen(my_pml) + 1) ||
-        (0 != strcmp(my_pml, remote_pml))) {
-        opal_output(0, "%s selected pml %s, but peer %s on %s selected pml %s",
-                    OMPI_NAME_PRINT(&ompi_proc_local()->super.proc_name),
-                    my_pml, OMPI_NAME_PRINT(&procs[0]->super.proc_name),
-                    (NULL == procs[0]->super.proc_hostname) ? "unknown" : procs[0]->super.proc_hostname,
-                    remote_pml);
-        free(remote_pml); /* cleanup before returning */
-        return OMPI_ERR_UNREACH;
-    }
-
-    free(remote_pml);
-    return OMPI_SUCCESS;
-}

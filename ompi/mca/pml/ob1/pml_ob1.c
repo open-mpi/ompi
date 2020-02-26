@@ -320,21 +320,6 @@ int mca_pml_ob1_add_procs(ompi_proc_t** procs, size_t nprocs)
     if(OMPI_SUCCESS != rc)
         return rc;
 
-    /*
-     * JJH: Disable this in FT enabled builds since
-     * we use a wrapper PML. It will cause this check to
-     * return failure as all processes will return the wrapper PML
-     * component in use instead of the wrapped PML component underneath.
-     */
-#if OPAL_ENABLE_FT_CR == 0
-    /* make sure remote procs are using the same PML as us */
-    if (OMPI_SUCCESS != (rc = mca_pml_base_pml_check_selected("ob1",
-                                                              procs,
-                                                              nprocs))) {
-        return rc;
-    }
-#endif
-
     rc = mca_bml.bml_add_procs( nprocs,
                                 procs,
                                 &reachable );
