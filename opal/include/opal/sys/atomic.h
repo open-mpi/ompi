@@ -164,8 +164,6 @@ enum {
  *********************************************************************/
 #if defined(DOXYGEN)
 /* don't include system-level gorp when generating doxygen files */
-#elif OPAL_ASSEMBLY_BUILTIN == OPAL_BUILTIN_SYNC
-#include "opal/sys/sync_builtin/atomic.h"
 #elif OPAL_ASSEMBLY_BUILTIN == OPAL_BUILTIN_GCC
 #include "opal/sys/gcc_builtin/atomic.h"
 #elif OPAL_ASSEMBLY_ARCH == OPAL_X86_64
