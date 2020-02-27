@@ -1,6 +1,4 @@
-trigger:
-  - master
-  - v*.*.x
+trigger: none
 pr:
   - master
   - v*.*.x
