@@ -27,7 +27,7 @@
 
 void shmem_udcflush(void)
 {
-#if (OPAL_ASSEMBLY_ARCH == OPAL_IA64) || (OPAL_ASSEMBLY_ARCH == OPAL_IA32) || (OPAL_ASSEMBLY_ARCH == OPAL_X86_64)
+#if (OPAL_ASSEMBLY_ARCH == OPAL_IA32) || (OPAL_ASSEMBLY_ARCH == OPAL_X86_64)
     do {SHMEM_API_VERBOSE(10,"shmem_udcflush is not supported by the current CPU architecture");}while (0);
 #else
     /* another implementation */

@@ -30,59 +30,7 @@
 #include <dlfcn.h>
 #include <assert.h>
 
-#if (OPAL_ASSEMBLY_ARCH == OPAL_IA32) || (OPAL_ASSEMBLY_ARCH == OPAL_IA64) || (OPAL_ASSEMBLY_ARCH == OPAL_X86_64)
-
-#if (OPAL_ASSEMBLY_ARCH == OPAL_IA64)
-
-#define INSERT_BIT(d,p,v) do {                  \
-        unsigned char c=*(d);                     \
-        assert(((p) < 8) && ((p) >= 0));          \
-        c&= ~(1<<(p));                            \
-        c|= ((v)<<(p));                           \
-        *(d) = c;                                 \
-    } while (0)
-
-static inline void
-copy_instr_slot(unsigned char **dst, int *dst_bitpos, unsigned long instr_slot)
-{
-    for (int i = 40 ; i >= 0 ; --i) {
-        INSERT_BIT(*dst, *dst_bitpos, (instr_slot>>i)&1);
-        if (*dst_bitpos == 0) {
-            ++*dst;
-            *dst_bitpos = 7;
-        } else {
-            --*dst_bitpos;
-        }
-    }
-}
-
-static void make_ia64_bundle (unsigned char *dst,
-                              unsigned long i2,
-                              unsigned long i1,
-                              unsigned long i0,
-                              unsigned template)
-{
-/*
- * each instr is 41 bits, template is 5 bits
- *
- * generate the bit concatenation of i2:i1:i0:t, all in all 128 bits
- *
- */
-
-    int dst_bitpos = 7;
-
-    copy_instr_slot(&dst, &dst_bitpos, i2);
-    copy_instr_slot(&dst, &dst_bitpos, i1);
-    copy_instr_slot(&dst, &dst_bitpos, i0);
-
-    assert(dst_bitpos == 4);
-
-    for (int i = 4 ; i >= 0 ; --i) {
-        INSERT_BIT(dst, dst_bitpos, (template>>i)&1);
-        --dst_bitpos;
-    }
-}
-#endif /* defined(__ia64__) */
+#if (OPAL_ASSEMBLY_ARCH == OPAL_IA32) || (OPAL_ASSEMBLY_ARCH == OPAL_X86_64)
 
 static int mca_patcher_overwrite_apply_patch (mca_patcher_base_patch_t *patch)
 {
@@ -100,53 +48,6 @@ static int mca_patcher_overwrite_apply_patch (mca_patcher_base_patch_t *patch)
         *(unsigned char*) (patch->patch_data +10) = 0x41;
         *(unsigned char*) (patch->patch_data +11) = 0xff;
         *(unsigned char*) (patch->patch_data +12) = 0xe3;
-#elif (OPAL_ASSEMBLY_ARCH == OPAL_IA64)
-      {
-/*
- * target64 = IP + ((i << 59 | imm39 << 20 | imm20) << 4)
- * imm64 = i << 63 | imm41 << 22 | ic << 21 | imm5c << 16 | imm9d << 7 | imm7b
- */
-         unsigned char buf[16];
-         unsigned long long imm64 =  func_new_addr - patch->patch_orig - 16;
-         register unsigned long long glb_ptr  __asm__("r1");
-         unsigned long long nop =
-            (0x0ULL<<37) | /* O     */
-            (0x0ULL<<36) | /* i     */
-            (0x0ULL<<33) | /* x3    */
-            (0x1ULL<<27) | /* x6    */
-            (0x0ULL<< 6) | /* imm20 */
-            (0x0ULL<< 0);  /* qp    */
-         unsigned long long brl =
-            (0xcULL                   << 37) |
-            (((imm64>>63)&0x1ULL)     << 36) |
-            (0x0ULL                   << 35) |
-            (0x0ULL                   << 33) |
-            (((imm64>>4)&0xFFFFFULL)  << 13) |
-            (0x0ULL                   <<  6) |
-            (0x0ULL                   <<  0);
-         unsigned long long movl =
-            (0x6ULL                    << 37) |
-            (((glb_ptr>>63)&0x1ULL)    << 36) |
-            (((glb_ptr>> 7)&0x1FFULL)  << 27) |
-            (((glb_ptr>>16)&0x1FULL)   << 22) |
-            (((glb_ptr>>21)&0x1ULL)    << 21) |
-            (0ULL                      << 20) |
-            (((glb_ptr>> 0)&0x7FULL)   << 13) |
-            (1ULL                      <<  6) |
-            (0x0ULL                    <<  0);
-
-         patch->patch_data_size = 32;
-
-         make_ia64_bundle(buf, movl, (glb_ptr>>22)&0x1FFFFFFFFFFULL, nop, 5);
-         for (int i = 0 ; i < 16 ; ++i) {
-             patch->patch_data[16-i-1] = buf[i];
-         }
-
-         make_ia64_bundle(buf, brl, ((imm64>>24)&0x7FFFFFFFFFULL)<<2, nop, 5);
-         for (int i = 0 ; i < 16 ; ++i) {
-             patch->patch_data[32-i-1] = buf[i];
-         }
-      }
 #endif
     }
 
@@ -358,12 +259,6 @@ static int mca_patcher_overwrite_patch_symbol (const char *func_symbol_name, uin
     }
 
     old_addr = (unsigned long)sym_addr;
-
-#if (OPAL_ASSEMBLY_ARCH == OPAL_IA64)
-    /* On IA64 addresses are all indirect */
-    func_new_addr = *(unsigned long *)func_new_addr;
-    old_addr = *(unsigned long *) old_addr;
-#endif
 
     if (func_old_addr) {
         /* we will be overwritting part of the original function. do not return
