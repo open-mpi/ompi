@@ -173,18 +173,6 @@ AC_DEFUN([MCA_opal_hwloc_external_CONFIG],[
                   AC_CHECK_DECLS([HWLOC_OBJ_OSDEV_COPROC], [], [], [#include <hwloc.h>])
                   AC_CHECK_FUNCS([hwloc_topology_dup])
 
-                  # See if the external hwloc supports XML
-                  AC_MSG_CHECKING([if external hwloc supports XML])
-                  AS_IF([test "$opal_hwloc_dir" != ""],
-                        [opal_hwloc_external_lstopo="$opal_hwloc_dir/bin/lstopo"],
-                        [OPAL_WHICH(lstopo, opal_hwloc_external_lstopo)])
-                  opal_hwloc_external_tmp=`$opal_hwloc_external_lstopo --help | $GREP "Supported output file formats" | grep xml`
-                  AS_IF([test "$opal_hwloc_external_tmp" = ""],
-                        [opal_hwloc_external_enable_xml=0
-                         AC_MSG_RESULT([no])],
-                        [opal_hwloc_external_enable_xml=1
-                         AC_MSG_RESULT([yes])])
-
                   AC_CHECK_HEADERS([infiniband/verbs.h])
 
                   # These flags need to get passed to the wrapper compilers

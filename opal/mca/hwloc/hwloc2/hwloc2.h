@@ -42,7 +42,7 @@ BEGIN_C_DECLS
 #    if defined(HAVE_INFINIBAND_VERBS_H)
 #        include "hwloc/include/hwloc/openfabrics-verbs.h"
 #    else
-#        error Tried to include hwloc verbs helper file, but hwloc was compiled with no OpenFabrics support
+#        error Tried to include hwloc verbs helper file, but <infiniband/verbs.h> is missing
 #    endif
 #endif
 
