@@ -3,6 +3,7 @@
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .\" Copyright (c) 2020      Google, LLC. All rights reserved.
+.\" Copyright (c) 2020      FUJITSU LIMITED.  All rights reserved.
 .\" $COPYRIGHT$
 .TH MPI_Request_free 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -18,7 +19,8 @@ int MPI_Request_free(MPI_Request *request)
 .fi
 .SH Fortran Syntax
 .nf
-\s-1INCLUDE\s0 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_REQUEST_FREE(REQUEST, IERROR)
 	INTEGER	REQUEST, IERROR
 
