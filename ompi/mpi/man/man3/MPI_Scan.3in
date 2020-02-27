@@ -4,6 +4,7 @@
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .\" Copyright (c) 2020      Google, LLC. All rights reserved.
+.\" Copyright (c) 2020      FUJITSU LIMITED.  All rights reserved.
 .\" $COPYRIGHT$
 .TH MPI_Scan 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 
@@ -38,6 +39,7 @@ MPI_ISCAN(\fISENDBUF, RECVBUF, COUNT, DATATYPE, OP, COMM, REQUEST, IERROR\fP)
 
 .fi
 .SH Fortran 2008 Syntax
+.nf
 USE mpi_f08
 MPI_Scan(\fIsendbuf\fP, \fIrecvbuf\fP, \fIcount\fP, \fIdatatype\fP, \fIop\fP, \fIcomm\fP, \fIierror\fP)
 	TYPE(*), DIMENSION(..), INTENT(IN) :: \fIsendbuf\fP

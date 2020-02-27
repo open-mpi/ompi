@@ -1,6 +1,7 @@
 .\" -*- nroff -*-
 .\" Copyright (c) 2015      Research Organization for Information Science
 .\"                         and Technology (RIST). All rights reserved.
+.\" Copyright (c) 2020      FUJITSU LIMITED.  All rights reserved.
 .\" $COPYRIGHT$
 .TH MPI_Win_get_info 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -19,7 +20,7 @@ int MPI_Win_get_info(MPI_Win \fIwin\fP, MPI_Info \fI*info_used\fP)
 USE MPI
 ! or the older form: INCLUDE 'mpif.h'
 MPI_WIN_GET_INFO(\fIWIN, INFO_USED, IERROR\fP)
-	INTEGER	\fICOMM, INFO_USED, IERROR \fP
+	INTEGER	\fIWIN, INFO_USED, IERROR \fP
 .
 .fi
 .SH Fortran 2008 Syntax

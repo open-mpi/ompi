@@ -4,6 +4,7 @@
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .\" Copyright (c) 2020      Google, LLC. All rights reserved.
+.\" Copyright (c) 2020      FUJITSU LIMITED.  All rights reserved.
 .\" $COPYRIGHT$
 .TH MPI_Scatterv 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -41,6 +42,7 @@ MPI_ISCATTERV(\fISENDBUF, SENDCOUNTS, DISPLS, SENDTYPE, RECVBUF,
 
 .fi
 .SH Fortran 2008 Syntax
+.nf
 USE mpi_f08
 MPI_Scatterv(\fIsendbuf\fP, \fIsendcounts\fP, \fIdispls\fP, \fIsendtype\fP, \fIrecvbuf\fP, \fIrecvcount\fP,
 		\fIrecvtype\fP, \fIroot\fP, \fIcomm\fP, \fIierror\fP)

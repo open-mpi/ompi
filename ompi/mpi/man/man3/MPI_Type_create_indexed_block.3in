@@ -4,6 +4,7 @@
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines
 .\" Copyright (c) 2020      Google, LLC. All rights reserved.
+.\" Copyright (c) 2020      FUJITSU LIMITED.  All rights reserved.
 .\" $COPYRIGHT$
 .TH MPI_Type_create_indexed_block 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -36,6 +37,7 @@ MPI_TYPE_CREATE_HINDEXED_BLOCK(\fICOUNT, BLOCKLENGTH,
 
 .fi
 .SH Fortran 2008 Syntax
+.nf
 USE mpi_f08
 MPI_Type_create_indexed_block(\fIcount\fP, \fIblocklength\fP, \fIarray_of_displacements\fP,
 		\fIoldtype\fP, \fInewtype\fP, \fIierror\fP)
