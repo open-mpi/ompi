@@ -17,6 +17,9 @@
 # Copyright (c) 2014-2018 Research Organization for Information Science
 #                         and Technology (RIST).  All rights reserved.
 # Copyright (c) 2016      IBM Corporation.  All rights reserved.
+# Copyright (c) 2020      Triad National Security, LLC. All rights
+#                         reserved.
+#
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -180,14 +183,17 @@ AC_DEFUN([OPAL_CHECK_PMIX_LIB],[
           [$3
            # add the new flags to our wrapper compilers
            AS_IF([test "$pmix_ext_install_incdir" != "/usr" && test "$pmix_ext_install_incdir" != "/usr/include"],
-                 [pmix_pmix4x_WRAPPER_EXTRA_CPPFLAGS="-I$pmix_ext_install_incdir"])
+                 [pmix_external_WRAPPER_EXTRA_CPPFLAGS="-I$pmix_ext_install_incdir"])
            AS_IF([test "$pmix_ext_install_libdir" != "/usr" && test "$pmix_ext_install_libdir" != "/usr/include"],
-                 [pmix_external_WRAPPER_EXTRA_LDFLAGS="-L$pmix_ext_install_libdir"])
-           pmix_external_WRAPPER_EXTRA_LIBS=-lpmix],
-          [CPPFLAGS=$opal_external_pmix_save_CPPFLAGS
-           LDFLAGS=$opal_external_pmix_save_LDFLAGS
-           LIBS=$opal_external_pmix_save_LIBS
-           $4])
+                 [pmix_external_WRAPPER_EXTRA_LDFLAGS="-L$pmix_ext_install_libdir"
+                  pmix_external_WRAPPER_EXTRA_LIBS="-lpmix"])],
+          [$4])
+
+dnl swap back in original LDFLAGS, LIBS to avoid messing up subsequent configury checks
+dnl don't swap back in orig CFLAGS as there are lots of places where the external pmix
+dnl header file location needs to be known
+    LDFLAGS=$opal_external_pmix_save_LDFLAGS
+    LIBS=$opal_external_pmix_save_LIBS
 
     OPAL_VAR_SCOPE_POP
 ])
@@ -257,11 +263,14 @@ AC_DEFUN([OPAL_CHECK_PMIX],[
            AS_IF([test "$pmix_ext_install_dir" != "/usr"],
                  [opal_external_pmix_CPPFLAGS="-I$pmix_ext_install_dir/include"
                   opal_external_pmix_LDFLAGS=-L$pmix_ext_install_libdir])
-           opal_external_pmix_LIBS=-lpmix],
+           opal_external_pmix_LIBS="-lpmix"],
           [AC_MSG_RESULT([internal])])
 
     AC_DEFINE_UNQUOTED([OPAL_PMIX_V1],[$opal_external_have_pmix1],
                        [Whether the external PMIx library is v1])
+
+    AC_SUBST(opal_external_pmix_LDFLAGS)
+    AC_SUBST(opal_external_pmix_LIBS)
 
     AS_IF([test "$opal_external_pmix_happy" = "yes"],
           [AS_IF([test "$opal_external_pmix_version" = "1x"],

@@ -1,6 +1,9 @@
 #
 # Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2016-2019 Intel, Inc.  All rights reserved.
+# Copyright (c) 2020      Triad National Security, LLC. All rights
+#                         reserved.
+#
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -19,8 +22,10 @@ noinst_LTLIBRARIES = libmca_pmix_external.la
 libmca_pmix_external_la_SOURCES = \
         external.h \
         pmix_external_component.c
+
+libmca_pmix_external_la_LIBADD = $(opal_external_pmix_LIBS)
 libmca_pmix_external_la_LDFLAGS = \
-    -module -avoid-version
+    -module -avoid-version $(opal_external_pmix_LDFLAGS)
 
 # Conditionally install the header files
 if WANT_INSTALL_HEADERS
