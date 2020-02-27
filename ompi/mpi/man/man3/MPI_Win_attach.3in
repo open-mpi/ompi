@@ -1,7 +1,7 @@
 .\" -*- nroff -*-
 .\" Copyright (c) 2015-2019 Research Organization for Information Science
 .\"                         and Technology (RIST).  All rights reserved.
-.\" Copyright (c) 2019      FUJITSU LIMITED.  All rights reserved.
+.\" Copyright (c) 2019-2020 FUJITSU LIMITED.  All rights reserved.
 .\" $COPYRIGHT$
 .TH MPI_Win_attach 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -25,6 +25,9 @@ MPI_WIN_ATTACH(\fIWIN, BASE, SIZE, IERROR\fP)
 	INTEGER(KIND=MPI_ADDRESS_KIND) \fISIZE\fP
 	INTEGER \fIWIN, IERROR\fP
 
+MPI_WIN_DETACH(\fIWIN, BASE, IERROR\fP)
+	<type> \fIBASE\fP(*)
+	INTEGER \fIWIN, IERROR\fP
 .fi
 .SH Fortran 2008 Syntax
 .nf
@@ -35,6 +38,10 @@ MPI_Win_attach(\fIwin\fP, \fIbase\fP, \fIsize\fP, \fIierror\fP)
 	INTEGER(KIND=MPI_ADDRESS_KIND), INTENT(IN) :: \fIsize\fP
 	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
+MPI_Win_detach(\fIwin\fP, \fIbase\fP, \fIierror\fP)
+	TYPE(MPI_Win), INTENT(IN) :: \fIwin\fP
+	TYPE(*), DIMENSION(..), INTENT(IN) :: \fIbase\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 .fi
 .SH INPUT PARAMETERS
 .ft R
