@@ -5,6 +5,7 @@
 .\" Copyright 2015      Research Organization for Information Science
 .\"                     and Technology (RIST). All rights reserved.
 .\" Copyright (c) 2020      Google, LLC. All rights reserved.
+.\" Copyright (c) 2020      FUJITSU LIMITED.  All rights reserved.
 .\" $COPYRIGHT$
 .TH MPI_File_get_position_shared 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -14,8 +15,9 @@
 .ft R
 .nf
 .SH C Syntax
-    #include <mpi.h>
-    int MPI_File_get_position_shared(MPI_File \fIfh\fP, MPI_Offset \fI*offset\fP)
+.nf
+#include <mpi.h>
+int MPI_File_get_position_shared(MPI_File \fIfh\fP, MPI_Offset \fI*offset\fP)
 
 .fi
 .SH Fortran Syntax (see FORTRAN 77 NOTES)

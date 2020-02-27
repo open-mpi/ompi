@@ -3,6 +3,7 @@
 .\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
+.\" Copyright (c) 2020      FUJITSU LIMITED.  All rights reserved.
 .\" $COPYRIGHT$
 .TH MPI_Dist_graph_create 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -53,7 +54,7 @@ n
 Number of source nodes for which this process specifies edges (non-negative integer).
 .TP 1i
 sources
-Array containing the \fIn\fP source nodes for which this process species edges (array of non-negative integers).
+Array containing the \fIn\fP source nodes for which this process specifies edges (array of non-negative integers).
 .TP 1i
 degrees
 Array specifying the number of destinations for each source node in the source node array (array of non-negative integers).
@@ -64,6 +65,7 @@ Destination nodes for the source nodes in the source node array (array of non-ne
 weights
 Weights for source to destination edges (array of non-negative integers).
 .TP 1i
+info
 Hints on optimization and interpretation of weights (handle).
 .TP 1i
 reorder
@@ -73,7 +75,7 @@ Ranking may be reordered (true) or not (false) (logical).
 .ft R
 .TP 1i
 comm_dist_graph
-Communicator with distibuted graph topology added (handle).
+Communicator with distributed graph topology added (handle).
 .ft R
 .TP 1i
 IERROR
@@ -88,7 +90,7 @@ constructor with a set of directed (source,destination) communication edges as d
 Every process passes an array of \fIn\fP source nodes in the \fIsources\fP array. For each source node, a
 non-negative number of destination nodes is specied in the \fIdegrees\fP array. The destination
 nodes are stored in the corresponding consecutive segment of the \fIdestinations\fP array. More
-precisely, if the i-th node in sources is s, this species \fIdegrees\fP[i] \fIedges\fP (s,d) with d of the j-th
+precisely, if the i-th node in sources is s, this specifies \fIdegrees\fP[i] \fIedges\fP (s,d) with d of the j-th
 such edge stored in \fIdestinations\fP[\fIdegrees\fP[0]+...+\fIdegrees\fP[i-1]+j]. The weight of this edge is
 stored in \fIweights\fP[\fIdegrees\fP[0]+...+\fIdegrees\fP[i-1]+j]. Both the \fIsources\fP and the \fIdestinations\fP arrays
 may contain the same node more than once, and the order in which nodes are listed as
