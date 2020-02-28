@@ -324,6 +324,7 @@ mca_pml_base_pml_check_selected(const char *my_pml,
     size_t size;
     int ret;
     char *remote_pml;
+    opal_process_name_t rank0 = {.jobid = ompi_proc_local()->super.proc_name.jobid, .vpid = 0};
 
     /* if no modex was required by the PML, then
      * we can assume success
@@ -342,13 +343,13 @@ mca_pml_base_pml_check_selected(const char *my_pml,
     }
 
     /* get the name of the PML module selected by rank=0 */
-    OPAL_MODEX_RECV(ret, &pml_base_component,
-                    &procs[0]->super.proc_name, (void**) &remote_pml, &size);
+    OPAL_MODEX_RECV_STRING_OPTIONAL(ret, mca_base_component_to_string(&pml_base_component),
+                                    &rank0, (void**) &remote_pml, &size);
 
     /* if this key wasn't found, then just assume all is well... */
-    if (OMPI_SUCCESS != ret) {
+    if (PMIX_ERR_NOT_FOUND != ret) {
         opal_output_verbose( 10, ompi_pml_base_framework.framework_output,
-                            "check:select: modex data not found");
+                            "check:select: PML modex for vpid 0 data not found");
         return OMPI_SUCCESS;
     }
 
