@@ -274,6 +274,7 @@ typedef struct {
         OPAL_PMIX_CONVERT_NAME(&_proc, (p));                                            \
         PMIX_INFO_LOAD(&_info, PMIX_OPTIONAL, NULL, PMIX_BOOL);                         \
         (r) = PMIx_Get(&(_proc), (s), &(_info), 1, &(_kv));                             \
+        PMIX_INFO_DESTRUCT(&_info);                                                     \
         if (NULL == _kv) {                                                              \
             (r) = PMIX_ERR_NOT_FOUND;                                                   \
         } else if (_kv->type != (t)) {                                                  \
@@ -301,8 +302,8 @@ typedef struct {
  *     is to be returned
  * t - the expected data type
  */
-#define OPAL_MODEX_RECV_VALUE_IMMEDIATE(r, s, p, d, t)                                   \
-    do {                                                                                 \
+#define OPAL_MODEX_RECV_VALUE_IMMEDIATE(r, s, p, d, t)                                  \
+    do {                                                                                \
         pmix_proc_t _proc;                                                              \
         pmix_value_t *_kv = NULL;                                                       \
         pmix_info_t _info;                                                              \
@@ -315,6 +316,7 @@ typedef struct {
         OPAL_PMIX_CONVERT_NAME(&_proc, (p));                                            \
         PMIX_INFO_LOAD(&_info, PMIX_IMMEDIATE, NULL, PMIX_BOOL);                        \
         (r) = PMIx_Get(&(_proc), (s), &(_info), 1, &(_kv));                             \
+        PMIX_INFO_DESTRUCT(&_info);                                                     \
         if (NULL == _kv) {                                                              \
             (r) = PMIX_ERR_NOT_FOUND;                                                   \
         } else if (_kv->type != (t)) {                                                  \
@@ -349,7 +351,7 @@ typedef struct {
                             OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),                 \
                             __FILE__, __LINE__,                                 \
                             OPAL_NAME_PRINT(*(p)), (s)));                       \
-        OPAL_PMIX_CONVERT_NAME(&_proc, (p));                                   \
+        OPAL_PMIX_CONVERT_NAME(&_proc, (p));                                    \
         (r) = PMIx_Get(&(_proc), (s), NULL, 0, &(_kv));                         \
         if (NULL == _kv) {                                                      \
             (r) = PMIX_ERR_NOT_FOUND;                                           \
@@ -406,6 +408,47 @@ typedef struct {
  * from another process:
  *
  * r - the integer return status from the modex op (int)
+ * s - string key (char*)
+ * p - pointer to the opal_process_name_t of the proc that posted
+ *     the data (opal_process_name_t*)
+ * d - pointer to a location wherein the data object
+ *     it to be returned (char**)
+ * sz - pointer to a location wherein the number of bytes
+ *     in the data object can be returned (size_t)
+ */
+#define OPAL_MODEX_RECV_STRING_IMMEDIATE(r, s, p, d, sz)                        \
+    do {                                                                        \
+        pmix_proc_t _proc;                                                      \
+        pmix_value_t *_kv = NULL;                                               \
+        pmix_info_t _info;                                                      \
+        OPAL_OUTPUT_VERBOSE((1, opal_pmix_verbose_output,                       \
+                            "%s[%s:%d] MODEX RECV STRING FOR PROC %s KEY %s",   \
+                            OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),                 \
+                            __FILE__, __LINE__,                                 \
+                            OPAL_NAME_PRINT(*(p)), (s)));                       \
+        *(d) = NULL;                                                            \
+        *(sz) = 0;                                                              \
+        OPAL_PMIX_CONVERT_NAME(&_proc, (p));                                    \
+        PMIX_INFO_LOAD(&_info, PMIX_IMMEDIATE, NULL, PMIX_BOOL);                \
+        (r) = PMIx_Get(&(_proc), (s), &_info, 1, &(_kv));                       \
+        PMIX_INFO_DESTRUCT(&_info);                                             \
+        if (NULL == _kv) {                                                      \
+            (r) = PMIX_ERR_NOT_FOUND;                                           \
+        } else if (PMIX_SUCCESS == (r)) {                                       \
+            *(d) = (uint8_t*)_kv->data.bo.bytes;                                \
+            *(sz) = _kv->data.bo.size;                                          \
+            _kv->data.bo.bytes = NULL; /* protect the data */                   \
+        }                                                                       \
+        if (NULL != _kv) {                                                      \
+            PMIX_VALUE_RELEASE(_kv);                                            \
+        }                                                                       \
+    } while(0);
+
+/**
+ * Provide a simplified macro for retrieving modex data
+ * from another process:
+ *
+ * r - the integer return status from the modex op (int)
  * s - the MCA component that posted the data (mca_base_component_t*)
  * p - pointer to the opal_process_name_t of the proc that posted
  *     the data (opal_process_name_t*)
@@ -431,6 +474,38 @@ typedef struct {
             free(_key);                                                 \
         }                                                               \
     } while(0);
+
+/**
+ * Provide a simplified macro for retrieving modex data
+ * from another process:
+ *
+ * r - the integer return status from the modex op (int)
+ * s - the MCA component that posted the data (mca_base_component_t*)
+ * p - pointer to the opal_process_name_t of the proc that posted
+ *     the data (opal_process_name_t*)
+ * d - pointer to a location wherein the data object
+ *     it to be returned (char**)
+ * sz - pointer to a location wherein the number of bytes
+ *     in the data object can be returned (size_t)
+ */
+#define OPAL_MODEX_RECV_IMMEDIATE(r, s, p, d, sz)                           \
+    do {                                                                    \
+        char *_key;                                                         \
+        _key = mca_base_component_to_string((s));                           \
+        OPAL_OUTPUT_VERBOSE((1, opal_pmix_verbose_output,                   \
+                            "%s[%s:%d] MODEX RECV FOR PROC %s KEY %s",      \
+                            OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),             \
+                            __FILE__, __LINE__,                             \
+                            OPAL_NAME_PRINT(*(p)), _key));                  \
+        if (NULL == _key) {                                                 \
+            OPAL_ERROR_LOG(OPAL_ERR_OUT_OF_RESOURCE);                       \
+            (r) = OPAL_ERR_OUT_OF_RESOURCE;                                 \
+        } else {                                                            \
+            OPAL_MODEX_RECV_STRING_IMMEDIATE((r), _key, (p), (d), (sz));    \
+            free(_key);                                                     \
+        }                                                                   \
+    } while(0);
+
 
 #define PMIX_ERROR_LOG(r)          \
     opal_output(0, "[%s:%d] PMIx Error: %s", __FILE__, __LINE__, PMIx_Error_string((r)))

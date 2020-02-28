@@ -206,8 +206,8 @@ static int init_vader_endpoint (struct mca_btl_base_endpoint_t *ep, struct opal_
     ep->peer_smp_rank = remote_rank;
 
     if (remote_rank != MCA_BTL_VADER_LOCAL_RANK) {
-        OPAL_MODEX_RECV(rc, &component->super.btl_version,
-                        &proc->proc_name, (void **) &modex, &msg_size);
+        OPAL_MODEX_RECV_IMMEDIATE(rc, &component->super.btl_version,
+                                  &proc->proc_name, (void **) &modex, &msg_size);
         if (OPAL_SUCCESS != rc) {
             return rc;
         }
