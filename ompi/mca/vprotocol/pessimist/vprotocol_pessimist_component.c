@@ -30,6 +30,7 @@ static int _free_list_inc;
 static int _sender_based_size;
 static int _event_buffer_size;
 static char *_mmap_file_name;
+static int ompi_vprotocol_pessimist_allow_thread_multiple;
 
 mca_vprotocol_base_component_2_0_0_t mca_vprotocol_pessimist_component =
 {
@@ -94,13 +95,27 @@ static int mca_vprotocol_pessimist_component_register(void)
                                            "sender_based_file", NULL, MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY, &_mmap_file_name);
+    /* Provide an overwrite allowing the PML V to run even if the OMPI library has been
+     * initialized with full support for THREAD_MULTIPLE.
+     */
+    ompi_vprotocol_pessimist_allow_thread_multiple = 0;
+    (void) mca_base_component_var_register(&mca_vprotocol_pessimist_component.pmlm_version,
+                                           "allow_thread_multiple", "Allow the PML V to work even when the MPI"
+                                           " library is initialized with MPI_THREAD_MULTIPLE support. By "
+                                           "default the PML V is disabled in such instances, to protect "
+                                           "applications that are not send deterministic.",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
+                                           &ompi_vprotocol_pessimist_allow_thread_multiple);
+
+
     return OMPI_SUCCESS;
 }
 
 static int mca_vprotocol_pessimist_component_open(void)
 {
     V_OUTPUT_VERBOSE(500, "vprotocol_pessimist: component_open: read priority %d", _priority);
-  return OMPI_SUCCESS;
+    return OMPI_SUCCESS;
 }
 
 static int mca_vprotocol_pessimist_component_close(void)
@@ -111,16 +126,22 @@ static int mca_vprotocol_pessimist_component_close(void)
 
 /** VPROTOCOL level functions (same as PML one)
   */
-static mca_vprotocol_base_module_t *mca_vprotocol_pessimist_component_init( int* priority,
-                                                                          bool enable_progress_threads,
-                                                                          bool enable_mpi_threads)
+static mca_vprotocol_base_module_t*
+mca_vprotocol_pessimist_component_init( int* priority,
+                                        bool enable_progress_threads,
+                                        bool enable_mpi_threads)
 {
     V_OUTPUT_VERBOSE(500, "vprotocol_pessimist: component_init");
     *priority = _priority;
 
     /* sanity check */
-    if(enable_mpi_threads)
-    {
+    if(enable_mpi_threads && !ompi_vprotocol_pessimist_allow_thread_multiple) {
+        /**
+         * Prevent the pessimistic protocol from activating if we are in a potentially multithreaded
+         * applications. The reason is that without tracking the thread initiator of messages it is
+         * extrmely difficult to provide a global message ordering in threaded-scenarios. Thus, the
+         * safe approach is to turn off the logger.
+         */
         opal_output(0, "vprotocol_pessimist: component_init: threads are enabled, and not supported by vprotocol pessimist fault tolerant layer, will not load");
         return NULL;
     }

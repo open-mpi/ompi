@@ -218,7 +218,19 @@ static int mca_pml_base_open(mca_base_open_flag_t flags)
             opal_pointer_array_add(&mca_pml_base_pml, strdup("ucx"));
             opal_pointer_array_add(&mca_pml_base_pml, strdup("cm"));
         } else {
+#if OPAL_ENABLE_DEBUG
+            char **req_pml = opal_argv_split(default_pml[0], ',');
+            if( NULL != req_pml[1] ) {
+                opal_output(0, "Only one PML must be provided. Using %s PML (the"
+                            " first on the MCA pml list)", req_pml[0]);
+                opal_pointer_array_add(&mca_pml_base_pml, strdup(req_pml[0]));
+            } else {
+                opal_pointer_array_add(&mca_pml_base_pml, strdup(default_pml[0]));
+            }
+            opal_argv_free(req_pml);
+#else
             opal_pointer_array_add(&mca_pml_base_pml, strdup(default_pml[0]));
+#endif  /* OPAL_ENABLE_DEBUG */
         }
     }
 #if OPAL_ENABLE_FT_CR == 1
