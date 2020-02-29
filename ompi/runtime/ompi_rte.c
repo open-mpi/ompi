@@ -543,6 +543,10 @@ int ompi_rte_init(int *pargc, char ***pargv)
         opal_show_help("help-mpi-runtime.txt", "no-pmi", true, PMIx_Error_string(ret));
         return OPAL_ERR_SILENT;
     }
+    /* if our nspace starts with "singleton", then we are a singleton */
+    if (0 == strncmp(myprocid.nspace, "singleton", strlen("singleton"))) {
+        ompi_singleton = true;
+    }
 
     /* setup the process name fields - also registers the new nspace */
     OPAL_PMIX_CONVERT_PROCT(rc, &pname, &myprocid);
@@ -566,20 +570,19 @@ int ompi_rte_init(int *pargc, char ***pargv)
     ompi_process_info.nodename = opal_process_info.nodename;
 
     /* get our local rank from PMI */
-    OPAL_MODEX_RECV_VALUE(rc, PMIX_LOCAL_RANK,
-                          &pmix_process_info.my_name, &u16ptr, PMIX_UINT16);
+    OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, PMIX_LOCAL_RANK,
+                                   &pmix_process_info.my_name, &u16ptr, PMIX_UINT16);
     if (PMIX_SUCCESS != rc) {
-        /* assume we are a singleton */
-        u16 = 0;
-        ompi_singleton = true;
+        ret = opal_pmix_convert_status(rc);
+        error = "local rank";
+        goto error;
     }
     pmix_process_info.my_local_rank = u16;
 
     /* get our node rank from PMI */
-    OPAL_MODEX_RECV_VALUE(rc, PMIX_NODE_RANK,
-                          &pmix_process_info.my_name, &u16ptr, PMIX_UINT16);
+    OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, PMIX_NODE_RANK,
+                                   &pmix_process_info.my_name, &u16ptr, PMIX_UINT16);
     if (PMIX_SUCCESS != rc) {
-        /* assume we are a singleton */
         u16 = 0;
     }
     pmix_process_info.my_node_rank = u16;
@@ -587,11 +590,12 @@ int ompi_rte_init(int *pargc, char ***pargv)
     /* get job size */
     pname.jobid = pmix_process_info.my_name.jobid;
     pname.vpid = OPAL_VPID_WILDCARD;
-    OPAL_MODEX_RECV_VALUE(rc, PMIX_JOB_SIZE,
-                          &pname, &u32ptr, PMIX_UINT32);
+    OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, PMIX_JOB_SIZE,
+                                   &pname, &u32ptr, PMIX_UINT32);
     if (PMIX_SUCCESS != rc) {
-        /* assume we are a singleton */
-        u32 = 1;
+        ret = opal_pmix_convert_status(rc);
+        error = "job size";
+        goto error;
     }
     pmix_process_info.num_procs = u32;
 
@@ -620,12 +624,14 @@ int ompi_rte_init(int *pargc, char ***pargv)
 
     /* get the number of local peers - required for wireup of
      * shared memory BTL */
-    OPAL_MODEX_RECV_VALUE(rc, PMIX_LOCAL_SIZE,
-                          &pname, &u32ptr, PMIX_UINT32);
+    OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, PMIX_LOCAL_SIZE,
+                                   &pname, &u32ptr, PMIX_UINT32);
     if (PMIX_SUCCESS == rc) {
         pmix_process_info.num_local_peers = u32 - 1;  // want number besides ourselves
     } else {
-        pmix_process_info.num_local_peers = 0;
+        ret = opal_pmix_convert_status(rc);
+        error = "local size";
+        goto error;
     }
 
     /* setup transport keys in case the MPI layer needs them -
@@ -711,7 +717,9 @@ int ompi_rte_init(int *pargc, char ***pargv)
             peers = opal_argv_split(val, ',');
             free(val);
         } else {
-            peers = NULL;
+            ret = opal_pmix_convert_status(rc);
+            error = "local peers";
+            goto error;
         }
     } else {
         peers = NULL;
