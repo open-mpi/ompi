@@ -37,6 +37,8 @@ AC_DEFUN([OMPI_CHECK_DELETED_OPTIONS],[
 
     # Open MPI C++ bindings were removed in v5.0
     cxx=0
+    cxxseek=0
+    cxxex=0
     AC_ARG_ENABLE([mpi-cxx],
                   [AC_HELP_STRING([--enable-mpi-cxx],
                                   [*DELETED* Build the MPI C++ bindings])],
@@ -44,13 +46,22 @@ AC_DEFUN([OMPI_CHECK_DELETED_OPTIONS],[
     AC_ARG_ENABLE([mpi-cxx-seek],
                   [AC_HELP_STRING([--enable-mpi-cxx-seek],
                                   [*DELETED* Build support for MPI::SEEK])],
-                  [cxx=1])
+                  [cxxseek=1])
     AC_ARG_ENABLE([cxx-exceptions],
                   [AC_HELP_STRING([--enable-cxx-exceptions],
                                   [*DELETED* Build support for C++ exceptions in the MPI C++ bindings])],
-                  [cxx=1])
+                  [cxxex=1])
 
-    AS_IF([test $cxx -eq 1],
+    AS_IF([test "$enable_mpi_cxx" = "no" ],
+          [cxx=0])
+
+    AS_IF([test "$enable_mpi_cxx_seek" = "no" ],
+          [cxxseek=0])
+
+    AS_IF([test "$enable_cxx_exceptions" = "no" ],
+          [cxxex=0])
+
+    AS_IF([test $cxx -eq 1 || test $cxxseek -eq 1 || test $cxxex -eq 1],
           [AC_MSG_WARN([The MPI C++ bindings have been removed from Open MPI.])
            AC_MSG_WARN([If you need support for the MPI C++ bindings, you])
            AC_MSG_WARN([will need to use an older version of Open MPI.])
