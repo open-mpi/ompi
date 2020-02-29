@@ -1271,6 +1271,10 @@ else
     CPPFLAGS='-I$(top_srcdir)'" $CPPFLAGS"
 fi
 
+# OMPI needs some additional processing of the flags (e.g., get
+# versions without optimization for debugger modules).
+
+m4_ifdef([project_ompi], [OMPI_SETUP_DEBUGGER_FLAGS])
 #
 # Delayed the substitution of CFLAGS and friends until now because
 # they may have been modified throughout the course of this script.
