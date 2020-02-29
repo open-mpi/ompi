@@ -23,6 +23,12 @@ AC_DEFUN([OMPI_CHECK_DELETED_OPTIONS],[
                                 [*DELETED* Look for libpmi or libpmi2 in the given directory DIR, DIR/lib or DIR/lib64])],
                 [with_pmi_libdir_given=yes])
 
+    AS_IF([test "$with_pmi" = "no"],
+          [with_pmi_given=no])
+
+    AS_IF([test "$with_pmi_libdir" = "no"],
+          [with_pmi_libdir_given=no])
+
     if test "$with_pmi_given" = "yes" || test "$with_pmi_libdir_given" = "yes"; then
         AC_MSG_WARN([Open MPI no longer supports PMI-1 or PMI-2 libraries.])
         AC_MSG_WARN([PMIx is now required. Either the internal version or an])
