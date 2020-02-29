@@ -279,10 +279,11 @@ void opal_common_ucx_wpool_finalize(opal_common_ucx_wpool_t *wpool)
     return;
 }
 
-OPAL_DECLSPEC void
+OPAL_DECLSPEC int
 opal_common_ucx_wpool_progress(opal_common_ucx_wpool_t *wpool)
 {
     _winfo_list_item_t *item = NULL, *next = NULL;
+    int completed = 0, progressed = 0;
 
     /* Go over all active workers and progress them
      * TODO: may want to have some partitioning to progress only part of
@@ -297,14 +298,19 @@ opal_common_ucx_wpool_progress(opal_common_ucx_wpool_t *wpool)
                 opal_list_remove_item(&wpool->active_workers, &item->super);
                 _winfo_reset(winfo);
                 opal_list_append(&wpool->idle_workers, &item->super);
+                completed++;
             } else {
                 /* Progress worker until there are existing events */
-                while(ucp_worker_progress(winfo->worker));
+                do {
+                    progressed = ucp_worker_progress(winfo->worker);
+                    completed += progressed;
+                } while (progressed);
             }
             opal_mutex_unlock(&winfo->mutex);
         }
         opal_mutex_unlock(&wpool->mutex);
     }
+    return completed;
 }
 
 static int

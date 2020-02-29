@@ -187,20 +187,21 @@ static int mca_spml_ucx_component_register(void)
 
 int spml_ucx_ctx_progress(void)
 {
-    int i;
+    int i, completed = 0;
     for (i = 0; i < mca_spml_ucx.active_array.ctxs_count; i++) {
-        ucp_worker_progress(mca_spml_ucx.active_array.ctxs[i]->ucp_worker[0]);
+        completed += ucp_worker_progress(mca_spml_ucx.active_array.ctxs[i]->ucp_worker[0]);
     }
-    return 1;
+    return completed;
 }
 
 int spml_ucx_default_progress(void)
 {
     unsigned int i=0;
+    int completed = 0;
     for (i = 0; i < mca_spml_ucx.ucp_workers; i++) {
-        ucp_worker_progress(mca_spml_ucx_ctx_default.ucp_worker[i]);
+        completed += ucp_worker_progress(mca_spml_ucx_ctx_default.ucp_worker[i]);
     }
-    return 1;
+    return completed;
 }
 
 int spml_ucx_progress_aux_ctx(void)

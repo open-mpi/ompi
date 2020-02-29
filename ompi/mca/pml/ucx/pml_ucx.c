@@ -515,8 +515,7 @@ int mca_pml_ucx_enable(bool enable)
 
 int mca_pml_ucx_progress(void)
 {
-    ucp_worker_progress(ompi_pml_ucx.ucp_worker);
-    return OMPI_SUCCESS;
+    return ucp_worker_progress(ompi_pml_ucx.ucp_worker);
 }
 
 int mca_pml_ucx_add_comm(struct ompi_communicator_t* comm)
