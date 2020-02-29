@@ -16,6 +16,7 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2018 IBM Corporation. All rights reserved.
+ * Copyright (c) 2020      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -32,6 +33,7 @@
 #include <unistd.h>
 #endif  /* HAVE_UNIST_H */
 #include "ompi/mca/mca.h"
+#include "opal/util/argv.h"
 #include "opal/util/output.h"
 #include "opal/mca/base/base.h"
 
@@ -214,7 +216,6 @@ static int mca_pml_base_open(mca_base_open_flag_t flags)
         if( (NULL == default_pml || NULL == default_pml[0] ||
              0 == strlen(default_pml[0])) || (default_pml[0][0] == '^') ) {
             opal_pointer_array_add(&mca_pml_base_pml, strdup("ob1"));
-            opal_pointer_array_add(&mca_pml_base_pml, strdup("yalla"));
             opal_pointer_array_add(&mca_pml_base_pml, strdup("ucx"));
             opal_pointer_array_add(&mca_pml_base_pml, strdup("cm"));
         } else {
