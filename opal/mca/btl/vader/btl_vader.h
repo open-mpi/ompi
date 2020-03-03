@@ -125,6 +125,7 @@ struct mca_btl_vader_component_t {
     char *my_segment;                       /**< this rank's base pointer */
     size_t segment_size;                    /**< size of my_segment */
     int32_t num_smp_procs;                  /**< current number of smp procs on this host */
+    int32_t local_rank;                     /**< current rank index at add_procs() time */
     opal_free_list_t vader_frags_eager;     /**< free list of vader send frags */
     opal_free_list_t vader_frags_max_send;  /**< free list of vader max send frags (large fragments) */
     opal_free_list_t vader_frags_user;      /**< free list of small inline frags */
