@@ -1038,10 +1038,28 @@ sub patch_autotools_output {
 	  whole_archive_flag_spec${tag}=
 	  tmp_sharedflag='--shared' ;;
 	nagfor*)			# NAGFOR 5.3
-	  tmp_sharedflag='-Wl,-shared';;
+	  tmp_sharedflag='-Wl,-shared' ;;
 	xl";
 
-        push(@verbose_out, $indent_str . "Patching configure for NAG compiler ($tag)\n");
+        push(@verbose_out, $indent_str . "Patching configure for NAG compiler #1 ($tag)\n");
+        $c =~ s/$search_string/$replace_string/;
+
+        # Newer versions of Libtool have the previous patch already. Therefore,
+        # we add the support for convenience libraries separetly
+        my $search_string = "whole_archive_flag_spec${tag}=" . '\n\s+' .
+            "tmp_sharedflag='--shared' ;;" . '\n\s+' .
+            'nagfor\052.*# NAGFOR 5.3\n\s+' .
+            "tmp_sharedflag='-Wl,-shared' ;;" . '\n\s+' .
+            'xl';
+        my $replace_string = "whole_archive_flag_spec${tag}=
+	  tmp_sharedflag='--shared' ;;
+        nagfor*)                        # NAGFOR 5.3
+          whole_archive_flag_spec${tag}='\$wl--whole-archive`for conv in \$convenience\\\"\\\"; do test  -n \\\"\$conv\\\" && new_convenience=\\\"\$new_convenience,\$conv\\\"; done; func_echo_all \\\"\$new_convenience\\\"` \$wl--no-whole-archive'
+          compiler_needs_object=yes
+          tmp_sharedflag='-Wl,-shared' ;;
+	xl";
+
+        push(@verbose_out, $indent_str . "Patching configure for NAG compiler #2 ($tag)\n");
         $c =~ s/$search_string/$replace_string/;
     }
 
