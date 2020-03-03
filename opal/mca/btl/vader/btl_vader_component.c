@@ -531,6 +531,7 @@ static mca_btl_base_module_t **mca_btl_vader_component_init (int *num_btls,
 #if OPAL_BTL_VADER_HAVE_XPMEM || OPAL_BTL_VADER_HAVE_CMA || OPAL_BTL_VADER_HAVE_KNEM
     mca_btl_vader_check_single_copy ();
 #endif
+    component->local_rank = 0;
 
     if (MCA_BTL_VADER_XPMEM != mca_btl_vader_component.single_copy_mechanism) {
         char *sm_file;
