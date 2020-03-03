@@ -621,7 +621,7 @@ AC_CHECK_HEADERS([alloca.h aio.h arpa/inet.h dirent.h \
     sys/types.h sys/uio.h sys/un.h net/uio.h sys/utsname.h sys/vfs.h sys/wait.h syslog.h \
     termios.h ulimit.h unistd.h util.h utmp.h malloc.h \
     ifaddrs.h crt_externs.h regex.h mntent.h paths.h \
-    ioLib.h sockLib.h hostLib.h shlwapi.h sys/synch.h db.h ndbm.h zlib.h ieee754.h])
+    ioLib.h sockLib.h hostLib.h shlwapi.h sys/synch.h db.h ndbm.h ieee754.h])
 
 AC_CHECK_HEADERS([sys/mount.h], [], [],
 [AC_INCLUDES_DEFAULT
