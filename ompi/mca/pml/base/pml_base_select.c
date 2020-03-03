@@ -347,7 +347,7 @@ mca_pml_base_pml_check_selected(const char *my_pml,
                                     &rank0, (void**) &remote_pml, &size);
 
     /* if this key wasn't found, then just assume all is well... */
-    if (PMIX_ERR_NOT_FOUND != ret) {
+    if (PMIX_ERR_NOT_FOUND == ret) {
         opal_output_verbose( 10, ompi_pml_base_framework.framework_output,
                             "check:select: PML modex for vpid 0 data not found");
         return OMPI_SUCCESS;
