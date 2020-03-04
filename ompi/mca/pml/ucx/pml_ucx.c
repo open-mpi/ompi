@@ -289,8 +289,8 @@ int mca_pml_ucx_init(int enable_mpi_threads)
     if (enable_mpi_threads && (attr.thread_mode != UCS_THREAD_MODE_MULTI)) {
         /* UCX does not support multithreading, disqualify current PML for now */
         /* TODO: we should let OMPI to fallback to THREAD_SINGLE mode */
-        PML_UCX_VERBOSE(1, "UCP worker does not support MPI_THREAD_MULTIPLE. "
-                           "PML UCX could not be selected");
+        PML_UCX_WARN("UCP worker does not support MPI_THREAD_MULTIPLE. "
+                     "PML UCX could not be selected");
         rc = OMPI_ERR_NOT_SUPPORTED;
         goto err_destroy_worker;
     }

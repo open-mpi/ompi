@@ -26,7 +26,7 @@
 #define PML_UCX_ASSERT  MCA_COMMON_UCX_ASSERT
 #define PML_UCX_ERROR   MCA_COMMON_UCX_ERROR
 #define PML_UCX_VERBOSE MCA_COMMON_UCX_VERBOSE
-
+#define PML_UCX_WARN    MCA_COMMON_UCX_WARN
 
 typedef struct mca_pml_ucx_module           mca_pml_ucx_module_t;
 typedef struct pml_ucx_persistent_request   mca_pml_ucx_persistent_request_t;
