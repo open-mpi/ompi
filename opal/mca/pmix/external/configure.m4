@@ -53,5 +53,13 @@ AC_DEFUN([MCA_opal_pmix_external_CONFIG],[
     AS_IF([test "$opal_external_pmix_happy" = "yes"],
           [$1], [$2])
 
+    AS_IF([test "$opal_external_pmix_happy" = "yes"],
+          [AS_IF([test "$opal_event_external_support" != "yes" || test "$opal_hwloc_external_support" != "yes"],
+                        [AC_MSG_WARN([EXTERNAL PMIX SUPPORT REQUIRES USE OF EXTERNAL LIBEVENT AND HWLOC])
+                         AC_MSG_WARN([LIBRARIES. THESE LIBRARIES MUST POINT TO THE SAME ONES USED])
+                         AC_MSG_WARN([TO BUILD PMIX OR ELSE UNPREDICTABLE BEHAVIOR MAY RESULT])
+                         AC_MSG_ERROR([PLEASE CORRECT THE CONFIGURE COMMAND LINE AND REBUILD])])
+          ])
+
     OPAL_VAR_SCOPE_POP
 ])dnl
