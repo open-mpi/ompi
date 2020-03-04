@@ -100,7 +100,7 @@ typedef struct ompi_osc_pt2pt_header_get_t ompi_osc_pt2pt_header_get_t;
 
 struct ompi_osc_pt2pt_header_complete_t {
     ompi_osc_pt2pt_header_base_t base;
-#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT || OPAL_ENABLE_DEBUG
     uint8_t padding[2];
 #endif
     int frag_count;
@@ -123,7 +123,7 @@ typedef struct ompi_osc_pt2pt_header_post_t ompi_osc_pt2pt_header_post_t;
 
 struct ompi_osc_pt2pt_header_lock_t {
     ompi_osc_pt2pt_header_base_t base;
-#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT || OPAL_ENABLE_DEBUG
     uint8_t padding[2];
 #endif
     int32_t lock_type;
@@ -133,7 +133,7 @@ typedef struct ompi_osc_pt2pt_header_lock_t ompi_osc_pt2pt_header_lock_t;
 
 struct ompi_osc_pt2pt_header_lock_ack_t {
     ompi_osc_pt2pt_header_base_t base;
-#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT || OPAL_ENABLE_DEBUG
     uint8_t padding[2];
 #endif
     uint32_t source;
@@ -143,7 +143,7 @@ typedef struct ompi_osc_pt2pt_header_lock_ack_t ompi_osc_pt2pt_header_lock_ack_t
 
 struct ompi_osc_pt2pt_header_unlock_t {
     ompi_osc_pt2pt_header_base_t base;
-#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT || OPAL_ENABLE_DEBUG
     uint8_t padding[2];
 #endif
     int32_t lock_type;
@@ -154,7 +154,7 @@ typedef struct ompi_osc_pt2pt_header_unlock_t ompi_osc_pt2pt_header_unlock_t;
 
 struct ompi_osc_pt2pt_header_unlock_ack_t {
     ompi_osc_pt2pt_header_base_t base;
-#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT || OPAL_ENABLE_DEBUG
     uint8_t padding[6];
 #endif
     uint64_t lock_ptr;
@@ -163,7 +163,7 @@ typedef struct ompi_osc_pt2pt_header_unlock_ack_t ompi_osc_pt2pt_header_unlock_a
 
 struct ompi_osc_pt2pt_header_flush_t {
     ompi_osc_pt2pt_header_base_t base;
-#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT || OPAL_ENABLE_DEBUG
     uint8_t padding[2];
 #endif
     uint32_t frag_count;
@@ -173,7 +173,7 @@ typedef struct ompi_osc_pt2pt_header_flush_t ompi_osc_pt2pt_header_flush_t;
 
 struct ompi_osc_pt2pt_header_flush_ack_t {
     ompi_osc_pt2pt_header_base_t base;
-#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT || OPAL_ENABLE_DEBUG
     uint8_t padding[6];
 #endif
     uint64_t lock_ptr;

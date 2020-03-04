@@ -131,7 +131,7 @@ static inline int memchecker_call (int (*f)(void *, size_t), const void * addr,
                 size_t blength = opal_datatype_basicDatatypes[pElem->elem.common.type]->size;
                 if ((size_t)pElem->elem.extent == blength) {
                     /* block is made of contiguous basic datatype */
-                    f( (void *)(source_base + pElem->elem.disp), pElem->elem.count*pElem->elem.extent );
+                    f( (void *)(source_base + pElem->elem.disp), pElem->elem.count*blength );
                 } else {
                     uint32_t j;
                     ptrdiff_t offset;

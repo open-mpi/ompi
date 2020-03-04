@@ -57,10 +57,8 @@ int MPI_Neighbor_allgatherv(const void *sendbuf, int sendcount, MPI_Datatype sen
     SPC_RECORD(OMPI_SPC_NEIGHBOR_ALLGATHERV, 1);
 
     MEMCHECKER(
-        int rank;
         ptrdiff_t ext;
 
-        rank = ompi_comm_rank(comm);
         mca_topo_base_neighbor_count (comm, &in_size, &out_size);
         ompi_datatype_type_extent(recvtype, &ext);
 

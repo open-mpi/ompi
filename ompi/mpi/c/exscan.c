@@ -51,12 +51,10 @@ int MPI_Exscan(const void *sendbuf, void *recvbuf, int count,
 
     MEMCHECKER(
         memchecker_datatype(datatype);
-        if (0 != ompi_comm_rank(comm)) {
-            if (MPI_IN_PLACE != sendbuf) {
-                memchecker_call(&opal_memchecker_base_isdefined, sendbuf, count, datatype);
-            } else {
-                memchecker_call(&opal_memchecker_base_isdefined, recvbuf, count, datatype);
-            }
+        if (MPI_IN_PLACE != sendbuf) {
+            memchecker_call(&opal_memchecker_base_isdefined, sendbuf, count, datatype);
+        } else {
+            memchecker_call(&opal_memchecker_base_isdefined, recvbuf, count, datatype);
         }
         memchecker_call(&opal_memchecker_base_isaddressable, recvbuf, count, datatype);
         memchecker_comm(comm);

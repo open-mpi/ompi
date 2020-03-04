@@ -43,11 +43,11 @@ static char *leak_msg = NULL;
 static int condition(void *value);
 static void action(void *key, void *value);
 
-static void mpbtcons(mca_mpool_base_tree_item_t *item) {
+static void opal_mca_mpool_base_tree_constructor(mca_mpool_base_tree_item_t *item) {
     item->key = NULL;
 }
 
-OBJ_CLASS_INSTANCE(mca_mpool_base_tree_item_t, opal_free_list_item_t, mpbtcons, NULL);
+OBJ_CLASS_INSTANCE(mca_mpool_base_tree_item_t, opal_free_list_item_t, opal_mca_mpool_base_tree_constructor, NULL);
 
 /*
  * use globals for the tree and the tree_item free list..
