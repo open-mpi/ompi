@@ -275,18 +275,30 @@ int mca_btl_ofi_finalize (mca_btl_base_module_t* btl)
 
     assert(btl);
 
+    /* clear the rcache */
+    if (ofi_btl->rcache) {
+        mca_rcache_base_module_destroy (ofi_btl->rcache);
+        ofi_btl->rcache = NULL;
+    }
+
+    /* For a standard ep, we need to close the ep first. */
+    if (NULL != ofi_btl->ofi_endpoint && !ofi_btl->is_scalable_ep) {
+        fi_close(&ofi_btl->ofi_endpoint->fid);
+        ofi_btl->ofi_endpoint = NULL;
+    }
+
     /* loop over all the contexts */
     for (i=0; i < ofi_btl->num_contexts; i++) {
         mca_btl_ofi_context_finalize(&ofi_btl->contexts[i], ofi_btl->is_scalable_ep);
     }
     free(ofi_btl->contexts);
 
-    if (NULL != ofi_btl->av) {
-        fi_close(&ofi_btl->av->fid);
-    }
-
     if (NULL != ofi_btl->ofi_endpoint) {
         fi_close(&ofi_btl->ofi_endpoint->fid);
+    }
+
+    if (NULL != ofi_btl->av) {
+        fi_close(&ofi_btl->av->fid);
     }
 
     if (NULL != ofi_btl->domain) {
@@ -310,11 +322,6 @@ int mca_btl_ofi_finalize (mca_btl_base_module_t* btl)
     OBJ_DESTRUCT(&ofi_btl->endpoints);
     OBJ_DESTRUCT(&ofi_btl->id_to_endpoint);
     OBJ_DESTRUCT(&ofi_btl->module_lock);
-
-    if (ofi_btl->rcache) {
-        mca_rcache_base_module_destroy (ofi_btl->rcache);
-        ofi_btl->rcache = NULL;
-    }
 
     free (btl);
 

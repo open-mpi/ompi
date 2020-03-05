@@ -578,6 +578,10 @@ static int mca_btl_ofi_init_device(struct fi_info *info)
 fail:
     /* clean up */
 
+    if (NULL != ep && !module->is_scalable_ep) {
+        fi_close(&ep->fid);
+    }
+
     /* if the contexts have not been initiated, num_contexts should
      * be zero and we skip this. */
     for (int i=0; i < module->num_contexts; i++) {
@@ -585,12 +589,12 @@ fail:
     }
     free(module->contexts);
 
-    if (NULL != av) {
-        fi_close(&av->fid);
-    }
-
     if (NULL != ep) {
         fi_close(&ep->fid);
+    }
+
+    if (NULL != av) {
+        fi_close(&av->fid);
     }
 
     if (NULL != domain) {
