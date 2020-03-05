@@ -560,6 +560,8 @@ static mca_btl_base_module_t **mca_btl_vader_component_init (int *num_btls,
     /* no fast boxes allocated initially */
     component->num_fbox_in_endpoints = 0;
 
+    component->local_rank = 0;
+
     mca_btl_vader_check_single_copy ();
 
     if (MCA_BTL_VADER_XPMEM != mca_btl_vader_component.single_copy_mechanism) {
