@@ -578,6 +578,7 @@ static int mca_btl_ofi_init_device(struct fi_info *info)
 fail:
     /* clean up */
 
+    /* close basic ep before closing av */
     if (NULL != ep && !module->is_scalable_ep) {
         fi_close(&ep->fid);
     }
@@ -589,10 +590,12 @@ fail:
     }
     free(module->contexts);
 
+    /* check for NULL ep to avoid double-close */
     if (NULL != ep) {
         fi_close(&ep->fid);
     }
 
+    /* close av after closing basic ep */
     if (NULL != av) {
         fi_close(&av->fid);
     }
