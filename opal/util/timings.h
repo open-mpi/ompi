@@ -49,11 +49,11 @@ opal_timing_ts_func_t opal_timing_ts_func(opal_timer_type_t type);
             _prefix = "";                                                         \
         }                                                                         \
         (_nm)->error = 0;                                                         \
-        n = snprintf((_nm)->id, OPAL_TIMING_STR_LEN, "%s%s", _prefix, func);      \
+        n = snprintf((_nm)->id, OPAL_TIMING_STR_LEN, "%s_%s", _prefix, func);     \
         if( n > OPAL_TIMING_STR_LEN ){                                            \
              (_nm)->error = 1;                                                    \
         }                                                                         \
-        n = sprintf((_nm)->cntr_env,"OMPI_TIMING_%s%s_CNT", prefix, (_nm)->id);   \
+        n = sprintf((_nm)->cntr_env,"OMPI_TIMING_%s_CNT", (_nm)->id);             \
         if( n > OPAL_TIMING_STR_LEN ){                                            \
             (_nm)->error = 1;                                                     \
         }                                                                         \
@@ -77,11 +77,6 @@ opal_timing_ts_func_t opal_timing_ts_func(opal_timer_type_t type);
         }                                                                         \
     } while(0)
 
-#define OPAL_TIMING_ENV_INIT(name)                                                \
-    opal_timing_env_t name ## _val, *name = &(name ## _val);                      \
-    OPAL_TIMING_ENV_START_TYPE(__func__, name, OPAL_TIMING_AUTOMATIC_TIMER, "");
-
-
 /* We use function names for identification
  * however this might be a problem for the private
  * functions declared as static as their names may
@@ -89,10 +84,10 @@ opal_timing_ts_func_t opal_timing_ts_func(opal_timer_type_t type);
  * Use prefix to do a finer-grained identification if needed
  */
 #define OPAL_TIMING_ENV_INIT_PREFIX(prefix, name)                                 \
-    do {                                                                          \
-        opal_timing_env_t name ## _val, *name = &(name ## _val);                  \
-        *name = OPAL_TIMING_ENV_START_TYPE(__func__, name, OPAL_TIMING_AUTOMATIC_TIMER, prefix); \
-    } while(0)
+    opal_timing_env_t name ## _val, *name = &(name ## _val);                      \
+    OPAL_TIMING_ENV_START_TYPE(__func__, name, OPAL_TIMING_AUTOMATIC_TIMER, prefix);
+
+#define OPAL_TIMING_ENV_INIT(name) OPAL_TIMING_ENV_INIT_PREFIX("", name)
 
 #define OPAL_TIMING_ENV_NEXT(h, ...)                                              \
     do {                                                                          \
@@ -161,7 +156,7 @@ opal_timing_ts_func_t opal_timing_ts_func(opal_timer_type_t type);
     do {                                                                          \
         char ename[OPAL_TIMING_STR_LEN];                                          \
         char *ptr = NULL;                                                         \
-        int n = snprintf(ename, OPAL_TIMING_STR_LEN, "OMPI_TIMING_%s%s_CNT", prefix, func);    \
+        int n = snprintf(ename, OPAL_TIMING_STR_LEN, "OMPI_TIMING_%s_%s_CNT", prefix, func);    \
         (_cnt) = 0;                                                               \
         if ( n <= OPAL_TIMING_STR_LEN ){                                          \
             ptr = getenv(ename);                                                  \
@@ -181,18 +176,15 @@ opal_timing_ts_func_t opal_timing_ts_func(opal_timer_type_t type);
         }                                                                         \
     } while(0)
 
-#define OPAL_TIMING_ENV_CNT(func, _cnt)                                           \
-    OPAL_TIMING_ENV_CNT_PREFIX("", func, _cnt)
-
 #define OPAL_TIMING_ENV_GETDESC_PREFIX(prefix, filename, func, i, desc, _t)       \
     do {                                                                          \
         char vname[OPAL_TIMING_STR_LEN];                                          \
         (_t) = 0.0;                                                               \
-        sprintf(vname, "OMPI_TIMING_%s%s_FILE_%d", prefix, func, i);              \
+        sprintf(vname, "OMPI_TIMING_%s_%s_FILE_%d", prefix, func, i);              \
         *filename = getenv(vname);                                                \
-        sprintf(vname, "OMPI_TIMING_%s%s_DESC_%d", prefix, func, i);              \
+        sprintf(vname, "OMPI_TIMING_%s_%s_DESC_%d", prefix, func, i);              \
         *desc = getenv(vname);                                                    \
-        sprintf(vname, "OMPI_TIMING_%s%s_VAL_%d", prefix, func, i);               \
+        sprintf(vname, "OMPI_TIMING_%s_%s_VAL_%d", prefix, func, i);               \
         char *ptr = getenv(vname);                                                \
         if ( NULL != ptr ) {                                                      \
             sscanf(ptr,"%lf", &(_t));                                             \
