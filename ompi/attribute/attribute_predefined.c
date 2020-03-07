@@ -13,6 +13,7 @@
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2017      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2020      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -87,6 +88,7 @@
 #include "ompi/errhandler/errcode.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/mca/pml/pml.h"
+#include "ompi/runtime/ompi_rte.h"
 
 /*
  * Private functions
@@ -103,8 +105,6 @@ static int set_f(int keyval, MPI_Fint value);
 int ompi_attr_create_predefined(void)
 {
     int ret;
-    char *univ_size;
-    int usize;
 
     /* Create all the keyvals */
 
@@ -138,14 +138,8 @@ int ompi_attr_create_predefined(void)
         return ret;
     }
 
-    /* If the universe size is set, then use it. Otherwise default
-     * to the size of MPI_COMM_WORLD */
-    univ_size = getenv("OMPI_UNIVERSE_SIZE");
-    if (NULL == univ_size || (usize = strtol(univ_size, NULL, 0)) <= 0) {
-        ret = set_f(MPI_UNIVERSE_SIZE, ompi_comm_size(MPI_COMM_WORLD));
-    } else {
-        ret = set_f(MPI_UNIVERSE_SIZE, usize);
-    }
+    /* set the universe size */
+    ret = set_f(MPI_UNIVERSE_SIZE, ompi_process_info.univ_size);
     if (OMPI_SUCCESS != ret) {
         return ret;
     }

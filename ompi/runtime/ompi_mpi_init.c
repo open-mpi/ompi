@@ -504,23 +504,8 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided,
 
     OMPI_TIMING_NEXT("initialization");
 
-    /* if we were not externally started, then we need to setup
-     * some envars so the MPI_INFO_ENV can get the cmd name
-     * and argv (but only if the user supplied a non-NULL argv!), and
-     * the requested thread level
-     */
-    if (NULL == getenv("OMPI_COMMAND") && NULL != argv && NULL != argv[0]) {
-        opal_setenv("OMPI_COMMAND", argv[0], true, &environ);
-    }
-    if (NULL == getenv("OMPI_ARGV") && 1 < argc) {
-        char *tmp;
-        tmp = opal_argv_join(&argv[1], ' ');
-        opal_setenv("OMPI_ARGV", tmp, true, &environ);
-        free(tmp);
-    }
-
     /* Setup RTE */
-    if (OMPI_SUCCESS != (ret = ompi_rte_init(NULL, NULL))) {
+    if (OMPI_SUCCESS != (ret = ompi_rte_init(&argc, &argv))) {
         error = "ompi_mpi_init: ompi_rte_init failed";
         goto error;
     }
