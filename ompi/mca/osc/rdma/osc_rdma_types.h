@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2014-2018 Los Alamos National Security, LLC.  All rights
  *                         reserved.
+ * Copyright (c) 2020      Google, LLC. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -110,6 +111,21 @@ struct ompi_osc_rdma_region_t {
 typedef struct ompi_osc_rdma_region_t ompi_osc_rdma_region_t;
 
 /**
+ * @brief data handle for attached memory region
+ *
+ * This structure describes an attached memory region. It is used
+ * to track the exact parameters passed to MPI_Win_attach to
+ * validate a new attachment as well as handle detach.
+ */
+struct ompi_osc_rdma_attachment_t {
+    opal_list_item_t super;
+    intptr_t base;
+    size_t len;
+};
+typedef struct ompi_osc_rdma_attachment_t ompi_osc_rdma_attachment_t;
+OBJ_CLASS_DECLARATION(ompi_osc_rdma_attachment_t);
+
+/**
  * @brief data handle for dynamic memory regions
  *
  * This structure holds the btl handle (if one exists) and the
@@ -118,12 +134,14 @@ typedef struct ompi_osc_rdma_region_t ompi_osc_rdma_region_t;
  * region associated with a page (or set of pages) has been attached.
  */
 struct ompi_osc_rdma_handle_t {
+    opal_object_t super;
     /** btl handle for the memory region */
     mca_btl_base_registration_handle_t *btl_handle;
-    /** number of attaches assocated with this region */
-    int refcnt;
+    /** attached regions associated with this registration */
+    opal_list_t attachments;
 };
 typedef struct ompi_osc_rdma_handle_t ompi_osc_rdma_handle_t;
+OBJ_CLASS_DECLARATION(ompi_osc_rdma_handle_t);
 
 /**
  * @brief number of state buffers that can be used for storing
