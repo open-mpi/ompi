@@ -283,7 +283,7 @@ int mca_btl_ofi_finalize (mca_btl_base_module_t* btl)
         ofi_btl->rcache = NULL;
     }
 
-    /* For a standard ep, we need to close the ep first. */
+    /* Close basic ep before closing its attached resources. */
     if (NULL != ofi_btl->ofi_endpoint && !ofi_btl->is_scalable_ep) {
         fi_close(&ofi_btl->ofi_endpoint->fid);
         ofi_btl->ofi_endpoint = NULL;
@@ -299,6 +299,7 @@ int mca_btl_ofi_finalize (mca_btl_base_module_t* btl)
         fi_close(&ofi_btl->ofi_endpoint->fid);
     }
 
+    /* close ep before closing av */
     if (NULL != ofi_btl->av) {
         fi_close(&ofi_btl->av->fid);
     }
