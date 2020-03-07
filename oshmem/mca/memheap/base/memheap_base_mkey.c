@@ -27,6 +27,7 @@
 #include "oshmem/mca/memheap/memheap.h"
 #include "oshmem/mca/memheap/base/base.h"
 #include "oshmem/mca/spml/spml.h"
+#include "opal/util/timings.h"
 
 /* Turn ON/OFF debug output from build (default 0) */
 #ifndef MEMHEAP_BASE_DEBUG
@@ -529,14 +530,16 @@ void mca_memheap_modex_recv_all(void)
     int rc = OSHMEM_SUCCESS;
     size_t buffer_size;
 
+    OPAL_TIMING_ENV_INIT(recv_all);
+
     if (!mca_memheap_base_key_exchange) {
         oshmem_shmem_barrier();
         return;
     }
-
+    OPAL_TIMING_ENV_NEXT(recv_all, "barrier");
     nprocs = oshmem_num_procs();
     my_pe = oshmem_my_proc_id();
-
+    OPAL_TIMING_ENV_NEXT(recv_all, "proc position");
     /* buffer allocation for num_transports
      * message sizes and offsets */
 
@@ -560,6 +563,7 @@ void mca_memheap_modex_recv_all(void)
         rc = OSHMEM_ERR_OUT_OF_RESOURCE;
         goto exit_fatal;
     }
+    OPAL_TIMING_ENV_NEXT(recv_all, "alloc bufs");
 
     /* serialize our own mkeys */
     msg = OBJ_NEW(opal_buffer_t);
@@ -582,6 +586,9 @@ void mca_memheap_modex_recv_all(void)
     opal_dss.unload(msg, &send_buffer, &size);
     MEMHEAP_VERBOSE(1, "local keys packed into %d bytes, %d segments", size, memheap_map->n_segments);
 
+    OPAL_TIMING_ENV_NEXT(recv_all, "serialize data");
+
+
     /* we need to send num_transports and message sizes separately
      * since message sizes depend on types of btl used */
 
@@ -591,11 +598,16 @@ void mca_memheap_modex_recv_all(void)
         goto exit_fatal;
     }
 
+    OPAL_TIMING_ENV_NEXT(recv_all, "allgather: transport cnt");
+
+
     rc = oshmem_shmem_allgather(&size, rcv_size, sizeof(int));
     if (MPI_SUCCESS != rc) {
         MEMHEAP_ERROR("allgather failed");
         goto exit_fatal;
     }
+
+    OPAL_TIMING_ENV_NEXT(recv_all, "allgather: size info");
 
     /* calculating offsets (displacements) for allgatherv */
 
@@ -613,12 +625,16 @@ void mca_memheap_modex_recv_all(void)
         goto exit_fatal;
     }
 
+    OPAL_TIMING_ENV_NEXT(recv_all, "alloc data buf");
+
     rc = oshmem_shmem_allgatherv(send_buffer, rcv_buffer, size, rcv_size, rcv_offsets);
     if (MPI_SUCCESS != rc) {
         free (rcv_buffer);
         MEMHEAP_ERROR("allgatherv failed");
         goto exit_fatal;
     }
+
+    OPAL_TIMING_ENV_NEXT(recv_all, "Perform mkey exchange");
 
     opal_dss.load(msg, rcv_buffer, buffer_size);
 
@@ -651,6 +667,8 @@ void mca_memheap_modex_recv_all(void)
         }
     }
 
+    OPAL_TIMING_ENV_NEXT(recv_all, "Unpack data");
+
     OPAL_THREAD_UNLOCK(&memheap_oob.lck);
 
 exit_fatal:
@@ -670,6 +688,7 @@ exit_fatal:
         OBJ_RELEASE(msg);
     }
 
+    OPAL_TIMING_ENV_NEXT(recv_all, "Cleanup");
     /* This function requires abort in any error case */
     if (OSHMEM_SUCCESS != rc) {
         oshmem_shmem_abort(rc);
