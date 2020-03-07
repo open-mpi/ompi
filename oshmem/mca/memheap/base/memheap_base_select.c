@@ -24,7 +24,7 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "oshmem/include/shmemx.h"
 #include "oshmem/mca/sshmem/base/base.h"
-
+#include "ompi/util/timings.h"
 
 mca_memheap_base_config_t mca_memheap_base_config = {
     .device_nic_mem_seg_size = 0
@@ -57,6 +57,8 @@ int mca_memheap_base_select()
     mca_memheap_base_component_t *best_component = NULL;
     mca_memheap_base_module_t *best_module = NULL;
 
+    OPAL_TIMING_ENV_INIT(timing);
+
     if( OPAL_SUCCESS != mca_base_select("memheap", oshmem_memheap_base_framework.framework_output,
                                         &oshmem_memheap_base_framework.framework_components,
                                         (mca_base_module_t **) &best_module,
@@ -65,10 +67,14 @@ int mca_memheap_base_select()
         return OSHMEM_ERROR;
     }
 
+    OPAL_TIMING_ENV_NEXT(timing, "env");
+
     context = _memheap_create();
     if (NULL == context) {
         return OSHMEM_ERROR;
     }
+
+    OPAL_TIMING_ENV_NEXT(timing, "_memheap_create()");
 
     if (OSHMEM_SUCCESS != best_component->memheap_init(context)) {
         opal_show_help("help-oshmem-memheap.txt",
@@ -77,6 +83,8 @@ int mca_memheap_base_select()
                        "memheap");
         return OSHMEM_ERROR;
     }
+
+    OPAL_TIMING_ENV_NEXT(timing, "best_component->memheap_init()");
 
     /* Calculate memheap size in case it was not set during component initialization */
     best_module->memheap_size = context->user_size;
@@ -90,6 +98,7 @@ int mca_memheap_base_select()
                     best_component->memheap_version.mca_type_name, 
                     best_component->memheap_version.mca_component_name);
 
+    OPAL_TIMING_ENV_NEXT(timing, "DONE");
     return OSHMEM_SUCCESS;
 }
 
@@ -104,43 +113,60 @@ static memheap_context_t* _memheap_create(void)
     static memheap_context_t context;
     size_t user_size, size;
 
+    OPAL_TIMING_ENV_INIT(timing);
+
     user_size = _memheap_size();
     if (user_size < MEMHEAP_BASE_MIN_SIZE) {
         MEMHEAP_ERROR("Requested memheap size is less than minimal meamheap size (%llu < %llu)",
                       (unsigned long long)user_size, MEMHEAP_BASE_MIN_SIZE);
         return NULL ;
     }
+
+    OPAL_TIMING_ENV_NEXT(timing, "_memheap_size()");
+
     /* Inititialize symmetric area */
     if (OSHMEM_SUCCESS == rc) {
         rc = mca_memheap_base_alloc_init(&mca_memheap_base_map,
-                                         user_size + MEMHEAP_BASE_PRIVATE_SIZE, 0);
+                                         user_size + MEMHEAP_BASE_PRIVATE_SIZE, 0,
+                                         "regular_mem");
     }
+
+    OPAL_TIMING_ENV_NEXT(timing, "mca_memheap_base_alloc_init()");
 
     /* Initialize atomic symmetric area */
     size = mca_memheap_base_config.device_nic_mem_seg_size;
     if ((OSHMEM_SUCCESS == rc) && (size > 0)) {
         rc = mca_memheap_base_alloc_init(&mca_memheap_base_map, size,
-                                         SHMEM_HINT_DEVICE_NIC_MEM);
+                                         SHMEM_HINT_DEVICE_NIC_MEM,
+                                         "device_mem");
         if (rc == OSHMEM_ERR_NOT_IMPLEMENTED) {
             /* do not treat NOT_IMPLEMENTED as error */
             rc = OSHMEM_SUCCESS;
         }
     }
 
+    OPAL_TIMING_ENV_NEXT(timing, "mca_memheap_base_alloc_init(DEVICE_MEM)");
+
+
     /* Inititialize static/global variables area */
     if (OSHMEM_SUCCESS == rc) {
         rc = mca_memheap_base_static_init(&mca_memheap_base_map);
     }
+
+    OPAL_TIMING_ENV_NEXT(timing, "mca_memheap_base_static_init()");
 
     /* Memory Registration */
     if (OSHMEM_SUCCESS == rc) {
         rc = mca_memheap_base_reg(&mca_memheap_base_map);
     }
 
+    OPAL_TIMING_ENV_NEXT(timing, "mca_memheap_base_reg()");
+
     /* Init OOB channel */
     if (OSHMEM_SUCCESS == rc) {
         rc = memheap_oob_init(&mca_memheap_base_map);
     }
+    OPAL_TIMING_ENV_NEXT(timing, "memheap_oob_init()");
 
     if (OSHMEM_SUCCESS == rc) {
         context.user_size = user_size;
@@ -152,6 +178,7 @@ static memheap_context_t* _memheap_create(void)
                 (void*) ((unsigned char*) mca_memheap_base_map.mem_segs[HEAP_SEG_INDEX].super.va_base
                         + context.user_size);
     }
+    OPAL_TIMING_ENV_NEXT(timing, "DONE");
 
     return ((OSHMEM_SUCCESS == rc) ? &context : NULL );
 }
