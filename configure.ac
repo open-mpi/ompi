@@ -1455,7 +1455,8 @@ opal_show_title "Setup PRRTE support"
 
 m4_ifdef([project_prrte],
          [OMPI_SETUP_PRRTE],
-         [ompi_want_prrte=no])
+         [OPAL_SUMMARY_ADD([[Miscellaneous]],[[PRRTE]],[prrte],[no (disabled)])
+          ompi_want_prrte=no])
 AM_CONDITIONAL(OMPI_WANT_PRRTE, test "$ompi_want_prrte" = "yes")
 
 # checkpoint results
