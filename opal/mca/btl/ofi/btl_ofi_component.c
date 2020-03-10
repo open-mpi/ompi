@@ -584,6 +584,7 @@ fail:
     /* close basic ep before closing av */
     if (NULL != ep && !module->is_scalable_ep) {
         fi_close(&ep->fid);
+        ep = NULL;
     }
 
     /* if the contexts have not been initiated, num_contexts should
