@@ -117,7 +117,7 @@ int ompi_mpiinfo_init(void)
     }
 
     /* max procs for the entire job */
-    if (NULL != (cptr = getenv("OMPI_MCA_orte_ess_num_procs"))) {
+    if (NULL != (cptr = getenv("OMPI_MCA_num_procs"))) {
         opal_info_set(&ompi_mpi_info_env.info.super, "maxprocs", cptr);
         /* Open MPI does not support the "soft" option, so set it to maxprocs */
         opal_info_set(&ompi_mpi_info_env.info.super, "soft", cptr);
@@ -128,7 +128,7 @@ int ompi_mpiinfo_init(void)
     opal_info_set(&ompi_mpi_info_env.info.super, "host", val);
 
     /* architecture name */
-    if (NULL != (cptr = getenv("OMPI_MCA_orte_cpu_type"))) {
+    if (NULL != (cptr = getenv("OMPI_MCA_cpu_type"))) {
         opal_info_set(&ompi_mpi_info_env.info.super, "arch", cptr);
     }
 #ifdef HAVE_SYS_UTSNAME_H
