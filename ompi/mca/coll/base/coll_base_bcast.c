@@ -903,7 +903,7 @@ int ompi_coll_base_bcast_intra_scatter_allgather(
                 } else if ((vremote < vrank) && (vremote < tree_root + nprocs_alldata)
                            && (vrank >= tree_root + nprocs_alldata)) {
                     err = MCA_PML_CALL(recv((char *)buf + (ptrdiff_t)offset * extent,
-                                            count - offset, datatype, remote,
+                                            count, datatype, remote,
                                             MCA_COLL_BASE_TAG_BCAST,
                                             comm, &status));
                     if (MPI_SUCCESS != err) { goto cleanup_and_return; }
