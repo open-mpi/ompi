@@ -679,38 +679,39 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided,
 #endif
 
     if (!ompi_singleton) {
-        /* If we have a non-blocking fence:
-         * if we are doing an async modex, but we are collecting all
-         * data, then execute the non-blocking modex in the background.
-         * All calls to modex_recv will be cached until the background
-         * modex completes. If collect_all_data is false, then we skip
-         * the fence completely and retrieve data on-demand from the
-         * source node.
-         *
-         * If we do not have a non-blocking fence, then we must always
-         * execute the blocking fence as the system does not support
-         * later data retrieval. */
         if (opal_pmix_base_async_modex) {
-            /* execute the fence_nb in the background to collect
-             * the data */
-            background_fence = true;
-            active = true;
-            OPAL_POST_OBJECT(&active);
-            PMIX_INFO_LOAD(&info[0], PMIX_COLLECT_DATA, &opal_pmix_collect_all_data, PMIX_BOOL);
-            if( PMIX_SUCCESS != (rc = PMIx_Fence_nb(NULL, 0, NULL, 0,
-                                                    fence_release,
-                                                    (void*)&active))) {
-                ret = opal_pmix_convert_status(rc);
-                error = "PMIx_Fence_nb() failed";
-                goto error;
+            /* if we are doing an async modex, but we are collecting all
+             * data, then execute the non-blocking modex in the background.
+             * All calls to modex_recv will be cached until the background
+             * modex completes. If collect_all_data is false, then we skip
+             * the fence completely and retrieve data on-demand from the
+             * source node.
+             */
+            if (opal_pmix_collect_all_data) {
+                /* execute the fence_nb in the background to collect
+                 * the data */
+                background_fence = true;
+                active = true;
+                OPAL_POST_OBJECT(&active);
+                PMIX_INFO_LOAD(&info[0], PMIX_COLLECT_DATA, &opal_pmix_collect_all_data, PMIX_BOOL);
+                if( PMIX_SUCCESS != (rc = PMIx_Fence_nb(NULL, 0, NULL, 0,
+                                                        fence_release,
+                                                        (void*)&active))) {
+                    ret = opal_pmix_convert_status(rc);
+                    error = "PMIx_Fence_nb() failed";
+                    goto error;
+                }
             }
-
-        } else if (!opal_pmix_base_async_modex) {
-            /* we want to do the modex */
+        } else {
+            /* we want to do the modex - we block at this point, but we must
+             * do so in a manner that allows us to call opal_progress so our
+             * event library can be cycled as we have tied PMIx to that
+             * event base */
             active = true;
             OPAL_POST_OBJECT(&active);
             PMIX_INFO_LOAD(&info[0], PMIX_COLLECT_DATA, &opal_pmix_collect_all_data, PMIX_BOOL);
-            if( PMIX_SUCCESS != (rc = PMIx_Fence_nb(NULL, 0, info, 1, fence_release, (void*)&active))) {
+            rc = PMIx_Fence_nb(NULL, 0, info, 1, fence_release, (void*)&active);
+            if( PMIX_SUCCESS != rc) {
                 ret = opal_pmix_convert_status(rc);
                 error = "PMIx_Fence() failed";
                 goto error;
