@@ -36,7 +36,6 @@
 #include "pml_ob1_recvreq.h"
 #include "pml_ob1_sendreq.h"
 #include "ompi/mca/bml/base/base.h"
-#include "ompi/memchecker.h"
 
 size_t mca_pml_ob1_rdma_cuda_btls(
     mca_bml_base_endpoint_t* bml_endpoint,

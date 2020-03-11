@@ -33,6 +33,7 @@
 #include "pml_ob1_rdma.h"
 #include "pml_ob1_rdmafrag.h"
 #include "ompi/mca/bml/bml.h"
+#include "ompi/memchecker.h"
 
 BEGIN_C_DECLS
 
@@ -214,6 +215,16 @@ do {                                                                            
 
 static inline void mca_pml_ob1_send_request_fini (mca_pml_ob1_send_request_t *sendreq)
 {
+
+  /* make buffer defined when the request is completed,
+     and before releasing the objects. */
+     MEMCHECKER(
+            memchecker_call(&opal_memchecker_base_mem_defined,
+                            sendreq->req_send.req_base.req_addr,
+                            sendreq->req_send.req_base.req_count,
+                            sendreq->req_send.req_base.req_datatype);
+     );
+
     /*  Let the base handle the reference counts */
     MCA_PML_BASE_SEND_REQUEST_FINI((&(sendreq)->req_send));
     assert( NULL == sendreq->rdma_frag );

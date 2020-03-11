@@ -40,7 +40,7 @@
 #include "pml_ob1_sendreq.h"
 #include "pml_ob1_rdmafrag.h"
 #include "ompi/mca/bml/base/base.h"
-#include "ompi/memchecker.h"
+
 #if OPAL_CUDA_SUPPORT
 #include "opal/datatype/opal_datatype_cuda.h"
 #include "opal/mca/common/cuda/common_cuda.h"

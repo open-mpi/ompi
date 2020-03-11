@@ -13,6 +13,8 @@
  * Copyright (c) 2009      IBM Corporation.  All rights reserved.
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2018      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -84,11 +86,11 @@ struct mca_pml_ob1_match_hdr_t {
     int32_t  hdr_src;                      /**< source rank */
     int32_t  hdr_tag;                      /**< user tag */
     uint16_t hdr_seq;                      /**< message sequence number */
-#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT || OPAL_ENABLE_DEBUG
     uint8_t  hdr_padding[2];               /**< explicitly pad to 16 bytes.  Compilers seem to already prefer to do this, but make it explicit just in case */
 #endif
 };
-#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT || OPAL_ENABLE_DEBUG
 #define OMPI_PML_OB1_MATCH_HDR_LEN  16
 #else
 #define OMPI_PML_OB1_MATCH_HDR_LEN  14
@@ -104,7 +106,7 @@ static inline void mca_pml_ob1_match_hdr_prepare (mca_pml_ob1_match_hdr_t *hdr, 
     hdr->hdr_src = hdr_src;
     hdr->hdr_tag = hdr_tag;
     hdr->hdr_seq = hdr_seq;
-#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT && OPAL_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
     hdr->hdr_padding[0] = 0;
     hdr->hdr_padding[1] = 0;
 #endif
@@ -169,7 +171,7 @@ static inline void mca_pml_ob1_rendezvous_hdr_prepare (mca_pml_ob1_rendezvous_hd
  */
 struct mca_pml_ob1_rget_hdr_t {
     mca_pml_ob1_rendezvous_hdr_t hdr_rndv;
-#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT || OPAL_ENABLE_DEBUG
     uint8_t hdr_padding[4];
 #endif
     opal_ptr_t hdr_frag;                      /**< source fragment (for fin) */
@@ -185,7 +187,7 @@ static inline void mca_pml_ob1_rget_hdr_prepare (mca_pml_ob1_rget_hdr_t *hdr, ui
 {
     mca_pml_ob1_rendezvous_hdr_prepare (&hdr->hdr_rndv, MCA_PML_OB1_HDR_TYPE_RGET, hdr_flags,
                                         hdr_ctx, hdr_src, hdr_tag, hdr_seq, hdr_msg_length, hdr_src_req);
-#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT && OPAL_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
     hdr->hdr_padding[0] = 0;
     hdr->hdr_padding[1] = 0;
     hdr->hdr_padding[2] = 0;
@@ -215,7 +217,7 @@ static inline void mca_pml_ob1_rget_hdr_prepare (mca_pml_ob1_rget_hdr_t *hdr, ui
  */
 struct mca_pml_ob1_frag_hdr_t {
     mca_pml_ob1_common_hdr_t hdr_common;     /**< common attributes */
-#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT || OPAL_ENABLE_DEBUG
     uint8_t hdr_padding[6];
 #endif
     uint64_t hdr_frag_offset;                /**< offset into message */
@@ -229,7 +231,7 @@ static inline void mca_pml_ob1_frag_hdr_prepare (mca_pml_ob1_frag_hdr_t *hdr, ui
                                                  uint64_t hdr_dst_req)
 {
     mca_pml_ob1_common_hdr_prepare (&hdr->hdr_common, MCA_PML_OB1_HDR_TYPE_FRAG, hdr_flags);
-#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT && OPAL_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
     hdr->hdr_padding[0] = 0;
     hdr->hdr_padding[1] = 0;
     hdr->hdr_padding[2] = 0;
@@ -260,7 +262,7 @@ static inline void mca_pml_ob1_frag_hdr_prepare (mca_pml_ob1_frag_hdr_t *hdr, ui
 
 struct mca_pml_ob1_ack_hdr_t {
     mca_pml_ob1_common_hdr_t hdr_common;      /**< common attributes */
-#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT || OPAL_ENABLE_DEBUG
     uint8_t hdr_padding[6];
 #endif
     opal_ptr_t hdr_src_req;                   /**< source request */
@@ -275,7 +277,7 @@ static inline void mca_pml_ob1_ack_hdr_prepare (mca_pml_ob1_ack_hdr_t *hdr, uint
                                                 uint64_t hdr_send_offset, uint64_t hdr_send_size)
 {
     mca_pml_ob1_common_hdr_prepare (&hdr->hdr_common, MCA_PML_OB1_HDR_TYPE_ACK, hdr_flags);
-#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT && OPAL_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
     hdr->hdr_padding[0] = 0;
     hdr->hdr_padding[1] = 0;
     hdr->hdr_padding[2] = 0;
@@ -313,8 +315,8 @@ static inline void mca_pml_ob1_ack_hdr_prepare (mca_pml_ob1_ack_hdr_t *hdr, uint
 
 struct mca_pml_ob1_rdma_hdr_t {
     mca_pml_ob1_common_hdr_t hdr_common;      /**< common attributes */
-#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
-    uint8_t hdr_padding[2];                   /** two to pad out the hdr to a 4 byte alignment.  hdr_req will then be 8 byte aligned after 4 for hdr_seg_cnt */
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT || OPAL_ENABLE_DEBUG
+    uint8_t hdr_padding[6];                   /** two to pad out the hdr to a 4 byte alignment.  hdr_req will then be 8 byte aligned after 4 for hdr_seg_cnt */
 #endif
     /* TODO: add real support for multiple destination segments */
     opal_ptr_t hdr_req;                       /**< destination request */
@@ -334,9 +336,13 @@ static inline void mca_pml_ob1_rdma_hdr_prepare (mca_pml_ob1_rdma_hdr_t *hdr, ui
                                                  size_t local_handle_size)
 {
     mca_pml_ob1_common_hdr_prepare (&hdr->hdr_common, MCA_PML_OB1_HDR_TYPE_PUT, hdr_flags);
-#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT && OPAL_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
     hdr->hdr_padding[0] = 0;
     hdr->hdr_padding[1] = 0;
+    hdr->hdr_padding[2] = 0;
+    hdr->hdr_padding[3] = 0;
+    hdr->hdr_padding[4] = 0;
+    hdr->hdr_padding[5] = 0;
 #endif
     hdr->hdr_req.lval = hdr_req;
     hdr->hdr_frag.pval = hdr_frag;
@@ -371,8 +377,8 @@ static inline void mca_pml_ob1_rdma_hdr_prepare (mca_pml_ob1_rdma_hdr_t *hdr, ui
 
 struct mca_pml_ob1_fin_hdr_t {
     mca_pml_ob1_common_hdr_t hdr_common;      /**< common attributes */
-#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
-    uint8_t hdr_padding[2];
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT || OPAL_ENABLE_DEBUG
+    uint8_t hdr_padding[6];
 #endif
     int64_t hdr_size;                         /**< number of bytes completed (positive), error code (negative) */
     opal_ptr_t hdr_frag;                      /**< completed RDMA fragment */
@@ -383,9 +389,13 @@ static inline void mca_pml_ob1_fin_hdr_prepare (mca_pml_ob1_fin_hdr_t *hdr, uint
                                                 uint64_t hdr_frag, int64_t hdr_size)
 {
     mca_pml_ob1_common_hdr_prepare (&hdr->hdr_common, MCA_PML_OB1_HDR_TYPE_FIN, hdr_flags);
-#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT && OPAL_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
     hdr->hdr_padding[0] = 0;
     hdr->hdr_padding[1] = 0;
+    hdr->hdr_padding[2] = 0;
+    hdr->hdr_padding[3] = 0;
+    hdr->hdr_padding[4] = 0;
+    hdr->hdr_padding[5] = 0;
 #endif
     hdr->hdr_frag.lval = hdr_frag;
     hdr->hdr_size      = hdr_size;

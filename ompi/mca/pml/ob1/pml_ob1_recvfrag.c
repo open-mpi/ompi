@@ -40,7 +40,6 @@
 #include "ompi/communicator/communicator.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/peruse/peruse-internal.h"
-#include "ompi/memchecker.h"
 #include "ompi/runtime/ompi_spc.h"
 
 #include "pml_ob1.h"

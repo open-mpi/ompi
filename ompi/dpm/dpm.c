@@ -16,7 +16,8 @@
  * Copyright (c) 2011-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
- * Copyright (c) 2014-2017 Research Organization for Information Science
+ * Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2020 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
@@ -1113,6 +1114,16 @@ int ompi_dpm_finalize(void)
     return OMPI_SUCCESS;
 }
 
+static void cleanup_dpm_disconnect_objs(ompi_dpm_disconnect_obj **objs, int count)
+{
+    for(int i = 0; i < count; i++) {
+        if (NULL != objs[i]->reqs) {
+            free(objs[i]->reqs);
+        }
+        free(objs[i]);
+    }
+    free(objs);
+}
 
 /**********************************************************************/
 /**********************************************************************/
@@ -1126,7 +1137,7 @@ int ompi_dpm_dyn_finalize(void)
     ompi_communicator_t *comm=NULL;
 
     if (1 <ompi_comm_num_dyncomm) {
-        objs = (ompi_dpm_disconnect_obj**)malloc(ompi_comm_num_dyncomm*
+        objs = (ompi_dpm_disconnect_obj**)malloc(ompi_comm_num_dyncomm *
                                sizeof(ompi_dpm_disconnect_obj*));
         if (NULL == objs) {
             return OMPI_ERR_OUT_OF_RESOURCE;
@@ -1140,13 +1151,12 @@ int ompi_dpm_dyn_finalize(void)
             }
         }
 
-        if (j != ompi_comm_num_dyncomm+1) {
-            free(objs);
+        if (j != ompi_comm_num_dyncomm) {
+            cleanup_dpm_disconnect_objs(objs, j);
             return OMPI_ERROR;
         }
 
         disconnect_waitall(ompi_comm_num_dyncomm, objs);
-        free(objs);
     }
 
     return OMPI_SUCCESS;
@@ -1265,13 +1275,7 @@ static int disconnect_waitall (int count, ompi_dpm_disconnect_obj **objs)
     ret = ompi_request_wait_all(2*totalcount, reqs, MPI_STATUSES_IGNORE);
 
     /* Finally, free everything */
-    for (i=0; i< count; i++ ) {
-        if (NULL != objs[i]->reqs ) {
-            free(objs[i]->reqs );
-        }
-        free(objs[i]);
-    }
-
+    cleanup_dpm_disconnect_objs(objs, count);
     free(reqs);
 
     return ret;

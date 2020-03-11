@@ -26,7 +26,6 @@
 #include "pml_ob1.h"
 #include "pml_ob1_recvreq.h"
 #include "pml_ob1_sendreq.h"
-#include "ompi/memchecker.h"
 
 
 int mca_pml_ob1_start(size_t count, ompi_request_t** requests)
