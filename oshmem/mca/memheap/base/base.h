@@ -62,7 +62,7 @@ typedef struct mca_memheap_map {
 extern mca_memheap_map_t mca_memheap_base_map;
 extern mca_memheap_base_config_t mca_memheap_base_config;
 
-int mca_memheap_base_alloc_init(mca_memheap_map_t *, size_t, long);
+int mca_memheap_base_alloc_init(mca_memheap_map_t *, size_t, long, char *);
 void mca_memheap_base_alloc_exit(mca_memheap_map_t *);
 int mca_memheap_base_static_init(mca_memheap_map_t *);
 void mca_memheap_base_static_exit(mca_memheap_map_t *);
