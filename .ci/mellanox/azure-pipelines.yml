@@ -18,18 +18,12 @@ variables:
 jobs:
 - job: mellanox_ompi_ci
   displayName: Mellanox Open MPI CI
-  timeoutInMinutes: 240
+  timeoutInMinutes: 90
   container:
     image: rdmz-harbor.rdmz.labs.mlnx/hpcx/ompi_ci:latest
     options: -v /hpc/local:/hpc/local -v /opt:/opt --uts=host --ipc=host --ulimit stack=67108864
       --ulimit memlock=-1 --security-opt seccomp=unconfined --cap-add=SYS_ADMIN --device=/dev/infiniband/
   steps:
-  - task: DeleteFiles@1
-    displayName: Cleanup workspace folder
-    inputs:
-      sourceFolder: $(Pipeline.Workspace)
-      contents: |
-        **/jenkins_scripts
   - checkout: self
     submodules: true
     path: ompi
@@ -37,11 +31,8 @@ jobs:
   - bash: |
       set -eE
       [ "$(debug)" = "true" ] && set -x
-      cd $(Pipeline.Workspace)
-      git clone $(ompi_jenkins_scripts_git_repo_url)
-      cd $(Pipeline.Workspace)/jenkins_scripts && git checkout $(ompi_jenkins_scripts_git_branch)
+      rm -rf $(Pipeline.Workspace)/jenkins_scripts
+      git clone $(ompi_jenkins_scripts_git_repo_url) --branch $(ompi_jenkins_scripts_git_branch) $(Pipeline.Workspace)/jenkins_scripts
       export WORKSPACE=$(Pipeline.Workspace)/ompi
-      # TODO: rework ompi_test.sh to avoid Jenkins mentions
-      export JENKINS_RUN_TESTS=yes
       $(Pipeline.Workspace)/jenkins_scripts/jenkins/ompi/ompi_test.sh
     displayName: Build and test Open MPI
