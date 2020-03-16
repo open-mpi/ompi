@@ -67,10 +67,6 @@ bool ompi_singleton = false;
 
 static pmix_proc_t myprocid;
 
-static bool added_transport_keys = false;
-static bool added_num_procs = false;
-static bool added_app_ctx = false;
-static char* pre_condition_transports_print(uint64_t *unique_key);
 static int _setup_top_session_dir(char **sdir);
 static int _setup_job_session_dir(char **sdir);
 static int _setup_proc_session_dir(char **sdir);
@@ -504,13 +500,12 @@ int ompi_rte_init(int *pargc, char ***pargv)
     int u32, *u32ptr;
     uint16_t u16, *u16ptr;
     char **peers=NULL;
-    char *envar, *ev1, *ev2;
+    char *ev1;
     char *val;
     size_t i;
-    uint64_t unique_key[2];
-    char *string_key;
     pmix_value_t pval;
     pmix_status_t rc;
+    char **tmp;
 
     u32ptr = &u32;
     u16ptr = &u16;
@@ -537,15 +532,17 @@ int ompi_rte_init(int *pargc, char ***pargv)
 
     /* initialize the selected module */
     if (!PMIx_Initialized() && (PMIX_SUCCESS != (ret = PMIx_Init(&myprocid, NULL, 0)))) {
-        /* we cannot run - this could be due to being direct launched
-         * without the required PMI support being built, so print
-         * out a help message indicating it */
-        opal_show_help("help-mpi-runtime.txt", "no-pmi", true, PMIx_Error_string(ret));
-        return OPAL_ERR_SILENT;
-    }
-    /* if our nspace starts with "singleton", then we are a singleton */
-    if (0 == strncmp(myprocid.nspace, "singleton", strlen("singleton"))) {
-        ompi_singleton = true;
+        /* if we get PMIX_ERR_UNREACH indicating that we cannot reach the
+         * server, then we assume we are operating as a singleton */
+        if (PMIX_ERR_UNREACH == ret) {
+            ompi_singleton = true;
+        } else {
+            /* we cannot run - this could be due to being direct launched
+             * without the required PMI support being built, so print
+             * out a help message indicating it */
+            opal_show_help("help-mpi-runtime.txt", "no-pmi", true, PMIx_Error_string(ret));
+            return OPAL_ERR_SILENT;
+        }
     }
 
     /* setup the process name fields - also registers the new nspace */
@@ -567,23 +564,35 @@ int ompi_rte_init(int *pargc, char ***pargv)
         }
         opal_process_info.nodename = ev1;  // ev1 is an allocated string
     }
-    ompi_process_info.nodename = opal_process_info.nodename;
+    pmix_process_info.nodename = opal_process_info.nodename;
 
-    /* get our local rank from PMI */
+    /* get our local rank from PMIx */
     OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, PMIX_LOCAL_RANK,
                                    &pmix_process_info.my_name, &u16ptr, PMIX_UINT16);
     if (PMIX_SUCCESS != rc) {
-        ret = opal_pmix_convert_status(rc);
-        error = "local rank";
-        goto error;
+        if (ompi_singleton) {
+            /* just assume 0 */
+            u16 = 0;
+        } else {
+            ret = opal_pmix_convert_status(rc);
+            error = "local rank";
+            goto error;
+        }
     }
     pmix_process_info.my_local_rank = u16;
 
-    /* get our node rank from PMI */
+    /* get our node rank from PMIx */
     OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, PMIX_NODE_RANK,
                                    &pmix_process_info.my_name, &u16ptr, PMIX_UINT16);
     if (PMIX_SUCCESS != rc) {
-        u16 = 0;
+        if (ompi_singleton) {
+            /* just assume 0 */
+            u16 = 0;
+        } else {
+            ret = opal_pmix_convert_status(rc);
+            error = "node rank";
+            goto error;
+        }
     }
     pmix_process_info.my_node_rank = u16;
 
@@ -593,27 +602,43 @@ int ompi_rte_init(int *pargc, char ***pargv)
     OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, PMIX_JOB_SIZE,
                                    &pname, &u32ptr, PMIX_UINT32);
     if (PMIX_SUCCESS != rc) {
-        ret = opal_pmix_convert_status(rc);
-        error = "job size";
-        goto error;
+        if (ompi_singleton) {
+            /* just assume 1 */
+            u32 = 1;
+        } else {
+            ret = opal_pmix_convert_status(rc);
+            error = "job size";
+            goto error;
+        }
     }
     pmix_process_info.num_procs = u32;
 
-    /* push into the environ for pickup in MPI layer for
-     * MPI-3 required info key
-     */
-    if (NULL == getenv(OPAL_MCA_PREFIX"opal_ess_num_procs")) {
-        opal_asprintf(&ev1, OPAL_MCA_PREFIX"opal_ess_num_procs=%d", pmix_process_info.num_procs);
-        putenv(ev1);
-        added_num_procs = true;
+    /* get universe size */
+    OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, PMIX_UNIV_SIZE,
+                                   &pname, &u32ptr, PMIX_UINT32);
+    if (PMIX_SUCCESS != rc) {
+        if (ompi_singleton) {
+            /* just assume 1 */
+            u32 = 1;
+        } else {
+            /* default to job size */
+            u32 = pmix_process_info.num_procs;
+        }
     }
-    if (NULL == getenv("OMPI_APP_CTX_NUM_PROCS")) {
-        opal_asprintf(&ev2, "OMPI_APP_CTX_NUM_PROCS=%d", pmix_process_info.num_procs);
-        putenv(ev2);
-        added_app_ctx = true;
+    pmix_process_info.univ_size = u32;
+
+    /* get number of app contexts */
+    pname.jobid = pmix_process_info.my_name.jobid;
+    pname.vpid = OPAL_VPID_WILDCARD;
+    OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, PMIX_JOB_NUM_APPS,
+                                   &pname, &u32ptr, PMIX_UINT32);
+    if (PMIX_SUCCESS == rc) {
+        pmix_process_info.num_apps = u32;
+    } else {
+        pmix_process_info.num_apps = 1;
     }
 
-    /* get our app number from PMI - ok if not found */
+    /* get our app number from PMIx - ok if not found */
     OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, PMIX_APPNUM,
                                    &pmix_process_info.my_name, &u32ptr, PMIX_UINT32);
     if (PMIX_SUCCESS == rc) {
@@ -622,8 +647,48 @@ int ompi_rte_init(int *pargc, char ***pargv)
         pmix_process_info.app_num = 0;
     }
 
+    /* if more than one app context, get the number of procs and first rank of each */
+    if (1 == pmix_process_info.num_apps) {
+        pmix_process_info.app_ldrs = strdup("0");
+        opal_asprintf(&pmix_process_info.app_sizes, "%u", pmix_process_info.num_procs);
+    } else {
+        OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, "OMPI_APP_SIZES", &pname, &val, PMIX_STRING);
+        if (PMIX_SUCCESS != rc) {
+            /* assume it is just us */
+            opal_asprintf(&pmix_process_info.app_sizes, "%u", pmix_process_info.num_procs);
+        } else {
+            pmix_process_info.app_sizes = val;
+        }
+        OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, "OMPI_FIRST_RANKS", &pname, &val, PMIX_STRING);
+        if (PMIX_SUCCESS != rc) {
+            /* assume it is just us */
+            pmix_process_info.app_ldrs = strdup("0");
+        } else {
+            pmix_process_info.app_ldrs = val;
+        }
+    }
+
+    /* get our command - defaults to our appnum */
+    OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, PMIX_APP_ARGV,
+                                   &pname, (char**)&ev1, PMIX_STRING);
+    if (PMIX_SUCCESS == rc) {
+        pmix_process_info.command = ev1;  // ev1 is an allocated string
+    } else if (NULL != pargv) {
+        tmp = *pargv;
+        if (NULL != tmp) {
+            pmix_process_info.command = opal_argv_join(tmp, ' ');
+        }
+    }
+
+    /* get our reincarnation number */
+    OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, PMIX_REINCARNATION,
+                                   &OPAL_PROC_MY_NAME, &u32ptr, PMIX_UINT32);
+    if (PMIX_SUCCESS == rc) {
+        pmix_process_info.reincarnation = u32;
+    }
+
     /* get the number of local peers - required for wireup of
-     * shared memory BTL */
+     * shared memory BTL, defaults to local node */
     OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, PMIX_LOCAL_SIZE,
                                    &pname, &u32ptr, PMIX_UINT32);
     if (PMIX_SUCCESS == rc) {
@@ -632,24 +697,6 @@ int ompi_rte_init(int *pargc, char ***pargv)
         ret = opal_pmix_convert_status(rc);
         error = "local size";
         goto error;
-    }
-
-    /* setup transport keys in case the MPI layer needs them -
-     * we can use the jobfam and stepid as unique keys
-     * because they are unique values assigned by the RM
-     */
-    if (NULL == getenv(OPAL_MCA_PREFIX"opal_precondition_transports")) {
-        unique_key[0] = (pmix_process_info.my_name.jobid & 0xff00) >> 16;
-        unique_key[1] = pmix_process_info.my_name.jobid & 0x00ff;
-        if (NULL == (string_key = pre_condition_transports_print(unique_key))) {
-            OPAL_ERROR_LOG(OPAL_ERR_OUT_OF_RESOURCE);
-            return OPAL_ERR_OUT_OF_RESOURCE;
-        }
-        opal_asprintf(&envar, OPAL_MCA_PREFIX"opal_precondition_transports=%s", string_key);
-        putenv(envar);
-        added_transport_keys = true;
-        /* cannot free the envar as that messes up our environ */
-        free(string_key);
     }
 
     /* retrieve temp directories info */
@@ -692,14 +739,24 @@ int ompi_rte_init(int *pargc, char ***pargv)
         }
     }
 
+    /* get our initial working directory - defaults to getting the value
+     * for our app */
+    OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, PMIX_WDIR, &pname, &val, PMIX_STRING);
+    if (PMIX_SUCCESS == rc && NULL != val) {
+        pmix_process_info.initial_wdir = val;
+        val = NULL;
+    }
+
     /* identify our location */
     val = NULL;
     OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, PMIX_LOCALITY_STRING,
                                    &pmix_process_info.my_name, &val, PMIX_STRING);
     if (PMIX_SUCCESS == rc && NULL != val) {
         pmix_process_info.cpuset = val;
+        pmix_proc_is_bound = true;
     } else {
         pmix_process_info.cpuset = NULL;
+        pmix_proc_is_bound = false;
     }
 
     /* get our local peers */
@@ -710,7 +767,7 @@ int ompi_rte_init(int *pargc, char ***pargv)
             error = "num local peers";
             goto error;
         }
-        /* retrieve the local peers */
+        /* retrieve the local peers - defaults to local node */
         OPAL_MODEX_RECV_VALUE(rc, PMIX_LOCAL_PEERS,
                               &pname, &val, PMIX_STRING);
         if (PMIX_SUCCESS == rc && NULL != val) {
@@ -762,11 +819,6 @@ int ompi_rte_init(int *pargc, char ***pargv)
         opal_argv_free(peers);
     }
 
-    /* poor attempt to detect we are bound */
-    if (NULL != getenv("SLURM_CPU_BIND_TYPE")) {
-        pmix_proc_is_bound = true;
-    }
-
     /* set the remaining opal_process_info fields. Note that
      * the OPAL layer will have initialized these to NULL, and
      * anyone between us would not have strdup'd the string, so
@@ -816,19 +868,6 @@ static bool check_file(const char *root, const char *path)
 
 int ompi_rte_finalize(void)
 {
-    /* remove the envars that we pushed into environ
-     * so we leave that structure intact
-     */
-    if (added_transport_keys) {
-        unsetenv(OPAL_MCA_PREFIX"opal_precondition_transports");
-    }
-    if (added_num_procs) {
-        unsetenv(OPAL_MCA_PREFIX"opal_ess_num_procs");
-    }
-    if (added_app_ctx) {
-        unsetenv("OMPI_APP_CTX_NUM_PROCS");
-    }
-
     /* shutdown pmix */
     PMIx_Finalize(NULL, 0);
 
@@ -837,10 +876,43 @@ int ompi_rte_finalize(void)
         opal_os_dirpath_destroy(pmix_process_info.job_session_dir,
                                 false, check_file);
         free(pmix_process_info.job_session_dir);
+        pmix_process_info.job_session_dir = NULL;
     }
 
-    free (pmix_process_info.cpuset);
-    pmix_process_info.cpuset = NULL;
+    if (NULL != pmix_process_info.top_session_dir) {
+        free(pmix_process_info.top_session_dir);
+        pmix_process_info.top_session_dir = NULL;
+    }
+
+    if (NULL != pmix_process_info.proc_session_dir) {
+        free(pmix_process_info.proc_session_dir);
+        pmix_process_info.proc_session_dir = NULL;
+    }
+
+    if (NULL != pmix_process_info.app_sizes) {
+        free(pmix_process_info.app_sizes);
+        pmix_process_info.app_sizes = NULL;
+    }
+
+    if (NULL != pmix_process_info.app_ldrs) {
+        free(pmix_process_info.app_ldrs);
+        pmix_process_info.app_ldrs = NULL;
+    }
+
+    if (NULL != pmix_process_info.cpuset) {
+        free(pmix_process_info.cpuset);
+        pmix_process_info.cpuset = NULL;
+    }
+
+    if (NULL != pmix_process_info.command) {
+        free(pmix_process_info.command);
+        pmix_process_info.command = NULL;
+    }
+
+    if (NULL != pmix_process_info.initial_wdir) {
+        free(pmix_process_info.initial_wdir);
+        pmix_process_info.initial_wdir = NULL;
+    }
 
     /* cleanup our internal nspace hack */
     opal_pmix_finalize_nspace_tracker();
@@ -939,72 +1011,6 @@ void ompi_rte_wait_for_debugger(void)
 
     /* deregister the event handler */
     PMIx_Deregister_event_handler(handler, NULL, NULL);
-}
-
-static char* pre_condition_transports_print(uint64_t *unique_key)
-{
-    unsigned int *int_ptr;
-    size_t i, j, string_key_len, written_len;
-    char *string_key = NULL, *format = NULL;
-
-    /* string is two 64 bit numbers printed in hex with a dash between
-     * and zero padding.
-     */
-    string_key_len = (sizeof(uint64_t) * 2) * 2 + strlen("-") + 1;
-    string_key = (char*) malloc(string_key_len);
-    if (NULL == string_key) {
-        return NULL;
-    }
-
-    string_key[0] = '\0';
-    written_len = 0;
-
-    /* get a format string based on the length of an unsigned int.  We
-     * want to have zero padding for sizeof(unsigned int) * 2
-     * characters -- when printing as a hex number, each byte is
-     * represented by 2 hex characters.  Format will contain something
-     * that looks like %08lx, where the number 8 might be a different
-     * number if the system has a different sized long (8 would be for
-     * sizeof(int) == 4)).
-     */
-    opal_asprintf(&format, "%%0%dx", (int)(sizeof(unsigned int)) * 2);
-
-    /* print the first number */
-    int_ptr = (unsigned int*) &unique_key[0];
-    for (i = 0 ; i < sizeof(uint64_t) / sizeof(unsigned int) ; ++i) {
-        if (0 == int_ptr[i]) {
-            /* inject some energy */
-            for (j=0; j < sizeof(unsigned int); j++) {
-                int_ptr[i] |= j << j;
-            }
-        }
-        snprintf(string_key + written_len,
-                 string_key_len - written_len,
-                 format, int_ptr[i]);
-        written_len = strlen(string_key);
-    }
-
-    /* print the middle dash */
-    snprintf(string_key + written_len, string_key_len - written_len, "-");
-    written_len = strlen(string_key);
-
-    /* print the second number */
-    int_ptr = (unsigned int*) &unique_key[1];
-    for (i = 0 ; i < sizeof(uint64_t) / sizeof(unsigned int) ; ++i) {
-        if (0 == int_ptr[i]) {
-            /* inject some energy */
-            for (j=0; j < sizeof(unsigned int); j++) {
-                int_ptr[i] |= j << j;
-            }
-        }
-        snprintf(string_key + written_len,
-                 string_key_len - written_len,
-                 format, int_ptr[i]);
-        written_len = strlen(string_key);
-    }
-    free(format);
-
-    return string_key;
 }
 
 static int _setup_top_session_dir(char **sdir)

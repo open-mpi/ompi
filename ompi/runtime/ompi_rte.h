@@ -243,7 +243,6 @@ typedef uint16_t ompi_local_rank_t;
 
 typedef struct {
     opal_process_name_t my_name;
-    char *my_hnp_uri;
     char *nodename;
     pid_t pid;
     char *top_session_dir;
@@ -254,7 +253,14 @@ typedef struct {
     int32_t num_local_peers;
     uint32_t num_procs;
     uint32_t app_num;
+    uint32_t univ_size;
+    char *app_sizes;
+    char *app_ldrs;
     char *cpuset;
+    char *command;
+    uint32_t num_apps;
+    char *initial_wdir;
+    uint32_t reincarnation;
 } pmix_process_info_t;
 OMPI_DECLSPEC extern pmix_process_info_t pmix_process_info;
 #define ompi_process_info pmix_process_info
