@@ -85,13 +85,18 @@ AC_DEFUN([_PMIX_CHECK_COMPILER_VENDOR], [
     pmix_check_compiler_vendor_result="unknown"
 
     # GNU is probably the most common, so check that one as soon as
-    # possible.  Intel pretends to be GNU, so need to check Intel
+    # possible.  Intel and PGI18 pretends to be GNU, so need to check them
     # before checking for GNU.
 
     # Intel
     AS_IF([test "$pmix_check_compiler_vendor_result" = "unknown"],
           [PMIX_IF_IFELSE([defined(__INTEL_COMPILER) || defined(__ICC)],
                [pmix_check_compiler_vendor_result="intel"])])
+
+    # Portland Group
+    AS_IF([test "$pmix_check_compiler_vendor_result" = "unknown"],
+          [PMIX_IFDEF_IFELSE([__PGI],
+               [pmix_check_compiler_vendor_result="portland group"])])
 
     # Fujitsu
     AS_IF([test "$pmix_check_compiler_vendor_result" = "unknown"],
@@ -211,11 +216,6 @@ AC_DEFUN([_PMIX_CHECK_COMPILER_VENDOR], [
     AS_IF([test "$pmix_check_compiler_vendor_result" = "unknown"],
           [PMIX_IFDEF_IFELSE([__POCC__],
                [pmix_check_compiler_vendor_result="pelles"])])
-
-    # Portland Group
-    AS_IF([test "$pmix_check_compiler_vendor_result" = "unknown"],
-          [PMIX_IFDEF_IFELSE([__PGI],
-               [pmix_check_compiler_vendor_result="portland group"])])
 
     # SAS/C
     AS_IF([test "$pmix_check_compiler_vendor_result" = "unknown"],
