@@ -497,7 +497,7 @@ int ompi_rte_init(int *pargc, char ***pargv)
     char *error = NULL;
     opal_process_name_t pname;
     pmix_proc_t rproc;
-    int u32, *u32ptr;
+    uint32_t u32, *u32ptr;
     uint16_t u16, *u16ptr;
     char **peers=NULL;
     char *ev1;
@@ -727,7 +727,7 @@ int ompi_rte_init(int *pargc, char ***pargv)
     }
 
     /* retrieve proc-session directory info */
-    OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, PMIX_PROCDIR, &OPAL_PROC_MY_NAME, &val, OPAL_STRING);
+    OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, PMIX_PROCDIR, &OPAL_PROC_MY_NAME, &val, PMIX_STRING);
     if (OPAL_SUCCESS == rc && NULL != val) {
         pmix_process_info.proc_session_dir = val;
     } else {
@@ -817,6 +817,26 @@ int ompi_rte_init(int *pargc, char ***pargv)
             }
         }
         opal_argv_free(peers);
+    }
+
+    /*
+     * stdout/stderr buffering
+     * If the user requested to override the default setting then do
+     * as they wish.
+     */
+    OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, "OMPI_STREAM_BUFFERING",
+                                   &pmix_process_info.my_name, &u16ptr, PMIX_UINT16);
+    if (PMIX_SUCCESS == rc) {
+        if (0 == u16) {
+            setvbuf(stdout, NULL, _IONBF, 0);
+            setvbuf(stderr, NULL, _IONBF, 0);
+        } else if (1 == u16) {
+            setvbuf(stdout, NULL, _IOLBF, 0);
+            setvbuf(stderr, NULL, _IOLBF, 0);
+        } else if (2 == u16 ) {
+            setvbuf(stdout, NULL, _IOFBF, 0);
+            setvbuf(stderr, NULL, _IOFBF, 0);
+        }
     }
 
     /* set the remaining opal_process_info fields. Note that
