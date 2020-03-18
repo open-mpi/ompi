@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2009-2019 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2011-2014 Los Alamos National Security, LLC. All rights
 #                         reserved.
 # Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
@@ -35,6 +35,10 @@ AC_DEFUN([OPAL_CHECK_PMIX_LIB],[
 
     OPAL_VAR_SCOPE_PUSH([opal_external_pmix_save_CPPFLAGS opal_external_pmix_save_LDFLAGS opal_external_pmix_save_LIBS])
     opal_external_pmix_happy=no
+
+    opal_external_pmix_save_CPPFLAGS=$CPPFLAGS
+    opal_external_pmix_save_LDFLAGS=$LDFLAGS
+    opal_external_pmix_save_LIBS=$LIBS
 
     # Make sure we have the headers and libs in the correct location
     AC_MSG_CHECKING([for pmix.h in $1])
@@ -91,10 +95,6 @@ AC_DEFUN([OPAL_CHECK_PMIX_LIB],[
                                AC_MSG_ERROR([Cannot continue])])])])
 
           # check the version
-          opal_external_pmix_save_CPPFLAGS=$CPPFLAGS
-          opal_external_pmix_save_LDFLAGS=$LDFLAGS
-          opal_external_pmix_save_LIBS=$LIBS
-
           # if the pmix_version.h file does not exist, then
           # this must be from a pre-1.1.5 version OMPI does
           # NOT support anything older than v1.2.5
