@@ -30,7 +30,7 @@ static bool requests_initialized = false;
 static opal_list_t requests;
 static opal_atomic_int32_t active_requests = 0;
 static bool in_progress = false;
-static opal_mutex_t lock;
+static opal_mutex_t lock = OPAL_MUTEX_STATIC_INIT;
 
 static int grequestx_progress(void) {
     ompi_grequest_t *request, *next;
@@ -79,13 +79,12 @@ int ompi_grequestx_start(
      */
     OBJ_RETAIN(((ompi_grequest_t *)*request));
 
+    OPAL_THREAD_LOCK(&lock);
     if (!requests_initialized) {
         OBJ_CONSTRUCT(&requests, opal_list_t);
-        OBJ_CONSTRUCT(&lock, opal_mutex_t);
         requests_initialized = true;
     }
 
-    OPAL_THREAD_LOCK(&lock);
     opal_list_append(&requests, &((*request)->super.super));
     OPAL_THREAD_UNLOCK(&lock);
     int32_t tmp = OPAL_THREAD_ADD_FETCH32(&active_requests, 1);
