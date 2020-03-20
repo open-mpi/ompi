@@ -47,6 +47,7 @@ static int grequestx_progress(void) {
             OPAL_THREAD_LOCK(&lock);
             if (REQUEST_COMPLETE(&request->greq_base)) {
                 opal_list_remove_item(&requests, &request->greq_base.super.super);
+                OBJ_RELEASE(request);
                 completed++;
             }
         }
@@ -72,6 +73,11 @@ int ompi_grequestx_start(
         return rc;
     }
     ((ompi_grequest_t *)*request)->greq_poll.c_poll = gpoll_fn;
+
+    /* prevent the request from being destroyed upon completion,
+     * we first have to remove it from the list of active requests
+     */
+    OBJ_RETAIN(((ompi_grequest_t *)*request));
 
     if (!requests_initialized) {
         OBJ_CONSTRUCT(&requests, opal_list_t);
