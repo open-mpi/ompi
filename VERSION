@@ -15,7 +15,7 @@
 
 major=3
 minor=0
-release=6
+release=7
 
 # greek is generally used for alpha or beta release tags.  If it is
 # non-empty, it will be appended to the version number.  It does not
@@ -24,7 +24,7 @@ release=6
 # requirement is that it must be entirely printable ASCII characters
 # and have no white space.
 
-greek=rc3
+greek=a1
 
 # If repo_rev is empty, then the repository version number will be
 # obtained during "make dist" via the "git describe --tags --always"
