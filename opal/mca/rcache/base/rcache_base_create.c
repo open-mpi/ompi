@@ -12,6 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2015-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2020      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -71,7 +72,7 @@ mca_rcache_base_module_t* mca_rcache_base_module_create (const char* name, void 
             } else if (1 == opal_leave_pinned || opal_leave_pinned_pipeline) {
                 opal_show_help("help-rcache-base.txt", "leave pinned failed",
                                true, name, OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
-                               opal_proc_local_get()->proc_hostname);
+                               opal_process_info.nodename);
                 return NULL;
             }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 Intel, Inc. All rights reserved
+ * Copyright (c) 2013-2020 Intel, Inc.  All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -98,10 +98,11 @@ ompi_mtl_ofi_add_procs(struct mca_mtl_base_module_t *mtl,
                               (void**)&ep_name,
                               &size);
         if (OMPI_SUCCESS != ret) {
+            char *errhost = opal_get_proc_hostname(&procs[i]->super);
             opal_show_help("help-mtl-ofi.txt", "modex failed",
                            true, ompi_process_info.nodename,
-			   procs[i]->super.proc_hostname,
-			   opal_strerror(ret), ret);
+			                     errhost, opal_strerror(ret), ret);
+            free(errhost);
             goto bail;
         }
         memcpy(&ep_names[i*namelen], ep_name, namelen);

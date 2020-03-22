@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2013-2016 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2014      Intel, Inc. All rights reserved
+ * Copyright (c) 2014-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
@@ -215,8 +215,10 @@ static int map_output_procs(FILE *fp)
     /* Loop over and print the sorted module device information */
     int ret = OPAL_SUCCESS;
     for (i = 0; i < num_procs; ++i) {
+        char *errhost = opal_get_proc_hostname(procs[i]->proc_opal);
         fprintf(fp, "peer=%d,", procs[i]->proc_opal->proc_name.vpid);
-        fprintf(fp, "hostname=%s,", opal_get_proc_hostname(procs[i]->proc_opal));
+        fprintf(fp, "hostname=%s,", errhost);
+        free(errhost);
         if (OPAL_SUCCESS != map_output_endpoints(fp, procs[i])) {
             break;
         }
@@ -244,9 +246,10 @@ void opal_btl_usnic_connectivity_map(void)
 
     /* Filename is of the form: <prefix>-<hostname>.<pid>.<job>.<MCW
        rank>.txt */
+    host = 
     opal_asprintf(&filename, "%s-%s.pid%d.job%d.mcwrank%d.txt",
              mca_btl_usnic_component.connectivity_map_prefix,
-             opal_get_proc_hostname(opal_proc_local_get()),
+             opal_process_info.nodename,
              getpid(),
              opal_proc_local_get()->proc_name.jobid,
              opal_proc_local_get()->proc_name.vpid);

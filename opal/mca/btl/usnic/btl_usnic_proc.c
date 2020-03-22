@@ -12,7 +12,7 @@
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
  * Copyright (c) 2013-2016 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
+ * Copyright (c) 2013-2020 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -641,14 +641,15 @@ static int match_modex(opal_btl_usnic_module_t *module,
     if (*index_out >= 0 &&
         proc->proc_modex[*index_out].max_msg_size !=
         (uint16_t) module->fabric_info->ep_attr->max_msg_size) {
+        char *errhost = opal_get_proc_hostname(proc->proc_opal);
         opal_show_help("help-mpi-btl-usnic.txt", "MTU mismatch",
                        true,
                        opal_process_info.nodename,
                        module->linux_device_name,
                        module->fabric_info->ep_attr->max_msg_size,
-                       (NULL == proc->proc_opal->proc_hostname) ?
-                       "unknown" : proc->proc_opal->proc_hostname,
+                       errhost,
                        proc->proc_modex[*index_out].max_msg_size);
+        free(errhost);
         *index_out = -1;
         return OPAL_ERR_UNREACH;
     }

@@ -18,6 +18,7 @@
  * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
+ * Copyright (c) 2020      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -192,13 +193,13 @@ void mca_mpool_base_tree_print(int show_up_to_mem_leaks)
         show_up_to_mem_leaks < 0) {
         opal_show_help("help-mpool-base.txt", "all mem leaks",
                        true, OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
-                       opal_proc_local_get()->proc_hostname,
+                       opal_process_info.nodename,
                        getpid(), leak_msg);
     } else {
         int i = num_leaks - show_up_to_mem_leaks;
         opal_show_help("help-mpool-base.txt", "some mem leaks",
                        true, OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
-                       opal_proc_local_get()->proc_hostname,
+                       opal_process_info.nodename,
                        getpid(), leak_msg, i,
                        (i > 1) ? "s were" : " was",
                        (i > 1) ? "are" : "is");

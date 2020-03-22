@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2014-2019 Cisco Systems, Inc.  All rights reserved
- * Copyright (c) 2014      Intel, Inc. All rights reserved
+ * Copyright (c) 2014-2020 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -279,13 +279,15 @@ opal_btl_usnic_check_connectivity(opal_btl_usnic_module_t *module,
 {
     if (OPAL_LIKELY(mca_btl_usnic_component.connectivity_enabled) &&
         OPAL_UNLIKELY(!endpoint->endpoint_connectivity_checked)) {
+        char *host = opal_get_proc_hostname(endpoint->endpoint_proc->proc_opal);
         opal_btl_usnic_connectivity_ping(module->local_modex.ipv4_addr,
                                          module->local_modex.connectivity_udp_port,
                                          endpoint->endpoint_remote_modex.ipv4_addr,
                                          endpoint->endpoint_remote_modex.netmask,
                                          endpoint->endpoint_remote_modex.connectivity_udp_port,
-                                         opal_get_proc_hostname(endpoint->endpoint_proc->proc_opal),
+                                         host,
                                          endpoint->endpoint_remote_modex.max_msg_size);
+        free(host);
         endpoint->endpoint_connectivity_checked = true;
     }
 }

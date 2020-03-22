@@ -15,7 +15,7 @@
  * Copyright (c) 2009-2019 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2014-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2014      Intel, Inc. All rights reserved
+ * Copyright (c) 2014-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
@@ -102,6 +102,7 @@ static int add_procs_block_create_endpoints(opal_btl_usnic_module_t *module,
     int rc;
     opal_proc_t* my_proc;
     size_t num_created = 0;
+    char *errhost;
 
     /* get pointer to my proc structure */
     my_proc = opal_proc_local_get();
@@ -143,11 +144,14 @@ static int add_procs_block_create_endpoints(opal_btl_usnic_module_t *module,
         if (OPAL_ERR_UNREACH == rc) {
             /* If the peer doesn't have usnic modex info, then we just
                skip it */
-            opal_output_verbose(75, USNIC_OUT,
-                                "btl:usnic:add_procs:%s: peer %s on %s does not have usnic modex info; skipping",
-                                module->linux_device_name,
-                                usnic_compat_proc_name_print(&opal_proc->proc_name),
-                                opal_get_proc_hostname(opal_proc));
+          if (74 < opal_output_get_verbosity(USNIC_OUT)) {
+                errhost = opal_get_proc_hostname(opal_proc);
+                opal_output(0, "btl:usnic:add_procs:%s: peer %s on %s does not have usnic modex info; skipping",
+                            module->linux_device_name,
+                            usnic_compat_proc_name_print(&opal_proc->proc_name),
+                            errhost);
+                free(errhost);
+            }
             continue;
         } else if (OPAL_SUCCESS != rc) {
             return OPAL_ERR_OUT_OF_RESOURCE;
@@ -159,11 +163,14 @@ static int add_procs_block_create_endpoints(opal_btl_usnic_module_t *module,
         rc = opal_btl_usnic_create_endpoint(module, usnic_proc,
                                             &usnic_endpoint);
         if (OPAL_SUCCESS != rc) {
-            opal_output_verbose(5, USNIC_OUT,
-                                "btl:usnic:add_procs:%s: unable to create endpoint to peer %s on %s",
-                                module->linux_device_name,
-                                usnic_compat_proc_name_print(&opal_proc->proc_name),
-                                opal_get_proc_hostname(opal_proc));
+          if (4 < opal_output_get_verbosity(USNIC_OUT)) {
+                errhost = opal_get_proc_hostname(opal_proc);
+                opal_output(0, "btl:usnic:add_procs:%s: unable to create endpoint to peer %s on %s",
+                            module->linux_device_name,
+                            usnic_compat_proc_name_print(&opal_proc->proc_name),
+                            errhost);
+                free(errhost);
+            }
             OBJ_RELEASE(usnic_proc);
             continue;
         }
@@ -221,6 +228,8 @@ static int add_procs_block_create_endpoints(opal_btl_usnic_module_t *module,
 static void add_procs_warn_unreachable(opal_btl_usnic_module_t *module,
                                        opal_btl_usnic_endpoint_t *endpoint)
 {
+    char *errhost;
+
     /* Only show the warning if it is enabled */
     if (!mca_btl_usnic_component.show_route_failures) {
         return;
@@ -236,13 +245,15 @@ static void add_procs_warn_unreachable(opal_btl_usnic_module_t *module,
                         module->linux_device_name,
                         module->if_ipv4_addr_str,
                         remote);
+    errhost = opal_get_proc_hostname(endpoint->endpoint_proc->proc_opal);
     opal_show_help("help-mpi-btl-usnic.txt", "unreachable peer IP",
                    true,
                    opal_process_info.nodename,
                    module->if_ipv4_addr_str,
                    module->linux_device_name,
-                   opal_get_proc_hostname(endpoint->endpoint_proc->proc_opal),
+                   errhost,
                    remote);
+    free(errhost);
 }
 
 /* A bunch of calls to fi_av_insert() were previously

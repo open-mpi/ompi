@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2010 Oracle and/or its affiliates.  All rights reserved
- * Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015-2016 Los Alamos National Security, LLC. All rights
@@ -48,6 +48,7 @@
 #include "opal/util/proc.h"
 #include "opal/util/show_help.h"
 #include "opal/util/printf.h"
+#include "opal/util/proc.h"
 #include "opal/util/string_copy.h"
 #include "opal/util/bipartite_graph.h"
 
@@ -479,21 +480,18 @@ int mca_btl_tcp_proc_insert(mca_btl_tcp_proc_t* btl_proc,
                             mca_btl_base_endpoint_t* btl_endpoint)
 {
     mca_btl_tcp_module_t* tcp_btl = btl_endpoint->endpoint_btl;
-    const char *proc_hostname;
     mca_btl_tcp_addr_t *remote_addr;
     int rc = OPAL_SUCCESS;
 
-    if (NULL == (proc_hostname = opal_get_proc_hostname(btl_proc->proc_opal))) {
-        rc = OPAL_ERR_UNREACH;
-        goto out;
-    }
-
     rc = opal_hash_table_get_value_uint32(&btl_proc->btl_index_to_endpoint, tcp_btl->btl_index, (void **)&remote_addr);
     if (OPAL_SUCCESS != rc) {
-        opal_output_verbose(10, opal_btl_base_framework.framework_output,
-                            "btl:tcp: host %s, process %s UNREACHABLE",
-                            proc_hostname,
-                            OPAL_NAME_PRINT(btl_proc->proc_opal->proc_name));
+        if (9 < opal_output_get_verbosity(opal_btl_base_framework.framework_output)) {
+            char *proc_hostname = opal_get_proc_hostname(btl_proc->proc_opal);
+            opal_output(0, "btl:tcp: host %s, process %s UNREACHABLE",
+                        proc_hostname,
+                        OPAL_NAME_PRINT(btl_proc->proc_opal->proc_name));
+            free(proc_hostname);
+        }
         goto out;
     }
     btl_endpoint->endpoint_addr = remote_addr;
@@ -685,14 +683,15 @@ void mca_btl_tcp_proc_accept(mca_btl_tcp_proc_t* btl_proc, struct sockaddr* addr
             }
             addr_str = tmp;
         }
+        tmp = opal_get_proc_hostname(btl_proc->proc_opal);
         opal_show_help("help-mpi-btl-tcp.txt", "dropped inbound connection",
                        true, opal_process_info.nodename,
-                       getpid(),
-                       btl_proc->proc_opal->proc_hostname,
+                       getpid(), tmp,
                        OPAL_NAME_PRINT(btl_proc->proc_opal->proc_name),
                        opal_net_get_hostname((struct sockaddr*)addr),
                        btl_proc->proc_endpoint_count,
                        (NULL == addr_str) ? "NONE" : addr_str);
+        free(tmp);
         if (NULL != addr_str) {
             free(addr_str);
         }
