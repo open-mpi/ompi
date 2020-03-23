@@ -26,7 +26,7 @@
 
 #include "opal/class/opal_pointer_array.h"
 #include "opal/class/opal_hash_table.h"
-#include "opal/threads/thread_usage.h"
+#include "opal/mca/threads/thread_usage.h"
 
 static opal_hash_table_t mca_base_event_index_hash;
 static opal_pointer_array_t registered_events;
