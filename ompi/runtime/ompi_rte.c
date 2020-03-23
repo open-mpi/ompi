@@ -747,12 +747,6 @@ int ompi_rte_init(int *pargc, char ***pargv)
         val = NULL;
     }
 
-    /* get our topology */
-    if (OPAL_SUCCESS != (rc = opal_hwloc_base_get_topology())) {
-        error = "hwloc_base_get_topology: failed";
-        goto error;
-    }
-
     /* identify our location */
     val = NULL;
     OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, PMIX_LOCALITY_STRING,
