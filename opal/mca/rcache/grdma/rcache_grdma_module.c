@@ -187,7 +187,7 @@ static inline mca_rcache_base_registration_t *mca_rcache_grdma_remove_lru_head(m
             /* registration has been selected for removal and is no longer in the LRU. mark it
              * as such. */
             new_flags = (old_flags & ~MCA_RCACHE_GRDMA_REG_FLAG_IN_LRU) | MCA_RCACHE_FLAGS_INVALID;
-            if (opal_atomic_compare_exchange_strong_32(&old_reg->flags, &old_flags, new_flags)) {
+            if (opal_atomic_compare_exchange_strong_32((opal_atomic_int32_t*)&old_reg->flags, &old_flags, new_flags)) {
                 break;
             }
         } while (1);

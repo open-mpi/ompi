@@ -85,8 +85,8 @@ static void try_kill_peers(ompi_communicator_t *comm,
 
     procs = (ompi_process_name_t*) calloc(nprocs, sizeof(ompi_process_name_t));
     if (NULL == procs) {
-        /* quick clean orte and get out */
-        ompi_rte_abort(errno, "Abort: unable to alloc memory to kill procs");
+        /* quick clean RTE and get out */
+        ompi_rte_abort(errcode, "Abort: unable to alloc memory to kill procs");
     }
 
     /* put all the local group procs in the abort list */
