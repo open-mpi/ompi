@@ -61,7 +61,27 @@
 opal_process_name_t pmix_name_wildcard = {UINT32_MAX-1, UINT32_MAX-1};
 opal_process_name_t pmix_name_invalid = {UINT32_MAX, UINT32_MAX};
 hwloc_cpuset_t ompi_proc_applied_binding = NULL;
-pmix_process_info_t pmix_process_info = {0};
+pmix_process_info_t pmix_process_info = {
+    .my_name = {OPAL_JOBID_INVALID, OPAL_VPID_INVALID},
+    .nodename = NULL,
+    .pid = 0,
+    .top_session_dir = NULL,
+    .job_session_dir = NULL,
+    .proc_session_dir = NULL,
+    .my_local_rank = 0,
+    .my_node_rank = 0,
+    .num_local_peers = 0,
+    .num_procs = 0,
+    .app_num = 0,
+    .univ_size = 0,
+    .app_sizes = NULL,
+    .app_ldrs = NULL,
+    .cpuset = NULL,
+    .command = NULL,
+    .num_apps = 0,
+    .initial_wdir = NULL,
+    .reincarnation = 0
+};
 bool pmix_proc_is_bound = false;
 bool ompi_singleton = false;
 

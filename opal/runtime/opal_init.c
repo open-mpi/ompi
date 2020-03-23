@@ -54,6 +54,7 @@
 #include "opal/mca/installdirs/base/base.h"
 #include "opal/mca/memory/base/base.h"
 #include "opal/mca/patcher/base/base.h"
+#include "opal/mca/pmix/base/base.h"
 #include "opal/mca/memcpy/base/base.h"
 #include "opal/mca/hwloc/base/base.h"
 #include "opal/mca/reachable/base/base.h"
@@ -630,7 +631,7 @@ opal_init_util(int* pargc, char*** pargv)
 static mca_base_framework_t *opal_init_frameworks[] = {
     &opal_hwloc_base_framework, &opal_memcpy_base_framework, &opal_memchecker_base_framework,
     &opal_backtrace_base_framework, &opal_timer_base_framework, &opal_event_base_framework,
-    &opal_shmem_base_framework, &opal_reachable_base_framework,
+    &opal_shmem_base_framework, &opal_reachable_base_framework, &opal_pmix_base_framework,
     NULL,
 };
 

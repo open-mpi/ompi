@@ -121,6 +121,10 @@ int ompi_interlib_declare(int threadlevel, char *version)
     PMIX_INFO_DESTRUCT(&info[3]);
     /* account for our refcount on pmix_init */
     PMIx_Finalize(NULL, 0);
-    ret = opal_pmix_convert_status(rc);
+    if (ompi_singleton && PMIX_ERR_UNREACH == rc) {
+        ret = OMPI_SUCCESS;
+    } else {
+        ret = opal_pmix_convert_status(rc);
+    }
     return ret;
 }

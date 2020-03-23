@@ -46,6 +46,15 @@ AC_DEFUN([OMPI_SETUP_PRRTE],[
         [AC_HELP_STRING([--enable-prte-prefix-by-default],
             [Make "mpirun ..." behave exactly the same as "mpirun --prefix \$prefix" (where \$prefix is the value given to --prefix in configure) (default:enabled)])])
 
+    AS_IF([test "$opal_external_pmix_happy" = "yes" && test $opal_numerical_pmix_version -lt 4 && test "$enable_internal_rte" != "no"],
+          [AC_MSG_WARN([OMPI's internal runtime environment "PRRTE" does not support])
+           AC_MSG_WARN([PMIx versions less than v4.x as they lack adequate tool])
+           AC_MSG_WARN([support. You can, if desired, build OMPI against an earlier])
+           AC_MSG_WARN([version of PMIx for strictly direct-launch purposes - e.g., using)])
+           AC_MSG_WARN([Slurm's srun to launch the job - by configuring with the])
+           AC_MSG_WARN([--disable-internal-rte option.])
+           AC_MSG_ERROR([Cannot continue])])
+
     AC_MSG_CHECKING([if RTE support is enabled])
     if test "$enable_internal_rte" != "no"; then
         AC_MSG_RESULT([yes])
@@ -81,7 +90,7 @@ AC_DEFUN([OMPI_SETUP_PRRTE],[
             opal_prrte_prefix_arg=
         fi
 
-        opal_prrte_args="--prefix=$prefix --disable-dlopen $opal_prrte_prefix_arg $opal_prrte_libevent_arg $opal_prrte_hwloc_arg $opal_prrte_pmix_arg"
+        opal_prrte_args="--prefix=$prefix $opal_prrte_prefix_arg $opal_prrte_libevent_arg $opal_prrte_hwloc_arg $opal_prrte_pmix_arg"
         AS_IF([test "$enable_debug" = "yes"],
               [opal_prrte_args="--enable-debug $opal_prrte_args"
                CFLAGS="$OPAL_CFLAGS_BEFORE_PICKY $OPAL_VISIBILITY_CFLAGS -g"],

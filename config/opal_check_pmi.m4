@@ -125,6 +125,7 @@ AC_DEFUN([OPAL_CHECK_PMIX_LIB],[
                                                     ], [])],
                                     [AC_MSG_RESULT([found])
                                      opal_external_pmix_version=4x
+                                     opal_numerical_pmix_version=4
                                      opal_external_pmix_version_found=1
                                      opal_external_pmix_happy=yes],
                                     [AC_MSG_RESULT([not found])])])
@@ -139,6 +140,7 @@ AC_DEFUN([OPAL_CHECK_PMIX_LIB],[
                                               ], [])],
                                    [AC_MSG_RESULT([found])
                                     opal_external_pmix_version=3x
+                                    opal_numerical_pmix_version=3
                                     opal_external_pmix_version_found=1
                                     opal_external_pmix_happy=yes],
                                    [AC_MSG_RESULT([not found])])])
@@ -153,6 +155,7 @@ AC_DEFUN([OPAL_CHECK_PMIX_LIB],[
                                               ], [])],
                                    [AC_MSG_RESULT([found])
                                     opal_external_pmix_version=2x
+                                    opal_numerical_pmix_version=2
                                     opal_external_pmix_version_found=1
                                     opal_external_pmix_happy=yes],
                                    [AC_MSG_RESULT([not found])])])
@@ -167,6 +170,7 @@ AC_DEFUN([OPAL_CHECK_PMIX_LIB],[
                                               ], [])],
                                    [AC_MSG_RESULT([found])
                                     opal_external_pmix_version=1x
+                                    opal_numerical_pmix_version=1
                                     opal_external_pmix_version_found=1
                                     opal_external_have_pmix1=1
                                     opal_external_pmix_happy=yes],
@@ -179,6 +183,12 @@ AC_DEFUN([OPAL_CHECK_PMIX_LIB],[
                  opal_external_pmix_happy=no])
 
     ])
+    AS_IF([test "$opal_external_pmix_happy" = "yes" && test $opal_numerical_pmix_version -lt 3],
+          [AC_MSG_WARN([OMPI no longer supports PMIx versions prior to v3])
+           AC_MSG_WARN([Please direct us to a more current PMIx release or])
+           AC_MSG_WARN([use the internally provided one])
+           AC_MSG_ERROR([Cannot continue])])
+
     AS_IF([test "$opal_external_pmix_happy" = "yes"],
           [$3
            # add the new flags to our wrapper compilers
