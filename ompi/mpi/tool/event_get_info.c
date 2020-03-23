@@ -61,7 +61,22 @@ int MPI_T_event_get_info (int event_index, char *name, int *name_len,
         mpit_copy_string (name, name_len, event->event_name);
         mpit_copy_string (desc, desc_len, event->event_description);
 
-        max_datatypes = num_elements ? (*num_elements < (int) (event->event_datatype_count + 1) ? *num_elements - 1 : event->event_datatype_count) : 0;
+        // num_elements is INOUT
+        //
+        // Can query number of datatypes, returned in num_elements
+        //   if array_of_datatypes or displacements are NULL, just return data_type_count
+
+        max_datatypes = 0;
+        if (num_elements) {
+            if (NULL == array_of_datatypes || NULL == array_of_displacements) 
+                *num_elements = event->event_datatype_count + 1;
+            else {
+                if (*num_elements < (int) (event->event_datatype_count + 1))
+                    max_datatypes = *num_elements - 1;
+                else
+                    max_datatypes = event->event_datatype_count;
+            }
+        }
 
         if (max_datatypes) {
             if (array_of_datatypes) {
