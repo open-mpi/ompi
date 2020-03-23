@@ -20,7 +20,7 @@
 #include "ompi/mpi/tool/profile/defines.h"
 #endif
 
-int MPI_T_source_get_info (int source_id, char *name, int *name_len, char *desc, int *desc_len, MPI_T_order *ordering,
+int MPI_T_source_get_info (int source_id, char *name, int *name_len, char *desc, int *desc_len, MPI_T_source_order *ordering,
                            MPI_Count *ticks_per_second, MPI_Count *max_timestamp, MPI_Info *info)
 {
     mca_base_source_t *source;

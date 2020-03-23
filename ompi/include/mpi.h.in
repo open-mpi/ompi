@@ -831,12 +831,12 @@ typedef enum {
 /*
  * MPIT source ordering
  */
-enum ompi_mpi_t_order_t {
+enum ompi_mpi_t_source_order_t {
   MPI_T_ORDERED,
   MPI_T_UNORDERED,
 };
 
-typedef enum ompi_mpi_t_order_t MPI_T_order;
+typedef enum ompi_mpi_t_source_order_t MPI_T_source_order;
 
 /*
  * MPI Tool event functions
@@ -2719,7 +2719,7 @@ OMPI_DECLSPEC  int PMPI_T_event_get_timestamp (MPI_T_event_instance event, MPI_C
 OMPI_DECLSPEC  int PMPI_T_event_get_source (MPI_T_event_instance event, int *source_index);
 OMPI_DECLSPEC  int PMPI_T_source_get_num (int *num_source);
 OMPI_DECLSPEC  int PMPI_T_source_get_info (int source_id, char *name, int *name_len,
-                                           char *desc, int *desc_len, MPI_T_order *ordering,
+                                           char *desc, int *desc_len, MPI_T_source_order *ordering,
                                            MPI_Count *ticks_per_second, MPI_Count *max_timestamp,
                                            MPI_Info *info);
 OMPI_DECLSPEC  int PMPI_T_source_get_timestamp (int source_id, MPI_Count *timestamp);
@@ -2820,7 +2820,7 @@ OMPI_DECLSPEC  int MPI_T_event_get_source (MPI_T_event_instance event, int *sour
 
 OMPI_DECLSPEC  int MPI_T_source_get_num (int *num_source);
 OMPI_DECLSPEC  int MPI_T_source_get_info (int source_id, char *name, int *name_len,
-                                          char *desc, int *desc_len, MPI_T_order *ordering,
+                                          char *desc, int *desc_len, MPI_T_source_order *ordering,
                                           MPI_Count *ticks_per_second, MPI_Count *max_timestamp,
                                           MPI_Info *info);
 OMPI_DECLSPEC  int MPI_T_source_get_timestamp (int source_id, MPI_Count *timestamp);
