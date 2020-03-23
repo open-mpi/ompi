@@ -13,10 +13,10 @@
  * Copyright (c) 2011-2018 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2012-2017 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (C) 2018      Mellanox Technologies, Ltd. 
+ * Copyright (C) 2018      Mellanox Technologies, Ltd.
  *                         All rights reserved.
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * Copyright (c) 2019      IBM Corporation. All rights reserved.
@@ -355,6 +355,13 @@ int opal_hwloc_base_get_topology(void)
         OPAL_MODEX_RECV_VALUE_IMMEDIATE(rc, OPAL_PMIX_HWLOC_XML_V1,
                                         &wildcard_rank, &val, OPAL_STRING);
 #endif
+
+        if (rc != OPAL_SUCCESS) {
+            /* check the old topo key to keep compatibility with older RMs */
+            OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, OPAL_PMIX_LOCAL_TOPO,
+                                           &wildcard_rank, &val, OPAL_STRING);
+        }
+
     } else {
         opal_output_verbose(1, opal_hwloc_base_framework.framework_output,
                             "hwloc:base PMIx not available");
