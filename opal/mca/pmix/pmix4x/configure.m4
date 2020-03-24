@@ -70,7 +70,7 @@ AC_DEFUN([MCA_opal_pmix_pmix4x_POST_CONFIG],[
 AC_DEFUN([MCA_opal_pmix_pmix4x_CONFIG],[
     AC_CONFIG_FILES([opal/mca/pmix/pmix4x/Makefile])
 
-    OPAL_VAR_SCOPE_PUSH([PMIX_VERSION opal_pmix_pmix4x_save_CPPFLAGS opal_pmix_pmix2_save_CFLAGS opal_pmix_pmix4x_save_LDFLAGS opal_pmix_pmix4x_save_LIBS opal_pmix_pmix4x_basedir opal_pmix_pmix4x_args  pmix_pmix4x_status_filename])
+    OPAL_VAR_SCOPE_PUSH([PMIX_VERSION opal_pmix_pmix4x_save_CPPFLAGS opal_pmix_pmix2_save_CFLAGS opal_pmix_pmix4x_save_LDFLAGS opal_pmix_pmix4x_save_LIBS opal_pmix_pmix4x_basedir opal_pmix_pmix4x_args  pmix_pmix4x_status_filename pmix_pmix4x_enable_static pmix_pmix4x_enable_shared])
 
     opal_pmix_pmix4x_basedir=opal/mca/pmix/pmix4x
 
@@ -78,6 +78,8 @@ AC_DEFUN([MCA_opal_pmix_pmix4x_CONFIG],[
     opal_pmix_pmix4x_save_CPPFLAGS=$CPPFLAGS
     opal_pmix_pmix4x_save_LDFLAGS=$LDFLAGS
     opal_pmix_pmix4x_save_LIBS=$LIBS
+    pmix_pmix4x_enable_static=enable_static
+    pmix_pmix4x_enable_shared=enable_shared
 
     AC_ARG_ENABLE([pmix-timing],
                   [AC_HELP_STRING([--enable-pmix-timing],
@@ -95,7 +97,7 @@ AC_DEFUN([MCA_opal_pmix_pmix4x_CONFIG],[
         opal_pmix_pmix4x_timing_flag=--disable-pmix-timing
     fi
 
-    opal_pmix_pmix4x_args="$opal_pmix_pmix4x_timing_flag --without-tests-examples --with-pmix-symbol-rename=OPAL_MCA_PMIX4X_ --disable-pmix-binaries --disable-pmix-backward-compatibility --disable-visibility --enable-embedded-mode --with-libevent-header=\\\"opal/mca/event/event.h\\\" --with-hwloc-header=\\\"opal/mca/hwloc/hwloc-internal.h\\\""
+    opal_pmix_pmix4x_args="--enable-static --disable-shared $opal_pmix_pmix4x_timing_flag --without-tests-examples --with-pmix-symbol-rename=OPAL_MCA_PMIX4X_ --disable-pmix-binaries --disable-pmix-backward-compatibility --disable-visibility --enable-embedded-mode --with-libevent-header=\\\"opal/mca/event/event.h\\\" --with-hwloc-header=\\\"opal/mca/hwloc/hwloc-internal.h\\\""
     AS_IF([test "$enable_debug" = "yes"],
           [opal_pmix_pmix4x_args="--enable-debug $opal_pmix_pmix4x_args"
            CFLAGS="$OPAL_CFLAGS_BEFORE_PICKY $OPAL_VISIBILITY_CFLAGS -g"],
@@ -116,6 +118,8 @@ AC_DEFUN([MCA_opal_pmix_pmix4x_CONFIG],[
     CPPFLAGS=$opal_pmix_pmix4x_save_CPPFLAGS
     LDFLAGS=$opal_pmix_pmix4x_save_LDFLAGS
     LIBS=$opal_pmix_pmix4x_save_LIBS
+    enable_static=$pmix_pmix4x_enable_static
+    enable_shared=$pmix_pmix4x_enable_shared
 
     # See if we are using the internal version. NOTE: we still did all the
     # above configury so that all the proper GNU Autotools
