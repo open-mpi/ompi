@@ -595,9 +595,11 @@ OPAL_DECLSPEC int opal_pmix_convert_nspace(opal_jobid_t *jobid, pmix_nspace_t ns
 OPAL_DECLSPEC void opal_pmix_setup_nspace_tracker(void);
 OPAL_DECLSPEC void opal_pmix_finalize_nspace_tracker(void);
 
+/* convert jobid to nspace */
 #define OPAL_PMIX_CONVERT_JOBID(n, j) \
     opal_pmix_convert_jobid((n), (j))
 
+/* convert vpid to rank */
 #define OPAL_PMIX_CONVERT_VPID(r, v)        \
     do {                                    \
         if (OPAL_VPID_WILDCARD == (v)) {    \
@@ -607,6 +609,7 @@ OPAL_DECLSPEC void opal_pmix_finalize_nspace_tracker(void);
         }                                   \
     } while(0)
 
+/* convert opal_process_name_t to pmix_proc_t */
 #define OPAL_PMIX_CONVERT_NAME(p, n)                        \
     do {                                                    \
         OPAL_PMIX_CONVERT_JOBID((p)->nspace, (n)->jobid);   \
@@ -614,9 +617,11 @@ OPAL_DECLSPEC void opal_pmix_finalize_nspace_tracker(void);
     } while(0)
 
 
+/* convert nspace to jobid */
 #define OPAL_PMIX_CONVERT_NSPACE(r, j, n)       \
     (r) = opal_pmix_convert_nspace((j), (n))
 
+/* convert pmix rank to opal vpid */
 #define OPAL_PMIX_CONVERT_RANK(v, r)            \
     do {                                        \
         if (PMIX_RANK_WILDCARD == (r)) {        \
@@ -628,6 +633,7 @@ OPAL_DECLSPEC void opal_pmix_finalize_nspace_tracker(void);
         }                                       \
     } while(0)
 
+/* convert pmix_proc_t to opal_process_name_t */
 #define OPAL_PMIX_CONVERT_PROCT(r, n, p)                            \
     do {                                                            \
         OPAL_PMIX_CONVERT_NSPACE((r), &(n)->jobid, (p)->nspace);    \

@@ -110,18 +110,14 @@ int opal_pmix_convert_jobid(pmix_nspace_t nspace, opal_jobid_t jobid)
     /* zero out the nspace */
     PMIX_LOAD_NSPACE(nspace, NULL);
 
-    if (opal_process_info.nativelaunch) {
-        opal_snprintf_jobid(nspace, PMIX_MAX_NSLEN, jobid);
-        return OPAL_SUCCESS;
-    } else {
-        /* cycle across our list of known jobids */
-        OPAL_LIST_FOREACH(nptr, &localnspaces, opal_nptr_t) {
-            if (jobid == nptr->jobid) {
-                PMIX_LOAD_NSPACE(nspace, nptr->nspace);
-                return OPAL_SUCCESS;
-            }
+    /* cycle across our list of known jobids */
+    OPAL_LIST_FOREACH(nptr, &localnspaces, opal_nptr_t) {
+        if (jobid == nptr->jobid) {
+            PMIX_LOAD_NSPACE(nspace, nptr->nspace);
+            return OPAL_SUCCESS;
         }
     }
+
     return OPAL_ERR_NOT_FOUND;
 }
 
@@ -129,29 +125,55 @@ int opal_pmix_convert_nspace(opal_jobid_t *jobid, pmix_nspace_t nspace)
 {
     opal_nptr_t *nptr;
     opal_jobid_t jid;
+    uint16_t jobfam;
+    uint32_t hash32, localjob = 0;
+    char *p = NULL;
 
     /* set a default */
     *jobid = OPAL_JOBID_INVALID;
 
-    if (opal_process_info.nativelaunch) {
-        return opal_convert_string_to_jobid(jobid, nspace);
-    } else {
-        /* cycle across our list of known jobids */
-        OPAL_LIST_FOREACH(nptr, &localnspaces, opal_nptr_t) {
-            if (PMIX_CHECK_NSPACE(nspace, nptr->nspace)) {
-                *jobid = nptr->jobid;
-                return OPAL_SUCCESS;
-            }
-        }
-        /* if we get here, we don't know this nspace */
-        OPAL_HASH_STR(nspace, jid);
-        jid &= ~(0x8000);
-        *jobid = jid;
-        nptr = OBJ_NEW(opal_nptr_t);
-        nptr->jobid = jid;
-        PMIX_LOAD_NSPACE(nptr->nspace, nspace);
-        opal_list_append(&localnspaces, &nptr->super);
+    /* if the nspace is empty, there is nothing more to do */
+    if (0 == strlen(nspace)) {
+        return OPAL_SUCCESS;
     }
+    if (NULL != strstr(nspace, "JOBID_WILDCARD")) {
+        *jobid = OPAL_JOBID_WILDCARD;
+        return OPAL_SUCCESS;
+    }
+    if (NULL != strstr(nspace, "JOBID_INVALID")) {
+        *jobid = OPAL_JOBID_INVALID;
+        return OPAL_SUCCESS;
+    }
+
+    /* cycle across our list of known jobids */
+    OPAL_LIST_FOREACH(nptr, &localnspaces, opal_nptr_t) {
+        if (PMIX_CHECK_NSPACE(nspace, nptr->nspace)) {
+            *jobid = nptr->jobid;
+            return OPAL_SUCCESS;
+        }
+    }
+    /* if we get here, we don't know this nspace */
+    /* find the "." at the end that indicates the child job */
+    if (NULL != (p = strrchr(nspace, '.'))) {
+        *p = '\0';
+    }
+    OPAL_HASH_STR(nspace, hash32);
+    if (NULL != p) {
+        *p = '.';
+        ++p;
+        localjob = strtoul(p, NULL, 10);
+    }
+
+    /* now compress to 16-bits */
+    jobfam = (uint16_t)(((0x0000ffff & (0xffff0000 & hash32) >> 16)) ^ (0x0000ffff & hash32));
+    jid = (0xffff0000 & ((uint32_t)jobfam << 16)) | (0x0000ffff & localjob);
+    *jobid = jid;
+    /* save this jobid/nspace pair */
+    nptr = OBJ_NEW(opal_nptr_t);
+    nptr->jobid = jid;
+    PMIX_LOAD_NSPACE(nptr->nspace, nspace);
+    opal_list_append(&localnspaces, &nptr->super);
+
     return OPAL_SUCCESS;
 }
 
