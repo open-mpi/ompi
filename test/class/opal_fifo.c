@@ -42,8 +42,9 @@
     } while (0)
 #endif
 
-static void *thread_test (opal_thread_t *arg) {
-    opal_fifo_t *fifo = (opal_fifo_t *) arg->t_arg;
+static void *thread_test (opal_object_t *arg) {
+    opal_thread_t *t = (opal_thread_t *) arg;
+    opal_fifo_t *fifo = (opal_fifo_t *) t->t_arg;
     opal_list_item_t *item;
     struct timeval start, stop, total;
     double timing;
@@ -67,8 +68,9 @@ static void *thread_test (opal_thread_t *arg) {
     return NULL;
 }
 
-static void *thread_test_exhaust (opal_thread_t *arg) {
-  opal_fifo_t *fifo = (opal_fifo_t *) arg->t_arg;
+static void *thread_test_exhaust (opal_object_t *arg) {
+  opal_thread_t *t = (opal_thread_t *) arg;
+  opal_fifo_t *fifo = (opal_fifo_t *) t->t_arg;
   opal_list_item_t *items[ITEMS_PER_LOOP];
   struct timeval start, stop, total;
   int item_count = 0;
@@ -184,7 +186,7 @@ int main (int argc, char *argv[]) {
             (int)total.tv_usec, (int)(timing / 1e-9));
 
     threads[0].t_arg = &fifo;
-    thread_test (&threads[0]);
+    thread_test ((opal_object_t *) &threads[0]);
 
     if (check_fifo_consistency (&fifo, ITEM_COUNT)) {
         test_success ();
@@ -194,7 +196,8 @@ int main (int argc, char *argv[]) {
 
     gettimeofday (&start, NULL);
     for (int i = 0 ; i < OPAL_FIFO_TEST_THREAD_COUNT ; ++i) {
-        threads[i].t_run = (opal_thread_fn_t) thread_test;
+        OBJ_CONSTRUCT(&threads[i], opal_thread_t);
+        threads[i].t_run = thread_test;
         threads[i].t_arg = &fifo;
         opal_thread_start (threads + i);
     }
@@ -222,7 +225,8 @@ int main (int argc, char *argv[]) {
 
     gettimeofday (&start, NULL);
     for (int i = 0 ; i < OPAL_FIFO_TEST_THREAD_COUNT ; ++i) {
-        threads[i].t_run = (opal_thread_fn_t) thread_test_exhaust;
+        OBJ_CONSTRUCT(&threads[i], opal_thread_t);
+        threads[i].t_run = thread_test_exhaust;
         threads[i].t_arg = &fifo;
         opal_thread_start (threads + i);
     }

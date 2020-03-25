@@ -39,8 +39,9 @@
     } while (0)
 #endif
 
-static void *thread_test (opal_thread_t *arg) {
-    opal_lifo_t *lifo = (opal_lifo_t *) arg->t_arg;
+static void *thread_test (opal_object_t *arg) {
+    opal_thread_t *t = (opal_thread_t *) arg;
+    opal_lifo_t *lifo = (opal_lifo_t *) t->t_arg;
     opal_list_item_t *item;
     struct timeval start, stop, total;
     double timing;
@@ -145,7 +146,7 @@ int main (int argc, char *argv[]) {
             (int)total.tv_usec, (int)(timing / 1e-9));
 
     threads[0].t_arg = &lifo;
-    thread_test (&threads[0]);
+    thread_test ((opal_object_t *) &threads[0]);
 
     if (check_lifo_consistency (&lifo, ITEM_COUNT)) {
         test_success ();
@@ -155,7 +156,8 @@ int main (int argc, char *argv[]) {
 
     gettimeofday (&start, NULL);
     for (int i = 0 ; i < OPAL_LIFO_TEST_THREAD_COUNT ; ++i) {
-        threads[i].t_run = (opal_thread_fn_t) thread_test;
+        OBJ_CONSTRUCT(&threads[i], opal_thread_t);
+        threads[i].t_run = thread_test;
         threads[i].t_arg = &lifo;
         opal_thread_start (threads + i);
     }

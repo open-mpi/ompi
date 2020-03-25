@@ -40,7 +40,7 @@ struct opal_tsd_key_value {
 };
 
 static ABT_thread opal_main_thread;
-struct opal_tsd_key_value *opal_tsd_key_values = NULL;
+static struct opal_tsd_key_value *opal_tsd_key_values = NULL;
 static int opal_tsd_key_values_count = 0;
 
 /*
