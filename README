@@ -15,7 +15,7 @@ Copyright (c) 2007      Myricom, Inc.  All rights reserved.
 Copyright (c) 2008-2018 IBM Corporation.  All rights reserved.
 Copyright (c) 2010      Oak Ridge National Labs.  All rights reserved.
 Copyright (c) 2011      University of Houston. All rights reserved.
-Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
+Copyright (c) 2013-2020 Intel, Inc.  All rights reserved.
 Copyright (c) 2015      NVIDIA Corporation.  All rights reserved.
 Copyright (c) 2017-2018 Los Alamos National Security, LLC.  All rights
                         reserved.
@@ -186,8 +186,6 @@ General notes
   - Cygwin 32 & 64 bit with gcc
   - ARMv6, ARMv7
   - Other 64 bit platforms.
-  - Oracle Solaris 10 and 11, 32 and 64 bit (SPARC, i386, x86_64),
-    with Oracle Solaris Studio 12.5
   - OpenBSD.  Requires configure options --enable-mca-no-build=patcher
     and --disable-dlopen with this release.
   - Problems have been reported when building Open MPI on FreeBSD 11.1
@@ -212,6 +210,10 @@ Compiler Notes
 --------------
 
 - Open MPI requires a C99-capable compiler to build.
+
+- On platforms other than x86-64, ARM, and PPC, Open MPI requires a
+  compiler that either supports C11 atomics or the GCC "__atomic"
+  atomics (i.e., GCC >= v4.7.2).
 
 - Mixing compilers from different vendors when building Open MPI
   (e.g., using the C/C++ compiler from one vendor and the Fortran
@@ -1910,7 +1912,7 @@ equivalent) to launch MPI applications.  For example:
   or
   shell$ mpiexec -np 1 hello_world_mpi : -np 1 hello_world_mpi
 
-are equivalent. 
+are equivalent.
 
 The rsh launcher (which defaults to using ssh) accepts a --hostfile
 parameter (the option "--machinefile" is equivalent); you can specify a
