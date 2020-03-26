@@ -26,8 +26,6 @@ The rest of the threading implementation follows the normal MCA model:
 
 * `threads_<threading_model>_condition.c` defines an instance of `opal_condition_t` which is used by `condition.h` to define Open MPI specific condition variables.
 
-* `threads_<threading_model>_event.c` defines an interface to Open MPI's libevent hooks. It allows the threading module to use threading model specific memory allocation and synchronization structures with Open MPI's libevent integration.
-
 * `threads_<threading_model>_module.c` defines the interface to opal's thread handle. It provides ways of comparing threads, getting the value of a thread via its handle and the implementation of thread local storage.
 
 * `threads_<threading_model>_mutex.c` provides a slow path interface to creating and destroying mutices dynamically via mca allocation. They can also be defined statically using the `.h` fast path interface.
@@ -36,6 +34,6 @@ The rest of the threading implementation follows the normal MCA model:
 
 ## TODO
 
-Libevent integration with lightweight threading models is a work in progress. The current Open MPI libevent library assumes preemption and does not yield by default. Lightweight threading libraries typically require tasks to be cooperative and to voluntarily yield after some time.
+Some components in the current Open MPI runtime assume preemption and does not yield by default. Lightweight threading libraries typically require tasks to be cooperative and to voluntarily yield after some time.
 
 Open MPI itself needs to be altered to use a common yielding model instead of usleep(3).

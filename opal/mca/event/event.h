@@ -48,8 +48,6 @@ BEGIN_C_DECLS
 
 #define OPAL_TIMEOUT_DEFAULT	{1, 0}
 
-OPAL_DECLSPEC void opal_event_use_threads(void);
-
 /**
  * Structure for event components.
  */

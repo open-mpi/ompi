@@ -137,8 +137,3 @@ int opal_tsd_keys_destruct(void)
 void opal_thread_set_main(void)
 {
 }
-
-void opal_event_use_threads(void)
-{
-    evthread_use_pthreads();
-}

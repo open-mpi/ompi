@@ -24,7 +24,6 @@ libmca_threads_argobots_la_SOURCES = \
     threads_argobots.h \
     threads_argobots_component.c \
     threads_argobots_condition.c \
-    threads_argobots_event.c \
     threads_argobots_module.c \
     threads_argobots_mutex.c \
     threads_argobots_mutex.h \
