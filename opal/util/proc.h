@@ -48,7 +48,7 @@
 #define OPAL_VPID_WILDCARD  (OPAL_VPID_MAX + 1)
 
 #define OPAL_PROC_MY_NAME           (opal_proc_local_get()->proc_name)
-#define OPAL_PROC_MY_HOSTNAME       (opal_proc_local_get()->proc_hostname)
+#define OPAL_PROC_MY_HOSTNAME       (opal_process_info.nodename)
 
 #define OPAL_NAME_WILDCARD      (&opal_name_wildcard)
 OPAL_DECLSPEC extern opal_process_name_t opal_name_wildcard;
@@ -91,9 +91,6 @@ typedef struct opal_proc_t {
     opal_hwloc_locality_t           proc_flags;
     /** Base convertor for the proc described by this process */
     struct opal_convertor_t*        proc_convertor;
-    /** A pointer to the name of this host - data is
-     * actually stored outside of this framework.  */
-    char*                           proc_hostname;
 } opal_proc_t;
 OBJ_CLASS_DECLARATION(opal_proc_t);
 

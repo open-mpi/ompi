@@ -13,7 +13,7 @@
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2011-2014 NVIDIA Corporation.  All rights reserved.
- * Copyright (c) 2015      Intel, Inc. All rights reserved
+ * Copyright (c) 2015-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
@@ -226,7 +226,7 @@ int mca_common_sm_mpool_ft_event(int state) {
         /* Record the shared memory filename */
         opal_asprintf( &file_name, "%s"OPAL_PATH_SEP"shared_mem_pool.%s",
                   opal_process_info.job_session_dir,
-                  opal_proc_local_get()->proc_hostname );
+                  opal_process_info.nodename );
         /* Disabled to get FT code compiled again
          * TODO: FIXIT soon
         orte_sstore.set_attr(orte_sstore_handle_current, SSTORE_METADATA_LOCAL_TOUCH, file_name);

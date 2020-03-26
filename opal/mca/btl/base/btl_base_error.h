@@ -13,7 +13,7 @@
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
+ * Copyright (c) 2013-2020 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -59,13 +59,15 @@ OPAL_DECLSPEC extern int mca_btl_base_out(const char*, ...) __opal_attribute_for
 
 #define BTL_PEER_ERROR(proc, args)                              \
     do {                                                        \
+        char *errhost;                                          \
         mca_btl_base_err("%s[%s:%d:%s] from %s ",               \
                          OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),    \
                          __FILE__, __LINE__, __func__,          \
                          opal_process_info.nodename);           \
         if (proc) {                                             \
-            mca_btl_base_err("to: %s ",                         \
-                             opal_get_proc_hostname(proc));     \
+            errhost = opal_get_proc_hostname(proc);             \
+            mca_btl_base_err("to: %s ", errhost);               \
+            free(errhost);                                      \
         }                                                       \
         mca_btl_base_err args;                                  \
         mca_btl_base_err("\n");                                 \

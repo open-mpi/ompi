@@ -15,6 +15,7 @@
  * Copyright (c) 2012-2015 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2015-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2020      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -202,14 +203,17 @@ void mca_pml_ob1_cuda_add_ipc_support(struct mca_btl_base_module_t* btl, int32_t
     /* Find the corresponding bml and adjust the flag to support CUDA get */
     for( i = 0; i < (int)ep->btl_send.arr_size; i++ ) {
         if( ep->btl_send.bml_btls[i].btl == btl ) {
+            if (4 < opal_output_get_verbosity(btl_verbose_stream)) {
+                char *errhost = opal_get_proc_hostname(&errproc->super);
+                opal_output(0, "BTL %s: rank=%d enabling CUDA IPC "
+                            "to rank=%d on node=%s \n",
+                            btl->btl_component->btl_version.mca_component_name,
+                            OMPI_PROC_MY_NAME->vpid,
+                            ((ompi_process_name_t*)&errproc->super.proc_name)->vpid,
+                            errhost);
+                free(errhost);
+            }
             ep->btl_send.bml_btls[i].btl_flags |= MCA_BTL_FLAGS_CUDA_GET;
-            opal_output_verbose(5, btl_verbose_stream,
-                        "BTL %s: rank=%d enabling CUDA IPC "
-                        "to rank=%d on node=%s \n",
-                        btl->btl_component->btl_version.mca_component_name,
-                        OMPI_PROC_MY_NAME->vpid,
-                        ((ompi_process_name_t*)&errproc->super.proc_name)->vpid,
-                        errproc->super.proc_hostname);
         }
     }
 }

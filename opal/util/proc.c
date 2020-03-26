@@ -41,11 +41,10 @@ opal_process_info_t opal_process_info = {
 static opal_proc_t opal_local_proc = {
     { .opal_list_next = NULL,
       .opal_list_prev = NULL},
-    {OPAL_JOBID_INVALID, OPAL_VPID_INVALID},
-    0,
-    0,
-    NULL,
-    NULL
+    .proc_name = {OPAL_JOBID_INVALID, OPAL_VPID_INVALID},
+    .proc_arch = 0,
+    .proc_flags = 0,
+    .proc_convertor = NULL
 };
 static opal_proc_t* opal_proc_my_name = &opal_local_proc;
 
@@ -55,14 +54,12 @@ static void opal_proc_construct(opal_proc_t* proc)
     proc->proc_convertor = NULL;
     proc->proc_flags = 0;
     proc->proc_name = *OPAL_NAME_INVALID;
-    proc->proc_hostname  = NULL;
 }
 
 static void opal_proc_destruct(opal_proc_t* proc)
 {
     proc->proc_flags     = 0;
     proc->proc_name      = *OPAL_NAME_INVALID;
-    proc->proc_hostname  = NULL;
     proc->proc_convertor = NULL;
 }
 
@@ -188,30 +185,26 @@ struct opal_proc_t *(*opal_proc_for_name) (const opal_process_name_t name) = opa
 char* opal_get_proc_hostname(const opal_proc_t *proc)
 {
     int ret;
+    char *hostname;
 
     /* if the proc is NULL, then we can't know */
     if (NULL == proc) {
-        return "unknown";
+        return strdup("unknown");
     }
 
     /* if it is my own hostname we are after, then just hand back
      * the value in opal_process_info */
     if (proc == opal_proc_my_name) {
-        return opal_process_info.nodename;
-    }
-
-    /* see if we already have the data - if so, pass it back */
-    if (NULL != proc->proc_hostname) {
-        return proc->proc_hostname;
+        return strdup(opal_process_info.nodename);
     }
 
     /* if we don't already have it, then try to get it */
     OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, PMIX_HOSTNAME, &proc->proc_name,
-                                   (char**)&(proc->proc_hostname), PMIX_STRING);
+                                   (char**)&hostname, PMIX_STRING);
     if (OPAL_SUCCESS != ret) {
-        return "unknown";  // return something so the caller doesn't segfault
+        return strdup("unknown");  // return something so the caller doesn't segfault
     }
 
     /* user is not allowed to release the data */
-    return proc->proc_hostname;
+    return hostname;
 }

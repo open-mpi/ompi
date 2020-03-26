@@ -324,8 +324,9 @@ ompi_mtl_psm2_add_procs(struct mca_mtl_base_module_t *mtl,
 			    errstr ? errstr : "unknown connect error");
 		for (j = 0; j < (int) nprocs; j++) {
 		  if (errs_out[j] == thiserr) {
-                      opal_output(0, " %s", (NULL == procs[j]->super.proc_hostname) ?
-                                  "unknown" : procs[j]->super.proc_hostname);
+                      char *errhost = opal_get_proc_hostname(&procs[j]->super);
+                      opal_output(0, " %s", errhost);
+                      free(errhost);
 		  }
 		}
 		opal_output(0, "\n");

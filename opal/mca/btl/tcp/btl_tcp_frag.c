@@ -15,6 +15,7 @@
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015-2016 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2020      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -44,6 +45,7 @@
 
 #include "opal/opal_socket_errno.h"
 #include "opal/mca/btl/base/btl_base_error.h"
+#include "opal/util/proc.h"
 #include "opal/util/show_help.h"
 
 #include "btl_tcp_frag.h"
@@ -168,6 +170,7 @@ bool mca_btl_tcp_frag_recv(mca_btl_tcp_frag_t* frag, int sd)
     mca_btl_base_endpoint_t* btl_endpoint = frag->endpoint;
     ssize_t cnt;
     int32_t i, num_vecs, dont_copy_data = 0;
+    char *errhost;
 
  repeat:
     num_vecs = frag->iov_cnt;
@@ -231,10 +234,11 @@ bool mca_btl_tcp_frag_recv(mca_btl_tcp_frag_t* frag, int sd)
             return false;
 
         case ECONNRESET:
+            errhost = opal_get_proc_hostname(btl_endpoint->endpoint_proc->proc_opal);
             opal_show_help("help-mpi-btl-tcp.txt", "peer hung up",
                            true, opal_process_info.nodename,
-                           getpid(),
-                           btl_endpoint->endpoint_proc->proc_opal->proc_hostname);
+                           getpid(), errhost);
+            free(errhost);
             btl_endpoint->endpoint_state = MCA_BTL_TCP_FAILED;
             mca_btl_tcp_endpoint_close(btl_endpoint);
             return false;
