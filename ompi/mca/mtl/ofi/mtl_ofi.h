@@ -4,8 +4,9 @@
  *                         reserved.
  * Copyright (c) 2019      Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2018-2020 Amazon.com, Inc. or its affiliates. All rights
+ *                         reserved.
  *
- * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -49,6 +50,10 @@ BEGIN_C_DECLS
 
 extern mca_mtl_ofi_module_t ompi_mtl_ofi;
 extern mca_base_framework_t ompi_mtl_base_framework;
+
+extern int ompi_mtl_ofi_add_procs(struct mca_mtl_base_module_t *mtl,
+                                  size_t nprocs,
+                                  struct ompi_proc_t** procs);
 
 extern int ompi_mtl_ofi_del_procs(struct mca_mtl_base_module_t *mtl,
                                   size_t nprocs,
