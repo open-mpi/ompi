@@ -12,8 +12,8 @@ dnl Copyright (c) 2004-2006 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2009-2017 Cisco Systems, Inc.  All rights reserved
 dnl Copyright (c) 2008-2018 University of Houston. All rights reserved.
-dnl Copyright (c) 2015      Research Organization for Information Science
-dnl                         and Technology (RIST). All rights reserved.
+dnl Copyright (c) 2015-2018 Research Organization for Information Science
+dnl                         and Technology (RIST).  All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -63,8 +63,9 @@ AC_DEFUN([OMPI_CHECK_LUSTRE],[
                 [ompi_check_lustre_happy="yes"],
                 [ompi_check_lustre_happy="no"])
             
-            AC_MSG_CHECKING([for required lustre data structures])
-            cat > conftest.c <<EOF
+            AS_IF([test "$ompi_check_lustre_happy" = "yes"],
+                  [AC_MSG_CHECKING([for required lustre data structures])
+                   cat > conftest.c <<EOF
 #include "lustre/lustreapi.h"
 void alloc_lum()
 {
@@ -76,15 +77,15 @@ void alloc_lum()
 }
 EOF
 
-# Try the compile
-OPAL_LOG_COMMAND(
-    [$CC $CFLAGS -I$with_lustre/include -c conftest.c],
-    [ompi_check_lustre_struct_happy="yes"],
-    [ompi_check_lustre_struct_happy="no"
-     ompi_check_lustre_happy="no"]
-)
-    rm -f conftest.c conftest.o
-    AC_MSG_RESULT([$ompi_check_lustre_struct_happy])
+                   # Try the compile
+                   OPAL_LOG_COMMAND(
+                       [$CC $CFLAGS -I$ompi_check_lustre_dir/include -c conftest.c],
+                       [ompi_check_lustre_struct_happy="yes"],
+                       [ompi_check_lustre_struct_happy="no"
+                        ompi_check_lustre_happy="no"]
+                   )
+                       rm -f conftest.c conftest.o
+                       AC_MSG_RESULT([$ompi_check_lustre_struct_happy])])
     ])
 
     AS_IF([test "$ompi_check_lustre_happy" = "yes"],
