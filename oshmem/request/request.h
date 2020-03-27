@@ -24,7 +24,7 @@
 
 #include "opal/class/opal_free_list.h"
 #include "opal/class/opal_pointer_array.h"
-#include "opal/threads/condition.h"
+#include "opal/mca/threads/condition.h"
 
 BEGIN_C_DECLS
 

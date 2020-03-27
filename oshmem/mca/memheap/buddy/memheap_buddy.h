@@ -17,7 +17,7 @@
 #include "oshmem_config.h"
 #include "oshmem/mca/mca.h"
 #include "opal/class/opal_list.h"
-#include "opal/threads/mutex.h"
+#include "opal/mca/threads/mutex.h"
 #include "oshmem/mca/memheap/memheap.h"
 #include "oshmem/mca/memheap/base/base.h"
 #include "oshmem/mca/spml/spml.h"

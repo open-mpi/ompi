@@ -26,7 +26,7 @@
 
 #include "opal_config.h"
 
-#include "opal/threads/threads.h"
+#include "opal/mca/threads/threads.h"
 #include "opal/class/opal_object.h"
 #include "opal/util/output.h"
 

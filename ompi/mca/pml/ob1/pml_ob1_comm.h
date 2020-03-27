@@ -26,7 +26,7 @@
 #ifndef MCA_PML_OB1_COMM_H
 #define MCA_PML_OB1_COMM_H
 
-#include "opal/threads/mutex.h"
+#include "opal/mca/threads/mutex.h"
 #include "opal/class/opal_list.h"
 #include "ompi/proc/proc.h"
 #include "ompi/communicator/communicator.h"

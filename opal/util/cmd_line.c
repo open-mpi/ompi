@@ -32,7 +32,7 @@
 
 #include "opal/class/opal_object.h"
 #include "opal/class/opal_list.h"
-#include "opal/threads/mutex.h"
+#include "opal/mca/threads/mutex.h"
 #include "opal/util/argv.h"
 #include "opal/util/cmd_line.h"
 #include "opal/util/output.h"

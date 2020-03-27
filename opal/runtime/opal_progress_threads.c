@@ -17,7 +17,7 @@
 
 #include "opal/class/opal_list.h"
 #include "opal/mca/event/event.h"
-#include "opal/threads/threads.h"
+#include "opal/mca/threads/threads.h"
 #include "opal/util/error.h"
 #include "opal/util/fd.h"
 

@@ -29,7 +29,7 @@
 #include "opal/mca/mpool/mpool.h"
 #include "base.h"
 #include "mpool_base_tree.h"
-#include "opal/threads/mutex.h"
+#include "opal/mca/threads/mutex.h"
 #include "opal/util/info.h"
 #include "opal/align.h"
 

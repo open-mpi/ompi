@@ -24,7 +24,7 @@
 #define MCA_IO_ROMIO321_H
 
 #include "ompi_config.h"
-#include "opal/threads/mutex.h"
+#include "opal/mca/threads/mutex.h"
 #include "ompi/request/request.h"
 #include "ompi/file/file.h"
 #include "ompi/mca/io/io.h"

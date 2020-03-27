@@ -14,6 +14,10 @@
  *                         reserved.
  * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2019      Sandia National Laboratories.  All rights reserved.
+ * Copyright (c) 2020      Triad National Security, LLC. All rights
+ *                         reserved.
+ *
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -21,8 +25,8 @@
  * $HEADER$
  */
 
-#ifndef  OPAL_MUTEX_UNIX_H
-#define  OPAL_MUTEX_UNIX_H 1
+#ifndef OPAL_MCA_THREADS_PTHREADS_THREADS_PTHREADS_MUTEX_H
+#define OPAL_MCA_THREADS_PTHREADS_THREADS_PTHREADS_MUTEX_H
 
 /**
  * @file:
@@ -43,6 +47,7 @@
 
 #include "opal/class/opal_object.h"
 #include "opal/sys/atomic.h"
+#include "opal/util/output.h"
 
 BEGIN_C_DECLS
 
@@ -63,9 +68,11 @@ OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_mutex_t);
 OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_recursive_mutex_t);
 
 #if defined(PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP)
-#define OPAL_PTHREAD_RECURSIVE_MUTEX_INITIALIZER PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP
+#define OPAL_PTHREAD_RECURSIVE_MUTEX_INITIALIZER \
+            PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP
 #elif defined(PTHREAD_RECURSIVE_MUTEX_INITIALIZER)
-#define OPAL_PTHREAD_RECURSIVE_MUTEX_INITIALIZER PTHREAD_RECURSIVE_MUTEX_INITIALIZER
+#define OPAL_PTHREAD_RECURSIVE_MUTEX_INITIALIZER \
+            PTHREAD_RECURSIVE_MUTEX_INITIALIZER
 #endif
 
 #if OPAL_ENABLE_DEBUG
@@ -118,27 +125,23 @@ OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_recursive_mutex_t);
 
 static inline int opal_mutex_trylock(opal_mutex_t *m)
 {
-#if OPAL_ENABLE_DEBUG
     int ret = pthread_mutex_trylock(&m->m_lock_pthread);
-    if (ret == EDEADLK) {
-        errno = ret;
-        perror("opal_mutex_trylock()");
-        abort();
-    }
-    return ret;
-#else
-    return pthread_mutex_trylock(&m->m_lock_pthread);
+    if (EDEADLK == ret) {
+#if OPAL_ENABLE_DEBUG
+        opal_output(0, "opal_mutex_trylock() %d",ret);
 #endif
+        return 1;
+    }
+    return 0 == ret ? 0 : 1;
 }
 
 static inline void opal_mutex_lock(opal_mutex_t *m)
 {
 #if OPAL_ENABLE_DEBUG
     int ret = pthread_mutex_lock(&m->m_lock_pthread);
-    if (ret == EDEADLK) {
+    if (EDEADLK == ret) {
         errno = ret;
-        perror("opal_mutex_lock()");
-        abort();
+        opal_output(0, "opal_mutex_lock() %d", ret);
     }
 #else
     pthread_mutex_lock(&m->m_lock_pthread);
@@ -149,10 +152,9 @@ static inline void opal_mutex_unlock(opal_mutex_t *m)
 {
 #if OPAL_ENABLE_DEBUG
     int ret = pthread_mutex_unlock(&m->m_lock_pthread);
-    if (ret == EPERM) {
+    if (EPERM == ret) {
         errno = ret;
-        perror("opal_mutex_unlock");
-        abort();
+        opal_output(0, "opal_mutex_unlock() %d", ret);
     }
 #else
     pthread_mutex_unlock(&m->m_lock_pthread);
@@ -209,6 +211,15 @@ static inline void opal_mutex_atomic_unlock(opal_mutex_t *m)
 
 #endif
 
+typedef pthread_cond_t opal_cond_t;
+#define OPAL_CONDITION_STATIC_INIT PTHREAD_COND_INITIALIZER
+
+int opal_cond_init(opal_cond_t *cond);
+int opal_cond_wait(opal_cond_t *cond, opal_mutex_t *lock);
+int opal_cond_broadcast(opal_cond_t *cond);
+int opal_cond_signal(opal_cond_t *cond);
+int opal_cond_destroy(opal_cond_t *cond);
+
 END_C_DECLS
 
-#endif                          /* OPAL_MUTEX_UNIX_H */
+#endif /* OPAL_MCA_THREADS_PTHREADS_THREADS_PTHREADS_MUTEX_H */

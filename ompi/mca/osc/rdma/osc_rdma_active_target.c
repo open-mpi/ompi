@@ -31,7 +31,7 @@
 #include "osc_rdma_active_target.h"
 
 #include "mpi.h"
-#include "opal/threads/mutex.h"
+#include "opal/mca/threads/mutex.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/mca/osc/base/base.h"
 

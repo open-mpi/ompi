@@ -1,5 +1,7 @@
 /*
  * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2020      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -14,7 +16,7 @@
 
 #include "opal_config.h"
 #include "opal/types.h"
-#include "opal/threads/threads.h"
+#include "opal/mca/threads/threads.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/mca_base_framework.h"
 

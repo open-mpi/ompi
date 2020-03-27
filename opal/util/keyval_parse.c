@@ -29,7 +29,7 @@
 #include "opal/util/keyval/keyval_lex.h"
 #include "opal/util/output.h"
 #include "opal/util/string_copy.h"
-#include "opal/threads/mutex.h"
+#include "opal/mca/threads/mutex.h"
 #include <string.h>
 #include <ctype.h>
 

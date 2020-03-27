@@ -32,7 +32,7 @@
 
 #include "ompi/constants.h"
 #include "opal/datatype/opal_convertor.h"
-#include "opal/threads/mutex.h"
+#include "opal/mca/threads/mutex.h"
 #include "opal/dss/dss.h"
 #include "opal/util/arch.h"
 #include "opal/util/show_help.h"

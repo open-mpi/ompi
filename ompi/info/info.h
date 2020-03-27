@@ -32,7 +32,7 @@
 #include "opal/util/info.h"
 #include "opal/class/opal_list.h"
 #include "opal/class/opal_pointer_array.h"
-#include "opal/threads/mutex.h"
+#include "opal/mca/threads/mutex.h"
 
 #include "opal/mca/base/mca_base_var_enum.h"
 

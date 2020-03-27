@@ -39,7 +39,7 @@
 #include "opal/class/opal_fifo.h"
 #include "opal/class/opal_hash_table.h"
 #include "opal/mca/pmix/pmix-internal.h"
-#include "opal/threads/tsd.h"
+#include "opal/mca/threads/tsd.h"
 #include <uct/api/uct.h>
 
 #include "btl_uct_types.h"

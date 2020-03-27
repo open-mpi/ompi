@@ -24,7 +24,7 @@
 #endif
 
 #include "opal/datatype/opal_convertor.h"
-#include "opal/threads/mutex.h"
+#include "opal/mca/threads/mutex.h"
 #include "opal/dss/dss.h"
 #include "opal/util/arch.h"
 #include "opal/class/opal_list.h"

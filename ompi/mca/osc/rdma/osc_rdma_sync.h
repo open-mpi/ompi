@@ -14,7 +14,7 @@
 
 #include "osc_rdma_types.h"
 #include "opal/class/opal_object.h"
-#include "opal/threads/threads.h"
+#include "opal/mca/threads/threads.h"
 
 /**
  * @brief synchronization types

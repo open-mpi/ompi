@@ -1,9 +1,12 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2007-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2019      Sandia National Laboratories. All rights reserved.
+ *
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -12,8 +15,8 @@
  */
 
 
-#ifndef OPAL_THREADS_TSD_H
-#define OPAL_THREADS_TSD_H
+#ifndef OPAL_MCA_THREADS_TSD_H
+#define OPAL_MCA_THREADS_TSD_H
 
 #include "opal_config.h"
 
@@ -42,7 +45,7 @@ typedef void (*opal_tsd_destructor_t)(void *value);
 /**
  * Typedef for thread-specific data key
  */
-typedef void* opal_tsd_key_t;
+typedef void *opal_tsd_key_t;
 
 
 /**
@@ -59,8 +62,9 @@ typedef void* opal_tsd_key_t;
  *
  * @param key[in]       The key for accessing thread-specific data
  *
- * @retval OPAL_SUCCESS Success
- * @retval EINVAL       Invalid key
+ * @retval OPAL_SUCCESS      Success
+ * @retval OPAL_ERROR        Error
+ * @retval OPAL_ERR_IN_ERRNO Error
  */
 OPAL_DECLSPEC int opal_tsd_key_delete(opal_tsd_key_t key);
 
@@ -78,10 +82,9 @@ OPAL_DECLSPEC int opal_tsd_key_delete(opal_tsd_key_t key);
  * @param key[in]       Thread specific data key to modify
  * @param value[in]     Value to associate with key
  *
- * @retval OPAL_SUCCESS Success
- * @retval ENOMEM       Insufficient memory exists to associate the
- *                      value with the key
- * @retval EINVAL       Invalid key
+ * @retval OPAL_SUCCESS      Success
+ * @retval OPAL_ERR          Error
+ * @retval OPAL_ERR_IN_ERRNO Error
  */
 OPAL_DECLSPEC int opal_tsd_setspecific(opal_tsd_key_t key, void *value);
 
@@ -94,38 +97,18 @@ OPAL_DECLSPEC int opal_tsd_setspecific(opal_tsd_key_t key, void *value);
  * called in the current thread with the given key, NULL is returned
  * in valuep.
  *
- * @param key[in]       Thread specific data key to modify
+ * @param key[in]        Thread specific data key to modify
  * @param value[out]     Value to associate with key
  *
- * @retval OPAL_SUCCESS Success
- * @retval ENOMEM       Insufficient memory exists to associate the
- *                      value with the key
- * @retval EINVAL       Invalid key
+ * @retval OPAL_SUCCESS      Success
+ * @retval OPAL_ERR          Error
+ * @retval OPAL_ERR_IN_ERRNO Error
  */
 OPAL_DECLSPEC int opal_tsd_getspecific(opal_tsd_key_t key, void **valuep);
 
 #else
 
-typedef pthread_key_t opal_tsd_key_t;
-
-static inline int
-opal_tsd_key_delete(opal_tsd_key_t key)
-{
-    return pthread_key_delete(key);
-}
-
-static inline int
-opal_tsd_setspecific(opal_tsd_key_t key, void *value)
-{
-    return pthread_setspecific(key, value);
-}
-
-static inline int
-opal_tsd_getspecific(opal_tsd_key_t key, void **valuep)
-{
-    *valuep = pthread_getspecific(key);
-    return OPAL_SUCCESS;
-}
+#include MCA_threads_tsd_base_include_HEADER
 
 #endif
 
@@ -150,10 +133,9 @@ opal_tsd_getspecific(opal_tsd_key_t key, void **valuep)
  * @param key[out]       The key for accessing thread-specific data
  * @param destructor[in] Cleanup function to call when a thread exits
  *
- * @retval OPAL_SUCCESS  Success
- * @retval EAGAIN        The system lacked the necessary resource to
- *                       create another thread specific data key
- * @retval ENOMEM        Insufficient memory exists to create the key
+ * @retval OPAL_SUCCESS      Success
+ * @retval OPAL_ERR          Error
+ * @retval OPAL_ERR_IN_ERRNO Error
  */
 OPAL_DECLSPEC int opal_tsd_key_create(opal_tsd_key_t *key,
                                       opal_tsd_destructor_t destructor);
@@ -175,4 +157,4 @@ OPAL_DECLSPEC int opal_tsd_keys_destruct(void);
 
 END_C_DECLS
 
-#endif /* OPAL_MTHREADS_TSD_H */
+#endif /* OPAL_MCA_THREADS_TSD_H */

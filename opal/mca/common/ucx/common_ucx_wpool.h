@@ -15,7 +15,7 @@
 #include "opal/runtime/opal_progress.h"
 #include "opal/include/opal/constants.h"
 #include "opal/class/opal_list.h"
-#include "opal/threads/tsd.h"
+#include "opal/mca/threads/tsd.h"
 
 BEGIN_C_DECLS
 

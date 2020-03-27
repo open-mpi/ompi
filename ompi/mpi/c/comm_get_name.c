@@ -23,7 +23,7 @@
 
 #include <string.h>
 
-#include "opal/threads/mutex.h"
+#include "opal/mca/threads/mutex.h"
 #include "opal/util/string_copy.h"
 
 #include "ompi/mpi/c/bindings.h"

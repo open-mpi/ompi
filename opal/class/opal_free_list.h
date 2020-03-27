@@ -27,7 +27,7 @@
 #include "opal_config.h"
 #include "opal/class/opal_lifo.h"
 #include "opal/prefetch.h"
-#include "opal/threads/condition.h"
+#include "opal/mca/threads/condition.h"
 #include "opal/constants.h"
 #include "opal/runtime/opal.h"
 

@@ -69,8 +69,8 @@
 #include "opal/mca/memory/base/base.h"
 #include "opal/mca/timer/base/base.h"
 
-#include "opal/threads/mutex.h"
-#include "opal/threads/threads.h"
+#include "opal/mca/threads/mutex.h"
+#include "opal/mca/threads/threads.h"
 #include "opal/mca/crs/base/base.h"
 
 /******************

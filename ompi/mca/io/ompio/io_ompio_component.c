@@ -28,7 +28,7 @@
 
 #include "mpi.h"
 #include "opal/class/opal_list.h"
-#include "opal/threads/mutex.h"
+#include "opal/mca/threads/mutex.h"
 #include "opal/mca/base/base.h"
 #include "ompi/mca/io/io.h"
 #include "ompi/mca/fs/base/base.h"

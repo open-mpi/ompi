@@ -16,11 +16,11 @@
 #include "opal/class/opal_lifo.h"
 #include "opal/runtime/opal.h"
 #include "opal/constants.h"
+#include "opal/mca/threads/threads.h"
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <stddef.h>
-
 #include <sys/time.h>
 
 #define OPAL_LIFO_TEST_THREAD_COUNT 8
@@ -39,8 +39,9 @@
     } while (0)
 #endif
 
-static void *thread_test (void *arg) {
-    opal_lifo_t *lifo = (opal_lifo_t *) arg;
+static void *thread_test (opal_object_t *arg) {
+    opal_thread_t *t = (opal_thread_t *) arg;
+    opal_lifo_t *lifo = (opal_lifo_t *) t->t_arg;
     opal_list_item_t *item;
     struct timeval start, stop, total;
     double timing;
@@ -76,7 +77,7 @@ static bool check_lifo_consistency (opal_lifo_t *lifo, int expected_count)
 }
 
 int main (int argc, char *argv[]) {
-    pthread_t threads[OPAL_LIFO_TEST_THREAD_COUNT];
+    opal_thread_t threads[OPAL_LIFO_TEST_THREAD_COUNT];
     opal_list_item_t *item, *prev, *item2;
     struct timeval start, stop, total;
     opal_lifo_t lifo;
@@ -144,7 +145,8 @@ int main (int argc, char *argv[]) {
     printf ("Single thread test. Time: %d s %d us %d nsec/poppush\n", (int) total.tv_sec,
             (int)total.tv_usec, (int)(timing / 1e-9));
 
-    thread_test (&lifo);
+    threads[0].t_arg = &lifo;
+    thread_test ((opal_object_t *) &threads[0]);
 
     if (check_lifo_consistency (&lifo, ITEM_COUNT)) {
         test_success ();
@@ -154,13 +156,16 @@ int main (int argc, char *argv[]) {
 
     gettimeofday (&start, NULL);
     for (int i = 0 ; i < OPAL_LIFO_TEST_THREAD_COUNT ; ++i) {
-        pthread_create (threads + i, NULL, thread_test, &lifo);
+        OBJ_CONSTRUCT(&threads[i], opal_thread_t);
+        threads[i].t_run = thread_test;
+        threads[i].t_arg = &lifo;
+        opal_thread_start (threads + i);
     }
 
     for (int i = 0 ; i < OPAL_LIFO_TEST_THREAD_COUNT ; ++i) {
         void *ret;
 
-        pthread_join (threads[i], &ret);
+        opal_thread_join (threads + i, &ret);
     }
     gettimeofday (&stop, NULL);
 

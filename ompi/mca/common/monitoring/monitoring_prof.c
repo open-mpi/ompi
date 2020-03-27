@@ -58,7 +58,7 @@ writing 4x4 matrix to monitoring_avg.mat
 #define OMPI_COMPILING_FORTRAN_WRAPPERS 1
 #endif
 
-#include "opal/threads/thread_usage.h"
+#include "opal/mca/threads/thread_usage.h"
 
 #include "ompi/include/mpi.h"
 #include "ompi/mpi/fortran/base/constants.h"

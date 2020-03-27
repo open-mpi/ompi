@@ -41,7 +41,7 @@
 #include "opal/util/string_copy.h"
 
 #include "ompi/proc/proc.h"
-#include "opal/threads/mutex.h"
+#include "opal/mca/threads/mutex.h"
 #include "opal/util/bit_ops.h"
 #include "opal/util/output.h"
 #include "ompi/mca/topo/topo.h"

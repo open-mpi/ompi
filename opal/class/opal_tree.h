@@ -67,7 +67,7 @@
 #if OPAL_ENABLE_DEBUG
 /* Need atomics for debugging (reference counting) */
 #include "opal/sys/atomic.h"
-#include "opal/threads/mutex.h"
+#include "opal/mca/threads/mutex.h"
 #endif
 
 BEGIN_C_DECLS

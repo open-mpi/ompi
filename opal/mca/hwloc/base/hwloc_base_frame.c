@@ -21,7 +21,7 @@
 #include "opal/util/show_help.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
-#include "opal/threads/tsd.h"
+#include "opal/mca/threads/tsd.h"
 
 #include "opal/mca/hwloc/hwloc-internal.h"
 #include "opal/mca/hwloc/base/base.h"

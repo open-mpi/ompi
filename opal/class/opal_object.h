@@ -123,7 +123,7 @@
 #include <assert.h>
 #include <stdlib.h>
 
-#include "opal/threads/thread_usage.h"
+#include "opal/mca/threads/thread_usage.h"
 
 BEGIN_C_DECLS
 
