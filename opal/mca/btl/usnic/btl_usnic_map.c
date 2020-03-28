@@ -246,7 +246,6 @@ void opal_btl_usnic_connectivity_map(void)
 
     /* Filename is of the form: <prefix>-<hostname>.<pid>.<job>.<MCW
        rank>.txt */
-    host = 
     opal_asprintf(&filename, "%s-%s.pid%d.job%d.mcwrank%d.txt",
              mca_btl_usnic_component.connectivity_map_prefix,
              opal_process_info.nodename,
