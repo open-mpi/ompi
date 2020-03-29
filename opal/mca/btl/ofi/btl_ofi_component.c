@@ -30,6 +30,7 @@
 #include "opal/mca/btl/btl.h"
 #include "opal/mca/btl/base/base.h"
 #include "opal/mca/hwloc/base/base.h"
+#include "opal/mca/common/ofi/common_ofi.h"
 
 #include <string.h>
 
@@ -240,7 +241,7 @@ static mca_btl_base_module_t **mca_btl_ofi_component_init (int *num_btl_modules,
         return NULL;
     }
 
-    struct fi_info *info, *info_list;
+    struct fi_info *info, *info_list, *device;
     struct fi_info hints = {0};
     struct fi_ep_attr ep_attr = {0};
     struct fi_rx_attr rx_attr = {0};
@@ -332,12 +333,17 @@ static mca_btl_base_module_t **mca_btl_ofi_component_init (int *num_btl_modules,
         if (OPAL_SUCCESS == rc) {
             /* Device passed sanity check, let's make a module.
              * We only pick the first device we found valid */
-            rc = mca_btl_ofi_init_device(info);
-            if (OPAL_SUCCESS == rc)
+            device = mca_common_ofi_select_device(info);
+            rc = mca_btl_ofi_init_device(device);
+            if (OPAL_SUCCESS == rc) {
+                info = device;
                 break;
+            }
         }
         info = info->next;
     }
+
+    BTL_VERBOSE(("ofi btl selected device: %s", device->domain_attr->name));
 
     /* We are done with the returned info. */
     fi_freeinfo(info_list);

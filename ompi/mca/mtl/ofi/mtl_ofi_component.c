@@ -16,6 +16,7 @@
 #include "mtl_ofi.h"
 #include "opal/util/argv.h"
 #include "opal/util/printf.h"
+#include "opal/mca/common/ofi/common_ofi.h"
 
 static int ompi_mtl_ofi_component_open(void);
 static int ompi_mtl_ofi_component_query(mca_base_module_t **module, int *priority);
@@ -370,6 +371,18 @@ select_ofi_provider(struct fi_info *providers,
                         "%s:%d: mtl:ofi:prov: %s\n",
                         __FILE__, __LINE__,
                         (prov ? prov->fabric_attr->prov_name : "none"));
+
+    /*
+     * If a valid provider is selected, select the device closest
+     * to this processes NUMA node
+     */
+    if (NULL != prov) {
+        prov = mca_common_ofi_select_device(prov);
+        opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+                            "%s:%d: mtl:ofi:device: %s\n",
+                            __FILE__, __LINE__,
+                            (prov ? prov->domain_attr->name : "none"));
+    }
 
     return prov;
 }
