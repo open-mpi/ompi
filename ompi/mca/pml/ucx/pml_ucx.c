@@ -393,22 +393,6 @@ static ucp_ep_h mca_pml_ucx_add_proc_common(ompi_proc_t *proc)
     return ep;
 }
 
-static ucp_ep_h mca_pml_ucx_add_proc(ompi_communicator_t *comm, int dst)
-{
-    ompi_proc_t *proc0     = ompi_comm_peer_lookup(comm, 0);
-    ompi_proc_t *proc_peer = ompi_comm_peer_lookup(comm, dst);
-    int ret;
-
-    /* Note, mca_pml_base_pml_check_selected, doesn't use 3rd argument */
-    if (OMPI_SUCCESS != (ret = mca_pml_base_pml_check_selected("ucx",
-                                                               &proc0,
-                                                               dst))) {
-        return NULL;
-    }
-
-    return mca_pml_ucx_add_proc_common(proc_peer);
-}
-
 int mca_pml_ucx_add_procs(struct ompi_proc_t **procs, size_t nprocs)
 {
     ompi_proc_t *proc;
@@ -436,26 +420,22 @@ int mca_pml_ucx_add_procs(struct ompi_proc_t **procs, size_t nprocs)
 
 static inline ucp_ep_h mca_pml_ucx_get_ep(ompi_communicator_t *comm, int rank)
 {
+    ompi_proc_t *proc_peer = ompi_comm_peer_lookup(comm, rank);
     ucp_ep_h ep;
 
-    ep = ompi_comm_peer_lookup(comm, rank)->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_PML];
-    if (OPAL_LIKELY(ep != NULL)) {
+    ep = proc_peer->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_PML];
+    if (OPAL_LIKELY(NULL != ep)) {
         return ep;
     }
 
-    ep = mca_pml_ucx_add_proc(comm, rank);
-    if (OPAL_LIKELY(ep != NULL)) {
-        return ep;
+    /* Note, mca_pml_base_pml_check_selected, doesn't use 3rd argument */
+    if (OMPI_SUCCESS != mca_pml_base_pml_check_selected("ucx",
+                                                        &proc_peer,
+                                                        1)) {
+        return NULL;
     }
 
-    if (rank >= ompi_comm_size(comm)) {
-        PML_UCX_ERROR("Rank number (%d) is larger than communicator size (%d)",
-                      rank, ompi_comm_size(comm));
-    } else {
-        PML_UCX_ERROR("Failed to resolve UCX endpoint for rank %d", rank);
-    }
-
-    return NULL;
+    return mca_pml_ucx_add_proc_common(proc_peer);
 }
 
 int mca_pml_ucx_del_procs(struct ompi_proc_t **procs, size_t nprocs)
