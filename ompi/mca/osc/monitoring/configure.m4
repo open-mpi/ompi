@@ -1,6 +1,8 @@
 dnl -*- shell-script -*-
 dnl
 dnl Copyright (c) 2016-2018 Inria.  All rights reserved.
+dnl Copyright (c) 2019      Research Organization for Information Science
+dnl                         and Technology (RIST).  All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -45,9 +47,9 @@ AC_DEFUN(
 #ifndef MCA_OSC_MONITORING_GEN_TEMPLATE_H
 #define MCA_OSC_MONITORING_GEN_TEMPLATE_H
 
-#include <ompi_config.h>
-#include <ompi/mca/osc/osc.h>
-#include <ompi/mca/osc/monitoring/osc_monitoring_template.h>
+#include "ompi_config.h"
+#include "ompi/mca/osc/osc.h"
+#include "ompi/mca/osc/monitoring/osc_monitoring_template.h"
 
 /************************************************************/
 /* Include template generating macros and inlined functions */

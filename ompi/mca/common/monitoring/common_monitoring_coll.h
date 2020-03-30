@@ -3,6 +3,8 @@
  * Copyright (c) 2017      The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2019      Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -15,8 +17,8 @@
 
 BEGIN_C_DECLS
 
-#include <ompi_config.h>
-#include <opal/mca/base/mca_base_pvar.h>
+#include "ompi_config.h"
+#include "opal/mca/base/mca_base_pvar.h"
 
 OMPI_DECLSPEC void mca_common_monitoring_coll_flush(FILE *pf, mca_monitoring_coll_data_t*data);
 

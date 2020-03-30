@@ -2,7 +2,7 @@
  * Copyright (c) 2014-2017 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved
- * Copyright (c) 2016-2018 Research Organization for Information Science
+ * Copyright (c) 2016-2019 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
@@ -15,7 +15,7 @@
 #define PSHMEM_SHMEM_H
 
 #include <shmem.h>
-#include <pshmemx.h>
+#include "pshmemx.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {

@@ -1,5 +1,7 @@
 /*
  * Copyright (c) 2016-2018 Inria.  All rights reserved.
+ * Copyright (c) 2019      Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -10,9 +12,9 @@
 #ifndef MCA_OSC_MONITORING_COMM_H
 #define MCA_OSC_MONITORING_COMM_H
 
-#include <ompi/request/request.h>
-#include <ompi/datatype/ompi_datatype.h>
-#include <ompi/win/win.h>
+#include "ompi/request/request.h"
+#include "ompi/datatype/ompi_datatype.h"
+#include "ompi/win/win.h"
 
 #define OSC_MONITORING_GENERATE_TEMPLATE_COMM(template)                 \
                                                                         \

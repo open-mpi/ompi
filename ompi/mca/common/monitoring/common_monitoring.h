@@ -1,5 +1,7 @@
 /*
  * Copyright (c) 2016-2018 Inria.  All rights reserved.
+ * Copyright (c) 2019      Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -12,12 +14,12 @@
 
 BEGIN_C_DECLS
 
-#include <ompi_config.h>
-#include <ompi/proc/proc.h>
-#include <ompi/group/group.h>
-#include <ompi/communicator/communicator.h>
-#include <opal/class/opal_hash_table.h>
-#include <opal/mca/base/mca_base_pvar.h>
+#include "ompi_config.h"
+#include "ompi/proc/proc.h"
+#include "ompi/group/group.h"
+#include "ompi/communicator/communicator.h"
+#include "opal/class/opal_hash_table.h"
+#include "opal/mca/base/mca_base_pvar.h"
 
 #define MCA_MONITORING_MAKE_VERSION                                     \
     MCA_BASE_MAKE_VERSION(component, OMPI_MAJOR_VERSION, OMPI_MINOR_VERSION, OMPI_RELEASE_VERSION)

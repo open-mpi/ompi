@@ -1260,10 +1260,16 @@ if test "$OMPI_TOP_BUILDDIR" != "$OMPI_TOP_SRCDIR"; then
     # rather than have successive assignments to these shell
     # variables, lest the $(foo) names try to get evaluated here.
     # Yuck!
-    CPPFLAGS='-I$(top_srcdir) -I$(top_builddir) -I$(top_srcdir)/opal/include m4_ifdef([project_ompi], [-I$(top_srcdir)/ompi/include]) m4_ifdef([project_oshmem], [-I$(top_srcdir)/oshmem/include])'" $CPPFLAGS"
+    cpp_includes='$(top_srcdir) $(top_builddir) $(top_srcdir)/opal/include m4_ifdef([project_ompi], [$(top_srcdir)/ompi/include]) m4_ifdef([project_oshmem], [$(top_srcdir)/oshmem/include])'
 else
-    CPPFLAGS='-I$(top_srcdir)'" $CPPFLAGS"
+    cpp_includes='$(top_srcdir)'
 fi
+
+CPP_INCLUDES="$(echo $cpp_includes | $SED 's/[[^ \]]* */'"$opal_cc_iquote"'&/g')"
+CXX_INCLUDES="$(echo $cpp_includes | $SED 's/[[^ \]]* */'"$opal_cxx_iquote"'&/g')"
+CPPFLAGS="$CPP_INCLUDES $CPPFLAGS"
+# C++ is only relevant if we're building OMPI
+m4_ifdef([project_ompi],[CXXCPPFLAGS="$CXX_INCLUDES $CXXCPPFLAGS"])
 
 # OMPI needs some additional processing of the flags (e.g., get
 # versions without optimization for debugger modules).

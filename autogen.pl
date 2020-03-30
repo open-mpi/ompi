@@ -399,7 +399,7 @@ sub mca_generate_framework_header(\$\@) {
 #ifndef $ifdef_string
 #define $ifdef_string
 
-#include <opal/mca/base/mca_base_framework.h>
+#include \"opal/mca/base/mca_base_framework.h\"
 
 $framework_decl_output
 static mca_base_framework_t *${project}_frameworks[] = {

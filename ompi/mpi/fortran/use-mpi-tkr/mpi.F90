@@ -11,8 +11,8 @@
 ! Copyright (c) 2004-2005 The Regents of the University of California.
 !                         All rights reserved.
 ! Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
-! Copyright (c) 2016-2017 Research Organization for Information Science
-!                         and Technology (RIST). All rights reserved.
+! Copyright (c) 2016-2019 Research Organization for Information Science
+!                         and Technology (RIST).  All rights reserved.
 ! $COPYRIGHT$
 !
 ! Additional copyrights may follow
@@ -33,11 +33,11 @@ module mpi
 
 ! The MPI attribute callback functions
 
-  include "ompi/mpi/fortran/base/attr-fn-int-callback-interfaces.h"
+  include "../base/attr-fn-int-callback-interfaces.h"
 
 ! The MPI_CONVERSION_FN_NULL function
 
-  include "ompi/mpi/fortran/base/conversion-fn-null-int-interface.h"
+  include "../base/conversion-fn-null-int-interface.h"
 
 ! Functions that have overloaded interfaces with TYPE(C_PTR) (which
 ! this compiler may or may not support).  We use an "if" preprocessor

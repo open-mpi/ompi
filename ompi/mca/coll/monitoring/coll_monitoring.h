@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2016      Inria.  All rights reserved.
- * Copyright (c) 2017      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017-2019 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2017      Amazon.com, Inc. or its affiliates.  All Rights
  *                         reserved.
  * $COPYRIGHT$
@@ -16,13 +16,13 @@
 
 BEGIN_C_DECLS
 
-#include <ompi_config.h>
-#include <ompi/mca/coll/coll.h>
-#include <ompi/op/op.h>
-#include <ompi/request/request.h>
-#include <ompi/datatype/ompi_datatype.h>
-#include <ompi/communicator/communicator.h>
-#include <ompi/mca/common/monitoring/common_monitoring.h>
+#include "ompi_config.h"
+#include "ompi/mca/coll/coll.h"
+#include "ompi/op/op.h"
+#include "ompi/request/request.h"
+#include "ompi/datatype/ompi_datatype.h"
+#include "ompi/communicator/communicator.h"
+#include "ompi/mca/common/monitoring/common_monitoring.h"
 
 struct mca_coll_monitoring_component_t {
     mca_coll_base_component_t super;

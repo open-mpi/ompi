@@ -4,8 +4,8 @@
  *                         reserved.
  * Copyright (c) 2013-2018 Inria.  All rights reserved.
  * Copyright (c) 2015      Bull SAS.  All rights reserved.
- * Copyright (c) 2016-2017 Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016-2019 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -13,13 +13,13 @@
  * $HEADER$
  */
 
-#include <ompi_config.h>
+#include "ompi_config.h"
 #include "common_monitoring.h"
 #include "common_monitoring_coll.h"
-#include <ompi/constants.h>
-#include <ompi/communicator/communicator.h>
-#include <opal/mca/base/mca_base_component_repository.h>
-#include <opal/class/opal_hash_table.h>
+#include "ompi/constants.h"
+#include "ompi/communicator/communicator.h"
+#include "opal/mca/base/mca_base_component_repository.h"
+#include "opal/class/opal_hash_table.h"
 #include <assert.h>
 
 /*** Monitoring specific variables ***/

@@ -27,7 +27,7 @@
 #include <string.h>
 #include <errno.h>
 
-#include <opal/mca/event/event.h>
+#include "opal/mca/event/event.h"
 #include "opal/runtime/opal.h"
 
 int called = 0;
