@@ -181,7 +181,7 @@ General notes
 
   (*) Be sure to read the Compiler Notes, below.
 
-- Other systems have been lightly (but not fully tested):
+- Other systems have been lightly (but not fully) tested:
   - Linux (various flavors/distros), 32 bit, with gcc
   - Cygwin 32 & 64 bit with gcc
   - ARMv6, ARMv7
