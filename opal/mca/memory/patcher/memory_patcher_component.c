@@ -168,8 +168,13 @@ static void *_intercept_mmap(void *start, size_t length, int prot, int flags, in
     }
 
     if (!original_mmap) {
-        result = (void *) (intptr_t) memory_patcher_syscall(SYS_mmap, start, length, prot, flags,
-                                                            fd, offset);
+        /* On RHEL8.1 (glibc-2.28-72.el8.ppc64le) __mmap became a global 'T' symbol, yet was the same address as mmap.  Don't recall it! */
+        if (__mmap != mmap ) {
+            /* the darwin syscall returns an int not a long so call the underlying __mmap function */
+            result = __mmap (start, length, prot, flags, fd, offset);
+        } else {
+            result = (void*)(intptr_t) memory_patcher_syscall(SYS_mmap, start, length, prot, flags, fd, offset);
+        }
     } else {
         result = original_mmap(start, length, prot, flags, fd, offset);
     }
