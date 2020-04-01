@@ -13,7 +13,7 @@
  * Copyright (c) 2008-2018 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2012-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
@@ -290,6 +290,13 @@ int mca_base_var_init(void)
             return ret;
         }
 
+        /* We may need this later */
+        home = (char*)opal_home_directory();
+        if (NULL == home) {
+            opal_output(0, "Error: Unable to get the user home directory\n");
+            return OPAL_ERROR;
+        }
+
         /* Set this before we register the parameter, below */
 
         mca_base_var_initialized = true;
@@ -412,16 +419,11 @@ int mca_base_var_cache_files(bool rel_path_search)
     }
 
 #if OPAL_WANT_HOME_CONFIG_FILES
-    /* We may need this later */
-    home = (char*)opal_home_directory();
-    if (NULL == home) {
-        opal_output(0, "Error: Unable to get the user home directory\n");
-        return OPAL_ERROR;
+    if (NULL == getenv("OPAL_USER_PARAMS_GIVEN")) {
+        opal_asprintf(&mca_base_var_files, "%s"OPAL_PATH_SEP".openmpi" OPAL_PATH_SEP
+                 "mca-params.conf%c%s" OPAL_PATH_SEP "openmpi-mca-params.conf",
+                 home, ',', opal_install_dirs.sysconfdir);
     }
-
-    opal_asprintf(&mca_base_var_files, "%s"OPAL_PATH_SEP".openmpi" OPAL_PATH_SEP
-             "mca-params.conf%c%s" OPAL_PATH_SEP "openmpi-mca-params.conf",
-             home, ',', opal_install_dirs.sysconfdir);
 #else
     opal_asprintf(&mca_base_var_files, "%s" OPAL_PATH_SEP "openmpi-mca-params.conf",
              opal_install_dirs.sysconfdir);

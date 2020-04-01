@@ -24,7 +24,7 @@
 #
 
 AC_DEFUN([OMPI_SETUP_PRRTE],[
-    OPAL_VAR_SCOPE_PUSH([opal_prrte_save_CPPFLAGS opal_prrte_save_CFLAGS opal_prrte_save_LDFLAGS opal_prrte_save_LIBS opal_prrte_args opal_prrte_save_enable_dlopen opal_prrte_save_enable_mca_dso opal_prrte_save_enable_mca_static opal_prrte_extra_libs opal_prrte_extra_ltlibs opal_prrte_extra_ldflags])
+    OPAL_VAR_SCOPE_PUSH([opal_prrte_save_CPPFLAGS opal_prrte_save_CFLAGS opal_prrte_save_LDFLAGS opal_prrte_save_LIBS opal_prrte_args opal_prrte_save_enable_dlopen opal_prrte_save_enable_mca_dso opal_prrte_save_enable_mca_static])
 
     opal_prrte_save_CFLAGS=$CFLAGS
     opal_prrte_save_CPPFLAGS=$CPPFLAGS
@@ -59,29 +59,29 @@ AC_DEFUN([OMPI_SETUP_PRRTE],[
     if test "$enable_internal_rte" != "no"; then
         AC_MSG_RESULT([yes])
         ompi_want_prrte=yes
-        opal_prrte_extra_libs=$OMPI_TOP_BUILDDIR/opal/libopen-pal.la
-        opal_prrte_extra_ltlibs=$OMPI_TOP_BUILDDIR/opal/libopen-pal.la
-
-        if test "$opal_event_external_support" = "yes"; then
-            opal_prrte_extra_libs="$opal_prrte_extra_libs $opal_event_external_LIBS"
-            opal_prrte_extra_ltlibs="$opal_prrte_extra_ltlibs $opal_event_external_LIBS"
+        if test -z $with_libevent || test "$with_libevent" = "internal" || test "$with_libevent" = "yes"; then
+            opal_prrte_libevent_arg="--with-libevent-header=$OMPI_TOP_SRCDIR/opal/mca/event/event.h"
+        elif test "$with_libevent" = "external"; then
+            opal_prrte_libevent_arg=""
+        else
+            opal_prrte_libevent_arg="--with-libevent=$with_libevent"
         fi
-        # specifying --with-libevent-header causes prrte to ignore the with_libevent and with_libevent_libdir options
-        opal_prrte_libevent_arg="--with-libevent-header=$OMPI_TOP_SRCDIR/opal/mca/event/event.h"
 
-        if test "$opal_hwloc_external_support" = "yes"; then
-            opal_prrte_extra_libs="$opal_prrte_extra_libs $opal_hwloc_external_LIBS"
-            opal_prrte_extra_ltlibs="$opal_prrte_extra_ltlibs $opal_hwloc_external_LIBS"
+        if test -z $with_hwloc || test "$with_hwloc" = "internal" || test "$with_hwloc" = "yes"; then
+               opal_prrte_hwloc_arg="--with-hwloc-header=$OMPI_TOP_SRCDIR/opal/mca/hwloc/hwloc-internal.h"
+        elif test "$with_hwloc" = "external"; then
+            opal_prrte_hwloc_arg=""
+        else
+            opal_prrte_hwloc_arg="--with-hwloc=$with_hwloc"
         fi
-        # specifying --with-hwloc-header causes prrte to ignore the with_hwloc and with_hwloc_libdir options
-        opal_prrte_hwloc_arg="--with-hwloc-header=$OMPI_TOP_SRCDIR/opal/mca/hwloc/hwloc-internal.h"
 
-        if test "$opal_external_pmix_happy" = "yes"; then
-            opal_prrte_extra_libs="$opal_prrte_extra_libs $opal_pmix_external_LIBS"
-            opal_prrte_extra_ltlibs="$opal_prrte_extra_ltlibs $opal_pmix_external_LIBS"
+        if test -z $with_pmix || test "$with_pmix" = "internal" || test "$with_pmix" = "yes"; then
+            opal_prrte_pmix_arg="--with-pmix-header=$OMPI_TOP_SRCDIR/opal/mca/pmix/pmix-internal.h"
+        elif test "$with_pmix" = "external"; then
+            opal_prrte_pmix_arg=""
+        else
+            opal_prrte_pmix_arg="--with-pmix=$with_pmix"
         fi
-        # specifying --with-pmix-header causes prrte to ignore the with_pmix and with_pmix_libdir options
-        opal_prrte_pmix_arg="--with-pmix-header=$OMPI_TOP_SRCDIR/opal/mca/pmix/pmix-internal.h"
 
         if test -z $enable_prte_prefix_by_default || test "$enable_prte_prefix_by_default" = "yes" ||
            test "$enable_orterun_prefix_given" = "yes"; then
@@ -102,7 +102,7 @@ AC_DEFUN([OMPI_SETUP_PRRTE],[
             opal_prrte_args="$opal_prrte_args --with-platform=$with_prrte_platform"
         fi
         # add the extra libs
-        opal_prrte_args="$opal_prrte_args --with-prrte-extra-lib=\"$opal_prrte_extra_libs\" --with-prrte-extra-ltlib=\"$opal_prrte_extra_ltlibs\""
+        opal_prrte_args="$opal_prrte_args --with-prrte-extra-lib=$OMPI_TOP_BUILDDIR/opal/libopen-pal.la --with-prrte-extra-ltlib=$OMPI_TOP_BUILDDIR/opal/libopen-pal.la"
 
         AC_MSG_CHECKING([final prrte configure args])
         AC_MSG_RESULT([$opal_prrte_args])
