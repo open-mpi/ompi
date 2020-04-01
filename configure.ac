@@ -1239,6 +1239,18 @@ AC_SUBST(OPAL_DYN_LIB_SUFFIX)
 # Need the libtool binary before the rpathify stuff
 LT_OUTPUT
 
+##################################
+# PRRTE support
+##################################
+
+opal_show_title "Setup PRRTE support"
+
+m4_ifdef([project_prrte],
+         [OMPI_SETUP_PRRTE],
+         [OPAL_SUMMARY_ADD([[Miscellaneous]],[[PRRTE]],[prrte],[no (disabled)])
+          ompi_want_prrte=no])
+AM_CONDITIONAL(OMPI_WANT_PRRTE, test "$ompi_want_prrte" = "yes")
+
 ############################################################################
 # final compiler config
 ############################################################################
@@ -1446,18 +1458,6 @@ m4_ifdef([project_ompi], [OMPI_CONFIG_FILES])
 m4_ifdef([project_oshmem], [OSHMEM_CONFIG_FILES])
 
 OPAL_CHECK_LIBNL_SUMMARY
-
-##################################
-# PRRTE support
-##################################
-
-opal_show_title "Setup PRRTE support"
-
-m4_ifdef([project_prrte],
-         [OMPI_SETUP_PRRTE],
-         [OPAL_SUMMARY_ADD([[Miscellaneous]],[[PRRTE]],[prrte],[no (disabled)])
-          ompi_want_prrte=no])
-AM_CONDITIONAL(OMPI_WANT_PRRTE, test "$ompi_want_prrte" = "yes")
 
 # checkpoint results
 AC_CACHE_SAVE
