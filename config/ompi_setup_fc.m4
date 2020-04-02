@@ -13,7 +13,7 @@ dnl                         All rights reserved.
 dnl Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
 dnl                         reserved.
 dnl Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
-dnl Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2009-2020 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2015-2020 Research Organization for Information Science
 dnl                         and Technology (RIST).  All rights reserved.
 dnl $COPYRIGHT$
@@ -139,23 +139,10 @@ AC_DEFUN([OMPI_SETUP_FC],[
            [AC_FC_SRCEXT(f)
             AC_FC_SRCEXT(f90)])
 
-    AC_MSG_CHECKING([if Fortran compilers preprocess .F90 files without additional flag])
-    cat > conftest_f.F90 << EOF
-#if 0
-#error The source file was not preprocessed
-#endif
-      program bogus
-      end program
-EOF
-    OPAL_LOG_COMMAND([$FC $FCFLAGS -c conftest_f.F90],
-                     [AC_MSG_RESULT(["yes"])],
-                     [AC_MSG_CHECKING([if -fpp flag works])
-                      OPAL_LOG_COMMAND([$FC $FCFLAGS -fpp -c conftest_f.F90],
-                                       [AC_MSG_RESULT(["yes"])
-                                        FCFLAGS="$FCFLAGS -fpp"],
-                                       [AC_MSG_RESULT("no")
-                                        AC_MSG_ERROR(["cannot preprocess Fortran files, Aborting"])])])
-    rm -f conftest*
+    # Check to see if we need additional compiler flags for
+    # preprocessing .F90 files.
+    AS_IF([test $ompi_fc_happy -eq 1],
+          [OMPI_FORTRAN_CHECK_PREPROCESS_F90])
 
     # Per trac #1982, on OS X, we may need some esoteric linker flags
     # in the wrapper compilers.  However, per
