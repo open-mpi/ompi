@@ -18,6 +18,7 @@ dnl                         reserved.
 dnl Copyright (c) 2017      Amazon.com, Inc. or its affiliates.  All Rights
 dnl                         reserved.
 dnl Copyright (c) 2020      Google, LLC. All rights reserved.
+dnl Copyright (c) 2020      Intel, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -833,7 +834,7 @@ AC_DEFUN([OPAL_CHECK_ASM_GNU_STACKEXEC], [
 int testfunc() {return 0; }
 EOF
              OPAL_LOG_COMMAND([$CC $CFLAGS -c conftest.c -o conftest.$OBJEXT],
-                 [$OBJDUMP -x conftest.$OBJEXT | $GREP '\.note\.GNU-stack' > /dev/null && opal_cv_asm_gnu_stack_result=yes],
+                 [$OBJDUMP -x conftest.$OBJEXT 2>&1 | $GREP '\.note\.GNU-stack' &> /dev/null && opal_cv_asm_gnu_stack_result=yes],
                  [OPAL_LOG_MSG([the failed program was:], 1)
                   OPAL_LOG_FILE([conftest.c])
                   opal_cv_asm_gnu_stack_result=no])
