@@ -8,7 +8,7 @@ Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
                         University of Stuttgart.  All rights reserved.
 Copyright (c) 2004-2007 The Regents of the University of California.
                         All rights reserved.
-Copyright (c) 2006-2018 Cisco Systems, Inc.  All rights reserved.
+Copyright (c) 2006-2020 Cisco Systems, Inc.  All rights reserved.
 Copyright (c) 2006-2011 Mellanox Technologies. All rights reserved.
 Copyright (c) 2006-2012 Oracle and/or its affiliates.  All rights reserved.
 Copyright (c) 2007      Myricom, Inc.  All rights reserved.
@@ -803,7 +803,7 @@ Network Support
   kernel.  If the knem Linux kernel module is not loaded, the knem
   support is (by default) silently deactivated during Open MPI jobs.
 
-  See http://runtime.bordeaux.inria.fr/knem/ for details on Knem.
+  See https://knem.gforge.inria.fr/ for details on Knem.
 
 - Linux Cross-Memory Attach (CMA) or XPMEM is used by the vader
   shared-memory BTL when the CMA/XPMEM libraries are installedm,
