@@ -1,8 +1,8 @@
 Source: openmpi
 Section: net
 Priority: extra
-Homepage: http://www.open-mpi.org/
-Maintainer:  http://www.open-mpi.org
+Homepage: https://www.open-mpi.org/
+Maintainer:  https://www.open-mpi.org
 
 Package: openmpi
 Depends: ${shlibs:Depends}, ${misc:Depends}

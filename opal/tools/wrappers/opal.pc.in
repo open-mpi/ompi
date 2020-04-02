@@ -1,9 +1,9 @@
-# Copyright (c) 2010 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2010-2020 Cisco Systems, Inc.  All rights reserved.
 #
 Name: Open Portability Access Layer (OPAL)
 Description: Lowest layer abstractions for the Open MPI software package
 Version: @OPAL_VERSION@
-URL: http://www.open-mpi.org/
+URL: https://www.open-mpi.org/
 #
 prefix=@prefix@
 exec_prefix=@exec_prefix@

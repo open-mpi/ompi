@@ -35,7 +35,7 @@ When submitting questions and problems, be sure to include as much
 extra information as possible.  This web page details all the
 information that we request in order to provide assistance:
 
-     http://www.open-mpi.org/community/help/
+     https://www.open-mpi.org/community/help/
 
 The best way to report bugs, send comments, or ask questions is to
 sign up on the user's and/or developer's mailing list (for user-level
@@ -51,8 +51,8 @@ address -- joe@example.com is considered different than
 joe@mycomputer.example.com!).  Visit these pages to subscribe to the
 lists:
 
-     http://lists.open-mpi.org/mailman/listinfo/users
-     http://lists.open-mpi.org/mailman/listinfo/devel
+     https://lists.open-mpi.org/mailman/listinfo/users
+     https://lists.open-mpi.org/mailman/listinfo/devel
 
 Thanks for your time.
 
@@ -699,7 +699,7 @@ Network Support
     - Portals 4
 
   - UCX is the Unified Communication X (UCX) communication library
-    (http://www.openucx.org/).  This is an open-source project
+    (https://www.openucx.org/).  This is an open-source project
     developed in collaboration between industry, laboratories, and
     academia to create an open-source production grade communication
     framework for data centric and high-performance applications.  The
@@ -790,7 +790,7 @@ Network Support
   same memory managers from prior versions of Open MPI will be used.
   The ummunotify Linux kernel module can be downloaded from:
 
-    http://lwn.net/Articles/343351/
+    https://lwn.net/Articles/343351/
 
 - The use of fork() with OpenFabrics-based networks (i.e., the UCX
   PML) is only partially supported, and only on Linux kernels >=
@@ -1057,7 +1057,7 @@ NETWORKING SUPPORT / OPTIONS
   knem is a Linux kernel module that allows direct process-to-process
   memory copies (optionally using hardware offload), potentially
   increasing bandwidth for large messages sent between messages on the
-  same server.  See http://knem.gforge.inria.fr/ for
+  same server.  See https://knem.gforge.inria.fr/ for
   details.
 
 --with-libfabric=<directory>
@@ -2215,7 +2215,7 @@ joe@example.com is considered different than
 joe@mycomputer.example.com!).  Visit this page to subscribe to the
 user's list:
 
-     http://lists.open-mpi.org/mailman/listinfo/users
+     https://lists.open-mpi.org/mailman/listinfo/users
 
 Developer-level bug reports, questions, and comments should generally
 be sent to the developer's mailing list (devel@lists.open-mpi.org).
@@ -2223,6 +2223,6 @@ Please do not post the same question to both lists.  As with the
 user's list, only subscribers are allowed to post to the developer's
 list.  Visit the following web page to subscribe:
 
-     http://lists.open-mpi.org/mailman/listinfo/devel
+     https://lists.open-mpi.org/mailman/listinfo/devel
 
 Make today an Open MPI day!

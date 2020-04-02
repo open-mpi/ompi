@@ -2,7 +2,7 @@
 # Copyright (c) 2006 The Trustees of Indiana University and Indiana
 #                    University Research and Technology
 #                    Corporation.  All rights reserved.
-# Copyright (c) 2006 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2020 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -51,7 +51,7 @@ Vendor: Open MPI Team
 License: BSD
 Group: Development/Libraries
 Source: openmpi-switcher-modulefile.tcl
-URL: http://www.open-mpi.org/
+URL: https://www.open-mpi.org/
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
 Requires: %__rm %__mkdir %__sed %__mv %__chmod %__chown
 Requires: modules-oscar

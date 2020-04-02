@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2008-2015 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2008-2020 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -24,7 +24,7 @@ AM_CPPFLAGS = \
 #
 # We use libsupport.a because we're lazy.  According to Ralph W., we
 # *could* use check_LTLIBRARIES, but it's a little weird (see
-# http://www.open-mpi.org/community/lists/devel/2008/06/4095.php).
+# https://www.open-mpi.org/community/lists/devel/2008/06/4095.php).
 #
 check_LIBRARIES = libsupport.a
 

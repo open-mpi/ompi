@@ -8,7 +8,7 @@ Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
                         University of Stuttgart.  All rights reserved.
 Copyright (c) 2004-2005 The Regents of the University of California.
                         All rights reserved.
-Copyright (c) 2008-2015 Cisco Systems, Inc.  All rights reserved.
+Copyright (c) 2008-2020 Cisco Systems, Inc.  All rights reserved.
 $COPYRIGHT$
 
 Additional copyrights may follow
@@ -23,7 +23,7 @@ This file is a *very* short overview of building and installing Open
 MPI, and building MPI applications.  Much more information is
 available on the Open MPI web site (e.g., see the FAQ section):
 
-    http://www.open-mpi.org/
+    https://www.open-mpi.org/
 
 
 Developer Builds

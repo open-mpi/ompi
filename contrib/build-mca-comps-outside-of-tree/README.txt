@@ -86,7 +86,7 @@ First, download, build, and install Open MPI:
 -----
 $ cd $HOME
 $ wget \
-  http://www.open-mpi.org/software/ompi/vX.Y/downloads/openmpi-X.Y.Z.tar.bz2
+  https://www.open-mpi.org/software/ompi/vX.Y/downloads/openmpi-X.Y.Z.tar.bz2
   [lots of output]
 $ tar jxf openmpi-X.Y.Z.tar.bz2
 $ cd openmpi-X.Y.Z

@@ -10,7 +10,7 @@ dnl Copyright (c) 2004-2007 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
-dnl Copyright (c) 2006-2017 Cisco Systems, Inc.  All rights reserved
+dnl Copyright (c) 2006-2020 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2006-2008 Sun Microsystems, Inc.  All rights reserved.
 dnl Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
 dnl                         reserved.
@@ -413,7 +413,7 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
                 OMPI_BUILD_FORTRAN_BINDINGS=$OMPI_FORTRAN_USEMPI_BINDINGS])])
 
     # Per discussion on the devel list starting here:
-    # http://www.open-mpi.org/community/lists/devel/2014/01/13799.php
+    # https://www.open-mpi.org/community/lists/devel/2014/01/13799.php
     # we need a new litmus test to disqualify older Fortran compilers
     # (e.g., Pathscale 4.0.12) that *seem* to support all the Right
     # Things, but a) do not support BIND(C, name="super_long_name") or

@@ -272,4 +272,4 @@ work for both arrays and direct buffers.
 
 If you have any problems, or find any bugs, please feel free to report
 them to Open MPI user's mailing list (see
-http://www.open-mpi.org/community/lists/ompi.php).
+https://www.open-mpi.org/community/lists/ompi.php).

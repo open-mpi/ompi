@@ -4,7 +4,7 @@
  * Copyright (c) 2014      Intel, Inc. All rights reserved
  * Copyright (c) 2016-2019 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
- * Copyright (c) 2017      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2017-2020 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -96,7 +96,7 @@ enum {
  */
 #define SHMEM_MAJOR_VERSION             1
 #define SHMEM_MINOR_VERSION             4 
-#define SHMEM_VENDOR_STRING             "http://www.open-mpi.org/"
+#define SHMEM_VENDOR_STRING             "https://www.open-mpi.org/"
 #define SHMEM_MAX_NAME_LEN              256
 
 #define SHMEM_CTX_PRIVATE               (1<<0)

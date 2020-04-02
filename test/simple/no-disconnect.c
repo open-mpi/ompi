@@ -1,6 +1,6 @@
 /* Contributed by Marcia Cristina Cera
    <marcia.cristina.cera@gmail.com>,
-   http://www.open-mpi.org/community/lists/users/2009/12/11540.php */
+   https://www.open-mpi.org/community/lists/users/2009/12/11540.php */
 
 /* It was decided that the issue highlighted by this test will NOT be
    fixed in the 1.3/1.4 series.  It is already fixed in the 1.5
