@@ -120,7 +120,7 @@ OPAL_DECLSPEC void opal_common_ucx_mca_var_register(const mca_base_component_t *
  * Load an integer value of \c size bytes from \c ptr and cast it to uint64_t.
  */
 static inline
-uint64_t opal_common_ucx_load_uint64(void *ptr, size_t size)
+uint64_t opal_common_ucx_load_uint64(const void *ptr, size_t size)
 {
     if (sizeof(uint8_t) == size) {
       return *(uint8_t*)ptr;
