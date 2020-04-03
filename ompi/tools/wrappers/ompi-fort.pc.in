@@ -4,7 +4,7 @@
 Name: Open MPI
 Description: Portable high-performance MPI implementation
 Version: @OMPI_VERSION@
-URL: http://www.open-mpi.org/
+URL: https://www.open-mpi.org/
 #
 prefix=@prefix@
 exec_prefix=@exec_prefix@

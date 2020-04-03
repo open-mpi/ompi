@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2020 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2016      Intel, Inc. All rights reserved.
@@ -118,7 +118,7 @@ mmap_register(void)
     /*
      * Do we want the "warning: your mmap file is on NFS!" message?  Per a
      * thread on the OMPI devel list
-     * (http://www.open-mpi.org/community/lists/devel/2011/12/10054.php),
+     * (https://www.open-mpi.org/community/lists/devel/2011/12/10054.php),
      * on some systems, it doesn't seem to matter.  But per older threads,
      * it definitely does matter on some systems.  Perhaps newer kernels
      * are smarter about this kind of stuff...?  Regardless, we should

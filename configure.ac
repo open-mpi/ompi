@@ -55,7 +55,7 @@ AC_LANG([C])
 
 AC_INIT([project_name_long],
         [m4_normalize(esyscmd([config/opal_get_version.sh VERSION --tarball]))],
-        [http://www.open-mpi.org/community/help/], [project_name_short])
+        [https://www.open-mpi.org/community/help/], [project_name_short])
 AC_PREREQ(2.60)
 AC_CONFIG_AUX_DIR(config)
 AC_CONFIG_MACRO_DIR(config)
@@ -1191,7 +1191,7 @@ if test "x$opal_cv_c_compiler_vendor" = "xsun"; then
 fi
 
 # Due to this thread:
-# http://www.open-mpi.org/community/lists/users/2013/02/21356.php and
+# https://www.open-mpi.org/community/lists/users/2013/02/21356.php and
 # a helpful tip from Dave Goodell, set the precious variables for
 # compilers to "no" that we don't want.  Libtool's m4 configry will
 # interpret this as "I won't be using this language; don't bother

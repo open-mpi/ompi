@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2020 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -46,7 +46,7 @@ int MPI_Group_free(MPI_Group *group)
        group.  The final thread about this, and the decision to
        support freeing GROUP_EMPTY can be found here:
 
-       http://www.open-mpi.org/community/lists/devel/2007/12/2750.php
+       https://www.open-mpi.org/community/lists/devel/2007/12/2750.php
 
        The short version: other MPI's allow it (LAM/MPI, CT6, MPICH2)
        probably mainly because the Intel MPI test suite expects it to

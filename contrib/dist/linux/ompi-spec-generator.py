@@ -45,7 +45,7 @@ copyright_template = """#
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2020 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -718,7 +718,7 @@ def main():
     param_parser.add_option("--no-install", action="store_true", dest="no_install", default=False, help="Disable the installation.")
     param_parser.add_option("--ompi-name", action="store", dest="ompi_name", default="openmpi", help="Specify the name.")
     param_parser.add_option("--ompi-prefix", action="store", dest="ompi_prefix", default="/opt/openmpi", help="Specify the installation prefix.")
-    param_parser.add_option("--ompi-url", action="store", dest="ompi_url", default="http://www.open-mpi.org", help="Specify the tarball to use.")
+    param_parser.add_option("--ompi-url", action="store", dest="ompi_url", default="https://www.open-mpi.org", help="Specify the tarball to use.")
     param_parser.add_option("--ompi-version", action="store", dest="ompi_version", default="1.1", help="Specify the version to use.")
     param_parser.add_option("--ompi-extra-version", action="store", dest="ompi_extra_version", default="%{nil}", help="Specify extra version to indicate special builds.")
     param_parser.add_option("--ompi-name-prefix", action="store", dest="ompi_name_prefix", default="%{nil}", help="Specify and name prefix for the RPMS.")

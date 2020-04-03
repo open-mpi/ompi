@@ -8,7 +8,7 @@ Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
                         University of Stuttgart.  All rights reserved.
 Copyright (c) 2004-2005 The Regents of the University of California.
                         All rights reserved.
-Copyright (c) 2008-2016 Cisco Systems, Inc.  All rights reserved.
+Copyright (c) 2008-2020 Cisco Systems, Inc.  All rights reserved.
 Copyright (c) 2013      Intel, Inc.  All rights reserved.
 $COPYRIGHT$
 
@@ -71,7 +71,7 @@ required depend on if you are using the Git master branch or a release
 branch (and which release branch you are using).  The specific
 versions can be found here:
 
-  http://www.open-mpi.org/source/building.php
+  https://www.open-mpi.org/source/building.php
 
 You can check what versions of the autotools you have installed with
 the following:
@@ -83,7 +83,7 @@ shell$ libtoolize --version
 
 Required version levels for all the OMPI releases can be found here:
 
-http://www.open-mpi.org/source/building.php
+https://www.open-mpi.org/source/building.php
 
 To strengthen the above point: the core Open MPI developers typically
 use very, very recent versions of the GNU tools.  There are known bugs

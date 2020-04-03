@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2019 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2020 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2013      Mellanox Technologies, Inc.
 #                         All rights reserved.
 # Copyright (c) 2015      Research Organization for Information Science
@@ -250,12 +250,12 @@ Requires: %{mpi_selector_rpm_name}
 
 %description
 Open MPI is an open source implementation of the Message Passing
-Interface specification (http://www.mpi-forum.org/) developed and
+Interface specification (https://www.mpi-forum.org/) developed and
 maintained by a consortium of research, academic, and industry
 partners.
 
 Open MPI also includes an implementation of the OpenSHMEM parallel
-programming API (http://www.openshmem.org/).  OpenSHMEM is a
+programming API (https://www.openshmem.org/).  OpenSHMEM is a
 Partitioned Global Address Space (PGAS) abstraction layer, which
 provides fast inter-process communication using one-sided
 communication techniques.
@@ -286,12 +286,12 @@ Requires: %{modules_rpm_name}
 
 %description runtime
 Open MPI is an open source implementation of the Message Passing
-Interface specification (http://www.mpi-forum.org/) developed and
+Interface specification (https://www.mpi-forum.org/) developed and
 maintained by a consortium of research, academic, and industry
 partners.
 
 Open MPI also includes an implementation of the OpenSHMEM parallel
-programming API (http://www.openshmem.org/).  OpenSHMEM is a
+programming API (https://www.openshmem.org/).  OpenSHMEM is a
 Partitioned Global Address Space (PGAS) abstraction layer, which
 provides fast inter-process communication using one-sided
 communication techniques.
@@ -319,12 +319,12 @@ Requires: %{name}-runtime
 
 %description devel
 Open MPI is an open source implementation of the Message Passing
-Interface specification (http://www.mpi-forum.org/) developed and
+Interface specification (https://www.mpi-forum.org/) developed and
 maintained by a consortium of research, academic, and industry
 partners.
 
 Open MPI also includes an implementation of the OpenSHMEM parallel
-programming API (http://www.openshmem.org/).  OpenSHMEM is a
+programming API (https://www.openshmem.org/).  OpenSHMEM is a
 Partitioned Global Address Space (PGAS) abstraction layer, which
 provides fast inter-process communication using one-sided
 communication techniques.
@@ -350,12 +350,12 @@ Requires: %{name}-runtime
 
 %description docs
 Open MPI is an open source implementation of the Message Passing
-Interface specification (http://www.mpi-forum.org/) developed and
+Interface specification (https://www.mpi-forum.org/) developed and
 maintained by a consortium of research, academic, and industry
 partners.
 
 Open MPI also includes an implementation of the OpenSHMEM parallel
-programming API (http://www.openshmem.org/).  OpenSHMEM is a
+programming API (https://www.openshmem.org/).  OpenSHMEM is a
 Partitioned Global Address Space (PGAS) abstraction layer, which
 provides fast inter-process communication using one-sided
 communication techniques.

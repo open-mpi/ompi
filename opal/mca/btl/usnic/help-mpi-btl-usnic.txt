@@ -1,6 +1,6 @@
 # -*- text -*-
 #
-# Copyright (c) 2012-2016 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2012-2020 Cisco Systems, Inc.  All rights reserved.
 #
 # $COPYRIGHT$
 #
@@ -37,7 +37,7 @@ In addition to any suggestions listed below, you might want to check
 the Linux "memlock" limits on your system (they should probably be
 "unlimited").  See this FAQ entry for details:
 
-    http://www.open-mpi.org/faq/?category=openfabrics#ib-locked-pages
+    https://www.open-mpi.org/faq/?category=openfabrics#ib-locked-pages
 
 Open MPI will skip this usNIC interface in the usnic BTL, which may
 result in either lower performance or your job aborting.
@@ -94,7 +94,7 @@ You may need to consult with your system administrator to get this
 problem fixed.  This FAQ entry on the Open MPI web site may also be
 helpful:
 
-    http://www.open-mpi.org/faq/?category=openfabrics#ib-locked-pages
+    https://www.open-mpi.org/faq/?category=openfabrics#ib-locked-pages
 #
 [invalid if_inexclude]
 WARNING: An invalid value was given for btl_usnic_if_%s.  This

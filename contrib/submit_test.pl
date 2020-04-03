@@ -10,6 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2020      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -21,7 +22,7 @@ use strict;
 use Data::Dumper;
 use LWP::UserAgent;
 
-my $base_url = "http://www.open-mpi.org/~jsquyres/openmpi";
+my $base_url = "https://www.open-mpi.org/~jsquyres/openmpi";
 my $platform_file = "platforms.php";
 my $ptl_file = "ptls.php";
 my $pcm_file = "pcms.php";

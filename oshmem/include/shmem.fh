@@ -2,7 +2,7 @@
 !
 !   Copyright (c) 2018      Mellanox Technologies, Inc.
 !                           All rights reserved.
-!   Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
+!   Copyright (c) 2014-2020 Cisco Systems, Inc.  All rights reserved.
 !   $COPYRIGHT$
 !
 !   Additional copyrights may follow
@@ -23,7 +23,7 @@
       parameter ( SHMEM_MAX_NAME_LEN = 256-1 )
 
       character(LEN = SHMEM_MAX_NAME_LEN) SHMEM_VENDOR_STRING
-      parameter ( SHMEM_VENDOR_STRING = "http://www.open-mpi.org/" )
+      parameter ( SHMEM_VENDOR_STRING = "https://www.open-mpi.org/" )
 
       integer SHMEM_BARRIER_SYNC_SIZE
       parameter ( SHMEM_BARRIER_SYNC_SIZE = 4 )
