@@ -206,22 +206,33 @@ int opal_common_ucx_atomic_cswap(ucp_ep_h ep, uint64_t compare,
                                  uint64_t remote_addr, ucp_rkey_h rkey,
                                  ucp_worker_h worker)
 {
-    uint64_t tmp = value;
-    int ret;
-
-    ret = opal_common_ucx_atomic_fetch(ep, UCP_ATOMIC_FETCH_OP_CSWAP, compare, &tmp,
-                                       op_size, remote_addr, rkey, worker);
-    if (OPAL_LIKELY(OPAL_SUCCESS == ret)) {
-        /* in case if op_size is constant (like sizeof(type)) then this condition
-         * is evaluated in compile time */
-        if (op_size == sizeof(uint64_t)) {
-            *(uint64_t*)result = tmp;
-        } else {
-            assert(op_size == sizeof(uint32_t));
-            *(uint32_t*)result = tmp;
-        }
+    if (op_size == sizeof(uint64_t)) {
+        *(uint64_t*)result = value;
+    } else {
+        assert(op_size == sizeof(uint32_t));
+        *(uint32_t*)result = value;
     }
-    return ret;
+
+    return opal_common_ucx_atomic_fetch(ep, UCP_ATOMIC_FETCH_OP_CSWAP, compare, result,
+                                        op_size, remote_addr, rkey, worker);
+}
+
+static inline
+ucs_status_ptr_t opal_common_ucx_atomic_cswap_nb(ucp_ep_h ep, uint64_t compare,
+                                                 uint64_t value, void *result, size_t op_size,
+                                                 uint64_t remote_addr, ucp_rkey_h rkey,
+                                                 ucp_send_callback_t req_handler,
+                                                 ucp_worker_h worker)
+{
+    if (op_size == sizeof(uint64_t)) {
+        *(uint64_t*)result = value;
+    } else {
+        assert(op_size == sizeof(uint32_t));
+        *(uint32_t*)result = value;
+    }
+
+    return opal_common_ucx_atomic_fetch_nb(ep, UCP_ATOMIC_FETCH_OP_CSWAP, compare, result,
+                                           op_size, remote_addr, rkey, req_handler, worker);
 }
 
 END_C_DECLS
