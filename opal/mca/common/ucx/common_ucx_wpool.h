@@ -1,3 +1,14 @@
+/*
+ * Copyright (C) 2001-2017 Mellanox Technologies Ltd. ALL RIGHTS RESERVED.
+ * Copyright (c) 2019-2020 High Performance Computing Center Stuttgart,
+ *                         University of Stuttgart.  All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
+
 #ifndef COMMON_UCX_WPOOL_H
 #define COMMON_UCX_WPOOL_H
 
