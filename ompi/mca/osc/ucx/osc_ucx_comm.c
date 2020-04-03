@@ -454,7 +454,7 @@ static int do_atomic_op_intrinsic(
         if (is_no_op) {
             value = 0;
         } else {
-            memcpy(&value, origin_addr, origin_dt_bytes);
+            value = opal_common_ucx_load_uint64(origin_addr, origin_dt_bytes);
         }
         ret = opal_common_ucx_wpmem_fetch_nb(module->mem, opcode, value, target,
                                              output_addr, origin_dt_bytes, remote_addr,
@@ -756,13 +756,11 @@ int ompi_osc_ucx_compare_and_swap(const void *origin_addr, const void *compare_a
         }
     }
 
-    uint64_t compare_val;
-    memcpy(&compare_val, compare_addr, dt_bytes);
-    memcpy(result_addr, origin_addr, dt_bytes);
-    ret = opal_common_ucx_wpmem_fetch_nb(module->mem, UCP_ATOMIC_FETCH_OP_CSWAP,
-                                         compare_val, target,
-                                         result_addr, dt_bytes, remote_addr,
-                                         NULL, NULL);
+    uint64_t compare_val = opal_common_ucx_load_uint64(compare_addr, dt_bytes);
+    uint64_t value       = opal_common_ucx_load_uint64(origin_addr,  dt_bytes);
+    ret = opal_common_ucx_wpmem_cmpswp_nb(module->mem, compare_val, value, target,
+                                          result_addr, dt_bytes, remote_addr,
+                                          NULL, NULL);
 
     if (module->acc_single_intrinsic) {
         return ret;
@@ -785,8 +783,8 @@ int ompi_osc_ucx_fetch_and_op(const void *origin_addr, void *result_addr,
 
     if (op == &ompi_mpi_op_no_op.op || op == &ompi_mpi_op_replace.op ||
         op == &ompi_mpi_op_sum.op) {
+        uint64_t value;
         uint64_t remote_addr = (module->addrs[target]) + target_disp * OSC_UCX_GET_DISP(module, target);
-        uint64_t value = origin_addr ? *(uint64_t *)origin_addr : 0;
         ucp_atomic_fetch_op_t opcode;
         size_t dt_bytes;
         bool lock_acquired = false;
@@ -805,7 +803,7 @@ int ompi_osc_ucx_fetch_and_op(const void *origin_addr, void *result_addr,
             }
         }
 
-        ompi_datatype_type_size(dt, &dt_bytes);
+        value = origin_addr ? opal_common_ucx_load_uint64(origin_addr, dt_bytes) : 0;
 
         if (op == &ompi_mpi_op_replace.op) {
             opcode = UCP_ATOMIC_FETCH_OP_SWAP;
