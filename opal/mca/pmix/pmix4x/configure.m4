@@ -16,6 +16,8 @@
 # Copyright (c) 2013-2020 Intel, Inc.  All rights reserved.
 # Copyright (c) 2015-2016 Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
+# Copyright (c) 2020      Amazon.com, Inc. or its affiliates.
+#                         All Rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -95,7 +97,7 @@ AC_DEFUN([MCA_opal_pmix_pmix4x_CONFIG],[
         opal_pmix_pmix4x_timing_flag=--disable-pmix-timing
     fi
 
-    opal_pmix_pmix4x_args="$opal_pmix_pmix4x_timing_flag --without-tests-examples --with-pmix-symbol-rename=OPAL_MCA_PMIX4X_ --disable-pmix-binaries --disable-pmix-backward-compatibility --disable-visibility --enable-embedded-mode --with-libevent-header=\\\"opal/mca/event/event.h\\\" --with-hwloc-header=\\\"opal/mca/hwloc/hwloc-internal.h\\\""
+    opal_pmix_pmix4x_args="$opal_pmix_pmix4x_timing_flag --without-tests-examples --with-pmix-symbol-rename=OPAL_MCA_PMIX4X_ --disable-pmix-binaries --disable-pmix-backward-compatibility --disable-visibility --enable-embedded-mode --with-libevent-header=\\\"opal/util/event.h\\\" --with-hwloc-header=\\\"opal/mca/hwloc/hwloc-internal.h\\\""
     AS_IF([test "$enable_debug" = "yes"],
           [opal_pmix_pmix4x_args="--enable-debug $opal_pmix_pmix4x_args"
            CFLAGS="$OPAL_CFLAGS_BEFORE_PICKY $OPAL_VISIBILITY_CFLAGS -g"],

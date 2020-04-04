@@ -2,6 +2,8 @@
  * Copyright (c) 2012-2016 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC. All rights reserved
  * Copyright (c) 2015      Intel, Inc. All rights reserved.
+ * Copyright (c) 2020      Amazon.com, Inc. or its affiliates.
+ *                         All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -53,9 +55,11 @@
 
 #include "opal_config.h"
 
+#include "opal/constants.h"
+#include "opal/util/output.h"
 #include "opal/prefetch.h"
 #include "opal/class/opal_object.h"
-#include "opal/mca/event/event.h"
+#include "opal/util/event.h"
 
 BEGIN_C_DECLS
 

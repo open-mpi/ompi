@@ -12,6 +12,8 @@
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
  * Copyright (c) 2013-2017 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2020      Amazon.com, Inc. or its affiliates.
+ *                         All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -26,7 +28,7 @@
 
 #include "opal/class/opal_list.h"
 #include "opal/class/opal_hotel.h"
-#include "opal/mca/event/event.h"
+#include "opal/util/event.h"
 
 #include "btl_usnic.h"
 

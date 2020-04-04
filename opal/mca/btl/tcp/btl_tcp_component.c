@@ -19,7 +19,7 @@
  * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2018-2019 Amazon.com, Inc. or its affiliates.  All Rights
+ * Copyright (c) 2018-2020 Amazon.com, Inc. or its affiliates.  All Rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -60,7 +60,7 @@
 #include <sys/time.h>
 #endif
 
-#include "opal/mca/event/event.h"
+#include "opal/util/event.h"
 #include "opal/util/ethtool.h"
 #include "opal/util/if.h"
 #include "opal/util/output.h"

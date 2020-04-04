@@ -7,6 +7,8 @@
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2020      Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2020      Amazon.com, Inc. or its affiliates.
+ *                         All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -25,7 +27,7 @@
 #endif
 
 #include "opal/mca/mca.h"
-#include "opal/mca/event/event.h"
+#include "opal/util/event.h"
 #include "opal/mca/threads/threads.h"
 #include "opal/dss/dss.h"
 #include "opal/util/error.h"

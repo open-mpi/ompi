@@ -7,6 +7,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2020      Amazon.com, Inc. or its affiliates.
+ *                         All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -22,7 +24,7 @@
 #endif  /* HAVE_UNIST_H */
 
 #include "opal/class/opal_bitmap.h"
-#include "opal/mca/event/event.h"
+#include "opal/util/event.h"
 #include "opal/util/opal_environ.h"
 #include "ompi/mca/mca.h"
 #include "opal/mca/base/base.h"

@@ -75,6 +75,9 @@ my $ompi_autoconf_search = "autoconf";
 my $ompi_automake_search = "automake";
 my $ompi_libtoolize_search = "libtoolize;glibtoolize";
 
+# version of libevent we ship
+my $libevent_version="2.0.22-stable";
+
 # One-time setup
 my $username;
 my $hostname;
@@ -1442,6 +1445,21 @@ dnl 3rd-party package information\n";
 
 # these are fairly one-off, so we did not try to do anything
 # generic. Sorry :).
+
+verbose "=== Libevent\n";
+if ("libevent" ~~ @disabled_3rdparty_packages) {
+    verbose "--- Libevent disabled\n";
+} else {
+    my $libevent_directory = "libevent-" . $libevent_version;
+    my $libevent_tarball = $libevent_directory . ".tar.gz";
+    if (! -f "3rd-party/" . $libevent_tarball) {
+        my_die("Could not find libevent tarball\n");
+    }
+    $m4 .= "m4_define([package_libevent], [1])\n";
+    $m4 .= "m4_define([libevent_tarball], [" . $libevent_tarball . "])\n";
+    $m4 .= "m4_define([libevent_directory], [" . $libevent_directory . "])\n";
+    verbose "--- Libevent enabled (" . $libevent_version . ")\n";
+}
 
 $m4 .= "\n";
 

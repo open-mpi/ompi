@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2014      Intel, Inc.  All rights reserved.
- * Copyright (c) 2017      Amazon.com, Inc. or its affiliates.
+ * Copyright (c) 2017-2020 Amazon.com, Inc. or its affiliates.
  *                         All Rights reserved.
  * $COPYRIGHT$
  *
@@ -23,7 +23,7 @@
 
 #include "opal/mca/reachable/reachable.h"
 #include "opal/mca/mca.h"
-#include "opal/mca/event/event.h"
+#include "opal/util/event.h"
 #include "opal/util/proc.h"
 
 #include "opal/mca/pmix/base/base.h"

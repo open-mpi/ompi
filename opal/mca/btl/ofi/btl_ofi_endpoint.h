@@ -13,6 +13,8 @@
  * Copyright (c) 2017-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2018      Intel, Inc, All rights reserved
+ * Copyright (c) 2020      Amazon.com, Inc. or its affiliates.
+ *                         All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -24,7 +26,7 @@
 #define MCA_BTL_OFI_ENDPOINT_H
 
 #include "opal/class/opal_list.h"
-#include "opal/mca/event/event.h"
+#include "opal/util/event.h"
 
 #include "btl_ofi.h"
 

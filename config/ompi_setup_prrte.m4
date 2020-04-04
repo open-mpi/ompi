@@ -16,6 +16,8 @@
 #                         reserved.
 # Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
 # Copyright (c) 2019-2020 Intel, Inc.  All rights reserved.
+# Copyright (c) 2020      Amazon.com, Inc. or its affiliates.
+#                         All Rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -24,7 +26,7 @@
 #
 
 AC_DEFUN([OMPI_SETUP_PRRTE],[
-    OPAL_VAR_SCOPE_PUSH([opal_prrte_save_CPPFLAGS opal_prrte_save_CFLAGS opal_prrte_save_LDFLAGS opal_prrte_save_LIBS opal_prrte_args opal_prrte_save_enable_dlopen opal_prrte_save_enable_mca_dso opal_prrte_save_enable_mca_static opal_prrte_extra_libs opal_prrte_extra_ltlibs opal_prrte_extra_ldflags opal_prrte_save_with_libevent opal_prrte_save_with_hwloc opal_prrte_save_with_pmix])
+    OPAL_VAR_SCOPE_PUSH([opal_prrte_save_CPPFLAGS opal_prrte_save_CFLAGS opal_prrte_save_LDFLAGS opal_prrte_save_LIBS opal_prrte_args opal_prrte_save_enable_dlopen opal_prrte_save_enable_mca_dso opal_prrte_save_enable_mca_static opal_prrte_extra_libs opal_prrte_extra_ltlibs opal_prrte_extra_ldflags opal_prrte_save_with_hwloc opal_prrte_save_with_pmix])
 
     opal_prrte_save_CFLAGS=$CFLAGS
     opal_prrte_save_CPPFLAGS=$CPPFLAGS
@@ -33,7 +35,6 @@ AC_DEFUN([OMPI_SETUP_PRRTE],[
     opal_prrte_save_enable_dlopen=enable_dlopen
     opal_prrte_save_enable_mca_dso=enable_mca_dso
     opal_prrte_save_enable_mca_static=enable_mca_static
-    opal_prrte_save_with_libevent=with_libevent
     opal_prrte_save_with_hwloc=with_hwloc
     opal_prrte_save_with_pmix=with_pmix
 
@@ -65,15 +66,15 @@ AC_DEFUN([OMPI_SETUP_PRRTE],[
         opal_prrte_extra_libs=$OMPI_TOP_BUILDDIR/opal/libopen-pal.la
         opal_prrte_extra_ltlibs=$OMPI_TOP_BUILDDIR/opal/libopen-pal.la
 
-        if test -z $with_libevent || test "$with_libevent" = "internal" || test "$with_libevent" = "yes"; then
-            opal_prrte_libevent_arg="--with-libevent-header=$OMPI_TOP_SRCDIR/opal/mca/event/event.h"
-        else
-            if test "$with_libevent" = "external"; then
-                opal_prrte_libevent_arg="--with-libevent"
-            else
-                opal_prrte_libevent_arg="--with-libevent=$with_libevent"
-            fi
-        fi
+        AS_IF([test "$opal_libevent_mode" = "internal"],
+           [opal_prrte_extra_libs="$opal_prrte_extra_libs $opal_libevent_LIBS"
+            opal_prrte_extra_ltlibs="$opal_prrte_extra_ltlibs $opal_libevent_LIBS"
+
+            AS_IF([test ! -z "$opal_libevent_header"]
+               [opal_prrte_libevent_arg="--with-libevent-header=$opal_libevent_header"])],
+           [opal_prrte_libevent_arg="--with-libevent=$with_libevent"
+            AS_IF([test ! -z "$with_libevent_libdir"],
+               [opal_prrte_libevent_arg="$opal_prrte_libevent_arg --with-libevent-libdir=$with_libevent_libdir"])])
 
         if test -z $with_hwloc || test "$with_hwloc" = "internal" || test "$with_hwloc" = "yes"; then
                opal_prrte_hwloc_arg="--with-hwloc-header=$OMPI_TOP_SRCDIR/opal/mca/hwloc/hwloc-internal.h"

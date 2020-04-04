@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2006      QLogic Corporation. All rights reserved.
  * Copyright (c) 2015-2020 Intel, Inc. All rights reserved
+ * Copyright (c) 2020      Amazon.com, Inc. or its affiliates.
+ *                         All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -22,7 +24,7 @@
 #define MCA_MTL_PSM2_ENDPOINT_H
 
 #include "opal/class/opal_list.h"
-#include "opal/mca/event/event.h"
+#include "opal/util/event.h"
 #include "ompi/mca/mtl/mtl.h"
 #include "mtl_psm2.h"
 

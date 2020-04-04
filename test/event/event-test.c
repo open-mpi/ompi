@@ -27,7 +27,7 @@
 #include <errno.h>
 #include <unistd.h>
 
-#include "opal/mca/event/event.h"
+#include "opal/util/event.h"
 #include "opal/runtime/opal.h"
 
 static void

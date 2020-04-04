@@ -387,6 +387,11 @@ int opal_register_params(void)
         return ret;
     }
 
+    ret = opal_event_register_params();
+    if (OPAL_SUCCESS != ret) {
+        return ret;
+    }
+
     opal_finalize_register_cleanup (opal_deregister_params);
 
     return OPAL_SUCCESS;

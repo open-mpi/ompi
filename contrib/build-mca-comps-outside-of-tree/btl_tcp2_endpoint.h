@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2020      Amazon.com, Inc. or its affiliates.
+ *                         All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -21,7 +23,7 @@
 #define MCA_BTL_TCP_ENDPOINT_H
 
 #include "opal/class/opal_list.h"
-#include "opal/mca/event/event.h"
+#include "opal/util/event.h"
 #include "btl_tcp2_frag.h"
 #include "btl_tcp2.h"
 BEGIN_C_DECLS

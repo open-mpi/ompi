@@ -18,7 +18,7 @@
  * Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2017      Amazon.com, Inc. or its affiliates.
+ * Copyright (c) 2017-2020 Amazon.com, Inc. or its affiliates.
  *                         All Rights reserved.
  * Copyright (c) 2018      Mellanox Technologies, Inc.
  *                         All rights reserved.
@@ -70,12 +70,12 @@
 #include "opal/mca/crs/base/base.h"
 
 #include "opal/runtime/opal_progress.h"
-#include "opal/mca/event/base/base.h"
 #include "opal/mca/threads/base/base.h"
 #include "opal/mca/backtrace/base/base.h"
 
 #include "opal/constants.h"
 #include "opal/util/error.h"
+#include "opal/util/event.h"
 #include "opal/util/stacktrace.h"
 #include "opal/util/keyval_parse.h"
 #include "opal/util/sys_limits.h"
@@ -631,7 +631,7 @@ opal_init_util(int* pargc, char*** pargv)
  */
 static mca_base_framework_t *opal_init_frameworks[] = {
     &opal_threads_base_framework, &opal_hwloc_base_framework, &opal_memcpy_base_framework, &opal_memchecker_base_framework,
-    &opal_backtrace_base_framework, &opal_timer_base_framework, &opal_event_base_framework,
+    &opal_backtrace_base_framework, &opal_timer_base_framework,
     &opal_shmem_base_framework, &opal_reachable_base_framework, &opal_pmix_base_framework,
     NULL,
 };
@@ -663,6 +663,11 @@ opal_init(int* pargc, char*** pargv)
     ret = mca_base_framework_open_list (opal_init_frameworks, 0);
     if (OPAL_UNLIKELY(OPAL_SUCCESS != ret)) {
         return opal_init_error ("opal_init framework open", ret);
+    }
+
+    /* initialize libevent */
+    if (OPAL_SUCCESS != (ret = opal_event_init())) {
+        return opal_init_error("opal_event_init", ret);
     }
 
     /* initialize the memory manager / tracker */

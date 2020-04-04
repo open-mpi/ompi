@@ -14,6 +14,8 @@
  *                         reserved.
  * Copyright (c) 2019      Google, LLC. All rights reserved.
  * Copyright (c) 2019      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2020      Amazon.com, Inc. or its affiliates.
+ *                         All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -31,7 +33,7 @@
 #include <string.h>
 
 /* Open MPI includes */
-#include "opal/mca/event/event.h"
+#include "opal/util/event.h"
 #include "opal/mca/btl/base/base.h"
 #include "opal/mca/mpool/mpool.h"
 #include "opal/mca/btl/base/btl_base_error.h"
