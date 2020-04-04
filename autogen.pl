@@ -75,8 +75,9 @@ my $ompi_autoconf_search = "autoconf";
 my $ompi_automake_search = "automake";
 my $ompi_libtoolize_search = "libtoolize;glibtoolize";
 
-# version of libevent we ship
+# version of packages we ship as tarballs
 my $libevent_version="2.0.22-stable";
+my $hwloc_version="2.2.0";
 
 # One-time setup
 my $username;
@@ -1459,6 +1460,21 @@ if ("libevent" ~~ @disabled_3rdparty_packages) {
     $m4 .= "m4_define([libevent_tarball], [" . $libevent_tarball . "])\n";
     $m4 .= "m4_define([libevent_directory], [" . $libevent_directory . "])\n";
     verbose "--- Libevent enabled (" . $libevent_version . ")\n";
+}
+
+verbose "=== hwloc\n";
+if ("hwloc" ~~ @disabled_3rdparty_packages) {
+    verbose "--- hwloc disabled\n";
+} else {
+    my $hwloc_directory = "hwloc-" . $hwloc_version;
+    my $hwloc_tarball = $hwloc_directory . ".tar.gz";
+    if (! -f "3rd-party/" . $hwloc_tarball) {
+        my_die("Could not find hwloc tarball\n");
+    }
+    $m4 .= "m4_define([package_hwloc], [1])\n";
+    $m4 .= "m4_define([hwloc_tarball], [" . $hwloc_tarball . "])\n";
+    $m4 .= "m4_define([hwloc_directory], [" . $hwloc_directory . "])\n";
+    verbose "--- hwloc enabled\n";
 }
 
 $m4 .= "\n";

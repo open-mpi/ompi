@@ -26,7 +26,7 @@
 #
 
 AC_DEFUN([OMPI_SETUP_PRRTE],[
-    OPAL_VAR_SCOPE_PUSH([opal_prrte_save_CPPFLAGS opal_prrte_save_CFLAGS opal_prrte_save_LDFLAGS opal_prrte_save_LIBS opal_prrte_args opal_prrte_save_enable_dlopen opal_prrte_save_enable_mca_dso opal_prrte_save_enable_mca_static opal_prrte_extra_libs opal_prrte_extra_ltlibs opal_prrte_extra_ldflags opal_prrte_save_with_hwloc opal_prrte_save_with_pmix])
+    OPAL_VAR_SCOPE_PUSH([opal_prrte_save_CPPFLAGS opal_prrte_save_CFLAGS opal_prrte_save_LDFLAGS opal_prrte_save_LIBS opal_prrte_args opal_prrte_save_enable_dlopen opal_prrte_save_enable_mca_dso opal_prrte_save_enable_mca_static opal_prrte_extra_libs opal_prrte_extra_ltlibs opal_prrte_extra_ldflags opal_prrte_save_with_pmix])
 
     opal_prrte_save_CFLAGS=$CFLAGS
     opal_prrte_save_CPPFLAGS=$CPPFLAGS
@@ -35,7 +35,6 @@ AC_DEFUN([OMPI_SETUP_PRRTE],[
     opal_prrte_save_enable_dlopen=enable_dlopen
     opal_prrte_save_enable_mca_dso=enable_mca_dso
     opal_prrte_save_enable_mca_static=enable_mca_static
-    opal_prrte_save_with_hwloc=with_hwloc
     opal_prrte_save_with_pmix=with_pmix
 
     AC_ARG_ENABLE([internal-rte],
@@ -76,15 +75,15 @@ AC_DEFUN([OMPI_SETUP_PRRTE],[
             AS_IF([test ! -z "$with_libevent_libdir"],
                [opal_prrte_libevent_arg="$opal_prrte_libevent_arg --with-libevent-libdir=$with_libevent_libdir"])])
 
-        if test -z $with_hwloc || test "$with_hwloc" = "internal" || test "$with_hwloc" = "yes"; then
-               opal_prrte_hwloc_arg="--with-hwloc-header=$OMPI_TOP_SRCDIR/opal/mca/hwloc/hwloc-internal.h"
-        else
-            if test "$with_hwloc" = "external"; then
-                opal_prrte_hwloc_arg="--with-hwloc"
-            else
-                opal_prrte_hwloc_arg="--with-hwloc=$with_hwloc"
-            fi
-        fi
+        AS_IF([test "$opal_hwloc_mode" = "internal"],
+           [opal_prrte_extra_libs="$opal_prrte_extra_libs $opal_hwloc_LIBS"
+            opal_prrte_extra_ltlibs="$opal_prrte_extra_ltlibs $opal_hwloc_LIBS"
+
+            AS_IF([test ! -z "$opal_hwloc_header"],
+               [opal_prrte_hwloc_arg="--with-hwloc-header=$opal_hwloc_header"])],
+           [opal_prrte_hwloc_arg="--with-hwloc=$with_hwloc"
+            AS_IF([test ! -z "$with_hwloc_libdir"],
+               [opal_prrte_hwloc_arg="$opal_prrte_hwloc_arg --with-hwloc-libdir=$with_hwloc_libdir"])])
 
         if test -z $with_pmix || test "$with_pmix" = "internal" || test "$with_pmix" = "yes"; then
             opal_prrte_pmix_arg="--with-pmix-header=$OMPI_TOP_SRCDIR/opal/mca/pmix/pmix-internal.h"

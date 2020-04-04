@@ -54,14 +54,16 @@ lib@OPAL_LIB_PREFIX@open_pal_la_LIBADD = \
         mca/base/libmca_base.la \
         util/libopalutil.la \
 	$(MCA_opal_FRAMEWORK_LIBS) \
-	$(opal_libevent_LIBS)
+	$(opal_libevent_LIBS) \
+	$(opal_hwloc_LIBS)
 lib@OPAL_LIB_PREFIX@open_pal_la_DEPENDENCIES = \
         datatype/libdatatype.la \
         mca/base/libmca_base.la \
         util/libopalutil.la \
         $(MCA_opal_FRAMEWORK_LIBS)
 lib@OPAL_LIB_PREFIX@open_pal_la_LDFLAGS = -version-info $(libopen_pal_so_version) \
-	$(opal_libevent_LDFLAGS)
+	$(opal_libevent_LDFLAGS) \
+	$(opal_hwloc_LDFLAGS)
 
 # included subdirectory Makefile.am's and appended-to variables
 headers =
