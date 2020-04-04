@@ -176,8 +176,9 @@ General notes
 
 - Systems that have been tested are:
   - Linux (various flavors/distros), 64 bit (x86, ppc, aarch64),
-    with gcc (4.8.x+), Absoft (fortran), Intel, and Portland (*)
-  - macOS (10.12), 64 bit (x85_64) with XCode compilers
+    with gcc (>=4.8.x+), clang (>=3.6.0), Absoft (fortran), Intel,
+    and Portland (*)
+  - macOS (10.14-10.15), 64 bit (x86_64) with XCode compilers
 
   (*) Be sure to read the Compiler Notes, below.
 
