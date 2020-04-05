@@ -1,0 +1,17 @@
+# -*- makefile -*-
+# Copyright (c) 2020 Cisco Systems, Inc.  All rights reserved.
+#
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
+#
+
+include $(top_srcdir)/Makefile.ompi-rules
+
+mpi_api_man_pages = \
+        mpi/man/man5/MPI_T.5
+
+nodist_man_MANS += $(mpi_api_man_pages)
+EXTRA_DIST += $(mpi_api_man_pages:.5=.5.md)
