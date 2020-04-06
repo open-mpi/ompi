@@ -484,7 +484,7 @@ General Run-Time Support Notes
 ------------------------------
 
 - The Open MPI installation must be in your PATH on all nodes (and
-  potentially LD_LIBRARY_PATH (or DYLD_LIBRARY_PATH), if libmpi/libshmem
+  potentially LD_LIBRARY_PATH or DYLD_LIBRARY_PATH, if libmpi/libshmem
   is a shared library), unless using the --prefix or
   --enable-mpirun-prefix-by-default functionality (see below).
 
