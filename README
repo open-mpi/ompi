@@ -404,7 +404,7 @@ Compiler Notes
   compiler Open MPI was configured and compiled.
 
   There are up to three sets of Fortran MPI bindings that may be
-  provided depending on your Fortran compiler):
+  provided (depending on your Fortran compiler):
 
   - mpif.h: This is the first MPI Fortran interface that was defined
     in MPI-1.  It is a file that is included in Fortran source code.
@@ -414,41 +414,9 @@ Compiler Notes
   - mpi module: The mpi module file was added in MPI-2.  It provides
     strong compile-time parameter type checking for MPI subroutines.
 
-  - mpi_f08 module: The mpi_f08 module was added in MPI-3.  It
-    provides many advantages over the mpif.h file and mpi module.  For
-    example, MPI handles have distinct types (vs. all being integers).
-    See the MPI-3 document for more details.
-
-    *** The mpi_f08 module is STRONGLY is recommended for all new MPI
-        Fortran subroutines and applications.  Note that the mpi_f08
-        module can be used in conjunction with the other two Fortran
-        MPI bindings in the same application (only one binding can be
-        used per subroutine/function, however).  Full interoperability
-        between mpif.h/mpi module and mpi_f08 module MPI handle types
-        is provided, allowing mpi_f08 to be used in new subroutines in
-        legacy MPI applications.
-
-  Per the OpenSHMEM specification, there is only one Fortran OpenSHMEM
-  binding provided:
-
-  - shmem.fh: All Fortran OpenSHMEM programs **should** include
-    'shmem.fh', and Fortran OpenSHMEM programs that use constants
-    defined by OpenSHMEM **MUST** include 'shmem.fh'.
-
-  The following notes apply to the above-listed Fortran bindings:
-
-  - All Fortran compilers support the mpif.h/shmem.fh-based bindings,
-    with one exception: the MPI_SIZEOF interfaces will only be present
-    when Open MPI is built with a Fortran compiler that support the
     INTERFACE keyword and ISO_FORTRAN_ENV.  Most notably, this
     excludes the GNU Fortran compiler suite before version 4.9.
 
-  - The level of support provided by the mpi module is based on your
-    Fortran compiler.
-
-    If Open MPI is built with a non-GNU Fortran compiler, or if Open
-    MPI is built with the GNU Fortran compiler >= v4.9, all MPI
-    subroutines will be prototyped in the mpi module.  All calls to
     MPI subroutines will therefore have their parameter types checked
     at compile time.
 
