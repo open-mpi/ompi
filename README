@@ -439,7 +439,7 @@ Compiler Notes
 
   - All Fortran compilers support the mpif.h/shmem.fh-based bindings,
     with one exception: the MPI_SIZEOF interfaces will only be present
-    when Open MPI is built with a Fortran compiler that support the
+    when Open MPI is built with a Fortran compiler that supports the
     INTERFACE keyword and ISO_FORTRAN_ENV.  Most notably, this
     excludes the GNU Fortran compiler suite before version 4.9.
 
