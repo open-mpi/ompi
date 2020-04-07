@@ -404,7 +404,7 @@ Compiler Notes
   compiler Open MPI was configured and compiled.
 
   There are up to three sets of Fortran MPI bindings that may be
-  provided depending on your Fortran compiler):
+  provided (depending on your Fortran compiler):
 
   - mpif.h: This is the first MPI Fortran interface that was defined
     in MPI-1.  It is a file that is included in Fortran source code.
