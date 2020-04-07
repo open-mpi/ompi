@@ -323,13 +323,6 @@ Compiler Notes
   compiling certain Open MPI source code files.  As such, it is not
   supported.
 
-- The Intel 9.0 v20051201 compiler on IA64 platforms seems to have a
-  problem with optimizing the ptmalloc2 memory manager component (the
-  generated code will segv).  As such, the ptmalloc2 component will
-  automatically disable itself if it detects that it is on this
-  platform/compiler combination.  The only effect that this should
-  have is that the MCA parameter mpi_leave_pinned will be inoperative.
-
 - It has been reported that the Intel 9.1 and 10.0 compilers fail to
   compile Open MPI on IA64 platforms.  As of 12 Sep 2012, there is
   very little (if any) testing performed on IA64 platforms (with any
