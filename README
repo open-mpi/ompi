@@ -214,7 +214,7 @@ Compiler Notes
 
 - On platforms other than x86-64, ARM, and PPC, Open MPI requires a
   compiler that either supports C11 atomics or the GCC "__atomic"
-  atomics (i.e., GCC >= v4.7.2).
+  atomics (e.g., GCC >= v4.7.2).
 
 - Mixing compilers from different vendors when building Open MPI
   (e.g., using the C/C++ compiler from one vendor and the Fortran
