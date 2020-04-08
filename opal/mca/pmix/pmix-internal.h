@@ -64,6 +64,14 @@ typedef struct {
 } opal_info_item_t;
 OBJ_CLASS_DECLARATION(opal_info_item_t);
 
+/* define the equivalent to opal_namelist_t for pmix_proc_t */
+typedef struct {
+    opal_list_item_t super;
+    pmix_proc_t procid;
+} opal_proclist_t;
+OBJ_CLASS_DECLARATION(opal_proclist_t);
+
+
 typedef opal_cond_t opal_pmix_condition_t;
 
 typedef struct {
@@ -599,18 +607,26 @@ OPAL_DECLSPEC int opal_pmix_convert_nspace(opal_jobid_t *jobid, pmix_nspace_t ns
 OPAL_DECLSPEC void opal_pmix_setup_nspace_tracker(void);
 OPAL_DECLSPEC void opal_pmix_finalize_nspace_tracker(void);
 
+#define OPAL_SCHEMA_DELIMITER_CHAR      '.'
+#define OPAL_SCHEMA_WILDCARD_CHAR       '*'
+#define OPAL_SCHEMA_WILDCARD_STRING     "*"
+#define OPAL_SCHEMA_INVALID_CHAR        '$'
+#define OPAL_SCHEMA_INVALID_STRING      "$"
+
 /* convert jobid to nspace */
 #define OPAL_PMIX_CONVERT_JOBID(n, j) \
     opal_pmix_convert_jobid((n), (j))
 
 /* convert vpid to rank */
-#define OPAL_PMIX_CONVERT_VPID(r, v)        \
-    do {                                    \
-        if (OPAL_VPID_WILDCARD == (v)) {    \
-            (r) = PMIX_RANK_WILDCARD;       \
-        } else {                            \
-            (r) = (v);                      \
-        }                                   \
+#define OPAL_PMIX_CONVERT_VPID(r, v)                \
+    do {                                            \
+        if (OPAL_VPID_WILDCARD == (v)) {            \
+            (r) = PMIX_RANK_WILDCARD;               \
+        } else if (OPAL_VPID_INVALID == (v)) {      \
+            (r) = PMIX_RANK_INVALID;                \
+        } else {                                    \
+            (r) = (v);                              \
+        }                                           \
     } while(0)
 
 /* convert opal_process_name_t to pmix_proc_t */
@@ -644,6 +660,33 @@ OPAL_DECLSPEC void opal_pmix_finalize_nspace_tracker(void);
         if (OPAL_SUCCESS == (r)) {                                  \
             OPAL_PMIX_CONVERT_RANK((n)->vpid, (p)->rank);           \
         }                                                           \
+    } while(0)
+
+#define OPAL_PMIX_CONVERT_PROCT_TO_STRING(s, p)                         \
+    do {                                                                \
+        if (PMIX_RANK_WILDCARD == (p)->rank) {                          \
+            (void)opal_asprintf((s), "%s.*", (p)->nspace);              \
+        } else if (PMIX_RANK_INVALID == (p)->rank) {                    \
+            (void)opal_asprintf((s), "%s.$", (p)->nspace);              \
+        } else {                                                        \
+            (void)opal_asprintf((s), "%s.%u", (p)->nspace, (p)->rank);  \
+        }                                                               \
+    } while(0)
+
+#define OPAL_PMIX_CONVERT_STRING_TO_PROCT(p, s)     \
+    do {                                            \
+        char *_ptr;                                 \
+        _ptr = strrchr((s), '.');                   \
+        *_ptr = '\0';                               \
+        _ptr++;                                     \
+        PMIX_LOAD_NSPACE((p)->nspace, (s));         \
+        if ('*' == *_ptr) {                         \
+            (p)->rank = PMIX_RANK_WILDCARD;         \
+        } else if ('$' == *_ptr) {                  \
+            (p)->rank = PMIX_RANK_INVALID;          \
+        } else {                                    \
+            (p)->rank = strtoul(_ptr, NULL, 10);    \
+        }                                           \
     } while(0)
 
 OPAL_DECLSPEC void opal_pmix_value_load(pmix_value_t *v,

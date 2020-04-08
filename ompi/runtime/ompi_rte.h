@@ -245,6 +245,7 @@ typedef uint16_t ompi_local_rank_t;
 
 typedef struct {
     opal_process_name_t my_name;
+    pmix_proc_t myprocid;
     char *nodename;
     pid_t pid;
     char *top_session_dir;

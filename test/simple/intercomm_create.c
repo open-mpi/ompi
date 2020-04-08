@@ -51,6 +51,8 @@ main(int argc, char *argv[])
     MPI_Comm_size(MPI_COMM_WORLD, &size);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
+    printf("Intercomm: Rank %d of %d\n", rank, size);
+
     /* Check to see if we *were* spawned -- because this is a test, we
        can only assume the existence of this one executable.  Hence, we
        both mpirun it and spawn it. */
