@@ -398,19 +398,19 @@ mca_btl_tcp_endpoint_send_blocking(mca_btl_base_endpoint_t* btl_endpoint,
  * Send the globally unique identifier for this process to a endpoint on
  * a newly connected socket.
  */
-static int 
+static int
 mca_btl_tcp_endpoint_send_connect_ack(mca_btl_base_endpoint_t* btl_endpoint)
 {
     opal_process_name_t guid = opal_proc_local_get()->proc_name;
     OPAL_PROCESS_NAME_HTON(guid);
-    
+
     mca_btl_tcp_endpoint_hs_msg_t hs_msg;
     opal_string_copy(hs_msg.magic_id, mca_btl_tcp_magic_id_string,
                      sizeof(hs_msg.magic_id));
     hs_msg.guid = guid;
-    
-    if(sizeof(hs_msg) != 
-       mca_btl_tcp_endpoint_send_blocking(btl_endpoint, 
+
+    if(sizeof(hs_msg) !=
+       mca_btl_tcp_endpoint_send_blocking(btl_endpoint,
                                           &hs_msg, sizeof(hs_msg))) {
          opal_show_help("help-mpi-btl-tcp.txt", "client handshake fail",
                        true, opal_process_info.nodename,
@@ -649,8 +649,8 @@ static int mca_btl_tcp_endpoint_recv_connect_ack(mca_btl_base_endpoint_t* btl_en
      * to be able to exchange the opal_process_name_t over the network.
      */
     if (0 != opal_compare_proc(btl_proc->proc_opal->proc_name, guid)) {
-        BTL_ERROR(("received unexpected process identifier %s",
-                   OPAL_NAME_PRINT(guid)));
+        BTL_ERROR(("received unexpected process identifier: got %s expected %s",
+                   OPAL_NAME_PRINT(guid), OPAL_NAME_PRINT(btl_proc->proc_opal->proc_name)));
         btl_endpoint->endpoint_state = MCA_BTL_TCP_FAILED;
         mca_btl_tcp_endpoint_close(btl_endpoint);
         return OPAL_ERR_UNREACH;
@@ -758,9 +758,9 @@ static int mca_btl_tcp_endpoint_start_connect(mca_btl_base_endpoint_t* btl_endpo
     mca_btl_tcp_proc_tosocks(btl_endpoint->endpoint_addr, &endpoint_addr);
 
     /* Bind the socket to one of the addresses associated with
-     * this btl module.  This sets the source IP to one of the 
-     * addresses shared in modex, so that the destination rank 
-     * can properly pair btl modules, even in cases where Linux 
+     * this btl module.  This sets the source IP to one of the
+     * addresses shared in modex, so that the destination rank
+     * can properly pair btl modules, even in cases where Linux
      * might do something unexpected with routing */
     if (endpoint_addr.ss_family == AF_INET) {
         assert(NULL != &btl_endpoint->endpoint_btl->tcp_ifaddr);
@@ -965,7 +965,7 @@ static void mca_btl_tcp_endpoint_recv_handler(int sd, short flags, void* user)
                    the magic string ID failed). recv_connect_ack already cleaned
                    up the socket. */
                 /* If we get OPAL_ERROR, the other end closed the connection
-                 * because it has initiated a symetrical connexion on its end. 
+                 * because it has initiated a symetrical connexion on its end.
                  * recv_connect_ack already cleaned up the socket. */
             }
             else {

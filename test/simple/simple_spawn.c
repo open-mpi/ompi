@@ -4,7 +4,6 @@
 #include <unistd.h>
 #include <sys/param.h>
 
-#include "opal/runtime/opal.h"
 
 #include <mpi.h>
 
@@ -13,14 +12,14 @@ int main(int argc, char* argv[])
     int msg, rc;
     MPI_Comm parent, child;
     int rank, size;
-    const char *hostname;
+    char hostname[1024];
     pid_t pid;
     char *env_rank,*env_nspace;
 
     env_rank = getenv("PMIX_RANK");
     env_nspace = getenv("PMIX_NAMESPACE");
     pid = getpid();
-    hostname = opal_gethostname();
+    gethostname(hostname, 1024);
 
     printf("[%s:%s pid %ld] starting up on node %s!\n", env_nspace, env_rank, (long)pid, hostname);
 

@@ -106,8 +106,7 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
     pmix_proc_t *procs, pxproc;
     size_t nprocs, n;
     pmix_status_t pret;
-    opal_namelist_t *nm;
-    opal_jobid_t jobid;
+    opal_proclist_t *plt;
 
     ompi_communicator_t *newcomp=MPI_COMM_NULL;
     ompi_proc_t *proc;
@@ -131,24 +130,14 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
      * procs is used to complete construction of the intercommunicator. */
 
     /* everyone constructs the list of members from their communicator */
+    pname.jobid = OMPI_PROC_MY_NAME->jobid;
+    pname.vpid = OPAL_VPID_WILDCARD;
     if (MPI_COMM_WORLD == comm) {
-        pname.jobid = OMPI_PROC_MY_NAME->jobid;
-        pname.vpid = OPAL_VPID_WILDCARD;
-        rc = opal_convert_process_name_to_string(&nstring, &pname);
-        if (OPAL_SUCCESS != rc) {
-            return OMPI_ERROR;
-        }
+        PMIX_LOAD_PROCID(&pxproc, ompi_process_info.myprocid.nspace, PMIX_RANK_WILDCARD);
+        OPAL_PMIX_CONVERT_PROCT_TO_STRING(&nstring, &pxproc);
         opal_argv_append_nosize(&members, nstring);
         free(nstring);
-        /* have to add the number of procs in the job so the remote side
-         * can correctly add the procs by computing their names, and our nspace
-         * so they can update their records */
-        nstring = opal_jobid_print(pname.jobid);
-        if (NULL == nstring) {
-            opal_argv_free(members);
-            return OMPI_ERROR;
-        }
-        opal_argv_append_nosize(&members, nstring);
+        /* add the number of procs in this job */
         (void)opal_asprintf(&nstring, "%d", size);
         opal_argv_append_nosize(&members, nstring);
         free(nstring);
@@ -176,22 +165,10 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
             } else {
                 proc_name = proc_list[i]->super.proc_name;
             }
-            rc = opal_convert_process_name_to_string(&nstring, &proc_name);
-            if (OPAL_SUCCESS != rc) {
-                if (!dense) {
-                    free(proc_list);
-                    proc_list = NULL;
-                }
-                return OMPI_ERROR;
-            }
+            OPAL_PMIX_CONVERT_NAME(&pxproc, &proc_name);
+            OPAL_PMIX_CONVERT_PROCT_TO_STRING(&nstring, &pxproc);
             opal_argv_append_nosize(&members, nstring);
             free(nstring);
-            nstring = opal_jobid_print(pname.jobid);
-            if (OPAL_SUCCESS != rc) {
-                opal_argv_free(members);
-                return OMPI_ERROR;
-            }
-            opal_argv_append_nosize(&members, nstring);
         }
         if (!dense) {
             free(proc_list);
@@ -260,64 +237,18 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
      * starting with our own members */
     OBJ_CONSTRUCT(&mlist, opal_list_t);
     for (i=0; NULL != members[i]; i++) {
-        nm = OBJ_NEW(opal_namelist_t);
-        if (OPAL_SUCCESS != (rc = opal_convert_string_to_process_name(&nm->name, members[i]))) {
-            OMPI_ERROR_LOG(rc);
-            opal_argv_free(members);
-            free(rport);
-            OPAL_LIST_DESTRUCT(&mlist);
-            goto exit;
-        }
-        /* step over the nspace */
-        ++i;
-        if (NULL == members[i]) {
-            /* this shouldn't happen and is an error */
-            OMPI_ERROR_LOG(OMPI_ERR_BAD_PARAM);
-            OPAL_LIST_DESTRUCT(&mlist);
-            opal_argv_free(members);
-            free(rport);
-            rc = OMPI_ERR_BAD_PARAM;
-            goto exit;
-        }
-        /* if the rank is wildcard, then we need to add all procs
-         * in that job to the list */
-        if (OPAL_VPID_WILDCARD == nm->name.vpid) {
-            jobid = nm->name.jobid;
-            OBJ_RELEASE(nm);
-            for (k=0; k < size; k++) {
-                nm = OBJ_NEW(opal_namelist_t);
-                nm->name.jobid = jobid;
-                nm->name.vpid = k;
-                opal_list_append(&mlist, &nm->super);
-            }
-            /* now step over the size */
-            if (NULL == members[i+1]) {
-                /* this shouldn't happen and is an error */
-                OMPI_ERROR_LOG(OMPI_ERR_BAD_PARAM);
-                OPAL_LIST_DESTRUCT(&mlist);
-                opal_argv_free(members);
-                free(rport);
-                rc = OMPI_ERR_BAD_PARAM;
-                goto exit;
-            }
+        OPAL_PMIX_CONVERT_STRING_TO_PROCT(&pxproc, members[i]);
+        plt = OBJ_NEW(opal_proclist_t);
+        memcpy(&plt->procid, &pxproc, sizeof(pmix_proc_t));
+        opal_list_append(&mlist, &plt->super);
+        /* if the rank is wildcard, then we need to skip
+         * the next position */
+        if (PMIX_RANK_WILDCARD == pxproc.rank) {
             ++i;
-        } else {
-            opal_list_append(&mlist, &nm->super);
         }
     }
     opal_argv_free(members);
     members = NULL;
-
-    /* convert the list of members to a pmix_proc_t array */
-    nprocs = opal_list_get_size(&mlist);
-    PMIX_PROC_CREATE(procs, nprocs);
-    n = 0;
-    OPAL_LIST_FOREACH(nm, &mlist, opal_namelist_t) {
-        OPAL_PMIX_CONVERT_NAME(&procs[n], &nm->name);
-        ++n;
-    }
-    OPAL_LIST_DESTRUCT(&mlist);
-
     /* rport contains a colon-delimited list
      * of process names for the remote procs - convert it
      * into an argv array */
@@ -330,29 +261,13 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
     OBJ_CONSTRUCT(&rlist, opal_list_t);
 
     for (i=0; NULL != members[i]; i++) {
-        nm = OBJ_NEW(opal_namelist_t);
-        if (OPAL_SUCCESS != (rc = opal_convert_string_to_process_name(&nm->name, members[i]))) {
-            OMPI_ERROR_LOG(rc);
-            opal_argv_free(members);
-            OPAL_LIST_DESTRUCT(&ilist);
-            OPAL_LIST_DESTRUCT(&rlist);
-            PMIX_PROC_FREE(procs, nprocs);
-            goto exit;
-        }
-        /* next entry is the nspace - register it */
-        ++i;
-        if (NULL == members[i]) {
-            OMPI_ERROR_LOG(OMPI_ERR_NOT_SUPPORTED);
-            opal_argv_free(members);
-            OPAL_LIST_DESTRUCT(&ilist);
-            OPAL_LIST_DESTRUCT(&rlist);
-            PMIX_PROC_FREE(procs, nprocs);
-            goto exit;
-        }
-        if (OPAL_VPID_WILDCARD == nm->name.vpid) {
-            jobid = nm->name.jobid;
-            OBJ_RELEASE(nm);
-            /* if the vpid is wildcard, then we are including all ranks
+        OPAL_PMIX_CONVERT_STRING_TO_PROCT(&pxproc, members[i]);
+        plt = OBJ_NEW(opal_proclist_t);
+        memcpy(&plt->procid, &pxproc, sizeof(pmix_proc_t));
+        opal_list_append(&mlist, &plt->super);
+
+        if (PMIX_RANK_WILDCARD == pxproc.rank) {
+            /* if the rank is wildcard, then we are including all ranks
              * of that job, and the next entry in members should be the
              * number of procs in the job */
             if (NULL == members[i+1]) {
@@ -361,19 +276,25 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
                 opal_argv_free(members);
                 OPAL_LIST_DESTRUCT(&ilist);
                 OPAL_LIST_DESTRUCT(&rlist);
+                OPAL_LIST_DESTRUCT(&mlist);
                 rc = OMPI_ERR_BAD_PARAM;
-                PMIX_PROC_FREE(procs, nprocs);
                 goto exit;
             }
             rsize = strtoul(members[i+1], NULL, 10);
             ++i;
             for (k=0; k < rsize; k++) {
-                nm = OBJ_NEW(opal_namelist_t);
-                nm->name.jobid = jobid;
-                nm->name.vpid = k;
-                opal_list_append(&mlist, &nm->super);
+                pxproc.rank = k;
+                OPAL_PMIX_CONVERT_PROCT(rc, &pname, &pxproc);
+                if (OPAL_SUCCESS != rc) {
+                    OMPI_ERROR_LOG(rc);
+                    opal_argv_free(members);
+                    OPAL_LIST_DESTRUCT(&ilist);
+                    OPAL_LIST_DESTRUCT(&rlist);
+                    OPAL_LIST_DESTRUCT(&mlist);
+                    goto exit;
+                }
                 /* see if this needs to be added to our ompi_proc_t array */
-                proc = ompi_proc_find_and_add(&nm->name, &isnew);
+                proc = ompi_proc_find_and_add(&pname, &isnew);
                 if (isnew) {
                     cd = OBJ_NEW(ompi_dpm_proct_caddy_t);
                     cd->p = proc;
@@ -385,9 +306,17 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
                 opal_list_append(&rlist, &cd->super);
             }
         } else {
-            opal_list_append(&mlist, &nm->super);
+            OPAL_PMIX_CONVERT_PROCT(rc, &pname, &pxproc);
+            if (OPAL_SUCCESS != rc) {
+                OMPI_ERROR_LOG(rc);
+                opal_argv_free(members);
+                OPAL_LIST_DESTRUCT(&ilist);
+                OPAL_LIST_DESTRUCT(&rlist);
+                OPAL_LIST_DESTRUCT(&mlist);
+                goto exit;
+            }
             /* see if this needs to be added to our ompi_proc_t array */
-            proc = ompi_proc_find_and_add(&nm->name, &isnew);
+            proc = ompi_proc_find_and_add(&pname, &isnew);
             if (isnew) {
                 cd = OBJ_NEW(ompi_dpm_proct_caddy_t);
                 cd->p = proc;
@@ -400,6 +329,16 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
         }
     }
     opal_argv_free(members);
+
+    /* convert the list of members to a pmix_proc_t array */
+    nprocs = opal_list_get_size(&mlist);
+    PMIX_PROC_CREATE(procs, nprocs);
+    n = 0;
+    OPAL_LIST_FOREACH(plt, &mlist, opal_proclist_t) {
+        memcpy(&procs[n], &plt->procid, sizeof(pmix_proc_t));
+        ++n;
+    }
+    OPAL_LIST_DESTRUCT(&mlist);
 
     /* tell the host RTE to connect us - this will download
      * all known data for the nspace's of participating procs
