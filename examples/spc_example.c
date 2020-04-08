@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018      The University of Tennessee and The University
+ * Copyright (c) 2018-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  *
@@ -37,7 +37,7 @@ void message_exchange(int num_messages, int message_size)
 
 int main(int argc, char **argv)
 {
-    int num_messages, message_size;
+    int num_messages, message_size, rc;
 
     if(argc < 3) {
         printf("Usage: mpirun -np 2 --mca mpi_spc_attach all --mca mpi_spc_dump_enabled true ./spc_example [num_messages] [message_size]\n");
@@ -72,9 +72,11 @@ int main(int argc, char **argv)
     MPI_T_pvar_get_num(&num);
     for(i = 0; i < num; i++) {
         name_len = desc_len = 256;
-        PMPI_T_pvar_get_info(i, name, &name_len, &verbosity,
-                             &var_class, &datatype, &enumtype, description, &desc_len, &bind,
-                             &readonly, &continuous, &atomic);
+        rc = PMPI_T_pvar_get_info(i, name, &name_len, &verbosity,
+                                  &var_class, &datatype, &enumtype, description, &desc_len, &bind,
+                                  &readonly, &continuous, &atomic);
+        if( MPI_SUCCESS != rc )
+            continue;
         if(strcmp(name, counter_names[rank]) == 0) {
             index = i;
             printf("[%d] %s -> %s\n", rank, name, description);

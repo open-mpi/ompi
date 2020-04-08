@@ -1,7 +1,7 @@
 /*
- * Copyright (c) 2018 The University of Tennessee and The University
- *                    of Tennessee Research Foundation.  All rights
- *                    reserved.
+ * Copyright (c) 2018-2020 The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  *
  * Simple example usage of SPCs through MPI_T.
  */
@@ -71,9 +71,9 @@ int main(int argc, char **argv)
 
     for(i = 0; i < num; i++) {
         name_len = desc_len = 256;
-        MPI_T_pvar_get_info(i, name, &name_len, &verbosity,
-                             &var_class, &datatype, &enumtype, description, &desc_len, &bind,
-                             &readonly, &continuous, &atomic);
+        MPI_result = MPI_T_pvar_get_info(i, name, &name_len, &verbosity,
+                                         &var_class, &datatype, &enumtype, description, &desc_len, &bind,
+                                         &readonly, &continuous, &atomic);
         if(MPI_result != MPI_SUCCESS || MPI_result == MPI_T_ERR_PVAR_NO_STARTSTOP) {
             fprintf(stderr, "Failed to get pvar info.\n");
             MPI_Abort(MPI_COMM_WORLD, MPI_result);

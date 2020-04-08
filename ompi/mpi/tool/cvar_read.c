@@ -5,6 +5,9 @@
  * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2016      Intel, Inc.  All rights reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
+ * Copyright (c) 2020      The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -33,7 +36,7 @@ int MPI_T_cvar_read (MPI_T_cvar_handle handle, void *buf)
     }
 
     if (MPI_PARAM_CHECK && NULL == buf) {
-        return MPI_ERR_ARG;
+        return MPI_T_ERR_INVALID;
     }
 
     ompi_mpit_lock ();
@@ -41,8 +44,8 @@ int MPI_T_cvar_read (MPI_T_cvar_handle handle, void *buf)
     do {
         rc = mca_base_var_get_value(handle->var->mbv_index, &value, NULL, NULL);
         if (OPAL_SUCCESS != rc || NULL == value) {
-            /* shouldn't happen */
-            rc = MPI_ERR_OTHER;
+            /* invalid or discarded cvar, ignore */
+            rc = MPI_T_ERR_INVALID_INDEX;
             break;
         }
 
@@ -84,7 +87,7 @@ int MPI_T_cvar_read (MPI_T_cvar_handle handle, void *buf)
 
             break;
         default:
-            rc = MPI_ERR_OTHER;
+            rc = MPI_T_ERR_INVALID;
         }
     } while (0);
 

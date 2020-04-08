@@ -4,6 +4,9 @@
  *                         reserved.
  * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
+ * Copyright (c) 2020      The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -44,7 +47,7 @@ int MPI_T_pvar_handle_free(MPI_T_pvar_session session, MPI_T_pvar_handle *handle
 
         ret = mca_base_pvar_handle_free (*handle);
         if (OPAL_SUCCESS != ret) {
-            ret = MPI_ERR_UNKNOWN;
+            ret = MPI_T_ERR_INVALID;
         }
 
         *handle = MPI_T_PVAR_HANDLE_NULL;
