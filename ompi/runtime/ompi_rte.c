@@ -12,6 +12,8 @@
  *                         reserved.
  * Copyright (c) 2019      Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
+ * Copyright (c) 2020      Amazon.com, Inc. or its affiliates.  All Rights
+ *                         reserved.
  * $COPYRIGHT$
  */
 #include "ompi_config.h"
@@ -70,6 +72,7 @@ pmix_process_info_t pmix_process_info = {
     .proc_session_dir = NULL,
     .my_local_rank = 0,
     .my_node_rank = 0,
+    .my_numa_rank = UINT16_MAX,     /* Assume invalid NUMA rank, set to UINT16_MAX */
     .num_local_peers = 0,
     .num_procs = 0,
     .app_num = 0,
@@ -777,6 +780,28 @@ int ompi_rte_init(int *pargc, char ***pargv)
         pmix_proc_is_bound = false;
     }
 
+    /* get our numa rank from PMIx */
+    if (pmix_proc_is_bound) {
+        OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, PMIX_NUMA_RANK,
+                                       &pmix_process_info.my_name, &u16ptr, PMIX_UINT16);
+        if (PMIX_SUCCESS != rc) {
+            if (ompi_singleton) {
+                /* just assume the numa_rank is invalid, set to UINT16_MAX */
+                u16 = UINT16_MAX;
+            } else {
+                ret = opal_pmix_convert_status(rc);
+                error = "numa rank";
+                goto error;
+            }
+        }
+        pmix_process_info.my_numa_rank = u16;
+    } else {
+        /* If processes are not bound, the numa_rank is not available
+         * Assign UINT16_MAX to the numa_rank to indicate an invalid value
+         */
+        pmix_process_info.my_numa_rank = UINT16_MAX;
+    }
+
     /* get our local peers */
     if (0 < pmix_process_info.num_local_peers) {
         /* if my local rank if too high, then that's an error */
@@ -866,6 +891,7 @@ int ompi_rte_init(int *pargc, char ***pargv)
     opal_process_info.proc_session_dir = pmix_process_info.proc_session_dir;
     opal_process_info.num_local_peers  = (int32_t)pmix_process_info.num_local_peers;
     opal_process_info.my_local_rank    = (int32_t)pmix_process_info.my_local_rank;
+    opal_process_info.my_numa_rank     = pmix_process_info.my_numa_rank;
     opal_process_info.cpuset           = pmix_process_info.cpuset;
 
     return OPAL_SUCCESS;
