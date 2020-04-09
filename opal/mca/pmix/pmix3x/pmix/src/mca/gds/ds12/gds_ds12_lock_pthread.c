@@ -199,20 +199,16 @@ void pmix_ds12_lock_finalize(pmix_common_dstor_lock_ctx_t *lock_ctx)
             (ds12_lock_pthread_ctx_t*)*lock_ctx;
 
     if (NULL == pthread_lock) {
-        PMIX_ERROR_LOG(PMIX_ERR_NOT_FOUND);
         return;
     }
     if (0 != pthread_rwlock_destroy(pthread_lock->rwlock)) {
-        PMIX_ERROR_LOG(PMIX_ERROR);
         return;
     }
 
     if (NULL == pthread_lock->segment) {
-        PMIX_ERROR_LOG(PMIX_ERROR);
         return;
     }
     if (NULL == pthread_lock->lockfile) {
-        PMIX_ERROR_LOG(PMIX_ERROR);
         return;
     }
 
