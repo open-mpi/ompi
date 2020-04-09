@@ -130,7 +130,9 @@ int opal_pmix_convert_nspace(opal_jobid_t *jobid, pmix_nspace_t nspace)
     char *p = NULL;
 
     /* set a default */
-    *jobid = OPAL_JOBID_INVALID;
+    if (NULL != jobid) {
+        *jobid = OPAL_JOBID_INVALID;
+    }
 
     /* if the nspace is empty, there is nothing more to do */
     if (0 == strlen(nspace)) {
