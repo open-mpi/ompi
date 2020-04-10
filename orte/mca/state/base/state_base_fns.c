@@ -3,6 +3,7 @@
  * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2018      Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
+ * Copyrigth (c) 2020      Triad National Security, LLC. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -734,8 +735,12 @@ void orte_state_base_track_procs(int fd, short argc, void *cbdata)
             /* Clean up the session directory as if we were the process
              * itself.  This covers the case where the process died abnormally
              * and didn't cleanup its own session directory.
+             * Don't do this for debugger daemons otherwise reattach is
+             * broken.  See https://github.com/open-mpi/ompi/issues/5115.
              */
-            orte_session_dir_finalize(proc);
+            if (!ORTE_FLAG_TEST(jdata, ORTE_JOB_FLAG_DEBUGGER_DAEMON)) {
+                orte_session_dir_finalize(proc);
+            }
         }
         /* if we are trying to terminate and our routes are
          * gone, then terminate ourselves IF no local procs
