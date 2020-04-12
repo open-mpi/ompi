@@ -4,6 +4,9 @@
  *                         reserved.
  * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
+ * Copyright (c) 2020      The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -41,6 +44,7 @@ int MPI_T_pvar_get_info(int pvar_index, char *name, int *name_len,
            bounds checking. */
         ret = mca_base_pvar_get (pvar_index, &pvar);
         if (OMPI_SUCCESS != ret) {
+            ret = (OPAL_ERR_NOT_FOUND == ret) ? MPI_T_ERR_INVALID_INDEX : MPI_T_ERR_INVALID;
             break;
         }
 
@@ -65,7 +69,8 @@ int MPI_T_pvar_get_info(int pvar_index, char *name, int *name_len,
 
         ret = ompit_var_type_to_datatype (pvar->type, datatype);
         if (OMPI_SUCCESS != ret) {
-            break;
+            ret = MPI_T_ERR_INVALID;  /* can't really happen as MPI_SUCCESS is the only
+                                         possible return from ompit_var_type_to_datatype */
         }
 
         if (NULL != enumtype) {

@@ -4,6 +4,9 @@
  *                         reserved.
  * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
+ * Copyright (c) 2020      The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -45,14 +48,14 @@ int MPI_T_init_thread (int required, int *provided)
         /* call opal_init_util to intialize the MCA system */
         rc = opal_init_util (NULL, NULL);
         if (OPAL_SUCCESS != rc) {
-            rc = MPI_ERR_OTHER;
+            rc = MPI_T_ERR_INVALID;
             break;
         }
 
         /* register all parameters */
         rc = ompi_info_register_framework_params (NULL);
         if (OMPI_SUCCESS != rc) {
-            rc = MPI_ERR_OTHER;
+            rc = MPI_T_ERR_INVALID;
             break;
         }
 
