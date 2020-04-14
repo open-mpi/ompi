@@ -90,14 +90,14 @@ int ompi_coll_tuned_read_rules_config_file (char *fname, ompi_coll_alg_rule_t** 
 
     fptr = fopen (fname, "r");
     if (!fptr) {
-        OPAL_OUTPUT((ompi_coll_tuned_stream,"cannot read rules file [%s]\n", fname));
+        OPAL_OUTPUT((ompi_coll_tuned_stream,"Cannot read rules file [%s]\n", fname));
         goto on_file_error;
     }
 
     /* make space and init the algorithm rules for each of the n_collectives MPI collectives */
     alg_rules = ompi_coll_tuned_mk_alg_rules (n_collectives);
     if (NULL == alg_rules) {
-        OPAL_OUTPUT((ompi_coll_tuned_stream,"cannot cannot allocate rules for file [%s]\n", fname));
+        OPAL_OUTPUT((ompi_coll_tuned_stream,"Cannot allocate rules for file [%s]\n", fname));
         goto on_file_error;
     }
 
