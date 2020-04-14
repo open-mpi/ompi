@@ -113,7 +113,7 @@ ompi_mtl_ofi_add_procs(struct mca_mtl_base_module_t *mtl,
      */
     count = fi_av_insert(ompi_mtl_ofi.av, ep_names, nprocs, fi_addrs, 0, NULL);
     if ((count < 0) || (nprocs != (size_t)count)) {
-        opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+        opal_output_verbose(1, opal_common_ofi.output,
                             "%s:%d: fi_av_insert failed: %d\n",
                             __FILE__, __LINE__, count);
         ret = OMPI_ERROR;
@@ -126,7 +126,7 @@ ompi_mtl_ofi_add_procs(struct mca_mtl_base_module_t *mtl,
     for (i = 0; i < nprocs; ++i) {
         endpoint = OBJ_NEW(mca_mtl_ofi_endpoint_t);
         if (NULL == endpoint) {
-            opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+            opal_output_verbose(1, opal_common_ofi.output,
                                 "%s:%d: mtl/ofi: could not allocate endpoint"
                                 " structure\n",
                                 __FILE__, __LINE__);
@@ -171,7 +171,7 @@ ompi_mtl_ofi_del_procs(struct mca_mtl_base_module_t *mtl,
             endpoint = procs[i]->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_MTL];
             ret = fi_av_remove(ompi_mtl_ofi.av, &endpoint->peer_fiaddr, 1, 0);
             if (ret) {
-                opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+                opal_output_verbose(1, opal_common_ofi.output,
                         "%s:%d: fi_av_remove failed: %s\n", __FILE__, __LINE__, fi_strerror(errno));
                 return ret;
             }

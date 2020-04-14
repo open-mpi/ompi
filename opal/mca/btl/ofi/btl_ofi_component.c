@@ -15,6 +15,8 @@
  * Copyright (c) 2018-2019 Intel, Inc.  All rights reserved.
  *
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
+ * Copyright (c) 2020      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -44,7 +46,6 @@
 
 #define MCA_BTL_OFI_REQUESTED_MR_MODE   (FI_MR_ALLOCATED | FI_MR_PROV_KEY | FI_MR_VIRT_ADDR)
 
-static char *prov_include;
 static char *ofi_progress_mode;
 static bool disable_sep;
 static int mca_btl_ofi_init_device(struct fi_info *info);
@@ -110,20 +111,6 @@ static int mca_btl_ofi_component_register(void)
                                           MCA_BASE_VAR_SCOPE_READONLY,
                                           &mca_btl_ofi_component.mode);
 
-    /* fi_getinfo with prov_name == NULL means ALL provider.
-     * Since now we are using the first valid info returned, I'm not sure
-     * if we need to provide the support for comma limited provider list. */
-    prov_include = NULL;
-    (void) mca_base_component_var_register(&mca_btl_ofi_component.super.btl_version,
-                                          "provider_include",
-                                          "OFI provider that ofi btl will query for. This parameter only "
-                                          "accept ONE provider name. "
-                                          "(e.g., \"psm2\"; an empty value means that all providers will "
-                                          "be considered.",
-                                          MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
-                                          OPAL_INFO_LVL_4,
-                                          MCA_BASE_VAR_SCOPE_READONLY,
-                                          &prov_include);
 
     mca_btl_ofi_component.num_cqe_read = MCA_BTL_OFI_NUM_CQE_READ;
     (void) mca_base_component_var_register(&mca_btl_ofi_component.super.btl_version,
@@ -188,6 +175,8 @@ static int mca_btl_ofi_component_register(void)
     /* for now we want this component to lose to the MTL. */
     module->super.btl_exclusivity = MCA_BTL_EXCLUSIVITY_HIGH - 50;
 
+    opal_common_ofi_register_mca_variables(&mca_btl_ofi_component.super.btl_version);
+
     return mca_btl_base_param_register (&mca_btl_ofi_component.super.btl_version,
                                         &module->super);
 }
@@ -203,7 +192,8 @@ static int mca_btl_ofi_component_open(void)
  */
 static int mca_btl_ofi_component_close(void)
 {
-    /* If we don't sleep, sockets provider freaks out. */
+    opal_common_ofi_mca_deregister();
+    /* If we don't sleep, sockets provider freaks out. Ummm this is a scary comment */
     sleep(1);
     return OPAL_SUCCESS;
 }
@@ -228,6 +218,7 @@ static mca_btl_base_module_t **mca_btl_ofi_component_init (int *num_btl_modules,
     uint64_t progress_mode;
     unsigned resource_count = 0;
     struct mca_btl_base_module_t **base_modules;
+    char **include_list = NULL;
 
     BTL_VERBOSE(("initializing ofi btl"));
 
@@ -250,6 +241,8 @@ static mca_btl_base_module_t **mca_btl_ofi_component_init (int *num_btl_modules,
     struct fi_domain_attr domain_attr = {0};
     uint64_t required_caps;
 
+    opal_common_ofi_mca_register();
+
     switch (mca_btl_ofi_component.mode) {
 
         case MCA_BTL_OFI_MODE_TWO_SIDED:
@@ -269,8 +262,12 @@ static mca_btl_base_module_t **mca_btl_ofi_component_init (int *num_btl_modules,
             break;
     }
 
-    /* Select the provider */
-    fabric_attr.prov_name = prov_include;
+    fabric_attr.prov_name = NULL;
+    /* Select the provider - sort of.  we just take first element in list for now */
+    if (NULL != *opal_common_ofi.prov_include) {
+        include_list = opal_argv_split(*opal_common_ofi.prov_include, ',');
+        fabric_attr.prov_name = include_list[0];
+    }
 
     domain_attr.mr_mode = MCA_BTL_OFI_REQUESTED_MR_MODE;
 
@@ -315,8 +312,12 @@ static mca_btl_base_module_t **mca_btl_ofi_component_init (int *num_btl_modules,
     rc = fi_getinfo(FI_VERSION(1, 5), NULL, NULL, 0, &hints, &info_list);
     if (0 != rc) {
         BTL_VERBOSE(("fi_getinfo failed with code %d: %s",rc, fi_strerror(-rc)));
+        if (NULL != include_list) {
+            opal_argv_free(include_list);
+        }
         return NULL;
     }
+
 
     /* count the number of resources/ */
     info = info_list;
@@ -359,6 +360,9 @@ static mca_btl_base_module_t **mca_btl_ofi_component_init (int *num_btl_modules,
 
     /* We are done with the returned info. */
     fi_freeinfo(info_list);
+    if (NULL != include_list) {
+        opal_argv_free(include_list);
+    }
 
     /* pass module array back to caller */
     base_modules = calloc (mca_btl_ofi_component.module_count, sizeof (*base_modules));
