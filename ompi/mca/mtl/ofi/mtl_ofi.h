@@ -2,7 +2,7 @@
  * Copyright (c) 2013-2018 Intel, Inc. All rights reserved
  * Copyright (c) 2017      Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2019      Triad National Security, LLC. All rights
+ * Copyright (c) 2019-2020 Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2018-2020 Amazon.com, Inc. or its affiliates. All rights
  *                         reserved.
@@ -38,6 +38,7 @@
 #include "ompi/mca/mtl/base/base.h"
 #include "ompi/mca/mtl/base/mtl_base_datatype.h"
 #include "ompi/message/message.h"
+#include "opal/mca/common/ofi/common_ofi.h"
 
 #include "mtl_ofi_opt.h"
 #include "mtl_ofi_types.h"
@@ -235,7 +236,7 @@ ompi_mtl_ofi_progress(void)
 
 #define MTL_OFI_LOG_FI_ERR(err, string)                                     \
     do {                                                                    \
-        opal_output_verbose(1, ompi_mtl_base_framework.framework_output,    \
+        opal_output_verbose(1, opal_common_ofi.output,                      \
                             "%s:%d:%s: %s\n",                               \
                             __FILE__, __LINE__, string, fi_strerror(-err)); \
     } while(0);
@@ -377,7 +378,7 @@ ompi_mtl_ofi_ssend_recv(ompi_mtl_ofi_request_t *ack_req,
                                       0, /* Exact match, no ignore bits */
                                       (void *) &ack_req->ctx), ret);
     if (OPAL_UNLIKELY(0 > ret)) {
-        opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+        opal_output_verbose(1, opal_common_ofi.output,
                             "%s:%d: fi_trecv failed: %s(%zd)",
                             __FILE__, __LINE__, fi_strerror(-ret), ret);
         free(ack_req);
@@ -663,7 +664,7 @@ ompi_mtl_ofi_recv_callback(struct fi_cq_tagged_entry *wc,
     status->_ucount = wc->len;
 
     if (OPAL_UNLIKELY(wc->len > ofi_req->length)) {
-        opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+        opal_output_verbose(1, opal_common_ofi.output,
                             "truncate expected: %ld %ld",
                             wc->len, ofi_req->length);
         status->MPI_ERROR = MPI_ERR_TRUNCATE;
@@ -677,7 +678,7 @@ ompi_mtl_ofi_recv_callback(struct fi_cq_tagged_entry *wc,
                                             ofi_req->buffer,
                                             wc->len);
         if (OPAL_UNLIKELY(OMPI_SUCCESS != ompi_ret)) {
-            opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+            opal_output_verbose(1, opal_common_ofi.output,
                                 "%s:%d: ompi_mtl_datatype_unpack failed: %d",
                                 __FILE__, __LINE__, ompi_ret);
             status->MPI_ERROR = ompi_ret;
@@ -1330,7 +1331,7 @@ init_regular_ep:
     if (MPI_COMM_WORLD == comm) {
         ret = opal_progress_register(ompi_mtl_ofi_progress_no_inline);
         if (OMPI_SUCCESS != ret) {
-            opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+            opal_output_verbose(1, opal_common_ofi.output,
                                 "%s:%d: opal_progress_register failed: %d\n",
                                 __FILE__, __LINE__, ret);
             goto init_error;
