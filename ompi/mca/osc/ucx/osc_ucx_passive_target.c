@@ -42,7 +42,7 @@ static inline int start_shared(ompi_osc_ucx_module_t *module, int target) {
         } else {
             break;
         }
-        ucp_worker_progress(mca_osc_ucx_component.wpool->dflt_worker);
+        opal_common_ucx_wpool_progress(mca_osc_ucx_component.wpool);
     }
 
     return ret;
@@ -70,8 +70,7 @@ static inline int start_exclusive(ompi_osc_ucx_module_t *module, int target) {
         if (result_value == TARGET_LOCK_UNLOCKED) {
             return OMPI_SUCCESS;
         }
-
-        ucp_worker_progress(mca_osc_ucx_component.wpool->dflt_worker);
+        opal_common_ucx_wpool_progress(mca_osc_ucx_component.wpool);
     }
 }
 

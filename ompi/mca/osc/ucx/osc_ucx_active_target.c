@@ -279,7 +279,7 @@ int ompi_osc_ucx_post(struct ompi_group_t *group, int assert, struct ompi_win_t 
                     ompi_osc_ucx_handle_incoming_post(module, &(module->state.post_state[j]), NULL, 0);
                 }
 
-                ucp_worker_progress(mca_osc_ucx_component.wpool->dflt_worker);
+                opal_common_ucx_wpool_progress(mca_osc_ucx_component.wpool);
                 usleep(100);
             } while (1);
         }
