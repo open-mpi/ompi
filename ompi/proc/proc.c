@@ -143,6 +143,7 @@ int ompi_proc_complete_init_single (ompi_proc_t *proc)
      * for those environments where the RM provides it */
     {
         uint32_t *ui32ptr;
+        int ret;
         ui32ptr = &(proc->super.proc_arch);
         OPAL_MODEX_RECV_VALUE(ret, PMIX_ARCH, &proc->super.proc_name,
                               (void**)&ui32ptr, OPAL_UINT32);
