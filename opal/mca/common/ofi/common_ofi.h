@@ -16,4 +16,6 @@
 
 OPAL_DECLSPEC int mca_common_ofi_register_mca_variables(void);
 
+struct fi_info* opal_mca_common_ofi_select_provider(struct fi_info *provider_list, int rank);
+
 #endif /* OPAL_MCA_COMMON_OFI_H */
