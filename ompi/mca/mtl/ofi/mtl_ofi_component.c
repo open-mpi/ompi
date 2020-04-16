@@ -16,6 +16,7 @@
 #include "mtl_ofi.h"
 #include "opal/util/argv.h"
 #include "opal/util/printf.h"
+#include "opal/mca/common/ofi/common_ofi.h"
 
 static int ompi_mtl_ofi_component_open(void);
 static int ompi_mtl_ofi_component_query(mca_base_module_t **module, int *priority);
@@ -370,6 +371,28 @@ select_ofi_provider(struct fi_info *providers,
                         "%s:%d: mtl:ofi:prov: %s\n",
                         __FILE__, __LINE__,
                         (prov ? prov->fabric_attr->prov_name : "none"));
+
+     /* The initial fi_getinfo() call will return a list of providers
+      * available for this process. once a provider is selected from the
+      * list, we will cycle through the remaining list to identify NICs
+      * serviced by this provider, and try to pick one on the same NUMA
+      * node as this process. If there are no NICs on the same NUMA node,
+      * we pick one in a manner which allows all ranks to make balanced
+      * use of available NICs on the system.
+      *
+      * Most providers give a separate fi_info object for each NIC,
+      * however some may have multiple info objects with different
+      * attributes for the same NIC. The initial provider attributes
+      * are used to ensure that all NICs we return provide the same
+      * capabilities as the inital one.
+      */
+    if (NULL != prov) {
+        prov = opal_mca_common_ofi_select_provider(prov, ompi_process_info.my_local_rank);
+        opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+                            "%s:%d: mtl:ofi:provider: %s\n",
+                            __FILE__, __LINE__,
+                            (prov ? prov->domain_attr->name : "none"));
+    }
 
     return prov;
 }
