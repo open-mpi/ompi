@@ -20,7 +20,7 @@
  *                         All rights reserved.
  * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Mellanox Technologies. All rights reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
@@ -673,7 +673,7 @@ static int ompi_comm_split_type_get_part (ompi_group_t *group, const int split_t
 
             u16ptr = &locality;
 
-            OPAL_MODEX_RECV_VALUE(ret, PMIX_LOCALITY, &proc_name, &u16ptr, PMIX_UINT16);
+            OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, PMIX_LOCALITY, &proc_name, &u16ptr, PMIX_UINT16);
             if (OPAL_SUCCESS != ret) {
                 continue;
             }
@@ -1655,7 +1655,7 @@ int ompi_comm_get_rprocs ( ompi_communicator_t *local_comm,
          * to provide this information at startup */
         uint16_t *u16ptr, u16;
         u16ptr = &u16;
-        OPAL_MODEX_RECV_VALUE(rc, PMIX_LOCALITY, &rprocs[i]->super.proc_name, &u16ptr, PMIX_UINT16);
+        OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, PMIX_LOCALITY, &rprocs[i]->super.proc_name, &u16ptr, PMIX_UINT16);
         if (OPAL_SUCCESS == rc) {
             rprocs[i]->super.proc_flags = u16;
         } else {
