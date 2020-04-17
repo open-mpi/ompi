@@ -13,6 +13,7 @@
  * Copyright (c) 2014-2018 Intel, Inc.  All rights reserved.
  * Copyright (c) 2017      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2020      Huawei Technologies Co., Ltd.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -142,7 +143,8 @@ static int rank_span(orte_job_t *jdata,
                             return ORTE_ERROR;
                         }
                         /* ignore procs not on this object */
-                        if (!hwloc_bitmap_intersects(obj->cpuset, locale->cpuset)) {
+                        if (NULL == locale ||
+                            !hwloc_bitmap_intersects(obj->cpuset, locale->cpuset)) {
                             opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                                                 "mca:rmaps:rank_span: proc at position %d is not on object %d",
                                                 j, i);
@@ -174,6 +176,11 @@ static int rank_span(orte_job_t *jdata,
                     }
                 }
             }
+        }
+
+        /* Are all the procs ranked? we don't want to crash on INVALID ranks */
+        if (cnt < app->num_procs) {
+            return ORTE_ERR_NOT_SUPPORTED;
         }
     }
 
@@ -263,7 +270,8 @@ static int rank_fill(orte_job_t *jdata,
                         return ORTE_ERROR;
                     }
                     /* ignore procs not on this object */
-                    if (!hwloc_bitmap_intersects(obj->cpuset, locale->cpuset)) {
+                    if (NULL == locale ||
+                        !hwloc_bitmap_intersects(obj->cpuset, locale->cpuset)) {
                         opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                                             "mca:rmaps:rank_fill: proc at position %d is not on object %d",
                                             j, i);
@@ -292,6 +300,11 @@ static int rank_fill(orte_job_t *jdata,
                     jdata->bookmark = node;
                 }
             }
+        }
+
+        /* Are all the procs ranked? we don't want to crash on INVALID ranks */
+        if (cnt < app->num_procs) {
+            return ORTE_ERR_NOT_SUPPORTED;
         }
     }
 
@@ -378,7 +391,8 @@ static int rank_by(orte_job_t *jdata,
              * algorithm, but this works for now.
              */
             i = 0;
-            while (cnt < app->num_procs && i < (int)node->num_procs) {
+            while (cnt < app->num_procs &&
+                   ((i < (int)node->num_procs) || (i < num_objs))) {
                 /* get the next object */
                 obj = (hwloc_obj_t)opal_pointer_array_get_item(&objs, i % num_objs);
                 if (NULL == obj) {
@@ -423,7 +437,7 @@ static int rank_by(orte_job_t *jdata,
                         !hwloc_bitmap_intersects(obj->cpuset, locale->cpuset)) {
                         opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                                             "mca:rmaps:rank_by: proc at position %d is not on object %d",
-                                            j, i);
+                                            j, i % num_objs);
                         continue;
                     }
                     /* assign the vpid */
@@ -458,6 +472,11 @@ static int rank_by(orte_job_t *jdata,
         }
         /* cleanup */
         OBJ_DESTRUCT(&objs);
+
+        /* Are all the procs ranked? we don't want to crash on INVALID ranks */
+        if (cnt < app->num_procs) {
+            return ORTE_ERR_NOT_SUPPORTED;
+        }
     }
     return ORTE_SUCCESS;
 }
