@@ -29,7 +29,8 @@ EXTRA_DIST = \
         ltmain_pgi_tp.diff \
         opal_mca_priority_sort.pl \
         find_common_syms \
-        make_manpage.pl
+        make_manpage.pl \
+        md2nroff.pl
 
 maintainer-clean-local:
 	rm -f opal_get_version.sh

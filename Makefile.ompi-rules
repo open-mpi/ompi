@@ -9,6 +9,8 @@
 # $HEADER$
 #
 
+MD2NROFF = $(OMPI_TOP_SRCDIR)/config/md2nroff.pl
+
 TRIM_OPTIONS=
 if ! MAN_PAGE_BUILD_MPIFH_BINDINGS
     TRIM_OPTIONS += --nofortran
@@ -17,6 +19,8 @@ if ! MAN_PAGE_BUILD_USEMPIF08_BINDINGS
     TRIM_OPTIONS += --nof08
 endif
 
+# JMS This rule can be deleted once all man pages have been converted
+# to markdown.
 .1in.1:
 	$(OMPI_V_GEN) $(top_srcdir)/config/make_manpage.pl \
 	  --package-name='@PACKAGE_NAME@' \
@@ -26,6 +30,8 @@ endif
 	  --input=$< \
 	  --output=$@
 
+# JMS This rule can be deleted once all man pages have been converted
+# to markdown.
 .3in.3:
 	$(OMPI_V_GEN) $(top_srcdir)/config/make_manpage.pl \
 	  --package-name='@PACKAGE_NAME@' \
@@ -36,6 +42,8 @@ endif
 	  --input=$< \
 	  --output=$@
 
+# JMS This rule can be deleted once all man pages have been converted
+# to markdown.
 .7in.7:
 	$(OMPI_V_GEN) $(top_srcdir)/config/make_manpage.pl \
 	  --package-name='@PACKAGE_NAME@' \
@@ -44,6 +52,28 @@ endif
 	  --opal-date='@OPAL_RELEASE_DATE@' \
 	  --input=$< \
 	  --output=$@
+
+%.1: %.1.md
+	$(OMPI_V_GEN) $(MD2NROFF) --source=$< --dest=$@ --pandoc=$(PANDOC)
+
+%.3: %.3.md
+	$(OMPI_V_GEN) $(MD2NROFF) --source=$< --dest=$@ --pandoc=$(PANDOC)
+
+%.5: %.5.md
+	$(OMPI_V_GEN) $(MD2NROFF) --source=$< --dest=$@ --pandoc=$(PANDOC)
+
+%.7: %.7.md
+	$(OMPI_V_GEN) $(MD2NROFF) --source=$< --dest=$@ --pandoc=$(PANDOC)
+
+# It is an error to "configure --disable-man-pages" and then try to
+# "make dist".
+if !OPAL_ENABLE_MAN_PAGES
+dist-hook:
+	@echo "************************************************************************************"
+	@echo "ERROR: 'make dist' inoperable when Open MPI is configured with --disable-man-pages"
+	@echo "************************************************************************************"
+	@/bin/false
+endif
 
 # A little verbosity magic; "make" will show the terse output.  "make
 # V=1" will show the actual commands used (just like the other

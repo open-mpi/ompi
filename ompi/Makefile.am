@@ -98,7 +98,9 @@ SUBDIRS = \
         mpi/fortran/use-mpi-f08 \
         mpi/fortran/mpiext-use-mpi-f08 \
         $(MCA_ompi_FRAMEWORK_COMPONENT_DSO_SUBDIRS) \
-        $(OMPI_CONTRIB_SUBDIRS)
+        $(OMPI_CONTRIB_SUBDIRS) \
+        mpi/man/man3 \
+        mpi/man/man5
 
 if OMPI_WANT_JAVA_BINDINGS
 SUBDIRS += \
@@ -131,7 +133,9 @@ DIST_SUBDIRS = \
         $(OMPI_MPIEXT_ALL_SUBDIRS) \
         $(MCA_ompi_FRAMEWORKS_SUBDIRS) \
         $(MCA_ompi_FRAMEWORK_COMPONENT_ALL_SUBDIRS) \
-        $(OMPI_CONTRIB_DIST_SUBDIRS)
+        $(OMPI_CONTRIB_DIST_SUBDIRS) \
+        mpi/man/man3 \
+        mpi/man/man5
 
 # Build the main MPI library
 
@@ -163,7 +167,6 @@ noinst_LTLIBRARIES =
 include_HEADERS =
 dist_ompidata_DATA =
 lib@OMPI_LIBMPI_NAME@_la_SOURCES += $(headers)
-nodist_man_MANS =
 
 # Conditionally install the header files
 
@@ -190,27 +193,11 @@ include runtime/Makefile.am
 include win/Makefile.am
 include tools/Makefile.am
 include mpi/Makefile.am
-include mpi/man/man3/Makefile.extra
 include mpiext/Makefile.am
 include patterns/net/Makefile.am
 include patterns/comm/Makefile.am
 include mca/Makefile.am
 include util/Makefile.am
 
-# Ensure that the man page directory exists before we try to make man
-# page files (because ompi/mpi/man/man3 has no config.status-generated
-# Makefile)
-dir_stamp = $(top_builddir)/$(subdir)/mpi/man/man3/.dir-stamp
-
-# Also ensure that the man pages are rebuilt if the opal_config.h file
-# changes (e.g., configure was run again, meaning that the release
-# date or version may have changed)
-$(nodist_man_MANS): $(dir_stamp) $(top_builddir)/opal/include/opal_config.h
-
-$(dir_stamp):
-	$(MKDIR_P) `dirname $@`
-	touch "$@"
-
-# Remove the generated man pages
 distclean-local:
-	rm -f $(nodist_man_MANS) $(dir_stamp) mpiext/static-components.h
+	rm -f mpiext/static-components.h

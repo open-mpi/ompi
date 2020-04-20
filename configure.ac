@@ -982,6 +982,12 @@ if test -z "$LEX" || \
 fi
 
 #
+# Setup man page processing
+#
+
+OPAL_SETUP_MAN_PAGES
+
+#
 # File system case sensitivity
 #
 

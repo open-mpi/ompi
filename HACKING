@@ -247,3 +247,26 @@ If you do not have Flex installed, it can be downloaded from the
 following URL:
 
     https://github.com/westes/flex
+
+Use of Pandoc
+=============
+
+Similar to prior sections, you need to read/care about this section
+*ONLY* if you are building from a developer's tree (i.e., a Git clone
+of the Open MPI source tree).  If you have an Open MPI distribution
+tarball, the contents of this section are optional -- you can (and
+probably should) skip reading this section.
+
+The Pandoc tool is used to generate Open MPI's man pages.
+Specifically: Open MPI's man pages are written in Markdown; Pandoc is
+the tool that converts that Markdown to nroff (i.e., the format of man
+pages).
+
+You must have Pandoc >=v1.12 when building Open MPI from a developer's
+tree.  If configure cannot find Pandoc >=v1.12, it will abort.
+
+If you need to install Pandoc, check your operating system-provided
+packages (to include MacOS Homebrew and MacPorts).  The Pandoc project
+itself also offers binaries for their releases:
+
+   https://pandoc.org/
