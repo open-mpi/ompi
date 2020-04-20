@@ -1,6 +1,8 @@
 # -*- makefile -*-
 #
 # Copyright (c) 2019 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2020      Research Organization for Information Science
+#                         and Technology (RIST).  All rights reserved.
 #
 # $COPYRIGHT$
 #
@@ -29,6 +31,8 @@ if OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS
 noinst_LTLIBRARIES = libusempif08_ccode.la
 
 libusempif08_ccode_la_SOURCES = \
-        buffer_detach.c
+        buffer_detach.c \
+        constants.c \
+        constants.h
 
 endif

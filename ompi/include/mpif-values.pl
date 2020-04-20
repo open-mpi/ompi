@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
 #
 # Copyright (c) 2011-2014 Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2016-2019 Research Organization for Information Science
+# Copyright (c) 2016-2020 Research Organization for Information Science
 #                         and Technology (RIST).  All rights reserved.
 # Copyright (c) 2016      FUJITSU LIMITED.  All rights reserved.
 # $COPYRIGHT$
@@ -489,8 +489,8 @@ my $output = '/* WARNING! THIS IS A GENERATED FILE!!
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2009-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2016      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016-2020 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -498,8 +498,8 @@ my $output = '/* WARNING! THIS IS A GENERATED FILE!!
  * $HEADER$
  */
 
-#ifndef USE_MPI_F08_CONSTANTS_H
-#define USE_MPI_F08_CONSTANTS_H
+#ifndef USE_MPI_F08_BASE_CONSTANTS_H
+#define USE_MPI_F08_BASE_CONSTANTS_H
 
 ';
 
@@ -522,9 +522,9 @@ foreach my $key (sort(keys(%{$io_handles}))) {
     $output .= "#define OMPI_$key $io_handles->{$key}\n";
 }
 $output .= "\n";
-$output .= "#endif /* USE_MPI_F08_CONSTANTS_H */\n";
+$output .= "#endif /* USE_MPI_F08_BASE_CONSTANTS_H */\n";
 
-write_file("$topdir/ompi/mpi/fortran/use-mpi-f08/constants.h", $output);
+write_file("$topdir/ompi/mpi/fortran/use-mpi-f08/base/constants.h", $output);
 
 $output = '! WARNING! THIS IS A GENERATED FILE!!
 ! ANY EDITS YOU PUT HERE WILL BE LOST!
