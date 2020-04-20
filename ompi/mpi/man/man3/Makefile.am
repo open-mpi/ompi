@@ -25,7 +25,6 @@ MD_FILES = \
         MPI_T_init_thread.3.md
 
 TEMPLATE_FILES = \
-        MPI.3in \
         MPI_Abort.3in \
         MPI_Accumulate.3in \
         MPI_Add_error_class.3in \
@@ -438,8 +437,7 @@ TEMPLATE_FILES = \
         MPI_Win_unlock_all.3in \
         MPI_Win_wait.3in \
         MPI_Wtick.3in \
-        MPI_Wtime.3in \
-        OpenMPI.3in
+        MPI_Wtime.3in
 
 man_pages_from_md = $(MD_FILES:.3.md=.3)
 man_pages_from_template = $(TEMPLATE_FILES:.3in=.3)
