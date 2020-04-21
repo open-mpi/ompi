@@ -9,6 +9,8 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2020      Amazon.com, Inc. or its affiliates.  All Rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -35,6 +37,7 @@ opal_process_info_t opal_process_info = {
     .proc_session_dir = NULL,
     .num_local_peers = 0,  /* there is nobody else but me */
     .my_local_rank = 0,    /* I'm the only process around here */
+    .my_numa_rank = UINT16_MAX,     /* Assume numa_rank is unavailable, set to UINT16_MAX */
     .cpuset = NULL,
 };
 

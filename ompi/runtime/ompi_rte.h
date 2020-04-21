@@ -8,6 +8,8 @@
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2020      Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2020      Amazon.com, Inc. or its affiliates.  All Rights
+ *                         reserved.
  *
  * $COPYRIGHT$
  *
@@ -253,6 +255,8 @@ typedef struct {
     char *proc_session_dir;
     uint16_t my_local_rank;
     uint16_t my_node_rank;
+    /* process rank on local NUMA node. Set to UINT16_MAX if NUMA rank is unavailable */
+    uint16_t my_numa_rank;
     int32_t num_local_peers;
     uint32_t num_procs;
     uint32_t app_num;

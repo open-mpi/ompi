@@ -7,6 +7,8 @@
  * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      Cisco Systems, Inc.  All rights reserved
+ * Copyright (c) 2020      Amazon.com, Inc. or its affiliates.  All Rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -108,6 +110,7 @@ typedef struct opal_process_info_t {
     char *proc_session_dir;             /**< Session directory for the process */
     int32_t num_local_peers;            /**< number of procs from my job that share my node with me */
     int32_t my_local_rank;              /**< local rank on this node within my job */
+    int16_t my_numa_rank;               /**< rank on this processes NUMA node. A value of UINT16_MAX indicates unavailable numa_rank */
     char *cpuset;                       /**< String-representation of bitmap where we are bound */
 } opal_process_info_t;
 OPAL_DECLSPEC extern opal_process_info_t opal_process_info;
