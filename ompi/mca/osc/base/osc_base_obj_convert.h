@@ -59,9 +59,9 @@ ompi_osc_base_datatype_create(ompi_proc_t *remote_proc,  void **payload)
 
 
 /**
- * Create datatype based on Fortran Index
+ * Create operation based on Fortran Index
  *
- * Create a useable MPI datatype based on it's Fortran index, which is
+ * Create a useable MPI operation based on it's Fortran index, which is
  * globally the same for predefined operations.  The op handle is
  * owned by the calling process and must be OBJ_RELEASEd when no
  * longer in use.
