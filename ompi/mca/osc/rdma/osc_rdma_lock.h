@@ -45,9 +45,7 @@ static inline int ompi_osc_rdma_btl_fop (ompi_osc_rdma_module_t *module, struct 
     pending_op = OBJ_NEW(ompi_osc_rdma_pending_op_t);
     assert (NULL != pending_op);
 
-    if (wait_for_completion) {
-        OBJ_RETAIN(pending_op);
-    } else {
+    if (!wait_for_completion) {
         /* NTH: need to keep track of pending ops to avoid a potential teardown problem */
         pending_op->module = module;
         (void) opal_atomic_fetch_add_32 (&module->pending_ops, 1);
