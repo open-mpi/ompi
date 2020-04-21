@@ -54,7 +54,6 @@ ompi_osc_base_datatype_create(ompi_proc_t *remote_proc,  void **payload)
     struct ompi_datatype_t *datatype =
         ompi_datatype_create_from_packed_description(payload, remote_proc);
     if (NULL == datatype) return NULL;
-    OMPI_DATATYPE_RETAIN(datatype);
     return datatype;
 }
 
