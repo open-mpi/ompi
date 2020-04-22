@@ -102,7 +102,7 @@ AC_DEFUN([OMPI_SETUP_PRRTE],[
             opal_prrte_prefix_arg=
         fi
 
-        opal_prrte_args="--prefix=$prefix $opal_prrte_prefix_arg $opal_prrte_libevent_arg $opal_prrte_hwloc_arg $opal_prrte_pmix_arg"
+        opal_prrte_args="--prefix=$prefix --with-proxy-version-string=$OPAL_VERSION --with-proxy-package-name=\"Open MPI\" --with-proxy-bugreport=\"https://www.open-mpi.org/community/help/\" $opal_prrte_prefix_arg $opal_prrte_libevent_arg $opal_prrte_hwloc_arg $opal_prrte_pmix_arg"
         AS_IF([test "$enable_debug" = "yes"],
               [opal_prrte_args="--enable-debug $opal_prrte_args"
                CFLAGS="$OPAL_CFLAGS_BEFORE_PICKY $OPAL_VISIBILITY_CFLAGS -g"],
