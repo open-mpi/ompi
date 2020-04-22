@@ -7,6 +7,7 @@
 #include "opal/mca/base/mca_base_framework.h"
 #include "opal/mca/pmix/pmix-internal.h"
 #include "opal/memoryhooks/memory.h"
+#include "opal/util/proc.h"
 
 #include <ucm/api/ucm.h>
 

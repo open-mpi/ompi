@@ -368,7 +368,7 @@ static int vader_add_procs (struct mca_btl_base_module_t* btl,
 
         /* setup endpoint */
         int rank = opal_atomic_fetch_add_32(&component -> local_rank, 1);
-           
+
         peers[proc] = component->endpoints + rank;
         rc = init_vader_endpoint (peers[proc], procs[proc], rank);
         if (OPAL_SUCCESS != rc) {
@@ -426,7 +426,7 @@ static int vader_finalize(struct mca_btl_base_module_t *btl)
         return OPAL_SUCCESS;
     }
 
-    for (int i = 0 ; i < 1 + MCA_BTL_VADER_NUM_LOCAL_PEERS ; ++i) {
+    for (int i = 0 ; i < (int)(1 + MCA_BTL_VADER_NUM_LOCAL_PEERS) ; ++i) {
         fini_vader_endpoint (component->endpoints + i);
     }
 

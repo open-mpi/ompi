@@ -22,8 +22,9 @@
 #include "opal_config.h"
 #include "opal/class/opal_list.h"
 #include "opal/mca/hwloc/hwloc-internal.h"
+#include "opal/mca/pmix/pmix-internal.h"
 #include "opal/types.h"
-#include "opal/dss/dss.h"
+#include "opal/dss/dss_types.h"
 
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
 #include <arpa/inet.h>
@@ -103,15 +104,29 @@ typedef struct {
 OBJ_CLASS_DECLARATION(opal_namelist_t);
 
 typedef struct opal_process_info_t {
+    opal_process_name_t my_name;
+    pmix_proc_t myprocid;
     bool nativelaunch;                  /**< launched by mpirun */
     char *nodename;                     /**< string name for this node */
     char *top_session_dir;              /**< Top-level session directory */
     char *job_session_dir;              /**< Session directory for job */
     char *proc_session_dir;             /**< Session directory for the process */
-    int32_t num_local_peers;            /**< number of procs from my job that share my node with me */
-    int32_t my_local_rank;              /**< local rank on this node within my job */
-    int16_t my_numa_rank;               /**< rank on this processes NUMA node. A value of UINT16_MAX indicates unavailable numa_rank */
+    uint32_t num_local_peers;           /**< number of procs from my job that share my node with me */
+    uint16_t my_local_rank;             /**< local rank on this node within my job */
+    uint16_t my_node_rank;
+    uint16_t my_numa_rank;              /**< rank on this processes NUMA node. A value of UINT16_MAX indicates unavailable numa_rank */
     char *cpuset;                       /**< String-representation of bitmap where we are bound */
+    pid_t pid;
+    uint32_t num_procs;
+    uint32_t app_num;
+    uint32_t univ_size;
+    char *app_sizes;
+    char *app_ldrs;
+    char *command;
+    uint32_t num_apps;
+    char *initial_wdir;
+    uint32_t reincarnation;
+    bool proc_is_bound;
 } opal_process_info_t;
 OPAL_DECLSPEC extern opal_process_info_t opal_process_info;
 
