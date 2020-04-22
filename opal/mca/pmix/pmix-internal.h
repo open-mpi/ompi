@@ -28,10 +28,7 @@
 #include "opal/mca/event/event.h"
 #include "opal/mca/threads/threads.h"
 #include "opal/dss/dss.h"
-#include "opal/runtime/opal.h"
-#include "opal/dss/dss.h"
 #include "opal/util/error.h"
-#include "opal/util/proc.h"
 #include "opal/hash_string.h"
 
 /* include implementation to call */
@@ -219,7 +216,6 @@ typedef struct {
         pmix_value_t _kv;                       \
         PMIX_VALUE_LOAD(&_kv, (d), (t));        \
         (r) = PMIx_Put((sc), (s), &(_kv));      \
-                OPAL_ERROR_LOG((r));            \
     } while(0);
 
 /**

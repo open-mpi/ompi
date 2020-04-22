@@ -30,6 +30,8 @@ opal_process_name_t opal_name_wildcard = {OPAL_JOBID_WILDCARD, OPAL_VPID_WILDCAR
 opal_process_name_t opal_name_invalid = {OPAL_JOBID_INVALID, OPAL_VPID_INVALID};
 
 opal_process_info_t opal_process_info = {
+    .my_name = {OPAL_JOBID_INVALID, OPAL_VPID_INVALID},
+    .myprocid = {{0}, PMIX_RANK_INVALID},
     .nativelaunch = false,
     .nodename = NULL,
     .top_session_dir = NULL,
@@ -37,8 +39,21 @@ opal_process_info_t opal_process_info = {
     .proc_session_dir = NULL,
     .num_local_peers = 0,  /* there is nobody else but me */
     .my_local_rank = 0,    /* I'm the only process around here */
+    .my_node_rank = 0,
     .my_numa_rank = UINT16_MAX,     /* Assume numa_rank is unavailable, set to UINT16_MAX */
     .cpuset = NULL,
+    .pid = 0,
+    .num_procs = 0,
+    .app_num = 0,
+    .univ_size = 0,
+    .app_sizes = NULL,
+    .app_ldrs = NULL,
+    .cpuset = NULL,
+    .command = NULL,
+    .num_apps = 0,
+    .initial_wdir = NULL,
+    .reincarnation = 0,
+    .proc_is_bound = false
 };
 
 static opal_proc_t opal_local_proc = {

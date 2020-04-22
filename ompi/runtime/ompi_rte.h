@@ -190,11 +190,10 @@ typedef uint32_t ompi_jobid_t;
 typedef uint32_t ompi_vpid_t;
 
 /* some local storage */
-OMPI_DECLSPEC extern opal_process_name_t pmix_name_wildcard;
 OMPI_DECLSPEC extern hwloc_cpuset_t ompi_proc_applied_binding;
 
-#define OMPI_PROC_MY_NAME (&pmix_process_info.my_name)
-#define OMPI_NAME_WILDCARD  (&pmix_name_wildcard)
+#define OMPI_PROC_MY_NAME (&opal_process_info.my_name)
+#define OMPI_NAME_WILDCARD  (&opal_name_wildcard)
 
 typedef uint8_t ompi_rte_cmp_bitmask_t;
 #define OMPI_RTE_CMP_NONE   0x00
@@ -240,40 +239,8 @@ static inline opal_process_name_t * OMPI_CAST_RTE_NAME(opal_process_name_t * nam
 #endif
 
 /* Process info struct and values */
-typedef uint16_t ompi_node_rank_t;
-typedef uint16_t ompi_local_rank_t;
-#define OMPI_NODE_RANK_INVALID UINT16_MAX
-#define OMPI_LOCAL_RANK_INVALID UINT16_MAX
-
-typedef struct {
-    opal_process_name_t my_name;
-    pmix_proc_t myprocid;
-    char *nodename;
-    pid_t pid;
-    char *top_session_dir;
-    char *job_session_dir;
-    char *proc_session_dir;
-    uint16_t my_local_rank;
-    uint16_t my_node_rank;
-    /* process rank on local NUMA node. Set to UINT16_MAX if NUMA rank is unavailable */
-    uint16_t my_numa_rank;
-    int32_t num_local_peers;
-    uint32_t num_procs;
-    uint32_t app_num;
-    uint32_t univ_size;
-    char *app_sizes;
-    char *app_ldrs;
-    char *cpuset;
-    char *command;
-    uint32_t num_apps;
-    char *initial_wdir;
-    uint32_t reincarnation;
-} pmix_process_info_t;
-OMPI_DECLSPEC extern pmix_process_info_t pmix_process_info;
-#define ompi_process_info pmix_process_info
-
-OMPI_DECLSPEC extern bool pmix_proc_is_bound;
-#define ompi_rte_proc_is_bound pmix_proc_is_bound
+#define ompi_process_info opal_process_info
+#define ompi_rte_proc_is_bound opal_process_info.proc_is_bound
 
 /* Error handling objects and operations */
 OMPI_DECLSPEC void __opal_attribute_noreturn__

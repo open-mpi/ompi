@@ -13,7 +13,7 @@
  * Copyright (c) 2006-2010 QLogic Corporation. All rights reserved.
  * Copyright (c) 2012-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2013-2017 Intel, Inc. All rights reserved
+ * Copyright (c) 2013-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2018      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
@@ -346,15 +346,12 @@ ompi_mtl_psm2_component_close(void)
 static int
 get_local_rank(int *out_rank)
 {
-    ompi_node_rank_t my_node_rank;
-
     *out_rank = 0;
 
-    if (OMPI_NODE_RANK_INVALID == (my_node_rank =
-        ompi_process_info.my_node_rank)) {
+    if (OMPI_NODE_RANK_INVALID == ompi_process_info.my_node_rank) {
         return OMPI_ERROR;
     }
-    *out_rank = (int)my_node_rank;
+    *out_rank = (int)ompi_process_info.my_node_rank;
     return OMPI_SUCCESS;
 }
 

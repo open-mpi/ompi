@@ -144,19 +144,24 @@ int ompi_proc_complete_init_single (ompi_proc_t *proc)
     {
         uint32_t *ui32ptr;
         int ret;
-        ui32ptr = &(proc->super.proc_arch);
-        OPAL_MODEX_RECV_VALUE(ret, PMIX_ARCH, &proc->super.proc_name,
-                              (void**)&ui32ptr, OPAL_UINT32);
-        if (OPAL_SUCCESS == ret) {
-            /* if arch is different than mine, create a new convertor for this proc */
-            if (proc->super.proc_arch != opal_local_arch) {
-                OBJ_RELEASE(proc->super.proc_convertor);
-                proc->super.proc_convertor = opal_convertor_create(proc->super.proc_arch, 0);
-            }
-        } else if (OMPI_ERR_NOT_IMPLEMENTED == ret) {
+        /* if the proc is local, then no need to fetch it */
+        if (OPAL_PROC_ON_LOCAL_NODE(proc->super.proc_flags)) {
             proc->super.proc_arch = opal_local_arch;
         } else {
-            return ret;
+            ui32ptr = &(proc->super.proc_arch);
+            OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, "OMPI_ARCH", &proc->super.proc_name,
+                                           (void**)&ui32ptr, OPAL_UINT32);
+            if (OPAL_SUCCESS == ret) {
+                /* if arch is different than mine, create a new convertor for this proc */
+                if (proc->super.proc_arch != opal_local_arch) {
+                    OBJ_RELEASE(proc->super.proc_convertor);
+                    proc->super.proc_convertor = opal_convertor_create(proc->super.proc_arch, 0);
+                }
+            } else if (OMPI_ERR_NOT_IMPLEMENTED == ret) {
+                proc->super.proc_arch = opal_local_arch;
+            } else {
+                return ret;
+            }
         }
     }
 #else
@@ -258,7 +263,7 @@ int ompi_proc_init(void)
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
     /* add our arch to the modex */
     OPAL_MODEX_SEND_VALUE(ret, PMIX_GLOBAL,
-                          PMIX_ARCH, &opal_local_arch, OPAL_UINT32);
+                          "OMPI_ARCH", &opal_local_arch, OPAL_UINT32);
     if (OPAL_SUCCESS != ret) {
         return ret;
     }
