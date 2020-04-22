@@ -90,14 +90,14 @@ int ompi_coll_tuned_read_rules_config_file (char *fname, ompi_coll_alg_rule_t** 
 
     fptr = fopen (fname, "r");
     if (!fptr) {
-        OPAL_OUTPUT((ompi_coll_tuned_stream,"cannot read rules file [%s]\n", fname));
+        OPAL_OUTPUT((ompi_coll_tuned_stream,"Cannot read rules file [%s]\n", fname));
         goto on_file_error;
     }
 
     /* make space and init the algorithm rules for each of the n_collectives MPI collectives */
     alg_rules = ompi_coll_tuned_mk_alg_rules (n_collectives);
     if (NULL == alg_rules) {
-        OPAL_OUTPUT((ompi_coll_tuned_stream,"cannot cannot allocate rules for file [%s]\n", fname));
+        OPAL_OUTPUT((ompi_coll_tuned_stream,"Cannot allocate rules for file [%s]\n", fname));
         goto on_file_error;
     }
 
@@ -142,6 +142,10 @@ int ompi_coll_tuned_read_rules_config_file (char *fname, ompi_coll_alg_rule_t** 
         OPAL_OUTPUT((ompi_coll_tuned_stream, "Read communicator count %d for dynamic rule for collective ID %d\n", NCS, CI));
         alg_p->n_com_sizes = NCS;
         alg_p->com_rules = ompi_coll_tuned_mk_com_rules (NCS, CI);
+        if (NULL == alg_p->com_rules) {
+            OPAL_OUTPUT((ompi_coll_tuned_stream,"Cannot allocate com rules for file [%s]\n", fname));
+            goto on_file_error;
+        }
 
         for (ncs=0;ncs<NCS;ncs++) {	/* for each comm size */
 
@@ -164,6 +168,10 @@ int ompi_coll_tuned_read_rules_config_file (char *fname, ompi_coll_alg_rule_t** 
                          NMS, CI, CS));
             com_p->n_msg_sizes = NMS;
             com_p->msg_rules = ompi_coll_tuned_mk_msg_rules (NMS, CI, ncs, CS);
+            if (NULL == com_p->msg_rules) {
+                OPAL_OUTPUT((ompi_coll_tuned_stream,"Cannot allocate msg rules for file [%s]\n", fname));
+                goto on_file_error;
+            }
 
             msg_p = com_p->msg_rules;
 
