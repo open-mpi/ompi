@@ -14,6 +14,8 @@ dnl Copyright (c) 2009-2017 Cisco Systems, Inc.  All rights reserved
 dnl Copyright (c) 2008-2018 University of Houston. All rights reserved.
 dnl Copyright (c) 2015-2018 Research Organization for Information Science
 dnl                         and Technology (RIST).  All rights reserved.
+dnl Copyright (c) 2020      Triad National Security, LLC. All rights
+dnl                         reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -36,7 +38,6 @@ AC_DEFUN([OMPI_CHECK_LUSTRE],[
     check_lustre_save_LDFLAGS="$LDFLAGS"
     check_lustre_save_CPPFLAGS="$CPPFLAGS"
 
-    check_lustre_configuration="none"
     ompi_check_lustre_happy="yes"
 
     # Get some configuration information
@@ -46,26 +47,28 @@ AC_DEFUN([OMPI_CHECK_LUSTRE],[
     OPAL_CHECK_WITHDIR([lustre], [$with_lustre], [include/lustre/lustreapi.h])
 
     AS_IF([test "$with_lustre" = "no"],
-        [ompi_check_lustre_happy="no"],
-        [AS_IF([test -z "$with_lustre" || test "$with_lustre" = "yes"],
-                [ompi_check_lustre_dir="/usr"],
-                [ompi_check_lustre_dir=$with_lustre])
-            
-            if test -e "$ompi_check_lustre_dir/lib64" ; then
-                ompi_check_lustre_libdir="$ompi_check_lustre_dir/lib64"
-            else
-                ompi_check_lustre_libdir="$ompi_check_lustre_dir/lib"
-            fi
-            
-            # Add correct -I and -L flags
-            OPAL_CHECK_PACKAGE([$1], [lustre/lustreapi.h], [lustreapi], [llapi_file_create], 
+          [ompi_check_lustre_happy=no])
+
+    AS_IF([test "$ompi_check_lustre_happy" != "no" ],
+          [AC_MSG_CHECKING([looking for lustre libraries and header files in])
+           AS_IF([test "$with_lustre" != "yes"],
+                 [ompi_check_lustre_dir=$with_lustre
+                  AC_MSG_RESULT([($ompi_check_lustre_dir)])],
+                 [AC_MSG_RESULT([(default search paths)])])
+           AS_IF([test -n "$with_lustre_libdir" && \
+                         test "$with_lustre_libdir" != "yes"],
+                 [ompi_check_lustre_libdir=$with_lustre_libdir])
+          ])
+
+    AS_IF([test "$ompi_check_lustre_happy" != "no" ],
+          [OPAL_CHECK_PACKAGE([$1], [lustre/lustreapi.h], [lustreapi], [llapi_file_create], 
                 [], [$ompi_check_lustre_dir], [$ompi_check_lustre_libdir], 
                 [ompi_check_lustre_happy="yes"],
-                [ompi_check_lustre_happy="no"])
+                [ompi_check_lustre_happy="no"])])
             
-            AS_IF([test "$ompi_check_lustre_happy" = "yes"],
-                  [AC_MSG_CHECKING([for required lustre data structures])
-                   cat > conftest.c <<EOF
+    AS_IF([test "$ompi_check_lustre_happy" = "yes"],
+          [AC_MSG_CHECKING([for required lustre data structures])
+           cat > conftest.c <<EOF
 #include "lustre/lustreapi.h"
 void alloc_lum()
 {
@@ -77,20 +80,19 @@ void alloc_lum()
 }
 EOF
 
-                   # Try the compile
-                   OPAL_LOG_COMMAND(
-                       [$CC $CFLAGS -I$ompi_check_lustre_dir/include -c conftest.c],
-                       [ompi_check_lustre_struct_happy="yes"],
-                       [ompi_check_lustre_struct_happy="no"
-                        ompi_check_lustre_happy="no"]
-                   )
-                       rm -f conftest.c conftest.o
-                       AC_MSG_RESULT([$ompi_check_lustre_struct_happy])])
-    ])
+           # Try the compile
+           OPAL_LOG_COMMAND(
+               [$CC $CFLAGS -I$ompi_check_lustre_dir/include -c conftest.c],
+               [ompi_check_lustre_struct_happy="yes"],
+               [ompi_check_lustre_struct_happy="no"
+                ompi_check_lustre_happy="no"]
+            )
+            rm -f conftest.c conftest.o
+            AC_MSG_RESULT([$ompi_check_lustre_struct_happy])])
 
     AS_IF([test "$ompi_check_lustre_happy" = "yes"],
           [$2],
-          [AS_IF([test ! -z "$with_lustre" && test "$with_lustre" != "no"],
+          [AS_IF([test -n "$with_lustre" && test "$with_lustre" != "no"],
                  [AC_MSG_ERROR([Lustre support requested but not found.  Aborting])])
-           $3])
+                  $3])
 ])
