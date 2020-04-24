@@ -5,6 +5,9 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
+ * Copyright (c) 2020      The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -81,6 +84,6 @@ int ompit_opal_to_mpit_error (int rc)
     case OPAL_ERR_NOT_BOUND:
         return MPI_T_ERR_INVALID_HANDLE;
     default:
-        return MPI_ERR_UNKNOWN;
+        return MPI_T_ERR_INVALID;
     }
 }

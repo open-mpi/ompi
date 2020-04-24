@@ -4,6 +4,9 @@
  *                         reserved.
  * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
+ * Copyright (c) 2020      The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -33,7 +36,7 @@ int MPI_T_cvar_handle_alloc (int cvar_index, void *obj_handle,
     }
 
     if (MPI_PARAM_CHECK && (NULL == handle || NULL == count)) {
-        return MPI_ERR_ARG;
+        return MPI_T_ERR_INVALID;
     }
 
     ompi_mpit_lock ();
@@ -50,7 +53,7 @@ int MPI_T_cvar_handle_alloc (int cvar_index, void *obj_handle,
         rc = mca_base_var_get(cvar_index, &new_handle->var);
         if (OPAL_SUCCESS != rc) {
             rc = (OPAL_ERR_VALUE_OUT_OF_BOUNDS == rc || OPAL_ERR_NOT_FOUND == rc) ? MPI_T_ERR_INVALID_INDEX:
-                MPI_ERR_OTHER;
+                MPI_T_ERR_INVALID;
             free (new_handle);
             break;
         }

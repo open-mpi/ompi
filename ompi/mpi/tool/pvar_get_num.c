@@ -3,6 +3,9 @@
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2020      The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -28,7 +31,7 @@ int MPI_T_pvar_get_num(int *num_pvar)
     }
 
     if (MPI_PARAM_CHECK && NULL == num_pvar) {
-        return MPI_ERR_ARG;
+        return MPI_T_ERR_INVALID;
     }
 
     return mca_base_pvar_get_count (num_pvar);

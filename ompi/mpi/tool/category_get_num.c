@@ -4,6 +4,9 @@
  *                         reserved.
  * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
+ * Copyright (c) 2020      The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -29,7 +32,7 @@ int MPI_T_category_get_num (int *num_cat)
     }
 
     if (MPI_PARAM_CHECK && NULL == num_cat) {
-        return MPI_ERR_ARG;
+        return MPI_T_ERR_INVALID;
     }
 
     ompi_mpit_lock ();
