@@ -17,7 +17,7 @@
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2018 IBM Corporation. All rights reserved.
- * Copyright (c) 2017      Intel, Inc. All rights reserved.
+ * Copyright (c) 2017-2020 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -338,7 +338,7 @@ int opal_info_get_value_enum (opal_info_t *info, const char *key, int *value,
  * Similar to opal_info_get(), but cast the result into a boolean
  * using some well-defined rules.
  */
-int opal_info_get_bool(opal_info_t *info, char *key, bool *value, int *flag)
+int opal_info_get_bool(opal_info_t *info, const char *key, bool *value, int *flag)
 {
     char str[256];
 

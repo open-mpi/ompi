@@ -15,6 +15,7 @@
  * Copyright (c) 2012-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2017-2018 IBM Corporation. All rights reserved.
+ * Copyright (c) 2020      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -203,7 +204,7 @@ int opal_info_free (opal_info_t **info);
    *     result is false
    *   - All other values are false
    */
-OPAL_DECLSPEC int opal_info_get_bool (opal_info_t *info, char *key, bool *value,
+OPAL_DECLSPEC int opal_info_get_bool (opal_info_t *info, const char *key, bool *value,
                                       int *flag);
 
 /**

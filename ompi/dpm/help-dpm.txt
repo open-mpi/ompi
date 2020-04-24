@@ -1,0 +1,46 @@
+# -*- text -*-
+#
+# Copyright (c) 2020      Intel, Inc.  All rights reserved.
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
+#
+#
+#
+[deprecated-converted]
+WARNING: A deprecated MPI_Info key was used.
+
+  Deprecated key:   %s
+  Corrected key:    %s
+
+We have updated this for you and will proceed. However, this will be treated
+as an error in a future release. Please update your application.
+#
+[deprecated-inform]
+WARNING: A deprecated MPI_Info key was used.
+
+  Deprecated option:   %s
+  Reason: %s
+
+This has been ignored as it is no longer meaningful. Please update
+your application.
+#
+[deprecated-fail]
+WARNING: A deprecated MPI_Info key was used. It is unclear how to update
+this option. Please contact the community for how best to resolve this issue.
+
+  Deprecated info key:  %s
+  Updated option:   %s
+  Reason: %s
+
+We are not able to proceed. Please update your application.
+#
+[bad-ppr]
+The proc-per-resource MPI_Info key is not correct. The value must include both
+the number of procs for each resource and the type of resource to be used.
+
+  Specified value:  %s
+
+We are not able to proceed. Please correct your application.

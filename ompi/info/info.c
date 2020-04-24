@@ -230,7 +230,7 @@ int ompi_info_get_value_enum (ompi_info_t *info, const char *key, int *value,
     return opal_info_get_value_enum (&(info->super), key, value,
                               default_value, var_enum, flag);
 }
-int ompi_info_get_bool(ompi_info_t *info, char *key, bool *value, int *flag) {
+int ompi_info_get_bool(ompi_info_t *info, const char *key, bool *value, int *flag) {
     return opal_info_get_bool(&(info->super), key, value, flag);
 }
 int ompi_info_delete (ompi_info_t *info, const char *key) {

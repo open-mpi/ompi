@@ -337,11 +337,6 @@ static int vader_add_procs (struct mca_btl_base_module_t* btl,
         return OPAL_SUCCESS;
     }
 
-    /* make sure that my local rank has been defined */
-    if (0 > MCA_BTL_VADER_LOCAL_RANK) {
-        return OPAL_ERROR;
-    }
-
     if (!vader_btl->btl_inited) {
         rc = vader_btl_first_time_init (vader_btl, 1 + MCA_BTL_VADER_NUM_LOCAL_PEERS);
         if (rc != OPAL_SUCCESS) {

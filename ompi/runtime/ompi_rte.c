@@ -561,7 +561,6 @@ int ompi_rte_init(int *pargc, char ***pargv)
         }
         opal_process_info.nodename = ev1;  // ev1 is an allocated string
     }
-    opal_process_info.nodename = opal_process_info.nodename;
 
     /* get our local rank from PMIx */
     OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, PMIX_LOCAL_RANK,
