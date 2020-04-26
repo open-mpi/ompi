@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2011-2018 Cisco Systems, Inc.  All rights reserved
- * Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2016-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2019 IBM Corporation. All rights reserved.
@@ -170,7 +170,6 @@ static int opal_hwloc_base_register(mca_base_register_flag_t flags)
 static int opal_hwloc_base_open(mca_base_open_flag_t flags)
 {
     int rc;
-    opal_data_type_t tmp;
 
     if (opal_hwloc_base_inited) {
         return OPAL_SUCCESS;
@@ -239,18 +238,6 @@ static int opal_hwloc_base_open(mca_base_open_flag_t flags)
     if (OPAL_SUCCESS !=
         mca_base_framework_components_open(&opal_hwloc_base_framework, flags)) {
         return OPAL_ERROR;
-    }
-
-    /* declare the hwloc data types */
-    tmp = OPAL_HWLOC_TOPO;
-    if (OPAL_SUCCESS != (rc = opal_dss.register_type(opal_hwloc_pack,
-                                                     opal_hwloc_unpack,
-                                                     (opal_dss_copy_fn_t)opal_hwloc_copy,
-                                                     (opal_dss_compare_fn_t)opal_hwloc_compare,
-                                                     (opal_dss_print_fn_t)opal_hwloc_print,
-                                                     OPAL_DSS_STRUCTURED,
-                                                     "OPAL_HWLOC_TOPO", &tmp))) {
-        return rc;
     }
 
     return OPAL_SUCCESS;
