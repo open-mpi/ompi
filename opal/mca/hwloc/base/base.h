@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2011-2017 Cisco Systems, Inc.  All rights reserved
- * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2017      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -175,45 +175,19 @@ OPAL_DECLSPEC unsigned int opal_hwloc_base_get_nbobjs_by_type(hwloc_topology_t t
                                                               hwloc_obj_type_t target,
                                                               unsigned cache_level,
                                                               opal_hwloc_resource_type_t rtype);
-OPAL_DECLSPEC void opal_hwloc_base_clear_usage(hwloc_topology_t topo);
 
 OPAL_DECLSPEC hwloc_obj_t opal_hwloc_base_get_obj_by_type(hwloc_topology_t topo,
                                                           hwloc_obj_type_t target,
                                                           unsigned cache_level,
                                                           unsigned int instance,
                                                           opal_hwloc_resource_type_t rtype);
-OPAL_DECLSPEC unsigned int opal_hwloc_base_get_obj_idx(hwloc_topology_t topo,
-                                                       hwloc_obj_t obj,
-                                                       opal_hwloc_resource_type_t rtype);
 
-OPAL_DECLSPEC int opal_hwloc_get_sorted_numa_list(hwloc_topology_t topo,
-                                    char* device_name,
-                                    opal_list_t *sorted_list);
-
-/**
- * Get the number of pu's under a given hwloc object.
- */
-OPAL_DECLSPEC unsigned int opal_hwloc_base_get_npus(hwloc_topology_t topo,
-                                                    hwloc_obj_t target);
 OPAL_DECLSPEC char* opal_hwloc_base_print_binding(opal_binding_policy_t binding);
 
 /**
  * Determine if there is a single cpu in a bitmap.
  */
 OPAL_DECLSPEC bool opal_hwloc_base_single_cpu(hwloc_cpuset_t cpuset);
-
-/**
- * Provide a utility to parse a slot list against the local
- * cpus of given type, and produce a cpuset for the described binding
- */
-OPAL_DECLSPEC int opal_hwloc_base_cpu_list_parse(const char *slot_str,
-                                                  hwloc_topology_t topo,
-                                                  opal_hwloc_resource_type_t rtype,
-                                                  hwloc_cpuset_t cpumask);
-
-OPAL_DECLSPEC char* opal_hwloc_base_find_coprocessors(hwloc_topology_t topo);
-OPAL_DECLSPEC char* opal_hwloc_base_check_on_coprocessor(void);
-
 
 /**
  * Report a bind failure using the normal mechanisms if a component
@@ -243,23 +217,6 @@ OPAL_DECLSPEC int opal_hwloc_base_node_name_to_id(char *node_name, int *id);
 OPAL_DECLSPEC int opal_hwloc_base_memory_set(opal_hwloc_base_memory_segment_t *segments,
                                              size_t num_segments);
 
-/* datatype support */
-OPAL_DECLSPEC int opal_hwloc_pack(opal_buffer_t *buffer, const void *src,
-                                  int32_t num_vals,
-                                  opal_data_type_t type);
-OPAL_DECLSPEC int opal_hwloc_unpack(opal_buffer_t *buffer, void *dest,
-                                    int32_t *num_vals,
-                                    opal_data_type_t type);
-OPAL_DECLSPEC int opal_hwloc_copy(hwloc_topology_t *dest,
-                                  hwloc_topology_t src,
-                                  opal_data_type_t type);
-OPAL_DECLSPEC int opal_hwloc_compare(const hwloc_topology_t topo1,
-                                     const hwloc_topology_t topo2,
-                                     opal_data_type_t type);
-OPAL_DECLSPEC int opal_hwloc_print(char **output, char *prefix,
-                                   hwloc_topology_t src,
-                                   opal_data_type_t type);
-
 /**
  * Make a prettyprint string for a hwloc_cpuset_t (e.g., "socket
  * 2[core 3]").
@@ -285,11 +242,6 @@ OPAL_DECLSPEC hwloc_obj_t opal_hwloc_base_get_pu(hwloc_topology_t topo,
                                                  int lid,
                                                  opal_hwloc_resource_type_t rtype);
 
-/* get the topology "signature" so we can check for differences - caller
- * if responsible for freeing the returned string */
-OPAL_DECLSPEC char* opal_hwloc_base_get_topo_signature(hwloc_topology_t topo);
-
-
 /* get a string describing the locality of a given process */
 OPAL_DECLSPEC char* opal_hwloc_base_get_locality_string(hwloc_topology_t topo, char *bitmap);
 
@@ -299,8 +251,6 @@ OPAL_DECLSPEC char* opal_hwloc_base_get_location(char *locality,
                                                  unsigned index);
 
 OPAL_DECLSPEC opal_hwloc_locality_t opal_hwloc_compute_relative_locality(char *loc1, char *loc2);
-
-OPAL_DECLSPEC int opal_hwloc_base_topology_export_xmlbuffer(hwloc_topology_t topology, char **xmlpath, int *buflen);
 
 OPAL_DECLSPEC int opal_hwloc_base_topology_set_flags (hwloc_topology_t topology, unsigned long flags, bool io);
 END_C_DECLS

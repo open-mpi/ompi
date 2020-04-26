@@ -91,7 +91,6 @@ typedef struct {
 #define    OPAL_BYTE_OBJECT         (opal_data_type_t)   20 /**< byte object structure */
 #define    OPAL_DATA_TYPE           (opal_data_type_t)   21 /**< data type */
 #define    OPAL_NULL                (opal_data_type_t)   22 /**< don't interpret data type */
-#define    OPAL_HWLOC_TOPO          (opal_data_type_t)   25 /**< hwloc topology */
 #define    OPAL_VALUE               (opal_data_type_t)   26 /**< opal value structure */
 #define    OPAL_BUFFER              (opal_data_type_t)   27 /**< pack the remaining contents of a buffer as an object */
 #define    OPAL_PTR                 (opal_data_type_t)   28 /**< pointer to void* */
