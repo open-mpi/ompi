@@ -26,7 +26,7 @@
 #
 
 AC_DEFUN([OMPI_SETUP_PRRTE],[
-    OPAL_VAR_SCOPE_PUSH([opal_prrte_save_CPPFLAGS opal_prrte_save_CFLAGS opal_prrte_save_LDFLAGS opal_prrte_save_LIBS opal_prrte_args opal_prrte_save_enable_dlopen opal_prrte_save_enable_mca_dso opal_prrte_save_enable_mca_static opal_prrte_extra_libs opal_prrte_extra_ltlibs opal_prrte_extra_ldflags opal_prrte_save_with_pmix])
+    OPAL_VAR_SCOPE_PUSH([opal_prrte_save_CPPFLAGS opal_prrte_save_CFLAGS opal_prrte_save_LDFLAGS opal_prrte_save_LIBS opal_prrte_args opal_prrte_save_enable_dlopen opal_prrte_save_enable_mca_dso opal_prrte_save_enable_mca_static opal_prrte_extra_libs opal_prrte_extra_ltlibs opal_prrte_extra_ldflags])
 
     opal_prrte_save_CFLAGS=$CFLAGS
     opal_prrte_save_CPPFLAGS=$CPPFLAGS
@@ -35,7 +35,6 @@ AC_DEFUN([OMPI_SETUP_PRRTE],[
     opal_prrte_save_enable_dlopen=enable_dlopen
     opal_prrte_save_enable_mca_dso=enable_mca_dso
     opal_prrte_save_enable_mca_static=enable_mca_static
-    opal_prrte_save_with_pmix=with_pmix
 
     AC_ARG_ENABLE([internal-rte],
                   [AC_HELP_STRING([--enable-internal-rte],
@@ -49,21 +48,12 @@ AC_DEFUN([OMPI_SETUP_PRRTE],[
         [AC_HELP_STRING([--enable-prte-prefix-by-default],
             [Make "mpirun ..." behave exactly the same as "mpirun --prefix \$prefix" (where \$prefix is the value given to --prefix in configure) (default:enabled)])])
 
-    AS_IF([test "$opal_external_pmix_happy" = "yes" && test $opal_numerical_pmix_version -lt 4 && test "$enable_internal_rte" != "no"],
-          [AC_MSG_WARN([OMPI's internal runtime environment "PRRTE" does not support])
-           AC_MSG_WARN([PMIx versions less than v4.x as they lack adequate tool])
-           AC_MSG_WARN([support. You can, if desired, build OMPI against an earlier])
-           AC_MSG_WARN([version of PMIx for strictly direct-launch purposes - e.g., using)])
-           AC_MSG_WARN([Slurm's srun to launch the job - by configuring with the])
-           AC_MSG_WARN([--disable-internal-rte option.])
-           AC_MSG_ERROR([Cannot continue])])
-
     AC_MSG_CHECKING([if RTE support is enabled])
-    if test "$enable_internal_rte" != "no"; then
-        AC_MSG_RESULT([yes])
+    AS_IF([test "$enable_internal_rte" != "no"],
+       [AC_MSG_RESULT([yes])
         ompi_want_prrte=yes
-        opal_prrte_extra_libs=$OMPI_TOP_BUILDDIR/opal/libopen-pal.la
-        opal_prrte_extra_ltlibs=$OMPI_TOP_BUILDDIR/opal/libopen-pal.la
+        opal_prrte_extra_libs=
+        opal_prrte_extra_ltlibs=
 
         AS_IF([test "$opal_libevent_mode" = "internal"],
            [opal_prrte_extra_libs="$opal_prrte_extra_libs $opal_libevent_LIBS"
@@ -85,15 +75,39 @@ AC_DEFUN([OMPI_SETUP_PRRTE],[
             AS_IF([test ! -z "$with_hwloc_libdir"],
                [opal_prrte_hwloc_arg="$opal_prrte_hwloc_arg --with-hwloc-libdir=$with_hwloc_libdir"])])
 
-        if test -z $with_pmix || test "$with_pmix" = "internal" || test "$with_pmix" = "yes"; then
-            opal_prrte_pmix_arg="--with-pmix-header=$OMPI_TOP_SRCDIR/opal/mca/pmix/pmix-internal.h"
-        else
-            if test "$with_pmix" = "external"; then
-                opal_prrte_pmix_arg="--with-pmix"
-            else
-                opal_prrte_pmix_arg="--with-pmix=$with_pmix"
-            fi
-        fi
+        AS_IF([test "$opal_pmix_mode" = "internal"],
+           [opal_prrte_extra_libs="$opal_prrte_extra_libs $opal_pmix_LIBS"
+            opal_prrte_extra_ltlibs="$opal_prrte_extra_ltlibs $opal_pmix_LIBS"
+
+            AS_IF([test ! -z "$opal_pmix_header"],
+               [opal_prrte_pmix_arg="--with-pmix-header=$opal_pmix_header"])],
+           [OPAL_VAR_SCOPE_PUSH([opal_prrte_CPPFLAGS_save])
+            opal_prrte_CPPFLAGS_save=$CPPFLAGS
+
+            AC_MSG_CHECKING([if external PMIx version is 3.0.0 or greater])
+            AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <pmix_version.h>]],
+                          [[
+#if PMIX_VERSION_MAJOR < 4L
+#error "pmix API version is less than 4.0.0"
+#endif
+                          ]])],
+                       [AC_MSG_RESULT([yes])],
+                       [AC_MSG_RESULT([no])
+                        AC_MSG_WARN([OMPI's internal runtime environment "PRRTE" does not support])
+                        AC_MSG_WARN([PMIx versions less than v4.x as they lack adequate tool])
+                        AC_MSG_WARN([support. You can, if desired, build OMPI against an earlier])
+                        AC_MSG_WARN([version of PMIx for strictly direct-launch purposes - e.g., using)])
+                        AC_MSG_WARN([Slurm's srun to launch the job - by configuring with the])
+                        AC_MSG_WARN([--disable-internal-rte option.])
+                        AC_MSG_ERROR([Cannot continue])])
+
+            CPPFLAGS=$opal_prrte_CPPFLAGS_save
+
+            OPAL_VAR_SCOPE_POP
+
+            opal_prrte_pmix_arg="--with-pmix=$with_pmix"
+            AS_IF([test ! -z "$with_pmix_libdir"],
+               [opal_prrte_pmix_arg="$opal_prrte_pmix_arg --with-pmix-libdir=$with_pmix_libdir"])])
 
         if test -z $enable_prte_prefix_by_default || test "$enable_prte_prefix_by_default" = "yes" ||
            test "$enable_orterun_prefix_given" = "yes"; then
@@ -124,13 +138,10 @@ AC_DEFUN([OMPI_SETUP_PRRTE],[
                            [$opal_prrte_args $opal_subdir_args 'CFLAGS=$CFLAGS' 'CPPFLAGS=$CPPFLAGS'],
                            [opal_prrte_happy=1], [opal_prrte_happy=0])
 
-        OPAL_SUMMARY_ADD([[Miscellaneous]],[[PRRTE]],[prrte],[yes])
-
-    else
-        OPAL_SUMMARY_ADD([[Miscellaneous]],[[PRRTE]],[prrte],[no (disabled)])
+        OPAL_SUMMARY_ADD([[Miscellaneous]],[[PRRTE]],[prrte],[yes])],
+       [OPAL_SUMMARY_ADD([[Miscellaneous]],[[PRRTE]],[prrte],[no (disabled)])
         AC_MSG_RESULT([no (disabled)])
-        ompi_want_prrte=no
-    fi
+        ompi_want_prrte=no])
 
     CFLAGS=$opal_prrte_save_CFLAGS
     CPPFLAGS=$opal_prrte_save_CPPFLAGS

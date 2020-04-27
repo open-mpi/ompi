@@ -3,6 +3,6 @@
 	url = https://github.com/openpmix/prrte
 	branch = master
 [submodule "openpmix"]
-	path = opal/mca/pmix/pmix4x/openpmix
+	path = 3rd-party/openpmix
 	url = https://github.com/openpmix/openpmix.git
 	branch = master

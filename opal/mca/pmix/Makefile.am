@@ -15,7 +15,8 @@ noinst_LTLIBRARIES = libmca_pmix.la
 libmca_pmix_la_SOURCES =
 
 # local files
-headers = pmix-internal.h
+headers = pmix-internal.h \
+	pmix-3rdparty.h
 libmca_pmix_la_SOURCES += $(headers)
 
 # Conditionally install the header files
@@ -25,6 +26,3 @@ nobase_opal_HEADERS = $(headers)
 endif
 
 include base/Makefile.am
-
-distclean-local:
-	rm -f base/static-components.h

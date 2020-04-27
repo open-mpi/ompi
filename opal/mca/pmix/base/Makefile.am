@@ -12,7 +12,8 @@
 dist_opaldata_DATA += base/help-pmix-base.txt
 
 headers += \
-	base/base.h
+	base/base.h \
+	base/static-components.h
 
 libmca_pmix_la_SOURCES += \
 	base/pmix_base_frame.c \

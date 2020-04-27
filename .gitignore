@@ -45,12 +45,13 @@
 Makefile
 Makefile.in
 
-# hwloc has been de-modularized, but still uses parts of the MCA
-# system due to the amount of glue code that ended up in the framework
-# base.  Until that is cleaned up, do not ignore the hard-coded
-# static-components.h file.
+# hwloc and pmix have been de-modularized, but still uses parts of the
+# MCA system due to the amount of glue code that ended up in the
+# framework base.  Until that is cleaned up, do not ignore the
+# hard-coded static-components.h file.
 static-components.h
 !opal/mca/hwloc/base/static-components.h
+!opal/mca/pmix/base/static-components.h
 
 *\\#
 config.cache

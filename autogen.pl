@@ -1477,6 +1477,19 @@ if ("hwloc" ~~ @disabled_3rdparty_packages) {
     verbose "--- hwloc enabled\n";
 }
 
+verbose "=== PMIx\n";
+if ("pmix" ~~ @disabled_3rdparty_packages) {
+    verbose "--- PMIx disabled\n";
+} else {
+    # sanity check pmix files exist
+    if (! -f "3rd-party/openpmix/configure.ac") {
+        my_die("Could not find pmix files\n");
+    }
+    push(@subdirs, "3rd-party/openpmix/");
+    $m4 .= "m4_define([package_pmix], [1])\n";
+    verbose "--- PMIx enabled\n";
+}
+
 $m4 .= "\n";
 
 #---------------------------------------------------------------------------

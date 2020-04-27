@@ -14,6 +14,14 @@
  * Additional copyrights may follow
  *
  * $HEADER$
+ *
+ * In days of old, pmix was packaged as multiple MCA components, and
+ * grew an extensive set of base code to support Open MPI's use of
+ * pmix.  When internal builds of libevent, hwloc, and pmix were moved
+ * out of components into base code so that they could be shared
+ * between Open MPI and PRRTE without incurring linking hell, we left
+ * the base code active.  This MCA framework is essentially defunct;
+ * its only purpose is to allow continued use of the base code.
  */
 
 #ifndef OPAL_PMIX_H
@@ -33,8 +41,7 @@
 #include "opal/util/error.h"
 #include "opal/hash_string.h"
 
-/* include implementation to call */
-#include MCA_pmix_IMPLEMENTATION_HEADER
+#include <pmix.h>
 
 
 BEGIN_C_DECLS
