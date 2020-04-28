@@ -8,6 +8,8 @@
 # Copyright (c) 2015-2019 Research Organization for Information Science
 #                         and Technology (RIST).  All rights reserved.
 # Copyright (c) 2015-2020 IBM Corporation.  All rights reserved.
+# Copyright (c) 2020      Amazon.com, Inc. or its affiliates.
+#                         All Rights reserved.
 #
 # $COPYRIGHT$
 #
@@ -49,6 +51,7 @@ my $no_ompi_arg = 0;
 my $no_orte_arg = 0;
 my $no_prrte_arg = 0;
 my $no_oshmem_arg = 0;
+my $no_3rdparty_arg = "";
 my $quiet_arg = 0;
 my $debug_arg = 0;
 my $help_arg = 0;
@@ -1125,6 +1128,7 @@ my $ok = Getopt::Long::GetOptions("no-ompi" => \$no_ompi_arg,
                                   "no-orte" => \$no_orte_arg,
                                   "no-prrte" => \$no_prrte_arg,
                                   "no-oshmem" => \$no_oshmem_arg,
+                                  "no-3rdparty=s" => \$no_3rdparty_arg,
                                   "quiet|q" => \$quiet_arg,
                                   "debug|d" => \$debug_arg,
                                   "help|h" => \$help_arg,
@@ -1143,6 +1147,7 @@ if (!$ok || $help_arg) {
   --no-orte | -no-orte          Do not build Open MPI's runtime support (alias for --no-prrte)
   --no-prrte | -no-prrte        Do not build Open MPI's runtime support
   --no-oshmem | -no-oshmem      Do not build the OSHMEM layer
+  --no-3rdparty <package>       Do not build the listed 3rd-party package (comma separtated list)
   --quiet | -q                  Do not display normal verbose output
   --debug | -d                  Output lots of debug information
   --help | -h                   This help list
@@ -1416,6 +1421,29 @@ m4_define([project_name_short], [$project_name_short])\n";
 
 # Setup MCA
 mca_run_global($projects);
+
+#---------------------------------------------------------------------------
+
+# Handle 3rd-party packages
+++$step;
+verbose "\n$step. Setup for 3rd-party packages\n";
+
+my @enabled_3rdparty_packages = ();
+my @disabled_3rdparty_packages = split(/,/, $no_3rdparty_arg);
+if ($no_prrte_arg) {
+    push(@disabled_3rdparty_packages, "prrte");
+}
+
+$m4 .= "\n$dnl_line
+$dnl_line
+$dnl_line
+
+dnl 3rd-party package information\n";
+
+# these are fairly one-off, so we did not try to do anything
+# generic. Sorry :).
+
+$m4 .= "\n";
 
 #---------------------------------------------------------------------------
 

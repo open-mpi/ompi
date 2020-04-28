@@ -28,6 +28,8 @@
 # Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
 # Copyright (c) 2019      Triad National Security, LLC. All rights
 #                         reserved.
+# Copyright (c) 2020      Amazon.com, Inc. or its affiliates.
+#                         All Rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -1097,6 +1099,21 @@ dnl OPAL_SETUP_FT_OPTIONS
 OPAL_SETUP_FT
 
 ##################################
+# 3rd-party packages not called ROMIO
+##################################
+opal_show_title "3rd-party packages"
+
+OPAL_3RDPARY_SUBDIRS=
+OPAL_3RDPARY_DIST_SUBDIRS=
+OPAL_3RDPARY_EXTRA_DIST=
+OPAL_3RDPARY_DISTCLEAN_DIRS=
+
+AC_SUBST(OPAL_3RDPARTY_SUBDIRS)
+AC_SUBST(OPAL_3RDPARTY_DIST_SUBDIRS)
+AC_SUBST(OPAL_3RDPARTY_EXTRA_DIST)
+AC_SUBST(OPAL_3RDPARTY_DISTCLEAN_DIRS)
+
+##################################
 # MCA
 ##################################
 
@@ -1442,6 +1459,8 @@ AC_CONFIG_FILES([
     contrib/dist/mofed/debian/changelog
     contrib/dist/mofed/debian/control
     contrib/dist/mofed/debian/copyright:LICENSE
+
+    3rd-party/Makefile
 
     test/Makefile
     test/event/Makefile

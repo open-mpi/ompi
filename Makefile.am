@@ -22,12 +22,12 @@
 # $HEADER$
 #
 
-SUBDIRS = config contrib $(MCA_PROJECT_SUBDIRS) test
+SUBDIRS = config contrib 3rd-party $(MCA_PROJECT_SUBDIRS) test
 if OMPI_WANT_PRRTE
 SUBDIRS += prrte
 endif
 
-DIST_SUBDIRS = config contrib $(MCA_PROJECT_DIST_SUBDIRS) test
+DIST_SUBDIRS = config contrib 3rd-party $(MCA_PROJECT_DIST_SUBDIRS) test
 if OMPI_WANT_PRRTE
 DIST_SUBDIRS += prrte
 endif
@@ -50,7 +50,8 @@ install-exec-hook:
 	        --brief \
 	        --top_builddir=$(top_builddir) \
 	        --top_srcdir=$(top_srcdir) \
-	        --objext=$(OBJEXT) ; \
+	        --objext=$(OBJEXT) \
+	        --skipdir=3rd-party ; \
 	fi
 
 ACLOCAL_AMFLAGS = -I config
