@@ -11,10 +11,10 @@
  * $HEADER$
  */
 
-#if !defined(MCA_BTL_VADER_XPMEM_H)
-#define MCA_BTL_VADER_XPMEM_H
+#if !defined(MCA_BTL_SM_XPMEM_H)
+#define MCA_BTL_SM_XPMEM_H
 
-#if OPAL_BTL_VADER_HAVE_XPMEM
+#if OPAL_BTL_SM_HAVE_XPMEM
 
 #if defined(HAVE_XPMEM_H)
   #include <xpmem.h>
@@ -35,17 +35,17 @@
 
 struct mca_btl_base_endpoint_t;
 
-int mca_btl_vader_xpmem_init (void);
+int mca_btl_sm_xpmem_init (void);
 
-mca_rcache_base_registration_t *vader_get_registation (struct mca_btl_base_endpoint_t *endpoint, void *rem_ptr,
+mca_rcache_base_registration_t *sm_get_registation (struct mca_btl_base_endpoint_t *endpoint, void *rem_ptr,
                                                        size_t size, int flags, void **local_ptr);
 
-void vader_return_registration (mca_rcache_base_registration_t *reg, struct mca_btl_base_endpoint_t *endpoint);
-void mca_btl_vader_xpmem_cleanup_endpoint (struct mca_btl_base_endpoint_t *ep);
+void sm_return_registration (mca_rcache_base_registration_t *reg, struct mca_btl_base_endpoint_t *endpoint);
+void mca_btl_sm_xpmem_cleanup_endpoint (struct mca_btl_base_endpoint_t *ep);
 
 #else
 
-static inline mca_rcache_base_registration_t *vader_get_registation (struct mca_btl_base_endpoint_t *endpoint, void *rem_ptr,
+static inline mca_rcache_base_registration_t *sm_get_registation (struct mca_btl_base_endpoint_t *endpoint, void *rem_ptr,
                                                                      size_t size, int flags, void **local_ptr)
 {
     (void) endpoint;
@@ -56,12 +56,12 @@ static inline mca_rcache_base_registration_t *vader_get_registation (struct mca_
     return NULL;
 }
 
-static inline void vader_return_registration (mca_rcache_base_registration_t *reg, struct mca_btl_base_endpoint_t *endpoint)
+static inline void sm_return_registration (mca_rcache_base_registration_t *reg, struct mca_btl_base_endpoint_t *endpoint)
 {
     (void) reg;
     (void) endpoint;
 }
 
-#endif /* OPAL_BTL_VADER_HAVE_XPMEM */
+#endif /* OPAL_BTL_SM_HAVE_XPMEM */
 
 #endif

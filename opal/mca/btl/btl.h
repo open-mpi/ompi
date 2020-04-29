@@ -18,6 +18,7 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2020      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2020      Google, LLC. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -190,7 +191,7 @@ typedef uint8_t mca_btl_base_tag_t;
 #define MCA_BTL_TAG_IB                (MCA_BTL_TAG_BTL + 0)
 #define MCA_BTL_TAG_UDAPL             (MCA_BTL_TAG_BTL + 1)
 #define MCA_BTL_TAG_SMCUDA            (MCA_BTL_TAG_BTL + 2)
-#define MCA_BTL_TAG_VADER             (MCA_BTL_TAG_BTL + 3)
+#define MCA_BTL_TAG_SM                (MCA_BTL_TAG_BTL + 3)
 
 /* prefered protocol */
 #define MCA_BTL_FLAGS_SEND            0x0001

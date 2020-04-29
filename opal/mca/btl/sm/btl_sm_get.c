@@ -14,12 +14,12 @@
 
 #include "opal_config.h"
 
-#include "btl_vader.h"
-#include "btl_vader_frag.h"
-#include "btl_vader_endpoint.h"
-#include "btl_vader_xpmem.h"
+#include "btl_sm.h"
+#include "btl_sm_frag.h"
+#include "btl_sm_endpoint.h"
+#include "btl_sm_xpmem.h"
 
-#if OPAL_BTL_VADER_HAVE_CMA
+#if OPAL_BTL_SM_HAVE_CMA
 #include <sys/uio.h>
 
 #if OPAL_CMA_NEED_SYSCALL_DEFS
@@ -36,8 +36,8 @@
  * @param endpoint (IN)    BTL addressing information
  * @param descriptor (IN)  Description of the data to be transferred
  */
-#if OPAL_BTL_VADER_HAVE_XPMEM
-int mca_btl_vader_get_xpmem (mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpoint, void *local_address,
+#if OPAL_BTL_SM_HAVE_XPMEM
+int mca_btl_sm_get_xpmem (mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpoint, void *local_address,
                              uint64_t remote_address, mca_btl_base_registration_handle_t *local_handle,
                              mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
                              int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata)
@@ -49,14 +49,14 @@ int mca_btl_vader_get_xpmem (mca_btl_base_module_t *btl, mca_btl_base_endpoint_t
     (void) local_handle;
     (void) remote_handle;
 
-    reg = vader_get_registation (endpoint, (void *)(intptr_t) remote_address, size, 0, &rem_ptr);
+    reg = sm_get_registation (endpoint, (void *)(intptr_t) remote_address, size, 0, &rem_ptr);
     if (OPAL_UNLIKELY(NULL == rem_ptr)) {
         return OPAL_ERROR;
     }
 
-    vader_memmove (local_address, rem_ptr, size);
+    sm_memmove (local_address, rem_ptr, size);
 
-    vader_return_registration (reg, endpoint);
+    sm_return_registration (reg, endpoint);
 
     /* always call the callback function */
     cbfunc (btl, endpoint, local_address, local_handle, cbcontext, cbdata, OPAL_SUCCESS);
@@ -65,8 +65,8 @@ int mca_btl_vader_get_xpmem (mca_btl_base_module_t *btl, mca_btl_base_endpoint_t
 }
 #endif
 
-#if OPAL_BTL_VADER_HAVE_CMA
-int mca_btl_vader_get_cma (mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpoint, void *local_address,
+#if OPAL_BTL_SM_HAVE_CMA
+int mca_btl_sm_get_cma (mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpoint, void *local_address,
                            uint64_t remote_address, mca_btl_base_registration_handle_t *local_handle,
                            mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
                            int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata)
@@ -111,8 +111,8 @@ int mca_btl_vader_get_cma (mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *
 }
 #endif
 
-#if OPAL_BTL_VADER_HAVE_KNEM
-int mca_btl_vader_get_knem (mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpoint, void *local_address,
+#if OPAL_BTL_SM_HAVE_KNEM
+int mca_btl_sm_get_knem (mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpoint, void *local_address,
                             uint64_t remote_address, mca_btl_base_registration_handle_t *local_handle,
                             mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
                             int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata)
@@ -134,15 +134,15 @@ int mca_btl_vader_get_knem (mca_btl_base_module_t *btl, mca_btl_base_endpoint_t 
     /* Use the DMA flag if knem supports it *and* the segment length
      * is greater than the cutoff. Not that if DMA is not supported
      * or the user specified 0 for knem_dma_min the knem_dma_min was
-     * set to UINT_MAX in mca_btl_vader_knem_init. */
-    if (mca_btl_vader_component.knem_dma_min <= size) {
+     * set to UINT_MAX in mca_btl_sm_knem_init. */
+    if (mca_btl_sm_component.knem_dma_min <= size) {
         icopy.flags = KNEM_FLAG_DMA;
     }
     /* synchronous flags only, no need to specify icopy.async_status_index */
 
     /* When the ioctl returns, the transfer is done and we can invoke
        the btl callback and return the frag */
-    if (OPAL_UNLIKELY(0 != ioctl (mca_btl_vader.knem_fd, KNEM_CMD_INLINE_COPY, &icopy))) {
+    if (OPAL_UNLIKELY(0 != ioctl (mca_btl_sm.knem_fd, KNEM_CMD_INLINE_COPY, &icopy))) {
         return OPAL_ERROR;
     }
 
@@ -157,15 +157,15 @@ int mca_btl_vader_get_knem (mca_btl_base_module_t *btl, mca_btl_base_endpoint_t 
 }
 #endif
 
-int mca_btl_vader_get_sc_emu (mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpoint, void *local_address,
+int mca_btl_sm_get_sc_emu (mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpoint, void *local_address,
                               uint64_t remote_address, mca_btl_base_registration_handle_t *local_handle,
                               mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
                               int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata)
 {
-    if (size > mca_btl_vader.super.btl_get_limit) {
+    if (size > mca_btl_sm.super.btl_get_limit) {
         return OPAL_ERR_NOT_AVAILABLE;
     }
 
-    return mca_btl_vader_rdma_frag_start (btl, endpoint, MCA_BTL_VADER_OP_GET, 0, 0, 0, order, flags, size,
-                                          local_address, remote_address, cbfunc, cbcontext, cbdata);
+    return mca_btl_sm_rdma_frag_start (btl, endpoint, MCA_BTL_SM_OP_GET, 0, 0, 0, order, flags, size,
+                                       local_address, remote_address, cbfunc, cbcontext, cbdata);
 }

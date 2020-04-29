@@ -13,17 +13,17 @@
  * $HEADER$
  */
 
-#include "btl_vader.h"
+#include "btl_sm.h"
 
 #include "opal/include/opal/align.h"
 #include "opal/mca/memchecker/base/base.h"
 
-#if OPAL_BTL_VADER_HAVE_XPMEM
+#if OPAL_BTL_SM_HAVE_XPMEM
 
-int mca_btl_vader_xpmem_init (void)
+int mca_btl_sm_xpmem_init (void)
 {
     /* Any attachment that goes past the Linux TASK_SIZE will always fail. To prevent this we need to
-     * determine the value of TASK_SIZE. On x86_64 the value was hard-coded in vader to be
+     * determine the value of TASK_SIZE. On x86_64 the value was hard-coded in sm to be
      * 0x7ffffffffffful but this approach does not work with AARCH64 (and possibly other architectures).
      * Since there is really no way to directly determine the value we can (in all cases?) look through
      * the mapping for this process to determine what the largest address is. This should be the top
@@ -57,48 +57,48 @@ int mca_btl_vader_xpmem_init (void)
     }
 
     /* save the calcuated maximum */
-    mca_btl_vader_component.my_address_max = address_max - 1;
+    mca_btl_sm_component.my_address_max = address_max - 1;
 
     /* it is safe to use XPMEM_MAXADDR_SIZE here (which is always (size_t)-1 even though
      * it is not safe for attach */
-    mca_btl_vader_component.my_seg_id = xpmem_make (0, XPMEM_MAXADDR_SIZE, XPMEM_PERMIT_MODE,
+    mca_btl_sm_component.my_seg_id = xpmem_make (0, XPMEM_MAXADDR_SIZE, XPMEM_PERMIT_MODE,
                                                     (void *)0666);
-    if (-1 == mca_btl_vader_component.my_seg_id) {
+    if (-1 == mca_btl_sm_component.my_seg_id) {
         return OPAL_ERR_NOT_AVAILABLE;
     }
 
-    mca_btl_vader.super.btl_get = mca_btl_vader_get_xpmem;
-    mca_btl_vader.super.btl_put = mca_btl_vader_put_xpmem;
+    mca_btl_sm.super.btl_get = mca_btl_sm_get_xpmem;
+    mca_btl_sm.super.btl_put = mca_btl_sm_put_xpmem;
 
     return OPAL_SUCCESS;
 }
 
-struct vader_check_reg_ctx_t {
+struct sm_check_reg_ctx_t {
     mca_btl_base_endpoint_t *ep;
     mca_rcache_base_registration_t **reg;
     uintptr_t base;
     uintptr_t bound;
 };
-typedef struct vader_check_reg_ctx_t vader_check_reg_ctx_t;
+typedef struct sm_check_reg_ctx_t sm_check_reg_ctx_t;
 
-static int vader_check_reg (mca_rcache_base_registration_t *reg, void *ctx)
+static int sm_check_reg (mca_rcache_base_registration_t *reg, void *ctx)
 {
-    vader_check_reg_ctx_t *vader_ctx = (vader_check_reg_ctx_t *) ctx;
+    sm_check_reg_ctx_t *sm_ctx = (sm_check_reg_ctx_t *) ctx;
 
-    if ((intptr_t) reg->alloc_base != vader_ctx->ep->peer_smp_rank) {
+    if ((intptr_t) reg->alloc_base != sm_ctx->ep->peer_smp_rank) {
         /* ignore this registration */
         return OPAL_SUCCESS;
     }
 
-    vader_ctx->reg[0] = reg;
+    sm_ctx->reg[0] = reg;
 
-    if (vader_ctx->bound <= (uintptr_t) reg->bound && vader_ctx->base >= (uintptr_t) reg->base) {
+    if (sm_ctx->bound <= (uintptr_t) reg->bound && sm_ctx->base >= (uintptr_t) reg->base) {
         if (0 == opal_atomic_fetch_add_32 (&reg->ref_count, 1)) {
-            /* registration is being deleted by a thread in vader_return_registration. the
+            /* registration is being deleted by a thread in sm_return_registration. the
              * VMA tree implementation will block in mca_rcache_delete until we finish
              * iterating over the VMA tree so it is safe to just ignore this registration
              * and continue. */
-            vader_ctx->reg[0] = NULL;
+            sm_ctx->reg[0] = NULL;
             return OPAL_SUCCESS;
         }
         return 1;
@@ -106,7 +106,7 @@ static int vader_check_reg (mca_rcache_base_registration_t *reg, void *ctx)
 
     if (MCA_RCACHE_FLAGS_INVALID & opal_atomic_fetch_or_32(&reg->flags, MCA_RCACHE_FLAGS_INVALID)) {
         /* another thread has already marked this registration as invalid. ignore and continue. */
-        vader_ctx->reg[0] = NULL;
+        sm_ctx->reg[0] = NULL;
         return OPAL_SUCCESS;
     }
 
@@ -116,9 +116,9 @@ static int vader_check_reg (mca_rcache_base_registration_t *reg, void *ctx)
     return 2;
 }
 
-void vader_return_registration (mca_rcache_base_registration_t *reg, struct mca_btl_base_endpoint_t *ep)
+void sm_return_registration (mca_rcache_base_registration_t *reg, struct mca_btl_base_endpoint_t *ep)
 {
-    mca_rcache_base_vma_module_t *vma_module =  mca_btl_vader_component.vma_module;
+    mca_rcache_base_vma_module_t *vma_module =  mca_btl_sm_component.vma_module;
     int32_t ref_count;
 
     ref_count = opal_atomic_add_fetch_32 (&reg->ref_count, -1);
@@ -137,13 +137,13 @@ void vader_return_registration (mca_rcache_base_registration_t *reg, struct mca_
 
 /* look up the remote pointer in the peer rcache and attach if
  * necessary */
-mca_rcache_base_registration_t *vader_get_registation (struct mca_btl_base_endpoint_t *ep, void *rem_ptr,
+mca_rcache_base_registration_t *sm_get_registation (struct mca_btl_base_endpoint_t *ep, void *rem_ptr,
                                                        size_t size, int flags, void **local_ptr)
 {
-    mca_rcache_base_vma_module_t *vma_module = mca_btl_vader_component.vma_module;
-    uint64_t attach_align = 1 << mca_btl_vader_component.log_attach_align;
+    mca_rcache_base_vma_module_t *vma_module = mca_btl_sm_component.vma_module;
+    uint64_t attach_align = 1 << mca_btl_sm_component.log_attach_align;
     mca_rcache_base_registration_t *reg = NULL;
-    vader_check_reg_ctx_t check_ctx = {.ep = ep, .reg = &reg};
+    sm_check_reg_ctx_t check_ctx = {.ep = ep, .reg = &reg};
     xpmem_addr_t xpmem_addr;
     uintptr_t base, bound;
     int rc;
@@ -158,11 +158,11 @@ mca_rcache_base_registration_t *vader_get_registation (struct mca_btl_base_endpo
     check_ctx.bound = bound;
 
     /* several segments may match the base pointer */
-    rc = mca_rcache_base_vma_iterate (vma_module, (void *) base, bound - base, true, vader_check_reg, &check_ctx);
+    rc = mca_rcache_base_vma_iterate (vma_module, (void *) base, bound - base, true, sm_check_reg, &check_ctx);
     if (2 == rc) {
         bound = bound < (uintptr_t) reg->bound ? (uintptr_t) reg->bound : bound;
         base = base > (uintptr_t) reg->base ? (uintptr_t) reg->base : base;
-        vader_return_registration(reg, ep);
+        sm_return_registration(reg, ep);
         reg = NULL;
     }
 
@@ -204,14 +204,14 @@ mca_rcache_base_registration_t *vader_get_registation (struct mca_btl_base_endpo
     return reg;
 }
 
-struct vader_cleanup_reg_ctx {
-    mca_btl_vader_endpoint_t *ep;
+struct sm_cleanup_reg_ctx {
+    mca_btl_sm_endpoint_t *ep;
     opal_list_t *registrations;
 };
 
-static int mca_btl_vader_endpoint_xpmem_rcache_cleanup (mca_rcache_base_registration_t *reg, void *ctx)
+static int mca_btl_sm_endpoint_xpmem_rcache_cleanup (mca_rcache_base_registration_t *reg, void *ctx)
 {
-    struct vader_cleanup_reg_ctx *cleanup_ctx = (struct vader_cleanup_reg_ctx *) ctx;
+    struct sm_cleanup_reg_ctx *cleanup_ctx = (struct sm_cleanup_reg_ctx *) ctx;
     if ((intptr_t) reg->alloc_base == cleanup_ctx->ep->peer_smp_rank) {
         opal_list_append(cleanup_ctx->registrations, &reg->super.super);
     }
@@ -219,21 +219,21 @@ static int mca_btl_vader_endpoint_xpmem_rcache_cleanup (mca_rcache_base_registra
     return OPAL_SUCCESS;
 }
 
-void mca_btl_vader_xpmem_cleanup_endpoint (struct mca_btl_base_endpoint_t *ep)
+void mca_btl_sm_xpmem_cleanup_endpoint (struct mca_btl_base_endpoint_t *ep)
 {
     mca_rcache_base_registration_t *reg;
     opal_list_t registrations;
-    struct vader_cleanup_reg_ctx cleanup_ctx = {.ep = ep, .registrations = &registrations};
+    struct sm_cleanup_reg_ctx cleanup_ctx = {.ep = ep, .registrations = &registrations};
 
     OBJ_CONSTRUCT(&registrations, opal_list_t);
 
     /* clean out the registration cache */
-    (void) mca_rcache_base_vma_iterate (mca_btl_vader_component.vma_module,
+    (void) mca_rcache_base_vma_iterate (mca_btl_sm_component.vma_module,
                                         NULL, (size_t) -1, true,
-                                        mca_btl_vader_endpoint_xpmem_rcache_cleanup,
+                                        mca_btl_sm_endpoint_xpmem_rcache_cleanup,
                                         (void *) &cleanup_ctx);
     while (NULL != (reg = (mca_rcache_base_registration_t *) opal_list_remove_first(&registrations))) {
-        vader_return_registration (reg, ep);
+        sm_return_registration (reg, ep);
     }
     OBJ_DESTRUCT(&registrations);
 
@@ -243,4 +243,4 @@ void mca_btl_vader_xpmem_cleanup_endpoint (struct mca_btl_base_endpoint_t *ep)
     }
 }
 
-#endif /* OPAL_BTL_VADER_HAVE_XPMEM */
+#endif /* OPAL_BTL_SM_HAVE_XPMEM */

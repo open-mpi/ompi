@@ -15,6 +15,7 @@
  *                         reserved.
  * Copyright (c) 2018      Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2020      Google, LLC. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -25,16 +26,16 @@
  * @file
  */
 
-#ifndef MCA_BTL_VADER_ENDPOINT_H
-#define MCA_BTL_VADER_ENDPOINT_H
+#ifndef MCA_BTL_SM_ENDPOINT_H
+#define MCA_BTL_SM_ENDPOINT_H
 
 #include "opal_config.h"
-#include "btl_vader_xpmem.h"
+#include "btl_sm_xpmem.h"
 
-#define MCA_BTL_VADER_FBOX_ALIGNMENT      32
-#define MCA_BTL_VADER_FBOX_ALIGNMENT_MASK (MCA_BTL_VADER_FBOX_ALIGNMENT - 1)
+#define MCA_BTL_SM_FBOX_ALIGNMENT      32
+#define MCA_BTL_SM_FBOX_ALIGNMENT_MASK (MCA_BTL_SM_FBOX_ALIGNMENT - 1)
 
-struct vader_fifo_t;
+struct sm_fifo_t;
 
 /**
  *  An abstraction that represents a connection to a endpoint process.
@@ -42,7 +43,7 @@ struct vader_fifo_t;
  *  and BTL pair at startup.
  */
 
-struct mca_btl_vader_fbox_t;
+struct mca_btl_sm_fbox_t;
 
 typedef struct mca_btl_base_endpoint_t {
     opal_list_item_t super;
@@ -69,13 +70,13 @@ typedef struct mca_btl_base_endpoint_t {
     char *segment_base;     /**< start of the peer's segment (in the address space
                              *   of this process) */
 
-    struct vader_fifo_t *fifo; /**< */
+    struct sm_fifo_t *fifo; /**< */
 
     opal_mutex_t lock;      /**< lock to protect endpoint structures from concurrent
                              *   access */
 
     union {
-#if OPAL_BTL_VADER_HAVE_XPMEM
+#if OPAL_BTL_SM_HAVE_XPMEM
         struct {
             xpmem_apid_t    apid;       /**< xpmem apid for remote peer */
             uintptr_t       address_max; /**< largest address that can be attached */
@@ -92,35 +93,35 @@ typedef struct mca_btl_base_endpoint_t {
     bool waiting;           /**< endpoint is on the component wait list */
 } mca_btl_base_endpoint_t;
 
-typedef mca_btl_base_endpoint_t mca_btl_vader_endpoint_t;
+typedef mca_btl_base_endpoint_t mca_btl_sm_endpoint_t;
 
-OBJ_CLASS_DECLARATION(mca_btl_vader_endpoint_t);
+OBJ_CLASS_DECLARATION(mca_btl_sm_endpoint_t);
 
-static inline void mca_btl_vader_endpoint_setup_fbox_recv (struct mca_btl_base_endpoint_t *endpoint, void *base)
+static inline void mca_btl_sm_endpoint_setup_fbox_recv (struct mca_btl_base_endpoint_t *endpoint, void *base)
 {
     endpoint->fbox_in.startp = (uint32_t *) base;
-    endpoint->fbox_in.start = MCA_BTL_VADER_FBOX_ALIGNMENT;
+    endpoint->fbox_in.start = MCA_BTL_SM_FBOX_ALIGNMENT;
     endpoint->fbox_in.seq = 0;
     opal_atomic_wmb ();
     endpoint->fbox_in.buffer = base;
 }
 
-static inline void mca_btl_vader_endpoint_setup_fbox_send (struct mca_btl_base_endpoint_t *endpoint, opal_free_list_item_t *fbox)
+static inline void mca_btl_sm_endpoint_setup_fbox_send (struct mca_btl_base_endpoint_t *endpoint, opal_free_list_item_t *fbox)
 {
     void *base = fbox->ptr;
 
-    endpoint->fbox_out.start = MCA_BTL_VADER_FBOX_ALIGNMENT;
-    endpoint->fbox_out.end = MCA_BTL_VADER_FBOX_ALIGNMENT;
+    endpoint->fbox_out.start = MCA_BTL_SM_FBOX_ALIGNMENT;
+    endpoint->fbox_out.end = MCA_BTL_SM_FBOX_ALIGNMENT;
     endpoint->fbox_out.startp = (uint32_t *) base;
-    endpoint->fbox_out.startp[0] = MCA_BTL_VADER_FBOX_ALIGNMENT;
+    endpoint->fbox_out.startp[0] = MCA_BTL_SM_FBOX_ALIGNMENT;
     endpoint->fbox_out.seq = 0;
     endpoint->fbox_out.fbox = fbox;
 
     /* zero out the first header in the fast box */
-    memset ((char *) base + MCA_BTL_VADER_FBOX_ALIGNMENT, 0, MCA_BTL_VADER_FBOX_ALIGNMENT);
+    memset ((char *) base + MCA_BTL_SM_FBOX_ALIGNMENT, 0, MCA_BTL_SM_FBOX_ALIGNMENT);
 
     opal_atomic_wmb ();
     endpoint->fbox_out.buffer = base;
 }
 
-#endif /* MCA_BTL_VADER_ENDPOINT_H */
+#endif /* MCA_BTL_SM_ENDPOINT_H */

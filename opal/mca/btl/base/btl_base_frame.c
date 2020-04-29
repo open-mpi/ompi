@@ -16,6 +16,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2020      Google, LLC. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -30,6 +31,7 @@
 #include "opal/mca/mca.h"
 #include "opal/util/output.h"
 #include "opal/mca/base/base.h"
+#include "opal/mca/base/mca_base_alias.h"
 #include "opal/mca/btl/btl.h"
 #include "opal/mca/btl/base/base.h"
 
@@ -153,6 +155,29 @@ static int mca_btl_base_register(mca_base_register_flag_t flags)
     (void) mca_base_var_enum_create_flag ("btl_atomic_flags", mca_btl_base_atomic_enum_flags, &mca_btl_base_atomic_enum);
     (void) mca_base_var_enum_register("opal", "btl", "base", "btl_atomic_flags",
                                  &mca_btl_base_atomic_enum);
+
+    /* Note that we break abstraction rules here by listing two
+       specific BTLs here in the base.  This is necessary, however,
+       due to extraordinary circumstances:
+
+       1. In Open MPI v5.0.0, we want to rename the "vader" BTL to be
+          "sm", because the "old" sm BTL is long gone, and the "vader"
+          name is not very user-friendly.
+
+       2. The MCA aliasing mechanism was therefore created for v5.0.0.
+          Both the component itself and all of its MCA vars are
+          aliased.
+
+       3. However -- at least as currently implemented -- by the time
+          individual components are registered, it's too late to make
+          aliases.  Hence, if we want to preserve the name "vader" for
+          some sembalance of backwards compatibility (and we do!), we
+          have to register "vader" as an "alias for "sm" up here in
+          the BTL base, before any BTL components are registered.
+
+       This is why we tolerate this abstraction break up here in the
+       BTL component base. */
+    (void) mca_base_alias_register ("opal", "btl", "sm", "vader", MCA_BASE_ALIAS_FLAG_NONE);
 
     return OPAL_SUCCESS;
 }

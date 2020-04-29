@@ -25,11 +25,11 @@
 
 #include "opal_config.h"
 
-#include "btl_vader.h"
-#include "btl_vader_frag.h"
-#include "btl_vader_fifo.h"
+#include "btl_sm.h"
+#include "btl_sm_frag.h"
+#include "btl_sm_fifo.h"
 
-#include "btl_vader_fbox.h"
+#include "btl_sm_fbox.h"
 
 /**
  * Initiate an inline send to the peer.
@@ -37,7 +37,7 @@
  * @param btl (IN)      BTL module
  * @param peer (IN)     BTL peer addressing
  */
-int mca_btl_vader_sendi (struct mca_btl_base_module_t *btl,
+int mca_btl_sm_sendi (struct mca_btl_base_module_t *btl,
                          struct mca_btl_base_endpoint_t *endpoint,
                          struct opal_convertor_t *convertor,
                          void *header, size_t header_size,
@@ -45,7 +45,7 @@ int mca_btl_vader_sendi (struct mca_btl_base_module_t *btl,
                          uint32_t flags, mca_btl_base_tag_t tag,
                          mca_btl_base_descriptor_t **descriptor)
 {
-    mca_btl_vader_frag_t *frag;
+    mca_btl_sm_frag_t *frag;
     void *data_ptr = NULL;
     size_t length;
 
@@ -63,14 +63,14 @@ int mca_btl_vader_sendi (struct mca_btl_base_module_t *btl,
     }
 
     if (!(payload_size && opal_convertor_need_buffers (convertor)) &&
-        mca_btl_vader_fbox_sendi (endpoint, tag, header, header_size, data_ptr, payload_size)) {
+        mca_btl_sm_fbox_sendi (endpoint, tag, header, header_size, data_ptr, payload_size)) {
         return OPAL_SUCCESS;
     }
 
     length = header_size + payload_size;
 
     /* allocate a fragment, giving up if we can't get one */
-    frag = (mca_btl_vader_frag_t *) mca_btl_vader_alloc (btl, endpoint, order, length,
+    frag = (mca_btl_sm_frag_t *) mca_btl_sm_alloc (btl, endpoint, order, length,
                                                          flags | MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
     if (OPAL_UNLIKELY(NULL == frag)) {
         if (descriptor) {
@@ -104,11 +104,11 @@ int mca_btl_vader_sendi (struct mca_btl_base_module_t *btl,
     }
 
     /* write the fragment pointer to peer's the FIFO. the progress function will return the fragment */
-    if (!vader_fifo_write_ep (frag->hdr, endpoint)) {
+    if (!sm_fifo_write_ep (frag->hdr, endpoint)) {
         if (descriptor) {
             *descriptor = &frag->base;
         } else {
-            mca_btl_vader_free (btl, &frag->base);
+            mca_btl_sm_free (btl, &frag->base);
         }
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
