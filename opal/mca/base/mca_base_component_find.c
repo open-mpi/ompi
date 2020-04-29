@@ -18,6 +18,7 @@
  *                         reserved.
  * Copyright (c) 2019      Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2020      Google, LLC. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -56,6 +57,7 @@
 #include "opal/class/opal_list.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
+#include "opal/mca/base/mca_base_alias.h"
 #include "opal/mca/base/mca_base_component_repository.h"
 #include "opal/constants.h"
 #include "opal/mca/dl/base/base.h"
@@ -84,7 +86,8 @@ typedef struct mca_base_open_only_dummy_component_t mca_base_open_only_dummy_com
 
 static char negate[] = "^";
 
-static bool use_component(const bool include_mode,
+static bool use_component(const mca_base_framework_t *framework,
+                          const bool include_mode,
                           const char **requested_component_names,
                           const char *component_name);
 
@@ -118,7 +121,7 @@ int mca_base_component_find (const char *directory, mca_base_framework_t *framew
     /* Find all the components that were statically linked in */
     if (static_components) {
         for (int i = 0 ; NULL != static_components[i]; ++i) {
-            if ( use_component(include_mode,
+            if ( use_component(framework, include_mode,
                                (const char**)requested_component_names,
                                static_components[i]->mca_component_name) ) {
                 cli = OBJ_NEW(mca_base_component_list_item_t);
@@ -192,7 +195,7 @@ int mca_base_components_filter (mca_base_framework_t *framework, uint32_t filter
         mca_base_open_only_dummy_component_t *dummy =
             (mca_base_open_only_dummy_component_t *) cli->cli_component;
 
-        can_use = use_component (include_mode, (const char **) requested_component_names,
+        can_use = use_component (framework, include_mode, (const char **) requested_component_names,
                                  cli->cli_component->mca_component_name);
 
         if (!can_use || (filter_flags & dummy->data.param_field) != filter_flags) {
@@ -263,7 +266,7 @@ static void find_dyn_components(const char *path, mca_base_framework_t *framewor
 
     /* Iterate through the repository and find components that can be included */
     OPAL_LIST_FOREACH(ri, dy_components, mca_base_component_repository_item_t) {
-        if (use_component(include_mode, names, ri->ri_name)) {
+        if (use_component(framework, include_mode, names, ri->ri_name)) {
             mca_base_component_repository_open (framework, ri);
         }
     }
@@ -271,27 +274,44 @@ static void find_dyn_components(const char *path, mca_base_framework_t *framewor
 
 #endif /* OPAL_HAVE_DL_SUPPORT */
 
-static bool use_component(const bool include_mode,
+static bool component_in_list (const char **requested_component_names,
+                               const char *component_name)
+{
+    for (int i = 0 ; requested_component_names[i] ; ++i) {
+        if (strcmp(component_name, requested_component_names[i]) == 0) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+static bool use_component(const mca_base_framework_t *framework,
+                          const bool include_mode,
                           const char **requested_component_names,
                           const char *component_name)
 {
-    bool found = false;
-    const char **req_comp_name = requested_component_names;
-
     /*
      * If no selection is specified then we use all components
      * we can find.
      */
-    if (NULL == req_comp_name) {
+    if (NULL == requested_component_names) {
         return true;
     }
 
-    while ( *req_comp_name != NULL ) {
-        if ( strcmp(component_name, *req_comp_name) == 0 ) {
-            found = true;
-            break;
+    bool found = component_in_list (requested_component_names, component_name);
+
+    if (!found) {
+        const mca_base_alias_t *alias = mca_base_alias_lookup (framework->framework_project,
+                                                               framework->framework_name, component_name);
+        if (alias) {
+            OPAL_LIST_FOREACH_DECL(alias_item, &alias->component_aliases, mca_base_alias_item_t) {
+                found = component_in_list (requested_component_names, alias_item->component_alias);
+                if (found) {
+                    break;
+                }
+            }
         }
-        req_comp_name++;
     }
 
     /*
@@ -315,20 +335,33 @@ static bool use_component(const bool include_mode,
 static int component_find_check (mca_base_framework_t *framework, char **requested_component_names)
 {
     opal_list_t *components = &framework->framework_components;
-    mca_base_component_list_item_t *cli;
 
     if (NULL == requested_component_names) {
         return OPAL_SUCCESS;
     }
 
-    for (int i = 0; NULL != requested_component_names[i]; ++i) {
+    for (int i = 0 ; requested_component_names[i] ; ++i) {
         bool found = false;
 
-        OPAL_LIST_FOREACH(cli, components, mca_base_component_list_item_t) {
-            if (0 == strcmp(requested_component_names[i],
-                            cli->cli_component->mca_component_name)) {
+        OPAL_LIST_FOREACH_DECL(cli, components, mca_base_component_list_item_t) {
+            if (0 == strcmp (requested_component_names[i], cli->cli_component->mca_component_name)) {
                 found = true;
                 break;
+            }
+
+            const mca_base_alias_t *alias = mca_base_alias_lookup (framework->framework_project,
+                                                                   framework->framework_name,
+                                                                   cli->cli_component->mca_component_name);
+            if (alias) {
+                OPAL_LIST_FOREACH_DECL(alias_item, &alias->component_aliases, mca_base_alias_item_t) {
+                    if (0 == strcmp (requested_component_names[i], alias_item->component_alias)) {
+                        found = true;
+                        break;
+                    }
+                }
+                if (found) {
+                    break;
+                }
             }
         }
 
