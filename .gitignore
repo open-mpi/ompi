@@ -464,6 +464,7 @@ test/simple/hello_output
 test/simple/hello_show_help
 test/simple/hello
 test/simple/hello++
+test/simple/intercomm1
 test/simple/interlib
 test/simple/loop_child
 test/simple/loop_spawn
