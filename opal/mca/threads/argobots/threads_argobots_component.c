@@ -27,7 +27,6 @@
 #include "opal/mca/threads/thread.h"
 #include "opal/mca/threads/threads.h"
 #include "opal/constants.h"
-#include <abt.h>
 
 static int opal_threads_argobots_open(void);
 

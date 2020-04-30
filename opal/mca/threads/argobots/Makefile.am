@@ -18,9 +18,9 @@
 # $HEADER$
 #
 
-noinst_LTLIBRARIES = libmca_threads_argobots.la
+AM_CPPFLAGS = $(opal_argo_CPPFLAGS)
 
-libmca_threads_argobots_la_SOURCES = \
+sources = \
     threads_argobots.h \
     threads_argobots_component.c \
     threads_argobots_condition.c \
@@ -32,4 +32,27 @@ libmca_threads_argobots_la_SOURCES = \
     threads_argobots_wait_sync.c \
     threads_argobots_wait_sync.h
 
-AM_LDFLAGS = -labt
+#lib = libmca_threads_argobots.la
+lib_sources = $(sources)
+
+if MCA_BUILD_opal_threads_argobots_DSO
+component_noinst =
+component_install = mca_threads_argobots.la
+else
+component_noinst = libmca_threads_argobots.la
+component_install =
+endif
+
+mcacomponentdir = $(opallibdir)
+mcacomponent_LTLIBRARIES = $(component_install)
+mca_threads_argobots_la_SOURCES = $(sources)
+mca_threads_argobots_la_LDFLAGS = -module -avoid-version
+mca_threads_argobots_la_LIBADD = $(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la \
+        $(opal_argo_LIBS)
+
+noinst_LTLIBRARIES = $(component_noinst)
+libmca_threads_argobots_la_SOURCES = $(sources)
+libmca_threads_argobots_la_LDFLAGS = -module -avoid-version $(opal_argo_LDFLAGS)
+libmca_threads_argobots_la_LIBADD = $(opal_argo_LIBS)
+
+

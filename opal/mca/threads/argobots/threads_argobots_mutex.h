@@ -40,7 +40,6 @@
 #include "opal/sys/atomic.h"
 #include "opal/util/output.h"
 
-#include <abt.h>
 
 BEGIN_C_DECLS
 

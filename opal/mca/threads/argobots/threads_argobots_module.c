@@ -32,8 +32,6 @@
 #include "opal/mca/threads/threads.h"
 #include "opal/mca/threads/tsd.h"
 
-#include <abt.h>
-
 struct opal_tsd_key_value {
     opal_tsd_key_t key;
     opal_tsd_destructor_t destructor;
