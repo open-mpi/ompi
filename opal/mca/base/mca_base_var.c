@@ -297,6 +297,11 @@ int mca_base_var_init(void)
             return OPAL_ERROR;
         }
 
+        if( NULL == (cwd = getcwd(NULL, 0) )) {
+            opal_output(0, "Error: Unable to get the current working directory\n");
+            cwd = strdup(".");
+        }
+
         /* Set this before we register the parameter, below */
 
         mca_base_var_initialized = true;
@@ -410,20 +415,15 @@ int mca_base_var_cache_files(bool rel_path_search)
     char *tmp;
     int ret;
 
-    if (NULL == cwd) {
-        cwd = (char *) malloc(sizeof(char) * MAXPATHLEN);
-        if( NULL == (cwd = getcwd(cwd, MAXPATHLEN) )) {
-            opal_output(0, "Error: Unable to get the current working directory\n");
-            cwd = strdup(".");
-        }
+    if (NULL != getenv("OPAL_USER_PARAMS_GIVEN")) {
+        /* PMIx already provided the params for us */
+        return OPAL_SUCCESS;
     }
 
 #if OPAL_WANT_HOME_CONFIG_FILES
-    if (NULL == getenv("OPAL_USER_PARAMS_GIVEN")) {
-        opal_asprintf(&mca_base_var_files, "%s"OPAL_PATH_SEP".openmpi" OPAL_PATH_SEP
-                 "mca-params.conf%c%s" OPAL_PATH_SEP "openmpi-mca-params.conf",
-                 home, ',', opal_install_dirs.sysconfdir);
-    }
+    opal_asprintf(&mca_base_var_files, "%s"OPAL_PATH_SEP".openmpi" OPAL_PATH_SEP
+             "mca-params.conf%c%s" OPAL_PATH_SEP "openmpi-mca-params.conf",
+             home, ',', opal_install_dirs.sysconfdir);
 #else
     opal_asprintf(&mca_base_var_files, "%s" OPAL_PATH_SEP "openmpi-mca-params.conf",
              opal_install_dirs.sysconfdir);

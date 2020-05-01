@@ -276,7 +276,7 @@ int ompi_mpi_finalize(void)
         ompi_communicator_t *comm = &ompi_mpi_comm_world.comm;
         comm->c_coll->coll_barrier(comm, comm->c_coll->coll_barrier_module);
 
-        if (PMIX_SUCCESS != (rc = PMIx_Fence(NULL, 0))) {
+        if (PMIX_SUCCESS != (rc = PMIx_Fence(NULL, 0, NULL, 0))) {
             ret = opal_pmix_convert_status(rc);
             OMPI_ERROR_LOG(ret);
         }
