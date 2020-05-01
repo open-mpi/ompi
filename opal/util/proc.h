@@ -114,7 +114,6 @@ typedef struct opal_process_info_t {
     uint32_t num_local_peers;           /**< number of procs from my job that share my node with me */
     uint16_t my_local_rank;             /**< local rank on this node within my job */
     uint16_t my_node_rank;
-    uint16_t my_numa_rank;              /**< rank on this processes NUMA node. A value of UINT16_MAX indicates unavailable numa_rank */
     char *cpuset;                       /**< String-representation of bitmap where we are bound */
     pid_t pid;
     uint32_t num_procs;

@@ -40,7 +40,6 @@ opal_process_info_t opal_process_info = {
     .num_local_peers = 0,  /* there is nobody else but me */
     .my_local_rank = 0,    /* I'm the only process around here */
     .my_node_rank = 0,
-    .my_numa_rank = UINT16_MAX,     /* Assume numa_rank is unavailable, set to UINT16_MAX */
     .cpuset = NULL,
     .pid = 0,
     .num_procs = 0,
