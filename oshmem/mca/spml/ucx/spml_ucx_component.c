@@ -162,15 +162,15 @@ static int mca_spml_ucx_component_register(void)
                                      &mca_spml_ucx.synchronized_quiet);
 
     mca_spml_ucx_param_register_ulong("nb_progress_thresh_global", 0,
-                                    "Number of nb_put or nb_get operations before ucx progress is triggered. Disabled by default (0)",
+                                    "Number of nb_put or nb_get operations before ucx progress is triggered. Disabled by default (0). Setting this value will override nb_put/get_progress_thresh.",
                                     &mca_spml_ucx.nb_progress_thresh_global);
 
-    mca_spml_ucx_param_register_ulong("nb_put_progress_thresh", mca_spml_ucx.nb_progress_thresh_global,
-                                    "Number of nb_put operations before ucx progress is triggered. Disabled by default (0), setting this value will override nb_progress_thresh_global",
+    mca_spml_ucx_param_register_ulong("nb_put_progress_thresh", 2048,
+                                    "Number of nb_put operations before ucx progress is triggered. Default (2048).",
                                     &mca_spml_ucx.nb_put_progress_thresh);
 
-    mca_spml_ucx_param_register_ulong("nb_get_progress_thresh", mca_spml_ucx.nb_progress_thresh_global,
-                                    "Number of nb_get operations before ucx progress is triggered. Disabled by default (0), setting this value will override nb_progress_thresh_global ",
+    mca_spml_ucx_param_register_ulong("nb_get_progress_thresh", 4096,
+                                    "Number of nb_get operations before ucx progress is triggered. Default (4096).",
                                     &mca_spml_ucx.nb_get_progress_thresh);
 
     mca_spml_ucx_param_register_ulong("nb_ucp_worker_progress", 32,
@@ -351,6 +351,10 @@ static int spml_ucx_init(void)
     mca_spml_ucx.aux_ctx    = NULL;
     mca_spml_ucx.aux_refcnt = 0;
 
+    if (mca_spml_ucx.nb_progress_thresh_global) {
+        mca_spml_ucx.nb_put_progress_thresh = mca_spml_ucx.nb_progress_thresh_global;
+        mca_spml_ucx.nb_get_progress_thresh = mca_spml_ucx.nb_progress_thresh_global;
+    }
     if (mca_spml_ucx.nb_put_progress_thresh) {
         mca_spml_ucx.super.spml_put_nb = &mca_spml_ucx_put_nb_wprogress;
     }
