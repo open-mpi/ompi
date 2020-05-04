@@ -59,7 +59,6 @@ included in the vX.Y.Z section and be denoted as:
 
 4.0.4 -- May, 2020
 -----------------------
-- Update embedded PMIx to 3.1.5
 - Fix an ABI compatibility issue with the Fortran 2008 bindings.
   Thanks to Alastair McKinstry for reporting.
 - Fix an issue with rpath of /usr/lib64 when building OMPI on
