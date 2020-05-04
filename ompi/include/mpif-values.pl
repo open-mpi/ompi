@@ -4,6 +4,9 @@
 # Copyright (c) 2016-2019 Research Organization for Information Science
 #                         and Technology (RIST).  All rights reserved.
 # Copyright (c) 2016-2018 FUJITSU LIMITED.  All rights reserved.
+# Copyright (c) 2020      The University of Tennessee and The University
+#                         of Tennessee Research Foundation.  All rights
+#                         reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -312,6 +315,7 @@ $constants->{MPI_ERR_NOT_SAME} = 40;
 $constants->{MPI_ERR_NO_SPACE} = 41;
 $constants->{MPI_ERR_NO_SUCH_FILE} = 42;
 $constants->{MPI_ERR_PORT} = 43;
+$constants->{MPI_ERR_PROC_ABORTED} = 74;
 $constants->{MPI_ERR_QUOTA} = 44;
 $constants->{MPI_ERR_READ_ONLY} = 45;
 $constants->{MPI_ERR_RMA_CONFLICT} = 46;

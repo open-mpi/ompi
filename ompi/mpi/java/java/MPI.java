@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -188,6 +188,7 @@ public final class MPI
 	public static final int ERR_NO_SPACE;
 	public static final int ERR_NO_SUCH_FILE;
 	public static final int ERR_PORT;
+	public static final int ERR_PROC_ABORTED;
 	public static final int ERR_QUOTA;
 	public static final int ERR_READ_ONLY;
 	public static final int ERR_RMA_CONFLICT;
@@ -382,6 +383,7 @@ public final class MPI
 		ERR_NO_SPACE     = c.ERR_NO_SPACE;
 		ERR_NO_SUCH_FILE = c.ERR_NO_SUCH_FILE;
 		ERR_PORT         = c.ERR_PORT;
+		ERR_PROC_ABORTED = c.ERR_PROC_ABORTED;
 		ERR_QUOTA        = c.ERR_QUOTA;
 		ERR_READ_ONLY    = c.ERR_READ_ONLY;
 		ERR_RMA_CONFLICT = c.ERR_RMA_CONFLICT;

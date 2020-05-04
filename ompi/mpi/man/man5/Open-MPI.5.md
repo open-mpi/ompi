@@ -107,6 +107,7 @@ Standard error return classes for Open MPI:
 | MPI_ERR_NO_SPACE | 41 | Not enough space. |
 | MPI_ERR_NO_SUCH_FILE | 42 | File (or directory) does not exist. |
 | MPI_ERR_PORT | 43 | Invalid port. |
+| MPI_ERR_PROC_ABORTED | 74 | Operation failed because a remote peer has aborted. |
 | MPI_ERR_QUOTA | 44 | Quota exceeded. |
 | MPI_ERR_READ_ONLY | 45 | Read-only file system. |
 | MPI_ERR_RMA_CONFLICT | 46 | Conflicting accesses to window. |
