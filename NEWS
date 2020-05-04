@@ -57,6 +57,30 @@ included in the vX.Y.Z section and be denoted as:
    (** also appeared: A.B.C)  -- indicating that this item was previously
                                  included in release version vA.B.C.
 
+4.0.4 -- May, 2020
+-----------------------
+- Update embedded PMIx to 3.1.5
+- Fix an ABI compatibility issue with the Fortran 2008 bindings.
+  Thanks to Alastair McKinstry for reporting.
+- Fix an issue with rpath of /usr/lib64 when building OMPI on
+  systems with Lustre.  Thanks to David Shrader for reporting.
+- Fix a memory leak occurring with certain MPI RMA operations.
+- Fix an issue with ORTE's mapping of MPI processes to resources.
+  Thanks to Alex Margolin for reporting and providing a fix.
+- Correct a problem with incorrect error codes being returned
+  by OMPI MPI_T functions.
+- Fix an issue with debugger tools not being able to attach
+  to mpirun more than once.  Thanks to Gregory Lee for reporting.
+- Fix an issue with the Fortran compiler wrappers when using
+  NAG compilers.  Thanks to Peter Brady for reporting.
+- Fix an issue with the ORTE ssh based process launcher at scale.
+  Thanks to Benjamín Hernández for reporting.
+- Address an issue when using shared MPI I/O operations.  OMPIO will
+  now successfully return from the file open statement but will
+  raise an error if the file system does not supported shared I/O
+  operations.  Thanks to Romain Hild for reporting.
+- Fix an issue with MPI_WIN_DETACH.  Thanks to Thomas Naughton for reporting.
+
 4.0.3 -- March, 2020
 -----------------------
 - Update embedded PMIx to 3.1.5
