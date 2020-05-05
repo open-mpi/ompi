@@ -15,7 +15,7 @@ dnl Copyright (c) 2015      Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
 dnl Copyright (c) 2016      Los Alamos National Security, LLC. All rights
 dnl                         reserved.
-dnl Copyright (c) 2017      IBM Corporation.  All rights reserved.
+dnl Copyright (c) 2017-2020 IBM Corporation.  All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -119,6 +119,73 @@ AC_DEFUN([ORTE_CHECK_LSF],[
                         [$orte_check_lsf_libdir],
                         [orte_check_lsf_happy="yes"],
                         [orte_check_lsf_happy="no"])])
+
+
+          # Some versions of LSF ship with a libevent.so in their library path.
+          # This is _not_ a copy of Libevent, but something specific to their project.
+          # The Open MPI components should not need to link against LSF's libevent.so
+          # However, the presence of it in the linker search path can cause a problem
+          # if there is a system installed Libevent and Open MPI chooses the 'external'
+          # event component prior to this stage.
+          #
+          # Add a check here to see if we are in a scenario where the two are conflicting.
+          # In which case the earlier checks for successful compile of an LSF program will
+          # have failed with messages like:
+          #   lib64/libevent_pthreads.so: undefined reference to `evthread_set_condition_callbacks'
+          #   lib64/libevent_pthreads.so: undefined reference to `event_mm_malloc_'
+          #   lib64/libevent_pthreads.so: undefined reference to `event_mm_free_'
+          #   lib64/libevent_pthreads.so: undefined reference to `evthread_set_id_callback'
+          #   lib64/libevent_pthreads.so: undefined reference to `evthread_set_lock_callbacks'
+          # Because it picked up -levent from LSF, but -levent_pthreads from Libevent.
+          #
+          # So look for a function that libevent_pthreads is looking for from libevent.so.
+          # If it does appears then we have the correct libevent.so, otherwise then we picked
+          # up the LSF version and a conflict has been detected.
+          # If the external libevent component used 'event_core' instead of 'event'
+          orte_check_lsf_event_conflict=na
+          # Split libs into an array, see if -levent is in that list
+          orte_check_lsf_libevent_present=`echo $LIBS | awk '{split([$]0, a, " "); {for (k in a) {if (a[[k]] == "-levent") {print a[[k]]}}}}' | wc -l`
+          AS_IF([test "$orte_check_lsf_happy" = "no"],
+                [AS_IF([test "$opal_event_external_support" = "yes" && test "$orte_check_lsf_libevent_present" != 0],
+                       [AS_IF([test "$orte_check_lsf_libdir" = "" ],
+                              [],
+                              [LDFLAGS="$LDFLAGS -L$orte_check_lsf_libdir"])
+                        # Note that we do not want to set LIBS here to include -llsf since
+                        # the check is not for an LSF library, but for the conflict with
+                        # LDFLAGS.
+                        AC_CHECK_LIB([event], [evthread_set_condition_callbacks],
+                                     [AC_MSG_CHECKING([for libevent conflict])
+                                      AC_MSG_RESULT([No. The correct libevent.so was linked.])
+                                      orte_check_lsf_event_conflict=no],
+                                     [AC_MSG_CHECKING([for libevent conflict])
+                                      AC_MSG_RESULT([Yes. A wrong libevent.so was linked.])
+                                      orte_check_lsf_event_conflict=yes])
+                       ],
+                       [AC_MSG_CHECKING([for libevent conflict])
+                        AC_MSG_RESULT([No. Internal Libevent or libevent_core is being used.])
+                        orte_check_lsf_event_conflict=na])],
+                [AC_MSG_CHECKING([for libevent conflict])
+                 AC_MSG_RESULT([No. LSF checks passed.])
+                 orte_check_lsf_event_conflict=na])
+
+          AS_IF([test "$orte_check_lsf_event_conflict" = "yes"],
+                [AC_MSG_WARN([===================================================================])
+                 AC_MSG_WARN([Conflicting libevent.so libraries detected on the system.])
+                 AC_MSG_WARN([])
+                 AC_MSG_WARN([A system-installed Libevent library was detected and the Open MPI])
+                 AC_MSG_WARN([build system chose to use the 'external' component expecting to])
+                 AC_MSG_WARN([link against the Libevent in the linker search path.])
+                 AC_MSG_WARN([LSF provides a libevent.so that is not from Libevent in its])
+                 AC_MSG_WARN([library path. At this point the linker is attempting to resolve])
+                 AC_MSG_WARN([Libevent symbols using the LSF library because of the lack of])
+                 AC_MSG_WARN([an explicit linker path pointing to the system-installed Libevent.])
+                 AC_MSG_WARN([])
+                 AC_MSG_WARN([To resolve this issue either (A) explicitly pass the Libevent])
+                 AC_MSG_WARN([library path on the configure line (--with-libevent-libdir), or])
+                 AC_MSG_WARN([(B) use the internal libevent by requesting it from configure ])
+                 AC_MSG_WARN([with the --with-libevent=internal option.])
+                 AC_MSG_WARN([===================================================================])
+                ])
 
           CPPFLAGS="$orte_check_lsf_$1_save_CPPFLAGS"
           LDFLAGS="$orte_check_lsf_$1_save_LDFLAGS"
