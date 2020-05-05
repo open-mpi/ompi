@@ -141,7 +141,7 @@ public final class MPI
 	MODE_NOSTORE, MODE_NOSUCCEED;
 	public static final int LOCK_EXCLUSIVE, LOCK_SHARED;
 
-	public static final Errhandler ERRORS_ARE_FATAL, ERRORS_RETURN;
+	public static final Errhandler ERRORS_ARE_FATAL, ERRORS_ABORT, ERRORS_RETURN;
 
 	// Error classes and codes
 	public static final int SUCCESS;
@@ -333,6 +333,7 @@ public final class MPI
 		LOCK_SHARED    = c.LOCK_SHARED;
 
 		ERRORS_ARE_FATAL = new Errhandler(Errhandler.getFatal());
+		ERRORS_ABORT     = new Errhandler(Errhandler.getAbort());
 		ERRORS_RETURN    = new Errhandler(Errhandler.getReturn());
 
 		COMM_WORLD = new Intracomm();

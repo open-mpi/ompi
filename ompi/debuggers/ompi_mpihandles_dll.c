@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2004-2013 The University of Tennessee and The University
+ * Copyright (c) 2004-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
@@ -383,6 +383,8 @@ int mpidbg_init_per_process(mqs_process *process,
     if (NULL != mpidbg_errhandler_name_map) {
         int i = 0;
         fill_map(image, "MPI_ERRORS_ARE_FATAL", "ompi_mpi_errors_are_fatal",
+                 &mpidbg_errhandler_name_map[i++]);
+        fill_map(image, "MPI_ERRORS_ABORT", "ompi_mpi_errors_abort",
                  &mpidbg_errhandler_name_map[i++]);
         fill_map(image, "MPI_ERRORS_RETURN", "ompi_mpi_errors_return",
                  &mpidbg_errhandler_name_map[i++]);

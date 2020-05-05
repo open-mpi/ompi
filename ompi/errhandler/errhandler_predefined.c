@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2014 The University of Tennessee and The University
+ * Copyright (c) 2004-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -47,7 +47,7 @@
 /*
  * Local functions
  */
-static void backend_fatal(char *type, struct ompi_communicator_t *comm,
+static void backend_abort(int fatal, char *type, struct ompi_communicator_t *comm,
                           char *name, int *error_code, va_list arglist);
 static void out(char *str, char *arg);
 
@@ -68,7 +68,7 @@ void ompi_mpi_errors_are_fatal_comm_handler(struct ompi_communicator_t **comm,
       name = NULL;
       abort_comm = NULL;
   }
-  backend_fatal("communicator", abort_comm, name, error_code, arglist);
+  backend_abort(true, "communicator", abort_comm, name, error_code, arglist);
   va_end(arglist);
 }
 
@@ -89,7 +89,7 @@ void ompi_mpi_errors_are_fatal_file_handler(struct ompi_file_t **file,
       name = NULL;
       abort_comm = NULL;
   }
-  backend_fatal("file", abort_comm, name, error_code, arglist);
+  backend_abort(true, "file", abort_comm, name, error_code, arglist);
   va_end(arglist);
 }
 
@@ -108,7 +108,67 @@ void ompi_mpi_errors_are_fatal_win_handler(struct ompi_win_t **win,
   } else {
       name = NULL;
   }
-  backend_fatal("win", abort_comm, name, error_code, arglist);
+  backend_abort(true, "win", abort_comm, name, error_code, arglist);
+  va_end(arglist);
+}
+
+void ompi_mpi_errors_abort_comm_handler(struct ompi_communicator_t **comm,
+                                            int *error_code, ...)
+{
+  char *name;
+  struct ompi_communicator_t *abort_comm;
+  va_list arglist;
+
+  va_start(arglist, error_code);
+
+  if ( (NULL != comm) && (NULL != *comm) ) {
+      name = (*comm)->c_name;
+      abort_comm = *comm;
+  } else {
+      name = NULL;
+      abort_comm = NULL;
+  }
+  backend_abort(false, "communicator", abort_comm, name, error_code, arglist);
+  va_end(arglist);
+}
+
+
+void ompi_mpi_errors_abort_file_handler(struct ompi_file_t **file,
+                                            int *error_code, ...)
+{
+  char *name;
+  struct ompi_communicator_t *abort_comm;
+  va_list arglist;
+
+  va_start(arglist, error_code);
+
+  if (NULL != file) {
+      name = (*file)->f_filename;
+      abort_comm = (*file)->f_comm;
+  } else {
+      name = NULL;
+      abort_comm = NULL;
+  }
+  backend_abort(false, "file", abort_comm, name, error_code, arglist);
+  va_end(arglist);
+}
+
+
+void ompi_mpi_errors_abort_win_handler(struct ompi_win_t **win,
+                                           int *error_code, ...)
+{
+  char *name;
+  struct ompi_communicator_t *abort_comm = NULL;
+  va_list arglist;
+
+  va_start(arglist, error_code);
+
+  if (NULL != win) {
+      name = (*win)->w_name;
+  } else {
+      name = NULL;
+  }
+  backend_abort(false, "win", abort_comm, name, error_code, arglist);
   va_end(arglist);
 }
 
@@ -175,7 +235,7 @@ static void out(char *str, char *arg)
  * there's no need to handle the pre-MPI_INIT and post-MPI_FINALIZE
  * errors here.
  */
-static void backend_fatal_aggregate(char *type,
+static void backend_abort_aggregate(int fatal, char *type,
                                     struct ompi_communicator_t *comm,
                                     char *name, int *error_code,
                                     va_list arglist)
@@ -199,7 +259,7 @@ static void backend_fatal_aggregate(char *type,
                  ompi_process_info.nodename,
                  (int) ompi_process_info.pid) == -1) {
         prefix = NULL;
-        // non-fatal, we could still go on to give useful information here...
+        // non-abort, we could still go on to give useful information here...
         opal_output(0, "%s", "Could not write node and PID to prefix");
         opal_output(0, "Node: %s", ompi_process_info.nodename);
         opal_output(0, "PID: %d", (int) ompi_process_info.pid);
@@ -224,7 +284,7 @@ static void backend_fatal_aggregate(char *type,
 
     if (NULL != name) {
         opal_show_help("help-mpi-errors.txt",
-                       "mpi_errors_are_fatal",
+                       fatal? "mpi_errors_are_fatal": "mpi_errors_abort",
                        false,
                        usable_prefix,
                        (NULL == arg) ? "" : "in",
@@ -267,7 +327,7 @@ static void backend_fatal_aggregate(char *type,
 
 /*
  * Note that this function has to handle pre-MPI_INIT and
- * post-MPI_FINALIZE errors, which backend_fatal_aggregate() does not
+ * post-MPI_FINALIZE errors, which backend_abort_aggregate() does not
  * have to handle.
  *
  * This function also intentionally does not call malloc(), just in
@@ -275,7 +335,7 @@ static void backend_fatal_aggregate(char *type,
  * we *might* be able to get a message out if we're not further
  * corrupting the stack by calling malloc()...
  */
-static void backend_fatal_no_aggregate(char *type,
+static void backend_abort_no_aggregate(int fatal, char *type,
                                        struct ompi_communicator_t *comm,
                                        char *name, int *error_code,
                                        va_list arglist)
@@ -303,7 +363,7 @@ static void backend_fatal_no_aggregate(char *type,
                 "*** Unfortunately, no further information is available on *which* MPI\n"
                 "*** function was invoked, sorry.  :-(\n", NULL);
         }
-        out("*** Your MPI job will now abort.\n", NULL);
+        if(fatal) out("*** Your MPI job will now abort.\n", NULL);
     } else if (state >= OMPI_MPI_STATE_FINALIZE_PAST_COMM_SELF_DESTRUCT) {
         if (NULL != arg) {
             out("*** The %s() function was called after MPI_FINALIZE was invoked.\n"
@@ -314,7 +374,7 @@ static void backend_fatal_no_aggregate(char *type,
                 "*** Unfortunately, no further information is available on *which* MPI\n"
                 "*** function was invoked, sorry.  :-(\n", NULL);
         }
-        out("*** Your MPI job will now abort.\n", NULL);
+        if(fatal) out("*** Your MPI job will now abort.\n", NULL);
     }
 
     else {
@@ -365,23 +425,30 @@ static void backend_fatal_no_aggregate(char *type,
                 out("*** Error code: %d (no associated error message)\n", intbuf);
             }
         }
-        /* out("*** MPI_ERRORS_ARE_FATAL: your MPI job will now abort\n", NULL); */
-        out("*** MPI_ERRORS_ARE_FATAL (processes in this %s will now abort,\n", type);
-        out("***    and potentially your MPI job)\n", NULL);
-
+        /* out("*** MPI_ERRORS_ABORT: your MPI job will now abort\n", NULL); */
+        if(fatal) {
+            out("*** MPI_ERRORS_ARE_FATAL (processes in this %s will now abort,\n", type);
+            out("***    and MPI will try to terminate your MPI job as well)\n", NULL);
+        }
+        else {
+            out("*** MPI_ERRORS_ABORT (processes in this %s will now abort,\n", type);
+            out("***    and potentially the rest of your MPI job)\n", NULL);
+        }
     }
     va_end(arglist);
 }
 
-static void backend_fatal(char *type, struct ompi_communicator_t *comm,
+static void backend_abort(int fatal, char *type, struct ompi_communicator_t *comm,
                           char *name, int *error_code,
                           va_list arglist)
 {
+    int err = MPI_ERR_UNKNOWN;
+
     /* We only want aggregation while the rte is initialized */
     if (ompi_rte_initialized) {
-        backend_fatal_aggregate(type, comm, name, error_code, arglist);
+        backend_abort_aggregate(fatal, type, comm, name, error_code, arglist);
     } else {
-        backend_fatal_no_aggregate(type, comm, name, error_code, arglist);
+        backend_abort_no_aggregate(fatal, type, comm, name, error_code, arglist);
     }
 
     /* In most instances the communicator will be valid. If not, we are either early in
@@ -392,9 +459,9 @@ static void backend_fatal(char *type, struct ompi_communicator_t *comm,
         comm = &ompi_mpi_comm_self.comm;
     }
 
-    if (NULL != error_code) {
-        ompi_mpi_abort(comm, *error_code);
-    } else {
-        ompi_mpi_abort(comm, 1);
-    }
+    if (NULL != error_code)
+        err = *error_code;
+
+    /* Call abort without a specified comm to force RTE Job termination */
+    ompi_mpi_abort(fatal? NULL: comm, err);
 }

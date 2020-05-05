@@ -96,6 +96,7 @@ $handles->{MPI_COMM_SELF} = 1;
 $handles->{MPI_GROUP_EMPTY} = 1;
 $handles->{MPI_ERRORS_ARE_FATAL} = 1;
 $handles->{MPI_ERRORS_RETURN} = 2;
+$handles->{MPI_ERRORS_ABORT} = 3;
 
 $handles->{MPI_MAX} =  1;
 $handles->{MPI_MIN} =  2;

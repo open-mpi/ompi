@@ -3,7 +3,7 @@
 # Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
 #                         Corporation.  All rights reserved.
-# Copyright (c) 2004-2005 The University of Tennessee and The University
+# Copyright (c) 2004-2020 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
 # Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -186,7 +186,7 @@ SEARCH_HEADER[5]="ompi/datatype/convertor.h OMPI_COMM_INTER OMPI_COMM_CART OMPI_
 SEARCH_HEADER[6]="ompi/datatype/datatype.h MPI_Datatype DT_MAX_PREDEFINED DT_FLAG_ MAX_DT_COMPONENT_COUNT opal_ddt_count_t dt_type_desc_t ompi_datatype_t ompi_predefined_datatype_t ompi_ddt_init ompi_ddt_finalize ompi_ddt_create_ ompi_ddt_duplicate ompi_ddt_is_predefined ompi_ddt_create_from_packed_description"
 SEARCH_HEADER[7]="ompi/datatype/datatype_internal.h DDT_DUMP_STACK DT_ ddt_elem_id_description ddt_elem_desc ddt_elem_desc_t ddt_loop_desc ddt_loop_desc_t ddt_endloop_desc ddt_endloop_desc_t dt_elem_desc CREATE_LOOP_START CREATE_LOOP_END CREATE_ELEM ompi_complex_float_t ompi_complex_double_t ompi_complex_long_double_t ompi_ddt_basicDatatypes BASIC_DDT_FROM_ELEM ompi_ddt_default_convertors_init ompi_ddt_default_convertors_fini SAVE_STACK PUSH_STACK ompi_ddt_safeguard_pointer_debug_breakpoint OMPI_DDT_SAFEGUARD_POINTER GET_FIRST_NON_LOOP UPDATE_INTERNAL_COUNTERS ompi_ddt_print_args"
 SEARCH_HEADER[8]="ompi/errhandler/errhandler.h OMPI_ERRHANDLER_LANG_ ompi_errhandler_lang_t OMPI_ERRHANDLER_TYPE_ ompi_errhandler_type_t ompi_errhandler_t ompi_predefined_errhandler_t ompi_mpi_errhandler_null OMPI_ERRHANDLER_CHECK OMPI_ERRHANDLER_RETURN ompi_errhandler_init ompi_errhandler_finalize OMPI_ERRHANDLER_INVOKE ompi_errhandler_invoke ompi_errhandler_request_invoke ompi_errhandler_create ompi_errhandler_is_intrinsic ompi_errhandler_fortran_handler_fn_t OMPI_ERR_INIT_FINALIZE MPI_Errhandler"
-SEARCH_HEADER[9]="ompi/errhandler/errhandler_predefined.h ompi_mpi_errors_are_fatal_ ompi_mpi_errors_return_ ompi_mpi_errors_throw_exceptions"
+SEARCH_HEADER[9]="ompi/errhandler/errhandler_predefined.h ompi_mpi_errors_are_fatal_ ompi_mpi_errors_return_ ompi_mpi_errors_abort_ ompi_mpi_errors_throw_exceptions"
 ###
 SEARCH_HEADER[10]="ompi/file/file.h OMPI_FILE_ISCLOSED OMPI_FILE_HIDDEN ompi_file_t ompi_predefined_file_t ompi_mpi_file_null ompi_file_f_to_c_table ompi_file_init ompi_file_open ompi_file_set_name ompi_file_close ompi_file_finalize ompi_file_invalid MPI_File MPI_FILE_NULL ompi_mpi_cxx_file_errhandler_invoke" # THE LAST ONE WAS FOR THE CXX INTERFACE
 SEARCH_HEADER[11]="ompi/group/group.h ompi_group_sporadic_list_t ompi_group_sporadic_data_t ompi_group_strided_data_t ompi_group_bitmap_data_t ompi_group_t ompi_predefined_group_t OMPI_GROUP_ ompi_group_f_to_c_table ompi_mpi_group_null ompi_group_allocate ompi_group_increment_proc_count ompi_group_decrement_proc_count ompi_group_size ompi_group_rank ompi_set_group_rank ompi_group_translate_ranks ompi_group_free ompi_group_get_proc_ptr ompi_group_calc_ ompi_group_peer_lookup ompi_group_div_ceil MPI_Group"

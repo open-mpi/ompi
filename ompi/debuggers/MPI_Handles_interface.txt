@@ -314,8 +314,8 @@ C++: MPI::Errhandler
 
 MPI allows applications to define their own error handlers.  The
 default error handler is to abort the MPI job.  Error handlers can be
-attached to communicators, files, and windows.  There are 3 predefined
-error handlers (MPI_ERRORS_ARE_FATAL, MPI_ERRORS_RETURN,
+attached to communicators, files, and windows.  There are 4 predefined
+error handlers (MPI_ERRORS_ARE_FATAL, MPI_ERRORS_RETURN, MPI_ERRORS_ABORT,
 MPI::ERRORS_THROW_EXCEPTIONS), and applications can create their own
 error handlers.
 

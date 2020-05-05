@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -41,10 +41,10 @@ int ompi_errhandler_invoke(ompi_errhandler_t *errhandler, void *mpi_object,
     ompi_win_t *win;
     ompi_file_t *file;
 
-    /* If we got no errorhandler, then just invoke errors_abort */
+    /* If we got no errorhandler, then just invoke errors_are_fatal */
     if (NULL == errhandler) {
         ompi_mpi_errors_are_fatal_comm_handler(NULL, NULL, message);
-	return err_code;
+        return err_code;
     }
 
     /* Figure out what kind of errhandler it is, figure out if it's
