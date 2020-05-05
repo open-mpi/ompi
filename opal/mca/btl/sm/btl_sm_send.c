@@ -23,10 +23,10 @@
 
 #include "opal_config.h"
 
-#include "btl_vader.h"
-#include "btl_vader_frag.h"
-#include "btl_vader_fifo.h"
-#include "btl_vader_fbox.h"
+#include "btl_sm.h"
+#include "btl_sm_frag.h"
+#include "btl_sm_fifo.h"
+#include "btl_sm_fbox.h"
 
 /**
  * Initiate a send to the peer.
@@ -34,12 +34,12 @@
  * @param btl (IN)      BTL module
  * @param peer (IN)     BTL peer addressing
  */
-int mca_btl_vader_send (struct mca_btl_base_module_t *btl,
+int mca_btl_sm_send (struct mca_btl_base_module_t *btl,
                         struct mca_btl_base_endpoint_t *endpoint,
                         struct mca_btl_base_descriptor_t *descriptor,
                         mca_btl_base_tag_t tag)
 {
-    mca_btl_vader_frag_t *frag = (mca_btl_vader_frag_t *) descriptor;
+    mca_btl_sm_frag_t *frag = (mca_btl_sm_frag_t *) descriptor;
     const size_t total_size = frag->segments[0].seg_len;
 
     /* in order to work around a long standing ob1 bug (see #3845) we have to always
@@ -52,14 +52,14 @@ int mca_btl_vader_send (struct mca_btl_base_module_t *btl,
     frag->hdr->tag = tag;
 
     /* post the relative address of the descriptor into the peer's fifo */
-    if (opal_list_get_size (&endpoint->pending_frags) || !vader_fifo_write_ep (frag->hdr, endpoint)) {
+    if (opal_list_get_size (&endpoint->pending_frags) || !sm_fifo_write_ep (frag->hdr, endpoint)) {
         frag->base.des_flags |= MCA_BTL_DES_SEND_ALWAYS_CALLBACK;
         OPAL_THREAD_LOCK(&endpoint->pending_frags_lock);
         opal_list_append (&endpoint->pending_frags, (opal_list_item_t *) frag);
         if (!endpoint->waiting) {
-            OPAL_THREAD_LOCK(&mca_btl_vader_component.lock);
-            opal_list_append (&mca_btl_vader_component.pending_endpoints, &endpoint->super);
-            OPAL_THREAD_UNLOCK(&mca_btl_vader_component.lock);
+            OPAL_THREAD_LOCK(&mca_btl_sm_component.lock);
+            opal_list_append (&mca_btl_sm_component.pending_endpoints, &endpoint->super);
+            OPAL_THREAD_UNLOCK(&mca_btl_sm_component.lock);
             endpoint->waiting = true;
         }
         OPAL_THREAD_UNLOCK(&endpoint->pending_frags_lock);
@@ -69,7 +69,7 @@ int mca_btl_vader_send (struct mca_btl_base_module_t *btl,
     return OPAL_SUCCESS;
 
 #if 0
-    if ((frag->hdr->flags & MCA_BTL_VADER_FLAG_SINGLE_COPY) ||
+    if ((frag->hdr->flags & MCA_BTL_SM_FLAG_SINGLE_COPY) ||
         !(frag->base.des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP)) {
         frag->base.des_flags |= MCA_BTL_DES_SEND_ALWAYS_CALLBACK;
 

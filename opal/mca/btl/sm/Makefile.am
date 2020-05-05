@@ -13,6 +13,7 @@
 # Copyright (c) 2011-2014 Los Alamos National Security, LLC. All rights
 #                         reserved.
 # Copyright (c) 2017      IBM Corporation.  All rights reserved.
+# Copyright (c) 2020      Google, LLC. All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -20,50 +21,50 @@
 # $HEADER$
 #
 
-AM_CPPFLAGS = $(btl_vader_CPPFLAGS)
+AM_CPPFLAGS = $(btl_sm_CPPFLAGS)
 
-dist_opaldata_DATA = help-btl-vader.txt
+dist_opaldata_DATA = help-btl-sm.txt
 
-libmca_btl_vader_la_sources = \
-    btl_vader_module.c \
-    btl_vader.h \
-    btl_vader_component.c \
-    btl_vader_endpoint.h \
-    btl_vader_fifo.h \
-    btl_vader_frag.c \
-    btl_vader_frag.h \
-    btl_vader_send.c \
-    btl_vader_sendi.c \
-    btl_vader_fbox.h \
-    btl_vader_get.c \
-    btl_vader_put.c \
-    btl_vader_xpmem.c \
-    btl_vader_xpmem.h \
-    btl_vader_knem.c \
-    btl_vader_knem.h \
-    btl_vader_sc_emu.c \
-    btl_vader_atomic.c
+libmca_btl_sm_la_sources = \
+    btl_sm_module.c \
+    btl_sm.h \
+    btl_sm_component.c \
+    btl_sm_endpoint.h \
+    btl_sm_fifo.h \
+    btl_sm_frag.c \
+    btl_sm_frag.h \
+    btl_sm_send.c \
+    btl_sm_sendi.c \
+    btl_sm_fbox.h \
+    btl_sm_get.c \
+    btl_sm_put.c \
+    btl_sm_xpmem.c \
+    btl_sm_xpmem.h \
+    btl_sm_knem.c \
+    btl_sm_knem.h \
+    btl_sm_sc_emu.c \
+    btl_sm_atomic.c
 
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
 # (for static builds).
 
-if MCA_BUILD_opal_btl_vader_DSO
+if MCA_BUILD_opal_btl_sm_DSO
 component_noinst =
-component_install = mca_btl_vader.la
+component_install = mca_btl_sm.la
 else
-component_noinst = libmca_btl_vader.la
+component_noinst = libmca_btl_sm.la
 component_install =
 endif
 
 mcacomponentdir = $(opallibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
-mca_btl_vader_la_SOURCES = $(libmca_btl_vader_la_sources)
-mca_btl_vader_la_LDFLAGS = -module -avoid-version $(btl_vader_LDFLAGS)
-mca_btl_vader_la_LIBADD = $(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la \
-	$(btl_vader_LIBS)
+mca_btl_sm_la_SOURCES = $(libmca_btl_sm_la_sources)
+mca_btl_sm_la_LDFLAGS = -module -avoid-version $(btl_sm_LDFLAGS)
+mca_btl_sm_la_LIBADD = $(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la \
+	$(btl_sm_LIBS)
 
 noinst_LTLIBRARIES = $(component_noinst)
-libmca_btl_vader_la_SOURCES = $(libmca_btl_vader_la_sources)
-libmca_btl_vader_la_LIBADD = $(btl_vader_LIBS)
-libmca_btl_vader_la_LDFLAGS = -module -avoid-version $(btl_vader_LDFLAGS)
+libmca_btl_sm_la_SOURCES = $(libmca_btl_sm_la_sources)
+libmca_btl_sm_la_LIBADD = $(btl_sm_LIBS)
+libmca_btl_sm_la_LDFLAGS = -module -avoid-version $(btl_sm_LDFLAGS)

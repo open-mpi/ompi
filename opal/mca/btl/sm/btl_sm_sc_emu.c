@@ -9,11 +9,11 @@
  * $HEADER$
  */
 
-#include "btl_vader.h"
-#include "btl_vader_frag.h"
+#include "btl_sm.h"
+#include "btl_sm_frag.h"
 
 #if OPAL_HAVE_ATOMIC_MATH_64
-static void mca_btl_vader_sc_emu_atomic_64 (int64_t *operand, opal_atomic_int64_t *addr, mca_btl_base_atomic_op_t op)
+static void mca_btl_sm_sc_emu_atomic_64 (int64_t *operand, opal_atomic_int64_t *addr, mca_btl_base_atomic_op_t op)
 {
     int64_t result = 0;
 
@@ -52,7 +52,7 @@ static void mca_btl_vader_sc_emu_atomic_64 (int64_t *operand, opal_atomic_int64_
 #endif
 
 #if OPAL_HAVE_ATOMIC_MATH_32
-static void mca_btl_vader_sc_emu_atomic_32 (int32_t *operand, opal_atomic_int32_t *addr, mca_btl_base_atomic_op_t op)
+static void mca_btl_sm_sc_emu_atomic_32 (int32_t *operand, opal_atomic_int32_t *addr, mca_btl_base_atomic_op_t op)
 {
     int32_t result = 0;
 
@@ -90,27 +90,27 @@ static void mca_btl_vader_sc_emu_atomic_32 (int32_t *operand, opal_atomic_int32_
 }
 #endif
 
-static void mca_btl_vader_sc_emu_rdma (mca_btl_base_module_t *btl, mca_btl_base_tag_t tag, mca_btl_base_descriptor_t *desc, void *ctx)
+static void mca_btl_sm_sc_emu_rdma (mca_btl_base_module_t *btl, mca_btl_base_tag_t tag, mca_btl_base_descriptor_t *desc, void *ctx)
 {
-    mca_btl_vader_sc_emu_hdr_t *hdr = (mca_btl_vader_sc_emu_hdr_t *) desc->des_segments[0].seg_addr.pval;
+    mca_btl_sm_sc_emu_hdr_t *hdr = (mca_btl_sm_sc_emu_hdr_t *) desc->des_segments[0].seg_addr.pval;
     size_t size = desc->des_segments[0].seg_len - sizeof (*hdr);
     void *data = (void *)(hdr + 1);
 
     switch (hdr->type) {
-    case MCA_BTL_VADER_OP_PUT:
+    case MCA_BTL_SM_OP_PUT:
         memcpy ((void *) hdr->addr, data, size);
         break;
-    case MCA_BTL_VADER_OP_GET:
+    case MCA_BTL_SM_OP_GET:
         memcpy (data, (void *) hdr->addr, size);
         break;
 #if OPAL_HAVE_ATOMIC_MATH_64
-    case MCA_BTL_VADER_OP_ATOMIC:
+    case MCA_BTL_SM_OP_ATOMIC:
         if (!(hdr->flags & MCA_BTL_ATOMIC_FLAG_32BIT)) {
-            mca_btl_vader_sc_emu_atomic_64 (hdr->operand, (void *) hdr->addr, hdr->op);
+            mca_btl_sm_sc_emu_atomic_64 (hdr->operand, (void *) hdr->addr, hdr->op);
 #if OPAL_HAVE_ATOMIC_MATH_32
         } else {
             int32_t tmp = (int32_t) hdr->operand[0];
-            mca_btl_vader_sc_emu_atomic_32 (&tmp, (void *) hdr->addr, hdr->op);
+            mca_btl_sm_sc_emu_atomic_32 (&tmp, (void *) hdr->addr, hdr->op);
             hdr->operand[0] = tmp;
 #else
         } else {
@@ -121,7 +121,7 @@ static void mca_btl_vader_sc_emu_rdma (mca_btl_base_module_t *btl, mca_btl_base_
         break;
 #endif /* OPAL_HAVE_ATOMIC_MATH_64 */
 #if OPAL_HAVE_ATOMIC_MATH_64
-    case MCA_BTL_VADER_OP_CSWAP:
+    case MCA_BTL_SM_OP_CSWAP:
         if (!(hdr->flags & MCA_BTL_ATOMIC_FLAG_32BIT)) {
             opal_atomic_compare_exchange_strong_64 ((opal_atomic_int64_t *) hdr->addr, &hdr->operand[0], hdr->operand[1]);
 #if OPAL_HAVE_ATOMIC_MATH_32
@@ -139,8 +139,8 @@ static void mca_btl_vader_sc_emu_rdma (mca_btl_base_module_t *btl, mca_btl_base_
     }
 }
 
-void mca_btl_vader_sc_emu_init (void)
+void mca_btl_sm_sc_emu_init (void)
 {
-    mca_btl_base_active_message_trigger[MCA_BTL_TAG_VADER].cbfunc = mca_btl_vader_sc_emu_rdma;
-    mca_btl_base_active_message_trigger[MCA_BTL_TAG_VADER].cbdata = NULL;
+    mca_btl_base_active_message_trigger[MCA_BTL_TAG_SM].cbfunc = mca_btl_sm_sc_emu_rdma;
+    mca_btl_base_active_message_trigger[MCA_BTL_TAG_SM].cbdata = NULL;
 }

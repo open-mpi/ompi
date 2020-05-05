@@ -486,6 +486,13 @@ OPAL_DECLSPEC int opal_proc_table_get_next_key(opal_proc_table_t *pt, opal_proce
   for (void *_nptr=NULL;                                   \
        OPAL_SUCCESS == opal_hash_table_get_next_key_##type(ht, &key, (void **)&value, _nptr, &_nptr);)
 
+#define OPAL_HASH_TABLE_FOREACH_PTR(key, value, ht, body)		\
+  {									\
+    size_t key_size_;							\
+    for (void *_nptr=NULL;						\
+	 OPAL_SUCCESS == opal_hash_table_get_next_key_ptr (ht, &key, &key_size_, (void **)&value, _nptr, &_nptr);) \
+      body								\
+  }
 END_C_DECLS
 
 #endif  /* OPAL_HASH_TABLE_H */

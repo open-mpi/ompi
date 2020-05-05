@@ -15,6 +15,7 @@
  *                         reserved.
  * Copyright (c) 2018      Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2020      Google, LLC. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -24,12 +25,12 @@
 
 #include "opal_config.h"
 
-#include "btl_vader.h"
-#include "btl_vader_frag.h"
+#include "btl_sm.h"
+#include "btl_sm_frag.h"
 
-static inline void mca_btl_vader_frag_constructor (mca_btl_vader_frag_t *frag)
+static inline void mca_btl_sm_frag_constructor (mca_btl_sm_frag_t *frag)
 {
-    frag->hdr = (mca_btl_vader_hdr_t*)frag->base.super.ptr;
+    frag->hdr = (mca_btl_sm_hdr_t*)frag->base.super.ptr;
     if(frag->hdr != NULL) {
         frag->hdr->frag = frag;
         frag->hdr->flags = 0;
@@ -40,9 +41,9 @@ static inline void mca_btl_vader_frag_constructor (mca_btl_vader_frag_t *frag)
     frag->base.des_segment_count = 1;
 }
 
-int mca_btl_vader_frag_init (opal_free_list_item_t *item, void *ctx)
+int mca_btl_sm_frag_init (opal_free_list_item_t *item, void *ctx)
 {
-    mca_btl_vader_frag_t *frag = (mca_btl_vader_frag_t *) item;
+    mca_btl_sm_frag_t *frag = (mca_btl_sm_frag_t *) item;
 
     /* Set the list element here so we don't have to set it on the critical path */
     frag->my_list = (opal_free_list_t *) ctx;
@@ -50,5 +51,5 @@ int mca_btl_vader_frag_init (opal_free_list_item_t *item, void *ctx)
     return OPAL_SUCCESS;
 }
 
-OBJ_CLASS_INSTANCE(mca_btl_vader_frag_t, mca_btl_base_descriptor_t,
-                   mca_btl_vader_frag_constructor, NULL);
+OBJ_CLASS_INSTANCE(mca_btl_sm_frag_t, mca_btl_base_descriptor_t,
+                   mca_btl_sm_frag_constructor, NULL);

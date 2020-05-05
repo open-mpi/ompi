@@ -594,7 +594,6 @@ MPI Functionality and Features
       - tcp
       - ugni
       - usnic
-      - vader (shared memory)
 
   Currently, MPI File operations are not thread safe even if MPI is
   initialized for MPI_THREAD_MULTIPLE support.
@@ -675,8 +674,8 @@ Network Support
     - SMCUDA
     - Cisco usNIC
     - uGNI (Cray Gemini, Aries)
-    - vader (XPMEM, Linux CMA, Linux KNEM, and copy-in/copy-out shared
-      memory)
+    - shared memory (XPMEM, Linux CMA, Linux KNEM, and
+      copy-in/copy-out shared memory)
 
   - "cm" supports a smaller number of networks (and they cannot be
     used together), but may provide better overall MPI performance:
@@ -785,16 +784,16 @@ Network Support
   v2.6.15 with libibverbs v1.1 or later (first released as part of
   OFED v1.2), per restrictions imposed by the OFED network stack.
 
-- Linux "knem" support is used when the "vader" or "sm" (shared
-  memory) BTLs are compiled with knem support (see the --with-knem
-  configure option) and the knem Linux module is loaded in the running
-  kernel.  If the knem Linux kernel module is not loaded, the knem
-  support is (by default) silently deactivated during Open MPI jobs.
+- Linux "knem" support is used when the "sm" (shared memory) BTL is
+  compiled with knem support (see the --with-knem configure option)
+  and the knem Linux module is loaded in the running kernel.  If the
+  knem Linux kernel module is not loaded, the knem support is (by
+  default) silently deactivated during Open MPI jobs.
 
   See https://knem.gforge.inria.fr/ for details on Knem.
 
-- Linux Cross-Memory Attach (CMA) or XPMEM is used by the vader
-  shared-memory BTL when the CMA/XPMEM libraries are installedm,
+- Linux Cross-Memory Attach (CMA) or XPMEM is used by the "sm" shared
+  memory BTL when the CMA/XPMEM libraries are installedm,
   respectively.  Linux CMA and XPMEM are similar (but different)
   mechanisms for Open MPI to utilize single-copy semantics for shared
   memory.
@@ -2154,14 +2153,14 @@ comma-delimited list to the "btl" MCA parameter:
 
    shell$ mpirun --mca btl tcp,self hello_world_mpi
 
-To add shared memory support, add "vader" into the command-delimited
-list (list order does not matter):
+To add shared memory support, add "sm" into the command-delimited list
+(list order does not matter):
 
-   shell$ mpirun --mca btl tcp,vader,self hello_world_mpi
+   shell$ mpirun --mca btl tcp,sm,self hello_world_mpi
 
-(there is an "sm" shared memory BTL, too, but "vader" is a newer
-generation of shared memory support; by default, "vader" will be used
-instead of "sm")
+(there used to be a "vader" BTL for shared memory support; it was
+renamed to "sm" in Open MPI v5.0.0, but the alias "vader" still works
+as well)
 
 To specifically deactivate a specific component, the comma-delimited
 list can be prepended with a "^" to negate it:

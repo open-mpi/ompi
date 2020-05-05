@@ -20,6 +20,7 @@
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * Copyright (c) 2018      Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2020      Google, LLC. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -49,6 +50,7 @@
 #include "opal/util/argv.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/mca_base_vari.h"
+#include "opal/mca/base/mca_base_alias.h"
 #include "opal/constants.h"
 #include "opal/util/output.h"
 #include "opal/util/opal_environ.h"
@@ -1545,12 +1547,33 @@ int mca_base_var_register (const char *project_name, const char *framework_name,
                            mca_base_var_info_lvl_t info_lvl,
                            mca_base_var_scope_t scope, void *storage)
 {
+    int ret;
     /* Only integer variables can have enumerator */
     assert (NULL == enumerator || (MCA_BASE_VAR_TYPE_INT == type || MCA_BASE_VAR_TYPE_UNSIGNED_INT == type));
 
-    return register_variable (project_name, framework_name, component_name,
-                              variable_name, description, type, enumerator,
-                              bind, flags, info_lvl, scope, -1, storage);
+    ret = register_variable (project_name, framework_name, component_name,
+                             variable_name, description, type, enumerator,
+                             bind, flags, info_lvl, scope, -1, storage);
+    if (OPAL_UNLIKELY(0 > ret)) {
+        return ret;
+    }
+
+    /* Register aliases if any exist */
+    const mca_base_alias_t *alias = mca_base_alias_lookup (project_name, framework_name, component_name);
+    if (NULL == alias) {
+        return ret;
+    }
+
+    OPAL_LIST_FOREACH_DECL(alias_item, &alias->component_aliases, mca_base_alias_item_t) {
+        mca_base_var_syn_flag_t flags = 0;
+        if (alias_item->alias_flags & MCA_BASE_ALIAS_FLAG_DEPRECATED) {
+            flags = MCA_BASE_VAR_SYN_FLAG_DEPRECATED;
+        }
+        (void) mca_base_var_register_synonym (ret, project_name, framework_name, alias_item->component_alias,
+                                              variable_name, flags);
+    }
+
+    return ret;
 }
 
 int mca_base_component_var_register (const mca_base_component_t *component,

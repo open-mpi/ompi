@@ -9,10 +9,10 @@
  * $HEADER$
  */
 
-#if !defined(BTL_VADER_KNEM_H)
-#define BTL_VADER_KNEM_H
+#if !defined(BTL_SM_KNEM_H)
+#define BTL_SM_KNEM_H
 
-#if OPAL_BTL_VADER_HAVE_KNEM
+#if OPAL_BTL_SM_HAVE_KNEM
 
 #include <knem_io.h>
 #include <sys/mman.h>
@@ -23,16 +23,16 @@ struct mca_btl_base_registration_handle_t {
     intptr_t base_addr;
 };
 
-struct mca_btl_vader_registration_handle_t {
+struct mca_btl_sm_registration_handle_t {
     mca_rcache_base_registration_t base;
     mca_btl_base_registration_handle_t btl_handle;
 };
-typedef struct mca_btl_vader_registration_handle_t mca_btl_vader_registration_handle_t;
+typedef struct mca_btl_sm_registration_handle_t mca_btl_sm_registration_handle_t;
 
-int mca_btl_vader_knem_init (void);
-int mca_btl_vader_knem_fini (void);
-int mca_btl_vader_knem_progress (void);
+int mca_btl_sm_knem_init (void);
+int mca_btl_sm_knem_fini (void);
+int mca_btl_sm_knem_progress (void);
 
-#endif /* OPAL_BTL_VADER_HAVE_KNEM */
+#endif /* OPAL_BTL_SM_HAVE_KNEM */
 
-#endif /* defined(BTL_VADER_KNEM_H) */
+#endif /* defined(BTL_SM_KNEM_H) */

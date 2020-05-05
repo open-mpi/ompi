@@ -215,6 +215,11 @@ typedef struct opal_list_t opal_list_t;
        item != (type *) &(list)->opal_list_sentinel ;                   \
        item = (type *) ((opal_list_item_t *) (item))->opal_list_next)
 
+#define OPAL_LIST_FOREACH_DECL(item, list, type)			\
+  for (type *item = (type *) (list)->opal_list_sentinel.opal_list_next ; \
+       item != (type *) &(list)->opal_list_sentinel ;                   \
+       item = (type *) ((opal_list_item_t *) (item))->opal_list_next)
+
 /**
  * Loop over a list in reverse.
  *
