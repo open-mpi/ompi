@@ -6,6 +6,7 @@
 #                         and Technology (RIST). All rights reserved.
 #
 # Copyright (c) 2017-2018 Intel, Inc. All rights reserved.
+# Copyright (c) 2020      IBM Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -116,10 +117,14 @@ AC_DEFUN([MCA_opal_event_external_CONFIG],[
                               [opal_event_external_support=no])
 
            AS_IF([test "$opal_event_external_support" = "yes"],
+                 [LDFLAGS="$opal_event_external_LDFLAGS $LDFLAGS"
+                  CPPFLAGS="$opal_event_external_CPPFLAGS $CPPFLAGS"],
+                 [])
+
+           AS_IF([test "$opal_event_external_support" = "yes"],
                  [# Ensure that this libevent has the symbol
                   # "evthread_set_lock_callbacks", which will only exist if
                   # libevent was configured with thread support.
-                  LIBS="$opal_event_external_LDFLAGS $LIBS"
                   AC_CHECK_LIB([event], [evthread_set_lock_callbacks],
                                [],
                                [AC_MSG_WARN([External libevent does not have thread support])
