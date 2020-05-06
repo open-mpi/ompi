@@ -101,7 +101,7 @@ int ompi_mtl_psm2_module_init(int local_rank, int num_local_procs) {
     char env_string[256];
     int rc;
 
-    generated_key = getenv(OPAL_MCA_PREFIX"orte_precondition_transports");
+    generated_key = getenv("PMIX_MCA_opa_precondition_transports");
     memset(uu, 0, sizeof(psm2_uuid_t));
 
     if (!generated_key || (strlen(generated_key) != 33) ||

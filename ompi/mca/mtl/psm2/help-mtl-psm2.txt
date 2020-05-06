@@ -25,7 +25,7 @@ active on the node and the hardware is functioning.
   Error: %s
 #
 [no uuid present]
-Error obtaining unique transport key from ORTE (orte_precondition_transports %s
+Error obtaining unique transport key from PMIX (PMIX_MCA_opa_precondition_transports %s
 the environment).
 
   Local host: %s

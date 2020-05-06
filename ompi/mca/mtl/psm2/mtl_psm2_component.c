@@ -348,7 +348,7 @@ get_local_rank(int *out_rank)
 {
     *out_rank = 0;
 
-    if (OMPI_NODE_RANK_INVALID == ompi_process_info.my_node_rank) {
+    if (UINT16_MAX == ompi_process_info.my_node_rank) {
         return OMPI_ERROR;
     }
     *out_rank = (int)ompi_process_info.my_node_rank;
