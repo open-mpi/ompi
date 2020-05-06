@@ -108,7 +108,7 @@ AC_DEFUN([MCA_opal_event_external_CONFIG],[
 
            OPAL_CHECK_PACKAGE([opal_event_external],
                               [event2/event.h],
-                              [event],
+                              [event_core],
                               [event_config_new],
                               [-levent_pthreads],
                               [$opal_event_dir],
@@ -150,7 +150,7 @@ AC_DEFUN([MCA_opal_event_external_CONFIG],[
                  [# Ensure that this libevent has the symbol
                   # "evthread_set_lock_callbacks", which will only exist if
                   # libevent was configured with thread support.
-                  AC_CHECK_LIB([event], [evthread_set_lock_callbacks],
+                  AC_CHECK_LIB([event_core], [evthread_set_lock_callbacks],
                                [],
                                [AC_MSG_WARN([External libevent does not have thread support])
                                 AC_MSG_WARN([Open MPI requires libevent to be compiled with])
