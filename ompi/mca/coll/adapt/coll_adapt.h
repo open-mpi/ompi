@@ -21,13 +21,15 @@
 #include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/coll_base_topo.h"
 
-BEGIN_C_DECLS typedef struct mca_coll_adapt_module_t mca_coll_adapt_module_t;
+BEGIN_C_DECLS
+
+typedef struct mca_coll_adapt_module_t mca_coll_adapt_module_t;
 
 /*
  * Structure to hold the adapt coll component.  First it holds the
  * base coll component, and then holds a bunch of
  * adapt-coll-component-specific stuff (e.g., current MCA param
- * values). 
+ * values).
  */
 typedef struct mca_coll_adapt_component_t {
     /* Base coll component */
@@ -45,7 +47,7 @@ typedef struct mca_coll_adapt_component_t {
     /* MCA parameter: Minimum number of segment in context free list */
     int adapt_context_free_list_min;
 
-    /* MCA parameter: Increasment number of segment in context free list */
+    /* MCA parameter: Increasement number of segment in context free list */
     int adapt_context_free_list_inc;
 
     /* Bcast MCA parameter */
@@ -55,7 +57,7 @@ typedef struct mca_coll_adapt_component_t {
     int adapt_ibcast_max_recv_requests;
     /* Bcast free list */
     opal_free_list_t *adapt_ibcast_context_free_list;
-    _Atomic int32_t adapt_ibcast_context_free_list_enabled;
+    opal_atomic_int32_t adapt_ibcast_context_free_list_enabled;
 
     /* Reduce MCA parameter */
     int adapt_ireduce_algorithm;
@@ -68,7 +70,7 @@ typedef struct mca_coll_adapt_component_t {
 
     /* Reduce free list */
     opal_free_list_t *adapt_ireduce_context_free_list;
-    _Atomic int32_t adapt_ireduce_context_free_list_enabled;
+    opal_atomic_int32_t adapt_ireduce_context_free_list_enabled;
 
 } mca_coll_adapt_component_t;
 
@@ -78,9 +80,7 @@ struct mca_coll_adapt_module_t {
     mca_coll_base_module_t super;
 
     /* Whether this module has been lazily initialized or not yet */
-    bool enabled;
-    /* Pointer to mca_coll_adapt_component */
-    mca_coll_adapt_component_t *adapt_component;
+    bool adapt_enabled;
 };
 OBJ_CLASS_DECLARATION(mca_coll_adapt_module_t);
 
@@ -88,11 +88,10 @@ OBJ_CLASS_DECLARATION(mca_coll_adapt_module_t);
 OMPI_MODULE_DECLSPEC extern mca_coll_adapt_component_t mca_coll_adapt_component;
 
 /* ADAPT module functions */
-int mca_coll_adapt_init_query(bool enable_progress_threads, bool enable_mpi_threads);
-
-mca_coll_base_module_t *mca_coll_adapt_comm_query(struct ompi_communicator_t *comm, int *priority);
+int ompi_coll_adapt_init_query(bool enable_progress_threads, bool enable_mpi_threads);
+mca_coll_base_module_t * ompi_coll_adapt_comm_query(struct ompi_communicator_t *comm, int *priority);
 
 /* Free ADAPT quest */
-int adapt_request_free(ompi_request_t ** request);
+int ompi_coll_adapt_request_free(ompi_request_t **request);
 
-#endif                          /* MCA_COLL_ADAPT_EXPORT_H */
+#endif /* MCA_COLL_ADAPT_EXPORT_H */

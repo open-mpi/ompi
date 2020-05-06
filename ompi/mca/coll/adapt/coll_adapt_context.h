@@ -19,7 +19,7 @@
 #include "coll_adapt_inbuf.h"
 
 /* Bcast constant context in bcast context */
-struct mca_coll_adapt_constant_bcast_context_s {
+struct ompi_coll_adapt_constant_bcast_context_s {
     opal_object_t super;
     int root;
     size_t count;
@@ -42,29 +42,29 @@ struct mca_coll_adapt_constant_bcast_context_s {
     int ibcast_tag;
 };
 
-typedef struct mca_coll_adapt_constant_bcast_context_s mca_coll_adapt_constant_bcast_context_t;
+typedef struct ompi_coll_adapt_constant_bcast_context_s ompi_coll_adapt_constant_bcast_context_t;
 
-OBJ_CLASS_DECLARATION(mca_coll_adapt_constant_bcast_context_t);
+OBJ_CLASS_DECLARATION(ompi_coll_adapt_constant_bcast_context_t);
 
 
 /* Bcast context of each segment*/
-typedef struct mca_coll_adapt_bcast_context_s mca_coll_adapt_bcast_context_t;
+typedef struct ompi_coll_adapt_bcast_context_s ompi_coll_adapt_bcast_context_t;
 
-typedef int (*mca_coll_adapt_bcast_cuda_callback_fn_t) (mca_coll_adapt_bcast_context_t * context);
+typedef int (*ompi_coll_adapt_bcast_cuda_callback_fn_t) (ompi_coll_adapt_bcast_context_t * context);
 
-struct mca_coll_adapt_bcast_context_s {
+struct ompi_coll_adapt_bcast_context_s {
     opal_free_list_item_t super;
     char *buff;
     int frag_id;
     int child_id;
     int peer;
-    mca_coll_adapt_constant_bcast_context_t *con;
+    ompi_coll_adapt_constant_bcast_context_t *con;
 };
 
-OBJ_CLASS_DECLARATION(mca_coll_adapt_bcast_context_t);
+OBJ_CLASS_DECLARATION(ompi_coll_adapt_bcast_context_t);
 
 /* Reduce constant context in reduce context */
-struct mca_coll_adapt_constant_reduce_context_s {
+struct ompi_coll_adapt_constant_reduce_context_s {
     opal_object_t super;
     size_t count;
     size_t seg_count;
@@ -81,7 +81,7 @@ struct mca_coll_adapt_constant_reduce_context_s {
     /* Number of sent segments */
     int32_t num_sent_segs;
     /* Next seg need to be received for every children */
-    _Atomic int32_t *next_recv_segs;
+    opal_atomic_int32_t *next_recv_segs;
     /* Mutex to protect recv_list */
     opal_mutex_t *mutex_recv_list;
     /* Mutex to protect num_recv_segs */
@@ -95,12 +95,14 @@ struct mca_coll_adapt_constant_reduce_context_s {
     ompi_coll_tree_t *tree;
     /* Accumulate buff */
     char **accumbuf;
+    /* inbuf list address of accumbuf */ 
+    ompi_coll_adapt_inbuf_t ** accumbuf_to_inbuf;  
     opal_free_list_t *inbuf_list;
     /* A list to store the segments which are received and not yet be sent */
     opal_list_t *recv_list;
     ptrdiff_t lower_bound;
     /* How many sends are posted but not finished */
-    _Atomic int32_t ongoing_send;
+    opal_atomic_int32_t ongoing_send;
     char *sbuf;
     char *rbuf;
     int root;
@@ -109,24 +111,24 @@ struct mca_coll_adapt_constant_reduce_context_s {
     int ireduce_tag;
 };
 
-typedef struct mca_coll_adapt_constant_reduce_context_s mca_coll_adapt_constant_reduce_context_t;
+typedef struct ompi_coll_adapt_constant_reduce_context_s ompi_coll_adapt_constant_reduce_context_t;
 
-OBJ_CLASS_DECLARATION(mca_coll_adapt_constant_reduce_context_t);
+OBJ_CLASS_DECLARATION(ompi_coll_adapt_constant_reduce_context_t);
 
 /* Reduce context of each segment */
-typedef struct mca_coll_adapt_reduce_context_s mca_coll_adapt_reduce_context_t;
+typedef struct ompi_coll_adapt_reduce_context_s ompi_coll_adapt_reduce_context_t;
 
-typedef int (*mca_coll_adapt_reduce_cuda_callback_fn_t) (mca_coll_adapt_reduce_context_t * context);
+typedef int (*ompi_coll_adapt_reduce_cuda_callback_fn_t) (ompi_coll_adapt_reduce_context_t * context);
 
-struct mca_coll_adapt_reduce_context_s {
+struct ompi_coll_adapt_reduce_context_s {
     opal_free_list_item_t super;
     char *buff;
     int frag_id;
     int child_id;
     int peer;
-    mca_coll_adapt_constant_reduce_context_t *con;
+    ompi_coll_adapt_constant_reduce_context_t *con;
     /* store the incoming segment */
-    mca_coll_adapt_inbuf_t *inbuf;
+    ompi_coll_adapt_inbuf_t *inbuf;
 };
 
-OBJ_CLASS_DECLARATION(mca_coll_adapt_reduce_context_t);
+OBJ_CLASS_DECLARATION(ompi_coll_adapt_reduce_context_t);

@@ -36,35 +36,32 @@ static int adapt_register(void);
  */
 
 mca_coll_adapt_component_t mca_coll_adapt_component = {
-
     /* First, fill in the super */
-
     {
-     /* First, the mca_component_t struct containing meta
-        information about the component itself */
+        /* First, the mca_component_t struct containing meta
+           information about the component itself */
+        .collm_version = {
+            MCA_COLL_BASE_VERSION_2_0_0,
 
-     {
-      MCA_COLL_BASE_VERSION_2_0_0,
+            /* Component name and version */
+            .mca_component_name = "adapt",
+            MCA_BASE_MAKE_VERSION(component, OMPI_MAJOR_VERSION, OMPI_MINOR_VERSION,
+                                  OMPI_RELEASE_VERSION),
 
-      /* Component name and version */
-      "adapt",
-      OMPI_MAJOR_VERSION,
-      OMPI_MINOR_VERSION,
-      OMPI_RELEASE_VERSION,
+            /* Component functions */
+            .mca_open_component = adapt_open,
+            .mca_close_component = adapt_close,
+            .mca_register_component_params = adapt_register,
+        },
+        .collm_data = {
+            /* The component is not checkpoint ready */
+            MCA_BASE_METADATA_PARAM_NONE
+        },
 
-      /* Component functions */
-      adapt_open,               /* open */
-      adapt_close,
-      NULL,                     /* query */
-      adapt_register},
-     {
-      /* The component is not checkpoint ready */
-      MCA_BASE_METADATA_PARAM_NONE},
-
-     /* Initialization / querying functions */
-     mca_coll_adapt_init_query,
-     mca_coll_adapt_comm_query,
-     },
+        /* Initialization / querying functions */
+        .collm_init_query = ompi_coll_adapt_init_query,
+        .collm_comm_query = ompi_coll_adapt_comm_query,
+    },
 
     /* adapt-component specific information */
 
@@ -81,6 +78,25 @@ mca_coll_adapt_component_t mca_coll_adapt_component = {
 /* Open the component */
 static int adapt_open(void)
 {
+    int param;
+    mca_coll_adapt_component_t *cs = &mca_coll_adapt_component;
+
+    /*
+     * Get the global coll verbosity: it will be ours
+     */
+    param = mca_base_var_find("ompi", "coll", "base", "verbose");
+    if (param >= 0) {
+        const int *verbose = NULL;
+        mca_base_var_get_value(param, &verbose, NULL, NULL);
+        if (verbose && verbose[0] > 0) {
+            cs->adapt_output = opal_output_open(NULL);
+            opal_output_set_verbosity(cs->adapt_output, verbose[0]);
+        }
+    }
+
+    opal_output_verbose(1, cs->adapt_output,
+                        "coll:adapt:component_open: done!");
+
     return OMPI_SUCCESS;
 }
 
@@ -88,8 +104,8 @@ static int adapt_open(void)
 /* Shut down the component */
 static int adapt_close(void)
 {
-    mca_coll_adapt_ibcast_fini();
-    mca_coll_adapt_ireduce_fini();
+    ompi_coll_adapt_ibcast_fini();
+    ompi_coll_adapt_ireduce_fini();
 
     return OMPI_SUCCESS;
 }
@@ -125,7 +141,7 @@ static int adapt_register(void)
     opal_output_set_verbosity(cs->adapt_output, adapt_verbose);
 
     cs->adapt_context_free_list_min = 10;
-    (void) mca_base_component_var_register(c, "context_free_list_max",
+    (void) mca_base_component_var_register(c, "context_free_list_min",
                                            "Minimum number of segments in context free list",
                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
                                            OPAL_INFO_LVL_9,
@@ -133,7 +149,7 @@ static int adapt_register(void)
                                            &cs->adapt_context_free_list_min);
 
     cs->adapt_context_free_list_max = 10000;
-    (void) mca_base_component_var_register(c, "context_free_list_min",
+    (void) mca_base_component_var_register(c, "context_free_list_max",
                                            "Maximum number of segments in context free list",
                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
                                            OPAL_INFO_LVL_9,
@@ -147,8 +163,8 @@ static int adapt_register(void)
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &cs->adapt_context_free_list_inc);
-    mca_coll_adapt_ibcast_init();
-    mca_coll_adapt_ireduce_init();
+    ompi_coll_adapt_ibcast_init();
+    ompi_coll_adapt_ireduce_init();
 
     return adapt_verify_mca_variables();
 }

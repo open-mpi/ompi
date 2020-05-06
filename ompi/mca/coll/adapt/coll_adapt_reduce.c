@@ -13,7 +13,7 @@
 #include "coll_adapt_algorithms.h"
 
 /* MPI_Reduce and MPI_Ireduce in the ADAPT module only work for commutative operations */
-int mca_coll_adapt_reduce(const void *sbuf, void *rbuf, int count, struct ompi_datatype_t *dtype,
+int ompi_coll_adapt_reduce(const void *sbuf, void *rbuf, int count, struct ompi_datatype_t *dtype,
                           struct ompi_op_t *op, int root, struct ompi_communicator_t *comm,
                           mca_coll_base_module_t * module)
 {
@@ -22,7 +22,7 @@ int mca_coll_adapt_reduce(const void *sbuf, void *rbuf, int count, struct ompi_d
     } else {
         ompi_request_t *request;
         int err =
-            mca_coll_adapt_ireduce(sbuf, rbuf, count, dtype, op, root, comm, &request, module);
+            ompi_coll_adapt_ireduce(sbuf, rbuf, count, dtype, op, root, comm, &request, module);
         ompi_request_wait(&request, MPI_STATUS_IGNORE);
         return err;
     }

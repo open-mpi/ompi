@@ -21,33 +21,35 @@
 #include "ompi/mca/pml/ob1/pml_ob1.h"
 
 
-typedef int (*mca_coll_adapt_ibcast_fn_t) (void *buff,
+typedef int (*ompi_coll_adapt_ibcast_fn_t) (void *buff,
                                            int count,
                                            struct ompi_datatype_t * datatype,
                                            int root,
                                            struct ompi_communicator_t * comm,
                                            ompi_request_t ** request,
-                                           mca_coll_base_module_t * module, int ibcast_tag);
+                                           mca_coll_base_module_t * module,
+                                           int ibcast_tag);
 
-static mca_coll_adapt_algorithm_index_t mca_coll_adapt_ibcast_algorithm_index[] = {
-    {1, (uintptr_t) mca_coll_adapt_ibcast_binomial},
-    {2, (uintptr_t) mca_coll_adapt_ibcast_in_order_binomial},
-    {3, (uintptr_t) mca_coll_adapt_ibcast_binary},
-    {4, (uintptr_t) mca_coll_adapt_ibcast_pipeline},
-    {5, (uintptr_t) mca_coll_adapt_ibcast_chain},
-    {6, (uintptr_t) mca_coll_adapt_ibcast_linear},
+static ompi_coll_adapt_algorithm_index_t ompi_coll_adapt_ibcast_algorithm_index[] = {
+    {0, (uintptr_t) ompi_coll_adapt_ibcast_tuned},
+    {1, (uintptr_t) ompi_coll_adapt_ibcast_binomial},
+    {2, (uintptr_t) ompi_coll_adapt_ibcast_in_order_binomial},
+    {3, (uintptr_t) ompi_coll_adapt_ibcast_binary},
+    {4, (uintptr_t) ompi_coll_adapt_ibcast_pipeline},
+    {5, (uintptr_t) ompi_coll_adapt_ibcast_chain},
+    {6, (uintptr_t) ompi_coll_adapt_ibcast_linear},
 };
 
 /*
  * Set up MCA parameters of MPI_Bcast and MPI_IBcast
  */
-int mca_coll_adapt_ibcast_init(void)
+int ompi_coll_adapt_ibcast_init(void)
 {
     mca_base_component_t *c = &mca_coll_adapt_component.super.collm_version;
 
     mca_coll_adapt_component.adapt_ibcast_algorithm = 1;
     mca_base_component_var_register(c, "bcast_algorithm",
-                                    "Algorithm of broadcast, 1: binomial, 2: in_order_binomial, 3: binary, 4: pipeline, 5: chain, 6: linear", MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                    "Algorithm of broadcast, 0: tuned, 1: binomial, 2: in_order_binomial, 3: binary, 4: pipeline, 5: chain, 6: linear", MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
                                     OPAL_INFO_LVL_5, MCA_BASE_VAR_SCOPE_READONLY,
                                     &mca_coll_adapt_component.adapt_ibcast_algorithm);
 
@@ -81,15 +83,15 @@ int mca_coll_adapt_ibcast_init(void)
 }
 
 /*
- * Release the free list created in mca_coll_adapt_ibcast_generic
+ * Release the free list created in ompi_coll_adapt_ibcast_generic
  */
-int mca_coll_adapt_ibcast_fini(void)
+int ompi_coll_adapt_ibcast_fini(void)
 {
     if (NULL != mca_coll_adapt_component.adapt_ibcast_context_free_list) {
         OBJ_RELEASE(mca_coll_adapt_component.adapt_ibcast_context_free_list);
         mca_coll_adapt_component.adapt_ibcast_context_free_list = NULL;
         mca_coll_adapt_component.adapt_ibcast_context_free_list_enabled = 0;
-		OPAL_OUTPUT_VERBOSE((10, mca_coll_adapt_component.adapt_output, "ibcast fini\n"));
+        OPAL_OUTPUT_VERBOSE((10, mca_coll_adapt_component.adapt_output, "ibcast fini\n"));
     }
     return OMPI_SUCCESS;
 }
@@ -97,7 +99,7 @@ int mca_coll_adapt_ibcast_fini(void)
 /*
  *  Finish a ibcast request
  */
-static int ibcast_request_fini(mca_coll_adapt_bcast_context_t * context)
+static int ibcast_request_fini(ompi_coll_adapt_bcast_context_t * context)
 {
     ompi_request_t *temp_req = context->con->request;
     if (context->con->tree->tree_nextsize != 0) {
@@ -121,8 +123,8 @@ static int ibcast_request_fini(mca_coll_adapt_bcast_context_t * context)
  */
 static int send_cb(ompi_request_t * req)
 {
-    mca_coll_adapt_bcast_context_t *context =
-        (mca_coll_adapt_bcast_context_t *) req->req_complete_cb_data;
+    ompi_coll_adapt_bcast_context_t *context =
+        (ompi_coll_adapt_bcast_context_t *) req->req_complete_cb_data;
 
     int err;
 
@@ -136,10 +138,11 @@ static int send_cb(ompi_request_t * req)
     /* If the current process has fragments in recv_array can be sent */
     if (sent_id < context->con->num_recv_segs) {
         ompi_request_t *send_req;
+        ompi_coll_adapt_bcast_context_t *send_context;
+        opal_free_list_t *free_list;
         int new_id = context->con->recv_array[sent_id];
-        mca_coll_adapt_bcast_context_t *send_context =
-            (mca_coll_adapt_bcast_context_t *) opal_free_list_wait(mca_coll_adapt_component.
-                                                                   adapt_ibcast_context_free_list);
+        free_list = mca_coll_adapt_component.adapt_ibcast_context_free_list;
+        send_context = (ompi_coll_adapt_bcast_context_t *) opal_free_list_wait(free_list);
         send_context->buff =
             context->buff + (new_id - context->frag_id) * context->con->real_seg_size;
         send_context->frag_id = new_id;
@@ -206,8 +209,8 @@ static int send_cb(ompi_request_t * req)
 static int recv_cb(ompi_request_t * req)
 {
     /* Get necessary info from request */
-    mca_coll_adapt_bcast_context_t *context =
-        (mca_coll_adapt_bcast_context_t *) req->req_complete_cb_data;
+    ompi_coll_adapt_bcast_context_t *context =
+        (ompi_coll_adapt_bcast_context_t *) req->req_complete_cb_data;
 
     int err, i;
     OPAL_OUTPUT_VERBOSE((30, mca_coll_adapt_component.adapt_output,
@@ -220,14 +223,15 @@ static int recv_cb(ompi_request_t * req)
     int num_recv_segs_t = ++(context->con->num_recv_segs);
     context->con->recv_array[num_recv_segs_t - 1] = context->frag_id;
 
+    opal_free_list_t *free_list;
     int new_id = num_recv_segs_t + mca_coll_adapt_component.adapt_ibcast_max_recv_requests - 1;
     /* Receive new segment */
     if (new_id < context->con->num_segs) {
         ompi_request_t *recv_req;
+        ompi_coll_adapt_bcast_context_t *recv_context;
+        free_list = mca_coll_adapt_component.adapt_ibcast_context_free_list;
         /* Get new context item from free list */
-        mca_coll_adapt_bcast_context_t *recv_context =
-            (mca_coll_adapt_bcast_context_t *) opal_free_list_wait(mca_coll_adapt_component.
-                                                                   adapt_ibcast_context_free_list);
+        recv_context = (ompi_coll_adapt_bcast_context_t *) opal_free_list_wait(free_list);
         recv_context->buff =
             context->buff + (new_id - context->frag_id) * context->con->real_seg_size;
         recv_context->frag_id = new_id;
@@ -266,9 +270,9 @@ static int recv_cb(ompi_request_t * req)
                 send_count = context->con->count - context->frag_id * context->con->seg_count;
             }
 
-            mca_coll_adapt_bcast_context_t *send_context =
-                (mca_coll_adapt_bcast_context_t *) opal_free_list_wait(mca_coll_adapt_component.
-                                                                       adapt_ibcast_context_free_list);
+            ompi_coll_adapt_bcast_context_t *send_context;
+            free_list = mca_coll_adapt_component.adapt_ibcast_context_free_list;
+            send_context = (ompi_coll_adapt_bcast_context_t *) opal_free_list_wait(free_list);
             send_context->buff = context->buff;
             send_context->frag_id = context->frag_id;
             send_context->child_id = i;
@@ -326,7 +330,7 @@ static int recv_cb(ompi_request_t * req)
     return 1;
 }
 
-int mca_coll_adapt_ibcast(void *buff, int count, struct ompi_datatype_t *datatype, int root,
+int ompi_coll_adapt_ibcast(void *buff, int count, struct ompi_datatype_t *datatype, int root,
                           struct ompi_communicator_t *comm, ompi_request_t ** request,
                           mca_coll_base_module_t * module)
 {
@@ -335,7 +339,7 @@ int mca_coll_adapt_ibcast(void *buff, int count, struct ompi_datatype_t *datatyp
         temp_request = OBJ_NEW(ompi_request_t);
         OMPI_REQUEST_INIT(temp_request, false);
         temp_request->req_type = 0;
-        temp_request->req_free = adapt_request_free;
+        temp_request->req_free = ompi_coll_adapt_request_free;
         temp_request->req_status.MPI_SOURCE = 0;
         temp_request->req_status.MPI_TAG = 0;
         temp_request->req_status.MPI_ERROR = 0;
@@ -356,9 +360,9 @@ int mca_coll_adapt_ibcast(void *buff, int count, struct ompi_datatype_t *datatyp
         }
         int ibcast_tag = opal_atomic_add_fetch_32(&(comm->c_ibcast_tag), 1);
         ibcast_tag = ibcast_tag % 4096;
-        mca_coll_adapt_ibcast_fn_t bcast_func =
-            (mca_coll_adapt_ibcast_fn_t)
-            mca_coll_adapt_ibcast_algorithm_index[mca_coll_adapt_component.adapt_ibcast_algorithm].
+        ompi_coll_adapt_ibcast_fn_t bcast_func =
+            (ompi_coll_adapt_ibcast_fn_t)
+            ompi_coll_adapt_ibcast_algorithm_index[mca_coll_adapt_component.adapt_ibcast_algorithm].
             algorithm_fn_ptr;
         return bcast_func(buff, count, datatype, root, comm, request, module, ibcast_tag);
     }
@@ -367,72 +371,81 @@ int mca_coll_adapt_ibcast(void *buff, int count, struct ompi_datatype_t *datatyp
 /*
  * Ibcast functions with different algorithms
  */
-int mca_coll_adapt_ibcast_binomial(void *buff, int count, struct ompi_datatype_t *datatype,
+int ompi_coll_adapt_ibcast_tuned(void *buff, int count, struct ompi_datatype_t *datatype,
+                                int root, struct ompi_communicator_t *comm,
+                                ompi_request_t ** request,
+                                mca_coll_base_module_t *module, int ibcast_tag)
+{
+    OPAL_OUTPUT_VERBOSE((10, mca_coll_adapt_component.adapt_output, "tuned not implemented\n"));
+    return OMPI_SUCCESS;
+}
+
+int ompi_coll_adapt_ibcast_binomial(void *buff, int count, struct ompi_datatype_t *datatype,
                                    int root, struct ompi_communicator_t *comm,
                                    ompi_request_t ** request, mca_coll_base_module_t * module,
                                    int ibcast_tag)
 {
     ompi_coll_tree_t *tree = ompi_coll_base_topo_build_bmtree(comm, root);
     int err =
-        mca_coll_adapt_ibcast_generic(buff, count, datatype, root, comm, request, module, tree,
+        ompi_coll_adapt_ibcast_generic(buff, count, datatype, root, comm, request, module, tree,
                                       mca_coll_adapt_component.adapt_ibcast_segment_size,
                                       ibcast_tag);
     return err;
 }
 
-int mca_coll_adapt_ibcast_in_order_binomial(void *buff, int count, struct ompi_datatype_t *datatype,
+int ompi_coll_adapt_ibcast_in_order_binomial(void *buff, int count, struct ompi_datatype_t *datatype,
                                             int root, struct ompi_communicator_t *comm,
                                             ompi_request_t ** request,
                                             mca_coll_base_module_t * module, int ibcast_tag)
 {
     ompi_coll_tree_t *tree = ompi_coll_base_topo_build_in_order_bmtree(comm, root);
     int err =
-        mca_coll_adapt_ibcast_generic(buff, count, datatype, root, comm, request, module, tree,
+        ompi_coll_adapt_ibcast_generic(buff, count, datatype, root, comm, request, module, tree,
                                       mca_coll_adapt_component.adapt_ibcast_segment_size,
                                       ibcast_tag);
     return err;
 }
 
 
-int mca_coll_adapt_ibcast_binary(void *buff, int count, struct ompi_datatype_t *datatype, int root,
+int ompi_coll_adapt_ibcast_binary(void *buff, int count, struct ompi_datatype_t *datatype, int root,
                                  struct ompi_communicator_t *comm, ompi_request_t ** request,
                                  mca_coll_base_module_t * module, int ibcast_tag)
 {
     ompi_coll_tree_t *tree = ompi_coll_base_topo_build_tree(2, comm, root);
     int err =
-        mca_coll_adapt_ibcast_generic(buff, count, datatype, root, comm, request, module, tree,
+        ompi_coll_adapt_ibcast_generic(buff, count, datatype, root, comm, request, module, tree,
                                       mca_coll_adapt_component.adapt_ibcast_segment_size,
                                       ibcast_tag);
     return err;
 }
 
-int mca_coll_adapt_ibcast_pipeline(void *buff, int count, struct ompi_datatype_t *datatype,
+int ompi_coll_adapt_ibcast_pipeline(void *buff, int count, struct ompi_datatype_t *datatype,
                                    int root, struct ompi_communicator_t *comm,
                                    ompi_request_t ** request, mca_coll_base_module_t * module,
                                    int ibcast_tag)
 {
     ompi_coll_tree_t *tree = ompi_coll_base_topo_build_chain(1, comm, root);
     int err =
-        mca_coll_adapt_ibcast_generic(buff, count, datatype, root, comm, request, module, tree,
+        ompi_coll_adapt_ibcast_generic(buff, count, datatype, root, comm, request, module, tree,
                                       mca_coll_adapt_component.adapt_ibcast_segment_size,
                                       ibcast_tag);
     return err;
 }
 
 
-int mca_coll_adapt_ibcast_chain(void *buff, int count, struct ompi_datatype_t *datatype, int root,
+int ompi_coll_adapt_ibcast_chain(void *buff, int count, struct ompi_datatype_t *datatype, int root,
                                 struct ompi_communicator_t *comm, ompi_request_t ** request,
                                 mca_coll_base_module_t * module, int ibcast_tag)
 {
     ompi_coll_tree_t *tree = ompi_coll_base_topo_build_chain(4, comm, root);
     int err =
-        mca_coll_adapt_ibcast_generic(buff, count, datatype, root, comm, request, module, tree,
+        ompi_coll_adapt_ibcast_generic(buff, count, datatype, root, comm, request, module, tree,
                                       mca_coll_adapt_component.adapt_ibcast_segment_size,
                                       ibcast_tag);
     return err;
 }
 
-int mca_coll_adapt_ibcast_linear(void *buff, int count, struct ompi_datatype_t *datatype, int root,
+int ompi_coll_adapt_ibcast_linear(void *buff, int count, struct ompi_datatype_t *datatype, int root,
                                  struct ompi_communicator_t *comm, ompi_request_t ** request,
                                  mca_coll_base_module_t * module, int ibcast_tag)
 {
@@ -446,14 +459,14 @@ int mca_coll_adapt_ibcast_linear(void *buff, int count, struct ompi_datatype_t *
         tree = ompi_coll_base_topo_build_tree(MAXTREEFANOUT, comm, root);
     }
     int err =
-        mca_coll_adapt_ibcast_generic(buff, count, datatype, root, comm, request, module, tree,
+        ompi_coll_adapt_ibcast_generic(buff, count, datatype, root, comm, request, module, tree,
                                       mca_coll_adapt_component.adapt_ibcast_segment_size,
                                       ibcast_tag);
     return err;
 }
 
 
-int mca_coll_adapt_ibcast_generic(void *buff, int count, struct ompi_datatype_t *datatype, int root,
+int ompi_coll_adapt_ibcast_generic(void *buff, int count, struct ompi_datatype_t *datatype, int root,
                                   struct ompi_communicator_t *comm, ompi_request_t ** request,
                                   mca_coll_base_module_t * module, ompi_coll_tree_t * tree,
                                   size_t seg_size, int ibcast_tag)
@@ -494,9 +507,9 @@ int mca_coll_adapt_ibcast_generic(void *buff, int count, struct ompi_datatype_t 
         if (1 == context_free_list_enabled) {
             mca_coll_adapt_component.adapt_ibcast_context_free_list = OBJ_NEW(opal_free_list_t);
             opal_free_list_init(mca_coll_adapt_component.adapt_ibcast_context_free_list,
-                                sizeof(mca_coll_adapt_bcast_context_t),
+                                sizeof(ompi_coll_adapt_bcast_context_t),
                                 opal_cache_line_size,
-                                OBJ_CLASS(mca_coll_adapt_bcast_context_t),
+                                OBJ_CLASS(ompi_coll_adapt_bcast_context_t),
                                 0, opal_cache_line_size,
                                 mca_coll_adapt_component.adapt_context_free_list_min,
                                 mca_coll_adapt_component.adapt_context_free_list_max,
@@ -510,7 +523,7 @@ int mca_coll_adapt_ibcast_generic(void *buff, int count, struct ompi_datatype_t 
     OMPI_REQUEST_INIT(temp_request, false);
     temp_request->req_state = OMPI_REQUEST_ACTIVE;
     temp_request->req_type = 0;
-    temp_request->req_free = adapt_request_free;
+    temp_request->req_free = ompi_coll_adapt_request_free;
     temp_request->req_status.MPI_SOURCE = 0;
     temp_request->req_status.MPI_TAG = 0;
     temp_request->req_status.MPI_ERROR = 0;
@@ -540,7 +553,7 @@ int mca_coll_adapt_ibcast_generic(void *buff, int count, struct ompi_datatype_t 
     }
 
     /* Set constant context for send and recv call back */
-    mca_coll_adapt_constant_bcast_context_t *con = OBJ_NEW(mca_coll_adapt_constant_bcast_context_t);
+    ompi_coll_adapt_constant_bcast_context_t *con = OBJ_NEW(ompi_coll_adapt_constant_bcast_context_t);
     con->root = root;
     con->count = count;
     con->seg_count = seg_count;
@@ -582,7 +595,7 @@ int mca_coll_adapt_ibcast_generic(void *buff, int count, struct ompi_datatype_t 
             recv_array[i] = i;
         }
         con->num_recv_segs = num_segs;
-        /* Set send_array, will send adapt_ibcast_max_send_requests segments */
+        /* Set send_array, will send ompi_coll_adapt_ibcast_max_send_requests segments */
         for (i = 0; i < tree->tree_nextsize; i++) {
             send_array[i] = mca_coll_adapt_component.adapt_ibcast_max_send_requests;
         }
@@ -595,8 +608,8 @@ int mca_coll_adapt_ibcast_generic(void *buff, int count, struct ompi_datatype_t 
                 send_count = count - i * seg_count;
             }
             for (j = 0; j < tree->tree_nextsize; j++) {
-                mca_coll_adapt_bcast_context_t *context =
-                    (mca_coll_adapt_bcast_context_t *) opal_free_list_wait(mca_coll_adapt_component.
+                ompi_coll_adapt_bcast_context_t *context =
+                    (ompi_coll_adapt_bcast_context_t *) opal_free_list_wait(mca_coll_adapt_component.
                                                                            adapt_ibcast_context_free_list);
                 context->buff = (char *) buff + i * real_seg_size;
                 context->frag_id = i;
@@ -656,8 +669,8 @@ int mca_coll_adapt_ibcast_generic(void *buff, int count, struct ompi_datatype_t 
             if (i == (num_segs - 1)) {
                 recv_count = count - i * seg_count;
             }
-            mca_coll_adapt_bcast_context_t *context =
-                (mca_coll_adapt_bcast_context_t *) opal_free_list_wait(mca_coll_adapt_component.
+            ompi_coll_adapt_bcast_context_t *context =
+                (ompi_coll_adapt_bcast_context_t *) opal_free_list_wait(mca_coll_adapt_component.
                                                                        adapt_ibcast_context_free_list);
             context->buff = (char *) buff + i * real_seg_size;
             context->frag_id = i;
