@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      QLogic Corporation. All rights reserved.
- * Copyright (c) 2015      Intel, Inc. All rights reserved
+ * Copyright (c) 2015-2020 Intel, Inc. All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -58,7 +58,10 @@ OBJ_CLASS_DECLARATION(mca_mtl_psm2_endpoint);
 static inline mca_mtl_psm2_endpoint_t *ompi_mtl_psm2_get_endpoint (struct mca_mtl_base_module_t* mtl, ompi_proc_t *ompi_proc)
 {
     if (OPAL_UNLIKELY(NULL == ompi_proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_MTL])) {
-	ompi_mtl_psm2_add_procs (mtl, 1, &ompi_proc);
+        int rc;
+        if (OPAL_UNLIKELY(OMPI_SUCCESS != (rc = MCA_PML_CALL(add_procs(&ompi_proc, 1))))) {
+            ompi_rte_abort(rc,"Error in ompi_mtl_psm2_get_endpoint.\n");
+        }
     }
 
     return ompi_proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_MTL];
