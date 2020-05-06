@@ -12,7 +12,7 @@ Copyright (c) 2006-2018 Cisco Systems, Inc.  All rights reserved.
 Copyright (c) 2006-2011 Mellanox Technologies. All rights reserved.
 Copyright (c) 2006-2012 Oracle and/or its affiliates.  All rights reserved.
 Copyright (c) 2007      Myricom, Inc.  All rights reserved.
-Copyright (c) 2008-2019 IBM Corporation.  All rights reserved.
+Copyright (c) 2008-2020 IBM Corporation.  All rights reserved.
 Copyright (c) 2010      Oak Ridge National Labs.  All rights reserved.
 Copyright (c) 2011      University of Houston. All rights reserved.
 Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
@@ -66,10 +66,15 @@ Much, much more information is also available in the Open MPI FAQ:
 ===========================================================================
 
 The following abbreviated list of release notes applies to this code
-base as of this writing (February 2019):
+base as of this writing (May 2020):
 
 General notes
 -------------
+
+- WARNING - Open MPI v4.0.3 accidentally dropped some external constant
+  definitions from the libmpi_usempif08.so library.  This is remedied
+  in v4.0.4.  It is recommended that users of libmpi_usempif08.so skip
+  over v4.0.3, and upgrade to v4.0.4 or later.
 
 - Open MPI now includes two public software layers: MPI and OpenSHMEM.
   Throughout this document, references to Open MPI implicitly include
