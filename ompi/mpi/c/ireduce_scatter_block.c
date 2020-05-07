@@ -97,6 +97,11 @@ int MPI_Ireduce_scatter_block(const void *sendbuf, void *recvbuf, int recvcount,
         OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);
     }
 
+    if (0 == recvcount) {
+        *request = &ompi_request_empty;
+        return MPI_SUCCESS;
+    }
+
     OPAL_CR_ENTER_LIBRARY();
 
     /* Invoke the coll component to perform the back-end operation */

@@ -96,6 +96,13 @@ int MPI_Ibcast(void *buffer, int count, MPI_Datatype datatype,
       }
     }
 
+    /* If there's only one node, or if the count is 0, we're done */
+
+    if ((OMPI_COMM_IS_INTRA(comm) && ompi_comm_size(comm) <= 1) ||
+        0 == count) {
+        return MPI_SUCCESS;
+    }
+
     OPAL_CR_ENTER_LIBRARY();
 
     /* Invoke the coll component to perform the back-end operation */
