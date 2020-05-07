@@ -58,6 +58,7 @@ mca_btl_ofi_la_SOURCES = $(component_sources)
 mca_btl_ofi_la_LDFLAGS = -module -avoid-version \
                          $(opal_ofi_LDFLAGS)
 mca_btl_ofi_la_LIBADD = $(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la \
+    $(OPAL_TOP_BUILDDIR)/opal/mca/common/ofi/lib@OPAL_LIB_PREFIX@mca_common_ofi.la \
     $(opal_ofi_LIBS)
 
 noinst_LTLIBRARIES = $(lib)
