@@ -65,11 +65,10 @@ mca_coll_adapt_component_t mca_coll_adapt_component = {
 
     /* adapt-component specific information */
 
-    /* (default) priority */
-    0,
+    0, /* (default) priority */
 
-    /* (default) verbose level */
-    0,
+    0, /* (default) output stream */
+    0, /* (default) verbose level */
 
     /* default values for non-MCA parameters */
     /* Not specifying values here gives us all 0's */
@@ -78,24 +77,12 @@ mca_coll_adapt_component_t mca_coll_adapt_component = {
 /* Open the component */
 static int adapt_open(void)
 {
-    int param;
     mca_coll_adapt_component_t *cs = &mca_coll_adapt_component;
 
-    /*
-     * Get the global coll verbosity: it will be ours
-     */
-    param = mca_base_var_find("ompi", "coll", "base", "verbose");
-    if (param >= 0) {
-        const int *verbose = NULL;
-        mca_base_var_get_value(param, &verbose, NULL, NULL);
-        if (verbose && verbose[0] > 0) {
-            cs->adapt_output = opal_output_open(NULL);
-            opal_output_set_verbosity(cs->adapt_output, verbose[0]);
-        }
+    if (cs->adapt_verbose > 0) {
+        cs->adapt_output = opal_output_open(NULL);
+        opal_output_set_verbosity(cs->adapt_output, cs->adapt_verbose);
     }
-
-    opal_output_verbose(1, cs->adapt_output,
-                        "coll:adapt:component_open: done!");
 
     return OMPI_SUCCESS;
 }
@@ -131,16 +118,14 @@ static int adapt_register(void)
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY, &cs->adapt_priority);
 
-    int adapt_verbose = 0;
+    cs->adapt_verbose = ompi_coll_base_framework.framework_verbose;
     (void) mca_base_component_var_register(c, "verbose",
-                                           "Verbose level",
+                                           "Verbose level (default set to the collective framework verbosity)",
                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
                                            OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY, &adapt_verbose);
-    cs->adapt_output = opal_output_open(NULL);
-    opal_output_set_verbosity(cs->adapt_output, adapt_verbose);
+                                           MCA_BASE_VAR_SCOPE_READONLY, &cs->adapt_verbose);
 
-    cs->adapt_context_free_list_min = 10;
+    cs->adapt_context_free_list_min = 64;
     (void) mca_base_component_var_register(c, "context_free_list_min",
                                            "Minimum number of segments in context free list",
                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
@@ -148,7 +133,7 @@ static int adapt_register(void)
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &cs->adapt_context_free_list_min);
 
-    cs->adapt_context_free_list_max = 10000;
+    cs->adapt_context_free_list_max = 1024;
     (void) mca_base_component_var_register(c, "context_free_list_max",
                                            "Maximum number of segments in context free list",
                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
@@ -156,15 +141,15 @@ static int adapt_register(void)
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &cs->adapt_context_free_list_max);
 
-    cs->adapt_context_free_list_inc = 10;
+    cs->adapt_context_free_list_inc = 32;
     (void) mca_base_component_var_register(c, "context_free_list_inc",
                                            "Increasement number of segments in context free list",
                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &cs->adapt_context_free_list_inc);
-    ompi_coll_adapt_ibcast_init();
-    ompi_coll_adapt_ireduce_init();
+    ompi_coll_adapt_ibcast_register();
+    ompi_coll_adapt_ireduce_register();
 
     return adapt_verify_mca_variables();
 }

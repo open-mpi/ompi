@@ -16,7 +16,7 @@ struct ompi_coll_adapt_item_s {
     opal_list_item_t super;
     /* Fragment id */
     int id;
-    /* The number of children which have received the current segment from */
+    /* The number of children which have received the current segment */
     int count;
 };
 

@@ -17,10 +17,13 @@ int ompi_coll_adapt_bcast(void *buff, int count, struct ompi_datatype_t *datatyp
 {
     if (count == 0) {
         return MPI_SUCCESS;
-    } else {
-        ompi_request_t *request;
-        int err = ompi_coll_adapt_ibcast(buff, count, datatype, root, comm, &request, module);
-        ompi_request_wait(&request, MPI_STATUS_IGNORE);
-        return err;
     }
+    ompi_request_t *request = NULL;
+    int err = ompi_coll_adapt_ibcast(buff, count, datatype, root, comm, &request, module);
+    if( MPI_SUCCESS != err ) {
+        if( NULL == request )
+            return err;
+    }
+    ompi_request_wait(&request, MPI_STATUS_IGNORE);
+    return err;
 }

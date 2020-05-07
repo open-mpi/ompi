@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014      The University of Tennessee and The University
+# Copyright (c) 2014-2020 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
 # $COPYRIGHT$
@@ -13,11 +13,11 @@
 sources = \
 	coll_adapt_component.c \
 	coll_adapt_module.c \
-    coll_adapt_bcast.c \
+	coll_adapt_bcast.c \
 	coll_adapt_ibcast.c \
 	coll_adapt_reduce.c \
 	coll_adapt_ireduce.c \
-    coll_adapt.h \
+	coll_adapt.h \
 	coll_adapt_algorithms.h \
 	coll_adapt_context.h \
 	coll_adapt_context.c \

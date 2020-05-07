@@ -43,7 +43,7 @@ static ompi_coll_adapt_algorithm_index_t ompi_coll_adapt_ibcast_algorithm_index[
 /*
  * Set up MCA parameters of MPI_Bcast and MPI_IBcast
  */
-int ompi_coll_adapt_ibcast_init(void)
+int ompi_coll_adapt_ibcast_register(void)
 {
     mca_base_component_t *c = &mca_coll_adapt_component.super.collm_version;
 
@@ -78,7 +78,6 @@ int ompi_coll_adapt_ibcast_init(void)
                                     &mca_coll_adapt_component.adapt_ibcast_max_recv_requests);
 
     mca_coll_adapt_component.adapt_ibcast_context_free_list = NULL;
-    mca_coll_adapt_component.adapt_ibcast_context_free_list_enabled = 0;
     return OMPI_SUCCESS;
 }
 
@@ -90,7 +89,6 @@ int ompi_coll_adapt_ibcast_fini(void)
     if (NULL != mca_coll_adapt_component.adapt_ibcast_context_free_list) {
         OBJ_RELEASE(mca_coll_adapt_component.adapt_ibcast_context_free_list);
         mca_coll_adapt_component.adapt_ibcast_context_free_list = NULL;
-        mca_coll_adapt_component.adapt_ibcast_context_free_list_enabled = 0;
         OPAL_OUTPUT_VERBOSE((10, mca_coll_adapt_component.adapt_output, "ibcast fini\n"));
     }
     return OMPI_SUCCESS;
@@ -179,7 +177,6 @@ static int send_cb(ompi_request_t * req)
     int num_sent = ++(context->con->num_sent_segs);
     int num_recv_fini_t = context->con->num_recv_fini;
     int rank = ompi_comm_rank(context->con->comm);
-    opal_mutex_t *mutex_temp = context->con->mutex;
     /* Check whether signal the condition */
     if ((rank == context->con->root
          && num_sent == context->con->tree->tree_nextsize * context->con->num_segs)
@@ -190,13 +187,13 @@ static int send_cb(ompi_request_t * req)
                                                               context->con->num_segs)) {
         OPAL_OUTPUT_VERBOSE((30, mca_coll_adapt_component.adapt_output, "[%d]: Singal in send\n",
                              ompi_comm_rank(context->con->comm)));
-        OPAL_THREAD_UNLOCK(mutex_temp);
+        OPAL_THREAD_UNLOCK(context->con->mutex);
         ibcast_request_fini(context);
     } else {
         OBJ_RELEASE(context->con);
         opal_free_list_return(mca_coll_adapt_component.adapt_ibcast_context_free_list,
                               (opal_free_list_item_t *) context);
-        OPAL_THREAD_UNLOCK(mutex_temp);
+        OPAL_THREAD_UNLOCK(context->con->mutex);
     }
     req->req_free(&req);
     /* Call back function return 1, which means successful */
@@ -306,7 +303,6 @@ static int recv_cb(ompi_request_t * req)
     int num_sent = context->con->num_sent_segs;
     int num_recv_fini_t = ++(context->con->num_recv_fini);
     int rank = ompi_comm_rank(context->con->comm);
-    opal_mutex_t *mutex_temp = context->con->mutex;
 
     /* If this process is leaf and has received all the segments */
     if ((rank == context->con->root
@@ -318,13 +314,13 @@ static int recv_cb(ompi_request_t * req)
                                                               context->con->num_segs)) {
         OPAL_OUTPUT_VERBOSE((30, mca_coll_adapt_component.adapt_output, "[%d]: Singal in recv\n",
                              ompi_comm_rank(context->con->comm)));
-        OPAL_THREAD_UNLOCK(mutex_temp);
+        OPAL_THREAD_UNLOCK(context->con->mutex);
         ibcast_request_fini(context);
     } else {
         OBJ_RELEASE(context->con);
         opal_free_list_return(mca_coll_adapt_component.adapt_ibcast_context_free_list,
                               (opal_free_list_item_t *) context);
-        OPAL_THREAD_UNLOCK(mutex_temp);
+        OPAL_THREAD_UNLOCK(context->con->mutex);
     }
     req->req_free(&req);
     return 1;
@@ -334,9 +330,8 @@ int ompi_coll_adapt_ibcast(void *buff, int count, struct ompi_datatype_t *dataty
                           struct ompi_communicator_t *comm, ompi_request_t ** request,
                           mca_coll_base_module_t * module)
 {
-    if (count == 0) {
-        ompi_request_t *temp_request;
-        temp_request = OBJ_NEW(ompi_request_t);
+    if (0 == count) {
+        ompi_request_t *temp_request = OBJ_NEW(ompi_request_t);
         OMPI_REQUEST_INIT(temp_request, false);
         temp_request->req_type = 0;
         temp_request->req_free = ompi_coll_adapt_request_free;
@@ -348,24 +343,22 @@ int ompi_coll_adapt_ibcast(void *buff, int count, struct ompi_datatype_t *dataty
         ompi_request_complete(temp_request, 1);
         *request = temp_request;
         return MPI_SUCCESS;
-    } else {
-        int rank = ompi_comm_rank(comm);
-        if (rank == root) {
-            OPAL_OUTPUT_VERBOSE((10, mca_coll_adapt_component.adapt_output,
-                                 "ibcast root %d, algorithm %d, coll_adapt_ibcast_segment_size %zu, coll_adapt_ibcast_max_send_requests %d, coll_adapt_ibcast_max_recv_requests %d\n",
-                                 root, mca_coll_adapt_component.adapt_ibcast_algorithm,
-                                 mca_coll_adapt_component.adapt_ibcast_segment_size,
-                                 mca_coll_adapt_component.adapt_ibcast_max_send_requests,
-                                 mca_coll_adapt_component.adapt_ibcast_max_recv_requests));
-        }
-        int ibcast_tag = opal_atomic_add_fetch_32(&(comm->c_ibcast_tag), 1);
-        ibcast_tag = ibcast_tag % 4096;
-        ompi_coll_adapt_ibcast_fn_t bcast_func =
-            (ompi_coll_adapt_ibcast_fn_t)
-            ompi_coll_adapt_ibcast_algorithm_index[mca_coll_adapt_component.adapt_ibcast_algorithm].
-            algorithm_fn_ptr;
-        return bcast_func(buff, count, datatype, root, comm, request, module, ibcast_tag);
     }
+    int ibcast_tag = opal_atomic_add_fetch_32(&(comm->c_ibcast_tag), 1);
+    ibcast_tag = ibcast_tag % 4096;
+
+    OPAL_OUTPUT_VERBOSE((10, mca_coll_adapt_component.adapt_output,
+                         "ibcast tag %d root %d, algorithm %d, coll_adapt_ibcast_segment_size %zu, coll_adapt_ibcast_max_send_requests %d, coll_adapt_ibcast_max_recv_requests %d\n",
+                         ibcast_tag, root, mca_coll_adapt_component.adapt_ibcast_algorithm,
+                         mca_coll_adapt_component.adapt_ibcast_segment_size,
+                         mca_coll_adapt_component.adapt_ibcast_max_send_requests,
+                         mca_coll_adapt_component.adapt_ibcast_max_recv_requests));
+
+    ompi_coll_adapt_ibcast_fn_t bcast_func =
+        (ompi_coll_adapt_ibcast_fn_t)
+        ompi_coll_adapt_ibcast_algorithm_index[mca_coll_adapt_component.adapt_ibcast_algorithm].
+        algorithm_fn_ptr;
+    return bcast_func(buff, count, datatype, root, comm, request, module, ibcast_tag);
 }
 
 /*
@@ -377,7 +370,7 @@ int ompi_coll_adapt_ibcast_tuned(void *buff, int count, struct ompi_datatype_t *
                                 mca_coll_base_module_t *module, int ibcast_tag)
 {
     OPAL_OUTPUT_VERBOSE((10, mca_coll_adapt_component.adapt_output, "tuned not implemented\n"));
-    return OMPI_SUCCESS;
+    return OMPI_ERR_NOT_IMPLEMENTED;
 }
 
 int ompi_coll_adapt_ibcast_binomial(void *buff, int count, struct ompi_datatype_t *datatype,
@@ -471,12 +464,7 @@ int ompi_coll_adapt_ibcast_generic(void *buff, int count, struct ompi_datatype_t
                                   mca_coll_base_module_t * module, ompi_coll_tree_t * tree,
                                   size_t seg_size, int ibcast_tag)
 {
-    /* Tempory variables for iteration */
-    int i, j;
-    /* Rank of this process */
-    int rank;
-    /* Record return value */
-    int err;
+    int i, j, rank, err;
     /* The min of num_segs and SEND_NUM or RECV_NUM, in case the num_segs is less than SEND_NUM or RECV_NUM */
     int min;
 
@@ -498,23 +486,21 @@ int ompi_coll_adapt_ibcast_generic(void *buff, int count, struct ompi_datatype_t
     /* Record how many isends have been issued for every child */
     int *send_array = NULL;
 
-    /* Set up free list */
-    if (0 == mca_coll_adapt_component.adapt_ibcast_context_free_list_enabled) {
-        int32_t context_free_list_enabled =
-            opal_atomic_add_fetch_32(&
-                                     (mca_coll_adapt_component.
-                                      adapt_ibcast_context_free_list_enabled), 1);
-        if (1 == context_free_list_enabled) {
-            mca_coll_adapt_component.adapt_ibcast_context_free_list = OBJ_NEW(opal_free_list_t);
-            opal_free_list_init(mca_coll_adapt_component.adapt_ibcast_context_free_list,
-                                sizeof(ompi_coll_adapt_bcast_context_t),
-                                opal_cache_line_size,
-                                OBJ_CLASS(ompi_coll_adapt_bcast_context_t),
-                                0, opal_cache_line_size,
-                                mca_coll_adapt_component.adapt_context_free_list_min,
-                                mca_coll_adapt_component.adapt_context_free_list_max,
-                                mca_coll_adapt_component.adapt_context_free_list_inc,
-                                NULL, 0, NULL, NULL, NULL);
+    /* Atomically set up free list */
+    if (NULL == mca_coll_adapt_component.adapt_ibcast_context_free_list) {
+        opal_free_list_t* fl = OBJ_NEW(opal_free_list_t);
+        opal_free_list_init(fl,
+                            sizeof(ompi_coll_adapt_bcast_context_t),
+                            opal_cache_line_size,
+                            OBJ_CLASS(ompi_coll_adapt_bcast_context_t),
+                            0, opal_cache_line_size,
+                            mca_coll_adapt_component.adapt_context_free_list_min,
+                            mca_coll_adapt_component.adapt_context_free_list_max,
+                            mca_coll_adapt_component.adapt_context_free_list_inc,
+                            NULL, 0, NULL, NULL, NULL);
+        if( !OPAL_ATOMIC_COMPARE_EXCHANGE_STRONG_PTR((opal_atomic_intptr_t *)&mca_coll_adapt_component.adapt_ibcast_context_free_list,
+                                                     &(intptr_t){0}, fl) ) {
+            OBJ_RELEASE(fl);
         }
     }
 

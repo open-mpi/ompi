@@ -47,7 +47,7 @@ static ompi_coll_adapt_algorithm_index_t ompi_coll_adapt_ireduce_algorithm_index
 /*
  * Set up MCA parameters of MPI_Reduce and MPI_Ireduce
  */
-int ompi_coll_adapt_ireduce_init(void)
+int ompi_coll_adapt_ireduce_register(void)
 {
     mca_base_component_t *c = &mca_coll_adapt_component.super.collm_version;
 
@@ -107,7 +107,6 @@ int ompi_coll_adapt_ireduce_init(void)
                                     &mca_coll_adapt_component.adapt_inbuf_free_list_inc);
 
     mca_coll_adapt_component.adapt_ireduce_context_free_list = NULL;
-    mca_coll_adapt_component.adapt_ireduce_context_free_list_enabled = 0;
     return OMPI_SUCCESS;
 }
 
@@ -119,14 +118,13 @@ int ompi_coll_adapt_ireduce_fini(void)
     if (NULL != mca_coll_adapt_component.adapt_ireduce_context_free_list) {
         OBJ_RELEASE(mca_coll_adapt_component.adapt_ireduce_context_free_list);
         mca_coll_adapt_component.adapt_ireduce_context_free_list = NULL;
-        mca_coll_adapt_component.adapt_ireduce_context_free_list_enabled = 0;
         OPAL_OUTPUT_VERBOSE((10, mca_coll_adapt_component.adapt_output, "ireduce fini\n"));
     }
     return OMPI_SUCCESS;
 }
 
 /*
- * Functions to access list 
+ * Functions to access list
  */
 static ompi_coll_adapt_item_t *get_next_ready_item(opal_list_t * list, int num_children)
 {
@@ -148,26 +146,22 @@ static ompi_coll_adapt_item_t *get_next_ready_item(opal_list_t * list, int num_c
 static int add_to_list(opal_list_t * list, int id)
 {
     ompi_coll_adapt_item_t *item;
-    int ret = 0;
     for (item = (ompi_coll_adapt_item_t *) opal_list_get_first(list);
          item != (ompi_coll_adapt_item_t *) opal_list_get_end(list);
          item = (ompi_coll_adapt_item_t *) ((opal_list_item_t *) item)->opal_list_next) {
         if (item->id == id) {
             (item->count)++;
-            ret = 1;
-            break;
+            OPAL_OUTPUT_VERBOSE((30, mca_coll_adapt_component.adapt_output, "add_to_list_return 1\n"));
+            return 1;
         }
     }
-    if (ret == 0) {
-        item = OBJ_NEW(ompi_coll_adapt_item_t);
-        item->id = id;
-        item->count = 1;
-        opal_list_append(list, (opal_list_item_t *) item);
-        ret = 2;
-    }
-    OPAL_OUTPUT_VERBOSE((30, mca_coll_adapt_component.adapt_output, "add_to_list_return %d\n",
-                         ret));
-    return ret;
+    /* Add a new object to the list with count set to 1 */
+    item = OBJ_NEW(ompi_coll_adapt_item_t);
+    item->id = id;
+    item->count = 1;
+    opal_list_append(list, (opal_list_item_t *) item);
+    OPAL_OUTPUT_VERBOSE((30, mca_coll_adapt_component.adapt_output, "add_to_list_return 1\n"));
+    return 2;
 }
 
 /*
@@ -250,7 +244,6 @@ static int send_cb(ompi_request_t * req)
                                                                     adapt_ireduce_context_free_list);
         if (context->con->tree->tree_nextsize > 0) {
             send_context->buff = context->con->accumbuf[item->id];
-
         } else {
             send_context->buff =
                 context->buff + (item->id - context->frag_id) * context->con->segment_increment;
@@ -530,26 +523,22 @@ int ompi_coll_adapt_ireduce(const void *sbuf, void *rbuf, int count, struct ompi
 {
     if (count == 0) {
         return MPI_SUCCESS;
-    } else {
-        int rank = ompi_comm_rank(comm);
-        if (rank == root) {
-            OPAL_OUTPUT_VERBOSE((10, mca_coll_adapt_component.adapt_output,
-                                 "ireduce root %d, algorithm %d, coll_adapt_ireduce_segment_size %zu, coll_adapt_ireduce_max_send_requests %d, coll_adapt_ireduce_max_recv_requests %d\n",
-                                 root, mca_coll_adapt_component.adapt_ireduce_algorithm,
-                                 mca_coll_adapt_component.adapt_ireduce_segment_size,
-                                 mca_coll_adapt_component.adapt_ireduce_max_send_requests,
-                                 mca_coll_adapt_component.adapt_ireduce_max_recv_requests));
-        }
-        /* Get ireduce tag */
-        int ireduce_tag = opal_atomic_add_fetch_32(&(comm->c_ireduce_tag), 1);
-        ireduce_tag = (ireduce_tag % 4096) + 4096;
-        fflush(stdout);
-        ompi_coll_adapt_ireduce_fn_t reduce_func =
-            (ompi_coll_adapt_ireduce_fn_t)
-            ompi_coll_adapt_ireduce_algorithm_index[mca_coll_adapt_component.
-                                                   adapt_ireduce_algorithm].algorithm_fn_ptr;
-        return reduce_func(sbuf, rbuf, count, dtype, op, root, comm, request, module, ireduce_tag);
     }
+    int ireduce_tag = opal_atomic_add_fetch_32(&(comm->c_ireduce_tag), 1);
+    ireduce_tag = (ireduce_tag % 4096) + 4096;
+
+    OPAL_OUTPUT_VERBOSE((10, mca_coll_adapt_component.adapt_output,
+                         "ireduce tag %d root %d, algorithm %d, coll_adapt_ireduce_segment_size %zu, coll_adapt_ireduce_max_send_requests %d, coll_adapt_ireduce_max_recv_requests %d\n",
+                         ireduce_tag, root, mca_coll_adapt_component.adapt_ireduce_algorithm,
+                         mca_coll_adapt_component.adapt_ireduce_segment_size,
+                         mca_coll_adapt_component.adapt_ireduce_max_send_requests,
+                         mca_coll_adapt_component.adapt_ireduce_max_recv_requests));
+
+    ompi_coll_adapt_ireduce_fn_t reduce_func =
+        (ompi_coll_adapt_ireduce_fn_t)
+        ompi_coll_adapt_ireduce_algorithm_index[mca_coll_adapt_component.
+                                               adapt_ireduce_algorithm].algorithm_fn_ptr;
+    return reduce_func(sbuf, rbuf, count, dtype, op, root, comm, request, module, ireduce_tag);
 }
 
 /*
@@ -562,7 +551,7 @@ int ompi_coll_adapt_ireduce_tuned(const void *sbuf, void *rbuf, int count,
                                  mca_coll_base_module_t *module, int ireduce_tag)
 {
     OPAL_OUTPUT_VERBOSE((10, mca_coll_adapt_component.adapt_output, "tuned not implemented\n"));
-    return OMPI_SUCCESS;
+    return OMPI_ERR_NOT_IMPLEMENTED;
 }
 
 int ompi_coll_adapt_ireduce_binomial(const void *sbuf, void *rbuf, int count,
@@ -688,23 +677,21 @@ int ompi_coll_adapt_ireduce_generic(const void *sbuf, void *rbuf, int count,
     ompi_datatype_get_true_extent(dtype, &true_lower_bound, &true_extent);
     real_seg_size = true_extent + (ptrdiff_t) (seg_count - 1) * extent;
 
-    /* Set up free list */
-    if (0 == mca_coll_adapt_component.adapt_ireduce_context_free_list_enabled) {
-        int32_t context_free_list_enabled =
-            opal_atomic_add_fetch_32(&
-                                     (mca_coll_adapt_component.
-                                      adapt_ireduce_context_free_list_enabled), 1);
-        if (1 == context_free_list_enabled) {
-            mca_coll_adapt_component.adapt_ireduce_context_free_list = OBJ_NEW(opal_free_list_t);
-            opal_free_list_init(mca_coll_adapt_component.adapt_ireduce_context_free_list,
-                                sizeof(ompi_coll_adapt_reduce_context_t),
-                                opal_cache_line_size,
-                                OBJ_CLASS(ompi_coll_adapt_reduce_context_t),
-                                0, opal_cache_line_size,
-                                mca_coll_adapt_component.adapt_context_free_list_min,
-                                mca_coll_adapt_component.adapt_context_free_list_max,
-                                mca_coll_adapt_component.adapt_context_free_list_inc,
-                                NULL, 0, NULL, NULL, NULL);
+    /* Atomically set up free list */
+    if (NULL == mca_coll_adapt_component.adapt_ireduce_context_free_list) {
+        opal_free_list_t* fl = OBJ_NEW(opal_free_list_t);
+        opal_free_list_init(fl,
+                            sizeof(ompi_coll_adapt_reduce_context_t),
+                            opal_cache_line_size,
+                            OBJ_CLASS(ompi_coll_adapt_reduce_context_t),
+                            0, opal_cache_line_size,
+                            mca_coll_adapt_component.adapt_context_free_list_min,
+                            mca_coll_adapt_component.adapt_context_free_list_max,
+                            mca_coll_adapt_component.adapt_context_free_list_inc,
+                            NULL, 0, NULL, NULL, NULL);
+        if( !OPAL_ATOMIC_COMPARE_EXCHANGE_STRONG_PTR((opal_atomic_intptr_t *)&mca_coll_adapt_component.adapt_ireduce_context_free_list,
+                                                     &(intptr_t){0}, fl) ) {
+            OBJ_RELEASE(fl);
         }
     }
 

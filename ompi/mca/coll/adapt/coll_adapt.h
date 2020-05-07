@@ -38,8 +38,9 @@ typedef struct mca_coll_adapt_component_t {
     /* MCA parameter: Priority of this component */
     int adapt_priority;
 
-    /* MCA parameter: Output verbose level */
+    /* MCA parameter: Output stream and verbose level */
     int adapt_output;
+    int adapt_verbose;
 
     /* MCA parameter: Maximum number of segment in context free list */
     int adapt_context_free_list_max;
@@ -57,7 +58,6 @@ typedef struct mca_coll_adapt_component_t {
     int adapt_ibcast_max_recv_requests;
     /* Bcast free list */
     opal_free_list_t *adapt_ibcast_context_free_list;
-    opal_atomic_int32_t adapt_ibcast_context_free_list_enabled;
 
     /* Reduce MCA parameter */
     int adapt_ireduce_algorithm;
@@ -70,7 +70,6 @@ typedef struct mca_coll_adapt_component_t {
 
     /* Reduce free list */
     opal_free_list_t *adapt_ireduce_context_free_list;
-    opal_atomic_int32_t adapt_ireduce_context_free_list_enabled;
 
 } mca_coll_adapt_component_t;
 
@@ -91,7 +90,7 @@ OMPI_MODULE_DECLSPEC extern mca_coll_adapt_component_t mca_coll_adapt_component;
 int ompi_coll_adapt_init_query(bool enable_progress_threads, bool enable_mpi_threads);
 mca_coll_base_module_t * ompi_coll_adapt_comm_query(struct ompi_communicator_t *comm, int *priority);
 
-/* Free ADAPT quest */
+/* ADAPT request free */
 int ompi_coll_adapt_request_free(ompi_request_t **request);
 
 #endif /* MCA_COLL_ADAPT_EXPORT_H */
