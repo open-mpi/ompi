@@ -70,12 +70,13 @@ OPAL_LOAD_PLATFORM
 # Start it up
 #
 
+OPAL_CONFIGURE_SETUP
+opal_show_title "Configuring project_name_long"
+opal_show_subtitle "Prerequisites"
+
 AC_CHECK_PROG([PERL],[perl],[perl],[no])
 AS_IF([test "X$PERL" = "Xno"],
       [AC_MSG_ERROR(["Open MPI requires perl. Aborting"])])
-
-OPAL_CONFIGURE_SETUP
-opal_show_title "Configuring project_name_long"
 
 #
 # Setup some things that must be done before AM-INIT-AUTOMAKE
@@ -976,10 +977,16 @@ if test -z "$LEX" || \
         AC_MSG_WARN([*** Could not find Flex on your system.])
         AC_MSG_WARN([*** Flex is required for developer builds of Open MPI.])
         AC_MSG_WARN([*** Other versions of Lex are not supported.])
-        AC_MSG_WARN([*** YOU DO NOT NEED FLEX WHEN BUILDING DISTRIBUTION TARBALLS!])
+        AC_MSG_WARN([*** NOTE: If you are building a tarball downloaded from www.open-mpi.org, you do not need Flex])
         AC_MSG_ERROR([Cannot continue])
     fi
 fi
+
+#
+# Setup man page processing
+#
+
+OPAL_SETUP_MAN_PAGES
 
 #
 # File system case sensitivity

@@ -45,6 +45,9 @@ AC_DEFUN([OMPI_CONFIG_FILES],[
         ompi/mpi/tool/Makefile
         ompi/mpi/tool/profile/Makefile
 
+        ompi/mpi/man/man3/Makefile
+        ompi/mpi/man/man5/Makefile
+
         ompi/tools/ompi_info/Makefile
         ompi/tools/wrappers/Makefile
         ompi/tools/wrappers/mpicc-wrapper-data.txt
