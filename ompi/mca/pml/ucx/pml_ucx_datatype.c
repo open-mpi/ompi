@@ -2,6 +2,9 @@
  * Copyright (C) Mellanox Technologies Ltd. 2001-2011.  ALL RIGHTS RESERVED.
  * Copyright (c) 2019      Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
+ * Copyright (c) 2020      The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -176,8 +179,12 @@ pml_ucx_datatype_t *mca_pml_ucx_init_nbx_datatype(ompi_datatype_t *datatype,
 
     pml_datatype = malloc(sizeof(*pml_datatype));
     if (pml_datatype == NULL) {
+        int err = MPI_ERR_INTERN;
         PML_UCX_ERROR("Failed to allocate datatype structure");
-        ompi_mpi_abort(&ompi_mpi_comm_world.comm, 1);
+        /* TODO: this error should return to the caller and invoke an error
+         * handler from the MPI API call.
+         * For now, it is fatal. */
+        ompi_mpi_errors_are_fatal_comm_handler(NULL, &err, "Failed to allocate datatype structure");
     }
 
     pml_datatype->datatype                    = ucp_datatype;
@@ -219,8 +226,12 @@ ucp_datatype_t mca_pml_ucx_init_datatype(ompi_datatype_t *datatype)
     status = ucp_dt_create_generic(&pml_ucx_generic_datatype_ops,
                                    datatype, &ucp_datatype);
     if (status != UCS_OK) {
+        int err = MPI_ERR_INTERN;
         PML_UCX_ERROR("Failed to create UCX datatype for %s", datatype->name);
-        ompi_mpi_abort(&ompi_mpi_comm_world.comm, 1);
+        /* TODO: this error should return to the caller and invoke an error
+         * handler from the MPI API call.
+         * For now, it is fatal. */
+        ompi_mpi_errors_are_fatal_comm_handler(NULL, &err, "Failed to allocate datatype structure");
     }
 
     /* Add custom attribute, to clean up UCX resources when OMPI datatype is
@@ -234,9 +245,13 @@ ucp_datatype_t mca_pml_ucx_init_datatype(ompi_datatype_t *datatype)
                               ompi_pml_ucx.datatype_attr_keyval,
                               (void*)ucp_datatype, false);
         if (ret != OMPI_SUCCESS) {
+            int err = MPI_ERR_INTERN;
             PML_UCX_ERROR("Failed to add UCX datatype attribute for %s: %d",
                           datatype->name, ret);
-            ompi_mpi_abort(&ompi_mpi_comm_world.comm, 1);
+            /* TODO: this error should return to the caller and invoke an error
+             * handler from the MPI API call.
+             * For now, it is fatal. */
+            ompi_mpi_errors_are_fatal_comm_handler(NULL, &err, "Failed to allocate datatype structure");
         }
     }
 out:

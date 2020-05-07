@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2013 The University of Tennessee and The University
+ * Copyright (c) 2004-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -118,5 +118,5 @@ int MPI_Info_set(MPI_Info info, const char *key, const char *value)
      */
 
     err = ompi_info_set (info, key, value);
-    OMPI_ERRHANDLER_RETURN(err, MPI_COMM_WORLD, err, FUNC_NAME);
+    OMPI_ERRHANDLER_NOHANDLE_RETURN(err, err, FUNC_NAME);
 }

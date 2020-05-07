@@ -3,7 +3,7 @@
  * Copyright (c) 2008      The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2011-2018 The University of Tennessee and The University
+ * Copyright (c) 2011-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
@@ -58,10 +58,10 @@ int MPI_Dist_graph_create_adjacent(MPI_Comm comm_old,
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if (ompi_comm_invalid(comm_old)) {
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM,
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_COMM,
                                           FUNC_NAME);
         } else if (OMPI_COMM_IS_INTER(comm_old)) {
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM,
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_COMM,
                                           FUNC_NAME);
         } else if (indegree < 0 || outdegree < 0 || NULL == comm_dist_graph) {
             return OMPI_ERRHANDLER_INVOKE(comm_old, MPI_ERR_ARG,

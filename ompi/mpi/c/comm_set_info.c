@@ -39,11 +39,11 @@ int MPI_Comm_set_info(MPI_Comm comm, MPI_Info info)
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if (NULL == info || MPI_INFO_NULL == info ||
             ompi_info_is_freed(info)) {
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INFO,
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_INFO,
                                           FUNC_NAME);
         }
         if (ompi_comm_invalid(comm)) {
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM,
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_COMM,
                                           FUNC_NAME);
         }
     }

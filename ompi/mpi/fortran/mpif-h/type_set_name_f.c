@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -83,7 +83,7 @@ void ompi_type_set_name_f(MPI_Fint *type, char *type_name, MPI_Fint *ierr,
 
     if (OMPI_SUCCESS != (ret = ompi_fortran_string_f2c(type_name, name_len,
                                                        &c_name))) {
-        c_ierr = OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, ret,
+        c_ierr = OMPI_ERRHANDLER_NOHANDLE_INVOKE(ret,
                                         "MPI_TYPE_SET_NAME");
         if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
         return;

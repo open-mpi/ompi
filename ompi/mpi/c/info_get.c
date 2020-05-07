@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -75,26 +75,26 @@ int MPI_Info_get(MPI_Info info, const char *key, int valuelen,
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if (NULL == info || MPI_INFO_NULL == info ||
             ompi_info_is_freed(info)) {
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INFO,
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_INFO,
                                           FUNC_NAME);
         }
         if (0 > valuelen){
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG,
                                           FUNC_NAME);
         }
 
         key_length = (key) ? (int)strlen (key) : 0;
         if ((NULL == key) || (0 == key_length) ||
             (MPI_MAX_INFO_KEY <= key_length)) {
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INFO_KEY,
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_INFO_KEY,
                                           FUNC_NAME);
         }
         if (NULL == value) {
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INFO_VALUE,
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_INFO_VALUE,
                                           FUNC_NAME);
         }
         if (NULL == flag) {
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG,
                                           FUNC_NAME);
         }
     }
@@ -102,5 +102,5 @@ int MPI_Info_get(MPI_Info info, const char *key, int valuelen,
     OPAL_CR_ENTER_LIBRARY();
 
     err = ompi_info_get(info, key, valuelen, value, flag);
-    OMPI_ERRHANDLER_RETURN(err, MPI_COMM_WORLD, err, FUNC_NAME);
+    OMPI_ERRHANDLER_NOHANDLE_RETURN(err, err, FUNC_NAME);
 }

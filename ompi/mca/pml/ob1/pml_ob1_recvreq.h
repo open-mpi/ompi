@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2016 The University of Tennessee and The University
+ * Copyright (c) 2004-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2007 High Performance Computing Center Stuttgart,
@@ -179,7 +179,7 @@ recv_request_pml_complete(mca_pml_ob1_recv_request_t *recvreq)
 
         if(true == recvreq->req_recv.req_base.req_free_called) {
             if( MPI_SUCCESS != recvreq->req_recv.req_base.req_ompi.req_status.MPI_ERROR ) {
-                ompi_mpi_abort(&ompi_mpi_comm_world.comm, MPI_ERR_REQUEST);
+                OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_REQUEST, "Recv error after request freed.");
             }
             MCA_PML_OB1_RECV_REQUEST_RETURN(recvreq);
         } else {

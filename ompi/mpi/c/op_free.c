@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -47,7 +47,7 @@ int MPI_Op_free(MPI_Op *op)
     OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
     if (NULL == op ||
         ompi_op_is_intrinsic(*op)) {
-      return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_OP,
+      return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_OP,
                                     FUNC_NAME);
     }
   }

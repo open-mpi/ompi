@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2018 The University of Tennessee and The University
+ * Copyright (c) 2004-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -113,6 +113,15 @@ OMPI_DECLSPEC extern bool ompi_mpi_abort_print_stack;
  * positive value = print the message and delay for that many seconds
  */
 OMPI_DECLSPEC extern int ompi_mpi_abort_delay;
+
+/**
+ * Whether errors in operations without a handle are raised on 
+ * MPI_COMM_WORLD (MPI-3 behavior) or MPI_COMM_SELF (MPI-4 behavior).
+ *
+ * true: raise on MPI_COMM_WORLD
+ * false: raise on MPI_COMM_SELF
+ */ 
+OMPI_DECLSPEC extern bool ompi_mpi_errors_mpi3;
 
 /**
  * Whether sparse MPI group storage formats are supported or not.

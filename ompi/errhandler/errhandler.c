@@ -318,7 +318,7 @@ void ompi_errhandler_callback(size_t refid, pmix_status_t status,
         cbfunc(PMIX_EVENT_ACTION_COMPLETE, NULL, 0, NULL, NULL, cbdata);
     }
     /* our default action is to abort */
-    ompi_mpi_abort(MPI_COMM_WORLD, status);
+    OMPI_ERRHANDLER_NOHANDLE_INVOKE(status, "PMIx Event notification");
 }
 
 /**************************************************************************

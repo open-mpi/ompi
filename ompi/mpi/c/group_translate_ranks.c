@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -51,15 +51,15 @@ int MPI_Group_translate_ranks(MPI_Group group1, int n_ranks, const int ranks1[],
 
         if ((MPI_GROUP_NULL == group1) || (MPI_GROUP_NULL == group2) ||
             (NULL == group1) || (NULL == group2)) {
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_GROUP,
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_GROUP,
                                           FUNC_NAME);
         }
         if (n_ranks < 0) {
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_GROUP,
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_GROUP,
                                           FUNC_NAME);
         }
         if (n_ranks > 0 && ((NULL == ranks1) || (NULL == ranks2 ))) {
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_GROUP,
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_GROUP,
                                           FUNC_NAME);
         }
     }
@@ -72,5 +72,5 @@ int MPI_Group_translate_ranks(MPI_Group group1, int n_ranks, const int ranks1[],
 
     err = ompi_group_translate_ranks ( group1, n_ranks, ranks1,
                                        group2, ranks2 );
-    OMPI_ERRHANDLER_RETURN(err, MPI_COMM_WORLD, err, FUNC_NAME );
+    OMPI_ERRHANDLER_NOHANDLE_RETURN(err, err, FUNC_NAME );
 }

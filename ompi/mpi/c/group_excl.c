@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -53,23 +53,23 @@ int MPI_Group_excl(MPI_Group group, int n, const int ranks[],
         /* verify that group is valid group */
         if ( (MPI_GROUP_NULL == group)  || (NULL == group) ||
              (NULL == new_group) ) {
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_GROUP,
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_GROUP,
                                           FUNC_NAME);
         } else if (NULL == ranks && n > 0) {
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG,
                                           FUNC_NAME);
         }
 
         /* check that new group is no larger than old group */
         if ( n > group_size) {
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_GROUP,
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_GROUP,
                                           FUNC_NAME);
         }
 
         /* check to see if procs are within range */
         for( i=0 ; i  < n ; i++ ) {
             if( ( 0 > ranks[i] ) || (ranks[i] >= group_size)){
-                return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_RANK,
+                return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_RANK,
                                               FUNC_NAME );
             }
         }
@@ -85,5 +85,5 @@ int MPI_Group_excl(MPI_Group group, int n, const int ranks[],
     OPAL_CR_ENTER_LIBRARY();
 
     err = ompi_group_excl ( group, n, ranks, new_group );
-    OMPI_ERRHANDLER_RETURN(err, MPI_COMM_WORLD, err, FUNC_NAME );
+    OMPI_ERRHANDLER_NOHANDLE_RETURN(err, err, FUNC_NAME );
 }

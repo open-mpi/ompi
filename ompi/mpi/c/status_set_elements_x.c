@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2010 The University of Tennessee and The University
+ * Copyright (c) 2004-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
@@ -66,7 +66,7 @@ int MPI_Status_set_elements_x(MPI_Status *status, MPI_Datatype datatype, MPI_Cou
         } else if (count < 0) {
             rc = MPI_ERR_COUNT;
         }
-        OMPI_ERRHANDLER_CHECK(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
+        OMPI_ERRHANDLER_NOHANDLE_CHECK(rc, rc, FUNC_NAME);
     }
 
     /* ROMIO calls MPI_STATUS_SET_ELEMENTS with IGNORE values, so we

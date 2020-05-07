@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -46,7 +46,7 @@ int MPI_Win_create_errhandler(MPI_Win_errhandler_function *function,
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if (NULL == function ||
             NULL == errhandler) {
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG,
                                           FUNC_NAME);
         }
     }
@@ -62,5 +62,5 @@ int MPI_Win_create_errhandler(MPI_Win_errhandler_function *function,
         err = MPI_ERR_INTERN;
     }
 
-    OMPI_ERRHANDLER_RETURN(err, MPI_COMM_WORLD, MPI_ERR_INTERN, FUNC_NAME);
+    OMPI_ERRHANDLER_NOHANDLE_RETURN(err, MPI_ERR_INTERN, FUNC_NAME);
 }

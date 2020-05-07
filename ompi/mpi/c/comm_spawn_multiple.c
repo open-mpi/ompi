@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
@@ -66,7 +66,7 @@ int MPI_Comm_spawn_multiple(int count, char *array_of_commands[], char **array_o
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
         if ( ompi_comm_invalid (comm)) {
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM,
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_COMM,
                                           FUNC_NAME);
         }
         if ( OMPI_COMM_IS_INTER(comm)) {
@@ -98,7 +98,7 @@ int MPI_Comm_spawn_multiple(int count, char *array_of_commands[], char **array_o
             for (i = 0; i < count; ++i) {
                 if (NULL == array_of_info[i] ||
                     ompi_info_is_freed(array_of_info[i])) {
-                    return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INFO,
+                    return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_INFO,
                                                   FUNC_NAME);
                 }
                 /* If ompi_non_mpi is set to true on any info, it must
@@ -117,7 +117,7 @@ int MPI_Comm_spawn_multiple(int count, char *array_of_commands[], char **array_o
                 /* If this info's effective value doesn't agree with
                    the rest of them, error */
                 if (cumulative != non_mpi) {
-                    return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD,
+                    return OMPI_ERRHANDLER_NOHANDLE_INVOKE(
                                                   MPI_ERR_INFO,
                                                   FUNC_NAME);
                 }

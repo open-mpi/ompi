@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2014 The University of Tennessee and The University
+ * Copyright (c) 2004-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
@@ -56,6 +56,7 @@ int MPI_Abort(MPI_Comm comm, int errorcode)
     opal_show_help("help-mpi-api.txt", "mpi-abort", true,
                    ompi_comm_rank(comm),
                    ('\0' != comm->c_name[0]) ? comm->c_name : "<Unknown>",
+                   OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
                    errorcode);
     return ompi_mpi_abort(comm, errorcode);
 }

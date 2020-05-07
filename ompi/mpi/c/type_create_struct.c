@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
@@ -59,22 +59,22 @@ int MPI_Type_create_struct(int count,
     if( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if( count < 0 ) {
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COUNT,
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_COUNT,
                                           FUNC_NAME);
         } else if( (count > 0) && (NULL == array_of_blocklengths ||
                                    NULL == array_of_displacements ||
                                    NULL == array_of_types) ) {
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, FUNC_NAME);
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG, FUNC_NAME);
         } else if (NULL == newtype) {
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_TYPE, FUNC_NAME);
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_TYPE, FUNC_NAME);
         }
         for ( i = 0; i < count; i++ ){
             if (NULL == array_of_types[i] ||
                 MPI_DATATYPE_NULL == array_of_types[i]) {
-                return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_TYPE,
+                return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_TYPE,
                                               FUNC_NAME);
             } else if (array_of_blocklengths[i] < 0) {
-                return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
+                return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG,
                                               FUNC_NAME);
             }
         }
@@ -86,7 +86,7 @@ int MPI_Type_create_struct(int count,
                                       array_of_types, newtype );
     if( rc != MPI_SUCCESS ) {
         ompi_datatype_destroy( newtype );
-        OMPI_ERRHANDLER_RETURN( rc, MPI_COMM_WORLD,
+        OMPI_ERRHANDLER_NOHANDLE_RETURN( rc, 
                                 rc, FUNC_NAME );
     }
 

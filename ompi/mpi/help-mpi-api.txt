@@ -4,6 +4,9 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2018 IBM Corporation. All rights reserved.
+# Copyright (c) 2020      The University of Tennessee and The University
+#                         of Tennessee Research Foundation.  All rights
+#                         reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -14,7 +17,8 @@
 #
 [mpi-abort]
 MPI_ABORT was invoked on rank %d in communicator %s
-with errorcode %d.
+  Proc: %s
+  Errorcode: %d
 
 NOTE: invoking MPI_ABORT causes Open MPI to kill all MPI processes.
 You may or may not see output from other processes, depending on

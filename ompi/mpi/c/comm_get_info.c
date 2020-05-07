@@ -38,11 +38,11 @@ int MPI_Comm_get_info(MPI_Comm comm, MPI_Info *info_used)
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if (NULL == info_used) {
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INFO,
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_INFO,
                                           FUNC_NAME);
         }
         if (ompi_comm_invalid(comm)) {
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM,
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_COMM,
                                           FUNC_NAME);
         }
     }
@@ -57,7 +57,7 @@ int MPI_Comm_get_info(MPI_Comm comm, MPI_Info *info_used)
 
     (*info_used) = OBJ_NEW(ompi_info_t);
     if (NULL == (*info_used)) {
-       return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_NO_MEM,
+       return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_NO_MEM,
                                       FUNC_NAME);
     }
     opal_info_t *opal_info_used = &(*info_used)->super;

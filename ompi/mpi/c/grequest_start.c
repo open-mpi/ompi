@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -47,7 +47,7 @@ int MPI_Grequest_start(MPI_Grequest_query_function *query_fn,
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if (NULL == request) {
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_REQUEST,
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_REQUEST,
                                           FUNC_NAME);
         }
     }
@@ -55,6 +55,6 @@ int MPI_Grequest_start(MPI_Grequest_query_function *query_fn,
     OPAL_CR_ENTER_LIBRARY();
 
     rc = ompi_grequest_start(query_fn,free_fn,cancel_fn,extra_state,request);
-    OMPI_ERRHANDLER_RETURN(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
+    OMPI_ERRHANDLER_NOHANDLE_RETURN(rc, rc, FUNC_NAME);
 }
 

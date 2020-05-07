@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -60,7 +60,7 @@ int MPI_Group_free(MPI_Group *group)
 
         if ((NULL == group) ||
             (MPI_GROUP_NULL == *group) || (NULL == *group) ) {
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_GROUP,
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_GROUP,
                                           FUNC_NAME);
         }
 
@@ -69,7 +69,7 @@ int MPI_Group_free(MPI_Group *group)
     OPAL_CR_ENTER_LIBRARY();
 
     ret = ompi_group_free ( group);
-    OMPI_ERRHANDLER_CHECK(ret, MPI_COMM_WORLD, ret, FUNC_NAME);
+    OMPI_ERRHANDLER_NOHANDLE_CHECK(ret, ret, FUNC_NAME);
 
     OPAL_CR_EXIT_LIBRARY();
     return MPI_SUCCESS;
