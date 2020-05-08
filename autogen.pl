@@ -1179,10 +1179,6 @@ if (! -e "ompi") {
     $no_ompi_arg = 1;
     debug "No ompi subdirectory found - will not build MPI layer\n";
 }
-if (! -e "prrte") {
-    $no_prrte_arg = 1;
-    debug "No prrte subdirectory found - will not build PRRTE\n";
-}
 if (! -e "oshmem") {
     $no_oshmem_arg = 1;
     debug "No oshmem subdirectory found - will not build OSHMEM\n";
@@ -1415,9 +1411,6 @@ $m4 .= "dnl Separate m4 define for each project\n";
 foreach my $p (@$projects) {
     $m4 .= "m4_define([project_$p->{name}], [1])\n";
 }
-if (!$no_prrte_arg) {
-    $m4 .= "m4_define([project_prrte], [1])\n";
-}
 
 $m4 .= "\ndnl Project names
 m4_define([project_name_long], [$project_name_long])
@@ -1490,6 +1483,19 @@ if ("pmix" ~~ @disabled_3rdparty_packages) {
     verbose "--- PMIx enabled\n";
 }
 
+verbose "=== PRRTE\n";
+if ("prrte" ~~ @disabled_3rdparty_packages) {
+    verbose "--- PRRTE disabled\n";
+} else {
+    # sanity check prrte files exist
+    if (! -f "3rd-party/prrte/configure.ac") {
+        my_die("Could not find pmix files\n");
+    }
+    push(@subdirs, "3rd-party/prrte/");
+    $m4 .= "m4_define([package_prrte], [1])\n";
+    verbose "--- PRRTE enabled\n";
+}
+
 $m4 .= "\n";
 
 #---------------------------------------------------------------------------
@@ -1510,10 +1516,6 @@ if (!$no_ompi_arg) {
 # Process all subdirs that we found in previous steps
 ++$step;
 verbose "\n$step. Processing autogen.subdirs directories\n";
-
-if (!$no_prrte_arg) {
-    process_autogen_subdirs(".");
-}
 
 if ($#subdirs >= 0) {
     foreach my $d (@subdirs) {

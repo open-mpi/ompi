@@ -1,5 +1,5 @@
 [submodule "prrte"]
-	path = prrte
+	path = 3rd-party/prrte
 	url = https://github.com/openpmix/prrte
 	branch = master
 [submodule "openpmix"]

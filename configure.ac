@@ -198,7 +198,6 @@ fi
 
 # Check for deprecated/deleted options
 OMPI_CHECK_DELETED_OPTIONS
-OMPI_CHECK_DEPRECATED_OPTIONS
 
 # Setup the top of the opal/include/opal_config.h file
 
@@ -1111,6 +1110,7 @@ OPAL_3RDPARY_DISTCLEAN_DIRS=
 OPAL_CONFIG_LIBEVENT
 OPAL_CONFIG_HWLOC
 OPAL_CONFIG_PMIX
+OMPI_SETUP_PRRTE
 
 AC_SUBST(OPAL_3RDPARTY_SUBDIRS)
 AC_SUBST(OPAL_3RDPARTY_DIST_SUBDIRS)
@@ -1268,18 +1268,6 @@ AC_SUBST(OPAL_DYN_LIB_SUFFIX)
 
 # Need the libtool executable before the rpathify stuff
 LT_OUTPUT
-
-##################################
-# PRRTE support
-##################################
-
-opal_show_title "Setup PRRTE support"
-
-m4_ifdef([project_prrte],
-         [OMPI_SETUP_PRRTE],
-         [OPAL_SUMMARY_ADD([[Miscellaneous]],[[PRRTE]],[prrte],[no (disabled)])
-          ompi_want_prrte=no])
-AM_CONDITIONAL(OMPI_WANT_PRRTE, test "$ompi_want_prrte" = "yes")
 
 ############################################################################
 # final compiler config
