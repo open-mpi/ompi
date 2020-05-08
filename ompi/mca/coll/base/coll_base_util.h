@@ -27,6 +27,8 @@
 #include "ompi/mca/mca.h"
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/request/request.h"
+#include "ompi/communicator/communicator.h"
+#include "ompi/mca/coll/base/coll_tags.h"
 #include "ompi/op/op.h"
 #include "ompi/mca/pml/pml.h"
 
@@ -59,6 +61,22 @@ struct ompi_coll_base_nbc_request_t {
 };
 
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_coll_base_nbc_request_t);
+
+static inline int32_t
+ompi_coll_base_nbc_reserve_tags(ompi_communicator_t* comm, int32_t reserve)
+{
+    int32_t tag, old_tag;
+    assert( reserve > 0 );
+  reread_tag:  /* In case we fail to atomically update the tag */
+    tag = old_tag = comm->c_nbc_tag;
+    if ((tag - reserve) < MCA_COLL_BASE_TAG_NONBLOCKING_END) {
+        tag = MCA_COLL_BASE_TAG_NONBLOCKING_BASE;
+    }
+    if( !OPAL_ATOMIC_COMPARE_EXCHANGE_STRONG_32(&comm->c_nbc_tag, &old_tag, tag - reserve) ) {
+        goto reread_tag;
+    }
+    return tag;
+}
 
 typedef struct ompi_coll_base_nbc_request_t ompi_coll_base_nbc_request_t;
 

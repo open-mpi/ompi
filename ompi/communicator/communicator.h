@@ -188,13 +188,12 @@ struct ompi_communicator_t {
     /* Collectives module interface and data */
     mca_coll_base_comm_coll_t *c_coll;
 
-    /* Non-blocking collective tag. These are added here as they should be
-     * shared between all non-blocking collective modules (to avoid message
-     * collisions between them in the case where multiple outstanding
-     * non-blocking collective coexists using multiple backends).
+    /* Non-blocking collective tag. These tags might be shared between
+     * all non-blocking collective modules (to avoid message collision
+     * between them in the case where multiple outstanding non-blocking
+     * collective coexists using multiple backends).
      */
-    opal_atomic_int32_t c_ibcast_tag;
-    opal_atomic_int32_t c_ireduce_tag;
+    opal_atomic_int32_t c_nbc_tag;
 };
 typedef struct ompi_communicator_t ompi_communicator_t;
 
