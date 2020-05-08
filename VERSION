@@ -21,7 +21,7 @@
 
 major=4
 minor=0
-release=3
+release=4
 
 # greek is generally used for alpha or beta release tags.  If it is
 # non-empty, it will be appended to the version number.  It does not
@@ -30,7 +30,7 @@ release=3
 # requirement is that it must be entirely printable ASCII characters
 # and have no white space.
 
-greek=rc4
+greek=rc1
 
 # If repo_rev is empty, then the repository version number will be
 # obtained during "make dist" via the "git describe --tags --always"
@@ -62,7 +62,7 @@ date="Unreleased developer copy"
 # release managers (not individual developers).  Notes:
 
 # 1. Since these version numbers are associated with *releases*, the
-# version numbers maintained on the Open MPI SVN trunk (and developer
+# version numbers maintained on the Open MPI GIT master (and developer
 # branches) is always 0:0:0 for all libraries.
 
 # 2. The version number of libmpi refers to the public MPI interfaces.
@@ -88,14 +88,14 @@ date="Unreleased developer copy"
 # Version numbers are described in the Libtool current:revision:age
 # format.
 
-libmpi_so_version=60:3:20
+libmpi_so_version=60:4:20
 libmpi_cxx_so_version=60:1:20
 libmpi_mpifh_so_version=60:2:20
 libmpi_usempi_tkr_so_version=60:0:20
 libmpi_usempi_ignore_tkr_so_version=60:0:20
-libmpi_usempif08_so_version=61:0:21
-libopen_rte_so_version=60:3:20
-libopen_pal_so_version=60:3:20
+libmpi_usempif08_so_version=61:1:21
+libopen_rte_so_version=60:4:20
+libopen_pal_so_version=60:4:20
 libmpi_java_so_version=60:0:20
 liboshmem_so_version=62:1:22
 libompitrace_so_version=60:0:20
