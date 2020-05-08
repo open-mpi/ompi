@@ -100,6 +100,7 @@ int MPI_Ibcast(void *buffer, int count, MPI_Datatype datatype,
 
     if ((OMPI_COMM_IS_INTRA(comm) && ompi_comm_size(comm) <= 1) ||
         0 == count) {
+        *request = &ompi_request_empty;
         return MPI_SUCCESS;
     }
 

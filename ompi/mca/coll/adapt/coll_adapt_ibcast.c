@@ -329,21 +329,6 @@ int ompi_coll_adapt_ibcast(void *buff, int count, struct ompi_datatype_t *dataty
                           struct ompi_communicator_t *comm, ompi_request_t ** request,
                           mca_coll_base_module_t * module)
 {
-    if (0 == count) {
-        ompi_request_t *temp_request = OBJ_NEW(ompi_request_t);
-        OMPI_REQUEST_INIT(temp_request, false);
-        temp_request->req_type = 0;
-        temp_request->req_free = ompi_coll_adapt_request_free;
-        temp_request->req_status.MPI_SOURCE = 0;
-        temp_request->req_status.MPI_TAG = 0;
-        temp_request->req_status.MPI_ERROR = 0;
-        temp_request->req_status._cancelled = 0;
-        temp_request->req_status._ucount = 0;
-        ompi_request_complete(temp_request, 1);
-        *request = temp_request;
-        return MPI_SUCCESS;
-    }
-
     OPAL_OUTPUT_VERBOSE((10, mca_coll_adapt_component.adapt_output,
                          "ibcast root %d, algorithm %d, coll_adapt_ibcast_segment_size %zu, coll_adapt_ibcast_max_send_requests %d, coll_adapt_ibcast_max_recv_requests %d\n",
                          root, mca_coll_adapt_component.adapt_ibcast_algorithm,

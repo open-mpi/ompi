@@ -521,10 +521,6 @@ int ompi_coll_adapt_ireduce(const void *sbuf, void *rbuf, int count, struct ompi
                            struct ompi_op_t *op, int root, struct ompi_communicator_t *comm,
                            ompi_request_t ** request, mca_coll_base_module_t * module)
 {
-    if (count == 0) {
-        return MPI_SUCCESS;
-    }
-
     OPAL_OUTPUT_VERBOSE((10, mca_coll_adapt_component.adapt_output,
                          "ireduce root %d, algorithm %d, coll_adapt_ireduce_segment_size %zu, coll_adapt_ireduce_max_send_requests %d, coll_adapt_ireduce_max_recv_requests %d\n",
                          root, mca_coll_adapt_component.adapt_ireduce_algorithm,

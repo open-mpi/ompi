@@ -15,9 +15,6 @@
 int ompi_coll_adapt_bcast(void *buff, int count, struct ompi_datatype_t *datatype, int root,
                          struct ompi_communicator_t *comm, mca_coll_base_module_t * module)
 {
-    if (count == 0) {
-        return MPI_SUCCESS;
-    }
     ompi_request_t *request = NULL;
     int err = ompi_coll_adapt_ibcast(buff, count, datatype, root, comm, &request, module);
     if( MPI_SUCCESS != err ) {

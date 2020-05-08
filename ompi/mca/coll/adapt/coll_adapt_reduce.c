@@ -17,9 +17,6 @@ int ompi_coll_adapt_reduce(const void *sbuf, void *rbuf, int count, struct ompi_
                           struct ompi_op_t *op, int root, struct ompi_communicator_t *comm,
                           mca_coll_base_module_t * module)
 {
-    if (count == 0) {
-        return MPI_SUCCESS;
-    }
     ompi_request_t *request = NULL;
     int err = ompi_coll_adapt_ireduce(sbuf, rbuf, count, dtype, op, root, comm, &request, module);
     if( MPI_SUCCESS != err ) {
