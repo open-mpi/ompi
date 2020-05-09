@@ -2,6 +2,7 @@
  * Copyright (c) 2018-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2020      Bull S.A.S. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -22,6 +23,8 @@
 #include "ompi/constants.h"
 #include "ompi/mca/coll/coll.h"
 #include "coll_han.h"
+#include "coll_han_dynamic.h"
+#include "coll_han_dynamic_file.h"
 
 /*
  * Public string showing the coll ompi_han component version number
@@ -84,6 +87,7 @@ mca_coll_han_component_t mca_coll_han_component = {
  */
 static int han_open(void)
 {
+    int param;
     mca_coll_han_component_t *cs = &mca_coll_han_component;
     if (cs->han_auto_tune) {
         cs->han_auto_tuned =
@@ -95,7 +99,16 @@ static int han_open(void)
               2 * cs->han_auto_tune_n * cs->han_auto_tune_c * cs->han_auto_tune_m, file);
         fclose(file);
     }
-    return OMPI_SUCCESS;
+
+    /*
+     * Get the global coll verbosity: it will be ours
+     */
+    cs->han_output = ompi_coll_base_framework.framework_output;
+    opal_output_verbose(1, cs->han_output,
+                        "coll:han:component_open: done!");
+
+    cs->topo_level = GLOBAL_COMMUNICATOR;
+    return mca_coll_han_init_dynamic_rules();
 }
 
 
@@ -109,9 +122,89 @@ static int han_close(void)
         free(cs->han_auto_tuned);
         cs->han_auto_tuned = NULL;
     }
+    mca_coll_han_free_dynamic_rules();
     return OMPI_SUCCESS;
 }
 
+static bool is_simple_implemented(COLLTYPE_T coll)
+{
+    switch(coll) {
+        case ALLGATHER:
+        case ALLREDUCE:
+        case BCAST:
+        case GATHER:
+        case REDUCE:
+            return true;
+        default:
+            return false;
+    }
+}
+
+const char* mca_coll_han_topo_lvl_to_str(TOPO_LVL_T topo_lvl)
+{
+    switch(topo_lvl) {
+        case INTRA_NODE:
+            return "intra_node";
+        case INTER_NODE:
+            return "inter_node";
+        case GLOBAL_COMMUNICATOR:
+            return "global_communicator";
+        case NB_TOPO_LVL:
+        default:
+            return "invalid topologic level";
+    }
+}
+const char* mca_coll_han_colltype_to_str(COLLTYPE_T coll)
+{
+    switch(coll) {
+        case ALLGATHER:
+            return "allgather";
+        case ALLGATHERV:
+            return "allgatherv";
+        case ALLREDUCE:
+            return "allreduce";
+        case ALLTOALL:
+            return "alltoall";
+        case ALLTOALLV:
+            return "alltoallv";
+        case ALLTOALLW:
+            return "alltoallw";
+        case BARRIER:
+            return "barrier";
+        case BCAST:
+            return "bcast";
+        case EXSCAN:
+            return "exscan";
+        case GATHER:
+            return "gather";
+        case GATHERV:
+            return "gatherv";
+        case REDUCE:
+            return "reduce";
+        case REDUCESCATTER:
+            return "reduce_scatter";
+        case REDUCESCATTERBLOCK:
+            return "reduce_scatter_block";
+        case SCAN:
+            return "scan";
+        case SCATTER:
+            return "scatter";
+        case SCATTERV:
+            return "scatterv";
+        case NEIGHBOR_ALLGATHER:
+            return "neighbor_allgather";
+        case NEIGHBOR_ALLGATHERV:
+            return "neighbor_allgatherv";
+        case NEIGHBOR_ALLTOALL:
+            return "neighbor_alltoall";
+        case NEIGHBOR_ALLTOALLV:
+            return "neighbor_alltoallv";
+        case NEIGHBOR_ALLTOALLW:
+            return "neighbor_alltoallw";
+        default:
+            return "";
+    }
+}
 
 /*
  * Register MCA params
@@ -121,20 +214,19 @@ static int han_register(void)
     mca_base_component_t *c = &mca_coll_han_component.super.collm_version;
     mca_coll_han_component_t *cs = &mca_coll_han_component;
 
-    cs->han_priority = 50;
+    /* Generated parameters name and description */
+    char param_name[100] = "";
+    char param_desc[300] = "";
+    int param_desc_size;
+    COLLTYPE_T coll;
+    TOPO_LVL_T topo_lvl;
+    COMPONENT_T component;
+
+    cs->han_priority = 0;
     (void) mca_base_component_var_register(c, "priority", "Priority of the han coll component",
                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY, &cs->han_priority);
-
-    int coll_han_verbose = 0;
-    (void) mca_base_component_var_register(c, "verbose",
-                                           "Verbose level",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY, &coll_han_verbose);
-    cs->han_output = opal_output_open(NULL);
-    opal_output_set_verbosity(cs->han_output, coll_han_verbose);
 
     cs->han_bcast_segsize = 65536;
     (void) mca_base_component_var_register(c, "bcast_segsize",
@@ -254,6 +346,93 @@ static int han_register(void)
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY, &cs->han_auto_tune);
 
+    cs->han_reproducible = 0;
+    (void) mca_base_component_var_register(c, "reproducible",
+                                           "whether we need reproducible results "
+                                           "(enabling this disables optimisations using topology)"
+                                           "0 disable 1 enable, default 0",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_3,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &cs->han_reproducible);
+
+    /* Simple algorithms MCA parameters */
+    for(coll = 0 ; coll < COLLCOUNT ; coll++) {
+        cs->use_simple_algorithm[coll] = false;
+        if(is_simple_implemented(coll)) {
+            snprintf(param_name, 100, "use_simple_%s",
+                     mca_coll_han_colltype_to_str(coll));
+            snprintf(param_desc, 300, "whether to enable simple algo for %s",
+                     mca_coll_han_colltype_to_str(coll));
+            mca_base_component_var_register(c, param_name,
+                                            param_desc,
+                                            MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                            OPAL_INFO_LVL_5,
+                                            MCA_BASE_VAR_SCOPE_READONLY,
+                                            &(cs->use_simple_algorithm[coll]));
+        }
+    }
+
+    /* Dynamic rules MCA parameters */
+    /* TODO: Find a way to avoid unused entried */
+    memset(cs->mca_rules, 0,
+           COLLCOUNT * (GLOBAL_COMMUNICATOR+1) * sizeof(COMPONENT_T));
+    for(coll = 0 ; coll < COLLCOUNT ; coll++) {
+        if(!mca_coll_han_is_coll_dynamic_implemented(coll)) {
+            continue;
+        }
+        /*
+         * Default values
+         * Do not avoid to set correct default parameters
+         */
+        cs->mca_rules[coll][INTRA_NODE] = TUNED;
+        cs->mca_rules[coll][INTER_NODE] = BASIC;
+        cs->mca_rules[coll][GLOBAL_COMMUNICATOR] = HAN;
+
+        for(topo_lvl = 0 ; topo_lvl < NB_TOPO_LVL ; topo_lvl++) {
+
+            snprintf(param_name, 100, "%s_dynamic_%s_module",
+                     mca_coll_han_colltype_to_str(coll),
+                     mca_coll_han_topo_lvl_to_str(topo_lvl));
+
+            param_desc_size = snprintf(param_desc, 300,
+                                       "Collective module to use for "
+                                       "collective %s on %s topological level: ",
+                                       mca_coll_han_colltype_to_str(coll),
+                                       mca_coll_han_topo_lvl_to_str(topo_lvl));
+            /*
+             * Exhaustive description:
+             * 0 = self; 1 = basic; 2 = libnbc; ...
+             * FIXME: Do not print component not providing this collective
+             */
+            for(component = 0 ; component < COMPONENTS_COUNT ; component++) {
+                if(HAN == component && GLOBAL_COMMUNICATOR != topo_lvl) {
+                    /* Han can only be used on the global communicator */
+                    continue;
+                }
+                param_desc_size += snprintf(param_desc+param_desc_size, 300,
+                                            "%d = %s; ",
+                                            component,
+                                            components_name[component]);
+            }
+
+            mca_base_component_var_register(c, param_name, param_desc,
+                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                            OPAL_INFO_LVL_9,
+                                            MCA_BASE_VAR_SCOPE_READONLY,
+                                            &(cs->mca_rules[coll][topo_lvl]));
+        }
+    }
+
+    /*
+     * TODO: remove the following lines when auto-tune is added back to the code
+     */
+    cs->han_auto_tune = 0;
+
+    cs->han_auto_tune_n = 5;
+    cs->han_auto_tune_c = 3;
+    cs->han_auto_tune_m = 21;
+#if 0
     cs->han_auto_tune_n = 5;
     (void) mca_base_component_var_register(c, "auto_tune_n",
                                            "auto tune n",
@@ -273,7 +452,65 @@ static int han_register(void)
                                            "auto tune n",
                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
                                            OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY, &cs->han_auto_tune_m);
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &cs->han_auto_tune_m);
+#endif
+
+    /* Dynamic rules */
+    cs->use_dynamic_file_rules = false;
+    (void) mca_base_component_var_register(&mca_coll_han_component.super.collm_version,
+                                           "use_dynamic_file_rules",
+                                           "Switch used to decide if we use "
+                                           "dynamic module choice rules "
+                                           "defines by file",
+                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                           OPAL_INFO_LVL_6,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &(cs->use_dynamic_file_rules));
+
+    cs->dynamic_rules_filename = NULL;
+    (void) mca_base_component_var_register(&mca_coll_han_component.super.collm_version,
+                                           "dynamic_rules_filename",
+                                           "Filename of configuration file that "
+                                           "contains the dynamic module choice rules",
+                                           MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                           OPAL_INFO_LVL_6,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &(cs->dynamic_rules_filename));
+
+    cs->dump_dynamic_rules = false;
+    (void) mca_base_component_var_register(&mca_coll_han_component.super.collm_version,
+                                           "dump_dynamic_rules",
+                                           "Switch used to decide if we dump "
+                                           "dynamic rules provided by "
+                                           "configuration file",
+                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                           OPAL_INFO_LVL_6,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &(cs->dump_dynamic_rules));
+
+    if((cs->dump_dynamic_rules || NULL != cs->dynamic_rules_filename)
+       && !cs->use_dynamic_file_rules) {
+        opal_output_verbose(0, cs->han_output,
+                            "coll:han:han_register "
+                            "you asked for dynamic rules "
+                            "but they are not activated. "
+                            "Check coll_han_use_dynamic_file_rules "
+                            "MCA parameter");
+    }
+
+    cs->max_dynamic_errors = 10;
+    (void) mca_base_component_var_register(&mca_coll_han_component.super.collm_version,
+                                           "max_dynamic_errors",
+                                           "Number of dynamic rules module/function "
+                                           "errors printed on rank 0 "
+                                           "with a 0 verbosity."
+                                           "Useless if coll_base_verbose is 30 or more.",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_6,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &(cs->max_dynamic_errors));
+
 
     return OMPI_SUCCESS;
 }

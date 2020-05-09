@@ -12,6 +12,8 @@
 sources = \
 coll_han.h \
 coll_han_trigger.h \
+coll_han_dynamic.h \
+coll_han_dynamic_file.h \
 coll_han_bcast.c \
 coll_han_reduce.c \
 coll_han_scatter.c \
@@ -21,6 +23,10 @@ coll_han_allgather.c \
 coll_han_component.c \
 coll_han_module.c \
 coll_han_trigger.c \
+coll_han_dynamic.c \
+coll_han_dynamic_file.c \
+coll_han_topo.c \
+coll_han_subcomms.c \
 coll_han_utils.c
 
 # Make the output library in this directory, and name it either

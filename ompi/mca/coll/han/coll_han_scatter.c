@@ -66,13 +66,23 @@ mca_coll_han_scatter_intra(const void *sbuf, int scount,
     w_rank = ompi_comm_rank(comm);
     w_size = ompi_comm_size(comm);
 
-    /* Create the subcommunicators */
     mca_coll_han_module_t *han_module = (mca_coll_han_module_t *) module;
+    int *topo = mca_coll_han_topo_init(comm, han_module, 2);
+    /* Topo must be initialized to know rank distribution which then is used to
+     * determine if han can be used */
+    mca_coll_han_topo_init(comm, han_module, 2);
+    if (han_module->are_ppn_imbalanced){
+        OPAL_OUTPUT_VERBOSE((30, mca_coll_han_component.han_output,
+                             "han cannot handle scatter with this communicator. It needs to fall back on another component\n"));
+        goto prev_scatter_intra;
+    }
+
+    /* Create the subcommunicators */
     mca_coll_han_comm_create(comm, han_module);
     ompi_communicator_t *low_comm =
-        han_module->cached_low_comms[mca_coll_han_component.han_scatter_low_module];
+         han_module->cached_low_comms[mca_coll_han_component.han_scatter_low_module];
     ompi_communicator_t *up_comm =
-        han_module->cached_up_comms[mca_coll_han_component.han_scatter_up_module];
+         han_module->cached_up_comms[mca_coll_han_component.han_scatter_up_module];
     int *vranks = han_module->cached_vranks;
     int low_rank = ompi_comm_rank(low_comm);
     int low_size = ompi_comm_size(low_comm);
@@ -93,6 +103,8 @@ mca_coll_han_scatter_intra(const void *sbuf, int scount,
 
     int root_low_rank;
     int root_up_rank;
+
+
     mca_coll_han_get_ranks(vranks, root, low_size, &root_low_rank, &root_up_rank);
     OPAL_OUTPUT_VERBOSE((30, mca_coll_han_component.han_output,
                          "[%d]: Han Scatter root %d root_low_rank %d root_up_rank %d\n", w_rank,
@@ -105,7 +117,6 @@ mca_coll_han_scatter_intra(const void *sbuf, int scount,
      */
     char *reorder_buf = NULL;
     char *reorder_sbuf = NULL;
-    int *topo = mca_coll_han_topo_init(comm, han_module, 2);
 
     if (w_rank == root) {
         /* If the processes are mapped-by core, no need to reorder */
@@ -154,6 +165,11 @@ mca_coll_han_scatter_intra(const void *sbuf, int scount,
     ompi_request_wait(&temp_request, MPI_STATUS_IGNORE);
     return OMPI_SUCCESS;
 
+prev_scatter_intra:
+    return han_module->previous_scatter(sbuf, scount, sdtype,
+                                        rbuf, rcount, rdtype,
+                                        root, comm,
+                                        han_module->previous_scatter_module);
 }
 
 /* us: upper level (intra-node) scatter task */

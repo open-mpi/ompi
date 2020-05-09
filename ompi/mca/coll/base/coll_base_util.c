@@ -305,3 +305,39 @@ static void nbc_req_cons(ompi_coll_base_nbc_request_t *req) {
 }
 
 OBJ_CLASS_INSTANCE(ompi_coll_base_nbc_request_t, ompi_request_t, nbc_req_cons, NULL);
+
+/* File reading functions */
+static void skiptonewline (FILE *fptr, int *fileline)
+{
+    do {
+        char val;
+        int rc; 
+
+        rc = fread(&val, 1, 1, fptr);
+        if (0 == rc) return;
+        if ((1 == rc)&&('\n' == val)) {
+            (*fileline)++;
+            return;
+        }   
+    } while (1);
+}
+
+long ompi_coll_base_file_getnext (FILE *fptr, int *fileline)
+{
+    do {
+        long val;
+        int rc; 
+        char trash;
+
+        rc = fscanf(fptr, "%li", &val);
+        if (rc == EOF) return MYEOF;
+        if (1 == rc) return val;
+        /* in all other cases, skip to the end */
+        rc = fread(&trash, sizeof(char), 1, fptr);
+        if (rc == EOF) return MYEOF;
+        if ('\n' == trash) (*fileline)++;
+        if ('#' == trash) {
+            skiptonewline (fptr, fileline);
+        }   
+    } while (1);
+}

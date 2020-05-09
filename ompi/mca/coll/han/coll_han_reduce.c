@@ -2,6 +2,7 @@
  * Copyright (c) 2018-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2020      Bull S.A.S. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -69,8 +70,24 @@ mca_coll_han_reduce_intra(const void *sbuf,
     size_t typelng;
     ompi_datatype_type_size(dtype, &typelng);
 
-    /* Create the subcommunicators */
     mca_coll_han_module_t *han_module = (mca_coll_han_module_t *) module;
+    /* Do not initialize topology if the operation cannot commute */
+    if(!ompi_op_is_commute(op)){
+        OPAL_OUTPUT_VERBOSE((30, mca_coll_han_component.han_output,
+                    "han cannot handle reduce with this operation. It needs to fall back on another component\n"));
+        goto prev_reduce_intra;
+    }
+
+    /* Topo must be initialized to know rank distribution which then is used to
+     * determine if han can be used */
+    mca_coll_han_topo_init(comm, han_module, 2);
+    if (han_module->are_ppn_imbalanced){
+        OPAL_OUTPUT_VERBOSE((30, mca_coll_han_component.han_output,
+                    "han cannot handle reduce with this communicator. It needs to fall back on another component\n"));
+        goto prev_reduce_intra;
+    }
+
+    /* Create the subcommunicators */
     mca_coll_han_comm_create(comm, han_module);
     ompi_communicator_t *low_comm;
     ompi_communicator_t *up_comm;
@@ -133,6 +150,11 @@ mca_coll_han_reduce_intra(const void *sbuf,
     free(t);
 
     return OMPI_SUCCESS;
+
+prev_reduce_intra:
+    return han_module->previous_reduce(sbuf, rbuf, count, dtype, op, root,
+                                       comm,
+                                       han_module->previous_reduce_module);
 }
 
 /* t0 task: issue and wait for the low level reduce of segment 0 */
@@ -189,4 +211,178 @@ int mca_coll_han_reduce_t1_task(void *task_argu) {
     }
 
     return OMPI_SUCCESS;
+}
+
+/* In case of non regular situation (imbalanced number of processes per nodes),
+ * a fallback is made on the next component that provides a reduce in priority order */
+int
+mca_coll_han_reduce_intra_simple(const void *sbuf,
+                                     void* rbuf,
+                                     int count,
+                                     struct ompi_datatype_t *dtype,
+                                     ompi_op_t *op,
+                                     int root,
+                                     struct ompi_communicator_t *comm,
+                                     mca_coll_base_module_t *module)
+{
+    int w_rank; /* information about the global communicator */
+    int root_low_rank, root_up_rank; /* root ranks for both sub-communicators */
+    int ret;
+    int *vranks, low_rank, low_size;
+    ptrdiff_t rsize, rgap = 0;
+    void * tmp_buf;
+
+    mca_coll_han_module_t *han_module = (mca_coll_han_module_t *)module;
+
+    /* Do not initialize topology if the operation cannot commute */
+    if(!ompi_op_is_commute(op)){
+        OPAL_OUTPUT_VERBOSE((30, mca_coll_han_component.han_output,
+                    "han cannot handle reduce with this operation. It needs to fall back on another component\n"));
+        goto prev_reduce_intra_simple;
+    }
+
+    /* Topo must be initialized to know rank distribution which then is used to
+     * determine if han can be used */
+    mca_coll_han_topo_init(comm, han_module, 2);
+    if (han_module->are_ppn_imbalanced){
+        OPAL_OUTPUT_VERBOSE((30, mca_coll_han_component.han_output,
+                    "han cannot handle reduce with this communicator. It needs to fall back on another component\n"));
+        goto prev_reduce_intra_simple;
+    }
+
+    mca_coll_han_comm_create(comm, han_module);
+    ompi_communicator_t *low_comm =
+         han_module->cached_low_comms[mca_coll_han_component.han_reduce_low_module];
+    ompi_communicator_t *up_comm =
+         han_module->cached_up_comms[mca_coll_han_component.han_reduce_up_module];
+
+    /* Get the 'virtual ranks' mapping corresponding to the communicators */
+    vranks = han_module->cached_vranks;
+    w_rank = ompi_comm_rank(comm);
+    low_rank = ompi_comm_rank(low_comm);
+
+    low_size = ompi_comm_size(low_comm);
+    /* Get root ranks for low and up comms */
+    mca_coll_han_get_ranks(vranks, root, low_size, &root_low_rank, &root_up_rank);
+
+    if (root_low_rank == low_rank && w_rank != root) {
+        rsize = opal_datatype_span(&dtype->super, (int64_t)count, &rgap);
+        tmp_buf = malloc(rsize);
+        if (NULL == tmp_buf) {
+            return OMPI_ERROR;
+        }
+    } else {
+        /* global root rbuf is valid, local non-root do not need buffers */
+        tmp_buf = rbuf;
+    }
+    /* No need to handle MPI_IN_PLACE: only the global root may ask for it and
+     * it is ok to use it for intermediary reduces since it is also a local root*/
+
+    /* Low_comm reduce */
+    ret = low_comm->c_coll->coll_reduce((char *)sbuf, (char *)tmp_buf,
+                count, dtype, op, root_low_rank,
+                low_comm, low_comm->c_coll->coll_reduce_module);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)){
+        if (root_low_rank == low_rank && w_rank != root){
+            free(tmp_buf);
+        }
+        OPAL_OUTPUT_VERBOSE((30, mca_coll_han_component.han_output,
+                             "HAN/REDUCE: low comm reduce failed. "
+                             "Falling back to another component\n"));
+        goto prev_reduce_intra_simple;
+    }
+
+    /* Up_comm reduce */
+    if (root_low_rank == low_rank ){
+        if(w_rank != root){
+            ret = up_comm->c_coll->coll_reduce((char *)tmp_buf, NULL,
+                        count, dtype, op, root_up_rank,
+                        up_comm, up_comm->c_coll->coll_reduce_module);
+            free(tmp_buf);
+        } else {
+            /* Take advantage of any optimisation made for IN_PLACE
+             * communcations */
+            ret = up_comm->c_coll->coll_reduce(MPI_IN_PLACE, (char *)tmp_buf,
+                        count, dtype, op, root_up_rank,
+                        up_comm, up_comm->c_coll->coll_reduce_module);
+        }
+        if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)){
+            OPAL_OUTPUT_VERBOSE((30, mca_coll_han_component.han_output,
+                                 "HAN/REDUCE: low comm reduce failed.\n"));
+            return ret;
+        }
+
+    }
+    return OMPI_SUCCESS;
+
+prev_reduce_intra_simple:
+    return han_module->previous_reduce(sbuf, rbuf, count, dtype, op, root,
+                                       comm,
+                                       han_module->previous_reduce_module);
+}
+
+
+/* Find a fallback on reproducible algorithm
+ * use tuned or basic or if impossible whatever available
+ */
+int
+mca_coll_han_reduce_reproducible_decision(struct ompi_communicator_t *comm,
+                                          mca_coll_base_module_t *module)
+{
+    int w_rank = ompi_comm_rank(comm);
+    mca_coll_han_module_t *han_module = (mca_coll_han_module_t *)module;
+
+    /* populate previous modules_storage*/
+    mca_coll_han_get_all_coll_modules(comm, han_module);
+
+    /* try availability of reproducible modules */
+    int fallbacks[] = {TUNED, BASIC};
+    int fallbacks_len = sizeof(fallbacks) / sizeof(*fallbacks);
+    int i;
+    for (i=0; i<fallbacks_len; i++) {
+        int fallback = fallbacks[i];
+        mca_coll_base_module_t *fallback_module = han_module->modules_storage
+            .modules[fallback]
+            .module_handler;
+        if (fallback_module != NULL && fallback_module->coll_reduce != NULL) {
+            if (0 == w_rank) {
+                opal_output_verbose(30, mca_coll_han_component.han_output,
+                                    "coll:han:reduce_reproducible: "
+                                    "fallback on %s\n",
+                                    components_name[fallback]);
+            }
+            han_module->reproducible_reduce_module = fallback_module;
+            han_module->reproducible_reduce = fallback_module->coll_reduce;
+            return OMPI_SUCCESS;
+        }
+    }
+   /* fallback of the fallback */
+    if (0 == w_rank) {
+        opal_output_verbose(5, mca_coll_han_component.han_output,
+                            "coll:han:reduce_reproducible_decision: "
+                            "no reproducible fallback\n");
+    }
+    han_module->reproducible_reduce_module =
+        han_module->previous_reduce_module;
+    han_module->reproducible_reduce = han_module->previous_reduce;
+    return  OMPI_SUCCESS;
+}
+
+
+/* Fallback on reproducible algorithm */
+int
+mca_coll_han_reduce_reproducible(const void *sbuf,
+                                 void *rbuf,
+                                  int count,
+                                  struct ompi_datatype_t *dtype,
+                                  struct ompi_op_t *op,
+                                  int root,
+                                  struct ompi_communicator_t *comm,
+                                  mca_coll_base_module_t *module)
+{
+    mca_coll_han_module_t *han_module = (mca_coll_han_module_t *)module;
+    return han_module->reproducible_reduce(sbuf, rbuf, count, dtype,
+                                           op, root, comm,
+                                           han_module
+                                           ->reproducible_reduce_module);
 }

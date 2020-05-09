@@ -84,6 +84,19 @@ ompi_coll_base_nbc_reserve_tags(ompi_communicator_t* comm, int32_t reserve)
 
 typedef struct ompi_coll_base_nbc_request_t ompi_coll_base_nbc_request_t;
 
+/*
+ * Structure to store an available module
+ */
+struct mca_coll_base_avail_coll_t {
+    opal_list_item_t super;
+
+    int ac_priority;
+    mca_coll_base_module_t *ac_module;
+    const char * ac_component_name;
+};
+typedef struct mca_coll_base_avail_coll_t mca_coll_base_avail_coll_t;
+OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_coll_base_avail_coll_t);
+
 /**
  * A MPI_like function doing a send and a receive simultaneously.
  * If one of the communications results in a zero-byte message the
@@ -163,6 +176,10 @@ int ompi_coll_base_retain_datatypes( ompi_request_t *request,
 int ompi_coll_base_retain_datatypes_w( ompi_request_t *request,
                                        ompi_datatype_t *stypes[],
                                        ompi_datatype_t *rtypes[]);
+
+/* File reading function */
+#define MYEOF -999
+long ompi_coll_base_file_getnext(FILE *fptr, int *fileline);
 
 END_C_DECLS
 #endif /* MCA_COLL_BASE_UTIL_EXPORT_H */
