@@ -2,6 +2,7 @@
  * Copyright (c) 2018-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2020      Bull S.A.S. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -63,10 +64,22 @@ mca_coll_han_bcast_intra(void *buff,
     w_rank = ompi_comm_rank(comm);
     int seg_count = count;
     size_t typelng;
+    mca_coll_han_module_t *han_module = (mca_coll_han_module_t *)module;
+
+    /* Topo must be initialized to know rank distribution which then is used to
+     * determine if han can be used */
+    mca_coll_han_topo_init(comm, han_module, 2);
+
+    if (han_module->are_ppn_imbalanced){
+        OPAL_OUTPUT_VERBOSE((30, mca_coll_han_component.han_output,
+                        "han cannot handle bcast with this communicator. It need to fall back on another component\n"));
+        return han_module->previous_bcast(buff, count, dtype, root,
+                    comm, han_module->previous_bcast_module);
+    }
+
     ompi_datatype_type_size(dtype, &typelng);
 
     /* Create the subcommunicators */
-    mca_coll_han_module_t *han_module = (mca_coll_han_module_t *) module;
     mca_coll_han_comm_create(comm, han_module);
     ompi_communicator_t *low_comm;
     ompi_communicator_t *up_comm;
@@ -217,6 +230,63 @@ int mca_coll_han_bcast_t1_task(void *task_argu)
     if (!t->noop && ibcast_req != NULL) {
         ompi_request_wait(&ibcast_req, MPI_STATUSES_IGNORE);
     }
+
+    return OMPI_SUCCESS;
+}
+
+int
+mca_coll_han_bcast_intra_simple(void *buff,
+                                int count,
+                                struct ompi_datatype_t *dtype,
+                                int root,
+                                struct ompi_communicator_t *comm,
+                                mca_coll_base_module_t *module)
+{
+    int w_rank;
+    w_rank = ompi_comm_rank(comm);
+
+    /* create the subcommunicators */
+    mca_coll_han_module_t *han_module = (mca_coll_han_module_t *)module;
+    mca_coll_han_comm_create_new(comm, han_module);
+    ompi_communicator_t *low_comm = han_module->sub_comm[INTRA_NODE];
+    ompi_communicator_t *up_comm = han_module->sub_comm[INTER_NODE];
+
+    int *vranks = han_module->cached_vranks;
+    int low_rank = ompi_comm_rank(low_comm);
+    int low_size = ompi_comm_size(low_comm);
+    int root_low_rank;
+    int root_up_rank;
+
+    /* Topo must be initialized to know rank distribution which then is used to
+     * determine if han can be used */
+    mca_coll_han_topo_init(comm, han_module, 2);
+
+    if (han_module->are_ppn_imbalanced){
+        OPAL_OUTPUT_VERBOSE((30, mca_coll_han_component.han_output,
+                        "han cannot handle bcast with this communicator. It need to fall back on another component\n"));
+        return han_module->previous_bcast(buff, count, dtype, root,
+                    comm, han_module->previous_bcast_module);
+    } else {
+        OPAL_OUTPUT_VERBOSE((10, mca_coll_han_component.han_output,
+                            "[OMPI][han] in mca_coll_han_bcast_intra_simple\n"));
+    }
+
+    mca_coll_han_get_ranks(vranks, root, low_size, &root_low_rank, &root_up_rank);
+    OPAL_OUTPUT_VERBOSE((30, mca_coll_han_component.han_output,
+                        "[%d]: root_low_rank %d root_up_rank %d\n",
+                         w_rank, root_low_rank, root_up_rank));
+
+    if (low_rank == root_low_rank) {
+        up_comm->c_coll->coll_bcast(buff, count, dtype, root_up_rank, up_comm, up_comm->c_coll->coll_bcast_module);
+
+        /* To remove when han has better sub-module selection.
+           For now switching to ibcast enables to make runs with libnbc. */
+        //ompi_request_t req;
+        //up_comm->c_coll->coll_ibcast(buff, count, dtype, root_up_rank, up_comm, &req, up_comm->c_coll->coll_ibcast_module);
+        //ompi_request_wait(&req, MPI_STATUS_IGNORE);
+
+    }
+    low_comm->c_coll->coll_bcast(buff, count, dtype, root_low_rank, low_comm, low_comm->c_coll->coll_bcast_module);
 
     return OMPI_SUCCESS;
 }

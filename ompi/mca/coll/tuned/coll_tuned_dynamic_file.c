@@ -29,18 +29,18 @@
 /* need to include our own topo prototypes so we can malloc data on the comm correctly */
 #include "ompi/mca/coll/base/coll_base_topo.h"
 
+/* need file reading function */
+#include "ompi/mca/coll/base/coll_base_util.h"
+
 /* also need the dynamic rule structures */
 #include "coll_tuned_dynamic_rules.h"
 
 /* and our own prototypes */
 #include "coll_tuned_dynamic_file.h"
 
-
-#define MYEOF   -999
-
-static long getnext (FILE *fptr); /* local function */
-
 static int fileline=0; /* used for verbose error messages */
+
+#define getnext(fptr) ompi_coll_base_file_getnext(fptr, &fileline)
 
 /*
  * Reads a rule file called fname
@@ -261,36 +261,3 @@ int ompi_coll_tuned_read_rules_config_file (char *fname, ompi_coll_alg_rule_t** 
     return (-1);
 }
 
-
-static void skiptonewline (FILE *fptr)
-{
-    char val;
-    int rc;
-
-    do {
-        rc = fread(&val, 1, 1, fptr);
-        if (0 == rc) return;
-        if ((1 == rc)&&('\n' == val)) {
-            fileline++;
-            return;
-        }
-    } while (1);
-}
-
-static long getnext (FILE *fptr)
-{
-    long val;
-    int rc;
-    char trash;
-
-    do {
-        rc = fscanf(fptr, "%li", &val);
-        if (rc == EOF) return MYEOF;
-        if (1 == rc) return val;
-        /* in all other cases, skip to the end */
-        rc = fread(&trash, 1, 1, fptr);
-        if (rc == EOF) return MYEOF;
-        if ('\n' == trash) fileline++;
-        if ('#' == trash) skiptonewline (fptr);
-    } while (1);
-}

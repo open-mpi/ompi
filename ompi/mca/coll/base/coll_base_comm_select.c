@@ -21,6 +21,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation.  All rights reserved.
  * Copyright (c) 2017      FUJITSU LIMITED.  All rights reserved.
+ * Copyright (c) 2020      BULL S.A.S. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -44,20 +45,12 @@
 #include "opal/mca/base/base.h"
 #include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/base.h"
-
+#include "ompi/mca/coll/base/coll_base_util.h"
 
 /*
- * Local types
+ * Stuff for the OBJ interface
  */
-struct avail_coll_t {
-    opal_list_item_t super;
-
-    int ac_priority;
-    mca_coll_base_module_2_3_0_t *ac_module;
-    const char * ac_component_name;
-};
-typedef struct avail_coll_t avail_coll_t;
-
+OBJ_CLASS_INSTANCE(mca_coll_base_avail_coll_t, opal_list_item_t, NULL, NULL);
 
 /*
  * Local functions
@@ -76,12 +69,6 @@ static int query_2_0_0(const mca_coll_base_component_2_0_0_t *
                        coll_component, ompi_communicator_t * comm,
                        int *priority,
                        mca_coll_base_module_2_3_0_t ** module);
-
-/*
- * Stuff for the OBJ interface
- */
-static OBJ_CLASS_INSTANCE(avail_coll_t, opal_list_item_t, NULL, NULL);
-
 
 #define COPY(module, comm, func)                                        \
     do {                                                                \
@@ -138,11 +125,14 @@ int mca_coll_base_comm_select(ompi_communicator_t * comm)
     /* FIX ME - Do some kind of collective operation to find a module
        that everyone has available */
 
+    /* List to store every valid module */
+    comm->c_coll->module_list =  OBJ_NEW(opal_list_t);
+
     /* do the selection loop */
     for (item = opal_list_remove_first(selectable);
          NULL != item; item = opal_list_remove_first(selectable)) {
 
-        avail_coll_t *avail = (avail_coll_t *) item;
+        mca_coll_base_avail_coll_t *avail = (mca_coll_base_avail_coll_t *) item;
 
         /* initialize the module */
         ret = avail->ac_module->coll_module_enable(avail->ac_module, comm);
@@ -153,6 +143,9 @@ int mca_coll_base_comm_select(ompi_communicator_t * comm)
                             (OMPI_SUCCESS == ret ? "Enabled": "Disabled") );
 
         if (OMPI_SUCCESS == ret) {
+            /* Save every component that is initialized,
+             * queried and enabled successfully */
+            opal_list_append(comm->c_coll->module_list, &avail->super);
 
             /* copy over any of the pointers */
             COPY(avail->ac_module, comm, allgather);
@@ -230,10 +223,11 @@ int mca_coll_base_comm_select(ompi_communicator_t * comm)
             COPY(avail->ac_module, comm, neighbor_alltoallw_init);
 
             COPY(avail->ac_module, comm, reduce_local);
+        } else {
+            /* release the original module reference and the list item */
+            OBJ_RELEASE(avail->ac_module);
+            OBJ_RELEASE(avail);
         }
-        /* release the original module reference and the list item */
-        OBJ_RELEASE(avail->ac_module);
-        OBJ_RELEASE(avail);
     }
 
     /* Done with the list from the check_components() call so release it. */
@@ -306,8 +300,8 @@ int mca_coll_base_comm_select(ompi_communicator_t * comm)
 
 static int avail_coll_compare (opal_list_item_t **a,
                                opal_list_item_t **b) {
-    avail_coll_t *acoll = (avail_coll_t *) *a;
-    avail_coll_t *bcoll = (avail_coll_t *) *b;
+    mca_coll_base_avail_coll_t *acoll = (mca_coll_base_avail_coll_t *) *a;
+    mca_coll_base_avail_coll_t *bcoll = (mca_coll_base_avail_coll_t *) *b;
 
     if (acoll->ac_priority > bcoll->ac_priority) {
         return 1;
@@ -332,7 +326,7 @@ static opal_list_t *check_components(opal_list_t * components,
     mca_base_component_list_item_t *cli;
     mca_coll_base_module_2_3_0_t *module;
     opal_list_t *selectable;
-    avail_coll_t *avail;
+    mca_coll_base_avail_coll_t *avail;
 
     /* Make a list of the components that query successfully */
     selectable = OBJ_NEW(opal_list_t);
@@ -345,7 +339,7 @@ static opal_list_t *check_components(opal_list_t * components,
         if (priority >= 0) {
             /* We have a component that indicated that it wants to run
                by giving us a module */
-            avail = OBJ_NEW(avail_coll_t);
+            avail = OBJ_NEW(mca_coll_base_avail_coll_t);
             avail->ac_priority = priority;
             avail->ac_module = module;
             // Point to the string so we don't have to free later
