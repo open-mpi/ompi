@@ -243,7 +243,7 @@ situation and try again.
 #
 [mapping-too-low]
 A request for multiple cpus-per-proc was given, but a directive
-was also give to map to an object level that has less cpus than
+was also given to map to an object level that has less cpus than
 requested ones:
 
   #cpus-per-proc:  %d
