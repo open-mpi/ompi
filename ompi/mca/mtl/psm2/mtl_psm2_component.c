@@ -194,6 +194,18 @@ ompi_mtl_psm2_component_open(void)
 static int
 ompi_mtl_psm2_component_query(mca_base_module_t **module, int *priority)
 {
+
+    /*
+     * Mixing the PSM2 MTL with the OFI BTL (using PSM2) 
+     * can cause an issue when they both call psm2_finalize
+     * in older versions of libpsm2.
+     */
+    if (!psm2_get_capability_mask(PSM2_LIB_REFCOUNT_CAP)) {
+        opal_output_verbose(2, ompi_mtl_base_framework.framework_output, 
+            "This version of the PSM2 MTL needs version 11.2.173 or later of the libpsm2 library for correct operation.\n");
+        return OMPI_ERR_FATAL;
+    }   
+
     /*
      * if we get here it means that PSM2 is available so give high priority
      */
