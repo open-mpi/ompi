@@ -26,8 +26,7 @@ coll_han_trigger.c \
 coll_han_dynamic.c \
 coll_han_dynamic_file.c \
 coll_han_topo.c \
-coll_han_subcomms.c \
-coll_han_utils.c
+coll_han_subcomms.c
 
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la

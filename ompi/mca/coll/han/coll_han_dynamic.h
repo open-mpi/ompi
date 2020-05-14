@@ -1,5 +1,8 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
+ * Copyright (c) 2020      The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * Copyright (c) 2020      Bull S.A.S. All rights reserved.
  *
  * $COPYRIGHT$
@@ -27,9 +30,9 @@
  * #################################################
  *
  * Han dynamic rules allow the user to define the collective
- * module to call depending the topological configuration of the
+ * module to call depending on the topological configuration of the
  * sub-communicators and the collective parameters. This mechanism
- * can also be used to fallback the main collective on another module.
+ * can also be used to fallback to the main collective on another module.
  * The interface is described in coll_han_dynamic_file.h.
  *
  * #############################
@@ -39,7 +42,7 @@
  * directly accesses the module on the communicator. This information is
  * stored in the collective structure of the communicator during the collective
  * module choice at the communicator initialization. When han needs this
- * information for the first time, it identifies the modles by their name and
+ * information for the first time, it identifies the modules by their name and
  * stores them in its module structure.
  * Then, the modules are identified by their identifier.
  *
@@ -69,7 +72,7 @@
  * adds an indirection on the collective call: dynamic choice functions. These
  * functions do not implement any collective. First, they try to find a dynamic
  * rule from file for the given collective. If there is not any rule for the
- * fiven configuration, MCA parameter defined rules are used. Once the module
+ * given configuration, MCA parameter defined rules are used. Once the module
  * to use is found, the correct collective implementation is called.
  *
  * This indirection is also used on the global communicator. This allows han
@@ -92,11 +95,9 @@
  *       by increasing value, some of them will not be considered
  */
 
-BEGIN_C_DECLS
-
 /* Dynamic rules support */
 typedef enum COMPONENTS {
-    SELF=0,
+    SELF = 0,
     BASIC,
     LIBNBC,
     TUNED,
@@ -107,18 +108,17 @@ typedef enum COMPONENTS {
     COMPONENTS_COUNT
 } COMPONENT_T;
 
-static const char *components_name[]={"self",
-                                      "basic",
-                                      "libnbc",
-                                      "tuned",
-                                      "sm",
-                                      "shared",
-                                      "adapt",
-                                      "han"};
+typedef struct {
+    COMPONENT_T id;
+    char* component_name;
+    mca_coll_base_component_t* component;
+} ompi_coll_han_components;
+
+extern ompi_coll_han_components available_components[COMPONENTS_COUNT];
 
 /* Topologic levels */
 typedef enum TOPO_LVL {
-    INTRA_NODE=0,
+    INTRA_NODE = 0,
     INTER_NODE,
     /* Identifies the global communicator as a topologic level */
     GLOBAL_COMMUNICATOR,
@@ -135,7 +135,7 @@ typedef struct msg_size_rule_s {
     int configuration_size;
 
     /* Message size of the rule */
-    int msg_size;
+    size_t msg_size;
 
     /* Component to use on this specific configuration
      * and message size */
@@ -209,6 +209,6 @@ typedef struct mca_coll_han_collective_modules_storage_s {
 
 /* Tests if a dynamic collective is implemented */
 bool mca_coll_han_is_coll_dynamic_implemented(COLLTYPE_T coll_id);
+COMPONENT_T mca_coll_han_component_name_to_id(const char* name);
 
-END_C_DECLS
 #endif

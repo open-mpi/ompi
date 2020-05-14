@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2015 The University of Tennessee and The University
+ * Copyright (c) 2004-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2007 High Performance Computing Center Stuttgart,
@@ -178,8 +178,17 @@ int ompi_coll_base_retain_datatypes_w( ompi_request_t *request,
                                        ompi_datatype_t *rtypes[]);
 
 /* File reading function */
-#define MYEOF -999
-long ompi_coll_base_file_getnext(FILE *fptr, int *fileline);
+int ompi_coll_base_file_getnext_long(FILE *fptr, int *fileline, long* val);
+int ompi_coll_base_file_getnext_size_t(FILE *fptr, int *fileline, size_t* val);
+int ompi_coll_base_file_getnext_string(FILE *fptr, int *fileline, char** val);
+/* peek at the next valid token to see if it begins with the expected value. If yes
+ * eat the value, otherwise put it back into the file.
+ */
+int ompi_coll_base_file_peek_next_char_is(FILE *fptr, int *fileline, int expected);
+
+/* Miscelaneous function */
+char* mca_coll_base_colltype_to_str(int collid);
+int mca_coll_base_name_to_colltype(const char* name);
 
 END_C_DECLS
 #endif /* MCA_COLL_BASE_UTIL_EXPORT_H */

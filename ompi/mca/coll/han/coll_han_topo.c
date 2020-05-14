@@ -35,244 +35,24 @@
 #include "coll_han.h"
 
 
-/*
- * Local functions
- */
-
-static int mca_coll_han_hostname_to_number(char* hostname, int size);
-static void mca_coll_han_topo_get(int *topo,
-                                     struct ompi_communicator_t* comm,
-                                     int num_topo_level);
-static void mca_coll_han_topo_sort(int *topo, int start, int end,
-                                      int level, int num_topo_level);
-static bool mca_coll_han_topo_is_mapbycore(int *topo,
-                                              struct ompi_communicator_t *comm,
-                                              int num_topo_level);
-static void mca_coll_han_topo_print(int *topo,
-                                       struct ompi_communicator_t *comm,
-                                       int num_topo_level);
-
-
-/*
- * takes the number part of a host: hhh2031 -->2031
- */
-static int mca_coll_han_hostname_to_number(char* hostname, int size)
+#if OPAL_ENABLE_DEBUG
+static void
+mca_coll_han_topo_print(int *topo,
+                        struct ompi_communicator_t *comm,
+                        int num_topo_level)
 {
-    int i, j;
-    char *number_array = (char *)malloc(sizeof(char) * size);
-    int number = 0;
-
-    for (i = 0, j = 0; hostname[i] != '\0'; i++) {
-        if ('0' <= hostname[i] && '9' >= hostname[i]) {
-            number_array[j++] = hostname[i];
-        }
-    }
-    number_array[j] = '\0';
-    number = atoi(number_array);
-    free(number_array);
-    return number;
-}
-
-/*
- * Set the virtual topo id. It is made of num_topo_level ints (2 today):
- *    . the integer part of the host id
- *    . the rank in the main communicator
- * Gather the virtual topoid from each process so every process will know other
- * processes virtual topids
- */
-static void mca_coll_han_topo_get(int *topo,
-                                     struct ompi_communicator_t* comm,
-                                     int num_topo_level)
-{
-    int *self_topo = (int *)malloc(sizeof(int) * num_topo_level);
-    char hostname[1024];
-
-    gethostname(hostname, 1024);
-    self_topo[0] = mca_coll_han_hostname_to_number(hostname, 1024);
-    self_topo[1] = ompi_comm_rank(comm);
-
-    ompi_coll_base_allgather_intra_bruck(self_topo, num_topo_level, MPI_INT,
-                                         topo, num_topo_level, MPI_INT, comm,
-                                         comm->c_coll->coll_allgather_module);
-    free(self_topo);
-
-    return;
-}
-
-/*
- * Sort the topology array in order to have ranks sharing the same node
- * contiguous in the topology array.
- * Called from topo_init whenever the processes are not mapped by core.
- * ex: 4 ranks executing on 2 nodes, mapped by node
- *     ranks 0 and 2 on hid0
- *     ranks 1 and 3 on hid1
- * On entry the topo array looks like
- *     hid0 0 hid1 1 hid0 2 hid1 3
- * After the sort:
- *     hid0 0 hid0 2 hid1 1 hid1 3
- * This is to have the gather result in the right order
- *
- * @param topo (IN/OUT)         topology description array (sorted in out)
- * @param start (IN)            where to begin the processing
- *                              The index in topo will actually be:
- *                              start * num_topo_level + level
- *                              topo contains num_topo_level ids per rank.
- * @param end (IN)              where to stop the processing
- *                              The index in topo will actually be:
- *                              end * num_topo_level + level
- *                              topo contains num_topo_level ids per rank.
- * @param level (IN)            level number we are currently processing
- * @param num_topo_level (IN)   number of topological levels
- *
- */
-static void mca_coll_han_topo_sort(int *topo, int start, int end,
-                                      int level, int num_topo_level)
-{
-    int i, j;
-    int min, min_loc;
-    int last, new_start, new_end;
-
-    if (level > num_topo_level-1 || start >= end) {
-        return;
-    }
-
-    min = INT_MAX;
-    min_loc = -1;
-    for (i = start; i <= end; i++) {
-        int temp;
-        /* get the min value for current level and its location */
-        for (j = i; j <= end; j++) {
-            /* topo contains num_topo_level ids per rank. */
-            if (topo[j * num_topo_level + level] < min) {
-                min = topo[j*num_topo_level+level];
-                min_loc = j;
-
-            }
-        }
-        /*
-         * swap i and min_loc
-         * We have num_topo_level ids to swap
-         */
-        for (j = 0; j < num_topo_level; j++) {
-            temp = topo[i * num_topo_level + j];
-            topo[i * num_topo_level + j] = topo[min_loc * num_topo_level + j];
-            topo[min_loc * num_topo_level + j] = temp;
-        }
-        min = INT_MAX;
-        min_loc = -1;
-    }
-
-    /* Process next level */
-    last = 0;
-    new_start = 0;
-    new_end = 0;
-    for (i = start; i <= end; i++) {
-        if (i == start) {
-            last = topo[i * num_topo_level + level];
-            new_start = start;
-        } else if (i == end) {
-            new_end = end;
-            mca_coll_han_topo_sort(topo, new_start, new_end, level + 1,
-                                      num_topo_level);
-        } else if (last != topo[i * num_topo_level + level]) {
-            new_end = i - 1;
-            mca_coll_han_topo_sort(topo, new_start, new_end, level + 1,
-                                      num_topo_level);
-            new_start = i;
-            last = topo[i * num_topo_level + level];
-        }
-    }
-    return;
-}
-
-/*
- * Check whether the ranks in the communicator given as input are mapped by core
- * Mapped by core: each node is first filled with as many ranks as needed before
- * moving to the next one
- * This is checked as follows:
- *    . 2 contiguous ranks should be either on the same node or on node ids in
- *      ascending order
- * The topology is actually an array of ints:
- *   +----------+-------+----------+-------+------+----------+-------+-----+
- *   | host_id0 | rank0 | host_id1 | rank1 | .... | host_idX | rankX | ... |
- *   +----------+-------+----------+-------+------+----------+-------+-----+
- */
-static bool mca_coll_han_topo_is_mapbycore(int *topo,
-                                              struct ompi_communicator_t *comm,
-                                              int num_topo_level)
-{
-    int i;
+    int rank = ompi_comm_rank(comm);
     int size = ompi_comm_size(comm);
 
-    for (i = 1; i < size; i++) {
-        /*
-         * The host id for a given rank should be < host id for the next rank
-         */
-        if (topo[(i - 1) * num_topo_level] > topo[i * num_topo_level]) {
-            return false;
+    if (rank == 0) {
+        OPAL_OUTPUT_VERBOSE((30, mca_coll_han_component.han_output, "[%d]: Han topo: ", rank));
+        for( int i = 0; i < size*num_topo_level; i++ ) {
+            OPAL_OUTPUT_VERBOSE((30, mca_coll_han_component.han_output, "%d ", topo[i]));
         }
-        /*
-         * For the same host id, consecutive ranks should be sorted in
-         * ascending order.
-         */
-        if (topo[(i - 1) * num_topo_level + 1] > topo[i * num_topo_level + 1]) {
-            return false;
-        }
+        OPAL_OUTPUT_VERBOSE((30, mca_coll_han_component.han_output, "\n"));
     }
-    return true;
 }
-
-/* The topo is supposed sorted by host */
-static bool mca_coll_han_topo_are_ppn_imbalanced(int *topo,
-                            struct ompi_communicator_t *comm,
-                            int num_topo_level){
-    int i;
-    int size = ompi_comm_size(comm);
-    if (size < 2){
-        return false;
-    }
-    int ppn;
-    int last_host = topo[0];
-
-    /* Find the ppn for the first node */
-    for (i = 1; i < size; i++) {
-        if (topo[i * num_topo_level] != last_host){
-            break;
-        }
-    }
-    ppn = i;
-
-    /* All on one node */
-    if ( size == ppn){
-        return false;
-    }
-    /* Trivial case */
-    if (size % ppn != 0){
-        return true;
-    }
-
-    last_host = topo[ppn * num_topo_level];
-    /* Check that the 2nd and next hosts also this ppn. Since the topo is sorted
-     * one just need to jump ppn ranks to check the supposed switch of host */
-    for (i = 2 * ppn; i < size; i += ppn ){
-        /* the list of ranks for the last known host have ended before */
-        if (topo[(i-1) * num_topo_level] != last_host){
-            return true;
-        }
-        /* the list of ranks for the last known host are bigger than excpected */
-        if (topo[(i-1) * num_topo_level] == topo[i*num_topo_level]){
-            return true;
-        }
-        last_host = topo[i * num_topo_level];
-    }
-    /* Check the last host */
-    if (topo[(size-1) * num_topo_level] != last_host){
-        return true;
-    }
-
-    return false;
-}
-
+#endif  /* OPAL_ENABLE_DEBUG */
 
 /**
  * Topology initialization phase
@@ -280,68 +60,136 @@ static bool mca_coll_han_topo_are_ppn_imbalanced(int *topo,
  *
  * @param num_topo_level (IN)   Number of the topological levels
  */
-int *mca_coll_han_topo_init(struct ompi_communicator_t *comm,
-                               mca_coll_han_module_t *han_module,
-                               int num_topo_level)
+int*
+mca_coll_han_topo_init(struct ompi_communicator_t *comm,
+                       mca_coll_han_module_t *han_module,
+                       int num_topo_level)
 {
-    int size;
-    int *topo;
-
-    size = ompi_comm_size(comm);
-
-    if (!((han_module->cached_topo) && (han_module->cached_comm == comm))) {
-        if (han_module->cached_topo) {
-            free(han_module->cached_topo);
-            han_module->cached_topo = NULL;
-        }
-
-        topo = (int *)malloc(sizeof(int) * size * num_topo_level);
-
-        /* get topo infomation */
-        mca_coll_han_topo_get(topo, comm, num_topo_level);
-        mca_coll_han_topo_print(topo, comm, num_topo_level);
-
-        /*
-         * All the ranks now have the topo information
-         */
-
-        /* check if the processes are mapped by core */
-        han_module->is_mapbycore = mca_coll_han_topo_is_mapbycore(topo, comm, num_topo_level);
-
-        /*
-         * If not, sort the topo such that each group of ids is sorted by rank
-         * i.e. ids for rank i are contiguous to ids for rank i+1.
-         * This will be needed for the operations that are order sensitive
-         * (like gather)
-         */
-        if (!han_module->is_mapbycore) {
-            mca_coll_han_topo_sort(topo, 0, size-1, 0, num_topo_level);
-        }
-        han_module->are_ppn_imbalanced = mca_coll_han_topo_are_ppn_imbalanced(topo, comm , num_topo_level);
-        han_module->cached_topo = topo;
-        han_module->cached_comm = comm;
-    } else {
-        topo = han_module->cached_topo;
+    if ( NULL != han_module->cached_topo ) {
+        return han_module->cached_topo;
     }
 
-    mca_coll_han_topo_print(topo, comm, num_topo_level);
-    return topo;
-}
+    ompi_communicator_t *up_comm, *low_comm;
+    ompi_request_t *request = MPI_REQUEST_NULL;
+    int *my_low_rank_map = NULL;
+    int *ranks_map = NULL;
 
-static void mca_coll_han_topo_print(int *topo,
-                                       struct ompi_communicator_t *comm,
-                                       int num_topo_level)
-{
-    int rank = ompi_comm_rank(comm);
     int size = ompi_comm_size(comm);
 
-    if (rank == 0) {
-        int i;
-        OPAL_OUTPUT_VERBOSE((30, mca_coll_han_component.han_output, "[%d]: Han Scatter topo: ", rank));
-        for (i=0; i<size*num_topo_level; i++) {
-            OPAL_OUTPUT_VERBOSE((30, mca_coll_han_component.han_output, "%d ", topo[i]));
-        }
-        OPAL_OUTPUT_VERBOSE((30, mca_coll_han_component.han_output, "\n"));
+    if (NULL != han_module->cached_up_comms) {
+        up_comm  = han_module->cached_up_comms[0];
+        low_comm = han_module->cached_low_comms[0];
+    } else {
+        up_comm  = han_module->sub_comm[INTER_NODE];
+        low_comm = han_module->sub_comm[INTRA_NODE];
     }
+    assert(up_comm != NULL && low_comm != NULL);
+
+    int low_rank = ompi_comm_rank(low_comm);
+    int low_size = ompi_comm_size(low_comm);
+
+    int *topo = (int *)malloc(sizeof(int) * size * num_topo_level);
+    int is_imbalanced = 1;
+    int ranks_consecutive = 1;
+
+    /* node leaders translate the node-local ranks to global ranks and check whether they are placed consecutively */
+    if (0 == low_rank) {
+        my_low_rank_map = malloc(sizeof(int)*low_size);
+        for (int i = 0; i < low_size; ++i) {
+            topo[i] = i;
+        }
+        ompi_group_translate_ranks(low_comm->c_local_group, low_size, topo,
+                                   comm->c_local_group, my_low_rank_map);
+        /* check if ranks are consecutive */
+        int rank = my_low_rank_map[0] + 1;
+        for (int i = 1; i < low_size; ++i, ++rank) {
+            if (my_low_rank_map[i] != rank) {
+                ranks_consecutive = 0;
+                break;
+            }
+        }
+
+        int reduce_vals[] = {ranks_consecutive, -ranks_consecutive, low_size, -low_size};
+
+        up_comm->c_coll->coll_allreduce(MPI_IN_PLACE, &reduce_vals, 4,
+                                        MPI_INT, MPI_MAX, up_comm,
+                                        up_comm->c_coll->coll_allreduce_module);
+
+        /* is the distribution of processes balanced per node? */
+        is_imbalanced = (reduce_vals[2] == -reduce_vals[3]) ? 0 : 1;
+        ranks_consecutive = (reduce_vals[0] == -reduce_vals[1]) ? 1 : 0;
+
+        if ( !ranks_consecutive && !is_imbalanced ) {
+            /* kick off up_comm allgather to collect non-consecutive rank information at node leaders */
+            ranks_map = malloc(sizeof(int)*size);
+            up_comm->c_coll->coll_iallgather(my_low_rank_map, low_size, MPI_INT,
+                                             ranks_map, low_size, MPI_INT, up_comm, &request,
+                                             up_comm->c_coll->coll_iallgather_module);
+        }
+    }
+
+
+    /* broadcast balanced and consecutive properties from node leaders to remaining ranks */
+    int bcast_vals[] = {is_imbalanced, ranks_consecutive};
+    low_comm->c_coll->coll_bcast(bcast_vals, 2, MPI_INT, 0,
+                                 low_comm, low_comm->c_coll->coll_bcast_module);
+    is_imbalanced = bcast_vals[0];
+    ranks_consecutive = bcast_vals[1];
+
+    /* error out if the rank distribution is not balanced */
+    if (is_imbalanced) {
+        assert(MPI_REQUEST_NULL == request);
+        han_module->are_ppn_imbalanced = true;
+        free(topo);
+        if( NULL != my_low_rank_map ) free(my_low_rank_map);
+        if( NULL != ranks_map ) free(ranks_map);
+        return NULL;
+    }
+
+    han_module->are_ppn_imbalanced = false;
+
+    if (ranks_consecutive) {
+        /* fast-path: all ranks are consecutive and balanced so fill topology locally */
+        for (int i = 0; i < size; ++i) {
+            topo[2*i]   = (i/low_size); // node leader is node ID
+            topo[2*i+1] = i;
+        }
+        han_module->is_mapbycore = true;
+    } else {
+        /*
+         * Slow path: gather global-to-node-local rank mappings at node leaders
+         *
+         * The topology will contain a mapping from global consecutive positions
+         * to ranks in the communicator.
+         *
+         * ex: 4 ranks executing on 2 nodes, mapped by node
+         *     ranks 0 and 2 on hid0
+         *     ranks 1 and 3 on hid1
+         * On entry the topo array looks like
+         *     hid0 0 hid1 1 hid0 2 hid1 3
+         * After the sort:
+         *     hid0 0 hid0 2 hid1 1 hid1 3
+         */
+        if (0 == low_rank) {
+            ompi_request_wait(&request, MPI_STATUS_IGNORE);
+            /* fill topology */
+            for (int i = 0; i < size; ++i) {
+                topo[2*i]   = ranks_map[(i/low_size)*low_size]; // node leader is node ID
+                topo[2*i+1] = ranks_map[i];
+            }
+            free(ranks_map);
+        }
+    }
+
+    /* broadcast topology from node leaders to remaining ranks */
+    low_comm->c_coll->coll_bcast(topo, num_topo_level*size, MPI_INT, 0,
+                                low_comm, low_comm->c_coll->coll_bcast_module);
+    free(my_low_rank_map);
+    han_module->cached_topo = topo;
+#if OPAL_ENABLE_DEBUG
+    mca_coll_han_topo_print(topo, comm, num_topo_level);
+#endif  /* OPAL_ENABLE_DEBUG */
+
+    return topo;
 }
 

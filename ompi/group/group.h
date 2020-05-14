@@ -419,7 +419,15 @@ static inline struct ompi_proc_t *ompi_group_peer_lookup_existing (ompi_group_t 
     return ompi_group_get_proc_ptr (group, peer_id, false);
 }
 
+/**
+ * Return true if all processes in the group are not on the local node.
+ */
 bool ompi_group_have_remote_peers (ompi_group_t *group);
+
+/**
+ * Count the number of processes on the local node.
+ */
+int ompi_group_count_local_peers (ompi_group_t *group);
 
 /**
  *  Function to print the group info
