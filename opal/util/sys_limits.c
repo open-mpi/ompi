@@ -16,6 +16,8 @@
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2020      Mellanox Technologies, Inc.
+ *                         All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -76,7 +78,7 @@ static int opal_setlimit(int resource, char *value, rlim_t *out)
 
     if (0 <= getrlimit(resource, &rlim)) {
         if (rlim.rlim_max < maxlim) {
-            rlim_set.rlim_cur = rlim.rlim_cur;
+            rlim_set.rlim_cur = rlim.rlim_max;
             rlim_set.rlim_max = rlim.rlim_max;
         } else {
             rlim_set.rlim_cur = maxlim;
