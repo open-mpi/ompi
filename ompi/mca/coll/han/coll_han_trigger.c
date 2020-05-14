@@ -14,29 +14,14 @@
 static void mca_coll_task_constructor(mca_coll_task_t * t)
 {
     t->func_ptr = NULL;
-    t->func_argu = NULL;
+    t->func_args = NULL;
 }
 
 static void mca_coll_task_destructor(mca_coll_task_t * t)
 {
     t->func_ptr = NULL;
-    t->func_argu = NULL;
+    t->func_args = NULL;
 }
 
 OBJ_CLASS_INSTANCE(mca_coll_task_t, opal_object_t, mca_coll_task_constructor,
                    mca_coll_task_destructor);
-
-/* Init task */
-int init_task(mca_coll_task_t * t, task_func_ptr func_ptr, void *func_argu)
-{
-    t->func_ptr = func_ptr;
-    t->func_argu = func_argu;
-    return OMPI_SUCCESS;
-}
-
-/* Issue the task */
-int issue_task(mca_coll_task_t * t)
-{
-    t->func_ptr(t->func_argu);
-    return OMPI_SUCCESS;
-}

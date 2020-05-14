@@ -1,5 +1,8 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
+ * Copyright (c) 2020      The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * Copyright (c) 2020      Bull S.A.S. All rights reserved.
  *
  * $COPYRIGHT$
@@ -60,10 +63,9 @@
  *           communicator and the corresponding level for sub-communicators
  *           created by han.
  *     - Configuration size:
- *           The configuration size is the number of elements of the actual
- *           topology level in the upper topology level. For example, if
- *           topology levels are intra-node and inter-node, it can be the
- *           number of MPI ranks per node or the number of nodes in the global
+ *           The configuration size is the number of elements in a topology level. 
+ *           For example, if topology levels are intra-node and inter-node, it can
+ *           be the number of MPI ranks per node or the number of nodes in the global
  *           communicator. For the GLOBAL_COMMUNICATOR topologic level,
  *           the configuration size is the communicator size.
  *     - Message_size Component:
@@ -101,11 +103,8 @@
  * the reader.
  */
 
-BEGIN_C_DECLS
-
 int mca_coll_han_init_dynamic_rules(void);
 void mca_coll_han_free_dynamic_rules(void);
 void mca_coll_han_dump_dynamic_rules(void);
 
-END_C_DECLS
 #endif

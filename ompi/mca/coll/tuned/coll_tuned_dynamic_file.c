@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2015 The University of Tennessee and The University
+ * Copyright (c) 2004-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -40,7 +40,7 @@
 
 static int fileline=0; /* used for verbose error messages */
 
-#define getnext(fptr) ompi_coll_base_file_getnext(fptr, &fileline)
+#define getnext(fptr, pval)        ompi_coll_base_file_getnext_long(fptr, &fileline, pval)
 
 /*
  * Reads a rule file called fname
@@ -56,9 +56,8 @@ static int fileline=0; /* used for verbose error messages */
 
 int ompi_coll_tuned_read_rules_config_file (char *fname, ompi_coll_alg_rule_t** rules, int n_collectives)
 {
+    long CI, NCS, CS, ALG, NMS, FANINOUT, X, MS, SS;
     FILE *fptr = (FILE*) NULL;
-    int X, CI, NCS, CS, ALG, NMS, FANINOUT;
-    long MS, SS;
     int x, ncs, nms;
 
     ompi_coll_alg_rule_t *alg_rules = (ompi_coll_alg_rule_t*) NULL;   /* complete table of rules */
@@ -101,45 +100,42 @@ int ompi_coll_tuned_read_rules_config_file (char *fname, ompi_coll_alg_rule_t** 
         goto on_file_error;
     }
 
-    X = (int)getnext(fptr);
-    if (X<0) {
+    if( (getnext(fptr, &X) < 0) || (X < 0) ) {
         OPAL_OUTPUT((ompi_coll_tuned_stream,"Could not read number of collectives in configuration file around line %d\n", fileline));
         goto on_file_error;
     }
     if (X>n_collectives) {
-        OPAL_OUTPUT((ompi_coll_tuned_stream,"Number of collectives in configuration file %d is greater than number of MPI collectives possible %d ??? error around line %d\n", X, n_collectives, fileline));
+        OPAL_OUTPUT((ompi_coll_tuned_stream,"Number of collectives in configuration file %ld is greater than number of MPI collectives possible %d ??? error around line %d\n", X, n_collectives, fileline));
         goto on_file_error;
     }
 
     for (x=0;x<X;x++) { /* for each collective */
 
-        CI = (int)getnext (fptr);
-        if (CI<0) {
+        if( (getnext(fptr, &CI) < 0) || (CI < 0) ) {
             OPAL_OUTPUT((ompi_coll_tuned_stream,"Could not read next Collective id in configuration file around line %d\n", fileline));
             goto on_file_error;
         }
         if (CI>=n_collectives) {
-            OPAL_OUTPUT((ompi_coll_tuned_stream,"Collective id in configuration file %d is greater than MPI collectives possible %d. Error around line %d\n", CI, n_collectives, fileline));
+            OPAL_OUTPUT((ompi_coll_tuned_stream,"Collective id in configuration file %ld is greater than MPI collectives possible %d. Error around line %d\n", CI, n_collectives, fileline));
             goto on_file_error;
         }
 
         if (alg_rules[CI].alg_rule_id != CI) {
-            OPAL_OUTPUT((ompi_coll_tuned_stream, "Internal error in handling collective ID %d\n", CI));
+            OPAL_OUTPUT((ompi_coll_tuned_stream, "Internal error in handling collective ID %ld\n", CI));
             goto on_file_error;
         }
-        OPAL_OUTPUT((ompi_coll_tuned_stream, "Reading dynamic rule for collective ID %d\n", CI));
+        OPAL_OUTPUT((ompi_coll_tuned_stream, "Reading dynamic rule for collective ID %ld\n", CI));
         alg_p = &alg_rules[CI];
 
         alg_p->alg_rule_id = CI;
         alg_p->n_com_sizes = 0;
         alg_p->com_rules = (ompi_coll_com_rule_t *) NULL;
 
-        NCS = (int)getnext (fptr);
-        if (NCS<0) {
-            OPAL_OUTPUT((ompi_coll_tuned_stream,"Could not read count of communicators for collective ID %d at around line %d\n", CI, fileline));
+        if( (getnext (fptr, &NCS) < 0) || (NCS < 0) ) {
+            OPAL_OUTPUT((ompi_coll_tuned_stream,"Could not read count of communicators for collective ID %ld at around line %d\n", CI, fileline));
             goto on_file_error;
         }
-        OPAL_OUTPUT((ompi_coll_tuned_stream, "Read communicator count %d for dynamic rule for collective ID %d\n", NCS, CI));
+        OPAL_OUTPUT((ompi_coll_tuned_stream, "Read communicator count %ld for dynamic rule for collective ID %ld\n", NCS, CI));
         alg_p->n_com_sizes = NCS;
         alg_p->com_rules = ompi_coll_tuned_mk_com_rules (NCS, CI);
         if (NULL == alg_p->com_rules) {
@@ -151,20 +147,18 @@ int ompi_coll_tuned_read_rules_config_file (char *fname, ompi_coll_alg_rule_t** 
 
             com_p = &(alg_p->com_rules[ncs]);
 
-            CS = (int)getnext (fptr);
-            if (CS<0) {
-                OPAL_OUTPUT((ompi_coll_tuned_stream,"Could not read communicator size for collective ID %d com rule %d at around line %d\n", CI, ncs, fileline));
+            if( (getnext (fptr, &CS) < 0) || (CS < 0) ) {
+                OPAL_OUTPUT((ompi_coll_tuned_stream,"Could not read communicator size for collective ID %ld com rule %d at around line %d\n", CI, ncs, fileline));
                 goto on_file_error;
             }
 
             com_p->mpi_comsize = CS;
 
-            NMS = (int)getnext (fptr);
-            if (NMS<0) {
-                OPAL_OUTPUT((ompi_coll_tuned_stream,"Could not read number of message sizes for collective ID %d com rule %d at around line %d\n", CI, ncs, fileline));
+            if( (getnext (fptr, &NMS) < 0) || (NMS < 0) ) {
+                OPAL_OUTPUT((ompi_coll_tuned_stream,"Could not read number of message sizes for collective ID %ld com rule %d at around line %d\n", CI, ncs, fileline));
                 goto on_file_error;
             }
-            OPAL_OUTPUT((ompi_coll_tuned_stream, "Read message count %d for dynamic rule for collective ID %d and comm size %d\n",
+            OPAL_OUTPUT((ompi_coll_tuned_stream, "Read message count %ld for dynamic rule for collective ID %ld and comm size %ld\n",
                          NMS, CI, CS));
             com_p->n_msg_sizes = NMS;
             com_p->msg_rules = ompi_coll_tuned_mk_msg_rules (NMS, CI, ncs, CS);
@@ -179,37 +173,33 @@ int ompi_coll_tuned_read_rules_config_file (char *fname, ompi_coll_alg_rule_t** 
 
                 msg_p = &(com_p->msg_rules[nms]);
 
-                MS = getnext (fptr);
-                if (MS<0) {
-                    OPAL_OUTPUT((ompi_coll_tuned_stream,"Could not read message size for collective ID %d com rule %d msg rule %d at around line %d\n", CI, ncs, nms, fileline));
+                if( (getnext (fptr, &MS) < 0) || (MS < 0) ) {
+                    OPAL_OUTPUT((ompi_coll_tuned_stream,"Could not read message size for collective ID %ld com rule %d msg rule %d at around line %d\n", CI, ncs, nms, fileline));
                     goto on_file_error;
                 }
                 msg_p->msg_size = (size_t)MS;
 
-                ALG = (int)getnext (fptr);
-                if (ALG<0) {
-                    OPAL_OUTPUT((ompi_coll_tuned_stream,"Could not read target algorithm method for collective ID %d com rule %d msg rule %d at around line %d\n", CI, ncs, nms, fileline));
+                if( (getnext (fptr, &ALG) < 0) || (ALG < 0) ) {
+                    OPAL_OUTPUT((ompi_coll_tuned_stream,"Could not read target algorithm method for collective ID %ld com rule %d msg rule %d at around line %d\n", CI, ncs, nms, fileline));
                     goto on_file_error;
                 }
                 msg_p->result_alg = ALG;
 
-                FANINOUT = (int)getnext (fptr);
-                if (FANINOUT<0) {
-                    OPAL_OUTPUT((ompi_coll_tuned_stream,"Could not read fan in/out topo for collective ID %d com rule %d msg rule %d at around line %d\n", CI, ncs, nms, fileline));
+                if( (getnext (fptr, &FANINOUT) < 0) || (FANINOUT < 0) ) {
+                    OPAL_OUTPUT((ompi_coll_tuned_stream,"Could not read fan in/out topo for collective ID %ld com rule %d msg rule %d at around line %d\n", CI, ncs, nms, fileline));
                     goto on_file_error;
                 }
                 msg_p->result_topo_faninout = FANINOUT;
 
-                SS = getnext (fptr);
-                if (SS<0) {
-                    OPAL_OUTPUT((ompi_coll_tuned_stream,"Could not read target segment size for collective ID %d com rule %d msg rule %d at around line %d\n", CI, ncs, nms, fileline));
+                if( (getnext (fptr, &SS) < 0) || (SS < 0) ) {
+                    OPAL_OUTPUT((ompi_coll_tuned_stream,"Could not read target segment size for collective ID %ld com rule %d msg rule %d at around line %d\n", CI, ncs, nms, fileline));
                     goto on_file_error;
                 }
                 msg_p->result_segsize = SS;
 
                 if (!nms && MS) {
                     OPAL_OUTPUT((ompi_coll_tuned_stream,"All algorithms must specify a rule for message size of zero upwards always first!\n"));
-                    OPAL_OUTPUT((ompi_coll_tuned_stream,"Message size was %lu for collective ID %d com rule %d msg rule %d at around line %d\n", MS, CI, ncs, nms, fileline));
+                    OPAL_OUTPUT((ompi_coll_tuned_stream,"Message size was %lu for collective ID %ld com rule %d msg rule %d at around line %d\n", MS, CI, ncs, nms, fileline));
                     goto on_file_error;
                 }
 
@@ -222,7 +212,7 @@ int ompi_coll_tuned_read_rules_config_file (char *fname, ompi_coll_alg_rule_t** 
         } /* comm size */
 
         total_alg_count++;
-        OPAL_OUTPUT((ompi_coll_tuned_stream, "Done reading dynamic rule for collective ID %d\n", CI));
+        OPAL_OUTPUT((ompi_coll_tuned_stream, "Done reading dynamic rule for collective ID %ld\n", CI));
 
     } /* per collective */
 
