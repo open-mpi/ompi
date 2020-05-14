@@ -12,6 +12,8 @@
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2020      Amazon.com, Inc. or its affiliates.
+ *                         All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -586,7 +588,7 @@ int ompi_coll_tuned_gather_intra_dec_dynamic(const void *sbuf, int scount,
 
         comsize = ompi_comm_size(comm);
         ompi_datatype_type_size (sdtype, &dsize);
-        dsize *= comsize;
+        dsize *= scount * comsize;
 
         alg = ompi_coll_tuned_get_target_method_params (tuned_module->com_rules[GATHER],
                                                         dsize, &faninout, &segsize, &max_requests);
@@ -635,7 +637,7 @@ int ompi_coll_tuned_scatter_intra_dec_dynamic(const void *sbuf, int scount,
 
         comsize = ompi_comm_size(comm);
         ompi_datatype_type_size (sdtype, &dsize);
-        dsize *= comsize;
+        dsize *= scount * comsize;
 
         alg = ompi_coll_tuned_get_target_method_params (tuned_module->com_rules[SCATTER],
                                                         dsize, &faninout, &segsize, &max_requests);
