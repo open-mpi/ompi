@@ -6,6 +6,7 @@
 #                         and Technology (RIST). All rights reserved.
 #
 # Copyright (c) 2017-2018 Intel, Inc. All rights reserved.
+# Copyright (c) 2020      IBM Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -107,7 +108,7 @@ AC_DEFUN([MCA_opal_event_external_CONFIG],[
 
            OPAL_CHECK_PACKAGE([opal_event_external],
                               [event2/event.h],
-                              [event],
+                              [event_core],
                               [event_config_new],
                               [-levent_pthreads],
                               [$opal_event_dir],
@@ -115,12 +116,41 @@ AC_DEFUN([MCA_opal_event_external_CONFIG],[
                               [opal_event_external_support=yes],
                               [opal_event_external_support=no])
 
+           # Check to see if the above check failed because it conflicted with LSF's libevent.so
+           # This can happen if LSF's library is in the LDFLAGS envar or default search
+           # path. The 'event_fini' function is only defined in LSF's libevent.so and not
+           # in Libevent's libevent.so
+           AS_IF([test "$opal_event_external_support" = "no"],
+                 [AC_CHECK_LIB([event], [event_fini],
+                               [AC_MSG_WARN([===================================================================])
+                                AC_MSG_WARN([Possible conflicting libevent.so libraries detected on the system.])
+                                AC_MSG_WARN([])
+                                AC_MSG_WARN([LSF provides a libevent.so that is not from Libevent in its])
+                                AC_MSG_WARN([library path. It is possible that you have installed Libevent])
+                                AC_MSG_WARN([on the system, but the linker is picking up the wrong version.])
+                                AC_MSG_WARN([])
+                                AC_MSG_WARN([Configure may continue and attempt to use the 'internal' libevent])
+                                AC_MSG_WARN([instead of the 'external' libevent if you did not explicitly request])
+                                AC_MSG_WARN([the 'external' component.])
+                                AC_MSG_WARN([])
+                                AC_MSG_WARN([If your intention was to use the 'external' libevent then you need])
+                                AC_MSG_WARN([to address this linker path ordering issue. One way to do so is])
+                                AC_MSG_WARN([to make sure the libevent system library path occurs before the])
+                                AC_MSG_WARN([LSF library path.])
+                                AC_MSG_WARN([===================================================================])
+                                opal_event_external_support=no
+                               ])
+                 ])
+
+           AS_IF([test "$opal_event_external_support" = "yes"],
+                 [LDFLAGS="$opal_event_external_LDFLAGS $LDFLAGS"
+                  CPPFLAGS="$opal_event_external_CPPFLAGS $CPPFLAGS"])
+
            AS_IF([test "$opal_event_external_support" = "yes"],
                  [# Ensure that this libevent has the symbol
                   # "evthread_set_lock_callbacks", which will only exist if
                   # libevent was configured with thread support.
-                  LIBS="$opal_event_external_LDFLAGS $LIBS"
-                  AC_CHECK_LIB([event], [evthread_set_lock_callbacks],
+                  AC_CHECK_LIB([event_core], [evthread_set_lock_callbacks],
                                [],
                                [AC_MSG_WARN([External libevent does not have thread support])
                                 AC_MSG_WARN([Open MPI requires libevent to be compiled with])
