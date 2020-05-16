@@ -414,22 +414,28 @@ static void resolve_relative_paths(char **file_prefix, char *file_path, bool rel
 
 int mca_base_var_cache_files(bool rel_path_search)
 {
-    char *tmp;
+    char *tmp = NULL;
     int ret;
 
-    if (NULL != getenv("OPAL_USER_PARAMS_GIVEN")) {
-        /* PMIx already provided the params for us */
-        return OPAL_SUCCESS;
-    }
-
 #if OPAL_WANT_HOME_CONFIG_FILES
-    opal_asprintf(&mca_base_var_files, "%s"OPAL_PATH_SEP".openmpi" OPAL_PATH_SEP
-             "mca-params.conf%c%s" OPAL_PATH_SEP "openmpi-mca-params.conf",
-             home, ',', opal_install_dirs.sysconfdir);
-#else
-    opal_asprintf(&mca_base_var_files, "%s" OPAL_PATH_SEP "openmpi-mca-params.conf",
-             opal_install_dirs.sysconfdir);
+    if (NULL == getenv("OPAL_USER_PARAMS_GIVEN")) {
+        opal_asprintf(&tmp, "%s"OPAL_PATH_SEP".openmpi" OPAL_PATH_SEP
+                 "mca-params.conf", home);
+    }
 #endif
+
+    if (NULL == getenv("OPAL_SYS_PARAMS_GIVEN")) {
+        if (NULL != tmp) {
+            opal_asprintf(&mca_base_var_files, "%s,%s" OPAL_PATH_SEP "openmpi-mca-params.conf",
+                     tmp, opal_install_dirs.sysconfdir);
+            free(tmp);
+        } else {
+            opal_asprintf(&mca_base_var_files, "%s" OPAL_PATH_SEP "openmpi-mca-params.conf",
+                     opal_install_dirs.sysconfdir);
+        }
+    } else {
+        mca_base_var_files = strdup("none");
+    }
 
     /* Initialize a parameter that says where MCA param files can be found.
        We may change this value so set the scope to MCA_BASE_VAR_SCOPE_READONLY */
