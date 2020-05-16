@@ -114,7 +114,7 @@ AC_DEFUN([OMPI_SETUP_PRRTE],[
             opal_prrte_args="$opal_prrte_args --with-platform=$with_prrte_platform"
         fi
         # add the extra libs
-        opal_prrte_args="$opal_prrte_args --with-prrte-extra-lib=\"$opal_prrte_extra_libs\" --with-prrte-extra-ltlib=\"$opal_prrte_extra_ltlibs\""
+        opal_prrte_args="$opal_prrte_args --with-prte-extra-lib=\"$opal_prrte_extra_libs\" --with-prte-extra-ltlib=\"$opal_prrte_extra_ltlibs\""
 
         AC_MSG_CHECKING([final prrte configure args])
         AC_MSG_RESULT([$opal_prrte_args])
