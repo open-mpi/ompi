@@ -23,13 +23,13 @@
 #
 
 SUBDIRS = config contrib $(MCA_PROJECT_SUBDIRS) test
-if OMPI_WANT_PRRTE
-SUBDIRS += prrte
+if OMPI_WANT_PRTE
+SUBDIRS += prte
 endif
 
 DIST_SUBDIRS = config contrib $(MCA_PROJECT_DIST_SUBDIRS) test
-if OMPI_WANT_PRRTE
-DIST_SUBDIRS += prrte
+if OMPI_WANT_PRTE
+DIST_SUBDIRS += prte
 endif
 EXTRA_DIST = README INSTALL VERSION Doxyfile LICENSE autogen.pl README.JAVA.txt AUTHORS
 

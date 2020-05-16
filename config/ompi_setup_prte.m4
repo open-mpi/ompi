@@ -23,27 +23,27 @@
 # $HEADER$
 #
 
-AC_DEFUN([OMPI_SETUP_PRRTE],[
-    OPAL_VAR_SCOPE_PUSH([opal_prrte_save_CPPFLAGS opal_prrte_save_CFLAGS opal_prrte_save_LDFLAGS opal_prrte_save_LIBS opal_prrte_args opal_prrte_save_enable_dlopen opal_prrte_save_enable_mca_dso opal_prrte_save_enable_mca_static opal_prrte_extra_libs opal_prrte_extra_ltlibs opal_prrte_extra_ldflags opal_prrte_save_with_libevent opal_prrte_save_with_hwloc opal_prrte_save_with_pmix])
+AC_DEFUN([OMPI_SETUP_PRTE],[
+    OPAL_VAR_SCOPE_PUSH([opal_prte_save_CPPFLAGS opal_prte_save_CFLAGS opal_prte_save_LDFLAGS opal_prte_save_LIBS opal_prte_args opal_prte_save_enable_dlopen opal_prte_save_enable_mca_dso opal_prte_save_enable_mca_static opal_prte_extra_libs opal_prte_extra_ltlibs opal_prte_extra_ldflags opal_prte_save_with_libevent opal_prte_save_with_hwloc opal_prte_save_with_pmix])
 
-    opal_prrte_save_CFLAGS=$CFLAGS
-    opal_prrte_save_CPPFLAGS=$CPPFLAGS
-    opal_prrte_save_LDFLAGS=$LDFLAGS
-    opal_prrte_save_LIBS=$LIBS
-    opal_prrte_save_enable_dlopen=enable_dlopen
-    opal_prrte_save_enable_mca_dso=enable_mca_dso
-    opal_prrte_save_enable_mca_static=enable_mca_static
-    opal_prrte_save_with_libevent=with_libevent
-    opal_prrte_save_with_hwloc=with_hwloc
-    opal_prrte_save_with_pmix=with_pmix
+    opal_prte_save_CFLAGS=$CFLAGS
+    opal_prte_save_CPPFLAGS=$CPPFLAGS
+    opal_prte_save_LDFLAGS=$LDFLAGS
+    opal_prte_save_LIBS=$LIBS
+    opal_prte_save_enable_dlopen=enable_dlopen
+    opal_prte_save_enable_mca_dso=enable_mca_dso
+    opal_prte_save_enable_mca_static=enable_mca_static
+    opal_prte_save_with_libevent=with_libevent
+    opal_prte_save_with_hwloc=with_hwloc
+    opal_prte_save_with_pmix=with_pmix
 
     AC_ARG_ENABLE([internal-rte],
                   [AC_HELP_STRING([--enable-internal-rte],
                                   [Enable internal runtime support and provide mpiexec/mpirun (default: enabled)])])
 
-    AC_ARG_WITH([prrte-platform],
-                [AC_HELP_STRING([--with-prrte-platform],
-                                [Platform file to use when building the internal PRRTE runtime support])])
+    AC_ARG_WITH([prte-platform],
+                [AC_HELP_STRING([--with-prte-platform],
+                                [Platform file to use when building the internal PRTE runtime support])])
 
     AC_ARG_ENABLE([prte-prefix-by-default],
         [AC_HELP_STRING([--enable-prte-prefix-by-default],
@@ -61,85 +61,84 @@ AC_DEFUN([OMPI_SETUP_PRRTE],[
     AC_MSG_CHECKING([if RTE support is enabled])
     if test "$enable_internal_rte" != "no"; then
         AC_MSG_RESULT([yes])
-        ompi_want_prrte=yes
-        opal_prrte_extra_libs=$OMPI_TOP_BUILDDIR/opal/libopen-pal.la
-        opal_prrte_extra_ltlibs=$OMPI_TOP_BUILDDIR/opal/libopen-pal.la
+        ompi_want_prte=yes
+        opal_prte_extra_libs=$OMPI_TOP_BUILDDIR/opal/libopen-pal.la
+        opal_prte_extra_ltlibs=$OMPI_TOP_BUILDDIR/opal/libopen-pal.la
 
         if test -z $with_libevent || test "$with_libevent" = "internal" || test "$with_libevent" = "yes"; then
-            opal_prrte_libevent_arg="--with-libevent-header=$OMPI_TOP_SRCDIR/opal/mca/event/event.h"
+            opal_prte_libevent_arg="--with-libevent-header=$OMPI_TOP_SRCDIR/opal/mca/event/event.h"
         else
             if test "$with_libevent" = "external"; then
-                opal_prrte_libevent_arg="--with-libevent"
+                opal_prte_libevent_arg="--with-libevent"
             else
-                opal_prrte_libevent_arg="--with-libevent=$with_libevent"
+                opal_prte_libevent_arg="--with-libevent=$with_libevent"
             fi
         fi
 
         if test -z $with_hwloc || test "$with_hwloc" = "internal" || test "$with_hwloc" = "yes"; then
-               opal_prrte_hwloc_arg="--with-hwloc-header=$OMPI_TOP_SRCDIR/opal/mca/hwloc/hwloc-internal.h"
+               opal_prte_hwloc_arg="--with-hwloc-header=$OMPI_TOP_SRCDIR/opal/mca/hwloc/hwloc-internal.h"
         else
             if test "$with_hwloc" = "external"; then
-                opal_prrte_hwloc_arg="--with-hwloc"
+                opal_prte_hwloc_arg="--with-hwloc"
             else
-                opal_prrte_hwloc_arg="--with-hwloc=$with_hwloc"
+                opal_prte_hwloc_arg="--with-hwloc=$with_hwloc"
             fi
         fi
 
         if test -z $with_pmix || test "$with_pmix" = "internal" || test "$with_pmix" = "yes"; then
-            opal_prrte_pmix_arg="--with-pmix-header=$OMPI_TOP_SRCDIR/opal/mca/pmix/pmix-internal.h"
+            opal_prte_pmix_arg="--with-pmix-header=$OMPI_TOP_SRCDIR/opal/mca/pmix/pmix-internal.h"
         else
             if test "$with_pmix" = "external"; then
-                opal_prrte_pmix_arg="--with-pmix"
+                opal_prte_pmix_arg="--with-pmix"
             else
-                opal_prrte_pmix_arg="--with-pmix=$with_pmix"
+                opal_prte_pmix_arg="--with-pmix=$with_pmix"
             fi
         fi
 
         if test -z $enable_prte_prefix_by_default || test "$enable_prte_prefix_by_default" = "yes" ||
            test "$enable_orterun_prefix_given" = "yes"; then
-           opal_prrte_prefix_arg="--enable-prte-prefix-by-default"
+           opal_prte_prefix_arg="--enable-prte-prefix-by-default"
         else
-            opal_prrte_prefix_arg=
+            opal_prte_prefix_arg=
         fi
 
-        opal_prrte_args="--prefix=$prefix --with-proxy-version-string=$OPAL_VERSION --with-proxy-package-name=\"Open MPI\" --with-proxy-bugreport=\"https://www.open-mpi.org/community/help/\" $opal_prrte_prefix_arg $opal_prrte_libevent_arg $opal_prrte_hwloc_arg $opal_prrte_pmix_arg"
+        opal_prte_args="--prefix=$prefix --with-proxy-version-string=$OPAL_VERSION --with-proxy-package-name=\"Open MPI\" --with-proxy-bugreport=\"https://www.open-mpi.org/community/help/\" $opal_prte_prefix_arg $opal_prte_libevent_arg $opal_prte_hwloc_arg $opal_prte_pmix_arg"
         AS_IF([test "$enable_debug" = "yes"],
-              [opal_prrte_args="--enable-debug $opal_prrte_args"
+              [opal_prte_args="--enable-debug $opal_prte_args"
                CFLAGS="$OPAL_CFLAGS_BEFORE_PICKY $OPAL_VISIBILITY_CFLAGS -g"],
-              [opal_prrte_args="--disable-debug $opal_prrte_args"
+              [opal_prte_args="--disable-debug $opal_prte_args"
                CFLAGS="$OPAL_CFLAGS_BEFORE_PICKY $OPAL_VISIBILITY_CFLAGS"])
         AS_IF([test "$with_devel_headers" = "yes"],
-              [opal_prrte_args="--with-devel-headers  $opal_prrte_args"])
-        if test ! -z $with_prrte_platform && test "$with_prrte_platform" != "yes"; then
-            opal_prrte_args="$opal_prrte_args --with-platform=$with_prrte_platform"
+              [opal_prte_args="--with-devel-headers  $opal_prte_args"])
+        if test ! -z $with_prte_platform && test "$with_prte_platform" != "yes"; then
+            opal_prte_args="$opal_prte_args --with-platform=$with_prte_platform"
         fi
         # add the extra libs
-        opal_prrte_args="$opal_prrte_args --with-prrte-extra-lib=\"$opal_prrte_extra_libs\" --with-prrte-extra-ltlib=\"$opal_prrte_extra_ltlibs\""
+        opal_prte_args="$opal_prte_args --with-prte-extra-lib=\"$opal_prte_extra_libs\" --with-prte-extra-ltlib=\"$opal_prte_extra_ltlibs\""
 
-        AC_MSG_CHECKING([final prrte configure args])
-        AC_MSG_RESULT([$opal_prrte_args])
+        AC_MSG_CHECKING([final PRRTE configure args])
+        AC_MSG_RESULT([$opal_prte_args])
 
         CPPFLAGS="-I$OPAL_TOP_SRCDIR -I$OPAL_TOP_BUILDDIR -I$OPAL_TOP_SRCDIR/opal/include -I$OPAL_TOP_BUILDDIR/opal/include $CPPFLAGS"
-        OPAL_CONFIG_SUBDIR([prrte],
-                           [$opal_prrte_args $opal_subdir_args 'CFLAGS=$CFLAGS' 'CPPFLAGS=$CPPFLAGS'],
-                           [opal_prrte_happy=1], [opal_prrte_happy=0])
+        OPAL_CONFIG_SUBDIR([prte],
+                           [$opal_prte_args $opal_subdir_args 'CFLAGS=$CFLAGS' 'CPPFLAGS=$CPPFLAGS'],
+                           [opal_prte_happy=1], [opal_prte_happy=0])
 
-        OPAL_SUMMARY_ADD([[Miscellaneous]],[[PRRTE]],[prrte],[yes])
+        OPAL_SUMMARY_ADD([[Miscellaneous]],[[PRRTE]],[prte],[yes])
 
     else
-        OPAL_SUMMARY_ADD([[Miscellaneous]],[[PRRTE]],[prrte],[no (disabled)])
+        OPAL_SUMMARY_ADD([[Miscellaneous]],[[PRRTE]],[prte],[no (disabled)])
         AC_MSG_RESULT([no (disabled)])
-        ompi_want_prrte=no
+        ompi_want_prte=no
     fi
 
-    CFLAGS=$opal_prrte_save_CFLAGS
-    CPPFLAGS=$opal_prrte_save_CPPFLAGS
-    LDFLAGS=$opal_prrte_save_LDFLAGS
-    LIBS=$opal_prrte_save_LIBS
-    enable_dlopen=$opal_prrte_save_enable_dlopen
-    enable_mca_dso=$opal_prrte_save_enable_mca_dso
-    enable_mca_static=$opal_prrte_save_enable_mca_static
+    CFLAGS=$opal_prte_save_CFLAGS
+    CPPFLAGS=$opal_prte_save_CPPFLAGS
+    LDFLAGS=$opal_prte_save_LDFLAGS
+    LIBS=$opal_prte_save_LIBS
+    enable_dlopen=$opal_prte_save_enable_dlopen
+    enable_mca_dso=$opal_prte_save_enable_mca_dso
+    enable_mca_static=$opal_prte_save_enable_mca_static
 
     OPAL_VAR_SCOPE_POP
-
 ])

@@ -8,7 +8,7 @@
 # $HEADER$
 #
 
-if OMPI_WANT_PRRTE
+if OMPI_WANT_PRTE
 install-exec-hook:
 	(cd $(DESTDIR)$(bindir); rm -f mpirun$(EXEEXT); $(LN_S) prte$(EXEEXT) mpirun$(EXEEXT))
 	(cd $(DESTDIR)$(bindir); rm -f mpiexec$(EXEEXT); $(LN_S) prte$(EXEEXT) mpiexec$(EXEEXT))

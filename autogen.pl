@@ -47,7 +47,7 @@ my @subdirs;
 # Command line parameters
 my $no_ompi_arg = 0;
 my $no_orte_arg = 0;
-my $no_prrte_arg = 0;
+my $no_prte_arg = 0;
 my $no_oshmem_arg = 0;
 my $quiet_arg = 0;
 my $debug_arg = 0;
@@ -1123,7 +1123,7 @@ sub in_tarball {
 
 my $ok = Getopt::Long::GetOptions("no-ompi" => \$no_ompi_arg,
                                   "no-orte" => \$no_orte_arg,
-                                  "no-prrte" => \$no_prrte_arg,
+                                  "no-prte" => \$no_prte_arg,
                                   "no-oshmem" => \$no_oshmem_arg,
                                   "quiet|q" => \$quiet_arg,
                                   "debug|d" => \$debug_arg,
@@ -1140,8 +1140,7 @@ if (!$ok || $help_arg) {
         if (!$ok);
     print "Options:
   --no-ompi | -no-ompi          Do not build the Open MPI layer
-  --no-orte | -no-orte          Do not build Open MPI's runtime support (alias for --no-prrte)
-  --no-prrte | -no-prrte        Do not build Open MPI's runtime support
+  --no-prte | -no-prte        Do not build Open MPI's runtime support
   --no-oshmem | -no-oshmem      Do not build the OSHMEM layer
   --quiet | -q                  Do not display normal verbose output
   --debug | -d                  Output lots of debug information
@@ -1170,17 +1169,17 @@ if (! -e "ompi") {
     $no_ompi_arg = 1;
     debug "No ompi subdirectory found - will not build MPI layer\n";
 }
-if (! -e "prrte") {
-    $no_prrte_arg = 1;
-    debug "No prrte subdirectory found - will not build PRRTE\n";
+if (! -e "prte") {
+    $no_prte_arg = 1;
+    debug "No prte subdirectory found - will not build PRTE\n";
 }
 if (! -e "oshmem") {
     $no_oshmem_arg = 1;
     debug "No oshmem subdirectory found - will not build OSHMEM\n";
 }
-# alias --no-orte to --no-prrte
+# alias --no-orte to --no-prte
 if ($no_orte_arg == 1) {
-    $no_prrte_arg = 1;
+    $no_prte_arg = 1;
 }
 
 if ($no_ompi_arg == 1) {
@@ -1406,8 +1405,8 @@ $m4 .= "dnl Separate m4 define for each project\n";
 foreach my $p (@$projects) {
     $m4 .= "m4_define([project_$p->{name}], [1])\n";
 }
-if (!$no_prrte_arg) {
-    $m4 .= "m4_define([project_prrte], [1])\n";
+if (!$no_prte_arg) {
+    $m4 .= "m4_define([project_prte], [1])\n";
 }
 
 $m4 .= "\ndnl Project names
@@ -1436,7 +1435,7 @@ if (!$no_ompi_arg) {
 ++$step;
 verbose "\n$step. Processing autogen.subdirs directories\n";
 
-if (!$no_prrte_arg) {
+if (!$no_prte_arg) {
     process_autogen_subdirs(".");
 }
 

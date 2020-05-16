@@ -1252,11 +1252,11 @@ LT_OUTPUT
 
 opal_show_title "Setup PRRTE support"
 
-m4_ifdef([project_prrte],
-         [OMPI_SETUP_PRRTE],
-         [OPAL_SUMMARY_ADD([[Miscellaneous]],[[PRRTE]],[prrte],[no (disabled)])
-          ompi_want_prrte=no])
-AM_CONDITIONAL(OMPI_WANT_PRRTE, test "$ompi_want_prrte" = "yes")
+m4_ifdef([project_prte],
+         [OMPI_SETUP_PRTE],
+         [OPAL_SUMMARY_ADD([[Miscellaneous]],[[PRRTE]],[prte],[no (disabled)])
+          ompi_want_prte=no])
+AM_CONDITIONAL(OMPI_WANT_PRTE, test "$ompi_want_prte" = "yes")
 
 ############################################################################
 # final compiler config
