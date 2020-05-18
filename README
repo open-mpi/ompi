@@ -412,7 +412,7 @@ Compiler Notes
     example, MPI handles have distinct types (vs. all being integers).
     See the MPI-3 document for more details.
 
-    *** The mpi_f08 module is STRONGLY is recommended for all new MPI
+    *** The mpi_f08 module is STRONGLY recommended for all new MPI
         Fortran subroutines and applications.  Note that the mpi_f08
         module can be used in conjunction with the other two Fortran
         MPI bindings in the same application (only one binding can be
@@ -758,7 +758,7 @@ Network Support
 - The OpenFabrics Enterprise Distribution (OFED) software package v1.0
   will not work properly with Open MPI v1.2 (and later) due to how its
   Mellanox InfiniBand plugin driver is created.  The problem is fixed
-  OFED v1.1 (and later).
+  with OFED v1.1 (and later).
 
 - Better memory management support is available for OFED-based
   transports using the "ummunotify" Linux kernel module.  OFED memory
@@ -1298,7 +1298,7 @@ MPI FUNCTIONALITY
              the value of the MCA parameter mpi_param_check (default:
              yes).
     yes:     Synonym for "always" (same as --with-mpi-param-check).
-    no:      Synonym for "none" (same as --without-mpi-param-check).
+    no:      Synonym for "never" (same as --without-mpi-param-check).
 
   If --with-mpi-param is not specified, "runtime" is the default.
 
@@ -1409,7 +1409,7 @@ MISCELLANEOUS FUNCTIONALITY
 --with-wrapper-fcflags=<fcflags>
 --with-wrapper-ldflags=<ldflags>
 --with-wrapper-libs=<libs>
-  Add the specified flags to the default flags that used are in Open
+  Add the specified flags to the default flags that are used in Open
   MPI's "wrapper" compilers (e.g., mpicc -- see below for more
   information about Open MPI's wrapper compilers).  By default, Open
   MPI's wrapper compilers use the same compilers used to build Open
@@ -1903,7 +1903,7 @@ are equivalent.
 
 The rsh launcher (which defaults to using ssh) accepts a --hostfile
 parameter (the option "--machinefile" is equivalent); you can specify a
---hostfile parameter indicating an standard mpirun-style hostfile (one
+--hostfile parameter indicating a standard mpirun-style hostfile (one
 hostname per line):
 
   shell$ mpirun --hostfile my_hostfile -np 2 hello_world_mpi
@@ -1919,7 +1919,7 @@ node3.example.com slots=2
 node4.example.com slots=4
 ---------------------------------------------------------------------------
 
-  shell$ mpirun -hostfile my_hostfile -np 8 hello_world_mpi
+  shell$ mpirun --hostfile my_hostfile -np 8 hello_world_mpi
 
 will launch MPI_COMM_WORLD rank 0 on node1, rank 1 on node2, ranks 2
 and 3 on node3, and ranks 4 through 7 on node4.
