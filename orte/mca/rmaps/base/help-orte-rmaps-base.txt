@@ -349,7 +349,7 @@ situation and try again.
 #
 [mapping-too-low]
 A request for multiple cpus-per-proc was given, but a directive
-was also give to map to an object level that has less cpus than
+was also given to map to an object level that has less cpus than
 requested ones:
 
   #cpus-per-proc:  %d
@@ -405,7 +405,7 @@ by specifying "--bind-to none" on your command line.
 #
 [mapping-too-low-init]
 A request for multiple cpus-per-proc was given, but a directive
-was also give to map to an object level that cannot support that
+was also given to map to an object level that cannot support that
 directive.
 
 Please specify a mapping level that has more than one cpu, or
