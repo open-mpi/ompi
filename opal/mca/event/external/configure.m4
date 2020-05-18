@@ -118,10 +118,10 @@ AC_DEFUN([MCA_opal_event_external_CONFIG],[
 
            # Check to see if the above check failed because it conflicted with LSF's libevent.so
            # This can happen if LSF's library is in the LDFLAGS envar or default search
-           # path. The 'event_fini' function is only defined in LSF's libevent.so and not
+           # path. The 'event_getcode4name' function is only defined in LSF's libevent.so and not
            # in Libevent's libevent.so
            AS_IF([test "$opal_event_external_support" = "no"],
-                 [AC_CHECK_LIB([event], [event_fini],
+                 [AC_CHECK_LIB([event], [event_getcode4name],
                                [AC_MSG_WARN([===================================================================])
                                 AC_MSG_WARN([Possible conflicting libevent.so libraries detected on the system.])
                                 AC_MSG_WARN([])
