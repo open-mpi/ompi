@@ -126,6 +126,16 @@ void mca_pml_ucx_bsend_completion(void *request, ucs_status_t status);
 void mca_pml_ucx_precv_completion(void *request, ucs_status_t status,
                                   ucp_tag_recv_info_t *info);
 
+void mca_pml_ucx_send_nbx_completion(void *request, ucs_status_t status,
+                                     void *user_data);
+
+void mca_pml_ucx_bsend_nbx_completion(void *request, ucs_status_t status,
+                                      void *user_data);
+
+void mca_pml_ucx_recv_nbx_completion(void *request, ucs_status_t status,
+                                     const ucp_tag_recv_info_t *info,
+                                     void *user_data);
+
 void mca_pml_ucx_persistent_request_complete(mca_pml_ucx_persistent_request_t *preq,
                                              ompi_request_t *tmp_req);
 
@@ -141,8 +151,9 @@ static inline void mca_pml_ucx_request_reset(ompi_request_t *req)
     req->req_complete          = REQUEST_PENDING;
 }
 
-static void mca_pml_ucx_set_send_status(ompi_status_public_t* mpi_status,
-                                        ucs_status_t status)
+__opal_attribute_always_inline__
+static inline void mca_pml_ucx_set_send_status(ompi_status_public_t* mpi_status,
+                                               ucs_status_t status)
 {
     if (OPAL_LIKELY(status == UCS_OK)) {
         mpi_status->MPI_ERROR  = MPI_SUCCESS;
