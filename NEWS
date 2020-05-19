@@ -59,6 +59,9 @@ included in the vX.Y.Z section and be denoted as:
 
 4.0.4 -- May, 2020
 -----------------------
+- Add checks to avoid conflicts with a libevent library shipped with LSF.
+- Switch to linking against libevent_core rather than libevent, if present.
+- Add improved support for UCX 1.9 and later.
 - Fix an ABI compatibility issue with the Fortran 2008 bindings.
   Thanks to Alastair McKinstry for reporting.
 - Fix an issue with rpath of /usr/lib64 when building OMPI on
