@@ -504,7 +504,7 @@ static int do_test_for_ddt( int doop, MPI_Datatype sddt, MPI_Datatype rddt, int 
 
 int main( int argc, char* argv[] )
 {
-    int run_tests = DO_STRUCT_MERGED_WITH_GAP_RESIZED;  /* do all datatype tests by default */
+    int run_tests = 0xffff;  /* do all datatype tests by default */
     int rank, size;
     MPI_Datatype ddt;
 
