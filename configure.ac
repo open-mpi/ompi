@@ -1207,7 +1207,7 @@ fi
 # if we have a C++ compiler.
 AS_IF([test "$OMPI_TRY_FORTRAN_BINDINGS" = "$OMPI_FORTRAN_NO_BINDINGS"],[F77=no FC=no])
 
-LT_INIT([dlopen win32-dll])
+LT_INIT
 
 # What's the suffix of shared libraries?  Inspired by generated
 # Libtool code (even though we don't support several of these
@@ -1243,7 +1243,7 @@ esac
 AC_SUBST(OPAL_DYN_LIB_PREFIX)
 AC_SUBST(OPAL_DYN_LIB_SUFFIX)
 
-# Need the libtool binary before the rpathify stuff
+# Need the libtool executable before the rpathify stuff
 LT_OUTPUT
 
 ##################################
