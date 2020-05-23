@@ -50,6 +50,7 @@ OPAL_DECLSPEC int opal_common_ofi_register_mca_variables(const mca_base_componen
          * to dereference a pointer which itself is no longer a valid address owing to having been previously dlclosed.
          */
          opal_common_ofi.prov_include = (char **)malloc(sizeof(char *));
+         *opal_common_ofi.prov_include = NULL;
          include_index = mca_base_var_register("opal", "opal_common", "ofi",
                                "provider_include",
                                "Comma-delimited list of OFI providers that are considered for use (e.g., \"psm,psm2\"; an empty value means that all providers will be considered). Mutually exclusive with mtl_ofi_provider_exclude.",
