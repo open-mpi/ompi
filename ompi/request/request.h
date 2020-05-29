@@ -417,21 +417,24 @@ static inline int ompi_request_free(ompi_request_t** request)
 
 static inline void ompi_request_wait_completion(ompi_request_t *req)
 {
-    if (opal_using_threads () && !REQUEST_COMPLETE(req)) {
-        void *_tmp_ptr = REQUEST_PENDING;
-        ompi_wait_sync_t sync;
+    if (opal_using_threads ()) {
+        if(!REQUEST_COMPLETE(req)) {
+            void *_tmp_ptr = REQUEST_PENDING;
+            ompi_wait_sync_t sync;
 
-        WAIT_SYNC_INIT(&sync, 1);
+            WAIT_SYNC_INIT(&sync, 1);
 
-        if (OPAL_ATOMIC_COMPARE_EXCHANGE_STRONG_PTR(&req->req_complete, &_tmp_ptr, &sync)) {
-            SYNC_WAIT(&sync);
-        } else {
-            /* completed before we had a chance to swap in the sync object */
-            WAIT_SYNC_SIGNALLED(&sync);
+            if (OPAL_ATOMIC_COMPARE_EXCHANGE_STRONG_PTR(&req->req_complete, &_tmp_ptr, &sync)) {
+                SYNC_WAIT(&sync);
+            } else {
+                /* completed before we had a chance to swap in the sync object */
+                WAIT_SYNC_SIGNALLED(&sync);
+            }
+
+            assert(REQUEST_COMPLETE(req));
+            WAIT_SYNC_RELEASE(&sync);
         }
-
-        assert(REQUEST_COMPLETE(req));
-        WAIT_SYNC_RELEASE(&sync);
+        opal_atomic_rmb();
     } else {
         while(!REQUEST_COMPLETE(req)) {
             opal_progress();
