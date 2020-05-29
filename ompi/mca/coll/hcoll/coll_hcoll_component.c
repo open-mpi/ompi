@@ -170,7 +170,7 @@ static int hcoll_register(void)
                   0));
 
     CHECK(reg_int("datatype_fallback",NULL,
-                  "[1|0|] Enable/Disable user defined dattypes fallback",
+                  "[1|0|] Enable/Disable user defined datatypes fallback",
                   1,
                   &mca_coll_hcoll_component.hcoll_datatype_fallback,
                   0));
