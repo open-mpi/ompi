@@ -14,8 +14,8 @@
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2012-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2015-2017 Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015-2020 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
  * Copyright (c) 2017      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
@@ -366,13 +366,13 @@ opal_str_to_bool(char *str)
     char *ptr;
 
     /* Trim whitespace */
-    ptr = str + sizeof(str) - 1;
+    ptr = str + strlen(str) - 1;
     while (ptr >= str && isspace(*ptr)) {
         *ptr = '\0';
         --ptr;
     }
     ptr = str;
-    while (ptr < str + sizeof(str) - 1 && *ptr != '\0' &&
+    while (ptr < str + strlen(str) - 1 && *ptr != '\0' &&
            isspace(*ptr)) {
         ++ptr;
     }
