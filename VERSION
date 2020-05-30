@@ -10,6 +10,8 @@
 # Copyright (c) 2018-2020 IBM Corporation.  All rights reserved.
 # Copyright (c) 2018      Research Organization for Information Science
 #                         and Technology (RIST).  All rights reserved.
+# Copyright (c) 2020      Amazon.com, Inc. or its affiliates.  All Rights
+                          reserved.
 
 # This is the VERSION file for Open MPI, describing the precise
 # version of Open MPI in this distribution.  The various components of
@@ -20,8 +22,8 @@
 # <major>.<minor>.<release>.
 
 major=4
-minor=0
-release=4
+minor=1
+release=0
 
 # greek is generally used for alpha or beta release tags.  If it is
 # non-empty, it will be appended to the version number.  It does not
@@ -30,7 +32,7 @@ release=4
 # requirement is that it must be entirely printable ASCII characters
 # and have no white space.
 
-greek=rc3
+greek=a1
 
 # If repo_rev is empty, then the repository version number will be
 # obtained during "make dist" via the "git describe --tags --always"
@@ -88,17 +90,17 @@ date="Unreleased developer copy"
 # Version numbers are described in the Libtool current:revision:age
 # format.
 
-libmpi_so_version=60:4:20
-libmpi_cxx_so_version=60:1:20
-libmpi_mpifh_so_version=60:2:20
-libmpi_usempi_tkr_so_version=60:0:20
-libmpi_usempi_ignore_tkr_so_version=60:0:20
-libmpi_usempif08_so_version=61:1:21
-libopen_rte_so_version=60:4:20
-libopen_pal_so_version=60:4:20
-libmpi_java_so_version=60:0:20
-liboshmem_so_version=62:1:22
-libompitrace_so_version=60:0:20
+libmpi_so_version=70:0:30
+libmpi_cxx_so_version=70:0:30
+libmpi_mpifh_so_version=70:0:30
+libmpi_usempi_tkr_so_version=70:0:30
+libmpi_usempi_ignore_tkr_so_version=70:0:30
+libmpi_usempif08_so_version=70:0:30
+libopen_rte_so_version=70:0:30
+libopen_pal_so_version=70:0:30
+libmpi_java_so_version=70:0:30
+liboshmem_so_version=70:0:30
+libompitrace_so_version=70:0:30
 
 # "Common" components install standalone libraries that are run-time
 # linked by one or more components.  So they need to be versioned as
@@ -106,15 +108,15 @@ libompitrace_so_version=60:0:20
 # components-don't-affect-the-build-system abstraction.
 
 # OMPI layer
-libmca_ompi_common_ompio_so_version=60:3:19
-libmca_ompi_common_monitoring_so_version=60:0:10
+libmca_ompi_common_ompio_so_version=70:0:29
+libmca_ompi_common_monitoring_so_version=70:0:20
 
 # ORTE layer
-libmca_orte_common_alps_so_version=60:0:20
+libmca_orte_common_alps_so_version=70:0:30
 
 # OPAL layer
-libmca_opal_common_cuda_so_version=60:0:20
-libmca_opal_common_sm_so_version=60:0:20
-libmca_opal_common_ucx_so_version=60:1:20
-libmca_opal_common_ugni_so_version=60:0:20
-libmca_opal_common_verbs_so_version=60:0:20
+libmca_opal_common_cuda_so_version=70:0:30
+libmca_opal_common_sm_so_version=70:0:30
+libmca_opal_common_ucx_so_version=70:0:30
+libmca_opal_common_ugni_so_version=70:0:30
+libmca_opal_common_verbs_so_version=70:0:30
