@@ -26,8 +26,8 @@
 #ifndef OPAL_MCA_THREADS_ARGOBOTS_THREADS_ARGOBOTS_THREADS_H
 #define OPAL_MCA_THREADS_ARGOBOTS_THREADS_ARGOBOTS_THREADS_H
 
-#include <abt.h>
 #include <signal.h>
+#include "opal/mca/threads/argobots/threads_argobots.h"
 
 struct opal_thread_t {
     opal_object_t super;

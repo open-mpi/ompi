@@ -27,7 +27,6 @@
 #define OPAL_MCA_THREADS_ARGOBOTS_THREADS_ARGOBOTS_WAIT_SYNC_H
 
 #include "opal/mca/threads/argobots/threads_argobots.h"
-#include <abt.h>
 
 typedef struct ompi_wait_sync_t {
     opal_atomic_int32_t count;

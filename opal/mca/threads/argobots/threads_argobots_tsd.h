@@ -28,7 +28,6 @@
 #define OPAL_MCA_THREADS_ARGOBOTS_THREADS_ARGOBOTS_TSD_H
 
 #include "opal/mca/threads/argobots/threads_argobots.h"
-#include <abt.h>
 
 typedef ABT_key opal_tsd_key_t;
 
