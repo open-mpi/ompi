@@ -178,6 +178,7 @@ check_provider_attr(struct fi_info *provider_info,
     }
 }
 
+#if OPAL_OFI_PCI_DATA_AVAILABLE
 /* Check if a process and a pci device share the same cpuset
  *     @param (IN) pci              struct fi_pci_attr pci device attributes,
  *                                  used to find hwloc object for device.
@@ -236,6 +237,7 @@ error:
     hwloc_bitmap_free(proc_cpuset);
     return result;
 }
+#endif
 
 /* Count providers returns the number of providers present in an fi_info list
  *     @param (IN) provider_list    struct fi_info* list of providers available
@@ -258,41 +260,56 @@ count_providers(struct fi_info* provider_list)
     return num_provider;
 }
 
-/* Selects a NIC based on hardware locality to process cpuset and device BDF.
+/* Selects a NIC based on hardware locality between process cpuset and device BDF.
  *
- *     @param provider_list (IN)    struct fi_info* An initially selected
+ * Initializes opal_hwloc_topology to access hardware topology if not previously
+ * initialized
+ *
+ * There are 3 main cases that this covers:
+ *
+ *      1. If the first provider passed into this function is the only valid
+ *      provider, this provider is returned.
+ *
+ *      2. If there is more than 1 provider that matches the type of the first
+ *      provider in the list, and the BDF data
+ *      is available then a provider is selected based on locality of device
+ *      cpuset and process cpuset and tries to ensure that processes are distributed
+ *      evenly across NICs. This has two separate cases:
+ *
+ *          i. There is one or more provider local to the process:
+ *
+ *              (local rank % number of providers of the same type that share the process cpuset)
+ *              is used to select one of these providers.
+ *
+ *          ii. There is no provider that is local to the process:
+ *
+ *              (local rank % number of providers of the same type)
+ *              is used to select one of these providers
+ *
+ *      3. If there is more than 1 providers of the same type in the list, and the BDF data
+ *      is not available (the ofi version does not support fi_info.nic or the
+ *      provider does not support BDF) then (local rank % number of providers of the same type)
+ *      is used to select one of these providers
+ *
+ *      @param provider_list (IN)   struct fi_info* An initially selected
  *                                  provider NIC. The provider name and
  *                                  attributes are used to restrict NIC
  *                                  selection. This provider is returned if the
  *                                  NIC selection fails.
  *
- *     @param local_index (IN)      int The local rank of the process. Used to
+ *      @param local_index (IN)     int The local rank of the process. Used to
  *                                  select one valid NIC if there is a case
  *                                  where more than one can be selected. This
  *                                  could occur when more than one provider
  *                                  shares the same cpuset as the process.
  *
- *     @param provider (OUT)        struct fi_info* object with the selected
+ *      @param provider (OUT)       struct fi_info* object with the selected
  *                                  provider if the selection succeeds
  *                                  if the selection fails, returns the fi_info
  *                                  object that was initially provided.
  *
- * If there is more than one provider that shares the same cpuset, we use
- * (local rank % number of valid providers that share the process cpuset)
- * to select one of the local providers.
- *
- * Likewise, If no providers share the same cpuset as the process, we use
- * (local rank % number of valid providers that share the process cpuset)
- * to select one of the valid providers.
- *
- * Initializes opal_hwloc_topology to access hardware topology if not previously
- * initialized
- *
- * If a provider does not provide a BDF, the locality can't be determined and it
- * is treated as though it does not share the same cpuset as the process.
- *
  * All errors should be recoverable and will return the initially provided
- * provider. However, if an error occurs this will no longer guarantee
+ * provider. However, if an error occurs we can no longer guarantee
  * that the provider returned is local to the process or that the processes will
  * balance across available NICs.
  */
@@ -301,7 +318,9 @@ opal_mca_common_ofi_select_provider(struct fi_info *provider_list, int local_ind
 {
     struct fi_info *provider = provider_list, *current_provider = provider_list;
     struct fi_info **provider_table;
+#if OPAL_OFI_PCI_DATA_AVAILABLE
     struct fi_pci_attr pci;
+#endif
     int ret;
     unsigned int num_provider = 0, provider_limit = 0;
     bool provider_found = false, cpusets_match = false;
@@ -310,7 +329,9 @@ opal_mca_common_ofi_select_provider(struct fi_info *provider_list, int local_ind
     ret = opal_hwloc_base_get_topology();
     if (0 > ret) {
         /* Provider selection can continue but there is no guarantee of locality */
-        opal_output(1, "%s:%d:Failed to initialize topology\n", __FILE__, __LINE__);
+        opal_output_verbose(1, opal_common_ofi.output,
+                            "%s:%d:Failed to initialize topology\n",
+                            __FILE__, __LINE__);
     }
 
     provider_limit = count_providers(provider_list);
@@ -318,7 +339,9 @@ opal_mca_common_ofi_select_provider(struct fi_info *provider_list, int local_ind
     /* Allocate memory for provider table */
     provider_table = calloc(provider_limit, sizeof(struct fi_info*));
     if (NULL == provider_table) {
-        opal_output(1, "%s:%d:Failed to allocate memory for provider table\n", __FILE__, __LINE__);
+        opal_output_verbose(1, opal_common_ofi.output,
+                            "%s:%d:Failed to allocate memory for provider table\n",
+                            __FILE__, __LINE__);
         return provider_list;
     }
 
@@ -328,10 +351,12 @@ opal_mca_common_ofi_select_provider(struct fi_info *provider_list, int local_ind
     while (NULL != current_provider) {
         if (!check_provider_attr(provider, current_provider)) {
             cpusets_match = false;
+#if OPAL_OFI_PCI_DATA_AVAILABLE
             if (NULL != current_provider->nic) {
                 pci = current_provider->nic->bus_attr->attr.pci;
                 cpusets_match = compare_cpusets(opal_hwloc_topology, pci);
             }
+#endif
 
             /* Reset the list if the cpusets match and no other provider was
              * found on the same cpuset as the process.
@@ -357,17 +382,20 @@ opal_mca_common_ofi_select_provider(struct fi_info *provider_list, int local_ind
         provider = provider_table[local_index % num_provider];
     }
 
-#if OPAL_DEBUG_ENABLE
+#if OPAL_OFI_PCI_DATA_AVAILABLE
     if (NULL != provider->nic) {
         pci = provider->nic->bus_attr->attr.pci;
         cpusets_match = compare_cpusets(opal_hwloc_topology, pci);
     }
-
-    opal_output(10, "local rank: %d device: %s cpusets match: %s\n",
-                local_index, provider->domain_attr->name, cpusets_match ? "true" : "false");
 #endif
 
-err_free_table:
+#if OPAL_DEBUG_ENABLE
+    opal_output_verbose(1, opal_common_ofi.output,
+                        "local rank: %d device: %s cpusets match: %s\n",
+                         local_index, provider->domain_attr->name,
+                         cpusets_match ? "true" : "false");
+#endif
+
     free(provider_table);
     return provider;
 }

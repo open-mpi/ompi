@@ -89,10 +89,11 @@ AC_DEFUN([_OPAL_CHECK_OFI],[
     OPAL_CHECK_WITHDIR([ofi-libdir], [$with_ofi_libdir],
                        [libfabric.*])
 
-    OPAL_VAR_SCOPE_PUSH([opal_check_ofi_save_CPPFLAGS opal_check_ofi_save_LDFLAGS opal_check_ofi_save_LIBS])
+    OPAL_VAR_SCOPE_PUSH([opal_check_ofi_save_CPPFLAGS opal_check_ofi_save_LDFLAGS opal_check_ofi_save_LIBS opal_check_fi_info_pci])
     opal_check_ofi_save_CPPFLAGS=$CPPFLAGS
     opal_check_ofi_save_LDFLAGS=$LDFLAGS
     opal_check_ofi_save_LIBS=$LIBS
+    opal_check_fi_info_pci=0
 
     opal_ofi_happy=yes
     AS_IF([test "$with_ofi" = "no"],
@@ -119,6 +120,16 @@ AC_DEFUN([_OPAL_CHECK_OFI],[
                               [$opal_ofi_libdir],
                               [],
                               [opal_ofi_happy=no])])
+
+    AS_IF([test $opal_ofi_happy = yes],
+          [AC_CHECK_MEMBER([struct fi_info.nic],
+                           [opal_check_fi_info_pci=1],
+                           [opal_check_fi_info_pci=0],
+                           [[#include "$with_ofi/include/rdma/fabric.h"]])])
+
+    AC_DEFINE_UNQUOTED([OPAL_OFI_PCI_DATA_AVAILABLE],
+                       [$opal_check_fi_info_pci],
+                       [check if pci data is available in ofi])
 
     CPPFLAGS=$opal_check_ofi_save_CPPFLAGS
     LDFLAGS=$opal_check_ofi_save_LDFLAGS
