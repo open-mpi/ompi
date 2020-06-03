@@ -39,6 +39,18 @@ it is possible for items to appear more than once in the list.
 3.0.7 -- Never
 --------------
 
+v3.0.7 will likely never be released.  The Open MPI team encourages
+all users to upgrade to later release series, if possible.  For users
+with critical bugs that cannot upgrade beyond the v3.0.x series,
+nightly snapshot tarballs of subsequent builds are available at
+https://www.open-mpi.org/nightly/v3.0.x/.
+
+- Fixed an issue with the memory patcher's ability to intercept
+  shmat() and shmdt() that could cause memory corruption in a specific
+  scenario.  For more information, please see
+  https://github.com/open-mpi/ompi/pull/7778.
+
+
 3.0.6 -- March, 2020
 --------------------
 
