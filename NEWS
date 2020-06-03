@@ -58,6 +58,18 @@ included in the vX.Y.Z section and be denoted as:
 3.1.7 -- Never
 --------------
 
+v3.1.7 will likely never be released.  The Open MPI team encourages
+all users to upgrade to later release series, if possible.  For users
+with critical bugs that cannot upgrade beyond the v3.1.x series,
+nightly snapshot tarballs of subsequent builds are available at
+https://www.open-mpi.org/nightly/v3.1.x/.
+
+- Fixed an issue with the memory patcher's ability to intercept
+  shmat() and shmdt() that could cause memory corruption in a specific
+  scenario.  For more information, please see
+  https://github.com/open-mpi/ompi/pull/7778.
+
+
 3.1.6 -- March, 2020
 --------------------
 
