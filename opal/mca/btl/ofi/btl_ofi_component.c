@@ -410,6 +410,12 @@ static int mca_btl_ofi_init_device(struct fi_info *info)
     ep_attr = ofi_info->ep_attr;
     domain_attr = ofi_info->domain_attr;
 
+    /* mtl_btl_ofi_rcache_init() initializes patcher which should only
+     * take place things are single threaded.  OFI providers may start
+     * spawn threads, so initialize the rcache before creating OFI objects
+     * to prevent races. */
+    mca_btl_ofi_rcache_init(module);
+
     linux_device_name = info->domain_attr->name;
     BTL_VERBOSE(("initializing dev:%s provider:%s",
                     linux_device_name,
@@ -539,9 +545,6 @@ static int mca_btl_ofi_init_device(struct fi_info *info)
         ofi_info->domain_attr->mr_mode & FI_MR_VIRT_ADDR) {
         module->use_virt_addr = true;
     }
-
-    /* initialize the rcache */
-    mca_btl_ofi_rcache_init(module);
 
     /* create endpoint list */
     OBJ_CONSTRUCT(&module->endpoints, opal_list_t);
