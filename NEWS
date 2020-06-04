@@ -57,8 +57,10 @@ included in the vX.Y.Z section and be denoted as:
    (** also appeared: A.B.C)  -- indicating that this item was previously
                                  included in release version vA.B.C.
 
-4.0.4 -- May, 2020
+4.0.4 -- June, 2020
 -----------------------
+- Fix an illegal access issue caught using gcc's address sanitizer.
+  Thanks to  Georg Geiser for reporting.
 - Add checks to avoid conflicts with a libevent library shipped with LSF.
 - Switch to linking against libevent_core rather than libevent, if present.
 - Add improved support for UCX 1.9 and later.
