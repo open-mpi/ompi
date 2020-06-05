@@ -98,7 +98,7 @@ included in the vX.Y.Z section and be denoted as:
   MPI failed silently; this version of Open MPI invokes the
   appropriate MPI error handler upon failure.  See
   https://github.com/open-mpi/ompi/issues/7058 for more details.
-  Thanks to Emmanuel Thom� for raising the issue.
+  Thanks to Emmanuel Thomé for raising the issue.
 - Fix case where 0-extent datatypes might be eliminated during
   optimization.  Thanks to Github user @tjahns for raising the issue.
 - Ensure that the MPIR_Breakpoint symbol is not optimized out on
@@ -329,7 +329,7 @@ included in the vX.Y.Z section and be denoted as:
   MPI failed silently; this version of Open MPI invokes the
   appropriate MPI error handler upon failure.  See
   https://github.com/open-mpi/ompi/issues/7058 for more details.
-  Thanks to Emmanuel Thom� for raising the issue.
+  Thanks to Emmanuel Thomé for raising the issue.
 - Fix case where 0-extent datatypes might be eliminated during
   optimization.  Thanks to Github user @tjahns for raising the issue.
 - Ensure that the MPIR_Breakpoint symbol is not optimized out on
@@ -367,7 +367,7 @@ included in the vX.Y.Z section and be denoted as:
   --with-devel-headers.  Thanks to @g-raffy for reporting the issue.
 - Fix possible floating point rounding and division issues in OMPIO
   which led to crashes and/or data corruption with very large data.
-  Thanks to Axel Huebl and Renÿ© Widera for identifing the issue,
+  Thanks to Axel Huebl and René Widera for identifing the issue,
   supplying and testing the fix (** also appeared: v3.0.4).
 - Use static_cast<> in mpi.h where appropriate.  Thanks to @shadow-fx
   for identifying the issue.
@@ -969,7 +969,7 @@ Bug fixes/minor improvements:
   for reporting.
 - Fix crash in MPI_COMM_SPAWN.
 - Fix types for MPI_UNWEIGHTED and MPI_WEIGHTS_EMPTY.  Thanks to
-  Lisandro Dalcin for reporting.
+  Lisandro Dalcín for reporting.
 - Correctly report the name of MPI_INTEGER16.
 - Add some missing MPI constants to the Fortran bindings.
 - Fixed compile error when configuring Open MPI with --enable-timing.
@@ -985,7 +985,7 @@ Bug fixes/minor improvements:
 - Fix problem with use use of non-zero lower bound datatypes in
   collectives.  Thanks to Hristo Iliev for reporting.
 - Fix a problem with memory allocation within MPI_GROUP_INTERSECTION.
-  Thanks to Lisandro Dalcin for reporting.
+  Thanks to Lisandro Dalcín for reporting.
 - Fix an issue with MPI_ALLGATHER for communicators that don't consist
   of two ranks.  Thanks to David Love for reporting.
 - Various fixes for collectives when used with esoteric MPI datatypes.
@@ -1154,9 +1154,9 @@ Bug fixes / minor enhancements:
 - Fix a problem with use of a 64 bit atomic counter.  Thanks to
   Paul Hargrove for reporting.
 - Fix a problem with singleton job launching.  Thanks to Lisandro
-  Dalcin for reporting.
+  Dalcín for reporting.
 - Fix a problem with use of MPI_UNDEFINED with MPI_COMM_SPLIT_TYPE.
-  Thanks to Lisandro Dalcin for reporting.
+  Thanks to Lisandro Dalcín for reporting.
 - Silence a compiler warning in PSM MTL.  Thanks to Adrian Reber for
   reporting this.
 - Properly detect Intel TrueScale and OmniPath devices in the ACTIVE
@@ -1172,7 +1172,7 @@ Bug fixes / minor enhancements:
 - Implement a workaround for a GNU Libtool problem.  Thanks to Eric
   Schnetter for reporting and fixing.
 - Improve hcoll library detection in configure.  Thanks to David
-  Shrader and Ake Sandgren for reporting this.
+  Shrader and Åke Sandgren for reporting this.
 - Miscellaneous minor bug fixes in the hcoll component.
 - Miscellaneous minor bug fixes in the ugni component.
 - Fix problems with XRC detection in OFED 3.12 and older releases.
@@ -1201,9 +1201,9 @@ Bug fixes / minor enhancements:
 - Fix a problem with MPI-RMA PSCW epochs.  Thanks to Berk Hess for
   reporting this.
 - Fix a problem in neighborhood collectives.  Thanks to Lisandro
-  Dalcin for reporting.
+  Dalcín for reporting.
 - Fix MPI_IREDUCE_SCATTER_BLOCK for a one-process communicator. Thanks
-  to Lisandro Dalcin for reporting.
+  to Lisandro Dalcín for reporting.
 - Add (Open MPI-specific) additional flavors to MPI_COMM_SPLIT_TYPE.
   See MPI_Comm_split_type(3) for details.  Thanks to Nick Andersen for
   supplying this enhancement.
@@ -1362,10 +1362,10 @@ Bug fixes / minor enhancements:
 - Create a datafile in the per-proc directory in order to make it
   unique per communicator. Thanks to Peter Wind for the report
 - Fix zero-size malloc in one-sided pt-to-pt code. Thanks to Lisandro
-  Dalcin for the report
+  Dalcín for the report
 - Fix MPI_Get_address when passed MPI_BOTTOM to not return an error.
-  Thanks to Lisandro Dalcin for the report
-- Fix MPI_TYPE_SET_ATTR with NULL value. Thanks to Lisandro Dalcin for
+  Thanks to Lisandro Dalcín for the report
+- Fix MPI_TYPE_SET_ATTR with NULL value. Thanks to Lisandro Dalcín for
   the report
 - Fix various Fortran08 binding issues
 - Fix memchecker no-data case. Thanks to Clinton Stimpson for the report
@@ -1562,11 +1562,11 @@ Bug fixes / minor enhancements:
   options.
 - CUDA: Made the asynchronous copy mode be the default.
 - Fix a malloc(0) warning in MPI_IREDUCE_SCATTER_BLOCK.  Thanks to
-  Lisandro Dalcin for reporting the issue.
+  Lisandro Dalcín for reporting the issue.
 - Fix typo in MPI_Scatter(3) man page.  Thanks to Akshay Venkatesh for
   noticing the mistake.
 - Add rudimentary protection from TCP port scanners.
-- Fix typo in Open MPI error handling.  Thanks to �ke Sandgren for
+- Fix typo in Open MPI error handling.  Thanks to Åke Sandgren for
   pointing out the error.
 - Increased the performance of the CM PML (i.e., the Portals, PSM,
   PSM2, MXM, and OFI transports).
@@ -1650,7 +1650,7 @@ Bug fixes / minor enhancements:
   source of the problem.
 - Fixed MPI_THREAD_MULTIPLE deadlock error in the vader BTL.  Thanks
   to Thomas Klimpel for reporting the issue.
-- Fixed several Valgrind warnings.  Thanks for Lisandro Dalcin for
+- Fixed several Valgrind warnings.  Thanks for Lisandro Dalcín for
   contributing a patch fixing some one-sided code paths.
 - Fixed version compatibility test in OOB that broke ABI within the
   1.8 series. NOTE: this will not resolve the problem between pre-1.8.5
@@ -1761,7 +1761,7 @@ Bug fixes / minor enhancements:
   reporting the issue.
 - Fixed seg fault in neighborhood collectives when the degree of the
   topology is higher than the communicator size.  Thanks to Lisandro
-  Dalcin for reporting the issue.
+  Dalcín for reporting the issue.
 - Fixed segfault in neighborhood collectives under certain use-cases.
 - Fixed various issues regarding Solaris support.  Thanks to Siegmar
   Gross for patiently identifying all the issues.
@@ -1852,7 +1852,7 @@ Bug fixes / minor enhancements:
 - Ensure mpirun aborts properly when unable to map processes in
   scheduled environments.
 - Ensure that MPI RMA error codes show up properly.  Thanks to
-  Lisandro Dalcin for reporting the issue.
+  Lisandro Dalcín for reporting the issue.
 - Minor bug fixes and improvements to the bash and zsh mpirun
   autocompletion scripts.
 - Fix sequential mpirun process mapper.  Thanks to Bill Chen for
@@ -1890,7 +1890,7 @@ Bug fixes / minor enhancements:
 - Add config support for the Mellanox ConnectX 4 card.
 - Add missing MPI_COMM_GET|SET_INFO functions, and missing
   MPI_WEIGHTS_EMPTY and MPI_ERR_RMA_SHARED constants.  Thanks to
-  Lisandro Dalcin for pointing out the issue.
+  Lisandro Dalcín for pointing out the issue.
 - Update some help messages in OSHMEM, the usnic BTL, the TCP BTL, and
   ORTE, and update documentation about ompi_info's --level option.
 - Fix some compiler warnings.
@@ -1942,7 +1942,7 @@ Bug fixes / minor enhancements:
 - Add version check during startup to ensure you are using the same
   version of Open MPI on all nodes in a job.
 - Significantly improved the performance of MPI_DIMS_CREATE for large
-  values.  Thanks to Andreas Sch�fer for the contribution.
+  values.  Thanks to Andreas Schäfer for the contribution.
 - Removed ASYNCHRONOUS keyword from the "ignore TKR" mpi_f08 module.
 - Deprecated the following mpirun options:
   --bynode, --bycore, --byslot: replaced with --map-by node|core|slot.
@@ -2140,7 +2140,7 @@ Bug fixes / minor enhancements:
   Thanks to Alexey Ryzhikh for the patch.
 - Add bozo check for negative np values to mpirun to prevent a
   deadlock.  Thanks to Upinder Malhi for identifying the issue.
-- Fixed MPI_IS_THREAD_MAIN behavior.  Thanks to Lisandro Dalcin for
+- Fixed MPI_IS_THREAD_MAIN behavior.  Thanks to Lisandro Dalcín for
   pointing out the problem.
 - Various rankfile fixes.
 - Fix functionality over iWARP devices.
@@ -2336,7 +2336,7 @@ Bug fixes / minor enhancements:
   the patch.
 - Fixed debugger support for direct-launched jobs.
 - Fix MPI_IS_THREAD_MAIN to return the correct value.  Thanks to
-  Lisandro Dalcin for pointing out the issue.
+  Lisandro Dalcín for pointing out the issue.
 - Update VT to 5.14.4.4:
   - Fix C++-11 issue.
   - Fix support for building RPMs on Fedora with CUDA libraries.
@@ -2451,9 +2451,9 @@ Bug fixes / minor enhancements:
 - Improved collective algorithm selection for very large messages.
 - Fix PSM MTL affinity settings.
 - Fix issue with MPI_OP_COMMUTATIVE in the mpif.h bindings.  Thanks to
-  Ake Sandgren for providing a patch to fix the issue.
+  Åke Sandgren for providing a patch to fix the issue.
 - Fix issue with MPI_SIZEOF when using CHARACTER and LOGICAL types in
-  the mpi module.  Thanks to Ake Sandgren for providing a patch to fix
+  the mpi module.  Thanks to Åke Sandgren for providing a patch to fix
   the issue.
 
 
@@ -2524,13 +2524,13 @@ Bug fixes / minor enhancements:
 - Use aligned memory for OpenFabrics registered memory.
 - Multiple fixes for parameter checking in MPI_ALLGATHERV,
   MPI_REDUCE_SCATTER, MPI_SCATTERV, and MPI_GATHERV.  Thanks to the
-  mpi4py community (Bennet Fauber, Lisandro Dalcin, Jonathan Dursi).
+  mpi4py community (Bennet Fauber, Lisandro Dalcín, Jonathan Dursi).
 - Fixed file positioning overflows in MPI_FILE_GET_POSITION,
   MPI_FILE_GET_POSITION_SHARED, FILE_GET_SIZE, FILE_GET_VIEW.
 - Removed the broken --cpu-set mpirun option.
 - Fix cleanup of MPI errorcodes.  Thanks to Alexey Bayduraev for the
   patch.
-- Fix default hostfile location.  Thanks to G�tz Waschk for noticing
+- Fix default hostfile location.  Thanks to Götz Waschk for noticing
   the issue.
 - Improve several error messages.
 
@@ -2642,7 +2642,7 @@ Bug fixes / minor enhancements:
 - Add support for dynamic service levels (SLs) in the openib BTL.
 - Fixed C++ bindings cosmetic/warnings issue with
   MPI::Comm::NULL_COPY_FN and MPI::Comm::NULL_DELETE_FN.  Thanks to
-  J�lio Hoffimann for identifying the issues.
+  Júlio Hoffimann for identifying the issues.
 - Also allow the word "slots" in rankfiles (i.e., not just "slot").
   (** also to appear in 1.4.4)
 - Add Mellanox ConnectX 3 device IDs to the openib BTL defaults.
@@ -3366,7 +3366,7 @@ and v1.4.
   features.
 - Fix SLURM race condition.
 - Fix MPI_File_c2f(MPI_FILE_NULL) to return 0, not -1.  Thanks to
-  Lisandro Dalcin for the bug report.
+  Lisandro Dalcín for the bug report.
 - Fix the DSO build of tm PLM.
 - Various fixes for size disparity between C int's and Fortran
   INTEGER's.  Thanks to Christoph van Wullen for the bug report.
@@ -3609,7 +3609,7 @@ and v1.4.
 - Fix for ConnectX devices and OFED 1.3.  See ticket #1190.
 - Fixed a configure problem for Fortran 90 on Cray systems.  Ticket #1189.
 - Fix an uninitialized variable in the error case in opal_init.c.
-  Thanks to Ake Sandgren for pointing out the mistake.
+  Thanks to Åke Sandgren for pointing out the mistake.
 - Fixed a hang in configure if $USER was not defined.  Thanks to
   Darrell Kresge for noticing the problem.  See ticket #900.
 - Added support for parallel debuggers even when we have an optimized build.
@@ -3618,7 +3618,7 @@ and v1.4.
   compiling Open MPI with -g.  See ticket #1179.
 - Removed some warnings about 'rm' from Mac OS X 10.5 (Leopard) builds.
 - Fix the handling of mx_finalize().  See ticket #1177.
-  Thanks to Ake Sandgren for bringing this issue to our attention.
+  Thanks to Åke Sandgren for bringing this issue to our attention.
 - Fixed minor file descriptor leak in the Altix timer code.  Thanks to
   Paul Hargrove for noticing the problem and supplying the fix.
 - Fix a problem when using a different compiler for C and Objective C.
@@ -3629,7 +3629,7 @@ and v1.4.
 - A few manpage fixes from the Debian Open MPI maintainers.  Thanks to
   Tilman Koschnick, Sylvestre Ledru, and Dirk Eddelbuettel.
 - Fixed issue with pthread detection when compilers are not all
-  from the same vendor.  Thanks to Ake Sandgren for the bug
+  from the same vendor.  Thanks to Åke Sandgren for the bug
   report.  See ticket #1150.
 - Fixed vector collectives in the self module.  See ticket #1166.
 - Fixed some data-type engine bugs: an indexing bug, and an alignment bug.
@@ -3657,12 +3657,12 @@ and v1.4.
 - Prevent users of 32-bit MPI apps from requesting >= 2GB of shared
   memory.
 - Added a Portals MTL.
-- Fix 0 sized MPI_ALLOC_MEM requests.  Thanks to Lisandro Dalcin for
+- Fix 0 sized MPI_ALLOC_MEM requests.  Thanks to Lisandro Dalcín for
   pointing out the problem.
 - Fixed a segfault crash on large SMPs when doing collectives.
 - A variety of fixes for Cray XT3/4 class of machines.
 - Fixed which error handler is used when MPI_COMM_SELF is passed
-  to MPI_COMM_FREE.  Thanks to Lisandro Dalcini for the bug report.
+  to MPI_COMM_FREE.  Thanks to Lisandro Dalcín for the bug report.
 - Fixed compilation on platforms that don't have hton/ntoh.
 - Fixed a logic problem in the fortran binding for MPI_TYPE_MATCH_SIZE.
   Thanks to Jeff Dusenberry for pointing out the problem and supplying
@@ -3909,7 +3909,7 @@ and v1.4.
   in the MPI F77 bindings functions.  Thanks to Pierre-Matthieu
   Anglade for bringing this problem to our attention.
 - Fix for a memory leak in the derived datatype function
-  ompi_ddt_duplicate().  Thanks to Andreas Schafer for reporting,
+  ompi_ddt_duplicate().  Thanks to Andreas Schäfer for reporting,
   diagnosing, and patching the leak.
 - Used better performing basic algorithm for MPI_ALLGATHERV.
 - Added a workaround for a bug in the Intel 9.1 C++ compiler (all
@@ -3919,9 +3919,9 @@ and v1.4.
 - Fix MPI_SIZEOF implementation in the F90 bindings for COMPLEX
   variable types.
 - Fixes for persistent requests involving MPI_PROC_NULL.  Thanks to
-  Lisandro Dalcin for reporting the problem.
+  Lisandro Dalcín for reporting the problem.
 - Fixes to MPI_TEST* and MPI_WAIT* for proper MPI exception reporting.
-  Thanks to Lisandro Dalcin for finding the issue.
+  Thanks to Lisandro Dalcín for finding the issue.
 - Various fixes for MPI generalized request handling; addition of
   missing MPI::Grequest functionality to the C++ bindings.
 - Add "mpi_preconnect_all" MCA parameter to force wireup of all MPI
@@ -3932,7 +3932,7 @@ and v1.4.
   to Ralf Wildenhues for suggesting the fix.
 - Fix several MPI_*ERRHANDLER* functions and MPI_GROUP_TRANSLATE_RANKS
   with respect to what arguments they allowed and the behavior that
-  they effected.  Thanks to Lisandro Dalcin for reporting the
+  they effected.  Thanks to Lisandro Dalcín for reporting the
   problems.
 
 
@@ -3941,7 +3941,7 @@ and v1.4.
 
 - Really fix Fortran status handling in MPI_WAITSOME and MPI_TESTSOME.
 - Various datatype fixes, reported by several users as causing
-  failures in the BLACS testing suite.  Thanks to Harald Forbert, Ake
+  failures in the BLACS testing suite.  Thanks to Harald Forbert, Åke
   Sandgren and, Michael Kluskens for reporting the problem.
 - Correctness and performance fixes for heterogeneous environments.
 - Fixed a error in command line parsing on some platforms (causing
@@ -3955,7 +3955,7 @@ and v1.4.
 - Fix various error checking in MPI_INFO_GET_NTHKEY and
   MPI_GROUP_TRANSLATE_RANKS, and some collective operations
   (particularly with regards to MPI_IN_PLACE).  Thanks to Lisandro
-  Dalcin for reporting the problems.
+  Dalcín for reporting the problems.
 - Fix receiving messages to buffers allocated by MPI_ALLOC_MEM.
 - Fix a number of race conditions with the MPI-2 Onesided
   interface.
