@@ -132,24 +132,46 @@ static void opal_common_ucx_mca_fence_complete_cb(int status, void *fenced)
     *(int*)fenced = 1;
 }
 
-void opal_common_ucx_mca_proc_added(void)
-{
 #if HAVE_DECL_UCM_TEST_EVENTS
+static ucs_status_t opal_common_ucx_mca_test_external_events(int events)
+{
+#if HAVE_DECL_UCM_TEST_EXTERNAL_EVENTS
+    return ucm_test_external_events(UCM_EVENT_VM_UNMAPPED);
+#else
+    return ucm_test_events(UCM_EVENT_VM_UNMAPPED);
+#endif
+}
+
+static void opal_common_ucx_mca_test_events(void)
+{
     static int warned = 0;
-    static char *mem_hooks_suggestion = "Pls try adding --mca opal_common_ucx_opal_mem_hooks 1 "
-                                        "to mpirun/oshrun command line to resolve this issue.";
+    const char *suggestion;
     ucs_status_t status;
 
     if (!warned) {
-        status = ucm_test_events(UCM_EVENT_VM_UNMAPPED);
+        if (opal_common_ucx.opal_mem_hooks) {
+            suggestion = "Please check OPAL memory events infrastructure.";
+            status     = opal_common_ucx_mca_test_external_events(UCM_EVENT_VM_UNMAPPED);
+        } else {
+            suggestion = "Pls try adding --mca opal_common_ucx_opal_mem_hooks 1 "
+                         "to mpirun/oshrun command line to resolve this issue.";
+            status     = ucm_test_events(UCM_EVENT_VM_UNMAPPED);
+        }
+
         if (status != UCS_OK) {
             MCA_COMMON_UCX_WARN("UCX is unable to handle VM_UNMAP event. "
                                 "This may cause performance degradation or data "
-                                "corruption. %s",
-                                opal_common_ucx.opal_mem_hooks ? "" : mem_hooks_suggestion);
+                                "corruption. %s", suggestion);
             warned = 1;
         }
     }
+}
+#endif
+
+void opal_common_ucx_mca_proc_added(void)
+{
+#if HAVE_DECL_UCM_TEST_EVENTS
+    opal_common_ucx_mca_test_events();
 #endif
 }
 
