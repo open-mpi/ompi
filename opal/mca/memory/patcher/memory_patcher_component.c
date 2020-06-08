@@ -15,7 +15,7 @@
  *                         reserved.
  * Copyright (c) 2016-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2016-2019 IBM Corporation.  All rights reserved.
+ * Copyright (c) 2016-2020 IBM Corporation.  All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -332,6 +332,18 @@ static int intercept_brk (void *addr)
     return result;
 }
 
+#endif
+
+// These op codes used to be in bits/ipc.h but were removed in glibc in 2015
+// with a comment saying they should be defined in internal headers:
+// https://sourceware.org/bugzilla/show_bug.cgi?id=18560
+// and when glibc uses that syscall it seems to do so from its own definitions:
+// https://github.com/bminor/glibc/search?q=IPCOP_shmat&unscoped_q=IPCOP_shmat
+#ifndef IPCOP_shmat
+#define IPCOP_shmat                21
+#endif
+#ifndef IPCOP_shmdt
+#define IPCOP_shmdt                22
 #endif
 
 #if defined(SYS_shmdt) || (defined(IPCOP_shmdt) && defined(SYS_ipc))
