@@ -71,6 +71,13 @@ base as of this writing (May 2020):
 General notes
 -------------
 
+- Open MPI v4.0.4 fixed an issue with the memory patcher's ability to
+  intercept shmat and shmdt that could cause wrong answers.  This was
+  observed on RHEL8.1 running on ppc64le, but it may affect other systems.
+
+  For more information, please see:
+    https://github.com/open-mpi/ompi/pull/7778
+
 - WARNING - Open MPI v4.0.0-4.0.3 accidentally did not include some
   constants from the mpi_f08 module interface (mostly dealing with C and
   C++ datatypes).
