@@ -107,6 +107,22 @@ opal_memory_patcher_component_t mca_memory_patcher_component = {
  * data. If this can be resolved the two levels can be joined.
  */
 
+/*
+ * Nathan's original fix described above can have the same problem reappear if the
+ * interception functions inline themselves.
+ */
+static void *_intercept_mmap(void *start, size_t length, int prot, int flags, int fd, off_t offset) __opal_attribute_noinline__;
+static int _intercept_munmap(void *start, size_t length) __opal_attribute_noinline__;
+#if defined(__linux__)
+static void *_intercept_mremap (void *start, size_t oldlen, size_t newlen, int flags, void *new_address) __opal_attribute_noinline__;
+#else
+static void *_intercept_mremap (void *start, size_t oldlen, void *new_address, size_t newlen, int flags) __opal_attribute_noinline__;
+#endif
+static int _intercept_madvise (void *start, size_t length, int advice) __opal_attribute_noinline__;
+static int _intercept_brk (void *addr) __opal_attribute_noinline__;
+static void *_intercept_shmat(int shmid, const void *shmaddr, int shmflg) __opal_attribute_noinline__;
+static int _intercept_shmdt (const void *shmaddr) __opal_attribute_noinline__;
+
 #if defined (SYS_mmap)
 
 #if defined(HAVE___MMAP) && !HAVE_DECL___MMAP
