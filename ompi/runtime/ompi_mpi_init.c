@@ -751,12 +751,6 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided,
         goto error;
     }
 
-    /* initialize info */
-    if (OMPI_SUCCESS != (ret = ompi_mpiinfo_init())) {
-        error = "ompi_info_init() failed";
-        goto error;
-    }
-
     /* initialize error handlers */
     if (OMPI_SUCCESS != (ret = ompi_errhandler_init())) {
         error = "ompi_errhandler_init() failed";
@@ -772,6 +766,12 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided,
     /* initialize internal error codes */
     if (OMPI_SUCCESS != (ret = ompi_errcode_intern_init())) {
         error = "ompi_errcode_intern_init() failed";
+        goto error;
+    }
+
+    /* initialize info */
+    if (OMPI_SUCCESS != (ret = ompi_mpiinfo_init())) {
+        error = "ompi_info_init() failed";
         goto error;
     }
 

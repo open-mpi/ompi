@@ -935,6 +935,11 @@ int ompi_rte_finalize(void)
         opal_process_info.initial_wdir = NULL;
     }
 
+    if (NULL != opal_process_info.initial_errhandler) {
+        free(opal_process_info.initial_errhandler);
+        opal_process_info.initial_errhandler = NULL;
+    }
+
     /* cleanup our internal nspace hack */
     opal_pmix_finalize_nspace_tracker();
 

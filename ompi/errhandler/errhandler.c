@@ -78,6 +78,55 @@ ompi_predefined_errhandler_t ompi_mpi_errors_throw_exceptions = {{{0}}};
 ompi_predefined_errhandler_t *ompi_mpi_errors_throw_exceptions_addr =
     &ompi_mpi_errors_throw_exceptions;
 
+static opal_mutex_t errhandler_init_lock = OPAL_MUTEX_STATIC_INIT;
+ompi_errhandler_t* ompi_initial_error_handler_eh = NULL;
+void (*ompi_initial_error_handler)(struct ompi_communicator_t **comm, int *error_code, ...) = NULL;
+
+/*
+ * Initialize the initial errhandler infrastructure only.
+ * This does not allocate any memory and does not require a corresponding fini.
+ */
+int ompi_initial_errhandler_init(void) {
+    opal_mutex_lock(&errhandler_init_lock);
+    if ( NULL != ompi_initial_error_handler ) {
+        /* Already initialized (presumably by an API call before MPI_init) */
+        opal_mutex_unlock(&errhandler_init_lock);
+        return OMPI_SUCCESS;
+    }
+
+    /* If it has been requested from the launch keys, set the initial
+     * error handler that will be attached by default with predefined
+     * communicators. We use an env because that can be obtained before
+     * OPAL and PMIx initialization.
+     */
+    char *env = getenv("OMPI_MCA_mpi_initial_errhandler");
+    if( NULL != env ) {
+        if( 0 == strcasecmp(env, "mpi_errors_are_fatal") ) {
+            ompi_initial_error_handler = &ompi_mpi_errors_are_fatal_comm_handler;
+            ompi_initial_error_handler_eh = &ompi_mpi_errors_are_fatal.eh;
+        }
+        else if( 0 == strcasecmp(env, "mpi_errors_abort") ) {
+            ompi_initial_error_handler = &ompi_mpi_errors_abort_comm_handler;
+            ompi_initial_error_handler_eh = &ompi_mpi_errors_abort.eh;
+        }
+        else if( 0 == strcasecmp(env, "mpi_errors_return") ) {
+            ompi_initial_error_handler = &ompi_mpi_errors_return_comm_handler;
+            ompi_initial_error_handler_eh = &ompi_mpi_errors_return.eh;
+        }
+        else {
+            /* invalid entry detected, ignore it, set fatal by default */
+            opal_output(0, "WARNING: invalid value for launch key 'mpi_initial_errhandler'; defaulting to 'mpi_errors_are_fatal'.");
+            ompi_initial_error_handler = &ompi_mpi_errors_are_fatal_comm_handler;
+            ompi_initial_error_handler_eh = &ompi_mpi_errors_are_fatal.eh;
+        }
+    }
+    else {
+        ompi_initial_error_handler = &ompi_mpi_errors_are_fatal_comm_handler;
+        ompi_initial_error_handler_eh = &ompi_mpi_errors_are_fatal.eh;
+    }
+    opal_mutex_unlock(&errhandler_init_lock);
+    return OMPI_SUCCESS;
+}
 
 /*
  * Initialize OMPI errhandler infrastructure
@@ -163,9 +212,12 @@ int ompi_errhandler_init(void)
                    "MPI_ERRORS_THROW_EXCEPTIONS",
                    sizeof(ompi_mpi_errors_throw_exceptions.eh.eh_name));
 
-  /* All done */
-
-  return OMPI_SUCCESS;
+  /* Lets initialize the initial error handler if not already done */
+  char *env = getenv("OMPI_MCA_mpi_initial_errhandler");
+  if( NULL != env ) {
+    ompi_process_info.initial_errhandler = strndup(env, MPI_MAX_INFO_VAL);
+  }
+  return ompi_initial_errhandler_init();
 }
 
 
