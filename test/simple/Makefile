@@ -1,6 +1,6 @@
 PROGS = mpi_no_op mpi_barrier hello hello_nodename abort multi_abort comm_abort initial_errh simple_spawn \
 		concurrent_spawn spawn_multiple mpi_spin delayed_abort loop_spawn loop_child \
-		bad_exit pubsub hello_barrier segv accept connect hello_output hello_show_help \
+		bad_exit bad_arg pubsub hello_barrier segv accept connect hello_output hello_show_help \
 		crisscross read_write ziatest slave reduce-hang ziaprobe ziatest bcast_loop \
 		parallel_w8 parallel_w64 parallel_r8 parallel_r64 sio sendrecv_blaster early_abort \
 		debugger singleton_client_server intercomm_create spawn_tree init-exit77 mpi_info \
