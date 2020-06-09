@@ -42,11 +42,22 @@ int MPI_Error_class(int errorcode, int *errorclass)
     OPAL_CR_NOOP_PROGRESS();
 
     if ( MPI_PARAM_CHECK ) {
-        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-
         if ( ompi_mpi_errcode_is_invalid(errorcode)) {
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
-                                          FUNC_NAME);
+            /* If we have an error, the action that we take depends on
+               whether we're currently (after MPI_Init and before
+               MPI_Finalize) or not */
+            int32_t state = ompi_mpi_state;
+            if (state >= OMPI_MPI_STATE_INIT_COMPLETED &&
+                state < OMPI_MPI_STATE_FINALIZE_PAST_COMM_SELF_DESTRUCT) {
+               return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
+                                              FUNC_NAME);
+            } else {
+                /* We have no MPI object here so call ompi_errhandle_invoke
+                 * directly */
+                return ompi_errhandler_invoke(NULL, NULL, -1,
+                                              ompi_errcode_get_mpi_code(MPI_ERR_ARG),
+                                              FUNC_NAME);
+            }
         }
     }
 

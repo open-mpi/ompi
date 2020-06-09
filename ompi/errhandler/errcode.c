@@ -131,8 +131,17 @@ do {                                                                      \
     opal_pointer_array_set_item(&ompi_mpi_errcodes, (ERRCODE), &(VAR));   \
 } while (0)
 
+static opal_mutex_t errcode_init_lock = OPAL_MUTEX_STATIC_INIT;
+
 int ompi_mpi_errcode_init (void)
 {
+    opal_mutex_lock(&errcode_init_lock);
+    if ( 0 != ompi_mpi_errcode_lastpredefined ) {
+        /* Already initialized (presumably by an API call before MPI_init */
+        opal_mutex_unlock(&errcode_init_lock);
+        return OMPI_SUCCESS;
+    }
+
     /* Initialize the pointer array, which will hold the references to
        the error objects */
     OBJ_CONSTRUCT(&ompi_mpi_errcodes, opal_pointer_array_t);
@@ -223,6 +232,7 @@ int ompi_mpi_errcode_init (void)
        MPI_ERR_LASTCODE.  So just start it as == MPI_ERR_LASTCODE. */
     ompi_mpi_errcode_lastused = MPI_ERR_LASTCODE;
     ompi_mpi_errcode_lastpredefined = MPI_ERR_LASTCODE;
+    opal_mutex_unlock(&errcode_init_lock);
     return OMPI_SUCCESS;
 }
 
@@ -231,6 +241,7 @@ int ompi_mpi_errcode_finalize(void)
     int i;
     ompi_mpi_errcode_t *errc;
 
+    opal_mutex_lock(&errcode_init_lock);
     for (i=ompi_mpi_errcode_lastpredefined+1; i<=ompi_mpi_errcode_lastused; i++) {
         /*
          * there are some user defined error-codes, which
@@ -317,6 +328,8 @@ int ompi_mpi_errcode_finalize(void)
     OBJ_DESTRUCT(&ompi_t_err_invalid_name);
 
     OBJ_DESTRUCT(&ompi_mpi_errcodes);
+    ompi_mpi_errcode_lastpredefined = 0;
+    opal_mutex_unlock(&errcode_init_lock);
     return OMPI_SUCCESS;
 }
 
