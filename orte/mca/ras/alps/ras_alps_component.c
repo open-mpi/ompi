@@ -13,6 +13,8 @@
  * Copyright (c) 2008      UT-Battelle, LLC
  * Copyright (c) 2011-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2020      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -104,7 +106,12 @@ get_res_id(void)
     if (NULL != (id = getenv("BATCH_PARTITION_ID"))) {
         return strtoul(id, NULL, 10);
     }
-    if (NULL != (id = getenv("PBS_JOBID"))) {
+
+    id = getenv("PBS_JOBID");
+    if (NULL == id) {
+        id = getenv("COBALT_JOBID");
+    }
+    if (NULL != id) {
         char *prepped_jid = prep_job_id(id);
         if (NULL == prepped_jid) {
             /* out of resources */
