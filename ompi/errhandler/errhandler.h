@@ -233,7 +233,9 @@ struct ompi_request_t;
         int32_t state = ompi_mpi_state;                                 \
         if (OPAL_UNLIKELY(state < OMPI_MPI_STATE_INIT_COMPLETED ||      \
                           state > OMPI_MPI_STATE_FINALIZE_PAST_COMM_SELF_DESTRUCT)) { \
-            ompi_mpi_errors_are_fatal_comm_handler(NULL, NULL, name);   \
+            ompi_errhandler_invoke(NULL, NULL, -1,                       \
+                                   ompi_errcode_get_mpi_code(MPI_ERR_ARG), \
+                                   name);                               \
         }                                                               \
     }
 

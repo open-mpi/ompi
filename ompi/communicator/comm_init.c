@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2017 The University of Tennessee and The University
+ * Copyright (c) 2004-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -135,8 +135,8 @@ int ompi_comm_init(void)
     ompi_mpi_comm_world.comm.c_remote_group = group;
     OBJ_RETAIN(ompi_mpi_comm_world.comm.c_remote_group);
     ompi_mpi_comm_world.comm.c_cube_dim     = opal_cube_dim((int)size);
-    ompi_mpi_comm_world.comm.error_handler  = &ompi_mpi_errors_are_fatal.eh;
-    OBJ_RETAIN( &ompi_mpi_errors_are_fatal.eh );
+    ompi_mpi_comm_world.comm.error_handler  = ompi_initial_error_handler_eh;
+    OBJ_RETAIN( ompi_mpi_comm_world.comm.error_handler );
     OMPI_COMM_SET_PML_ADDED(&ompi_mpi_comm_world.comm);
     opal_pointer_array_set_item (&ompi_mpi_communicators, 0, &ompi_mpi_comm_world);
 
@@ -188,8 +188,8 @@ int ompi_comm_init(void)
     ompi_mpi_comm_self.comm.c_local_group  = group;
     ompi_mpi_comm_self.comm.c_remote_group = group;
     OBJ_RETAIN(ompi_mpi_comm_self.comm.c_remote_group);
-    ompi_mpi_comm_self.comm.error_handler  = &ompi_mpi_errors_are_fatal.eh;
-    OBJ_RETAIN( &ompi_mpi_errors_are_fatal.eh );
+    ompi_mpi_comm_self.comm.error_handler  = ompi_initial_error_handler_eh;
+    OBJ_RETAIN( ompi_mpi_comm_self.comm.error_handler );
     OMPI_COMM_SET_PML_ADDED(&ompi_mpi_comm_self.comm);
     opal_pointer_array_set_item (&ompi_mpi_communicators, 1, &ompi_mpi_comm_self);
 
@@ -214,8 +214,10 @@ int ompi_comm_init(void)
     ompi_mpi_comm_null.comm.c_contextid    = 2;
     ompi_mpi_comm_null.comm.c_my_rank      = MPI_PROC_NULL;
 
+    /* unlike world, self, and parent, comm_null does not inherit the initial error
+     * handler */
     ompi_mpi_comm_null.comm.error_handler  = &ompi_mpi_errors_are_fatal.eh;
-    OBJ_RETAIN( &ompi_mpi_errors_are_fatal.eh );
+    OBJ_RETAIN( ompi_mpi_comm_null.comm.error_handler );
     opal_pointer_array_set_item (&ompi_mpi_communicators, 2, &ompi_mpi_comm_null);
 
     opal_string_copy(ompi_mpi_comm_null.comm.c_name, "MPI_COMM_NULL",
@@ -228,6 +230,8 @@ int ompi_comm_init(void)
     OBJ_RETAIN(&ompi_mpi_comm_null);
     OBJ_RETAIN(&ompi_mpi_group_null.group);
     OBJ_RETAIN(&ompi_mpi_errors_are_fatal.eh);
+    /* During dyn_init, the comm_parent error handler will be set to the same
+     * as comm_world (thus, the initial error handler). */
 
     /* initialize communicator requests (for ompi_comm_idup) */
     ompi_comm_request_init ();
