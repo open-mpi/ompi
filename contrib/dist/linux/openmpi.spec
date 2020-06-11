@@ -150,6 +150,10 @@
 %global _binary_filedigest_algorithm 1
 %global _source_filedigest_algorithm 1
 
+# Define this to 1 if you want to keep libtool achive files
+# Default is 0 (remove *.la files)
+# type: bool (0/1)
+%{!?install_libtool_archive: %define install_libtool_archive 0}
 #############################################################################
 #
 # Configuration Logic
@@ -477,6 +481,18 @@ export CFLAGS CXXFLAGS FCFLAGS
 # We've had cases of config.log being left in the installation tree.
 # We don't need that in an RPM.
 find $RPM_BUILD_ROOT -name config.log -exec rm -f {} \;
+
+%if !%{install_libtool_archive}
+# Libtool archive files (.la files) create an unnecessary dependency
+# between linked applications and the development versions of packages
+# upon which Open MPI depends. For example, when building an application
+# which uses Libtool, Open MPI would create a dependency not just on
+# the HWLOC libs package, but the HWLOC devel package
+# (to get the .so.1 -> .so symlink). Best practice in package builders
+# appears to be to skip shipping .la files because of this issue.
+find $RPM_BUILD_ROOT/%{_libdir} -name \*.la -exec rm -f {} \;
+%endif
+# End of libotool_archive if
 
 # First, the [optional] modulefile
 
