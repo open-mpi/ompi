@@ -142,6 +142,8 @@ struct mca_coll_hcoll_module_t {
     mca_coll_base_module_t *previous_scatterv_module;
     mca_coll_base_module_reduce_scatter_fn_t previous_reduce_scatter;
     mca_coll_base_module_t *previous_reduce_scatter_module;
+    mca_coll_base_module_reduce_scatter_block_fn_t previous_reduce_scatter_block;
+    mca_coll_base_module_t *previous_reduce_scatter_block_module;
     mca_coll_base_module_ibcast_fn_t previous_ibcast;
     mca_coll_base_module_t *previous_ibcast_module;
     mca_coll_base_module_ibarrier_fn_t previous_ibarrier;
@@ -212,6 +214,18 @@ int mca_coll_hcoll_allreduce(const void *sbuf, void *rbuf, int count,
                             struct ompi_communicator_t *comm,
                             mca_coll_base_module_t *module);
 
+#if HCOLL_API > HCOLL_VERSION(4,5)
+int mca_coll_hcoll_reduce_scatter_block(const void *sbuf, void *rbuf, int rcount,
+                                        struct ompi_datatype_t *dtype,
+                                        struct ompi_op_t *op,
+                                        struct ompi_communicator_t *comm,
+                                        mca_coll_base_module_t *module);
+int mca_coll_hcoll_reduce_scatter(const void *sbuf, void *rbuf, const int* rcounts,
+                                  struct ompi_datatype_t *dtype,
+                                  struct ompi_op_t *op,
+                                  struct ompi_communicator_t *comm,
+                                  mca_coll_base_module_t *module);
+#endif
 int mca_coll_hcoll_reduce(const void *sbuf, void *rbuf, int count,
                             struct ompi_datatype_t *dtype,
                             struct ompi_op_t *op,
