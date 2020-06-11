@@ -760,3 +760,88 @@ int mca_coll_hcoll_ialltoallv(const void *sbuf, int *scounts, int *sdisps,
     return rc;
 }
 #endif
+
+#if HCOLL_API > HCOLL_VERSION(4,5)
+int mca_coll_hcoll_reduce_scatter_block(const void *sbuf, void *rbuf, int rcount,
+                                        struct ompi_datatype_t *dtype,
+                                        struct ompi_op_t *op,
+                                        struct ompi_communicator_t *comm,
+                                        mca_coll_base_module_t *module) {
+    dte_data_representation_t Dtype;
+    hcoll_dte_op_t *Op;
+    int rc;
+    HCOL_VERBOSE(20,"RUNNING HCOL REDUCE SCATTER BLOCK");
+    mca_coll_hcoll_module_t *hcoll_module = (mca_coll_hcoll_module_t*)module;
+    Dtype = ompi_dtype_2_hcoll_dtype(dtype, NO_DERIVED);
+    if (OPAL_UNLIKELY(HCOL_DTE_IS_ZERO(Dtype))){
+        /*If we are here then datatype is not simple predefined datatype */
+        /*In future we need to add more complex mapping to the dte_data_representation_t */
+        /* Now use fallback */
+        HCOL_VERBOSE(20,"Ompi_datatype is not supported: dtype = %s; calling fallback allreduce;",
+                     dtype->super.name);
+        goto fallback;
+    }
+
+    Op = ompi_op_2_hcolrte_op(op);
+    if (OPAL_UNLIKELY(HCOL_DTE_OP_NULL == Op->id)){
+        /*If we are here then datatype is not simple predefined datatype */
+        /*In future we need to add more complex mapping to the dte_data_representation_t */
+        /* Now use fallback */
+        HCOL_VERBOSE(20,"ompi_op_t is not supported: op = %s; calling fallback allreduce;",
+                     op->o_name);
+        goto fallback;
+    }
+
+    rc = hcoll_collectives.coll_reduce_scatter_block((void *)sbuf,rbuf,rcount,Dtype,Op,hcoll_module->hcoll_context);
+    if (HCOLL_SUCCESS != rc){
+    fallback:        
+        HCOL_VERBOSE(20,"RUNNING FALLBACK ALLREDUCE");
+        rc = hcoll_module->previous_reduce_scatter_block(sbuf,rbuf,
+                                             rcount,dtype,op,
+                                             comm, hcoll_module->previous_allreduce_module);
+    }
+    return rc;
+}
+
+int mca_coll_hcoll_reduce_scatter(const void *sbuf, void *rbuf, const int* rcounts,
+                                  struct ompi_datatype_t *dtype,
+                                  struct ompi_op_t *op,
+                                  struct ompi_communicator_t *comm,
+                                  mca_coll_base_module_t *module) {
+    dte_data_representation_t Dtype;
+    hcoll_dte_op_t *Op;
+    int rc;
+    HCOL_VERBOSE(20,"RUNNING HCOL REDUCE SCATTER");
+    mca_coll_hcoll_module_t *hcoll_module = (mca_coll_hcoll_module_t*)module;
+    Dtype = ompi_dtype_2_hcoll_dtype(dtype, NO_DERIVED);
+    if (OPAL_UNLIKELY(HCOL_DTE_IS_ZERO(Dtype))){
+        /*If we are here then datatype is not simple predefined datatype */
+        /*In future we need to add more complex mapping to the dte_data_representation_t */
+        /* Now use fallback */
+        HCOL_VERBOSE(20,"Ompi_datatype is not supported: dtype = %s; calling fallback allreduce;",
+                     dtype->super.name);
+        goto fallback;
+    }
+
+    Op = ompi_op_2_hcolrte_op(op);
+    if (OPAL_UNLIKELY(HCOL_DTE_OP_NULL == Op->id)){
+        /*If we are here then datatype is not simple predefined datatype */
+        /*In future we need to add more complex mapping to the dte_data_representation_t */
+        /* Now use fallback */
+        HCOL_VERBOSE(20,"ompi_op_t is not supported: op = %s; calling fallback allreduce;",
+                     op->o_name);
+        goto fallback;
+    }
+
+    rc = hcoll_collectives.coll_reduce_scatter((void*)sbuf, rbuf, (int*)rcounts,
+                                               Dtype, Op, hcoll_module->hcoll_context);
+    if (HCOLL_SUCCESS != rc){
+    fallback:        
+        HCOL_VERBOSE(20,"RUNNING FALLBACK ALLREDUCE");
+        rc = hcoll_module->previous_reduce_scatter(sbuf,rbuf,
+                                             rcounts,dtype,op,
+                                             comm, hcoll_module->previous_allreduce_module);
+    }
+    return rc;
+}
+#endif
