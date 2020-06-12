@@ -52,6 +52,9 @@ OMPI_DECLSPEC int mca_fs_base_init_file (struct ompio_file_t *file);
 OMPI_DECLSPEC int mca_fs_base_get_param (struct ompio_file_t *file, int keyval);
 OMPI_DECLSPEC void mca_fs_base_get_parent_dir (char *filename, char **dirnamep);
 OMPI_DECLSPEC int  mca_fs_base_get_fstype(char *fname);
+OMPI_DECLSPEC int mca_fs_base_get_mpi_err(int errno_val);
+OMPI_DECLSPEC int mca_fs_base_get_file_perm(ompio_file_t *fh);
+OMPI_DECLSPEC int mca_fs_base_get_file_amode(int rank, int access_mode);
 
 OMPI_DECLSPEC int mca_fs_base_file_delete (char* file_name, struct opal_info_t *info);
 OMPI_DECLSPEC int mca_fs_base_file_sync (ompio_file_t *fh);

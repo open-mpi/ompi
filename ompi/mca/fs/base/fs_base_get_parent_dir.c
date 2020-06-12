@@ -117,8 +117,90 @@ int  mca_fs_base_get_fstype(char *fname )
     else if ( 0 == strncasecmp(fstype, "pvfs2", sizeof("pvfs2"))) {
         ompio_type = PVFS2;
     }
+    else if ( 0 == strncasecmp(fstype, "gpfs", sizeof("gpfs"))) {
+        ompio_type = GPFS;
+    }
 
     free (fstype);
     return ompio_type;
+}
+
+int mca_fs_base_get_mpi_err(int errno_val)
+{
+    int ret;
+    switch (errno_val) {
+        case EACCES:
+            ret = MPI_ERR_ACCESS;
+            break;
+        case ENAMETOOLONG:
+        case EISDIR:
+            ret = MPI_ERR_BAD_FILE;
+            break;
+        case ENOENT:
+            ret = MPI_ERR_NO_SUCH_FILE;
+            break;
+        case EROFS:
+            ret = MPI_ERR_READ_ONLY;
+            break;
+        case EEXIST:
+            ret = MPI_ERR_FILE_EXISTS;
+            break;
+        case ENOSPC:
+            ret = MPI_ERR_NO_SPACE;
+            break;
+        case EDQUOT:
+            ret = MPI_ERR_QUOTA;
+            break;
+        case ETXTBSY:
+            ret = MPI_ERR_FILE_IN_USE;
+            break;
+        case EBADF:
+            ret = MPI_ERR_FILE;
+            break;
+        default:
+            ret = MPI_ERR_OTHER;
+            break;
+    }
+    return ret;
+}
+
+int mca_fs_base_get_file_perm(ompio_file_t *fh)
+{
+    int old_mask;
+    int perm = fh->f_perm;
+
+    if (OMPIO_PERM_NULL == perm) {
+        old_mask = umask(022);
+        umask(old_mask);
+        perm = old_mask ^ 0666;
+    }
+    return perm;
+}
+
+int mca_fs_base_get_file_amode(int rank, int access_mode)
+{
+    int amode = 0;
+
+    if (access_mode & MPI_MODE_RDONLY) {
+        amode = amode | O_RDONLY;
+    }
+    if (access_mode & MPI_MODE_WRONLY) {
+        amode = amode | O_WRONLY;
+    }
+    if (access_mode & MPI_MODE_RDWR) {
+        amode = amode | O_RDWR;
+    }
+
+    /* MODE_CREATE and MODE_EXCL should only be set by one process */
+    if(OMPIO_ROOT == rank) {
+        if (access_mode & MPI_MODE_CREATE) {
+            amode = amode | O_CREAT;
+        }
+        if (access_mode & MPI_MODE_EXCL) {
+            amode = amode | O_EXCL;
+        }
+    }
+
+    return amode;
 }
 
