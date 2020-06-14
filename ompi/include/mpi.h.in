@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2019 Cisco Systems, Inc.  All rights reserved
+ * Copyright (c) 2007-2020 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2009-2012 Oak Rigde National Laboratory.  All rights reserved.
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
@@ -290,11 +290,12 @@
           * just emit a compiletime warning (via the deprecation function
           * attribute) that they're using an MPI1 removed function.
           *
-          * Otherwise, we'd like to issue a fatal error directing the user
-          * that they've used an MPI1 removed function.  If the user's
-          * compiler supports C11 _Static_assert feature, we #define
-          * the MPI routines to instead be a call to _Static_assert
-          * with an appropreate message suggesting the new MPI3 equivalent.
+          * Otherwise, we'd like to issue a fatal error directing the
+          * user that they've used an MPI1 removed function.  If the
+          * user's compiler supports C11 _Static_assert() or
+          * C++11 static_assert(), we #define the MPI routines to
+          * instead be a call to an assert with an appropriate message
+          * suggesting the new MPI3 equivalent.
           *
           * Otherwise, if the user's compiler supports the error function
           * attribute, define the MPI routines with that error attribute.
@@ -312,13 +313,27 @@
 #            define OMPI_OMIT_MPI1_COMPAT_DECLS 0
 #            define OMPI_REMOVED_USE_STATIC_ASSERT 0
 #            define __mpi_interface_removed__(func, newfunc) __mpi_interface_deprecated__(#func " was removed in MPI-3.0.  Use " #newfunc " instead.  continuing...")
-#        elif (__STDC_VERSION__ >= 201112L)
+#        elif defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201112L)
+             /* This is the C11 (or later) case, which uses
+                _Static_assert() */
 #            define OMPI_OMIT_MPI1_COMPAT_DECLS 1
 #            define OMPI_REMOVED_USE_STATIC_ASSERT 1
 // This macro definition may show up in compiler output.  So we both
 // outdent it back to column 0 and give it a user-friendly name to
 // help users grok what we are trying to tell them here.
-#define THIS_SYMBOL_WAS_REMOVED_IN_MPI30(func, newfunc) _Static_assert(0, #func " was removed in MPI-3.0.  Use " #newfunc " instead.")
+#define THIS_SYMBOL_WAS_REMOVED_IN_MPI30(symbol, new_symbol) 0; _Static_assert(0, #symbol " was removed in MPI-3.0.  Use " #new_symbol " instead.")
+#define THIS_FUNCTION_WAS_REMOVED_IN_MPI30(func, newfunc) _Static_assert(0, #func " was removed in MPI-3.0.  Use " #newfunc " instead.")
+#        elif defined(__cplusplus) && (__cplusplus >= 201103L)
+             /* This is the C++11 (or later) case, which uses
+                static_assert() */
+#            define OMPI_OMIT_MPI1_COMPAT_DECLS 1
+#            define OMPI_REMOVED_USE_STATIC_ASSERT 1
+/* This macro definition may show up in compiler output.  So we both
+ * outdent it back to column 0 and give it a user-friendly name to
+ * help users grok what we are trying to tell them here.
+ */
+#define THIS_SYMBOL_WAS_REMOVED_IN_MPI30(symbol, new_symbol) 0; static_assert(0, #symbol " was removed in MPI-3.0.  Use " #new_symbol " instead.")
+#define THIS_FUNCTION_WAS_REMOVED_IN_MPI30(func, newfunc) static_assert(0, #func " was removed in MPI-3.0.  Use " #newfunc " instead.")
 #        elif OPAL_HAVE_ATTRIBUTE_ERROR
 #            define OMPI_OMIT_MPI1_COMPAT_DECLS 0
 #            define OMPI_REMOVED_USE_STATIC_ASSERT 0
@@ -344,7 +359,10 @@
 #endif
 
 #if !defined(THIS_SYMBOL_WAS_REMOVED_IN_MPI30)
-#    define THIS_SYMBOL_WAS_REMOVED_IN_MPI30(func, newfunc)
+#    define THIS_SYMBOL_WAS_REMOVED_IN_MPI30(symbol, newsymbol)
+#endif
+#if !defined(THIS_FUNCTION_WAS_REMOVED_IN_MPI30)
+#    define THIS_FUNCTION_WAS_REMOVED_IN_MPI30(func, newfunc)
 #endif
 
 #if !defined(OMPI_REMOVED_USE_STATIC_ASSERT)
@@ -2838,16 +2856,16 @@ OMPI_DECLSPEC  int PMPI_Type_ub(MPI_Datatype mtype, MPI_Aint *ub)
 #endif /* !OMPI_OMIT_MPI1_COMPAT_DECLS */
 
 #if OMPI_REMOVED_USE_STATIC_ASSERT
-#define MPI_Address(...)  THIS_SYMBOL_WAS_REMOVED_IN_MPI30(MPI_Address, MPI_Get_address)
-#define MPI_Errhandler_create(...)  THIS_SYMBOL_WAS_REMOVED_IN_MPI30(MPI_Errhandler_create, MPI_Comm_create_errhandler)
-#define MPI_Errhandler_get(...)  THIS_SYMBOL_WAS_REMOVED_IN_MPI30(MPI_Errhandler_get, MPI_Comm_get_errhandler)
-#define MPI_Errhandler_set(...)  THIS_SYMBOL_WAS_REMOVED_IN_MPI30(MPI_Errhandler_set, MPI_Comm_set_errhandler)
-#define MPI_Type_extent(...)  THIS_SYMBOL_WAS_REMOVED_IN_MPI30(MPI_Type_extent, MPI_Type_get_extent)
-#define MPI_Type_hindexed(...)  THIS_SYMBOL_WAS_REMOVED_IN_MPI30(MPI_Type_hindexed, MPI_Type_create_hindexed)
-#define MPI_Type_hvector(...)  THIS_SYMBOL_WAS_REMOVED_IN_MPI30(MPI_Type_hvector, MPI_Type_create_hvector)
-#define MPI_Type_lb(...)  THIS_SYMBOL_WAS_REMOVED_IN_MPI30(MPI_Type_lb, MPI_Type_get_extent)
-#define MPI_Type_struct(...)  THIS_SYMBOL_WAS_REMOVED_IN_MPI30(MPI_Type_struct, MPI_Type_create_struct)
-#define MPI_Type_ub(...)  THIS_SYMBOL_WAS_REMOVED_IN_MPI30(MPI_Type_ub, MPI_Type_get_extent)
+#define MPI_Address(...)  THIS_FUNCTION_WAS_REMOVED_IN_MPI30(MPI_Address, MPI_Get_address)
+#define MPI_Errhandler_create(...)  THIS_FUNCTION_WAS_REMOVED_IN_MPI30(MPI_Errhandler_create, MPI_Comm_create_errhandler)
+#define MPI_Errhandler_get(...)  THIS_FUNCTION_WAS_REMOVED_IN_MPI30(MPI_Errhandler_get, MPI_Comm_get_errhandler)
+#define MPI_Errhandler_set(...)  THIS_FUNCTION_WAS_REMOVED_IN_MPI30(MPI_Errhandler_set, MPI_Comm_set_errhandler)
+#define MPI_Type_extent(...)  THIS_FUNCTION_WAS_REMOVED_IN_MPI30(MPI_Type_extent, MPI_Type_get_extent)
+#define MPI_Type_hindexed(...)  THIS_FUNCTION_WAS_REMOVED_IN_MPI30(MPI_Type_hindexed, MPI_Type_create_hindexed)
+#define MPI_Type_hvector(...)  THIS_FUNCTION_WAS_REMOVED_IN_MPI30(MPI_Type_hvector, MPI_Type_create_hvector)
+#define MPI_Type_lb(...)  THIS_FUNCTION_WAS_REMOVED_IN_MPI30(MPI_Type_lb, MPI_Type_get_extent)
+#define MPI_Type_struct(...)  THIS_FUNCTION_WAS_REMOVED_IN_MPI30(MPI_Type_struct, MPI_Type_create_struct)
+#define MPI_Type_ub(...)  THIS_FUNCTION_WAS_REMOVED_IN_MPI30(MPI_Type_ub, MPI_Type_get_extent)
 #endif
 
 #if defined(c_plusplus) || defined(__cplusplus)
