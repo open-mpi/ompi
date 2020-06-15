@@ -107,7 +107,7 @@ int mca_common_ompio_simple_grouping(ompio_file_t *fh,
     /* Determine whether to use the formula for 1-D or 2-D data decomposition. Anything
     ** that is not 1-D is assumed to be 2-D in this version
     */ 
-    mode = ( fh->f_cc_size == fh->f_view_size ) ? 1 : 2;
+    mode = ( fh->f_cc_size == fh->f_avg_view_size ) ? 1 : 2;
 
     /* Determine the increment size when searching the optimal
     ** no. of aggregators 
