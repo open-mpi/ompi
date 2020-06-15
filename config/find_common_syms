@@ -17,12 +17,12 @@ use warnings;
 use Getopt::Long;
 use File::Basename qw(basename);
 
-sub is_whitelisted;
+sub is_allowlisted;
 
 my $MAX_BRIEF = 10;
 
 my @orig_argv = @ARGV;
-my @sym_whitelist = ();
+my @sym_allowlist = ();
 
 sub usage {
     print STDERR <<EOT;
@@ -62,14 +62,14 @@ if (0 != system("command -v nm >/dev/null 2>&1")) {
     exit 1;
 }
 
-# load the common symbol whitelist from files scattered around the codebase
+# load the common symbol allowlist from files scattered around the codebase
 #
 # It would be better to load these into some sort of tree and then have those
-# whitelists only apply to objects that are found in the same directory or
-# subdirectories.  That way a whitelisted symbol in one component doesn't
-# "shadow" a symbol that should not be whitelisted in another component.  If we
+# allowlists only apply to objects that are found in the same directory or
+# subdirectories.  That way a allowlisted symbol in one component doesn't
+# "shadow" a symbol that should not be allowlisted in another component.  If we
 # find this is actually a problem in practice then we can write a v2 update.
-my @wl_files = `find '${top_srcdir}' -name 'common_sym_whitelist.txt'`;
+my @wl_files = `find '${top_srcdir}' -name 'common_sym_allowlist.txt'`;
 foreach my $wl_file (@wl_files) {
     chomp $wl_file;
     my @lines = `cat $wl_file`;
@@ -77,7 +77,7 @@ foreach my $wl_file (@wl_files) {
         chomp $line;
         next if ($line =~ /^\s*#/); # skip comments
         next if ($line =~ /^\s*$/); # skip blank lines
-        push @sym_whitelist, $line;
+        push @sym_allowlist, $line;
     }
 }
 
@@ -93,7 +93,7 @@ OBJECT: while (my $obj_line = <FIND>) {
     # at this point how common support for "nm -P" is.
     open(NM, '-|', "nm '${obj}' 2>/dev/null | egrep '\\s[cC]\\s'");
     SYMBOL: while (my $sym_line = <NM>) {
-        if (!$all and is_whitelisted($sym_line)) {
+        if (!$all and is_allowlisted($sym_line)) {
             next SYMBOL;
         }
 
@@ -124,10 +124,10 @@ if ($n > 0) {
     exit 0;
 }
 
-sub is_whitelisted {
+sub is_allowlisted {
     my $line = shift;
 
-    foreach my $wl_sym (@sym_whitelist) {
+    foreach my $wl_sym (@sym_allowlist) {
         if ($line =~ m/\b_?\Q$wl_sym\E\b/) {
             return 1;
         }
