@@ -318,9 +318,10 @@
                 _Static_assert() */
 #            define OMPI_OMIT_MPI1_COMPAT_DECLS 1
 #            define OMPI_REMOVED_USE_STATIC_ASSERT 1
-// This macro definition may show up in compiler output.  So we both
-// outdent it back to column 0 and give it a user-friendly name to
-// help users grok what we are trying to tell them here.
+/* This macro definition may show up in compiler output.  So we both
+ * outdent it back to column 0 and give it a user-friendly name to
+ * help users grok what we are trying to tell them here.
+ */
 #define THIS_SYMBOL_WAS_REMOVED_IN_MPI30(symbol, new_symbol) 0; _Static_assert(0, #symbol " was removed in MPI-3.0.  Use " #new_symbol " instead.")
 #define THIS_FUNCTION_WAS_REMOVED_IN_MPI30(func, newfunc) _Static_assert(0, #func " was removed in MPI-3.0.  Use " #newfunc " instead.")
 #        elif defined(__cplusplus) && (__cplusplus >= 201103L)
