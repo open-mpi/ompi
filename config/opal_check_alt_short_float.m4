@@ -1,6 +1,7 @@
 dnl -*- shell-script -*-
 dnl
-dnl Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
+dnl Copyright (c) 2018-2020 FUJITSU LIMITED.  All rights reserved.
+dnl Copyright (c) 2020 Cisco Systems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -35,7 +36,34 @@ AC_DEFUN([OPAL_CHECK_ALT_SHORT_FLOAT], [
     fi
     if test "$opal_short_float_type" != ""; then
         AC_MSG_RESULT([yes ($opal_short_float_type)])
-        AC_CHECK_TYPES($opal_short_float_type, [opal_enable_short_float=1], [opal_enable_short_float=0])
+        AC_CHECK_TYPES($opal_short_float_type, [opal_alt_short_float_exists=1], [opal_alt_short_float_exists=0])
+
+        # Even if the alternate short float type exists, make sure
+        # that the compiler can actually compile/link when
+        # mathematical operations are performed on variables of that
+        # type.  Case in point: clang 6.0.x and 7.0.x need an
+        # additional CLI flag added (--rtlib=compiler-rt) to enable
+        # software emulation of _Float16.  Open MPI will *not*
+        # automagically add that flag -- we'll just emit a warning and
+        # point the user to a README where more information is
+        # available.
+        AC_MSG_CHECKING([if compiler supports arithmetic operations on $opal_short_float_type])
+        AS_IF([test $opal_alt_short_float_exists -eq 1],
+              [AC_LINK_IFELSE([AC_LANG_PROGRAM([], [[
+static $opal_short_float_type a = 2.5, b = 3.8;
+a += b;]])],
+                                 [AC_MSG_RESULT([yes])
+                                  opal_enable_short_float=1],
+                                 [AC_MSG_RESULT([no])
+                                  AS_IF([test `basename $CC` = "clang"],
+                                        [AC_MSG_WARN([if you are using the Clang 6.0.x or 7.0.x compilers and want])
+                                         AC_MSG_WARN([to enable software emulation of half-precision floating point])
+                                         AC_MSG_WARN([in conjunction with the "shortfloat" Open MPI extension,])
+                                         AC_MSG_WARN([see the ompi/mpiext/shortfloat/README.txt file for details.])
+                                         ])
+                                  opal_enable_short_float=0])
+               ])
+
         if test "$opal_enable_short_float" = 1; then
             AC_DEFINE_UNQUOTED(opal_short_float_t, [[$opal_short_float_type]],
                                [User-selected alternate C type of short float])
