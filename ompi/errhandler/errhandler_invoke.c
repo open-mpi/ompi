@@ -41,9 +41,25 @@ int ompi_errhandler_invoke(ompi_errhandler_t *errhandler, void *mpi_object,
     ompi_win_t *win;
     ompi_file_t *file;
 
-    /* If we got no errorhandler, then just invoke errors_are_fatal */
+    /* If we got no errorhandler, then route the error to the appropriate
+     * predefined error handler */
     if (NULL == errhandler) {
-        ompi_mpi_errors_are_fatal_comm_handler(NULL, NULL, message);
+        int32_t state = ompi_mpi_state;
+        if (state >= OMPI_MPI_STATE_INIT_COMPLETED &&
+            state < OMPI_MPI_STATE_FINALIZE_PAST_COMM_SELF_DESTRUCT) {
+            comm = &ompi_mpi_comm_self.comm;
+            comm->error_handler->eh_comm_fn(&comm, &err_code, message, NULL);
+        }
+        else {
+            if(NULL == ompi_initial_error_handler) {
+                int rc = ompi_initial_errhandler_init();
+                if(OMPI_SUCCESS != rc) {
+                    /* don't know what else to do... */
+                    ompi_mpi_errors_are_fatal_comm_handler(NULL, NULL, message);
+                }
+            }
+            ompi_initial_error_handler(NULL, NULL, message);
+        }
         return err_code;
     }
 
