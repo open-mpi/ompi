@@ -245,7 +245,7 @@ static int ompi_osc_rdma_component_register (void)
                                             MCA_BASE_VAR_SCOPE_GROUP, &mca_osc_rdma_component.locking_mode);
     OBJ_RELEASE(new_enum);
 
-    ompi_osc_rdma_btl_names = "openib,ugni,uct,ucp";
+    ompi_osc_rdma_btl_names = "ugni,uct,tcp";
     opal_asprintf(&description_str, "Comma-delimited list of BTL component names to allow without verifying "
              "connectivity. Do not add a BTL to to this list unless it can reach all "
              "processes in any communicator used with an MPI window (default: %s)",
