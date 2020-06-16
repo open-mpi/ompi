@@ -9,10 +9,10 @@ dnl
 dnl $HEADER$
 dnl
 
-# Check whether the user wants to use an alternate type of C 'short float'.
+dnl Check whether the user wants to use an alternate type of C 'short float'.
 
-# OPAL_CHECK_ALT_SHORT_FLOAT
-# ------------------------------------------------------------
+dnl OPAL_CHECK_ALT_SHORT_FLOAT
+dnl ------------------------------------------------------------
 AC_DEFUN([OPAL_CHECK_ALT_SHORT_FLOAT], [
     AC_CHECK_TYPES(_Float16)
     AC_MSG_CHECKING([if want alternate C type of short float])
