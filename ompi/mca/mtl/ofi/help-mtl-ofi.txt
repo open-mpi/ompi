@@ -1,6 +1,6 @@
 # -*- text -*-
 #
-# Copyright (c) 2013-2017 Intel, Inc. All rights reserved
+# Copyright (c) 2013-2018 Intel, Inc. All rights reserved
 #
 # Copyright (c) 2017      Cisco Systems, Inc.  All rights reserved
 # $COPYRIGHT$
@@ -16,5 +16,64 @@ unusual; your job may behave unpredictably (and/or abort) after this.
   Local host: %s
   Location: %s:%d
   Error: %s (%zd)
+#
+[Not enough bits for CID]
+OFI provider "%s" does not have enough free bits in its tag to fit the MPI
+Communicator ID. See the mem_tag_format of the provider by running:
+fi_info -v -p %s
+
+  Local host: %s
+  Location: %s:%d
+
+[SEP unavailable]
+Scalable Endpoint feature is enabled by the user but it is not supported by
+%s provider. Try disabling this feature or use a different provider that
+supports it using mtl_ofi_provider_include.
+
+  Local host: %s
+  Location: %s:%d
+
+[SEP required]
+Scalable Endpoint feature is required for Thread Grouping feature to work.
+Please try enabling Scalable Endpoints using mtl_ofi_enable_sep.
+
+  Local host: %s
+  Location: %s:%d
+
+[SEP thread grouping ctxt limit]
+Reached limit (%d) for number of OFI contexts set by mtl_ofi_num_ctxts.
+Please set mtl_ofi_num_ctxts to a larger value if you need more contexts.
+If an MPI application creates more communicators than mtl_ofi_num_ctxts,
+OFI MTL will make the new communicators re-use existing contexts in
+round-robin fashion which will impact performance.
+
+  Local host: %s
+  Location: %s:%d
+
+[Local ranks exceed ofi contexts]
+Number of local ranks exceed the number of available OFI contexts in %s
+provider and we cannot provision enough contexts for each rank. Try disabling
+Scalable Endpoint feature.
+
+  Local host: %s
+  Location: %s:%d
+
+[Ctxts exceeded available]
+User requested for more than available contexts from provider. Limiting
+to max allowed (%d). Contexts will be re used in round-robin fashion if there
+are more threads than the available contexts.
+
+  Local host: %s
+  Location: %s:%d
+
+[modex failed]
+The OFI MTL was not able to find endpoint information for a remote
+endpoint.  Most likely, this means that the remote process was unable
+to initialize the Libfabric NIC correctly.  This error is not
+recoverable and your application is likely to abort.
+
+  Local host: %s
+  Remote host: %s
+  Error: %s (%d)
 [message too big]
 Message size %llu bigger than supported by selected transport. Max = %llu

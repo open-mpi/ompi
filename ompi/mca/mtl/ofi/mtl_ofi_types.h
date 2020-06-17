@@ -19,6 +19,19 @@ BEGIN_C_DECLS
 /**
  * MTL Module Interface
  */
+
+typedef struct mca_mtl_ofi_context_t {
+    /* Transmit and receive contexts */
+    struct fid_ep *tx_ep;
+    struct fid_ep *rx_ep;
+
+    /* Completion queue */
+    struct fid_cq *cq;
+
+    /* Thread locking */
+    opal_mutex_t context_lock;
+} mca_mtl_ofi_context_t;
+
 typedef struct mca_mtl_ofi_module_t {
     mca_mtl_base_module_t base;
 
@@ -31,11 +44,19 @@ typedef struct mca_mtl_ofi_module_t {
     /** Address vector handle */
     struct fid_av *av;
 
-    /** Completion queue handle */
-    struct fid_cq *cq;
+    /* Multi-threaded Application flag */
+    bool mpi_thread_multiple;
 
-    /** Endpoint to communicate on */
-    struct fid_ep *ep;
+    /* Scalable Endpoint attributes */
+    struct fid_ep *sep;                 /* Endpoint object */
+    mca_mtl_ofi_context_t *ofi_ctxt;    /* OFI contexts */
+    int threshold_comm_context_id;      /* Set threshold communicator ID */
+    int *comm_to_context;               /* Map communicator ID to context */
+    int rx_ctx_bits;                    /* Bits used for RX context */
+    int total_ctxts_used;               /* Total number of contexts used */
+    int enable_sep;                     /* MCA to enable/disable SEP feature */
+    int thread_grouping;                /* MCA for thread grouping feature */
+    int num_ofi_contexts;               /* MCA for number of contexts to use */
 
     /** Endpoint name length */
     size_t epnamelen;
@@ -71,6 +92,9 @@ typedef struct mca_mtl_ofi_module_t {
     unsigned long long sync_send_ack;
     unsigned long long sync_proto_mask;
 
+    /** Optimized function Symbol Tables **/
+    struct ompi_mtl_ofi_symtable sym_table;
+
 } mca_mtl_ofi_module_t;
 
 extern mca_mtl_ofi_module_t ompi_mtl_ofi;
@@ -79,6 +103,19 @@ typedef struct mca_mtl_ofi_component_t {
     /** Base MTL component */
     mca_mtl_base_component_2_0_0_t super;
 } mca_mtl_ofi_component_t;
+
+typedef enum {
+    OFI_REGULAR_EP  = 0,
+    OFI_SCALABLE_EP,
+} mca_mtl_ofi_ep_type;
+
+/*
+ * Define upper limit for number of events read from a CQ.
+ * Setting this to 100 as this was deemed optimal from empirical data.
+ * If one wants to read lesser number of events from the CQ, the MCA
+ * variable can be used.
+ */
+#define MTL_OFI_MAX_PROG_EVENT_COUNT    100
 
 /*OFI TAG:
  * Define 3 different OFI tag distributions:
@@ -89,12 +126,15 @@ typedef struct mca_mtl_ofi_component_t {
  * More details of the tags are in the README file (mtl_ofi_tag_mode).
 */
 
+#define MTL_OFI_MINIMUM_CID_BITS        (8)
+
 /* Support FI_REMOTE_CQ_DATA, send the source rank in the CQ data (4 Bytes is the minimum)
  *  01234567 01234567 01234567 012345  67  01234567 01234567 01234567 01234567
  *                                   |    |
  *           context_id              |prot|          message tag
  */
 #define MTL_OFI_PROTO_BIT_COUNT         (2)
+#define MTL_OFI_HIGHEST_TAG_BIT         (0x8000000000000000ULL)
 
 #define MTL_OFI_CID_MASK_DATA           (0xFFFFFFFC00000000ULL)
 #define MTL_OFI_CID_BIT_COUNT_DATA      (30)

@@ -1,6 +1,6 @@
 dnl -*- shell-script -*-
 dnl
-dnl Copyright (c) 2015-2019 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2015-2020 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2016-2017 Los Alamos National Security, LLC. All rights
 dnl                         reserved.
 dnl $COPYRIGHT$
@@ -9,6 +9,45 @@ dnl Additional copyrights may follow
 dnl
 dnl $HEADER$
 dnl
+
+dnl
+dnl OPAL_CHECK_OFI_VERSION_GE
+dnl
+dnl Check that the OFI API version number is >= a specific value.
+dnl
+dnl $1: version number to compare, in the form of "major,minor"
+dnl     (without quotes) -- i.e., a single token representing the
+dnl     arguments to FI_VERSION()
+dnl $2: action if OFI API version is >= $1
+dnl $3: action if OFI API version is < $1
+AC_DEFUN([OPAL_CHECK_OFI_VERSION_GE],[
+    OPAL_VAR_SCOPE_PUSH([opal_ofi_ver_ge_save_CPPFLAGS opal_ofi_ver_ge_happy])
+
+    AC_MSG_CHECKING([if OFI API version number is >= $1])
+    opal_ofi_ver_ge_save_CPPFLAGS=$CPPFLAGS
+    CPPFLAGS=$opal_ofi_CPPFLAGS
+
+    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <rdma/fabric.h>]],
+[[
+#if !defined(FI_MAJOR_VERSION)
+#error "we cannot check the version -- sad panda"
+#elif FI_VERSION_LT(FI_VERSION(FI_MAJOR_VERSION, FI_MINOR_VERSION), FI_VERSION($1))
+#error "version is too low -- nopes"
+#endif
+]])],
+                      [opal_ofi_ver_ge_happy=1],
+                      [opal_ofi_ver_ge_happy=0])
+
+    AS_IF([test $opal_ofi_ver_ge_happy -eq 1],
+          [AC_MSG_RESULT([yes])
+           $2],
+          [AC_MSG_RESULT([no])
+           $3])
+
+    CPPFLAGS=$opal_ofi_ver_ge_save_CPPFLAGS
+
+    OPAL_VAR_SCOPE_POP
+])dnl
 
 dnl
 dnl _OPAL_CHECK_OFI
@@ -50,10 +89,11 @@ AC_DEFUN([_OPAL_CHECK_OFI],[
     OPAL_CHECK_WITHDIR([ofi-libdir], [$with_ofi_libdir],
                        [libfabric.*])
 
-    OPAL_VAR_SCOPE_PUSH([opal_check_ofi_save_CPPFLAGS opal_check_ofi_save_LDFLAGS opal_check_ofi_save_LIBS])
+    OPAL_VAR_SCOPE_PUSH([opal_check_ofi_save_CPPFLAGS opal_check_ofi_save_LDFLAGS opal_check_ofi_save_LIBS opal_check_fi_info_pci])
     opal_check_ofi_save_CPPFLAGS=$CPPFLAGS
     opal_check_ofi_save_LDFLAGS=$LDFLAGS
     opal_check_ofi_save_LIBS=$LIBS
+    opal_check_fi_info_pci=0
 
     opal_ofi_happy=yes
     AS_IF([test "$with_ofi" = "no"],
@@ -80,6 +120,16 @@ AC_DEFUN([_OPAL_CHECK_OFI],[
                               [$opal_ofi_libdir],
                               [],
                               [opal_ofi_happy=no])])
+
+    AS_IF([test $opal_ofi_happy = yes],
+          [AC_CHECK_MEMBER([struct fi_info.nic],
+                           [opal_check_fi_info_pci=1],
+                           [opal_check_fi_info_pci=0],
+                           [[#include "$with_ofi/include/rdma/fabric.h"]])])
+
+    AC_DEFINE_UNQUOTED([OPAL_OFI_PCI_DATA_AVAILABLE],
+                       [$opal_check_fi_info_pci],
+                       [check if pci data is available in ofi])
 
     CPPFLAGS=$opal_check_ofi_save_CPPFLAGS
     LDFLAGS=$opal_check_ofi_save_LDFLAGS

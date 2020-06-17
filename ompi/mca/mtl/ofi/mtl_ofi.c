@@ -23,12 +23,12 @@ mca_mtl_ofi_module_t ompi_mtl_ofi = {
         ompi_mtl_ofi_del_procs,
         ompi_mtl_ofi_finalize,
 
-        ompi_mtl_ofi_send,
-        ompi_mtl_ofi_isend,
-        ompi_mtl_ofi_irecv,
-        ompi_mtl_ofi_iprobe,
-        ompi_mtl_ofi_imrecv,
-        ompi_mtl_ofi_improbe,
+         NULL,
+         NULL,
+         NULL,
+         NULL,
+         ompi_mtl_ofi_imrecv,
+         NULL,
 
         ompi_mtl_ofi_cancel,
         ompi_mtl_ofi_add_comm,
@@ -98,9 +98,10 @@ ompi_mtl_ofi_add_procs(struct mca_mtl_base_module_t *mtl,
                               (void**)&ep_name,
                               &size);
         if (OMPI_SUCCESS != ret) {
-            opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
-                                "%s:%d: modex_recv failed: %d\n",
-                                __FILE__, __LINE__, ret);
+            opal_show_help("help-mtl-ofi.txt", "modex failed",
+                           true, ompi_process_info.nodename,
+			   procs[i]->super.proc_hostname,
+			   opal_strerror(ret), ret);
             goto bail;
         }
         memcpy(&ep_names[i*namelen], ep_name, namelen);
