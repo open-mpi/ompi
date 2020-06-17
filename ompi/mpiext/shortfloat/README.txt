@@ -23,3 +23,13 @@ that of MPICH.
 This extension is enabled only if the C compiler supports 'short float'
 or '_Float16', or the '--enable-alt-short-float=TYPE' option is passed
 to the configure script.
+
+NOTE: The Clang 6.0.x and 7.0.x compilers support the "_Float16" type
+(via software emulation), but require an additional linker flag to
+function properly.  If you wish to enable Clang 6.0.x or 7.0.x's
+software emulation of _Float16, use the following CLI options to Open
+MPI configure script:
+
+    ./configure \
+        LDFLAGS=--rtlib=compiler-rt \
+        --with-wrapper-ldflags=--rtlib=compiler-rt ...
