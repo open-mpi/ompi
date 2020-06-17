@@ -1,26 +1,39 @@
 #!/bin/sh
+# Copyright (c) 2020 Cisco Systems, Inc.  All rights reserved.
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
 
 retval=-1
+argv=$*
 
-progname="`basename $*`"
+set $*
+while shift; do
+    if test "$1" = "--test-name"; then
+        progname=`basename $2`
+        break
+    fi
+done
 echo "--> Testing $progname"
 
 for threads in 1 2 4 5 8 ; do
-    $* $threads
+    $argv $threads
     result=$?
     if test "$result" = "0" ; then
        echo "    - $threads threads: Passed"
-       if test "$retval" = "-1" ; then
+       if test $retval -eq -1 ; then
        	  retval=0
        fi
     elif test "$result" = "77" ; then
        echo "    - $threads threads: Skipped"
-       if test "$retval" = "-1" ; then
+       if test $retval -eq -1 ; then
        	  retval=77
        fi
     else
        echo "    - $threads threads: Failed"
-       retval="$result"
+       retval=$result
     fi
 done
 
