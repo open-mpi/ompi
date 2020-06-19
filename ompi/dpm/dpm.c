@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2017 The University of Tennessee and The University
+ * Copyright (c) 2004-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -660,7 +660,8 @@ static int dpm_convert(opal_list_t *infos,
                        char *infokey,
                        char *option,
                        char *directive,
-                       char *modifier)
+                       char *modifier,
+                       bool deprecated)
 {
     opal_info_item_t *iptr;
     char *ck, *ptr, *help_str;
@@ -758,9 +759,11 @@ static int dpm_convert(opal_list_t *infos,
     opal_list_append(infos, &iptr->super);
 
     /* alert them */
-    opal_asprintf(&help_str, "Key: %s Value: %s", option, ptr);
-    opal_show_help("help-dpm.txt", "deprecated-converted", true,
-                   infokey, help_str);
+    if(deprecated) {
+        opal_asprintf(&help_str, "Key: %s Value: %s", option, ptr);
+        opal_show_help("help-dpm.txt", "deprecated-converted", true,
+                       infokey, help_str);
+    }
     free(help_str);
     free(ptr);
 
@@ -803,8 +806,15 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
 #endif
 
     /* parse the info object */
-    /* check potentially for:
+    /* check potentially for
+      Standard keys:
+       - "arch": desired architecture
+       - "wdir": directory, where executable can be found
+       - "path": list of directories where to look for the executable
+       - "file": filename, where additional information is provided.
+       - "soft": see page 92 of MPI-2.
        - "host": desired host where to spawn the processes
+      Non-standard keys:
        - "hostfile": hostfile containing hosts where procs are
        to be spawned
        - "add-host": add the specified hosts to the known list
@@ -818,11 +828,6 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
        - "ompi_prefix": the path to the root of the directory tree where ompi
        executables and libraries can be found on all nodes
        used to spawn these procs
-       - "arch": desired architecture
-       - "wdir": directory, where executable can be found
-       - "path": list of directories where to look for the executable
-       - "file": filename, where additional information is provided.
-       - "soft": see page 92 of MPI-2.
        - "mapper": indicate the mapper to be used for the job
        - "display_map": display the map of the spawned job
        - "npernode": number of procs/node to spawn
@@ -835,7 +840,6 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
        - "ompi_preload_files": move specified files to nodes prior to execution
        - "ompi_non_mpi": spawned job will not call MPI_Init
        - "ompi_param": list of MCA params to be in the spawned job's environment
-       - "env": newline (\n) delimited list of envar values to be passed to spawned procs
     */
 
     /* setup the job object */
@@ -907,12 +911,12 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
             }
 #endif
 
+            /* check for standard form keys, do not deprecate they are part of
+             * MPI standard ch. 10.3.4 */
+
             /* check for 'host' */
             ompi_info_get (array_of_info[i], "host", sizeof(host) - 1, host, &flag);
             if ( flag ) {
-                /* deprecate --> PMIX_PERSONALITY */
-                opal_show_help("help-dpm.txt", "deprecated-converted", true,
-                                "host", "PMIX_HOST");
                 info = OBJ_NEW(opal_info_item_t);
                 PMIX_INFO_LOAD(&info->info, PMIX_HOST, host, PMIX_STRING);
                 opal_list_append(&app_info, &info->super);
@@ -936,12 +940,46 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
             }
 #endif
 
+            /* check for 'wdir' */
+            ompi_info_get (array_of_info[i], "wdir", sizeof(cwd) - 1, cwd, &flag);
+            if ( flag ) {
+                info = OBJ_NEW(opal_info_item_t);
+                PMIX_INFO_LOAD(&info->info, PMIX_WDIR, cwd, PMIX_STRING);
+                opal_list_append(&app_info, &info->super);
+                have_wdir = 1;
+            }
+            ompi_info_get (array_of_info[i], "PMIX_WDIR", sizeof(cwd) - 1, cwd, &flag);
+            if ( flag ) {
+                info = OBJ_NEW(opal_info_item_t);
+                PMIX_INFO_LOAD(&info->info, PMIX_WDIR, cwd, PMIX_STRING);
+                opal_list_append(&app_info, &info->super);
+                have_wdir = 1;
+                continue;
+            }
+#if PMIX_NUMERIC_VERSION >= 0x00040000
+            checkkey = PMIx_Get_attribute_string("PMIX_WDIR");
+            ompi_info_get (array_of_info[i], checkkey, sizeof(cwd) - 1, cwd, &flag);
+            if ( flag ) {
+                info = OBJ_NEW(opal_info_item_t);
+                PMIX_INFO_LOAD(&info->info, PMIX_WDIR, cwd, PMIX_STRING);
+                opal_list_append(&app_info, &info->super);
+                have_wdir = 1;
+                continue;
+            }
+#endif
+
+            /* 'path', 'arch', 'file', 'soft'  -- to be implemented */
+
+            /* non-standard keys
+             * Keys that correspond to prun/mpiexec parameters
+             * do not deprecate PMIX unprefixed forms to remain identical 
+             * to the command line parameter;
+             * Keys that are not corresponding to an mpiexec parameter are 
+             * deprecated in the non-prefixed form */
+
             /* check for 'hostfile' */
             ompi_info_get (array_of_info[i], "hostfile", sizeof(host) - 1, host, &flag);
             if ( flag ) {
-                /* deprecate --> PMIX_HOSTFILE */
-                opal_show_help("help-dpm.txt", "deprecated-converted", true,
-                                "hostfile", "PMIX_HOSTFILE");
                 info = OBJ_NEW(opal_info_item_t);
                 PMIX_INFO_LOAD(&info->info, PMIX_HOSTFILE, host, PMIX_STRING);
                 opal_list_append(&app_info, &info->super);
@@ -1058,8 +1096,6 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
             }
 #endif
 
-            /* 'path', 'arch', 'file', 'soft'  -- to be implemented */
-
             /* check for 'ompi_prefix' (OMPI-specific -- to effect the same
              * behavior as --prefix option to orterun)
              *
@@ -1089,37 +1125,6 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
                 info = OBJ_NEW(opal_info_item_t);
                 PMIX_INFO_LOAD(&info->info, PMIX_PREFIX, prefix, PMIX_STRING);
                 opal_list_append(&job_info, &info->super);
-                continue;
-            }
-#endif
-
-            /* check for 'wdir' */
-            ompi_info_get (array_of_info[i], "wdir", sizeof(cwd) - 1, cwd, &flag);
-            if ( flag ) {
-                /* deprecate --> PMIX_WDIR */
-                opal_show_help("help-dpm.txt", "deprecated-converted", true,
-                                "wdir", "PMIX_WDIR");
-                info = OBJ_NEW(opal_info_item_t);
-                PMIX_INFO_LOAD(&info->info, PMIX_WDIR, cwd, PMIX_STRING);
-                opal_list_append(&app_info, &info->super);
-                have_wdir = 1;
-            }
-            ompi_info_get (array_of_info[i], "PMIX_WDIR", sizeof(cwd) - 1, cwd, &flag);
-            if ( flag ) {
-                info = OBJ_NEW(opal_info_item_t);
-                PMIX_INFO_LOAD(&info->info, PMIX_WDIR, cwd, PMIX_STRING);
-                opal_list_append(&app_info, &info->super);
-                have_wdir = 1;
-                continue;
-            }
-#if PMIX_NUMERIC_VERSION >= 0x00040000
-            checkkey = PMIx_Get_attribute_string("PMIX_WDIR");
-            ompi_info_get (array_of_info[i], checkkey, sizeof(cwd) - 1, cwd, &flag);
-            if ( flag ) {
-                info = OBJ_NEW(opal_info_item_t);
-                PMIX_INFO_LOAD(&info->info, PMIX_WDIR, cwd, PMIX_STRING);
-                opal_list_append(&app_info, &info->super);
-                have_wdir = 1;
                 continue;
             }
 #endif
@@ -1156,7 +1161,7 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
             /* check for 'display_map' - a job-level key */
             ompi_info_get_bool(array_of_info[i], "display_map", &local_spawn, &flag);
             if ( flag ) {
-                rc = dpm_convert(&job_info, "display_map", PMIX_MAPBY, NULL, "DISPLAYMAP");
+                rc = dpm_convert(&job_info, "display_map", PMIX_MAPBY, NULL, "DISPLAYMAP", true);
                 if (OMPI_SUCCESS != rc) {
                     OPAL_LIST_DESTRUCT(&job_info);
                     OPAL_LIST_DESTRUCT(&app_info);
@@ -1171,7 +1176,7 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
             ompi_info_get (array_of_info[i], "npernode", sizeof(slot_list) - 1, slot_list, &flag);
             if ( flag ) {
                 opal_asprintf(&tmp, "PPR:%s:NODE", slot_list);
-                rc = dpm_convert(&job_info, "npernode", PMIX_MAPBY, tmp, NULL);
+                rc = dpm_convert(&job_info, "npernode", PMIX_MAPBY, tmp, NULL, true);
                 free(tmp);
                 if (OMPI_SUCCESS != rc) {
                     OPAL_LIST_DESTRUCT(&job_info);
@@ -1184,7 +1189,7 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
             }
             ompi_info_get (array_of_info[i], "pernode", sizeof(slot_list) - 1, slot_list, &flag);
             if ( flag ) {
-                rc = dpm_convert(&job_info, "pernode", PMIX_MAPBY, "PPR:1:NODE", NULL);
+                rc = dpm_convert(&job_info, "pernode", PMIX_MAPBY, "PPR:1:NODE", NULL, true);
                 free(tmp);
                 if (OMPI_SUCCESS != rc) {
                     OPAL_LIST_DESTRUCT(&job_info);
@@ -1215,7 +1220,7 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
                     opal_progress_event_users_decrement();
                     return MPI_ERR_SPAWN;
                 }
-                rc = dpm_convert(&job_info, "ppr", PMIX_MAPBY, slot_list, NULL);
+                rc = dpm_convert(&job_info, "ppr", PMIX_MAPBY, slot_list, NULL, true);
                 free(tmp);
                 if (OMPI_SUCCESS != rc) {
                     OPAL_LIST_DESTRUCT(&job_info);
@@ -1230,7 +1235,7 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
             /* check for 'map_by' - job-level key */
             ompi_info_get(array_of_info[i], "map_by", sizeof(slot_list) - 1, slot_list, &flag);
             if ( flag ) {
-                rc = dpm_convert(&job_info, "map_by", PMIX_MAPBY, slot_list, NULL);
+                rc = dpm_convert(&job_info, "map_by", PMIX_MAPBY, slot_list, NULL, false);
                 free(tmp);
                 if (OMPI_SUCCESS != rc) {
                     OPAL_LIST_DESTRUCT(&job_info);
@@ -1262,7 +1267,7 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
             /* check for 'rank_by' - job-level key */
             ompi_info_get(array_of_info[i], "rank_by", sizeof(slot_list) - 1, slot_list, &flag);
             if ( flag ) {
-                rc = dpm_convert(&job_info, "rank_by", PMIX_RANKBY, slot_list, NULL);
+                rc = dpm_convert(&job_info, "rank_by", PMIX_RANKBY, slot_list, NULL, false);
                 free(tmp);
                 if (OMPI_SUCCESS != rc) {
                     OPAL_LIST_DESTRUCT(&job_info);
@@ -1294,7 +1299,7 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
             /* check for 'bind_to' - job-level key */
             ompi_info_get(array_of_info[i], "bind_to", sizeof(slot_list) - 1, slot_list, &flag);
             if ( flag ) {
-                rc = dpm_convert(&job_info, "bind_to", PMIX_BINDTO, slot_list, NULL);
+                rc = dpm_convert(&job_info, "bind_to", PMIX_BINDTO, slot_list, NULL, false);
                 free(tmp);
                 if (OMPI_SUCCESS != rc) {
                     OPAL_LIST_DESTRUCT(&job_info);
