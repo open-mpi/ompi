@@ -110,12 +110,16 @@ int ompi_osc_ucx_start(struct ompi_group_t *group, int assert, struct ompi_win_t
 
     ret = ompi_comm_group(module->comm, &win_group);
     if (ret != OMPI_SUCCESS) {
+        free(ranks_in_grp);
+        free(ranks_in_win_grp);
         return OMPI_ERROR;
     }
 
     ret = ompi_group_translate_ranks(module->start_group, size, ranks_in_grp,
                                      win_group, ranks_in_win_grp);
     if (ret != OMPI_SUCCESS) {
+        free(ranks_in_grp);
+        free(ranks_in_win_grp);
         return OMPI_ERROR;
     }
 
@@ -215,6 +219,11 @@ int ompi_osc_ucx_post(struct ompi_group_t *group, int assert, struct ompi_win_t 
         int *ranks_in_grp = NULL, *ranks_in_win_grp = NULL;
         int myrank = ompi_comm_rank(module->comm);
 
+        ret = ompi_comm_group(module->comm, &win_group);
+        if (ret != OMPI_SUCCESS) {
+            return OMPI_ERROR;
+        }
+
         size = ompi_group_size(module->post_group);
         ranks_in_grp = malloc(sizeof(int) * size);
         ranks_in_win_grp = malloc(sizeof(int) * ompi_comm_size(module->comm));
@@ -223,15 +232,11 @@ int ompi_osc_ucx_post(struct ompi_group_t *group, int assert, struct ompi_win_t 
             ranks_in_grp[i] = i;
         }
 
-        ret = ompi_comm_group(module->comm, &win_group);
-        if (ret != OMPI_SUCCESS) {
-            return OMPI_ERROR;
-        }
-
         ret = ompi_group_translate_ranks(module->post_group, size, ranks_in_grp,
                                          win_group, ranks_in_win_grp);
         if (ret != OMPI_SUCCESS) {
-            return OMPI_ERROR;
+            ret = OMPI_ERROR;
+            goto cleanup;
         }
 
         for (i = 0; i < size; i++) {
@@ -243,7 +248,8 @@ int ompi_osc_ucx_post(struct ompi_group_t *group, int assert, struct ompi_win_t 
                                             1, ranks_in_win_grp[i], &result,
                                             sizeof(result), remote_addr);
             if (ret != OMPI_SUCCESS) {
-                return OMPI_ERROR;
+                ret = OMPI_ERROR;
+                goto cleanup;
             }
 
             curr_idx = result & (OMPI_OSC_UCX_POST_PEER_MAX - 1);
@@ -256,7 +262,8 @@ int ompi_osc_ucx_post(struct ompi_group_t *group, int assert, struct ompi_win_t 
                                                  myrank + 1, &result, sizeof(result),
                                                  remote_addr);
                 if (ret != OMPI_SUCCESS) {
-                    return OMPI_ERROR;
+                    ret = OMPI_ERROR;
+                    goto cleanup;
                 }
 
                 if (result == 0)
@@ -277,9 +284,11 @@ int ompi_osc_ucx_post(struct ompi_group_t *group, int assert, struct ompi_win_t 
             } while (1);
         }
 
+cleanup:
         free(ranks_in_grp);
         free(ranks_in_win_grp);
         ompi_group_free(&win_group);
+        if (OMPI_SUCCESS != ret) return ret;
     }
 
     module->epoch_type.exposure = POST_WAIT_EPOCH;
