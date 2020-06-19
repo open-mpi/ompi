@@ -688,6 +688,9 @@ ompi_coll_base_reduce_intra_basic_linear(const void *sbuf, void *rbuf, int count
         if (NULL != free_buffer) {
             free(free_buffer);
         }
+        if (NULL != inplace_temp_free) {
+            free(inplace_temp_free);
+        }
         return err;
     }
 
@@ -703,6 +706,9 @@ ompi_coll_base_reduce_intra_basic_linear(const void *sbuf, void *rbuf, int count
             if (MPI_SUCCESS != err) {
                 if (NULL != free_buffer) {
                     free(free_buffer);
+                }
+                if (NULL != inplace_temp_free) {
+                    free(inplace_temp_free);
                 }
                 return err;
             }
