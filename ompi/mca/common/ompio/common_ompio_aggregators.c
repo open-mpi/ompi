@@ -1333,14 +1333,12 @@ int mca_common_ompio_prepare_to_group(ompio_file_t *fh,
        if (NULL == aggr_bytes_per_group_tmp) {
           opal_output (1, "OUT OF MEMORY\n");
           ret = OMPI_ERR_OUT_OF_RESOURCE;
-          free(end_offsets_tmp);
           goto exit;
        }
     decision_list_tmp = (int* )malloc (fh->f_init_num_aggrs * sizeof(int));
     if (NULL == decision_list_tmp) {
         opal_output (1, "OUT OF MEMORY\n");
         ret = OMPI_ERR_OUT_OF_RESOURCE;
-        free(end_offsets_tmp);
         if (NULL != aggr_bytes_per_group_tmp) {
             free(aggr_bytes_per_group_tmp);
         }
