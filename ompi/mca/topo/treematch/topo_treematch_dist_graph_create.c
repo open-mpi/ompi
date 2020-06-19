@@ -204,6 +204,7 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
          * and create a duplicate of the original communicator */
         free(vpids);
         free(colors);
+        free(lindex_to_grank);
         goto fallback; /* return with success */
     }
     /* compute local roots ranks in comm_old */
@@ -250,6 +251,7 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
     }
     if( (0 == num_objs_in_node) || (0 == num_pus_in_node) ) {  /* deal with bozo cases: COVERITY 1418505 */
         free(colors);
+        free(lindex_to_grank);
         goto fallback; /* return with success */
     }
     /* Check for oversubscribing */
@@ -288,6 +290,7 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
             object = hwloc_get_obj_by_depth(opal_hwloc_topology, effective_depth, obj_rank);
             if( NULL == object) {
                 free(colors);
+                free(lindex_to_grank);
                 hwloc_bitmap_free(set);
                 goto fallback;  /* return with success */
             }
@@ -315,6 +318,7 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
         OPAL_OUTPUT_VERBOSE((10, ompi_topo_base_framework.framework_output,
                              "Oversubscribing PUs resources => Rank Reordering Impossible \n"));
         free(colors);
+        free(lindex_to_grank);
         hwloc_bitmap_free(set);
         goto fallback;  /* return with success */
     }
