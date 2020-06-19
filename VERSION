@@ -15,8 +15,8 @@
 # major, minor, and release are generally combined in the form
 # <major>.<minor>.<release>.
 
-major=4
-minor=1
+major=5
+minor=0
 release=0
 
 # greek is generally used for alpha or beta release tags.  If it is
