@@ -979,6 +979,7 @@ int ompi_attr_copy_all(ompi_attribute_type_t type, void *old_object,
         /* Did the callback return non-MPI_SUCCESS? */
         if (0 != err) {
             ret = err;
+            OBJ_RELEASE(new_attr);
             goto out;
         }
 
