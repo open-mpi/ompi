@@ -290,6 +290,23 @@ ompi_errhandler_t *ompi_errhandler_create(ompi_errhandler_type_t object_type,
   return new_errhandler;
 }
 
+/* helper to move the error report back from the RTE thread to the MPI thread */
+typedef struct ompi_errhandler_event_s {
+    opal_event_t super;
+    opal_process_name_t procname;
+    int status;
+} ompi_errhandler_event_t;
+
+static void *ompi_errhandler_event_cb(int fd, int flags, void *context) {
+    ompi_errhandler_event_t *event = (ompi_errhandler_event_t*) context;
+    int status = event->status;
+    opal_event_del(&event->super);
+    free(event);
+    /* our default action is to abort */
+    OMPI_ERRHANDLER_NOHANDLE_INVOKE(status, "PMIx Event notification");
+    return NULL;
+}
+
 /* registration callback */
 void ompi_errhandler_registration_callback(int status,
                                            size_t errhandler_ref,
@@ -312,13 +329,37 @@ void ompi_errhandler_callback(size_t refid, pmix_status_t status,
                               pmix_event_notification_cbfunc_fn_t cbfunc,
                               void *cbdata)
 {
+    int rc;
+    /* an error has been found, report to the MPI layer and let it take
+     * further action. */
+    /* transition this from the RTE thread to the MPI progress engine */
+    ompi_errhandler_event_t *event = malloc(sizeof(*event));
+    if(NULL == event) {
+        OMPI_ERROR_LOG(OMPI_ERR_OUT_OF_RESOURCE);
+        goto error;
+    }
+    OPAL_PMIX_CONVERT_PROCT(rc, &event->procname, (pmix_proc_t*)source);
+    if(OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
+        OMPI_ERROR_LOG(rc);
+        free(event);
+        goto error;
+    }
+    event->status = status;
+    opal_event_set(opal_sync_event_base, &event->super, -1, OPAL_EV_READ,
+                   ompi_errhandler_event_cb, event);
+    opal_event_active(&event->super, OPAL_EV_READ, 1);
     /* tell the event chain engine to go no further - we
      * will handle this */
     if (NULL != cbfunc) {
         cbfunc(PMIX_EVENT_ACTION_COMPLETE, NULL, 0, NULL, NULL, cbdata);
     }
-    /* our default action is to abort */
-    OMPI_ERRHANDLER_NOHANDLE_INVOKE(status, "PMIx Event notification");
+    return;
+
+error:
+    if (NULL != cbfunc) {
+        /* We can't handle this, let the default action abort. */
+        cbfunc(PMIX_EVENT_NO_ACTION_TAKEN, NULL, 0, NULL, NULL, cbdata);
+    }
 }
 
 /**************************************************************************

@@ -339,19 +339,11 @@ struct ompi_request_t;
   }
 
 /* Same as OMPI_ERRHANDLER_RETURN for non-handle attached errors */
-#define OMPI_ERRHANDLER_NOHANDLE_RETURN(rc, err_code, message) \
+#define OMPI_ERRHANDLER_NOHANDLE_RETURN(rc, err_code, message) {\
+  OMPI_ERRHANDLER_NOHANDLE_CHECK(rc, err_code, message) \
   OPAL_CR_EXIT_LIBRARY() \
-  if ( OPAL_UNLIKELY(OMPI_SUCCESS != rc) ) { \
-    int __mpi_err_code = ompi_errcode_get_mpi_code(err_code);         \
-    ompi_errhandler_invoke(NULL, \
-                           NULL, \
-                           -1, \
-                           (__mpi_err_code), \
-                           (message)); \
-    return (__mpi_err_code); \
-  } else { \
-    return MPI_SUCCESS; \
-  }
+  return MPI_SUCCESS; \
+}
 
   /**
    * Initialize the error handler interface.
