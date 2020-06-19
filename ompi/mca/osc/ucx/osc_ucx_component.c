@@ -538,14 +538,7 @@ select_unlock:
 error:
     if (module->disp_units) free(module->disp_units);
     if (module->comm) ompi_comm_free(&module->comm);
-    /* We update the modules count and (if need) registering a callback right
-     * prior to memory allocation for the module.
-     * So we use it as an indirect sign here
-     */
-    if (module) {
-        free(module);
-        ompi_osc_ucx_unregister_progress();
-    }
+    free(module);
 
 error_nomem:
     if (env_initialized == true) {
@@ -553,6 +546,8 @@ error_nomem:
         OBJ_DESTRUCT(&mca_osc_ucx_component.requests);
         mca_osc_ucx_component.env_initialized = false;
     }
+
+    ompi_osc_ucx_unregister_progress();
     return ret;
 }
 

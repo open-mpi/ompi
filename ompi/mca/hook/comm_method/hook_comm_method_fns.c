@@ -789,8 +789,7 @@ ompi_report_comm_methods(int called_from_location) // 1 = from init, 2 = from fi
                     if (majority_method_offhost == -1) {
                         majority_method_offhost = this_method;
                     }
-                    if (majority_method_offhost != -1 &&
-                        this_method != majority_method_offhost)
+                    if (this_method != majority_method_offhost)
                     {
                         uniformity_offhost = 0;
                     }
