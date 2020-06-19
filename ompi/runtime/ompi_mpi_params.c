@@ -75,7 +75,7 @@ bool ompi_async_mpi_finalize = false;
 uint32_t ompi_add_procs_cutoff = OMPI_ADD_PROCS_CUTOFF_DEFAULT;
 bool ompi_mpi_dynamics_enabled = true;
 
-bool ompi_mpi_errors_mpi3 = true;
+bool ompi_mpi_compat_mpi3 = false;
 
 char *ompi_mpi_spc_attach_string = NULL;
 bool ompi_mpi_spc_dump_enabled = false;
@@ -326,13 +326,13 @@ int ompi_mpi_register_params(void)
                                       MCA_BASE_VAR_SYN_FLAG_DEPRECATED);
     }
 
-    ompi_mpi_errors_mpi3 = true;
-    (void) mca_base_var_register("ompi", "mpi", NULL, "errors_mpi3",
-                                 "A boolean value for whether errors in operations without a handle are raised on (true) MPI_COMM_WORLD (MPI-3 behavior) or (false) MPI_COMM_SELF (MPI-4 behavior).",
+    ompi_mpi_compat_mpi3 = false;
+    (void) mca_base_var_register("ompi", "mpi", NULL, "compat_mpi3",
+                                 "A boolean value for whether Open MPI operates in MPI-3 compatibility mode; this changes the following behavior: in operations without a handle, errors are raised on (true) MPI_COMM_WORLD (MPI-3 behavior) or (false) MPI_COMM_SELF (MPI-4 behavior).",
                                  MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
                                  OPAL_INFO_LVL_9,
                                  MCA_BASE_VAR_SCOPE_READONLY,
-                                 &ompi_mpi_errors_mpi3);
+                                 &ompi_mpi_compat_mpi3);
 
     ompi_mpi_spc_attach_string = NULL;
     (void) mca_base_var_register("ompi", "mpi", NULL, "spc_attach",

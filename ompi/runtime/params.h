@@ -115,13 +115,16 @@ OMPI_DECLSPEC extern bool ompi_mpi_abort_print_stack;
 OMPI_DECLSPEC extern int ompi_mpi_abort_delay;
 
 /**
- * Whether errors in operations without a handle are raised on 
- * MPI_COMM_WORLD (MPI-3 behavior) or MPI_COMM_SELF (MPI-4 behavior).
+ * Whether we operate in MPI3 compatibility, or MPI4 mode (default).
  *
- * true: raise on MPI_COMM_WORLD
- * false: raise on MPI_COMM_SELF
- */ 
-OMPI_DECLSPEC extern bool ompi_mpi_errors_mpi3;
+ * true: use MPI3 compatibility
+ * false: use MPI4 compatibility (default)
+ *
+ * Behavioral changes:
+ *   - errors in operations without a handle are raised on MPI_COMM_WORLD (MPI-3 behavior) or MPI_COMM_SELF (MPI-4 behavior)
+ *
+ */
+OMPI_DECLSPEC extern bool ompi_mpi_compat_mpi3;
 
 /**
  * Whether sparse MPI group storage formats are supported or not.
