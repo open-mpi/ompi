@@ -123,9 +123,6 @@ void ompi_info_show_ompi_version(const char *scope)
     opal_info_out("Open MPI release date", tmp, OMPI_RELEASE_DATE);
     free(tmp);
 
-    /* show the opal version */
-    opal_info_show_opal_version(scope);
-
     tmp2 = opal_info_make_version_str(scope,
                                       MPI_VERSION, MPI_SUBVERSION,
                                       0, "", "");
