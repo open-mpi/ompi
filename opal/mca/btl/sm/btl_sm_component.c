@@ -634,18 +634,16 @@ static mca_btl_base_module_t **mca_btl_sm_component_init (int *num_btls,
 
 void mca_btl_sm_poll_handle_frag (mca_btl_sm_hdr_t *hdr, struct mca_btl_base_endpoint_t *endpoint)
 {
-    mca_btl_base_segment_t segments[2];
-    mca_btl_base_descriptor_t frag = {.des_segments = segments, .des_segment_count = 1};
-    const mca_btl_active_message_callback_t *reg;
-
     if (hdr->flags & MCA_BTL_SM_FLAG_COMPLETE) {
         mca_btl_sm_frag_complete (hdr->frag);
         return;
     }
 
-    reg = mca_btl_base_active_message_trigger + hdr->tag;
-    segments[0].seg_addr.pval = (void *) (hdr + 1);
-    segments[0].seg_len       = hdr->len;
+    const mca_btl_active_message_callback_t *reg = mca_btl_base_active_message_trigger + hdr->tag;
+    mca_btl_base_segment_t segments[2] = {[0] = {.seg_addr.pval = (void *) (hdr + 1), .seg_len = hdr->len}};
+    mca_btl_base_receive_descriptor_t frag = {.endpoint = endpoint, .des_segments = segments,
+                                              .des_segment_count = 1, .tag = hdr->frag,
+                                              .cbdata = reg->cbdata};
 
     if (hdr->flags & MCA_BTL_SM_FLAG_SINGLE_COPY) {
         mca_rcache_base_registration_t *xpmem_reg;
@@ -659,10 +657,10 @@ void mca_btl_sm_poll_handle_frag (mca_btl_sm_hdr_t *hdr, struct mca_btl_base_end
         frag.des_segment_count = 2;
 
         /* recv upcall */
-        reg->cbfunc(&mca_btl_sm.super, hdr->tag, &frag, reg->cbdata);
+        reg->cbfunc(&mca_btl_sm.super, &frag);
         sm_return_registration (xpmem_reg, endpoint);
     } else {
-        reg->cbfunc(&mca_btl_sm.super, hdr->tag, &frag, reg->cbdata);
+        reg->cbfunc(&mca_btl_sm.super, &frag);
     }
 
     if (OPAL_UNLIKELY(MCA_BTL_SM_FLAG_SETUP_FBOX & hdr->flags)) {

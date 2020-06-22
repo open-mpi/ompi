@@ -450,13 +450,12 @@ typedef struct mca_btl_base_segment_t mca_btl_base_segment_t;
 #define MCA_BTL_BASE_SEGMENT_NTOH(s)
 #endif
 /**
- * A descriptor that holds the parameters to a send/put/get
+ * @brief Descriptor to hold outgoing send messages
+ *
+ * This descriptor holds the parameters to perform a send
  * operation along w/ a callback routine that is called on
  * completion of the request.
- * Note: receive callbacks will store the incomming data segments in
- *       des_segments
  */
-
 struct mca_btl_base_descriptor_t {
     opal_free_list_item_t super;
     mca_btl_base_segment_t *des_segments;     /**< local segments */
@@ -518,6 +517,28 @@ OPAL_DECLSPEC OBJ_CLASS_DECLARATION(mca_btl_base_descriptor_t);
  * Maximum size of a BTL registration handle in bytes
  */
 #define MCA_BTL_REG_HANDLE_MAX_SIZE 256
+
+/**
+ * @brief Descriptor for incoming messages
+ *
+ * This descriptor holds the information on incoming messages. The
+ * data this descriptor describes is only valid during a callback.
+ */
+struct mca_btl_base_receive_descriptor_t {
+    /** Incoming endpoint. May be NULL if the endpoint is not readily
+     * available for this BTL. */
+    struct mca_btl_base_endpoint_t *endpoint;
+    /** Local segment data. Copy this data if it is needed after the
+     * receive callback returns. **/
+    const mca_btl_base_segment_t *des_segments;
+    /** Number of segment is des_segments */
+    size_t des_segment_count;
+    mca_btl_base_tag_t tag;
+    /** Callback data supplied at callback registration time. */
+    void *cbdata;
+};
+typedef struct mca_btl_base_receive_descriptor_t mca_btl_base_receive_descriptor_t;
+
 
 /*
  *  BTL base header, stores the tag at a minimum
@@ -581,7 +602,7 @@ typedef int (*mca_btl_base_component_progress_fn_t)(void);
 /**
  * Callback function that is called asynchronously on receipt
  * of data by the transport layer.
- * Note that the the mca_btl_base_descriptor_t is only valid within the
+ * Note that the the mca_btl_base_receive_descriptor_t is only valid within the
  * completion function, this implies that all data payload in the
  * mca_btl_base_descriptor_t must be copied out within this callback or
  * forfeited back to the BTL.
@@ -589,17 +610,12 @@ typedef int (*mca_btl_base_component_progress_fn_t)(void);
  * segments for all callbacks.
  *
  * @param[IN] btl        BTL module
- * @param[IN] tag        The active message receive callback tag value
  * @param[IN] descriptor The BTL descriptor (contains the receive payload)
- * @param[IN] cbdata     Opaque callback data
  */
 
 typedef void (*mca_btl_base_module_recv_cb_fn_t)(
-    struct mca_btl_base_module_t* btl,
-    mca_btl_base_tag_t tag,
-    mca_btl_base_descriptor_t* descriptor,
-    void* cbdata
-);
+    struct mca_btl_base_module_t *btl,
+    const mca_btl_base_receive_descriptor_t *descriptor);
 
 typedef struct mca_btl_active_message_callback_t {
     mca_btl_base_module_recv_cb_fn_t cbfunc;
@@ -1262,14 +1278,21 @@ struct mca_btl_base_module_t {
 };
 typedef struct mca_btl_base_module_t mca_btl_base_module_t;
 
+#define MCA_BTL_BASE_MAJOR_VERSION 3
+#define MCA_BTL_BASE_MINOR_VERSION 2
+#define MCA_BTL_BASE_PATCH_VERSION 0
+
 /*
- * Macro for use in modules that are of type btl v3.1.0
+ * Macro for use in modules that are of type btl v3.2.0
  */
-#define MCA_BTL_BASE_VERSION_3_1_0              \
-    OPAL_MCA_BASE_VERSION_2_1_0("btl", 3, 1, 0)
+#define MCA_BTL_BASE_VERSION_3_2_0                          \
+    OPAL_MCA_BASE_VERSION_2_1_0("btl",                      \
+                                MCA_BTL_BASE_MAJOR_VERSION, \
+                                MCA_BTL_BASE_MINOR_VERSION, \
+                                MCA_BTL_BASE_PATCH_VERSION)
 
 #define MCA_BTL_DEFAULT_VERSION(name)                       \
-    MCA_BTL_BASE_VERSION_3_1_0,                             \
+    MCA_BTL_BASE_VERSION_3_2_0,                             \
     .mca_component_name = name,                             \
     MCA_BASE_MAKE_VERSION(component, OPAL_MAJOR_VERSION, OPAL_MINOR_VERSION, \
                           OPAL_RELEASE_VERSION)
@@ -1277,7 +1300,7 @@ typedef struct mca_btl_base_module_t mca_btl_base_module_t;
 /**
  * Convinience macro for detecting the BTL interface version.
  */
-#define BTL_VERSION 310
+#define BTL_VERSION 320
 
 END_C_DECLS
 

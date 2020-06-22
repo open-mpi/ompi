@@ -68,14 +68,6 @@ extern opal_event_base_t* mca_btl_tcp_event_base;
             MCA_BTL_TCP_FRAG_RETURN(frag);                              \
         }                                                               \
     } while (0)
-#define MCA_BTL_TCP_RECV_TRIGGER_CB(frag)                               \
-    do {                                                                \
-        if( MCA_BTL_TCP_HDR_TYPE_SEND == frag->hdr.type ) {             \
-            mca_btl_active_message_callback_t* reg;                     \
-            reg = mca_btl_base_active_message_trigger + frag->hdr.base.tag; \
-            reg->cbfunc(&frag->endpoint->endpoint_btl->super, frag->hdr.base.tag, &frag->base, reg->cbdata); \
-        }                                                               \
-    } while (0)
 
 extern opal_list_t mca_btl_tcp_ready_frag_pending_queue;
 extern opal_mutex_t mca_btl_tcp_ready_frag_mutex;

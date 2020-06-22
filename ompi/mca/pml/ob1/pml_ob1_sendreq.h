@@ -512,9 +512,9 @@ mca_pml_ob1_send_request_start( mca_pml_ob1_send_request_t* sendreq )
  *  Initiate a put scheduled by the receiver.
  */
 
-void mca_pml_ob1_send_request_put( mca_pml_ob1_send_request_t* sendreq,
-                                   mca_btl_base_module_t* btl,
-                                   mca_pml_ob1_rdma_hdr_t* hdr );
+void mca_pml_ob1_send_request_put (mca_pml_ob1_send_request_t *sendreq,
+                                   mca_btl_base_module_t *btl,
+                                   const mca_pml_ob1_rdma_hdr_t *hdr);
 
 int mca_pml_ob1_send_request_put_frag(mca_pml_ob1_rdma_frag_t* frag);
 

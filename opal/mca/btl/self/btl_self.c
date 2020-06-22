@@ -15,6 +15,7 @@
  *                         reserved.
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2020      Google, LLC. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -204,12 +205,16 @@ static int mca_btl_self_send (struct mca_btl_base_module_t *btl,
                               struct mca_btl_base_descriptor_t *des,
                               mca_btl_base_tag_t tag)
 {
-    mca_btl_active_message_callback_t* reg;
+    mca_btl_active_message_callback_t *reg = mca_btl_base_active_message_trigger + tag;
+    mca_btl_base_receive_descriptor_t recv_desc = {.endpoint = endpoint,
+                                                   .des_segments = des->des_segments,
+                                                   .des_segment_count = des->des_segment_count,
+                                                   .tag = tag,
+                                                   .cbdata = reg->cbdata};
     int btl_ownership = (des->des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
 
     /* upcall */
-    reg = mca_btl_base_active_message_trigger + tag;
-    reg->cbfunc( btl, tag, des, reg->cbdata );
+    reg->cbfunc (btl, &recv_desc);
 
     /* send completion */
     if( des->des_flags & MCA_BTL_DES_SEND_ALWAYS_CALLBACK ) {

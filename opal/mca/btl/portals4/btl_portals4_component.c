@@ -15,6 +15,7 @@
  * Copyright (c) 2014      Bull SAS.  All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2020      Google, LLC. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -572,8 +573,8 @@ mca_btl_portals4_component_progress(void)
     static ptl_event_t ev;
     unsigned int which;
     mca_btl_active_message_callback_t* reg;
-    mca_btl_base_segment_t seg[2];
-    mca_btl_base_descriptor_t btl_base_descriptor;
+    mca_btl_base_segment_t seg[1];
+    mca_btl_base_receive_descriptor_t recv_descriptor = {.des_segments = seg, .des_segment_count = 1};
 
     while (true) {
         ret = PtlEQPoll(mca_btl_portals4_component.eqs_h, mca_btl_portals4_component.num_btls, 0, &ev, &which);
@@ -658,15 +659,18 @@ mca_btl_portals4_component_progress(void)
 
                 tag = (unsigned char) (ev.hdr_data);
 
-                btl_base_descriptor.des_segments = seg;
-                btl_base_descriptor.des_segment_count = 1;
                 seg[0].seg_addr.pval = ev.start;
                 seg[0].seg_len = ev.mlength;
 
                 reg = mca_btl_base_active_message_trigger + tag;
+
+                recv_descriptor.endpoint = NULL;
+                recv_descriptor.tag = tag;
+                recv_descriptor.cbdata = reg->cbdata;
+
                 OPAL_OUTPUT_VERBOSE((50, opal_btl_base_framework.framework_output,
                     "PTL_EVENT_PUT: tag=%x base_descriptor=%p cbfunc: %lx\n", tag, (void*)&btl_base_descriptor, (uint64_t)reg->cbfunc));
-                reg->cbfunc(&portals4_btl->super, tag, &btl_base_descriptor, reg->cbdata);
+                reg->cbfunc(&portals4_btl->super, &recv_descriptor);
 
                 goto done;
                 break;

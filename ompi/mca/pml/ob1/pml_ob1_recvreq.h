@@ -15,6 +15,7 @@
  *                         reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2020      Google, LLC. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -239,7 +240,7 @@ static inline void prepare_recv_req_converter(mca_pml_ob1_recv_request_t *req)
     recv_req_matched(request, hdr)
 
 static inline void recv_req_matched(mca_pml_ob1_recv_request_t *req,
-                                    mca_pml_ob1_match_hdr_t *hdr)
+                                    const mca_pml_ob1_match_hdr_t *hdr)
 {
     req->req_recv.req_base.req_ompi.req_status.MPI_SOURCE = hdr->hdr_src;
     req->req_recv.req_base.req_ompi.req_status.MPI_TAG = hdr->hdr_tag;
@@ -278,7 +279,7 @@ do {                                                                            
         uint32_t iov_count = 0;                                                   \
         size_t max_data = bytes_received;                                         \
         size_t n, offset = seg_offset;                                            \
-        mca_btl_base_segment_t* segment = segments;                               \
+        const mca_btl_base_segment_t *segment = segments;                         \
                                                                                   \
         for( n = 0; n < num_segments; n++, segment++ ) {                          \
             if(offset >= segment->seg_len) {                                      \
@@ -314,7 +315,7 @@ do {                                                                            
 void mca_pml_ob1_recv_request_progress_match(
     mca_pml_ob1_recv_request_t* req,
     struct mca_btl_base_module_t* btl,
-    mca_btl_base_segment_t* segments,
+    const mca_btl_base_segment_t* segments,
     size_t num_segments);
 
 /**
@@ -324,7 +325,7 @@ void mca_pml_ob1_recv_request_progress_match(
 void mca_pml_ob1_recv_request_progress_frag(
     mca_pml_ob1_recv_request_t* req,
     struct mca_btl_base_module_t* btl,
-    mca_btl_base_segment_t* segments,
+    const mca_btl_base_segment_t* segments,
     size_t num_segments);
 
 #if OPAL_CUDA_SUPPORT
@@ -347,7 +348,7 @@ void mca_pml_ob1_recv_request_frag_copy_finished(struct mca_btl_base_module_t* b
 void mca_pml_ob1_recv_request_progress_rndv(
     mca_pml_ob1_recv_request_t* req,
     struct mca_btl_base_module_t* btl,
-    mca_btl_base_segment_t* segments,
+    const mca_btl_base_segment_t* segments,
     size_t num_segments);
 
 /**
@@ -357,7 +358,7 @@ void mca_pml_ob1_recv_request_progress_rndv(
 void mca_pml_ob1_recv_request_progress_rget(
     mca_pml_ob1_recv_request_t* req,
     struct mca_btl_base_module_t* btl,
-    mca_btl_base_segment_t* segments,
+    const mca_btl_base_segment_t* segments,
     size_t num_segments);
 
 /**
@@ -367,7 +368,7 @@ void mca_pml_ob1_recv_request_progress_rget(
 void mca_pml_ob1_recv_request_matched_probe(
     mca_pml_ob1_recv_request_t* req,
     struct mca_btl_base_module_t* btl,
-    mca_btl_base_segment_t* segments,
+    const mca_btl_base_segment_t* segments,
     size_t num_segments);
 
 /**

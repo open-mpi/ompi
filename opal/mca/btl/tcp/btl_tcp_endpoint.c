@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -15,6 +16,7 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
+ * Copyright (c) 2020      Google, LLC. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -1016,9 +1018,15 @@ static void mca_btl_tcp_endpoint_recv_handler(int sd, short flags, void* user)
             } else {
                 btl_endpoint->endpoint_recv_frag = NULL;
                 if( MCA_BTL_TCP_HDR_TYPE_SEND == frag->hdr.type ) {
-                    mca_btl_active_message_callback_t* reg;
-                    reg = mca_btl_base_active_message_trigger + frag->hdr.base.tag;
-                    reg->cbfunc(&frag->btl->super, frag->hdr.base.tag, &frag->base, reg->cbdata);
+                    mca_btl_active_message_callback_t *reg =
+                      mca_btl_base_active_message_trigger + frag->hdr.base.tag;
+                    const mca_btl_base_receive_descriptor_t desc =
+                      {.endpoint = btl_endpoint,
+                       .des_segments = frag->base.des_segments,
+                       .des_segment_count = frag->base.des_segment_count,
+                       .tag = frag->hdr.base.tag,
+                       .cbdata = reg->cbdata};
+                    reg->cbfunc(&frag->btl->super, &desc);
                 }
 #if MCA_BTL_TCP_ENDPOINT_CACHE
                 if( 0 != btl_endpoint->endpoint_cache_length ) {

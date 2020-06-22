@@ -311,8 +311,8 @@ void mca_pml_ob1_process_pending_rdma(void);
  * Compute the total number of bytes on supplied descriptor
  */
 static inline size_t
-mca_pml_ob1_compute_segment_length_base(mca_btl_base_segment_t *segments,
-                                        size_t count, size_t hdrlen)
+mca_pml_ob1_compute_segment_length_base (const mca_btl_base_segment_t *segments,
+                                         size_t count, size_t hdrlen)
 {
     size_t i, length = 0;
 
@@ -323,7 +323,7 @@ mca_pml_ob1_compute_segment_length_base(mca_btl_base_segment_t *segments,
 }
 
 static inline size_t
-mca_pml_ob1_compute_segment_length_remote (size_t seg_size, void *segments,
+mca_pml_ob1_compute_segment_length_remote (size_t seg_size, const void *segments,
                                            size_t count, ompi_proc_t *rem_proc)
 {
     mca_btl_base_segment_t *segment = (mca_btl_base_segment_t *) segments;

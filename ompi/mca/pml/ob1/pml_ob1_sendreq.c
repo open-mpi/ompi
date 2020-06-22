@@ -1216,9 +1216,9 @@ int mca_pml_ob1_send_request_put_frag( mca_pml_ob1_rdma_frag_t *frag )
  *  (3) Queue the RDMA put
  */
 
-void mca_pml_ob1_send_request_put( mca_pml_ob1_send_request_t* sendreq,
-                                   mca_btl_base_module_t* btl,
-                                   mca_pml_ob1_rdma_hdr_t* hdr )
+void mca_pml_ob1_send_request_put (mca_pml_ob1_send_request_t *sendreq,
+                                   mca_btl_base_module_t *btl,
+                                   const mca_pml_ob1_rdma_hdr_t *hdr)
 {
     mca_bml_base_endpoint_t *bml_endpoint = sendreq->req_endpoint;
     mca_pml_ob1_rdma_frag_t* frag;
