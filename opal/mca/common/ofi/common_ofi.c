@@ -2,6 +2,8 @@
  * Copyright (c) 2015      Intel, Inc.  All rights reserved.
  * Copyright (c) 2017      Los Alamos National Security, LLC.  All rights
  *                         reserved.
+ * Copyright (c) 2020      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -9,22 +11,73 @@
  * $HEADER$
  */
 
-#include "opal_config.h"
-#include "opal/constants.h"
-#include "opal/mca/hwloc/base/base.h"
 
 #include <errno.h>
 #include <unistd.h>
 
 #include "common_ofi.h"
+#include "opal_config.h"
+#include "opal/constants.h"
+#include "opal/util/argv.h"
+#include "opal/mca/base/mca_base_var.h"
+#include "opal/mca/base/mca_base_framework.h"
+#include "opal/mca/hwloc/base/base.h"
 
-int mca_common_ofi_register_mca_variables(void)
+OPAL_DECLSPEC opal_common_ofi_module_t opal_common_ofi = {
+    .registered = 0,
+    .verbose = 0
+};
+
+OPAL_DECLSPEC int opal_common_ofi_register_mca_variables(const mca_base_component_t *component)
 {
-    if (fi_version() >= FI_VERSION(1,0)) {
-        return OPAL_SUCCESS;
-    } else {
+    static int registered = 0;
+    static int verbose_index;
+
+    if (fi_version() < FI_VERSION(1,0)) {
         return OPAL_ERROR;
     }
+
+    if (!registered) {
+        verbose_index = mca_base_var_register("opal", "opal_common", "ofi", "verbose",
+                                              "Verbose level of the OFI components",
+                                              MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                              MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_3,
+                                              MCA_BASE_VAR_SCOPE_LOCAL,
+                                              &opal_common_ofi.verbose);
+        registered = 1;
+    }
+
+    if (component) {
+        mca_base_var_register_synonym(verbose_index, component->mca_project_name,
+                                      component->mca_type_name,
+                                      component->mca_component_name,
+                                      "verbose", 0);
+    }
+
+    return OPAL_SUCCESS;
+}
+
+OPAL_DECLSPEC void opal_common_ofi_mca_register(void)
+{
+    opal_common_ofi.registered++;
+    if (opal_common_ofi.registered > 1) {
+         opal_output_set_verbosity(opal_common_ofi.output, opal_common_ofi.verbose);
+        return;
+    }
+
+    opal_common_ofi.output = opal_output_open(NULL);
+    opal_output_set_verbosity(opal_common_ofi.output, opal_common_ofi.verbose);
+}
+
+OPAL_DECLSPEC void opal_common_ofi_mca_deregister(void)
+{
+    /* unregister only on last deregister */
+    opal_common_ofi.registered--;
+    assert(opal_common_ofi.registered >= 0);
+    if (opal_common_ofi.registered) {
+        return;
+    }
+    opal_output_close(opal_common_ofi.output);
 }
 
 /* check that the tx attributes match */

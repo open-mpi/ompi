@@ -5,6 +5,9 @@
  * Copyright (c) 2014-2017 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2015-2016 Los Alamos National Security, LLC.  All rights
  *                         reserved.
+ * Copyright (c) 2020      Triad National Security, LLC. All rights
+ *                         reserved.
+ *
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -266,6 +269,8 @@ ompi_mtl_ofi_component_register(void)
                                     OPAL_INFO_LVL_4,
                                     MCA_BASE_VAR_SCOPE_READONLY,
                                     &ompi_mtl_ofi.num_ofi_contexts);
+
+    opal_common_ofi_register_mca_variables(&mca_mtl_ofi_component.super.mtl_version);
 
     return OMPI_SUCCESS;
 }

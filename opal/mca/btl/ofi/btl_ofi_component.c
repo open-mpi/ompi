@@ -13,6 +13,8 @@
  * Copyright (c) 2014-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2018      Intel, Inc, All rights reserved
+ * Copyright (c) 2020      Triad National Security, LLC. All rights
+ *                         reserved.
  *
  * $COPYRIGHT$
  *
@@ -184,6 +186,8 @@ static int mca_btl_ofi_component_register(void)
 
     /* for now we want this component to lose to the MTL. */
     module->super.btl_exclusivity = MCA_BTL_EXCLUSIVITY_HIGH - 50;
+
+    opal_common_ofi_register_mca_variables(&mca_btl_ofi_component.super.btl_version);
 
     return mca_btl_base_param_register (&mca_btl_ofi_component.super.btl_version,
                                         &module->super);
