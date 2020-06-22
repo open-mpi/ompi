@@ -391,8 +391,10 @@ static void ompi_osc_rdma_put_complete (struct mca_btl_base_module_t *btl, struc
         ompi_osc_rdma_request_t *request = request = (ompi_osc_rdma_request_t *) ((intptr_t) context & ~1);
         sync = request->sync;
 
-        /* NTH -- TODO: better error handling */
-        ompi_osc_rdma_request_complete (request, status);
+        if (0 == OPAL_THREAD_ADD_FETCH32 (&request->outstanding_requests, -1)) {
+            /* NTH -- TODO: better error handling */
+            ompi_osc_rdma_request_complete (request, status);
+        }
     }
 
     OSC_RDMA_VERBOSE(status ? MCA_BASE_VERBOSE_ERROR : MCA_BASE_VERBOSE_TRACE, "btl put complete on sync %p. local "
