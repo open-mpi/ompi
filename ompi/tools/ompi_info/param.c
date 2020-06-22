@@ -308,7 +308,7 @@ void ompi_info_do_config(bool want_all)
     /* output values */
     opal_info_out("Configured by", "config:user", OPAL_CONFIGURE_USER);
     opal_info_out("Configured on", "config:timestamp", OPAL_CONFIGURE_DATE);
-    opal_info_out("Configure host", "config:host", OPAL_CONFIGURE_HOST);
+    opal_info_do_hostname();
     opal_info_out("Configure command line", "config:cli", OPAL_CONFIGURE_CLI);
 
     opal_info_out("Built by", "build:user", OMPI_BUILD_USER);

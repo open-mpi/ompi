@@ -167,7 +167,6 @@ int main(int argc, char *argv[])
         ompi_info_show_ompi_version(opal_info_ver_full);
         opal_info_show_path(opal_info_path_prefix, opal_install_dirs.prefix);
         opal_info_do_arch();
-        opal_info_do_hostname();
         ompi_info_do_config(false);
         opal_info_show_component_version(&mca_types, &component_map, opal_info_type_all,
                                          opal_info_component_all, opal_info_ver_full,
