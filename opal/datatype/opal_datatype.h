@@ -316,56 +316,6 @@ opal_datatype_copy_content_same_ddt( const opal_datatype_t* pData, int32_t count
 
 OPAL_DECLSPEC int opal_datatype_compute_ptypes( opal_datatype_t* datatype );
 
-OPAL_DECLSPEC const opal_datatype_t*
-opal_datatype_match_size( int size, uint16_t datakind, uint16_t datalang );
-
-/*
- *
- */
-OPAL_DECLSPEC int32_t
-opal_datatype_sndrcv( void *sbuf, int32_t scount, const opal_datatype_t* sdtype, void *rbuf,
-                      int32_t rcount, const opal_datatype_t* rdtype);
-
-/*
- *
- */
-OPAL_DECLSPEC int32_t
-opal_datatype_get_args( const opal_datatype_t* pData, int32_t which,
-                        int32_t * ci, int32_t * i,
-                        int32_t * ca, ptrdiff_t* a,
-                        int32_t * cd, opal_datatype_t** d, int32_t * type);
-OPAL_DECLSPEC int32_t
-opal_datatype_set_args( opal_datatype_t* pData,
-                        int32_t ci, int32_t ** i,
-                        int32_t ca, ptrdiff_t* a,
-                        int32_t cd, opal_datatype_t** d,int32_t type);
-OPAL_DECLSPEC int32_t
-opal_datatype_copy_args( const opal_datatype_t* source_data,
-                         opal_datatype_t* dest_data );
-OPAL_DECLSPEC int32_t
-opal_datatype_release_args( opal_datatype_t* pData );
-
-/*
- *
- */
-OPAL_DECLSPEC size_t
-opal_datatype_pack_description_length( const opal_datatype_t* datatype );
-
-/*
- *
- */
-OPAL_DECLSPEC int
-opal_datatype_get_pack_description( opal_datatype_t* datatype,
-                                    const void** packed_buffer );
-
-/*
- *
- */
-struct opal_proc_t;
-OPAL_DECLSPEC opal_datatype_t*
-opal_datatype_create_from_packed_description( void** packed_buffer,
-                                              struct opal_proc_t* remote_processor );
-
 /* Compute the span in memory of count datatypes. This function help with temporary
  * memory allocations for receiving already typed data (such as those used for reduce
  * operations). This span is the distance between the minimum and the maximum byte
