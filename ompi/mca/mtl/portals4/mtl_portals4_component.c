@@ -523,7 +523,7 @@ ompi_mtl_portals4_progress(void)
                     if (OMPI_SUCCESS != ret) {
                         opal_output(ompi_mtl_base_framework.framework_output,
                                     "Error returned from target event callback: %d", ret);
-                        abort();
+                        ompi_rte_abort(ret, "mtl-portals4: Error returned from target event callback");
                     }
                 }
                 break;
@@ -535,7 +535,7 @@ ompi_mtl_portals4_progress(void)
                     if (OMPI_SUCCESS != ret) {
                         opal_output(ompi_mtl_base_framework.framework_output,
                                     "Error returned from target event callback: %d", ret);
-                        abort();
+                        ompi_rte_abort(ret, "mtl-portals4: Error returned from target event callback");
                     }
                 }
                 break;
@@ -550,12 +550,12 @@ ompi_mtl_portals4_progress(void)
                     opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                                         "%s:%d: flowctl_trigger() failed: %d\n",
                                         __FILE__, __LINE__, ret);
-                    abort();
+                    ompi_rte_abort(ret, "mtl-portals4: Flow control failed (PT_DISABLED)");
                 }
 #else
                 opal_output(ompi_mtl_base_framework.framework_output,
                             "Flow control situation without recovery (PT_DISABLED)");
-                abort();
+                ompi_rte_abort(ret, "mtl-portals4: Flow control situation without recovery (PT_DISABLED)");
 #endif
                 break;
 
@@ -573,7 +573,7 @@ ompi_mtl_portals4_progress(void)
             opal_output(ompi_mtl_base_framework.framework_output,
                         "Flow control situation without recovery (EQ_DROPPED): %d",
                         which);
-            abort();
+            ompi_rte_abort(ret, "mtl-portals4: Flow control situation without recovery (EQ_DROPPED)");
         } else {
             opal_output(ompi_mtl_base_framework.framework_output,
                         "Error returned from PtlEQGet: %d", ret);
