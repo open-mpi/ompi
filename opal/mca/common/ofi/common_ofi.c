@@ -2,6 +2,8 @@
  * Copyright (c) 2015      Intel, Inc.  All rights reserved.
  * Copyright (c) 2017      Los Alamos National Security, LLC.  All rights
  *                         reserved.
+ * Copyright (c) 2020      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -9,22 +11,110 @@
  * $HEADER$
  */
 
-#include "opal_config.h"
-#include "opal/constants.h"
-#include "opal/mca/hwloc/base/base.h"
 
 #include <errno.h>
 #include <unistd.h>
 
 #include "common_ofi.h"
+#include "opal_config.h"
+#include "opal/constants.h"
+#include "opal/util/argv.h"
+#include "opal/mca/base/mca_base_var.h"
+#include "opal/mca/base/mca_base_framework.h"
+#include "opal/mca/hwloc/base/base.h"
 
-int mca_common_ofi_register_mca_variables(void)
+OPAL_DECLSPEC opal_common_ofi_module_t opal_common_ofi = {
+    .prov_include = NULL,
+    .prov_exclude = NULL,
+    .registered = 0,
+    .verbose = 0
+};
+
+static const char default_prov_exclude_list[] = "shm,sockets,tcp,udp,rstream";
+
+OPAL_DECLSPEC int opal_common_ofi_register_mca_variables(const mca_base_component_t *component)
 {
-    if (fi_version() >= FI_VERSION(1,0)) {
-        return OPAL_SUCCESS;
-    } else {
+    static int registered = 0;
+    static int include_index;
+    static int exclude_index;
+    static int verbose_index;
+
+    if (fi_version() < FI_VERSION(1,0)) {
         return OPAL_ERROR;
     }
+
+    if (!registered) {
+        /*
+         * this monkey business is needed because of the way the MCA VARs stuff tries to handle pointers to strings when
+         * when destructing the MCA var database.  If you don't do something like this,the MCA var framework will try
+         * to dereference a pointer which itself is no longer a valid address owing to having been previously dlclosed.
+         */
+         opal_common_ofi.prov_include = (char **)malloc(sizeof(char *));
+         *opal_common_ofi.prov_include = NULL;
+         include_index = mca_base_var_register("opal", "opal_common", "ofi",
+                               "provider_include",
+                               "Comma-delimited list of OFI providers that are considered for use (e.g., \"psm,psm2\"; an empty value means that all providers will be considered). Mutually exclusive with mtl_ofi_provider_exclude.",
+                               MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                               OPAL_INFO_LVL_1,
+                               MCA_BASE_VAR_SCOPE_READONLY,
+                               opal_common_ofi.prov_include);
+        opal_common_ofi.prov_exclude = (char **)malloc(sizeof(char *));
+        *opal_common_ofi.prov_exclude = strdup(default_prov_exclude_list);
+        exclude_index = mca_base_var_register("opal", "opal_common", "ofi",
+                              "provider_exclude",
+                              "Comma-delimited list of OFI providers that are not considered for use (default: \"sockets,mxm\"; empty value means that all providers will be considered). Mutually exclusive with mtl_ofi_provider_include.",
+                              MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                              OPAL_INFO_LVL_1,
+                              MCA_BASE_VAR_SCOPE_READONLY,
+                              opal_common_ofi.prov_exclude);
+        verbose_index = mca_base_var_register("opal", "opal_common", "ofi", "verbose",
+                                              "Verbose level of the OFI components",
+                                              MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                              MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_3,
+                                              MCA_BASE_VAR_SCOPE_LOCAL,
+                                              &opal_common_ofi.verbose);
+        registered = 1;
+    }
+
+    if (component) {
+        mca_base_var_register_synonym(include_index, component->mca_project_name,
+                                      component->mca_type_name,
+                                      component->mca_component_name,
+                                      "provider_include", 0);
+        mca_base_var_register_synonym(exclude_index, component->mca_project_name,
+                                      component->mca_type_name,
+                                      component->mca_component_name,
+                                      "provider_exclude", 0);
+        mca_base_var_register_synonym(verbose_index, component->mca_project_name,
+                                      component->mca_type_name,
+                                      component->mca_component_name,
+                                      "verbose", 0);
+    }
+
+    return OPAL_SUCCESS;
+}
+
+OPAL_DECLSPEC void opal_common_ofi_mca_register(void)
+{
+    opal_common_ofi.registered++;
+    if (opal_common_ofi.registered > 1) {
+         opal_output_set_verbosity(opal_common_ofi.output, opal_common_ofi.verbose);
+        return;
+    }
+
+    opal_common_ofi.output = opal_output_open(NULL);
+    opal_output_set_verbosity(opal_common_ofi.output, opal_common_ofi.verbose);
+}
+
+OPAL_DECLSPEC void opal_common_ofi_mca_deregister(void)
+{
+    /* unregister only on last deregister */
+    opal_common_ofi.registered--;
+    assert(opal_common_ofi.registered >= 0);
+    if (opal_common_ofi.registered) {
+        return;
+    }
+    opal_output_close(opal_common_ofi.output);
 }
 
 /* check that the tx attributes match */

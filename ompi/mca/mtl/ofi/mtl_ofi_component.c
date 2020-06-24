@@ -5,6 +5,9 @@
  * Copyright (c) 2014-2017 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2015-2016 Los Alamos National Security, LLC.  All rights
  *                         reserved.
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
+ * Copyright (c) 2020      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -27,8 +30,6 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
                             bool enable_mpi_threads);
 
 static int param_priority;
-static char *prov_include;
-static char *prov_exclude;
 static int control_progress;
 static int data_progress;
 static int av_type;
@@ -129,24 +130,6 @@ ompi_mtl_ofi_component_register(void)
                                     OPAL_INFO_LVL_9,
                                     MCA_BASE_VAR_SCOPE_READONLY,
                                     &param_priority);
-
-    prov_include = NULL;
-    mca_base_component_var_register(&mca_mtl_ofi_component.super.mtl_version,
-                                    "provider_include",
-                                    "Comma-delimited list of OFI providers that are considered for use (e.g., \"psm,psm2\"; an empty value means that all providers will be considered). Mutually exclusive with mtl_ofi_provider_exclude.",
-                                    MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
-                                    OPAL_INFO_LVL_1,
-                                    MCA_BASE_VAR_SCOPE_READONLY,
-                                    &prov_include);
-
-    prov_exclude = "shm,sockets,tcp,udp,rstream";
-    mca_base_component_var_register(&mca_mtl_ofi_component.super.mtl_version,
-                                    "provider_exclude",
-                                    "Comma-delimited list of OFI providers that are not considered for use (default: \"sockets,mxm\"; empty value means that all providers will be considered). Mutually exclusive with mtl_ofi_provider_include.",
-                                    MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
-                                    OPAL_INFO_LVL_1,
-                                    MCA_BASE_VAR_SCOPE_READONLY,
-                                    &prov_exclude);
 
     ompi_mtl_ofi.ofi_progress_event_count = MTL_OFI_MAX_PROG_EVENT_COUNT;
     opal_asprintf(&desc, "Max number of events to read each call to OFI progress (default: %d events will be read per OFI progress call)", ompi_mtl_ofi.ofi_progress_event_count);
@@ -267,6 +250,8 @@ ompi_mtl_ofi_component_register(void)
                                     MCA_BASE_VAR_SCOPE_READONLY,
                                     &ompi_mtl_ofi.num_ofi_contexts);
 
+    opal_common_ofi_register_mca_variables(&mca_mtl_ofi_component.super.mtl_version);
+
     return OMPI_SUCCESS;
 }
 
@@ -311,6 +296,7 @@ ompi_mtl_ofi_component_query(mca_base_module_t **module, int *priority)
 static int
 ompi_mtl_ofi_component_close(void)
 {
+    opal_common_ofi_mca_deregister();
     return OMPI_SUCCESS;
 }
 
@@ -349,7 +335,7 @@ select_ofi_provider(struct fi_info *providers,
     if (NULL != include_list) {
         while ((NULL != prov) &&
                (!is_in_list(include_list, prov->fabric_attr->prov_name))) {
-            opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+            opal_output_verbose(1, opal_common_ofi.output,
                                 "%s:%d: mtl:ofi: \"%s\" not in include list\n",
                                 __FILE__, __LINE__,
                                 prov->fabric_attr->prov_name);
@@ -358,7 +344,7 @@ select_ofi_provider(struct fi_info *providers,
     } else if (NULL != exclude_list) {
         while ((NULL != prov) &&
                (is_in_list(exclude_list, prov->fabric_attr->prov_name))) {
-            opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+            opal_output_verbose(1, opal_common_ofi.output,
                                 "%s:%d: mtl:ofi: \"%s\" in exclude list\n",
                                 __FILE__, __LINE__,
                                 prov->fabric_attr->prov_name);
@@ -366,7 +352,7 @@ select_ofi_provider(struct fi_info *providers,
         }
     }
 
-    opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+    opal_output_verbose(1, opal_common_ofi.output,
                         "%s:%d: mtl:ofi:prov: %s\n",
                         __FILE__, __LINE__,
                         (prov ? prov->fabric_attr->prov_name : "none"));
@@ -395,6 +381,7 @@ select_ofi_provider(struct fi_info *providers,
 
     return prov;
 }
+
 
 /* Check if FI_REMOTE_CQ_DATA is supported, if so send the source rank there
  * FI_DIRECTED_RECV is also needed so receives can discrimate the source
@@ -481,7 +468,7 @@ ompi_mtl_ofi_define_tag_mode(int ofi_tag_mode, int *bits_for_cid) {
     do {                                                                                \
         ompi_mtl_ofi.comm_to_context = calloc(arr_size, sizeof(int));                   \
         if (OPAL_UNLIKELY(!ompi_mtl_ofi.comm_to_context)) {                             \
-            opal_output_verbose(1, ompi_mtl_base_framework.framework_output,            \
+            opal_output_verbose(1, opal_common_ofi.output,            \
                                    "%s:%d: alloc of comm_to_context array failed: %s\n",\
                                    __FILE__, __LINE__, strerror(errno));                \
             return ret;                                                                 \
@@ -493,7 +480,7 @@ ompi_mtl_ofi_define_tag_mode(int ofi_tag_mode, int *bits_for_cid) {
         ompi_mtl_ofi.ofi_ctxt = (mca_mtl_ofi_context_t *) malloc(ompi_mtl_ofi.num_ofi_contexts * \
                                                           sizeof(mca_mtl_ofi_context_t));   \
         if (OPAL_UNLIKELY(!ompi_mtl_ofi.ofi_ctxt)) {                                        \
-            opal_output_verbose(1, ompi_mtl_base_framework.framework_output,                \
+            opal_output_verbose(1, opal_common_ofi.output,                \
                                    "%s:%d: alloc of ofi_ctxt array failed: %s\n",           \
                                    __FILE__, __LINE__, strerror(errno));                    \
             return ret;                                                                     \
@@ -641,17 +628,19 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
     int universe_size;
     char *univ_size_str;
 
-    opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
-                        "%s:%d: mtl:ofi:provider_include = \"%s\"\n",
-                        __FILE__, __LINE__, prov_include);
-    opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
-                        "%s:%d: mtl:ofi:provider_exclude = \"%s\"\n",
-                        __FILE__, __LINE__, prov_exclude);
+    opal_common_ofi_mca_register();
 
-    if (NULL != prov_include) {
-        include_list = opal_argv_split(prov_include, ',');
-    } else if (NULL != prov_exclude) {
-        exclude_list = opal_argv_split(prov_exclude, ',');
+    opal_output_verbose(1, opal_common_ofi.output,
+                        "%s:%d: mtl:ofi:provider_include = \"%s\"\n",
+                        __FILE__, __LINE__, *opal_common_ofi.prov_include);
+    opal_output_verbose(1, opal_common_ofi.output,
+                        "%s:%d: mtl:ofi:provider_exclude = \"%s\"\n",
+                        __FILE__, __LINE__, *opal_common_ofi.prov_exclude);
+
+    if (NULL != *opal_common_ofi.prov_include) {
+        include_list = opal_argv_split(*opal_common_ofi.prov_include, ',');
+    } else if (NULL != *opal_common_ofi.prov_exclude) {
+        exclude_list = opal_argv_split(*opal_common_ofi.prov_exclude, ',');
     }
 
     /**
@@ -666,7 +655,7 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
      */
     hints = fi_allocinfo();
     if (!hints) {
-        opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+        opal_output_verbose(1, opal_common_ofi.output,
                             "%s:%d: Could not allocate fi_info\n",
                             __FILE__, __LINE__);
         goto error;
@@ -752,7 +741,7 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
 
         ret = fi_getinfo(fi_version, NULL, NULL, 0ULL, hints_dup, &providers);
 
-        opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+        opal_output_verbose(1, opal_common_ofi.output,
                             "%s:%d: EFA specific fi_getinfo(): %s\n",
                             __FILE__, __LINE__, fi_strerror(-ret));
 
@@ -789,7 +778,7 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
                      hints,         /* In: Hints to filter providers            */
                      &providers);   /* Out: List of matching providers          */
 
-    opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+    opal_output_verbose(1, opal_common_ofi.output,
                         "%s:%d: fi_getinfo(): %s\n",
                         __FILE__, __LINE__, fi_strerror(-ret));
 
@@ -810,7 +799,7 @@ select_prov:
      */
     prov = select_ofi_provider(providers, include_list, exclude_list);
     if (!prov) {
-        opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+        opal_output_verbose(1, opal_common_ofi.output,
                             "%s:%d: select_ofi_provider: no provider found\n",
                             __FILE__, __LINE__);
         goto error;
@@ -839,7 +828,7 @@ select_prov:
                    /* Fallback to MTL_OFI_TAG_1 */
                    ompi_mtl_ofi_define_tag_mode(MTL_OFI_TAG_1, &ofi_tag_bits_for_cid);
                 } else { /* MTL_OFI_TAG_FULL */
-                   opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+                   opal_output_verbose(1, opal_common_ofi.output,
                             "%s:%d: OFI provider %s does not support FI_REMOTE_CQ_DATA\n",
                             __FILE__, __LINE__, prov->fabric_attr->prov_name);
                     goto error;
@@ -919,7 +908,7 @@ select_prov:
                            ompi_process_info.nodename, __FILE__, __LINE__);
             goto error;
         } else if (1 == sep_support_in_provider) {
-            opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+            opal_output_verbose(1, opal_common_ofi.output,
                                 "%s:%d: Scalable EP supported in %s provider. Enabling in MTL.\n",
                                 __FILE__, __LINE__, prov->fabric_attr->prov_name);
         }
@@ -1078,7 +1067,7 @@ select_prov:
                           &ep_name,
                           namelen);
     if (OMPI_SUCCESS != ret) {
-        opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+        opal_output_verbose(1, opal_common_ofi.output,
                             "%s:%d: modex_send failed: %d\n",
                             __FILE__, __LINE__, ret);
         goto error;
