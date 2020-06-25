@@ -10,6 +10,8 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyrigth (c) 2020      Triad National Security, LLC. All rights
+#                         reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -25,14 +27,15 @@ variables:
 
 	 OMPI_ALPS_RESID
 	 BASIL_RESERVATION_ID
+	 COBALT_JOBID
 
 However, it was unable to find either one of these variables.
 
 #This is a fatal error.
 [alps-env-var-invalid]
 While trying to determine what resources are available, the ALPS
-resource allocator uses either the OMPI_ALPS_RESID or the
-BASIL_RESERVATION_ID environment variable.
+resource allocator uses either the OMPI_ALPS_RESID,
+BASIL_RESERVATION_ID, or COBALT_JOBID environment variable.
 
 However, an error was encountered when trying to parse the variable:
 
