@@ -72,7 +72,8 @@ ompi_osc_ucx_component_t mca_osc_ucx_component = {
     .wpool                  = NULL,
     .env_initialized        = false,
     .num_incomplete_req_ops = 0,
-    .num_modules            = 0
+    .num_modules            = 0,
+    .acc_single_intrinsic   = false
 };
 
 ompi_osc_ucx_module_t ompi_osc_ucx_module_template = {
@@ -165,6 +166,15 @@ static int component_register(void) {
     (void) mca_base_component_var_register(&mca_osc_ucx_component.super.osc_version, "no_locks", description_str,
                                            MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0, OPAL_INFO_LVL_5,
                                            MCA_BASE_VAR_SCOPE_GROUP, &mca_osc_ucx_component.no_locks);
+    free(description_str);
+
+    mca_osc_ucx_component.acc_single_intrinsic = false;
+    opal_asprintf(&description_str, "Enable optimizations for MPI_Fetch_and_op, MPI_Accumulate, etc for codes "
+             "that will not use anything more than a single predefined datatype (default: %s)",
+             mca_osc_ucx_component.acc_single_intrinsic  ? "true" : "false");
+    (void) mca_base_component_var_register(&mca_osc_ucx_component.super.osc_version, "acc_single_intrinsic",
+                                           description_str, MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0, OPAL_INFO_LVL_5,
+                                           MCA_BASE_VAR_SCOPE_GROUP, &mca_osc_ucx_component.acc_single_intrinsic);
     free(description_str);
 
     opal_common_ucx_mca_var_register(&mca_osc_ucx_component.super.osc_version);
@@ -389,6 +399,7 @@ select_unlock:
     module->flavor = flavor;
     module->size = size;
     module->no_locks = check_config_value_bool ("no_locks", info);
+    module->acc_single_intrinsic = check_config_value_bool ("acc_single_intrinsic", info);
 
     /* share everyone's displacement units. Only do an allgather if
        strictly necessary, since it requires O(p) state. */

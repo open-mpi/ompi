@@ -1,3 +1,14 @@
+/*
+ * Copyright (C) 2001-2017 Mellanox Technologies Ltd. ALL RIGHTS RESERVED.
+ * Copyright (c) 2019-2020 High Performance Computing Center Stuttgart,
+ *                         University of Stuttgart.  All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
+
 #ifndef COMMON_UCX_WPOOL_H
 #define COMMON_UCX_WPOOL_H
 
@@ -417,6 +428,56 @@ opal_common_ucx_wpmem_cmpswp(opal_common_ucx_wpmem_t *mem, uint64_t compare,
 
     return rc;
 }
+
+
+static inline int
+opal_common_ucx_wpmem_cmpswp_nb(opal_common_ucx_wpmem_t *mem, uint64_t compare,
+                                uint64_t value, int target, void *buffer, size_t len,
+                                uint64_t rem_addr,
+                                opal_common_ucx_user_req_handler_t user_req_cb,
+                                void *user_req_ptr)
+{
+    ucp_ep_h ep;
+    ucp_rkey_h rkey;
+    opal_common_ucx_winfo_t *winfo = NULL;
+    opal_common_ucx_request_t *req;
+    int rc = OPAL_SUCCESS;
+
+    rc = opal_common_ucx_tlocal_fetch(mem, target, &ep, &rkey, &winfo);
+    if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
+        MCA_COMMON_UCX_ERROR("opal_common_ucx_tlocal_fetch failed: %d", rc);
+        return rc;
+    }
+
+    /* Perform the operation */
+    opal_mutex_lock(&winfo->mutex);
+    req = opal_common_ucx_atomic_cswap_nb(ep, compare, value,
+                                          buffer, len,
+                                          rem_addr, rkey, opal_common_ucx_req_completion,
+                                          winfo->worker);
+
+    if (UCS_PTR_IS_PTR(req)) {
+        req->ext_req = user_req_ptr;
+        req->ext_cb = user_req_cb;
+        req->winfo = winfo;
+    } else {
+        if (user_req_cb != NULL) {
+            (*user_req_cb)(user_req_ptr);
+        }
+    }
+
+
+    rc = _periodical_flush_nb(mem, winfo, target);
+    if(OPAL_UNLIKELY(OPAL_SUCCESS != rc)){
+        MCA_COMMON_UCX_VERBOSE(1, "_incr_and_check_inflight_ops failed: %d", rc);
+        return rc;
+    }
+
+    opal_mutex_unlock(&winfo->mutex);
+
+    return rc;
+}
+
 
 static inline int
 opal_common_ucx_wpmem_post(opal_common_ucx_wpmem_t *mem, ucp_atomic_post_op_t opcode,

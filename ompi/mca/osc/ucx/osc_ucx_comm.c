@@ -1,5 +1,7 @@
 /*
- * Copyright (C) Mellanox Technologies Ltd. 2001-2017. ALL RIGHTS RESERVED.
+ * Copyright (C) 2001-2017 Mellanox Technologies Ltd. ALL RIGHTS RESERVED.
+ * Copyright (c) 2019-2020 High Performance Computing Center Stuttgart,
+ *                         University of Stuttgart.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -23,6 +25,11 @@
         OSC_UCX_VERBOSE(1, "window with non-zero length does not have an rkey"); \
         return OMPI_ERROR;                                                       \
     }
+
+/* macro to check whether UCX supports atomic operation on the size the operands */
+#define ATOMIC_SIZE_SUPPORTED(_remote_addr, _size) \
+    ((sizeof(uint32_t) == (_size) && !((_remote_addr) & 0x3)) || \
+     (sizeof(uint64_t) == (_size) && !((_remote_addr) & 0x7)))
 
 typedef struct ucx_iovec {
     void *addr;
@@ -235,43 +242,83 @@ static inline int ddt_put_get(ompi_osc_ucx_module_t *module,
     return ret;
 }
 
-static inline int start_atomicity(ompi_osc_ucx_module_t *module, int target) {
+static inline bool need_acc_lock(ompi_osc_ucx_module_t *module, int target)
+{
+    ompi_osc_ucx_lock_t *lock = NULL;
+    opal_hash_table_get_value_uint32(&module->outstanding_locks,
+                                     (uint32_t) target, (void **) &lock);
+
+    /* if there is an exclusive lock there is no need to acqurie the accumulate lock */
+    return !(NULL != lock && LOCK_EXCLUSIVE == lock->type);
+}
+
+static inline int start_atomicity(
+    ompi_osc_ucx_module_t *module,
+    int                    target,
+    bool                  *lock_acquired) {
     uint64_t result_value = -1;
     uint64_t remote_addr = (module->state_addrs)[target] + OSC_UCX_STATE_ACC_LOCK_OFFSET;
     int ret = OMPI_SUCCESS;
 
-    for (;;) {
-        ret = opal_common_ucx_wpmem_cmpswp(module->state_mem,
-                                         TARGET_LOCK_UNLOCKED, TARGET_LOCK_EXCLUSIVE,
-                                         target, &result_value, sizeof(result_value),
-                                         remote_addr);
-        if (ret != OMPI_SUCCESS) {
-            OSC_UCX_VERBOSE(1, "opal_common_ucx_mem_cmpswp failed: %d", ret);
-            return OMPI_ERROR;
-        }
-        if (result_value == TARGET_LOCK_UNLOCKED) {
-            return OMPI_SUCCESS;
+    if (need_acc_lock(module, target)) {
+        for (;;) {
+            ret = opal_common_ucx_wpmem_cmpswp(module->state_mem,
+                                            TARGET_LOCK_UNLOCKED, TARGET_LOCK_EXCLUSIVE,
+                                            target, &result_value, sizeof(result_value),
+                                            remote_addr);
+            if (ret != OMPI_SUCCESS) {
+                OSC_UCX_VERBOSE(1, "opal_common_ucx_mem_cmpswp failed: %d", ret);
+                return OMPI_ERROR;
+            }
+            if (result_value == TARGET_LOCK_UNLOCKED) {
+                break;
+            }
+
+            ucp_worker_progress(mca_osc_ucx_component.wpool->dflt_worker);
         }
 
-        ucp_worker_progress(mca_osc_ucx_component.wpool->dflt_worker);
+        *lock_acquired = true;
+    } else {
+        *lock_acquired = false;
     }
+
+    return OMPI_SUCCESS;
 }
 
-static inline int end_atomicity(ompi_osc_ucx_module_t *module, int target) {
-    uint64_t result_value = 0;
+static inline int end_atomicity(
+    ompi_osc_ucx_module_t *module,
+    int                    target,
+    bool                   lock_acquired,
+    void                  *free_ptr) {
     uint64_t remote_addr = (module->state_addrs)[target] + OSC_UCX_STATE_ACC_LOCK_OFFSET;
     int ret = OMPI_SUCCESS;
 
-    ret = opal_common_ucx_wpmem_fetch(module->state_mem,
-                                    UCP_ATOMIC_FETCH_OP_SWAP, TARGET_LOCK_UNLOCKED,
-                                    target, &result_value, sizeof(result_value),
-                                    remote_addr);
+    if (lock_acquired) {
+        uint64_t result_value = 0;
+        /* fence any still active operations */
+        ret = opal_common_ucx_wpmem_fence(module->mem);
+        if (ret != OMPI_SUCCESS) {
+            OSC_UCX_VERBOSE(1, "opal_common_ucx_mem_fence failed: %d", ret);
+            return OMPI_ERROR;
+        }
+
+        ret = opal_common_ucx_wpmem_fetch(module->state_mem,
+                                        UCP_ATOMIC_FETCH_OP_SWAP, TARGET_LOCK_UNLOCKED,
+                                        target, &result_value, sizeof(result_value),
+                                        remote_addr);
+        assert(result_value == TARGET_LOCK_EXCLUSIVE);
+    } else if (NULL != free_ptr){
+        /* flush before freeing the buffer */
+        ret = opal_common_ucx_wpmem_flush(module->state_mem, OPAL_COMMON_UCX_SCOPE_EP, target);
+    }
+    /* TODO: encapsulate in a request and make the release non-blocking */
+    if (NULL != free_ptr) {
+        free(free_ptr);
+    }
     if (ret != OMPI_SUCCESS) {
         OSC_UCX_VERBOSE(1, "opal_common_ucx_mem_fetch failed: %d", ret);
         return OMPI_ERROR;
     }
-
-    assert(result_value == TARGET_LOCK_EXCLUSIVE);
 
     return ret;
 }
@@ -319,6 +366,114 @@ static inline int get_dynamic_win_info(uint64_t remote_addr, ompi_osc_ucx_module
     module->local_dynamic_win_info[contain].mem->mem_displs[target] = target * OMPI_OSC_UCX_MEM_ADDR_MAX_LEN;
 
     free(temp_buf);
+
+    return ret;
+}
+
+static inline
+bool use_atomic_op(
+    ompi_osc_ucx_module_t  *module,
+    struct ompi_op_t       *op,
+    uint64_t                remote_addr,
+    struct ompi_datatype_t *origin_dt,
+    struct ompi_datatype_t *target_dt,
+    int                     origin_count,
+    int                     target_count)
+{
+
+    if (module->acc_single_intrinsic &&
+        ompi_datatype_is_predefined(origin_dt) &&
+        origin_count == 1 &&
+        (op == &ompi_mpi_op_replace.op ||
+         op == &ompi_mpi_op_sum.op     ||
+         op == &ompi_mpi_op_no_op.op)) {
+        size_t origin_dt_bytes;
+        size_t target_dt_bytes;
+        ompi_datatype_type_size(origin_dt, &origin_dt_bytes);
+        ompi_datatype_type_size(target_dt, &target_dt_bytes);
+        /* UCX only supports 32 and 64-bit operands atm */
+        if (ATOMIC_SIZE_SUPPORTED(remote_addr, origin_dt_bytes) &&
+            origin_dt_bytes  == target_dt_bytes    &&
+            origin_count     == target_count) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+static int do_atomic_op_intrinsic(
+    ompi_osc_ucx_module_t  *module,
+    struct ompi_op_t       *op,
+    int                     target,
+    const void             *origin_addr,
+    int                     count,
+    struct ompi_datatype_t *dt,
+    ptrdiff_t               target_disp,
+    void                   *result_addr,
+    ompi_osc_ucx_request_t *ucx_req)
+{
+    int ret = OMPI_SUCCESS;
+    size_t origin_dt_bytes;
+    ompi_datatype_type_size(dt, &origin_dt_bytes);
+
+    uint64_t remote_addr = (module->addrs[target]) + target_disp * OSC_UCX_GET_DISP(module, target);
+
+    if (module->flavor == MPI_WIN_FLAVOR_DYNAMIC) {
+        ret = get_dynamic_win_info(remote_addr, module, target);
+        if (ret != OMPI_SUCCESS) {
+            return ret;
+        }
+    }
+
+    ucp_atomic_fetch_op_t opcode;
+    bool is_no_op = false;
+    if (op == &ompi_mpi_op_replace.op) {
+        opcode = UCP_ATOMIC_FETCH_OP_SWAP;
+    } else {
+        opcode = UCP_ATOMIC_FETCH_OP_FADD;
+        if (op == &ompi_mpi_op_no_op.op) {
+            is_no_op = true;
+        }
+    }
+
+    opal_common_ucx_user_req_handler_t user_req_cb = NULL;
+    void *user_req_ptr = NULL;
+    void *output_addr  = &(module->req_result);
+    if( result_addr ) {
+        output_addr = result_addr;
+    }
+    for (int i = 0; i < count; ++i) {
+        uint64_t value = 0;
+        if ((count - 1) == i && NULL != ucx_req) {
+            // the last item is used to feed the request, if needed
+            user_req_cb = &req_completion;
+            user_req_ptr = ucx_req;
+            // issue a fence if this is the last but not the only element
+            if (0 < i) {
+                ret = opal_common_ucx_wpmem_fence(module->mem);
+                if (ret != OMPI_SUCCESS) {
+                    OSC_UCX_VERBOSE(1, "opal_common_ucx_mem_fence failed: %d", ret);
+                    return OMPI_ERROR;
+                }
+            }
+        }
+        if (is_no_op) {
+            value = 0;
+        } else {
+            value = opal_common_ucx_load_uint64(origin_addr, origin_dt_bytes);
+        }
+        ret = opal_common_ucx_wpmem_fetch_nb(module->mem, opcode, value, target,
+                                             output_addr, origin_dt_bytes, remote_addr,
+                                             user_req_cb, user_req_ptr);
+
+        // advance origin and remote address
+        origin_addr  = (void*)((intptr_t)origin_addr + origin_dt_bytes);
+        remote_addr += origin_dt_bytes;
+        if (result_addr) {
+            output_addr = (void*)((intptr_t)output_addr + origin_dt_bytes);
+        }
+    }
 
     return ret;
 }
@@ -432,13 +587,18 @@ int ompi_osc_ucx_get(void *origin_addr, int origin_count,
     }
 }
 
-int ompi_osc_ucx_accumulate(const void *origin_addr, int origin_count,
-                            struct ompi_datatype_t *origin_dt,
-                            int target, ptrdiff_t target_disp, int target_count,
-                            struct ompi_datatype_t *target_dt,
-                            struct ompi_op_t *op, struct ompi_win_t *win) {
+static
+int accumulate_req(const void *origin_addr, int origin_count,
+                   struct ompi_datatype_t *origin_dt,
+                   int target, ptrdiff_t target_disp, int target_count,
+                   struct ompi_datatype_t *target_dt,
+                   struct ompi_op_t *op, struct ompi_win_t *win,
+                   ompi_osc_ucx_request_t *ucx_req) {
+
     ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t*) win->w_osc_module;
     int ret = OMPI_SUCCESS;
+    void *free_ptr = NULL;
+    bool lock_acquired = false;
 
     ret = check_sync_state(module, target, false);
     if (ret != OMPI_SUCCESS) {
@@ -449,7 +609,14 @@ int ompi_osc_ucx_accumulate(const void *origin_addr, int origin_count,
         return ret;
     }
 
-    ret = start_atomicity(module, target);
+    /* rely on UCX network atomics if the user told us that it safe */
+    if (use_atomic_op(module, op, target_disp, origin_dt, target_dt, origin_count, target_count)) {
+        return do_atomic_op_intrinsic(module, op, target,
+                                      origin_addr, origin_count, origin_dt,
+                                      target_disp, NULL, ucx_req);
+    }
+
+    ret = start_atomicity(module, target, &lock_acquired);
     if (ret != OMPI_SUCCESS) {
         return ret;
     }
@@ -461,7 +628,6 @@ int ompi_osc_ucx_accumulate(const void *origin_addr, int origin_count,
             return ret;
         }
     } else {
-        void *temp_addr_holder = NULL;
         void *temp_addr = NULL;
         uint32_t temp_count;
         ompi_datatype_t *temp_dt;
@@ -478,7 +644,7 @@ int ompi_osc_ucx_accumulate(const void *origin_addr, int origin_count,
             }
         }
         ompi_datatype_get_true_extent(temp_dt, &temp_lb, &temp_extent);
-        temp_addr = temp_addr_holder = malloc(temp_extent * temp_count);
+        temp_addr = free_ptr = malloc(temp_extent * temp_count);
         if (temp_addr == NULL) {
             return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
         }
@@ -544,15 +710,53 @@ int ompi_osc_ucx_accumulate(const void *origin_addr, int origin_count,
             return ret;
         }
 
-        ret = opal_common_ucx_wpmem_flush(module->mem, OPAL_COMMON_UCX_SCOPE_EP, target);
+    }
+
+    if (NULL != ucx_req) {
+        // nothing to wait for, mark request as completed
+        ompi_request_complete(&ucx_req->super, true);
+    }
+
+    return end_atomicity(module, target, lock_acquired, free_ptr);
+}
+
+int ompi_osc_ucx_accumulate(const void *origin_addr, int origin_count,
+                            struct ompi_datatype_t *origin_dt,
+                            int target, ptrdiff_t target_disp, int target_count,
+                            struct ompi_datatype_t *target_dt,
+                            struct ompi_op_t *op, struct ompi_win_t *win) {
+    return accumulate_req(origin_addr, origin_count, origin_dt, target,
+                          target_disp, target_count, target_dt, op, win, NULL);
+}
+
+static int
+do_atomic_compare_and_swap(const void *origin_addr, const void *compare_addr,
+                           void *result_addr, struct ompi_datatype_t *dt,
+                           int target, uint64_t remote_addr,
+                           ompi_osc_ucx_module_t *module)
+{
+    int ret;
+    bool lock_acquired = false;
+    size_t dt_bytes;
+    if (!module->acc_single_intrinsic) {
+        ret = start_atomicity(module, target, &lock_acquired);
         if (ret != OMPI_SUCCESS) {
             return ret;
         }
-
-        free(temp_addr_holder);
     }
 
-    return end_atomicity(module, target);
+    ompi_datatype_type_size(dt, &dt_bytes);
+    uint64_t compare_val = opal_common_ucx_load_uint64(compare_addr, dt_bytes);
+    uint64_t value       = opal_common_ucx_load_uint64(origin_addr,  dt_bytes);
+    ret = opal_common_ucx_wpmem_cmpswp_nb(module->mem, compare_val, value, target,
+                                          result_addr, dt_bytes, remote_addr,
+                                          NULL, NULL);
+
+    if (module->acc_single_intrinsic) {
+        return ret;
+    }
+
+    return end_atomicity(module, target, lock_acquired, NULL);
 }
 
 int ompi_osc_ucx_compare_and_swap(const void *origin_addr, const void *compare_addr,
@@ -563,13 +767,9 @@ int ompi_osc_ucx_compare_and_swap(const void *origin_addr, const void *compare_a
     uint64_t remote_addr = (module->addrs[target]) + target_disp * OSC_UCX_GET_DISP(module, target);
     size_t dt_bytes;
     int ret = OMPI_SUCCESS;
+    bool lock_acquired = false;
 
     ret = check_sync_state(module, target, false);
-    if (ret != OMPI_SUCCESS) {
-        return ret;
-    }
-
-    ret = start_atomicity(module, target);
     if (ret != OMPI_SUCCESS) {
         return ret;
     }
@@ -582,20 +782,50 @@ int ompi_osc_ucx_compare_and_swap(const void *origin_addr, const void *compare_a
     }
 
     ompi_datatype_type_size(dt, &dt_bytes);
-    ret = opal_common_ucx_wpmem_cmpswp(module->mem,*(uint64_t *)compare_addr,
-                                     *(uint64_t *)origin_addr, target,
-                                     result_addr, dt_bytes, remote_addr);
+    if (ATOMIC_SIZE_SUPPORTED(remote_addr, dt_bytes)) {
+        // fast path using UCX atomic operations
+        return do_atomic_compare_and_swap(origin_addr, compare_addr,
+                                          result_addr, dt, target,
+                                          remote_addr, module);
+    }
+
+    /* fall back to get-compare-put */
+
+    ret = start_atomicity(module, target, &lock_acquired);
     if (ret != OMPI_SUCCESS) {
         return ret;
     }
 
-    return end_atomicity(module, target);
+    ret = opal_common_ucx_wpmem_putget(module->mem, OPAL_COMMON_UCX_GET, target,
+                                       &result_addr, dt_bytes, remote_addr);
+    if (OPAL_SUCCESS != ret) {
+        OSC_UCX_VERBOSE(1, "opal_common_ucx_mem_putget failed: %d", ret);
+        return OMPI_ERROR;
+    }
+
+    ret = opal_common_ucx_wpmem_flush(module->mem, OPAL_COMMON_UCX_SCOPE_EP, target);
+    if (ret != OPAL_SUCCESS) {
+        return ret;
+    }
+
+    if (0 == memcmp(result_addr, compare_addr, dt_bytes)) {
+        // write the new value
+        ret = opal_common_ucx_wpmem_putget(module->mem, OPAL_COMMON_UCX_PUT, target,
+                                           (void*)origin_addr, dt_bytes, remote_addr);
+        if (OPAL_SUCCESS != ret) {
+            OSC_UCX_VERBOSE(1, "opal_common_ucx_mem_putget failed: %d", ret);
+            return OMPI_ERROR;
+        }
+    }
+
+    return end_atomicity(module, target, lock_acquired, NULL);
 }
 
 int ompi_osc_ucx_fetch_and_op(const void *origin_addr, void *result_addr,
                               struct ompi_datatype_t *dt, int target,
                               ptrdiff_t target_disp, struct ompi_op_t *op,
                               struct ompi_win_t *win) {
+    size_t dt_bytes;
     ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t*) win->w_osc_module;
     int ret = OMPI_SUCCESS;
 
@@ -604,16 +834,22 @@ int ompi_osc_ucx_fetch_and_op(const void *origin_addr, void *result_addr,
         return ret;
     }
 
-    if (op == &ompi_mpi_op_no_op.op || op == &ompi_mpi_op_replace.op ||
-        op == &ompi_mpi_op_sum.op) {
-        uint64_t remote_addr = (module->addrs[target]) + target_disp * OSC_UCX_GET_DISP(module, target);
-        uint64_t value = origin_addr ? *(uint64_t *)origin_addr : 0;
-        ucp_atomic_fetch_op_t opcode;
-        size_t dt_bytes;
+    uint64_t remote_addr = (module->addrs[target]) + target_disp * OSC_UCX_GET_DISP(module, target);
+    ompi_datatype_type_size(dt, &dt_bytes);
 
-        ret = start_atomicity(module, target);
-        if (ret != OMPI_SUCCESS) {
-            return ret;
+    /* UCX atomics are only supported on 32 and 64 bit values */
+    if (ATOMIC_SIZE_SUPPORTED(remote_addr, dt_bytes) &&
+        (op == &ompi_mpi_op_no_op.op || op == &ompi_mpi_op_replace.op ||
+         op == &ompi_mpi_op_sum.op)) {
+        uint64_t value;
+        ucp_atomic_fetch_op_t opcode;
+        bool lock_acquired = false;
+
+        if (!module->acc_single_intrinsic) {
+            ret = start_atomicity(module, target, &lock_acquired);
+            if (ret != OMPI_SUCCESS) {
+                return ret;
+            }
         }
 
         if (module->flavor == MPI_WIN_FLAVOR_DYNAMIC) {
@@ -623,7 +859,7 @@ int ompi_osc_ucx_fetch_and_op(const void *origin_addr, void *result_addr,
             }
         }
 
-        ompi_datatype_type_size(dt, &dt_bytes);
+        value = origin_addr ? opal_common_ucx_load_uint64(origin_addr, dt_bytes) : 0;
 
         if (op == &ompi_mpi_op_replace.op) {
             opcode = UCP_ATOMIC_FETCH_OP_SWAP;
@@ -634,35 +870,48 @@ int ompi_osc_ucx_fetch_and_op(const void *origin_addr, void *result_addr,
             }
         }
 
-        ret = opal_common_ucx_wpmem_fetch(module->mem, opcode, value, target,
-                                        (void *)result_addr, dt_bytes, remote_addr);
-        if (ret != OMPI_SUCCESS) {
+        ret = opal_common_ucx_wpmem_fetch_nb(module->mem, opcode, value, target,
+                                             (void *)result_addr, dt_bytes,
+                                             remote_addr, NULL, NULL);
+
+        if (module->acc_single_intrinsic) {
             return ret;
         }
 
-        return end_atomicity(module, target);
+        return end_atomicity(module, target, lock_acquired, NULL);
     } else {
         return ompi_osc_ucx_get_accumulate(origin_addr, 1, dt, result_addr, 1, dt,
                                            target, target_disp, 1, dt, op, win);
     }
 }
 
-int ompi_osc_ucx_get_accumulate(const void *origin_addr, int origin_count,
-                                struct ompi_datatype_t *origin_dt,
-                                void *result_addr, int result_count,
-                                struct ompi_datatype_t *result_dt,
-                                int target, ptrdiff_t target_disp,
-                                int target_count, struct ompi_datatype_t *target_dt,
-                                struct ompi_op_t *op, struct ompi_win_t *win) {
+static
+int get_accumulate_req(const void *origin_addr, int origin_count,
+                       struct ompi_datatype_t *origin_dt,
+                       void *result_addr, int result_count,
+                       struct ompi_datatype_t *result_dt,
+                       int target, ptrdiff_t target_disp,
+                       int target_count, struct ompi_datatype_t *target_dt,
+                       struct ompi_op_t *op, struct ompi_win_t *win,
+                       ompi_osc_ucx_request_t *ucx_req) {
     ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t*) win->w_osc_module;
     int ret = OMPI_SUCCESS;
+    void *free_addr = NULL;
+    bool lock_acquired = false;
 
     ret = check_sync_state(module, target, false);
     if (ret != OMPI_SUCCESS) {
         return ret;
     }
 
-    ret = start_atomicity(module, target);
+    /* rely on UCX network atomics if the user told us that it safe */
+    if (use_atomic_op(module, op, target_disp, origin_dt, target_dt, origin_count, target_count)) {
+        return do_atomic_op_intrinsic(module, op, target,
+                                      origin_addr, origin_count, origin_dt,
+                                      target_disp, result_addr, ucx_req);
+    }
+
+    ret = start_atomicity(module, target, &lock_acquired);
     if (ret != OMPI_SUCCESS) {
         return ret;
     }
@@ -682,7 +931,6 @@ int ompi_osc_ucx_get_accumulate(const void *origin_addr, int origin_count,
                 return ret;
             }
         } else {
-            void *temp_addr_holder = NULL;
             void *temp_addr = NULL;
             uint32_t temp_count;
             ompi_datatype_t *temp_dt;
@@ -699,7 +947,7 @@ int ompi_osc_ucx_get_accumulate(const void *origin_addr, int origin_count,
                 }
             }
             ompi_datatype_get_true_extent(temp_dt, &temp_lb, &temp_extent);
-            temp_addr = temp_addr_holder = malloc(temp_extent * temp_count);
+            temp_addr = free_addr = malloc(temp_extent * temp_count);
             if (temp_addr == NULL) {
                 return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
             }
@@ -763,17 +1011,29 @@ int ompi_osc_ucx_get_accumulate(const void *origin_addr, int origin_count,
             if (ret != OMPI_SUCCESS) {
                 return ret;
             }
-
-            ret = opal_common_ucx_wpmem_flush(module->mem, OPAL_COMMON_UCX_SCOPE_EP, target);
-            if (ret != OMPI_SUCCESS) {
-                return ret;
-            }
-
-            free(temp_addr_holder);
         }
     }
 
-    return end_atomicity(module, target);
+    if (NULL != ucx_req) {
+        // nothing to wait for, mark request as completed
+        ompi_request_complete(&ucx_req->super, true);
+    }
+
+
+    return end_atomicity(module, target, lock_acquired, free_addr);
+}
+
+int ompi_osc_ucx_get_accumulate(const void *origin_addr, int origin_count,
+                                struct ompi_datatype_t *origin_dt,
+                                void *result_addr, int result_count,
+                                struct ompi_datatype_t *result_dt,
+                                int target, ptrdiff_t target_disp,
+                                int target_count, struct ompi_datatype_t *target_dt,
+                                struct ompi_op_t *op, struct ompi_win_t *win) {
+
+    return get_accumulate_req(origin_addr, origin_count, origin_dt, result_addr,
+                              result_count, result_dt, target, target_disp,
+                              target_count, target_dt, op, win, NULL);
 }
 
 int ompi_osc_ucx_rput(const void *origin_addr, int origin_count,
@@ -819,6 +1079,7 @@ int ompi_osc_ucx_rput(const void *origin_addr, int origin_count,
                                          sizeof(uint64_t), remote_addr,
                                          req_completion, ucx_req);
     if (ret != OMPI_SUCCESS) {
+        OMPI_OSC_UCX_REQUEST_RETURN(ucx_req);
         return ret;
     }
 
@@ -870,6 +1131,7 @@ int ompi_osc_ucx_rget(void *origin_addr, int origin_count,
                                          sizeof(uint64_t), remote_addr,
                                          req_completion, ucx_req);
     if (ret != OMPI_SUCCESS) {
+        OMPI_OSC_UCX_REQUEST_RETURN(ucx_req);
         return ret;
     }
 
@@ -895,13 +1157,13 @@ int ompi_osc_ucx_raccumulate(const void *origin_addr, int origin_count,
     OMPI_OSC_UCX_REQUEST_ALLOC(win, ucx_req);
     assert(NULL != ucx_req);
 
-    ret = ompi_osc_ucx_accumulate(origin_addr, origin_count, origin_dt, target, target_disp,
-                                  target_count, target_dt, op, win);
+    ret = accumulate_req(origin_addr, origin_count, origin_dt, target, target_disp,
+                         target_count, target_dt, op, win, ucx_req);
     if (ret != OMPI_SUCCESS) {
+        OMPI_OSC_UCX_REQUEST_RETURN(ucx_req);
         return ret;
     }
 
-    ompi_request_complete(&ucx_req->super, true);
     *request = &ucx_req->super;
 
     return ret;
@@ -927,15 +1189,14 @@ int ompi_osc_ucx_rget_accumulate(const void *origin_addr, int origin_count,
     OMPI_OSC_UCX_REQUEST_ALLOC(win, ucx_req);
     assert(NULL != ucx_req);
 
-    ret = ompi_osc_ucx_get_accumulate(origin_addr, origin_count, origin_datatype,
-                                      result_addr, result_count, result_datatype,
-                                      target, target_disp, target_count,
-                                      target_datatype, op, win);
+    ret = get_accumulate_req(origin_addr, origin_count, origin_datatype,
+                             result_addr, result_count, result_datatype,
+                             target, target_disp, target_count,
+                             target_datatype, op, win, ucx_req);
     if (ret != OMPI_SUCCESS) {
+        OMPI_OSC_UCX_REQUEST_RETURN(ucx_req);
         return ret;
     }
-
-    ompi_request_complete(&ucx_req->super, true);
 
     *request = &ucx_req->super;
 

@@ -3,6 +3,8 @@
  *                         All rights reserved.
  * Copyright (c) 2018      Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
+ * Copyright (c) 2019-2020 High Performance Computing Center Stuttgart,
+ *                         University of Stuttgart.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -115,6 +117,42 @@ OPAL_DECLSPEC int opal_common_ucx_del_procs_nofence(opal_common_ucx_del_proc_t *
                                                size_t my_rank, size_t max_disconnect, ucp_worker_h worker);
 OPAL_DECLSPEC void opal_common_ucx_mca_var_register(const mca_base_component_t *component);
 
+
+/**
+ * Load an integer value of \c size bytes from \c ptr and cast it to uint64_t.
+ */
+static inline
+uint64_t opal_common_ucx_load_uint64(const void *ptr, size_t size)
+{
+    if (sizeof(uint8_t) == size) {
+      return *(uint8_t*)ptr;
+    } else if (sizeof(uint16_t) == size) {
+      return *(uint16_t*)ptr;
+    } else if (sizeof(uint32_t) == size) {
+      return *(uint32_t*)ptr;
+    } else {
+      return *(uint64_t*)ptr;
+    }
+}
+
+/**
+ * Cast and store a uint64_t value to a value of \c size bytes pointed to by \c ptr.
+ */
+static inline
+void opal_common_ucx_store_uint64(uint64_t value, void *ptr, size_t size)
+{
+    if (sizeof(uint8_t) == size) {
+      *(uint8_t*)ptr  = value;
+    } else if (sizeof(uint16_t) == size) {
+      *(uint16_t*)ptr = value;
+    } else if (sizeof(uint32_t) == size) {
+      *(uint32_t*)ptr = value;
+    } else {
+      *(uint64_t*)ptr = value;
+    }
+}
+
+
 static inline
 ucs_status_t opal_common_ucx_request_status(ucs_status_ptr_t request)
 {
@@ -206,22 +244,21 @@ int opal_common_ucx_atomic_cswap(ucp_ep_h ep, uint64_t compare,
                                  uint64_t remote_addr, ucp_rkey_h rkey,
                                  ucp_worker_h worker)
 {
-    uint64_t tmp = value;
-    int ret;
+    opal_common_ucx_store_uint64(value, result, op_size);
+    return opal_common_ucx_atomic_fetch(ep, UCP_ATOMIC_FETCH_OP_CSWAP, compare, result,
+                                        op_size, remote_addr, rkey, worker);
+}
 
-    ret = opal_common_ucx_atomic_fetch(ep, UCP_ATOMIC_FETCH_OP_CSWAP, compare, &tmp,
-                                       op_size, remote_addr, rkey, worker);
-    if (OPAL_LIKELY(OPAL_SUCCESS == ret)) {
-        /* in case if op_size is constant (like sizeof(type)) then this condition
-         * is evaluated in compile time */
-        if (op_size == sizeof(uint64_t)) {
-            *(uint64_t*)result = tmp;
-        } else {
-            assert(op_size == sizeof(uint32_t));
-            *(uint32_t*)result = tmp;
-        }
-    }
-    return ret;
+static inline
+ucs_status_ptr_t opal_common_ucx_atomic_cswap_nb(ucp_ep_h ep, uint64_t compare,
+                                                 uint64_t value, void *result, size_t op_size,
+                                                 uint64_t remote_addr, ucp_rkey_h rkey,
+                                                 ucp_send_callback_t req_handler,
+                                                 ucp_worker_h worker)
+{
+    opal_common_ucx_store_uint64(value, result, op_size);
+    return opal_common_ucx_atomic_fetch_nb(ep, UCP_ATOMIC_FETCH_OP_CSWAP, compare, result,
+                                           op_size, remote_addr, rkey, req_handler, worker);
 }
 
 END_C_DECLS
