@@ -143,10 +143,12 @@ int mca_base_alias_register (const char *project, const char *framework, const c
 
         opal_hash_table_set_value_ptr (alias_hash_table, name, strlen(name), alias);
         free (name);
+        name = NULL;
     }
 
     mca_base_alias_item_t *alias_item = OBJ_NEW(mca_base_alias_item_t);
     if (NULL == alias_item) {
+        if (NULL != name) free(name);
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
     

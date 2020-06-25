@@ -44,7 +44,10 @@ opal_reachable_t * opal_reachable_allocate(unsigned int num_local,
        malloc, rather than a bunch of little allocations */
     memory = malloc(sizeof(int*) * num_local +
                     num_local * (sizeof(int) * num_remote));
-    if (memory == NULL) return NULL;
+    if (memory == NULL) {
+        OBJ_RELEASE(reachable);
+        return NULL;
+    }
 
     reachable->memory = (void*)memory;
     reachable->weights = (int**)reachable->memory;

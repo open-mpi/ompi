@@ -1234,6 +1234,7 @@ static int mca_btl_tcp_component_exchange(void)
                                  opal_net_get_hostname(addr));
          } else {
              BTL_ERROR(("Unexpected address family: %d", addr->sa_family));
+             free(addrs);
              return OPAL_ERR_BAD_PARAM;
          }
 

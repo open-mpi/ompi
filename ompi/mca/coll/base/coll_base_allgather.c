@@ -178,19 +178,19 @@ int ompi_coll_base_allgather_intra_bruck(const void *sbuf, int scount,
         /* 1. copy blocks [0 .. (size - rank - 1)] from rbuf to shift buffer */
         err = ompi_datatype_copy_content_same_ddt(rdtype, ((ptrdiff_t)(size - rank) * (ptrdiff_t)rcount),
                                                   shift_buf, rbuf);
-        if (err < 0) { line = __LINE__; goto err_hndl;  }
+        if (err < 0) { line = __LINE__; free(free_buf); goto err_hndl;  }
 
         /* 2. move blocks [(size - rank) .. size] from rbuf to the begining of rbuf */
         tmpsend = (char*) rbuf + (ptrdiff_t)(size - rank) * (ptrdiff_t)rcount * rext;
         err = ompi_datatype_copy_content_same_ddt(rdtype, (ptrdiff_t)rank * (ptrdiff_t)rcount,
                                                   rbuf, tmpsend);
-        if (err < 0) { line = __LINE__; goto err_hndl;  }
+        if (err < 0) { line = __LINE__; free(free_buf); goto err_hndl;  }
 
         /* 3. copy blocks from shift buffer back to rbuf starting at block [rank]. */
         tmprecv = (char*) rbuf + (ptrdiff_t)rank * (ptrdiff_t)rcount * rext;
         err = ompi_datatype_copy_content_same_ddt(rdtype, (ptrdiff_t)(size - rank) * (ptrdiff_t)rcount,
                                                   tmprecv, shift_buf);
-        if (err < 0) { line = __LINE__; goto err_hndl;  }
+        if (err < 0) { line = __LINE__; free(free_buf); goto err_hndl;  }
 
         free(free_buf);
     }

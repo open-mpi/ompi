@@ -140,7 +140,7 @@ static inline int ddt_put_get(ompi_osc_ucx_module_t *module,
         ret = create_iov_list(origin_addr, origin_count, origin_dt,
                               &origin_ucx_iov, &origin_ucx_iov_count);
         if (ret != OMPI_SUCCESS) {
-            return ret;
+            goto cleanup;
         }
     }
 
@@ -148,7 +148,7 @@ static inline int ddt_put_get(ompi_osc_ucx_module_t *module,
         ret = create_iov_list(NULL, target_count, target_dt,
                               &target_ucx_iov, &target_ucx_iov_count);
         if (ret != OMPI_SUCCESS) {
-            return ret;
+            goto cleanup;
         }
     }
 
@@ -168,7 +168,8 @@ static inline int ddt_put_get(ompi_osc_ucx_module_t *module,
                                                 remote_addr + (uint64_t)(target_ucx_iov[target_ucx_iov_idx].addr));
             if (OPAL_SUCCESS != status) {
                 OSC_UCX_VERBOSE(1, "opal_common_ucx_mem_putget failed: %d", status);
-                return OMPI_ERROR;
+                ret = OMPI_ERROR;
+                goto cleanup;
             }
 
             origin_ucx_iov[origin_ucx_iov_idx].addr = (void *)((intptr_t)origin_ucx_iov[origin_ucx_iov_idx].addr + curr_len);
@@ -202,7 +203,8 @@ static inline int ddt_put_get(ompi_osc_ucx_module_t *module,
                                                 remote_addr + target_lb + prev_len);
             if (OPAL_SUCCESS != status) {
                 OSC_UCX_VERBOSE(1, "opal_common_ucx_mem_putget failed: %d", status);
-                return OMPI_ERROR;
+                ret = OMPI_ERROR;
+                goto cleanup;
             }
 
             prev_len += origin_ucx_iov[origin_ucx_iov_idx].len;
@@ -224,13 +226,16 @@ static inline int ddt_put_get(ompi_osc_ucx_module_t *module,
                                                 remote_addr + (uint64_t)(target_ucx_iov[target_ucx_iov_idx].addr));
             if (OPAL_SUCCESS != status) {
                 OSC_UCX_VERBOSE(1, "opal_common_ucx_mem_putget failed: %d", status);
-                return OMPI_ERROR;
+                ret = OMPI_ERROR;
+                goto cleanup;
             }
 
             prev_len += target_ucx_iov[target_ucx_iov_idx].len;
             target_ucx_iov_idx++;
         }
     }
+
+cleanup:
 
     if (origin_ucx_iov != NULL) {
         free(origin_ucx_iov);
@@ -338,12 +343,14 @@ static inline int get_dynamic_win_info(uint64_t remote_addr, ompi_osc_ucx_module
                                        len, remote_state_addr);
     if (OPAL_SUCCESS != ret) {
         OSC_UCX_VERBOSE(1, "opal_common_ucx_mem_putget failed: %d", ret);
-        return OMPI_ERROR;
+        ret = OMPI_ERROR;
+        goto cleanup;
     }
 
     ret = opal_common_ucx_wpmem_flush(module->state_mem, OPAL_COMMON_UCX_SCOPE_EP, target);
-    if (ret != OMPI_SUCCESS) {
-        return ret;
+    if (ret != OPAL_SUCCESS) {
+        ret = OMPI_ERROR;
+        goto cleanup;
     }
 
     memcpy(&win_count, temp_buf, sizeof(uint64_t));
@@ -365,6 +372,7 @@ static inline int get_dynamic_win_info(uint64_t remote_addr, ompi_osc_ucx_module
            temp_dynamic_wins[contain].mem_addr, OMPI_OSC_UCX_MEM_ADDR_MAX_LEN);
     module->local_dynamic_win_info[contain].mem->mem_displs[target] = target * OMPI_OSC_UCX_MEM_ADDR_MAX_LEN;
 
+cleanup:
     free(temp_buf);
 
     return ret;
@@ -652,11 +660,13 @@ int accumulate_req(const void *origin_addr, int origin_count,
         ret = ompi_osc_ucx_get(temp_addr, (int)temp_count, temp_dt,
                                target, target_disp, target_count, target_dt, win);
         if (ret != OMPI_SUCCESS) {
+            free(temp_addr);
             return ret;
         }
 
         ret = opal_common_ucx_wpmem_flush(module->mem, OPAL_COMMON_UCX_SCOPE_EP, target);
         if (ret != OMPI_SUCCESS) {
+            free(temp_addr);
             return ret;
         }
 
@@ -670,6 +680,7 @@ int accumulate_req(const void *origin_addr, int origin_count,
             ret = create_iov_list(origin_addr, origin_count, origin_dt,
                                   &origin_ucx_iov, &origin_ucx_iov_count);
             if (ret != OMPI_SUCCESS) {
+                free(temp_addr);
                 return ret;
             }
 
@@ -707,6 +718,7 @@ int accumulate_req(const void *origin_addr, int origin_count,
         ret = ompi_osc_ucx_put(temp_addr, (int)temp_count, temp_dt, target, target_disp,
                                target_count, target_dt, win);
         if (ret != OMPI_SUCCESS) {
+            free(temp_addr);
             return ret;
         }
 
@@ -741,6 +753,7 @@ do_atomic_compare_and_swap(const void *origin_addr, const void *compare_addr,
     if (!module->acc_single_intrinsic) {
         ret = start_atomicity(module, target, &lock_acquired);
         if (ret != OMPI_SUCCESS) {
+            free(temp_addr);
             return ret;
         }
     }
