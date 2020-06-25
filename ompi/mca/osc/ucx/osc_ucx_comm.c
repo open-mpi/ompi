@@ -753,7 +753,6 @@ do_atomic_compare_and_swap(const void *origin_addr, const void *compare_addr,
     if (!module->acc_single_intrinsic) {
         ret = start_atomicity(module, target, &lock_acquired);
         if (ret != OMPI_SUCCESS) {
-            free(temp_addr);
             return ret;
         }
     }
