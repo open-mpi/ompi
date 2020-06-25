@@ -316,11 +316,11 @@ int mca_coll_hcoll_ialltoall(const void *sbuf, int scount,
                             mca_coll_base_module_t *module);
 
 #if HCOLL_API >= HCOLL_VERSION(3,7)
-int mca_coll_hcoll_ialltoallv(const void *sbuf, int *scounts,
-                            int *sdisps,
+int mca_coll_hcoll_ialltoallv(const void *sbuf, const int *scounts,
+                            const int *sdisps,
                             struct ompi_datatype_t *sdtype,
-                            void *rbuf, int *rcounts,
-                            int *rdisps,
+                            void *rbuf, const int *rcounts,
+                            const int *rdisps,
                             struct ompi_datatype_t *rdtype,
                             struct ompi_communicator_t *comm,
                             ompi_request_t **req,
