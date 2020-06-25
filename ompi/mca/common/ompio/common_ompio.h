@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2016 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2020 University of Houston. All rights reserved.
  * Copyright (c) 2018      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2018      DataDirect Networks. All rights reserved.
@@ -166,6 +166,7 @@ struct ompio_file_t {
     size_t                 f_stripe_size;
     int                    f_stripe_count;
     size_t                 f_cc_size;
+    size_t                 f_avg_view_size;
     int                    f_bytes_per_agg;
     enum ompio_fs_type     f_fstype;
     ompi_request_t        *f_split_coll_req;
