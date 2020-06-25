@@ -76,7 +76,15 @@ AC_DEFUN([OMPI_CHECK_PSM2],[
                [AC_MSG_WARN([glob.h not found.  Can not build component.])
                ompi_check_psm2_happy="no"])])
 
-	OPAL_SUMMARY_ADD([[Transports]],[[Intel Omnipath (PSM2)]],[$1],[$ompi_check_psm2_happy])
+        AS_IF([test "$ompi_check_psm2_happy" = "yes"],
+              [AC_CHECK_DECL([PSM2_LIB_REFCOUNT_CAP],
+                        [],
+                        [AC_MSG_WARN([PSM2 needs to be version 11.2.173 or later. Disabling MTL.])
+                         ompi_check_psm2_happy="no"],
+                        [#include <psm2.h>])
+              ])
+
+        OPAL_SUMMARY_ADD([[Transports]],[[Intel Omnipath (PSM2)]],[$1],[$ompi_check_psm2_happy])
     fi
 
     AS_IF([test "$ompi_check_psm2_happy" = "yes"],

@@ -696,7 +696,7 @@ Network Support
   - "cm" supports a smaller number of networks (and they cannot be
     used together), but may provide better overall MPI performance:
 
-    - Intel Omni-Path PSM2
+    - Intel Omni-Path PSM2 (version 11.2.173 or later)
     - Intel True Scale PSM (QLogic InfiniPath)
     - OpenFabrics Interfaces ("libfabric" tag matching)
     - Portals 4
