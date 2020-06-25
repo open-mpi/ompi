@@ -210,12 +210,13 @@ void *tm_realloc(void *old_ptr, size_t size, char *file, int line){
 }
 
 void tm_free(void *ptr){
-  byte *original_ptr = ((byte *)ptr) - EXTRA_BYTE;
+  byte *original_ptr;
   size_t size;
 
   if(!ptr)
     return;
 
+  original_ptr = ((byte *)ptr) - EXTRA_BYTE;
   size = retreive_size(original_ptr);
 
   if((bcmp(original_ptr ,extra_data, EXTRA_BYTE)) && ((tm_get_verbose_level()>=ERROR))){

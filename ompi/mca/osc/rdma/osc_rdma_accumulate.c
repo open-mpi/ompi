@@ -241,10 +241,8 @@ static inline int ompi_osc_rdma_gacc_contig (ompi_osc_rdma_sync_t *sync, const v
             return ompi_osc_rdma_put_contig (sync, peer, target_address, target_handle, ptr, len, request);
         }
 
-        if (request) {
-            /* nothing more to do for this request */
-            ompi_osc_rdma_request_complete (request, MPI_SUCCESS);
-        }
+        /* nothing more to do for this request */
+        ompi_osc_rdma_request_complete (request, MPI_SUCCESS);
 
         return OMPI_SUCCESS;
     }
