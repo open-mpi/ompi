@@ -814,9 +814,10 @@ int ompi_osc_ucx_rput(const void *origin_addr, int origin_count,
     }
 
     mca_osc_ucx_component.num_incomplete_req_ops++;
+    /* TODO: investigate whether ucp_worker_flush_nb is a better choice here */
     ret = opal_common_ucx_wpmem_fetch_nb(module->mem, UCP_ATOMIC_FETCH_OP_FADD,
                                          0, target, &(module->req_result),
-                                         sizeof(uint64_t), remote_addr,
+                                         sizeof(uint64_t), remote_addr & (~0x7),
                                          req_completion, ucx_req);
     if (ret != OMPI_SUCCESS) {
         return ret;
@@ -865,9 +866,10 @@ int ompi_osc_ucx_rget(void *origin_addr, int origin_count,
     }
 
     mca_osc_ucx_component.num_incomplete_req_ops++;
+    /* TODO: investigate whether ucp_worker_flush_nb is a better choice here */
     ret = opal_common_ucx_wpmem_fetch_nb(module->mem, UCP_ATOMIC_FETCH_OP_FADD,
                                          0, target, &(module->req_result),
-                                         sizeof(uint64_t), remote_addr,
+                                         sizeof(uint64_t), remote_addr & (~0x7),
                                          req_completion, ucx_req);
     if (ret != OMPI_SUCCESS) {
         return ret;
