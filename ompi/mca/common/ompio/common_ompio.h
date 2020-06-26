@@ -107,6 +107,7 @@ enum ompio_fs_type
     PVFS2 = 2,
     LUSTRE = 3,
     PLFS = 4,
+    IME = 5,
     GPFS = 6
 };
 
