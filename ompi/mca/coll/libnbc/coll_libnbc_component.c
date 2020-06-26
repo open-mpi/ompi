@@ -46,6 +46,59 @@ static int libnbc_priority = 10;
 static bool libnbc_in_progress = false;     /* protect from recursive calls */
 bool libnbc_ibcast_skip_dt_decision = true;
 
+int libnbc_iallgather_algorithm = 0;             /* iallgather user forced algorithm */
+static mca_base_var_enum_value_t iallgather_algorithms[] = {
+    {0, "ignore"},
+    {1, "linear"},
+    {2, "recursive_doubling"},
+    {0, NULL}
+};
+
+int libnbc_iallreduce_algorithm = 0;             /* iallreduce user forced algorithm */
+static mca_base_var_enum_value_t iallreduce_algorithms[] = {
+    {0, "ignore"},
+    {1, "ring"},
+    {2, "binomial"},
+    {3, "rabenseifner"},
+    {4, "recursive_doubling"},
+    {0, NULL}
+};
+
+int libnbc_ibcast_algorithm = 0;             /* ibcast user forced algorithm */
+int libnbc_ibcast_knomial_radix = 4;
+static mca_base_var_enum_value_t ibcast_algorithms[] = {
+    {0, "ignore"},
+    {1, "linear"},
+    {2, "binomial"},
+    {3, "chain"},
+    {4, "knomial"},
+    {0, NULL}
+};
+
+int libnbc_iexscan_algorithm = 0;             /* iexscan user forced algorithm */
+static mca_base_var_enum_value_t iexscan_algorithms[] = {
+    {0, "ignore"},
+    {1, "linear"},
+    {2, "recursive_doubling"},
+    {0, NULL}
+};
+
+int libnbc_ireduce_algorithm = 0;            /* ireduce user forced algorithm */
+static mca_base_var_enum_value_t ireduce_algorithms[] = {
+    {0, "ignore"},
+    {1, "chain"},
+    {2, "binomial"},
+    {3, "rabenseifner"},
+    {0, NULL}
+};
+
+int libnbc_iscan_algorithm = 0;             /* iscan user forced algorithm */
+static mca_base_var_enum_value_t iscan_algorithms[] = {
+    {0, "ignore"},
+    {1, "linear"},
+    {2, "recursive_doubling"},
+    {0, NULL}
+};
 
 static int libnbc_open(void);
 static int libnbc_close(void);
@@ -53,7 +106,6 @@ static int libnbc_register(void);
 static int libnbc_init_query(bool, bool);
 static mca_coll_base_module_t *libnbc_comm_query(struct ompi_communicator_t *, int *);
 static int libnbc_module_enable(mca_coll_base_module_t *, struct ompi_communicator_t *);
-
 
 /*
  * Instantiate the public struct with all of our public information
@@ -128,6 +180,8 @@ libnbc_close(void)
 static int
 libnbc_register(void)
 {
+    mca_base_var_enum_t *new_enum = NULL;
+
     /* Use a low priority, but allow other components to be lower */
     libnbc_priority = 10;
     (void) mca_base_component_var_register(&mca_coll_libnbc_component.super.collm_version,
@@ -158,10 +212,76 @@ libnbc_register(void)
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &libnbc_ibcast_skip_dt_decision);
 
+    libnbc_iallgather_algorithm = 0;
+    (void) mca_base_var_enum_create("coll_libnbc_iallgather_algorithms", iallgather_algorithms, &new_enum);
+    mca_base_component_var_register(&mca_coll_libnbc_component.super.collm_version,
+                                    "iallgather_algorithm",
+                                    "Which iallgather algorithm is used: 0 ignore, 1 linear, 2 recursive_doubling",
+                                    MCA_BASE_VAR_TYPE_INT, new_enum, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                    OPAL_INFO_LVL_5, MCA_BASE_VAR_SCOPE_ALL,
+                                    &libnbc_iallgather_algorithm);
+    OBJ_RELEASE(new_enum);
+
+    libnbc_iallreduce_algorithm = 0;
+    (void) mca_base_var_enum_create("coll_libnbc_iallreduce_algorithms", iallreduce_algorithms, &new_enum);
+    mca_base_component_var_register(&mca_coll_libnbc_component.super.collm_version,
+                                    "iallreduce_algorithm",
+                                    "Which iallreduce algorithm is used: 0 ignore, 1 ring, 2 binomial, 3 rabenseifner, 4 recursive_doubling",
+                                    MCA_BASE_VAR_TYPE_INT, new_enum, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                    OPAL_INFO_LVL_5, MCA_BASE_VAR_SCOPE_ALL,
+                                    &libnbc_iallreduce_algorithm);
+    OBJ_RELEASE(new_enum);
+
+    libnbc_ibcast_algorithm = 0;
+    (void) mca_base_var_enum_create("coll_libnbc_ibcast_algorithms", ibcast_algorithms, &new_enum);
+    mca_base_component_var_register(&mca_coll_libnbc_component.super.collm_version,
+                                    "ibcast_algorithm",
+                                    "Which ibcast algorithm is used: 0 ignore, 1 linear, 2 binomial, 3 chain, 4 knomial",
+                                    MCA_BASE_VAR_TYPE_INT, new_enum, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                    OPAL_INFO_LVL_5, MCA_BASE_VAR_SCOPE_ALL,
+                                    &libnbc_ibcast_algorithm);
+    OBJ_RELEASE(new_enum);
+
+    libnbc_ibcast_knomial_radix = 4;
+    (void) mca_base_component_var_register(&mca_coll_libnbc_component.super.collm_version,
+                                           "ibcast_knomial_radix", "k-nomial tree radix for the ibcast algorithm (radix > 1)",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &libnbc_ibcast_knomial_radix);
+
+    libnbc_iexscan_algorithm = 0;
+    (void) mca_base_var_enum_create("coll_libnbc_iexscan_algorithms", iexscan_algorithms, &new_enum);
+    mca_base_component_var_register(&mca_coll_libnbc_component.super.collm_version,
+                                    "iexscan_algorithm",
+                                    "Which iexscan algorithm is used: 0 ignore, 1 linear, 2 recursive_doubling",
+                                    MCA_BASE_VAR_TYPE_INT, new_enum, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                    OPAL_INFO_LVL_5, MCA_BASE_VAR_SCOPE_ALL,
+                                    &libnbc_iexscan_algorithm);
+    OBJ_RELEASE(new_enum);
+
+    libnbc_ireduce_algorithm = 0;
+    (void) mca_base_var_enum_create("coll_libnbc_ireduce_algorithms", ireduce_algorithms, &new_enum);
+    mca_base_component_var_register(&mca_coll_libnbc_component.super.collm_version,
+                                    "ireduce_algorithm",
+                                    "Which ireduce algorithm is used: 0 ignore, 1 chain, 2 binomial, 3 rabenseifner",
+                                    MCA_BASE_VAR_TYPE_INT, new_enum, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                    OPAL_INFO_LVL_5, MCA_BASE_VAR_SCOPE_ALL,
+                                    &libnbc_ireduce_algorithm);
+    OBJ_RELEASE(new_enum);
+
+    libnbc_iscan_algorithm = 0;
+    (void) mca_base_var_enum_create("coll_libnbc_iscan_algorithms", iscan_algorithms, &new_enum);
+    mca_base_component_var_register(&mca_coll_libnbc_component.super.collm_version,
+                                    "iscan_algorithm",
+                                    "Which iscan algorithm is used: 0 ignore, 1 linear, 2 recursive_doubling",
+                                    MCA_BASE_VAR_TYPE_INT, new_enum, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                    OPAL_INFO_LVL_5, MCA_BASE_VAR_SCOPE_ALL,
+                                    &libnbc_iscan_algorithm);
+    OBJ_RELEASE(new_enum);
+
     return OMPI_SUCCESS;
 }
-
-
 
 /*
  * Initial query function that is invoked during MPI_INIT, allowing

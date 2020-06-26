@@ -20,6 +20,15 @@
  */
 #include "nbc_internal.h"
 
+static inline int allgather_sched_linear(
+    int rank, int comm_size, NBC_Schedule *schedule, const void *sendbuf,
+    int scount, struct ompi_datatype_t *sdtype, void *recvbuf, int rcount,
+    struct ompi_datatype_t *rdtype);
+static inline int allgather_sched_recursivedoubling(
+    int rank, int comm_size, NBC_Schedule *schedule, const void *sbuf,
+    int scount, struct ompi_datatype_t *sdtype, void *rbuf, int rcount,
+    struct ompi_datatype_t *rdtype);
+
 #ifdef NBC_CACHE_SCHEDULE
 /* tree comparison function for schedule cache */
 int NBC_Allgather_args_compare(NBC_Allgather_args *a, NBC_Allgather_args *b, void *param) {
@@ -40,10 +49,6 @@ int NBC_Allgather_args_compare(NBC_Allgather_args *a, NBC_Allgather_args *b, voi
 }
 #endif
 
-/* simple linear MPI_Iallgather
- * the algorithm uses p-1 rounds
- * each node sends the packet it received last round (or has in round 0) to it's right neighbor (modulo p)
- * each node receives from it's left (modulo p) neighbor */
 static int nbc_allgather_init(const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount,
                               MPI_Datatype recvtype, struct ompi_communicator_t *comm, ompi_request_t ** request,
                               struct mca_coll_base_module_2_3_0_t *module, bool persistent)
@@ -51,16 +56,31 @@ static int nbc_allgather_init(const void* sendbuf, int sendcount, MPI_Datatype s
   int rank, p, res;
   MPI_Aint rcvext;
   NBC_Schedule *schedule;
-  char *rbuf, *sbuf, inplace;
+  char *rbuf, inplace;
 #ifdef NBC_CACHE_SCHEDULE
   NBC_Allgather_args *args, *found, search;
 #endif
+  enum { NBC_ALLGATHER_LINEAR, NBC_ALLGATHER_RDBL} alg;
   ompi_coll_libnbc_module_t *libnbc_module = (ompi_coll_libnbc_module_t*) module;
 
   NBC_IN_PLACE(sendbuf, recvbuf, inplace);
 
   rank = ompi_comm_rank (comm);
   p = ompi_comm_size (comm);
+  int is_commsize_pow2 = !(p & (p - 1));
+
+  if (libnbc_iallgather_algorithm == 0) {
+    alg = NBC_ALLGATHER_LINEAR;
+  } else {
+    /* user forced dynamic decision */
+    if (libnbc_iallgather_algorithm == 1) {
+      alg = NBC_ALLGATHER_LINEAR;
+    } else if (libnbc_iallgather_algorithm == 2 && is_commsize_pow2) {
+      alg = NBC_ALLGATHER_RDBL;
+    } else {
+      alg = NBC_ALLGATHER_LINEAR;
+    }
+  }
 
   res = ompi_datatype_type_extent(recvtype, &rcvext);
   if (MPI_SUCCESS != res) {
@@ -98,36 +118,32 @@ static int nbc_allgather_init(const void* sendbuf, int sendcount, MPI_Datatype s
       return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
-    sbuf = (char *)recvbuf + rank * recvcount * rcvext;
-
-    if (persistent && !inplace) { /* for nonblocking, data has been copied already */
+    if (persistent && !inplace) {
+      /* for nonblocking, data has been copied already */
       /* copy my data to receive buffer (= send buffer of NBC_Sched_send) */
-      res = NBC_Sched_copy ((void *)sendbuf, false, sendcount, sendtype,
-                            sbuf, false, recvcount, recvtype, schedule, true);
+      rbuf = (char *)recvbuf + rank * recvcount * rcvext;
+      res = NBC_Sched_copy((void *)sendbuf, false, sendcount, sendtype,
+                            rbuf, false, recvcount, recvtype, schedule, true);
       if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
         OBJ_RELEASE(schedule);
         return res;
       }
     }
 
-    /* do p-1 rounds */
-    for(int r = 0 ; r < p ; ++r) {
-      if(r != rank) {
-        /* recv from rank r */
-        rbuf = (char *)recvbuf + r * recvcount * rcvext;
-        res = NBC_Sched_recv (rbuf, false, recvcount, recvtype, r, schedule, false);
-        if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-          OBJ_RELEASE(schedule);
-          return res;
-        }
+    switch (alg) {
+      case NBC_ALLGATHER_LINEAR:
+        res = allgather_sched_linear(rank, p, schedule, sendbuf, sendcount, sendtype,
+                                     recvbuf, recvcount, recvtype);
+        break;
+      case NBC_ALLGATHER_RDBL:
+        res = allgather_sched_recursivedoubling(rank, p, schedule, sendbuf, sendcount,
+                                                sendtype, recvbuf, recvcount, recvtype);
+        break;
+    }
 
-        /* send to rank r - not from the sendbuf to optimize MPI_IN_PLACE */
-        res = NBC_Sched_send (sbuf, false, recvcount, recvtype, r, schedule, false);
-        if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-          OBJ_RELEASE(schedule);
-          return res;
-        }
-      }
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+      OBJ_RELEASE(schedule);
+      return res;
     }
 
     res = NBC_Sched_commit(schedule);
@@ -268,6 +284,109 @@ int ompi_coll_libnbc_iallgather_inter(const void* sendbuf, int sendcount, MPI_Da
     }
 
     return OMPI_SUCCESS;
+}
+
+/*
+ * allgather_sched_linear
+ *
+ * Description: an implementation of Iallgather using linear algorithm
+ *
+ * Time: O(comm_size)
+ * Schedule length (rounds): O(comm_size)
+ */
+static inline int allgather_sched_linear(
+    int rank, int comm_size, NBC_Schedule *schedule, const void *sendbuf,
+    int scount, struct ompi_datatype_t *sdtype, void *recvbuf, int rcount,
+    struct ompi_datatype_t *rdtype)
+{
+    int res = OMPI_SUCCESS;
+    ptrdiff_t rlb, rext;
+
+    res = ompi_datatype_get_extent(rdtype, &rlb, &rext);
+    char *sbuf = (char *)recvbuf + rank * rcount * rext;
+
+    for (int remote = 0; remote < comm_size ; ++remote) {
+        if (remote != rank) {
+            /* Recv from rank remote */
+            char *rbuf = (char *)recvbuf + remote * rcount * rext;
+            res = NBC_Sched_recv(rbuf, false, rcount, rdtype, remote, schedule, false);
+            if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) { goto cleanup_and_return; }
+
+            /* Send to rank remote - not from the sendbuf to optimize MPI_IN_PLACE */
+            res = NBC_Sched_send(sbuf, false, rcount, rdtype, remote, schedule, false);
+            if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) { goto cleanup_and_return; }
+        }
+    }
+
+cleanup_and_return:
+    return res;
+}
+
+/*
+ * allgather_sched_recursivedoubling
+ *
+ * Description: an implementation of Iallgather using recursive doubling algorithm
+ * Limitation: power-of-two number of processes only
+ * Time: O(log(comm_size))
+ * Schedule length (rounds): O(log(comm_size))
+ * Memory: no additional memory requirements beyond user-supplied buffers.
+ *
+ * Example on 4 nodes:
+ *   Initialization: everyone has its own buffer at location rank in rbuf
+ *    #     0      1      2      3
+ *         [0]    [ ]    [ ]    [ ]
+ *         [ ]    [1]    [ ]    [ ]
+ *         [ ]    [ ]    [2]    [ ]
+ *         [ ]    [ ]    [ ]    [3]
+ *   Step 0: exchange data with (rank ^ 2^0)
+ *    #     0      1      2      3
+ *         [0]    [0]    [ ]    [ ]
+ *         [1]    [1]    [ ]    [ ]
+ *         [ ]    [ ]    [2]    [2]
+ *         [ ]    [ ]    [3]    [3]
+ *   Step 1: exchange data with (rank ^ 2^1) (if you can)
+ *    #     0      1      2      3
+ *         [0]    [0]    [0]    [0]
+ *         [1]    [1]    [1]    [1]
+ *         [2]    [2]    [2]    [2]
+ *         [3]    [3]    [3]    [3]
+ *
+ */
+static inline int allgather_sched_recursivedoubling(
+    int rank, int comm_size, NBC_Schedule *schedule, const void *sbuf,
+    int scount, struct ompi_datatype_t *sdtype, void *rbuf, int rcount,
+    struct ompi_datatype_t *rdtype)
+{
+    int res = OMPI_SUCCESS;
+    ptrdiff_t rlb, rext;
+    char *tmpsend = NULL, *tmprecv = NULL;
+
+    res = ompi_datatype_get_extent(rdtype, &rlb, &rext);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) { goto cleanup_and_return; }
+
+    int sendblocklocation = rank;
+    for (int distance = 1; distance < comm_size; distance <<= 1) {
+        int remote = rank ^ distance;
+
+        tmpsend = (char *)rbuf + (ptrdiff_t)sendblocklocation * (ptrdiff_t)rcount * rext;
+        if (rank < remote) {
+            tmprecv = (char *)rbuf + (ptrdiff_t)(sendblocklocation + distance) * (ptrdiff_t)rcount * rext;
+        } else {
+            tmprecv = (char *)rbuf + (ptrdiff_t)(sendblocklocation - distance) * (ptrdiff_t)rcount * rext;
+            sendblocklocation -= distance;
+        }
+
+        res = NBC_Sched_send(tmpsend, false, (ptrdiff_t)distance * (ptrdiff_t)rcount,
+                             rdtype, remote, schedule, false);
+        if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) { goto cleanup_and_return; }
+
+        res = NBC_Sched_recv(tmprecv, false, (ptrdiff_t)distance * (ptrdiff_t)rcount,
+                             rdtype, remote, schedule, true);
+        if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) { goto cleanup_and_return; }
+    }
+
+cleanup_and_return:
+    return res;
 }
 
 int ompi_coll_libnbc_allgather_init(const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount,

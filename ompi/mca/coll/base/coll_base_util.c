@@ -42,7 +42,7 @@ int ompi_coll_base_sendrecv_actual( const void* sendbuf, size_t scount,
 { /* post receive first, then send, then wait... should be fast (I hope) */
     int err, line = 0;
     size_t rtypesize, stypesize;
-    ompi_request_t *req;
+    ompi_request_t *req = MPI_REQUEST_NULL;
     ompi_status_public_t rstatus;
 
     /* post new irecv */

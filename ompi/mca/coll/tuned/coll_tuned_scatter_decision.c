@@ -5,6 +5,7 @@
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2019      Mellanox Technologies. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -36,6 +37,7 @@ static mca_base_var_enum_value_t scatter_algorithms[] = {
     {0, "ignore"},
     {1, "basic_linear"},
     {2, "binomial"},
+    {3, "linear_nb"},
     {0, NULL}
 };
 
@@ -74,7 +76,7 @@ ompi_coll_tuned_scatter_intra_check_forced_init(coll_tuned_force_algorithm_mca_p
     mca_param_indices->algorithm_param_index =
         mca_base_component_var_register(&mca_coll_tuned_component.super.collm_version,
                                         "scatter_algorithm",
-                                        "Which scatter algorithm is used. Can be locked down to choice of: 0 ignore, 1 basic linear, 2 binomial.",
+                                        "Which scatter algorithm is used. Can be locked down to choice of: 0 ignore, 1 basic linear, 2 binomial, 3 non-blocking linear.",
                                         MCA_BASE_VAR_TYPE_INT, new_enum, 0, MCA_BASE_VAR_FLAG_SETTABLE,
                                         OPAL_INFO_LVL_5,
                                         MCA_BASE_VAR_SCOPE_ALL,
@@ -114,6 +116,38 @@ ompi_coll_tuned_scatter_intra_check_forced_init(coll_tuned_force_algorithm_mca_p
                                       MCA_BASE_VAR_SCOPE_ALL,
                                       &coll_tuned_scatter_chain_fanout);
 
+    (void) mca_base_component_var_register(&mca_coll_tuned_component.super.collm_version,
+                                           "scatter_min_procs",
+                                           "use basic linear algorithm for communicators larger than this value",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_6,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &ompi_coll_tuned_scatter_min_procs);
+
+    (void)mca_base_component_var_register(&mca_coll_tuned_component.super.collm_version,
+                                          "scatter_algorithm_max_requests",
+                                          "Issue a blocking send every this many non-blocking requests. Only has meaning for non-blocking linear algorithm.",
+                                          MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                          OPAL_INFO_LVL_5,
+                                          MCA_BASE_VAR_SCOPE_ALL,
+                                          &ompi_coll_tuned_scatter_blocking_send_ratio);
+
+    (void) mca_base_component_var_register(&mca_coll_tuned_component.super.collm_version,
+                                           "scatter_intermediate_msg",
+                                           "use non-blocking linear algorithm for messages larger than this value",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_6,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &ompi_coll_tuned_scatter_intermediate_msg);
+
+    (void) mca_base_component_var_register(&mca_coll_tuned_component.super.collm_version,
+                                           "scatter_large_msg",
+                                           "use linear algorithm for messages larger than this value",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_6,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &ompi_coll_tuned_scatter_large_msg);
+
     return (MPI_SUCCESS);
 }
 
@@ -144,6 +178,11 @@ ompi_coll_tuned_scatter_intra_do_this(const void *sbuf, int scount,
         return ompi_coll_base_scatter_intra_binomial(sbuf, scount, sdtype,
                                                      rbuf, rcount, rdtype,
                                                      root, comm, module);
+    case (3):
+        return ompi_coll_base_scatter_intra_linear_nb(sbuf, scount, sdtype,
+                                                      rbuf, rcount, rdtype,
+                                                      root, comm, module,
+                                                      ompi_coll_tuned_scatter_blocking_send_ratio);
     } /* switch */
     OPAL_OUTPUT((ompi_coll_tuned_stream,
                  "coll:tuned:scatter_intra_do_this attempt to select algorithm %d when only 0-%d is valid?",

@@ -91,7 +91,7 @@ ompi_coll_tuned_comm_query(struct ompi_communicator_t *comm, int *priority)
     tuned_module->super.coll_module_enable = tuned_module_enable;
     tuned_module->super.ft_event = mca_coll_tuned_ft_event;
 
-    /* By default stick with the fied version of the tuned collectives. Later on,
+    /* By default stick with the fixed version of the tuned collectives. Later on,
      * when the module get enabled, set the correct version based on the availability
      * of the dynamic rules.
      */

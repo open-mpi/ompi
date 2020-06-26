@@ -397,6 +397,43 @@ int mca_coll_hcoll_gatherv(const void* sbuf, int scount,
 
 }
 
+int mca_coll_hcoll_scatterv(const void* sbuf, const int *scounts, const int *displs,
+                            struct ompi_datatype_t *sdtype,
+                            void* rbuf, int rcount,
+                            struct ompi_datatype_t *rdtype,
+                            int root,
+                            struct ompi_communicator_t *comm,
+                            mca_coll_base_module_t *module)
+{
+    dte_data_representation_t stype;
+    dte_data_representation_t rtype;
+    int rc;
+    HCOL_VERBOSE(20,"RUNNING HCOL SCATTERV");
+    mca_coll_hcoll_module_t *hcoll_module = (mca_coll_hcoll_module_t*)module;
+    stype = ompi_dtype_2_hcoll_dtype(sdtype, NO_DERIVED);
+    rtype = ompi_dtype_2_hcoll_dtype(rdtype, NO_DERIVED);
+    if (OPAL_UNLIKELY(HCOL_DTE_IS_ZERO(stype) || HCOL_DTE_IS_ZERO(rtype))) {
+        /*If we are here then datatype is not simple predefined datatype */
+        /*In future we need to add more complex mapping to the dte_data_representation_t */
+        /* Now use fallback */
+        HCOL_VERBOSE(20,"Ompi_datatype is not supported: sdtype = %s, rdtype = %s; calling fallback scatterv;",
+                     sdtype->super.name,
+                     rdtype->super.name);
+        rc = hcoll_module->previous_scatterv(sbuf, scounts, displs, sdtype,
+                                           rbuf, rcount, rdtype, root,
+                                           comm, hcoll_module->previous_scatterv_module);
+        return rc;
+    }
+    rc = hcoll_collectives.coll_scatterv((void *)sbuf, (int *)scounts, (int *)displs, stype, rbuf, rcount, rtype, root, hcoll_module->hcoll_context);
+    if (HCOLL_SUCCESS != rc){
+        HCOL_VERBOSE(20,"RUNNING FALLBACK SCATTERV");
+        rc = hcoll_module->previous_scatterv(sbuf, scounts, displs, sdtype,
+                                           rbuf, rcount, rdtype, root,
+                                           comm, hcoll_module->previous_scatterv_module);
+    }
+    return rc;
+}
+
 int mca_coll_hcoll_ibarrier(struct ompi_communicator_t *comm,
                             ompi_request_t ** request,
                             mca_coll_base_module_t *module)

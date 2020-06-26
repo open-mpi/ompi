@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2016 The University of Tennessee and The University
+ * Copyright (c) 2004-2017 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -214,13 +214,29 @@ ompi_coll_base_bcast_intra_generic( void* buffer,
     return (MPI_SUCCESS);
 
  error_hndl:
+    if (MPI_ERR_IN_STATUS == err) {
+        for( req_index = 0; req_index < 2; req_index++ ) {
+            if (MPI_REQUEST_NULL == recv_reqs[req_index]) continue;
+            if (MPI_ERR_PENDING == recv_reqs[req_index]->req_status.MPI_ERROR) continue;
+            err = recv_reqs[req_index]->req_status.MPI_ERROR;
+            break;
+        }
+    }
+    ompi_coll_base_free_reqs( recv_reqs, 2);
+    if( NULL != send_reqs ) {
+        if (MPI_ERR_IN_STATUS == err) {
+            for( req_index = 0; req_index < tree->tree_nextsize; req_index++ ) {
+                if (MPI_REQUEST_NULL == send_reqs[req_index]) continue;
+                if (MPI_ERR_PENDING == send_reqs[req_index]->req_status.MPI_ERROR) continue;
+                err = send_reqs[req_index]->req_status.MPI_ERROR;
+                break;
+            }
+        }
+        ompi_coll_base_free_reqs(send_reqs, tree->tree_nextsize);
+    }
     OPAL_OUTPUT( (ompi_coll_base_framework.framework_output,"%s:%4d\tError occurred %d, rank %2d",
                   __FILE__, line, err, rank) );
     (void)line;  // silence compiler warnings
-    ompi_coll_base_free_reqs( recv_reqs, 2);
-    if( NULL != send_reqs ) {
-        ompi_coll_base_free_reqs(send_reqs, tree->tree_nextsize);
-    }
 
     return err;
 }
@@ -630,7 +646,9 @@ ompi_coll_base_bcast_intra_basic_linear(void *buff, int count,
 
     /* Root sends data to all others. */
     preq = reqs = ompi_coll_base_comm_get_reqs(module->base_data, size-1);
-    if( NULL == reqs ) { err = OMPI_ERR_OUT_OF_RESOURCE; goto err_hndl; }
+    if( NULL == reqs ) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
 
     for (i = 0; i < size; ++i) {
         if (i == rank) {
@@ -649,12 +667,21 @@ ompi_coll_base_bcast_intra_basic_linear(void *buff, int count,
      * care what the error was -- just that there *was* an error.  The
      * PML will finish all requests, even if one or more of them fail.
      * i.e., by the end of this call, all the requests are free-able.
-     * So free them anyway -- even if there was an error, and return
-     * the error after we free everything. */
+     * So free them anyway -- even if there was an error. 
+     * Note we still need to get the actual error, as collective 
+     * operations cannot return MPI_ERR_IN_STATUS.
+     */
 
     err = ompi_request_wait_all(i, reqs, MPI_STATUSES_IGNORE);
  err_hndl:
     if( MPI_SUCCESS != err ) {  /* Free the reqs */
+        /* first find the real error code */
+        for( preq = reqs; preq < reqs+i; preq++ ) {
+            if (MPI_REQUEST_NULL == *preq) continue;
+            if (MPI_ERR_PENDING == (*preq)->req_status.MPI_ERROR) continue;
+            err = (*preq)->req_status.MPI_ERROR;
+            break;
+        }
         ompi_coll_base_free_reqs(reqs, i);
     }
 
