@@ -142,6 +142,35 @@ OPAL_DECLSPEC int opal_tsd_key_create(opal_tsd_key_t *key,
 
 
 /**
+ * Create thread-specific data key
+ *
+ * Create a thread-specific data key visible to all threads in the
+ * current process.  The returned key is valid in all threads,
+ * although the values bound to the key by opal_tsd_setspecific() are
+ * allocated on a per-thread basis and persist for the life of the
+ * calling thread.
+ *
+ * Upon key creation, the value NULL is associated with the new key in
+ * all active threads.  When a new thread is created, the value NULL
+ * is associated with all defined keys in the new thread.
+ *
+ * The destructor parameter may be NULL.  At thread exit, if
+ * destructor is non-NULL AND the thread has a non-NULL value
+ * associated with the key, the function is called with the current
+ * value as its argument.
+ *
+ * @param key[out]       The key for accessing thread-specific data
+ * @param destructor[in] Cleanup function to call when a thread exits
+ *
+ * @retval OPAL_SUCCESS      Success
+ * @retval OPAL_ERR          Error
+ * @retval OPAL_ERR_IN_ERRNO Error
+ */
+OPAL_DECLSPEC int opal_tls_key_create(opal_tsd_key_t *key,
+                                      opal_tsd_destructor_t destructor);
+
+
+/**
  * Destruct all thread-specific data keys
  *
  * Destruct all thread-specific data keys and invoke the destructor

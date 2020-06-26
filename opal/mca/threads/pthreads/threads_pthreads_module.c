@@ -137,3 +137,9 @@ int opal_tsd_keys_destruct(void)
 void opal_thread_set_main(void)
 {
 }
+
+int opal_tls_key_create(opal_tsd_key_t *key, opal_tsd_destructor_t destructor)
+{
+    int ret = pthread_key_create(key, destructor);
+    return 0 == ret ? OPAL_SUCCESS : OPAL_ERR_IN_ERRNO;
+}
