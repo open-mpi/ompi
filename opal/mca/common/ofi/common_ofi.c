@@ -4,6 +4,7 @@
  *                         reserved.
  * Copyright (c) 2020      Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2020      Cisco Systems, Inc.  All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -389,7 +390,7 @@ opal_mca_common_ofi_select_provider(struct fi_info *provider_list, int local_ind
     }
 #endif
 
-#if OPAL_DEBUG_ENABLE
+#if OPAL_ENABLE_DEBUG
     opal_output_verbose(1, opal_common_ofi.output,
                         "local rank: %d device: %s cpusets match: %s\n",
                          local_index, provider->domain_attr->name,
