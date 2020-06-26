@@ -23,6 +23,8 @@
 #include <pthread.h>
 
 #include "opal/constants.h"
+#include "opal/class/opal_list.h"
+#include "mutex.h"
 
 BEGIN_C_DECLS
 
@@ -46,7 +48,6 @@ typedef void (*opal_tsd_destructor_t)(void *value);
  * Typedef for thread-specific data key
  */
 typedef void *opal_tsd_key_t;
-
 
 /**
  * Delete a thread-specific data key
@@ -111,6 +112,45 @@ OPAL_DECLSPEC int opal_tsd_getspecific(opal_tsd_key_t key, void **valuep);
 #include MCA_threads_tsd_base_include_HEADER
 
 #endif
+
+typedef struct opal_tsd_tracked_key_s opal_tsd_tracked_key_t;
+
+typedef struct _opal_tsd_list_item_t {
+    opal_list_item_t super;
+    opal_tsd_tracked_key_t *tracked_key;
+    void *data;
+} opal_tsd_list_item_t;
+OBJ_CLASS_DECLARATION(opal_tsd_list_item_t);
+
+struct opal_tsd_tracked_key_s {
+    opal_object_t super;
+    opal_tsd_key_t key;
+    opal_mutex_t mutex;
+    opal_list_t tsd_list;
+    void (*user_destructor)(void *);
+};
+OBJ_CLASS_DECLARATION(opal_tsd_tracked_key_t);
+
+void opal_tsd_tracked_key_constructor(opal_tsd_tracked_key_t *key);
+void opal_tsd_tracked_key_destructor(opal_tsd_tracked_key_t *key);
+
+static inline int opal_tsd_tracked_key_get(opal_tsd_tracked_key_t *key, void **p)
+{
+    assert( NULL != key);
+    *p = NULL;
+
+    opal_tsd_list_item_t *tsd = NULL;
+    opal_tsd_get(key->key, (void **)&tsd); 
+    if (NULL != tsd) {
+        *p = tsd->data;
+    }
+
+    return OPAL_SUCCESS;
+}
+
+OPAL_DECLSPEC int opal_tsd_tracked_key_set(opal_tsd_tracked_key_t *key, void *p);
+OPAL_DECLSPEC void opal_tsd_tracked_key_set_destructor(
+        opal_tsd_tracked_key_t *key, opal_tsd_destructor_t destructor);
 
 /**
  * Create thread-specific data key
