@@ -470,7 +470,6 @@ opal_common_ucx_wpmem_cmpswp_nb(opal_common_ucx_wpmem_t *mem, uint64_t compare,
     rc = _periodical_flush_nb(mem, winfo, target);
     if(OPAL_UNLIKELY(OPAL_SUCCESS != rc)){
         MCA_COMMON_UCX_VERBOSE(1, "_incr_and_check_inflight_ops failed: %d", rc);
-        return rc;
     }
 
     opal_mutex_unlock(&winfo->mutex);
