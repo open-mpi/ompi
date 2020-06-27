@@ -279,10 +279,10 @@ static int usnic_pvar_notify(struct mca_base_pvar_t *pvar,
  * Function called by the pvar base when a user wants to read the
  * value of an MPI_T performance variable.
  */
-static int usnic_pvar_read(const struct mca_base_pvar_t *pvar,
+static int usnic_pvar_read(const struct mca_base_pvar_handle_t *pvar_handle,
                            void *value, void *bound_obj)
 {
-    size_t offset = (size_t) pvar->ctx;
+    size_t offset = (size_t) pvar_handler->pvar->ctx;
     uint64_t *array = (uint64_t*) value;
 
     for (int i = 0; i < mca_btl_usnic_component.num_modules; ++i) {
@@ -324,7 +324,7 @@ static void register_pvar_highwater(char *name, char *desc, size_t offset)
  * which will map to the strings in the devices_enum
  * setup_mpit_pvar_type().
  */
-static int usnic_pvar_enum_read(const struct mca_base_pvar_t *pvar,
+static int usnic_pvar_enum_read(const struct mca_base_pvar_handle_t *pvar_handle,
                                 void *value, void *bound_obj)
 {
     int *array = (int *) value;

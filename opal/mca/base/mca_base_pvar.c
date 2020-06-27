@@ -9,6 +9,8 @@
  *                         reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
+ * Copyright (c) 2019      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -146,8 +148,10 @@ int mca_base_pvar_get_count (int *count)
     return OPAL_SUCCESS;
 }
 
-static int mca_base_pvar_default_get_value (const mca_base_pvar_t *pvar, void *value, void *obj_handle)
+static int mca_base_pvar_default_get_value (const mca_base_pvar_handle_t *pvar_handle, void *value, void *obj_handle)
 {
+    const mca_base_pvar_t *pvar = pvar_handle->pvar;
+
     /* not used */
     (void) obj_handle;
 
@@ -156,8 +160,10 @@ static int mca_base_pvar_default_get_value (const mca_base_pvar_t *pvar, void *v
     return OPAL_SUCCESS;
 }
 
-static int mca_base_pvar_default_set_value (mca_base_pvar_t *pvar, const void *value, void *obj_handle)
+static int mca_base_pvar_default_set_value (mca_base_pvar_handle_t *pvar_handle, const void *value, void *obj_handle)
 {
+    mca_base_pvar_t *pvar = pvar_handle->pvar;
+
     /* not used */
     (void) obj_handle;
 
@@ -222,6 +228,7 @@ int mca_base_pvar_register (const char *project, const char *framework, const ch
         if (MCA_BASE_VAR_TYPE_UNSIGNED_INT != type &&
             MCA_BASE_VAR_TYPE_UNSIGNED_LONG != type &&
             MCA_BASE_VAR_TYPE_UNSIGNED_LONG_LONG != type &&
+            MCA_BASE_VAR_TYPE_SIZE_T != type &&
             MCA_BASE_VAR_TYPE_DOUBLE != type) {
             return OPAL_ERR_BAD_PARAM;
         }
@@ -516,10 +523,10 @@ int mca_base_pvar_handle_alloc (mca_base_pvar_session_t *session, int index, voi
                current value is not relevant. */
             if (mca_base_pvar_is_continuous (pvar)) {
                 if (mca_base_pvar_is_sum (pvar)) {
-                    ret = pvar->get_value (pvar, pvar_handle->last_value, pvar_handle->obj_handle);
+                    ret = pvar->get_value (pvar_handle, pvar_handle->last_value, pvar_handle->obj_handle);
                 } else {
                     /* the initial value of a watermark is the current value of the variable */
-                    ret = pvar->get_value (pvar, pvar_handle->current_value, pvar_handle->obj_handle);
+                    ret = pvar->get_value (pvar_handle, pvar_handle->current_value, pvar_handle->obj_handle);
                 }
 
                 if (OPAL_SUCCESS != ret) {
@@ -570,7 +577,7 @@ int mca_base_pvar_handle_update (mca_base_pvar_handle_t *handle)
     }
 
     if (mca_base_pvar_is_sum (handle->pvar) || mca_base_pvar_is_watermark (handle->pvar)) {
-        ret = handle->pvar->get_value (handle->pvar, handle->tmp_value, handle->obj_handle);
+        ret = handle->pvar->get_value (handle, handle->tmp_value, handle->obj_handle);
         if (OPAL_SUCCESS != ret) {
             return OPAL_ERROR;
         }
@@ -595,6 +602,10 @@ int mca_base_pvar_handle_update (mca_base_pvar_handle_t *handle)
                 case MCA_BASE_VAR_TYPE_DOUBLE:
                     ((double *) handle->current_value)[i] += ((double *) handle->tmp_value)[i] -
                         ((double *) handle->last_value)[i];
+                    break;
+                case MCA_BASE_VAR_TYPE_SIZE_T:
+                    ((size_t *) handle->current_value)[i] += ((size_t *) handle->tmp_value)[i] -
+                        ((size_t *) handle->last_value)[i];
                     break;
                 default:
                     /* shouldn't happen */
@@ -625,6 +636,10 @@ int mca_base_pvar_handle_update (mca_base_pvar_handle_t *handle)
                         ((double *) handle->current_value)[i] = min(((double *) handle->tmp_value)[i],
                                                                     ((double *) handle->current_value)[i]);
                         break;
+                    case MCA_BASE_VAR_TYPE_SIZE_T:
+                        ((size_t *) handle->current_value)[i] = min(((size_t *) handle->tmp_value)[i],
+                                                                                ((size_t *) handle->current_value)[i]);
+                        break;
                     default:
                         /* shouldn't happen */
                         break;
@@ -647,6 +662,10 @@ int mca_base_pvar_handle_update (mca_base_pvar_handle_t *handle)
                         ((double *) handle->current_value)[i] = max(((double *) handle->tmp_value)[i],
                                                                     ((double *) handle->current_value)[i]);
                         break;
+                    case MCA_BASE_VAR_TYPE_SIZE_T:
+                        ((size_t *) handle->current_value)[i] = max(((size_t *) handle->tmp_value)[i],
+                                                                                ((size_t *) handle->current_value)[i]);
+                        break;
                     default:
                         /* shouldn't happen */
                         break;
@@ -656,7 +675,7 @@ int mca_base_pvar_handle_update (mca_base_pvar_handle_t *handle)
         }
     } else if (!mca_base_pvar_is_continuous (handle->pvar)) {
         /* cache the current value */
-        ret = handle->pvar->get_value (handle->pvar, handle->current_value, handle->obj_handle);
+        ret = handle->pvar->get_value (handle, handle->current_value, handle->obj_handle);
         if (OPAL_SUCCESS != ret) {
             return ret;
         }
@@ -687,7 +706,7 @@ int mca_base_pvar_handle_read_value (mca_base_pvar_handle_t *handle, void *value
         memmove (value, handle->current_value, handle->count * ompi_var_type_sizes[handle->pvar->type]);
     } else {
         /* read the value directly from the variable. */
-        ret = handle->pvar->get_value (handle->pvar, value, handle->obj_handle);
+        ret = handle->pvar->get_value (handle, value, handle->obj_handle);
     }
 
     return ret;
@@ -706,7 +725,7 @@ int mca_base_pvar_handle_write_value (mca_base_pvar_handle_t *handle, const void
     }
 
     /* write the value directly from the variable. */
-    ret = handle->pvar->set_value (handle->pvar, value, handle->obj_handle);
+    ret = handle->pvar->set_value (handle, value, handle->obj_handle);
 
     ret = mca_base_pvar_handle_update (handle);
     if (OPAL_SUCCESS != ret) {
@@ -715,7 +734,7 @@ int mca_base_pvar_handle_write_value (mca_base_pvar_handle_t *handle, const void
 
     memmove (handle->current_value, value, handle->count * ompi_var_type_sizes[handle->pvar->type]);
     /* read the value directly from the variable. */
-    ret = handle->pvar->set_value (handle->pvar, value, handle->obj_handle);
+    ret = handle->pvar->set_value (handle, value, handle->obj_handle);
 
     return OPAL_SUCCESS;
 }
@@ -740,14 +759,14 @@ int mca_base_pvar_handle_start (mca_base_pvar_handle_t *handle)
 
     if (mca_base_pvar_is_sum (handle->pvar)) {
         /* Keep track of the counter value from when this counter started. */
-        ret = handle->pvar->get_value (handle->pvar, handle->last_value, handle->obj_handle);
+        ret = handle->pvar->get_value (handle, handle->last_value, handle->obj_handle);
         if (OPAL_SUCCESS != ret) {
             return ret;
         }
     } else if (mca_base_pvar_is_watermark (handle->pvar)) {
         /* Find the current watermark. is this correct in the case where a watermark is started, stopped,
            then restarted? Probably will need to add a check. */
-        ret = handle->pvar->get_value (handle->pvar, handle->current_value, handle->obj_handle);
+        ret = handle->pvar->get_value (handle, handle->current_value, handle->obj_handle);
         if (OPAL_SUCCESS != ret) {
             return ret;
         }
@@ -797,12 +816,12 @@ int mca_base_pvar_handle_reset (mca_base_pvar_handle_t *handle)
         memset (handle->current_value, 0, handle->count * ompi_var_type_sizes[handle->pvar->type]);
 
         if (mca_base_pvar_handle_is_running (handle)) {
-            ret = handle->pvar->get_value (handle->pvar, handle->last_value, handle->obj_handle);
+            ret = handle->pvar->get_value (handle, handle->last_value, handle->obj_handle);
         }
     } else if (mca_base_pvar_handle_is_running (handle) && mca_base_pvar_is_watermark (handle->pvar)) {
             /* watermarks should get set to the current value if runnning. */
 
-        ret = handle->pvar->get_value (handle->pvar, handle->current_value, handle->obj_handle);
+        ret = handle->pvar->get_value (handle, handle->current_value, handle->obj_handle);
     } else if (mca_base_pvar_is_readonly (handle->pvar)) {
         return OPAL_ERR_PERM;
     }

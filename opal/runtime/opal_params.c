@@ -23,6 +23,8 @@
  *                         All rights reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
+ * Copyright (c) 2019      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -386,6 +388,8 @@ int opal_register_params(void)
     if (OPAL_SUCCESS != ret) {
         return ret;
     }
+
+    opal_object_register_variables ();
 
     opal_finalize_register_cleanup (opal_deregister_params);
 

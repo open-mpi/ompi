@@ -116,33 +116,38 @@ enum {
 };
 
 struct mca_base_pvar_t;
+struct mca_base_pvar_handle_t;
 
 /**
  * Function to retrieve the current value of a variable.
  *
- * @param[in]  pvar  Performance variable to get the value of.
+ * @param[in]  pvar  Performance variable handle to get the value of.
  * @param[out] value Current value of the variable.
  * @param[in]  obj   Bound object
  *
  * This function will be called to get the current value of a variable. The value
  * pointer will be large enough to hold the datatype and count specified when this
- * variable was created and bound.
+ * variable was created and bound. This function has been updated to take the pvar
+ * handle instead of the pvar. This allows the function to check the count returned
+ * when the handle was bound.
  */
-typedef int (*mca_base_get_value_fn_t) (const struct mca_base_pvar_t *pvar, void *value, void *obj);
+typedef int (*mca_base_get_value_fn_t) (const struct mca_base_pvar_handle_t *pvar_handle, void *value, void *obj);
 
 /**
  * Function to set the current value of a variable.
  *
- * @param[in] pvar  Performance variable to set the value of.
+ * @param[in] pvar  Performance variable handle to set the value of.
  * @param[in] value Value to write.
  * @param[in] obj   Bound object.
  *
  * This function will be called to set the current value of a variable. The value
  * pointer will be large enough to hold the datatype and count specified when this
  * variable was created and bound. Read-only variables are not expected to provide
- * this function.
+ * this function. This function has been updated to take the pvar handle instead of
+ * the pvar. This allows the function to check the count returned when the handle was
+ * bound.
  */
-typedef int (*mca_base_set_value_fn_t) (struct mca_base_pvar_t *pvar, const void *value, void *obj);
+typedef int (*mca_base_set_value_fn_t) (struct mca_base_pvar_handle_t *pvar_handle, const void *value, void *obj);
 
 /**
  * Function to notify of a pvar handle event.

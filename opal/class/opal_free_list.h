@@ -14,6 +14,8 @@
  * Copyright (c) 2010-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2014-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2019      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -369,6 +371,8 @@ static inline void opal_free_list_return (opal_free_list_t *flist,
 /** compatibility macro */
 #define OPAL_FREE_LIST_RETURN(fl, item)         \
     opal_free_list_return (fl, item)
+
+extern opal_atomic_int64_t opal_free_list_memory_allocated;
 
 END_C_DECLS
 #endif

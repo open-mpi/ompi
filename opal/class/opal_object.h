@@ -15,6 +15,8 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2019      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * Additional copyrights may follow
  * $HEADER$
@@ -160,6 +162,10 @@ struct opal_class_t {
     opal_destruct_t *cls_destruct_array;
                                     /**< array of parent class destructors */
     size_t cls_sizeof;              /**< size of an object instance */
+#if OPAL_ENABLE_DEBUG
+    opal_atomic_size_t cls_alloc_count; /**< number of objects of this type allocated using OBJ_NEW() */
+    opal_atomic_size_t cls_alloc_count_high; /**< highest number of objects of this type allocated at any time */
+#endif
 };
 
 extern int opal_class_init_epoch;
@@ -327,6 +333,7 @@ static inline opal_object_t *opal_obj_new_debug(opal_class_t* type, const char* 
         assert(OPAL_OBJ_MAGIC_ID == ((opal_object_t *) (object))->obj_magic_id); \
         assert(NULL != ((opal_object_t *) (object))->obj_class);        \
         if (0 == opal_obj_update((opal_object_t *) (object), -1)) {     \
+            OPAL_THREAD_ADD_FETCH_SIZE_T(&((opal_object_t *) (object))->obj_class->cls_alloc_count, -1); \
             OBJ_SET_MAGIC_ID((object), 0);                              \
             opal_obj_run_destructors((opal_object_t *) (object));       \
             OBJ_REMEMBER_FILE_AND_LINENO( object, __FILE__, __LINE__ ); \
@@ -489,6 +496,12 @@ static inline opal_object_t *opal_obj_new(opal_class_t * cls)
         opal_class_initialize(cls);
     }
     if (NULL != object) {
+#if OPAL_ENABLE_DEBUG
+        size_t count = OPAL_THREAD_ADD_FETCH_SIZE_T(&cls->cls_alloc_count, 1);
+        if (count > cls->cls_alloc_count_high) {
+            (void) opal_atomic_max_fetch_size_t (&cls->cls_alloc_count_high, count);
+        }
+#endif
         object->obj_class = cls;
         object->obj_reference_count = 1;
         opal_obj_run_constructors(object);
@@ -512,6 +525,11 @@ static inline int opal_obj_update(opal_object_t *object, int inc)
 {
     return OPAL_THREAD_ADD_FETCH32(&object->obj_reference_count, inc);
 }
+
+/**
+ * @brief Register performance variables exposed by the OPAL class system
+ */
+OPAL_DECLSPEC void opal_object_register_variables (void);
 
 END_C_DECLS
 
