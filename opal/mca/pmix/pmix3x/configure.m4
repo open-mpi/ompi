@@ -12,7 +12,7 @@
 #                         All rights reserved.
 # Copyright (c) 2011-2013 Los Alamos National Security, LLC.
 #                         All rights reserved.
-# Copyright (c) 2010-2017 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2010-2020 Cisco Systems, Inc.  All rights reserved
 # Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
 # Copyright (c) 2015-2016 Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
@@ -37,10 +37,6 @@ AC_DEFUN([MCA_opal_pmix_pmix3x_CONFIG],[
     opal_pmix_pmix3x_save_LDFLAGS=$LDFLAGS
     opal_pmix_pmix3x_save_LIBS=$LIBS
 
-    AC_ARG_ENABLE([install-libpmix],
-                  [AC_HELP_STRING([--enable-install-libpmix],
-                                  [Enable a native PMIx library and headers in the OMPI install location (default: disabled)])])
-
     AC_ARG_ENABLE([pmix-timing],
                   [AC_HELP_STRING([--enable-pmix-timing],
                                   [Enable PMIx timing measurements (default: disabled)])])
@@ -54,16 +50,12 @@ AC_DEFUN([MCA_opal_pmix_pmix3x_CONFIG],[
     fi
 
     opal_pmix_pmix3x_args="$opal_pmix_pmix3x_timing_flag --without-tests-examples --disable-pmix-binaries --disable-pmix-backward-compatibility --disable-visibility --enable-embedded-libevent --with-libevent-header=\\\"opal/mca/event/$opal_event_base_include\\\" --enable-embedded-hwloc --with-hwloc-header=\\\"$opal_hwloc_base_include\\\""
+    opal_pmix_pmix3x_args="--with-pmix-symbol-rename=OPAL_MCA_PMIX3X_ --enable-embedded-mode $opal_pmix_pmix3x_args"
     AS_IF([test "$enable_debug" = "yes"],
           [opal_pmix_pmix3x_args="--enable-debug $opal_pmix_pmix3x_args"
            CFLAGS="$OPAL_CFLAGS_BEFORE_PICKY $OPAL_VISIBILITY_CFLAGS -g"],
           [opal_pmix_pmix3x_args="--disable-debug $opal_pmix_pmix3x_args"
            CFLAGS="$OPAL_CFLAGS_BEFORE_PICKY $OPAL_VISIBILITY_CFLAGS"])
-    AC_MSG_CHECKING([if want to install standalone libpmix])
-    AS_IF([test "$enable_install_libpmix" = "yes"],
-          [AC_MSG_RESULT([yes])],
-          [AC_MSG_RESULT([no])
-           opal_pmix_pmix3x_args="--with-pmix-symbol-rename=OPAL_MCA_PMIX3X_ --enable-embedded-mode $opal_pmix_pmix3x_args"])
     AS_IF([test "$with_devel_headers" = "yes"],
           [opal_pmix_pmix3x_args="--with-devel-headers  $opal_pmix_pmix3x_args"])
     CPPFLAGS="-I$OPAL_TOP_SRCDIR -I$OPAL_TOP_BUILDDIR -I$OPAL_TOP_SRCDIR/opal/include -I$OPAL_TOP_BUILDDIR/opal/include $CPPFLAGS"
