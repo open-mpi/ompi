@@ -456,7 +456,7 @@ static int rank_by(orte_job_t *jdata,
                             continue;
                         }
                         /* assign the vpid */
-                        proc->name.vpid = vpid;
+                        proc->name.vpid = vpid++;
                         if (0 == cnt) {
                             app->first_rank = proc->name.vpid;
                         }
