@@ -904,9 +904,10 @@ int ompi_osc_ucx_rput(const void *origin_addr, int origin_count,
         return OMPI_ERROR;
     }
 
+    /* TODO: investigate whether ucp_worker_flush_nb is a better choice here */
     internal_req = ucp_atomic_fetch_nb(ep, UCP_ATOMIC_FETCH_OP_FADD, 0,
                                        &(module->req_result), sizeof(uint64_t),
-                                       remote_addr, rkey, req_completion);
+                                       remote_addr & (~0x7), rkey, req_completion);
 
     if (UCS_PTR_IS_PTR(internal_req)) {
         internal_req->external_req = ucx_req;
@@ -965,9 +966,10 @@ int ompi_osc_ucx_rget(void *origin_addr, int origin_count,
         return OMPI_ERROR;
     }
 
+    /* TODO: investigate whether ucp_worker_flush_nb is a better choice here */
     internal_req = ucp_atomic_fetch_nb(ep, UCP_ATOMIC_FETCH_OP_FADD, 0,
                                        &(module->req_result), sizeof(uint64_t),
-                                       remote_addr, rkey, req_completion);
+                                       remote_addr & (~0x7), rkey, req_completion);
 
     if (UCS_PTR_IS_PTR(internal_req)) {
         internal_req->external_req = ucx_req;
