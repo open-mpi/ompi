@@ -20,6 +20,9 @@
 #include "ompi/message/message.h"
 #include "ompi/mca/pml/base/pml_base_bsend.h"
 #include "opal/mca/common/ucx/common_ucx.h"
+#if OPAL_CUDA_SUPPORT
+#include "opal/mca/common/cuda/common_cuda.h"
+#endif /* OPAL_CUDA_SUPPORT */
 #include "pml_ucx_request.h"
 
 #include <inttypes.h>
@@ -227,6 +230,9 @@ int mca_pml_ucx_open(void)
 
     /* Query UCX attributes */
     attr.field_mask        = UCP_ATTR_FIELD_REQUEST_SIZE;
+#if HAVE_UCP_ATTR_MEMORY_TYPES
+    attr.field_mask       |= UCP_ATTR_FIELD_MEMORY_TYPES;
+#endif
     status = ucp_context_query(ompi_pml_ucx.ucp_context, &attr);
     if (UCS_OK != status) {
         ucp_cleanup(ompi_pml_ucx.ucp_context);
@@ -234,8 +240,15 @@ int mca_pml_ucx_open(void)
         return OMPI_ERROR;
     }
 
-    ompi_pml_ucx.request_size = attr.request_size;
+    ompi_pml_ucx.request_size     = attr.request_size;
+    ompi_pml_ucx.cuda_initialized = false;
 
+#if HAVE_UCP_ATTR_MEMORY_TYPES && OPAL_CUDA_SUPPORT
+    if (attr.memory_types & UCS_BIT(UCS_MEMORY_TYPE_CUDA)) {
+        mca_common_cuda_stage_one_init();
+        ompi_pml_ucx.cuda_initialized = true;
+    }
+#endif
     return OMPI_SUCCESS;
 }
 
@@ -243,6 +256,11 @@ int mca_pml_ucx_close(void)
 {
     PML_UCX_VERBOSE(1, "mca_pml_ucx_close");
 
+#if OPAL_CUDA_SUPPORT
+    if (ompi_pml_ucx.cuda_initialized) {
+        mca_common_cuda_fini();
+    }
+#endif
     if (ompi_pml_ucx.ucp_context != NULL) {
         ucp_cleanup(ompi_pml_ucx.ucp_context);
         ompi_pml_ucx.ucp_context = NULL;
