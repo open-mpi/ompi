@@ -3,7 +3,7 @@
 # Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
 #                         Corporation.  All rights reserved.
-# Copyright (c) 2004-2005 The University of Tennessee and The University
+# Copyright (c) 2004-2020 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
 # Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -28,7 +28,7 @@
 %s *** on %s %s
 %s *** %s
 %s *** MPI_ERRORS_ARE_FATAL (processes in this %s will now abort,
-%s ***    and potentially your MPI job)
+%s ***    and MPI will try to terminate your MPI job as well)
 #
 [mpi_errors_are_fatal unknown handle]
 %s *** An error occurred %s %s
@@ -36,5 +36,13 @@
 %s *** on a NULL %s
 %s *** %s
 %s *** MPI_ERRORS_ARE_FATAL (processes in this %s will now abort,
-%s ***    and potentially your MPI job)
+%s ***    and MPI will try to terminate your MPI job as well)
+#
+[mpi_errors_abort]
+%s *** An error occurred %s %s
+%s *** reported by process [%lu,%lu]
+%s *** on %s %s
+%s *** %s
+%s *** MPI_ERRORS_ABORT (processes in this %s will now abort,
+%s ***    and potentially the rest of your MPI job)
 #

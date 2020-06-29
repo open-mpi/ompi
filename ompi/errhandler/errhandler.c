@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2017 The University of Tennessee and The University
+ * Copyright (c) 2004-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -68,6 +68,9 @@ ompi_predefined_errhandler_t *ompi_mpi_errhandler_null_addr =
 ompi_predefined_errhandler_t ompi_mpi_errors_are_fatal = {{{0}}};
 ompi_predefined_errhandler_t *ompi_mpi_errors_are_fatal_addr =
     &ompi_mpi_errors_are_fatal;
+ompi_predefined_errhandler_t ompi_mpi_errors_abort = {{{0}}};
+ompi_predefined_errhandler_t *ompi_mpi_errors_abort_addr =
+    &ompi_mpi_errors_abort;
 ompi_predefined_errhandler_t ompi_mpi_errors_return = {{{0}}};
 ompi_predefined_errhandler_t *ompi_mpi_errors_return_addr =
     &ompi_mpi_errors_return;
@@ -126,6 +129,19 @@ int ompi_errhandler_init(void)
   ompi_mpi_errors_return.eh.eh_fort_fn = NULL;
   opal_string_copy(ompi_mpi_errors_return.eh.eh_name, "MPI_ERRORS_RETURN",
                    sizeof(ompi_mpi_errors_return.eh.eh_name));
+
+  OBJ_CONSTRUCT( &ompi_mpi_errors_abort.eh, ompi_errhandler_t );
+  if( ompi_mpi_errors_abort.eh.eh_f_to_c_index != OMPI_ERRORS_ABORT_FORTRAN )
+      return OMPI_ERROR;
+  ompi_mpi_errors_abort.eh.eh_mpi_object_type = OMPI_ERRHANDLER_TYPE_PREDEFINED;
+  ompi_mpi_errors_abort.eh.eh_lang = OMPI_ERRHANDLER_LANG_C;
+  ompi_mpi_errors_abort.eh.eh_comm_fn = ompi_mpi_errors_abort_comm_handler;
+  ompi_mpi_errors_abort.eh.eh_file_fn = ompi_mpi_errors_abort_file_handler;
+  ompi_mpi_errors_abort.eh.eh_win_fn  = ompi_mpi_errors_abort_win_handler ;
+  ompi_mpi_errors_abort.eh.eh_fort_fn = NULL;
+  opal_string_copy(ompi_mpi_errors_abort.eh.eh_name,
+                   "MPI_ERRORS_ABORT",
+                   sizeof(ompi_mpi_errors_abort.eh.eh_name));
 
   /* If we're going to use C++, functions will be fixed up during
      MPI::Init.  Note that it is proper to use ERRHANDLER_LANG_C here;

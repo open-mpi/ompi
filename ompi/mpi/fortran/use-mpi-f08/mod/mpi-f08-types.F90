@@ -6,6 +6,9 @@
 ! Copyright (c) 2015-2019 Research Organization for Information Science
 !                         and Technology (RIST).  All rights reserved.
 ! Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
+! Copyright (c) 2020      The University of Tennessee and The University
+!                         of Tennessee Research Foundation.  All rights
+!                         reserved.
 ! $COPYRIGHT$
 !
 ! This file creates mappings between MPI C types (e.g., MPI_Comm) and
@@ -85,6 +88,7 @@ module mpi_f08_types
   type(MPI_Group), parameter      :: MPI_GROUP_EMPTY             = MPI_Group(OMPI_MPI_GROUP_EMPTY)
 
   type(MPI_Errhandler), parameter :: MPI_ERRORS_ARE_FATAL        = MPI_Errhandler(OMPI_MPI_ERRORS_ARE_FATAL)
+  type(MPI_Errhandler), parameter :: MPI_ERRORS_ABORT            = MPI_Errhandler(OMPI_MPI_ERRORS_ABORT)
   type(MPI_Errhandler), parameter :: MPI_ERRORS_RETURN           = MPI_Errhandler(OMPI_MPI_ERRORS_RETURN)
 
   type(MPI_Message), parameter    :: MPI_MESSAGE_NO_PROC         = MPI_Message(OMPI_MPI_MESSAGE_NO_PROC)

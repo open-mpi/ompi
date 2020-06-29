@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2011 The University of Tennessee and The University
+ * Copyright (c) 2004-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -49,7 +49,8 @@ BEGIN_C_DECLS
 enum {
   OMPI_ERRHANDLER_NULL_FORTRAN = 0,
   OMPI_ERRORS_ARE_FATAL_FORTRAN,
-  OMPI_ERRORS_RETURN_FORTRAN
+  OMPI_ERRORS_RETURN_FORTRAN,
+  OMPI_ERRORS_ABORT_FORTRAN,
 };
 
 
@@ -166,6 +167,12 @@ OMPI_DECLSPEC extern ompi_predefined_errhandler_t *ompi_mpi_errors_are_fatal_add
  */
 OMPI_DECLSPEC extern ompi_predefined_errhandler_t ompi_mpi_errors_return;
 OMPI_DECLSPEC extern ompi_predefined_errhandler_t *ompi_mpi_errors_return_addr;
+
+/*
+ * Global variable for MPI_ERRORS_ABORT (_addr flavor is for F03 bindings)
+ */
+OMPI_DECLSPEC extern ompi_predefined_errhandler_t ompi_mpi_errors_abort;
+OMPI_DECLSPEC extern ompi_predefined_errhandler_t *ompi_mpi_errors_abort_addr;
 
 /**
  * Global variable for MPI::ERRORS_THROW_EXCEPTIONS.  Will abort if

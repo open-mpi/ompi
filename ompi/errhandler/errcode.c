@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2017 The University of Tennessee and The University
+ * Copyright (c) 2004-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -85,6 +85,7 @@ static ompi_mpi_errcode_t ompi_err_not_same;
 static ompi_mpi_errcode_t ompi_err_no_space;
 static ompi_mpi_errcode_t ompi_err_no_such_file;
 static ompi_mpi_errcode_t ompi_err_port;
+static ompi_mpi_errcode_t ompi_err_proc_aborted;
 static ompi_mpi_errcode_t ompi_err_quota;
 static ompi_mpi_errcode_t ompi_err_read_only;
 static ompi_mpi_errcode_t ompi_err_rma_conflict;
@@ -186,6 +187,7 @@ int ompi_mpi_errcode_init (void)
     CONSTRUCT_ERRCODE( ompi_err_no_space, MPI_ERR_NO_SPACE, "MPI_ERR_NO_SPACE: no space left on device" );
     CONSTRUCT_ERRCODE( ompi_err_no_such_file, MPI_ERR_NO_SUCH_FILE, "MPI_ERR_NO_SUCH_FILE: no such file or directory" );
     CONSTRUCT_ERRCODE( ompi_err_port, MPI_ERR_PORT, "MPI_ERR_PORT: invalid port" );
+    CONSTRUCT_ERRCODE( ompi_err_proc_aborted, MPI_ERR_PROC_ABORTED, "MPI_ERR_PROC_ABORTED: operation failed because a remote peer has aborted" );
     CONSTRUCT_ERRCODE( ompi_err_quota, MPI_ERR_QUOTA, "MPI_ERR_QUOTA: out of quota" );
     CONSTRUCT_ERRCODE( ompi_err_read_only, MPI_ERR_READ_ONLY, "MPI_ERR_READ_ONLY: file is read only" );
     CONSTRUCT_ERRCODE( ompi_err_rma_conflict, MPI_ERR_RMA_CONFLICT, "MPI_ERR_RMA_CONFLICT: rma conflict during operation" );
@@ -282,6 +284,7 @@ int ompi_mpi_errcode_finalize(void)
     OBJ_DESTRUCT(&ompi_err_no_space);
     OBJ_DESTRUCT(&ompi_err_no_such_file);
     OBJ_DESTRUCT(&ompi_err_port);
+    OBJ_DESTRUCT(&ompi_err_proc_aborted);
     OBJ_DESTRUCT(&ompi_err_quota);
     OBJ_DESTRUCT(&ompi_err_read_only);
     OBJ_DESTRUCT(&ompi_err_rma_conflict);

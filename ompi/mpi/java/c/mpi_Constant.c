@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -160,6 +160,7 @@ JNIEXPORT void JNICALL Java_mpi_Constant_setConstant(JNIEnv *env, jobject obj)
     ompi_java_setIntField(env, c, obj, "ERR_NO_SPACE",     MPI_ERR_NO_SPACE);
     ompi_java_setIntField(env, c, obj, "ERR_NO_SUCH_FILE", MPI_ERR_NO_SUCH_FILE);
     ompi_java_setIntField(env, c, obj, "ERR_PORT",         MPI_ERR_PORT);
+    ompi_java_setIntField(env, c, obj, "ERR_PROC_ABORTED", MPI_ERR_PROC_ABORTED);
     ompi_java_setIntField(env, c, obj, "ERR_QUOTA",        MPI_ERR_QUOTA);
     ompi_java_setIntField(env, c, obj, "ERR_READ_ONLY",    MPI_ERR_READ_ONLY);
     ompi_java_setIntField(env, c, obj, "ERR_RMA_CONFLICT", MPI_ERR_RMA_CONFLICT);
