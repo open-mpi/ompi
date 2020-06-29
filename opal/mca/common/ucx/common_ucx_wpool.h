@@ -376,14 +376,15 @@ opal_common_ucx_wpmem_putget(opal_common_ucx_wpmem_t *mem, opal_common_ucx_op_t 
     if (OPAL_UNLIKELY(status != UCS_OK && status != UCS_INPROGRESS)) {
         MCA_COMMON_UCX_ERROR("%s failed: %d", called_func, status);
         rc = OPAL_ERROR;
+        goto out;
     }
 
     rc = _periodical_flush_nb(mem, winfo, target);
     if(OPAL_UNLIKELY(OPAL_SUCCESS != rc)){
         MCA_COMMON_UCX_VERBOSE(1, "_incr_and_check_inflight_ops failed: %d", rc);
-        return rc;
     }
 
+out:
     opal_mutex_unlock(&winfo->mutex);
 
     return rc;
@@ -416,14 +417,15 @@ opal_common_ucx_wpmem_cmpswp(opal_common_ucx_wpmem_t *mem, uint64_t compare,
     if (OPAL_UNLIKELY(status != UCS_OK)) {
         MCA_COMMON_UCX_ERROR("opal_common_ucx_atomic_cswap failed: %d", status);
         rc = OPAL_ERROR;
+        goto out;
     }
 
     rc = _periodical_flush_nb(mem, winfo, target);
     if(OPAL_UNLIKELY(OPAL_SUCCESS != rc)){
         MCA_COMMON_UCX_VERBOSE(1, "_incr_and_check_inflight_ops failed: %d", rc);
-        return rc;
     }
 
+out:
     opal_mutex_unlock(&winfo->mutex);
 
     return rc;
@@ -470,7 +472,6 @@ opal_common_ucx_wpmem_cmpswp_nb(opal_common_ucx_wpmem_t *mem, uint64_t compare,
     rc = _periodical_flush_nb(mem, winfo, target);
     if(OPAL_UNLIKELY(OPAL_SUCCESS != rc)){
         MCA_COMMON_UCX_VERBOSE(1, "_incr_and_check_inflight_ops failed: %d", rc);
-        return rc;
     }
 
     opal_mutex_unlock(&winfo->mutex);
@@ -503,14 +504,15 @@ opal_common_ucx_wpmem_post(opal_common_ucx_wpmem_t *mem, ucp_atomic_post_op_t op
     if (OPAL_UNLIKELY(status != UCS_OK)) {
         MCA_COMMON_UCX_ERROR("ucp_atomic_post failed: %d", status);
         rc = OPAL_ERROR;
+        goto out;
     }
 
     rc = _periodical_flush_nb(mem, winfo, target);
     if(OPAL_UNLIKELY(OPAL_SUCCESS != rc)){
         MCA_COMMON_UCX_VERBOSE(1, "_incr_and_check_inflight_ops failed: %d", rc);
-        return rc;
     }
 
+out:
     opal_mutex_unlock(&winfo->mutex);
     return rc;
 }
@@ -542,14 +544,15 @@ opal_common_ucx_wpmem_fetch(opal_common_ucx_wpmem_t *mem,
     if (OPAL_UNLIKELY(status != UCS_OK)) {
         MCA_COMMON_UCX_ERROR("ucp_atomic_cswap64 failed: %d", status);
         rc = OPAL_ERROR;
+        goto out;
     }
 
     rc = _periodical_flush_nb(mem, winfo, target);
     if(OPAL_UNLIKELY(OPAL_SUCCESS != rc)){
         MCA_COMMON_UCX_VERBOSE(1, "_incr_and_check_inflight_ops failed: %d", rc);
-        return rc;
     }
 
+out:
     opal_mutex_unlock(&winfo->mutex);
 
     return rc;
@@ -593,7 +596,6 @@ opal_common_ucx_wpmem_fetch_nb(opal_common_ucx_wpmem_t *mem,
     rc = _periodical_flush_nb(mem, winfo, target);
     if(OPAL_UNLIKELY(OPAL_SUCCESS != rc)){
         MCA_COMMON_UCX_VERBOSE(1, "_incr_and_check_inflight_ops failed: %d", rc);
-        return rc;
     }
 
     opal_mutex_unlock(&winfo->mutex);
