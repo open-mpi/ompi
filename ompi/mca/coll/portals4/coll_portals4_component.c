@@ -761,7 +761,7 @@ portals4_progress(void)
         }
         else if (PTL_EQ_DROPPED == ret) {
             opal_output(ompi_coll_base_framework.framework_output, "Flow control situation without recovery (EQ_DROPPED)\n");
-            abort();
+            ompi_rte_abort(ret, "coll-portals4: Flow control situation without recovery (EQ_DROPPED)");
         }
         else {
             opal_output(ompi_coll_base_framework.framework_output, "Error returned from PtlEQGet: %d", ret);
