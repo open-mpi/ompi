@@ -195,7 +195,7 @@ BEGIN_C_DECLS
         OPAL_CMD_LINE_OTYPE_DVM,
         OPAL_CMD_LINE_OTYPE_UNSUPPORTED,
         OPAL_CMD_LINE_OTYPE_PARSABLE,
-        OPAL_CMD_LINE_OTYPE_NULL
+        OPAL_CMD_LINE_OTYPE_NULL /* include in full help only */
     };
     /**
      * \internal
@@ -286,16 +286,17 @@ BEGIN_C_DECLS
      *
      * \code
      * opal_cmd_line_init_t cmd_line_init[] = {
-     *    { NULL, NULL, NULL, 'h', NULL, "help", 0,
+     *    { NULL, 'h', NULL, "help", 0,
      *      &orterun_globals.help, OPAL_CMD_LINE_TYPE_BOOL,
-     *      "This help message" },
+     *      "This help message", OPAL_CMD_LINE_OTYPE_GENERAL },
      *
-     *    { NULL, NULL, NULL, '\0', NULL, "wd", 1,
+     *    { NULL, '\0', NULL, "wd", 1,
      *      &orterun_globals.wd, OPAL_CMD_LINE_TYPE_STRING,
-     *      "Set the working directory of the started processes" },
+     *      "Set the working directory of the started processes",
+     *      OPAL_CMD_LINE_OTYPE_LAUNCH },
      *
-     *    { NULL, NULL, NULL, '\0', NULL, NULL, 0,
-     *      NULL, OPAL_CMD_LINE_TYPE_NULL, NULL }
+     *    { NULL, '\0', NULL, NULL, 0,
+     *      NULL, OPAL_CMD_LINE_TYPE_NULL, NULL, OPAL_CMD_LINE_OTYPE_NULL }
      * };
      * \endcode
      */
