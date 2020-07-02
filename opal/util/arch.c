@@ -67,7 +67,7 @@ static inline int32_t opal_arch_ldisintel( void )
             j = j-1;
         }
     }
-    return (pui[j] & (1 << i) ? 1 : 0);
+    return ((pui[j] & (1u << i)) ? 1 : 0);
 }
 
 static inline void opal_arch_setmask ( uint32_t *var, uint32_t mask)

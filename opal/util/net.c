@@ -202,7 +202,7 @@ opal_net_init(void)
 uint32_t
 opal_net_prefix2netmask(uint32_t prefixlen)
 {
-    return htonl (((1 << prefixlen) - 1) << (32 - prefixlen));
+    return htonl (((1u << prefixlen) - 1u) << (32 - prefixlen));
 }
 
 
