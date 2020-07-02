@@ -47,7 +47,6 @@ opal_process_info_t opal_process_info = {
     .univ_size = 0,
     .app_sizes = NULL,
     .app_ldrs = NULL,
-    .cpuset = NULL,
     .command = NULL,
     .num_apps = 0,
     .initial_wdir = NULL,
