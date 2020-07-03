@@ -272,7 +272,9 @@ int opal_free_list_grow_st (opal_free_list_t* flist, size_t num_elements, opal_f
         }
 
         ptr += head_size;
-        payload_ptr += elem_size;
+        if (NULL != payload_ptr) {
+            payload_ptr += elem_size;
+        }
     }
 
     if (OPAL_SUCCESS != rc && 0 == num_elements) {
