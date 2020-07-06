@@ -60,6 +60,12 @@ included in the vX.Y.Z section and be denoted as:
 4.1.0 -- July, 2020
 -------------------
 
+- runtime: fix situation where rank-by argument does not work
+- Portals4: Clean up error handling corner cases
+- runtime: Remove --enable-install-libpmix option, which has not
+  worked since it was added
+- UCX: Allow UCX 1.8 to be used with the btl uct
+- OMPIO: Add support for the IME file system
 - OFI/libfabric: Added support for multiple NICs
 - OFI/libfabric: Added support for Scalable Endpoints
 - OFI/libfabric: Added btl for one-sided support
