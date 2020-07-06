@@ -109,64 +109,58 @@ ompi_mtl_ofi_context_progress(int ctxt_id)
      * From the completion's op_context, we get the associated OFI request.
      * Call the request's callback.
      */
-    while (true) {
-        ret = fi_cq_read(ompi_mtl_ofi.ofi_ctxt[ctxt_id].cq, (void *)&wc,
-                         ompi_mtl_ofi.ofi_progress_event_count);
-        if (ret > 0) {
-            count+= ret;
-            events_read = ret;
-            for (i = 0; i < events_read; i++) {
-                if (NULL != wc[i].op_context) {
-                    ofi_req = TO_OFI_REQ(wc[i].op_context);
-                    assert(ofi_req);
-                    ret = ofi_req->event_callback(&wc[i], ofi_req);
-                    if (OMPI_SUCCESS != ret) {
-                        opal_output(0, "%s:%d: Error returned by request event callback: %zd.\n"
-                                       "*** The Open MPI OFI MTL is aborting the MPI job (via exit(3)).\n",
-                                       __FILE__, __LINE__, ret);
-                        fflush(stderr);
-                        exit(1);
-                    }
-                }
-            }
-        } else if (OPAL_UNLIKELY(ret == -FI_EAVAIL)) {
-            /**
-             * An error occured and is being reported via the CQ.
-             * Read the error and forward it to the upper layer.
-             */
-            ret = fi_cq_readerr(ompi_mtl_ofi.ofi_ctxt[ctxt_id].cq,
-                                &error,
-                                0);
-            if (0 > ret) {
-                opal_output(0, "%s:%d: Error returned from fi_cq_readerr: %s(%zd).\n"
-                               "*** The Open MPI OFI MTL is aborting the MPI job (via exit(3)).\n",
-                               __FILE__, __LINE__, fi_strerror(-ret), ret);
-                fflush(stderr);
-                exit(1);
-            }
-
-            assert(error.op_context);
-            ofi_req = TO_OFI_REQ(error.op_context);
-            assert(ofi_req);
-            ret = ofi_req->error_callback(&error, ofi_req);
-            if (OMPI_SUCCESS != ret) {
-                    opal_output(0, "%s:%d: Error returned by request error callback: %zd.\n"
+    ret = fi_cq_read(ompi_mtl_ofi.ofi_ctxt[ctxt_id].cq, (void *)&wc,
+                     ompi_mtl_ofi.ofi_progress_event_count);
+    if (ret > 0) {
+        count+= ret;
+        events_read = ret;
+        for (i = 0; i < events_read; i++) {
+            if (NULL != wc[i].op_context) {
+                ofi_req = TO_OFI_REQ(wc[i].op_context);
+                assert(ofi_req);
+                ret = ofi_req->event_callback(&wc[i], ofi_req);
+                if (OMPI_SUCCESS != ret) {
+                    opal_output(0, "%s:%d: Error returned by request event callback: %zd.\n"
                                    "*** The Open MPI OFI MTL is aborting the MPI job (via exit(3)).\n",
                                    __FILE__, __LINE__, ret);
-                fflush(stderr);
-                exit(1);
-            }
-        } else {
-            if (ret == -FI_EAGAIN || ret == -EINTR) {
-                break;
-            } else {
-                opal_output(0, "%s:%d: Error returned from fi_cq_read: %s(%zd).\n"
-                               "*** The Open MPI OFI MTL is aborting the MPI job (via exit(3)).\n",
-                               __FILE__, __LINE__, fi_strerror(-ret), ret);
-                fflush(stderr);
-                exit(1);
+                    fflush(stderr);
+                    exit(1);
+                }
             }
         }
+    } else if (OPAL_UNLIKELY(ret == -FI_EAVAIL)) {
+        /**
+         * An error occured and is being reported via the CQ.
+         * Read the error and forward it to the upper layer.
+         */
+        ret = fi_cq_readerr(ompi_mtl_ofi.ofi_ctxt[ctxt_id].cq,
+                            &error,
+                            0);
+        if (0 > ret) {
+            opal_output(0, "%s:%d: Error returned from fi_cq_readerr: %s(%zd).\n"
+                           "*** The Open MPI OFI MTL is aborting the MPI job (via exit(3)).\n",
+                           __FILE__, __LINE__, fi_strerror(-ret), ret);
+            fflush(stderr);
+            exit(1);
+        }
+
+        assert(error.op_context);
+        ofi_req = TO_OFI_REQ(error.op_context);
+        assert(ofi_req);
+        ret = ofi_req->error_callback(&error, ofi_req);
+        if (OMPI_SUCCESS != ret) {
+                opal_output(0, "%s:%d: Error returned by request error callback: %zd.\n"
+                               "*** The Open MPI OFI MTL is aborting the MPI job (via exit(3)).\n",
+                               __FILE__, __LINE__, ret);
+            fflush(stderr);
+            exit(1);
+        }
+    } else if (ret != -FI_EAGAIN && ret != -EINTR) {
+        opal_output(0, "%s:%d: Error returned from fi_cq_read: %s(%zd).\n"
+                       "*** The Open MPI OFI MTL is aborting the MPI job (via exit(3)).\n",
+                       __FILE__, __LINE__, fi_strerror(-ret), ret);
+        fflush(stderr);
+        exit(1);
     }
 
     return count;
