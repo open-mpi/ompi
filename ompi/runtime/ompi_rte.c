@@ -726,6 +726,7 @@ int ompi_rte_init(int *pargc, char ***pargv)
     OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, PMIX_PROCDIR, &OPAL_PROC_MY_NAME, &val, PMIX_STRING);
     if (OPAL_SUCCESS == rc && NULL != val) {
         opal_process_info.proc_session_dir = val;
+        val = NULL;
     } else {
         /* we need to create something */
         rc = _setup_proc_session_dir(&opal_process_info.proc_session_dir);
