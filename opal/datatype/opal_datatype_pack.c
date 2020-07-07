@@ -14,6 +14,7 @@
  * Copyright (c) 2013      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2017-2018 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
+ * Copyright (c) 2020      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -36,6 +37,7 @@
 #define DO_DEBUG(INST)
 #endif  /* OPAL_ENABLE_DEBUG */
 
+#include "opal/util/arch.h"
 #include "opal/datatype/opal_datatype_checksum.h"
 #include "opal/datatype/opal_datatype_pack.h"
 #include "opal/datatype/opal_datatype_prototypes.h"
@@ -392,12 +394,15 @@ pack_predefined_heterogeneous( opal_convertor_t* CONVERTOR,
 {
     const opal_convertor_master_t* master = (CONVERTOR)->master;
     const ddt_elem_desc_t* _elem = &((ELEM)->elem);
-    unsigned char* _source = (*SOURCE) + _elem->disp;
+    unsigned char* _source = (*SOURCE); /* don't offset to _elem->disp here, let pFunction do that */
     ptrdiff_t advance;
     size_t _count = *(COUNT);
     size_t _r_blength;
 
     _r_blength = master->remote_sizes[_elem->common.type];
+    if (_elem->common.ompi_id != OPAL_MIRROR_OMPI_DATATYPE_MPI_EMPTY && master->ompi_remote_sizes_is_set) {
+        _r_blength = master->ompi_remote_sizes[_elem->common.ompi_id];
+    }
     if( (_count * _r_blength) > *(SPACE) ) {
         _count = (*(SPACE) / _r_blength);
         if( 0 == _count ) return;  /* nothing to do */
@@ -410,15 +415,16 @@ pack_predefined_heterogeneous( opal_convertor_t* CONVERTOR,
                            ((ptrdiff_t)_r_blength == _elem->extent) ? "cont" : "----",
                            (void*)*(DESTINATION), (void*)_source, (unsigned long)_r_blength,
                            (unsigned long)(*(SPACE)) ); );
-    master->pFunctions[_elem->common.type]( CONVERTOR, _count,
-                                            _source, *SPACE, _elem->extent,
-                                            *DESTINATION, *SPACE, _r_blength,
-                                            &advance );
-    _r_blength     *= _count;  /* update the remote length to encompass all the elements */
-    *(SOURCE)      += _count * _elem->extent;
-    *(DESTINATION) += _r_blength;
-    *(SPACE)       -= _r_blength;
-    *(COUNT)       -= _count;
+    size_t elements_done = 0;
+    size_t rc;
+    rc = master->pFunctions[_elem->common.type]( CONVERTOR,
+                                            COPY_FROM_VECTOR,
+                                            _elem,
+                                            SOURCE,
+                                            COUNT,
+                                            DESTINATION,
+                                            SPACE,
+                                            _r_blength);
 }
 
 int32_t
@@ -550,7 +556,7 @@ opal_pack_general_function( opal_convertor_t* pConvertor,
     *max_data = total_packed;
     pConvertor->bConverted += total_packed;  /* update the already converted bytes */
     *out_size = iov_count;
-    if( pConvertor->bConverted == pConvertor->local_size ) {
+    if( pConvertor->bConverted == pConvertor->remote_size ) {
         pConvertor->flags |= CONVERTOR_COMPLETED;
         return 1;
     }

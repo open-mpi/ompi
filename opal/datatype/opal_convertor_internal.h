@@ -7,6 +7,7 @@
  * Copyright (c) 2013      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2017      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2020      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -19,13 +20,19 @@
 #include "opal_config.h"
 
 #include "opal/datatype/opal_convertor.h"
+#include "opal/datatype/opal_datatype_internal.h"
 
 BEGIN_C_DECLS
 
-typedef int32_t (*conversion_fct_t)( opal_convertor_t* pConvertor, uint32_t count,
-                                     const void* from, size_t from_len, ptrdiff_t from_extent,
-                                     void* to, size_t to_length, ptrdiff_t to_extent,
-                                     ptrdiff_t *advance );
+/* returns elements processed in the packed_buf for this call */
+typedef size_t (*conversion_fct_t)( opal_convertor_t* pConvertor,
+                                     int mode,
+                                     const ddt_elem_desc_t *elem,
+                                     char** pconv_ptr,
+                                     size_t* pcount_desc,
+                                     char** ppacked_buf,
+                                     size_t* packed_len,
+                                     size_t packed_element_size);
 
 typedef struct opal_convertor_master_t {
     struct opal_convertor_master_t* next;

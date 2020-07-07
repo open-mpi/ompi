@@ -11,6 +11,7 @@
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2020      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -202,7 +203,7 @@
 
 /* BYTE 2 */
 #define OPAL_ARCH_LONGISxx        0x0000c000  /* mask for sizeof long */
-#define OPAL_ARCH_LONGIS64        0x00001000
+#define OPAL_ARCH_LONGIS64        0x00008000
 #define OPAL_ARCH_LONGLONGISxx    0x00003000  /* mask for sizeof long long */
 
 #define OPAL_ARCH_BOOLISxx        0x00000c00  /* mask for sizeof bool */

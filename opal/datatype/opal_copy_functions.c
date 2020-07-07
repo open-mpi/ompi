@@ -8,6 +8,7 @@
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
+ * Copyright (c) 2020      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -39,42 +40,40 @@
  *
  * Return value: Number of elements of type TYPE copied
  */
-#define COPY_TYPE( TYPENAME, TYPE, COUNT )                                              \
-static int copy_##TYPENAME( opal_convertor_t *pConvertor, size_t count,                 \
-                            char* from, size_t from_len, ptrdiff_t from_extent,         \
-                            char* to, size_t to_len, ptrdiff_t to_extent,               \
-                            ptrdiff_t *advance)                                         \
-{                                                                                       \
-    size_t remote_TYPE_size = sizeof(TYPE) * (COUNT); /* TODO */                        \
-    size_t local_TYPE_size = (COUNT) * sizeof(TYPE);                                    \
-                                                                                        \
-    /* make sure the remote buffer is large enough to hold the data */                  \
-    if( (remote_TYPE_size * count) > from_len ) {                                       \
-        count = from_len / remote_TYPE_size;                                            \
-        if( (count * remote_TYPE_size) != from_len ) {                                  \
-            DUMP( "oops should I keep this data somewhere (excedent %d bytes)?\n",      \
-                  from_len - (count * remote_TYPE_size) );                              \
-        }                                                                               \
-        DUMP( "correct: copy %s count %d from buffer %p with length %d to %p space %d\n", \
-              #TYPE, count, from, from_len, to, to_len );                               \
-    } else                                                                              \
-        DUMP( "         copy %s count %d from buffer %p with length %d to %p space %d\n", \
-              #TYPE, count, from, from_len, to, to_len );                               \
-                                                                                        \
-    if( (from_extent == (ptrdiff_t)local_TYPE_size) &&                          \
-        (to_extent == (ptrdiff_t)remote_TYPE_size) ) {                          \
-        /* copy of contigous data at both source and destination */                     \
-        MEMCPY( to, from, count * local_TYPE_size );                                    \
-    } else {                                                                            \
-        /* source or destination are non-contigous */                                   \
-        for(size_t i = 0; i < count; i++ ) {                                            \
-            MEMCPY( to, from, local_TYPE_size );                                        \
-            to += to_extent;                                                            \
-            from += from_extent;                                                        \
-        }                                                                               \
-    }                                                                                   \
-    *advance = count * from_extent;                                                     \
-    return count;                                                                       \
+#define COPY_TYPE( TYPENAME, TYPE, COUNT )                               \
+static int copy_##TYPENAME( opal_convertor_t *pConvertor,                \
+                            int mode,                                    \
+                            ddt_elem_desc_t *elem,                       \
+                            size_t* pconv_ptr,                           \
+                            size_t* pcount_desc,                         \
+                            char** ppacked_buf,                          \
+                            size_t* ppacked_len,                         \
+                            size_t element_size)                         \
+{                                                                        \
+    vector_iterator_state_t vec;                                         \
+    size_t i;                                                            \
+    int opal_type = elem->common.type;                                   \
+    vector_iter_load_current_state(&vec, elem, pconv_ptr, pcount_desc);  \
+    char **pfrom, **pto;                                                 \
+    if (mode == COPY_TO_VECTOR) {                                        \
+        pto = &vec.buf,                                                  \
+        pfrom = ppacked_buf;                                             \
+    } else {                                                             \
+        pfrom = &vec.buf;                                                \
+        pto = ppacked_buf;                                               \
+    }                                                                    \
+                                                                         \
+    while (*pcount_desc != 0 && *ppacked_len >= element_size) {          \
+        size_t mycount = vec.count;                                      \
+        if (mycount * element_size > *ppacked_len) {                     \
+            mycount = *ppacked_len / element_size;                       \
+        }                                                                \
+        MEMCPY(*pto, *pfrom, mycount * element_size );                   \
+        vector_iter_consume(&vec, mycount);                              \
+        *ppacked_buf += mycount * element_size;                          \
+        *ppacked_len -= mycount * element_size;                          \
+     }                                                                   \
+    return 0;                                                            \
 }
 
 /*
@@ -91,39 +90,40 @@ static int copy_##TYPENAME( opal_convertor_t *pConvertor, size_t count,         
  *
  * Return value: Number of elements of type TYPE copied
  */
-#define COPY_CONTIGUOUS_BYTES( TYPENAME, COUNT )                                          \
-static size_t copy_##TYPENAME##_##COUNT( opal_convertor_t *pConvertor, size_t count,         \
-                                         char* from, size_t from_len, ptrdiff_t from_extent, \
-                                         char* to, size_t to_len, ptrdiff_t to_extent,       \
-                                         ptrdiff_t *advance )              \
-{                                                                               \
-    size_t remote_TYPE_size = (size_t)(COUNT); /* TODO */                       \
-    size_t local_TYPE_size = (size_t)(COUNT);                                   \
-                                                                                \
-    if( (remote_TYPE_size * count) > from_len ) {                               \
-        count = from_len / remote_TYPE_size;                                    \
-        if( (count * remote_TYPE_size) != from_len ) {                          \
-            DUMP( "oops should I keep this data somewhere (excedent %d bytes)?\n", \
-                  from_len - (count * remote_TYPE_size) );                      \
-        }                                                                       \
-        DUMP( "correct: copy %s count %d from buffer %p with length %d to %p space %d\n", \
-              #TYPENAME, count, from, from_len, to, to_len );                   \
-    } else                                                                      \
-        DUMP( "         copy %s count %d from buffer %p with length %d to %p space %d\n", \
-              #TYPENAME, count, from, from_len, to, to_len );                   \
-                                                                                \
-    if( (from_extent == (ptrdiff_t)local_TYPE_size) &&                  \
-        (to_extent == (ptrdiff_t)remote_TYPE_size) ) {                  \
-        MEMCPY( to, from, count * local_TYPE_size );                            \
-    } else {                                                                    \
-        for(size_t i = 0; i < count; i++ ) {                                    \
-            MEMCPY( to, from, local_TYPE_size );                                \
-            to += to_extent;                                                    \
-            from += from_extent;                                                \
-        }                                                                       \
-    }                                                                           \
-    *advance = count * from_extent;                                             \
-    return count;                                                               \
+#define COPY_CONTIGUOUS_BYTES( TYPENAME, COUNT )                         \
+static size_t copy_##TYPENAME##_##COUNT( opal_convertor_t *pConvertor,   \
+                            int mode,                                    \
+                            ddt_elem_desc_t *elem,                       \
+                            size_t* pconv_ptr,                           \
+                            size_t* pcount_desc,                         \
+                            char** ppacked_buf,                          \
+                            size_t* ppacked_len,                         \
+                            size_t element_size)                         \
+{                                                                        \
+    vector_iterator_state_t vec;                                         \
+    size_t i;                                                            \
+    int opal_type = elem->common.type;                                   \
+    vector_iter_load_current_state(&vec, elem, pconv_ptr, pcount_desc);  \
+    char **pfrom, **pto;                                                 \
+    if (mode == COPY_TO_VECTOR) {                                        \
+        pto = &vec.buf,                                                  \
+        pfrom = ppacked_buf;                                             \
+    } else {                                                             \
+        pfrom = &vec.buf;                                                \
+        pto = ppacked_buf;                                               \
+    }                                                                    \
+                                                                         \
+    while (*pcount_desc != 0 && *ppacked_len >= element_size) {          \
+        size_t mycount = vec.count;                                      \
+        if (mycount * element_size > *ppacked_len) {                     \
+            mycount = *ppacked_len / element_size;                       \
+        }                                                                \
+        MEMCPY(*pto, *pfrom, mycount * element_size );                   \
+        vector_iter_consume(&vec, mycount);                              \
+        *ppacked_buf += mycount * element_size;                          \
+        *ppacked_len -= mycount * element_size;                          \
+     }                                                                   \
+    return 0;                                                            \
 }
 
 /* set up copy functions for the basic C MPI data types */

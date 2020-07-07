@@ -15,6 +15,7 @@
  * Copyright (c) 2013      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2017-2018 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
+ * Copyright (c) 2020      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -38,6 +39,7 @@
 #define DO_DEBUG(INST)
 #endif  /* OPAL_ENABLE_DEBUG */
 
+#include "opal/util/arch.h"
 #include "opal/datatype/opal_datatype_checksum.h"
 #include "opal/datatype/opal_datatype_unpack.h"
 #include "opal/datatype/opal_datatype_prototypes.h"
@@ -484,14 +486,24 @@ opal_unpack_general_function( opal_convertor_t* pConvertor,
                                        (void*)pConvertor->pBaseBuf, conv_ptr + pElem->elem.disp - pConvertor->pBaseBuf,
                                        count_desc, description[pos_desc].elem.extent,
                                        opal_datatype_basicDatatypes[type]->name ); );
-                rc = master->pFunctions[type]( pConvertor, count_desc,
-                                               iov_ptr, iov_len_local, opal_datatype_basicDatatypes[type]->size,
-                                               conv_ptr + pElem->elem.disp,
-                                               (pConvertor->pDesc->ub - pConvertor->pDesc->lb) * pConvertor->count,
-                                               description[pos_desc].elem.extent, &advance );
-                iov_len_local -= advance;  /* decrease the available space in the buffer */
-                iov_ptr += advance;        /* increase the pointer to the buffer */
-                count_desc -= rc;          /* compute leftovers */
+                size_t _r_blength = master->remote_sizes[type];
+                if (pElem->elem.common.ompi_id != OPAL_MIRROR_OMPI_DATATYPE_MPI_EMPTY && master->ompi_remote_sizes_is_set) {
+                    _r_blength = master->ompi_remote_sizes[pElem->elem.common.ompi_id];
+                }
+/*
+ *  pElem describes a vector being iterated over, with conv_ptr stepping
+ *  through, and count_desc decrementing for what's already completed.
+ */
+                rc = master->pFunctions[type]( pConvertor,
+                                               COPY_TO_VECTOR,
+                                               &pElem->elem,
+                                               &conv_ptr,
+                                               &count_desc,
+                                               &iov_ptr,
+                                               &iov_len_local,
+                                               _r_blength);
+                /* iov_len_local/iov_ptr were incr/decr in pFunction,
+                 * along with conv_ptr/count_desc */
                 if( 0 == count_desc ) {  /* completed */
                     conv_ptr = pConvertor->pBaseBuf + pStack->disp;
                     pos_desc++;  /* advance to the next data */
@@ -499,7 +511,6 @@ opal_unpack_general_function( opal_convertor_t* pConvertor,
                     if( 0 == iov_len_local ) goto complete_loop;  /* escape if we're done */
                     continue;
                 }
-                conv_ptr += rc * description[pos_desc].elem.extent;
                 assert( pElem->elem.common.type < OPAL_DATATYPE_MAX_PREDEFINED );
                 assert( 0 == iov_len_local );
                 if( 0 != iov_len_local ) {

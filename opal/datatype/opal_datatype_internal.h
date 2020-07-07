@@ -29,6 +29,7 @@
 #define OPAL_DATATYPE_INTERNAL_H_HAS_BEEN_INCLUDED
 
 #include "opal_config.h"
+#include "opal_datatype.h"
 
 #include <stdarg.h>
 #include <string.h>
@@ -615,6 +616,109 @@ extern bool opal_ddt_copy_debug;
 extern bool opal_ddt_unpack_debug;
 extern bool opal_ddt_pack_debug;
 extern bool opal_ddt_raw_debug;
+
+/*
+ * Vector iterating utilities to be used with conv_ptr and count_desc
+ *
+ * conv_ptr is managed the same way it appears to be done elsewhere:
+ * it is incremented as we walk the vector, but it is not offset by
+ * elem.disp.  So if a partially walked pElem were pushed onto the
+ * stack and restored later, the conv_ptr would come back as being
+ * iterated somewhere in the middle of the vector, but it would still
+ * need to be offset by elem.disp to locate actual data.
+ *
+ * The .buf field though is updated to be the actual location of the
+ * data, eg conv_ptr + elem.disp
+ */
+struct vector_iterator_state {
+    char *buf; /* next contiguous block of elements */
+    size_t count; /* length of next contiguous block of elements */
+    /*
+     * Other standard bookkeeping values are from outside
+     * this function, so they are used here by reference
+     *   conv_ptr : start of buffer for the next contig block of elements
+     *       (incremented as we iterate)
+     *   count_desc : total elements left in vector to iterate over
+     *       (decremented as we iterate)
+     */
+    unsigned char **pconv_ptr;
+    size_t *pcount_desc;
+
+    /* vector info */
+    ddt_elem_desc_t* elem;
+
+    /* internal book keeping */
+    size_t index_within_block;
+};
+typedef struct vector_iterator_state vector_iterator_state_t;
+
+#define COPY_TO_VECTOR   1
+#define COPY_FROM_VECTOR 2
+
+static inline void
+vector_iter_load_current_state(
+    vector_iterator_state_t *it,
+    ddt_elem_desc_t* elem,
+    unsigned char **pconv_ptr,
+    size_t *pcount_desc)
+{
+    size_t nblocks, blocklen, element_size, extent, elements_done;
+
+    it->elem = elem;
+    it->pconv_ptr = pconv_ptr;
+    it->pcount_desc = pcount_desc;
+
+    nblocks = it->elem->count;
+    blocklen = it->elem->blocklen;
+    extent = it->elem->extent;
+    element_size = opal_datatype_basicDatatypes[it->elem->common.type]->size;
+
+    it->index_within_block = 0;
+    elements_done = nblocks * blocklen - *it->pcount_desc;
+
+    if (elements_done != 0) {
+        it->index_within_block = elements_done % blocklen;
+    }
+
+    /*
+     * maintain .count as how many elements are left in the
+     * current contiguous block that conv_ptr is at
+     * and offset .buf by elem.disp to get the actual data
+     */
+    it->count = blocklen - it->index_within_block;
+    it->buf = *it->pconv_ptr + it->elem->disp;
+}
+
+static inline void
+vector_iter_consume(
+    vector_iterator_state_t *it,
+    size_t nelements)
+{
+    size_t nblocks, blocklen, element_size, extent;
+
+    nblocks = it->elem->count;
+    blocklen = it->elem->blocklen;
+    extent = it->elem->extent;
+    element_size = opal_datatype_basicDatatypes[it->elem->common.type]->size;
+
+    assert(nelements <= *it->pcount_desc);
+
+    /* roll back to the start of this block, then advance */
+    *it->pconv_ptr -= it->index_within_block * element_size;
+    *it->pcount_desc += it->index_within_block;
+    nelements += it->index_within_block;
+    it->index_within_block = 0;
+
+    size_t blocks_done, remainder_done;
+    blocks_done = nelements / blocklen;
+    remainder_done = nelements - blocks_done * blocklen;
+    *it->pconv_ptr += blocks_done * extent + remainder_done * element_size;
+    *it->pcount_desc -= nelements;
+    it->index_within_block = remainder_done;
+
+    it->count = blocklen - it->index_within_block;
+    it->buf = *it->pconv_ptr + it->elem->disp;
+}
 
 END_C_DECLS
 #endif  /* OPAL_DATATYPE_INTERNAL_H_HAS_BEEN_INCLUDED */

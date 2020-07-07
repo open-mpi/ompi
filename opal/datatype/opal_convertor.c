@@ -15,6 +15,7 @@
  * Copyright (c) 2013-2018 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2017      Intel, Inc. All rights reserved
+ * Copyright (c) 2020      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -521,8 +522,26 @@ size_t opal_convertor_compute_remote_size( opal_convertor_t* pConvertor )
     
     pConvertor->remote_size = pConvertor->local_size;
     if( OPAL_UNLIKELY(datatype->bdt_used & pConvertor->master->hetero_mask) ) {
+        int is_send_conversion = 0;
+        if (pConvertor->flags & CONVERTOR_SEND_CONVERSION) {
+            /*
+             * Adding to the conditions for keeping the optimized description.
+             * Now it's only optimized if (send && contiguous &&
+             * !something like external32 that needs conversion)
+             *
+             * Note, elsewhere there are similar checks that boil down to
+             * checking that CONVERTOR_SEND_CONVERSION is on but that
+             * HOMOGENEOUS is off.  That kind of makes sense, except
+             * OPAL_CONVERTOR_PREPARE seems to universally set HOMOGENEOUS
+             * so I don't think that setting means what it looks like it
+             * means, so I'm not using it.
+             */
+            is_send_conversion = 1;
+        }
         pConvertor->flags &= (~CONVERTOR_HOMOGENEOUS);
-        if (!(pConvertor->flags & CONVERTOR_SEND && pConvertor->flags & OPAL_DATATYPE_FLAG_CONTIGUOUS)) {
+        if (!(pConvertor->flags & CONVERTOR_SEND && pConvertor->flags & OPAL_DATATYPE_FLAG_CONTIGUOUS
+            && !is_send_conversion))
+        {
             pConvertor->use_desc = &(datatype->desc);
         }
         if( 0 == (pConvertor->flags & CONVERTOR_HAS_REMOTE_SIZE) ) {
