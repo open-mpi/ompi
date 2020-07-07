@@ -47,11 +47,11 @@ struct mca_pml_ob1_send_request_t {
     mca_pml_base_send_request_t req_send;
     mca_bml_base_endpoint_t* req_endpoint;
     opal_ptr_t req_recv;
-    opal_atomic_int32_t  req_state;
-    opal_atomic_int32_t  req_lock;
+    volatile int32_t  req_state;
+    volatile int32_t  req_lock;
     bool     req_throttle_sends;
-    opal_atomic_int32_t  req_pipeline_depth;
-    opal_atomic_size_t   req_bytes_delivered;
+    volatile int32_t  req_pipeline_depth;
+    volatile size_t   req_bytes_delivered;
     uint32_t req_rdma_cnt;
     mca_pml_ob1_send_pending_t req_pending;
     opal_mutex_t req_send_range_lock;

@@ -57,7 +57,7 @@ int mca_coll_sm_barrier_intra(struct ompi_communicator_t *comm,
     mca_coll_sm_comm_t *data;
     uint32_t i, num_children;
     volatile uint32_t *me_in, *me_out, *children = NULL;
-    opal_atomic_uint32_t *parent;
+    volatile uint32_t *parent;
     int uint_control_size;
     mca_coll_sm_module_t *sm_module = (mca_coll_sm_module_t*) module;
 

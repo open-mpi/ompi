@@ -80,7 +80,7 @@ static int32_t event_progress_delta = 0;
 #endif
 /* users of the event library from MPI cause the tick rate to
    be every time */
-static opal_atomic_int32_t num_event_users = 0;
+static volatile int32_t num_event_users = 0;
 
 #if OPAL_ENABLE_DEBUG
 static int debug_output = -1;
@@ -171,7 +171,7 @@ opal_progress_init(void)
 
 static int opal_progress_events(void)
 {
-    static opal_atomic_int32_t lock = 0;
+    static volatile int32_t lock = 0;
     int events = 0;
 
     if( opal_progress_event_flag != 0 && !OPAL_THREAD_SWAP_32(&lock, 1) ) {

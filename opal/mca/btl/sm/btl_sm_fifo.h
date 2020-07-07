@@ -31,23 +31,23 @@
 #include "btl_sm_endpoint.h"
 #include "btl_sm_frag.h"
 
-#define sm_item_compare_exchange(x, y, z) opal_atomic_compare_exchange_strong_ptr ((opal_atomic_intptr_t *) (x), (intptr_t *) (y), (intptr_t) (z))
+#define sm_item_compare_exchange(x, y, z) opal_atomic_compare_exchange_strong_ptr ((volatile intptr_t *) (x), (intptr_t *) (y), (intptr_t) (z))
 
 #if SIZEOF_VOID_P == 8
-#define sm_item_swap(x, y)      opal_atomic_swap_64((opal_atomic_int64_t *)(x), (int64_t)(y))
+#define sm_item_swap(x, y)      opal_atomic_swap_64((volatile int64_t *)(x), (int64_t)(y))
 
 #define MCA_BTL_SM_OFFSET_MASK 0xffffffffll
 #define MCA_BTL_SM_OFFSET_BITS 32
 #define MCA_BTL_SM_BITNESS     64
 #else
-#define sm_item_swap(x, y)      opal_atomic_swap_32((opal_atomic_int32_t *)(x), (int32_t)(y))
+#define sm_item_swap(x, y)      opal_atomic_swap_32((volatile int32_t *)(x), (int32_t)(y))
 
 #define MCA_BTL_SM_OFFSET_MASK 0x00ffffffl
 #define MCA_BTL_SM_OFFSET_BITS 24
 #define MCA_BTL_SM_BITNESS     32
 #endif
 
-typedef opal_atomic_intptr_t atomic_fifo_value_t;
+typedef volatile intptr_t atomic_fifo_value_t;
 typedef intptr_t fifo_value_t;
 
 #define SM_FIFO_FREE  ((fifo_value_t)-2)
@@ -70,7 +70,7 @@ typedef intptr_t fifo_value_t;
 typedef struct sm_fifo_t {
     atomic_fifo_value_t fifo_head;
     atomic_fifo_value_t fifo_tail;
-    opal_atomic_int32_t fbox_available;
+    volatile int32_t fbox_available;
 } sm_fifo_t;
 
 /* large enough to ensure the fifo is on its own cache line */

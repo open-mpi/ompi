@@ -159,8 +159,8 @@ struct mca_btl_smcuda_component_t {
     struct mca_btl_base_endpoint_t **sm_peers;
 
     opal_free_list_t pending_send_fl;
-    opal_atomic_int32_t num_outstanding_frags;         /**< number of fragments sent but not yet returned to free list */
-    opal_atomic_int32_t num_pending_sends;             /**< total number on all of my pending-send queues */
+    volatile int32_t num_outstanding_frags;         /**< number of fragments sent but not yet returned to free list */
+    volatile int32_t num_pending_sends;             /**< total number on all of my pending-send queues */
     int mem_node;
     int num_mem_nodes;
 

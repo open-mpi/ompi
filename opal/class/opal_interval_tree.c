@@ -131,7 +131,7 @@ static opal_interval_tree_token_t opal_interval_tree_reader_get_token (opal_inte
         }
     }
 
-    while (!OPAL_ATOMIC_COMPARE_EXCHANGE_STRONG_32((opal_atomic_int32_t *) &tree->reader_epochs[token],
+    while (!OPAL_ATOMIC_COMPARE_EXCHANGE_STRONG_32(&tree->reader_epochs[token],
                                                    &(int32_t) {UINT_MAX}, tree->epoch));
 
     return token;

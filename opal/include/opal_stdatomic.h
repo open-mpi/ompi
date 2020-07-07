@@ -46,6 +46,12 @@ typedef _Atomic ssize_t opal_atomic_ssize_t;
 typedef _Atomic intptr_t opal_atomic_intptr_t;
 typedef _Atomic uintptr_t opal_atomic_uintptr_t;
 
+#ifdef __INTEL_COMPILER
+typedef volatile _Bool opal_atomic_lock_t;
+#else
+typedef atomic_flag opal_atomic_lock_t;
+#endif
+
 #endif /* OPAL_HAVE_C__ATOMIC */
 
 #if HAVE_OPAL_INT128_T

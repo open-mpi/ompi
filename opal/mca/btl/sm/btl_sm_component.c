@@ -750,7 +750,7 @@ static void mca_btl_sm_progress_endpoints (void)
 
 static int mca_btl_sm_component_progress (void)
 {
-    static opal_atomic_int32_t lock = 0;
+    static volatile int32_t lock = 0;
     int count = 0;
 
     if (opal_using_threads()) {

@@ -28,7 +28,7 @@
 #define OPAL_MCA_THREADS_PTHREADS_THREADS_PTHREADS_WAIT_SYNC_H
 
 typedef struct ompi_wait_sync_t {
-    opal_atomic_int32_t count;
+    volatile int32_t count;
     int32_t status;
     pthread_cond_t condition;
     pthread_mutex_t lock;

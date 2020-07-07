@@ -40,7 +40,7 @@ struct ompi_osc_rdma_request_t {
     void *origin_addr;
 
     ompi_osc_rdma_module_t *module;
-    opal_atomic_int32_t outstanding_requests;
+    volatile int32_t outstanding_requests;
     bool internal;
 
     ptrdiff_t offset;

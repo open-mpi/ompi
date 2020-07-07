@@ -120,7 +120,7 @@ typedef struct opal_tree_item_t
 
 #if OPAL_ENABLE_DEBUG
     /** Atomic reference count for debugging */
-    opal_atomic_int32_t opal_tree_item_refcount;
+    volatile int32_t opal_tree_item_refcount;
     /** The tree this item belong to */
     struct opal_tree_t* opal_tree_item_belong_to;
 #endif

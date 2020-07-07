@@ -391,7 +391,7 @@ opal_generic_simple_unpack_function( opal_convertor_t* pConvertor,
             opal_unpack_partial_datatype( pConvertor, pElem,
                                           iov_ptr, 0, iov_len_local,
                                           &temp );
-                
+
             pConvertor->partial_length = iov_len_local;
             iov_len_local = 0;
         }

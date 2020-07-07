@@ -686,7 +686,7 @@ static void ompi_osc_rdma_cas_put_complete (struct mca_btl_base_module_t *btl, s
  *
  * This function is necessary to support compare-and-swap on types larger
  * than 64-bits. As of MPI-3.1 this can include MPI_INTEGER16 and possibly
- * MPI_LON_LONG_INT. The former is a 128-bit value and the later *may*
+ * MPI_LONG_LONG_INT. The former is a 128-bit value and the later *may*
  * be depending on the platform, compiler, etc. This function currently
  * blocks until the operation is complete.
  */

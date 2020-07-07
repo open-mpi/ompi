@@ -50,7 +50,7 @@
     OSC_MONITORING_SET_TEMPLATE_FCT_NAME(template) (ompi_osc_base_module_t*module) \
     {                                                                   \
         /* Define the ompi_osc_monitoring_module_## template ##_init_done variable */ \
-        opal_atomic_int32_t init_done = 0;                              \
+        volatile int32_t init_done = 0;                                 \
         /* Define and set the ompi_osc_monitoring_## template           \
          * ##_template variable. The functions recorded here are        \
          * linked to the original functions of the original             \

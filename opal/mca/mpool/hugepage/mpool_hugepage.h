@@ -46,7 +46,7 @@ struct mca_mpool_hugepage_component_t {
     opal_list_t huge_pages;
     mca_mpool_hugepage_module_t *modules;
     int module_count;
-    opal_atomic_size_t bytes_allocated;
+    volatile size_t bytes_allocated;
 };
 typedef struct mca_mpool_hugepage_component_t mca_mpool_hugepage_component_t;
 
@@ -62,7 +62,7 @@ struct mca_mpool_hugepage_hugepage_t {
     /** path for mmapped files */
     char            *path;
     /** counter to help ensure unique file names for mmaped files */
-    opal_atomic_int32_t count;
+    volatile int32_t count;
     /** some platforms allow allocation of hugepages through mmap flags */
     int              mmap_flags;
 };

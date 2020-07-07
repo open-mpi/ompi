@@ -48,7 +48,7 @@ union opal_counted_pointer_t {
         /** update counter used when cmpset_128 is available */
         uint64_t counter;
         /** list item pointer */
-        volatile opal_atomic_intptr_t item;
+        volatile intptr_t item;
     } data;
 #if OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_128 && HAVE_OPAL_INT128_T
     /** used for atomics when there is a cmpset that can operate on

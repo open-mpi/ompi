@@ -41,9 +41,9 @@ BEGIN_C_DECLS
 struct mca_pml_ob1_recv_request_t {
     mca_pml_base_recv_request_t req_recv;
     opal_ptr_t remote_req_send;
-    opal_atomic_int32_t  req_lock;
-    opal_atomic_int32_t  req_pipeline_depth;
-    opal_atomic_size_t   req_bytes_received;  /**< amount of data transferred into the user buffer */
+    volatile int32_t  req_lock;
+    volatile int32_t  req_pipeline_depth;
+    volatile size_t   req_bytes_received;  /**< amount of data transferred into the user buffer */
     size_t   req_bytes_expected; /**< local size of the data as suggested by the user */
     size_t   req_rdma_offset;
     size_t   req_send_offset;

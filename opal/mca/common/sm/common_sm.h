@@ -43,13 +43,13 @@ typedef struct mca_common_sm_seg_header_t {
     /* lock to control atomic access */
     opal_atomic_lock_t seg_lock;
     /* indicates whether or not the segment is ready for use */
-    opal_atomic_int32_t seg_inited;
+    volatile int32_t seg_inited;
     /* number of local processes that are attached to the shared memory segment.
      * this is primarily used as a way of determining whether or not it is safe
      * to unlink the shared memory backing store. for example, once seg_att
      * is equal to the number of local processes, then we can safely unlink.
      */
-    opal_atomic_size_t seg_num_procs_inited;
+    volatile size_t seg_num_procs_inited;
     /* offset to next available memory location available for allocation */
     size_t seg_offset;
     /* total size of the segment */

@@ -84,10 +84,10 @@ struct opal_interval_tree_t {
     opal_list_t gc_list;          /**< list of nodes that need to be released */
     uint32_t epoch;               /**< current update epoch */
     opal_atomic_size_t tree_size;    /**< the current size of the tree */
-    opal_atomic_int32_t lock;        /**< update lock */
-    opal_atomic_int32_t reader_count;    /**< current highest reader slot to check */
+    volatile int32_t lock;        /**< update lock */
+    volatile int32_t reader_count;    /**< current highest reader slot to check */
     volatile uint32_t reader_id;  /**< next reader slot to check */
-    opal_atomic_uint32_t reader_epochs[OPAL_INTERVAL_TREE_MAX_READERS];
+    volatile uint32_t reader_epochs[OPAL_INTERVAL_TREE_MAX_READERS];
 };
 typedef struct opal_interval_tree_t opal_interval_tree_t;
 

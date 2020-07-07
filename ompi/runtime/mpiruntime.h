@@ -52,7 +52,7 @@ struct ompi_predefined_datatype_t;
 /** Mutex to protect all the _init and _finalize variables */
 OMPI_DECLSPEC extern opal_mutex_t ompi_mpi_bootstrap_mutex;
 /** Did MPI start to initialize? */
-OMPI_DECLSPEC extern opal_atomic_int32_t ompi_mpi_state;
+OMPI_DECLSPEC extern volatile int32_t ompi_mpi_state;
 /** Has the RTE been initialized? */
 OMPI_DECLSPEC extern volatile bool ompi_rte_initialized;
 

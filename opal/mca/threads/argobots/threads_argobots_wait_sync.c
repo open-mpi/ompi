@@ -21,7 +21,7 @@
 static opal_mutex_t wait_sync_lock = OPAL_MUTEX_STATIC_INIT;
 static ompi_wait_sync_t *wait_sync_list = NULL;
 
-static opal_atomic_int32_t num_thread_in_progress = 0;
+static volatile int32_t num_thread_in_progress = 0;
 
 #define WAIT_SYNC_PASS_OWNERSHIP(who)                  \
     do {                                               \

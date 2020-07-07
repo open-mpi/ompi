@@ -55,7 +55,7 @@ struct ompi_osc_sm_lock_t {
 typedef struct ompi_osc_sm_lock_t ompi_osc_sm_lock_t;
 
 struct ompi_osc_sm_node_state_t {
-    opal_atomic_int32_t complete_count;
+    volatile int32_t complete_count;
     ompi_osc_sm_lock_t lock;
     opal_atomic_lock_t accumulate_lock;
 };

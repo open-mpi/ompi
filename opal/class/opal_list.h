@@ -111,7 +111,7 @@ struct opal_list_item_t
 
 #if OPAL_ENABLE_DEBUG
     /** Atomic reference count for debugging */
-    opal_atomic_int32_t opal_list_item_refcount;
+    volatile int32_t opal_list_item_refcount;
     /** The list this item belong to */
     volatile struct opal_list_t* opal_list_item_belong_to;
 #endif

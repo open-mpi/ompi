@@ -125,7 +125,7 @@ struct mca_btl_sm_component_t {
     char *my_segment;                       /**< this rank's base pointer */
     size_t segment_size;                    /**< size of my_segment */
     int32_t num_smp_procs;                  /**< current number of smp procs on this host */
-    opal_atomic_int32_t local_rank;         /**< current rank index at add_procs() time */
+    volatile int32_t local_rank;         /**< current rank index at add_procs() time */
     opal_free_list_t sm_frags_eager;     /**< free list of sm send frags */
     opal_free_list_t sm_frags_max_send;  /**< free list of sm max send frags (large fragments) */
     opal_free_list_t sm_frags_user;      /**< free list of small inline frags */

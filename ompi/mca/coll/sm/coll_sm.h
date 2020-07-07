@@ -114,7 +114,7 @@ BEGIN_C_DECLS
     typedef struct mca_coll_sm_in_use_flag_t {
         /** Number of processes currently using this set of
             segments */
-        opal_atomic_uint32_t mcsiuf_num_procs_using;
+        volatile uint32_t mcsiuf_num_procs_using;
         /** Must match data->mcb_count */
         volatile uint32_t mcsiuf_operation_count;
     } mca_coll_sm_in_use_flag_t;
@@ -152,7 +152,7 @@ BEGIN_C_DECLS
         /** Pointer to my parent's barrier control pages (will be NULL
             for communicator rank 0; odd index pages are "in", even
             index pages are "out") */
-        opal_atomic_uint32_t *mcb_barrier_control_parent;
+        volatile uint32_t *mcb_barrier_control_parent;
 
         /** Pointers to my childrens' barrier control pages (they're
             contiguous in memory, so we only point to the base -- the

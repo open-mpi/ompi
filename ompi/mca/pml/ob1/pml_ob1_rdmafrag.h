@@ -47,7 +47,7 @@ struct mca_pml_ob1_rdma_frag_t {
     mca_pml_ob1_hdr_t rdma_hdr;
     mca_pml_ob1_rdma_state_t rdma_state;
     size_t rdma_length;  /* how much the fragment will transfer */
-    opal_atomic_size_t rdma_bytes_remaining;  /* how much is left to be transferred */
+    volatile size_t rdma_bytes_remaining;  /* how much is left to be transferred */
     void *rdma_req;
     uint32_t retries;
     mca_pml_ob1_rdma_frag_callback_t cbfunc;

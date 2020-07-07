@@ -45,7 +45,7 @@ __ompi_datatype_create_from_args( int32_t* i, ptrdiff_t * a,
                                   ompi_datatype_t** d, int32_t type );
 
 typedef struct __dt_args {
-    opal_atomic_int32_t ref_count;
+    volatile int32_t   ref_count;
     int32_t            create_type;
     size_t             total_pack_size;
     int32_t            ci;

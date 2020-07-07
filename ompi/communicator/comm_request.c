@@ -99,7 +99,7 @@ int ompi_comm_request_schedule_append (ompi_comm_request_t *request, ompi_comm_r
 static int ompi_comm_request_progress (void)
 {
     ompi_comm_request_t *request, *next;
-    static opal_atomic_int32_t progressing = 0;
+    static volatile int32_t progressing = 0;
     int completed = 0;
 
     /* don't allow re-entry */
