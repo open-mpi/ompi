@@ -59,7 +59,7 @@
 #include "opal/sys/architecture.h"
 #include "opal_stdatomic.h"
 
-#if OPAL_ASSEMBLY_BUILTIN == OPAL_BUILTIN_C11
+#if OPAL_ASSEMBLY_BUILTIN == OPAL_BUILTIN_C11 && !defined(__INTEL_COMPILER)
 
 #include "atomic_stdc.h"
 
