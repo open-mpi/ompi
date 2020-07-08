@@ -305,20 +305,6 @@ opal_common_ucx_wpool_progress(opal_common_ucx_wpool_t *wpool)
     return completed;
 }
 
-// static int 
-// _wpool_list_return_item(opal_common_ucx_wpool_t *wpool, opal_list_t *idle_list, opal_list_t *active_list,
-//         opal_common_ucx_winfo_t *winfo)
-// {
-//     opal_list_item_t *tmp = NULL; 
-//     opal_mutex_lock(&wpool->mutex);
-//     tmp = opal_list_remove_item(active_list, &(winfo->self->super));
-//     assert(NULL != tmp);
-//     opal_list_append(idle_list, &(winfo->self->super));
-//     opal_mutex_unlock(&wpool->mutex);
-// 
-//     return OPAL_SUCCESS;
-// }
-
 static int
 _wpool_list_put(opal_common_ucx_wpool_t *wpool, opal_list_t *list,
                 opal_common_ucx_winfo_t *winfo)
@@ -358,15 +344,6 @@ _wpool_list_get(opal_common_ucx_wpool_t *wpool, opal_list_t *list)
         OBJ_RELEASE(item);
     }
     return winfo;
-
-    /*XXX*/
-//     opal_mutex_lock(&wpool->mutex);
-//     _winfo_list_item_t *item = (_winfo_list_item_t *)opal_list_remove_first(list);
-//     opal_mutex_unlock(&wpool->mutex);
-//     winfo = item->ptr;
-//     OBJ_DESTRUCT(item);
-// 
-//     return winfo;
 }
 
 static opal_common_ucx_winfo_t *
@@ -407,7 +384,7 @@ opal_common_ucx_wpctx_create(opal_common_ucx_wpool_t *wpool, int comm_size,
     opal_common_ucx_ctx_t *ctx = calloc(1, sizeof(*ctx));
     int ret = OPAL_SUCCESS;
 
-    OBJ_CONSTRUCT(&ctx->mutex, opal_recursive_mutex_t);
+    OBJ_CONSTRUCT(&ctx->mutex, opal_mutex_t);
     OBJ_CONSTRUCT(&ctx->ctx_records, opal_list_t);
 
     ctx->wpool = wpool;
@@ -492,6 +469,7 @@ int opal_common_ucx_wpmem_create(opal_common_ucx_ctx_t *ctx,
     mem->mem_addrs = NULL;
     mem->mem_displs = NULL;
     
+    OBJ_CONSTRUCT(&mem->mutex, opal_mutex_t);
     OBJ_CONSTRUCT(&mem->mem_records, opal_list_t);
 
     ret = _comm_ucx_wpmem_map(ctx->wpool, mem_base, mem_size, &mem->memh,
@@ -639,7 +617,9 @@ _tlocal_ctx_rec_cleanup(_ctx_record_t *ctx_rec)
      * Remove the context record from the ctx list */
     opal_list_remove_item(&wpool->active_workers, &winfo->self->super);
     opal_list_prepend(&wpool->idle_workers, &winfo->self->super);
+    opal_mutex_lock(&ctx_rec->gctx->mutex);
     opal_list_remove_item(&ctx_rec->gctx->ctx_records, &ctx_rec->super);
+    opal_mutex_unlock(&ctx_rec->gctx->mutex);
 
     opal_mutex_unlock(&wpool->mutex);
 
@@ -705,6 +685,7 @@ static int _tlocal_ctx_connect(_ctx_record_t *ctx_rec, int target)
     if (status != UCS_OK) {
         opal_mutex_unlock(&winfo->mutex);
         MCA_COMMON_UCX_VERBOSE(1, "ucp_ep_create failed: %d", status);
+        opal_mutex_unlock(&winfo->mutex);
         return OPAL_ERROR;
     }
     opal_mutex_unlock(&winfo->mutex);
@@ -733,9 +714,9 @@ _tlocal_mem_rec_cleanup(_mem_record_t *mem_rec)
     free(mem_rec->rkeys);
 
     /* Remove item from the list */
-    opal_mutex_lock(&mem_rec->gmem->ctx->mutex);
+    opal_mutex_lock(&mem_rec->gmem->mutex);
     opal_list_remove_item(&mem_rec->gmem->mem_records, &mem_rec->super);
-    opal_mutex_unlock(&mem_rec->gmem->ctx->mutex);
+    opal_mutex_unlock(&mem_rec->gmem->mutex);
 
     OBJ_RELEASE(mem_rec);
 
@@ -750,9 +731,9 @@ static _mem_record_t *_tlocal_add_mem_rec(opal_common_ucx_wpmem_t *mem, _ctx_rec
         return NULL;
     }
 
-    opal_mutex_lock(&ctx_rec->gctx->mutex);
+    opal_mutex_lock(&mem->mutex);
     opal_list_append(&mem->mem_records, &mem_rec->super);
-    opal_mutex_unlock(&ctx_rec->gctx->mutex);
+    opal_mutex_unlock(&mem->mutex);
 
 
     mem_rec->gmem = mem;
@@ -777,8 +758,10 @@ _tlocal_mem_create_rkey(_mem_record_t *mem_rec, ucp_ep_h ep, int target)
     int displ = gmem->mem_displs[target];
     ucs_status_t status;
 
+    opal_mutex_lock(&mem_rec->winfo->mutex);
     status = ucp_ep_rkey_unpack(ep, &gmem->mem_addrs[displ],
                                 &mem_rec->rkeys[target]);
+    opal_mutex_unlock(&mem_rec->winfo->mutex);
     if (status != UCS_OK) {
         MCA_COMMON_UCX_VERBOSE(1, "ucp_ep_rkey_unpack failed: %d", status);
         return OPAL_ERROR;
@@ -890,9 +873,9 @@ opal_common_ucx_wpmem_flush(opal_common_ucx_wpmem_t *mem,
                 (NULL == winfo->endpoints[target])) {
             continue;
         }
-        opal_mutex_lock(&winfo->mutex);
         rc = opal_common_ucx_winfo_flush(winfo, target, OPAL_COMMON_UCX_FLUSH_B,
                                          scope, NULL);
+        opal_mutex_lock(&winfo->mutex);
         switch (scope) {
         case OPAL_COMMON_UCX_SCOPE_WORKER:
             winfo->global_inflight_ops = 0;

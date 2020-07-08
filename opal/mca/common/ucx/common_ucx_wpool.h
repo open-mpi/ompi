@@ -38,7 +38,7 @@ BEGIN_C_DECLS
 typedef struct {
     /* Ref counting & locking*/
     int refcnt;
-    opal_recursive_mutex_t mutex;
+    opal_mutex_t mutex;
 
     /* UCX data */
     ucp_context_h ucp_ctx;
@@ -61,7 +61,7 @@ typedef struct {
  * Context is bound to a particular Worker Pool object.
  */
 typedef struct {
-    opal_recursive_mutex_t mutex;
+    opal_mutex_t mutex;
 
     /* the reference to a Worker pool this context belongs to*/
     opal_common_ucx_wpool_t *wpool;
@@ -89,6 +89,8 @@ typedef struct {
  * be possible to have one context for multiple windows.
  */
 typedef struct {
+    opal_mutex_t mutex;
+
     /* reference context to which memory region belongs */
     opal_common_ucx_ctx_t *ctx;
 
