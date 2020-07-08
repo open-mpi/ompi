@@ -162,3 +162,11 @@ int opal_tsd_keys_destruct(void)
     opal_mutex_unlock(&opal_tsd_lock);
     return OPAL_SUCCESS;
 }
+
+int opal_tls_key_create(opal_tsd_key_t *key, opal_tsd_destructor_t destructor)
+{
+    opal_threads_argobots_ensure_init();
+    int rc;
+    rc = ABT_key_create(destructor, key);
+    return (ABT_SUCCESS == rc) ? OPAL_SUCCESS : OPAL_ERROR;
+}
