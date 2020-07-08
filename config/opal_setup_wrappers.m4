@@ -77,6 +77,32 @@ AC_DEFUN([OPAL_WRAPPER_FLAGS_ADD], [
 #     <flag>_prefix, configure is not.  There's no known use case for
 #     doing so, and we'd like to force the issue.
 AC_DEFUN([OPAL_SETUP_WRAPPER_INIT],[
+    OPAL_VAR_SCOPE_PUSH([wrapper_cc_tmp])
+    # AC_PROG_CC_C99 changes CC (instead of CFLAGS) so this method
+    # must be called before OPAL_SETUP_CC.
+    AC_ARG_WITH([wrapper_cc],
+		[AC_HELP_STRING([--with-wrapper-cc=path],
+				[Set a different wrapper C compiler than the one used to build Open MPI])],
+		[], [with_wrapper_cc="$CC"])
+
+    AC_MSG_CHECKING([for wrapper C compiler])
+
+    if test "$with_wrapper_cc" = "yes" || test "$with_wrapper_cc" = "no" ; then
+	AC_MSG_ERROR([--with-wrapper-cc must have an argument.])
+    fi
+
+    # Get the full path to the wrapper compiler. If it doesn't exist
+    # assume that the path is not currently valid.
+    wrapper_tmp="$(type -p "$with_wrapper_cc")"
+    WRAPPER_CC="${wrapper_tmp:-$with_wrapper_cc}"
+    if test -z "$wrapper_tmp" ; then
+	AC_MSG_WARN([could not find \"$with_wrapper_cc\" in path])
+    fi
+
+    AC_MSG_RESULT([$WRAPPER_CC])
+
+    AC_SUBST([WRAPPER_CC])
+
     AC_ARG_WITH([wrapper-cflags],
                 [AC_HELP_STRING([--with-wrapper-cflags],
                                 [Extra flags to add to CFLAGS when using mpicc])])
@@ -142,6 +168,7 @@ AC_DEFUN([OPAL_SETUP_WRAPPER_INIT],[
 
     AS_IF([test "$enable_wrapper_rpath" = "no" && test "$enable_wrapper_runpath" = "yes"],
           [AC_MSG_ERROR([--enable-wrapper-runpath cannot be selected with --disable-wrapper-rpath])])
+    OPAL_VAR_SCOPE_POP
 ])
 
 # OPAL_LIBTOOL_CONFIG(libtool-variable, result-variable,

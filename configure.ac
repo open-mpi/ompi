@@ -305,6 +305,8 @@ m4_ifdef([project_ompi],
 AM_ENABLE_SHARED
 AM_DISABLE_STATIC
 
+# Must be called before OPAL_SETUP_CC to get the value of CC
+# before it is modified by the C99/C11 checks.
 OPAL_SETUP_WRAPPER_INIT
 
 ##################################
