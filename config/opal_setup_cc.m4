@@ -153,11 +153,6 @@ AC_DEFUN([OPAL_SETUP_CC],[
 
     OPAL_VAR_SCOPE_PUSH([opal_prog_cc_c11_helper__Thread_local_available opal_prog_cc_c11_helper_atomic_var_available opal_prog_cc_c11_helper__Atomic_available opal_prog_cc_c11_helper__static_assert_available opal_prog_cc_c11_helper__Generic_available opal_prog_cc__thread_available opal_prog_cc_c11_helper_atomic_fetch_xor_explicit_available])
 
-    # AC_PROG_CC_C99 changes CC (instead of CFLAGS) so save CC (without c99
-    # flags) for use in our wrappers.
-    WRAPPER_CC="$CC"
-    AC_SUBST([WRAPPER_CC])
-
     OPAL_PROG_CC_C11
 
     OPAL_CHECK_CC_IQUOTE
