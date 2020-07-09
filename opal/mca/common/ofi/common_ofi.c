@@ -172,7 +172,8 @@ check_provider_attr(struct fi_info *provider_info,
         !check_rx_attr(provider_info->rx_attr, provider->rx_attr) &&
         !check_ep_attr(provider_info->ep_attr, provider->ep_attr) &&
         !(provider_info->caps & ~(provider->caps)) &&
-        !(provider_info->mode & ~(provider->mode))) {
+        !(provider_info->mode & ~(provider->mode)) &&
+        provider_info->addr_format == provider->addr_format) {
         return 0;
     } else {
         return OPAL_ERROR;
