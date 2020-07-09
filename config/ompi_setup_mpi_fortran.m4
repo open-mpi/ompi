@@ -244,12 +244,28 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
 
     # How big should MPI_STATUS_SIZE be?  (i.e., the size of
     # MPI_STATUS, expressed in units of Fortran INTEGERs).  The C
-    # equivalent of MPI_Status contains 4 C ints and a size_t.
+    # MPI_Status struct contains 4 C ints and a size_t.
     OMPI_FORTRAN_STATUS_SIZE=0
-    AC_MSG_CHECKING([for the value of MPI_STATUS_SIZE])
+
+    # Calculate how many C int's can fit in sizeof(MPI_Status).  Yes,
+    # I do mean C ints -- not Fortran INTEGERS.  The reason is because
+    # an mpif.h MPI_Status is an array of INTEGERS.  But these
+    # sizeof(INTEGER) may be larger than sizeof(int).  Hence,
+    # MPI_Status_ctof() basically does this:
+    #
+    # MPI_Fint *f_status = ...;
+    # int *s = (int*) &c_status;
+    # for i=0..sizeof(MPI_Status)/sizeof(int)
+    #    f_status[i] = c_status[i];
+    #
+    # Meaning: we have to have as many Fortran INTEGERs in the array
+    # as int's will fit in a C MPI_Status (vs. just having a Fortran
+    # array of INTEGERs that has enough bytes to hold a C MPI_Status).
     bytes=`expr 4 \* $ac_cv_sizeof_int + $ac_cv_sizeof_size_t`
-    num_integers=`expr $bytes / $ac_cv_sizeof_int`
-    sanity=`expr $num_integers \* $ac_cv_sizeof_int`
+    AC_MSG_NOTICE([C MPI_Status is $bytes bytes long])
+    AC_MSG_CHECKING([for the value of MPI_STATUS_SIZE])
+    num_ints=`expr $bytes / $ac_cv_sizeof_int`
+    sanity=`expr $num_ints \* $ac_cv_sizeof_int`
     AS_IF([test "$sanity" != "$bytes"],
           [AC_MSG_RESULT([unknown!])
            AC_MSG_WARN([WARNING: Size of C int: $ac_cv_sizeof_int])
@@ -257,7 +273,7 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
            AC_MSG_WARN([WARNING: Size of Fortran INTEGER: $OMPI_SIZEOF_FORTRAN_INTEGER])
            AC_MSG_WARN([Could not make this work out evenly...!])
            AC_MSG_ERROR([Cannot continue])])
-    OMPI_FORTRAN_STATUS_SIZE=$num_integers
+    OMPI_FORTRAN_STATUS_SIZE=$num_ints
     AC_MSG_RESULT([$OMPI_FORTRAN_STATUS_SIZE Fortran INTEGERs])
     AC_SUBST(OMPI_FORTRAN_STATUS_SIZE)
 

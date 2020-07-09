@@ -74,8 +74,18 @@ module mpi_f08_types
       integer :: MPI_SOURCE
       integer :: MPI_TAG
       integer :: MPI_ERROR
-      integer(C_INT)    OMPI_PRIVATE :: c_cancelled
-      integer(C_SIZE_T) OMPI_PRIVATE :: c_count
+      ! The mpif.h interface uses MPI_STATUS_SIZE to know how long of
+      ! an array of INTEGERs is necessary to hold a C MPI_Status.
+      ! Effectively do the same thing here: pad out this datatype with
+      ! as many INTEGERs as there are C int's can fit in
+      ! sizeof(MPI_Status) bytes -- see MPI_Status_ctof() for an
+      ! explanation why.
+      !
+      ! This padding makes this F08 Type(MPI_Status) be the same size
+      ! as the mpif.h status (i.e., an array of MPI_STATUS_SIZE
+      ! INTEGERs), which is critical for MPI_Status_ctof() to not
+      ! overwrite memory.
+      integer OMPI_PRIVATE :: internal(MPI_STATUS_SIZE - 3)
    end type MPI_Status
 
   !
