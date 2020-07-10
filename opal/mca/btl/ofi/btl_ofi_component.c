@@ -28,6 +28,7 @@
 #include "opal_config.h"
 
 #include "opal/util/printf.h"
+#include "opal/util/argv.h"
 
 #include "opal/mca/btl/btl.h"
 #include "opal/mca/btl/base/base.h"
