@@ -185,7 +185,7 @@ while getopts bn:omif:t:dc:r:sR:h flag; do
          ;;
       c) configure_options="$configure_options $OPTARG"
          ;;
-      r) configure_options="$rpmbuild_options $OPTARG"
+      r) rpmbuild_options="$rpmbuild_options $OPTARG"
          ;;
       R) rpmtopdir="$OPTARG"
          ;;
