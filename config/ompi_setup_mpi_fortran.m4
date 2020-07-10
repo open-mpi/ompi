@@ -373,6 +373,72 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
            OMPI_FORTRAN_F08_TYPE=$OMPI_FORTRAN_IGNORE_TKR_TYPE
           ])
 
+    # The mpi_f08 module in this version of Open MPI does not properly
+    # handle if sizeof(INTEGER) != sizeof(int) with the mpi_f08
+    # bindings.  As of July 2020, this issue is fixed on master / what
+    # will eventually become Open MPI v5.0.x, but the fix causes an
+    # ABI break.  Hence, we're not going to fix it here on this
+    # release branch.
+    #
+    # This is a bit of a quandry, however, because up until v4.0.4, we
+    # built the Open MPI F08 bindings by default (if the compiler
+    # supported them), even in this problematic scenario.  Meaning: a
+    # user could use the exact same compilers + configure command line
+    # between v4.0.4 and v4.0.5 and suddenly -- probably unexpectedly
+    # -- not get F08 bindings.  That seems a little weird.
+    #
+    # Instead, if we're in the "bad" scenario (sizeof(int) !=
+    # sizeof(INTEGER)), if the user didn't explicitly disable the
+    # mpi_f08 module, we'll print a Giant Error Message (GEM) and tell
+    # them what their options are.  This may be slightly annoying for
+    # the user, but it at least it won't violate the Law of Least
+    # Surprise.
+    #
+    # Note that mpif.h and mpi module are still ok in the sizeof(int)
+    # != sizeof(INTEGER) scenario; this isssue *only* affects the use
+    # of mpi_f08's TYPE(MPI_Status).
+    #
+    # The following URLs shed some light on this decision:
+    #
+    # - https://github.com/open-mpi/ompi/pull/7921 -- in particular,
+    #   the comment at
+    #   https://github.com/open-mpi/ompi/pull/7921#issuecomment-656418618
+    # - https://github.com/open-mpi/ompi/pull/7922 -- in particlar,
+    #   the comment at
+    #   https://github.com/open-mpi/ompi/pull/7922#issuecomment-656788803
+    #
+    AC_MSG_CHECKING([if sizeof(C int) == sizeof(Fortran INTEGER)])
+    AS_IF([test $ac_cv_sizeof_int -eq $OMPI_SIZEOF_FORTRAN_INTEGER],
+          [AC_MSG_RESULT([yes])],
+          [AC_MSG_RESULT([no])
+           AS_IF([test $OMPI_TRY_FORTRAN_BINDINGS -ge $OMPI_FORTRAN_USEMPIF08_BINDINGS],
+                 [c=$ac_cv_sizeof_int
+                  f=$OMPI_SIZEOF_FORTRAN_INTEGER
+                  cat <<EOF
+
+=========================================================================
+                        ERROR   ERROR    ERROR
+
+Configure has detected that the size of a C integer ($c bytes) is
+different than the size of a Fortran INTEGER ($f bytes).  In the
+entire v3.x and v4.x series of Open MPI, this configuration is known
+to cause data corruption with the mpi_f08 module (it does *not* cause
+problems with mpif.h or the mpi module bindings).
+
+You may either choose to change the C and/or Fortran compiler flags
+(in order to have the size of a C int be the same as the size of a
+Fortran INTEGER) and re-run configure, or you may specify the
+--enable-mpi-fortran=usempi flag to configure to explicitly
+disable building the mpi_f08 module.
+
+(NOTE: this error has been fixed in Open MPI releases beyond v4.x)
+
+=========================================================================
+
+EOF
+                  AC_MSG_ERROR([Cannot continue])])
+            ])
+
     # The overall "_BIND_C" variable will be set to 1 if we have all
     # the necessary forms of BIND(C)
     OMPI_FORTRAN_HAVE_BIND_C=0
