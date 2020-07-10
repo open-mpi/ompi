@@ -12,7 +12,7 @@
 # Copyright (c) 2006-2016 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2012-2015 Los Alamos National Security, Inc.  All rights reserved.
 # Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
-# Copyright (c) 2017-2018 Amazon.com, Inc. or its affiliates.
+# Copyright (c) 2017-2020 Amazon.com, Inc. or its affiliates.
 #                         All Rights reserved.
 # Copyright (c) 2020      IBM Corporation.  All rights reserved.
 # $COPYRIGHT$
@@ -50,7 +50,7 @@ install-exec-hook:
 	        --brief \
 	        --top_builddir=$(top_builddir) \
 	        --top_srcdir=$(top_srcdir) \
-	        --objext=$(OBJEXT); \
+	        --objext=$(OBJEXT) ; \
 	fi
 
 ACLOCAL_AMFLAGS = -I config

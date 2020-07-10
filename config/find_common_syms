@@ -1,5 +1,7 @@
 #!/usr/bin/env perl
 # Copyright (c) 2006-2016 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2020      Amazon.com, Inc. or its affiliates.
+#                         All Rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -16,6 +18,8 @@ use warnings;
 
 use Getopt::Long;
 use File::Basename qw(basename);
+use File::Find;
+use Data::Dumper;
 
 sub is_allowlisted;
 
@@ -27,10 +31,10 @@ my @sym_allowlist = ();
 sub usage {
     print STDERR <<EOT;
 Usage: $0 --top_builddir=BUILDDIR --top_srcdir=SRCDIR [--objext=OBJEXT] [--brief] [--full-path]
-
+[--skipdir=DIR]
 Searches for all ".OBJEXT" files in BUILDDIR and checks for the existence of
 common symbols.  Common symbols are problematic for some platforms, including
-OS X.
+OS X.  Skipdir can be specified multiple times.
 
 OBJEXT defaults to 'o' if not specified.
 EOT
@@ -43,6 +47,9 @@ my $objext = 'o';
 my $top_builddir = '';
 my $top_srcdir = '';
 my $print_full_obj_path = 0;
+my $n = 0;
+my @skipdirs = ();
+
 GetOptions(
     "all!" => \$all,
     "brief!" => \$brief,
@@ -50,6 +57,7 @@ GetOptions(
     "objext=s" => \$objext,
     "top_builddir=s" => \$top_builddir,
     "top_srcdir=s" => \$top_srcdir,
+    "skipdir=s" => \@skipdirs
 ) || usage();
 
 if (!$top_builddir or !$top_srcdir) {
@@ -69,23 +77,33 @@ if (0 != system("command -v nm >/dev/null 2>&1")) {
 # subdirectories.  That way a allowlisted symbol in one component doesn't
 # "shadow" a symbol that should not be allowlisted in another component.  If we
 # find this is actually a problem in practice then we can write a v2 update.
-my @wl_files = `find '${top_srcdir}' -name 'common_sym_allowlist.txt'`;
-foreach my $wl_file (@wl_files) {
-    chomp $wl_file;
-    my @lines = `cat $wl_file`;
-    foreach my $line (@lines) {
-        chomp $line;
+sub allowlist_find {
+    if (!/^common_sym_allowlist.txt\z/) { return; }
+
+    open(my $fh, "<", $_) or die "Can't open $_: $!";
+    while (my $line = <$fh>) {
+	chomp $line;
         next if ($line =~ /^\s*#/); # skip comments
         next if ($line =~ /^\s*$/); # skip blank lines
         push @sym_allowlist, $line;
     }
+    close($fh);
 }
+File::Find::find({wanted => \&allowlist_find}, $top_srcdir);
 
-my $n = 0;
-open(FIND, '-|', "find ${top_builddir} -name '*.${objext}'");
-OBJECT: while (my $obj_line = <FIND>) {
-    my $obj = $obj_line;
-    chomp $obj;
+sub object_find {
+    my $obj = $_;
+
+    # skip specified directories.  This needs to be before the objext
+    # search below, or the prune will be missed and we'll recursive
+    # into the directory anyway.
+    if (grep { $_ eq $obj} @skipdirs) {
+	$File::Find::prune = 1;
+	return;
+    }
+
+    # skip any files not of form *.$objext
+    if (!/^.*\.$objext\z/) { return; }
 
     # This pattern may not be 100% robust for all implementations of nm.  If
     # that turns out to be the case, we can try switching to "nm -P", which is
@@ -100,23 +118,23 @@ OBJECT: while (my $obj_line = <FIND>) {
         if ($n == 0) {
             print STDERR "WARNING!  Common symbols found:\n";
         }
+
+	$n++;
+
         if ($brief and $n == $MAX_BRIEF) {
             print STDERR "[...]\n";
             print STDERR "skipping remaining symbols. To see all symbols, run:\n";
             print STDERR "  " . join(" ", ($0, grep {!/--brief/} @orig_argv)) . "\n";
-            last OBJECT;
-        }
-        if ($print_full_obj_path) {
-            print STDERR "$obj: $sym_line";
         } else {
-            my $obj_basename = basename($obj);
-            printf STDERR "%25s: %s", $obj_basename, $sym_line;
-        }
-        ++$n;
+	    if ($print_full_obj_path) {
+		print STDERR $File::Find::name . ": " . $sym_line;
+	    } else {
+		printf STDERR "%25s: %s", $obj, $sym_line;
+	    }
+	}
     }
-    close(NM);
 }
-close(FIND);
+File::Find::find({wanted => \&object_find}, $top_builddir);
 
 if ($n > 0) {
     exit 1;
