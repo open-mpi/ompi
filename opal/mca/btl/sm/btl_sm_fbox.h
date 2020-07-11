@@ -211,9 +211,11 @@ static inline bool mca_btl_sm_check_fboxes (void)
             /* the 0xff tag indicates we should skip the rest of the buffer */
             if (OPAL_LIKELY((0xfe & hdr.data.tag) != 0xfe)) {
                 mca_btl_base_segment_t segment;
-                mca_btl_base_descriptor_t desc = {.des_segments = &segment, .des_segment_count = 1};
                 const mca_btl_active_message_callback_t *reg =
                     mca_btl_base_active_message_trigger + hdr.data.tag;
+                mca_btl_base_receive_descriptor_t desc = {.endpoint = ep, .des_segments = &segment,
+                                                          .des_segment_count = 1, .tag = hdr.data.tag,
+                                                          .cbdata = reg->cbdata};
 
                 /* fragment fits entirely in the remaining buffer space. some
                  * btl users do not handle fragmented data so we can't split
@@ -224,7 +226,7 @@ static inline bool mca_btl_sm_check_fboxes (void)
                 segment.seg_addr.pval = (void *) (ep->fbox_in.buffer + start + sizeof (hdr));
 
                 /* call the registered callback function */
-                reg->cbfunc(&mca_btl_sm.super, hdr.data.tag, &desc, reg->cbdata);
+                reg->cbfunc(&mca_btl_sm.super, &desc);
             } else if (OPAL_LIKELY(0xfe == hdr.data.tag)) {
                 /* process fragment header */
                 fifo_value_t *value = (fifo_value_t *)(ep->fbox_in.buffer + start + sizeof (hdr));

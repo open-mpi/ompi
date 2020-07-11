@@ -17,7 +17,7 @@
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * Copyright (c) 2018      Triad National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2019      Google, LLC. All rights reserved.
+ * Copyright (c) 2019-2020 Google, LLC. All rights reserved.
  * Copyright (c) 2019      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -301,17 +301,15 @@ ucs_status_t mca_btl_uct_am_handler (void *arg, void *data, size_t length, unsig
     mca_btl_uct_device_context_t *tl_context = (mca_btl_uct_device_context_t *) arg;
     mca_btl_uct_module_t *uct_btl = tl_context->uct_btl;
     mca_btl_uct_am_header_t *header = (mca_btl_uct_am_header_t *) data;
-    mca_btl_active_message_callback_t *reg;
+    mca_btl_active_message_callback_t *reg = mca_btl_base_active_message_trigger + header->data.tag;
     mca_btl_base_segment_t seg = {.seg_addr = {.pval = (void *) ((intptr_t) data + sizeof (*header))},
                                   .seg_len = length - sizeof (*header)};
-    mca_btl_uct_base_frag_t frag = {.base = {.des_segments = &seg, .des_segment_count = 1}};
+    mca_btl_base_receive_descriptor_t desc = {.endpoint = NULL, .des_segments = &seg, .des_segment_count = 1,
+                                              .tag = header->data.tag, .cbdata = reg->cbdata};
 
     /* prevent recursion */
     tl_context->in_am_callback = true;
-
-    reg = mca_btl_base_active_message_trigger + header->data.tag;
-    reg->cbfunc (&uct_btl->super, header->data.tag, &frag.base, reg->cbdata);
-
+    reg->cbfunc (&uct_btl->super, &desc);
     tl_context->in_am_callback = false;
 
     return UCS_OK;

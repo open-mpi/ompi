@@ -14,6 +14,7 @@
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2020      Google, LLC. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -113,60 +114,49 @@ do {                                                                    \
  *  Callback from BTL on receipt of a recv_frag (match).
  */
 
-extern void mca_pml_ob1_recv_frag_callback_match( mca_btl_base_module_t *btl,
-                                                  mca_btl_base_tag_t tag,
-                                                  mca_btl_base_descriptor_t* descriptor,
-                                                  void* cbdata );
+extern void mca_pml_ob1_recv_frag_callback_match (mca_btl_base_module_t *btl,
+                                                  const mca_btl_base_receive_descriptor_t *descriptor);
 
 /**
  *  Callback from BTL on receipt of a recv_frag (rndv).
  */
 
-extern void mca_pml_ob1_recv_frag_callback_rndv( mca_btl_base_module_t *btl,
-                                                 mca_btl_base_tag_t tag,
-                                                 mca_btl_base_descriptor_t* descriptor,
-                                                 void* cbdata );
+extern void mca_pml_ob1_recv_frag_callback_rndv (mca_btl_base_module_t *btl,
+                                                 const mca_btl_base_receive_descriptor_t *descriptor);
 /**
  *  Callback from BTL on receipt of a recv_frag (rget).
  */
 
-extern void mca_pml_ob1_recv_frag_callback_rget( mca_btl_base_module_t *btl,
-                                                 mca_btl_base_tag_t tag,
-                                                 mca_btl_base_descriptor_t* descriptor,
-                                                 void* cbdata );
+extern void mca_pml_ob1_recv_frag_callback_rget (mca_btl_base_module_t *btl,
+                                                 const mca_btl_base_receive_descriptor_t *descriptor);
 
 /**
  *  Callback from BTL on receipt of a recv_frag (ack).
  */
 
-extern void mca_pml_ob1_recv_frag_callback_ack( mca_btl_base_module_t *btl,
-                                                mca_btl_base_tag_t tag,
-                                                mca_btl_base_descriptor_t* descriptor,
-                                                void* cbdata );
+extern void mca_pml_ob1_recv_frag_callback_ack (mca_btl_base_module_t *btl,
+                                                const mca_btl_base_receive_descriptor_t *descriptor);
+
 /**
  *  Callback from BTL on receipt of a recv_frag (frag).
  */
 
-extern void mca_pml_ob1_recv_frag_callback_frag( mca_btl_base_module_t *btl,
-                                                 mca_btl_base_tag_t tag,
-                                                 mca_btl_base_descriptor_t* descriptor,
-                                                 void* cbdata );
+extern void mca_pml_ob1_recv_frag_callback_frag (mca_btl_base_module_t *btl,
+                                                 const mca_btl_base_receive_descriptor_t *descriptor);
+
 /**
  *  Callback from BTL on receipt of a recv_frag (put).
  */
 
-extern void mca_pml_ob1_recv_frag_callback_put( mca_btl_base_module_t *btl,
-                                                mca_btl_base_tag_t tag,
-                                                mca_btl_base_descriptor_t* descriptor,
-                                                void* cbdata );
+extern void mca_pml_ob1_recv_frag_callback_put (mca_btl_base_module_t *btl,
+                                                const mca_btl_base_receive_descriptor_t *descriptor);
+
 /**
  *  Callback from BTL on receipt of a recv_frag (fin).
  */
 
-extern void mca_pml_ob1_recv_frag_callback_fin( mca_btl_base_module_t *btl,
-                                                mca_btl_base_tag_t tag,
-                                                mca_btl_base_descriptor_t* descriptor,
-                                                void* cbdata );
+extern void mca_pml_ob1_recv_frag_callback_fin (mca_btl_base_module_t *btl,
+                                                const mca_btl_base_receive_descriptor_t *descriptor);
 
 /**
  * Extract the next fragment from the cant_match ordered list. This fragment

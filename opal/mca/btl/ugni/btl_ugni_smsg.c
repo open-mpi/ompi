@@ -57,7 +57,6 @@ int mca_btl_ugni_smsg_process (mca_btl_base_endpoint_t *ep)
     mca_btl_ugni_module_t *ugni_module = mca_btl_ugni_ep_btl (ep);
     mca_btl_active_message_callback_t *reg;
     mca_btl_ugni_base_frag_t frag;
-    mca_btl_base_segment_t seg;
     bool disconnect = false;
     int32_t _tmp_value = 0;
     uintptr_t data_ptr;
@@ -95,6 +94,7 @@ int mca_btl_ugni_smsg_process (mca_btl_base_endpoint_t *ep)
 
         switch (tag) {
         case MCA_BTL_UGNI_TAG_SEND:
+            
             frag.hdr.send = ((mca_btl_ugni_send_frag_hdr_t *) data_ptr)[0];
 
             tag = frag.hdr.send.lag >> 24;
@@ -103,15 +103,14 @@ int mca_btl_ugni_smsg_process (mca_btl_base_endpoint_t *ep)
             BTL_VERBOSE(("received smsg fragment. hdr = {len = %u, tag = %d}", len, tag));
 
             reg = mca_btl_base_active_message_trigger + tag;
-            frag.base.des_segments       = &seg;
-            frag.base.des_segment_count = 1;
 
-            seg.seg_addr.pval = (void *)((uintptr_t)data_ptr + sizeof (mca_btl_ugni_send_frag_hdr_t));
-            seg.seg_len       = len;
-
-            assert (NULL != reg->cbfunc);
-
-            reg->cbfunc(&ugni_module->super, tag, &(frag.base), reg->cbdata);
+            mca_btl_base_segment_t seg =
+                {.seg_addr.pval = (void *)((uintptr_t)data_ptr + sizeof (mca_btl_ugni_send_frag_hdr_t)),
+                 seg.seg_len = len};
+            const mca_btl_base_receive_descriptor_t desc = {.endpoint = ep, .des_segments = &seg,
+                                                            .des_segment_count = 1, .tag = tag,
+                                                            .cbdata = reg->cbdata};
+            reg->cbfunc(&ugni_module->super, &desc);
 
             break;
         case MCA_BTL_UGNI_TAG_GET_INIT:

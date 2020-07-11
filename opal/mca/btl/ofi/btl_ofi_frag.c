@@ -4,6 +4,7 @@
  * Copyright (c) 2018      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2018      Intel Inc. All rights reserved
+ * Copyright (c) 2020      Google, LLC. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -138,17 +139,18 @@ int mca_btl_ofi_recv_frag (mca_btl_ofi_module_t *ofi_btl,
                            mca_btl_ofi_base_frag_t *frag)
 {
     int rc;
-    mca_btl_active_message_callback_t *reg;
-
+    mca_btl_active_message_callback_t *reg = mca_btl_base_active_message_trigger + frag->hdr.tag;
+    mca_btl_base_segment_t segment = {.seg_addr.pval = (void *)(frag + 1),
+                                      .seg_len = frag->hdr.len};
     /* Tell PML where the payload is */
-    frag->base.des_segments = frag->segments;
-    frag->segments[0].seg_addr.pval = frag+1;
-    frag->segments[0].seg_len = frag->hdr.len;
-    frag->base.des_segment_count = 1;
+    mca_btl_base_receive_descriptor_t recv_desc = {.endpoint = endpoint,
+                                                   .des_segments = &segment,
+                                                   .des_segment_count = 1,
+                                                   .tag = frag->hdr.tag,
+                                                   .cbdata = reg->cbdata};
 
     /* call the callback */
-    reg = mca_btl_base_active_message_trigger + frag->hdr.tag;
-    reg->cbfunc (&ofi_btl->super, frag->hdr.tag, &frag->base, reg->cbdata);
+    reg->cbfunc (&ofi_btl->super, &recv_desc);
     mca_btl_ofi_frag_complete(frag, OPAL_SUCCESS);
 
     /* repost the recv */

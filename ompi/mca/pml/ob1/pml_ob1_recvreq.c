@@ -20,6 +20,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2018      Sandia National Laboratories
  *                         All rights reserved.
+ * Copyright (c) 2020      Google, LLC. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -517,7 +518,7 @@ int mca_pml_ob1_recv_request_get_frag (mca_pml_ob1_rdma_frag_t *frag)
 
 void mca_pml_ob1_recv_request_progress_frag( mca_pml_ob1_recv_request_t* recvreq,
                                              mca_btl_base_module_t* btl,
-                                             mca_btl_base_segment_t* segments,
+                                             const mca_btl_base_segment_t* segments,
                                              size_t num_segments )
 {
     size_t bytes_received, data_offset = 0;
@@ -652,7 +653,7 @@ void mca_pml_ob1_recv_request_frag_copy_finished( mca_btl_base_module_t* btl,
 
 void mca_pml_ob1_recv_request_progress_rget( mca_pml_ob1_recv_request_t* recvreq,
                                              mca_btl_base_module_t* btl,
-                                             mca_btl_base_segment_t* segments,
+                                             const mca_btl_base_segment_t* segments,
                                              size_t num_segments )
 {
     mca_pml_ob1_rget_hdr_t* hdr = (mca_pml_ob1_rget_hdr_t*)segments->seg_addr.pval;
@@ -806,7 +807,7 @@ void mca_pml_ob1_recv_request_progress_rget( mca_pml_ob1_recv_request_t* recvreq
 
 void mca_pml_ob1_recv_request_progress_rndv( mca_pml_ob1_recv_request_t* recvreq,
                                              mca_btl_base_module_t* btl,
-                                             mca_btl_base_segment_t* segments,
+                                             const mca_btl_base_segment_t* segments,
                                              size_t num_segments )
 {
     size_t bytes_received = 0;
@@ -876,7 +877,7 @@ void mca_pml_ob1_recv_request_progress_rndv( mca_pml_ob1_recv_request_t* recvreq
  */
 void mca_pml_ob1_recv_request_progress_match( mca_pml_ob1_recv_request_t* recvreq,
                                               mca_btl_base_module_t* btl,
-                                              mca_btl_base_segment_t* segments,
+                                              const mca_btl_base_segment_t* segments,
                                               size_t num_segments )
 {
     size_t bytes_received, data_offset = 0;
@@ -932,7 +933,7 @@ void mca_pml_ob1_recv_request_progress_match( mca_pml_ob1_recv_request_t* recvre
 
 void mca_pml_ob1_recv_request_matched_probe( mca_pml_ob1_recv_request_t* recvreq,
                                              mca_btl_base_module_t* btl,
-                                             mca_btl_base_segment_t* segments,
+                                             const mca_btl_base_segment_t* segments,
                                              size_t num_segments )
 {
     size_t bytes_packed = 0;

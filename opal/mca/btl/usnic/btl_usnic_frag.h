@@ -199,7 +199,7 @@ struct opal_btl_usnic_endpoint_t;
  */
 typedef struct opal_btl_usnic_recv_segment_t {
     opal_btl_usnic_segment_t rs_base;
-    mca_btl_base_descriptor_t rs_desc;
+    mca_btl_base_receive_descriptor_t rs_desc;
     mca_btl_base_segment_t rs_segment;
 
     /* receive segments have protocol header prepended */

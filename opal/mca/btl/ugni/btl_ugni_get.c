@@ -84,30 +84,26 @@ static void mca_btl_ugni_callback_eager_get (struct mca_btl_base_module_t *btl, 
     uint8_t tag = frag->hdr.eager.send.lag >> 24;
     size_t payload_len = frag->hdr.eager.size;
     size_t hdr_len = len - payload_len;
-    mca_btl_active_message_callback_t *reg;
+    mca_btl_active_message_callback_t *reg = mca_btl_base_active_message_trigger + tag;
     mca_btl_base_segment_t segs[2];
-    mca_btl_ugni_base_frag_t tmp;
+    const mca_btl_base_receive_descriptor_t tmp = {.endpoint = endpoint, .des_segments = segs,
+                                                   .des_segment_count = hdr_len ? 2 : 1,
+                                                   .tag = tag, .cbdata = reg->cbdata};
     int rc;
 
     BTL_VERBOSE(("eager get for rem_ctx %p complete", frag->hdr.eager.ctx))
 
-    tmp.base.des_segments = segs;
     if (hdr_len) {
-        tmp.base.des_segment_count = 2;
-
         segs[0].seg_addr.pval = frag->hdr.eager_ex.pml_header;
         segs[0].seg_len       = hdr_len;
         segs[1].seg_addr.pval = local_address;
         segs[1].seg_len       = payload_len;
     } else {
-        tmp.base.des_segment_count = 1;
-
         segs[0].seg_addr.pval = local_address;
         segs[0].seg_len       = payload_len;
     }
 
-    reg = mca_btl_base_active_message_trigger + tag;
-    reg->cbfunc(&ugni_module->super, tag, &(tmp.base), reg->cbdata);
+    reg->cbfunc(&ugni_module->super, &tmp);
 
     /* fill in the response header */
     frag->hdr.rdma.ctx = frag->hdr.eager.ctx;

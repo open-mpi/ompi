@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2013-2017 Cisco Systems, Inc.  All rights reserved
  * $COPYRIGHT$
@@ -329,8 +330,10 @@ opal_btl_usnic_dump_hex(15, USNIC_OUT, bseg->us_btl_header, bseg->us_btl_header-
          */
         reg = mca_btl_base_active_message_trigger + bseg->us_btl_header->tag;
         seg->rs_segment.seg_len = bseg->us_btl_header->payload_len;
-        reg->cbfunc(&module->super, bseg->us_btl_header->tag,
-                    &seg->rs_desc, reg->cbdata);
+        seg->rs_desc.endpoint = endpoint;
+        seg->rs_desc.tag = bseg->us_btl_header->tag;
+        seg->rs_desc.cbdata = reg->cbdata;
+        reg->cbfunc(&module->super, &seg->rs_desc);
 
 drop:
         channel->chan_deferred_recv = seg;
@@ -437,8 +440,9 @@ opal_btl_usnic_recv(opal_btl_usnic_module_t *module,
          */
         reg = mca_btl_base_active_message_trigger + bseg->us_btl_header->tag;
         seg->rs_segment.seg_len = bseg->us_btl_header->payload_len;
-        reg->cbfunc(&module->super, bseg->us_btl_header->tag,
-                    &seg->rs_desc, reg->cbdata);
+        seg->rs_desc.tag = bseg->us_btl_header->tag;
+        seg->rs_desc.cbdata = reg->cbdata;
+        reg->cbfunc(&module->super, &seg->rs_desc);
 
     }
 

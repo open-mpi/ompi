@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -142,7 +143,10 @@ void opal_btl_usnic_recv_call(opal_btl_usnic_module_t *module,
                         (unsigned)bseg->us_btl_header->payload_len,
                         (int)bseg->us_btl_header->tag);
 #endif
-            reg->cbfunc(&module->super, hdr->tag, &seg->rs_desc, reg->cbdata);
+            seg->rs_desc.endpoint = endpoint;
+            seg->rs_desc.tag = hdr->tag;
+            seg->rs_desc.cbdata = reg->cbdata;
+            reg->cbfunc(&module->super, &seg->rs_desc);
 
         /*
          * If this is a PUT, need to copy it to user buffer
@@ -271,7 +275,7 @@ void opal_btl_usnic_recv_call(opal_btl_usnic_module_t *module,
 
         fip->rfi_bytes_left -= chunk_hdr->ch_hdr.payload_len;
         if (0 == fip->rfi_bytes_left) {
-            mca_btl_base_descriptor_t desc;
+            mca_btl_base_receive_descriptor_t desc;
             mca_btl_base_segment_t segment;
 
             segment.seg_addr.pval = fip->rfi_data;
@@ -293,8 +297,10 @@ void opal_btl_usnic_recv_call(opal_btl_usnic_module_t *module,
                     chunk_hdr->ch_hdr.tag;
 
                 /* mca_pml_ob1_recv_frag_callback_frag() */
-                reg->cbfunc(&module->super, chunk_hdr->ch_hdr.tag,
-                        &desc, reg->cbdata);
+                desc.endpoint = endpoint;
+                desc.tag = chunk_hdr->ch_hdr.tag;
+                desc.cbdata = reg->cbdata;
+                reg->cbfunc(&module->super, &desc);
 
                 /* free temp buffer for non-put */
                 if (fip->rfi_data_in_pool) {
