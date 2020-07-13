@@ -93,33 +93,12 @@ static orte_schizo_launch_environ_t check_launch_environment(void)
     opal_argv_append_nosize(&pushed_envs, OPAL_MCA_PREFIX"ess");
     opal_argv_append_nosize(&pushed_vals, "pmi");
 
-    /* if we are direct launched by SLURM, then we want
-     * to ensure that we do not override their binding
-     * options, so set that envar */
-    if (NULL != (bind = getenv("SLURM_CPU_BIND_TYPE"))) {
-        if (0 == strcmp(bind, "none")) {
-            opal_argv_append_nosize(&pushed_envs, OPAL_MCA_PREFIX"hwloc_base_binding_policy");
-            opal_argv_append_nosize(&pushed_vals, "none");
-            /* indicate we are externally bound so we won't try to do it ourselves */
-            opal_argv_append_nosize(&pushed_envs, OPAL_MCA_PREFIX"orte_externally_bound");
-            opal_argv_append_nosize(&pushed_vals, "1");
-        } else if (bind == strstr(bind, "mask_cpu")) {
-            /* if the bind list is all F's, then the
-             * user didn't specify anything */
-            if (NULL != (list = getenv("SLURM_CPU_BIND_LIST")) &&
-                NULL != (ptr = strchr(list, 'x'))) {
-                ++ptr;  // step over the 'x'
-                for (i=0; '\0' != *ptr; ptr++) {
-                    if ('F' != *ptr) {
-                        /* indicate we are externally bound */
-                        opal_argv_append_nosize(&pushed_envs, OPAL_MCA_PREFIX"orte_externally_bound");
-                        opal_argv_append_nosize(&pushed_vals, "1");
-                        break;
-                    }
-                }
-            }
-        }
-    }
+    /* if we are direct-launched by SLURM, then disable binding */
+    opal_argv_append_nosize(&pushed_envs, OPAL_MCA_PREFIX"hwloc_base_binding_policy");
+    opal_argv_append_nosize(&pushed_vals, "none");
+    /* indicate we are externally bound so we won't try to do it ourselves */
+    opal_argv_append_nosize(&pushed_envs, OPAL_MCA_PREFIX"orte_externally_bound");
+    opal_argv_append_nosize(&pushed_vals, "1");
 
   setup:
       opal_output_verbose(1, orte_schizo_base_framework.framework_output,
