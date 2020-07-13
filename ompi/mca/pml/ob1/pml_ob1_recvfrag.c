@@ -624,10 +624,10 @@ void mca_pml_ob1_recv_frag_callback_frag (mca_btl_base_module_t *btl,
         assert(btl->btl_flags & MCA_BTL_FLAGS_CUDA_COPY_ASYNC_RECV);
 
         /* This will trigger the opal_convertor_pack to start asynchronous copy. */
-        mca_pml_ob1_recv_request_frag_copy_start(recvreq,btl,segments,descriptor->des_segment_count,des);
+        mca_pml_ob1_recv_request_frag_copy_start(recvreq, btl, segments, descriptor->des_segment_count, NULL);
 
         /* Let BTL know that it CANNOT free the frag */
-        descriptor->des_flags |= MCA_BTL_DES_FLAGS_CUDA_COPY_ASYNC;
+        //TODO: GB: descriptor->des_flags |= MCA_BTL_DES_FLAGS_CUDA_COPY_ASYNC;
 
         return;
     }
