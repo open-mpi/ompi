@@ -124,8 +124,8 @@ typedef struct map_segment {
 } map_segment_t;
 
 struct segment_allocator {
-    int      (*realloc)(map_segment_t*, size_t newsize, void *, void **);
-    int         (*free)(map_segment_t*, void*);
+    int      (*sa_realloc)(map_segment_t*, size_t newsize, void *, void **);
+    int         (*sa_free)(map_segment_t*, void*);
 };
 
 END_C_DECLS
