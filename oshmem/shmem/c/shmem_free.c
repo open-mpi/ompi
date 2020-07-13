@@ -62,7 +62,7 @@ static inline void _shfree(void* ptr)
     }
 
     if (s && s->allocator) {
-        rc = s->allocator->free(s, ptr);
+        rc = s->allocator->release(s, ptr);
     } else {
         rc = MCA_MEMHEAP_CALL(free(ptr));
     }

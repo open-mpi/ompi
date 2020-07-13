@@ -84,7 +84,7 @@ int mca_memheap_alloc_with_hint(size_t size, long hint, void** ptr)
             /* Do not fall back to default allocator since it will break the
              * symmetry between PEs
              */
-            return s->allocator->realloc(s, size, NULL, ptr);
+            return s->allocator->reallocate(s, size, NULL, ptr);
         }
     }
 
