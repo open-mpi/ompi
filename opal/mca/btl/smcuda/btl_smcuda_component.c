@@ -17,6 +17,7 @@
  * Copyright (c) 2011-2015 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
+ * Copyright (c) 2020      Google, LLC. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -679,20 +680,15 @@ static void mca_btl_smcuda_send_cuda_ipc_ack(struct mca_btl_base_module_t* btl,
  * BTL.  It handles smcuda specific control messages that are triggered
  * when GPU memory transfers are initiated. */
 static void btl_smcuda_control(mca_btl_base_module_t* btl,
-                               mca_btl_base_tag_t tag,
-                               mca_btl_base_descriptor_t* des, void* cbdata)
+                               mca_btl_base_receive_descriptor_t* recv_des)
 {
     int mydevnum, ipcaccess, res;
     ctrlhdr_t ctrlhdr;
     opal_proc_t *ep_proc;
-    struct mca_btl_base_endpoint_t *endpoint;
+    struct mca_btl_base_endpoint_t *endpoint = recv_des->endpoint;
     mca_btl_smcuda_t *smcuda_btl = (mca_btl_smcuda_t *)btl;
-    mca_btl_smcuda_frag_t *frag = (mca_btl_smcuda_frag_t *)des;
-    mca_btl_base_segment_t* segments = des->des_segments;
+    mca_btl_base_segment_t* segments = recv_des->des_segments;
 
-    /* Use the rank of the peer that sent the data to get to the endpoint
-     * structure.  This is needed for PML callback. */
-    endpoint = mca_btl_smcuda_component.sm_peers[frag->hdr->my_smp_rank];
     ep_proc = endpoint->proc_opal;
 
     /* Copy out control message payload to examine it */
@@ -764,7 +760,6 @@ static void btl_smcuda_control(mca_btl_base_module_t* btl,
                 }
             }
 
-            assert(endpoint->peer_smp_rank == frag->hdr->my_smp_rank);
             opal_output_verbose(10, mca_btl_smcuda_component.cuda_ipc_output,
                                 "Analyzed CUDA IPC request: myrank=%d, mydev=%d, peerrank=%d, "
                                 "peerdev=%d --> ACCESS=%d",
@@ -999,7 +994,6 @@ int mca_btl_smcuda_component_progress(void)
     /* local variables */
     mca_btl_base_segment_t seg;
     mca_btl_smcuda_frag_t *frag;
-    mca_btl_smcuda_frag_t Frag;
     sm_fifo_t *fifo = NULL;
     mca_btl_smcuda_hdr_t *hdr;
     int my_smp_rank = mca_btl_smcuda_component.my_smp_rank;
@@ -1047,10 +1041,13 @@ int mca_btl_smcuda_component_progress(void)
             case MCA_BTL_SMCUDA_FRAG_SEND:
             {
                 mca_btl_active_message_callback_t* reg;
+                mca_btl_base_receive_descriptor_t recv_desc;
+                mca_btl_base_endpoint_t *endpoint;
                 /* change the address from address relative to the shared
                  * memory address, to a true virtual address */
                 hdr = (mca_btl_smcuda_hdr_t *) RELATIVE2VIRTUAL(hdr);
                 peer_smp_rank = hdr->my_smp_rank;
+                endpoint = mca_btl_smcuda_component.sm_peers[peer_smp_rank];
 #if OPAL_ENABLE_DEBUG
                 if ( FIFO_MAP(peer_smp_rank) != j ) {
                     opal_output(0, "mca_btl_smcuda_component_progress: "
@@ -1062,17 +1059,17 @@ int mca_btl_smcuda_component_progress(void)
                 reg = mca_btl_base_active_message_trigger + hdr->tag;
                 seg.seg_addr.pval = ((char *)hdr) + sizeof(mca_btl_smcuda_hdr_t);
                 seg.seg_len = hdr->len;
-                Frag.base.des_segment_count = 1;
-                Frag.base.des_segments = &seg;
-#if OPAL_CUDA_SUPPORT
-                Frag.hdr = hdr;  /* needed for peer rank in control messages */
-#endif /* OPAL_CUDA_SUPPORT */
-                reg->cbfunc(&mca_btl_smcuda.super, hdr->tag, &(Frag.base),
-                            reg->cbdata);
+                recv_desc.des_segments = &seg;
+                recv_desc.des_segment_count = 1;
+                recv_desc.tag = hdr->tag;
+                recv_desc.cbdata = reg->cbdata;
+                recv_desc.endpoint = endpoint;
+
+                reg->cbfunc(&mca_btl_smcuda.super, &recv_desc);
+
                 /* return the fragment */
                 MCA_BTL_SMCUDA_FIFO_WRITE(
-                        mca_btl_smcuda_component.sm_peers[peer_smp_rank],
-                        my_smp_rank, peer_smp_rank, hdr->frag, false, true, rc);
+                        endpoint, my_smp_rank, peer_smp_rank, hdr->frag, false, true, rc);
                 break;
             }
         case MCA_BTL_SMCUDA_FRAG_ACK:
