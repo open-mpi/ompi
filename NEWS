@@ -57,6 +57,25 @@ included in the vX.Y.Z section and be denoted as:
    (** also appeared: A.B.C)  -- indicating that this item was previously
                                  included in release version vA.B.C.
 
+4.0.5 -- July, 2020
+-------------------
+- Disable binding of MPI processes to system resources by Open MPI
+  if an application is launched using SLURM's srun command.
+- Disable building of the Fortran mpi_f08 module when configuring
+  Open MPI with default 8 byte Fortran integer size.  Thanks to
+  @ahcien for reporting.
+- Fix a problem with mpirun when the --map-by option is used.
+  Thanks to Wenbin Lyu for reporting.
+- Fix some issues with MPI one-sided operations uncovered using Global
+  Arrays regression test-suite.  Thanks to @bjpalmer for reporting.
+- Fix a problem with make check when using the PGI compiler.  Thanks to
+  Carl Ponder for reporting.
+- Fix a problem with MPI_FILE_READ_AT_ALL that could lead to application
+  hangs under certain circumstances.  Thanks to Scot Breitenfeld for
+  reporting.
+- Fix a problem building C++ applications with newer versions of GCC.
+  Thanks to Constantine Khrulev for reporting.
+
 4.0.4 -- June, 2020
 -----------------------
 - Fix a memory patcher issue intercepting shmat and shmdt.  This was
