@@ -121,12 +121,12 @@ get_hostname_buffer(void)
     void *buffer;
     int ret;
 
-    ret = opal_tsd_getspecific(hostname_tsd_key, &buffer);
+    ret = opal_tsd_get(hostname_tsd_key, &buffer);
     if (OPAL_SUCCESS != ret) return NULL;
 
     if (NULL == buffer) {
         buffer = (void*) malloc((NI_MAXHOST + 1) * sizeof(char));
-        ret = opal_tsd_setspecific(hostname_tsd_key, buffer);
+        ret = opal_tsd_set(hostname_tsd_key, buffer);
     }
 
     return (char*) buffer;

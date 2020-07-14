@@ -201,7 +201,7 @@ opal_common_ucx_tlocal_fetch(opal_common_ucx_wpmem_t *mem, int target,
     int rc = OPAL_SUCCESS;
 
     /* First check the fast-path */
-    rc = opal_tsd_getspecific(mem->mem_tls_key, (void**)&fp);
+    rc = opal_tsd_get(mem->mem_tls_key, (void**)&fp);
     if (OPAL_SUCCESS != rc) {
         return rc;
     }
@@ -212,7 +212,7 @@ opal_common_ucx_tlocal_fetch(opal_common_ucx_wpmem_t *mem, int target,
         if (OPAL_SUCCESS != rc) {
             return rc;
         }
-        rc = opal_tsd_getspecific(mem->mem_tls_key, (void**)&fp);
+        rc = opal_tsd_get(mem->mem_tls_key, (void**)&fp);
         if (OPAL_SUCCESS != rc) {
             return rc;
         }

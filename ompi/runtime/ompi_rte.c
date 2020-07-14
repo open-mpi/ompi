@@ -115,7 +115,7 @@ get_print_name_buffer(void)
         fns_init = true;
     }
 
-    ret = opal_tsd_getspecific(print_args_tsd_key, (void**)&ptr);
+    ret = opal_tsd_get(print_args_tsd_key, (void**)&ptr);
     if (OPAL_SUCCESS != ret) return NULL;
 
     if (NULL == ptr) {
@@ -124,7 +124,7 @@ get_print_name_buffer(void)
             ptr->buffers[i] = (char *) malloc((OPAL_PRINT_NAME_ARGS_MAX_SIZE+1) * sizeof(char));
         }
         ptr->cntr = 0;
-        ret = opal_tsd_setspecific(print_args_tsd_key, (void*)ptr);
+        ret = opal_tsd_set(print_args_tsd_key, (void*)ptr);
     }
 
     return (opal_print_args_buffers_t*) ptr;

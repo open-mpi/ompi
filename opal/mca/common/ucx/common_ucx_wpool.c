@@ -726,7 +726,7 @@ static _tlocal_table_t* _common_ucx_tls_init(opal_common_ucx_wpool_t *wpool)
         return NULL;
     }
 
-    opal_tsd_setspecific(wpool->tls_key, tls);
+    opal_tsd_set(wpool->tls_key, tls);
 
     return tls;
 }
@@ -734,7 +734,7 @@ static _tlocal_table_t* _common_ucx_tls_init(opal_common_ucx_wpool_t *wpool)
 static inline _tlocal_table_t *
 _tlocal_get_tls(opal_common_ucx_wpool_t *wpool){
     _tlocal_table_t *tls;
-    int rc = opal_tsd_getspecific(wpool->tls_key, (void**)&tls);
+    int rc = opal_tsd_get(wpool->tls_key, (void**)&tls);
 
     if (OPAL_SUCCESS != rc) {
         return NULL;
@@ -795,7 +795,7 @@ static void _common_ucx_tls_cleanup(_tlocal_table_t *tls)
         free(tls->ctx_tbl[i]);
     }
 
-    opal_tsd_setspecific(tls->wpool->tls_key, NULL);
+    opal_tsd_set(tls->wpool->tls_key, NULL);
 
     OBJ_RELEASE(tls);
     return;
@@ -1051,7 +1051,7 @@ static _tlocal_mem_t *_tlocal_add_mem(_tlocal_table_t *tls,
             calloc(1, sizeof(*tls->mem_tbl[free_idx]->mem_tls_ptr));
     tls->mem_tbl[free_idx]->mem_tls_ptr->winfo = ctx_rec->winfo;
     tls->mem_tbl[free_idx]->mem_tls_ptr->rkeys = tls->mem_tbl[free_idx]->mem->rkeys;
-    opal_tsd_setspecific(mem->mem_tls_key, tls->mem_tbl[free_idx]->mem_tls_ptr);
+    opal_tsd_set(mem->mem_tls_key, tls->mem_tbl[free_idx]->mem_tls_ptr);
 
     /* Make sure that we completed all the data structures before
      * placing the item to the list

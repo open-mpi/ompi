@@ -307,7 +307,7 @@ opal_hwloc_print_buffers_t *opal_hwloc_get_print_buffer(void)
         fns_init = true;
     }
 
-    ret = opal_tsd_getspecific(print_tsd_key, (void**)&ptr);
+    ret = opal_tsd_get(print_tsd_key, (void**)&ptr);
     if (OPAL_SUCCESS != ret) return NULL;
 
     if (NULL == ptr) {
@@ -316,7 +316,7 @@ opal_hwloc_print_buffers_t *opal_hwloc_get_print_buffer(void)
             ptr->buffers[i] = (char *) malloc((OPAL_HWLOC_PRINT_MAX_SIZE+1) * sizeof(char));
         }
         ptr->cntr = 0;
-        ret = opal_tsd_setspecific(print_tsd_key, (void*)ptr);
+        ret = opal_tsd_set(print_tsd_key, (void*)ptr);
     }
 
     return (opal_hwloc_print_buffers_t*) ptr;
