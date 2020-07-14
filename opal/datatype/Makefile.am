@@ -17,6 +17,7 @@
 # Copyright (c) 2011-2013 NVIDIA Corporation.  All rights reserved.
 # Copyright (c) 2018      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
+# Copyright (c) 2021      IBM Corporation. All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -32,6 +33,7 @@ headers = \
         opal_datatype_internal.h \
         opal_datatype_copy.h \
         opal_datatype_memcpy.h \
+        opal_datatype_pack_unpack_predefined.h \
         opal_datatype_pack.h \
         opal_datatype_prototypes.h \
         opal_datatype_unpack.h

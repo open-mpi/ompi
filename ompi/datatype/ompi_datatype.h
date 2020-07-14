@@ -10,6 +10,7 @@
  * Copyright (c) 2015-2020 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
+ * Copyright (c) 2021      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -417,6 +418,95 @@ OMPI_DECLSPEC int ompi_datatype_pack_external_size( const char datarep[], int in
             OBJ_RELEASE_NO_NULLIFY((ddt));                              \
         }                                                               \
     }
+
+/*
+ * Sometimes it's faster to operate on a (count,datatype) pair if it's
+ * converted to (1,larger_datatype).  This comes up in pack/unpack if
+ * the datatype is [int4b,empty4b] for example.  With that datatype the
+ * (count,datatype) path has to loop over the count processing each
+ * occurrance of the datatype, but a larger type created via
+ * MPI_Type_contiguous(count,datatype,) will have a single description
+ * entry describing the whole vector and go through pack/unpack much
+ * faster.
+ *
+ * These functions convert an incoming (count,dt) if the performance
+ * is potentially better.
+ *
+ * Note this function is only likely to be useful if the (count,datatype)
+ * describes a simple evenly spaced vector that will boil down to a
+ * single description element, but I don't think it's cheap to traverse
+ * the incoming datatype to check if that will be the case.  Eg I'm not
+ * sure it would be cheap enough to check that
+ *   [int,int,space,int,int,space]  is going to convert nicely, vs
+ *   [int,int,space,int,space]      which isn't.
+ * So the only checks performed are that the (count,datatype) isn't
+ * contiguous, and that the count is large enough to justify the
+ * overhead of making a new datatype.
+ */
+typedef struct {
+    MPI_Datatype dt;
+    MPI_Count count;
+    int new_type_was_created;
+} ompi_datatype_consolidate_t;
+
+static inline int
+ompi_datatype_consolidate_create(
+    MPI_Count count, MPI_Datatype dtype, ompi_datatype_consolidate_t *dtmod,
+    int threshold)
+{
+    int rc;
+    size_t dtsize;
+    MPI_Aint lb, extent;
+
+    /* default (do nothing) unless we decide otherwise below */
+    dtmod->dt = dtype;
+    dtmod->count = count;
+    dtmod->new_type_was_created = 0;
+
+    if (count >= threshold) {
+        opal_datatype_type_size ( &dtype->super, &dtsize);
+        rc = ompi_datatype_get_extent( dtype, &lb, &extent );
+        if (rc != OMPI_SUCCESS) { return rc; }
+        if ((dtype->super.flags & OPAL_DATATYPE_FLAG_CONTIGUOUS) &&
+            (MPI_Aint)dtsize == extent)
+        {
+            /* contig, no performance advantage to making a new type */
+        } else {
+            rc = ompi_datatype_create_contiguous( count, dtype, &dtmod->dt );
+            if (rc != OMPI_SUCCESS) { return rc; }
+            ompi_datatype_commit(&dtmod->dt);
+            dtmod->count = 1;
+            dtmod->new_type_was_created = 1;
+        }
+    }
+    return OMPI_SUCCESS;
+}
+static inline int
+ompi_datatype_consolidate_free(ompi_datatype_consolidate_t *dtmod)
+{
+    int rc = OMPI_SUCCESS;
+    if (dtmod->new_type_was_created) {
+        rc = ompi_datatype_destroy( &dtmod->dt );
+        /* caller isn't supposed to free twice, but safety valve if they do: */
+        dtmod->new_type_was_created = 0;
+    }
+    return rc;
+}
+/*
+ *  The magic number below just came from empirical testing on a couple
+ *  local PPC machines using [int,space] as the datatype.  There's some
+ *  overhead in constructing a new datatype, so just walking a sequence of
+ *  description elements is better for a short list of elements vs
+ *  creating a potentially shorter list and hoping the vector-walking
+ *  of the new elements is faster.  This could maybe be tuned dynamically
+ *  but it doesn't really seem worth it.
+ *
+ *  I only tested on two machines, the crossover point for pack and unpack
+ *  were 80 and 62 on one machine, and 250 and 220 on the other.  So I lean
+ *  toward using 250 for both and assuming that's likely to not waste too
+ *  much overhead on the datatype creation for most cases.
+ */
+#define OMPI_DATATYPE_CONSOLIDATE_THRESHOLD 250
 
 END_C_DECLS
 #endif  /* OMPI_DATATYPE_H_HAS_BEEN_INCLUDED */

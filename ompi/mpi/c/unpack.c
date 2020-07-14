@@ -12,6 +12,7 @@
  * Copyright (c) 2006-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2021      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -79,12 +80,27 @@ int MPI_Unpack(const void *inbuf, int insize, int *position,
 
     OPAL_CR_ENTER_LIBRARY();
 
+   /*
+    * If a datatype's description contains a single element that describes
+    * a large vector that path is reasonably optimized in pack/unpack. On
+    * the other hand if the count and datatype combined describe the same
+    * vector that is processed one element at a time.
+    *
+    * So at the top level we morph the call if the count and datatype look
+    * like a good vector.
+    */
+    ompi_datatype_consolidate_t dtmod;
+    rc = ompi_datatype_consolidate_create(outcount, datatype, &dtmod,
+        OMPI_DATATYPE_CONSOLIDATE_THRESHOLD);
+    OMPI_ERRHANDLER_CHECK(rc, comm, rc, FUNC_NAME);
+
     if( insize > 0 ) {
         int ret;
         OBJ_CONSTRUCT( &local_convertor, opal_convertor_t );
         /* the resulting convertor will be set the the position ZERO */
-        opal_convertor_copy_and_prepare_for_recv( ompi_mpi_local_convertor, &(datatype->super),
-                                                  outcount, outbuf, 0, &local_convertor );
+        opal_convertor_copy_and_prepare_for_recv( ompi_mpi_local_convertor,
+                                                  &(dtmod.dt->super), dtmod.count,
+                                                  outbuf, 0, &local_convertor );
 
         /* Check for truncation */
         opal_convertor_get_packed_size( &local_convertor, &size );
@@ -109,6 +125,9 @@ int MPI_Unpack(const void *inbuf, int insize, int *position,
             rc = OMPI_ERROR;
         }
     }
+
+    rc = ompi_datatype_consolidate_free(&dtmod);
+    OMPI_ERRHANDLER_CHECK(rc, comm, rc, FUNC_NAME);
 
     OPAL_CR_EXIT_LIBRARY();
 

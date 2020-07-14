@@ -8,6 +8,7 @@
  * Copyright (c) 2017-2018 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2020      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2020-2021 IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -19,6 +20,7 @@
 #define OPAL_DATATYPE_PACK_H_HAS_BEEN_INCLUDED
 
 #include "opal_config.h"
+#include "opal/datatype/opal_datatype_pack_unpack_predefined.h"
 
 #if !defined(CHECKSUM) && OPAL_CUDA_SUPPORT
 /* Make use of existing macro to do CUDA style memcpy */
@@ -107,7 +109,14 @@ pack_predefined_data( opal_convertor_t* CONVERTOR,
     /* premptively update the number of COUNT we will return. */
     *(COUNT) -= cando_count;
 
-    if( 1 == _elem->blocklen ) { /* Do as many full blocklen as possible */
+    if(_elem->blocklen < 9) {
+        if(OPAL_LIKELY(OPAL_SUCCESS == opal_datatype_pack_predefined_element(&_memory, &_packed, cando_count, _elem)))   {
+            goto update_and_return;
+        }
+        /* else unrecognized _elem->common.type, use the memcpy path */
+    }
+
+    if(_elem->blocklen == 1) {
         for(; cando_count > 0; cando_count--) {
             OPAL_DATATYPE_SAFEGUARD_POINTER( _memory, blocklen_bytes, (CONVERTOR)->pBaseBuf,
                                              (CONVERTOR)->pDesc, (CONVERTOR)->count );

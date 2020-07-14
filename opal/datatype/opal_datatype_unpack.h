@@ -7,6 +7,7 @@
  * Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2017-2018 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
+ * Copyright (c) 2020-2021 IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -18,6 +19,7 @@
 #define OPAL_DATATYPE_UNPACK_H_HAS_BEEN_INCLUDED
 
 #include "opal_config.h"
+#include "opal/datatype/opal_datatype_pack_unpack_predefined.h"
 
 #if !defined(CHECKSUM) && OPAL_CUDA_SUPPORT
 /* Make use of existing macro to do CUDA style memcpy */
@@ -102,6 +104,13 @@ unpack_predefined_data( opal_convertor_t* CONVERTOR,
 
     /* premptively update the number of COUNT we will return. */
     *(COUNT) -= cando_count;
+
+    if( _elem->blocklen < 9 ) {
+        if(OPAL_LIKELY(OPAL_SUCCESS == opal_datatype_unpack_predefined_element(&_packed, &_memory, cando_count, _elem))) {
+            goto update_and_return;
+        }
+        /* else unrecognized _elem->common.type, use the memcpy path */
+    }
 
     if( 1 == _elem->blocklen ) {  /* Do as many full blocklen as possible */
         for(; cando_count > 0; cando_count--) {

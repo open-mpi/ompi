@@ -15,6 +15,7 @@
  *                         reserved.
  * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2021      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -77,10 +78,25 @@ int MPI_Pack(const void *inbuf, int incount, MPI_Datatype datatype,
 
     OPAL_CR_ENTER_LIBRARY();
 
+    /*
+     * If a datatype's description contains a single element that describes
+     * a large vector that path is reasonably optimized in pack/unpack. On
+     * the other hand if the count and datatype combined describe the same
+     * vector, that gets processed one element at a time.
+     *
+     * So at the top level we morph the call if the count and datatype look
+     * like a good vector.
+     */
+    ompi_datatype_consolidate_t dtmod;
+    rc = ompi_datatype_consolidate_create(incount, datatype, &dtmod,
+        OMPI_DATATYPE_CONSOLIDATE_THRESHOLD);
+    OMPI_ERRHANDLER_CHECK(rc, comm, rc, FUNC_NAME);
+
     OBJ_CONSTRUCT( &local_convertor, opal_convertor_t );
     /* the resulting convertor will be set to the position ZERO */
-    opal_convertor_copy_and_prepare_for_send( ompi_mpi_local_convertor, &(datatype->super),
-                                              incount, (void *) inbuf, 0, &local_convertor );
+    opal_convertor_copy_and_prepare_for_send( ompi_mpi_local_convertor,
+                                              &(dtmod.dt->super), dtmod.count,
+                                              (void *) inbuf, 0, &local_convertor );
 
     /* Check for truncation */
     opal_convertor_get_packed_size( &local_convertor, &size );
@@ -99,6 +115,9 @@ int MPI_Pack(const void *inbuf, int incount, MPI_Datatype datatype,
     ret = opal_convertor_pack( &local_convertor, &invec, &iov_count, &size );
     *position += size;
     OBJ_DESTRUCT( &local_convertor );
+
+    rc = ompi_datatype_consolidate_free(&dtmod);
+    OMPI_ERRHANDLER_CHECK(rc, comm, rc, FUNC_NAME);
 
     OPAL_CR_EXIT_LIBRARY();
 
