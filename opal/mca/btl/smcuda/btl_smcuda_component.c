@@ -42,6 +42,7 @@
 #include <sys/stat.h>  /* for mkfifo */
 #endif  /* HAVE_SYS_STAT_H */
 
+#include "opal/mca/hwloc/base/base.h"
 #include "opal/mca/shmem/base/base.h"
 #include "opal/mca/shmem/shmem.h"
 #include "opal/util/bit_ops.h"
@@ -865,6 +866,13 @@ mca_btl_smcuda_component_init(int *num_btls,
     /* calculate max procs so we can figure out how large to make the
      * shared-memory segment. this routine sets component sm_max_procs. */
     calc_sm_max_procs(num_local_procs);
+
+    /* Before we can safely create the backend file we need to know minimal
+     * information about the local node. We need at least a size of a cache line
+     * as we align the data in the backing file to it. The simplest way for now is
+     * to force the HWLOC initialization.
+     */
+    opal_hwloc_base_get_topology();
 
     /* This is where the modex will live some day. For now, just have local rank
      * 0 create a rendezvous file containing the backing store info, so the
