@@ -38,13 +38,13 @@ static inline int opal_tsd_key_delete(opal_tsd_key_t key)
     return 0 == ret ? OPAL_SUCCESS : OPAL_ERR_IN_ERRNO;
 }
 
-static inline int opal_tsd_setspecific(opal_tsd_key_t key, void *value)
+static inline int opal_tsd_set(opal_tsd_key_t key, void *value)
 {
     int ret = pthread_setspecific(key, value);
     return 0 == ret ? OPAL_SUCCESS : OPAL_ERR_IN_ERRNO;
 }
 
-static inline int opal_tsd_getspecific(opal_tsd_key_t key, void **valuep)
+static inline int opal_tsd_get(opal_tsd_key_t key, void **valuep)
 {
     *valuep = pthread_getspecific(key);
     return OPAL_SUCCESS;

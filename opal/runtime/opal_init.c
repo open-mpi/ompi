@@ -659,7 +659,6 @@ opal_init(int* pargc, char*** pargv)
     opal_finalize_set_domain (&opal_init_domain);
 
     opal_finalize_register_cleanup_arg (mca_base_framework_close_list, opal_init_frameworks);
-    opal_finalize_register_cleanup (opal_tsd_keys_destruct);
 
     ret = mca_base_framework_open_list (opal_init_frameworks, 0);
     if (OPAL_UNLIKELY(OPAL_SUCCESS != ret)) {

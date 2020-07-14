@@ -180,21 +180,6 @@ OPAL_DECLSPEC void opal_tsd_tracked_key_set_destructor(
 OPAL_DECLSPEC int opal_tsd_key_create(opal_tsd_key_t *key,
                                       opal_tsd_destructor_t destructor);
 
-
-/**
- * Destruct all thread-specific data keys
- *
- * Destruct all thread-specific data keys and invoke the destructor
- *
- * This should only be invoked in the main thread.
- * This is made necessary since destructors are not invoked on the
- * keys of the main thread, since there is no such thing as
- * pthread_join(main_thread)
- *
- * @retval OPAL_SUCCESS  Success
- */
-OPAL_DECLSPEC int opal_tsd_keys_destruct(void);
-
 END_C_DECLS
 
 #endif /* OPAL_MCA_THREADS_TSD_H */

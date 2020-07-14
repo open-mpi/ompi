@@ -122,43 +122,5 @@ int opal_tsd_key_create(opal_tsd_key_t *key, opal_tsd_destructor_t destructor)
     opal_threads_argobots_ensure_init();
     int rc;
     rc = ABT_key_create(destructor, key);
-    if (ABT_SUCCESS == rc) {
-        opal_mutex_lock(&opal_tsd_lock);
-        if (opal_tsd_key_values_size <= opal_tsd_key_values_count) {
-            opal_tsd_key_values_size = opal_tsd_key_values_size == 0
-                                       ? 1 : opal_tsd_key_values_size * 2;
-            opal_tsd_key_values = (struct opal_tsd_key_value *)
-                realloc(opal_tsd_key_values, opal_tsd_key_values_size *
-                                             sizeof(struct opal_tsd_key_value));
-        }
-        opal_tsd_key_values[opal_tsd_key_values_count].key = *key;
-        opal_tsd_key_values[opal_tsd_key_values_count].destructor = destructor;
-        opal_tsd_key_values_count++;
-        opal_mutex_unlock(&opal_tsd_lock);
-    }
     return (ABT_SUCCESS == rc) ? OPAL_SUCCESS : OPAL_ERROR;
-}
-
-int opal_tsd_keys_destruct(void)
-{
-    int i;
-    void *ptr;
-    opal_mutex_lock(&opal_tsd_lock);
-    for (i = 0; i < opal_tsd_key_values_count; i++) {
-        if (OPAL_SUCCESS ==
-            opal_tsd_getspecific(opal_tsd_key_values[i].key, &ptr)) {
-            if (NULL != opal_tsd_key_values[i].destructor) {
-                opal_tsd_key_values[i].destructor(ptr);
-                opal_tsd_setspecific(opal_tsd_key_values[i].key, NULL);
-            }
-        }
-    }
-    if (0 < opal_tsd_key_values_count) {
-        free(opal_tsd_key_values);
-        opal_tsd_key_values = NULL;
-        opal_tsd_key_values_count = 0;
-        opal_tsd_key_values_size = 0;
-    }
-    opal_mutex_unlock(&opal_tsd_lock);
-    return OPAL_SUCCESS;
 }
