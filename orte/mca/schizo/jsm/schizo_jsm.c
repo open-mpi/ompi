@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2016-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2016      Mellanox Technologies Ltd.  All rights reserved.
- * Copyright (c) 2017-2019 IBM Corporation.  All rights reserved.
+ * Copyright (c) 2017-2020 IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -77,6 +77,13 @@ static orte_schizo_launch_environ_t check_launch_environment(void)
     /* We don't support singleton launch by JSM.
      * If we did then the logic should be placed here.
      */
+
+    /* if we are direct-launched by JSM, then disable binding */
+    opal_argv_append_nosize(&pushed_envs, OPAL_MCA_PREFIX"hwloc_base_binding_policy");
+    opal_argv_append_nosize(&pushed_vals, "none");
+    /* indicate we are externally bound so we won't try to do it ourselves */
+    opal_argv_append_nosize(&pushed_envs, OPAL_MCA_PREFIX"orte_externally_bound");
+    opal_argv_append_nosize(&pushed_vals, "1");
 
     opal_output_verbose(1, orte_schizo_base_framework.framework_output,
                         "schizo:jsm DECLARED AS %s", orte_schizo_base_print_env(myenv));
