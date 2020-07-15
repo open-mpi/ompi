@@ -33,7 +33,7 @@ __thread int initialized = 0;
 static _ctx_record_t *
 _tlocal_add_ctx_rec(opal_common_ucx_ctx_t *ctx);
 static inline _ctx_record_t *
-_tlocal_get_ctx_rec(opal_tsd_key_t tls_key);
+_tlocal_get_ctx_rec(opal_tsd_tracked_key_t tls_key);
 static void _tlocal_ctx_rec_cleanup(_ctx_record_t *ctx_rec);
 static void _tlocal_mem_rec_cleanup(_mem_record_t *mem_rec);
 static void _ctx_rec_destructor(void *arg);
@@ -399,7 +399,8 @@ opal_common_ucx_wpctx_create(opal_common_ucx_wpool_t *wpool, int comm_size,
         goto error;
     }
 
-    opal_tsd_key_create(&ctx->tls_key, _ctx_rec_destructor);
+    OBJ_CONSTRUCT(&ctx->tls_key, opal_tsd_tracked_key_t);
+    opal_tsd_tracked_key_set_destructor(&ctx->tls_key, _ctx_rec_destructor);
 
     (*ctx_ptr) = ctx;
     return ret;
@@ -414,16 +415,16 @@ error:
 OPAL_DECLSPEC void
 opal_common_ucx_wpctx_release(opal_common_ucx_ctx_t *ctx)
 {
-    _ctx_record_t *ctx_rec = NULL;
+    _ctx_record_t *ctx_rec = NULL, *next;
 
     /* Application is expected to guarantee that no operation
      * is performed on the context that is being released */
 
     /* destroy key so that other threads don't invoke destructors */
-    opal_tsd_key_delete(ctx->tls_key);
+    OBJ_DESTRUCT(&ctx->tls_key);
 
     /* loop through list of records */
-    OPAL_LIST_FOREACH(ctx_rec, &ctx->ctx_records, _ctx_record_t) {
+    OPAL_LIST_FOREACH_SAFE(ctx_rec, next, &ctx->ctx_records, _ctx_record_t) {
        _tlocal_ctx_rec_cleanup(ctx_rec);
     }
 
@@ -493,7 +494,8 @@ int opal_common_ucx_wpmem_create(opal_common_ucx_ctx_t *ctx,
         goto error_rkey_pack;
     }
 
-    opal_tsd_key_create(&mem->tls_key, _mem_rec_destructor);
+    OBJ_CONSTRUCT(&mem->tls_key, opal_tsd_tracked_key_t);
+    opal_tsd_tracked_key_set_destructor(&mem->tls_key, _mem_rec_destructor);
 
     (*mem_ptr) = mem;
     (*my_mem_addr) = rkey_addr;
@@ -560,12 +562,12 @@ static int _comm_ucx_wpmem_map(opal_common_ucx_wpool_t *wpool,
 
 void opal_common_ucx_wpmem_free(opal_common_ucx_wpmem_t *mem)
 {
-    _mem_record_t *mem_rec = NULL;
+    _mem_record_t *mem_rec = NULL, *next;
     
-    opal_tsd_key_delete(mem->tls_key);
-    
+    OBJ_DESTRUCT(&mem->tls_key);
+
     /* Loop through list of records */
-    OPAL_LIST_FOREACH(mem_rec, &mem->mem_records, _mem_record_t) {
+    OPAL_LIST_FOREACH_SAFE(mem_rec, next, &mem->mem_records, _mem_record_t) {
         _tlocal_mem_rec_cleanup(mem_rec);
     }
   
@@ -581,9 +583,9 @@ void opal_common_ucx_wpmem_free(opal_common_ucx_wpmem_t *mem)
 }
 
 static inline _ctx_record_t *
-_tlocal_get_ctx_rec(opal_tsd_key_t tls_key){
+_tlocal_get_ctx_rec(opal_tsd_tracked_key_t tls_key){
     _ctx_record_t *ctx_rec = NULL;
-    int rc = opal_tsd_getspecific(tls_key, (void**)&ctx_rec);
+    int rc = opal_tsd_tracked_key_get(&tls_key, (void**)&ctx_rec);
 
     if (OPAL_SUCCESS != rc) {
         return NULL;
@@ -657,7 +659,7 @@ _tlocal_add_ctx_rec(opal_common_ucx_ctx_t *ctx)
     opal_mutex_unlock(&ctx->mutex);
 
     /* Add tls reference to record */
-    rc = opal_tsd_setspecific(ctx->tls_key, ctx_rec);
+    rc = opal_tsd_tracked_key_set(&ctx->tls_key, ctx_rec);
     if (OPAL_SUCCESS != rc) {
         OBJ_RELEASE(ctx_rec);
         return NULL;
@@ -743,7 +745,7 @@ static _mem_record_t *_tlocal_add_mem_rec(opal_common_ucx_wpmem_t *mem, _ctx_rec
     
     opal_atomic_wmb();
 
-    rc = opal_tsd_setspecific(mem->tls_key, mem_rec);
+    rc = opal_tsd_tracked_key_set(&mem->tls_key, mem_rec);
     if (OPAL_SUCCESS != rc) {
         return NULL;
     }

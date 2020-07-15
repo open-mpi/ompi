@@ -73,7 +73,7 @@ typedef struct {
 
     /* Thread-local key to allow each thread to have
      * local information associated with this wpctx */
-    opal_tsd_key_t tls_key;
+    opal_tsd_tracked_key_t tls_key;
 
     /* UCX addressing information */
     char *recv_worker_addrs;
@@ -107,7 +107,7 @@ typedef struct {
     /* TLS item that allows each thread to
      * store endpoints and rkey arrays
      * for faster access */
-    opal_tsd_key_t tls_key;
+    opal_tsd_tracked_key_t tls_key;
 } opal_common_ucx_wpmem_t;
 
 typedef struct __winfo_list_item_t _winfo_list_item_t;
@@ -220,7 +220,7 @@ opal_common_ucx_tlocal_fetch(opal_common_ucx_wpmem_t *mem, int target,
     int rc = OPAL_SUCCESS;
 
     /* First check the fast-path */
-    rc = opal_tsd_getspecific(mem->tls_key, (void**)&mem_rec);
+    rc = opal_tsd_tracked_key_get(&mem->tls_key, (void**)&mem_rec);
     if (OPAL_SUCCESS != rc) {
         return rc;
     }
@@ -231,7 +231,7 @@ opal_common_ucx_tlocal_fetch(opal_common_ucx_wpmem_t *mem, int target,
         if (OPAL_SUCCESS != rc) {
             return rc;
         }
-        rc = opal_tsd_getspecific(mem->tls_key, (void**)&mem_rec);
+        rc = opal_tsd_tracked_key_get(&mem->tls_key, (void**)&mem_rec);
         if (OPAL_SUCCESS != rc) {
             return rc;
         }
