@@ -182,7 +182,7 @@ static int cuda_event_ipc_first_avail, cuda_event_dtoh_first_avail, cuda_event_h
 static int cuda_event_ipc_first_used, cuda_event_dtoh_first_used, cuda_event_htod_first_used;
 
 /* Number of status items currently in use */
-static int cuda_event_ipc_num_used, cuda_event_dtoh_num_used, cuda_event_htod_num_used;
+static volatile int cuda_event_ipc_num_used, cuda_event_dtoh_num_used, cuda_event_htod_num_used;
 
 /* Size of array holding events */
 int cuda_event_max = 400;
@@ -1506,6 +1506,9 @@ void *mca_common_cuda_get_htod_stream(void) {
  */
 int progress_one_cuda_ipc_event(struct mca_btl_base_descriptor_t **frag) {
     CUresult result;
+
+    if( OPAL_LIKELY(0 == cuda_event_ipc_num_used) )
+        return 0;
 
     OPAL_THREAD_LOCK(&common_cuda_ipc_lock);
     if (cuda_event_ipc_num_used > 0) {
