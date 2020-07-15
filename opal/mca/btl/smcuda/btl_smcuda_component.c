@@ -136,8 +136,15 @@ static inline unsigned int mca_btl_smcuda_param_register_uint(
     return *storage;
 }
 
-static int mca_btl_smcuda_component_verify(void) {
-
+static int mca_btl_smcuda_component_verify(void)
+{
+    /* We canot support async memcpy right now */
+    if( (mca_btl_smcuda.super.btl_flags & MCA_BTL_FLAGS_CUDA_COPY_ASYNC_RECV) ||
+        (mca_btl_smcuda.super.btl_flags & MCA_BTL_FLAGS_CUDA_COPY_ASYNC_SEND) ) {
+        opal_output_verbose(10, opal_btl_base_framework.framework_output,
+                            "btl: smcuda: disable all asynchronous memcpy support");
+    }
+    mca_btl_smcuda.super.btl_flags &= ~(MCA_BTL_FLAGS_CUDA_COPY_ASYNC_RECV | MCA_BTL_FLAGS_CUDA_COPY_ASYNC_SEND);
     return mca_btl_base_param_verify(&mca_btl_smcuda.super);
 }
 
@@ -1100,27 +1107,27 @@ int mca_btl_smcuda_component_progress(void)
                 }
                 goto recheck_peer;
             }
-            default:
-                /* unknown */
-                /*
-                 * This code path should presumably never be called.
-                 * It's unclear if it should exist or, if so, how it should be written.
-                 * If we want to return it to the sending process,
-                 * we have to figure out who the sender is.
-                 * It seems we need to subtract the mask bits.
-                 * Then, hopefully this is an sm header that has an smp_rank field.
-                 * Presumably that means the received header was relative.
-                 * Or, maybe this code should just be removed.
-                 */
-                opal_output(0, "mca_btl_smcuda_component_progress read an unknown type of header");
-                hdr = (mca_btl_smcuda_hdr_t *) RELATIVE2VIRTUAL(hdr);
-                peer_smp_rank = hdr->my_smp_rank;
-                hdr = (mca_btl_smcuda_hdr_t*)((uintptr_t)hdr->frag |
-                        MCA_BTL_SMCUDA_FRAG_STATUS_MASK);
-                MCA_BTL_SMCUDA_FIFO_WRITE(
-                        mca_btl_smcuda_component.sm_peers[peer_smp_rank],
-                        my_smp_rank, peer_smp_rank, hdr, false, true, rc);
-                break;
+        default:
+            /* unknown */
+            /*
+             * This code path should presumably never be called.
+             * It's unclear if it should exist or, if so, how it should be written.
+             * If we want to return it to the sending process,
+             * we have to figure out who the sender is.
+             * It seems we need to subtract the mask bits.
+             * Then, hopefully this is an sm header that has an smp_rank field.
+             * Presumably that means the received header was relative.
+             * Or, maybe this code should just be removed.
+             */
+            opal_output(0, "mca_btl_smcuda_component_progress read an unknown type of header");
+            hdr = (mca_btl_smcuda_hdr_t *) RELATIVE2VIRTUAL(hdr);
+            peer_smp_rank = hdr->my_smp_rank;
+            hdr = (mca_btl_smcuda_hdr_t*)((uintptr_t)hdr->frag |
+                                          MCA_BTL_SMCUDA_FRAG_STATUS_MASK);
+            MCA_BTL_SMCUDA_FIFO_WRITE(
+                    mca_btl_smcuda_component.sm_peers[peer_smp_rank],
+                    my_smp_rank, peer_smp_rank, hdr, false, true, rc);
+            break;
         }
     }
     (void)rc; /* this is safe to ignore as the message is requeued till success */
