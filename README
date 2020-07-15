@@ -2045,6 +2045,9 @@ srun:
 
    shell$ srun -N 2 hello_world_oshmem
 
+  NOTE: Starting with Open MPI v4.0.5, libmpi will honor SLURM's binding
+        policy even if that would leave the processes unbound.
+
 ===========================================================================
 
 The Modular Component Architecture (MCA)
