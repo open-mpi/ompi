@@ -553,13 +553,15 @@ int ompi_rte_init(int *pargc, char ***pargv)
     opal_process_info.my_name.vpid = OPAL_PROC_MY_NAME.vpid;
 
     /* set our hostname */
+    ev1 = NULL;
     OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, PMIX_HOSTNAME, &OPAL_PROC_MY_NAME,
                                    (char**)&ev1, PMIX_STRING);
-    if (PMIX_SUCCESS == ret) {
+    if (PMIX_SUCCESS == ret && NULL != ev1) {
         if (NULL != opal_process_info.nodename) {
             free(opal_process_info.nodename);
         }
         opal_process_info.nodename = ev1;  // ev1 is an allocated string
+        ev1 = NULL;  // protect the string
     }
 
     /* get our local rank from PMIx */
@@ -648,27 +650,33 @@ int ompi_rte_init(int *pargc, char ***pargv)
         opal_process_info.app_ldrs = strdup("0");
         opal_asprintf(&opal_process_info.app_sizes, "%u", opal_process_info.num_procs);
     } else {
+        val = NULL;
         OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, "OMPI_APP_SIZES", &pname, &val, PMIX_STRING);
-        if (PMIX_SUCCESS != rc) {
+        if (PMIX_SUCCESS != rc || NULL == val) {
             /* assume it is just us */
             opal_asprintf(&opal_process_info.app_sizes, "%u", opal_process_info.num_procs);
         } else {
             opal_process_info.app_sizes = val;
+            val = NULL;  // protect the string
         }
+        val = NULL;
         OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, "OMPI_FIRST_RANKS", &pname, &val, PMIX_STRING);
-        if (PMIX_SUCCESS != rc) {
+        if (PMIX_SUCCESS != rc || NULL == val) {
             /* assume it is just us */
             opal_process_info.app_ldrs = strdup("0");
         } else {
             opal_process_info.app_ldrs = val;
+            val = NULL;  // protect the string
         }
     }
 
     /* get our command - defaults to our appnum */
+    ev1 = NULL;
     OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, PMIX_APP_ARGV,
                                    &pname, (char**)&ev1, PMIX_STRING);
-    if (PMIX_SUCCESS == rc) {
+    if (PMIX_SUCCESS == rc && NULL != ev1) {
         opal_process_info.command = ev1;  // ev1 is an allocated string
+        ev1 = NULL;  // protect the string
     } else if (NULL != pargv) {
         tmp = *pargv;
         if (NULL != tmp) {
@@ -696,9 +704,11 @@ int ompi_rte_init(int *pargc, char ***pargv)
     }
 
     /* retrieve temp directories info */
+    val = NULL;
     OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, PMIX_TMPDIR, &pname, &val, PMIX_STRING);
     if (OPAL_SUCCESS == rc && NULL != val) {
         opal_process_info.top_session_dir = val;
+        val = NULL;  // protect the string
     } else {
         /* we need to create something */
         rc = _setup_top_session_dir(&opal_process_info.top_session_dir);
@@ -709,10 +719,11 @@ int ompi_rte_init(int *pargc, char ***pargv)
     }
 
     /* retrieve job-session directory info */
+    val = NULL;
     OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, PMIX_NSDIR, &pname, &val, PMIX_STRING);
     if (PMIX_SUCCESS == rc && NULL != val) {
         opal_process_info.job_session_dir = val;
-        val = NULL;
+        val = NULL;  // protect the string
     } else {
         /* we need to create something */
         rc = _setup_job_session_dir(&opal_process_info.job_session_dir);
@@ -723,9 +734,11 @@ int ompi_rte_init(int *pargc, char ***pargv)
     }
 
     /* retrieve proc-session directory info */
+    val = NULL;
     OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, PMIX_PROCDIR, &OPAL_PROC_MY_NAME, &val, PMIX_STRING);
     if (OPAL_SUCCESS == rc && NULL != val) {
         opal_process_info.proc_session_dir = val;
+        val = NULL;  // protect the string
     } else {
         /* we need to create something */
         rc = _setup_proc_session_dir(&opal_process_info.proc_session_dir);
@@ -737,10 +750,11 @@ int ompi_rte_init(int *pargc, char ***pargv)
 
     /* get our initial working directory - defaults to getting the value
      * for our app */
+    val = NULL;
     OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, PMIX_WDIR, &pname, &val, PMIX_STRING);
     if (PMIX_SUCCESS == rc && NULL != val) {
         opal_process_info.initial_wdir = val;
-        val = NULL;
+        val = NULL;  // protect the string
     }
 
     /* identify our location */
@@ -750,6 +764,7 @@ int ompi_rte_init(int *pargc, char ***pargv)
     if (PMIX_SUCCESS == rc && NULL != val) {
         opal_process_info.cpuset = val;
         opal_process_info.proc_is_bound = true;
+        val = NULL;  // protect the string
     } else {
         opal_process_info.cpuset = NULL;
         opal_process_info.proc_is_bound = false;
@@ -764,6 +779,7 @@ int ompi_rte_init(int *pargc, char ***pargv)
             goto error;
         }
         /* retrieve the local peers - defaults to local node */
+        val = NULL;
         OPAL_MODEX_RECV_VALUE(rc, PMIX_LOCAL_PEERS,
                               &pname, &val, PMIX_STRING);
         if (PMIX_SUCCESS == rc && NULL != val) {
