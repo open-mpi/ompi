@@ -46,15 +46,9 @@ typedef struct {
     ucp_address_t *recv_waddr;
     size_t recv_waddr_len;
 
-    /* Thread-local key to allow each thread to have
-     * local information assisiated with this wpool */
-    opal_tsd_tracked_key_t tls_key;
-
     /* Bookkeeping information */
     opal_list_t idle_workers;
     opal_list_t active_workers;
-
-    opal_list_t tls_list;
 } opal_common_ucx_wpool_t;
 
 /* Worker Pool Context (wpctx) is an object that is comprised of a set of UCP
@@ -68,15 +62,18 @@ typedef struct {
  */
 typedef struct {
     opal_recursive_mutex_t mutex;
-    opal_atomic_int32_t refcntr;
 
     /* the reference to a Worker pool this context belongs to*/
     opal_common_ucx_wpool_t *wpool;
-    /* A list of references to TLS context records
-     * we need to keep track of them to have an ability to
-     * let thread know that this context is no longer valid */
-    opal_list_t tls_workers;
-    volatile int released;
+
+    /* A list of context records
+     * We need to keep a track of allocated context records so
+     * that we can free them at the end if thread fails to release context record */
+    opal_list_t ctx_records;
+
+    /* Thread-local key to allow each thread to have
+     * local information associated with this wpctx */
+    opal_tsd_key_t tls_key;
 
     /* UCX addressing information */
     char *recv_worker_addrs;
@@ -95,20 +92,23 @@ typedef struct {
     /* reference context to which memory region belongs */
     opal_common_ucx_ctx_t *ctx;
 
-    /* object lifetime control */
-    volatile int released;
-    opal_atomic_int32_t refcntr;
-
     /* UCX memory handler */
     ucp_mem_h memh;
     char *mem_addrs;
     int *mem_displs;
 
+    /* A list of mem records
+     * We need to kepp trakc o fallocated memory records so that we can free them at the end
+     * if a thread fails to release the memory record */
+    opal_list_t mem_records;
+
     /* TLS item that allows each thread to
      * store endpoints and rkey arrays
      * for faster access */
-    opal_tsd_tracked_key_t mem_tls_key;
+    opal_tsd_key_t tls_key;
 } opal_common_ucx_wpmem_t;
+
+typedef struct __winfo_list_item_t _winfo_list_item_t;
 
 /* The structure that wraps UCP worker and holds the state that is required
  * for its use.
@@ -118,6 +118,7 @@ typedef struct {
  */
 typedef struct opal_common_ucx_winfo {
     opal_recursive_mutex_t mutex;
+    _winfo_list_item_t *self;
     volatile int released;
     ucp_worker_h worker;
     ucp_ep_h *endpoints;
@@ -126,11 +127,6 @@ typedef struct opal_common_ucx_winfo {
     short global_inflight_ops;
     ucs_status_ptr_t inflight_req;
 } opal_common_ucx_winfo_t;
-
-typedef struct {
-    opal_common_ucx_winfo_t *winfo;
-    ucp_rkey_h *rkeys;
-} opal_common_ucx_tlocal_fast_ptrs_t;
 
 typedef void (*opal_common_ucx_user_req_handler_t)(void *request);
 
@@ -165,10 +161,31 @@ typedef enum {
     OPAL_COMMON_UCX_MEM_MAP
 } opal_common_ucx_mem_type_t;
 
+struct __winfo_list_item_t{
+    opal_list_item_t super;
+    opal_common_ucx_winfo_t *ptr;
+};
+OBJ_CLASS_DECLARATION(_winfo_list_item_t);
+
+typedef struct {
+    opal_list_item_t super;
+    opal_common_ucx_ctx_t *gctx;
+    opal_common_ucx_winfo_t *winfo;
+} _ctx_record_t; 
+OBJ_CLASS_DECLARATION(_ctx_record_t);
+
+typedef struct {
+    opal_list_item_t super;
+    opal_common_ucx_wpmem_t *gmem;
+    opal_common_ucx_winfo_t *winfo;
+    ucp_rkey_h *rkeys;
+    _ctx_record_t *ctx_rec;
+} _mem_record_t;
+OBJ_CLASS_DECLARATION(_mem_record_t);
+
 typedef int (*opal_common_ucx_exchange_func_t)(void *my_info, size_t my_info_len,
                                                char **recv_info, int **disps,
                                                void *metadata);
-
 
 /* Manage Worker Pool (wpool) */
 OPAL_DECLSPEC opal_common_ucx_wpool_t * opal_common_ucx_wpool_allocate(void);
@@ -196,34 +213,35 @@ opal_common_ucx_tlocal_fetch(opal_common_ucx_wpmem_t *mem, int target,
                                 ucp_ep_h *_ep, ucp_rkey_h *_rkey,
                                 opal_common_ucx_winfo_t **_winfo)
 {
-    opal_common_ucx_tlocal_fast_ptrs_t *fp = NULL;
+    _mem_record_t *mem_rec = NULL;
     int expr;
     int rc = OPAL_SUCCESS;
 
     /* First check the fast-path */
-    rc = opal_tsd_tracked_key_get(&mem->mem_tls_key, (void**)&fp);
+    rc = opal_tsd_getspecific(mem->tls_key, (void**)&mem_rec);
     if (OPAL_SUCCESS != rc) {
         return rc;
     }
-    expr = fp && (NULL != fp->winfo) && (fp->winfo->endpoints[target]) &&
-            (NULL != fp->rkeys[target]);
+    expr = mem_rec && (NULL != mem_rec->winfo) && (mem_rec->winfo->endpoints[target]) &&
+            (NULL != mem_rec->rkeys[target]);
     if (OPAL_UNLIKELY(!expr)) {
         rc = opal_common_ucx_tlocal_fetch_spath(mem, target);
         if (OPAL_SUCCESS != rc) {
             return rc;
         }
-        rc = opal_tsd_tracked_key_get(&mem->mem_tls_key, (void**)&fp);
+        rc = opal_tsd_getspecific(mem->tls_key, (void**)&mem_rec);
         if (OPAL_SUCCESS != rc) {
             return rc;
         }
     }
-    MCA_COMMON_UCX_ASSERT(fp && (NULL != fp->winfo) &&
-                          (fp->winfo->endpoints[target])
-                          && (NULL != fp->rkeys[target]));
+    MCA_COMMON_UCX_ASSERT(NULL != mem_rec);
+    MCA_COMMON_UCX_ASSERT(NULL != mem_rec->winfo);
+    MCA_COMMON_UCX_ASSERT(NULL != mem_rec->winfo->endpoints[target]);
+    MCA_COMMON_UCX_ASSERT(NULL != mem_rec->rkeys[target]);
 
-    *_rkey = fp->rkeys[target];
-    *_winfo = fp->winfo;
-    *_ep = fp->winfo->endpoints[target];
+    *_rkey = mem_rec->rkeys[target];
+    *_winfo = mem_rec->winfo;
+    *_ep = mem_rec->winfo->endpoints[target];
     return OPAL_SUCCESS;
 }
 
@@ -236,7 +254,7 @@ OPAL_DECLSPEC int opal_common_ucx_wpmem_create(opal_common_ucx_ctx_t *ctx,
                                                char **my_mem_addr,
                                                int *my_mem_addr_size,
                                opal_common_ucx_wpmem_t **mem_ptr);
-OPAL_DECLSPEC int opal_common_ucx_wpmem_free(opal_common_ucx_wpmem_t *mem);
+OPAL_DECLSPEC void opal_common_ucx_wpmem_free(opal_common_ucx_wpmem_t *mem);
 
 OPAL_DECLSPEC int opal_common_ucx_wpmem_flush(opal_common_ucx_wpmem_t *mem,
                                             opal_common_ucx_flush_scope_t scope,
