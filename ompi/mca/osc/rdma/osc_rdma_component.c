@@ -813,6 +813,7 @@ static int ompi_osc_rdma_query_btls (ompi_communicator_t *comm, struct mca_btl_b
 {
     struct mca_btl_base_module_t **possible_btls = NULL;
     int comm_size = ompi_comm_size (comm);
+    int comm_rank = ompi_comm_rank (comm);
     int rc = OMPI_SUCCESS, max_btls = 0;
     unsigned int selected_latency = INT_MAX;
     struct mca_btl_base_module_t *selected_btl = NULL;
@@ -852,10 +853,11 @@ static int ompi_osc_rdma_query_btls (ompi_communicator_t *comm, struct mca_btl_b
         return OMPI_SUCCESS;
     }
 
-    for (int i = 0 ; i < comm_size ; ++i) {
-        ompi_proc_t *proc = ompi_comm_peer_lookup (comm, i);
+    for (int rank = 0 ; rank < comm_size ; ++rank) {
+        ompi_proc_t *proc = ompi_comm_peer_lookup (comm, rank);
         mca_bml_base_endpoint_t *endpoint;
         int num_btls, prev_max;
+        bool found_btl = false;
 
         endpoint = mca_bml_base_get_endpoint (proc);
         if (NULL == endpoint) {
@@ -901,23 +903,30 @@ static int ompi_osc_rdma_query_btls (ompi_communicator_t *comm, struct mca_btl_b
                 for (int j = 0 ; j < max_btls ; ++j) {
                     if (endpoint->btl_rdma.bml_btls[i_btl].btl == possible_btls[j]) {
                         ++btl_counts[j];
+                        found_btl = true;
                         break;
                     } else if (NULL == possible_btls[j]) {
                         possible_btls[j] = endpoint->btl_rdma.bml_btls[i_btl].btl;
                         btl_counts[j] = 1;
+                        found_btl = true;
                         break;
                     }
                 }
             }
+        }
+
+        /* any non-local rank must have a usable btl */
+        if (!found_btl && comm_rank == rank) {
+            /* no btl = no rdma/atomics */
+            rc = OMPI_ERR_UNREACH;
+            break;
         }
     }
 
     if (OMPI_SUCCESS != rc) {
         free (possible_btls);
         free (btl_counts);
-
-        /* no btl = no rdma/atomics */
-        return OMPI_ERR_NOT_AVAILABLE;
+        return rc;
     }
 
     for (int i = 0 ; i < max_btls ; ++i) {
