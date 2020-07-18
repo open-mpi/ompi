@@ -577,7 +577,7 @@ void mca_pml_ob1_recv_request_progress_frag( mca_pml_ob1_recv_request_t* recvreq
  */
 void mca_pml_ob1_recv_request_frag_copy_start( mca_pml_ob1_recv_request_t* recvreq,
                                                mca_btl_base_module_t* btl,
-                                               mca_btl_base_segment_t* segments,
+                                               const mca_btl_base_segment_t* segments,
                                                size_t num_segments,
                                                mca_btl_base_descriptor_t* des)
 {

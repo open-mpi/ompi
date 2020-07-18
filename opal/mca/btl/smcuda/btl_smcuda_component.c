@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2011 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2009 The University of Tennessee and The University
+ * Copyright (c) 2004-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -42,6 +42,7 @@
 #include <sys/stat.h>  /* for mkfifo */
 #endif  /* HAVE_SYS_STAT_H */
 
+#include "opal/mca/hwloc/base/base.h"
 #include "opal/mca/shmem/base/base.h"
 #include "opal/mca/shmem/shmem.h"
 #include "opal/util/bit_ops.h"
@@ -135,8 +136,15 @@ static inline unsigned int mca_btl_smcuda_param_register_uint(
     return *storage;
 }
 
-static int mca_btl_smcuda_component_verify(void) {
-
+static int mca_btl_smcuda_component_verify(void)
+{
+    /* We canot support async memcpy right now */
+    if( (mca_btl_smcuda.super.btl_flags & MCA_BTL_FLAGS_CUDA_COPY_ASYNC_RECV) ||
+        (mca_btl_smcuda.super.btl_flags & MCA_BTL_FLAGS_CUDA_COPY_ASYNC_SEND) ) {
+        opal_output_verbose(10, opal_btl_base_framework.framework_output,
+                            "btl: smcuda: disable all asynchronous memcpy support");
+    }
+    mca_btl_smcuda.super.btl_flags &= ~(MCA_BTL_FLAGS_CUDA_COPY_ASYNC_RECV | MCA_BTL_FLAGS_CUDA_COPY_ASYNC_SEND);
     return mca_btl_base_param_verify(&mca_btl_smcuda.super);
 }
 
@@ -679,20 +687,15 @@ static void mca_btl_smcuda_send_cuda_ipc_ack(struct mca_btl_base_module_t* btl,
  * BTL.  It handles smcuda specific control messages that are triggered
  * when GPU memory transfers are initiated. */
 static void btl_smcuda_control(mca_btl_base_module_t* btl,
-                               mca_btl_base_tag_t tag,
-                               mca_btl_base_descriptor_t* des, void* cbdata)
+                               const mca_btl_base_receive_descriptor_t *descriptor)
 {
     int mydevnum, ipcaccess, res;
     ctrlhdr_t ctrlhdr;
     opal_proc_t *ep_proc;
-    struct mca_btl_base_endpoint_t *endpoint;
     mca_btl_smcuda_t *smcuda_btl = (mca_btl_smcuda_t *)btl;
-    mca_btl_smcuda_frag_t *frag = (mca_btl_smcuda_frag_t *)des;
-    mca_btl_base_segment_t* segments = des->des_segments;
+    const mca_btl_base_segment_t* segments = descriptor->des_segments;
+    struct mca_btl_base_endpoint_t *endpoint = descriptor->endpoint;
 
-    /* Use the rank of the peer that sent the data to get to the endpoint
-     * structure.  This is needed for PML callback. */
-    endpoint = mca_btl_smcuda_component.sm_peers[frag->hdr->my_smp_rank];
     ep_proc = endpoint->proc_opal;
 
     /* Copy out control message payload to examine it */
@@ -764,7 +767,6 @@ static void btl_smcuda_control(mca_btl_base_module_t* btl,
                 }
             }
 
-            assert(endpoint->peer_smp_rank == frag->hdr->my_smp_rank);
             opal_output_verbose(10, mca_btl_smcuda_component.cuda_ipc_output,
                                 "Analyzed CUDA IPC request: myrank=%d, mydev=%d, peerrank=%d, "
                                 "peerdev=%d --> ACCESS=%d",
@@ -871,6 +873,13 @@ mca_btl_smcuda_component_init(int *num_btls,
     /* calculate max procs so we can figure out how large to make the
      * shared-memory segment. this routine sets component sm_max_procs. */
     calc_sm_max_procs(num_local_procs);
+
+    /* Before we can safely create the backend file we need to know minimal
+     * information about the local node. We need at least a size of a cache line
+     * as we align the data in the backing file to it. The simplest way for now is
+     * to force the HWLOC initialization.
+     */
+    opal_hwloc_base_get_topology();
 
     /* This is where the modex will live some day. For now, just have local rank
      * 0 create a rendezvous file containing the backing store info, so the
@@ -999,7 +1008,6 @@ int mca_btl_smcuda_component_progress(void)
     /* local variables */
     mca_btl_base_segment_t seg;
     mca_btl_smcuda_frag_t *frag;
-    mca_btl_smcuda_frag_t Frag;
     sm_fifo_t *fifo = NULL;
     mca_btl_smcuda_hdr_t *hdr;
     int my_smp_rank = mca_btl_smcuda_component.my_smp_rank;
@@ -1046,7 +1054,6 @@ int mca_btl_smcuda_component_progress(void)
         switch(((uintptr_t)hdr) & MCA_BTL_SMCUDA_FRAG_TYPE_MASK) {
             case MCA_BTL_SMCUDA_FRAG_SEND:
             {
-                mca_btl_active_message_callback_t* reg;
                 /* change the address from address relative to the shared
                  * memory address, to a true virtual address */
                 hdr = (mca_btl_smcuda_hdr_t *) RELATIVE2VIRTUAL(hdr);
@@ -1058,17 +1065,16 @@ int mca_btl_smcuda_component_progress(void)
                                 my_smp_rank, peer_smp_rank, j, FIFO_MAP(peer_smp_rank));
                 }
 #endif
-                /* recv upcall */
-                reg = mca_btl_base_active_message_trigger + hdr->tag;
                 seg.seg_addr.pval = ((char *)hdr) + sizeof(mca_btl_smcuda_hdr_t);
                 seg.seg_len = hdr->len;
-                Frag.base.des_segment_count = 1;
-                Frag.base.des_segments = &seg;
-#if OPAL_CUDA_SUPPORT
-                Frag.hdr = hdr;  /* needed for peer rank in control messages */
-#endif /* OPAL_CUDA_SUPPORT */
-                reg->cbfunc(&mca_btl_smcuda.super, hdr->tag, &(Frag.base),
-                            reg->cbdata);
+
+                mca_btl_active_message_callback_t *reg = mca_btl_base_active_message_trigger + hdr->tag;
+                mca_btl_base_receive_descriptor_t recv_desc = {.endpoint = mca_btl_smcuda_component.sm_peers[peer_smp_rank],
+                                                               .des_segments = &seg,
+                                                               .des_segment_count = 1,
+                                                               .tag = hdr->tag,
+                                                               .cbdata = reg->cbdata};
+                reg->cbfunc(&mca_btl_smcuda.super, &recv_desc);
                 /* return the fragment */
                 MCA_BTL_SMCUDA_FIFO_WRITE(
                         mca_btl_smcuda_component.sm_peers[peer_smp_rank],
@@ -1101,27 +1107,27 @@ int mca_btl_smcuda_component_progress(void)
                 }
                 goto recheck_peer;
             }
-            default:
-                /* unknown */
-                /*
-                 * This code path should presumably never be called.
-                 * It's unclear if it should exist or, if so, how it should be written.
-                 * If we want to return it to the sending process,
-                 * we have to figure out who the sender is.
-                 * It seems we need to subtract the mask bits.
-                 * Then, hopefully this is an sm header that has an smp_rank field.
-                 * Presumably that means the received header was relative.
-                 * Or, maybe this code should just be removed.
-                 */
-                opal_output(0, "mca_btl_smcuda_component_progress read an unknown type of header");
-                hdr = (mca_btl_smcuda_hdr_t *) RELATIVE2VIRTUAL(hdr);
-                peer_smp_rank = hdr->my_smp_rank;
-                hdr = (mca_btl_smcuda_hdr_t*)((uintptr_t)hdr->frag |
-                        MCA_BTL_SMCUDA_FRAG_STATUS_MASK);
-                MCA_BTL_SMCUDA_FIFO_WRITE(
-                        mca_btl_smcuda_component.sm_peers[peer_smp_rank],
-                        my_smp_rank, peer_smp_rank, hdr, false, true, rc);
-                break;
+        default:
+            /* unknown */
+            /*
+             * This code path should presumably never be called.
+             * It's unclear if it should exist or, if so, how it should be written.
+             * If we want to return it to the sending process,
+             * we have to figure out who the sender is.
+             * It seems we need to subtract the mask bits.
+             * Then, hopefully this is an sm header that has an smp_rank field.
+             * Presumably that means the received header was relative.
+             * Or, maybe this code should just be removed.
+             */
+            opal_output(0, "mca_btl_smcuda_component_progress read an unknown type of header");
+            hdr = (mca_btl_smcuda_hdr_t *) RELATIVE2VIRTUAL(hdr);
+            peer_smp_rank = hdr->my_smp_rank;
+            hdr = (mca_btl_smcuda_hdr_t*)((uintptr_t)hdr->frag |
+                                          MCA_BTL_SMCUDA_FRAG_STATUS_MASK);
+            MCA_BTL_SMCUDA_FIFO_WRITE(
+                    mca_btl_smcuda_component.sm_peers[peer_smp_rank],
+                    my_smp_rank, peer_smp_rank, hdr, false, true, rc);
+            break;
         }
     }
     (void)rc; /* this is safe to ignore as the message is requeued till success */

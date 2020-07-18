@@ -1197,17 +1197,16 @@ static void mca_btl_smcuda_send_cuda_ipc_request(struct mca_btl_base_module_t* b
     if (endpoint->ipcstate != IPC_INIT) {
         OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
         return;
-    } else {
-        endpoint->ipctries++;
-        if (endpoint->ipctries > MAXTRIES) {
-            endpoint->ipcstate = IPC_BAD;
-            OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
-            return;
-        }
-        /* All is good.  Set up state and continue. */
-        endpoint->ipcstate = IPC_SENT;
-        OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
     }
+    endpoint->ipctries++;
+    if (endpoint->ipctries > MAXTRIES) {
+        endpoint->ipcstate = IPC_BAD;
+        OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
+        return;
+    }
+    /* All is good.  Set up state and continue. */
+    endpoint->ipcstate = IPC_SENT;
+    OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
 
     if ( mca_btl_smcuda_component.num_outstanding_frags * 2 > (int) mca_btl_smcuda_component.fifo_size ) {
         mca_btl_smcuda_component_progress();
