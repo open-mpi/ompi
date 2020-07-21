@@ -17,8 +17,8 @@
  *                         reserved.
  * Copyright (c) 2011-2013 INRIA.  All rights reserved.
  * Copyright (c) 2015      University of Houston. All rights reserved.
- * Copyright (c) 2015-2018 Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015-2020 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2017-2019 IBM Corporation.  All rights reserved.
  * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
@@ -97,6 +97,9 @@
 
 /* Maximum length of processor names (default is 256) */
 #undef OPAL_MAX_PROCESSOR_NAME
+
+/* The number or Fortran INTEGER in MPI Status */
+#undef OMPI_FORTRAN_STATUS_SIZE
 
 /* Whether we have FORTRAN LOGICAL*1 or not */
 #undef OMPI_HAVE_FORTRAN_LOGICAL1
@@ -431,6 +434,19 @@ struct ompi_status_public_t {
     size_t _ucount;
 };
 typedef struct ompi_status_public_t ompi_status_public_t;
+
+/*
+ * MPI_F08_status
+ */
+struct ompi_f08_status_public_t {
+    /* These fields are publicly defined in the MPI specification.
+       User applications may freely read from these fields. */
+    MPI_Fint MPI_SOURCE;
+    MPI_Fint MPI_TAG;
+    MPI_Fint MPI_ERROR;
+    MPI_Fint internal[OMPI_FORTRAN_STATUS_SIZE - 3];
+};
+typedef struct ompi_f08_status_public_t ompi_f08_status_public_t;
 
 /*
  * User typedefs

@@ -15,7 +15,7 @@ dnl Copyright (c) 2006-2008 Sun Microsystems, Inc.  All rights reserved.
 dnl Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
 dnl                         reserved.
 dnl Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
-dnl Copyright (c) 2014-2019 Research Organization for Information Science
+dnl Copyright (c) 2014-2020 Research Organization for Information Science
 dnl                         and Technology (RIST).  All rights reserved.
 dnl Copyright (c) 2016      IBM Corporation.  All rights reserved.
 dnl Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
@@ -276,6 +276,9 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
     OMPI_FORTRAN_STATUS_SIZE=$num_ints
     AC_MSG_RESULT([$OMPI_FORTRAN_STATUS_SIZE Fortran INTEGERs])
     AC_SUBST(OMPI_FORTRAN_STATUS_SIZE)
+    AC_DEFINE_UNQUOTED([OMPI_FORTRAN_STATUS_SIZE],
+                       [$OMPI_FORTRAN_STATUS_SIZE],
+                       [The number or Fortran INTEGER in MPI Status])
 
     # Setup for the compilers that don't support ignore TKR functionality
     OPAL_UNIQ(OMPI_FORTRAN_IKINDS)
