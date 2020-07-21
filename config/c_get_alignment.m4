@@ -44,6 +44,7 @@ AC_DEFUN([OPAL_C_GET_ALIGNMENT],[
     FILE *f=fopen("conftestval", "w");
     if (!f) exit(1);
     diff = ((char *)&p->x) - ((char *)&p->c);
+    free(p);
     fprintf(f, "%d\n", (diff >= 0) ? diff : -diff);
 ]])],                         [AS_TR_SH([opal_cv_c_align_$1])=`cat conftestval`],
                                [AC_MSG_WARN([*** Problem running configure test!])
