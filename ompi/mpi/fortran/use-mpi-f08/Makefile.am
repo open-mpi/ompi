@@ -7,7 +7,7 @@
 # Copyright (c) 2012-2013 Inria.  All rights reserved.
 # Copyright (c) 2013-2018 Los Alamos National Security, LLC. All rights
 #                         reserved.
-# Copyright (c) 2015-2019 Research Organization for Information Science
+# Copyright (c) 2015-2020 Research Organization for Information Science
 #                         and Technology (RIST).  All rights reserved.
 # Copyright (c) 2016      IBM Corporation.  All rights reserved.
 # Copyright (c) 2017-2018 FUJITSU LIMITED.  All rights reserved.
@@ -36,6 +36,7 @@ if OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS
 
 AM_FCFLAGS = -I$(top_builddir)/ompi/include \
              -I$(top_srcdir)/ompi/include \
+             $(OMPI_FC_MODULE_FLAG)$(top_builddir)/ompi/mpi/fortran/use-mpi \
              $(OMPI_FC_MODULE_FLAG)$(top_builddir)/ompi/$(OMPI_FORTRAN_USEMPI_DIR) \
              $(OMPI_FC_MODULE_FLAG)mod \
              $(OMPI_FC_MODULE_FLAG)bindings \
@@ -363,6 +364,8 @@ mpi_api_files = \
         ssend_init_f08.F90 \
         startall_f08.F90 \
         start_f08.F90 \
+        status_f082f_f08.F90 \
+        status_f2f08_f08.F90 \
         status_set_cancelled_f08.F90 \
         status_set_elements_f08.F90 \
         status_set_elements_x_f08.F90 \
@@ -718,6 +721,8 @@ pmpi_api_files = \
         profile/pssend_init_f08.F90 \
         profile/pstartall_f08.F90 \
         profile/pstart_f08.F90 \
+        profile/pstatus_f082f_f08.F90 \
+        profile/pstatus_f2f08_f08.F90 \
         profile/pstatus_set_cancelled_f08.F90 \
         profile/pstatus_set_elements_f08.F90 \
         profile/pstatus_set_elements_x_f08.F90 \

@@ -387,6 +387,18 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
           [OMPI_TRY_FORTRAN_BINDINGS=$OMPI_FORTRAN_MPIFH_BINDINGS
            AC_MSG_RESULT([no])])
 
+    OMPI_FORTRAN_HAVE_BIND_C_TYPE=0
+    OMPI_FORTRAN_HAVE_TYPE_MPI_STATUS=0
+
+    AS_IF([test $OMPI_BUILD_FORTRAN_BINDINGS -ge $OMPI_FORTRAN_USEMPI_BINDINGS],
+          [OMPI_FORTRAN_CHECK_BIND_C_TYPE(
+              [OMPI_FORTRAN_HAVE_BIND_C_TYPE=1
+               OMPI_FORTRAN_HAVE_TYPE_MPI_STATUS=1])])
+
+    AC_SUBST(OMPI_FORTRAN_HAVE_TYPE_MPI_STATUS)
+    AM_CONDITIONAL(OMPI_FORTRAN_HAVE_TYPE_MPI_STATUS,
+                   [test $OMPI_FORTRAN_HAVE_TYPE_MPI_STATUS -eq 1])
+
     #---------------------------------
     # Fortran use mpi_f08 MPI bindings
     #---------------------------------
@@ -422,14 +434,11 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
                [OMPI_FORTRAN_HAVE_BIND_C_SUB=0
                 OMPI_BUILD_FORTRAN_BINDINGS=$OMPI_FORTRAN_USEMPI_BINDINGS])])
 
-    OMPI_FORTRAN_HAVE_BIND_C_TYPE=0
     AS_IF([test $OMPI_TRY_FORTRAN_BINDINGS -ge $OMPI_FORTRAN_USEMPIF08_BINDINGS && \
            test $OMPI_BUILD_FORTRAN_BINDINGS -ge $OMPI_FORTRAN_USEMPIF08_BINDINGS],
           [ # If we don't have TYPE, BIND(C), we won't build mpi_f08 at all
-           OMPI_FORTRAN_CHECK_BIND_C_TYPE(
-               [OMPI_FORTRAN_HAVE_BIND_C_TYPE=1],
-               [OMPI_FORTRAN_HAVE_BIND_C_TYPE=0
-                OMPI_BUILD_FORTRAN_BINDINGS=$OMPI_FORTRAN_USEMPI_BINDINGS])])
+           AS_IF([test $OMPI_FORTRAN_HAVE_BIND_C_TYPE -ne 1],
+                 [OMPI_BUILD_FORTRAN_BINDINGS=$OMPI_FORTRAN_USEMPI_BINDINGS])])
 
     # Per discussion on the devel list starting here:
     # https://www.open-mpi.org/community/lists/devel/2014/01/13799.php
@@ -701,6 +710,16 @@ end type test_mpi_handle],
     AM_CONDITIONAL(OMPI_BUILD_FORTRAN_USEMPI_IGNORE_TKR_BINDINGS,
                    [test $OMPI_BUILD_FORTRAN_BINDINGS -ge $OMPI_FORTRAN_USEMPI_BINDINGS && \
                     test $OMPI_FORTRAN_HAVE_IGNORE_TKR -eq 1])
+    # True if we support TYPE, BIND(C)
+    AC_DEFINE_UNQUOTED(OMPI_FORTRAN_HAVE_BIND_C_TYPE,
+                       [$OMPI_FORTRAN_HAVE_BIND_C_TYPE],
+                       [For ompi_info: Whether the compiler supports TYPE, BIND(C) or not])
+
+    # For mpif-status.h, configure-fortran-output.h, mpi-f08-types.F90 (and ompi_info)
+    AC_SUBST([OMPI_FORTRAN_HAVE_PRIVATE])
+    AC_DEFINE_UNQUOTED([OMPI_FORTRAN_HAVE_PRIVATE],
+                       [$OMPI_FORTRAN_HAVE_PRIVATE],
+                       [For mpif-status.h, mpi-f08-types.f90 and ompi_info: whether the compiler supports the "private" keyword or not (used in TYPE(MPI_Status))])
 
     # -------------------
     # use mpi_f08 final setup
@@ -749,21 +768,12 @@ end type test_mpi_handle],
     AC_DEFINE_UNQUOTED(OMPI_FORTRAN_HAVE_BIND_C_SUB,
                        [$OMPI_FORTRAN_HAVE_BIND_C_SUB],
                        [For ompi_info: Whether the compiler supports SUBROUTINE ... BIND(C) or not])
-    AC_DEFINE_UNQUOTED(OMPI_FORTRAN_HAVE_BIND_C_TYPE,
-                       [$OMPI_FORTRAN_HAVE_BIND_C_TYPE],
-                       [For ompi_info: Whether the compiler supports TYPE, BIND(C) or not])
     AC_DEFINE_UNQUOTED(OMPI_FORTRAN_HAVE_BIND_C_TYPE_NAME,
                        [$OMPI_FORTRAN_HAVE_BIND_C_TYPE_NAME],
                        [For ompi_info: Whether the compiler supports TYPE, BIND(C, NAME="name") or not])
     AC_DEFINE_UNQUOTED([OMPI_FORTRAN_HAVE_OPTIONAL_ARGS],
                        [$OMPI_FORTRAN_HAVE_OPTIONAL_ARGS],
                        [For ompi_info: whether the Fortran compiler supports optional arguments or not])
-
-    # For configure-fortran-output.h, mpi-f08-types.F90 (and ompi_info)
-    AC_SUBST([OMPI_FORTRAN_HAVE_PRIVATE])
-    AC_DEFINE_UNQUOTED([OMPI_FORTRAN_HAVE_PRIVATE],
-                       [$OMPI_FORTRAN_HAVE_PRIVATE],
-                       [For mpi-f08-types.f90 and ompi_info: whether the compiler supports the "private" keyword or not (used in MPI_Status)])
 
     # For configure-fortran-output.h, mpi-f08-interfaces-callbacks.F90
     # (and ompi_info)

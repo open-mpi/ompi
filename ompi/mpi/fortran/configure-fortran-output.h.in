@@ -3,7 +3,7 @@
 ! Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
 ! Copyright (c) 2009-2012 Los Alamos National Security, LLC.
 !                         All rights reserved.
-! Copyright (c) 2017-2019 Research Organization for Information Science
+! Copyright (c) 2017-2020 Research Organization for Information Science
 !                         and Technology (RIST).  All rights reserved.
 !
 ! $COPYRIGHT$
@@ -104,6 +104,8 @@
 #define OMPI_SIZEOF_FORTRAN_COMPLEX32 @OMPI_SIZEOF_FORTRAN_COMPLEX32@
 
 #define OMPI_ENABLE_MPI1_COMPAT @OMPI_ENABLE_MPI1_COMPAT@
+
+#define OMPI_FORTRAN_HAVE_TYPE_MPI_STATUS @OMPI_FORTRAN_HAVE_TYPE_MPI_STATUS@
 
 ! Include some post-processing, based on the values from above
 

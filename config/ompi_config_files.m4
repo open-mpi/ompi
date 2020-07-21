@@ -1,8 +1,8 @@
 # -*- shell-script -*-
 #
 # Copyright (c) 2009-2020 Cisco Systems, Inc.  All rights reserved
-# Copyright (c) 2017-2018 Research Organization for Information Science
-#                         and Technology (RIST). All rights reserved.
+# Copyright (c) 2017-2020 Research Organization for Information Science
+#                         and Technology (RIST).  All rights reserved.
 # Copyright (c) 2018      Los Alamos National Security, LLC. All rights
 #                         reserved.
 # Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
@@ -29,6 +29,8 @@ AC_DEFUN([OMPI_CONFIG_FILES],[
         ompi/mpi/fortran/base/Makefile
         ompi/mpi/fortran/mpif-h/Makefile
         ompi/mpi/fortran/mpif-h/profile/Makefile
+        ompi/mpi/fortran/use-mpi/Makefile
+        ompi/mpi/fortran/use-mpi/mpi-types.F90
         ompi/mpi/fortran/use-mpi-tkr/Makefile
         ompi/mpi/fortran/use-mpi-tkr/fortran_sizes.h
         ompi/mpi/fortran/use-mpi-tkr/fortran_kinds.sh

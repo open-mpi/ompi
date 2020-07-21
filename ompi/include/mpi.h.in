@@ -411,6 +411,7 @@ typedef struct ompi_op_t *MPI_Op;
 typedef struct ompi_request_t *MPI_Request;
 typedef struct ompi_message_t *MPI_Message;
 typedef struct ompi_status_public_t MPI_Status;
+typedef struct ompi_f08_status_public_t MPI_F08_status;
 typedef struct ompi_win_t *MPI_Win;
 typedef struct mca_base_var_enum_t *MPI_T_enum;
 typedef struct ompi_mpit_cvar_handle_t *MPI_T_cvar_handle;
@@ -1779,7 +1780,11 @@ OMPI_DECLSPEC  int MPI_Ssend(const void *buf, int count, MPI_Datatype datatype, 
 OMPI_DECLSPEC  int MPI_Start(MPI_Request *request);
 OMPI_DECLSPEC  int MPI_Startall(int count, MPI_Request array_of_requests[]);
 OMPI_DECLSPEC  int MPI_Status_c2f(const MPI_Status *c_status, MPI_Fint *f_status);
+OMPI_DECLSPEC  int MPI_Status_c2f08(const MPI_Status *c_status, MPI_F08_status *f08_status);
+OMPI_DECLSPEC  int MPI_Status_f082c(const MPI_F08_status *f08_status, MPI_Status *c_status);
+OMPI_DECLSPEC  int MPI_Status_f082f(const MPI_F08_status *f08_status, MPI_Fint *f_status);
 OMPI_DECLSPEC  int MPI_Status_f2c(const MPI_Fint *f_status, MPI_Status *c_status);
+OMPI_DECLSPEC  int MPI_Status_f2f08(const MPI_Fint *f_status, MPI_F08_status *f08_status);
 OMPI_DECLSPEC  int MPI_Status_set_cancelled(MPI_Status *status, int flag);
 OMPI_DECLSPEC  int MPI_Status_set_elements(MPI_Status *status, MPI_Datatype datatype,
                                            int count);
@@ -2440,7 +2445,11 @@ OMPI_DECLSPEC  int PMPI_Ssend(const void *buf, int count, MPI_Datatype datatype,
 OMPI_DECLSPEC  int PMPI_Start(MPI_Request *request);
 OMPI_DECLSPEC  int PMPI_Startall(int count, MPI_Request array_of_requests[]);
 OMPI_DECLSPEC  int PMPI_Status_c2f(const MPI_Status *c_status, MPI_Fint *f_status);
+OMPI_DECLSPEC  int PMPI_Status_c2f08(const MPI_Status *c_status, MPI_F08_status *f08_status);
+OMPI_DECLSPEC  int PMPI_Status_f082f(const MPI_F08_status *f08_status, MPI_Fint *f_status);
+OMPI_DECLSPEC  int PMPI_Status_f082c(const MPI_F08_status *f08_status, MPI_Status *c_status);
 OMPI_DECLSPEC  int PMPI_Status_f2c(const MPI_Fint *f_status, MPI_Status *c_status);
+OMPI_DECLSPEC  int PMPI_Status_f2f08(const MPI_Fint *f_status, MPI_F08_status *f08_status);
 OMPI_DECLSPEC  int PMPI_Status_set_cancelled(MPI_Status *status, int flag);
 OMPI_DECLSPEC  int PMPI_Status_set_elements(MPI_Status *status, MPI_Datatype datatype,
                                             int count);

@@ -7,7 +7,7 @@
 !                         of Tennessee Research Foundation.  All rights
 !                         reserved.
 ! Copyright (c) 2012      Inria.  All rights reserved.
-! Copyright (c) 2015-2019 Research Organization for Information Science
+! Copyright (c) 2015-2020 Research Organization for Information Science
 !                         and Technology (RIST).  All rights reserved.
 ! $COPYRIGHT$
 !
@@ -2634,6 +2634,24 @@ subroutine ompi_query_thread_f(provided,ierror) &
    INTEGER, INTENT(OUT) :: provided
    INTEGER, INTENT(OUT) :: ierror
 end subroutine ompi_query_thread_f
+
+subroutine ompi_status_f082f_f(f08_status,f_status,ierror) &
+   BIND(C, name="ompi_status_f2f08_f")
+   use :: mpi_f08_types, only : MPI_Status, MPI_STATUS_SIZE
+   implicit none
+   TYPE(MPI_Status), INTENT(IN) :: f08_status
+   INTEGER, INTENT(OUT) :: f_status(MPI_STATUS_SIZE)
+   INTEGER, INTENT(OUT) :: ierror
+end subroutine ompi_status_f082f_f
+
+subroutine ompi_status_f2f08_f(f_status,f08_status,ierror) &
+   BIND(C, name="ompi_status_f082f_f")
+   use :: mpi_f08_types, only : MPI_Status, MPI_STATUS_SIZE
+   implicit none
+   INTEGER, INTENT(IN) :: f_status(MPI_STATUS_SIZE)
+   TYPE(MPI_Status), INTENT(OUT) :: f08_status
+   INTEGER, INTENT(OUT) :: ierror
+end subroutine ompi_status_f2f08_f
 
 subroutine ompi_status_set_elements_f(status,datatype,count,ierror) &
    BIND(C, name="ompi_status_set_elements_f")

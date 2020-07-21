@@ -11,8 +11,8 @@
 ! Copyright (c) 2004-2005 The Regents of the University of California.
 !                         All rights reserved.
 ! Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
-! Copyright (c) 2017      Research Organization for Information Science
-!                         and Technology (RIST). All rights reserved.
+! Copyright (c) 2017-2020 Research Organization for Information Science
+!                         and Technology (RIST).  All rights reserved.
 ! $COPYRIGHT$
 !
 ! Additional copyrights may follow
@@ -24,6 +24,9 @@
 
 module mpi
 
+#if OMPI_FORTRAN_HAVE_TYPE_MPI_STATUS
+  use mpi_types
+#endif
   include "mpif-config.h"
   include "mpif-constants.h"
   include "mpif-handles.h"
@@ -42,6 +45,9 @@ module mpi
 ! The ignore-TKR version of the MPI interfaces
 
   include "ompi/mpi/fortran/use-mpi-ignore-tkr/mpi-ignore-tkr-interfaces.h"
+#if OMPI_FORTRAN_HAVE_TYPE_MPI_STATUS
+  include "ompi/mpi/fortran/use-mpi-ignore-tkr/mpi-ignore-tkr-status.h"
+#endif
   include "ompi/mpi/fortran/use-mpi-ignore-tkr/mpi-ignore-tkr-file-interfaces.h"
 #if !defined(OMPI_ENABLE_MPI1_COMPAT)
 

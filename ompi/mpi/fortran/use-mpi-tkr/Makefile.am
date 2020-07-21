@@ -13,8 +13,8 @@
 # Copyright (c) 2006-2019 Cisco Systems, Inc.  All rights reserved
 # Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
 #                         reserved.
-# Copyright (c) 2014-2016 Research Organization for Information Science
-#                         and Technology (RIST). All rights reserved.
+# Copyright (c) 2014-2020 Research Organization for Information Science
+#                         and Technology (RIST).  All rights reserved.
 # Copyright (c) 2016      IBM Corporation.  All rights reserved.
 # Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
 # $COPYRIGHT$
@@ -49,6 +49,7 @@ if OMPI_BUILD_FORTRAN_USEMPI_TKR_BINDINGS
 
 AM_FCFLAGS = -I$(top_builddir)/ompi/include -I$(top_srcdir)/ompi/include \
              $(OMPI_FC_MODULE_FLAG). -I$(top_srcdir) -I$(top_builddir) -I. \
+             -I$(top_builddir)/ompi/mpi/fortran/use-mpi \
              -I$(top_builddir)/ompi/mpi/fortran/use-mpi-tkr $(FCFLAGS_f90)
 
 # Do different things if the top-level configure decided that we're
@@ -66,11 +67,13 @@ lib_LTLIBRARIES += lib@OMPI_LIBMPI_NAME@_usempi.la
 
 mpi.lo: mpi.F90
 mpi.lo: mpi-f90-interfaces.h
+mpi.lo: mpi-f90-status.h
 mpi.lo: mpi-f90-file-interfaces.h
 mpi.lo: mpi-f90-removed-interfaces.h
 mpi.lo: $(top_builddir)/ompi/mpi/fortran/configure-fortran-output.h
 mpi.lo: mpi-f90-cptr-interfaces.h
 mpi.lo: pmpi-f90-interfaces.h
+mpi.lo: pmpi-f90-status.h
 mpi.lo: pmpi-f90-file-interfaces.h
 mpi.lo: pmpi-f90-removed-interfaces.h
 mpi.lo: pmpi-f90-cptr-interfaces.h
@@ -102,12 +105,18 @@ nodist_lib@OMPI_LIBMPI_NAME@_usempi_la_SOURCES += \
 endif
 mpi.lo: $(nodist_lib@OMPI_LIBMPI_NAME@_usempi_la_SOURCES)
 
+libusempi_internal_modules =
+if OMPI_FORTRAN_HAVE_TYPE_MPI_STATUS
+libusempi_internal_modules += $(top_builddir)/ompi/mpi/fortran/use-mpi/libusempi_internal_modules.la
+endif
+
 # Note that we invoke some OPAL functions directly in
 # libmpi_usempi.la, so we need to link in the OPAL library directly
 # (pulling it in indirectly via libmpi.la does not work on all
 # platforms).
 lib@OMPI_LIBMPI_NAME@_usempi_la_LIBADD = \
         $(top_builddir)/ompi/mpi/fortran/mpif-h/lib@OMPI_LIBMPI_NAME@_mpifh.la \
+        $(libusempi_internal_modules) \
         $(OMPI_TOP_BUILDDIR)/opal/lib@OPAL_LIB_PREFIX@open-pal.la
 # Set the library version
 lib@OMPI_LIBMPI_NAME@_usempi_la_LDFLAGS = \
@@ -181,10 +190,12 @@ endif
 
 EXTRA_DIST = \
      mpi-f90-interfaces.h \
+     mpi-f90-status.h \
      mpi-f90-file-interfaces.h \
      mpi-f90-removed-interfaces.h \
      mpi-f90-cptr-interfaces.h \
      pmpi-f90-interfaces.h \
+     pmpi-f90-status.h \
      pmpi-f90-file-interfaces.h \
      pmpi-f90-removed-interfaces.h \
      pmpi-f90-cptr-interfaces.h

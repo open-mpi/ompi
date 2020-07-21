@@ -27,16 +27,12 @@ include $(top_srcdir)/Makefile.ompi-rules
 CPPFLAGS =
 AM_CPPFLAGS =
 
-# This Makefile is only relevant if we're building the "use mpi_f08"
+# This Makefile is only relevant if we support TYPE(MPI_Status)
 # MPI bindings.
-if OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS
+if OMPI_FORTRAN_HAVE_TYPE_MPI_STATUS
 
 AM_FCFLAGS = -I$(top_builddir)/ompi/include \
              -I$(top_srcdir)/ompi/include \
-             $(OMPI_FC_MODULE_FLAG)$(top_builddir)/ompi/mpi/fortran/use-mpi \
-             $(OMPI_FC_MODULE_FLAG)$(top_builddir)/ompi/$(OMPI_FORTRAN_USEMPI_DIR) \
-             $(OMPI_FC_MODULE_FLAG). \
-             $(OMPI_FC_MODULE_FLAG)../mod \
              -I$(top_srcdir) -I$(top_builddir) $(FCFLAGS_f90)
 
 MOSTLYCLEANFILES = *.mod
@@ -45,25 +41,27 @@ CLEANFILES += *.i90
 
 ###########################################################################
 
-module_sentinel_file = \
-        libforce_usempif08_internal_bindings_to_be_built.la
 
-noinst_LTLIBRARIES = $(module_sentinel_file)
+noinst_LTLIBRARIES = libusempi_internal_modules.la
 
-# f08 support modules
+# Don't distribute mpi-types.F90,  it is generated.
+nodist_libusempi_internal_modules_la_SOURCES = \
+	mpi-types.F90
 
-libforce_usempif08_internal_bindings_to_be_built_la_SOURCES = \
-        mpi-f-interfaces-bind.h \
-        ompi-mpifh-bindings.F90
+mpi-types.lo: mpi-types.F90
 
-#
-# Automake doesn't do Fortran dependency analysis, so must list them
-# manually here.  Bummer!
-#
+# Install the generated .mod files.  Unfortunately, each F90 compiler
+# may generate different filenames, so we have to use a glob.  :-(
 
-ompi-mpifh-bindings.lo: mpi-f-interfaces-bind.h
+install-exec-hook:
+	@ for file in `ls *.mod`; do \
+	  echo $(INSTALL) $$file $(DESTDIR)$(libdir); \
+	  $(INSTALL) $$file $(DESTDIR)$(libdir); \
+	done
 
-distclean-local:
-	rm -f *.mod
-
+uninstall-local:
+	@ for file in `ls *.mod`; do \
+	  echo rm -f $(DESTDIR)$(libdir)/$$file; \
+	  rm -f $(DESTDIR)$(libdir)/$$file; \
+	done
 endif

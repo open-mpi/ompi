@@ -14,8 +14,8 @@
 # Copyright (c) 2011-2013 Universite Bordeaux 1
 # Copyright (c) 2013-2018 Los Alamos National Security, LLC. All rights
 #                         reserved.
-# Copyright (c) 2015-2017 Research Organization for Information Science
-#                         and Technology (RIST). All rights reserved.
+# Copyright (c) 2015-2020 Research Organization for Information Science
+#                         and Technology (RIST).  All rights reserved.
 # Copyright (c) 2016      IBM Corporation.  All rights reserved.
 # Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
 # $COPYRIGHT$
@@ -385,6 +385,8 @@ lib@OMPI_LIBMPI_NAME@_mpifh_la_SOURCES += \
         ssend_init_f.c \
         startall_f.c \
         start_f.c \
+        status_f082f_f.c \
+        status_f2f08_f.c \
         status_set_cancelled_f.c \
         status_set_elements_f.c \
         status_set_elements_x_f.c \

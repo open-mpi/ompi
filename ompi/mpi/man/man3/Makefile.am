@@ -2,6 +2,8 @@
 # Copyright (c) 2006-2020 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
 # Copyright (c) 2012-2013 Los Alamos National Security, LLC.  All rights reserved.
+# Copyright (c) 2020      Research Organization for Information Science
+#                         and Technology (RIST).  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -311,8 +313,12 @@ TEMPLATE_FILES = \
         MPI_Ssend_init.3in \
         MPI_Start.3in \
         MPI_Startall.3in \
+        MPI_Status_c2f08.3in \
         MPI_Status_c2f.3in \
+        MPI_Status_f082c.3in \
+        MPI_Status_f082f.3in \
         MPI_Status_f2c.3in \
+        MPI_Status_f2f08.3in \
         MPI_Status_set_cancelled.3in \
         MPI_Status_set_elements.3in \
         MPI_Status_set_elements_x.3in \

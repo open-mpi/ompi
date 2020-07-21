@@ -15,8 +15,8 @@
 # Copyright (c) 2013-2015 Los Alamos National Security, LLC. All rights
 #                         reserved.
 # Copyright (c) 2015-2019 Intel, Inc.  All rights reserved.
-# Copyright (c) 2015-2018 Research Organization for Information Science
-#                         and Technology (RIST). All rights reserved.
+# Copyright (c) 2015-2020 Research Organization for Information Science
+#                         and Technology (RIST).  All rights reserved.
 # Copyright (c) 2016      IBM Corporation.  All rights reserved.
 # Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
 # $COPYRIGHT$
@@ -88,6 +88,7 @@ SUBDIRS = \
         . \
         $(OMPI_MPIEXT_MPIFH_DIRS) \
         mpi/fortran/mpif-h \
+        mpi/fortran/use-mpi \
         $(OMPI_MPIEXT_USEMPI_DIR) \
         $(OMPI_FORTRAN_USEMPI_DIR) \
         mpi/fortran/mpiext-use-mpi \
@@ -121,6 +122,7 @@ DIST_SUBDIRS = \
         mpi/tool \
         mpi/fortran/base \
         mpi/fortran/mpif-h \
+        mpi/fortran/use-mpi \
         mpi/fortran/use-mpi-tkr \
         mpi/fortran/use-mpi-ignore-tkr \
         mpi/fortran/mpiext-use-mpi \

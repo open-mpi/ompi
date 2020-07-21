@@ -11,7 +11,7 @@
 ! Copyright (c) 2004-2005 The Regents of the University of California.
 !                         All rights reserved.
 ! Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
-! Copyright (c) 2016-2019 Research Organization for Information Science
+! Copyright (c) 2016-2020 Research Organization for Information Science
 !                         and Technology (RIST).  All rights reserved.
 ! $COPYRIGHT$
 !
@@ -23,6 +23,10 @@
 #include "ompi/mpi/fortran/configure-fortran-output.h"
 
 module mpi
+
+#if OMPI_FORTRAN_HAVE_TYPE_MPI_STATUS
+  use mpi_types
+#endif
 
   include "mpif-config.h"
   include "mpif-constants.h"
@@ -45,6 +49,11 @@ module mpi
 ! directive, not the Fortran include.
 #include "mpi-f90-cptr-interfaces.h"
 #include "pmpi-f90-cptr-interfaces.h"
+
+#if OMPI_FORTRAN_HAVE_TYPE_MPI_STATUS
+  include "mpi-f90-status.h"
+  include "pmpi-f90-status.h"
+#endif
 
 ! This file is generated, and is *huge*.  Its size is directly related
 ! to the --with-f90-max-array-dim configure parameter.

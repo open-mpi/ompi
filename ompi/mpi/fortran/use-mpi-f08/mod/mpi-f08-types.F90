@@ -3,7 +3,7 @@
 ! Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
 ! Copyright (c) 2009-2012 Los Alamos National Security, LLC.
 !                         All rights reserved.
-! Copyright (c) 2015-2019 Research Organization for Information Science
+! Copyright (c) 2015-2020 Research Organization for Information Science
 !                         and Technology (RIST).  All rights reserved.
 ! Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
 ! Copyright (c) 2020      The University of Tennessee and The University
@@ -21,6 +21,7 @@
 module mpi_f08_types
 
    use, intrinsic :: ISO_C_BINDING
+   use mpi_types
 
    include "mpif-config.h"
    include "mpif-constants.h"
@@ -69,24 +70,6 @@ module mpi_f08_types
    type, BIND(C) :: MPI_Win
       integer :: MPI_VAL
    end type MPI_Win
-
-   type, BIND(C) :: MPI_Status
-      integer :: MPI_SOURCE
-      integer :: MPI_TAG
-      integer :: MPI_ERROR
-      ! The mpif.h interface uses MPI_STATUS_SIZE to know how long of
-      ! an array of INTEGERs is necessary to hold a C MPI_Status.
-      ! Effectively do the same thing here: pad out this datatype with
-      ! as many INTEGERs as there are C int's can fit in
-      ! sizeof(MPI_Status) bytes -- see MPI_Status_ctof() for an
-      ! explanation why.
-      !
-      ! This padding makes this F08 Type(MPI_Status) be the same size
-      ! as the mpif.h status (i.e., an array of MPI_STATUS_SIZE
-      ! INTEGERs), which is critical for MPI_Status_ctof() to not
-      ! overwrite memory.
-      integer OMPI_PRIVATE :: internal(MPI_STATUS_SIZE - 3)
-   end type MPI_Status
 
   !
   ! Pre-defined handles
