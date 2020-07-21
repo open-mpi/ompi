@@ -126,6 +126,7 @@ typedef struct opal_process_info_t {
     char *initial_wdir;
     uint32_t reincarnation;
     bool proc_is_bound;
+    char *initial_errhandler;
 } opal_process_info_t;
 OPAL_DECLSPEC extern opal_process_info_t opal_process_info;
 

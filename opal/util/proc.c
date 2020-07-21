@@ -51,7 +51,8 @@ opal_process_info_t opal_process_info = {
     .num_apps = 0,
     .initial_wdir = NULL,
     .reincarnation = 0,
-    .proc_is_bound = false
+    .proc_is_bound = false,
+    .initial_errhandler = NULL,
 };
 
 static opal_proc_t opal_local_proc = {

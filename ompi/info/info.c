@@ -131,6 +131,12 @@ int ompi_mpiinfo_init(void)
     opal_info_set(&ompi_mpi_info_env.info.super, "soft", cptr);
     free(cptr);
 
+    /* the initial error handler, set it as requested (nothing if not
+     * requested) */
+    if (NULL != ompi_process_info.initial_errhandler) {
+        opal_info_set(&ompi_mpi_info_env.info.super, "mpi_initial_errhandler", ompi_process_info.initial_errhandler);
+    }
+
     /* local host name */
     opal_info_set(&ompi_mpi_info_env.info.super, "host", ompi_process_info.nodename);
 

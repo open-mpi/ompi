@@ -185,6 +185,26 @@ OMPI_DECLSPEC extern ompi_predefined_errhandler_t ompi_mpi_errors_throw_exceptio
  */
 OMPI_DECLSPEC extern opal_pointer_array_t ompi_errhandler_f_to_c_table;
 
+/**
+ * This function selects the initial error handler.
+ * It may be called during MPI_INIT, or during the first MPI call
+ * that raises an error. This function does not allocate memory,
+ * and will only populate the ompi_initial_error_handler_eh and
+ * ompi_initial_error_handler pointers with predefined error handler
+ * and error handler functions aliases.
+ */
+OMPI_DECLSPEC int ompi_initial_errhandler_init(void);
+/**
+ * The initial error handler pointer. Will be set to alias one of the
+ * predefined error handlers through launch keys during the first MPI call,
+ * and will then be attached to predefined communicators.
+ */
+OMPI_DECLSPEC extern ompi_errhandler_t* ompi_initial_error_handler_eh;
+/**
+ * The initial error handler function pointer. Will be called when an error
+ * is raised before MPI_INIT or after MPI_FINALIZE.
+ */
+OMPI_DECLSPEC extern void (*ompi_initial_error_handler)(struct ompi_communicator_t **comm, int *error_code, ...);
 
 /**
  * Forward declaration so that we don't have to include
@@ -213,7 +233,9 @@ struct ompi_request_t;
         int32_t state = ompi_mpi_state;                                 \
         if (OPAL_UNLIKELY(state < OMPI_MPI_STATE_INIT_COMPLETED ||      \
                           state > OMPI_MPI_STATE_FINALIZE_PAST_COMM_SELF_DESTRUCT)) { \
-            ompi_mpi_errors_are_fatal_comm_handler(NULL, NULL, name);   \
+            ompi_errhandler_invoke(NULL, NULL, -1,                       \
+                                   ompi_errcode_get_mpi_code(MPI_ERR_ARG), \
+                                   name);                               \
         }                                                               \
     }
 

@@ -782,6 +782,7 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
     int flag=0;
     char cwd[OPAL_PATH_MAX];
     char host[OPAL_MAX_INFO_VAL];  /*** should define OMPI_HOST_MAX ***/
+    char init_errh[OPAL_MAX_INFO_VAL];
     char prefix[OPAL_MAX_INFO_VAL];
     char stdin_target[OPAL_MAX_INFO_VAL];
     char params[OPAL_MAX_INFO_VAL];
@@ -814,6 +815,7 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
        - "file": filename, where additional information is provided.
        - "soft": see page 92 of MPI-2.
        - "host": desired host where to spawn the processes
+       - "mpi_initial_errhandler": the error handler attached to predefined communicators.
       Non-standard keys:
        - "hostfile": hostfile containing hosts where procs are
        to be spawned
@@ -967,6 +969,15 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
                 continue;
             }
 #endif
+
+            /* check for 'mpi_initial_errhandler' */
+            ompi_info_get (array_of_info[i], "mpi_initial_errhandler", sizeof(init_errh) - 1, init_errh, &flag);
+            if ( flag ) {
+                /* this is set as an environment because it must be available
+                 * before pmix_init */
+                opal_setenv("OMPI_MCA_mpi_initial_errhandler", init_errh, true, &app->env);
+                continue;
+            }
 
             /* 'path', 'arch', 'file', 'soft'  -- to be implemented */
 

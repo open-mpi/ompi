@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2007 The University of Tennessee and The University
+ * Copyright (c) 2004-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -54,93 +54,6 @@ OMPI_DECLSPEC extern int ompi_mpi_errcode_lastused;
 OMPI_DECLSPEC extern int ompi_mpi_errcode_lastpredefined;
 
 OMPI_DECLSPEC extern ompi_mpi_errcode_t ompi_err_unknown;
-
-/**
- * Check for a valid error code
- */
-static inline bool ompi_mpi_errcode_is_invalid(int errcode)
-{
-    if ( errcode >= 0 && errcode <= ompi_mpi_errcode_lastused )
-        return 0;
-    else
-        return 1;
-}
-
-/**
- * Return the error class
- */
-static inline int ompi_mpi_errcode_get_class (int errcode)
-{
-    ompi_mpi_errcode_t *err = NULL;
-
-    if (errcode >= 0) {
-        err = (ompi_mpi_errcode_t *)opal_pointer_array_get_item(&ompi_mpi_errcodes, errcode);
-        /* If we get a bogus errcode, return MPI_ERR_UNKNOWN */
-    }
-
-    if (NULL != err) {
-	if ( err->code != MPI_UNDEFINED ) {
-	    return err->cls;
-	}
-    }
-    return ompi_err_unknown.cls;
-}
-
-static inline int ompi_mpi_errcode_is_predefined ( int errcode )
-{
-    if ( errcode >= 0 && errcode <= ompi_mpi_errcode_lastpredefined )
-	return true;
-
-    return false;
-}
-
-static inline int ompi_mpi_errnum_is_class ( int errnum )
-{
-    ompi_mpi_errcode_t *err;
-
-    if (errnum < 0) {
-        return false;
-    }
-
-    if ( errnum <= ompi_mpi_errcode_lastpredefined ) {
-	/* Predefined error values represent an error code and
-	   an error class at the same time */
-	return true;
-    }
-
-    err = (ompi_mpi_errcode_t *)opal_pointer_array_get_item(&ompi_mpi_errcodes, errnum);
-    if (NULL != err) {
-	if ( MPI_UNDEFINED == err->code) {
-	    /* Distinction between error class and error code is that for the
-	       first one the code section is set to MPI_UNDEFINED  */
-	    return true;
-	}
-    }
-
-    return false;
-}
-
-
-/**
- * Return the error string
- */
-static inline char* ompi_mpi_errnum_get_string (int errnum)
-{
-    ompi_mpi_errcode_t *err = NULL;
-
-    if (errnum >= 0) {
-        err = (ompi_mpi_errcode_t *)opal_pointer_array_get_item(&ompi_mpi_errcodes, errnum);
-        /* If we get a bogus errcode, return a string indicating that this
-           truly should not happen */
-    }
-
-    if (NULL != err) {
-        return err->errstring;
-    } else {
-        return "Unknown error (this should not happen!)";
-    }
-}
-
 
 /**
  * Initialize the error codes
@@ -194,6 +107,113 @@ int ompi_mpi_errclass_add (void);
  * @returns OMPI_ERROR on error
  */
 int ompi_mpi_errnum_add_string (int errnum, const char* string, int len);
+
+/**
+ * Check for a valid error code
+ */
+static inline bool ompi_mpi_errcode_is_invalid(int errcode)
+{
+    if (OPAL_UNLIKELY( 0 == ompi_mpi_errcode_lastpredefined )) {
+        ompi_mpi_errcode_init();
+    }
+
+    if ( errcode >= 0 && errcode <= ompi_mpi_errcode_lastused )
+        return 0;
+    else
+        return 1;
+}
+
+/**
+ * Return the error class
+ */
+static inline int ompi_mpi_errcode_get_class (int errcode)
+{
+    ompi_mpi_errcode_t *err = NULL;
+
+    if (OPAL_UNLIKELY( 0 == ompi_mpi_errcode_lastpredefined )) {
+        ompi_mpi_errcode_init();
+    }
+
+    if (errcode >= 0) {
+        err = (ompi_mpi_errcode_t *)opal_pointer_array_get_item(&ompi_mpi_errcodes, errcode);
+        /* If we get a bogus errcode, return MPI_ERR_UNKNOWN */
+    }
+
+    if (NULL != err) {
+        if ( err->code != MPI_UNDEFINED ) {
+            return err->cls;
+        }
+    }
+    return ompi_err_unknown.cls;
+}
+
+static inline int ompi_mpi_errcode_is_predefined ( int errcode )
+{
+    if (OPAL_UNLIKELY( 0 == ompi_mpi_errcode_lastpredefined )) {
+        ompi_mpi_errcode_init();
+    }
+
+    if ( errcode >= 0 && errcode <= ompi_mpi_errcode_lastpredefined )
+        return true;
+
+    return false;
+}
+
+static inline int ompi_mpi_errnum_is_class ( int errnum )
+{
+    ompi_mpi_errcode_t *err;
+
+    if (OPAL_UNLIKELY( 0 == ompi_mpi_errcode_lastpredefined )) {
+        ompi_mpi_errcode_init();
+    }
+
+    if (errnum < 0) {
+        return false;
+    }
+
+    if ( errnum <= ompi_mpi_errcode_lastpredefined ) {
+        /* Predefined error values represent an error code and
+           an error class at the same time */
+        return true;
+    }
+
+    err = (ompi_mpi_errcode_t *)opal_pointer_array_get_item(&ompi_mpi_errcodes, errnum);
+    if (NULL != err) {
+        if ( MPI_UNDEFINED == err->code) {
+            /* Distinction between error class and error code is that for the
+               first one the code section is set to MPI_UNDEFINED  */
+            return true;
+        }
+    }
+
+    return false;
+}
+
+
+/**
+ * Return the error string
+ */
+static inline char* ompi_mpi_errnum_get_string (int errnum)
+{
+    ompi_mpi_errcode_t *err = NULL;
+
+    if (OPAL_UNLIKELY( 0 == ompi_mpi_errcode_lastpredefined )) {
+        ompi_mpi_errcode_init();
+    }
+
+    if (errnum >= 0) {
+        err = (ompi_mpi_errcode_t *)opal_pointer_array_get_item(&ompi_mpi_errcodes, errnum);
+        /* If we get a bogus errcode, return a string indicating that this
+           truly should not happen */
+    }
+
+    if (NULL != err) {
+        return err->errstring;
+    } else {
+        return "Unknown error (this should not happen!)";
+    }
+}
+
 
 END_C_DECLS
 
