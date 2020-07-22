@@ -11,6 +11,8 @@ dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2010-2014 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2020      Research Organization for Information Science
+dnl                         and Technology (RIST).  All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -83,6 +85,7 @@ AC_DEFUN([OMPI_FORTRAN_CHECK_BIND_C_TYPE],[
 end module]])],
              [AS_VAR_SET(bind_c_type_var, yes)],
              [AS_VAR_SET(bind_c_type_var, no)])
+        rm -rf *.mod 2>/dev/null
         AC_LANG_POP([Fortran])
        ])
 
