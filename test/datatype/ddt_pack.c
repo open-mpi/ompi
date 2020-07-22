@@ -88,7 +88,15 @@ main(int argc, char* argv[])
     unpacked_dt = ompi_datatype_create_from_packed_description(&payload,
                                                                ompi_proc_local());
     free(ptr);
-    if (unpacked_dt == &ompi_mpi_int32_t.dt) {
+    /*
+     *  Update, this test used to expecte the resturned unpacked_dt
+     *  to be ompi_mpi_int32_t.dt, probably because we used to have
+     *  #define OMPI_DATATYPE_MPI_INT OMPI_DATATYPE_MPI_INT32_T
+     *  so the only base OMPI datatype represented in the ID numbers
+     *  was for MPI_INT32_T.  This PR separated the IDs so external32
+     *  can have the sizes diverge.
+     */
+    if (unpacked_dt == &ompi_mpi_int.dt) {
         printf("\tPASSED\n");
     } else {
         printf("\tFAILED: datatypes don't match\n");
@@ -438,7 +446,7 @@ main(int argc, char* argv[])
         }
         printf("\tPASSED\n");
     }
-    if (unpacked_dt == &ompi_mpi_int32_t.dt) {
+    if (unpacked_dt == &ompi_mpi_int.dt) {
         printf("\tPASSED\n");
     } else {
         printf("\tFAILED: datatypes don't match\n");

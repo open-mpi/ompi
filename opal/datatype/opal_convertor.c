@@ -119,6 +119,12 @@ opal_convertor_master_t* opal_convertor_find_or_create_master( uint32_t remote_a
      */
     remote_sizes = (size_t*)master->remote_sizes;
     memcpy(remote_sizes, opal_datatype_local_sizes, sizeof(size_t) * OPAL_DATATYPE_MAX_PREDEFINED);
+
+    /*
+     * Specify that ompi_remote_sizes[] isn't initally set up
+     */
+    master->ompi_remote_sizes_is_set = 0;
+
     /**
      * If the local and remote architecture are the same there is no need
      * to check for the remote data sizes. They will always be the same as
@@ -448,13 +454,36 @@ int32_t opal_convertor_set_position_nocheck( opal_convertor_t* convertor,
 
 static size_t
 opal_datatype_compute_remote_size( const opal_datatype_t* pData,
-                                   const size_t* sizes )
+                                   const size_t* remote_sizes,
+                                   const size_t* ompi_remote_sizes,
+                                   int ompi_remote_sizes_is_set )
 {
     uint32_t typeMask = pData->bdt_used;
     size_t length = 0;
 
     if (opal_datatype_is_predefined(pData)) {
-        return sizes[pData->desc.desc->elem.common.type];
+/*
+ *  opal datatypes can exist independently of OMPI datatypes,
+ *  or they can be connected to an OMPI datatype, so .ompi_id
+ *  can be set but doesn't have to be.
+ *  Similarly convertors can set an ompi_remote_sizes[] array
+ *  but don't have to.
+ *  If either of those isn't available then remote_sizes[opal_id]
+ *  is the way to get the size of a predefined opal datatype.
+ *  But if an ompi_id is available and if the convertor has
+ *  specified a set of ompi_remote_sizes[] then those allow
+ *  a more specific size to be given.
+ *
+ *  Example: MPI_LONG and MPI_INT8_T both have .id OPAL_DATATYPE_INT8
+ *  so the remote_sizes[.id] would be 8.  But external32 wants to
+ *  see the size for the MPI_LONG as 4.  This requires the .ompi_id
+ *  to distinguish.
+ */
+        int ompi_id = pData->desc.desc->elem.common.ompi_id;
+        if (ompi_id != OPAL_MIRROR_OMPI_DATATYPE_MPI_EMPTY && ompi_remote_sizes_is_set) {
+            return ompi_remote_sizes[ompi_id];
+        }
+        return remote_sizes[pData->desc.desc->elem.common.type];
     }
 
     if( OPAL_UNLIKELY(NULL == pData->ptypes) ) {
@@ -462,10 +491,20 @@ opal_datatype_compute_remote_size( const opal_datatype_t* pData,
         opal_datatype_compute_ptypes( (opal_datatype_t*)pData );
     }
 
-    for( int i = OPAL_DATATYPE_FIRST_TYPE; typeMask && (i < OPAL_DATATYPE_MAX_PREDEFINED); i++ ) {
-        if( typeMask & ((uint32_t)1 << i) ) {
-            length += (pData->ptypes[i] * sizes[i]);
-            typeMask ^= ((uint32_t)1 << i);
+/*
+ *  For walking the ptypes entries, walk the .ompi_dt_count[] if available,
+ *  or the .bdt_count[] if the ompi data is unavailable.
+ */
+    if (pData->ptypes->ompi_dt_count_is_valid && ompi_remote_sizes_is_set) {
+        for( int i = OPAL_MIRROR_OMPI_DATATYPE_MPI_EMPTY+1; i < OPAL_MIRROR_OMPI_DATATYPE_MPI_MAX_PREDEFINED; i++ ) {
+            length += (pData->ptypes->ompi_dt_count[i] * ompi_remote_sizes[i]);
+        }
+    } else {
+        for( int i = OPAL_DATATYPE_FIRST_TYPE; typeMask && (i < OPAL_DATATYPE_MAX_PREDEFINED); i++ ) {
+            if( typeMask & ((uint32_t)1 << i) ) {
+                length += (pData->ptypes->bdt_count[i] * remote_sizes[i]);
+                typeMask ^= ((uint32_t)1 << i);
+            }
         }
     }
     return length;
@@ -489,7 +528,9 @@ size_t opal_convertor_compute_remote_size( opal_convertor_t* pConvertor )
         if( 0 == (pConvertor->flags & CONVERTOR_HAS_REMOTE_SIZE) ) {
             /* This is for a single datatype, we must update it with the count */
             pConvertor->remote_size = opal_datatype_compute_remote_size(datatype,
-                                                                        pConvertor->master->remote_sizes);
+                                                                        pConvertor->master->remote_sizes,
+                                                                        pConvertor->master->ompi_remote_sizes,
+                                                                        pConvertor->master->ompi_remote_sizes_is_set);
             pConvertor->remote_size *= pConvertor->count;
         }
     }
@@ -749,3 +790,4 @@ void opal_datatype_dump_stack( const dt_stack_t* pStack, int stack_pos,
     }
     opal_output( 0, "\n" );
 }
+

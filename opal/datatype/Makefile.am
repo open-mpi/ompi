@@ -68,7 +68,9 @@ libdatatype_la_SOURCES = \
         opal_datatype_pack.c \
         opal_datatype_position.c \
         opal_datatype_resize.c \
-        opal_datatype_unpack.c
+        opal_datatype_unpack.c \
+        opal_datatype_setexternal32.c \
+        opal_datatype_reset_predef.c
 
 libdatatype_la_LIBADD = libdatatype_reliable.la
 

@@ -58,7 +58,7 @@ opal_datatype_optimize_short( opal_datatype_t* pData,
             ddt_endloop_desc_t* end_loop = &(pData->desc.desc[pos_desc].end_loop);
             if( 0 != last.count ) {
                 CREATE_ELEM( pElemDesc, last.common.type, OPAL_DATATYPE_FLAG_BASIC,
-                             last.blocklen, last.count, last.disp, last.extent );
+                             last.blocklen, last.count, last.disp, last.extent, last.common.ompi_id );
                 pElemDesc++; nbElems++;
                 last.count= 0;
             }
@@ -123,7 +123,7 @@ opal_datatype_optimize_short( opal_datatype_t* pData,
 
             if( 0 != last.count ) {  /* Generate the pending element */
                 CREATE_ELEM( pElemDesc, last.common.type, OPAL_DATATYPE_FLAG_BASIC,
-                             last.blocklen, last.count, last.disp, last.extent );
+                             last.blocklen, last.count, last.disp, last.extent, last.common.ompi_id );
                 pElemDesc++; nbElems++;
                 last.count       = 0;
                 last.common.type = OPAL_DATATYPE_LOOP;
@@ -136,7 +136,7 @@ opal_datatype_optimize_short( opal_datatype_t* pData,
                     for( uint32_t j = 0; j < (loop->items - 1); j++ ) {
                         current = &pData->desc.desc[pos_desc + index + j].elem;
                         CREATE_ELEM( pElemDesc, current->common.type, current->common.flags,
-                                     current->blocklen, current->count, current->disp + elem_displ, current->extent );
+                                     current->blocklen, current->count, current->disp + elem_displ, current->extent, current->common.ompi_id );
                         pElemDesc++; nbElems++;
                     }
                     elem_displ += loop->extent;
@@ -217,7 +217,7 @@ opal_datatype_optimize_short( opal_datatype_t* pData,
                 current->disp ) {
                 if( last.count != 1 ) {
                     CREATE_ELEM( pElemDesc, last.common.type, OPAL_DATATYPE_FLAG_BASIC,
-                                 last.blocklen, last.count - 1, last.disp, last.extent );
+                                 last.blocklen, last.count - 1, last.disp, last.extent, last.common.ompi_id );
                     pElemDesc++; nbElems++;
                     last.disp += (last.count - 1) * last.extent;
                     last.count = 1;
@@ -232,7 +232,7 @@ opal_datatype_optimize_short( opal_datatype_t* pData,
                 last.extent += current->extent;
                 if( current->count != 1 ) {
                     CREATE_ELEM( pElemDesc, last.common.type, OPAL_DATATYPE_FLAG_BASIC,
-                                 last.blocklen, last.count, last.disp, last.extent );
+                                 last.blocklen, last.count, last.disp, last.extent, last.common.ompi_id );
                     pElemDesc++; nbElems++;
                     last = *current;
                     last.count -= 1;
@@ -241,7 +241,7 @@ opal_datatype_optimize_short( opal_datatype_t* pData,
                 continue;
             }
             CREATE_ELEM( pElemDesc, last.common.type, OPAL_DATATYPE_FLAG_BASIC,
-                         last.blocklen, last.count, last.disp, last.extent );
+                         last.blocklen, last.count, last.disp, last.extent, last.common.ompi_id );
             pElemDesc++; nbElems++;
             last = *current;
         }
@@ -249,7 +249,7 @@ opal_datatype_optimize_short( opal_datatype_t* pData,
 
     if( 0 != last.count ) {
         CREATE_ELEM( pElemDesc, last.common.type, OPAL_DATATYPE_FLAG_BASIC,
-                     last.blocklen, last.count, last.disp, last.extent );
+                     last.blocklen, last.count, last.disp, last.extent, last.common.ompi_id );
         pElemDesc++; nbElems++;
     }
     /* cleanup the stack */

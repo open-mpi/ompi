@@ -397,6 +397,11 @@ OPAL_DECLSPEC int
 opal_convertor_generic_simple_position( opal_convertor_t* pConvertor,
                                         size_t* position );
 
+OPAL_DECLSPEC void
+opal_convertor_set_ompi_remote_size(opal_convertor_t *convertor, int idx, int size);
+OPAL_DECLSPEC void
+opal_convertor_ompi_remote_size_is_ready(opal_convertor_t *convertor);
+
 END_C_DECLS
 
 #endif  /* OPAL_CONVERTOR_H_HAS_BEEN_INCLUDED */

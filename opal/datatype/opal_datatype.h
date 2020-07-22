@@ -61,8 +61,16 @@ BEGIN_C_DECLS
  *
  * BEWARE: This constant should reflect whatever the OMPI-layer needs.
  */
-#define OPAL_DATATYPE_MAX_SUPPORTED  50
+#define OPAL_DATATYPE_MAX_SUPPORTED  80
 
+/*
+ *  These need to match OMPI_DATATYPE_MPI_EMPTY and
+ *  OMPI_DATATYPE_MPI_MAX_PREDEFINED which we don't have
+ *  visibilit into over here in opal.  So these values
+ *  will be checked for consistency in ompi_datatype_internal.h
+ */
+#define OPAL_MIRROR_OMPI_DATATYPE_MPI_EMPTY          0
+#define OPAL_MIRROR_OMPI_DATATYPE_MPI_MAX_PREDEFINED 81
 
 /* flags for the datatypes. */
 #define OPAL_DATATYPE_FLAG_UNAVAILABLE   0x0001  /**< datatypes unavailable on the build (OS or compiler dependant) */
@@ -74,6 +82,7 @@ BEGIN_C_DECLS
 #define OPAL_DATATYPE_FLAG_USER_LB       0x0040  /**< has a user defined LB */
 #define OPAL_DATATYPE_FLAG_USER_UB       0x0080  /**< has a user defined UB */
 #define OPAL_DATATYPE_FLAG_DATA          0x0100  /**< data or control structure */
+#define OPAL_DATATYPE_FLAG_DESC_WAS_REALLOCATED 0x0200 /* predefined DT can have .desc modified */
 /*
  * We should make the difference here between the predefined contiguous and non contiguous
  * datatypes. The OPAL_DATATYPE_FLAG_BASIC is held by all predefined contiguous datatypes.
@@ -100,6 +109,18 @@ struct dt_type_desc_t {
 };
 typedef struct dt_type_desc_t dt_type_desc_t;
 
+/*
+ *  ptypes structure
+ *
+ *  There used to just be a ptypes[] array that was a count of how
+ *  many of each base OPAL_DATATYPE_ was in a given datatype.  This
+ *  keeps that but adds another field for using ompi IDs
+ */
+typedef struct {
+    size_t bdt_count[OPAL_DATATYPE_MAX_SUPPORTED];
+    size_t ompi_dt_count[OPAL_MIRROR_OMPI_DATATYPE_MPI_MAX_PREDEFINED];
+    int ompi_dt_count_is_valid;
+} ptypes_t;
 
 /*
  * The datatype description.
@@ -126,16 +147,14 @@ struct opal_datatype_t {
     dt_type_desc_t     opt_desc; /**< short description of the data used when conversion is useless
                                       or in the send case (without conversion) */
 
-    size_t             *ptypes;  /**< array of basic predefined types that facilitate the computing
+    ptypes_t           *ptypes;  /**< array of basic predefined types that facilitate the computing
                                       of the remote size in heterogeneous environments. The length of the
                                       array is dependent on the maximum number of predefined datatypes of
                                       all language interfaces (because Fortran is not known at the OPAL
                                       layer). This field should never be initialized in homogeneous
                                       environments */
-    /* --- cacheline 5 boundary (320 bytes) was 32-36 bytes ago --- */
-
-    /* size: 352, cachelines: 6, members: 15 */
-    /* last cacheline: 28-32 bytes */
+    uint16_t           ompi_id;
+    /* size: 200 or 208, and there are a few bytes empty after the ompi_id */
 };
 
 typedef struct opal_datatype_t opal_datatype_t;
@@ -338,6 +357,16 @@ opal_datatype_span( const opal_datatype_t* pData, size_t count,
     ptrdiff_t true_extent = (pData->true_ub - pData->true_lb);
     return true_extent + extent * (count - 1);
 }
+
+/*
+ * For use with any datatype whose setup involves its
+ * desc[] entries being pointed into opal_datatype_predefined_elem_desc[].
+ * That's a shared space where different OMPI types collide, so
+ * any type built using it needs to copy its desc[] and update
+ * the .ompi_id there.
+ */
+OPAL_DECLSPEC int opal_datatype_desc_update_reset(opal_datatype_t *pData);
+OPAL_DECLSPEC void opal_datatype_desc_update_free(opal_datatype_t *pData);
 
 #if OPAL_ENABLE_DEBUG
 /*

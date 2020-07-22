@@ -375,6 +375,37 @@ const ompi_datatype_t* ompi_datatype_basicDatatypes[OMPI_DATATYPE_MPI_MAX_PREDEF
     [OMPI_DATATYPE_MPI_SHORT_FLOAT] = &ompi_mpi_short_float.dt,
     [OMPI_DATATYPE_MPI_C_SHORT_FLOAT_COMPLEX] = &ompi_mpi_c_short_float_complex.dt,
 
+    [OMPI_DATATYPE_MPI_CHAR] = &ompi_mpi_char.dt,
+    [OMPI_DATATYPE_MPI_SIGNED_CHAR] = &ompi_mpi_signed_char.dt,
+    [OMPI_DATATYPE_MPI_UNSIGNED_CHAR] = &ompi_mpi_unsigned_char.dt,
+    [OMPI_DATATYPE_MPI_BYTE] = &ompi_mpi_byte.dt,
+    [OMPI_DATATYPE_MPI_SHORT] = &ompi_mpi_short.dt,
+    [OMPI_DATATYPE_MPI_UNSIGNED_SHORT] = &ompi_mpi_unsigned_short.dt,
+    [OMPI_DATATYPE_MPI_INT] = &ompi_mpi_int.dt,
+    [OMPI_DATATYPE_MPI_UNSIGNED] = &ompi_mpi_unsigned.dt,
+    [OMPI_DATATYPE_MPI_LONG] = &ompi_mpi_long.dt,
+    [OMPI_DATATYPE_MPI_UNSIGNED_LONG] = &ompi_mpi_unsigned_long.dt,
+    [OMPI_DATATYPE_MPI_LONG_LONG_INT] = &ompi_mpi_long_long_int.dt,
+    [OMPI_DATATYPE_MPI_UNSIGNED_LONG_LONG] = &ompi_mpi_unsigned_long_long.dt,
+    [OMPI_DATATYPE_MPI_LOGICAL1] = &ompi_mpi_logical1.dt,
+    [OMPI_DATATYPE_MPI_LOGICAL2] = &ompi_mpi_logical2.dt,
+    [OMPI_DATATYPE_MPI_LOGICAL4] = &ompi_mpi_logical4.dt,
+    [OMPI_DATATYPE_MPI_LOGICAL8] = &ompi_mpi_logical8.dt,
+    [OMPI_DATATYPE_MPI_INTEGER1] = &ompi_mpi_integer1.dt,
+    [OMPI_DATATYPE_MPI_INTEGER2] = &ompi_mpi_integer2.dt,
+    [OMPI_DATATYPE_MPI_INTEGER4] = &ompi_mpi_integer4.dt,
+    [OMPI_DATATYPE_MPI_INTEGER8] = &ompi_mpi_integer8.dt,
+    [OMPI_DATATYPE_MPI_INTEGER16] = &ompi_mpi_integer16.dt,
+    [OMPI_DATATYPE_MPI_REAL2] = &ompi_mpi_real2.dt,
+    [OMPI_DATATYPE_MPI_REAL4] = &ompi_mpi_real4.dt,
+    [OMPI_DATATYPE_MPI_REAL8] = &ompi_mpi_real8.dt,
+    [OMPI_DATATYPE_MPI_REAL16] = &ompi_mpi_real16.dt,
+    [OMPI_DATATYPE_MPI_CXX_BOOL] = &ompi_mpi_cxx_bool.dt,
+    [OMPI_DATATYPE_MPI_CXX_SHORT_FLOAT_COMPLEX] = &ompi_mpi_cxx_sfltcplex.dt,
+    [OMPI_DATATYPE_MPI_CXX_FLOAT_COMPLEX] = &ompi_mpi_cxx_cplex.dt,
+    [OMPI_DATATYPE_MPI_CXX_DOUBLE_COMPLEX] = &ompi_mpi_cxx_dblcplex.dt,
+    [OMPI_DATATYPE_MPI_CXX_LONG_DOUBLE_COMPLEX] = &ompi_mpi_cxx_ldblcplex.dt,
+
     [OMPI_DATATYPE_MPI_UNAVAILABLE] = &ompi_mpi_unavailable.dt,
 };
 
@@ -663,12 +694,32 @@ int32_t ompi_datatype_init( void )
         }
     }
     ompi_datatype_default_convertors_init();
+
+/*
+ *  Many of the predefined OMPI datatypes use OPAL initializers that map
+ *  their .desc entries into a shared space where it's impossible to set an
+ *  .ompi_id due to collision.  This call privatizes each that's constructed
+ *  that way (it checks if the incoming .desc[] is in the shared range).
+ *  Note some of the predefineds are already fine, eg the ones that use
+ *  OMPI_DATATYPE_INIT_DEFER() but I don't see any good way to identify which
+ *  are okay vs not other than by checking each predefined datatype.
+ */
+    for (i=OMPI_DATATYPE_MPI_EMPTY+1; i<OMPI_DATATYPE_MPI_MAX_PREDEFINED; ++i) {
+        opal_datatype_desc_update_reset((opal_datatype_t*)&ompi_datatype_basicDatatypes[i]->super);
+    }
+
     return OMPI_SUCCESS;
 }
 
 
 int32_t ompi_datatype_finalize( void )
 {
+    int i;
+
+    for (i=OMPI_DATATYPE_MPI_EMPTY+1; i<OMPI_DATATYPE_MPI_MAX_PREDEFINED; ++i) {
+        opal_datatype_desc_update_free((opal_datatype_t*)&ompi_datatype_basicDatatypes[i]->super);
+    }
+
     /* As the synonyms are just copies of the internal data we should not free them.
      * Anyway they are over the limit of OMPI_DATATYPE_MPI_MAX_PREDEFINED so they will never get freed.
      */

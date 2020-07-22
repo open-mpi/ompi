@@ -158,8 +158,16 @@ int opal_datatype_compute_ptypes( opal_datatype_t* datatype )
     dt_elem_desc_t* pElems;
 
     if( NULL != datatype->ptypes ) return 0;
-    datatype->ptypes = (size_t*)calloc(OPAL_DATATYPE_MAX_SUPPORTED, sizeof(size_t));
+    datatype->ptypes = (ptypes_t*)calloc(1, sizeof(ptypes_t));
 
+    datatype->ptypes->ompi_dt_count_is_valid = 1; /* until proven otherwise */
+/*
+ *  The ptypes.bdt_count[] entries don't have enough information to later figure out
+ *  what the remote size of the packed data would be.  If the datatype is
+ *  2 MPI_LONG, those counts will only tell us it's 2 OPAL_DATATYPE_UINT8_T.
+ *  So the new field .ompi_dt_count[] represents the same info but in terms
+ *  of ompi datatypes if possible.
+ */
     DUMP( "opal_datatype_compute_ptypes( %p )\n", (void*)datatype );
     pStack = (dt_stack_t*)alloca( sizeof(dt_stack_t) * (datatype->loops + 2) );
     pStack->count    = 1;
@@ -188,11 +196,19 @@ int opal_datatype_compute_ptypes( opal_datatype_t* datatype )
         }
         while( pElems[pos_desc].elem.common.flags & OPAL_DATATYPE_FLAG_DATA ) {
             /* now here we have a basic datatype */
-            datatype->ptypes[pElems[pos_desc].elem.common.type] += (size_t)pElems[pos_desc].elem.count * pElems[pos_desc].elem.blocklen;
-            nbElems += (size_t)pElems[pos_desc].elem.count * pElems[pos_desc].elem.blocklen;
+            size_t mycount = (size_t)pElems[pos_desc].elem.count * pElems[pos_desc].elem.blocklen;
+            datatype->ptypes->bdt_count[pElems[pos_desc].elem.common.type] += mycount;
+            nbElems += mycount;
+
+            int ompi_id = pElems[pos_desc].elem.common.ompi_id;
+            if (ompi_id != OPAL_MIRROR_OMPI_DATATYPE_MPI_EMPTY) {
+                datatype->ptypes->ompi_dt_count[ompi_id] += mycount;
+            } else {
+                datatype->ptypes->ompi_dt_count_is_valid = 0;
+            }
 
             DUMP( "  compute_ptypes-add: type %d count %"PRIsize_t" (total type %u total %lld)\n",
-                  pElems[pos_desc].elem.common.type, datatype->ptypes[pElems[pos_desc].elem.common.type],
+                  pElems[pos_desc].elem.common.type, datatype->ptypes->bdt_count[pElems[pos_desc].elem.common.type],
                   pElems[pos_desc].elem.count, nbElems );
             pos_desc++;  /* advance to the next data */
         }

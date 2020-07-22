@@ -10,6 +10,7 @@
  * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2018 FUJITSU LIMITED.  All rights reserved.
+ * Copyright (c) 2020      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -108,11 +109,82 @@
 #define OMPI_DATATYPE_MPI_SHORT_FLOAT             0x30
 #define OMPI_DATATYPE_MPI_C_SHORT_FLOAT_COMPLEX   0x31
 
-/* This should __ALWAYS__ stay last  */
-#define OMPI_DATATYPE_MPI_UNAVAILABLE             0x32
+#define OMPI_DATATYPE_MPI_CHAR                    0x32
+#define OMPI_DATATYPE_MPI_SIGNED_CHAR             0x33
+#define OMPI_DATATYPE_MPI_UNSIGNED_CHAR           0x34
+#define OMPI_DATATYPE_MPI_BYTE                    0x35
+#define OMPI_DATATYPE_MPI_SHORT                   0x36
+#define OMPI_DATATYPE_MPI_UNSIGNED_SHORT          0x37
+#define OMPI_DATATYPE_MPI_INT                     0x38
+#define OMPI_DATATYPE_MPI_UNSIGNED                0x39
+#define OMPI_DATATYPE_MPI_LONG                    0x3A
+#define OMPI_DATATYPE_MPI_UNSIGNED_LONG           0x3B
+#define OMPI_DATATYPE_MPI_LONG_LONG_INT           0x3C
+#define OMPI_DATATYPE_MPI_UNSIGNED_LONG_LONG      0x3D
+#define OMPI_DATATYPE_MPI_LOGICAL1                0x3E
+#define OMPI_DATATYPE_MPI_LOGICAL2                0x3F
+#define OMPI_DATATYPE_MPI_LOGICAL4                0x40
+#define OMPI_DATATYPE_MPI_LOGICAL8                0x41
+#define OMPI_DATATYPE_MPI_INTEGER1                0x42
+#define OMPI_DATATYPE_MPI_INTEGER2                0x43
+#define OMPI_DATATYPE_MPI_INTEGER4                0x44
+#define OMPI_DATATYPE_MPI_INTEGER8                0x45
+#define OMPI_DATATYPE_MPI_INTEGER16               0x46
+#define OMPI_DATATYPE_MPI_REAL2                   0x47
+#define OMPI_DATATYPE_MPI_REAL4                   0x48
+#define OMPI_DATATYPE_MPI_REAL8                   0x49
+#define OMPI_DATATYPE_MPI_REAL16                  0x4A
 
+#define OMPI_DATATYPE_MPI_CXX_BOOL                0x4B
+#define OMPI_DATATYPE_MPI_CXX_SHORT_FLOAT_COMPLEX 0x4C
+#define OMPI_DATATYPE_MPI_CXX_FLOAT_COMPLEX       0x4D
+#define OMPI_DATATYPE_MPI_CXX_DOUBLE_COMPLEX      0x4E
+#define OMPI_DATATYPE_MPI_CXX_LONG_DOUBLE_COMPLEX 0x4F
+
+/* This should __ALWAYS__ stay last  */
+#define OMPI_DATATYPE_MPI_UNAVAILABLE             0x50
 
 #define OMPI_DATATYPE_MPI_MAX_PREDEFINED          (OMPI_DATATYPE_MPI_UNAVAILABLE+1)
+
+/*
+ *  Note all the mapping is removed above, for a couple reasons.
+ *
+ *  The first group of mapping that used to be here was a lot of
+ *    #define OMPI_DATATYPE_MPI_LONG OMPI_DATATYPE_MPI_INT64_T
+ *  for example.  But we need to have .ompi_id be unique enough
+ *  that external32 can specify a size for MPI_LONG that differs
+ *  from MPI_INT64_T so that had to change.
+ *
+ *  The second group was similar but in the other direction, there
+ *  were a few like
+ *    #define OMPI_DATATYPE_MPI_REAL4 OMPI_DATATYPE_MPI_REAL
+ *  which is a problem for the same reason.
+ *
+ *  The last group posed a more implementation-specific problem.
+ *  There used to be a few
+ *    #define OMPI_DATATYPE_MPI_CXX_DOUBLE_COMPLEX \
+ *            OMPI_DATATYPE_MPI_C_DOUBLE_COMPLEX
+ *  which I can't imagine being a problem, except for the way
+ *  a datatype's .desc[] field is initialized and modified.
+ *  These are two OMPI types for example created as
+ *      ompi_mpi_c_double_complex = ...PREDEFINED(C_DOUBLE_COMPLEX,)
+ *      ompi_mpi_cxx_dblcplex = ...BASIC_TYPE(,CXX_FLOAT_COMPLEX)
+ *  where they both go through the same OPAL dt initialization
+ *  and initially both contain a .desc pointing to the same offset
+ *  into opal_datatype_predefined_elem_desc[].  I have a function
+ *  later in init that re-allocates .desc[] for any type in the
+ *  ompi_datatype_basicDatatypes[] array, but if we have the
+ *  above mapping then only ompi_mpi_c_double_complex is in the
+ *  array, not ompi_mpi_cxx_dblcplex so the mapped type wouldn't
+ *  get its .desc fixed unless we put it in a second list
+ *  somewhere.
+ */
+#if OPAL_MIRROR_OMPI_DATATYPE_MPI_EMPTY != OMPI_DATATYPE_MPI_EMPTY
+#error OPAL_MIRROR_OMPI_DATATYPE_MPI_EMPTY needs to mirror the value of OMPI_DATATYPE_MPI_EMPTY
+#endif
+#if OPAL_MIRROR_OMPI_DATATYPE_MPI_MAX_PREDEFINED != OMPI_DATATYPE_MPI_MAX_PREDEFINED
+#error  OPAL_MIRROR_OMPI_DATATYPE_MPI_MAX_PREDEFINED needs to mirror the value of OMPI_DATATYPE_MPI_MAX_PREDEFINED
+#endif
 
 /*
  * Ensure we can support the predefined datatypes.
@@ -120,293 +192,6 @@
 #if OMPI_DATATYPE_MAX_PREDEFINED < OMPI_DATATYPE_MPI_UNAVAILABLE
 #error OMPI_DATATYPE_MAX_PREDEFINED should be updated to the value of OMPI_DATATYPE_MPI_UNAVAILABLE
 #endif
-
-/*
- * Mapped types. The following types have basic equivalents in OPAL. Instead
- * of being redefined as independent types, they will be made synonyms to
- * the most basic type.
- */
-#if SIZEOF_CHAR == 1
-#define OMPI_DATATYPE_MPI_CHAR                    OMPI_DATATYPE_MPI_INT8_T
-#define OMPI_DATATYPE_MPI_SIGNED_CHAR             OMPI_DATATYPE_MPI_INT8_T
-#define OMPI_DATATYPE_MPI_UNSIGNED_CHAR           OMPI_DATATYPE_MPI_UINT8_T
-#define OMPI_DATATYPE_MPI_BYTE                    OMPI_DATATYPE_MPI_UINT8_T
-#elif SIZEOF_CHAR == 2
-#define OMPI_DATATYPE_MPI_CHAR                    OMPI_DATATYPE_MPI_INT16_T
-#define OMPI_DATATYPE_MPI_SIGNED_CHAR             OMPI_DATATYPE_MPI_INT16_T
-#define OMPI_DATATYPE_MPI_UNSIGNED_CHAR           OMPI_DATATYPE_MPI_UINT16_T
-#define OMPI_DATATYPE_MPI_BYTE                    OMPI_DATATYPE_MPI_UINT16_T
-#elif SIZEOF_CHAR == 4
-#define OMPI_DATATYPE_MPI_CHAR                    OMPI_DATATYPE_MPI_INT32_T
-#define OMPI_DATATYPE_MPI_SIGNED_CHAR             OMPI_DATATYPE_MPI_INT32_T
-#define OMPI_DATATYPE_MPI_UNSIGNED_CHAR           OMPI_DATATYPE_MPI_UINT32_T
-#define OMPI_DATATYPE_MPI_BYTE                    OMPI_DATATYPE_MPI_UINT32_T
-#elif SIZEOF_CHAR == 8
-#define OMPI_DATATYPE_MPI_CHAR                    OMPI_DATATYPE_MPI_INT64_T
-#define OMPI_DATATYPE_MPI_SIGNED_CHAR             OMPI_DATATYPE_MPI_INT64_T
-#define OMPI_DATATYPE_MPI_UNSIGNED_CHAR           OMPI_DATATYPE_MPI_UINT64_T
-#define OMPI_DATATYPE_MPI_BYTE                    OMPI_DATATYPE_MPI_UINT64_T
-#endif
-
-#if SIZEOF_SHORT == 1
-#define OMPI_DATATYPE_MPI_SHORT                   OMPI_DATATYPE_MPI_INT8_T
-#define OMPI_DATATYPE_MPI_UNSIGNED_SHORT          OMPI_DATATYPE_MPI_UINT8_T
-#elif SIZEOF_SHORT == 2
-#define OMPI_DATATYPE_MPI_SHORT                   OMPI_DATATYPE_MPI_INT16_T
-#define OMPI_DATATYPE_MPI_UNSIGNED_SHORT          OMPI_DATATYPE_MPI_UINT16_T
-#elif SIZEOF_SHORT == 4
-#define OMPI_DATATYPE_MPI_SHORT                   OMPI_DATATYPE_MPI_INT32_T
-#define OMPI_DATATYPE_MPI_UNSIGNED_SHORT          OMPI_DATATYPE_MPI_UINT32_T
-#elif SIZEOF_SHORT == 8
-#define OMPI_DATATYPE_MPI_SHORT                   OMPI_DATATYPE_MPI_INT64_T
-#define OMPI_DATATYPE_MPI_UNSIGNED_SHORT          OMPI_DATATYPE_MPI_UINT64_T
-#endif
-
-#if SIZEOF_INT == 1
-#define OMPI_DATATYPE_MPI_INT                     OMPI_DATATYPE_MPI_INT8_T
-#define OMPI_DATATYPE_MPI_UNSIGNED                OMPI_DATATYPE_MPI_UINT8_T
-#elif SIZEOF_INT == 2
-#define OMPI_DATATYPE_MPI_INT                     OMPI_DATATYPE_MPI_INT16_T
-#define OMPI_DATATYPE_MPI_UNSIGNED                OMPI_DATATYPE_MPI_UINT16_T
-#elif SIZEOF_INT == 4
-#define OMPI_DATATYPE_MPI_INT                     OMPI_DATATYPE_MPI_INT32_T
-#define OMPI_DATATYPE_MPI_UNSIGNED                OMPI_DATATYPE_MPI_UINT32_T
-#elif SIZEOF_INT == 8
-#define OMPI_DATATYPE_MPI_INT                     OMPI_DATATYPE_MPI_INT64_T
-#define OMPI_DATATYPE_MPI_UNSIGNED                OMPI_DATATYPE_MPI_UINT64_T
-#endif
-
-#if SIZEOF_LONG == 1
-#define OMPI_DATATYPE_MPI_LONG                    OMPI_DATATYPE_MPI_INT8_T
-#define OMPI_DATATYPE_MPI_UNSIGNED_LONG           OMPI_DATATYPE_MPI_UINT8_T
-#elif SIZEOF_LONG == 2
-#define OMPI_DATATYPE_MPI_LONG                    OMPI_DATATYPE_MPI_INT16_T
-#define OMPI_DATATYPE_MPI_UNSIGNED_LONG           OMPI_DATATYPE_MPI_UINT16_T
-#elif SIZEOF_LONG == 4
-#define OMPI_DATATYPE_MPI_LONG                    OMPI_DATATYPE_MPI_INT32_T
-#define OMPI_DATATYPE_MPI_UNSIGNED_LONG           OMPI_DATATYPE_MPI_UINT32_T
-#elif SIZEOF_LONG == 8
-#define OMPI_DATATYPE_MPI_LONG                    OMPI_DATATYPE_MPI_INT64_T
-#define OMPI_DATATYPE_MPI_UNSIGNED_LONG           OMPI_DATATYPE_MPI_UINT64_T
-#endif
-
-#if SIZEOF_LONG_LONG == 1
-#define OMPI_DATATYPE_MPI_LONG_LONG_INT           OMPI_DATATYPE_MPI_INT8_T
-#define OMPI_DATATYPE_MPI_UNSIGNED_LONG_LONG      OMPI_DATATYPE_MPI_UINT8_T
-#elif SIZEOF_LONG_LONG == 2
-#define OMPI_DATATYPE_MPI_LONG_LONG_INT           OMPI_DATATYPE_MPI_INT16_T
-#define OMPI_DATATYPE_MPI_UNSIGNED_LONG_LONG      OMPI_DATATYPE_MPI_UINT16_T
-#elif SIZEOF_LONG_LONG == 4
-#define OMPI_DATATYPE_MPI_LONG_LONG_INT           OMPI_DATATYPE_MPI_INT32_T
-#define OMPI_DATATYPE_MPI_UNSIGNED_LONG_LONG      OMPI_DATATYPE_MPI_UINT32_T
-#elif SIZEOF_LONG_LONG == 8
-#define OMPI_DATATYPE_MPI_LONG_LONG_INT           OMPI_DATATYPE_MPI_INT64_T
-#define OMPI_DATATYPE_MPI_UNSIGNED_LONG_LONG      OMPI_DATATYPE_MPI_UINT64_T
-#endif
-
-/*
- * Optional Fortran datatypes, these map to representable types
- * in the lower layer, aka as other Fortran types have to map to C types,
- * additionally, if the type has the same size as the mandatory
- * Fortran type, map to this one.
- */
-/* LOGICAL */
-#if OMPI_SIZEOF_FORTRAN_LOGICAL1 == OMPI_SIZEOF_FORTRAN_LOGICAL
-#  define OMPI_DATATYPE_MPI_LOGICAL1              OMPI_DATATYPE_MPI_LOGICAL
-#elif OMPI_SIZEOF_FORTRAN_LOGICAL1 == 1
-#  define OMPI_DATATYPE_MPI_LOGICAL1              OMPI_DATATYPE_MPI_INT8_T
-#elif OMPI_SIZEOF_FORTRAN_LOGICAL1 == 2
-#  define OMPI_DATATYPE_MPI_LOGICAL1              OMPI_DATATYPE_MPI_INT16_T
-#elif OMPI_SIZEOF_FORTRAN_LOGICAL1 == 4
-#  define OMPI_DATATYPE_MPI_LOGICAL1              OMPI_DATATYPE_MPI_INT32_T
-#elif OMPI_SIZEOF_FORTRAN_LOGICAL1 == 8
-#  define OMPI_DATATYPE_MPI_LOGICAL1              OMPI_DATATYPE_MPI_INT64_T
-#else
-#  define OMPI_DATATYPE_MPI_LOGICAL1              OMPI_DATATYPE_MPI_UNAVAILABLE
-#endif
-
-#if OMPI_SIZEOF_FORTRAN_LOGICAL2 == OMPI_SIZEOF_FORTRAN_LOGICAL
-#  define OMPI_DATATYPE_MPI_LOGICAL2              OMPI_DATATYPE_MPI_LOGICAL
-#elif OMPI_SIZEOF_FORTRAN_LOGICAL2 == 1
-#  define OMPI_DATATYPE_MPI_LOGICAL2              OMPI_DATATYPE_MPI_INT8_T
-#elif OMPI_SIZEOF_FORTRAN_LOGICAL2 == 2
-#  define OMPI_DATATYPE_MPI_LOGICAL2              OMPI_DATATYPE_MPI_INT16_T
-#elif OMPI_SIZEOF_FORTRAN_LOGICAL2 == 4
-#  define OMPI_DATATYPE_MPI_LOGICAL2              OMPI_DATATYPE_MPI_INT32_T
-#elif OMPI_SIZEOF_FORTRAN_LOGICAL2 == 8
-#  define OMPI_DATATYPE_MPI_LOGICAL2              OMPI_DATATYPE_MPI_INT64_T
-#else
-#  define OMPI_DATATYPE_MPI_LOGICAL2              OMPI_DATATYPE_MPI_UNAVAILABLE
-#endif
-
-#if OMPI_SIZEOF_FORTRAN_LOGICAL4 == OMPI_SIZEOF_FORTRAN_LOGICAL
-#  define OMPI_DATATYPE_MPI_LOGICAL4              OMPI_DATATYPE_MPI_LOGICAL
-#elif OMPI_SIZEOF_FORTRAN_LOGICAL4 == 1
-#  define OMPI_DATATYPE_MPI_LOGICAL4              OMPI_DATATYPE_MPI_INT8_T
-#elif OMPI_SIZEOF_FORTRAN_LOGICAL4 == 2
-#  define OMPI_DATATYPE_MPI_LOGICAL4              OMPI_DATATYPE_MPI_INT16_T
-#elif OMPI_SIZEOF_FORTRAN_LOGICAL4 == 4
-#  define OMPI_DATATYPE_MPI_LOGICAL4              OMPI_DATATYPE_MPI_INT32_T
-#elif OMPI_SIZEOF_FORTRAN_LOGICAL4 == 8
-#  define OMPI_DATATYPE_MPI_LOGICAL4              OMPI_DATATYPE_MPI_INT64_T
-#else
-#  define OMPI_DATATYPE_MPI_LOGICAL4              OMPI_DATATYPE_MPI_UNAVAILABLE
-#endif
-
-#if OMPI_SIZEOF_FORTRAN_LOGICAL8 == OMPI_SIZEOF_FORTRAN_LOGICAL
-#  define OMPI_DATATYPE_MPI_LOGICAL8              OMPI_DATATYPE_MPI_LOGICAL
-#elif OMPI_SIZEOF_FORTRAN_LOGICAL8 == 1
-#  define OMPI_DATATYPE_MPI_LOGICAL8              OMPI_DATATYPE_MPI_INT8_T
-#elif OMPI_SIZEOF_FORTRAN_LOGICAL8 == 2
-#  define OMPI_DATATYPE_MPI_LOGICAL8              OMPI_DATATYPE_MPI_INT16_T
-#elif OMPI_SIZEOF_FORTRAN_LOGICAL8 == 4
-#  define OMPI_DATATYPE_MPI_LOGICAL8              OMPI_DATATYPE_MPI_INT32_T
-#elif OMPI_SIZEOF_FORTRAN_LOGICAL8 == 8
-#  define OMPI_DATATYPE_MPI_LOGICAL8              OMPI_DATATYPE_MPI_INT64_T
-#else
-#  define OMPI_DATATYPE_MPI_LOGICAL8              OMPI_DATATYPE_MPI_UNAVAILABLE
-#endif
-
-/* INTEGER */
-#if OMPI_SIZEOF_FORTRAN_INTEGER1 == OMPI_SIZEOF_FORTRAN_INTEGER
-#  define OMPI_DATATYPE_MPI_INTEGER1              OMPI_DATATYPE_MPI_INTEGER
-#elif OMPI_SIZEOF_FORTRAN_INTEGER1 == 1
-#  define OMPI_DATATYPE_MPI_INTEGER1              OMPI_DATATYPE_MPI_INT8_T
-#elif OMPI_SIZEOF_FORTRAN_INTEGER1 == 2
-#  define OMPI_DATATYPE_MPI_INTEGER1              OMPI_DATATYPE_MPI_INT16_T
-#elif OMPI_SIZEOF_FORTRAN_INTEGER1 == 4
-#  define OMPI_DATATYPE_MPI_INTEGER1              OMPI_DATATYPE_MPI_INT32_T
-#elif OMPI_SIZEOF_FORTRAN_INTEGER1 == 8
-#  define OMPI_DATATYPE_MPI_INTEGER1              OMPI_DATATYPE_MPI_INT64_T
-#else
-#  define OMPI_DATATYPE_MPI_INTEGER1              OMPI_DATATYPE_MPI_UNAVAILABLE
-#endif
-
-#if OMPI_SIZEOF_FORTRAN_INTEGER2 == OMPI_SIZEOF_FORTRAN_INTEGER
-#  define OMPI_DATATYPE_MPI_INTEGER2              OMPI_DATATYPE_MPI_INTEGER
-#elif OMPI_SIZEOF_FORTRAN_INTEGER2 == 1
-#  define OMPI_DATATYPE_MPI_INTEGER2              OMPI_DATATYPE_MPI_INT8_T
-#elif OMPI_SIZEOF_FORTRAN_INTEGER2 == 2
-#  define OMPI_DATATYPE_MPI_INTEGER2              OMPI_DATATYPE_MPI_INT16_T
-#elif OMPI_SIZEOF_FORTRAN_INTEGER2 == 4
-#  define OMPI_DATATYPE_MPI_INTEGER2              OMPI_DATATYPE_MPI_INT32_T
-#elif OMPI_SIZEOF_FORTRAN_INTEGER2 == 8
-#  define OMPI_DATATYPE_MPI_INTEGER2              OMPI_DATATYPE_MPI_INT64_T
-#else
-#  define OMPI_DATATYPE_MPI_INTEGER2              OMPI_DATATYPE_MPI_UNAVAILABLE
-#endif
-
-#if OMPI_SIZEOF_FORTRAN_INTEGER4 == OMPI_SIZEOF_FORTRAN_INTEGER
-#  define OMPI_DATATYPE_MPI_INTEGER4              OMPI_DATATYPE_MPI_INTEGER
-#elif OMPI_SIZEOF_FORTRAN_INTEGER4 == 1
-#  define OMPI_DATATYPE_MPI_INTEGER4              OMPI_DATATYPE_MPI_INT8_T
-#elif OMPI_SIZEOF_FORTRAN_INTEGER4 == 2
-#  define OMPI_DATATYPE_MPI_INTEGER4              OMPI_DATATYPE_MPI_INT16_T
-#elif OMPI_SIZEOF_FORTRAN_INTEGER4 == 4
-#  define OMPI_DATATYPE_MPI_INTEGER4              OMPI_DATATYPE_MPI_INT32_T
-#elif OMPI_SIZEOF_FORTRAN_INTEGER4 == 8
-#  define OMPI_DATATYPE_MPI_INTEGER4              OMPI_DATATYPE_MPI_INT64_T
-#else
-#  define OMPI_DATATYPE_MPI_INTEGER4              OMPI_DATATYPE_MPI_UNAVAILABLE
-#endif
-
-#if OMPI_SIZEOF_FORTRAN_INTEGER8 == OMPI_SIZEOF_FORTRAN_INTEGER
-#  define OMPI_DATATYPE_MPI_INTEGER8              OMPI_DATATYPE_MPI_INTEGER
-#elif OMPI_SIZEOF_FORTRAN_INTEGER8 == 1
-#  define OMPI_DATATYPE_MPI_INTEGER8              OMPI_DATATYPE_MPI_INT8_T
-#elif OMPI_SIZEOF_FORTRAN_INTEGER8 == 2
-#  define OMPI_DATATYPE_MPI_INTEGER8              OMPI_DATATYPE_MPI_INT16_T
-#elif OMPI_SIZEOF_FORTRAN_INTEGER8 == 4
-#  define OMPI_DATATYPE_MPI_INTEGER8              OMPI_DATATYPE_MPI_INT32_T
-#elif OMPI_SIZEOF_FORTRAN_INTEGER8 == 8
-#  define OMPI_DATATYPE_MPI_INTEGER8              OMPI_DATATYPE_MPI_INT64_T
-#else
-#  define OMPI_DATATYPE_MPI_INTEGER8              OMPI_DATATYPE_MPI_UNAVAILABLE
-#endif
-
-#if OMPI_SIZEOF_FORTRAN_INTEGER16 == OMPI_SIZEOF_FORTRAN_INTEGER
-#  define OMPI_DATATYPE_MPI_INTEGER16             OMPI_DATATYPE_MPI_INTEGER
-#elif OMPI_SIZEOF_FORTRAN_INTEGER16 == 1
-#  define OMPI_DATATYPE_MPI_INTEGER16             OMPI_DATATYPE_MPI_INT8_T
-#elif OMPI_SIZEOF_FORTRAN_INTEGER16 == 2
-#  define OMPI_DATATYPE_MPI_INTEGER16             OMPI_DATATYPE_MPI_INT16_T
-#elif OMPI_SIZEOF_FORTRAN_INTEGER16 == 4
-#  define OMPI_DATATYPE_MPI_INTEGER16             OMPI_DATATYPE_MPI_INT32_T
-#elif OMPI_SIZEOF_FORTRAN_INTEGER16 == 8
-#  define OMPI_DATATYPE_MPI_INTEGER16             OMPI_DATATYPE_MPI_INT64_T
-#else
-#  define OMPI_DATATYPE_MPI_INTEGER16             OMPI_DATATYPE_MPI_UNAVAILABLE
-#endif
-
-/* REAL */
-#if OMPI_SIZEOF_FORTRAN_REAL2 == OMPI_SIZEOF_FORTRAN_REAL
-#  define OMPI_DATATYPE_MPI_REAL2                 OMPI_DATATYPE_MPI_REAL
-#elif (defined(HAVE_SHORT_FLOAT) && OMPI_SIZEOF_FORTRAN_REAL2 == SIZEOF_SHORT_FLOAT) || \
-      (defined(HAVE_OPAL_SHORT_FLOAT_T) && OMPI_SIZEOF_FORTRAN_REAL2 == SIZEOF_OPAL_SHORT_FLOAT_T)
-#  define OMPI_DATATYPE_MPI_REAL2                 OMPI_DATATYPE_MPI_SHORT_FLOAT
-#elif OMPI_SIZEOF_FORTRAN_REAL2 == SIZEOF_FLOAT
-#  define OMPI_DATATYPE_MPI_REAL2                 OMPI_DATATYPE_MPI_FLOAT
-#elif OMPI_SIZEOF_FORTRAN_REAL2 == SIZEOF_DOUBLE
-#  define OMPI_DATATYPE_MPI_REAL2                 OMPI_DATATYPE_MPI_DOUBLE
-#elif OMPI_SIZEOF_FORTRAN_REAL2 == SIZEOF_LONG_DOUBLE
-#  define OMPI_DATATYPE_MPI_REAL2                 OMPI_DATATYPE_MPI_LONG_DOUBLE
-#else
-#  define OMPI_DATATYPE_MPI_REAL2                 OMPI_DATATYPE_MPI_UNAVAILABLE
-#endif
-
-#if OMPI_SIZEOF_FORTRAN_REAL4 == OMPI_SIZEOF_FORTRAN_REAL
-#  define OMPI_DATATYPE_MPI_REAL4                 OMPI_DATATYPE_MPI_REAL
-#elif (defined(HAVE_SHORT_FLOAT) && OMPI_SIZEOF_FORTRAN_REAL4 == SIZEOF_SHORT_FLOAT) || \
-      (defined(HAVE_OPAL_SHORT_FLOAT_T) && OMPI_SIZEOF_FORTRAN_REAL4 == SIZEOF_OPAL_SHORT_FLOAT_T)
-#  define OMPI_DATATYPE_MPI_REAL4                 OMPI_DATATYPE_MPI_SHORT_FLOAT
-#elif OMPI_SIZEOF_FORTRAN_REAL4 == SIZEOF_FLOAT
-#  define OMPI_DATATYPE_MPI_REAL4                 OMPI_DATATYPE_MPI_FLOAT
-#elif OMPI_SIZEOF_FORTRAN_REAL4 == SIZEOF_DOUBLE
-#  define OMPI_DATATYPE_MPI_REAL4                 OMPI_DATATYPE_MPI_DOUBLE
-#elif OMPI_SIZEOF_FORTRAN_REAL4 == SIZEOF_LONG_DOUBLE
-#  define OMPI_DATATYPE_MPI_REAL4                 OMPI_DATATYPE_MPI_LONG_DOUBLE
-#else
-#  define OMPI_DATATYPE_MPI_REAL4                 OMPI_DATATYPE_MPI_UNAVAILABLE
-#endif
-
-#if OMPI_SIZEOF_FORTRAN_REAL8 == OMPI_SIZEOF_FORTRAN_REAL
-#  define OMPI_DATATYPE_MPI_REAL8                 OMPI_DATATYPE_MPI_REAL
-#elif (defined(HAVE_SHORT_FLOAT) && OMPI_SIZEOF_FORTRAN_REAL8 == SIZEOF_SHORT_FLOAT) || \
-      (defined(HAVE_OPAL_SHORT_FLOAT_T) && OMPI_SIZEOF_FORTRAN_REAL8 == SIZEOF_OPAL_SHORT_FLOAT_T)
-#  define OMPI_DATATYPE_MPI_REAL8                 OMPI_DATATYPE_MPI_SHORT_FLOAT
-#elif OMPI_SIZEOF_FORTRAN_REAL8 == SIZEOF_FLOAT
-#  define OMPI_DATATYPE_MPI_REAL8                 OMPI_DATATYPE_MPI_FLOAT
-#elif OMPI_SIZEOF_FORTRAN_REAL8 == SIZEOF_DOUBLE
-#  define OMPI_DATATYPE_MPI_REAL8                 OMPI_DATATYPE_MPI_DOUBLE
-#elif OMPI_SIZEOF_FORTRAN_REAL8 == SIZEOF_LONG_DOUBLE
-#  define OMPI_DATATYPE_MPI_REAL8                 OMPI_DATATYPE_MPI_LONG_DOUBLE
-#else
-#  define OMPI_DATATYPE_MPI_REAL8                 OMPI_DATATYPE_MPI_UNAVAILABLE
-#endif
-
-#if OMPI_SIZEOF_FORTRAN_REAL16 == OMPI_SIZEOF_FORTRAN_REAL
-#  define OMPI_DATATYPE_MPI_REAL16                OMPI_DATATYPE_MPI_REAL
-#elif (defined(HAVE_SHORT_FLOAT) && OMPI_SIZEOF_FORTRAN_REAL16 == SIZEOF_SHORT_FLOAT) || \
-      (defined(HAVE_OPAL_SHORT_FLOAT_T) && OMPI_SIZEOF_FORTRAN_REAL16 == SIZEOF_OPAL_SHORT_FLOAT_T)
-#  define OMPI_DATATYPE_MPI_REAL16                 OMPI_DATATYPE_MPI_SHORT_FLOAT
-#elif OMPI_SIZEOF_FORTRAN_REAL16 == SIZEOF_FLOAT
-#  define OMPI_DATATYPE_MPI_REAL16                OMPI_DATATYPE_MPI_FLOAT
-#elif OMPI_SIZEOF_FORTRAN_REAL16 == SIZEOF_DOUBLE
-#  define OMPI_DATATYPE_MPI_REAL16                OMPI_DATATYPE_MPI_DOUBLE
-#elif OMPI_SIZEOF_FORTRAN_REAL16 == SIZEOF_LONG_DOUBLE
-#  define OMPI_DATATYPE_MPI_REAL16                OMPI_DATATYPE_MPI_LONG_DOUBLE
-#else
-#  define OMPI_DATATYPE_MPI_REAL16                OMPI_DATATYPE_MPI_UNAVAILABLE
-#endif
-
-/*
- * C++ datatypes, these map to C datatypes.
- */
-#define OMPI_DATATYPE_MPI_CXX_BOOL                OMPI_DATATYPE_MPI_C_BOOL
-#define OMPI_DATATYPE_MPI_CXX_SHORT_FLOAT_COMPLEX OMPI_DATATYPE_MPI_C_SHORT_FLOAT_COMPLEX
-#define OMPI_DATATYPE_MPI_CXX_FLOAT_COMPLEX       OMPI_DATATYPE_MPI_C_FLOAT_COMPLEX
-#define OMPI_DATATYPE_MPI_CXX_DOUBLE_COMPLEX      OMPI_DATATYPE_MPI_C_DOUBLE_COMPLEX
-#define OMPI_DATATYPE_MPI_CXX_LONG_DOUBLE_COMPLEX OMPI_DATATYPE_MPI_C_LONG_DOUBLE_COMPLEX
 
 extern const ompi_datatype_t* ompi_datatype_basicDatatypes[OMPI_DATATYPE_MPI_MAX_PREDEFINED];
 
@@ -431,7 +216,7 @@ extern const ompi_datatype_t* ompi_datatype_basicDatatypes[OMPI_DATATYPE_MPI_MAX
     .packed_description = 0,                                                         \
     .name = "MPI_" # NAME
 
-#define OMPI_DATATYPE_INITIALIZER_UNAVAILABLE(FLAGS)                                 \
+#define OMPI_DATATYPE_INITIALIZER_UNAVAILABLE(FLAGS, OMPI_ID)                        \
     OPAL_DATATYPE_INITIALIZER_UNAVAILABLE(FLAGS)
 
 #define OMPI_DATATYPE_INIT_PREDEFINED_BASIC_TYPE_X( TYPE, NAME, FLAGS )              \
@@ -440,7 +225,8 @@ extern const ompi_datatype_t* ompi_datatype_basicDatatypes[OMPI_DATATYPE_MPI_MAX
             OMPI_DATATYPE_INITIALIZER_ ## TYPE (OMPI_DATATYPE_FLAG_PREDEFINED |      \
                                                 OMPI_DATATYPE_FLAG_ANALYZED   |      \
                                                 OMPI_DATATYPE_FLAG_MONOTONIC  |      \
-                                                (FLAGS)) /*super*/,                  \
+                                                (FLAGS), /*super*/                   \
+                                                OMPI_DATATYPE_MPI_ ## NAME),         \
             OMPI_DATATYPE_EMPTY_DATA(NAME) /*id,d_f_to_c_index,d_keyhash,args,packed_description,name*/ \
         },                                                                           \
         {0, } /* padding */                                                          \
@@ -493,7 +279,7 @@ extern const ompi_datatype_t* ompi_datatype_basicDatatypes[OMPI_DATATYPE_MPI_MAX
         .name = OPAL_DATATYPE_INIT_NAME(TYPE ## SIZE),                               \
         .desc = OPAL_DATATYPE_INIT_DESC_PREDEFINED(TYPE ## SIZE),                    \
         .opt_desc = OPAL_DATATYPE_INIT_DESC_PREDEFINED(TYPE ## SIZE),                \
-        .ptypes = OPAL_DATATYPE_INIT_PTYPES_ARRAY(TYPE ## SIZE)                      \
+        .ptypes = OPAL_DATATYPE_INIT_PTYPES_ARRAY(TYPE ## SIZE, SIZE, NAME)          \
     }
 
 #define OMPI_DATATYPE_INIT_PREDEFINED_BASIC_TYPE_FORTRAN( TYPE, NAME, SIZE, ALIGN, FLAGS ) \

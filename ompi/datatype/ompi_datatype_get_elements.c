@@ -52,7 +52,7 @@ int ompi_datatype_get_elements (ompi_datatype_t *datatype, size_t ucount, size_t
             opal_datatype_compute_ptypes(&datatype->super);
             /* count the basic elements in the datatype */
             for (i = OPAL_DATATYPE_FIRST_TYPE, total = 0 ; i < OPAL_DATATYPE_MAX_PREDEFINED ; ++i) {
-                total += datatype->super.ptypes[i];
+                total += datatype->super.ptypes->bdt_count[i];
             }
             internal_count = total * internal_count;
         }

@@ -279,11 +279,19 @@ int32_t opal_datatype_add( opal_datatype_t* pdtBase, const opal_datatype_t* pdtA
      * predefined non contiguous datatypes (like MPI_SHORT_INT).
      */
     if( (pdtAdd->flags & (OPAL_DATATYPE_FLAG_PREDEFINED | OPAL_DATATYPE_FLAG_DATA)) == (OPAL_DATATYPE_FLAG_PREDEFINED | OPAL_DATATYPE_FLAG_DATA) ) {
-        if( NULL != pdtBase->ptypes )
-            pdtBase->ptypes[pdtAdd->id] += count;
+        if( NULL != pdtBase->ptypes ) {
+            pdtBase->ptypes->bdt_count[pdtAdd->id] += count;
+            if (pdtAdd->ompi_id != OPAL_MIRROR_OMPI_DATATYPE_MPI_EMPTY) {
+                pdtBase->ptypes->ompi_dt_count[pdtAdd->ompi_id] += count;
+            } else {
+                /* opal_datatype_t don't have to be connected to an ompi_id */
+                pdtBase->ptypes->ompi_dt_count_is_valid = 0;
+            }
+        }
 
         pLast->elem.common.flags     = pdtAdd->flags & ~(OPAL_DATATYPE_FLAG_COMMITTED);
         pLast->elem.common.type      = pdtAdd->id;
+        pLast->elem.common.ompi_id   = pdtAdd->ompi_id;
         pLast->elem.disp             = disp;
         pLast->elem.extent           = (ptrdiff_t)count * extent;
         /* assume predefined datatypes without extent, aka. contiguous */
@@ -305,7 +313,20 @@ int32_t opal_datatype_add( opal_datatype_t* pdtBase, const opal_datatype_t* pdtA
         pdtBase->flags |= (pdtAdd->flags & OPAL_DATATYPE_FLAG_USER_UB);
         if( (NULL != pdtBase->ptypes) && (NULL != pdtAdd->ptypes) ) {
             for( i = OPAL_DATATYPE_FIRST_TYPE; i < OPAL_DATATYPE_MAX_PREDEFINED; i++ )
-                if( pdtAdd->ptypes[i] != 0 ) pdtBase->ptypes[i] += (count * pdtAdd->ptypes[i]);
+                if( pdtAdd->ptypes->bdt_count[i] != 0 ) pdtBase->ptypes->bdt_count[i] += (count * pdtAdd->ptypes->bdt_count[i]); 
+            if (pdtBase->ptypes->ompi_dt_count_is_valid) {
+                if (pdtAdd->ptypes->ompi_dt_count_is_valid) {
+                    for( i = OPAL_MIRROR_OMPI_DATATYPE_MPI_EMPTY+1; i < OPAL_MIRROR_OMPI_DATATYPE_MPI_MAX_PREDEFINED; i++ )
+                        if( pdtAdd->ptypes->ompi_dt_count[i] != 0 )
+                            pdtBase->ptypes->ompi_dt_count[i] += (count * pdtAdd->ptypes->ompi_dt_count[i]); 
+                } else {
+                    pdtBase->ptypes->ompi_dt_count_is_valid = 0;
+                }
+            }
+        } else if (NULL != pdtBase->ptypes) {
+            /* (We had ptypes data but didn't update it, must invalidate) */
+            free(pdtBase->ptypes);
+            pdtBase->ptypes = NULL;
         }
         if( 1 == pdtAdd->desc.used ) {
             pLast->elem        = pdtAdd->desc.desc[0].elem;

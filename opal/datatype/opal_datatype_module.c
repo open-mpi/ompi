@@ -20,6 +20,7 @@
  * Copyright (c) 2018      Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
+ * Copyright (c) 2020      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -58,31 +59,31 @@ extern int opal_cuda_verbose;
  */
 OPAL_DECLSPEC const opal_datatype_t opal_datatype_empty =       OPAL_DATATYPE_INITIALIZER_EMPTY(OPAL_DATATYPE_FLAG_CONTIGUOUS);
 
-OPAL_DECLSPEC const opal_datatype_t opal_datatype_loop =        OPAL_DATATYPE_INITIALIZER_LOOP(0);
-OPAL_DECLSPEC const opal_datatype_t opal_datatype_end_loop =    OPAL_DATATYPE_INITIALIZER_END_LOOP(0);
-OPAL_DECLSPEC const opal_datatype_t opal_datatype_lb =          OPAL_DATATYPE_INITIALIZER_LB(0);
-OPAL_DECLSPEC const opal_datatype_t opal_datatype_ub =          OPAL_DATATYPE_INITIALIZER_UB(0);
-OPAL_DECLSPEC const opal_datatype_t opal_datatype_int1 =        OPAL_DATATYPE_INITIALIZER_INT1(0);
-OPAL_DECLSPEC const opal_datatype_t opal_datatype_int2 =        OPAL_DATATYPE_INITIALIZER_INT2(0);
-OPAL_DECLSPEC const opal_datatype_t opal_datatype_int4 =        OPAL_DATATYPE_INITIALIZER_INT4(0);
-OPAL_DECLSPEC const opal_datatype_t opal_datatype_int8 =        OPAL_DATATYPE_INITIALIZER_INT8(0);
-OPAL_DECLSPEC const opal_datatype_t opal_datatype_int16 =       OPAL_DATATYPE_INITIALIZER_INT16(0);
-OPAL_DECLSPEC const opal_datatype_t opal_datatype_uint1 =       OPAL_DATATYPE_INITIALIZER_UINT1(0);
-OPAL_DECLSPEC const opal_datatype_t opal_datatype_uint2 =       OPAL_DATATYPE_INITIALIZER_UINT2(0);
-OPAL_DECLSPEC const opal_datatype_t opal_datatype_uint4 =       OPAL_DATATYPE_INITIALIZER_UINT4(0);
-OPAL_DECLSPEC const opal_datatype_t opal_datatype_uint8 =       OPAL_DATATYPE_INITIALIZER_UINT8(0);
-OPAL_DECLSPEC const opal_datatype_t opal_datatype_uint16 =      OPAL_DATATYPE_INITIALIZER_UINT16(0);
-OPAL_DECLSPEC const opal_datatype_t opal_datatype_float2 =      OPAL_DATATYPE_INITIALIZER_FLOAT2(0);
-OPAL_DECLSPEC const opal_datatype_t opal_datatype_float4 =      OPAL_DATATYPE_INITIALIZER_FLOAT4(0);
-OPAL_DECLSPEC const opal_datatype_t opal_datatype_float8 =      OPAL_DATATYPE_INITIALIZER_FLOAT8(0);
-OPAL_DECLSPEC const opal_datatype_t opal_datatype_float12 =     OPAL_DATATYPE_INITIALIZER_FLOAT12(0);
-OPAL_DECLSPEC const opal_datatype_t opal_datatype_float16 =     OPAL_DATATYPE_INITIALIZER_FLOAT16(0);
-OPAL_DECLSPEC const opal_datatype_t opal_datatype_short_float_complex = OPAL_DATATYPE_INITIALIZER_SHORT_FLOAT_COMPLEX(0);
-OPAL_DECLSPEC const opal_datatype_t opal_datatype_float_complex = OPAL_DATATYPE_INITIALIZER_FLOAT_COMPLEX(0);
-OPAL_DECLSPEC const opal_datatype_t opal_datatype_double_complex = OPAL_DATATYPE_INITIALIZER_DOUBLE_COMPLEX(0);
-OPAL_DECLSPEC const opal_datatype_t opal_datatype_long_double_complex = OPAL_DATATYPE_INITIALIZER_LONG_DOUBLE_COMPLEX(0);
-OPAL_DECLSPEC const opal_datatype_t opal_datatype_bool =        OPAL_DATATYPE_INITIALIZER_BOOL(0);
-OPAL_DECLSPEC const opal_datatype_t opal_datatype_wchar =       OPAL_DATATYPE_INITIALIZER_WCHAR(0);
+OPAL_DECLSPEC const opal_datatype_t opal_datatype_loop =        OPAL_DATATYPE_INITIALIZER_LOOP(0, OPAL_MIRROR_OMPI_DATATYPE_MPI_EMPTY);
+OPAL_DECLSPEC const opal_datatype_t opal_datatype_end_loop =    OPAL_DATATYPE_INITIALIZER_END_LOOP(0, OPAL_MIRROR_OMPI_DATATYPE_MPI_EMPTY);
+OPAL_DECLSPEC const opal_datatype_t opal_datatype_lb =          OPAL_DATATYPE_INITIALIZER_LB(0, OPAL_MIRROR_OMPI_DATATYPE_MPI_EMPTY);
+OPAL_DECLSPEC const opal_datatype_t opal_datatype_ub =          OPAL_DATATYPE_INITIALIZER_UB(0, OPAL_MIRROR_OMPI_DATATYPE_MPI_EMPTY);
+OPAL_DECLSPEC const opal_datatype_t opal_datatype_int1 =        OPAL_DATATYPE_INITIALIZER_INT1(0, OPAL_MIRROR_OMPI_DATATYPE_MPI_EMPTY);
+OPAL_DECLSPEC const opal_datatype_t opal_datatype_int2 =        OPAL_DATATYPE_INITIALIZER_INT2(0, OPAL_MIRROR_OMPI_DATATYPE_MPI_EMPTY);
+OPAL_DECLSPEC const opal_datatype_t opal_datatype_int4 =        OPAL_DATATYPE_INITIALIZER_INT4(0, OPAL_MIRROR_OMPI_DATATYPE_MPI_EMPTY);
+OPAL_DECLSPEC const opal_datatype_t opal_datatype_int8 =        OPAL_DATATYPE_INITIALIZER_INT8(0, OPAL_MIRROR_OMPI_DATATYPE_MPI_EMPTY);
+OPAL_DECLSPEC const opal_datatype_t opal_datatype_int16 =       OPAL_DATATYPE_INITIALIZER_INT16(0, OPAL_MIRROR_OMPI_DATATYPE_MPI_EMPTY);
+OPAL_DECLSPEC const opal_datatype_t opal_datatype_uint1 =       OPAL_DATATYPE_INITIALIZER_UINT1(0, OPAL_MIRROR_OMPI_DATATYPE_MPI_EMPTY);
+OPAL_DECLSPEC const opal_datatype_t opal_datatype_uint2 =       OPAL_DATATYPE_INITIALIZER_UINT2(0, OPAL_MIRROR_OMPI_DATATYPE_MPI_EMPTY);
+OPAL_DECLSPEC const opal_datatype_t opal_datatype_uint4 =       OPAL_DATATYPE_INITIALIZER_UINT4(0, OPAL_MIRROR_OMPI_DATATYPE_MPI_EMPTY);
+OPAL_DECLSPEC const opal_datatype_t opal_datatype_uint8 =       OPAL_DATATYPE_INITIALIZER_UINT8(0, OPAL_MIRROR_OMPI_DATATYPE_MPI_EMPTY);
+OPAL_DECLSPEC const opal_datatype_t opal_datatype_uint16 =      OPAL_DATATYPE_INITIALIZER_UINT16(0, OPAL_MIRROR_OMPI_DATATYPE_MPI_EMPTY);
+OPAL_DECLSPEC const opal_datatype_t opal_datatype_float2 =      OPAL_DATATYPE_INITIALIZER_FLOAT2(0, OPAL_MIRROR_OMPI_DATATYPE_MPI_EMPTY);
+OPAL_DECLSPEC const opal_datatype_t opal_datatype_float4 =      OPAL_DATATYPE_INITIALIZER_FLOAT4(0, OPAL_MIRROR_OMPI_DATATYPE_MPI_EMPTY);
+OPAL_DECLSPEC const opal_datatype_t opal_datatype_float8 =      OPAL_DATATYPE_INITIALIZER_FLOAT8(0, OPAL_MIRROR_OMPI_DATATYPE_MPI_EMPTY);
+OPAL_DECLSPEC const opal_datatype_t opal_datatype_float12 =     OPAL_DATATYPE_INITIALIZER_FLOAT12(0, OPAL_MIRROR_OMPI_DATATYPE_MPI_EMPTY);
+OPAL_DECLSPEC const opal_datatype_t opal_datatype_float16 =     OPAL_DATATYPE_INITIALIZER_FLOAT16(0, OPAL_MIRROR_OMPI_DATATYPE_MPI_EMPTY);
+OPAL_DECLSPEC const opal_datatype_t opal_datatype_short_float_complex = OPAL_DATATYPE_INITIALIZER_SHORT_FLOAT_COMPLEX(0, OPAL_MIRROR_OMPI_DATATYPE_MPI_EMPTY);
+OPAL_DECLSPEC const opal_datatype_t opal_datatype_float_complex = OPAL_DATATYPE_INITIALIZER_FLOAT_COMPLEX(0, OPAL_MIRROR_OMPI_DATATYPE_MPI_EMPTY);
+OPAL_DECLSPEC const opal_datatype_t opal_datatype_double_complex = OPAL_DATATYPE_INITIALIZER_DOUBLE_COMPLEX(0, OPAL_MIRROR_OMPI_DATATYPE_MPI_EMPTY);
+OPAL_DECLSPEC const opal_datatype_t opal_datatype_long_double_complex = OPAL_DATATYPE_INITIALIZER_LONG_DOUBLE_COMPLEX(0, OPAL_MIRROR_OMPI_DATATYPE_MPI_EMPTY);
+OPAL_DECLSPEC const opal_datatype_t opal_datatype_bool =        OPAL_DATATYPE_INITIALIZER_BOOL(0, OPAL_MIRROR_OMPI_DATATYPE_MPI_EMPTY);
+OPAL_DECLSPEC const opal_datatype_t opal_datatype_wchar =       OPAL_DATATYPE_INITIALIZER_WCHAR(0, OPAL_MIRROR_OMPI_DATATYPE_MPI_EMPTY);
 OPAL_DECLSPEC const opal_datatype_t opal_datatype_unavailable = OPAL_DATATYPE_INITIALIZER_UNAVAILABLE_NAMED(UNAVAILABLE, 0);
 
 OPAL_DECLSPEC dt_elem_desc_t opal_datatype_predefined_elem_desc[2 * OPAL_DATATYPE_MAX_PREDEFINED] = {{{{0}}}};
@@ -261,6 +262,7 @@ int32_t opal_datatype_init( void )
                                                    OPAL_DATATYPE_FLAG_CONTIGUOUS |
                                                    OPAL_DATATYPE_FLAG_NO_GAPS;
         datatype->desc.desc[0].elem.common.type  = i;
+        datatype->desc.desc[0].elem.common.ompi_id  = OPAL_MIRROR_OMPI_DATATYPE_MPI_EMPTY;
         datatype->desc.desc[0].elem.count        = 1;
         datatype->desc.desc[0].elem.blocklen     = 1;
         datatype->desc.desc[0].elem.disp         = 0;

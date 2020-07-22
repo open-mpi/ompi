@@ -33,6 +33,15 @@ typedef struct opal_convertor_master_t {
     uint32_t                        flags;
     uint32_t                        hetero_mask;
     const size_t                    remote_sizes[OPAL_DATATYPE_MAX_PREDEFINED];
+    size_t                          ompi_remote_sizes[OPAL_MIRROR_OMPI_DATATYPE_MPI_MAX_PREDEFINED];
+    int                             ompi_remote_sizes_is_set;
+                            /*
+                             *  opal datatypes don't have to be associated with
+                             *  an ompi datatype, so remote_sizes[opal_id]
+                             *  is necessary to keep, but if there is an
+                             *  ompi_id, it's more specific and should be
+                             *  used with ompi_remote_sizes[].
+                             */
     conversion_fct_t*               pFunctions;   /**< the convertor functions pointer */
 } opal_convertor_master_t;
 

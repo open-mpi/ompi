@@ -50,7 +50,7 @@ int opal_datatype_contain_basic_datatypes( const opal_datatype_t* pData, char* p
                 index += snprintf( ptr + index, length - index, "%s:* ", opal_datatype_basicDatatypes[i]->name );
             } else {
                 index += snprintf( ptr + index, length - index, "%s:%" PRIsize_t " ", opal_datatype_basicDatatypes[i]->name,
-                                   pData->ptypes[i]);
+                                   pData->ptypes->bdt_count[i]);
             }
         }
         mask <<= 1;

@@ -298,14 +298,14 @@ opal_datatype_unpack_predefined_element( unsigned char** rtn_src,
  *  Otherwise we'd have to copy and maintain essentially the same blob of
  *  macros that already exist in opal_datatype_internal.h.
  */
-#define OPAL_DATATYPE_MYUNPACK(NAME)               \
-    do {                                           \
-        OPAL_DATATYPE_HANDLE_ ## NAME(             \
-            OPAL_DATATYPE_MYUNPACK_AVAILABLE,      \
-            OPAL_DATATYPE_MYUNPACK_NOTAVAIL, 0);   \
+#define OPAL_DATATYPE_MYUNPACK(NAME)                \
+    do {                                            \
+        OPAL_DATATYPE_HANDLE_ ## NAME(              \
+            OPAL_DATATYPE_MYUNPACK_AVAILABLE,       \
+            OPAL_DATATYPE_MYUNPACK_NOTAVAIL, 0, 0); \
     } while (0)
 
-#define OPAL_DATATYPE_MYUNPACK_AVAILABLE(TYPE, unused_ALIGN, NAME, unused) \
+#define OPAL_DATATYPE_MYUNPACK_AVAILABLE(TYPE, unused_ALIGN, NAME, unused, unused2) \
     do { \
         OPAL_DATATYPE_UNPACK_PREDEFINED_ELEMENT(src, dest, cando_count, stride, blocklen, TYPE); \
         success = true; \
@@ -436,10 +436,10 @@ opal_datatype_pack_predefined_element( unsigned char** rtn_src,
     do {                                           \
         OPAL_DATATYPE_HANDLE_ ## NAME(             \
             OPAL_DATATYPE_MYPACK_AVAILABLE,        \
-            OPAL_DATATYPE_MYPACK_NOTAVAIL, 0);     \
+            OPAL_DATATYPE_MYPACK_NOTAVAIL, 0, 0);  \
     } while (0)
 
-#define OPAL_DATATYPE_MYPACK_AVAILABLE(TYPE, unused_ALIGN, NAME, unused) \
+#define OPAL_DATATYPE_MYPACK_AVAILABLE(TYPE, unused_ALIGN, NAME, unused, unused2) \
     do { \
         OPAL_DATATYPE_PACK_PREDEFINED_ELEMENT(src, dest, cando_count, stride, blocklen, TYPE); \
         success = true; \
