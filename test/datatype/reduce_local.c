@@ -71,6 +71,94 @@ static void print_status(char* op, char* type, int type_size,
     printf(" count  %-10d  time %.6f seconds\n", count, duration);
 }
 
+static int do_ops_built = 0;
+static int
+build_do_ops( char* optarg, int* do_ops)
+{
+    int i;
+    if( 0 == strcmp(optarg, "all") ) {
+        for( i = 0; NULL != array_of_ops[i].name; i++ ) {
+            do_ops[i] = i;
+        }
+        do_ops[i] = -1;  /* stop */
+    } else {
+        int n, idx = 0;
+        char* token, *arg = optarg;
+        while ((token = strsep(&arg, ",")) != NULL) {
+            for( i = 0; NULL != array_of_ops[i].name; i++ ) {  /* find the op */
+                if( 0 == strcmp(array_of_ops[i].name, token) ) {
+                    /* check if the op was not already selected */
+                    for(n = 0; n < idx; n++ ) {
+                        if( i == do_ops[n] ) {
+                            break;
+                        }
+                    }
+                    if( n >= idx ) {
+                        do_ops[idx++] = i;
+                        do_ops[idx]   = -1;
+                    }
+                    break;
+                }
+            }
+            if( NULL == array_of_ops[i].name ) {
+                fprintf(stderr, "Unknown op %s. Ignored.\n", token);
+            }
+        }
+    }
+    do_ops_built = 1;
+    return 0;
+}
+
+
+#define MPI_OP_TEST(OPNAME, MPIOP, MPITYPE, TYPE, INBUF, INOUT_BUF, CHECK_BUF, COUNT, TYPE_PREFIX) \
+do { \
+    const TYPE *_p1 = ((TYPE*)(INBUF)), *_p3 = ((TYPE*)(CHECK_BUF)); \
+    TYPE *_p2 = ((TYPE*)(INOUT_BUF)); \
+    skip_op_type = 0; \
+    for(int _k = 0; _k < min((COUNT), 4); +_k++ ) { \
+        memcpy(_p2, _p3, sizeof(TYPE) * (COUNT)); \
+        tstart = MPI_Wtime(); \
+        MPI_Reduce_local(_p1+_k, _p2+_k, (COUNT)-_k, (MPITYPE), (MPIOP)); \
+        tend = MPI_Wtime(); \
+        if( check ) { \
+            for( i = 0; i < (COUNT)-_k; i++ ) { \
+                if(((_p2+_k)[i]) == (((_p1+_k)[i]) OPNAME ((_p3+_k)[i]))) \
+                    continue; \
+                printf("First error at alignment %d position %d (%" TYPE_PREFIX " %s %" TYPE_PREFIX " != %" TYPE_PREFIX ")\n", \
+                       _k, i, (_p1+_k)[i], (#OPNAME), (_p3+_k)[i], (_p2+_k)[i]); \
+                correctness = 0; \
+                break; \
+            } \
+        } \
+    } \
+    goto check_and_continue; \
+} while (0)
+
+#define MPI_OP_MINMAX_TEST(OPNAME, MPIOP, MPITYPE, TYPE, INBUF, INOUT_BUF, CHECK_BUF, COUNT, TYPE_PREFIX) \
+do { \
+    const TYPE *_p1 = ((TYPE*)(INBUF)), *_p3 = ((TYPE*)(CHECK_BUF)); \
+    TYPE *_p2 = ((TYPE*)(INOUT_BUF)); \
+    skip_op_type = 0; \
+    for(int _k = 0; _k < min((COUNT), 4); +_k++ ) { \
+        memcpy(_p2, _p3, sizeof(TYPE) * (COUNT)); \
+        tstart = MPI_Wtime(); \
+        MPI_Reduce_local(_p1+_k, _p2+_k, (COUNT), (MPITYPE), (MPIOP)); \
+        tend = MPI_Wtime(); \
+        if( check ) { \
+            for( i = 0; i < (COUNT); i++ ) { \
+                TYPE _v1 = *(_p1+_k), _v2 = *(_p2+_k), _v3 = *(_p3+_k); \
+                if(_v2 == OPNAME(_v1, _v3)) \
+                    continue; \
+                printf("First error at alignment %d position %d (%" TYPE_PREFIX " !=  %s(%" TYPE_PREFIX ", %" TYPE_PREFIX ")\n", \
+                       _k, i, _v1, (#OPNAME), _v3, _v2); \
+                correctness = 0; \
+                break; \
+            } \
+        } \
+    } \
+    goto check_and_continue; \
+} while (0)
+
 int main(int argc, char **argv)
 {
     static void *in_buf = NULL, *inout_buf = NULL, *inout_check_buf = NULL;
@@ -118,37 +206,7 @@ int main(int argc, char **argv)
             strncpy(type, optarg, 4);
             break;
         case 'o':
-            {
-                if( 0 == strcmp(optarg, "all") ) {
-                    for( i = 0; NULL != array_of_ops[i].name; i++ ) {
-                        do_ops[i] = i;
-                    }
-                    do_ops[i] = -1;  /* stop */
-                } else {
-                    int n, idx = 0;
-                    char* token, *arg = optarg;
-                    while ((token = strsep(&arg, ",")) != NULL) {
-                        for( i = 0; NULL != array_of_ops[i].name; i++ ) {  /* find the op */
-                            if( 0 == strcmp(array_of_ops[i].name, token) ) {
-                                /* check if the op was not already selected */
-                                for(n = 0; n < idx; n++ ) {
-                                    if( i == do_ops[n] ) {
-                                        break;
-                                    }
-                                }
-                                if( n >= idx ) {
-                                    do_ops[idx++] = i;
-                                    do_ops[idx]   = -1;
-                                }
-                                break;
-                            }
-                        }
-                        if( NULL == array_of_ops[i].name ) {
-                            fprintf(stderr, "Unknown op %s. Ignored.\n", token);
-                        }
-                    }
-                }
-            }
+            build_do_ops( optarg, do_ops);
             break;
         case 's':
             type_size = atoi(optarg);
@@ -166,11 +224,15 @@ int main(int argc, char **argv)
                     " -t [i,u,f,d] : type of the elements to apply the operations on\n"
                     " -o <op> : comma separated list of operations to execute among\n"
                     "           sum, min, max, prod, bor, bxor, band\n"
+                    " -v: increase the verbosity level\n"
                     " -h: this help message\n", argv[0]);
             exit(0);
         }
     }
 
+    if( !do_ops_built ) {  /* not yet done, take the default */
+            build_do_ops( "all", do_ops);
+    }
     in_buf          = malloc(upper * sizeof(double));
     inout_buf       = malloc(upper * sizeof(double));
     inout_check_buf = malloc(upper * sizeof(double));
@@ -201,124 +263,39 @@ int main(int argc, char **argv)
                         mpi_type = "MPI_INT8_T";
 
                         if( 0 == strcmp(op, "sum") ) {
-                            skip_op_type = 0;
-                            tstart = MPI_Wtime();
-                            MPI_Reduce_local(in_int8, inout_int8, count, MPI_INT8_T, mpi_op);
-                            tend = MPI_Wtime();
-                            if( check ) {
-                                for( i = 0; i < count; i++ ) {
-                                    if(inout_int8[i] == (int8_t)(in_int8[i] + inout_int8_for_check[i]))
-                                        continue;
-                                    printf("First error at position %d (%d %s %d != %d)\n",
-                                           i, in_int8[i], op, inout_int8_for_check[i], inout_int8[i]);
-                                    correctness = 0;
-                                    break;
-                                }
-                            }
-                            goto check_and_continue;
-                        }
-                        if( 0 == strcmp(op, "max") ) {
-                            skip_op_type = 0;
-                            tstart = MPI_Wtime();
-                            MPI_Reduce_local(in_int8, inout_int8, count, MPI_INT8_T, mpi_op);
-                            tend = MPI_Wtime();
-                            if( check ) {
-                                for( i = 0; i < count; i++ ) {
-                                    if(inout_int8[i] == max(inout_int8_for_check[i], in_int8[i]))
-                                        continue;
-                                    printf("First error at position %d (%d != %s(%d))\n",
-                                           i, inout_int8[i], op, in_int8[i]);
-                                    correctness = 0;
-                                    break;
-                                }
-                            }
-                            goto check_and_continue;
-                        }
-                        if( 0 == strcmp(op, "min") ) {  //intentionly reversed in and out
-                            skip_op_type = 0;
-                            tstart = MPI_Wtime();
-                            MPI_Reduce_local(inout_int8, in_int8, count, MPI_INT8_T, mpi_op);
-                            tend = MPI_Wtime();
-                            if( check ) {
-                                for( i = 0; i < count; i++ ) {
-                                    if(inout_int8[i] == min(inout_int8_for_check[i], in_int8[i]))
-                                        continue;
-                                    printf("First error at position %d (%d != %s(%d))\n",
-                                           i, inout_int8[i], op, in_int8[i]);
-                                    correctness = 0;
-                                    break;
-                                }
-                            }
-                            goto check_and_continue;
+                            MPI_OP_TEST( +, mpi_op, MPI_INT8_T, int8_t,
+                                         in_int8, inout_int8, inout_int8_for_check,
+                                         count, PRId8);
                         }
                         if( 0 == strcmp(op, "bor") ) {
-                            skip_op_type = 0;
-                            tstart = MPI_Wtime();
-                            MPI_Reduce_local(in_int8, inout_int8, count, MPI_INT8_T, mpi_op);
-                            tend = MPI_Wtime();
-                            if( check ) {
-                                for( i = 0; i < count; i++ ) {
-                                    if(inout_int8[i] == (in_int8[i] | inout_int8_for_check[i]))
-                                        continue;
-                                    printf("First error at position %d (%d %s %d != %d)\n",
-                                           i, in_int8[i], op, inout_int8_for_check[i], inout_int8[i]);
-                                    correctness = 0;
-                                    break;
-                                }
-                            }
-                            goto check_and_continue;
+                            MPI_OP_TEST( |, mpi_op, MPI_INT8_T, int8_t,
+                                         in_int8, inout_int8, inout_int8_for_check,
+                                         count, PRId8);
                         }
                         if( 0 == strcmp(op, "bxor") ) {
-                            skip_op_type = 0;
-                            tstart = MPI_Wtime();
-                            MPI_Reduce_local(in_int8, inout_int8, count, MPI_INT8_T, mpi_op);
-                            tend = MPI_Wtime();
-                            if( check ) {
-                                for( i = 0; i < count; i++ ) {
-                                    if(inout_int8[i] == (in_int8[i] ^ inout_int8_for_check[i]))
-                                        continue;
-                                    printf("First error at position %d (%d %s %d != %d)\n",
-                                           i, in_int8[i], op, inout_int8_for_check[i], inout_int8[i]);
-                                    correctness = 0;
-                                    break;
-                                }
-                            }
-                            goto check_and_continue;
+                            MPI_OP_TEST( ^, mpi_op, MPI_INT8_T, int8_t,
+                                         in_int8, inout_int8, inout_int8_for_check,
+                                         count, PRId8);
                         }
                         if( 0 == strcmp(op, "prod") ) {
-                            skip_op_type = 0;
-                            tstart = MPI_Wtime();
-                            MPI_Reduce_local(in_int8, inout_int8, count, MPI_INT8_T, mpi_op);
-                            tend = MPI_Wtime();
-                            if( check ) {
-                                for( i = 0; i < count; i++ ) {
-                                    if(inout_int8[i] == (int8_t)(in_int8[i] * inout_int8_for_check[i]))
-                                        continue;
-                                    printf("First error at position %d (%d %s %d != %d)\n",
-                                           i, in_int8[i], op, inout_int8_for_check[i], inout_int8[i]);
-                                    correctness = 0;
-                                    break;
-                                }
-                            }
-                            goto check_and_continue;
+                            MPI_OP_TEST( *, mpi_op, MPI_INT8_T, int8_t,
+                                         in_int8, inout_int8, inout_int8_for_check,
+                                         count, PRId8);
                         }
                         if( 0 == strcmp(op, "band") ) {
-                            skip_op_type = 0;
-                            tstart = MPI_Wtime();
-                            MPI_Reduce_local(in_int8, inout_int8, count, MPI_INT8_T, mpi_op);
-                            tend = MPI_Wtime();
-                            if( check ) {
-                                for( i = 0; i < count; i++ ) {
-                                    if(inout_int8[i] == (in_int8[i] & inout_int8_for_check[i]) )
-                                        continue;
-                                    printf("First error at position %d (%d %s %d != %d)\n",
-                                           i, in_int8[i], op, inout_int8_for_check[i], inout_int8[i]);
-                                    printf("First error at position %d\n", i);
-                                    correctness = 0;
-                                    break;
-                                }
-                            }
-                            goto check_and_continue;
+                            MPI_OP_TEST( &, mpi_op, MPI_INT8_T, int8_t,
+                                         in_int8, inout_int8, inout_int8_for_check,
+                                         count, PRId8);
+                        }
+                        if( 0 == strcmp(op, "max") ) {
+                            MPI_OP_MINMAX_TEST(max, mpi_op,  MPI_INT8_T, int8_t,
+                                               in_int8, inout_int8, inout_int8_for_check,
+                                               count, PRId8);
+                        }
+                        if( 0 == strcmp(op, "min") ) {  //intentionly reversed in and out
+                            MPI_OP_MINMAX_TEST(min, mpi_op,  MPI_INT8_T, int8_t,
+                                               in_int8, inout_int8, inout_int8_for_check,
+                                               count, PRId8);
                         }
                     }
                     if( 16 == type_size ) {
@@ -332,123 +309,39 @@ int main(int argc, char **argv)
                         mpi_type = "MPI_INT16_T";
 
                         if( 0 == strcmp(op, "sum") ) {
-                            skip_op_type = 0;
-                            tstart = MPI_Wtime();
-                            MPI_Reduce_local(in_int16, inout_int16, count, MPI_INT16_T, mpi_op);
-                            tend = MPI_Wtime();
-                            if( check ) {
-                                for( i = 0; i < count; i++ ) {
-                                    if(inout_int16[i] == (int16_t)(in_int16[i] + inout_int16_for_check[i]))
-                                        continue;
-                                    printf("First error at position %d (%d %s %d != %d)\n",
-                                           i, in_int16[i], op, inout_int16_for_check[i], inout_int16[i]);
-                                    correctness = 0;
-                                    break;
-                                }
-                            }
-                            goto check_and_continue;
-                        }
-                        if( 0 == strcmp(op, "max") ) {
-                            skip_op_type = 0;
-                            tstart = MPI_Wtime();
-                            MPI_Reduce_local(in_int16, inout_int16, count, MPI_INT16_T, mpi_op);
-                            tend = MPI_Wtime();
-                            if( check ) {
-                                for( i = 0; i < count; i++ )  {
-                                    if(inout_int16[i] == max(inout_int16_for_check[i], in_int16[i]))
-                                        continue;
-                                    printf("First error at position %d (%d != %s(%d))\n",
-                                           i, inout_int16[i], op, in_int16[i]);
-                                    correctness = 0;
-                                    break;
-                                }
-                            }
-                            goto check_and_continue;
-                        }
-                        if( 0 == strcmp(op, "min") ) {
-                            skip_op_type = 0;
-                            tstart = MPI_Wtime();
-                            MPI_Reduce_local(inout_int16, in_int16, count, MPI_INT16_T, mpi_op);
-                            tend = MPI_Wtime();
-                            if( check ) {
-                                for( i = 0; i < count; i++ ) {
-                                    if(inout_int16[i] == min(inout_int16_for_check[i],in_int16[i]))
-                                        continue;
-                                    printf("First error at position %d (%d != %s(%d))\n",
-                                           i, inout_int16[i], op, in_int16[i]);
-                                    correctness = 0;
-                                    break;
-                                }
-                            }
-                            goto check_and_continue;
+                            MPI_OP_TEST( +, mpi_op, MPI_INT16_T, int16_t,
+                                         in_int16, inout_int16, inout_int16_for_check,
+                                         count, PRId16);
                         }
                         if( 0 == strcmp(op, "bor") ) {
-                            skip_op_type = 0;
-                            tstart = MPI_Wtime();
-                            MPI_Reduce_local(in_int16, inout_int16, count, MPI_INT16_T, mpi_op);
-                            tend = MPI_Wtime();
-                            if( check ) {
-                                for( i = 0; i < count; i++ ) {
-                                    if(inout_int16[i] == (in_int16[i] | inout_int16_for_check[i]))
-                                        continue;
-                                    printf("First error at position %d (%d %s %d != %d)\n",
-                                           i, in_int16[i], op, inout_int16_for_check[i], inout_int16[i]);
-                                    correctness = 0;
-                                    break;
-                                }
-                            }
-                            goto check_and_continue;
+                            MPI_OP_TEST( |, mpi_op, MPI_INT16_T, int16_t,
+                                         in_int16, inout_int16, inout_int16_for_check,
+                                         count, PRId16);
                         }
                         if( 0 == strcmp(op, "bxor") ) {
-                            skip_op_type = 0;
-                            tstart = MPI_Wtime();
-                            MPI_Reduce_local(in_int16, inout_int16, count, MPI_INT16_T, mpi_op);
-                            tend = MPI_Wtime();
-                            if( check ) {
-                                for( i = 0; i < count; i++ ) {
-                                    if(inout_int16[i] == (in_int16[i] ^ inout_int16_for_check[i]))
-                                        continue;
-                                    printf("First error at position %d (%d %s %d != %d)\n",
-                                           i, in_int16[i], op, inout_int16_for_check[i], inout_int16[i]);
-                                    correctness = 0;
-                                    break;
-                                }
-                            }
-                            goto check_and_continue;
+                            MPI_OP_TEST( ^, mpi_op, MPI_INT16_T, int16_t,
+                                         in_int16, inout_int16, inout_int16_for_check,
+                                         count, PRId16);
                         }
                         if( 0 == strcmp(op, "prod") ) {
-                            skip_op_type = 0;
-                            tstart = MPI_Wtime();
-                            MPI_Reduce_local(in_int16, inout_int16, count, MPI_INT16_T, mpi_op);
-                            tend = MPI_Wtime();
-                            if( check ) {
-                                for( i = 0; i < count; i++ ) {
-                                    if(inout_int16[i] == (int16_t)(in_int16[i] * inout_int16_for_check[i]))
-                                        continue;
-                                    printf("First error at position %d (%d %s %d != %d)\n",
-                                           i, in_int16[i], op, inout_int16_for_check[i], inout_int16[i]);
-                                    correctness = 0;
-                                    break;
-                                }
-                            }
-                            goto check_and_continue;
+                            MPI_OP_TEST( *, mpi_op, MPI_INT16_T, int16_t,
+                                         in_int16, inout_int16, inout_int16_for_check,
+                                         count, PRId16);
                         }
                         if( 0 == strcmp(op, "band") ) {
-                            skip_op_type = 0;
-                            tstart = MPI_Wtime();
-                            MPI_Reduce_local(in_int16, inout_int16, count, MPI_INT16_T, mpi_op);
-                            tend = MPI_Wtime();
-                            if( check ) {
-                                for( i = 0; i < count; i++ ) {
-                                    if(inout_int16[i] == (in_int16[i] & inout_int16_for_check[i]))
-                                        continue;
-                                    printf("First error at position %d (%d %s %d != %d)\n",
-                                           i, in_int16[i], op, inout_int16_for_check[i], inout_int16[i]);
-                                    correctness = 0;
-                                    break;
-                                }
-                            }
-                            goto check_and_continue;
+                            MPI_OP_TEST( &, mpi_op, MPI_INT16_T, int16_t,
+                                         in_int16, inout_int16, inout_int16_for_check,
+                                         count, PRId16);
+                        }
+                        if( 0 == strcmp(op, "max") ) {
+                            MPI_OP_MINMAX_TEST(max, mpi_op,  MPI_INT16_T, int16_t,
+                                               in_int16, inout_int16, inout_int16_for_check,
+                                               count, PRId16);
+                        }
+                        if( 0 == strcmp(op, "min") ) {  //intentionly reversed in and out
+                            MPI_OP_MINMAX_TEST(min, mpi_op,  MPI_INT16_T, int16_t,
+                                               in_int16, inout_int16, inout_int16_for_check,
+                                               count, PRId16);
                         }
                     }
                     if( 32 == type_size ) {
@@ -462,123 +355,39 @@ int main(int argc, char **argv)
                         mpi_type = "MPI_INT32_T";
 
                         if( 0 == strcmp(op, "sum") ) {
-                            skip_op_type = 0;
-                            tstart = MPI_Wtime();
-                            MPI_Reduce_local(in_int32, inout_int32, count, MPI_INT32_T, mpi_op);
-                            tend = MPI_Wtime();
-                            if( check ) {
-                                for( i = 0; i < count; i++ ) {
-                                    if(inout_int32[i] == (int32_t)(in_int32[i] + inout_int32_for_check[i]))
-                                        continue;
-                                    printf("First error at position %d (%d %s %d != %d)\n",
-                                           i, in_int32[i], op, inout_int32_for_check[i], inout_int32[i]);
-                                    correctness = 0;
-                                    break;
-                                }
-                            }
-                            goto check_and_continue;
-                        }
-                        if( 0 == strcmp(op, "max") ) {
-                            skip_op_type = 0;
-                            tstart = MPI_Wtime();
-                            MPI_Reduce_local(in_int32, inout_int32, count, MPI_INT32_T, mpi_op);
-                            tend = MPI_Wtime();
-                            if( check ) {
-                                for( i = 0; i < count; i++ ) {
-                                    if(inout_int32[i] == max(inout_int32_for_check[i], in_int32[i]))
-                                        continue;
-                                    printf("First error at position %d (%d != %s(%d))\n",
-                                           i, in_int32[i], op, inout_int32[i]);
-                                    correctness = 0;
-                                    break;
-                                }
-                            }
-                            goto check_and_continue;
-                        }
-                        if( 0 == strcmp(op, "min") ) {
-                            skip_op_type = 0;
-                            tstart = MPI_Wtime();
-                            MPI_Reduce_local(inout_int32, in_int32, count, MPI_INT32_T, mpi_op);
-                            tend = MPI_Wtime();
-                            if( check ) {
-                                for( i = 0; i < count; i++ ) {
-                                    if(inout_int32[i] == min(inout_int32_for_check[i], in_int32[i]))
-                                        continue;
-                                    printf("First error at position %d (%d != %s(%d))\n",
-                                           i, in_int32[i], op, inout_int32[i]);
-                                    correctness = 0;
-                                    break;
-                                }
-                            }
-                            goto check_and_continue;
+                            MPI_OP_TEST( +, mpi_op, MPI_INT32_T, int32_t,
+                                         in_int32, inout_int32, inout_int32_for_check,
+                                         count, PRId32);
                         }
                         if( 0 == strcmp(op, "bor") ) {
-                            skip_op_type = 0;
-                            tstart = MPI_Wtime();
-                            MPI_Reduce_local(in_int32, inout_int32, count, MPI_INT32_T, mpi_op);
-                            tend = MPI_Wtime();
-                            if( check ) {
-                                for( i = 0; i < count; i++ ) {
-                                    if(inout_int32[i] == (in_int32[i] | inout_int32_for_check[i]))
-                                        continue;
-                                    printf("First error at position %d (%d %s %d != %d)\n",
-                                           i, in_int32[i], op, inout_int32_for_check[i], inout_int32[i]);
-                                    correctness = 0;
-                                    break;
-                                }
-                            }
-                            goto check_and_continue;
-                        }
-                        if( 0 == strcmp(op, "prod") ) {
-                            skip_op_type = 0;
-                            tstart = MPI_Wtime();
-                            MPI_Reduce_local(in_int32, inout_int32, count, MPI_INT32_T, mpi_op);
-                            tend = MPI_Wtime();
-                            if( check ) {
-                                for( i = 0; i < count; i++ ) {
-                                    if(inout_int32[i] == (int32_t)(in_int32[i] * inout_int32_for_check[i]))
-                                        continue;
-                                    printf("First error at position %d (%d %s %d != %d)\n",
-                                           i, in_int32[i], op, inout_int32_for_check[i], inout_int32[i]);
-                                    correctness = 0;
-                                    break;
-                                }
-                            }
-                            goto check_and_continue;
-                        }
-                        if( 0 == strcmp(op, "band") ) {
-                            skip_op_type = 0;
-                            tstart = MPI_Wtime();
-                            MPI_Reduce_local(in_int32, inout_int32, count, MPI_INT32_T, mpi_op);
-                            tend = MPI_Wtime();
-                            if( check ) {
-                                for( i = 0; i < count; i++ ) {
-                                    if(inout_int32[i] == (in_int32[i] & inout_int32_for_check[i]))
-                                        continue;
-                                    printf("First error at position %d (%d %s %d != %d)\n",
-                                           i, in_int32[i], op, inout_int32_for_check[i], inout_int32[i]);
-                                    correctness = 0;
-                                    break;
-                                }
-                            }
-                            goto check_and_continue;
+                            MPI_OP_TEST( |, mpi_op, MPI_INT32_T, int32_t,
+                                         in_int32, inout_int32, inout_int32_for_check,
+                                         count, PRId32);
                         }
                         if( 0 == strcmp(op, "bxor") ) {
-                            skip_op_type = 0;
-                            tstart = MPI_Wtime();
-                            MPI_Reduce_local(in_int32, inout_int32, count, MPI_INT32_T, mpi_op);
-                            tend = MPI_Wtime();
-                            if( check ) {
-                                for( i = 0; i < count; i++ ) {
-                                    if(inout_int32[i] == (in_int32[i] ^ inout_int32_for_check[i]))
-                                        continue;
-                                    printf("First error at position %d (%d %s %d != %d)\n",
-                                           i, in_int32[i], op, inout_int32_for_check[i], inout_int32[i]);
-                                    correctness = 0;
-                                    break;
-                                }
-                            }
-                            goto check_and_continue;
+                            MPI_OP_TEST( ^, mpi_op, MPI_INT32_T, int32_t,
+                                         in_int32, inout_int32, inout_int32_for_check,
+                                         count, PRId32);
+                        }
+                        if( 0 == strcmp(op, "prod") ) {
+                            MPI_OP_TEST( *, mpi_op, MPI_INT32_T, int32_t,
+                                         in_int32, inout_int32, inout_int32_for_check,
+                                         count, PRId32);
+                        }
+                        if( 0 == strcmp(op, "band") ) {
+                            MPI_OP_TEST( &, mpi_op, MPI_INT32_T, int32_t,
+                                         in_int32, inout_int32, inout_int32_for_check,
+                                         count, PRId32);
+                        }
+                        if( 0 == strcmp(op, "max") ) {
+                            MPI_OP_MINMAX_TEST(max, mpi_op,  MPI_INT32_T, int32_t,
+                                               in_int32, inout_int32, inout_int32_for_check,
+                                               count, PRId32);
+                        }
+                        if( 0 == strcmp(op, "min") ) {  //intentionly reversed in and out
+                            MPI_OP_MINMAX_TEST(min, mpi_op,  MPI_INT32_T, int32_t,
+                                               in_int32, inout_int32, inout_int32_for_check,
+                                               count, PRId32);
                         }
                     }
                     if( 64 == type_size ) {
@@ -592,140 +401,39 @@ int main(int argc, char **argv)
                         mpi_type = "MPI_INT64_T";
 
                         if( 0 == strcmp(op, "sum") ) {
-                            skip_op_type = 0;
-                            tstart = MPI_Wtime();
-                            MPI_Reduce_local(in_int64, inout_int64, count, MPI_INT64_T, mpi_op);
-                            tend = MPI_Wtime();
-                            if( check ) {
-                                for( i = 0; i < count; i++ ) {
-                                    if(inout_int64[i] == (int64_t)(in_int64[i] + inout_int64_for_check[i]))
-                                        continue;
-                                    printf("First error at position %d (%lld %s %lld != %lld)\n",
-                                           i, in_int64[i], op, inout_int64_for_check[i], inout_int64[i]);
-                                    correctness = 0;
-                                    break;
-                                }
-                            }
-                            goto check_and_continue;
-                        }
-                        if( 0 == strcmp(op, "max") ) {
-                            skip_op_type = 0;
-                            tstart = MPI_Wtime();
-                            MPI_Reduce_local(in_int64, inout_int64, count, MPI_INT64_T, mpi_op);
-                            tend = MPI_Wtime();
-                            if( check ) {
-                                for( i = 0; i < count; i++ ) {
-                                    if(inout_int64[i] == max(inout_int64_for_check[i], in_int64[i]))
-                                        continue;
-                                    printf("First error at position %d (%lld != %s(%lld))\n",
-                                           i, inout_int64[i], op, in_int64[i]);
-                                    correctness = 0;
-                                    break;
-                                }
-                            }
-                            goto check_and_continue;
-                        }
-                        if( 0 == strcmp(op, "min") ) {
-                            skip_op_type = 0;
-                            tstart = MPI_Wtime();
-                            MPI_Reduce_local(inout_int64, in_int64, count, MPI_INT64_T, mpi_op);
-                            tend = MPI_Wtime();
-                            if( check ) {
-                                for( i = 0; i < count; i++ ) {
-                                    if(inout_int64[i] == min(inout_int64_for_check[i], in_int64[i]))
-                                        continue;
-                                    printf("First error at position %d (%lld != %s(%lld))\n",
-                                           i, inout_int64[i], op, in_int64[i]);
-                                    correctness = 0;
-                                    break;
-                                }
-                            }
-                            goto check_and_continue;
-                        }
-                        if( 0 == strcmp(op, "min") ) {
-                            skip_op_type = 0;
-                            tstart = MPI_Wtime();
-                            MPI_Reduce_local(inout_int64, in_int64, count, MPI_INT64_T, mpi_op);
-                            tend = MPI_Wtime();
-                            if( check ) {
-                                for( i = 0; i < count; i++ ) {
-                                    if(inout_int64[i] == in_int64[i])
-                                        continue;
-                                    printf("First error at position %d (%lld %s %lld != %lld)\n",
-                                           i, in_int64[i], op, inout_int64_for_check[i], inout_int64[i]);
-                                    correctness = 0;
-                                    break;
-                                }
-                            }
-                            goto check_and_continue;
+                            MPI_OP_TEST( +, mpi_op, MPI_INT64_T, int64_t,
+                                         in_int64, inout_int64, inout_int64_for_check,
+                                         count, PRId64);
                         }
                         if( 0 == strcmp(op, "bor") ) {
-                            skip_op_type = 0;
-                            tstart = MPI_Wtime();
-                            MPI_Reduce_local(in_int64, inout_int64, count, MPI_INT64_T, mpi_op);
-                            tend = MPI_Wtime();
-                            if( check ) {
-                                for( i = 0; i < count; i++ ) {
-                                    if(inout_int64[i] == (in_int64[i] | inout_int64_for_check[i]))
-                                        continue;
-                                    printf("First error at position %d (%lld %s %lld != %lld)\n",
-                                           i, in_int64[i], op, inout_int64_for_check[i], inout_int64[i]);
-                                    correctness = 0;
-                                    break;
-                                }
-                            }
-                            goto check_and_continue;
+                            MPI_OP_TEST( |, mpi_op, MPI_INT64_T, int64_t,
+                                         in_int64, inout_int64, inout_int64_for_check,
+                                         count, PRId64);
                         }
                         if( 0 == strcmp(op, "bxor") ) {
-                            skip_op_type = 0;
-                            tstart = MPI_Wtime();
-                            MPI_Reduce_local(in_int64, inout_int64, count, MPI_INT64_T, mpi_op);
-                            tend = MPI_Wtime();
-                            if( check ) {
-                                for( i = 0; i < count; i++ ) {
-                                    if(inout_int64[i] == (in_int64[i] ^ inout_int64_for_check[i]))
-                                        continue;
-                                    printf("First error at position %d (%lld %s %lld != %lld)\n",
-                                           i, in_int64[i], op, inout_int64_for_check[i], inout_int64[i]);
-                                    correctness = 0;
-                                    break;
-                                }
-                            }
-                            goto check_and_continue;
+                            MPI_OP_TEST( ^, mpi_op, MPI_INT64_T, int64_t,
+                                         in_int64, inout_int64, inout_int64_for_check,
+                                         count, PRId64);
                         }
                         if( 0 == strcmp(op, "prod") ) {
-                            skip_op_type = 0;
-                            tstart = MPI_Wtime();
-                            MPI_Reduce_local(in_int64,inout_int64,count, MPI_INT64_T, mpi_op);
-                            tend = MPI_Wtime();
-                            if( check ) {
-                                for( i = 0; i < count; i++ ) {
-                                    if(inout_int64[i] == (int64_t)(in_int64[i] * inout_int64_for_check[i]))
-                                        continue;
-                                    printf("First error at position %d (%lld %s %lld != %lld)\n",
-                                           i, in_int64[i], op, inout_int64_for_check[i], inout_int64[i]);
-                                    correctness = 0;
-                                    break;
-                                }
-                            }
-                            goto check_and_continue;
+                            MPI_OP_TEST( *, mpi_op, MPI_INT64_T, int64_t,
+                                         in_int64, inout_int64, inout_int64_for_check,
+                                         count, PRId64);
                         }
                         if( 0 == strcmp(op, "band") ) {
-                            skip_op_type = 0;
-                            tstart = MPI_Wtime();
-                            MPI_Reduce_local(in_int64, inout_int64, count, MPI_INT64_T, mpi_op);
-                            tend = MPI_Wtime();
-                            if( check ) {
-                                for( i = 0; i < count; i++ ) {
-                                    if(inout_int64[i] == (in_int64[i] & inout_int64_for_check[i]) )
-                                        continue;
-                                    printf("First error at position %d (%lld %s %lld != %lld)\n",
-                                           i, in_int64[i], op, inout_int64_for_check[i], inout_int64[i]);
-                                    correctness = 0;
-                                    break;
-                                }
-                            }
-                            goto check_and_continue;
+                            MPI_OP_TEST( &, mpi_op, MPI_INT64_T, int64_t,
+                                         in_int64, inout_int64, inout_int64_for_check,
+                                         count, PRId64);
+                        }
+                        if( 0 == strcmp(op, "max") ) {
+                            MPI_OP_MINMAX_TEST(max, mpi_op,  MPI_INT64_T, int64_t,
+                                               in_int64, inout_int64, inout_int64_for_check,
+                                               count, PRId64);
+                        }
+                        if( 0 == strcmp(op, "min") ) {  //intentionly reversed in and out
+                            MPI_OP_MINMAX_TEST(min, mpi_op,  MPI_INT64_T, int64_t,
+                                               in_int64, inout_int64, inout_int64_for_check,
+                                               count, PRId64);
                         }
                     }
                 }
@@ -737,128 +445,44 @@ int main(int argc, char **argv)
                             *inout_uint8_for_check = (uint8_t*)inout_check_buf;
                         for( i = 0; i < count; i++ ) {
                             in_uint8[i] = 5;
-                            inout_uint8[i] = inout_uint8_for_check[i] = 121;
+                            inout_uint8[i] = inout_uint8_for_check[i] = 2;
                         }
                         mpi_type = "MPI_UINT8_T";
 
                         if( 0 == strcmp(op, "sum") ) {
-                            skip_op_type = 0;
-                            tstart = MPI_Wtime();
-                            MPI_Reduce_local(in_uint8, inout_uint8, count, MPI_UINT8_T, mpi_op);
-                            tend = MPI_Wtime();
-                            if( check ) {
-                                for( i = 0; i < count; i++ ) {
-                                    if(inout_uint8[i] == (uint8_t)(in_uint8[i] + inout_uint8_for_check[i]))
-                                        continue;
-                                    printf("First error at position %d (%u %s %u [%u] != %u)\n",
-                                           i, in_uint8[i], op, inout_uint8_for_check[i], (uint8_t)(in_uint8[i] + inout_uint8_for_check[i]), inout_uint8[i]);
-                                    correctness = 0;
-                                    break;
-                                }
-                            }
-                            goto check_and_continue;
-                        }
-                        if( 0 == strcmp(op, "max") ) {
-                            skip_op_type = 0;
-                            tstart = MPI_Wtime();
-                            MPI_Reduce_local(in_uint8, inout_uint8, count, MPI_UINT8_T, mpi_op);
-                            tend = MPI_Wtime();
-                            if( check ) {
-                                for( i = 0; i < count; i++ ) {
-                                    if(inout_uint8[i] == max(inout_uint8_for_check[i], in_uint8[i]))
-                                        continue;
-                                    printf("First error at position %d (%u != %s(%u))\n",
-                                           i, inout_uint8[i], op, inout_uint8_for_check[i]);
-                                    correctness = 0;
-                                    break;
-                                }
-                            }
-                            goto check_and_continue;
-                        }
-                        if( 0 == strcmp(op, "min") ) {  //intentionly reversed in and out
-                            skip_op_type = 0;
-                            tstart = MPI_Wtime();
-                            MPI_Reduce_local(in_uint8, inout_uint8, count, MPI_UINT8_T, mpi_op);
-                            tend = MPI_Wtime();
-                            if( check ) {
-                                for( i = 0; i < count; i++ ) {
-                                    if(inout_uint8[i] == min(inout_uint8_for_check[i], in_uint8[i]))
-                                        continue;
-                                    printf("First error at position %d (%u != %s(%u))\n",
-                                           i, inout_uint8[i], op, inout_uint8_for_check[i]);
-                                    correctness = 0;
-                                    break;
-                                }
-                            }
-                            goto check_and_continue;
+                            MPI_OP_TEST( +, mpi_op, MPI_UINT8_T, uint8_t,
+                                         in_uint8, inout_uint8, inout_uint8_for_check,
+                                         count, PRIu8);
                         }
                         if( 0 == strcmp(op, "bor") ) {
-                            skip_op_type = 0;
-                            tstart = MPI_Wtime();
-                            MPI_Reduce_local(in_uint8, inout_uint8, count, MPI_UINT8_T, mpi_op);
-                            tend = MPI_Wtime();
-                            if( check ) {
-                                for( i = 0; i < count; i++ ) {
-                                    if(inout_uint8[i] == (in_uint8[i] | inout_uint8_for_check[i]))
-                                        continue;
-                                    printf("First error at position %d (%u %s %u != %u)\n",
-                                           i, in_uint8[i], op, inout_uint8_for_check[i], inout_uint8[i]);
-                                    correctness = 0;
-                                    break;
-                                }
-                            }
-                            goto check_and_continue;
+                            MPI_OP_TEST( |, mpi_op, MPI_UINT8_T, uint8_t,
+                                         in_uint8, inout_uint8, inout_uint8_for_check,
+                                         count, PRIu8);
                         }
                         if( 0 == strcmp(op, "bxor") ) {
-                            skip_op_type = 0;
-                            tstart = MPI_Wtime();
-                            MPI_Reduce_local(in_uint8, inout_uint8, count, MPI_UINT8_T, mpi_op);
-                            tend = MPI_Wtime();
-                            if( check ) {
-                                for( i = 0; i < count; i++ ) {
-                                    if(inout_uint8[i] == (in_uint8[i] ^ inout_uint8_for_check[i]))
-                                        continue;
-                                    printf("First error at position %d (%u %s %u != %u)\n",
-                                           i, in_uint8[i], op, inout_uint8_for_check[i], inout_uint8[i]);
-                                    correctness = 0;
-                                    break;
-                                }
-                            }
-                            goto check_and_continue;
+                            MPI_OP_TEST( ^, mpi_op, MPI_UINT8_T, uint8_t,
+                                         in_uint8, inout_uint8, inout_uint8_for_check,
+                                         count, PRIu8);
                         }
                         if( 0 == strcmp(op, "prod") ) {
-                            skip_op_type = 0;
-                            tstart = MPI_Wtime();
-                            MPI_Reduce_local(in_uint8, inout_uint8, count, MPI_UINT8_T, mpi_op);
-                            tend = MPI_Wtime();
-                            if( check ) {
-                                for( i = 0; i < count; i++ ) {
-                                    if(inout_uint8[i] == (uint8_t)(in_uint8[i] * inout_uint8_for_check[i]))
-                                        continue;
-                                    printf("First error at position %d (%u %s %u != %u)\n",
-                                           i, in_uint8[i], op, inout_uint8_for_check[i], inout_uint8[i]);
-                                    correctness = 0;
-                                    break;
-                                }
-                            }
-                            goto check_and_continue;
+                            MPI_OP_TEST( *, mpi_op, MPI_UINT8_T, uint8_t,
+                                         in_uint8, inout_uint8, inout_uint8_for_check,
+                                         count, PRIu8);
                         }
                         if( 0 == strcmp(op, "band") ) {
-                            skip_op_type = 0;
-                            tstart = MPI_Wtime();
-                            MPI_Reduce_local(in_uint8, inout_uint8, count, MPI_UINT8_T, mpi_op);
-                            tend = MPI_Wtime();
-                            if( check ) {
-                                for( i = 0; i < count; i++ ) {
-                                    if(inout_uint8[i] == (in_uint8[i] & inout_uint8_for_check[i]) )
-                                        continue;
-                                    printf("First error at position %d (%u %s %u != %u)\n",
-                                           i, in_uint8[i], op, inout_uint8_for_check[i], inout_uint8[i]);
-                                    correctness = 0;
-                                    break;
-                                }
-                            }
-                            goto check_and_continue;
+                            MPI_OP_TEST( &, mpi_op, MPI_UINT8_T, uint8_t,
+                                         in_uint8, inout_uint8, inout_uint8_for_check,
+                                         count, PRIu8);
+                        }
+                        if( 0 == strcmp(op, "max") ) {
+                            MPI_OP_MINMAX_TEST(max, mpi_op,  MPI_UINT8_T, uint8_t,
+                                               in_uint8, inout_uint8, inout_uint8_for_check,
+                                               count, PRIu8);
+                        }
+                        if( 0 == strcmp(op, "min") ) {  //intentionly reversed in and out
+                            MPI_OP_MINMAX_TEST(min, mpi_op,  MPI_UINT8_T, uint8_t,
+                                               in_uint8, inout_uint8, inout_uint8_for_check,
+                                               count, PRIu8);
                         }
                     }
                     if( 16 == type_size ) {
@@ -872,123 +496,39 @@ int main(int argc, char **argv)
                         mpi_type = "MPI_UINT16_T";
 
                         if( 0 == strcmp(op, "sum") ) {
-                            skip_op_type = 0;
-                            tstart = MPI_Wtime();
-                            MPI_Reduce_local(in_uint16, inout_uint16, count, MPI_UINT16_T, mpi_op);
-                            tend = MPI_Wtime();
-                            if( check ) {
-                                for( i = 0; i < count; i++ ) {
-                                    if(inout_uint16[i] == (uint16_t)(in_uint16[i] + inout_uint16_for_check[i]))
-                                        continue;
-                                    printf("First error at position %d (%u %s %u != %u)\n",
-                                           i, in_uint16[i], op, inout_uint16_for_check[i], inout_uint16[i]);
-                                    correctness = 0;
-                                    break;
-                                }
-                            }
-                            goto check_and_continue;
-                        }
-                        if( 0 == strcmp(op, "max") ) {
-                            skip_op_type = 0;
-                            tstart = MPI_Wtime();
-                            MPI_Reduce_local(in_uint16, inout_uint16, count, MPI_UINT16_T, mpi_op);
-                            tend = MPI_Wtime();
-                            if( check ) {
-                                for( i = 0; i < count; i++ )  {
-                                    if(inout_uint16[i] == max(inout_uint16_for_check[i], in_uint16[i]))
-                                        continue;
-                                    printf("First error at position %d (%u != %s(%u))\n",
-                                           i, inout_uint16[i], op, inout_uint16_for_check[i]);
-                                    correctness = 0;
-                                    break;
-                                }
-                            }
-                            goto check_and_continue;
-                        }
-                        if( 0 == strcmp(op, "min") ) {
-                            skip_op_type = 0;
-                            tstart = MPI_Wtime();
-                            MPI_Reduce_local(in_uint16, inout_uint16, count, MPI_UINT16_T, mpi_op);
-                            tend = MPI_Wtime();
-                            if( check ) {
-                                for( i = 0; i < count; i++ ) {
-                                    if(inout_uint16[i] == min(inout_uint16_for_check[i], in_uint16[i]))
-                                        continue;
-                                    printf("First error at position %d (%u != %s(%u))\n",
-                                           i, inout_uint16[i], op, inout_uint16_for_check[i]);
-                                    correctness = 0;
-                                    break;
-                                }
-                            }
-                            goto check_and_continue;
+                            MPI_OP_TEST( +, mpi_op, MPI_UINT16_T, uint16_t,
+                                         in_uint16, inout_uint16, inout_uint16_for_check,
+                                         count, PRIu16);
                         }
                         if( 0 == strcmp(op, "bor") ) {
-                            skip_op_type = 0;
-                            tstart = MPI_Wtime();
-                            MPI_Reduce_local(in_uint16, inout_uint16, count, MPI_UINT16_T, mpi_op);
-                            tend = MPI_Wtime();
-                            if( check ) {
-                                for( i = 0; i < count; i++ ) {
-                                    if(inout_uint16[i] == (in_uint16[i] | inout_uint16_for_check[i]))
-                                        continue;
-                                    printf("First error at position %d (%u %s %u != %u)\n",
-                                           i, in_uint16[i], op, inout_uint16_for_check[i], inout_uint16[i]);
-                                    correctness = 0;
-                                    break;
-                                }
-                            }
-                            goto check_and_continue;
+                            MPI_OP_TEST( |, mpi_op, MPI_UINT16_T, uint16_t,
+                                         in_uint16, inout_uint16, inout_uint16_for_check,
+                                         count, PRIu16);
                         }
                         if( 0 == strcmp(op, "bxor") ) {
-                            skip_op_type = 0;
-                            tstart = MPI_Wtime();
-                            MPI_Reduce_local(in_uint16, inout_uint16, count, MPI_UINT16_T, mpi_op);
-                            tend = MPI_Wtime();
-                            if( check ) {
-                                for( i = 0; i < count; i++ ) {
-                                    if(inout_uint16[i] == (in_uint16[i] ^ inout_uint16_for_check[i]))
-                                        continue;
-                                    printf("First error at position %d (%u %s %u != %u)\n",
-                                           i, in_uint16[i], op, inout_uint16_for_check[i], inout_uint16[i]);
-                                    correctness = 0;
-                                    break;
-                                }
-                            }
-                            goto check_and_continue;
+                            MPI_OP_TEST( ^, mpi_op, MPI_UINT16_T, uint16_t,
+                                         in_uint16, inout_uint16, inout_uint16_for_check,
+                                         count, PRIu16);
                         }
                         if( 0 == strcmp(op, "prod") ) {
-                            skip_op_type = 0;
-                            tstart = MPI_Wtime();
-                            MPI_Reduce_local(in_uint16, inout_uint16, count, MPI_UINT16_T, mpi_op);
-                            tend = MPI_Wtime();
-                            if( check ) {
-                                for( i = 0; i < count; i++ ) {
-                                    if(inout_uint16[i] == (uint16_t)(in_uint16[i] * inout_uint16_for_check[i]))
-                                        continue;
-                                    printf("First error at position %d (%u %s %u != %u)\n",
-                                           i, in_uint16[i], op, inout_uint16_for_check[i], inout_uint16[i]);
-                                    correctness = 0;
-                                    break;
-                                }
-                            }
-                            goto check_and_continue;
+                            MPI_OP_TEST( *, mpi_op, MPI_UINT16_T, uint16_t,
+                                         in_uint16, inout_uint16, inout_uint16_for_check,
+                                         count, PRIu16);
                         }
                         if( 0 == strcmp(op, "band") ) {
-                            skip_op_type = 0;
-                            tstart = MPI_Wtime();
-                            MPI_Reduce_local(in_uint16, inout_uint16, count, MPI_UINT16_T, mpi_op);
-                            tend = MPI_Wtime();
-                            if( check ) {
-                                for( i = 0; i < count; i++ ) {
-                                    if(inout_uint16[i] == (in_uint16[i] & inout_uint16_for_check[i]))
-                                        continue;
-                                    printf("First error at position %d (%u %s %u != %u)\n",
-                                           i, in_uint16[i], op, inout_uint16_for_check[i], inout_uint16[i]);
-                                    correctness = 0;
-                                    break;
-                                }
-                            }
-                            goto check_and_continue;
+                            MPI_OP_TEST( &, mpi_op, MPI_UINT16_T, uint16_t,
+                                         in_uint16, inout_uint16, inout_uint16_for_check,
+                                         count, PRIu16);
+                        }
+                        if( 0 == strcmp(op, "max") ) {
+                            MPI_OP_MINMAX_TEST(max, mpi_op,  MPI_UINT16_T, uint16_t,
+                                               in_uint16, inout_uint16, inout_uint16_for_check,
+                                               count, PRIu16);
+                        }
+                        if( 0 == strcmp(op, "min") ) {  //intentionly reversed in and out
+                            MPI_OP_MINMAX_TEST(min, mpi_op,  MPI_UINT16_T, uint16_t,
+                                               in_uint16, inout_uint16, inout_uint16_for_check,
+                                               count, PRIu16);
                         }
                     }
                     if( 32 == type_size ) {
@@ -1002,129 +542,45 @@ int main(int argc, char **argv)
                         mpi_type = "MPI_UINT32_T";
 
                         if( 0 == strcmp(op, "sum") ) {
-                            skip_op_type = 0;
-                            tstart = MPI_Wtime();
-                            MPI_Reduce_local(in_uint32, inout_uint32, count, MPI_UINT32_T, mpi_op);
-                            tend = MPI_Wtime();
-                            if( check ) {
-                                for( i = 0; i < count; i++ ) {
-                                    if(inout_uint32[i] == (uint32_t)(in_uint32[i] + inout_uint32_for_check[i]))
-                                        continue;
-                                    printf("First error at position %d (%u %s %u != %u)\n",
-                                           i, in_uint32[i], op, inout_uint32_for_check[i], inout_uint32[i]);
-                                    correctness = 0;
-                                    break;
-                                }
-                            }
-                            goto check_and_continue;
-                        }
-                        if( 0 == strcmp(op, "max") ) {
-                            skip_op_type = 0;
-                            tstart = MPI_Wtime();
-                            MPI_Reduce_local(in_uint32, inout_uint32, count, MPI_UINT32_T, mpi_op);
-                            tend = MPI_Wtime();
-                            if( check ) {
-                                for( i = 0; i < count; i++ ) {
-                                    if(inout_uint32[i] == max(inout_uint32_for_check[i], in_uint32[i]))
-                                        continue;
-                                    printf("First error at position %d (%u != %s(%u))\n",
-                                           i, inout_uint32[i], op, inout_uint32_for_check[i]);
-                                    correctness = 0;
-                                    break;
-                                }
-                            }
-                            goto check_and_continue;
-                        }
-                        if( 0 == strcmp(op, "min") ) {  // we reverse the send and recv buffers
-                            skip_op_type = 0;
-                            tstart = MPI_Wtime();
-                            MPI_Reduce_local(inout_uint32, in_uint32, count, MPI_UINT32_T, mpi_op);
-                            tend = MPI_Wtime();
-                            if( check ) {
-                                for( i = 0; i < count; i++ ) {
-                                    if(inout_uint32[i] == min(inout_uint32_for_check[i], in_uint32[i]))
-                                        continue;
-                                    printf("First error at position %d (%u != %s(%u))\n",
-                                           i, inout_uint32[i], op, inout_uint32_for_check[i]);
-                                    correctness = 0;
-                                    break;
-                                }
-                            }
-                            goto check_and_continue;
+                            MPI_OP_TEST( +, mpi_op, MPI_UINT32_T, uint32_t,
+                                         in_uint32, inout_uint32, inout_uint32_for_check,
+                                         count, PRIu32);
                         }
                         if( 0 == strcmp(op, "bor") ) {
-                            skip_op_type = 0;
-                            tstart = MPI_Wtime();
-                            MPI_Reduce_local(in_uint32,inout_uint32,count, MPI_UINT32_T, mpi_op);
-                            tend = MPI_Wtime();
-                            if( check ) {
-                                for( i = 0; i < count; i++ ) {
-                                    if(inout_uint32[i] == (in_uint32[i] | inout_uint32_for_check[i]))
-                                        continue;
-                                    printf("First error at position %d (%u %s %u != %u)\n",
-                                           i, in_uint32[i], op, inout_uint32_for_check[i], inout_uint32[i]);
-                                    correctness = 0;
-                                    break;
-                                }
-                            }
-                            goto check_and_continue;
-                        }
-                        if( 0 == strcmp(op, "prod") ) {
-                            skip_op_type = 0;
-                            tstart = MPI_Wtime();
-                            MPI_Reduce_local(in_uint32, inout_uint32, count, MPI_UINT32_T, mpi_op);
-                            tend = MPI_Wtime();
-                            if( check ) {
-                                for( i = 0; i < count; i++ ) {
-                                    if(inout_uint32[i] == (uint32_t)(in_uint32[i] * inout_uint32_for_check[i]))
-                                        continue;
-                                    printf("First error at position %d (%u %s %u != %u)\n",
-                                           i, in_uint32[i], op, inout_uint32_for_check[i], inout_uint32[i]);
-                                    correctness = 0;
-                                    break;
-                                }
-                            }
-                            goto check_and_continue;
-                        }
-                        if( 0 == strcmp(op, "band") ) {
-                            skip_op_type = 0;
-                            tstart = MPI_Wtime();
-                            MPI_Reduce_local(in_uint32, inout_uint32, count, MPI_UINT32_T, mpi_op);
-                            tend = MPI_Wtime();
-                            if( check ) {
-                                for( i = 0; i < count; i++ ) {
-                                    if(inout_uint32[i] == (in_uint32[i] & inout_uint32_for_check[i]))
-                                        continue;
-                                    printf("First error at position %d (%u %s %u != %u)\n",
-                                           i, in_uint32[i], op, inout_uint32_for_check[i], inout_uint32[i]);
-                                    correctness = 0;
-                                    break;
-                                }
-                            }
-                            goto check_and_continue;
+                            MPI_OP_TEST( |, mpi_op, MPI_UINT32_T, uint32_t,
+                                         in_uint32, inout_uint32, inout_uint32_for_check,
+                                         count, PRIu32);
                         }
                         if( 0 == strcmp(op, "bxor") ) {
-                            skip_op_type = 0;
-                            tstart = MPI_Wtime();
-                            MPI_Reduce_local(in_uint32, inout_uint32, count, MPI_UINT32_T, mpi_op);
-                            tend = MPI_Wtime();
-                            if( check ) {
-                                for( i = 0; i < count; i++ ) {
-                                    if(inout_uint32[i] == (in_uint32[i] ^ inout_uint32_for_check[i]))
-                                        continue;
-                                    printf("First error at position %d (%u %s %u != %u)\n",
-                                           i, in_uint32[i], op, inout_uint32_for_check[i], inout_uint32[i]);
-                                    correctness = 0;
-                                    break;
-                                }
-                            }
-                            goto check_and_continue;
+                            MPI_OP_TEST( ^, mpi_op, MPI_UINT32_T, uint32_t,
+                                         in_uint32, inout_uint32, inout_uint32_for_check,
+                                         count, PRIu32);
+                        }
+                        if( 0 == strcmp(op, "prod") ) {
+                            MPI_OP_TEST( *, mpi_op, MPI_UINT32_T, uint32_t,
+                                         in_uint32, inout_uint32, inout_uint32_for_check,
+                                         count, PRIu32);
+                        }
+                        if( 0 == strcmp(op, "band") ) {
+                            MPI_OP_TEST( &, mpi_op, MPI_UINT32_T, uint32_t,
+                                         in_uint32, inout_uint32, inout_uint32_for_check,
+                                         count, PRIu32);
+                        }
+                        if( 0 == strcmp(op, "max") ) {
+                            MPI_OP_MINMAX_TEST(max, mpi_op,  MPI_UINT32_T, uint32_t,
+                                               in_uint32, inout_uint32, inout_uint32_for_check,
+                                               count, PRIu32);
+                        }
+                        if( 0 == strcmp(op, "min") ) {  //intentionly reversed in and out
+                            MPI_OP_MINMAX_TEST(min, mpi_op,  MPI_UINT32_T, uint32_t,
+                                               in_uint32, inout_uint32, inout_uint32_for_check,
+                                               count, PRIu32);
                         }
                     }
                     if( 64 == type_size ) {
-                        int64_t *in_uint64 = (int64_t*)in_buf,
-                            *inout_uint64 = (int64_t*)inout_buf,
-                            *inout_uint64_for_check = (int64_t*)inout_check_buf;
+                        uint64_t *in_uint64 = (uint64_t*)in_buf,
+                              *inout_uint64 = (uint64_t*)inout_buf,
+                            *inout_uint64_for_check = (uint64_t*)inout_check_buf;
                         for( i = 0; i < count; i++ ) {
                             in_uint64[i] = 5;
                             inout_uint64[i] = inout_uint64_for_check[i] = 32433;
@@ -1132,124 +588,39 @@ int main(int argc, char **argv)
                         mpi_type = "MPI_UINT64_T";
 
                         if( 0 == strcmp(op, "sum") ) {
-                            skip_op_type = 0;
-                            tstart = MPI_Wtime();
-                            MPI_Reduce_local(in_uint64, inout_uint64, count, MPI_UINT64_T, mpi_op);
-                            tend = MPI_Wtime();
-                            if( check ) {
-                                for( correctness = 1, i = 0; i < count; i++ ) {
-                                    if(inout_uint64[i] == (int64_t)(in_uint64[i] + inout_uint64_for_check[i]))
-                                        continue;
-                                    printf("First error at position %d (%llu %s %llu != %llu)\n",
-                                           i, in_uint64[i], op, inout_uint64_for_check[i], inout_uint64[i]);
-                                    correctness = 0;
-                                    break;
-                                }
-                            }
-                            goto check_and_continue;
-                        }
-                        if( 0 == strcmp(op, "max") ) {
-                            skip_op_type = 0;
-                            tstart = MPI_Wtime();
-                            MPI_Reduce_local(in_uint64, inout_uint64, count, MPI_UINT64_T, mpi_op);
-                            tend = MPI_Wtime();
-                            if( check ) {
-                                for( i = 0; i < count; i++ ) {
-                                    if(inout_uint64[i] == max(inout_uint64_for_check[i], in_uint64[i]))
-                                        continue;
-                                    printf("First error at position %d (%llu != %s(%llu))\n",
-                                           i, inout_uint64[i], op, inout_uint64_for_check[i]);
-                                    correctness = 0;
-                                    break;
-                                }
-                            }
-                            goto check_and_continue;
-                        }
-                        if( 0 == strcmp(op, "min") ) {
-                            skip_op_type = 0;
-                            tstart = MPI_Wtime();
-                            MPI_Reduce_local(in_uint64, inout_uint64, count, MPI_UINT64_T, mpi_op);
-                            tend = MPI_Wtime();
-                            if( check ) {
-                                for( i = 0; i < count; i++ ) {
-                                    if(inout_uint64[i] == min(inout_uint64_for_check[i], in_uint64[i]))
-                                        continue;
-                                    printf("First error at position %d (%llu != %s(%llu, %llu))\n",
-                                           i, inout_uint64[i], op, inout_uint64_for_check[i], in_uint64[i]);
-                                    correctness = 0;
-                                    break;
-                                }
-                            }
-                            goto check_and_continue;
+                            MPI_OP_TEST( +, mpi_op, MPI_UINT64_T, uint64_t,
+                                         in_uint64, inout_uint64, inout_uint64_for_check,
+                                         count, PRIu64);
                         }
                         if( 0 == strcmp(op, "bor") ) {
-                            skip_op_type = 0;
-                            tstart = MPI_Wtime();
-                            MPI_Reduce_local(in_uint64, inout_uint64, count, MPI_UINT64_T, mpi_op);
-                            tend = MPI_Wtime();
-                            if( check ) {
-                                for( i = 0; i < count; i++ ) {
-                                    if(inout_uint64[i] == (in_uint64[i] | inout_uint64_for_check[i]))
-                                        continue;
-                                    printf("First error at position %d (%llu %s %llu != %llu)\n",
-                                           i, in_uint64[i], op, inout_uint64_for_check[i], inout_uint64[i]);
-                                    correctness = 0;
-                                    break;
-                                }
-                            }
-                            goto check_and_continue;
+                            MPI_OP_TEST( |, mpi_op, MPI_UINT64_T, uint64_t,
+                                         in_uint64, inout_uint64, inout_uint64_for_check,
+                                         count, PRIu64);
                         }
                         if( 0 == strcmp(op, "bxor") ) {
-                            skip_op_type = 0;
-                            tstart = MPI_Wtime();
-                            MPI_Reduce_local(in_uint64, inout_uint64, count, MPI_UINT64_T, mpi_op);
-                            tend = MPI_Wtime();
-                            if( check ) {
-                                for( i = 0; i < count; i++ ) {
-                                    if(inout_uint64[i] == (in_uint64[i] ^ inout_uint64_for_check[i]))
-                                        continue;
-                                    printf("First error at position %d (%llu %s %llu != %llu)\n",
-                                           i, in_uint64[i], op, inout_uint64_for_check[i], inout_uint64[i]);
-                                    correctness = 0;
-                                    break;
-                                }
-                            }
-                            goto check_and_continue;
+                            MPI_OP_TEST( ^, mpi_op, MPI_UINT64_T, uint64_t,
+                                         in_uint64, inout_uint64, inout_uint64_for_check,
+                                         count, PRIu64);
                         }
                         if( 0 == strcmp(op, "prod") ) {
-                            skip_op_type = 0;
-                            tstart = MPI_Wtime();
-                            MPI_Reduce_local(in_uint64,inout_uint64,count, MPI_UINT64_T, mpi_op);
-                            tend = MPI_Wtime();
-                            if( check ) {
-                                for( i = 0; i < count; i++ ) {
-                                    if(inout_uint64[i] == (int64_t)(in_uint64[i] * inout_uint64_for_check[i]))
-                                        continue;
-                                    printf("First error at position %d (%llu %s %llu != %llu)\n",
-                                           i, in_uint64[i], op, inout_uint64_for_check[i], inout_uint64[i]);
-                                    correctness = 0;
-                                    break;
-                                }
-                            }
-                            goto check_and_continue;
+                            MPI_OP_TEST( *, mpi_op, MPI_UINT64_T, uint64_t,
+                                         in_uint64, inout_uint64, inout_uint64_for_check,
+                                         count, PRIu64);
                         }
                         if( 0 == strcmp(op, "band") ) {
-                            skip_op_type = 0;
-                            tstart = MPI_Wtime();
-                            MPI_Reduce_local(in_uint64, inout_uint64, count, MPI_UINT64_T, mpi_op);
-                            tend = MPI_Wtime();
-                            if( check ) {
-                                for( i = 0; i < count; i++ ) {
-                                    if(inout_uint64[i] == (in_uint64[i] & inout_uint64_for_check[i]) )
-                                        continue;
-                                    printf("First error at position %d (%llu %s %llu != %llu)\n",
-                                           i, in_uint64[i], op, inout_uint64_for_check[i], inout_uint64[i]);
-                                    printf("First error at position %d\n", i);
-                                    correctness = 0;
-                                    break;
-                                }
-                            }
-                            goto check_and_continue;
+                            MPI_OP_TEST( &, mpi_op, MPI_UINT64_T, uint64_t,
+                                         in_uint64, inout_uint64, inout_uint64_for_check,
+                                         count, PRIu64);
+                        }
+                        if( 0 == strcmp(op, "max") ) {
+                            MPI_OP_MINMAX_TEST(max, mpi_op,  MPI_UINT64_T, uint64_t,
+                                               in_uint64, inout_uint64, inout_uint64_for_check,
+                                               count, PRIu64);
+                        }
+                        if( 0 == strcmp(op, "min") ) {
+                            MPI_OP_MINMAX_TEST(min, mpi_op,  MPI_UINT64_T, uint64_t,
+                                               in_uint64, inout_uint64, inout_uint64_for_check,
+                                               count, PRIu64);
                         }
                     }
                 }
@@ -1265,68 +636,24 @@ int main(int argc, char **argv)
                     mpi_type = "MPI_FLOAT";
 
                     if( 0 == strcmp(op, "sum") ) {
-                        skip_op_type = 0;
-                        tstart = MPI_Wtime();
-                        MPI_Reduce_local(in_float, inout_float, count, MPI_FLOAT, mpi_op);
-                        tend = MPI_Wtime();
-                        if( check ) {
-                            for( i = 0; i < count; i++ ) {
-                                if(inout_float[i] == inout_float_for_check[i]+in_float[i])
-                                    continue;
-                                printf("First error at position %d\n", i);
-                                correctness = 0;
-                                break;
-                            }
-                        }
-                        goto check_and_continue;
-                    }
-                    if( 0 == strcmp(op, "max") ) {
-                        skip_op_type = 0;
-                        tstart = MPI_Wtime();
-                        MPI_Reduce_local(in_float, inout_float, count, MPI_FLOAT, mpi_op);
-                        tend = MPI_Wtime();
-                        if( check ) {
-                            for( i = 0; i < count; i++ ) {
-                                if(inout_float[i] == max(inout_float_for_check[i], in_float[i]))
-                                    continue;
-                                printf("First error at position %d\n", i);
-                                correctness = 0;
-                                break;
-                            }
-                        }
-                        goto check_and_continue;
-                    }
-                    if( 0 == strcmp(op, "min") ) {
-                        skip_op_type = 0;
-                        tstart = MPI_Wtime();
-                        MPI_Reduce_local(inout_float,in_float,count, MPI_FLOAT, mpi_op);
-                        tend = MPI_Wtime();
-                        if( check ) {
-                            for( i = 0; i < count; i++ ) {
-                                if(inout_float[i] == min(inout_float_for_check[i], in_float[i]))
-                                    continue;
-                                printf("First error at position %d\n", i);
-                                correctness = 0;
-                                break;
-                            }
-                        }
-                        goto check_and_continue;
+                        MPI_OP_TEST( +, mpi_op, MPI_FLOAT, float,
+                                     in_float, inout_float, inout_float_for_check,
+                                     count, "f");
                     }
                     if( 0 == strcmp(op, "prod") ) {
-                        skip_op_type = 0;
-                        tstart = MPI_Wtime();
-                        MPI_Reduce_local(in_float, inout_float, count, MPI_FLOAT, mpi_op);
-                        tend = MPI_Wtime();
-                        if( check ) {
-                            for( i = 0; i < count; i++ ) {
-                                if(inout_float[i] == in_float[i] * inout_float_for_check[i])
-                                    continue;
-                                printf("First error at position %d\n", i);
-                                correctness = 0;
-                                break;
-                            }
-                        }
-                        goto check_and_continue;
+                        MPI_OP_TEST( *, mpi_op, MPI_FLOAT, float,
+                                     in_float, inout_float, inout_float_for_check,
+                                     count, "f");
+                    }
+                    if( 0 == strcmp(op, "max") ) {
+                        MPI_OP_MINMAX_TEST(max, mpi_op,  MPI_FLOAT, float,
+                                           in_float, inout_float, inout_float_for_check,
+                                           count, "f");
+                    }
+                    if( 0 == strcmp(op, "min") ) {
+                        MPI_OP_MINMAX_TEST(min, mpi_op,  MPI_FLOAT, float,
+                                           in_float, inout_float, inout_float_for_check,
+                                           count, "f");
                     }
                 }
 
@@ -1341,68 +668,24 @@ int main(int argc, char **argv)
                     mpi_type = "MPI_DOUBLE";
 
                     if( 0 == strcmp(op, "sum") ) {
-                        skip_op_type = 0;
-                        tstart = MPI_Wtime();
-                        MPI_Reduce_local(in_double, inout_double, count, MPI_DOUBLE, mpi_op);
-                        tend = MPI_Wtime();
-                        if( check ) {
-                            for( i = 0; i < count; i++ ) {
-                                if(inout_double[i] == inout_double_for_check[i]+in_double[i])
-                                    continue;
-                                printf("First error at position %d\n", i);
-                                correctness = 0;
-                                break;
-                            }
-                        }
-                        goto check_and_continue;
-                    }
-                    if( 0 == strcmp(op, "max") ) {
-                        skip_op_type = 0;
-                        tstart = MPI_Wtime();
-                        MPI_Reduce_local(in_double, inout_double, count, MPI_DOUBLE, mpi_op);
-                        tend = MPI_Wtime();
-                        if( check ) {
-                            for( i = 0; i < count; i++ ) {
-                                if(inout_double[i] == max(inout_double_for_check[i], in_double[i]))
-                                    continue;
-                                printf("First error at position %d\n", i);
-                                correctness = 0;
-                                break;
-                            }
-                        }
-                        goto check_and_continue;
-                    }
-                    if( 0 == strcmp(op, "min") ) {
-                        skip_op_type = 0;
-                        tstart = MPI_Wtime();
-                        MPI_Reduce_local(inout_double, in_double, count, MPI_DOUBLE, mpi_op);
-                        tend = MPI_Wtime();
-                        if( check ) {
-                            for( i = 0; i < count; i++ ) {
-                                if(inout_double[i] == min(inout_double_for_check[i], in_double[i]))
-                                    continue;
-                                printf("First error at position %d\n", i);
-                                correctness = 0;
-                                break;
-                            }
-                        }
-                        goto check_and_continue;
+                        MPI_OP_TEST( +, mpi_op, MPI_DOUBLE, double,
+                                     in_double, inout_double, inout_double_for_check,
+                                     count, "g");
                     }
                     if( 0 == strcmp(op, "prod") ) {
-                        skip_op_type = 0;
-                        tstart = MPI_Wtime();
-                        MPI_Reduce_local(in_double, inout_double, count, MPI_DOUBLE, mpi_op);
-                        tend = MPI_Wtime();
-                        if( check ) {
-                            for( i = 0; i < count; i++ ) {
-                                if(inout_double[i] == inout_double_for_check[i]*in_double[i])
-                                    continue;
-                                printf("First error at position %d\n", i);
-                                correctness = 0;
-                                break;
-                            }
-                        }
-                        goto check_and_continue;
+                        MPI_OP_TEST( *, mpi_op, MPI_DOUBLE, double,
+                                     in_double, inout_double, inout_double_for_check,
+                                     count, "f");
+                    }
+                    if( 0 == strcmp(op, "max") ) {
+                        MPI_OP_MINMAX_TEST(max, mpi_op,  MPI_DOUBLE, double,
+                                           in_double, inout_double, inout_double_for_check,
+                                           count, "f");
+                    }
+                    if( 0 == strcmp(op, "min") ) {
+                        MPI_OP_MINMAX_TEST(min, mpi_op,  MPI_DOUBLE, double,
+                                           in_double, inout_double, inout_double_for_check,
+                                           count, "f");
                     }
                 }
         check_and_continue:
