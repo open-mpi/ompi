@@ -16,7 +16,7 @@
 
 struct ompi_coll_adapt_inbuf_s {
     opal_free_list_item_t super;
-    char buff[1];
+    char buff[];
 };
 
 typedef struct ompi_coll_adapt_inbuf_s ompi_coll_adapt_inbuf_t;

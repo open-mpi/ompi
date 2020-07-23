@@ -89,7 +89,7 @@ struct ompi_coll_adapt_constant_reduce_context_s {
     /* Mutex to protect num_sent */
     opal_mutex_t *mutex_num_sent;
     /* Mutex to protect each segment when do the reduce op */
-    opal_mutex_t **mutex_op_list;
+    opal_mutex_t *mutex_op_list;
     /* Reduce operation */
     ompi_op_t *op;
     ompi_coll_tree_t *tree;
