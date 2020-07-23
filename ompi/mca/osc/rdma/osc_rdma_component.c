@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2017 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
+ * Copyright (c) 2004-2020 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -54,6 +54,7 @@
 #include "opal/mca/common/cuda/common_cuda.h"
 #endif /* OPAL_CUDA_SUPPORT */
 #include "opal/util/info_subscriber.h"
+#include "opal/mca/mpool/base/base.h"
 
 #include "ompi/info/info.h"
 #include "ompi/communicator/communicator.h"
@@ -305,6 +306,16 @@ static int ompi_osc_rdma_component_register (void)
                                             MCA_BASE_VAR_TYPE_UNSIGNED_LONG, NULL, 0, 0, OPAL_INFO_LVL_3,
                                             MCA_BASE_VAR_SCOPE_LOCAL, &mca_osc_rdma_component.network_amo_max_count);
 
+    mca_osc_rdma_component.memory_alignment = opal_getpagesize();
+    opal_asprintf(&description_str, "The minimum memory alignment used to allocate local window memory (default: %zu). "
+                  "This is a best effort approach. Alignments larger than the page size may not be supported.",
+                  mca_osc_rdma_component.memory_alignment);
+    (void) mca_base_component_var_register (&mca_osc_rdma_component.super.osc_version, "minimum_memory_alignment",
+                                            description_str,
+                                            MCA_BASE_VAR_TYPE_SIZE_T, NULL, 0, 0, OPAL_INFO_LVL_3,
+                                            MCA_BASE_VAR_SCOPE_READONLY, &mca_osc_rdma_component.memory_alignment);
+    free(description_str);
+
     /* register performance variables */
 
     (void) mca_base_component_pvar_register (&mca_osc_rdma_component.super.osc_version, "put_retry_count",
@@ -390,7 +401,7 @@ static int ompi_osc_rdma_component_query (struct ompi_win_t *win, void **base, s
 {
 
     if (MPI_WIN_FLAVOR_SHARED == flavor) {
-        return -1;
+        return OMPI_ERR_RMA_SHARED;
     }
 
 #if OPAL_CUDA_SUPPORT
@@ -448,9 +459,10 @@ static int ompi_osc_rdma_initialize_region (ompi_osc_rdma_module_t *module, void
 
 static int allocate_state_single (ompi_osc_rdma_module_t *module, void **base, size_t size)
 {
-    size_t total_size, local_rank_array_size, leader_peer_data_size;
+    size_t total_size, local_rank_array_size, leader_peer_data_size, base_data_size;
     ompi_osc_rdma_peer_t *my_peer;
     int ret, my_rank;
+    size_t memory_alignment = module->memory_alignment;
 
     OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "allocating private internal state");
 
@@ -463,32 +475,34 @@ static int allocate_state_single (ompi_osc_rdma_module_t *module, void **base, s
      * registration handles needed to access this data. */
     total_size = local_rank_array_size + module->region_size +
         module->state_size + leader_peer_data_size;
-    total_size += OPAL_ALIGN_PAD_AMOUNT(total_size, OPAL_ALIGN_MIN);
+    base_data_size = total_size;
 
     if (MPI_WIN_FLAVOR_ALLOCATE == module->flavor) {
-        total_size += size;
+        base_data_size += OPAL_ALIGN_PAD_AMOUNT(base_data_size, memory_alignment);
+        total_size = base_data_size + size;
     }
 
     /* the local data is ordered as follows: rank array (leader, offset mapping), state, leader peer data, and base
      * (if using MPI_Win_allocate). In this case the leader peer data array does not need to be stored in the same
      * segment but placing it there simplifies the peer data fetch and cleanup code. */
 
-    module->rank_array = calloc (total_size, 1);
+    module->rank_array = mca_mpool_base_default_module->mpool_alloc(mca_mpool_base_default_module, total_size,
+                                                                    memory_alignment, 0);
     if (OPAL_UNLIKELY(NULL == module->rank_array)) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
-// Note, the extra module->region_size space added after local_rank_array_size
-// is unused but is there to match what happens in allocte_state_shared()
-// This allows module->state_offset to be uniform across the ranks which
-// is part of how they pull peer info from each other.
+    /* Note, the extra module->region_size space added after local_rank_array_size
+     * is unused but is there to match what happens in allocte_state_shared()
+     * This allows module->state_offset to be uniform across the ranks which
+     * is part of how they pull peer info from each other. */
     module->state_offset = local_rank_array_size + module->region_size;
 
     module->state = (ompi_osc_rdma_state_t *) ((intptr_t) module->rank_array + module->state_offset);
     module->node_comm_info = (unsigned char *) ((intptr_t) module->state + module->state_size);
 
     if (MPI_WIN_FLAVOR_ALLOCATE == module->flavor) {
-        *base = (void *) ((intptr_t) module->node_comm_info + leader_peer_data_size);
+        *base = (void *) ((intptr_t) module->rank_array + base_data_size);
     }
 
     /* just go ahead and register the whole segment */
@@ -583,7 +597,7 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
     ompi_osc_rdma_region_t *state_region;
     struct _local_data *temp;
     char *data_file;
-    int page_size = opal_getpagesize();
+    size_t memory_alignment = module->memory_alignment;
 
     shared_comm = module->shared_comm;
 
@@ -620,8 +634,8 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
 
     /* ensure proper alignment */
     if (MPI_WIN_FLAVOR_ALLOCATE == module->flavor) {
-        data_base += OPAL_ALIGN_PAD_AMOUNT(data_base, page_size);
-        size += OPAL_ALIGN_PAD_AMOUNT(size, page_size);
+        data_base += OPAL_ALIGN_PAD_AMOUNT(data_base, memory_alignment);
+        size += OPAL_ALIGN_PAD_AMOUNT(size, memory_alignment);
     }
 
     do {
@@ -649,6 +663,7 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
                     my_base_offset = total_size;
                 }
                 total_size += temp[i].size;
+                total_size += OPAL_ALIGN_PAD_AMOUNT(total_size, memory_alignment);
             }
         }
 
@@ -660,12 +675,12 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
             if (0 > ret) {
                 ret = OMPI_ERR_OUT_OF_RESOURCE;
             } else {
-              /* allocate enough space for the state + data for all local ranks */
-              ret = opal_shmem_segment_create (&module->seg_ds, data_file, total_size);
-              free (data_file);
-              if (OPAL_SUCCESS != ret) {
-                  OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_ERROR, "failed to create shared memory segment");
-              }
+                /* allocate enough space for the state + data for all local ranks */
+                ret = opal_shmem_segment_create (&module->seg_ds, data_file, total_size);
+                free (data_file);
+                if (OPAL_SUCCESS != ret) {
+                    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_ERROR, "failed to create shared memory segment");
+                }
             }
         }
 
@@ -692,6 +707,7 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
         }
 
         if (size && MPI_WIN_FLAVOR_ALLOCATE == module->flavor) {
+            size_t page_size = opal_getpagesize();
             char *baseptr = (char *)((intptr_t) module->segment_base + my_base_offset);
             *base = (void *)baseptr;
             // touch each page to force allocation on local NUMA node
@@ -795,7 +811,7 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
             }
 
             if (my_rank == peer_rank) {
-	        module->my_peer = peer;
+                module->my_peer = peer;
             }
 
             if (MPI_WIN_FLAVOR_DYNAMIC != module->flavor && MPI_WIN_FLAVOR_CREATE != module->flavor &&
@@ -855,12 +871,12 @@ static int ompi_osc_rdma_query_mtls (void)
 
     mtls_to_use = opal_argv_split (ompi_osc_rdma_mtl_names, ',');
     if (mtls_to_use && ompi_mtl_base_selected_component) {
-	for (int i = 0 ; mtls_to_use[i] ; ++i) {
-	    if (0 == strcmp (mtls_to_use[i], ompi_mtl_base_selected_component->mtl_version.mca_component_name)) {
-                opal_argv_free(mtls_to_use);
-		return OMPI_SUCCESS;
-	    }
-	}
+        for (int i = 0 ; mtls_to_use[i] ; ++i) {
+            if (0 == strcmp (mtls_to_use[i], ompi_mtl_base_selected_component->mtl_version.mca_component_name)) {
+                      opal_argv_free(mtls_to_use);
+                return OMPI_SUCCESS;
+            }
+        }
     }
     opal_argv_free(mtls_to_use);
     return -1;
@@ -1305,6 +1321,8 @@ static int ompi_osc_rdma_component_select (struct ompi_win_t *win, void **base, 
     int world_size = ompi_comm_size (comm);
     int init_limit = 256;
     int ret;
+    int flag;
+    char infoval[32];
     char *name;
 
     /* the osc/sm component is the exclusive provider for support for shared
@@ -1343,6 +1361,18 @@ static int ompi_osc_rdma_component_select (struct ompi_win_t *win, void **base, 
     module->win = win;
     module->disp_unit = disp_unit;
     module->size = size;
+    module->memory_alignment = mca_osc_rdma_component.memory_alignment;
+    if (NULL != info) {
+        opal_cstring_t *align_info_str;
+        opal_info_get(info, "mpi_minimum_memory_alignment", &align_info_str, &flag);
+        if (flag) {
+            ssize_t tmp_align = atoll(align_info_str->string);
+            OBJ_RELEASE(align_info_str);
+            if (OPAL_ALIGN_MIN < tmp_align) {
+                module->memory_alignment = tmp_align;
+            }
+        }
+    }
 
     /* set the module so we properly cleanup */
     win->w_osc_module = (ompi_osc_base_module_t*) module;
@@ -1415,15 +1445,16 @@ static int ompi_osc_rdma_component_select (struct ompi_win_t *win, void **base, 
     } else {
         module->state_size += mca_osc_rdma_component.max_attach * module->region_size;
     }
-/*
- * These are the info's that this module is interested in
- */
+
+    /*
+     * These are the info's that this module is interested in
+     */
     opal_infosubscribe_subscribe(&win->super, "no_locks", "false", ompi_osc_rdma_set_no_lock_info);
 
-/*
- * TODO: same_size, same_disp_unit have w_flag entries, but do not appear
- * to be used anywhere.  If that changes, they should be subscribed
- */
+    /*
+     * TODO: same_size, same_disp_unit have w_flag entries, but do not appear
+     * to be used anywhere.  If that changes, they should be subscribed
+     */
 
     /* fill in the function pointer part */
     memcpy(&module->super, &ompi_osc_rdma_module_rdma_template, sizeof(module->super));
@@ -1541,8 +1572,8 @@ ompi_osc_rdma_set_no_lock_info(opal_infosubscriber_t *obj, const char *key, cons
     }
     /* enforce collectiveness... */
     module->comm->c_coll->coll_barrier(module->comm, module->comm->c_coll->coll_barrier_module);
-/*
- * Accept any value
- */
+    /*
+     * Accept any value
+     */
     return module->no_locks ? "true" : "false";
 }
