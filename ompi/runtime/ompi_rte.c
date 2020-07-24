@@ -78,7 +78,7 @@ static int _setup_proc_session_dir(char **sdir);
 #define OPAL_PRINT_NAME_ARG_NUM_BUFS    16
 
 static bool fns_init=false;
-static opal_tsd_key_t print_args_tsd_key;
+static opal_tsd_tracked_key_t print_args_tsd_key;
 static char* opal_print_args_null = "NULL";
 typedef struct {
     char *buffers[OPAL_PRINT_NAME_ARG_NUM_BUFS];
@@ -108,14 +108,12 @@ get_print_name_buffer(void)
 
     if (!fns_init) {
         /* setup the print_args function */
-        if (OPAL_SUCCESS != (ret = opal_tsd_key_create(&print_args_tsd_key, buffer_cleanup))) {
-            OPAL_ERROR_LOG(ret);
-            return NULL;
-        }
+        OBJ_CONSTRUCT(&print_args_tsd_key, opal_tsd_tracked_key_t);
+        opal_tsd_tracked_key_set_destructor(&print_args_tsd_key, buffer_cleanup);
         fns_init = true;
     }
 
-    ret = opal_tsd_getspecific(print_args_tsd_key, (void**)&ptr);
+    ret = opal_tsd_tracked_key_get(&print_args_tsd_key, (void**)&ptr);
     if (OPAL_SUCCESS != ret) return NULL;
 
     if (NULL == ptr) {
@@ -124,7 +122,7 @@ get_print_name_buffer(void)
             ptr->buffers[i] = (char *) malloc((OPAL_PRINT_NAME_ARGS_MAX_SIZE+1) * sizeof(char));
         }
         ptr->cntr = 0;
-        ret = opal_tsd_setspecific(print_args_tsd_key, (void*)ptr);
+        ret = opal_tsd_tracked_key_set(&print_args_tsd_key, (void*)ptr);
     }
 
     return (opal_print_args_buffers_t*) ptr;
@@ -938,6 +936,10 @@ int ompi_rte_finalize(void)
     if (NULL != opal_process_info.initial_errhandler) {
         free(opal_process_info.initial_errhandler);
         opal_process_info.initial_errhandler = NULL;
+    }
+
+    if (fns_init) {
+        OBJ_DESTRUCT(&print_args_tsd_key);
     }
 
     /* cleanup our internal nspace hack */

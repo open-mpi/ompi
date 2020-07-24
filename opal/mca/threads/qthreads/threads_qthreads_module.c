@@ -85,8 +85,3 @@ int opal_tsd_key_create(opal_tsd_key_t *key, opal_tsd_destructor_t destructor)
 {
     return OPAL_ERR_NOT_IMPLEMENTED;
 }
-
-int opal_tsd_keys_destruct(void)
-{
-    return OPAL_ERR_NOT_IMPLEMENTED;
-}

@@ -37,14 +37,14 @@ static inline int opal_tsd_key_delete(opal_tsd_key_t key)
     return ABT_SUCCESS == ret ? OPAL_SUCCESS : OPAL_ERROR;
 }
 
-static inline int opal_tsd_setspecific(opal_tsd_key_t key, void *value)
+static inline int opal_tsd_set(opal_tsd_key_t key, void *value)
 {
     opal_threads_argobots_ensure_init();
     int ret = ABT_key_set(key, value);
     return ABT_SUCCESS == ret ? OPAL_SUCCESS : OPAL_ERROR;
 }
 
-static inline int opal_tsd_getspecific(opal_tsd_key_t key, void **valuep)
+static inline int opal_tsd_get(opal_tsd_key_t key, void **valuep)
 {
     int ret = ABT_key_get(key, valuep);
     return ABT_SUCCESS == ret ? OPAL_SUCCESS : OPAL_ERROR;

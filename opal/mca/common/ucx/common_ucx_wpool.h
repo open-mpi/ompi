@@ -48,7 +48,7 @@ typedef struct {
 
     /* Thread-local key to allow each thread to have
      * local information assisiated with this wpool */
-    opal_tsd_key_t tls_key;
+    opal_tsd_tracked_key_t tls_key;
 
     /* Bookkeeping information */
     opal_list_t idle_workers;
@@ -107,7 +107,7 @@ typedef struct {
     /* TLS item that allows each thread to
      * store endpoints and rkey arrays
      * for faster access */
-    opal_tsd_key_t mem_tls_key;
+    opal_tsd_tracked_key_t mem_tls_key;
 } opal_common_ucx_wpmem_t;
 
 /* The structure that wraps UCP worker and holds the state that is required
@@ -201,7 +201,7 @@ opal_common_ucx_tlocal_fetch(opal_common_ucx_wpmem_t *mem, int target,
     int rc = OPAL_SUCCESS;
 
     /* First check the fast-path */
-    rc = opal_tsd_getspecific(mem->mem_tls_key, (void**)&fp);
+    rc = opal_tsd_tracked_key_get(&mem->mem_tls_key, (void**)&fp);
     if (OPAL_SUCCESS != rc) {
         return rc;
     }
@@ -212,7 +212,7 @@ opal_common_ucx_tlocal_fetch(opal_common_ucx_wpmem_t *mem, int target,
         if (OPAL_SUCCESS != rc) {
             return rc;
         }
-        rc = opal_tsd_getspecific(mem->mem_tls_key, (void**)&fp);
+        rc = opal_tsd_tracked_key_get(&mem->mem_tls_key, (void**)&fp);
         if (OPAL_SUCCESS != rc) {
             return rc;
         }
