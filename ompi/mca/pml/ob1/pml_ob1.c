@@ -826,7 +826,10 @@ void mca_pml_ob1_error_handler(
         return;
     }
 
-    ompi_rte_abort(-1, btlinfo);
+    /* TODO: this error should return to the caller and invoke an error
+     * handler from the MPI API call.
+     * For now, it is fatal. */
+    ompi_mpi_errors_are_fatal_comm_handler(NULL, -1, btlinfo);
 }
 
 #if OPAL_ENABLE_FT_CR    == 0

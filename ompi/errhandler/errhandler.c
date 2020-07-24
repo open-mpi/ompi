@@ -303,7 +303,10 @@ static void *ompi_errhandler_event_cb(int fd, int flags, void *context) {
     opal_event_del(&event->super);
     free(event);
     /* our default action is to abort */
-    OMPI_ERRHANDLER_NOHANDLE_INVOKE(status, "PMIx Event notification");
+    /* TODO: this error should return to the caller and invoke an error
+     * handler from the MPI API call.
+     * For now, it is fatal. */
+    ompi_mpi_errors_are_fatal_comm_handler(NULL, status, "PMIx Even Notification");
     return NULL;
 }
 
