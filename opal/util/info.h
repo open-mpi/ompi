@@ -40,7 +40,7 @@
 
 struct opal_info_t {
   opal_list_t   super;
-  opal_mutex_t	*i_lock;
+  opal_mutex_t *i_lock;
 };
 
 /**
@@ -240,7 +240,7 @@ OPAL_DECLSPEC int opal_info_get_value_enum (opal_info_t *info, const char *key,
  *   @retval OPAL_SUCCESS
  *
  *   In C and C++, 'valuelen' should be one less than the allocated
- *   space to allow for for the null terminator.
+ *   space to allow for the null terminator.
  */
 OPAL_DECLSPEC int opal_info_get (opal_info_t *info, const char *key, int valuelen,
                                  char *value, int *flag);

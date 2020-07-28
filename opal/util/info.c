@@ -104,9 +104,11 @@ static void opal_info_get_nolock (opal_info_t *info, const char *key, int valuel
         /*
          * We have found the element, so we can return the value
          * Set the flag and value
+         * NOTE: the interface states that "'valuelen' should be one less than
+         *       the allocated space to allow for the null terminator."
          */
         *flag = 1;
-        opal_string_copy(value, search->ie_value, valuelen);
+        opal_string_copy(value, search->ie_value, valuelen+1);
     }
 }
 
@@ -135,7 +137,7 @@ static int opal_info_set_nolock (opal_info_t *info, const char *key, const char 
             OPAL_THREAD_UNLOCK(info->i_lock);
             return OPAL_ERR_OUT_OF_RESOURCE;
         }
-        opal_string_copy (new_info->ie_key, key, OPAL_MAX_INFO_KEY);
+        opal_string_copy (new_info->ie_key, key, OPAL_MAX_INFO_KEY+1);
         new_info->ie_value = new_value;
         opal_list_append (&(info->super), (opal_list_item_t *) new_info);
     }
