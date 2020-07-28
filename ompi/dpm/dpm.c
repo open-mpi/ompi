@@ -781,13 +781,13 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
     int have_wdir=0;
     int flag=0;
     char cwd[OPAL_PATH_MAX];
-    char host[OPAL_MAX_INFO_VAL];  /*** should define OMPI_HOST_MAX ***/
-    char init_errh[OPAL_MAX_INFO_VAL];
-    char prefix[OPAL_MAX_INFO_VAL];
-    char stdin_target[OPAL_MAX_INFO_VAL];
-    char params[OPAL_MAX_INFO_VAL];
-    char mapper[OPAL_MAX_INFO_VAL];
-    char slot_list[OPAL_MAX_INFO_VAL];
+    char host[OPAL_MAX_INFO_VAL+1];  /*** should define OMPI_HOST_MAX ***/
+    char init_errh[OPAL_MAX_INFO_VAL+1];
+    char prefix[OPAL_MAX_INFO_VAL+1];
+    char stdin_target[OPAL_MAX_INFO_VAL+1];
+    char params[OPAL_MAX_INFO_VAL+1];
+    char mapper[OPAL_MAX_INFO_VAL+1];
+    char slot_list[OPAL_MAX_INFO_VAL+1];
     uint32_t ui32;
     bool personality = false;
     char *tmp;
@@ -983,9 +983,9 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
 
             /* non-standard keys
              * Keys that correspond to prun/mpiexec parameters
-             * do not deprecate PMIX unprefixed forms to remain identical 
+             * do not deprecate PMIX unprefixed forms to remain identical
              * to the command line parameter;
-             * Keys that are not corresponding to an mpiexec parameter are 
+             * Keys that are not corresponding to an mpiexec parameter are
              * deprecated in the non-prefixed form */
 
             /* check for 'hostfile' */

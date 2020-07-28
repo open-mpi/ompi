@@ -200,16 +200,16 @@ int mca_common_ompio_set_view (ompio_file_t *fh,
        }
     }
 
-    char char_stripe[MPI_MAX_INFO_VAL];
+    char char_stripe[128];
     /* Check the info object set during File_open */
-    opal_info_get (fh->f_info, "cb_nodes", MPI_MAX_INFO_VAL, char_stripe, &flag);
+    opal_info_get (fh->f_info, "cb_nodes", sizeof(char_stripe)-1, char_stripe, &flag);
     if ( flag ) {
         sscanf ( char_stripe, "%d", &num_cb_nodes );
         OMPIO_MCA_PRINT_INFO(fh, "cb_nodes", char_stripe, "");
     }
     else {
         /* Check the info object set during file_set_view */
-        opal_info_get (info, "cb_nodes", MPI_MAX_INFO_VAL, char_stripe, &flag);
+        opal_info_get (info, "cb_nodes", sizeof(char_stripe)-1, char_stripe, &flag);
         if ( flag ) {
             sscanf ( char_stripe, "%d", &num_cb_nodes );
             OMPIO_MCA_PRINT_INFO(fh, "cb_nodes", char_stripe, "");

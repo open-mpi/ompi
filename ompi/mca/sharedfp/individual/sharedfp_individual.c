@@ -76,9 +76,6 @@ struct mca_sharedfp_base_module_1_0_0_t * mca_sharedfp_individual_component_file
     bool wronly_flag=false;
     bool relaxed_order_flag=false;
     opal_info_t *info;
-    int flag;
-    int valuelen;
-    char value[MPI_MAX_INFO_VAL+1];
     *priority = 0;
 
     /*test, and update priority*/
@@ -87,32 +84,33 @@ struct mca_sharedfp_base_module_1_0_0_t * mca_sharedfp_individual_component_file
     amode = fh->f_amode;
     if ( amode & MPI_MODE_WRONLY || amode & MPI_MODE_RDWR ) {
         wronly_flag=true;
-	if ( mca_sharedfp_individual_verbose ) {
+        if ( mca_sharedfp_individual_verbose ) {
             opal_output(ompi_sharedfp_base_framework.framework_output,
                         "mca_sharedfp_individual_component_file_query: "
                         "MPI_MODE_WRONLY[true=%d,false=%d]=%d\n",true,false,wronly_flag);
-	}
+        }
     } else {
         wronly_flag=false;
-	if ( mca_sharedfp_individual_verbose ) {
+        if ( mca_sharedfp_individual_verbose ) {
             opal_output(ompi_sharedfp_base_framework.framework_output,
-			"mca_sharedfp_individual_component_file_query: Can not run!, "
-			"MPI_MODE_WRONLY[true=%d,false=%d]=%d\n",true,false,wronly_flag);
-	}
+                        "mca_sharedfp_individual_component_file_query: Can not run!, "
+                        "MPI_MODE_WRONLY[true=%d,false=%d]=%d\n",true,false,wronly_flag);
+        }
     }
 
     /*---------------------------------------------------------*/
     /* 2. Did the user specify MPI_INFO relaxed ordering flag? */
     info = fh->f_info;
     if ( info != &(MPI_INFO_NULL->super) ){
-        valuelen = MPI_MAX_INFO_VAL;
-        opal_info_get ( info,"OMPIO_SHAREDFP_RELAXED_ORDERING", valuelen, value, &flag);
+        int flag;
+        char value[MPI_MAX_INFO_VAL+1];
+        opal_info_get ( info,"OMPIO_SHAREDFP_RELAXED_ORDERING", sizeof(value)-1, value, &flag);
         if ( flag ) {
-           if ( mca_sharedfp_individual_verbose ) {
+            if ( mca_sharedfp_individual_verbose ) {
                 opal_output(ompi_sharedfp_base_framework.framework_output,
                         "mca_sharedfp_individual_component_file_query: "
                         "OMPIO_SHAREDFP_RELAXED_ORDERING=%s\n",value);
-	    }
+            }
             /* flag - Returns true if key defined, false if not (boolean). */
             relaxed_order_flag=true;
         }
@@ -122,17 +120,17 @@ struct mca_sharedfp_base_module_1_0_0_t * mca_sharedfp_individual_component_file
                         "mca_sharedfp_individual_component_file_query: "
                         "OMPIO_SHAREDFP_RELAXED_ORDERING MPI_Info key not set. "
                         "Set this key in order to increase this component's priority value.\n");
-	    }
-	}
+            }
+        }
     }
     else {
-	if ( mca_sharedfp_individual_verbose ) {
+        if ( mca_sharedfp_individual_verbose ) {
             opal_output(ompi_sharedfp_base_framework.framework_output,
                  "mca_sharedfp_individual_component_file_query: "
                  "OMPIO_SHAREDFP_RELAXED_ORDERING MPI_Info key not set, "
                  "got MPI_INFO_NULL. Set this key in order to increase "
                  "this component's priority value.\n");
-	}
+        }
     }
 
     /*For now, this algorithm will not run if the file is not opened write only.

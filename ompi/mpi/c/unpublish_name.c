@@ -50,7 +50,7 @@ int MPI_Unpublish_name(const char *service_name, MPI_Info info,
                        const char *port_name)
 {
     int ret;
-    char range[OPAL_MAX_INFO_VAL];
+    char range[OPAL_MAX_INFO_VAL+1];
     int flag=0;
     pmix_status_t rc;
     pmix_info_t pinfo;

@@ -48,7 +48,7 @@ static const char FUNC_NAME[] = "MPI_Lookup_name";
 
 int MPI_Lookup_name(const char *service_name, MPI_Info info, char *port_name)
 {
-    char range[OPAL_MAX_INFO_VAL];
+    char range[OPAL_MAX_INFO_VAL+1];
     int flag=0, ret;
     pmix_status_t rc;
     pmix_pdata_t pdat;

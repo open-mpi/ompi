@@ -415,7 +415,7 @@ int mca_common_ompio_set_file_defaults (ompio_file_t *fh)
 {
 
    if (NULL != fh) {
-       char char_stripe[MPI_MAX_INFO_VAL];
+       char char_stripe[128];
        ompi_datatype_t *types[2];
        int blocklen[2] = {1, 1};
        ptrdiff_t d[2], base;
@@ -426,7 +426,7 @@ int mca_common_ompio_set_file_defaults (ompio_file_t *fh)
        fh->f_flags = 0;
        
        fh->f_bytes_per_agg = OMPIO_MCA_GET(fh, bytes_per_agg);
-       opal_info_get (fh->f_info, "cb_buffer_size", MPI_MAX_INFO_VAL, char_stripe, &flag);
+       opal_info_get (fh->f_info, "cb_buffer_size", sizeof(char_stripe)-1, char_stripe, &flag);
        if ( flag ) {
            /* Info object trumps mca parameter value */
            sscanf ( char_stripe, "%d", &fh->f_bytes_per_agg  );

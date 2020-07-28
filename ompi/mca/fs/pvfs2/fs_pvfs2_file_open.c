@@ -74,7 +74,7 @@ mca_fs_pvfs2_file_open (struct ompi_communicator_t *comm,
     struct ompi_datatype_t *types[2] = {&ompi_mpi_int.dt, &ompi_mpi_byte.dt};
     int lens[2] = {1, sizeof(PVFS_object_ref)};
     ptrdiff_t offsets[2];
-    char char_stripe[MPI_MAX_INFO_KEY];
+    char char_stripe[128];
     int flag;
     int fs_pvfs2_stripe_size = -1;
     int fs_pvfs2_stripe_width = -1;
@@ -109,12 +109,12 @@ mca_fs_pvfs2_file_open (struct ompi_communicator_t *comm,
        update mca_fs_pvfs2_stripe_width and mca_fs_pvfs2_stripe_size
        before calling fake_an_open() */
 
-    opal_info_get (info, "stripe_size", MPI_MAX_INFO_VAL, char_stripe, &flag);
+    opal_info_get (info, "stripe_size", sizeof(char_stripe)-1, char_stripe, &flag);
     if ( flag ) {
         sscanf ( char_stripe, "%d", &fs_pvfs2_stripe_size );
     }
 
-    opal_info_get (info, "stripe_width", MPI_MAX_INFO_VAL, char_stripe, &flag);
+    opal_info_get (info, "stripe_width", sizeof(char_stripe)-1, char_stripe, &flag);
     if ( flag ) {
         sscanf ( char_stripe, "%d", &fs_pvfs2_stripe_width );
     }
