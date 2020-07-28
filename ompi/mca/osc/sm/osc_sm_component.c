@@ -13,6 +13,8 @@
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * Copyright (c) 2020      FUJITSU LIMITED.  All rights reserved.
+ * Copyright (c) 2020      High Performance Computing Center Stuttgart,
+ *                         University of Stuttgart.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -30,6 +32,7 @@
 #include "opal/include/opal/align.h"
 #include "opal/util/info_subscriber.h"
 #include "opal/util/printf.h"
+#include "opal/mca/mpool/base/base.h"
 
 #include "osc_sm.h"
 
@@ -193,6 +196,8 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
     int comm_size = ompi_comm_size (comm);
     bool unlink_needed = false;
     int ret = OMPI_ERROR;
+    int flag;
+    size_t memory_alignment = OPAL_ALIGN_MIN;
 
     if (OMPI_SUCCESS != (ret = check_win_ok(comm, flavor))) {
         return ret;
@@ -208,8 +213,19 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
     OBJ_CONSTRUCT(&module->lock, opal_mutex_t);
 
     ret = opal_infosubscribe_subscribe(&(win->super), "alloc_shared_noncontig", "false", component_set_alloc_shared_noncontig_info);
-
     if (OPAL_SUCCESS != ret) goto error;
+
+    if (NULL != info) {
+        opal_cstring_t *align_info_str;
+        ret = opal_info_get(info, "mpi_minimum_memory_alignment", &align_info_str, &flag);
+        if (flag) {
+            ssize_t tmp_align = atoll(align_info_str->string);
+            OBJ_RELEASE(align_info_str);
+            if (OPAL_ALIGN_MIN < tmp_align) {
+                memory_alignment = tmp_align;
+            }
+        }
+    }
 
     /* fill in the function pointer part */
     memcpy(module, &ompi_osc_sm_module_template,
@@ -230,7 +246,8 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
         if (NULL == module->bases) return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
 
         module->sizes[0] = size;
-        module->bases[0] = malloc(size);
+        module->bases[0] = mca_mpool_base_default_module->mpool_alloc(mca_mpool_base_default_module, size,
+                                                                      memory_alignment, 0);
         if (NULL == module->bases[0]) return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
 
         module->global_state = malloc(sizeof(ompi_osc_sm_global_state_t));
@@ -246,6 +263,7 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
         size_t pagesize;
         size_t state_size;
         size_t posts_size, post_size = (comm_size + OSC_SM_POST_MASK) / (OSC_SM_POST_MASK + 1);
+        size_t data_base_size;
 
         OPAL_OUTPUT_VERBOSE((1, ompi_osc_base_framework.framework_output,
                              "allocating shared memory region of size %ld\n", (long) size));
@@ -283,6 +301,8 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
         state_size += OPAL_ALIGN_PAD_AMOUNT(state_size, 64);
         posts_size = comm_size * post_size * sizeof (module->posts[0][0]);
         posts_size += OPAL_ALIGN_PAD_AMOUNT(posts_size, 64);
+        data_base_size = state_size + posts_size;
+        data_base_size += OPAL_ALIGN_PAD_AMOUNT(data_base_size, pagesize);
         if (0 == ompi_comm_rank (module->comm)) {
             char *data_file;
             ret = opal_asprintf (&data_file, "%s" OPAL_PATH_SEP "osc_sm.%s.%x.%d.%d",
@@ -293,7 +313,7 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
                 return OMPI_ERR_OUT_OF_RESOURCE;
             }
 
-            ret = opal_shmem_segment_create (&module->seg_ds, data_file, total + pagesize + state_size + posts_size);
+            ret = opal_shmem_segment_create (&module->seg_ds, data_file, total + data_base_size);
             free(data_file);
             if (OPAL_SUCCESS != ret) {
                 free(rbuf);
@@ -340,7 +360,7 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
         module->global_state = (ompi_osc_sm_global_state_t *) (module->posts[0] + comm_size * post_size);
         module->node_states = (ompi_osc_sm_node_state_t *) (module->global_state + 1);
 
-        for (i = 0, total = state_size + posts_size ; i < comm_size ; ++i) {
+        for (i = 0, total = data_base_size ; i < comm_size ; ++i) {
             if (i > 0) {
                 module->posts[i] = module->posts[i - 1] + post_size;
             }
@@ -523,12 +543,13 @@ ompi_osc_sm_free(struct ompi_win_t *win)
         module->comm->c_coll->coll_barrier(module->comm,
                                           module->comm->c_coll->coll_barrier_module);
 
-	opal_shmem_segment_detach (&module->seg_ds);
+        opal_shmem_segment_detach (&module->seg_ds);
     } else {
         free(module->node_states);
         free(module->global_state);
         if (NULL != module->bases) {
-            free(module->bases[0]);
+            mca_mpool_base_default_module->mpool_free(mca_mpool_base_default_module,
+                                                      module->bases[0]);
         }
     }
     free(module->disp_units);
@@ -565,9 +586,9 @@ static const char*
 component_set_blocking_fence_info(opal_infosubscriber_t *obj, const char *key, const char *val)
 {
     ompi_osc_sm_module_t *module = (ompi_osc_sm_module_t*) ((struct ompi_win_t*) obj)->w_osc_module;
-/*
- * Assuming that you can't change the default.  
- */
+    /*
+    * Assuming that you can't change the default.
+    */
     return module->global_state->use_barrier_for_fence ? "true" : "false";
 }
 
@@ -577,9 +598,9 @@ component_set_alloc_shared_noncontig_info(opal_infosubscriber_t *obj, const char
 {
 
     ompi_osc_sm_module_t *module = (ompi_osc_sm_module_t*) ((struct ompi_win_t*) obj)->w_osc_module;
-/*
- * Assuming that you can't change the default.  
- */
+    /*
+    * Assuming that you can't change the default.
+    */
     return module->noncontig ? "true" : "false";
 }
 
