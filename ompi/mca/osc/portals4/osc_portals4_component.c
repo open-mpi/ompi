@@ -111,36 +111,21 @@ check_config_value_bool(char *key, opal_info_t *info)
 {
     char *value_string;
     int value_len, ret, flag, param;
-    const bool *flag_value;
     bool result;
 
-    ret = opal_info_get_valuelen(info, key, &value_len, &flag);
-    if (OMPI_SUCCESS != ret) goto info_not_found;
-    if (flag == 0) goto info_not_found;
-    value_len++;
+    ret = opal_info_get_bool(info, key, &result, &flag);
 
-    value_string = (char*)malloc(sizeof(char) * value_len + 1); /* Should malloc 1 char for NUL-termination */
-    if (NULL == value_string) goto info_not_found;
-
-    ret = opal_info_get(info, key, value_len, value_string, &flag);
-    if (OMPI_SUCCESS != ret) {
-        free(value_string);
-        goto info_not_found;
-    }
-    assert(flag != 0);
-    ret = opal_info_value_to_bool(value_string, &result);
-    free(value_string);
-    if (OMPI_SUCCESS != ret) goto info_not_found;
+    if (OMPI_SUCCESS != ret || !flag) goto info_not_found;
     return result;
 
  info_not_found:
     param = mca_base_var_find("ompi", "osc", "portals4", key);
     if (0 > param) return false;
 
-    ret = mca_base_var_get_value(param, &flag_value, NULL, NULL);
+    ret = mca_base_var_get_value(param, &result, NULL, NULL);
     if (OMPI_SUCCESS != ret) return false;
 
-    return flag_value[0];
+    return result;
 }
 
 
@@ -153,32 +138,17 @@ check_config_value_equal(char *key, opal_info_t *info, char *value)
     bool result = false;
 
     ret = opal_info_get_valuelen(info, key, &value_len, &flag);
-    if (OMPI_SUCCESS != ret) goto info_not_found;
-    if (flag == 0) goto info_not_found;
-    value_len++;
+    if (OMPI_SUCCESS != ret || !flag) return false;
 
-    value_string = (char*)malloc(sizeof(char) * value_len + 1); /* Should malloc 1 char for NUL-termination */
-    if (NULL == value_string) goto info_not_found;
+    value_string = (char*)malloc(sizeof(char) * (value_len + 1)); /* Should malloc 1 char for NUL-termination */
+    if (NULL == value_string) return false;
 
     ret = opal_info_get(info, key, value_len, value_string, &flag);
-    if (OMPI_SUCCESS != ret) {
-        free(value_string);
-        goto info_not_found;
+    if (OMPI_SUCCESS == ret) {
+        assert(flag != 0);
+        if (0 == strcmp(value_string, value)) result = true;
     }
-    assert(flag != 0);
-    if (0 == strcmp(value_string, value)) result = true;
     free(value_string);
-    return result;
-
- info_not_found:
-    param = mca_base_var_find("ompi", "osc", "portals4", key);
-    if (0 > param) return false;
-
-    ret = mca_base_var_get_value(param, &flag_value, NULL, NULL);
-    if (OMPI_SUCCESS != ret) return false;
-
-    if (0 == strcmp(value_string, value)) result = true;
-
     return result;
 }
 
@@ -411,6 +381,7 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
     ptl_md_t md;
     ptl_me_t me;
     char *name;
+    bool accumulate_ordering_none;
 
     if (MPI_WIN_FLAVOR_SHARED == flavor) return OMPI_ERR_NOT_SUPPORTED;
 
@@ -566,11 +537,12 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
 
     module->opcount = 0;
     module->match_bits = module->comm->c_contextid;
-    module->atomic_max = (check_config_value_equal("accumulate_ordering", info, "none")) ?
+    accumulate_ordering_none = check_config_value_equal("accumulate_ordering", info, "none");
+    module->atomic_max = accumulate_ordering_none ?
         mca_osc_portals4_component.matching_atomic_max :
         MIN(mca_osc_portals4_component.matching_atomic_max,
             mca_osc_portals4_component.matching_atomic_ordered_size);
-    module->fetch_atomic_max = (check_config_value_equal("accumulate_ordering", info, "none")) ?
+    module->fetch_atomic_max = accumulate_ordering_none ?
         mca_osc_portals4_component.matching_fetch_atomic_max :
         MIN(mca_osc_portals4_component.matching_fetch_atomic_max,
             mca_osc_portals4_component.matching_atomic_ordered_size);
