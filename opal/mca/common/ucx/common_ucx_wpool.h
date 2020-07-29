@@ -110,8 +110,6 @@ typedef struct {
     opal_tsd_tracked_key_t tls_key;
 } opal_common_ucx_wpmem_t;
 
-typedef struct __winfo_list_item_t _winfo_list_item_t;
-
 /* The structure that wraps UCP worker and holds the state that is required
  * for its use.
  * The structure is allocated along with UCP worker on demand and is being held
@@ -119,9 +117,8 @@ typedef struct __winfo_list_item_t _winfo_list_item_t;
  * One wpmem is intended per shared memory segment (i.e. MPI Window).
  */
 typedef struct opal_common_ucx_winfo {
+    opal_list_item_t super;
     opal_recursive_mutex_t mutex;
-    _winfo_list_item_t *self;
-    volatile int released;
     ucp_worker_h worker;
     ucp_ep_h *endpoints;
     size_t comm_size;
@@ -129,6 +126,7 @@ typedef struct opal_common_ucx_winfo {
     short global_inflight_ops;
     ucs_status_ptr_t inflight_req;
 } opal_common_ucx_winfo_t;
+OBJ_CLASS_DECLARATION(opal_common_ucx_winfo_t);
 
 typedef void (*opal_common_ucx_user_req_handler_t)(void *request);
 
@@ -162,12 +160,6 @@ typedef enum {
     OPAL_COMMON_UCX_MEM_ALLOCATE_MAP,
     OPAL_COMMON_UCX_MEM_MAP
 } opal_common_ucx_mem_type_t;
-
-struct __winfo_list_item_t{
-    opal_list_item_t super;
-    opal_common_ucx_winfo_t *ptr;
-};
-OBJ_CLASS_DECLARATION(_winfo_list_item_t);
 
 typedef struct {
     opal_list_item_t super;
@@ -216,7 +208,7 @@ opal_common_ucx_tlocal_fetch(opal_common_ucx_wpmem_t *mem, int target,
                                 opal_common_ucx_winfo_t **_winfo)
 {
     _mem_record_t *mem_rec = NULL;
-    int expr;
+    int is_ready;
     int rc = OPAL_SUCCESS;
 
     /* First check the fast-path */
@@ -224,9 +216,10 @@ opal_common_ucx_tlocal_fetch(opal_common_ucx_wpmem_t *mem, int target,
     if (OPAL_SUCCESS != rc) {
         return rc;
     }
-    expr = mem_rec && (NULL != mem_rec->winfo) && (mem_rec->winfo->endpoints[target]) &&
+    is_ready = mem_rec && (mem_rec->winfo->endpoints[target]) &&
             (NULL != mem_rec->rkeys[target]);
-    if (OPAL_UNLIKELY(!expr)) {
+    MCA_COMMON_UCX_ASSERT((NULL == mem_rec) || (NULL != mem_rec->winfo));
+    if (OPAL_UNLIKELY(!is_ready)) {
         rc = opal_common_ucx_tlocal_fetch_spath(mem, target);
         if (OPAL_SUCCESS != rc) {
             return rc;

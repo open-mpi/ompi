@@ -474,11 +474,6 @@ opal_net_init()
 int
 opal_net_finalize()
 {
-#if OPAL_ENABLE_IPV6
-    if (NULL != hostname_tsd_key) {
-        OBJ_RELEASE(hostname_tsd_key);
-    }
-#endif
     return OPAL_SUCCESS;
 }
 
