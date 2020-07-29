@@ -16,6 +16,7 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
+ * Copyright (c) 2019-2020 IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -74,8 +75,10 @@ struct options_data_t {
     char **link_flags;
     char **libs;
     char **libs_static;
+    char **libs_profilesupport;
     char *dyn_lib_file;
     char *static_lib_file;
+    char *profilesupport_lib_file;
     char *req_file;
     char *path_includedir;
     char *path_libdir;
@@ -125,8 +128,11 @@ options_data_init(struct options_data_t *data)
     data->libs[0] = NULL;
     data->libs_static = (char **) malloc(sizeof(char*));
     data->libs_static[0] = NULL;
+    data->libs_profilesupport = (char **) malloc(sizeof(char*));
+    data->libs_profilesupport[0] = NULL;
     data->dyn_lib_file = NULL;
     data->static_lib_file = NULL;
+    data->profilesupport_lib_file = NULL;
     data->req_file = NULL;
     data->path_includedir = NULL;
     data->path_libdir = NULL;
@@ -153,8 +159,10 @@ options_data_free(struct options_data_t *data)
     opal_argv_free(data->link_flags);
     opal_argv_free(data->libs);
     opal_argv_free(data->libs_static);
+    opal_argv_free(data->libs_profilesupport);
     if (NULL != data->dyn_lib_file) free(data->dyn_lib_file);
     if (NULL != data->static_lib_file) free(data->static_lib_file);
+    if (NULL != data->profilesupport_lib_file) free(data->profilesupport_lib_file);
     if (NULL != data->req_file) free(data->req_file);
     if (NULL != data->path_includedir) free(data->path_includedir);
     if (NULL != data->path_libdir) free(data->path_libdir);
@@ -303,10 +311,18 @@ data_callback(const char *key, const char *value)
                          opal_argv_count(options_data[parse_options_idx].libs_static),
                          values);
         opal_argv_free(values);
+    } else if (0 == strcmp(key, "libs_profilesupport")) {
+        char **values = opal_argv_split(value, ' ');
+        opal_argv_insert(&options_data[parse_options_idx].libs_profilesupport,
+                         opal_argv_count(options_data[parse_options_idx].libs_profilesupport),
+                         values);
+        opal_argv_free(values);
     } else if (0 == strcmp(key, "dyn_lib_file")) {
         if (NULL != value) options_data[parse_options_idx].dyn_lib_file = strdup(value);
     } else if (0 == strcmp(key, "static_lib_file")) {
         if (NULL != value) options_data[parse_options_idx].static_lib_file = strdup(value);
+    } else if (0 == strcmp(key, "profilesupport_lib_file")) {
+        if (NULL != value) options_data[parse_options_idx].profilesupport_lib_file = strdup(value);
     } else if (0 == strcmp(key, "required_file")) {
         if (NULL != value) options_data[parse_options_idx].req_file = strdup(value);
     } else if (0 == strcmp(key, "project_short")) {
@@ -798,8 +814,9 @@ main(int argc, char *argv[])
     if (flags & COMP_WANT_LINK) {
         bool have_static_lib;
         bool have_dyn_lib;
+        bool have_psupport_lib;
         bool use_static_libs;
-        char *filename1, *filename2;
+        char *filename1, *filename2, *filename_psupport;
         struct stat buf;
 
         opal_argv_insert(&exec_argv, exec_argc, options_data[user_data_idx].link_flags);
@@ -819,6 +836,9 @@ main(int argc, char *argv[])
            ompi .a libs        all         all
            ompi both libs      all         -lmpi
 
+           Addition to the above: to support dynamic PMPI interface layering,
+           we conditionally include -lprofilesupport if it's not a static link
+           and if libprofilesupport.so exists.
         */
 
         filename1 = opal_os_path( false, options_data[user_data_idx].path_libdir, options_data[user_data_idx].static_lib_file, NULL );
@@ -835,6 +855,13 @@ main(int argc, char *argv[])
             have_dyn_lib = false;
         }
 
+        filename_psupport = opal_os_path( false, options_data[user_data_idx].path_libdir, options_data[user_data_idx].profilesupport_lib_file, NULL );
+        if (0 == stat(filename_psupport, &buf)) {
+            have_psupport_lib = true;
+        } else {
+            have_psupport_lib = false;
+        }
+
         /* Determine which set of libs to use: dynamic or static.  Be
            pedantic to make the code easy to read. */
         if (flags & COMP_WANT_LINKALL) {
@@ -849,6 +876,7 @@ main(int argc, char *argv[])
                         filename1, filename2);
                 free(filename1);
                 free(filename2);
+                free(filename_psupport);
                 exit(1);
             }
         } else if (flags & COMP_WANT_STATIC) {
@@ -873,10 +901,16 @@ main(int argc, char *argv[])
         }
         free(filename1);
         free(filename2);
+        free(filename_psupport);
 
         if (use_static_libs) {
             opal_argv_insert(&exec_argv, exec_argc, options_data[user_data_idx].libs_static);
         } else {
+            if (have_psupport_lib) {
+                opal_argv_insert(&exec_argv, exec_argc, options_data[user_data_idx].libs_profilesupport);
+            }
+            exec_argc = opal_argv_count(exec_argv);
+
             opal_argv_insert(&exec_argv, exec_argc, options_data[user_data_idx].libs);
         }
         exec_argc = opal_argv_count(exec_argv);

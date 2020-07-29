@@ -1,0 +1,22 @@
+#!/bin/sh
+
+# Prepend to LD_LIBRARY_PATH and LD_PRELOAD then exec
+# whatever is next in the argv
+
+if [ ! -z "${OMPI_ENTRY_LD_LIBRARY_PATH:-}" ] ; then
+    if [ -z "${LD_LIBRARY_PATH:-}" ] ; then
+        export LD_LIBRARY_PATH="${OMPI_ENTRY_LD_LIBRARY_PATH}"
+    else
+        export LD_LIBRARY_PATH="${OMPI_ENTRY_LD_LIBRARY_PATH}:${LD_LIBRARY_PATH}"
+    fi
+fi
+
+if [ ! -z "${OMPI_ENTRY_LD_PRELOAD:-}" ] ; then
+    if [ -z "${LD_PRELOAD:-}" ] ; then
+        export LD_PRELOAD="${OMPI_ENTRY_LD_PRELOAD}"
+    else
+        export LD_PRELOAD="${OMPI_ENTRY_LD_PRELOAD}:${LD_PRELOAD}"
+    fi
+fi
+
+exec "$@"

@@ -16,7 +16,7 @@
 #                         reserved.
 # Copyright (c) 2016      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
-# Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
+# Copyright (c) 2016-2020 IBM Corporation. All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -75,7 +75,8 @@ headers = \
         timings.h \
         uri.h \
         info_subscriber.h \
-	info.h
+	info.h \
+	parse_entry.h
 
 libopalutil_la_SOURCES = \
         $(headers) \
@@ -113,7 +114,8 @@ libopalutil_la_SOURCES = \
         sys_limits.c \
         uri.c \
         info_subscriber.c \
-        info.c
+        info.c \
+	parse_entry.c
 
 if OPAL_COMPILE_TIMING
 libopalutil_la_SOURCES += timings.c
