@@ -70,6 +70,7 @@ ompi_osc_ucx_component_t mca_osc_ucx_component = {
         .osc_finalize = component_finalize,
     },
     .wpool                  = NULL,
+    .wpctx                  = NULL,
     .env_initialized        = false,
     .num_incomplete_req_ops = 0,
     .num_modules            = 0,
@@ -192,6 +193,7 @@ static int progress_callback(void) {
 static int component_init(bool enable_progress_threads, bool enable_mpi_threads) {
     mca_osc_ucx_component.enable_mpi_threads = enable_mpi_threads;
     mca_osc_ucx_component.wpool = opal_common_ucx_wpool_allocate();
+    mca_osc_ucx_component.wpctx = opal_common_ucx_wpctx_allocate();
     opal_common_ucx_mca_register();
     return OMPI_SUCCESS;
 }
@@ -199,6 +201,7 @@ static int component_init(bool enable_progress_threads, bool enable_mpi_threads)
 static int component_finalize(void) {
     opal_common_ucx_mca_deregister();
     if (mca_osc_ucx_component.env_initialized) {
+        opal_common_ucx_wpctx_release(mca_osc_ucx_component.wpctx);
         opal_common_ucx_wpool_finalize(mca_osc_ucx_component.wpool);
     }
     opal_common_ucx_wpool_free(mca_osc_ucx_component.wpool);
@@ -211,20 +214,42 @@ static int component_query(struct ompi_win_t *win, void **base, size_t size, int
     return mca_osc_ucx_component.priority;
 }
 
+static unsigned int get_proc_vpid(void *metadata, int rank)
+{
+	struct ompi_communicator_t *comm = (struct ompi_communicator_t *)metadata;
+	ompi_group_t *group = comm->c_local_group;
+	opal_process_name_t tmp;
+
+	/* find the processor of the destination */
+	ompi_proc_t *proc = ompi_group_get_proc_ptr(group, rank, true);
+
+	if( ompi_proc_is_sentinel(proc) ) {
+		tmp = ompi_proc_sentinel_to_name((uintptr_t)proc);
+	} else {
+		tmp = proc->super.proc_name;
+	}
+
+    return tmp.vpid;
+}
+
 static int exchange_len_info(void *my_info, size_t my_info_len, char **recv_info_ptr,
-                             int **disps_ptr, void *metadata)
+                             int **disps_ptr, int **lens_ptr, void *metadata)
 {
     int ret = OMPI_SUCCESS;
     struct ompi_communicator_t *comm = (struct ompi_communicator_t *)metadata;
     int comm_size = ompi_comm_size(comm);
-    int lens[comm_size];
     int total_len, i;
+    int *lens = calloc(comm_size, sizeof(*lens));
+
+    if (NULL != lens_ptr) {
+        *lens_ptr = lens;
+    }
 
     ret = comm->c_coll->coll_allgather(&my_info_len, 1, MPI_INT,
                                        lens, 1, MPI_INT, comm,
                                        comm->c_coll->coll_allgather_module);
     if (OMPI_SUCCESS != ret) {
-        return ret;
+        goto fini;
     }
 
     total_len = 0;
@@ -233,13 +258,14 @@ static int exchange_len_info(void *my_info, size_t my_info_len, char **recv_info
         (*disps_ptr)[i] = total_len;
         total_len += lens[i];
     }
-
     (*recv_info_ptr) = (char *)calloc(total_len, sizeof(char));
     ret = comm->c_coll->coll_allgatherv(my_info, my_info_len, MPI_BYTE,
                                         (void *)(*recv_info_ptr), lens, (*disps_ptr), MPI_BYTE,
                                         comm, comm->c_coll->coll_allgatherv_module);
-    if (OMPI_SUCCESS != ret) {
-        return ret;
+
+fini:
+    if (NULL == lens_ptr) {
+        free(lens);
     }
 
     return ret;
@@ -303,7 +329,6 @@ static int component_select(struct ompi_win_t *win, void **base, size_t size, in
     char *name = NULL;
     long values[2];
     int ret = OMPI_SUCCESS;
-    //ucs_status_t status;
     int i, comm_size = ompi_comm_size(comm);
     bool env_initialized = false;
     void *state_base = NULL;
@@ -345,6 +370,13 @@ static int component_select(struct ompi_win_t *win, void **base, size_t size, in
                                          mca_osc_ucx_component.enable_mpi_threads);
         if (OMPI_SUCCESS != ret) {
             OSC_UCX_VERBOSE(1, "opal_common_ucx_wpool_init failed: %d", ret);
+            goto select_unlock;
+        }
+
+        ret = opal_common_ucx_wpctx_init(mca_osc_ucx_component.wpool,
+                                         mca_osc_ucx_component.wpctx,
+                                         &get_proc_vpid);
+        if (OMPI_SUCCESS != ret) {
             goto select_unlock;
         }
 
@@ -432,10 +464,12 @@ select_unlock:
         }
     }
 
-    ret = opal_common_ucx_wpctx_create(mca_osc_ucx_component.wpool, comm_size,
-                                     &exchange_len_info, (void *)module->comm,
-                                     &module->ctx);
-    if (OMPI_SUCCESS != ret) {
+    /* Populate addr table */
+    _osc_ucx_init_lock();
+    ret = opal_common_ucx_wpool_update_addr(mca_osc_ucx_component.wpool, comm_size,
+                                         &exchange_len_info, &get_proc_vpid, (void *)module->comm);
+    _osc_ucx_init_unlock();
+    if (ret != OMPI_SUCCESS) {
         goto error;
     }
 
@@ -449,24 +483,23 @@ select_unlock:
             break;
         }
 
-        ret = opal_common_ucx_wpmem_create(module->ctx, base, size,
-                                         mem_type, &exchange_len_info,
-                                         (void *)module->comm,
+        ret = opal_common_ucx_wpmem_create(mca_osc_ucx_component.wpctx, base, size,
+                                           mem_type, &exchange_len_info,
+                                           (void *)module->comm, comm_size,
                                            &my_mem_addr, &my_mem_addr_size,
                                            &module->mem);
         if (ret != OMPI_SUCCESS) {
             goto error;
         }
-
     }
 
     state_base = (void *)&(module->state);
-    ret = opal_common_ucx_wpmem_create(module->ctx, &state_base,
+    ret = opal_common_ucx_wpmem_create(mca_osc_ucx_component.wpctx, &state_base,
                                      sizeof(ompi_osc_ucx_state_t),
                                      OPAL_COMMON_UCX_MEM_MAP, &exchange_len_info,
-                                     (void *)module->comm,
-                                       &my_mem_addr, &my_mem_addr_size,
-                                       &module->state_mem);
+                                     (void *)module->comm, comm_size,
+                                     &my_mem_addr, &my_mem_addr_size,
+                                     &module->state_mem);
     if (ret != OMPI_SUCCESS) {
         goto error;
     }
@@ -613,9 +646,9 @@ int ompi_osc_ucx_win_attach(struct ompi_win_t *win, void *base, size_t len) {
         insert_index = 0;
     }
 
-    ret = opal_common_ucx_wpmem_create(module->ctx, &base, len,
+    ret = opal_common_ucx_wpmem_create(mca_osc_ucx_component.wpctx, &base, len,
                                        OPAL_COMMON_UCX_MEM_MAP, &exchange_len_info,
-                                       (void *)module->comm,
+                                       (void *)module->comm, ompi_comm_size(module->comm),
                                        &(module->local_dynamic_win_info[insert_index].my_mem_addr),
                                        &(module->local_dynamic_win_info[insert_index].my_mem_addr_size),
                                        &(module->local_dynamic_win_info[insert_index].mem));
@@ -692,8 +725,6 @@ int ompi_osc_ucx_free(struct ompi_win_t *win) {
 
     opal_common_ucx_wpmem_free(module->state_mem);
     opal_common_ucx_wpmem_free(module->mem);
-
-    opal_common_ucx_wpctx_release(module->ctx);
 
     if (module->disp_units) {
         free(module->disp_units);
