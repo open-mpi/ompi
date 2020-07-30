@@ -5,8 +5,8 @@
 #include "common_ucx.h"
 #include "common_ucx_wpool.h"
 
-static int _tlocal_ctx_connect(_ctx_record_t *ctx_rec, int target);
-static int _tlocal_mem_create_rkey(_mem_record_t *mem_rec, ucp_ep_h ep, int target);
+static int _tlocal_ctx_connect(opal_common_ucx_wpmem_t *wpmem, _ctx_record_t *ctx_rec, int target);
+static int _tlocal_mem_create_rkey(_mem_record_t *mem_rec, ucp_ep_h ep, int target, int proc_vpid);
 
 /* Sorted declarations */
 

@@ -18,6 +18,8 @@
 #include "common_ucx.h"
 #include <stdint.h>
 #include <string.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 #include <ucp/api/ucp.h>
 
@@ -29,6 +31,14 @@
 #include "opal/mca/threads/tsd.h"
 
 BEGIN_C_DECLS
+
+typedef int (*opal_common_ucx_exchange_func_t)(void *my_info, size_t my_info_len,
+                                               char **recv_info, int **disps,
+                                               int **ret_total_len,
+                                               void *metadata);
+
+typedef unsigned int (*opal_common_ucx_get_proc_vpid_func_t)(void *metadata, int rank);
+
 
 /* Worker pool is a global object that that is allocated per component or can be
  * shared between multiple compatible components.
@@ -49,6 +59,11 @@ typedef struct {
     /* Bookkeeping information */
     opal_list_t idle_workers;
     opal_list_t active_workers;
+
+    /* UCX addressing information */
+    char **recv_worker_addrs;
+    int *recv_worker_displs;
+    int *recv_worker_lens;
 } opal_common_ucx_wpool_t;
 
 /* Worker Pool Context (wpctx) is an object that is comprised of a set of UCP
@@ -71,14 +86,11 @@ typedef struct {
      * that we can free them at the end if thread fails to release context record */
     opal_list_t ctx_records;
 
+    opal_common_ucx_get_proc_vpid_func_t get_proc_vpid_func;
+
     /* Thread-local key to allow each thread to have
      * local information associated with this wpctx */
     opal_tsd_tracked_key_t tls_key;
-
-    /* UCX addressing information */
-    char *recv_worker_addrs;
-    int *recv_worker_displs;
-    size_t comm_size;
 } opal_common_ucx_ctx_t;
 
 /* Worker Pool memory (wpmem) is an object that represents a remotely accessible
@@ -103,6 +115,9 @@ typedef struct {
      * We need to kepp trakc o fallocated memory records so that we can free them at the end
      * if a thread fails to release the memory record */
     opal_list_t mem_records;
+
+    size_t comm_size;
+    void* metadata;
 
     /* TLS item that allows each thread to
      * store endpoints and rkey arrays
@@ -172,28 +187,29 @@ typedef struct {
     opal_list_item_t super;
     opal_common_ucx_wpmem_t *gmem;
     opal_common_ucx_winfo_t *winfo;
+    ucp_ep_h *endpoints;
     ucp_rkey_h *rkeys;
     _ctx_record_t *ctx_rec;
 } _mem_record_t;
 OBJ_CLASS_DECLARATION(_mem_record_t);
 
-typedef int (*opal_common_ucx_exchange_func_t)(void *my_info, size_t my_info_len,
-                                               char **recv_info, int **disps,
-                                               void *metadata);
-
 /* Manage Worker Pool (wpool) */
 OPAL_DECLSPEC opal_common_ucx_wpool_t * opal_common_ucx_wpool_allocate(void);
 OPAL_DECLSPEC void opal_common_ucx_wpool_free(opal_common_ucx_wpool_t *wpool);
+OPAL_DECLSPEC int opal_common_ucx_wpool_update_addr(opal_common_ucx_wpool_t *wpool, size_t comm_size,
+                                                 opal_common_ucx_exchange_func_t exchange_func,
+                                                 opal_common_ucx_get_proc_vpid_func_t get_proc_vpid_func,
+                                                 void *exchange_metadata);
 OPAL_DECLSPEC int opal_common_ucx_wpool_init(opal_common_ucx_wpool_t *wpool,
                                              int proc_world_size, bool enable_mt);
 OPAL_DECLSPEC void opal_common_ucx_wpool_finalize(opal_common_ucx_wpool_t *wpool);
 OPAL_DECLSPEC int opal_common_ucx_wpool_progress(opal_common_ucx_wpool_t *wpool);
 
 /* Manage Communication context */
-OPAL_DECLSPEC int opal_common_ucx_wpctx_create(opal_common_ucx_wpool_t *wpool, int comm_size,
-                                             opal_common_ucx_exchange_func_t exchange_func,
-                                             void *exchange_metadata,
-                                             opal_common_ucx_ctx_t **ctx_ptr);
+OPAL_DECLSPEC opal_common_ucx_ctx_t * opal_common_ucx_wpctx_allocate(void);
+OPAL_DECLSPEC int opal_common_ucx_wpctx_init(opal_common_ucx_wpool_t *wpool,
+                                             opal_common_ucx_ctx_t *ctx_ptr,
+                                             opal_common_ucx_get_proc_vpid_func_t get_proc_vpid_func);
 OPAL_DECLSPEC void opal_common_ucx_wpctx_release(opal_common_ucx_ctx_t *ctx);
 
 /* request init / completion */
@@ -207,6 +223,8 @@ opal_common_ucx_tlocal_fetch(opal_common_ucx_wpmem_t *mem, int target,
                                 ucp_ep_h *_ep, ucp_rkey_h *_rkey,
                                 opal_common_ucx_winfo_t **_winfo)
 {
+    static unsigned long ucx_tlocal_fetch = 0;
+    ucx_tlocal_fetch++;
     _mem_record_t *mem_rec = NULL;
     int is_ready;
     int rc = OPAL_SUCCESS;
@@ -216,7 +234,7 @@ opal_common_ucx_tlocal_fetch(opal_common_ucx_wpmem_t *mem, int target,
     if (OPAL_SUCCESS != rc) {
         return rc;
     }
-    is_ready = mem_rec && (mem_rec->winfo->endpoints[target]) &&
+    is_ready = mem_rec && (mem_rec->endpoints[target]) &&
             (NULL != mem_rec->rkeys[target]);
     MCA_COMMON_UCX_ASSERT((NULL == mem_rec) || (NULL != mem_rec->winfo));
     if (OPAL_UNLIKELY(!is_ready)) {
@@ -232,11 +250,12 @@ opal_common_ucx_tlocal_fetch(opal_common_ucx_wpmem_t *mem, int target,
     MCA_COMMON_UCX_ASSERT(NULL != mem_rec);
     MCA_COMMON_UCX_ASSERT(NULL != mem_rec->winfo);
     MCA_COMMON_UCX_ASSERT(NULL != mem_rec->winfo->endpoints[target]);
+    MCA_COMMON_UCX_ASSERT(NULL != mem_rec->endpoints[target]);
     MCA_COMMON_UCX_ASSERT(NULL != mem_rec->rkeys[target]);
 
     *_rkey = mem_rec->rkeys[target];
     *_winfo = mem_rec->winfo;
-    *_ep = mem_rec->winfo->endpoints[target];
+    *_ep = mem_rec->endpoints[target];
     return OPAL_SUCCESS;
 }
 
@@ -246,8 +265,9 @@ OPAL_DECLSPEC int opal_common_ucx_wpmem_create(opal_common_ucx_ctx_t *ctx,
                                opal_common_ucx_mem_type_t mem_type,
                                opal_common_ucx_exchange_func_t exchange_func,
                                void *exchange_metadata,
-                                               char **my_mem_addr,
-                                               int *my_mem_addr_size,
+                               size_t comm_size,
+                               char **my_mem_addr,
+                               int *my_mem_addr_size,
                                opal_common_ucx_wpmem_t **mem_ptr);
 OPAL_DECLSPEC void opal_common_ucx_wpmem_free(opal_common_ucx_wpmem_t *mem);
 

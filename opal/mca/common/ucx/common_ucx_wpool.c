@@ -31,7 +31,7 @@ __thread int initialized = 0;
 #endif
    
 static _ctx_record_t *
-_tlocal_add_ctx_rec(opal_common_ucx_ctx_t *ctx);
+_tlocal_add_ctx_rec(opal_common_ucx_ctx_t *ctx, size_t comm_size);
 static inline _ctx_record_t *
 _tlocal_get_ctx_rec(opal_tsd_tracked_key_t tls_key);
 static void _tlocal_ctx_rec_cleanup(_ctx_record_t *ctx_rec);
@@ -59,7 +59,7 @@ _winfo_create(opal_common_ucx_wpool_t *wpool)
         goto exit;
     }
 
-    winfo = calloc(1, sizeof(*winfo));
+    winfo = OBJ_NEW(opal_common_ucx_winfo_t);
     if (NULL == winfo) {
         MCA_COMMON_UCX_ERROR("Cannot allocate memory for worker info");
         goto release_worker;
@@ -119,6 +119,13 @@ opal_common_ucx_wpool_allocate(void)
 {
     opal_common_ucx_wpool_t *ptr = calloc(1, sizeof(opal_common_ucx_wpool_t));
     ptr->refcnt = 0;
+    return ptr;
+}
+
+OPAL_DECLSPEC opal_common_ucx_ctx_t *
+opal_common_ucx_wpctx_allocate(void)
+{
+    opal_common_ucx_ctx_t *ptr = calloc(1, sizeof(opal_common_ucx_ctx_t));
 
     return ptr;
 }
@@ -130,8 +137,50 @@ opal_common_ucx_wpool_free(opal_common_ucx_wpool_t *wpool)
     free(wpool);
 }
 
-static int _wpool_list_put(opal_common_ucx_wpool_t *wpool, opal_list_t *list,
-                opal_common_ucx_winfo_t *winfo);
+static int _wpool_list_put(opal_list_t *list, opal_common_ucx_winfo_t *winfo);
+
+OPAL_DECLSPEC int
+opal_common_ucx_wpool_update_addr(opal_common_ucx_wpool_t *wpool, size_t comm_size,
+                                opal_common_ucx_exchange_func_t exchange_func,
+                                opal_common_ucx_get_proc_vpid_func_t get_proc_vpid_func,
+                                void *exchange_metadata)
+{
+    unsigned int i = 0, proc_vpid = 0;
+    int ret = OPAL_SUCCESS;
+    int *recv_worker_lens = NULL, *recv_worker_displs = NULL;
+    char *recv_worker_addrs = NULL, *curr_addr = NULL;
+
+    ret = exchange_func(wpool->recv_waddr, wpool->recv_waddr_len,
+                        &recv_worker_addrs,
+                        &recv_worker_displs,
+                        &recv_worker_lens,
+                        exchange_metadata);
+
+    curr_addr = recv_worker_addrs;
+    /* loop through ranks of current comm and update wpool world_comm addresses */
+    for (i = 0; i < comm_size; i++) {
+        proc_vpid = get_proc_vpid_func(exchange_metadata, i);
+
+        if (NULL == wpool->recv_worker_addrs[proc_vpid] ) {
+            wpool->recv_worker_addrs[proc_vpid] = calloc(recv_worker_lens[i], sizeof(char));
+            memcpy(wpool->recv_worker_addrs[proc_vpid], curr_addr, recv_worker_lens[i]);
+            wpool->recv_worker_displs[proc_vpid] = recv_worker_displs[i];
+            wpool->recv_worker_lens[proc_vpid] = recv_worker_lens[i];
+        }
+        curr_addr=(curr_addr+recv_worker_lens[i]);
+    }
+
+    if (NULL != recv_worker_addrs) {
+        free(recv_worker_addrs);
+    }
+    if (NULL != recv_worker_displs) {
+        free(recv_worker_displs);
+    }
+    if (NULL != recv_worker_lens) {
+        free(recv_worker_lens);
+    }
+    return ret;
+}
 
 OPAL_DECLSPEC int
 opal_common_ucx_wpool_init(opal_common_ucx_wpool_t *wpool,
@@ -204,11 +253,14 @@ opal_common_ucx_wpool_init(opal_common_ucx_wpool_t *wpool,
         goto err_get_addr;
     }
 
-    rc = _wpool_list_put(wpool, &wpool->idle_workers, winfo);
+    rc = _wpool_list_put(&wpool->idle_workers, winfo);
     if (rc) {
         goto err_wpool_add;
     }
 
+    wpool->recv_worker_lens = calloc(proc_world_size, sizeof(*wpool->recv_worker_lens));
+    wpool->recv_worker_displs = calloc(proc_world_size, sizeof(*wpool->recv_worker_displs));
+    wpool->recv_worker_addrs = calloc(proc_world_size, sizeof(char *));
     return rc;
 
 err_wpool_add:
@@ -272,23 +324,27 @@ opal_common_ucx_wpool_progress(opal_common_ucx_wpool_t *wpool)
     /* Go over all active workers and progress them
      * TODO: may want to have some partitioning to progress only part of
      * workers */
-    opal_mutex_lock(&wpool->mutex);
-    OPAL_LIST_FOREACH_SAFE(winfo, next, &wpool->active_workers,
-                           opal_common_ucx_winfo_t) {
-        opal_mutex_lock(&winfo->mutex);
-        do {
-            progressed = ucp_worker_progress(winfo->worker);
-            completed += progressed;
-        } while (progressed);
-        opal_mutex_unlock(&winfo->mutex);
+    if (!opal_mutex_trylock (&wpool->mutex)) {
+        int active_workers = opal_list_get_size(&wpool->active_workers);
+        OPAL_LIST_FOREACH_SAFE(winfo, next, &wpool->active_workers,
+                               opal_common_ucx_winfo_t) {
+            opal_mutex_lock(&winfo->mutex);
+            do {
+                progressed = ucp_worker_progress(winfo->worker);
+                completed += progressed;
+            } while (progressed);
+            opal_mutex_unlock(&winfo->mutex);
+        }
+        if (!active_workers && opal_list_get_size(&wpool->idle_workers)) {
+            ucp_worker_progress(wpool->dflt_worker);
+        }
     }
     opal_mutex_unlock(&wpool->mutex);
     return completed;
 }
 
 static int
-_wpool_list_put(opal_common_ucx_wpool_t *wpool, opal_list_t *list,
-                opal_common_ucx_winfo_t *winfo)
+_wpool_list_put(opal_list_t *list, opal_common_ucx_winfo_t *winfo)
 {
     opal_list_append(list, &winfo->super);
     return OPAL_SUCCESS;
@@ -327,7 +383,7 @@ _wpool_get_winfo(opal_common_ucx_wpool_t *wpool, size_t comm_size)
     winfo->comm_size = comm_size;
 
     /* Put the worker on the active list */
-    _wpool_list_put(wpool, &wpool->active_workers, winfo);
+    _wpool_list_put(&wpool->active_workers, winfo);
 
     opal_mutex_unlock(&wpool->mutex);
 
@@ -350,39 +406,31 @@ _wpool_put_winfo(opal_common_ucx_wpool_t *wpool, opal_common_ucx_winfo_t *winfo)
  *----------------------------------------------------------------------------*/
 
 OPAL_DECLSPEC int
-opal_common_ucx_wpctx_create(opal_common_ucx_wpool_t *wpool, int comm_size,
-                             opal_common_ucx_exchange_func_t exchange_func,
-                             void *exchange_metadata,
-                             opal_common_ucx_ctx_t **ctx_ptr)
+opal_common_ucx_wpctx_init(opal_common_ucx_wpool_t *wpool,
+                           opal_common_ucx_ctx_t *ctx,
+                           opal_common_ucx_get_proc_vpid_func_t get_proc_vpid_func)
 {
-    opal_common_ucx_ctx_t *ctx = calloc(1, sizeof(*ctx));
     int ret = OPAL_SUCCESS;
+
+    if (NULL == ctx) {
+        ret = OPAL_ERROR;
+        goto error;
+    }
 
     OBJ_CONSTRUCT(&ctx->mutex, opal_mutex_t);
     OBJ_CONSTRUCT(&ctx->ctx_records, opal_list_t);
 
     ctx->wpool = wpool;
-    ctx->comm_size = comm_size;
-
-    ctx->recv_worker_addrs = NULL;
-    ctx->recv_worker_displs = NULL;
-    ret = exchange_func(wpool->recv_waddr, wpool->recv_waddr_len,
-                        &ctx->recv_worker_addrs,
-                        &ctx->recv_worker_displs, exchange_metadata);
-    if (ret != OPAL_SUCCESS) {
-        goto error;
-    }
+    ctx->get_proc_vpid_func = get_proc_vpid_func;
 
     OBJ_CONSTRUCT(&ctx->tls_key, opal_tsd_tracked_key_t);
     opal_tsd_tracked_key_set_destructor(&ctx->tls_key, _ctx_rec_destructor);
 
-    (*ctx_ptr) = ctx;
     return ret;
+
 error:
     OBJ_DESTRUCT(&ctx->mutex);
     OBJ_DESTRUCT(&ctx->ctx_records);
-    free(ctx);
-    (*ctx_ptr) = NULL;
     return ret;
 }
 
@@ -402,13 +450,8 @@ opal_common_ucx_wpctx_release(opal_common_ucx_ctx_t *ctx)
        _tlocal_ctx_rec_cleanup(ctx_rec);
     }
 
-    free(ctx->recv_worker_addrs);
-    free(ctx->recv_worker_displs);
-
     OBJ_DESTRUCT(&ctx->mutex);
     OBJ_DESTRUCT(&ctx->ctx_records);
-
-    free(ctx);
 }
 
 /* -----------------------------------------------------------------------------
@@ -420,9 +463,9 @@ int opal_common_ucx_wpmem_create(opal_common_ucx_ctx_t *ctx,
                                void **mem_base, size_t mem_size,
                                opal_common_ucx_mem_type_t mem_type,
                                opal_common_ucx_exchange_func_t exchange_func,
-                               void *exchange_metadata,
-                                 char **my_mem_addr,
-                                 int *my_mem_addr_size,
+                               void *exchange_metadata, size_t comm_size,
+                               char **my_mem_addr,
+                               int *my_mem_addr_size,
                                opal_common_ucx_wpmem_t **mem_ptr)
 {
     opal_common_ucx_wpmem_t *mem = calloc(1, sizeof(*mem));
@@ -431,6 +474,8 @@ int opal_common_ucx_wpmem_create(opal_common_ucx_ctx_t *ctx,
     ucs_status_t status;
     int ret = OPAL_SUCCESS;
 
+    mem->comm_size = comm_size;
+    mem->metadata = exchange_metadata;
     mem->ctx = ctx;
     mem->mem_addrs = NULL;
     mem->mem_displs = NULL;
@@ -454,7 +499,7 @@ int opal_common_ucx_wpmem_create(opal_common_ucx_ctx_t *ctx,
     }
 
     ret = exchange_func(rkey_addr, rkey_addr_len,
-                        &mem->mem_addrs, &mem->mem_displs, exchange_metadata);
+                        &mem->mem_addrs, &mem->mem_displs, NULL, exchange_metadata);
     if (ret != OPAL_SUCCESS) {
         goto error_rkey_pack;
     }
@@ -546,7 +591,7 @@ void opal_common_ucx_wpmem_free(opal_common_ucx_wpmem_t *mem)
 }
 
 static inline _ctx_record_t *
-_tlocal_get_ctx_rec(opal_tsd_tracked_key_t tls_key){
+_tlocal_get_ctx_rec(opal_tsd_tracked_key_t tls_key) {
     _ctx_record_t *ctx_rec = NULL;
     int rc = opal_tsd_tracked_key_get(&tls_key, (void**)&ctx_rec);
 
@@ -587,7 +632,7 @@ _tlocal_ctx_rec_cleanup(_ctx_record_t *ctx_rec)
 }
 
 static _ctx_record_t *
-_tlocal_add_ctx_rec(opal_common_ucx_ctx_t *ctx)
+_tlocal_add_ctx_rec(opal_common_ucx_ctx_t *ctx, size_t comm_size)
 {
     int rc;
     
@@ -598,7 +643,7 @@ _tlocal_add_ctx_rec(opal_common_ucx_ctx_t *ctx)
     }
 
     ctx_rec->gctx = ctx;
-    ctx_rec->winfo = _wpool_get_winfo(ctx->wpool, ctx->comm_size);
+    ctx_rec->winfo = _wpool_get_winfo(ctx->wpool, comm_size);
     if (NULL == ctx_rec->winfo) {
         MCA_COMMON_UCX_ERROR("Failed to allocate new worker");
         goto error2;
@@ -630,21 +675,24 @@ error1:
     return NULL;
 }
 
-static int _tlocal_ctx_connect(_ctx_record_t *ctx_rec, int target)
+static int _tlocal_ctx_connect(opal_common_ucx_wpmem_t *wpmem, _ctx_record_t *ctx_rec, int target)
 {
     ucp_ep_params_t ep_params;
     opal_common_ucx_winfo_t *winfo = ctx_rec->winfo;
-    opal_common_ucx_ctx_t *gctx = ctx_rec->gctx;
+    opal_common_ucx_ctx_t   *gctx  = ctx_rec->gctx;
+    opal_common_ucx_wpool_t *wpool = gctx->wpool;
     ucs_status_t status;
-    int displ;
+    unsigned int proc_vpid;
 
     memset(&ep_params, 0, sizeof(ucp_ep_params_t));
     ep_params.field_mask = UCP_EP_PARAM_FIELD_REMOTE_ADDRESS;
 
     opal_mutex_lock(&winfo->mutex);
-    displ = gctx->recv_worker_displs[target];
-    ep_params.address = (ucp_address_t *)&(gctx->recv_worker_addrs[displ]);
-    status = ucp_ep_create(winfo->worker, &ep_params, &winfo->endpoints[target]);
+    
+    proc_vpid = gctx->get_proc_vpid_func(wpmem->metadata, target);
+
+    ep_params.address = (ucp_address_t *)wpool->recv_worker_addrs[proc_vpid];
+    status = ucp_ep_create(winfo->worker, &ep_params, &winfo->endpoints[proc_vpid]);
     if (status != UCS_OK) {
         opal_mutex_unlock(&winfo->mutex);
         MCA_COMMON_UCX_VERBOSE(1, "ucp_ep_create failed: %d", status);
@@ -670,7 +718,7 @@ _tlocal_mem_rec_cleanup(_mem_record_t *mem_rec)
     }
 
     opal_mutex_lock(&mem_rec->winfo->mutex);
-    for(i = 0; i < mem_rec->gmem->ctx->comm_size; i++) {
+    for(i = 0; i < mem_rec->gmem->comm_size; i++) {
         if (mem_rec->rkeys[i]) {
             ucp_rkey_destroy(mem_rec->rkeys[i]);
         }
@@ -699,8 +747,9 @@ static _mem_record_t *_tlocal_add_mem_rec(opal_common_ucx_wpmem_t *mem, _ctx_rec
     mem_rec->gmem = mem;
     mem_rec->ctx_rec = ctx_rec;
     mem_rec->winfo = ctx_rec->winfo;
-    mem_rec->rkeys = calloc(mem->ctx->comm_size, sizeof(*mem_rec->rkeys));
-    
+    mem_rec->endpoints = calloc(mem->comm_size, sizeof(*mem_rec->endpoints));
+    mem_rec->rkeys = calloc(mem->comm_size, sizeof(*mem_rec->rkeys));
+        
     rc = opal_tsd_tracked_key_set(&mem->tls_key, mem_rec);
     if (OPAL_SUCCESS != rc) {
         return NULL;
@@ -714,7 +763,7 @@ static _mem_record_t *_tlocal_add_mem_rec(opal_common_ucx_wpmem_t *mem, _ctx_rec
 }
 
 static int
-_tlocal_mem_create_rkey(_mem_record_t *mem_rec, ucp_ep_h ep, int target)
+_tlocal_mem_create_rkey(_mem_record_t *mem_rec, ucp_ep_h ep, int target, int proc_vpid)
 {
     opal_common_ucx_wpmem_t *gmem = mem_rec->gmem;
     int displ = gmem->mem_displs[target];
@@ -740,25 +789,27 @@ opal_common_ucx_tlocal_fetch_spath(opal_common_ucx_wpmem_t *mem, int target)
     _mem_record_t *mem_rec = NULL;
     opal_common_ucx_winfo_t *winfo = NULL;
     ucp_ep_h ep;
-    int rc = OPAL_SUCCESS;
+    int rc = OPAL_SUCCESS, proc_vpid;
 
     ctx_rec = _tlocal_get_ctx_rec(mem->ctx->tls_key);
     if (OPAL_UNLIKELY(!ctx_rec)) {
-        ctx_rec = _tlocal_add_ctx_rec(mem->ctx);
+        ctx_rec = _tlocal_add_ctx_rec(mem->ctx, mem->comm_size);
         if (NULL == ctx_rec) {
             return OPAL_ERR_OUT_OF_RESOURCE;
         }
     }
     winfo = ctx_rec->winfo;
+    
+    proc_vpid = ctx_rec->gctx->get_proc_vpid_func(mem->metadata, target);
 
     /* Obtain the endpoint */
-    if (OPAL_UNLIKELY(NULL == winfo->endpoints[target])) {
-        rc = _tlocal_ctx_connect(ctx_rec, target);
+    if (OPAL_UNLIKELY(NULL == winfo->endpoints[proc_vpid])) {
+        rc = _tlocal_ctx_connect(mem, ctx_rec, target);
         if (rc != OPAL_SUCCESS) {
             return rc;
         }
     }
-    ep = winfo->endpoints[target];
+    ep = winfo->endpoints[proc_vpid];
 
     /* Obtain the memory region info */
     mem_rec = _tlocal_add_mem_rec(mem, ctx_rec);
@@ -766,11 +817,13 @@ opal_common_ucx_tlocal_fetch_spath(opal_common_ucx_wpmem_t *mem, int target)
     /* Obtain the rkey */
     if (OPAL_UNLIKELY(NULL == mem_rec->rkeys[target])) {
         /* Create the rkey */
-        rc = _tlocal_mem_create_rkey(mem_rec, ep, target);
+        rc = _tlocal_mem_create_rkey(mem_rec, ep, target, proc_vpid);
         if (rc) {
             return rc;
         }
     }
+
+    mem_rec->endpoints[target] = ep;
 
     return OPAL_SUCCESS;
 }
