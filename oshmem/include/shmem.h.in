@@ -84,7 +84,7 @@ enum {
 /* size of symmetric heap in bytes.
  * Can be qualified with the letter 'K', 'M', 'G' or 'T'
  */
-#define SHMEM_HEAP_SIZE "SHMEM_SYMMETRIC_HEAP_SIZE"
+#define SHMEM_HEAP_SIZE "SHMEM_SYMMETRIC_SIZE"
 
 /*
  * Type of allocator used by symmetric heap
