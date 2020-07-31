@@ -1,9 +1,9 @@
 /*
- * Copyright (c) 2015      Mellanox Technologies, Inc.
- *                         All rights reserved.
- * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
- * Copyright (c) 2019      Research Organization for Information Science
- *                         and Technology (RIST).  All rights reserved.
+ * Copyright (c) 2015-2020      Mellanox Technologies, Inc.
+ *                              All rights reserved.
+ * Copyright (c) 2018           Amazon.com, Inc. or its affiliates.  All Rights reserved.
+ * Copyright (c) 2019           Research Organization for Information Science
+ *                              and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -47,7 +47,7 @@ oshmem_info_t oshmem_shmem_info_env = {
  */
 static int oshmem_info_value_to_bool(char *value, bool *interp);
 static int oshmem_info_value_to_int(char *value, int *interp);
-static int oshmem_info_get_heap_size(char *value, size_t *interp);
+static int oshmem_info_get_heap_size(const char *name, char *value, size_t *interp);
 static int oshmem_info_get_library_version(char *version, int *len);
 
 
@@ -105,19 +105,19 @@ int oshmem_info_init(void)
     }
 
     if (NULL != (cptr = getenv(OSHMEM_ENV_SYMMETRIC_SIZE))) {
-        char *p1 = getenv(SHMEM_HEAP_SIZE);
-        if (p1 && strcmp(cptr, p1)) {
-            SHMEM_API_ERROR("Found conflict between env '%s' and '%s'.\n",
-                          OSHMEM_ENV_SYMMETRIC_SIZE, SHMEM_HEAP_SIZE);
-            ret = OSHMEM_ERR_BAD_PARAM;
-            goto out;
+        char *p1;
+        if (NULL != (p1 = getenv(SHMEM_HEAP_SIZE))) {
+            SHMEM_API_WARNING("SYMMETRIC_HEAP_SIZE and SMA_HEAP_SIZE are both set;"
+             "SYMMETRIC_HEAP_SIZE takes precedence.");
         }
-        ret = oshmem_info_get_heap_size(cptr, &oshmem_shmem_info_env.symmetric_heap_size);
+        ret = oshmem_info_get_heap_size(OSHMEM_ENV_SYMMETRIC_SIZE, cptr,
+                                        &oshmem_shmem_info_env.symmetric_heap_size);
         if (OSHMEM_SUCCESS != ret) {
             goto out;
         }
     } else if (NULL != (cptr = getenv(SHMEM_HEAP_SIZE))) {
-        ret = oshmem_info_get_heap_size(cptr, &oshmem_shmem_info_env.symmetric_heap_size);
+        ret = oshmem_info_get_heap_size(SHMEM_HEAP_SIZE, cptr,
+                                        &oshmem_shmem_info_env.symmetric_heap_size);
         if (OSHMEM_SUCCESS != ret) {
             goto out;
         }
@@ -217,7 +217,7 @@ static int oshmem_info_value_to_int(char *value, int *interp)
     return OSHMEM_SUCCESS;
 }
 
-static int oshmem_info_get_heap_size(char *value, size_t *interp)
+static int oshmem_info_get_heap_size(const char *name, char *value, size_t *interp)
 {
     char *p;
     long long factor = 1;
@@ -259,8 +259,7 @@ static int oshmem_info_get_heap_size(char *value, size_t *interp)
     if (size <= 0) {
         return OSHMEM_ERR_BAD_PARAM;
     } else {
-        opal_setenv(OSHMEM_ENV_SYMMETRIC_SIZE, p, true, &environ);
-        opal_setenv(SHMEM_HEAP_SIZE, p, true, &environ);
+        opal_setenv(name, p, true, &environ);
 /* Probably needless code */
 #if 0
         char *tmp = p;
