@@ -117,7 +117,6 @@ OPAL_DECLSPEC int opal_common_ucx_del_procs_nofence(opal_common_ucx_del_proc_t *
                                                size_t my_rank, size_t max_disconnect, ucp_worker_h worker);
 OPAL_DECLSPEC void opal_common_ucx_mca_var_register(const mca_base_component_t *component);
 
-
 /**
  * Load an integer value of \c size bytes from \c ptr and cast it to uint64_t.
  */
