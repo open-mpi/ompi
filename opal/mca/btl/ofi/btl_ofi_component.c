@@ -53,9 +53,24 @@ static int mca_btl_ofi_init_device(struct fi_info *info);
 
 /* validate information returned from fi_getinfo().
  * return OPAL_ERROR if we dont have what we need. */
-static int validate_info(struct fi_info *info, uint64_t required_caps)
+static int validate_info(struct fi_info *info, uint64_t required_caps,
+                         char **include_list, char **exclude_list)
 {
     int mr_mode;
+
+    if (NULL != include_list && !opal_common_ofi_is_in_list(include_list, info->fabric_attr->prov_name)) {
+        opal_output_verbose(1, opal_common_ofi.output,
+                            "%s:%d: btl:ofi: \"%s\" not in include list\n",
+                            __FILE__, __LINE__,
+                            info->fabric_attr->prov_name);
+        return OPAL_ERROR;
+    } else if (NULL != exclude_list && opal_common_ofi_is_in_list(exclude_list, info->fabric_attr->prov_name)) {
+        opal_output_verbose(1, opal_common_ofi.output,
+                            "%s:%d: btl:ofi: \"%s\" in exclude list\n",
+                            __FILE__, __LINE__,
+                            info->fabric_attr->prov_name);
+        return OPAL_ERROR;
+    }
 
     BTL_VERBOSE(("validating device: %s", info->domain_attr->name));
 
@@ -219,7 +234,7 @@ static mca_btl_base_module_t **mca_btl_ofi_component_init (int *num_btl_modules,
     uint64_t progress_mode;
     unsigned resource_count = 0;
     struct mca_btl_base_module_t **base_modules;
-    char **include_list = NULL;
+    char **include_list = NULL, **exclude_list = NULL;
 
     BTL_VERBOSE(("initializing ofi btl"));
 
@@ -264,10 +279,18 @@ static mca_btl_base_module_t **mca_btl_ofi_component_init (int *num_btl_modules,
     }
 
     fabric_attr.prov_name = NULL;
-    /* Select the provider - sort of.  we just take first element in list for now */
+
+    opal_output_verbose(1, opal_common_ofi.output,
+                        "%s:%d: btl:ofi:provider_include = \"%s\"\n",
+                        __FILE__, __LINE__, *opal_common_ofi.prov_include);
+    opal_output_verbose(1, opal_common_ofi.output,
+                        "%s:%d: btl:ofi:provider_exclude = \"%s\"\n",
+                        __FILE__, __LINE__, *opal_common_ofi.prov_exclude);
+
     if (NULL != *opal_common_ofi.prov_include) {
         include_list = opal_argv_split(*opal_common_ofi.prov_include, ',');
-        fabric_attr.prov_name = include_list[0];
+    } else if (NULL != *opal_common_ofi.prov_exclude) {
+        exclude_list = opal_argv_split(*opal_common_ofi.prov_exclude, ',');
     }
 
     domain_attr.mr_mode = MCA_BTL_OFI_REQUESTED_MR_MODE;
@@ -331,7 +354,7 @@ static mca_btl_base_module_t **mca_btl_ofi_component_init (int *num_btl_modules,
     info = info_list;
 
     while(info) {
-        rc = validate_info(info, required_caps);
+        rc = validate_info(info, required_caps, include_list, exclude_list);
         if (OPAL_SUCCESS == rc) {
             /* Device passed sanity check, let's make a module.
              *

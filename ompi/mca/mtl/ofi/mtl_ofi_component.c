@@ -306,26 +306,6 @@ ompi_mtl_ofi_progress_no_inline(void)
 	return ompi_mtl_ofi_progress();
 }
 
-static int
-is_in_list(char **list, char *item)
-{
-    int i = 0;
-
-    if ((NULL == list) || (NULL == item)) {
-        return 0;
-    }
-
-    while (NULL != list[i]) {
-        if (0 == strncasecmp(item, list[i], strlen(list[i]))) {
-            return 1;
-        } else {
-            i++;
-        }
-    }
-
-    return 0;
-}
-
 static struct fi_info*
 select_ofi_provider(struct fi_info *providers,
                     char **include_list, char **exclude_list)
@@ -334,7 +314,7 @@ select_ofi_provider(struct fi_info *providers,
 
     if (NULL != include_list) {
         while ((NULL != prov) &&
-               (!is_in_list(include_list, prov->fabric_attr->prov_name))) {
+               (!opal_common_ofi_is_in_list(include_list, prov->fabric_attr->prov_name))) {
             opal_output_verbose(1, opal_common_ofi.output,
                                 "%s:%d: mtl:ofi: \"%s\" not in include list\n",
                                 __FILE__, __LINE__,
@@ -343,7 +323,7 @@ select_ofi_provider(struct fi_info *providers,
         }
     } else if (NULL != exclude_list) {
         while ((NULL != prov) &&
-               (is_in_list(exclude_list, prov->fabric_attr->prov_name))) {
+               (opal_common_ofi_is_in_list(exclude_list, prov->fabric_attr->prov_name))) {
             opal_output_verbose(1, opal_common_ofi.output,
                                 "%s:%d: mtl:ofi: \"%s\" in exclude list\n",
                                 __FILE__, __LINE__,
@@ -733,8 +713,8 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
      * this logic if the user specifies an include list without EFA or adds EFA
      * to the exclude list.
      */
-    if ((include_list && is_in_list(include_list, "efa")) ||
-        (exclude_list && !is_in_list(exclude_list, "efa"))) {
+    if ((include_list && opal_common_ofi_is_in_list(include_list, "efa")) ||
+        (exclude_list && !opal_common_ofi_is_in_list(exclude_list, "efa"))) {
         hints_dup = fi_dupinfo(hints);
         hints_dup->caps &= ~(FI_LOCAL_COMM | FI_REMOTE_COMM);
         hints_dup->fabric_attr->prov_name = strdup("efa");
