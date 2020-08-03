@@ -74,18 +74,18 @@ int OMPI_Affinity_str(ompi_affinity_fmt_t fmt_type,
     if (OMPI_SUCCESS != (ret = get_rsrc_ompi_bound(ompi_bound)) ||
         OMPI_SUCCESS != (ret = get_rsrc_current_binding(current_binding)) ||
         OMPI_SUCCESS != (ret = get_rsrc_exists(exists))) {
-        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, ret, FUNC_NAME);
+        return OMPI_ERRHANDLER_NOHANDLE_INVOKE(ret, FUNC_NAME);
     }
     break;
     case OMPI_AFFINITY_LAYOUT_FMT:
     if (OMPI_SUCCESS != (ret = get_layout_ompi_bound(ompi_bound)) ||
         OMPI_SUCCESS != (ret = get_layout_current_binding(current_binding)) ||
         OMPI_SUCCESS != (ret = get_layout_exists(exists))) {
-        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, ret, FUNC_NAME);
+        return OMPI_ERRHANDLER_NOHANDLE_INVOKE(ret, FUNC_NAME);
     }
     break;
     default:
-    return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, FUNC_NAME);
+    return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG, FUNC_NAME);
     }
 
     return MPI_SUCCESS;

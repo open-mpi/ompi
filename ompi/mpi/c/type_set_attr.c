@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2016 The University of Tennessee and The University
+ * Copyright (c) 2004-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
@@ -51,7 +51,7 @@ int MPI_Type_set_attr (MPI_Datatype type,
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if (NULL == type || MPI_DATATYPE_NULL == type) {
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_TYPE, FUNC_NAME);
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_TYPE, FUNC_NAME);
         }
     }
 
@@ -60,7 +60,7 @@ int MPI_Type_set_attr (MPI_Datatype type,
     ret = ompi_attr_set_c(TYPE_ATTR, type, &type->d_keyhash,
                           type_keyval, attribute_val, false);
 
-    OMPI_ERRHANDLER_RETURN(ret, MPI_COMM_WORLD,
+    OMPI_ERRHANDLER_NOHANDLE_RETURN(ret, 
 			  MPI_ERR_OTHER, FUNC_NAME);
 
 }

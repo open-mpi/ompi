@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -50,7 +50,7 @@ int MPI_Type_create_keyval(MPI_Type_copy_attr_function *type_copy_attr_fn,
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if ((NULL == type_copy_attr_fn) || (NULL == type_delete_attr_fn) ||
             (NULL == type_keyval)) {
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD,
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(
                                           MPI_ERR_ARG,
                                           FUNC_NAME);
         }
@@ -63,7 +63,7 @@ int MPI_Type_create_keyval(MPI_Type_copy_attr_function *type_copy_attr_fn,
 
     ret = ompi_attr_create_keyval(TYPE_ATTR, copy_fn, del_fn,
                                   type_keyval, extra_state, 0, NULL);
-    OMPI_ERRHANDLER_RETURN(ret, MPI_COMM_WORLD, ret, FUNC_NAME);
+    OMPI_ERRHANDLER_NOHANDLE_RETURN(ret, ret, FUNC_NAME);
 }
 
 

@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
@@ -55,14 +55,14 @@ int MPI_Type_create_hvector(int count,
     if( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if( count < 0 ) {
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COUNT,
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_COUNT,
                                           FUNC_NAME );
         } else if( blocklength < 0) {
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG,
                                           FUNC_NAME );
         } else if (NULL == oldtype || MPI_DATATYPE_NULL == oldtype ||
                    NULL == newtype) {
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_TYPE,
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_TYPE,
                                           FUNC_NAME );
         }
     }
@@ -71,7 +71,7 @@ int MPI_Type_create_hvector(int count,
 
     rc = ompi_datatype_create_hvector ( count, blocklength, stride, oldtype,
                                         newtype );
-    OMPI_ERRHANDLER_CHECK(rc, MPI_COMM_WORLD, rc, FUNC_NAME );
+    OMPI_ERRHANDLER_NOHANDLE_CHECK(rc, rc, FUNC_NAME );
 
     {
         const int* a_i[2] = {&count, &blocklength};

@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -48,21 +48,8 @@ int MPI_Error_string(int errorcode, char *string, int *resultlen)
 
     if ( MPI_PARAM_CHECK ) {
         if ( ompi_mpi_errcode_is_invalid(errorcode)) {
-            /* If we have an error, the action that we take depends on
-               whether we're currently (after MPI_Init and before
-               MPI_Finalize) or not */
-            int32_t state = ompi_mpi_state;
-            if (state >= OMPI_MPI_STATE_INIT_COMPLETED &&
-                state < OMPI_MPI_STATE_FINALIZE_PAST_COMM_SELF_DESTRUCT) {
-               return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
-                                              FUNC_NAME);
-            } else {
-                /* We have no MPI object here so call ompi_errhandle_invoke
-                 * directly */
-                return ompi_errhandler_invoke(NULL, NULL, -1,
-                                              ompi_errcode_get_mpi_code(MPI_ERR_ARG),
-                                              FUNC_NAME);
-            }
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG,
+                                                   FUNC_NAME);
         }
     }
 

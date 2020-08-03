@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -43,7 +43,7 @@ int MPI_Keyval_free(int *keyval)
     /* Check for valid key pointer */
     if (MPI_PARAM_CHECK) {
         if (NULL == keyval) {
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_KEYVAL,
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_KEYVAL,
                                           FUNC_NAME);
         }
     }
@@ -51,5 +51,5 @@ int MPI_Keyval_free(int *keyval)
     OPAL_CR_ENTER_LIBRARY();
 
     ret = ompi_attr_free_keyval(COMM_ATTR, keyval, 0);
-    OMPI_ERRHANDLER_RETURN(ret, MPI_COMM_WORLD, MPI_ERR_OTHER, FUNC_NAME);
+    OMPI_ERRHANDLER_NOHANDLE_RETURN(ret, MPI_ERR_OTHER, FUNC_NAME);
 }

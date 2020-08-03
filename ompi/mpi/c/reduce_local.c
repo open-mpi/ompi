@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2017 The University of Tennessee and The University
+ * Copyright (c) 2004-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
@@ -60,13 +60,13 @@ int MPI_Reduce_local(const void *inbuf, void *inoutbuf, int count,
         if (MPI_OP_NULL == op || NULL == op) {
             err = MPI_ERR_OP;
         } else if (!ompi_op_is_valid(op, datatype, &msg, FUNC_NAME)) {
-            int ret = OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_OP, msg);
+            int ret = OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_OP, msg);
             free(msg);
             return ret;
         } else {
             OMPI_CHECK_DATATYPE_FOR_SEND(err, datatype, count);
         }
-        OMPI_ERRHANDLER_CHECK(err, MPI_COMM_WORLD, err, FUNC_NAME);
+        OMPI_ERRHANDLER_NOHANDLE_CHECK(err, err, FUNC_NAME);
     }
 
     /* If the count is 0, just return */
@@ -87,5 +87,5 @@ int MPI_Reduce_local(const void *inbuf, void *inoutbuf, int count,
     OBJ_RELEASE(datatype);
     OBJ_RELEASE(op);
 
-    OMPI_ERRHANDLER_RETURN(err, MPI_COMM_WORLD, err, FUNC_NAME);
+    OMPI_ERRHANDLER_NOHANDLE_RETURN(err, err, FUNC_NAME);
 }

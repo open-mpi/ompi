@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -68,14 +68,14 @@ int MPI_Info_dup(MPI_Info info, MPI_Info *newinfo) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if (NULL == info || MPI_INFO_NULL == info || NULL == newinfo ||
             ompi_info_is_freed(info)) {
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INFO,
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_INFO,
                                           FUNC_NAME);
         }
     }
 
     *newinfo = OBJ_NEW(ompi_info_t);
     if (NULL == *newinfo) {
-        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_NO_MEM,
+        return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_NO_MEM,
                                       FUNC_NAME);
     }
 
@@ -85,5 +85,5 @@ int MPI_Info_dup(MPI_Info info, MPI_Info *newinfo) {
      * Now to actually duplicate all the values
      */
     err = ompi_info_dup (info, newinfo);
-    OMPI_ERRHANDLER_RETURN(err, MPI_COMM_WORLD, err, FUNC_NAME);
+    OMPI_ERRHANDLER_NOHANDLE_RETURN(err, err, FUNC_NAME);
 }

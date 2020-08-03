@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -84,7 +84,7 @@ void ompi_type_create_struct_f(MPI_Fint *count,
 
     c_type_old_array = (MPI_Datatype *) malloc(*count * sizeof(MPI_Datatype));
     if (NULL == c_type_old_array) {
-        c_ierr = OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_NO_MEM,
+        c_ierr = OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_NO_MEM,
                                         FUNC_NAME);
         if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
         return;

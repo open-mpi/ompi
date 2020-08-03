@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -48,21 +48,21 @@ int MPI_Add_error_string(int errorcode, const char *string)
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
         if ( ompi_mpi_errcode_is_invalid(errorcode) )
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG,
                                           FUNC_NAME);
 
 	if ( ompi_mpi_errcode_is_predefined(errorcode) )
-	    return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
+	    return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG,
 					  FUNC_NAME);
 
 	if ( MPI_MAX_ERROR_STRING < (strlen(string)+1) )
-	    return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
+	    return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG,
 					  FUNC_NAME);
     }
 
     rc = ompi_mpi_errnum_add_string (errorcode, string, (int)(strlen(string)+1));
     if ( OMPI_SUCCESS != rc ) {
-        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INTERN,
+        return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_INTERN,
                                       FUNC_NAME);
     }
 

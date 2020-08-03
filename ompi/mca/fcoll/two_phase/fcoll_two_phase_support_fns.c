@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2017 The University of Tennessee and The University
+ * Copyright (c) 2004-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -171,12 +171,16 @@ int mca_fcoll_two_phase_calc_aggregator(ompio_file_t *fh,
     }
 
     if (rank_index >= num_aggregators || rank_index < 0) {
+       int err = MPI_ERR_INTERN;
        fprintf(stderr,
 	       "Error in mca_fcoll_two_phase_calc_aggregator:");
        fprintf(stderr,
 	       "rank_index(%d) >= num_aggregators(%d) fd_size=%lld off=%lld min_off=%lld striping_unit=%d\n",
 	       rank_index, num_aggregators, fd_size, off, min_off, striping_unit);
-       ompi_mpi_abort(&ompi_mpi_comm_world.comm, 1);
+       /* TODO: this error should return to the caller and invoke an error
+        * handler from the MPI API call.
+        * For now, it is fatal. */
+       ompi_mpi_errors_are_fatal_file_handler(NULL, &err, "Invalid rank in fcoll aggregator");
     }
 
 

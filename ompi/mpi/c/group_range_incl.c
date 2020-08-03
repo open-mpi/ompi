@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -51,14 +51,14 @@ int MPI_Group_range_incl(MPI_Group group, int n_triplets, int ranges[][3],
 
         if ( (MPI_GROUP_NULL == group) || (NULL == group) ||
              (NULL == new_group) ) {
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_GROUP,
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_GROUP,
                                           FUNC_NAME);
         }
 
         group_size = ompi_group_size ( group);
         elements_int_list = (int *) malloc(sizeof(int) * (group_size+1));
         if (NULL == elements_int_list) {
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_OTHER, FUNC_NAME);
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_OTHER, FUNC_NAME);
         }
         for (i = 0; i < group_size; i++) {
             elements_int_list[i] = -1;
@@ -115,9 +115,9 @@ int MPI_Group_range_incl(MPI_Group group, int n_triplets, int ranges[][3],
     OPAL_CR_ENTER_LIBRARY();
 
     err = ompi_group_range_incl ( group, n_triplets, ranges, new_group );
-    OMPI_ERRHANDLER_RETURN(err, MPI_COMM_WORLD, err, FUNC_NAME );
+    OMPI_ERRHANDLER_NOHANDLE_RETURN(err, err, FUNC_NAME );
 
 error_rank:
     free(elements_int_list);
-    return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_RANK, FUNC_NAME);
+    return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_RANK, FUNC_NAME);
 }

@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -86,7 +86,7 @@ void ompi_info_get_f(MPI_Fint *info, char *key, MPI_Fint *valuelen,
     OMPI_LOGICAL_NAME_DECL(flag);
 
     if (OMPI_SUCCESS != (ret = ompi_fortran_string_f2c(key, key_len, &c_key))) {
-        c_ierr = OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, ret, FUNC_NAME);
+        c_ierr = OMPI_ERRHANDLER_NOHANDLE_INVOKE(ret, FUNC_NAME);
         if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
         return;
     }
@@ -109,7 +109,7 @@ void ompi_info_get_f(MPI_Fint *info, char *key, MPI_Fint *valuelen,
            in ompi/mpi/fortran/base/strings.c. */
         if (*flag && OMPI_SUCCESS !=
             (ret = ompi_fortran_string_c2f(c_value, value, value_len))) {
-            c_ierr = OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, ret, FUNC_NAME);
+            c_ierr = OMPI_ERRHANDLER_NOHANDLE_INVOKE(ret, FUNC_NAME);
             if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
             free(c_key);
             return;

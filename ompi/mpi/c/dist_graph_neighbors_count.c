@@ -2,7 +2,7 @@
  * Copyright (c) 2008      The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2011-2013 The University of Tennessee and The University
+ * Copyright (c) 2011-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
@@ -49,7 +49,7 @@ int MPI_Dist_graph_neighbors_count(MPI_Comm comm, int *inneighbors,
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if (ompi_comm_invalid(comm)) {
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM,
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_COMM,
                                           FUNC_NAME);
         } else if (NULL == inneighbors || NULL == outneighbors ||
                    NULL == weighted) {

@@ -2,8 +2,9 @@
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University.
  *                         All rights reserved.
- * Copyright (c) 2004-2006 The Trustees of the University of Tennessee.
- *                         All rights reserved.
+ * Copyright (c) 2004-2020 The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
@@ -84,16 +85,20 @@ int ompi_osc_base_process_op (void *outbuf, void *inbuf, size_t inbuflen,
            MPI_DOUBLE_INT == datatype ||
            MPI_LONG_INT == datatype ||
            MPI_LONG_DOUBLE_INT == datatype) {
-           ompi_communicator_t *comm = &ompi_mpi_comm_world.comm;
-           opal_output(0, "Error: %s datatype is currently "
-                       "unsupported for MPI_MINLOC/MPI_MAXLOC "
-                       "operation\n", datatype->name);
-           opal_show_help("help-mpi-api.txt", "mpi-abort", true,
-                          comm->c_my_rank,
-                          ('\0' != comm->c_name[0]) ? comm->c_name : "<Unknown>",
-                          -1);
-
-           ompi_mpi_abort(comm, -1);
+            int err = MPI_ERR_UNSUPPORTED_DATAREP;
+            char *reason = NULL;
+            opal_asprintf(&reason,
+                    "%s datatype is currently "
+                    "unsupported for MPI_MINLOC/MPI_MAXLOC "
+                    "operation\n", datatype->name);
+            opal_show_help("help-mpi-api.txt", "MPI function not supported", true,
+                          (MPI_MINLOC==op)?"MPI_MINLOC":"MPI_MAXLOC",
+                          reason);
+            free(reason);
+            /* TODO: this error should return to the caller and invoke an error
+             * handler from the MPI API call.
+             * For now, it is fatal. */
+            ompi_mpi_errors_are_fatal_win_handler(NULL, &err, "OSC unsupported MINLOC/MAXLOC datatype");
         }
     }
 

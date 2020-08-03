@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2016 The University of Tennessee and The University
+ * Copyright (c) 2004-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
@@ -55,14 +55,14 @@ int MPI_Unpack_external (const char datarep[], const void *inbuf, MPI_Aint insiz
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if ((NULL == inbuf) || (NULL == position)) {  /* outbuf can be MPI_BOTTOM */
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, FUNC_NAME);
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG, FUNC_NAME);
         } else if (outcount < 0) {
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COUNT, FUNC_NAME);
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_COUNT, FUNC_NAME);
         }
         OMPI_CHECK_DATATYPE_FOR_RECV(rc, datatype, outcount);
-        OMPI_ERRHANDLER_CHECK(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
+        OMPI_ERRHANDLER_NOHANDLE_CHECK(rc, rc, FUNC_NAME);
         OMPI_CHECK_USER_BUFFER(rc, outbuf, datatype, outcount);
-        OMPI_ERRHANDLER_CHECK(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
+        OMPI_ERRHANDLER_NOHANDLE_CHECK(rc, rc, FUNC_NAME);
     }
 
     OPAL_CR_ENTER_LIBRARY();
@@ -72,5 +72,5 @@ int MPI_Unpack_external (const char datarep[], const void *inbuf, MPI_Aint insiz
                                        datatype);
     OPAL_CR_EXIT_LIBRARY();
 
-    OMPI_ERRHANDLER_RETURN(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
+    OMPI_ERRHANDLER_NOHANDLE_RETURN(rc, rc, FUNC_NAME);
 }
