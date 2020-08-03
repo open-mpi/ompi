@@ -21,7 +21,8 @@ Copyright (c) 2017-2018 Los Alamos National Security, LLC.  All rights
                         reserved.
 Copyright (c) 2017      Research Organization for Information Science
                         and Technology (RIST). All rights reserved.
-Copyright (c) 2019      Triad National Security, LLC. All rights
+Copyright (c) 2020      Google, LLC. All rights reserved.
+Copyright (c) 2019-2020 Triad National Security, LLC. All rights
                         reserved.
 
 $COPYRIGHT$
@@ -754,6 +755,11 @@ Network Support
      services to the upper level MPI/OpenSHMEM libraries.  MXM is only
      included in this release of Open MPI for backwards compatibility;
      the "ucx" PML should be used insead.
+
+  There is a known issue when using UCX with very old Mellanox Infiniband
+  HCAs, in particular HCAs preceding the introduction of the ConnectX
+  product line, which can result in Open MPI crashing in MPI_Finalize.
+  This issue will be addressed by UCX release 1.9.0 and newer.
 
 - The main OpenSHMEM network model is "ucx"; it interfaces directly
   with UCX.
