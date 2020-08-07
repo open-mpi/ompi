@@ -467,7 +467,6 @@ select_unlock:
     /* Populate addr table */
     ret = opal_common_ucx_wpool_update_addr(mca_osc_ucx_component.wpool, comm_size,
                                          &exchange_len_info, &get_proc_vpid, (void *)module->comm);
-    _osc_ucx_init_unlock();
     if (ret != OMPI_SUCCESS) {
         goto error;
     }
