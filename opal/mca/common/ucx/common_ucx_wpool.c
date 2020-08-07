@@ -795,7 +795,7 @@ opal_common_ucx_tlocal_fetch_spath(opal_common_ucx_wpmem_t *mem, int target)
 
     /* Obtain the endpoint */
     if (OPAL_UNLIKELY(NULL == winfo->endpoints[proc_vpid])) {
-        rc = _tlocal_ctx_connect(mem, ctx_rec, target);
+        rc = _tlocal_ctx_connect(mem, ctx_rec, proc_vpid);
         if (rc != OPAL_SUCCESS) {
             return rc;
         }
