@@ -669,7 +669,7 @@ error1:
     return NULL;
 }
 
-static int _tlocal_ctx_connect(opal_common_ucx_wpmem_t *wpmem, _ctx_record_t *ctx_rec, int target)
+static int _tlocal_ctx_connect(opal_common_ucx_wpmem_t *wpmem, _ctx_record_t *ctx_rec, unsigned int proc_vpid)
 {
     ucp_ep_params_t ep_params;
     opal_common_ucx_winfo_t *winfo = ctx_rec->winfo;
