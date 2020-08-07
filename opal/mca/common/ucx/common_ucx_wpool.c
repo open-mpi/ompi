@@ -332,6 +332,7 @@ opal_common_ucx_wpool_progress(opal_common_ucx_wpool_t *wpool)
         if (!active_workers && opal_list_get_size(&wpool->idle_workers)) {
             ucp_worker_progress(wpool->dflt_worker);
         }
+        opal_mutex_unlock(&wpool->mutex);
     }
     return completed;
 }
