@@ -333,7 +333,6 @@ opal_common_ucx_wpool_progress(opal_common_ucx_wpool_t *wpool)
             ucp_worker_progress(wpool->dflt_worker);
         }
     }
-    opal_mutex_unlock(&wpool->mutex);
     return completed;
 }
 
