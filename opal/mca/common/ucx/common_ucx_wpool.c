@@ -808,7 +808,7 @@ opal_common_ucx_tlocal_fetch_spath(opal_common_ucx_wpmem_t *mem, int target)
     /* Obtain the rkey */
     if (OPAL_UNLIKELY(NULL == mem_rec->rkeys[target])) {
         /* Create the rkey */
-        rc = _tlocal_mem_create_rkey(mem_rec, ep, target, proc_vpid);
+        rc = _tlocal_mem_create_rkey(mem_rec, ep, target);
         if (rc) {
             return rc;
         }
