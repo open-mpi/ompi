@@ -683,8 +683,6 @@ static int _tlocal_ctx_connect(opal_common_ucx_wpmem_t *wpmem, _ctx_record_t *ct
 
     opal_mutex_lock(&winfo->mutex);
     
-    proc_vpid = gctx->get_proc_vpid_func(wpmem->metadata, target);
-
     ep_params.address = (ucp_address_t *)wpool->recv_worker_addrs[proc_vpid];
     status = ucp_ep_create(winfo->worker, &ep_params, &winfo->endpoints[proc_vpid]);
     if (status != UCS_OK) {
