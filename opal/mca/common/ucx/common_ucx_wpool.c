@@ -676,7 +676,6 @@ static int _tlocal_ctx_connect(opal_common_ucx_wpmem_t *wpmem, _ctx_record_t *ct
     opal_common_ucx_ctx_t   *gctx  = ctx_rec->gctx;
     opal_common_ucx_wpool_t *wpool = gctx->wpool;
     ucs_status_t status;
-    unsigned int proc_vpid;
 
     memset(&ep_params, 0, sizeof(ucp_ep_params_t));
     ep_params.field_mask = UCP_EP_PARAM_FIELD_REMOTE_ADDRESS;
