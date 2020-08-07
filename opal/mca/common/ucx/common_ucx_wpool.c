@@ -170,15 +170,9 @@ opal_common_ucx_wpool_update_addr(opal_common_ucx_wpool_t *wpool, size_t comm_si
         curr_addr=(curr_addr+recv_worker_lens[i]);
     }
 
-    if (NULL != recv_worker_addrs) {
-        free(recv_worker_addrs);
-    }
-    if (NULL != recv_worker_displs) {
-        free(recv_worker_displs);
-    }
-    if (NULL != recv_worker_lens) {
-        free(recv_worker_lens);
-    }
+    free(recv_worker_addrs);
+    free(recv_worker_displs);
+    free(recv_worker_lens);
     return ret;
 }
 
