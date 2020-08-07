@@ -223,8 +223,6 @@ opal_common_ucx_tlocal_fetch(opal_common_ucx_wpmem_t *mem, int target,
                                 ucp_ep_h *_ep, ucp_rkey_h *_rkey,
                                 opal_common_ucx_winfo_t **_winfo)
 {
-    static unsigned long ucx_tlocal_fetch = 0;
-    ucx_tlocal_fetch++;
     _mem_record_t *mem_rec = NULL;
     int is_ready;
     int rc = OPAL_SUCCESS;
