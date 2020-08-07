@@ -757,7 +757,7 @@ static _mem_record_t *_tlocal_add_mem_rec(opal_common_ucx_wpmem_t *mem, _ctx_rec
 }
 
 static int
-_tlocal_mem_create_rkey(_mem_record_t *mem_rec, ucp_ep_h ep, int target, int proc_vpid)
+_tlocal_mem_create_rkey(_mem_record_t *mem_rec, ucp_ep_h ep, int target)
 {
     opal_common_ucx_wpmem_t *gmem = mem_rec->gmem;
     int displ = gmem->mem_displs[target];
