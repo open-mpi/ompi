@@ -170,15 +170,9 @@ opal_common_ucx_wpool_update_addr(opal_common_ucx_wpool_t *wpool, size_t comm_si
         curr_addr=(curr_addr+recv_worker_lens[i]);
     }
 
-    if (NULL != recv_worker_addrs) {
-        free(recv_worker_addrs);
-    }
-    if (NULL != recv_worker_displs) {
-        free(recv_worker_displs);
-    }
-    if (NULL != recv_worker_lens) {
-        free(recv_worker_lens);
-    }
+    free(recv_worker_addrs);
+    free(recv_worker_displs);
+    free(recv_worker_lens);
     return ret;
 }
 
@@ -696,22 +690,19 @@ error1:
     return NULL;
 }
 
-static int _tlocal_ctx_connect(opal_common_ucx_wpmem_t *wpmem, _ctx_record_t *ctx_rec, int target)
+static int _tlocal_ctx_connect(opal_common_ucx_wpmem_t *wpmem, _ctx_record_t *ctx_rec, unsigned int proc_vpid)
 {
     ucp_ep_params_t ep_params;
     opal_common_ucx_winfo_t *winfo = ctx_rec->winfo;
     opal_common_ucx_ctx_t   *gctx  = ctx_rec->gctx;
     opal_common_ucx_wpool_t *wpool = gctx->wpool;
     ucs_status_t status;
-    unsigned int proc_vpid;
 
     memset(&ep_params, 0, sizeof(ucp_ep_params_t));
     ep_params.field_mask = UCP_EP_PARAM_FIELD_REMOTE_ADDRESS;
 
     opal_mutex_lock(&winfo->mutex);
     
-    proc_vpid = gctx->get_proc_vpid_func(wpmem->metadata, target);
-
     ep_params.address = (ucp_address_t *)wpool->recv_worker_addrs[proc_vpid];
     status = ucp_ep_create(winfo->worker, &ep_params, &winfo->endpoints[proc_vpid]);
     if (status != UCS_OK) {
@@ -784,7 +775,7 @@ static _mem_record_t *_tlocal_add_mem_rec(opal_common_ucx_wpmem_t *mem, _ctx_rec
 }
 
 static int
-_tlocal_mem_create_rkey(_mem_record_t *mem_rec, ucp_ep_h ep, int target, int proc_vpid)
+_tlocal_mem_create_rkey(_mem_record_t *mem_rec, ucp_ep_h ep, int target)
 {
     opal_common_ucx_wpmem_t *gmem = mem_rec->gmem;
     int displ = gmem->mem_displs[target];
@@ -825,7 +816,7 @@ opal_common_ucx_tlocal_fetch_spath(opal_common_ucx_wpmem_t *mem, int target)
 
     /* Obtain the endpoint */
     if (OPAL_UNLIKELY(NULL == winfo->endpoints[proc_vpid])) {
-        rc = _tlocal_ctx_connect(mem, ctx_rec, target);
+        rc = _tlocal_ctx_connect(mem, ctx_rec, proc_vpid);
         if (rc != OPAL_SUCCESS) {
             return rc;
         }
@@ -838,7 +829,7 @@ opal_common_ucx_tlocal_fetch_spath(opal_common_ucx_wpmem_t *mem, int target)
     /* Obtain the rkey */
     if (OPAL_UNLIKELY(NULL == mem_rec->rkeys[target])) {
         /* Create the rkey */
-        rc = _tlocal_mem_create_rkey(mem_rec, ep, target, proc_vpid);
+        rc = _tlocal_mem_create_rkey(mem_rec, ep, target);
         if (rc) {
             return rc;
         }
