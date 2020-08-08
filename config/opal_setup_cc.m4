@@ -151,7 +151,7 @@ AC_DEFUN([OPAL_SETUP_CC],[
     AC_REQUIRE([_OPAL_PROG_CC])
     AC_REQUIRE([AM_PROG_CC_C_O])
 
-    OPAL_VAR_SCOPE_PUSH([opal_prog_cc_c11_helper__Thread_local_available opal_prog_cc_c11_helper_atomic_var_available opal_prog_cc_c11_helper__Atomic_available opal_prog_cc_c11_helper__static_assert_available opal_prog_cc_c11_helper__Generic_available opal_prog_cc__thread_available opal_prog_cc_c11_helper_atomic_fetch_xor_explicit_available])
+    OPAL_VAR_SCOPE_PUSH([opal_prog_cc_c11_helper__Thread_local_available opal_prog_cc_c11_helper_atomic_var_available opal_prog_cc_c11_helper__Atomic_available opal_prog_cc_c11_helper__static_assert_available opal_prog_cc_c11_helper__Generic_available opal_prog_cc__thread_available opal_prog_cc_c11_helper_atomic_fetch_xor_explicit_available opal_prog_cc_c11_helper_proper__Atomic_support_in_atomics])
 
     OPAL_PROG_CC_C11
 
@@ -223,6 +223,20 @@ AC_DEFUN([OPAL_SETUP_CC],[
 # undef _GNU_SOURCE
 #endif])
            AC_DEFINE([_GNU_SOURCE])])
+
+    AS_IF([test "$opal_cv_c_compiler_vendor" = "intel"],
+          [OPAL_CC_HELPER([if $CC is Intel < 20200310 (lacks proper support for atomic operations on _Atomic variables)], [opal_prog_cc_c11_helper_proper__Atomic_support_in_atomics],
+                          [],[[
+                   #ifdef __INTEL_COMPILER
+                   #if __INTEL_COMPILER_BUILD_DATE <= 20200310
+                   #error Lacks support for proper atomic operations on _Atomic variables.
+                   #endif  /* __INTEL_COMPILER_BUILD_DATE <= 20200310 */
+                   #endif  /* __INTEL_COMPILER */
+                             ]])],
+          [opal_prog_cc_c11_helper_proper__Atomic_support_in_atomics=1])
+
+    AC_DEFINE_UNQUOTED([OPAL_C_HAVE_ATOMIC_SUPPORT_FOR__ATOMIC], [$opal_prog_cc_c11_helper_proper__Atomic_support_in_atomics],
+                       [Whether C compiler supports atomic operations on _Atomic variables without warnings])
 
     # Do we want code coverage
     if test "$WANT_COVERAGE" = "1"; then
