@@ -237,7 +237,7 @@ int opal_cmd_line_make_opt3(opal_cmd_line_t *cmd, char short_name,
 
     e.ocl_description = desc;
 
-    e.ocl_otype = OPAL_CMD_LINE_TYPE_NULL;
+    e.ocl_otype = OPAL_CMD_LINE_OTYPE_NULL;
 
     return make_opt(cmd, &e);
 }
