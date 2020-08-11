@@ -33,6 +33,25 @@ OPAL_DECLSPEC opal_common_ofi_module_t opal_common_ofi = {
 
 static const char default_prov_exclude_list[] = "shm,sockets,tcp,udp,rstream";
 
+OPAL_DECLSPEC int opal_common_ofi_is_in_list(char **list, char *item)
+{
+    int i = 0;
+
+    if ((NULL == list) || (NULL == item)) {
+        return 0;
+    }
+
+    while (NULL != list[i]) {
+        if (0 == strncasecmp(item, list[i], strlen(list[i]))) {
+            return 1;
+        } else {
+            i++;
+        }
+    }
+
+    return 0;
+}
+
 OPAL_DECLSPEC int opal_common_ofi_register_mca_variables(const mca_base_component_t *component)
 {
     static int registered = 0;

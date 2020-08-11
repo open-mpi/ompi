@@ -38,6 +38,21 @@ OPAL_DECLSPEC void opal_common_ofi_mca_register(void);
 OPAL_DECLSPEC void opal_common_ofi_mca_deregister(void);
 OPAL_DECLSPEC struct fi_info* opal_common_ofi_select_ofi_provider(struct fi_info *providers, 
                                                                   char *framework_name);
+/*
+ * @param list (IN)    List of strings corresponding to lower providers.
+ * @param item (IN)    Single string corresponding to a provider.
+ *
+ * @return 0           The lower provider of the item string is not in
+ *                     list or an input was NULL
+ * @return 1           The lower provider of the item string matches
+ *                     a string in the item list.
+ *
+ * This function will take a provider name string and a list of lower
+ * provider name strings as inputs. It will return true if the lower
+ * provider in the item string matches a lower provider in the list.
+ *
+ */
+OPAL_DECLSPEC int opal_common_ofi_is_in_list(char **list, char *item);
 
 END_C_DECLS
 
