@@ -642,7 +642,7 @@ void mca_btl_sm_poll_handle_frag (mca_btl_sm_hdr_t *hdr, struct mca_btl_base_end
     const mca_btl_active_message_callback_t *reg = mca_btl_base_active_message_trigger + hdr->tag;
     mca_btl_base_segment_t segments[2] = {[0] = {.seg_addr.pval = (void *) (hdr + 1), .seg_len = hdr->len}};
     mca_btl_base_receive_descriptor_t frag = {.endpoint = endpoint, .des_segments = segments,
-                                              .des_segment_count = 1, .tag = hdr->frag,
+                                              .des_segment_count = 1, .tag = hdr->tag,
                                               .cbdata = reg->cbdata};
 
     if (hdr->flags & MCA_BTL_SM_FLAG_SINGLE_COPY) {
