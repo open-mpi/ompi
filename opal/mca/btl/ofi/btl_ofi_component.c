@@ -85,6 +85,14 @@ static int validate_info(struct fi_info *info, uint64_t required_caps,
         return OPAL_ERROR;
     }
 
+    /* ofi_rxm does not fulfill FI_DELIVERY_COMPLETE requirements. Thus we
+     * exclude it if it's detected.
+     */
+    if (strstr(info->fabric_attr->prov_name, "ofi_rxm")) {
+        BTL_VERBOSE(("ofi_rxm does not support FI_DELIVERY_COMPLETE"));
+        return OPAL_ERROR;
+    }
+
     /* we need exactly all the required bits */
     if ((info->caps & required_caps) != required_caps) {
         BTL_VERBOSE(("unsupported caps"));
