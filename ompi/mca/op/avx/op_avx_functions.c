@@ -286,11 +286,11 @@ static void OP_CONCAT(ompi_op_avx_2buff_##name##_##type,PREPEND)(const void *_in
     if( OMPI_OP_AVX_HAS_FLAGS(OMPI_OP_AVX_HAS_AVX512F_FLAG) ) {         \
         types_per_step = (512 / 8) / sizeof(float);                     \
         for (; left_over >= types_per_step; left_over -= types_per_step) { \
-            __m512 vecA =  _mm512_load_ps((__m512*)in);                 \
-            __m512 vecB =  _mm512_load_ps((__m512*)out);                \
+            __m512 vecA =  _mm512_loadu_ps((__m512*)in);                \
+            __m512 vecB =  _mm512_loadu_ps((__m512*)out);         \
             in += types_per_step;                                       \
             __m512 res = _mm512_##op##_ps(vecA, vecB);                  \
-            _mm512_store_ps((__m512*)out, res);                         \
+            _mm512_storeu_ps((__m512*)out, res);                        \
             out += types_per_step;                                      \
         }                                                               \
         if( 0 == left_over ) return;                                    \
@@ -304,11 +304,11 @@ static void OP_CONCAT(ompi_op_avx_2buff_##name##_##type,PREPEND)(const void *_in
     if( OMPI_OP_AVX_HAS_FLAGS(OMPI_OP_AVX_HAS_AVX_FLAG) ) {             \
         types_per_step = (256 / 8) / sizeof(float);                     \
         for( ; left_over >= types_per_step; left_over -= types_per_step ) { \
-            __m256 vecA =  _mm256_load_ps(in);                          \
+            __m256 vecA =  _mm256_loadu_ps(in);                          \
             in += types_per_step;                                       \
-            __m256 vecB =  _mm256_load_ps(out);                         \
+            __m256 vecB =  _mm256_loadu_ps(out);                         \
             __m256 res = _mm256_##op##_ps(vecA, vecB);                  \
-            _mm256_store_ps(out, res);                                  \
+            _mm256_storeu_ps(out, res);                                  \
             out += types_per_step;                                      \
         }                                                               \
         if( 0 == left_over ) return;                                    \
@@ -322,11 +322,11 @@ static void OP_CONCAT(ompi_op_avx_2buff_##name##_##type,PREPEND)(const void *_in
     if( OMPI_OP_AVX_HAS_FLAGS(OMPI_OP_AVX_HAS_SSE_FLAG) ) {             \
         types_per_step = (128 / 8) / sizeof(float);                     \
         for( ; left_over >= types_per_step; left_over -= types_per_step ) { \
-            __m128 vecA = _mm_load_ps(in);                              \
+            __m128 vecA = _mm_loadu_ps(in);                             \
             in += types_per_step;                                       \
-            __m128 vecB = _mm_load_ps(out);                             \
+            __m128 vecB = _mm_loadu_ps(out);                            \
             __m128 res = _mm_##op##_ps(vecA, vecB);                     \
-            _mm_store_ps(out, res);                                     \
+            _mm_storeu_ps(out, res);                                    \
             out += types_per_step;                                      \
         }                                                               \
     }
@@ -367,11 +367,11 @@ static void OP_CONCAT(ompi_op_avx_2buff_##op##_float,PREPEND)(const void *_in, v
     if( OMPI_OP_AVX_HAS_FLAGS(OMPI_OP_AVX_HAS_AVX512F_FLAG) ) {         \
         types_per_step = (512 / 8)  / sizeof(double);                   \
         for (; left_over >= types_per_step; left_over -= types_per_step) { \
-            __m512d vecA =  _mm512_load_pd(in);                         \
+            __m512d vecA =  _mm512_loadu_pd(in);                        \
             in += types_per_step;                                       \
-            __m512d vecB =  _mm512_load_pd(out);                        \
+            __m512d vecB =  _mm512_loadu_pd(out);                       \
             __m512d res = _mm512_##op##_pd(vecA, vecB);                 \
-            _mm512_store_pd((out), res);                                \
+            _mm512_storeu_pd((out), res);                               \
             out += types_per_step;                                      \
         }                                                               \
         if( 0 == left_over ) return;                                    \
@@ -385,11 +385,11 @@ static void OP_CONCAT(ompi_op_avx_2buff_##op##_float,PREPEND)(const void *_in, v
     if( OMPI_OP_AVX_HAS_FLAGS(OMPI_OP_AVX_HAS_AVX_FLAG) ) {             \
         types_per_step = (256 / 8)  / sizeof(double);                   \
         for( ; left_over >= types_per_step; left_over -= types_per_step ) { \
-            __m256d vecA =  _mm256_load_pd(in);                         \
+            __m256d vecA =  _mm256_loadu_pd(in);                        \
             in += types_per_step;                                       \
-            __m256d vecB =  _mm256_load_pd(out);                        \
+            __m256d vecB =  _mm256_loadu_pd(out);                       \
             __m256d res = _mm256_##op##_pd(vecA, vecB);                 \
-            _mm256_store_pd(out, res);                                  \
+            _mm256_storeu_pd(out, res);                                 \
             out += types_per_step;                                      \
         }                                                               \
         if( 0 == left_over ) return;                                    \
@@ -403,11 +403,11 @@ static void OP_CONCAT(ompi_op_avx_2buff_##op##_float,PREPEND)(const void *_in, v
     if( OMPI_OP_AVX_HAS_FLAGS(OMPI_OP_AVX_HAS_SSE2_FLAG) ) {            \
         types_per_step = (128 / 8)  / sizeof(double);                   \
         for( ; left_over >= types_per_step; left_over -= types_per_step ) { \
-            __m128d vecA = _mm_load_pd(in);                             \
+            __m128d vecA = _mm_loadu_pd(in);                            \
             in += types_per_step;                                       \
-            __m128d vecB = _mm_load_pd(out);                            \
+            __m128d vecB = _mm_loadu_pd(out);                           \
             __m128d res = _mm_##op##_pd(vecA, vecB);                    \
-            _mm_store_pd(out, res);                                     \
+            _mm_storeu_pd(out, res);                                    \
             out += types_per_step;                                      \
         }                                                               \
     }
@@ -813,12 +813,12 @@ static void OP_CONCAT(ompi_op_avx_3buff_##op##_##type,PREPEND)(const void *_in1,
     if( OMPI_OP_AVX_HAS_FLAGS(OMPI_OP_AVX_HAS_AVX512F_FLAG) ) {         \
         types_per_step = (512 / 8) / sizeof(float);                     \
         for (; left_over >= types_per_step; left_over -= types_per_step) { \
-            __m512 vecA =  _mm512_load_ps(in1);                         \
-            __m512 vecB =  _mm512_load_ps(in2);                         \
+            __m512 vecA =  _mm512_loadu_ps(in1);                        \
+            __m512 vecB =  _mm512_loadu_ps(in2);                        \
             in1 += types_per_step;                                      \
             in2 += types_per_step;                                      \
             __m512 res = _mm512_##op##_ps(vecA, vecB);                  \
-            _mm512_store_ps(out, res);                                  \
+            _mm512_storeu_ps(out, res);                                 \
             out += types_per_step;                                      \
         }                                                               \
         if( 0 == left_over ) return;                                    \
@@ -832,12 +832,12 @@ static void OP_CONCAT(ompi_op_avx_3buff_##op##_##type,PREPEND)(const void *_in1,
     if( OMPI_OP_AVX_HAS_FLAGS(OMPI_OP_AVX_HAS_AVX_FLAG) ) {             \
         types_per_step = (256 / 8) / sizeof(float);                     \
         for( ; left_over >= types_per_step; left_over -= types_per_step ) { \
-            __m256 vecA =  _mm256_load_ps(in1);                         \
-            __m256 vecB =  _mm256_load_ps(in2);                         \
+            __m256 vecA =  _mm256_loadu_ps(in1);                        \
+            __m256 vecB =  _mm256_loadu_ps(in2);                        \
             in1 += types_per_step;                                      \
             in2 += types_per_step;                                      \
             __m256 res = _mm256_##op##_ps(vecA, vecB);                  \
-            _mm256_store_ps(out, res);                                  \
+            _mm256_storeu_ps(out, res);                                 \
             out += types_per_step;                                      \
         }                                                               \
         if( 0 == left_over ) return;                                    \
@@ -851,12 +851,12 @@ static void OP_CONCAT(ompi_op_avx_3buff_##op##_##type,PREPEND)(const void *_in1,
     if( OMPI_OP_AVX_HAS_FLAGS(OMPI_OP_AVX_HAS_SSE_FLAG) ) {             \
         types_per_step = (128 / 8) / sizeof(float);                     \
         for( ; left_over >= types_per_step; left_over -= types_per_step ) { \
-            __m128 vecA = _mm_load_ps(in1);                             \
-            __m128 vecB = _mm_load_ps(in2);                             \
+            __m128 vecA = _mm_loadu_ps(in1);                            \
+            __m128 vecB = _mm_loadu_ps(in2);                            \
             in1 += types_per_step;                                      \
             in2 += types_per_step;                                      \
             __m128 res = _mm_##op##_ps(vecA, vecB);                     \
-            _mm_store_ps(out, res);                                     \
+            _mm_storeu_ps(out, res);                                    \
             out += types_per_step;                                      \
         }                                                               \
     }
@@ -899,12 +899,12 @@ static void OP_CONCAT(ompi_op_avx_3buff_##op##_float,PREPEND)(const void *_in1, 
     if( OMPI_OP_AVX_HAS_FLAGS(OMPI_OP_AVX_HAS_AVX512F_FLAG) ) {         \
         types_per_step = (512 / 8) / sizeof(double);                    \
         for (; left_over >= types_per_step; left_over -= types_per_step) { \
-            __m512d vecA =  _mm512_load_pd((in1));                      \
-            __m512d vecB =  _mm512_load_pd((in2));                      \
+            __m512d vecA =  _mm512_loadu_pd((in1));                     \
+            __m512d vecB =  _mm512_loadu_pd((in2));                     \
             in1 += types_per_step;                                      \
             in2 += types_per_step;                                      \
             __m512d res = _mm512_##op##_pd(vecA, vecB);                 \
-            _mm512_store_pd((out), res);                                \
+            _mm512_storeu_pd((out), res);                               \
             out += types_per_step;                                      \
         }                                                               \
         if( 0 == left_over ) return;                                    \
@@ -918,12 +918,12 @@ static void OP_CONCAT(ompi_op_avx_3buff_##op##_float,PREPEND)(const void *_in1, 
     if( OMPI_OP_AVX_HAS_FLAGS(OMPI_OP_AVX_HAS_AVX_FLAG) ) {             \
         types_per_step = (256 / 8) / sizeof(double);                    \
         for( ; left_over >= types_per_step; left_over -= types_per_step ) { \
-            __m256d vecA =  _mm256_load_pd(in1);                        \
-            __m256d vecB =  _mm256_load_pd(in2);                        \
+            __m256d vecA =  _mm256_loadu_pd(in1);                       \
+            __m256d vecB =  _mm256_loadu_pd(in2);                       \
             in1 += types_per_step;                                      \
             in2 += types_per_step;                                      \
             __m256d res = _mm256_##op##_pd(vecA, vecB);                 \
-            _mm256_store_pd(out, res);                                  \
+            _mm256_storeu_pd(out, res);                                 \
             out += types_per_step;                                      \
         }                                                               \
         if( 0 == left_over ) return;                                    \
@@ -937,12 +937,12 @@ static void OP_CONCAT(ompi_op_avx_3buff_##op##_float,PREPEND)(const void *_in1, 
     if( OMPI_OP_AVX_HAS_FLAGS(OMPI_OP_AVX_HAS_SSE2_FLAG) ) {            \
         types_per_step = (128 / 8) / sizeof(double);                    \
         for( ; left_over >= types_per_step; left_over -= types_per_step ) { \
-            __m128d vecA = _mm_load_pd(in1);                            \
-            __m128d vecB = _mm_load_pd(in2);                            \
+            __m128d vecA = _mm_loadu_pd(in1);                           \
+            __m128d vecB = _mm_loadu_pd(in2);                           \
             in1 += types_per_step;                                      \
             in2 += types_per_step;                                      \
             __m128d res = _mm_##op##_pd(vecA, vecB);                    \
-            _mm_store_pd(out, res);                                     \
+            _mm_storeu_pd(out, res);                                    \
             out += types_per_step;                                      \
         }                                                               \
     }
