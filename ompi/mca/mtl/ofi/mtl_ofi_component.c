@@ -596,6 +596,17 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
     }
 
     /**
+     * Unfortunately the attempt to implement FI_MR_SCALABLE in the GNI provider
+     * doesn't work, at least not well.  Since we're asking for the 1.5 libfabric
+     * API now, we have to tell GNI we want to use Mr. Basic.  Using FI_MR_BASIC
+     * rather than FI_MR_VIRT_ADDR | FI_MR_ALLOCATED | FI_MR_PROV_KEY to stay
+     * compatible with older libfabrics.
+     */
+    if (!strncmp(prov->fabric_attr->prov_name,"gni",3)) {
+         prov->domain_attr->mr_mode = FI_MR_BASIC;
+    }
+
+    /**
      * Create the access domain, which is the physical or virtual network or
      * hardware port/collection of ports.  Returns a domain object that can be
      * used to create endpoints.  See man fi_domain for details.
