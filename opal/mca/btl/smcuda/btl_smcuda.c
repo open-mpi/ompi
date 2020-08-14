@@ -202,10 +202,14 @@ sm_segment_attach(mca_btl_smcuda_component_t *comp_ptr)
         rc = OPAL_ERROR;
         goto out;
     }
+    /*
+     * We should not use the opal_cache_line_size here, it is too early in the initialization
+     * and it is not yet initialized. Fall back to a fixed constant instead.
+     */
     if (NULL == (comp_ptr->sm_seg =
                  mca_common_sm_module_attach(tmp_shmem_ds,
                                              sizeof(mca_common_sm_seg_header_t),
-                                             opal_cache_line_size))) {
+                                             SM_CACHE_LINE_PAD))) {
         /* don't have to detach here, because module_attach cleans up after
          * itself on failure. */
         opal_output(0, "sm_segment_attach: "
