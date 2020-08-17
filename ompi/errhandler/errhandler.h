@@ -176,12 +176,6 @@ OMPI_DECLSPEC extern ompi_predefined_errhandler_t ompi_mpi_errors_abort;
 OMPI_DECLSPEC extern ompi_predefined_errhandler_t *ompi_mpi_errors_abort_addr;
 
 /**
- * Global variable for MPI::ERRORS_THROW_EXCEPTIONS.  Will abort if
- * MPI_INIT wasn't called as MPI::INIT (_addr flavor is for F03 bindings)
- */
-OMPI_DECLSPEC extern ompi_predefined_errhandler_t ompi_mpi_errors_throw_exceptions;
-
-/**
  * Table for Fortran <-> C errhandler handle conversion
  */
 OMPI_DECLSPEC extern opal_pointer_array_t ompi_errhandler_f_to_c_table;

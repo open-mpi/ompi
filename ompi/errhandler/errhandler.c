@@ -74,9 +74,6 @@ ompi_predefined_errhandler_t *ompi_mpi_errors_abort_addr =
 ompi_predefined_errhandler_t ompi_mpi_errors_return = {{{0}}};
 ompi_predefined_errhandler_t *ompi_mpi_errors_return_addr =
     &ompi_mpi_errors_return;
-ompi_predefined_errhandler_t ompi_mpi_errors_throw_exceptions = {{{0}}};
-ompi_predefined_errhandler_t *ompi_mpi_errors_throw_exceptions_addr =
-    &ompi_mpi_errors_throw_exceptions;
 
 static opal_mutex_t errhandler_init_lock = OPAL_MUTEX_STATIC_INIT;
 ompi_errhandler_t* ompi_initial_error_handler_eh = NULL;
@@ -192,26 +189,6 @@ int ompi_errhandler_init(void)
                    "MPI_ERRORS_ABORT",
                    sizeof(ompi_mpi_errors_abort.eh.eh_name));
 
-  /* If we're going to use C++, functions will be fixed up during
-     MPI::Init.  Note that it is proper to use ERRHANDLER_LANG_C here;
-     the dispatch function is in C (although in libmpi_cxx); the
-     conversion from C handles to C++ handles happens in that dispatch
-     function -- not the errhandler_invoke.c stuff here in libmpi. */
-  OBJ_CONSTRUCT( &ompi_mpi_errors_throw_exceptions.eh, ompi_errhandler_t );
-  ompi_mpi_errors_throw_exceptions.eh.eh_mpi_object_type =
-      OMPI_ERRHANDLER_TYPE_PREDEFINED;
-  ompi_mpi_errors_throw_exceptions.eh.eh_lang = OMPI_ERRHANDLER_LANG_C;
-  ompi_mpi_errors_throw_exceptions.eh.eh_comm_fn =
-      ompi_mpi_errors_are_fatal_comm_handler;
-  ompi_mpi_errors_throw_exceptions.eh.eh_file_fn =
-      ompi_mpi_errors_are_fatal_file_handler;
-  ompi_mpi_errors_throw_exceptions.eh.eh_win_fn  =
-      ompi_mpi_errors_are_fatal_win_handler ;
-  ompi_mpi_errors_throw_exceptions.eh.eh_fort_fn = NULL;
-  opal_string_copy(ompi_mpi_errors_throw_exceptions.eh.eh_name,
-                   "MPI_ERRORS_THROW_EXCEPTIONS",
-                   sizeof(ompi_mpi_errors_throw_exceptions.eh.eh_name));
-
   /* Lets initialize the initial error handler if not already done */
   char *env = getenv("OMPI_MCA_mpi_initial_errhandler");
   if( NULL != env ) {
@@ -228,7 +205,6 @@ int ompi_errhandler_finalize(void)
 {
     OBJ_DESTRUCT(&ompi_mpi_errhandler_null.eh);
     OBJ_DESTRUCT(&ompi_mpi_errors_return.eh);
-    OBJ_DESTRUCT(&ompi_mpi_errors_throw_exceptions.eh);
     OBJ_DESTRUCT(&ompi_mpi_errors_are_fatal.eh);
 
     /* JMS Add stuff here checking for unreleased errorhandlers,
