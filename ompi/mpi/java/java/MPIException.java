@@ -43,12 +43,15 @@
  * Updated      : $Date: 1999/09/14 22:01:52 $
  * Copyright: Northeast Parallel Architectures Center
  *            at Syracuse University 1999
+ *
+ * Sidenote from August 2020: this class probably should have been
+ * called MPIError, not MPIException.
  */
 
 package mpi;
 
 /**
- * Signals that an MPI exception of some sort has occurred.
+ * Signals that an MPI error of some sort has occurred.
  * <p>The Java binding of the MPI operation {@code MPI_Error_string} is the
  * method {@code getMessage}, which is inherited from the class Exception.
  */
@@ -65,7 +68,7 @@ public final class MPIException extends Exception
 
 	/**
 	 * Creates an exception.
-	 * @param message message associated to the exception
+	 * @param message message associated to the error
 	 */
 	public MPIException(String message)
 	{
@@ -74,7 +77,7 @@ public final class MPIException extends Exception
 
 	/**
 	 * Creates an exception:
-	 * @param cause cause associated to the exception
+	 * @param cause cause associated to the error
 	 */
 	public MPIException(Throwable cause)
 	{

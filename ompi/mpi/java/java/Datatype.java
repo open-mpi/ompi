@@ -140,7 +140,7 @@ public final class Datatype implements Freeable, Cloneable
 	 * Returns the lower bound of a datatype.
 	 * <p>Java binding of the MPI operation {@code MPI_TYPE_GET_EXTENT}.
 	 * @return lower bound of datatype
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public int getLb() throws MPIException
 	{
@@ -154,7 +154,7 @@ public final class Datatype implements Freeable, Cloneable
 	 * Returns the extent of a datatype.
 	 * <p>Java binding of the MPI operation {@code MPI_TYPE_GET_EXTENT}.
 	 * @return datatype extent
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public int getExtent() throws MPIException
 	{
@@ -179,7 +179,7 @@ public final class Datatype implements Freeable, Cloneable
 	 * Returns the true lower bound of a datatype.
 	 * <p>Java binding of the MPI operation {@code MPI_TYPE_GET_TRUE_EXTENT}.
 	 * @return lower bound of datatype
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public int getTrueLb() throws MPIException
 	{
@@ -193,7 +193,7 @@ public final class Datatype implements Freeable, Cloneable
 	 * Returns the true extent of a datatype.
 	 * <p>Java binding of the MPI operation {@code MPI_TYPE_GET_TRUE_EXTENT}.
 	 * @return datatype true extent
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public int getTrueExtent() throws MPIException
 	{
@@ -219,7 +219,7 @@ public final class Datatype implements Freeable, Cloneable
 	 * elements it represents.
 	 * <p>Java binding of the MPI operation {@code MPI_TYPE_SIZE}.
 	 * @return datatype size
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public int getSize() throws MPIException
 	{
@@ -232,7 +232,7 @@ public final class Datatype implements Freeable, Cloneable
 	/**
 	 * Commits a derived datatype.
 	 * Java binding of the MPI operation {@code MPI_TYPE_COMMIT}.
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public void commit() throws MPIException
 	{
@@ -245,7 +245,7 @@ public final class Datatype implements Freeable, Cloneable
 	/**
 	 * Frees the datatype.
 	 * <p>Java binding of the MPI operation {@code MPI_TYPE_FREE}.
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	@Override public void free() throws MPIException
 	{
@@ -285,7 +285,7 @@ public final class Datatype implements Freeable, Cloneable
 	/**
 	 * Java binding of {@code MPI_TYPE_DUP}.
 	 * @return new datatype
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public Datatype dup() throws MPIException
 	{
@@ -304,7 +304,7 @@ public final class Datatype implements Freeable, Cloneable
 	 * @param count   replication count
 	 * @param oldType old datatype
 	 * @return new datatype
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public static Datatype createContiguous(int count, Datatype oldType)
 			throws MPIException
@@ -326,7 +326,7 @@ public final class Datatype implements Freeable, Cloneable
 	 * @param stride      number of elements between start of each block
 	 * @param oldType     old datatype
 	 * @return new datatype
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public static Datatype createVector(int count, int blockLength,
 			int stride, Datatype oldType)
@@ -351,7 +351,7 @@ public final class Datatype implements Freeable, Cloneable
 	 * @param stride      number of bytes between start of each block
 	 * @param oldType     old datatype
 	 * @return new datatype
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public static Datatype createHVector(int count, int blockLength,
 			int stride, Datatype oldType)
@@ -379,7 +379,7 @@ public final class Datatype implements Freeable, Cloneable
 	 * @param displacements displacement of each block in units of old type
 	 * @param oldType       old datatype
 	 * @return new datatype
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public static Datatype createIndexed(int[] blockLengths,
 			int[] displacements, Datatype oldType)
@@ -403,7 +403,7 @@ public final class Datatype implements Freeable, Cloneable
 	 * @param displacements byte displacement in buffer for each block
 	 * @param oldType       old datatype
 	 * @return new datatype
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public static Datatype createHIndexed(int[] blockLengths,
 			int[] displacements, Datatype oldType)
@@ -428,7 +428,7 @@ public final class Datatype implements Freeable, Cloneable
 	 * @param displacements byte displacement of each block
 	 * @param types         type of elements in each block
 	 * @return new datatype
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public static Datatype createStruct(int[] blockLengths,
 			int[] displacements, Datatype[] types)
@@ -455,7 +455,7 @@ public final class Datatype implements Freeable, Cloneable
 	 * @param lb      new lower bound of datatype (address integer)
 	 * @param extent  new extent of datatype (address integer)
 	 * @return new datatype
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public static Datatype createResized(Datatype oldType, int lb, int extent)
 			throws MPIException
@@ -470,7 +470,7 @@ public final class Datatype implements Freeable, Cloneable
 	/**
 	 * Sets the print name for the datatype.
 	 * @param name name for the datatype
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public void setName(String name) throws MPIException
 	{
@@ -483,7 +483,7 @@ public final class Datatype implements Freeable, Cloneable
 	/**
 	 * Return the print name from the datatype.
 	 * @return name of the datatype
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public String getName() throws MPIException
 	{
@@ -497,7 +497,7 @@ public final class Datatype implements Freeable, Cloneable
 	 * Create a new attribute key.
 	 * <p>Java binding of the MPI operation {@code MPI_TYPE_CREATE_KEYVAL}.
 	 * @return attribute key for future access
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public static int createKeyval() throws MPIException
 	{
@@ -511,7 +511,7 @@ public final class Datatype implements Freeable, Cloneable
 	 * Frees an attribute key.
 	 * <p>Java binding of the MPI operation {@code MPI_TYPE_FREE_KEYVAL}.
 	 * @param keyval attribute key
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public static void freeKeyval(int keyval) throws MPIException
 	{
@@ -526,7 +526,7 @@ public final class Datatype implements Freeable, Cloneable
 	 * <p>Java binding of the MPI operation {@code MPI_TYPE_SET_ATTR}.
 	 * @param keyval attribute key
 	 * @param value  attribute value
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public void setAttr(int keyval, Object value) throws MPIException
 	{
@@ -542,7 +542,7 @@ public final class Datatype implements Freeable, Cloneable
 	 * <p>Java binding of the MPI operation {@code MPI_TYPE_GET_ATTR}.
 	 * @param keyval attribute key
 	 * @return attribute value or null if no attribute is associated with the key.
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public Object getAttr(int keyval) throws MPIException
 	{
@@ -557,7 +557,7 @@ public final class Datatype implements Freeable, Cloneable
 	 * Deletes an attribute value associated with a key.
 	 * <p>Java binding of the MPI operation {@code MPI_TYPE_DELETE_ATTR}.
 	 * @param keyval attribute key
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public void deleteAttr(int keyval) throws MPIException
 	{

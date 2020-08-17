@@ -119,7 +119,7 @@ int ompi_mpi_finalize(void)
     if (state < OMPI_MPI_STATE_INIT_COMPLETED ||
         state >= OMPI_MPI_STATE_FINALIZE_STARTED) {
         /* Note that if we're not initialized or already finalized, we
-           cannot raise an MPI exception.  The best that we can do is
+           cannot raise an MPI error.  The best that we can do is
            write something to stderr. */
         const char *hostname;
         pid_t pid = getpid();

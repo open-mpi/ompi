@@ -46,7 +46,7 @@ Fortran only: Error status (integer).
 .ft R
 Note that use of this routine is \fIdeprecated\fP as of MPI-2. Please use MPI_Comm_create_errhandler instead.
 .sp
-Registers the user routine function for use as an MPI exception handler. Returns in errhandler a handle to the registered exception handler.
+Registers the user routine function for use as an MPI error handler. Returns in errhandler a handle to the registered error handler.
 .sp
 In the C language, the user routine should be a C function of type MPI_Handler_function, which is defined as
 .sp

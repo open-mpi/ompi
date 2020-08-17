@@ -390,8 +390,6 @@ int mpidbg_init_per_process(mqs_process *process,
                  &mpidbg_errhandler_name_map[i++]);
         fill_map(image, "MPI_ERRHANDLER_NULL", "ompi_mpi_errhandler_null",
                  &mpidbg_errhandler_name_map[i++]);
-        /* MPI::ERRORS_THROW_EXCEPTIONS exists as a symbol in OMPI; no
-           need to alias it here */
 
         /* Sentinel value */
         mpidbg_errhandler_name_map[i].map_name = NULL;

@@ -85,7 +85,7 @@ public final class Intercomm extends Comm
 	 * Duplicates this communicator.
 	 * <p>Java binding of {@code MPI_COMM_DUP}.
 	 * @return copy of this communicator
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	@Override public Intercomm dup() throws MPIException
 	{
@@ -99,7 +99,7 @@ public final class Intercomm extends Comm
 	 * <p>The new communicator can't be used before the operation completes.
 	 * The request object must be obtained calling {@link #getRequest}.
 	 * @return copy of this communicator
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	@Override public Intercomm iDup() throws MPIException
 	{
@@ -112,7 +112,7 @@ public final class Intercomm extends Comm
 	* <p>Java binding of {@code MPI_COMM_DUP_WITH_INFO}.
 	* @param info	info object to associate with the new communicator
 	* @return copy of this communicator
-	* @throws MPIException Signals that an MPI exception of some sort has occurred.
+	* @throws MPIException Signals that an MPI error of some sort has occurred.
 	*/
 	@Override public Intercomm dupWithInfo(Info info) throws MPIException
 	{
@@ -126,7 +126,7 @@ public final class Intercomm extends Comm
 	 * Size of remote group.
 	 * <p>Java binding of the MPI operation {@code MPI_COMM_REMOTE_SIZE}.
 	 * @return number of process in remote group of this communicator
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public int getRemoteSize() throws MPIException
 	{
@@ -140,7 +140,7 @@ public final class Intercomm extends Comm
 	 * Return the remote group.
 	 * <p>Java binding of the MPI operation {@code MPI_COMM_REMOTE_GROUP}.
 	 * @return remote group of this communicator
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public Group getRemoteGroup() throws MPIException
 	{
@@ -155,7 +155,7 @@ public final class Intercomm extends Comm
 	 * <p>Java binding of the MPI operation {@code MPI_INTERCOMM_MERGE}.
 	 * @param high true if the local group has higher ranks in combined group
 	 * @return new intra-communicator
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public Intracomm merge(boolean high) throws MPIException
 	{
@@ -168,7 +168,7 @@ public final class Intercomm extends Comm
 	/**
 	 * Java binding of {@code MPI_COMM_GET_PARENT}.
 	 * @return the parent communicator
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public static Intercomm getParent() throws MPIException
 	{

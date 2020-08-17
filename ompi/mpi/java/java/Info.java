@@ -31,7 +31,7 @@ public final class Info implements Freeable, Cloneable
 
 	/**
 	 * Java binding of the MPI operation {@code MPI_INFO_CREATE}.
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public Info() throws MPIException
 	{
@@ -58,7 +58,7 @@ public final class Info implements Freeable, Cloneable
 	 * Java binding of the MPI operation {@code MPI_INFO_SET}.
 	 * @param key   key
 	 * @param value value
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public void set(String key, String value) throws MPIException
 	{
@@ -73,7 +73,7 @@ public final class Info implements Freeable, Cloneable
 	 * Java binding of the MPI operation {@code MPI_INFO_GET}.
 	 * @param key key
 	 * @return value or {@code null} if key is not defined
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public String get(String key) throws MPIException
 	{
@@ -86,7 +86,7 @@ public final class Info implements Freeable, Cloneable
 	/**
 	 * Java binding of the MPI operation {@code MPI_INFO_DELETE}.
 	 * @param key key
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public void delete(String key) throws MPIException
 	{
@@ -99,7 +99,7 @@ public final class Info implements Freeable, Cloneable
 	/**
 	 * Java binding of the MPI operation {@code MPI_INFO_GET_NKEYS}.
 	 * @return number of defined keys
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public int size() throws MPIException
 	{
@@ -113,7 +113,7 @@ public final class Info implements Freeable, Cloneable
 	 * Java binding of the MPI operation {@code MPI_INFO_GET_NTHKEY}.
 	 * @param i key number
 	 * @return key
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public String getKey(int i) throws MPIException
 	{
@@ -144,7 +144,7 @@ public final class Info implements Freeable, Cloneable
 	/**
 	 * Java binding of the MPI operation {@code MPI_INFO_DUP}.
 	 * @return info object
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public Info dup() throws MPIException
 	{
@@ -156,7 +156,7 @@ public final class Info implements Freeable, Cloneable
 
 	/**
 	 * Java binding of the MPI operation {@code MPI_INFO_FREE}.
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	@Override public void free() throws MPIException
 	{

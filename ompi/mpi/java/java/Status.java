@@ -74,7 +74,7 @@ public final class Status
 	 * <p>Java binding of the MPI operation {@code MPI_GET_COUNT}.
 	 * @param datatype datatype of each item in receive buffer
 	 * @return number of received entries
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public int getCount(Datatype datatype) throws MPIException
 	{
@@ -96,7 +96,7 @@ public final class Status
 	 * Tests if the communication was cancelled.
 	 * <p>Java binding of the MPI operation {@code MPI_TEST_CANCELLED}.
 	 * @return true if the operation was succesfully cancelled, false otherwise
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public boolean isCancelled() throws MPIException
 	{
@@ -119,7 +119,7 @@ public final class Status
 	 * <p>Java binding of the MPI operation {@code MPI_GET_ELEMENTS}.
 	 * @param datatype datatype used by receive operation
 	 * @return number of received basic elements
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public int getElements(Datatype datatype) throws MPIException
 	{
@@ -142,7 +142,7 @@ public final class Status
 	 * <p>Java binding of the MPI operation {@code MPI_GET_ELEMENTS_X}.
 	 * @param datatype datatype used by receive operation
 	 * @return number of received basic elements
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public Count getElementsX(Datatype datatype) throws MPIException
 	{
@@ -165,7 +165,7 @@ public final class Status
 	 * <p>Java binding of the MPI operation {@code MPI_STATUS_SET_ELEMENTS}.
 	 * @param datatype 	datatype used by receive operation
 	 * @param count		number of elements to associate with the status
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public void setElements(Datatype datatype, int count) throws MPIException
 	{
@@ -188,7 +188,7 @@ public final class Status
 	 * <p>Java binding of the MPI operation {@code MPI_STATUS_SET_ELEMENTS_X}.
 	 * @param datatype 	datatype used by receive operation
 	 * @param count		number of elements to associate with the status
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public void setElementsX(Datatype datatype, Count count) throws MPIException
 	{
@@ -210,7 +210,7 @@ public final class Status
 	 * Sets the cancelled flag.
 	 * <p>Java binding of the MPI operation {@code MPI_STATUS_SET_CANCELLED}.
 	 * @param flag	if true indicates request was cancelled
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public void setCancelled(boolean flag) throws MPIException
 	{

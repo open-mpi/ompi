@@ -68,7 +68,7 @@ public final class Prequest extends Request
 	 * one of the {@code wait} or {@code test} operations.
 	 * On successful completion the request becomes inactive again.
 	 * It can be reactivated by a further call to {@code Start}.
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public void start() throws MPIException
 	{
@@ -81,7 +81,7 @@ public final class Prequest extends Request
 	 * Activate a list of communication requests.
 	 * <p>Java binding of the MPI operation {@code MPI_STARTALL}.
 	 * @param requests array of requests
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public static void startAll(Prequest[] requests) throws MPIException
 	{

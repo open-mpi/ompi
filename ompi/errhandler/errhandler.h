@@ -176,12 +176,6 @@ OMPI_DECLSPEC extern ompi_predefined_errhandler_t ompi_mpi_errors_abort;
 OMPI_DECLSPEC extern ompi_predefined_errhandler_t *ompi_mpi_errors_abort_addr;
 
 /**
- * Global variable for MPI::ERRORS_THROW_EXCEPTIONS.  Will abort if
- * MPI_INIT wasn't called as MPI::INIT (_addr flavor is for F03 bindings)
- */
-OMPI_DECLSPEC extern ompi_predefined_errhandler_t ompi_mpi_errors_throw_exceptions;
-
-/**
  * Table for Fortran <-> C errhandler handle conversion
  */
 OMPI_DECLSPEC extern opal_pointer_array_t ompi_errhandler_f_to_c_table;
@@ -387,7 +381,7 @@ struct ompi_request_t;
    *
    * @returns err_code The same value as the parameter
    *
-   * This function invokes the MPI exception function on the error
+   * This function invokes the MPI error function on the error
    * handler.  If the errhandler was created from fortran, the error
    * handler will be invoked with fortran linkage.  Otherwise, it is
    * invoked with C linkage.
@@ -400,7 +394,7 @@ struct ompi_request_t;
 
 
   /**
-   * Invoke an MPI exception on the first request found in the array
+   * Invoke an MPI error on the first request found in the array
    * that has a non-MPI_SUCCESS value for MPI_ERROR in its status.  It
    * is safe to invoke this function if none of the requests have an
    * outstanding error; MPI_SUCCESS will be returned.

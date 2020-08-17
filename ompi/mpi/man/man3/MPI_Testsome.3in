@@ -98,10 +98,10 @@ A server with multiple clients can use MPI_Waitsome so as not to starve any clie
 
 .SH ERRORS
 For each invocation of MPI_Testsome, if one or more requests generate
-an MPI exception, only the \fIfirst\fP MPI request that caused an
-exception will be passed to its corresponding error handler.  No other
+an MPI error, only the \fIfirst\fP MPI request that caused an
+error will be passed to its corresponding error handler.  No other
 error handlers will be invoked (even if multiple requests generated
-exceptions).  However, \fIall\fP requests that generate an exception
+errors).  However, \fIall\fP requests that generate an error
 will have a relevant error code set in the corresponding
 status.MPI_ERROR field (unless MPI_STATUSES_IGNORE was used).
 .sp

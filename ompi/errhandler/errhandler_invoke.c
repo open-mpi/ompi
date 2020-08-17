@@ -141,7 +141,7 @@ int ompi_errhandler_request_invoke(int count,
     ompi_mpi_object_t mpi_object;
 
     /* Find the *first* request that has an error -- that's the one
-       that we'll invoke the exception on.  In an error condition, the
+       that we'll invoke the error on.  In an error condition, the
        request will not have been reset back to MPI_REQUEST_NULL, so
        there's no need to cache values from before we call
        ompi_request_test(). */
@@ -162,18 +162,18 @@ int ompi_errhandler_request_invoke(int count,
 
     /* Since errors on requests cause them to not be freed (until we
        can examine them here), go through and free all requests with
-       errors.  We only invoke the exception on the *first* request
+       errors.  We only invoke the error on the *first* request
        that had an error. */
     for (; i < count; ++i) {
         if (MPI_REQUEST_NULL != requests[i] &&
             MPI_SUCCESS != requests[i]->req_status.MPI_ERROR) {
             /* Ignore the error -- what are we going to do?  We're
-               already going to invoke an exception */
+               already going to invoke an error */
             ompi_request_free(&(requests[i]));
         }
     }
 
-    /* Invoke the exception */
+    /* Invoke the error */
     switch (type) {
     case OMPI_REQUEST_PML:
     case OMPI_REQUEST_COLL:

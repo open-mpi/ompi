@@ -66,7 +66,7 @@ public abstract class Struct
 	/**
 	 * Returns the extent of the struct data type.
 	 * @return Extent of the struct data type.
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final int getExtent() throws MPIException
 	{
@@ -77,7 +77,7 @@ public abstract class Struct
 	/**
 	 * Returns the data type of the struct.
 	 * @return The data type of the struct.
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final Datatype getType() throws MPIException
 	{
@@ -105,7 +105,7 @@ public abstract class Struct
 	 * Gets a Data object in order to access to the buffer.
 	 * @param buffer the Data object will read/write on this buffer.
 	 * @return Data object
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final <T extends Data> T getData(ByteBuffer buffer) throws MPIException
 	{
@@ -120,7 +120,7 @@ public abstract class Struct
 	 * @param buffer The Data object will read/write on this buffer.
 	 * @param index  Index of the struct in the buffer.
 	 * @return Data object.
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final <T extends Data> T getData(ByteBuffer buffer, int index)
 			throws MPIException
@@ -134,7 +134,7 @@ public abstract class Struct
 	 * Gets a Data object in order to access to the byte array.
 	 * @param array The Data object will read/write on this byte array.
 	 * @return Data object.
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final <T extends Data> T getData(byte[] array) throws MPIException
 	{
@@ -150,7 +150,7 @@ public abstract class Struct
 	 * @param array The Data object will read/write on this byte array.
 	 * @param index Index of the struct in the array.
 	 * @return Data object.
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final <T extends Data> T getData(byte[] array, int index)
 			throws MPIException
@@ -329,7 +329,7 @@ public abstract class Struct
 	 * Adds a struct field to this struct.
 	 * @param struct Type of the field.
 	 * @return Offset of the new field.
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final int addStruct(Struct struct) throws MPIException
 	{
@@ -341,7 +341,7 @@ public abstract class Struct
 	 * @param struct Type of the array.
 	 * @param length Length of the array.
 	 * @return Offset of the new field.
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final int addStruct(Struct struct, int length) throws MPIException
 	{
@@ -353,7 +353,7 @@ public abstract class Struct
 	 * Adds a field of the specified data type.
 	 * @param type Data type.
 	 * @return Offset of the new field.
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final int addData(Datatype type) throws MPIException
 	{
@@ -365,7 +365,7 @@ public abstract class Struct
 	 * @param type Data type.
 	 * @param length Length of the array.
 	 * @return Offset of the new field.
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final int addData(Datatype type, int length) throws MPIException
 	{
@@ -784,7 +784,7 @@ public abstract class Struct
 		 * @param field Offset of the buffer array.
 		 * @param index Index of the buffer in the array.
 		 * @return Buffer object.
-		 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+		 * @throws MPIException Signals that an MPI error of some sort has occurred.
 		 */
 		protected final ByteBuffer getBuffer(Datatype type, int field, int index)
 				throws MPIException

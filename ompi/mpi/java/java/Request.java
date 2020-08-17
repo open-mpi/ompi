@@ -107,7 +107,7 @@ public class Request implements Freeable
 	/**
 	 * Mark a pending nonblocking communication for cancellation.
 	 * Java binding of the MPI operation {@code MPI_CANCEL}.
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final void cancel() throws MPIException
 	{
@@ -157,7 +157,7 @@ public class Request implements Freeable
 	 * <p>Java binding of the MPI operation {@code MPI_WAIT}.
 	 * <p>After the call returns, the request object becomes inactive.
 	 * @return status object
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final Status waitStatus() throws MPIException
 	{
@@ -173,7 +173,7 @@ public class Request implements Freeable
 	 * Blocks until the operation identified by the request is complete.
 	 * <p>Java binding of the MPI operation {@code MPI_WAIT}.
 	 * <p>After the call returns, the request object becomes inactive.
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final void waitFor() throws MPIException
 	{
@@ -190,7 +190,7 @@ public class Request implements Freeable
 	 * <p>After the call, if the operation is complete (ie, if the return
 	 * value is non-null), the request object becomes inactive.
 	 * @return status object
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final Status testStatus() throws MPIException
 	{
@@ -207,7 +207,7 @@ public class Request implements Freeable
 	 * <p>After the call, if the operation is complete (ie, if the return
 	 * value is non-null), the request object remains active.
 	 * @return status object
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final Status getStatus() throws MPIException
 	{
@@ -224,7 +224,7 @@ public class Request implements Freeable
 	 * <p>After the call, if the operation is complete (ie, if the return
 	 * value is true), the request object becomes inactive.
 	 * @return true if the operation identified by the request, false otherwise
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final boolean test() throws MPIException
 	{
@@ -244,7 +244,7 @@ public class Request implements Freeable
 	 * of array of {@code requests} becomes inactive.
 	 * @param requests array of requests
 	 * @return status object
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public static Status waitAnyStatus(Request[] requests) throws MPIException
 	{
@@ -268,7 +268,7 @@ public class Request implements Freeable
 	 * @return The index in array of {@code requests} for the request that
 	 * completed. If all of the requests are MPI_REQUEST_NULL, then index
 	 * is returned as {@code MPI.UNDEFINED}.
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public static int waitAny(Request[] requests) throws MPIException
 	{
@@ -291,7 +291,7 @@ public class Request implements Freeable
 	 * If no request completed, {@code testAnyStatus} returns {@code null}.
 	 * @param requests array of requests
 	 * @return status object if one request completed, {@code null} otherwise.
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public static Status testAnyStatus(Request[] requests) throws MPIException
 	{
@@ -312,7 +312,7 @@ public class Request implements Freeable
 	 * @param requests array of requests
 	 * @return index of operation that completed, or {@code MPI.UNDEFINED}
 	 * if none completed.
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public static int testAny(Request[] requests) throws MPIException
 	{
@@ -334,7 +334,7 @@ public class Request implements Freeable
 	 * elements of the status array will contain null status references.
 	 * @param requests array of requests
 	 * @return array of statuses
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public static Status[] waitAllStatus(Request[] requests) throws MPIException
 	{
@@ -353,7 +353,7 @@ public class Request implements Freeable
 	 * requests in the array have completed.
 	 * <p>Java binding of the MPI operation {@code MPI_WAITALL}.
 	 * @param requests array of requests
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public static void waitAll(Request[] requests) throws MPIException
 	{
@@ -374,7 +374,7 @@ public class Request implements Freeable
 	 * @param requests array of requests
 	 * @return array of statuses if all operations have completed,
 	 *         {@code null} otherwise.
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public static Status[] testAllStatus(Request[] requests) throws MPIException
 	{
@@ -395,7 +395,7 @@ public class Request implements Freeable
 	 * @param requests array of requests
 	 * @return {@code true} if all operations have completed,
 	 *         {@code false} otherwise.
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public static boolean testAll(Request[] requests) throws MPIException
 	{
@@ -420,7 +420,7 @@ public class Request implements Freeable
 	 * @param requests array of requests
 	 * @return array of statuses or {@code null} if the number of operations
 	 *         completed is {@code MPI_UNDEFINED}.
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public static Status[] waitSomeStatus(Request[] requests) throws MPIException
 	{
@@ -444,7 +444,7 @@ public class Request implements Freeable
 	 * @param requests array of requests
 	 * @return array of indexes of {@code requests} that completed or {@code null}
 	 *         if the number of operations completed is {@code MPI_UNDEFINED}.
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public static int[] waitSome(Request[] requests) throws MPIException
 	{
@@ -464,7 +464,7 @@ public class Request implements Freeable
 	 * length zero, otherwise the return value are as for {@code waitSome}.
 	 * @param requests array of requests
 	 * @return array of statuses
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public static Status[] testSomeStatus(Request[] requests) throws MPIException
 	{
@@ -485,7 +485,7 @@ public class Request implements Freeable
 	 * length zero, otherwise the return value are as for {@code waitSome}.
 	 * @param requests array of requests
 	 * @return array of indexes of {@code requests} that completed.
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public static int[] testSome(Request[] requests) throws MPIException
 	{
