@@ -53,7 +53,7 @@ static int init_query_2_0_0(const mca_base_component_t *ls,
  * and destroy the opened list.
  *
  * It is *not* an error if there are no io components available.
- * Appropriate run-time MPI exceptions will be invoked during
+ * Appropriate run-time MPI errors will be invoked during
  * MPI_FILE_OPEN and MPI_FILE_DELETE.
  */
 int mca_io_base_find_available(bool enable_progress_threads,

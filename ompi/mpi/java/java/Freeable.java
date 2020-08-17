@@ -52,7 +52,7 @@ public interface Freeable
 {
 	/**
 	 * Frees a freeable object.
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	void free() throws MPIException;
 }

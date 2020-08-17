@@ -128,7 +128,7 @@ public class Comm implements Freeable, Cloneable
 	 * Duplicates this communicator.
 	 * <p>Java binding of {@code MPI_COMM_DUP}.
 	 * @return copy of this communicator
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public Comm dup() throws MPIException
 	{
@@ -144,7 +144,7 @@ public class Comm implements Freeable, Cloneable
 	 * <p>The new communicator can't be used before the operation completes.
 	 * The request object must be obtained calling {@link #getRequest}.
 	 * @return copy of this communicator
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public Comm iDup() throws MPIException
 	{
@@ -159,7 +159,7 @@ public class Comm implements Freeable, Cloneable
 	 * <p>Java binding of {@code MPI_COMM_DUP_WITH_INFO}.
 	 * @param info	info object to associate with the new communicator
 	 * @return copy of this communicator
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public Comm dupWithInfo(Info info) throws MPIException
 	{
@@ -184,7 +184,7 @@ public class Comm implements Freeable, Cloneable
 	 * Size of group of this communicator.
 	 * <p>Java binding of the MPI operation {@code MPI_COMM_SIZE}.
 	 * @return number of processors in the group of this communicator
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final int getSize() throws MPIException
 	{
@@ -198,7 +198,7 @@ public class Comm implements Freeable, Cloneable
 	 * Rank of this process in group of this communicator.
 	 * <p>Java binding of the MPI operation {@code MPI_COMM_RANK}.
 	 * @return rank of the calling process in the group of this communicator
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final int getRank() throws MPIException
 	{
@@ -221,7 +221,7 @@ public class Comm implements Freeable, Cloneable
 	 * {@code MPI.SIMILAR} results if the underlying groups are similar
 	 * but the communicators differ by context.<br>
 	 * {@code MPI.UNEQUAL} results otherwise.
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public static int compare(Comm comm1, Comm comm2) throws MPIException
 	{
@@ -233,7 +233,7 @@ public class Comm implements Freeable, Cloneable
 
 	/**
 	 * Java binding of the MPI operation {@code MPI_COMM_FREE}.
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	@Override final public void free() throws MPIException
 	{
@@ -256,7 +256,7 @@ public class Comm implements Freeable, Cloneable
 	/**
 	 * Java binding of {@code MPI_COMM_SET_INFO}.
 	 * @param info info object
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final void setInfo(Info info) throws MPIException
 	{
@@ -269,7 +269,7 @@ public class Comm implements Freeable, Cloneable
 	/**
 	 * Java binding of {@code MPI_COMM_GET_INFO}.
 	 * @return new info object
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final Info getInfo() throws MPIException
 	{
@@ -281,7 +281,7 @@ public class Comm implements Freeable, Cloneable
 
 	/**
 	 * Java binding of the MPI operation {@code MPI_COMM_DISCONNECT}.
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final void disconnect() throws MPIException
 	{
@@ -295,7 +295,7 @@ public class Comm implements Freeable, Cloneable
 	 * Return group associated with a communicator.
 	 * <p>Java binding of the MPI operation {@code MPI_COMM_GROUP}.
 	 * @return group corresponding to this communicator group
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final Group getGroup() throws MPIException
 	{
@@ -312,7 +312,7 @@ public class Comm implements Freeable, Cloneable
 	 * <p>Java binding of the MPI operation {@code MPI_COMM_TEST_INTER}.
 	 * @return {@code true} if this is an inter-communicator,
 	 *         {@code false} otherwise
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final boolean isInter() throws MPIException
 	{
@@ -335,7 +335,7 @@ public class Comm implements Freeable, Cloneable
 	 * @param remoteLeader rank of remote group leader in this communicator
 	 * @param tag          "safe" tag
 	 * @return new inter-communicator
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final Intercomm createIntercomm(Comm localComm, int localLeader,
 			int remoteLeader, int tag)
@@ -361,7 +361,7 @@ public class Comm implements Freeable, Cloneable
 	 * @param type  datatype of each item in send buffer
 	 * @param dest  rank of destination
 	 * @param tag   message tag
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final void send(Object buf, int count, Datatype type, int dest, int tag)
 			throws MPIException
@@ -392,7 +392,7 @@ public class Comm implements Freeable, Cloneable
 	 * @param source rank of source
 	 * @param tag    message tag
 	 * @return status object
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final Status recv(Object buf, int count,
 			Datatype type, int source, int tag)
@@ -437,7 +437,7 @@ public class Comm implements Freeable, Cloneable
 	 * @param source    rank of source
 	 * @param recvtag   receive tag
 	 * @return status object
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 * @see mpi.Comm#send(Object, int, Datatype, int, int)
 	 * @see mpi.Comm#recv(Object, int, Datatype, int, int)
 	 */
@@ -495,7 +495,7 @@ public class Comm implements Freeable, Cloneable
 	 * @param source  rank of source
 	 * @param recvtag receive tag
 	 * @return status object
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 * @see mpi.Comm#send(Object, int, Datatype, int, int)
 	 * @see mpi.Comm#recv(Object, int, Datatype, int, int)
 	 */
@@ -537,7 +537,7 @@ public class Comm implements Freeable, Cloneable
 	 * @param type  datatype of each item in send buffer
 	 * @param dest  rank of destination
 	 * @param tag   message tag
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 * @see mpi.Comm#send(Object, int, Datatype, int, int)
 	 */
 	public final void bSend(Object buf, int count, Datatype type, int dest, int tag)
@@ -568,7 +568,7 @@ public class Comm implements Freeable, Cloneable
 	 * @param type  datatype of each item in send buffer
 	 * @param dest  rank of destination
 	 * @param tag   message tag
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 * @see mpi.Comm#send(Object, int, Datatype, int, int)
 	 */
 	public final void sSend(Object buf, int count, Datatype type, int dest, int tag)
@@ -599,7 +599,7 @@ public class Comm implements Freeable, Cloneable
 	 * @param type  datatype of each item in send buffer
 	 * @param dest  rank of destination
 	 * @param tag   message tag
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 * @see mpi.Comm#send(Object, int, Datatype, int, int)
 	 */
 	public final void rSend(Object buf, int count, Datatype type, int dest, int tag)
@@ -633,7 +633,7 @@ public class Comm implements Freeable, Cloneable
 	 * @param dest  rank of destination
 	 * @param tag   message tag
 	 * @return communication request
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 * @see mpi.Comm#send(Object, int, Datatype, int, int)
 	 */
 	public final Request iSend(Buffer buf, int count,
@@ -660,7 +660,7 @@ public class Comm implements Freeable, Cloneable
 	 * @param dest  rank of destination
 	 * @param tag   message tag
 	 * @return communication request
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 * @see mpi.Comm#send(Object, int, Datatype, int, int)
 	 */
 	public final Request ibSend(Buffer buf, int count,
@@ -687,7 +687,7 @@ public class Comm implements Freeable, Cloneable
 	 * @param dest  rank of destination
 	 * @param tag   message tag
 	 * @return communication request
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 * @see mpi.Comm#send(Object, int, Datatype, int, int)
 	 */
 	public final Request isSend(Buffer buf, int count,
@@ -714,7 +714,7 @@ public class Comm implements Freeable, Cloneable
 	 * @param dest  rank of destination
 	 * @param tag   message tag
 	 * @return communication request
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 * @see mpi.Comm#send(Object, int, Datatype, int, int)
 	 */
 	public final Request irSend(Buffer buf, int count,
@@ -741,7 +741,7 @@ public class Comm implements Freeable, Cloneable
 	 * @param source rank of source
 	 * @param tag    message tag
 	 * @return communication request
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 * @see mpi.Comm#recv(Object, int, Datatype, int, int)
 	 */
 	public final Request iRecv(Buffer buf, int count,
@@ -771,7 +771,7 @@ public class Comm implements Freeable, Cloneable
 	 * @param dest  rank of destination
 	 * @param tag   message tag
 	 * @return persistent communication request
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 * @see mpi.Comm#send(Object, int, Datatype, int, int)
 	 */
 	public final Prequest sendInit(Buffer buf, int count,
@@ -798,7 +798,7 @@ public class Comm implements Freeable, Cloneable
 	 * @param dest  rank of destination
 	 * @param tag   message tag
 	 * @return persistent communication request
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 * @see mpi.Comm#send(Object, int, Datatype, int, int)
 	 */
 	public final Prequest bSendInit(Buffer buf, int count,
@@ -825,7 +825,7 @@ public class Comm implements Freeable, Cloneable
 	 * @param dest  rank of destination
 	 * @param tag   message tag
 	 * @return persistent communication request
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 * @see mpi.Comm#send(Object, int, Datatype, int, int)
 	 */
 	public final Prequest sSendInit(Buffer buf, int count,
@@ -852,7 +852,7 @@ public class Comm implements Freeable, Cloneable
 	 * @param dest  rank of destination
 	 * @param tag   message tag
 	 * @return persistent communication request
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 * @see mpi.Comm#send(Object, int, Datatype, int, int)
 	 */
 	public final Prequest rSendInit(Buffer buf, int count,
@@ -879,7 +879,7 @@ public class Comm implements Freeable, Cloneable
 	 * @param source rank of source
 	 * @param tag    message tag
 	 * @return communication request
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 * @see mpi.Comm#recv(Object, int, Datatype, int, int)
 	 */
 	public final Prequest recvInit(Buffer buf, int count,
@@ -913,7 +913,7 @@ public class Comm implements Freeable, Cloneable
 	 * @param outbuf   output buffer
 	 * @param position initial position in output buffer
 	 * @return final position in output buffer
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final int pack(Object inbuf, int incount, Datatype type,
 			byte[] outbuf, int position)
@@ -951,7 +951,7 @@ public class Comm implements Freeable, Cloneable
 	 * @param outcount number of items in output buffer
 	 * @param type     datatype of each item in output buffer
 	 * @return final position in input buffer
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final int unpack(byte[] inbuf, int position,
 			Object outbuf, int outcount, Datatype type)
@@ -982,7 +982,7 @@ public class Comm implements Freeable, Cloneable
 	 * @param incount number of items in input buffer
 	 * @param type    datatype of each item in input buffer
 	 * @return upper bound on size of packed message
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final int packSize(int incount, Datatype type) throws MPIException
 	{
@@ -1004,7 +1004,7 @@ public class Comm implements Freeable, Cloneable
 	 * @param tag    message tag
 	 * @return status object if such a message is currently available,
 	 *         {@code null} otherwise.
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final Status iProbe(int source, int tag) throws MPIException
 	{
@@ -1023,7 +1023,7 @@ public class Comm implements Freeable, Cloneable
 	 * @param source rank of source
 	 * @param tag    message tag
 	 * @return status object
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final Status probe(int source, int tag) throws MPIException
 	{
@@ -1042,7 +1042,7 @@ public class Comm implements Freeable, Cloneable
 	 * Create a new attribute key.
 	 * <p>Java binding of the MPI operation {@code MPI_COMM_CREATE_KEYVAL}.
 	 * @return attribute key for future access
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public static int createKeyval() throws MPIException
 	{
@@ -1056,7 +1056,7 @@ public class Comm implements Freeable, Cloneable
 	 * Frees an attribute key for communicators.
 	 * <p>Java binding of the MPI operation {@code MPI_COMM_FREE_KEYVAL}.
 	 * @param keyval attribute key
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public static void freeKeyval(int keyval) throws MPIException
 	{
@@ -1071,7 +1071,7 @@ public class Comm implements Freeable, Cloneable
 	 * <p>Java binding of the MPI operation {@code MPI_COMM_SET_ATTR}.
 	 * @param keyval attribute key
 	 * @param value  attribute value
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final void setAttr(int keyval, Object value) throws MPIException
 	{
@@ -1087,7 +1087,7 @@ public class Comm implements Freeable, Cloneable
 	 * <p>Java binding of the MPI operation {@code MPI_COMM_GET_ATTR}.
 	 * @param keyval attribute key
 	 * @return attribute value or null if no attribute is associated with the key.
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final Object getAttr(int keyval) throws MPIException
 	{
@@ -1122,7 +1122,7 @@ public class Comm implements Freeable, Cloneable
 	 * Deletes an attribute value associated with a key on a communicator.
 	 * <p>Java binding of the MPI operation {@code MPI_COMM_DELETE_ATTR}.
 	 * @param keyval attribute key
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final void deleteAttr(int keyval) throws MPIException
 	{
@@ -1140,7 +1140,7 @@ public class Comm implements Freeable, Cloneable
 	 * <p>The return value will be one of {@code MPI.GRAPH}, {@code MPI.CART},
 	 * {@code MPI.DIST_GRAPH} or {@code MPI.UNDEFINED}.
 	 * @return topology type of communicator
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final int getTopology() throws MPIException
 	{
@@ -1156,7 +1156,7 @@ public class Comm implements Freeable, Cloneable
 	 * Abort MPI.
 	 * <p>Java binding of the MPI operation {@code MPI_ABORT}.
 	 * @param errorcode error code for Unix or POSIX environments
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final void abort(int errorcode) throws MPIException
 	{
@@ -1172,7 +1172,7 @@ public class Comm implements Freeable, Cloneable
 	 * Associates a new error handler with communicator at the calling process.
 	 * <p>Java binding of the MPI operation {@code MPI_COMM_SET_ERRHANDLER}.
 	 * @param errhandler new MPI error handler for communicator
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final void setErrhandler(Errhandler errhandler) throws MPIException
 	{
@@ -1187,7 +1187,7 @@ public class Comm implements Freeable, Cloneable
 	 * Returns the error handler currently associated with the communicator.
 	 * <p>Java binding of the MPI operation {@code MPI_COMM_GET_ERRHANDLER}.
 	 * @return MPI error handler currently associated with communicator
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final Errhandler getErrhandler() throws MPIException
 	{
@@ -1201,7 +1201,7 @@ public class Comm implements Freeable, Cloneable
 	 * Calls the error handler currently associated with the communicator.
 	 * <p>Java binding of the MPI operation {@code MPI_COMM_CALL_ERRHANDLER}.
 	 * @param errorCode error code
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public void callErrhandler(int errorCode) throws MPIException
 	{
@@ -1217,7 +1217,7 @@ public class Comm implements Freeable, Cloneable
 	 * A call to {@code barrier} blocks the caller until all process
 	 * in the group have called it.
 	 * <p>Java binding of the MPI operation {@code MPI_BARRIER}.
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final void barrier() throws MPIException
 	{
@@ -1231,7 +1231,7 @@ public class Comm implements Freeable, Cloneable
 	 * Nonblocking barrier synchronization.
 	 * <p>Java binding of the MPI operation {@code MPI_IBARRIER}.
 	 * @return communication request
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final Request iBarrier() throws MPIException
 	{
@@ -1249,7 +1249,7 @@ public class Comm implements Freeable, Cloneable
 	 * @param count number of items in buffer
 	 * @param type  datatype of each item in buffer
 	 * @param root  rank of broadcast root
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final void bcast(Object buf, int count, Datatype type, int root)
 			throws MPIException
@@ -1280,7 +1280,7 @@ public class Comm implements Freeable, Cloneable
 	 * @param type  datatype of each item in buffer
 	 * @param root  rank of broadcast root
 	 * @return communication request
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final Request iBcast(Buffer buf, int count, Datatype type, int root)
 			throws MPIException
@@ -1306,7 +1306,7 @@ public class Comm implements Freeable, Cloneable
 	 * @param recvcount number of items to receive
 	 * @param recvtype  datatype of each item in receive buffer
 	 * @param root      rank of receiving process
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final void gather(
 			Object sendbuf, int sendcount, Datatype sendtype,
@@ -1349,7 +1349,7 @@ public class Comm implements Freeable, Cloneable
 	 * @param count number of items to send/receive
 	 * @param type  datatype of each item in buffer
 	 * @param root  rank of receiving process
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final void gather(Object buf, int count, Datatype type, int root)
 			throws MPIException
@@ -1386,7 +1386,7 @@ public class Comm implements Freeable, Cloneable
 	 * @param recvtype  datatype of each item in receive buffer
 	 * @param root      rank of receiving process
 	 * @return communication request
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final Request iGather(
 			Buffer sendbuf, int sendcount, Datatype sendtype,
@@ -1413,7 +1413,7 @@ public class Comm implements Freeable, Cloneable
 	 * @param type  datatype of each item in buffer
 	 * @param root  rank of receiving process
 	 * @return communication request
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final Request iGather(Buffer buf, int count, Datatype type, int root)
 			throws MPIException
@@ -1443,7 +1443,7 @@ public class Comm implements Freeable, Cloneable
 	 * @param displs    displacements at which to place incoming data
 	 * @param recvtype  datatype of each item in receive buffer
 	 * @param root      rank of receiving process
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final void gatherv(Object sendbuf, int sendcount, Datatype sendtype,
 			Object recvbuf, int[] recvcount, int[] displs,
@@ -1487,7 +1487,7 @@ public class Comm implements Freeable, Cloneable
 	 * @param displs    displacements at which to place incoming data
 	 * @param recvtype  datatype of each item in receive buffer
 	 * @param root      rank of receiving process
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final void gatherv(Object recvbuf, int[] recvcount, int[] displs,
 			Datatype recvtype, int root)
@@ -1517,7 +1517,7 @@ public class Comm implements Freeable, Cloneable
 	 * @param sendcount number of items to send
 	 * @param sendtype  datatype of each item in send buffer
 	 * @param root      rank of receiving process
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final void gatherv(Object sendbuf, int sendcount,
 			Datatype sendtype, int root)
@@ -1558,7 +1558,7 @@ public class Comm implements Freeable, Cloneable
 	 * @param recvtype  datatype of each item in receive buffer
 	 * @param root      rank of receiving process
 	 * @return communication request
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final Request iGatherv(
 			Buffer sendbuf, int sendcount, Datatype sendtype, Buffer recvbuf,
@@ -1586,7 +1586,7 @@ public class Comm implements Freeable, Cloneable
 	 * @param recvtype  datatype of each item in receive buffer
 	 * @param root      rank of receiving process
 	 * @return communication request
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final Request iGatherv(Buffer recvbuf, int[] recvcount, int[] displs,
 			Datatype recvtype, int root)
@@ -1611,7 +1611,7 @@ public class Comm implements Freeable, Cloneable
 	 * @param sendtype  datatype of each item in send buffer
 	 * @param root      rank of receiving process
 	 * @return communication request
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final Request iGatherv(Buffer sendbuf, int sendcount,
 			Datatype sendtype, int root)
@@ -1641,7 +1641,7 @@ public class Comm implements Freeable, Cloneable
 	 * @param recvcount number of items to receive
 	 * @param recvtype  datatype of each item in receive buffer
 	 * @param root      rank of sending process
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final void scatter(
 			Object sendbuf, int sendcount, Datatype sendtype,
@@ -1684,7 +1684,7 @@ public class Comm implements Freeable, Cloneable
 	 * @param count number of items to send/receive
 	 * @param type  datatype of each item in buffer
 	 * @param root  rank of sending process
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final void scatter(Object buf, int count, Datatype type, int root)
 			throws MPIException
@@ -1720,7 +1720,7 @@ public class Comm implements Freeable, Cloneable
 	 * @param recvtype  datatype of each item in receive buffer
 	 * @param root      rank of sending process
 	 * @return communication request
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final Request iScatter(
 			Buffer sendbuf, int sendcount, Datatype sendtype,
@@ -1747,7 +1747,7 @@ public class Comm implements Freeable, Cloneable
 	 * @param type  datatype of each item in buffer
 	 * @param root  rank of sending process
 	 * @return communication request
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final Request iScatter(Buffer buf, int count, Datatype type, int root)
 			throws MPIException
@@ -1776,7 +1776,7 @@ public class Comm implements Freeable, Cloneable
 	 * @param recvcount number of items to receive
 	 * @param recvtype  datatype of each item in receive buffer
 	 * @param root      rank of sending process
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final void scatterv(
 			Object sendbuf, int[] sendcount, int[] displs, Datatype sendtype,
@@ -1819,7 +1819,7 @@ public class Comm implements Freeable, Cloneable
 	 * @param displs    displacements from which to take outgoing data
 	 * @param sendtype  datatype of each item in send buffer
 	 * @param root      rank of sending process
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final void scatterv(Object sendbuf, int[] sendcount, int[] displs,
 			Datatype sendtype, int root)
@@ -1849,7 +1849,7 @@ public class Comm implements Freeable, Cloneable
 	 * @param recvcount number of items to receive
 	 * @param recvtype  datatype of each item in receive buffer
 	 * @param root      rank of sending process
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final void scatterv(Object recvbuf, int recvcount,
 			Datatype recvtype, int root)
@@ -1889,7 +1889,7 @@ public class Comm implements Freeable, Cloneable
 	 * @param recvtype  datatype of each item in receive buffer
 	 * @param root      rank of sending process
 	 * @return communication request
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final Request iScatterv(
 			Buffer sendbuf, int[] sendcount, int[] displs,  Datatype sendtype,
@@ -1917,7 +1917,7 @@ public class Comm implements Freeable, Cloneable
 	 * @param sendtype  datatype of each item in send buffer
 	 * @param root      rank of sending process
 	 * @return communication request
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final Request iScatterv(Buffer sendbuf, int[] sendcount, int[] displs,
 			Datatype sendtype, int root)
@@ -1941,7 +1941,7 @@ public class Comm implements Freeable, Cloneable
 	 * @param recvtype  datatype of each item in receive buffer
 	 * @param root      rank of sending process
 	 * @return communication request
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final Request iScatterv(Buffer recvbuf, int recvcount,
 			Datatype recvtype, int root)
@@ -1969,7 +1969,7 @@ public class Comm implements Freeable, Cloneable
 	 * @param recvbuf   receive buffer
 	 * @param recvcount number of items to receive
 	 * @param recvtype  datatype of each item in receive buffer
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final void allGather(Object sendbuf, int sendcount, Datatype sendtype,
 			Object recvbuf, int recvcount, Datatype recvtype)
@@ -2008,7 +2008,7 @@ public class Comm implements Freeable, Cloneable
 	 * @param buf   receive buffer
 	 * @param count number of items to receive
 	 * @param type  datatype of each item in receive buffer
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final void allGather(Object buf, int count, Datatype type)
 			throws MPIException
@@ -2043,7 +2043,7 @@ public class Comm implements Freeable, Cloneable
 	 * @param recvcount number of items to receive
 	 * @param recvtype  datatype of each item in receive buffer
 	 * @return communication request
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final Request iAllGather(
 			Buffer sendbuf, int sendcount, Datatype sendtype,
@@ -2067,7 +2067,7 @@ public class Comm implements Freeable, Cloneable
 	 * @param count number of items to receive
 	 * @param type  datatype of each item in receive buffer
 	 * @return communication request
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final Request iAllGather(Buffer buf, int count, Datatype type)
 			throws MPIException
@@ -2093,7 +2093,7 @@ public class Comm implements Freeable, Cloneable
 	 * @param recvcount number of elements received from each process
 	 * @param displs    displacements at which to place incoming data
 	 * @param recvtype  datatype of each item in receive buffer
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final void allGatherv(
 			Object sendbuf, int sendcount, Datatype sendtype,
@@ -2134,7 +2134,7 @@ public class Comm implements Freeable, Cloneable
 	 * @param recvcount number of elements received from each process
 	 * @param displs    displacements at which to place incoming data
 	 * @param recvtype  datatype of each item in receive buffer
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final void allGatherv(Object recvbuf, int[] recvcount,
 			int[] displs, Datatype recvtype)
@@ -2172,7 +2172,7 @@ public class Comm implements Freeable, Cloneable
 	 * @param displs    displacements at which to place incoming data
 	 * @param recvtype  datatype of each item in receive buffer
 	 * @return communication request
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final Request iAllGatherv(
 			Buffer sendbuf, int sendcount, Datatype sendtype,
@@ -2198,7 +2198,7 @@ public class Comm implements Freeable, Cloneable
 	 * @param displs displacements at which to place incoming data
 	 * @param type   datatype of each item in receive buffer
 	 * @return communication request
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final Request iAllGatherv(
 			Buffer buf, int[] count, int[] displs, Datatype type)
@@ -2227,7 +2227,7 @@ public class Comm implements Freeable, Cloneable
 	 * @param recvbuf   receive buffer
 	 * @param recvcount number of items received from any process
 	 * @param recvtype  datatype of receive buffer items
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final void allToAll(Object sendbuf, int sendcount, Datatype sendtype,
 			Object recvbuf, int recvcount, Datatype recvtype)
@@ -2276,7 +2276,7 @@ public class Comm implements Freeable, Cloneable
 	 * @param recvcount number of items received from any process
 	 * @param recvtype  datatype of receive buffer items
 	 * @return communication request
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final Request iAllToAll(Buffer sendbuf, int sendcount, Datatype sendtype,
 			Buffer recvbuf, int recvcount, Datatype recvtype)
@@ -2308,7 +2308,7 @@ public class Comm implements Freeable, Cloneable
 	 * @param recvcount number of elements received from each process
 	 * @param rdispls   displacements at which to place incoming data
 	 * @param recvtype  datatype of each item in receive buffer
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final void allToAllv(
 			Object sendbuf, int[] sendcount, int[] sdispls, Datatype sendtype,
@@ -2362,7 +2362,7 @@ public class Comm implements Freeable, Cloneable
 	 * @param rdispls   displacements at which to place incoming data
 	 * @param recvtype  datatype of each item in receive buffer
 	 * @return communication request
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final Request iAllToAllv(
 			Buffer sendbuf, int[] sendcount, int[] sdispls, Datatype sendtype,
@@ -2397,7 +2397,7 @@ public class Comm implements Freeable, Cloneable
 	 * @param recvCount number of elements received from each process
 	 * @param rDispls   displacements at which to place incoming data
 	 * @param recvTypes datatype of each item in receive buffer
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final void allToAllw(
 			Object sendBuf, int[] sendCount, int[] sDispls, Datatype[] sendTypes,
@@ -2461,7 +2461,7 @@ public class Comm implements Freeable, Cloneable
 	 * @param rDispls   displacements at which to place incoming data
 	 * @param recvTypes datatype of each item in receive buffer
 	 * @return communication request
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final Request iAllToAllw(
 			Buffer sendBuf, int[] sendCount, int[] sDispls, Datatype[] sendTypes,
@@ -2494,7 +2494,7 @@ public class Comm implements Freeable, Cloneable
 	 * @param recvbuf   receive buffer
 	 * @param recvcount number of items to receive
 	 * @param recvtype  datatype of each item in receive buffer
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final void neighborAllGather(
 			Object sendbuf, int sendcount, Datatype sendtype,
@@ -2543,7 +2543,7 @@ public class Comm implements Freeable, Cloneable
 	 * @param recvcount number of items to receive
 	 * @param recvtype  datatype of each item in receive buffer
 	 * @return communication request
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final Request iNeighborAllGather(
 			Buffer sendbuf, int sendcount, Datatype sendtype,
@@ -2574,7 +2574,7 @@ public class Comm implements Freeable, Cloneable
 	 * @param recvcount number of elements that are received from each neighbor
 	 * @param displs    displacements at which to place incoming data
 	 * @param recvtype  datatype of receive buffer elements
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final void neighborAllGatherv(
 			Object sendbuf, int sendcount, Datatype sendtype,
@@ -2623,7 +2623,7 @@ public class Comm implements Freeable, Cloneable
 	 * @param displs    displacements at which to place incoming data
 	 * @param recvtype  datatype of receive buffer elements
 	 * @return communication request
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final Request iNeighborAllGatherv(
 			Buffer sendbuf, int sendcount, Datatype sendtype,
@@ -2653,7 +2653,7 @@ public class Comm implements Freeable, Cloneable
 	 * @param recvbuf   receive buffer
 	 * @param recvcount number of items to receive
 	 * @param recvtype  datatype of each item in receive buffer
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final void neighborAllToAll(
 			Object sendbuf, int sendcount, Datatype sendtype,
@@ -2702,7 +2702,7 @@ public class Comm implements Freeable, Cloneable
 	 * @param recvcount number of items to receive
 	 * @param recvtype  datatype of each item in receive buffer
 	 * @return communication request
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final Request iNeighborAllToAll(
 			Buffer sendbuf, int sendcount, Datatype sendtype,
@@ -2733,7 +2733,7 @@ public class Comm implements Freeable, Cloneable
 	 * @param recvcount number of elements received from each process
 	 * @param rdispls   displacements at which to place incoming data
 	 * @param recvtype  datatype of each item in receive buffer
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final void neighborAllToAllv(
 			Object sendbuf, int[] sendcount, int[] sdispls, Datatype sendtype,
@@ -2785,7 +2785,7 @@ public class Comm implements Freeable, Cloneable
 	 * @param rdispls   displacements at which to place incoming data
 	 * @param recvtype  datatype of each item in receive buffer
 	 * @return communication request
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final Request iNeighborAllToAllv(
 			Buffer sendbuf, int[] sendcount, int[] sdispls, Datatype sendtype,
@@ -2824,7 +2824,7 @@ public class Comm implements Freeable, Cloneable
 	 * @param type    data type of each item in send buffer
 	 * @param op      reduce operation
 	 * @param root    rank of root process
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final void reduce(Object sendbuf, Object recvbuf, int count,
 			Datatype type, Op op, int root)
@@ -2866,7 +2866,7 @@ public class Comm implements Freeable, Cloneable
 	 * @param type  data type of each item in buffer
 	 * @param op    reduce operation
 	 * @param root  rank of root process
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final void reduce(Object buf, int count, Datatype type, Op op, int root)
 			throws MPIException
@@ -2904,7 +2904,7 @@ public class Comm implements Freeable, Cloneable
 	 * @param op      reduce operation
 	 * @param root    rank of root process
 	 * @return communication request
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final Request iReduce(Buffer sendbuf, Buffer recvbuf,
 			int count, Datatype type, Op op, int root)
@@ -2933,7 +2933,7 @@ public class Comm implements Freeable, Cloneable
 	 * @param op    reduce operation
 	 * @param root  rank of root process
 	 * @return communication request
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final Request iReduce(Buffer buf, int count,
 			Datatype type, Op op, int root)
@@ -2963,7 +2963,7 @@ public class Comm implements Freeable, Cloneable
 	 * @param count   number of items in send buffer
 	 * @param type    data type of each item in send buffer
 	 * @param op      reduce operation
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final void allReduce(Object sendbuf, Object recvbuf,
 			int count, Datatype type, Op op)
@@ -3003,7 +3003,7 @@ public class Comm implements Freeable, Cloneable
 	 * @param count number of items in send buffer
 	 * @param type  data type of each item in send buffer
 	 * @param op    reduce operation
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final void allReduce(Object buf, int count, Datatype type, Op op)
 			throws MPIException
@@ -3038,7 +3038,7 @@ public class Comm implements Freeable, Cloneable
 	 * @param type    data type of each item in send buffer
 	 * @param op      reduce operation
 	 * @return communication request
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final Request iAllReduce(Buffer sendbuf, Buffer recvbuf,
 			int count, Datatype type, Op op)
@@ -3064,7 +3064,7 @@ public class Comm implements Freeable, Cloneable
 	 * @param type  data type of each item in send buffer
 	 * @param op    reduce operation
 	 * @return communication request
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final Request iAllReduce(Buffer buf, int count, Datatype type, Op op)
 			throws MPIException
@@ -3093,7 +3093,7 @@ public class Comm implements Freeable, Cloneable
 	 * @param recvcounts numbers of result elements distributed to each process
 	 * @param type       data type of each item in send buffer
 	 * @param op         reduce operation
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final void reduceScatter(Object sendbuf, Object recvbuf,
 			int[] recvcounts, Datatype type, Op op)
@@ -3134,7 +3134,7 @@ public class Comm implements Freeable, Cloneable
 	 * @param counts numbers of result elements distributed to each process
 	 * @param type   data type of each item in send buffer
 	 * @param op     reduce operation
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final void reduceScatter(Object buf, int[] counts, Datatype type, Op op)
 			throws MPIException
@@ -3170,7 +3170,7 @@ public class Comm implements Freeable, Cloneable
 	 * @param type       data type of each item in send buffer
 	 * @param op         reduce operation
 	 * @return communication request
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final Request iReduceScatter(Buffer sendbuf, Buffer recvbuf,
 			int[] recvcounts, Datatype type, Op op)
@@ -3198,7 +3198,7 @@ public class Comm implements Freeable, Cloneable
 	 * @param type   data type of each item in send buffer
 	 * @param op     reduce operation
 	 * @return communication request
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final Request iReduceScatter(
 			Buffer buf, int[] counts, Datatype type, Op op)
@@ -3226,7 +3226,7 @@ public class Comm implements Freeable, Cloneable
 	 * @param recvcount element count per block
 	 * @param type      data type of each item in send buffer
 	 * @param op        reduce operation
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final void reduceScatterBlock(Object sendbuf, Object recvbuf,
 			int recvcount, Datatype type, Op op)
@@ -3265,7 +3265,7 @@ public class Comm implements Freeable, Cloneable
 	 * @param count element count per block
 	 * @param type  data type of each item in send buffer
 	 * @param op    reduce operation
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final void reduceScatterBlock(
 			Object buf, int count, Datatype type, Op op)
@@ -3300,7 +3300,7 @@ public class Comm implements Freeable, Cloneable
 	 * @param type      data type of each item in send buffer
 	 * @param op        reduce operation
 	 * @return communication request
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final Request iReduceScatterBlock(
 			Buffer sendbuf, Buffer recvbuf, int recvcount, Datatype type, Op op)
@@ -3326,7 +3326,7 @@ public class Comm implements Freeable, Cloneable
 	 * @param type  data type of each item in send buffer
 	 * @param op    reduce operation
 	 * @return communication request
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final Request iReduceScatterBlock(
 			Buffer buf, int count, Datatype type, Op op)
@@ -3356,7 +3356,7 @@ public class Comm implements Freeable, Cloneable
 	 * @param count    number of elements
 	 * @param type     data type of each item
 	 * @param op       reduce operation
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public static void reduceLocal(
 			Object inBuf, Object inOutBuf, int count, Datatype type, Op op)
@@ -3408,7 +3408,7 @@ public class Comm implements Freeable, Cloneable
 	/**
 	 * Sets the print name for the communicator.
 	 * @param name name for the communicator
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final void setName(String name) throws MPIException
 	{
@@ -3421,7 +3421,7 @@ public class Comm implements Freeable, Cloneable
 	/**
 	 * Return the print name from the communicator.
 	 * @return name of the communicator
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final String getName() throws MPIException
 	{

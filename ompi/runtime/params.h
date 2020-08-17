@@ -75,7 +75,7 @@ OMPI_DECLSPEC extern int ompi_debug_show_mpi_alloc_mem_leaks;
  * Whether or not to actually free MPI handles when their
  * corresponding destructor is invoked.  If enabled, Open MPI will not
  * free handles, but will rather simply mark them as "freed".  Any
- * attempt to use them will result in an MPI exception.
+ * attempt to use them will result in an MPI error.
  *
  * This is good debugging for user applications to find out if they
  * are inadvertantly using MPI handles after they have been freed.

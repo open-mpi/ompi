@@ -78,7 +78,7 @@ public final class Message
 	 * @param tag    message tag
 	 * @param comm   communicator
 	 * @return status object
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public Status mProbe(int source, int tag, Comm comm) throws MPIException
 	{
@@ -97,7 +97,7 @@ public final class Message
 	 * @param tag    message tag
 	 * @param comm   communicator
 	 * @return status object if there is a message, {@code null} otherwise
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public Status imProbe(int source, int tag, Comm comm) throws MPIException
 	{
@@ -114,7 +114,7 @@ public final class Message
 	 * @param count number of elements in receve buffer
 	 * @param type  datatype of each receive buffer element
 	 * @return status object
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public Status mRecv(Object buf, int count, Datatype type) throws MPIException
 	{
@@ -145,7 +145,7 @@ public final class Message
 	 * @param count number of elements in receve buffer
 	 * @param type  datatype of each receive buffer element
 	 * @return request object
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public Request imRecv(Buffer buf, int count, Datatype type)
 			throws MPIException

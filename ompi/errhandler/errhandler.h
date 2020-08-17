@@ -381,7 +381,7 @@ struct ompi_request_t;
    *
    * @returns err_code The same value as the parameter
    *
-   * This function invokes the MPI exception function on the error
+   * This function invokes the MPI error function on the error
    * handler.  If the errhandler was created from fortran, the error
    * handler will be invoked with fortran linkage.  Otherwise, it is
    * invoked with C linkage.
@@ -394,7 +394,7 @@ struct ompi_request_t;
 
 
   /**
-   * Invoke an MPI exception on the first request found in the array
+   * Invoke an MPI error on the first request found in the array
    * that has a non-MPI_SUCCESS value for MPI_ERROR in its status.  It
    * is safe to invoke this function if none of the requests have an
    * outstanding error; MPI_SUCCESS will be returned.

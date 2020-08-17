@@ -87,7 +87,7 @@ generated the request); the predefined error handler MPI_ERRORS_RETURN
 may be used to cause error values to be returned. Note that MPI does
 not guarantee that an MPI program can continue past an error.
 .sp
-Note that per MPI-1 section 3.2.5, MPI exceptions on requests passed
+Note that per MPI-1 section 3.2.5, MPI errors on requests passed
 to MPI_TESTANY do not set the status.MPI_ERROR field in the returned
 status.  The error code is passed to the back-end error handler and
 may be passed back to the caller through the return value of

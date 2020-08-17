@@ -42,7 +42,7 @@ public final class Win implements Freeable
 	 * @param dispUnit local unit size for displacements (buffer elements)
 	 * @param info     info object
 	 * @param comm     communicator
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public Win(Buffer base, int size, int dispUnit, Info info, Comm comm)
 			throws MPIException
@@ -81,7 +81,7 @@ public final class Win implements Freeable
 	 * @param comm     	communicator
 	 * @param base     	initial address of window
 	 * @param flavor	FLAVOR_PRIVATE or FLAVOR_SHARED
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public Win(int size, int dispUnit, Info info, Comm comm, Buffer base, int flavor)
 			throws MPIException
@@ -124,7 +124,7 @@ public final class Win implements Freeable
 	 * Java binding of {@code MPI_WIN_CREATE_DYNAMIC}.
 	 * @param info     info object
 	 * @param comm     communicator
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public Win(Info info, Comm comm)
 			throws MPIException
@@ -154,7 +154,7 @@ public final class Win implements Freeable
 	 * Java binding of {@code MPI_WIN_ATTACH}.
 	 * @param base     initial address of window
 	 * @param size     size of window (buffer elements)
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public void attach(Buffer base, int size) throws MPIException
 	{
@@ -185,7 +185,7 @@ public final class Win implements Freeable
 	/**
 	 * Java binding of {@code MPI_WIN_DETACH}.
 	 * @param base     initial address of window
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public void detach(Buffer base) throws MPIException
 	{
@@ -201,7 +201,7 @@ public final class Win implements Freeable
 	/**
 	 * Java binding of the MPI operation {@code MPI_GET_GROUP}.
 	 * @return group of processes which share access to the window
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public Group getGroup() throws MPIException
 	{
@@ -220,7 +220,7 @@ public final class Win implements Freeable
 	 * @param targetDisp  displacement from start of window to target buffer
 	 * @param targetCount number of entries in target buffer
 	 * @param targetType  datatype of each entry in target buffer
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public void put(Buffer origin, int orgCount, Datatype orgType,
 			int targetRank, int targetDisp, int targetCount,
@@ -251,7 +251,7 @@ public final class Win implements Freeable
 	 * @param targetDisp  displacement from start of window to target buffer
 	 * @param targetCount number of entries in target buffer
 	 * @param targetType  datatype of each entry in target buffer
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public void get(Buffer origin, int orgCount, Datatype orgType,
 			int targetRank, int targetDisp, int targetCount,
@@ -283,7 +283,7 @@ public final class Win implements Freeable
 	 * @param targetCount number of entries in target buffer
 	 * @param targetType  datatype of each entry in target buffer
 	 * @param op          reduce operation
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public void accumulate(Buffer origin, int orgCount, Datatype orgType,
 			int targetRank, int targetDisp, int targetCount,
@@ -308,7 +308,7 @@ public final class Win implements Freeable
 	/**
 	 * Java binding of {@code MPI_WIN_FENCE}.
 	 * @param assertion program assertion
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public void fence(int assertion) throws MPIException
 	{
@@ -322,7 +322,7 @@ public final class Win implements Freeable
 	 * Java binding of the MPI operation {@code MPI_WIN_START}.
 	 * @param group     group of target processes
 	 * @param assertion program assertion
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public void start(Group group, int assertion) throws MPIException
 	{
@@ -335,7 +335,7 @@ public final class Win implements Freeable
 
 	/**
 	 * Java binding of the MPI operation {@code MPI_WIN_COMPLETE}.
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public void complete() throws MPIException
 	{
@@ -349,7 +349,7 @@ public final class Win implements Freeable
 	 * Java binding of the MPI operation {@code MPI_WIN_POST}.
 	 * @param group     group of origin processes
 	 * @param assertion program assertion
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public void post(Group group, int assertion) throws MPIException
 	{
@@ -362,7 +362,7 @@ public final class Win implements Freeable
 
 	/**
 	 * Java binding of the MPI operation {@code MPI_WIN_WAIT}.
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public void waitFor() throws MPIException
 	{
@@ -375,7 +375,7 @@ public final class Win implements Freeable
 	/**
 	 * Java binding of the MPI operation {@code MPI_WIN_TEST}.
 	 * @return true if success
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public boolean test() throws MPIException
 	{
@@ -390,7 +390,7 @@ public final class Win implements Freeable
 	 * @param lockType  either MPI.LOCK_EXCLUSIVE or MPI.LOCK_SHARED
 	 * @param rank      rank of locked window
 	 * @param assertion program assertion
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public void lock(int lockType, int rank, int assertion) throws MPIException
 	{
@@ -404,7 +404,7 @@ public final class Win implements Freeable
 	/**
 	 * Java binding of the MPI operation {@code MPI_WIN_UNLOCK}.
 	 * @param rank rank of window
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public void unlock(int rank) throws MPIException
 	{
@@ -417,7 +417,7 @@ public final class Win implements Freeable
 	/**
 	 * Java binding of the MPI operation {@code MPI_WIN_SET_ERRHANDLER}.
 	 * @param errhandler new MPI error handler for window
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public void setErrhandler(Errhandler errhandler) throws MPIException
 	{
@@ -431,7 +431,7 @@ public final class Win implements Freeable
 	/**
 	 * Java binding of the MPI operation {@code MPI_WIN_GET_ERRHANDLER}.
 	 * @return MPI error handler currently associated with window
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public Errhandler getErrhandler() throws MPIException
 	{
@@ -444,7 +444,7 @@ public final class Win implements Freeable
 	/**
 	 * Java binding of the MPI operation {@code MPI_WIN_CALL_ERRHANDLER}.
 	 * @param errorCode error code
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public void callErrhandler(int errorCode) throws MPIException
 	{
@@ -458,7 +458,7 @@ public final class Win implements Freeable
 	 * Create a new attribute key.
 	 * <p>Java binding of the MPI operation {@code MPI_WIN_CREATE_KEYVAL}.
 	 * @return attribute key for future access
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public static int createKeyval() throws MPIException
 	{
@@ -472,7 +472,7 @@ public final class Win implements Freeable
 	 * Frees an attribute key.
 	 * <p>Java binding of the MPI operation {@code MPI_WIN_FREE_KEYVAL}.
 	 * @param keyval attribute key
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public static void freeKeyval(int keyval) throws MPIException
 	{
@@ -487,7 +487,7 @@ public final class Win implements Freeable
 	 * <p>Java binding of the MPI operation {@code MPI_WIN_SET_ATTR}.
 	 * @param keyval attribute key
 	 * @param value  attribute value
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public void setAttr(int keyval, Object value) throws MPIException
 	{
@@ -503,7 +503,7 @@ public final class Win implements Freeable
 	 * <p>Java binding of the MPI operation {@code MPI_WIN_GET_ATTR}.
 	 * @param keyval attribute key
 	 * @return attribute value or null if no attribute is associated with the key.
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public Object getAttr(int keyval) throws MPIException
 	{
@@ -518,7 +518,7 @@ public final class Win implements Freeable
 	 * Deletes an attribute value associated with a key.
 	 * <p>Java binding of the MPI operation {@code MPI_WIN_DELETE_ATTR}.
 	 * @param keyval attribute key
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public void deleteAttr(int keyval) throws MPIException
 	{
@@ -530,7 +530,7 @@ public final class Win implements Freeable
 
 	/**
 	 * Java binding of {@code MPI_WIN_FREE}.
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	@Override public void free() throws MPIException
 	{
@@ -543,7 +543,7 @@ public final class Win implements Freeable
 	/**
 	 * Java binding of the MPI operation {@code MPI_WIN_GET_INFO}.
 	 * @return Info	Info object associated with this window
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public Info getInfo() throws MPIException
 	{
@@ -557,7 +557,7 @@ public final class Win implements Freeable
 	/**
 	 * Java binding of the MPI operation {@code MPI_WIN_SET_INFO}.
 	 * @param info the new info
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public void setInfo(Info info) throws MPIException
 	{
@@ -578,7 +578,7 @@ public final class Win implements Freeable
 	 * @param target_count		number of entries in target buffer
 	 * @param target_datatype	datatype of each entry in target buffer
 	 * @return RMA request
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final Request rPut(Buffer origin_addr, int origin_count,
 			Datatype origin_datatype, int target_rank, int target_disp,
@@ -609,7 +609,7 @@ public final class Win implements Freeable
 	 * @param targetCount 	number of entries in target buffer
 	 * @param targetType  	datatype of each entry in target buffer
 	 * @return RMA request
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public final Request rGet(Buffer origin, int orgCount, Datatype orgType,
 			int targetRank, int targetDisp, int targetCount,
@@ -643,7 +643,7 @@ public final class Win implements Freeable
 	 * @param targetType  datatype of each entry in target buffer
 	 * @param op          reduce operation
 	 * @return RMA request
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public Request rAccumulate(Buffer origin, int orgCount, Datatype orgType,
 			int targetRank, int targetDisp, int targetCount,
@@ -679,7 +679,7 @@ public final class Win implements Freeable
 	 * @param targetCount 	number of entries in target buffer
 	 * @param targetType  	datatype of each entry in target buffer
 	 * @param op          	reduce operation
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 
 	public void getAccumulate(Buffer origin, int orgCount, Datatype orgType,
@@ -719,7 +719,7 @@ public final class Win implements Freeable
 	 * @param targetType  	datatype of each entry in target buffer
 	 * @param op          	reduce operation
 	 * @return RMA request
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 
 	public Request rGetAccumulate(Buffer origin, int orgCount, Datatype orgType,
@@ -749,7 +749,7 @@ public final class Win implements Freeable
 	/**
 	 * Java binding of the MPI operation {@code MPI_WIN_LOCK_ALL}.
 	 * @param assertion program assertion
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public void lockAll(int assertion) throws MPIException
 	{
@@ -762,7 +762,7 @@ public final class Win implements Freeable
 
 	/**
 	 * Java binding of the MPI operation {@code MPI_WIN_UNLOCK_ALL}.
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public void unlockAll() throws MPIException
 	{
@@ -774,7 +774,7 @@ public final class Win implements Freeable
 
 	/**
 	 * Java binding of the MPI operation {@code MPI_WIN_SYNC}.
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public void sync() throws MPIException
 	{
@@ -787,7 +787,7 @@ public final class Win implements Freeable
 	/**
 	 * Java binding of the MPI operation {@code MPI_WIN_FLUSH}.
 	 * @param targetRank	rank of target window
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public void flush(int targetRank) throws MPIException
 	{
@@ -799,7 +799,7 @@ public final class Win implements Freeable
 
 	/**
 	 * Java binding of the MPI operation {@code MPI_WIN_FLUSH_ALL}.
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public void flushAll() throws MPIException
 	{
@@ -817,7 +817,7 @@ public final class Win implements Freeable
 	 * @param targetType  	datatype of each entry in target buffer
 	 * @param targetRank  	rank of target
 	 * @param targetDisp  	displacement from start of window to target buffer
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 
 	public void compareAndSwap(Buffer origin, Buffer compareAddr, Buffer resultAddr,
@@ -845,7 +845,7 @@ public final class Win implements Freeable
 	 * @param targetRank  	rank of target
 	 * @param targetDisp  	displacement from start of window to target buffer
 	 * @param op          	reduce operation
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 
 	public void fetchAndOp(Buffer origin, Buffer resultAddr, Datatype dataType,
@@ -868,7 +868,7 @@ public final class Win implements Freeable
 	/**
 	 * Java binding of the MPI operation {@code MPI_WIN_FLUSH_LOCAL}.
 	 * @param targetRank	rank of target window
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 
 	public void flushLocal(int targetRank) throws MPIException
@@ -881,7 +881,7 @@ public final class Win implements Freeable
 
 	/**
 	 * Java binding of the MPI operation {@code MPI_WIN_FLUSH_LOCAL_ALL}.
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 
 	public void flushLocalAll() throws MPIException
@@ -895,7 +895,7 @@ public final class Win implements Freeable
 	/**
 	 * Java binding of the MPI operation {@code MPI_WIN_GET_NAME}.
 	 * @return the name associated with this window
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public String getName() throws MPIException
 	{
@@ -908,7 +908,7 @@ public final class Win implements Freeable
 	/**
 	 * Java binding of the MPI operation {@code MPI_WIN_SET_NAME}.
 	 * @param name	the name to associate with this window
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public void setName(String name) throws MPIException
 	{

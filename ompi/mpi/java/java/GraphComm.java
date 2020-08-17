@@ -93,7 +93,7 @@ public final class GraphComm extends Intracomm
 	 * Duplicates this communicator.
 	 * <p>Java binding of {@code MPI_COMM_DUP}.
 	 * @return copy of this communicator
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	@Override public GraphComm dup() throws MPIException
 	{
@@ -107,7 +107,7 @@ public final class GraphComm extends Intracomm
 	 * The request object must be obtained calling {@link #getRequest}.
 	 * <p>Java binding of {@code MPI_COMM_IDUP}.
 	 * @return copy of this communicator
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	@Override public GraphComm iDup() throws MPIException
 	{
@@ -120,7 +120,7 @@ public final class GraphComm extends Intracomm
 	* <p>Java binding of {@code MPI_COMM_DUP_WITH_INFO}.
 	* @param info	info object to associate with the new communicator
 	* @return copy of this communicator
-	* @throws MPIException Signals that an MPI exception of some sort has occurred.
+	* @throws MPIException Signals that an MPI error of some sort has occurred.
 	*/
 	@Override public GraphComm dupWithInfo(Info info) throws MPIException
 	{
@@ -136,7 +136,7 @@ public final class GraphComm extends Intracomm
 	 * from the sizes of the {@code index} and {@code edges} fields
 	 * of the returned object.
 	 * @return object defining node degress and edges of graph
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public GraphParms getDims() throws MPIException
 	{
@@ -153,7 +153,7 @@ public final class GraphComm extends Intracomm
 	 * <p>The number of neighbors can be extracted from the size of the result.
 	 * @param rank rank of a process in the group of this communicator
 	 * @return array of ranks of neighboring processes to one specified
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public int[] getNeighbors(int rank) throws MPIException
 	{
@@ -166,7 +166,7 @@ public final class GraphComm extends Intracomm
 	/**
 	 * Gets the adjacency information for a distributed graph topology.
 	 * @return adjacency information for a distributed graph topology
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public DistGraphNeighbors getDistGraphNeighbors() throws MPIException
 	{
@@ -184,7 +184,7 @@ public final class GraphComm extends Intracomm
 	 * @param index node degrees
 	 * @param edges graph edges
 	 * @return reordered rank of calling process
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public int map(int[] index, int[] edges) throws MPIException
 	{

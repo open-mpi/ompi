@@ -121,7 +121,7 @@ public final class Op implements Freeable
 
 	/**
 	 * Java binding of the MPI operation {@code MPI_OP_FREE}.
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	@Override public native void free() throws MPIException;
 

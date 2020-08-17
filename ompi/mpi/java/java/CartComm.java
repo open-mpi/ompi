@@ -92,7 +92,7 @@ public final class CartComm extends Intracomm
 	 * Duplicates this communicator.
 	 * <p>Java binding of {@code MPI_COMM_DUP}.
 	 * @return copy of this communicator
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	@Override public CartComm dup() throws MPIException
 	{
@@ -106,7 +106,7 @@ public final class CartComm extends Intracomm
 	 * <p>The new communicator can't be used before the operation completes.
 	 * The request object must be obtained calling {@link #getRequest}.
 	 * @return copy of this communicator
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred. Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred. Signals that an MPI exception of some sort has occurred.
 	 */
 	@Override public CartComm iDup() throws MPIException
 	{
@@ -119,7 +119,7 @@ public final class CartComm extends Intracomm
 	* <p>Java binding of {@code MPI_COMM_DUP_WITH_INFO}.
 	* @param info	info object to associate with the new communicator
 	* @return copy of this communicator
-	* @throws MPIException Signals that an MPI exception of some sort has occurred.
+	* @throws MPIException Signals that an MPI error of some sort has occurred.
 	*/
 	@Override public CartComm dupWithInfo(Info info) throws MPIException
 	{
@@ -134,7 +134,7 @@ public final class CartComm extends Intracomm
 	 * <p>The number of dimensions can be obtained from the size of (eg)
 	 * {@code dims} field of the returned object.
 	 * @return object containing dimensions, periods and local coordinates
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public CartParms getTopo() throws MPIException
 	{
@@ -149,7 +149,7 @@ public final class CartComm extends Intracomm
 	 * <p>Java binding of the MPI operation {@code MPI_CART_RANK}.
 	 * @param coords Cartesian coordinates of a process
 	 * @return rank of the specified process
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public int getRank(int[] coords) throws MPIException
 	{
@@ -164,7 +164,7 @@ public final class CartComm extends Intracomm
 	 * <p>Java binding of the MPI operation {@code MPI_CART_COORDS}.
 	 * @param rank rank of a process
 	 * @return Cartesian coordinates of the specified process
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public int[] getCoords(int rank) throws MPIException
 	{
@@ -180,7 +180,7 @@ public final class CartComm extends Intracomm
 	 * @param direction coordinate dimension of shift
 	 * @param disp      displacement
 	 * @return object containing ranks of source and destination processes
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public ShiftParms shift(int direction, int disp) throws MPIException
 	{
@@ -197,7 +197,7 @@ public final class CartComm extends Intracomm
 	 * @param remainDims by dimension, {@code true} if dimension is to be kept,
 	 *                   {@code false} otherwise
 	 * @return communicator containing subgrid including this process
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public CartComm sub(boolean[] remainDims) throws MPIException
 	{
@@ -215,7 +215,7 @@ public final class CartComm extends Intracomm
 	 * @param periods {@code true} if grid is periodic,
 	 *                {@code false} if not, in each dimension
 	 * @return reordered rank of calling process
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public int map(int[] dims, boolean[] periods) throws MPIException
 	{
@@ -231,7 +231,7 @@ public final class CartComm extends Intracomm
 	 * <p>Java binding of the MPI operation {@code MPI_DIMS_CREATE}.
 	 * @param nnodes number of nodes in a grid
 	 * @param dims   array specifying the number of nodes in each dimension
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public static void createDims(int nnodes, int[] dims) throws MPIException
 	{

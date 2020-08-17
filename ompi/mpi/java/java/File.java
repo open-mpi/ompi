@@ -48,7 +48,7 @@ public final class File
 	 * @param comm     communicator
 	 * @param filename name of the file to open
 	 * @param amode    file access mode
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public File(Comm comm, String filename, int amode) throws MPIException
 	{
@@ -62,7 +62,7 @@ public final class File
 	 * @param filename name of the file to open
 	 * @param amode    file access mode
 	 * @param info     info object
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public File(Comm comm, String filename, int amode, Info info)
 			throws MPIException
@@ -76,7 +76,7 @@ public final class File
 
 	/**
 	 * Java binding of {@code MPI_FILE_CLOSE}.
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public void close() throws MPIException
 	{
@@ -89,7 +89,7 @@ public final class File
 	/**
 	 * Java binding of {@code MPI_FILE_DELETE} using {@code MPI_INFO_NULL}.
 	 * @param filename name of the file to delete
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public static void delete(String filename) throws MPIException
 	{
@@ -101,7 +101,7 @@ public final class File
 	 * Java binding of {@code MPI_FILE_DELETE}.
 	 * @param filename name of the file to delete
 	 * @param info     info object
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public static void delete(String filename, Info info) throws MPIException
 	{
@@ -115,7 +115,7 @@ public final class File
 	/**
 	 * Java binding of {@code MPI_FILE_SET_SIZE}.
 	 * @param size size to truncate or expand file
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public void setSize(long size) throws MPIException
 	{
@@ -128,7 +128,7 @@ public final class File
 	/**
 	 * Java binding of {@code MPI_FILE_PREALLOCATE}.
 	 * @param size size to preallocate file
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public void preallocate(long size) throws MPIException
 	{
@@ -141,7 +141,7 @@ public final class File
 	/**
 	 * Java binding of {@code MPI_FILE_GET_SIZE}.
 	 * @return size of file in bytes
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public long getSize() throws MPIException
 	{
@@ -154,7 +154,7 @@ public final class File
 	/**
 	 * Java binding of {@code MPI_FILE_GET_GROUP}.
 	 * @return group which opened the file
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public Group getGroup() throws MPIException
 	{
@@ -167,7 +167,7 @@ public final class File
 	/**
 	 * Java binding of {@code MPI_FILE_GET_AMODE}.
 	 * @return file access mode to open the file
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public int getAMode() throws MPIException
 	{
@@ -180,7 +180,7 @@ public final class File
 	/**
 	 * Java binding of {@code MPI_FILE_SET_INFO}.
 	 * @param info info object
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public void setInfo(Info info) throws MPIException
 	{
@@ -193,7 +193,7 @@ public final class File
 	/**
 	 * Java binding of {@code MPI_FILE_GET_INFO}.
 	 * @return new info object
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public Info getInfo() throws MPIException
 	{
@@ -209,7 +209,7 @@ public final class File
 	 * @param etype    elementary datatype
 	 * @param filetype filetype
 	 * @param datarep  data representation
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public void setView(long disp, Datatype etype,
 			Datatype filetype, String datarep)
@@ -227,7 +227,7 @@ public final class File
 	 * @param filetype filetype
 	 * @param datarep  data representation
 	 * @param info     info object
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public void setView(long disp, Datatype etype,
 			Datatype filetype, String datarep, Info info)
@@ -258,7 +258,7 @@ public final class File
 	 * @param count  number of items in buffer
 	 * @param type   datatype of each buffer element
 	 * @return status object
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public Status readAt(long offset, Object buf, int count, Datatype type)
 			throws MPIException
@@ -291,7 +291,7 @@ public final class File
 	 * @param count  number of items in buffer
 	 * @param type   datatype of each buffer element
 	 * @return status object
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public Status readAtAll(long offset, Object buf, int count, Datatype type)
 			throws MPIException
@@ -324,7 +324,7 @@ public final class File
 	 * @param count  number of items in buffer
 	 * @param type   datatype of each buffer element
 	 * @return status object
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public Status writeAt(long offset, Object buf, int count, Datatype type)
 			throws MPIException
@@ -357,7 +357,7 @@ public final class File
 	 * @param count  number of items in buffer
 	 * @param type   datatype of each buffer element
 	 * @return status object
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public Status writeAtAll(long offset, Object buf, int count, Datatype type)
 			throws MPIException
@@ -390,7 +390,7 @@ public final class File
 	 * @param count  number of items in buffer
 	 * @param type   datatype of each buffer element
 	 * @return request object
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public Request iReadAt(long offset, Buffer buf, int count, Datatype type)
 			throws MPIException
@@ -413,7 +413,7 @@ public final class File
 	 * @param count  number of items in buffer
 	 * @param type   datatype of each buffer element
 	 * @return request object
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public Request iReadAtAll(long offset, Buffer buf, int count, Datatype type)
 			throws MPIException
@@ -436,7 +436,7 @@ public final class File
 	 * @param count  number of items in buffer
 	 * @param type   datatype of each buffer element
 	 * @return request object
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public Request iWriteAt(long offset, Buffer buf, int count, Datatype type)
 			throws MPIException
@@ -459,7 +459,7 @@ public final class File
 	 * @param count  number of items in buffer
 	 * @param type   datatype of each buffer element
 	 * @return request object
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public Request iWriteAtAll(long offset, Buffer buf, int count, Datatype type)
 			throws MPIException
@@ -481,7 +481,7 @@ public final class File
 	 * @param count number of items in buffer
 	 * @param type  datatype of each buffer element
 	 * @return status object
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public Status read(Object buf, int count, Datatype type) throws MPIException
 	{
@@ -510,7 +510,7 @@ public final class File
 	 * @param count number of items in buffer
 	 * @param type  datatype of each buffer element
 	 * @return status object
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public Status readAll(Object buf, int count, Datatype type) throws MPIException
 	{
@@ -539,7 +539,7 @@ public final class File
 	 * @param count number of items in buffer
 	 * @param type  datatype of each buffer element
 	 * @return status object
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public Status write(Object buf, int count, Datatype type) throws MPIException
 	{
@@ -568,7 +568,7 @@ public final class File
 	 * @param count number of items in buffer
 	 * @param type  datatype of each buffer element
 	 * @return status object
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public Status writeAll(Object buf, int count, Datatype type) throws MPIException
 	{
@@ -597,7 +597,7 @@ public final class File
 	 * @param count number of items in buffer
 	 * @param type  datatype of each buffer element
 	 * @return request object
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public Request iRead(Buffer buf, int count, Datatype type) throws MPIException
 	{
@@ -617,7 +617,7 @@ public final class File
 	 * @param count number of items in buffer
 	 * @param type  datatype of each buffer element
 	 * @return request object
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public Request iReadAll(Buffer buf, int count, Datatype type) throws MPIException
 	{
@@ -637,7 +637,7 @@ public final class File
 	 * @param count number of items in buffer
 	 * @param type  datatype of each buffer element
 	 * @return request object
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public Request iWrite(Buffer buf, int count, Datatype type) throws MPIException
 	{
@@ -657,7 +657,7 @@ public final class File
 	 * @param count number of items in buffer
 	 * @param type  datatype of each buffer element
 	 * @return request object
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public Request iWriteAll(Buffer buf, int count, Datatype type) throws MPIException
 	{
@@ -675,7 +675,7 @@ public final class File
 	 * Java binding of {@code MPI_FILE_SEEK}.
 	 * @param offset file offset
 	 * @param whence update mode
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public void seek(long offset, int whence) throws MPIException
 	{
@@ -688,7 +688,7 @@ public final class File
 	/**
 	 * Java binding of {@code MPI_FILE_GET_POSITION}.
 	 * @return offset of individual pointer
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public long getPosition() throws MPIException
 	{
@@ -702,7 +702,7 @@ public final class File
 	 * Java binding of {@code MPI_FILE_GET_BYTE_OFFSET}.
 	 * @param offset offset
 	 * @return absolute byte position of offset
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public long getByteOffset(long offset) throws MPIException
 	{
@@ -718,7 +718,7 @@ public final class File
 	 * @param count number of items in buffer
 	 * @param type  datatype of each buffer element
 	 * @return status object
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public Status readShared(Object buf, int count, Datatype type)
 			throws MPIException
@@ -750,7 +750,7 @@ public final class File
 	 * @param count number of items in buffer
 	 * @param type  datatype of each buffer element
 	 * @return status object
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public Status writeShared(Object buf, int count, Datatype type)
 			throws MPIException
@@ -782,7 +782,7 @@ public final class File
 	 * @param count number of items in buffer
 	 * @param type  datatype of each buffer element
 	 * @return request object
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public Request iReadShared(Buffer buf, int count, Datatype type)
 			throws MPIException
@@ -803,7 +803,7 @@ public final class File
 	 * @param count number of items in buffer
 	 * @param type  datatype of each buffer element
 	 * @return request object
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public Request iWriteShared(Buffer buf, int count, Datatype type)
 			throws MPIException
@@ -824,7 +824,7 @@ public final class File
 	 * @param count number of items in buffer
 	 * @param type  datatype of each buffer element
 	 * @return status object
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public Status readOrdered(Object buf, int count, Datatype type)
 			throws MPIException
@@ -856,7 +856,7 @@ public final class File
 	 * @param count number of items in buffer
 	 * @param type  datatype of each buffer element
 	 * @return status object
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public Status writeOrdered(Object buf, int count, Datatype type)
 			throws MPIException
@@ -886,7 +886,7 @@ public final class File
 	 * Java binding of {@code MPI_FILE_SEEK_SHARED}.
 	 * @param offset file offset
 	 * @param whence update mode
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public void seekShared(long offset, int whence) throws MPIException
 	{
@@ -900,7 +900,7 @@ public final class File
 	/**
 	 * Java binding of {@code MPI_FILE_GET_POSITION_SHARED}.
 	 * @return offset of individual pointer
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public long getPositionShared() throws MPIException
 	{
@@ -916,7 +916,7 @@ public final class File
 	 * @param buf    buffer
 	 * @param count  number of items in buffer
 	 * @param type   datatype of each buffer element
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public void readAtAllBegin(long offset, Object buf, int count, Datatype type)
 			throws MPIException
@@ -953,7 +953,7 @@ public final class File
 	 * Java binding of {@code MPI_FILE_READ_AT_ALL_END}.
 	 * @param buf buffer
 	 * @return status object
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public Status readAtAllEnd(Object buf) throws MPIException
 	{
@@ -980,7 +980,7 @@ public final class File
 	 * @param buf    buffer
 	 * @param count  number of items in buffer
 	 * @param type   datatype of each buffer element
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public void writeAtAllBegin(long offset, Object buf, int count, Datatype type)
 			throws MPIException
@@ -1017,7 +1017,7 @@ public final class File
 	 * Java binding of {@code MPI_FILE_WRITE_AT_ALL_END}.
 	 * @param buf buffer
 	 * @return status object
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public Status writeAtAllEnd(Object buf) throws MPIException
 	{
@@ -1043,7 +1043,7 @@ public final class File
 	 * @param buf   buffer
 	 * @param count number of items in buffer
 	 * @param type  datatype of each buffer element
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public void readAllBegin(Object buf, int count, Datatype type)
 			throws MPIException
@@ -1079,7 +1079,7 @@ public final class File
 	 * Java binding of {@code MPI_FILE_READ_ALL_END}.
 	 * @param buf buffer
 	 * @return status object
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public Status readAllEnd(Object buf) throws MPIException
 	{
@@ -1105,7 +1105,7 @@ public final class File
 	 * @param buf   buffer
 	 * @param count number of items in buffer
 	 * @param type  datatype of each buffer element
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public void writeAllBegin(Object buf, int count, Datatype type)
 			throws MPIException
@@ -1141,7 +1141,7 @@ public final class File
 	 * Java binding of {@code MPI_FILE_WRITE_ALL_END}.
 	 * @param buf buffer
 	 * @return status object
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public Status writeAllEnd(Object buf) throws MPIException
 	{
@@ -1167,7 +1167,7 @@ public final class File
 	 * @param buf   buffer
 	 * @param count number of items in buffer
 	 * @param type  datatype of each buffer element
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public void readOrderedBegin(Object buf, int count, Datatype type)
 			throws MPIException
@@ -1203,7 +1203,7 @@ public final class File
 	 * Java binding of {@code MPI_FILE_READ_ORDERED_END}.
 	 * @param buf buffer
 	 * @return status object
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public Status readOrderedEnd(Object buf) throws MPIException
 	{
@@ -1229,7 +1229,7 @@ public final class File
 	 * @param buf   buffer
 	 * @param count number of items in buffer
 	 * @param type  datatype of each buffer element
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public void writeOrderedBegin(Object buf, int count, Datatype type)
 			throws MPIException
@@ -1265,7 +1265,7 @@ public final class File
 	 * Java binding of {@code MPI_FILE_WRITE_ORDERED_END}.
 	 * @param buf buffer
 	 * @return status object
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public Status writeOrderedEnd(Object buf) throws MPIException
 	{
@@ -1297,7 +1297,7 @@ public final class File
 	 * Java binding of {@code MPI_FILE_GET_TYPE_EXTENT}.
 	 * @param type		type of data
 	 * @return datatype extent
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public int getTypeExtent(Datatype type) throws MPIException
 	{
@@ -1310,7 +1310,7 @@ public final class File
 	/**
 	 * Java binding of {@code MPI_FILE_SET_ATOMICITY}.
 	 * @param atomicity true to set atomic mode, false to set nonatomic mode
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public void setAtomicity(boolean atomicity) throws MPIException
 	{
@@ -1324,7 +1324,7 @@ public final class File
 	/**
 	 * Java binding of {@code MPI_FILE_GET_ATOMICITY}.
 	 * @return current consistency of the file
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public boolean getAtomicity() throws MPIException
 	{
@@ -1336,7 +1336,7 @@ public final class File
 
 	/**
 	 * Java binding of {@code MPI_FILE_SYNC}.
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public void sync() throws MPIException
 	{
@@ -1349,7 +1349,7 @@ public final class File
 	/**
 	 * Java binding of the MPI operation {@code MPI_FILE_SET_ERRHANDLER}.
 	 * @param errhandler new MPI error handler for file
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public void setErrhandler(Errhandler errhandler) throws MPIException
 	{
@@ -1363,7 +1363,7 @@ public final class File
 	/**
 	 * Java binding of the MPI operation {@code MPI_FILE_GET_ERRHANDLER}.
 	 * @return MPI error handler currently associated with file
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public Errhandler getErrhandler() throws MPIException
 	{
@@ -1376,7 +1376,7 @@ public final class File
 	/**
 	 * Java binding of the MPI operation {@code MPI_FILE_CALL_ERRHANDLER}.
 	 * @param errorCode error code
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public void callErrhandler(int errorCode) throws MPIException
 	{

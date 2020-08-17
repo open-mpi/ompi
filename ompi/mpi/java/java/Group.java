@@ -72,7 +72,7 @@ public final class Group implements Freeable
 	/**
 	 * Java binding of the MPI operation {@code MPI_GROUP_SIZE}.
 	 * @return number of processes in the group
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public int getSize() throws MPIException
 	{
@@ -87,7 +87,7 @@ public final class Group implements Freeable
 	 * <p>Java binding of the MPI operation {@code MPI_GROUP_RANK}.
 	 * @return rank of this process in the group, or {@code MPI.UNDEFINED}
 	 *         if this process is not a member of the group.
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public int getRank() throws MPIException
 	{
@@ -125,7 +125,7 @@ public final class Group implements Freeable
 	 * @param ranks1 array of valid ranks in group1
 	 * @param group2 another group
 	 * @return array of corresponding ranks in group2
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public static int[] translateRanks(Group group1, int[] ranks1, Group group2)
 			throws MPIException
@@ -145,7 +145,7 @@ public final class Group implements Freeable
 	 * @return {@code MPI.IDENT} if the group members and group order are exactly
 	 *         the same in both groups, {@code MPI.SIMILAR} if the group members are
 	 *         the same but the order is different, {@code MPI.UNEQUAL} otherwise.
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public static int compare(Group group1, Group group2) throws MPIException
 	{
@@ -161,7 +161,7 @@ public final class Group implements Freeable
 	 * @param group1 first group
 	 * @param group2 second group
 	 * @return union group
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public static Group union(Group group1, Group group2) throws MPIException
 	{
@@ -177,7 +177,7 @@ public final class Group implements Freeable
 	 * @param group1 first group
 	 * @param group2 second group
 	 * @return intersection group
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public static Group intersection(Group group1, Group group2) throws MPIException
 	{
@@ -193,7 +193,7 @@ public final class Group implements Freeable
 	 * @param group1 first group
 	 * @param group2 second group
 	 * @return difference group
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public static Group difference(Group group1, Group group2) throws MPIException
 	{
@@ -208,7 +208,7 @@ public final class Group implements Freeable
 	 * <p>Java binding of the MPI operation {@code MPI_GROUP_INCL}.
 	 * @param ranks ranks from this group to appear in new group
 	 * @return new group
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public Group incl(int[] ranks) throws MPIException
 	{
@@ -223,7 +223,7 @@ public final class Group implements Freeable
 	 * <p>Java binding of the MPI operation {@code MPI_GROUP_EXCL}.
 	 * @param ranks ranks from this group <em>not</em> to appear in new group
 	 * @return new group
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public Group excl(int[] ranks) throws MPIException
 	{
@@ -243,7 +243,7 @@ public final class Group implements Freeable
 	 * of triplets.  The size of the second dimension is 3.
 	 * @param ranges array of integer triplets
 	 * @return new group
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public Group rangeIncl(int[][] ranges) throws MPIException
 	{
@@ -261,7 +261,7 @@ public final class Group implements Freeable
 	 * indicating ranks in this group to be excluded from the new group.
 	 * @param ranges array of integer triplets
 	 * @return new group
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public Group rangeExcl(int[][] ranges) throws MPIException
 	{

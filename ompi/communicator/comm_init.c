@@ -419,7 +419,7 @@ static void ompi_comm_destruct(ompi_communicator_t* comm)
        from one communicator to another and we end up destroying the
        new communication while propagating the error up the stack.  We
        want to make it all the way up the stack to invoke the MPI
-       exception, not cause a seg fault in pml_del_comm because it was
+       error, not cause a seg fault in pml_del_comm because it was
        never pml_add_com'ed. */
 
     if ( MPI_COMM_NULL != comm && OMPI_COMM_IS_PML_ADDED(comm) ) {
