@@ -396,16 +396,19 @@ get_mpool_res_size(int32_t max_procs,
      * - max fragments (sm_free_list_num of them)
      *
      * On top of all that, we sprinkle in some number of
-     * "opal_cache_line_size" additions to account for some
+     * SM_CACHE_LINE_PAD additions to account for some
      * padding and edge effects that may lie in the allocator.
+     *
+     * We should not use the opal_cache_line_size here, it is too early in the initialization
+     * and it is not yet initialized. Fall back to a fixed constant instead.
      */
     size = FIFO_MAP_NUM(max_procs) *
            (sizeof(sm_fifo_t) + sizeof(void *) *
-            mca_btl_smcuda_component.fifo_size + 4 * opal_cache_line_size) +
+            mca_btl_smcuda_component.fifo_size + 4 * SM_CACHE_LINE_PAD) +
            (2 * max_procs + mca_btl_smcuda_component.sm_free_list_inc) *
-           (mca_btl_smcuda_component.eager_limit + 2 * opal_cache_line_size) +
+           (mca_btl_smcuda_component.eager_limit + 2 * SM_CACHE_LINE_PAD) +
            mca_btl_smcuda_component.sm_free_list_num *
-           (mca_btl_smcuda_component.max_frag_size + 2 * opal_cache_line_size);
+           (mca_btl_smcuda_component.max_frag_size + 2 * SM_CACHE_LINE_PAD);
 
     /* add something for the control structure */
     size += sizeof(mca_common_sm_module_t);
@@ -528,12 +531,12 @@ create_rndv_file(mca_btl_smcuda_component_t *comp_ptr,
                comp_ptr->sm_max_procs *
                (sizeof(sm_fifo_t *) +
                 sizeof(char *) + sizeof(uint16_t)) +
-               opal_cache_line_size;
+               SM_CACHE_LINE_PAD;
 
         if (OPAL_SUCCESS != (rc =
             create_and_attach(comp_ptr, size, comp_ptr->sm_ctl_file_name,
                               sizeof(mca_common_sm_seg_header_t),
-                              opal_cache_line_size, &comp_ptr->sm_seg))) {
+                              SM_CACHE_LINE_PAD, &comp_ptr->sm_seg))) {
             /* rc is set */
             goto out;
         }
