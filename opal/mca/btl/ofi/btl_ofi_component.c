@@ -74,6 +74,25 @@ static int validate_info(struct fi_info *info, uint64_t required_caps,
 
     BTL_VERBOSE(("validating device: %s", info->domain_attr->name));
 
+    /* EFA does not fulfill FI_DELIVERY_COMPLETE requirements in prior libfabric
+     * versions. The prov version is set as:
+     * FI_VERSION(FI_MAJOR_VERSION * 100 + FI_MINOR_VERSION, FI_REVISION_VERSION * 10)
+     * Thus, FI_VERSION(112,0) corresponds to libfabric 1.12.0
+     */
+    if (!strncasecmp(info->fabric_attr->prov_name, "efa", 3)
+        && FI_VERSION_LT(info->fabric_attr->prov_version, FI_VERSION(112,0))) {
+        BTL_VERBOSE(("unsupported libfabric efa version"));
+        return OPAL_ERROR;
+    }
+
+    /* ofi_rxm does not fulfill FI_DELIVERY_COMPLETE requirements. Thus we
+     * exclude it if it's detected.
+     */
+    if (strstr(info->fabric_attr->prov_name, "ofi_rxm")) {
+        BTL_VERBOSE(("ofi_rxm does not support FI_DELIVERY_COMPLETE"));
+        return OPAL_ERROR;
+    }
+
     /* we need exactly all the required bits */
     if ((info->caps & required_caps) != required_caps) {
         BTL_VERBOSE(("unsupported caps"));
