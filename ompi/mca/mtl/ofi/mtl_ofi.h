@@ -955,6 +955,8 @@ ompi_mtl_ofi_imrecv(struct mca_mtl_base_module_t *mtl,
         return ompi_mtl_ofi_get_error(ret);
     }
 
+    *message = MPI_MESSAGE_NULL;
+
     return OMPI_SUCCESS;
 }
 
