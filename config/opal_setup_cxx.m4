@@ -16,6 +16,9 @@ dnl Copyright (c) 2007-2009 Sun Microsystems, Inc.  All rights reserved.
 dnl Copyright (c) 2008-2013 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2015-2016 Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
+dnl Copyright (c) 2020      Triad National Security, LLC. All rights
+dnl                         reserved.
+dnl
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -145,7 +148,7 @@ AC_DEFUN([_OPAL_SETUP_CXX_COMPILER_BACKEND],[
                       opal_cv_cxx_wno_long_double="yes"
                       if test -s conftest.err ; then
                           dnl Yes, it should be "ignor", in order to catch ignoring and ignore
-                          for i in unknown invalid ignor unrecognized ; do
+                          for i in unknown invalid ignor unrecognized 'not supported'; do
                               $GREP -iq $i conftest.err
                               if test "$?" = "0" ; then
                                   opal_cv_cxx_wno_long_double="no"
