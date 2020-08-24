@@ -380,7 +380,7 @@ opal_generic_simple_unpack_function( opal_convertor_t* pConvertor,
         }
     complete_loop:
         assert( pElem->elem.common.type < OPAL_DATATYPE_MAX_PREDEFINED );
-        if( 0 != iov_len_local ) {
+        if( (pElem->elem.common.flags & OPAL_DATATYPE_FLAG_DATA) && (0 != iov_len_local) ) {
             unsigned char* temp = conv_ptr;
             /* We have some partial data here. Let's copy it into the convertor
              * and keep it hot until the next round.
@@ -391,7 +391,7 @@ opal_generic_simple_unpack_function( opal_convertor_t* pConvertor,
             opal_unpack_partial_datatype( pConvertor, pElem,
                                           iov_ptr, 0, iov_len_local,
                                           &temp );
-                
+
             pConvertor->partial_length = iov_len_local;
             iov_len_local = 0;
         }
