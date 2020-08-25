@@ -88,14 +88,14 @@ date="Unreleased developer copy"
 # Version numbers are described in the Libtool current:revision:age
 # format.
 
-libmpi_so_version=60:4:20
+libmpi_so_version=60:5:20
 libmpi_cxx_so_version=60:1:20
 libmpi_mpifh_so_version=60:2:20
 libmpi_usempi_tkr_so_version=60:0:20
 libmpi_usempi_ignore_tkr_so_version=60:0:20
 libmpi_usempif08_so_version=61:1:21
-libopen_rte_so_version=60:4:20
-libopen_pal_so_version=60:4:20
+libopen_rte_so_version=60:5:20
+libopen_pal_so_version=60:5:20
 libmpi_java_so_version=60:0:20
 liboshmem_so_version=62:1:22
 libompitrace_so_version=60:0:20
@@ -106,7 +106,7 @@ libompitrace_so_version=60:0:20
 # components-don't-affect-the-build-system abstraction.
 
 # OMPI layer
-libmca_ompi_common_ompio_so_version=60:3:19
+libmca_ompi_common_ompio_so_version=60:4:19
 libmca_ompi_common_monitoring_so_version=60:0:10
 
 # ORTE layer
@@ -115,6 +115,6 @@ libmca_orte_common_alps_so_version=60:0:20
 # OPAL layer
 libmca_opal_common_cuda_so_version=60:0:20
 libmca_opal_common_sm_so_version=60:0:20
-libmca_opal_common_ucx_so_version=60:1:20
+libmca_opal_common_ucx_so_version=60:2:20
 libmca_opal_common_ugni_so_version=60:0:20
 libmca_opal_common_verbs_so_version=60:0:20
