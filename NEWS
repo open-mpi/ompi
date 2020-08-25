@@ -57,8 +57,10 @@ included in the vX.Y.Z section and be denoted as:
    (** also appeared: A.B.C)  -- indicating that this item was previously
                                  included in release version vA.B.C.
 
-4.0.5 -- July, 2020
--------------------
+4.0.5 -- August, 2020
+---------------------
+- Fix a problem with MPI RMA compare and swap operations.  Thanks
+  to Wojciech Chlapek for reporting.
 - Disable binding of MPI processes to system resources by Open MPI
   if an application is launched using SLURM's srun command.
 - Disable building of the Fortran mpi_f08 module when configuring
