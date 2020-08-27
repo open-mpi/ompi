@@ -883,64 +883,11 @@ int ompi_coll_tuned_reduce_scatter_intra_dec_fixed( const void *sbuf, void *rbuf
      *  {3, "ring"},
      *  {4, "butterfly"},
      *
-     * Recursive halving and ring do not support non commutative ops.
+     * Non commutative algorithm capability needs re-investigation.
+     * Defaulting to non overlapping for non commutative ops.
      */
     if (!ompi_op_is_commute(op)) {
-        if (communicator_size < 4) {
-            if (total_dsize < 262144) {
-                alg = 4;
-            } else {
-                alg = 1;
-            }
-        } else if (communicator_size < 8) {
-            if (total_dsize < 16) {
-                alg = 1;
-            } else {
-                alg = 4;
-            }
-        } else if (communicator_size < 16) {
-            if (total_dsize < 32) {
-                alg = 1;
-            } else {
-                alg = 4;
-            }
-        } else if (communicator_size < 32) {
-            if (total_dsize < 64) {
-                alg = 1;
-            } else {
-                alg = 4;
-            }
-        } else if (communicator_size < 64) {
-            if (total_dsize < 128) {
-                alg = 1;
-            } else {
-                alg = 4;
-            }
-        } else if (communicator_size < 128) {
-            if (total_dsize < 256) {
-                alg = 1;
-            } else {
-                alg = 4;
-            }
-        } else if (communicator_size < 1024) {
-            if (total_dsize < 512) {
-                alg = 1;
-            } else {
-                alg = 4;
-            }
-        } else if (communicator_size < 2048) {
-            if (total_dsize < 1024) {
-                alg = 1;
-            } else {
-                alg = 4;
-            }
-        } else {
-            if (total_dsize < 2048) {
-                alg = 1;
-            } else {
-                alg = 4;
-            }
-        }
+        alg = 1;
     } else {
         if (communicator_size < 4) {
             if (total_dsize < 65536) {
@@ -1082,82 +1029,11 @@ int ompi_coll_tuned_reduce_scatter_block_intra_dec_fixed(const void *sbuf, void 
      *  {3, "recursive_halving"},
      *  {4, "butterfly"},
      *
-     * Only recursive halving does not support non commutative ops.
+     * Non commutative algorithm capability needs re-investigation.
+     * Defaulting to basic linear for non commutative ops.
      */
     if( !ompi_op_is_commute(op) ) {
-        if (communicator_size < 4) {
-            if (total_dsize < 4) {
-                alg = 2;
-            } else if (total_dsize < 131072) {
-                alg = 4;
-            } else {
-                alg = 1;
-            }
-        } else if (communicator_size < 8) {
-            if (total_dsize < 4) {
-                alg = 1;
-            } else if (total_dsize < 32) {
-                alg = 2;
-            } else if (total_dsize < 1048576) {
-                alg = 4;
-            } else {
-                alg = 1;
-            }
-        } else if (communicator_size < 16) {
-            if (total_dsize < 4) {
-                alg = 1;
-            } else if (total_dsize < 524288) {
-                alg = 4;
-            } else if (total_dsize < 4194304) {
-                alg = 1;
-            } else {
-                alg = 4;
-            }
-        } else if (communicator_size < 32) {
-            if (total_dsize < 128) {
-                alg = 1;
-            } else if (total_dsize < 262144) {
-                alg = 4;
-            } else if (total_dsize < 2097152) {
-                alg = 1;
-            } else {
-                alg = 4;
-            }
-        } else if (communicator_size < 64) {
-            if (total_dsize < 64) {
-                alg = 1;
-            } else if (total_dsize < 65536) {
-                alg = 4;
-            } else if (total_dsize < 1048576) {
-                alg = 1;
-            } else {
-                alg = 4;
-            }
-        } else if (communicator_size < 128) {
-            if (total_dsize < 4) {
-                alg = 4;
-            } else if (total_dsize < 64) {
-                alg = 1;
-            } else if (total_dsize < 131072) {
-                alg = 4;
-            } else if (total_dsize < 524288) {
-                alg = 1;
-            } else {
-                alg = 4;
-            }
-        } else {
-            if (total_dsize < 4) {
-                alg = 4;
-            } else if (total_dsize < 16) {
-                alg = 1;
-            } else if (total_dsize < 65536) {
-                alg = 4;
-            } else if (total_dsize < 262144) {
-                alg = 1;
-            } else {
-                alg = 4;
-            }
-        }
+        alg = 1;
     } else {
         if (communicator_size < 4) {
             if (total_dsize < 4) {
