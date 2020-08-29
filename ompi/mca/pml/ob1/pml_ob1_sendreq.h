@@ -278,7 +278,8 @@ send_request_pml_complete(mca_pml_ob1_send_request_t *sendreq)
                 if( MPI_SUCCESS != sendreq->req_send.req_base.req_ompi.req_status.MPI_ERROR ) {
                     /* An error after freeing the request MUST be fatal
                      * MPI3 ch3.7: MPI_REQUEST_FREE */
-                    ompi_mpi_errors_are_fatal_comm_handler(NULL, MPI_ERR_REQUEST, "Send error after request freed");
+                    int err = MPI_ERR_REQUEST;
+                    ompi_mpi_errors_are_fatal_comm_handler(NULL, &err, "Send error after request freed");
                 }
             }
         } else {
