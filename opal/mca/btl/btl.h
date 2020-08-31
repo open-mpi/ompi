@@ -491,11 +491,6 @@ OPAL_DECLSPEC OBJ_CLASS_DECLARATION(mca_btl_base_descriptor_t);
  */
 #define MCA_BTL_DES_FLAGS_CUDA_COPY_ASYNC   0x0008
 
-/* Type of transfer that will be done with this frag.
- */
-#define MCA_BTL_DES_FLAGS_PUT               0x0010
-#define MCA_BTL_DES_FLAGS_GET               0x0020
-
 /* Ask the BTL to wake the remote process (send/sendi) or local process
  * (put/get) to handle this message. The BTL may ignore this flag if
  * signaled operations are not supported.

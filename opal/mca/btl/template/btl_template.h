@@ -12,6 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2020      Google, LLC. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -268,9 +269,8 @@ int mca_btl_template_get (struct mca_btl_base_module_t *btl,
  * @param endpoint(IN)     BTL addressing information (or NULL for all endpoints)
  * @param base (IN)        Pointer to start of region
  * @param size (IN)        Size of region
- * @param flags (IN)       Flags indicating what operation will be performed. Valid
- *                         values are MCA_BTL_DES_FLAGS_PUT, MCA_BTL_DES_FLAGS_GET,
- *                         and MCA_BTL_DES_FLAGS_ATOMIC
+ * @param flags (IN)       Flags indicating what memory access level is requested.
+ *                         See opal/mca/rcache/rcache.h for valid access flags.
  *
  * @returns a memory registration handle valid for both local and remote operations
  * @returns NULL if the region could not be registered
