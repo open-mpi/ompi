@@ -16,8 +16,8 @@ message-passing programs that would be efficient, flexible, and
 portable.
 
 The outcome, known as the MPI Standard, was first published in 1993; its
-most recent version (MPI-2) was published in July 1997. Open MPI 1.2
-includes all MPI 1.2-compliant and MPI 2-compliant routines.
+most recent version (MPI-3.1) was published in June 2015. Open MPI
+includes all MPI 3.1-compliant routines.
 
 For more information about Open MPI, see
 [https://www.open-mpi.org](https://www.open-mpi.org).
