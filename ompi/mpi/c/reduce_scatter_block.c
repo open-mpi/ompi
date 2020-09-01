@@ -94,6 +94,9 @@ int MPI_Reduce_scatter_block(const void *sendbuf, void *recvbuf, int recvcount,
         OMPI_CHECK_DATATYPE_FOR_SEND(err, datatype, recvcount);
         OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);
     }
+    if (0 == recvcount) {
+        return MPI_SUCCESS;
+    }
 
     OPAL_CR_ENTER_LIBRARY();
 

@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2017 The University of Tennessee and The University
+ * Copyright (c) 2004-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -187,6 +187,13 @@ struct ompi_communicator_t {
 
     /* Collectives module interface and data */
     mca_coll_base_comm_coll_t *c_coll;
+
+    /* Non-blocking collective tag. These tags might be shared between
+     * all non-blocking collective modules (to avoid message collision
+     * between them in the case where multiple outstanding non-blocking
+     * collective coexists using multiple backends).
+     */
+    opal_atomic_int32_t c_nbc_tag;
 };
 typedef struct ompi_communicator_t ompi_communicator_t;
 

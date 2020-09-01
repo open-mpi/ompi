@@ -40,6 +40,7 @@
 #include "ompi/constants.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/coll/base/base.h"
+#include "ompi/mca/coll/base/coll_tags.h"
 #include "ompi/mca/topo/base/base.h"
 #include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
@@ -382,6 +383,7 @@ static void ompi_comm_construct(ompi_communicator_t* comm)
     comm->c_pml_comm     = NULL;
     comm->c_topo         = NULL;
     comm->c_coll         = NULL;
+    comm->c_nbc_tag      = MCA_COLL_BASE_TAG_NONBLOCKING_BASE;
 
     /* A keyhash will be created if/when an attribute is cached on
        this communicator */
