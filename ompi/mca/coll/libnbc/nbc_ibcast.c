@@ -11,6 +11,7 @@
  *                         reserved.
  * Copyright (c) 2016-2017 IBM Corporation.  All rights reserved.
  * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
+ * Copyright (c) 2020      Bull SAS. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -20,6 +21,9 @@
  */
 #include "nbc_internal.h"
 
+#define IBCAST_DEFAULT_RADIX 4
+#define IBCAST_DEFAULT_SEGSIZE 16384
+
 static inline int bcast_sched_binomial(int rank, int p, int root, NBC_Schedule *schedule, void *buffer, int count,
                                        MPI_Datatype datatype);
 static inline int bcast_sched_linear(int rank, int p, int root, NBC_Schedule *schedule, void *buffer, int count,
@@ -28,6 +32,82 @@ static inline int bcast_sched_chain(int rank, int p, int root, NBC_Schedule *sch
                                     MPI_Datatype datatype, int fragsize, size_t size);
 static inline int bcast_sched_knomial(int rank, int comm_size, int root, NBC_Schedule *schedule, void *buf,
                                       int count, MPI_Datatype datatype, int knomial_radix);
+
+static int libnbc_ibcast_knomial_radix;
+static bool libnbc_ibcast_skip_dt_decision;
+
+static mca_base_var_enum_value_t ibcast_algorithms[] = {
+    {0, "ignore"},
+    {1, "linear"},
+    {2, "binomial"},
+    {3, "chain"},
+    {4, "knomial"},
+    {0, NULL}
+};
+
+typedef enum { NBC_BCAST_LINEAR, NBC_BCAST_BINOMIAL, NBC_BCAST_CHAIN, NBC_BCAST_KNOMIAL } bcast_algorithm_t;
+
+/* The following are used by dynamic and forced rules */
+
+/* this routine is called by the component only */
+/* module does not call this it calls the forced_getvalues routine instead */
+
+int ompi_coll_libnbc_bcast_check_forced_init (void)
+{
+  mca_base_var_enum_t *new_enum;
+
+  mca_coll_libnbc_component.forced_params[BCAST].algorithm = 0;
+  (void) mca_base_var_enum_create("coll_libnbc_ibcast_algorithms", ibcast_algorithms, &new_enum);
+  (void) mca_base_component_var_register(&mca_coll_libnbc_component.super.collm_version,
+                                         "ibcast_algorithm",
+                                         "Which ibcast algorithm is used: 0 ignore, 1 linear, 2 binomial, 3 chain, 4 knomial",
+                                         MCA_BASE_VAR_TYPE_INT, new_enum, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                         OPAL_INFO_LVL_5,
+                                         MCA_BASE_VAR_SCOPE_ALL,
+                                         &mca_coll_libnbc_component.forced_params[BCAST].algorithm);
+
+  mca_coll_libnbc_component.forced_params[BCAST].segsize = IBCAST_DEFAULT_SEGSIZE;
+  mca_base_component_var_register(&mca_coll_libnbc_component.super.collm_version,
+                                  "ibcast_algorithm_segmentsize",
+                                  "Segment size in bytes used by default for ibcast algorithms. Only has meaning if algorithm is forced and supports segmenting. 0 bytes means no segmentation.",
+                                  MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                  OPAL_INFO_LVL_5,
+                                  MCA_BASE_VAR_SCOPE_ALL,
+                                  &mca_coll_libnbc_component.forced_params[BCAST].segsize);
+
+  libnbc_ibcast_knomial_radix = IBCAST_DEFAULT_RADIX;
+
+  (void) mca_base_component_var_register(&mca_coll_libnbc_component.super.collm_version,
+                                         "ibcast_knomial_radix", "k-nomial tree radix for the ibcast algorithm (radix > 1)",
+                                         MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                         OPAL_INFO_LVL_9,
+                                         MCA_BASE_VAR_SCOPE_READONLY,
+                                         &libnbc_ibcast_knomial_radix);
+  /* ibcast decision function can make the wrong decision if a legal
+   * non-uniform data type signature is used. This has resulted in the
+   * collective operation failing, and possibly producing wrong answers.
+   * We are investigating a fix for this problem, but it is taking a while.
+   *   https://github.com/open-mpi/ompi/issues/2256
+   *   https://github.com/open-mpi/ompi/issues/1763
+   * As a result we are adding an MCA parameter to make a conservative
+   * decision to avoid this issue. If the user knows that their application
+   * does not use data types in this way, then they can set this parameter
+   * to get the old behavior. Once the issue is truely fixed, then this
+   * parameter can be removed.
+   */
+  libnbc_ibcast_skip_dt_decision = true;
+  (void) mca_base_component_var_register(&mca_coll_libnbc_component.super.collm_version,
+                                         "ibcast_skip_dt_decision",
+                                         "In ibcast only use size of communicator to choose algorithm, exclude data type signature. Set to 'false' to use data type signature in decision. WARNING: If you set this to 'false' then your application should not use non-uniform data type signatures in calls to ibcast.",
+                                         MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                         OPAL_INFO_LVL_9,
+                                         MCA_BASE_VAR_SCOPE_READONLY,
+                                         &libnbc_ibcast_skip_dt_decision);
+
+
+  OBJ_RELEASE(new_enum);
+  return OMPI_SUCCESS;
+}
 
 #ifdef NBC_CACHE_SCHEDULE
 /* tree comparison function for schedule cache */
@@ -47,17 +127,47 @@ int NBC_Bcast_args_compare(NBC_Bcast_args *a, NBC_Bcast_args *b, void *param) {
 }
 #endif
 
+static bcast_algorithm_t nbc_bcast_default_algorithm(int p, size_t size, int count,
+                                                     int* segsize)
+{
+  bcast_algorithm_t alg;
+  *segsize = IBCAST_DEFAULT_SEGSIZE;
+
+  if( libnbc_ibcast_skip_dt_decision ) {
+    if (p <= 4) {
+      alg = NBC_BCAST_LINEAR;
+    }
+    else {
+      alg = NBC_BCAST_BINOMIAL;
+    }
+  }
+  else {
+    if (p <= 4) {
+      alg = NBC_BCAST_LINEAR;
+    } else if (size * count < 65536) {
+      alg = NBC_BCAST_BINOMIAL;
+    } else if (size * count < 524288) {
+      alg = NBC_BCAST_CHAIN;
+      *segsize = 8192;
+    } else {
+      alg = NBC_BCAST_CHAIN;
+      *segsize = 32768;
+    }
+  }
+  return alg;
+}
+
 static int nbc_bcast_init(void *buffer, int count, MPI_Datatype datatype, int root,
                           struct ompi_communicator_t *comm, ompi_request_t ** request,
                           struct mca_coll_base_module_2_3_0_t *module, bool persistent)
 {
-  int rank, p, res, segsize;
+  int rank, p, res, segsize, radix;
   size_t size;
   NBC_Schedule *schedule;
 #ifdef NBC_CACHE_SCHEDULE
   NBC_Bcast_args *args, *found, search;
 #endif
-  enum { NBC_BCAST_LINEAR, NBC_BCAST_BINOMIAL, NBC_BCAST_CHAIN, NBC_BCAST_KNOMIAL } alg;
+  bcast_algorithm_t alg;
   ompi_coll_libnbc_module_t *libnbc_module = (ompi_coll_libnbc_module_t*) module;
 
   rank = ompi_comm_rank (comm);
@@ -73,43 +183,35 @@ static int nbc_bcast_init(void *buffer, int count, MPI_Datatype datatype, int ro
     return res;
   }
 
-  segsize = 16384;
-  /* algorithm selection */
-  if (libnbc_ibcast_algorithm == 0) {
-    if( libnbc_ibcast_skip_dt_decision ) {
-      if (p <= 4) {
-        alg = NBC_BCAST_LINEAR;
-      }
-      else {
-        alg = NBC_BCAST_BINOMIAL;
-      }
-    }
-    else {
-      if (p <= 4) {
-        alg = NBC_BCAST_LINEAR;
-      } else if (size * count < 65536) {
-        alg = NBC_BCAST_BINOMIAL;
-      } else if (size * count < 524288) {
-        alg = NBC_BCAST_CHAIN;
-        segsize = 8192;
-      } else {
-        alg = NBC_BCAST_CHAIN;
-        segsize = 32768;
-      }
-    }
-  } else {
-    /* user forced dynamic decision */
-    if (libnbc_ibcast_algorithm == 1) {
-      alg = NBC_BCAST_LINEAR;
-    } else if (libnbc_ibcast_algorithm == 2) {
-      alg = NBC_BCAST_BINOMIAL;
-    } else if (libnbc_ibcast_algorithm == 3) {
-      alg = NBC_BCAST_CHAIN;
-    } else if (libnbc_ibcast_algorithm == 4 && libnbc_ibcast_knomial_radix > 1) {
-      alg = NBC_BCAST_KNOMIAL;
+  if (libnbc_module->com_rules[BCAST]) {
+    int algorithm, dummy;
+    algorithm = ompi_coll_base_get_target_method_params (libnbc_module->com_rules[BCAST],
+                                                         size * count, &radix, &segsize, &dummy);
+    if (algorithm) {
+      alg = algorithm - 1; /* -1 is to shift from algorithm ID to enum */
     } else {
-      alg = NBC_BCAST_LINEAR;
+      /* get default algorithm ID but keep our segsize value */
+      alg = nbc_bcast_default_algorithm(p, size, count, &dummy);
     }
+  } else if (0 != mca_coll_libnbc_component.forced_params[BCAST].algorithm) {
+    alg = mca_coll_libnbc_component.forced_params[BCAST].algorithm - 1; /* -1 is to shift from algorithm ID to enum */
+    segsize = mca_coll_libnbc_component.forced_params[BCAST].segsize;
+    radix = libnbc_ibcast_knomial_radix;
+  } else {
+    alg = nbc_bcast_default_algorithm(p, size, count, &segsize);
+    radix = libnbc_ibcast_knomial_radix;
+  }
+
+  if (NBC_BCAST_KNOMIAL == alg && radix <= 1) {
+    alg = NBC_BCAST_LINEAR;
+  }
+
+  opal_output_verbose(10, mca_coll_libnbc_component.stream,
+                      "Libnbc ibcast : algorithm %d segmentsize %d radix %d",
+                      alg + 1, segsize, radix);
+
+  if(0 == segsize) {
+    segsize = count * size; /* only one frag */
   }
 
 #ifdef NBC_CACHE_SCHEDULE
@@ -137,7 +239,7 @@ static int nbc_bcast_init(void *buffer, int count, MPI_Datatype datatype, int ro
         res = bcast_sched_chain(rank, p, root, schedule, buffer, count, datatype, segsize, size);
         break;
       case NBC_BCAST_KNOMIAL:
-        res = bcast_sched_knomial(rank, p, root, schedule, buffer, count, datatype, libnbc_ibcast_knomial_radix);
+        res = bcast_sched_knomial(rank, p, root, schedule, buffer, count, datatype, radix);
         break;
     }
 

@@ -11,6 +11,7 @@
  *                         reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
+ * Copyright (c) 2020      Bull SAS. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -36,6 +37,34 @@ static inline int a2aw_sched_inplace(int rank, int p, NBC_Schedule *schedule,
                                     void *buf, const int *counts, const int *displs,
                                     struct ompi_datatype_t * const * types);
 
+static mca_base_var_enum_value_t ialltoallw_algorithms[] = {
+    {0, "ignore"},
+    {1, "linear"},
+    {2, "pairwise"},
+    {0, NULL}
+};
+
+/* The following are used by dynamic and forced rules */
+/* this routine is called by the component only */
+
+int ompi_coll_libnbc_alltoallw_check_forced_init (void)
+{
+  mca_base_var_enum_t *new_enum;
+
+  mca_coll_libnbc_component.forced_params[ALLTOALLW].algorithm = 0;
+  (void) mca_base_var_enum_create("coll_libnbc_alltoallw_algorithms", ialltoallw_algorithms, &new_enum);
+  (void) mca_base_component_var_register(&mca_coll_libnbc_component.super.collm_version,
+                                         "ialltoallw_algorithm",
+                                         "Which ialltoallw algorithm is used unless MPI_IN_PLACE flag has been specified: 0 ignore, 1 linear, 2 pairwise",
+                                         MCA_BASE_VAR_TYPE_INT, new_enum, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                         OPAL_INFO_LVL_5,
+                                         MCA_BASE_VAR_SCOPE_ALL,
+                                         &mca_coll_libnbc_component.forced_params[ALLTOALLW].algorithm);
+
+  OBJ_RELEASE(new_enum);
+  return OMPI_SUCCESS;
+}
+
 /* an alltoallw schedule can not be cached easily because the contents
  * ot the recvcounts array may change, so a comparison of the address
  * would not be sufficient ... we simply do not cache it */
@@ -58,6 +87,33 @@ static int nbc_alltoallw_init(const void* sendbuf, const int *sendcounts, const 
   rank = ompi_comm_rank (comm);
   p = ompi_comm_size (comm);
 
+  enum {NBC_A2AW_LINEAR, NBC_A2AW_PAIRWISE, NBC_A2AW_INPLACE} alg;
+  if (inplace) {
+    alg = NBC_A2AW_INPLACE;
+  } else if (libnbc_module->com_rules[ALLTOALLW]) {
+    int algorithm,dummy1,dummy2,dummy3;
+    /**
+     * check to see if we have some filebased rules. As we don't have global
+     * knowledge about the total amount of data, use the first available rule.
+     * This allow the users to specify the alltoallw algorithm to be used only
+     * based on the communicator size.
+    */
+    algorithm = ompi_coll_base_get_target_method_params (libnbc_module->com_rules[ALLTOALLW],
+                                                         0, &dummy1, &dummy2, &dummy3);
+    if (algorithm) {
+      alg = algorithm - 1; /* -1 is to shift from algorithm ID to enum */
+    } else {
+      alg = NBC_A2AW_LINEAR; /* default if not inplace */
+    }
+  } else if (0 != mca_coll_libnbc_component.forced_params[ALLTOALLW].algorithm) {
+    alg = mca_coll_libnbc_component.forced_params[ALLTOALLW].algorithm - 1; /* -1 is to shift from algorithm ID to enum */
+  } else {
+    alg = NBC_A2AW_LINEAR; /* default if not inplace */
+  }
+
+  opal_output_verbose(10, mca_coll_libnbc_component.stream,
+                      "Libnbc ialltoallw : algorithm %d (no segmentation supported)",
+                      alg + 1);
   /* copy data to receivbuffer */
   if (inplace) {
     ptrdiff_t lgap, lspan;
@@ -101,14 +157,23 @@ static int nbc_alltoallw_init(const void* sendbuf, const int *sendcounts, const 
     }
   }
 
-  if (inplace) {
-    res = a2aw_sched_inplace(rank, p, schedule, recvbuf,
-                                 recvcounts, rdispls, recvtypes);
-  } else {
-    res = a2aw_sched_linear(rank, p, schedule,
-                            sendbuf, sendcounts, sdispls, sendtypes,
-                            recvbuf, recvcounts, rdispls, recvtypes);
+  switch(alg) {
+    case NBC_A2AW_INPLACE:
+      res = a2aw_sched_inplace(rank, p, schedule, recvbuf,
+                               recvcounts, rdispls, recvtypes);
+      break;
+    case NBC_A2AW_LINEAR:
+      res = a2aw_sched_linear(rank, p, schedule,
+                              sendbuf, sendcounts, sdispls, sendtypes,
+                              recvbuf, recvcounts, rdispls, recvtypes);
+      break;
+    case NBC_A2AW_PAIRWISE:
+      res = a2aw_sched_pairwise(rank, p, schedule,
+                                sendbuf, sendcounts, sdispls, sendtypes,
+                                recvbuf, recvcounts, rdispls, recvtypes);
+      break;
   }
+
   if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
     OBJ_RELEASE(schedule);
     free(tmpbuf);

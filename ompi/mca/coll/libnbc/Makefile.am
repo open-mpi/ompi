@@ -22,6 +22,8 @@
 # $HEADER$
 #
 
+dist_ompidata_DATA = help-mpi-coll-libnbc.txt
+
 sources = \
         coll_libnbc.h \
 	coll_libnbc_component.c \

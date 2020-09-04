@@ -17,6 +17,7 @@
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation.  All rights reserved.
  * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
+ * Copyright (c) 2020      Bull SAS. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -30,6 +31,8 @@
 #include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/coll_base_util.h"
 #include "opal/sys/atomic.h"
+#include "ompi/mca/coll/base/coll_base_functions.h"
+#include "ompi/mca/coll/base/coll_base_dynamic_rules.h"
 
 BEGIN_C_DECLS
 
@@ -69,14 +72,15 @@ BEGIN_C_DECLS
 /* number of implemented collective functions */
 #define NBC_NUM_COLL 17
 
-extern bool libnbc_ibcast_skip_dt_decision;
-extern int libnbc_iallgather_algorithm;
-extern int libnbc_iallreduce_algorithm;
-extern int libnbc_ibcast_algorithm;
-extern int libnbc_ibcast_knomial_radix;
-extern int libnbc_iexscan_algorithm;
-extern int libnbc_ireduce_algorithm;
-extern int libnbc_iscan_algorithm;
+/* forced algorithm choices */
+/* this structure is for storing the indexes to the forced algorithm mca params... */
+/* we get these at component query (so that registered values appear in ompi_info) */
+struct coll_libnbc_force_algorithm_mca_param_indices_t {
+    int algorithm; /* which algorithm you want to force */
+    int segsize;
+    int topo;
+};
+typedef struct coll_libnbc_force_algorithm_mca_param_indices_t coll_libnbc_force_algorithm_mca_param_indices_t;
 
 struct ompi_coll_libnbc_component_t {
     mca_coll_base_component_2_0_0_t super;
@@ -84,6 +88,13 @@ struct ompi_coll_libnbc_component_t {
     opal_list_t active_requests;
     opal_atomic_int32_t active_comms;
     opal_mutex_t lock;                /* protect access to the active_requests list */
+    int dynamic_rules_verbose;
+    int stream;
+    coll_libnbc_force_algorithm_mca_param_indices_t forced_params[COLLCOUNT];
+    /* cached decision table stuff */
+    ompi_coll_base_alg_rule_t *all_base_rules;
+    int dynamic_rules_fileformat;
+    char* dynamic_rules_filename;
 };
 typedef struct ompi_coll_libnbc_component_t ompi_coll_libnbc_component_t;
 
@@ -94,6 +105,9 @@ struct ompi_coll_libnbc_module_t {
     mca_coll_base_module_t super;
     opal_mutex_t mutex;
     bool comm_registered;
+
+    /* the communicator rules for each MPI collective for ONLY my comsize */
+    ompi_coll_base_com_rule_t *com_rules[COLLCOUNT];
 #ifdef NBC_CACHE_SCHEDULE
   void *NBC_Dict[NBC_NUM_COLL]; /* this should point to a struct
                                       hb_tree, but since this is a
@@ -160,6 +174,27 @@ int ompi_coll_libnbc_progress(void);
 int NBC_Init_comm(MPI_Comm comm, ompi_coll_libnbc_module_t *module);
 int NBC_Progress(NBC_Handle *handle);
 
+int ompi_coll_libnbc_allgather_check_forced_init (void);
+int ompi_coll_libnbc_allreduce_check_forced_init (void);
+int ompi_coll_libnbc_alltoall_check_forced_init (void);
+int ompi_coll_libnbc_alltoallv_check_forced_init (void);
+int ompi_coll_libnbc_alltoallw_check_forced_init (void);
+int ompi_coll_libnbc_barrier_check_forced_init (void);
+int ompi_coll_libnbc_bcast_check_forced_init (void);
+int ompi_coll_libnbc_exscan_check_forced_init (void);
+int ompi_coll_libnbc_gather_check_forced_init (void);
+int ompi_coll_libnbc_gatherv_check_forced_init (void);
+int ompi_coll_libnbc_reduce_check_forced_init (void);
+int ompi_coll_libnbc_reduce_scatter_check_forced_init (void);
+int ompi_coll_libnbc_reduce_scatter_block_check_forced_init (void);
+int ompi_coll_libnbc_scan_check_forced_init (void);
+int ompi_coll_libnbc_scatter_check_forced_init (void);
+int ompi_coll_libnbc_scatterv_check_forced_init (void);
+int ompi_coll_libnbc_neighbor_allgather_check_forced_init (void);
+int ompi_coll_libnbc_neighbor_allgatherv_check_forced_init (void);
+int ompi_coll_libnbc_neighbor_alltoall_check_forced_init (void);
+int ompi_coll_libnbc_neighbor_alltoallv_check_forced_init (void);
+int ompi_coll_libnbc_neighbor_alltoallw_check_forced_init (void);
 
 int ompi_coll_libnbc_iallgather(const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount,
                                 MPI_Datatype recvtype, struct ompi_communicator_t *comm, ompi_request_t ** request,

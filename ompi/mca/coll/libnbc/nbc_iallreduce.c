@@ -11,6 +11,7 @@
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
+ * Copyright (c) 2020      Bull SAS. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -42,6 +43,38 @@ static inline int allred_sched_redscat_allgather(
     const void *sbuf, void *rbuf, MPI_Op op, char inplace,
     NBC_Schedule *schedule, void *tmpbuf, struct ompi_communicator_t *comm);
 
+static mca_base_var_enum_value_t iallreduce_algorithms[] = {
+    {0, "ignore"},
+    {1, "ring"},
+    {2, "binomial"},
+    {3, "rabenseifner"},
+    {4, "recursive_doubling"},
+    {0, NULL}
+};
+
+typedef enum { NBC_ARED_BINOMIAL, NBC_ARED_RING, NBC_ARED_REDSCAT_ALLGATHER, NBC_ARED_RDBL } ared_algorithm_t;
+
+/* The following are used by dynamic and forced rules */
+/* this routine is called by the component only */
+
+int ompi_coll_libnbc_allreduce_check_forced_init (void)
+{
+  mca_base_var_enum_t *new_enum;
+
+  mca_coll_libnbc_component.forced_params[ALLREDUCE].algorithm = 0;
+  (void) mca_base_var_enum_create("coll_libnbc_iallreduce_algorithms", iallreduce_algorithms, &new_enum);
+  (void) mca_base_component_var_register(&mca_coll_libnbc_component.super.collm_version,
+                                         "iallreduce_algorithm",
+                                         "Which iallreduce algorithm is used: 0 ignore, 1 ring, 2 binomial, 3 rabenseifner, 4 recursive_doubling",
+                                         MCA_BASE_VAR_TYPE_INT, new_enum, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                         OPAL_INFO_LVL_5,
+                                         MCA_BASE_VAR_SCOPE_ALL,
+                                         &mca_coll_libnbc_component.forced_params[ALLREDUCE].algorithm);
+
+  OBJ_RELEASE(new_enum);
+  return OMPI_SUCCESS;
+}
+
 #ifdef NBC_CACHE_SCHEDULE
 /* tree comparison function for schedule cache */
 int NBC_Allreduce_args_compare(NBC_Allreduce_args *a, NBC_Allreduce_args *b, void *param) {
@@ -61,6 +94,18 @@ int NBC_Allreduce_args_compare(NBC_Allreduce_args *a, NBC_Allreduce_args *b, voi
 }
 #endif
 
+static ared_algorithm_t nbc_allreduce_default_algorithm(int p, size_t size, int count,
+                                                        MPI_Op op, char inplace, int nprocs_pof2)
+{
+  if(p < 4 || size*count < 65536 || !ompi_op_is_commute(op) || inplace) {
+    return NBC_ARED_BINOMIAL;
+  } else if (count >= nprocs_pof2 && ompi_op_is_commute(op)) {
+    return NBC_ARED_REDSCAT_ALLGATHER;
+  } else {
+    return NBC_ARED_RING;
+  }
+}
+
 static int nbc_allreduce_init(const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op,
                               struct ompi_communicator_t *comm, ompi_request_t ** request,
                               struct mca_coll_base_module_2_3_0_t *module, bool persistent)
@@ -72,7 +117,7 @@ static int nbc_allreduce_init(const void* sendbuf, void* recvbuf, int count, MPI
 #ifdef NBC_CACHE_SCHEDULE
   NBC_Allreduce_args *args, *found, search;
 #endif
-  enum { NBC_ARED_BINOMIAL, NBC_ARED_RING, NBC_ARED_REDSCAT_ALLGATHER, NBC_ARED_RDBL } alg;
+  ared_algorithm_t alg;
   char inplace;
   void *tmpbuf = NULL;
   ompi_coll_libnbc_module_t *libnbc_module = (ompi_coll_libnbc_module_t*) module;
@@ -114,26 +159,32 @@ static int nbc_allreduce_init(const void* sendbuf, void* recvbuf, int count, MPI
 
   /* algorithm selection */
   int nprocs_pof2 = opal_next_poweroftwo(p) >> 1;
-  if (libnbc_iallreduce_algorithm == 0) {
-    if(p < 4 || size*count < 65536 || !ompi_op_is_commute(op) || inplace) {
-      alg = NBC_ARED_BINOMIAL;
-    } else if (count >= nprocs_pof2 && ompi_op_is_commute(op)) {
-      alg = NBC_ARED_REDSCAT_ALLGATHER;
+
+  if(libnbc_module->com_rules[ALLREDUCE]) {
+    int algorithm,dummy1,dummy2,dummy3;
+    algorithm = ompi_coll_base_get_target_method_params (libnbc_module->com_rules[ALLREDUCE],
+                                                         size * count, &dummy1, &dummy2, &dummy3);
+    if(algorithm) {
+      alg = algorithm - 1; /* -1 is to shift from algorithm ID to enum */
     } else {
-      alg = NBC_ARED_RING;
+      /* default */
+      alg = nbc_allreduce_default_algorithm (p, size, count, op, inplace, nprocs_pof2);
     }
+  } else if(0 != mca_coll_libnbc_component.forced_params[ALLREDUCE].algorithm) {
+    /* if op is not commutative or MPI_IN_PLACE was specified we have to deal with it */
+    alg = mca_coll_libnbc_component.forced_params[ALLREDUCE].algorithm - 1; /* -1 is to shift from algorithm ID to enum */
   } else {
-    if (libnbc_iallreduce_algorithm == 1)
-      alg = NBC_ARED_RING;
-    else if (libnbc_iallreduce_algorithm == 2)
-      alg = NBC_ARED_BINOMIAL;
-    else if (libnbc_iallreduce_algorithm == 3 && count >= nprocs_pof2 && ompi_op_is_commute(op))
-      alg = NBC_ARED_REDSCAT_ALLGATHER;
-    else if (libnbc_iallreduce_algorithm == 4)
-      alg = NBC_ARED_RDBL;
-    else
-      alg = NBC_ARED_RING;
+    /* default */
+    alg = nbc_allreduce_default_algorithm (p, size, count, op, inplace, nprocs_pof2);
   }
+
+  if (NBC_ARED_REDSCAT_ALLGATHER == alg && (count < nprocs_pof2 || !ompi_op_is_commute(op))) {
+    alg = NBC_ARED_RING;
+  }
+
+  opal_output_verbose(10, mca_coll_libnbc_component.stream,
+                      "Libnbc iallreduce : algorithm %d (no segmentation supported)",
+                      alg + 1);
 #ifdef NBC_CACHE_SCHEDULE
   /* search schedule in communicator specific tree */
   search.sendbuf = sendbuf;
