@@ -11,6 +11,7 @@
  *                         reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
+ * Copyright (c) 2020      Bull SAS. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -28,6 +29,35 @@ static inline int allgather_sched_recursivedoubling(
     int rank, int comm_size, NBC_Schedule *schedule, const void *sbuf,
     int scount, struct ompi_datatype_t *sdtype, void *rbuf, int rcount,
     struct ompi_datatype_t *rdtype);
+
+int libnbc_iallgather_algorithm = 0;             /* iallgather user forced algorithm */
+static mca_base_var_enum_value_t iallgather_algorithms[] = {
+    {0, "ignore"},
+    {1, "linear"},
+    {2, "recursive_doubling"},
+    {0, NULL}
+};
+
+/* The following are used by dynamic and forced rules */
+/* this routine is called by the component only */
+
+int ompi_coll_libnbc_allgather_check_forced_init (void)
+{
+  mca_base_var_enum_t *new_enum;
+
+  mca_coll_libnbc_component.forced_params[ALLGATHER].algorithm = 0;
+  (void) mca_base_var_enum_create("coll_libnbc_iallgather_algorithms", iallgather_algorithms, &new_enum);
+  (void) mca_base_component_var_register(&mca_coll_libnbc_component.super.collm_version,
+                                         "iallgather_algorithm",
+                                         "Which iallgather algorithm is used: 0 ignore, 1 linear, 2 recursive_doubling",
+                                         MCA_BASE_VAR_TYPE_INT, new_enum, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                         OPAL_INFO_LVL_5,
+                                         MCA_BASE_VAR_SCOPE_ALL,
+                                         &mca_coll_libnbc_component.forced_params[ALLGATHER].algorithm);
+
+  OBJ_RELEASE(new_enum);
+  return OMPI_SUCCESS;
+}
 
 #ifdef NBC_CACHE_SCHEDULE
 /* tree comparison function for schedule cache */
@@ -69,18 +99,34 @@ static int nbc_allgather_init(const void* sendbuf, int sendcount, MPI_Datatype s
   p = ompi_comm_size (comm);
   int is_commsize_pow2 = !(p & (p - 1));
 
-  if (libnbc_iallgather_algorithm == 0) {
+  if(!is_commsize_pow2) {
+    /* default */
     alg = NBC_ALLGATHER_LINEAR;
-  } else {
-    /* user forced dynamic decision */
-    if (libnbc_iallgather_algorithm == 1) {
-      alg = NBC_ALLGATHER_LINEAR;
-    } else if (libnbc_iallgather_algorithm == 2 && is_commsize_pow2) {
-      alg = NBC_ALLGATHER_RDBL;
+  } else if (libnbc_module->com_rules[ALLGATHER]) {
+    int algorithm,dummy1,dummy2,dummy3;
+    /* compute data size to choose correct rule */
+    size_t dsize;
+    ompi_datatype_type_size (sendtype, &dsize);
+    dsize *= sendcount;
+    /* get algorithm */
+    algorithm = ompi_coll_base_get_target_method_params (libnbc_module->com_rules[ALLGATHER],
+                                                         dsize, &dummy1, &dummy2, &dummy3);
+    if (algorithm) {
+      alg = algorithm - 1; /* -1 is to shift from algorithm ID to enum */
     } else {
+      /* default */
       alg = NBC_ALLGATHER_LINEAR;
     }
+  } else if (0 != mca_coll_libnbc_component.forced_params[ALLGATHER].algorithm) {
+    alg = mca_coll_libnbc_component.forced_params[ALLGATHER].algorithm - 1; /* -1 is to shift from algorithm ID to enum */
+  } else {
+    /* default */
+    alg = NBC_ALLGATHER_LINEAR;
   }
+
+  opal_output_verbose(10, mca_coll_libnbc_component.stream,
+                      "Libnbc iallgather : algorithm %d (no segmentation supported)",
+                      alg + 1);
 
   res = ompi_datatype_type_extent(recvtype, &rcvext);
   if (MPI_SUCCESS != res) {

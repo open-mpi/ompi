@@ -11,6 +11,7 @@
  *                         reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
+ * Copyright (c) 2020      Bull SAS. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -31,6 +32,36 @@ static inline int scan_sched_recursivedoubling(
     int rank, int comm_size, const void *sendbuf, void *recvbuf,
     int count, MPI_Datatype datatype,  MPI_Op op, char inplace,
     NBC_Schedule *schedule, void *tmpbuf1, void *tmpbuf2);
+
+static mca_base_var_enum_value_t iscan_algorithms[] = {
+    {0, "ignore"},
+    {1, "linear"},
+    {2, "recursive_doubling"},
+    {0, NULL}
+};
+
+/* The following are used by dynamic and forced rules */
+
+/* this routine is called by the component only */
+/* module does not call this it calls the forced_getvalues routine instead */
+
+int ompi_coll_libnbc_scan_check_forced_init (void)
+{
+  mca_base_var_enum_t *new_enum;
+
+  (void) mca_base_var_enum_create("coll_libnbc_iscan_algorithms", iscan_algorithms, &new_enum);
+
+  mca_coll_libnbc_component.forced_params[SCAN].algorithm = 0;
+  (void) mca_base_component_var_register(&mca_coll_libnbc_component.super.collm_version,
+                                         "iscan_algorithm",
+                                         "Which scan algorithm is used: 0 ignore, 1 linear, 2 recursive_doubling",
+                                         MCA_BASE_VAR_TYPE_INT, new_enum, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                         OPAL_INFO_LVL_5,
+                                         MCA_BASE_VAR_SCOPE_ALL,
+                                         &mca_coll_libnbc_component.forced_params[SCAN].algorithm);
+  OBJ_RELEASE(new_enum);
+  return OMPI_SUCCESS;
+}
 
 #ifdef NBC_CACHE_SCHEDULE
 /* tree comparison function for schedule cache */
@@ -71,16 +102,34 @@ static int nbc_scan_init(const void* sendbuf, void* recvbuf, int count, MPI_Data
         return nbc_get_noop_request(persistent, request);
     }
 
+    if (libnbc_module->com_rules[SCAN]) {
+        /* compute data size to choose correct rule */
+        size_t dsize;
+        ompi_datatype_type_size (datatype, &dsize);
+        dsize *= count;
+        /* get algorithm */
+        int algorithm, dummy1, dummy2, dummy3;
+        algorithm = ompi_coll_base_get_target_method_params (libnbc_module->com_rules[SCAN],
+                                                             dsize, &dummy1, &dummy2, &dummy3);
+        if (algorithm) {
+          alg = algorithm - 1; /* -1 is to shift from algorithm ID to enum */
+        } else {
+          alg = NBC_SCAN_LINEAR; /* default */
+        }
+    } else if (0 != mca_coll_libnbc_component.forced_params[SCAN].algorithm) {
+      alg = mca_coll_libnbc_component.forced_params[SCAN].algorithm - 1; /* -1 is to shift from algorithm ID to enum */
+    } else {
+      alg = NBC_SCAN_LINEAR; /* default */
+    }
+
     span = opal_datatype_span(&datatype->super, count, &gap);
-    if (libnbc_iscan_algorithm == 2) {
-        alg = NBC_SCAN_RDBL;
+    if (NBC_SCAN_RDBL == alg) {
         ptrdiff_t span_align = OPAL_ALIGN(span, datatype->super.align, ptrdiff_t);
         tmpbuf = malloc(span_align + span);
         if (NULL == tmpbuf) { return OMPI_ERR_OUT_OF_RESOURCE; }
         tmpbuf1 = (void *)(-gap);
         tmpbuf2 = (char *)(span_align) - gap;
     } else {
-        alg = NBC_SCAN_LINEAR;
         if (rank > 0) {
             tmpbuf = malloc(span);
             if (NULL == tmpbuf) { return OMPI_ERR_OUT_OF_RESOURCE; }
