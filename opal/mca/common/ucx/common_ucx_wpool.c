@@ -528,6 +528,10 @@ static int _comm_ucx_wpmem_map(opal_common_ucx_wpool_t *wpool,
 void opal_common_ucx_wpmem_free(opal_common_ucx_wpmem_t *mem)
 {
     _mem_record_t *mem_rec = NULL, *next;
+
+    if (NULL == mem) {
+        return;
+    }
     
     OBJ_DESTRUCT(&mem->tls_key);
 
@@ -824,9 +828,14 @@ opal_common_ucx_wpmem_flush(opal_common_ucx_wpmem_t *mem,
                           int target)
 {
     _ctx_record_t *ctx_rec;
-    opal_common_ucx_ctx_t *ctx = mem->ctx;
+    opal_common_ucx_ctx_t *ctx;
     int rc = OPAL_SUCCESS;
 
+    if (NULL == mem) {
+        return OPAL_SUCCESS;
+    }
+
+    ctx = mem->ctx;
     opal_mutex_lock(&ctx->mutex);
 
     OPAL_LIST_FOREACH(ctx_rec, &ctx->ctx_records, _ctx_record_t) {
