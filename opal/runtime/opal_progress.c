@@ -6,7 +6,7 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
+ * Copyright (c) 2004-2020 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -27,10 +27,6 @@
 
 #include "opal_config.h"
 
-#ifdef HAVE_SCHED_H
-#include <sched.h>
-#endif
-
 #include "opal/runtime/opal_progress.h"
 #include "opal/util/event.h"
 #include "opal/mca/base/mca_base_var.h"
@@ -39,6 +35,7 @@
 #include "opal/util/output.h"
 #include "opal/runtime/opal_params.h"
 #include "opal/runtime/opal.h"
+#include "opal/mca/threads/threads.h"
 
 #define OPAL_PROGRESS_USE_TIMERS (OPAL_TIMER_CYCLE_SUPPORTED || OPAL_TIMER_USEC_SUPPORTED)
 #define OPAL_PROGRESS_ONLY_USEC_NATIVE (OPAL_TIMER_USEC_NATIVE && !OPAL_TIMER_CYCLE_NATIVE)
@@ -68,7 +65,7 @@ static volatile opal_progress_callback_t *callbacks_lp = NULL;
 static size_t callbacks_lp_len = 0;
 static size_t callbacks_lp_size = 0;
 
-/* do we want to call sched_yield() if nothing happened */
+/* do we want to yield() if nothing happened */
 bool opal_progress_yield_when_idle = false;
 
 #if OPAL_PROGRESS_USE_TIMERS
@@ -212,7 +209,7 @@ static int opal_progress_events(void)
  * be called.  We don't propogate errors from the progress functions,
  * so no action is taken if they return failures.  The functions are
  * expected to return the number of events progressed, to determine
- * whether or not we should call sched_yield() during MPI progress.
+ * whether or not we should yield the CPU during MPI progress.
  * This is only losely tracked, as an error return can cause the number
  * of progressed events to appear lower than it actually is.  We don't
  * care, as the cost of that happening is far outweighed by the cost
@@ -246,16 +243,16 @@ opal_progress(void)
         opal_progress_events();
     }
 
-#if OPAL_HAVE_SCHED_YIELD
     if (opal_progress_yield_when_idle && events <= 0) {
         /* If there is nothing to do - yield the processor - otherwise
          * we could consume the processor for the entire time slice. If
          * the processor is oversubscribed - this will result in a best-case
          * latency equivalent to the time-slice.
+         * With some thread implementations, yielding might be required
+         * to ensure correct scheduling of all communicating threads.
          */
-        sched_yield();
+        opal_thread_yield();
     }
-#endif  /* defined(HAVE_SCHED_YIELD) */
 }
 
 

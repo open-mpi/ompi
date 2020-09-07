@@ -133,6 +133,8 @@ OPAL_DECLSPEC opal_thread_t *opal_thread_get_self(void);
 OPAL_DECLSPEC void opal_thread_kill(opal_thread_t *, int sig);
 OPAL_DECLSPEC void opal_thread_set_main(void);
 
+static inline void opal_thread_yield(void);
+
 END_C_DECLS
 
 #endif /* OPAL_MCA_THREADS_THREADS_H */

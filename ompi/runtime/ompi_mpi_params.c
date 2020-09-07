@@ -43,6 +43,8 @@
 #include "opal/util/show_help.h"
 #include "opal/runtime/opal.h"
 #include "opal/runtime/opal_params.h"
+#include "opal/mca/threads/threads.h"
+
 /*
  * Global variables
  *
@@ -62,7 +64,8 @@ bool ompi_mpi_keep_fqdn_hostnames = false;
 bool ompi_have_sparse_group_storage = OPAL_INT_TO_BOOL(OMPI_GROUP_SPARSE);
 bool ompi_use_sparse_group_storage = OPAL_INT_TO_BOOL(OMPI_GROUP_SPARSE);
 
-bool ompi_mpi_yield_when_idle = false;
+/* if the threads module requires yielding we use that as default but allow it to be overridden */
+bool ompi_mpi_yield_when_idle = OPAL_THREAD_YIELD_WHEN_IDLE_DEFAULT;
 int ompi_mpi_event_tick_rate = -1;
 char *ompi_mpi_show_mca_params_string = NULL;
 bool ompi_mpi_have_sparse_group_storage = !!(OMPI_GROUP_SPARSE);
@@ -118,7 +121,9 @@ int ompi_mpi_register_params(void)
                                  OPAL_INFO_LVL_9,
                                  MCA_BASE_VAR_SCOPE_READONLY,
                                  &ompi_mpi_oversubscribe);
-    ompi_mpi_yield_when_idle = ompi_mpi_oversubscribe;
+
+    /* yield if the node is oversubscribed and allow users to override */
+    ompi_mpi_yield_when_idle |= ompi_mpi_oversubscribe;
     (void) mca_base_var_register("ompi", "mpi", NULL, "yield_when_idle",
                                  "Yield the processor when waiting for MPI communication (for MPI processes, will default to 1 when oversubscribing nodes)",
                                  MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
