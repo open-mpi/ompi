@@ -24,7 +24,10 @@ include $(top_srcdir)/Makefile.ompi-rules
 # https://rmarkdown.rstudio.com/authoring_pandoc_markdown.html
 
 MD_FILES = \
-        MPI_T_init_thread.3.md
+        MPI_T_init_thread.3.md \
+        MPI_Status_f2c.3.md \
+        MPI_Status_f082c.3.md \
+        MPI_Status_f082f.3.md
 
 TEMPLATE_FILES = \
         MPI_Abort.3in \
@@ -315,9 +318,6 @@ TEMPLATE_FILES = \
         MPI_Startall.3in \
         MPI_Status_c2f08.3in \
         MPI_Status_c2f.3in \
-        MPI_Status_f082c.3in \
-        MPI_Status_f082f.3in \
-        MPI_Status_f2c.3in \
         MPI_Status_f2f08.3in \
         MPI_Status_set_cancelled.3in \
         MPI_Status_set_elements.3in \
