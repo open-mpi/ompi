@@ -34,6 +34,10 @@
 
 BEGIN_C_DECLS
 
+/**
+ * Request structure to be returned by non-blocking
+ * collective operations.
+ */
 struct ompi_coll_base_nbc_request_t {
     ompi_request_t super;
     union {
@@ -133,14 +137,29 @@ unsigned int ompi_mirror_perm(unsigned int x, int nbits);
  */
 int ompi_rounddown(int num, int factor);
 
+/**
+ * If necessary, retain op and store it in the
+ * request object, which should be of type ompi_coll_base_nbc_request_t
+ * (will be cast internally).
+ */
 int ompi_coll_base_retain_op( ompi_request_t *request,
                               ompi_op_t *op,
                               ompi_datatype_t *type);
 
+/**
+ * If necessary, retain the datatypes and store them in the
+ * request object, which should be of type ompi_coll_base_nbc_request_t
+ * (will be cast internally).
+ */
 int ompi_coll_base_retain_datatypes( ompi_request_t *request,
                                       ompi_datatype_t *stype,
                                      ompi_datatype_t *rtype);
 
+/**
+ * If necessary, retain the datatypes and store them in the
+ * request object, which should be of type ompi_coll_base_nbc_request_t
+ * (will be cast internally).
+ */
 int ompi_coll_base_retain_datatypes_w( ompi_request_t *request,
                                        ompi_datatype_t * const stypes[],
                                        ompi_datatype_t * const rtypes[]);
