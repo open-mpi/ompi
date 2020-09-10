@@ -1,8 +1,8 @@
 # -*- makefile -*-
 #
 # Copyright (c) 2006-2019 Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2015-2018 Research Organization for Information Science
-#                         and Technology (RIST). All rights reserved.
+# Copyright (c) 2015-2020 Research Organization for Information Science
+#                         and Technology (RIST).  All rights reserved.
 # Copyright (c) 2016      IBM Corporation.  All rights reserved.
 #
 # Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
@@ -27,6 +27,7 @@ AM_CPPFLAGS =
 if OMPI_BUILD_FORTRAN_USEMPI_IGNORE_TKR_BINDINGS
 
 AM_FCFLAGS = -I$(top_builddir)/ompi/include -I$(top_srcdir)/ompi/include \
+             -I$(top_builddir)/ompi/mpi/fortran/use-mpi \
              -I$(top_builddir) -I$(top_srcdir) $(FCFLAGS_f90)
 
 lib_LTLIBRARIES = lib@OMPI_LIBMPI_NAME@_usempi_ignore_tkr.la
@@ -38,6 +39,7 @@ mpi-ignore-tkr-removed-interfaces.h: mpi-ignore-tkr-removed-interfaces.h.in
 mpi-ignore-tkr.lo: $(top_srcdir)/ompi/mpi/fortran/base/attr-fn-int-callback-interfaces.h
 mpi-ignore-tkr.lo: $(top_srcdir)/ompi/mpi/fortran/base/conversion-fn-null-int-interface.h
 mpi-ignore-tkr.lo: mpi-ignore-tkr-interfaces.h
+mpi-ignore-tkr.lo: mpi-ignore-tkr-status.h
 mpi-ignore-tkr.lo: mpi-ignore-tkr-file-interfaces.h
 mpi-ignore-tkr.lo: mpi-ignore-tkr-removed-interfaces.h
 mpi-ignore-tkr.lo: mpi-ignore-tkr-sizeof.h
@@ -45,7 +47,9 @@ mpi-ignore-tkr.lo: mpi-ignore-tkr-sizeof.f90
 mpi-ignore-tkr.lo: mpi-ignore-tkr.F90
 
 lib@OMPI_LIBMPI_NAME@_usempi_ignore_tkr_la_SOURCES = \
-        mpi-ignore-tkr.F90
+        mpi-ignore-tkr.F90 \
+        mpi-ignore-tkr-status.h
+
 nodist_lib@OMPI_LIBMPI_NAME@_usempi_ignore_tkr_la_SOURCES = \
         mpi-ignore-tkr-interfaces.h \
         mpi-ignore-tkr-file-interfaces.h \
@@ -58,11 +62,17 @@ nodist_lib@OMPI_LIBMPI_NAME@_usempi_ignore_tkr_la_SOURCES += \
         mpi-ignore-tkr-sizeof.f90
 endif
 
+libusempi_internal_modules =
+if OMPI_FORTRAN_HAVE_TYPE_MPI_STATUS
+libusempi_internal_modules += $(top_builddir)/ompi/mpi/fortran/use-mpi/libusempi_internal_modules.la
+endif
+
 # Note that we invoke some OPAL functions directly in
 # libmpi_usempi_ignore_tkr.la, so we need to link in the OPAL library
 # directly (pulling it in indirectly via libmpi.la does not work on
 # all platforms).
 lib@OMPI_LIBMPI_NAME@_usempi_ignore_tkr_la_LIBADD = \
+        $(libusempi_internal_modules) \
         $(OMPI_TOP_BUILDDIR)/opal/lib@OPAL_LIB_PREFIX@open-pal.la
 lib@OMPI_LIBMPI_NAME@_usempi_ignore_tkr_la_LDFLAGS = \
         -version-info $(libmpi_usempi_ignore_tkr_so_version) \

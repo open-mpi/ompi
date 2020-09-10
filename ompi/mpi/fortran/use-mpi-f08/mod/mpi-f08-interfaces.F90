@@ -7,8 +7,8 @@
 !                         of Tennessee Research Foundation.  All rights
 !                         reserved.
 ! Copyright (c) 2012      Inria.  All rights reserved.
-! Copyright (c) 2015-2017 Research Organization for Information Science
-!                         and Technology (RIST). All rights reserved.
+! Copyright (c) 2015-2020 Research Organization for Information Science
+!                         and Technology (RIST).  All rights reserved.
 ! Copyright (c) 2017-2018 FUJITSU LIMITED.  All rights reserved.
 ! $COPYRIGHT$
 !
@@ -3497,6 +3497,26 @@ subroutine MPI_Query_thread_f08(provided,ierror)
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 end subroutine MPI_Query_thread_f08
 end interface  MPI_Query_thread
+
+interface  MPI_Status_f082f
+subroutine MPI_Status_f082f_f08(f08_status,f_status,ierror)
+   use :: mpi_f08_types, only : MPI_Status, MPI_STATUS_SIZE
+   implicit none
+   TYPE(MPI_Status), INTENT(IN) :: f08_status
+   INTEGER, INTENT(OUT) :: f_status(MPI_STATUS_SIZE)
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine MPI_Status_f082f_f08
+end interface  MPI_Status_f082f
+
+interface  MPI_Status_f2f08
+subroutine MPI_Status_f2f08_f08(f_status,f08_status,ierror)
+   use :: mpi_f08_types, only : MPI_Status, MPI_STATUS_SIZE
+   implicit none
+   INTEGER, INTENT(IN) :: f_status(MPI_STATUS_SIZE)
+   TYPE(MPI_Status), INTENT(OUT) :: f08_status
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine MPI_Status_f2f08_f08
+end interface  MPI_Status_f2f08
 
 interface  MPI_Status_set_cancelled
 subroutine MPI_Status_set_cancelled_f08(status,flag,ierror)

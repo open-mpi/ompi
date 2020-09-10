@@ -1,6 +1,6 @@
 #
 # Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2017-2019 Research Organization for Information Science
+# Copyright (c) 2017-2020 Research Organization for Information Science
 #                         and Technology (RIST).  All rights reserved.
 # Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
 # $COPYRIGHT$
@@ -22,7 +22,8 @@ AM_CPPFLAGS =
 
 # We must set these #defines and include paths so that the inner OMPI
 # MPI prototype header files do the Right Thing.
-AM_FCFLAGS = $(OMPI_FC_MODULE_FLAG)$(top_builddir)/ompi/mpi/fortran/use-mpi-f08/mod \
+AM_FCFLAGS = $(OMPI_FC_MODULE_FLAG)$(top_builddir)/ompi/mpi/fortran/use-mpi \
+             $(OMPI_FC_MODULE_FLAG)$(top_builddir)/ompi/mpi/fortran/use-mpi-f08/mod \
              -I$(top_builddir) -I$(top_srcdir) $(FCFLAGS_f90)
 
 # Note that the mpi_f08-based bindings are optional -- they can only

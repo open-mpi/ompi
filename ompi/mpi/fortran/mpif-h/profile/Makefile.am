@@ -15,8 +15,8 @@
 # Copyright (c) 2011-2013 Universite Bordeaux 1
 # Copyright (c) 2013-2014 Los Alamos National Security, LLC. All rights
 #                         reserved.
-# Copyright (c) 2015-2018 Research Organization for Information Science
-#                         and Technology (RIST). All rights reserved.
+# Copyright (c) 2015-2020 Research Organization for Information Science
+#                         and Technology (RIST).  All rights reserved.
 # Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
 # $COPYRIGHT$
 #
@@ -298,6 +298,8 @@ linked_files = \
         pssend_init_f.c \
         pstartall_f.c \
         pstart_f.c \
+        pstatus_f082f_f.c \
+        pstatus_f2f08_f.c \
         pstatus_set_cancelled_f.c \
         pstatus_set_elements_f.c \
         pstatus_set_elements_x_f.c \
