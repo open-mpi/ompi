@@ -54,7 +54,7 @@ int MPI_T_source_get_info (int source_id, char *name, int *name_len, char *desc,
     }
 
     if (max_timestamp) {
-        *max_timestamp = SIZE_T_MAX;
+        *max_timestamp = SIZE_MAX;
     }
 
     if (*info) {
