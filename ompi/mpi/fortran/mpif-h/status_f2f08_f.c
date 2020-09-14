@@ -48,7 +48,7 @@ OMPI_GENERATE_F77_BINDINGS(MPI_STATUS_F2F08,
                            mpi_status_f2f08_,
                            mpi_status_f2f08__,
                            ompi_status_f2f08_f,
-                           (const MPI_Fint *f_stttttatus, MPI_F08_status *f08_status *f08_status, MPI_Fint *ierr),
+                           (const MPI_Fint *f_status, MPI_F08_status *f08_status, MPI_Fint *ierr),
                            (f_status, f08_status, ierr) )
 #else
 #define ompi_status_f2f08_f pompi_status_f2f08_f
