@@ -280,8 +280,14 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
         ppack_external_size.c \
         ppack.c \
         ppack_size.c \
+        pparrived.c \
         ppcontrol.c \
+        ppready.c \
+        ppready_list.c \
+        ppready_range.c \
+        pprecv_init.c \
         pprobe.c \
+        ppsend_init.c \
         ppublish_name.c \
         pquery_thread.c \
 	praccumulate.c \

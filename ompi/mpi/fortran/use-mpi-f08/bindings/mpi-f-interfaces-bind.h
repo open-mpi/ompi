@@ -276,6 +276,53 @@ subroutine ompi_issend_f(buf,count,datatype,dest,tag,comm,request,ierror) &
    INTEGER, INTENT(OUT) :: ierror
 end subroutine ompi_issend_f
 
+subroutine ompi_psend_init_f(buf,partitions,count,datatype,dest,tag,comm,request,ierror) &
+   BIND(C, name="ompi_psend_init_f")
+   implicit none
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: buf
+   INTEGER, INTENT(IN) :: partitions, count, dest, tag
+   INTEGER, INTENT(IN) :: datatype
+   INTEGER, INTENT(IN) :: comm
+   INTEGER, INTENT(OUT) :: request
+   INTEGER, INTENT(OUT) :: ierror
+end subroutine ompi_psend_init_f
+
+subroutine ompi_precv_init_f(buf,partitions,count,datatype,dest,tag,comm,request,ierror) &
+   BIND(C, name="ompi_precv_init_f")
+   implicit none
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: buf
+   INTEGER, INTENT(IN) :: partitions, count, dest, tag
+   INTEGER, INTENT(IN) :: datatype
+   INTEGER, INTENT(IN) :: comm
+   INTEGER, INTENT(OUT) :: request
+   INTEGER, INTENT(OUT) :: ierror
+end subroutine ompi_precv_init_f
+
+subroutine ompi_pready_f(partition,request,ierror) &
+   BIND(C, name="ompi_pready_f")
+   implicit none
+   INTEGER, INTENT(IN) :: partition
+   INTEGER, INTENT(IN) :: request
+   INTEGER, INTENT(OUT) :: ierror
+end subroutine ompi_pready_f
+
+subroutine ompi_pready_list_f(length,partitions,request,ierror) &
+   BIND(C, name="ompi_pready_list_f")
+   implicit none
+   INTEGER, INTENT(IN) :: length
+   INTEGER, INTENT(IN) :: partitions(*)
+   INTEGER, INTENT(IN) :: request
+   INTEGER, INTENT(OUT) :: ierror
+end subroutine ompi_pready_list_f
+
+subroutine ompi_pready_range_f(partition_low,partition_high,request,ierror) &
+   BIND(C, name="ompi_pready_range_f")
+   implicit none
+   INTEGER, INTENT(IN) :: partition_low, partition_high
+   INTEGER, INTENT(IN) :: request
+   INTEGER, INTENT(OUT) :: ierror
+end subroutine ompi_pready_range_f
+
 subroutine ompi_probe_f(source,tag,comm,status,ierror) &
    BIND(C, name="ompi_probe_f")
    use :: mpi_f08_types, only : MPI_Status
