@@ -46,7 +46,7 @@ typedef struct {
 
 extern opal_pmix_base_t opal_pmix_base;
 
-#define OPAL_PMIX_CONDITION_STATIC_INIT PTHREAD_COND_INITIALIZER
+#define OPAL_PMIX_CONDITION_STATIC_INIT OPAL_CONDITION_STATIC_INIT
 
 END_C_DECLS
 
