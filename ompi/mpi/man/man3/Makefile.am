@@ -292,8 +292,14 @@ TEMPLATE_FILES = \
         MPI_Pack_external.3in \
         MPI_Pack_external_size.3in \
         MPI_Pack_size.3in \
+        MPI_Parrived.3in \
         MPI_Pcontrol.3in \
+        MPI_Pready.3in \
+        MPI_Pready_list.3in \
+        MPI_Pready_range.3in \
+        MPI_Precv_init.3in \
         MPI_Probe.3in \
+        MPI_Psend_init.3in \
         MPI_Publish_name.3in \
         MPI_Put.3in \
         MPI_Query_thread.3in \

@@ -13,6 +13,7 @@
 # Copyright (c) 2017-2018 FUJITSU LIMITED.  All rights reserved.
 # Copyright (c) 2019      Triad National Security, LLC. All rights
 #                         reserved.
+# Copyright (c) 2020      Sandia National Laboratories. All rights reserved.
 #
 # $COPYRIGHT$
 #
@@ -356,8 +357,14 @@ mpi_api_files = \
         pack_external_size_f08.F90 \
         pack_f08.F90 \
         pack_size_f08.F90 \
+        parrived_f08.F90 \
         pcontrol_f08.F90 \
+        pready_f08.F90 \
+        pready_range_f08.F90 \
+        pready_list_f08.F90 \
+        precv_init_f08.F90 \
         probe_f08.F90 \
+        psend_init_f08.F90 \
         publish_name_f08.F90 \
         put_f08.F90 \
         query_thread_f08.F90 \
