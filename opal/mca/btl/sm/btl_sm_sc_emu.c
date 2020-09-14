@@ -90,7 +90,7 @@ static void mca_btl_sm_sc_emu_atomic_32 (int32_t *operand, opal_atomic_int32_t *
 }
 #endif
 
-static void mca_btl_sm_sc_emu_rdma (mca_btl_base_module_t *btl, mca_btl_base_tag_t tag, mca_btl_base_descriptor_t *desc, void *ctx)
+static void mca_btl_sm_sc_emu_rdma (mca_btl_base_module_t *btl, const mca_btl_base_receive_descriptor_t *desc)
 {
     mca_btl_sm_sc_emu_hdr_t *hdr = (mca_btl_sm_sc_emu_hdr_t *) desc->des_segments[0].seg_addr.pval;
     size_t size = desc->des_segments[0].seg_len - sizeof (*hdr);
