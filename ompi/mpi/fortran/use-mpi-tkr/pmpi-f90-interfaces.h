@@ -621,6 +621,18 @@ end subroutine PMPI_Finalized
 end interface
 
 
+interface PMPI_Parrived
+
+subroutine PMPI_Parrived(request, partition, flag, ierror)
+  integer, intent(in) :: request
+  integer, intent(in) :: partition
+  logical, intent(out) :: flag
+  integer, intent(out) :: ierror
+end subroutine PMPI_Parrived
+
+end interface
+
+
 interface PMPI_Get_count
 
 subroutine PMPI_Get_count(status, datatype, count, ierror)

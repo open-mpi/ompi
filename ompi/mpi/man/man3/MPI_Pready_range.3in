@@ -1,0 +1,64 @@
+.\" -*- nroff -*-
+.\" Copyright 2013 Los Alamos National Security, LLC. All rights reserved.
+.\" Copyright (c) 2010-2015 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright (c) 1996 Thinking Machines Corporation
+.\" Copyright (c) 2020      Google, LLC. All rights reserved.
+.\" Copyright (c) 2020      Sandia National Laboratories. All rights reserved.
+.\" $COPYRIGHT$
+.TH MPI_Pready_range 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
+.SH NAME
+\fBMPI_Pready_range\fP \- Indicates that a given range os send-side partitions are ready to be transferred.
+
+.SH SYNTAX
+.ft R
+.SH C Syntax
+.nf
+#include <mpi.h>
+int MPI_Pready_range(int\fI partition_low\fP, int\fI partition_high\fP, MPI_Request\fI *request\fP)
+
+.fi
+.SH Fortran Syntax
+.nf
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
+MPI_PREADY(PARTITION_LOW, PARTITION_HIGH, REQUEST, IERROR\fP)
+	INTEGER	\fIPARTITION_LOW, PARTITION_HIGH, REQUEST, IERROR\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Pready(\fIpartition_low\fP, \fIpartition_high\fP, \fIrequest\fP, \fIierror\fP)
+	INTEGER, INTENT(IN) :: \fIpartition_low\fP, \fIpartition_high\fP
+	TYPE(MPI_Request), INTENT(IN) :: \fIrequest\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
+
+.fi
+.SH INPUT PARAMETERS
+.ft R
+.TP 1i
+partition_low
+The lowest of the range of partitions to mark ready for transfer (integer).
+.TP 1i
+partition_high
+The highest of the range of partitions to mark ready for transfer (integer).
+.TP 1i
+request
+Communication request (handle).
+
+.SH OUTPUT PARAMETERS
+.ft R
+.TP 1i
+IERROR
+Fortran only: Error status (integer).
+
+.SH ERRORS
+Almost all MPI routines return an error value; C routines as the value of the function and Fortran routines in the last argument.
+.sp
+Before the error value is returned, the current MPI error handler is
+called. By default, this error handler aborts the MPI job, except for I/O function errors. The error handler may be changed with MPI_Comm_set_errhandler; the predefined error handler MPI_ERRORS_RETURN may be used to cause error values to be returned. Note that MPI does not guarantee that an MPI program can continue past an error.
+
+.SH SEE ALSO
+MPI_Pready, MPI_Pready_list, MPI_Parrived
+.br

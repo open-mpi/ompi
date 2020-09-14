@@ -273,6 +273,12 @@ libmpi_c_mpi_la_SOURCES = \
         is_thread_main.c \
         isend.c \
         issend.c \
+        pready.c \
+        pready_range.c \
+        pready_list.c \
+        parrived.c \
+        psend_init.c \
+        precv_init.c \
         lookup_name.c \
         message_f2c.c \
         message_c2f.c \

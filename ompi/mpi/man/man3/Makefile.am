@@ -275,6 +275,12 @@ TEMPLATE_FILES = \
         MPI_Probe.3in \
         MPI_Publish_name.3in \
         MPI_Put.3in \
+	MPI_Parrived.3in \
+	MPI_Pready.3in \
+	MPI_Pready_list.3in \
+	MPI_Pready_range.3in \
+	MPI_Precv_init.3in \
+	MPI_Psend_init.3in \
         MPI_Query_thread.3in \
         MPI_Raccumulate.3in \
         MPI_Recv.3in \

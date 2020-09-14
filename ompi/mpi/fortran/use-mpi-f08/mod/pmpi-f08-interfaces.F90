@@ -202,6 +202,85 @@ subroutine PMPI_Issend_f08(buf,count,datatype,dest,tag,comm,request,ierror)
 end subroutine PMPI_Issend_f08
 end interface  PMPI_Issend
 
+
+interface  PMPI_Precv_init
+subroutine PMPI_Precv_init_f08(buf,partitions,count,datatype,dest,tag,comm,request,ierror)
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
+   implicit none
+   !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: buf
+   !$PRAGMA IGNORE_TKR buf
+   !DIR$ IGNORE_TKR buf
+   !IBM* IGNORE_TKR buf
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: buf
+   INTEGER, INTENT(IN) :: partitions, count, dest, tag
+   TYPE(MPI_Datatype), INTENT(IN) :: datatype
+   TYPE(MPI_Comm), INTENT(IN) :: comm
+   TYPE(MPI_Request), INTENT(OUT) :: request
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine PMPI_Precv_init_f08
+end interface  PMPI_Precv_init
+
+interface  PMPI_Psend_init
+subroutine PMPI_Psend_init_f08(buf,partitions,count,datatype,dest,tag,comm,request,ierror)
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
+   implicit none
+   !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: buf
+   !$PRAGMA IGNORE_TKR buf
+   !DIR$ IGNORE_TKR buf
+   !IBM* IGNORE_TKR buf
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: buf
+   INTEGER, INTENT(IN) :: partitions, count, dest, tag
+   TYPE(MPI_Datatype), INTENT(IN) :: datatype
+   TYPE(MPI_Comm), INTENT(IN) :: comm
+   TYPE(MPI_Request), INTENT(OUT) :: request
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine PMPI_Psend_init_f08
+end interface  PMPI_Psend_init
+
+interface  PMPI_Pready
+subroutine PMPI_Pready_f08(partition,request,ierror)
+   use :: mpi_f08_types, only : MPI_Request
+   implicit none
+   INTEGER, INTENT(IN) :: partition
+   TYPE(MPI_Request), INTENT(IN) :: request
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine PMPI_Pready_f08
+end interface  PMPI_Pready
+
+interface  PMPI_Pready_list
+subroutine PMPI_Pready_list_f08(length,partitions,request,ierror)
+   use :: mpi_f08_types, only : MPI_Request
+   implicit none
+   INTEGER, INTENT(IN) :: length
+   INTEGER, DIMENSION(*), INTENT(IN) :: partitions
+   TYPE(MPI_Request), INTENT(IN) :: request
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine PMPI_Pready_list_f08
+end interface  PMPI_Pready_list
+
+interface  PMPI_Pready_range
+subroutine PMPI_Pready_range_f08(partition_low,partition_high,request,ierror)
+   use :: mpi_f08_types, only : MPI_Request
+   implicit none
+   INTEGER, INTENT(IN) :: partition_low, partition_high
+   TYPE(MPI_Request), INTENT(IN) :: request
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine PMPI_Pready_range_f08
+end interface  PMPI_Pready_range
+
+interface  PMPI_Parrived
+subroutine PMPI_Parrived_f08(request,partition,flag,ierror)
+   use :: mpi_f08_types, only : MPI_Request
+   implicit none
+   TYPE(MPI_Request), INTENT(IN) :: request
+   INTEGER, INTENT(IN) :: partition
+   LOGICAL, INTENT(OUT) :: flag
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine PMPI_Parrived_f08
+end interface  PMPI_Parrived
+
 interface  PMPI_Probe
 subroutine PMPI_Probe_f08(source,tag,comm,status,ierror)
    use :: mpi_f08_types, only : MPI_Comm, MPI_Status

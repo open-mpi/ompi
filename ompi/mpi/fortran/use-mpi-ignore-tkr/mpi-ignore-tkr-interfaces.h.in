@@ -4362,6 +4362,168 @@ end subroutine PMPI_Issend
 end interface
 
 
+interface MPI_Psend_init
+
+subroutine MPI_Psend_init(buf, partitions, count, datatype, dest, tag, &
+        comm, request, ierror)
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ buf
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: buf
+  integer, intent(in) :: partitions 
+  integer, intent(in) :: count
+  integer, intent(in) :: datatype
+  integer, intent(in) :: dest
+  integer, intent(in) :: tag
+  integer, intent(in) :: comm
+  integer, intent(out) :: request
+  integer, intent(out) :: ierror
+end subroutine MPI_Psend_init
+
+end interface
+
+interface PMPI_Psend_init
+
+subroutine PMPI_Psend_init(buf, partitions, count, datatype, dest, tag, &
+        comm, request, ierror)
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ buf
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: buf
+  integer, intent(in) :: partitions
+  integer, intent(in) :: count
+  integer, intent(in) :: datatype
+  integer, intent(in) :: dest
+  integer, intent(in) :: tag
+  integer, intent(in) :: comm
+  integer, intent(out) :: request
+  integer, intent(out) :: ierror
+end subroutine PMPI_Psend_init
+
+end interface
+
+
+interface MPI_Precv_init
+
+subroutine MPI_Precv_init(buf, partitions, count, datatype, dest, tag, &
+        comm, request, ierror)
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ buf
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: buf
+  integer, intent(in) :: partitions
+  integer, intent(in) :: count 
+  integer, intent(in) :: datatype
+  integer, intent(in) :: dest
+  integer, intent(in) :: tag
+  integer, intent(in) :: comm
+  integer, intent(out) :: request
+  integer, intent(out) :: ierror
+end subroutine MPI_Precv_init
+
+end interface
+
+interface PMPI_Precv_init
+
+subroutine PMPI_Precv_init(buf, partitions, count, datatype, dest, tag, &
+        comm, request, ierror)
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ buf
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: buf
+  integer, intent(in) :: partitions
+  integer, intent(in) :: count
+  integer, intent(in) :: datatype
+  integer, intent(in) :: dest
+  integer, intent(in) :: tag
+  integer, intent(in) :: comm
+  integer, intent(out) :: request
+  integer, intent(out) :: ierror
+end subroutine PMPI_Precv_init
+
+end interface
+
+
+interface MPI_Pready
+
+subroutine MPI_Pready(partition, request, ierror)
+  integer, intent(in) :: partition
+  integer, intent(in) :: request
+  integer, intent(out) :: ierror
+end subroutine MPI_Pready
+
+end interface
+
+interface PMPI_Pready
+
+subroutine PMPI_Pready(partition, request, ierror)
+  integer, intent(in) :: partition
+  integer, intent(in) :: request
+  integer, intent(out) :: ierror
+end subroutine PMPI_Pready
+
+end interface
+
+
+interface MPI_Pready_list
+
+subroutine MPI_Pready_list(length, partitions, request, ierror)
+  integer, intent(in) :: length
+  integer, dimension(*), intent(in) :: partitions
+  integer, intent(in) :: request
+  integer, intent(out) :: ierror
+end subroutine MPI_Pready_list
+
+end interface
+
+interface PMPI_Pready_list
+
+subroutine PMPI_Pready_list(length, partitions, request, ierror)
+  integer, intent(in) :: length
+  integer, dimension(*), intent(in) :: partitions
+  integer, intent(in) :: request
+  integer, intent(out) :: ierror
+end subroutine PMPI_Pready_list
+
+end interface
+
+
+interface MPI_Pready_range
+
+subroutine MPI_Pready_range(partition_low, partition_high, request, ierror)
+  integer, intent(in) :: partition_low
+  integer, intent(in) :: partition_high
+  integer, intent(in) :: request
+  integer, intent(out) :: ierror
+end subroutine MPI_Pready_range
+
+end interface
+
+interface PMPI_Pready_range
+
+subroutine PMPI_Pready_range(partition_low, partition_high, request, ierror)
+  integer, intent(in) :: partition_low
+  integer, intent(in) :: partition_high
+  integer, intent(in) :: request
+  integer, intent(out) :: ierror
+end subroutine PMPI_Pready_range
+
+end interface
+
+interface MPI_Parrived
+
+subroutine MPI_Parrived(request, partition, flag, ierror)
+  integer, intent(in) :: request
+  integer, intent(in) :: partition
+  logical, intent(in) :: flag
+  integer, intent(out) :: ierror
+end subroutine MPI_Parrived
+
+end interface
+
+interface PMPI_Parrived
+
+subroutine PMPI_Parrived(request, partition, flag, ierror)
+  integer, intent(in) :: request
+  integer, intent(in) :: partition
+  logical, intent(in) :: flag
+  integer, intent(out) :: ierror
+end subroutine PMPI_Parrived
+
+end interface
+
 interface MPI_Lookup_name
 
 subroutine MPI_Lookup_name(service_name, info, port_name, ierror)

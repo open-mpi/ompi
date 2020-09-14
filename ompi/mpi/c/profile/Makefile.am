@@ -253,6 +253,12 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
         pis_thread_main.c \
         pisend.c \
         pissend.c \
+        ppready.c \
+        ppready_range.c \
+        ppready_list.c \
+        pparrived.c \
+        ppsend_init.c \
+        pprecv_init.c \
         plookup_name.c \
         pmessage_f2c.c \
         pmessage_c2f.c \

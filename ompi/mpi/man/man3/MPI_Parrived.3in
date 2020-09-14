@@ -1,0 +1,66 @@
+.\" -*- nroff -*-
+.\" Copyright 2013 Los Alamos National Security, LLC. All rights reserved.
+.\" Copyright (c) 2010-2015 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright (c) 1996 Thinking Machines Corporation
+.\" Copyright (c) 2020      Google, LLC. All rights reserved.
+.\" Copyright (c) 2020      Sandia National Laboratories. All rights reserved.
+.\" $COPYRIGHT$
+.TH MPI_Parrived 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
+.SH NAME
+\fBMPI_Parrived\fP \- Tests for completion of a specified receive-side partition.
+
+.SH SYNTAX
+.ft R
+.SH C Syntax
+.nf
+#include <mpi.h>
+int MPI_Parrived(MPI_Request\fI *request\fP, int\fI partition\fP, int\fI *flag\fP)
+
+.fi
+.SH Fortran Syntax
+.nf
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
+MPI_PARRIVED(REQUEST, PARTITION, FLAG IERROR\fP)
+	INTEGER	\fIREQUEST, PARTITION, FLAG(*), IERROR\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Parrived(\fIrequest\fP, \fIpartition\fP, \fIflag\fP, \fIierror\fP)
+	TYPE(MPI_Request), INTENT(in) :: \fIrequest\fP
+        INTEGER, INTENT(IN) :: \fIpartition\fP
+        INTEGER, INTENT(out) :: \fIflag\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
+
+.fi
+.SH INPUT PARAMETERS
+.ft R
+.TP 1i
+request
+Communication request (handle).
+.TP 1i
+partition
+The number of the partition to test for completion (integer).
+
+.SH OUTPUT PARAMETERS
+.ft R
+.TP 1i
+flag
+True if partition is completed. 
+.ft R
+.TP 1i
+IERROR
+Fortran only: Error status (integer).
+
+.SH ERRORS
+Almost all MPI routines return an error value; C routines as the value of the function and Fortran routines in the last argument.
+.sp
+Before the error value is returned, the current MPI error handler is
+called. By default, this error handler aborts the MPI job, except for I/O function errors. The error handler may be changed with MPI_Comm_set_errhandler; the predefined error handler MPI_ERRORS_RETURN may be used to cause error values to be returned. Note that MPI does not guarantee that an MPI program can continue past an error.
+
+.SH SEE ALSO
+MPI_Pready_list, MPI_Pready_range, MPI_Parrived
+.br

@@ -15,7 +15,7 @@
  *                         reserved.
  * Copyright (c) 2006      University of Houston. All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
- * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
+ * Copyright (c) 2011-2020 Sandia National Laboratories. All rights reserved.
  * Copyright (c) 2014-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -75,6 +75,7 @@
 #include "ompi/mca/pml/base/base.h"
 #include "ompi/mca/bml/base/base.h"
 #include "ompi/mca/osc/base/base.h"
+#include "ompi/mca/part/base/base.h"
 #include "ompi/mca/coll/base/base.h"
 #include "ompi/runtime/ompi_rte.h"
 #include "ompi/mca/topo/base/base.h"
@@ -312,6 +313,10 @@ int ompi_mpi_finalize(void)
         goto done;
     }
 
+    if (OMPI_SUCCESS != (ret = mca_part_base_finalize())) {
+        goto done;
+    }
+
     /* free communicator resources. this MUST come before finalizing the PML
      * as this will call into the pml */
     if (OMPI_SUCCESS != (ret = ompi_comm_finalize())) {
@@ -429,6 +434,9 @@ int ompi_mpi_finalize(void)
     }
     (void) mca_base_framework_close(&ompi_topo_base_framework);
     if (OMPI_SUCCESS != (ret = mca_base_framework_close(&ompi_osc_base_framework))) {
+        goto done;
+    }
+    if (OMPI_SUCCESS != (ret = mca_base_framework_close(&ompi_part_base_framework))) {
         goto done;
     }
     if (OMPI_SUCCESS != (ret = mca_base_framework_close(&ompi_coll_base_framework))) {

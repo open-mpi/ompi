@@ -13,6 +13,7 @@
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      FUJITSU LIMITED.  All rights reserved.
+ * Copyright (c) 2020      Sandia National Laboratories. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -68,6 +69,7 @@ int MPI_Start(MPI_Request *request)
     switch((*request)->req_type) {
     case OMPI_REQUEST_PML:
     case OMPI_REQUEST_COLL:
+    case OMPI_REQUEST_PART:
         if ( MPI_PARAM_CHECK && !(*request)->req_persistent) {
             return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_REQUEST, FUNC_NAME);
         }

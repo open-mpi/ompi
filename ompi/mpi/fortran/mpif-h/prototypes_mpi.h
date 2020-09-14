@@ -304,6 +304,12 @@ PN2(void, MPI_Irecv, mpi_irecv, MPI_IRECV, (char *buf, MPI_Fint *count, MPI_Fint
 PN2(void, MPI_Irsend, mpi_irsend, MPI_IRSEND, (char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *dest, MPI_Fint *tag, MPI_Fint *comm, MPI_Fint *request, MPI_Fint *ierr));
 PN2(void, MPI_Isend, mpi_isend, MPI_ISEND, (char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *dest, MPI_Fint *tag, MPI_Fint *comm, MPI_Fint *request, MPI_Fint *ierr));
 PN2(void, MPI_Issend, mpi_issend, MPI_ISSEND, (char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *dest, MPI_Fint *tag, MPI_Fint *comm, MPI_Fint *request, MPI_Fint *ierr));
+PN2(void, MPI_Parrived, mpi_parrived, MPI_PARRIVED, (MPI_Fint *request, MPI_Fint *partition, ompi_fortran_logical_t *flag, MPI_Fint *ierr));
+PN2(void, MPI_Pready, mpi_pready, MPI_PREADY, (MPI_Fint *partition, MPI_Fint *request, MPI_Fint *ierr));
+PN2(void, MPI_Pready_list, mpi_pready_list, MPI_PREADY_LIST, (MPI_Fint *length, MPI_Fint *partition, MPI_Fint *request, MPI_Fint *ierr));
+PN2(void, MPI_Pready_range, mpi_pready_range, MPI_PREADY_RANGE, (MPI_Fint *partition_low, MPI_Fint *partition_high, MPI_Fint *request, MPI_Fint *ierr));
+PN2(void, MPI_Psend_init, mpi_psend_init, MPI_PSEND_INIT, (char *buf, MPI_Fint *partitions, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *dest, MPI_Fint *tag, MPI_Fint *comm, MPI_Fint *request, MPI_Fint *ierr));
+PN2(void, MPI_Precv_init, mpi_precv_init, MPI_PRECV_INIT, (char *buf, MPI_Fint *partitions, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *src, MPI_Fint *tag, MPI_Fint *comm, MPI_Fint *request, MPI_Fint *ierr));
 PN2(void, MPI_Is_thread_main, mpi_is_thread_main, MPI_IS_THREAD_MAIN, (ompi_fortran_logical_t *flag, MPI_Fint *ierr));
 PN2(void, MPI_Keyval_create, mpi_keyval_create, MPI_KEYVAL_CREATE, (ompi_fint_copy_attr_function* copy_fn, ompi_fint_delete_attr_function* delete_fn, MPI_Fint *keyval, MPI_Fint *extra_state, MPI_Fint *ierr));
 PN2(void, MPI_Keyval_free, mpi_keyval_free, MPI_KEYVAL_FREE, (MPI_Fint *keyval, MPI_Fint *ierr));

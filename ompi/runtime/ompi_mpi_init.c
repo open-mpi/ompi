@@ -15,7 +15,7 @@
  *                         reserved.
  * Copyright (c) 2006-2009 University of Houston. All rights reserved.
  * Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
- * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
+ * Copyright (c) 2011-2020 Sandia National Laboratories. All rights reserved.
  * Copyright (c) 2012-2013 Inria.  All rights reserved.
  * Copyright (c) 2014-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2016 Research Organization for Information Science
@@ -85,6 +85,7 @@
 #include "ompi/mca/pml/base/base.h"
 #include "ompi/mca/bml/base/base.h"
 #include "ompi/mca/osc/base/base.h"
+#include "ompi/mca/part/base/base.h"
 #include "ompi/mca/coll/base/base.h"
 #include "ompi/mca/io/io.h"
 #include "ompi/mca/io/base/base.h"
@@ -610,6 +611,12 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided,
         goto error;
     }
 
+    
+    if (OMPI_SUCCESS != (ret = mca_base_framework_open(&ompi_part_base_framework, 0))) {
+        error = "ompi_part_base_open() failed";
+        goto error;
+    }
+
 #if OPAL_ENABLE_FT_CR == 1
     if (OMPI_SUCCESS != (ret = mca_base_framework_open(&ompi_crcp_base_framework, 0))) {
         error = "ompi_crcp_base_open() failed";
@@ -726,6 +733,13 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided,
         (ret = ompi_osc_base_find_available(OPAL_ENABLE_PROGRESS_THREADS,
                                             ompi_mpi_thread_multiple))) {
         error = "ompi_osc_base_find_available() failed";
+        goto error;
+    }
+
+    if (OMPI_SUCCESS !=
+        (ret = mca_part_base_select(OPAL_ENABLE_PROGRESS_THREADS,
+                                   ompi_mpi_thread_multiple))) {
+        error = "mca_part_base_select() failed";
         goto error;
     }
 

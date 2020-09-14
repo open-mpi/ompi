@@ -254,6 +254,12 @@ linked_files = \
         piscatterv_f.c \
         pisend_f.c \
         pissend_f.c \
+        pparrived_f.c \
+        ppready_f.c \
+        ppready_list_f.c \
+        ppready_range_f.c \
+        pprecv_init_f.c \
+        ppsend_init_f.c \
         pis_thread_main_f.c \
         pkeyval_create_f.c \
         pkeyval_free_f.c \

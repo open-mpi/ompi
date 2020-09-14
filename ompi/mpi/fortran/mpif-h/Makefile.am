@@ -340,6 +340,12 @@ lib@OMPI_LIBMPI_NAME@_mpifh_la_SOURCES += \
         iscatter_f.c \
         iscatterv_f.c \
         issend_f.c \
+	parrived_f.c \
+	pready_f.c \
+	pready_list_f.c \
+	pready_range_f.c \
+	precv_init_f.c \
+	psend_init_f.c \
         is_thread_main_f.c \
         keyval_create_f.c \
         keyval_free_f.c \

@@ -13,6 +13,7 @@
 # Copyright (c) 2017-2018 FUJITSU LIMITED.  All rights reserved.
 # Copyright (c) 2019      Triad National Security, LLC. All rights
 #                         reserved.
+# Copyright (c) 2020      Sandia National Laboratories. All rights reserved.
 #
 # $COPYRIGHT$
 #
@@ -315,6 +316,12 @@ mpi_api_files = \
         iscatterv_f08.F90 \
         isend_f08.F90 \
         issend_f08.F90 \
+        psend_init_f08.F90 \
+        precv_init_f08.F90 \
+        pready_f08.F90 \
+        pready_range_f08.F90 \
+        pready_list_f08.F90 \
+        parrived_f08.F90 \
         is_thread_main_f08.F90 \
         lookup_name_f08.F90 \
         mprobe_f08.F90 \
@@ -670,6 +677,12 @@ pmpi_api_files = \
         profile/piscatterv_f08.F90 \
         profile/pisend_f08.F90 \
         profile/pissend_f08.F90 \
+        profile/ppsend_init_f08.F90 \
+        profile/pprecv_init_f08.F90 \
+        profile/ppready_f08.F90 \
+        profile/ppready_range_f08.F90 \
+        profile/ppready_list_f08.F90 \
+        profile/pparrived_f08.F90 \
         profile/pis_thread_main_f08.F90 \
         profile/plookup_name_f08.F90 \
         profile/pmprobe_f08.F90 \
