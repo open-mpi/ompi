@@ -302,6 +302,7 @@ int mca_base_var_init(void)
         if( NULL == (cwd = getcwd(NULL, 0) )) {
             opal_output(0, "Error: Unable to get the current working directory\n");
             cwd = strdup(".");
+        }
 
         ret = mca_base_source_init ();
         if (OPAL_SUCCESS != ret) {
