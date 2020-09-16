@@ -99,12 +99,12 @@ mca_base_event_list_item_t mca_pml_ob1_events[] = {
 
     [MCA_PML_OB1_EVENT_SEARCH_POSTED_BEGIN] = {.name = "search_posted_begin", .desc = "Begin searching posted message queue",
                                                .verbosity = OPAL_INFO_LVL_5, .datatypes = &mca_pml_ob1_match_hdr_types[1],
-                                               .offsets = &mca_pml_ob1_match_hdr_offsets[1], .num_datatypes = 2,
+                                               .offsets = &mca_pml_ob1_match_hdr_offsets[1], .num_datatypes = 3,
                                                .elements = &mca_pml_ob1_match_hdr_names[1], .extent = 8, .bind = MCA_BASE_VAR_BIND_MPI_COMM},
 
     [MCA_PML_OB1_EVENT_SEARCH_POSTED_END] = {.name = "search_posted_end", .desc = "Finished searching posted message queue",
                                              .verbosity = OPAL_INFO_LVL_5, .datatypes = &mca_pml_ob1_match_hdr_types[1],
-                                             .offsets = &mca_pml_ob1_match_hdr_offsets[1], .num_datatypes = 2,
+                                             .offsets = &mca_pml_ob1_match_hdr_offsets[1], .num_datatypes = 3,
                                              .elements = &mca_pml_ob1_match_hdr_names[1], .extent = 8, .bind = MCA_BASE_VAR_BIND_MPI_COMM},
 
     [MCA_PML_OB1_EVENT_SEARCH_UNEX_BEGIN] = {.name = "search_unexpected_begin", .desc = "Begin searching unexpected message queue",
