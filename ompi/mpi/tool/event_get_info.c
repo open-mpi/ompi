@@ -64,18 +64,26 @@ int MPI_T_event_get_info (int event_index, char *name, int *name_len,
         // num_elements is INOUT
         //
         // Can query number of datatypes, returned in num_elements
-        //   if array_of_datatypes or displacements are NULL, just return data_type_count
+        //   if array_of_datatypes or displacements are NULL, just return data_type_count.
+        // Otherwise, if array_of_datatypes or displacements are not NULL, use num_elements
+        //   as maximum datatypes or displacements returned.
+        //
+        // Unless the user passes the NULL pointer for num_elements, 
+        //   the function returns the number of elements required for this event type.
+        //
+        // If the number of elements used by the event type is larger than the value of num_elements 
+        //   provided by the user, the number of datatype handles and displacements returned in the 
+        //   corresponding arrays is truncated to the value of num_elements passed in by the user.
 
         max_datatypes = 0;
         if (num_elements) {
-            if (NULL == array_of_datatypes || NULL == array_of_displacements) 
-                *num_elements = event->event_datatype_count + 1;
-            else {
-                if (*num_elements < (int) (event->event_datatype_count + 1))
-                    max_datatypes = *num_elements - 1;
+            if (NULL != array_of_datatypes || NULL != array_of_displacements) 
+                if (*num_elements < (int) (event->event_datatype_count))
+                    max_datatypes = *num_elements;
                 else
                     max_datatypes = event->event_datatype_count;
             }
+            *num_elements = event->event_datatype_count;
         }
 
         if (max_datatypes) {
