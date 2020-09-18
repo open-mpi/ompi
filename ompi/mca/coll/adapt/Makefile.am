@@ -24,7 +24,9 @@ sources = \
 	coll_adapt_inbuf.c \
 	coll_adapt_inbuf.h \
 	coll_adapt_item.c \
-	coll_adapt_item.h 
+	coll_adapt_item.h \
+	coll_adapt_topocache.c \
+	coll_adapt_topocache.h
 
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la

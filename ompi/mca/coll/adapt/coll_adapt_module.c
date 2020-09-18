@@ -41,6 +41,7 @@
 #include "ompi/mca/coll/base/coll_tags.h"
 #include "ompi/mca/pml/pml.h"
 #include "coll_adapt_algorithms.h"
+#include "coll_adapt_topocache.h"
 
 
 /*
@@ -52,6 +53,7 @@
  */
 static void adapt_module_construct(mca_coll_adapt_module_t * module)
 {
+    module->topo_cache    = NULL;
     module->adapt_enabled = false;
 }
 
@@ -60,6 +62,14 @@ static void adapt_module_construct(mca_coll_adapt_module_t * module)
  */
 static void adapt_module_destruct(mca_coll_adapt_module_t * module)
 {
+    if (NULL != module->topo_cache) {
+        adapt_topology_cache_item_t *item;
+        while (NULL != (item = (adapt_topology_cache_item_t*)opal_list_remove_first(module->topo_cache))) {
+            OBJ_RELEASE(item);
+        }
+        OBJ_RELEASE(module->topo_cache);
+        module->topo_cache = NULL;
+    }
     module->adapt_enabled = false;
 }
 
@@ -70,11 +80,36 @@ OBJ_CLASS_INSTANCE(mca_coll_adapt_module_t,
             adapt_module_destruct);
 
 /*
+ * In this macro, the following variables are supposed to have been declared
+ * in the caller:
+ * . ompi_communicator_t *comm
+ * . mca_coll_adapt_module_t *adapt_module
+ */
+#define ADAPT_SAVE_PREV_COLL_API(__api)                                 \
+    do {                                                                \
+        adapt_module->previous_ ## __api            = comm->c_coll->coll_ ## __api; \
+        adapt_module->previous_ ## __api ## _module = comm->c_coll->coll_ ## __api ## _module; \
+        if (!comm->c_coll->coll_ ## __api || !comm->c_coll->coll_ ## __api ## _module) { \
+            opal_output_verbose(1, ompi_coll_base_framework.framework_output, \
+                                "(%d/%s): no underlying " # __api"; disqualifying myself", \
+                                comm->c_contextid, comm->c_name); \
+            return OMPI_ERROR;                                  \
+        }                                                       \
+        OBJ_RETAIN(adapt_module->previous_ ## __api ## _module);  \
+    } while(0)
+
+
+/*
  * Init module on the communicator
  */
 static int adapt_module_enable(mca_coll_base_module_t * module,
             struct ompi_communicator_t *comm)
 {
+    mca_coll_adapt_module_t * adapt_module = (mca_coll_adapt_module_t*) module;
+
+    ADAPT_SAVE_PREV_COLL_API(reduce);
+    ADAPT_SAVE_PREV_COLL_API(ireduce);
+
     return OMPI_SUCCESS;
 }
 
@@ -157,6 +192,7 @@ mca_coll_base_module_t *ompi_coll_adapt_comm_query(struct ompi_communicator_t * 
  */
 int ompi_coll_adapt_request_free(ompi_request_t ** request)
 {
+    OMPI_REQUEST_FINI(*request);
     (*request)->req_state = OMPI_REQUEST_INVALID;
     OBJ_RELEASE(*request);
     *request = MPI_REQUEST_NULL;

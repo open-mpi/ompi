@@ -3,9 +3,9 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -74,20 +74,19 @@ struct ompi_coll_adapt_constant_reduce_context_s {
     /* Increment of each segment */
     int segment_increment;
     int num_segs;
-    ompi_request_t *request;
     int rank;
+    int root;
+    /* The distance between the address of inbuf->buff and the address of inbuf */
+    int distance;
+    int ireduce_tag;
+    /* How many sends are posted but not finished */
+    int32_t ongoing_send;
     /* Length of the fragment array, which is the number of recevied segments */
     int32_t num_recv_segs;
     /* Number of sent segments */
     int32_t num_sent_segs;
     /* Next seg need to be received for every children */
-    opal_atomic_int32_t *next_recv_segs;
-    /* Mutex to protect recv_list */
-    opal_mutex_t *mutex_recv_list;
-    /* Mutex to protect num_recv_segs */
-    opal_mutex_t *mutex_num_recv_segs;
-    /* Mutex to protect num_sent */
-    opal_mutex_t *mutex_num_sent;
+    int32_t *next_recv_segs;
     /* Mutex to protect each segment when do the reduce op */
     opal_mutex_t *mutex_op_list;
     /* Reduce operation */
@@ -95,20 +94,15 @@ struct ompi_coll_adapt_constant_reduce_context_s {
     ompi_coll_tree_t *tree;
     /* Accumulate buff */
     char **accumbuf;
-    /* inbuf list address of accumbuf */ 
-    ompi_coll_adapt_inbuf_t ** accumbuf_to_inbuf;  
-    opal_free_list_t *inbuf_list;
-    /* A list to store the segments which are received and not yet be sent */
-    opal_list_t *recv_list;
     ptrdiff_t lower_bound;
-    /* How many sends are posted but not finished */
-    opal_atomic_int32_t ongoing_send;
     char *sbuf;
     char *rbuf;
-    int root;
-    /* The distance between the address of inbuf->buff and the address of inbuf */
-    int distance;
-    int ireduce_tag;
+    opal_free_list_t inbuf_list;
+    /* Mutex to protect recv_list */
+    opal_mutex_t mutex_recv_list;
+    /* A list to store the segments which are received and not yet be sent */
+    opal_list_t recv_list;
+    ompi_request_t *request;
 };
 
 typedef struct ompi_coll_adapt_constant_reduce_context_s ompi_coll_adapt_constant_reduce_context_t;
@@ -123,7 +117,7 @@ typedef int (*ompi_coll_adapt_reduce_cuda_callback_fn_t) (ompi_coll_adapt_reduce
 struct ompi_coll_adapt_reduce_context_s {
     opal_free_list_item_t super;
     char *buff;
-    int frag_id;
+    int seg_index;
     int child_id;
     int peer;
     ompi_coll_adapt_constant_reduce_context_t *con;

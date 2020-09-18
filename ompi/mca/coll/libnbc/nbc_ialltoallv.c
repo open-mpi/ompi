@@ -74,13 +74,20 @@ static int nbc_alltoallv_init(const void* sendbuf, const int *sendcounts, const 
       }
     }
     span = opal_datatype_span(&recvtype->super, count, &gap);
+    /**
+     * If this process has no data to send or receive it can bail out early,
+     * but it needs to increase the nonblocking tag to stay in sycn with the
+     * rest of the processses.
+     */
     if (OPAL_UNLIKELY(0 == span)) {
+      ompi_coll_base_nbc_reserve_tags(comm, 1);
       return nbc_get_noop_request(persistent, request);
     }
     tmpbuf = malloc(span);
     if (OPAL_UNLIKELY(NULL == tmpbuf)) {
       return OMPI_ERR_OUT_OF_RESOURCE;
     }
+
     sendcounts = recvcounts;
     sdispls = rdispls;
   } else {
