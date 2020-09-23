@@ -215,17 +215,8 @@ static int tuned_open(void)
     int rc;
 
 #if OPAL_ENABLE_DEBUG
-    {
-        int param;
-
-        param = mca_base_var_find("ompi", "coll", "base", "verbose");
-        if (param >= 0) {
-            const int *verbose = NULL;
-            mca_base_var_get_value(param, &verbose, NULL, NULL);
-            if (verbose && verbose[0] > 0) {
-                ompi_coll_tuned_stream = opal_output_open(NULL);
-            }
-        }
+    if (ompi_coll_base_framework.framework_verbose) {
+        ompi_coll_tuned_stream = opal_output_open(NULL);
     }
 #endif  /* OPAL_ENABLE_DEBUG */
 

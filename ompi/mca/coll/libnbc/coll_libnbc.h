@@ -94,7 +94,6 @@ struct ompi_coll_libnbc_module_t {
     mca_coll_base_module_t super;
     opal_mutex_t mutex;
     bool comm_registered;
-    int tag;
 #ifdef NBC_CACHE_SCHEDULE
   void *NBC_Dict[NBC_NUM_COLL]; /* this should point to a struct
                                       hb_tree, but since this is a
