@@ -226,11 +226,11 @@ int mca_scoll_mpi_reduce(struct oshmem_group_t *group,
     MPI_COLL_VERBOSE(20,"RUNNING MPI REDUCE");
     void *sbuf, *rbuf;
     mpi_module = (mca_scoll_mpi_module_t *) group->g_scoll.scoll_reduce_module;
-    sbuf = (void *) source;
-    rbuf = target;
     dtype = shmem_dtype_to_ompi_dtype(op);
     h_op = shmem_op_to_ompi_op(op->op);
     count = nlong/op->dt_size;
+    rbuf = target;
+    sbuf = (source == target) ? MPI_IN_PLACE : (void*)source;
 
     /* Do nothing on zero-length request */
     if (OPAL_UNLIKELY(!nlong)) {
