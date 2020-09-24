@@ -259,6 +259,9 @@ static int tuned_open(void)
                                                         &(mca_coll_tuned_component.all_base_rules), COLLCOUNT);
             if( rc >= 0 ) {
                 opal_output_verbose(10, ompi_coll_tuned_stream,"coll:tuned:module_open Read %d valid rules\n", rc);
+                if(ompi_coll_base_framework.framework_verbose >= 50) {
+                    ompi_coll_base_dump_all_rules (mca_coll_tuned_component.all_base_rules, COLLCOUNT);
+                }
             } else {
                 opal_output_verbose(1, ompi_coll_tuned_stream,"coll:tuned:module_open Reading collective rules file failed\n");
                 char error_name[12];
