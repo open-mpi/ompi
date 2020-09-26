@@ -63,7 +63,7 @@
 
 #if defined(GENERATE_AVX512_CODE) && defined(OMPI_MCA_OP_HAVE_AVX512) && (1 == OMPI_MCA_OP_HAVE_AVX512)
 #define OP_AVX_AVX512_FUNC(name, type_sign, type_size, type, op)               \
-    if( OMPI_OP_AVX_HAS_FLAGS(OMPI_OP_AVX_HAS_AVX512F_FLAG|OMPI_OP_AVX_HAS_AVX512BW_FLAG) ) { \
+    if( OMPI_OP_AVX_HAS_FLAGS(OMPI_OP_AVX_HAS_AVX512F_FLAG & OMPI_OP_AVX_HAS_AVX512BW_FLAG) ) { \
         int types_per_step = (512 / 8) / sizeof(type);                         \
         for( ; left_over >= types_per_step; left_over -= types_per_step ) {    \
             __m512i vecA =  _mm512_loadu_si512((__m512*)in);                   \
@@ -144,7 +144,7 @@ static void OP_CONCAT(ompi_op_avx_2buff_##name##_##type,PREPEND)(const void *_in
 
 #if defined(GENERATE_AVX512_CODE) && defined(OMPI_MCA_OP_HAVE_AVX512) && (1 == OMPI_MCA_OP_HAVE_AVX512)
 #define OP_AVX_AVX512_MUL(name, type_sign, type_size, type, op)         \
-    if( OMPI_OP_AVX_HAS_FLAGS(OMPI_OP_AVX_HAS_AVX512F_FLAG | OMPI_OP_AVX_HAS_AVX512BW_FLAG) ) {  \
+    if( OMPI_OP_AVX_HAS_FLAGS(OMPI_OP_AVX_HAS_AVX512F_FLAG & OMPI_OP_AVX_HAS_AVX512BW_FLAG) ) {  \
         int types_per_step = (256 / 8) / sizeof(type);                  \
         for (; left_over >= types_per_step; left_over -= types_per_step) { \
             __m256i vecA_tmp =  _mm256_loadu_si256((__m256i*)in);       \
