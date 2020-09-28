@@ -47,6 +47,7 @@
 #include "ompi/mca/bml/base/base.h"
 #include "opal/mca/pmix/pmix-internal.h"
 #include "ompi/runtime/ompi_cr.h"
+#include "ompi/runtime/ompi_spc.h"
 
 #include "pml_ob1.h"
 #include "pml_ob1_component.h"
@@ -708,6 +709,7 @@ int mca_pml_ob1_send_fin( ompi_proc_t* proc,
         if( OPAL_LIKELY( 1 == rc ) ) {
             MCA_PML_OB1_PROGRESS_PENDING(bml_btl);
         }
+        SPC_RECORD(OMPI_SPC_BYTES_SENT_MPI, (ompi_spc_value_t)sizeof(mca_pml_ob1_fin_hdr_t));
         return OMPI_SUCCESS;
     }
     mca_bml_base_free(bml_btl, fin);
