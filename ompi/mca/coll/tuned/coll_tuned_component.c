@@ -17,6 +17,7 @@
  * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2019      Mellanox Technologies. All rights reserved.
+ * Copyright (c) 2020      Bull SAS. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -38,7 +39,7 @@
 #include "mpi.h"
 #include "ompi/mca/coll/coll.h"
 #include "coll_tuned.h"
-#include "coll_tuned_dynamic_file.h"
+#include "ompi/mca/coll/base/coll_base_dynamic_file.h"
 
 /*
  * Public string showing the coll ompi_tuned component version number
@@ -253,16 +254,19 @@ static int tuned_open(void)
                 "coll:tuned:component_open Reading collective rules file [%s] which format is %d",
                          ompi_coll_tuned_dynamic_rules_filename,
                          ompi_coll_tuned_dynamic_rules_fileformat);
-            rc = ompi_coll_tuned_read_rules_config_file( ompi_coll_tuned_dynamic_rules_filename,
-                                                         ompi_coll_tuned_dynamic_rules_fileformat,
-                                                         &(mca_coll_tuned_component.all_base_rules), COLLCOUNT);
+            rc = ompi_coll_base_read_rules_config_file( ompi_coll_tuned_dynamic_rules_filename,
+                                                        ompi_coll_tuned_dynamic_rules_fileformat,
+                                                        &(mca_coll_tuned_component.all_base_rules), COLLCOUNT);
             if( rc >= 0 ) {
                 opal_output_verbose(10, ompi_coll_tuned_stream,"coll:tuned:module_open Read %d valid rules\n", rc);
             } else {
                 opal_output_verbose(1, ompi_coll_tuned_stream,"coll:tuned:module_open Reading collective rules file failed\n");
+                char error_name[12];
+                sprintf(error_name,"file fail%1d", rc);
+                error_name[11] = '\0';
+                opal_show_help("help-mpi-coll-tuned.txt", (const char*)error_name, true,
+                               ompi_coll_tuned_dynamic_rules_filename, ompi_coll_tuned_dynamic_rules_fileformat);
                 mca_coll_tuned_component.all_base_rules = NULL;
-                opal_show_help("help-mpi-coll-tuned.txt", "file fail", true,
-                       ompi_coll_tuned_dynamic_rules_filename, ompi_coll_tuned_dynamic_rules_fileformat);
             }
         }
     }
@@ -279,7 +283,7 @@ static int tuned_close(void)
     /* dealloc alg table if allocated */
     /* dealloc dynamic changable rules if allocated */
     if( NULL != mca_coll_tuned_component.all_base_rules ) {
-        ompi_coll_tuned_free_all_rules(mca_coll_tuned_component.all_base_rules, COLLCOUNT);
+        ompi_coll_base_free_all_rules(mca_coll_tuned_component.all_base_rules, COLLCOUNT);
         mca_coll_tuned_component.all_base_rules = NULL;
     }
     opal_output_verbose(10, ompi_coll_tuned_stream, "coll:tuned:component_close: done!");

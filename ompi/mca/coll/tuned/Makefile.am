@@ -24,12 +24,8 @@ dist_ompidata_DATA = help-mpi-coll-tuned.txt
 
 sources = \
         coll_tuned.h \
-        coll_tuned_dynamic_file.h \
-        coll_tuned_dynamic_rules.h \
         coll_tuned_decision_fixed.c \
         coll_tuned_decision_dynamic.c \
-        coll_tuned_dynamic_file.c \
-        coll_tuned_dynamic_rules.c \
         coll_tuned_component.c \
         coll_tuned_module.c \
         coll_tuned_allgather_decision.c \
