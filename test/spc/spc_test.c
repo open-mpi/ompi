@@ -74,6 +74,10 @@ int main(int argc, char **argv)
         MPI_result = MPI_T_pvar_get_info(i, name, &name_len, &verbosity,
                                          &var_class, &datatype, &enumtype, description, &desc_len, &bind,
                                          &readonly, &continuous, &atomic);
+        if (MPI_result == MPI_T_ERR_INVALID) {
+            // skip invalidated MPI_T pvars
+            continue;
+        }
         if(MPI_result != MPI_SUCCESS || MPI_result == MPI_T_ERR_PVAR_NO_STARTSTOP) {
             fprintf(stderr, "Failed to get pvar info.\n");
             MPI_Abort(MPI_COMM_WORLD, MPI_result);
@@ -82,6 +86,7 @@ int main(int argc, char **argv)
         if(strcmp(name, counter_names[rank]) == 0) {
             index = i;
             printf("[%d] %s -> %s\n", rank, name, description);
+            break;
         }
     }
 
