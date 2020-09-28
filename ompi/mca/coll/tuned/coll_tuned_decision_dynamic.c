@@ -14,6 +14,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2020      Amazon.com, Inc. or its affiliates.
  *                         All Rights reserved.
+ * Copyright (c) 2020      Bull SAS. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -71,7 +72,7 @@ ompi_coll_tuned_allreduce_intra_dec_dynamic (const void *sbuf, void *rbuf, int c
         ompi_datatype_type_size (dtype, &dsize);
         dsize *= count;
 
-        alg = ompi_coll_tuned_get_target_method_params (tuned_module->com_rules[ALLREDUCE],
+        alg = ompi_coll_base_get_target_method_params (tuned_module->com_rules[ALLREDUCE],
                                                         dsize, &faninout, &segsize, &ignoreme);
 
         if (alg) {
@@ -122,7 +123,7 @@ int ompi_coll_tuned_alltoall_intra_dec_dynamic(const void *sbuf, int scount,
         comsize = ompi_comm_size(comm);
         dsize *= (ptrdiff_t)comsize * (ptrdiff_t)scount;
 
-        alg = ompi_coll_tuned_get_target_method_params (tuned_module->com_rules[ALLTOALL],
+        alg = ompi_coll_base_get_target_method_params (tuned_module->com_rules[ALLTOALL],
                                                         dsize, &faninout, &segsize, &max_requests);
 
         if (alg) {
@@ -174,7 +175,7 @@ int ompi_coll_tuned_alltoallv_intra_dec_dynamic(const void *sbuf, const int *sco
     if (tuned_module->com_rules[ALLTOALLV]) {
         int alg, faninout, segsize, max_requests;
 
-        alg = ompi_coll_tuned_get_target_method_params (tuned_module->com_rules[ALLTOALLV],
+        alg = ompi_coll_base_get_target_method_params (tuned_module->com_rules[ALLTOALLV],
                                                         0, &faninout, &segsize, &max_requests);
 
         if (alg) {
@@ -216,7 +217,7 @@ int ompi_coll_tuned_barrier_intra_dec_dynamic(struct ompi_communicator_t *comm,
         /* we do, so calc the message size or what ever we need and use this for the evaluation */
         int alg, faninout, segsize, ignoreme;
 
-        alg = ompi_coll_tuned_get_target_method_params (tuned_module->com_rules[BARRIER],
+        alg = ompi_coll_base_get_target_method_params (tuned_module->com_rules[BARRIER],
                                                         0, &faninout, &segsize, &ignoreme);
 
         if (alg) {
@@ -260,7 +261,7 @@ int ompi_coll_tuned_bcast_intra_dec_dynamic(void *buf, int count,
         ompi_datatype_type_size (dtype, &dsize);
         dsize *= count;
 
-        alg = ompi_coll_tuned_get_target_method_params (tuned_module->com_rules[BCAST],
+        alg = ompi_coll_base_get_target_method_params (tuned_module->com_rules[BCAST],
                                                         dsize, &faninout, &segsize, &ignoreme);
 
         if (alg) {
@@ -311,7 +312,7 @@ int ompi_coll_tuned_reduce_intra_dec_dynamic( const void *sbuf, void *rbuf,
         ompi_datatype_type_size(dtype, &dsize);
         dsize *= count;
 
-        alg = ompi_coll_tuned_get_target_method_params (tuned_module->com_rules[REDUCE],
+        alg = ompi_coll_base_get_target_method_params (tuned_module->com_rules[REDUCE],
                                                         dsize, &faninout, &segsize, &max_requests);
 
         if (alg) {
@@ -366,7 +367,7 @@ int ompi_coll_tuned_reduce_scatter_intra_dec_dynamic(const void *sbuf, void *rbu
         ompi_datatype_type_size (dtype, &dsize);
         dsize *= count;
 
-        alg = ompi_coll_tuned_get_target_method_params (tuned_module->com_rules[REDUCESCATTER],
+        alg = ompi_coll_base_get_target_method_params (tuned_module->com_rules[REDUCESCATTER],
                                                         dsize, &faninout,
                                                         &segsize, &ignoreme);
         if (alg) {
@@ -418,7 +419,7 @@ int ompi_coll_tuned_reduce_scatter_block_intra_dec_dynamic(const void *sbuf, voi
         ompi_datatype_type_size (dtype, &dsize);
         dsize *= rcount * size;
 
-        alg = ompi_coll_tuned_get_target_method_params(tuned_module->com_rules[REDUCESCATTERBLOCK],
+        alg = ompi_coll_base_get_target_method_params(tuned_module->com_rules[REDUCESCATTERBLOCK],
                                                        dsize, &faninout,
                                                        &segsize, &ignoreme);
         if (alg) {
@@ -472,7 +473,7 @@ int ompi_coll_tuned_allgather_intra_dec_dynamic(const void *sbuf, int scount,
         comsize = ompi_comm_size(comm);
         dsize *= (ptrdiff_t)comsize * (ptrdiff_t)scount;
 
-        alg = ompi_coll_tuned_get_target_method_params (tuned_module->com_rules[ALLGATHER],
+        alg = ompi_coll_base_get_target_method_params (tuned_module->com_rules[ALLGATHER],
                                                         dsize, &faninout, &segsize, &ignoreme);
         if (alg) {
             /* we have found a valid choice from the file based rules for
@@ -537,7 +538,7 @@ int ompi_coll_tuned_allgatherv_intra_dec_dynamic(const void *sbuf, int scount,
 
         per_rank_size = total_size / comsize;
 
-        alg = ompi_coll_tuned_get_target_method_params (tuned_module->com_rules[ALLGATHERV],
+        alg = ompi_coll_base_get_target_method_params (tuned_module->com_rules[ALLGATHERV],
                                                         per_rank_size, &faninout, &segsize, &ignoreme);
         if (alg) {
             /* we have found a valid choice from the file based rules for
@@ -592,7 +593,7 @@ int ompi_coll_tuned_gather_intra_dec_dynamic(const void *sbuf, int scount,
         ompi_datatype_type_size (sdtype, &dsize);
         dsize *= scount * comsize;
 
-        alg = ompi_coll_tuned_get_target_method_params (tuned_module->com_rules[GATHER],
+        alg = ompi_coll_base_get_target_method_params (tuned_module->com_rules[GATHER],
                                                         dsize, &faninout, &segsize, &max_requests);
 
         if (alg) {
@@ -641,7 +642,7 @@ int ompi_coll_tuned_scatter_intra_dec_dynamic(const void *sbuf, int scount,
         ompi_datatype_type_size (sdtype, &dsize);
         dsize *= scount * comsize;
 
-        alg = ompi_coll_tuned_get_target_method_params (tuned_module->com_rules[SCATTER],
+        alg = ompi_coll_base_get_target_method_params (tuned_module->com_rules[SCATTER],
                                                         dsize, &faninout, &segsize, &max_requests);
 
         if (alg) {
@@ -689,7 +690,7 @@ int ompi_coll_tuned_exscan_intra_dec_dynamic(const void *sbuf, void* rbuf, int c
         ompi_datatype_type_size (dtype, &dsize);
         dsize *= comsize;
 
-        alg = ompi_coll_tuned_get_target_method_params (tuned_module->com_rules[EXSCAN],
+        alg = ompi_coll_base_get_target_method_params (tuned_module->com_rules[EXSCAN],
                                                         dsize, &faninout, &segsize, &max_requests);
 
         if (alg) {
@@ -732,7 +733,7 @@ int ompi_coll_tuned_scan_intra_dec_dynamic(const void *sbuf, void* rbuf, int cou
         ompi_datatype_type_size (dtype, &dsize);
         dsize *= comsize;
 
-        alg = ompi_coll_tuned_get_target_method_params (tuned_module->com_rules[SCAN],
+        alg = ompi_coll_base_get_target_method_params (tuned_module->com_rules[SCAN],
                                                         dsize, &faninout, &segsize, &max_requests);
 
         if (alg) {

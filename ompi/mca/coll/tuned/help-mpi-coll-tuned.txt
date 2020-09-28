@@ -7,8 +7,8 @@
 #
 # $HEADER$
 #
-# This is the US/English help file for Open MPI's tuned collective component
-# (which use base collective implementations).
+# This is the US/English help file for Open MPI's tuned component
+# (which use base collective implementations and config file parser).
 #
 [file fail]
 The coll/tuned module was unable to load rules contained in file %s.
@@ -81,3 +81,139 @@ OMPI_MCA_coll_tuned_verbose >= 10 (basic summary print)
 OMPI_MCA_coll_tuned_verbose >= 50 (rules print)
 OMPI_MCA_coll_tuned_verbose >= 100 (file parsing logs print)
 #
+[file fail-1]
+
+The coll/tuned module was unable to load rules contained in file %s.
+The rule configuration format specified was %d.
+
+The coll file parser was called with a null filename string.
+This is an internal error. Parser should be used only if a rules filename was set by user.
+
+This error leads to tuned component to ignore the provided dynamic rules.
+Internal logs can be enable using verbose MCA parameter OMPI_MCA_coll_base_verbose.
+OMPI_MCA_coll_base_verbose = 1 (errors)
+OMPI_MCA_coll_base_verbose >= 50 (file based rules selection print)
+OMPI_MCA_coll_base_verbose >= 100 (file parsing logs print)
+#
+[file fail-2]
+
+The coll/tuned module was unable to load rules contained in file %s.
+The rule configuration format specified was %d.
+
+The coll file parser was called with a null rules pointer.
+This is an internal error. Rules object pointer must be valid.
+
+This error leads to tuned component to ignore the provided dynamic rules.
+Internal logs can be enable using verbose MCA parameter OMPI_MCA_coll_base_verbose.
+OMPI_MCA_coll_base_verbose = 1 (errors)
+OMPI_MCA_coll_base_verbose >= 50 (file based rules selection print)
+OMPI_MCA_coll_base_verbose >= 100 (file parsing logs print)
+#
+[file fail-3]
+
+The coll/tuned module was unable to load rules contained in file %s.
+The rule configuration format specified was %d.
+
+The coll file parser was called with an invalid max collectives number.
+This is an internal error. Max collectives number must be greater than 0.
+
+This error leads to tuned component to ignore the provided dynamic rules.
+Internal logs can be enable using verbose MCA parameter OMPI_MCA_coll_base_verbose.
+OMPI_MCA_coll_base_verbose = 1 (errors)
+OMPI_MCA_coll_base_verbose >= 50 (file based rules selection print)
+OMPI_MCA_coll_base_verbose >= 100 (file parsing logs print)
+#
+[file fail-4]
+
+The coll/tuned module was unable to load rules contained in file %s.
+The rule configuration format specified was %d.
+
+The file can't be opened. Either file is missing or access rights are wrong.
+Check if the file path defined by the mca parameter
+OMPI_MCA_coll_tuned_dynamic_rules_filename is valid.
+
+This error leads to tuned component to ignore the provided dynamic rules.
+Internal logs can be enable using verbose MCA parameter OMPI_MCA_coll_base_verbose.
+OMPI_MCA_coll_base_verbose = 1 (errors)
+OMPI_MCA_coll_base_verbose >= 50 (file based rules selection print)
+OMPI_MCA_coll_base_verbose >= 100 (file parsing logs print)
+#
+[file fail-5]
+
+The coll/tuned module was unable to load rules contained in file %s.
+The rule configuration format specified was %d.
+
+The file format is unknown. It must be either
+    0: Rules are defined according to a combination of
+       collective_id, communicator size and message size
+ or 1: Rules are defined according to a combination of
+       collective_id, communicator nodes number, communicator size and message size.
+
+This error leads to tuned component to ignore the provided dynamic rules.
+Internal logs can be enable using verbose MCA parameter OMPI_MCA_coll_base_verbose.
+OMPI_MCA_coll_base_verbose = 1 (errors)
+OMPI_MCA_coll_base_verbose >= 50 (file based rules selection print)
+OMPI_MCA_coll_base_verbose >= 100 (file parsing logs print)
+#
+[file fail-6]
+
+The coll/tuned module was unable to load rules contained in file %s.
+The rule configuration format specified was %d.
+
+Rules object allocation failed. This can be induced by a memory resource exhaustion.
+
+This error leads to tuned component to ignore the provided dynamic rules.
+Internal logs can be enable using verbose MCA parameter OMPI_MCA_coll_base_verbose.
+OMPI_MCA_coll_base_verbose = 1 (errors)
+OMPI_MCA_coll_base_verbose >= 50 (file based rules selection print)
+OMPI_MCA_coll_base_verbose >= 100 (file parsing logs print)
+#
+[file fail-7]
+
+The coll/tuned module was unable to load rules contained in file %s.
+The rule configuration format specified was %d.
+
+The file parsing aborted. This can be induced by either:
+    a format mismatch
+ or a missing line
+ or an invalid configuration number.
+
+This error leads to tuned component to ignore the provided dynamic rules.
+Internal logs can be enable using verbose MCA parameter OMPI_MCA_coll_base_verbose.
+OMPI_MCA_coll_base_verbose = 1 (errors)
+OMPI_MCA_coll_base_verbose >= 50 (file based rules selection print)
+OMPI_MCA_coll_base_verbose >= 100 (file parsing logs print)
+#
+[file fail-8]
+
+The coll/tuned module was unable to load rules contained in file %s.
+The rule configuration format specified was %d.
+
+Unconsistent collective id or collective number. Collective number can't be greater than 22 and collective IDs belong to [0,21].
+As a reminder, the collectives IDs are listed below:
+ALLGATHER = 0, ALLGATHERV = 1, ALLREDUCE = 2,
+ALLTOALL  = 3, ALLTOALLV = 4, ALLTOALLW = 5,
+BARRIER = 6, BCAST = 7, EXSCAN = 8, GATHER = 9, GATHERV = 10,
+REDUCE = 11, REDUCESCATTER = 12, REDUCESCATTERBLOCK = 13, SCAN = 14,
+SCATTER = 15, SCATTERV = 16, NEIGHBOR_ALLGATHER = 17, NEIGHBOR_ALLGATHERV = 18,
+NEIGHBOR_ALLTOALL = 19, NEIGHBOR_ALLTOALLV = 20, NEIGHBOR_ALLTOALLW = 21.
+
+This error leads to tuned component to ignore the provided dynamic rules.
+Internal logs can be enable using verbose MCA parameter OMPI_MCA_coll_base_verbose.
+OMPI_MCA_coll_base_verbose = 1 (errors)
+OMPI_MCA_coll_base_verbose >= 50 (file based rules selection print)
+OMPI_MCA_coll_base_verbose >= 100 (file parsing logs print)
+#
+[file fail-9]
+
+The coll/tuned module was unable to load rules contained in file %s.
+The rule configuration format specified was %d.
+
+Incosistent collective ID in rules object. This is an internal error.
+
+This error leads to tuned component to ignore the provided dynamic rules.
+Internal logs can be enable using verbose MCA parameter OMPI_MCA_coll_base_verbose.
+OMPI_MCA_coll_base_verbose = 1 (errors)
+OMPI_MCA_coll_base_verbose >= 50 (file based rules selection print)
+OMPI_MCA_coll_base_verbose >= 100 (file parsing logs print)
+

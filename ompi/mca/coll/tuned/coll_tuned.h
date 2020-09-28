@@ -6,6 +6,7 @@
  * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2019      Mellanox Technologies. All rights reserved.
+ * Copyright (c) 2020      Bull SAS. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -25,7 +26,7 @@
 #include "opal/util/output.h"
 
 /* also need the dynamic rule structures */
-#include "coll_tuned_dynamic_rules.h"
+#include "ompi/mca/coll/base/coll_base_dynamic_rules.h"
 
 BEGIN_C_DECLS
 
@@ -197,7 +198,7 @@ struct mca_coll_tuned_component_t {
 	/* MCA parameters first */
 
 	/* cached decision table stuff (moved from MCW module) */
-	ompi_coll_alg_rule_t *all_base_rules;
+	ompi_coll_base_alg_rule_t *all_base_rules;
 };
 /**
  * Convenience typedef
@@ -217,17 +218,9 @@ struct mca_coll_tuned_module_t {
     coll_tuned_force_algorithm_params_t user_forced[COLLCOUNT];
 
     /* the communicator rules for each MPI collective for ONLY my comsize */
-    ompi_coll_com_rule_t *com_rules[COLLCOUNT];
+    ompi_coll_base_com_rule_t *com_rules[COLLCOUNT];
 };
 typedef struct mca_coll_tuned_module_t mca_coll_tuned_module_t;
 OBJ_CLASS_DECLARATION(mca_coll_tuned_module_t);
-
-/* hostname item used to get the number of nodes of a communicator */
-struct ompi_coll_tuned_hostname_item_t {
-    opal_list_item_t super;
-    char* hostname;
-};
-typedef struct ompi_coll_tuned_hostname_item_t ompi_coll_tuned_hostname_item_t ;
-OBJ_CLASS_DECLARATION(ompi_coll_tuned_hostname_item_t);
 
 #endif  /* MCA_COLL_TUNED_EXPORT_H */

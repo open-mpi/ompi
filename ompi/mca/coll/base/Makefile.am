@@ -20,6 +20,8 @@ dist_ompidata_DATA = base/help-mca-coll-base.txt
 
 headers += \
         base/base.h \
+        base/coll_base_dynamic_file.h \
+        base/coll_base_dynamic_rules.h \
         base/coll_tags.h \
         base/coll_base_topo.h \
         base/coll_base_util.h \
@@ -36,6 +38,8 @@ libmca_coll_la_SOURCES += \
         base/coll_base_allgather.c \
         base/coll_base_allgatherv.c \
         base/coll_base_util.c \
+        base/coll_base_dynamic_file.c \
+        base/coll_base_dynamic_rules.c \
         base/coll_base_allreduce.c \
         base/coll_base_alltoall.c \
         base/coll_base_gather.c \

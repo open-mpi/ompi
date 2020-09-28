@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2014-2020 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
+ * Copyright (c) 2020      Bull SAS. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -557,4 +558,70 @@ const char* mca_coll_base_colltype_to_str(int collid)
         return NULL;
     }
     return colltype_translation_table[collid];
+}
+
+OBJ_CLASS_INSTANCE(ompi_coll_base_hostname_item_t, opal_list_item_t, NULL, NULL);
+
+int
+ompi_coll_base_get_nnodes(struct ompi_communicator_t *comm)
+{
+    ompi_group_t* group;
+    ompi_proc_t *proc;
+    opal_list_t hostname_list;
+    ompi_coll_base_hostname_item_t *host_item, *next, *new_item;
+    bool already_in_the_list;
+    char* hostname;
+    int i, cmp, group_size, nodes_nb;
+
+    OPAL_OUTPUT((ompi_coll_base_framework.framework_output,"coll get_nnodes called."));
+    OBJ_CONSTRUCT(&hostname_list, opal_list_t);
+    /* Is inter communicator ? */
+    if (OMPI_COMM_IS_INTER(comm)) {
+        group = comm->c_remote_group;
+    } else {
+        group = comm->c_local_group;
+    }
+    /* allocate an array of node id */
+    group_size = ompi_group_size(group);
+    OPAL_OUTPUT((ompi_coll_base_framework.framework_output,"coll get_nnodes group size %d.", group_size));
+    /* For each rank */
+    for (i=0 ; i<group_size ; i++) {
+        proc = ompi_group_get_proc_ptr (group, i, true);
+        hostname = opal_get_proc_hostname(&proc->super);
+        OPAL_OUTPUT((ompi_coll_base_framework.framework_output,"coll get_nnodes host %s.", hostname));
+        /* Check if hostname is OK. */
+        if(0 == strcmp(hostname,"unknown")) {
+            /* Do not consider this rank */
+            OPAL_OUTPUT((ompi_coll_base_framework.framework_output,"coll get_nnodes ignoring unknown host."));
+            continue;
+        }
+        already_in_the_list = false;
+        /* Try to find eleme in the list */
+        /* List is sorted we stop if current elem is "higher" than the one we expect to find */
+        /* In this case this element is inserted at this position. */
+        /* If element is found, no insertion is performed, element is inserted at the end otherwise. */
+        OPAL_LIST_FOREACH_SAFE(host_item, next, &hostname_list, ompi_coll_base_hostname_item_t) {
+            cmp = strcmp(host_item->hostname, hostname);
+            if(cmp > 0) {
+                /* no match found, insert at this position */
+                break;
+            }
+            else if(0 == cmp) {
+                /* Found, do not insert this hostname */
+                already_in_the_list = true;
+                break;
+            }
+            /* continue comparing elements otherwise */
+        }
+        if (false == already_in_the_list) {
+            /* Insert a new element at current position */
+            new_item = OBJ_NEW(ompi_coll_base_hostname_item_t);
+            new_item->hostname = hostname;
+            OPAL_OUTPUT((ompi_coll_base_framework.framework_output,"coll get_nnodes insert host %s", new_item->hostname));
+            opal_list_insert_pos(&hostname_list, &host_item->super, &new_item->super);
+        }
+    }
+    nodes_nb = opal_list_get_size(&hostname_list);
+    OPAL_LIST_DESTRUCT(&hostname_list);
+    return nodes_nb;
 }
