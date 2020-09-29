@@ -47,6 +47,7 @@
 #include "opal/util/argv.h"
 #include "opal/util/printf.h"
 #include "opal/align.h"
+#include "opal/util/sys_limits.h"
 #if OPAL_CUDA_SUPPORT
 #include "opal/datatype/opal_datatype_cuda.h"
 #endif /* OPAL_CUDA_SUPPORT */
@@ -550,6 +551,7 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
     ompi_osc_rdma_region_t *state_region;
     struct _local_data *temp;
     char *data_file;
+    int page_size = opal_getpagesize();
 
     shared_comm = module->shared_comm;
 
@@ -575,9 +577,9 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
     data_base = state_base + leader_peer_data_size + module->state_size * local_size;
 
     /* ensure proper alignment */
-    data_base += OPAL_ALIGN_PAD_AMOUNT(data_base, OPAL_ALIGN_MIN);
     if (MPI_WIN_FLAVOR_ALLOCATE == module->flavor) {
-        size += OPAL_ALIGN_PAD_AMOUNT(size, OPAL_ALIGN_MIN);
+        data_base += OPAL_ALIGN_PAD_AMOUNT(data_base, page_size);
+        size += OPAL_ALIGN_PAD_AMOUNT(size, page_size);
     }
 
     do {
