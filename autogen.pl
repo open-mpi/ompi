@@ -76,7 +76,7 @@ my $ompi_automake_search = "automake";
 my $ompi_libtoolize_search = "libtoolize;glibtoolize";
 
 # version of packages we ship as tarballs
-my $libevent_version="2.0.22-stable";
+my $libevent_version="2.1.12-stable";
 my $hwloc_version="2.2.0";
 
 # One-time setup
