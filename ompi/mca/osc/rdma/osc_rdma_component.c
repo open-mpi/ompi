@@ -650,8 +650,12 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
         }
 
         if (size && MPI_WIN_FLAVOR_ALLOCATE == module->flavor) {
-            *base = (void *)((intptr_t) module->segment_base + my_base_offset);
-            memset (*base, 0, size);
+            char *baseptr = (char *)((intptr_t) module->segment_base + my_base_offset);
+            *base = (void *)baseptr;
+            // touch each page to force allocation on local NUMA node
+            for (size_t i = 0; i < size; i += page_size) {
+                baseptr[i] = 0;
+            }
         }
 
         module->rank_array = (ompi_osc_rdma_rank_data_t *) module->segment_base;
