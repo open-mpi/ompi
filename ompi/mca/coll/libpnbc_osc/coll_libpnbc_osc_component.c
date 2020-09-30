@@ -402,11 +402,6 @@ libpnbc_osc_comm_query(struct ompi_communicator_t *comm,
 
     module->super.ft_event = NULL;
 
-    if (OMPI_SUCCESS != PNBC_OSC_Init_comm(comm, module)) {
-        OBJ_RELEASE(module);
-        return NULL;
-    }
-
     return &(module->super);
 }
 

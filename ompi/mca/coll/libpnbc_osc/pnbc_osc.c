@@ -25,7 +25,6 @@
  * Additional copyrights may follow
  */
 #include "pnbc_osc_internal.h"
-#include "ompi/mca/coll/base/coll_tags.h"
 #include "ompi/op/op.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/win/win.h"
@@ -604,8 +603,6 @@ static inline int PNBC_OSC_Start_round(PNBC_OSC_Handle *handle) {
   PNBC_OSC_Args_put      putargs;
   PNBC_OSC_Args_get      getargs;
   PNBC_OSC_Args_try_get  trygetargs;
-  PNBC_OSC_Args_send     sendargs;
-  PNBC_OSC_Args_recv     recvargs;
   PNBC_OSC_Args_op         opargs;
   PNBC_OSC_Args_copy     copyargs;
   PNBC_OSC_Args_unpack unpackargs;
@@ -658,9 +655,9 @@ static inline int PNBC_OSC_Start_round(PNBC_OSC_Handle *handle) {
     case PUT:
       PNBC_OSC_DEBUG(5,"  PUT (offset %li) ", offset);
       PNBC_OSC_GET_BYTES(ptr,putargs);
-      PNBC_OSC_DEBUG(5,"*buf: %p, origin count: %i, origin type: %p, target: %i, target count: %i, target type: %p, tag: %i)\n",
+      PNBC_OSC_DEBUG(5,"*buf: %p, origin count: %i, origin type: %p, target: %i, target count: %i, target type: %p)\n",
                      putargs.buf, putargs.origin_count, putargs.origin_datatype, putargs.target,
-                     putargs.target_count, putargs.target_datatype, handle->tag);
+                     putargs.target_count, putargs.target_datatype);
 
       /* get an additional request */
       handle->req_count++;
@@ -685,10 +682,10 @@ static inline int PNBC_OSC_Start_round(PNBC_OSC_Handle *handle) {
                                                putargs.target_datatype, handle->win);
 
       if (OMPI_SUCCESS != res) {
-        PNBC_OSC_Error ("Error in MPI_Iput(%lu, %i, %p, %i, %i, %p, %i, %lu) (%i)",
+        PNBC_OSC_Error ("Error in MPI_Iput(%lu, %i, %p, %i, %i, %p, %lu) (%i)",
                         (unsigned long)buf1,
                         putargs.origin_count, putargs.origin_datatype, putargs.target,
-                        putargs.target_count, putargs.target_datatype, handle->tag,
+                        putargs.target_count, putargs.target_datatype,
                         (unsigned long)handle->comm, res);
         return res;
       }
@@ -699,9 +696,9 @@ static inline int PNBC_OSC_Start_round(PNBC_OSC_Handle *handle) {
     case GET:
       PNBC_OSC_DEBUG(5,"  GET (offset %li) ", offset);
       PNBC_OSC_GET_BYTES(ptr,getargs);
-      PNBC_OSC_DEBUG(5,"*buf: %p, origin count: %i, origin type: %p, target: %i, target disp: %i, target count: %i, target type: %p, tag: %i)\n",
+      PNBC_OSC_DEBUG(5,"*buf: %p, origin count: %i, origin type: %p, target: %i, target disp: %i, target count: %i, target type: %p)\n",
                      getargs.buf, getargs.origin_count, getargs.origin_datatype, getargs.target,
-                     getargs.target_count, getargs.target_datatype, handle->tag);
+                     getargs.target_count, getargs.target_datatype);
       /* get an additional request */
       handle->req_count++;
       /* get buffer */
@@ -733,10 +730,10 @@ static inline int PNBC_OSC_Start_round(PNBC_OSC_Handle *handle) {
                                                    getargs.target_datatype, handle->win);
 
           if (OMPI_SUCCESS != res) {
-            PNBC_OSC_Error ("Error in MPI_Iget(%lu, %i, %p, %i, %i, %p, %i, %lu) (%i)",
+            PNBC_OSC_Error ("Error in MPI_Iget(%lu, %i, %p, %i, %i, %p, %lu) (%i)",
                             (unsigned long)buf1,
                             getargs.origin_count, getargs.origin_datatype, getargs.target,
-                            getargs.target_count, getargs.target_datatype,  handle->tag,
+                            getargs.target_count, getargs.target_datatype,
                             (unsigned long)handle->comm, res);
             return res;
           }
@@ -944,11 +941,6 @@ void PNBC_OSC_Return_handle(ompi_coll_libpnbc_osc_request_t *request) {
   OMPI_COLL_LIBPNBC_OSC_REQUEST_RETURN(request);
 }
 
-int  PNBC_OSC_Init_comm(MPI_Comm comm, PNBC_OSC_Comminfo *comminfo) {
-  comminfo->tag= MCA_COLL_BASE_TAG_NONBLOCKING_BASE;
-  return OMPI_SUCCESS;
-}
-
 int PNBC_OSC_Start(PNBC_OSC_Handle *handle) {
   int res;
 
@@ -976,7 +968,7 @@ int PNBC_OSC_Start(PNBC_OSC_Handle *handle) {
 int PNBC_OSC_Schedule_request(PNBC_OSC_Schedule *schedule, ompi_communicator_t *comm,
                               ompi_coll_libpnbc_osc_module_t *module, bool persistent,
                               ompi_request_t **request, void *tmpbuf) {
-  int ret, tmp_tag;
+  int ret;
   bool need_register = false;
   ompi_coll_libpnbc_osc_request_t *handle;
 
@@ -986,16 +978,6 @@ int PNBC_OSC_Schedule_request(PNBC_OSC_Schedule *schedule, ompi_communicator_t *
     if (OMPI_SUCCESS != ret) {
       return OMPI_ERR_OUT_OF_RESOURCE;
     }
-
-    /* update the module->tag here because other processes may have operations
-     * and they may update the module->tag */
-    OPAL_THREAD_LOCK(&module->mutex);
-    tmp_tag = module->tag--;
-    if (tmp_tag == MCA_COLL_BASE_TAG_NONBLOCKING_END) {
-      tmp_tag = module->tag = MCA_COLL_BASE_TAG_NONBLOCKING_BASE;
-      PNBC_OSC_DEBUG(2,"resetting tags ...\n");
-    }
-    OPAL_THREAD_UNLOCK(&module->mutex);
 
     OBJ_RELEASE(schedule);
     free(tmpbuf);
@@ -1014,22 +996,14 @@ int PNBC_OSC_Schedule_request(PNBC_OSC_Schedule *schedule, ompi_communicator_t *
   handle->row_offset = 0;
   handle->nbc_complete = persistent ? true : false;
 
-  /******************** Do the tag and shadow comm administration ...  ***************/
+  /******************** Do the shadow comm administration ...  ***************/
 
   OPAL_THREAD_LOCK(&module->mutex);
-  tmp_tag = module->tag--;
-  if (tmp_tag == MCA_COLL_BASE_TAG_NONBLOCKING_END) {
-    tmp_tag = module->tag = MCA_COLL_BASE_TAG_NONBLOCKING_BASE;
-    PNBC_OSC_DEBUG(2,"resetting tags ...\n");
-  }
-
   if (true != module->comm_registered) {
     module->comm_registered = true;
     need_register = true;
   }
   OPAL_THREAD_UNLOCK(&module->mutex);
-
-  handle->tag = tmp_tag;
 
   /* register progress */
   if (need_register) {
@@ -1040,13 +1014,8 @@ int PNBC_OSC_Schedule_request(PNBC_OSC_Schedule *schedule, ompi_communicator_t *
     }
   }
 
-  handle->comm=comm;
-  /*printf("got module: %lu tag: %i\n", module, module->tag);*/
-
-  /******************** end of tag and shadow comm administration ...  ***************/
+  /******************** end of shadow comm administration ...  ***************/
   handle->comminfo = module;
-
-  PNBC_OSC_DEBUG(3, "got tag %i\n", handle->tag);
 
   handle->tmpbuf = tmpbuf;
   handle->schedule = schedule;
@@ -1059,7 +1028,7 @@ int PNBC_OSC_Schedule_request_win(PNBC_OSC_Schedule *schedule, ompi_communicator
                                   ompi_win_t *win,ompi_win_t *winflag,
                                   ompi_coll_libpnbc_osc_module_t *module,
                                   bool persistent, ompi_request_t **request, void *tmpbuf) {
-  int ret, tmp_tag;
+  int ret;
   bool need_register = false;
   ompi_coll_libpnbc_osc_request_t *handle;
 
@@ -1069,16 +1038,6 @@ int PNBC_OSC_Schedule_request_win(PNBC_OSC_Schedule *schedule, ompi_communicator
     if (OMPI_SUCCESS != ret) {
       return OMPI_ERR_OUT_OF_RESOURCE;
     }
-
-    /* update the module->tag here because other processes may have operations
-     * and they may update the module->tag */
-    OPAL_THREAD_LOCK(&module->mutex);
-    tmp_tag = module->tag--;
-    if (tmp_tag == MCA_COLL_BASE_TAG_NONBLOCKING_END) {
-      tmp_tag = module->tag = MCA_COLL_BASE_TAG_NONBLOCKING_BASE;
-      PNBC_OSC_DEBUG(2,"resetting tags ...\n");
-    }
-    OPAL_THREAD_UNLOCK(&module->mutex);
 
     OBJ_RELEASE(schedule);
     free(tmpbuf);
@@ -1098,22 +1057,15 @@ int PNBC_OSC_Schedule_request_win(PNBC_OSC_Schedule *schedule, ompi_communicator
   handle->nbc_complete = persistent ? true : false;
   handle->win = win;
   handle->winflag = winflag;
-  /******************** Do the tag and shadow comm administration ...  ***************/
+
+  /******************** Do the shadow comm administration ...  ***************/
 
   OPAL_THREAD_LOCK(&module->mutex);
-  tmp_tag = module->tag--;
-  if (tmp_tag == MCA_COLL_BASE_TAG_NONBLOCKING_END) {
-    tmp_tag = module->tag = MCA_COLL_BASE_TAG_NONBLOCKING_BASE;
-    PNBC_OSC_DEBUG(2,"resetting tags ...\n");
-  }
-
   if (true != module->comm_registered) {
     module->comm_registered = true;
     need_register = true;
   }
   OPAL_THREAD_UNLOCK(&module->mutex);
-
-  handle->tag = tmp_tag;
 
   /* register progress */
   if (need_register) {
@@ -1124,13 +1076,8 @@ int PNBC_OSC_Schedule_request_win(PNBC_OSC_Schedule *schedule, ompi_communicator
     }
   }
 
-  handle->comm=comm;
-  /*printf("got module: %lu tag: %i\n", module, module->tag);*/
-
-  /******************** end of tag and shadow comm administration ...  ***************/
+  /******************** end of shadow comm administration ...  ***************/
   handle->comminfo = module;
-
-  PNBC_OSC_DEBUG(3, "got tag %i\n", handle->tag);
 
   handle->tmpbuf = tmpbuf;
   handle->schedule = schedule;
