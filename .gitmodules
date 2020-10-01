@@ -1,11 +1,8 @@
-[submodule "hwloc-20x"]
-	path = opal/mca/hwloc/hwloc2/hwloc
-	url = https://github.com/open-mpi/hwloc.git
 [submodule "prrte"]
-	path = prrte
+	path = 3rd-party/prrte
 	url = https://github.com/openpmix/prrte
 	branch = master
 [submodule "openpmix"]
-	path = opal/mca/pmix/pmix4x/openpmix
+	path = 3rd-party/openpmix
 	url = https://github.com/openpmix/openpmix.git
 	branch = master

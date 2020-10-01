@@ -15,6 +15,8 @@
  * Copyright (c) 2011-2019 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2015-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2020      Amazon.com, Inc. or its affiliates.
+ *                         All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -34,7 +36,7 @@
 #include "opal/util/alfg.h"
 #include "opal/class/opal_hash_table.h"
 #include "opal/class/opal_hash_table.h"
-#include "opal/mca/event/event.h"
+#include "opal/util/event.h"
 
 #include "opal/mca/btl/btl.h"
 #include "opal/mca/btl/base/btl_base_error.h"

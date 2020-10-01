@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2012      The University of Wisconsin-La Crosse. All rights
  *                         reserved.
- * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
+ * Copyright (c) 2018-2020 Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -42,7 +42,7 @@
 #include <sys/stat.h>  /* for mkfifo */
 #endif  /* HAVE_SYS_STAT_H */
 
-#include "opal/mca/event/event.h"
+#include "opal/util/event.h"
 #include "opal/util/output.h"
 #include "opal/util/printf.h"
 #include "opal/mca/crs/crs.h"

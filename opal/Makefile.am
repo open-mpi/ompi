@@ -13,6 +13,8 @@
 # Copyright (c) 2015-2016 Intel, Inc. All rights reserved.
 # Copyright (c) 2016      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
+# Copyright (c) 2020      Amazon.com, Inc. or its affiliates.
+#                         All Rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -51,9 +53,19 @@ lib@OPAL_LIB_PREFIX@open_pal_la_LIBADD = \
         datatype/libdatatype.la \
         mca/base/libmca_base.la \
         util/libopalutil.la \
-	$(MCA_opal_FRAMEWORK_LIBS)
-lib@OPAL_LIB_PREFIX@open_pal_la_DEPENDENCIES = $(lib@OPAL_LIB_PREFIX@open_pal_la_LIBADD)
-lib@OPAL_LIB_PREFIX@open_pal_la_LDFLAGS = -version-info $(libopen_pal_so_version)
+	$(MCA_opal_FRAMEWORK_LIBS) \
+	$(opal_libevent_LIBS) \
+	$(opal_hwloc_LIBS) \
+	$(opal_pmix_LIBS)
+lib@OPAL_LIB_PREFIX@open_pal_la_DEPENDENCIES = \
+        datatype/libdatatype.la \
+        mca/base/libmca_base.la \
+        util/libopalutil.la \
+        $(MCA_opal_FRAMEWORK_LIBS)
+lib@OPAL_LIB_PREFIX@open_pal_la_LDFLAGS = -version-info $(libopen_pal_so_version) \
+	$(opal_libevent_LDFLAGS) \
+	$(opal_hwloc_LDFLAGS) \
+	$(opal_pmix_LDFLAGS)
 
 # included subdirectory Makefile.am's and appended-to variables
 headers =

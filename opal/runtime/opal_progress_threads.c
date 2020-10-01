@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2014-2015 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2020      Amazon.com, Inc. or its affiliates.
+ *                         All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -16,7 +18,7 @@
 #endif
 
 #include "opal/class/opal_list.h"
-#include "opal/mca/event/event.h"
+#include "opal/util/event.h"
 #include "opal/mca/threads/threads.h"
 #include "opal/util/error.h"
 #include "opal/util/fd.h"

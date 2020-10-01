@@ -15,7 +15,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2019      Amazon.com, Inc. or its affiliates.  All Rights
+ * Copyright (c) 2019-2020 Amazon.com, Inc. or its affiliates.  All Rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -44,7 +44,7 @@
 #endif
 
 /* Open MPI includes */
-#include "opal/mca/event/event.h"
+#include "opal/util/event.h"
 #include "opal/class/opal_free_list.h"
 #include "opal/mca/btl/btl.h"
 #include "opal/mca/btl/base/base.h"

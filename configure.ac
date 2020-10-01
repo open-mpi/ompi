@@ -28,6 +28,8 @@
 # Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
 # Copyright (c) 2019      Triad National Security, LLC. All rights
 #                         reserved.
+# Copyright (c) 2020      Amazon.com, Inc. or its affiliates.
+#                         All Rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -196,7 +198,6 @@ fi
 
 # Check for deprecated/deleted options
 OMPI_CHECK_DELETED_OPTIONS
-OMPI_CHECK_DEPRECATED_OPTIONS
 
 # Setup the top of the opal/include/opal_config.h file
 
@@ -253,7 +254,7 @@ m4_ifdef([project_oshmem],
 OPAL_CONFIGURE_OPTIONS
 OPAL_CHECK_OS_FLAVORS
 OPAL_CHECK_CUDA
-OPAL_CHECK_PMIX
+
 m4_ifdef([project_ompi], [OMPI_CONFIGURE_OPTIONS])
 m4_ifdef([project_oshmem], [OSHMEM_CONFIGURE_OPTIONS])
 
@@ -1097,6 +1098,26 @@ dnl OPAL_SETUP_FT_OPTIONS
 OPAL_SETUP_FT
 
 ##################################
+# 3rd-party packages not called ROMIO
+##################################
+opal_show_title "3rd-party packages"
+
+OPAL_3RDPARY_SUBDIRS=
+OPAL_3RDPARY_DIST_SUBDIRS=
+OPAL_3RDPARY_EXTRA_DIST=
+OPAL_3RDPARY_DISTCLEAN_DIRS=
+
+OPAL_CONFIG_LIBEVENT
+OPAL_CONFIG_HWLOC
+OPAL_CONFIG_PMIX
+OMPI_SETUP_PRRTE
+
+AC_SUBST(OPAL_3RDPARTY_SUBDIRS)
+AC_SUBST(OPAL_3RDPARTY_DIST_SUBDIRS)
+AC_SUBST(OPAL_3RDPARTY_EXTRA_DIST)
+AC_SUBST(OPAL_3RDPARTY_DISTCLEAN_DIRS)
+
+##################################
 # MCA
 ##################################
 
@@ -1247,18 +1268,6 @@ AC_SUBST(OPAL_DYN_LIB_SUFFIX)
 
 # Need the libtool executable before the rpathify stuff
 LT_OUTPUT
-
-##################################
-# PRRTE support
-##################################
-
-opal_show_title "Setup PRRTE support"
-
-m4_ifdef([project_prrte],
-         [OMPI_SETUP_PRRTE],
-         [OPAL_SUMMARY_ADD([[Miscellaneous]],[[PRRTE]],[prrte],[no (disabled)])
-          ompi_want_prrte=no])
-AM_CONDITIONAL(OMPI_WANT_PRRTE, test "$ompi_want_prrte" = "yes")
 
 ############################################################################
 # final compiler config
@@ -1442,6 +1451,8 @@ AC_CONFIG_FILES([
     contrib/dist/mofed/debian/changelog
     contrib/dist/mofed/debian/control
     contrib/dist/mofed/debian/copyright:LICENSE
+
+    3rd-party/Makefile
 
     test/Makefile
     test/event/Makefile

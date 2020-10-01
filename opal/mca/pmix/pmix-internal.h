@@ -7,11 +7,21 @@
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2020      Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2020      Amazon.com, Inc. or its affiliates.
+ *                         All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
  *
  * $HEADER$
+ *
+ * In days of old, pmix was packaged as multiple MCA components, and
+ * grew an extensive set of base code to support Open MPI's use of
+ * pmix.  When internal builds of libevent, hwloc, and pmix were moved
+ * out of components into base code so that they could be shared
+ * between Open MPI and PRRTE without incurring linking hell, we left
+ * the base code active.  This MCA framework is essentially defunct;
+ * its only purpose is to allow continued use of the base code.
  */
 
 #ifndef OPAL_PMIX_H
@@ -25,14 +35,13 @@
 #endif
 
 #include "opal/mca/mca.h"
-#include "opal/mca/event/event.h"
+#include "opal/util/event.h"
 #include "opal/mca/threads/threads.h"
 #include "opal/dss/dss.h"
 #include "opal/util/error.h"
 #include "opal/hash_string.h"
 
-/* include implementation to call */
-#include MCA_pmix_IMPLEMENTATION_HEADER
+#include <pmix.h>
 
 
 BEGIN_C_DECLS

@@ -44,7 +44,15 @@
 
 Makefile
 Makefile.in
+
+# hwloc and pmix have been de-modularized, but still uses parts of the
+# MCA system due to the amount of glue code that ended up in the
+# framework base.  Until that is cleaned up, do not ignore the
+# hard-coded static-components.h file.
 static-components.h
+!opal/mca/hwloc/base/static-components.h
+!opal/mca/pmix/base/static-components.h
+
 *\\#
 config.cache
 aclocal.m4
@@ -89,6 +97,14 @@ ltargz.m4
 ltsugar.m4
 ltversion.m4
 ltoptions.m4
+
+# Libevent and hwloc are included as a tarball.  Ignore any expanded
+# tarballs, since they are not included in git.  Do not ignore the
+# tarballs themselves, and those are artifacts we will store in git.
+3rd-party/libevent-*
+!3rd-party/libevent-*.tar.*
+3rd-party/hwloc-*
+!3rd-party/hwloc-*.tar.*
 
 config/project_list.m4
 config/autogen_found_items.m4
@@ -366,11 +382,6 @@ opal/mca/event/libevent*/libevent/libevent.pc
 opal/mca/event/libevent*/libevent/libevent_openssl.pc
 opal/mca/event/libevent*/libevent/libevent_pthreads.pc
 opal/mca/event/libevent*/libevent/include/event2/event-config.h
-
-opal/mca/hwloc/hwloc*/hwloc/include/hwloc/autogen/config.h
-opal/mca/hwloc/hwloc*/hwloc/include/private/autogen/config.h
-opal/mca/hwloc/base/static-components.h.new.extern
-opal/mca/hwloc/base/static-components.h.new.struct
 
 opal/mca/installdirs/config/install_dirs.h
 

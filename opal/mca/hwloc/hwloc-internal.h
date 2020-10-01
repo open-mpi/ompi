@@ -4,10 +4,20 @@
  * Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2020      Amazon.com, Inc. or its affiliates.
+ *                         All Rights reserved.
  *
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
+ *
+ * In days of old, hwloc was packaged as multiple MCA components, and
+ * grew an extensive set of base code to support Open MPI's use of
+ * hwloc.  When internal builds of libevent, hwloc, and hwloc were
+ * moved out of components into base code so that they could be shared
+ * between Open MPI and PRRTE without incurring linking hell, we left
+ * the base code active.  This MCA framework is essentially defunct;
+ * its only purpose is to allow continued use of the base code.
  */
 
 #ifndef OPAL_MCA_HWLOC_H
@@ -128,7 +138,20 @@ typedef struct {
 } opal_hwloc_base_memory_segment_t;
 
 /* include implementation to call */
-#include MCA_hwloc_IMPLEMENTATION_HEADER
+#include <hwloc.h>
+#if defined(OPAL_HWLOC_WANT_SHMEM) && OPAL_HWLOC_WANT_SHMEM
+#    if HWLOC_API_VERSION >= 0x20000
+#        include <hwloc/shmem.h>
+#    endif
+/* Do nothing in the 1.x case because the caller doesn't know HWLOC_API_VERSION when it sets OPAL_HWLOC_WANT_SHMEM.
+ * Calls to hwloc/shmem.h are protected by HWLOC_API_VERSION >= 0x20000 in the actual code.
+ */
+#endif
+
+#if HWLOC_API_VERSION < 0x00010b00
+#define HWLOC_OBJ_NUMANODE HWLOC_OBJ_NODE
+#define HWLOC_OBJ_PACKAGE HWLOC_OBJ_SOCKET
+#endif
 
 /* define type of processor info requested */
 typedef uint8_t opal_hwloc_resource_type_t;

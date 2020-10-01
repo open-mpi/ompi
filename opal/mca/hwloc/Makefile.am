@@ -26,6 +26,3 @@ nobase_opal_HEADERS = $(headers)
 endif
 
 include base/Makefile.am
-
-distclean-local:
-	rm -f base/static-components.h

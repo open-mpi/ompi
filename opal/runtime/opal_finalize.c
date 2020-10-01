@@ -173,6 +173,9 @@ int opal_finalize(void)
     opal_finalize_cleanup_domain (&opal_init_domain);
     OBJ_DESTRUCT(&opal_init_domain);
 
+    /* finalize libevent code */
+    opal_event_finalize();
+
     /* finalize util code */
     opal_finalize_util();
 

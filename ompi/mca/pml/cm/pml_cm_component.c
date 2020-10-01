@@ -12,6 +12,8 @@
  * Copyright (c) 2013      Sandia National Laboratories.  All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
  *                         reserved.
+ * Copyright (c) 2020      Amazon.com, Inc. or its affiliates.
+ *                         All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -22,7 +24,7 @@
 #include "ompi_config.h"
 
 #include "pml_cm.h"
-#include "opal/mca/event/event.h"
+#include "opal/util/event.h"
 #include "ompi/mca/mtl/mtl.h"
 #include "ompi/mca/mtl/base/base.h"
 #include "ompi/mca/pml/base/pml_base_bsend.h"

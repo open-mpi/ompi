@@ -1,8 +1,8 @@
 /*
  * Copyright (c) 2014-2016 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2018-2020 Amazon.com, Inc. or its affiliates.  All Rights reserved.
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -26,7 +26,7 @@
 
 #include "opal_stdint.h"
 #include "opal/mca/threads/mutex.h"
-#include "opal/mca/event/event.h"
+#include "opal/util/event.h"
 #include "opal/util/output.h"
 #include "opal/util/fd.h"
 #include "opal/util/string_copy.h"

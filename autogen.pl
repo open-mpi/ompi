@@ -8,6 +8,8 @@
 # Copyright (c) 2015-2019 Research Organization for Information Science
 #                         and Technology (RIST).  All rights reserved.
 # Copyright (c) 2015-2020 IBM Corporation.  All rights reserved.
+# Copyright (c) 2020      Amazon.com, Inc. or its affiliates.
+#                         All Rights reserved.
 #
 # $COPYRIGHT$
 #
@@ -49,6 +51,7 @@ my $no_ompi_arg = 0;
 my $no_orte_arg = 0;
 my $no_prrte_arg = 0;
 my $no_oshmem_arg = 0;
+my $no_3rdparty_arg = "";
 my $quiet_arg = 0;
 my $debug_arg = 0;
 my $help_arg = 0;
@@ -71,6 +74,10 @@ my $ompi_libtool_version = "2.4.2";
 my $ompi_autoconf_search = "autoconf";
 my $ompi_automake_search = "automake";
 my $ompi_libtoolize_search = "libtoolize;glibtoolize";
+
+# version of packages we ship as tarballs
+my $libevent_version="2.1.12-stable";
+my $hwloc_version="2.2.0";
 
 # One-time setup
 my $username;
@@ -1125,6 +1132,7 @@ my $ok = Getopt::Long::GetOptions("no-ompi" => \$no_ompi_arg,
                                   "no-orte" => \$no_orte_arg,
                                   "no-prrte" => \$no_prrte_arg,
                                   "no-oshmem" => \$no_oshmem_arg,
+                                  "no-3rdparty=s" => \$no_3rdparty_arg,
                                   "quiet|q" => \$quiet_arg,
                                   "debug|d" => \$debug_arg,
                                   "help|h" => \$help_arg,
@@ -1143,6 +1151,7 @@ if (!$ok || $help_arg) {
   --no-orte | -no-orte          Do not build Open MPI's runtime support (alias for --no-prrte)
   --no-prrte | -no-prrte        Do not build Open MPI's runtime support
   --no-oshmem | -no-oshmem      Do not build the OSHMEM layer
+  --no-3rdparty <package>       Do not build the listed 3rd-party package (comma separtated list)
   --quiet | -q                  Do not display normal verbose output
   --debug | -d                  Output lots of debug information
   --help | -h                   This help list
@@ -1169,10 +1178,6 @@ my $project_name_short = "openmpi";
 if (! -e "ompi") {
     $no_ompi_arg = 1;
     debug "No ompi subdirectory found - will not build MPI layer\n";
-}
-if (! -e "prrte") {
-    $no_prrte_arg = 1;
-    debug "No prrte subdirectory found - will not build PRRTE\n";
 }
 if (! -e "oshmem") {
     $no_oshmem_arg = 1;
@@ -1406,9 +1411,6 @@ $m4 .= "dnl Separate m4 define for each project\n";
 foreach my $p (@$projects) {
     $m4 .= "m4_define([project_$p->{name}], [1])\n";
 }
-if (!$no_prrte_arg) {
-    $m4 .= "m4_define([project_prrte], [1])\n";
-}
 
 $m4 .= "\ndnl Project names
 m4_define([project_name_long], [$project_name_long])
@@ -1416,6 +1418,85 @@ m4_define([project_name_short], [$project_name_short])\n";
 
 # Setup MCA
 mca_run_global($projects);
+
+#---------------------------------------------------------------------------
+
+# Handle 3rd-party packages
+++$step;
+verbose "\n$step. Setup for 3rd-party packages\n";
+
+my @enabled_3rdparty_packages = ();
+my @disabled_3rdparty_packages = split(/,/, $no_3rdparty_arg);
+if ($no_prrte_arg) {
+    push(@disabled_3rdparty_packages, "prrte");
+}
+
+$m4 .= "\n$dnl_line
+$dnl_line
+$dnl_line
+
+dnl 3rd-party package information\n";
+
+# these are fairly one-off, so we did not try to do anything
+# generic. Sorry :).
+
+verbose "=== Libevent\n";
+if ("libevent" ~~ @disabled_3rdparty_packages) {
+    verbose "--- Libevent disabled\n";
+} else {
+    my $libevent_directory = "libevent-" . $libevent_version;
+    my $libevent_tarball = $libevent_directory . ".tar.gz";
+    if (! -f "3rd-party/" . $libevent_tarball) {
+        my_die("Could not find libevent tarball\n");
+    }
+    $m4 .= "m4_define([package_libevent], [1])\n";
+    $m4 .= "m4_define([libevent_tarball], [" . $libevent_tarball . "])\n";
+    $m4 .= "m4_define([libevent_directory], [" . $libevent_directory . "])\n";
+    verbose "--- Libevent enabled (" . $libevent_version . ")\n";
+}
+
+verbose "=== hwloc\n";
+if ("hwloc" ~~ @disabled_3rdparty_packages) {
+    verbose "--- hwloc disabled\n";
+} else {
+    my $hwloc_directory = "hwloc-" . $hwloc_version;
+    my $hwloc_tarball = $hwloc_directory . ".tar.gz";
+    if (! -f "3rd-party/" . $hwloc_tarball) {
+        my_die("Could not find hwloc tarball\n");
+    }
+    $m4 .= "m4_define([package_hwloc], [1])\n";
+    $m4 .= "m4_define([hwloc_tarball], [" . $hwloc_tarball . "])\n";
+    $m4 .= "m4_define([hwloc_directory], [" . $hwloc_directory . "])\n";
+    verbose "--- hwloc enabled\n";
+}
+
+verbose "=== PMIx\n";
+if ("pmix" ~~ @disabled_3rdparty_packages) {
+    verbose "--- PMIx disabled\n";
+} else {
+    # sanity check pmix files exist
+    if (! -f "3rd-party/openpmix/configure.ac") {
+        my_die("Could not find pmix files\n");
+    }
+    push(@subdirs, "3rd-party/openpmix/");
+    $m4 .= "m4_define([package_pmix], [1])\n";
+    verbose "--- PMIx enabled\n";
+}
+
+verbose "=== PRRTE\n";
+if ("prrte" ~~ @disabled_3rdparty_packages) {
+    verbose "--- PRRTE disabled\n";
+} else {
+    # sanity check prrte files exist
+    if (! -f "3rd-party/prrte/configure.ac") {
+        my_die("Could not find pmix files\n");
+    }
+    push(@subdirs, "3rd-party/prrte/");
+    $m4 .= "m4_define([package_prrte], [1])\n";
+    verbose "--- PRRTE enabled\n";
+}
+
+$m4 .= "\n";
 
 #---------------------------------------------------------------------------
 
@@ -1435,10 +1516,6 @@ if (!$no_ompi_arg) {
 # Process all subdirs that we found in previous steps
 ++$step;
 verbose "\n$step. Processing autogen.subdirs directories\n";
-
-if (!$no_prrte_arg) {
-    process_autogen_subdirs(".");
-}
 
 if ($#subdirs >= 0) {
     foreach my $d (@subdirs) {

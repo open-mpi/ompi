@@ -1,5 +1,7 @@
 /*
  * Copyright (c) 2013-2017 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2020      Amazon.com, Inc. or its affiliates.
+ *                         All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -18,7 +20,7 @@
 
 #include <sys/time.h>
 
-#include "opal/mca/event/event.h"
+#include "opal/util/event.h"
 
 
 /**

@@ -12,7 +12,7 @@
 # Copyright (c) 2006-2016 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2012-2015 Los Alamos National Security, Inc.  All rights reserved.
 # Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
-# Copyright (c) 2017-2018 Amazon.com, Inc. or its affiliates.
+# Copyright (c) 2017-2020 Amazon.com, Inc. or its affiliates.
 #                         All Rights reserved.
 # Copyright (c) 2020      IBM Corporation.  All rights reserved.
 # $COPYRIGHT$
@@ -22,15 +22,8 @@
 # $HEADER$
 #
 
-SUBDIRS = config contrib $(MCA_PROJECT_SUBDIRS) test
-if OMPI_WANT_PRRTE
-SUBDIRS += prrte
-endif
-
-DIST_SUBDIRS = config contrib $(MCA_PROJECT_DIST_SUBDIRS) test
-if OMPI_WANT_PRRTE
-DIST_SUBDIRS += prrte
-endif
+SUBDIRS = config contrib 3rd-party $(MCA_PROJECT_SUBDIRS) test
+DIST_SUBDIRS = config contrib 3rd-party $(MCA_PROJECT_DIST_SUBDIRS) test
 EXTRA_DIST = README INSTALL VERSION Doxyfile LICENSE autogen.pl README.JAVA.txt AUTHORS
 
 include examples/Makefile.include
@@ -50,7 +43,8 @@ install-exec-hook:
 	        --brief \
 	        --top_builddir=$(top_builddir) \
 	        --top_srcdir=$(top_srcdir) \
-	        --objext=$(OBJEXT); \
+	        --objext=$(OBJEXT) \
+	        --skipdir=3rd-party ; \
 	fi
 
 ACLOCAL_AMFLAGS = -I config

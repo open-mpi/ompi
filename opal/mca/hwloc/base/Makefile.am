@@ -11,7 +11,8 @@
 dist_opaldata_DATA = base/help-opal-hwloc-base.txt
 
 headers += \
-        base/base.h
+        base/base.h \
+	base/static-components.h
 
 libmca_hwloc_la_SOURCES += \
         base/hwloc_base_frame.c \

@@ -17,6 +17,8 @@
 # Copyright (c) 2016      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
+# Copyright (c) 2020      Amazon.com, Inc. or its affiliates.
+#                         All Rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -50,6 +52,7 @@ headers = \
         daemon_init.h \
 	ethtool.h \
         error.h \
+	event.h \
         fd.h \
         few.h \
         if.h \
@@ -89,6 +92,7 @@ libopalutil_la_SOURCES = \
         daemon_init.c \
 	ethtool.c \
         error.c \
+	event.c \
         fd.c \
         few.c \
         if.c \

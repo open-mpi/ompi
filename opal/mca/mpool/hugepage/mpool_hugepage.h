@@ -13,6 +13,8 @@
  * Copyright (c) 2006      Voltaire. All rights reserved.
  * Copyright (c) 2011-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2020      Amazon.com, Inc. or its affiliates.
+ *                         All Rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -30,7 +32,7 @@
 #include "opal/class/opal_list.h"
 #include "opal/class/opal_free_list.h"
 #include "opal/class/opal_rb_tree.h"
-#include "opal/mca/event/event.h"
+#include "opal/util/event.h"
 #include "opal/mca/mpool/mpool.h"
 #include "opal/util/proc.h"
 #include "opal/mca/allocator/allocator.h"

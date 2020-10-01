@@ -8,6 +8,8 @@
  *                         reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2020      Amazon.com, Inc. or its affiliates.
+ *                         All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -17,7 +19,7 @@
 
 #include "ompi_config.h"
 
-#include "opal/mca/event/event.h"
+#include "opal/util/event.h"
 #include "pml_example.h"
 
 static int mca_pml_example_component_register(void);
