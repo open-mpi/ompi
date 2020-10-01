@@ -57,9 +57,15 @@ included in the vX.Y.Z section and be denoted as:
    (** also appeared: A.B.C)  -- indicating that this item was previously
                                  included in release version vA.B.C.
 
-4.1.0 -- July, 2020
--------------------
+4.1.0 -- October, 2020
+----------------------
 
+- collectives: Add ADAPT adaptive collectives component.  The
+  component is off by default and can be enabled by specifying --mca
+  coll_adapt_priority 100.  We intend to turn on ADAPT by default in
+  Open MPI 5.0.
+- collectives: Adjust default tuning thresholds for many collective
+  algorithms
 - runtime: fix situation where rank-by argument does not work
 - Portals4: Clean up error handling corner cases
 - runtime: Remove --enable-install-libpmix option, which has not
@@ -69,6 +75,7 @@ included in the vX.Y.Z section and be denoted as:
 - OFI/libfabric: Added support for multiple NICs
 - OFI/libfabric: Added support for Scalable Endpoints
 - OFI/libfabric: Added btl for one-sided support
+- OFI/libfabric: Multiple small bugfixes
 - libnbc: Adding numerous performance-improving algorithms
 
 4.0.4 -- June, 2020
