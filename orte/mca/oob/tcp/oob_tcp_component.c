@@ -695,6 +695,9 @@ static void component_shutdown(void)
         /* tell the thread to exit */
         write(mca_oob_tcp_component.stop_thread[1], &i, sizeof(int));
         opal_thread_join(&mca_oob_tcp_component.listen_thread, NULL);
+
+        close(mca_oob_tcp_component.stop_thread[0]);
+        close(mca_oob_tcp_component.stop_thread[1]);
     } else {
         opal_output_verbose(2, orte_oob_base_framework.framework_output,
                         "no hnp or not active");
