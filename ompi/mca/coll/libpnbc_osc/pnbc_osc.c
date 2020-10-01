@@ -48,27 +48,28 @@ void PNBC_OSC_Print_times(double div) {
 }
 #endif
 
-static void nbc_schedule_constructor (PNBC_OSC_Schedule *schedule) {
+static void PNBC_OSC_Schedule_constructor (PNBC_OSC_Schedule *schedule) {
   /* initial total size of the schedule */
   schedule->size = sizeof (int);
   schedule->current_round_offset = 0;
   schedule->data = calloc (1, schedule->size);
 }
 
-static void nbc_schedule_destructor (PNBC_OSC_Schedule *schedule) {
+static void PNBC_OSC_Schedule_destructor (PNBC_OSC_Schedule *schedule) {
   free (schedule->data);
   schedule->data = NULL;
 }
 
-OBJ_CLASS_INSTANCE(PNBC_OSC_Schedule, opal_object_t, nbc_schedule_constructor,
-                   nbc_schedule_destructor);
+OBJ_CLASS_INSTANCE(PNBC_OSC_Schedule, opal_object_t,
+                   PNBC_OSC_Schedule_constructor,
+                   PNBC_OSC_Schedule_destructor);
 
-static int nbc_schedule_grow (PNBC_OSC_Schedule *schedule, int additional) {
+static int PNBC_OSC_Schedule_grow (PNBC_OSC_Schedule *schedule, int additional) {
   void *tmp;
   int size;
 
   /* get current size of schedule */
-  size = nbc_schedule_get_size (schedule);
+  size = PNBC_OSC_Schedule_get_size (schedule);
 
   tmp = realloc (schedule->data, size + additional);
   if (NULL == tmp) {
@@ -80,13 +81,13 @@ static int nbc_schedule_grow (PNBC_OSC_Schedule *schedule, int additional) {
   return OMPI_SUCCESS;
 }
 
-static int nbc_schedule_round_append (PNBC_OSC_Schedule *schedule, void *data, int data_size, bool barrier) {
-  int ret, size = nbc_schedule_get_size (schedule);
+static int PNBC_OSC_Schedule_round_append (PNBC_OSC_Schedule *schedule, void *data, int data_size, bool barrier) {
+  int ret, size = PNBC_OSC_Schedule_get_size (schedule);
 
   if (barrier) {
-    ret = nbc_schedule_grow (schedule, data_size + 1 + sizeof (int));
+    ret = PNBC_OSC_Schedule_grow (schedule, data_size + 1 + sizeof (int));
   } else {
-    ret = nbc_schedule_grow (schedule, data_size);
+    ret = PNBC_OSC_Schedule_grow (schedule, data_size);
   }
   if (OMPI_SUCCESS != ret) {
     return ret;
@@ -97,10 +98,10 @@ static int nbc_schedule_round_append (PNBC_OSC_Schedule *schedule, void *data, i
     memcpy (schedule->data + size, data, data_size);
 
     /* increase number of elements in round-schedule */
-    nbc_schedule_inc_round (schedule);
+    PNBC_OSC_Schedule_inc_round (schedule);
 
     /* increase size of schedule */
-    nbc_schedule_inc_size (schedule, data_size);
+    PNBC_OSC_Schedule_inc_size (schedule, data_size);
   }
 
   if (barrier) {
@@ -114,17 +115,17 @@ static int nbc_schedule_round_append (PNBC_OSC_Schedule *schedule, void *data, i
     schedule->current_round_offset = size + data_size + 1;
 
     /* increase size of schedule */
-    nbc_schedule_inc_size (schedule, sizeof (int) + 1);
+    PNBC_OSC_Schedule_inc_size (schedule, sizeof (int) + 1);
   }
 
   return OMPI_SUCCESS;
 }
 
-/* this function puts a put into the schedule */
-static int PNBC_OSC_Sched_put_internal (const void* buf, char tmpbuf, int origin_count,
-                                        MPI_Datatype origin_datatype, int target, int target_count,
-                                        MPI_Datatype target_datatype, bool local, PNBC_OSC_Schedule *schedule,
-                                        bool barrier) {
+/* this function appends a put into the schedule */
+int PNBC_OSC_Sched_put(const void* buf, char tmpbuf,
+                       int origin_count, MPI_Datatype origin_datatype,
+           int target, int target_count, MPI_Datatype target_datatype,
+                       PNBC_OSC_Schedule *schedule, bool barrier) {
   PNBC_OSC_Args_put put_args;
   int ret;
 
@@ -137,34 +138,26 @@ static int PNBC_OSC_Sched_put_internal (const void* buf, char tmpbuf, int origin
   put_args.target = target;
   put_args.target_count = target_count;
   put_args.target_datatype = target_datatype;
-  put_args.local = local;
 
   /* append to the round-schedule */
-  ret = nbc_schedule_round_append (schedule, &put_args, sizeof (put_args), barrier);
+  ret = PNBC_OSC_Schedule_round_append (schedule, &put_args, sizeof (put_args), barrier);
   if (OMPI_SUCCESS != ret) {
     return ret;
   }
 
-  PNBC_OSC_DEBUG(10, "added put - ends at byte %i\n", nbc_schedule_get_size (schedule));
+  PNBC_OSC_DEBUG(10, "added put - ends at byte %i\n", PNBC_OSC_Schedule_get_size (schedule));
 
   return OMPI_SUCCESS;
 }
 
-int PNBC_OSC_Sched_put (const void* buf, char tmpbuf, int origin_count, MPI_Datatype origin_datatype,
-                        int target, int target_count,  MPI_Datatype target_datatype,
+
+/* this function appends a get into the schedule */
+int PNBC_OSC_Sched_get (const void* buf, char tmpbuf,
+                        int origin_count, MPI_Datatype origin_datatype,
+                        int target, MPI_Aint target_disp,
+                        int target_count, MPI_Datatype target_datatype,
+                        int lock_type, int assert, bool notify,
                         PNBC_OSC_Schedule *schedule, bool barrier) {
-  return PNBC_OSC_Sched_put_internal (buf, tmpbuf, origin_count, origin_datatype, target, target_count,
-                                      target_datatype, false, schedule, barrier);
-}
-
-
-/* this function puts a get into the schedule */
-static int PNBC_OSC_Sched_get_internal (const void* buf, char tmpbuf, int origin_count,
-                                        MPI_Datatype origin_datatype, int target,
-                                        MPI_Aint target_disp, int target_count,
-                                        MPI_Datatype target_datatype, bool local,
-                                        PNBC_OSC_Schedule *schedule,int lock_type,
-                                        bool barrier) {
   PNBC_OSC_Args_get get_args;
   int ret;
 
@@ -178,172 +171,24 @@ static int PNBC_OSC_Sched_get_internal (const void* buf, char tmpbuf, int origin
   get_args.target_disp = target_disp;
   get_args.target_count = target_count;
   get_args.target_datatype = target_datatype;
-  get_args.local = local;
   get_args.lock_type = lock_type;
   get_args.lock_status = UNLOCKED;
+  get_args.assert = assert;
+  get_args.notify = notify;
+
   /* append to the round-schedule */
-  ret = nbc_schedule_round_append (schedule, &get_args, sizeof (get_args), barrier);
+  ret = PNBC_OSC_Schedule_round_append (schedule, &get_args, sizeof (get_args), barrier);
   if (OMPI_SUCCESS != ret) {
     return ret;
   }
 
-  PNBC_OSC_DEBUG(10, "added get - ends at byte %i\n", nbc_schedule_get_size (schedule));
+  PNBC_OSC_DEBUG(10, "added get - ends at byte %i\n", PNBC_OSC_Schedule_get_size (schedule));
 
   return OMPI_SUCCESS;
 }
 
-int PNBC_OSC_Sched_get (const void* buf, char tmpbuf, int origin_count,
-                        MPI_Datatype origin_datatype, int target,
-                        MPI_Aint target_disp, int target_count,
-                        MPI_Datatype target_datatype, PNBC_OSC_Schedule *schedule,
-                        int lock_type, bool barrier) {
 
-  return PNBC_OSC_Sched_get_internal (buf, tmpbuf, origin_count, origin_datatype, target,
-                                      target_disp, target_count, target_datatype, false,
-                                      schedule, lock_type, barrier);
-}
-
-/* this function puts a get into the schedule */
-static int PNBC_OSC_Sched_try_get_internal (const void* buf, char tmpbuf, int origin_count,
-                                            MPI_Datatype origin_datatype, int target,
-                                            MPI_Aint target_disp, int target_count,
-                                            MPI_Datatype target_datatype, bool local,
-                                            PNBC_OSC_Schedule *schedule, int lock_type,
-                                            int assert, bool notify, bool barrier) {
-  PNBC_OSC_Args_try_get try_get_args;
-  int ret;
-
-  /* store the passed arguments */
-  try_get_args.type = TRY_GET;
-  try_get_args.buf = buf;
-  try_get_args.tmpbuf = tmpbuf;   /* TODO: most likely we don't need this for single sided */
-  try_get_args.origin_count = origin_count;
-  try_get_args.origin_datatype = origin_datatype;
-  try_get_args.target = target;
-  try_get_args.target_disp = target_disp;
-  try_get_args.target_count = target_count;
-  try_get_args.target_datatype = target_datatype;
-  try_get_args.local = local;
-  try_get_args.lock_type = lock_type;
-  try_get_args.assert = assert;
-  try_get_args.lock_status = UNLOCKED;
-  try_get_args.notify = notify;
-
-  /* append to the round-schedule */
-  ret = nbc_schedule_round_append (schedule, &try_get_args, sizeof (try_get_args), barrier);
-  if (OMPI_SUCCESS != ret) {
-    return ret;
-  }
-
-  PNBC_OSC_DEBUG(10, "added try_get - ends at byte %i\n", nbc_schedule_get_size (schedule));
-
-  return OMPI_SUCCESS;
-}
-
-int PNBC_OSC_Sched_try_get (const void* buf, char tmpbuf, int origin_count,
-                            MPI_Datatype origin_datatype, int target,
-                            MPI_Aint target_disp, int target_count,
-                            MPI_Datatype target_datatype, PNBC_OSC_Schedule *schedule,
-                            int lock_type, int assert, bool notify, bool barrier) {
-  return PNBC_OSC_Sched_try_get_internal (buf, tmpbuf, origin_count, origin_datatype, target,
-                                          target_disp, target_count, target_datatype, false,
-                                          schedule, lock_type, assert, notify, barrier);
-}
-
-/* this function puts a send into the schedule */
-static int PNBC_OSC_Sched_send_internal (const void* buf, char tmpbuf, int count,
-                                         MPI_Datatype datatype, int dest, bool local,
-                                         PNBC_OSC_Schedule *schedule, bool barrier) {
-  PNBC_OSC_Args_send send_args;
-  int ret;
-
-  /* store the passed arguments */
-  send_args.type = SEND;
-  send_args.buf = buf;
-  send_args.tmpbuf = tmpbuf;
-  send_args.count = count;
-  send_args.datatype = datatype;
-  send_args.dest = dest;
-  send_args.local = local;
-
-  /* append to the round-schedule */
-  ret = nbc_schedule_round_append (schedule, &send_args, sizeof (send_args), barrier);
-  if (OMPI_SUCCESS != ret) {
-    return ret;
-  }
-
-  PNBC_OSC_DEBUG(10, "added send - ends at byte %i\n", nbc_schedule_get_size (schedule));
-
-  return OMPI_SUCCESS;
-}
-
-int PNBC_OSC_Sched_local_put (const void* buf, char tmpbuf, int origin_count,
-                              MPI_Datatype origin_datatype, int target,
-                              PNBC_OSC_Schedule *schedule, bool barrier) {
-
-  return PNBC_OSC_Sched_send_internal (buf, tmpbuf, origin_count, origin_datatype,
-                                       target, true, schedule, barrier);
-}
-
-int PNBC_OSC_Sched_send (const void* buf, char tmpbuf, int count, MPI_Datatype datatype,
-                         int dest, PNBC_OSC_Schedule *schedule, bool barrier) {
-  return PNBC_OSC_Sched_send_internal (buf, tmpbuf, count, datatype, dest, false,
-                                       schedule, barrier);
-}
-
-int PNBC_OSC_Sched_local_send (const void* buf, char tmpbuf, int count, MPI_Datatype datatype,
-                               int dest, PNBC_OSC_Schedule *schedule, bool barrier) {
-  return PNBC_OSC_Sched_send_internal (buf, tmpbuf, count, datatype, dest, true,
-                                       schedule, barrier);
-}
-
-/* this function puts a receive into the schedule */
-static int PNBC_OSC_Sched_recv_internal (void* buf, char tmpbuf, int count, MPI_Datatype datatype,
-                                         int source, bool local, PNBC_OSC_Schedule *schedule,
-                                         bool barrier) {
-  PNBC_OSC_Args_recv recv_args;
-  int ret;
-
-  /* store the passed arguments */
-  recv_args.type = RECV;
-  recv_args.buf = buf;
-  recv_args.tmpbuf = tmpbuf;
-  recv_args.count = count;
-  recv_args.datatype = datatype;
-  recv_args.source = source;
-  recv_args.local = local;
-
-  /* append to the round-schedule */
-  ret = nbc_schedule_round_append (schedule, &recv_args, sizeof (recv_args), barrier);
-  if (OMPI_SUCCESS != ret) {
-    return ret;
-  }
-
-  PNBC_OSC_DEBUG(10, "added receive - ends at byte %d\n", nbc_schedule_get_size (schedule));
-
-  return OMPI_SUCCESS;
-}
-
-int PNBC_OSC_Sched_local_get (const void* buf, char tmpbuf, int origin_count,
-                              MPI_Datatype origin_datatype, int target,
-                              PNBC_OSC_Schedule *schedule, bool barrier) {
-  printf("No implementation yet\n");
-  exit(0);
-}
-
-int PNBC_OSC_Sched_recv (void* buf, char tmpbuf, int count, MPI_Datatype datatype,
-                         int source, PNBC_OSC_Schedule *schedule, bool barrier) {
-  return PNBC_OSC_Sched_recv_internal(buf, tmpbuf, count, datatype, source, false,
-                                      schedule, barrier);
-}
-
-int PNBC_OSC_Sched_local_recv (void* buf, char tmpbuf, int count, MPI_Datatype datatype,
-                               int source, PNBC_OSC_Schedule *schedule, bool barrier) {
-  return PNBC_OSC_Sched_recv_internal(buf, tmpbuf, count, datatype, source, true, schedule,
-                                      barrier);
-}
-
-/* this function puts an operation into the schedule */
+/* this function appends an operation into the schedule */
 int PNBC_OSC_Sched_op (const void* buf1, char tmpbuf1, void* buf2, char tmpbuf2, int count,
                        MPI_Datatype datatype, MPI_Op op, PNBC_OSC_Schedule *schedule,
                        bool barrier) {
@@ -361,12 +206,12 @@ int PNBC_OSC_Sched_op (const void* buf1, char tmpbuf1, void* buf2, char tmpbuf2,
   op_args.datatype = datatype;
 
   /* append to the round-schedule */
-  ret = nbc_schedule_round_append (schedule, &op_args, sizeof (op_args), barrier);
+  ret = PNBC_OSC_Schedule_round_append (schedule, &op_args, sizeof (op_args), barrier);
   if (OMPI_SUCCESS != ret) {
     return ret;
   }
 
-  PNBC_OSC_DEBUG(10, "added op2 - ends at byte %i\n", nbc_schedule_get_size (schedule));
+  PNBC_OSC_DEBUG(10, "added op2 - ends at byte %i\n", PNBC_OSC_Schedule_get_size (schedule));
 
   return OMPI_SUCCESS;
 }
@@ -389,12 +234,12 @@ int PNBC_OSC_Sched_copy (void *src, char tmpsrc, int srccount, MPI_Datatype srct
   copy_args.tgttype = tgttype;
 
   /* append to the round-schedule */
-  ret = nbc_schedule_round_append (schedule, &copy_args, sizeof (copy_args), barrier);
+  ret = PNBC_OSC_Schedule_round_append (schedule, &copy_args, sizeof (copy_args), barrier);
   if (OMPI_SUCCESS != ret) {
     return ret;
   }
 
-  PNBC_OSC_DEBUG(10, "added copy - ends at byte %i\n", nbc_schedule_get_size (schedule));
+  PNBC_OSC_DEBUG(10, "added copy - ends at byte %i\n", PNBC_OSC_Schedule_get_size (schedule));
 
   return OMPI_SUCCESS;
 }
@@ -416,12 +261,12 @@ int PNBC_OSC_Sched_unpack (void *inbuf, char tmpinbuf, int count, MPI_Datatype d
   unpack_args.tmpoutbuf = tmpoutbuf;
 
   /* append to the round-schedule */
-  ret = nbc_schedule_round_append (schedule, &unpack_args, sizeof (unpack_args), barrier);
+  ret = PNBC_OSC_Schedule_round_append (schedule, &unpack_args, sizeof (unpack_args), barrier);
   if (OMPI_SUCCESS != ret) {
     return ret;
   }
 
-  PNBC_OSC_DEBUG(10, "added unpack - ends at byte %i\n", nbc_schedule_get_size (schedule));
+  PNBC_OSC_DEBUG(10, "added unpack - ends at byte %i\n", PNBC_OSC_Schedule_get_size (schedule));
 
   return OMPI_SUCCESS;
 }
@@ -433,28 +278,28 @@ int PNBC_OSC_Sched_win_free ( PNBC_OSC_Schedule *schedule, bool barrier) {
   wfree_args.type = WIN_FREE;
 
   /* append to the round-schedule */
-  ret = nbc_schedule_round_append (schedule, &wfree_args, sizeof(wfree_args), barrier);
+  ret = PNBC_OSC_Schedule_round_append (schedule, &wfree_args, sizeof(wfree_args), barrier);
   if (OMPI_SUCCESS != ret) {
     return ret;
   }
 
-  PNBC_OSC_DEBUG(10, "added win_free - ends at byte %i\n", nbc_schedule_get_size (schedule));
+  PNBC_OSC_DEBUG(10, "added win_free - ends at byte %i\n", PNBC_OSC_Schedule_get_size (schedule));
 
   return OMPI_SUCCESS;
 }
 
 /* this function ends a round of a schedule */
 int PNBC_OSC_Sched_barrier (PNBC_OSC_Schedule *schedule) {
-  return nbc_schedule_round_append (schedule, NULL, 0, true);
+  return PNBC_OSC_Schedule_round_append (schedule, NULL, 0, true);
 }
 
 /* this function ends a schedule */
 int PNBC_OSC_Sched_commit(PNBC_OSC_Schedule *schedule) {
-  int size = nbc_schedule_get_size (schedule);
+  int size = PNBC_OSC_Schedule_get_size (schedule);
   char *ptr;
   int ret;
 
-  ret = nbc_schedule_grow (schedule, 1);
+  ret = PNBC_OSC_Schedule_grow (schedule, 1);
   if (OMPI_SUCCESS != ret) {
     return ret;
   }
@@ -464,7 +309,7 @@ int PNBC_OSC_Sched_commit(PNBC_OSC_Schedule *schedule) {
   *((char *) ptr) = 0;
 
   /* increase size of schedule */
-  nbc_schedule_inc_size (schedule, 1);
+  PNBC_OSC_Schedule_inc_size (schedule, 1);
 
   PNBC_OSC_DEBUG(10, "closed schedule %p at byte %i\n", schedule, (int)(size + 1));
 
@@ -482,9 +327,6 @@ static inline void PNBC_OSC_Free (PNBC_OSC_Handle* handle) {
     handle->schedule = NULL;
   }
 
-  /* if the nbc_I<collective> attached some data */
-  /* problems with schedule cache here, see comment (TODO) in
-   * nbc_internal.h */
   if (NULL != handle->tmpbuf) {
     free((void*)handle->tmpbuf);
     handle->tmpbuf = NULL;
@@ -602,13 +444,11 @@ static inline int PNBC_OSC_Start_round(PNBC_OSC_Handle *handle) {
   PNBC_OSC_Fn_type type;
   PNBC_OSC_Args_put      putargs;
   PNBC_OSC_Args_get      getargs;
-  PNBC_OSC_Args_try_get  trygetargs;
   PNBC_OSC_Args_op         opargs;
   PNBC_OSC_Args_copy     copyargs;
   PNBC_OSC_Args_unpack unpackargs;
 
-
-  void *buf1,  *buf2;
+  void *buf1, *buf2;
 
   /* get round-schedule address */
   ptr = handle->schedule->data + handle->row_offset;
@@ -619,11 +459,13 @@ static inline int PNBC_OSC_Start_round(PNBC_OSC_Handle *handle) {
 
   for (int i = 0 ; i < num ; ++i) {
     int offset = (intptr_t)(ptr - handle->schedule->data);
+    memcpy(&type, ptr, sizeof(type));
 
-    memcpy (&type, ptr, sizeof (type));
     switch(type) {
 
+/***************/
     case WIN_FREE:
+/***************/
       PNBC_OSC_DEBUG(5,"  WIN_FREE (offset %li) ", offset);
 
       /* get an additional request */
@@ -652,7 +494,10 @@ static inline int PNBC_OSC_Start_round(PNBC_OSC_Handle *handle) {
 #endif
 
       break;
+
+/***************/
     case PUT:
+/***************/
       PNBC_OSC_DEBUG(5,"  PUT (offset %li) ", offset);
       PNBC_OSC_GET_BYTES(ptr,putargs);
       PNBC_OSC_DEBUG(5,"*buf: %p, origin count: %i, origin type: %p, target: %i, target count: %i, target type: %p)\n",
@@ -693,7 +538,10 @@ static inline int PNBC_OSC_Start_round(PNBC_OSC_Handle *handle) {
       Iget_time += MPI_Wtime();
 #endif
       break;
+
+/***************/
     case GET:
+/***************/
       PNBC_OSC_DEBUG(5,"  GET (offset %li) ", offset);
       PNBC_OSC_GET_BYTES(ptr,getargs);
       PNBC_OSC_DEBUG(5,"*buf: %p, origin count: %i, origin type: %p, target: %i, target disp: %i, target count: %i, target type: %p)\n",
@@ -760,99 +608,105 @@ static inline int PNBC_OSC_Start_round(PNBC_OSC_Handle *handle) {
 #endif
 
       break;
-    case TRY_GET:
-      PNBC_OSC_DEBUG(10,"  TRY_GET (offset %li) ", offset);
-      PNBC_OSC_GET_BYTES(ptr,trygetargs);
-      PNBC_OSC_DEBUG(10,"*buf: %p, origin count: %i, origin type: %p, target: %i, target disp: %i, "
-                     "target count: %i, target type: %p, notification: %i)\n",
-                     trygetargs.buf, trygetargs.origin_count, trygetargs.origin_datatype,
-                     trygetargs.target, trygetargs.target_disp, trygetargs.target_count,
-                     trygetargs.target_datatype, trygetargs.notify);
 
-      /* get an additional request */
-      handle->req_count++;
-      /* get buffer */
-      if(trygetargs.tmpbuf) {
-        buf1=(char*)handle->tmpbuf+(long)trygetargs.buf;
-      } else {
-        buf1=(void *)trygetargs.buf;
-      }
+/***************/
+//    case TRY_GET:
+/***************/
+//      PNBC_OSC_DEBUG(10,"  TRY_GET (offset %li) ", offset);
+//      PNBC_OSC_GET_BYTES(ptr,trygetargs);
+//      PNBC_OSC_DEBUG(10,"*buf: %p, origin count: %i, origin type: %p, target: %i, target disp: %i, "
+//                     "target count: %i, target type: %p, notification: %i)\n",
+//                     trygetargs.buf, trygetargs.origin_count, trygetargs.origin_datatype,
+//                     trygetargs.target, trygetargs.target_disp, trygetargs.target_count,
+//                     trygetargs.target_datatype, trygetargs.notify);
+//
+//      /* get an additional request */
+//      handle->req_count++;
+//      /* get buffer */
+//      if(trygetargs.tmpbuf) {
+//        buf1=(char*)handle->tmpbuf+(long)trygetargs.buf;
+//      } else {
+//        buf1=(void *)trygetargs.buf;
+//      }
+//
+//#ifdef PNBC_OSC_TIMING
+//      Iget_time -= MPI_Wtime();
+//#endif
+//
+//      /* [state is unlocked] -> we try to lock */
+//      if( UNLOCKED == trygetargs.lock_status ){
+//        /* notification */
+//        if(trygetargs.notify == true ){
+///* DJH 2020_09_25 temporarily removed to enable compilation
+//          res = handle->winflag->w_osc_module->osc_try_lock(trygetargs.lock_type, trygetargs.target,
+//                                                            trygetargs.assert, handle->winflag);
+//*/
+//          if(OMPI_SUCCESS == res){
+//            trygetargs.lock_status = LOCKED;
+//            res = handle->winflag->w_osc_module->osc_get(buf1, trygetargs.origin_count,
+//                                                         trygetargs.origin_datatype,
+//                                                         trygetargs.target ,trygetargs.target_disp,
+//                                                         trygetargs.target_count,
+//                                                         trygetargs.target_datatype, handle->winflag);
+//
+//          }
+//
+//          /* getting data */
+//        } else {
+//
+///* DJH 2020_09_25 temporarily removed to enable compilation
+//          res = handle->win->w_osc_module->osc_try_lock(trygetargs.lock_type, trygetargs.target,
+//                                                        trygetargs.assert, handle->win);
+//*/
+//          if(OMPI_SUCCESS == res){
+//            trygetargs.lock_status = LOCKED;
+//            res = handle->win->w_osc_module->osc_get(buf1, trygetargs.origin_count,
+//                                                     trygetargs.origin_datatype,
+//                                                     trygetargs.target ,trygetargs.target_disp,
+//                                                     trygetargs.target_count,
+//                                                     trygetargs.target_datatype, handle->win);
+//
+//          }
+//        }
+//
+//        /* something went wrong */
+//        if (OMPI_SUCCESS != res){
+//          /* return error code */
+//          PNBC_OSC_Error ("Error in MPI_try_get(%lu, %i, %p, %i, %i, %p, %lu) (%i)",
+//                          (unsigned long)buf1,
+//                          trygetargs.origin_count, trygetargs.origin_datatype, trygetargs.target,
+//                          trygetargs.target_count, trygetargs.target_datatype,
+//                          (unsigned long)handle->comm, res);
+//
+//          /* return error */
+//          return res;
+//        }
+//      }
+//
+//      /* [state is locked] -> we try to unlock */
+//      if( LOCKED == trygetargs.lock_status ){
+//        /* notification */
+///* DJH 2020_09_25 temporarily removed to enable compilation
+//        if(trygetargs.notify == true ){
+//          res = handle->winflag->w_osc_module->osc_try_unlock(trygetargs.target, handle->winflag);
+//        }else{
+//          res = handle->win->w_osc_module->osc_try_unlock(trygetargs.target, handle->win);
+//        }
+//*/
+//        if (OMPI_SUCCESS != res){
+//
+//          /* return error code */
+//          PNBC_OSC_Error ("Error in MPI_try_unlock(%i) (%i)",
+//                          trygetargs.target, res);
+//          return res;
+//        }
+//      }
+//
+//      break;
 
-#ifdef PNBC_OSC_TIMING
-      Iget_time -= MPI_Wtime();
-#endif
-
-      /* [state is unlocked] -> we try to lock */
-      if( UNLOCKED == trygetargs.lock_status ){
-        /* notification */
-        if(trygetargs.notify == true ){
-/* DJH 2020_09_25 temporarily removed to enable compilation
-          res = handle->winflag->w_osc_module->osc_try_lock(trygetargs.lock_type, trygetargs.target,
-                                                            trygetargs.assert, handle->winflag);
-*/
-          if(OMPI_SUCCESS == res){
-            trygetargs.lock_status = LOCKED;
-            res = handle->winflag->w_osc_module->osc_get(buf1, trygetargs.origin_count,
-                                                         trygetargs.origin_datatype,
-                                                         trygetargs.target ,trygetargs.target_disp,
-                                                         trygetargs.target_count,
-                                                         trygetargs.target_datatype, handle->winflag);
-
-          }
-
-          /* getting data */
-        } else {
-
-/* DJH 2020_09_25 temporarily removed to enable compilation
-          res = handle->win->w_osc_module->osc_try_lock(trygetargs.lock_type, trygetargs.target,
-                                                        trygetargs.assert, handle->win);
-*/
-          if(OMPI_SUCCESS == res){
-            trygetargs.lock_status = LOCKED;
-            res = handle->win->w_osc_module->osc_get(buf1, trygetargs.origin_count,
-                                                     trygetargs.origin_datatype,
-                                                     trygetargs.target ,trygetargs.target_disp,
-                                                     trygetargs.target_count,
-                                                     trygetargs.target_datatype, handle->win);
-
-          }
-        }
-
-        /* something went wrong */
-        if (OMPI_SUCCESS != res){
-          /* return error code */
-          PNBC_OSC_Error ("Error in MPI_try_get(%lu, %i, %p, %i, %i, %p, %lu) (%i)",
-                          (unsigned long)buf1,
-                          trygetargs.origin_count, trygetargs.origin_datatype, trygetargs.target,
-                          trygetargs.target_count, trygetargs.target_datatype,
-                          (unsigned long)handle->comm, res);
-
-          /* return error */
-          return res;
-        }
-      }
-
-      /* [state is locked] -> we try to unlock */
-      if( LOCKED == trygetargs.lock_status ){
-        /* notification */
-/* DJH 2020_09_25 temporarily removed to enable compilation
-        if(trygetargs.notify == true ){
-          res = handle->winflag->w_osc_module->osc_try_unlock(trygetargs.target, handle->winflag);
-        }else{
-          res = handle->win->w_osc_module->osc_try_unlock(trygetargs.target, handle->win);
-        }
-*/
-        if (OMPI_SUCCESS != res){
-
-          /* return error code */
-          PNBC_OSC_Error ("Error in MPI_try_unlock(%i) (%i)",
-                          trygetargs.target, res);
-          return res;
-        }
-      }
-
-      break;
+/***************/
     case OP:
+/***************/
       PNBC_OSC_DEBUG(5, "  OP2  (offset %li) ", offset);
       PNBC_OSC_GET_BYTES(ptr,opargs);
       PNBC_OSC_DEBUG(5, "*buf1: %p, buf2: %p, count: %i, type: %p)\n", opargs.buf1, opargs.buf2,
@@ -894,7 +748,9 @@ static inline int PNBC_OSC_Start_round(PNBC_OSC_Handle *handle) {
       }
       break;
       
+/***************/
     case UNPACK:
+/***************/
       PNBC_OSC_DEBUG(5, "  UNPACK   (offset %li) ", offset);
       PNBC_OSC_GET_BYTES(ptr,unpackargs);
       PNBC_OSC_DEBUG(5, "*src: %lu, srccount: %i, srctype: %p, *tgt: %lu\n", (unsigned long) unpackargs.inbuf,
@@ -915,7 +771,11 @@ static inline int PNBC_OSC_Start_round(PNBC_OSC_Handle *handle) {
         PNBC_OSC_Error ("NBC_Unpack() failed (code: %i)", res);
         return res;
       }
+      break;
+
+/***************/
     default:
+/***************/
       PNBC_OSC_Error ("PNBC_OSC_Start_round: bad type %li at offset %li", (long)type, offset);
       return OMPI_ERROR;
     }

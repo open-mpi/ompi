@@ -50,224 +50,149 @@
 extern "C" {
 #endif
 
-  /* log(2) */
+/* log(2) */
 #define LOG2 0.69314718055994530941
 
-  /* true/false */
+/* true/false */
 #define true 1
 #define false 0
 
-  /* all collectives */
-#define PNBC_OSC_ALLGATHER 0
-#define PNBC_OSC_ALLGATHERV 1
-#define PNBC_OSC_ALLREDUCE 2
-#define PNBC_OSC_ALLTOALL 3
-#define PNBC_OSC_ALLTOALLV 4
-#define PNBC_OSC_ALLTOALLW 5
-#define PNBC_OSC_BARRIER 6
-#define PNBC_OSC_BCAST 7
-#define PNBC_OSC_EXSCAN 8
-#define PNBC_OSC_GATHER 9
-#define PNBC_OSC_GATHERV 10
-#define PNBC_OSC_REDUCE 11
-#define PNBC_OSC_REDUCESCAT 12
-#define PNBC_OSC_SCAN 13
-#define PNBC_OSC_SCATTER 14
-#define PNBC_OSC_SCATTERV 15
-  /* set the number of collectives in nbc.h !!!! */
 
-  /* several typedefs for PNBC_OSC */
-  /* the function type enum */
-  typedef enum {
-                SEND,
-                RECV,
-                OP,
-                COPY,
-                UNPACK,
-                PUT,
-                GET,
-                TRY_GET,
-                WIN_FREE,
-  } PNBC_OSC_Fn_type;
+typedef enum {
+              LOCKED,
+              UNLOCKED
+} PNBC_OSC_Lock_status;
 
-  typedef enum {
-                LOCKED,
-                UNLOCKED
-  } PNBC_OSC_Lock_status;
+typedef enum {
+              PUT,
+              GET,
+              TRY_GET,
+              WIN_FREE,
+              OP,
+              COPY,
+              UNPACK
+} PNBC_OSC_Fn_type;
 
-  /* the put argument struct */
-  typedef struct {
-    PNBC_OSC_Fn_type type;
-    int origin_count;
-    int target_count;
-    const void *buf;
-    MPI_Datatype origin_datatype;
-    MPI_Datatype target_datatype;
-    int target;
-    char tmpbuf;
-    bool local;
-  } PNBC_OSC_Args_put;
+/* the put argument struct */
+typedef struct {
+  PNBC_OSC_Fn_type type;
+  int origin_count;
+  int target_count;
+  const void *buf;
+  MPI_Datatype origin_datatype;
+  MPI_Datatype target_datatype;
+  int target;
+  char tmpbuf;
+  bool local;
+} PNBC_OSC_Args_put;
 
-  /* the win_free argument struct */
-  typedef struct {
-    PNBC_OSC_Fn_type type;
-  } PNBC_OSC_Args_win_free;
+/* the get argument struct */
+typedef struct {
+  PNBC_OSC_Fn_type type;
+  int origin_count;
+  int target_count;
+  const void *buf;
+  MPI_Datatype origin_datatype;
+  MPI_Datatype target_datatype;
+  MPI_Aint target_disp;
+  int target;
+  char tmpbuf;
+  bool local;
+  int lock_type;
+  PNBC_OSC_Lock_status lock_status;
+  int assert;
+  bool notify;
+} PNBC_OSC_Args_get;
 
-  /* the get argument struct */
-  typedef struct {
-    PNBC_OSC_Fn_type type;
-    int origin_count;
-    int target_count;
-    const void *buf;
-    MPI_Datatype origin_datatype;
-    MPI_Datatype target_datatype;
-    MPI_Aint target_disp;
-    int target;
-    char tmpbuf;
-    bool local;
-    int lock_type;
-    PNBC_OSC_Lock_status lock_status;
-  } PNBC_OSC_Args_get;
+/* the win_free argument struct */
+typedef struct {
+  PNBC_OSC_Fn_type type;
+} PNBC_OSC_Args_win_free;
 
-  typedef struct {
-    PNBC_OSC_Fn_type type;
-    int origin_count;
-    int target_count;
-    const void *buf;
-    MPI_Datatype origin_datatype;
-    MPI_Datatype target_datatype;
-    MPI_Aint target_disp;
-    int target;
-    char tmpbuf;
-    bool local;
-    int lock_type;
-    int assert;
-    PNBC_OSC_Lock_status lock_status;
-    bool notify;
-  } PNBC_OSC_Args_try_get;
+/* the operation argument struct */
+typedef struct {
+  PNBC_OSC_Fn_type type;
+  char tmpbuf1;
+  char tmpbuf2;
+  const void *buf1;
+  void *buf2;
+  MPI_Op op;
+  MPI_Datatype datatype;
+  int count;
+} PNBC_OSC_Args_op;
 
-  /* the send argument struct */
-  typedef struct {
-    PNBC_OSC_Fn_type type;
-    int count;
-    const void *buf;
-    MPI_Datatype datatype;
-    int dest;
-    char tmpbuf;
-    bool local;
-  } PNBC_OSC_Args_send;
+/* the copy argument struct */
+typedef struct {
+  PNBC_OSC_Fn_type type;
+  int srccount;
+  void *src;
+  void *tgt;
+  MPI_Datatype srctype;
+  MPI_Datatype tgttype;
+  int tgtcount;
+  char tmpsrc;
+  char tmptgt;
+} PNBC_OSC_Args_copy;
 
-  /* the receive argument struct */
-  typedef struct {
-    PNBC_OSC_Fn_type type;
-    int count;
-    void *buf;
-    MPI_Datatype datatype;
-    char tmpbuf;
-    int source;
-    bool local;
-  } PNBC_OSC_Args_recv;
+/* unpack operation arguments */
+typedef struct {
+  PNBC_OSC_Fn_type type;
+  int count;
+  void *inbuf;
+  void *outbuf;
+  MPI_Datatype datatype;
+  char tmpinbuf;
+  char tmpoutbuf;
+} PNBC_OSC_Args_unpack;
 
-  /* the operation argument struct */
-  typedef struct {
-    PNBC_OSC_Fn_type type;
-    char tmpbuf1;
-    char tmpbuf2;
-    const void *buf1;
-    void *buf2;
-    MPI_Op op;
-    MPI_Datatype datatype;
-    int count;
-  } PNBC_OSC_Args_op;
+/* internal function prototypes */
 
-  /* the copy argument struct */
-  typedef struct {
-    PNBC_OSC_Fn_type type;
-    int srccount;
-    void *src;
-    void *tgt;
-    MPI_Datatype srctype;
-    MPI_Datatype tgttype;
-    int tgtcount;
-    char tmpsrc;
-    char tmptgt;
-  } PNBC_OSC_Args_copy;
+/* add a put to a schedule */
+int PNBC_OSC_Sched_put(const void* buf, char tmpbuf,
+                       int origin_count, MPI_Datatype origin_datatype,
+           int target, int target_count, MPI_Datatype target_datatype,
+                       PNBC_OSC_Schedule *schedule, bool barrier);
 
-  /* unpack operation arguments */
-  typedef struct {
-    PNBC_OSC_Fn_type type;
-    int count;
-    void *inbuf;
-    void *outbuf;
-    MPI_Datatype datatype;
-    char tmpinbuf;
-    char tmpoutbuf;
-  } PNBC_OSC_Args_unpack;
+  /* schedule get */
+int PNBC_OSC_Sched_get (const void* buf, char tmpbuf,
+                        int origin_count, MPI_Datatype origin_datatype,
+                        int target, MPI_Aint target_disp,
+                        int target_count, MPI_Datatype target_datatype,
+                        int lock_type, int assert, bool notify,
+                        PNBC_OSC_Schedule *schedule, bool barrier);
 
-  /* internal function prototypes */
-  /* Put */
-  int PNBC_OSC_Sched_put (const void* buf, char tmpbuf, int origin_count,
-                          MPI_Datatype origin_datatype,
-                          int target, int target_count,  MPI_Datatype target_datatype,
-                          PNBC_OSC_Schedule *schedule, bool barrier);
-  int PNBC_OSC_Sched_local_put (const void* buf, char tmpbuf, int origin_count,
-                                MPI_Datatype origin_datatype, int target,
-                                PNBC_OSC_Schedule *schedule, bool barrier);
+/* schedule win_free */
+int PNBC_OSC_Sched_win_free(PNBC_OSC_Schedule *schedule, bool barrier);
 
-  /* Get */
-  int PNBC_OSC_Sched_get (const void* buf, char tmpbuf, int origin_count,
-                          MPI_Datatype origin_datatype, int target,
-                          MPI_Aint target_disp, int target_count,
-                          MPI_Datatype target_datatype,
-                          PNBC_OSC_Schedule *schedule, int lock_type, bool barrier);
-  int PNBC_OSC_Sched_local_get (const void* buf, char tmpbuf, int origin_count,
-                                MPI_Datatype origin_datatype, int target,
-                                PNBC_OSC_Schedule *schedule, bool barrier);
-  /* try_get */
-  int PNBC_OSC_Sched_try_get (const void* buf, char tmpbuf, int origin_count,
-                              MPI_Datatype origin_datatype, int target,
-                              MPI_Aint target_disp, int target_count,
-                              MPI_Datatype target_datatype,
-                              PNBC_OSC_Schedule *schedule, int lock_type,
-                              int assert, bool notify, bool barrier);
-  int PNBC_OSC_Sched_send (const void* buf, char tmpbuf, int count,
-                           MPI_Datatype datatype, int dest,
+int PNBC_OSC_Sched_op (const void* buf1, char tmpbuf1, void* buf2, char tmpbuf2, int count,
+                       MPI_Datatype datatype, MPI_Op op, PNBC_OSC_Schedule *schedule,
+                       bool barrier);
+
+int PNBC_OSC_Sched_copy (void *src, char tmpsrc, int srccount, MPI_Datatype srctype,
+                         void *tgt, char tmptgt, int tgtcount,
+                         MPI_Datatype tgttype, PNBC_OSC_Schedule *schedule, bool barrier);
+
+int PNBC_OSC_Sched_unpack (void *inbuf, char tmpinbuf, int count, MPI_Datatype datatype,
+                           void *outbuf, char tmpoutbuf,
                            PNBC_OSC_Schedule *schedule, bool barrier);
-  int PNBC_OSC_Sched_local_send (const void* buf, char tmpbuf, int count,
-                                 MPI_Datatype datatype, int dest,
-                                 PNBC_OSC_Schedule *schedule, bool barrier);
-  int PNBC_OSC_Sched_recv (void* buf, char tmpbuf, int count, MPI_Datatype datatype,
-                           int source, PNBC_OSC_Schedule *schedule, bool barrier);
-  int PNBC_OSC_Sched_local_recv (void* buf, char tmpbuf, int count, MPI_Datatype datatype
-                                 , int source, PNBC_OSC_Schedule *schedule, bool barrier);
-  int PNBC_OSC_Sched_op (const void* buf1, char tmpbuf1, void* buf2, char tmpbuf2, int count,
-                         MPI_Datatype datatype, MPI_Op op, PNBC_OSC_Schedule *schedule,
-                         bool barrier);
-  int PNBC_OSC_Sched_copy (void *src, char tmpsrc, int srccount, MPI_Datatype srctype,
-                           void *tgt, char tmptgt, int tgtcount,
-                           MPI_Datatype tgttype, PNBC_OSC_Schedule *schedule, bool barrier);
-  int PNBC_OSC_Sched_unpack (void *inbuf, char tmpinbuf, int count, MPI_Datatype datatype,
-                             void *outbuf, char tmpoutbuf,
-                             PNBC_OSC_Schedule *schedule, bool barrier);
   
-  int PNBC_OSC_Sched_win_free(PNBC_OSC_Schedule *schedule, bool barrier);
-  int PNBC_OSC_Sched_barrier (PNBC_OSC_Schedule *schedule);
-  int PNBC_OSC_Sched_commit (PNBC_OSC_Schedule *schedule);
+int PNBC_OSC_Sched_barrier (PNBC_OSC_Schedule *schedule);
+int PNBC_OSC_Sched_commit (PNBC_OSC_Schedule *schedule);
 
 
-  int PNBC_OSC_Start(PNBC_OSC_Handle *handle);
-  int PNBC_OSC_Schedule_request(PNBC_OSC_Schedule *schedule, ompi_communicator_t *comm,
-                                ompi_coll_libpnbc_osc_module_t *module, bool persistent,
-                                ompi_request_t **request, void *tmpbuf);
-  int PNBC_OSC_Schedule_request_win(PNBC_OSC_Schedule *schedule, ompi_communicator_t *comm,
-                                    ompi_win_t *win,ompi_win_t *winflag,
-                                    ompi_coll_libpnbc_osc_module_t *module,
-                                    bool persistent, ompi_request_t **request, void *tmpbuf);
+int PNBC_OSC_Start(PNBC_OSC_Handle *handle);
+int PNBC_OSC_Schedule_request(PNBC_OSC_Schedule *schedule, ompi_communicator_t *comm,
+                              ompi_coll_libpnbc_osc_module_t *module, bool persistent,
+                              ompi_request_t **request, void *tmpbuf);
+int PNBC_OSC_Schedule_request_win(PNBC_OSC_Schedule *schedule, ompi_communicator_t *comm,
+                                  ompi_win_t *win,ompi_win_t *winflag,
+                                  ompi_coll_libpnbc_osc_module_t *module,
+                                  bool persistent, ompi_request_t **request, void *tmpbuf);
   
-  void PNBC_OSC_Return_handle(ompi_coll_libpnbc_osc_request_t *request);
+void PNBC_OSC_Return_handle(ompi_coll_libpnbc_osc_request_t *request);
   
-  static inline int PNBC_OSC_Type_intrinsic(MPI_Datatype type);
-  int PNBC_OSC_Create_fortran_handle(int *fhandle, PNBC_OSC_Handle **handle);
+static inline int PNBC_OSC_Type_intrinsic(MPI_Datatype type);
+int PNBC_OSC_Create_fortran_handle(int *fhandle, PNBC_OSC_Handle **handle);
   
   /* some macros */
   
@@ -286,7 +211,7 @@ extern "C" {
    * [round-schedule] ::= [num][type][type-args][type][type-args]...
    * [num] ::= number of elements in round (int)
    * [type] ::= function type (PNBC_OSC_Fn_type)
-   * [type-args] ::= type specific arguments (PNBC_OSC_Args_send, PNBC_OSC_Args_recv or, PNBC_OSC_Args_op)
+   * [type-args] ::= type specific arguments (PNBC_OSC_Args_get, PNBC_OSC_Args_put or, PNBC_OSC_Args_op)
    * [delimiter] ::= 1 (char) - indicates that a round follows
    * [end] ::= 0 (char) - indicates that this is the last round
    */
@@ -303,7 +228,7 @@ extern "C" {
   /* PNBC_OSC_GET_ROUND_SIZE returns the size in bytes of a round of a PNBC_OSC_Schedule
    * schedule. A round has the format:
    * [num]{[type][type-args]}
-   * e.g. [(int)2][(PNBC_OSC_Fn_type)SEND][(PNBC_OSC_Args_send)SEND-ARGS][(PNBC_OSC_Fn_type)RECV][(PNBC_OSC_Args_recv)RECV-ARGS] */
+   * e.g. [(int)2][(PNBC_OSC_Fn_type)SEND][(PNBC_OSC_Args_get)GET-ARGS][(PNBC_OSC_Fn_type)RECV][(PNBC_OSC_Args_put)PUT-ARGS] */
   static inline void nbc_get_round_size (char *p, unsigned long *size) {
     PNBC_OSC_Fn_type type;
     unsigned long offset = 0;
@@ -314,10 +239,6 @@ extern "C" {
     for (int i = 0 ; i < num ; ++i) {
       memcpy (&type, p + offset, sizeof (type));
       switch(type) {
-      case WIN_FREE:
-        /*printf("found a iFREE at offset %li\n", (long)p-(long)schedule); */
-        offset += sizeof(PNBC_OSC_Args_win_free);
-        break;
       case PUT:
         /*printf("found a PUT at offset %li\n", (long)p-(long)schedule); */
         offset += sizeof(PNBC_OSC_Args_put);
@@ -326,17 +247,9 @@ extern "C" {
         /*printf("found a GET at offset %li\n", (long)p-(long)schedule); */
         offset += sizeof(PNBC_OSC_Args_get);
         break;
-      case TRY_GET:
-        /*printf("found a TRY_GET at offset %li\n", (long)p-(long)schedule); */
-        offset += sizeof(PNBC_OSC_Args_try_get);
-        break;
-      case SEND:
-        /*printf("found a SEND at offset %li\n", (long)p-(long)schedule); */
-        offset += sizeof(PNBC_OSC_Args_send);
-        break;
-      case RECV:
-        /*printf("found a RECV at offset %li\n", (long)p-(long)schedule); */
-        offset += sizeof(PNBC_OSC_Args_recv);
+      case WIN_FREE:
+        /*printf("found a iFREE at offset %li\n", (long)p-(long)schedule); */
+        offset += sizeof(PNBC_OSC_Args_win_free);
         break;
       case OP:
         /*printf("found a OP at offset %li\n", (long)p-(long)schedule); */
@@ -361,17 +274,17 @@ extern "C" {
 
 
   /* returns the size of a schedule in bytes */
-  static inline int nbc_schedule_get_size (PNBC_OSC_Schedule *schedule) {
+  static inline int PNBC_OSC_Schedule_get_size (PNBC_OSC_Schedule *schedule) {
     return schedule->size;
   }
 
   /* increase the size of a schedule by size bytes */
-  static inline void nbc_schedule_inc_size (PNBC_OSC_Schedule *schedule, int size) {
+  static inline void PNBC_OSC_Schedule_inc_size (PNBC_OSC_Schedule *schedule, int size) {
     schedule->size += size;
   }
 
   /* increments the number of operations in the last round */
-  static inline void nbc_schedule_inc_round (PNBC_OSC_Schedule *schedule) {
+  static inline void PNBC_OSC_Schedule_inc_round (PNBC_OSC_Schedule *schedule) {
     int last_round_num;
     char *lastround;
 
@@ -402,40 +315,40 @@ extern "C" {
     int myrank, i, num;                                                 \
     char *p = (char*) schedule;                                         \
     PNBC_OSC_Fn_type type;                                                   \
-    PNBC_OSC_Args_send     sendargs;                                         \
-    PNBC_OSC_Args_recv     recvargs;                                         \
+    PNBC_OSC_Args_put       putargs;                                         \
+    PNBC_OSC_Args_get       getargs;                                         \
     PNBC_OSC_Args_op         opargs;                                         \
     PNBC_OSC_Args_copy     copyargs;                                         \
     PNBC_OSC_Args_unpack unpackargs;                                         \
-                                                                        \
+                                                                             \
     PNBC_OSC_GET_BYTES(p,num);                                               \
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);                             \
     printf("[%i] has %i actions: \n", myrank, num);                     \
     for (i=0; i<num; i++) {                                             \
       PNBC_OSC_GET_BYTES(p,type);                                            \
       switch(type) {                                                    \
-      case SEND:                                                        \
-        printf("[%i]  SEND (offset %li) ", myrank, (long)p-(long)schedule); \
-        PNBC_OSC_GET_BYTES(p,sendargs);                                      \
-        printf("*buf: %lu, count: %i, type: %lu, dest: %i)\n", (unsigned long)sendargs.buf, sendargs.count, (unsigned long)sendargs.datatype, sendargs.dest); \
+      case GET:                                                        \
+        printf("[%i]   GET  (offset %li) ", myrank, (long)p-(long)schedule); \
+        PNBC_OSC_GET_BYTES(p,getargs);                                      \
+        printf("*buf: %lu, count: %i, type: %lu, dest: %i)\n", (unsigned long)getargs.buf, getargs.count, (unsigned long)getargs.datatype, getargs.dest); \
         break;                                                          \
-      case RECV:                                                        \
-        printf("[%i]  RECV (offset %li) ", myrank, (long)p-(long)schedule); \
+      case PUT:                                                        \
+        printf("[%i]   PUT  (offset %li) ", myrank, (long)p-(long)schedule); \
         PNBC_OSC_GET_BYTES(p,recvargs);                                      \
-        printf("*buf: %lu, count: %i, type: %lu, source: %i)\n", (unsigned long)recvargs.buf, recvargs.count, (unsigned long)recvargs.datatype, recvargs.source); \
+        printf("*buf: %lu, count: %i, type: %lu, source: %i)\n", (unsigned long)putargs.buf, putargs.count, (unsigned long)putargs.datatype, putargs.source); \
         break;                                                          \
       case OP:                                                          \
-        printf("[%i]  OP   (offset %li) ", myrank, (long)p-(long)schedule); \
+        printf("[%i]   OP   (offset %li) ", myrank, (long)p-(long)schedule); \
         PNBC_OSC_GET_BYTES(p,opargs);                                        \
         printf("*buf1: %lu, buf2: %lu, count: %i, type: %lu)\n", (unsigned long)opargs.buf1, (unsigned long)opargs.buf2, opargs.count, (unsigned long)opargs.datatype); \
         break;                                                          \
       case COPY:                                                        \
-        printf("[%i]  COPY   (offset %li) ", myrank, (long)p-(long)schedule); \
+        printf("[%i]  COPY  (offset %li) ", myrank, (long)p-(long)schedule); \
         PNBC_OSC_GET_BYTES(p,copyargs);                                      \
         printf("*src: %lu, srccount: %i, srctype: %lu, *tgt: %lu, tgtcount: %i, tgttype: %lu)\n", (unsigned long)copyargs.src, copyargs.srccount, (unsigned long)copyargs.srctype, (unsigned long)copyargs.tgt, copyargs.tgtcount, (unsigned long)copyargs.tgttype); \
         break;                                                          \
       case UNPACK:                                                      \
-        printf("[%i]  UNPACK   (offset %li) ", myrank, (long)p-(long)schedule); \
+        printf("[%i] UNPACK (offset %li) ", myrank, (long)p-(long)schedule); \
         PNBC_OSC_GET_BYTES(p,unpackargs);                                    \
         printf("*src: %lu, srccount: %i, srctype: %lu, *tgt: %lu\n",(unsigned long)unpackargs.inbuf, unpackargs.count, (unsigned long)unpackargs.datatype, (unsigned long)unpackargs.outbuf); \
         break;                                                          \

@@ -46,21 +46,6 @@ static inline int a2av_sched_linear(int rank, int p, PNBC_OSC_Schedule *schedule
                                     void *recvbuf, const int *recvcounts,
                                     const int *rdispls, MPI_Aint rcvext, MPI_Datatype recvtype);
 
-static inline int a2av_sched_pairwise(int rank, int p, PNBC_OSC_Schedule *schedule,
-                                      const void *sendbuf, const int *sendcounts, const int *sdispls,
-                                      MPI_Aint sndext, MPI_Datatype sendtype,
-                                      void *recvbuf, const int *recvcounts, const int *rdispls,
-                                      MPI_Aint rcvext, MPI_Datatype recvtype);
-
-static inline int a2av_sched_inplace(int rank, int p, PNBC_OSC_Schedule *schedule,
-                                    void *buf, const int *counts, const int *displs,
-                                    MPI_Aint ext, MPI_Datatype type, ptrdiff_t gap);
-
-/* an alltoallv schedule can not be cached easily because the contents
- * ot the recvcounts array may change, so a comparison of the address
- * would not be sufficient ... we simply do not cache it */
-
-/* simple linear Alltoallv */
 static int pnbc_osc_alltoallv_init(const void* sendbuf, const int *sendcounts, const int *sdispls,
                   MPI_Datatype sendtype, void* recvbuf, const int *recvcounts, const int *rdispls,
                   MPI_Datatype recvtype, struct ompi_communicator_t *comm, MPI_Info info,
@@ -69,12 +54,15 @@ static int pnbc_osc_alltoallv_init(const void* sendbuf, const int *sendcounts, c
   int rank, p, res;
   MPI_Aint sndext, rcvext;
   PNBC_OSC_Schedule *schedule;
-  char *rbuf, *sbuf, inplace;
-  ptrdiff_t gap = 0, span;
+  char inplace;
   void * tmpbuf = NULL;
   ompi_coll_libpnbc_osc_module_t *libpnbc_osc_module = (ompi_coll_libpnbc_osc_module_t*) module;
 
   PNBC_OSC_IN_PLACE(sendbuf, recvbuf, inplace);
+  if (inplace) {
+    PNBC_OSC_Error("Error: inplace not implemented for PNBC_OSC AlltoallV");
+    return OMPI_ERROR;
+  }
 
   rank = ompi_comm_rank (comm);
   p = ompi_comm_size (comm);
@@ -85,30 +73,10 @@ static int pnbc_osc_alltoallv_init(const void* sendbuf, const int *sendcounts, c
     return res;
   }
 
-  /* copy data to receivbuffer */
-  if (inplace) {
-    int count = 0;
-    for (int i = 0; i < p; i++) {
-      if (recvcounts[i] > count) {
-        count = recvcounts[i];
-      }
-    }
-    span = opal_datatype_span(&recvtype->super, count, &gap);
-    if (OPAL_UNLIKELY(0 == span)) {
-      return nbc_get_noop_request(persistent, request);
-    }
-    tmpbuf = malloc(span);
-    if (OPAL_UNLIKELY(NULL == tmpbuf)) {
-      return OMPI_ERR_OUT_OF_RESOURCE;
-    }
-    sendcounts = recvcounts;
-    sdispls = rdispls;
-  } else {
-    res = ompi_datatype_type_extent (sendtype, &sndext);
-    if (MPI_SUCCESS != res) {
-      PNBC_OSC_Error("MPI Error in ompi_datatype_type_extent() (%i)", res);
-      return res;
-    }
+  res = ompi_datatype_type_extent (sendtype, &sndext);
+  if (MPI_SUCCESS != res) {
+    PNBC_OSC_Error("MPI Error in ompi_datatype_type_extent() (%i)", res);
+    return res;
   }
 
   schedule = OBJ_NEW(PNBC_OSC_Schedule);
@@ -117,33 +85,17 @@ static int pnbc_osc_alltoallv_init(const void* sendbuf, const int *sendcounts, c
     return OMPI_ERR_OUT_OF_RESOURCE;
   }
 
+  res = a2av_sched_linear(rank, p, schedule,
+                          sendbuf, sendcounts, sdispls, sndext, sendtype,
+                          recvbuf, recvcounts, rdispls, rcvext, recvtype);
 
-  if (!inplace && sendcounts[rank] != 0) {
-    rbuf = (char *) recvbuf + rdispls[rank] * rcvext;
-    sbuf = (char *) sendbuf + sdispls[rank] * sndext;
-    res = PNBC_OSC_Sched_copy (sbuf, false, sendcounts[rank], sendtype,
-                          rbuf, false, recvcounts[rank], recvtype, schedule, false);
-    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-      OBJ_RELEASE(schedule);
-      return res;
-    }
-  }
-
-  if (inplace) {
-    res = a2av_sched_inplace(rank, p, schedule, recvbuf, recvcounts,
-                                 rdispls, rcvext, recvtype, gap);
-  } else {
-    res = a2av_sched_linear(rank, p, schedule,
-                            sendbuf, sendcounts, sdispls, sndext, sendtype,
-                            recvbuf, recvcounts, rdispls, rcvext, recvtype);
-  }
   if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
     OBJ_RELEASE(schedule);
     free(tmpbuf);
     return res;
   }
 
-  res = PNBC_OSC_Sched_commit (schedule);
+  res = PNBC_OSC_Sched_commit(schedule);
   if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
     OBJ_RELEASE(schedule);
     free(tmpbuf);
@@ -160,139 +112,37 @@ static int pnbc_osc_alltoallv_init(const void* sendbuf, const int *sendcounts, c
   return OMPI_SUCCESS;
 }
 
-__opal_attribute_unused__
 static inline int a2av_sched_linear(int rank, int p, PNBC_OSC_Schedule *schedule,
                                     const void *sendbuf, const int *sendcounts, const int *sdispls,
                                     MPI_Aint sndext, MPI_Datatype sendtype,
-                                    void *recvbuf, const int *recvcounts, const int *rdispls,
+                                          void *recvbuf, const int *recvcounts, const int *rdispls,
                                     MPI_Aint rcvext, MPI_Datatype recvtype) {
   int res;
+  char *rbuf, *sbuf;
 
   for (int i = 0 ; i < p ; ++i) {
-    if (i == rank) {
-      continue;
-    }
+    if (sendcounts[rank] != 0) {
+      sbuf = (char *) sendbuf + sdispls[rank] * sndext;
 
-    /* post send */
-    if (sendcounts[i] != 0) {
-      char *sbuf = ((char *) sendbuf) + (sdispls[i] * sndext);
-      res = PNBC_OSC_Sched_send(sbuf, false, sendcounts[i], sendtype, i, schedule, false);
+      if (i == rank) {
+        /* schedule a copy for the local MPI process */
+        rbuf = (char *) recvbuf + rdispls[rank] * rcvext;
+        res = PNBC_OSC_Sched_copy(sbuf, false, sendcounts[rank], sendtype,
+                                  rbuf, false, recvcounts[rank], recvtype, schedule, false);
+      } else {
+        /* schedule a put for remote target */
+        res = PNBC_OSC_Sched_put(sbuf, false,
+                                 sendcounts[i], sendtype,
+                                 i,
+                                 recvcounts[i], recvtype,
+                                 schedule, false);
+      }
+
       if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+        OBJ_RELEASE(schedule);
         return res;
       }
-    }
 
-    /* post receive */
-    if (recvcounts[i] != 0) {
-      char *rbuf = ((char *) recvbuf) + (rdispls[i] * rcvext);
-      res = PNBC_OSC_Sched_recv(rbuf, false, recvcounts[i], recvtype, i, schedule, false);
-      if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-        return res;
-      }
-    }
-  }
-
-  return OMPI_SUCCESS;
-}
-
-__opal_attribute_unused__
-static inline int a2av_sched_pairwise(int rank, int p, PNBC_OSC_Schedule *schedule,
-                                      const void *sendbuf, const int *sendcounts, const int *sdispls,
-                                      MPI_Aint sndext, MPI_Datatype sendtype,
-                                      void *recvbuf, const int *recvcounts, const int *rdispls,
-                                      MPI_Aint rcvext, MPI_Datatype recvtype) {
-  int res;
-
-  for (int i = 1 ; i < p ; ++i) {
-    int sndpeer = (rank + i) % p;
-    int rcvpeer = (rank + p - i) %p;
-
-    /* post send */
-    if (sendcounts[sndpeer] != 0) {
-      char *sbuf = ((char *) sendbuf) + (sdispls[sndpeer] * sndext);
-      res = PNBC_OSC_Sched_send(sbuf, false, sendcounts[sndpeer], sendtype, sndpeer, schedule, false);
-      if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-        return res;
-      }
-    }
-
-    /* post receive */
-    if (recvcounts[rcvpeer] != 0) {
-      char *rbuf = ((char *) recvbuf) + (rdispls[rcvpeer] * rcvext);
-      res = PNBC_OSC_Sched_recv(rbuf, false, recvcounts[rcvpeer], recvtype, rcvpeer, schedule, true);
-      if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-        return res;
-      }
-    }
-  }
-
-  return OMPI_SUCCESS;
-}
-
-static inline int a2av_sched_inplace(int rank, int p, PNBC_OSC_Schedule *schedule,
-                                    void *buf, const int *counts, const int *displs,
-                                    MPI_Aint ext, MPI_Datatype type, ptrdiff_t gap) {
-  int res;
-
-  for (int i = 1; i < (p+1)/2; i++) {
-    int speer = (rank + i) % p;
-    int rpeer = (rank + p - i) % p;
-    char *sbuf = (char *) buf + displs[speer] * ext;
-    char *rbuf = (char *) buf + displs[rpeer] * ext;
-
-    if (0 != counts[rpeer]) {
-      res = PNBC_OSC_Sched_copy (rbuf, false, counts[rpeer], type,
-                            (void *)(-gap), true, counts[rpeer], type,
-                            schedule, true);
-      if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-        return res;
-      }
-    }
-    if (0 != counts[speer]) {
-      res = PNBC_OSC_Sched_send (sbuf, false , counts[speer], type, speer, schedule, false);
-      if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-        return res;
-      }
-    }
-    if (0 != counts[rpeer]) {
-      res = PNBC_OSC_Sched_recv (rbuf, false , counts[rpeer], type, rpeer, schedule, true);
-      if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-        return res;
-      }
-    }
-
-    if (0 != counts[rpeer]) {
-      res = PNBC_OSC_Sched_send ((void *)(-gap), true, counts[rpeer], type, rpeer, schedule, false);
-      if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-        return res;
-      }
-    }
-    if (0 != counts[speer]) {
-      res = PNBC_OSC_Sched_recv (sbuf, false, counts[speer], type, speer, schedule, true);
-      if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-        return res;
-      }
-    }
-  }
-  if (0 == (p%2)) {
-    int peer = (rank + p/2) % p;
-
-    char *tbuf = (char *) buf + displs[peer] * ext;
-    res = PNBC_OSC_Sched_copy (tbuf, false, counts[peer], type,
-                          (void *)(-gap), true, counts[peer], type,
-                          schedule, true);
-    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-      return res;
-    }
-    if (0 != counts[peer]) {
-      res = PNBC_OSC_Sched_send ((void *)(-gap), true , counts[peer], type, peer, schedule, false);
-      if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-        return res;
-      }
-      res = PNBC_OSC_Sched_recv (tbuf, false , counts[peer], type, peer, schedule, true);
-      if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-        return res;
-      }
     }
   }
 
