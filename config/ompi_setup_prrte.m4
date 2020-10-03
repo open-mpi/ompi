@@ -100,7 +100,7 @@ AC_DEFUN([OMPI_SETUP_PRRTE_INTERNAL], [
     # user did not specify an option.  PRTE defaults to not enabling
     # prefix-by-default, but open mpi wants that behavior.
     AS_IF([test -n "$deprecated_prefix_by_default"],
-              [internal_prrte_args="internal_prrte_args --enable-prte-prefix-by-default=$deprecated_prefix_by_default"],
+              [internal_prrte_args="$internal_prrte_args --enable-prte-prefix-by-default=$deprecated_prefix_by_default"],
           [test -z "$enable_prte_prefix_by_default"],
               [internal_prrte_args="$internal_prrte_args --enable-prte-prefix-by-default"])
 
@@ -136,9 +136,6 @@ AC_DEFUN([OMPI_SETUP_PRRTE_INTERNAL], [
                         AC_MSG_WARN([Slurm's srun to launch the job - by configuring with the])
                         AC_MSG_WARN([--disable-internal-rte option.])
                         AC_MSG_ERROR([Cannot continue])])])
-
-dnl    AS_IF([test ! -z $with_prrte_platform && test "$with_prrte_platform" != "yes"],
-dnl        [internal_prrte_args="$internal_prrte_args --with-platform=$with_prrte_platform"])
 
     # add the extra libs
     internal_prrte_args="$internal_prrte_args --with-prte-extra-lib=\"$internal_prrte_libs\" --with-prte-extra-ltlib=\"$internal_prrte_libs\""
