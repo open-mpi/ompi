@@ -183,9 +183,11 @@ AC_DEFUN([_OPAL_CONFIG_LIBEVENT_INTERNAL], [
     # Libevent, so we will never actually fix said warnnings and 2)
     # some of the warning options cause failures with compilers that
     # fake being GCC (I'm looking at you, PGI).
+    OPAL_SUBDIR_ENV_CLEAN([opal_libevent_configure])
     PAC_CONFIG_SUBDIR_ARGS([3rd-party/libevent_directory],
        [--disable-dns --disable-http --disable-rpc --disable-openssl --enable-thread-support --disable-evport --disable-gcc-warnings],
        [], [subconfig_happy=1], [subconfig_happy=0])
+    OPAL_SUBDIR_ENV_RESTORE([opal_libevent_configure])
 
     AS_IF([test "$subconfig_happy" = "1"],
         [internal_libevent_location="3rd-party/libevent_directory"

@@ -57,7 +57,7 @@ dnl         LD_LIBRARY_PATH.
 dnl   * CPPFLAGS, LDFLAGS - Updated opal_pmix_CPPFLAGS and
 dnl         opal_pmix_LDFLAGS.
 AC_DEFUN([OPAL_CONFIG_PMIX], [
-    OPAL_VAR_SCOPE_PUSH([external_pmix_happy internal_pmix_happy internal_pmix_args internal_pmix_libs])
+    OPAL_VAR_SCOPE_PUSH([external_pmix_happy internal_pmix_happy internal_pmix_args internal_pmix_libs internal_pmix_CPPFLAGS])
 
     opal_show_subtitle "Configuring PMIx"
 
@@ -71,13 +71,16 @@ AC_DEFUN([OPAL_CONFIG_PMIX], [
          # make dist always works.
 	 internal_pmix_args="--without-tests-examples --disable-pmix-binaries --disable-pmix-backward-compatibility --disable-visibility"
          internal_pmix_libs=
+         internal_pmix_CPPFLAGS=
 
          AS_IF([test "$opal_libevent_mode" = "internal"],
                [internal_pmix_args="$internal_pmix_args --with-libevent=cobuild"
+                internal_pmix_CPPFLAGS="$internal_pmix_CPPFLAGS $opal_libevent_CPPFLAGS"
                 internal_pmix_libs="$internal_pmix_libs $opal_libevent_LIBS"])
 
          AS_IF([test "$opal_hwloc_mode" = "internal"],
                [internal_pmix_args="$internal_pmix_args --with-hwloc=cobuild"
+                internal_pmix_CPPFLAGS="$internal_pmix_CPPFLAGS $opal_hwloc_CPPFLAGS"
                 internal_pmix_libs="$internal_pmix_libs $opal_hwloc_LIBS"])
 
          AS_IF([test ! -z "$internal_pmix_libs"],
@@ -87,12 +90,15 @@ AC_DEFUN([OPAL_CONFIG_PMIX], [
          # picks up how to build an internal HWLOC and libevent, plus
          # picks up any user-specified compiler flags from the master
          # configure run.
-         export CFLAGS CPPFLAGS LDFLAGS
+         OPAL_SUBDIR_ENV_CLEAN([opal_pmix_configure])
+         AS_IF([test -n "$internal_pmix_CPPFLAGS"],
+               [OPAL_SUBDIR_ENV_APPEND([CPPFLAGS], [$internal_pmix_CPPFLAGS])])
          PAC_CONFIG_SUBDIR_ARGS([3rd-party/openpmix], [$internal_pmix_args],
                            [[--with-libevent=internal], [--with-hwloc=internal],
                             [--with-libevent=external], [--with-hwloc=external],
                             [--with-pmix=[[^ 	]]*], [--with-platform=[[^ 	]]*]],
                            [internal_pmix_happy=1])
+         OPAL_SUBDIR_ENV_RESTORE([opal_pmix_configure])
          OPAL_3RDPARTY_DIST_SUBDIRS="$OPAL_3RDPARTY_DIST_SUBDIRS openpmix"])
 
     # unless internal specifically requested by the user, try to find

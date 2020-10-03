@@ -49,7 +49,7 @@ AC_DEFUN([OMPI_SETUP_PRRTE],[
 ])
 
 AC_DEFUN([OMPI_SETUP_PRRTE_INTERNAL], [
-    OPAL_VAR_SCOPE_PUSH([internal_prrte_args internal_prrte_extra_libs internal_prrte_happy deprecated_prefix_by_default print_prrte_warning])
+    OPAL_VAR_SCOPE_PUSH([internal_prrte_args internal_prrte_extra_libs internal_prrte_happy deprecated_prefix_by_default print_prrte_warning internal_prrte_CPPFLAGS])
 
     opal_show_subtitle "Configuring PRRTE"
 
@@ -91,6 +91,7 @@ AC_DEFUN([OMPI_SETUP_PRRTE_INTERNAL], [
     AS_IF([test "$enable_internal_rte" = "no"],
           [internal_prrte_happy="no"])
 
+    internal_prrte_CPPFLAGS=
     internal_prrte_args="--with-proxy-version-string=$OPAL_VERSION --with-proxy-package-name=\"Open MPI\" --with-proxy-bugreport=\"https://www.open-mpi.org/community/help/\""
     internal_prrte_libs=
 
@@ -105,14 +106,17 @@ AC_DEFUN([OMPI_SETUP_PRRTE_INTERNAL], [
 
     AS_IF([test "$opal_libevent_mode" = "internal"],
           [internal_prrte_args="$internal_prrte_args --with-libevent-header=$opal_libevent_header"
+           internal_prrte_CPPFLAGS="$internal_prrte_CPPFLAGS $opal_libevent_CPPFLAGS"
            internal_prrte_libs="$internal_prrte_libs $opal_libevent_LIBS"])
 
     AS_IF([test "$opal_hwloc_mode" = "internal"],
           [internal_prrte_args="$internal_prrte_args --with-hwloc-header=$opal_hwloc_header"
+           internal_prrte_CPPFLAGS="$internal_prrte_CPPFLAGS $opal_hwloc_CPPFLAGS"
            internal_prrte_libs="$internal_prrte_libs $opal_hwloc_LIBS"])
 
     AS_IF([test "$opal_pmix_mode" = "internal"],
           [internal_prrte_args="$internal_prrte_args --with-pmix-header=$opal_pmix_header"
+           internal_prrte_CPPFLAGS="$internal_prrte_CPPFLAGS $opal_pmix_CPPFLAGS"
            internal_prrte_libs="$internal_prrte_libs $opal_pmix_LIBS"])
 
     AS_IF([test "$internal_prrte_happy" = "yes"],
@@ -143,13 +147,16 @@ dnl        [internal_prrte_args="$internal_prrte_args --with-platform=$with_prrt
     # picks up how to build an internal HWLOC, libevent, and PMIx, plus
     # picks up any user-specified compiler flags from the master
     # configure run.
-    export CFLAGS CPPFLAGS LDFLAGS
+    OPAL_SUBDIR_ENV_CLEAN([opal_prrte_configure])
+    AS_IF([test -n "$internal_prrte_CPPFLAGS"],
+          [OPAL_SUBDIR_ENV_APPEND([CPPFLAGS], [$internal_prrte_CPPFLAGS])])
     PAC_CONFIG_SUBDIR_ARGS([3rd-party/prrte], [$internal_prrte_args],
             [[--with-libevent=internal], [--with-hwloc=internal],
              [--with-libevent=external], [--with-hwloc=external],
              [--with-pmix=internal], [--with-pmix=external],
              [--with-platform=[[^ 	]]*]],
             [], [internal_prrte_happy="no"])
+    OPAL_SUBDIR_ENV_RESTORE([opal_prrte_configure])
     OPAL_3RDPARTY_DIST_SUBDIRS="$OPAL_3RDPARTY_DIST_SUBDIRS prrte"
 
     AS_IF([test "$internal_prrte_happy" = "no" -a "$enable_internal_rte" != "no"],
