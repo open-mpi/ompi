@@ -162,7 +162,8 @@ AC_DEFUN([_OPAL_CONFIG_HWLOC_INTERNAL], [
          # note: because we only ship/commit a tarball (and not the source
          # directory), the source is always expanded in the builddir, so we
          # only need to add a -I to the builddir.
-         CPPFLAGS="$CPPFLAGS -I$OMPI_TOP_BUILDDIR/$internal_hwloc_location/include -I$OMPI_TOP_SRCDIR/$internal_hwloc_location/include"
+         opal_hwloc_CPPFLAGS="-I$OMPI_TOP_BUILDDIR/$internal_hwloc_location/include -I$OMPI_TOP_SRCDIR/$internal_hwloc_location/include"
+         CPPFLAGS="$CPPFLAGS $opal_hwloc_CPPFLAGS"
          # No need to update LDFLAGS, because they will install into
          # our tree and in the mean time are referenced by their .la
          # files.
