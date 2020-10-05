@@ -48,8 +48,6 @@
 #include "opal/sys/atomic.h"
 #include "opal/util/output.h"
 
-#include <qthread/qthread.h>
-
 BEGIN_C_DECLS
 
 struct opal_mutex_t {

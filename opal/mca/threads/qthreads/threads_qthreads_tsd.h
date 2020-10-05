@@ -28,8 +28,6 @@
 #define OPAL_MCA_THREADS_QTHREADS_THREADS_QTHREADS_TSD_H 1
 
 #include "opal/mca/threads/qthreads/threads_qthreads.h"
-#include <qthread/qthread.h>
-#include <qthread/tls.h>
 
 typedef qthread_key_t opal_tsd_key_t;
 

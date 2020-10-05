@@ -31,7 +31,68 @@ AC_DEFUN([OPAL_CONFIG_QTHREADS],[
                                     [threads_qthreads_happy="no"])],
                      [threads_qthreads_happy="no"])
 
-    AS_IF([test "$threads_qthreads_happy" = "yes"],
+    AC_ARG_WITH([qthreads],
+                [AC_HELP_STRING([--with-qthreads=DIR],
+                                [Specify location of qthreads installation.  Error if qthreads support cannot be found.])])
+
+    AC_ARG_WITH([qthreads-libdir],
+                [AC_HELP_STRING([--with-qthreads-libdir=DIR],
+                                [Search for qthreads libraries in DIR])])
+
+    opal_check_qthreads_save_CPPFLAGS=$CPPFLAGS
+    opal_check_qthreads_save_LDFLAGS=$LDFLAGS
+    opal_check_qthreads_save_LIBS=$LIBS
+
+    opal_qthreads_happy=yes
+    AS_IF([test "$with_qthreads" = "no"],
+          [opal_qthreads_happy=no])
+
+    AS_IF([test $opal_qthreads_happy = yes],
+          [AC_MSG_CHECKING([looking for qthreads in])
+           AS_IF([test "$with_qthreads" != "yes"],
+                 [opal_qthreads_dir=$with_qthreads
+                  AC_MSG_RESULT([($opal_qthreads_dir)])],
+                 [AC_MSG_RESULT([(default search paths)])])
+           AS_IF([test ! -z "$with_qthreads_libdir" && \
+                         test "$with_qthreads_libdir" != "yes"],
+                 [opal_qthreads_libdir=$with_qthreads_libdir])
+          ])
+
+    AS_IF([test $opal_qthreads_happy = yes],
+          [OPAL_CHECK_PACKAGE([opal_qthreads],
+                              [qthread/qthread.h],
+                              [qthread],
+                              [qthread_initialize],
+                              [],
+                              [$opal_qthreads_dir],
+                              [$opal_qthreads_libdir],
+                              [],
+                              [opal_qthreads_happy=no])])
+
+    AS_IF([test $opal_qthreads_happy = yes && test -n "$opal_qthreads_dir"],
+          [OPAL_QTHREADS_INCLUDE_PATH="$opal_qthreads_dir/include/"],
+          [OPAL_QTHREADS_INCLUDE_PATH=""])
+
+    AS_IF([test $opal_qthreads_happy = yes],
+          [TPKG_CFLAGS="$opal_qthreads_CPPFLAGS"
+           TPKG_FCFLAGS="$opal_qthreads_CPPFLAGS"
+           TPKG_CXXFLAGS="$opal_qthreads_CPPFLAGS"
+           TPKG_CPPFLAGS="$opal_qthreads_CPPFLAGS"
+           TPKG_CXXCPPFLAGS="$opal_qthreads_CPPFLAGS"
+           TPKG_LDFLAGS="$opal_qthreads_LDFLAGS"
+           TPKG_LIBS="$opal_qthreads_LIBS"])
+
+    AC_CONFIG_FILES([opal/mca/threads/qthreads/threads_qthreads.h])
+    AC_SUBST([OPAL_QTHREADS_INCLUDE_PATH])
+    AC_SUBST([opal_qthreads_CPPFLAGS])
+    AC_SUBST([opal_qthreads_LDFLAGS])
+    AC_SUBST([opal_qthreads_LIBS])
+
+    CPPFLAGS=$opal_check_qthreads_save_CPPFLAGS
+    LDFLAGS=$opal_check_qthreads_save_LDFLAGS
+    LIBS=$opal_check_qthreads_save_LIBS
+
+    AS_IF([test "$opal_qthreads_happy" = "yes"],
           [$1],
           [$2])
 ])dnl
@@ -60,7 +121,22 @@ AC_DEFUN([MCA_opal_threads_qthreads_POST_CONFIG],[
            AC_DEFINE_UNQUOTED([MCA_threads_wait_sync_base_include_HEADER],
                               ["opal/mca/threads/qthreads/threads_qthreads_wait_sync.h"],
                               [Header to include for wait_sync implementation])
+           THREAD_CFLAGS="$TPKG_CFLAGS"
+           THREAD_FCFLAGS="$TPKG_FCFLAGS"
+           THREAD_CXXFLAGS="$TPKG_CXXFLAGS"
+           THREAD_CPPFLAGS="$TPKG_CPPFLAGS"
+           THREAD_CXXCPPFLAGS="$TPKG_CXXCPPFLAGS"
+           THREAD_LDFLAGS="$TPKG_LDFLAGS"
+           THREAD_LIBS="$TPKG_LIBS"
+           LIBS="$LIBS $THREAD_LIBS"
+           LDFLAGS="$LDFLAGS $THREAD_LDFLAGS"
          ])
+    AC_SUBST(THREAD_CFLAGS)
+    AC_SUBST(THREAD_FCFLAGS)
+    AC_SUBST(THREAD_CXXFLAGS)
+    AC_SUBST(THREAD_CPPFLAGS)
+    AC_SUBST(THREAD_LDFLAGS)
+    AC_SUBST(THREAD_LIBS)
 ])dnl
 
 

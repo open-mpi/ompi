@@ -26,7 +26,6 @@
 #ifndef OPAL_MCA_THREADS_QTHREADS_THREADS_QTHREADS_THREADS_H
 #define OPAL_MCA_THREADS_QTHREADS_THREADS_QTHREADS_THREADS_H 1
 
-#include <qthread/qthread.h>
 #include <signal.h>
 
 struct opal_thread_t {
