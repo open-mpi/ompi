@@ -824,12 +824,6 @@ AC_DEFUN([MCA_opal_threads_pthreads_POST_CONFIG],[
            THREAD_CXXCPPFLAGS="$TPKG_CXXCPPFLAGS"
            THREAD_LDFLAGS="$TPKG_LDFLAGS"
            THREAD_LIBS="$TPKG_LIBS"
-           AC_SUBST(THREAD_CFLAGS)
-           AC_SUBST(THREAD_FCFLAGS)
-           AC_SUBST(THREAD_CXXFLAGS)
-           AC_SUBST(THREAD_CPPFLAGS)
-           AC_SUBST(THREAD_LDFLAGS)
-           AC_SUBST(THREAD_LIBS)
           ])
 ])dnl
 

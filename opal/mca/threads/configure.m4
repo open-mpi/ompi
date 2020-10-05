@@ -56,5 +56,12 @@ AS_IF([test x"$opal_thread_type_found" = x""],
 
 AC_MSG_RESULT([Found thread type $opal_thread_type_found])
 
+AC_SUBST(THREAD_CFLAGS)
+AC_SUBST(THREAD_FCFLAGS)
+AC_SUBST(THREAD_CXXFLAGS)
+AC_SUBST(THREAD_CPPFLAGS)
+AC_SUBST(THREAD_LDFLAGS)
+AC_SUBST(THREAD_LIBS)
+
 OPAL_SUMMARY_ADD([[Miscellaneous]],[[Threading Package]],[], [$opal_thread_type_found])
 ])dnl
