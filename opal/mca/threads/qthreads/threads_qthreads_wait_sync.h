@@ -28,13 +28,10 @@
 #define OPAL_MCA_THREADS_QTHREADS_THREADS_QTHREADS_WAIT_SYNC_H 1
 
 #include "opal/mca/threads/qthreads/threads_qthreads.h"
-#include <abt.h>
 
 typedef struct ompi_wait_sync_t {
     opal_atomic_int32_t count;
     int32_t status;
-    ABT_cond condition;
-    ABT_mutex lock;
     struct ompi_wait_sync_t *next;
     struct ompi_wait_sync_t *prev;
     volatile bool signaling;
