@@ -73,31 +73,45 @@ AC_DEFUN([PAC_CONFIG_SUBDIR_ARGS],[
           --disable-option-checking)
             ;;
           *)
-            # MPICH note: this is a more robust version of the "precious
-            # variable" propagation code that was present in the previous
-            # incarnation of this macro
+            # strip out precious variables from ac_configure_args,
+            # which will include precious variables that are currently
+            # set and were set on the command line or in the
+            # environment at the time configure was invoked.  Instead,
+            # we add all precious variables which have been tagged as
+            # set, so that we can more closely control the environment
+            # of sub-configures.
+            is_precious=0
             for pac_pvar in $ac_precious_vars ; do
                 # check if configure argument token contains the
                 # precious variable, i.e. "name_of_prec_var=".
                 if ( echo $pac_arg | grep "^$pac_pvar=" >/dev/null 2>&1 ) ; then
-                    # check if current precious variable is set in env
-                    eval pvar_set=\${$pac_pvar+set}
-                    if test "$pvar_set" = "set" ; then
-                        # Append 'name_of_prec_var=value_of_prec_var'
-                        # to the subconfigure arguments list, where
-                        # value_of_prec_var is fetched from the env.
-                        # this also overrides any value set on the command line
-                        eval pac_pval=\${$pac_pvar}
-                        pac_arg="$pac_pvar=$pac_pval"
-                        break
-                    fi
+                    is_precious=1
+                    break
                 fi
             done
-            case $pac_arg in
-            *\'*) pac_arg=`AS_ECHO(["$pac_arg"]) | sed "s/'/'\\\\\\\\''/g"` ;;
-            esac
-            AS_VAR_APPEND([pac_sub_configure_args], [" '$pac_arg'"]) ;;
+            if test $is_precious -eq 0; then
+              case $pac_arg in
+              *\'*) pac_arg=`AS_ECHO(["$pac_arg"]) | sed "s/'/'\\\\\\\\''/g"` ;;
+              esac
+              AS_VAR_APPEND([pac_sub_configure_args], [" '$pac_arg'"]) 
+            fi ;;
           esac
+        done
+
+        # add all precious values with a set token to the configure
+        # args.  If the caller hasn't artificially manipulated the
+        # environment, this will simply be any precious variables as
+        # they were originally specified on the top-level configure
+        # line (or in the environment at start of configure).
+        # However, callers may manipulate that environment, preferably
+        # with the OPAL_SUBDIR_ENV macros.
+        for temp_var in $ac_precious_vars; do
+            eval temp_var_set=\$ac_env_${temp_var}_set
+            if test "$temp_var_set" = "set" ; then
+                eval temp_val=\$$temp_var
+                temp_arg="$temp_var=$temp_val"
+                AS_VAR_APPEND([pac_sub_configure_args], [" '$temp_arg'"])
+            fi
         done
 
         # Always prepend --prefix to ensure using the same prefix

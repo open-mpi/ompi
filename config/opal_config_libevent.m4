@@ -183,16 +183,19 @@ AC_DEFUN([_OPAL_CONFIG_LIBEVENT_INTERNAL], [
     # Libevent, so we will never actually fix said warnnings and 2)
     # some of the warning options cause failures with compilers that
     # fake being GCC (I'm looking at you, PGI).
+    OPAL_SUBDIR_ENV_CLEAN([opal_libevent_configure])
     PAC_CONFIG_SUBDIR_ARGS([3rd-party/libevent_directory],
        [--disable-dns --disable-http --disable-rpc --disable-openssl --enable-thread-support --disable-evport --disable-gcc-warnings],
        [], [subconfig_happy=1], [subconfig_happy=0])
+    OPAL_SUBDIR_ENV_RESTORE([opal_libevent_configure])
 
     AS_IF([test "$subconfig_happy" = "1"],
         [internal_libevent_location="3rd-party/libevent_directory"
          # note: because we only ship/commit a tarball (and not the source
          # directory), the source is always expanded in the builddir, so we
          # only need to add a -I to the builddir.
-         CPPFLAGS="$CPPFLAGS -I$OMPI_TOP_BUILDDIR/$internal_libevent_location -I$OMPI_TOP_BUILDDIR/$internal_libevent_location/include"
+         opal_libevent_CPPFLAGS="-I$OMPI_TOP_BUILDDIR/$internal_libevent_location -I$OMPI_TOP_BUILDDIR/$internal_libevent_location/include"
+         CPPFLAGS="$CPPFLAGS $opal_libevent_CPPFLAGS"
          # No need to update LDFLAGS, because they will install into
          # our tree and in the mean time are referenced by their .la
          # files.

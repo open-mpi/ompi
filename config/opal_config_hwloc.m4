@@ -154,15 +154,18 @@ AC_DEFUN([_OPAL_CONFIG_HWLOC_INTERNAL], [
     # Note: To update the version of hwloc shipped, update the
     # constant in autogen.pl.
     OPAL_EXPAND_TARBALL([3rd-party/hwloc_tarball], [3rd-party/hwloc_directory], [configure])
+    OPAL_SUBDIR_ENV_CLEAN([opal_hwloc_configure])
     PAC_CONFIG_SUBDIR_ARGS([3rd-party/hwloc_directory], [], [],
         [subconfig_happy=1], [subconfig_happy=0])
+    OPAL_SUBDIR_ENV_RESTORE([opal_hwloc_configure])
 
     AS_IF([test "$subconfig_happy" = "1"],
         [internal_hwloc_location="3rd-party/hwloc_directory"
          # note: because we only ship/commit a tarball (and not the source
          # directory), the source is always expanded in the builddir, so we
          # only need to add a -I to the builddir.
-         CPPFLAGS="$CPPFLAGS -I$OMPI_TOP_BUILDDIR/$internal_hwloc_location/include -I$OMPI_TOP_SRCDIR/$internal_hwloc_location/include"
+         opal_hwloc_CPPFLAGS="-I$OMPI_TOP_BUILDDIR/$internal_hwloc_location/include -I$OMPI_TOP_SRCDIR/$internal_hwloc_location/include"
+         CPPFLAGS="$CPPFLAGS $opal_hwloc_CPPFLAGS"
          # No need to update LDFLAGS, because they will install into
          # our tree and in the mean time are referenced by their .la
          # files.
