@@ -91,7 +91,7 @@ AC_DEFUN([OPAL_CONFIG_PMIX], [
          PAC_CONFIG_SUBDIR_ARGS([3rd-party/openpmix], [$internal_pmix_args],
                            [[--with-libevent=internal], [--with-hwloc=internal],
                             [--with-libevent=external], [--with-hwloc=external],
-                            [--with-pmix=.*], [--with-platform=.*]],
+                            [--with-pmix=[[^ 	]]*], [--with-platform=[[^ 	]]*]],
                            [internal_pmix_happy=1])
          OPAL_3RDPARTY_DIST_SUBDIRS="$OPAL_3RDPARTY_DIST_SUBDIRS openpmix"])
 

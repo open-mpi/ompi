@@ -148,7 +148,7 @@ dnl        [internal_prrte_args="$internal_prrte_args --with-platform=$with_prrt
             [[--with-libevent=internal], [--with-hwloc=internal],
              [--with-libevent=external], [--with-hwloc=external],
              [--with-pmix=internal], [--with-pmix=external],
-             [--with-platform=.*]],
+             [--with-platform=[[^ 	]]*]],
             [], [internal_prrte_happy="no"])
     OPAL_3RDPARTY_DIST_SUBDIRS="$OPAL_3RDPARTY_DIST_SUBDIRS prrte"
 
