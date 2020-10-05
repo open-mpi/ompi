@@ -23,6 +23,7 @@
 
 #include "opal_config.h"
 
+#include "opal/mca/threads/qthreads/threads_qthreads.h"
 #include "opal/mca/threads/thread.h"
 #include "opal/mca/threads/threads.h"
 #include "opal/constants.h"

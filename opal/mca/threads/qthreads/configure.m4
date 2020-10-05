@@ -25,12 +25,6 @@
 
 AC_DEFUN([OPAL_CONFIG_QTHREADS],[
 
-    AC_CHECK_HEADERS([qthread/qthread.h],
-                     [AC_CHECK_LIB([qthread],[qthread_initialize],
-                                    [threads_qthreads_happy="yes"],
-                                    [threads_qthreads_happy="no"])],
-                     [threads_qthreads_happy="no"])
-
     AC_ARG_WITH([qthreads],
                 [AC_HELP_STRING([--with-qthreads=DIR],
                                 [Specify location of qthreads installation.  Error if qthreads support cannot be found.])])
@@ -60,7 +54,7 @@ AC_DEFUN([OPAL_CONFIG_QTHREADS],[
 
     AS_IF([test $opal_qthreads_happy = yes],
           [OPAL_CHECK_PACKAGE([opal_qthreads],
-                              [qthread/qthread.h],
+                              [qthread.h],
                               [qthread],
                               [qthread_initialize],
                               [],

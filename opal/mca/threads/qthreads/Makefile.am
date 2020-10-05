@@ -27,6 +27,7 @@ sources = \
     threads_qthreads_condition.c \
     threads_qthreads_module.c \
     threads_qthreads_mutex.c \
+    threads_qthreads_wait_sync.c \
     threads_qthreads_mutex.h \
     threads_qthreads_threads.h \
     threads_qthreads_tsd.h \
