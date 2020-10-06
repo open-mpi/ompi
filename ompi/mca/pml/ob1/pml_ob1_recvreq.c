@@ -252,7 +252,7 @@ int mca_pml_ob1_recv_request_ack_send_btl(
     des->des_cbfunc = mca_pml_ob1_recv_ctl_completion;
 
     rc = mca_bml_base_send(bml_btl, des, MCA_PML_OB1_HDR_TYPE_ACK);
-    SPC_RECORD(OMPI_SPC_BYTES_RECEIVED_MPI, (ompi_spc_value_t)size);
+    SPC_RECORD(OMPI_SPC_BYTES_SENT_MPI, (ompi_spc_value_t)sizeof(mca_pml_ob1_ack_hdr_t));
     if( OPAL_LIKELY( rc >= 0 ) ) {
         return OMPI_SUCCESS;
     }
@@ -456,8 +456,8 @@ static int mca_pml_ob1_recv_request_put_frag (mca_pml_ob1_rdma_frag_t *frag)
 
     /* send rdma request to peer */
     rc = mca_bml_base_send (bml_btl, ctl, MCA_PML_OB1_HDR_TYPE_PUT);
-    /* Increment counter for bytes_put even though they probably haven't all been received yet */
-    SPC_RECORD(OMPI_SPC_BYTES_PUT, (ompi_spc_value_t)frag->rdma_length);
+    /* Increment counter for bytes sent by MPI */
+    SPC_RECORD(OMPI_SPC_BYTES_SENT_MPI, (ompi_spc_value_t)(sizeof (mca_pml_ob1_rdma_hdr_t) + reg_size));
     if (OPAL_UNLIKELY(rc < 0)) {
         mca_bml_base_free (bml_btl, ctl);
         return rc;
