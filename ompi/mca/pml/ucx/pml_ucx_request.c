@@ -13,6 +13,7 @@
 #include "pml_ucx_request.h"
 #include "ompi/mca/pml/base/pml_base_bsend.h"
 #include "ompi/message/message.h"
+#include "ompi/runtime/ompi_spc.h"
 #include <inttypes.h>
 
 
@@ -70,6 +71,9 @@ mca_pml_ucx_recv_completion_internal(void *request, ucs_status_t status,
     PML_UCX_VERBOSE(8, "receive request %p completed with status %s tag %"PRIx64" len %zu",
                     (void*)req, ucs_status_string(status), info->sender_tag,
                     info->length);
+
+    SPC_USER_OR_MPI(PML_UCX_TAG_GET_MPI_TAG(info->sender_tag), info->length,
+                    OMPI_SPC_BYTES_RECEIVED_USER, OMPI_SPC_BYTES_RECEIVED_MPI);
 
     mca_pml_ucx_set_recv_status(&req->req_status, status, info);
     PML_UCX_ASSERT( !(REQUEST_COMPLETE(req)));
