@@ -26,15 +26,16 @@
 #ifndef OPAL_MCA_THREADS_QTHREADS_THREADS_QTHREADS_THREADS_H
 #define OPAL_MCA_THREADS_QTHREADS_THREADS_QTHREADS_THREADS_H 1
 
-#include <qthread/qthread.h>
 #include <signal.h>
+#include "opal/mca/threads/qthreads/threads_qthreads.h"
 
 struct opal_thread_t {
     opal_object_t super;
     opal_thread_fn_t t_run;
     void *t_arg;
-    unsigned *t_handle;
     void *t_ret;
+    aligned_t t_thread_ret;
+    aligned_t *t_thread_ret_ptr;
 };
 
 #endif /* OPAL_MCA_THREADS_QTHREADS_THREADS_QTHREADS_THREADS_H */

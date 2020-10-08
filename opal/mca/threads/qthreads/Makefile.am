@@ -19,12 +19,38 @@
 # $HEADER$
 #
 
-noinst_LTLIBRARIES = libmca_threads_qthreads.la
+AM_CPPFLAGS = $(opal_qthreads_CPPFLAGS)
 
-libmca_threads_qthreads_la_SOURCES = \
+sources = \
+    threads_qthreads.h \
     threads_qthreads_component.c \
-    threads_qthreads_mutex.c \
     threads_qthreads_condition.c \
-    threads_qthreads_module.c
+    threads_qthreads_module.c \
+    threads_qthreads_mutex.c \
+    threads_qthreads_wait_sync.c \
+    threads_qthreads_mutex.h \
+    threads_qthreads_threads.h \
+    threads_qthreads_tsd.h \
+    threads_qthreads_wait_sync.h
 
-AM_LDFLAGS = -lqthread
+lib_sources = $(sources)
+
+if MCA_BUILD_opal_threads_qthreads_DSO
+component_noinst =
+component_install = mca_threads_qthreads.la
+else
+component_noinst = libmca_threads_qthreads.la
+component_install =
+endif
+
+mcacomponentdir = $(opallibdir)
+mcacomponent_LTLIBRARIES = $(component_install)
+mca_threads_qthreads_la_SOURCES = $(sources)
+mca_threads_qthreads_la_LDFLAGS = -module -avoid-version
+mca_threads_qthreads_la_LIBADD = $(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la \
+        $(opal_qthreads_LIBS)
+
+noinst_LTLIBRARIES = $(component_noinst)
+libmca_threads_qthreads_la_SOURCES = $(sources)
+libmca_threads_qthreads_la_LDFLAGS = -module -avoid-version $(opal_qthreads_LDFLAGS)
+libmca_threads_qthreads_la_LIBADD = $(opal_qthreads_LIBS)
