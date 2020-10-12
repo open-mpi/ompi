@@ -585,9 +585,11 @@ int ompi_rte_init(int *pargc, char ***pargv)
             /* just assume 0 */
             u16 = 0;
         } else {
-            ret = opal_pmix_convert_status(rc);
-            error = "node rank";
-            goto error;
+            /* we may be in an environment that doesn't quite adhere
+             * to the Standard - we can safely assume it is the same
+             * as the local rank as such environments probably aren't
+             * going to care */
+            u16 = opal_process_info.my_local_rank;
         }
     }
     opal_process_info.my_node_rank = u16;
@@ -704,10 +706,6 @@ int ompi_rte_init(int *pargc, char ***pargv)
                                    &pname, &u32ptr, PMIX_UINT32);
     if (PMIX_SUCCESS == rc) {
         opal_process_info.num_local_peers = u32 - 1;  // want number besides ourselves
-    } else {
-        ret = opal_pmix_convert_status(rc);
-        error = "local size";
-        goto error;
     }
 
     /* retrieve temp directories info */
@@ -777,28 +775,27 @@ int ompi_rte_init(int *pargc, char ***pargv)
         opal_process_info.proc_is_bound = false;
     }
 
-    /* get our local peers */
-    if (0 < opal_process_info.num_local_peers) {
-        /* if my local rank if too high, then that's an error */
-        if (opal_process_info.num_local_peers < opal_process_info.my_local_rank) {
-            ret = OPAL_ERR_BAD_PARAM;
-            error = "num local peers";
-            goto error;
-        }
-        /* retrieve the local peers - defaults to local node */
-        val = NULL;
-        OPAL_MODEX_RECV_VALUE(rc, PMIX_LOCAL_PEERS,
-                              &pname, &val, PMIX_STRING);
-        if (PMIX_SUCCESS == rc && NULL != val) {
-            peers = opal_argv_split(val, ',');
-            free(val);
-        } else {
-            ret = opal_pmix_convert_status(rc);
-            error = "local peers";
-            goto error;
-        }
+    /* retrieve the local peers - defaults to local node */
+    val = NULL;
+    OPAL_MODEX_RECV_VALUE(rc, PMIX_LOCAL_PEERS,
+                          &pname, &val, PMIX_STRING);
+    if (PMIX_SUCCESS == rc && NULL != val) {
+        peers = opal_argv_split(val, ',');
+        free(val);
     } else {
-        peers = NULL;
+        ret = opal_pmix_convert_status(rc);
+        error = "local peers";
+        goto error;
+    }
+    /* if we were unable to retrieve the #local peers, set it here */
+    if (0 == opal_process_info.num_local_peers) {
+        opal_process_info.num_local_peers = opal_argv_count(peers) - 1;
+    }
+    /* if my local rank if too high, then that's an error */
+    if (opal_process_info.num_local_peers < opal_process_info.my_local_rank) {
+        ret = OPAL_ERR_BAD_PARAM;
+        error = "num local peers";
+        goto error;
     }
 
     /* set the locality */
