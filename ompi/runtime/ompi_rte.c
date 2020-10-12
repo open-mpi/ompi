@@ -668,6 +668,7 @@ int ompi_rte_init(int *pargc, char ***pargv)
         }
     }
 
+#ifdef PMIX_APP_ARGV
     /* get our command - defaults to our appnum */
     ev1 = NULL;
     OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, PMIX_APP_ARGV,
@@ -681,13 +682,21 @@ int ompi_rte_init(int *pargc, char ***pargv)
             opal_process_info.command = opal_argv_join(tmp, ' ');
         }
     }
+#else
+    tmp = *pargv;
+    if (NULL != tmp) {
+        opal_process_info.command = opal_argv_join(tmp, ' ');
+    }
+#endif
 
+#ifdef PMIX_REINCARNATION
     /* get our reincarnation number */
     OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, PMIX_REINCARNATION,
                                    &OPAL_PROC_MY_NAME, &u32ptr, PMIX_UINT32);
     if (PMIX_SUCCESS == rc) {
         opal_process_info.reincarnation = u32;
     }
+#endif
 
     /* get the number of local peers - required for wireup of
      * shared memory BTL, defaults to local node */
