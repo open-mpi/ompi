@@ -12,7 +12,7 @@
  * Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
- * Copyright (c) 2017      FUJITSU LIMITED.  All rights reserved.
+ * Copyright (c) 2017-2020 FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -232,7 +232,7 @@ static void show_stackframe (int signo, siginfo_t * info, void * p)
             case BUS_ADRERR: si_code_str = "Non-existant physical address"; break;
 #endif
 #ifdef BUS_OBJERR
-            case BUS_OBJERR: si_code_str = "Objet-specific hardware error"; break;
+            case BUS_OBJERR: si_code_str = "Object-specific hardware error"; break;
 #endif
             }
             break;
