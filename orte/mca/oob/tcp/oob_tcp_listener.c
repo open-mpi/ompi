@@ -705,8 +705,6 @@ static void* listen_thread(opal_object_t *obj)
         rc = select(max + 1, &readfds, NULL, NULL, &timeout);
         if (!mca_oob_tcp_component.listen_thread_active) {
             /* we've been asked to terminate */
-            close(mca_oob_tcp_component.stop_thread[0]);
-            close(mca_oob_tcp_component.stop_thread[1]);
             return NULL;
         }
         if (rc < 0) {
