@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 IBM Corporation. All rights reserved.
+ * Copyright (c) 2016-2020 IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -68,11 +68,11 @@ const ompi_hook_base_component_1_0_0_t mca_hook_comm_method_component = {
 
 int mca_hook_comm_method_verbose = 0;
 int mca_hook_comm_method_output  = -1;
-bool hook_comm_method_enable_mpi_init = false;
-bool hook_comm_method_enable_mpi_finalize = false;
-int hook_comm_method_max = 12;
-int hook_comm_method_brief = 0;
-char *hook_comm_method_fakefile = NULL;
+bool mca_hook_comm_method_enable_mpi_init = false;
+bool mca_hook_comm_method_enable_mpi_finalize = false;
+int mca_hook_comm_method_max = 12;
+int mca_hook_comm_method_brief = 0;
+char *mca_hook_comm_method_fakefile = NULL;
 
 static int ompi_hook_comm_method_component_open(void)
 {
@@ -113,23 +113,23 @@ static int ompi_hook_comm_method_component_register(void)
     /*
      * If the component is active for mpi_init / mpi_finalize
      */
-    hook_comm_method_enable_mpi_init = false;
+    mca_hook_comm_method_enable_mpi_init = false;
     (void) mca_base_component_var_register(&mca_hook_comm_method_component.hookm_version, "enable_mpi_init",
                                            "Enable comm_method behavior on mpi_init",
                                            MCA_BASE_VAR_TYPE_BOOL, NULL,
                                            0, 0,
                                            OPAL_INFO_LVL_3,
                                            MCA_BASE_VAR_SCOPE_READONLY,
-                                           &hook_comm_method_enable_mpi_init);
+                                           &mca_hook_comm_method_enable_mpi_init);
 
-    hook_comm_method_enable_mpi_finalize = false;
+    mca_hook_comm_method_enable_mpi_finalize = false;
     (void) mca_base_component_var_register(&mca_hook_comm_method_component.hookm_version, "enable_mpi_finalize",
                                            "Enable comm_method behavior on mpi_finalize",
                                            MCA_BASE_VAR_TYPE_BOOL, NULL,
                                            0, 0,
                                            OPAL_INFO_LVL_3,
                                            MCA_BASE_VAR_SCOPE_READONLY,
-                                           &hook_comm_method_enable_mpi_finalize);
+                                           &mca_hook_comm_method_enable_mpi_finalize);
 
     // User can set the comm_method mca variable too
     int hook_comm_method = -1;
@@ -142,10 +142,10 @@ static int ompi_hook_comm_method_component_register(void)
                                  &hook_comm_method);
 
     if( 1 == hook_comm_method ) {
-        hook_comm_method_enable_mpi_init = true;
+        mca_hook_comm_method_enable_mpi_init = true;
     }
     else if( 2 == hook_comm_method ) {
-        hook_comm_method_enable_mpi_finalize = true;
+        mca_hook_comm_method_enable_mpi_finalize = true;
     }
 
     // comm_method_max
@@ -155,7 +155,7 @@ static int ompi_hook_comm_method_component_register(void)
                                  0, 0,
                                  OPAL_INFO_LVL_3,
                                  MCA_BASE_VAR_SCOPE_READONLY,
-                                 &hook_comm_method_max);
+                                 &mca_hook_comm_method_max);
     // comm_method_brief
     (void) mca_base_var_register("ompi", NULL, NULL, "comm_method_brief",
                                  "Only print the comm method summary, skip the 2d table.",
@@ -163,7 +163,7 @@ static int ompi_hook_comm_method_component_register(void)
                                  0, 0,
                                  OPAL_INFO_LVL_3,
                                  MCA_BASE_VAR_SCOPE_READONLY,
-                                 &hook_comm_method_brief);
+                                 &mca_hook_comm_method_brief);
 
     // comm_method_fakefile is just for debugging, allows complete override of all the
     // comm method in the table
@@ -173,7 +173,7 @@ static int ompi_hook_comm_method_component_register(void)
                                  0, 0,
                                  OPAL_INFO_LVL_3,
                                  MCA_BASE_VAR_SCOPE_READONLY,
-                                 &hook_comm_method_fakefile);
+                                 &mca_hook_comm_method_fakefile);
 
     return OMPI_SUCCESS;
 }

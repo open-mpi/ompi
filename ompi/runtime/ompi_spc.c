@@ -8,6 +8,7 @@
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2019      Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2020      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -17,7 +18,7 @@
 
 #include "ompi_spc.h"
 
-opal_timer_t sys_clock_freq_mhz = 0;
+static opal_timer_t sys_clock_freq_mhz = 0;
 
 static void ompi_spc_dump(void);
 

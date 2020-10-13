@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 IBM Corporation. All rights reserved.
+ * Copyright (c) 2016-2020 IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -219,14 +219,14 @@ static void ompi_report_comm_methods(int called_from_location);
 
 void ompi_hook_comm_method_mpi_init_bottom(int argc, char **argv, int requested, int *provided)
 {
-    if( hook_comm_method_enable_mpi_init ) {
+    if( mca_hook_comm_method_enable_mpi_init ) {
         ompi_report_comm_methods( 1 );
     }
 }
 
 void ompi_hook_comm_method_mpi_finalize_top(void)
 {
-    if( hook_comm_method_enable_mpi_finalize ) {
+    if( mca_hook_comm_method_enable_mpi_finalize ) {
         ompi_report_comm_methods( 2 );
     }
 }
@@ -339,9 +339,9 @@ ompi_report_comm_methods(int called_from_location) // 1 = from init, 2 = from fi
     hpmp_myrank = ompi_comm_rank(MPI_COMM_WORLD);
     // hpmp_nprocs = ompi_comm_size(MPI_COMM_WORLD);
 
-    max2Dprottable = hook_comm_method_max;
+    max2Dprottable = mca_hook_comm_method_max;
     max2D1Cprottable = 3 * max2Dprottable;
-    if (hook_comm_method_brief) {
+    if (mca_hook_comm_method_brief) {
         // force only the short summary output to be printed with no 2d table:
         max2Dprottable = 0;
         max2D1Cprottable = 0;
@@ -545,10 +545,10 @@ ompi_report_comm_methods(int called_from_location) // 1 = from init, 2 = from fi
 // settings, this is only for testing, eg to make sure the printing comes out
 // right.
     if (myleaderrank == 0) {
-        if (hook_comm_method_fakefile) {
+        if (mca_hook_comm_method_fakefile) {
             FILE *fp;
             int setting;
-            fp = fopen(hook_comm_method_fakefile, "r");
+            fp = fopen(mca_hook_comm_method_fakefile, "r");
             for (i=0; i<nleaderranks; ++i) {
                 for (k=0; k<nleaderranks; ++k) {
                     fscanf(fp, "%d", &setting);
