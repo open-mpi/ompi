@@ -13,7 +13,7 @@ dnl                         All rights reserved.
 dnl Copyright (c) 2009-2019 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2011-2014 Los Alamos National Security, LLC. All rights
 dnl                         reserved.
-dnl Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
+dnl Copyright (c) 2014-2020 Intel, Inc.  All rights reserved.
 dnl Copyright (c) 2014-2018 Research Organization for Information Science
 dnl                         and Technology (RIST).  All rights reserved.
 dnl Copyright (c) 2016      IBM Corporation.  All rights reserved.
@@ -166,11 +166,11 @@ AC_DEFUN([_OPAL_CONFIG_PMIX_EXTERNAL], [
            LIBS="$opal_pmix_LIBS_save $opal_pmix_LIBS"
 
            AS_IF([test "$opal_pmix_external_support" = "yes"],
-                 [AC_MSG_CHECKING([if external PMIx version is 3.0.0 or greater])
+                 [AC_MSG_CHECKING([if external PMIx version is 3.1.5 or greater])
                     AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <pmix_version.h>]],
                           [[
-#if PMIX_VERSION_MAJOR < 3L
-#error "pmix API version is less than 3.0.0"
+#if PMIX_NUMERIC_VERSION < 0x00030105
+#error "pmix API version is less than 3.1.5"
 #endif
                           ]])],
                           [AC_MSG_RESULT([yes])],

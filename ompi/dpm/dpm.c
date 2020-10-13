@@ -696,7 +696,11 @@ static int dpm_convert(opal_list_t *infos,
                 /* does it conflict? */
                if (0 != strncasecmp(ck, directive, strlen(directive))) {
                     opal_asprintf(&help_str, "Conflicting directives \"%s %s\"", ck, directive);
+#if PMIX_NUMERIC_VERSION >= 0x00040000
                     attr = PMIx_Get_attribute_string(option);
+#else
+                    attr = option;
+#endif
                     opal_show_help("help-dpm.txt", "deprecated-fail", true,
                                    infokey, attr, help_str);
                     free(help_str);
@@ -723,7 +727,11 @@ static int dpm_convert(opal_list_t *infos,
                     if (OMPI_SUCCESS != rc) {
                         /* we have a conflict */
                         opal_asprintf(&ptr, "  Option %s\n  Conflicting modifiers \"%s %s\"", option, infokey, modifier);
+#if PMIX_NUMERIC_VERSION >= 0x00040000
                         attr = PMIx_Get_attribute_string(option);
+#else
+                        attr = option;
+#endif
                         opal_show_help("help-dpm.txt", "deprecated-fail", true,
                                        infokey, attr, ptr);
                         free(ptr);
@@ -983,9 +991,9 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
 
             /* non-standard keys
              * Keys that correspond to prun/mpiexec parameters
-             * do not deprecate PMIX unprefixed forms to remain identical 
+             * do not deprecate PMIX unprefixed forms to remain identical
              * to the command line parameter;
-             * Keys that are not corresponding to an mpiexec parameter are 
+             * Keys that are not corresponding to an mpiexec parameter are
              * deprecated in the non-prefixed form */
 
             /* check for 'hostfile' */
