@@ -17,6 +17,7 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
+ * Copyright (c) 2020      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -227,6 +228,72 @@ int ompi_op_init(void)
      * See https://github.com/mpi-forum/mpi-issues/issues/65 */
     ompi_op_ddt_map[OMPI_DATATYPE_MPI_SHORT_FLOAT] = OMPI_OP_BASE_TYPE_SHORT_FLOAT;
     ompi_op_ddt_map[OMPI_DATATYPE_MPI_C_SHORT_FLOAT_COMPLEX] = OMPI_OP_BASE_TYPE_C_SHORT_FLOAT_COMPLEX;
+
+/*
+ *  The list of OMPI types used to end here.  And the other entries were
+ *  mapped to one of the above, eg
+ *    OMPI_DATATYPE_MPI_INT was #defined as one of
+ *    OMPI_DATATYPE_MPI_INT16_T or OMPI_DATATYPE_MPI_INT32_T etc
+ *    depending on the size of an int.
+ *  The external32 fix involves more separation of OMPI datatypes.
+ *
+ *  We could have a lot of sizeof checks like
+ *    #if SIZEOF_INT == 4
+ *    ompi_op_ddt_map[OMPI_DATATYPE_MPI_INT] = ompi_op_ddt_map[OMPI_DATATYPE_MPI_INT32_T]
+ *    ...
+ *  but that data is indirectly available already in the .id field.  Both
+ *  of those OMPI types have the same OPAL value (6 in this example) for .id.
+ */
+#define FIND_MATCH(OMPIDT) do {                                                       \
+        int opal_id_search;                                                           \
+        int ompi_id_i;                                                                \
+        int opal_id_i;                                                                \
+        opal_id_search = ompi_datatype_basicDatatypes[OMPIDT]->super.id;              \
+        for (ompi_id_i = 0; ompi_id_i < OMPI_DATATYPE_MAX_PREDEFINED; ++ompi_id_i) {  \
+            opal_id_i = ompi_datatype_basicDatatypes[ompi_id_i]->super.id;            \
+            if (opal_id_i == opal_id_search && ompi_op_ddt_map[ompi_id_i] != -1) {    \
+                ompi_op_ddt_map[OMPIDT] = ompi_op_ddt_map[ompi_id_i];                 \
+                break;                                                                \
+            }                                                                         \
+        }                                                                             \
+        if (ompi_op_ddt_map[OMPIDT] == -1) {                                          \
+            if (!(ompi_datatype_basicDatatypes[OMPIDT]->super.flags &                 \
+                OPAL_DATATYPE_FLAG_UNAVAILABLE))                                      \
+            {                                                                         \
+                return OMPI_ERROR;                                                    \
+            }                                                                         \
+        }                                                                             \
+    } while (0)
+    FIND_MATCH(OMPI_DATATYPE_MPI_CHAR);
+    FIND_MATCH(OMPI_DATATYPE_MPI_SIGNED_CHAR);
+    FIND_MATCH(OMPI_DATATYPE_MPI_UNSIGNED_CHAR);
+    FIND_MATCH(OMPI_DATATYPE_MPI_BYTE);
+    FIND_MATCH(OMPI_DATATYPE_MPI_SHORT);
+    FIND_MATCH(OMPI_DATATYPE_MPI_UNSIGNED_SHORT);
+    FIND_MATCH(OMPI_DATATYPE_MPI_INT);
+    FIND_MATCH(OMPI_DATATYPE_MPI_UNSIGNED);
+    FIND_MATCH(OMPI_DATATYPE_MPI_LONG);
+    FIND_MATCH(OMPI_DATATYPE_MPI_UNSIGNED_LONG);
+    FIND_MATCH(OMPI_DATATYPE_MPI_LONG_LONG_INT);
+    FIND_MATCH(OMPI_DATATYPE_MPI_UNSIGNED_LONG_LONG);
+    FIND_MATCH(OMPI_DATATYPE_MPI_LOGICAL1);
+    FIND_MATCH(OMPI_DATATYPE_MPI_LOGICAL2);
+    FIND_MATCH(OMPI_DATATYPE_MPI_LOGICAL4);
+    FIND_MATCH(OMPI_DATATYPE_MPI_LOGICAL8);
+    FIND_MATCH(OMPI_DATATYPE_MPI_INTEGER1);
+    FIND_MATCH(OMPI_DATATYPE_MPI_INTEGER2);
+    FIND_MATCH(OMPI_DATATYPE_MPI_INTEGER4);
+    FIND_MATCH(OMPI_DATATYPE_MPI_INTEGER8);
+    FIND_MATCH(OMPI_DATATYPE_MPI_INTEGER16);
+    FIND_MATCH(OMPI_DATATYPE_MPI_REAL2);
+    FIND_MATCH(OMPI_DATATYPE_MPI_REAL4);
+    FIND_MATCH(OMPI_DATATYPE_MPI_REAL8);
+    FIND_MATCH(OMPI_DATATYPE_MPI_REAL16);
+    FIND_MATCH(OMPI_DATATYPE_MPI_CXX_BOOL);
+    FIND_MATCH(OMPI_DATATYPE_MPI_CXX_SHORT_FLOAT_COMPLEX);
+    FIND_MATCH(OMPI_DATATYPE_MPI_CXX_FLOAT_COMPLEX);
+    FIND_MATCH(OMPI_DATATYPE_MPI_CXX_DOUBLE_COMPLEX);
+    FIND_MATCH(OMPI_DATATYPE_MPI_CXX_LONG_DOUBLE_COMPLEX);
 
     /* Create the intrinsic ops */
 
