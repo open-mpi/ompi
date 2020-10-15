@@ -26,14 +26,7 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
-
-#include "coll_libpnbc_osc.h"
 #include "pnbc_osc_internal.h"
-
-#include "mpi.h"
-#include "ompi/mca/coll/coll.h"
-#include "ompi/communicator/communicator.h"
 
 /*
  * Public string showing the coll ompi_libpnbc_osc component version number

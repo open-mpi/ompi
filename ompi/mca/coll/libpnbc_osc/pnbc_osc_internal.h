@@ -59,18 +59,18 @@ extern "C" {
 
 
 typedef enum {
-              LOCKED,
-              UNLOCKED
+  LOCKED,
+  UNLOCKED
 } PNBC_OSC_Lock_status;
 
 typedef enum {
-              PUT,
-              GET,
-              TRY_GET,
-              WIN_FREE,
-              OP,
-              COPY,
-              UNPACK
+  PUT,
+  GET,
+  TRY_GET,
+  WIN_FREE,
+  OP,
+  COPY,
+  UNPACK
 } PNBC_OSC_Fn_type;
 
 /* the put argument struct */
@@ -180,7 +180,6 @@ int PNBC_OSC_Sched_barrier (PNBC_OSC_Schedule *schedule);
 int PNBC_OSC_Sched_commit (PNBC_OSC_Schedule *schedule);
 
 
-int PNBC_OSC_Start(PNBC_OSC_Handle *handle);
 int PNBC_OSC_Schedule_request(PNBC_OSC_Schedule *schedule, ompi_communicator_t *comm,
                               ompi_coll_libpnbc_osc_module_t *module, bool persistent,
                               ompi_request_t **request, void *tmpbuf);
@@ -189,6 +188,9 @@ int PNBC_OSC_Schedule_request_win(PNBC_OSC_Schedule *schedule, ompi_communicator
                                   ompi_coll_libpnbc_osc_module_t *module,
                                   bool persistent, ompi_request_t **request, void *tmpbuf);
   
+int PNBC_OSC_Start(PNBC_OSC_Handle *handle);
+int PNBC_OSC_Progress(PNBC_OSC_Handle *handle);
+
 void PNBC_OSC_Return_handle(ompi_coll_libpnbc_osc_request_t *request);
   
 static inline int PNBC_OSC_Type_intrinsic(MPI_Datatype type);

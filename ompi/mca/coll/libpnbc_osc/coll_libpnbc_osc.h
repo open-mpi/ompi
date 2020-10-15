@@ -71,10 +71,10 @@ typedef struct ompi_coll_libpnbc_osc_module_t ompi_coll_libpnbc_osc_module_t;
 OBJ_CLASS_DECLARATION(ompi_coll_libpnbc_osc_module_t);
 
 struct PNBC_OSC_Schedule {
-    opal_object_t super;
-    volatile int size;
-    volatile int current_round_offset;
-    char *data;
+  opal_object_t super;
+  int size;                 //DJH//should be obsolete
+  int current_round_offset; //DJH//should be obsolete
+  char *data;               //DJH//should be obsolete, except for nbc steps
 };
 typedef struct PNBC_OSC_Schedule PNBC_OSC_Schedule;
 OBJ_CLASS_DECLARATION(PNBC_OSC_Schedule);
@@ -118,9 +118,6 @@ typedef ompi_coll_libpnbc_osc_request_t PNBC_OSC_Handle;
 
 
 int ompi_coll_libpnbc_osc_progress(void);
-
-int PNBC_OSC_Init_comm(MPI_Comm comm, ompi_coll_libpnbc_osc_module_t *module);
-int PNBC_OSC_Progress(PNBC_OSC_Handle *handle);
 
 
 int ompi_coll_libpnbc_osc_alltoallv_init(const void* sendbuf, const int *sendcounts, const int *sdispls,
