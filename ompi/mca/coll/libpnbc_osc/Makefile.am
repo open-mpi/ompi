@@ -27,6 +27,7 @@ sources = \
 	coll_libpnbc_osc_component.c \
 	pnbc_osc.c \
 	pnbc_osc_trigger.c \
+	pnbc_osc_trigger_array.c \
 	pnbc_osc_internal.h \
 	pnbc_osc_alltoallv_init.c 
 
