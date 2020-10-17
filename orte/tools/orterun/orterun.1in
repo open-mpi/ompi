@@ -1181,8 +1181,9 @@ exert detailed control over relative MCW rank location and binding.
 Finally, \fI--report-bindings\fP can be used to report bindings.
 .
 .PP
-As an example, consider a node with two processor sockets, each comprising
-four cores.  We run \fImpirun\fP with \fI-np 4 --report-bindings\fP and
+As an example, consider a node with two processor sockets, each
+comprised of four cores, and each of those cores contains one hardware
+thread.  We run \fImpirun\fP with \fI-np 4 --report-bindings\fP and
 the following additional options:
 .
 
@@ -1198,7 +1199,7 @@ the following additional options:
  [...] ... binding child [...,2] to socket 0 cpus 000f
  [...] ... binding child [...,3] to socket 1 cpus 00f0
 
- % mpirun ... --map-by core:PE=2 --bind-to core
+ % mpirun ... --map-by slot:PE=2 --bind-to core
  [...] ... binding child [...,0] to cpus 0003
  [...] ... binding child [...,1] to cpus 000c
  [...] ... binding child [...,2] to cpus 0030
@@ -1212,9 +1213,20 @@ In the first case, the processes bind to successive cores as indicated by
 the masks 0001, 0002, 0004, and 0008.  In the second case, processes bind
 to all cores on successive sockets as indicated by the masks 000f and 00f0.
 The processes cycle through the processor sockets in a round-robin fashion
-as many times as are needed.  In the third case, the masks show us that
-2 cores have been bound per process.  In the fourth case, binding is
-turned off and no bindings are reported.
+as many times as are needed.
+.
+.P
+In the third case, the masks show us that 2 cores have been bound per
+process.  Specifically, the mapping by slot with the \fIPE=2\fP
+qualifier indicated that each slot (i.e., process) should consume two
+processor elements.  Since \fI--use-hwthread-cpus\fP was not
+specified, Open MPI defined "processor element" as "core", and
+therefore the \fI--bind-to core\fP caused each process to be bound to
+both of the cores to which it was mapped.
+.
+.P
+In the fourth case, binding is turned off and no bindings are
+reported.
 .
 .PP
 Open MPI's support for process binding depends on the underlying
