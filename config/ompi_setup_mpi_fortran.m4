@@ -15,7 +15,7 @@ dnl Copyright (c) 2006-2008 Sun Microsystems, Inc.  All rights reserved.
 dnl Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
 dnl                         reserved.
 dnl Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
-dnl Copyright (c) 2014-2019 Research Organization for Information Science
+dnl Copyright (c) 2014-2020 Research Organization for Information Science
 dnl                         and Technology (RIST).  All rights reserved.
 dnl Copyright (c) 2016      IBM Corporation.  All rights reserved.
 dnl $COPYRIGHT$
@@ -425,9 +425,9 @@ entire v3.x and v4.x series of Open MPI, this configuration is known
 to cause data corruption with the mpi_f08 module (it does *not* cause
 problems with mpif.h or the mpi module bindings).
 
-You may either choose to change the C and/or Fortran compiler flags
-(in order to have the size of a C int be the same as the size of a
-Fortran INTEGER) and re-run configure, or you may specify the
+You may either choose to change the compiler flags
+(in order to have the size of a Fortran INTEGER be the same as
+the size of a C int) and re-run configure, or you may specify the
 --enable-mpi-fortran=usempi flag to configure to explicitly
 disable building the mpi_f08 module.
 
