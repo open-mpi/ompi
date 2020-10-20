@@ -80,8 +80,31 @@ Master (not on release branches yet)
   Currently, this means the Open SHMEM layer will only build if
   a MXM or UCX library is found.
 
+4.0.5 -- August, 2020
+---------------------
+
+- Fix a problem with MPI RMA compare and swap operations.  Thanks
+  to Wojciech Chlapek for reporting.
+- Disable binding of MPI processes to system resources by Open MPI
+  if an application is launched using SLURM's srun command.
+- Disable building of the Fortran mpi_f08 module when configuring
+  Open MPI with default 8 byte Fortran integer size.  Thanks to
+  @ahcien for reporting.
+- Fix a problem with mpirun when the --map-by option is used.
+  Thanks to Wenbin Lyu for reporting.
+- Fix some issues with MPI one-sided operations uncovered using Global
+  Arrays regression test-suite.  Thanks to @bjpalmer for reporting.
+- Fix a problem with make check when using the PGI compiler.  Thanks to
+  Carl Ponder for reporting.
+- Fix a problem with MPI_FILE_READ_AT_ALL that could lead to application
+  hangs under certain circumstances.  Thanks to Scot Breitenfeld for
+  reporting.
+- Fix a problem building C++ applications with newer versions of GCC.
+  Thanks to Constantine Khrulev for reporting.
+
 4.0.4 -- May, 2020
 -----------------------
+
 - Add checks to avoid conflicts with a libevent library shipped with LSF.
 - Switch to linking against libevent_core rather than libevent, if present.
 - Add improved support for UCX 1.9 and later.
@@ -108,6 +131,7 @@ Master (not on release branches yet)
 
 4.0.3 -- March, 2020
 -----------------------
+
 - Update embedded PMIx to 3.1.5
 - Add support for Mellanox ConnectX-6.
 - Fix an issue in OpenMPI IO when using shared file pointers.
@@ -146,6 +170,7 @@ Master (not on release branches yet)
 
 4.0.2 -- September, 2019
 ------------------------
+
 - Update embedded PMIx to 3.1.4
 - Enhance Open MPI to detect when processes are running in
   different name spaces on the same node, in which case the
