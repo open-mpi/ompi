@@ -98,8 +98,8 @@ module_finalize(void)
 /* ////////////////////////////////////////////////////////////////////////// */
 
 static segment_allocator_t sshmem_ucx_allocator = {
-    .realloc = sshmem_ucx_memheap_realloc,
-    .free    = sshmem_ucx_memheap_free
+    .sa_realloc = sshmem_ucx_memheap_realloc,
+    .sa_free    = sshmem_ucx_memheap_free
 };
 
 static int
