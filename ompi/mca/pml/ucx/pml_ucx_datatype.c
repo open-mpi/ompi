@@ -197,7 +197,7 @@ pml_ucx_datatype_t *mca_pml_ucx_init_nbx_datatype(ompi_datatype_t *datatype,
     pml_datatype->op_param.recv.cb.recv       = mca_pml_ucx_recv_nbx_completion;
 
     is_contig_pow2 = mca_pml_ucx_datatype_is_contig(datatype) &&
-                     !(size & (size - 1)); /* is_pow2(size) */
+                     (size && !(size & (size - 1))); /* is_pow2(size) */
     if (is_contig_pow2) {
         pml_datatype->size_shift = (int)(log(size) / log(2.0)); /* log2(size) */
     } else {
