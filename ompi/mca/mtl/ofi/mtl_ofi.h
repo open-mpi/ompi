@@ -137,6 +137,17 @@ ompi_mtl_ofi_context_progress(int ctxt_id)
                                 &error,
                                 0);
             if (0 > ret) {
+                /*
+                 * In multi-threaded scenarios, any thread that attempts to read
+                 * a CQ when there's a pending error CQ entry gets an
+                 * -FI_EAVAIL. Without any serialization here (which is okay,
+                 * since libfabric will protect access to critical CQ objects),
+                 * all threads proceed to read from the error CQ, but only one
+                 * thread fetches the entry while others get -FI_EAGAIN
+                 * indicating an empty queue, which is not erroneous.
+                 */
+                if (ret == -FI_EAGAIN)
+                    return count;
                 opal_output(0, "%s:%d: Error returned from fi_cq_readerr: %s(%zd).\n"
                                "*** The Open MPI OFI MTL is aborting the MPI job (via exit(3)).\n",
                                __FILE__, __LINE__, fi_strerror(-ret), ret);
