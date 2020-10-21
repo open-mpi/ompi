@@ -11,7 +11,7 @@
 # Copyright (c) 2018      Research Organization for Information Science
 #                         and Technology (RIST).  All rights reserved.
 # Copyright (c) 2020      Amazon.com, Inc. or its affiliates.  All Rights
-                          reserved.
+#                         reserved.
 
 # This is the VERSION file for Open MPI, describing the precise
 # version of Open MPI in this distribution.  The various components of
@@ -32,7 +32,7 @@ release=0
 # requirement is that it must be entirely printable ASCII characters
 # and have no white space.
 
-greek=rc2
+greek=rc3
 
 # If repo_rev is empty, then the repository version number will be
 # obtained during "make dist" via the "git describe --tags --always"
