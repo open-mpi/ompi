@@ -6,6 +6,7 @@
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2020      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -24,6 +25,8 @@ int32_t opal_datatype_resize( opal_datatype_t* type, ptrdiff_t lb, ptrdiff_t ext
     type->ub = lb + extent;
 
     type->flags &= ~OPAL_DATATYPE_FLAG_NO_GAPS;
+    type->flags |= OPAL_DATATYPE_FLAG_USER_LB;
+    type->flags |= OPAL_DATATYPE_FLAG_USER_UB;
     if( (extent == (ptrdiff_t)type->size) &&
         (type->flags & OPAL_DATATYPE_FLAG_CONTIGUOUS) ) {
         type->flags |= OPAL_DATATYPE_FLAG_NO_GAPS;
