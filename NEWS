@@ -60,6 +60,8 @@ included in the vX.Y.Z section and be denoted as:
 4.1.0 -- October, 2020
 ----------------------
 
+- Fixed issue where MPI_TYPE_CREATE_RESIZED would create a datatype
+  with unexpected extent on oddly-aligned datatypes.
 - collectives: Add ADAPT adaptive collectives component.  The
   component is off by default and can be enabled by specifying --mca
   coll_adapt_priority 100.  We intend to turn on ADAPT by default in
