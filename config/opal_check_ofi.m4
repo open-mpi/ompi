@@ -121,11 +121,13 @@ AC_DEFUN([_OPAL_CHECK_OFI],[
                               [],
                               [opal_ofi_happy=no])])
 
+    CPPFLAGS="$CPPFLAGS $opal_ofi_CPPFLAGS"
+
     AS_IF([test $opal_ofi_happy = yes],
           [AC_CHECK_MEMBER([struct fi_info.nic],
                            [opal_check_fi_info_pci=1],
                            [opal_check_fi_info_pci=0],
-                           [[#include "$with_ofi/include/rdma/fabric.h"]])])
+                           [[#include <rdma/fabric.h>]])])
 
     AC_DEFINE_UNQUOTED([OPAL_OFI_PCI_DATA_AVAILABLE],
                        [$opal_check_fi_info_pci],
