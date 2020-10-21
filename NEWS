@@ -102,9 +102,13 @@ Master (not on release branches yet)
 - Fix a problem building C++ applications with newer versions of GCC.
   Thanks to Constantine Khrulev for reporting.
 
-4.0.4 -- May, 2020
------------------------
+4.0.4 -- June, 2020
+-------------------
 
+- Fix a memory patcher issue intercepting shmat and shmdt.  This was
+  observed on RHEL 8.x ppc64le (see README for more info).
+- Fix an illegal access issue caught using gcc's address sanitizer.
+  Thanks to  Georg Geiser for reporting.
 - Add checks to avoid conflicts with a libevent library shipped with LSF.
 - Switch to linking against libevent_core rather than libevent, if present.
 - Add improved support for UCX 1.9 and later.
