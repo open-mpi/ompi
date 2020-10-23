@@ -882,10 +882,20 @@ __opal_attribute_always_inline__ static inline int
 ompi_mtl_ofi_probe_error_callback(struct fi_cq_err_entry *error,
                                   ompi_mtl_ofi_request_t *ofi_req)
 {
-    ofi_req->status.MPI_ERROR = MPI_ERR_INTERN;
     ofi_req->completion_count--;
 
-    return OMPI_SUCCESS;
+    /*
+     * Receives posted with FI_PEEK and friends will get an error
+     * completion with FI_ENOMSG. This just indicates the lack of a match for
+     * the probe and is not an error case. All other error cases are
+     * provider-internal errors and should be flagged as such.
+     */
+    if (error->err == FI_ENOMSG)
+        return OMPI_SUCCESS;
+
+    ofi_req->status.MPI_ERROR = MPI_ERR_INTERN;
+
+    return OMPI_ERROR;
 }
 
 __opal_attribute_always_inline__ static inline int
@@ -925,7 +935,6 @@ ompi_mtl_ofi_iprobe(struct mca_mtl_base_module_t *mtl,
     /**
      * fi_trecvmsg with FI_PEEK:
      * Initiate a search for a match in the hardware or software queue.
-     * The search can complete immediately with -ENOMSG.
      * If successful, libfabric will enqueue a context entry into the completion
      * queue to make the search nonblocking.  This code will poll until the
      * entry is enqueued.
@@ -946,13 +955,7 @@ ompi_mtl_ofi_iprobe(struct mca_mtl_base_module_t *mtl,
     ofi_req.match_state = 0;
 
     MTL_OFI_RETRY_UNTIL_DONE(fi_trecvmsg(ompi_mtl_ofi.ep, &msg, msgflags), ret);
-    if (-FI_ENOMSG == ret) {
-        /**
-         * The search request completed but no matching message was found.
-         */
-        *flag = 0;
-        return OMPI_SUCCESS;
-    } else if (OPAL_UNLIKELY(0 > ret)) {
+    if (OPAL_UNLIKELY(0 > ret)) {
         opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                             "%s:%d: fi_trecvmsg failed: %s(%zd)",
                             __FILE__, __LINE__, fi_strerror(-ret), ret);
@@ -1019,7 +1022,6 @@ ompi_mtl_ofi_improbe(struct mca_mtl_base_module_t *mtl,
     /**
      * fi_trecvmsg with FI_PEEK and FI_CLAIM:
      * Initiate a search for a match in the hardware or software queue.
-     * The search can complete immediately with -ENOMSG.
      * If successful, libfabric will enqueue a context entry into the completion
      * queue to make the search nonblocking.  This code will poll until the
      * entry is enqueued.
@@ -1041,14 +1043,7 @@ ompi_mtl_ofi_improbe(struct mca_mtl_base_module_t *mtl,
     ofi_req->mask_bits = mask_bits;
 
     MTL_OFI_RETRY_UNTIL_DONE(fi_trecvmsg(ompi_mtl_ofi.ep, &msg, msgflags), ret);
-    if (-FI_ENOMSG == ret) {
-        /**
-         * The search request completed but no matching message was found.
-         */
-        *matched = 0;
-        free(ofi_req);
-        return OMPI_SUCCESS;
-    } else if (OPAL_UNLIKELY(0 > ret)) {
+    if (OPAL_UNLIKELY(0 > ret)) {
         opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                             "%s:%d: fi_trecvmsg failed: %s(%zd)",
                             __FILE__, __LINE__, fi_strerror(-ret), ret);
