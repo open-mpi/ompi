@@ -15,6 +15,7 @@
  * $HEADER$
  */
 
+#include "opal_config.h"
 #include "mtl_ofi.h"
 #include "opal/util/argv.h"
 #include "opal/util/printf.h"
@@ -337,7 +338,7 @@ select_ofi_provider(struct fi_info *providers,
                         __FILE__, __LINE__,
                         (prov ? prov->fabric_attr->prov_name : "none"));
 
-     /* The initial fi_getinfo() call will return a list of providers
+    /** The initial provider selection will return a list of providers
       * available for this process. once a provider is selected from the
       * list, we will cycle through the remaining list to identify NICs
       * serviced by this provider, and try to pick one on the same NUMA
@@ -350,9 +351,13 @@ select_ofi_provider(struct fi_info *providers,
       * attributes for the same NIC. The initial provider attributes
       * are used to ensure that all NICs we return provide the same
       * capabilities as the inital one.
+      *
+      * We use package rank to select between NICs of equal distance
+      * if we cannot calculate a package_rank, we fall back to using the
+      * process id.
       */
     if (NULL != prov) {
-        prov = opal_mca_common_ofi_select_provider(prov, ompi_process_info.my_local_rank);
+        prov = opal_mca_common_ofi_select_provider(prov, ompi_process_info);
         opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                             "%s:%d: mtl:ofi:provider: %s\n",
                             __FILE__, __LINE__,
@@ -1170,6 +1175,3 @@ finalize_err:
 
     return OMPI_ERROR;
 }
-
-
-

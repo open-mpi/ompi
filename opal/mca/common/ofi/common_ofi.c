@@ -16,6 +16,7 @@
 #include <errno.h>
 #include <unistd.h>
 
+#include "opal_config.h"
 #include "common_ofi.h"
 #include "opal_config.h"
 #include "opal/constants.h"
@@ -23,6 +24,8 @@
 #include "opal/mca/base/mca_base_var.h"
 #include "opal/mca/base/mca_base_framework.h"
 #include "opal/mca/hwloc/base/base.h"
+#include "opal/mca/pmix/base/base.h"
+#include "opal/util/show_help.h"
 
 OPAL_DECLSPEC opal_common_ofi_module_t opal_common_ofi = {
     .prov_include = NULL,
@@ -281,6 +284,79 @@ count_providers(struct fi_info* provider_list)
     return num_provider;
 }
 
+/* Calculate the currrent process package rank.
+ *     @param (IN) process_info     struct opal_process_info_t information
+ *                                  about the current process. used to get
+ *                                  num_local_peers, myprocid.rank, and
+ *                                  my_local_rank.
+ *
+ *     @param (OUT)                 uint32_t package rank or myprocid.rank
+ *
+ * If successful, returns PMIX_PACKAGE_RANK, or an
+ * equivalent calculated package rank.
+ * otherwise falls back to using opal_process_info.myprocid.rank
+ * this can affect performance, but is unlikely to happen.
+ */
+static uint32_t get_package_rank(opal_process_info_t process_info)
+{
+    int i;
+    uint16_t relative_locality, *package_rank_ptr;
+    uint16_t current_package_rank = 0;
+    uint16_t package_ranks[process_info.num_local_peers];
+    opal_process_name_t pname;
+    opal_status_t rc;
+    char **peers = NULL;
+    char *local_peers = NULL;
+    char *locality_string = NULL;
+
+    pname.jobid = OPAL_PROC_MY_NAME.jobid;
+    pname.vpid = OPAL_VPID_WILDCARD;
+
+#if HAVE_DECL_PMIX_PACKAGE_RANK
+    // Try to get the PACKAGE_RANK from PMIx
+    OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, PMIX_PACKAGE_RANK,
+                                   &pname, &package_rank_ptr, PMIX_UINT16);
+    if (PMIX_SUCCESS == rc) {
+        return (uint32_t)*package_rank_ptr;
+    }
+#endif
+
+    // Get the local peers
+    OPAL_MODEX_RECV_VALUE(rc, PMIX_LOCAL_PEERS,
+                          &pname, &local_peers, PMIX_STRING);
+    if (PMIX_SUCCESS != rc || NULL == local_peers) {
+        // We can't find package_rank, fall back to procid
+        opal_show_help("help-common-ofi.txt", "package_rank failed", true);
+        return (uint32_t)process_info.myprocid.rank;
+    }
+    peers = opal_argv_split(local_peers, ',');
+    free(local_peers);
+
+    for (i = 0; NULL != peers[i]; i++) {
+        pname.vpid = strtoul(peers[i], NULL, 10);
+        locality_string = NULL;
+        // Get the LOCALITY_STRING for process[i]
+        OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, PMIX_LOCALITY_STRING,
+                                       &pname, &locality_string, PMIX_STRING);
+        if (PMIX_SUCCESS != rc || NULL == locality_string) {
+            // If we don't have information about locality, fall back to procid
+            opal_show_help("help-common-ofi.txt", "package_rank failed", true);
+            return (uint32_t)process_info.myprocid.rank;
+        }
+
+        // compute relative locality
+        relative_locality = opal_hwloc_compute_relative_locality(process_info.cpuset, locality_string);
+        free(locality_string);
+
+        if (relative_locality & OPAL_PROC_ON_SOCKET) {
+            package_ranks[i] = current_package_rank;
+            current_package_rank++;
+        }
+    }
+
+    return (uint32_t)package_ranks[process_info.my_local_rank];
+}
+
 /* Selects a NIC based on hardware locality between process cpuset and device BDF.
  *
  * Initializes opal_hwloc_topology to access hardware topology if not previously
@@ -318,11 +394,13 @@ count_providers(struct fi_info* provider_list)
  *                                  selection. This provider is returned if the
  *                                  NIC selection fails.
  *
- *      @param local_index (IN)     int The local rank of the process. Used to
+ *      @param package_rank (IN)   uint32_t The rank of the process. Used to
  *                                  select one valid NIC if there is a case
  *                                  where more than one can be selected. This
  *                                  could occur when more than one provider
  *                                  shares the same cpuset as the process.
+ *                                  This could either be a package_rank if one is
+ *                                  successfully calculated, or the process id.
  *
  *      @param provider (OUT)       struct fi_info* object with the selected
  *                                  provider if the selection succeeds
@@ -335,7 +413,7 @@ count_providers(struct fi_info* provider_list)
  * balance across available NICs.
  */
 struct fi_info*
-opal_mca_common_ofi_select_provider(struct fi_info *provider_list, int local_index)
+opal_mca_common_ofi_select_provider(struct fi_info *provider_list, opal_process_info_t process_info)
 {
     struct fi_info *provider = provider_list, *current_provider = provider_list;
     struct fi_info **provider_table;
@@ -343,6 +421,7 @@ opal_mca_common_ofi_select_provider(struct fi_info *provider_list, int local_ind
     struct fi_pci_attr pci;
 #endif
     int ret;
+    uint32_t package_rank;
     unsigned int num_provider = 0, provider_limit = 0;
     bool provider_found = false, cpusets_match = false;
 
@@ -399,8 +478,12 @@ opal_mca_common_ofi_select_provider(struct fi_info *provider_list, int local_ind
     }
 
     /* Select provider from local rank % number of providers */
-    if (num_provider > 0) {
-        provider = provider_table[local_index % num_provider];
+    if (num_provider >= 2) {
+        // If there are multiple NICs "close" to the process, try to calculate package_rank
+        package_rank = get_package_rank(process_info);
+        provider = provider_table[package_rank % num_provider];
+    } else if (num_provider == 1) {
+        provider = provider_table[num_provider - 1];
     }
 
 #if OPAL_OFI_PCI_DATA_AVAILABLE
@@ -412,8 +495,8 @@ opal_mca_common_ofi_select_provider(struct fi_info *provider_list, int local_ind
 
 #if OPAL_ENABLE_DEBUG
     opal_output_verbose(1, opal_common_ofi.output,
-                        "local rank: %d device: %s cpusets match: %s\n",
-                         local_index, provider->domain_attr->name,
+                        "package rank: %d device: %s cpusets match: %s\n",
+                         package_rank, provider->domain_attr->name,
                          cpusets_match ? "true" : "false");
 #endif
 
