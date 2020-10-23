@@ -133,6 +133,11 @@ AC_DEFUN([_OPAL_CHECK_OFI],[
                        [$opal_check_fi_info_pci],
                        [check if pci data is available in ofi])
 
+    AC_CHECK_DECLS([PMIX_PACKAGE_RANK],
+                   [],
+                   [],
+                   [#include <pmix.h>])
+
     CPPFLAGS=$opal_check_ofi_save_CPPFLAGS
     LDFLAGS=$opal_check_ofi_save_LDFLAGS
     LIBS=$opal_check_ofi_save_LIBS
