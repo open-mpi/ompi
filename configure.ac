@@ -117,6 +117,26 @@ AM_SILENT_RULES([yes])
 # Make configure depend on the VERSION file, since it's used in AC_INIT
 AC_SUBST([CONFIGURE_DEPENDENCIES], ['$(top_srcdir)/VERSION'])
 
+# Sanity checks
+AC_DEFUN([OMPI_CHECK_DIR_FOR_SPACES],[
+    dir="$1"
+    article="$2"
+    label="$3"
+
+    AC_MSG_CHECKING([directory of $label])
+    AC_MSG_RESULT([$dir])
+    AS_IF([test -n "`echo $dir | grep ' '`"],
+          [AC_MSG_WARN([This version of Open MPI does not support $article $label])
+           AC_MSG_WARN([with a path that contains spaces])
+           AC_MSG_ERROR([Cannot continue.])])
+])
+
+OMPI_CHECK_DIR_FOR_SPACES([$srcdir], [a], [source tree])
+OMPI_CHECK_DIR_FOR_SPACES([`readlink -f $srcdir`], [an], [absolute source tree])
+OMPI_CHECK_DIR_FOR_SPACES([`readlink -f .`], [a], [build tree])
+OMPI_CHECK_DIR_FOR_SPACES([$prefix], [a], [prefix])
+OMPI_CHECK_DIR_FOR_SPACES([`readlink -f $prefix`], [an], [absolute prefix])
+
 opal_show_subtitle "Checking versions"
 
 # Get the version of OMPI that we are installing
