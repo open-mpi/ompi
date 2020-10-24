@@ -83,9 +83,9 @@ m4_define([OPAL_GET_VERSION],[
             if test -d "$srcdir/.git" && test $git_happy -eq 1; then
                 if test "$srcdir" != "`pwd`"; then
                     git_save_dir=`pwd`
-                    cd $srcdir
+                    cd "$srcdir"
                     $2_REPO_REV=`git describe --tags --always`
-                    cd $git_save_dir
+                    cd "$git_save_dir"
                     unset git_save_dir
                 else
                     $2_REPO_REV=`git describe --tags --always`
