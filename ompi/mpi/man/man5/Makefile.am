@@ -23,6 +23,8 @@ native_nroff_files = \
         MPI.5 \
         OpenMPI.5
 
+man_pages_from_md = $(MD_FILES:.5.md=.5)
+
 if OPAL_ENABLE_MAN_PAGES
 man_MANS = $(man_pages_from_md) $(native_nroff_files)
 MAINTAINERCLEANFILES = $(man_pages_from_md)
