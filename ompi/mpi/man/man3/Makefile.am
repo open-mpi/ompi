@@ -24,6 +24,7 @@ include $(top_srcdir)/Makefile.ompi-rules
 # https://rmarkdown.rstudio.com/authoring_pandoc_markdown.html
 
 MD_FILES = \
+        MPI_Barrier.md \
         MPI_T_init_thread.3.md \
         MPI_Status_f2c.3.md \
         MPI_Status_f082c.3.md \
@@ -54,7 +55,6 @@ TEMPLATE_FILES = \
         MPI_Attr_delete.3in \
         MPI_Attr_get.3in \
         MPI_Attr_put.3in \
-        MPI_Barrier.3in \
         MPI_Ibarrier.3in \
         MPI_Bcast.3in \
         MPI_Ibcast.3in \
