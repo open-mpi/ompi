@@ -275,8 +275,6 @@ AC_ARG_ENABLE([dlopen],
                      Disabling dlopen implies --disable-mca-dso.
                      (default: enabled)])])
 if test "$enable_dlopen" = "no" ; then
-    enable_mca_dso=no
-    enable_mca_static=yes
     OPAL_ENABLE_DLOPEN_SUPPORT=0
     AC_MSG_RESULT([no])
 else
