@@ -166,7 +166,7 @@ AC_DEFUN([OPAL_MCA],[
     # resolution (prefer static) is done in the big loop below
     #
     AC_MSG_CHECKING([which components should be run-time loadable])
-    if test "$enable_static" != "no"; then
+    if test "$enable_static" != "no" || test "$OPAL_ENABLE_DLOPEN_SUPPORT" = 0; then
         DSO_all=0
         msg=none
     elif test -z "$enable_mca_dso" || test "$enable_mca_dso" = "yes"; then
@@ -175,7 +175,6 @@ AC_DEFUN([OPAL_MCA],[
     elif test "$enable_mca_dso" = "no"; then
         DSO_all=0
         msg=none
-        enable_dlopen=no
     else
         DSO_all=0
         ifs_save="$IFS"
