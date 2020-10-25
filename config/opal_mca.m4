@@ -705,15 +705,12 @@ AC_DEFUN([MCA_COMPONENT_COMPILE_MODE],[
         [str="STATIC_COMPONENT=\$STATIC_$2_$3"
          eval $str])
 
-    shared_mode_override=static
-
     # Setup for either shared or static
     if test "$STATIC_FRAMEWORK" = "1" || \
        test "$STATIC_COMPONENT" = "1" || \
        test "$STATIC_all" = "1" ; then
         $4="static"
-    elif test "$shared_mode_override" = "dso" || \
-         test "$SHARED_FRAMEWORK" = "1" || \
+    elif test "$SHARED_FRAMEWORK" = "1" || \
          test "$SHARED_COMPONENT" = "1" || \
          test "$DSO_all" = "1"; then
         $4="dso"
