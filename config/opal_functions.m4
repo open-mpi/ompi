@@ -113,14 +113,6 @@ dnl #######################################################################
 
 AC_DEFUN([OPAL_BASIC_SETUP],[
 #
-# Save some stats about this build
-#
-
-OPAL_CONFIGURE_USER="${USER:-`whoami`}"
-OPAL_CONFIGURE_HOST="${HOSTNAME:-`(hostname || uname -n) 2> /dev/null | sed 1q`}"
-OPAL_CONFIGURE_DATE="`date`"
-
-#
 # Make automake clean emacs ~ files for "make clean"
 #
 
