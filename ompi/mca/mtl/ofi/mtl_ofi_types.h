@@ -160,7 +160,7 @@ __opal_attribute_always_inline__ static inline void
 mtl_ofi_create_recv_tag_CQD(uint64_t *match_bits, uint64_t *mask_bits,
                             int comm_id, int tag)
 {
-    *mask_bits  = ompi_mtl_ofi.sync_proto_mask;
+    *mask_bits  = ompi_mtl_ofi.sync_send;
     *match_bits = (uint64_t) comm_id;
     *match_bits = (*match_bits << (MTL_OFI_PROTO_BIT_COUNT
                                 +  MTL_OFI_TAG_BIT_COUNT_DATA));
@@ -229,7 +229,7 @@ __opal_attribute_always_inline__ static inline void
 mtl_ofi_create_recv_tag(uint64_t *match_bits, uint64_t *mask_bits,
                             int comm_id, int source, int tag)
 {
-    *mask_bits  = ompi_mtl_ofi.sync_proto_mask;
+    *mask_bits  = ompi_mtl_ofi.sync_send;
     *match_bits = comm_id;
     *match_bits = (*match_bits << ompi_mtl_ofi.num_bits_source_rank);
 
