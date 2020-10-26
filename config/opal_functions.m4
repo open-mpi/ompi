@@ -12,7 +12,7 @@ dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
 dnl Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
-dnl Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2009-2020 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2014      Intel, Inc. All rights reserved.
 dnl Copyright (c) 2015-2017 Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
@@ -112,14 +112,6 @@ dnl #######################################################################
 dnl #######################################################################
 
 AC_DEFUN([OPAL_BASIC_SETUP],[
-#
-# Save some stats about this build
-#
-
-OPAL_CONFIGURE_USER="`whoami`"
-OPAL_CONFIGURE_HOST="`(hostname || uname -n) 2> /dev/null | sed 1q`"
-OPAL_CONFIGURE_DATE="`date`"
-
 #
 # Make automake clean emacs ~ files for "make clean"
 #
