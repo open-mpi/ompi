@@ -578,3 +578,31 @@ bool ompi_group_have_remote_peers (ompi_group_t *group)
 
     return false;
 }
+
+/**
+ * Count the number of processes on this group that share the same node as
+ * this process.
+ */
+int ompi_group_count_local_peers (ompi_group_t *group)
+{
+    int local_peers = 0;
+    for (int i = 0 ; i < group->grp_proc_count ; ++i) {
+        ompi_proc_t *proc = NULL;
+#if OMPI_GROUP_SPARSE
+        proc = ompi_group_peer_lookup (group, i);
+#else
+        proc = ompi_group_get_proc_ptr_raw (group, i);
+        if (ompi_proc_is_sentinel (proc)) {
+            /* the proc must be stored in the group or cached in the proc
+             * hash table if the process resides in the local node
+             * (see ompi_proc_complete_init) */
+            continue;
+        }
+#endif
+        if (OPAL_PROC_ON_LOCAL_NODE(proc->super.proc_flags)) {
+            local_peers++;
+        }
+    }
+
+    return local_peers;
+}

@@ -21,6 +21,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation.  All rights reserved.
  * Copyright (c) 2017      FUJITSU LIMITED.  All rights reserved.
+ * Copyright (c) 2020      BULL S.A.S. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -37,6 +38,7 @@
 #include "mpi.h"
 #include "ompi/communicator/communicator.h"
 #include "opal/util/output.h"
+#include "opal/util/argv.h"
 #include "opal/util/show_help.h"
 #include "opal/class/opal_list.h"
 #include "opal/class/opal_object.h"
@@ -44,20 +46,12 @@
 #include "opal/mca/base/base.h"
 #include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/base.h"
-
+#include "ompi/mca/coll/base/coll_base_util.h"
 
 /*
- * Local types
+ * Stuff for the OBJ interface
  */
-struct avail_coll_t {
-    opal_list_item_t super;
-
-    int ac_priority;
-    mca_coll_base_module_2_3_0_t *ac_module;
-    const char * ac_component_name;
-};
-typedef struct avail_coll_t avail_coll_t;
-
+OBJ_CLASS_INSTANCE(mca_coll_base_avail_coll_t, opal_list_item_t, NULL, NULL);
 
 /*
  * Local functions
@@ -76,12 +70,6 @@ static int query_2_0_0(const mca_coll_base_component_2_0_0_t *
                        coll_component, ompi_communicator_t * comm,
                        int *priority,
                        mca_coll_base_module_2_3_0_t ** module);
-
-/*
- * Stuff for the OBJ interface
- */
-static OBJ_CLASS_INSTANCE(avail_coll_t, opal_list_item_t, NULL, NULL);
-
 
 #define COPY(module, comm, func)                                        \
     do {                                                                \
@@ -138,11 +126,14 @@ int mca_coll_base_comm_select(ompi_communicator_t * comm)
     /* FIX ME - Do some kind of collective operation to find a module
        that everyone has available */
 
+    /* List to store every valid module */
+    comm->c_coll->module_list =  OBJ_NEW(opal_list_t);
+
     /* do the selection loop */
     for (item = opal_list_remove_first(selectable);
          NULL != item; item = opal_list_remove_first(selectable)) {
 
-        avail_coll_t *avail = (avail_coll_t *) item;
+        mca_coll_base_avail_coll_t *avail = (mca_coll_base_avail_coll_t *) item;
 
         /* initialize the module */
         ret = avail->ac_module->coll_module_enable(avail->ac_module, comm);
@@ -153,6 +144,9 @@ int mca_coll_base_comm_select(ompi_communicator_t * comm)
                             (OMPI_SUCCESS == ret ? "Enabled": "Disabled") );
 
         if (OMPI_SUCCESS == ret) {
+            /* Save every component that is initialized,
+             * queried and enabled successfully */
+            opal_list_append(comm->c_coll->module_list, &avail->super);
 
             /* copy over any of the pointers */
             COPY(avail->ac_module, comm, allgather);
@@ -230,10 +224,11 @@ int mca_coll_base_comm_select(ompi_communicator_t * comm)
             COPY(avail->ac_module, comm, neighbor_alltoallw_init);
 
             COPY(avail->ac_module, comm, reduce_local);
+        } else {
+            /* release the original module reference and the list item */
+            OBJ_RELEASE(avail->ac_module);
+            OBJ_RELEASE(avail);
         }
-        /* release the original module reference and the list item */
-        OBJ_RELEASE(avail->ac_module);
-        OBJ_RELEASE(avail);
     }
 
     /* Done with the list from the check_components() call so release it. */
@@ -306,8 +301,8 @@ int mca_coll_base_comm_select(ompi_communicator_t * comm)
 
 static int avail_coll_compare (opal_list_item_t **a,
                                opal_list_item_t **b) {
-    avail_coll_t *acoll = (avail_coll_t *) *a;
-    avail_coll_t *bcoll = (avail_coll_t *) *b;
+    mca_coll_base_avail_coll_t *acoll = (mca_coll_base_avail_coll_t *) *a;
+    mca_coll_base_avail_coll_t *bcoll = (mca_coll_base_avail_coll_t *) *b;
 
     if (acoll->ac_priority > bcoll->ac_priority) {
         return 1;
@@ -315,6 +310,20 @@ static int avail_coll_compare (opal_list_item_t **a,
         return -1;
     }
 
+    return 0;
+}
+
+static inline int
+component_in_argv(char **argv, const char* component_name)
+{
+    if( NULL != argv ) {
+        while( NULL != *argv ) {
+            if( 0 == strcmp(component_name, *argv) ) {
+                return 1;
+            }
+            argv++;  /* move to the next argument */
+        }
+    }
     return 0;
 }
 
@@ -327,13 +336,66 @@ static int avail_coll_compare (opal_list_item_t **a,
 static opal_list_t *check_components(opal_list_t * components,
                                      ompi_communicator_t * comm)
 {
-    int priority;
+    int priority, flag;
     const mca_base_component_t *component;
     mca_base_component_list_item_t *cli;
     mca_coll_base_module_2_3_0_t *module;
     opal_list_t *selectable;
-    avail_coll_t *avail;
+    mca_coll_base_avail_coll_t *avail;
+    char info_val[OPAL_MAX_INFO_VAL+1];
+    char **coll_argv = NULL, **coll_exclude = NULL, **coll_include = NULL;
 
+    /* Check if this communicator comes with restrictions on the collective modules
+     * it wants to use. The restrictions are consistent with the MCA parameter
+     * to limit the collective components loaded, but it applies for each
+     * communicator and is provided as an info key during the communicator
+     * creation. Unlike the MCA param, this info key is used not to select
+     * components but either to prevent components from being used or to
+     * force a change in the component priority.
+     */
+    if( NULL != comm->super.s_info) {
+        opal_info_get(comm->super.s_info, "ompi_comm_coll_preference",
+                      sizeof(info_val), info_val, &flag);
+        if( !flag ) {
+            goto proceed_to_select;
+        }
+        coll_argv = opal_argv_split(info_val, ',');
+        if(NULL == coll_argv) {
+            goto proceed_to_select;
+        }
+        int idx2, count_include = opal_argv_count(coll_argv);
+        /* Allocate the coll_include argv */
+        coll_include = (char**)malloc((count_include + 1) * sizeof(char*));
+        coll_include[count_include] = NULL; /* NULL terminated array */
+        /* Dispatch the include/exclude in the corresponding arrays */
+        for( int idx = 0; NULL != coll_argv[idx]; idx++ ) {
+            if( '^' == coll_argv[idx][0] ) {
+                coll_include[idx] = NULL;  /* NULL terminated array */
+
+                /* Allocate the coll_exclude argv */
+                coll_exclude = (char**)malloc((count_include - idx + 1) * sizeof(char*));
+                /* save the exclude components */
+                for( idx2 = idx; NULL != coll_argv[idx2]; idx2++ ) {
+                    coll_exclude[idx2 - idx] = coll_argv[idx2];
+                }
+                coll_exclude[idx2 - idx] = NULL;  /* NULL-terminated array */
+                coll_exclude[0] = coll_exclude[0] + 1;  /* get rid of the ^ */
+                count_include = idx;
+                break;
+            }
+            coll_include[idx] = coll_argv[idx];
+        }
+        /* Reverse the order of the coll_inclide argv to faciliate the ordering of
+         * the selected components reverse.
+         */
+        for( idx2 = 0; idx2 < (count_include - 1); idx2++ ) {
+            char* temp = coll_include[idx2];
+            coll_include[idx2] = coll_include[count_include - 1];
+            coll_include[count_include - 1] = temp;
+            count_include--;
+        }
+    }
+ proceed_to_select:
     /* Make a list of the components that query successfully */
     selectable = OBJ_NEW(opal_list_t);
 
@@ -341,11 +403,18 @@ static opal_list_t *check_components(opal_list_t * components,
     OPAL_LIST_FOREACH(cli, &ompi_coll_base_framework.framework_components, mca_base_component_list_item_t) {
         component = cli->cli_component;
 
+        /* dont bother is we have this component in the exclusion list */
+        if( component_in_argv(coll_exclude, component->mca_component_name) ) {
+            opal_output_verbose(10, ompi_coll_base_framework.framework_output,
+                                "coll:base:comm_select: component disqualified: %s (due to communicator info key)",
+                                component->mca_component_name );
+            continue;
+        }
         priority = check_one_component(comm, component, &module);
         if (priority >= 0) {
             /* We have a component that indicated that it wants to run
                by giving us a module */
-            avail = OBJ_NEW(avail_coll_t);
+            avail = OBJ_NEW(mca_coll_base_avail_coll_t);
             avail->ac_priority = priority;
             avail->ac_module = module;
             // Point to the string so we don't have to free later
@@ -375,6 +444,27 @@ static opal_list_t *check_components(opal_list_t * components,
 
     /* Put this list in priority order */
     opal_list_sort(selectable, avail_coll_compare);
+
+    /* For all valid component reorder them not on their provided priorities but on
+     * the order requested in the info key. As at this point the coll_include is
+     * already ordered backward we can simply prepend the components.
+     */
+    mca_coll_base_avail_coll_t *item, *item_next;
+    OPAL_LIST_FOREACH_SAFE(item, item_next,
+                           selectable, mca_coll_base_avail_coll_t) {
+        if( component_in_argv(coll_include, item->ac_component_name) ) {
+            opal_list_remove_item(selectable, &item->super);
+            opal_list_prepend(selectable, &item->super);
+        }
+    }
+
+    opal_argv_free(coll_argv);
+    if( NULL != coll_exclude ) {
+        free(coll_exclude);
+    }
+    if( NULL != coll_include ) {
+        free(coll_include);
+    }
 
     /* All done */
     return selectable;
@@ -408,7 +498,6 @@ static int check_one_component(ompi_communicator_t * comm,
 
     return priority;
 }
-
 
 /**************************************************************************
  * Query functions

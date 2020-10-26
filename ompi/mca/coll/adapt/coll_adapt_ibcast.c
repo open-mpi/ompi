@@ -178,7 +178,7 @@ static int send_cb(ompi_request_t * req)
         || (context->con->tree->tree_nextsize > 0 && rank != context->con->root
             && num_sent == context->con->tree->tree_nextsize * context->con->num_segs
             && num_recv_fini == context->con->num_segs)) {
-        OPAL_OUTPUT_VERBOSE((30, mca_coll_adapt_component.adapt_output, "[%d]: Singal in send\n",
+        OPAL_OUTPUT_VERBOSE((30, mca_coll_adapt_component.adapt_output, "[%d]: Signal in send\n",
                              ompi_comm_rank(context->con->comm)));
         ibcast_request_fini(context);
     }
@@ -306,7 +306,7 @@ static int recv_cb(ompi_request_t * req)
             && num_recv_fini == context->con->num_segs)
         || (context->con->tree->tree_nextsize == 0
             && num_recv_fini == context->con->num_segs)) {
-        OPAL_OUTPUT_VERBOSE((30, mca_coll_adapt_component.adapt_output, "[%d]: Singal in recv\n",
+        OPAL_OUTPUT_VERBOSE((30, mca_coll_adapt_component.adapt_output, "[%d]: Signal in recv\n",
                              ompi_comm_rank(context->con->comm)));
         ibcast_request_fini(context);
     }
