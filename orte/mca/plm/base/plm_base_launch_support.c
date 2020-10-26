@@ -16,7 +16,7 @@
  * Copyright (c) 2013-2018 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2018 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
- * Copyright (c) 2016      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2016-2020 IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -902,6 +902,8 @@ void orte_plm_base_daemon_topology(int status, orte_process_name_t* sender,
         orted_failed_launch = true;
         goto CLEANUP;
     }
+    /* Apply any CPU filters (not preserved by the XML) */
+    opal_hwloc_base_filter_cpus(topo);
     /* record the final topology */
     t->topo = topo;
 
@@ -1252,6 +1254,8 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
             opal_pointer_array_add(orte_node_topologies, t);
             daemon->node->topology = t;
             if (NULL != topo) {
+                /* Apply any CPU filters (not preserved by the XML) */
+                opal_hwloc_base_filter_cpus(topo);
                 t->topo = topo;
             } else {
                 /* nope - save the signature and request the complete topology from that node */
