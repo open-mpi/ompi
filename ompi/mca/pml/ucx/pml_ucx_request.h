@@ -165,7 +165,7 @@ static inline void mca_pml_ucx_set_send_status(ompi_status_public_t* mpi_status,
     }
 }
 
-static inline void mca_pml_ucx_set_recv_status(ompi_status_public_t* mpi_status,
+static inline int mca_pml_ucx_set_recv_status(ompi_status_public_t* mpi_status,
                                                ucs_status_t ucp_status,
                                                const ucp_tag_recv_info_t *info)
 {
@@ -186,15 +186,23 @@ static inline void mca_pml_ucx_set_recv_status(ompi_status_public_t* mpi_status,
     } else {
         mpi_status->MPI_ERROR = MPI_ERR_INTERN;
     }
+
+    return mpi_status->MPI_ERROR;
 }
 
-static inline void mca_pml_ucx_set_recv_status_safe(ompi_status_public_t* mpi_status,
-                                                    ucs_status_t ucp_status,
-                                                    const ucp_tag_recv_info_t *info)
+static inline int mca_pml_ucx_set_recv_status_safe(ompi_status_public_t* mpi_status,
+                                                   ucs_status_t ucp_status,
+                                                   const ucp_tag_recv_info_t *info)
 {
     if (mpi_status != MPI_STATUS_IGNORE) {
-        mca_pml_ucx_set_recv_status(mpi_status, ucp_status, info);
+        return mca_pml_ucx_set_recv_status(mpi_status, ucp_status, info);
+    } else if (OPAL_LIKELY(ucp_status == UCS_OK) || (ucp_status == UCS_ERR_CANCELED)) {
+        return UCS_OK;
+    } else if (ucp_status == UCS_ERR_MESSAGE_TRUNCATED) {
+        return MPI_ERR_TRUNCATE;
     }
+
+    return MPI_ERR_INTERN;
 }
 
 OBJ_CLASS_DECLARATION(mca_pml_ucx_persistent_request_t);

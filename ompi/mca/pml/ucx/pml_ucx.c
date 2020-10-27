@@ -625,8 +625,7 @@ int mca_pml_ucx_recv(void *buf, size_t count, ompi_datatype_t *datatype, int src
     MCA_COMMON_UCX_PROGRESS_LOOP(ompi_pml_ucx.ucp_worker) {
         status = ucp_request_test(req, &info);
         if (status != UCS_INPROGRESS) {
-            mca_pml_ucx_set_recv_status_safe(mpi_status, status, &info);
-            return OMPI_SUCCESS;
+            return mca_pml_ucx_set_recv_status_safe(mpi_status, status, &info);
         }
     }
 }
@@ -1070,8 +1069,7 @@ int mca_pml_ucx_mrecv(void *buf, size_t count, ompi_datatype_t *datatype,
 
     PML_UCX_MESSAGE_RELEASE(message);
 
-    ompi_request_wait(&req, status);
-    return OMPI_SUCCESS;
+    return ompi_request_wait(&req, status);
 }
 
 int mca_pml_ucx_start(size_t count, ompi_request_t** requests)
