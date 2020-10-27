@@ -28,7 +28,8 @@ MD_FILES = \
         MPI_T_init_thread.3.md \
         MPI_Status_f2c.3.md \
         MPI_Status_f082c.3.md \
-        MPI_Status_f082f.3.md
+        MPI_Status_f082f.3.md \
+        MPI_Bcast.md
 
 TEMPLATE_FILES = \
         MPI_Abort.3in \
@@ -56,7 +57,6 @@ TEMPLATE_FILES = \
         MPI_Attr_get.3in \
         MPI_Attr_put.3in \
         MPI_Ibarrier.3in \
-        MPI_Bcast.3in \
         MPI_Ibcast.3in \
         MPI_Bsend.3in \
         MPI_Bsend_init.3in \
