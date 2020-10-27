@@ -611,6 +611,7 @@ int mca_pml_ucx_recv(void *buf, size_t count, ompi_datatype_t *datatype, int src
     ucp_tag_t ucp_tag, ucp_tag_mask;
     ucp_tag_recv_info_t info;
     ucs_status_t status;
+    int result;
 
     PML_UCX_TRACE_RECV("%s", buf, count, datatype, src, tag, comm, "recv");
 
@@ -627,7 +628,7 @@ int mca_pml_ucx_recv(void *buf, size_t count, ompi_datatype_t *datatype, int src
     MCA_COMMON_UCX_PROGRESS_LOOP(ompi_pml_ucx.ucp_worker) {
         status = ucp_request_test(req, &info);
         if (status != UCS_INPROGRESS) {
-            mca_pml_ucx_set_recv_status_safe(mpi_status, status, &info);
+            result = mca_pml_ucx_set_recv_status_safe(mpi_status, status, &info);
 
 #if SPC_ENABLE == 1
             size_t dt_size;
@@ -635,7 +636,7 @@ int mca_pml_ucx_recv(void *buf, size_t count, ompi_datatype_t *datatype, int src
             SPC_USER_OR_MPI(tag, dt_size*count,
                             OMPI_SPC_BYTES_RECEIVED_USER, OMPI_SPC_BYTES_RECEIVED_MPI);
 #endif
-            return OMPI_SUCCESS;
+            return result;
         }
     }
 }
@@ -1093,8 +1094,7 @@ int mca_pml_ucx_mrecv(void *buf, size_t count, ompi_datatype_t *datatype,
 
     PML_UCX_MESSAGE_RELEASE(message);
 
-    ompi_request_wait(&req, status);
-    return OMPI_SUCCESS;
+    return ompi_request_wait(&req, status);
 }
 
 int mca_pml_ucx_start(size_t count, ompi_request_t** requests)
