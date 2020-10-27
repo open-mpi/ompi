@@ -130,7 +130,7 @@ mca_coll_han_init_dynamic_rules(void)
             /* maybe the file was in the old format and we read the collective index instead of the name. */
             char* endp;
             coll_id = strtol(coll_name, &endp, 10);
-            if( '\0' != *endp ) {  /* there is garbage in the input */
+            if( ('\0' != *endp ) || (coll_id < ALLGATHER) || (coll_id >= COLLCOUNT) ) {  /* there is garbage in the input */
                 opal_output_verbose(5, mca_coll_han_component.han_output,
                                     "coll:han:mca_coll_han_init_dynamic_rules invalid collective %s "
                                     "at line %d: the collective must be at least %d and less than %d. "
@@ -138,8 +138,10 @@ mca_coll_han_init_dynamic_rules(void)
                                     coll_name, fileline, ALLGATHER, COLLCOUNT);
                 goto file_reading_error;
             }
-            free(coll_name);
-            coll_name = mca_coll_base_colltype_to_str(coll_id);
+            if( NULL != coll_name ) {
+                free(coll_name);
+            }
+            coll_name = strdup(mca_coll_base_colltype_to_str(coll_id));
         }
 
         if(!mca_coll_han_is_coll_dynamic_implemented(coll_id)) {
@@ -390,24 +392,26 @@ cannot_allocate:
     opal_output_verbose(0, mca_coll_han_component.han_output,
                         "coll:han:mca_coll_han_init_dynamic_rules "
                         "cannot allocate dynamic rules\n");
-    /* Do not check free_dynamic_rules
-     * because we are returning OMPI_ERROR anyway */
+    if( NULL != coll_name ) {
+        free(coll_name);
+    }
+    fclose (fptr);
+    /* We disable the module, we don't need to keep the rules */
     mca_coll_han_free_dynamic_rules();
     return OMPI_ERROR;
 
 file_reading_error:
-    if( NULL != coll_name ) {
-        free(coll_name);
-    }
     opal_output_verbose(0, mca_coll_han_component.han_output,
                         "coll:han:mca_coll_han_init_dynamic_rules "
                         "could not fully read dynamic rules file. "
                         "Will use mca parameters defined rules. "
                         "To see error detail, please set "
                         "collective verbosity level over 5\n");
-    if(fptr) {
-        fclose (fptr);
+    if( NULL != coll_name ) {
+        free(coll_name);
     }
+    fclose (fptr);
+    /* We disable the module, we don't need to keep the rules */
     mca_coll_han_free_dynamic_rules();
     return OMPI_SUCCESS;
 }
