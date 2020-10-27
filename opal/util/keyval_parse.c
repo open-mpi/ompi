@@ -276,21 +276,37 @@ static int save_param_name (void)
 
 static int add_to_env_str(char *var, char *val)
 {
-    int sz, varsz, valsz;
+    int sz, varsz, valsz, new_envsize;
     void *tmp;
 
     if (NULL == var) {
         return OPAL_ERR_BAD_PARAM;
     }
 
+    varsz = strlen(var);
+    if (NULL != val) {
+        valsz = strlen(val);
+        /* account for '=' */
+        valsz += 1;
+    }
+    sz = 0;
     if (NULL != env_str) {
-        varsz = strlen(var);
-        valsz = (NULL != val) ? strlen(val) : 0;
-        sz = strlen(env_str)+varsz+valsz+2;
-        if (envsize <= sz) {
-            envsize *=2;
+        sz = strlen(env_str);
+        /* account for ';' */
+        sz += 1;
+    }
+    /* add required new size incl NUL byte */
+    sz += varsz+valsz+1;
 
-            tmp = realloc(env_str, envsize);
+    /* make sure we have sufficient space */
+    new_envsize = envsize;
+    while (new_envsize <= sz) {
+        new_envsize *=2;
+    }
+
+    if (NULL != env_str) {
+        if (new_envsize > envsize) {
+            tmp = realloc(env_str, new_envsize);
             if (NULL == tmp) {
                 return OPAL_ERR_OUT_OF_RESOURCE;
             }
@@ -298,11 +314,12 @@ static int add_to_env_str(char *var, char *val)
         }
         strcat(env_str, ";");
     } else {
-        env_str = calloc(1, envsize);
+        env_str = calloc(1, new_envsize);
         if (NULL == env_str) {
             return OPAL_ERR_OUT_OF_RESOURCE;
         }
     }
+    envsize = new_envsize;
 
     strcat(env_str, var);
     if (NULL != val) {
