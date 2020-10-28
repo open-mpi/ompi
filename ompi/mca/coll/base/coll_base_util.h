@@ -187,7 +187,7 @@ int ompi_coll_base_file_getnext_string(FILE *fptr, int *fileline, char** val);
 int ompi_coll_base_file_peek_next_char_is(FILE *fptr, int *fileline, int expected);
 
 /* Miscelaneous function */
-char* mca_coll_base_colltype_to_str(int collid);
+const char* mca_coll_base_colltype_to_str(int collid);
 int mca_coll_base_name_to_colltype(const char* name);
 
 END_C_DECLS
