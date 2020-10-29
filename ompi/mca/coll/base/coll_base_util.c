@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2016 The University of Tennessee and The University
+ * Copyright (c) 2004-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -29,6 +29,8 @@
 #include "ompi/mca/topo/base/base.h"
 #include "ompi/mca/pml/pml.h"
 #include "coll_base_util.h"
+#include "coll_base_functions.h"
+#include <ctype.h>
 
 int ompi_coll_base_sendrecv_actual( const void* sendbuf, size_t scount,
                                     ompi_datatype_t* sdatatype,
@@ -268,7 +270,7 @@ int ompi_coll_base_retain_datatypes_w( ompi_request_t *req,
     } else {
         scount = rcount = OMPI_COMM_IS_INTER(comm)?ompi_comm_remote_size(comm):ompi_comm_size(comm);
     }
-   
+
     for (int i=0; i<scount; i++) {
         if (NULL != stypes && NULL != stypes[i] && !ompi_datatype_is_predefined(stypes[i])) {
             OBJ_RETAIN(stypes[i]);
@@ -297,7 +299,8 @@ int ompi_coll_base_retain_datatypes_w( ompi_request_t *req,
     return OMPI_SUCCESS;
 }
 
-static void nbc_req_cons(ompi_coll_base_nbc_request_t *req) {
+static void nbc_req_cons(ompi_coll_base_nbc_request_t *req)
+{
     req->cb.req_complete_cb = NULL;
     req->req_complete_cb_data = NULL;
     req->data.objs.objs[0] = NULL;
@@ -305,3 +308,253 @@ static void nbc_req_cons(ompi_coll_base_nbc_request_t *req) {
 }
 
 OBJ_CLASS_INSTANCE(ompi_coll_base_nbc_request_t, ompi_request_t, nbc_req_cons, NULL);
+
+/* File reading functions */
+static void skiptonewline (FILE *fptr, int *fileline)
+{
+    char val;
+    int rc;
+
+    do {
+        rc = fread(&val, 1, 1, fptr);
+        if (0 == rc) {
+            return;
+        }
+        if ('\n' == val) {
+            (*fileline)++;
+            return;
+        }
+    } while (1);
+}
+
+int ompi_coll_base_file_getnext_long(FILE *fptr, int *fileline, long* val)
+{
+    char trash;
+    int rc;
+
+    do {
+        rc = fscanf(fptr, "%li", val);
+        if (rc == EOF) {
+            return -1;
+        }
+        if (1 == rc) {
+            return 0;
+        }
+        /* in all other cases, skip to the end of the token */
+        rc = fread(&trash, sizeof(char), 1, fptr);
+        if (rc == EOF) {
+            return -1;
+        }
+        if ('\n' == trash) (*fileline)++;
+        if ('#' == trash) {
+            skiptonewline (fptr, fileline);
+        }
+    } while (1);
+}
+
+int ompi_coll_base_file_getnext_string(FILE *fptr, int *fileline, char** val)
+{
+    char trash, token[32];
+    int rc;
+
+    *val = NULL;  /* security in case we fail */
+    do {
+        rc = fscanf(fptr, "%32s", token);
+        if (rc == EOF) {
+            return -1;
+        }
+        if (1 == rc) {
+            if( '#' == token[0] ) {
+                skiptonewline(fptr, fileline);
+                continue;
+            }
+            *val = (char*)malloc(strlen(token) + 1);
+            strcpy(*val, token);
+            return 0;
+        }
+        /* in all other cases, skip to the end of the token */
+        rc = fread(&trash, sizeof(char), 1, fptr);
+        if (rc == EOF) {
+            return -1;
+        }
+        if ('\n' == trash) (*fileline)++;
+        if ('#' == trash) {
+            skiptonewline (fptr, fileline);
+        }
+    } while (1);
+}
+
+int ompi_coll_base_file_getnext_size_t(FILE *fptr, int *fileline, size_t* val)
+{
+    char trash;
+    int rc;
+
+    do {
+        rc = fscanf(fptr, "%" PRIsize_t, val);
+        if (rc == EOF) {
+            return -1;
+        }
+        if (1 == rc) {
+            return 0;
+        }
+        /* in all other cases, skip to the end of the token */
+        rc = fread(&trash, sizeof(char), 1, fptr);
+        if (rc == EOF) {
+            return -1;
+        }
+        if ('\n' == trash) (*fileline)++;
+        if ('#' == trash) {
+            skiptonewline (fptr, fileline);
+        }
+    } while (1);
+}
+
+int ompi_coll_base_file_peek_next_char_is(FILE *fptr, int *fileline, int expected)
+{
+    char trash;
+    int rc;
+
+    do {
+        rc = fread(&trash, sizeof(char), 1, fptr);
+        if (0 == rc) {  /* hit the end of the file */
+            return -1;
+        }
+        if ('\n' == trash) {
+            (*fileline)++;
+            continue;
+        }
+        if ('#' == trash) {
+            skiptonewline (fptr, fileline);
+            continue;
+        }
+        if( trash == expected )
+            return 1;  /* return true and eat the char */
+        if( isblank(trash) )  /* skip all spaces if that's not what we were looking for */
+            continue;
+        if( 0 != fseek(fptr, -1, SEEK_CUR) )
+            return -1;
+        return 0;
+    } while (1);
+}
+
+/**
+ * There are certainly simpler implementation for this function when performance
+ * is not a critical point. But, as this function is used during the collective
+ * configuration, and we can do this configurations once for each communicator,
+ * I would rather have a more complex but faster implementation.
+ * The approach here is to search for the largest common denominators, to create
+ * something similar to a dichotomic search.
+ */
+int mca_coll_base_name_to_colltype(const char* name)
+{
+    if( 'n' == name[0] ) {
+        if( 0 == strncmp(name, "neighbor_all", 12) ) {
+            if( 't' != name[12] ) {
+                if( 0 == strncmp(name+12, "gather", 6) ) {
+                    if('\0' == name[18]) return NEIGHBOR_ALLGATHER;
+                    if( 'v' == name[18]) return NEIGHBOR_ALLGATHERV;
+                }
+            } else {
+                if( 0 == strncmp(name+12, "toall", 5) ) {
+                    if( '\0' == name[17] ) return NEIGHBOR_ALLTOALL;
+                    if( 'v' == name[17] ) return NEIGHBOR_ALLTOALLV;
+                    if( 'w' == name[17] ) return NEIGHBOR_ALLTOALLW;
+                }
+            }
+        }
+        return -1;
+    }
+    if( 'a' == name[0] ) {
+        if( 0 != strncmp(name, "all", 3) ) {
+            return -1;
+        }
+        if( 't' != name[3] ) {
+            if( 'r' == name[3] ) {
+                if( 0 == strcmp(name+3, "reduce") )
+                    return ALLREDUCE;
+            } else {
+                if( 0 == strncmp(name+3, "gather", 6) ) {
+                    if( '\0' == name[9] ) return ALLGATHER;
+                    if( 'v'  == name[9] ) return ALLGATHERV;
+                }
+            }
+        } else {
+            if( 0 == strncmp(name+3, "toall", 5) ) {
+                if( '\0' == name[8] ) return ALLTOALL;
+                if( 'v' == name[8] ) return ALLTOALLV;
+                if( 'w' == name[8] ) return ALLTOALLW;
+            }
+        }
+        return -1;
+    }
+    if( 'r' > name[0] ) {
+        if( 'b' == name[0] ) {
+            if( 0 == strcmp(name, "barrier") )
+                return BARRIER;
+            if( 0 == strcmp(name, "bcast") )
+                return BCAST;
+        } else if( 'g'== name[0] ) {
+            if( 0 == strncmp(name, "gather", 6) ) {
+                if( '\0' == name[6] ) return GATHER;
+                if( 'v' == name[6] ) return GATHERV;
+            }
+        }
+        if( 0 == strcmp(name, "exscan") )
+            return EXSCAN;
+        return -1;
+    }
+    if( 's' > name[0] ) {
+        if( 0 == strncmp(name, "reduce", 6) ) {
+            if( '\0' == name[6] ) return REDUCE;
+            if( '_' == name[6] ) {
+                if( 0 == strncmp(name+7, "scatter", 7) ) {
+                    if( '\0' == name[14] ) return REDUCESCATTER;
+                    if( 0 == strcmp(name+14, "_block") ) return REDUCESCATTERBLOCK;
+                }
+            }
+        }
+        return -1;
+    }
+    if( 0 == strcmp(name, "scan") )
+        return SCAN;
+    if( 0 == strcmp(name, "scatterv") )
+        return SCATTERV;
+    if( 0 == strcmp(name, "scatter") )
+        return SCATTER;
+    return -1;
+}
+
+/* conversion table for all COLLTYPE_T values defined in ompi/mca/coll/base/coll_base_functions.h */
+static const char* colltype_translation_table[] = {
+    [ALLGATHER] = "allgather",
+    [ALLGATHERV] = "allgatherv",
+    [ALLREDUCE] = "allreduce",
+    [ALLTOALL] = "alltoall",
+    [ALLTOALLV] = "alltoallv",
+    [ALLTOALLW] = "alltoallw",
+    [BARRIER] = "barrier",
+    [BCAST] = "bcast",
+    [EXSCAN] = "exscan",
+    [GATHER] = "gather",
+    [GATHERV] = "gatherv",
+    [REDUCE] = "reduce",
+    [REDUCESCATTER] = "reduce_scatter",
+    [REDUCESCATTERBLOCK] = "reduce_scatter_block",
+    [SCAN] = "scan",
+    [SCATTER] = "scatter",
+    [SCATTERV] = "scatterv",
+    [NEIGHBOR_ALLGATHER] = "neighbor_allgather",
+    [NEIGHBOR_ALLGATHERV] = "neighbor_allgatherv",
+    [NEIGHBOR_ALLTOALL] = "neighbor_alltoall",
+    [NEIGHBOR_ALLTOALLV] = "neighbor_alltoallv",
+    [NEIGHBOR_ALLTOALLW] = "neighbor_alltoallw",
+    [COLLCOUNT] = NULL
+};
+
+const char* mca_coll_base_colltype_to_str(int collid)
+{
+    if( (collid < 0) || (collid >= COLLCOUNT) ) {
+        return NULL;
+    }
+    return colltype_translation_table[collid];
+}

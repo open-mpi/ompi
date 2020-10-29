@@ -464,6 +464,21 @@ OMPI_DECLSPEC int ompi_comm_split (ompi_communicator_t *comm, int color, int key
                                    ompi_communicator_t** newcomm, bool pass_on_topo);
 
 /**
+ * split a communicator based on color and key. Parameters
+ * are identical to the MPI-counterpart of the function.
+ * Similar to \see ompi_comm_split with an additional info parameter.
+ *
+ * @param comm: input communicator
+ * @param color
+ * @param key
+ *
+ * @
+ */
+OMPI_DECLSPEC int ompi_comm_split_with_info( ompi_communicator_t* comm, int color, int key,
+                                             opal_info_t *info,
+                                             ompi_communicator_t **newcomm, bool pass_on_topo );
+
+/**
  * split a communicator based on type and key. Parameters
  * are identical to the MPI-counterpart of the function.
  *

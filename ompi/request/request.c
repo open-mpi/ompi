@@ -54,7 +54,7 @@ static void ompi_request_construct(ompi_request_t* req)
     /* don't call _INIT, we don't to set the request to _INACTIVE and there will
      * be no matching _FINI invocation */
     req->req_state        = OMPI_REQUEST_INVALID;
-    req->req_complete     = false;
+    req->req_complete     = REQUEST_COMPLETED;
     req->req_persistent   = false;
     req->req_start        = NULL;
     req->req_free         = NULL;

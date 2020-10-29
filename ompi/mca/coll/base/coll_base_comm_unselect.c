@@ -16,6 +16,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  * Copyright (c) 2017      FUJITSU LIMITED.  All rights reserved.
+ * Copyright (c) 2020      BULL S.A.S. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -34,6 +35,7 @@
 
 #include "ompi/communicator/communicator.h"
 #include "ompi/mca/coll/base/base.h"
+#include "ompi/mca/coll/base/coll_base_util.h"
 
 #define CLOSE(comm, func)                                        \
     do {                                                         \
@@ -50,6 +52,8 @@
 
 int mca_coll_base_comm_unselect(ompi_communicator_t * comm)
 {
+    opal_list_item_t *item;
+
     CLOSE(comm, allgather);
     CLOSE(comm, allgatherv);
     CLOSE(comm, allreduce);
@@ -123,6 +127,17 @@ int mca_coll_base_comm_unselect(ompi_communicator_t * comm)
     CLOSE(comm, neighbor_alltoallw_init);
 
     CLOSE(comm, reduce_local);
+
+    for (item = opal_list_remove_first(comm->c_coll->module_list);
+         NULL != item; item = opal_list_remove_first(comm->c_coll->module_list)) {
+        mca_coll_base_avail_coll_t *avail = (mca_coll_base_avail_coll_t *) item;
+
+        if(avail->ac_module) {
+            OBJ_RELEASE(avail->ac_module);
+        }
+        OBJ_RELEASE(avail);
+    }
+    OBJ_RELEASE(comm->c_coll->module_list);
 
     free(comm->c_coll);
     comm->c_coll = NULL;

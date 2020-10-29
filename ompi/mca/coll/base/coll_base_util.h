@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2015 The University of Tennessee and The University
+ * Copyright (c) 2004-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2007 High Performance Computing Center Stuttgart,
@@ -84,6 +84,19 @@ ompi_coll_base_nbc_reserve_tags(ompi_communicator_t* comm, int32_t reserve)
 
 typedef struct ompi_coll_base_nbc_request_t ompi_coll_base_nbc_request_t;
 
+/*
+ * Structure to store an available module
+ */
+struct mca_coll_base_avail_coll_t {
+    opal_list_item_t super;
+
+    int ac_priority;
+    mca_coll_base_module_t *ac_module;
+    const char * ac_component_name;
+};
+typedef struct mca_coll_base_avail_coll_t mca_coll_base_avail_coll_t;
+OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_coll_base_avail_coll_t);
+
 /**
  * A MPI_like function doing a send and a receive simultaneously.
  * If one of the communications results in a zero-byte message the
@@ -163,6 +176,19 @@ int ompi_coll_base_retain_datatypes( ompi_request_t *request,
 int ompi_coll_base_retain_datatypes_w( ompi_request_t *request,
                                        ompi_datatype_t *stypes[],
                                        ompi_datatype_t *rtypes[]);
+
+/* File reading function */
+int ompi_coll_base_file_getnext_long(FILE *fptr, int *fileline, long* val);
+int ompi_coll_base_file_getnext_size_t(FILE *fptr, int *fileline, size_t* val);
+int ompi_coll_base_file_getnext_string(FILE *fptr, int *fileline, char** val);
+/* peek at the next valid token to see if it begins with the expected value. If yes
+ * eat the value, otherwise put it back into the file.
+ */
+int ompi_coll_base_file_peek_next_char_is(FILE *fptr, int *fileline, int expected);
+
+/* Miscelaneous function */
+const char* mca_coll_base_colltype_to_str(int collid);
+int mca_coll_base_name_to_colltype(const char* name);
 
 END_C_DECLS
 #endif /* MCA_COLL_BASE_UTIL_EXPORT_H */

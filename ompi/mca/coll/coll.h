@@ -19,6 +19,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation.  All rights reserved.
  * Copyright (c) 2017      FUJITSU LIMITED.  All rights reserved.
+ * Copyright (c) 2020      BULL S.A.S. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -767,6 +768,9 @@ struct mca_coll_base_comm_coll_t {
 
     mca_coll_base_module_reduce_local_fn_t coll_reduce_local;
     mca_coll_base_module_2_3_0_t *coll_reduce_local_module;
+
+    /* List of modules initialized, queried and enabled */
+    opal_list_t *module_list;
 };
 typedef struct mca_coll_base_comm_coll_t mca_coll_base_comm_coll_t;
 

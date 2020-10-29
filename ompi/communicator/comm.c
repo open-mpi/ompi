@@ -400,11 +400,10 @@ int ompi_comm_create ( ompi_communicator_t *comm, ompi_group_t *group,
 /**********************************************************************/
 /**********************************************************************/
 /**********************************************************************/
-/*
-** Counterpart to MPI_Comm_split. To be used within OMPI (e.g. MPI_Cart_sub).
-*/
-int ompi_comm_split( ompi_communicator_t* comm, int color, int key,
-                     ompi_communicator_t **newcomm, bool pass_on_topo )
+
+int ompi_comm_split_with_info( ompi_communicator_t* comm, int color, int key,
+                               opal_info_t *info,
+                               ompi_communicator_t **newcomm, bool pass_on_topo )
 {
     int myinfo[2];
     int size, my_size;
@@ -610,7 +609,11 @@ int ompi_comm_split( ompi_communicator_t* comm, int color, int key,
     snprintf(newcomp->c_name, MPI_MAX_OBJECT_NAME, "MPI COMMUNICATOR %d SPLIT FROM %d",
              newcomp->c_contextid, comm->c_contextid );
 
-
+    /* Copy info if there is one */
+    if (info) {
+        newcomp->super.s_info = OBJ_NEW(opal_info_t);
+        opal_info_dup(info, &(newcomp->super.s_info));
+    }
 
     /* Activate the communicator and init coll-component */
     rc = ompi_comm_activate (&newcomp, comm, NULL, NULL, NULL, false, mode);
@@ -636,6 +639,15 @@ int ompi_comm_split( ompi_communicator_t* comm, int color, int key,
     return rc;
 }
 
+
+/*
+** Counterpart to MPI_Comm_split. To be used within OMPI (e.g. MPI_Cart_sub).
+*/
+int ompi_comm_split( ompi_communicator_t* comm, int color, int key,
+                     ompi_communicator_t **newcomm, bool pass_on_topo )
+{
+    return ompi_comm_split_with_info(comm, color, key, NULL, newcomm, pass_on_topo);
+}
 
 /**********************************************************************/
 /**********************************************************************/
