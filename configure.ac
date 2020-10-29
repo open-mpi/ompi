@@ -131,11 +131,29 @@ AC_DEFUN([OMPI_CHECK_DIR_FOR_SPACES],[
            AC_MSG_ERROR([Cannot continue.])])
 ])
 
+AC_DEFUN([OMPI_CANONICALIZE_PATH],[
+    case $host_os in
+    darwin*)
+        # MacOS does not have "readlink -f" or realpath (at least as
+        # of MacOS Cataline / 10.15).  Instead, use Python, because we
+        # know MacOS comes with a /usr/bin/python that has
+        # os.path.realpath.
+        $2=`/usr/bin/python -c 'import os; print os.path.realpath("'$1'")'`
+        ;;
+    *)
+        $2=`readlink -f $1`
+        ;;
+    esac
+])
+
 OMPI_CHECK_DIR_FOR_SPACES([$srcdir], [a], [source tree])
-OMPI_CHECK_DIR_FOR_SPACES([`readlink -f $srcdir`], [an], [absolute source tree])
-OMPI_CHECK_DIR_FOR_SPACES([`readlink -f .`], [a], [build tree])
+OMPI_CANONICALIZE_PATH([$srcdir], [ompi_dir])
+OMPI_CHECK_DIR_FOR_SPACES([$ompi_dir], [an], [absolute source tree])
+OMPI_CANONICALIZE_PATH([.], [ompi_dir])
+OMPI_CHECK_DIR_FOR_SPACES([$ompi_dir], [a], [build tree])
 OMPI_CHECK_DIR_FOR_SPACES([$prefix], [a], [prefix])
-OMPI_CHECK_DIR_FOR_SPACES([`readlink -f $prefix`], [an], [absolute prefix])
+OMPI_CANONICALIZE_PATH([$prefix], [ompi_dir])
+OMPI_CHECK_DIR_FOR_SPACES([$ompi_dir], [an], [absolute prefix])
 
 opal_show_subtitle "Checking versions"
 
