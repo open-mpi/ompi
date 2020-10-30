@@ -3,6 +3,7 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2020      Bull S.A.S. All rights reserved.
+ * Copyright (c) 2020      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -490,7 +491,9 @@ ompi_coll_han_reorder_gather(const void *sbuf,
                              int * topo)
 {
     int i, topolevel = 2; // always 2 levels in topo
+#if OPAL_ENABLE_DEBUG
     int w_rank = ompi_comm_rank(comm);
+#endif
     int w_size = ompi_comm_size(comm);
     ptrdiff_t rextent;
     ompi_datatype_type_extent(dtype, &rextent);

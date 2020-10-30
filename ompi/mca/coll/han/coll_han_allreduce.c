@@ -4,6 +4,7 @@
  *                         reserved.
  * Copyright (c) 2020      Bull S.A.S. All rights reserved.
  *
+ * Copyright (c) 2020      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -410,8 +411,10 @@ mca_coll_han_allreduce_intra_simple(const void *sbuf,
     int root_low_rank = 0;
     int low_rank;
     int ret;
-    mca_coll_han_component_t *cs = &mca_coll_han_component;
     mca_coll_han_module_t *han_module = (mca_coll_han_module_t *)module;
+#if OPAL_ENABLE_DEBUG
+    mca_coll_han_component_t *cs = &mca_coll_han_component;
+#endif
 
     OPAL_OUTPUT_VERBOSE((10, cs->han_output,
                     "[OMPI][han] in mca_coll_han_reduce_intra_simple\n"));
