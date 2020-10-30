@@ -33,7 +33,14 @@ MD_FILES = \
         MPI_Status_f2c.3.md \
         MPI_Status_f082c.3.md \
         MPI_Status_f082f.3.md \
-        MPI_Bcast.md
+        MPI_Bcast.md \
+        MPI_File_write_ordered.md \
+        MPI_File_write_ordered_begin.md \
+        MPI_File_write_ordered_end.md \
+        MPI_File_write_shared.md \
+        MPI_Finalize.md \
+        MPI_Finalized.md \
+        MPI_Free_mem.md
 
 TEMPLATE_FILES = \
         MPI_Abort.3in \
@@ -181,13 +188,6 @@ TEMPLATE_FILES = \
         MPI_File_write_at_all.3in \
         MPI_File_write_at_all_begin.3in \
         MPI_File_write_at_all_end.3in \
-        MPI_File_write_ordered.3in \
-        MPI_File_write_ordered_begin.3in \
-        MPI_File_write_ordered_end.3in \
-        MPI_File_write_shared.3in \
-        MPI_Finalize.3in \
-        MPI_Finalized.3in \
-        MPI_Free_mem.3in \
         MPI_Gather.3in \
         MPI_Igather.3in \
         MPI_Gatherv.3in \
