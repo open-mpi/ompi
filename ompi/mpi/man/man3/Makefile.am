@@ -25,6 +25,10 @@ include $(top_srcdir)/Makefile.ompi-rules
 
 MD_FILES = \
         MPI_Barrier.md \
+        MPI_Bsend.md \
+        MPI_Bsend_init.md \
+        MPI_Buffer_attach.md \
+        MPI_Buffer_detach.md \
         MPI_T_init_thread.3.md \
         MPI_Status_f2c.3.md \
         MPI_Status_f082c.3.md \
@@ -58,10 +62,6 @@ TEMPLATE_FILES = \
         MPI_Attr_put.3in \
         MPI_Ibarrier.3in \
         MPI_Ibcast.3in \
-        MPI_Bsend.3in \
-        MPI_Bsend_init.3in \
-        MPI_Buffer_attach.3in \
-        MPI_Buffer_detach.3in \
         MPI_Cancel.3in \
         MPI_Cart_coords.3in \
         MPI_Cart_create.3in \
