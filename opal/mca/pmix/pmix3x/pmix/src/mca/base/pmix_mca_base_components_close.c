@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2013-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2016      Intel, Inc. All rights reserved.
+ * Copyright (c) 2016-2020 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -20,14 +20,14 @@
  * $HEADER$
  */
 
-#include <src/include/pmix_config.h>
+#include "src/include/pmix_config.h"
 
 #include "src/class/pmix_list.h"
 #include "src/util/output.h"
 #include "src/mca/mca.h"
 #include "src/mca/base/base.h"
 #include "src/mca/base/pmix_mca_base_component_repository.h"
-#include "pmix_common.h"
+#include "include/pmix_common.h"
 
 void pmix_mca_base_component_unload (const pmix_mca_base_component_t *component, int output_id)
 {

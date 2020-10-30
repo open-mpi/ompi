@@ -12,7 +12,7 @@ dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
 dnl Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
-dnl Copyright (c) 2009-2016 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2009-2020 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
 dnl Copyright (c) 2017      Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
@@ -287,7 +287,7 @@ for val in ${$1}; do
 
     # Check for special cases where we do want to allow repeated
     # arguments (per
-    # http://www.open-mpi.org/community/lists/devel/2012/08/11362.php).
+    # https://www.open-mpi.org/community/lists/devel/2012/08/11362.php).
 
     case $val in
     -Xclang|-Xg)
@@ -373,7 +373,7 @@ AC_DEFUN([PMIX_FLAGS_UNIQ],[
 
         # Check for special cases where we do want to allow repeated
         # arguments (per
-        # http://www.open-mpi.org/community/lists/devel/2012/08/11362.php
+        # https://www.open-mpi.org/community/lists/devel/2012/08/11362.php
         # and
         # https://github.com/open-mpi/ompi/issues/324).
 

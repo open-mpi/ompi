@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2019      Research Organization for Information Science
@@ -24,7 +24,8 @@
 #ifndef PMIX_TYPES_H
 #define PMIX_TYPES_H
 
-#include <src/include/pmix_config.h>
+#include "src/include/pmix_config.h"
+#include "include/pmix_common.h"
 
 #ifdef HAVE_STDINT_H
 #include <stdint.h>
@@ -54,7 +55,6 @@
 #endif
 
 #include <pthread.h>
-#include <pmix_common.h>
 
 
 /*

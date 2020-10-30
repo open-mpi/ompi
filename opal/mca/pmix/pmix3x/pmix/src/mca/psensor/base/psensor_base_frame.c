@@ -2,8 +2,9 @@
 /*
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, Inc. All rights reserved.
- *
- * Copyright (c) 2017      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2017-2020 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2020      Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -12,9 +13,9 @@
  */
 
 
-#include <src/include/pmix_config.h>
+#include "src/include/pmix_config.h"
 
-#include <pmix_common.h>
+#include "include/pmix_common.h"
 
 #include <pthread.h>
 #include PMIX_EVENT_HEADER
@@ -48,6 +49,7 @@ static bool use_separate_thread = false;
 
 static int pmix_psensor_register(pmix_mca_base_register_flag_t flags)
 {
+    (void)flags;
     (void) pmix_mca_base_var_register("pmix", "psensor", "base", "use_separate_thread",
                                       "Use a separate thread for monitoring local procs",
                                       PMIX_MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
@@ -60,6 +62,7 @@ static int pmix_psensor_register(pmix_mca_base_register_flag_t flags)
 
 static int pmix_psensor_base_close(void)
 {
+    pmix_psensor_base.selected = false;
     PMIX_LIST_DESTRUCT(&pmix_psensor_base.actives);
 
     if (use_separate_thread && NULL != pmix_psensor_base.evbase) {

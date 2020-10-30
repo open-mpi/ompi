@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2016-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2016-2020 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -22,7 +22,7 @@
 #ifndef PMIX_UTIL_KEYVAL_PARSE_H
 #define PMIX_UTIL_KEYVAL_PARSE_H
 
-#include <src/include/pmix_config.h>
+#include "src/include/pmix_config.h"
 
 BEGIN_C_DECLS
 

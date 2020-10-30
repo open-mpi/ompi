@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2018      Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2020      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -11,8 +12,8 @@
 #ifndef DS12_LOCK_H
 #define DS12_LOCK_H
 
-#include <src/include/pmix_config.h>
-#include <pmix_common.h>
+#include "src/include/pmix_config.h"
+#include "include/pmix_common.h"
 
 #include "src/mca/common/dstore/dstore_common.h"
 

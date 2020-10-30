@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2011 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2016-2018 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2016-2020 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -90,8 +90,8 @@
 #ifndef PMIX_SHOW_HELP_H
 #define PMIX_SHOW_HELP_H
 
-#include <src/include/pmix_config.h>
-#include <pmix_common.h>
+#include "src/include/pmix_config.h"
+#include "include/pmix_common.h"
 
 #include <stdarg.h>
 
@@ -135,17 +135,15 @@ PMIX_EXPORT int pmix_show_help_finalize(void);
  * promotion to va_start() has undefined behavior (according to clang
  * warnings on MacOS High Sierra).
  */
-typedef int (*pmix_show_help_fn_t)(const char *filename, const char *topic,
-                                   int want_error_header, ...);
-PMIX_EXPORT extern pmix_show_help_fn_t pmix_show_help;
+PMIX_EXPORT int pmix_show_help(const char *filename, const char *topic,
+                               int want_error_header, ...);
 
 /**
  * This function does the same thing as pmix_show_help(), but accepts
  * a va_list form of varargs.
  */
-typedef int (*pmix_show_vhelp_fn_t)(const char *filename, const char *topic,
-                                    int want_error_header, va_list ap);
-PMIX_EXPORT extern pmix_show_vhelp_fn_t pmix_show_vhelp;
+PMIX_EXPORT int pmix_show_vhelp(const char *filename, const char *topic,
+                                int want_error_header, va_list ap);
 
 /**
  * This function does the same thing as pmix_show_help(), but returns

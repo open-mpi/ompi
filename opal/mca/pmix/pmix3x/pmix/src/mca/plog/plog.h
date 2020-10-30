@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2015-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2020 Intel, Inc.  All rights reserved.
  *
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -26,8 +26,8 @@
 #ifndef PMIX_PLOG_H
 #define PMIX_PLOG_H
 
-#include <src/include/pmix_config.h>
-#include "pmix_common.h"
+#include "src/include/pmix_config.h"
+#include "include/pmix_common.h"
 
 #include "src/class/pmix_list.h"
 #include "src/mca/mca.h"

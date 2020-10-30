@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2013-2018 Intel, Inc.  All rights reserved.
+# Copyright (c) 2013-2020 Intel, Inc.  All rights reserved.
 # Copyright (c) 2007-2016 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2017      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
@@ -30,6 +30,9 @@ headers += \
 sources += \
         include/pmix_globals.c
 
+nodist_headers += \
+    include/pmix_config.h
+
 if ! PMIX_EMBEDDED_MODE
 headers += \
         include/align.h \
@@ -47,6 +50,6 @@ headers += \
 endif ! PMIX_EMBEDDED_MODE
 
 if WANT_INSTALL_HEADERS
-nodist_headers += \
+nobase_nodist_pmix_HEADERS = \
     include/pmix_config.h
 endif

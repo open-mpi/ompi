@@ -11,9 +11,9 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, Inc.  All rights reserved.
- * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
- * Copyright (c) 2015-2016 Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2014-2020 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015-2020 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2019      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -24,9 +24,9 @@
 /** @file:
  *
  */
-#include <src/include/pmix_config.h>
+#include "src/include/pmix_config.h"
 
-#include <pmix_common.h>
+#include "include/pmix_common.h"
 
 #ifdef HAVE_STRING_H
 #include <string.h>
@@ -51,8 +51,9 @@ pmix_preg_module_t pmix_preg = {
     .generate_ppn = pmix_preg_base_generate_ppn,
     .parse_nodes = pmix_preg_base_parse_nodes,
     .parse_procs = pmix_preg_base_parse_procs,
-    .resolve_peers = pmix_preg_base_resolve_peers,
-    .resolve_nodes = pmix_preg_base_resolve_nodes
+    .copy = pmix_preg_base_copy,
+    .pack = pmix_preg_base_pack,
+    .unpack = pmix_preg_base_unpack
 };
 
 static pmix_status_t pmix_preg_close(void)
@@ -61,6 +62,7 @@ static pmix_status_t pmix_preg_close(void)
         return PMIX_SUCCESS;
     }
     pmix_preg_globals.initialized = false;
+    pmix_preg_globals.selected = false;
 
     PMIX_LIST_DESTRUCT(&pmix_preg_globals.actives);
 

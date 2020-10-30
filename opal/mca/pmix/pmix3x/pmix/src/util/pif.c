@@ -16,7 +16,7 @@
  *                         reserved.
  * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2016-2018 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2016-2020 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -25,7 +25,7 @@
  */
 
 #include "pmix_config.h"
-#include "pmix_common.h"
+#include "include/pmix_common.h"
 
 #include <string.h>
 #ifdef HAVE_UNISTD_H
@@ -539,14 +539,14 @@ static int parse_ipv4_dots(const char *addr, uint32_t* net, int* dots)
         }
         /* did we read something sensible? */
         if( n[i] > 255 ) {
-            return PMIX_ERR_NETWORK_NOT_PARSEABLE;
+            return PMIX_ERR_FABRIC_NOT_PARSEABLE;
         }
         /* skip all the . */
         for( start = end; '\0' != *start; start++ )
             if( '.' != *start ) break;
     }
     *dots = i;
-    *net = PMIX_PIF_ASSEMBLE_NETWORK(n[0], n[1], n[2], n[3]);
+    *net = PMIX_PIF_ASSEMBLE_FABRIC(n[0], n[1], n[2], n[3]);
     return PMIX_SUCCESS;
 }
 
@@ -575,7 +575,7 @@ pmix_iftupletoaddr(const char *inaddr, uint32_t *net, uint32_t *mask)
                 pval = strtol(ptr, NULL, 10);
                 if ((pval > 31) || (pval < 1)) {
                     pmix_output(0, "pmix_iftupletoaddr: unknown mask");
-                    return PMIX_ERR_NETWORK_NOT_PARSEABLE;
+                    return PMIX_ERR_FABRIC_NOT_PARSEABLE;
                 }
                 *mask = 0xFFFFFFFF << (32 - pval);
             }
@@ -600,7 +600,7 @@ pmix_iftupletoaddr(const char *inaddr, uint32_t *net, uint32_t *mask)
                 *mask = 0xFF000000;
             } else {
                 pmix_output(0, "pmix_iftupletoaddr: unknown mask");
-                return PMIX_ERR_NETWORK_NOT_PARSEABLE;
+                return PMIX_ERR_FABRIC_NOT_PARSEABLE;
             }
         }
     }

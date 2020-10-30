@@ -2,7 +2,7 @@
 #
 # Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2013      Los Alamos National Security, LLC.  All rights reserved.
-# Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
+# Copyright (c) 2013-2020 Intel, Inc.  All rights reserved.
 # Copyright (c) 2017-2019 Research Organization for Information Science
 #                         and Technology (RIST).  All rights reserved.
 # $COPYRIGHT$
@@ -15,7 +15,7 @@
 # MCA_libev_CONFIG([action-if-found], [action-if-not-found])
 # --------------------------------------------------------------------
 AC_DEFUN([PMIX_LIBEV_CONFIG],[
-    PMIX_VAR_SCOPE_PUSH([pmix_libev_dir pmix_libev_libdir pmix_libev_standard_header_location pmix_libev_standard_lib_location])
+    PMIX_VAR_SCOPE_PUSH([pmix_libev_dir pmix_libev_libdir pmix_libev_standard_header_location pmix_libev_standard_lib_location pmix_check_libev_save_CPPFLAGS pmix_check_libev_save_LDFLAGS pmix_check_libev_save_LIBS])
 
     AC_ARG_WITH([libev],
                 [AC_HELP_STRING([--with-libev=DIR],
@@ -61,7 +61,7 @@ AC_DEFUN([PMIX_LIBEV_CONFIG],[
            PMIX_CHECK_PACKAGE([pmix_libev],
                               [event.h],
                               [ev],
-                              [event_base_new],
+                              [ev_async_send],
                               [],
                               [$pmix_libev_dir],
                               [$pmix_libev_libdir],
@@ -72,12 +72,12 @@ AC_DEFUN([PMIX_LIBEV_CONFIG],[
            LIBS="$pmix_check_libev_save_LIBS"])
 
     AS_IF([test $pmix_libev_support -eq 1],
-          [LIBS="$LIBS $pmix_libev_LIBS"
+          [PMIX_FLAGS_APPEND_UNIQ(PMIX_FINAL_LIBS, $pmix_libev_LIBS)
 
            AS_IF([test "$pmix_libev_standard_header_location" != "yes"],
-                 [CPPFLAGS="$CPPFLAGS $pmix_libev_CPPFLAGS"])
+                 [PMIX_FLAGS_APPEND_UNIQ(PMIX_FINAL_CPPFLAGS, $pmix_libev_CPPFLAGS)])
            AS_IF([test "$pmix_libev_standard_lib_location" != "yes"],
-                 [LDFLAGS="$LDFLAGS $pmix_libev_LDFLAGS"])])
+                 [PMIX_FLAGS_APPEND_UNIQ(PMIX_FINAL_LDFLAGS, $pmix_libev_LDFLAGS)])])
 
     AC_MSG_CHECKING([will libev support be built])
     if test $pmix_libev_support -eq 1; then
@@ -88,6 +88,10 @@ AC_DEFUN([PMIX_LIBEV_CONFIG],[
         PMIX_SUMMARY_ADD([[External Packages]],[[libev]],[libev],[$pmix_libev_dir])
     else
         AC_MSG_RESULT([no])
+        # if they asked us to use it, then this is an error
+        AS_IF([test -n "$with_libev" && test "$with_libev" != "no"],
+              [AC_MSG_WARN([LIBEV SUPPORT REQUESTED AND NOT FOUND])
+               AC_MSG_ERROR([CANNOT CONTINUE])])
     fi
 
     AC_DEFINE_UNQUOTED([PMIX_HAVE_LIBEV], [$pmix_libev_support], [Whether we are building against libev])

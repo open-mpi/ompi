@@ -70,12 +70,12 @@ my @paths = split(/:/, $ENV{PATH});
 foreach my $p (@paths) {
     my $fullpath = $p . "/" . "gtimeout";
     if ((-e $fullpath) && (-f $fullpath)) {
-        $timeout_cmd = $fullpath . " --preserve-status -k 35 30 ";
+        $timeout_cmd = $fullpath . " --preserve-status -k 500 450 ";
         last;
     } else {
         my $fullpath = $p . "/" . "timeout";
         if ((-e $fullpath) && (-f $fullpath)) {
-            $timeout_cmd = $fullpath . " --preserve-status -k 35 30 ";
+            $timeout_cmd = $fullpath . " --preserve-status -k 500 450 ";
             last;
         }
     }

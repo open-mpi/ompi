@@ -11,10 +11,12 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, Inc.  All rights reserved.
- * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2014-2020 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015-2020 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2018      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2019      Mellanox Technologies, Inc.
+ *                         All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -25,7 +27,7 @@
 #ifndef PMIX_GDS_BASE_H_
 #define PMIX_GDS_BASE_H_
 
-#include <src/include/pmix_config.h>
+#include "src/include/pmix_config.h"
 
 
 #ifdef HAVE_SYS_TIME_H
@@ -73,15 +75,34 @@ PMIX_CLASS_DECLARATION(pmix_gds_base_active_module_t);
 struct pmix_gds_globals_t {
   pmix_list_t actives;
   bool initialized;
+  bool selected;
   char *all_mods;
 };
+
+typedef enum {
+    PMIX_MODEX_KEY_INVALID = -1,
+    PMIX_MODEX_KEY_NATIVE_FMT,
+    PMIX_MODEX_KEY_KEYMAP_FMT,
+    PMIX_MODEX_KEY_MAX
+} pmix_gds_modex_key_fmt_t;
+
+/* define a modex blob info */
+typedef uint8_t pmix_gds_modex_blob_info_t;
+
+#define PMIX_GDS_COLLECT_BIT        0x0001
+#define PMIX_GDS_KEYMAP_BIT         0x0002
+
+#define PMIX_GDS_KEYMAP_IS_SET(byte)        (PMIX_GDS_KEYMAP_BIT & (byte))
+#define PMIX_GDS_COLLECT_IS_SET(byte)       (PMIX_GDS_COLLECT_BIT & (byte))
+
 typedef struct pmix_gds_globals_t pmix_gds_globals_t;
 
-typedef void * pmix_gds_base_store_modex_cbdata_t;
-typedef pmix_status_t (*pmix_gds_base_store_modex_cb_fn_t)(pmix_gds_base_store_modex_cbdata_t cbdata,
-                                                           struct pmix_namespace_t *nspace,
-                                                           pmix_list_t *cbs,
-                                                           pmix_byte_object_t *bo);
+typedef void * pmix_gds_base_ctx_t;
+typedef pmix_status_t (*pmix_gds_base_store_modex_cb_fn_t)(pmix_gds_base_ctx_t ctx,
+                                                           pmix_proc_t *proc,
+                                                           pmix_gds_modex_key_fmt_t key_fmt,
+                                                           char **kmap,
+                                                           pmix_buffer_t *pbkt);
 
 PMIX_EXPORT extern pmix_gds_globals_t pmix_gds_globals;
 
@@ -106,11 +127,20 @@ PMIX_EXPORT pmix_status_t pmix_gds_base_setup_fork(const pmix_proc_t *proc,
                                                    char ***env);
 
 PMIX_EXPORT pmix_status_t pmix_gds_base_store_modex(struct pmix_namespace_t *nspace,
-                                                           pmix_list_t *cbs,
-                                                           pmix_buffer_t *xfer,
-                                                           pmix_gds_base_store_modex_cb_fn_t cb_fn,
-                                                           pmix_gds_base_store_modex_cbdata_t cbdata);
+                                                    pmix_buffer_t * buff,
+                                                    pmix_gds_base_ctx_t ctx,
+                                                    pmix_gds_base_store_modex_cb_fn_t cb_fn,
+                                                    void *cbdata);
 
+PMIX_EXPORT
+pmix_status_t pmix_gds_base_modex_pack_kval(pmix_gds_modex_key_fmt_t key_fmt,
+                                            pmix_buffer_t *buf, char ***kmap,
+                                            pmix_kval_t *kv);
+
+PMIX_EXPORT
+pmix_status_t pmix_gds_base_modex_unpack_kval(pmix_gds_modex_key_fmt_t key_fmt,
+                                              pmix_buffer_t *buf, char **kmap,
+                                              pmix_kval_t *kv);
 END_C_DECLS
 
 #endif

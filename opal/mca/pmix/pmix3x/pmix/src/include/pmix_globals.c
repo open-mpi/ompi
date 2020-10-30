@@ -6,6 +6,8 @@
  * Copyright (c) 2014-2015 Artem Y. Polyakov <artpol84@gmail.com>.
  *                         All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2019      Mellanox Technologies, Inc.
+ *                         All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -15,11 +17,12 @@
 
 /* THIS FILE IS INCLUDED SOLELY TO INSTANTIATE AND INIT/FINALIZE THE GLOBAL CLASSES */
 
-#include <src/include/pmix_config.h>
+#include "src/include/pmix_config.h"
 
-#include <src/include/types.h>
-#include <src/include/pmix_stdint.h>
-#include <src/include/pmix_socket_errno.h>
+#include "include/pmix_common.h"
+#include "src/include/types.h"
+#include "src/include/pmix_stdint.h"
+#include "src/include/pmix_socket_errno.h"
 
 #include "src/include/pmix_globals.h"
 
@@ -42,7 +45,7 @@
 #include <dirent.h>
 #endif  /* HAVE_DIRENT_H */
 
-#include <pmix_common.h>
+#include "include/pmix_common.h"
 
 #include "src/mca/bfrops/bfrops_types.h"
 #include "src/class/pmix_hash_table.h"
@@ -232,7 +235,8 @@ PMIX_EXPORT PMIX_CLASS_INSTANCE(pmix_peer_t,
 static void iofreqcon(pmix_iof_req_t *p)
 {
     p->requestor = NULL;
-    p->refid = 0;
+    p->local_id = 0;
+    p->remote_id = 0;
     p->procs = NULL;
     p->nprocs = 0;
     p->channels = PMIX_FWD_NO_CHANNELS;
@@ -335,6 +339,26 @@ PMIX_EXPORT PMIX_CLASS_INSTANCE(pmix_info_caddy_t,
                                 pmix_list_item_t,
                                 NULL, NULL);
 
+static void ifcon(pmix_infolist_t *p)
+{
+    PMIX_INFO_CONSTRUCT(&p->info);
+}
+static void ifdes(pmix_infolist_t *p)
+{
+    PMIX_INFO_DESTRUCT(&p->info);
+}
+PMIX_EXPORT PMIX_CLASS_INSTANCE(pmix_infolist_t,
+                                pmix_list_item_t,
+                                ifcon, ifdes);
+
+static void qlcon(pmix_querylist_t *p)
+{
+    PMIX_QUERY_CONSTRUCT(&p->query);
+}
+PMIX_EXPORT PMIX_CLASS_INSTANCE(pmix_querylist_t,
+                                pmix_list_item_t,
+                                qlcon, NULL);
+
 static void qcon(pmix_query_caddy_t *p)
 {
     PMIX_CONSTRUCT_LOCK(&p->lock);
@@ -345,13 +369,15 @@ static void qcon(pmix_query_caddy_t *p)
     p->info = NULL;
     p->ninfo = 0;
     PMIX_BYTE_OBJECT_CONSTRUCT(&p->bo);
+    PMIX_CONSTRUCT(&p->results, pmix_list_t);
+    p->nreplies = 0;
+    p->nrequests = 0;
     p->cbfunc = NULL;
     p->valcbfunc = NULL;
     p->cbdata = NULL;
     p->relcbfunc = NULL;
     p->credcbfunc = NULL;
     p->validcbfunc = NULL;
-    PMIX_CONSTRUCT(&p->results, pmix_list_t);
 }
 static void qdes(pmix_query_caddy_t *p)
 {
@@ -360,11 +386,51 @@ static void qdes(pmix_query_caddy_t *p)
     PMIX_PROC_FREE(p->targets, p->ntargets);
     PMIX_INFO_FREE(p->info, p->ninfo);
     PMIX_LIST_DESTRUCT(&p->results);
-    PMIX_QUERY_FREE(p->queries, p->nqueries);
 }
 PMIX_EXPORT PMIX_CLASS_INSTANCE(pmix_query_caddy_t,
                                 pmix_object_t,
                                 qcon, qdes);
+
+static void ncon(pmix_notify_caddy_t *p)
+{
+    PMIX_CONSTRUCT_LOCK(&p->lock);
+#if defined(__linux__) && PMIX_HAVE_CLOCK_GETTIME
+    struct timespec tp;
+    (void) clock_gettime(CLOCK_MONOTONIC, &tp);
+    p->ts = tp.tv_sec;
+#else
+    /* Fall back to gettimeofday() if we have nothing else */
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    p->ts = tv.tv_sec;
+#endif
+    p->room = -1;
+    memset(p->source.nspace, 0, PMIX_MAX_NSLEN+1);
+    p->source.rank = PMIX_RANK_UNDEF;
+    p->range = PMIX_RANGE_UNDEF;
+    p->targets = NULL;
+    p->ntargets = 0;
+    p->nleft = SIZE_MAX;
+    p->affected = NULL;
+    p->naffected = 0;
+    p->nondefault = false;
+    p->info = NULL;
+    p->ninfo = 0;
+}
+static void ndes(pmix_notify_caddy_t *p)
+{
+    PMIX_DESTRUCT_LOCK(&p->lock);
+    if (NULL != p->info) {
+        PMIX_INFO_FREE(p->info, p->ninfo);
+    }
+    PMIX_PROC_FREE(p->affected, p->naffected);
+    if (NULL != p->targets) {
+        free(p->targets);
+    }
+}
+PMIX_CLASS_INSTANCE(pmix_notify_caddy_t,
+                    pmix_object_t,
+                    ncon, ndes);
 
 void pmix_execute_epilog(pmix_epilog_t *epi)
 {
@@ -382,6 +448,7 @@ void pmix_execute_epilog(pmix_epilog_t *epi)
          * some minimum level of protection */
         tmp = pmix_argv_split(cf->path, ',');
         for (n=0; NULL != tmp[n]; n++) {
+            /* coverity[toctou] */
             rc = stat(tmp[n], &statbuf);
             if (0 != rc) {
                 pmix_output_verbose(10, pmix_globals.debug_output,
@@ -415,6 +482,7 @@ void pmix_execute_epilog(pmix_epilog_t *epi)
          * some minimum level of protection */
         tmp = pmix_argv_split(cd->path, ',');
         for (n=0; NULL != tmp[n]; n++) {
+            /* coverity[toctou] */
             rc = stat(tmp[n], &statbuf);
             if (0 != rc) {
                 pmix_output_verbose(10, pmix_globals.debug_output,
@@ -500,6 +568,7 @@ static void dirpath_destroy(char *path, pmix_cleanup_dir_t *cd, pmix_epilog_t *e
         /* Check to see if it is a directory */
         is_dir = false;
 
+        /* coverity[toctou] */
         rc = stat(filenm, &buf);
         if (0 > rc) {
             /* Handle a race condition. filenm might have been deleted by an

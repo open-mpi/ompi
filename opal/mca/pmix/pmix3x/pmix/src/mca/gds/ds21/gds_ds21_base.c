@@ -1,7 +1,7 @@
 /*
- * Copyright (c) 2015-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2016-2018 IBM Corporation.  All rights reserved.
- * Copyright (c) 2016-2018 Mellanox Technologies, Inc.
+ * Copyright (c) 2016-2020 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2018      Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
@@ -13,8 +13,8 @@
  * $HEADER$
  */
 
-#include <src/include/pmix_config.h>
-#include <pmix_common.h>
+#include "src/include/pmix_config.h"
+#include "include/pmix_common.h"
 #include "src/include/pmix_globals.h"
 #include "src/util/error.h"
 #include "src/mca/gds/base/base.h"
@@ -107,10 +107,10 @@ static pmix_status_t ds21_store(const pmix_proc_t *proc,
  * always contains data solely from remote procs, and we
  * shall store it accordingly */
 static pmix_status_t ds21_store_modex(struct pmix_namespace_t *nspace,
-                                      pmix_list_t *cbs,
-                                      pmix_buffer_t *buf)
+                                      pmix_buffer_t *buf,
+                                      void *cbdata)
 {
-    return pmix_common_dstor_store_modex(ds21_ctx, nspace, cbs, buf);
+    return pmix_common_dstor_store_modex(ds21_ctx, nspace, buf, cbdata);
 }
 
 static pmix_status_t ds21_fetch(const pmix_proc_t *proc,
@@ -145,11 +145,10 @@ static pmix_status_t ds21_setup_fork(const pmix_proc_t *peer, char ***env)
     return rc;
 }
 
-static pmix_status_t ds21_add_nspace(const char *nspace,
-                                pmix_info_t info[],
-                                size_t ninfo)
+static pmix_status_t ds21_add_nspace(const char *nspace, uint32_t local_size,
+                                     pmix_info_t info[], size_t ninfo)
 {
-    return pmix_common_dstor_add_nspace(ds21_ctx, nspace, info, ninfo);
+    return pmix_common_dstor_add_nspace(ds21_ctx, nspace, local_size, info, ninfo);
 }
 
 static pmix_status_t ds21_del_nspace(const char* nspace)

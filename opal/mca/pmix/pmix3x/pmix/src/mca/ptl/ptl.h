@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, Inc. All rights reserved.
- * Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      Mellanox Technologies, Inc.
@@ -31,9 +31,9 @@
 #ifndef PMIX_PTL_H_
 #define PMIX_PTL_H_
 
-#include <src/include/pmix_config.h>
+#include "src/include/pmix_config.h"
 
-#include <src/include/types.h>
+#include "src/include/types.h"
 
 #include "src/mca/mca.h"
 #include "src/mca/base/pmix_mca_base_var.h"
@@ -127,6 +127,7 @@ typedef pmix_status_t (*pmix_ptl_connect_to_peer_fn_t)(struct pmix_peer_t *peer,
                                                        pmix_info_t info[], size_t ninfo);
 
 
+
 /**
  * Base structure for a PTL module
  */
@@ -167,8 +168,8 @@ typedef struct pmix_ptl_module_t pmix_ptl_module_t;
 #define PMIX_PTL_CANCEL(r, p, t)                        \
     (r) = (p)->nptr->compat.ptl->cancel((struct pmix_peer_t*)(p), t)
 
-extern pmix_status_t pmix_ptl_base_connect_to_peer(struct pmix_peer_t* peer,
-                                                   pmix_info_t info[], size_t ninfo);
+PMIX_EXPORT extern pmix_status_t pmix_ptl_base_connect_to_peer(struct pmix_peer_t* peer,
+                                                               pmix_info_t info[], size_t ninfo);
 
 
 /****    COMPONENT STRUCTURE DEFINITION    ****/

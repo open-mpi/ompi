@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, Inc. All rights reserved.
- * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2020 Intel, Inc.  All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -16,7 +16,7 @@
 #ifndef PMIX_PSENSOR_H_
 #define PMIX_PSENSOR_H_
 
-#include <src/include/pmix_config.h>
+#include "src/include/pmix_config.h"
 
 #include "src/class/pmix_list.h"
 #include "src/mca/mca.h"

@@ -1,6 +1,7 @@
 /*
- * Copyright (c) 2018      Mellanox Technologies, Inc.
+ * Copyright (c) 2018-2020 Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2018-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2018      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -13,8 +14,8 @@
 #define PMIX_GDS_DS_BASE_H_
 
 #include <pthread.h>
-#include <src/include/pmix_config.h>
-#include <pmix_common.h>
+#include "src/include/pmix_config.h"
+#include "include/pmix_common.h"
 
 #include "src/include/pmix_globals.h"
 #include "src/class/pmix_list.h"
@@ -49,7 +50,7 @@ PMIX_EXPORT pmix_common_dstore_ctx_t *pmix_common_dstor_init(const char *ds_name
                                                              pmix_common_dstore_file_cbs_t *file_cb);
 PMIX_EXPORT void pmix_common_dstor_finalize(pmix_common_dstore_ctx_t *ds_ctx);
 PMIX_EXPORT pmix_status_t pmix_common_dstor_add_nspace(pmix_common_dstore_ctx_t *ds_ctx,
-                                const char *nspace, pmix_info_t info[], size_t ninfo);
+                                const char *nspace, uint32_t local_size, pmix_info_t info[], size_t ninfo);
 PMIX_EXPORT pmix_status_t pmix_common_dstor_del_nspace(pmix_common_dstore_ctx_t *ds_ctx, const char* nspace);
 PMIX_EXPORT pmix_status_t pmix_common_dstor_setup_fork(pmix_common_dstore_ctx_t *ds_ctx, const char *base_path_env,
                                            const pmix_proc_t *peer, char ***env);
@@ -74,6 +75,6 @@ PMIX_EXPORT pmix_status_t pmix_common_dstor_fetch(pmix_common_dstore_ctx_t *ds_c
                                 pmix_list_t *kvs);
 PMIX_EXPORT pmix_status_t pmix_common_dstor_store_modex(pmix_common_dstore_ctx_t *ds_ctx,
                                 struct pmix_namespace_t *nspace,
-                                pmix_list_t *cbs,
-                                pmix_buffer_t *buff);
+                                pmix_buffer_t *buff,
+                                void *cbdata);
 #endif

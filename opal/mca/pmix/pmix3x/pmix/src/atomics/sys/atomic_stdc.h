@@ -215,6 +215,7 @@ typedef atomic_flag pmix_atomic_lock_t;
  */
 static inline void pmix_atomic_lock_init (pmix_atomic_lock_t *lock, bool value)
 {
+    (void)value;
     atomic_flag_clear (lock);
 }
 

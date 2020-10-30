@@ -15,6 +15,7 @@
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2019      Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2020      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -25,9 +26,8 @@
 #ifndef PMIX_GLOBALS_H
 #define PMIX_GLOBALS_H
 
-#include <src/include/pmix_config.h>
-
-#include <src/include/types.h>
+#include "src/include/pmix_config.h"
+#include "src/include/types.h"
 
 #include <unistd.h>
 #ifdef HAVE_SYS_TYPES_H
@@ -35,8 +35,9 @@
 #endif
 #include PMIX_EVENT_HEADER
 
-#include <pmix.h>
-#include <pmix_common.h>
+#include "include/pmix.h"
+#include "include/pmix_common.h"
+#include "include/pmix_tool.h"
 
 #include "src/class/pmix_hash_table.h"
 #include "src/class/pmix_list.h"
@@ -86,31 +87,36 @@ PMIX_CLASS_DECLARATION(pmix_namelist_t);
 typedef uint8_t pmix_cmd_t;
 
 /* define some commands */
-#define PMIX_REQ_CMD                 0
-#define PMIX_ABORT_CMD               1
-#define PMIX_COMMIT_CMD              2
-#define PMIX_FENCENB_CMD             3
-#define PMIX_GETNB_CMD               4
-#define PMIX_FINALIZE_CMD            5
-#define PMIX_PUBLISHNB_CMD           6
-#define PMIX_LOOKUPNB_CMD            7
-#define PMIX_UNPUBLISHNB_CMD         8
-#define PMIX_SPAWNNB_CMD             9
-#define PMIX_CONNECTNB_CMD          10
-#define PMIX_DISCONNECTNB_CMD       11
-#define PMIX_NOTIFY_CMD             12
-#define PMIX_REGEVENTS_CMD          13
-#define PMIX_DEREGEVENTS_CMD        14
-#define PMIX_QUERY_CMD              15
-#define PMIX_LOG_CMD                16
-#define PMIX_ALLOC_CMD              17
-#define PMIX_JOB_CONTROL_CMD        18
-#define PMIX_MONITOR_CMD            19
-#define PMIX_GET_CREDENTIAL_CMD     20
-#define PMIX_VALIDATE_CRED_CMD      21
-#define PMIX_IOF_PULL_CMD           22
-#define PMIX_IOF_PUSH_CMD           23
-#define PMIX_IOF_DEREG_CMD          29
+#define PMIX_REQ_CMD                         0
+#define PMIX_ABORT_CMD                       1
+#define PMIX_COMMIT_CMD                      2
+#define PMIX_FENCENB_CMD                     3
+#define PMIX_GETNB_CMD                       4
+#define PMIX_FINALIZE_CMD                    5
+#define PMIX_PUBLISHNB_CMD                   6
+#define PMIX_LOOKUPNB_CMD                    7
+#define PMIX_UNPUBLISHNB_CMD                 8
+#define PMIX_SPAWNNB_CMD                     9
+#define PMIX_CONNECTNB_CMD                  10
+#define PMIX_DISCONNECTNB_CMD               11
+#define PMIX_NOTIFY_CMD                     12
+#define PMIX_REGEVENTS_CMD                  13
+#define PMIX_DEREGEVENTS_CMD                14
+#define PMIX_QUERY_CMD                      15
+#define PMIX_LOG_CMD                        16
+#define PMIX_ALLOC_CMD                      17
+#define PMIX_JOB_CONTROL_CMD                18
+#define PMIX_MONITOR_CMD                    19
+#define PMIX_GET_CREDENTIAL_CMD             20
+#define PMIX_VALIDATE_CRED_CMD              21
+#define PMIX_IOF_PULL_CMD                   22
+#define PMIX_IOF_PUSH_CMD                   23
+#define PMIX_GROUP_CONSTRUCT_CMD            24
+#define PMIX_GROUP_JOIN_CMD                 25
+#define PMIX_GROUP_INVITE_CMD               26
+#define PMIX_GROUP_LEAVE_CMD                27
+#define PMIX_GROUP_DESTRUCT_CMD             28
+#define PMIX_IOF_DEREG_CMD                  29
 
 /* provide a "pretty-print" function for cmds */
 const char* pmix_command_string(pmix_cmd_t cmd);
@@ -211,13 +217,25 @@ PMIX_CLASS_DECLARATION(pmix_rank_info_t);
 
 
 /* define a very simple caddy for dealing with pmix_info_t
- * objects when transferring portions of arrays */
+ * and pmix_query_t objects when transferring portions of arrays */
 typedef struct {
     pmix_list_item_t super;
     pmix_info_t *info;
     size_t ninfo;
 } pmix_info_caddy_t;
 PMIX_CLASS_DECLARATION(pmix_info_caddy_t);
+
+typedef struct {
+    pmix_list_item_t super;
+    pmix_info_t info;
+} pmix_infolist_t;
+PMIX_CLASS_DECLARATION(pmix_infolist_t);
+
+typedef struct {
+    pmix_list_item_t super;
+    pmix_query_t query;
+} pmix_querylist_t;
+PMIX_CLASS_DECLARATION(pmix_querylist_t);
 
 
 /* object for tracking peers - each peer can have multiple
@@ -253,7 +271,8 @@ PMIX_CLASS_DECLARATION(pmix_peer_t);
 typedef struct {
     pmix_object_t super;
     pmix_peer_t *requestor;
-    size_t refid;
+    size_t local_id;
+    size_t remote_id;
     pmix_proc_t *procs;
     size_t nprocs;
     pmix_iof_channel_t channels;
@@ -274,8 +293,10 @@ typedef struct {
     size_t ntargets;
     pmix_info_t *info;
     size_t ninfo;
-    pmix_byte_object_t bo;
     pmix_list_t results;
+    size_t nreplies;
+    size_t nrequests;
+    pmix_byte_object_t bo;
     pmix_info_cbfunc_t cbfunc;
     pmix_value_cbfunc_t valcbfunc;
     pmix_release_cbfunc_t relcbfunc;
@@ -411,6 +432,17 @@ PMIX_CLASS_DECLARATION(pmix_cb_t);
     pmix_event_active(&((r)->ev), EV_WRITE, 1);             \
 } while (0)
 
+#define PMIX_TIMED_THREADSHIFT(r, c, t)                         \
+    do {                                                        \
+        struct timeval _tv = {0, 0};                            \
+        _tv.tv_sec = (t);                                       \
+        pmix_event_evtimer_set(pmix_globals.evbase,             \
+                               &((r)->ev),                      \
+                               (c), (r));                       \
+        PMIX_POST_OBJECT((r));                                  \
+        pmix_event_evtimer_add(&((r)->ev), &_tv);               \
+    } while (0)
+
 
 typedef struct {
     pmix_object_t super;
@@ -449,7 +481,9 @@ typedef struct {
      * handlers can look at it */
     pmix_info_t *info;
     size_t ninfo;
+    /* allow for a buffer to be carried across internal processing */
     pmix_buffer_t *buf;
+    /* the final callback to be executed upon completion of the event */
     pmix_op_cbfunc_t cbfunc;
     void *cbdata;
 } pmix_notify_caddy_t;
@@ -467,6 +501,8 @@ typedef struct {
     uid_t uid;                          // my effective uid
     gid_t gid;                          // my effective gid
     char *hostname;                     // my hostname
+    uint32_t appnum;                    // my appnum
+    pid_t pid;                          // my local pid
     uint32_t nodeid;                    // my nodeid, if given
     int pindex;
     pmix_event_base_t *evbase;
@@ -489,8 +525,9 @@ typedef struct {
      * look them up */
     pmix_gds_base_module_t *mygds;
     /* IOF controls */
-    bool tag_output;
+    bool pushstdin;
     pmix_list_t stdin_targets;          // list of pmix_namelist_t
+    bool tag_output;
     bool xml_output;
     bool timestamp_output;
     size_t output_limit;
@@ -500,6 +537,8 @@ typedef struct {
 /* provide access to a function to cleanup epilogs */
 PMIX_EXPORT void pmix_execute_epilog(pmix_epilog_t *ep);
 
+PMIX_EXPORT pmix_status_t pmix_notify_event_cache(pmix_notify_caddy_t *cd);
+
 PMIX_EXPORT extern pmix_globals_t pmix_globals;
 PMIX_EXPORT extern pmix_lock_t pmix_global_lock;
 
@@ -508,6 +547,8 @@ static inline bool pmix_check_node_info(const char* key)
     char *keys[] = {
         PMIX_LOCAL_PEERS,
         PMIX_LOCAL_SIZE,
+        PMIX_NODE_SIZE,
+        PMIX_LOCALLDR,
         NULL
     };
     size_t n;
@@ -524,6 +565,8 @@ static inline bool pmix_check_app_info(const char* key)
 {
     char *keys[] = {
         PMIX_APP_SIZE,
+        PMIX_APPLDR,
+        PMIX_WDIR,
         NULL
     };
     size_t n;
@@ -535,7 +578,6 @@ static inline bool pmix_check_app_info(const char* key)
     }
     return false;
 }
-
 
 END_C_DECLS
 

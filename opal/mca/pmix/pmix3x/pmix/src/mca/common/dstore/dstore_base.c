@@ -1,7 +1,7 @@
 /*
- * Copyright (c) 2015-2019 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2016-2018 IBM Corporation.  All rights reserved.
- * Copyright (c) 2016-2019 Mellanox Technologies, Inc.
+ * Copyright (c) 2016-2020 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2018-2019 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
@@ -13,7 +13,7 @@
  * $HEADER$
  */
 
-#include <src/include/pmix_config.h>
+#include "src/include/pmix_config.h"
 
 #include <stdio.h>
 #include <sys/types.h>
@@ -35,15 +35,16 @@
 #endif
 #include <time.h>
 
-#include <pmix_common.h>
+#include "include/pmix_common.h"
 
 #include "src/include/pmix_globals.h"
 #include "src/class/pmix_list.h"
 #include "src/client/pmix_client_ops.h"
 #include "src/server/pmix_server_ops.h"
 #include "src/util/argv.h"
-#include "src/util/compress.h"
+#include "src/mca/pcompress/pcompress.h"
 #include "src/util/error.h"
+#include "src/util/name_fns.h"
 #include "src/util/output.h"
 #include "src/util/pmix_environ.h"
 #include "src/util/hash.h"
@@ -108,9 +109,10 @@ static inline pmix_peer_t * _client_peer(pmix_common_dstore_ctx_t *ds_ctx);
 static inline int _my_client(const char *nspace, pmix_rank_t rank);
 
 static pmix_status_t _dstor_store_modex_cb(pmix_common_dstore_ctx_t *ds_ctx,
-                                                struct pmix_namespace_t *nspace,
-                                                pmix_list_t *cbs,
-                                                pmix_byte_object_t *bo);
+                                           pmix_proc_t *proc,
+                                           pmix_gds_modex_key_fmt_t key_fmt,
+                                           char **kmap,
+                                           pmix_buffer_t *pbkt);
 
 static pmix_status_t _dstore_store_nolock(pmix_common_dstore_ctx_t *ds_ctx,
                                    ns_map_data_t *ns_map,
@@ -207,6 +209,7 @@ static inline int _esh_dir_del(const char *path)
 
     while (NULL != (d_ptr = readdir(dir))) {
         snprintf(name, PMIX_PATH_MAX, "%s/%s", path, d_ptr->d_name);
+        /* coverity[toctou] */
         if ( 0 > lstat(name, &st) ){
             /* No fatal error here - just log this event
              * we will hit the error later at rmdir. Keep trying ...
@@ -1597,10 +1600,12 @@ pmix_common_dstore_ctx_t *pmix_common_dstor_init(const char *ds_name, pmix_info_
         goto err_exit;
     }
 
-    rc = pmix_pshmem.init();
-    if (PMIX_SUCCESS != rc) {
-        PMIX_ERROR_LOG(rc);
-        goto err_exit;
+    if (NULL != pmix_pshmem.init) {
+        rc = pmix_pshmem.init();
+        if (PMIX_SUCCESS != rc) {
+            PMIX_ERROR_LOG(rc);
+            goto err_exit;
+        }
     }
 
     _set_constants_from_env(ds_ctx);
@@ -1775,10 +1780,12 @@ PMIX_EXPORT void pmix_common_dstor_finalize(pmix_common_dstore_ctx_t *ds_ctx)
     _esh_ns_map_cleanup(ds_ctx);
     _esh_ns_track_cleanup(ds_ctx);
 
-    pmix_pshmem.finalize();
+    if (NULL != pmix_pshmem.finalize) {
+        pmix_pshmem.finalize();
+    }
 
     if (NULL != ds_ctx->base_path){
-        if (PMIX_PEER_IS_SERVER(pmix_globals.mypeer)) {
+        if(PMIX_PEER_IS_SERVER(pmix_globals.mypeer)) {
             /* coverity[toctou] */
             if (lstat(ds_ctx->base_path, &st) >= 0){
                 if (PMIX_SUCCESS != (rc = _esh_dir_del(ds_ctx->base_path))) {
@@ -1962,7 +1969,7 @@ static pmix_status_t _dstore_fetch(pmix_common_dstore_ctx_t *ds_ctx,
     bool all_ranks_found = true;
     bool key_found = false;
     pmix_info_t *info = NULL;
-    size_t ninfo;
+    size_t ninfo = 0;
     size_t keyhash = 0;
     bool lock_is_set = false;
 
@@ -2253,7 +2260,7 @@ done:
 
     if( rc != PMIX_SUCCESS ){
         if ((NULL == key) && (kval_cnt > 0)) {
-            if( NULL != info ) {
+            if( NULL != info && 0 < ninfo ) {
                 PMIX_INFO_FREE(info, ninfo);
             }
             if (NULL != kval) {
@@ -2385,7 +2392,8 @@ PMIX_EXPORT pmix_status_t pmix_common_dstor_setup_fork(pmix_common_dstore_ctx_t 
 }
 
 PMIX_EXPORT pmix_status_t pmix_common_dstor_add_nspace(pmix_common_dstore_ctx_t *ds_ctx,
-                                const char *nspace, pmix_info_t info[], size_t ninfo)
+                                                       const char *nspace, uint32_t local_size,
+                                                       pmix_info_t info[], size_t ninfo)
 {
     pmix_status_t rc = PMIX_SUCCESS;
     size_t tbl_idx=0;
@@ -2393,21 +2401,17 @@ PMIX_EXPORT pmix_status_t pmix_common_dstor_add_nspace(pmix_common_dstore_ctx_t 
     char setjobuid = ds_ctx->setjobuid;
     size_t n;
     ns_map_data_t *ns_map = NULL;
-    uint32_t local_size = 0;
 
     pmix_output_verbose(2, pmix_gds_base_framework.framework_output,
-                        "gds: dstore add nspace");
+                        "gds: dstore add nspace %s, local_size %d",
+                        nspace, local_size);
 
     if (NULL != info) {
         for (n=0; n < ninfo; n++) {
             if (0 == strcmp(PMIX_USERID, info[n].key)) {
                 jobuid = info[n].value.data.uint32;
                 setjobuid = 1;
-                continue;
-            }
-            if (0 == strcmp(PMIX_LOCAL_SIZE, info[n].key)) {
-                local_size = info[n].value.data.uint32;
-                continue;
+                break;
             }
         }
     }
@@ -2461,7 +2465,9 @@ PMIX_EXPORT pmix_status_t pmix_common_dstor_del_nspace(pmix_common_dstore_ctx_t 
     int in_use = 0;
     ns_map_data_t *ns_map_data = NULL;
     ns_map_t *ns_map;
+#if PMIX_ENABLE_DEBUG
     session_t *session_tbl = NULL;
+#endif
     ns_track_elem_t *trk = NULL;
     int dstor_track_idx;
     size_t session_tbl_idx;
@@ -2511,10 +2517,12 @@ PMIX_EXPORT pmix_status_t pmix_common_dstor_del_nspace(pmix_common_dstore_ctx_t 
     /* A lot of nspaces may be using same session info
      * session record can only be deleted once all references are gone */
     if (!in_use) {
+#if PMIX_ENABLE_DEBUG
         session_tbl = PMIX_VALUE_ARRAY_GET_BASE(ds_ctx->session_array, session_t);
         PMIX_OUTPUT_VERBOSE((10, pmix_gds_base_framework.framework_output,
                              "%s:%d:%s delete session for jobuid: %d",
                              __FILE__, __LINE__, __func__, session_tbl[session_tbl_idx].jobuid));
+#endif
         _esh_session_release(ds_ctx, session_tbl_idx);
      }
 exit:
@@ -2544,9 +2552,9 @@ static inline int _my_client(const char *nspace, pmix_rank_t rank)
  * always contains data solely from remote procs, and we
  * shall store it accordingly */
 PMIX_EXPORT pmix_status_t pmix_common_dstor_store_modex(pmix_common_dstore_ctx_t *ds_ctx,
-                                                            struct pmix_namespace_t *nspace,
-                                                            pmix_list_t *cbs,
-                                                            pmix_buffer_t *buf)
+                                                        struct pmix_namespace_t *nspace,
+                                                        pmix_buffer_t *buf,
+                                                        void *cbdata)
 {
     pmix_status_t rc = PMIX_SUCCESS;
     pmix_status_t rc1 = PMIX_SUCCESS;
@@ -2566,7 +2574,9 @@ PMIX_EXPORT pmix_status_t pmix_common_dstor_store_modex(pmix_common_dstore_ctx_t
         return rc;
     }
 
-    rc = pmix_gds_base_store_modex(nspace, cbs, buf, (pmix_gds_base_store_modex_cb_fn_t)_dstor_store_modex_cb, ds_ctx);
+    rc = pmix_gds_base_store_modex(nspace, buf, ds_ctx,
+                    (pmix_gds_base_store_modex_cb_fn_t)_dstor_store_modex_cb,
+                    cbdata);
     if (PMIX_SUCCESS != rc) {
         PMIX_ERROR_LOG(rc);
     }
@@ -2584,15 +2594,12 @@ PMIX_EXPORT pmix_status_t pmix_common_dstor_store_modex(pmix_common_dstore_ctx_t
 }
 
 static pmix_status_t _dstor_store_modex_cb(pmix_common_dstore_ctx_t *ds_ctx,
-                                                struct pmix_namespace_t *nspace,
-                                                pmix_list_t *cbs,
-                                                pmix_byte_object_t *bo)
+                                           pmix_proc_t *proc,
+                                           pmix_gds_modex_key_fmt_t key_fmt,
+                                           char **kmap,
+                                           pmix_buffer_t *pbkt)
 {
-    pmix_namespace_t *ns = (pmix_namespace_t*)nspace;
     pmix_status_t rc = PMIX_SUCCESS;
-    int32_t cnt;
-    pmix_buffer_t pbkt;
-    pmix_proc_t proc;
     pmix_kval_t *kv;
     ns_map_data_t *ns_map;
     pmix_buffer_t tmp;
@@ -2600,7 +2607,7 @@ static pmix_status_t _dstor_store_modex_cb(pmix_common_dstore_ctx_t *ds_ctx,
     pmix_output_verbose(2, pmix_gds_base_framework.framework_output,
                         "[%s:%d] gds:dstore:store_modex for nspace %s",
                         pmix_globals.myid.nspace, pmix_globals.myid.rank,
-                        ns->nspace);
+                        proc->nspace);
 
     /* NOTE: THE BYTE OBJECT DELIVERED HERE WAS CONSTRUCTED
      * BY A SERVER, AND IS THEREFORE PACKED USING THE SERVER'S
@@ -2612,28 +2619,8 @@ static pmix_status_t _dstor_store_modex_cb(pmix_common_dstore_ctx_t *ds_ctx,
      * the rank followed by pmix_kval_t's. The list of callbacks
      * contains all local participants. */
 
-    /* setup the byte object for unpacking */
-    PMIX_CONSTRUCT(&pbkt, pmix_buffer_t);
-    /* the next step unfortunately NULLs the byte object's
-     * entries, so we need to ensure we restore them! */
-    PMIX_LOAD_BUFFER(pmix_globals.mypeer, &pbkt, bo->bytes, bo->size);
-    /* unload the proc that provided this data */
-    cnt = 1;
-    PMIX_BFROPS_UNPACK(rc, pmix_globals.mypeer, &pbkt, &proc, &cnt, PMIX_PROC);
-    if (PMIX_SUCCESS != rc) {
-        PMIX_ERROR_LOG(rc);
-        bo->bytes = pbkt.base_ptr;
-        bo->size = pbkt.bytes_used; // restore the incoming data
-        pbkt.base_ptr = NULL;
-        PMIX_DESTRUCT(&pbkt);
-        return rc;
-    }
     /* don't store blobs to the sm dstore from local clients */
-    if (_my_client(proc.nspace, proc.rank)) {
-        bo->bytes = pbkt.base_ptr;
-        bo->size = pbkt.bytes_used; // restore the incoming data
-        pbkt.base_ptr = NULL;
-        PMIX_DESTRUCT(&pbkt);
+    if (_my_client(proc->nspace, proc->rank)) {
         return PMIX_SUCCESS;
     }
 
@@ -2641,18 +2628,14 @@ static pmix_status_t _dstor_store_modex_cb(pmix_common_dstore_ctx_t *ds_ctx,
     PMIX_CONSTRUCT(&tmp, pmix_buffer_t);
 
     /* unpack the remaining values until we hit the end of the buffer */
-    cnt = 1;
     kv = PMIX_NEW(pmix_kval_t);
-    PMIX_BFROPS_UNPACK(rc, pmix_globals.mypeer, &pbkt, kv, &cnt, PMIX_KVAL);
+    rc = pmix_gds_base_modex_unpack_kval(key_fmt, pbkt, kmap, kv);
+
     while (PMIX_SUCCESS == rc) {
         /* store this in the hash table */
-        PMIX_GDS_STORE_KV(rc, pmix_globals.mypeer, &proc, PMIX_REMOTE, kv);
+        PMIX_GDS_STORE_KV(rc, pmix_globals.mypeer, proc, PMIX_REMOTE, kv);
         if (PMIX_SUCCESS != rc) {
             PMIX_ERROR_LOG(rc);
-            bo->bytes = pbkt.base_ptr;
-            bo->size = pbkt.bytes_used; // restore the incoming data
-            pbkt.base_ptr = NULL;
-            PMIX_DESTRUCT(&pbkt);
             return rc;
         }
 
@@ -2665,8 +2648,10 @@ static pmix_status_t _dstor_store_modex_cb(pmix_common_dstore_ctx_t *ds_ctx,
 
         /* proceed to the next element */
         kv = PMIX_NEW(pmix_kval_t);
-        cnt = 1;
-        PMIX_BFROPS_UNPACK(rc, pmix_globals.mypeer, &pbkt, kv, &cnt, PMIX_KVAL);
+        rc = pmix_gds_base_modex_unpack_kval(key_fmt, pbkt, kmap, kv);
+        if (PMIX_SUCCESS != rc) {
+            break;
+        }
     }
 
     /* Release the kv that didn't received the value
@@ -2686,18 +2671,14 @@ static pmix_status_t _dstor_store_modex_cb(pmix_common_dstore_ctx_t *ds_ctx,
     PMIX_UNLOAD_BUFFER(&tmp, kv->value->data.bo.bytes, kv->value->data.bo.size);
 
     /* Get the namespace map element for the process "proc" */
-    if (NULL == (ns_map = ds_ctx->session_map_search(ds_ctx, proc.nspace))) {
+    if (NULL == (ns_map = ds_ctx->session_map_search(ds_ctx, proc->nspace))) {
         rc = PMIX_ERROR;
         PMIX_ERROR_LOG(rc);
-        bo->bytes = pbkt.base_ptr;
-        bo->size = pbkt.bytes_used; // restore the incoming data
-        pbkt.base_ptr = NULL;
-        PMIX_DESTRUCT(&pbkt);
         return rc;
     }
 
     /* Store all keys at once */
-    rc = _dstore_store_nolock(ds_ctx, ns_map, proc.rank, kv);
+    rc = _dstore_store_nolock(ds_ctx, ns_map, proc->rank, kv);
     if (PMIX_SUCCESS != rc) {
         PMIX_ERROR_LOG(rc);
     }
@@ -2705,12 +2686,6 @@ static pmix_status_t _dstor_store_modex_cb(pmix_common_dstore_ctx_t *ds_ctx,
     /* Release all resources */
     PMIX_RELEASE(kv);
     PMIX_DESTRUCT(&tmp);
-
-    /* Reset the input buffer */
-    bo->bytes = pbkt.base_ptr;
-    bo->size = pbkt.bytes_used;
-    pbkt.base_ptr = NULL;
-    PMIX_DESTRUCT(&pbkt);
 
     return rc;
 }
@@ -2723,7 +2698,10 @@ static pmix_status_t _store_job_info(pmix_common_dstore_ctx_t *ds_ctx, ns_map_da
     pmix_buffer_t buf;
     pmix_kval_t kv2, *kvp;
     pmix_status_t rc = PMIX_SUCCESS;
-    pmix_info_t *ihost;
+    uint32_t appnum;
+    char *hostname, **aliases;
+    uint32_t nodeid;
+    bool match;
 
     PMIX_CONSTRUCT(&cb, pmix_cb_t);
     PMIX_CONSTRUCT(&buf, pmix_buffer_t);
@@ -2735,6 +2713,10 @@ static pmix_status_t _store_job_info(pmix_common_dstore_ctx_t *ds_ctx, ns_map_da
     cb.scope = PMIX_INTERNAL;
     cb.copy = false;
 
+    PMIX_OUTPUT_VERBOSE((8, pmix_gds_base_framework.framework_output,
+                        "STORE JOB INFO FOR PROC %s",
+                        PMIX_NAME_PRINT(proc)));
+
     PMIX_GDS_FETCH_KV(rc, pmix_globals.mypeer, &cb);
     if (PMIX_SUCCESS != rc) {
         if (rc == PMIX_ERR_PROC_ENTRY_NOT_FOUND) {
@@ -2745,53 +2727,109 @@ static pmix_status_t _store_job_info(pmix_common_dstore_ctx_t *ds_ctx, ns_map_da
     }
 
     PMIX_LIST_FOREACH(kv, &cb.kvs, pmix_kval_t) {
-        if (PMIX_CHECK_KEY(kv, PMIX_NODE_INFO_ARRAY)) {
-            /* earlier PMIx versions don't know how to handle
-             * the info arrays - what they need is a key-value
-             * pair where the key is the name of the node and
-             * the value is the local peers. So if the peer
-             * is earlier than 3.1.5, construct the necessary
-             * translation. Otherwise, ignore it as the hash
-             * component will handle it for them */
-            if (PMIX_PEER_IS_EARLIER(ds_ctx->clients_peer, 3, 1, 5)) {
-                pmix_info_t *info;
-                size_t size, i;
-                /* if it is our local node, then we are going to pass
-                 * all info */
-                info = kv->value->data.darray->array;
-                size = kv->value->data.darray->size;
-                ihost = NULL;
-                for (i = 0; i < size; i++) {
-                    if (PMIX_CHECK_KEY(&info[i], PMIX_HOSTNAME)) {
-                        ihost = &info[i];
+    	if (PMIX_CHECK_KEY(kv, PMIX_NODE_INFO_ARRAY)) {
+    		/* the dstore currently does not understand info arrays,
+             * which causes problems when users query for node/app
+             * info. We cannot fully resolve the problem, but we
+             * can mitigate it by at least storing the info for
+             * the local node and this proc's app number */
+            pmix_info_t *info;
+            size_t size, i;
+            /* if it is our local node, then we are going to pass
+             * all info */
+            info = kv->value->data.darray->array;
+            size = kv->value->data.darray->size;
+            hostname = NULL;
+            nodeid = UINT32_MAX;
+            aliases = NULL;
+            for (i = 0; i < size; i++) {
+                if (PMIX_CHECK_KEY(&info[i], PMIX_HOSTNAME)) {
+                    hostname = info[i].value.data.string;
+                } else if (PMIX_CHECK_KEY(&info[i], PMIX_NODEID)) {
+                    nodeid = info[i].value.data.uint32;
+                } else if (PMIX_CHECK_KEY(&info[i], PMIX_HOSTNAME_ALIASES)) {
+                    aliases = pmix_argv_split(info[i].value.data.string, ',');
+                }
+            }
+            if (NULL == hostname && UINT32_MAX == nodeid && NULL == aliases) {
+                continue;
+            }
+            match = false;
+            if (NULL != hostname && 0 == strcmp(hostname, pmix_globals.hostname)) {
+                match = true;
+            }
+            if (!match && UINT32_MAX != nodeid && nodeid == pmix_globals.nodeid) {
+                match = true;
+            }
+            if (!match && NULL != aliases) {
+                for (i=0; NULL != aliases[i]; i++) {
+                    if (0 == strcmp(aliases[i], pmix_globals.hostname)) {
+                        match = true;
                         break;
                     }
                 }
-                if (NULL != ihost) {
-                    PMIX_CONSTRUCT(&kv2, pmix_kval_t);
-                    kv2.key = ihost->value.data.string;
-                    kv2.value = kv->value;
+                pmix_argv_free(aliases);
+            }
+            if (match) {
+                /* if this host is us, then store each value as its own key */
+                for (i = 0; i < size; i++) {
+                    if (PMIX_CHECK_KEY(&info[i], PMIX_HOSTNAME) ||
+                        PMIX_CHECK_KEY(&info[i], PMIX_NODEID) ||
+                        PMIX_CHECK_KEY(&info[i], PMIX_HOSTNAME_ALIASES)) {
+                        continue;
+                    }
+                    PMIX_OUTPUT_VERBOSE((8, pmix_gds_base_framework.framework_output,
+                                        "STORE %s FOR NODE %s",
+                                        info[i].key, hostname));
+                    kv2.key = info[i].key;
+                    kv2.value = &info[i].value;
                     PMIX_BFROPS_PACK(rc, pmix_globals.mypeer, &buf, &kv2, 1, PMIX_KVAL);
                     if (PMIX_SUCCESS != rc) {
                         PMIX_ERROR_LOG(rc);
-                        goto exit;
+                        continue;
                     }
-                    /* if this host is us, then store each value as its own key */
-                    if (0 == strcmp(kv2.key, pmix_globals.hostname)) {
-                        for (i = 0; i < size; i++) {
-                            kv2.key = info[i].key;
-                            kv2.value = &info[i].value;
-                            PMIX_BFROPS_PACK(rc, pmix_globals.mypeer, &buf, &kv2, 1, PMIX_KVAL);
-                            if (PMIX_SUCCESS != rc) {
-                                PMIX_ERROR_LOG(rc);
-                                goto exit;
-                            }
-                        }
+                }
+    		}
+            /* if the client is earlier than v3.1.5, we also need to store the
+             * array using the hostname as key */
+            if (PMIX_PEER_IS_EARLIER(pmix_client_globals.myserver, 3, 1, 5) &&
+                NULL != hostname) {
+                kv2.key = hostname;
+                kv2.value = kv->value;
+                PMIX_BFROPS_PACK(rc, pmix_globals.mypeer, &buf, &kv2, 1, PMIX_KVAL);
+                if (PMIX_SUCCESS != rc) {
+                    PMIX_ERROR_LOG(rc);
+                    continue;
+                }
+            }
+        } else if (PMIX_CHECK_KEY(kv, PMIX_APP_INFO_ARRAY)) {
+            /* the dstore currently does not understand info arrays,
+             * but we will store info from our own app */
+            pmix_info_t *info;
+            size_t size, i;
+            /* if it is our local node, then we are going to pass
+             * all info */
+            info = kv->value->data.darray->array;
+            size = kv->value->data.darray->size;
+            appnum = UINT32_MAX;
+            for (i = 0; i < size; i++) {
+                if (PMIX_CHECK_KEY(&info[i], PMIX_APPNUM)) {
+                    appnum = info[i].value.data.uint32;
+                    break;
+                }
+            }
+            if (appnum == pmix_globals.appnum) {
+                for (i = 0; i < size; i++) {
+                    kv2.key = info[i].key;
+                    kv2.value = &info[i].value;
+                    PMIX_BFROPS_PACK(rc, pmix_globals.mypeer, &buf, &kv2, 1, PMIX_KVAL);
+                    if (PMIX_SUCCESS != rc) {
+                        PMIX_ERROR_LOG(rc);
+                        continue;
                     }
                 }
             }
-        } else if (PMIX_CHECK_KEY(kv, PMIX_APP_INFO_ARRAY) ||
-                   PMIX_CHECK_KEY(kv, PMIX_JOB_INFO_ARRAY) ||
+        } else if (PMIX_CHECK_KEY(kv, PMIX_JOB_INFO_ARRAY) ||
                    PMIX_CHECK_KEY(kv, PMIX_SESSION_INFO_ARRAY)) {
             continue;
         } else {
@@ -2836,8 +2874,7 @@ PMIX_EXPORT pmix_status_t pmix_common_dstor_register_job_info(pmix_common_dstore
         ns_map_data_t *ns_map;
 
         _client_compat_save(ds_ctx, peer);
-        pmix_strncpy(proc.nspace, ns->nspace, PMIX_MAX_NSLEN);
-        proc.rank = PMIX_RANK_WILDCARD;
+        PMIX_LOAD_PROCID(&proc, ns->nspace, PMIX_RANK_WILDCARD);
         if (NULL == (ns_map = ds_ctx->session_map_search(ds_ctx, proc.nspace))) {
             rc = PMIX_ERROR;
             PMIX_ERROR_LOG(rc);

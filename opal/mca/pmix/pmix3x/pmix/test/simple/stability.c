@@ -25,10 +25,10 @@
  *
  */
 
-#include <src/include/pmix_config.h>
+#include "src/include/pmix_config.h"
 #include <pmix_server.h>
-#include <src/include/types.h>
-#include <src/include/pmix_globals.h>
+#include "src/include/types.h"
+#include "src/include/pmix_globals.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -41,7 +41,7 @@
 #include PMIX_EVENT_HEADER
 
 #if PMIX_HAVE_HWLOC
-#include <src/hwloc/hwloc-internal.h>
+#include "src/hwloc/hwloc-internal.h"
 #endif
 
 #include "src/class/pmix_list.h"

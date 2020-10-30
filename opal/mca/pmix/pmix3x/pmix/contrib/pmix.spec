@@ -192,7 +192,7 @@
 
 Summary: An extended/exascale implementation of PMI
 Name: %{?_name:%{_name}}%{!?_name:pmix}
-Version: 3.1.5
+Version: 3.2.1rc1
 Release: 1%{?dist}
 License: BSD
 Group: Development/Libraries
@@ -493,7 +493,7 @@ test "x$RPM_BUILD_ROOT" != "x" && rm -rf $RPM_BUILD_ROOT
 %if !%{sysconfdir_in_prefix}
 %{_sysconfdir}/*
 %endif
-# If %{install_in_opt}, then we're installing PMIx to
+# If %%{install_in_opt}, then we're installing PMIx to
 # /opt/pmix<version>.  But be sure to also explicitly mention
 # /opt/pmix so that it can be removed by RPM when everything under
 # there is also removed.

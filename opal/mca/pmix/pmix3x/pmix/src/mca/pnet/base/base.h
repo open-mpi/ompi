@@ -11,9 +11,9 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, Inc.  All rights reserved.
- * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2014-2020 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015-2020 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -24,7 +24,7 @@
 #ifndef PMIX_PNET_BASE_H_
 #define PMIX_PNET_BASE_H_
 
-#include <src/include/pmix_config.h>
+#include "src/include/pmix_config.h"
 
 
 #ifdef HAVE_SYS_TIME_H
@@ -99,11 +99,27 @@ typedef struct {
 } pmix_pnet_job_t;
 PMIX_EXPORT PMIX_CLASS_DECLARATION(pmix_pnet_job_t);
 
+typedef struct {
+    pmix_list_item_t super;
+    char *name;
+    size_t index;
+    /* provide access to the component
+     * APIs that are managing this
+     * fabric plane */
+    pmix_pnet_module_t *module;
+    /* allow the component to add
+     * whatever structures it needs */
+    void *payload;
+} pmix_pnet_fabric_t;
+PMIX_EXPORT PMIX_CLASS_DECLARATION(pmix_pnet_fabric_t);
+
 /* framework globals */
 struct pmix_pnet_globals_t {
     pmix_lock_t lock;
     pmix_list_t actives;
+    pmix_list_t fabrics;
     bool initialized;
+    bool selected;
     pmix_list_t jobs;
     pmix_list_t nodes;
 };

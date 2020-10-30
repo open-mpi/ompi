@@ -195,19 +195,13 @@ if [ "$jenkins_test_build" = "yes" ]; then
     tar zxf libevent-2.0.22-stable.tar.gz
     cd libevent-2.0.22-stable
     libevent_dir=$PWD/install
-    ./autogen.sh && ./configure --prefix=$libevent_dir && make && make install
+    ./autogen.pl && ./configure --prefix=$libevent_dir && make && make install
 
     cd $WORKSPACE
-    if [ -x "autogen.sh" ]; then
-        autogen_script=./autogen.sh
-    else
-        autogen_script=./autogen.pl
-    fi
-
     configure_args="--with-libevent=$libevent_dir"
 
     # build pmix
-    $autogen_script
+    ./autogen.pl
     echo ./configure --prefix=$pmix_dir $configure_args | bash -xeE
     make $make_opt install
     jenkins_build_passed=1
@@ -270,7 +264,7 @@ if [ "$jenkins_test_src_rpm" = "yes" ]; then
 
     # check distclean
     make $make_opt distclean
-    $autogen_script
+    ./autogen.pl
     echo ./configure --prefix=$pmix_dir $configure_args | bash -xeE || exit 11
 
     if [ -x /usr/bin/dpkg-buildpackage ]; then
@@ -316,7 +310,7 @@ if [ -n "$JENKINS_RUN_TESTS" -a "$JENKINS_RUN_TESTS" -ne "0" ]; then
     rm -rf $run_tap
 
     # build pmix
-    $autogen_script
+    ./autogen.pl
     echo ./configure --prefix=$pmix_dir $configure_args --disable-visibility | bash -xeE
     make $make_opt install
 

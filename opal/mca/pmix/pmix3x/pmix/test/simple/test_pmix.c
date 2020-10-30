@@ -1,6 +1,6 @@
 
 #include <stdio.h>
-#include <pmix.h>
+#include "include/pmix.h"
 #include <assert.h>
 
 int main(int argc, char **argv)

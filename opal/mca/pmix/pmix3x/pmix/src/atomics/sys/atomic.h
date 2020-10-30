@@ -16,7 +16,7 @@
  *                         reserved.
  * Copyright (c) 2017      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2018      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2018-2020 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -52,7 +52,7 @@
 #ifndef PMIX_SYS_ATOMIC_H
 #define PMIX_SYS_ATOMIC_H 1
 
-#include "pmix_config.h"
+#include "src/include/pmix_config.h"
 
 #include <stdbool.h>
 
@@ -164,8 +164,6 @@ enum {
  *********************************************************************/
 #if defined(DOXYGEN)
 /* don't include system-level gorp when generating doxygen files */
-#elif PMIX_ASSEMBLY_BUILTIN == PMIX_BUILTIN_SYNC
-#include "src/atomics/sys/sync_builtin/atomic.h"
 #elif PMIX_ASSEMBLY_BUILTIN == PMIX_BUILTIN_GCC
 #include "src/atomics/sys/gcc_builtin/atomic.h"
 #elif PMIX_ASSEMBLY_ARCH == PMIX_X86_64
@@ -176,20 +174,10 @@ enum {
 #include "src/atomics/sys/arm64/atomic.h"
 #elif PMIX_ASSEMBLY_ARCH == PMIX_IA32
 #include "src/atomics/sys/ia32/atomic.h"
-#elif PMIX_ASSEMBLY_ARCH == PMIX_IA64
-#include "src/atomics/sys/ia64/atomic.h"
-#elif PMIX_ASSEMBLY_ARCH == PMIX_MIPS
-#include "src/atomics/sys/mips/atomic.h"
 #elif PMIX_ASSEMBLY_ARCH == PMIX_POWERPC32
 #include "src/atomics/sys/powerpc/atomic.h"
 #elif PMIX_ASSEMBLY_ARCH == PMIX_POWERPC64
 #include "src/atomics/sys/powerpc/atomic.h"
-#elif PMIX_ASSEMBLY_ARCH == PMIX_SPARC
-#include "src/atomics/sys/sparc/atomic.h"
-#elif PMIX_ASSEMBLY_ARCH == PMIX_SPARCV9_32
-#include "src/atomics/sys/sparcv9/atomic.h"
-#elif PMIX_ASSEMBLY_ARCH == PMIX_SPARCV9_64
-#include "src/atomics/sys/sparcv9/atomic.h"
 #endif
 
 #ifndef DOXYGEN

@@ -11,9 +11,9 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, Inc.  All rights reserved.
- * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
- * Copyright (c) 2015-2018 Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2014-2020 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015-2020 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -23,9 +23,9 @@
 /** @file:
  *
  */
-#include <src/include/pmix_config.h>
+#include "src/include/pmix_config.h"
 
-#include <pmix_common.h>
+#include "include/pmix_common.h"
 
 #ifdef HAVE_STRING_H
 #include <string.h>
@@ -47,11 +47,26 @@
 #include "src/mca/bfrops/base/static-components.h"
 
 /* Instantiate the global vars */
-pmix_bfrops_globals_t pmix_bfrops_globals = {{{0}}};
+pmix_bfrops_globals_t pmix_bfrops_globals = {
+    .actives = PMIX_LIST_STATIC_INIT,
+    .initialized = false,
+    .initial_size = 0,
+    .threshold_size = 0,
+#if PMIX_ENABLE_DEBUG
+    .default_type = PMIX_BFROP_BUFFER_FULLY_DESC
+#else
+    .default_type = PMIX_BFROP_BUFFER_NON_DESC
+#endif
+};
 int pmix_bfrops_base_output = 0;
 
 static int pmix_bfrop_register(pmix_mca_base_register_flag_t flags)
 {
+    if (PMIX_MCA_BASE_REGISTER_DEFAULT == flags) {
+        /* do something to silence warning */
+        int count=0;
+        ++count;
+    }
     pmix_bfrops_globals.initial_size = PMIX_BFROP_DEFAULT_INITIAL_SIZE;
     pmix_mca_base_var_register("pmix", "bfrops", "base", "initial_size",
                                "Initial size of a buffer",
@@ -88,6 +103,7 @@ static pmix_status_t pmix_bfrop_close(void)
         return PMIX_SUCCESS;
     }
     pmix_bfrops_globals.initialized = false;
+    pmix_bfrops_globals.selected = false;
 
     /* the components will cleanup when closed */
     PMIX_LIST_DESTRUCT(&pmix_bfrops_globals.actives);

@@ -13,7 +13,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Mellanox Technologies, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -23,8 +23,20 @@
  *
  */
 
-#include <src/include/pmix_config.h>
-#include <pmix.h>
+/******    FUNCTIONS TESTED    ****/
+/*
+ * PMIx_Init
+ * PMIx_Get
+ * PMIx_Register_event_handler
+ * PMIx_Store_internal
+ * PMIx_Put
+ * PMIx_Commit
+ * PMIx_Fence
+ * PMIx_Finalize
+ */
+
+#include "src/include/pmix_config.h"
+#include "include/pmix.h"
 
 #include <stdio.h>
 #include <stdlib.h>
