@@ -2,6 +2,7 @@
  * Copyright (c) 2014-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2020      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -20,7 +21,7 @@ typedef struct adapt_topology_cache_item_t {
     opal_list_item_t super;
     ompi_coll_tree_t *tree;
     int root;
-    int algorithm;
+    ompi_coll_adapt_algorithm_t algorithm;
 } adapt_topology_cache_item_t;
 
 OBJ_CLASS_DECLARATION(adapt_topology_cache_item_t);
