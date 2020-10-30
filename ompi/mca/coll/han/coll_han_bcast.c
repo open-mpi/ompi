@@ -3,6 +3,7 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2020      Bull S.A.S. All rights reserved.
+ * Copyright (c) 2020      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -221,7 +222,10 @@ mca_coll_han_bcast_intra_simple(void *buff,
     /* create the subcommunicators */
     mca_coll_han_module_t *han_module = (mca_coll_han_module_t *)module;
     ompi_communicator_t *low_comm, *up_comm;
-    int err, w_rank = ompi_comm_rank(comm);
+    int err;
+#if OPAL_ENABLE_DEBUG
+    int w_rank = ompi_comm_rank(comm);
+#endif
 
     /* Create the subcommunicators */
     err = mca_coll_han_comm_create_new(comm, han_module);
