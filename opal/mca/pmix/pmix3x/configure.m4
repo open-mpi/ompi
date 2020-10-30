@@ -16,6 +16,7 @@
 # Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
 # Copyright (c) 2015-2016 Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
+# Copyright (c) 2020      IBM Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -59,6 +60,9 @@ AC_DEFUN([MCA_opal_pmix_pmix3x_CONFIG],[
     AS_IF([test "$with_devel_headers" = "yes"],
           [opal_pmix_pmix3x_args="--with-devel-headers  $opal_pmix_pmix3x_args"])
     CPPFLAGS="-I$OPAL_TOP_SRCDIR -I$OPAL_TOP_BUILDDIR -I$OPAL_TOP_SRCDIR/opal/include -I$OPAL_TOP_BUILDDIR/opal/include $CPPFLAGS"
+
+    # OpenPMIx Man pages are not needed when embedded. Avoids pandoc check
+    opal_pmix_pmix3x_args="--disable-man-pages  $opal_pmix_pmix3x_args"
 
     OPAL_CONFIG_SUBDIR([$opal_pmix_pmix3x_basedir/pmix],
                        [$opal_pmix_pmix3x_args $opal_subdir_args 'CFLAGS=$CFLAGS' 'CPPFLAGS=$CPPFLAGS'],
