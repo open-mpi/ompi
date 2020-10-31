@@ -12,6 +12,9 @@
  *                         All rights reserved.
  * Copyright (c) 2015-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2018      Triad National Security, LLC. All rights
+ *                         reserved.
+ * Copyright (c) 2020      Cisco Systems, Inc.  All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -274,7 +277,7 @@ static int save_param_name (void)
 
 static int add_to_env_str(char *var, char *val)
 {
-    int sz, varsz, valsz, new_envsize;
+    int sz, varsz = 0, valsz = 0, new_envsize;
     void *tmp;
 
     if (NULL == var) {
