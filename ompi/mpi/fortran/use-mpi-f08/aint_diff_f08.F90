@@ -3,11 +3,13 @@
 ! Copyright (c) 2010-2015 Cisco Systems, Inc.  All rights reserved.
 ! Copyright (c) 2009-2015 Los Alamos National Security, LLC.
 !               All Rights reserved.
-! Copyright (c) 2018      Research Organization for Information Science
+! Copyright (c) 2018-2020 Research Organization for Information Science
 !                         and Technology (RIST).  All rights reserved.
 ! $COPYRIGHT$
 
 #include "ompi/mpi/fortran/configure-fortran-output.h"
+
+#include "mpi-f08-rename.h"
 
 function MPI_Aint_diff_f08(addr1, addr2)
    use :: mpi_f08_types, only : MPI_ADDRESS_KIND

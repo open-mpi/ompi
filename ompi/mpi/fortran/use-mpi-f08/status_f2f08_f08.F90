@@ -4,6 +4,8 @@
 !                         and Technology (RIST).  All rights reserved.
 ! $COPYRIGHT$
 
+#include "mpi-f08-rename.h"
+
 subroutine MPI_Status_f2f08_f08(f_status,f08_status,ierror)
    use :: mpi_f08_types, only : MPI_Status, MPI_STATUS_SIZE
    use :: ompi_mpifh_bindings, only : ompi_status_f2f08_f
