@@ -50,7 +50,17 @@ MD_FILES = \
         MPI_File_write_shared.md \
         MPI_Finalize.md \
         MPI_Finalized.md \
-        MPI_Free_mem.md
+        MPI_Free_mem.md \
+        MPI_Gather.md \
+        MPI_Gatherv.md \
+        MPI_Get.md \
+        MPI_Get_accumulate.md \
+        MPI_Get_address.md \
+        MPI_Get_count.md \
+        MPI_Get_elements.md \
+        MPI_Get_library_version.md \
+        MPI_Get_processor_name.md \
+        MPI_Get_version.md
 
 TEMPLATE_FILES = \
         MPI_Abort.3in \
@@ -188,19 +198,9 @@ TEMPLATE_FILES = \
         MPI_File_write_at_all.3in \
         MPI_File_write_at_all_begin.3in \
         MPI_File_write_at_all_end.3in \
-        MPI_Gather.3in \
         MPI_Igather.3in \
-        MPI_Gatherv.3in \
         MPI_Igatherv.3in \
-        MPI_Get.3in \
-        MPI_Get_accumulate.3in \
-        MPI_Get_address.3in \
-        MPI_Get_count.3in \
-        MPI_Get_elements.3in \
         MPI_Get_elements_x.3in \
-        MPI_Get_library_version.3in \
-        MPI_Get_processor_name.3in \
-        MPI_Get_version.3in \
         MPI_Graph_create.3in \
         MPI_Graphdims_get.3in \
         MPI_Graph_get.3in \
