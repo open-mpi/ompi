@@ -29,6 +29,16 @@ MD_FILES = \
         MPI_Bsend_init.md \
         MPI_Buffer_attach.md \
         MPI_Buffer_detach.md \
+        MPI_Cancel.md \
+        MPI_Cart_coords.md \
+        MPI_Cart_create.md \
+        MPI_Cart_get.md \
+        MPI_Cart_map.md \
+        MPI_Cart_rank.md \
+        MPI_Cart_shift.md \
+        MPI_Close_port.md \
+        MPI_Cart_sub.md \
+        MPI_Cartdim_get.md \
         MPI_T_init_thread.3.md \
         MPI_Status_f2c.3.md \
         MPI_Status_f082c.3.md \
@@ -69,16 +79,6 @@ TEMPLATE_FILES = \
         MPI_Attr_put.3in \
         MPI_Ibarrier.3in \
         MPI_Ibcast.3in \
-        MPI_Cancel.3in \
-        MPI_Cart_coords.3in \
-        MPI_Cart_create.3in \
-        MPI_Cartdim_get.3in \
-        MPI_Cart_get.3in \
-        MPI_Cart_map.3in \
-        MPI_Cart_rank.3in \
-        MPI_Cart_shift.3in \
-        MPI_Cart_sub.3in \
-        MPI_Close_port.3in \
         MPI_Comm_accept.3in \
         MPI_Comm_c2f.3in \
         MPI_Comm_call_errhandler.3in \
