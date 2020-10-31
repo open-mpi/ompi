@@ -39,6 +39,18 @@ MD_FILES = \
         MPI_Close_port.md \
         MPI_Cart_sub.md \
         MPI_Cartdim_get.md \
+        MPI_Comm_accept.md \
+        MPI_Comm_call_errhandler.md \
+        MPI_Comm_compare.md \
+        MPI_Comm_connect.md \
+        MPI_Comm_create.md \
+        MPI_Comm_create_errhandler.md \
+        MPI_Comm_create_group.md \
+        MPI_Comm_create_keyval.md \
+        MPI_Comm_delete_attr.md \
+        MPI_Comm_disconnect.md \
+        MPI_Comm_dup.md \
+        MPI_Comm_dup_with_info.md \
         MPI_T_init_thread.3.md \
         MPI_Status_f2c.3.md \
         MPI_Status_f082c.3.md \
@@ -89,19 +101,7 @@ TEMPLATE_FILES = \
         MPI_Attr_put.3in \
         MPI_Ibarrier.3in \
         MPI_Ibcast.3in \
-        MPI_Comm_accept.3in \
         MPI_Comm_c2f.3in \
-        MPI_Comm_call_errhandler.3in \
-        MPI_Comm_compare.3in \
-        MPI_Comm_connect.3in \
-        MPI_Comm_create.3in \
-        MPI_Comm_create_group.3in \
-        MPI_Comm_create_errhandler.3in \
-        MPI_Comm_create_keyval.3in \
-        MPI_Comm_delete_attr.3in \
-        MPI_Comm_disconnect.3in \
-        MPI_Comm_dup.3in \
-        MPI_Comm_dup_with_info.3in \
         MPI_Comm_idup.3in \
         MPI_Comm_f2c.3in \
         MPI_Comm_free.3in \
