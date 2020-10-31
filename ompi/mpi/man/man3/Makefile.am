@@ -72,7 +72,20 @@ MD_FILES = \
         MPI_Get_elements.md \
         MPI_Get_library_version.md \
         MPI_Get_processor_name.md \
-        MPI_Get_version.md
+        MPI_Get_version.md \
+        MPI_Graph_create.md \
+        MPI_Graph_get.md \
+        MPI_Graph_map.md \
+        MPI_Graph_neighbors_count.md \
+        MPI_Graphdims_get.md \
+        MPI_Grequest_complete.md \
+        MPI_Grequest_start.md \
+        MPI_Group_compare.md \
+        MPI_Group_difference.md \
+        MPI_Group_excl.md \
+        MPI_Group_free.md \
+        MPI_Group_incl.md \
+        MPI_Group_intersection.md
 
 TEMPLATE_FILES = \
         MPI_Abort.3in \
@@ -201,22 +214,9 @@ TEMPLATE_FILES = \
         MPI_Igather.3in \
         MPI_Igatherv.3in \
         MPI_Get_elements_x.3in \
-        MPI_Graph_create.3in \
-        MPI_Graphdims_get.3in \
-        MPI_Graph_get.3in \
-        MPI_Graph_map.3in \
         MPI_Graph_neighbors.3in \
-        MPI_Graph_neighbors_count.3in \
-        MPI_Grequest_complete.3in \
-        MPI_Grequest_start.3in \
         MPI_Group_c2f.3in \
-        MPI_Group_compare.3in \
-        MPI_Group_difference.3in \
-        MPI_Group_excl.3in \
         MPI_Group_f2c.3in \
-        MPI_Group_free.3in \
-        MPI_Group_incl.3in \
-        MPI_Group_intersection.3in \
         MPI_Group_range_excl.3in \
         MPI_Group_range_incl.3in \
         MPI_Group_rank.3in \
