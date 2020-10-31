@@ -14,6 +14,7 @@
  *                         reserved.
  * Copyright (c) 2018      Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2020      Cisco Systems, Inc.  All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -276,7 +277,7 @@ static int save_param_name (void)
 
 static int add_to_env_str(char *var, char *val)
 {
-    int sz, varsz, valsz, new_envsize;
+    int sz, varsz = 0, valsz = 0, new_envsize;
     void *tmp;
 
     if (NULL == var) {
@@ -286,22 +287,25 @@ static int add_to_env_str(char *var, char *val)
     varsz = strlen(var);
     if (NULL != val) {
         valsz = strlen(val);
-        /* account for '=' */
+        /* If we have a value, it will be preceeded by a '=', so be
+           sure to account for that */
         valsz += 1;
     }
     sz = 0;
     if (NULL != env_str) {
         sz = strlen(env_str);
-        /* account for ';' */
+        /* If we have a valid variable, the whole clause will be
+           terminated by a ';', so be sure to account for that */
         sz += 1;
     }
-    /* add required new size incl NUL byte */
-    sz += varsz+valsz+1;
+    /* Sum the required new sizes, including space for a terminating
+       \0 byte */
+    sz += varsz + valsz + 1;
 
-    /* make sure we have sufficient space */
+    /* Make sure we have sufficient space */
     new_envsize = envsize;
     while (new_envsize <= sz) {
-        new_envsize *=2;
+        new_envsize *= 2;
     }
 
     if (NULL != env_str) {
