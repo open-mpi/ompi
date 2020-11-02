@@ -3,7 +3,7 @@
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  *
- * Copyright (c) 2016-2019 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2016-2020 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -18,8 +18,8 @@
 #define PMIX_HWLOC_INTERNAL_H
 
 
-#include <src/include/pmix_config.h>
-#include <pmix_common.h>
+#include "src/include/pmix_config.h"
+#include "include/pmix_common.h"
 
 #if PMIX_HAVE_HWLOC
 #include PMIX_HWLOC_HEADER
@@ -29,7 +29,7 @@
 #define HWLOC_OBJ_PACKAGE HWLOC_OBJ_SOCKET
 #endif
 
-extern hwloc_topology_t pmix_hwloc_topology;
+PMIX_EXPORT extern hwloc_topology_t pmix_hwloc_topology;
 #endif
 
 BEGIN_C_DECLS

@@ -4,6 +4,7 @@
  *                         All rights reserved.
  *
  * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2020      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
@@ -13,13 +14,13 @@
  * $HEADER$
  */
 
-#include <src/include/pmix_config.h>
+#include "src/include/pmix_config.h"
 
 #ifdef HAVE_UNISTD_H
 #include "unistd.h"
 #endif
 
-#include "pmix_common.h"
+#include "include/pmix_common.h"
 #include "src/util/output.h"
 #include "src/mca/mca.h"
 #include "src/mca/base/base.h"

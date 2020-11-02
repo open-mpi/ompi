@@ -1,8 +1,8 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
- * Copyright (c) 2014-2018 Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2014-2020 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2019 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2014      Artem Y. Polyakov <artpol84@gmail.com>.
  *                         All rights reserved.
  * Copyright (c) 2016-2017 Mellanox Technologies, Inc.
@@ -15,14 +15,12 @@
  * $HEADER$
  */
 
-#include <src/include/pmix_config.h>
+#include "src/include/pmix_config.h"
 
-#include <src/include/types.h>
-#include <src/include/pmix_stdint.h>
-#include <src/include/pmix_socket_errno.h>
+#include "src/include/pmix_stdint.h"
+#include "src/include/pmix_socket_errno.h"
 
-#include <pmix.h>
-#include <pmix_rename.h>
+#include "include/pmix.h"
 
 #include "src/include/pmix_globals.h"
 
@@ -46,11 +44,8 @@
 #include <sys/types.h>
 #endif
 
-#if PMIX_HAVE_ZLIB
-#include <zlib.h>
-#endif
 #include PMIX_EVENT_HEADER
-#if ! PMIX_HAVE_LIBEV
+#ifdef PMIX_EVENT2_THREAD_HEADER
 #include PMIX_EVENT2_THREAD_HEADER
 #endif
 
@@ -60,7 +55,6 @@ static pmix_status_t pmix_init_result = PMIX_ERR_INIT;
 #include "src/class/pmix_list.h"
 #include "src/event/pmix_event.h"
 #include "src/util/argv.h"
-#include "src/util/compress.h"
 #include "src/util/error.h"
 #include "src/util/hash.h"
 #include "src/util/name_fns.h"
@@ -69,6 +63,7 @@ static pmix_status_t pmix_init_result = PMIX_ERR_INIT;
 #include "src/runtime/pmix_rte.h"
 #include "src/threads/threads.h"
 #include "src/mca/bfrops/base/base.h"
+#include "src/mca/pcompress/base/base.h"
 #include "src/mca/gds/base/base.h"
 #include "src/mca/preg/preg.h"
 #include "src/mca/ptl/base/base.h"
@@ -82,7 +77,56 @@ static pmix_status_t pmix_init_result = PMIX_ERR_INIT;
 static void _notify_complete(pmix_status_t status, void *cbdata)
 {
     pmix_event_chain_t *chain = (pmix_event_chain_t*)cbdata;
+    pmix_notify_caddy_t *cd;
+    size_t n;
+    pmix_status_t rc;
+
     PMIX_ACQUIRE_OBJECT(chain);
+
+    /* if the event wasn't found, then cache it as it might
+     * be registered later */
+    if (PMIX_ERR_NOT_FOUND == status && !chain->cached) {
+        cd = PMIX_NEW(pmix_notify_caddy_t);
+        cd->status = chain->status;
+        PMIX_LOAD_PROCID(&cd->source, chain->source.nspace, chain->source.rank);
+        cd->range = chain->range;
+        if (0 < chain->ninfo) {
+            cd->ninfo = chain->ninfo;
+            PMIX_INFO_CREATE(cd->info, cd->ninfo);
+            cd->nondefault = chain->nondefault;
+           /* need to copy the info */
+            for (n=0; n < cd->ninfo; n++) {
+                PMIX_INFO_XFER(&cd->info[n], &chain->info[n]);
+            }
+        }
+        if (NULL != chain->targets) {
+            cd->ntargets = chain->ntargets;
+            PMIX_PROC_CREATE(cd->targets, cd->ntargets);
+            memcpy(cd->targets, chain->targets, cd->ntargets * sizeof(pmix_proc_t));
+        }
+        if (NULL != chain->affected) {
+            cd->naffected = chain->naffected;
+            PMIX_PROC_CREATE(cd->affected, cd->naffected);
+            if (NULL == cd->affected) {
+                cd->naffected = 0;
+                goto cleanup;
+            }
+            memcpy(cd->affected, chain->affected, cd->naffected * sizeof(pmix_proc_t));
+        }
+        /* cache it */
+        pmix_output_verbose(2, pmix_client_globals.event_output,
+                            "%s pmix:client_notify - processing complete, caching",
+                            PMIX_NAME_PRINT(&pmix_globals.myid));
+        rc = pmix_notify_event_cache(cd);
+        if (PMIX_SUCCESS != rc) {
+            PMIX_ERROR_LOG(rc);
+            PMIX_RELEASE(cd);
+            goto cleanup;
+        }
+        chain->cached = true;
+    }
+
+  cleanup:
     PMIX_RELEASE(chain);
 }
 
@@ -96,8 +140,9 @@ static void pmix_client_notify_recv(struct pmix_peer_t *peer,
     pmix_event_chain_t *chain;
     size_t ninfo;
 
-    pmix_output_verbose(2, pmix_client_globals.base_output,
-                        "pmix:client_notify_recv - processing event");
+    pmix_output_verbose(2, pmix_client_globals.event_output,
+                        "%s pmix:client_notify_recv - processing event",
+                        PMIX_NAME_PRINT(&pmix_globals.myid));
 
     /* a zero-byte buffer indicates that this recv is being
      * completed due to a lost connection */
@@ -175,17 +220,18 @@ static void pmix_client_notify_recv(struct pmix_peer_t *peer,
     /* prep the chain for processing */
     pmix_prep_event_chain(chain, chain->info, ninfo, false);
 
-    pmix_output_verbose(2, pmix_client_globals.base_output,
-                        "[%s:%d] pmix:client_notify_recv - processing event %s, calling errhandler",
-                        pmix_globals.myid.nspace, pmix_globals.myid.rank, PMIx_Error_string(chain->status));
+    pmix_output_verbose(2, pmix_client_globals.event_output,
+                        "%s pmix:client_notify_recv - processing event %s, calling errhandler",
+                        PMIX_NAME_PRINT(&pmix_globals.myid), PMIx_Error_string(chain->status));
 
     pmix_invoke_local_event_hdlr(chain);
     return;
 
   error:
     /* we always need to return */
-    pmix_output_verbose(2, pmix_client_globals.base_output,
-                        "pmix:client_notify_recv - unpack error status =%d, calling def errhandler", rc);
+    pmix_output_verbose(2, pmix_client_globals.event_output,
+                        "%s pmix:client_notify_recv - unpack error status =%s, calling def errhandler",
+                        PMIX_NAME_PRINT(&pmix_globals.myid), PMIx_Error_string(rc));
     chain = PMIX_NEW(pmix_event_chain_t);
     if (NULL == chain) {
         PMIX_ERROR_LOG(PMIX_ERR_NOMEM);
@@ -471,7 +517,7 @@ PMIX_EXPORT pmix_status_t PMIx_Init(pmix_proc_t *proc,
                                     pmix_info_t info[], size_t ninfo)
 {
     char *evar;
-    pmix_status_t rc;
+    pmix_status_t rc = PMIX_SUCCESS;
     pmix_cb_t cb;
     pmix_buffer_t *req;
     pmix_cmd_t cmd = PMIX_REQ_CMD;
@@ -484,6 +530,7 @@ PMIX_EXPORT pmix_status_t PMIx_Init(pmix_proc_t *proc,
     bool found;
     pmix_ptl_posted_recv_t *rcv;
     pid_t pid;
+    pmix_kval_t *kptr;
 
     PMIX_ACQUIRE_THREAD(&pmix_global_lock);
 
@@ -657,7 +704,7 @@ PMIX_EXPORT pmix_status_t PMIx_Init(pmix_proc_t *proc,
     found = false;
     if (info != NULL) {
         for (n=0; n < ninfo; n++) {
-            if (0 == strncmp(info[n].key, PMIX_GDS_MODULE, PMIX_MAX_KEYLEN)) {
+            if (PMIX_CHECK_KEY(&info[n], PMIX_GDS_MODULE)) {
                 PMIX_INFO_LOAD(&ginfo, PMIX_GDS_MODULE, info[n].value.data.string, PMIX_STRING);
                 found = true;
                 break;
@@ -687,6 +734,7 @@ PMIX_EXPORT pmix_status_t PMIx_Init(pmix_proc_t *proc,
             PMIX_RELEASE_THREAD(&pmix_global_lock);
             return rc;
         }
+        rc = PMIX_ERR_UNREACH;
     } else {
         /* connect to the server */
         rc = pmix_ptl_base_connect_to_peer((struct pmix_peer_t*)pmix_client_globals.myserver, info, ninfo);
@@ -747,7 +795,7 @@ PMIX_EXPORT pmix_status_t PMIx_Init(pmix_proc_t *proc,
         PMIX_CONSTRUCT_LOCK(&releaselock);
         PMIX_INFO_LOAD(&evinfo[0], PMIX_EVENT_RETURN_OBJECT, &releaselock, PMIX_POINTER);
         PMIX_INFO_LOAD(&evinfo[1], PMIX_EVENT_HDLR_NAME, "WAIT-FOR-DEBUGGER", PMIX_STRING);
-        pmix_output_verbose(2, pmix_client_globals.base_output,
+        pmix_output_verbose(2, pmix_client_globals.event_output,
                             "[%s:%d] WAITING IN INIT FOR DEBUGGER",
                             pmix_globals.myid.nspace, pmix_globals.myid.rank);
         PMIx_Register_event_handler(&code, 1, evinfo, 2,
@@ -767,7 +815,39 @@ PMIX_EXPORT pmix_status_t PMIx_Init(pmix_proc_t *proc,
     if (NULL != info) {
         _check_for_notify(info, ninfo);
     }
-    return PMIX_SUCCESS;
+
+    /* store our server's ID */
+    if (NULL != pmix_client_globals.myserver &&
+        NULL != pmix_client_globals.myserver->info) {
+        kptr = PMIX_NEW(pmix_kval_t);
+        kptr->key = strdup(PMIX_SERVER_NSPACE);
+        PMIX_VALUE_CREATE(kptr->value, 1);
+        kptr->value->type = PMIX_STRING;
+        kptr->value->data.string = strdup(pmix_client_globals.myserver->info->pname.nspace);
+        PMIX_GDS_STORE_KV(rc, pmix_globals.mypeer,
+                          &pmix_globals.myid,
+                          PMIX_INTERNAL, kptr);
+        if (PMIX_SUCCESS != rc) {
+            PMIX_ERROR_LOG(rc);
+            return rc;
+        }
+        PMIX_RELEASE(kptr); // maintain accounting
+        kptr = PMIX_NEW(pmix_kval_t);
+        kptr->key = strdup(PMIX_SERVER_RANK);
+        PMIX_VALUE_CREATE(kptr->value, 1);
+        kptr->value->type = PMIX_PROC_RANK;
+        kptr->value->data.rank = pmix_client_globals.myserver->info->pname.rank;
+        PMIX_GDS_STORE_KV(rc, pmix_globals.mypeer,
+                          &pmix_globals.myid,
+                          PMIX_INTERNAL, kptr);
+        if (PMIX_SUCCESS != rc) {
+            PMIX_ERROR_LOG(rc);
+            return rc;
+        }
+        PMIX_RELEASE(kptr); // maintain accounting
+    }
+
+    return rc;
 }
 
 PMIX_EXPORT int PMIx_Initialized(void)
@@ -1051,7 +1131,7 @@ static void _putfn(int sd, short args, void *cbdata)
     kv->value = (pmix_value_t*)malloc(sizeof(pmix_value_t));
     if (PMIX_STRING_SIZE_CHECK(cb->value)) {
         /* compress large strings */
-        if (pmix_util_compress_string(cb->value->data.string, &tmp, &len)) {
+        if (pmix_compress.compress_string(cb->value->data.string, &tmp, &len)) {
             if (NULL == tmp) {
                 PMIX_ERROR_LOG(PMIX_ERR_NOMEM);
                 rc = PMIX_ERR_NOMEM;
@@ -1398,12 +1478,22 @@ PMIX_EXPORT pmix_status_t PMIx_Resolve_peers(const char *nodename,
             for (n=0; NULL != tmp[n]; n++) {
                 /* find the nspace delimiter */
                 prs = strchr(tmp[n], ':');
+                if (NULL == prs) {
+                    /* should never happen, but silence a Coverity warning */
+                    rc = PMIX_ERR_BAD_PARAM;
+                    pmix_argv_free(tmp);
+                    PMIX_PROC_FREE(pa, np);
+                    *procs = NULL;
+                    *nprocs = 0;
+                    goto done;
+                }
                 *prs = '\0';
                 ++prs;
                 p = pmix_argv_split(prs, ',');
                 for (m=0; NULL != p[m]; m++) {
                     PMIX_LOAD_NSPACE(&pa[np].nspace, tmp[n]);
-                    pa[n].rank = strtoul(p[m], NULL, 10);
+                    pa[np].rank = strtoul(p[m], NULL, 10);
+                    ++np;
                 }
                 pmix_argv_free(p);
             }

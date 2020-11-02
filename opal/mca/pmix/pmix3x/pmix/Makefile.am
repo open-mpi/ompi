@@ -11,7 +11,7 @@
 #                         All rights reserved.
 # Copyright (c) 2006-2016 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2012-2013 Los Alamos National Security, Inc.  All rights reserved.
-# Copyright (c) 2013-2018 Intel, Inc.  All rights reserved.
+# Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
 # Copyright (c) 2019      Amazon.com, Inc. or its affiliates.  All Rights
 #                         reserved.
 # $COPYRIGHT$
@@ -32,7 +32,7 @@ AM_DISTCHECK_CONFIGURE_FLAGS = --disable-dlopen
 headers =
 sources =
 nodist_headers =
-EXTRA_DIST = AUTHORS README INSTALL VERSION LICENSE autogen.pl
+EXTRA_DIST = AUTHORS README HACKING INSTALL VERSION LICENSE autogen.pl Makefile.pmix-rules
 
 # Only install the valgrind suppressions file and man pages
 # if we're building in standalone mode
@@ -60,3 +60,6 @@ nroff:
 
 dist-hook:
 	env LS_COLORS= sh "$(top_srcdir)/config/distscript.sh" "$(top_srcdir)" "$(distdir)" "$(PMIX_VERSION)" "$(PMIX_REPO_REV)"
+
+pkgconfigdir = $(libdir)/pkgconfig
+pkgconfig_DATA = maint/pmix.pc

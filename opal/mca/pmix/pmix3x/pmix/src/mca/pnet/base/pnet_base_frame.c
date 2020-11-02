@@ -11,9 +11,9 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, Inc.  All rights reserved.
- * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
- * Copyright (c) 2015-2016 Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2014-2020 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015-2020 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -23,9 +23,9 @@
 /** @file:
  *
  */
-#include <src/include/pmix_config.h>
+#include "src/include/pmix_config.h"
 
-#include <pmix_common.h>
+#include "include/pmix_common.h"
 
 #ifdef HAVE_STRING_H
 #include <string.h>
@@ -64,6 +64,7 @@ static pmix_status_t pmix_pnet_close(void)
         return PMIX_SUCCESS;
     }
     pmix_pnet_globals.initialized = false;
+    pmix_pnet_globals.selected = false;
 
     PMIX_LIST_FOREACH_SAFE(active, prev, &pmix_pnet_globals.actives, pmix_pnet_base_active_module_t) {
       pmix_list_remove_item(&pmix_pnet_globals.actives, &active->super);
@@ -73,6 +74,7 @@ static pmix_status_t pmix_pnet_close(void)
       PMIX_RELEASE(active);
     }
     PMIX_DESTRUCT(&pmix_pnet_globals.actives);
+    PMIX_DESTRUCT(&pmix_pnet_globals.fabrics);
 
     PMIX_LIST_DESTRUCT(&pmix_pnet_globals.jobs);
     PMIX_LIST_DESTRUCT(&pmix_pnet_globals.nodes);
@@ -88,6 +90,7 @@ static pmix_status_t pmix_pnet_open(pmix_mca_base_open_flag_t flags)
     PMIX_CONSTRUCT_LOCK(&pmix_pnet_globals.lock);
     pmix_pnet_globals.lock.active = false;
     PMIX_CONSTRUCT(&pmix_pnet_globals.actives, pmix_list_t);
+    PMIX_CONSTRUCT(&pmix_pnet_globals.fabrics, pmix_list_t);
     PMIX_CONSTRUCT(&pmix_pnet_globals.jobs, pmix_list_t);
     PMIX_CONSTRUCT(&pmix_pnet_globals.nodes, pmix_list_t);
 
@@ -181,3 +184,20 @@ static void rdes(pmix_pnet_resource_t *p)
 PMIX_CLASS_INSTANCE(pmix_pnet_resource_t,
                     pmix_list_item_t,
                     rcon, rdes);
+
+static void ftcon(pmix_pnet_fabric_t *p)
+{
+    p->name = NULL;
+    p->index = 0;
+    p->module = NULL;
+    p->payload = NULL;
+}
+static void ftdes(pmix_pnet_fabric_t *p)
+{
+    if (NULL != p->name) {
+        free(p->name);
+    }
+}
+PMIX_CLASS_INSTANCE(pmix_pnet_fabric_t,
+                    pmix_list_item_t,
+                    ftcon, ftdes);

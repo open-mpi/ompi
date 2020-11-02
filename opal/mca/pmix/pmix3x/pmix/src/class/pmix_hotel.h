@@ -2,7 +2,9 @@
 /*
  * Copyright (c) 2012-2016 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC. All rights reserved
- * Copyright (c) 2015-2019 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015-2020 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2019      Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2020      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -53,10 +55,10 @@
 #ifndef PMIX_HOTEL_H
 #define PMIX_HOTEL_H
 
-#include <src/include/pmix_config.h>
-#include "src/include/types.h"
+#include "src/include/pmix_config.h"
 #include "src/include/prefetch.h"
-#include "pmix_common.h"
+#include "include/pmix_common.h"
+#include "src/include/types.h"
 #include "src/class/pmix_object.h"
 #include PMIX_EVENT_HEADER
 
@@ -307,7 +309,7 @@ static inline void pmix_hotel_checkout_and_return_occupant(pmix_hotel_t *hotel, 
         *occupant = room->occupant;
         room->occupant = NULL;
         if (NULL != hotel->evbase) {
-            event_del(&(room->eviction_timer_event));
+            pmix_event_del(&(room->eviction_timer_event));
         }
         hotel->last_unoccupied_room++;
         assert(hotel->last_unoccupied_room < hotel->num_rooms);

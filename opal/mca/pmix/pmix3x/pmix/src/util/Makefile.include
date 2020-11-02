@@ -12,7 +12,7 @@
 #                         All rights reserved.
 # Copyright (c) 2007-2016 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
-# Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
+# Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
 # Copyright (c) 2016      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
@@ -38,6 +38,7 @@ headers += \
         util/crc.h \
         util/fd.h \
         util/timings.h \
+        util/os_dirpath.h \
         util/os_path.h \
         util/basename.h \
         util/keyval_parse.h \
@@ -51,7 +52,9 @@ headers += \
         util/net.h \
         util/pif.h \
         util/parse_options.h \
-        util/compress.h
+        util/context_fns.h \
+        util/pmix_pty.h \
+        util/few.h
 
 sources += \
         util/alfg.c \
@@ -64,6 +67,7 @@ sources += \
         util/crc.c \
         util/fd.c \
         util/timings.c \
+        util/os_dirpath.c \
         util/os_path.c \
         util/basename.c \
         util/keyval_parse.c \
@@ -76,7 +80,9 @@ sources += \
         util/net.c \
         util/pif.c \
         util/parse_options.c \
-        util/compress.c
+        util/context_fns.c \
+        util/pmix_pty.c \
+        util/few.c
 
 libpmix_la_LIBADD += \
         util/keyval/libpmixutilkeyval.la

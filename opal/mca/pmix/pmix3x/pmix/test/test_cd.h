@@ -8,7 +8,7 @@
  *
  */
 
-#include <src/include/pmix_config.h>
+#include "src/include/pmix_config.h"
 #include <pmix.h>
 
 #include "test_common.h"

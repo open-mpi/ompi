@@ -13,7 +13,7 @@
  * Copyright (c) 2008-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2016      Intel, Inc. All rights reserved.
+ * Copyright (c) 2016-2020 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -29,7 +29,7 @@
 #ifndef PMIX_MCA_H
 #define PMIX_MCA_H
 
-#include <src/include/pmix_config.h>
+#include "src/include/pmix_config.h"
 
 /**
  * Common type for all MCA modules.

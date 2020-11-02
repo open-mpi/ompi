@@ -13,7 +13,9 @@
  * Copyright (c) 2011-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2020 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2019      Mellanox Technologies, Inc.
+ *                         All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -22,7 +24,7 @@
  *
  */
 
-#include <src/include/pmix_config.h>
+#include "src/include/pmix_config.h"
 
 #include "src/util/error.h"
 #include "src/include/pmix_globals.h"
@@ -436,20 +438,22 @@ pmix_data_type_t pmix20_v21_to_v20_datatype(pmix_data_type_t v21type)
     return v20type;
 }
 
-pmix_status_t pmix20_bfrop_store_data_type(pmix_buffer_t *buffer, pmix_data_type_t type)
+pmix_status_t pmix20_bfrop_store_data_type(pmix_pointer_array_t *regtypes,
+                                           pmix_buffer_t *buffer, pmix_data_type_t type)
 {
     pmix_data_type_t v20type;
 
     v20type = pmix20_v21_to_v20_datatype(type);
-    return pmix20_bfrop_pack_datatype(buffer, &v20type, 1, PMIX_DATA_TYPE);
+    return pmix20_bfrop_pack_datatype(regtypes, buffer, &v20type, 1, PMIX_DATA_TYPE);
 }
 
-pmix_status_t pmix20_bfrop_get_data_type(pmix_buffer_t *buffer, pmix_data_type_t *type)
+pmix_status_t pmix20_bfrop_get_data_type(pmix_pointer_array_t *regtypes,
+                                         pmix_buffer_t *buffer, pmix_data_type_t *type)
 {
     int32_t n=1;
     pmix_status_t rc;
 
-    rc = pmix20_bfrop_unpack_datatype(buffer, type, &n, PMIX_DATA_TYPE);
+    rc = pmix20_bfrop_unpack_datatype(regtypes, buffer, type, &n, PMIX_DATA_TYPE);
 
     return rc;
 }

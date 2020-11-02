@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
- * Copyright (c) 2017      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2017-2020 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -66,7 +66,7 @@ static int plibltpdl_open(const char *fname, bool use_ext, bool private_namespac
     }
 
     if (NULL != err_msg) {
-        *err_msg = (char*) lt_dlerror();
+        *err_msg = strdup((char*) lt_dlerror());
     }
     return PMIX_ERROR;
 }
@@ -90,7 +90,7 @@ static int plibltpdl_lookup(pmix_pdl_handle_t *handle, const char *symbol,
     }
 
     if (NULL != err_msg) {
-        *err_msg = (char*) lt_dlerror();
+        *err_msg = strdup((char*) lt_dlerror());
     }
     return PMIX_ERROR;
 }

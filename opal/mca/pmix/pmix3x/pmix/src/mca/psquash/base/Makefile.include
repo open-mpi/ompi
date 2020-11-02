@@ -1,0 +1,19 @@
+# -*- makefile -*-
+#
+# Copyright (c) 2019      IBM Corporation.  All rights reserved.
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
+#
+
+# This makefile.am does not stand on its own - it is included from
+# src/Makefile.am
+
+headers += \
+         base/base.h
+
+sources += \
+        base/psquash_base_frame.c \
+        base/psquash_base_select.c

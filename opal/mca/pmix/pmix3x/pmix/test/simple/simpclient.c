@@ -15,6 +15,8 @@
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2013-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Mellanox Technologies, Inc.  All rights reserved.
+ * Copyright (c) 2019      Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -23,8 +25,8 @@
  *
  */
 
-#include <src/include/pmix_config.h>
-#include <pmix.h>
+#include "src/include/pmix_config.h"
+#include "include/pmix.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -54,17 +56,6 @@ static void notification_fn(size_t evhdlr_registration_id,
         cbfunc(PMIX_SUCCESS, NULL, 0, NULL, NULL, cbdata);
     }
     completed = true;
-}
-
-static void errhandler_reg_callbk(pmix_status_t status,
-                                  size_t errhandler_ref,
-                                  void *cbdata)
-{
-    volatile bool *active = (volatile bool*)cbdata;
-
-    pmix_output(0, "Client: ERRHANDLER REGISTRATION CALLBACK CALLED WITH STATUS %d, ref=%lu",
-                status, (unsigned long)errhandler_ref);
-    *active = false;
 }
 
 static void opcbfunc(pmix_status_t status, void *cbdata)
@@ -109,18 +100,6 @@ static void model_callback(size_t evhdlr_registration_id,
     }
 }
 
-/* event handler registration is done asynchronously */
-static void model_registration_callback(pmix_status_t status,
-                                        size_t evhandler_ref,
-                                        void *cbdata)
-{
-    volatile int *active = (volatile int*)cbdata;
-
-    fprintf(stderr, "simpclient EVENT HANDLER REGISTRATION RETURN STATUS %d, ref=%lu\n",
-               status, (unsigned long)evhandler_ref);
-    *active = false;
-}
-
 int main(int argc, char **argv)
 {
     int rc;
@@ -158,8 +137,7 @@ int main(int argc, char **argv)
     pmix_output(0, "Client ns %s rank %d: Running on node %s", myproc.nspace, myproc.rank, pmix_globals.hostname);
 
     /* test something */
-    (void)strncpy(proc.nspace, myproc.nspace, PMIX_MAX_NSLEN);
-    proc.rank = PMIX_RANK_WILDCARD;
+    PMIX_LOAD_PROCID(&proc, myproc.nspace, PMIX_RANK_WILDCARD);
     if (PMIX_SUCCESS != (rc = PMIx_Get(&proc, PMIX_JOB_SIZE, NULL, 0, &val))) {
         pmix_output(0, "Client ns %s rank %d: PMIx_Get job size failed: %s",
                     myproc.nspace, myproc.rank, PMIx_Error_string(rc));
@@ -171,7 +149,7 @@ int main(int argc, char **argv)
 
     /* test something */
     if (PMIX_SUCCESS != (rc = PMIx_Get(&myproc, PMIX_SERVER_URI, NULL, 0, &val))) {
-        pmix_output(0, "Client ns %s rank %d: PMIx_Get failed: %s",
+        pmix_output(0, "Client ns %s rank %d: PMIx_Get server URI failed: %s",
                     myproc.nspace, myproc.rank, PMIx_Error_string(rc));
         exit(rc);
     }
@@ -195,26 +173,17 @@ int main(int argc, char **argv)
     PMIX_VALUE_RELEASE(val);
 
     /* register a handler specifically for when models declare */
-    active = true;
     ninfo = 1;
     PMIX_INFO_CREATE(iptr, ninfo);
     PMIX_INFO_LOAD(&iptr[0], PMIX_EVENT_HDLR_NAME, "SIMPCLIENT-MODEL", PMIX_STRING);
     code = PMIX_MODEL_DECLARED;
     PMIx_Register_event_handler(&code, 1, iptr, ninfo,
-                                model_callback, model_registration_callback, (void*)&active);
-    while (active) {
-        usleep(10);
-    }
+                                model_callback, NULL, NULL);
     PMIX_INFO_FREE(iptr, ninfo);
 
     /* register our errhandler */
-    active = true;
     PMIx_Register_event_handler(NULL, 0, NULL, 0,
-                                notification_fn, errhandler_reg_callbk, (void*)&active);
-    while (active) {
-        usleep(10);
-    }
-
+                                notification_fn, NULL, NULL);
 
     /* put a few values */
     (void)asprintf(&tmp, "%s-%d-internal", myproc.nspace, myproc.rank);

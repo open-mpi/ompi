@@ -3,7 +3,7 @@
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2016-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2016-2020 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -14,7 +14,7 @@
 #ifndef PMIX_PDL_BASE_H
 #define PMIX_PDL_BASE_H
 
-#include <src/include/pmix_config.h>
+#include "src/include/pmix_config.h"
 #include "src/mca/pdl/pdl.h"
 #include "src/util/pmix_environ.h"
 

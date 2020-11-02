@@ -1,8 +1,8 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2016-2018 Mellanox Technologies, Inc.
+ * Copyright (c) 2016-2020 Mellanox Technologies, Inc.
  *                         All rights reserved.
- * Copyright (c) 2016-2018 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2016-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2018      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -14,10 +14,10 @@
 #ifndef PMIX_GDS_H
 #define PMIX_GDS_H
 
-#include <src/include/pmix_config.h>
+#include "src/include/pmix_config.h"
 
 
-#include <pmix_common.h>
+#include "include/pmix_common.h"
 #include "src/mca/mca.h"
 #include "src/mca/base/pmix_mca_base_var.h"
 #include "src/mca/base/pmix_mca_base_framework.h"
@@ -234,17 +234,14 @@ typedef pmix_status_t (*pmix_gds_base_module_store_fn_t)(const pmix_proc_t *proc
  * ranks - a list of pmix_rank_info_t for the local ranks from this
  *         nspace - this is to be used to filter the cbs list
  *
- * cbs - a list of pmix_server_caddy_t's that contain the pmix_peer_t
- *       pointers of the local participants. The list can be used to
- *       identify those participants corresponding to this nspace
- *       (and thus, GDS component)
+ * cbdata - pointer to modex callback data
  *
  * bo - pointer to the byte object containing the data
  *
  */
 typedef pmix_status_t (*pmix_gds_base_module_store_modex_fn_t)(struct pmix_namespace_t *ns,
-                                                               pmix_list_t *cbs,
-                                                               pmix_buffer_t *buff);
+                                                               pmix_buffer_t *buff,
+                                                               void *cbdata);
 
 /**
  * define a convenience macro for storing modex byte objects
@@ -253,17 +250,16 @@ typedef pmix_status_t (*pmix_gds_base_module_store_modex_fn_t)(struct pmix_names
  *
  * n - pointer to the pmix_namespace_t this blob is to be stored for
  *
- * l - pointer to pmix_list_t containing pmix_server_caddy_t objects
- *     of the local_cbs of the collective tracker
- *
  * b - pointer to pmix_byte_object_t containing the data
+ *
+ * t - pointer to the modex server tracker
  */
-#define PMIX_GDS_STORE_MODEX(r, n, l, b)  \
+#define PMIX_GDS_STORE_MODEX(r, n, b, t)  \
     do {                                                                    \
         pmix_output_verbose(1, pmix_gds_base_output,                        \
                             "[%s:%d] GDS STORE MODEX WITH %s",              \
                             __FILE__, __LINE__, (n)->compat.gds->name);     \
-        (r) = (n)->compat.gds->store_modex((struct pmix_namespace_t*)n, l, b); \
+        (r) = (n)->compat.gds->store_modex((struct pmix_namespace_t*)n, b, t); \
     } while (0)
 
 /**
@@ -346,11 +342,12 @@ typedef pmix_status_t (*pmix_gds_base_module_setup_fork_fn_t)(const pmix_proc_t 
 * @return PMIX_SUCCESS on success.
 */
 typedef pmix_status_t (*pmix_gds_base_module_add_nspace_fn_t)(const char *nspace,
+                                                              uint32_t nlocalprocs,
                                                               pmix_info_t info[],
                                                               size_t ninfo);
 
 /* define a convenience macro for add_nspace based on peer */
-#define PMIX_GDS_ADD_NSPACE(s, n, i, ni)                    \
+#define PMIX_GDS_ADD_NSPACE(s, n, ls, i, ni)                \
     do {                                                    \
         pmix_gds_base_active_module_t *_g;                  \
         pmix_status_t _s = PMIX_SUCCESS;                    \
@@ -361,7 +358,7 @@ typedef pmix_status_t (*pmix_gds_base_module_add_nspace_fn_t)(const char *nspace
         PMIX_LIST_FOREACH(_g, &pmix_gds_globals.actives,    \
                           pmix_gds_base_active_module_t) {  \
             if (NULL != _g->module->add_nspace) {           \
-                _s = _g->module->add_nspace(n, i, ni);      \
+                _s = _g->module->add_nspace(n, ls, i, ni);  \
             }                                               \
             if (PMIX_SUCCESS != _s) {                       \
                 (s) = PMIX_ERROR;                           \

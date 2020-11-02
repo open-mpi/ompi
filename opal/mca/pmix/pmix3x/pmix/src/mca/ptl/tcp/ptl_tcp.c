@@ -13,7 +13,7 @@
  * Copyright (c) 2011-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2018      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -23,7 +23,7 @@
  *
  */
 
-#include <src/include/pmix_config.h>
+#include "src/include/pmix_config.h"
 #include "src/include/pmix_globals.h"
 
 #ifdef HAVE_FCNTL_H
@@ -128,7 +128,7 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
     char *evar, **uri, *suri = NULL, *suri2 = NULL;
     char *filename, *nspace=NULL;
     pmix_rank_t rank = PMIX_RANK_WILDCARD;
-    char *p, *p2, *server_nspace = NULL, *rendfile = NULL;
+    char *p = NULL, *p2, *server_nspace = NULL, *rendfile = NULL;
     int sd, rc;
     size_t n;
     char myhost[PMIX_MAXHOSTNAMELEN] = {0};
@@ -269,14 +269,8 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
                         continue;
                     }
                     /* otherwise, we don't know which one to use */
-                    free(server_nspace);
-                    if (NULL != suri) {
-                        free(suri);
-                    }
-                    if (NULL != rendfile) {
-                        free(rendfile);
-                    }
-                    return PMIX_ERR_BAD_PARAM;
+                    rc = PMIX_ERR_BAD_PARAM;
+                    goto cleanup;
                 }
                 server_nspace = strdup(info[n].value.data.string);
             } else if (PMIX_CHECK_KEY(&info[n], PMIX_SERVER_URI)) {
@@ -287,14 +281,8 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
                         continue;
                     }
                     /* otherwise, we don't know which one to use */
-                    free(suri);
-                    if (NULL != server_nspace) {
-                        free(server_nspace);
-                    }
-                    if (NULL != rendfile) {
-                        free(rendfile);
-                    }
-                    return PMIX_ERR_BAD_PARAM;
+                    rc = PMIX_ERR_BAD_PARAM;
+                    goto cleanup;
                 }
                 suri = strdup(info[n].value.data.string);
             } else if (PMIX_CHECK_KEY(&info[n], PMIX_CONNECT_RETRY_DELAY)) {
@@ -303,11 +291,6 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
                 mca_ptl_tcp_component.max_retries = info[n].value.data.uint32;
             } else if (PMIX_CHECK_KEY(&info[n], PMIX_RECONNECT_SERVER)) {
                 reconnect = true;
-            } else if (PMIX_CHECK_KEY(&info[n], PMIX_LAUNCHER_RENDEZVOUS_FILE)) {
-                if (NULL != rendfile) {
-                    free(rendfile);
-                }
-                rendfile = strdup(info[n].value.data.string);
             } else {
                 /* need to pass this to server */
                 kv = PMIX_NEW(pmix_info_caddy_t);
@@ -345,13 +328,16 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
 
     if (sysctl(mib, 2, &argmax, &size, NULL, 0) == -1) {
         fprintf(stderr, "sysctl() argmax failed\n");
-        return -1;
+        rc = PMIX_ERR_NO_PERMISSIONS;
+        goto cleanup;
     }
 
     /* Allocate space for the arguments. */
     procargs = (char *)malloc(argmax);
-    if (procargs == NULL)
-        return -1;
+    if (procargs == NULL) {
+        rc = -1;
+        goto cleanup;
+    }
 
     /* Make a sysctl() call to get the raw argument space of the process. */
     mib[0] = CTL_KERN;
@@ -362,7 +348,8 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
 
     if (sysctl(mib, 3, procargs, &size, NULL, 0) == -1) {
         fprintf(stderr, "Lacked permissions\n");;
-        return 0;
+        rc = PMIX_ERR_NO_PERMISSIONS;
+        goto cleanup;
     }
 
     memcpy(&nargs, procargs, sizeof(nargs));
@@ -435,10 +422,6 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
     gethostname(myhost, sizeof(myhost)-1);
     /* if we were given a URI via MCA param, then look no further */
     if (NULL != suri) {
-        if (NULL != server_nspace) {
-            free(server_nspace);
-            server_nspace = NULL;
-        }
         /* if the string starts with "file:", then they are pointing
          * us to a file we need to read to get the URI itself */
         if (0 == strncmp(suri, "file:", 5)) {
@@ -447,14 +430,8 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
             nspace = NULL;
             rc = parse_uri_file(&suri[5], &suri2, &nspace, &rank);
             if (PMIX_SUCCESS != rc) {
-                free(suri);
-                if (NULL != rendfile) {
-                    free(rendfile);
-                }
-                if (NULL != iptr) {
-                    PMIX_INFO_FREE(iptr, niptr);
-                }
-                return PMIX_ERR_UNREACH;
+                rc = PMIX_ERR_UNREACH;
+                goto cleanup;
             }
             free(suri);
             suri = suri2;
@@ -462,14 +439,8 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
             /* we need to extract the nspace/rank of the server from the string */
             p = strchr(suri, ';');
             if (NULL == p) {
-                free(suri);
-                if (NULL != rendfile) {
-                    free(rendfile);
-                }
-                if (NULL != iptr) {
-                    PMIX_INFO_FREE(iptr, niptr);
-                }
-                return PMIX_ERR_BAD_PARAM;
+                rc = PMIX_ERR_BAD_PARAM;
+                goto cleanup;
             }
             *p = '\0';
             p++;
@@ -479,14 +450,8 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
             p = strchr(suri, '.');
             if (NULL == p) {
                 free(suri2);
-                free(suri);
-                if (NULL != rendfile) {
-                    free(rendfile);
-                }
-                if (NULL != iptr) {
-                    PMIX_INFO_FREE(iptr, niptr);
-                }
-                return PMIX_ERR_BAD_PARAM;
+                rc = PMIX_ERR_BAD_PARAM;
+                goto cleanup;
             }
             *p = '\0';
             p++;
@@ -500,27 +465,9 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
                             "ptl:tcp:tool attempt connect using given URI %s", suri);
         /* go ahead and try to connect */
         if (PMIX_SUCCESS != (rc = try_connect(suri, &sd, iptr, niptr))) {
-            if (NULL != nspace) {
-                free(nspace);
-            }
-            free(suri);
-            if (NULL != rendfile) {
-                free(rendfile);
-            }
-            if (NULL != iptr) {
-                PMIX_INFO_FREE(iptr, niptr);
-            }
-            return rc;
+            goto cleanup;
         }
         /* cleanup */
-        free(suri);
-        suri = NULL;
-        if (NULL != rendfile) {
-            free(rendfile);
-        }
-        if (NULL != iptr) {
-            PMIX_INFO_FREE(iptr, niptr);
-        }
         goto complete;
     }
 
@@ -532,42 +479,27 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
         rendfile = NULL;
         if (PMIX_SUCCESS == rc) {
             pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
-                                "ptl:tcp:tool attempt connect to system server at %s", suri);
+                                "ptl:tcp:tool attempt connect to rendezvous server at %s", suri);
             /* go ahead and try to connect */
             if (PMIX_SUCCESS == try_connect(suri, &sd, iptr, niptr)) {
                 /* don't free nspace - we will use it below */
-                if (NULL != rendfile) {
-                    free(rendfile);
-                }
                 if (NULL != iptr) {
                     PMIX_INFO_FREE(iptr, niptr);
                 }
                 goto complete;
             }
         }
-        /* cleanup */
-        if (NULL != nspace) {
-            free(nspace);
-        }
-        if (NULL != suri) {
-            free(suri);
-        }
-        free(rendfile);
-        if (NULL != iptr) {
-            PMIX_INFO_FREE(iptr, niptr);
-        }
         /* since they gave us a specific rendfile and we couldn't
          * connect to it, return an error */
-        return PMIX_ERR_UNREACH;
+        rc = PMIX_ERR_UNREACH;
+        goto cleanup;
     }
 
     /* if they asked for system-level first or only, we start there */
     if (system_level || system_level_only) {
         if (0 > asprintf(&filename, "%s/pmix.sys.%s", mca_ptl_tcp_component.system_tmpdir, myhost)) {
-            if (NULL != iptr) {
-                PMIX_INFO_FREE(iptr, niptr);
-            }
-            return PMIX_ERR_NOMEM;
+            rc = PMIX_ERR_NOMEM;
+            goto cleanup;
         }
         pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
                             "ptl:tcp:tool looking for system server at %s",
@@ -581,12 +513,10 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
             /* go ahead and try to connect */
             if (PMIX_SUCCESS == try_connect(suri, &sd, iptr, niptr)) {
                 /* don't free nspace - we will use it below */
-                if (NULL != iptr) {
-                    PMIX_INFO_FREE(iptr, niptr);
-                }
                 goto complete;
             }
             free(nspace);
+            nspace = NULL;
         }
     }
 
@@ -596,26 +526,15 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
     if (system_level_only) {
         pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
                             "ptl:tcp: connecting to system failed");
-        if (NULL != suri) {
-            free(suri);
-        }
-        if (NULL != iptr) {
-            PMIX_INFO_FREE(iptr, niptr);
-        }
-        return PMIX_ERR_UNREACH;
+        rc = PMIX_ERR_UNREACH;
+        goto cleanup;
     }
 
     /* if they gave us a pid, then look for it */
     if (0 != pid) {
-        if (NULL != server_nspace) {
-            free(server_nspace);
-            server_nspace = NULL;
-        }
         if (0 > asprintf(&filename, "pmix.%s.tool.%d", myhost, pid)) {
-            if (NULL != iptr) {
-                PMIX_INFO_FREE(iptr, niptr);
-            }
-            return PMIX_ERR_NOMEM;
+            rc = PMIX_ERR_NOMEM;
+            goto cleanup;
         }
         pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
                             "ptl:tcp:tool searching for given session server %s",
@@ -627,28 +546,17 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
         if (PMIX_SUCCESS == rc) {
             goto complete;
         }
-        if (NULL != suri) {
-            free(suri);
-        }
-        if (NULL != nspace) {
-            free(nspace);
-        }
-        if (NULL != iptr) {
-            PMIX_INFO_FREE(iptr, niptr);
-        }
         /* since they gave us a specific pid and we couldn't
          * connect to it, return an error */
-        return PMIX_ERR_UNREACH;
+        rc = PMIX_ERR_UNREACH;
+        goto cleanup;
     }
 
     /* if they gave us an nspace, then look for it */
     if (NULL != server_nspace) {
         if (0 > asprintf(&filename, "pmix.%s.tool.%s", myhost, server_nspace)) {
-            free(server_nspace);
-            if (NULL != iptr) {
-                PMIX_INFO_FREE(iptr, niptr);
-            }
-            return PMIX_ERR_NOMEM;
+            rc = PMIX_ERR_NOMEM;
+            goto cleanup;
         }
         free(server_nspace);
         server_nspace = NULL;
@@ -662,18 +570,10 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
         if (PMIX_SUCCESS == rc) {
             goto complete;
         }
-        if (NULL != suri) {
-            free(suri);
-        }
-        if (NULL != nspace) {
-            free(nspace);
-        }
-        if (NULL != iptr) {
-            PMIX_INFO_FREE(iptr, niptr);
-        }
         /* since they gave us a specific nspace and we couldn't
          * connect to it, return an error */
-        return PMIX_ERR_UNREACH;
+        rc = PMIX_ERR_UNREACH;
+        goto cleanup;
     }
 
     /* they didn't give us a pid, so we will search to see what session-level
@@ -682,13 +582,8 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
      * one session per user on a node */
 
     if (0 > asprintf(&filename, "pmix.%s.tool", myhost)) {
-        if (NULL != suri) {
-            free(suri);
-        }
-        if (NULL != iptr) {
-            PMIX_INFO_FREE(iptr, niptr);
-        }
-        return PMIX_ERR_NOMEM;
+        rc = PMIX_ERR_NOMEM;
+        goto cleanup;
     }
     pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
                         "ptl:tcp:tool searching for session server %s",
@@ -698,19 +593,8 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
                    filename, iptr, niptr, &sd, &nspace, &rank, &suri);
     free(filename);
     if (PMIX_SUCCESS != rc) {
-        if (NULL != nspace){
-            free(nspace);
-        }
-        if (NULL != suri) {
-            free(suri);
-        }
-        if (NULL != iptr) {
-            PMIX_INFO_FREE(iptr, niptr);
-        }
-        return PMIX_ERR_UNREACH;
-    }
-    if (NULL != iptr) {
-        PMIX_INFO_FREE(iptr, niptr);
+        rc = PMIX_ERR_UNREACH;
+        goto cleanup;
     }
 
   complete:
@@ -719,14 +603,9 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
 
     /* do a final bozo check */
     if (NULL == nspace || PMIX_RANK_WILDCARD == rank) {
-        if (NULL != nspace) {
-            free(nspace);
-        }
-        if (NULL != suri) {
-            free(suri);
-        }
         CLOSE_THE_SOCKET(sd);
-        return PMIX_ERR_UNREACH;
+        rc = PMIX_ERR_UNREACH;
+        goto cleanup;
     }
     /* mark the connection as made */
     pmix_globals.connected = true;
@@ -784,11 +663,23 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
                       pmix_ptl_base_send_handler, pmix_client_globals.myserver);
     pmix_client_globals.myserver->send_ev_active = false;
 
-    free(nspace);
+  cleanup:
+    if (NULL != nspace) {
+        free(nspace);
+    }
+    if (NULL != iptr) {
+        PMIX_INFO_FREE(iptr, niptr);
+    }
+    if (NULL != rendfile) {
+        free(rendfile);
+    }
     if (NULL != suri) {
         free(suri);
     }
-    return PMIX_SUCCESS;
+    if (NULL != server_nspace) {
+        free(server_nspace);
+    }
+    return rc;
 }
 
 static pmix_status_t send_recv(struct pmix_peer_t *peer,
@@ -852,45 +743,79 @@ static pmix_status_t parse_uri_file(char *filename,
     int retries;
     int major, minor, release;
 
-    fp = fopen(filename, "r");
-    if (NULL == fp) {
-        /* if we cannot open the file, then the server must not
-         * be configured to support tool connections, or this
-         * user isn't authorized to access it - or it may just
-         * not exist yet! Check for existence */
-        if (0 != access(filename, R_OK)) {
-            if (ENOENT == errno && 0 < mca_ptl_tcp_component.wait_to_connect) {
-                /* the file does not exist, so give it
-                 * a little time to see if the server
-                 * is still starting up */
-                retries = 0;
-                do {
-                    ++retries;
-                    pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
-                                        "WAITING FOR CONNECTION FILE");
-                    PMIX_CONSTRUCT_LOCK(&lock);
+     /* if we cannot open the file, then the server must not
+     * be configured to support tool connections, or this
+     * user isn't authorized to access it - or it may just
+     * not exist yet! Check for existence */
+    /* coverity[toctou] */
+    if (0 == access(filename, R_OK)) {
+        goto process;
+    } else {
+        if (ENOENT == errno) {
+            /* the file does not exist, so give it
+             * a little time to see if the server
+             * is still starting up */
+            retries = 0;
+            do {
+                ++retries;
+                pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
+                                    "WAITING FOR CONNECTION FILE %s", filename);
+                PMIX_CONSTRUCT_LOCK(&lock);
+                if (0 < mca_ptl_tcp_component.wait_to_connect) {
                     tv.tv_sec = mca_ptl_tcp_component.wait_to_connect;
                     tv.tv_usec = 0;
                     pmix_event_evtimer_set(pmix_globals.evbase, &ev,
                                            timeout, &lock);
+                    PMIX_POST_OBJECT(&ev);
                     pmix_event_evtimer_add(&ev, &tv);
-                    PMIX_WAIT_THREAD(&lock);
-                    PMIX_DESTRUCT_LOCK(&lock);
-                    fp = fopen(filename, "r");
-                    if (NULL != fp) {
-                        /* we found it! */
-                        goto process;
-                    }
-                } while (retries < mca_ptl_tcp_component.max_retries);
-                /* otherwise, mark it as unreachable */
-            }
+                } else {
+                    tv.tv_sec = 0;
+                    tv.tv_usec = 10000;  // use 0.01 sec as default
+                    pmix_event_evtimer_set(pmix_globals.evbase, &ev,
+                                           timeout, &lock);
+                    PMIX_POST_OBJECT(&ev);
+                    pmix_event_evtimer_add(&ev, &tv);
+                }
+                PMIX_WAIT_THREAD(&lock);
+                PMIX_DESTRUCT_LOCK(&lock);
+                /* coverity[toctou] */
+                if (0 == access(filename, R_OK)) {
+                    goto process;
+                }
+            } while (retries < mca_ptl_tcp_component.max_retries);
+            /* otherwise, mark it as unreachable */
         }
-        return PMIX_ERR_UNREACH;
     }
+    return PMIX_ERR_UNREACH;
 
   process:
-    /* get the URI */
-    srvr = pmix_getline(fp);
+    fp = fopen(filename, "r");
+    if (NULL == fp) {
+        return PMIX_ERR_UNREACH;
+    }
+    /* get the URI - might seem crazy, but there is actually
+     * a race condition here where the server may have created
+     * the file but not yet finished writing into it. So give
+     * us a chance to get the required info */
+    for (retries=0; retries < 3; retries++) {
+        srvr = pmix_getline(fp);
+        if (NULL != srvr) {
+            break;
+        }
+        fclose(fp);
+        tv.tv_sec = 0;
+        tv.tv_usec = 10000;  // use 0.01 sec as default
+        pmix_event_evtimer_set(pmix_globals.evbase, &ev,
+                               timeout, &lock);
+        PMIX_POST_OBJECT(&ev);
+        pmix_event_evtimer_add(&ev, &tv);
+        PMIX_WAIT_THREAD(&lock);
+        PMIX_DESTRUCT_LOCK(&lock);
+        fp = fopen(filename, "r");
+        if (NULL == fp) {
+            return PMIX_ERR_UNREACH;
+        }
+    }
     if (NULL == srvr) {
         PMIX_ERROR_LOG(PMIX_ERR_FILE_READ_FAILURE);
         fclose(fp);
@@ -1412,7 +1337,10 @@ static pmix_status_t recv_connect_ack(int sd, uint8_t myflag)
         if (NULL == pmix_client_globals.myserver->nptr) {
             pmix_client_globals.myserver->nptr = PMIX_NEW(pmix_namespace_t);
         }
-        pmix_ptl_base_recv_blocking(sd, (char*)nspace, PMIX_MAX_NSLEN+1);
+        rc = pmix_ptl_base_recv_blocking(sd, (char*)nspace, PMIX_MAX_NSLEN+1);
+        if (PMIX_SUCCESS != rc) {
+            return rc;
+        }
         if (NULL != pmix_client_globals.myserver->nptr->nspace) {
             free(pmix_client_globals.myserver->nptr->nspace);
         }
@@ -1421,7 +1349,10 @@ static pmix_status_t recv_connect_ack(int sd, uint8_t myflag)
             free(pmix_client_globals.myserver->info->pname.nspace);
         }
         pmix_client_globals.myserver->info->pname.nspace = strdup(nspace);
-        pmix_ptl_base_recv_blocking(sd, (char*)&u32, sizeof(uint32_t));
+        rc = pmix_ptl_base_recv_blocking(sd, (char*)&u32, sizeof(uint32_t));
+        if (PMIX_SUCCESS != rc) {
+            return rc;
+        }
         pmix_client_globals.myserver->info->pname.rank = htonl(u32);
 
         pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
@@ -1462,6 +1393,31 @@ static pmix_status_t recv_connect_ack(int sd, uint8_t myflag)
             return PMIX_ERR_UNREACH;
         }
     }
+#if defined(TCP_NODELAY)
+    int optval;
+    optval = 1;
+    if (setsockopt(sd, IPPROTO_TCP, TCP_NODELAY, (char *)&optval, sizeof(optval)) < 0) {
+        opal_backtrace_print(stderr, NULL, 1);
+        pmix_output_verbose(5, pmix_ptl_base_framework.framework_output,
+                            "[%s:%d] setsockopt(TCP_NODELAY) failed: %s (%d)",
+                            __FILE__, __LINE__,
+                            strerror(pmix_socket_errno),
+                            pmix_socket_errno);
+    }
+#endif
+#if defined(SO_NOSIGPIPE)
+    /* Some BSD flavors generate EPIPE when we write to a disconnected peer. We need
+     * the prevent this signal to be able to trap socket shutdown and cleanly release
+     * the endpoint.
+     */
+    int optval2 = 1;
+    if (setsockopt(sd, SOL_SOCKET, SO_NOSIGPIPE, (char *)&optval2, sizeof(optval2)) < 0) {
+            pmix_output_verbose(5, pmix_ptl_base_framework.framework_output,
+                                "[%s:%d] setsockopt(SO_NOSIGPIPE) failed: %s (%d)",
+                                 __FILE__, __LINE__,
+                                strerror(pmix_socket_errno), pmix_socket_errno);
+    }
+#endif
 
     return PMIX_SUCCESS;
 }
@@ -1493,6 +1449,7 @@ static pmix_status_t df_search(char *dirname, char *prefix,
             continue;
         }
         newdir = pmix_os_path(false, dirname, dir_entry->d_name, NULL);
+        /* coverity[toctou] */
         if (-1 == stat(newdir, &buf)) {
             free(newdir);
             continue;

@@ -13,7 +13,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015-2019 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
@@ -25,10 +25,10 @@
  *
  */
 
-#include <src/include/pmix_config.h>
+#include "src/include/pmix_config.h"
 #include <pmix_server.h>
-#include <src/include/types.h>
-#include <src/include/pmix_globals.h>
+#include "src/include/types.h"
+#include "src/include/pmix_globals.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -40,7 +40,7 @@
 #include <signal.h>
 
 #if PMIX_HAVE_HWLOC
-#include <src/hwloc/hwloc-internal.h>
+#include "src/hwloc/hwloc-internal.h"
 #endif
 
 #include "src/class/pmix_list.h"
@@ -258,7 +258,9 @@ static void infocbfunc(pmix_status_t status,
      * server */
     x = PMIX_NEW(myxfer_t);
     x->ninfo = ninfo;
-    PMIX_INFO_CREATE(x->info, x->ninfo);
+    if (0 < ninfo) {
+        PMIX_INFO_CREATE(x->info, x->ninfo);
+    }
     for (n=0; n < ninfo; n++) {
         PMIX_INFO_XFER(&x->info[n], &info[n]);
     }

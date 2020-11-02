@@ -13,7 +13,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2018 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Mellanox Technologies, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -24,7 +24,7 @@
  */
 
 #include "pmix_config.h"
-#include "pmix_common.h"
+#include "include/pmix_common.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -32,7 +32,7 @@
 #include <time.h>
 #include <pthread.h>
 
-#include <pmix_tool.h>
+#include "include/pmix_tool.h"
 #include "src/mca/base/base.h"
 #include "src/mca/pinstalldirs/base/base.h"
 #include "src/threads/threads.h"
@@ -169,6 +169,11 @@ int main(int argc, char **argv)
     /* initialize install dirs code */
     if (PMIX_SUCCESS != (rc = pmix_mca_base_framework_open(&pmix_pinstalldirs_base_framework, 0))) {
         fprintf(stderr, "pmix_pinstalldirs_base_open() failed -- process will likely abort (%s:%d, returned %d instead of PMIX_SUCCESS)\n",
+                __FILE__, __LINE__, rc);
+        return rc;
+    }
+    if (PMIX_SUCCESS != (rc = pmix_pinstall_dirs_base_init(NULL, 0))) {
+        fprintf(stderr, "pmix_pinstalldirs_base_init() failed -- process will likely abort (%s:%d, returned %d instead of PMIX_SUCCESS)\n",
                 __FILE__, __LINE__, rc);
         return rc;
     }

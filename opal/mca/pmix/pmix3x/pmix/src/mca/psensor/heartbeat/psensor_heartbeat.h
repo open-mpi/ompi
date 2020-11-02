@@ -2,7 +2,7 @@
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, Inc. All rights reserved.
  *
- * Copyright (c) 2017-2018 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2017-2020 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -17,8 +17,8 @@
 #ifndef PMIX_PSENSOR_HEARTBEAT_H
 #define PMIX_PSENSOR_HEARTBEAT_H
 
-#include <src/include/pmix_config.h>
-#include <src/include/types.h>
+#include "src/include/pmix_config.h"
+#include "src/include/types.h"
 
 #include "src/class/pmix_list.h"
 #include "src/include/pmix_globals.h"

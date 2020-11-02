@@ -43,6 +43,11 @@ AC_DEFUN([PMIX_SETUP_CORE],[
     AC_REQUIRE([AM_PROG_CC_C_O])
 
 
+    # initialize
+    PMIX_EMBEDDED_LDFLAGS=
+    PMIX_EMBEDDED_LIBS=
+    PMIX_EMBEDDED_CPPFLAGS=
+
     # If no prefix was defined, set a good value
     m4_ifval([$1],
              [m4_define([pmix_config_prefix],[$1/])],
@@ -168,22 +173,6 @@ AC_DEFUN([PMIX_SETUP_CORE],[
     # replaced, not the entire file.
     AC_CONFIG_HEADERS(pmix_config_prefix[src/include/pmix_config.h])
 
-    # Rename symbols?
-    AC_ARG_WITH([pmix-symbol-rename],
-                AC_HELP_STRING([--with-pmix-symbol-rename=PREFIX],
-                               [Provide a prefix to rename PMIx symbols]))
-    AC_MSG_CHECKING([for symbol rename])
-    AS_IF([test ! -z "$with_pmix_symbol_rename" && test "$with_pmix_symbol_rename" != "yes"],
-          [AC_MSG_RESULT([$with_pmix_symbol_rename])
-           pmix_symbol_rename="$with_pmix_symbol_rename"
-           PMIX_RENAME=$with_pmix_symbol_rename],
-          [AC_MSG_RESULT([no])
-           pmix_symbol_rename=""
-           PMIX_RENAME=])
-    AC_DEFINE_UNQUOTED(PMIX_SYMBOL_RENAME, [$pmix_symbol_rename],
-                       [The pmix symbol rename include directive])
-    AC_SUBST(PMIX_RENAME)
-    AC_CONFIG_FILES(pmix_config_prefix[include/pmix_rename.h])
 
     # Add any extra lib?
     AC_ARG_WITH([pmix-extra-lib],
@@ -416,9 +405,11 @@ AC_DEFUN([PMIX_SETUP_CORE],[
                       time.h unistd.h dirent.h \
                       crt_externs.h signal.h \
                       ioLib.h sockLib.h hostLib.h limits.h \
-                      sys/statfs.h sys/statvfs.h \
+                      sys/fcntl.h sys/statfs.h sys/statvfs.h \
                       netdb.h ucred.h zlib.h sys/auxv.h \
-                      sys/sysctl.h])
+                      sys/sysctl.h termio.h termios.h pty.h \
+                      libutil.h util.h grp.h sys/cdefs.h utmp.h stropts.h \
+                      sys/utsname.h])
 
     AC_CHECK_HEADERS([sys/mount.h], [], [],
                      [AC_INCLUDES_DEFAULT
@@ -663,7 +654,7 @@ AC_DEFUN([PMIX_SETUP_CORE],[
     # -lrt might be needed for clock_gettime
     PMIX_SEARCH_LIBS_CORE([clock_gettime], [rt])
 
-    AC_CHECK_FUNCS([asprintf snprintf vasprintf vsnprintf strsignal socketpair strncpy_s usleep statfs statvfs getpeereid getpeerucred strnlen posix_fallocate tcgetpgrp setpgid ptsname openpty setenv])
+    AC_CHECK_FUNCS([asprintf snprintf vasprintf vsnprintf strsignal socketpair strncpy_s usleep statfs statvfs getpeereid getpeerucred strnlen posix_fallocate tcgetpgrp setpgid ptsname openpty setenv fork execve waitpid])
 
     # On some hosts, htonl is a define, so the AC_CHECK_FUNC will get
     # confused.  On others, it's in the standard library, but stubbed with
@@ -752,7 +743,7 @@ AC_DEFUN([PMIX_SETUP_CORE],[
     ##################################
     # Libevent
     ##################################
-    pmix_show_title "Libevent"
+    pmix_show_title "Event libraries"
 
     PMIX_LIBEV_CONFIG
     PMIX_LIBEVENT_CONFIG
@@ -779,11 +770,12 @@ AC_DEFUN([PMIX_SETUP_CORE],[
 
 
     ##################################
-    # ZLIB COMPRESSION
+    # ZLIB
     ##################################
     pmix_show_title "ZLIB"
 
     PMIX_ZLIB_CONFIG
+
 
     ##################################
     # Dstore Locking
@@ -813,15 +805,19 @@ AC_DEFUN([PMIX_SETUP_CORE],[
                                    MCA-variable-setting mechansism).  This MCA variable
                                    controls whether warnings are displayed when an MCA
                                    component fails to load at run time due to an error.
-                                   (default: enabled, meaning that
+                                   (default: enabled in --enable-debug builds, meaning that
                                    mca_base_component_show_load_errors is enabled
-                                   by default])])
+                                   by default when configured with --enable-debug])])
     if test "$enable_show_load_errors_by_default" = "no" ; then
         PMIX_SHOW_LOAD_ERRORS_DEFAULT=0
         AC_MSG_RESULT([disabled by default])
     else
-        PMIX_SHOW_LOAD_ERRORS_DEFAULT=1
-        AC_MSG_RESULT([enabled by default])
+        PMIX_SHOW_LOAD_ERRORS_DEFAULT=$WANT_DEBUG
+        if test "$WANT_DEBUG" = "1"; then
+            AC_MSG_RESULT([enabled by default])
+        else
+            AC_MSG_RESULT([disabled by default])
+        fi
     fi
     AC_DEFINE_UNQUOTED(PMIX_SHOW_LOAD_ERRORS_DEFAULT, $PMIX_SHOW_LOAD_ERRORS_DEFAULT,
                        [Default value for mca_base_component_show_load_errors MCA variable])
@@ -854,11 +850,16 @@ AC_DEFUN([PMIX_SETUP_CORE],[
         # rather than have successive assignments to these shell
         # variables, lest the $(foo) names try to get evaluated here.
         # Yuck!
-        CPPFLAGS="-I$PMIX_top_builddir -I$PMIX_top_srcdir -I$PMIX_top_srcdir/src -I$PMIX_top_builddir/include -I$PMIX_top_srcdir/include $CPPFLAGS"
+        cpp_includes="$PMIX_top_builddir $PMIX_top_srcdir $PMIX_top_srcdir/src $PMIX_top_builddir/include"
     else
-        CPPFLAGS="-I$PMIX_top_srcdir -I$PMIX_top_srcdir/src -I$PMIX_top_srcdir/include $CPPFLAGS"
+        cpp_includes="$PMIX_top_srcdir $PMIX_top_srcdir/src"
     fi
+    CPP_INCLUDES="$(echo $cpp_includes | $SED 's/[[^ \]]* */'"$pmix_cc_iquote"'&/g')"
+    CPPFLAGS="$CPP_INCLUDES -I$PMIX_top_srcdir/include $CPPFLAGS $PMIX_FINAL_CPPFLAGS"
+    LDFLAGS="$LDFLAGS $PMIX_FINAL_LDFLAGS"
+    LIBS="$LIBS $PMIX_FINAL_LIBS"
 
+    ############################################################################
     # pmixdatadir, pmixlibdir, and pmixinclude are essentially the same as
     # pkg*dir, but will always be */pmix.
     pmixdatadir='${datadir}/pmix'
@@ -891,8 +892,15 @@ AC_DEFUN([PMIX_SETUP_CORE],[
     AC_CONFIG_FILES(pmix_config_prefix[test/run_tests11.pl], [chmod +x test/run_tests11.pl])
     AC_CONFIG_FILES(pmix_config_prefix[test/run_tests12.pl], [chmod +x test/run_tests12.pl])
     AC_CONFIG_FILES(pmix_config_prefix[test/run_tests13.pl], [chmod +x test/run_tests13.pl])
-    AC_CONFIG_FILES(pmix_config_prefix[test/run_tests14.pl], [chmod +x test/run_tests14.pl])
-    AC_CONFIG_FILES(pmix_config_prefix[test/run_tests15.pl], [chmod +x test/run_tests15.pl])
+#    AC_CONFIG_FILES(pmix_config_prefix[test/run_tests14.pl], [chmod +x test/run_tests14.pl])
+#    AC_CONFIG_FILES(pmix_config_prefix[test/run_tests15.pl], [chmod +x test/run_tests15.pl])
+
+
+    ############################################################################
+    # Check for building man pages
+    ############################################################################
+    pmix_show_subtitle "Man page setup"
+    PMIX_SETUP_MAN_PAGES
 
     ############################################################################
     # final output
@@ -1194,7 +1202,6 @@ fi
 
 AM_CONDITIONAL([PMIX_INSTALL_BINARIES], [test $WANT_PMIX_BINARIES -eq 1])
 
-
 # see if they want to disable non-RTLD_GLOBAL dlopen
 AC_MSG_CHECKING([if want to support dlopen of non-global namespaces])
 AC_ARG_ENABLE([nonglobal-dlopen],
@@ -1212,6 +1219,24 @@ fi
 # devel headers, then default nonglobal-dlopen to false
 AS_IF([test -z "$enable_nonglobal_dlopen" && test "x$pmix_mode" = "xembedded" && test $WANT_INSTALL_HEADERS -eq 0 && test $pmix_need_libpmix -eq 1],
       [pmix_need_libpmix=0])
+
+#
+# Do we want PTY support?
+#
+
+AC_MSG_CHECKING([if want pty support])
+AC_ARG_ENABLE(pty-support,
+    AC_HELP_STRING([--enable-pty-support],
+                   [Enable/disable PTY support for STDIO forwarding.  (default: enabled)]))
+if test "$enable_pty_support" = "no" ; then
+    AC_MSG_RESULT([no])
+    PMIX_ENABLE_PTY_SUPPORT=0
+else
+    AC_MSG_RESULT([yes])
+    PMIX_ENABLE_PTY_SUPPORT=1
+fi
+AC_DEFINE_UNQUOTED([PMIX_ENABLE_PTY_SUPPORT], [$PMIX_ENABLE_PTY_SUPPORT],
+                   [Whether user wants PTY support or not])
 
 #
 # psec/dummy_handshake

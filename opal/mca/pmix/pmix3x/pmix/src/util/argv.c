@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Voltaire. All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC. All rights reserved.
- * Copyright (c) 2014-2018 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2020 Intel, Inc.  All rights reserved.
  *
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -22,7 +22,7 @@
  * $HEADER$
  */
 
-#include <src/include/pmix_config.h>
+#include "src/include/pmix_config.h"
 
 
 #ifdef HAVE_STDLIB_H
@@ -124,6 +124,34 @@ pmix_status_t pmix_argv_prepend_nosize(char ***argv, const char *arg)
         }
         (*argv)[0] = strdup(arg);
     }
+
+    return PMIX_SUCCESS;
+}
+
+pmix_status_t pmix_argv_append_unique_idx(int *idx, char ***argv, const char *arg)
+{
+    int i;
+    pmix_status_t rc;
+
+    /* if the provided array is NULL, then the arg cannot be present,
+     * so just go ahead and append
+     */
+    if (NULL == *argv) {
+        goto add;
+    }
+    /* see if this arg is already present in the array */
+    for (i=0; NULL != (*argv)[i]; i++) {
+        if (0 == strcmp(arg, (*argv)[i])) {
+            /* already exists */
+            *idx = i;
+            return PMIX_SUCCESS;
+        }
+    }
+add:
+    if (PMIX_SUCCESS != (rc = pmix_argv_append_nosize(argv, arg))) {
+        return rc;
+    }
+    *idx = pmix_argv_count(*argv)-1;
 
     return PMIX_SUCCESS;
 }

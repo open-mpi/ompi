@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2020 Intel, Inc.  All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -11,7 +11,7 @@
 #ifndef PMIX_GDS_HASH_H
 #define PMIX_GDS_HASH_H
 
-#include <src/include/pmix_config.h>
+#include "src/include/pmix_config.h"
 
 
 #include "src/mca/gds/gds.h"

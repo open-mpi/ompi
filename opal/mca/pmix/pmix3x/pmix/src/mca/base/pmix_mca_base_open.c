@@ -13,7 +13,7 @@
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2016-2019 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2016-2020 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -21,7 +21,7 @@
  * $HEADER$
  */
 
-#include <src/include/pmix_config.h>
+#include "src/include/pmix_config.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -38,7 +38,7 @@
 #include "src/mca/mca.h"
 #include "src/mca/base/base.h"
 #include "src/mca/base/pmix_mca_base_component_repository.h"
-#include "pmix_common.h"
+#include "include/pmix_common.h"
 #include "src/util/pmix_environ.h"
 
 /*
@@ -77,16 +77,15 @@ int pmix_mca_base_open(void)
     }
 
     /* define the system and user default paths */
-#if PMIX_WANT_HOME_CONFIG_FILES
     pmix_mca_base_system_default_path = strdup(pmix_pinstall_dirs.pmixlibdir);
-    rc = asprintf(&pmix_mca_base_user_default_path, "%s"PMIX_PATH_SEP".pmix"PMIX_PATH_SEP"components", pmix_home_directory());
-#else
-    rc = asprintf(&pmix_mca_base_system_default_path, "%s", pmix_pinstall_dirs.pmixlibdir);
-#endif
-
+#if PMIX_WANT_HOME_CONFIG_FILES
+    value = (char*)pmix_home_directory(geteuid());
+    rc = asprintf(&pmix_mca_base_user_default_path, "%s"PMIX_PATH_SEP".pmix"PMIX_PATH_SEP"components", value);
     if (0 > rc) {
         return PMIX_ERR_OUT_OF_RESOURCE;
     }
+#endif
+
 
     /* see if the user wants to override the defaults */
     if (NULL == pmix_mca_base_user_default_path) {

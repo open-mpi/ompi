@@ -8,14 +8,14 @@ Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
                         University of Stuttgart.  All rights reserved.
 Copyright (c) 2004-2007 The Regents of the University of California.
                         All rights reserved.
-Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
+Copyright (c) 2006-2020 Cisco Systems, Inc.  All rights reserved.
 Copyright (c) 2006-2011 Mellanox Technologies. All rights reserved.
 Copyright (c) 2006-2012 Oracle and/or its affiliates.  All rights reserved.
 Copyright (c) 2007      Myricom, Inc.  All rights reserved.
 Copyright (c) 2008      IBM Corporation.  All rights reserved.
 Copyright (c) 2010      Oak Ridge National Labs.  All rights reserved.
 Copyright (c) 2011      University of Houston. All rights reserved.
-Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
+Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
 $COPYRIGHT$
 
 Additional copyrights may follow
@@ -25,16 +25,20 @@ $HEADER$
 ===========================================================================
 
 When submitting questions and problems, be sure to include as much
-extra information as possible.  The issues template on the
-GitHub repo provides directions:
+extra information as possible.  This web page details all the
+information that we request in order to provide assistance:
 
-     http://github.com/pmix/pmix/issues
+     https://pmix.org/support/
 
 The best way to report bugs, send comments, or ask questions is to
-open an issue on the repo. Alternatively, you are welcome to sign
-up for the developer/user mailing list:
+post them on the OpenPMIx GitHub issue tracker:
 
-        pmix@googlegroups.com
+     https://github.com/openpmix/openpmix/issues
+
+Alternatively, you can sign up on the PMIx mailing list, which is
+hosted by Google Groups:
+
+     pmix@googlegroups.com
 
 Because of spam, only subscribers are allowed to post to this list
 (ensure that you subscribe with and post from exactly the same e-mail
@@ -43,18 +47,13 @@ joe@mycomputer.example.com!).  You can subscribe to the list here:
 
      https://groups.google.com/d/forum/pmix
 
-Finally, just to round out all the possible ways to communicate with the
-PMIx community, you are invited to join the community's Slack channel:
-
-    pmix-workspace.slack.com
-
 Thanks for your time.
 
 ===========================================================================
 
 More information is available in the PMIx FAQ:
 
-    https://pmix.org/support
+    https://pmix.org/support/faq/
 
 We are in early days, so please be patient - info will grow as questions
 are addressed.
@@ -69,7 +68,7 @@ General notes
 
 - The majority of PMIx's documentation is here in this file, the
   included man pages, and on the web site FAQ
-  (https://pmix.org/support).  This will eventually be
+  (https://pmix.org/support/faq/).  This will eventually be
   supplemented with cohesive installation and user documentation files.
 
 - Systems that have been tested are:
@@ -197,22 +196,21 @@ PMIx's version numbers are the union of several different values:
 major, minor, release, and an optional quantifier.
 
   * Major: The major number is the first integer in the version string
-    (e.g., v1.2.3) and indicates the corresponding version of the PMIx
-    Standard. In other words, a PMIx library release starting with "v2"
-    indicates that the implementation conforms to version 2 of the PMIx
-    Standard.
+    (e.g., v1.2.3). Changes in the major number typically indicate a
+    significant change in the code base and/or end-user
+    functionality. The major number is always included in the version
+    number.
 
   * Minor: The minor number is the second integer in the version
     string (e.g., v1.2.3). Changes in the minor number typically
     indicate a incremental change in the code base and/or end-user
-    functionality, but not the supported version of the Standard.
-    The minor number is always included in the version number.
+    functionality. The minor number is always included in the version
+    number:
 
   * Release: The release number is the third integer in the version
     string (e.g., v1.2.3). Changes in the release number typically
     indicate a bug fix in the code base and/or end-user
-    functionality. The release number is always included in the
-    version number.
+    functionality.
 
   * Quantifier: PMIx version numbers sometimes have an arbitrary
     string affixed to the end of the version number. Common strings
@@ -299,15 +297,16 @@ Application Binary Interface (ABI) Compatibility
 ------------------------------------------------
 
 PMIx provides forward ABI compatibility in all versions of a given
-feature release series.  For example, on a single platform, an pmix
+feature release series and its corresponding
+super stable series.  For example, on a single platform, an pmix
 application linked against PMIx v1.3.2 shared libraries can be
 updated to point to the shared libraries in any successive v1.3.x or
 v1.4 release and still work properly (e.g., via the LD_LIBRARY_PATH
 environment variable or other operating system mechanism).
 
-PMIx reserves the right to break ABI compatibility at new major
+PMIx reserves the right to break ABI compatibility at new feature
 release series.  For example, the same pmix application from above
-(linked against PMIx v1.3.2 shared libraries) may *not* work with
+(linked against PMIx v1.3.2 shared libraries) will *not* work with
 PMIx v1.5 shared libraries.
 
 ===========================================================================
@@ -318,7 +317,7 @@ Common Questions
 Many common questions about building and using PMIx are answered
 on the FAQ:
 
-    https://pmix.org/support
+    https://pmix.org/support/faq/
 
 ===========================================================================
 
@@ -329,19 +328,23 @@ Found a bug?  Got a question?  Want to make a suggestion?  Want to
 contribute to PMIx?  Please let us know!
 
 When submitting questions and problems, be sure to include as much
-extra information as possible. Again, the issues template is your
-friend in this regard!
+extra information as possible.  This web page details all the
+information that we request in order to provide assistance:
 
-     https://github.com/pmix/pmix/issues
+     https://pmix.org/support/
 
-Questions and comments should generally be sent to the PMIx mailing
-list (pmix@googlegroups.com).  Because of spam, only
-subscribers are allowed to post to this list (ensure that you
-subscribe with and post from *exactly* the same e-mail address --
-joe@example.com is considered different than
-joe@mycomputer.example.com!).  Visit this page to subscribe to the
-user's list:
+Questions and comments should generally be posted to the OpenPMIx
+GitHub issue tracker:
+
+    https://github.com/openpmix/openpmix/issues
+
+Alternatively, question can also be sent to the PMIx mailing list
+(pmix@googlegroups.com).  Because of spam, only subscribers are
+allowed to post to this list (ensure that you subscribe with and post
+from *exactly* the same e-mail address -- joe@example.com is
+considered different than joe@mycomputer.example.com!).  Visit this
+page to subscribe to the user's list:
 
      https://groups.google.com/d/forum/pmix
 
-Make today a PMIx day!
+Make today an PMIx day!

@@ -12,7 +12,7 @@
  * Copyright (c) 2010      Cisco Systems, Inc. All rights reserved.
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2017      Intel, Inc. All rights reserved.
+ * Copyright (c) 2017-2020 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -24,7 +24,7 @@
 
 #include "src/threads/threads.h"
 #include "src/threads/tsd.h"
-#include "pmix_common.h"
+#include "include/pmix_common.h"
 
 bool pmix_debug_threads = false;
 

@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, Inc. All rights reserved.
- * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2020 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -28,7 +28,7 @@
 #ifndef PMIX_PTL_TYPES_H_
 #define PMIX_PTL_TYPES_H_
 
-#include <src/include/pmix_config.h>
+#include "src/include/pmix_config.h"
 #include "src/include/types.h"
 
 #ifdef HAVE_UNISTD_H
@@ -97,6 +97,8 @@ typedef struct {
 #define PMIX_PROC_CLIENT_TOOL       (PMIX_PROC_TOOL | PMIX_PROC_CLIENT | PMIX_PROC_CLIENT_TOOL_ACT)
 #define PMIX_PROC_GATEWAY_ACT       0x40000000
 #define PMIX_PROC_GATEWAY           (PMIX_PROC_SERVER | PMIX_PROC_GATEWAY_ACT)
+#define PMIX_PROC_SCHEDULER_ACT     0x80000000
+#define PMIX_PROC_SCHEDULER         (PMIX_PROC_SERVER | PMIX_PROC_SCHEDULER_ACT)
 
 #define PMIX_SET_PEER_TYPE(a, b)    \
     (a)->proc_type.type |= (b)
@@ -111,6 +113,7 @@ typedef struct {
 #define PMIX_PEER_IS_CLIENT_LAUNCHER(p)     ((PMIX_PROC_LAUNCHER_ACT & (p)->proc_type.type) && (PMIX_PROC_CLIENT & (p)->proc_type.type))
 #define PMIX_PEER_IS_CLIENT_TOOL(p)         ((PMIX_PROC_CLIENT_TOOL_ACT & (p)->proc_type.type) && (PMIX_PROC_CLIENT & (p)->proc_type.type))
 #define PMIX_PEER_IS_GATEWAY(p)             (PMIX_PROC_GATEWAY_ACT & (p)->proc_type.type)
+#define PMIX_PEER_IS_SCHEDULER(p)           (PMIX_PROC_SCHEDULER_ACT & (p)->proc_type.type)
 
 #define PMIX_PROC_IS_CLIENT(p)              (PMIX_PROC_CLIENT & (p)->type)
 #define PMIX_PROC_IS_SERVER(p)              (PMIX_PROC_SERVER & (p)->type)
@@ -119,6 +122,7 @@ typedef struct {
 #define PMIX_PROC_IS_CLIENT_LAUNCHER(p)     ((PMIX_PROC_LAUNCHER_ACT & (p)->type) && (PMIX_PROC_CLIENT & (p)->type))
 #define PMIX_PROC_IS_CLIENT_TOOL(p)         ((PMIX_PROC_CLIENT_TOOL_ACT & (p)->type) && (PMIX_PROC_CLIENT & (p)->type))
 #define PMIX_PROC_IS_GATEWAY(p)             (PMIX_PROC_GATEWAY_ACT & (p)->type)
+#define PMIX_PROC_IS_SCHEDULER(p)           (PMIX_PROC_SCHEDULER_ACT & (p)->type)
 
 /* provide macros for setting the major, minor, and release values
  * just so people don't have to deal with the details of the struct */
@@ -180,7 +184,10 @@ typedef uint32_t pmix_ptl_tag_t;
 typedef struct {
     int32_t pindex;
     pmix_ptl_tag_t tag;
-    size_t nbytes;
+    uint32_t nbytes;
+#if SIZEOF_SIZE_T == 8
+    uint32_t padding;
+#endif
 } pmix_ptl_hdr_t;
 
 /* define the messaging cbfunc */

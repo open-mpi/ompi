@@ -11,9 +11,9 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, Inc.  All rights reserved.
- * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2014-2020 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015-2020 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -24,7 +24,7 @@
 #ifndef PMIX_PREG_BASE_H_
 #define PMIX_PREG_BASE_H_
 
-#include <src/include/pmix_config.h>
+#include "src/include/pmix_config.h"
 
 
 #ifdef HAVE_SYS_TIME_H
@@ -72,6 +72,7 @@ PMIX_CLASS_DECLARATION(pmix_preg_base_active_module_t);
 struct pmix_preg_globals_t {
   pmix_list_t actives;
   bool initialized;
+  bool selected;
 };
 typedef struct pmix_preg_globals_t pmix_preg_globals_t;
 
@@ -85,12 +86,11 @@ PMIX_EXPORT pmix_status_t pmix_preg_base_parse_nodes(const char *regexp,
                                                      char ***names);
 PMIX_EXPORT pmix_status_t pmix_preg_base_parse_procs(const char *regexp,
                                                      char ***procs);
-PMIX_EXPORT pmix_status_t pmix_preg_base_resolve_peers(const char *nodename,
-                                                       const char *nspace,
-                                                       pmix_proc_t **procs, size_t *nprocs);
-PMIX_EXPORT pmix_status_t pmix_preg_base_resolve_nodes(const char *nspace,
-                                                       char **nodelist);
+PMIX_EXPORT pmix_status_t pmix_preg_base_copy(char **dest, size_t *len, const char *input);
 
+PMIX_EXPORT pmix_status_t pmix_preg_base_pack(pmix_buffer_t *buffer, const char *input);
+
+PMIX_EXPORT pmix_status_t pmix_preg_base_unpack(pmix_buffer_t *buffer, char **regex);
 
 END_C_DECLS
 

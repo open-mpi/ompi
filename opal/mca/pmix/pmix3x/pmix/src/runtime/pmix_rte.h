@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2010-2012 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2020 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -25,7 +25,7 @@
 #define PMIX_RTE_H
 
 #include "pmix_config.h"
-#include "pmix_common.h"
+#include "include/pmix_common.h"
 #include "src/class/pmix_object.h"
 
 #include <stdio.h>
@@ -39,18 +39,18 @@
 BEGIN_C_DECLS
 
 #if PMIX_ENABLE_TIMING
-extern char *pmix_timing_sync_file;
-extern char *pmix_timing_output;
-extern bool pmix_timing_overhead;
+PMIX_EXPORT extern char *pmix_timing_sync_file;
+PMIX_EXPORT extern char *pmix_timing_output;
+PMIX_EXPORT extern bool pmix_timing_overhead;
 #endif
 
-extern int pmix_initialized;
-extern char *pmix_net_private_ipv4;
-extern int pmix_event_caching_window;
-extern bool pmix_suppress_missing_data_warning;
+PMIX_EXPORT extern int pmix_initialized;
+PMIX_EXPORT extern char *pmix_net_private_ipv4;
+PMIX_EXPORT extern int pmix_event_caching_window;
+PMIX_EXPORT extern bool pmix_suppress_missing_data_warning;
 
 /** version string of pmix */
-extern const char pmix_version_string[];
+PMIX_EXPORT extern const char pmix_version_string[];
 
 /**
  * Initialize the PMIX layer, including the MCA system.

@@ -11,9 +11,9 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, Inc.  All rights reserved.
- * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2014-2020 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015-2020 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -24,7 +24,7 @@
 #ifndef PMIX_PTL_BASE_H_
 #define PMIX_PTL_BASE_H_
 
-#include <src/include/pmix_config.h>
+#include "src/include/pmix_config.h"
 
 
 #ifdef HAVE_SYS_TIME_H
@@ -73,6 +73,7 @@ PMIX_CLASS_DECLARATION(pmix_ptl_base_active_t);
 struct pmix_ptl_globals_t {
     pmix_list_t actives;
     bool initialized;
+    bool selected;
     pmix_list_t posted_recvs;     // list of pmix_ptl_posted_recv_t
     pmix_list_t unexpected_msgs;
     int stop_thread[2];

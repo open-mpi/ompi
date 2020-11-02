@@ -3,7 +3,7 @@
  *                         All rights reserved.
  * Copyright (c) 2017      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2017-2019 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2017-2020 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -21,44 +21,30 @@
 #include <fcntl.h>
 #include <errno.h>
 
-#include <src/include/pmix_config.h>
-#include <pmix_common.h>
+#include "src/include/pmix_config.h"
+#include "include/pmix_common.h"
 #include "src/include/pmix_globals.h"
 
 //#include "pmix_sm.h"
-#include <src/mca/pshmem/pshmem.h>
+#include "src/mca/pshmem/pshmem.h"
 #include "pshmem_mmap.h"
 
 #if !defined(MAP_ANONYMOUS) && defined(MAP_ANON)
 #    define MAP_ANONYMOUS MAP_ANON
 #endif /* MAP_ANONYMOUS and MAP_ANON */
 
-static int _mmap_init(void);
-static void _mmap_finalize(void);
 static int _mmap_segment_create(pmix_pshmem_seg_t *sm_seg, const char *file_name, size_t size);
 static int _mmap_segment_attach(pmix_pshmem_seg_t *sm_seg, pmix_pshmem_access_mode_t sm_mode);
 static int _mmap_segment_detach(pmix_pshmem_seg_t *sm_seg);
 static int _mmap_segment_unlink(pmix_pshmem_seg_t *sm_seg);
 
 pmix_pshmem_base_module_t pmix_mmap_module = {
-    "mmap",
-    _mmap_init,
-    _mmap_finalize,
-    _mmap_segment_create,
-    _mmap_segment_attach,
-    _mmap_segment_detach,
-    _mmap_segment_unlink
+    .name = "mmap",
+    .segment_create = _mmap_segment_create,
+    .segment_attach = _mmap_segment_attach,
+    .segment_detach = _mmap_segment_detach,
+    .segment_unlink = _mmap_segment_unlink
 };
-
-static int _mmap_init(void)
-{
-    return PMIX_SUCCESS;
-}
-
-static void _mmap_finalize(void)
-{
-    ;
-}
 
 static int _mmap_segment_create(pmix_pshmem_seg_t *sm_seg, const char *file_name, size_t size)
 {

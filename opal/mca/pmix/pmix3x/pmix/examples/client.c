@@ -13,8 +13,9 @@
  *                         All rights reserved.
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Mellanox Technologies, Inc.  All rights reserved.
+ * Copyright (c) 2019      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -124,7 +125,7 @@ int main(int argc, char **argv)
 {
     pmix_status_t rc;
     pmix_value_t value;
-    pmix_value_t *val = &value;
+    pmix_value_t *val = NULL;
     char *tmp;
     pmix_proc_t proc;
     uint32_t nprocs, n;
@@ -168,8 +169,7 @@ int main(int argc, char **argv)
      * wildcard rank as it doesn't relate to a specific rank. Setup
      * a name to retrieve such values */
     PMIX_PROC_CONSTRUCT(&proc);
-    (void)strncpy(proc.nspace, myproc.nspace, PMIX_MAX_NSLEN);
-    proc.rank = PMIX_RANK_WILDCARD;
+    PMIX_LOAD_PROCID(&proc, myproc.nspace, PMIX_RANK_WILDCARD);
 
     /* check to see if we have been instructed to wait for a debugger
      * to attach to us. We won't get both a stop-in-init AND a
@@ -197,6 +197,8 @@ int main(int argc, char **argv)
         /* wait for debugger release */
         DEBUG_WAIT_THREAD(&myrel.lock);
         DEBUG_DESTRUCT_MYREL(&myrel);
+
+        PMIX_VALUE_RELEASE(val);
     }
 
     /* get our universe size */
@@ -205,6 +207,8 @@ int main(int argc, char **argv)
         goto done;
     }
     fprintf(stderr, "Client %s:%d universe size %d\n", myproc.nspace, myproc.rank, val->data.uint32);
+    PMIX_VALUE_RELEASE(val);
+
     /* get the number of procs in our job - univ size is the total number of allocated
      * slots, not the number of procs in the job */
     if (PMIX_SUCCESS != (rc = PMIx_Get(&proc, PMIX_JOB_SIZE, NULL, 0, &val))) {
@@ -219,6 +223,7 @@ int main(int argc, char **argv)
     if (0 > asprintf(&tmp, "%s-%d-internal", myproc.nspace, myproc.rank)) {
         exit(1);
     }
+
     value.type = PMIX_UINT32;
     value.data.uint32 = 1234;
     if (PMIX_SUCCESS != (rc = PMIx_Store_internal(&myproc, tmp, &value))) {
@@ -277,6 +282,7 @@ int main(int argc, char **argv)
         }
         if (PMIX_SUCCESS != (rc = PMIx_Get(&myproc, tmp, NULL, 0, &val))) {
             fprintf(stderr, "Client ns %s rank %d: PMIx_Get %s failed: %d\n", myproc.nspace, myproc.rank, tmp, rc);
+            free(tmp);
             goto done;
         }
         if (PMIX_UINT64 != val->type) {
@@ -299,6 +305,7 @@ int main(int argc, char **argv)
         }
         if (PMIX_SUCCESS != (rc = PMIx_Get(&myproc, tmp, NULL, 0, &val))) {
             fprintf(stderr, "Client ns %s rank %d: PMIx_Get %s failed: %d\n", myproc.nspace, myproc.rank, tmp, rc);
+            free(tmp);
             goto done;
         }
         if (PMIX_STRING != val->type) {

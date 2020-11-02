@@ -14,7 +14,7 @@
  * Copyright (c) 2011-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2014      Hochschule Esslingen.  All rights reserved.
- * Copyright (c) 2016      Intel, Inc. All rights reserved.
+ * Copyright (c) 2016-2020 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -22,7 +22,7 @@
  * $HEADER$
  */
 
-#include <src/include/pmix_config.h>
+#include "src/include/pmix_config.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -34,7 +34,7 @@
 #include "src/util/output.h"
 #include "src/mca/mca.h"
 #include "src/mca/base/base.h"
-#include "pmix_common.h"
+#include "include/pmix_common.h"
 
 /*
  * Local functions

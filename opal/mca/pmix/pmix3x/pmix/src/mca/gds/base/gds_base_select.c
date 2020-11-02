@@ -9,7 +9,9 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2016-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2016-2020 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2020      Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -17,8 +19,8 @@
  * $HEADER$
  */
 
-#include <src/include/pmix_config.h>
-#include <pmix_common.h>
+#include "src/include/pmix_config.h"
+#include "include/pmix_common.h"
 
 #include <string.h>
 
@@ -29,8 +31,6 @@
 #include "src/mca/base/base.h"
 
 #include "src/mca/gds/base/base.h"
-
-static bool selected = false;
 
 /* Function for selecting a prioritized list of components
  * from all those that are available. */
@@ -45,11 +45,11 @@ int pmix_gds_base_select(pmix_info_t info[], size_t ninfo)
     bool inserted;
     char **mods = NULL;
 
-    if (selected) {
+    if (pmix_gds_globals.selected) {
         /* ensure we don't do this twice */
         return PMIX_SUCCESS;
     }
-    selected = true;
+    pmix_gds_globals.selected = true;
 
     /* Query all available components and ask if they have a module */
     PMIX_LIST_FOREACH(cli, &pmix_gds_base_framework.framework_components, pmix_mca_base_component_list_item_t) {
