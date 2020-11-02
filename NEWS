@@ -57,15 +57,23 @@ included in the vX.Y.Z section and be denoted as:
    (** also appeared: A.B.C)  -- indicating that this item was previously
                                  included in release version vA.B.C.
 
-4.1.0 -- October, 2020
-----------------------
+4.1.0 -- November, 2020
+-----------------------
 
+- collectives: Add HAN and ADAPT adaptive collectives components.
+  Both components are off by default and can be enabled by specifying
+  "mpirun --mca coll_adapt_priority 100 --mca coll_han_priority 100 ...".
+  We intend to enable both by default in Open MPI 5.0.
+- Upgrade the embedded OpenPMIx to v3.2.1.
+- Take more steps towards creating fully Reproducible builds (see
+  https://reproducible-builds.org/).
+- Fix issue with extra-long values in MCA files.  Thanks to GitHub
+  user @zrss for bringing the issue to our attention.
+- UCX: Fix zero-sized datatype transfers.
+- Fix --cpu-list for non-uniform modes.
+- OFI MTL: Various bug fixes.
 - Fixed issue where MPI_TYPE_CREATE_RESIZED would create a datatype
   with unexpected extent on oddly-aligned datatypes.
-- collectives: Add ADAPT adaptive collectives component.  The
-  component is off by default and can be enabled by specifying --mca
-  coll_adapt_priority 100.  We intend to turn on ADAPT by default in
-  Open MPI 5.0.
 - collectives: Adjust default tuning thresholds for many collective
   algorithms
 - runtime: fix situation where rank-by argument does not work
