@@ -1,0 +1,14 @@
+# -*- text -*-
+#
+# Copyright (c) 2020      Amazon.com, Inc. or its affiliates.  All Rights reserved.
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
+#
+[package_rank failed]
+Open MPI's OFI driver detected multiple equidistant NICs from the current process,
+but had insufficient information to ensure MPI processes fairly pick a NIC for use.
+This may negatively impact performance. A more modern PMIx server is necessary to
+resolve this issue.

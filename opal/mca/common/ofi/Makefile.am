@@ -31,6 +31,8 @@
 
 AM_CPPFLAGS = $(opal_ofi_CPPFLAGS)
 
+dist_opaldata_DATA = help-common-ofi.txt
+
 # Header files
 
 headers = \
