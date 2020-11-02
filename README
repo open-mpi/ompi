@@ -230,6 +230,23 @@ Compiler Notes
   example, such configurations may require additional compiler /
   linker flags to make Open MPI build properly.
 
+  A not-uncommon case for this is when building on MacOS with the
+  system-default GCC compiler (i.e., /usr/bin/gcc), but a 3rd party
+  gfortran (e.g., provided by Homebrew, in /usr/local/bin/gfortran).
+  Since these compilers are provided by different organizations, they
+  have different default search paths.  For example, if Homebrew has
+  also installed a local copy of Libevent (a 3rd party package that
+  Open MPI requires), the MacOS-default gcc linker will find it
+  without any additional command line flags, but the Homebrew-provided
+  gfortran linker will not.  In this case, it may be necessary to
+  provide the following on the configure command line:
+
+  $ ./configure FCFLAGS=-L/usr/local/lib ...
+
+  This -L flag will then be passed to the Fortran linker when creating
+  Open MPI's Fortran libraries, and it will therefore be able to find
+  the installed Libevent.
+
 - In general, the latest versions of compilers of a given vendor's
   series have the least bugs.  We have seen cases where Vendor XYZ's
   compiler version A.B fails to compile Open MPI, but version A.C
