@@ -2932,7 +2932,7 @@ subroutine ompi_query_thread_f(provided,ierror) &
 end subroutine ompi_query_thread_f
 
 subroutine ompi_status_f082f_f(f08_status,f_status,ierror) &
-   BIND(C, name="ompi_status_f2f08_f")
+   BIND(C, name="ompi_status_f082f_f")
    use :: mpi_f08_types, only : MPI_Status, MPI_STATUS_SIZE
    implicit none
    TYPE(MPI_Status), INTENT(IN) :: f08_status
@@ -2941,7 +2941,7 @@ subroutine ompi_status_f082f_f(f08_status,f_status,ierror) &
 end subroutine ompi_status_f082f_f
 
 subroutine ompi_status_f2f08_f(f_status,f08_status,ierror) &
-   BIND(C, name="ompi_status_f082f_f")
+   BIND(C, name="ompi_status_f2f08_f")
    use :: mpi_f08_types, only : MPI_Status, MPI_STATUS_SIZE
    implicit none
    INTEGER, INTENT(IN) :: f_status(MPI_STATUS_SIZE)
