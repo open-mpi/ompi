@@ -233,9 +233,11 @@ ompi/mpi/fortran/mpif-h/profile/psizeof_f.f90
 ompi/mpi/fortran/use-mpi/mpi-types.F90
 
 ompi/mpi/fortran/use-mpi-f08/mod/mpi-f08-constants.h
+ompi/mpi/fortran/use-mpi-f08/mod/mpi-f08-interfaces.h
 ompi/mpi/fortran/use-mpi-f08/sizeof_f08.f90
 ompi/mpi/fortran/use-mpi-f08/sizeof_f08.h
 ompi/mpi/fortran/use-mpi-f08/profile/psizeof_f08.f90
+ompi/mpi/fortran/use-mpi-f08/profile/*.F90
 
 ompi/mpi/fortran/use-mpi-ignore-tkr/mpi-ignore-tkr-interfaces.h
 ompi/mpi/fortran/use-mpi-ignore-tkr/mpi-ignore-tkr-file-interfaces.h
