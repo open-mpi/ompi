@@ -297,12 +297,12 @@ count_providers(struct fi_info* provider_list)
  * otherwise falls back to using opal_process_info.myprocid.rank
  * this can affect performance, but is unlikely to happen.
  */
-static uint32_t get_package_rank(opal_process_info_t process_info)
+static uint32_t get_package_rank(opal_process_info_t *process_info)
 {
     int i;
     uint16_t relative_locality, *package_rank_ptr;
     uint16_t current_package_rank = 0;
-    uint16_t package_ranks[process_info.num_local_peers];
+    uint16_t package_ranks[process_info->num_local_peers];
     opal_process_name_t pname;
     opal_status_t rc;
     char **peers = NULL;
@@ -327,7 +327,7 @@ static uint32_t get_package_rank(opal_process_info_t process_info)
     if (PMIX_SUCCESS != rc || NULL == local_peers) {
         // We can't find package_rank, fall back to procid
         opal_show_help("help-common-ofi.txt", "package_rank failed", true);
-        return (uint32_t)process_info.myprocid.rank;
+        return (uint32_t)process_info->myprocid.rank;
     }
     peers = opal_argv_split(local_peers, ',');
     free(local_peers);
@@ -341,11 +341,11 @@ static uint32_t get_package_rank(opal_process_info_t process_info)
         if (PMIX_SUCCESS != rc || NULL == locality_string) {
             // If we don't have information about locality, fall back to procid
             opal_show_help("help-common-ofi.txt", "package_rank failed", true);
-            return (uint32_t)process_info.myprocid.rank;
+            return (uint32_t)process_info->myprocid.rank;
         }
 
         // compute relative locality
-        relative_locality = opal_hwloc_compute_relative_locality(process_info.cpuset, locality_string);
+        relative_locality = opal_hwloc_compute_relative_locality(process_info->cpuset, locality_string);
         free(locality_string);
 
         if (relative_locality & OPAL_PROC_ON_SOCKET) {
@@ -354,7 +354,7 @@ static uint32_t get_package_rank(opal_process_info_t process_info)
         }
     }
 
-    return (uint32_t)package_ranks[process_info.my_local_rank];
+    return (uint32_t)package_ranks[process_info->my_local_rank];
 }
 
 /* Selects a NIC based on hardware locality between process cpuset and device BDF.
@@ -413,7 +413,7 @@ static uint32_t get_package_rank(opal_process_info_t process_info)
  * balance across available NICs.
  */
 struct fi_info*
-opal_mca_common_ofi_select_provider(struct fi_info *provider_list, opal_process_info_t process_info)
+opal_mca_common_ofi_select_provider(struct fi_info *provider_list, opal_process_info_t *process_info)
 {
     struct fi_info *provider = provider_list, *current_provider = provider_list;
     struct fi_info **provider_table;

@@ -391,7 +391,7 @@ static mca_btl_base_module_t **mca_btl_ofi_component_init (int *num_btl_modules,
              * are used to ensure that all NICs we return provide the same
              * capabilities as the inital one.
              */
-            selected_info = opal_mca_common_ofi_select_provider(info, opal_process_info);
+            selected_info = opal_mca_common_ofi_select_provider(info, &opal_process_info);
             rc = mca_btl_ofi_init_device(selected_info);
             if (OPAL_SUCCESS == rc) {
                 info = selected_info;
