@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -120,8 +120,8 @@
 #ifndef PMIX_OBJECT_H
 #define PMIX_OBJECT_H
 
-#include <src/include/pmix_config.h>
-#include <pmix_common.h>
+#include "src/include/pmix_config.h"
+#include "include/pmix_common.h"
 
 #include <assert.h>
 #ifdef HAVE_STDLIB_H
@@ -175,9 +175,20 @@ PMIX_EXPORT extern int pmix_class_init_epoch;
  * @param NAME   Name of the class to initialize
  */
 #if PMIX_ENABLE_DEBUG
-#define PMIX_OBJ_STATIC_INIT(BASE_CLASS) { PMIX_OBJ_MAGIC_ID, PMIX_CLASS(BASE_CLASS), 1, __FILE__, __LINE__ }
+#define PMIX_OBJ_STATIC_INIT(BASE_CLASS)        \
+    {                                           \
+        .obj_magic_id = PMIX_OBJ_MAGIC_ID,      \
+        .obj_class = PMIX_CLASS(BASE_CLASS),    \
+        .obj_reference_count = 1,               \
+        .cls_init_file_name = __FILE__,         \
+        .cls_init_lineno = __LINE__,            \
+    }
 #else
-#define PMIX_OBJ_STATIC_INIT(BASE_CLASS) { PMIX_CLASS(BASE_CLASS), 1 }
+#define PMIX_OBJ_STATIC_INIT(BASE_CLASS)        \
+    {                                           \
+        .obj_class = PMIX_CLASS(BASE_CLASS),    \
+        .obj_reference_count = 1,               \
+    }
 #endif
 
 /**

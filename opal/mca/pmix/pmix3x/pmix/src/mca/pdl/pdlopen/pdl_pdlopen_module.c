@@ -4,7 +4,7 @@
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
- * Copyright (c) 2016-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2016-2020 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -12,7 +12,7 @@
  * $HEADER$
  */
 
-#include <src/include/pmix_config.h>
+#include "src/include/pmix_config.h"
 
 #include <stdlib.h>
 #include <dlfcn.h>
@@ -21,7 +21,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include "pmix_common.h"
+#include "include/pmix_common.h"
 #include "src/mca/pdl/pdl.h"
 #include "src/util/argv.h"
 #include "src/util/error.h"
@@ -88,11 +88,16 @@ static int pdlopen_open(const char *fname, bool use_ext, bool private_namespace,
 
             /* Does the file exist? */
             struct stat buf;
+            /* coverity[toctou] */
             if (stat(name, &buf) < 0) {
-                free(name);
                 if (NULL != err_msg) {
-                    *err_msg = "File not found";
+                    rc = asprintf(err_msg, "File %s not found", name);
+                    if (0 > rc) {
+                        free(name);
+                        return PMIX_ERR_NOMEM;
+                    }
                 }
+                free(name);
                 continue;
             }
 
@@ -200,6 +205,7 @@ static int pdlopen_foreachfile(const char *search_path,
 
             /* Stat the file */
             struct stat buf;
+            /* coverity[toctou] */
             if (stat(abs_name, &buf) < 0) {
                 free(abs_name);
                 ret = PMIX_ERR_IN_ERRNO;

@@ -11,7 +11,7 @@
 #                         All rights reserved.
 # Copyright (c) 2006-2010 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2012-2013 Los Alamos National Security, Inc.  All rights reserved.
-# Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
+# Copyright (c) 2013-2020 Intel, Inc.  All rights reserved.
 # Copyright (c) 2018      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
@@ -25,6 +25,7 @@ if !WANT_HIDDEN
 # these tests use internal symbols
 # use --disable-visibility
 SUBDIRS = simple
+
 endif
 
 headers = test_common.h cli_stages.h server_callbacks.h utils.h test_fence.h \
@@ -47,9 +48,9 @@ noinst_SCRIPTS = pmix_client_otheruser.sh \
 	run_tests10.pl \
 	run_tests11.pl \
 	run_tests12.pl \
-	run_tests13.pl \
-	run_tests14.pl \
-	run_tests15.pl
+	run_tests13.pl
+#	run_tests14.pl \
+#	run_tests15.pl
 
 noinst_PROGRAMS =
 
@@ -81,9 +82,9 @@ TESTS = \
 	run_tests10.pl \
 	run_tests11.pl \
 	run_tests12.pl \
-	run_tests13.pl \
-	run_tests14.pl \
-	run_tests15.pl
+	run_tests13.pl
+#	run_tests14.pl \
+#	run_tests15.pl
 
 
 ##########################

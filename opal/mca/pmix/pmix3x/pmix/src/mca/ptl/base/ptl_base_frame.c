@@ -11,9 +11,9 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, Inc.  All rights reserved.
- * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
- * Copyright (c) 2015-2017 Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2014-2020 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015-2020 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -23,9 +23,9 @@
 /** @file:
  *
  */
-#include <src/include/pmix_config.h>
+#include "src/include/pmix_config.h"
 
-#include <pmix_common.h>
+#include "include/pmix_common.h"
 
 #ifdef HAVE_STRING_H
 #include <string.h>
@@ -64,6 +64,7 @@ static size_t max_msg_size = PMIX_MAX_MSG_SIZE;
 
 static int pmix_ptl_register(pmix_mca_base_register_flag_t flags)
 {
+    (void)flags;
     pmix_mca_base_var_register("pmix", "ptl", "base", "max_msg_size",
                                "Max size (in Mbytes) of a client/server msg",
                                PMIX_MCA_BASE_VAR_TYPE_SIZE_T, NULL, 0, 0,
@@ -80,6 +81,7 @@ static pmix_status_t pmix_ptl_close(void)
         return PMIX_SUCCESS;
     }
     pmix_ptl_globals.initialized = false;
+    pmix_ptl_globals.selected = false;
 
     /* ensure the listen thread has been shut down */
     pmix_ptl_base_stop_listening();

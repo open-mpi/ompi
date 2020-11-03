@@ -1,9 +1,9 @@
 /*
- * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      Artem Y. Polyakov <artpol84@gmail.com>.
  *                         All rights reserved.
- * Copyright (c) 2015-2017 Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015-2019 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2016      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
@@ -13,11 +13,10 @@
  *
  * $HEADER$
  */
-#include <src/include/pmix_config.h>
+#include "src/include/pmix_config.h"
 
-#include <src/include/types.h>
-#include <src/include/pmix_stdint.h>
-#include <src/include/pmix_socket_errno.h>
+#include "src/include/pmix_stdint.h"
+#include "src/include/pmix_socket_errno.h"
 
 #ifdef HAVE_STRING_H
 #include <string.h>
@@ -44,6 +43,7 @@
 #include "src/client/pmix_client_ops.h"
 #include "src/server/pmix_server_ops.h"
 #include "src/util/error.h"
+#include "src/util/name_fns.h"
 #include "src/util/show_help.h"
 #include "src/mca/psensor/psensor.h"
 
@@ -51,14 +51,9 @@
 
 static void _notify_complete(pmix_status_t status, void *cbdata)
 {
+    (void)status;
     pmix_event_chain_t *chain = (pmix_event_chain_t*)cbdata;
     PMIX_RELEASE(chain);
-}
-
-static void lcfn(pmix_status_t status, void *cbdata)
-{
-    pmix_peer_t *peer = (pmix_peer_t*)cbdata;
-    PMIX_RELEASE(peer);
 }
 
 void pmix_ptl_base_lost_connection(pmix_peer_t *peer, pmix_status_t err)
@@ -165,22 +160,10 @@ void pmix_ptl_base_lost_connection(pmix_peer_t *peer, pmix_status_t err)
             }
         }
 
-        /* remove this proc from the list of ranks for this nspace if it is
-         * still there - we must check for multiple copies as there will be
-         * one for each "clone" of this peer */
-        PMIX_LIST_FOREACH_SAFE(info, pinfo, &(peer->nptr->ranks), pmix_rank_info_t) {
-            if (info == peer->info) {
-                pmix_list_remove_item(&(peer->nptr->ranks), &(peer->info->super));
-            }
-        }
         /* reduce the number of local procs */
         if (0 < peer->nptr->nlocalprocs) {
             --peer->nptr->nlocalprocs;
         }
-
-        /* remove this client from our array */
-        pmix_pointer_array_set_item(&pmix_server_globals.clients,
-                                    peer->index, NULL);
 
         /* purge any notifications cached for this client */
         pmix_server_purge_events(peer, NULL);
@@ -200,8 +183,14 @@ void pmix_ptl_base_lost_connection(pmix_peer_t *peer, pmix_status_t err)
              * an event. If not, then we do */
             PMIX_REPORT_EVENT(err, peer, PMIX_RANGE_PROC_LOCAL, _notify_complete);
         }
-        /* now decrease the refcount - might actually free the object */
-        PMIX_RELEASE(peer->info);
+        /* mark this rank as "dead" but do not remove it from ranks for this nspace if it is
+         * still there - we must check for multiple copies as there will be
+         * one for each "clone" of this peer */
+        PMIX_LIST_FOREACH_SAFE(info, pinfo, &(peer->nptr->ranks), pmix_rank_info_t) {
+            if (info == peer->info) {
+                peer->finalized = true;
+            }
+        }
 
         /* be sure to let the host know that the tool or client
          * is gone - otherwise, it won't know to cleanup the
@@ -210,19 +199,9 @@ void pmix_ptl_base_lost_connection(pmix_peer_t *peer, pmix_status_t err)
             pmix_strncpy(proc.nspace, peer->info->pname.nspace, PMIX_MAX_NSLEN);
             proc.rank = peer->info->pname.rank;
             /* now tell the host server */
-            rc = pmix_host_server.client_finalized(&proc, peer->info->server_object,
-                                                   lcfn, peer);
-            if (PMIX_SUCCESS == rc) {
-                /* we will release the peer when the server calls us back */
-                peer->finalized = true;
-                return;
-            }
+            pmix_host_server.client_finalized(&proc, peer->info->server_object,
+                                              NULL, NULL);
         }
-        /* mark the peer as "gone" since a release doesn't guarantee
-         * that the peer object doesn't persist */
-        peer->finalized = true;
-        /* Release peer info */
-        PMIX_RELEASE(peer);
      } else {
         /* if I am a client, there is only
          * one connection we can have */
@@ -386,6 +365,8 @@ static pmix_status_t read_bytes(int sd, char **buf, size_t *remain)
  */
 void pmix_ptl_base_send_handler(int sd, short flags, void *cbdata)
 {
+    (void)sd;
+    (void)flags;
     pmix_peer_t *peer = (pmix_peer_t*)cbdata;
     pmix_ptl_send_t *msg = peer->send_msg;
     pmix_status_t rc;
@@ -394,16 +375,16 @@ void pmix_ptl_base_send_handler(int sd, short flags, void *cbdata)
     PMIX_ACQUIRE_OBJECT(peer);
 
     pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
-                        "%s:%d ptl:base:send_handler SENDING TO PEER %s:%d tag %u with %s msg",
-                        pmix_globals.myid.nspace, pmix_globals.myid.rank,
-                        peer->info->pname.nspace, peer->info->pname.rank,
+                        "%s ptl:base:send_handler SENDING TO PEER %s tag %u with %s msg",
+                        PMIX_NAME_PRINT(&pmix_globals.myid),
+                        PMIX_PNAME_PRINT(&peer->info->pname),
                         (NULL == msg) ? UINT_MAX : ntohl(msg->hdr.tag),
                         (NULL == msg) ? "NULL" : "NON-NULL");
 
     if (NULL != msg) {
         pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
-                            "ptl:base:send_handler SENDING MSG TO %s:%d TAG %u",
-                            peer->info->pname.nspace, peer->info->pname.rank,
+                            "ptl:base:send_handler SENDING MSG TO %s TAG %u",
+                            PMIX_PNAME_PRINT(&peer->info->pname),
                             ntohl(msg->hdr.tag));
         if (PMIX_SUCCESS == (rc = send_msg(peer->sd, msg))) {
             // message is complete
@@ -422,8 +403,8 @@ void pmix_ptl_base_send_handler(int sd, short flags, void *cbdata)
             return;
         } else {
             pmix_output_verbose(5, pmix_ptl_base_framework.framework_output,
-                                "%s:%d SEND ERROR %s",
-                                pmix_globals.myid.nspace, pmix_globals.myid.rank,
+                                "%s SEND ERROR %s",
+                                PMIX_NAME_PRINT(&pmix_globals.myid),
                                 PMIx_Error_string(rc));
             // report the error
             pmix_event_del(&peer->send_event);
@@ -464,6 +445,7 @@ void pmix_ptl_base_send_handler(int sd, short flags, void *cbdata)
 
 void pmix_ptl_base_recv_handler(int sd, short flags, void *cbdata)
 {
+    (void)flags;
     pmix_status_t rc;
     pmix_peer_t *peer = (pmix_peer_t*)cbdata;
     pmix_ptl_recv_t *msg = NULL;
@@ -475,8 +457,8 @@ void pmix_ptl_base_recv_handler(int sd, short flags, void *cbdata)
     PMIX_ACQUIRE_OBJECT(peer);
 
     pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
-                        "%s:%d ptl:base:recv:handler called with peer %s:%d",
-                        pmix_globals.myid.nspace, pmix_globals.myid.rank,
+                        "%s ptl:base:recv:handler called with peer %s:%u",
+                        PMIX_NAME_PRINT(&pmix_globals.myid),
                         (NULL == peer) ? "NULL" : peer->info->pname.nspace,
                         (NULL == peer) ? PMIX_RANK_UNDEF : peer->info->pname.rank);
 
@@ -514,14 +496,17 @@ void pmix_ptl_base_recv_handler(int sd, short flags, void *cbdata)
             peer->recv_msg->hdr.tag = ntohl(hdr.tag);
             peer->recv_msg->hdr.nbytes = ntohl(hdr.nbytes);
             pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
-                                "RECVD MSG FOR TAG %d SIZE %d",
+                                "%s RECVD MSG FROM %s FOR TAG %d SIZE %d",
+                                PMIX_NAME_PRINT(&pmix_globals.myid),
+                                PMIX_PNAME_PRINT(&peer->info->pname),
                                 (int)peer->recv_msg->hdr.tag,
                                 (int)peer->recv_msg->hdr.nbytes);
             /* if this is a zero-byte message, then we are done */
             if (0 == peer->recv_msg->hdr.nbytes) {
                 pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
-                                    "RECVD ZERO-BYTE MESSAGE FROM %s:%u for tag %d",
-                                    peer->info->pname.nspace, peer->info->pname.rank,
+                                    "%s RECVD ZERO-BYTE MESSAGE FROM %s for tag %d",
+                                    PMIX_NAME_PRINT(&pmix_globals.myid),
+                                    PMIX_PNAME_PRINT(&peer->info->pname),
                                     peer->recv_msg->hdr.tag);
                 peer->recv_msg->data = NULL;  // make sure
                 peer->recv_msg->rdptr = NULL;
@@ -558,8 +543,9 @@ void pmix_ptl_base_recv_handler(int sd, short flags, void *cbdata)
              * and let the caller know
              */
             pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
-                                "ptl:base:msg_recv: peer %s:%d closed connection",
-                                peer->nptr->nspace, peer->info->pname.rank);
+                                "%s ptl:base:msg_recv: peer %s closed connection",
+                                PMIX_NAME_PRINT(&pmix_globals.myid),
+                                PMIX_PNAME_PRINT(&peer->info->pname));
             goto err_close;
         }
     }
@@ -626,6 +612,8 @@ void pmix_ptl_base_recv_handler(int sd, short flags, void *cbdata)
 
 void pmix_ptl_base_send(int sd, short args, void *cbdata)
 {
+    (void)sd;
+    (void)args;
     pmix_ptl_queue_t *queue = (pmix_ptl_queue_t*)cbdata;
     pmix_ptl_send_t *snd;
 
@@ -682,6 +670,8 @@ void pmix_ptl_base_send(int sd, short args, void *cbdata)
 
 void pmix_ptl_base_send_recv(int fd, short args, void *cbdata)
 {
+    (void)fd;
+    (void)args;
     pmix_ptl_sr_t *ms = (pmix_ptl_sr_t*)cbdata;
     pmix_ptl_posted_recv_t *req;
     pmix_ptl_send_t *snd;
@@ -760,6 +750,8 @@ void pmix_ptl_base_send_recv(int fd, short args, void *cbdata)
 
 void pmix_ptl_base_process_msg(int fd, short flags, void *cbdata)
 {
+    (void)fd;
+    (void)flags;
     pmix_ptl_recv_t *msg = (pmix_ptl_recv_t*)cbdata;
     pmix_ptl_posted_recv_t *rcv;
     pmix_buffer_t buf;

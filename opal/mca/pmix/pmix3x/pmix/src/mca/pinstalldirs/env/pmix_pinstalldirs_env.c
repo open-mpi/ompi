@@ -2,7 +2,7 @@
  * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2016      Intel, Inc. All rights reserved
+ * Copyright (c) 2016-2020 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -10,15 +10,15 @@
  * $HEADER$
  */
 
-#include <src/include/pmix_config.h>
+#include "src/include/pmix_config.h"
 
 #include <stdlib.h>
 #include <string.h>
 
-#include "pmix_common.h"
+#include "include/pmix_common.h"
 #include "src/mca/pinstalldirs/pinstalldirs.h"
 
-static int pinstalldirs_env_open(void);
+static void pinstalldirs_env_init(pmix_info_t info[], size_t ninfo);
 
 
 pmix_pinstalldirs_base_component_t mca_pinstalldirs_env_component = {
@@ -32,10 +32,6 @@ pmix_pinstalldirs_base_component_t mca_pinstalldirs_env_component = {
         PMIX_MAJOR_VERSION,
         PMIX_MINOR_VERSION,
         PMIX_RELEASE_VERSION,
-
-        /* Component open and close functions */
-        pinstalldirs_env_open,
-        NULL
     },
     {
         /* This component is checkpointable */
@@ -46,6 +42,7 @@ pmix_pinstalldirs_base_component_t mca_pinstalldirs_env_component = {
     {
         NULL,
     },
+    .init = pinstalldirs_env_init
 };
 
 
@@ -55,14 +52,27 @@ pmix_pinstalldirs_base_component_t mca_pinstalldirs_env_component = {
          if (NULL != tmp && 0 == strlen(tmp)) {                           \
              tmp = NULL;                                                  \
          }                                                                \
-         mca_pinstalldirs_env_component.install_dirs_data.field = tmp;     \
+         mca_pinstalldirs_env_component.install_dirs_data.field = tmp;    \
     } while (0)
 
 
-static int
-pinstalldirs_env_open(void)
+static void pinstalldirs_env_init(pmix_info_t info[], size_t ninfo)
 {
-    SET_FIELD(prefix, "PMIX_INSTALL_PREFIX");
+    size_t n;
+    bool prefix_given = false;
+
+    /* check for a prefix value */
+    for (n=0; n < ninfo; n++) {
+        if (PMIX_CHECK_KEY(&info[n], PMIX_PREFIX)) {
+            mca_pinstalldirs_env_component.install_dirs_data.prefix = info[n].value.data.string;
+            prefix_given = true;
+            break;
+        }
+    }
+
+    if (!prefix_given) {
+        SET_FIELD(prefix, "PMIX_INSTALL_PREFIX");
+    }
     SET_FIELD(exec_prefix, "PMIX_EXEC_PREFIX");
     SET_FIELD(bindir, "PMIX_BINDIR");
     SET_FIELD(sbindir, "PMIX_SBINDIR");
@@ -79,6 +89,4 @@ pinstalldirs_env_open(void)
     SET_FIELD(pmixdatadir, "PMIX_PKGDATADIR");
     SET_FIELD(pmixlibdir, "PMIX_PKGLIBDIR");
     SET_FIELD(pmixincludedir, "PMIX_PKGINCLUDEDIR");
-
-    return PMIX_SUCCESS;
 }

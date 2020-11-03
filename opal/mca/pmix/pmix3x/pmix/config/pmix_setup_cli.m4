@@ -2,8 +2,8 @@ dnl -*- shell-script -*-
 dnl
 dnl Copyright (c) 2016      Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
-dnl Copyright (c) 2017-2019 Intel, Inc.  All rights reserved.
-dnl Copyright (c) 2018      Cisco, Inc. All rights reserved.
+dnl Copyright (c) 2017-2018 Intel, Inc.  All rights reserved.
+dnl Copyright (c) 2018-2020 Cisco, Inc. All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -24,7 +24,7 @@ AC_DEFUN([PMIX_CAPTURE_CONFIGURE_CLI],[
     PMIX_VAR_SCOPE_PUSH([sed_quote_subst arg quoted_arg])
     $1=
     for arg in "$[]@"; do
-        sed_quote_subst='s/\(@<:@`"$\\@:>@\)/\\\1/g'
+        sed_quote_subst='s/\(@<:@`"\\@:>@\)/\\\1/g'
         case "$arg" in
           *@<:@\\\`\"\$[]@:>@*)
 	    quoted_arg=\'`echo "$arg" | sed $sed_quote_subst`\' ;;

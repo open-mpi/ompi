@@ -13,7 +13,7 @@
  * Copyright (c) 2007      Voltaire All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2013-2018 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2020 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -67,7 +67,7 @@
 #ifndef PMIX_LIST_H
 #define PMIX_LIST_H
 
-#include <src/include/pmix_config.h>
+#include "src/include/pmix_config.h"
 #include <stdio.h>
 #include <stdlib.h>
 #if HAVE_STDBOOL_H
@@ -119,6 +119,14 @@ struct pmix_list_item_t
  */
 typedef struct pmix_list_item_t pmix_list_item_t;
 
+/* static initializer for pmix_list_t */
+#define PMIX_LIST_ITEM_STATIC_INIT                      \
+    {                                                   \
+        .super = PMIX_OBJ_STATIC_INIT(pmix_object_t),   \
+        .pmix_list_next = NULL,                         \
+        .pmix_list_prev = NULL,                         \
+        .item_free = 0                                  \
+    }
 
 /**
  * Get the next item in a list.
@@ -159,6 +167,15 @@ struct pmix_list_t
  * List container type.
  */
 typedef struct pmix_list_t pmix_list_t;
+
+/* static initializer for pmix_list_t */
+#define PMIX_LIST_STATIC_INIT                                           \
+    {                                                                   \
+        .super = PMIX_OBJ_STATIC_INIT(pmix_object_t),                   \
+        .pmix_list_sentinel = PMIX_LIST_ITEM_STATIC_INIT,   \
+        .pmix_list_length = 0                                           \
+    }
+
 
 /** Cleanly destruct a list
  *

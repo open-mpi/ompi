@@ -13,7 +13,7 @@
  * Copyright (c) 2009-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
- * Copyright (c) 2013-2018 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -359,10 +359,10 @@
    including stdint.h */
 #define __STDC_LIMIT_MACROS
 #endif
-#include <src/include/pmix_config.h>
+#include "src/include/pmix_config.h"
 #include <stdint.h>
 #else
-#include <src/include/pmix_stdint.h>
+#include "src/include/pmix_stdint.h"
 #endif
 
 /***********************************************************************

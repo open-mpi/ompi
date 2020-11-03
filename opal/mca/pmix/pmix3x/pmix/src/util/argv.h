@@ -13,10 +13,10 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Voltaire. All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC. All rights reserved.
- * Copyright (c) 2015-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015-2020 Intel, Inc.  All rights reserved.
  *
- * Copyright (c) 2015      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015-2019 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -34,14 +34,14 @@
 #ifndef PMIX_ARGV_H
 #define PMIX_ARGV_H
 
-#include <src/include/pmix_config.h>
+#include "src/include/pmix_config.h"
 
 
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
 
-#include <pmix_common.h>
+#include "include/pmix_common.h"
 
 BEGIN_C_DECLS
 
@@ -117,9 +117,26 @@ PMIX_EXPORT pmix_status_t pmix_argv_prepend_nosize(char ***argv, const char *arg
  *
  * This function is identical to the pmix_argv_append_nosize() function
  * except that it only appends the provided argument if it does not already
- * exist in the provided array, or overwrites it if it is.
+ * exist in the provided array.
  */
 PMIX_EXPORT pmix_status_t pmix_argv_append_unique_nosize(char ***argv, const char *arg, bool overwrite);
+
+/**
+ * Append to an argv-style array, but only if the provided argument
+ * doesn't already exist somewhere in the array. Ignore the size of the array.
+ * Defines the index of the found/added item in the array.
+ *
+ * @param idx Index the found/added item in the array.
+ * @param argv Pointer to an argv array.
+ * @param str Pointer to the string to append.
+ *
+ * @retval PMIX_SUCCESS On success
+ * @retval PMIX_ERROR On failure
+ *
+ * This function is identical to the pmix_argv_append_unique_nosize() function
+ * but it has an extra argument defining the index of the item in the array.
+ */
+PMIX_EXPORT pmix_status_t pmix_argv_append_unique_idx(int *idx, char ***argv, const char *arg);
 
 /**
    * Free a NULL-terminated argv array.
@@ -146,7 +163,7 @@ PMIX_EXPORT void pmix_argv_free(char **argv);
    * @retval argv pointer to new argv array on success
    * @retval NULL on error
    *
-   * All strings are insertted into the argv array by value; the
+   * All strings are inserted into the argv array by value; the
    * newly-allocated array makes no references to the src_string
    * argument (i.e., it can be freed after calling this function
    * without invalidating the output argv).
@@ -163,7 +180,7 @@ PMIX_EXPORT char **pmix_argv_split(const char *src_string, int delimiter) __pmix
    * @retval argv pointer to new argv array on success
    * @retval NULL on error
    *
-   * All strings are insertted into the argv array by value; the
+   * All strings are inserted into the argv array by value; the
    * newly-allocated array makes no references to the src_string
    * argument (i.e., it can be freed after calling this function
    * without invalidating the output argv).
@@ -266,7 +283,7 @@ PMIX_EXPORT pmix_status_t pmix_argv_delete(int *argc, char ***argv,
      * @retval PMIX_BAD_PARAM if any parameters are non-sensical
      *
      * This function takes one arg and inserts it in the middle of
-     * another.  The first token in source will be insertted at index
+     * another.  The first token in source will be inserted at index
      * start in the target argv; all other tokens will follow it.
      * Similar to pmix_argv_append(), the target may be realloc()'ed
      * to accomodate the new storage requirements.

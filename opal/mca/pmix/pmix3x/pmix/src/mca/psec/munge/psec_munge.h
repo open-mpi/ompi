@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015-2020 Intel, Inc.  All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -13,7 +13,7 @@
 
 BEGIN_C_DECLS
 
-#include <src/include/pmix_config.h>
+#include "src/include/pmix_config.h"
 
 
 /* the component must be visible data for the linker to find it */

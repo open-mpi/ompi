@@ -15,7 +15,7 @@
 #ifndef CLI_STAGES_H
 #define CLI_STAGES_H
 
-#include <src/include/pmix_config.h>
+#include <pmix_config.h>
 #include <signal.h>
 #include <fcntl.h>
 #include <sys/types.h>

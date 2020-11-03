@@ -1,7 +1,6 @@
 /*
- * Copyright (c) 2018      Mellanox Technologies, Inc.
+ * Copyright (c) 2018-2020 Mellanox Technologies, Inc.
  *                         All rights reserved.
- *
  * Copyright (c) 2018-2020 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -10,8 +9,8 @@
  * $HEADER$
  */
 
-#include <src/include/pmix_config.h>
-#include <pmix_common.h>
+#include "src/include/pmix_config.h"
+#include "include/pmix_common.h"
 
 #include <stdio.h>
 #ifdef HAVE_UNISTD_H
@@ -88,7 +87,7 @@ static void ncon(lock_item_t *p) {
 static void ldes(lock_item_t *p) {
     uint32_t i;
 
-    if(PMIX_PEER_IS_SERVER(pmix_globals.mypeer)) {
+    if(PMIX_PEER_IS_SERVER(pmix_globals.mypeer) && (NULL != p->seg_desc)) {
         segment_hdr_t *seg_hdr = (segment_hdr_t *)p->seg_desc->seg_info.seg_base_addr;
         if (p->lockfile) {
             unlink(p->lockfile);

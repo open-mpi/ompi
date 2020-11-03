@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, Inc.  All rights reserved.
- * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -24,7 +24,7 @@
 #ifndef PMIX_PSHMEM_BASE_H_
 #define PMIX_PSHMEM_BASE_H_
 
-#include <src/include/pmix_config.h>
+#include "src/include/pmix_config.h"
 
 
 #ifdef HAVE_SYS_TIME_H
@@ -54,6 +54,16 @@ PMIX_EXPORT extern pmix_mca_base_framework_t pmix_pshmem_base_framework;
  * of active modules
  */
 PMIX_EXPORT pmix_status_t pmix_pshmem_base_select(void);
+
+/* framework globals */
+struct pmix_pshmem_globals_t {
+  bool initialized;
+  bool selected;
+};
+
+typedef struct pmix_pshmem_globals_t pmix_pshmem_globals_t;
+
+PMIX_EXPORT extern pmix_pshmem_globals_t pmix_pshmem_globals;
 
 END_C_DECLS
 

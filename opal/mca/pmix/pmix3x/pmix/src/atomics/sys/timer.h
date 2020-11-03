@@ -13,7 +13,7 @@
  * Copyright (c) 2016      Broadcom Limited. All rights reserved.
  * Copyright (c) 2016-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2018      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2018-2020 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -79,18 +79,10 @@ BEGIN_C_DECLS
 #include "src/atomics/sys/arm64/timer.h"
 #elif PMIX_ASSEMBLY_ARCH == PMIX_IA32
 #include "src/atomics/sys/ia32/timer.h"
-#elif PMIX_ASSEMBLY_ARCH == PMIX_IA64
-#include "src/atomics/sys/ia64/timer.h"
 #elif PMIX_ASSEMBLY_ARCH == PMIX_POWERPC32
 #include "src/atomics/sys/powerpc/timer.h"
 #elif PMIX_ASSEMBLY_ARCH == PMIX_POWERPC64
 #include "src/atomics/sys/powerpc/timer.h"
-#elif PMIX_ASSEMBLY_ARCH == PMIX_SPARCV9_32
-#include "src/atomics/sys/sparcv9/timer.h"
-#elif PMIX_ASSEMBLY_ARCH == PMIX_SPARCV9_64
-#include "src/atomics/sys/sparcv9/timer.h"
-#elif PMIX_ASSEMBLY_ARCH == PMIX_MIPS
-#include "src/atomics/sys/mips/timer.h"
 #endif
 
 #ifndef DOXYGEN

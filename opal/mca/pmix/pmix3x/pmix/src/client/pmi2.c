@@ -1,8 +1,8 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2014-2020 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015-2019 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2016      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
@@ -12,9 +12,7 @@
  * $HEADER$
  */
 
-#include <src/include/pmix_config.h>
-
-#include <src/include/types.h>
+#include "src/include/pmix_config.h"
 
 #ifdef HAVE_STRING_H
 #include <string.h>
@@ -27,8 +25,8 @@
 #endif
 #include PMIX_EVENT_HEADER
 
-#include <pmi2.h>
-#include <pmix.h>
+#include "include/pmi2.h"
+#include "include/pmix.h"
 
 #include "src/mca/bfrops/bfrops.h"
 #include "src/util/argv.h"

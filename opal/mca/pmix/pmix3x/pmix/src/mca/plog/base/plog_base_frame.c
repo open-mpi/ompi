@@ -1,15 +1,17 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
- * Copyright (c) 2018      Intel, Inc. All rights reserved.
+ * Copyright (c) 2018-2020 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2020      Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
  *
  * $HEADER$
  */
-#include <src/include/pmix_config.h>
+#include "src/include/pmix_config.h"
 
-#include <pmix_common.h>
+#include "include/pmix_common.h"
 
 #ifdef HAVE_STRING_H
 #include <string.h>
@@ -38,6 +40,7 @@ pmix_plog_API_module_t pmix_plog = {
 static char *order = NULL;
 static int pmix_plog_register(pmix_mca_base_register_flag_t flags)
 {
+    (void)flags;
     pmix_mca_base_var_register("pmix", "plog", "base", "order",
                                "Comma-delimited, prioritized list of logging channels",
                                PMIX_MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
@@ -59,6 +62,7 @@ static pmix_status_t pmix_plog_close(void)
         return PMIX_SUCCESS;
     }
     pmix_plog_globals.initialized = false;
+    pmix_plog_globals.selected = false;
 
     for (n=0; n < pmix_plog_globals.actives.size; n++) {
         if (NULL == (active = (pmix_plog_base_active_module_t*)pmix_pointer_array_get_item(&pmix_plog_globals.actives, n))) {

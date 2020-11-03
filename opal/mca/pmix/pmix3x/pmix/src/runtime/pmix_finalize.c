@@ -12,7 +12,7 @@
  * Copyright (c) 2008-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2016-2019 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
@@ -24,7 +24,7 @@
 
 /** @file **/
 
-#include <src/include/pmix_config.h>
+#include "src/include/pmix_config.h"
 
 #include "src/class/pmix_object.h"
 #include "src/client/pmix_client_ops.h"
@@ -34,6 +34,7 @@
 #include "src/mca/base/base.h"
 #include "src/mca/base/pmix_mca_base_var.h"
 #include "src/mca/bfrops/base/base.h"
+#include "src/mca/pcompress/base/base.h"
 #include "src/mca/gds/base/base.h"
 #include "src/mca/pif/base/base.h"
 #include "src/mca/pinstalldirs/base/base.h"
@@ -41,6 +42,7 @@
 #include "src/mca/pnet/base/base.h"
 #include "src/mca/preg/base/base.h"
 #include "src/mca/psec/base/base.h"
+#include "src/mca/psquash/base/base.h"
 #include "src/mca/ptl/base/base.h"
 #include PMIX_EVENT_HEADER
 
@@ -79,6 +81,13 @@ void pmix_rte_finalize(void)
 
     /* close bfrops */
     (void)pmix_mca_base_framework_close(&pmix_bfrops_base_framework);
+
+    /* close the psquash framework */
+    pmix_psquash.finalize();
+    pmix_mca_base_framework_close(&pmix_psquash_base_framework);
+
+    /* close compress */
+    (void)pmix_mca_base_framework_close(&pmix_pcompress_base_framework);
 
     /* close GDS */
     (void)pmix_mca_base_framework_close(&pmix_gds_base_framework);
@@ -123,7 +132,9 @@ void pmix_rte_finalize(void)
     }
     PMIX_DESTRUCT(&pmix_globals.iof_requests);
     PMIX_LIST_DESTRUCT(&pmix_globals.stdin_targets);
-    free(pmix_globals.hostname);
+    if (NULL != pmix_globals.hostname) {
+        free(pmix_globals.hostname);
+    }
     PMIX_LIST_DESTRUCT(&pmix_globals.nspaces);
 
     /* now safe to release the event base */

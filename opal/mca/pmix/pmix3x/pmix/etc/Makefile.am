@@ -9,8 +9,8 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2017      Intel, Inc. All rights reserved.
+# Copyright (c) 2008-2020 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2019-2020 Intel, Inc.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -18,39 +18,39 @@
 # $HEADER$
 #
 
-pmix_config_files = pmix-mca-params.conf
-pmix_file_from_platform = no
+pmix_config_files = @PMIX_DEFAULT_MCA_PARAM_CONF@
+pmix_file_from_platform = @PMIX_PARAM_FROM_PLATFORM@
 
 EXTRA_DIST = $(pmix_config_files)
 
 # Steal a little trickery from a generated Makefile to only install
 # files if they do not already exist at the target.  Be sure to read
 # thread starting here
-# (http://www.open-mpi.org/community/lists/devel/2008/06/4080.php) for
+# (https://www.open-mpi.org/community/lists/devel/2008/06/4080.php) for
 # details why the mkdir is in install-data-local.
 
 install-data-local:
 	$(MKDIR_P) $(DESTDIR)$(sysconfdir)
 	@ p="$(pmix_config_files)"; \
         if test "$(pmix_file_from_platform)" = "yes"; then \
-	    if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
-	    echo " $(INSTALL_DATA) $$d$$p $(DESTDIR)$(sysconfdir)/pmix-mca-params.conf"; \
-	    $(INSTALL_DATA) $$d$$p $(DESTDIR)$(sysconfdir)/pmix-mca-params.conf; \
+	    	if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	    	echo " $(INSTALL_DATA) $$d$$p $(DESTDIR)$(sysconfdir)/pmix-mca-params.conf"; \
+		    $(INSTALL_DATA) $$d$$p $(DESTDIR)$(sysconfdir)/pmix-mca-params.conf; \
         else \
             for file in $$p; do \
-	        if test -f $(DESTDIR)$(sysconfdir)/pmix-mca-params.conf; then \
-	            echo "******************************* WARNING ************************************"; \
-	            echo "*** Not installing new $$file over existing file in:"; \
-	            echo "***   $(DESTDIR)$(sysconfdir)/$$file"; \
-	            echo "******************************* WARNING ************************************"; \
-	        else \
-	            if test -f "$$file"; then d=; else d="$(srcdir)/"; fi; \
-	            f="`echo $$file | sed -e 's|^.*/||'`"; \
-	            echo " $(INSTALL_DATA) $$d$$file $(DESTDIR)$(sysconfdir)/$$f"; \
-	            $(INSTALL_DATA) $$d$$file $(DESTDIR)$(sysconfdir)/$$f; \
-	        fi; \
-	    done \
-        fi;
+	        	if test -f $(DESTDIR)$(sysconfdir)/pmix-mca-params.conf; then \
+		            echo "******************************* WARNING ************************************"; \
+		            echo "*** Not installing new $$file over existing file in:"; \
+		            echo "***   $(DESTDIR)$(sysconfdir)/$$file"; \
+		            echo "******************************* WARNING ************************************"; \
+		        else \
+		            if test -f "$$file"; then d=; else d="$(srcdir)/"; fi; \
+		            f="`echo $$file | sed -e 's|^.*/||'`"; \
+		            echo " $(INSTALL_DATA) $$d$$file $(DESTDIR)$(sysconfdir)/$$f"; \
+		            $(INSTALL_DATA) $$d$$file $(DESTDIR)$(sysconfdir)/$$f; \
+		        fi; \
+		    done \
+	    fi;
 
 
 # Only remove if exactly the same as what in our tree
@@ -61,7 +61,7 @@ uninstall-local:
 	@ p="$(pmix_config_files)"; \
 	for file in $$p; do \
 	  if test -f "$(DESTDIR)$(sysconfdir)/$$file"; then \
-            if test -f "$$file"; then d=; else d="$(srcdir)/"; fi; \
+	  	if test -f "$$file"; then d=; else d="$(srcdir)/"; fi; \
 	    if diff "$(DESTDIR)$(sysconfdir)/$$file" "$$d$$file" > /dev/null 2>&1 ; then \
 	      echo "rm -f $(DESTDIR)$(sysconfdir)/$$file" ; \
 	      rm -f "$(DESTDIR)$(sysconfdir)/$$file" ; \

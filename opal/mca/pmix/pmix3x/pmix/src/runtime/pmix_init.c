@@ -15,7 +15,7 @@
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2010-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -27,30 +27,28 @@
 
 /** @file **/
 
-#include <src/include/pmix_config.h>
+#include "src/include/pmix_config.h"
 
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
-#include PMIX_EVENT_HEADER
-#if ! PMIX_HAVE_LIBEV
-#include PMIX_EVENT2_THREAD_HEADER
-#endif
 
-#include <pmix_rename.h>
-
+#include "src/include/pmix_globals.h"
 #include "src/util/output.h"
+#include "src/util/pmix_environ.h"
 #include "src/util/show_help.h"
 #include "src/mca/base/base.h"
 #include "src/mca/base/pmix_mca_base_var.h"
 #include "src/mca/bfrops/base/base.h"
+#include "src/mca/pcompress/base/base.h"
 #include "src/mca/gds/base/base.h"
 #include "src/mca/pif/base/base.h"
 #include "src/mca/pinstalldirs/base/base.h"
 #include "src/mca/plog/base/base.h"
 #include "src/mca/pnet/base/base.h"
-#include "src/mca/psec/base/base.h"
 #include "src/mca/preg/base/base.h"
+#include "src/mca/psec/base/base.h"
+#include "src/mca/psquash/base/base.h"
 #include "src/mca/ptl/base/base.h"
 
 #include "src/client/pmix_client_ops.h"
@@ -68,7 +66,10 @@ PMIX_EXPORT int pmix_initialized = 0;
 PMIX_EXPORT bool pmix_init_called = false;
 /* we have to export the pmix_globals object so
  * all plugins can access it. However, it is included
- * in the pmix_rename.h file for external protection */
+ * in the pmix_rename.h file for external protection.
+ * Initialize only those entries that are not covered
+ * by MCA params or are complex structures initialized
+ * below */
 PMIX_EXPORT pmix_globals_t pmix_globals = {
     .init_cntr = 0,
     .mypeer = NULL,
@@ -80,7 +81,8 @@ PMIX_EXPORT pmix_globals_t pmix_globals = {
     .debug_output = -1,
     .connected = false,
     .commits_pending = false,
-    .mygds = NULL
+    .mygds = NULL,
+    .pushstdin = false
 };
 
 
@@ -101,6 +103,7 @@ int pmix_rte_init(uint32_t type,
     char *error = NULL, *evar;
     size_t n;
     char hostname[PMIX_MAXHOSTNAMELEN] = {0};
+    char *gds = NULL;
 
     if( ++pmix_initialized != 1 ) {
         if( pmix_initialized < 1 ) {
@@ -132,6 +135,11 @@ int pmix_rte_init(uint32_t type,
                 __FILE__, __LINE__, ret);
         return ret;
     }
+    if (PMIX_SUCCESS != (ret = pmix_pinstall_dirs_base_init(info, ninfo))) {
+        fprintf(stderr, "pmix_pinstalldirs_base_init() failed -- process will likely abort (%s:%d, returned %d instead of PMIX_SUCCESS)\n",
+                __FILE__, __LINE__, ret);
+        return ret;
+    }
 
     /* initialize the help system */
     pmix_show_help_init();
@@ -160,7 +168,21 @@ int pmix_rte_init(uint32_t type,
         goto return_error;
     }
 
+    /* if an external event base wasn't provide, create one */
+    if (!pmix_globals.external_evbase) {
+        /* tell libevent that we need thread support */
+        pmix_event_use_threads();
+
+        /* create an event base and progress thread for us */
+        if (NULL == (pmix_globals.evbase = pmix_progress_thread_init(NULL))) {
+            error = "progress thread";
+            ret = PMIX_ERROR;
+            goto return_error;
+        }
+    }
+
     /* setup the globals structure */
+    pmix_globals.pid = getpid();
     memset(&pmix_globals.myid.nspace, 0, PMIX_MAX_NSLEN+1);
     pmix_globals.myid.rank = PMIX_RANK_INVALID;
     PMIX_CONSTRUCT(&pmix_globals.events, pmix_events_t);
@@ -173,17 +195,19 @@ int pmix_rte_init(uint32_t type,
                           pmix_globals.evbase, pmix_globals.event_eviction_time,
                           _notification_eviction_cbfunc);
     PMIX_CONSTRUCT(&pmix_globals.nspaces, pmix_list_t);
+    /* need to hold off checking the hotel init return code
+     * until after we construct all the globals so they can
+     * correct finalize */
+    if (PMIX_SUCCESS != ret) {
+        error = "notification hotel init";
+        goto return_error;
+    }
     /* if we were given a hostname in our environment, use it */
     if (NULL != (evar = getenv("PMIX_HOSTNAME"))) {
         pmix_globals.hostname = strdup(evar);
     } else {
         gethostname(hostname, PMIX_MAXHOSTNAMELEN-1);
         pmix_globals.hostname = strdup(hostname);
-    }
-
-    if (PMIX_SUCCESS != ret) {
-        error = "notification hotel init";
-        goto return_error;
     }
 
     /* and setup the iof request tracking list */
@@ -282,6 +306,8 @@ int pmix_rte_init(uint32_t type,
                 if (PMIX_SUCCESS != ret) {
                     goto return_error;
                 }
+            } else if (PMIX_CHECK_KEY(&info[n], PMIX_GDS_MODULE)) {
+                gds = info[n].value.data.string;
             }
         }
     }
@@ -289,6 +315,22 @@ int pmix_rte_init(uint32_t type,
     /* the choice of modules to use when communicating with a peer
      * will be done by the individual init functions and at the
      * time of connection to that peer */
+
+    if( PMIX_SUCCESS != (ret = pmix_mca_base_framework_open(&pmix_psquash_base_framework, 0)) ) {
+        error = "pmix_psquash_base_open";
+        goto return_error;
+    }
+
+    if( PMIX_SUCCESS != (ret = pmix_psquash_base_select()) ) {
+        error = "pmix_psquash_base_select";
+        goto return_error;
+    }
+
+    ret = pmix_psquash.init();
+    if (PMIX_SUCCESS != ret) {
+        error = "psquash_init";
+        goto return_error;
+    }
 
     /* open the bfrops and select the active plugins */
     if (PMIX_SUCCESS != (ret = pmix_mca_base_framework_open(&pmix_bfrops_base_framework, 0)) ) {
@@ -300,7 +342,21 @@ int pmix_rte_init(uint32_t type,
         goto return_error;
     }
 
+    /* open and select the compress framework */
+    if (PMIX_SUCCESS != (ret = pmix_mca_base_framework_open(&pmix_pcompress_base_framework, 0)) ) {
+        error = "pmix_pcompress_base_open";
+        goto return_error;
+    }
+    if (PMIX_SUCCESS != (ret = pmix_compress_base_select()) ) {
+        error = "pmix_pcompress_base_select";
+        goto return_error;
+    }
+
     /* open the ptl and select the active plugins */
+    if (NULL != (evar = getenv("PMIX_PTL_MODULE"))) {
+        /* convert to an MCA param, but don't overwrite something already there */
+        pmix_setenv("PMIX_MCA_ptl", evar, false, &environ);
+    }
     if (PMIX_SUCCESS != (ret = pmix_mca_base_framework_open(&pmix_ptl_base_framework, 0)) ) {
         error = "pmix_ptl_base_open";
         goto return_error;
@@ -316,6 +372,10 @@ int pmix_rte_init(uint32_t type,
     }
 
     /* open the psec and select the active plugins */
+    if (NULL != (evar = getenv("PMIX_SECURITY_MODE"))) {
+        /* convert to an MCA param, but don't overwrite something already there */
+        pmix_setenv("PMIX_MCA_psec", evar, false, &environ);
+    }
     if (PMIX_SUCCESS != (ret = pmix_mca_base_framework_open(&pmix_psec_base_framework, 0))) {
         error = "pmix_psec_base_open";
         goto return_error;
@@ -326,6 +386,12 @@ int pmix_rte_init(uint32_t type,
     }
 
     /* open the gds and select the active plugins */
+    if (NULL != gds) {
+        pmix_setenv("PMIX_MCA_gds", gds, true, &environ);
+    } else if (NULL != (evar = getenv("PMIX_GDS_MODULE"))) {
+        /* convert to an MCA param, but don't overwrite something already there */
+        pmix_setenv("PMIX_MCA_gds", evar, false, &environ);
+    }
     if (PMIX_SUCCESS != (ret = pmix_mca_base_framework_open(&pmix_gds_base_framework, 0)) ) {
         error = "pmix_gds_base_open";
         goto return_error;
@@ -341,7 +407,7 @@ int pmix_rte_init(uint32_t type,
         return ret;
     }
 
-    /* open the preg and select the active plugins */
+    /* open the preg and select the active plugins - must come after pcompress! */
     if (PMIX_SUCCESS != (ret = pmix_mca_base_framework_open(&pmix_preg_base_framework, 0)) ) {
         error = "pmix_preg_base_open";
         goto return_error;
@@ -361,15 +427,10 @@ int pmix_rte_init(uint32_t type,
         goto return_error;
     }
 
-    /* if an external event base wasn't provide, create one */
     if (!pmix_globals.external_evbase) {
-        /* tell libevent that we need thread support */
-        pmix_event_use_threads();
-
-        /* create an event base and progress thread for us */
-        if (NULL == (pmix_globals.evbase = pmix_progress_thread_init(NULL))) {
-            error = "progress thread";
-            ret = PMIX_ERROR;
+        /* start progressing the event library */
+        if (PMIX_SUCCESS != (ret = pmix_progress_thread_start(NULL))) {
+            error = "pmix_progress_thread_start";
             goto return_error;
         }
     }

@@ -4,7 +4,7 @@
 # Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
 # Copyright (c) 2013      Mellanox Technologies, Inc.
 #                         All rights reserved.
-# Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
+# Copyright (c) 2013-2020 Intel, Inc.  All rights reserved.
 # Copyright (c) 2015      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # Copyright (c) 2015      IBM Corporation.  All rights reserved.
@@ -275,7 +275,7 @@ sub mca_generate_framework_header(\$\@) {
 #ifndef $ifdef_string
 #define $ifdef_string
 
-#include <src/mca/base/pmix_mca_base_framework.h>
+#include \"src/mca/base/pmix_mca_base_framework.h\"
 
 $framework_decl_output
 static pmix_mca_base_framework_t *pmix_frameworks[] = {

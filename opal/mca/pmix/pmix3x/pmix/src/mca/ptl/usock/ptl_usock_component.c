@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2016-2019 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2016-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2017      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2018      IBM Corporation.  All rights reserved.
@@ -30,8 +30,8 @@
  * entire components just to query their version and parameters.
  */
 
-#include <src/include/pmix_config.h>
-#include <pmix_common.h>
+#include "src/include/pmix_config.h"
+#include "include/pmix_common.h"
 
 #ifdef HAVE_FCNTL_H
 #include <fcntl.h>
@@ -154,8 +154,8 @@ static int component_query(pmix_mca_base_module_t **module, int *priority)
     if (PMIX_PEER_IS_TOOL(pmix_globals.mypeer)) {
         return PMIX_ERR_NOT_SUPPORTED;
     }
-
     *module = (pmix_mca_base_module_t*)&pmix_ptl_usock_module;
+    *priority = mca_ptl_usock_component.super.priority;
     return PMIX_SUCCESS;
 }
 
@@ -650,13 +650,9 @@ static void connection_handler(int sd, short args, void *cbdata)
     nptr->compat.type = bftype;
 
     /* set the gds module to match this peer */
-    if (NULL != gds) {
-        PMIX_INFO_LOAD(&ginfo, PMIX_GDS_MODULE, gds, PMIX_STRING);
-        nptr->compat.gds = pmix_gds_base_assign_module(&ginfo, 1);
-        PMIX_INFO_DESTRUCT(&ginfo);
-    } else {
-        nptr->compat.gds = pmix_gds_base_assign_module(NULL, 0);
-    }
+    PMIX_INFO_LOAD(&ginfo, PMIX_GDS_MODULE, gds, PMIX_STRING);
+    nptr->compat.gds = pmix_gds_base_assign_module(&ginfo, 1);
+    PMIX_INFO_DESTRUCT(&ginfo);
     if (NULL == nptr->compat.gds) {
         free(msg);
         info->proc_cnt--;

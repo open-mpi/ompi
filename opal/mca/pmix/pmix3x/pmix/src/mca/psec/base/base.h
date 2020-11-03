@@ -11,9 +11,9 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, Inc.  All rights reserved.
- * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2014-2020 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015-2020 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -24,7 +24,7 @@
 #ifndef PMIX_PSEC_BASE_H_
 #define PMIX_PSEC_BASE_H_
 
-#include <src/include/pmix_config.h>
+#include "src/include/pmix_config.h"
 
 
 #ifdef HAVE_SYS_TIME_H
@@ -72,10 +72,11 @@ PMIX_CLASS_DECLARATION(pmix_psec_base_active_module_t);
 struct pmix_psec_globals_t {
   pmix_list_t actives;
   bool initialized;
+  bool selected;
 };
 typedef struct pmix_psec_globals_t pmix_psec_globals_t;
 
-extern pmix_psec_globals_t pmix_psec_globals;
+PMIX_EXPORT extern pmix_psec_globals_t pmix_psec_globals;
 
 PMIX_EXPORT char* pmix_psec_base_get_available_modules(void);
 PMIX_EXPORT pmix_psec_module_t* pmix_psec_base_assign_module(const char *options);

@@ -13,7 +13,7 @@
  * Copyright (c) 2008-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2016      Intel, Inc. All rights reserved
+ * Copyright (c) 2016-2020 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -24,10 +24,10 @@
 #if !defined(PMIX_MCA_BASE_VAR_ENUM_H)
 #define PMIX_MCA_BASE_VAR_ENUM_H
 
-#include <src/include/pmix_config.h>
+#include "src/include/pmix_config.h"
 
 #include "src/class/pmix_object.h"
-#include "pmix_common.h"
+#include "include/pmix_common.h"
 
 typedef struct pmix_mca_base_var_enum_t pmix_mca_base_var_enum_t;
 

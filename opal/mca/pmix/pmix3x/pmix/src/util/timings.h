@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2014      Artem Polyakov <artpol84@gmail.com>
- * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -13,7 +13,7 @@
 #ifndef PMIX_UTIL_TIMING_H
 #define PMIX_UTIL_TIMING_H
 
-#include <src/include/pmix_config.h>
+#include "src/include/pmix_config.h"
 
 
 #include "src/class/pmix_list.h"

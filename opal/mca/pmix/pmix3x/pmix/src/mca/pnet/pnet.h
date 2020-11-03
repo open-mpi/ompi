@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2018      Intel, Inc. All rights reserved.
+ * Copyright (c) 2018-2020 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -26,7 +26,8 @@
 #ifndef PMIX_PNET_H
 #define PMIX_PNET_H
 
-#include <src/include/pmix_config.h>
+#include "src/include/pmix_config.h"
+#include "include/pmix.h"
 
 #include "src/class/pmix_list.h"
 #include "src/mca/mca.h"
@@ -61,7 +62,7 @@ typedef void (*pmix_pnet_base_module_fini_fn_t)(void);
  * for forwarding to compute nodes, or allocation of static endpts
  */
 typedef pmix_status_t (*pmix_pnet_base_module_allocate_fn_t)(pmix_namespace_t *nptr,
-                                                             pmix_info_t *info,
+                                                             pmix_info_t info[], size_t ninfo,
                                                              pmix_list_t *ilist);
 
 /**
@@ -145,12 +146,14 @@ typedef pmix_status_t (*pmix_pnet_base_module_deliver_inventory_fn_t)(pmix_info_
                                                                       pmix_info_t directives[], size_t ndirs,
                                                                       pmix_op_cbfunc_t cbfunc, void *cbdata);
 
-
 /**
- * Base structure for a PNET module
+ * Base structure for a PNET module. Each component should malloc a
+ * copy of the module structure for each fabric plane they support.
  */
 typedef struct {
     char *name;
+    /* provide a pointer to plane-specific metadata */
+    void *plane;
     /* init/finalize */
     pmix_pnet_base_module_init_fn_t                 init;
     pmix_pnet_base_module_fini_fn_t                 finalize;

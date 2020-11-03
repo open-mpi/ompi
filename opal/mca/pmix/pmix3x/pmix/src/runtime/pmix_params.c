@@ -17,11 +17,12 @@
  * Copyright (c) 2010-2014 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2014      Hochschule Esslingen.  All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015-2019 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2015-2018 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2016-2019 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2020      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -31,7 +32,6 @@
 
 #include "pmix_config.h"
 
-#include "src/include/types.h"
 #include "src/mca/base/pmix_mca_base_var.h"
 #include "src/runtime/pmix_rte.h"
 #include "src/util/timings.h"
@@ -205,6 +205,13 @@ pmix_status_t pmix_register_params(void)
                                        PMIX_MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
                                        PMIX_INFO_LVL_1, PMIX_MCA_BASE_VAR_SCOPE_ALL,
                                        &pmix_server_globals.base_verbose);
+
+    pmix_server_globals.fence_localonly_opt = true;
+    (void) pmix_mca_base_var_register ("pmix", "pmix", "server", "fence_localonly_opt",
+                                       "Optimize local-only fence opteration by eliminating the upcall to the RM (default: true)",
+                                       PMIX_MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                       PMIX_INFO_LVL_1, PMIX_MCA_BASE_VAR_SCOPE_ALL,
+                                       &pmix_server_globals.fence_localonly_opt);
 
     /* check for maximum number of pending output messages */
     pmix_globals.output_limit = (size_t) INT_MAX;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  *
@@ -394,7 +394,8 @@ PMIX_EXPORT pmix_status_t PMIx_Disconnect_nb(const pmix_proc_t ranges[], size_t 
  * for releasing the array when done with it - the PMIX_PROC_FREE macro is
  * provided for this purpose.
  */
-PMIX_EXPORT pmix_status_t PMIx_Resolve_peers(const char *nodename, const pmix_nspace_t nspace,
+PMIX_EXPORT pmix_status_t PMIx_Resolve_peers(const char *nodename,
+                                             const pmix_nspace_t nspace,
                                              pmix_proc_t **procs, size_t *nprocs);
 
 
@@ -575,7 +576,6 @@ PMIX_EXPORT pmix_status_t PMIx_Process_monitor_nb(const pmix_info_t *monitor, pm
 PMIX_EXPORT pmix_status_t PMIx_Get_credential(const pmix_info_t info[], size_t ninfo,
                                               pmix_credential_cbfunc_t cbfunc, void *cbdata);
 
-
 /* Request validation of a credential by the PMIx server/SMS
  * Input values include:
  *
@@ -696,7 +696,7 @@ PMIX_EXPORT pmix_status_t PMIx_IOF_deregister(size_t iofhdlr,
                                               pmix_op_cbfunc_t cbfunc, void *cbdata);
 
 /* Push data collected locally (typically from stdin) to
- * target recipients.
+ * stdin of target recipients.
  *
  * targets - array of process identifiers to which the data is to be delivered. Note
  *           that a WILDCARD rank indicates that all procs in the given nspace are
@@ -714,7 +714,7 @@ PMIX_EXPORT pmix_status_t PMIx_IOF_deregister(size_t iofhdlr,
  *
  * bo - pointer to a byte object containing the stdin data
  *
- * cbfunc - callback function when the data has been forwarded
+ * cbfunc - callback function when the data has been forwarded.
  *
  * cbdata - object to be returned in cbfunc
  */
@@ -723,6 +723,10 @@ PMIX_EXPORT pmix_status_t PMIx_IOF_push(const pmix_proc_t targets[], size_t ntar
                                         const pmix_info_t directives[], size_t ndirs,
                                         pmix_op_cbfunc_t cbfunc, void *cbdata);
 
+/****************************************/
+/****    COMMON SUPPORT FUNCTIONS    ****/
+/* Found in pmix_common.h.in in the v3.x and earlier series */
+/****************************************/
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

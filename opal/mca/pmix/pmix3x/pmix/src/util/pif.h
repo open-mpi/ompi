@@ -13,7 +13,7 @@
  *                         reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2013      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2016-2019 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2016-2020 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -46,7 +46,7 @@ BEGIN_C_DECLS
     (((n) >> 24) & 0x000000FF), (((n) >> 16) & 0x000000FF), \
     (((n) >> 8) & 0x000000FF), ((n) & 0x000000FF)
 
-#define PMIX_PIF_ASSEMBLE_NETWORK(n1, n2, n3, n4)    \
+#define PMIX_PIF_ASSEMBLE_FABRIC(n1, n2, n3, n4)    \
     (((n1) << 24) & 0xFF000000) |                   \
     (((n2) << 16) & 0x00FF0000) |                   \
     (((n3) <<  8) & 0x0000FF00) |                   \

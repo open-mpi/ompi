@@ -1,0 +1,274 @@
+Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+                        University Research and Technology
+                        Corporation.  All rights reserved.
+Copyright (c) 2004-2005 The University of Tennessee and The University
+                        of Tennessee Research Foundation.  All rights
+                        reserved.
+Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
+                        University of Stuttgart.  All rights reserved.
+Copyright (c) 2004-2005 The Regents of the University of California.
+                        All rights reserved.
+Copyright (c) 2008-2020 Cisco Systems, Inc.  All rights reserved
+Copyright (c) 2013-2020 Intel, Inc.  All rights reserved.
+$COPYRIGHT$
+
+Additional copyrights may follow
+
+$HEADER$
+
+Overview
+========
+
+This file is here for those who are building/exploring PMIx in its
+source code form, most likely through a developer's tree (i.e., a Git
+checkout).
+
+
+Debugging vs. Optimized Builds
+==============================
+
+**If you are building PMIx from a Git checkout**, the default build
+includes a lot of debugging features.  This happens automatically when
+when configure detects the hidden ".git" Git meta directory (that is
+present in all Git checkouts) in your source tree, and therefore
+activates a number of developer-only debugging features in the PMIx
+code base.
+
+By definition, debugging builds will perform [much] slower than
+optimized builds of PMIx.  You should *NOT* conduct timing tests
+or try to run production performance numbers with debugging builds.
+
+**REMEMBER** that you need to add appropriate -O directives
+to your CFLAGS so your compiler will optimize the code! Otherwise,
+while we will have disabled various debug code paths, the resulting
+binary will not have been optimized.
+
+NOTE: this version of PMIx requires the Libevent package to build
+and operate. Any version of Libevent greater than or equal to
+2.0.21 is acceptable. It optionally supports the HWLOC package
+for providing topology information to both the host environment
+(by collecting local inventory for rollup) and local client
+processes. Any version of HWLOC greater than 1.10 is supported,
+although versions in the 2.x series are recommended.
+
+If you wish to build an optimized version of PMIx from a
+developer's checkout, you have a couple of options:
+
+1. Manually specify configure options to disable the debugging
+   option.  You'll need to carefully examine the output of
+   "./configure --help" to see which options to disable.
+   They are all listed, but some are less obvious than others (they
+   are not listed here because it is a changing set of flags; by
+   Murphy's Law, listing them here will pretty much guarantee that
+   this file will get out of date):
+
+     shell$ ./autogen.pl
+     shell$ ./configure --disable-debug ...
+     [...lots of output...]
+     shell$ make all install
+
+2. Use a VPATH build.  Simply build PMIx from a different
+   directory than the source tree -- one where the .git subdirectory
+   is not present.  For example:
+
+     shell$ git clone https://github.com/openpmix/openpmix.git pmix
+     shell$ cd pmix
+     shell$ ./autogen.pl
+     shell$ mkdir build
+     shell$ cd build
+     shell$ ../configure ...
+     [...lots of output...]
+     shell$ make all install
+
+Note that in both cases you must point configure at the libevent
+installation using the --with-libevent=<dir> option if it is in
+a non-standard location. Similarly, non-standard locations for
+the HWLOC package must be specified using the --with-hwloc=<dir>
+option. In both cases, PMIx will automatically detect these
+packages in standard locations and build-in support for them
+unless otherwise specified using the respective configure option.
+
+
+Use of GNU Autoconf, Automake, and Libtool (and m4)
+===================================================
+
+This procedure is *ONLY* necessary if you are building from a
+developer's tree.  If you have a PMIx distribution tarball, this
+procedure is unnecessary -- you can (and should) skip reading this
+section.
+
+If you are building PMIx from a developer's tree, you must first
+install fairly recent versions of the GNU tools Autoconf, Automake,
+and Libtool (and possibly GNU m4, because recent versions of Autoconf
+have specific GNU m4 version requirements).  The specific versions
+required depend on if you are using the master or a release branch (and
+which release branch you are using).  The specific versions can be
+found at:
+
+    https://pmix.org/code/getting-the-reference-implementation/
+
+You can check what versions of the autotools you have installed with
+the following:
+
+shell$ m4 --version
+shell$ autoconf --version
+shell$ automake --version
+shell$ libtoolize --version
+
+To strengthen the above point: the core PMIx developers typically
+use very, very recent versions of the GNU tools.  There are known bugs
+in older versions of the GNU tools that PMIx no longer compensates
+for (it seemed senseless to indefinitely support patches for ancient
+versions of Autoconf, for example).  You *WILL* have problems if you
+do not use recent versions of the GNU tools.
+
+If you need newer versions, you are *strongly* encouraged to heed the
+following advice:
+
+NOTE: On MacOS/X, the default "libtool" program is different than the
+      GNU libtool.  You must download and install the GNU version
+      (e.g., via MacPorts, Homebrew, or some other mechanism).
+
+1. Unless your OS distribution has easy-to-use binary installations,
+   the sources can be can be downloaded from:
+
+        ftp://ftp.gnu.org/gnu/autoconf/
+        ftp://ftp.gnu.org/gnu/automake/
+        ftp://ftp.gnu.org/gnu/libtool/
+        and if you need it:
+        ftp://ftp.gnu.org/gnu/m4/
+
+   NOTE: It is certainly easiest to download/build/install all four of
+   these tools together.  But note that PMIx has no specific m4
+   requirements; it is only listed here because Autoconf requires
+   minimum versions of GNU m4.  Hence, you may or may not *need* to
+   actually install a new version of GNU m4.  That being said, if you
+   are confused or don't know, just install the latest GNU m4 with the
+   rest of the GNU Autotools and everything will work out fine.
+
+2. Build and install the tools in the following order:
+
+   2a. m4
+   2b. Autoconf
+   2c. Automake
+   2d. Libtool
+
+3. You MUST install the last three tools (Autoconf, Automake, Libtool)
+   into the same prefix directory.  These three tools are somewhat
+   inter-related, and if they're going to be used together, they MUST
+   share a common installation prefix.
+
+   You can install m4 anywhere as long as it can be found in the path;
+   it may be convenient to install it in the same prefix as the other
+   three.  Or you can use any recent-enough m4 that is in your path.
+
+   3a. It is *strongly* encouraged that you do not install your new
+       versions over the OS-installed versions.  This could cause
+       other things on your system to break.  Instead, install into
+       $HOME/local, or /usr/local, or wherever else you tend to
+       install "local" kinds of software.
+   3b. In doing so, be sure to prefix your $path with the directory
+       where they are installed.  For example, if you install into
+       $HOME/local, you may want to edit your shell startup file
+       (.bashrc, .cshrc, .tcshrc, etc.) to have something like:
+
+          # For bash/sh:
+          export PATH=$HOME/local/bin:$PATH
+          # For csh/tcsh:
+          set path = ($HOME/local/bin $path)
+
+   3c. Ensure to set your $path *BEFORE* you configure/build/install
+       the four packages.
+
+4. All four packages require two simple commands to build and
+   install (where PREFIX is the prefix discussed in 3, above).
+
+      shell$ cd m4-1.4.13
+      shell$ ./configure --prefix=PREFIX
+      shell$ make; make install
+
+      --> If you are using the csh or tcsh shells, be sure to run the
+          "rehash" command after you install each package.
+
+      shell$ cd ../autoconf-2.68
+      shell$ ./configure --prefix=PREFIX
+      shell$ make; make install
+
+      --> If you are using the csh or tcsh shells, be sure to run the
+          "rehash" command after you install each package.
+
+      shell$ cd ../automake-1.11.1
+      shell$ ./configure --prefix=PREFIX
+      shell$ make; make install
+
+      --> If you are using the csh or tcsh shells, be sure to run the
+          "rehash" command after you install each package.
+
+      shell$ cd ../libtool-2.2.8
+      shell$ ./configure --prefix=PREFIX
+      shell$ make; make install
+
+      --> If you are using the csh or tcsh shells, be sure to run the
+          "rehash" command after you install each package.
+
+   m4, Autoconf and Automake build and install very quickly; Libtool will
+   take a minute or two.
+
+5. You can now run PMIx’s top-level "autogen.pl" script.  This script
+   will invoke the GNU Autoconf, Automake, and Libtool commands in the
+   proper order and setup to run PMIx's top-level "configure" script.
+
+   5a. You generally need to run autogen.pl only when the top-level
+       file "configure.ac" changes, or any files in the config/ or
+       <project>/config/ directories change (these directories are
+       where a lot of "include" files for PMI’xs configure script
+       live).
+
+   5b. You do *NOT* need to re-run autogen.pl if you modify a
+       Makefile.am.
+
+Use of Flex
+===========
+
+Flex may be used during the compilation of a developer's checkout (it is
+not used to build official distribution tarballs).  Other flavors of
+lex are *not* supported: given the choice of making parsing code
+portable between all flavors of lex and doing more interesting work on
+PMIx, we greatly prefer the latter.
+
+Note that no testing has been performed to see what the minimum
+version of Flex is required by PMIx.  We suggest that you use
+v2.5.35 at the earliest.
+
+Note that the flex-generated code generates some compiler warnings on
+some platforms, but the warnings do not seem to be consistent or
+uniform on all platforms, compilers, and flex versions.  As such, we
+have done little to try to remove those warnings.
+
+If you do not have Flex installed, it can be downloaded from the
+following URL:
+
+    https://github.com/westes/flex
+
+Use of Pandoc
+=============
+
+Similar to prior sections, you need to read/care about this section
+*ONLY* if you are building from a developer's tree (i.e., a Git clone
+of the Open MPI source tree).  If you have an Open MPI distribution
+tarball, the contents of this section are optional -- you can (and
+probably should) skip reading this section.
+
+The Pandoc tool is used to generate Open MPI's man pages.
+Specifically: Open MPI's man pages are written in Markdown; Pandoc is
+the tool that converts that Markdown to nroff (i.e., the format of man
+pages).
+
+You must have Pandoc >=v1.12 when building Open MPI from a developer's
+tree.  If configure cannot find Pandoc >=v1.12, it will abort.
+
+If you need to install Pandoc, check your operating system-provided
+packages (to include MacOS Homebrew and MacPorts).  The Pandoc project
+itself also offers binaries for their releases:
+
+    https://pandoc.org/

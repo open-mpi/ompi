@@ -9,7 +9,9 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2015-2018 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015-2020 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2019      Mellanox Technologies, Inc.
+ *                         All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -17,7 +19,7 @@
  * $HEADER$
  */
 
-#include <src/include/pmix_config.h>
+#include "src/include/pmix_config.h"
 
 
 #include <stdio.h>
@@ -28,6 +30,7 @@
 #include "src/util/argv.h"
 #include "src/util/error.h"
 #include "src/include/pmix_globals.h"
+#include "src/mca/preg/preg.h"
 
 #include "src/mca/bfrops/base/base.h"
 
@@ -201,7 +204,13 @@ void pmix_bfrops_base_value_load(pmix_value_t *v, const void *data,
                 PMIX_ERROR_LOG(rc);
             }
             break;
-
+        case PMIX_REGEX:
+            /* load it into the byte object */
+            rc = pmix_preg.copy(&v->data.bo.bytes, &v->data.bo.size, (char*)data);
+            if (PMIX_SUCCESS != rc) {
+                PMIX_ERROR_LOG(rc);
+            }
+            break;
         default:
             /* silence warnings */
             break;
@@ -354,6 +363,15 @@ pmix_status_t pmix_bfrops_base_value_unload(pmix_value_t *kv,
             *data = envar;
             *sz = sizeof(pmix_envar_t);
             break;
+        case PMIX_REGEX:
+            if (NULL != kv->data.bo.bytes && 0 < kv->data.bo.size) {
+                *data = kv->data.bo.bytes;
+                *sz = kv->data.bo.size;
+            } else {
+                *data = NULL;
+                *sz = 0;
+            }
+            break;
         default:
             /* silence warnings */
             rc = PMIX_ERROR;
@@ -501,6 +519,7 @@ pmix_value_cmp_t pmix_bfrops_base_value_cmp(pmix_value_t *p,
             }
             rc = PMIX_EQUAL;
             break;
+
         default:
             pmix_output(0, "COMPARE-PMIX-VALUE: UNSUPPORTED TYPE %d", (int)p->type);
     }
@@ -600,6 +619,7 @@ pmix_status_t pmix_bfrops_base_value_xfer(pmix_value_t *p,
         break;
     case PMIX_BYTE_OBJECT:
     case PMIX_COMPRESSED_STRING:
+    case PMIX_REGEX:
         memset(&p->data.bo, 0, sizeof(pmix_byte_object_t));
         if (NULL != src->data.bo.bytes && 0 < src->data.bo.size) {
             p->data.bo.bytes = malloc(src->data.bo.size);
@@ -727,39 +747,23 @@ bool pmix_bfrop_too_small(pmix_buffer_t *buffer, size_t bytes_reqd)
     return false;
 }
 
-pmix_status_t pmix_bfrop_store_data_type(pmix_buffer_t *buffer, pmix_data_type_t type)
+pmix_status_t pmix_bfrop_store_data_type(pmix_pointer_array_t *regtypes,
+                                         pmix_buffer_t *buffer, pmix_data_type_t type)
 {
-    uint16_t tmp;
-    char *dst;
+    pmix_status_t ret;
 
-    /* check to see if buffer needs extending */
-     if (NULL == (dst = pmix_bfrop_buffer_extend(buffer, sizeof(tmp)))) {
-        return PMIX_ERR_OUT_OF_RESOURCE;
-    }
-    tmp = pmix_htons(type);
-    memcpy(dst, &tmp, sizeof(tmp));
-    buffer->pack_ptr += sizeof(tmp);
-    buffer->bytes_used += sizeof(tmp);
-
-    return PMIX_SUCCESS;
+    PMIX_BFROPS_PACK_TYPE(ret, buffer, &type, 1, PMIX_UINT16, regtypes);
+    return ret;
 }
 
-pmix_status_t pmix_bfrop_get_data_type(pmix_buffer_t *buffer, pmix_data_type_t *type)
+pmix_status_t pmix_bfrop_get_data_type(pmix_pointer_array_t *regtypes,
+                                       pmix_buffer_t *buffer, pmix_data_type_t *type)
 {
-    uint16_t tmp;
+    pmix_status_t ret;
+    int32_t m = 1;
 
-    /* check to see if there's enough data in buffer */
-    if (pmix_bfrop_too_small(buffer, sizeof(tmp))) {
-        return PMIX_ERR_UNPACK_READ_PAST_END_OF_BUFFER;
-    }
-
-    /* unpack the data */
-    memcpy(&tmp, buffer->unpack_ptr, sizeof(tmp));
-    tmp = pmix_ntohs(tmp);
-    memcpy(type, &tmp, sizeof(tmp));
-    buffer->unpack_ptr += sizeof(tmp);
-
-    return PMIX_SUCCESS;
+    PMIX_BFROPS_UNPACK_TYPE(ret, buffer, type, &m, PMIX_UINT16, regtypes);
+    return ret;
 }
 
 const char* pmix_bfrops_base_data_type_string(pmix_pointer_array_t *regtypes,

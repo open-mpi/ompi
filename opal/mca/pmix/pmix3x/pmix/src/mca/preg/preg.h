@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2015-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -23,11 +23,12 @@
 #ifndef PMIX_PREG_H
 #define PMIX_PREG_H
 
-#include <src/include/pmix_config.h>
+#include "src/include/pmix_config.h"
 
 #include "src/mca/mca.h"
 #include "src/mca/base/pmix_mca_base_var.h"
 #include "src/mca/base/pmix_mca_base_framework.h"
+#include "src/mca/bfrops/bfrops_types.h"
 
 #include "src/mca/preg/preg_types.h"
 
@@ -78,12 +79,11 @@ typedef pmix_status_t (*pmix_preg_base_module_parse_nodes_fn_t)(const char *rege
 typedef pmix_status_t (*pmix_preg_base_module_parse_procs_fn_t)(const char *regexp,
                                                                 char ***procs);
 
-typedef pmix_status_t (*pmix_preg_base_module_resolve_peers_fn_t)(const char *nodename,
-                                                                  const char *nspace,
-                                                                  pmix_proc_t **procs, size_t *nprocs);
+typedef pmix_status_t (*pmix_preg_base_module_copy_fn_t)(char **dest, size_t *len, const char *input);
 
-typedef pmix_status_t (*pmix_preg_base_module_resolve_nodes_fn_t)(const char *nspace,
-                                                                  char **nodelist);
+typedef pmix_status_t (*pmix_preg_base_module_pack_fn_t)(pmix_buffer_t *buffer, const char *regex);
+
+typedef pmix_status_t (*pmix_preg_base_module_unpack_fn_t)(pmix_buffer_t *buffer, char **regex);
 
 /**
  * Base structure for a PREG module
@@ -94,8 +94,9 @@ typedef struct {
     pmix_preg_base_module_generate_ppn_fn_t             generate_ppn;
     pmix_preg_base_module_parse_nodes_fn_t              parse_nodes;
     pmix_preg_base_module_parse_procs_fn_t              parse_procs;
-    pmix_preg_base_module_resolve_peers_fn_t            resolve_peers;
-    pmix_preg_base_module_resolve_nodes_fn_t            resolve_nodes;
+    pmix_preg_base_module_copy_fn_t                     copy;
+    pmix_preg_base_module_pack_fn_t                     pack;
+    pmix_preg_base_module_unpack_fn_t                   unpack;
 } pmix_preg_module_t;
 
 /* we just use the standard component definition */

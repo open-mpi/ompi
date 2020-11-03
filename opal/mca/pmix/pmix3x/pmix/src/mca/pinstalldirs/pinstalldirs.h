@@ -2,7 +2,7 @@
 /*
  * Copyright (c) 2006-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2016-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2016-2020 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -13,7 +13,9 @@
 #ifndef PMIX_MCA_PINSTALLDIRS_PINSTALLDIRS_H
 #define PMIX_MCA_PINSTALLDIRS_PINSTALLDIRS_H
 
-#include <src/include/pmix_config.h>
+#include "src/include/pmix_config.h"
+
+#include "include/pmix_common.h"
 
 #include "src/mca/mca.h"
 #include "src/mca/base/base.h"
@@ -59,8 +61,11 @@ PMIX_EXPORT extern pmix_pinstall_dirs_t pmix_pinstall_dirs;
 /**
  * Expand out path variables (such as ${prefix}) in the input string
  * using the current pmix_pinstall_dirs structure */
-char * pmix_pinstall_dirs_expand(const char* input);
+PMIX_EXPORT char * pmix_pinstall_dirs_expand(const char* input);
 
+
+/* optional initialization function */
+typedef void (*pmix_install_dirs_init_fn_t)(pmix_info_t info[], size_t ninfo);
 
 /**
  * Structure for pinstalldirs components.
@@ -72,6 +77,8 @@ struct pmix_pinstalldirs_base_component_2_0_0_t {
     pmix_mca_base_component_data_t component_data;
     /** install directories provided by the given component */
     pmix_pinstall_dirs_t install_dirs_data;
+    /* optional init function */
+    pmix_install_dirs_init_fn_t init;
 };
 /**
  * Convenience typedef

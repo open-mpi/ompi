@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2020 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -19,7 +19,7 @@
  * $HEADER$
  */
 
-#include <src/include/pmix_config.h>
+#include "src/include/pmix_config.h"
 
 
 #ifdef HAVE_STRING_H
@@ -31,7 +31,7 @@
 #include <stdlib.h>
 #endif
 
-#include <pmix_common.h>
+#include "include/pmix_common.h"
 #include "src/include/pmix_globals.h"
 #include "src/util/error.h"
 
@@ -152,7 +152,6 @@ PMIX_EXPORT const char* PMIx_Error_string(pmix_status_t errnum)
     case PMIX_ERR_CONFLICTING_CLEANUP_DIRECTIVES:
         return "PMIX CONFLICTING CLEANUP DIRECTIVES";
 
-
     case PMIX_ERR_LOST_CONNECTION_TO_SERVER:
         return "LOST_CONNECTION_TO_SERVER";
     case PMIX_ERR_LOST_PEER_CONNECTION:
@@ -233,8 +232,8 @@ PMIX_EXPORT const char* PMIx_Error_string(pmix_status_t errnum)
         return "PMIX_ERR_VALUE_OUT_OF_BOUNDS";
     case PMIX_ERR_PERM:
         return "PMIX_ERR_PERM";
-    case PMIX_ERR_NETWORK_NOT_PARSEABLE:
-        return "PMIX_ERR_NETWORK_NOT_PARSEABLE";
+    case PMIX_ERR_FABRIC_NOT_PARSEABLE:
+        return "PMIX_ERR_FABRIC_NOT_PARSEABLE";
     case PMIX_ERR_FILE_OPEN_FAILURE:
         return "PMIX_ERR_FILE_OPEN_FAILURE";
     case PMIX_ERR_FILE_READ_FAILURE:
@@ -244,10 +243,8 @@ PMIX_EXPORT const char* PMIx_Error_string(pmix_status_t errnum)
     case PMIX_ERR_TEMP_UNAVAILABLE:
         return "PMIX TEMPORARILY UNAVAILABLE";
 
-
     case PMIX_MAX_ERR_CONSTANT:
         return "PMIX_ERR_WILDCARD";
-
 
     default:
         return "ERROR STRING NOT FOUND";

@@ -2,7 +2,7 @@
 /*
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2016-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2016-2020 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -12,7 +12,7 @@
 
 #if !defined(PMIX_MCA_BASE_FRAMEWORK_H)
 #define PMIX_MCA_BASE_FRAMEWORK_H
-#include <src/include/pmix_config.h>
+#include "src/include/pmix_config.h"
 
 #include "src/mca/mca.h"
 #include "src/class/pmix_list.h"

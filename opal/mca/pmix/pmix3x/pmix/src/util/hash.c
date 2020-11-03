@@ -6,7 +6,7 @@
  *                         reserved.
  * Copyright (c) 2011-2014 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2014-2018 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      Mellanox Technologies, Inc.
@@ -20,10 +20,10 @@
  *
  */
 
-#include <src/include/pmix_config.h>
+#include "src/include/pmix_config.h"
 
-#include <src/include/pmix_stdint.h>
-#include <src/include/hash_string.h>
+#include "src/include/pmix_stdint.h"
+#include "src/include/hash_string.h"
 
 #include <string.h>
 
@@ -130,8 +130,8 @@ pmix_status_t pmix_hash_fetch(pmix_hash_table_t *table, pmix_rank_t rank,
                 (void**)&proc_data, (void**)&node);
         if (PMIX_SUCCESS != rc) {
             pmix_output_verbose(10, pmix_globals.debug_output,
-                                "HASH:FETCH proc data for rank %d not found",
-                                rank);
+                                "HASH:FETCH[%s:%d] proc data for rank %d not found",
+                                __func__, __LINE__, rank);
             return PMIX_ERR_PROC_ENTRY_NOT_FOUND;
         }
     }
@@ -140,8 +140,8 @@ pmix_status_t pmix_hash_fetch(pmix_hash_table_t *table, pmix_rank_t rank,
         proc_data = lookup_proc(table, id, false);
         if (NULL == proc_data) {
             pmix_output_verbose(10, pmix_globals.debug_output,
-                                "HASH:FETCH proc data for rank %d not found",
-                                rank);
+                                "HASH:FETCH[%s:%d] proc data for rank %d not found",
+                                __func__, __LINE__, rank);
             return PMIX_ERR_PROC_ENTRY_NOT_FOUND;
         }
 
@@ -203,7 +203,7 @@ pmix_status_t pmix_hash_fetch(pmix_hash_table_t *table, pmix_rank_t rank,
                 (void**)&proc_data, node, (void**)&node);
         if (PMIX_SUCCESS != rc) {
             pmix_output_verbose(10, pmix_globals.debug_output,
-                                "HASH:FETCH data for key %s not found", key);
+                                "%s:%d HASH:FETCH data for key %s not found", __func__, __LINE__, key);
             return PMIX_ERR_PROC_ENTRY_NOT_FOUND;
         }
     }

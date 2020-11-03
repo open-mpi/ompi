@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2016-2020 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -10,7 +10,7 @@
 #ifndef PMIX_GETID_H
 #define PMIX_GETID_H
 
-#include <src/include/pmix_config.h>
+#include "src/include/pmix_config.h"
 #include "include/pmix_common.h"
 
 #ifdef HAVE_UNISTD_H
