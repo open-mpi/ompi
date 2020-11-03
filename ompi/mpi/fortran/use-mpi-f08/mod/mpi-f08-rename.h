@@ -587,7 +587,9 @@
 #define MPI_Is_thread_main_f08 PMPI_Is_thread_main_f08
 #define MPI_Query_thread PMPI_Query_thread
 #define MPI_Query_thread_f08 PMPI_Query_thread_f08
+#define MPI_Status_f082f PMPI_Status_f082f
 #define MPI_Status_f082f_f08 PMPI_Status_f082f_f08
+#define MPI_Status_f2f08 PMPI_Status_f2f08
 #define MPI_Status_f2f08_f08 PMPI_Status_f2f08_f08
 #define MPI_Status_set_cancelled PMPI_Status_set_cancelled
 #define MPI_Status_set_cancelled_f08 PMPI_Status_set_cancelled_f08
