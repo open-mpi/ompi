@@ -13,6 +13,7 @@
  * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2020      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -120,6 +121,9 @@ int orte_rmaps_rr_assign_byobj(orte_job_t *jdata,
             /* get the number of objects of this type on this node */
             nobjs = opal_hwloc_base_get_nbobjs_by_type(node->topology->topo, target, cache_level, OPAL_HWLOC_AVAILABLE);
             if (0 == nobjs) {
+                opal_output_verbose(2, orte_rmaps_base_framework.framework_output,
+                                    "mca:rmaps:rr: found NO %s objects on node %s",
+                                    hwloc_obj_type_string(target), node->name);
                 continue;
             }
             opal_output_verbose(2, orte_rmaps_base_framework.framework_output,
