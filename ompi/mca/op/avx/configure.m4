@@ -4,6 +4,8 @@
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
 # Copyright (c) 2020      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2020      Research Organization for Information Science
+#                         and Technology (RIST).  All rights reserved.
 #
 # $COPYRIGHT$
 #
@@ -75,6 +77,25 @@ AC_DEFUN([MCA_ompi_op_avx_CONFIG],[
                                [[
     int A[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
     __m512i vA = _mm512_loadu_si512((__m512i*)&(A[1]))
+                               ]])],
+                      [AC_MSG_RESULT([yes])],
+                      [op_avx512_support=0
+                       MCA_BUILD_OP_AVX512_FLAGS=""
+                       AC_MSG_RESULT([no])])
+                  CFLAGS="$op_avx_cflags_save"
+                 ])
+           #
+           # Some PGI compilers do not define _mm512_mullo_epi64. Screen them out.
+           #
+           AS_IF([test $op_avx512_support -eq 1],
+                 [AC_MSG_CHECKING([if _mm512_mullo_epi64 generates code that can be compiled])
+                  op_avx_cflags_save="$CFLAGS"
+                  CFLAGS="$CFLAGS_WITHOUT_OPTFLAGS -O0 $MCA_BUILD_OP_AVX512_FLAGS"
+                  AC_LINK_IFELSE(
+                      [AC_LANG_PROGRAM([[#include <immintrin.h>]],
+                               [[
+    __m512i vA, vB;
+    _mm512_mullo_epi64(vA, vB)
                                ]])],
                       [AC_MSG_RESULT([yes])],
                       [op_avx512_support=0
