@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2010-2013 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2015-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -13,7 +13,7 @@
 
 #include "pmix_config.h"
 
-#include "pmix_common.h"
+#include "include/pmix_common.h"
 #include "src/util/output.h"
 #include "src/mca/mca.h"
 #include "src/mca/pif/pif.h"
@@ -40,6 +40,7 @@ PMIX_MCA_BASE_FRAMEWORK_DECLARE(pmix, pif, NULL, pmix_pif_base_register, pmix_pi
 
 static int pmix_pif_base_register (pmix_mca_base_register_flag_t flags)
 {
+    (void)flags;
     pmix_if_do_not_resolve = false;
     (void) pmix_mca_base_framework_var_register (&pmix_pif_base_framework, "do_not_resolve",
                                                  "If nonzero, do not attempt to resolve interfaces",

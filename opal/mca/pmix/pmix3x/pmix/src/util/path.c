@@ -13,7 +13,7 @@
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2016      University of Houston. All rights reserved.
  * Copyright (c) 2018      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -24,7 +24,7 @@
  * $HEADER$
  */
 
-#include <src/include/pmix_config.h>
+#include "src/include/pmix_config.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -245,6 +245,7 @@ char *pmix_path_access(char *fname, char *path, int mode)
     /* first check to see - is this a file or a directory? We
      * only want files
      */
+    /* coverity[toctou] */
     if (0 != stat(fullpath, &buf)) {
         /* couldn't stat the path - obviously, this also meets the
          * existence check, if that was requested
@@ -295,7 +296,7 @@ char *pmix_path_access(char *fname, char *path, int mode)
  *  Loads argument array with $PATH env var.
  *
  *  Accepts
- *      -path String contiaing the $PATH
+ *      -path String containing the $PATH
  *      -argc Pointer to argc
  *      -argv Pointer to list of argv
  */

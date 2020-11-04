@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2019 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015-2020 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -10,7 +10,7 @@
 #ifndef PMIX_CLIENT_OPS_H
 #define PMIX_CLIENT_OPS_H
 
-#include <src/include/pmix_config.h>
+#include "src/include/pmix_config.h"
 
 
 #include "src/threads/threads.h"

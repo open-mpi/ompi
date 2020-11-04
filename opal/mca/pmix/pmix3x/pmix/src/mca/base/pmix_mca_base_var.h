@@ -13,7 +13,7 @@
  * Copyright (c) 2008-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2016-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2016-2020 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -60,7 +60,7 @@
 #ifndef PMIX_MCA_BASE_VAR_H
 #define PMIX_MCA_BASE_VAR_H
 
-#include <src/include/pmix_config.h>
+#include "src/include/pmix_config.h"
 
 #include "src/class/pmix_list.h"
 #include "src/class/pmix_value_array.h"

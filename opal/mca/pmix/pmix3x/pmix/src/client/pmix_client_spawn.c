@@ -1,8 +1,8 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
- * Copyright (c) 2014-2017 Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2014-2020 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2019 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2014      Artem Y. Polyakov <artpol84@gmail.com>.
  *                         All rights reserved.
  * Copyright (c) 2016      Mellanox Technologies, Inc.
@@ -15,13 +15,11 @@
  * $HEADER$
  */
 
-#include <src/include/pmix_config.h>
+#include "src/include/pmix_config.h"
 
-#include <src/include/types.h>
-#include <src/include/pmix_stdint.h>
+#include "src/include/pmix_stdint.h"
 
-#include <pmix.h>
-#include <pmix_rename.h>
+#include "include/pmix.h"
 
 #include "src/include/pmix_globals.h"
 
@@ -52,7 +50,9 @@
 #include "src/mca/pnet/base/base.h"
 #include "src/util/argv.h"
 #include "src/util/error.h"
+#include "src/util/name_fns.h"
 #include "src/util/output.h"
+#include "src/util/pmix_environ.h"
 #include "src/mca/gds/gds.h"
 #include "src/mca/ptl/ptl.h"
 
@@ -64,16 +64,17 @@ static void wait_cbfunc(struct pmix_peer_t *pr,
 static void spawn_cbfunc(pmix_status_t status, char nspace[], void *cbdata);
 
 PMIX_EXPORT pmix_status_t PMIx_Spawn(const pmix_info_t job_info[], size_t ninfo,
-                           const pmix_app_t apps[], size_t napps,
-                           pmix_nspace_t nspace)
+                                     const pmix_app_t apps[], size_t napps,
+                                     pmix_nspace_t nspace)
 {
     pmix_status_t rc;
     pmix_cb_t *cb;
 
     PMIX_ACQUIRE_THREAD(&pmix_global_lock);
 
-    pmix_output_verbose(2, pmix_globals.debug_output,
-                        "pmix: spawn called");
+    pmix_output_verbose(2, pmix_client_globals.spawn_output,
+                        "%s pmix: spawn called",
+                        PMIX_NAME_PRINT(&pmix_globals.myid));
 
     if (pmix_globals.init_cntr <= 0) {
         PMIX_RELEASE_THREAD(&pmix_global_lock);
@@ -97,6 +98,12 @@ PMIX_EXPORT pmix_status_t PMIx_Spawn(const pmix_info_t job_info[], size_t ninfo,
     cb = PMIX_NEW(pmix_cb_t);
 
     if (PMIX_SUCCESS != (rc = PMIx_Spawn_nb(job_info, ninfo, apps, napps, spawn_cbfunc, cb))) {
+        /* note: the call may have returned PMIX_OPERATION_SUCCEEDED thus indicating
+         * that the spawn was atomically completed */
+        if (PMIX_OPERATION_SUCCEEDED == rc) {
+            PMIX_LOAD_NSPACE(nspace, cb->pname.nspace);
+            rc = PMIX_SUCCESS;
+        }
         PMIX_RELEASE(cb);
         return rc;
     }
@@ -122,15 +129,12 @@ PMIX_EXPORT pmix_status_t PMIx_Spawn_nb(const pmix_info_t job_info[], size_t nin
     pmix_cb_t *cb;
     size_t n, m;
     pmix_app_t *aptr;
-    bool jobenvars = false;
-    char *harvest[2] = {"PMIX_MCA_", NULL};
-    pmix_kval_t *kv;
-    pmix_list_t ilist;
 
     PMIX_ACQUIRE_THREAD(&pmix_global_lock);
 
-    pmix_output_verbose(2, pmix_globals.debug_output,
-                        "pmix: spawn called");
+    pmix_output_verbose(2, pmix_client_globals.spawn_output,
+                        "%s pmix: spawn_nb called",
+                        PMIX_NAME_PRINT(&pmix_globals.myid));
 
     if (pmix_globals.init_cntr <= 0) {
         PMIX_RELEASE_THREAD(&pmix_global_lock);
@@ -143,32 +147,6 @@ PMIX_EXPORT pmix_status_t PMIx_Spawn_nb(const pmix_info_t job_info[], size_t nin
         return PMIX_ERR_UNREACH;
     }
     PMIX_RELEASE_THREAD(&pmix_global_lock);
-
-    /* check job info for directives */
-    if (NULL != job_info) {
-        for (n=0; n < ninfo; n++) {
-            if (PMIX_CHECK_KEY(&job_info[n], PMIX_SETUP_APP_ENVARS)) {
-                PMIX_CONSTRUCT(&ilist, pmix_list_t);
-                rc = pmix_pnet_base_harvest_envars(harvest, NULL, &ilist);
-                if (PMIX_SUCCESS != rc) {
-                    PMIX_LIST_DESTRUCT(&ilist);
-                    return rc;
-                }
-                PMIX_LIST_FOREACH(kv, &ilist, pmix_kval_t) {
-                    /* cycle across all the apps and set this envar */
-                    for (m=0; m < napps; m++) {
-                        aptr = (pmix_app_t*)&apps[m];
-                        pmix_setenv(kv->value->data.envar.envar,
-                                    kv->value->data.envar.value,
-                                    true, &aptr->env);
-                    }
-                }
-                jobenvars = true;
-                PMIX_LIST_DESTRUCT(&ilist);
-                break;
-            }
-        }
-    }
 
     for (n=0; n < napps; n++) {
         /* do a quick check of the apps directive array to ensure
@@ -185,26 +163,6 @@ PMIX_EXPORT pmix_status_t PMIx_Spawn_nb(const pmix_info_t job_info[], size_t nin
                 return PMIX_ERR_BAD_PARAM;
             }
             aptr->ninfo = m;
-        }
-        if (!jobenvars) {
-            for (m=0; m < aptr->ninfo; m++) {
-                if (PMIX_CHECK_KEY(&aptr->info[m], PMIX_SETUP_APP_ENVARS)) {
-                    PMIX_CONSTRUCT(&ilist, pmix_list_t);
-                    rc = pmix_pnet_base_harvest_envars(harvest, NULL, &ilist);
-                    if (PMIX_SUCCESS != rc) {
-                        PMIX_LIST_DESTRUCT(&ilist);
-                        return rc;
-                    }
-                    PMIX_LIST_FOREACH(kv, &ilist, pmix_kval_t) {
-                        pmix_setenv(kv->value->data.envar.envar,
-                                    kv->value->data.envar.value,
-                                    true, &aptr->env);
-                    }
-                    jobenvars = true;
-                    PMIX_LIST_DESTRUCT(&ilist);
-                    break;
-                }
-            }
         }
     }
 
@@ -330,6 +288,7 @@ static void wait_cbfunc(struct pmix_peer_t *pr,
         /* extract and process any job-related info for this nspace */
         if (PMIX_SUCCESS != rc) {
             PMIX_ERROR_LOG(rc);
+            ret = rc;
         }
     }
 

@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010-2012 Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2018      Intel, Inc. All rights reserved.
+ * Copyright (c) 2018-2020 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -41,7 +41,7 @@
 #ifndef PMIX_BITMAP_H
 #define PMIX_BITMAP_H
 
-#include <src/include/pmix_config.h>
+#include "src/include/pmix_config.h"
 
 #include <string.h>
 

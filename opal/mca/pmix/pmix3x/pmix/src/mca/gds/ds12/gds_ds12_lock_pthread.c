@@ -13,7 +13,7 @@
  * $HEADER$
  */
 
-#include <src/include/pmix_config.h>
+#include "src/include/pmix_config.h"
 
 #include <stdio.h>
 #ifdef HAVE_UNISTD_H
@@ -26,7 +26,7 @@
 #include <sys/stat.h>
 #endif
 
-#include <pmix_common.h>
+#include "include/pmix_common.h"
 
 #include "src/mca/common/dstore/dstore_common.h"
 #include "src/mca/gds/base/base.h"

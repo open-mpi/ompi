@@ -4,7 +4,7 @@
  *                         reserved.
  * Copyright (c) 2017      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2018      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2018-2020 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  */
 
@@ -44,9 +44,6 @@
 #elif PMIX_ASSEMBLY_ARCH == PMIX_IA32
 #define __NR_process_vm_readv 347
 #define __NR_process_vm_writev 348
-#elif PMIX_ASSEMBLY_ARCH == PMIX_IA64
-#define __NR_process_vm_readv 1332
-#define __NR_process_vm_writev 1333
 #elif PMIX_ASSEMBLY_ARCH == PMIX_POWERPC32
 #define __NR_process_vm_readv 351
 #define __NR_process_vm_writev 352
@@ -65,33 +62,6 @@
 #define __NR_process_vm_readv 270
 #define __NR_process_vm_writev 271
 
-#elif PMIX_ASSEMBLY_ARCH == PMIX_MIPS
-
-#if _MIPS_SIM == _MIPS_SIM_ABI64
-
-#define __NR_process_vm_readv 5304
-#define __NR_process_vm_writev 5305
-
-#elif _MIPS_SIM == _MIPS_SIM_NABI32
-
-#define __NR_process_vm_readv 6309
-#define __NR_process_vm_writev 6310
-
-#else
-
-#error "Unsupported MIPS architecture for process_vm_readv and process_vm_writev syscalls"
-
-#endif
-
-#elif PMIX_ASSEMBLY_ARCH == PMIX_S390
-
-#define __NR_process_vm_readv	340
-#define __NR_process_vm_writev	341
-
-#elif PMIX_ASSEMBLY_ARCH == PMIX_S390X
-
-#define __NR_process_vm_readv	340
-#define __NR_process_vm_writev	341
 
 #else
 #error "Unsupported architecture for process_vm_readv and process_vm_writev syscalls"

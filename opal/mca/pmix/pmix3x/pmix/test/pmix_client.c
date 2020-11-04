@@ -22,7 +22,7 @@
  * $HEADER$
  *
  */
-#include <src/include/pmix_config.h>
+#include <pmix_config.h>
 #include <pmix.h>
 
 #include <stdio.h>

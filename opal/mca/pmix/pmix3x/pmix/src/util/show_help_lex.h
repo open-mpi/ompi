@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2016      Intel, Inc. All rights reserved
+ * Copyright (c) 2016-2020 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -21,7 +21,8 @@
 #ifndef PMIX_SHOW_HELP_LEX_H
 #define PMIX_SHOW_HELP_LEX_H
 
-#include <src/include/pmix_config.h>
+#include "src/include/pmix_config.h"
+#include "include/pmix_common.h"
 
 #ifdef malloc
 #undef malloc
@@ -35,14 +36,14 @@
 
 #include <stdio.h>
 BEGIN_C_DECLS
-int pmix_show_help_yylex(void);
-int pmix_show_help_init_buffer(FILE *file);
-int pmix_show_help_yylex_destroy(void);
+PMIX_EXPORT int pmix_show_help_yylex(void);
+PMIX_EXPORT int pmix_show_help_init_buffer(FILE *file);
+PMIX_EXPORT int pmix_show_help_yylex_destroy(void);
 
-extern FILE *pmix_show_help_yyin;
-extern bool pmix_show_help_parse_done;
-extern char *pmix_show_help_yytext;
-extern int pmix_show_help_yynewlines;
+PMIX_EXPORT extern FILE *pmix_show_help_yyin;
+PMIX_EXPORT extern bool pmix_show_help_parse_done;
+PMIX_EXPORT extern char *pmix_show_help_yytext;
+PMIX_EXPORT extern int pmix_show_help_yynewlines;
 
 /*
  * Make lex-generated files not issue compiler warnings

@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2016 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2020 Cisco Systems, Inc.  All rights reserved
 # Copyright (c) 2006-2008 Sun Microsystems, Inc.  All rights reserved.
 # Copyright (c) 2006-2017 Los Alamos National Security, LLC.  All rights
 #                         reserved.
@@ -19,7 +19,7 @@
 # Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
 # Copyright (c) 2013      Mellanox Technologies, Inc.
 #                         All rights reserved.
-# Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
+# Copyright (c) 2014-2020 Intel, Inc.  All rights reserved.
 # Copyright (c) 2016      IBM Corporation.  All rights reserved.
 # Copyright (c) 2016-2018 Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
@@ -44,7 +44,7 @@ m4_include([config/autogen_found_items.m4])
 
 AC_INIT([pmix],
         [m4_normalize(esyscmd([config/pmix_get_version.sh VERSION --tarball]))],
-        [http://pmix.github.io/master], [pmix])
+        [https://github.com/pmix/pmix/issues], [pmix])
 AC_PREREQ(2.69)
 AC_CONFIG_AUX_DIR(./config)
 # Note that this directory must *exactly* match what was specified via
@@ -94,7 +94,7 @@ pmix_show_title "Configuring PMIx"
 AC_CANONICAL_TARGET
 
 # Init automake
-AM_INIT_AUTOMAKE([foreign dist-bzip2 subdir-objects no-define 1.13.4 -Wall -Werror])
+AM_INIT_AUTOMAKE([foreign dist-bzip2 subdir-objects no-define 1.13.4])
 
 # SILENT_RULES is new in AM 1.11, but we require 1.13.4 or higher via
 # autogen.  Limited testing shows that calling SILENT_RULES directly
@@ -143,11 +143,11 @@ AH_TOP([/* -*- c -*-
 #ifndef PMIX_CONFIG_H
 #define PMIX_CONFIG_H
 
-#include <src/include/pmix_config_top.h>
+#include "src/include/pmix_config_top.h"
 
 ])
 AH_BOTTOM([
-#include <src/include/pmix_config_bottom.h>
+#include "src/include/pmix_config_bottom.h"
 #endif /* PMIX_CONFIG_H */
 ])
 
@@ -231,6 +231,7 @@ AS_IF([test ! -z "$PMIX_CFLAGS_cache"], [CFLAGS="$CFLAGS $PMIX_CFLAGS_cache"])
 #fi
 
 # Cleanup duplicate flags
+PMIX_FLAGS_UNIQ(CFLAGS)
 PMIX_FLAGS_UNIQ(CPPFLAGS)
 PMIX_FLAGS_UNIQ(LDFLAGS)
 PMIX_FLAGS_UNIQ(LIBS)
@@ -258,6 +259,43 @@ AC_MSG_CHECKING([final LIBS])
 AC_MSG_RESULT([$LIBS])
 
 ####################################################################
+# Setup variables for pkg-config file (maint/pmix.pc.in)
+####################################################################
+
+#
+# Dependencies that themselves have a pkg-config file available.
+#
+PC_REQUIRES=""
+AS_IF([test "$pmix_hwloc_support_will_build" = "yes"],
+      [PC_REQUIRES="$PC_REQUIRES hwloc"])
+AS_IF([test $pmix_libevent_support -eq 1],
+      [PC_REQUIRES="$PC_REQUIRES libevent"])
+AS_IF([test "$pmix_zlib_support" = "1"],
+      [PC_REQUIRES="$PC_REQUIRES zlib"])
+AC_SUBST([PC_REQUIRES], ["$PC_REQUIRES"])
+
+#
+# Dependencies that don't have a pkg-config file available.
+# In this case we need to manually add -L<path> and -l<lib>
+# to the PC_PRIVATE_LIBS variable.
+#
+PC_PRIVATE_LIBS=""
+AS_IF([test $pmix_libev_support -eq 1],
+      [PC_PRIVATE_LIBS="$PC_PRIVATE_LIBS $pmix_libev_LDFLAGS $pmix_libev_LIBS"])
+AC_SUBST([PC_PRIVATE_LIBS], ["$PC_PRIVATE_LIBS"])
+
+####################################################################
+# -Werror for CI scripts
+####################################################################
+
+AC_ARG_ENABLE(werror,
+    AC_HELP_STRING([--enable-werror],
+                   [Treat compiler warnings as errors]),
+[
+    CFLAGS="$CFLAGS -Werror"
+])
+
+####################################################################
 # Version information
 ####################################################################
 
@@ -275,7 +313,8 @@ AC_SUBST([libmca_common_dstore_so_version])
 AC_CONFIG_FILES(pmix_config_prefix[contrib/Makefile]
                 pmix_config_prefix[examples/Makefile]
                 pmix_config_prefix[test/Makefile]
-                pmix_config_prefix[test/simple/Makefile])
+                pmix_config_prefix[test/simple/Makefile]
+                pmix_config_prefix[maint/pmix.pc])
 
 pmix_show_title "Configuration complete"
 

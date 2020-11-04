@@ -11,9 +11,11 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, Inc.  All rights reserved.
- * Copyright (c) 2014-2018 Intel, Inc.  All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2014-2020 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015-2020 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
+ * Copyright (c) 2019      Mellanox Technologies, Inc.
+ *                         All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -24,7 +26,7 @@
 #ifndef PMIX_BFROP_BASE_H_
 #define PMIX_BFROP_BASE_H_
 
-#include <src/include/pmix_config.h>
+#include "src/include/pmix_config.h"
 
 
 #ifdef HAVE_SYS_TIME_H
@@ -72,6 +74,7 @@ PMIX_CLASS_DECLARATION(pmix_bfrops_base_active_module_t);
 struct pmix_bfrops_globals_t {
   pmix_list_t actives;
   bool initialized;
+  bool selected;
   size_t initial_size;
   size_t threshold_size;
   pmix_bfrop_buffer_type_t default_type;
@@ -159,48 +162,76 @@ PMIX_EXPORT extern pmix_bfrops_globals_t pmix_bfrops_globals;
 #endif
 
 /* Unpack generic size macros */
-#define PMIX_BFROP_UNPACK_SIZE_MISMATCH(unpack_type, remote_type, ret)                     \
+#define PMIX_BFROP_UNPACK_SIZE_MISMATCH(reg_types, unpack_type, remote_type, ret)                     \
     do {                                                                        \
         switch(remote_type) {                                                   \
             case PMIX_UINT8:                                                    \
-                PMIX_BFROP_UNPACK_SIZE_MISMATCH_FOUND(unpack_type, uint8_t, remote_type);  \
+                PMIX_BFROP_UNPACK_SIZE_MISMATCH_FOUND(reg_types, unpack_type, uint8_t, remote_type);  \
                 break;                                                          \
             case PMIX_INT8:                                                     \
-                PMIX_BFROP_UNPACK_SIZE_MISMATCH_FOUND(unpack_type, int8_t, remote_type);   \
+                PMIX_BFROP_UNPACK_SIZE_MISMATCH_FOUND(reg_types, unpack_type, int8_t, remote_type);   \
                 break;                                                          \
             case PMIX_UINT16:                                                   \
-                PMIX_BFROP_UNPACK_SIZE_MISMATCH_FOUND(unpack_type, uint16_t, remote_type); \
+                PMIX_BFROP_UNPACK_SIZE_MISMATCH_FOUND(reg_types, unpack_type, uint16_t, remote_type); \
                 break;                                                          \
             case PMIX_INT16:                                                    \
-                PMIX_BFROP_UNPACK_SIZE_MISMATCH_FOUND(unpack_type, int16_t, remote_type);  \
+                PMIX_BFROP_UNPACK_SIZE_MISMATCH_FOUND(reg_types, unpack_type, int16_t, remote_type);  \
                 break;                                                          \
             case PMIX_UINT32:                                                   \
-                PMIX_BFROP_UNPACK_SIZE_MISMATCH_FOUND(unpack_type, uint32_t, remote_type); \
+                PMIX_BFROP_UNPACK_SIZE_MISMATCH_FOUND(reg_types, unpack_type, uint32_t, remote_type); \
                 break;                                                          \
             case PMIX_INT32:                                                    \
-                PMIX_BFROP_UNPACK_SIZE_MISMATCH_FOUND(unpack_type, int32_t, remote_type);  \
+                PMIX_BFROP_UNPACK_SIZE_MISMATCH_FOUND(reg_types, unpack_type, int32_t, remote_type);  \
                 break;                                                          \
             case PMIX_UINT64:                                                   \
-                PMIX_BFROP_UNPACK_SIZE_MISMATCH_FOUND(unpack_type, uint64_t, remote_type); \
+                PMIX_BFROP_UNPACK_SIZE_MISMATCH_FOUND(reg_types, unpack_type, uint64_t, remote_type); \
                 break;                                                          \
             case PMIX_INT64:                                                    \
-                PMIX_BFROP_UNPACK_SIZE_MISMATCH_FOUND(unpack_type, int64_t, remote_type);  \
+                PMIX_BFROP_UNPACK_SIZE_MISMATCH_FOUND(reg_types, unpack_type, int64_t, remote_type);  \
                 break;                                                          \
             default:                                                            \
                 ret = PMIX_ERR_NOT_FOUND;                                       \
         }                                                                       \
     } while (0)
 
+#define PMIX_BFROPS_PACK_TYPE(r, b, s, n, t, arr)                           \
+    do {                                                                    \
+        pmix_bfrop_type_info_t *__info;                                     \
+        /* Lookup the pack function for this type and call it */            \
+        __info = (pmix_bfrop_type_info_t*)pmix_pointer_array_get_item((arr),\
+                                                                      (t)); \
+        if (NULL == __info) {                                               \
+            (r) = PMIX_ERR_UNKNOWN_DATA_TYPE;                               \
+        } else {                                                            \
+            (r) = __info->odti_pack_fn(arr, b, s, n, t);                 \
+        }                                                                   \
+    } while(0)
+
+#define PMIX_BFROPS_UNPACK_TYPE(r, b, d, n, t, arr)                         \
+    do {                                                                    \
+        pmix_bfrop_type_info_t *__info;                                     \
+        /* Lookup the unpack function for this type and call it */          \
+        __info = (pmix_bfrop_type_info_t*)pmix_pointer_array_get_item((arr),\
+                                                                      (t)); \
+        if (NULL == __info) {                                               \
+            (r) = PMIX_ERR_UNKNOWN_DATA_TYPE;                               \
+        } else {                                                            \
+            (r) = __info->odti_unpack_fn(arr, b, d, n, t);                  \
+        }                                                                   \
+    } while(0)
+
 /* NOTE: do not need to deal with endianness here, as the unpacking of
    the underling sender-side type will do that for us.  Repeat: the
    data in tmpbuf[] is already in host byte order. */
-#define PMIX_BFROP_UNPACK_SIZE_MISMATCH_FOUND(unpack_type, tmptype, tmpbfroptype)      \
+#define PMIX_BFROP_UNPACK_SIZE_MISMATCH_FOUND(reg_types, unpack_type, tmptype, tmpbfroptype)    \
     do {                                                                    \
         int32_t i;                                                          \
-        tmptype *tmpbuf = (tmptype*)malloc(sizeof(tmptype) * (*num_vals));  \
-        ret = unpack_gentype(buffer, tmpbuf, num_vals, tmpbfroptype);       \
-        for (i = 0 ; i < *num_vals ; ++i) {                                 \
-            ((unpack_type*) dest)[i] = (unpack_type)(tmpbuf[i]);            \
+        tmptype *tmpbuf = (tmptype*)calloc(*num_vals, sizeof(tmptype));     \
+        PMIX_BFROPS_UNPACK_TYPE(ret, buffer, tmpbuf, num_vals, tmpbfroptype, reg_types);        \
+        if (PMIX_ERR_UNKNOWN_DATA_TYPE != ret) {                            \
+            for (i = 0 ; i < *num_vals ; ++i) {                             \
+                ((unpack_type*) dest)[i] = (unpack_type)(tmpbuf[i]);        \
+            }                                                               \
         }                                                                   \
         free(tmpbuf);                                                       \
     } while (0)
@@ -211,6 +242,16 @@ typedef struct pmix_info_array {
     pmix_info_t *array;
 } pmix_info_array_t;
 
+typedef pmix_status_t (*pmix_bfrop_internal_pack_fn_t)(pmix_pointer_array_t *regtypes,
+                                                       pmix_buffer_t *buffer,
+                                                       const void *src,
+                                                       int32_t num_values,
+                                                       pmix_data_type_t type);
+
+typedef pmix_status_t (*pmix_bfrop_internal_unpack_fn_t)(pmix_pointer_array_t *regtypes,
+                                                         pmix_buffer_t *buffer, void *dest,
+                                                         int32_t *max_num_values,
+                                                         pmix_data_type_t type);
 
 /**
  * Internal struct used for holding registered bfrop functions
@@ -222,9 +263,9 @@ typedef struct pmix_info_array {
     /** Debugging string name */
     char *odti_name;
     /** Pack function */
-    pmix_bfrop_pack_fn_t odti_pack_fn;
+    pmix_bfrop_internal_pack_fn_t odti_pack_fn;
     /** Unpack function */
-    pmix_bfrop_unpack_fn_t odti_unpack_fn;
+    pmix_bfrop_internal_unpack_fn_t odti_unpack_fn;
     /** copy function */
     pmix_bfrop_copy_fn_t odti_copy_fn;
     /** prpmix_status_t function */
@@ -240,8 +281,8 @@ PMIX_EXPORT PMIX_CLASS_DECLARATION(pmix_bfrop_type_info_t);
     _info = PMIX_NEW(pmix_bfrop_type_info_t);                       \
     _info->odti_name = strdup((n));                                 \
     _info->odti_type = (t);                                         \
-    _info->odti_pack_fn = (pmix_bfrop_pack_fn_t)(p);                \
-    _info->odti_unpack_fn = (pmix_bfrop_unpack_fn_t)(u);            \
+    _info->odti_pack_fn = (pmix_bfrop_internal_pack_fn_t)(p);           \
+    _info->odti_unpack_fn = (pmix_bfrop_internal_unpack_fn_t)(u);       \
     _info->odti_copy_fn = (pmix_bfrop_copy_fn_t)(c) ;               \
     _info->odti_print_fn = (pmix_bfrop_print_fn_t)(pr) ;            \
     pmix_pointer_array_set_item((arr), (t), _info);                 \
@@ -306,88 +347,131 @@ PMIX_EXPORT pmix_status_t pmix_bfrops_base_pack_buffer(pmix_pointer_array_t *reg
                                                        const void *src, int32_t num_vals,
                                                        pmix_data_type_t type);
 
-PMIX_EXPORT pmix_status_t pmix_bfrops_base_pack_bool(pmix_buffer_t *buffer, const void *src,
+PMIX_EXPORT pmix_status_t pmix_bfrops_base_pack_bool(pmix_pointer_array_t *regtypes,
+                                                     pmix_buffer_t *buffer, const void *src,
                                                      int32_t num_vals, pmix_data_type_t type);
-PMIX_EXPORT pmix_status_t pmix_bfrops_base_pack_int(pmix_buffer_t *buffer, const void *src,
+PMIX_EXPORT pmix_status_t pmix_bfrops_base_pack_int(pmix_pointer_array_t *regtypes,
+                                                    pmix_buffer_t *buffer, const void *src,
                                                     int32_t num_vals, pmix_data_type_t type);
-PMIX_EXPORT pmix_status_t pmix_bfrops_base_pack_sizet(pmix_buffer_t *buffer, const void *src,
+PMIX_EXPORT pmix_status_t pmix_bfrops_base_pack_sizet(pmix_pointer_array_t *regtypes,
+                                                      pmix_buffer_t *buffer, const void *src,
                                                       int32_t num_vals, pmix_data_type_t type);
-PMIX_EXPORT pmix_status_t pmix_bfrops_base_pack_byte(pmix_buffer_t *buffer, const void *src,
+PMIX_EXPORT pmix_status_t pmix_bfrops_base_pack_byte(pmix_pointer_array_t *regtypes,
+                                                     pmix_buffer_t *buffer, const void *src,
                                                      int32_t num_vals, pmix_data_type_t type);
-PMIX_EXPORT pmix_status_t pmix_bfrops_base_pack_string(pmix_buffer_t *buffer, const void *src,
+PMIX_EXPORT pmix_status_t pmix_bfrops_base_pack_string(pmix_pointer_array_t *regtypes,
+                                                       pmix_buffer_t *buffer, const void *src,
                                                        int32_t num_vals, pmix_data_type_t type);
-PMIX_EXPORT pmix_status_t pmix_bfrops_base_pack_pid(pmix_buffer_t *buffer, const void *src,
+PMIX_EXPORT pmix_status_t pmix_bfrops_base_pack_pid(pmix_pointer_array_t *regtypes,
+                                                    pmix_buffer_t *buffer, const void *src,
                                                     int32_t num_vals, pmix_data_type_t type);
 
-PMIX_EXPORT pmix_status_t pmix_bfrops_base_pack_int16(pmix_buffer_t *buffer, const void *src,
+PMIX_EXPORT pmix_status_t pmix_bfrops_base_pack_int16(pmix_pointer_array_t *regtypes,
+                                                      pmix_buffer_t *buffer, const void *src,
                                                       int32_t num_vals, pmix_data_type_t type);
-PMIX_EXPORT pmix_status_t pmix_bfrops_base_pack_int32(pmix_buffer_t *buffer, const void *src,
+PMIX_EXPORT pmix_status_t pmix_bfrops_base_pack_int32(pmix_pointer_array_t *regtypes,
+                                                      pmix_buffer_t *buffer, const void *src,
                                                       int32_t num_vals, pmix_data_type_t type);
-PMIX_EXPORT pmix_status_t pmix_bfrops_base_pack_int64(pmix_buffer_t *buffer, const void *src,
+PMIX_EXPORT pmix_status_t pmix_bfrops_base_pack_int64(pmix_pointer_array_t *regtypes,
+                                                      pmix_buffer_t *buffer, const void *src,
                                                       int32_t num_vals, pmix_data_type_t type);
-PMIX_EXPORT pmix_status_t pmix_bfrops_base_pack_string(pmix_buffer_t *buffer, const void *src,
+PMIX_EXPORT pmix_status_t pmix_bfrops_base_pack_string(pmix_pointer_array_t *regtypes,
+                                                       pmix_buffer_t *buffer, const void *src,
                                                        int32_t num_vals, pmix_data_type_t type);
-PMIX_EXPORT pmix_status_t pmix_bfrops_base_pack_float(pmix_buffer_t *buffer, const void *src,
+PMIX_EXPORT pmix_status_t pmix_bfrops_base_pack_float(pmix_pointer_array_t *regtypes,
+                                                      pmix_buffer_t *buffer, const void *src,
                                                       int32_t num_vals, pmix_data_type_t type);
-PMIX_EXPORT pmix_status_t pmix_bfrops_base_pack_double(pmix_buffer_t *buffer, const void *src,
+PMIX_EXPORT pmix_status_t pmix_bfrops_base_pack_double(pmix_pointer_array_t *regtypes,
+                                                       pmix_buffer_t *buffer, const void *src,
                                                        int32_t num_vals, pmix_data_type_t type);
-PMIX_EXPORT pmix_status_t pmix_bfrops_base_pack_timeval(pmix_buffer_t *buffer, const void *src,
+PMIX_EXPORT pmix_status_t pmix_bfrops_base_pack_timeval(pmix_pointer_array_t *regtypes,
+                                                        pmix_buffer_t *buffer, const void *src,
                                                         int32_t num_vals, pmix_data_type_t type);
-PMIX_EXPORT pmix_status_t pmix_bfrops_base_pack_time(pmix_buffer_t *buffer, const void *src,
+PMIX_EXPORT pmix_status_t pmix_bfrops_base_pack_time(pmix_pointer_array_t *regtypes,
+                                                     pmix_buffer_t *buffer, const void *src,
                                                      int32_t num_vals, pmix_data_type_t type);
-PMIX_EXPORT pmix_status_t pmix_bfrops_base_pack_status(pmix_buffer_t *buffer, const void *src,
+PMIX_EXPORT pmix_status_t pmix_bfrops_base_pack_status(pmix_pointer_array_t *regtypes,
+                                                       pmix_buffer_t *buffer, const void *src,
                                                        int32_t num_vals, pmix_data_type_t type);
-PMIX_EXPORT pmix_status_t pmix_bfrops_base_pack_buf(pmix_buffer_t *buffer, const void *src,
+PMIX_EXPORT pmix_status_t pmix_bfrops_base_pack_buf(pmix_pointer_array_t *regtypes,
+                                                    pmix_buffer_t *buffer, const void *src,
                                                     int32_t num_vals, pmix_data_type_t type);
-PMIX_EXPORT pmix_status_t pmix_bfrops_base_pack_bo(pmix_buffer_t *buffer, const void *src,
+PMIX_EXPORT pmix_status_t pmix_bfrops_base_pack_bo(pmix_pointer_array_t *regtypes,
+                                                   pmix_buffer_t *buffer, const void *src,
                                                    int32_t num_vals, pmix_data_type_t type);
-PMIX_EXPORT pmix_status_t pmix_bfrops_base_pack_proc(pmix_buffer_t *buffer, const void *src,
+PMIX_EXPORT pmix_status_t pmix_bfrops_base_pack_proc(pmix_pointer_array_t *regtypes,
+                                                     pmix_buffer_t *buffer, const void *src,
                                                      int32_t num_vals, pmix_data_type_t type);
-PMIX_EXPORT pmix_status_t pmix_bfrops_base_pack_value(pmix_buffer_t *buffer, const void *src,
+PMIX_EXPORT pmix_status_t pmix_bfrops_base_pack_value(pmix_pointer_array_t *regtypes,
+                                                      pmix_buffer_t *buffer, const void *src,
                                                       int32_t num_vals, pmix_data_type_t type);
-PMIX_EXPORT pmix_status_t pmix_bfrops_base_pack_info(pmix_buffer_t *buffer, const void *src,
+PMIX_EXPORT pmix_status_t pmix_bfrops_base_pack_info(pmix_pointer_array_t *regtypes,
+                                                     pmix_buffer_t *buffer, const void *src,
                                                      int32_t num_vals, pmix_data_type_t type);
-PMIX_EXPORT pmix_status_t pmix_bfrops_base_pack_pdata(pmix_buffer_t *buffer, const void *src,
+PMIX_EXPORT pmix_status_t pmix_bfrops_base_pack_pdata(pmix_pointer_array_t *regtypes,
+                                                      pmix_buffer_t *buffer, const void *src,
                                                       int32_t num_vals, pmix_data_type_t type);
-PMIX_EXPORT pmix_status_t pmix_bfrops_base_pack_app(pmix_buffer_t *buffer, const void *src,
+PMIX_EXPORT pmix_status_t pmix_bfrops_base_pack_app(pmix_pointer_array_t *regtypes,
+                                                    pmix_buffer_t *buffer, const void *src,
                                                     int32_t num_vals, pmix_data_type_t type);
-PMIX_EXPORT pmix_status_t pmix_bfrops_base_pack_kval(pmix_buffer_t *buffer, const void *src,
+PMIX_EXPORT pmix_status_t pmix_bfrops_base_pack_kval(pmix_pointer_array_t *regtypes,
+                                                     pmix_buffer_t *buffer, const void *src,
                                                      int32_t num_vals, pmix_data_type_t type);
-PMIX_EXPORT pmix_status_t pmix_bfrops_base_pack_array(pmix_buffer_t *buffer, const void *src,
+PMIX_EXPORT pmix_status_t pmix_bfrops_base_pack_array(pmix_pointer_array_t *regtypes,
+                                                      pmix_buffer_t *buffer, const void *src,
                                                       int32_t num_vals, pmix_data_type_t type);
 PMIX_EXPORT pmix_status_t pmix_bfrops_base_pack_modex(pmix_buffer_t *buffer, const void *src,
                                                       int32_t num_vals, pmix_data_type_t type);
-PMIX_EXPORT pmix_status_t pmix_bfrops_base_pack_persist(pmix_buffer_t *buffer, const void *src,
+PMIX_EXPORT pmix_status_t pmix_bfrops_base_pack_persist(pmix_pointer_array_t *regtypes,
+                                                        pmix_buffer_t *buffer, const void *src,
                                                         int32_t num_vals, pmix_data_type_t type);
-PMIX_EXPORT pmix_status_t pmix_bfrops_base_pack_datatype(pmix_buffer_t *buffer, const void *src,
+PMIX_EXPORT pmix_status_t pmix_bfrops_base_pack_datatype(pmix_pointer_array_t *regtypes,
+                                                         pmix_buffer_t *buffer, const void *src,
                                                          int32_t num_vals, pmix_data_type_t type);
-PMIX_EXPORT pmix_status_t pmix_bfrops_base_pack_ptr(pmix_buffer_t *buffer, const void *src,
+PMIX_EXPORT pmix_status_t pmix_bfrops_base_pack_ptr(pmix_pointer_array_t *regtypes,
+                                                    pmix_buffer_t *buffer, const void *src,
                                                     int32_t num_vals, pmix_data_type_t type);
-PMIX_EXPORT pmix_status_t pmix_bfrops_base_pack_scope(pmix_buffer_t *buffer, const void *src,
+PMIX_EXPORT pmix_status_t pmix_bfrops_base_pack_scope(pmix_pointer_array_t *regtypes,
+                                                      pmix_buffer_t *buffer, const void *src,
                                                       int32_t num_vals, pmix_data_type_t type);
-PMIX_EXPORT pmix_status_t pmix_bfrops_base_pack_range(pmix_buffer_t *buffer, const void *src,
+PMIX_EXPORT pmix_status_t pmix_bfrops_base_pack_range(pmix_pointer_array_t *regtypes,
+                                                      pmix_buffer_t *buffer, const void *src,
                                                       int32_t num_vals, pmix_data_type_t type);
-PMIX_EXPORT pmix_status_t pmix_bfrops_base_pack_cmd(pmix_buffer_t *buffer, const void *src,
+PMIX_EXPORT pmix_status_t pmix_bfrops_base_pack_cmd(pmix_pointer_array_t *regtypes,
+                                                    pmix_buffer_t *buffer, const void *src,
                                                     int32_t num_vals, pmix_data_type_t type);
-PMIX_EXPORT pmix_status_t pmix_bfrops_base_pack_info_directives(pmix_buffer_t *buffer, const void *src,
+PMIX_EXPORT pmix_status_t pmix_bfrops_base_pack_info_directives(pmix_pointer_array_t *regtypes,
+                                                                pmix_buffer_t *buffer, const void *src,
                                                                 int32_t num_vals, pmix_data_type_t type);
-PMIX_EXPORT pmix_status_t pmix_bfrops_base_pack_pstate(pmix_buffer_t *buffer, const void *src,
+PMIX_EXPORT pmix_status_t pmix_bfrops_base_pack_pstate(pmix_pointer_array_t *regtypes,
+                                                       pmix_buffer_t *buffer, const void *src,
                                                        int32_t num_vals, pmix_data_type_t type);
-PMIX_EXPORT pmix_status_t pmix_bfrops_base_pack_pinfo(pmix_buffer_t *buffer, const void *src,
+PMIX_EXPORT pmix_status_t pmix_bfrops_base_pack_pinfo(pmix_pointer_array_t *regtypes,
+                                                      pmix_buffer_t *buffer, const void *src,
                                                       int32_t num_vals, pmix_data_type_t type);
-PMIX_EXPORT pmix_status_t pmix_bfrops_base_pack_darray(pmix_buffer_t *buffer, const void *src,
+PMIX_EXPORT pmix_status_t pmix_bfrops_base_pack_darray(pmix_pointer_array_t *regtypes,
+                                                       pmix_buffer_t *buffer, const void *src,
                                                        int32_t num_vals, pmix_data_type_t type);
-PMIX_EXPORT pmix_status_t pmix_bfrops_base_pack_rank(pmix_buffer_t *buffer, const void *src,
+PMIX_EXPORT pmix_status_t pmix_bfrops_base_pack_rank(pmix_pointer_array_t *regtypes,
+                                                     pmix_buffer_t *buffer, const void *src,
                                                      int32_t num_vals, pmix_data_type_t type);
-PMIX_EXPORT pmix_status_t pmix_bfrops_base_pack_query(pmix_buffer_t *buffer, const void *src,
+PMIX_EXPORT pmix_status_t pmix_bfrops_base_pack_query(pmix_pointer_array_t *regtypes,
+                                                      pmix_buffer_t *buffer, const void *src,
                                                       int32_t num_vals, pmix_data_type_t type);
-PMIX_EXPORT pmix_status_t pmix_bfrops_base_pack_val(pmix_buffer_t *buffer,
+PMIX_EXPORT pmix_status_t pmix_bfrops_base_pack_val(pmix_pointer_array_t *regtypes,
+                                                    pmix_buffer_t *buffer,
                                                     pmix_value_t *p);
-PMIX_EXPORT pmix_status_t pmix_bfrops_base_pack_alloc_directive(pmix_buffer_t *buffer, const void *src,
+PMIX_EXPORT pmix_status_t pmix_bfrops_base_pack_alloc_directive(pmix_pointer_array_t *regtypes,
+                                                                pmix_buffer_t *buffer, const void *src,
                                                                 int32_t num_vals, pmix_data_type_t type);
-PMIX_EXPORT pmix_status_t pmix_bfrops_base_pack_iof_channel(pmix_buffer_t *buffer, const void *src,
+PMIX_EXPORT pmix_status_t pmix_bfrops_base_pack_iof_channel(pmix_pointer_array_t *regtypes,
+                                                            pmix_buffer_t *buffer, const void *src,
                                                             int32_t num_vals, pmix_data_type_t type);
-PMIX_EXPORT pmix_status_t pmix_bfrops_base_pack_envar(pmix_buffer_t *buffer, const void *src,
+PMIX_EXPORT pmix_status_t pmix_bfrops_base_pack_envar(pmix_pointer_array_t *regtypes,
+                                                      pmix_buffer_t *buffer, const void *src,
+                                                      int32_t num_vals, pmix_data_type_t type);
+PMIX_EXPORT pmix_status_t pmix_bfrops_base_pack_regex(pmix_pointer_array_t *regtypes,
+                                                      pmix_buffer_t *buffer, const void *src,
                                                       int32_t num_vals, pmix_data_type_t type);
 
 /*
@@ -398,90 +482,135 @@ PMIX_EXPORT pmix_status_t pmix_bfrops_base_unpack(pmix_pointer_array_t *regtypes
                                                   void *dst, int32_t *num_vals,
                                                   pmix_data_type_t type);
 
-PMIX_EXPORT pmix_status_t pmix_bfrops_base_unpack_bool(pmix_buffer_t *buffer, void *dest,
+PMIX_EXPORT pmix_status_t pmix_bfrops_base_unpack_bool(pmix_pointer_array_t *regtypes,
+                                                       pmix_buffer_t *buffer, void *dest,
                                                        int32_t *num_vals, pmix_data_type_t type);
-PMIX_EXPORT pmix_status_t pmix_bfrops_base_unpack_byte(pmix_buffer_t *buffer, void *dest,
+PMIX_EXPORT pmix_status_t pmix_bfrops_base_unpack_byte(pmix_pointer_array_t *regtypes,
+                                                       pmix_buffer_t *buffer, void *dest,
                                                        int32_t *num_vals, pmix_data_type_t type);
-PMIX_EXPORT pmix_status_t pmix_bfrops_base_unpack_string(pmix_buffer_t *buffer, void *dest,
+PMIX_EXPORT pmix_status_t pmix_bfrops_base_unpack_string(pmix_pointer_array_t *regtypes,
+                                                         pmix_buffer_t *buffer, void *dest,
                                                          int32_t *num_vals, pmix_data_type_t type);
-PMIX_EXPORT pmix_status_t pmix_bfrops_base_unpack_int(pmix_buffer_t *buffer, void *dest,
+PMIX_EXPORT pmix_status_t pmix_bfrops_base_unpack_int(pmix_pointer_array_t *regtypes,
+                                                      pmix_buffer_t *buffer, void *dest,
                                                       int32_t *num_vals, pmix_data_type_t type);
-PMIX_EXPORT pmix_status_t pmix_bfrops_base_unpack_sizet(pmix_buffer_t *buffer, void *dest,
+PMIX_EXPORT pmix_status_t pmix_bfrops_base_unpack_sizet(pmix_pointer_array_t *regtypes,
+                                                        pmix_buffer_t *buffer, void *dest,
                                                         int32_t *num_vals, pmix_data_type_t type);
-PMIX_EXPORT pmix_status_t pmix_bfrops_base_unpack_pid(pmix_buffer_t *buffer, void *dest,
+PMIX_EXPORT pmix_status_t pmix_bfrops_base_unpack_pid(pmix_pointer_array_t *regtypes,
+                                                      pmix_buffer_t *buffer, void *dest,
                                                       int32_t *num_vals, pmix_data_type_t type);
-PMIX_EXPORT pmix_status_t pmix_bfrops_base_unpack_int16(pmix_buffer_t *buffer, void *dest,
+PMIX_EXPORT pmix_status_t pmix_bfrops_base_unpack_int16(pmix_pointer_array_t *regtypes,
+                                                        pmix_buffer_t *buffer, void *dest,
                                                         int32_t *num_vals, pmix_data_type_t type);
-PMIX_EXPORT pmix_status_t pmix_bfrops_base_unpack_int32(pmix_buffer_t *buffer, void *dest,
+PMIX_EXPORT pmix_status_t pmix_bfrops_base_unpack_int32(pmix_pointer_array_t *regtypes,
+                                                        pmix_buffer_t *buffer, void *dest,
                                                         int32_t *num_vals, pmix_data_type_t type);
-PMIX_EXPORT pmix_status_t pmix_bfrops_base_unpack_datatype(pmix_buffer_t *buffer, void *dest,
+PMIX_EXPORT pmix_status_t pmix_bfrops_base_unpack_datatype(pmix_pointer_array_t *regtypes,
+                                                           pmix_buffer_t *buffer, void *dest,
                                                            int32_t *num_vals, pmix_data_type_t type);
-PMIX_EXPORT pmix_status_t pmix_bfrops_base_unpack_int64(pmix_buffer_t *buffer, void *dest,
+PMIX_EXPORT pmix_status_t pmix_bfrops_base_unpack_int64(pmix_pointer_array_t *regtypes,
+                                                        pmix_buffer_t *buffer, void *dest,
                                                         int32_t *num_vals, pmix_data_type_t type);
 
-PMIX_EXPORT pmix_status_t pmix_bfrops_base_unpack_float(pmix_buffer_t *buffer, void *dest,
+PMIX_EXPORT pmix_status_t pmix_bfrops_base_unpack_float(pmix_pointer_array_t *regtypes,
+                                                        pmix_buffer_t *buffer, void *dest,
                                                         int32_t *num_vals, pmix_data_type_t type);
-PMIX_EXPORT pmix_status_t pmix_bfrops_base_unpack_double(pmix_buffer_t *buffer, void *dest,
+PMIX_EXPORT pmix_status_t pmix_bfrops_base_unpack_double(pmix_pointer_array_t *regtypes,
+                                                         pmix_buffer_t *buffer, void *dest,
                                                          int32_t *num_vals, pmix_data_type_t type);
-PMIX_EXPORT pmix_status_t pmix_bfrops_base_unpack_timeval(pmix_buffer_t *buffer, void *dest,
+PMIX_EXPORT pmix_status_t pmix_bfrops_base_unpack_timeval(pmix_pointer_array_t *regtypes,
+                                                          pmix_buffer_t *buffer, void *dest,
                                                           int32_t *num_vals, pmix_data_type_t type);
-PMIX_EXPORT pmix_status_t pmix_bfrops_base_unpack_time(pmix_buffer_t *buffer, void *dest,
+PMIX_EXPORT pmix_status_t pmix_bfrops_base_unpack_time(pmix_pointer_array_t *regtypes,
+                                                       pmix_buffer_t *buffer, void *dest,
                                                        int32_t *num_vals, pmix_data_type_t type);
-PMIX_EXPORT pmix_status_t pmix_bfrops_base_unpack_status(pmix_buffer_t *buffer, void *dest,
+PMIX_EXPORT pmix_status_t pmix_bfrops_base_unpack_status(pmix_pointer_array_t *regtypes,
+                                                         pmix_buffer_t *buffer, void *dest,
                                                          int32_t *num_vals, pmix_data_type_t type);
 
-PMIX_EXPORT pmix_status_t pmix_bfrops_base_unpack_val(pmix_buffer_t *buffer,
+PMIX_EXPORT pmix_status_t pmix_bfrops_base_unpack_val(pmix_pointer_array_t *regtypes,
+                                                      pmix_buffer_t *buffer,
                                                       pmix_value_t *val);
-PMIX_EXPORT pmix_status_t pmix_bfrops_base_unpack_value(pmix_buffer_t *buffer, void *dest,
+PMIX_EXPORT pmix_status_t pmix_bfrops_base_unpack_value(pmix_pointer_array_t *regtypes,
+                                                        pmix_buffer_t *buffer, void *dest,
                                                         int32_t *num_vals, pmix_data_type_t type);
-PMIX_EXPORT pmix_status_t pmix_bfrops_base_unpack_info(pmix_buffer_t *buffer, void *dest,
+PMIX_EXPORT pmix_status_t pmix_bfrops_base_unpack_info(pmix_pointer_array_t *regtypes,
+                                                       pmix_buffer_t *buffer, void *dest,
                                                        int32_t *num_vals, pmix_data_type_t type);
-PMIX_EXPORT pmix_status_t pmix_bfrops_base_unpack_pdata(pmix_buffer_t *buffer, void *dest,
+PMIX_EXPORT pmix_status_t pmix_bfrops_base_unpack_pdata(pmix_pointer_array_t *regtypes,
+                                                        pmix_buffer_t *buffer, void *dest,
                                                         int32_t *num_vals, pmix_data_type_t type);
-PMIX_EXPORT pmix_status_t pmix_bfrops_base_unpack_buf(pmix_buffer_t *buffer, void *dest,
+PMIX_EXPORT pmix_status_t pmix_bfrops_base_unpack_buf(pmix_pointer_array_t *regtypes,
+                                                      pmix_buffer_t *buffer, void *dest,
                                                       int32_t *num_vals, pmix_data_type_t type);
-PMIX_EXPORT pmix_status_t pmix_bfrops_base_unpack_proc(pmix_buffer_t *buffer, void *dest,
+PMIX_EXPORT pmix_status_t pmix_bfrops_base_unpack_proc(pmix_pointer_array_t *regtypes,
+                                                       pmix_buffer_t *buffer, void *dest,
                                                        int32_t *num_vals, pmix_data_type_t type);
-PMIX_EXPORT pmix_status_t pmix_bfrops_base_unpack_app(pmix_buffer_t *buffer, void *dest,
+PMIX_EXPORT pmix_status_t pmix_bfrops_base_unpack_app(pmix_pointer_array_t *regtypes,
+                                                      pmix_buffer_t *buffer, void *dest,
                                                       int32_t *num_vals, pmix_data_type_t type);
-PMIX_EXPORT pmix_status_t pmix_bfrops_base_unpack_kval(pmix_buffer_t *buffer, void *dest,
+PMIX_EXPORT pmix_status_t pmix_bfrops_base_unpack_kval(pmix_pointer_array_t *regtypes,
+                                                       pmix_buffer_t *buffer, void *dest,
                                                        int32_t *num_vals, pmix_data_type_t type);
-PMIX_EXPORT pmix_status_t pmix_bfrops_base_unpack_modex(pmix_buffer_t *buffer, void *dest,
+PMIX_EXPORT pmix_status_t pmix_bfrops_base_unpack_modex(pmix_pointer_array_t *regtypes,
+                                                        pmix_buffer_t *buffer, void *dest,
                                                         int32_t *num_vals, pmix_data_type_t type);
-PMIX_EXPORT pmix_status_t pmix_bfrops_base_unpack_persist(pmix_buffer_t *buffer, void *dest,
+PMIX_EXPORT pmix_status_t pmix_bfrops_base_unpack_persist(pmix_pointer_array_t *regtypes,
+                                                          pmix_buffer_t *buffer, void *dest,
                                                           int32_t *num_vals, pmix_data_type_t type);
-PMIX_EXPORT pmix_status_t pmix_bfrops_base_unpack_bo(pmix_buffer_t *buffer, void *dest,
+PMIX_EXPORT pmix_status_t pmix_bfrops_base_unpack_bo(pmix_pointer_array_t *regtypes,
+                                                     pmix_buffer_t *buffer, void *dest,
                                                      int32_t *num_vals, pmix_data_type_t type);
-PMIX_EXPORT pmix_status_t pmix_bfrops_base_unpack_ptr(pmix_buffer_t *buffer, void *dest,
+PMIX_EXPORT pmix_status_t pmix_bfrops_base_unpack_ptr(pmix_pointer_array_t *regtypes,
+                                                      pmix_buffer_t *buffer, void *dest,
                                                       int32_t *num_vals, pmix_data_type_t type);
-PMIX_EXPORT pmix_status_t pmix_bfrops_base_unpack_scope(pmix_buffer_t *buffer, void *dest,
+PMIX_EXPORT pmix_status_t pmix_bfrops_base_unpack_scope(pmix_pointer_array_t *regtypes,
+                                                        pmix_buffer_t *buffer, void *dest,
                                                         int32_t *num_vals, pmix_data_type_t type);
-PMIX_EXPORT pmix_status_t pmix_bfrops_base_unpack_range(pmix_buffer_t *buffer, void *dest,
+PMIX_EXPORT pmix_status_t pmix_bfrops_base_unpack_range(pmix_pointer_array_t *regtypes,
+                                                        pmix_buffer_t *buffer, void *dest,
                                                         int32_t *num_vals, pmix_data_type_t type);
-PMIX_EXPORT pmix_status_t pmix_bfrops_base_unpack_cmd(pmix_buffer_t *buffer, void *dest,
+PMIX_EXPORT pmix_status_t pmix_bfrops_base_unpack_cmd(pmix_pointer_array_t *regtypes,
+                                                      pmix_buffer_t *buffer, void *dest,
                                                       int32_t *num_vals, pmix_data_type_t type);
-PMIX_EXPORT pmix_status_t pmix_bfrops_base_unpack_info_directives(pmix_buffer_t *buffer, void *dest,
+PMIX_EXPORT pmix_status_t pmix_bfrops_base_unpack_info_directives(pmix_pointer_array_t *regtypes,
+                                                                  pmix_buffer_t *buffer, void *dest,
                                                                   int32_t *num_vals, pmix_data_type_t type);
-PMIX_EXPORT pmix_status_t pmix_bfrops_base_unpack_datatype(pmix_buffer_t *buffer, void *dest,
+PMIX_EXPORT pmix_status_t pmix_bfrops_base_unpack_datatype(pmix_pointer_array_t *regtypes,
+                                                           pmix_buffer_t *buffer, void *dest,
                                                            int32_t *num_vals, pmix_data_type_t type);
-PMIX_EXPORT pmix_status_t pmix_bfrops_base_unpack_pstate(pmix_buffer_t *buffer, void *dest,
+PMIX_EXPORT pmix_status_t pmix_bfrops_base_unpack_pstate(pmix_pointer_array_t *regtypes,
+                                                         pmix_buffer_t *buffer, void *dest,
                                                          int32_t *num_vals, pmix_data_type_t type);
-PMIX_EXPORT pmix_status_t pmix_bfrops_base_unpack_pinfo(pmix_buffer_t *buffer, void *dest,
+PMIX_EXPORT pmix_status_t pmix_bfrops_base_unpack_pinfo(pmix_pointer_array_t *regtypes,
+                                                        pmix_buffer_t *buffer, void *dest,
                                                         int32_t *num_vals, pmix_data_type_t type);
-PMIX_EXPORT pmix_status_t pmix_bfrops_base_unpack_darray(pmix_buffer_t *buffer, void *dest,
+PMIX_EXPORT pmix_status_t pmix_bfrops_base_unpack_darray(pmix_pointer_array_t *regtypes,
+                                                         pmix_buffer_t *buffer, void *dest,
                                                          int32_t *num_vals, pmix_data_type_t type);
-PMIX_EXPORT pmix_status_t pmix_bfrops_base_unpack_rank(pmix_buffer_t *buffer, void *dest,
+PMIX_EXPORT pmix_status_t pmix_bfrops_base_unpack_rank(pmix_pointer_array_t *regtypes,
+                                                       pmix_buffer_t *buffer, void *dest,
                                                        int32_t *num_vals, pmix_data_type_t type);
-PMIX_EXPORT pmix_status_t pmix_bfrops_base_unpack_query(pmix_buffer_t *buffer, void *dest,
+PMIX_EXPORT pmix_status_t pmix_bfrops_base_unpack_query(pmix_pointer_array_t *regtypes,
+                                                        pmix_buffer_t *buffer, void *dest,
                                                         int32_t *num_vals, pmix_data_type_t type);
-PMIX_EXPORT pmix_status_t pmix_bfrops_base_unpack_alloc_directive(pmix_buffer_t *buffer, void *dest,
+PMIX_EXPORT pmix_status_t pmix_bfrops_base_unpack_alloc_directive(pmix_pointer_array_t *regtypes,
+                                                                  pmix_buffer_t *buffer, void *dest,
                                                                   int32_t *num_vals, pmix_data_type_t type);
-PMIX_EXPORT pmix_status_t pmix_bfrops_base_unpack_iof_channel(pmix_buffer_t *buffer, void *dest,
+PMIX_EXPORT pmix_status_t pmix_bfrops_base_unpack_iof_channel(pmix_pointer_array_t *regtypes,
+                                                              pmix_buffer_t *buffer, void *dest,
                                                               int32_t *num_vals, pmix_data_type_t type);
-PMIX_EXPORT pmix_status_t pmix_bfrops_base_unpack_envar(pmix_buffer_t *buffer, void *dest,
+PMIX_EXPORT pmix_status_t pmix_bfrops_base_unpack_envar(pmix_pointer_array_t *regtypes,
+                                                        pmix_buffer_t *buffer, void *dest,
                                                         int32_t *num_vals, pmix_data_type_t type);
+PMIX_EXPORT pmix_status_t pmix_bfrops_base_unpack_regex(pmix_pointer_array_t *regtypes,
+                                                        pmix_buffer_t *buffer, void *dest,
+                                                        int32_t *num_vals, pmix_data_type_t type);
+
 /**** DEPRECATED ****/
-PMIX_EXPORT pmix_status_t pmix_bfrops_base_unpack_array(pmix_buffer_t *buffer, void *dest,
+PMIX_EXPORT pmix_status_t pmix_bfrops_base_unpack_array(pmix_pointer_array_t *regtypes,
+                                                        pmix_buffer_t *buffer, void *dest,
                                                         int32_t *num_vals, pmix_data_type_t type);
 
 /*
@@ -537,6 +666,9 @@ PMIX_EXPORT pmix_status_t pmix_bfrops_base_copy_query(pmix_query_t **dest,
                                                       pmix_data_type_t type);
 PMIX_EXPORT pmix_status_t pmix_bfrops_base_copy_envar(pmix_envar_t **dest,
                                                       pmix_envar_t *src,
+                                                      pmix_data_type_t type);
+PMIX_EXPORT pmix_status_t pmix_bfrops_base_copy_regex(char **dest,
+                                                      char *src,
                                                       pmix_data_type_t type);
 
 /*
@@ -646,6 +778,10 @@ PMIX_EXPORT pmix_status_t pmix_bfrops_base_print_iof_channel(char **output, char
 PMIX_EXPORT pmix_status_t pmix_bfrops_base_print_envar(char **output, char *prefix,
                                                        pmix_envar_t *src,
                                                        pmix_data_type_t type);
+PMIX_EXPORT pmix_status_t pmix_bfrops_base_print_regex(char **output, char *prefix,
+                                                       char *src,
+                                                       pmix_data_type_t type);
+
 
 /*
  * Common helper functions
@@ -655,9 +791,11 @@ PMIX_EXPORT char* pmix_bfrop_buffer_extend(pmix_buffer_t *bptr, size_t bytes_to_
 
 PMIX_EXPORT bool pmix_bfrop_too_small(pmix_buffer_t *buffer, size_t bytes_reqd);
 
-PMIX_EXPORT pmix_status_t pmix_bfrop_store_data_type(pmix_buffer_t *buffer, pmix_data_type_t type);
+PMIX_EXPORT pmix_status_t pmix_bfrop_store_data_type(pmix_pointer_array_t *regtypes,
+                                                     pmix_buffer_t *buffer, pmix_data_type_t type);
 
-PMIX_EXPORT pmix_status_t pmix_bfrop_get_data_type(pmix_buffer_t *buffer, pmix_data_type_t *type);
+PMIX_EXPORT pmix_status_t pmix_bfrop_get_data_type(pmix_pointer_array_t *regtypes,
+                                                   pmix_buffer_t *buffer, pmix_data_type_t *type);
 
 PMIX_EXPORT pmix_status_t pmix_bfrops_base_copy_payload(pmix_buffer_t *dest,
                                                         pmix_buffer_t *src);

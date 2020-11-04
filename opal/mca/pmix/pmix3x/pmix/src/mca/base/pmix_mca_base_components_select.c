@@ -5,7 +5,7 @@
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2015-2016 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2020 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -13,7 +13,7 @@
  * $HEADER$
  */
 
-#include <src/include/pmix_config.h>
+#include "src/include/pmix_config.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -28,7 +28,7 @@
 #include "src/mca/mca.h"
 #include "src/mca/base/base.h"
 #include "src/mca/base/pmix_mca_base_component_repository.h"
-#include "pmix_common.h"
+#include "include/pmix_common.h"
 
 
 int pmix_mca_base_select(const char *type_name, int output_id,

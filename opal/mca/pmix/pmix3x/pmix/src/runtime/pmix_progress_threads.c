@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2017-2019 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
@@ -12,7 +12,7 @@
  * $HEADER$
  */
 
-#include <src/include/pmix_config.h>
+#include "src/include/pmix_config.h"
 
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
@@ -266,7 +266,6 @@ static int start_progress_engine(pmix_progress_tracker_t *trk)
 pmix_event_base_t *pmix_progress_thread_init(const char *name)
 {
     pmix_progress_tracker_t *trk;
-    int rc;
 
     if (!inited) {
         PMIX_CONSTRUCT(&tracking, pmix_list_t);
@@ -320,17 +319,45 @@ pmix_event_base_t *pmix_progress_thread_init(const char *name)
     /* construct the thread object */
     PMIX_CONSTRUCT(&trk->engine, pmix_thread_t);
     trk->engine_constructed = true;
-    if (PMIX_SUCCESS != (rc = start_progress_engine(trk))) {
-        PMIX_ERROR_LOG(rc);
-        PMIX_RELEASE(trk);
-        return NULL;
-    }
     pmix_list_append(&tracking, &trk->super);
 
     return trk->ev_base;
 }
 
-int pmix_progress_thread_stop(const char *name)
+pmix_status_t pmix_progress_thread_start(const char *name)
+{
+    pmix_progress_tracker_t *trk;
+    pmix_status_t rc;
+
+    if (!inited) {
+        /* nothing we can do */
+        return PMIX_ERR_NOT_FOUND;
+    }
+
+    if (NULL == name) {
+        name = shared_thread_name;
+    }
+
+    /* find the specified engine */
+    PMIX_LIST_FOREACH(trk, &tracking, pmix_progress_tracker_t) {
+        if (0 == strcmp(name, trk->name)) {
+            /* If the progress thread is active, ignore the request */
+            if (trk->ev_active) {
+                return PMIX_SUCCESS;
+            }
+            if (PMIX_SUCCESS != (rc = start_progress_engine(trk))) {
+                PMIX_ERROR_LOG(rc);
+                PMIX_RELEASE(trk);
+            }
+            return rc;
+        }
+    }
+
+    return PMIX_ERR_NOT_FOUND;
+}
+
+
+pmix_status_t pmix_progress_thread_stop(const char *name)
 {
     pmix_progress_tracker_t *trk;
 
@@ -367,7 +394,7 @@ int pmix_progress_thread_stop(const char *name)
     return PMIX_ERR_NOT_FOUND;
 }
 
-int pmix_progress_thread_finalize(const char *name)
+pmix_status_t pmix_progress_thread_finalize(const char *name)
 {
     pmix_progress_tracker_t *trk;
 
@@ -400,7 +427,7 @@ int pmix_progress_thread_finalize(const char *name)
 /*
  * Stop the progress thread, but don't delete the tracker (or event base)
  */
-int pmix_progress_thread_pause(const char *name)
+pmix_status_t pmix_progress_thread_pause(const char *name)
 {
     pmix_progress_tracker_t *trk;
 
@@ -442,7 +469,7 @@ static pmix_progress_tracker_t* pmix_progress_tracker_get_by_base(pmix_event_bas
 }
 #endif
 
-int pmix_progress_thread_resume(const char *name)
+pmix_status_t pmix_progress_thread_resume(const char *name)
 {
     pmix_progress_tracker_t *trk;
 

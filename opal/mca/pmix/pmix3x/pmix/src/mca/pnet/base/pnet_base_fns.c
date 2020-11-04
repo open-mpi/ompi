@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2015-2019 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2016      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2018      Research Organization for Information Science
@@ -13,9 +13,9 @@
  * $HEADER$
  */
 
-#include <src/include/pmix_config.h>
+#include "src/include/pmix_config.h"
 
-#include <pmix_common.h>
+#include "include/pmix_common.h"
 #include "src/include/pmix_globals.h"
 
 #include "src/class/pmix_list.h"
@@ -28,7 +28,7 @@
 #include "src/mca/pnet/base/base.h"
 
 
-static pmix_status_t process_maps(char *nspace, char *nregex, char *pregex);
+static pmix_status_t process_maps(char *nspace, char **nodes, char **procs);
 
 /* NOTE: a tool (e.g., prun) may call this function to
  * harvest local envars for inclusion in a call to
@@ -39,11 +39,10 @@ pmix_status_t pmix_pnet_base_allocate(char *nspace,
                                       pmix_list_t *ilist)
 {
     pmix_pnet_base_active_module_t *active;
-    pmix_status_t rc = PMIX_SUCCESS;
+    pmix_status_t rc;
     pmix_namespace_t *nptr, *ns;
     size_t n;
-    char *nregex, *pregex;
-    char *params[2] = {"PMIX_MCA_", NULL};
+    char **nodes, **procs;
 
     if (!pmix_pnet_globals.initialized) {
         return PMIX_ERR_INIT;
@@ -56,7 +55,7 @@ pmix_status_t pmix_pnet_base_allocate(char *nspace,
     if (NULL == nspace || NULL == ilist) {
         return PMIX_ERR_BAD_PARAM;
     }
-    if (PMIX_PEER_IS_GATEWAY(pmix_globals.mypeer)) {
+    if (PMIX_PEER_IS_SCHEDULER(pmix_globals.mypeer)) {
         nptr = NULL;
         /* find this nspace - note that it may not have
          * been registered yet */
@@ -78,16 +77,22 @@ pmix_status_t pmix_pnet_base_allocate(char *nspace,
 
         if (NULL != info) {
             /* check for description of the node and proc maps */
-            nregex = NULL;
-            pregex = NULL;
+            nodes = NULL;
+            procs = NULL;
             for (n=0; n < ninfo; n++) {
-                if (0 == strncmp(info[n].key, PMIX_NODE_MAP, PMIX_MAX_KEYLEN)) {
-                    nregex = info[n].value.data.string;
-                } else if (0 == strncmp(info[n].key, PMIX_PROC_MAP, PMIX_MAX_KEYLEN)) {
-                    pregex = info[n].value.data.string;
+                if (PMIX_CHECK_KEY(&info[n], PMIX_NODE_MAP)) {
+                    rc = pmix_preg.parse_nodes(info[n].value.data.bo.bytes, &nodes);
+                    if (PMIX_SUCCESS != rc) {
+                        return rc;
+                    }
+                } else if (PMIX_CHECK_KEY(&info[n], PMIX_PROC_MAP)) {
+                    rc = pmix_preg.parse_procs(info[n].value.data.bo.bytes, &procs);
+                    if (PMIX_SUCCESS != rc) {
+                        return rc;
+                    }
                 }
             }
-            if (NULL != nregex && NULL != pregex) {
+            if (NULL != nodes && NULL != procs) {
                 /* assemble the pnet node and proc descriptions
                  * NOTE: this will eventually be folded into the
                  * new shared memory system, but we do it here
@@ -95,32 +100,29 @@ pmix_status_t pmix_pnet_base_allocate(char *nspace,
                  * the host will not have registered the clients
                  * and nspace prior to calling allocate
                  */
-                rc = process_maps(nspace, nregex, pregex);
+                rc = process_maps(nspace, nodes, procs);
+                pmix_argv_free(nodes);
+                pmix_argv_free(procs);
                 if (PMIX_SUCCESS != rc) {
                     return rc;
                 }
             }
             /* process the allocation request */
-            for (n=0; n < ninfo; n++) {
-                PMIX_LIST_FOREACH(active, &pmix_pnet_globals.actives, pmix_pnet_base_active_module_t) {
-                    if (NULL != active->module->allocate) {
-                        if (PMIX_SUCCESS == (rc = active->module->allocate(nptr, &info[n], ilist))) {
-                            break;
-                        }
-                        if (PMIX_ERR_TAKE_NEXT_OPTION != rc) {
-                            /* true error */
-                            return rc;
-                        }
+            PMIX_LIST_FOREACH(active, &pmix_pnet_globals.actives, pmix_pnet_base_active_module_t) {
+                if (NULL != active->module->allocate) {
+                    if (PMIX_SUCCESS == (rc = active->module->allocate(nptr, info, ninfo, ilist))) {
+                        break;
+                    }
+                    if (PMIX_ERR_TAKE_NEXT_OPTION != rc) {
+                        /* true error */
+                        return rc;
                     }
                 }
             }
         }
     }
 
-    /* add any local PMIx MCA params */
-    rc = pmix_pnet_base_harvest_envars(params, NULL, ilist);
-
-    return rc;
+    return PMIX_SUCCESS;
 }
 
 /* can only be called by a server */
@@ -531,76 +533,10 @@ void pmix_pnet_base_deliver_inventory(pmix_info_t info[], size_t ninfo,
     return;
 }
 
-pmix_status_t pmix_pnet_base_harvest_envars(char **incvars, char **excvars,
-                                            pmix_list_t *ilist)
+
+static pmix_status_t process_maps(char *nspace, char **nodes, char **procs)
 {
-    int i, j;
-    size_t len;
-    pmix_kval_t *kv, *next;
-    char *cs_env, *string_key;
-
-    /* harvest envars to pass along */
-    for (j=0; NULL != incvars[j]; j++) {
-        len = strlen(incvars[j]);
-        if ('*' == incvars[j][len-1]) {
-            --len;
-        }
-        for (i = 0; NULL != environ[i]; ++i) {
-            if (0 == strncmp(environ[i], incvars[j], len)) {
-                cs_env = strdup(environ[i]);
-                kv = PMIX_NEW(pmix_kval_t);
-                if (NULL == kv) {
-                    free(cs_env);
-                    return PMIX_ERR_OUT_OF_RESOURCE;
-                }
-                kv->key = strdup(PMIX_SET_ENVAR);
-                kv->value = (pmix_value_t*)malloc(sizeof(pmix_value_t));
-                if (NULL == kv->value) {
-                    PMIX_RELEASE(kv);
-                    free(cs_env);
-                    return PMIX_ERR_OUT_OF_RESOURCE;
-                }
-                kv->value->type = PMIX_ENVAR;
-                string_key = strchr(cs_env, '=');
-                if (NULL == string_key) {
-                    free(cs_env);
-                    PMIX_RELEASE(kv);
-                    return PMIX_ERR_BAD_PARAM;
-                }
-                *string_key = '\0';
-                ++string_key;
-                pmix_output_verbose(5, pmix_pnet_base_framework.framework_output,
-                                    "pnet: adding envar %s", cs_env);
-                PMIX_ENVAR_LOAD(&kv->value->data.envar, cs_env, string_key, ':');
-                pmix_list_append(ilist, &kv->super);
-                free(cs_env);
-            }
-        }
-    }
-
-    /* now check the exclusions and remove any that match */
-    if (NULL != excvars) {
-        for (j=0; NULL != excvars[j]; j++) {
-            len = strlen(excvars[j]);
-            if ('*' == excvars[j][len-1]) {
-                --len;
-            }
-            PMIX_LIST_FOREACH_SAFE(kv, next, ilist, pmix_kval_t) {
-                if (0 == strncmp(kv->value->data.envar.envar, excvars[j], len)) {
-                pmix_output_verbose(5, pmix_pnet_base_framework.framework_output,
-                                    "pnet: excluding envar %s", kv->value->data.envar.envar);
-                    pmix_list_remove_item(ilist, &kv->super);
-                    PMIX_RELEASE(kv);
-                }
-            }
-        }
-    }
-    return PMIX_SUCCESS;
-}
-
-static pmix_status_t process_maps(char *nspace, char *nregex, char *pregex)
-{
-    char **nodes, **procs, **ranks;
+    char **ranks;
     pmix_status_t rc;
     size_t m, n;
     pmix_pnet_job_t *jptr, *job;
@@ -610,17 +546,10 @@ static pmix_status_t process_maps(char *nspace, char *nregex, char *pregex)
 
     PMIX_ACQUIRE_THREAD(&pmix_pnet_globals.lock);
 
-    /* parse the regex to get the argv array of node names */
-    if (PMIX_SUCCESS != (rc = pmix_preg.parse_nodes(nregex, &nodes))) {
+    /* bozo check */
+    if (pmix_argv_count(nodes) != pmix_argv_count(procs)) {
+        rc = PMIX_ERR_BAD_PARAM;
         PMIX_ERROR_LOG(rc);
-        PMIX_RELEASE_THREAD(&pmix_pnet_globals.lock);
-        return rc;
-    }
-
-    /* parse the regex to get the argv array of proc ranks on each node */
-    if (PMIX_SUCCESS != (rc = pmix_preg.parse_procs(pregex, &procs))) {
-        PMIX_ERROR_LOG(rc);
-        pmix_argv_free(nodes);
         PMIX_RELEASE_THREAD(&pmix_pnet_globals.lock);
         return rc;
     }
@@ -696,9 +625,6 @@ static pmix_status_t process_maps(char *nspace, char *nregex, char *pregex)
         pmix_list_append(&nd->local_jobs, &lp->super);
         pmix_argv_free(ranks);
     }
-
-    pmix_argv_free(nodes);
-    pmix_argv_free(procs);
 
     PMIX_RELEASE_THREAD(&pmix_pnet_globals.lock);
     return PMIX_SUCCESS;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2017      Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2017      Inria.  All rights reserved.
  * $COPYRIGHT$
@@ -9,8 +9,8 @@
  * $HEADER$
  */
 
-#include <src/include/pmix_config.h>
-#include <pmix_common.h>
+#include "src/include/pmix_config.h"
+#include "include/pmix_common.h"
 
 #include <stdio.h>
 #include <stdlib.h>

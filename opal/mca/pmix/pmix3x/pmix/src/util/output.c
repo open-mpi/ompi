@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -20,9 +20,9 @@
  * $HEADER$
  */
 
-#include <src/include/pmix_config.h>
+#include "src/include/pmix_config.h"
 
-#include <pmix_common.h>
+#include "include/pmix_common.h"
 
 #include <stdio.h>
 #include <ctype.h>
@@ -454,6 +454,7 @@ void pmix_output_finalize(void)
         free (output_prefix);
         free (output_dir);
         PMIX_DESTRUCT(&verbose);
+        initialized = false;
     }
 }
 

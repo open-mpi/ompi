@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2018      Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
@@ -21,7 +21,7 @@
  * $HEADER$
  */
 
-#include <src/include/pmix_config.h>
+#include "src/include/pmix_config.h"
 
 
 #ifdef HAVE_STRING_H
@@ -33,8 +33,7 @@
 #include <stdlib.h>
 #endif
 
-#include <pmix_common.h>
-#include <pmix_rename.h>
+#include "include/pmix_common.h"
 
 #include "src/include/pmix_globals.h"
 
@@ -230,6 +229,16 @@ PMIX_EXPORT const char* pmix_command_string(pmix_cmd_t cmd)
             return "IOF PUSH";
         case PMIX_IOF_PULL_CMD:
             return "IOF PULL";
+        case PMIX_GROUP_CONSTRUCT_CMD:
+            return "GROUP CONSTRUCT";
+        case PMIX_GROUP_JOIN_CMD:
+            return "GROUP JOIN";
+        case PMIX_GROUP_INVITE_CMD:
+            return "GROUP INVITE";
+        case PMIX_GROUP_LEAVE_CMD:
+            return "GROUP LEAVE";
+        case PMIX_GROUP_DESTRUCT_CMD:
+            return "GROUP DESTRUCT";
         default:
             return "UNKNOWN";
     }

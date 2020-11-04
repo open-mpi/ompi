@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -25,7 +25,7 @@
  * Implementation of pmix_object_t, the base pmix foundation class
  */
 
-#include <src/include/pmix_config.h>
+#include "src/include/pmix_config.h"
 /* Symbol transforms */
 
 

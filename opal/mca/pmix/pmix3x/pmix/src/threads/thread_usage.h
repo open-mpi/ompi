@@ -15,7 +15,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2018      Intel, Inc. All rights reserved.
+ * Copyright (c) 2018-2019 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -26,7 +26,7 @@
 #if !defined(PMIX_THREAD_USAGE_H)
 #define PMIX_THREAD_USAGE_H
 
-#include "pmix_config.h"
+#include "src/include/pmix_config.h"
 
 #include "src/atomics/sys/atomic.h"
 #include "src/include/prefetch.h"
@@ -37,24 +37,24 @@
  */
 
 #define PMIX_THREAD_DEFINE_ATOMIC_OP(type, name, operator, suffix)      \
-static inline type pmix_thread_ ## name ## _fetch_ ## suffix (pmix_atomic_ ## type *addr, type delta) \
+__pmix_attribute_always_inline__ static inline type pmix_thread_ ## name ## _fetch_ ## suffix (pmix_atomic_ ## type *addr, type delta) \
 {                                                                       \
     return pmix_atomic_ ## name ## _fetch_ ## suffix (addr, delta);     \
 }                                                                       \
                                                                         \
-static inline type pmix_thread_fetch_ ## name ## _ ## suffix (pmix_atomic_ ## type *addr, type delta) \
+__pmix_attribute_always_inline__ static inline type pmix_thread_fetch_ ## name ## _ ## suffix (pmix_atomic_ ## type *addr, type delta) \
 {                                                                       \
     return pmix_atomic_fetch_ ## name ## _ ## suffix (addr, delta);     \
 }
 
 #define PMIX_THREAD_DEFINE_ATOMIC_COMPARE_EXCHANGE(type, addr_type, suffix)       \
-static inline bool pmix_thread_compare_exchange_strong_ ## suffix (pmix_atomic_ ## addr_type *addr, type *compare, type value) \
+__pmix_attribute_always_inline__ static inline bool pmix_thread_compare_exchange_strong_ ## suffix (pmix_atomic_ ## addr_type *addr, type *compare, type value) \
 {                                                                       \
     return pmix_atomic_compare_exchange_strong_ ## suffix (addr, (addr_type *) compare, (addr_type) value); \
 }
 
 #define PMIX_THREAD_DEFINE_ATOMIC_SWAP(type, addr_type, suffix)         \
-static inline type pmix_thread_swap_ ## suffix (pmix_atomic_ ## addr_type *ptr, type newvalue) \
+__pmix_attribute_always_inline__ static inline type pmix_thread_swap_ ## suffix (pmix_atomic_ ## addr_type *ptr, type newvalue) \
 {                                                                       \
     return (type) pmix_atomic_swap_ ## suffix (ptr, (addr_type) newvalue); \
 }

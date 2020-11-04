@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2015-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2016-2018 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2016-2020 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -20,9 +20,9 @@
  * $HEADER$
  */
 
-#include <src/include/pmix_config.h>
+#include "src/include/pmix_config.h"
 
-#include "pmix_common.h"
+#include "include/pmix_common.h"
 #include "src/util/keyval_parse.h"
 #include "src/util/keyval/keyval_lex.h"
 #include "src/util/output.h"

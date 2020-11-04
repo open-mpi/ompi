@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2014      Artem Polyakov <artpol84@gmail.com>
- * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2020 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -8,9 +8,9 @@
  * $HEADER$
  */
 
-#include <src/include/pmix_config.h>
+#include "src/include/pmix_config.h"
 
-#include <pmix_common.h>
+#include "include/pmix_common.h"
 
 #include <stdlib.h>
 #include <stdarg.h>

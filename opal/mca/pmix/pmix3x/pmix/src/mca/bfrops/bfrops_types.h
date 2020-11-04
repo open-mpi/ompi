@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, Inc. All rights reserved.
- * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2020 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -28,13 +28,13 @@
 #ifndef PMIX_MCA_BFROP_TYPES_H_
 #define PMIX_MCA_BFROP_TYPES_H_
 
-#include <src/include/pmix_config.h>
+#include "src/include/pmix_config.h"
 
 
 #include "src/class/pmix_object.h"
 #include "src/class/pmix_pointer_array.h"
 #include "src/class/pmix_list.h"
-#include <pmix_common.h>
+#include "include/pmix_common.h"
 
 BEGIN_C_DECLS
 
@@ -146,7 +146,7 @@ PMIX_EXPORT PMIX_CLASS_DECLARATION(pmix_buffer_t);
 /* Convenience macro to check for empty buffer without
  * exposing the internals */
 #define PMIX_BUFFER_IS_EMPTY(b)     \
-    0 == (b)->bytes_used
+    (0 == (b)->bytes_used)
 
 END_C_DECLS
 

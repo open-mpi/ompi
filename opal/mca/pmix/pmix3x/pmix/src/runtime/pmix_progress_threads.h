@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -32,7 +32,9 @@
  * already-running progress thread will be returned (i.e., no new
  * progress thread will be started).
  */
-pmix_event_base_t *pmix_progress_thread_init(const char *name);
+PMIX_EXPORT pmix_event_base_t *pmix_progress_thread_init(const char *name);
+
+PMIX_EXPORT pmix_status_t pmix_progress_thread_start(const char *name);
 
 /**
  * Stop a progress thread name (reference counted).
@@ -45,7 +47,7 @@ pmix_event_base_t *pmix_progress_thread_init(const char *name);
  * Will return PMIX_ERR_NOT_FOUND if the progress thread name does not
  * exist; PMIX_SUCCESS otherwise.
  */
-int pmix_progress_thread_stop(const char *name);
+PMIX_EXPORT pmix_status_t pmix_progress_thread_stop(const char *name);
 
 /**
  * Finalize a progress thread name (reference counted).
@@ -57,7 +59,7 @@ int pmix_progress_thread_stop(const char *name);
  * Will return PMIX_ERR_NOT_FOUND if the progress thread name does not
  * exist; PMIX_SUCCESS otherwise.
  */
-int pmix_progress_thread_finalize(const char *name);
+PMIX_EXPORT pmix_status_t pmix_progress_thread_finalize(const char *name);
 
 /**
  * Temporarily pause the progress thread associated with this name.
@@ -70,7 +72,7 @@ int pmix_progress_thread_finalize(const char *name);
  * Will return PMIX_ERR_NOT_FOUND if the progress thread name does not
  * exist; PMIX_SUCCESS otherwise.
  */
-int pmix_progress_thread_pause(const char *name);
+PMIX_EXPORT pmix_status_t pmix_progress_thread_pause(const char *name);
 
 /**
  * Restart a previously-paused progress thread associated with this
@@ -79,6 +81,6 @@ int pmix_progress_thread_pause(const char *name);
  * Will return PMIX_ERR_NOT_FOUND if the progress thread name does not
  * exist; PMIX_SUCCESS otherwise.
  */
-int pmix_progress_thread_resume(const char *name);
+PMIX_EXPORT pmix_status_t pmix_progress_thread_resume(const char *name);
 
 #endif

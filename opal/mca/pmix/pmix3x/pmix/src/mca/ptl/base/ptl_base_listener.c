@@ -1,8 +1,8 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
- * Copyright (c) 2014-2016 Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2014-2020 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2019 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2014-2015 Artem Y. Polyakov <artpol84@gmail.com>.
  *                         All rights reserved.
  * Copyright (c) 2016      Mellanox Technologies, Inc.
@@ -15,13 +15,12 @@
  * $HEADER$
  */
 
-#include <src/include/pmix_config.h>
+#include "src/include/pmix_config.h"
 
-#include <src/include/types.h>
-#include <src/include/pmix_stdint.h>
-#include <src/include/pmix_socket_errno.h>
+#include "src/include/pmix_stdint.h"
+#include "src/include/pmix_socket_errno.h"
 
-#include <pmix_server.h>
+#include "include/pmix_server.h"
 #include "src/include/pmix_globals.h"
 
 #ifdef HAVE_STRING_H
@@ -182,6 +181,7 @@ void pmix_ptl_base_stop_listening(void)
 
 static void* listen_thread(void *obj)
 {
+    (void)obj;
     int rc, max, accepted_connections;
     socklen_t addrlen = sizeof(struct sockaddr_storage);
     pmix_pending_connection_t *pending_connection;

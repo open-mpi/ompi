@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2015-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      Mellanox Technologies, Inc.
@@ -34,8 +34,8 @@
 #ifndef PMIX_HASH_TABLE_H
 #define PMIX_HASH_TABLE_H
 
-#include <src/include/pmix_config.h>
-#include <src/include/prefetch.h>
+#include "src/include/pmix_config.h"
+#include "src/include/prefetch.h"
 
 #ifdef HAVE_STDINT_H
 #include <stdint.h>
@@ -43,7 +43,7 @@
 
 #include "src/class/pmix_list.h"
 
-#include <pmix_common.h>
+#include "include/pmix_common.h"
 
 BEGIN_C_DECLS
 

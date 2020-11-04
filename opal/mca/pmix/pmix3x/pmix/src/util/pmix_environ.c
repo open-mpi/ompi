@@ -12,7 +12,7 @@
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * Copyright (c) 2019      Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
@@ -23,18 +23,21 @@
  * $HEADER$
  */
 
-#include <src/include/pmix_config.h>
+#include "src/include/pmix_config.h"
 
-#include <pmix_common.h>
+#include "include/pmix_common.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <pwd.h>
 
+#include "src/class/pmix_list.h"
 #include "src/util/printf.h"
 #include "src/util/error.h"
 #include "src/util/argv.h"
 #include "src/util/pmix_environ.h"
+#include "src/include/pmix_globals.h"
 
 #define PMIX_DEFAULT_TMPDIR "/tmp"
 #define PMIX_MAX_ENVAR_LENGTH   100000
@@ -260,20 +263,109 @@ char **pmix_environ_merge(char **minor, char **major)
     return (found) ? PMIX_SUCCESS : PMIX_ERR_NOT_FOUND;
 }
 
-const char* pmix_tmp_directory( void )
+const char* pmix_tmp_directory(void)
 {
     const char* str;
 
-    if( NULL == (str = getenv("TMPDIR")) )
-        if( NULL == (str = getenv("TEMP")) )
-            if( NULL == (str = getenv("TMP")) )
+    if (NULL == (str = getenv("TMPDIR")))
+        if (NULL == (str = getenv("TEMP")))
+            if (NULL == (str = getenv("TMP")))
                 str = PMIX_DEFAULT_TMPDIR;
     return str;
 }
 
-const char* pmix_home_directory( void )
+const char* pmix_home_directory(uid_t uid)
 {
-    char* home = getenv("HOME");
+    const char *home = NULL;
+
+    if (uid == geteuid()) {
+        home = getenv("HOME");
+    }
+    if (NULL == home) {
+        struct passwd *pw = getpwuid(uid);
+        home = pw->pw_dir;
+    }
 
     return home;
+}
+
+pmix_status_t pmix_util_harvest_envars(char **incvars, char **excvars,
+                                       pmix_list_t *ilist)
+{
+    int i, j;
+    size_t len;
+    pmix_kval_t *kv, *next;
+    char *cs_env, *string_key;
+    bool duplicate;
+
+    /* harvest envars to pass along */
+    for (j=0; NULL != incvars[j]; j++) {
+        len = strlen(incvars[j]);
+        if ('*' == incvars[j][len-1]) {
+            --len;
+        }
+        for (i = 0; NULL != environ[i]; ++i) {
+            if (0 == strncmp(environ[i], incvars[j], len)) {
+                cs_env = strdup(environ[i]);
+                string_key = strchr(cs_env, '=');
+                if (NULL == string_key) {
+                    free(cs_env);
+                    return PMIX_ERR_BAD_PARAM;
+                }
+                *string_key = '\0';
+                ++string_key;
+                /* see if we already have this envar on the list */
+                duplicate = false;
+                PMIX_LIST_FOREACH(kv, ilist, pmix_kval_t) {
+                    if (0 == strcmp(kv->value->data.envar.envar, cs_env)) {
+                        /* if the value is the same, then ignore it */
+                        if (0 != strcmp(kv->value->data.envar.value, string_key)) {
+                            /* otherwise, overwrite the value */
+                            free(kv->value->data.envar.value);
+                            kv->value->data.envar.value = strdup(string_key);
+                        }
+                        duplicate = true;
+                        break;
+                    }
+                }
+                if (duplicate) {
+                    free(cs_env);
+                    continue;
+                }
+                kv = PMIX_NEW(pmix_kval_t);
+                if (NULL == kv) {
+                    free(cs_env);
+                    return PMIX_ERR_OUT_OF_RESOURCE;
+                }
+                kv->key = strdup(PMIX_SET_ENVAR);
+                kv->value = (pmix_value_t*)malloc(sizeof(pmix_value_t));
+                if (NULL == kv->value) {
+                    PMIX_RELEASE(kv);
+                    free(cs_env);
+                    return PMIX_ERR_OUT_OF_RESOURCE;
+                }
+                kv->value->type = PMIX_ENVAR;
+                PMIX_ENVAR_LOAD(&kv->value->data.envar, cs_env, string_key, ':');
+                pmix_list_append(ilist, &kv->super);
+                free(cs_env);
+            }
+        }
+    }
+
+    /* now check the exclusions and remove any that match */
+    if (NULL != excvars) {
+        for (j=0; NULL != excvars[j]; j++) {
+            len = strlen(excvars[j]);
+            if ('*' == excvars[j][len-1]) {
+                --len;
+            }
+            PMIX_LIST_FOREACH_SAFE(kv, next, ilist, pmix_kval_t) {
+                if (0 == strncmp(kv->value->data.envar.envar, excvars[j], len)) {
+                    pmix_list_remove_item(ilist, &kv->super);
+                    PMIX_RELEASE(kv);
+                }
+            }
+        }
+    }
+    return PMIX_SUCCESS;
 }

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2015-2016 Mellanox Technologies, Inc.
  *                         All rights reserved.
- * Copyright (c) 2017      Intel, Inc. All rights reserved.
+ * Copyright (c) 2017-2020 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -12,8 +12,8 @@
 #ifndef PMIX_SM_MMAP_H
 #define PMIX_SM_MMAP_H
 
-#include <src/include/pmix_config.h>
-#include <src/mca/pshmem/pshmem.h>
+#include "src/include/pmix_config.h"
+#include "src/mca/pshmem/pshmem.h"
 
 BEGIN_C_DECLS
 

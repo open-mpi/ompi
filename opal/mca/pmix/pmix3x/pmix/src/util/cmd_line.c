@@ -15,7 +15,7 @@
  * Copyright (c) 2012-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2016-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2016-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
@@ -39,7 +39,7 @@
 #include "src/util/pmix_environ.h"
 
 #include "src/mca/base/pmix_mca_base_var.h"
-#include "pmix_common.h"
+#include "include/pmix_common.h"
 
 
 /*
@@ -383,7 +383,7 @@ int pmix_cmd_line_parse(pmix_cmd_line_t *cmd, bool ignore_unknown, bool ignore_u
                 /* Suck down the following parameters that belong to
                    this option.  If we run out of parameters, or find
                    that any of them are the special_empty_param
-                   (insertted by split_shorts()), then print an error
+                   (inserted by split_shorts()), then print an error
                    and return. */
 
                 param = PMIX_NEW(pmix_cmd_line_param_t);
@@ -533,7 +533,7 @@ char *pmix_cmd_line_get_usage_msg(pmix_cmd_line_t *cmd)
     int argc;
     size_t j;
     char **argv;
-    char *ret, temp[MAX_WIDTH * 2], line[MAX_WIDTH * 2];
+    char *ret, temp[MAX_WIDTH * 2 - 1], line[MAX_WIDTH * 2];
     char *start, *desc, *ptr;
     pmix_list_item_t *item;
     pmix_cmd_line_option_t *option, **sorted;
@@ -725,11 +725,6 @@ char *pmix_cmd_line_get_usage_msg(pmix_cmd_line_t *cmd)
                 free(desc);
             }
         }
-    }
-    if(otype == PMIX_CMD_LINE_OTYPE_NULL || otype == PMIX_CMD_LINE_OTYPE_GENERAL) {
-        char *argument_line = "\nFor additional mpirun arguments, run 'mpirun --help <category>'\n\nThe following categories exist: general (Defaults to this option), debug,\n    output, input, mapping, ranking, binding, devel (arguments useful to PMIX\n    Developers), compatibility (arguments supported for backwards compatibility),\n    launch (arguments to modify launch options), and dvm (Distributed Virtual\n    Machine arguments).";
-
-        pmix_argv_append(&argc, &argv, argument_line);
     }
     if (NULL != argv) {
         ret = pmix_argv_join(argv, '\n');

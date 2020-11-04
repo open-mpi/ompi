@@ -12,7 +12,7 @@
  * Copyright (c) 2009      IBM Corporation.  All rights reserved.
  * Copyright (c) 2009      Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2015-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015-2020 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -23,7 +23,7 @@
 #ifndef _PMIX_CRC_H_
 #define _PMIX_CRC_H_
 
-#include <src/include/pmix_config.h>
+#include "src/include/pmix_config.h"
 
 
 #include <stddef.h>

@@ -5,7 +5,7 @@
  * Copyright (c) 2010      Sandia National Laboratories. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2016      Intel, Inc. All rights reserved.
+ * Copyright (c) 2016-2020 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -14,9 +14,9 @@
  *
  */
 
-#include <src/include/pmix_config.h>
+#include "src/include/pmix_config.h"
 
-#include "pmix_common.h"
+#include "include/pmix_common.h"
 #include "src/mca/mca.h"
 #include "src/mca/pinstalldirs/pinstalldirs.h"
 #include "src/mca/pinstalldirs/base/base.h"
@@ -34,17 +34,20 @@ pmix_pinstall_dirs_t pmix_pinstall_dirs = {0};
 static int
 pmix_pinstalldirs_base_open(pmix_mca_base_open_flag_t flags)
 {
-    pmix_mca_base_component_list_item_t *component_item;
-    int ret;
+    return pmix_mca_base_framework_components_open(&pmix_pinstalldirs_base_framework, flags);
+}
 
-    ret = pmix_mca_base_framework_components_open(&pmix_pinstalldirs_base_framework, flags);
-    if (PMIX_SUCCESS != ret) {
-        return ret;
-    }
+int pmix_pinstall_dirs_base_init(pmix_info_t info[], size_t ninfo)
+{
+    pmix_mca_base_component_list_item_t *component_item;
 
     PMIX_LIST_FOREACH(component_item, &pmix_pinstalldirs_base_framework.framework_components, pmix_mca_base_component_list_item_t) {
         const pmix_pinstalldirs_base_component_t *component =
             (const pmix_pinstalldirs_base_component_t *) component_item->cli_component;
+
+        if (NULL != component->init) {
+            component->init(info, ninfo);
+        }
 
         /* copy over the data, if something isn't already there */
         CONDITIONAL_COPY(pmix_pinstall_dirs, component->install_dirs_data,

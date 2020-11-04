@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2019      Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2020      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -12,7 +13,7 @@
 #ifndef PMIX_SIMPLE_H
 #define PMIX_SIMPLE_H
 
-#include <src/include/pmix_config.h>
+#include "src/include/pmix_config.h"
 
 
 #include "src/mca/psec/psec.h"
