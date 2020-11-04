@@ -12,6 +12,9 @@
  *                         All rights reserved.
  * Copyright (c) 2015-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2018      Triad National Security, LLC. All rights
+ *                         reserved.
+ * Copyright (c) 2020      Cisco Systems, Inc.  All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -274,21 +277,40 @@ static int save_param_name (void)
 
 static int add_to_env_str(char *var, char *val)
 {
-    int sz, varsz, valsz;
+    int sz, varsz = 0, valsz = 0, new_envsize;
     void *tmp;
 
     if (NULL == var) {
         return OPAL_ERR_BAD_PARAM;
     }
 
+    varsz = strlen(var);
+    if (NULL != val) {
+        valsz = strlen(val);
+        /* If we have a value, it will be preceeded by a '=', so be
+           sure to account for that */
+        valsz += 1;
+    }
+    sz = 0;
     if (NULL != env_str) {
-        varsz = strlen(var);
-        valsz = (NULL != val) ? strlen(val) : 0;
-        sz = strlen(env_str)+varsz+valsz+2;
-        if (envsize <= sz) {
-            envsize *=2;
+        sz = strlen(env_str);
+        /* If we have a valid variable, the whole clause will be
+           terminated by a ';', so be sure to account for that */
+        sz += 1;
+    }
+    /* Sum the required new sizes, including space for a terminating
+       \0 byte */
+    sz += varsz + valsz + 1;
 
-            tmp = realloc(env_str, envsize);
+    /* Make sure we have sufficient space */
+    new_envsize = envsize;
+    while (new_envsize <= sz) {
+        new_envsize *= 2;
+    }
+
+    if (NULL != env_str) {
+        if (new_envsize > envsize) {
+            tmp = realloc(env_str, new_envsize);
             if (NULL == tmp) {
                 return OPAL_ERR_OUT_OF_RESOURCE;
             }
@@ -296,11 +318,12 @@ static int add_to_env_str(char *var, char *val)
         }
         strcat(env_str, ";");
     } else {
-        env_str = calloc(1, envsize);
+        env_str = calloc(1, new_envsize);
         if (NULL == env_str) {
             return OPAL_ERR_OUT_OF_RESOURCE;
         }
     }
+    envsize = new_envsize;
 
     strcat(env_str, var);
     if (NULL != val) {
