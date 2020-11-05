@@ -68,7 +68,8 @@ int ompi_coll_tuned_scan_intra_check_forced_init (coll_tuned_force_algorithm_mca
     mca_param_indices->algorithm_param_index =
         mca_base_component_var_register(&mca_coll_tuned_component.super.collm_version,
                                         "scan_algorithm",
-                                        "Which scan algorithm is used. Can be locked down to choice of: 0 ignore, 1 linear, 2 recursive_doubling",
+                                        "Which scan algorithm is used. Can be locked down to choice of: 0 ignore, 1 linear, 2 recursive_doubling. "
+                                        "Only relevant if coll_tuned_use_dynamic_rules is true.",
                                         MCA_BASE_VAR_TYPE_INT, new_enum, 0, MCA_BASE_VAR_FLAG_SETTABLE,
                                         OPAL_INFO_LVL_5,
                                         MCA_BASE_VAR_SCOPE_ALL,
