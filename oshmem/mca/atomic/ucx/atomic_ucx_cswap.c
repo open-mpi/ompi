@@ -31,6 +31,14 @@ int mca_atomic_ucx_cswap(shmem_ctx_t ctx,
     spml_ucx_mkey_t *ucx_mkey;
     uint64_t rva;
     mca_spml_ucx_ctx_t *ucx_ctx = (mca_spml_ucx_ctx_t *)ctx;
+#if HAVE_DECL_UCP_ATOMIC_OP_NBX
+    ucp_request_param_t param = {
+        .op_attr_mask = UCP_OP_ATTR_FIELD_DATATYPE |
+                        UCP_OP_ATTR_FIELD_REPLY_BUFFER,
+        .datatype     = ucp_dt_make_contig(size),
+        .reply_buffer = prev
+    };
+#endif
 
     if ((8 != size) && (4 != size)) {
         ATOMIC_ERROR("[#%d] Type size must be 4 or 8 bytes.", my_pe);
@@ -41,15 +49,25 @@ int mca_atomic_ucx_cswap(shmem_ctx_t ctx,
 
     *prev      = value;
     ucx_mkey   = mca_spml_ucx_get_mkey(ctx, pe, target, (void *)&rva, mca_spml_self);
+#if HAVE_DECL_UCP_ATOMIC_OP_NBX
+    status_ptr = ucp_atomic_op_nbx(ucx_ctx->ucp_peers[pe].ucp_conn,
+                                   UCP_ATOMIC_OP_CSWAP, &cond, 1, rva,
+                                   ucx_mkey->rkey, &param);
+#else
     status_ptr = ucp_atomic_fetch_nb(ucx_ctx->ucp_peers[pe].ucp_conn,
                                      UCP_ATOMIC_FETCH_OP_CSWAP, cond, prev, size,
                                      rva, ucx_mkey->rkey,
                                      opal_common_ucx_empty_complete_cb);
+#endif
 
     if (OPAL_LIKELY(!UCS_PTR_IS_ERR(status_ptr))) {
         mca_spml_ucx_remote_op_posted(ucx_ctx, pe);
     }
 
     return opal_common_ucx_wait_request(status_ptr, ucx_ctx->ucp_worker[0],
+#if HAVE_DECL_UCP_ATOMIC_OP_NBX
+                                        "ucp_atomic_op_nbx");
+#else
                                         "ucp_atomic_fetch_nb");
+#endif
 }
