@@ -29,6 +29,7 @@ EXTRA_DIST = \
         ltmain_pgi_tp.diff \
         opal_mca_priority_sort.pl \
         find_common_syms \
+        getdate.sh \
         make_manpage.pl
 
 maintainer-clean-local:
