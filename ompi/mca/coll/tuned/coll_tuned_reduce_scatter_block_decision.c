@@ -77,7 +77,8 @@ int ompi_coll_tuned_reduce_scatter_block_intra_check_forced_init (coll_tuned_for
                                         "reduce_scatter_block_algorithm",
                                         "Which reduce reduce_scatter_block algorithm is used. "
                                         "Can be locked down to choice of: 0 ignore, 1 basic_linear, 2 recursive_doubling, "
-                                        "3 recursive_halving, 4 butterfly",
+                                        "3 recursive_halving, 4 butterfly. "
+                                        "Only relevant if coll_tuned_use_dynamic_rules is true.",
                                         MCA_BASE_VAR_TYPE_INT, new_enum, 0, MCA_BASE_VAR_FLAG_SETTABLE,
                                         OPAL_INFO_LVL_5,
                                         MCA_BASE_VAR_SCOPE_ALL,
