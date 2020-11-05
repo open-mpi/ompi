@@ -96,6 +96,12 @@ EOF
 
 OPAL_CONFIGURE_USER="${USER:-`whoami`}"
 OPAL_CONFIGURE_HOST="${HOSTNAME:-`(hostname || uname -n) 2> /dev/null | sed 1q`}"
+# Note: it's ok to use $srcdir here because this macro is called at
+# the very beginning of configure.ac:
+#
+# a) before $OMPI_TOP_SRCDIR is set, and
+# b) from the top-level build directory (i.e., so $srcdir actually
+#    points to the top source directory)
 OPAL_CONFIGURE_DATE="`$srcdir/config/getdate.sh`"
 
 OPAL_LIBNL_SANITY_INIT
