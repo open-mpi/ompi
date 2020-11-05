@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2015 The University of Tennessee and The University
+ * Copyright (c) 2004-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -567,9 +567,7 @@ int ompi_coll_tuned_bcast_intra_dec_fixed(void *buff, int count,
      *  {9, "scatter_allgather_ring"},
      */
     if (communicator_size < 4) {
-        if (total_dsize < 2) {
-            alg = 9;
-        } else if (total_dsize < 32) {
+        if (total_dsize < 32) {
             alg = 3;
         } else if (total_dsize < 256) {
             alg = 5;
@@ -591,9 +589,7 @@ int ompi_coll_tuned_bcast_intra_dec_fixed(void *buff, int count,
             alg = 5;
         }
     } else if (communicator_size < 8) {
-        if (total_dsize < 2) {
-            alg = 8;
-        } else if (total_dsize < 64) {
+        if (total_dsize < 64) {
             alg = 5;
         } else if (total_dsize < 128) {
             alg = 6;
@@ -639,8 +635,6 @@ int ompi_coll_tuned_bcast_intra_dec_fixed(void *buff, int count,
     } else if (communicator_size < 256) {
         if (total_dsize < 2) {
             alg = 6;
-        } else if (total_dsize < 128) {
-            alg = 8;
         } else if (total_dsize < 16384) {
             alg = 5;
         } else if (total_dsize < 32768) {
