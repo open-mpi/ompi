@@ -2,6 +2,9 @@
 /*
  * Copyright (c) 2018      Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
+ * Copyright (c) 2020      The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -26,7 +29,7 @@
 static int coll_tuned_scan_forced_algorithm = 0;
 
 /* valid values for coll_tuned_scan_forced_algorithm */
-static mca_base_var_enum_value_t scan_algorithms[] = {
+static const mca_base_var_enum_value_t scan_algorithms[] = {
     {0, "ignore"},
     {1, "linear"},
     {2, "recursive_doubling"},

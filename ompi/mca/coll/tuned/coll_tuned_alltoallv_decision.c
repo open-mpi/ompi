@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2004-2017 The University of Tennessee and The University
+ * Copyright (c) 2004-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
@@ -29,7 +29,7 @@
 static int coll_tuned_alltoallv_forced_algorithm = 0;
 
 /* valid values for coll_tuned_alltoallv_forced_algorithm */
-static mca_base_var_enum_value_t alltoallv_algorithms[] = {
+static const mca_base_var_enum_value_t alltoallv_algorithms[] = {
     {0, "ignore"},
     {1, "basic_linear"},
     {2, "pairwise"},
