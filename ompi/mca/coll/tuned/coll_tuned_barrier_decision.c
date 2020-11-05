@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2004-2015 The University of Tennessee and The University
+ * Copyright (c) 2004-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * $COPYRIGHT$
@@ -27,7 +27,7 @@
 static int coll_tuned_barrier_forced_algorithm = 0;
 
 /* valid values for coll_tuned_barrier_forced_algorithm */
-static mca_base_var_enum_value_t barrier_algorithms[] = {
+static const mca_base_var_enum_value_t barrier_algorithms[] = {
     {0, "ignore"},
     {1, "linear"},
     {2, "double_ring"},
