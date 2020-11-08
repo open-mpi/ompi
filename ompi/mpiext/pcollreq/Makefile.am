@@ -8,3 +8,5 @@
 #
 
 SUBDIRS = c mpif-h use-mpi use-mpi-f08
+
+EXTRA_DIST = README.md

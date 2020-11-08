@@ -24,7 +24,7 @@
 
 SUBDIRS = config contrib 3rd-party $(MCA_PROJECT_SUBDIRS) test
 DIST_SUBDIRS = config contrib 3rd-party $(MCA_PROJECT_DIST_SUBDIRS) test
-EXTRA_DIST = README INSTALL VERSION Doxyfile LICENSE autogen.pl README.JAVA.txt AUTHORS
+EXTRA_DIST = README.md INSTALL VERSION Doxyfile LICENSE autogen.pl README.JAVA.md AUTHORS
 
 include examples/Makefile.include
 

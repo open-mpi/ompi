@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2020 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -17,4 +17,4 @@
 
 SUBDIRS = c mpif-h use-mpi use-mpi-f08
 
-EXTRA_DIST = README.txt
+EXTRA_DIST = README.md

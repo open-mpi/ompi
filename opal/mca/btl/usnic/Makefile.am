@@ -27,7 +27,7 @@
 
 AM_CPPFLAGS = $(opal_ofi_CPPFLAGS) -DOMPI_LIBMPI_NAME=\"$(OMPI_LIBMPI_NAME)\"
 
-EXTRA_DIST = README.txt README.test
+EXTRA_DIST = README.md README.test
 
 dist_opaldata_DATA = \
     help-mpi-btl-usnic.txt

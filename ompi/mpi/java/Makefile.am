@@ -10,3 +10,5 @@
 #
 
 SUBDIRS = java c
+
+EXTRA_DIST = README.md
