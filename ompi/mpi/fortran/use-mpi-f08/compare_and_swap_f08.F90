@@ -1,6 +1,6 @@
 ! -*- f90 -*-
 !
-! Copyright (c) 2010-2014 Cisco Systems, Inc.  All rights reserved.
+! Copyright (c) 2010-2022 Cisco Systems, Inc.  All rights reserved
 ! Copyright (c) 2009-2014 Los Alamos National Security, LLC.
 !               All Rights reserved.
 ! Copyright (c) 2018-2020 Research Organization for Information Science
@@ -17,8 +17,8 @@ subroutine MPI_Compare_and_swap_f08(origin_addr,compare_addr,result_addr,&
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Win, MPI_ADDRESS_KIND
    use :: ompi_mpifh_bindings, only : ompi_compare_and_swap_f
    implicit none
-   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN), ASYNCHRONOUS :: origin_addr, compare_addr
-   OMPI_FORTRAN_IGNORE_TKR_TYPE, ASYNCHRONOUS :: result_addr
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) OMPI_ASYNCHRONOUS :: origin_addr, compare_addr
+   OMPI_FORTRAN_IGNORE_TKR_TYPE OMPI_ASYNCHRONOUS :: result_addr
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
    INTEGER, INTENT(IN) :: target_rank
    INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: target_disp
