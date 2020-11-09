@@ -1,6 +1,6 @@
 ! -*- f90 -*-
 !
-! Copyright (c) 2010-2012 Cisco Systems, Inc.  All rights reserved.
+! Copyright (c) 2010-2022 Cisco Systems, Inc.  All rights reserved
 ! Copyright (c) 2009-2018 Los Alamos National Security, LLC.
 !               All Rights reserved.
 ! Copyright (c) 2018-2020 Research Organization for Information Science
@@ -16,7 +16,7 @@ subroutine MPI_Get_f08(origin_addr,origin_count,origin_datatype,target_rank,&
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Win, MPI_ADDRESS_KIND
    use :: ompi_mpifh_bindings, only : ompi_get_f
    implicit none
-   OMPI_FORTRAN_IGNORE_TKR_TYPE, ASYNCHRONOUS :: origin_addr
+   OMPI_FORTRAN_IGNORE_TKR_TYPE OMPI_ASYNCHRONOUS :: origin_addr
    INTEGER, INTENT(IN) :: origin_count, target_rank, target_count
    TYPE(MPI_Datatype), INTENT(IN) :: origin_datatype
    INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: target_disp

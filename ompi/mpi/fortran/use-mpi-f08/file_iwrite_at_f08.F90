@@ -17,7 +17,7 @@ subroutine MPI_File_iwrite_at_f08(fh,offset,buf,count,datatype,request,ierror)
    implicit none
    TYPE(MPI_File), INTENT(IN) :: fh
    INTEGER(MPI_OFFSET_KIND), INTENT(IN) :: offset
-   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: buf
+   OMPI_FORTRAN_IGNORE_TKR_TYPE OMPI_ASYNCHRONOUS, INTENT(IN) :: buf
    INTEGER, INTENT(IN) :: count
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
    TYPE(MPI_Request), INTENT(OUT) :: request

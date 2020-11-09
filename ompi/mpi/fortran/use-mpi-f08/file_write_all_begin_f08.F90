@@ -16,7 +16,7 @@ subroutine MPI_File_write_all_begin_f08(fh,buf,count,datatype,ierror)
    use :: ompi_mpifh_bindings, only : ompi_file_write_all_begin_f
    implicit none
    TYPE(MPI_File), INTENT(IN) :: fh
-   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: buf
+   OMPI_FORTRAN_IGNORE_TKR_TYPE OMPI_ASYNCHRONOUS, INTENT(IN) :: buf
    INTEGER, INTENT(IN) :: count
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
