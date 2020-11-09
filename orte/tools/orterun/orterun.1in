@@ -107,6 +107,106 @@ using an appropriate binding level or specific number of processing elements per
 application process.
 .
 .\" **************************
+.\"    Definition of "slot"
+.\" **************************
+.SH DEFINITION OF 'SLOT'
+.
+.P
+The term "slot" is used extensively in the rest of this manual page.
+A slot is an allocation unit for a process.  The number of slots on a
+node indicate how many processes can potentially execute on that node.
+By default, Open MPI will allow one process per slot.
+.
+.P
+If Open MPI is not explicitly told how many slots are available on a
+node (e.g., if a hostfile is used and the number of slots is not
+specified for a given node), it will determine a maximum number of
+slots for that node in one of two ways:
+.
+.TP 3
+1. Default behavior
+By default, Open MPI will attempt to discover the number of
+processor cores on the node, and use that as the number of slots
+available.
+.
+.TP 3
+2. When \fI--use-hwthread-cpus\fP is used
+If \fI--use-hwthread-cpus\fP is specified on the \fImpirun\fP command
+line, then Open MPI will attempt to discover the number of hardware
+threads on the node, and use that as the number of slots available.
+.
+.P
+This default behavior also occurs when specifying the \fI-host\fP
+option with a single host.  Thus, the command:
+.
+.TP 4
+mpirun --host node1 ./a.out
+launches a number of processes equal to the number of cores on node node1,
+whereas:
+.TP 4
+mpirun --host node1 --use-hwthread-cpus ./a.out
+launches a number of processes equal to the number of hardware threads
+on node1.
+.
+.P
+When Open MPI applications are invoked in an environment managed by a
+resource manager (e.g., inside of a SLURM job), and Open MPI was built
+with appropriate support for that resource manager, then Open MPI will
+be informed of the number of slots for each node by the resource
+manager.  For example:
+.
+.TP 4
+mpirun ./a.out
+launches one process for every slot (on every node) as dictated by
+the resource manager job specification.
+.
+.P
+Also note that the one-process-per-slot restriction can be overridden
+in unmanaged environments (e.g., when using hostfiles without a
+resource manager) if oversubscription is enabled (by default, it is
+disabled).  Most MPI applications and HPC environments do not
+oversubscribe; for simplicity, the majority of this documentation
+assumes that oversubscription is not enabled.
+.
+.
+.SS Slots are not hardware resources
+.
+Slots are frequently incorrectly conflated with hardware resources.
+It is important to realize that slots are an entirely different metric
+than the number (and type) of hardware resources available.
+.
+.P
+Here are some examples that may help illustrate the difference:
+.
+.TP 3
+1. More processor cores than slots
+
+Consider a resource manager job environment that tells Open MPI that
+there is a single node with 20 processor cores and 2 slots available.
+By default, Open MPI will only let you run up to 2 processes.
+
+Meaning: you run out of slots long before you run out of processor
+cores.
+.
+.TP 3
+2. More slots than processor cores
+
+Consider a hostfile with a single node listed with a "slots=50"
+qualification.  The node has 20 processor cores.  By default, Open MPI
+will let you run up to 50 processes.
+
+Meaning: you can run many more processes than you have processor
+cores.
+.
+.
+.SH DEFINITION OF 'PROCESSOR ELEMENT'
+By default, Open MPI defines that a "processing element" is a
+processor core.  However, if \fI--use-hwthread-cpus\fP is specified on
+the \fImpirun\fP command line, then a "processing element" is a
+hardware thread.
+.
+.
+.\" **************************
 .\"    Options Section
 .\" **************************
 .SH OPTIONS
@@ -297,15 +397,17 @@ To map processes:
 .
 .TP
 .B --map-by \fR<foo>\fP
-Map to the specified object, defaults to \fIsocket\fP. Supported options
-include slot, hwthread, core, L1cache, L2cache, L3cache, socket, numa,
-board, node, sequential, distance, and ppr. Any object can include
-modifiers by adding a \fR:\fP and any combination of PE=n (bind n
-processing elements to each proc), SPAN (load
-balance the processes across the allocation), OVERSUBSCRIBE (allow
-more processes on a node than processing elements), and NOOVERSUBSCRIBE.
-This includes PPR, where the pattern would be terminated by another colon
-to separate it from the modifiers.
+Map to the specified object, defaults to \fIsocket\fP. Supported
+options include \fIslot\fP, \fIhwthread\fP, \fIcore\fP, \fIL1cache\fP,
+\fIL2cache\fP, \fIL3cache\fP, \fIsocket\fP, \fInuma\fP, \fIboard\fP,
+\fInode\fP, \fIsequential\fP, \fIdistance\fP, and \fIppr\fP. Any
+object can include modifiers by adding a \fI:\fP and any combination
+of \fIPE=n\fP (bind n processing elements to each proc), \fISPAN\fP
+(load balance the processes across the allocation),
+\fIOVERSUBSCRIBE\fP (allow more processes on a node than processing
+elements), and \fINOOVERSUBSCRIBE\fP.  This includes \fIPPR\fP, where the
+pattern would be terminated by another colon to separate it from the
+modifiers.
 .
 .TP
 .B -bycore\fR,\fP --bycore
@@ -757,7 +859,16 @@ Terminate the DVM.
 .
 .TP
 .B -use-hwthread-cpus\fR,\fP --use-hwthread-cpus
-Use hardware threads as independent cpus.
+Use hardware threads as independent CPUs.
+
+Note that if a number of slots is not provided to Open MPI (e.g., via
+the "slots" keyword in a hostfile or from a resource manager such as
+SLURM), the use of this option changes the default calculation of
+number of slots on a node.  See "DEFINITION OF 'SLOT'", above.
+
+Also note that the use of this option changes the Open MPI's
+definition of a "processor element" from a processor core to a
+hardware thread.  See "DEFINITION OF 'PROCESSOR ELEMENT'", above.
 .
 .
 .TP
@@ -889,20 +1000,8 @@ Or, consider the hostfile
 
 .
 .PP
-Here, we list both the host names (aa, bb, and cc) but also how many "slots"
-there are for each.  Slots indicate how many processes can potentially execute
-on a node.  For best performance, the number of slots may be chosen to be the
-number of cores on the node or the number of processor sockets.  If the hostfile
-does not provide slots information, Open MPI will attempt to discover the number
-of cores (or hwthreads, if the use-hwthreads-as-cpus option is set) and set the
-number of slots to that value. This default behavior also occurs when specifying
-the \fI-host\fP option with a single hostname. Thus, the command
-.
-.TP 4
-mpirun -H aa ./a.out
-launches a number of processes equal to the number of cores on node aa.
-.
-.PP
+Here, we list both the host names (aa, bb, and cc) but also how many slots
+there are for each.
 .
 .TP 4
 mpirun -hostfile myhostfile ./a.out
@@ -1181,8 +1280,9 @@ exert detailed control over relative MCW rank location and binding.
 Finally, \fI--report-bindings\fP can be used to report bindings.
 .
 .PP
-As an example, consider a node with two processor sockets, each comprising
-four cores.  We run \fImpirun\fP with \fI-np 4 --report-bindings\fP and
+As an example, consider a node with two processor sockets, each
+comprised of four cores, and each of those cores contains one hardware
+thread.  We run \fImpirun\fP with \fI-np 4 --report-bindings\fP and
 the following additional options:
 .
 
@@ -1198,7 +1298,7 @@ the following additional options:
  [...] ... binding child [...,2] to socket 0 cpus 000f
  [...] ... binding child [...,3] to socket 1 cpus 00f0
 
- % mpirun ... --map-by core:PE=2 --bind-to core
+ % mpirun ... --map-by slot:PE=2 --bind-to core
  [...] ... binding child [...,0] to cpus 0003
  [...] ... binding child [...,1] to cpus 000c
  [...] ... binding child [...,2] to cpus 0030
@@ -1212,9 +1312,20 @@ In the first case, the processes bind to successive cores as indicated by
 the masks 0001, 0002, 0004, and 0008.  In the second case, processes bind
 to all cores on successive sockets as indicated by the masks 000f and 00f0.
 The processes cycle through the processor sockets in a round-robin fashion
-as many times as are needed.  In the third case, the masks show us that
-2 cores have been bound per process.  In the fourth case, binding is
-turned off and no bindings are reported.
+as many times as are needed.
+.
+.P
+In the third case, the masks show us that 2 cores have been bound per
+process.  Specifically, the mapping by slot with the \fIPE=2\fP
+qualifier indicated that each slot (i.e., process) should consume two
+processor elements.  Since \fI--use-hwthread-cpus\fP was not
+specified, Open MPI defined "processor element" as "core", and
+therefore the \fI--bind-to core\fP caused each process to be bound to
+both of the cores to which it was mapped.
+.
+.P
+In the fourth case, binding is turned off and no bindings are
+reported.
 .
 .PP
 Open MPI's support for process binding depends on the underlying
