@@ -827,7 +827,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided,
      * convey this requirement */
     if (mca_pml_base_requires_world ()) {
         if (NULL == (procs = ompi_proc_world (&nprocs))) {
-            error = "ompi_proc_get_allocated () failed";
+            error = "ompi_proc_world () failed";
             goto error;
         }
     } else {
