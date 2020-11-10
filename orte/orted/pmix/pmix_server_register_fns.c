@@ -13,7 +13,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009-2018 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2014-2016 Research Organization for Information Science
@@ -386,7 +386,12 @@ int orte_pmix_server_register_nspace(orte_job_t *jdata, bool force)
                     kv->type = OPAL_STRING;
                     kv->data.string = opal_hwloc_base_get_locality_string(opal_hwloc_topology, tmp);
                     opal_list_append(pmap, &kv->super);
-                    free(tmp);
+                    /* pass the cpuset itself as well */
+                    kv = OBJ_NEW(opal_value_t);
+                    kv->key = strdup(OPAL_PMIX_CPUSET);
+                    kv->type = OPAL_STRING;
+                    kv->data.string = tmp;
+                    opal_list_append(pmap, &kv->super);
                 } else {
                     /* the proc is not bound */
                     kv = OBJ_NEW(opal_value_t);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2017      Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2020      Triad National Security, LLC. All rights
@@ -308,6 +308,7 @@ static uint32_t get_package_rank(int32_t num_local_peers, uint16_t my_local_rank
     char **peers = NULL;
     char *local_peers = NULL;
     char *locality_string = NULL;
+    char *mylocality = NULL;
 
     pname.jobid = OPAL_PROC_MY_NAME.jobid;
     pname.vpid = OPAL_VPID_WILDCARD;
@@ -333,6 +334,20 @@ static uint32_t get_package_rank(int32_t num_local_peers, uint16_t my_local_rank
     peers = opal_argv_split(local_peers, ',');
     free(local_peers);
 
+    // Get my locality
+    OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, OPAL_PMIX_LOCALITY_STRING,
+                                   &OPAL_PROC_MY_NAME, &mylocality, OPAL_STRING);
+    if (OPAL_SUCCESS != rc || NULL == mylocality) {
+        // can we fall back to cpuset?
+        if (NULL != cpuset && NULL != opal_hwloc_topology) {
+            mylocality = opal_hwloc_base_get_locality_string(opal_hwloc_topology, cpuset);
+        } else {
+            // We can't find package_rank, fall back to procid
+            opal_show_help("help-common-ofi.txt", "package_rank failed", true);
+            return pid;
+        }
+    }
+
     for (i = 0; NULL != peers[i]; i++) {
         pname.vpid = strtoul(peers[i], NULL, 10);
         locality_string = NULL;
@@ -346,7 +361,7 @@ static uint32_t get_package_rank(int32_t num_local_peers, uint16_t my_local_rank
         }
 
         // compute relative locality
-        relative_locality = opal_hwloc_compute_relative_locality(cpuset, locality_string);
+        relative_locality = opal_hwloc_compute_relative_locality(mylocality, locality_string);
         free(locality_string);
 
         if (relative_locality & OPAL_PROC_ON_SOCKET) {
@@ -354,6 +369,7 @@ static uint32_t get_package_rank(int32_t num_local_peers, uint16_t my_local_rank
             current_package_rank++;
         }
     }
+    free(mylocality);
 
     return (uint32_t)package_ranks[my_local_rank];
 }
