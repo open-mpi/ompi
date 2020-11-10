@@ -12,7 +12,7 @@
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014-2018 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -66,15 +66,18 @@ int orte_ess_base_proc_binding(void)
                 goto error;
             }
         }
+        /* store/update the string representation of our local binding */
+        if (NULL != orte_process_info.cpuset) {
+            free(orte_process_info.cpuset);
+            orte_process_info.cpuset = NULL;
+        }
+        OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, OPAL_PMIX_LOCALITY_STRING,
+                                       ORTE_PROC_MY_NAME, &orte_process_info.cpuset, OPAL_STRING);
         if (opal_hwloc_report_bindings || 4 < opal_output_get_verbosity(orte_ess_base_framework.framework_output)) {
             /* print out a shorthand notation to avoid pulling in the entire topology tree */
-            map = NULL;
-            OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, OPAL_PMIX_LOCALITY_STRING,
-                                           ORTE_PROC_MY_NAME, &map, OPAL_STRING);
-            if (OPAL_SUCCESS == ret && NULL != map) {
+            if (OPAL_SUCCESS == ret && NULL != orte_process_info.cpuset) {
                 opal_output(0, "MCW rank %s bound to %s",
-                            ORTE_VPID_PRINT(ORTE_PROC_MY_NAME->vpid), map);
-                free(map);
+                            ORTE_VPID_PRINT(ORTE_PROC_MY_NAME->vpid), orte_process_info.cpuset);
             } else {
                 opal_output(0, "MCW rank %s not bound", ORTE_VPID_PRINT(ORTE_PROC_MY_NAME->vpid));
             }
