@@ -2,7 +2,7 @@
 # Copyright (c) 2004-2009 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
 #                         Corporation.  All rights reserved.
-# Copyright (c) 2010-2012 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2010-2020 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -20,4 +20,4 @@
 
 SUBDIRS = c
 
-EXTRA_DIST = README.txt
+EXTRA_DIST = README.md

@@ -64,7 +64,7 @@ EXTRA_DIST = \
         platform/lanl/cray_xc_cle5.2/optimized-common \
         platform/lanl/cray_xc_cle5.2/optimized-lustre \
         platform/lanl/cray_xc_cle5.2/optimized-lustre.conf \
-        platform/lanl/toss/README \
+        platform/lanl/toss/README.md \
         platform/lanl/toss/common \
         platform/lanl/toss/common-optimized \
         platform/lanl/toss/cray-lustre-optimized \

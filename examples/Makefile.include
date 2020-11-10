@@ -33,7 +33,7 @@
 # Automake).
 
 EXTRA_DIST += \
-        examples/README \
+        examples/README.md \
         examples/Makefile \
         examples/hello_c.c \
         examples/hello_mpifh.f \

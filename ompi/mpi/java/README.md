@@ -1,26 +1,27 @@
-***************************************************************************
+# Open MPI Java bindings
 
 Note about the Open MPI Java bindings
 
-The Java bindings in this directory are not part of the MPI specification,
-as noted in the README.JAVA.txt file in the root directory. That file also
-contains some information regarding the installation and use of the Java
-bindings. Further details can be found in the paper [1].
+The Java bindings in this directory are not part of the MPI
+specification, as noted in the README.JAVA.md file in the root
+directory. That file also contains some information regarding the
+installation and use of the Java bindings. Further details can be
+found in the paper [1].
 
 We originally took the code from the mpiJava project [2] as starting point
 for our developments, but we have pretty much rewritten 100% of it. The
 original copyrights and license terms of mpiJava are listed below.
 
- [1] O. Vega-Gisbert, J. E. Roman, and J. M. Squyres. "Design and
-     implementation of Java bindings in Open MPI". Parallel Comput.
-     59: 1-20 (2016).
+1. O. Vega-Gisbert, J. E. Roman, and J. M. Squyres. "Design and
+   implementation of Java bindings in Open MPI". Parallel Comput.
+   59: 1-20 (2016).
+1. M. Baker et al. "mpiJava: An object-oriented Java interface to
+   MPI". In Parallel and Distributed Processing, LNCS vol. 1586,
+   pp. 748-762, Springer (1999).
 
- [2] M. Baker et al. "mpiJava: An object-oriented Java interface to
-     MPI". In Parallel and Distributed Processing, LNCS vol. 1586,
-     pp. 748-762, Springer (1999).
+## Original citation
 
-***************************************************************************
-
+```
             mpiJava - A Java Interface to MPI
             ---------------------------------
                     Copyright 2003
@@ -39,6 +40,7 @@ original copyrights and license terms of mpiJava are listed below.
       (Bugfixes/Additions, CMake based configure/build)
                       Blasius Czink
                HLRS, University of Stuttgart
+```
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.

@@ -61,7 +61,7 @@ created.
   - copy of toss3-hfi-optimized.conf with the following changes:
     - change: comment "Add the interface for out-of-band communication and set
       it up" to "Set up the interface for out-of-band communication"
-    - remove: oob_tcp_if_exclude = ib0 
+    - remove: oob_tcp_if_exclude = ib0
     - remove: btl (let Open MPI figure out what best to use for ethernet-
       connected hardware)
     - remove: btl_openib_want_fork_support (no infiniband)
