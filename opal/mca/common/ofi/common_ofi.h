@@ -19,6 +19,7 @@
 #include "opal_config.h"
 #include "opal/mca/base/mca_base_var.h"
 #include "opal/mca/base/mca_base_framework.h"
+#include "opal/util/proc.h"
 #include <rdma/fabric.h>
 
 BEGIN_C_DECLS
@@ -36,8 +37,7 @@ extern opal_common_ofi_module_t opal_common_ofi;
 OPAL_DECLSPEC int opal_common_ofi_register_mca_variables(const mca_base_component_t *component);
 OPAL_DECLSPEC void opal_common_ofi_mca_register(void);
 OPAL_DECLSPEC void opal_common_ofi_mca_deregister(void);
-OPAL_DECLSPEC struct fi_info* opal_common_ofi_select_ofi_provider(struct fi_info *providers, 
-                                                                  char *framework_name);
+
 /*
  * @param list (IN)    List of strings corresponding to lower providers.
  * @param item (IN)    Single string corresponding to a provider.
@@ -56,6 +56,9 @@ OPAL_DECLSPEC int opal_common_ofi_is_in_list(char **list, char *item);
 
 END_C_DECLS
 
-struct fi_info* opal_mca_common_ofi_select_provider(struct fi_info *provider_list, int rank);
+struct fi_info* opal_mca_common_ofi_select_provider(struct fi_info *provider_list,
+                                                    int32_t num_local_peers,
+                                                    uint16_t my_local_rank,
+                                                    char *cpuset, uint32_t pid);
 
 #endif /* OPAL_MCA_COMMON_OFI_H */

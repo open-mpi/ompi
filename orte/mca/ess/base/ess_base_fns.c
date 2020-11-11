@@ -12,7 +12,7 @@
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014-2018 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -54,6 +54,7 @@ int orte_ess_base_proc_binding(void)
     int ret;
     char *error=NULL;
     hwloc_cpuset_t mycpus;
+    opal_value_t val;
 
     /* Determine if we were pre-bound or not - this also indicates
      * that we were launched via mpirun, bound or not */
@@ -66,23 +67,39 @@ int orte_ess_base_proc_binding(void)
                 goto error;
             }
         }
-        if (opal_hwloc_report_bindings || 4 < opal_output_get_verbosity(orte_ess_base_framework.framework_output)) {
-            /* print out a shorthand notation to avoid pulling in the entire topology tree */
-            map = NULL;
-            OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, OPAL_PMIX_LOCALITY_STRING,
-                                           ORTE_PROC_MY_NAME, &map, OPAL_STRING);
-            if (OPAL_SUCCESS == ret && NULL != map) {
+        /* get our cpuset */
+        if (NULL != orte_process_info.cpuset) {
+            free(orte_process_info.cpuset);
+            orte_process_info.cpuset = NULL;
+        }
+        OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, OPAL_PMIX_CPUSET,
+                                       ORTE_PROC_MY_NAME, &orte_process_info.cpuset, OPAL_STRING);
+        /* try to get our locality as well */
+        map = NULL;
+        OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, OPAL_PMIX_LOCALITY_STRING,
+                                       ORTE_PROC_MY_NAME, &map, OPAL_STRING);
+        if (OPAL_SUCCESS == ret && NULL != map) {
+            /* we were - no need to pull in the topology */
+            if (opal_hwloc_report_bindings || 4 < opal_output_get_verbosity(orte_ess_base_framework.framework_output)) {
                 opal_output(0, "MCW rank %s bound to %s",
                             ORTE_VPID_PRINT(ORTE_PROC_MY_NAME->vpid), map);
-                free(map);
-            } else {
-                opal_output(0, "MCW rank %s not bound", ORTE_VPID_PRINT(ORTE_PROC_MY_NAME->vpid));
             }
+            free(map);
+        } else {
+            opal_output(0, "MCW rank %s not bound", ORTE_VPID_PRINT(ORTE_PROC_MY_NAME->vpid));
         }
         return ORTE_SUCCESS;
     } else if (NULL != getenv(OPAL_MCA_PREFIX"orte_externally_bound")) {
         orte_proc_is_bound = true;
-        /* see if we were launched by a PMIx-enabled system */
+        /* get our cpuset, if available */
+        if (NULL != orte_process_info.cpuset) {
+            free(orte_process_info.cpuset);
+            orte_process_info.cpuset = NULL;
+        }
+        OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, OPAL_PMIX_CPUSET,
+                                       ORTE_PROC_MY_NAME, &orte_process_info.cpuset, OPAL_STRING);
+
+        /* see if we also have our locality - this is the one we require */
         map = NULL;
         OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, OPAL_PMIX_LOCALITY_STRING,
                                        ORTE_PROC_MY_NAME, &map, OPAL_STRING);
@@ -323,6 +340,17 @@ int orte_ess_base_proc_binding(void)
     if (NULL != orte_process_info.cpuset) {
         OPAL_MODEX_SEND_VALUE(ret, OPAL_PMIX_GLOBAL, OPAL_PMIX_CPUSET,
                               orte_process_info.cpuset, OPAL_STRING);
+        /* save our locality string so we can retrieve it elsewhere */
+        OBJ_CONSTRUCT(&val, opal_value_t);
+        val.key = OPAL_PMIX_LOCALITY_STRING;
+        val.type = OPAL_STRING;
+        val.data.string = opal_hwloc_base_get_locality_string(opal_hwloc_topology, orte_process_info.cpuset);
+        if (OPAL_SUCCESS != (ret = opal_pmix.store_local(ORTE_PROC_MY_NAME, &val))) {
+            ORTE_ERROR_LOG(ret);
+        }
+        val.key = NULL;
+        val.data.string = NULL;
+        OBJ_DESTRUCT(&val);
     }
     return ORTE_SUCCESS;
 

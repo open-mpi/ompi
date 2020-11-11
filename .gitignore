@@ -396,6 +396,7 @@ opal/mca/pmix/pmix*/pmix/examples/jctrl
 opal/mca/pmix/pmix*/pmix/examples/pub
 opal/mca/pmix/pmix*/pmix/examples/server
 opal/mca/pmix/pmix*/pmix/examples/tool
+opal/mca/pmix/pmix*/pmix/maint/pmix.pc
 
 opal/mca/pmix/ext3x/ext3x.c
 opal/mca/pmix/ext3x/ext3x.h
