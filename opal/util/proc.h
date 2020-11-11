@@ -115,6 +115,7 @@ typedef struct opal_process_info_t {
     uint16_t my_local_rank;             /**< local rank on this node within my job */
     uint16_t my_node_rank;
     char *cpuset;                       /**< String-representation of bitmap where we are bound */
+    char *locality;                     /**< String-representation of process locality */
     pid_t pid;
     uint32_t num_procs;
     uint32_t app_num;
