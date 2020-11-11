@@ -41,6 +41,7 @@ opal_process_info_t opal_process_info = {
     .my_local_rank = 0,    /* I'm the only process around here */
     .my_node_rank = 0,
     .cpuset = NULL,
+    .locality = NULL,
     .pid = 0,
     .num_procs = 0,
     .app_num = 0,

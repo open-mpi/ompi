@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2017      Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2020      Triad National Security, LLC. All rights
@@ -345,7 +345,7 @@ static uint32_t get_package_rank(opal_process_info_t *process_info)
         }
 
         // compute relative locality
-        relative_locality = opal_hwloc_compute_relative_locality(process_info->cpuset, locality_string);
+        relative_locality = opal_hwloc_compute_relative_locality(process_info->locality, locality_string);
         free(locality_string);
 
         if (relative_locality & OPAL_PROC_ON_SOCKET) {

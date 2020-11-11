@@ -355,7 +355,7 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
     if (0 < opal_list_get_size(&ilist)) {
         uint32_t *peer_ranks = NULL;
         int prn, nprn = 0;
-        char *val, *mycpuset;
+        char *val;
         uint16_t u16;
         opal_process_name_t wildcard_rank;
         /* convert the list of new procs to a proc_t array */
@@ -380,16 +380,6 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
             opal_argv_free(peers);
         }
 
-        /* get my locality string */
-        val = NULL;
-        OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, PMIX_LOCALITY_STRING,
-                                       OMPI_PROC_MY_NAME, &val, PMIX_STRING);
-        if (OPAL_SUCCESS == rc && NULL != val) {
-            mycpuset = val;
-        } else {
-            mycpuset = NULL;
-        }
-
         i = 0;
         OPAL_LIST_FOREACH(cd, &ilist, ompi_dpm_proct_caddy_t) {
             proc = cd->p;
@@ -406,8 +396,8 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
                         val = NULL;
                         OPAL_MODEX_RECV_VALUE_IMMEDIATE(rc, PMIX_LOCALITY_STRING,
                                                        &proc->super.proc_name, &val, OPAL_STRING);
-                        if (OPAL_SUCCESS == rc && NULL != val) {
-                            u16 = opal_hwloc_compute_relative_locality(mycpuset, val);
+                        if (OPAL_SUCCESS == rc && NULL != ompi_process_info.locality) {
+                            u16 = opal_hwloc_compute_relative_locality(ompi_process_info.locality, val);
                             free(val);
                         } else {
                             /* all we can say is that it shares our node */
@@ -424,9 +414,6 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
                 }
             }
             ++i;
-        }
-        if (NULL != mycpuset) {
-            free(mycpuset);
         }
         if (NULL != peer_ranks) {
             free(peer_ranks);

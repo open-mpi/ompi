@@ -764,7 +764,7 @@ int ompi_rte_init(int *pargc, char ***pargv)
 
     /* identify our location */
     val = NULL;
-    OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, PMIX_LOCALITY_STRING,
+    OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, PMIX_CPUSET,
                                    &opal_process_info.my_name, &val, PMIX_STRING);
     if (PMIX_SUCCESS == rc && NULL != val) {
         opal_process_info.cpuset = val;
@@ -773,6 +773,15 @@ int ompi_rte_init(int *pargc, char ***pargv)
     } else {
         opal_process_info.cpuset = NULL;
         opal_process_info.proc_is_bound = false;
+    }
+    val = NULL;
+    OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, PMIX_LOCALITY_STRING,
+                                   &opal_process_info.my_name, &val, PMIX_STRING);
+    if (PMIX_SUCCESS == rc && NULL != val) {
+        opal_process_info.locality = val;
+        val = NULL;  // protect the string
+    } else {
+        opal_process_info.locality = NULL;
     }
 
     /* retrieve the local peers - defaults to local node */
@@ -811,7 +820,7 @@ int ompi_rte_init(int *pargc, char ***pargv)
                 OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, PMIX_LOCALITY_STRING,
                                                &pname, &val, PMIX_STRING);
                 if (PMIX_SUCCESS == rc && NULL != val) {
-                    u16 = opal_hwloc_compute_relative_locality(opal_process_info.cpuset, val);
+                    u16 = opal_hwloc_compute_relative_locality(opal_process_info.locality, val);
                     free(val);
                 } else {
                     /* all we can say is that it shares our node */
@@ -826,9 +835,6 @@ int ompi_rte_init(int *pargc, char ***pargv)
                 ret = opal_pmix_convert_status(rc);
                 error = "local store of locality";
                 opal_argv_free(peers);
-                if (NULL != opal_process_info.cpuset) {
-                    free(opal_process_info.cpuset);
-                }
                 goto error;
             }
         }
