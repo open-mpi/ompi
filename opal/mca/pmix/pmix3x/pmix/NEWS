@@ -28,12 +28,13 @@ Master (not on release branches yet)
 ----------------------
 
 
-3.2.1 -- 5 Nov 2020
+3.2.1 -- 12 Nov 2020
 ----------------------
  - PR #1890:
    - Fix Issue #1889: Fix symlinks in unit tests to include new timeout
    - Fix Issue #1891: Remove pnet/opa component that should not be in v3.2
  - PR #1904: Add more metadata to string generated from preg/compress
+ - PR #1919: Fix memory leak in PMIx_Get/fastpath
 
 
 3.2.0 -- 22 Oct 2020

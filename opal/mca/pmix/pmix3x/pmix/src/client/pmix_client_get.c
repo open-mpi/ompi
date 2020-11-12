@@ -439,16 +439,11 @@ PMIX_EXPORT pmix_status_t PMIx_Get_nb(const pmix_proc_t *proc, const pmix_key_t 
 static void _value_cbfunc(pmix_status_t status, pmix_value_t *kv, void *cbdata)
 {
     pmix_cb_t *cb = (pmix_cb_t*)cbdata;
-    pmix_status_t rc;
 
     PMIX_ACQUIRE_OBJECT(cb);
     cb->status = status;
     if (PMIX_SUCCESS == status) {
-        PMIX_BFROPS_COPY(rc, pmix_client_globals.myserver,
-                         (void**)&cb->value, kv, PMIX_VALUE);
-        if (PMIX_SUCCESS != rc) {
-            PMIX_ERROR_LOG(rc);
-        }
+        cb->value = kv;
     }
     PMIX_POST_OBJECT(cb);
     PMIX_WAKEUP_THREAD(&cb->lock);
@@ -845,9 +840,6 @@ static void _getnbfn(int fd, short flags, void *cbdata)
             PMIX_VALUE_COMPRESSED_STRING_UNPACK(val);
         }
         cb->cbfunc.valuefn(rc, val, cb->cbdata);
-    }
-    if (NULL != val) {
-        PMIX_VALUE_RELEASE(val);
     }
     PMIX_RELEASE(cb);
     return;
