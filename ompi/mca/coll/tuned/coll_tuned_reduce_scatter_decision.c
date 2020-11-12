@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2004-2017 The University of Tennessee and The University
+ * Copyright (c) 2004-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
@@ -33,7 +33,7 @@ static int coll_tuned_reduce_scatter_tree_fanout;
 static int coll_tuned_reduce_scatter_chain_fanout;
 
 /* valid values for coll_tuned_reduce_scatter_forced_algorithm */
-static mca_base_var_enum_value_t reduce_scatter_algorithms[] = {
+static const mca_base_var_enum_value_t reduce_scatter_algorithms[] = {
     {0, "ignore"},
     {1, "non-overlapping"},
     {2, "recursive_halving"},
@@ -77,7 +77,8 @@ int ompi_coll_tuned_reduce_scatter_intra_check_forced_init (coll_tuned_force_alg
     mca_param_indices->algorithm_param_index =
         mca_base_component_var_register(&mca_coll_tuned_component.super.collm_version,
                                         "reduce_scatter_algorithm",
-                                        "Which reduce reduce_scatter algorithm is used. Can be locked down to choice of: 0 ignore, 1 non-overlapping (Reduce + Scatterv), 2 recursive halving, 3 ring, 4 butterfly",
+                                        "Which reduce reduce_scatter algorithm is used. Can be locked down to choice of: 0 ignore, 1 non-overlapping (Reduce + Scatterv), 2 recursive halving, 3 ring, 4 butterfly. "
+                                        "Only relevant if coll_tuned_use_dynamic_rules is true.",
                                         MCA_BASE_VAR_TYPE_INT, new_enum, 0, MCA_BASE_VAR_FLAG_SETTABLE,
                                         OPAL_INFO_LVL_5,
                                         MCA_BASE_VAR_SCOPE_ALL,

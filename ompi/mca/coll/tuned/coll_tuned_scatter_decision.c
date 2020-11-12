@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2004-2017 The University of Tennessee and The University
+ * Copyright (c) 2004-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
@@ -33,7 +33,7 @@ static int coll_tuned_scatter_tree_fanout;
 static int coll_tuned_scatter_chain_fanout;
 
 /* valid values for coll_tuned_scatter_forced_algorithm */
-static mca_base_var_enum_value_t scatter_algorithms[] = {
+static const mca_base_var_enum_value_t scatter_algorithms[] = {
     {0, "ignore"},
     {1, "basic_linear"},
     {2, "binomial"},
@@ -76,7 +76,8 @@ ompi_coll_tuned_scatter_intra_check_forced_init(coll_tuned_force_algorithm_mca_p
     mca_param_indices->algorithm_param_index =
         mca_base_component_var_register(&mca_coll_tuned_component.super.collm_version,
                                         "scatter_algorithm",
-                                        "Which scatter algorithm is used. Can be locked down to choice of: 0 ignore, 1 basic linear, 2 binomial, 3 non-blocking linear.",
+                                        "Which scatter algorithm is used. Can be locked down to choice of: 0 ignore, 1 basic linear, 2 binomial, 3 non-blocking linear. "
+                                        "Only relevant if coll_tuned_use_dynamic_rules is true.",
                                         MCA_BASE_VAR_TYPE_INT, new_enum, 0, MCA_BASE_VAR_FLAG_SETTABLE,
                                         OPAL_INFO_LVL_5,
                                         MCA_BASE_VAR_SCOPE_ALL,
