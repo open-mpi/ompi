@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2015 The University of Tennessee and The University
+ * Copyright (c) 2004-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -92,30 +92,10 @@ ompi_coll_tuned_allreduce_intra_dec_fixed(const void *sbuf, void *rbuf, int coun
             } else {
                 alg = 2;
             }
-        } else if (communicator_size < 32) {
-            alg = 3;
-        } else if (communicator_size < 64) {
-            if (total_dsize < 131072) {
-                alg = 1;
-            } else {
-                alg = 3;
-            }
         } else if (communicator_size < 128) {
-            if (total_dsize < 128) {
-                alg = 1;
-            } else if (total_dsize < 512) {
-                alg = 3;
-            } else if (total_dsize < 8192) {
-                alg = 1;
-            } else {
-                alg = 3;
-            }
+            alg = 3;
         } else if (communicator_size < 256) {
-            if (total_dsize < 2048) {
-                alg = 2;
-            } else if (total_dsize < 16384) {
-                alg = 1;
-            } else if (total_dsize < 131072) {
+            if (total_dsize < 131072) {
                 alg = 2;
             } else if (total_dsize < 524288) {
                 alg = 3;
@@ -183,23 +163,13 @@ ompi_coll_tuned_allreduce_intra_dec_fixed(const void *sbuf, void *rbuf, int coun
                 alg = 6;
             }
         } else if (communicator_size < 128) {
-            if (total_dsize < 128) {
-                alg = 1;
-            } else if (total_dsize < 512) {
-                alg = 3;
-            } else if (total_dsize < 8192) {
-                alg = 1;
-            } else if (total_dsize < 262144) {
+            if (total_dsize < 262144) {
                 alg = 3;
             } else {
                 alg = 6;
             }
         } else if (communicator_size < 256) {
-            if (total_dsize < 2048) {
-                alg = 2;
-            } else if (total_dsize < 16384) {
-                alg = 1;
-            } else if (total_dsize < 131072) {
+            if (total_dsize < 131072) {
                 alg = 2;
             } else if (total_dsize < 262144) {
                 alg = 3;
@@ -567,9 +537,7 @@ int ompi_coll_tuned_bcast_intra_dec_fixed(void *buff, int count,
      *  {9, "scatter_allgather_ring"},
      */
     if (communicator_size < 4) {
-        if (total_dsize < 2) {
-            alg = 9;
-        } else if (total_dsize < 32) {
+        if (total_dsize < 32) {
             alg = 3;
         } else if (total_dsize < 256) {
             alg = 5;
@@ -591,9 +559,7 @@ int ompi_coll_tuned_bcast_intra_dec_fixed(void *buff, int count,
             alg = 5;
         }
     } else if (communicator_size < 8) {
-        if (total_dsize < 2) {
-            alg = 8;
-        } else if (total_dsize < 64) {
+        if (total_dsize < 64) {
             alg = 5;
         } else if (total_dsize < 128) {
             alg = 6;
@@ -639,8 +605,6 @@ int ompi_coll_tuned_bcast_intra_dec_fixed(void *buff, int count,
     } else if (communicator_size < 256) {
         if (total_dsize < 2) {
             alg = 6;
-        } else if (total_dsize < 128) {
-            alg = 8;
         } else if (total_dsize < 16384) {
             alg = 5;
         } else if (total_dsize < 32768) {
@@ -1164,9 +1128,7 @@ int ompi_coll_tuned_allgather_intra_dec_fixed(const void *sbuf, int scount,
             alg = 4;
         }
     } else if (communicator_size < 128) {
-        if (total_dsize < 64) {
-            alg = 1;
-        } else if (total_dsize < 512) {
+        if (total_dsize < 512) {
             alg = 3;
         } else if (total_dsize < 65536) {
             alg = 5;
@@ -1174,9 +1136,7 @@ int ompi_coll_tuned_allgather_intra_dec_fixed(const void *sbuf, int scount,
             alg = 4;
         }
     } else if (communicator_size < 256) {
-        if (total_dsize < 32) {
-            alg = 1;
-        } else if (total_dsize < 512) {
+        if (total_dsize < 512) {
             alg = 3;
         } else if (total_dsize < 131072) {
             alg = 5;
@@ -1188,9 +1148,7 @@ int ompi_coll_tuned_allgather_intra_dec_fixed(const void *sbuf, int scount,
             alg = 4;
         }
     } else if (communicator_size < 512) {
-        if (total_dsize < 16) {
-            alg = 1;
-        } else if (total_dsize < 32) {
+        if (total_dsize < 32) {
             alg = 3;
         } else if (total_dsize < 128) {
             alg = 2;
@@ -1206,9 +1164,7 @@ int ompi_coll_tuned_allgather_intra_dec_fixed(const void *sbuf, int scount,
             alg = 4;
         }
     } else if (communicator_size < 1024) {
-        if (total_dsize < 4) {
-            alg = 1;
-        } else if (total_dsize < 64) {
+        if (total_dsize < 64) {
             alg = 3;
         } else if (total_dsize < 256) {
             alg = 2;
@@ -1218,9 +1174,7 @@ int ompi_coll_tuned_allgather_intra_dec_fixed(const void *sbuf, int scount,
             alg = 5;
         }
     } else if (communicator_size < 2048) {
-        if (total_dsize < 2) {
-            alg = 1;
-        } else if (total_dsize < 4) {
+        if (total_dsize < 4) {
             alg = 3;
         } else if (total_dsize < 8) {
             alg = 2;
