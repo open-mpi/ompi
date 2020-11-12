@@ -168,6 +168,16 @@ void ADIOI_Flatten_datatype(MPI_Datatype datatype)
   DBG_FPRINTF(stderr,"ADIOI_Flatten_datatype:: ADIOI_Flatten\n");
   #endif
 
+/*
+ * Setting flat->count to curr_index, since curr_index is the most fundamentally
+ * correct updated value that represents what's in the indices/blocklens arrays.
+ * It would be nice if the counter function and the flatten function were in sync,
+ * but the numerous cases that decrement flat->count in the flatten function show
+ * that syncing them is a hack, and as long as the counter doesn't under-count
+ * it's good enough.
+ */
+    flat->count = curr_index;
+
     ADIOI_Optimize_flattened(flat);
 #endif
 /* debug */
@@ -183,6 +193,36 @@ void ADIOI_Flatten_datatype(MPI_Datatype datatype)
   }
 #endif
 }
+
+/*
+ * I don't really expect this to ever trigger, but without the below safety
+ * valve, the design relies on the Count function coming out >= whatever
+ * the Flatten function comes up with.  There are enough differences between
+ * the two that it's hard to be positive this will always be true.  So every
+ * time something's added to flat's arrays, let's make sure they're big enough
+ * and re-alloc if not.
+ */
+#define FIX_ARRAYS_IN_CASE_OF_WRONG_COUNT(idx)                        \
+    do {                                                              \
+        if (idx >= flat->count) {                                     \
+            int new_count = (flat->count * 1.25 + 4);                 \
+            ADIO_Offset *new_blocklens = (ADIO_Offset *)              \
+                    ADIOI_Malloc(new_count * sizeof(ADIO_Offset));    \
+            ADIO_Offset *new_indices = (ADIO_Offset *)                \
+                    ADIOI_Malloc(new_count * sizeof(ADIO_Offset));    \
+            if (flat->count) {                                        \
+                memcpy(new_blocklens, flat->blocklens,                \
+                    flat->count * sizeof(ADIO_Offset));               \
+                memcpy(new_indices,   flat->indices,                  \
+                    flat->count * sizeof(ADIO_Offset));               \
+                ADIOI_Free(flat->blocklens);                          \
+                ADIOI_Free(flat->indices);                            \
+            }                                                         \
+            flat->blocklens = new_blocklens;                          \
+            flat->indices = new_indices;                              \
+            flat->count = new_count;                                  \
+        }                                                             \
+    } while (0)
 
 /* ADIOI_Flatten()
  *
@@ -318,6 +358,7 @@ void ADIOI_Flatten(MPI_Datatype datatype, ADIOI_Flatlist_node *flat,
 	if (prev_index == *curr_index) {
 /* simplest case, made up of basic or contiguous types */
 	    j = *curr_index;
+            FIX_ARRAYS_IN_CASE_OF_WRONG_COUNT(j);
 	    flat->indices[j] = st_offset;
 	    MPI_Type_size_x(types[0], &old_size);
 	    flat->blocklens[j] = top_count * old_size;
@@ -335,6 +376,7 @@ void ADIOI_Flatten(MPI_Datatype datatype, ADIOI_Flatlist_node *flat,
 	    MPI_Type_get_extent(types[0], &lb, &old_extent);
 	    for (m=1; m<top_count; m++) {
 		for (i=0; i<num; i++) {
+                    FIX_ARRAYS_IN_CASE_OF_WRONG_COUNT(j);
 		    flat->indices[j] = flat->indices[j-num] + ADIOI_AINT_CAST_TO_OFFSET old_extent;
 		    flat->blocklens[j] = flat->blocklens[j-num];
           #ifdef FLATTEN_DEBUG 
@@ -366,10 +408,12 @@ void ADIOI_Flatten(MPI_Datatype datatype, ADIOI_Flatlist_node *flat,
          avoid >2G integer arithmetic problems */
     ADIO_Offset blocklength = ints[1], stride = ints[2];
 	    j = *curr_index;
+            FIX_ARRAYS_IN_CASE_OF_WRONG_COUNT(j);
 	    flat->indices[j] = st_offset;
 	    MPI_Type_size_x(types[0], &old_size);
 	    flat->blocklens[j] = blocklength * old_size;
 	    for (i=j+1; i<j+top_count; i++) {
+                FIX_ARRAYS_IN_CASE_OF_WRONG_COUNT(i);
 		flat->indices[i] = flat->indices[i-1] + stride * old_size;
 		flat->blocklens[i] = flat->blocklens[j];
 	    }
@@ -389,6 +433,7 @@ void ADIOI_Flatten(MPI_Datatype datatype, ADIOI_Flatlist_node *flat,
 	    MPI_Type_get_extent(types[0], &lb, &old_extent);
 	    for (m=1; m<blocklength; m++) {
 		for (i=0; i<num; i++) {
+                    FIX_ARRAYS_IN_CASE_OF_WRONG_COUNT(j);
 		    flat->indices[j] = flat->indices[j-num] + ADIOI_AINT_CAST_TO_OFFSET old_extent;
 		    flat->blocklens[j] = flat->blocklens[j-num];
 		    j++;
@@ -400,6 +445,7 @@ void ADIOI_Flatten(MPI_Datatype datatype, ADIOI_Flatlist_node *flat,
 	    num = *curr_index - prev_index;
 	    for (i=1; i<top_count; i++) {
  		for (m=0; m<num; m++) {
+                   FIX_ARRAYS_IN_CASE_OF_WRONG_COUNT(j);
 		   flat->indices[j] =  flat->indices[j-num] + stride * ADIOI_AINT_CAST_TO_OFFSET old_extent;
 		   flat->blocklens[j] = flat->blocklens[j-num];
 		   j++;
@@ -429,10 +475,12 @@ void ADIOI_Flatten(MPI_Datatype datatype, ADIOI_Flatlist_node *flat,
          avoid >2G integer arithmetic problems */
     ADIO_Offset blocklength = ints[1];
 	    j = *curr_index;
+            FIX_ARRAYS_IN_CASE_OF_WRONG_COUNT(j);
 	    flat->indices[j] = st_offset;
 	    MPI_Type_size_x(types[0], &old_size);
 	    flat->blocklens[j] = blocklength * old_size;
 	    for (i=j+1; i<j+top_count; i++) {
+                FIX_ARRAYS_IN_CASE_OF_WRONG_COUNT(i);
 		flat->indices[i] = flat->indices[i-1] + adds[0];
 		flat->blocklens[i] = flat->blocklens[j];
 	    }
@@ -452,6 +500,7 @@ void ADIOI_Flatten(MPI_Datatype datatype, ADIOI_Flatlist_node *flat,
 	    MPI_Type_get_extent(types[0], &lb, &old_extent);
 	    for (m=1; m<blocklength; m++) {
 		for (i=0; i<num; i++) {
+                    FIX_ARRAYS_IN_CASE_OF_WRONG_COUNT(j);
 		    flat->indices[j] = flat->indices[j-num] + ADIOI_AINT_CAST_TO_OFFSET old_extent;
 		    flat->blocklens[j] = flat->blocklens[j-num];
 		    j++;
@@ -463,6 +512,7 @@ void ADIOI_Flatten(MPI_Datatype datatype, ADIOI_Flatlist_node *flat,
 	    num = *curr_index - prev_index;
 	    for (i=1; i<top_count; i++) {
  		for (m=0; m<num; m++) {
+                   FIX_ARRAYS_IN_CASE_OF_WRONG_COUNT(j);
 		   flat->indices[j] =  flat->indices[j-num] + adds[0];
 		   flat->blocklens[j] = flat->blocklens[j-num];
 		   j++;
@@ -500,16 +550,15 @@ void ADIOI_Flatten(MPI_Datatype datatype, ADIOI_Flatlist_node *flat,
          avoid >2G integer arithmetic problems */
     ADIO_Offset blocklength = ints[1+i-j], stride = ints[top_count+1+i-j];
 		if (blocklength > 0) {
+                    FIX_ARRAYS_IN_CASE_OF_WRONG_COUNT(nonzeroth);
 		    flat->indices[nonzeroth] =
 			st_offset + stride* ADIOI_AINT_CAST_TO_OFFSET old_extent;
 		    flat->blocklens[nonzeroth] =
 			blocklength* ADIOI_AINT_CAST_TO_OFFSET old_extent;
 		    nonzeroth++;
-		} else {
-		    flat->count--; /* don't count/consider any zero-length blocklens */
 		}
 	    }
-	    *curr_index = i;
+            *curr_index = nonzeroth;
 	}
 	else {
 /* indexed type made up of noncontiguous derived types */
@@ -523,14 +572,13 @@ void ADIOI_Flatten(MPI_Datatype datatype, ADIOI_Flatlist_node *flat,
 	    for (m=1; m<ints[1]; m++) {
 		for (i=0, nonzeroth = j; i<num; i++) {
 		    if (flat->blocklens[j-num] > 0) {
+                        FIX_ARRAYS_IN_CASE_OF_WRONG_COUNT(nonzeroth);
 			flat->indices[nonzeroth] =
 			    flat->indices[nonzeroth-num] + ADIOI_AINT_CAST_TO_OFFSET old_extent;
 			flat->blocklens[nonzeroth] =
 			    flat->blocklens[nonzeroth-num];
 			j++;
 			nonzeroth++;
-		    } else {
-			flat->count --;
 		    }
 		}
 	    }
@@ -545,26 +593,24 @@ void ADIOI_Flatten(MPI_Datatype datatype, ADIOI_Flatlist_node *flat,
          avoid >2G integer arithmetic problems */
       ADIO_Offset stride = ints[top_count+1+i]-ints[top_count+i];
 		    if (flat->blocklens[j-num] > 0 ) {
+                        FIX_ARRAYS_IN_CASE_OF_WRONG_COUNT(nonzeroth);
 			flat->indices[nonzeroth] =
 			    flat->indices[j-num] + stride* ADIOI_AINT_CAST_TO_OFFSET old_extent;
 			flat->blocklens[nonzeroth] = flat->blocklens[j-num];
 			j++;
 			nonzeroth++;
-		    } else {
-			flat->count--;
 		    }
 		}
 		*curr_index = j;
 		for (m=1; m<ints[1+i]; m++) {
                     for (k=0, nonzeroth=j; k<basic_num; k++) {
 			if (flat->blocklens[j-basic_num] > 0) {
+                            FIX_ARRAYS_IN_CASE_OF_WRONG_COUNT(nonzeroth);
 			    flat->indices[nonzeroth] =
 				flat->indices[j-basic_num] + ADIOI_AINT_CAST_TO_OFFSET old_extent;
 			    flat->blocklens[nonzeroth] = flat->blocklens[j-basic_num];
 			    j++;
 			    nonzeroth++;
-			} else {
-			    flat->count --;
 			}
                     }
                 }
@@ -610,6 +656,7 @@ void ADIOI_Flatten(MPI_Datatype datatype, ADIOI_Flatlist_node *flat,
       /* By using ADIO_Offset we preserve +/- sign and 
          avoid >2G integer arithmetic problems */
 		ADIO_Offset blocklength = ints[1];
+                FIX_ARRAYS_IN_CASE_OF_WRONG_COUNT(i);
 		if (is_hindexed_block) {
 		    flat->indices[i] = st_offset + adds[i-j];
 		} else {
@@ -636,6 +683,7 @@ void ADIOI_Flatten(MPI_Datatype datatype, ADIOI_Flatlist_node *flat,
 			 * extent of a type */
 			MPI_Type_get_extent(types[0], &lb, &old_extent);
 		    }
+                    FIX_ARRAYS_IN_CASE_OF_WRONG_COUNT(j);
 		    flat->indices[j] = flat->indices[j-num] +
 			ADIOI_AINT_CAST_TO_OFFSET old_extent;
 		    flat->blocklens[j] = flat->blocklens[j-num];
@@ -648,6 +696,7 @@ void ADIOI_Flatten(MPI_Datatype datatype, ADIOI_Flatlist_node *flat,
 	    num = *curr_index - prev_index;
 	    for (i=1; i<top_count; i++) {
 		for (m=0; m<num; m++) {
+                    FIX_ARRAYS_IN_CASE_OF_WRONG_COUNT(j);
 		    if (is_hindexed_block) {
 			flat->indices[j] = flat->indices[j-num] +
 			    adds[i] - adds[i-1];
@@ -691,14 +740,13 @@ void ADIOI_Flatten(MPI_Datatype datatype, ADIOI_Flatlist_node *flat,
 		    /* By using ADIO_Offset we preserve +/- sign and
 		       avoid >2G integer arithmetic problems */
 		    ADIO_Offset blocklength = ints[1+i-j];
+                    FIX_ARRAYS_IN_CASE_OF_WRONG_COUNT(nonzeroth);
 		    flat->indices[nonzeroth] = st_offset + adds[i-j];
 		    flat->blocklens[nonzeroth] = blocklength*old_size;
 		    nonzeroth++;
-		} else {
-		    flat->count--;
 		}
 	    }
-	    *curr_index = i;
+            *curr_index = nonzeroth;
 	}
 	else {
 /* indexed type made up of noncontiguous derived types */
@@ -713,13 +761,12 @@ void ADIOI_Flatten(MPI_Datatype datatype, ADIOI_Flatlist_node *flat,
 	    for (m=1; m<ints[1]; m++) {
 		for (i=0, nonzeroth=j; i<num; i++) {
 		    if (flat->blocklens[j-num] > 0) {
+                        FIX_ARRAYS_IN_CASE_OF_WRONG_COUNT(nonzeroth);
 			flat->indices[nonzeroth] =
 			    flat->indices[j-num] + ADIOI_AINT_CAST_TO_OFFSET old_extent;
 			flat->blocklens[nonzeroth] = flat->blocklens[j-num];
 			j++;
 			nonzeroth++;
-		    } else {
-			flat->count--;
 		    }
 		}
 	    }
@@ -731,19 +778,19 @@ void ADIOI_Flatten(MPI_Datatype datatype, ADIOI_Flatlist_node *flat,
 		prev_index = *curr_index;
 		for (m=0, nonzeroth=j; m<basic_num; m++) {
 		    if (flat->blocklens[j-num] > 0) {
+                        FIX_ARRAYS_IN_CASE_OF_WRONG_COUNT(nonzeroth);
 			flat->indices[nonzeroth] =
 			    flat->indices[j-num] + adds[i] - adds[i-1];
 			flat->blocklens[nonzeroth] = flat->blocklens[j-num];
 			j++;
 			nonzeroth++;
-		    } else {
-			flat->count--;
 		    }
 		}
 		*curr_index = j;
 		for (m=1; m<ints[1+i]; m++) {
 		    for (k=0,nonzeroth=j; k<basic_num; k++) {
 			if (flat->blocklens[j-basic_num] >0) {
+                            FIX_ARRAYS_IN_CASE_OF_WRONG_COUNT(nonzeroth);
 			    flat->indices[nonzeroth] =
 				flat->indices[j-basic_num] + ADIOI_AINT_CAST_TO_OFFSET old_extent;
 			    flat->blocklens[nonzeroth] = flat->blocklens[j-basic_num];
@@ -781,6 +828,7 @@ void ADIOI_Flatten(MPI_Datatype datatype, ADIOI_Flatlist_node *flat,
 		    j = *curr_index;
 		    flat->indices[j] = st_offset + adds[n];
 		    MPI_Type_size_x(types[n], &old_size);
+                    FIX_ARRAYS_IN_CASE_OF_WRONG_COUNT(j);
 		    flat->blocklens[j] = blocklength * old_size;
 #ifdef FLATTEN_DEBUG
 		    DBG_FPRINTF(stderr,"ADIOI_Flatten:: simple adds[%#X] "MPI_AINT_FMT_HEX_SPEC", flat->indices[%#llX] %#llX, flat->blocklens[%#llX] %#llX\n",n,adds[n],j, flat->indices[j], j, flat->blocklens[j]);
@@ -798,6 +846,7 @@ void ADIOI_Flatten(MPI_Datatype datatype, ADIOI_Flatlist_node *flat,
 		MPI_Type_get_extent(types[n], &lb, &old_extent);
 		for (m=1; m<ints[1+n]; m++) {
 		    for (i=0; i<num; i++) {
+                        FIX_ARRAYS_IN_CASE_OF_WRONG_COUNT(j);
 			flat->indices[j] =
 			    flat->indices[j-num] + ADIOI_AINT_CAST_TO_OFFSET old_extent;
 			flat->blocklens[j] = flat->blocklens[j-num];
@@ -827,6 +876,7 @@ void ADIOI_Flatten(MPI_Datatype datatype, ADIOI_Flatlist_node *flat,
 	 * bound based on the inner type, but the lower bound based on the
 	 * upper type.  check both lb and ub to prevent mixing updates */
 	if (flat->lb_idx == -1 && flat->ub_idx == -1) {
+            FIX_ARRAYS_IN_CASE_OF_WRONG_COUNT(j);
 	    flat->indices[j] = st_offset + adds[0];
 	    /* this zero-length blocklens[] element, unlike eleswhere in the
 	     * flattening code, is correct and is used to indicate a lower bound
@@ -843,7 +893,6 @@ void ADIOI_Flatten(MPI_Datatype datatype, ADIOI_Flatlist_node *flat,
 	} else {
 	    /* skipped over this chunk because something else higher-up in the
 	     * type construction set this for us already */
-	    flat->count--;
 	    st_offset -= adds[0];
 	}
 
@@ -859,6 +908,7 @@ void ADIOI_Flatten(MPI_Datatype datatype, ADIOI_Flatlist_node *flat,
 	else {
             /* current type is basic or contiguous */
 	    j = *curr_index;
+            FIX_ARRAYS_IN_CASE_OF_WRONG_COUNT(j);
 	    flat->indices[j] = st_offset;
 	    MPI_Type_size_x(types[0], &old_size);
 	    flat->blocklens[j] = old_size;
@@ -874,6 +924,7 @@ void ADIOI_Flatten(MPI_Datatype datatype, ADIOI_Flatlist_node *flat,
 	/* see note above about mixing updates for why we check lb and ub */
 	if ((flat->lb_idx == -1 && flat->ub_idx == -1) || lb_updated) {
 	    j = *curr_index;
+            FIX_ARRAYS_IN_CASE_OF_WRONG_COUNT(j);
 	    flat->indices[j] = st_offset + adds[0] + adds[1];
 	    /* again, zero-element ok: an upper-bound marker explicitly set by the
 	     * constructor of this resized type */
@@ -882,7 +933,6 @@ void ADIOI_Flatten(MPI_Datatype datatype, ADIOI_Flatlist_node *flat,
 	} else {
 	    /* skipped over this chunk because something else higher-up in the
 	     * type construction set this for us already */
-	    flat->count--;
 	    (*curr_index)--;
 	}
 
