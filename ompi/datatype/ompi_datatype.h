@@ -7,8 +7,8 @@
  * Copyright (c) 2010-2017 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2015-2018 Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015-2020 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -405,6 +405,16 @@ OMPI_DECLSPEC int ompi_datatype_pack_external_size( const char datarep[], int in
                                 (void*)(ddt), (ddt)->name, (ddt)->super.super.obj_reference_count, \
                                 __func__, __LINE__));                   \
             OBJ_RELEASE((ddt));                                         \
+        }                                                               \
+    }
+
+#define OMPI_DATATYPE_RELEASE_NO_NULLIFY(ddt)                           \
+    {                                                                   \
+        if( !ompi_datatype_is_predefined((ddt)) ) {                     \
+            OPAL_OUTPUT_VERBOSE((0, 100, "Datatype %p [%s] refcount %d in file %s:%d\n",     \
+                                (void*)(ddt), (ddt)->name, (ddt)->super.super.obj_reference_count, \
+                                __func__, __LINE__));                   \
+            OBJ_RELEASE_NO_NULLIFY((ddt));                              \
         }                                                               \
     }
 
