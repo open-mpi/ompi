@@ -279,7 +279,7 @@ static inline int start_atomicity(
                 break;
             }
 
-            ucp_worker_progress(mca_osc_ucx_component.wpool->dflt_worker);
+            opal_common_ucx_wpool_progress(mca_osc_ucx_component.wpool);
         }
 
         *lock_acquired = true;

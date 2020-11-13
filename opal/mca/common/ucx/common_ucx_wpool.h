@@ -30,6 +30,9 @@
 
 BEGIN_C_DECLS
 
+/* fordward declaration */
+typedef struct opal_common_ucx_winfo opal_common_ucx_winfo_t;
+
 /* Worker pool is a global object that that is allocated per component or can be
  * shared between multiple compatible components.
  * The lifetime of this object is normally equal to the lifetime of a component[s].
@@ -42,7 +45,7 @@ typedef struct {
 
     /* UCX data */
     ucp_context_h ucp_ctx;
-    ucp_worker_h dflt_worker;
+    opal_common_ucx_winfo_t *dflt_winfo;
     ucp_address_t *recv_waddr;
     size_t recv_waddr_len;
 
@@ -116,7 +119,7 @@ typedef struct {
  * in the Worker Pool lists (either active or idle).
  * One wpmem is intended per shared memory segment (i.e. MPI Window).
  */
-typedef struct opal_common_ucx_winfo {
+struct opal_common_ucx_winfo {
     opal_list_item_t super;
     opal_recursive_mutex_t mutex;
     ucp_worker_h worker;
@@ -125,7 +128,7 @@ typedef struct opal_common_ucx_winfo {
     short *inflight_ops;
     short global_inflight_ops;
     ucs_status_ptr_t inflight_req;
-} opal_common_ucx_winfo_t;
+};
 OBJ_CLASS_DECLARATION(opal_common_ucx_winfo_t);
 
 typedef void (*opal_common_ucx_user_req_handler_t)(void *request);
