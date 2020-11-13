@@ -122,9 +122,6 @@ int MPI_Ialltoallw(const void *sendbuf, const int sendcounts[], const int sdispl
                                        sendtypes, recvbuf, recvcounts,
                                        rdispls, recvtypes, comm, request,
                                        comm->c_coll->coll_ialltoallw_module);
-    if (OPAL_LIKELY(OMPI_SUCCESS == err)) {
-        ompi_coll_base_retain_datatypes_w(*request, (MPI_IN_PLACE==sendbuf)?NULL:sendtypes, recvtypes);
-    }
     OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);
 }
 

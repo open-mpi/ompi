@@ -13,7 +13,7 @@
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2017 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2014-2019 Research Organization for Information Science
+ * Copyright (c) 2014-2020 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
@@ -150,9 +150,6 @@ int MPIX_Neighbor_alltoallw_init(const void *sendbuf, const int sendcounts[], co
                                                      recvbuf, recvcounts, rdispls, recvtypes, comm,
                                                      info, request,
                                                      comm->c_coll->coll_neighbor_alltoallw_init_module);
-    if (OPAL_LIKELY(OMPI_SUCCESS == err)) {
-        ompi_coll_base_retain_datatypes_w(*request, sendtypes, recvtypes);
-    }
     OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);
 }
 
