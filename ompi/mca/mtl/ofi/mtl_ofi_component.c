@@ -370,43 +370,6 @@ select_ofi_provider(struct fi_info *providers,
     return prov;
 }
 
-
-/* Check if FI_REMOTE_CQ_DATA is supported, if so send the source rank there
- * FI_DIRECTED_RECV is also needed so receives can discrimate the source
- */
-static int
-ompi_mtl_ofi_check_fi_remote_cq_data(int fi_version,
-                                     struct fi_info *hints,
-                                     struct fi_info *provider,
-                                     struct fi_info **prov_cq_data)
-{
-    int ret;
-    char *provider_name;
-    struct fi_info *hints_dup;
-    hints_dup = fi_dupinfo(hints);
-
-    provider_name = strdup(provider->fabric_attr->prov_name);
-    hints_dup->fabric_attr->prov_name = provider_name;
-    hints_dup->caps |= FI_TAGGED | FI_DIRECTED_RECV;
-    /* Ask for the size that OMPI uses for the source rank number */
-    hints_dup->domain_attr->cq_data_size = sizeof(int);
-    ret = fi_getinfo(fi_version, NULL, NULL, 0ULL, hints_dup, prov_cq_data);
-
-    if ((0 != ret) && (-FI_ENODATA != ret)) {
-        opal_show_help("help-mtl-ofi.txt", "OFI call fail", true,
-                       "fi_getinfo",
-                       ompi_process_info.nodename, __FILE__, __LINE__,
-                       fi_strerror(-ret), -ret);
-        return ret;
-    } else if (-FI_ENODATA == ret) {
-        /* The provider does not support  FI_REMOTE_CQ_DATA */
-        prov_cq_data = NULL;
-    }
-
-    fi_freeinfo(hints_dup);
-    return OMPI_SUCCESS;
-}
-
 static void
 ompi_mtl_ofi_define_tag_mode(int ofi_tag_mode, int *bits_for_cid) {
     switch (ofi_tag_mode) {
@@ -652,7 +615,7 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
        interface and local communication and remote communication. */
     hints->mode               = FI_CONTEXT;
     hints->ep_attr->type      = FI_EP_RDM;
-    hints->caps               = FI_TAGGED | FI_LOCAL_COMM | FI_REMOTE_COMM;
+    hints->caps               = FI_TAGGED | FI_LOCAL_COMM | FI_REMOTE_COMM | FI_DIRECTED_RECV;
     hints->tx_attr->msg_order = FI_ORDER_SAS;
     hints->rx_attr->msg_order = FI_ORDER_SAS;
     hints->rx_attr->op_flags = FI_COMPLETION;
@@ -803,14 +766,13 @@ select_prov:
      */
     if ((MTL_OFI_TAG_AUTO == ofi_tag_mode) ||
         (MTL_OFI_TAG_FULL == ofi_tag_mode)) {
-            ret = ompi_mtl_ofi_check_fi_remote_cq_data(fi_version,
-                                                       hints, prov,
-                                                       &prov_cq_data);
-            if (OMPI_SUCCESS != ret) {
-                goto error;
-            } else if (NULL == prov_cq_data) {
+            if (prov->domain_attr->cq_data_size >= sizeof(int) &&
+                (prov->caps & FI_DIRECTED_RECV)) {
+                /* Use FI_REMOTE_CQ_DATA */
+                ompi_mtl_ofi.fi_cq_data = true;
+                ompi_mtl_ofi_define_tag_mode(MTL_OFI_TAG_FULL, &ofi_tag_bits_for_cid);
+            } else {
                 /* No support for FI_REMTOTE_CQ_DATA */
-                fi_freeinfo(prov_cq_data);
                 ompi_mtl_ofi.fi_cq_data = false;
                 if (MTL_OFI_TAG_AUTO == ofi_tag_mode) {
                    /* Fallback to MTL_OFI_TAG_1 */
@@ -821,11 +783,6 @@ select_prov:
                             __FILE__, __LINE__, prov->fabric_attr->prov_name);
                     goto error;
                 }
-            } else {
-                /* Use FI_REMTOTE_CQ_DATA */
-                ompi_mtl_ofi.fi_cq_data = true;
-                prov = prov_cq_data;
-                ompi_mtl_ofi_define_tag_mode(MTL_OFI_TAG_FULL, &ofi_tag_bits_for_cid);
             }
     } else { /* MTL_OFI_TAG_1 or MTL_OFI_TAG_2 */
         ompi_mtl_ofi.fi_cq_data = false;
