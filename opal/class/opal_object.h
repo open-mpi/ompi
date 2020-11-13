@@ -11,8 +11,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2014 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2014-2020 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
@@ -345,6 +345,27 @@ static inline opal_object_t *opal_obj_new_debug(opal_class_t* type, const char* 
     } while (0)
 #endif
 
+#if OPAL_ENABLE_DEBUG
+#define OBJ_RELEASE_NO_NULLIFY(object)                                  \
+    do {                                                                \
+        assert(OPAL_OBJ_MAGIC_ID == ((opal_object_t *) (object))->obj_magic_id); \
+        assert(NULL != ((opal_object_t *) (object))->obj_class);        \
+        if (0 == opal_obj_update((opal_object_t *) (object), -1)) {     \
+            OBJ_SET_MAGIC_ID((object), 0);                              \
+            opal_obj_run_destructors((opal_object_t *) (object));       \
+            OBJ_REMEMBER_FILE_AND_LINENO( object, __FILE__, __LINE__ ); \
+            free((void *) object);                                      \
+        }                                                               \
+    } while (0)
+#else
+#define OBJ_RELEASE_NO_NULLIFY(object)                                   \
+    do {                                                                \
+        if (0 == opal_obj_update((opal_object_t *) (object), -1)) {     \
+            opal_obj_run_destructors((opal_object_t *) (object));       \
+            free((void *) object);                                      \
+        }                                                               \
+    } while (0)
+#endif
 
 /**
  * Construct (initialize) objects that are not dynamically allocated.
