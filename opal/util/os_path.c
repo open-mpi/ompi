@@ -32,7 +32,7 @@
 
 static const char *path_sep = OPAL_PATH_SEP;
 
-char *opal_os_path(bool relative, ...)
+char *opal_os_path(int relative, ...)
 {
     va_list ap;
     char *element, *path;

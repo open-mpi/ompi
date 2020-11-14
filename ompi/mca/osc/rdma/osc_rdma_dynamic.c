@@ -113,8 +113,8 @@ static bool ompi_osc_rdma_find_conflicting_attachment (ompi_osc_rdma_handle_t *h
 
     OPAL_LIST_FOREACH(attachment, &handle->attachments, ompi_osc_rdma_attachment_t) {
         intptr_t region_bound = attachment->base + attachment->len;
-        if (base >= attachment->base && base < region_bound ||
-            bound > attachment->base && bound <= region_bound) {
+        if ((base >= attachment->base && base < region_bound) ||
+             (bound > attachment->base && bound <= region_bound)) {
             OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "existing region {%p, %p} overlaps region {%p, %p}",
                              (void *) attachment->base, (void *) region_bound, (void *) base, (void *) bound);
             return true;
@@ -295,8 +295,7 @@ int ompi_osc_rdma_detach (struct ompi_win_t *win, const void *base)
     ompi_osc_rdma_handle_t *rdma_region_handle;
     osc_rdma_counter_t region_count, region_id;
     ompi_osc_rdma_region_t *region;
-    void *bound;
-    int start_index = INT_MAX, region_index;
+    int region_index;
 
     if (module->flavor != MPI_WIN_FLAVOR_DYNAMIC) {
         return OMPI_ERR_WIN;
@@ -313,9 +312,10 @@ int ompi_osc_rdma_detach (struct ompi_win_t *win, const void *base)
         rdma_region_handle = module->dynamic_handles[region_index];
         region = (ompi_osc_rdma_region_t *) ((intptr_t) module->state->regions + region_index * module->region_size);
         OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_INFO, "checking attachments at index %d {.base=%p, len=%lu} for attachment %p"
-                         ", region handle=%p", region_index, (void *) region->base, region->len, base, rdma_region_handle);
+                         ", region handle=%p", region_index, (void *) region->base,
+                         (unsigned long) region->len, base, (void *) rdma_region_handle);
 
-        if (region->base > (uintptr_t) base || (region->base + region->len) < (uintptr_t) base) {
+        if (region->base > (intptr_t) base || (region->base + region->len) < (uintptr_t) base) {
             continue;
         }
 
