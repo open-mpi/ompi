@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2014-2019 Research Organization for Information Science
+ * Copyright (c) 2014-2020 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
@@ -220,7 +220,7 @@ static void release_vecs_callback(ompi_coll_base_nbc_request_t *request) {
     if (NULL != request->data.vecs.stypes) {
         for (int i=0; i<scount; i++) {
             if (NULL != request->data.vecs.stypes[i]) {
-                OMPI_DATATYPE_RELEASE(request->data.vecs.stypes[i]);
+                OMPI_DATATYPE_RELEASE_NO_NULLIFY(request->data.vecs.stypes[i]);
             }
         }
         request->data.vecs.stypes = NULL;
@@ -228,7 +228,7 @@ static void release_vecs_callback(ompi_coll_base_nbc_request_t *request) {
     if (NULL != request->data.vecs.rtypes) {
         for (int i=0; i<rcount; i++) {
             if (NULL != request->data.vecs.rtypes[i]) {
-                OMPI_DATATYPE_RELEASE(request->data.vecs.rtypes[i]);
+                OMPI_DATATYPE_RELEASE_NO_NULLIFY(request->data.vecs.rtypes[i]);
             }
         }
         request->data.vecs.rtypes = NULL;
