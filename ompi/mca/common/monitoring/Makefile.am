@@ -5,7 +5,7 @@
 # Copyright (c) 2016      Inria.  All rights reserved.
 # Copyright (c) 2017      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
-# Copyright (c) 2018      Cisco Systems, Inc.  All rights reserved
+# Copyright (c) 2018-2020 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -28,6 +28,9 @@ lib_LTLIBRARIES += $(component_install)
 lib_LTLIBRARIES += ompi_monitoring_prof.la
 
 ompi_monitoring_prof_la_SOURCES = monitoring_prof.c
+if OMPI_BUILD_FORTRAN_MPIFH_BINDINGS
+ompi_monitoring_prof_la_SOURCES += monitoring_prof_f.c
+endif
 ompi_monitoring_prof_la_LDFLAGS= \
     -module -avoid-version -shared $(WRAPPER_EXTRA_LDFLAGS)
 ompi_monitoring_prof_la_LIBADD = \

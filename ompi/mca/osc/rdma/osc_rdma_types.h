@@ -3,6 +3,7 @@
  * Copyright (c) 2014-2018 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2020      Google, LLC. All rights reserved.
+ * Copyright (c) 2020      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -23,7 +24,7 @@ struct ompi_osc_rdma_peer_t;
 #if OPAL_HAVE_ATOMIC_MATH_64
 
 typedef int64_t osc_rdma_base_t;
-typedef int64_t osc_rdma_size_t;
+typedef uint64_t osc_rdma_size_t;
 typedef int64_t osc_rdma_counter_t;
 typedef opal_atomic_int64_t osc_rdma_atomic_counter_t;
 
@@ -32,7 +33,7 @@ typedef opal_atomic_int64_t osc_rdma_atomic_counter_t;
 #else
 
 typedef int32_t osc_rdma_base_t;
-typedef int32_t osc_rdma_size_t;
+typedef uint32_t osc_rdma_size_t;
 typedef int32_t osc_rdma_counter_t;
 typedef opal_atomic_int32_t osc_rdma_atomic_counter_t;
 

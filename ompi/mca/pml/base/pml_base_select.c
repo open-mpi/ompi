@@ -13,7 +13,7 @@
  * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2013-2020 Intel, Inc.  All rights reserved.
- * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015-2020 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2020      Amazon.com, Inc. or its affiliates.  All Rights
  *                         reserved.
  * $COPYRIGHT$
@@ -368,7 +368,7 @@ mca_pml_base_pml_check_selected_impl(const char *my_pml,
     /* if that module doesn't match my own, return an error */
     if ((size != strlen(my_pml) + 1) ||
         (0 != strcmp(my_pml, remote_pml))) {
-        char *errhost;
+        char *errhost = NULL;
         OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, PMIX_HOSTNAME, &proc_name,
                                        &(errhost), PMIX_STRING);
         opal_output(0, "%s selected pml %s, but peer %s on %s selected pml %s",

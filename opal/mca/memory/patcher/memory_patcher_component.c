@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2009-2017 Cisco Systems, Inc.  All rights reserved
+ * Copyright (c) 2009-2020 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2016-2017 Research Organization for Information Science
@@ -54,6 +54,18 @@
 
 #include "memory_patcher.h"
 #undef opal_memory_changed
+
+#if defined(SYS_shmdt) || (defined(IPCOP_shmdt) && defined(SYS_ipc))
+#define HAS_SHMDT 1
+#else
+#define HAS_SHMDT 0
+#endif
+
+#if defined(SYS_shmat) ||(defined(IPCOP_shmat) && defined(SYS_ipc))
+#define HAS_SHMAT 1
+#else
+#define HAS_SHMAT 0
+#endif
 
 static int patcher_open(void);
 static int patcher_close(void);
@@ -113,15 +125,25 @@ opal_memory_patcher_component_t mca_memory_patcher_component = {
  */
 static void *_intercept_mmap(void *start, size_t length, int prot, int flags, int fd, off_t offset) __opal_attribute_noinline__;
 static int _intercept_munmap(void *start, size_t length) __opal_attribute_noinline__;
+#if defined (SYS_mremap)
 #if defined(__linux__)
 static void *_intercept_mremap (void *start, size_t oldlen, size_t newlen, int flags, void *new_address) __opal_attribute_noinline__;
 #else
 static void *_intercept_mremap (void *start, size_t oldlen, void *new_address, size_t newlen, int flags) __opal_attribute_noinline__;
-#endif
+#endif // defined(__linux__)
+#endif // defined(SYS_mremap)
 static int _intercept_madvise (void *start, size_t length, int advice) __opal_attribute_noinline__;
+#if defined SYS_brk
 static int _intercept_brk (void *addr) __opal_attribute_noinline__;
+#endif
+#if defined(__linux__)
+#if HAS_SHMAT
 static void *_intercept_shmat(int shmid, const void *shmaddr, int shmflg) __opal_attribute_noinline__;
+#endif // HAS_SHMAT
+#if HAS_SHMDT
 static int _intercept_shmdt (const void *shmaddr) __opal_attribute_noinline__;
+#endif // HAS_SHMDT
+#endif // defined(__linux__)
 
 #if defined (SYS_mmap)
 
@@ -360,18 +382,6 @@ static int intercept_brk (void *addr)
 #endif
 #ifndef IPCOP_shmdt
 #define IPCOP_shmdt                22
-#endif
-
-#if defined(SYS_shmdt) || (defined(IPCOP_shmdt) && defined(SYS_ipc))
-#define HAS_SHMDT 1
-#else
-#define HAS_SHMDT 0
-#endif
-
-#if defined(SYS_shmat) ||(defined(IPCOP_shmat) && defined(SYS_ipc))
-#define HAS_SHMAT 1
-#else
-#define HAS_SHMAT 0
 #endif
 
 #if HAS_SHMDT || HAS_SHMAT

@@ -7,6 +7,7 @@
  * Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2017-2018 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
+ * Copyright (c) 2020      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -68,7 +69,7 @@ pack_partial_blocklen( opal_convertor_t* CONVERTOR,
     OPAL_DATATYPE_SAFEGUARD_POINTER( _memory, do_now_bytes, (CONVERTOR)->pBaseBuf,
                                      (CONVERTOR)->pDesc, (CONVERTOR)->count );
     DO_DEBUG( opal_output( 0, "pack memcpy( %p, %p, %lu ) => space %lu [partial]\n",
-                           _packed, (void*)_memory, (unsigned long)do_now_bytes, (unsigned long)(*(SPACE)) ); );
+                           (void*) _packed, (void*)_memory, (unsigned long)do_now_bytes, (unsigned long)(*(SPACE)) ); );
     MEMCPY_CSUM( _packed, _memory, do_now_bytes, (CONVERTOR) );
     *(memory)     += (ptrdiff_t)do_now_bytes;
     if( do_now == left_in_block )  /* compensate if completed a blocklen */
