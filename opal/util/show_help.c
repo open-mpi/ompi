@@ -50,7 +50,7 @@ static char **search_dirs = NULL;
 static int opal_show_vhelp_internal(const char *filename, const char *topic,
                                     bool want_error_header, va_list arglist);
 static int opal_show_help_internal(const char *filename, const char *topic,
-                                   bool want_error_header, ...);
+                                   int want_error_header, ...);
 
 opal_show_help_fn_t opal_show_help = opal_show_help_internal;
 opal_show_vhelp_fn_t opal_show_vhelp = opal_show_vhelp_internal;
@@ -317,7 +317,7 @@ char *opal_show_help_vstring(const char *filename, const char *topic,
 }
 
 char *opal_show_help_string(const char *filename, const char *topic,
-                            bool want_error_handler, ...)
+                            int want_error_handler, ...)
 {
     char *output;
     va_list arglist;
@@ -349,7 +349,7 @@ static int opal_show_vhelp_internal(const char *filename, const char *topic,
 }
 
 static int opal_show_help_internal(const char *filename, const char *topic,
-                                   bool want_error_header, ...)
+                                   int want_error_header, ...)
 {
     va_list arglist;
     int rc;

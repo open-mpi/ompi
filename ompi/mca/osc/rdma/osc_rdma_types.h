@@ -23,7 +23,7 @@ struct ompi_osc_rdma_peer_t;
 #if OPAL_HAVE_ATOMIC_MATH_64
 
 typedef int64_t osc_rdma_base_t;
-typedef int64_t osc_rdma_size_t;
+typedef uint64_t osc_rdma_size_t;
 typedef int64_t osc_rdma_counter_t;
 
 #define ompi_osc_rdma_counter_add opal_atomic_add_fetch_64
@@ -31,7 +31,7 @@ typedef int64_t osc_rdma_counter_t;
 #else
 
 typedef int32_t osc_rdma_base_t;
-typedef int32_t osc_rdma_size_t;
+typedef uint32_t osc_rdma_size_t;
 typedef int32_t osc_rdma_counter_t;
 
 #define ompi_osc_rdma_counter_add opal_atomic_add_fetch_32

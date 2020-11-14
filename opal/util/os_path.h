@@ -62,8 +62,12 @@ BEGIN_C_DECLS
  * provided path elements, separated by the path separator character
  * appropriate to the local operating system. The path_name string has been malloc'd
  * and therefore the user is responsible for free'ing the field.
-*/
-OPAL_DECLSPEC char *opal_os_path(bool relative, ...) __opal_attribute_malloc__ __opal_attribute_sentinel__ __opal_attribute_warn_unused_result__;
+ *
+ * NOTE: Since this is a varargs function, the last known parameter
+ * can't undergo a default promotion (e.g., from bool to int), because
+ * that is undefined behavior.  Hence, the type of "relative" is int.
+ */
+OPAL_DECLSPEC char *opal_os_path(int relative, ...) __opal_attribute_malloc__ __opal_attribute_sentinel__ __opal_attribute_warn_unused_result__;
 
 /**
  * Convert the path to be OS friendly. On UNIX this function will

@@ -45,7 +45,6 @@ static bool myenvdefined = false;
 
 static orte_schizo_launch_environ_t check_launch_environment(void)
 {
-    char *bind, *list, *ptr;
     int i;
 
     if (myenvdefined) {

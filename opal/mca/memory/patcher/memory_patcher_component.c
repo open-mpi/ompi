@@ -55,6 +55,11 @@
 #include "memory_patcher.h"
 #undef opal_memory_changed
 
+#define HAS_SHMDT (defined(SYS_shmdt) || \
+    (defined(IPCOP_shmdt) && defined(SYS_ipc)))
+#define HAS_SHMAT (defined(SYS_shmat) || \
+    (defined(IPCOP_shmat) && defined(SYS_ipc)))
+
 static int patcher_open(void);
 static int patcher_close(void);
 static int patcher_register(void);
@@ -113,15 +118,25 @@ opal_memory_patcher_component_t mca_memory_patcher_component = {
  */
 static void *_intercept_mmap(void *start, size_t length, int prot, int flags, int fd, off_t offset) __opal_attribute_noinline__;
 static int _intercept_munmap(void *start, size_t length) __opal_attribute_noinline__;
+#if defined (SYS_mremap)
 #if defined(__linux__)
 static void *_intercept_mremap (void *start, size_t oldlen, size_t newlen, int flags, void *new_address) __opal_attribute_noinline__;
 #else
 static void *_intercept_mremap (void *start, size_t oldlen, void *new_address, size_t newlen, int flags) __opal_attribute_noinline__;
-#endif
+#endif // defined(__linux__)
+#endif // defined(SYS_mremap)
 static int _intercept_madvise (void *start, size_t length, int advice) __opal_attribute_noinline__;
+#if defined SYS_brk
 static int _intercept_brk (void *addr) __opal_attribute_noinline__;
+#endif
+#if defined(__linux__)
+#if HAS_SHMAT
 static void *_intercept_shmat(int shmid, const void *shmaddr, int shmflg) __opal_attribute_noinline__;
+#endif // HAS_SHMAT
+#if HAS_SHMDT
 static int _intercept_shmdt (const void *shmaddr) __opal_attribute_noinline__;
+#endif // HAS_SHMDT
+#endif // defined(__linux__)
 
 #if defined (SYS_mmap)
 
@@ -362,12 +377,8 @@ static int intercept_brk (void *addr)
 #define IPCOP_shmdt                22
 #endif
 
-#define HAS_SHMDT (defined(SYS_shmdt) || \
-    (defined(IPCOP_shmdt) && defined(SYS_ipc)))
-#define HAS_SHMAT (defined(SYS_shmat) || \
-    (defined(IPCOP_shmat) && defined(SYS_ipc)))
-
-#if (HAS_SHMDT || HAS_SHMAT) && defined(__linux__)
+#if defined(__linux__)
+#if (HAS_SHMDT || HAS_SHMAT)
 
 #include <stdio.h>
 #include <fcntl.h>
@@ -443,8 +454,10 @@ static size_t get_shm_size(int shmid)
     return ds.shm_segsz;
 }
 #endif
+#endif // defined(__linux__)
 
-#if HAS_SHMAT && defined(__linux__)
+#if defined(__linux__)
+#if HAS_SHMAT
 static void *(*original_shmat)(int shmid, const void *shmaddr, int shmflg);
 
 static void *_intercept_shmat(int shmid, const void *shmaddr, int shmflg)
@@ -490,8 +503,10 @@ static void* intercept_shmat (int shmid, const void * shmaddr, int shmflg)
     return result;
 }
 #endif
+#endif // defined(__linux__)
 
-#if HAS_SHMDT && defined(__linux__)
+#if defined(__linux__)
+#if HAS_SHMDT
 static int (*original_shmdt) (const void *);
 
 static int _intercept_shmdt (const void *shmaddr)
@@ -523,6 +538,7 @@ static int intercept_shmdt (const void *shmaddr)
     return result;
 }
 #endif
+#endif // defined(__linux__)
 
 static int patcher_register (void)
 {
@@ -598,19 +614,21 @@ static int patcher_open (void)
     }
 #endif
 
-#if HAS_SHMAT && defined(__linux__)
+#if defined(__linux__)
+#if HAS_SHMAT
     rc = opal_patcher->patch_symbol ("shmat", (uintptr_t) intercept_shmat, (uintptr_t *) &original_shmat);
     if (OPAL_SUCCESS != rc) {
         return rc;
     }
-#endif
+#endif // HAS_SHMAT
 
-#if HAS_SHMDT && defined(__linux__)
+#if HAS_SHMDT
     rc = opal_patcher->patch_symbol ("shmdt", (uintptr_t) intercept_shmdt, (uintptr_t *) &original_shmdt);
     if (OPAL_SUCCESS != rc) {
         return rc;
     }
-#endif
+#endif // HAS_SHMDT
+#endif // defined(__linux__)
 
 #if defined (SYS_brk)
     rc = opal_patcher->patch_symbol ("brk", (uintptr_t)intercept_brk, (uintptr_t *) &original_brk);
