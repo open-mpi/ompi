@@ -75,4 +75,4 @@ guarantee that an MPI program can continue past an error.
 
 # See Also
 
-[`MPI_Get_version`(3)](MPI_Get_version.html)
+[`MPI_Get_version`(3)](./?file=MPI_Get_version.md)

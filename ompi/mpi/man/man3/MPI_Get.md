@@ -128,4 +128,4 @@ guarantee that an MPI program can continue past an error.
 
 # See Also
 
-[`MPI_Put`(3)](MPI_Put.html)
+[`MPI_Put`(3)](./?file=MPI_Put.md)

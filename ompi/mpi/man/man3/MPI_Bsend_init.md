@@ -77,9 +77,9 @@ guarantee that an MPI program can continue past an error.
 
 # See Also
 
-[MPI_Send_init(3)](MPI_Send_init.html)
-[MPI_Ssend_init(3)](MPI_Ssend_init.html)
-[MPI_Rsend_init(3)](MPI_Rsend_init.html)
-[MPI_Recv_init(3)](MPI_Recv_init.html)
-[MPI_Start(3)](MPI_Start.html)
-[MPI_Startall(3)](MPI_Startall.html)
+[MPI_Send_init(3)](./?file=MPI_Send_init.md)
+[MPI_Ssend_init(3)](./?file=MPI_Ssend_init.md)
+[MPI_Rsend_init(3)](./?file=MPI_Rsend_init.md)
+[MPI_Recv_init(3)](./?file=MPI_Recv_init.md)
+[MPI_Start(3)](./?file=MPI_Start.md)
+[MPI_Startall(3)](./?file=MPI_Startall.md)

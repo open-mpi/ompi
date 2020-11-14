@@ -108,7 +108,7 @@ guarantee that an MPI program can continue past an error.
 
 # See Also
 
-[`MPI_Probe`(3)](MPI_Probe.html)
-[`MPI_Iprobe`(3)](MPI_Iprobe.html)
-[`MPI_Test_cancelled`(3)](MPI_Test_cancelled.html)
-[`MPI_Cart_coords`(3)](MPI_Cart_coords.html)
+[`MPI_Probe`(3)](./?file=MPI_Probe.md)
+[`MPI_Iprobe`(3)](./?file=MPI_Iprobe.md)
+[`MPI_Test_cancelled`(3)](./?file=MPI_Test_cancelled.md)
+[`MPI_Cart_coords`(3)](./?file=MPI_Cart_coords.md)

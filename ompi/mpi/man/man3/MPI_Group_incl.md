@@ -78,6 +78,6 @@ guarantee that an MPI program can continue past an error.
 
 # See Also
 
-[`MPI_Group_compare`(3)](MPI_Group_compare.html)
-[`MPI_Group_range_incl`(3)](MPI_Group_range_incl.html)
-[`MPI_Group_free`(3)](MPI_Group_free.html)
+[`MPI_Group_compare`(3)](./?file=MPI_Group_compare.md)
+[`MPI_Group_range_incl`(3)](./?file=MPI_Group_range_incl.md)
+[`MPI_Group_free`(3)](./?file=MPI_Group_free.md)

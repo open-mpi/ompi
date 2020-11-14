@@ -91,4 +91,4 @@ guarantee that an MPI program can continue past an error.
 
 # See Also
 
-[`MPI_Comm_create`(3)](MPI_Comm_create.html)
+[`MPI_Comm_create`(3)](./?file=MPI_Comm_create.md)

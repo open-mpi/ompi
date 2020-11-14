@@ -67,4 +67,4 @@ guarantee that an MPI program can continue past an error.
 
 # See Also
 
-[`MPI_Graph_neighbors`(3)](MPI_Graph_neighbors.html)
+[`MPI_Graph_neighbors`(3)](./?file=MPI_Graph_neighbors.md)

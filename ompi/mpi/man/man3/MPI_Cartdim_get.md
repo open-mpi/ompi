@@ -62,5 +62,5 @@ guarantee that an MPI program can continue past an error.
 
 # See Also
 
-[`MPI_Cart_get`(3)](MPI_Cart_get.html)
-[`MPI_Cart_create`(3)](MPI_Cart_create.html)
+[`MPI_Cart_get`(3)](./?file=MPI_Cart_get.md)
+[`MPI_Cart_create`(3)](./?file=MPI_Cart_create.md)

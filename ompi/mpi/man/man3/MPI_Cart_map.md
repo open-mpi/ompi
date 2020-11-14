@@ -76,4 +76,4 @@ guarantee that an MPI program can continue past an error.
 
 # See Also
 
-[`MPI_Graph_map`(3)](MPI_Graph_map.html)
+[`MPI_Graph_map`(3)](./?file=MPI_Graph_map.md)

@@ -84,4 +84,4 @@ guarantee that an MPI program can continue past an error.
 
 # See Also
 
-[`MPI_Get_elements`(3)](MPI_Get_elements.html)
+[`MPI_Get_elements`(3)](./?file=MPI_Get_elements.md)

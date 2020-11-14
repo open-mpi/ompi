@@ -61,4 +61,4 @@ guarantee that an MPI program can continue past an error.
 
 # See Also
 
-[`MPI_Alloc_mem`(3)](MPI_Alloc_mem.html)
+[`MPI_Alloc_mem`(3)](./?file=MPI_Alloc_mem.md)

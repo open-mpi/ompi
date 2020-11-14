@@ -112,5 +112,5 @@ guarantee that an MPI program can continue past an error.
 
 # See Also
 
-[MPI_Buffer_attach(3)](MPI_Buffer_attach.html)
-[MPI_Bsend(3)](MPI_Bsend.html)
+[MPI_Buffer_attach(3)](./?file=MPI_Buffer_attach.md)
+[MPI_Bsend(3)](./?file=MPI_Bsend.md)

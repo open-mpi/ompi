@@ -121,5 +121,5 @@ guarantee that an MPI program can continue past an error.
 
 # See Also
 
-[`MPI_Graph_get`(3)](MPI_Graph_get.html)
-[`MPI_Graphdims_get`(3)](MPI_Graphdims_get.html)
+[`MPI_Graph_get`(3)](./?file=MPI_Graph_get.md)
+[`MPI_Graphdims_get`(3)](./?file=MPI_Graphdims_get.md)

@@ -186,8 +186,8 @@ guarantee that an MPI program can continue past an error.
 
 # See Also
 
-[`MPI_Put`(3)](MPI_Put.html)
-[`MPI_Get`(3)](MPI_Get.html)
-[`MPI_Accumulate`(3)](MPI_Accumulate.html)
-[`MPI_Fetch_and_op`(3)](MPI_Fetch_and_op.html)
-[`MPI_Reduce`(3)](MPI_Reduce.html)
+[`MPI_Put`(3)](./?file=MPI_Put.md)
+[`MPI_Get`(3)](./?file=MPI_Get.md)
+[`MPI_Accumulate`(3)](./?file=MPI_Accumulate.md)
+[`MPI_Fetch_and_op`(3)](./?file=MPI_Fetch_and_op.md)
+[`MPI_Reduce`(3)](./?file=MPI_Reduce.md)

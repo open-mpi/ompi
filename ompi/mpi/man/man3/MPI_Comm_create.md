@@ -80,6 +80,6 @@ guarantee that an MPI program can continue past an error.
 
 # See Also
 
-[`MPI_Comm_split`(3)](MPI_Comm_split.html)
-[`MPI_Intercomm_create`(3)](MPI_Intercomm_create.html)
-[`MPI_Comm_create_group`(3)](MPI_Comm_create_group.html)
+[`MPI_Comm_split`(3)](./?file=MPI_Comm_split.md)
+[`MPI_Intercomm_create`(3)](./?file=MPI_Intercomm_create.md)
+[`MPI_Comm_create_group`(3)](./?file=MPI_Comm_create_group.md)

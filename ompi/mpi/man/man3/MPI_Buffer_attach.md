@@ -89,4 +89,4 @@ guarantee that an MPI program can continue past an error.
 
 # See Also
 
-[MPI_Buffer_detach(3)](MPI_Buffer_detach.html)
+[MPI_Buffer_detach(3)](./?file=MPI_Buffer_detach.md)

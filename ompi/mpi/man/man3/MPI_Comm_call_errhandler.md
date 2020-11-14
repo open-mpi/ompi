@@ -65,5 +65,5 @@ See the MPI man page for a full list of MPI error codes.
 
 # See Also
 
-[`MPI_Comm_create_errhandler`(3)](MPI_Comm_create_errhandler.html)
-[`MPI_Comm_set_errhandler`(3)](MPI_Comm_set_errhandler.html)
+[`MPI_Comm_create_errhandler`(3)](./?file=MPI_Comm_create_errhandler.md)
+[`MPI_Comm_set_errhandler`(3)](./?file=MPI_Comm_set_errhandler.md)

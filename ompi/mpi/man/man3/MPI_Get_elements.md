@@ -129,4 +129,4 @@ length of the declared integer in bytes.
 
 # See Also
 
-[`MPI_Get_count`(3)](MPI_Get_count.html)
+[`MPI_Get_count`(3)](./?file=MPI_Get_count.md)

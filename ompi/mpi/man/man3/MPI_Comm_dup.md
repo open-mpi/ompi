@@ -85,5 +85,5 @@ guarantee that an MPI program can continue past an error.
 
 # See Also
 
-[`MPI_Comm_dup_with_info`(3)](MPI_Comm_dup_with_info.html)
-[`MPI_Comm_idup`(3)](MPI_Comm_idup.html)
+[`MPI_Comm_dup_with_info`(3)](./?file=MPI_Comm_dup_with_info.md)
+[`MPI_Comm_idup`(3)](./?file=MPI_Comm_idup.md)

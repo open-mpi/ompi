@@ -72,4 +72,4 @@ guarantee that an MPI program can continue past an error.
 
 # See Also
 
-[`MPI_Cart_map`(3)](MPI_Cart_map.html)
+[`MPI_Cart_map`(3)](./?file=MPI_Cart_map.md)

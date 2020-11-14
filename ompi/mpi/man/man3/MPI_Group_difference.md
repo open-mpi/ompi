@@ -76,4 +76,4 @@ guarantee that an MPI program can continue past an error.
 
 # See Also
 
-[`MPI_Group_free`(3)](MPI_Group_free.html)
+[`MPI_Group_free`(3)](./?file=MPI_Group_free.md)

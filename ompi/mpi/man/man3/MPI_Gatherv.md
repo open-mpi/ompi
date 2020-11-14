@@ -374,6 +374,6 @@ guarantee that an MPI program can continue past an error.
 
 # See Also
 
-[`MPI_Gather`(3)](MPI_Gather.html)
-[`MPI_Scatter`(3)](MPI_Scatter.html)
-[`MPI_Scatterv`(3)](MPI_Scatterv.html)
+[`MPI_Gather`(3)](./?file=MPI_Gather.md)
+[`MPI_Scatter`(3)](./?file=MPI_Scatter.md)
+[`MPI_Scatterv`(3)](./?file=MPI_Scatterv.md)

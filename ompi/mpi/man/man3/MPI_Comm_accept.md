@@ -74,5 +74,5 @@ See the MPI man page for a full list of MPI error codes.
 
 # See Also
 
-[`MPI_Comm_connect`(3)](MPI_Comm_connect.html)
-[`MPI_Open_port`(3)](MPI_Open_port.html)
+[`MPI_Comm_connect`(3)](./?file=MPI_Comm_connect.md)
+[`MPI_Open_port`(3)](./?file=MPI_Open_port.md)

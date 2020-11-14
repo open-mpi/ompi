@@ -97,7 +97,7 @@ guarantee that an MPI program can continue past an error.
 
 # See Also
 
-[`MPI_Init`(3)](MPI_Init.html)
-[`MPI_Init_thread`(3)](MPI_Init_thread.html)
-[`MPI_Initialized`(3)](MPI_Initialized.html)
-[`MPI_Finalized`(3)](MPI_Finalized.html)
+[`MPI_Init`(3)](./?file=MPI_Init.md)
+[`MPI_Init_thread`(3)](./?file=MPI_Init_thread.md)
+[`MPI_Initialized`(3)](./?file=MPI_Initialized.md)
+[`MPI_Finalized`(3)](./?file=MPI_Finalized.md)

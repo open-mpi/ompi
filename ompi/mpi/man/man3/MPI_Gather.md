@@ -200,6 +200,6 @@ See the MPI man page for a full list of MPI error codes.
 
 # See Also
 
-[`MPI_Gatherv`(3)](MPI_Gatherv.html)
-[`MPI_Scatter`(3)](MPI_Scatter.html)
-[`MPI_Scatterv`(3)](MPI_Scatterv.html)
+[`MPI_Gatherv`(3)](./?file=MPI_Gatherv.md)
+[`MPI_Scatter`(3)](./?file=MPI_Scatter.md)
+[`MPI_Scatterv`(3)](./?file=MPI_Scatterv.md)

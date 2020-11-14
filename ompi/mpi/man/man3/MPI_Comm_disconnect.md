@@ -76,5 +76,5 @@ guarantee that an MPI program can continue past an error.
 
 # See Also
 
-[`MPI_Comm_connect`(3)](MPI_Comm_connect.html)
-[`MPI_Comm_accept`(3)](MPI_Comm_accept.html)
+[`MPI_Comm_connect`(3)](./?file=MPI_Comm_connect.md)
+[`MPI_Comm_accept`(3)](./?file=MPI_Comm_accept.md)
