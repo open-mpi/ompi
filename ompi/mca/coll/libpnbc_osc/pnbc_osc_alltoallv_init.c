@@ -51,11 +51,14 @@ static int pnbc_osc_alltoallv_init(const void* sendbuf, const int *sendcounts, c
                   MPI_Datatype recvtype, struct ompi_communicator_t *comm, MPI_Info info,
                   ompi_request_t ** request, struct mca_coll_base_module_2_3_0_t *module, bool persistent)
 {
-  int rank, p, res;
-  MPI_Aint sndext, rcvext;
-  PNBC_OSC_Schedule *schedule;
+  int res;
   char inplace;
-  void * tmpbuf = NULL;
+  MPI_Aint sendext, recvext;
+  PNBC_OSC_Schedule *schedule;
+  int crank, csize;
+  MPI_Aint base_recvbuf, abs_recvbuf;
+  MPI_Aint *abs_rdispls_other, *abs_rdispls_local;
+  MPI_Win win;
   ompi_coll_libpnbc_osc_module_t *libpnbc_osc_module = (ompi_coll_libpnbc_osc_module_t*) module;
 
   PNBC_OSC_IN_PLACE(sendbuf, recvbuf, inplace);
@@ -64,16 +67,13 @@ static int pnbc_osc_alltoallv_init(const void* sendbuf, const int *sendcounts, c
     return OMPI_ERROR;
   }
 
-  rank = ompi_comm_rank (comm);
-  p = ompi_comm_size (comm);
-
-  res = ompi_datatype_type_extent (recvtype, &rcvext);
+  res = ompi_datatype_type_extent (recvtype, &recvext);
   if (MPI_SUCCESS != res) {
     PNBC_OSC_Error("MPI Error in ompi_datatype_type_extent() (%i)", res);
     return res;
   }
 
-  res = ompi_datatype_type_extent (sendtype, &sndext);
+  res = ompi_datatype_type_extent (sendtype, &sendext);
   if (MPI_SUCCESS != res) {
     PNBC_OSC_Error("MPI Error in ompi_datatype_type_extent() (%i)", res);
     return res;
@@ -81,31 +81,106 @@ static int pnbc_osc_alltoallv_init(const void* sendbuf, const int *sendcounts, c
 
   schedule = OBJ_NEW(PNBC_OSC_Schedule);
   if (OPAL_UNLIKELY(NULL == schedule)) {
-    free(tmpbuf);
     return OMPI_ERR_OUT_OF_RESOURCE;
   }
 
-  res = a2av_sched_linear(rank, p, schedule,
-                          sendbuf, sendcounts, sdispls, sndext, sendtype,
-                          recvbuf, recvcounts, rdispls, rcvext, recvtype);
+  crank = ompi_comm_rank(comm);
+  csize = ompi_comm_size(comm);
+
+  // ********************
+  // WINDOW SETUP - BEGIN
+  // ********************
+
+  // compute absolute displacement as MPI_AINT for the recvbuf pointer
+  res = MPI_Get_address(recvbuf, &base_recvbuf);
+  if (OMPI_SUCCESS != res) {
+    PNBC_OSC_Error ("MPI Error in MPI_Get_address (%i)", res);
+    return res;
+  }
+  abs_recvbuf = MPI_Aint_add(MPI_BOTTOM, base_recvbuf);
+
+  // create an array of displacements where all ranks will gather their window memory base address
+  abs_rdispls_other = (MPI_Aint*)malloc(csize * sizeof(MPI_Aint));
+  if (OPAL_UNLIKELY(NULL == abs_rdispls_other)) {
+    return OMPI_ERR_OUT_OF_RESOURCE;
+  }
+  abs_rdispls_local = (MPI_Aint*)malloc(csize * sizeof(MPI_Aint));
+  if (OPAL_UNLIKELY(NULL == abs_rdispls_local)) {
+    free(abs_rdispls_other);
+    return OMPI_ERR_OUT_OF_RESOURCE;
+  }
+
+  // create a dynamic window - data will be received here
+  res = ompi_win_create_dynamic(&info->super, comm, &win);
+  if (OMPI_SUCCESS != res) {
+    PNBC_OSC_Error ("MPI Error in win_create_dynamic (%i)", res);
+    free(abs_rdispls_other);
+    free(abs_rdispls_local);
+    return res;
+  }
+
+  // attach all pieces of local recvbuf to local window and record their absolute displacements
+  for (int r=0;r<csize;++r) {
+    res = win->w_osc_module->osc_win_attach(win, (char*)recvbuf+rdispls[r], recvext*recvcounts[r]);
+    if (OMPI_SUCCESS != res) {
+      PNBC_OSC_Error ("MPI Error in win_create_dynamic (%i)", res);
+      free(abs_rdispls_other);
+      free(abs_rdispls_local);
+      MPI_Win_free(&win);
+      return res;
+    }
+    PNBC_OSC_DEBUG(1, "[pnbc_alltoallv_init] %d attaches to dynamic window memory for rank %d with address %p (computed from rdispl value %d) of size %d bytes (computed from recvcount value %d)\n",
+                   crank, r,
+                   (char*)recvbuf+rdispls[r],
+                   rdispls[r],
+                   recvext*recvcounts[r],
+                   recvcounts[r]);
+
+    // compute displacement of local window memory portion
+    abs_rdispls_local[r] = MPI_Aint_add(abs_recvbuf, (MPI_Aint)rdispls[r]);
+    PNBC_OSC_DEBUG(1, "[nbc_allreduce_init] %d gets address at disp %ld\n",
+                   crank, abs_rdispls_local[r]);
+  }
+
+  // swap local rdispls for remote rdispls
+  // put the displacements for all local portions on the window
+  // get the displacements for all other portions on the window
+  res = comm->c_coll->coll_alltoall(abs_rdispls_local, csize, MPI_AINT,
+                                    abs_rdispls_other, csize, MPI_AINT,
+                                    comm, comm->c_coll->coll_alltoall_module);
+  if (OMPI_SUCCESS != res) {
+    PNBC_OSC_Error ("MPI Error in alltoall for rdispls (%i)", res);
+    free(abs_rdispls_other);
+    free(abs_rdispls_local);
+    MPI_Win_free(&win);
+    return res;
+  }
+
+  // the local displacement values are only needed remotely
+  free(abs_rdispls_local);
+
+  // ******************
+  // WINDOW SETUP - END
+  // ******************
+
+  res = a2av_sched_linear(crank, csize, schedule,
+                          sendbuf, sendcounts, sdispls, sendext, sendtype,
+                          recvbuf, recvcounts, rdispls, recvext, recvtype);
 
   if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
     OBJ_RELEASE(schedule);
-    free(tmpbuf);
     return res;
   }
 
   res = PNBC_OSC_Sched_commit(schedule);
   if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
     OBJ_RELEASE(schedule);
-    free(tmpbuf);
     return res;
   }
 
-  res = PNBC_OSC_Schedule_request(schedule, comm, libpnbc_osc_module, persistent, request, tmpbuf);
+  res = PNBC_OSC_Schedule_request(schedule, comm, libpnbc_osc_module, persistent, request, abs_rdispls_other);
   if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
     OBJ_RELEASE(schedule);
-    free(tmpbuf);
     return res;
   }
 
