@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2011-2017 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2014-2018 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -98,6 +98,7 @@ int orte_ras_base_node_insert(opal_list_t* nodes, orte_job_t *jdata)
                 hnp_node->name = strdup("mpirun");
                 skiphnp = true;
                 ORTE_SET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping, ORTE_MAPPING_NO_USE_LOCAL);
+                ORTE_FLAG_SET(hnp_node, ORTE_NODE_NON_USABLE);  // leave this node out of mapping operations
             }
         }
     }
