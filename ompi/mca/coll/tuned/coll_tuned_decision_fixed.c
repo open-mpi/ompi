@@ -1245,7 +1245,7 @@ int ompi_coll_tuned_allgatherv_intra_dec_fixed(const void *sbuf, int scount,
                                                mca_coll_base_module_t *module)
 {
     int communicator_size, alg, i;
-    size_t dsize, total_dsize;
+    size_t dsize, total_dsize, per_rank_dsize;
 
     communicator_size = ompi_comm_size(comm);
 
@@ -1258,6 +1258,9 @@ int ompi_coll_tuned_allgatherv_intra_dec_fixed(const void *sbuf, int scount,
     total_dsize = 0;
     for (i = 0; i < communicator_size; i++) { total_dsize += dsize * rcounts[i]; }
 
+    /* use the per-rank data size as basis, similar to allgather */
+    per_rank_dsize = total_dsize / communicator_size;
+
     /** Algorithms:
      *  {1, "default"},
      *  {2, "bruck"},
@@ -1266,97 +1269,87 @@ int ompi_coll_tuned_allgatherv_intra_dec_fixed(const void *sbuf, int scount,
      *  {5, "two_proc"},
      */
     if (communicator_size == 2) {
-        if (total_dsize < 2048) {
+        if (per_rank_dsize < 2048) {
             alg = 3;
-        } else if (total_dsize < 4096) {
+        } else if (per_rank_dsize < 4096) {
             alg = 5;
-        } else if (total_dsize < 8192) {
+        } else if (per_rank_dsize < 8192) {
             alg = 3;
         } else {
             alg = 5;
         }
     } else if (communicator_size < 8) {
-        if (total_dsize < 256) {
+        if (per_rank_dsize < 256) {
             alg = 1;
-        } else if (total_dsize < 4096) {
+        } else if (per_rank_dsize < 4096) {
             alg = 4;
-        } else if (total_dsize < 8192) {
+        } else if (per_rank_dsize < 8192) {
             alg = 3;
-        } else if (total_dsize < 16384) {
+        } else if (per_rank_dsize < 16384) {
             alg = 4;
-        } else if (total_dsize < 262144) {
+        } else if (per_rank_dsize < 262144) {
             alg = 2;
         } else {
             alg = 4;
         }
     } else if (communicator_size < 16) {
-        if (total_dsize < 1024) {
+        if (per_rank_dsize < 1024) {
             alg = 1;
         } else {
             alg = 2;
         }
     } else if (communicator_size < 32) {
-        if (total_dsize < 32) {
+        if (per_rank_dsize < 128) {
             alg = 1;
-        } else {
+        } else if (per_rank_dsize < 262144) {
             alg = 2;
+        } else {
+            alg = 3;
         }
     } else if (communicator_size < 64) {
-        if (total_dsize < 1024) {
+        if (per_rank_dsize < 256) {
+            alg = 1;
+        } else if (per_rank_dsize < 8192) {
             alg = 2;
-        } else if (total_dsize < 2048) {
-            alg = 4;
-        } else if (total_dsize < 8192) {
-            alg = 3;
-        } else if (total_dsize < 16384) {
-            alg = 4;
-        } else if (total_dsize < 32768) {
-            alg = 3;
-        } else if (total_dsize < 65536) {
-            alg = 4;
         } else {
             alg = 3;
         }
     } else if (communicator_size < 128) {
-        if (total_dsize < 16) {
+        if (per_rank_dsize < 256) {
             alg = 1;
-        } else if (total_dsize < 1024) {
+        } else if (per_rank_dsize < 4096) {
             alg = 2;
-        } else if (total_dsize < 65536) {
-            alg = 4;
         } else {
             alg = 3;
         }
     } else if (communicator_size < 256) {
-        if (total_dsize < 1024) {
+        if (per_rank_dsize < 1024) {
             alg = 2;
-        } else if (total_dsize < 65536) {
+        } else if (per_rank_dsize < 65536) {
             alg = 4;
         } else {
             alg = 3;
         }
     } else if (communicator_size < 512) {
-        if (total_dsize < 1024) {
+        if (per_rank_dsize < 1024) {
             alg = 2;
-        } else if (total_dsize < 131072) {
-            alg = 4;
         } else {
             alg = 3;
         }
     } else if (communicator_size < 1024) {
-        if (total_dsize < 512) {
+        if (per_rank_dsize < 512) {
             alg = 2;
-        } else if (total_dsize < 1024) {
+        } else if (per_rank_dsize < 1024) {
             alg = 1;
-        } else if (total_dsize < 4096) {
+        } else if (per_rank_dsize < 4096) {
             alg = 2;
-        } else if (total_dsize < 1048576) {
+        } else if (per_rank_dsize < 1048576) {
             alg = 4;
         } else {
             alg = 3;
         }
     } else {
-        if (total_dsize < 4096) {
+        if (per_rank_dsize < 4096) {
             alg = 2;
         } else {
             alg = 4;
