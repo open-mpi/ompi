@@ -528,15 +528,17 @@ int ompi_coll_tuned_allgatherv_intra_dec_dynamic(const void *sbuf, int scount,
            - calculate message size and other necessary information */
         int comsize, i;
         int alg, faninout, segsize, ignoreme;
-        size_t dsize, total_size;
+        size_t dsize, total_size, per_rank_size;
 
         comsize = ompi_comm_size(comm);
         ompi_datatype_type_size (sdtype, &dsize);
         total_size = 0;
         for (i = 0; i < comsize; i++) { total_size += dsize * rcounts[i]; }
 
+        per_rank_size = total_size / comsize;
+
         alg = ompi_coll_tuned_get_target_method_params (tuned_module->com_rules[ALLGATHERV],
-                                                        total_size, &faninout, &segsize, &ignoreme);
+                                                        per_rank_size, &faninout, &segsize, &ignoreme);
         if (alg) {
             /* we have found a valid choice from the file based rules for
                this message size */
