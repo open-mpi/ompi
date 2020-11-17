@@ -63,7 +63,7 @@ const char *opal_info_deprecated_value = "deprecated-ompi-info-value";
  */
 void oshmem_info_do_config(bool want_all)
 {
-    char *fortran;
+    char *fortran_binding;
     char *heterogeneous;
     char *memprofile;
     char *memdebug;
@@ -129,13 +129,13 @@ void oshmem_info_do_config(bool want_all)
 
     /* setup strings that require allocation */
     if (OMPI_BUILD_FORTRAN_BINDINGS >= OMPI_FORTRAN_MPIFH_BINDINGS) {
-        (void)asprintf(&fortran, "yes (%s)",
+        (void)asprintf(&fortran_binding, "yes (%s)",
                        (OPAL_HAVE_WEAK_SYMBOLS ? "all" :
                         (OMPI_FORTRAN_CAPS ? "caps" :
                          (OMPI_FORTRAN_PLAIN ? "lower case" :
                           (OMPI_FORTRAN_SINGLE_UNDERSCORE ? "single underscore" : "double underscore")))));
     } else {
-        fortran = strdup("no");
+        fortran_binding = strdup("no");
     }
 
 #if OMPI_RTE_ORTE
@@ -163,8 +163,8 @@ void oshmem_info_do_config(bool want_all)
     opal_info_out("Built host", "build:host", OMPI_BUILD_HOST);
 
     opal_info_out("C bindings", "bindings:c", "yes");
-    opal_info_out("Fort shmem.fh", "bindings:fortran", fortran);
-    free(fortran);
+    opal_info_out("Fort shmem.fh", "bindings:fortran", fortran_binding);
+    free(fortran_binding);
 
     opal_info_out("Wrapper compiler rpath", "compiler:all:rpath",
                   WRAPPER_RPATH_SUPPORT);
