@@ -12,7 +12,7 @@
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -314,8 +314,12 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
         /* the list is empty - if the HNP is allocated, then add it */
         if (orte_hnp_is_allocated) {
             nd = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, 0);
-            OBJ_RETAIN(nd);
-            opal_list_append(allocated_nodes, &nd->super);
+            if (!ORTE_FLAG_TEST(nd, ORTE_NODE_NON_USABLE)) {
+                OBJ_RETAIN(nd);
+                opal_list_append(allocated_nodes, &nd->super);
+            } else {
+                nd = NULL;
+            }
         } else {
             nd = NULL;
         }
