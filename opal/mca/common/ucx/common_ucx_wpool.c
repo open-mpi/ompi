@@ -219,6 +219,8 @@ err_get_addr:
     OBJ_RELEASE(wpool->dflt_winfo);
     wpool->dflt_winfo = NULL;
  err_worker_create:
+    OBJ_DESTRUCT(&wpool->idle_workers);
+    OBJ_DESTRUCT(&wpool->active_workers);
     ucp_cleanup(wpool->ucp_ctx);
  err_ucp_init:
     return rc;
