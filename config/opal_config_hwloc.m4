@@ -5,6 +5,7 @@ dnl Copyright (c) 2014-2018 Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
 dnl Copyright (c) 2020      Amazon.com, Inc. or its affiliates.  All Rights
 dnl                         reserved.
+dnl Copyright (c) 2020      Intel, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -155,7 +156,7 @@ AC_DEFUN([_OPAL_CONFIG_HWLOC_INTERNAL], [
     # constant in autogen.pl.
     OPAL_EXPAND_TARBALL([3rd-party/hwloc_tarball], [3rd-party/hwloc_directory], [configure])
     OPAL_SUBDIR_ENV_CLEAN([opal_hwloc_configure])
-    PAC_CONFIG_SUBDIR_ARGS([3rd-party/hwloc_directory], [], [],
+    PAC_CONFIG_SUBDIR_ARGS([3rd-party/hwloc_directory], [], [[--enable-debug]],
         [subconfig_happy=1], [subconfig_happy=0])
     OPAL_SUBDIR_ENV_RESTORE([opal_hwloc_configure])
 
