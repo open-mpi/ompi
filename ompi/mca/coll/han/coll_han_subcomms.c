@@ -258,7 +258,7 @@ int mca_coll_han_comm_create(struct ompi_communicator_t *comm,
      * Upgrade sm module priority to set up low_comms[0] with sm module
      * This sub-communicator contains the ranks that share my node.
      */
-    opal_info_set(&comm_info, "ompi_comm_coll_preference", "sm,^han");
+    opal_info_set(&comm_info, "ompi_comm_coll_preference", "tuned,^han");
     ompi_comm_split_type(comm, MPI_COMM_TYPE_SHARED, 0,
                          &comm_info, &(low_comms[0]));
 
@@ -272,7 +272,7 @@ int mca_coll_han_comm_create(struct ompi_communicator_t *comm,
      * Upgrade shared module priority to set up low_comms[1] with shared module
      * This sub-communicator contains the ranks that share my node.
      */
-    opal_info_set(&comm_info, "ompi_comm_coll_preference", "shared,^han");
+    opal_info_set(&comm_info, "ompi_comm_coll_preference", "sm,^han");
     ompi_comm_split_type(comm, MPI_COMM_TYPE_SHARED, 0,
                          &comm_info, &(low_comms[1]));
 
