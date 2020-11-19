@@ -81,7 +81,7 @@ static int mca_pml_ob1_recv_request_free(struct ompi_request_t** request)
                              &(recvreq->req_recv.req_base), PERUSE_RECV );
 
     if( true == recvreq->req_recv.req_base.req_pml_complete ) {
-        /* make buffer defined when the request is compeleted,
+        /* make buffer defined when the request is completed,
            and before releasing the objects. */
         MEMCHECKER(
                    memchecker_call(&opal_memchecker_base_mem_defined,

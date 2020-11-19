@@ -135,7 +135,7 @@ int mca_pml_ob1_recv(void *addr,
     ompi_request_wait_completion(&recvreq->req_recv.req_base.req_ompi);
 
     if( true == recvreq->req_recv.req_base.req_pml_complete ) {
-        /* make buffer defined when the request is compeleted */
+        /* make buffer defined when the request is completed */
         MEMCHECKER(
             memchecker_call(&opal_memchecker_base_mem_defined,
                             recvreq->req_recv.req_base.req_addr,
@@ -151,7 +151,7 @@ int mca_pml_ob1_recv(void *addr,
     rc = recvreq->req_recv.req_base.req_ompi.req_status.MPI_ERROR;
 
     if (recvreq->req_recv.req_base.req_pml_complete) {
-        /* make buffer defined when the request is compeleted,
+        /* make buffer defined when the request is completed,
            and before releasing the objects. */
         MEMCHECKER(
             memchecker_call(&opal_memchecker_base_mem_defined,
