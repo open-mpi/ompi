@@ -3,9 +3,9 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -146,7 +146,7 @@ mca_coll_base_module_t *ompi_coll_adapt_comm_query(struct ompi_communicator_t * 
     /* Get the priority level attached to this module.
        If priority is less than or equal to 0, then the module is unavailable. */
     *priority = mca_coll_adapt_component.adapt_priority;
-    if (mca_coll_adapt_component.adapt_priority <= 0) {
+    if (mca_coll_adapt_component.adapt_priority < 0) {
         opal_output_verbose(10, ompi_coll_base_framework.framework_output,
                             "coll:adapt:comm_query (%d/%s): priority too low; "
                             "disqualifying myself",

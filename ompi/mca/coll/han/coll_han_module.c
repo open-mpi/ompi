@@ -188,7 +188,7 @@ mca_coll_han_comm_query(struct ompi_communicator_t * comm, int *priority)
     /* Get the priority level attached to this module. If priority is less
      * than or equal to 0, then the module is unavailable. */
     *priority = mca_coll_han_component.han_priority;
-    if (mca_coll_han_component.han_priority <= 0) {
+    if (mca_coll_han_component.han_priority < 0) {
         opal_output_verbose(10, ompi_coll_base_framework.framework_output,
                             "coll:han:comm_query (%d/%s): priority too low; disqualifying myself",
                             comm->c_contextid, comm->c_name);
