@@ -84,7 +84,7 @@ static int nbc_gather_init(const void* sendbuf, int sendcount, MPI_Datatype send
   search.recvcount = recvcount;
   search.recvtype = recvtype;
   search.root = root;
-  found = (NBC_Gather_args *) hb_tree_search ((hb_tree *) libnbc_module->NBC_Dict[NBC_GATHER],
+  found = (NBC_Gather_args *) ompi_nbc_hb_tree_search ((hb_tree *) libnbc_module->NBC_Dict[NBC_GATHER],
                                               &search);
   if (NULL == found) {
 #endif
@@ -143,7 +143,7 @@ static int nbc_gather_init(const void* sendbuf, int sendcount, MPI_Datatype send
       args->recvtype = recvtype;
       args->root = root;
       args->schedule = schedule;
-      res = hb_tree_insert ((hb_tree *) libnbc_module->NBC_Dict[NBC_GATHER], args, args, 0);
+      res = ompi_nbc_hb_tree_insert ((hb_tree *) libnbc_module->NBC_Dict[NBC_GATHER], args, args, 0);
       if (0 == res) {
         OBJ_RETAIN(schedule);
 

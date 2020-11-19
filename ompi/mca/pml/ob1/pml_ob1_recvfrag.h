@@ -163,9 +163,9 @@ extern void mca_pml_ob1_recv_frag_callback_fin (mca_btl_base_module_t *btl,
  * will be the next in sequence.
  */
 extern mca_pml_ob1_recv_frag_t*
-check_cantmatch_for_match(mca_pml_ob1_comm_proc_t *proc);
+ompi_ob1_check_cantmatch_for_match(mca_pml_ob1_comm_proc_t *proc);
 
-void append_frag_to_ordered_list(mca_pml_ob1_recv_frag_t** queue,
+void ompi_ob1_append_frag_to_ordered_list(mca_pml_ob1_recv_frag_t** queue,
                                  mca_pml_ob1_recv_frag_t* frag,
                                  uint16_t seq);
 

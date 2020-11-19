@@ -118,7 +118,7 @@ static int nbc_bcast_init(void *buffer, int count, MPI_Datatype datatype, int ro
   search.count = count;
   search.datatype = datatype;
   search.root = root;
-  found = (NBC_Bcast_args *) hb_tree_search ((hb_tree *) libnbc_module->NBC_Dict[NBC_BCAST], &search);
+  found = (NBC_Bcast_args *) ompi_nbc_hb_tree_search ((hb_tree *) libnbc_module->NBC_Dict[NBC_BCAST], &search);
   if (NULL == found) {
 #endif
     schedule = OBJ_NEW(NBC_Schedule);
@@ -161,7 +161,7 @@ static int nbc_bcast_init(void *buffer, int count, MPI_Datatype datatype, int ro
       args->datatype = datatype;
       args->root = root;
       args->schedule = schedule;
-      res = hb_tree_insert ((hb_tree *) libnbc_module->NBC_Dict[NBC_BCAST], args, args, 0);
+      res = ompi_nbc_hb_tree_insert ((hb_tree *) libnbc_module->NBC_Dict[NBC_BCAST], args, args, 0);
       if (0 == res) {
         OBJ_RETAIN (schedule);
 

@@ -67,7 +67,7 @@ mca_pml_base_component_2_0_0_t mca_pml_cm_component = {
  * These are called internally by the library when the send
  * is completed from its perspective.
  */
-void (*send_completion_callbacks[MCA_PML_BASE_SEND_SIZE])
+void (*ompi_cm_send_completion_callbacks[MCA_PML_BASE_SEND_SIZE])
     (struct mca_mtl_request_t *mtl_request) =
   { mca_pml_cm_send_request_completion,
     mca_pml_cm_send_request_completion,

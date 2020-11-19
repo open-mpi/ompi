@@ -83,7 +83,7 @@ static double log10_2 = 0.;
 static int rank_world = -1;
 static int nprocs_world = 0;
 
-opal_hash_table_t *common_monitoring_translation_ht = NULL;
+opal_hash_table_t *ompi_common_monitoring_translation_ht = NULL;
 
 /* Reset all the monitoring arrays */
 static void mca_common_monitoring_reset ( void );
@@ -225,8 +225,8 @@ int mca_common_monitoring_init( void )
     mca_common_monitoring_output_stream_id =
         opal_output_open(&mca_common_monitoring_output_stream_obj);
     /* Initialize proc translation hashtable */
-    common_monitoring_translation_ht = OBJ_NEW(opal_hash_table_t);
-    opal_hash_table_init(common_monitoring_translation_ht, 2048);
+    ompi_common_monitoring_translation_ht = OBJ_NEW(opal_hash_table_t);
+    opal_hash_table_init(ompi_common_monitoring_translation_ht, 2048);
     return OMPI_SUCCESS;
 }
 
@@ -246,8 +246,8 @@ void mca_common_monitoring_finalize( void )
     free(mca_common_monitoring_output_stream_obj.lds_prefix);
     /* Free internal data structure */
     free((void *) pml_data);  /* a single allocation */
-    opal_hash_table_remove_all( common_monitoring_translation_ht );
-    OBJ_RELEASE(common_monitoring_translation_ht);
+    opal_hash_table_remove_all( ompi_common_monitoring_translation_ht );
+    OBJ_RELEASE(ompi_common_monitoring_translation_ht);
     mca_common_monitoring_coll_finalize();
     if( NULL != mca_common_monitoring_current_filename ) {
         free(mca_common_monitoring_current_filename);
@@ -484,7 +484,7 @@ int mca_common_monitoring_add_procs(struct ompi_proc_t **procs,
 
             key = *((uint64_t*)&tmp);
             /* save the rank of the process in MPI_COMM_WORLD in the hash using the proc_name as the key */
-            if( OPAL_SUCCESS != opal_hash_table_set_value_uint64(common_monitoring_translation_ht,
+            if( OPAL_SUCCESS != opal_hash_table_set_value_uint64(ompi_common_monitoring_translation_ht,
                                                                  key, (void*)(uintptr_t)peer_rank) ) {
                 return OMPI_ERR_OUT_OF_RESOURCE;  /* failed to allocate memory or growing the hash table */
             }

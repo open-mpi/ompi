@@ -175,8 +175,8 @@ posix_runtime_query(mca_base_module_t **module,
          "shmem: posix: runtime_query: NO HINT PROVIDED:"
          "starting run-time test...\n")
     );
-    /* shmem_posix_shm_open successfully shm_opened - we can use posix sm! */
-    if (-1 != (fd = shmem_posix_shm_open(tmp_buff,
+    /* ompi_shmem_posix_shm_open successfully shm_opened - we can use posix sm! */
+    if (-1 != (fd = ompi_shmem_posix_shm_open(tmp_buff,
                                          OPAL_SHMEM_POSIX_FILE_LEN_MAX -1))) {
         /* free up allocated resources before we return */
         if (0 != shm_unlink(tmp_buff)) {
@@ -186,7 +186,7 @@ posix_runtime_query(mca_base_module_t **module,
             opal_show_help("help-opal-shmem-posix.txt", "sys call fail", 1,
                            hn, "shm_unlink(2)", "", strerror(err), err);
             /* something strange happened, so consider this a run-time test
-             * failure even though shmem_posix_shm_open was successful */
+             * failure even though ompi_shmem_posix_shm_open was successful */
         }
         /* all is well */
         else {

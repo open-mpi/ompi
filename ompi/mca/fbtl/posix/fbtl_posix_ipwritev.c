@@ -50,7 +50,7 @@ ssize_t  mca_fbtl_posix_ipwritev (ompio_file_t *fh,
     data->aio_req_count = fh->f_num_of_io_entries;
     data->aio_open_reqs = fh->f_num_of_io_entries;
     data->aio_req_type  = FBTL_POSIX_WRITE;
-    data->aio_req_chunks = fbtl_posix_max_aio_active_reqs;
+    data->aio_req_chunks = ompi_fbtl_posix_max_aio_active_reqs;
     data->aio_total_len = 0;
     data->aio_reqs = (struct aiocb *) malloc (sizeof(struct aiocb) *
                                               fh->f_num_of_io_entries);

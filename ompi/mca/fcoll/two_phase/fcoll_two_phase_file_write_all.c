@@ -120,7 +120,7 @@ static int is_aggregator(int rank,
 			 int *aggregator_list);
 #endif
 
-void two_phase_heap_merge(mca_common_ompio_access_array_t *others_req,
+static void two_phase_heap_merge(mca_common_ompio_access_array_t *others_req,
 			  int *count,
 			  OMPI_MPI_OFFSET_TYPE *srt_off,
 			  int *srt_len,
@@ -1404,7 +1404,7 @@ static int two_phase_fill_send_buffer(ompio_file_t *fh,
 
 
 
-void two_phase_heap_merge( mca_common_ompio_access_array_t *others_req,
+static void two_phase_heap_merge( mca_common_ompio_access_array_t *others_req,
 			   int *count,
 			   OMPI_MPI_OFFSET_TYPE *srt_off,
 			   int *srt_len,

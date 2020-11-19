@@ -69,7 +69,7 @@ static int nbc_neighbor_allgather_init(const void *sbuf, int scount, MPI_Datatyp
   search.rbuf = rbuf;
   search.rcount = rcount;
   search.rtype = rtype;
-  found = (NBC_Ineighbor_allgather_args *) hb_tree_search ((hb_tree *) libnbc_module->NBC_Dict[NBC_NEIGHBOR_ALLGATHER],
+  found = (NBC_Ineighbor_allgather_args *) ompi_nbc_hb_tree_search ((hb_tree *) libnbc_module->NBC_Dict[NBC_NEIGHBOR_ALLGATHER],
                                                            &search);
   if (NULL == found) {
 #endif
@@ -134,7 +134,7 @@ static int nbc_neighbor_allgather_init(const void *sbuf, int scount, MPI_Datatyp
       args->rcount = rcount;
       args->rtype = rtype;
       args->schedule = schedule;
-      res = hb_tree_insert ((hb_tree *) libnbc_module->NBC_Dict[NBC_NEIGHBOR_ALLGATHER], args, args, 0);
+      res = ompi_nbc_hb_tree_insert ((hb_tree *) libnbc_module->NBC_Dict[NBC_NEIGHBOR_ALLGATHER], args, args, 0);
       if (0 == res) {
         OBJ_RETAIN(schedule);
 

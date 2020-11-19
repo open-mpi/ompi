@@ -57,7 +57,7 @@ typedef struct mca_common_sm_mpool_module_t {
     int32_t mem_node;
 } mca_common_sm_mpool_module_t;
 
-OPAL_DECLSPEC mca_mpool_base_module_t *common_sm_mpool_create (mca_common_sm_mpool_resources_t *);
+OPAL_DECLSPEC mca_mpool_base_module_t *ompi_sm_common_sm_mpool_create (mca_common_sm_mpool_resources_t *);
 
 END_C_DECLS
 

@@ -45,7 +45,7 @@ BEGIN_C_DECLS
 extern int mca_common_monitoring_output_stream_id;
 extern int mca_common_monitoring_enabled;
 extern int mca_common_monitoring_current_state;
-extern opal_hash_table_t *common_monitoring_translation_ht;
+extern opal_hash_table_t *ompi_common_monitoring_translation_ht;
 
 OMPI_DECLSPEC int mca_common_monitoring_init( void );
 OMPI_DECLSPEC void mca_common_monitoring_finalize( void );
@@ -88,7 +88,7 @@ static inline int mca_common_monitoring_get_world_rank(int dest, ompi_group_t *g
      * If this fails the destination is not part of my MPI_COM_WORLD
      * Lookup its name in the rank hastable to get its MPI_COMM_WORLD rank
      */
-    int ret = opal_hash_table_get_value_uint64(common_monitoring_translation_ht,
+    int ret = opal_hash_table_get_value_uint64(ompi_common_monitoring_translation_ht,
                                                key, (void *)&rank);
 
     /* Use intermediate variable to avoid overwriting while looking up in the hashtbale. */

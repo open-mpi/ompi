@@ -87,7 +87,7 @@ static void mca_common_sm_mpool_module_init(mca_common_sm_mpool_module_t* mpool)
     mpool->mem_node = -1;
 }
 
-mca_mpool_base_module_t *common_sm_mpool_create (mca_common_sm_mpool_resources_t *resources)
+mca_mpool_base_module_t *ompi_sm_common_sm_mpool_create (mca_common_sm_mpool_resources_t *resources)
 {
     mca_common_sm_mpool_module_t *mpool_module;
     mca_allocator_base_component_t* allocator_component;

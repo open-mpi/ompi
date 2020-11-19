@@ -504,7 +504,7 @@ int ompi_coll_adapt_ireduce(const void *sbuf, void *rbuf, int count, struct ompi
 
 
     return ompi_coll_adapt_ireduce_generic(sbuf, rbuf, count, dtype, op, root, comm, request, module,
-                                           adapt_module_cached_topology(module, comm, root, mca_coll_adapt_component.adapt_ireduce_algorithm),
+                                           ompi_adapt_module_cached_topology(module, comm, root, mca_coll_adapt_component.adapt_ireduce_algorithm),
                                            mca_coll_adapt_component.adapt_ireduce_segment_size);
 
 }

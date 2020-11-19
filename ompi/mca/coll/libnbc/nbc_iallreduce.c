@@ -141,7 +141,7 @@ static int nbc_allreduce_init(const void* sendbuf, void* recvbuf, int count, MPI
   search.count = count;
   search.datatype = datatype;
   search.op = op;
-  found = (NBC_Allreduce_args *) hb_tree_search ((hb_tree *) libnbc_module->NBC_Dict[NBC_ALLREDUCE], &search);
+  found = (NBC_Allreduce_args *) ompi_nbc_hb_tree_search ((hb_tree *) libnbc_module->NBC_Dict[NBC_ALLREDUCE], &search);
   if (NULL == found) {
 #endif
     schedule = OBJ_NEW(NBC_Schedule);
@@ -193,7 +193,7 @@ static int nbc_allreduce_init(const void* sendbuf, void* recvbuf, int count, MPI
       args->datatype = datatype;
       args->op = op;
       args->schedule = schedule;
-      res = hb_tree_insert ((hb_tree *) libnbc_module->NBC_Dict[NBC_ALLREDUCE], args, args, 0);
+      res = ompi_nbc_hb_tree_insert ((hb_tree *) libnbc_module->NBC_Dict[NBC_ALLREDUCE], args, args, 0);
       if (0 == res) {
         OBJ_RETAIN(schedule);
 

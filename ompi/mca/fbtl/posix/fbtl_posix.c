@@ -35,7 +35,7 @@
 #include <aio.h>
 #endif
 
-int fbtl_posix_max_aio_active_reqs=2048;
+int ompi_fbtl_posix_max_aio_active_reqs=2048;
 
 #include "ompi/mca/fbtl/fbtl.h"
 #include "ompi/mca/fbtl/posix/fbtl_posix.h"
@@ -104,7 +104,7 @@ int mca_fbtl_posix_module_init (ompio_file_t *file) {
 #if defined (FBTL_POSIX_HAVE_AIO)
     long val = sysconf(_SC_AIO_MAX);
     if ( -1 != val ) {
-	fbtl_posix_max_aio_active_reqs = (int)val;
+	ompi_fbtl_posix_max_aio_active_reqs = (int)val;
     }
 #endif
     return OMPI_SUCCESS;

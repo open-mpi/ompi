@@ -405,7 +405,7 @@ mca_coll_han_reduce_reproducible_decision(struct ompi_communicator_t *comm,
                 opal_output_verbose(30, mca_coll_han_component.han_output,
                                     "coll:han:reduce_reproducible: "
                                     "fallback on %s\n",
-                                    available_components[fallback].component_name);
+                                    ompi_han_available_components[fallback].component_name);
             }
             han_module->reproducible_reduce_module = fallback_module;
             han_module->reproducible_reduce = fallback_module->coll_reduce;

@@ -33,7 +33,7 @@
 const char *mca_coll_han_component_version_string =
     "Open MPI HAN collective MCA component version " OMPI_VERSION;
 
-ompi_coll_han_components available_components[COMPONENTS_COUNT] = {
+ompi_coll_han_components ompi_han_available_components[COMPONENTS_COUNT] = {
     { SELF, "self",  NULL },
     { BASIC, "basic", NULL },
     { LIBNBC, "libnbc", NULL },
@@ -328,7 +328,7 @@ static int han_register(void)
                 param_desc_size += snprintf(param_desc+param_desc_size, sizeof(param_desc) - param_desc_size,
                                             "%d = %s; ",
                                             component,
-                                            available_components[component].component_name);
+                                            ompi_han_available_components[component].component_name);
             }
 
             mca_base_component_var_register(c, param_name, param_desc,

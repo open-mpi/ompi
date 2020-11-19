@@ -188,7 +188,7 @@ static int nbc_alltoall_init(const void* sendbuf, int sendcount, MPI_Datatype se
   search.recvbuf = recvbuf;
   search.recvcount = recvcount;
   search.recvtype = recvtype;
-  found = (NBC_Alltoall_args *) hb_tree_search ((hb_tree *) libnbc_module->NBC_Dict[NBC_ALLTOALL], &search);
+  found = (NBC_Alltoall_args *) ompi_nbc_hb_tree_search ((hb_tree *) libnbc_module->NBC_Dict[NBC_ALLTOALL], &search);
   if (NULL == found) {
 #endif
     /* not found - generate new schedule */
@@ -250,7 +250,7 @@ static int nbc_alltoall_init(const void* sendbuf, int sendcount, MPI_Datatype se
       args->recvcount = recvcount;
       args->recvtype = recvtype;
       args->schedule = schedule;
-      res = hb_tree_insert ((hb_tree *) libnbc_module->NBC_Dict[NBC_ALLTOALL], args, args, 0);
+      res = ompi_nbc_hb_tree_insert ((hb_tree *) libnbc_module->NBC_Dict[NBC_ALLTOALL], args, args, 0);
       if (0 == res) {
         OBJ_RETAIN(schedule);
 

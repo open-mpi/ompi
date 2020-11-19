@@ -61,7 +61,7 @@ static int nbc_neighbor_alltoallw_init(const void *sbuf, const int *scounts, con
   search.rbuf = rbuf;
   search.rcount = rcount;
   search.rtype = rtype;
-  found = (NBC_Ineighbor_alltoallw_args *) hb_tree_search ((hb_tree *) libnbc_module->NBC_Dict[NBC_NEIGHBOR_ALLTOALLW],
+  found = (NBC_Ineighbor_alltoallw_args *) ompi_nbc_hb_tree_search ((hb_tree *) libnbc_module->NBC_Dict[NBC_NEIGHBOR_ALLTOALLW],
                                                            &search);
   if(found == NULL) {
 #endif
@@ -127,7 +127,7 @@ static int nbc_neighbor_alltoallw_init(const void *sbuf, const int *scounts, con
       args->rcount = rcount;
       args->rtype = rtype;
       args->schedule = schedule;
-      res = hb_tree_insert ((hb_tree *) libnbc_module->NBC_Dict[NBC_NEIGHBOR_ALLTOALLW], args, args, 0);
+      res = ompi_nbc_hb_tree_insert ((hb_tree *) libnbc_module->NBC_Dict[NBC_NEIGHBOR_ALLTOALLW], args, args, 0);
       if (0 == res) {
         OBJ_RETAIN(schedule);
 

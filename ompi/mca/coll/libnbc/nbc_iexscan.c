@@ -95,7 +95,7 @@ static int nbc_exscan_init(const void* sendbuf, void* recvbuf, int count, MPI_Da
     search.count = count;
     search.datatype = datatype;
     search.op = op;
-    found = (NBC_Scan_args *) hb_tree_search ((hb_tree *) libnbc_module->NBC_Dict[NBC_EXSCAN], &search);
+    found = (NBC_Scan_args *) ompi_nbc_hb_tree_search ((hb_tree *) libnbc_module->NBC_Dict[NBC_EXSCAN], &search);
     if (NULL == found) {
 #endif
     schedule = OBJ_NEW(NBC_Schedule);
@@ -134,7 +134,7 @@ static int nbc_exscan_init(const void* sendbuf, void* recvbuf, int count, MPI_Da
             args->datatype = datatype;
             args->op = op;
             args->schedule = schedule;
-            res = hb_tree_insert ((hb_tree *) libnbc_module->NBC_Dict[NBC_EXSCAN], args, args, 0);
+            res = ompi_nbc_hb_tree_insert ((hb_tree *) libnbc_module->NBC_Dict[NBC_EXSCAN], args, args, 0);
             if (0 == res) {
                 OBJ_RETAIN(schedule);
 

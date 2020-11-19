@@ -157,7 +157,7 @@ static int nbc_reduce_init(const void* sendbuf, void* recvbuf, int count, MPI_Da
   search.datatype = datatype;
   search.op = op;
   search.root = root;
-  found = (NBC_Reduce_args *) hb_tree_search ((hb_tree *) libnbc_module->NBC_Dict[NBC_REDUCE], &search);
+  found = (NBC_Reduce_args *) ompi_nbc_hb_tree_search ((hb_tree *) libnbc_module->NBC_Dict[NBC_REDUCE], &search);
   if (NULL == found) {
 #endif
     schedule = OBJ_NEW(NBC_Schedule);
@@ -206,7 +206,7 @@ static int nbc_reduce_init(const void* sendbuf, void* recvbuf, int count, MPI_Da
       args->op = op;
       args->root = root;
       args->schedule = schedule;
-      res = hb_tree_insert ((hb_tree *) libnbc_module->NBC_Dict[NBC_REDUCE], args, args, 0);
+      res = ompi_nbc_hb_tree_insert ((hb_tree *) libnbc_module->NBC_Dict[NBC_REDUCE], args, args, 0);
       if (0 == res) {
         OBJ_RETAIN(schedule);
 

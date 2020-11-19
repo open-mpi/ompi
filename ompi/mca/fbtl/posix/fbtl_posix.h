@@ -41,7 +41,7 @@ int mca_fbtl_posix_component_file_unquery (ompio_file_t *file);
 int mca_fbtl_posix_module_init (ompio_file_t *file);
 int mca_fbtl_posix_module_finalize (ompio_file_t *file);
 
-extern int fbtl_posix_max_aio_active_reqs;
+extern int ompi_fbtl_posix_max_aio_active_reqs;
 
 OMPI_MODULE_DECLSPEC extern mca_fbtl_base_component_2_0_0_t mca_fbtl_posix_component;
 /*

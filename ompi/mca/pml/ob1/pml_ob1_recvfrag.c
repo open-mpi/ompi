@@ -114,7 +114,7 @@ append_frag_to_umq(custom_match_umq *queue, mca_btl_base_module_t *btl,
  * messages. On the vertical layer, messages with contiguous sequence
  * number organize themselves in a way to minimize the search space.
  */
-void append_frag_to_ordered_list (mca_pml_ob1_recv_frag_t **queue,
+void ompi_ob1_append_frag_to_ordered_list (mca_pml_ob1_recv_frag_t **queue,
                                   mca_pml_ob1_recv_frag_t *frag,
                                   uint16_t seq)
 {
@@ -327,7 +327,7 @@ static mca_pml_ob1_recv_request_t *match_one (mca_btl_base_module_t *btl,
                                               mca_pml_ob1_comm_proc_t *proc,
                                               mca_pml_ob1_recv_frag_t *frag);
 
-mca_pml_ob1_recv_frag_t *check_cantmatch_for_match (mca_pml_ob1_comm_proc_t *proc)
+mca_pml_ob1_recv_frag_t *ompi_ob1_check_cantmatch_for_match (mca_pml_ob1_comm_proc_t *proc)
 {
     mca_pml_ob1_recv_frag_t *frag = proc->frags_cant_match;
 
@@ -402,7 +402,7 @@ void mca_pml_ob1_recv_frag_callback_match (mca_btl_base_module_t *btl,
             mca_pml_ob1_recv_frag_t* frag;
             MCA_PML_OB1_RECV_FRAG_ALLOC(frag);
             MCA_PML_OB1_RECV_FRAG_INIT(frag, hdr, segments, num_segments, btl);
-            append_frag_to_ordered_list(&proc->frags_cant_match, frag, proc->expected_sequence);
+            ompi_ob1_append_frag_to_ordered_list(&proc->frags_cant_match, frag, proc->expected_sequence);
             SPC_RECORD(OMPI_SPC_OUT_OF_SEQUENCE, 1);
             OB1_MATCHING_UNLOCK(&comm->matching_lock);
             return;
@@ -422,7 +422,7 @@ void mca_pml_ob1_recv_frag_callback_match (mca_btl_base_module_t *btl,
     match = match_one(btl, hdr, segments, num_segments, comm_ptr, proc, NULL);
 
     /* The match is over. We generate the SEARCH_POSTED_Q_END here,
-     * before going into check_cantmatch_for_match so we can make
+     * before going into ompi_ob1_check_cantmatch_for_match so we can make
      * a difference for the searching time for all messages.
      */
     PERUSE_TRACE_MSG_EVENT(PERUSE_COMM_SEARCH_POSTED_Q_END, comm_ptr,
@@ -499,7 +499,7 @@ void mca_pml_ob1_recv_frag_callback_match (mca_btl_base_module_t *btl,
         mca_pml_ob1_recv_frag_t* frag;
 
         OB1_MATCHING_LOCK(&comm->matching_lock);
-        if((frag = check_cantmatch_for_match(proc))) {
+        if((frag = ompi_ob1_check_cantmatch_for_match(proc))) {
             /* mca_pml_ob1_recv_frag_match_proc() will release the lock. */
             mca_pml_ob1_recv_frag_match_proc(frag->btl, comm_ptr, proc,
                                              &frag->hdr.hdr_match,
@@ -938,7 +938,7 @@ static int mca_pml_ob1_recv_frag_match (mca_btl_base_module_t *btl,
             mca_pml_ob1_recv_frag_t* frag;
             MCA_PML_OB1_RECV_FRAG_ALLOC(frag);
             MCA_PML_OB1_RECV_FRAG_INIT(frag, hdr, segments, num_segments, btl);
-            append_frag_to_ordered_list(&proc->frags_cant_match, frag, next_msg_seq_expected);
+            ompi_ob1_append_frag_to_ordered_list(&proc->frags_cant_match, frag, next_msg_seq_expected);
 
             SPC_RECORD(OMPI_SPC_OUT_OF_SEQUENCE, 1);
             SPC_RECORD(OMPI_SPC_OOS_IN_QUEUE, 1);
@@ -998,7 +998,7 @@ mca_pml_ob1_recv_frag_match_proc (mca_btl_base_module_t *btl,
     match = match_one(btl, hdr, segments, num_segments, comm_ptr, proc, frag);
 
     /* The match is over. We generate the SEARCH_POSTED_Q_END here,
-     * before going into check_cantmatch_for_match we can make a
+     * before going into ompi_ob1_check_cantmatch_for_match we can make a
      * difference for the searching time for all messages.
      */
     PERUSE_TRACE_MSG_EVENT(PERUSE_COMM_SEARCH_POSTED_Q_END, comm_ptr,
@@ -1031,7 +1031,7 @@ mca_pml_ob1_recv_frag_match_proc (mca_btl_base_module_t *btl,
      */
     if(OPAL_UNLIKELY(NULL != proc->frags_cant_match)) {
         OB1_MATCHING_LOCK(&comm->matching_lock);
-        if((frag = check_cantmatch_for_match(proc))) {
+        if((frag = ompi_ob1_check_cantmatch_for_match(proc))) {
             hdr = &frag->hdr.hdr_match;
             segments = frag->segments;
             num_segments = frag->num_segments;

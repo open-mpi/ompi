@@ -17,17 +17,17 @@
 #include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/coll_base_topo.h"
 
-typedef struct adapt_topology_cache_item_t {
+typedef struct ompi_adapt_topology_cache_item_t {
     opal_list_item_t super;
     ompi_coll_tree_t *tree;
     int root;
     ompi_coll_adapt_algorithm_t algorithm;
-} adapt_topology_cache_item_t;
+} ompi_adapt_topology_cache_item_t;
 
-OBJ_CLASS_DECLARATION(adapt_topology_cache_item_t);
+OBJ_CLASS_DECLARATION(ompi_adapt_topology_cache_item_t);
 
 
-OMPI_DECLSPEC ompi_coll_tree_t* adapt_module_cached_topology(
+OMPI_DECLSPEC ompi_coll_tree_t* ompi_adapt_module_cached_topology(
     mca_coll_base_module_t *module,
     struct ompi_communicator_t *comm,
     int root,

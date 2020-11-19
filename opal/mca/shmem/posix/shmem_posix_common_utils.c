@@ -62,7 +62,7 @@
 
 /* ////////////////////////////////////////////////////////////////////////// */
 int
-shmem_posix_shm_open(char *posix_file_name_buff, size_t size)
+ompi_shmem_posix_shm_open(char *posix_file_name_buff, size_t size)
 {
     int attempt = 0, fd = -1;
 
@@ -92,7 +92,7 @@ shmem_posix_shm_open(char *posix_file_name_buff, size_t size)
              */
             else {
                 opal_output_verbose(10, opal_shmem_base_framework.framework_output,
-                     "shmem_posix_shm_open: disqualifying posix because "
+                     "ompi_shmem_posix_shm_open: disqualifying posix because "
                      "shm_open(2) failed with error: %s (errno %d)\n",
                      strerror(err), err);
                 break;

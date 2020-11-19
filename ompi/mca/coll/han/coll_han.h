@@ -356,7 +356,7 @@ int mca_coll_han_init_query(bool enable_progress_threads, bool enable_mpi_thread
 
 mca_coll_base_module_t *mca_coll_han_comm_query(struct ompi_communicator_t *comm, int *priority);
 
-int han_request_free(ompi_request_t ** request);
+int ompi_han_request_free(ompi_request_t ** request);
 
 /* Subcommunicator creation */
 int mca_coll_han_comm_create(struct ompi_communicator_t *comm, mca_coll_han_module_t * han_module);

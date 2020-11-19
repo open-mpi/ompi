@@ -12,22 +12,22 @@
 #include "dict.h"
 #include "dict_private.h"
 
-dict_malloc_func _dict_malloc = malloc;
-dict_free_func _dict_free = free;
+dict_malloc_func ompi_nbc_dict_malloc = malloc;
+dict_free_func ompi_nbc_dict_free = free;
 
 dict_malloc_func
-dict_set_malloc(dict_malloc_func func)
+ompi_nbc_dict_set_malloc(dict_malloc_func func)
 {
-	dict_malloc_func old = _dict_malloc;
-	_dict_malloc = func ? func : malloc;
+	dict_malloc_func old = ompi_nbc_dict_malloc;
+	ompi_nbc_dict_malloc = func ? func : malloc;
 	return old;
 }
 
 dict_free_func
-dict_set_free(dict_free_func func)
+ompi_nbc_dict_set_free(dict_free_func func)
 {
-	dict_free_func old = _dict_free;
-	_dict_free = func ? func : free;
+	dict_free_func old = ompi_nbc_dict_free;
+	ompi_nbc_dict_free = func ? func : free;
 	return old;
 }
 
@@ -36,7 +36,7 @@ dict_set_free(dict_free_func func)
  * overflow.
  */
 int
-dict_int_cmp(const void *k1, const void *k2)
+ompi_nbc_dict_int_cmp(const void *k1, const void *k2)
 {
 	const int *a = (int*)k1, *b = (int*)k2;
 
@@ -44,7 +44,7 @@ dict_int_cmp(const void *k1, const void *k2)
 }
 
 int
-dict_uint_cmp(const void *k1, const void *k2)
+ompi_nbc_dict_uint_cmp(const void *k1, const void *k2)
 {
 	const unsigned int *a = (unsigned int*)k1, *b = (unsigned int*)k2;
 
@@ -52,7 +52,7 @@ dict_uint_cmp(const void *k1, const void *k2)
 }
 
 int
-dict_long_cmp(const void *k1, const void *k2)
+ompi_nbc_dict_long_cmp(const void *k1, const void *k2)
 {
 	const long *a = (long*)k1, *b = (long*)k2;
 
@@ -60,7 +60,7 @@ dict_long_cmp(const void *k1, const void *k2)
 }
 
 int
-dict_ulong_cmp(const void *k1, const void *k2)
+ompi_nbc_dict_ulong_cmp(const void *k1, const void *k2)
 {
 	const unsigned long *a = (unsigned long*)k1, *b = (unsigned long*)k2;
 
@@ -68,13 +68,13 @@ dict_ulong_cmp(const void *k1, const void *k2)
 }
 
 int
-dict_ptr_cmp(const void *k1, const void *k2)
+ompi_nbc_dict_ptr_cmp(const void *k1, const void *k2)
 {
 	return (k1 > k2) - (k1 < k2);
 }
 
 int
-dict_str_cmp(const void *k1, const void *k2)
+ompi_nbc_dict_str_cmp(const void *k1, const void *k2)
 {
 	const char *a = (char*)k1, *b = (char*)k2;
 	char p, q;
@@ -88,7 +88,7 @@ dict_str_cmp(const void *k1, const void *k2)
 }
 
 void
-dict_destroy(dict *dct, int del)
+ompi_nbc_dict_destroy(dict *dct, int del)
 {
 	ASSERT(dct != NULL);
 
@@ -97,7 +97,7 @@ dict_destroy(dict *dct, int del)
 }
 
 void
-dict_itor_destroy(dict_itor *itor)
+ompi_nbc_dict_itor_destroy(dict_itor *itor)
 {
 	ASSERT(itor != NULL);
 

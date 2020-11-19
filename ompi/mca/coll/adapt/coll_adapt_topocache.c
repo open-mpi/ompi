@@ -14,14 +14,14 @@
 
 #include "ompi/communicator/communicator.h"
 
-static void destruct_topology_cache(adapt_topology_cache_item_t *item)
+static void destruct_topology_cache(ompi_adapt_topology_cache_item_t *item)
 {
     if (NULL != item->tree) {
         ompi_coll_base_topo_destroy_tree(&item->tree);
     }
 }
 
-OBJ_CLASS_INSTANCE(adapt_topology_cache_item_t, opal_list_item_t,
+OBJ_CLASS_INSTANCE(ompi_adapt_topology_cache_item_t, opal_list_item_t,
                    NULL, &destruct_topology_cache);
 
 static ompi_coll_tree_t *create_topology(
@@ -73,17 +73,17 @@ static ompi_coll_tree_t *create_topology(
     }
 }
 
-ompi_coll_tree_t* adapt_module_cached_topology(
+ompi_coll_tree_t* ompi_adapt_module_cached_topology(
     mca_coll_base_module_t *module,
     struct ompi_communicator_t *comm,
     int root,
     ompi_coll_adapt_algorithm_t algorithm)
 {
     mca_coll_adapt_module_t *adapt_module = (mca_coll_adapt_module_t*)module;
-    adapt_topology_cache_item_t *item;
+    ompi_adapt_topology_cache_item_t *item;
     ompi_coll_tree_t * tree;
     if (NULL != adapt_module->topo_cache) {
-        OPAL_LIST_FOREACH(item, adapt_module->topo_cache, adapt_topology_cache_item_t) {
+        OPAL_LIST_FOREACH(item, adapt_module->topo_cache, ompi_adapt_topology_cache_item_t) {
             if (item->root == root && item->algorithm == algorithm) {
                 return item->tree;
             }
@@ -95,7 +95,7 @@ ompi_coll_tree_t* adapt_module_cached_topology(
     /* topology not found, create one */
     tree = create_topology(algorithm, root, comm);
 
-    item = OBJ_NEW(adapt_topology_cache_item_t);
+    item = OBJ_NEW(ompi_adapt_topology_cache_item_t);
     item->tree = tree;
     item->root = root;
     item->algorithm = algorithm;

@@ -22,16 +22,16 @@ BEGIN_C_DECLS
 
 /** Prepare for using the sender based storage
   */
-int vprotocol_pessimist_sender_based_init(const char *mmapfile, size_t size);
+int ompi_vprotocol_pessimist_sender_based_init(const char *mmapfile, size_t size);
 
 /** Cleanup mmap etc
   */
-void vprotocol_pessimist_sender_based_finalize(void);
+void ompi_vprotocol_pessimist_sender_based_finalize(void);
 
 /** Manage mmap floating window, allocating enough memory for the message to be
   * asynchronously copied to disk.
   */
-void vprotocol_pessimist_sender_based_alloc(size_t len);
+void ompi_vprotocol_pessimist_sender_based_alloc(size_t len);
 
 
 /*******************************************************************************
@@ -177,7 +177,7 @@ static inline void vprotocol_pessimist_sender_based_copy_start(ompi_request_t *r
             pmlreq->req_bytes_packed +
             sizeof(vprotocol_pessimist_sender_based_header_t))
     {
-        vprotocol_pessimist_sender_based_alloc(pmlreq->req_bytes_packed);
+        ompi_vprotocol_pessimist_sender_based_alloc(pmlreq->req_bytes_packed);
     }
 
     /* Copy message header to the sender-based space */

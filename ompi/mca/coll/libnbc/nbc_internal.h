@@ -553,12 +553,12 @@ static inline int NBC_Unpack(void *src, int srccount, MPI_Datatype srctype, void
 static inline void NBC_SchedCache_dictwipe(hb_tree *dict, int *size) {
   hb_itor *itor;
 
-  itor = hb_itor_new(dict);
-  for (; hb_itor_valid(itor) && (*size>NBC_SCHED_DICT_LOWER); hb_itor_next(itor)) {
-    hb_tree_remove(dict, hb_itor_key(itor), 0);
+  itor = ompi_nbc_hb_itor_new(dict);
+  for (; ompi_nbc_hb_itor_valid(itor) && (*size>NBC_SCHED_DICT_LOWER); ompi_nbc_hb_itor_next(itor)) {
+    ompi_nbc_hb_tree_remove(dict, ompi_nbc_hb_itor_key(itor), 0);
     *size = *size-1;
   }
-  hb_itor_destroy(itor);
+  ompi_nbc_hb_itor_destroy(itor);
 }
 
 #define NBC_IN_PLACE(sendbuf, recvbuf, inplace) \

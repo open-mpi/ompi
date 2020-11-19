@@ -110,7 +110,7 @@ static int nbc_allgather_init(const void* sendbuf, int sendcount, MPI_Datatype s
   search.recvbuf = recvbuf;
   search.recvcount = recvcount;
   search.recvtype = recvtype;
-  found = (NBC_Allgather_args *) hb_tree_search ((hb_tree*)libnbc_module->NBC_Dict[NBC_ALLGATHER], &search);
+  found = (NBC_Allgather_args *) ompi_nbc_hb_tree_search ((hb_tree*)libnbc_module->NBC_Dict[NBC_ALLGATHER], &search);
   if (NULL == found) {
 #endif
     schedule = OBJ_NEW(NBC_Schedule);
@@ -163,7 +163,7 @@ static int nbc_allgather_init(const void* sendbuf, int sendcount, MPI_Datatype s
     args->recvtype = recvtype;
     args->schedule = schedule;
 
-    res = hb_tree_insert ((hb_tree *) libnbc_module->NBC_Dict[NBC_ALLGATHER], args, args, 0);
+    res = ompi_nbc_hb_tree_insert ((hb_tree *) libnbc_module->NBC_Dict[NBC_ALLGATHER], args, args, 0);
     if (res != 0) {
       free (args);
     } else {

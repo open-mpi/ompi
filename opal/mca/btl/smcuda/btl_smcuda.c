@@ -341,7 +341,7 @@ smcuda_btl_first_time_init(mca_btl_smcuda_t *smcuda_btl,
         return rc;
     }
     /* now that res is fully populated, create the thing */
-    mca_btl_smcuda_component.sm_mpools[0] = common_sm_mpool_create (res);
+    mca_btl_smcuda_component.sm_mpools[0] = ompi_sm_common_sm_mpool_create (res);
     /* Sanity check to ensure that we found it */
     if (NULL == mca_btl_smcuda_component.sm_mpools[0]) {
         free(res);

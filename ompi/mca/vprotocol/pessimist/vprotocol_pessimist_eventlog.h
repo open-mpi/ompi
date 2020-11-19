@@ -20,12 +20,12 @@ BEGIN_C_DECLS
 /** Initialize the MPI connexion with the event logger
  * @return OMPI_SUCCESS or error code
  */
-int vprotocol_pessimist_event_logger_connect(int el_rank, ompi_communicator_t **el_comm);
+int ompi_vprotocol_pessimist_event_logger_connect(int el_rank, ompi_communicator_t **el_comm);
 
 /** Finalize the MPI connexion with the event logger
  * @return OMPI_SUCCESS or error code
  */
-int vprotocol_pessimist_event_logger_disconnect(ompi_communicator_t *el_comm);
+int ompi_vprotocol_pessimist_event_logger_disconnect(ompi_communicator_t *el_comm);
 
 /*******************************************************************************
   * ANY_SOURCE MATCHING
@@ -84,7 +84,7 @@ static inline void vprotocol_pessimist_matching_log_finish(ompi_request_t *req)
         vprotocol_pessimist_clock_t max_clock;                                \
         if(OPAL_UNLIKELY(ompi_comm_invalid(mca_vprotocol_pessimist.el_comm))) \
         {                                                                     \
-            rc = vprotocol_pessimist_event_logger_connect(0,                  \
+            rc = ompi_vprotocol_pessimist_event_logger_connect(0,                  \
                                         &mca_vprotocol_pessimist.el_comm);    \
             if(OMPI_SUCCESS != rc)                                            \
                 OMPI_ERRHANDLER_INVOKE(mca_vprotocol_pessimist.el_comm, rc,   \
@@ -170,9 +170,9 @@ static inline void vprotocol_pessimist_event_flush(void)
  */
 #define VPROTOCOL_PESSIMIST_MATCHING_REPLAY(src) do {                         \
   if(mca_vprotocol_pessimist.replay && ((src) == MPI_ANY_SOURCE))             \
-    vprotocol_pessimist_matching_replay(&(src));                              \
+    ompi_vprotocol_pessimist_matching_replay(&(src));                              \
 } while(0)
-void vprotocol_pessimist_matching_replay(int *src);
+void ompi_vprotocol_pessimist_matching_replay(int *src);
 
 /*******************************************************************************
   * WAIT/TEST-SOME/ANY & PROBES
@@ -233,9 +233,9 @@ static inline void vprotocol_pessimist_delivery_log(ompi_request_t *req)
   */
 #define VPROTOCOL_PESSIMIST_DELIVERY_REPLAY(n, reqs, outcount, i, status) do {\
   if(mca_vprotocol_pessimist.replay)                                          \
-    vprotocol_pessimist_delivery_replay(n, reqs, outcount, i, status);        \
+    ompi_vprotocol_pessimist_delivery_replay(n, reqs, outcount, i, status);        \
 } while(0)
-void vprotocol_pessimist_delivery_replay(size_t, ompi_request_t **,
+void ompi_vprotocol_pessimist_delivery_replay(size_t, ompi_request_t **,
                                          int *, int *, ompi_status_public_t *);
 
 END_C_DECLS

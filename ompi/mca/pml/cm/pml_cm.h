@@ -47,7 +47,7 @@ struct mca_mtl_request_t;
  * These are called internally by the library when the send
  * is completed from its perspective.
  */
-extern void (*send_completion_callbacks[])
+extern void (*ompi_cm_send_completion_callbacks[])
     (struct mca_mtl_request_t *mtl_request);
 
 struct ompi_pml_cm_t {

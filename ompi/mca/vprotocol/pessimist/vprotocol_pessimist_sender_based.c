@@ -80,7 +80,7 @@ static void sb_mmap_free(void)
                      (void *) sb.sb_addr, strerror(errno));
 }
 
-int vprotocol_pessimist_sender_based_init(const char *mmapfile, size_t size)
+int ompi_vprotocol_pessimist_sender_based_init(const char *mmapfile, size_t size)
 {
     char *path;
 #ifdef SB_USE_CONVERTOR_METHOD
@@ -107,7 +107,7 @@ int vprotocol_pessimist_sender_based_init(const char *mmapfile, size_t size)
     return OMPI_SUCCESS;
 }
 
-void vprotocol_pessimist_sender_based_finalize(void)
+void ompi_vprotocol_pessimist_sender_based_finalize(void)
 {
     if(((uintptr_t) NULL) != sb.sb_addr)
         sb_mmap_free();
@@ -118,7 +118,7 @@ void vprotocol_pessimist_sender_based_finalize(void)
 /** Manage mmap floating window, allocating enough memory for the message to be
   * asynchronously copied to disk.
   */
-void vprotocol_pessimist_sender_based_alloc(size_t len)
+void ompi_vprotocol_pessimist_sender_based_alloc(size_t len)
 {
     if(((uintptr_t) NULL) != sb.sb_addr)
         sb_mmap_free();

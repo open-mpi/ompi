@@ -113,7 +113,7 @@ typedef struct {
     mca_coll_base_component_t* component;
 } ompi_coll_han_components;
 
-extern ompi_coll_han_components available_components[COMPONENTS_COUNT];
+extern ompi_coll_han_components ompi_han_available_components[COMPONENTS_COUNT];
 
 /* Topologic levels */
 typedef enum TOPO_LVL {

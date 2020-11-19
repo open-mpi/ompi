@@ -81,7 +81,7 @@ static int nbc_scatter_init (const void* sendbuf, int sendcount, MPI_Datatype se
   search.recvcount=recvcount;
   search.recvtype=recvtype;
   search.root=root;
-  found = (NBC_Scatter_args *) hb_tree_search ((hb_tree *) libnbc_module->NBC_Dict[NBC_SCATTER], &search);
+  found = (NBC_Scatter_args *) ompi_nbc_hb_tree_search ((hb_tree *) libnbc_module->NBC_Dict[NBC_SCATTER], &search);
   if (NULL == found) {
 #endif
     schedule = OBJ_NEW(NBC_Schedule);
@@ -138,7 +138,7 @@ static int nbc_scatter_init (const void* sendbuf, int sendcount, MPI_Datatype se
       args->recvtype = recvtype;
       args->root = root;
       args->schedule = schedule;
-      res = hb_tree_insert ((hb_tree *) libnbc_module->NBC_Dict[NBC_SCATTER], args, args, 0);
+      res = ompi_nbc_hb_tree_insert ((hb_tree *) libnbc_module->NBC_Dict[NBC_SCATTER], args, args, 0);
       if (0 == res) {
         OBJ_RETAIN(schedule);
 

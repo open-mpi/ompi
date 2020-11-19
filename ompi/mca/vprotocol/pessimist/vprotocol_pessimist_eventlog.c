@@ -18,7 +18,7 @@
 #include "opal/util/printf.h"
 #include "ompi/dpm/dpm.h"
 
-int vprotocol_pessimist_event_logger_connect(int el_rank, ompi_communicator_t **el_comm)
+int ompi_vprotocol_pessimist_event_logger_connect(int el_rank, ompi_communicator_t **el_comm)
 {
     int rc;
     pmix_status_t prc;
@@ -67,13 +67,13 @@ int vprotocol_pessimist_event_logger_connect(int el_rank, ompi_communicator_t **
     return rc;
 }
 
-int vprotocol_pessimist_event_logger_disconnect(ompi_communicator_t *el_comm)
+int ompi_vprotocol_pessimist_event_logger_disconnect(ompi_communicator_t *el_comm)
 {
     ompi_dpm_disconnect(el_comm);
     return OMPI_SUCCESS;
 }
 
-void vprotocol_pessimist_matching_replay(int *src) {
+void ompi_vprotocol_pessimist_matching_replay(int *src) {
 #if OPAL_ENABLE_DEBUG
     vprotocol_pessimist_clock_t max = 0;
 #endif
@@ -109,7 +109,7 @@ void vprotocol_pessimist_matching_replay(int *src) {
 #endif
 }
 
-void vprotocol_pessimist_delivery_replay(size_t n, ompi_request_t **reqs,
+void ompi_vprotocol_pessimist_delivery_replay(size_t n, ompi_request_t **reqs,
                                          int *outcount, int *index,
                                          ompi_status_public_t *status) {
     mca_vprotocol_pessimist_event_t *event;

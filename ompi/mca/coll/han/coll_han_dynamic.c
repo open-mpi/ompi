@@ -44,7 +44,7 @@ mca_coll_han_component_name_to_id(const char* name)
     }
 
     for( int i = SELF; i < COMPONENTS_COUNT ; i++ ) {
-        if (0 == strcmp(name, available_components[i].component_name)) {
+        if (0 == strcmp(name, ompi_han_available_components[i].component_name)) {
             return i;
         }
     }
@@ -237,7 +237,7 @@ get_dynamic_rule(COLLTYPE_T collective,
                         msg_size_rule->topologic_level,
                         mca_coll_han_topo_lvl_to_str(msg_size_rule->topologic_level),
                         msg_size_rule->configuration_size,
-                        msg_size_rule->msg_size, component, available_components[component].component_name);
+                        msg_size_rule->msg_size, component, ompi_han_available_components[component].component_name);
 
     return msg_size_rule;
 }

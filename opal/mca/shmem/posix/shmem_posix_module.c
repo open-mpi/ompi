@@ -186,11 +186,11 @@ segment_create(opal_shmem_ds_t *ds_buf,
      * being located on a network file system... so no check is needed here.
      */
 
-    /* calling shmem_posix_shm_open searches for an available posix shared
+    /* calling ompi_shmem_posix_shm_open searches for an available posix shared
      * memory object name and upon successful completion populates the name
      * buffer
      */
-    if (-1 == (ds_buf->seg_id = shmem_posix_shm_open(
+    if (-1 == (ds_buf->seg_id = ompi_shmem_posix_shm_open(
                                     ds_buf->seg_name,
                                     OPAL_SHMEM_POSIX_FILE_LEN_MAX - 1))) {
         /* snaps!  something happened in posix_shm_open.  don't report anything

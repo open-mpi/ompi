@@ -335,7 +335,7 @@ int ompi_coll_adapt_ibcast(void *buff, int count, struct ompi_datatype_t *dataty
     }
 
     return ompi_coll_adapt_ibcast_generic(buff, count, datatype, root, comm, request, module,
-                                          adapt_module_cached_topology(module, comm, root, mca_coll_adapt_component.adapt_ibcast_algorithm),
+                                          ompi_adapt_module_cached_topology(module, comm, root, mca_coll_adapt_component.adapt_ibcast_algorithm),
                                           mca_coll_adapt_component.adapt_ibcast_segment_size);
 }
 

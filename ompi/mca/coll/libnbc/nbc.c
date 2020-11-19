@@ -598,46 +598,46 @@ int  NBC_Init_comm(MPI_Comm comm, NBC_Comminfo *comminfo) {
 
 #ifdef NBC_CACHE_SCHEDULE
   /* initialize the NBC_ALLTOALL SchedCache tree */
-  comminfo->NBC_Dict[NBC_ALLTOALL] = hb_tree_new((dict_cmp_func)NBC_Alltoall_args_compare, NBC_SchedCache_args_delete_key_dummy, NBC_SchedCache_args_delete);
-  if(comminfo->NBC_Dict[NBC_ALLTOALL] == NULL) { printf("Error in hb_tree_new()\n"); return OMPI_ERROR;; }
+  comminfo->NBC_Dict[NBC_ALLTOALL] = ompi_nbc_hb_tree_new((dict_cmp_func)NBC_Alltoall_args_compare, NBC_SchedCache_args_delete_key_dummy, NBC_SchedCache_args_delete);
+  if(comminfo->NBC_Dict[NBC_ALLTOALL] == NULL) { printf("Error in ompi_nbc_hb_tree_new()\n"); return OMPI_ERROR;; }
   NBC_DEBUG(1, "added tree at address %lu\n", (unsigned long)comminfo->NBC_Dict[NBC_ALLTOALL]);
   comminfo->NBC_Dict_size[NBC_ALLTOALL] = 0;
   /* initialize the NBC_ALLGATHER SchedCache tree */
-  comminfo->NBC_Dict[NBC_ALLGATHER] = hb_tree_new((dict_cmp_func)NBC_Allgather_args_compare, NBC_SchedCache_args_delete_key_dummy, NBC_SchedCache_args_delete);
-  if(comminfo->NBC_Dict[NBC_ALLGATHER] == NULL) { printf("Error in hb_tree_new()\n"); return OMPI_ERROR;; }
+  comminfo->NBC_Dict[NBC_ALLGATHER] = ompi_nbc_hb_tree_new((dict_cmp_func)NBC_Allgather_args_compare, NBC_SchedCache_args_delete_key_dummy, NBC_SchedCache_args_delete);
+  if(comminfo->NBC_Dict[NBC_ALLGATHER] == NULL) { printf("Error in ompi_nbc_hb_tree_new()\n"); return OMPI_ERROR;; }
   NBC_DEBUG(1, "added tree at address %lu\n", (unsigned long)comminfo->NBC_Dict[NBC_ALLGATHER]);
   comminfo->NBC_Dict_size[NBC_ALLGATHER] = 0;
   /* initialize the NBC_ALLREDUCE SchedCache tree */
-  comminfo->NBC_Dict[NBC_ALLREDUCE] = hb_tree_new((dict_cmp_func)NBC_Allreduce_args_compare, NBC_SchedCache_args_delete_key_dummy, NBC_SchedCache_args_delete);
-  if(comminfo->NBC_Dict[NBC_ALLREDUCE] == NULL) { printf("Error in hb_tree_new()\n"); return OMPI_ERROR;; }
+  comminfo->NBC_Dict[NBC_ALLREDUCE] = ompi_nbc_hb_tree_new((dict_cmp_func)NBC_Allreduce_args_compare, NBC_SchedCache_args_delete_key_dummy, NBC_SchedCache_args_delete);
+  if(comminfo->NBC_Dict[NBC_ALLREDUCE] == NULL) { printf("Error in ompi_nbc_hb_tree_new()\n"); return OMPI_ERROR;; }
   NBC_DEBUG(1, "added tree at address %lu\n", (unsigned long)comminfo->NBC_Dict[NBC_ALLREDUCE]);
   comminfo->NBC_Dict_size[NBC_ALLREDUCE] = 0;
   /* initialize the NBC_BARRIER SchedCache tree - is not needed -
    * schedule is hung off directly */
   comminfo->NBC_Dict_size[NBC_BARRIER] = 0;
   /* initialize the NBC_BCAST SchedCache tree */
-  comminfo->NBC_Dict[NBC_BCAST] = hb_tree_new((dict_cmp_func)NBC_Bcast_args_compare, NBC_SchedCache_args_delete_key_dummy, NBC_SchedCache_args_delete);
-  if(comminfo->NBC_Dict[NBC_BCAST] == NULL) { printf("Error in hb_tree_new()\n"); return OMPI_ERROR;; }
+  comminfo->NBC_Dict[NBC_BCAST] = ompi_nbc_hb_tree_new((dict_cmp_func)NBC_Bcast_args_compare, NBC_SchedCache_args_delete_key_dummy, NBC_SchedCache_args_delete);
+  if(comminfo->NBC_Dict[NBC_BCAST] == NULL) { printf("Error in ompi_nbc_hb_tree_new()\n"); return OMPI_ERROR;; }
   NBC_DEBUG(1, "added tree at address %lu\n", (unsigned long)comminfo->NBC_Dict[NBC_BCAST]);
   comminfo->NBC_Dict_size[NBC_BCAST] = 0;
   /* initialize the NBC_GATHER SchedCache tree */
-  comminfo->NBC_Dict[NBC_GATHER] = hb_tree_new((dict_cmp_func)NBC_Gather_args_compare, NBC_SchedCache_args_delete_key_dummy, NBC_SchedCache_args_delete);
-  if(comminfo->NBC_Dict[NBC_GATHER] == NULL) { printf("Error in hb_tree_new()\n"); return OMPI_ERROR;; }
+  comminfo->NBC_Dict[NBC_GATHER] = ompi_nbc_hb_tree_new((dict_cmp_func)NBC_Gather_args_compare, NBC_SchedCache_args_delete_key_dummy, NBC_SchedCache_args_delete);
+  if(comminfo->NBC_Dict[NBC_GATHER] == NULL) { printf("Error in ompi_nbc_hb_tree_new()\n"); return OMPI_ERROR;; }
   NBC_DEBUG(1, "added tree at address %lu\n", (unsigned long)comminfo->NBC_Dict[NBC_GATHER]);
   comminfo->NBC_Dict_size[NBC_GATHER] = 0;
   /* initialize the NBC_REDUCE SchedCache tree */
-  comminfo->NBC_Dict[NBC_REDUCE] = hb_tree_new((dict_cmp_func)NBC_Reduce_args_compare, NBC_SchedCache_args_delete_key_dummy, NBC_SchedCache_args_delete);
-  if(comminfo->NBC_Dict[NBC_REDUCE] == NULL) { printf("Error in hb_tree_new()\n"); return OMPI_ERROR;; }
+  comminfo->NBC_Dict[NBC_REDUCE] = ompi_nbc_hb_tree_new((dict_cmp_func)NBC_Reduce_args_compare, NBC_SchedCache_args_delete_key_dummy, NBC_SchedCache_args_delete);
+  if(comminfo->NBC_Dict[NBC_REDUCE] == NULL) { printf("Error in ompi_nbc_hb_tree_new()\n"); return OMPI_ERROR;; }
   NBC_DEBUG(1, "added tree at address %lu\n", (unsigned long)comminfo->NBC_Dict[NBC_REDUCE]);
   comminfo->NBC_Dict_size[NBC_REDUCE] = 0;
   /* initialize the NBC_SCAN SchedCache tree */
-  comminfo->NBC_Dict[NBC_SCAN] = hb_tree_new((dict_cmp_func)NBC_Scan_args_compare, NBC_SchedCache_args_delete_key_dummy, NBC_SchedCache_args_delete);
-  if(comminfo->NBC_Dict[NBC_SCAN] == NULL) { printf("Error in hb_tree_new()\n"); return OMPI_ERROR;; }
+  comminfo->NBC_Dict[NBC_SCAN] = ompi_nbc_hb_tree_new((dict_cmp_func)NBC_Scan_args_compare, NBC_SchedCache_args_delete_key_dummy, NBC_SchedCache_args_delete);
+  if(comminfo->NBC_Dict[NBC_SCAN] == NULL) { printf("Error in ompi_nbc_hb_tree_new()\n"); return OMPI_ERROR;; }
   NBC_DEBUG(1, "added tree at address %lu\n", (unsigned long)comminfo->NBC_Dict[NBC_SCAN]);
   comminfo->NBC_Dict_size[NBC_SCAN] = 0;
   /* initialize the NBC_SCATTER SchedCache tree */
-  comminfo->NBC_Dict[NBC_SCATTER] = hb_tree_new((dict_cmp_func)NBC_Scatter_args_compare, NBC_SchedCache_args_delete_key_dummy, NBC_SchedCache_args_delete);
-  if(comminfo->NBC_Dict[NBC_SCATTER] == NULL) { printf("Error in hb_tree_new()\n"); return OMPI_ERROR;; }
+  comminfo->NBC_Dict[NBC_SCATTER] = ompi_nbc_hb_tree_new((dict_cmp_func)NBC_Scatter_args_compare, NBC_SchedCache_args_delete_key_dummy, NBC_SchedCache_args_delete);
+  if(comminfo->NBC_Dict[NBC_SCATTER] == NULL) { printf("Error in ompi_nbc_hb_tree_new()\n"); return OMPI_ERROR;; }
   NBC_DEBUG(1, "added tree at address %lu\n", (unsigned long)comminfo->NBC_Dict[NBC_SCATTER]);
   comminfo->NBC_Dict_size[NBC_SCATTER] = 0;
 #endif

@@ -279,14 +279,14 @@ int mca_pml_ob1_add_comm(ompi_communicator_t* comm)
              * the network.
              */
             if( NULL != pml_proc->frags_cant_match ) {
-                frag = check_cantmatch_for_match(pml_proc);
+                frag = ompi_ob1_check_cantmatch_for_match(pml_proc);
                 if( NULL != frag ) {
                     hdr = &frag->hdr.hdr_match;
                     goto add_fragment_to_unexpected;
                 }
             }
         } else {
-            append_frag_to_ordered_list(&pml_proc->frags_cant_match, frag,
+            ompi_ob1_append_frag_to_ordered_list(&pml_proc->frags_cant_match, frag,
                                         pml_proc->expected_sequence);
         }
     }
