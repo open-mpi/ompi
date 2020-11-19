@@ -134,7 +134,7 @@ int mca_pml_ob1_recv(void *addr,
     MCA_PML_OB1_RECV_REQUEST_START(recvreq);
     ompi_request_wait_completion(&recvreq->req_recv.req_base.req_ompi);
 
-    if( true == recvreq->req_recv.req_base.req_pml_complete ) {
+    if (recvreq->req_recv.req_base.req_pml_complete) {
         /* make buffer defined when the request is completed */
         MEMCHECKER(
             memchecker_call(&opal_memchecker_base_mem_defined,
