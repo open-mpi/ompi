@@ -39,7 +39,6 @@ ompi_coll_han_components available_components[COMPONENTS_COUNT] = {
     { LIBNBC, "libnbc", NULL },
     { TUNED, "tuned", NULL },
     { SM, "sm", NULL },
-    { SHARED, "shared", NULL },
     { ADAPT, "adapt", NULL },
     { HAN, "han", NULL }
 };
@@ -179,7 +178,7 @@ static int han_register(void)
 
     cs->han_bcast_low_module = 0;
     (void) mca_base_component_var_register(c, "bcast_low_module",
-                                           "low level module for bcast, 0 sm, 1 solo",
+                                           "low level module for bcast, 0 tuned, 1 sm",
                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY, &cs->han_bcast_low_module);
@@ -200,7 +199,7 @@ static int han_register(void)
 
     cs->han_reduce_low_module = 0;
     (void) mca_base_component_var_register(c, "reduce_low_module",
-                                           "low level module for allreduce, 0 sm, 1 shared",
+                                           "low level module for allreduce, 0 tuned, 1 sm",
                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY, &cs->han_reduce_low_module);
@@ -220,7 +219,7 @@ static int han_register(void)
 
     cs->han_allreduce_low_module = 0;
     (void) mca_base_component_var_register(c, "allreduce_low_module",
-                                           "low level module for allreduce, 0 sm, 1 shared",
+                                           "low level module for allreduce, 0 tuned, 1 sm",
                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY, &cs->han_allreduce_low_module);
@@ -234,7 +233,7 @@ static int han_register(void)
 
     cs->han_allgather_low_module = 0;
     (void) mca_base_component_var_register(c, "allgather_low_module",
-                                           "low level module for allgather, 0 sm, 1 shared",
+                                           "low level module for allgather, 0 tuned, 1 sm",
                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY, &cs->han_allgather_low_module);
@@ -248,7 +247,7 @@ static int han_register(void)
 
     cs->han_gather_low_module = 0;
     (void) mca_base_component_var_register(c, "gather_low_module",
-                                           "low level module for gather, 0 sm, 1 shared",
+                                           "low level module for gather, 0 tuned, 1 sm",
                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY, &cs->han_gather_low_module);
@@ -262,7 +261,7 @@ static int han_register(void)
 
     cs->han_scatter_low_module = 0;
     (void) mca_base_component_var_register(c, "scatter_low_module",
-                                           "low level module for scatter, 0 sm, 1 shared",
+                                           "low level module for scatter, 0 tuned, 1 sm",
                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY, &cs->han_scatter_low_module);
