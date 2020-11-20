@@ -121,12 +121,12 @@ static int PNBC_OSC_Schedule_round_append (PNBC_OSC_Schedule *schedule, void *da
   return OMPI_SUCCESS;
 }
 
-/* this function appends a put into the schedule */
-int PNBC_OSC_Sched_put(const void* buf, int target,
-                       int origin_count, MPI_Datatype origin_datatype,
-                       int target_count, MPI_Datatype target_datatype,
-                       MPI_Aint target_displ,
-                       PNBC_OSC_Schedule *schedule, bool barrier) {
+/* this function appends an rput into the schedule */
+int PNBC_OSC_Sched_rput(const void* buf, int target,
+                        int origin_count, MPI_Datatype origin_datatype,
+                        int target_count, MPI_Datatype target_datatype,
+                        MPI_Aint target_displ,
+                        PNBC_OSC_Schedule *schedule, bool barrier) {
   int ret;
   PNBC_OSC_Args_put put_args;
 
@@ -146,36 +146,30 @@ int PNBC_OSC_Sched_put(const void* buf, int target,
     return ret;
   }
 
-  PNBC_OSC_DEBUG(10, "added put - ends at byte %i\n", PNBC_OSC_Schedule_get_size (schedule));
+  PNBC_OSC_DEBUG(10, "added rput - ends at byte %i\n", PNBC_OSC_Schedule_get_size (schedule));
 
   return OMPI_SUCCESS;
 }
 
 
-/* this function appends a get into the schedule */
-int PNBC_OSC_Sched_get (const void* buf, char tmpbuf,
-                        int origin_count, MPI_Datatype origin_datatype,
-                        int target, MPI_Aint target_disp,
-                        int target_count, MPI_Datatype target_datatype,
-                        int lock_type, int assert, bool notify,
-                        PNBC_OSC_Schedule *schedule, bool barrier) {
+/* this function appends an rget into the schedule */
+int PNBC_OSC_Sched_rget(void* buf, int target,
+                       int origin_count, MPI_Datatype origin_datatype,
+                       int target_count, MPI_Datatype target_datatype,
+                       MPI_Aint target_displ,
+                       PNBC_OSC_Schedule *schedule, bool barrier) {
   PNBC_OSC_Args_get get_args;
   int ret;
 
   /* store the passed arguments */
   get_args.type = GET;
   get_args.buf = buf;
-  get_args.tmpbuf = tmpbuf;   /* TODO: most likely we don't need this for single sided */
   get_args.origin_count = origin_count;
   get_args.origin_datatype = origin_datatype;
   get_args.target = target;
-  get_args.target_disp = target_disp;
   get_args.target_count = target_count;
   get_args.target_datatype = target_datatype;
-  get_args.lock_type = lock_type;
-  get_args.lock_status = UNLOCKED;
-  get_args.assert = assert;
-  get_args.notify = notify;
+  get_args.target_displ = target_displ;
 
   /* append to the round-schedule */
   ret = PNBC_OSC_Schedule_round_append (schedule, &get_args, sizeof (get_args), barrier);
@@ -183,7 +177,7 @@ int PNBC_OSC_Sched_get (const void* buf, char tmpbuf,
     return ret;
   }
 
-  PNBC_OSC_DEBUG(10, "added get - ends at byte %i\n", PNBC_OSC_Schedule_get_size (schedule));
+  PNBC_OSC_DEBUG(10, "added rget - ends at byte %i\n", PNBC_OSC_Schedule_get_size (schedule));
 
   return OMPI_SUCCESS;
 }
@@ -538,46 +532,40 @@ static inline int PNBC_OSC_Start_round(PNBC_OSC_Handle *handle) {
 /***************/
       PNBC_OSC_DEBUG(5,"  PUT (offset %li) ", offset);
       PNBC_OSC_GET_BYTES(ptr,putargs);
-      PNBC_OSC_DEBUG(5,"*buf: %p, origin count: %i, origin type: %p, target: %i, target count: %i, target type: %p)\n",
+      PNBC_OSC_DEBUG(5,"*buf: %p, origin count: %i, origin type: %p, target: %i, target count: %i, target type: %p, target displ: %lu)\n",
                      putargs.buf, putargs.origin_count, putargs.origin_datatype, putargs.target,
-                     putargs.target_count, putargs.target_datatype);
+                                  putargs.target_count, putargs.target_datatype, putargs.target_displ);
 
-      /* get an additional request */
-      //handle->req_count++;
-      /* get buffer */
-      //if(putargs.tmpbuf) {
-      //  buf1=(char*)handle->tmpbuf+(long)putargs.buf;
-      //} else {
-      //  buf1=(void *)putargs.buf;
-      //}
 #ifdef PNBC_OSC_TIMING
       Iput_time -= MPI_Wtime();
 #endif
-      //tmp = (MPI_Request *) realloc ((void *) handle->req_array, handle->req_count *
-      //                               sizeof (MPI_Request));
-      //if (NULL == tmp) {
-      //  return OMPI_ERR_OUT_OF_RESOURCE;
-      //}
-      //handle->req_array = tmp;
+      // get an additional request
+      handle->req_count++;
+      tmp = (MPI_Request *) realloc ((void *) handle->req_array, handle->req_count * sizeof (MPI_Request));
+      if (NULL == tmp) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+      }
+      handle->req_array = tmp;
 
-      res = handle->win->w_osc_module->osc_put(putargs.buf,
-                                               putargs.origin_count, putargs.origin_datatype,
-                                               putargs.target, putargs.target_displ,
-                                               putargs.target_count, putargs.target_datatype,
-                                               handle->win);
-
-#ifdef PNBC_OSC_TIMING
-      Iput_time += MPI_Wtime();
-#endif
+      res = handle->win->w_osc_module->osc_rput(putargs.buf,
+                                                putargs.origin_count, putargs.origin_datatype,
+                                                putargs.target, putargs.target_displ,
+                                                putargs.target_count, putargs.target_datatype,
+                                                handle->win, &(handle->req_array[handle->req_count-1]));
 
       if (OMPI_SUCCESS != res) {
-        PNBC_OSC_Error ("Error in MPI_Iput(%lu, %i, %p, %i, %i, %p, %lu, %lu) (%i)",
-                        (unsigned long)buf1,
+        PNBC_OSC_Error ("Error in osc_rput(%p, %i, %p, %i, %i, %p, %lu, %lu) (%i)",
+                        putargs.buf,
                         putargs.origin_count, putargs.origin_datatype, putargs.target,
                         putargs.target_count, putargs.target_datatype, putargs.target_displ,
                         (unsigned long)handle->comm, res);
         return res;
       }
+
+#ifdef PNBC_OSC_TIMING
+      Iput_time += MPI_Wtime();
+#endif
+
       break;
 
 /***************/
@@ -585,62 +573,33 @@ static inline int PNBC_OSC_Start_round(PNBC_OSC_Handle *handle) {
 /***************/
       PNBC_OSC_DEBUG(5,"  GET (offset %li) ", offset);
       PNBC_OSC_GET_BYTES(ptr,getargs);
-      PNBC_OSC_DEBUG(5,"*buf: %p, origin count: %i, origin type: %p, target: %i, target disp: %i, target count: %i, target type: %p)\n",
+      PNBC_OSC_DEBUG(5,"*buf: %p, origin count: %i, origin type: %p, target: %i, target count: %i, target type: %p, target displ: %lu)\n",
                      getargs.buf, getargs.origin_count, getargs.origin_datatype, getargs.target,
-                     getargs.target_count, getargs.target_datatype);
-      /* get an additional request */
-      handle->req_count++;
-      /* get buffer */
-      if(getargs.tmpbuf) {
-        buf1=(char*)handle->tmpbuf+(long)getargs.buf;
-      } else {
-        buf1=(void *)getargs.buf;
-      }
+                                  getargs.target_count, getargs.target_datatype, getargs.target_displ);
+
 #ifdef PNBC_OSC_TIMING
       Iget_time -= MPI_Wtime();
 #endif
-      //TODO: I am not too sure we need to realloc for PUT/GET - Not used
-      tmp = (MPI_Request *) realloc ((void *) handle->req_array, handle->req_count *
-                                     sizeof (MPI_Request));
+      // get an additional request
+      handle->req_count++;
+      tmp = (MPI_Request *) realloc ((void *) handle->req_array, handle->req_count * sizeof (MPI_Request));
       if (NULL == tmp) {
         return OMPI_ERR_OUT_OF_RESOURCE;
       }
-
       handle->req_array = tmp;
-      if( UNLOCKED == getargs.lock_status ){
 
-        res = handle->win->w_osc_module->osc_lock(getargs.lock_type, getargs.target,
-                                                  0, handle->win);
-        if(OMPI_SUCCESS == res){
-          getargs.lock_status = LOCKED;
-          res = handle->win->w_osc_module->osc_get(buf1, getargs.origin_count, getargs.origin_datatype,
-                                                   getargs.target, getargs.target_disp,
-                                                   getargs.target_count,
-                                                   getargs.target_datatype, handle->win);
+      res = handle->win->w_osc_module->osc_rget(getargs.buf,
+                                                getargs.origin_count, getargs.origin_datatype,
+                                                getargs.target, getargs.target_displ,
+                                                getargs.target_count, getargs.target_datatype,
+                                                handle->win, &(handle->req_array[handle->req_count-1]));
 
-          if (OMPI_SUCCESS != res) {
-            PNBC_OSC_Error ("Error in MPI_Iget(%lu, %i, %p, %i, %i, %p, %lu) (%i)",
-                            (unsigned long)buf1,
-                            getargs.origin_count, getargs.origin_datatype, getargs.target,
-                            getargs.target_count, getargs.target_datatype,
-                            (unsigned long)handle->comm, res);
-            return res;
-          }
-        }else{
-          return res;
-        }
-      }
-      /* [state is locked] */
-      if( LOCKED == getargs.lock_status){
-        res = handle->win->w_osc_module->osc_unlock(getargs.target, handle->win);
-        if (OMPI_SUCCESS != res){
-          return res;
-        }else{
-          getargs.lock_status = UNLOCKED;
-        }
-
-      }else{
-
+      if (OMPI_SUCCESS != res) {
+        PNBC_OSC_Error ("Error in osc_rget(%p, %i, %p, %i, %lu, %i, %p, %lu) (%i)",
+                        getargs.buf,
+                        getargs.origin_count, getargs.origin_datatype, getargs.target,
+                        getargs.target_count, getargs.target_datatype, getargs.target_displ,
+                        (unsigned long)handle->comm, res);
         return res;
       }
 
