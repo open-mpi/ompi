@@ -380,7 +380,7 @@ int PNBC_OSC_Progress(PNBC_OSC_Handle *handle) {
           /* copy the error code from the sub-request and let the round continue/finish */
           handle->super.req_status.MPI_ERROR = subreq->req_status.MPI_ERROR;
         }
-        if (subreq->req_persistent == true) {
+        if (subreq->req_persistent == false) {
           ompi_request_free(&subreq); // only for nbc subreq; avoid for pnbc subreq
         }
 
@@ -469,18 +469,17 @@ int PNBC_OSC_Progress(PNBC_OSC_Handle *handle) {
 
 
 static inline int PNBC_OSC_Start_round(PNBC_OSC_Handle *handle) {
-  int num; /* number of operations */
   int res;
-  char* ptr;
-  MPI_Request *tmp;
+
+  int num; /* number of operations in this round */
+  char *ptr;
+  void *buf1, *buf2;
   PNBC_OSC_Fn_type type;
   PNBC_OSC_Args_put       putargs;
   PNBC_OSC_Args_get       getargs;
   PNBC_OSC_Args_op         opargs;
   PNBC_OSC_Args_copy     copyargs;
   PNBC_OSC_Args_unpack unpackargs;
-
-  void *buf1, *buf2;
 
   /* get round-schedule address */
   ptr = handle->schedule->data + handle->row_offset;
@@ -489,43 +488,15 @@ static inline int PNBC_OSC_Start_round(PNBC_OSC_Handle *handle) {
   PNBC_OSC_DEBUG(10, "start_round round at offset %d : posting %i operations\n",
                  handle->row_offset, num);
 
+  handle->req_count = 0;
+
   for (int i = 0 ; i < num ; ++i) {
-    int offset = (intptr_t)(ptr - handle->schedule->data);
+    long offset = (intptr_t)(ptr - handle->schedule->data);
+
+    // peek at the first part of the next args struct, which will be its type field
     memcpy(&type, ptr, sizeof(type));
 
     switch(type) {
-
-/***************/
-    case WIN_FREE:
-/***************/
-      PNBC_OSC_DEBUG(5,"  WIN_FREE (offset %li) ", offset);
-
-      /* get an additional request */
-      handle->req_count++;
-
-      tmp = (MPI_Request *) realloc ((void *) handle->req_array, handle->req_count *
-                                     sizeof (MPI_Request));
-      if (NULL == tmp) {
-        return OMPI_ERR_OUT_OF_RESOURCE;
-      }
-
-      handle->req_array = tmp;
-
-#ifdef PNBC_OSC_TIMING
-      Iwfree_time -= MPI_Wtime();
-#endif
-
-      res = handle->win->w_osc_module->osc_free(handle->win);
-      if (OMPI_SUCCESS != res) {
-        PNBC_OSC_Error ("Error in win_free");
-        return res;
-      }
-
-#ifdef PNBC_OSC_TIMING
-      Iwfree_time += MPI_Wtime();
-#endif
-
-      break;
 
 /***************/
     case PUT:
@@ -539,19 +510,13 @@ static inline int PNBC_OSC_Start_round(PNBC_OSC_Handle *handle) {
 #ifdef PNBC_OSC_TIMING
       Iput_time -= MPI_Wtime();
 #endif
-      // get an additional request
-      handle->req_count++;
-      tmp = (MPI_Request *) realloc ((void *) handle->req_array, handle->req_count * sizeof (MPI_Request));
-      if (NULL == tmp) {
-        return OMPI_ERR_OUT_OF_RESOURCE;
-      }
-      handle->req_array = tmp;
 
       res = handle->win->w_osc_module->osc_rput(putargs.buf,
                                                 putargs.origin_count, putargs.origin_datatype,
                                                 putargs.target, putargs.target_displ,
                                                 putargs.target_count, putargs.target_datatype,
-                                                handle->win, &(handle->req_array[handle->req_count-1]));
+                                                handle->win, &(handle->req_array[handle->req_count]));
+      handle->req_count++;
 
       if (OMPI_SUCCESS != res) {
         PNBC_OSC_Error ("Error in osc_rput(%p, %i, %p, %i, %i, %p, %lu, %lu) (%i)",
@@ -580,19 +545,13 @@ static inline int PNBC_OSC_Start_round(PNBC_OSC_Handle *handle) {
 #ifdef PNBC_OSC_TIMING
       Iget_time -= MPI_Wtime();
 #endif
-      // get an additional request
-      handle->req_count++;
-      tmp = (MPI_Request *) realloc ((void *) handle->req_array, handle->req_count * sizeof (MPI_Request));
-      if (NULL == tmp) {
-        return OMPI_ERR_OUT_OF_RESOURCE;
-      }
-      handle->req_array = tmp;
 
       res = handle->win->w_osc_module->osc_rget(getargs.buf,
                                                 getargs.origin_count, getargs.origin_datatype,
                                                 getargs.target, getargs.target_displ,
                                                 getargs.target_count, getargs.target_datatype,
-                                                handle->win, &(handle->req_array[handle->req_count-1]));
+                                                handle->win, &(handle->req_array[handle->req_count]));
+      handle->req_count++;
 
       if (OMPI_SUCCESS != res) {
         PNBC_OSC_Error ("Error in osc_rget(%p, %i, %p, %i, %lu, %i, %p, %lu) (%i)",
@@ -774,6 +733,27 @@ static inline int PNBC_OSC_Start_round(PNBC_OSC_Handle *handle) {
       break;
 
 /***************/
+    case WIN_FREE:
+/***************/
+      PNBC_OSC_DEBUG(5,"  WIN_FREE (offset %li) ", offset);
+
+#ifdef PNBC_OSC_TIMING
+      Iwfree_time -= MPI_Wtime();
+#endif
+
+      res = handle->win->w_osc_module->osc_free(handle->win);
+      if (OMPI_SUCCESS != res) {
+        PNBC_OSC_Error ("Error in win_free");
+        return res;
+      }
+
+#ifdef PNBC_OSC_TIMING
+      Iwfree_time += MPI_Wtime();
+#endif
+
+      break;
+
+/***************/
     default:
 /***************/
       PNBC_OSC_Error ("PNBC_OSC_Start_round: bad type %li at offset %li", (long)type, offset);
@@ -885,7 +865,7 @@ int PNBC_OSC_Schedule_request(PNBC_OSC_Schedule *schedule, ompi_communicator_t *
 }
 
 int PNBC_OSC_Schedule_request_win(PNBC_OSC_Schedule *schedule, ompi_communicator_t *comm,
-                                  ompi_win_t *win, ompi_win_t *winflag,
+                                  ompi_win_t *win, ompi_win_t *winflag, int req_count,
                                   ompi_coll_libpnbc_osc_module_t *module,
                                   bool persistent, ompi_request_t **request, void *tmpbuf) {
   int ret;
@@ -909,7 +889,6 @@ int PNBC_OSC_Schedule_request_win(PNBC_OSC_Schedule *schedule, ompi_communicator
   if (NULL == handle) return OMPI_ERR_OUT_OF_RESOURCE;
 
   handle->req_count = 0;
-  handle->req_array = NULL;
   handle->row_offset = 0;
   handle->nbc_complete = persistent ? true : false;
   handle->schedule = schedule;
@@ -917,8 +896,11 @@ int PNBC_OSC_Schedule_request_win(PNBC_OSC_Schedule *schedule, ompi_communicator
   handle->win = win;
   handle->winflag = winflag;
   handle->comminfo = module;
-  //handle->module_win = module_win;
   handle->tmpbuf = tmpbuf;
+  if (req_count > 0)
+    handle->req_array = malloc(req_count*sizeof(MPI_Request));
+  else
+    handle->req_array = NULL;
 
   /******************** Do the shadow comm administration ...  ***************/
 

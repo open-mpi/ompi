@@ -41,7 +41,7 @@ int ompi_coll_libpnbc_osc_alltoallv_init(const void* sendbuf, const int *sendcou
 }
 
 static inline int a2av_sched_linear_rget(int crank, int csize, PNBC_OSC_Schedule *schedule,
-                                         void *flags, int *fsize,
+                                         void *flags, int *fsize, int *req_count,
                                          const void *sendbuf, const int *sendcounts, const int *sdispls,
                                          MPI_Aint sendext, MPI_Datatype sendtype,
                                                void *recvbuf, const int *recvcounts, const int *rdispls,
@@ -49,7 +49,7 @@ static inline int a2av_sched_linear_rget(int crank, int csize, PNBC_OSC_Schedule
                                          MPI_Aint *abs_sdispls_other);
 
 static inline int a2av_sched_linear_rput(int crank, int csize, PNBC_OSC_Schedule *schedule,
-                                         void *flags, int *fsize,
+                                         void *flags, int *fsize, int *req_count,
                                          const void *sendbuf, const int *sendcounts, const int *sdispls,
                                          MPI_Aint sendext, MPI_Datatype sendtype,
                                                void *recvbuf, const int *recvcounts, const int *rdispls,
@@ -71,6 +71,7 @@ static int pnbc_osc_alltoallv_init(const void* sendbuf, const int *sendcounts, c
   MPI_Win win, winflag;
   void *flags = NULL;
   int fsize = 0;
+  int req_count;
   ompi_coll_libpnbc_osc_module_t *libpnbc_osc_module = (ompi_coll_libpnbc_osc_module_t*) module;
 
   PNBC_OSC_IN_PLACE(sendbuf, recvbuf, inplace);
@@ -175,7 +176,7 @@ static int pnbc_osc_alltoallv_init(const void* sendbuf, const int *sendcounts, c
   // PUT_BASED WINDOW SETUP - END
   // ****************************
 
-  res = a2av_sched_linear_rput(crank, csize, schedule, flags, &fsize,
+  res = a2av_sched_linear_rput(crank, csize, schedule, flags, &fsize, &req_count,
                                sendbuf, sendcounts, sdispls, sendext, sendtype,
                                recvbuf, recvcounts, rdispls, recvext, recvtype,
                                abs_rdispls_other);
@@ -221,7 +222,7 @@ static int pnbc_osc_alltoallv_init(const void* sendbuf, const int *sendcounts, c
     return res;
   }
 
-  res = PNBC_OSC_Schedule_request_win(schedule, comm, win, winflag, libpnbc_osc_module, persistent, request, flags);
+  res = PNBC_OSC_Schedule_request_win(schedule, comm, win, winflag, req_count, libpnbc_osc_module, persistent, request, flags);
   if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
     PNBC_OSC_Error ("MPI Error in PNBC_OSC_Schedule_request_win (%i)", res);
     free(abs_rdispls_other);
@@ -236,7 +237,7 @@ static int pnbc_osc_alltoallv_init(const void* sendbuf, const int *sendcounts, c
 }
 
 static inline int a2av_sched_linear_rget(int crank, int csize, PNBC_OSC_Schedule *schedule,
-                                         void *flags, int *fsize,
+                                         void *flags, int *fsize, int *req_count,
                                          const void *sendbuf, const int *sendcounts, const int *sdispls,
                                          MPI_Aint sendext, MPI_Datatype sendtype,
                                                void *recvbuf, const int *recvcounts, const int *rdispls,
@@ -256,6 +257,8 @@ static inline int a2av_sched_linear_rget(int crank, int csize, PNBC_OSC_Schedule
       return res;
     }
   }
+
+  *req_count = csize - 1;
 
   // schedule a get for each remote target, if needed
   for (int dist = 1 ; dist < csize ; ++dist) {
@@ -282,7 +285,7 @@ static inline int a2av_sched_linear_rget(int crank, int csize, PNBC_OSC_Schedule
 }
 
 static inline int a2av_sched_linear_rput(int crank, int csize, PNBC_OSC_Schedule *schedule,
-                                         void *flags, int *fsize,
+                                         void *flags, int *fsize, int *req_count,
                                          const void *sendbuf, const int *sendcounts, const int *sdispls,
                                          MPI_Aint sendext, MPI_Datatype sendtype,
                                                void *recvbuf, const int *recvcounts, const int *rdispls,
@@ -302,6 +305,8 @@ static inline int a2av_sched_linear_rput(int crank, int csize, PNBC_OSC_Schedule
       return res;
     }
   }
+
+  *req_count = csize - 1;
 
   // schedule a put for each remote target, if needed
   for (int dist = 1 ; dist < csize ; ++dist) {
