@@ -70,24 +70,113 @@ struct ompi_coll_libpnbc_osc_module_t {
 typedef struct ompi_coll_libpnbc_osc_module_t ompi_coll_libpnbc_osc_module_t;
 OBJ_CLASS_DECLARATION(ompi_coll_libpnbc_osc_module_t);
 
+typedef enum {
+  PNBC_OSC_ROUND_INVALID,
+  PNBC_OSC_ROUND_FLAG_BASED,
+  PNBC_OSC_ROUND_REQUEST_BASED,
+  PNBC_OSC_ROUND_RESTART_POINT,
+  PNBC_OSC_ROUND_COMPLETION_POINT,
+} PNBC_OSC_Round_type;
+
+struct PNBC_OSC_Round {
+  opal_object_t super;
+  PNBC_OSC_Round_type round_type;
+};
+typedef struct PNBC_OSC_Round PNBC_OSC_Round;
+OBJ_CLASS_DECLARATION(PNBC_OSC_Round);
+
+/* forward reference - needed for function pointer typedefs */
+struct PNBC_OSC_Round_flag_based;
+typedef struct PNBC_OSC_Round_flag_based PNBC_OSC_Round_flag_based;
+
+/* function that allocates and returns a flag-based round, with undefined flag values */
+typedef PNBC_OSC_Round_flag_based* (*PNBC_OSC_Init_flag_round_fn_t)(
+  int flags
+);
+
+/* function that sets starting values for all flags in a flag-based round */
+typedef void (*PNBC_OSC_Start_flag_round_fn_t)(
+  PNBC_OSC_Round_flag_based *round
+);
+
+/* function that tests flag values against final values,
+   returns 0 iff at least one flag is not final value */
+typedef int (*PNBC_OSC_Test_flag_round_fn_t)(
+  PNBC_OSC_Round_flag_based *round
+);
+
+/* function that deallocates a flag-based round, nullifies the round pointer */
+typedef void (*PNBC_OSC_Free_flag_round_fn_t)(
+  PNBC_OSC_Round_flag_based *round
+);
+
+/* struct describing a flag-based round,
+   caution: must always be passed by reference because of flexible array member
+*/
+struct PNBC_OSC_Round_flag_based {
+  PNBC_OSC_Round super;
+  PNBC_OSC_Init_flag_round_fn_t initRound;
+  PNBC_OSC_Start_flag_round_fn_t startRound;
+  PNBC_OSC_Test_flag_round_fn_t testRound;
+  PNBC_OSC_Free_flag_round_fn_t freeRound;
+  int number_of_flags;
+  int flags[];
+};
+typedef struct PNBC_OSC_Round_flag_based PNBC_OSC_Round_flag_based;
+
+struct PNBC_OSC_Round_req_based;
+typedef struct PNBC_OSC_Round_req_based PNBC_OSC_Round_req_based;
+
+typedef PNBC_OSC_Round_req_based* (*PNBC_OSC_Init_req_round_fn_t)(
+  int reqs
+);
+
+typedef void (*PNBC_OSC_Start_req_round_fn_t)(
+  PNBC_OSC_Round_req_based *round
+);
+
+typedef int (*PNBC_OSC_Test_req_round_fn_t)(
+  PNBC_OSC_Round_req_based *round
+);
+
+typedef void (*PNBC_OSC_Free_req_round_fn_t)(
+  PNBC_OSC_Round_req_based *round
+);
+
+struct PNBC_OSC_Round_request_based {
+  PNBC_OSC_Round super;
+  PNBC_OSC_Init_req_round_fn_t initRound;
+  PNBC_OSC_Start_req_round_fn_t startRound;
+  PNBC_OSC_Test_req_round_fn_t testRound;
+  PNBC_OSC_Free_req_round_fn_t freeRound;
+  int number_of_requests;     // total number of requests in this round
+  volatile int req_count;     // number of non-complete requests in this round
+  ompi_request_t *requests[];
+};
+typedef struct PNBC_OSC_Round_request_based PNBC_OSC_Round_request_based;
+
 struct PNBC_OSC_Schedule {
   opal_object_t super;
   int size;                 //DJH//should be obsolete
   int current_round_offset; //DJH//should be obsolete
   char *data;               //DJH//should be obsolete, except for nbc steps
+  int number_of_rounds;     // length of array: rounds
+  int restart_round;        // index into array: rounds
+  PNBC_OSC_Round *rounds[]; // list of rounds (polymorphic)
 };
 typedef struct PNBC_OSC_Schedule PNBC_OSC_Schedule;
 OBJ_CLASS_DECLARATION(PNBC_OSC_Schedule);
 
 struct ompi_coll_libpnbc_osc_request_t {
     ompi_request_t super;
+    int current_round; // index into array: schedule->rounds
+    PNBC_OSC_Schedule *schedule;
     MPI_Comm comm;
     long row_offset;
     bool nbc_complete; /* status in libpnbc_osc level */
     volatile int req_count;
     ompi_request_t **req_array;
     ompi_coll_libpnbc_osc_module_t *comminfo;
-    PNBC_OSC_Schedule *schedule;
     MPI_Win win;
     MPI_Win winflag;
     void *tmpbuf; /* temporary buffer e.g. used for Reduce */

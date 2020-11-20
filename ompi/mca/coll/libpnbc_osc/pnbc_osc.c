@@ -122,22 +122,23 @@ static int PNBC_OSC_Schedule_round_append (PNBC_OSC_Schedule *schedule, void *da
 }
 
 /* this function appends a put into the schedule */
-int PNBC_OSC_Sched_put(const void* buf, char tmpbuf,
+int PNBC_OSC_Sched_put(const void* buf, int target,
                        int origin_count, MPI_Datatype origin_datatype,
-           int target, int target_count, MPI_Datatype target_datatype,
+                       int target_count, MPI_Datatype target_datatype,
+                       MPI_Aint target_displ,
                        PNBC_OSC_Schedule *schedule, bool barrier) {
-  PNBC_OSC_Args_put put_args;
   int ret;
+  PNBC_OSC_Args_put put_args;
 
   /* store the passed arguments */
   put_args.type = PUT;
   put_args.buf = buf;
-  put_args.tmpbuf = tmpbuf;   /*TODO: most likely we don't need this for single sided */
   put_args.origin_count = origin_count;
   put_args.origin_datatype = origin_datatype;
   put_args.target = target;
   put_args.target_count = target_count;
   put_args.target_datatype = target_datatype;
+  put_args.target_displ = target_displ;
 
   /* append to the round-schedule */
   ret = PNBC_OSC_Schedule_round_append (schedule, &put_args, sizeof (put_args), barrier);
@@ -338,54 +339,64 @@ static inline void PNBC_OSC_Free (PNBC_OSC_Handle* handle) {
  * to be called *only* from the progress thread !!! */
 int PNBC_OSC_Progress(PNBC_OSC_Handle *handle) {
   int res, ret=PNBC_OSC_CONTINUE;
-  bool flag;
+  bool round_is_complete;
   unsigned long size = 0;
   char *delim;
 
+  /* bozo case */
   if (handle->nbc_complete) {
     return PNBC_OSC_OK;
   }
 
-  flag = true;
+  round_is_complete = true;
 
-  if ((handle->req_count > 0) && (handle->req_array != NULL)) {
-    PNBC_OSC_DEBUG(50, "PNBC_OSC_Progress: testing for %i requests\n", handle->req_count);
+  /* figure out whether the current round is request-based or flag-based */
+  switch (handle->schedule->rounds[handle->current_round]->round_type) {
+
+/******/
+  case PNBC_OSC_ROUND_FLAG_BASED: {
+/******/
+    PNBC_OSC_Round_flag_based *round = (PNBC_OSC_Round_flag_based*)(handle->schedule->rounds[handle->current_round]);
+
+    for (int f=0;f<round->number_of_flags;++f) {
+      if (round->flags[f] != 0) round_is_complete = false;
+    }
+
+    break;
+  }
+
+/******/
+  case PNBC_OSC_ROUND_REQUEST_BASED: {
+/******/
+    PNBC_OSC_Round_request_based *round = (PNBC_OSC_Round_request_based*)(handle->schedule->rounds[handle->current_round]);
+
+    PNBC_OSC_DEBUG(50, "PNBC_OSC_Progress: testing for %i requests\n", round->number_of_requests);
 #ifdef PNBC_OSC_TIMING
     Test_time -= MPI_Wtime();
 #endif
     /* don't call ompi_request_test_all as it causes a recursive call into opal_progress */
-    while (handle->req_count) {
-      ompi_request_t *subreq = handle->req_array[handle->req_count - 1];
+    for(int r=0;r<round->number_of_requests;++r) {
+      ompi_request_t *subreq = round->requests[r];
+
       if (REQUEST_COMPLETE(subreq)) {
+
         if(OPAL_UNLIKELY( OMPI_SUCCESS != subreq->req_status.MPI_ERROR )) {
-          PNBC_OSC_Error ("MPI Error in PNBC_OSC subrequest %p : %d", subreq,
-                          subreq->req_status.MPI_ERROR);
-          /* copy the error code from the underlying request and let the
-           * round finish */
+          PNBC_OSC_Error("MPI Error in PNBC_OSC subrequest %p : %d",
+                         subreq, subreq->req_status.MPI_ERROR);
+          /* copy the error code from the sub-request and let the round continue/finish */
           handle->super.req_status.MPI_ERROR = subreq->req_status.MPI_ERROR;
         }
-        handle->req_count--;
-        ompi_request_free(&subreq);
+        if (subreq->req_persistent == true) {
+          ompi_request_free(&subreq); // only for nbc subreq; avoid for pnbc subreq
+        }
+
       } else {
-        flag = false;
-        break;
+        round_is_complete = false;
       }
     }
 #ifdef PNBC_OSC_TIMING
     Test_time += MPI_Wtime();
 #endif
-  }
-
-  /* a round is finished */
-  if (flag) {
-    /* reset handle for next round */
-    if (NULL != handle->req_array) {
-      /* free request array */
-      free (handle->req_array);
-      handle->req_array = NULL;
-    }
-
-    handle->req_count = 0;
 
     /* previous round had an error */
     if (OPAL_UNLIKELY(OMPI_SUCCESS != handle->super.req_status.MPI_ERROR)) {
@@ -397,6 +408,33 @@ int PNBC_OSC_Progress(PNBC_OSC_Handle *handle) {
       }
       return res;
     }
+
+    break;
+  }
+
+/******/
+  default:
+/******/
+    PNBC_OSC_Error ("PNBC_OSC Error unknown round type (%i) in round %d for schedule %p in request %p",
+                    handle->schedule->rounds[handle->current_round]->round_type,
+                    handle->current_round, handle->schedule, handle);
+
+    break;
+  }
+
+  /* a round has just finished */
+  if (round_is_complete) {
+
+//DJH// the rest of this function needs lots of work
+
+//DJH// keep req_array per-round and do not free it until the top-level request is freed, re-use space for next start
+    /* reset handle for next round */
+    if (NULL != handle->req_array) {
+      /* free request array */
+      free (handle->req_array);
+      handle->req_array = NULL;
+    }
+    handle->req_count = 0;
 
     /* adjust delim to start of current round */
     PNBC_OSC_DEBUG(5, "PNBC_OSC_Progress: going in schedule %p to row-offset: %li\n",
@@ -442,8 +480,8 @@ static inline int PNBC_OSC_Start_round(PNBC_OSC_Handle *handle) {
   char* ptr;
   MPI_Request *tmp;
   PNBC_OSC_Fn_type type;
-  PNBC_OSC_Args_put      putargs;
-  PNBC_OSC_Args_get      getargs;
+  PNBC_OSC_Args_put       putargs;
+  PNBC_OSC_Args_get       getargs;
   PNBC_OSC_Args_op         opargs;
   PNBC_OSC_Args_copy     copyargs;
   PNBC_OSC_Args_unpack unpackargs;
@@ -505,38 +543,41 @@ static inline int PNBC_OSC_Start_round(PNBC_OSC_Handle *handle) {
                      putargs.target_count, putargs.target_datatype);
 
       /* get an additional request */
-      handle->req_count++;
+      //handle->req_count++;
       /* get buffer */
-      if(putargs.tmpbuf) {
-        buf1=(char*)handle->tmpbuf+(long)putargs.buf;
-      } else {
-        buf1=(void *)putargs.buf;
-      }
+      //if(putargs.tmpbuf) {
+      //  buf1=(char*)handle->tmpbuf+(long)putargs.buf;
+      //} else {
+      //  buf1=(void *)putargs.buf;
+      //}
 #ifdef PNBC_OSC_TIMING
       Iput_time -= MPI_Wtime();
 #endif
-      tmp = (MPI_Request *) realloc ((void *) handle->req_array, handle->req_count *
-                                     sizeof (MPI_Request));
-      if (NULL == tmp) {
-        return OMPI_ERR_OUT_OF_RESOURCE;
-      }
+      //tmp = (MPI_Request *) realloc ((void *) handle->req_array, handle->req_count *
+      //                               sizeof (MPI_Request));
+      //if (NULL == tmp) {
+      //  return OMPI_ERR_OUT_OF_RESOURCE;
+      //}
+      //handle->req_array = tmp;
 
-      handle->req_array = tmp;
-      res = handle->win->w_osc_module->osc_put(buf1, putargs.origin_count, putargs.origin_datatype,
-                                               putargs.target, 0, putargs.target_count,
-                                               putargs.target_datatype, handle->win);
+      res = handle->win->w_osc_module->osc_put(putargs.buf,
+                                               putargs.origin_count, putargs.origin_datatype,
+                                               putargs.target, putargs.target_displ,
+                                               putargs.target_count, putargs.target_datatype,
+                                               handle->win);
+
+#ifdef PNBC_OSC_TIMING
+      Iput_time += MPI_Wtime();
+#endif
 
       if (OMPI_SUCCESS != res) {
-        PNBC_OSC_Error ("Error in MPI_Iput(%lu, %i, %p, %i, %i, %p, %lu) (%i)",
+        PNBC_OSC_Error ("Error in MPI_Iput(%lu, %i, %p, %i, %i, %p, %lu, %lu) (%i)",
                         (unsigned long)buf1,
                         putargs.origin_count, putargs.origin_datatype, putargs.target,
-                        putargs.target_count, putargs.target_datatype,
+                        putargs.target_count, putargs.target_datatype, putargs.target_displ,
                         (unsigned long)handle->comm, res);
         return res;
       }
-#ifdef PNBC_OSC_TIMING
-      Iget_time += MPI_Wtime();
-#endif
       break;
 
 /***************/
@@ -885,7 +926,7 @@ int PNBC_OSC_Schedule_request(PNBC_OSC_Schedule *schedule, ompi_communicator_t *
 }
 
 int PNBC_OSC_Schedule_request_win(PNBC_OSC_Schedule *schedule, ompi_communicator_t *comm,
-                                  ompi_win_t *win,ompi_win_t *winflag,
+                                  ompi_win_t *win, ompi_win_t *winflag,
                                   ompi_coll_libpnbc_osc_module_t *module,
                                   bool persistent, ompi_request_t **request, void *tmpbuf) {
   int ret;
@@ -908,15 +949,17 @@ int PNBC_OSC_Schedule_request_win(PNBC_OSC_Schedule *schedule, ompi_communicator
   OMPI_COLL_LIBPNBC_OSC_REQUEST_ALLOC(comm, persistent, handle);
   if (NULL == handle) return OMPI_ERR_OUT_OF_RESOURCE;
 
-  handle->tmpbuf = NULL;
   handle->req_count = 0;
   handle->req_array = NULL;
-  handle->comm = comm;
-  handle->schedule = NULL;
   handle->row_offset = 0;
   handle->nbc_complete = persistent ? true : false;
+  handle->schedule = schedule;
+  handle->comm = comm;
   handle->win = win;
   handle->winflag = winflag;
+  handle->comminfo = module;
+  //handle->module_win = module_win;
+  handle->tmpbuf = tmpbuf;
 
   /******************** Do the shadow comm administration ...  ***************/
 
@@ -937,10 +980,7 @@ int PNBC_OSC_Schedule_request_win(PNBC_OSC_Schedule *schedule, ompi_communicator
   }
 
   /******************** end of shadow comm administration ...  ***************/
-  handle->comminfo = module;
 
-  handle->tmpbuf = tmpbuf;
-  handle->schedule = schedule;
   *request = (ompi_request_t *) handle;
 
   return OMPI_SUCCESS;

@@ -82,7 +82,7 @@ typedef struct {
   MPI_Datatype origin_datatype;
   MPI_Datatype target_datatype;
   int target;
-  char tmpbuf;
+  MPI_Aint target_displ;
   bool local;
 } PNBC_OSC_Args_put;
 
@@ -148,9 +148,10 @@ typedef struct {
 /* internal function prototypes */
 
 /* add a put to a schedule */
-int PNBC_OSC_Sched_put(const void* buf, char tmpbuf,
+int PNBC_OSC_Sched_put(const void* buf, int target,
                        int origin_count, MPI_Datatype origin_datatype,
-           int target, int target_count, MPI_Datatype target_datatype,
+                       int target_count, MPI_Datatype target_datatype,
+                       MPI_Aint target_displ,
                        PNBC_OSC_Schedule *schedule, bool barrier);
 
   /* schedule get */
