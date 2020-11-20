@@ -1327,13 +1327,11 @@ void pmix_info_do_config(bool want_all)
     char *debug;
     char *have_dl;
     char *symbol_visibility;
-    char *manpages;
 
     /* setup the strings that don't require allocations*/
     debug = PMIX_ENABLE_DEBUG ? "yes" : "no";
     have_dl = PMIX_HAVE_PDL_SUPPORT ? "yes" : "no";
     symbol_visibility = PMIX_HAVE_VISIBILITY ? "yes" : "no";
-    manpages = PMIX_ENABLE_MAN_PAGES ? "yes" : "no";
 
     /* output values */
     pmix_info_out("Configured by", "config:user", PMIX_CONFIGURE_USER);
@@ -1375,5 +1373,4 @@ void pmix_info_do_config(bool want_all)
     pmix_info_out("Internal debug support", "option:debug", debug);
     pmix_info_out("dl support", "option:dlopen", have_dl);
     pmix_info_out("Symbol vis. support", "options:visibility", symbol_visibility);
-    pmix_info_out("Manpages built", "options:man-pages", manpages);
 }
