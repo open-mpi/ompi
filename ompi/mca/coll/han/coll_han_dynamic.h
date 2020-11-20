@@ -102,7 +102,6 @@ typedef enum COMPONENTS {
     LIBNBC,
     TUNED,
     SM,
-    SHARED,
     ADAPT,
     HAN,
     COMPONENTS_COUNT

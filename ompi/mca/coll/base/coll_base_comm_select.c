@@ -337,6 +337,7 @@ static opal_list_t *check_components(opal_list_t * components,
                                      ompi_communicator_t * comm)
 {
     int priority, flag;
+    int count_include = 0;
     const mca_base_component_t *component;
     mca_base_component_list_item_t *cli;
     mca_coll_base_module_2_3_0_t *module;
@@ -363,7 +364,8 @@ static opal_list_t *check_components(opal_list_t * components,
         if(NULL == coll_argv) {
             goto proceed_to_select;
         }
-        int idx2, count_include = opal_argv_count(coll_argv);
+        int idx2;
+        count_include = opal_argv_count(coll_argv);
         /* Allocate the coll_include argv */
         coll_include = (char**)malloc((count_include + 1) * sizeof(char*));
         coll_include[count_include] = NULL; /* NULL terminated array */
@@ -384,15 +386,6 @@ static opal_list_t *check_components(opal_list_t * components,
                 break;
             }
             coll_include[idx] = coll_argv[idx];
-        }
-        /* Reverse the order of the coll_inclide argv to faciliate the ordering of
-         * the selected components reverse.
-         */
-        for( idx2 = 0; idx2 < (count_include - 1); idx2++ ) {
-            char* temp = coll_include[idx2];
-            coll_include[idx2] = coll_include[count_include - 1];
-            coll_include[count_include - 1] = temp;
-            count_include--;
         }
     }
  proceed_to_select:
@@ -453,14 +446,17 @@ static opal_list_t *check_components(opal_list_t * components,
 
     /* For all valid component reorder them not on their provided priorities but on
      * the order requested in the info key. As at this point the coll_include is
-     * already ordered backward we can simply prepend the components.
+     * already ordered backward we can simply append the components.
+     * Note that the last element in selectable will have the highest priorty.
      */
-    mca_coll_base_avail_coll_t *item, *item_next;
-    OPAL_LIST_FOREACH_SAFE(item, item_next,
-                           selectable, mca_coll_base_avail_coll_t) {
-        if( component_in_argv(coll_include, item->ac_component_name) ) {
-            opal_list_remove_item(selectable, &item->super);
-            opal_list_prepend(selectable, &item->super);
+    for (int idx = count_include-1; idx >= 0; --idx) {
+        mca_coll_base_avail_coll_t *item;
+        OPAL_LIST_FOREACH(item, selectable, mca_coll_base_avail_coll_t) {
+            if (0 == strcmp(item->ac_component_name, coll_include[idx])) {
+                opal_list_remove_item(selectable, &item->super);
+                opal_list_append(selectable, &item->super);
+                break;
+            }
         }
     }
 
