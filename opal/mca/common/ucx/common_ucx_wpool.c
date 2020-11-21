@@ -215,12 +215,12 @@ opal_common_ucx_wpool_init(opal_common_ucx_wpool_t *wpool,
 err_wpool_add:
     free(wpool->recv_waddr);
 err_get_addr:
-    if (NULL != wpool) {
-        OBJ_RELEASE(winfo);
-        OBJ_RELEASE(wpool->dflt_winfo);
-        wpool->dflt_winfo = NULL;
-    }
+    OBJ_RELEASE(winfo);
+    OBJ_RELEASE(wpool->dflt_winfo);
+    wpool->dflt_winfo = NULL;
  err_worker_create:
+    OBJ_DESTRUCT(&wpool->idle_workers);
+    OBJ_DESTRUCT(&wpool->active_workers);
     ucp_cleanup(wpool->ucp_ctx);
  err_ucp_init:
     return rc;
