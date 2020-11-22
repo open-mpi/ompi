@@ -355,19 +355,12 @@ ompi/tools/ompi_info/ompi_info.1
 ompi/tools/wrappers/mpic++-wrapper-data.txt
 ompi/tools/wrappers/mpicc-wrapper-data.txt
 ompi/tools/wrappers/mpifort-wrapper-data.txt
-ompi/tools/wrappers/mpicc.1
-ompi/tools/wrappers/mpic++.1
-ompi/tools/wrappers/mpicxx.1
-ompi/tools/wrappers/mpifort.1
-ompi/tools/wrappers/mpijavac.1
 ompi/tools/wrappers/ompi_wrapper_script
 ompi/tools/wrappers/ompi.pc
 ompi/tools/wrappers/ompi-c.pc
 ompi/tools/wrappers/ompi-cxx.pc
 ompi/tools/wrappers/ompi-fort.pc
 ompi/tools/wrappers/mpijavac.pl
-ompi/tools/wrappers/mpif90.1
-ompi/tools/wrappers/mpif77.1
 ompi/tools/wrappers/mpicxx-wrapper-data.txt
 ompi/tools/wrappers/mpif77-wrapper-data.txt
 ompi/tools/wrappers/mpif90-wrapper-data.txt
@@ -471,10 +464,6 @@ opal/tools/wrappers/opalcc-wrapper-data.txt
 opal/tools/wrappers/opalc++-wrapper-data.txt
 opal/tools/wrappers/opalCC-wrapper-data.txt
 opal/tools/wrappers/opal_wrapper
-opal/tools/wrappers/opalcc.1
-opal/tools/wrappers/opalc++.1
-opal/tools/wrappers/generic_wrapper.1
-opal/tools/wrappers/opal_wrapper.1
 opal/tools/wrappers/opal.pc
 
 opal/util/show_help_lex.c
@@ -704,3 +693,12 @@ opal/test/reachable/reachable_netlink
 opal/test/reachable/reachable_weighted
 opal/mca/threads/argobots/threads_argobots.h
 opal/mca/threads/qthreads/threads_qthreads.h
+
+docs/_build
+docs/_static
+docs/_static/css/custom.css
+docs/_templates
+
+# Common Python virtual environment directory names
+venv
+py??

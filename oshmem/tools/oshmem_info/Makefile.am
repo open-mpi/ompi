@@ -1,7 +1,7 @@
 #
 # Copyright (c) 2014      Mellanox Technologies, Inc.
 #                         All rights reserved.
-# Copyright (c) 2014-2020 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2014-2022 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2016      IBM Corporation.  All rights reserved.
 # Copyright (c) 2017      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
@@ -44,26 +44,15 @@ endif
 
 include $(top_srcdir)/Makefile.ompi-rules
 
-nodist_man_MANS =
 bin_PROGRAMS =
 
-man_pages = oshmem_info.1
-
-EXTRA_DIST = $(man_pages:.1=.1in)
-
 if PROJECT_OSHMEM
-# Only build/install the binary and man pages if we're building oshmem
+# Only build/install the binary pages if we're building oshmem
 bin_PROGRAMS += oshmem_info
-nodist_man_MANS += $(man_pages)
 dist_ompidata_DATA = \
      help-oshmem-info.txt
 endif
 
-
-# Ensure that the man pages are rebuilt if the opal_config.h file
-# changes; a "good enough" way to know if configure was run again (and
-# therefore the release date or version may have changed)
-$(nodist_man_MANS): $(top_builddir)/opal/include/opal_config.h
 
 oshmem_info_SOURCES = \
         oshmem_info.h \
@@ -73,6 +62,3 @@ oshmem_info_SOURCES = \
 oshmem_info_LDADD = $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la
 oshmem_info_LDADD += $(top_builddir)/oshmem/liboshmem.la
 oshmem_info_LDADD += $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la
-
-distclean-local:
-	rm -f $(man_pages)

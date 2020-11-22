@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2022 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
 # Copyright (c) 2014      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
@@ -22,17 +22,10 @@
 
 DEFS="-DEXEEXT=\"$(EXEEXT)\""
 
-real_man_pages = generic_wrapper.1 opal_wrapper.1
-EXTRA_DIST = $(real_man_pages:.1=.1in)
-
-include $(top_srcdir)/Makefile.ompi-rules
-
 if !OPAL_WANT_SCRIPT_WRAPPER_COMPILERS
 if OPAL_INSTALL_BINARIES
 
 bin_PROGRAMS = opal_wrapper
-
-nodist_man_MANS = opal_wrapper.1
 
 dist_opaldata_DATA = help-opal-wrapper.txt
 
@@ -42,16 +35,8 @@ if WANT_INSTALL_HEADERS
 nodist_opaldata_DATA = \
 	opalcc-wrapper-data.txt
 
-nodist_man_MANS += opalcc.1
-
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = opal.pc
-
-install-exec-hook:
-	(cd $(DESTDIR)$(bindir); rm -f opalcc$(EXEEXT); $(LN_S) opal_wrapper$(EXEECT) opalcc$(EXEEXT))
-
-uninstall-local:
-	rm -f $(DESTDIR)$(bindir)/opalcc$(EXEEXT)
 
 endif # WANT_INSTALL_HEADERS
 
@@ -60,15 +45,3 @@ endif # OPAL_WANT_SCRIPT_WRAPPER_COMPILERS
 
 opal_wrapper_SOURCES = opal_wrapper.c
 opal_wrapper_LDADD = $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la
-
-# Ensure that the man pages are rebuilt if the opal_config.h file
-# changes; a "good enough" way to know if configure was run again (and
-# therefore the release date or version may have changed)
-$(real_man_pages): $(top_builddir)/opal/include/opal_config.h
-
-opalcc.1: generic_wrapper.1
-	rm -f opalcc.1
-	sed -e 's/#COMMAND#/opalcc/g' -e 's/#PROJECT#/Open PAL/g' -e 's/#PROJECT_SHORT#/OPAL/g' -e 's/#LANGUAGE#/C/g' < $(top_builddir)/opal/tools/wrappers/generic_wrapper.1 > opalcc.1
-
-distclean-local:
-	rm -f $(real_man_pages) opalcc.1
