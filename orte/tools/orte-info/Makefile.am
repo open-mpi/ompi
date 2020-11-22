@@ -11,8 +11,8 @@
 #                         All rights reserved.
 # Copyright (c) 2010-2014 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
-# Copyright (c) 2017      Research Organization for Information Science
-#                         and Technology (RIST). All rights reserved.
+# Copyright (c) 2017-2020 Research Organization for Information Science
+#                         and Technology (RIST).  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -25,7 +25,7 @@ AM_CFLAGS = \
             -DOPAL_CONFIGURE_HOST="\"@OPAL_CONFIGURE_HOST@\"" \
             -DOPAL_CONFIGURE_DATE="\"@OPAL_CONFIGURE_DATE@\"" \
             -DOMPI_BUILD_USER="\"$$USER\"" \
-            -DOMPI_BUILD_HOST="\"`$${HOSTNAME:-(hostname || uname -n) | sed 1q`\"" \
+            -DOMPI_BUILD_HOST="\"$${HOSTNAME:-`(hostname || uname -n) | sed 1q`}\"" \
             -DOMPI_BUILD_DATE="\"`$(top_srcdir)/config/getdate.sh`\"" \
             -DOMPI_BUILD_CFLAGS="\"@CFLAGS@\"" \
             -DOMPI_BUILD_CPPFLAGS="\"@CPPFLAGS@\"" \
