@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2021 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2022 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2010      Oracle and/or its affiliates.  All rights
 #                         reserved.
 # Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
@@ -30,8 +30,6 @@ EXTRA_DIST = \
         opal_mca_priority_sort.pl \
         find_common_syms \
         getdate.sh \
-        make_manpage.pl \
-        md2nroff.pl \
         from-savannah/upstream-config.guess \
         from-savannah/upstream-config.sub \
         extract-3rd-party-configure.pl
