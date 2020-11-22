@@ -20,6 +20,8 @@
 # First, list all .h and .c sources.  It is necessary to list all .h
 # files so that they will be picked up in the distribution tarball.
 
+SUBDIRS = sub
+
 sources = op_avx_component.c op_avx.h
 sources_extended = op_avx_functions.c
 

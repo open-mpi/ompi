@@ -19,7 +19,7 @@
 # ------------------------------------------------
 # We can always build, unless we were explicitly disabled.
 AC_DEFUN([MCA_ompi_op_avx_CONFIG],[
-    AC_CONFIG_FILES([ompi/mca/op/avx/Makefile])
+    AC_CONFIG_FILES([ompi/mca/op/avx/Makefile ompi/mca/op/avx/sub/Makefile])
 
     MCA_BUILD_OP_AVX_FLAGS=""
     MCA_BUILD_OP_AVX2_FLAGS=""
