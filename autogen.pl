@@ -1,12 +1,12 @@
 #!/usr/bin/env perl
 #
-# Copyright (c) 2009-2017 Cisco Systems, Inc.  All rights reserved
+# Copyright (c) 2009-2020 Cisco Systems, Inc.  All rights reserved
 # Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
 # Copyright (c) 2013      Mellanox Technologies, Inc.
 #                         All rights reserved.
 # Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
-# Copyright (c) 2015-2016 Research Organization for Information Science
-#                         and Technology (RIST). All rights reserved.
+# Copyright (c) 2015-2020 Research Organization for Information Science
+#                         and Technology (RIST).  All rights reserved.
 # Copyright (c) 2015      IBM Corporation.  All rights reserved.
 #
 # $COPYRIGHT$
@@ -1068,11 +1068,40 @@ sub patch_autotools_output {
     # Fix consequence of broken libtool.m4
     # see http://lists.gnu.org/archive/html/bug-libtool/2015-07/msg00002.html and
     # https://github.com/open-mpi/ompi/issues/751
-    push(@verbose_out, $indent_str . "Patching configure for libtool.m4 bug\n");
+    push(@verbose_out, $indent_str . "Patching configure for -L/-R libtool.m4 bug\n");
     # patch for libtool < 2.4.3
     $c =~ s/# Some compilers place space between "-\{L,R\}" and the path.\n       # Remove the space.\n       if test \$p = \"-L\" \|\|/# Some compilers place space between "-\{L,-l,R\}" and the path.\n       # Remove the spaces.\n       if test \$p = \"-L\" \|\|\n          test \$p = \"-l\" \|\|/g;
     # patch for libtool >= 2.4.3
     $c =~ s/# Some compilers place space between "-\{L,R\}" and the path.\n       # Remove the space.\n       if test x-L = \"\$p\" \|\|\n          test x-R = \"\$p\"\; then/# Some compilers place space between "-\{L,-l,R\}" and the path.\n       # Remove the spaces.\n       if test x-L = \"x\$p\" \|\|\n          test x-l = \"x\$p\" \|\|\n          test x-R = \"x\$p\"\; then/g;
+
+    # Fix OS X Big Sur (11.0.x) support
+    # From https://lists.gnu.org/archive/html/libtool-patches/2020-06/msg00001.html
+    push(@verbose_out, $indent_str . "Patching configure for MacOS Big Sur libtool.m4 bug\n");
+    # Some versions of Libtool use ${wl} consistently, but others did
+    # not (e.g., they used $wl).  Make the regexp be able to handle
+    # both.  Additionally, the case string searching for 10.[012]*
+    # changed over time.  So make sure it can handle both of the case
+    # strings that we're aware of.
+    my $WL = '(\$\{wl\}|\$wl)';
+    my $SOMETIMES = '(\[,.\])*';
+    my $search_string = 'darwin\*\) # darwin 5.x on
+      # if running on 10.5 or later, the deployment target defaults
+      # to the OS version, if on x86, and 10.4, the deployment
+      # target defaults to 10.4. Don\'t you love it\?
+      case \$\{MACOSX_DEPLOYMENT_TARGET-10.0\},\$host in
+	10.0,\*86\*-darwin8\*\|10.0,\*-darwin\[91\]\*\)
+	  _lt_dar_allow_undefined=\'' . $WL . '-undefined ' . $WL . 'dynamic_lookup\' ;;
+	10.\[012\]' . $SOMETIMES . '\*\)
+	  _lt_dar_allow_undefined=\'' . $WL . '-flat_namespace ' . $WL . '-undefined ' . $WL . 'suppress\' ;;
+	10.\*\)';
+    my $replace_string = 'darwin*)
+      # Open MPI patched for Darwin / MacOS Big Sur.  See
+      # http://lists.gnu.org/archive/html/bug-libtool/2015-07/msg00001.html
+      case ${MACOSX_DEPLOYMENT_TARGET},$host in
+      10.[012],*|,*powerpc*)
+	  _lt_dar_allow_undefined=\'${wl}-flat_namespace ${wl}-undefined ${wl}suppress\' ;;
+      *)';
+    $c =~ s/$search_string/$replace_string/g;
 
     # Only write out verbose statements and a new configure if the
     # configure content actually changed
