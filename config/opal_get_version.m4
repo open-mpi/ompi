@@ -12,8 +12,8 @@ dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2008-2020 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2014      Intel, Inc. All rights reserved.
-dnl Copyright (c) 2014      Research Organization for Information Science
-dnl                         and Technology (RIST). All rights reserved.
+dnl Copyright (c) 2014-2020 Research Organization for Information Science
+dnl                         and Technology (RIST).  All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -80,7 +80,7 @@ m4_define([OPAL_GET_VERSION],[
 
             # If we're in a git repo and we found the git command, use
             # git describe to get the repo rev
-            if test -d "$srcdir/.git" && test $git_happy -eq 1; then
+            if test -r "$srcdir/.git" && test $git_happy -eq 1; then
                 if test "$srcdir" != "`pwd`"; then
                     git_save_dir=`pwd`
                     cd "$srcdir"
@@ -91,7 +91,7 @@ m4_define([OPAL_GET_VERSION],[
                     $2_REPO_REV=`git describe --tags --always`
                 fi
             else
-                $2_REPO_REV=date`$srcdir/getdate.sh '+%Y-%m-%d'`
+                $2_REPO_REV=`$srcdir/config/getdate.sh '+%Y-%m-%d'`
             fi
         fi
 
