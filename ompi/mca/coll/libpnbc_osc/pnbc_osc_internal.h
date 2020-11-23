@@ -57,6 +57,19 @@ extern "C" {
 #define true 1
 #define false 0
 
+/* Function return codes  */
+#define PNBC_OSC_OK 0 /* everything went fine */
+#define PNBC_OSC_SUCCESS 0 /* everything went fine (MPI compliant :) */
+#define PNBC_OSC_OOR 1 /* out of resources */
+#define PNBC_OSC_BAD_SCHED 2 /* bad schedule */
+#define PNBC_OSC_CONTINUE 3 /* progress not done */
+#define PNBC_OSC_DATATYPE_NOT_SUPPORTED 4 /* datatype not supported or not valid */
+#define PNBC_OSC_OP_NOT_SUPPORTED 5 /* operation not supported or not valid */
+#define PNBC_OSC_NOT_IMPLEMENTED 6
+#define PNBC_OSC_INVALID_PARAM 7 /* invalid parameters */
+#define PNBC_OSC_INVALID_TOPOLOGY_COMM 8 /* invalid topology attached to communicator */
+
+typedef ompi_coll_libpnbc_osc_request_t PNBC_OSC_Handle;
 
 typedef enum {
   LOCKED,
@@ -198,6 +211,10 @@ int PNBC_OSC_Schedule_request_win(PNBC_OSC_Schedule *schedule, ompi_communicator
 int PNBC_OSC_Start(PNBC_OSC_Handle *handle);
 int PNBC_OSC_Progress(PNBC_OSC_Handle *handle);
 
+static inline void PNBC_OSC_Reset(PNBC_OSC_Handle *handle) {
+  handle->schedule->row_offset = 0;
+}
+
 void PNBC_OSC_Return_handle(ompi_coll_libpnbc_osc_request_t *request);
   
 static inline int PNBC_OSC_Type_intrinsic(MPI_Datatype type);
@@ -238,12 +255,14 @@ int PNBC_OSC_Create_fortran_handle(int *fhandle, PNBC_OSC_Handle **handle);
    * schedule. A round has the format:
    * [num]{[type][type-args]}
    * e.g. [(int)2][(PNBC_OSC_Fn_type)SEND][(PNBC_OSC_Args_get)GET-ARGS][(PNBC_OSC_Fn_type)RECV][(PNBC_OSC_Args_put)PUT-ARGS] */
-  static inline void nbc_get_round_size (char *p, unsigned long *size) {
+  static inline void PNBC_OSC_Get_round_size (char *p, unsigned long *size) {
     PNBC_OSC_Fn_type type;
     unsigned long offset = 0;
     int num;
 
-    PNBC_OSC_GET_BYTES(p,num);
+    memcpy (&num, p + offset, sizeof (num));
+    offset += sizeof(num);
+//    PNBC_OSC_GET_BYTES(p,num);
     /*PNBC_OSC_DEBUG(10, "GET_ROUND_SIZE got %i elements\n", num); */
     for (int i = 0 ; i < num ; ++i) {
       memcpy (&type, p + offset, sizeof (type));
@@ -278,7 +297,8 @@ int PNBC_OSC_Create_fortran_handle(int *fhandle, PNBC_OSC_Handle **handle);
       }
     }
 
-    *size = offset + sizeof (int);
+//    *size = offset + sizeof (int);
+    *size = offset;
   }
 
 
@@ -299,8 +319,8 @@ int PNBC_OSC_Create_fortran_handle(int *fhandle, PNBC_OSC_Handle **handle);
 
     lastround = schedule->data + schedule->current_round_offset;
 
-    /* increment the count in the last round of the schedule (memcpy is used
-     * to protect against unaligned access) */
+    // increment the count in the last round of the schedule (memcpy is used
+    // to protect against unaligned access)
     memcpy (&last_round_num, lastround, sizeof (last_round_num));
     ++last_round_num;
     memcpy (lastround, &last_round_num, sizeof (last_round_num));
@@ -435,7 +455,6 @@ int PNBC_OSC_Create_fortran_handle(int *fhandle, PNBC_OSC_Handle **handle);
       return 0;
   }
 
-  /* let's give a try to inline functions */
   static inline int PNBC_OSC_Copy(const void *src, int srccount, MPI_Datatype srctype,
                                   void *tgt, int tgtcount, MPI_Datatype tgttype,
                                   MPI_Comm comm) {

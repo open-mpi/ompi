@@ -448,7 +448,8 @@ ompi_coll_libpnbc_osc_progress(void)
                 }
                 if(request->super.req_persistent) {
                     /* reset for the next communication */
-                    request->row_offset = 0;
+                    PNBC_OSC_Reset(request);
+                    //request->row_offset = 0; // move into new PNBC_OSC_Reset
                 }
                 if(!request->super.req_persistent || !REQUEST_COMPLETE(&request->super)) {
             	    ompi_request_complete(&request->super, true);
@@ -511,7 +512,7 @@ request_start(size_t count, ompi_request_t ** requests)
         PNBC_OSC_DEBUG(5, "handle %p size %u\n", &handle, sizeof(handle));
         PNBC_OSC_DEBUG(5, "data %p size %u\n", &schedule->data, sizeof(schedule->data));
         PNBC_OSC_DEBUG(5, "req_array %p size %u\n", &handle->req_array, sizeof(handle->req_array));
-        PNBC_OSC_DEBUG(5, "row_offset=%u address=%p size=%u\n", handle->row_offset, &handle->row_offset, sizeof(handle->row_offset));
+        PNBC_OSC_DEBUG(5, "row_offset=%u address=%p size=%u\n", schedule->row_offset, &schedule->row_offset, sizeof(schedule->row_offset));
         PNBC_OSC_DEBUG(5, "req_count=%u address=%p size=%u\n", handle->req_count, &handle->req_count, sizeof(handle->req_count));
         PNBC_OSC_DEBUG(5, "tmpbuf address=%p size=%u\n", handle->tmpbuf, sizeof(handle->tmpbuf));
         PNBC_OSC_DEBUG(5, "--------------------------------\n");
