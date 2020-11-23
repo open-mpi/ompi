@@ -4,7 +4,7 @@
  *                         reserved.
  * Copyright (c) 2013-2017 Inria.  All rights reserved.
  * Copyright (c) 2013-2015 Bull SAS.  All rights reserved.
- * Copyright (c) 2016-2018 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2016-2020 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2017      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -398,59 +398,3 @@ int write_mat(char * filename, size_t * mat, unsigned int dim)
 
     return 0;
 }
-
-/**
- * MPI binding for fortran
- */
-
-void monitoring_prof_mpi_init_f2c( MPI_Fint * );
-void monitoring_prof_mpi_finalize_f2c( MPI_Fint * );
-
-void monitoring_prof_mpi_init_f2c( MPI_Fint *ierr ) { 
-    int c_ierr;
-    int argc = 0;
-    char ** argv = NULL; 
-
-    c_ierr = MPI_Init(&argc, &argv); 
-    if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr); 
-}
-
-void monitoring_prof_mpi_finalize_f2c( MPI_Fint *ierr ) { 
-    int c_ierr;
-
-    c_ierr = MPI_Finalize(); 
-    if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr); 
-}
-
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_INIT = monitoring_prof_mpi_init_f2c
-#pragma weak mpi_init = monitoring_prof_mpi_init_f2c
-#pragma weak mpi_init_ = monitoring_prof_mpi_init_f2c
-#pragma weak mpi_init__ = monitoring_prof_mpi_init_f2c
-#pragma weak MPI_Init_f = monitoring_prof_mpi_init_f2c
-#pragma weak MPI_Init_f08 = monitoring_prof_mpi_init_f2c
-
-#pragma weak MPI_FINALIZE = monitoring_prof_mpi_finalize_f2c
-#pragma weak mpi_finalize = monitoring_prof_mpi_finalize_f2c
-#pragma weak mpi_finalize_ = monitoring_prof_mpi_finalize_f2c
-#pragma weak mpi_finalize__ = monitoring_prof_mpi_finalize_f2c
-#pragma weak MPI_Finalize_f = monitoring_prof_mpi_finalize_f2c
-#pragma weak MPI_Finalize_f08 = monitoring_prof_mpi_finalize_f2c
-#elif OMPI_BUILD_FORTRAN_BINDINGS
-
-OMPI_GENERATE_F77_BINDINGS (MPI_INIT,
-                           mpi_init,
-                           mpi_init_,
-                           mpi_init__,
-                           monitoring_prof_mpi_init_f2c,
-                           (MPI_Fint *ierr),
-                           (ierr) )
-
-OMPI_GENERATE_F77_BINDINGS (MPI_FINALIZE,
-                           mpi_finalize,
-                           mpi_finalize_,
-                           mpi_finalize__,
-                           monitoring_prof_mpi_finalize_f2c,
-                           (MPI_Fint *ierr),
-                           (ierr) )
-#endif

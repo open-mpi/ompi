@@ -624,7 +624,7 @@ int ompi_coll_adapt_ireduce_generic(const void *sbuf, void *rbuf, int count,
         OPAL_OUTPUT_VERBOSE((30, mca_coll_adapt_component.adapt_output,
                              "[%d]: distance %d, inbuf %p, inbuf->buff %p, inbuf->buff-lb %p, to_inbuf %p, inbuf_list %p\n",
                              rank, con->distance, (void *) temp_inbuf, (void *) temp_inbuf->buff,
-                             (char *) temp_inbuf->buff - lower_bound,
+                             (void *) ((char *) temp_inbuf->buff - lower_bound),
                              (void *) to_inbuf((char *) temp_inbuf->buff - lower_bound, con->distance),
                              (void *) &con->inbuf_list));
         opal_free_list_return_st(&con->inbuf_list, (opal_free_list_item_t *) temp_inbuf);

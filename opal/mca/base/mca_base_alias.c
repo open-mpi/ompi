@@ -93,13 +93,23 @@ static char *mca_base_alias_generate_name (const char *project, const char *fram
 
     if (project_length) {
         strncat (tmp, project, length);
-        strncat (tmp, "_", 1);
+        // NOTE: We use strcat() here (and not strncat()) because
+        // we're appending a constant string with a fixed/hard-coded
+        // length.  It's the exact equivalent of strncat(tmp, "_", 1),
+        // but strncat() would actually be more overhead.  Indeed, GCC
+        // 10 emits a warning if we use strncatd() with a compile-time
+        // constant string as the source and a hard-coded length that
+        // is equivalent to the length of that compile-time constant
+        // string.  So avoid the warning and use strcat().
+        strcat (tmp, "_");
         length -= project_length + 1;
     }
 
     if (framework_length) {
         strncat (tmp, framework, length);
-        strncat (tmp, "_", 1);
+        // Use strcat() here instead of strncat(); see the comment
+        // above for an explanation.
+        strcat (tmp, "_");
         length -= framework_length + 1;
     }
 

@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2018 Cisco Systems, Inc.  All rights reserved
+ * Copyright (c) 2007-2020 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2009 University of Houston.  All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2011-2015 Los Alamos National Security, LLC.  All rights
@@ -651,7 +651,7 @@ static int dpm_convert(opal_list_t *infos,
                        bool deprecated)
 {
     opal_info_item_t *iptr;
-    char *ck, *ptr, *help_str;
+    char *ck, *ptr, *help_str = NULL;
     int rc;
     char **tmp;
     dpm_conflicts_t *modifiers;
