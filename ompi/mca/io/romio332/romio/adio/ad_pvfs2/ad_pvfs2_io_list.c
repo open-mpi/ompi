@@ -43,7 +43,7 @@ int ADIOI_PVFS2_StridedListIO(ADIO_File fd, void *buf, int count,
     int64_t cur_flat_file_reg_off = 0;
     ADIOI_Flatlist_node *flat_buf_p, *flat_file_p;
     MPI_Count buftype_size = -1, filetype_size = -1;
-    MPI_Aint filetype_extent = -1, buftype_extent = -1;;
+    MPI_Aint lb, filetype_extent = -1, buftype_extent = -1;;
     int buftype_is_contig = -1, filetype_is_contig = -1;
 
     /* PVFS2 specific parameters */
@@ -67,9 +67,9 @@ int ADIOI_PVFS2_StridedListIO(ADIO_File fd, void *buf, int count,
         *error_code = MPI_SUCCESS;
         return -1;
     }
-    MPI_Type_extent(fd->filetype, &filetype_extent);
+    MPI_Type_get_extent(fd->filetype, &lb, &filetype_extent);
     MPI_Type_size_x(datatype, &buftype_size);
-    MPI_Type_extent(datatype, &buftype_extent);
+    MPI_Type_get_extent(datatype, &lb, &buftype_extent);
     io_size = buftype_size * count;
 
     pvfs_fs = (ADIOI_PVFS2_fs *) fd->fs_ptr;

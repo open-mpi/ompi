@@ -67,7 +67,7 @@ int MPIO_Err_return_comm(MPI_Comm mpi_comm, int error_code)
 {
     MPI_Errhandler errh;
 
-    MPI_Errhandler_get(mpi_comm, &errh);
+    MPI_Comm_get_errhandler(mpi_comm, &errh);
 
     if (errh == MPI_ERRORS_ARE_FATAL || errh != MPI_ERRORS_RETURN) {
         MPI_Abort(mpi_comm, 1);

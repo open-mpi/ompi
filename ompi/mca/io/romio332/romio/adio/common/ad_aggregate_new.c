@@ -210,18 +210,16 @@ void ADIOI_Calc_file_realms_fsize(ADIO_File fd, int nprocs_for_coll,
 /* creates a datatype with an empty trailing edge */
 void ADIOI_Create_fr_simpletype(int size, int nprocs_for_coll, MPI_Datatype * simpletype)
 {
-    int count = 2, blocklens[2];
-    MPI_Aint indices[2];
-    MPI_Datatype old_types[2];
+    MPI_Aint lb, ub;
+    MPI_Datatype type;
 
-    blocklens[0] = size;
-    blocklens[1] = 1;
-    indices[0] = 0;
-    indices[1] = size * nprocs_for_coll;
-    old_types[0] = MPI_BYTE;
-    old_types[1] = MPI_UB;
+    lb = 0;
+    ub = size * nprocs_for_coll;
 
-    MPI_Type_struct(count, blocklens, indices, old_types, simpletype);
+    MPI_Type_contiguous(size, MPI_BYTE, &type);
+    MPI_Type_create_resized(type, lb, ub, simpletype);
+
+    MPI_Type_free(&type);
 
     MPI_Type_commit(simpletype);
 }

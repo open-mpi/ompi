@@ -49,7 +49,7 @@ int MPI_Type_create_darray(int size, int rank, int ndims,
 {
     int err, error_code;
     int i;
-    MPI_Aint orig_extent, size_with_aint;
+    MPI_Aint lb, orig_extent, size_with_aint;
     MPI_Offset size_with_offset;
     static char myname[] = "MPI_TYPE_CREATE_DARRAY";
 
@@ -151,7 +151,7 @@ int MPI_Type_create_darray(int size, int rank, int ndims,
         return MPIO_Err_return_comm(MPI_COMM_SELF, error_code);
     }
 
-    MPI_Type_extent(oldtype, &orig_extent);
+    MPI_Type_get_extent(oldtype, &lb, &orig_extent);
 
 /* check if MPI_Aint is large enough for size of global array.
    if not, complain. */

@@ -23,7 +23,7 @@ int ADIOI_PVFS2_StridedDtypeIO(ADIO_File fd, void *buf, int count,
     PVFS_Request tmp_mem_req, mem_req, tmp_file_req, file_req;
     PVFS_sysresp_io resp_io;
     ADIO_Offset off = -1, bytes_into_filetype = 0;
-    MPI_Aint filetype_extent = -1;
+    MPI_Aint lb, filetype_extent = -1;
     int i = -1;
     MPI_Count etype_size;
     PVFS_size pvfs_disp = -1;
@@ -53,7 +53,7 @@ int ADIOI_PVFS2_StridedDtypeIO(ADIO_File fd, void *buf, int count,
         *error_code = MPI_SUCCESS;
         return -1;
     }
-    MPI_Type_extent(fd->filetype, &filetype_extent);
+    MPI_Type_get_extent(fd->filetype, &lb, &filetype_extent);
     MPI_Type_size_x(fd->etype, &etype_size);
     if (filetype_size == 0) {
         *error_code = MPI_SUCCESS;

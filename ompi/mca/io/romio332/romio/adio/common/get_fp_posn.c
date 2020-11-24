@@ -18,7 +18,7 @@ void ADIOI_Get_position(ADIO_File fd, ADIO_Offset * offset)
     int i, flag;
     MPI_Count filetype_size, etype_size;
     int filetype_is_contig;
-    MPI_Aint filetype_extent;
+    MPI_Aint lb, filetype_extent;
     ADIO_Offset disp, byte_offset, sum = 0, size_in_file, n_filetypes, frd_size;
 
     ADIOI_Datatype_iscontig(fd->filetype, &filetype_is_contig);
@@ -30,7 +30,7 @@ void ADIOI_Get_position(ADIO_File fd, ADIO_Offset * offset)
         flat_file = ADIOI_Flatten_and_find(fd->filetype);
 
         MPI_Type_size_x(fd->filetype, &filetype_size);
-        MPI_Type_extent(fd->filetype, &filetype_extent);
+        MPI_Type_get_extent(fd->filetype, &lb, &filetype_extent);
 
         disp = fd->disp;
         byte_offset = fd->fp_ind;

@@ -82,7 +82,7 @@ void ADIOI_Exch_file_views(int myrank, int nprocs, int file_ptr_type,
     MPI_Request *send_req_arr = NULL, *recv_req_arr = NULL;
     MPI_Status *statuses = NULL;
     ADIO_Offset disp_off_sz_ext_typesz[6];
-    MPI_Aint memtype_extent, filetype_extent;
+    MPI_Aint lb, memtype_extent, filetype_extent;
     int ret = -1;
 
     /* parameters for datatypes */
@@ -98,7 +98,7 @@ void ADIOI_Exch_file_views(int myrank, int nprocs, int file_ptr_type,
      * freed in the close and should have been flattened in the file
      * view. */
     MPI_Type_size_x(datatype, &memtype_sz);
-    MPI_Type_extent(datatype, &memtype_extent);
+    MPI_Type_get_extent(datatype, &lb, &memtype_extent);
     if (memtype_sz == memtype_extent) {
         memtype_is_contig = 1;
         flat_mem_p = ADIOI_Flatten_and_find(datatype);
@@ -107,7 +107,7 @@ void ADIOI_Exch_file_views(int myrank, int nprocs, int file_ptr_type,
         flat_mem_p = ADIOI_Flatten_and_find(datatype);
     }
 
-    MPI_Type_extent(fd->filetype, &filetype_extent);
+    MPI_Type_get_extent(fd->filetype, &lb, &filetype_extent);
     MPI_Type_size_x(fd->filetype, &filetype_sz);
     flat_file_p = ADIOI_Flatten_and_find(fd->filetype);
     if (filetype_extent == filetype_sz) {

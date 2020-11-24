@@ -18,7 +18,7 @@ void ADIOI_Get_eof_offset(ADIO_File fd, ADIO_Offset * eof_offset)
     ADIO_Offset fsize, disp, sum = 0, size_in_file, n_filetypes, rem, etype_size;
     int flag, i;
     ADIO_Fcntl_t *fcntl_struct;
-    MPI_Aint filetype_extent;
+    MPI_Aint lb, filetype_extent;
     ADIOI_Flatlist_node *flat_file;
 
     /* find the eof in bytes */
@@ -42,7 +42,7 @@ void ADIOI_Get_eof_offset(ADIO_File fd, ADIO_Offset * eof_offset)
         flat_file = ADIOI_Flatten_and_find(fd->filetype);
 
         MPI_Type_size_x(fd->filetype, &filetype_size);
-        MPI_Type_extent(fd->filetype, &filetype_extent);
+        MPI_Type_get_extent(fd->filetype, &lb, &filetype_extent);
 
         disp = fd->disp;
         n_filetypes = -1;

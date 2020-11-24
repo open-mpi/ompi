@@ -103,8 +103,8 @@ int run_test(test_param_t * test)
 
     MPI_Datatype filetype;
 
-    MPI_Type_struct(test->type_count, test->type_blocklens,
-                    test->type_indices, test->type_oldtypes, &filetype);
+    MPI_Type_create_struct(test->type_count, test->type_blocklens,
+                           test->type_indices, test->type_oldtypes, &filetype);
     MPI_Type_commit(&filetype);
 
     MPI_File_open(MPI_COMM_WORLD, "test_file.txt", MPI_MODE_RDWR, MPI_INFO_NULL, &fh);
