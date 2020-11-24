@@ -30,16 +30,16 @@ AM_CPPFLAGS = \
         -I$(OMPI_TOP_BUILDDIR)/ompi/include \
         -I$(OMPI_TOP_SRCDIR)/ompi \
         -I$(OMPI_TOP_SRCDIR)/ompi/include \
-        -I$(OMPI_TOP_SRCDIR)/ompi/mca/io/romio321 \
-        -I$(OMPI_TOP_SRCDIR)/ompi/mca/io/romio321/romio/include \
-        -I$(OMPI_TOP_SRCDIR)/ompi/mca/io/romio321/romio/adio/include \
+        -I$(OMPI_TOP_SRCDIR)/ompi/mca/io/romio332 \
+        -I$(OMPI_TOP_SRCDIR)/ompi/mca/io/romio332/romio/include \
+        -I$(OMPI_TOP_SRCDIR)/ompi/mca/io/romio332/romio/adio/include \
         -I$(top_builddir)
 
 sources += \
-	src/io_romio321.h \
-	src/io_romio321_component.c \
-	src/io_romio321_file_open.c \
-	src/io_romio321_file_read.c \
-	src/io_romio321_file_write.c \
-	src/io_romio321_module.c
+	src/io_romio332.h \
+	src/io_romio332_component.c \
+	src/io_romio332_file_open.c \
+	src/io_romio332_file_read.c \
+	src/io_romio332_file_write.c \
+	src/io_romio332_module.c
 

@@ -11,8 +11,8 @@
 #                         All rights reserved.
 # Copyright (c) 2010-2015 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2017      IBM Corporation.  All rights reserved.
-# Copyright (c) 2017      Research Organization for Information Science
-#                         and Technology (RIST). All rights reserved.
+# Copyright (c) 2017-2020 Research Organization for Information Science
+#                         and Technology (RIST).  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -25,7 +25,7 @@ EXTRA_DIST = autogen.subdirs
 sources =
 include src/Makefile.extra
 
-if MCA_io_romio321_SHOULD_BUILD
+if MCA_io_romio332_SHOULD_BUILD
 # Need to set both SUBDIRS and DIST_SUBDIRS due to oddities with AM
 SUBDIRS = romio
 DIST_SUBDIRS = romio
@@ -35,13 +35,13 @@ endif
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
 # (for static builds).
 
-if MCA_BUILD_ompi_io_romio321_DSO
+if MCA_BUILD_ompi_io_romio332_DSO
 lib =
 lib_sources =
-component = mca_io_romio321.la
+component = mca_io_romio332.la
 component_sources = $(sources)
 else
-lib = libmca_io_romio321.la
+lib = libmca_io_romio332.la
 lib_sources = $(sources)
 component =
 component_sources =
@@ -51,13 +51,13 @@ libs = romio/libromio_dist.la
 
 mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component)
-mca_io_romio321_la_SOURCES = $(component_sources)
-mca_io_romio321_la_LIBADD = $(libs)
-mca_io_romio321_la_DEPENDENCIES = $(libs)
-mca_io_romio321_la_LDFLAGS = -module -avoid-version
+mca_io_romio332_la_SOURCES = $(component_sources)
+mca_io_romio332_la_LIBADD = $(libs)
+mca_io_romio332_la_DEPENDENCIES = $(libs)
+mca_io_romio332_la_LDFLAGS = -module -avoid-version
 
 noinst_LTLIBRARIES = $(lib)
-libmca_io_romio321_la_SOURCES = $(lib_sources)
-libmca_io_romio321_la_LIBADD = $(libs)
-libmca_io_romio321_la_DEPENDENCIES = $(libs)
-libmca_io_romio321_la_LDFLAGS = -module -avoid-version
+libmca_io_romio332_la_SOURCES = $(lib_sources)
+libmca_io_romio332_la_LIBADD = $(libs)
+libmca_io_romio332_la_DEPENDENCIES = $(libs)
+libmca_io_romio332_la_LDFLAGS = -module -avoid-version
