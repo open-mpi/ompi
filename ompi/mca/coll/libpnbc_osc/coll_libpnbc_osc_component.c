@@ -568,8 +568,32 @@ request_construct(ompi_coll_libpnbc_osc_request_t *request)
     request->super.req_cancel = request_cancel;
 }
 
+static void
+request_destruct(ompi_coll_libpnbc_osc_request_t *request)
+{
+  if (NULL != request->schedule)
+    OBJ_DESTRUCT(request->schedule);
+  if (NULL != request->req_array) {
+    for (int i=0; i<request->req_count; ++i) {
+      OBJ_DESTRUCT(request->req_array[i]);
+    }
+    free(request->req_array);
+  }
+  if (MPI_WIN_NULL == request->win) {
+    MPI_Win_unlock_all(request->win);
+    OBJ_DESTRUCT(request->win);
+  }
+  if (MPI_WIN_NULL == request->winflag) {
+    MPI_Win_unlock_all(request->winflag);
+    OBJ_DESTRUCT(request->winflag);
+  }
+  if (NULL != request->tmpbuf)
+    free(request->tmpbuf);
+}
+
 
 OBJ_CLASS_INSTANCE(ompi_coll_libpnbc_osc_request_t,
                    ompi_request_t,
                    request_construct,
-                   NULL);
+                   request_destruct);
+
