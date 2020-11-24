@@ -127,9 +127,14 @@ OPAL_DECLSPEC int opal_show_help_finalize(void);
  * (typically $prefix/share/openmpi), and looks up the message
  * based on the topic, and displays it.  If want_error_header is
  * true, a header and footer of asterisks are also displayed.
+ *
+ * NOTE: Since this is a varargs function, the last known parameter
+ * can't undergo a default promotion (e.g., from bool to int), because
+ * that is undefined behavior.  Hence, the type of "want_error_header"
+ * is int.
  */
 typedef int (*opal_show_help_fn_t)(const char *filename, const char *topic,
-                                   bool want_error_header, ...);
+                                   int want_error_header, ...);
 OPAL_DECLSPEC extern opal_show_help_fn_t opal_show_help;
 
 /**
@@ -143,10 +148,15 @@ OPAL_DECLSPEC extern opal_show_vhelp_fn_t opal_show_vhelp;
 /**
  * This function does the same thing as opal_show_help(), but returns
  * its output in a string (that must be freed by the caller).
+ *
+ * NOTE: Since this is a varargs function, the last known parameter
+ * can't undergo a default promotion (e.g., from bool to int), because
+ * that is undefined behavior.  Hence, the type of "want_error_header"
+ * is int.
  */
 OPAL_DECLSPEC char* opal_show_help_string(const char *filename,
                                           const char *topic,
-                                          bool want_error_header, ...);
+                                          int want_error_header, ...);
 
 /**
  * This function does the same thing as opal_show_help_string(), but

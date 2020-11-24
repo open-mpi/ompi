@@ -591,7 +591,7 @@ void orte_show_help_finalize(void)
 }
 
 int orte_show_help(const char *filename, const char *topic,
-                   bool want_error_header, ...)
+                   int want_error_header, ...)
 {
     int rc = ORTE_SUCCESS;
     va_list arglist;

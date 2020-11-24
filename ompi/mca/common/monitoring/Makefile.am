@@ -28,6 +28,9 @@ lib_LTLIBRARIES += $(component_install)
 lib_LTLIBRARIES += ompi_monitoring_prof.la
 
 ompi_monitoring_prof_la_SOURCES = monitoring_prof.c
+if OMPI_BUILD_FORTRAN_MPIFH_BINDINGS
+ompi_monitoring_prof_la_SOURCES += monitoring_prof_f.c
+endif
 ompi_monitoring_prof_la_LDFLAGS= \
     -module -avoid-version -shared $(WRAPPER_EXTRA_LDFLAGS)
 ompi_monitoring_prof_la_LIBADD = \
