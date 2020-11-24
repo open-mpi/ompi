@@ -14,6 +14,8 @@
 #include <dirent.h>
 #endif
 
+#ifdef MPICH
+
 static int comm_split_filesystem_exhaustive(MPI_Comm comm, int key,
                                             const char *dirname, MPI_Comm * newcomm)
 {
@@ -257,6 +259,8 @@ int MPIR_Comm_split_filesystem(MPI_Comm comm, int key, const char *dirname, MPI_
     }
     return mpi_errno;
 }
+
+#endif /* MPICH */
 
 /*
  * vim: ts=8 sts=4 sw=4 noexpandtab

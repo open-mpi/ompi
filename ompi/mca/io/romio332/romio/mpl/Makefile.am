@@ -20,20 +20,48 @@ strsep_LDADD = lib@MPLLIBNAME@.la
 
 mpl_headers =               \
     include/mpl.h           \
+    include/mpl_arg_serial.h\
+    include/mpl_argstr.h    \
     include/mpl_base.h      \
+    include/mpl_dbg.h       \
     include/mpl_math.h      \
     include/mplconfig.h     \
-    include/utlist.h    \
+    include/utlist.h        \
     include/mpl_valgrind.h  \
     include/mpl_env.h       \
     include/mpl_str.h       \
     include/mpl_trmem.h     \
     include/mpl_msg.h       \
+    include/mpl_proc_mutex.h\
+    include/mpl_proc_mutex_posix.h\
+    include/mpl_shm.h       \
+    include/mpl_shm_mmap.h  \
+    include/mpl_shm_sysv.h  \
+    include/mpl_shm_win.h   \
     include/mpl_sock.h      \
     include/mpl_sockaddr.h  \
     include/mpl_iov.h       \
     include/mpl_bt.h        \
-    include/mpl_shm.h
+    include/mpl_shm.h       \
+    include/mpl_thread_argobots.h\
+    include/mpl_thread.h    \
+    include/mpl_thread_posix.h\
+    include/mpl_thread_priv.h\
+    include/mpl_thread_solaris.h\
+    include/mpl_thread_win.h\
+    include/mpl_timer_clock_gettime.h\
+    include/mpl_timer_device.h\
+    include/mpl_timer_gcc_ia64_cycle.h\
+    include/mpl_timer_gethrtime.h\
+    include/mpl_timer_gettimeofday.h\
+    include/mpl_timer_linux86_cycle.h\
+    include/mpl_timer_mach_absolute_time.h\
+    include/mpl_timer_ppc64_cycle.h\
+    include/mpl_timer_query_performance_counter.h\
+    include/mpl_timer_win86_cycle.h\
+    include/mpl_yield.h\
+    include/utarray.h\
+    include/uthash.h
 
 if MPL_EMBEDDED_MODE
 noinst_HEADERS = $(mpl_headers)
