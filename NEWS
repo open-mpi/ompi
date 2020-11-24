@@ -64,9 +64,18 @@ included in the vX.Y.Z section and be denoted as:
   Both components are off by default and can be enabled by specifying
   "mpirun --mca coll_adapt_priority 100 --mca coll_han_priority 100 ...".
   We intend to enable both by default in Open MPI 5.0.
+- Updates for macOS Big Sur.  Thanks to FX Coudert for reporting this
+  issue and pointing to a solution.
+- Minor MPI one-sided RDMA performance improvements.
+- Fix hcoll MPI_SCATTERV with MPI_IN_PLACE.
+- Add AVX support for MPI collectives.
+- Updates to mpirun(1) about "slots" and PE=x values.
+- Fix buffer allocation for large environment variables.  Thanks to
+  @zrss for reporting the issue.
 - Upgrade the embedded OpenPMIx to v3.2.1.
 - Take more steps towards creating fully Reproducible builds (see
-  https://reproducible-builds.org/).
+  https://reproducible-builds.org/).  Thanks Bernhard M. Wiedemann for
+  bringing this to our attention.
 - Fix issue with extra-long values in MCA files.  Thanks to GitHub
   user @zrss for bringing the issue to our attention.
 - UCX: Fix zero-sized datatype transfers.
