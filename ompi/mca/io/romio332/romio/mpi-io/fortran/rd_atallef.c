@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -14,16 +14,20 @@
 #if defined(HAVE_WEAK_SYMBOLS)
 #if defined(HAVE_PRAGMA_WEAK)
 #if defined(FORTRANCAPS)
-extern FORTRAN_API void FORT_CALL MPI_FILE_READ_AT_ALL_END( MPI_Fint *, void*, MPI_Status*, MPI_Fint * );
+extern FORTRAN_API void FORT_CALL MPI_FILE_READ_AT_ALL_END(MPI_Fint *, void *, MPI_Status *,
+                                                           MPI_Fint *);
 #pragma weak MPI_FILE_READ_AT_ALL_END = PMPI_FILE_READ_AT_ALL_END
 #elif defined(FORTRANDOUBLEUNDERSCORE)
-extern FORTRAN_API void FORT_CALL mpi_file_read_at_all_end__( MPI_Fint *, void*, MPI_Status*, MPI_Fint * );
+extern FORTRAN_API void FORT_CALL mpi_file_read_at_all_end__(MPI_Fint *, void *, MPI_Status *,
+                                                             MPI_Fint *);
 #pragma weak mpi_file_read_at_all_end__ = pmpi_file_read_at_all_end__
 #elif !defined(FORTRANUNDERSCORE)
-extern FORTRAN_API void FORT_CALL mpi_file_read_at_all_end( MPI_Fint *, void*, MPI_Status*, MPI_Fint * );
+extern FORTRAN_API void FORT_CALL mpi_file_read_at_all_end(MPI_Fint *, void *, MPI_Status *,
+                                                           MPI_Fint *);
 #pragma weak mpi_file_read_at_all_end = pmpi_file_read_at_all_end
 #else
-extern FORTRAN_API void FORT_CALL mpi_file_read_at_all_end_( MPI_Fint *, void*, MPI_Status*, MPI_Fint * );
+extern FORTRAN_API void FORT_CALL mpi_file_read_at_all_end_(MPI_Fint *, void *, MPI_Status *,
+                                                            MPI_Fint *);
 #pragma weak mpi_file_read_at_all_end_ = pmpi_file_read_at_all_end_
 #endif
 
@@ -90,13 +94,14 @@ extern FORTRAN_API void FORT_CALL mpi_file_read_at_all_end_( MPI_Fint *, void*, 
 #endif
 
 /* Prototype to keep compiler happy */
-FORTRAN_API void FORT_CALL mpi_file_read_at_all_end_(MPI_Fint *fh,void *buf,MPI_Status *status, MPI_Fint *ierr );
+FORTRAN_API void FORT_CALL mpi_file_read_at_all_end_(MPI_Fint * fh, void *buf, MPI_Status * status,
+                                                     MPI_Fint * ierr);
 
-FORTRAN_API void FORT_CALL mpi_file_read_at_all_end_(MPI_Fint *fh,void *buf,MPI_Status *status, MPI_Fint *ierr )
+FORTRAN_API void FORT_CALL mpi_file_read_at_all_end_(MPI_Fint * fh, void *buf, MPI_Status * status,
+                                                     MPI_Fint * ierr)
 {
     MPI_File fh_c;
-    
-    fh_c = MPI_File_f2c(*fh);
-    *ierr = MPI_File_read_at_all_end(fh_c,buf,status);
-}
 
+    fh_c = MPI_File_f2c(*fh);
+    *ierr = MPI_File_read_at_all_end(fh_c, buf, status);
+}

@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
- *   Copyright (C) 1997 University of Chicago. 
+/*
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -16,7 +16,8 @@
 #pragma _CRI duplicate MPI_File_seek_shared as PMPI_File_seek_shared
 /* end of weak pragmas */
 #elif defined(HAVE_WEAK_ATTRIBUTE)
-int MPI_File_seek_shared(MPI_File fh, MPI_Offset offset, int whence) __attribute__((weak,alias("PMPI_File_seek_shared")));
+int MPI_File_seek_shared(MPI_File fh, MPI_Offset offset, int whence)
+    __attribute__ ((weak, alias("PMPI_File_seek_shared")));
 #endif
 
 /* Include mapping from MPI->PMPI */
@@ -36,7 +37,7 @@ Input Parameters:
 @*/
 int MPI_File_seek_shared(MPI_File fh, MPI_Offset offset, int whence)
 {
-    int error_code=MPI_SUCCESS, tmp_whence, myrank;
+    int error_code = MPI_SUCCESS, tmp_whence, myrank;
     static char myname[] = "MPI_FILE_SEEK_SHARED";
     MPI_Offset curr_offset, eof_offset, tmp_offset;
     ADIO_File adio_fh;
@@ -54,26 +55,22 @@ int MPI_File_seek_shared(MPI_File fh, MPI_Offset offset, int whence)
     tmp_offset = offset;
     MPI_Bcast(&tmp_offset, 1, ADIO_OFFSET, 0, adio_fh->comm);
     /* --BEGIN ERROR HANDLING-- */
-    if (tmp_offset != offset)
-    {
-	error_code = MPIO_Err_create_code(MPI_SUCCESS, MPIR_ERR_RECOVERABLE,
-					  myname, __LINE__, MPI_ERR_ARG,
-					  "**notsame", 0);
-	error_code = MPIO_Err_return_file(adio_fh, error_code);
-	goto fn_exit;
+    if (tmp_offset != offset) {
+        error_code = MPIO_Err_create_code(MPI_SUCCESS, MPIR_ERR_RECOVERABLE,
+                                          myname, __LINE__, MPI_ERR_ARG, "**notsame", 0);
+        error_code = MPIO_Err_return_file(adio_fh, error_code);
+        goto fn_exit;
     }
     /* --END ERROR HANDLING-- */
 
     tmp_whence = whence;
     MPI_Bcast(&tmp_whence, 1, MPI_INT, 0, adio_fh->comm);
     /* --BEGIN ERROR HANDLING-- */
-    if (tmp_whence != whence)
-    {
-	error_code = MPIO_Err_create_code(MPI_SUCCESS, MPIR_ERR_RECOVERABLE,
-					  myname, __LINE__, MPI_ERR_ARG,
-					  "**iobadwhence", 0);
-	error_code = MPIO_Err_return_file(adio_fh, error_code);
-	goto fn_exit;
+    if (tmp_whence != whence) {
+        error_code = MPIO_Err_create_code(MPI_SUCCESS, MPIR_ERR_RECOVERABLE,
+                                          myname, __LINE__, MPI_ERR_ARG, "**iobadwhence", 0);
+        error_code = MPIO_Err_return_file(adio_fh, error_code);
+        goto fn_exit;
     }
     /* --END ERROR HANDLING-- */
 
@@ -81,94 +78,82 @@ int MPI_File_seek_shared(MPI_File fh, MPI_Offset offset, int whence)
 
     MPI_Comm_rank(adio_fh->comm, &myrank);
 
-    if (!myrank)
-    {
-	switch(whence)
-	{
-	case MPI_SEEK_SET:
-	    /* --BEGIN ERROR HANDLING-- */
-	    if (offset < 0)
-	    {
-		error_code = MPIO_Err_create_code(MPI_SUCCESS,
-						  MPIR_ERR_RECOVERABLE,
-						  myname, __LINE__,
-						  MPI_ERR_ARG,
-						  "**iobadoffset", 0);
-		error_code = MPIO_Err_return_file(adio_fh, error_code);
-		goto fn_exit;
-	    }
-	    /* --END ERROR HANDLING-- */
-	    break;
-	case MPI_SEEK_CUR:
-	    /* get current location of shared file pointer */
-	    ADIO_Get_shared_fp(adio_fh, 0, &curr_offset, &error_code);
-	    /* --BEGIN ERROR HANDLING-- */
-	    if (error_code != MPI_SUCCESS)
-	    {
-		error_code = MPIO_Err_create_code(MPI_SUCCESS,
-						  MPIR_ERR_FATAL,
-						  myname, __LINE__,
-						  MPI_ERR_INTERN, 
-						  "**iosharedfailed", 0);
-		error_code = MPIO_Err_return_file(adio_fh, error_code);
-		goto fn_exit;
-	    }
-	    /* --END ERROR HANDLING-- */
-	    offset += curr_offset;
-	    /* --BEGIN ERROR HANDLING-- */
-	    if (offset < 0)
-	    {
-		error_code = MPIO_Err_create_code(MPI_SUCCESS,
-						  MPIR_ERR_RECOVERABLE,
-						  myname, __LINE__,
-						  MPI_ERR_ARG,
-						  "**ionegoffset", 0);
-		error_code = MPIO_Err_return_file(adio_fh, error_code);
-		goto fn_exit;
-	    }
-	    /* --END ERROR HANDLING-- */
-	    break;
-	case MPI_SEEK_END:
-	    /* find offset corr. to end of file */
-	    ADIOI_Get_eof_offset(adio_fh, &eof_offset);
-	    offset += eof_offset;
-	    /* --BEGIN ERROR HANDLING-- */
-	    if (offset < 0)
-	    {
-		error_code = MPIO_Err_create_code(MPI_SUCCESS,
-						  MPIR_ERR_RECOVERABLE,
-						  myname, __LINE__,
-						  MPI_ERR_ARG,
-						  "**ionegoffset", 0);
-		error_code = MPIO_Err_return_file(adio_fh, error_code);
-		goto fn_exit;
-	    }
-	    /* --END ERROR HANDLING-- */
-	    break;
-	default:
-	    /* --BEGIN ERROR HANDLING-- */
-	    error_code = MPIO_Err_create_code(MPI_SUCCESS,
-					      MPIR_ERR_RECOVERABLE,
-					      myname, __LINE__, MPI_ERR_ARG,
-					      "**iobadwhence", 0);
-	    error_code = MPIO_Err_return_file(adio_fh, error_code);
-	    goto fn_exit;
-	    /* --END ERROR HANDLING-- */
-	}
+    if (!myrank) {
+        switch (whence) {
+            case MPI_SEEK_SET:
+                /* --BEGIN ERROR HANDLING-- */
+                if (offset < 0) {
+                    error_code = MPIO_Err_create_code(MPI_SUCCESS,
+                                                      MPIR_ERR_RECOVERABLE,
+                                                      myname, __LINE__,
+                                                      MPI_ERR_ARG, "**iobadoffset", 0);
+                    error_code = MPIO_Err_return_file(adio_fh, error_code);
+                    goto fn_exit;
+                }
+                /* --END ERROR HANDLING-- */
+                break;
+            case MPI_SEEK_CUR:
+                /* get current location of shared file pointer */
+                ADIO_Get_shared_fp(adio_fh, 0, &curr_offset, &error_code);
+                /* --BEGIN ERROR HANDLING-- */
+                if (error_code != MPI_SUCCESS) {
+                    error_code = MPIO_Err_create_code(MPI_SUCCESS,
+                                                      MPIR_ERR_FATAL,
+                                                      myname, __LINE__,
+                                                      MPI_ERR_INTERN, "**iosharedfailed", 0);
+                    error_code = MPIO_Err_return_file(adio_fh, error_code);
+                    goto fn_exit;
+                }
+                /* --END ERROR HANDLING-- */
+                offset += curr_offset;
+                /* --BEGIN ERROR HANDLING-- */
+                if (offset < 0) {
+                    error_code = MPIO_Err_create_code(MPI_SUCCESS,
+                                                      MPIR_ERR_RECOVERABLE,
+                                                      myname, __LINE__,
+                                                      MPI_ERR_ARG, "**ionegoffset", 0);
+                    error_code = MPIO_Err_return_file(adio_fh, error_code);
+                    goto fn_exit;
+                }
+                /* --END ERROR HANDLING-- */
+                break;
+            case MPI_SEEK_END:
+                /* find offset corr. to end of file */
+                ADIOI_Get_eof_offset(adio_fh, &eof_offset);
+                offset += eof_offset;
+                /* --BEGIN ERROR HANDLING-- */
+                if (offset < 0) {
+                    error_code = MPIO_Err_create_code(MPI_SUCCESS,
+                                                      MPIR_ERR_RECOVERABLE,
+                                                      myname, __LINE__,
+                                                      MPI_ERR_ARG, "**ionegoffset", 0);
+                    error_code = MPIO_Err_return_file(adio_fh, error_code);
+                    goto fn_exit;
+                }
+                /* --END ERROR HANDLING-- */
+                break;
+            default:
+                /* --BEGIN ERROR HANDLING-- */
+                error_code = MPIO_Err_create_code(MPI_SUCCESS,
+                                                  MPIR_ERR_RECOVERABLE,
+                                                  myname, __LINE__, MPI_ERR_ARG,
+                                                  "**iobadwhence", 0);
+                error_code = MPIO_Err_return_file(adio_fh, error_code);
+                goto fn_exit;
+                /* --END ERROR HANDLING-- */
+        }
 
-	ADIO_Set_shared_fp(adio_fh, offset, &error_code);
-	/* --BEGIN ERROR HANDLING-- */
-	if (error_code != MPI_SUCCESS)
-	{
-	    error_code = MPIO_Err_create_code(MPI_SUCCESS,
-					      MPIR_ERR_FATAL,
-					      myname, __LINE__,
-					      MPI_ERR_INTERN, 
-					      "**iosharedfailed", 0);
-	    error_code = MPIO_Err_return_file(adio_fh, error_code);
-	    goto fn_exit;
-	}
-	/* --END ERROR HANDLING-- */
+        ADIO_Set_shared_fp(adio_fh, offset, &error_code);
+        /* --BEGIN ERROR HANDLING-- */
+        if (error_code != MPI_SUCCESS) {
+            error_code = MPIO_Err_create_code(MPI_SUCCESS,
+                                              MPIR_ERR_FATAL,
+                                              myname, __LINE__,
+                                              MPI_ERR_INTERN, "**iosharedfailed", 0);
+            error_code = MPIO_Err_return_file(adio_fh, error_code);
+            goto fn_exit;
+        }
+        /* --END ERROR HANDLING-- */
 
     }
 
@@ -177,7 +162,7 @@ int MPI_File_seek_shared(MPI_File fh, MPI_Offset offset, int whence)
 
     error_code = MPI_SUCCESS;
 
-fn_exit:
+  fn_exit:
     ROMIO_THREAD_CS_EXIT();
 
     return error_code;

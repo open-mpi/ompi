@@ -65,4 +65,3 @@ romio_mpi_sources +=              \
     mpi-io/fortran/writef.c
 
 endif BUILD_F77_BINDINGS
-

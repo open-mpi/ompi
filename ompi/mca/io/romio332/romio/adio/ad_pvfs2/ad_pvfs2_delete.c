@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 2003 University of Chicago. 
+ *   Copyright (C) 2003 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -17,14 +17,13 @@ void ADIOI_PVFS2_Delete(const char *filename, int *error_code)
     int ret;
     PVFS_fs_id cur_fs;
     static char myname[] = "ADIOI_PVFS2_DELETE";
-    char pvfs_path[PVFS_NAME_MAX] = {0};
+    char pvfs_path[PVFS_NAME_MAX] = { 0 };
 
     ADIOI_PVFS2_Init(error_code);
     /* --BEGIN ERROR HANDLING-- */
-    if (*error_code != MPI_SUCCESS) 
-    {
-	/* ADIOI_PVFS2_INIT handles creating error codes itself */
-	return;
+    if (*error_code != MPI_SUCCESS) {
+        /* ADIOI_PVFS2_INIT handles creating error codes itself */
+        return;
     }
     /* --END ERROR HANDLING-- */
 
@@ -36,27 +35,26 @@ void ADIOI_PVFS2_Delete(const char *filename, int *error_code)
     ret = PVFS_util_resolve(filename, &cur_fs, pvfs_path, PVFS_NAME_MAX);
     /* --BEGIN ERROR HANDLING-- */
     if (ret != 0) {
-	*error_code = MPIO_Err_create_code(MPI_SUCCESS,
-					   MPIR_ERR_RECOVERABLE,
-					   myname, __LINE__,
-					   ADIOI_PVFS2_error_convert(ret),
-					   "Error in PVFS_util_resolve", 0);
-	return;
+        *error_code = MPIO_Err_create_code(MPI_SUCCESS,
+                                           MPIR_ERR_RECOVERABLE,
+                                           myname, __LINE__,
+                                           ADIOI_PVFS2_error_convert(ret),
+                                           "Error in PVFS_util_resolve", 0);
+        return;
     }
     /* --END ERROR HANDLING-- */
 
     ret = PVFS_sys_getparent(cur_fs, pvfs_path, &credentials, &resp_getparent);
 
-    ret = PVFS_sys_remove(resp_getparent.basename, 
-			  resp_getparent.parent_ref, &credentials);
+    ret = PVFS_sys_remove(resp_getparent.basename, resp_getparent.parent_ref, &credentials);
     /* --BEGIN ERROR HANDLING-- */
     if (ret != 0) {
-	*error_code = MPIO_Err_create_code(MPI_SUCCESS,
-					   MPIR_ERR_RECOVERABLE,
-					   myname, __LINE__,
-					   ADIOI_PVFS2_error_convert(ret),
-					   "Error in PVFS_sys_remove", 0);
-	return;
+        *error_code = MPIO_Err_create_code(MPI_SUCCESS,
+                                           MPIR_ERR_RECOVERABLE,
+                                           myname, __LINE__,
+                                           ADIOI_PVFS2_error_convert(ret),
+                                           "Error in PVFS_sys_remove", 0);
+        return;
     }
     /* --END ERROR HANDLING-- */
 
@@ -64,6 +62,6 @@ void ADIOI_PVFS2_Delete(const char *filename, int *error_code)
     return;
 }
 
-/* 
- * vim: ts=8 sts=4 sw=4 noexpandtab 
+/*
+ * vim: ts=8 sts=4 sw=4 noexpandtab
  */

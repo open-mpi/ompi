@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -84,7 +84,7 @@
 #endif
 #endif
 
-void mpi_info_delete_(MPI_Fint *info, char *key, int *ierr, int keylen)
+void mpi_info_delete_(MPI_Fint * info, char *key, int *ierr, int keylen)
 {
     MPI_Info info_c;
     char *newkey;
@@ -97,11 +97,15 @@ void mpi_info_delete_(MPI_Fint *info, char *key, int *ierr, int keylen)
 
     /* strip leading and trailing blanks in key */
     lead_blanks = 0;
-    for (i=0; i<keylen; i++) 
-        if (key[i] == ' ') lead_blanks++;
-        else break;
+    for (i = 0; i < keylen; i++)
+        if (key[i] == ' ')
+            lead_blanks++;
+        else
+            break;
 
-    for (i=keylen-1; i>=0; i--) if (key[i] != ' ') break;
+    for (i = keylen - 1; i >= 0; i--)
+        if (key[i] != ' ')
+            break;
     if (i < 0) {
         FPRINTF(stderr, "MPI_Info_delete: key is a blank string\n");
         MPI_Abort(MPI_COMM_WORLD, 1);
@@ -109,7 +113,7 @@ void mpi_info_delete_(MPI_Fint *info, char *key, int *ierr, int keylen)
     new_keylen = i + 1 - lead_blanks;
     key += lead_blanks;
 
-    newkey = (char *) ADIOI_Malloc((new_keylen+1)*sizeof(char));
+    newkey = (char *) ADIOI_Malloc((new_keylen + 1) * sizeof(char));
     ADIOI_Strncpy(newkey, key, new_keylen);
     newkey[new_keylen] = '\0';
 
@@ -117,4 +121,3 @@ void mpi_info_delete_(MPI_Fint *info, char *key, int *ierr, int keylen)
     *ierr = MPI_Info_delete(info_c, newkey);
     ADIOI_Free(newkey);
 }
-

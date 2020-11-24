@@ -3,6 +3,10 @@
  *  (C) 2001 by Argonne National Laboratory.
  *      See COPYRIGHT in top-level directory.
  */
+
+#ifndef MPIO_ERROR_H_INCLUDED
+#define MPIO_ERROR_H_INCLUDED
+
 /* MPI_ERR_FILE */
 #define MPIR_ERR_FILE_NULL 3
 #define MPIR_ERR_FILE_CORRUPT 5
@@ -42,35 +46,32 @@
 #endif
 
 /* MPI_ERR_IO */
-#define MPIR_ADIO_ERROR 1  /* used for strerror(errno) */
+#define MPIR_ADIO_ERROR 1       /* used for strerror(errno) */
 #define MPIR_ERR_ETYPE_FRACTIONAL 3
 #define MPIR_ERR_NO_FSTYPE 5
-#define MPIR_ERR_NO_PFS 7
-#define MPIR_ERR_NO_PIOFS 9
 #define MPIR_ERR_NO_UFS 11
 #define MPIR_ERR_NO_NFS 13
-#define MPIR_ERR_NO_HFS 15
 #define MPIR_ERR_NO_XFS 17
-#define MPIR_ERR_NO_SFS 19
-#define MPIR_ERR_NO_PVFS 21
+#define MPIR_ERR_NO_PVFS2 21
 #define MPIR_ERR_NO_PANFS 22
 #define MPIR_ERR_MULTIPLE_SPLIT_COLL 23
 #define MPIR_ERR_NO_SPLIT_COLL 25
 #define MPIR_ERR_ASYNC_OUTSTANDING 27
 #define MPIR_READ_PERM 29
 #define MPIR_PREALLOC_PERM 31
-#define MPIR_ERR_FILETYPE 33 
-#define MPIR_ERR_NO_NTFS 35
+#define MPIR_ERR_FILETYPE 33
 #define MPIR_ERR_NO_TESTFS 36
 #define MPIR_ERR_NO_LUSTRE 37
-#define MPIR_ERR_NO_BGL 38
+#define MPIR_ERR_NO_GPFS 38
+#define MPIR_ERR_NO_IM 39
 
 /* MPI_ERR_COMM */
 #ifndef MPIR_ERR_COMM_NULL
 #define MPIR_ERR_COMM_NULL 3
-#define MPIR_ERR_COMM_INTER 5 
+#define MPIR_ERR_COMM_INTER 5
 #endif
 
 /* MPI_ERR_UNSUPPORTED_DATAREP */
 #define MPIR_ERR_NOT_NATIVE_DATAREP 3
 
+#endif /* MPIO_ERROR_H_INCLUDED */

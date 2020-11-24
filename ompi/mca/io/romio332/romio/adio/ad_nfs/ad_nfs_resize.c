@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 2004 University of Chicago. 
+ *   Copyright (C) 2004 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -26,8 +26,8 @@ void ADIOI_NFS_Resize(ADIO_File fd, ADIO_Offset size, int *error_code)
 
     /* --BEGIN ERROR HANDLING-- */
     if (err == -1) {
-	*error_code = ADIOI_Err_create_code(myname, fd->filename, errno);
-	return;
+        *error_code = ADIOI_Err_create_code(myname, fd->filename, errno);
+        return;
     }
     /* --END ERROR HANDLING-- */
 

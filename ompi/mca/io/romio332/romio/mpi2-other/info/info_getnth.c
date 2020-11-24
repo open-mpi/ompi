@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -46,15 +46,15 @@ int MPI_Info_get_nthkey(MPI_Info info, int n, char *key)
     }
 
     if (key <= (char *) 0) {
-	FPRINTF(stderr, "MPI_Info_get: key is an invalid address\n");
+        FPRINTF(stderr, "MPI_Info_get: key is an invalid address\n");
         MPI_Abort(MPI_COMM_WORLD, 1);
     }
 
     curr = info->next;
     nkeys = 0;
     while (curr) {
-	curr = curr->next;
-	nkeys++;
+        curr = curr->next;
+        nkeys++;
     }
 
     if ((n < 0) || (n >= nkeys)) {
@@ -65,8 +65,8 @@ int MPI_Info_get_nthkey(MPI_Info info, int n, char *key)
     curr = info->next;
     i = 0;
     while (i < n) {
-	curr = curr->next;
-	i++;
+        curr = curr->next;
+        i++;
     }
     ADIOI_Strncpy(key, curr->key, MPI_MAX_INFO_KEY);
 

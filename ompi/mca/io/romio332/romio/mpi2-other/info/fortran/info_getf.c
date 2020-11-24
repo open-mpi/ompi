@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -84,8 +84,8 @@
 #endif
 #endif
 
-void mpi_info_get_(MPI_Fint *info, char *key, int *valuelen, char *value, 
-        int *flag, int *ierr, int keylen, int valspace)
+void mpi_info_get_(MPI_Fint * info, char *key, int *valuelen, char *value,
+                   int *flag, int *ierr, int keylen, int valspace)
 {
     MPI_Info info_c;
     char *newkey, *tmpvalue;
@@ -98,11 +98,15 @@ void mpi_info_get_(MPI_Fint *info, char *key, int *valuelen, char *value,
 
     /* strip leading and trailing blanks in key */
     lead_blanks = 0;
-    for (i=0; i<keylen; i++) 
-        if (key[i] == ' ') lead_blanks++;
-        else break;
+    for (i = 0; i < keylen; i++)
+        if (key[i] == ' ')
+            lead_blanks++;
+        else
+            break;
 
-    for (i=keylen-1; i>=0; i--) if (key[i] != ' ') break;
+    for (i = keylen - 1; i >= 0; i--)
+        if (key[i] != ' ')
+            break;
     if (i < 0) {
         FPRINTF(stderr, "MPI_Info_get: key is a blank string\n");
         MPI_Abort(MPI_COMM_WORLD, 1);
@@ -110,7 +114,7 @@ void mpi_info_get_(MPI_Fint *info, char *key, int *valuelen, char *value,
     new_keylen = i + 1 - lead_blanks;
     key += lead_blanks;
 
-    newkey = (char *) ADIOI_Malloc((new_keylen+1)*sizeof(char));
+    newkey = (char *) ADIOI_Malloc((new_keylen + 1) * sizeof(char));
     ADIOI_Strncpy(newkey, key, new_keylen);
     newkey[new_keylen] = '\0';
 
@@ -123,22 +127,24 @@ void mpi_info_get_(MPI_Fint *info, char *key, int *valuelen, char *value,
         MPI_Abort(MPI_COMM_WORLD, 1);
     }
     if (*valuelen > valspace) {
-        FPRINTF(stderr, "MPI_Info_get: valuelen is greater than the amount of memory available in value\n");
+        FPRINTF(stderr,
+                "MPI_Info_get: valuelen is greater than the amount of memory available in value\n");
         MPI_Abort(MPI_COMM_WORLD, 1);
     }
-    
-    tmpvalue = (char *) ADIOI_Malloc((*valuelen + 1)*sizeof(char));
+
+    tmpvalue = (char *) ADIOI_Malloc((*valuelen + 1) * sizeof(char));
 
     info_c = MPI_Info_f2c(*info);
     *ierr = MPI_Info_get(info_c, newkey, *valuelen, tmpvalue, flag);
 
     if (*flag) {
-	tmpvaluelen = strlen(tmpvalue);
-	ADIOI_Strncpy(value, tmpvalue, tmpvaluelen);
-	/* blank pad the remaining space */
-	for (i=tmpvaluelen; i<valspace; i++) value[i] = ' ';
+        tmpvaluelen = strlen(tmpvalue);
+        ADIOI_Strncpy(value, tmpvalue, tmpvaluelen);
+        /* blank pad the remaining space */
+        for (i = tmpvaluelen; i < valspace; i++)
+            value[i] = ' ';
     }
-	
+
     ADIOI_Free(newkey);
     ADIOI_Free(tmpvalue);
 }

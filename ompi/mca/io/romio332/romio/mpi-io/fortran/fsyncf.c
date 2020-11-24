@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -14,16 +14,16 @@
 #if defined(HAVE_WEAK_SYMBOLS)
 #if defined(HAVE_PRAGMA_WEAK)
 #if defined(FORTRANCAPS)
-extern FORTRAN_API void FORT_CALL MPI_FILE_SYNC( MPI_Fint *, MPI_Fint * );
+extern FORTRAN_API void FORT_CALL MPI_FILE_SYNC(MPI_Fint *, MPI_Fint *);
 #pragma weak MPI_FILE_SYNC = PMPI_FILE_SYNC
 #elif defined(FORTRANDOUBLEUNDERSCORE)
-extern FORTRAN_API void FORT_CALL mpi_file_sync__( MPI_Fint *, MPI_Fint * );
+extern FORTRAN_API void FORT_CALL mpi_file_sync__(MPI_Fint *, MPI_Fint *);
 #pragma weak mpi_file_sync__ = pmpi_file_sync__
 #elif !defined(FORTRANUNDERSCORE)
-extern FORTRAN_API void FORT_CALL mpi_file_sync( MPI_Fint *, MPI_Fint * );
+extern FORTRAN_API void FORT_CALL mpi_file_sync(MPI_Fint *, MPI_Fint *);
 #pragma weak mpi_file_sync = pmpi_file_sync
 #else
-extern FORTRAN_API void FORT_CALL mpi_file_sync_( MPI_Fint *, MPI_Fint * );
+extern FORTRAN_API void FORT_CALL mpi_file_sync_(MPI_Fint *, MPI_Fint *);
 #pragma weak mpi_file_sync_ = pmpi_file_sync_
 #endif
 
@@ -90,12 +90,12 @@ extern FORTRAN_API void FORT_CALL mpi_file_sync_( MPI_Fint *, MPI_Fint * );
 #endif
 
 /* Prototype to keep compiler happy */
-FORTRAN_API void FORT_CALL mpi_file_sync_(MPI_Fint *fh, MPI_Fint *ierr );
+FORTRAN_API void FORT_CALL mpi_file_sync_(MPI_Fint * fh, MPI_Fint * ierr);
 
-FORTRAN_API void FORT_CALL mpi_file_sync_(MPI_Fint *fh, MPI_Fint *ierr )
+FORTRAN_API void FORT_CALL mpi_file_sync_(MPI_Fint * fh, MPI_Fint * ierr)
 {
     MPI_File fh_c;
-    
+
     fh_c = MPI_File_f2c(*fh);
     *ierr = MPI_File_sync(fh_c);
 }

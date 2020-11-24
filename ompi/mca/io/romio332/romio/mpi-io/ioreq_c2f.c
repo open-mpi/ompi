@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -25,7 +25,7 @@
 #include "adio_extern.h"
 
 /*@
-    MPIO_Request_c2f - Translates a C I/O-request handle to a 
+    MPIO_Request_c2f - Translates a C I/O-request handle to a
                        Fortran I/O-request handle
 
 Input Parameters:
@@ -37,7 +37,7 @@ Return Value:
 #ifdef HAVE_MPI_GREQUEST
 MPI_Fint MPIO_Request_c2f(MPIO_Request request)
 {
-    return ((MPI_Fint)request);
+    return ((MPI_Fint) request);
 }
 #else
 
@@ -47,30 +47,30 @@ MPI_Fint MPIO_Request_c2f(MPIO_Request request)
     return (MPI_Fint) request;
 #else
     int i;
-    MPID_THREADPRIV_DECL;
 
     /* We can make this test outside of the GLOBAL mutex because it does
-       not access any shared data */
-    if ((request <= (MPIO_Request) 0) || (request->cookie != ADIOI_REQ_COOKIE))
-    {
-	    return (MPI_Fint) 0;
+     * not access any shared data */
+    if ((request <= (MPIO_Request) 0) || (request->cookie != ADIOI_REQ_COOKIE)) {
+        return (MPI_Fint) 0;
     }
 
     ROMIO_THREAD_CS_ENTER();
     if (!ADIOI_Reqtable) {
-	ADIOI_Reqtable_max = 1024;
-	ADIOI_Reqtable = (MPIO_Request *)
-	    ADIOI_Malloc(ADIOI_Reqtable_max*sizeof(MPIO_Request)); 
-        ADIOI_Reqtable_ptr = 0;  /* 0 can't be used though, because 
-                                  MPIO_REQUEST_NULL=0 */
-	for (i=0; i<ADIOI_Reqtable_max; i++) ADIOI_Reqtable[i] = MPIO_REQUEST_NULL;
+        ADIOI_Reqtable_max = 1024;
+        ADIOI_Reqtable = (MPIO_Request *)
+            ADIOI_Malloc(ADIOI_Reqtable_max * sizeof(MPIO_Request));
+        ADIOI_Reqtable_ptr = 0; /* 0 can't be used though, because
+                                 * MPIO_REQUEST_NULL=0 */
+        for (i = 0; i < ADIOI_Reqtable_max; i++)
+            ADIOI_Reqtable[i] = MPIO_REQUEST_NULL;
     }
-    if (ADIOI_Reqtable_ptr == ADIOI_Reqtable_max-1) {
-	ADIOI_Reqtable = (MPIO_Request *) ADIOI_Realloc(ADIOI_Reqtable, 
-                           (ADIOI_Reqtable_max+1024)*sizeof(MPIO_Request));
-	for (i=ADIOI_Reqtable_max; i<ADIOI_Reqtable_max+1024; i++) 
-	    ADIOI_Reqtable[i] = MPIO_REQUEST_NULL;
-	ADIOI_Reqtable_max += 1024;
+    if (ADIOI_Reqtable_ptr == ADIOI_Reqtable_max - 1) {
+        ADIOI_Reqtable = (MPIO_Request *) ADIOI_Realloc(ADIOI_Reqtable,
+                                                        (ADIOI_Reqtable_max +
+                                                         1024) * sizeof(MPIO_Request));
+        for (i = ADIOI_Reqtable_max; i < ADIOI_Reqtable_max + 1024; i++)
+            ADIOI_Reqtable[i] = MPIO_REQUEST_NULL;
+        ADIOI_Reqtable_max += 1024;
     }
     ADIOI_Reqtable_ptr++;
     ADIOI_Reqtable[ADIOI_Reqtable_ptr] = request;

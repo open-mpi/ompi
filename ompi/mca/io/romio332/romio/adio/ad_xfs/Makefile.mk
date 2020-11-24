@@ -19,4 +19,3 @@ romio_other_sources +=          \
     adio/ad_xfs/ad_xfs_write.c
 
 endif BUILD_AD_XFS
-

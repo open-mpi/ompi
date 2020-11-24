@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -17,7 +17,8 @@
 #pragma _CRI duplicate MPI_File_get_size as PMPI_File_get_size
 /* end of weak pragmas */
 #elif defined(HAVE_WEAK_ATTRIBUTE)
-int MPI_File_get_size(MPI_File fh, MPI_Offset *size) __attribute__((weak,alias("PMPI_File_get_size")));
+int MPI_File_get_size(MPI_File fh, MPI_Offset * size)
+    __attribute__ ((weak, alias("PMPI_File_get_size")));
 #endif
 
 /* Include mapping from MPI->PMPI */
@@ -36,7 +37,7 @@ Output Parameters:
 
 .N fortran
 @*/
-int MPI_File_get_size(MPI_File fh, MPI_Offset *size)
+int MPI_File_get_size(MPI_File fh, MPI_Offset * size)
 {
     int error_code;
     ADIO_File adio_fh;
@@ -45,18 +46,17 @@ int MPI_File_get_size(MPI_File fh, MPI_Offset *size)
 #ifdef MPI_hpux
     int fl_xmpi;
 
-    HPMP_IO_START(fl_xmpi, BLKMPIFILEGETSIZE, TRDTBLOCK, adio_fh,
-		  MPI_DATATYPE_NULL, -1);
+    HPMP_IO_START(fl_xmpi, BLKMPIFILEGETSIZE, TRDTBLOCK, adio_fh, MPI_DATATYPE_NULL, -1);
 #endif /* MPI_hpux */
 
     adio_fh = MPIO_File_resolve(fh);
 
     /* --BEGIN ERROR HANDLING-- */
     MPIO_CHECK_FILE_HANDLE(adio_fh, myname, error_code);
-    if(size == NULL){
+    if (size == NULL) {
         error_code = MPIO_Err_create_code(MPI_SUCCESS, MPIR_ERR_RECOVERABLE,
-                     myname, __LINE__, MPI_ERR_ARG,
-                     "**nullptr", "**nullptr %s", "size");
+                                          myname, __LINE__, MPI_ERR_ARG,
+                                          "**nullptr", "**nullptr %s", "size");
         goto fn_fail;
     }
     /* --END ERROR HANDLING-- */
@@ -67,7 +67,7 @@ int MPI_File_get_size(MPI_File fh, MPI_Offset *size)
     ADIO_Fcntl(adio_fh, ADIO_FCNTL_GET_FSIZE, fcntl_struct, &error_code);
     /* --BEGIN ERROR HANDLING-- */
     if (error_code != MPI_SUCCESS)
-	error_code = MPIO_Err_return_file(adio_fh, error_code);
+        error_code = MPIO_Err_return_file(adio_fh, error_code);
     /* --END ERROR HANDLING-- */
     *size = fcntl_struct->fsize;
     ADIOI_Free(fcntl_struct);
@@ -76,9 +76,9 @@ int MPI_File_get_size(MPI_File fh, MPI_Offset *size)
     HPMP_IO_END(fl_xmpi, adio_fh, MPI_DATATYPE_NULL, -1);
 #endif /* MPI_hpux */
 
-fn_exit:
+  fn_exit:
     return error_code;
-fn_fail:
+  fn_fail:
     /* --BEGIN ERROR HANDLING-- */
     error_code = MPIO_Err_return_file(fh, error_code);
     goto fn_exit;

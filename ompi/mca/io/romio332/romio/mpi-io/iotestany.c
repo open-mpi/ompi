@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 2003 University of Chicago. 
+ *   Copyright (C) 2003 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -28,54 +28,54 @@
   requests.
 */
 
-int MPIO_Testany(int count, MPIO_Request requests[], int *index, 
-		 int *flag, MPI_Status *status)
+int MPIO_Testany(int count, MPIO_Request requests[], int *index, int *flag, MPI_Status * status)
 {
-    int i, err; 
-    MPID_THREADPRIV_DECL;
+    int i, err;
 
     ROMIO_THREAD_CS_ENTER();
 
     if (count == 1) {
-	err = MPIO_Test( requests, flag, status );
-	if (!err) *index = 0;
-	goto fn_exit;
+        err = MPIO_Test(requests, flag, status);
+        if (!err)
+            *index = 0;
+        goto fn_exit;
     }
 
     /* Check for no active requests */
-    for (i=0; i<count; i++) {
-	if (requests[i] != MPIO_REQUEST_NULL) {
-	    break;
-	}
+    for (i = 0; i < count; i++) {
+        if (requests[i] != MPIO_REQUEST_NULL) {
+            break;
+        }
     }
     if (i == count) {
-	*index = MPI_UNDEFINED;
+        *index = MPI_UNDEFINED;
 #ifdef MPICH
-	/* need to set empty status */
-	if (status != MPI_STATUS_IGNORE) {
-	    status->MPI_SOURCE = MPI_ANY_SOURCE;
-	    status->MPI_TAG    = MPI_ANY_TAG;
+        /* need to set empty status */
+        if (status != MPI_STATUS_IGNORE) {
+            status->MPI_SOURCE = MPI_ANY_SOURCE;
+            status->MPI_TAG = MPI_ANY_TAG;
             MPIR_STATUS_SET_COUNT(*status, 0);
             MPIR_STATUS_SET_CANCEL_BIT(*status, 0);
-	}
+        }
 #endif
-	err = MPI_SUCCESS;
-	goto fn_exit;
+        err = MPI_SUCCESS;
+        goto fn_exit;
     }
 
     err = MPI_SUCCESS;
-    for (i=0; i<count; i++) {
-      if (requests[i] != MPIO_REQUEST_NULL) {
-	err = MPIO_Test( &requests[i], flag, status );
-	if (*flag) {
-	  if (!err) *index = i;
-	  break;
-	}
-      }
+    for (i = 0; i < count; i++) {
+        if (requests[i] != MPIO_REQUEST_NULL) {
+            err = MPIO_Test(&requests[i], flag, status);
+            if (*flag) {
+                if (!err)
+                    *index = i;
+                break;
+            }
+        }
     }
 
 
-fn_exit:
+  fn_exit:
     ROMIO_THREAD_CS_EXIT();
     return err;
 }

@@ -1,11 +1,12 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
-extern ADIOI_Flatlist_node *ADIOI_Flatlist;
+#ifndef ADIO_EXTERN_H_INCLUDED
+#define ADIO_EXTERN_H_INCLUDED
 
 extern ADIOI_Datarep *ADIOI_Datarep_head;
 
@@ -29,3 +30,6 @@ extern MPI_Info ADIOI_syshints;
 extern MPI_Op ADIO_same_amode;
 
 extern int ADIOI_cb_config_list_keyval;
+extern int ADIOI_Flattened_type_keyval;
+
+#endif /* ADIO_EXTERN_H_INCLUDED */

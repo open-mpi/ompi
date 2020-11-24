@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -85,8 +85,7 @@
 #endif
 
 
-void mpi_info_set_(MPI_Fint *info, char *key, char *value, int *ierr, 
-                   int keylen, int vallen)
+void mpi_info_set_(MPI_Fint * info, char *key, char *value, int *ierr, int keylen, int vallen)
 {
     MPI_Info info_c;
     char *newkey, *newvalue;
@@ -103,11 +102,15 @@ void mpi_info_set_(MPI_Fint *info, char *key, char *value, int *ierr,
 
     /* strip leading and trailing blanks in key */
     lead_blanks = 0;
-    for (i=0; i<keylen; i++) 
-	if (key[i] == ' ') lead_blanks++;
-	else break;
+    for (i = 0; i < keylen; i++)
+        if (key[i] == ' ')
+            lead_blanks++;
+        else
+            break;
 
-    for (i=keylen-1; i>=0; i--) if (key[i] != ' ') break;
+    for (i = keylen - 1; i >= 0; i--)
+        if (key[i] != ' ')
+            break;
     if (i < 0) {
         FPRINTF(stderr, "MPI_Info_set: key is a blank string\n");
         MPI_Abort(MPI_COMM_WORLD, 1);
@@ -115,18 +118,22 @@ void mpi_info_set_(MPI_Fint *info, char *key, char *value, int *ierr,
     new_keylen = i + 1 - lead_blanks;
     key += lead_blanks;
 
-    newkey = (char *) ADIOI_Malloc((new_keylen+1)*sizeof(char));
+    newkey = (char *) ADIOI_Malloc((new_keylen + 1) * sizeof(char));
     ADIOI_Strncpy(newkey, key, new_keylen);
     newkey[new_keylen] = '\0';
 
 
     /* strip leading and trailing blanks in value */
     lead_blanks = 0;
-    for (i=0; i<vallen; i++) 
-	if (value[i] == ' ') lead_blanks++;
-	else break;
+    for (i = 0; i < vallen; i++)
+        if (value[i] == ' ')
+            lead_blanks++;
+        else
+            break;
 
-    for (i=vallen-1; i>=0; i--) if (value[i] != ' ') break;
+    for (i = vallen - 1; i >= 0; i--)
+        if (value[i] != ' ')
+            break;
     if (i < 0) {
         FPRINTF(stderr, "MPI_Info_set: value is a blank string\n");
         MPI_Abort(MPI_COMM_WORLD, 1);
@@ -134,11 +141,11 @@ void mpi_info_set_(MPI_Fint *info, char *key, char *value, int *ierr,
     new_vallen = i + 1 - lead_blanks;
     value += lead_blanks;
 
-    newvalue = (char *) ADIOI_Malloc((new_vallen+1)*sizeof(char));
+    newvalue = (char *) ADIOI_Malloc((new_vallen + 1) * sizeof(char));
     ADIOI_Strncpy(newvalue, value, new_vallen);
     newvalue[new_vallen] = '\0';
 
- 
+
     info_c = MPI_Info_f2c(*info);
     *ierr = MPI_Info_set(info_c, newkey, newvalue);
     ADIOI_Free(newkey);

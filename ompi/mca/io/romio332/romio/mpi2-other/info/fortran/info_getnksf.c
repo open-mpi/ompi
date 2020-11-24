@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -84,10 +84,10 @@
 #endif
 #endif
 
-void mpi_info_get_nkeys_(MPI_Fint *info, int *nkeys, int *ierr )
+void mpi_info_get_nkeys_(MPI_Fint * info, int *nkeys, int *ierr)
 {
     MPI_Info info_c;
-    
+
     info_c = MPI_Info_f2c(*info);
     *ierr = MPI_Info_get_nkeys(info_c, nkeys);
 }

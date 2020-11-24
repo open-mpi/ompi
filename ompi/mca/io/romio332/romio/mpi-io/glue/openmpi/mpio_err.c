@@ -26,11 +26,10 @@ int MPIO_Err_create_code(int lastcode, int fatal, const char fcname[],
 
     buf = (char *) ADIOI_Malloc(1024);
     if (buf != NULL) {
-        idx += ADIOI_Snprintf(buf, 1023, "%s (line %d): ", fcname, line);
+        idx += MPL_snprintf(buf, 1023, "%s (line %d): ", fcname, line);
         if (specific_msg == NULL) {
-            ADIOI_Snprintf(&buf[idx], 1023 - idx, "%s\n", generic_msg);
-        }
-        else {
+            MPL_snprintf(&buf[idx], 1023 - idx, "%s\n", generic_msg);
+        } else {
             va_start(Argp, specific_msg);
             vsnprintf(&buf[idx], 1023 - idx, specific_msg, Argp);
             va_end(Argp);

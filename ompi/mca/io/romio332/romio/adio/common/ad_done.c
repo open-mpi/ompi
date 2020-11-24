@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 2004 University of Chicago. 
+ *   Copyright (C) 2004 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -20,15 +20,15 @@
 #ifdef HAVE_AIO_LITE_H
 #include <aio-lite.h>
 #else
- #ifdef  HAVE_AIO_H
- #include <aio.h>
- #endif
- #ifdef HAVE_SYS_AIO_H
- #include <sys/aio.h>
- #endif
+#ifdef  HAVE_AIO_H
+#include <aio.h>
+#endif
+#ifdef HAVE_SYS_AIO_H
+#include <sys/aio.h>
+#endif
 #endif
 
-/* Workaround for incomplete set of definitions if __REDIRECT is not 
+/* Workaround for incomplete set of definitions if __REDIRECT is not
    defined and large file support is used in aio.h */
 #if !defined(__REDIRECT) && defined(__USE_FILE_OFFSET64)
 #define aiocb aiocb64
@@ -44,9 +44,8 @@
  * If ROMIO_HAVE_WORKING_AIO is defined, then we may need to wait for I/O
  * to complete.
  */
-int ADIOI_GEN_IODone(ADIO_Request *request, ADIO_Status *status,
-		     int *error_code)  
+int ADIOI_GEN_IODone(ADIO_Request * request, ADIO_Status * status, int *error_code)
 {
-	return 0;
+    return 0;
 
 }

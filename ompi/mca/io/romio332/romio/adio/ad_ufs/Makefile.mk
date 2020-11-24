@@ -14,4 +14,3 @@ romio_other_sources +=        \
     adio/ad_ufs/ad_ufs_open.c
 
 endif BUILD_AD_UFS
-

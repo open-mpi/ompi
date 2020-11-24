@@ -25,4 +25,3 @@ romio_other_sources +=              \
     adio/ad_panfs/ad_panfs_write.c
 
 endif BUILD_AD_PANFS
-

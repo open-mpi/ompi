@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -17,16 +17,20 @@
 #if defined(HAVE_WEAK_SYMBOLS)
 #if defined(HAVE_PRAGMA_WEAK)
 #if defined(FORTRANCAPS)
-extern FORTRAN_API void FORT_CALL MPI_FILE_DELETE( char * FORT_MIXED_LEN_DECL, MPI_Fint *, MPI_Fint * FORT_END_LEN_DECL );
+extern FORTRAN_API void FORT_CALL MPI_FILE_DELETE(char *FORT_MIXED_LEN_DECL, MPI_Fint *,
+                                                  MPI_Fint * FORT_END_LEN_DECL);
 #pragma weak MPI_FILE_DELETE = PMPI_FILE_DELETE
 #elif defined(FORTRANDOUBLEUNDERSCORE)
-extern FORTRAN_API void FORT_CALL mpi_file_delete__( char * FORT_MIXED_LEN_DECL, MPI_Fint *, MPI_Fint * FORT_END_LEN_DECL );
+extern FORTRAN_API void FORT_CALL mpi_file_delete__(char *FORT_MIXED_LEN_DECL, MPI_Fint *,
+                                                    MPI_Fint * FORT_END_LEN_DECL);
 #pragma weak mpi_file_delete__ = pmpi_file_delete__
 #elif !defined(FORTRANUNDERSCORE)
-extern FORTRAN_API void FORT_CALL mpi_file_delete( char * FORT_MIXED_LEN_DECL, MPI_Fint *, MPI_Fint * FORT_END_LEN_DECL );
+extern FORTRAN_API void FORT_CALL mpi_file_delete(char *FORT_MIXED_LEN_DECL, MPI_Fint *,
+                                                  MPI_Fint * FORT_END_LEN_DECL);
 #pragma weak mpi_file_delete = pmpi_file_delete
 #else
-extern FORTRAN_API void FORT_CALL mpi_file_delete_( char * FORT_MIXED_LEN_DECL, MPI_Fint *, MPI_Fint * FORT_END_LEN_DECL );
+extern FORTRAN_API void FORT_CALL mpi_file_delete_(char *FORT_MIXED_LEN_DECL, MPI_Fint *,
+                                                   MPI_Fint * FORT_END_LEN_DECL);
 #pragma weak mpi_file_delete_ = pmpi_file_delete_
 #endif
 
@@ -105,15 +109,17 @@ void mpi_file_delete_(_fcd filename_fcd, MPI_Fint *info, MPI_Fint *ierr)
 FORTRAN_API void FORT_CALL mpi_file_delete_(char *filename, MPI_Fint *info, MPI_Fint *ierr, int str_len)
 */
 /* Prototype to keep compiler happy */
-FORTRAN_API void FORT_CALL mpi_file_delete_(char *filename FORT_MIXED_LEN_DECL, MPI_Fint *info, MPI_Fint *ierr FORT_END_LEN_DECL);
+FORTRAN_API void FORT_CALL mpi_file_delete_(char *filename FORT_MIXED_LEN_DECL, MPI_Fint * info,
+                                            MPI_Fint * ierr FORT_END_LEN_DECL);
 
 #ifdef _UNICOS
-void mpi_file_delete_(_fcd filename_fcd, MPI_Fint *info, MPI_Fint *ierr)
+void mpi_file_delete_(_fcd filename_fcd, MPI_Fint * info, MPI_Fint * ierr)
 {
     char *filename = _fcdtocp(filename_fcd);
     int str_len = _fcdlen(filename_fcd);
 #else
-FORTRAN_API void FORT_CALL mpi_file_delete_(char *filename FORT_MIXED_LEN(str_len), MPI_Fint *info, MPI_Fint *ierr FORT_END_LEN(str_len))
+FORTRAN_API void FORT_CALL mpi_file_delete_(char *filename FORT_MIXED_LEN(str_len), MPI_Fint * info,
+                                            MPI_Fint * ierr FORT_END_LEN(str_len))
 {
 #endif
     char *newfname;
@@ -127,14 +133,16 @@ FORTRAN_API void FORT_CALL mpi_file_delete_(char *filename FORT_MIXED_LEN(str_le
         FPRINTF(stderr, "MPI_File_delete: filename is an invalid address\n");
         MPI_Abort(MPI_COMM_WORLD, 1);
     }
-    for (i=str_len-1; i>=0; i--) if (filename[i] != ' ') break;
+    for (i = str_len - 1; i >= 0; i--)
+        if (filename[i] != ' ')
+            break;
     if (i < 0) {
         FPRINTF(stderr, "MPI_File_delete: filename is a blank string\n");
         MPI_Abort(MPI_COMM_WORLD, 1);
     }
     real_len = i + 1;
 
-    newfname = (char *) ADIOI_Malloc((real_len+1)*sizeof(char));
+    newfname = (char *) ADIOI_Malloc((real_len + 1) * sizeof(char));
     ADIOI_Strncpy(newfname, filename, real_len);
     newfname[real_len] = '\0';
 

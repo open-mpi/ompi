@@ -7,9 +7,9 @@
  */
 
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -17,7 +17,7 @@
 
 void ADIOI_GPFS_Flush(ADIO_File fd, int *error_code)
 {
-    int err=0;
+    int err = 0;
     static char myname[] = "ADIOI_GPFS_FLUSH";
 
     int rank;
@@ -36,33 +36,31 @@ void ADIOI_GPFS_Flush(ADIO_File fd, int *error_code)
     MPI_Barrier(fd->comm);
 
     if (rank == fd->hints->ranklist[0]) {
-	err = fsync(fd->fd_sys);
-	DBG_FPRINTF(stderr,"aggregation:fsync %s, err=%#X, errno=%#X\n",fd->filename, err, errno);
-	/* We want errno, not the return code if it failed */
-	if (err == -1) err = errno;
-	else err = 0;
+        err = fsync(fd->fd_sys);
+        DBG_FPRINTF(stderr, "aggregation:fsync %s, err=%#X, errno=%#X\n", fd->filename, err, errno);
+        /* We want errno, not the return code if it failed */
+        if (err == -1)
+            err = errno;
+        else
+            err = 0;
     }
     MPI_Bcast(&err, 1, MPI_UNSIGNED, fd->hints->ranklist[0], fd->comm);
-    DBGV_FPRINTF(stderr,"aggregation result:fsync %s, errno %#X,\n",fd->filename, err);
+    DBGV_FPRINTF(stderr, "aggregation result:fsync %s, errno %#X,\n", fd->filename, err);
 
-    if (err) /* if it's non-zero, it must be an errno */
-    {
-	errno = err;
-	err = -1;
+    if (err) {  /* if it's non-zero, it must be an errno */
+        errno = err;
+        err = -1;
     }
 
     /* --BEGIN ERROR HANDLING-- */
-    if (err == -1)
-    {
-	*error_code = MPIO_Err_create_code(MPI_SUCCESS, MPIR_ERR_RECOVERABLE,
-		myname, __LINE__, MPI_ERR_IO,
-		"**io",
-		"**io %s", strerror(errno));
-	DBGT_FPRINTF(stderr,"fsync %s, err=%#X, errno=%#X\n",fd->filename, err, errno);
-	return;
+    if (err == -1) {
+        *error_code = MPIO_Err_create_code(MPI_SUCCESS, MPIR_ERR_RECOVERABLE,
+                                           myname, __LINE__, MPI_ERR_IO,
+                                           "**io", "**io %s", strerror(errno));
+        DBGT_FPRINTF(stderr, "fsync %s, err=%#X, errno=%#X\n", fd->filename, err, errno);
+        return;
     }
     /* --END ERROR HANDLING-- */
 
     *error_code = MPI_SUCCESS;
 }
-

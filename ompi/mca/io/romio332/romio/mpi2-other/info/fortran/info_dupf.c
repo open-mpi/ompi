@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -84,7 +84,7 @@
 #endif
 #endif
 
-void mpi_info_dup_(MPI_Fint *info, MPI_Fint *newinfo, int *ierr )
+void mpi_info_dup_(MPI_Fint * info, MPI_Fint * newinfo, int *ierr)
 {
     MPI_Info info_c, newinfo_c;
 

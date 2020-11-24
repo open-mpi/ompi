@@ -134,16 +134,19 @@ and {\tt MPI\_File\_c2f} (\S~4.12.4) are also implemented.  C,
 Fortran, and profiling interfaces are provided for all functions that
 have been implemented.
 
-This version of ROMIO runs on at least the following machines: IBM SP; Intel
+ROMIO has run on at least the following machines: IBM SP; Intel
 Paragon; HP Exemplar; SGI Origin2000; Cray T3E; NEC SX-4; other
 symmetric multiprocessors from HP, SGI, DEC, Sun, and IBM; and networks of
-workstations (Sun, SGI, HP, IBM, DEC, Linux, and FreeBSD).
-Supported file systems are IBM PIOFS, Intel PFS, HP/Convex
-HFS, SGI XFS, NEC SFS, PVFS, NFS, NTFS, and any Unix file system (UFS).
+workstations (Sun, SGI, HP, IBM, DEC, Linux, and FreeBSD).  Supported file
+systems have at one time included IBM PIOFS, Intel PFS, HP/Convex HFS, SGI XFS,
+NEC SFS, PVFS, NFS, NTFS, and any Unix file system (UFS).  You may have to
+download an older ROMIO or MPICH release for out-of-date systems.
 
-This version of ROMIO is included in MPICH 1.2.4; an earlier version
-is included in at least the following MPI implementations: LAM, HP
-MPI, SGI MPI, and NEC MPI. 
+
+This version of ROMIO is included in MPICH; an earlier version
+is included in at least the following MPI implementations: LAM, HP MPI, SGI
+MPI, and NEC MPI. Many HPC vendors base their MPI-IO implementation on
+ROMIO.
 
 Note that proper I/O error codes and classes are returned and the status
 variable is filled only when used with MPICH revision 1.2.1 or later.
@@ -362,7 +365,7 @@ applicable to all file system types:
    aggregators.  
 \end{itemize}
 
-For PVFS, PIOFS, and PFS:
+For PVFS2:
 \begin{itemize}
 \item \texttt{striping\_factor} -- Controls the number of I/O devices to
 stripe across.  The default is file system dependent, but for PVFS it is
@@ -375,13 +378,6 @@ first be written to.  This is a number in the range of 0 ...
 striping\_factor - 1.
 \end{itemize}
 
-\subsubsection{Hints for PFS}
-\label{sec:hints_pfs}
-\begin{itemize}
-\item \texttt{pfs\_svr\_buf} -- Turns on PFS server buffering.  Valid
-values are \texttt{true} and \texttt{false}.  Default is \texttt{false}.
-\end{itemize}
-
 \subsubsection{Hints for XFS}
 \label{sec:hints_xfs}
 For XFS control is provided for the direct I/O optimization:
@@ -392,26 +388,7 @@ values are \texttt{true} and \texttt{false}.  Default is \texttt{false}.
 values are \texttt{true} and \texttt{false}.  Default is \texttt{false}.
 \end{itemize}
 
-\subsubsection{Hints for PVFS (v1)}
-\label{sec:hints_oldpvfs}
-
-For PVFS control is provided for the use of the listio interface.  This
-interface to PVFS allows for a collection of noncontiguous regions to be
-requested (for reading or writing) with a single operation.  This can result
-in substantially higher performance when accessing noncontiguous regions.
-Support for these operations in PVFS exists after version 1.5.4, but has not
-been heavily tested, so use of the interface is disabled in ROMIO by default
-at this time.  The hints to control listio use are:
-\begin{itemize}
-\item \texttt{romio\_pvfs\_listio\_read} -- Controls use of listio for reads.
-Valid values are \texttt{enable}, \texttt{disable}, and \texttt{automatic}.
-Default is \texttt{disable}.
-\item \texttt{romio\_pvfs\_listio\_write} -- Controls use of listio for writes.
-Valid values are \texttt{enable}, \texttt{disable}, and \texttt{automatic}.
-Default is \texttt{disable}.
-\end{itemize}
-
-\subsubsection{Hints for PVFS (v2)}
+\subsubsection{Hints for PVFS2 (a.k.a OrangeFS)}
 \label{sec:hints_pvfs}
 
 The PVFS v2 file system has many tuning parameters. 
@@ -807,18 +784,12 @@ to include the file {\tt mpio.h} for C or {\tt mpiof.h} for Fortran in
 your MPI-IO program.  
 
 Note that on HP machines running HPUX and on NEC SX-4, you need to
-compile Fortran programs with {\tt mpifort}, because {\tt mpif77} does
-not support 8-byte integers.
+compile Fortran programs with {\tt mpifort}.
 
 With MPICH, HP MPI, or NEC MPI, you can compile MPI-IO programs as \\
 \hspace*{.4in} {\tt mpicc foo.c}\\
 or \\
-\hspace*{.4in} {\tt mpif77 foo.f }\\
-or\\
 \hspace*{.4in} {\tt mpifort foo.f}\\
-
-As mentioned above, mpifort is preferred over mpif77 on HPUX and NEC
-because the f77 compilers on those machines do not support 8-byte integers.
 
 With SGI MPI, you can compile MPI-IO programs as \\
 \hspace*{.4in} {\tt cc foo.c -lmpi}\\
@@ -864,16 +835,12 @@ on failure.
 \item This version works only on a homogeneous cluster of machines,
 and only the ``native'' file data representation is supported.
 
-\item Shared file pointers are not supported on PVFS and IBM PIOFS
-file systems because they don't support {\tt fcntl} file locks,
+\item Shared file pointers are not supported on the PVFS2
+file system because it does not support {\tt fcntl} file locks,
 and ROMIO uses that feature to implement shared file pointers.
 
 \item On HP machines running HPUX and on NEC SX-4, you need to compile
-Fortran programs with {\tt mpifort} instead of {\tt mpif77}, because
-the {\tt f77} compilers on these machines don't support 8-byte integers.
-
-\item The file-open mode {\tt MPI\_MODE\_EXCL} does not work on Intel
-PFS file system, due to a bug in PFS.
+Fortran programs with {\tt mpifort}.
 
 \end{itemize}
 

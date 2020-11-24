@@ -13,19 +13,18 @@
  * needed due to file size relative to the read buffer size and number of
  * aggregators */
 
-void *ADIOI_IO_Thread_Func(void *vptr_args) {
-    ADIOI_IO_ThreadFuncData *args = (ADIOI_IO_ThreadFuncData*)vptr_args;
+void *ADIOI_IO_Thread_Func(void *vptr_args)
+{
+    ADIOI_IO_ThreadFuncData *args = (ADIOI_IO_ThreadFuncData *) vptr_args;
 
-    ADIOI_Assert(args->size == (int)(args->size));
+    ADIOI_Assert(args->size == (int) (args->size));
 
     if (args->io_kind == ADIOI_READ) {
-	ADIO_ReadContig(args->fd, args->buf, args->size, MPI_BYTE,
-		ADIO_EXPLICIT_OFFSET, args->offset,
-		args->status, &(args->error_code));
+        ADIO_ReadContig(args->fd, args->buf, args->size, MPI_BYTE,
+                        ADIO_EXPLICIT_OFFSET, args->offset, args->status, &(args->error_code));
     } else {
-	ADIO_WriteContig(args->fd, args->buf, args->size, MPI_BYTE,
-		ADIO_EXPLICIT_OFFSET, args->offset,
-		args->status, &(args->error_code));
+        ADIO_WriteContig(args->fd, args->buf, args->size, MPI_BYTE,
+                         ADIO_EXPLICIT_OFFSET, args->offset, args->status, &(args->error_code));
     }
     pthread_exit(&(args->error_code));
     return NULL;

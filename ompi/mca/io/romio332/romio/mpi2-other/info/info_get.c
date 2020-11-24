@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -47,27 +47,27 @@ int MPI_Info_get(MPI_Info info, char *key, int valuelen, char *value, int *flag)
     }
 
     if (key <= (char *) 0) {
-	FPRINTF(stderr, "MPI_Info_get: key is an invalid address\n");
+        FPRINTF(stderr, "MPI_Info_get: key is an invalid address\n");
         MPI_Abort(MPI_COMM_WORLD, 1);
     }
 
     if (strlen(key) > MPI_MAX_INFO_KEY) {
-	FPRINTF(stderr, "MPI_Info_get: key is longer than MPI_MAX_INFO_KEY\n");
+        FPRINTF(stderr, "MPI_Info_get: key is longer than MPI_MAX_INFO_KEY\n");
         MPI_Abort(MPI_COMM_WORLD, 1);
     }
 
     if (!strlen(key)) {
-	FPRINTF(stderr, "MPI_Info_get: key is a null string\n");
+        FPRINTF(stderr, "MPI_Info_get: key is a null string\n");
         MPI_Abort(MPI_COMM_WORLD, 1);
     }
 
     if (valuelen <= 0) {
-	FPRINTF(stderr, "MPI_Info_get: Invalid valuelen argument\n");
+        FPRINTF(stderr, "MPI_Info_get: Invalid valuelen argument\n");
         MPI_Abort(MPI_COMM_WORLD, 1);
     }
 
     if (value <= (char *) 0) {
-	FPRINTF(stderr, "MPI_Info_get: value is an invalid address\n");
+        FPRINTF(stderr, "MPI_Info_get: value is an invalid address\n");
         MPI_Abort(MPI_COMM_WORLD, 1);
     }
 
@@ -75,13 +75,13 @@ int MPI_Info_get(MPI_Info info, char *key, int valuelen, char *value, int *flag)
     *flag = 0;
 
     while (curr) {
-	if (!strcmp(curr->key, key)) {
-	    ADIOI_Strncpy(value, curr->value, valuelen);
-	    value[valuelen] = '\0';
-	    *flag = 1;
-	    break;
-	}
-	curr = curr->next;
+        if (!strcmp(curr->key, key)) {
+            ADIOI_Strncpy(value, curr->value, valuelen);
+            value[valuelen] = '\0';
+            *flag = 1;
+            break;
+        }
+        curr = curr->next;
     }
 
     return MPI_SUCCESS;

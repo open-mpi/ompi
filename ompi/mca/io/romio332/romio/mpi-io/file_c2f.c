@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -17,7 +17,7 @@
 #pragma _CRI duplicate MPI_File_c2f as PMPI_File_c2f
 /* end of weak pragmas */
 #elif defined(HAVE_WEAK_ATTRIBUTE)
-MPI_Fint MPI_File_c2f(MPI_File fh) __attribute__((weak,alias("PMPI_File_c2f")));
+MPI_Fint MPI_File_c2f(MPI_File fh) __attribute__ ((weak, alias("PMPI_File_c2f")));
 #endif
 
 /* Include mapping from MPI->PMPI */

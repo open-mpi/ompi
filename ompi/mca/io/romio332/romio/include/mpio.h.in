@@ -11,16 +11,12 @@
 #define MPIO_INCLUDE
 
 #include "mpi.h"
-/* Open MPI: We need to rename almost all of these functions, as well
-   a the types to be names that conform to the prefix rule */
-#include "io_romio_conv.h"
 
-#define MPIIMPL_HAVE_MPI_COMBINER_DARRAY 1
-#define MPIIMPL_HAVE_MPI_TYPE_CREATE_DARRAY 1
-#define MPIIMPL_HAVE_MPI_COMBINER_SUBARRAY 1
-#define MPIIMPL_HAVE_MPI_TYPE_CREATE_DARRAY 1
-#define MPIIMPL_HAVE_MPI_COMBINER_DUP 1
-#define MPICH_ATTR_POINTER_WITH_TYPE_TAG(x,y)
+#if defined(HAVE_VISIBILITY)
+#define ROMIO_API_PUBLIC __attribute__((visibility ("default")))
+#else
+#define ROMIO_API_PUBLIC
+#endif
 
 #if defined(__cplusplus)
 extern "C" {
@@ -34,7 +30,9 @@ extern "C" {
 typedef struct ADIOI_FileD *MPI_File;
 #endif
 
+/* *INDENT-OFF* */
 @DEFINE_HAVE_MPI_GREQUEST@
+/* *INDENT-ON* */
 #ifndef HAVE_MPI_GREQUEST
 typedef struct ADIOI_RequestD *MPIO_Request;  
 #else
@@ -48,10 +46,10 @@ typedef struct ADIOI_RequestD *MPIO_Request;
 #endif
 #define MPIO_REQUEST_DEFINED
 
-@DEFINE_HAVE_MPI_GREQUEST_EXTENSIONS@
-
 #ifndef HAVE_MPI_OFFSET
+/* *INDENT-OFF* */
 @DEFINE_MPI_OFFSET@
+/* *INDENT-ON* */
 /* If we needed to define MPI_Offset, then we also need to make
    this definition. */
 #ifndef HAVE_MPI_DATAREP_FUNCTIONS
@@ -64,14 +62,18 @@ typedef int (MPI_Datarep_extent_function)(MPI_Datatype datatype, MPI_Aint *,
 #endif
 
 #ifndef NEEDS_MPI_FINT
+/* *INDENT-OFF* */
 @NEEDS_MPI_FINT@
+/* *INDENT-ON* */
 #endif
 #ifdef NEEDS_MPI_FINT
 typedef int MPI_Fint; 
 #endif
 
 #ifndef HAVE_MPI_INFO
+/* *INDENT-OFF* */
 @HAVE_MPI_INFO@
+/* *INDENT-ON* */
 #endif
 #ifndef HAVE_MPI_INFO
   typedef struct MPIR_Info *MPI_Info;
@@ -111,7 +113,9 @@ typedef int MPI_Fint;
 #endif
 
 #ifndef HAVE_MPI_DARRAY_SUBARRAY
+/* *INDENT-OFF* */
 @HAVE_MPI_DARRAY_SUBARRAY@
+/* *INDENT-ON* */
 #endif
 #ifndef HAVE_MPI_DARRAY_SUBARRAY
 #  define MPI_ORDER_C             56
@@ -132,150 +136,150 @@ typedef int MPI_Fint;
 
 /* Section 9.2 */
 /* Begin Prototypes */
-int MPI_File_open(MPI_Comm comm, const char *filename, int amode, MPI_Info info, MPI_File *fh);
-int MPI_File_close(MPI_File *fh);
-int MPI_File_delete(const char *filename, MPI_Info info);
-int MPI_File_set_size(MPI_File fh, MPI_Offset size);
-int MPI_File_preallocate(MPI_File fh, MPI_Offset size);
-int MPI_File_get_size(MPI_File fh, MPI_Offset *size);
-int MPI_File_get_group(MPI_File fh, MPI_Group *group);
-int MPI_File_get_amode(MPI_File fh, int *amode);
-int MPI_File_set_info(MPI_File fh, MPI_Info info);
-int MPI_File_get_info(MPI_File fh, MPI_Info *info_used);
+int MPI_File_open(MPI_Comm comm, const char *filename, int amode, MPI_Info info, MPI_File *fh) ROMIO_API_PUBLIC;
+int MPI_File_close(MPI_File *fh) ROMIO_API_PUBLIC;
+int MPI_File_delete(const char *filename, MPI_Info info) ROMIO_API_PUBLIC;
+int MPI_File_set_size(MPI_File fh, MPI_Offset size) ROMIO_API_PUBLIC;
+int MPI_File_preallocate(MPI_File fh, MPI_Offset size) ROMIO_API_PUBLIC;
+int MPI_File_get_size(MPI_File fh, MPI_Offset *size) ROMIO_API_PUBLIC;
+int MPI_File_get_group(MPI_File fh, MPI_Group *group) ROMIO_API_PUBLIC;
+int MPI_File_get_amode(MPI_File fh, int *amode) ROMIO_API_PUBLIC;
+int MPI_File_set_info(MPI_File fh, MPI_Info info) ROMIO_API_PUBLIC;
+int MPI_File_get_info(MPI_File fh, MPI_Info *info_used) ROMIO_API_PUBLIC;
 
 /* Section 9.3 */
 int MPI_File_set_view(MPI_File fh, MPI_Offset disp, MPI_Datatype etype, MPI_Datatype filetype,
-                      const char *datarep, MPI_Info info);
+                      const char *datarep, MPI_Info info) ROMIO_API_PUBLIC;
 int MPI_File_get_view(MPI_File fh, MPI_Offset *disp, MPI_Datatype *etype, MPI_Datatype *filetype,
-                      char *datarep);
+                      char *datarep) ROMIO_API_PUBLIC;
 
 /* Section 9.4.2 */
 int MPI_File_read_at(MPI_File fh, MPI_Offset offset, void *buf, int count, MPI_Datatype datatype,
-                     MPI_Status *status) MPICH_ATTR_POINTER_WITH_TYPE_TAG(3,5);
+                     MPI_Status *status) MPICH_ATTR_POINTER_WITH_TYPE_TAG(3,5) ROMIO_API_PUBLIC;
 int MPI_File_read_at_all(MPI_File fh, MPI_Offset offset, void * buf, int count,
                          MPI_Datatype datatype, MPI_Status *status)
-    MPICH_ATTR_POINTER_WITH_TYPE_TAG(3,5);
+    MPICH_ATTR_POINTER_WITH_TYPE_TAG(3,5) ROMIO_API_PUBLIC;
 int MPI_File_write_at(MPI_File fh, MPI_Offset offset, const void * buf, int count,
                       MPI_Datatype datatype, MPI_Status *status)
-    MPICH_ATTR_POINTER_WITH_TYPE_TAG(3,5);
+    MPICH_ATTR_POINTER_WITH_TYPE_TAG(3,5) ROMIO_API_PUBLIC;
 int MPI_File_write_at_all(MPI_File fh, MPI_Offset offset, const void *buf, int count,
                           MPI_Datatype datatype, MPI_Status *status)
-    MPICH_ATTR_POINTER_WITH_TYPE_TAG(3,5);
+    MPICH_ATTR_POINTER_WITH_TYPE_TAG(3,5) ROMIO_API_PUBLIC;
 
 /* nonblocking calls currently use MPIO_Request, because generalized
    requests not yet implemented. For the same reason, MPIO_Test and 
    MPIO_Wait are used to test and wait on nonblocking I/O requests */ 
 int MPI_File_iread_at(MPI_File fh, MPI_Offset offset, void *buf, int count, MPI_Datatype datatype,
-                      MPIO_Request *request) MPICH_ATTR_POINTER_WITH_TYPE_TAG(3,5);
+                      MPIO_Request *request) MPICH_ATTR_POINTER_WITH_TYPE_TAG(3,5) ROMIO_API_PUBLIC;
 int MPI_File_iwrite_at(MPI_File fh, MPI_Offset offset, const void *buf, int count,
                        MPI_Datatype datatype, MPIO_Request *request)
-    MPICH_ATTR_POINTER_WITH_TYPE_TAG(3,5);
+    MPICH_ATTR_POINTER_WITH_TYPE_TAG(3,5) ROMIO_API_PUBLIC;
 
 /* Section 9.4.3 */
 int MPI_File_read(MPI_File fh, void *buf, int count, MPI_Datatype datatype, MPI_Status *status)
-    MPICH_ATTR_POINTER_WITH_TYPE_TAG(2,4);
+    MPICH_ATTR_POINTER_WITH_TYPE_TAG(2,4) ROMIO_API_PUBLIC;
 int MPI_File_read_all(MPI_File fh, void *buf, int count, MPI_Datatype datatype, MPI_Status *status)
-    MPICH_ATTR_POINTER_WITH_TYPE_TAG(2,4);
+    MPICH_ATTR_POINTER_WITH_TYPE_TAG(2,4) ROMIO_API_PUBLIC;
 int MPI_File_write(MPI_File fh, const void *buf, int count, MPI_Datatype datatype,
-                   MPI_Status *status) MPICH_ATTR_POINTER_WITH_TYPE_TAG(2,4);
+                   MPI_Status *status) MPICH_ATTR_POINTER_WITH_TYPE_TAG(2,4) ROMIO_API_PUBLIC;
 int MPI_File_write_all(MPI_File fh, const void *buf, int count, MPI_Datatype datatype,
-                       MPI_Status *status) MPICH_ATTR_POINTER_WITH_TYPE_TAG(2,4);
+                       MPI_Status *status) MPICH_ATTR_POINTER_WITH_TYPE_TAG(2,4) ROMIO_API_PUBLIC;
 
 /* nonblocking calls currently use MPIO_Request, because generalized
    requests not yet implemented. For the same reason, MPIO_Test and 
    MPIO_Wait are used to test and wait on nonblocking I/O requests */ 
 
 int MPI_File_iread(MPI_File fh, void *buf, int count, MPI_Datatype datatype, MPIO_Request *request)
-    MPICH_ATTR_POINTER_WITH_TYPE_TAG(2,4);
+    MPICH_ATTR_POINTER_WITH_TYPE_TAG(2,4) ROMIO_API_PUBLIC;
 int MPI_File_iwrite(MPI_File fh, const void *buf, int count, MPI_Datatype datatype,
-                    MPIO_Request *request) MPICH_ATTR_POINTER_WITH_TYPE_TAG(2,4);
+                    MPIO_Request *request) MPICH_ATTR_POINTER_WITH_TYPE_TAG(2,4) ROMIO_API_PUBLIC;
 
-int MPI_File_seek(MPI_File fh, MPI_Offset offset, int whence);
-int MPI_File_get_position(MPI_File fh, MPI_Offset *offset);
-int MPI_File_get_byte_offset(MPI_File fh, MPI_Offset offset, MPI_Offset *disp);
+int MPI_File_seek(MPI_File fh, MPI_Offset offset, int whence) ROMIO_API_PUBLIC;
+int MPI_File_get_position(MPI_File fh, MPI_Offset *offset) ROMIO_API_PUBLIC;
+int MPI_File_get_byte_offset(MPI_File fh, MPI_Offset offset, MPI_Offset *disp) ROMIO_API_PUBLIC;
 
 /* Section 9.4.4 */
 int MPI_File_read_shared(MPI_File fh, void *buf, int count, MPI_Datatype datatype,
-                         MPI_Status *status) MPICH_ATTR_POINTER_WITH_TYPE_TAG(2,4);
+                         MPI_Status *status) MPICH_ATTR_POINTER_WITH_TYPE_TAG(2,4) ROMIO_API_PUBLIC;
 int MPI_File_write_shared(MPI_File fh, const void *buf, int count, MPI_Datatype datatype,
-                          MPI_Status *status) MPICH_ATTR_POINTER_WITH_TYPE_TAG(2,4);
+                          MPI_Status *status) MPICH_ATTR_POINTER_WITH_TYPE_TAG(2,4) ROMIO_API_PUBLIC;
 int MPI_File_iread_shared(MPI_File fh, void *buf, int count, MPI_Datatype datatype,
-                          MPIO_Request *request) MPICH_ATTR_POINTER_WITH_TYPE_TAG(2,4);
+                          MPIO_Request *request) MPICH_ATTR_POINTER_WITH_TYPE_TAG(2,4) ROMIO_API_PUBLIC;
 int MPI_File_iwrite_shared(MPI_File fh, const void *buf, int count, MPI_Datatype datatype,
-                           MPIO_Request *request) MPICH_ATTR_POINTER_WITH_TYPE_TAG(2,4);
+                           MPIO_Request *request) MPICH_ATTR_POINTER_WITH_TYPE_TAG(2,4) ROMIO_API_PUBLIC;
 int MPI_File_read_ordered(MPI_File fh, void *buf, int count, MPI_Datatype datatype,
-                          MPI_Status *status) MPICH_ATTR_POINTER_WITH_TYPE_TAG(2,4);
+                          MPI_Status *status) MPICH_ATTR_POINTER_WITH_TYPE_TAG(2,4) ROMIO_API_PUBLIC;
 int MPI_File_write_ordered(MPI_File fh, const void *buf, int count, MPI_Datatype datatype,
-                           MPI_Status *status) MPICH_ATTR_POINTER_WITH_TYPE_TAG(2,4);
-int MPI_File_seek_shared(MPI_File fh, MPI_Offset offset, int whence);
-int MPI_File_get_position_shared(MPI_File fh, MPI_Offset *offset);
+                           MPI_Status *status) MPICH_ATTR_POINTER_WITH_TYPE_TAG(2,4) ROMIO_API_PUBLIC;
+int MPI_File_seek_shared(MPI_File fh, MPI_Offset offset, int whence) ROMIO_API_PUBLIC;
+int MPI_File_get_position_shared(MPI_File fh, MPI_Offset *offset) ROMIO_API_PUBLIC;
 
 /* Section 9.4.5 */
 int MPI_File_read_at_all_begin(MPI_File fh, MPI_Offset offset, void *buf, int count,
-                               MPI_Datatype datatype) MPICH_ATTR_POINTER_WITH_TYPE_TAG(3,5);
-int MPI_File_read_at_all_end(MPI_File fh, void *buf, MPI_Status *status);
+                               MPI_Datatype datatype) MPICH_ATTR_POINTER_WITH_TYPE_TAG(3,5) ROMIO_API_PUBLIC;
+int MPI_File_read_at_all_end(MPI_File fh, void *buf, MPI_Status *status) ROMIO_API_PUBLIC;
 int MPI_File_write_at_all_begin(MPI_File fh, MPI_Offset offset, const void *buf, int count,
-                                MPI_Datatype datatype) MPICH_ATTR_POINTER_WITH_TYPE_TAG(3,5);
-int MPI_File_write_at_all_end(MPI_File fh, const void *buf, MPI_Status *status);
+                                MPI_Datatype datatype) MPICH_ATTR_POINTER_WITH_TYPE_TAG(3,5) ROMIO_API_PUBLIC;
+int MPI_File_write_at_all_end(MPI_File fh, const void *buf, MPI_Status *status) ROMIO_API_PUBLIC;
 int MPI_File_read_all_begin(MPI_File fh, void *buf, int count, MPI_Datatype datatype)
-    MPICH_ATTR_POINTER_WITH_TYPE_TAG(2,4);
-int MPI_File_read_all_end(MPI_File fh, void *buf, MPI_Status *status);
+    MPICH_ATTR_POINTER_WITH_TYPE_TAG(2,4) ROMIO_API_PUBLIC;
+int MPI_File_read_all_end(MPI_File fh, void *buf, MPI_Status *status) ROMIO_API_PUBLIC;
 int MPI_File_write_all_begin(MPI_File fh, const void *buf, int count, MPI_Datatype datatype)
-    MPICH_ATTR_POINTER_WITH_TYPE_TAG(2,4);
-int MPI_File_write_all_end(MPI_File fh, const void *buf, MPI_Status *status);
+    MPICH_ATTR_POINTER_WITH_TYPE_TAG(2,4) ROMIO_API_PUBLIC;
+int MPI_File_write_all_end(MPI_File fh, const void *buf, MPI_Status *status) ROMIO_API_PUBLIC;
 int MPI_File_read_ordered_begin(MPI_File fh, void *buf, int count, MPI_Datatype datatype)
-    MPICH_ATTR_POINTER_WITH_TYPE_TAG(2,4);
-int MPI_File_read_ordered_end(MPI_File fh, void *buf, MPI_Status *status);
+    MPICH_ATTR_POINTER_WITH_TYPE_TAG(2,4) ROMIO_API_PUBLIC;
+int MPI_File_read_ordered_end(MPI_File fh, void *buf, MPI_Status *status) ROMIO_API_PUBLIC;
 int MPI_File_write_ordered_begin(MPI_File fh, const void *buf, int count, MPI_Datatype datatype)
-    MPICH_ATTR_POINTER_WITH_TYPE_TAG(2,4);
-int MPI_File_write_ordered_end(MPI_File fh, const void *buf, MPI_Status *status);
+    MPICH_ATTR_POINTER_WITH_TYPE_TAG(2,4) ROMIO_API_PUBLIC;
+int MPI_File_write_ordered_end(MPI_File fh, const void *buf, MPI_Status *status) ROMIO_API_PUBLIC;
 
 /* Section 9.5.1 */
-int MPI_File_get_type_extent(MPI_File fh, MPI_Datatype datatype, MPI_Aint *extent);
+int MPI_File_get_type_extent(MPI_File fh, MPI_Datatype datatype, MPI_Aint *extent) ROMIO_API_PUBLIC;
 
 /* Section 9.5.3 */
 int MPI_Register_datarep(const char *datarep, MPI_Datarep_conversion_function *read_conversion_fn,
 			 MPI_Datarep_conversion_function *write_conversion_fn,
-			 MPI_Datarep_extent_function *dtype_file_extent_fn, void *extra_state);
+			 MPI_Datarep_extent_function *dtype_file_extent_fn, void *extra_state) ROMIO_API_PUBLIC;
 
 /* Section 9.6.1 */
-int MPI_File_set_atomicity(MPI_File fh, int flag);
-int MPI_File_get_atomicity(MPI_File fh, int *flag);
-int MPI_File_sync(MPI_File fh);
+int MPI_File_set_atomicity(MPI_File fh, int flag) ROMIO_API_PUBLIC;
+int MPI_File_get_atomicity(MPI_File fh, int *flag) ROMIO_API_PUBLIC;
+int MPI_File_sync(MPI_File fh) ROMIO_API_PUBLIC;
 
 /* Section 4.13.3 */
 #ifndef MPICH
 /* MPICH provides these definitions */
-int MPI_File_set_errhandler(MPI_File file, MPI_Errhandler errhandler);
-int MPI_File_get_errhandler(MPI_File file, MPI_Errhandler *errhandler);
+int MPI_File_set_errhandler(MPI_File file, MPI_Errhandler errhandler) ROMIO_API_PUBLIC;
+int MPI_File_get_errhandler(MPI_File file, MPI_Errhandler *errhandler) ROMIO_API_PUBLIC;
 #endif
 
 /* For MPI 3.1 */
 int MPI_File_iread_at_all(MPI_File fh, MPI_Offset offset, void *buf, int count,
                            MPI_Datatype datatype, MPI_Request *request)
-    MPICH_ATTR_POINTER_WITH_TYPE_TAG(3,5);
+    MPICH_ATTR_POINTER_WITH_TYPE_TAG(3,5) ROMIO_API_PUBLIC;
 int MPI_File_iwrite_at_all(MPI_File fh, MPI_Offset offset, const void *buf, int count,
                             MPI_Datatype datatype, MPI_Request *request)
-    MPICH_ATTR_POINTER_WITH_TYPE_TAG(3,5);
+    MPICH_ATTR_POINTER_WITH_TYPE_TAG(3,5) ROMIO_API_PUBLIC;
 int MPI_File_iread_all(MPI_File fh, void *buf, int count, MPI_Datatype datatype,
                         MPI_Request *request)
-    MPICH_ATTR_POINTER_WITH_TYPE_TAG(2,4);
+    MPICH_ATTR_POINTER_WITH_TYPE_TAG(2,4) ROMIO_API_PUBLIC;
 int MPI_File_iwrite_all(MPI_File fh, const void *buf, int count, MPI_Datatype datatype,
                          MPI_Request *request)
-    MPICH_ATTR_POINTER_WITH_TYPE_TAG(2,4);
+    MPICH_ATTR_POINTER_WITH_TYPE_TAG(2,4) ROMIO_API_PUBLIC;
 /* End Prototypes */
 
 #ifndef HAVE_MPI_DARRAY_SUBARRAY
 /* Section 4.14.4 */
 int MPI_Type_create_subarray(int ndims, const int array_of_sizes[], const int array_of_subsizes[],
                              const int array_of_starts[], int order, MPI_Datatype oldtype,
-                             MPI_Datatype *newtype);
+                             MPI_Datatype *newtype) ROMIO_API_PUBLIC;
 
 /* Section 4.14.5 */
 int MPI_Type_create_darray(int size, int rank, int ndims, const int array_of_gsizes[],
                            const int array_of_distribs[], const int array_of_dargs[],
                            const int array_of_psizes, int order, MPI_Datatype oldtype,
-                           MPI_Datatype *newtype);
+                           MPI_Datatype *newtype) ROMIO_API_PUBLIC;
 #endif
 
 /* The globus2 device has to rename MPI_ symbols in order to use the vendor
@@ -291,46 +295,43 @@ int MPI_Type_create_darray(int size, int rank, int ndims, const int array_of_gsi
 #endif
 #endif
 /* above needed for some versions of mpi.h in MPICH!! */
-/* Open MPI: I can't seem to make these #define properly.  Oh well --
-   we don't need them anyway :-( */
-#if 0
-MPI_File MPI_File_f2c(MPI_Fint file);
-MPI_Fint MPI_File_c2f(MPI_File file);
-#endif
+MPI_File MPI_File_f2c(MPI_Fint file) ROMIO_API_PUBLIC;
+MPI_Fint MPI_File_c2f(MPI_File file) ROMIO_API_PUBLIC;
+
 
 #ifndef HAVE_MPI_GREQUEST
 /* The following functions are required if generalized requests are not
    available, because in that case, an MPIO_Request object
    is currently used for nonblocking I/O. */
-int MPIO_Test(MPIO_Request *request, int *flag, MPI_Status *status);
-int MPIO_Wait(MPIO_Request *request, MPI_Status *status);
+int MPIO_Test(MPIO_Request *request, int *flag, MPI_Status *status) ROMIO_API_PUBLIC;
+int MPIO_Wait(MPIO_Request *request, MPI_Status *status) ROMIO_API_PUBLIC;
 int MPIO_Testall(int count, MPIO_Request array_of_requests[], int *flag,
-                 MPI_Status array_of_statuses[]);
-int MPIO_Waitall(int count, MPIO_Request array_of_requests[], MPI_Status array_of_statuses[]);
+                 MPI_Status array_of_statuses[]) ROMIO_API_PUBLIC;
+int MPIO_Waitall(int count, MPIO_Request array_of_requests[], MPI_Status array_of_statuses[]) ROMIO_API_PUBLIC;
 int MPIO_Testany(int count, MPIO_Request array_of_requests[], int *indx, int *flag,
-                 MPI_Status *status);
-int MPIO_Waitany(int count, MPIO_Request array_of_requests[], int *indx, MPI_Status *status);
+                 MPI_Status *status) ROMIO_API_PUBLIC;
+int MPIO_Waitany(int count, MPIO_Request array_of_requests[], int *indx, MPI_Status *status) ROMIO_API_PUBLIC;
 int MPIO_Waitsome(int incount, MPIO_Request array_of_requests[], int *outcount,
-                  int array_of_indices[], MPI_Status array_of_statuses[]);
+                  int array_of_indices[], MPI_Status array_of_statuses[]) ROMIO_API_PUBLIC;
 int MPIO_Testsome(int incount, MPIO_Request array_of_requests[], int *outcount,
-                  int array_of_indices[], MPI_Status array_of_statuses[]);
+                  int array_of_indices[], MPI_Status array_of_statuses[]) ROMIO_API_PUBLIC;
 
-MPI_Fint MPIO_Request_c2f(MPIO_Request request);
-MPIO_Request MPIO_Request_f2c(MPI_Fint request);
+MPI_Fint MPIO_Request_c2f(MPIO_Request request) ROMIO_API_PUBLIC;
+MPIO_Request MPIO_Request_f2c(MPI_Fint request) ROMIO_API_PUBLIC;
 #endif /* HAVE_MPI_GREQUEST */
 
 /* info functions if not defined in the MPI implementation */
 #ifndef HAVE_MPI_INFO
 
-int MPI_Info_create(MPI_Info *info);
-int MPI_Info_set(MPI_Info info, const char *key, const char *value);
-int MPI_Info_delete(MPI_Info info, const char *key);
-int MPI_Info_get(MPI_Info info, const char *key, int valuelen, char *value, int *flag);
-int MPI_Info_get_valuelen(MPI_Info info, const char *key, int *valuelen, int *flag);
-int MPI_Info_get_nkeys(MPI_Info info, int *nkeys);
-int MPI_Info_get_nthkey(MPI_Info info, int n, char *key);
-int MPI_Info_dup(MPI_Info info, MPI_Info *newinfo);
-int MPI_Info_free(MPI_Info *info);
+int MPI_Info_create(MPI_Info *info) ROMIO_API_PUBLIC;
+int MPI_Info_set(MPI_Info info, const char *key, const char *value) ROMIO_API_PUBLIC;
+int MPI_Info_delete(MPI_Info info, const char *key) ROMIO_API_PUBLIC;
+int MPI_Info_get(MPI_Info info, const char *key, int valuelen, char *value, int *flag) ROMIO_API_PUBLIC;
+int MPI_Info_get_valuelen(MPI_Info info, const char *key, int *valuelen, int *flag) ROMIO_API_PUBLIC;
+int MPI_Info_get_nkeys(MPI_Info info, int *nkeys) ROMIO_API_PUBLIC;
+int MPI_Info_get_nthkey(MPI_Info info, int n, char *key) ROMIO_API_PUBLIC;
+int MPI_Info_dup(MPI_Info info, MPI_Info *newinfo) ROMIO_API_PUBLIC;
+int MPI_Info_free(MPI_Info *info) ROMIO_API_PUBLIC;
 
 /* The globus2 device has to rename MPI_ symbols in order to use the vendor
    MPI as one of its transport mechanisms.  Therefore, the following undefines
@@ -344,11 +345,8 @@ int MPI_Info_free(MPI_Info *info);
 #endif
 #endif
 /* above needed for some versions of mpi.h in MPICH!! */
-/* Open MPI: we don't need these in ROMIO */
-#if 0
-MPI_Fint MPI_Info_c2f(MPI_Info info);
-MPI_Info MPI_Info_f2c(MPI_Fint info);
-#endif
+MPI_Fint MPI_Info_c2f(MPI_Info info) ROMIO_API_PUBLIC;
+MPI_Info MPI_Info_f2c(MPI_Fint info) ROMIO_API_PUBLIC;
 #endif
 
 #endif   /* HAVE_PRAGMA_HP_SEC_DEF */
@@ -356,41 +354,38 @@ MPI_Info MPI_Info_f2c(MPI_Fint info);
 
 /**************** BINDINGS FOR THE PROFILING INTERFACE ***************/
 
-/* Open MPI: We don't want any of the profiling layer */
-#if 0
-
 
 /* Section 9.2 */
-int PMPI_File_open(MPI_Comm, const char *, int, MPI_Info, MPI_File *);
-int PMPI_File_close(MPI_File *);
-int PMPI_File_delete(const char *, MPI_Info);
-int PMPI_File_set_size(MPI_File, MPI_Offset);
-int PMPI_File_preallocate(MPI_File, MPI_Offset);
-int PMPI_File_get_size(MPI_File, MPI_Offset *);
-int PMPI_File_get_group(MPI_File, MPI_Group *);
-int PMPI_File_get_amode(MPI_File, int *);
-int PMPI_File_set_info(MPI_File, MPI_Info);
-int PMPI_File_get_info(MPI_File, MPI_Info *);
+int PMPI_File_open(MPI_Comm, const char *, int, MPI_Info, MPI_File *) ROMIO_API_PUBLIC;
+int PMPI_File_close(MPI_File *) ROMIO_API_PUBLIC;
+int PMPI_File_delete(const char *, MPI_Info) ROMIO_API_PUBLIC;
+int PMPI_File_set_size(MPI_File, MPI_Offset) ROMIO_API_PUBLIC;
+int PMPI_File_preallocate(MPI_File, MPI_Offset) ROMIO_API_PUBLIC;
+int PMPI_File_get_size(MPI_File, MPI_Offset *) ROMIO_API_PUBLIC;
+int PMPI_File_get_group(MPI_File, MPI_Group *) ROMIO_API_PUBLIC;
+int PMPI_File_get_amode(MPI_File, int *) ROMIO_API_PUBLIC;
+int PMPI_File_set_info(MPI_File, MPI_Info) ROMIO_API_PUBLIC;
+int PMPI_File_get_info(MPI_File, MPI_Info *) ROMIO_API_PUBLIC;
 
 /* Section 9.3 */
 int PMPI_File_set_view(MPI_File, MPI_Offset, 
-    MPI_Datatype, MPI_Datatype, const char *, MPI_Info);
+    MPI_Datatype, MPI_Datatype, const char *, MPI_Info) ROMIO_API_PUBLIC;
 int PMPI_File_get_view(MPI_File, MPI_Offset *, 
-      MPI_Datatype *, MPI_Datatype *, char *);
+      MPI_Datatype *, MPI_Datatype *, char *) ROMIO_API_PUBLIC;
 
 /* Section 9.4.2 */
 int PMPI_File_read_at(MPI_File, MPI_Offset, void *,
 	      int, MPI_Datatype, MPI_Status *)
-              MPICH_ATTR_POINTER_WITH_TYPE_TAG(3,5);
+              MPICH_ATTR_POINTER_WITH_TYPE_TAG(3,5) ROMIO_API_PUBLIC;
 int PMPI_File_read_at_all(MPI_File, MPI_Offset, void *,
 	      int, MPI_Datatype, MPI_Status *)
-              MPICH_ATTR_POINTER_WITH_TYPE_TAG(3,5);
+              MPICH_ATTR_POINTER_WITH_TYPE_TAG(3,5) ROMIO_API_PUBLIC;
 int PMPI_File_write_at(MPI_File, MPI_Offset, const void *,
 	      int, MPI_Datatype, MPI_Status *)
-              MPICH_ATTR_POINTER_WITH_TYPE_TAG(3,5);
+              MPICH_ATTR_POINTER_WITH_TYPE_TAG(3,5) ROMIO_API_PUBLIC;
 int PMPI_File_write_at_all(MPI_File, MPI_Offset, const void *,
 	      int, MPI_Datatype, MPI_Status *)
-              MPICH_ATTR_POINTER_WITH_TYPE_TAG(3,5);
+              MPICH_ATTR_POINTER_WITH_TYPE_TAG(3,5) ROMIO_API_PUBLIC;
 
 /* nonblocking calls currently use MPIO_Request, because generalized
    requests not yet implemented. For the same reason, MPIO_Test and 
@@ -398,158 +393,156 @@ int PMPI_File_write_at_all(MPI_File, MPI_Offset, const void *,
 
 int PMPI_File_iread_at(MPI_File, MPI_Offset, void *,
 	      int, MPI_Datatype, MPIO_Request *)
-              MPICH_ATTR_POINTER_WITH_TYPE_TAG(3,5);
+              MPICH_ATTR_POINTER_WITH_TYPE_TAG(3,5) ROMIO_API_PUBLIC;
 int PMPI_File_iwrite_at(MPI_File, MPI_Offset, const void *,
 	      int, MPI_Datatype, MPIO_Request *)
-              MPICH_ATTR_POINTER_WITH_TYPE_TAG(3,5);
+              MPICH_ATTR_POINTER_WITH_TYPE_TAG(3,5) ROMIO_API_PUBLIC;
 
 /* Section 9.4.3 */
 int PMPI_File_read(MPI_File, void *, int, MPI_Datatype, MPI_Status *)
-                   MPICH_ATTR_POINTER_WITH_TYPE_TAG(2,4);
+                   MPICH_ATTR_POINTER_WITH_TYPE_TAG(2,4) ROMIO_API_PUBLIC;
 int PMPI_File_read_all(MPI_File, void *, int, MPI_Datatype, MPI_Status *)
-                       MPICH_ATTR_POINTER_WITH_TYPE_TAG(2,4);
+                       MPICH_ATTR_POINTER_WITH_TYPE_TAG(2,4) ROMIO_API_PUBLIC;
 int PMPI_File_write(MPI_File, const void *, int, MPI_Datatype, MPI_Status *)
-                    MPICH_ATTR_POINTER_WITH_TYPE_TAG(2,4);
+                    MPICH_ATTR_POINTER_WITH_TYPE_TAG(2,4) ROMIO_API_PUBLIC;
 int PMPI_File_write_all(MPI_File, const void *, int, MPI_Datatype, MPI_Status *)
-                        MPICH_ATTR_POINTER_WITH_TYPE_TAG(2,4);
+                        MPICH_ATTR_POINTER_WITH_TYPE_TAG(2,4) ROMIO_API_PUBLIC;
 
 /* nonblocking calls currently use MPIO_Request, because generalized
    requests not yet implemented. For the same reason, MPIO_Test and 
    MPIO_Wait are used to test and wait on nonblocking I/O requests */ 
 
 int PMPI_File_iread(MPI_File, void *, int, MPI_Datatype, MPIO_Request *)
-                    MPICH_ATTR_POINTER_WITH_TYPE_TAG(2,4);
+                    MPICH_ATTR_POINTER_WITH_TYPE_TAG(2,4) ROMIO_API_PUBLIC;
 int PMPI_File_iwrite(MPI_File, const void *, int, MPI_Datatype, MPIO_Request *)
-                     MPICH_ATTR_POINTER_WITH_TYPE_TAG(2,4);
+                     MPICH_ATTR_POINTER_WITH_TYPE_TAG(2,4) ROMIO_API_PUBLIC;
 
-int PMPI_File_seek(MPI_File, MPI_Offset, int);
-int PMPI_File_get_position(MPI_File, MPI_Offset *);
-int PMPI_File_get_byte_offset(MPI_File, MPI_Offset, MPI_Offset *);
+int PMPI_File_seek(MPI_File, MPI_Offset, int) ROMIO_API_PUBLIC;
+int PMPI_File_get_position(MPI_File, MPI_Offset *) ROMIO_API_PUBLIC;
+int PMPI_File_get_byte_offset(MPI_File, MPI_Offset, MPI_Offset *) ROMIO_API_PUBLIC;
 
 /* Section 9.4.4 */
 int PMPI_File_read_shared(MPI_File, void *, int, MPI_Datatype, MPI_Status *)
-                          MPICH_ATTR_POINTER_WITH_TYPE_TAG(2,4);
+                          MPICH_ATTR_POINTER_WITH_TYPE_TAG(2,4) ROMIO_API_PUBLIC;
 int PMPI_File_write_shared(MPI_File, const void *, int, MPI_Datatype, MPI_Status *)
-                           MPICH_ATTR_POINTER_WITH_TYPE_TAG(2,4);
+                           MPICH_ATTR_POINTER_WITH_TYPE_TAG(2,4) ROMIO_API_PUBLIC;
 int PMPI_File_iread_shared(MPI_File, void *, int, 
 			   MPI_Datatype, MPIO_Request *)
-                           MPICH_ATTR_POINTER_WITH_TYPE_TAG(2,4);
+                           MPICH_ATTR_POINTER_WITH_TYPE_TAG(2,4) ROMIO_API_PUBLIC;
 int PMPI_File_iwrite_shared(MPI_File, const void *, int,
 			    MPI_Datatype, MPIO_Request *)
-                            MPICH_ATTR_POINTER_WITH_TYPE_TAG(2,4);
+                            MPICH_ATTR_POINTER_WITH_TYPE_TAG(2,4) ROMIO_API_PUBLIC;
 int PMPI_File_read_ordered(MPI_File, void *, int, MPI_Datatype, MPI_Status *)
-                           MPICH_ATTR_POINTER_WITH_TYPE_TAG(2,4);
+                           MPICH_ATTR_POINTER_WITH_TYPE_TAG(2,4) ROMIO_API_PUBLIC;
 int PMPI_File_write_ordered(MPI_File, const void *, int, MPI_Datatype, MPI_Status *)
-                            MPICH_ATTR_POINTER_WITH_TYPE_TAG(2,4);
-int PMPI_File_seek_shared(MPI_File, MPI_Offset, int);
-int PMPI_File_get_position_shared(MPI_File, MPI_Offset *);
+                            MPICH_ATTR_POINTER_WITH_TYPE_TAG(2,4) ROMIO_API_PUBLIC;
+int PMPI_File_seek_shared(MPI_File, MPI_Offset, int) ROMIO_API_PUBLIC;
+int PMPI_File_get_position_shared(MPI_File, MPI_Offset *) ROMIO_API_PUBLIC;
 
 /* Section 9.4.5 */
 int PMPI_File_read_at_all_begin(MPI_File, MPI_Offset, void *,
                                int, MPI_Datatype)
-                               MPICH_ATTR_POINTER_WITH_TYPE_TAG(3,5);
-int PMPI_File_read_at_all_end(MPI_File, void *, MPI_Status *);
+                               MPICH_ATTR_POINTER_WITH_TYPE_TAG(3,5) ROMIO_API_PUBLIC;
+int PMPI_File_read_at_all_end(MPI_File, void *, MPI_Status *) ROMIO_API_PUBLIC;
 int PMPI_File_write_at_all_begin(MPI_File, MPI_Offset, const void *,
                                  int, MPI_Datatype)
-                                 MPICH_ATTR_POINTER_WITH_TYPE_TAG(3,5);
-int PMPI_File_write_at_all_end(MPI_File, const void *, MPI_Status *);
+                                 MPICH_ATTR_POINTER_WITH_TYPE_TAG(3,5) ROMIO_API_PUBLIC;
+int PMPI_File_write_at_all_end(MPI_File, const void *, MPI_Status *) ROMIO_API_PUBLIC;
 int PMPI_File_read_all_begin(MPI_File, void *, int, MPI_Datatype)
-                             MPICH_ATTR_POINTER_WITH_TYPE_TAG(2,4);
-int PMPI_File_read_all_end(MPI_File, void *, MPI_Status *);
+                             MPICH_ATTR_POINTER_WITH_TYPE_TAG(2,4) ROMIO_API_PUBLIC;
+int PMPI_File_read_all_end(MPI_File, void *, MPI_Status *) ROMIO_API_PUBLIC;
 int PMPI_File_write_all_begin(MPI_File, const void *, int, MPI_Datatype)
-                              MPICH_ATTR_POINTER_WITH_TYPE_TAG(2,4);
-int PMPI_File_write_all_end(MPI_File, const void *, MPI_Status *);
+                              MPICH_ATTR_POINTER_WITH_TYPE_TAG(2,4) ROMIO_API_PUBLIC;
+int PMPI_File_write_all_end(MPI_File, const void *, MPI_Status *) ROMIO_API_PUBLIC;
 int PMPI_File_read_ordered_begin(MPI_File, void *, int, MPI_Datatype)
-                                 MPICH_ATTR_POINTER_WITH_TYPE_TAG(2,4);
-int PMPI_File_read_ordered_end(MPI_File, void *, MPI_Status *);
+                                 MPICH_ATTR_POINTER_WITH_TYPE_TAG(2,4) ROMIO_API_PUBLIC;
+int PMPI_File_read_ordered_end(MPI_File, void *, MPI_Status *) ROMIO_API_PUBLIC;
 int PMPI_File_write_ordered_begin(MPI_File, const void *, int, MPI_Datatype)
-                                  MPICH_ATTR_POINTER_WITH_TYPE_TAG(2,4);
-int PMPI_File_write_ordered_end(MPI_File, const void *, MPI_Status *);
+                                  MPICH_ATTR_POINTER_WITH_TYPE_TAG(2,4) ROMIO_API_PUBLIC;
+int PMPI_File_write_ordered_end(MPI_File, const void *, MPI_Status *) ROMIO_API_PUBLIC;
 
 /* Section 9.5.1 */
-int PMPI_File_get_type_extent(MPI_File, MPI_Datatype, MPI_Aint *);
+int PMPI_File_get_type_extent(MPI_File, MPI_Datatype, MPI_Aint *) ROMIO_API_PUBLIC;
 
 /* Section 9.5.3 */
 int PMPI_Register_datarep(const char *,
 			 MPI_Datarep_conversion_function *,
 			 MPI_Datarep_conversion_function *,
 			 MPI_Datarep_extent_function *,
-			 void *);
+			 void *) ROMIO_API_PUBLIC;
 
 /* Section 9.6.1 */
-int PMPI_File_set_atomicity(MPI_File, int);
-int PMPI_File_get_atomicity(MPI_File, int *);
-int PMPI_File_sync(MPI_File);
+int PMPI_File_set_atomicity(MPI_File, int) ROMIO_API_PUBLIC;
+int PMPI_File_get_atomicity(MPI_File, int *) ROMIO_API_PUBLIC;
+int PMPI_File_sync(MPI_File) ROMIO_API_PUBLIC;
 
 /* Section 4.13.3 */
 #ifndef MPICH
 /* MPICH provides these definitions */
-int PMPI_File_set_errhandler( MPI_File, MPI_Errhandler );
-int PMPI_File_get_errhandler( MPI_File, MPI_Errhandler * );
+int PMPI_File_set_errhandler( MPI_File, MPI_Errhandler ) ROMIO_API_PUBLIC;
+int PMPI_File_get_errhandler( MPI_File, MPI_Errhandler * ) ROMIO_API_PUBLIC;
 #endif
 
 /* For MPI 3.1 */
 int PMPI_File_iread_at_all(MPI_File fh, MPI_Offset offset, void *buf, int count,
                             MPI_Datatype datatype, MPI_Request *request)
-    MPICH_ATTR_POINTER_WITH_TYPE_TAG(3,5);
+    MPICH_ATTR_POINTER_WITH_TYPE_TAG(3,5) ROMIO_API_PUBLIC;
 int PMPI_File_iwrite_at_all(MPI_File fh, MPI_Offset offset, const void *buf, int count,
                              MPI_Datatype datatype, MPI_Request *request)
-    MPICH_ATTR_POINTER_WITH_TYPE_TAG(3,5);
+    MPICH_ATTR_POINTER_WITH_TYPE_TAG(3,5) ROMIO_API_PUBLIC;
 int PMPI_File_iread_all(MPI_File fh, void *buf, int count, MPI_Datatype datatype,
                          MPI_Request *request)
-    MPICH_ATTR_POINTER_WITH_TYPE_TAG(2,4);
+    MPICH_ATTR_POINTER_WITH_TYPE_TAG(2,4) ROMIO_API_PUBLIC;
 int PMPI_File_iwrite_all(MPI_File fh, const void *buf, int count, MPI_Datatype datatype,
                           MPI_Request *request)
-    MPICH_ATTR_POINTER_WITH_TYPE_TAG(2,4);
+    MPICH_ATTR_POINTER_WITH_TYPE_TAG(2,4) ROMIO_API_PUBLIC;
 
 #ifndef HAVE_MPI_DARRAY_SUBARRAY
 /* Section 4.14.4 */
 int PMPI_Type_create_subarray(int, int *, int *, int *, int, 
-                      MPI_Datatype, MPI_Datatype *);
+                      MPI_Datatype, MPI_Datatype *) ROMIO_API_PUBLIC;
 
 /* Section 4.14.5 */
 int PMPI_Type_create_darray(int, int, int, int *, int *, 
-                    int *, int *, int, MPI_Datatype, MPI_Datatype *);
+                    int *, int *, int, MPI_Datatype, MPI_Datatype *) ROMIO_API_PUBLIC;
 #endif
 
 /* Section 4.12.4 */
-MPI_File PMPI_File_f2c(MPI_Fint);
-MPI_Fint PMPI_File_c2f(MPI_File);
+MPI_File PMPI_File_f2c(MPI_Fint) ROMIO_API_PUBLIC;
+MPI_Fint PMPI_File_c2f(MPI_File) ROMIO_API_PUBLIC;
 
 #ifndef HAVE_MPI_GREQUEST
 /* The following functions are required if generalized requests are not
    available, because in that case, an MPIO_Request object
    is currently used for nonblocking I/O. */
-int PMPIO_Test(MPIO_Request *, int *, MPI_Status *);
-int PMPIO_Wait(MPIO_Request *, MPI_Status *);
-int PMPIO_Testall(int, MPIO_Request *, int *, MPI_Status *);
-int PMPIO_Waitall(int, MPIO_Request *, MPI_Status *);
-int PMPIO_Testany(int, MPIO_Request *, int *, int *, MPI_Status *);
-int PMPIO_Waitany(int, MPIO_Request *, int *, MPI_Status *);
-int PMPIO_Waitsome(int, MPIO_Request *, int *, int *, MPI_Status *);
-int PMPIO_Testsome(int, MPIO_Request *, int *, int *, MPI_Status *);
-MPI_Fint PMPIO_Request_c2f(MPIO_Request);
-MPIO_Request PMPIO_Request_f2c(MPI_Fint);
+int PMPIO_Test(MPIO_Request *, int *, MPI_Status *) ROMIO_API_PUBLIC;
+int PMPIO_Wait(MPIO_Request *, MPI_Status *) ROMIO_API_PUBLIC;
+int PMPIO_Testall(int, MPIO_Request *, int *, MPI_Status *) ROMIO_API_PUBLIC;
+int PMPIO_Waitall(int, MPIO_Request *, MPI_Status *) ROMIO_API_PUBLIC;
+int PMPIO_Testany(int, MPIO_Request *, int *, int *, MPI_Status *) ROMIO_API_PUBLIC;
+int PMPIO_Waitany(int, MPIO_Request *, int *, MPI_Status *) ROMIO_API_PUBLIC;
+int PMPIO_Waitsome(int, MPIO_Request *, int *, int *, MPI_Status *) ROMIO_API_PUBLIC;
+int PMPIO_Testsome(int, MPIO_Request *, int *, int *, MPI_Status *) ROMIO_API_PUBLIC;
+MPI_Fint PMPIO_Request_c2f(MPIO_Request) ROMIO_API_PUBLIC;
+MPIO_Request PMPIO_Request_f2c(MPI_Fint) ROMIO_API_PUBLIC;
 #endif /* HAVE_MPI_GREQUEST */
 
 /* info functions if not defined in the MPI implementation */
 #ifndef HAVE_MPI_INFO
 
-int PMPI_Info_create(MPI_Info *);
-int PMPI_Info_set(MPI_Info, char *, char *);
-int PMPI_Info_delete(MPI_Info, char *);
-int PMPI_Info_get(MPI_Info, char *, int, char *, int *);
-int PMPI_Info_get_valuelen(MPI_Info, char *, int *, int *);
-int PMPI_Info_get_nkeys(MPI_Info, int *);
-int PMPI_Info_get_nthkey(MPI_Info, int, char *);
-int PMPI_Info_dup(MPI_Info, MPI_Info *);
-int PMPI_Info_free(MPI_Info *);
+int PMPI_Info_create(MPI_Info *) ROMIO_API_PUBLIC;
+int PMPI_Info_set(MPI_Info, char *, char *) ROMIO_API_PUBLIC;
+int PMPI_Info_delete(MPI_Info, char *) ROMIO_API_PUBLIC;
+int PMPI_Info_get(MPI_Info, char *, int, char *, int *) ROMIO_API_PUBLIC;
+int PMPI_Info_get_valuelen(MPI_Info, char *, int *, int *) ROMIO_API_PUBLIC;
+int PMPI_Info_get_nkeys(MPI_Info, int *) ROMIO_API_PUBLIC;
+int PMPI_Info_get_nthkey(MPI_Info, int, char *) ROMIO_API_PUBLIC;
+int PMPI_Info_dup(MPI_Info, MPI_Info *) ROMIO_API_PUBLIC;
+int PMPI_Info_free(MPI_Info *) ROMIO_API_PUBLIC;
 
-MPI_Fint PMPI_Info_c2f(MPI_Info);
-MPI_Info PMPI_Info_f2c(MPI_Fint);
+MPI_Fint PMPI_Info_c2f(MPI_Info) ROMIO_API_PUBLIC;
+MPI_Info PMPI_Info_f2c(MPI_Fint) ROMIO_API_PUBLIC;
 #endif
-
-#endif /* Open MPI: We don't want any of the profiling layer */
 
 #if defined(__cplusplus)
 }

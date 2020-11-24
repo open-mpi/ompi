@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -37,59 +37,55 @@ Output Parameters:
 .N fortran
 @*/
 #ifdef HAVE_MPI_GREQUEST
-int MPIO_Wait(MPIO_Request *request, MPI_Status *status)
+int MPIO_Wait(MPIO_Request * request, MPI_Status * status)
 {
-	return(MPI_Wait(request, status));
+    return (MPI_Wait(request, status));
 }
 #else
-int MPIO_Wait(MPIO_Request *request, MPI_Status *status)
+int MPIO_Wait(MPIO_Request * request, MPI_Status * status)
 {
     int error_code;
     static char myname[] = "MPIO_WAIT";
-    MPID_THREADPRIV_DECL;
 
 #ifdef MPI_hpux
     int fl_xmpi;
 
     if (*request != MPIO_REQUEST_NULL) {
-	HPMP_IO_WSTART(fl_xmpi, BLKMPIOWAIT, TRDTBLOCK, (*request)->fd);
+        HPMP_IO_WSTART(fl_xmpi, BLKMPIOWAIT, TRDTBLOCK, (*request)->fd);
     }
 #endif /* MPI_hpux */
 
     ROMIO_THREAD_CS_ENTER();
 
     if (*request == MPIO_REQUEST_NULL) {
-	    error_code = MPI_SUCCESS;
-	    goto fn_exit;
+        error_code = MPI_SUCCESS;
+        goto fn_exit;
     }
 
 
     /* --BEGIN ERROR HANDLING-- */
-    if ((*request < (MPIO_Request) 0) ||
-	((*request)->cookie != ADIOI_REQ_COOKIE))
-    {
-	error_code = MPIO_Err_create_code(MPI_SUCCESS, MPIR_ERR_RECOVERABLE,
-					  myname, __LINE__, MPI_ERR_REQUEST,
-					  "**request", 0);
-	error_code = MPIO_Err_return_file(MPI_FILE_NULL, error_code);
-	goto fn_exit;
+    if ((*request < (MPIO_Request) 0) || ((*request)->cookie != ADIOI_REQ_COOKIE)) {
+        error_code = MPIO_Err_create_code(MPI_SUCCESS, MPIR_ERR_RECOVERABLE,
+                                          myname, __LINE__, MPI_ERR_REQUEST, "**request", 0);
+        error_code = MPIO_Err_return_file(MPI_FILE_NULL, error_code);
+        goto fn_exit;
     }
     /* --END ERROR HANDLING-- */
 
     switch ((*request)->optype) {
-    case ADIOI_READ:
-        ADIO_ReadComplete(request, status, &error_code);
-        break;
-    case ADIOI_WRITE:
-        ADIO_WriteComplete(request, status, &error_code);
-        break;
+        case ADIOI_READ:
+            ADIO_ReadComplete(request, status, &error_code);
+            break;
+        case ADIOI_WRITE:
+            ADIO_WriteComplete(request, status, &error_code);
+            break;
     }
 
 #ifdef MPI_hpux
     HPMP_IO_WEND(fl_xmpi);
 #endif /* MPI_hpux */
 
-fn_exit:
+  fn_exit:
     ROMIO_THREAD_CS_EXIT();
     return error_code;
 }

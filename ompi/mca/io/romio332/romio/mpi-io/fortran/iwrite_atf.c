@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -14,16 +14,20 @@
 #if defined(HAVE_WEAK_SYMBOLS)
 #if defined(HAVE_PRAGMA_WEAK)
 #if defined(FORTRANCAPS)
-extern FORTRAN_API void FORT_CALL MPI_FILE_IWRITE_AT( MPI_Fint *, MPI_Offset *, void*, MPI_Fint *, MPI_Fint *, MPI_Fint*, MPI_Fint * );
+extern FORTRAN_API void FORT_CALL MPI_FILE_IWRITE_AT(MPI_Fint *, MPI_Offset *, void *, MPI_Fint *,
+                                                     MPI_Fint *, MPI_Fint *, MPI_Fint *);
 #pragma weak MPI_FILE_IWRITE_AT = PMPI_FILE_IWRITE_AT
 #elif defined(FORTRANDOUBLEUNDERSCORE)
-extern FORTRAN_API void FORT_CALL mpi_file_iwrite_at__( MPI_Fint *, MPI_Offset *, void*, MPI_Fint *, MPI_Fint *, MPI_Fint*, MPI_Fint * );
+extern FORTRAN_API void FORT_CALL mpi_file_iwrite_at__(MPI_Fint *, MPI_Offset *, void *, MPI_Fint *,
+                                                       MPI_Fint *, MPI_Fint *, MPI_Fint *);
 #pragma weak mpi_file_iwrite_at__ = pmpi_file_iwrite_at__
 #elif !defined(FORTRANUNDERSCORE)
-extern FORTRAN_API void FORT_CALL mpi_file_iwrite_at( MPI_Fint *, MPI_Offset *, void*, MPI_Fint *, MPI_Fint *, MPI_Fint*, MPI_Fint * );
+extern FORTRAN_API void FORT_CALL mpi_file_iwrite_at(MPI_Fint *, MPI_Offset *, void *, MPI_Fint *,
+                                                     MPI_Fint *, MPI_Fint *, MPI_Fint *);
 #pragma weak mpi_file_iwrite_at = pmpi_file_iwrite_at
 #else
-extern FORTRAN_API void FORT_CALL mpi_file_iwrite_at_( MPI_Fint *, MPI_Offset *, void*, MPI_Fint *, MPI_Fint *, MPI_Fint*, MPI_Fint * );
+extern FORTRAN_API void FORT_CALL mpi_file_iwrite_at_(MPI_Fint *, MPI_Offset *, void *, MPI_Fint *,
+                                                      MPI_Fint *, MPI_Fint *, MPI_Fint *);
 #pragma weak mpi_file_iwrite_at_ = pmpi_file_iwrite_at_
 #endif
 
@@ -89,41 +93,40 @@ extern FORTRAN_API void FORT_CALL mpi_file_iwrite_at_( MPI_Fint *, MPI_Offset *,
 #endif
 #endif
 
-#if defined(MPIHP) || defined(MPILAM)
+#if defined(MPIHP)
 /* Prototype to keep compiler happy */
-void mpi_file_iwrite_at_(MPI_Fint *fh,MPI_Offset *offset,void *buf,
-                       MPI_Fint *count,MPI_Fint *datatype,
-			 MPI_Fint *request, MPI_Fint *ierr );
+void mpi_file_iwrite_at_(MPI_Fint * fh, MPI_Offset * offset, void *buf,
+                         MPI_Fint * count, MPI_Fint * datatype,
+                         MPI_Fint * request, MPI_Fint * ierr);
 
-void mpi_file_iwrite_at_(MPI_Fint *fh,MPI_Offset *offset,void *buf,
-                       MPI_Fint *count,MPI_Fint *datatype,
-                       MPI_Fint *request, MPI_Fint *ierr )
+void mpi_file_iwrite_at_(MPI_Fint * fh, MPI_Offset * offset, void *buf,
+                         MPI_Fint * count, MPI_Fint * datatype, MPI_Fint * request, MPI_Fint * ierr)
 {
     MPI_File fh_c;
     MPIO_Request req_c;
     MPI_Datatype datatype_c;
-    
+
     fh_c = MPI_File_f2c(*fh);
     datatype_c = MPI_Type_f2c(*datatype);
 
-    *ierr = MPI_File_iwrite_at(fh_c,*offset,buf,*count,datatype_c,&req_c);
+    *ierr = MPI_File_iwrite_at(fh_c, *offset, buf, *count, datatype_c, &req_c);
     *request = MPIO_Request_c2f(req_c);
 }
 #else
 /* Prototype to keep compiler happy */
-FORTRAN_API void FORT_CALL mpi_file_iwrite_at_(MPI_Fint *fh,MPI_Offset *offset,void *buf,
-                       MPI_Fint *count,MPI_Datatype *datatype,
-			 MPI_Fint *request, MPI_Fint *ierr );
+FORTRAN_API void FORT_CALL mpi_file_iwrite_at_(MPI_Fint * fh, MPI_Offset * offset, void *buf,
+                                               MPI_Fint * count, MPI_Datatype * datatype,
+                                               MPI_Fint * request, MPI_Fint * ierr);
 
-FORTRAN_API void FORT_CALL mpi_file_iwrite_at_(MPI_Fint *fh,MPI_Offset *offset,void *buf,
-                       MPI_Fint *count,MPI_Datatype *datatype,
-                       MPI_Fint *request, MPI_Fint *ierr )
+FORTRAN_API void FORT_CALL mpi_file_iwrite_at_(MPI_Fint * fh, MPI_Offset * offset, void *buf,
+                                               MPI_Fint * count, MPI_Datatype * datatype,
+                                               MPI_Fint * request, MPI_Fint * ierr)
 {
     MPI_File fh_c;
     MPIO_Request req_c;
-    
+
     fh_c = MPI_File_f2c(*fh);
-    *ierr = MPI_File_iwrite_at(fh_c,*offset,buf,*count,*datatype,&req_c);
+    *ierr = MPI_File_iwrite_at(fh_c, *offset, buf, *count, *datatype, &req_c);
     *request = MPIO_Request_c2f(req_c);
 }
 #endif

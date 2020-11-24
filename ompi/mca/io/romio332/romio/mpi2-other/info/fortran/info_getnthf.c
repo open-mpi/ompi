@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -84,8 +84,7 @@
 #endif
 #endif
 
-void mpi_info_get_nthkey_(MPI_Fint *info, int *n, char *key, int *ierr,
-                          int keylen)
+void mpi_info_get_nthkey_(MPI_Fint * info, int *n, char *key, int *ierr, int keylen)
 {
     MPI_Info info_c;
     int i, tmpkeylen;
@@ -96,25 +95,24 @@ void mpi_info_get_nthkey_(MPI_Fint *info, int *n, char *key, int *ierr,
         MPI_Abort(MPI_COMM_WORLD, 1);
     }
 
-    tmpkey = (char *) ADIOI_Malloc((MPI_MAX_INFO_KEY+1) * sizeof(char));
+    tmpkey = (char *) ADIOI_Malloc((MPI_MAX_INFO_KEY + 1) * sizeof(char));
     info_c = MPI_Info_f2c(*info);
     *ierr = MPI_Info_get_nthkey(info_c, *n, tmpkey);
 
     tmpkeylen = strlen(tmpkey);
 
     if (tmpkeylen <= keylen) {
-	ADIOI_Strncpy(key, tmpkey, tmpkeylen);
+        ADIOI_Strncpy(key, tmpkey, tmpkeylen);
 
-	/* blank pad the remaining space */
-	for (i=tmpkeylen; i<keylen; i++) key[i] = ' ';
-    }
-    else {
-	/* not enough space */
-	ADIOI_Strncpy(key, tmpkey, keylen);
-	/* this should be flagged as an error. */
-	*ierr = MPI_ERR_UNKNOWN;
+        /* blank pad the remaining space */
+        for (i = tmpkeylen; i < keylen; i++)
+            key[i] = ' ';
+    } else {
+        /* not enough space */
+        ADIOI_Strncpy(key, tmpkey, keylen);
+        /* this should be flagged as an error. */
+        *ierr = MPI_ERR_UNKNOWN;
     }
 
     ADIOI_Free(tmpkey);
 }
-

@@ -1,24 +1,22 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
- *   Copyright (c) 2018 IBM Corporation. All rights reserved.
- *   $COPYRIGHT$
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
 
 /* header file for MPI-IO implementation. not intended to be
-   user-visible */ 
+   user-visible */
 
-#ifndef MPIOIMPL_INCLUDE
-#define MPIOIMPL_INCLUDE
+#ifndef MPIOIMPL_H_INCLUDED
+#define MPIOIMPL_H_INCLUDED
 
 #include "adio.h"
 #include "mpio.h"
 
 #ifdef ROMIO_INSIDE_MPICH
-#include "glue_romio.h"
+#include "mpir_ext.h"
 
 #define ROMIO_THREAD_CS_ENTER() MPIR_Ext_cs_enter()
 #define ROMIO_THREAD_CS_EXIT() MPIR_Ext_cs_exit()
@@ -32,23 +30,13 @@
 
 #else /* not ROMIO_INSIDE_MPICH */
 /* Any MPI implementation that wishes to follow the thread-safety and
-   error reporting features provided by MPICH must implement these 
-   four functions.  Defining these as empty should not change the behavior 
+   error reporting features provided by MPICH must implement these
+   four functions.  Defining these as empty should not change the behavior
    of correct programs */
 #define ROMIO_THREAD_CS_ENTER()
 #define ROMIO_THREAD_CS_EXIT()
 #define ROMIO_THREAD_CS_YIELD()
-/* The MPI_DATATYPE_ISCOMMITTED macro now always sets err_=0.
-   This is an optimistic approach for Open MPI, but it is likely other
-   upper layers already checked the datatype was committed.
-   Not setting err_ is incorrect since it can lead to use of
-   uninitialized variable.*/
-#define MPIO_DATATYPE_ISCOMMITTED(dtype_, err_) do { err_ = 0; } while (0)
-#ifdef HAVE_WINDOWS_H
-#define MPIU_UNREFERENCED_ARG(a) a
-#else
-#define MPIU_UNREFERENCED_ARG(a)
-#endif
+#define MPIO_DATATYPE_ISCOMMITTED(dtype_, err_) do {} while (0)
 #endif /* ROMIO_INSIDE_MPICH */
 
 /* info is a linked list of these structures */
@@ -60,10 +48,10 @@ struct MPIR_Info {
 
 #define MPIR_INFO_COOKIE 5835657
 
-MPI_Comm_delete_attr_function ADIOI_End_call;
+MPI_Delete_function ADIOI_End_call;
 
 /* common initialization routine */
-void MPIR_MPIOInit(int * error_code);
+void MPIR_MPIOInit(int *error_code);
 
 #ifdef HAVE_MPIIO_CONST
 #define ROMIO_CONST const
@@ -73,12 +61,12 @@ void MPIR_MPIOInit(int * error_code);
 
 #include "mpiu_external32.h"
 
-
+#ifdef MPIO_BUILD_PROFILING
 #include "mpioprof.h"
+#endif /* MPIO_BUILD_PROFILING */
 
 #ifdef MPI_hpux
-#  include "mpioinst.h"
+#include "mpioinst.h"
 #endif /* MPI_hpux */
 
-#endif
-
+#endif /* MPIOIMPL_H_INCLUDED */

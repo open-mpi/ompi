@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 2003 University of Chicago. 
+ *   Copyright (C) 2003 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -29,57 +29,55 @@
 */
 
 int MPIO_Testsome(int count, MPIO_Request requests[], int *outcount,
-		  int indices[], MPI_Status *statuses)
+                  int indices[], MPI_Status * statuses)
 {
-    int i, err; 
+    int i, err;
     int flag;
-    MPID_THREADPRIV_DECL;
 
     ROMIO_THREAD_CS_ENTER();
 
     if (count == 1) {
-	err = MPIO_Test( requests, &flag, statuses );
-	if (!err) {
-	    if (flag) {
-		indices[0] = 0;
-		*outcount = 1;
-	    }
-	    else {
-		*outcount = 0;
-	    }
-	}
-	goto fn_exit;
+        err = MPIO_Test(requests, &flag, statuses);
+        if (!err) {
+            if (flag) {
+                indices[0] = 0;
+                *outcount = 1;
+            } else {
+                *outcount = 0;
+            }
+        }
+        goto fn_exit;
     }
 
     /* Check for no active requests */
-    for (i=0; i<count; i++) {
-	if (requests[i] != MPIO_REQUEST_NULL) {
-	    break;
-	}
+    for (i = 0; i < count; i++) {
+        if (requests[i] != MPIO_REQUEST_NULL) {
+            break;
+        }
     }
     if (i == count) {
-	*outcount = MPI_UNDEFINED;
-	err = MPI_SUCCESS;
-	goto fn_exit;
+        *outcount = MPI_UNDEFINED;
+        err = MPI_SUCCESS;
+        goto fn_exit;
     }
 
     err = MPI_SUCCESS;
     *outcount = 0;
-    for (i=0; i<count; i++) {
-      if (requests[i] != MPIO_REQUEST_NULL) {
-	err = MPIO_Test( &requests[i], &flag, statuses );
-	if (flag) {
-	  if (!err) {
-	      indices[0] = i;
-	      indices++;
-	      statuses++;
-	      *outcount = *outcount + 1;
-	  }
-	}
-      }
+    for (i = 0; i < count; i++) {
+        if (requests[i] != MPIO_REQUEST_NULL) {
+            err = MPIO_Test(&requests[i], &flag, statuses);
+            if (flag) {
+                if (!err) {
+                    indices[0] = i;
+                    indices++;
+                    statuses++;
+                    *outcount = *outcount + 1;
+                }
+            }
+        }
     }
 
-fn_exit:
+  fn_exit:
 
     ROMIO_THREAD_CS_EXIT();
     return err;

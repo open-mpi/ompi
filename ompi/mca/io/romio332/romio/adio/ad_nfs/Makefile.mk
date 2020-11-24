@@ -25,4 +25,3 @@ romio_other_sources +=            \
     adio/ad_nfs/ad_nfs_features.c
 
 endif BUILD_AD_NFS
-

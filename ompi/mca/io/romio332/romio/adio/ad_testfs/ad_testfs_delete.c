@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 2001 University of Chicago. 
+ *   Copyright (C) 2001 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -16,6 +16,5 @@ void ADIOI_TESTFS_Delete(const char *filename, int *error_code)
 
     MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
-    FPRINTF(stdout, "[%d/%d] ADIOI_TESTFS_Delete called on %s\n", 
-	    myrank, nprocs, filename);
+    FPRINTF(stdout, "[%d/%d] ADIOI_TESTFS_Delete called on %s\n", myrank, nprocs, filename);
 }

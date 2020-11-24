@@ -1,13 +1,13 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
 
-#ifndef ADIO_PROTO
-#define ADIO_PROTO
+#ifndef ADIOI_FS_PROTO_H_INCLUDED
+#define ADIOI_FS_PROTO_H_INCLUDED
 
 #ifdef ROMIO_NFS
 extern struct ADIOI_Fns_struct ADIO_NFS_operations;
@@ -19,24 +19,9 @@ extern struct ADIOI_Fns_struct ADIO_PANFS_operations;
 /* prototypes are in adio/ad_panfs/ad_panfs.h */
 #endif
 
-#ifdef ROMIO_PFS
-extern struct ADIOI_Fns_struct ADIO_PFS_operations;
-/* prototypes are in adio/ad_pfs/ad_pfs.h */
-#endif
-
-#ifdef ROMIO_PIOFS
-extern struct ADIOI_Fns_struct ADIO_PIOFS_operations;
-/* prototypes are in adio/ad_piofs/ad_piofs.h */
-#endif
-
 #ifdef ROMIO_UFS
 extern struct ADIOI_Fns_struct ADIO_UFS_operations;
 /* prototypes are in adio/ad_ufs/ad_ufs.h */
-#endif
-
-#ifdef ROMIO_HFS
-extern struct ADIOI_Fns_struct ADIO_HFS_operations;
-/* prototypes are in adio/ad_hfs/ad_hfs.h */
 #endif
 
 #ifdef ROMIO_XFS
@@ -44,24 +29,9 @@ extern struct ADIOI_Fns_struct ADIO_XFS_operations;
 /* prototypes are in adio/ad_xfs/ad_xfs.h */
 #endif
 
-#ifdef ROMIO_SFS
-extern struct ADIOI_Fns_struct ADIO_SFS_operations;
-/* prototypes are in adio/ad_sfs/ad_sfs.h */
-#endif
-
 #ifdef ROMIO_LUSTRE
 extern struct ADIOI_Fns_struct ADIO_LUSTRE_operations;
 /* prototypes are in adio/ad_lustre/ad_lustre.h */
-#endif
-
-#ifdef ROMIO_NTFS
-extern struct ADIOI_Fns_struct ADIO_NTFS_operations;
-/* prototypes are in adio/ad_ntfs/ad_ntfs.h */
-#endif
-
-#ifdef ROMIO_PVFS
-extern struct ADIOI_Fns_struct ADIO_PVFS_operations;
-/* prototypes are in adio/ad_pvfs/ad_pvfs.h */
 #endif
 
 #ifdef ROMIO_PVFS2
@@ -79,14 +49,9 @@ extern struct ADIOI_Fns_struct ADIO_GPFS_operations;
 /* prototypes are in adio/ad_gpfs/ad_gpfs.h */
 #endif
 
-#ifdef ROMIO_GRIDFTP
-/* prototypes are in adio/ad_gridftp/ad_gridftp.h */
-extern struct ADIOI_Fns_struct ADIO_GRIDFTP_operations;
+#ifdef ROMIO_IME
+/* prototypes are in adio/ad_im/ad_im.h */
+extern struct ADIOI_Fns_struct ADIO_IME_operations;
 #endif
 
-#ifdef ROMIO_ZOIDFS
-/* prototypes are in adio/ad_zoidfs/ad_zoidfs.h */
-extern struct ADIOI_Fns_struct ADIO_ZOIDFS_operations;
-#endif
-
-#endif
+#endif /* ADIOI_FS_PROTO_H_INCLUDED */

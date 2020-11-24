@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 2003 University of Chicago. 
+ *   Copyright (C) 2003 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -28,47 +28,46 @@
   requests.
 */
 
-int MPIO_Waitall( int count, MPIO_Request requests[], MPI_Status statuses[] )
+int MPIO_Waitall(int count, MPIO_Request requests[], MPI_Status statuses[])
 {
-    int notdone, i, flag, err; 
-    MPID_THREADPRIV_DECL;
+    int notdone, i, flag, err;
 
     ROMIO_THREAD_CS_ENTER();
 
-    if (count == 1)  {
-	    err = MPIO_Wait(requests, statuses);
-	    goto fn_exit;
+    if (count == 1) {
+        err = MPIO_Wait(requests, statuses);
+        goto fn_exit;
     }
-    
-    
+
+
     do {
-	notdone = 0;
-	for (i=0; i<count; i++) {
-	    if (requests[i] != MPIO_REQUEST_NULL) {
-		err = MPIO_Test( &requests[i], &flag, &statuses[i] );
-		if (!flag) notdone = 1;
-		if (err) goto fn_exit;
-	    }
-	    else {
+        notdone = 0;
+        for (i = 0; i < count; i++) {
+            if (requests[i] != MPIO_REQUEST_NULL) {
+                err = MPIO_Test(&requests[i], &flag, &statuses[i]);
+                if (!flag)
+                    notdone = 1;
+                if (err)
+                    goto fn_exit;
+            } else {
 #ifdef MPICH
-		/* need to set empty status */
-		if (statuses != MPI_STATUSES_IGNORE) {
-		    statuses[i].MPI_SOURCE = MPI_ANY_SOURCE;
-		    statuses[i].MPI_TAG    = MPI_ANY_TAG;
+                /* need to set empty status */
+                if (statuses != MPI_STATUSES_IGNORE) {
+                    statuses[i].MPI_SOURCE = MPI_ANY_SOURCE;
+                    statuses[i].MPI_TAG = MPI_ANY_TAG;
                     MPIR_STATUS_SET_COUNT(statuses[i], 0);
                     MPIR_STATUS_SET_CANCEL_BIT(statuses[i], 0);
-		}
+                }
 #else
-		;
+                ;
 #endif
-	    }
-	}
+            }
+        }
     } while (notdone);
 
     err = MPI_SUCCESS;
-fn_exit:
+  fn_exit:
 
     ROMIO_THREAD_CS_EXIT();
     return err;
 }
-

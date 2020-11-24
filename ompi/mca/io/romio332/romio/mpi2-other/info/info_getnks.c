@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -47,8 +47,8 @@ int MPI_Info_get_nkeys(MPI_Info info, int *nkeys)
     *nkeys = 0;
 
     while (curr) {
-	curr = curr->next;
-	(*nkeys)++;
+        curr = curr->next;
+        (*nkeys)++;
     }
 
     return MPI_SUCCESS;

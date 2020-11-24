@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -18,7 +18,8 @@
 #pragma _CRI duplicate MPI_File_set_errhandler as PMPI_File_set_errhandler
 /* end of weak pragmas */
 #elif defined(HAVE_WEAK_ATTRIBUTE)
-int MPI_File_set_errhandler(MPI_File file, MPI_Errhandler errhandler) __attribute__((weak,alias("PMPI_File_set_errhandler")));
+int MPI_File_set_errhandler(MPI_File file, MPI_Errhandler errhandler)
+    __attribute__ ((weak, alias("PMPI_File_set_errhandler")));
 #endif
 
 /* Include mapping from MPI->PMPI */
@@ -40,37 +41,32 @@ int MPI_File_set_errhandler(MPI_File mpi_fh, MPI_Errhandler errhandler)
     int error_code = MPI_SUCCESS;
     static char myname[] = "MPI_FILE_SET_ERRHANDLER";
     ADIO_File fh;
-    MPID_THREADPRIV_DECL;
 
     ROMIO_THREAD_CS_ENTER();
 
     if (mpi_fh == MPI_FILE_NULL) {
-	ADIOI_DFLT_ERR_HANDLER = errhandler;
-    }
-    else {
-	fh = MPIO_File_resolve(mpi_fh);
+        ADIOI_DFLT_ERR_HANDLER = errhandler;
+    } else {
+        fh = MPIO_File_resolve(mpi_fh);
 
-	/* --BEGIN ERROR HANDLING-- */
-	MPIO_CHECK_FILE_HANDLE(fh, myname, error_code);
-	/* --END ERROR HANDLING-- */
+        /* --BEGIN ERROR HANDLING-- */
+        MPIO_CHECK_FILE_HANDLE(fh, myname, error_code);
+        /* --END ERROR HANDLING-- */
 
-	if ((errhandler != MPI_ERRORS_RETURN) &&
-	    (errhandler != MPI_ERRORS_ARE_FATAL))
-	{
-	    error_code = MPIO_Err_create_code(MPI_SUCCESS,
-					      MPIR_ERR_RECOVERABLE,
-					      myname, __LINE__,
-					      MPI_ERR_UNSUPPORTED_OPERATION,
-					      "**fileopunsupported",
-					      0);
-	    error_code = MPIO_Err_return_file(fh, error_code);
-	    goto fn_exit;
-	}
+        if ((errhandler != MPI_ERRORS_RETURN) && (errhandler != MPI_ERRORS_ARE_FATAL)) {
+            error_code = MPIO_Err_create_code(MPI_SUCCESS,
+                                              MPIR_ERR_RECOVERABLE,
+                                              myname, __LINE__,
+                                              MPI_ERR_UNSUPPORTED_OPERATION,
+                                              "**fileopunsupported", 0);
+            error_code = MPIO_Err_return_file(fh, error_code);
+            goto fn_exit;
+        }
 
-	fh->err_handler = errhandler;
+        fh->err_handler = errhandler;
     }
 
-fn_exit:
+  fn_exit:
     ROMIO_THREAD_CS_EXIT();
     return error_code;
 }

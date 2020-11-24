@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -18,7 +18,8 @@
 /* end of weak pragmas */
 #elif defined(HAVE_WEAK_ATTRIBUTE)
 int MPI_File_read_at_all_begin(MPI_File fh, MPI_Offset offset, void *buf, int count,
-                               MPI_Datatype datatype) __attribute__((weak,alias("PMPI_File_read_at_all_begin")));
+                               MPI_Datatype datatype)
+    __attribute__ ((weak, alias("PMPI_File_read_at_all_begin")));
 #endif
 
 /* Include mapping from MPI->PMPI */
@@ -41,14 +42,13 @@ Output Parameters:
 .N fortran
 @*/
 int MPI_File_read_at_all_begin(MPI_File fh, MPI_Offset offset, void *buf,
-			       int count, MPI_Datatype datatype)
+                               int count, MPI_Datatype datatype)
 {
     int error_code;
     static char myname[] = "MPI_FILE_READ_AT_ALL_BEGIN";
 
     error_code = MPIOI_File_read_all_begin(fh, offset,
-					   ADIO_EXPLICIT_OFFSET,
-					   buf, count, datatype, myname);
+                                           ADIO_EXPLICIT_OFFSET, buf, count, datatype, myname);
 
     return error_code;
 }

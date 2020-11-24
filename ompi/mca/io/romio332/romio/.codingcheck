@@ -28,7 +28,6 @@
 	'PVFS_.+' => romio,
 	'MPI_hpux'=> romio,
 	'FORTRANCAPS'=> romio,
-	'MPILAM'=> romio,
 	'NEEDS_ADIOCB_T'=> romio,
 	'AGG_DEBUG'=> romio,
 	'SOLARIS'=> romio,

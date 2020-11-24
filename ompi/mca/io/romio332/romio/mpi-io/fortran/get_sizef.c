@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -14,16 +14,16 @@
 #if defined(HAVE_WEAK_SYMBOLS)
 #if defined(HAVE_PRAGMA_WEAK)
 #if defined(FORTRANCAPS)
-extern FORTRAN_API void FORT_CALL MPI_FILE_GET_SIZE( MPI_Fint *, MPI_Offset*, MPI_Fint * );
+extern FORTRAN_API void FORT_CALL MPI_FILE_GET_SIZE(MPI_Fint *, MPI_Offset *, MPI_Fint *);
 #pragma weak MPI_FILE_GET_SIZE = PMPI_FILE_GET_SIZE
 #elif defined(FORTRANDOUBLEUNDERSCORE)
-extern FORTRAN_API void FORT_CALL mpi_file_get_size__( MPI_Fint *, MPI_Offset*, MPI_Fint * );
+extern FORTRAN_API void FORT_CALL mpi_file_get_size__(MPI_Fint *, MPI_Offset *, MPI_Fint *);
 #pragma weak mpi_file_get_size__ = pmpi_file_get_size__
 #elif !defined(FORTRANUNDERSCORE)
-extern FORTRAN_API void FORT_CALL mpi_file_get_size( MPI_Fint *, MPI_Offset*, MPI_Fint * );
+extern FORTRAN_API void FORT_CALL mpi_file_get_size(MPI_Fint *, MPI_Offset *, MPI_Fint *);
 #pragma weak mpi_file_get_size = pmpi_file_get_size
 #else
-extern FORTRAN_API void FORT_CALL mpi_file_get_size_( MPI_Fint *, MPI_Offset*, MPI_Fint * );
+extern FORTRAN_API void FORT_CALL mpi_file_get_size_(MPI_Fint *, MPI_Offset *, MPI_Fint *);
 #pragma weak mpi_file_get_size_ = pmpi_file_get_size_
 #endif
 
@@ -90,13 +90,12 @@ extern FORTRAN_API void FORT_CALL mpi_file_get_size_( MPI_Fint *, MPI_Offset*, M
 #endif
 
 /* Prototype to keep compiler happy */
-FORTRAN_API void FORT_CALL mpi_file_get_size_(MPI_Fint *fh, MPI_Offset *size, MPI_Fint *ierr );
+FORTRAN_API void FORT_CALL mpi_file_get_size_(MPI_Fint * fh, MPI_Offset * size, MPI_Fint * ierr);
 
-FORTRAN_API void FORT_CALL mpi_file_get_size_(MPI_Fint *fh, MPI_Offset *size, MPI_Fint *ierr )
+FORTRAN_API void FORT_CALL mpi_file_get_size_(MPI_Fint * fh, MPI_Offset * size, MPI_Fint * ierr)
 {
     MPI_File fh_c;
-    
+
     fh_c = MPI_File_f2c(*fh);
     *ierr = MPI_File_get_size(fh_c, size);
 }
-

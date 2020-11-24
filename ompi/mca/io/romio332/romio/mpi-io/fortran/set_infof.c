@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -14,16 +14,16 @@
 #if defined(HAVE_WEAK_SYMBOLS)
 #if defined(HAVE_PRAGMA_WEAK)
 #if defined(FORTRANCAPS)
-extern FORTRAN_API void FORT_CALL MPI_FILE_SET_INFO( MPI_Fint *, MPI_Fint *, MPI_Fint * );
+extern FORTRAN_API void FORT_CALL MPI_FILE_SET_INFO(MPI_Fint *, MPI_Fint *, MPI_Fint *);
 #pragma weak MPI_FILE_SET_INFO = PMPI_FILE_SET_INFO
 #elif defined(FORTRANDOUBLEUNDERSCORE)
-extern FORTRAN_API void FORT_CALL mpi_file_set_info__( MPI_Fint *, MPI_Fint *, MPI_Fint * );
+extern FORTRAN_API void FORT_CALL mpi_file_set_info__(MPI_Fint *, MPI_Fint *, MPI_Fint *);
 #pragma weak mpi_file_set_info__ = pmpi_file_set_info__
 #elif !defined(FORTRANUNDERSCORE)
-extern FORTRAN_API void FORT_CALL mpi_file_set_info( MPI_Fint *, MPI_Fint *, MPI_Fint * );
+extern FORTRAN_API void FORT_CALL mpi_file_set_info(MPI_Fint *, MPI_Fint *, MPI_Fint *);
 #pragma weak mpi_file_set_info = pmpi_file_set_info
 #else
-extern FORTRAN_API void FORT_CALL mpi_file_set_info_( MPI_Fint *, MPI_Fint *, MPI_Fint * );
+extern FORTRAN_API void FORT_CALL mpi_file_set_info_(MPI_Fint *, MPI_Fint *, MPI_Fint *);
 #pragma weak mpi_file_set_info_ = pmpi_file_set_info_
 #endif
 
@@ -90,13 +90,13 @@ extern FORTRAN_API void FORT_CALL mpi_file_set_info_( MPI_Fint *, MPI_Fint *, MP
 #endif
 
 /* Prototype to keep compiler happy */
-FORTRAN_API void FORT_CALL mpi_file_set_info_(MPI_Fint *fh, MPI_Fint *info, MPI_Fint *ierr );
+FORTRAN_API void FORT_CALL mpi_file_set_info_(MPI_Fint * fh, MPI_Fint * info, MPI_Fint * ierr);
 
-FORTRAN_API void FORT_CALL mpi_file_set_info_(MPI_Fint *fh, MPI_Fint *info, MPI_Fint *ierr )
+FORTRAN_API void FORT_CALL mpi_file_set_info_(MPI_Fint * fh, MPI_Fint * info, MPI_Fint * ierr)
 {
     MPI_File fh_c;
     MPI_Info info_c;
-    
+
     fh_c = MPI_File_f2c(*fh);
     info_c = MPI_Info_f2c(*info);
 

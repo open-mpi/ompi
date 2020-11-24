@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -40,22 +40,23 @@ MPI_Fint MPI_Info_c2f(MPI_Info info)
 #else
     int i;
 
-    if ((info <= (MPI_Info) 0) || (info->cookie != MPIR_INFO_COOKIE)) 
-	return (MPI_Fint) 0;
+    if ((info <= (MPI_Info) 0) || (info->cookie != MPIR_INFO_COOKIE))
+        return (MPI_Fint) 0;
     if (!MPIR_Infotable) {
-	MPIR_Infotable_max = 1024;
-	MPIR_Infotable = (MPI_Info *)
-	    ADIOI_Malloc(MPIR_Infotable_max*sizeof(MPI_Info)); 
-        MPIR_Infotable_ptr = 0;  /* 0 can't be used though, because 
-                                  MPI_INFO_NULL=0 */
-	for (i=0; i<MPIR_Infotable_max; i++) MPIR_Infotable[i] = MPI_INFO_NULL;
+        MPIR_Infotable_max = 1024;
+        MPIR_Infotable = (MPI_Info *)
+            ADIOI_Malloc(MPIR_Infotable_max * sizeof(MPI_Info));
+        MPIR_Infotable_ptr = 0; /* 0 can't be used though, because
+                                 * MPI_INFO_NULL=0 */
+        for (i = 0; i < MPIR_Infotable_max; i++)
+            MPIR_Infotable[i] = MPI_INFO_NULL;
     }
-    if (MPIR_Infotable_ptr == MPIR_Infotable_max-1) {
-	MPIR_Infotable = (MPI_Info *) ADIOI_Realloc(MPIR_Infotable, 
-                           (MPIR_Infotable_max+1024)*sizeof(MPI_Info));
-	for (i=MPIR_Infotable_max; i<MPIR_Infotable_max+1024; i++) 
-	    MPIR_Infotable[i] = MPI_INFO_NULL;
-	MPIR_Infotable_max += 1024;
+    if (MPIR_Infotable_ptr == MPIR_Infotable_max - 1) {
+        MPIR_Infotable = (MPI_Info *) ADIOI_Realloc(MPIR_Infotable,
+                                                    (MPIR_Infotable_max + 1024) * sizeof(MPI_Info));
+        for (i = MPIR_Infotable_max; i < MPIR_Infotable_max + 1024; i++)
+            MPIR_Infotable[i] = MPI_INFO_NULL;
+        MPIR_Infotable_max += 1024;
     }
     MPIR_Infotable_ptr++;
     MPIR_Infotable[MPIR_Infotable_ptr] = info;

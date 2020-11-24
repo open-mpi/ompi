@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -39,10 +39,11 @@ MPI_Info MPI_Info_f2c(MPI_Fint info)
 #ifndef INT_LT_POINTER
     return (MPI_Info) info;
 #else
-    if (!info) return MPI_INFO_NULL;
+    if (!info)
+        return MPI_INFO_NULL;
     if ((info < 0) || (info > MPIR_Infotable_ptr)) {
-	FPRINTF(stderr, "MPI_Info_f2c: Invalid info handle\n");
-	MPI_Abort(MPI_COMM_WORLD, 1);
+        FPRINTF(stderr, "MPI_Info_f2c: Invalid info handle\n");
+        MPI_Abort(MPI_COMM_WORLD, 1);
     }
     return MPIR_Infotable[info];
 #endif

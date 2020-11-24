@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
 /*
- *  (C) 2014 by Argonne National Laboratory.
+ *  (C) 2008 by Argonne National Laboratory.
  *      See COPYRIGHT in top-level directory.
  */
 
@@ -17,8 +17,8 @@
 /* end of weak pragmas */
 #elif defined(HAVE_WEAK_ATTRIBUTE)
 int MPI_File_iwrite_all(MPI_File fh, const void *buf, int count, MPI_Datatype datatype,
-                        MPI_Request *request)
-    __attribute__((weak,alias("PMPI_File_iwrite_all")));
+                        MPI_Request * request)
+    __attribute__ ((weak, alias("PMPI_File_iwrite_all")));
 #endif
 
 /* Include mapping from MPI->PMPI */
@@ -45,7 +45,7 @@ Output Parameters:
 .N fortran
 @*/
 int MPI_File_iwrite_all(MPI_File fh, ROMIO_CONST void *buf, int count,
-                        MPI_Datatype datatype, MPI_Request *request)
+                        MPI_Datatype datatype, MPI_Request * request)
 {
     int error_code;
     static char myname[] = "MPI_FILE_IWRITE_ALL";
@@ -56,8 +56,7 @@ int MPI_File_iwrite_all(MPI_File fh, ROMIO_CONST void *buf, int count,
 #endif /* MPI_hpux */
 
     error_code = MPIOI_File_iwrite_all(fh, (MPI_Offset) 0,
-                      ADIO_INDIVIDUAL, buf,
-                      count, datatype, myname, request);
+                                       ADIO_INDIVIDUAL, buf, count, datatype, myname, request);
 
 #ifdef MPI_hpux
     HPMP_IO_END(fl_xmpi, fh, datatype, count);
@@ -70,19 +69,16 @@ int MPI_File_iwrite_all(MPI_File fh, ROMIO_CONST void *buf, int count,
 /* prevent multiple definitions of this routine */
 #ifdef MPIO_BUILD_PROFILING
 int MPIOI_File_iwrite_all(MPI_File fh,
-            MPI_Offset offset,
-            int file_ptr_type,
-            const void *buf,
-            int count,
-            MPI_Datatype datatype,
-            char *myname,
-            MPI_Request *request)
+                          MPI_Offset offset,
+                          int file_ptr_type,
+                          const void *buf,
+                          int count, MPI_Datatype datatype, char *myname, MPI_Request * request)
 {
     int error_code;
     MPI_Count datatype_size;
     ADIO_File adio_fh;
-    void *e32buf=NULL;
-    const void *xbuf=NULL;
+    void *e32buf = NULL;
+    const void *xbuf = NULL;
 
     ROMIO_THREAD_CS_ENTER();
 
@@ -93,11 +89,9 @@ int MPIOI_File_iwrite_all(MPI_File fh,
     MPIO_CHECK_COUNT(adio_fh, count, myname, error_code);
     MPIO_CHECK_DATATYPE(adio_fh, datatype, myname, error_code);
 
-    if (file_ptr_type == ADIO_EXPLICIT_OFFSET && offset < 0)
-    {
+    if (file_ptr_type == ADIO_EXPLICIT_OFFSET && offset < 0) {
         error_code = MPIO_Err_create_code(MPI_SUCCESS, MPIR_ERR_RECOVERABLE,
-                          myname, __LINE__, MPI_ERR_ARG,
-                          "**iobadoffset", 0);
+                                          myname, __LINE__, MPI_ERR_ARG, "**iobadoffset", 0);
         error_code = MPIO_Err_return_file(adio_fh, error_code);
         goto fn_exit;
     }
@@ -126,11 +120,12 @@ int MPIOI_File_iwrite_all(MPI_File fh,
 
     /* --BEGIN ERROR HANDLING-- */
     if (error_code != MPI_SUCCESS)
-    error_code = MPIO_Err_return_file(adio_fh, error_code);
+        error_code = MPIO_Err_return_file(adio_fh, error_code);
     /* --END ERROR HANDLING-- */
 
-fn_exit:
-    if (e32buf != NULL) ADIOI_Free(e32buf);
+  fn_exit:
+    if (e32buf != NULL)
+        ADIOI_Free(e32buf);
     ROMIO_THREAD_CS_EXIT();
 
     return error_code;

@@ -1,0 +1,21 @@
+# -*- Mode: c-basic-offset:4 ; indent-tabs-mode:nil ; -*-
+#  
+#  (C) 2010 by Argonne National Laboratory.
+#      See COPYRIGHT in top-level directory.
+# 
+
+# For libtool ABI versioning rules see:
+# http://www.gnu.org/software/libtool/manual/libtool.html#Updating-version-info
+
+#     1. If the library source code has changed at all since the last
+#     update, then increment revision (`c:r:a' becomes `c:r+1:a').
+#
+#     2. If any interfaces have been added, removed, or changed since
+#     the last update, increment current, and set revision to 0.
+#
+#     3. If any interfaces have been added since the last public
+#     release, then increment age.
+#
+#     4. If any interfaces have been removed since the last public
+#     release, then set age to 0.
+libmpl_so_version=1:0

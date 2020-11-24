@@ -6,7 +6,7 @@
  * \brief ???
  */
 
-/* 
+/*
  *
  * Declares functions specific for the BlueGene platform within the GPFS
  * parallel I/O solution.  Implements aligned file-domain partitioning
@@ -14,8 +14,8 @@
  *
  */
 
-#ifndef AD_BG_AGGRS_H_
-#define AD_BG_AGGRS_H_
+#ifndef AD_BG_AGGRS_H_INCLUDED
+#define AD_BG_AGGRS_H_INCLUDED
 
 #include "adio.h"
 #include <sys/stat.h>
@@ -24,10 +24,10 @@
 #include <gpfs.h>
 #endif
 #if !defined(GPFS_SUPER_MAGIC)
-  #define GPFS_SUPER_MAGIC (0x47504653)
+#define GPFS_SUPER_MAGIC (0x47504653)
 #endif
 
     /* generate a list of I/O aggregators that utilizes BG-PSET orginization. */
-    int ADIOI_BG_gen_agg_ranklist(ADIO_File fd, int n_aggrs_per_pset);
+int ADIOI_BG_gen_agg_ranklist(ADIO_File fd, int n_aggrs_per_pset);
 
-#endif  /* AD_BG_AGGRS_H_ */
+#endif /* AD_BG_AGGRS_H_INCLUDED */

@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -17,8 +17,8 @@
 #pragma _CRI duplicate MPI_File_iread as PMPI_File_iread
 /* end of weak pragmas */
 #elif defined(HAVE_WEAK_ATTRIBUTE)
-int MPI_File_iread(MPI_File fh, void *buf, int count, MPI_Datatype datatype, MPIO_Request *request)
-    __attribute__((weak,alias("PMPI_File_iread")));
+int MPI_File_iread(MPI_File fh, void *buf, int count, MPI_Datatype datatype, MPIO_Request * request)
+    __attribute__ ((weak, alias("PMPI_File_iread")));
 #endif
 
 /* Include mapping from MPI->PMPI */
@@ -44,24 +44,23 @@ Output Parameters:
 
 .N fortran
 @*/
-int MPI_File_iread(MPI_File fh, void *buf, int count, MPI_Datatype datatype, MPI_Request *request)
+int MPI_File_iread(MPI_File fh, void *buf, int count, MPI_Datatype datatype, MPI_Request * request)
 {
-    int error_code=MPI_SUCCESS;
+    int error_code = MPI_SUCCESS;
     static char myname[] = "MPI_FILE_IREAD";
 #ifdef MPI_hpux
     int fl_xmpi;
 
-    HPMP_IO_START(fl_xmpi, BLKMPIFILEIREAD, TRDTSYSTEM, fh, datatype,
-		  count);
+    HPMP_IO_START(fl_xmpi, BLKMPIFILEIREAD, TRDTSYSTEM, fh, datatype, count);
 #endif /* MPI_hpux */
 
 
     error_code = MPIOI_File_iread(fh, (MPI_Offset) 0, ADIO_INDIVIDUAL,
-				  buf, count, datatype, myname, request);
-    
+                                  buf, count, datatype, myname, request);
+
     /* --BEGIN ERROR HANDLING-- */
     if (error_code != MPI_SUCCESS)
-	error_code = MPIO_Err_return_file(fh, error_code);
+        error_code = MPIO_Err_return_file(fh, error_code);
     /* --END ERROR HANDLING-- */
 
 #ifdef MPI_hpux
@@ -74,14 +73,14 @@ int MPI_File_iread(MPI_File fh, void *buf, int count, MPI_Datatype datatype, MPI
 /* prevent multiple definitions of this routine */
 #ifdef MPIO_BUILD_PROFILING
 int MPIOI_File_iread(MPI_File fh, MPI_Offset offset, int file_ptr_type, void *buf, int count,
-		     MPI_Datatype datatype, char *myname, MPI_Request *request)
+                     MPI_Datatype datatype, char *myname, MPI_Request * request)
 {
     int error_code, buftype_is_contig, filetype_is_contig;
     MPI_Count datatype_size;
     ADIO_Status status;
     ADIO_File adio_fh;
     ADIO_Offset off, bufsize;
-    MPI_Offset nbytes=0;
+    MPI_Offset nbytes = 0;
 
     ROMIO_THREAD_CS_ENTER();
 
@@ -93,11 +92,10 @@ int MPIOI_File_iread(MPI_File fh, MPI_Offset offset, int file_ptr_type, void *bu
     MPIO_CHECK_DATATYPE(adio_fh, datatype, myname, error_code);
 
     if (file_ptr_type == ADIO_EXPLICIT_OFFSET && offset < 0) {
-	error_code = MPIO_Err_create_code(MPI_SUCCESS, MPIR_ERR_RECOVERABLE,
-					  myname, __LINE__, MPI_ERR_ARG,
-					  "**iobadoffset", 0);
-	error_code = MPIO_Err_return_file(adio_fh, error_code);
-	goto fn_exit;
+        error_code = MPIO_Err_create_code(MPI_SUCCESS, MPIR_ERR_RECOVERABLE,
+                                          myname, __LINE__, MPI_ERR_ARG, "**iobadoffset", 0);
+        error_code = MPIO_Err_return_file(adio_fh, error_code);
+        goto fn_exit;
     }
     /* --END ERROR HANDLING-- */
 
@@ -116,44 +114,41 @@ int MPIOI_File_iread(MPI_File fh, MPI_Offset offset, int file_ptr_type, void *bu
     ADIOI_TEST_DEFERRED(adio_fh, myname, &error_code);
 
     if (buftype_is_contig && filetype_is_contig) {
-	/* convert count and offset to bytes */
-	bufsize = datatype_size * count;
+        /* convert count and offset to bytes */
+        bufsize = datatype_size * count;
 
-	if (file_ptr_type == ADIO_EXPLICIT_OFFSET) {
-	    off = adio_fh->disp + adio_fh->etype_size * offset;
-	}
-	else {
-	    off = adio_fh->fp_ind;
-	}
+        if (file_ptr_type == ADIO_EXPLICIT_OFFSET) {
+            off = adio_fh->disp + adio_fh->etype_size * offset;
+        } else {
+            off = adio_fh->fp_ind;
+        }
 
         if (!(adio_fh->atomicity))
-	    ADIO_IreadContig(adio_fh, buf, count, datatype, file_ptr_type,
-			off, request, &error_code); 
+            ADIO_IreadContig(adio_fh, buf, count, datatype, file_ptr_type,
+                             off, request, &error_code);
         else {
             /* to maintain strict atomicity semantics with other concurrent
-              operations, lock (exclusive) and call blocking routine */
-	    if (ADIO_Feature(adio_fh, ADIO_LOCKS))
-	    {
+             * operations, lock (exclusive) and call blocking routine */
+            if (ADIO_Feature(adio_fh, ADIO_LOCKS)) {
                 ADIOI_WRITE_LOCK(adio_fh, off, SEEK_SET, bufsize);
-	    }
+            }
 
             ADIO_ReadContig(adio_fh, buf, count, datatype, file_ptr_type,
-			    off, &status, &error_code);
+                            off, &status, &error_code);
 
-	    if (ADIO_Feature(adio_fh, ADIO_LOCKS))
-	    {
+            if (ADIO_Feature(adio_fh, ADIO_LOCKS)) {
                 ADIOI_UNLOCK(adio_fh, off, SEEK_SET, bufsize);
-	    }
-	    if (error_code == MPI_SUCCESS) {
-		nbytes = count*datatype_size;
-	    }
-	    MPIO_Completed_request_create(&adio_fh, nbytes, &error_code, request);
+            }
+            if (error_code == MPI_SUCCESS) {
+                nbytes = count * datatype_size;
+            }
+            MPIO_Completed_request_create(&adio_fh, nbytes, &error_code, request);
         }
-    }
-    else ADIO_IreadStrided(adio_fh, buf, count, datatype, file_ptr_type,
-			   offset, request, &error_code); 
+    } else
+        ADIO_IreadStrided(adio_fh, buf, count, datatype, file_ptr_type,
+                          offset, request, &error_code);
 
-fn_exit:
+  fn_exit:
     ROMIO_THREAD_CS_EXIT();
 
     return error_code;

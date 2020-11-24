@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -23,6 +23,7 @@ void ADIOI_PVFS2_Close(ADIO_File fd, int *error_code)
 
     *error_code = MPI_SUCCESS;
 }
-/* 
- * vim: ts=8 sts=4 sw=4 noexpandtab 
+
+/*
+ * vim: ts=8 sts=4 sw=4 noexpandtab
  */

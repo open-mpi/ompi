@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -43,17 +43,17 @@ int MPI_Info_delete(MPI_Info info, char *key)
     }
 
     if (key <= (char *) 0) {
-	FPRINTF(stderr, "MPI_Info_delete: key is an invalid address\n");
+        FPRINTF(stderr, "MPI_Info_delete: key is an invalid address\n");
         MPI_Abort(MPI_COMM_WORLD, 1);
     }
 
     if (strlen(key) > MPI_MAX_INFO_KEY) {
-	FPRINTF(stderr, "MPI_Info_delete: key is longer than MPI_MAX_INFO_KEY\n");
+        FPRINTF(stderr, "MPI_Info_delete: key is longer than MPI_MAX_INFO_KEY\n");
         MPI_Abort(MPI_COMM_WORLD, 1);
     }
 
     if (!strlen(key)) {
-	FPRINTF(stderr, "MPI_Info_delete: key is a null string\n");
+        FPRINTF(stderr, "MPI_Info_delete: key is a null string\n");
         MPI_Abort(MPI_COMM_WORLD, 1);
     }
 
@@ -62,21 +62,21 @@ int MPI_Info_delete(MPI_Info info, char *key)
     done = 0;
 
     while (curr) {
-	if (!strcmp(curr->key, key)) {
-	    ADIOI_Free(curr->key); 
-	    ADIOI_Free(curr->value);
-	    prev->next = curr->next;
-	    ADIOI_Free(curr);
-	    done = 1;
-	    break;
-	}
-	prev = curr;
-	curr = curr->next;
+        if (!strcmp(curr->key, key)) {
+            ADIOI_Free(curr->key);
+            ADIOI_Free(curr->value);
+            prev->next = curr->next;
+            ADIOI_Free(curr);
+            done = 1;
+            break;
+        }
+        prev = curr;
+        curr = curr->next;
     }
 
     if (!done) {
-	FPRINTF(stderr, "MPI_Info_delete: key not defined in info\n");
-        MPI_Abort(MPI_COMM_WORLD, 1);	
+        FPRINTF(stderr, "MPI_Info_delete: key not defined in info\n");
+        MPI_Abort(MPI_COMM_WORLD, 1);
     }
 
     return MPI_SUCCESS;

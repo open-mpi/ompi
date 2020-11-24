@@ -1,7 +1,7 @@
 ## -*- Mode: Makefile; -*-
 ## vim: set ft=automake :
 ##
-## (C) 2012 by Argonne National Laboratory.
+## (C) 2014 by Argonne National Laboratory.
 ##     See COPYRIGHT in top-level directory.
 ##
 

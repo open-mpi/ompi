@@ -1,27 +1,8 @@
 # -*- Mode: Makefile; -*-
-# Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
-#                         University Research and Technology
-#                         Corporation.  All rights reserved.
-# Copyright (c) 2004-2005 The University of Tennessee and The University
-#                         of Tennessee Research Foundation.  All rights
-#                         reserved.
-# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
-#                         University of Stuttgart.  All rights reserved.
-# Copyright (c) 2004-2005 The Regents of the University of California.
-#                         All rights reserved.
-# Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
-# $COPYRIGHT$
-#
-# Additional copyrights may follow
-#
-# $HEADER$
 #
 # (C) 2011 by Argonne National Laboratory.
 #     See COPYRIGHT in top-level directory.
 #
-
-# OMPI: include a top level makefile with some options
-include $(top_srcdir)/Makefile.options
 
 ## TODO: need to write an automakefile that handles two primary cases:
 ## 1) that ROMIO is being embedded within the MPI library, as in MPICH or Open
@@ -36,9 +17,17 @@ ACLOCAL_AMFLAGS = -I confdb
 include_HEADERS = 
 nodist_include_HEADERS =
 noinst_HEADERS = 
+AM_CFLAGS = @VISIBILITY_CFLAGS@
+AM_CPPFLAGS =
 EXTRA_DIST =
 SUFFIXES = 
 doc1_src_txt =
+
+external_subdirs = @mpl_srcdir@
+external_dist_subdirs = @mpl_dist_srcdir@
+external_includes = @mpl_includedir@
+external_ldflags = @mpl_libdir@
+external_libs = @mpl_lib@
 
 # ------------------------------------------------------------------------
 # variables to be populated by the included Makefile.mk fragments:
@@ -62,19 +51,14 @@ AM_CPPFLAGS += $(MPI_H_INCLUDE)
 
 # ------------------------------------------------------------------------
 # handle the "include" directory here
-AM_CPPFLAGS += -I$(top_builddir)/include -I$(top_srcdir)/include
+AM_CPPFLAGS += -I$(top_builddir)/include -I$(top_srcdir)/include $(external_includes)
 # nodist_ b/c these are created by config.status and should not be distributed
-# Open MPI: do not install mpio.h
-noinst_HEADERS += include/mpio.h
-noinst_HEADERS += include/io_romio_conv.h
-
-# Included for Open MPI's --enable-grequest-extensions feature.
-noinst_HEADERS += include/ompi_grequestx.h
+nodist_include_HEADERS += include/mpio.h include/mpiof.h
 
 # ------------------------------------------------------------------------
 
-SUBDIRS =
-DIST_SUBDIRS = test test-internal
+SUBDIRS = $(external_subdirs)
+DIST_SUBDIRS = test test-internal $(external_dist_subdirs)
 
 # for the sake of parallel make and avoiding an excessive number of convenience
 # libs, we use a subdir automake fragment strategy
@@ -86,8 +70,8 @@ EXTRA_DIST += autogen.sh
 if BUILD_ROMIO_EMBEDDED
 # Build a libtool convenience library that the enclosing MPI implementation can
 # use by adding it to the right _LIBADD variable.
-noinst_LTLIBRARIES = libromio_dist.la
-libromio_dist_la_SOURCES = $(romio_mpi_sources) $(romio_other_sources) $(glue_sources)
+noinst_LTLIBRARIES = libromio.la
+libromio_la_SOURCES = $(romio_mpi_sources) $(romio_other_sources) $(glue_sources)
 
 ## NOTE: ROMIO's old build system builds a bunch of _foo.o objects that contain
 ## PMPI_ implementations as well as calls to only other PMPI routines.  In
@@ -106,7 +90,12 @@ if BUILD_PROFILING_LIB
 noinst_LTLIBRARIES += libpromio.la
 libpromio_la_SOURCES = $(romio_mpi_sources)
 libpromio_la_CPPFLAGS = $(AM_CPPFLAGS) -DMPIO_BUILD_PROFILING 
-endif BUILD_PROFILING_LIB
+libpromio_la_LDFLAGS = $(external_ldflags)
+libpromio_la_LIBADD = $(external_libs)
+else !BUILD_PROFILING_LIB
+libromio_la_LDFLAGS = $(external_ldflags)
+libromio_la_LIBADD = $(external_libs)
+endif !BUILD_PROFILING_LIB
 
 else !BUILD_ROMIO_EMBEDDED
 lib_LTLIBRARIES = libromio.la
@@ -192,4 +181,12 @@ htmldoc:
 htmldoc-local: $(romio_mpi_sources:.c=.html-phony) $(doc1_src_txt:.txt=.html1-phony)
 
 # --------------------------------------------------------------------------
+
+# sometimes helpful when debugging macros to see the preprocessed output.
+# Also using '-CC' because comments provide useful landmarks
+
+SUFFIXES += .i
+
+.c.i:
+	$(COMPILE) -CC -E -o $@ $<
 

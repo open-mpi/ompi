@@ -60,7 +60,7 @@ romio_other_sources +=                  \
     adio/common/flatten.c               \
     adio/common/get_fp_posn.c           \
     adio/common/greq_fns.c              \
-    adio/common/heap-sort.c             \
+    adio/common/heap_sort.c             \
     adio/common/iscontig.c              \
     adio/common/lock.c                  \
     adio/common/malloc.c                \
@@ -72,5 +72,5 @@ romio_other_sources +=                  \
     adio/common/ad_threaded_io.c        \
     adio/common/p2p_aggregation.c       \
     adio/common/onesided_aggregation.c  \
+    adio/common/ad_tuning.c             \
     adio/common/utils.c
-

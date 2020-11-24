@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -18,7 +18,8 @@
 /* end of weak pragmas */
 #elif defined(HAVE_WEAK_ATTRIBUTE)
 int MPI_File_iread_shared(MPI_File fh, void *buf, int count, MPI_Datatype datatype,
-                          MPIO_Request *request) __attribute__((weak,alias("PMPI_File_iread_shared")));
+                          MPIO_Request * request)
+    __attribute__ ((weak, alias("PMPI_File_iread_shared")));
 #endif
 
 /* Include mapping from MPI->PMPI */
@@ -44,7 +45,7 @@ Output Parameters:
 .N fortran
 @*/
 int MPI_File_iread_shared(MPI_File fh, void *buf, int count,
-                          MPI_Datatype datatype, MPI_Request *request)
+                          MPI_Datatype datatype, MPI_Request * request)
 {
     int error_code, buftype_is_contig, filetype_is_contig;
     ADIO_Offset bufsize;
@@ -53,7 +54,7 @@ int MPI_File_iread_shared(MPI_File fh, void *buf, int count,
     MPI_Count datatype_size, incr;
     MPI_Status status;
     ADIO_Offset off, shared_fp;
-    MPI_Offset nbytes=0;
+    MPI_Offset nbytes = 0;
 
     ROMIO_THREAD_CS_ENTER();
 
@@ -78,62 +79,53 @@ int MPI_File_iread_shared(MPI_File fh, void *buf, int count,
 
     ADIOI_TEST_DEFERRED(adio_fh, myname, &error_code);
 
-    incr = (count*datatype_size)/adio_fh->etype_size;
+    incr = (count * datatype_size) / adio_fh->etype_size;
     ADIO_Get_shared_fp(adio_fh, incr, &shared_fp, &error_code);
 
     /* --BEGIN ERROR HANDLING-- */
-    if (error_code != MPI_SUCCESS)
-    {
-	/* note: ADIO_Get_shared_fp should have set up error code already? */
-	MPIO_Err_return_file(adio_fh, error_code);
+    if (error_code != MPI_SUCCESS) {
+        /* note: ADIO_Get_shared_fp should have set up error code already? */
+        MPIO_Err_return_file(adio_fh, error_code);
     }
     /* --END ERROR HANDLING-- */
 
-    if (buftype_is_contig && filetype_is_contig)
-    {
-    /* convert count and shared_fp to bytes */
-	bufsize = datatype_size * count;
-	off = adio_fh->disp + adio_fh->etype_size * shared_fp;
-        if (!(adio_fh->atomicity))
-	{
-	    ADIO_IreadContig(adio_fh, buf, count, datatype, ADIO_EXPLICIT_OFFSET,
-			off, request, &error_code);
-	}
-        else
-	{
+    if (buftype_is_contig && filetype_is_contig) {
+        /* convert count and shared_fp to bytes */
+        bufsize = datatype_size * count;
+        off = adio_fh->disp + adio_fh->etype_size * shared_fp;
+        if (!(adio_fh->atomicity)) {
+            ADIO_IreadContig(adio_fh, buf, count, datatype, ADIO_EXPLICIT_OFFSET,
+                             off, request, &error_code);
+        } else {
             /* to maintain strict atomicity semantics with other concurrent
-              operations, lock (exclusive) and call blocking routine */
+             * operations, lock (exclusive) and call blocking routine */
 
-            if (adio_fh->file_system != ADIO_NFS)
-	    {
+            if (adio_fh->file_system != ADIO_NFS) {
                 ADIOI_WRITE_LOCK(adio_fh, off, SEEK_SET, bufsize);
-	    }
+            }
 
             ADIO_ReadContig(adio_fh, buf, count, datatype, ADIO_EXPLICIT_OFFSET,
-			    off, &status, &error_code);  
+                            off, &status, &error_code);
 
-            if (adio_fh->file_system != ADIO_NFS)
-	    {
+            if (adio_fh->file_system != ADIO_NFS) {
                 ADIOI_UNLOCK(adio_fh, off, SEEK_SET, bufsize);
-	    }
-	    if (error_code == MPI_SUCCESS){
-		    nbytes = count * datatype_size;
-	    }
-	    MPIO_Completed_request_create(&adio_fh, nbytes, &error_code, request);
+            }
+            if (error_code == MPI_SUCCESS) {
+                nbytes = count * datatype_size;
+            }
+            MPIO_Completed_request_create(&adio_fh, nbytes, &error_code, request);
         }
-    }
-    else
-    {
-	ADIO_IreadStrided(adio_fh, buf, count, datatype, ADIO_EXPLICIT_OFFSET,
-			   shared_fp, request, &error_code);
+    } else {
+        ADIO_IreadStrided(adio_fh, buf, count, datatype, ADIO_EXPLICIT_OFFSET,
+                          shared_fp, request, &error_code);
     }
 
     /* --BEGIN ERROR HANDLING-- */
     if (error_code != MPI_SUCCESS)
-	error_code = MPIO_Err_return_file(adio_fh, error_code);
+        error_code = MPIO_Err_return_file(adio_fh, error_code);
     /* --END ERROR HANDLING-- */
 
-fn_exit:
+  fn_exit:
     ROMIO_THREAD_CS_EXIT();
     return error_code;
 }

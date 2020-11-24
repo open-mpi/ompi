@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -43,32 +43,32 @@ int MPI_Info_set(MPI_Info info, char *key, char *value)
     }
 
     if (key <= (char *) 0) {
-	FPRINTF(stderr, "MPI_Info_set: key is an invalid address\n");
+        FPRINTF(stderr, "MPI_Info_set: key is an invalid address\n");
         MPI_Abort(MPI_COMM_WORLD, 1);
     }
 
     if (value <= (char *) 0) {
-	FPRINTF(stderr, "MPI_Info_set: value is an invalid address\n");
+        FPRINTF(stderr, "MPI_Info_set: value is an invalid address\n");
         MPI_Abort(MPI_COMM_WORLD, 1);
     }
 
     if (strlen(key) > MPI_MAX_INFO_KEY) {
-	FPRINTF(stderr, "MPI_Info_set: key is longer than MPI_MAX_INFO_KEY\n");
+        FPRINTF(stderr, "MPI_Info_set: key is longer than MPI_MAX_INFO_KEY\n");
         MPI_Abort(MPI_COMM_WORLD, 1);
     }
 
     if (strlen(value) > MPI_MAX_INFO_VAL) {
-	FPRINTF(stderr, "MPI_Info_set: value is longer than MPI_MAX_INFO_VAL\n");
+        FPRINTF(stderr, "MPI_Info_set: value is longer than MPI_MAX_INFO_VAL\n");
         MPI_Abort(MPI_COMM_WORLD, 1);
     }
 
     if (!strlen(key)) {
-	FPRINTF(stderr, "MPI_Info_set: key is a null string\n");
+        FPRINTF(stderr, "MPI_Info_set: key is a null string\n");
         MPI_Abort(MPI_COMM_WORLD, 1);
     }
 
     if (!strlen(value)) {
-	FPRINTF(stderr, "MPI_Info_set: value is a null string\n");
+        FPRINTF(stderr, "MPI_Info_set: value is a null string\n");
         MPI_Abort(MPI_COMM_WORLD, 1);
     }
 
@@ -76,22 +76,22 @@ int MPI_Info_set(MPI_Info info, char *key, char *value)
     curr = info->next;
 
     while (curr) {
-	if (!strcmp(curr->key, key)) {
-	    ADIOI_Free(curr->value); 
-	    curr->value = ADIOI_Strdup(value);
-	    break;
-	}
-	prev = curr;
-	curr = curr->next;
+        if (!strcmp(curr->key, key)) {
+            ADIOI_Free(curr->value);
+            curr->value = ADIOI_Strdup(value);
+            break;
+        }
+        prev = curr;
+        curr = curr->next;
     }
 
     if (!curr) {
-	prev->next = (MPI_Info) ADIOI_Malloc(sizeof(struct MPIR_Info));
-	curr = prev->next;
-	curr->cookie = 0;  /* cookie not set on purpose */
-	curr->key = ADIOI_Strdup(key);
-	curr->value = ADIOI_Strdup(value);
-	curr->next = 0;
+        prev->next = (MPI_Info) ADIOI_Malloc(sizeof(struct MPIR_Info));
+        curr = prev->next;
+        curr->cookie = 0;       /* cookie not set on purpose */
+        curr->key = ADIOI_Strdup(key);
+        curr->value = ADIOI_Strdup(value);
+        curr->next = 0;
     }
 
     return MPI_SUCCESS;

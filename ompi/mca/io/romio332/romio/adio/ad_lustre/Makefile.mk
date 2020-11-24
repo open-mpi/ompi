@@ -18,5 +18,9 @@ romio_other_sources +=                   \
     adio/ad_lustre/ad_lustre_hints.c     \
     adio/ad_lustre/ad_lustre_aggregate.c
 
-endif BUILD_AD_LUSTRE
+if LUSTRE_LOCKAHEAD
+romio_other_sources +=                   \
+    adio/ad_lustre/ad_lustre_lock.c
+endif LUSTRE_LOCKAHEAD
 
+endif BUILD_AD_LUSTRE

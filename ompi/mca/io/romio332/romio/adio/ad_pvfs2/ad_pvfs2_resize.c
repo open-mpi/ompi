@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -19,12 +19,12 @@ void ADIOI_PVFS2_Resize(ADIO_File fd, ADIO_Offset size, int *error_code)
 
     *error_code = MPI_SUCCESS;
 
-    pvfs_fs = (ADIOI_PVFS2_fs*)fd->fs_ptr;
+    pvfs_fs = (ADIOI_PVFS2_fs *) fd->fs_ptr;
 
     MPI_Comm_rank(fd->comm, &rank);
 
-    /* We desginate one node in the communicator to be an 'io_worker' in 
-     * ADIO_Open.  This node can perform operations on files and then 
+    /* We desginate one node in the communicator to be an 'io_worker' in
+     * ADIO_Open.  This node can perform operations on files and then
      * inform the other nodes of the result */
 
     /* MPI-IO semantics treat conflicting MPI_File_set_size requests the
@@ -33,24 +33,23 @@ void ADIOI_PVFS2_Resize(ADIO_File fd, ADIO_Offset size, int *error_code)
      * syncronization point is reached */
 
     if (rank == fd->hints->ranklist[0]) {
-	ret = PVFS_sys_truncate(pvfs_fs->object_ref, 
-		size, &(pvfs_fs->credentials));
-	MPI_Bcast(&ret, 1, MPI_INT, fd->hints->ranklist[0], fd->comm);
-    } else  {
-	MPI_Bcast(&ret, 1, MPI_INT, fd->hints->ranklist[0], fd->comm);
+        ret = PVFS_sys_truncate(pvfs_fs->object_ref, size, &(pvfs_fs->credentials));
+        MPI_Bcast(&ret, 1, MPI_INT, fd->hints->ranklist[0], fd->comm);
+    } else {
+        MPI_Bcast(&ret, 1, MPI_INT, fd->hints->ranklist[0], fd->comm);
     }
     /* --BEGIN ERROR HANDLING-- */
     if (ret != 0) {
-	*error_code = MPIO_Err_create_code(MPI_SUCCESS,
-					   MPIR_ERR_RECOVERABLE,
-					   myname, __LINE__,
-					   ADIOI_PVFS2_error_convert(ret),
-					   "Error in PVFS_sys_truncate", 0);
-	return;
+        *error_code = MPIO_Err_create_code(MPI_SUCCESS,
+                                           MPIR_ERR_RECOVERABLE,
+                                           myname, __LINE__,
+                                           ADIOI_PVFS2_error_convert(ret),
+                                           "Error in PVFS_sys_truncate", 0);
+        return;
     }
     /* --END ERROR HANDLING-- */
 }
 
 /*
- * vim: ts=8 sts=4 sw=4 noexpandtab 
+ * vim: ts=8 sts=4 sw=4 noexpandtab
  */

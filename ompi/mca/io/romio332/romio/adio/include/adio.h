@@ -1,25 +1,25 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
- *   Copyright (C) 1997 University of Chicago. 
+/*
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
 /* main include file for ADIO.
-   contains general definitions, declarations, and macros independent 
+   contains general definitions, declarations, and macros independent
    of the underlying file system */
 
-/* Functions and datataypes that are "internal" to the ADIO implementation 
+/* Functions and datataypes that are "internal" to the ADIO implementation
    prefixed ADIOI_. Functions and datatypes that are part of the
    "externally visible" (documented) ADIO interface are prefixed ADIO_.
 
    An implementation of MPI-IO, or any other high-level interface, should
-   not need to use any of the ADIOI_ functions/datatypes. 
-   Only someone implementing ADIO on a new file system, or modifying 
+   not need to use any of the ADIOI_ functions/datatypes.
+   Only someone implementing ADIO on a new file system, or modifying
    an existing ADIO implementation, would need to use the ADIOI_
    functions/datatypes. */
 
-#ifndef ADIO_INCLUDE
-#define ADIO_INCLUDE
+#ifndef ADIO_H_INCLUDED
+#define ADIO_H_INCLUDED
 
 #ifdef SPPUX
 #define _POSIX_SOURCE
@@ -45,21 +45,15 @@
 #define FORT_END_LEN(a)       , int a
 #endif
 
-#ifdef HAVE_FORTRAN_API
-# ifdef FORTRAN_EXPORTS
-#  define FORTRAN_API __declspec(dllexport)
-# else
-#  define FORTRAN_API __declspec(dllimport)
-# endif
-#else
-# define FORTRAN_API
-#endif
 
-/* Use this macro for each parameter to a function that is not referenced in the body of the function */
-#ifdef HAVE_WINDOWS_H
-#define ADIOI_UNREFERENCED_ARG(a) a
+#ifdef HAVE_FORTRAN_API
+#ifdef FORTRAN_EXPORTS
+#define FORTRAN_API __declspec(dllexport)
 #else
-#define ADIOI_UNREFERENCED_ARG(a)
+#define FORTRAN_API __declspec(dllimport)
+#endif
+#else
+#define FORTRAN_API
 #endif
 
 /* Include romioconf.h if we haven't already (some include files may
@@ -94,51 +88,43 @@
 #define FDTYPE int
 #endif
 
+typedef MPI_Offset ADIO_Offset;
 #ifdef MPI_OFFSET_IS_INT
-   typedef int ADIO_Offset;
-   typedef unsigned ADIO_Size;
-#  define ADIO_OFFSET MPI_INT
+#define ADIO_OFFSET MPI_INT
 #elif defined(HAVE_LONG_LONG_64)
-   typedef long long ADIO_Offset;
-   typedef unsigned long long ADIO_Size;
-#  ifdef HAVE_MPI_LONG_LONG_INT
-#     define ADIO_OFFSET MPI_LONG_LONG_INT
-#  else
-#     define ADIO_OFFSET MPI_DOUBLE
-#  endif
-#elif defined(HAVE_INT64)
-   typedef __int64 ADIO_Offset;
-   typedef unsigned __int64 ADIO_Size;
-#  define ADIO_OFFSET MPI_DOUBLE
+#ifdef HAVE_MPI_LONG_LONG_INT
+#define ADIO_OFFSET MPI_LONG_LONG_INT
 #else
-   typedef long ADIO_Offset;
-   typedef unsigned long ADIO_Size;
-#  define ADIO_OFFSET MPI_LONG
+#define ADIO_OFFSET MPI_DOUBLE
+#endif
+#elif defined(HAVE_INT64)
+#define ADIO_OFFSET MPI_DOUBLE
+#else
+#define ADIO_OFFSET MPI_LONG
 #endif
 
-#define ADIO_Status MPI_Status   
+#define ADIO_Status MPI_Status
 
 #ifndef MPIO_INCLUDE
-#  ifdef NEEDS_MPI_FINT
-      typedef int MPI_Fint; 
-#  endif
+#ifdef NEEDS_MPI_FINT
+typedef int MPI_Fint;
+#endif
 #endif
 
 #if (!defined(HAVE_MPI_INFO) && !defined(MPIO_INCLUDE))
-   typedef struct MPIR_Info *MPI_Info;
-#  define MPI_INFO_NULL 0
-#  define MPI_MAX_INFO_VAL      1024
+typedef struct MPIR_Info *MPI_Info;
+#define MPI_INFO_NULL 0
+#define MPI_MAX_INFO_VAL      1024
 
-int MPI_Info_create(MPI_Info *info);
+int MPI_Info_create(MPI_Info * info);
 int MPI_Info_set(MPI_Info info, char *key, char *value);
 int MPI_Info_delete(MPI_Info info, char *key);
-int MPI_Info_get(MPI_Info info, char *key, int valuelen, 
-                         char *value, int *flag);
+int MPI_Info_get(MPI_Info info, char *key, int valuelen, char *value, int *flag);
 int MPI_Info_get_valuelen(MPI_Info info, char *key, int *valuelen, int *flag);
 int MPI_Info_get_nkeys(MPI_Info info, int *nkeys);
 int MPI_Info_get_nthkey(MPI_Info info, int n, char *key);
-int MPI_Info_dup(MPI_Info info, MPI_Info *newinfo);
-int MPI_Info_free(MPI_Info *info);
+int MPI_Info_dup(MPI_Info info, MPI_Info * newinfo);
+int MPI_Info_free(MPI_Info * info);
 
 #ifdef MPI_Info_f2c
 #undef MPI_Info_f2c
@@ -150,16 +136,15 @@ int MPI_Info_free(MPI_Info *info);
 MPI_Fint MPI_Info_c2f(MPI_Info info);
 MPI_Info MPI_Info_f2c(MPI_Fint info);
 
-int PMPI_Info_create(MPI_Info *info);
+int PMPI_Info_create(MPI_Info * info);
 int PMPI_Info_set(MPI_Info info, char *key, char *value);
 int PMPI_Info_delete(MPI_Info info, char *key);
-int PMPI_Info_get(MPI_Info info, char *key, int valuelen, 
-                         char *value, int *flag);
+int PMPI_Info_get(MPI_Info info, char *key, int valuelen, char *value, int *flag);
 int PMPI_Info_get_valuelen(MPI_Info info, char *key, int *valuelen, int *flag);
 int PMPI_Info_get_nkeys(MPI_Info info, int *nkeys);
 int PMPI_Info_get_nthkey(MPI_Info info, int n, char *key);
-int PMPI_Info_dup(MPI_Info info, MPI_Info *newinfo);
-int PMPI_Info_free(MPI_Info *info);
+int PMPI_Info_dup(MPI_Info info, MPI_Info * newinfo);
+int PMPI_Info_free(MPI_Info * info);
 
 MPI_Fint PMPI_Info_c2f(MPI_Info info);
 MPI_Info PMPI_Info_f2c(MPI_Fint info);
@@ -170,85 +155,85 @@ MPI_Info PMPI_Info_f2c(MPI_Fint info);
 
 #if defined(HAVE_STRDUP) && defined(NEEDS_STRDUP_DECL) && !defined(strdup)
 char *strdup(const char *s);
-# endif
+#endif
 #if defined(HAVE_READLINK) && defined(NEEDS_READLINK_DECL) && !defined(readlink)
 ssize_t readlink(const char *path, char *buf, size_t bufsiz);
-# endif
+#endif
 #if defined(HAVE_LSTAT) && defined(NEEDS_LSTAT_DECL) && !defined(lstat)
 int lstat(const char *file_name, struct stat *buf);
-# endif
+#endif
 #if defined(HAVE_FSYNC) && defined(NEEDS_FSYNC_DECL) && !defined(fsync)
 int fsync(int fd);
-# endif
+#endif
 #if defined(HAVE_FTRUNCATE) && defined(NEEDS_FTRUNCATE_DECL) && !defined(ftruncate)
 int ftruncate(int fd, off_t length);
-# endif
+#endif
 
 
 typedef struct ADIOI_Fns_struct ADIOI_Fns;
 typedef struct ADIOI_Hints_struct ADIOI_Hints;
 
 typedef struct ADIOI_FileD {
-    int cookie;              /* for error checking */
+    int cookie;                 /* for error checking */
     FDTYPE fd_sys;              /* system file descriptor */
-    FDTYPE null_fd;          /* the null-device file descriptor: debug only (obviously)*/
-    int fd_direct;           /* On XFS, this is used for direct I/O; 
-                                fd_sys is used for buffered I/O */
-    int direct_read;         /* flag; 1 means use direct read */
-    int direct_write;        /* flag; 1 means use direct write  */
+    FDTYPE null_fd;             /* the null-device file descriptor: debug only (obviously) */
+    int fd_direct;              /* On XFS, this is used for direct I/O;
+                                 * fd_sys is used for buffered I/O */
+    int direct_read;            /* flag; 1 means use direct read */
+    int direct_write;           /* flag; 1 means use direct write  */
     /* direct I/O attributes */
-    unsigned d_mem;          /* data buffer memory alignment */
-    unsigned d_miniosz;      /* min xfer size, xfer size multiple,
-                                and file seek offset alignment */
-    long blksize;            /* some optimizations benefit from knowing
-				underlying block size */
-    ADIO_Offset fp_ind;      /* individual file pointer in MPI-IO (in bytes)*/
-    ADIO_Offset fp_sys_posn; /* current location of the system file-pointer
-                                in bytes */
-    ADIOI_Fns *fns;          /* struct of I/O functions to use */
-    MPI_Comm comm;           /* communicator indicating who called open */
-    int is_open;	    /* deferred open: 0: not open yet 1: is open */
-    int is_agg;              /* bool: if I am an aggregator */
-    char *filename;          
-    int file_system;         /* type of file system */
-    int access_mode;         /* Access mode (sequential, append, etc.),
-				possibly modified to deal with
-				data sieving or deferred open*/
-    int orig_access_mode;    /* Access mode provided by user: unmodified */
-    ADIO_Offset disp;        /* reqd. for MPI-IO */
-    MPI_Datatype etype;      /* reqd. for MPI-IO */
-    MPI_Datatype filetype;   /* reqd. for MPI-IO */
-    MPI_Count etype_size;          /* in bytes */
-    ADIOI_Hints *hints;      /* structure containing fs-indep. info values */
+    unsigned d_mem;             /* data buffer memory alignment */
+    unsigned d_miniosz;         /* min xfer size, xfer size multiple,
+                                 * and file seek offset alignment */
+    long blksize;               /* some optimizations benefit from knowing
+                                 * underlying block size */
+    ADIO_Offset fp_ind;         /* individual file pointer in MPI-IO (in bytes) */
+    ADIO_Offset fp_sys_posn;    /* current location of the system file-pointer
+                                 * in bytes */
+    ADIOI_Fns *fns;             /* struct of I/O functions to use */
+    MPI_Comm comm;              /* communicator indicating who called open */
+    int is_open;                /* deferred open: 0: not open yet 1: is open */
+    int is_agg;                 /* bool: if I am an aggregator */
+    char *filename;
+    int file_system;            /* type of file system */
+    int access_mode;            /* Access mode (sequential, append, etc.),
+                                 * possibly modified to deal with
+                                 * data sieving or deferred open */
+    int orig_access_mode;       /* Access mode provided by user: unmodified */
+    ADIO_Offset disp;           /* reqd. for MPI-IO */
+    MPI_Datatype etype;         /* reqd. for MPI-IO */
+    MPI_Datatype filetype;      /* reqd. for MPI-IO */
+    MPI_Count etype_size;       /* in bytes */
+    ADIOI_Hints *hints;         /* structure containing fs-indep. info values */
     MPI_Info info;
 
     /* The following support the split collective operations */
-    int split_coll_count;    /* count of outstanding split coll. ops. */
-    MPI_Status split_status; /* status used for split collectives */
-    MPI_Datatype split_datatype; /* datatype used for split collectives */
+    int split_coll_count;       /* count of outstanding split coll. ops. */
+    MPI_Status split_status;    /* status used for split collectives */
+    MPI_Datatype split_datatype;        /* datatype used for split collectives */
 
     /* The following support the shared file operations */
-    char *shared_fp_fname;   /* name of file containing shared file pointer */
-    struct ADIOI_FileD *shared_fp_fd;  /* file handle of file 
-                                         containing shared fp */
-    int async_count;         /* count of outstanding nonblocking operations */
+    char *shared_fp_fname;      /* name of file containing shared file pointer */
+    struct ADIOI_FileD *shared_fp_fd;   /* file handle of file
+                                         * containing shared fp */
+    int async_count;            /* count of outstanding nonblocking operations */
     int perm;
-    int atomicity;          /* true=atomic, false=nonatomic */
-    int fortran_handle;     /* handle for Fortran interface if needed */
+    int atomicity;              /* true=atomic, false=nonatomic */
+    int fortran_handle;         /* handle for Fortran interface if needed */
     MPI_Errhandler err_handler;
-    void *fs_ptr;            /* file-system specific information */
+    void *fs_ptr;               /* file-system specific information */
 
     /* Two phase collective I/O support */
-    ADIO_Offset *file_realm_st_offs; /* file realm starting offsets */
-    MPI_Datatype *file_realm_types;  /* file realm datatypes */
-    int my_cb_nodes_index; /* my index into cb_config_list. -1 if N/A */
-    char *io_buf;          /* two-phase buffer allocated out of i/o path */
-    MPI_Win io_buf_window; /* Window over the io_buf to support one-sided aggregation */
-    int *io_buf_put_amounts; /* array tracking the amount of data mpi_put into the io_buf
-                                during the same round of one-sided write aggregation */
-    MPI_Win io_buf_put_amounts_window; /* Window over the io_buf_put_amounts */
+    ADIO_Offset *file_realm_st_offs;    /* file realm starting offsets */
+    MPI_Datatype *file_realm_types;     /* file realm datatypes */
+    int my_cb_nodes_index;      /* my index into cb_config_list. -1 if N/A */
+    char *io_buf;               /* two-phase buffer allocated out of i/o path */
+    MPI_Win io_buf_window;      /* Window over the io_buf to support one-sided aggregation */
+    int io_buf_put_amounts;     /* the amount of data mpi_put into the io_buf
+                                 * during the same round of one-sided write aggregation */
+    MPI_Win io_buf_put_amounts_window;  /* Window over the io_buf_put_amounts */
     /* External32 */
-    int is_external32;      /* bool:  0 means native view */
+    int is_external32;          /* bool:  0 means native view */
 
 } ADIOI_FileD;
 
@@ -263,9 +248,9 @@ typedef struct {
     MPI_Datatype filetype;
     MPI_Info info;
     int atomicity;
-    ADIO_Offset fsize;       /* for get_fsize only */
-    ADIO_Offset diskspace;   /* for file preallocation */
-} ADIO_Fcntl_t;              /* should contain more stuff */
+    ADIO_Offset fsize;          /* for get_fsize only */
+    ADIO_Offset diskspace;      /* for file preallocation */
+} ADIO_Fcntl_t;                 /* should contain more stuff */
 
 
 /* access modes */
@@ -289,26 +274,18 @@ typedef struct {
 #define ADIO_REQUEST_NULL        ((ADIO_Request) 0)
 #define ADIO_FILE_NULL           ((ADIO_File) 0)
 
-/* file systems */
+/* file systems:
+ * the numbering is slightly strange because we have deleted file
+ * systems over time */
 #define ADIO_NFS                 150
-#define ADIO_PIOFS               151   /* IBM */
-#define ADIO_UFS                 152   /* Unix file system */
-#define ADIO_PFS                 153   /* Intel */
-#define ADIO_XFS                 154   /* SGI */
-#define ADIO_HFS                 155   /* HP/Convex */
-#define ADIO_SFS                 156   /* NEC */
-#define ADIO_PVFS                157   /* PVFS for Linux Clusters from Clemson Univ. */
-#define ADIO_NTFS                158   /* NTFS for Windows NT */
-#define ADIO_TESTFS              159   /* fake file system for testing */
-#define ADIO_PVFS2               160   /* PVFS2: 2nd generation PVFS */
-#define ADIO_PANFS               161   /* Panasas FS */
-#define ADIO_GRIDFTP             162   /* Globus GridFTP */
-#define ADIO_LUSTRE              163   /* Lustre */
-/* #define ADIO_BGL              164 */  /* IBM BGL */
-/* #define ADIO_BGLOCKLESS       165 */  /* IBM BGL (lock-free) */
-#define ADIO_ZOIDFS              167   /* ZoidFS: the I/O forwarding fs */
-/* #define ADIO_BG               168 */
+#define ADIO_UFS                 152    /* Unix file system */
+#define ADIO_XFS                 154    /* SGI */
+#define ADIO_TESTFS              159    /* fake file system for testing */
+#define ADIO_PVFS2               160    /* PVFS2: 2nd generation PVFS */
+#define ADIO_PANFS               161    /* Panasas FS */
+#define ADIO_LUSTRE              163    /* Lustre */
 #define ADIO_GPFS                  168
+#define ADIO_IME                 169    /* IME burst buffer */
 
 #define ADIO_SEEK_SET            SEEK_SET
 #define ADIO_SEEK_CUR            SEEK_CUR
@@ -319,21 +296,21 @@ typedef struct {
 #define ADIO_FCNTL_GET_FSIZE     200
 
 /* file system feature tests */
-#define ADIO_LOCKS               300 /* file system supports fcntl()-style locking */
-#define ADIO_SHARED_FP           301 /* file system supports shared file pointers */
-#define ADIO_ATOMIC_MODE         302 /* file system supports atomic mode */
-#define ADIO_DATA_SIEVING_WRITES 303 /* file system supports data sieving for writes */
-#define ADIO_SCALABLE_OPEN       304 /* one process can open the file and
-					broadcast result to all other
-					processors */
-#define ADIO_UNLINK_AFTER_CLOSE  305 /* supports posix semantic of keeping a
-					deleted file around until all
-					processors have closed it */
-#define ADIO_TWO_PHASE           306 /* file system implements some version of
-					two-phase collective buffering with
-					aggregation */
-#define ADIO_SCALABLE_RESIZE     307 /* file system supports resizing from one
-					processor (nfs, e.g. does not) */
+#define ADIO_LOCKS               300    /* file system supports fcntl()-style locking */
+#define ADIO_SHARED_FP           301    /* file system supports shared file pointers */
+#define ADIO_ATOMIC_MODE         302    /* file system supports atomic mode */
+#define ADIO_DATA_SIEVING_WRITES 303    /* file system supports data sieving for writes */
+#define ADIO_SCALABLE_OPEN       304    /* one process can open the file and
+                                         * broadcast result to all other
+                                         * processors */
+#define ADIO_UNLINK_AFTER_CLOSE  305    /* supports posix semantic of keeping a
+                                         * deleted file around until all
+                                         * processors have closed it */
+#define ADIO_TWO_PHASE           306    /* file system implements some version of
+                                         * two-phase collective buffering with
+                                         * aggregation */
+#define ADIO_SCALABLE_RESIZE     307    /* file system supports resizing from one
+                                         * processor (nfs, e.g. does not) */
 
 /* for default file permissions */
 #define ADIO_PERM_NULL           -1
@@ -342,125 +319,112 @@ typedef struct {
 #define ADIOI_REQ_COOKIE 3493740
 
 /* ADIO function prototypes */
-/* all these may not be necessary, as many of them are macro replaced to 
+/* all these may not be necessary, as many of them are macro replaced to
    function pointers that point to the appropriate functions for each
    different file system (in adioi.h), but anyway... */
 
 void ADIO_Init(int *argc, char ***argv, int *error_code);
 void ADIO_End(int *error_code);
 MPI_File ADIO_Open(MPI_Comm orig_comm, MPI_Comm comm, const char *filename,
-		   int file_system, ADIOI_Fns *ops,
-		   int access_mode, ADIO_Offset disp, MPI_Datatype etype,
-		   MPI_Datatype filetype,
-		   MPI_Info info, int perm, int *error_code);
+                   int file_system, ADIOI_Fns * ops,
+                   int access_mode, ADIO_Offset disp, MPI_Datatype etype,
+                   MPI_Datatype filetype, MPI_Info info, int perm, int *error_code);
 void ADIOI_OpenColl(ADIO_File fd, int rank, int acces_mode, int *error_code);
 void ADIO_ImmediateOpen(ADIO_File fd, int *error_code);
 void ADIO_Close(ADIO_File fd, int *error_code);
 void ADIO_ReadContig(ADIO_File fd, void *buf, int count, MPI_Datatype datatype,
-                    int file_ptr_type,  ADIO_Offset offset, 
-                    ADIO_Status *status, int *error_code);
-void ADIO_WriteContig(ADIO_File fd, void *buf, int count, 
-                     MPI_Datatype datatype, int file_ptr_type,
+                     int file_ptr_type, ADIO_Offset offset, ADIO_Status * status, int *error_code);
+void ADIO_WriteContig(ADIO_File fd, void *buf, int count,
+                      MPI_Datatype datatype, int file_ptr_type,
                       ADIO_Offset offset, int *bytes_written, int
-		      *error_code);
-void ADIO_IwriteContig(ADIO_File fd, void *buf, int count, 
+                      *error_code);
+void ADIO_IwriteContig(ADIO_File fd, void *buf, int count,
+                       MPI_Datatype datatype, int file_ptr_type,
+                       ADIO_Offset offset, ADIO_Request * request, int
+                       *error_code);
+void ADIO_IreadContig(ADIO_File fd, void *buf, int count,
                       MPI_Datatype datatype, int file_ptr_type,
-                      ADIO_Offset offset, ADIO_Request *request, int
-		      *error_code);   
-void ADIO_IreadContig(ADIO_File fd, void *buf, int count, 
-                      MPI_Datatype datatype, int file_ptr_type,
-                      ADIO_Offset offset, ADIO_Request *request, int
-		      *error_code);   
-int ADIO_ReadDone(ADIO_Request *request, ADIO_Status *status, 
-               int *error_code);
-int ADIO_WriteDone(ADIO_Request *request, ADIO_Status *status, 
-               int *error_code);
-int ADIO_ReadIcomplete(ADIO_Request *request, ADIO_Status *status, int
-		       *error_code); 
-int ADIO_WriteIcomplete(ADIO_Request *request, ADIO_Status *status,
-			int *error_code); 
-void ADIO_ReadComplete(ADIO_Request *request, ADIO_Status *status, int
-		       *error_code); 
-void ADIO_WriteComplete(ADIO_Request *request, ADIO_Status *status,
-			int *error_code); 
-void ADIO_Fcntl(ADIO_File fd, int flag, ADIO_Fcntl_t *fcntl_struct, int
-		*error_code); 
+                      ADIO_Offset offset, ADIO_Request * request, int
+                      *error_code);
+int ADIO_ReadDone(ADIO_Request * request, ADIO_Status * status, int *error_code);
+int ADIO_WriteDone(ADIO_Request * request, ADIO_Status * status, int *error_code);
+int ADIO_ReadIcomplete(ADIO_Request * request, ADIO_Status * status, int
+                       *error_code);
+int ADIO_WriteIcomplete(ADIO_Request * request, ADIO_Status * status, int *error_code);
+void ADIO_ReadComplete(ADIO_Request * request, ADIO_Status * status, int
+                       *error_code);
+void ADIO_WriteComplete(ADIO_Request * request, ADIO_Status * status, int *error_code);
+void ADIO_Fcntl(ADIO_File fd, int flag, ADIO_Fcntl_t * fcntl_struct, int
+                *error_code);
 void ADIO_ReadStrided(ADIO_File fd, void *buf, int count,
-		       MPI_Datatype datatype, int file_ptr_type,
-		       ADIO_Offset offset, ADIO_Status *status, int
-		       *error_code);
+                      MPI_Datatype datatype, int file_ptr_type,
+                      ADIO_Offset offset, ADIO_Status * status, int
+                      *error_code);
 void ADIO_WriteStrided(ADIO_File fd, const void *buf, int count,
-		       MPI_Datatype datatype, int file_ptr_type,
-		       ADIO_Offset offset, ADIO_Status *status, int
-		       *error_code);
+                       MPI_Datatype datatype, int file_ptr_type,
+                       ADIO_Offset offset, ADIO_Status * status, int
+                       *error_code);
 void ADIO_ReadStridedColl(ADIO_File fd, void *buf, int count,
-		       MPI_Datatype datatype, int file_ptr_type,
-		       ADIO_Offset offset, ADIO_Status *status, int
-		       *error_code);
+                          MPI_Datatype datatype, int file_ptr_type,
+                          ADIO_Offset offset, ADIO_Status * status, int
+                          *error_code);
 void ADIO_WriteStridedColl(ADIO_File fd, void *buf, int count,
-		       MPI_Datatype datatype, int file_ptr_type,
-		       ADIO_Offset offset, ADIO_Status *status, int
-		       *error_code);
+                           MPI_Datatype datatype, int file_ptr_type,
+                           ADIO_Offset offset, ADIO_Status * status, int
+                           *error_code);
 void ADIO_IreadStrided(ADIO_File fd, void *buf, int count,
-		       MPI_Datatype datatype, int file_ptr_type,
-		       ADIO_Offset offset, ADIO_Request *request, int
-		       *error_code);
+                       MPI_Datatype datatype, int file_ptr_type,
+                       ADIO_Offset offset, ADIO_Request * request, int
+                       *error_code);
 void ADIO_IwriteStrided(ADIO_File fd, void *buf, int count,
-		       MPI_Datatype datatype, int file_ptr_type,
-		       ADIO_Offset offset, ADIO_Request *request, int
-		       *error_code);
+                        MPI_Datatype datatype, int file_ptr_type,
+                        ADIO_Offset offset, ADIO_Request * request, int
+                        *error_code);
 void ADIO_IreadStridedColl(ADIO_File fd, void *buf, int count,
-               MPI_Datatype datatype, int file_ptr_type,
-               ADIO_Offset offset, ADIO_Request *request,
-               int *error_code);
+                           MPI_Datatype datatype, int file_ptr_type,
+                           ADIO_Offset offset, ADIO_Request * request, int *error_code);
 void ADIO_IwriteStridedColl(ADIO_File fd, void *buf, int count,
-               MPI_Datatype datatype, int file_ptr_type,
-               ADIO_Offset offset, ADIO_Request *request,
-               int *error_code);
-ADIO_Offset ADIO_SeekIndividual(ADIO_File fd, ADIO_Offset offset, 
-                       int whence, int *error_code);
+                            MPI_Datatype datatype, int file_ptr_type,
+                            ADIO_Offset offset, ADIO_Request * request, int *error_code);
+ADIO_Offset ADIO_SeekIndividual(ADIO_File fd, ADIO_Offset offset, int whence, int *error_code);
 void ADIO_Delete(char *filename, int *error_code);
 void ADIO_Flush(ADIO_File fd, int *error_code);
 void ADIO_Resize(ADIO_File fd, ADIO_Offset size, int *error_code);
 void ADIO_SetInfo(ADIO_File fd, MPI_Info users_info, int *error_code);
 void ADIO_ResolveFileType(MPI_Comm comm, const char *filename, int *fstype,
-          ADIOI_Fns **ops, int *error_code);
-void ADIO_Get_shared_fp(ADIO_File fd, ADIO_Offset size, ADIO_Offset *shared_fp,
-			 int *error_code);
+                          ADIOI_Fns ** ops, int *error_code);
+void ADIO_Get_shared_fp(ADIO_File fd, ADIO_Offset size, ADIO_Offset * shared_fp, int *error_code);
 void ADIO_Set_shared_fp(ADIO_File fd, ADIO_Offset offset, int *error_code);
-void ADIO_Set_view(ADIO_File fd, ADIO_Offset disp, MPI_Datatype etype, 
-		MPI_Datatype filetype, MPI_Info info,  int *error_code);
-int  ADIO_Feature(ADIO_File fd, int flag);
+void ADIO_Set_view(ADIO_File fd, ADIO_Offset disp, MPI_Datatype etype,
+                   MPI_Datatype filetype, MPI_Info info, int *error_code);
+int ADIO_Feature(ADIO_File fd, int flag);
 
 /* functions to help deal with the array datatypes */
 int ADIO_Type_create_subarray(int ndims,
                               int *array_of_sizes,
                               int *array_of_subsizes,
                               int *array_of_starts,
-                              int order,
-                              MPI_Datatype oldtype,
-                              MPI_Datatype *newtype);
-int ADIO_Type_create_darray(int size, int rank, int ndims, 
-			    int *array_of_gsizes, int *array_of_distribs, 
-			    int *array_of_dargs, int *array_of_psizes, 
-			    int order, MPI_Datatype oldtype, 
-			    MPI_Datatype *newtype);
+                              int order, MPI_Datatype oldtype, MPI_Datatype * newtype);
+int ADIO_Type_create_darray(int size, int rank, int ndims,
+                            int *array_of_gsizes, int *array_of_distribs,
+                            int *array_of_dargs, int *array_of_psizes,
+                            int order, MPI_Datatype oldtype, MPI_Datatype * newtype);
 
 /* MPI_File management functions (in mpio_file.c) */
 MPI_File MPIO_File_create(int size);
 ADIO_File MPIO_File_resolve(MPI_File mpi_fh);
-void MPIO_File_free(MPI_File *mpi_fh);
+void MPIO_File_free(MPI_File * mpi_fh);
 MPI_File MPIO_File_f2c(MPI_Fint fh);
 MPI_Fint MPIO_File_c2f(MPI_File fh);
 int MPIO_Err_create_code(int lastcode, int fatal, const char fcname[],
-			 int line, int error_class, const char generic_msg[],
-			 const char specific_msg[], ... );
+                         int line, int error_class, const char generic_msg[],
+                         const char specific_msg[], ...);
 int MPIO_Err_return_file(MPI_File mpi_fh, int error_code);
 int MPIO_Err_return_comm(MPI_Comm mpi_comm, int error_code);
 
 /* request managment helper functions */
-void MPIO_Completed_request_create(MPI_File *fh, MPI_Offset nbytes,
-		int * error_code, MPI_Request *request);
+void MPIO_Completed_request_create(MPI_File * fh, MPI_Offset nbytes,
+                                   int *error_code, MPI_Request * request);
 
 #include "adioi.h"
 #include "adioi_fs_proto.h"
@@ -471,4 +435,4 @@ void MPIO_Completed_request_create(MPI_File *fh, MPI_Offset nbytes,
 #define MPIR_ERR_FATAL 1
 #define MPIR_ERR_RECOVERABLE 0
 
-#endif
+#endif /* ADIO_H_INCLUDED */

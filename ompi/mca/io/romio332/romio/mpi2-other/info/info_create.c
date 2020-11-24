@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -31,21 +31,22 @@ Output Parameters:
 
 .N fortran
 @*/
-int MPI_Info_create(MPI_Info *info)
+int MPI_Info_create(MPI_Info * info)
 {
     int error_code;
 
     MPIR_MPIOInit(&error_code);
-    if (error_code != MPI_SUCCESS) goto fn_exit;
+    if (error_code != MPI_SUCCESS)
+        goto fn_exit;
 
     *info = (MPI_Info) ADIOI_Malloc(sizeof(struct MPIR_Info));
     (*info)->cookie = MPIR_INFO_COOKIE;
     (*info)->key = 0;
     (*info)->value = 0;
     (*info)->next = 0;
-    /* this is the first structure in this linked list. it is 
-       always kept empty. new (key,value) pairs are added after it. */
+    /* this is the first structure in this linked list. it is
+     * always kept empty. new (key,value) pairs are added after it. */
 
-fn_exit:
+  fn_exit:
     return MPI_SUCCESS;
 }

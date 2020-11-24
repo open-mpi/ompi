@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -34,7 +34,7 @@ Output Parameters:
 
 .N fortran
 @*/
-int MPI_Info_dup(MPI_Info info, MPI_Info *newinfo)
+int MPI_Info_dup(MPI_Info info, MPI_Info * newinfo)
 {
     MPI_Info curr_old, curr_new;
 
@@ -52,14 +52,14 @@ int MPI_Info_dup(MPI_Info info, MPI_Info *newinfo)
 
     curr_old = info->next;
     while (curr_old) {
-	curr_new->next = (MPI_Info) ADIOI_Malloc(sizeof(struct MPIR_Info));
-	curr_new = curr_new->next;
-	curr_new->cookie = 0;  /* cookie not set on purpose */
-	curr_new->key = ADIOI_Strdup(curr_old->key);
-	curr_new->value = ADIOI_Strdup(curr_old->value);
-	curr_new->next = 0;
-	
-	curr_old = curr_old->next;
+        curr_new->next = (MPI_Info) ADIOI_Malloc(sizeof(struct MPIR_Info));
+        curr_new = curr_new->next;
+        curr_new->cookie = 0;   /* cookie not set on purpose */
+        curr_new->key = ADIOI_Strdup(curr_old->key);
+        curr_new->value = ADIOI_Strdup(curr_old->value);
+        curr_new->next = 0;
+
+        curr_old = curr_old->next;
     }
 
     return MPI_SUCCESS;

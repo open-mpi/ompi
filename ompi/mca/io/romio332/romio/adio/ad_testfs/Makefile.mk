@@ -29,4 +29,3 @@ romio_other_sources +=                \
     adio/ad_testfs/ad_testfs.c
 
 endif BUILD_AD_TESTFS
-
