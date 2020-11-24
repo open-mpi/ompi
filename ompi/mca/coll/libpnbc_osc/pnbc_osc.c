@@ -66,6 +66,108 @@ static inline void PNBC_OSC_Free (PNBC_OSC_Handle* handle) {
   }
 }
 
+
+/* progresses a request
+ *
+ * to be called *only* from the progress thread !!! */
+static int NBC_Progress(PNBC_OSC_Handle *handle) {
+  int res, ret=PNBC_OSC_CONTINUE;
+  bool flag;
+  unsigned long size = 0;
+  char *delim;
+
+  if (handle->nbc_complete) {
+    return PNBC_OSC_OK;
+  }
+
+  flag = true;
+
+  if ((handle->req_count > 0) && (handle->req_array != NULL)) {
+    PNBC_OSC_DEBUG(50, "NBC_Progress: testing for %i requests\n", handle->req_count);
+#ifdef PNBC_OSC_TIMING
+    Test_time -= MPI_Wtime();
+#endif
+    /* don't call ompi_request_test_all as it causes a recursive call into opal_progress */
+    while (handle->req_count) {
+        ompi_request_t *subreq = handle->req_array[handle->req_count - 1];
+        if (REQUEST_COMPLETE(subreq)) {
+            if(OPAL_UNLIKELY( OMPI_SUCCESS != subreq->req_status.MPI_ERROR )) {
+                PNBC_OSC_Error ("MPI Error in NBC subrequest %p : %d", subreq, subreq->req_status.MPI_ERROR);
+                /* copy the error code from the underlying request and let the
+                 * round finish */
+                handle->super.req_status.MPI_ERROR = subreq->req_status.MPI_ERROR;
+            }
+            handle->req_count--;
+            ompi_request_free(&subreq);
+        } else {
+            flag = false;
+            break;
+        }
+    }
+#ifdef PNBC_OSC_TIMING
+    Test_time += MPI_Wtime();
+#endif
+  }
+
+  /* a round is finished */
+  if (flag) {
+    /* reset handle for next round */
+    if (NULL != handle->req_array) {
+      /* free request array */
+      free (handle->req_array);
+      handle->req_array = NULL;
+    }
+
+    handle->req_count = 0;
+
+    /* previous round had an error */
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != handle->super.req_status.MPI_ERROR)) {
+      res = handle->super.req_status.MPI_ERROR;
+      PNBC_OSC_Error("NBC_Progress: an error %d was found during schedule %p at row-offset %li - aborting the schedule\n", res, handle->schedule, handle->schedule->row_offset);
+      handle->nbc_complete = true;
+      if (!handle->super.req_persistent) {
+        PNBC_OSC_Free(handle);
+      }
+      return res;
+    }
+
+    /* adjust delim to start of current round */
+    PNBC_OSC_DEBUG(5, "NBC_Progress: going in schedule %p to row-offset: %li\n", handle->schedule, handle->schedule->row_offset);
+    delim = handle->schedule->data + handle->schedule->row_offset;
+    PNBC_OSC_DEBUG(10, "delim: %p\n", delim);
+    PNBC_OSC_Get_round_size(delim, &size);
+    PNBC_OSC_DEBUG(10, "size: %li\n", size);
+    /* adjust delim to end of current round -> delimiter */
+    delim = delim + size;
+
+    if (*delim == 0) {
+      /* this was the last round - we're done */
+      PNBC_OSC_DEBUG(5, "NBC_Progress last round finished - we're done\n");
+
+      handle->nbc_complete = true;
+      if (!handle->super.req_persistent) {
+        PNBC_OSC_Free(handle);
+      }
+
+      return PNBC_OSC_OK;
+    }
+
+    PNBC_OSC_DEBUG(5, "NBC_Progress round finished - goto next round\n");
+    /* move delim to start of next round */
+    /* initializing handle for new virgin round */
+    handle->schedule->row_offset = (intptr_t) (delim + 1) - (intptr_t) handle->schedule->data;
+    /* kick it off */
+    res = PNBC_OSC_Start_round(handle);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+      PNBC_OSC_Error ("Error in NBC_Start_round() (%i)", res);
+      return res;
+    }
+  }
+
+  return ret;
+}
+
+
 /* progresses a request
  *
  * to be called *only* from the progress thread !!! */
@@ -81,6 +183,13 @@ int PNBC_OSC_Progress(PNBC_OSC_Handle *handle) {
   }
 
   round_is_complete = true;
+
+  if (NULL != handle->schedule->data) {
+/******/
+  // schedule uses legacy NBC-like schedule->data mechanism
+/******/
+    return NBC_Progress(handle);
+  } else {
 
   /* figure out whether the current round is request-based or flag-based */
   switch (handle->schedule->rounds[handle->current_round]->round_type) {
@@ -152,6 +261,8 @@ int PNBC_OSC_Progress(PNBC_OSC_Handle *handle) {
                     handle->current_round, handle->schedule, handle);
 
     break;
+  }
+
   }
 
   /* a round has just finished */
