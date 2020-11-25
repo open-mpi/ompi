@@ -174,8 +174,8 @@ int ompi_coll_base_retain_datatypes( ompi_request_t *request,
  * (will be cast internally).
  */
 int ompi_coll_base_retain_datatypes_w( ompi_request_t *request,
-                                       ompi_datatype_t *stypes[],
-                                       ompi_datatype_t *rtypes[]);
+                                       ompi_datatype_t * const stypes[],
+                                       ompi_datatype_t * const rtypes[]);
 
 /* File reading function */
 int ompi_coll_base_file_getnext_long(FILE *fptr, int *fileline, long* val);
