@@ -74,19 +74,43 @@ int orte_ess_base_proc_binding(void)
         }
         OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, OPAL_PMIX_CPUSET,
                                        ORTE_PROC_MY_NAME, &orte_process_info.cpuset, OPAL_STRING);
-        /* try to get our locality as well */
-        map = NULL;
-        OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, OPAL_PMIX_LOCALITY_STRING,
-                                       ORTE_PROC_MY_NAME, &map, OPAL_STRING);
-        if (OPAL_SUCCESS == ret && NULL != map) {
-            /* we were - no need to pull in the topology */
-            if (opal_hwloc_report_bindings || 4 < opal_output_get_verbosity(orte_ess_base_framework.framework_output)) {
-                opal_output(0, "MCW rank %s bound to %s",
-                            ORTE_VPID_PRINT(ORTE_PROC_MY_NAME->vpid), map);
+
+        if (opal_hwloc_report_bindings || 4 < opal_output_get_verbosity(orte_ess_base_framework.framework_output)) {
+            /* try to get our locality as well so we avoid pulling in the hwloc topology tree */
+            map = NULL;
+            OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, OPAL_PMIX_LOCALITY_STRING,
+                                           ORTE_PROC_MY_NAME, &map, OPAL_STRING);
+            if (OPAL_SUCCESS == ret && NULL != map) {
+                /* we were - no need to pull in the topology */
+                    opal_output(0, "MCW rank %s bound to %s",
+                                ORTE_VPID_PRINT(ORTE_PROC_MY_NAME->vpid), map);
+                free(map);
+            } else if (OPAL_SUCCESS == ret && NULL == map) {
+                opal_output(0, "MCW rank %s not bound", ORTE_VPID_PRINT(ORTE_PROC_MY_NAME->vpid));
+            } else {
+                /* they want the binding report, so we will have to obtain the
+                 * topology since locality wasn't given to us */
+                if (OPAL_SUCCESS != opal_hwloc_base_get_topology()) {
+                    /* there is nothing we can do, so just return */
+                    return ORTE_SUCCESS;
+                }
+                mycpus = hwloc_bitmap_alloc();
+                if (hwloc_get_cpubind(opal_hwloc_topology,
+                                      mycpus, HWLOC_CPUBIND_PROCESS) < 0) {
+                    opal_output(0, "MCW rank %d is not bound",
+                                ORTE_PROC_MY_NAME->vpid);
+                } else {
+                    char tmp1[1024], tmp2[1024];
+                    if (OPAL_ERR_NOT_BOUND == opal_hwloc_base_cset2str(tmp1, sizeof(tmp1), opal_hwloc_topology, mycpus)) {
+                        opal_output(0, "MCW rank %d is not bound (or bound to all available processors)", ORTE_PROC_MY_NAME->vpid);
+                    } else {
+                        opal_hwloc_base_cset2mapstr(tmp2, sizeof(tmp2), opal_hwloc_topology, mycpus);
+                        opal_output(0, "MCW rank %d bound to %s: %s",
+                                    ORTE_PROC_MY_NAME->vpid, tmp1, tmp2);
+                    }
+                }
+                hwloc_bitmap_free(mycpus);
             }
-            free(map);
-        } else {
-            opal_output(0, "MCW rank %s not bound", ORTE_VPID_PRINT(ORTE_PROC_MY_NAME->vpid));
         }
         return ORTE_SUCCESS;
     } else if (NULL != getenv(OPAL_MCA_PREFIX"orte_externally_bound")) {
@@ -99,18 +123,43 @@ int orte_ess_base_proc_binding(void)
         OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, OPAL_PMIX_CPUSET,
                                        ORTE_PROC_MY_NAME, &orte_process_info.cpuset, OPAL_STRING);
 
-        /* see if we also have our locality - this is the one we require */
-        map = NULL;
-        OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, OPAL_PMIX_LOCALITY_STRING,
-                                       ORTE_PROC_MY_NAME, &map, OPAL_STRING);
-        if (OPAL_SUCCESS == ret && NULL != map) {
-            /* we were - no need to pull in the topology */
-            if (opal_hwloc_report_bindings || 4 < opal_output_get_verbosity(orte_ess_base_framework.framework_output)) {
-                opal_output(0, "MCW rank %s bound to %s",
-                            ORTE_VPID_PRINT(ORTE_PROC_MY_NAME->vpid), map);
+
+        if (opal_hwloc_report_bindings || 4 < opal_output_get_verbosity(orte_ess_base_framework.framework_output)) {
+            /* try to get our locality as well so we avoid pulling in the hwloc topology tree */
+            map = NULL;
+            OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, OPAL_PMIX_LOCALITY_STRING,
+                                           ORTE_PROC_MY_NAME, &map, OPAL_STRING);
+            if (OPAL_SUCCESS == ret && NULL != map) {
+                /* we were - no need to pull in the topology */
+                    opal_output(0, "MCW rank %s bound to %s",
+                                ORTE_VPID_PRINT(ORTE_PROC_MY_NAME->vpid), map);
+                free(map);
+            } else if (OPAL_SUCCESS == ret && NULL == map) {
+                opal_output(0, "MCW rank %s not bound", ORTE_VPID_PRINT(ORTE_PROC_MY_NAME->vpid));
+            } else {
+                /* they want the binding report, so we will have to obtain the
+                 * topology since locality wasn't given to us */
+                if (OPAL_SUCCESS != opal_hwloc_base_get_topology()) {
+                    /* there is nothing we can do, so just return */
+                    return ORTE_SUCCESS;
+                }
+                mycpus = hwloc_bitmap_alloc();
+                if (hwloc_get_cpubind(opal_hwloc_topology,
+                                      mycpus, HWLOC_CPUBIND_PROCESS) < 0) {
+                    opal_output(0, "MCW rank %d is not bound",
+                                ORTE_PROC_MY_NAME->vpid);
+                } else {
+                    char tmp1[1024], tmp2[1024];
+                    if (OPAL_ERR_NOT_BOUND == opal_hwloc_base_cset2str(tmp1, sizeof(tmp1), opal_hwloc_topology, mycpus)) {
+                        opal_output(0, "MCW rank %d is not bound (or bound to all available processors)", ORTE_PROC_MY_NAME->vpid);
+                    } else {
+                        opal_hwloc_base_cset2mapstr(tmp2, sizeof(tmp2), opal_hwloc_topology, mycpus);
+                        opal_output(0, "MCW rank %d bound to %s: %s",
+                                    ORTE_PROC_MY_NAME->vpid, tmp1, tmp2);
+                    }
+                }
+                hwloc_bitmap_free(mycpus);
             }
-            free(map);
-            return ORTE_SUCCESS;
         }
         /* the topology system will pickup the binding pattern */
     }
