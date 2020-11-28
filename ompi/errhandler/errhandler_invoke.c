@@ -48,7 +48,17 @@ int ompi_errhandler_invoke(ompi_errhandler_t *errhandler, void *mpi_object,
         if (state >= OMPI_MPI_STATE_INIT_COMPLETED &&
             state < OMPI_MPI_STATE_FINALIZE_PAST_COMM_SELF_DESTRUCT) {
             comm = (ompi_mpi_compat_mpi3)? &ompi_mpi_comm_world.comm: &ompi_mpi_comm_self.comm;
-            comm->error_handler->eh_comm_fn(&comm, &err_code, message, NULL);
+            switch (comm->error_handler->eh_lang) {
+               case OMPI_ERRHANDLER_LANG_C:
+                 comm->error_handler->eh_comm_fn(&comm, &err_code, message, NULL);
+                 break;
+
+               case OMPI_ERRHANDLER_LANG_FORTRAN:
+                  fortran_handle = OMPI_INT_2_FINT(comm->c_f_to_c_index);
+                  comm->error_handler->eh_fort_fn(&fortran_handle, &fortran_err_code);
+                  err_code = OMPI_FINT_2_INT(fortran_err_code);
+                  break;
+            }
         }
         else {
             if(NULL == ompi_initial_error_handler) {
