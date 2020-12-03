@@ -8,6 +8,8 @@
  * Copyright (c) 2016      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2016      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2020      Triad National Security, LLC. All rights 
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -663,9 +665,11 @@ static inline unsigned char pmi_base64_decsym (unsigned char value) {
 
 static inline void pmi_base64_encode_block (const unsigned char in[3], char out[4], int len) {
     out[0] = pmi_base64_encsym (in[0] >> 2);
-    out[1] = pmi_base64_encsym (((in[0] & 0x03) << 4) | ((in[1] & 0xf0) >> 4));
+    /* len == length of in[] - conditionals insure we don't reference uninitialized in[] values */
+    out[1] = 1 < len ? pmi_base64_encsym(((in[0] & 0x03) << 4) | ((in[1] & 0xf0) >> 4)) : pmi_base64_encsym((in[0] & 0x03) << 4);
     /* Cray PMI doesn't allow = in PMI attributes so pad with spaces */
-    out[2] = 1 < len ? pmi_base64_encsym(((in[1] & 0x0f) << 2) | ((in[2] & 0xc0) >> 6)) : ' ';
+    out[2] = 1 < len ? pmi_base64_encsym((in[1] & 0x0f) << 2) : ' ';
+    out[2] = 2 < len ? pmi_base64_encsym(((in[1] & 0x0f) << 2) | ((in[2] & 0xc0) >> 6)) : out[2];
     out[3] = 2 < len ? pmi_base64_encsym(in[2] & 0x3f) : ' ';
 }
 
