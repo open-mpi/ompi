@@ -12,7 +12,7 @@
 # Copyright (c) 2006-2016 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2013      Mellanox Technologies, Inc.
 #                         All rights reserved.
-# Copyright (c) 2015-2018 Intel, Inc.  All rights reserved.
+# Copyright (c) 2015-2020 Intel, Inc.  All rights reserved.
 # Copyright (c) 2015      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
@@ -192,7 +192,7 @@
 
 Summary: An extended/exascale implementation of PMI
 Name: %{?_name:%{_name}}%{!?_name:pmix}
-Version: 3.2.1
+Version: 3.2.2
 Release: 1%{?dist}
 License: BSD
 Group: Development/Libraries
@@ -229,10 +229,20 @@ APIs to eliminate some current restrictions that impact scalability, and (b) pro
 a reference implementation of the PMI-server that demonstrates the desired level of
 scalability.
 
+%if %{build_all_in_one_rpm}
 This RPM contains all the tools necessary to compile and link against PMIx.
+%endif
 
 # if build_all_in_one_rpm = 0, build split packages
 %if !%{build_all_in_one_rpm}
+%package devel
+Summary: PMIx developpement packages
+Requires: %{name}%{?_isa} = %{version}-%{release}
+
+%description devel
+This RPM contains headers and shared objects symbolic links necessary to compile
+and link against PMIx.
+
 %package libpmi
 Summary: PMI-1 and PMI-2 compatibility libraries
 Requires: %{name}%{?_isa} = %{version}-%{release}
@@ -245,6 +255,16 @@ into its PMIx equivalent. This is especially targeted at apps/libs that are
 hardcoded to dlopen “libpmi” or “libpmi2”.
 This package conflicts sith slurm-libpmi, which provides its own, incompatible 
 versions of libpmi.so and libpmi2.so.
+
+%package libpmi-devel
+Summary: PMI-1 and PMI-2 compatibility developpement libraryes
+Requires: %{name}%{?_isa} = %{version}-%{release}
+Requires: %{name}%{?_isa}-devel = %{version}-%{release}
+Conflicts: slurm-libpmi
+
+%description libpmi-devel
+The %{name}-libpmi-devel package contains headers and shared objects
+symbolic links of libpmi and libpmi2 libraries.
 %endif
 
 #############################################################################
@@ -513,17 +533,35 @@ test "x$RPM_BUILD_ROOT" != "x" && rm -rf $RPM_BUILD_ROOT
 
 # if building separate RPMs, split the compatibility libs
 %if !%{build_all_in_one_rpm}
+%exclude %{_includedir}
+%exclude %{_libdir}/*.so
+%exclude %{_libdir}/*.la
+%exclude %{_libdir}/libpmi.*
+%exclude %{_libdir}/libpmi2.*
+
+%files devel
+%{_includedir}
+%{_libdir}/*.so
+%{_libdir}/*.la
+
 %exclude %{_libdir}/libpmi.*
 %exclude %{_libdir}/libpmi2.*
 %exclude %{_includedir}/pmi.*
 %exclude %{_includedir}/pmi2.*
 
 %files libpmi
-%{_libdir}/libpmi.*
-%{_libdir}/libpmi2.*
-%{_includedir}/pmi.*
-%{_includedir}/pmi2.*
-%endif
+%{_libdir}/libpmi.so.*
+%{_libdir}/libpmi2.so.*
+
+%files libpmi-devel
+%{_libdir}/libpmi.so
+%{_libdir}/libpmi2.so
+%{_includedir}/pmi.h
+%{_includedir}/pmi2.h
+
+%endif # build_all_in_one_rpm
+
+
 
 #############################################################################
 #
@@ -531,6 +569,9 @@ test "x$RPM_BUILD_ROOT" != "x" && rm -rf $RPM_BUILD_ROOT
 #
 #############################################################################
 %changelog
+* Mon Sep 21 2020 Piotr Lesnicki <piotr.lesnicki@atos.net>
+- Enable separate -devel rpms
+
 * Tue Apr 30 2019 Kilian Cavalotti <kilian@stanford.edu>
 - Enable multiple RPMs build to allow backward compatibility PMI-1 and PMI-2
   libs to be built separate. "rpmbuild --define 'build_all_in_one_rpm 0' ..."
