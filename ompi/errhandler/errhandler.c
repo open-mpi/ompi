@@ -229,6 +229,7 @@ void ompi_errhandler_registration_callback(int status,
 
     default_errhandler_id = errhandler_ref;
     errtrk->status = status;
+    opal_atomic_wmb();
     errtrk->active = false;
 }
 
