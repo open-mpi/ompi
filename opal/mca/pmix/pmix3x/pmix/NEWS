@@ -26,6 +26,10 @@ Master (not on release branches yet)
 
 3.2.2 -- TBD
 ----------------------
+ - PR #1930: Remove man page setup as there are no manpages in v3.2
+ - PR #1933: Remove stale config command
+ - PR #1940: Fix dependency issue with hwloc
+ - PR #1941: .spec: add *-devel packages
 
 
 3.2.1 -- 12 Nov 2020
