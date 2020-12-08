@@ -52,6 +52,7 @@ static void model_registration_callback(int status,
 
     trk->status = status;
     interlibhandler_id = errhandler_ref;
+    opal_atomic_wmb();
     trk->active = false;
 }
 static void model_callback(int status,
