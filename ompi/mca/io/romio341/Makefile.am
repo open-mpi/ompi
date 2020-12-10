@@ -11,8 +11,8 @@
 #                         All rights reserved.
 # Copyright (c) 2010-2015 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2017      IBM Corporation.  All rights reserved.
-# Copyright (c) 2017      Research Organization for Information Science
-#                         and Technology (RIST). All rights reserved.
+# Copyright (c) 2017-2021 Research Organization for Information Science
+#                         and Technology (RIST).  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -27,29 +27,29 @@ include src/Makefile.extra
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
 # (for static builds).
 
-if MCA_BUILD_ompi_io_romio321_DSO
+if MCA_BUILD_ompi_io_romio341_DSO
 lib =
 lib_sources =
-component = mca_io_romio321.la
+component = mca_io_romio341.la
 component_sources = $(sources)
 else
-lib = libmca_io_romio321.la
+lib = libmca_io_romio341.la
 lib_sources = $(sources)
 component =
 component_sources =
 endif
 
-libs = $(top_builddir)/3rd-party/romio321/libromio_dist.la
+libs = $(top_builddir)/3rd-party/romio341/libromio_dist.la
 
 mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component)
-mca_io_romio321_la_SOURCES = $(component_sources)
-mca_io_romio321_la_LIBADD = $(libs)
-mca_io_romio321_la_DEPENDENCIES = $(libs)
-mca_io_romio321_la_LDFLAGS = -module -avoid-version
+mca_io_romio341_la_SOURCES = $(component_sources)
+mca_io_romio341_la_LIBADD = $(libs)
+mca_io_romio341_la_DEPENDENCIES = $(libs)
+mca_io_romio341_la_LDFLAGS = -module -avoid-version
 
 noinst_LTLIBRARIES = $(lib)
-libmca_io_romio321_la_SOURCES = $(lib_sources)
-libmca_io_romio321_la_LIBADD = $(libs)
-libmca_io_romio321_la_DEPENDENCIES = $(libs)
-libmca_io_romio321_la_LDFLAGS = -module -avoid-version
+libmca_io_romio341_la_SOURCES = $(lib_sources)
+libmca_io_romio341_la_LIBADD = $(libs)
+libmca_io_romio341_la_DEPENDENCIES = $(libs)
+libmca_io_romio341_la_LDFLAGS = -module -avoid-version
