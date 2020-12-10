@@ -12,8 +12,6 @@ noinst_HEADERS += mpi-io/mpioimpl.h mpi-io/mpioprof.h
 romio_mpi_sources +=          \
     mpi-io/close.c            \
     mpi-io/delete.c           \
-    mpi-io/file_c2f.c         \
-    mpi-io/file_f2c.c         \
     mpi-io/fsync.c            \
     mpi-io/get_amode.c        \
     mpi-io/get_atom.c         \

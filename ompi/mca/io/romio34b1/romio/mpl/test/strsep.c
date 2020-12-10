@@ -3,11 +3,11 @@
  *     See COPYRIGHT in top-level directory
  */
 
+#include "mpl.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
-#include "mpl.h"
 
 int main(void)
 {

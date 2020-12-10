@@ -444,16 +444,24 @@ void ADIOI_GEN_ReadStridedColl(ADIO_File fd, void *buf, int count,
                                MPI_Datatype datatype, int file_ptr_type,
                                ADIO_Offset offset, ADIO_Status * status, int
                                *error_code);
+#ifdef HAVE_MPI_GREQUEST_EXTENSIONS
 void ADIOI_GEN_IreadStridedColl(ADIO_File fd, void *buf, int count,
                                 MPI_Datatype datatype, int file_ptr_type,
                                 ADIO_Offset offset, MPI_Request * request, int *error_code);
+#else
+#define ADIOI_GEN_IreadStridedColl NULL
+#endif
 void ADIOI_GEN_WriteStridedColl(ADIO_File fd, const void *buf, int count,
                                 MPI_Datatype datatype, int file_ptr_type,
                                 ADIO_Offset offset, ADIO_Status * status, int
                                 *error_code);
+#ifdef HAVE_MPI_GREQUEST_EXTENSIONS
 void ADIOI_GEN_IwriteStridedColl(ADIO_File fd, const void *buf, int count,
                                  MPI_Datatype datatype, int file_ptr_type,
                                  ADIO_Offset offset, MPI_Request * request, int *error_code);
+#else
+#define ADIOI_GEN_IwriteStridedColl NULL
+#endif
 void ADIOI_Calc_my_off_len(ADIO_File fd, int bufcount, MPI_Datatype
                            datatype, int file_ptr_type, ADIO_Offset
                            offset, ADIO_Offset ** offset_list_ptr, ADIO_Offset
