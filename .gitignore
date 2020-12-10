@@ -187,18 +187,19 @@ ompi/mca/coll/sm/coll-sm-version.h*
 
 ompi/mca/crcp/ompi_crcp.7
 
-ompi/mca/io/romio321/romio/adio/include/romioconf.h
-ompi/mca/io/romio321/romio/include/mpio.h
-ompi/mca/io/romio321/romio/localdefs
-ompi/mca/io/romio321/romio/test/fcoll_test.f
-ompi/mca/io/romio321/romio/test/fmisc.f
-ompi/mca/io/romio321/romio/test/fperf.f
-ompi/mca/io/romio321/romio/test/large_file.c
-ompi/mca/io/romio321/romio/test/misc.c
-ompi/mca/io/romio321/romio/test/pfcoll_test.f
-ompi/mca/io/romio321/romio/test/runtests
-ompi/mca/io/romio321/romio/util/romioinstall
-ompi/mca/io/romio321/romio/test/syshints.c
+
+ompi/mca/io/romio34/romio/adio/include/romioconf.h
+ompi/mca/io/romio34/romio/adio/include/romioconf.h.in
+ompi/mca/io/romio34/romio/include/mpio.h
+ompi/mca/io/romio34/romio/localdefs
+ompi/mca/io/romio34/romio/mpl/confdb/test-driver
+ompi/mca/io/romio34/romio/mpl/include/config.h
+ompi/mca/io/romio34/romio/mpl/include/config.h.in
+ompi/mca/io/romio34/romio/mpl/include/mplconfig.h
+ompi/mca/io/romio34/romio/mpl/include/mpl_timer.h
+ompi/mca/io/romio34/romio/mpl/localdefs
+ompi/mca/io/romio34/romio/test/runtests
+ompi/mca/io/romio34/romio/util/romioinstall
 
 ompi/mca/osc/monitoring/osc_monitoring_template_gen.h
 
