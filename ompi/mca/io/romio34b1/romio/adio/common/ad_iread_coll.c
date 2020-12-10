@@ -538,6 +538,7 @@ static void ADIOI_Iread_and_exch(ADIOI_NBC_Request * nbc_req, int *error_code)
     MPI_Datatype datatype = vars->datatype;
     int nprocs = vars->nprocs;
     ADIOI_Access *others_req = vars->others_req;
+    MPI_Aint lb;
 
     /* Read in sizes of no more than coll_bufsize, an info parameter.
      * Send data to appropriate processes.
@@ -633,7 +634,7 @@ static void ADIOI_Iread_and_exch(ADIOI_NBC_Request * nbc_req, int *error_code)
     if (!vars->buftype_is_contig) {
         vars->flat_buf = ADIOI_Flatten_and_find(datatype);
     }
-    MPI_Type_extent(datatype, &vars->buftype_extent);
+    MPI_Type_get_extent(datatype, &lb, &vars->buftype_extent);
 
     vars->done = 0;
     vars->off = st_loc;
@@ -750,7 +751,7 @@ static void ADIOI_Iread_and_exch_l1_begin(ADIOI_NBC_Request * nbc_req, int *erro
                     count[i]++;
                     ADIOI_Assert((((ADIO_Offset) (uintptr_t) read_buf) + req_off - real_off) ==
                                  (ADIO_Offset) (uintptr_t) (read_buf + req_off - real_off));
-                    MPI_Address(read_buf + req_off - real_off, &(others_req[i].mem_ptrs[j]));
+                    MPI_Get_address(read_buf + req_off - real_off, &(others_req[i].mem_ptrs[j]));
                     ADIOI_Assert((real_off + real_size - req_off) ==
                                  (int) (real_off + real_size - req_off));
                     send_size[i] +=
