@@ -62,8 +62,9 @@ libforce_usempif08_internal_modules_to_be_built_la_SOURCES = \
         pmpi-f08-interfaces.F90 \
         mpi-f08-interfaces-callbacks.F90
 
-noinst_HEADERS = mpi-f08-interfaces.h mpi-f08-rename.h
+nodist_noinst_HEADERS = mpi-f08-interfaces.h
 
+noinst_HEADERS = mpi-f08-rename.h
 
 libforce_usempi_internal_modules_to_be_built.la: libusempif08_internal_modules.la
 

@@ -13,13 +13,13 @@ ompidir = $(ompiincludedir)/mpiext
 
 # Just like noinst_LTLIBRARIES, set this macro to empty and
 # conditionally add to it later.
-ompi_HEADERS =
+nodist_ompi_HEADERS =
 
 # Use the Automake conditional to know if we're building the mpif.h
 # bindings.
 if OMPI_BUILD_FORTRAN_MPIFH_BINDINGS
 
 # This is the header file that is installed.
-ompi_HEADERS += mpiext_shortfloat_mpifh.h
+nodist_ompi_HEADERS += mpiext_shortfloat_mpifh.h
 
 endif
