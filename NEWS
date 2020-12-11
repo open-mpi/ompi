@@ -59,7 +59,7 @@ included in the vX.Y.Z section and be denoted as:
 
 4.0.6 -- December, 2020
 -----------------------
-- Update embedded PMIx to 3.2.1.  This update addresses several
+- Update embedded PMIx to 3.2.2.  This update addresses several
   MPI_COMM_SPAWN problems.
 - Fix a symbol name collision when using the Cray compiler to build
   Open SHMEM.  Thanks to Pak Lui for reporting and fixing.
