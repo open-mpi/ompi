@@ -129,8 +129,8 @@ ompi_coll_base_scatter_intra_binomial(
         /* non-root, non-leaf nodes, allocate temp buffer for recv
          * the most we need is rcount*size/2 */
         ompi_datatype_type_extent(rdtype, &rextent);
-        rsize = opal_datatype_span(&rdtype->super, (int64_t)rcount * size, &rgap);
-        tempbuf = (char *)malloc(rsize / 2);
+        rsize = opal_datatype_span(&rdtype->super, (int64_t)rcount * size / 2, &rgap);
+        tempbuf = (char *)malloc(rsize);
         if (NULL == tempbuf) {
             err = OMPI_ERR_OUT_OF_RESOURCE; line = __LINE__; goto err_hndl;
         }
