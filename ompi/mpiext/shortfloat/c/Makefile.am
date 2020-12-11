@@ -14,4 +14,4 @@
 ompidir = $(ompiincludedir)/mpiext
 
 # This is the header file that is installed.
-ompi_HEADERS = mpiext_shortfloat_c.h
+nodist_ompi_HEADERS = mpiext_shortfloat_c.h

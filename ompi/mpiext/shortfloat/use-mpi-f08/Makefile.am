@@ -20,6 +20,6 @@ if OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS
 # mpiext_shortfloat_usempif08.h is automatically slurped up into the
 # mpi_f08_ext module.  It must be listed so that it is included in
 # dist tarballs.
-noinst_HEADERS = mpiext_shortfloat_usempif08.h
+nodist_noinst_HEADERS = mpiext_shortfloat_usempif08.h
 
 endif
