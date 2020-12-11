@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2014-2019 Research Organization for Information Science
+ * Copyright (c) 2014-2020 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
@@ -52,8 +52,8 @@ struct ompi_coll_base_nbc_request_t {
             opal_object_t *objs[2];
         } objs;
         struct {
-            ompi_datatype_t **stypes;
-            ompi_datatype_t **rtypes;
+            ompi_datatype_t * const *stypes;
+            ompi_datatype_t * const *rtypes;
         } vecs;
     } data;
 };
@@ -124,8 +124,8 @@ int ompi_coll_base_retain_datatypes( ompi_request_t *request,
                                      ompi_datatype_t *rtype);
 
 int ompi_coll_base_retain_datatypes_w( ompi_request_t *request,
-                                       ompi_datatype_t *stypes[],
-                                       ompi_datatype_t *rtypes[]);
+                                       ompi_datatype_t * const stypes[],
+                                       ompi_datatype_t * const rtypes[]);
 
 END_C_DECLS
 #endif /* MCA_COLL_BASE_UTIL_EXPORT_H */

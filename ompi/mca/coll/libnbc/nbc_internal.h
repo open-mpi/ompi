@@ -516,6 +516,11 @@ static inline int NBC_Unpack(void *src, int srccount, MPI_Datatype srctype, void
   int res;
   ptrdiff_t ext, lb;
 
+  res = ompi_datatype_pack_external_size("external32", srccount, srctype, &size);
+  if (OMPI_SUCCESS != res) {
+    NBC_Error ("MPI Error in ompi_datatype_pack_external_size() (%i)", res);
+    return res;
+  }
 #if OPAL_CUDA_SUPPORT
   if(NBC_Type_intrinsic(srctype) && !(opal_cuda_check_bufs((char *)tgt, (char *)src))) {
 #else
@@ -523,7 +528,6 @@ static inline int NBC_Unpack(void *src, int srccount, MPI_Datatype srctype, void
 #endif /* OPAL_CUDA_SUPPORT */
     /* if we have the same types and they are contiguous (intrinsic
      * types are contiguous), we can just use a single memcpy */
-    res = ompi_datatype_pack_external_size("external32", srccount, srctype, &size);
     res = ompi_datatype_get_extent (srctype, &lb, &ext);
     if (OMPI_SUCCESS != res) {
       NBC_Error ("MPI Error in MPI_Type_extent() (%i)", res);

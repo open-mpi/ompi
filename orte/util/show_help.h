@@ -78,7 +78,7 @@ ORTE_DECLSPEC void orte_show_help_finalize(void);
  * (e.g., cray).
  */
 ORTE_DECLSPEC int orte_show_help(const char *filename, const char *topic,
-                                 bool want_error_header, ...);
+                                 int want_error_header, ...);
 
 /**
  * Exactly the same as orte_show_help, but pass in a rendered string,

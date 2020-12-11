@@ -44,7 +44,7 @@ static opal_event_t ipc_event;
 static struct timeval ack_timeout;
 static opal_list_t udp_port_listeners;
 static opal_list_t ipc_listeners;
-static volatile int ipc_accepts = 0;
+static volatile uint32_t ipc_accepts = 0;
 /* JMS The pings_pending and ping_results should probably both be hash
    tables for more efficient lookups */
 static opal_list_t pings_pending;
