@@ -1,0 +1,73 @@
+Schedule->data - the old way
+
+Do lock(exclusive) on local window during init procedure
+
+Round 1: do unlock on local
+Round 2: lockall(shared) on all remotes
+Round 3: do put/get to/from all remotes
+Round 4: unlockall on all remotes
+Round 5: do lock(exclusive) on local
+
+do unlock on local window during free procedure
+
+Problem: assumes near-lock-step - all remotes must do lockall before local does lock(exclusive), but nothing guarantees that
+Problem: lockall is non-local and breaches the MPI operation semantics of MPI_START;while(!flag) MPI_TEST(&flag);
+Problem: unlockall is non-local and breaches the MPI operation semantics of MPI_START;while(!flag) MPI_TEST(&flag);
+Problem: lock(exclusive) is non-local and breaches the MPI operation semantics of MPI_START;while(!flag) MPI_TEST(&flag);
+
+--
+
+Schedule->flag&round-based - the hybrid way
+
+In INIT procedure
+  reset flag(FIN) for all remotes in init procedure
+  reset flag(CTS) for all remotes in init procedure // use RTS  here for osc_gather-based/rget-based
+  init  rput(CTS) for all remotes in init procedure // use RTS  here for osc_gather-based/rget-based
+  init rput(data) for all remotes in init procedure // use rget here for osc_gather-based/rget-based
+  init  rput(FIN) for all remotes in init procedure
+
+In SCHEDULE object
+  Round 0: await rput(FIN) for all remotes
+  Round 1: start rput(CTS) for all remotes  // rput(RTS) for osc_gather-based
+  Round 2: flag-based, auto-reset, multiple CTS flags, one per remote // or RTS
+  Round 3: start rput(data) for all remotes // rget(data) for osc_gather-based
+  Round 4: await rput(data) for all remotes // rget(data) for osc_gather-based
+  Round 5: await rput(CTS) for all remotes  // rput(RTS) for osc_gather-based
+  Round 6: start rput(FIN) for all remotes
+  Round 7: flag-based, auto-reset, multiple FIN flags, one per remote
+
+In FREE procedure
+  await rput(FIN) for all remotes
+  start win_free
+  free memory for flags and schedule
+
+--
+
+Schedule->flag&trigger-based - the new way
+
+In INIT procedure
+  For each remote
+    // FLAG means CTS iff move is rput or RTS iff move is rget
+    create trigger REQ_ACTIVE, posthook start:rput(FLAG)
+    create trigger flag(FLAG), posthook start:move(data)
+    create trigger move(data), posthook start:rput(DONE)
+    create trigger rput(FLAG), posthook no-op
+    create trigger flag(DONE), posthook reset:flag(DONE)
+    create trigger rput(DONE), posthook no-op
+
+In START procedure
+  set step_count = #triggers = #trigger_types * #remotes
+  set REQ_ACTIVE = true
+
+In TEST procedure
+  For each trigger
+    if triggered then do posthook and decrement step_count
+  If step_count == 0 then
+    set REQ_ACTIVE = FALSE
+
+In FREE procedure
+  start win_free
+  free memory for flags and schedule
+
+--
+
