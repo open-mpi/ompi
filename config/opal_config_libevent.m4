@@ -185,7 +185,7 @@ AC_DEFUN([_OPAL_CONFIG_LIBEVENT_INTERNAL], [
     # fake being GCC (I'm looking at you, PGI).
     OPAL_SUBDIR_ENV_CLEAN([opal_libevent_configure])
     PAC_CONFIG_SUBDIR_ARGS([3rd-party/libevent_directory],
-       [--disable-dns --disable-http --disable-rpc --disable-openssl --enable-thread-support --disable-evport --disable-gcc-warnings],
+       [--disable-dns --disable-http --disable-rpc --disable-openssl --enable-thread-support --disable-evport --disable-gcc-warnings --disable-libevent-regress],
        [], [subconfig_happy=1], [subconfig_happy=0])
     OPAL_SUBDIR_ENV_RESTORE([opal_libevent_configure])
 
