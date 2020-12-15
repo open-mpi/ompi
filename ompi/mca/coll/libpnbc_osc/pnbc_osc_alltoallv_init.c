@@ -40,6 +40,24 @@ int ompi_coll_libpnbc_osc_alltoallv_init(const void* sendbuf, const int *sendcou
     return OMPI_SUCCESS;
 }
 
+// pull implies move means get and FLAG means RTS (ready to send)
+static inline int a2av_sched_trigger_pull(int crank, int csize, PNBC_OSC_Schedule *schedule,
+//                                          FLAG_t **flags, int *fsize, int *req_count,
+                                          const void *sendbuf, const int *sendcounts, const int *sdispls,
+                                          MPI_Aint sendext, MPI_Datatype sendtype,
+                                                void *recvbuf, const int *recvcounts, const int *rdispls,
+                                          MPI_Aint recvext, MPI_Datatype recvtype,
+                                          MPI_Aint *abs_sdispls_other);
+
+// push implies move means put and FLAG means CTS (clear to send)
+static inline int a2av_sched_trigger_push(int crank, int csize, PNBC_OSC_Schedule *schedule,
+                                          void *flags, int *fsize, int *req_count,
+                                          const void *sendbuf, const int *sendcounts, const int *sdispls,
+                                          MPI_Aint sendext, MPI_Datatype sendtype,
+                                                void *recvbuf, const int *recvcounts, const int *rdispls,
+                                          MPI_Aint recvext, MPI_Datatype recvtype,
+                                          MPI_Aint *abs_rdispls_other);
+
 static inline int a2av_sched_linear_rget(int crank, int csize, PNBC_OSC_Schedule *schedule,
                                          void *flags, int *fsize, int *req_count,
                                          const void *sendbuf, const int *sendcounts, const int *sdispls,
@@ -260,6 +278,70 @@ static int pnbc_osc_alltoallv_init(const void* sendbuf, const int *sendcounts, c
   return OMPI_SUCCESS;
 }
 
+static inline int a2av_sched_trigger_pull(int crank, int csize, PNBC_OSC_Schedule *schedule,
+//                                          FLAG_t **flags, int *fsize, int *req_count,
+                                          const void *sendbuf, const int *sendcounts, const int *sdispls,
+                                          MPI_Aint sendext, MPI_Datatype sendtype,
+                                                void *recvbuf, const int *recvcounts, const int *rdispls,
+                                          MPI_Aint recvext, MPI_Datatype recvtype,
+                                          MPI_Aint *abs_sdispls_other) {
+  // pull implies move means get and FLAG means RTS (ready to send)
+  int res = OMPI_SUCCESS;
+
+  schedule = OBJ_NEW(PNBC_OSC_Schedule);
+
+  schedule->triggers = malloc(6 * csize * sizeof(triggerable_t));
+  triggerable_t *triggers_phase0 = &(schedule->triggers[0 * csize * sizeof(triggerable_t)]);
+  triggerable_t *triggers_phase1 = &(schedule->triggers[1 * csize * sizeof(triggerable_t)]);
+  triggerable_t *triggers_phase2 = &(schedule->triggers[2 * csize * sizeof(triggerable_t)]);
+  triggerable_t *triggers_phase3 = &(schedule->triggers[3 * csize * sizeof(triggerable_t)]);
+  triggerable_t *triggers_phase4 = &(schedule->triggers[4 * csize * sizeof(triggerable_t)]);
+  triggerable_t *triggers_phase5 = &(schedule->triggers[5 * csize * sizeof(triggerable_t)]);
+
+  schedule->flags = malloc(2 * csize * sizeof(FLAG_t));
+  FLAG_t *flags_FLAG = &(schedule->flags[0 * csize * sizeof(FLAG_t)]);
+  FLAG_t *flags_DONE = &(schedule->flags[1 * csize * sizeof(FLAG_t)]);
+
+  schedule->requests = malloc(3 * csize * sizeof(MPI_Request*));
+  MPI_Request **requests_rputFLAG = &(schedule->requests[0 * csize * sizeof(MPI_Request*)]);
+  MPI_Request **requests_moveData = &(schedule->requests[1 * csize * sizeof(MPI_Request*)]);
+  MPI_Request **requests_rputDONE = &(schedule->requests[2 * csize * sizeof(MPI_Request*)]);
+
+  for (int p=0;p<csize;++p) {
+    int orank = (crank+p)%csize;
+    triggers_phase0[orank].trigger = &(schedule->triggers_active);
+    triggers_phase1[orank].trigger = &flags_FLAG[orank];
+    triggers_phase2[orank].trigger = &requests_moveData[orank];
+    triggers_phase3[orank].trigger = &requests_rputFLAG[orank];
+    triggers_phase4[orank].trigger = &flags_DONE[orank];
+    triggers_phase5[orank].trigger = &requests_rputDONE[orank];
+
+  }
+
+  // schedule a copy for the local MPI process, if needed
+  if (recvcounts[crank] != 0) {
+  }
+
+  return res;
+}
+
+static inline int a2av_sched_trigger_push(int crank, int csize, PNBC_OSC_Schedule *schedule,
+                                          void *flags, int *fsize, int *req_count,
+                                          const void *sendbuf, const int *sendcounts, const int *sdispls,
+                                          MPI_Aint sendext, MPI_Datatype sendtype,
+                                                void *recvbuf, const int *recvcounts, const int *rdispls,
+                                          MPI_Aint recvext, MPI_Datatype recvtype,
+                                          MPI_Aint *abs_rdispls_other) {
+  // push implies move means put and FLAG means CTS (clear to send)
+  int res = OMPI_SUCCESS;
+
+  // schedule a copy for the local MPI process, if needed
+  if (sendcounts[crank] != 0) {
+  }
+
+  return res;
+}
+
 static inline int a2av_sched_linear_rget(int crank, int csize, PNBC_OSC_Schedule *schedule,
                                          void *flags, int *fsize, int *req_count,
                                          const void *sendbuf, const int *sendcounts, const int *sdispls,
@@ -271,7 +353,7 @@ static inline int a2av_sched_linear_rget(int crank, int csize, PNBC_OSC_Schedule
   char *rbuf, *sbuf;
 
   // schedule a copy for the local MPI process, if needed
-  if (sendcounts[crank] != 0) {
+  if (recvcounts[crank] != 0) {
     sbuf = (char *) sendbuf + sdispls[crank] * sendext;
     rbuf = (char *) recvbuf + rdispls[crank] * recvext;
     res = PNBC_OSC_Sched_copy(sbuf, false, sendcounts[crank], sendtype,

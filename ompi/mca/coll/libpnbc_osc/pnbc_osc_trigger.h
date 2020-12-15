@@ -1,4 +1,6 @@
 
+typedef int FLAG_t;
+
 enum TRIGGER_ACTION_STATE {
   TRIGGER_PENDING=-1,
   ACTION_SUCCESS=0,
@@ -15,7 +17,7 @@ typedef void
   (*trigger_reset_fn_t)
   (void*);
 
-struct triggerable_thing {
+struct triggerable_t {
   trigger_triggered_fn_t triggered;
   void *trigger;
   trigger_action_cb_fn_t action;
@@ -23,11 +25,11 @@ struct triggerable_thing {
   trigger_reset_fn_t reset;
   int auto_reset;
 };
-typedef struct triggerable_thing triggerable_thing;
+typedef struct triggerable_t triggerable_t;
 
-void trigger_reset(triggerable_thing thing);
+void trigger_reset(triggerable_t thing);
 
-enum TRIGGER_ACTION_STATE trigger_test(triggerable_thing thing);
+enum TRIGGER_ACTION_STATE trigger_test(triggerable_t thing);
 
 /* some built-in trigger functions */
 int triggered_bynonzero_int(void *trigger);

@@ -29,6 +29,7 @@
 
 #include "opal/class/opal_object.h"
 #include "ompi/request/request.h"
+#include "pnbc_osc_trigger.h"
 
 BEGIN_C_DECLS
 
@@ -137,6 +138,11 @@ struct PNBC_OSC_Schedule {
   long row_offset;          //DJH//should be obsolete
   int current_round_offset; //DJH//should be obsolete
   char *data;               //DJH//should be obsolete, except for nbc steps
+  int triggers_active;      // for trigger-based schedule
+  int triggers_length;      // for trigger-based schedule
+  triggerable_t *triggers;  // for trigger-based schedule
+  FLAG_t *flags;            // for trigger-based schedule
+  MPI_Request **requests;   // for trigger-based schedule
   int number_of_rounds;     // length of array: rounds
   int restart_round;        // index into array: rounds
   PNBC_OSC_Round *rounds[]; // list of rounds (polymorphic)
