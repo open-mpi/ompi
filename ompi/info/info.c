@@ -17,7 +17,7 @@
  * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
- * Copyright (c) 2019      Triad National Security, LLC. All rights
+ * Copyright (c) 2019-2020 Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2020      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
@@ -138,7 +138,8 @@ int ompi_mpiinfo_init(void)
     }
 
     /* local host name */
-    opal_info_set(&ompi_mpi_info_env.info.super, "host", ompi_process_info.nodename);
+    cptr = opal_gethostname();
+    opal_info_set(&ompi_mpi_info_env.info.super, "host", cptr);
 
 #ifdef HAVE_SYS_UTSNAME_H
     {
