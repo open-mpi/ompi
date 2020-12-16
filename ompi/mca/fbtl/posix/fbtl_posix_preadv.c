@@ -43,8 +43,27 @@ ssize_t mca_fbtl_posix_preadv (ompio_file_t *fh )
     }
     
     if ( fh->f_num_of_io_entries > 1 ) {
-        bool do_data_sieving = false;
-        
+        bool do_data_sieving = true;
+
+        size_t avg_gap_size=0;
+        size_t avg_block_size = 0;
+        off_t prev_offset = (off_t)fh->f_io_array[0].offset;
+        int i;
+        for ( i=0; i< fh->f_num_of_io_entries; i++ ) {
+            avg_block_size += fh->f_io_array[i].length;
+            avg_gap_size   += (size_t)((off_t)fh->f_io_array[i].offset - prev_offset);
+            prev_offset     = (off_t)fh->f_io_array[i].offset;
+        }
+        avg_block_size = avg_block_size / fh->f_num_of_io_entries;
+        avg_gap_size = avg_gap_size / fh->f_num_of_io_entries;
+
+        if ( mca_fbtl_posix_read_datasieving == false       ||
+             avg_gap_size == 0                              ||
+             avg_block_size > mca_fbtl_posix_max_block_size ||
+             avg_gap_size   > mca_fbtl_posix_max_gap_size     ) {
+            do_data_sieving = false;
+        }
+
         if ( do_data_sieving) {
             return mca_fbtl_posix_preadv_datasieving (fh);
         }
@@ -53,7 +72,7 @@ ssize_t mca_fbtl_posix_preadv (ompio_file_t *fh )
         }
     }
     else {
-        // Case num_of_io_entries == 1
+        // i.e. fh->f_num_of_io_entries == 1
         ret = mca_fbtl_posix_lock ( &lock, fh, F_RDLCK, (off_t)fh->f_io_array[0].offset,
                                     (off_t)fh->f_io_array[0].length, OMPIO_LOCK_ENTIRE_REGION ); 
         if ( 0 < ret ) {
@@ -63,7 +82,8 @@ ssize_t mca_fbtl_posix_preadv (ompio_file_t *fh )
             return OMPI_ERROR;
         }
         
-        ret_code = pread(fh->fd, fh->f_io_array[0].memory_address, fh->f_io_array[0].length, (off_t)fh->f_io_array[0].offset );
+        ret_code = pread(fh->fd, fh->f_io_array[0].memory_address, fh->f_io_array[0].length,
+                         (off_t)fh->f_io_array[0].offset );
         mca_fbtl_posix_unlock ( &lock, fh );
         if ( ret_code == -1 ) {
             opal_output(1, "mca_fbtl_posix_preadv: error in (p)read(v):%s", strerror(errno));
