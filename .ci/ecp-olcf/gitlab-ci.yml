@@ -1,0 +1,117 @@
+variables:
+  SCHEDULER_PARAMETERS: "-P STF010 -W 10 -nnodes 1 -alloc_flags gpumps"
+  GIT_STRATEGY: clone
+  EXTERNAL_WORKDIR: /gpfs/wolf/proj-shared/stf010/ci/ompi-x/naughtont3-ompi/${CI_JOB_ID}
+  # The TMPDIR does not have the jobid, so spans instances/sections
+  EXTERNAL_TMPDIR: /gpfs/wolf/proj-shared/stf010/ci/ompi-x/naughtont3-ompi
+
+
+#### Build and Test using GPFS ####
+stages:
+  - build-nobatch-gpfs
+  - test-gpfs
+
+
+build-nobatch-gpfs:
+  stage: build-nobatch-gpfs
+  before_script:
+    - echo "NOTE - Starting GPFS build before-script"
+    # Use work directory on shared filesystem accessible to compute nodes
+    - module load gcc/6.4.0
+    - module load git
+    - module use /ccsopen/home/tjn3/ums/ompix/gcc/6.4.0/modules
+    - module unload spectrum-mpi xalt
+    - module load pandoc
+    # We get cuda from ucx load
+    - module load ucx/1.9.0
+    - module list
+    - git clone ${CI_PROJECT_DIR} ${EXTERNAL_WORKDIR}/source
+    - cd ${EXTERNAL_WORKDIR}/source
+    - git submodule update --init
+    - git checkout --detach ${CI_COMMIT_SHA}
+  script:
+    - echo "NOTE - Starting GPFS build script"
+    - module list
+    - pwd
+    - ./autogen.pl
+    - ./configure --prefix=${EXTERNAL_WORKDIR}/install_test --with-libevent=internal
+    - make -j 8 install
+    - make check
+    - export PATH=${EXTERNAL_WORKDIR}/install_test/bin:$PATH
+    - cd examples/
+    - make
+    - echo ${EXTERNAL_WORKDIR} > ${EXTERNAL_TMPDIR}/path.txt
+    #- ls -l ${EXTERNAL_TMPDIR}/path.txt
+    - cat ${EXTERNAL_TMPDIR}/path.txt
+    - echo "NOTE - End GPFS build script"
+  after_script:
+    # clean up the directory
+    #- rm -rf ${EXTERNAL_WORKDIR}
+  artifacts:
+      name: "$CI_JOB_NAME-$CI_COMMIT_REF_NAME"
+      untracked: true
+      paths:
+        - examples
+      expire_in: 1 week
+  tags:
+    - nobatch
+
+
+
+test-gpfs:
+  stage: test-gpfs
+  dependencies:
+    - build-nobatch-gpfs
+  before_script:
+    - echo "NOTE - Starting GPFS test before-script"
+    - module load gcc/6.4.0
+    - module load git
+    - module use /ccsopen/home/tjn3/ums/ompix/gcc/6.4.0/modules
+    - module unload spectrum-mpi xalt
+    - module load pandoc
+    # We get cuda from ucx load
+    - module load ucx/1.9.0
+    - module list
+    - cd /gpfs/wolf/proj-shared/stf010/ci/ompi-x/naughtont3-ompi
+    - echo "NOTE - End GPFS test before-script"
+  script:
+    - echo "NOTE - Starting GPFS test script"
+    - module list
+    - pwd
+    - cat ${EXTERNAL_TMPDIR}/path.txt
+    - BUILD_DIR=`cat ${EXTERNAL_TMPDIR}/path.txt`
+    #- ls -l ${EXTERNAL_TMPDIR}/path.txt
+    #- ls -l $BUILD_DIR
+    #- ls -l $BUILD_DIR/install_test
+    #- ls -l $BUILD_DIR/source/examples
+    - echo "NOTE - Extend PATH with ${BUILD_DIR}/install_test/bin"
+    - export PATH=$BUILD_DIR/install_test/bin:$PATH
+    - which mpirun
+    - echo "----Our hosts---"
+    - cat $LSB_DJOB_HOSTFILE | sort | uniq
+    - echo "----------------"
+    # Move to previously compiled examples directory in sources tree
+    - cd ${BUILD_DIR}/source/examples
+    #- "jsrun -n1 hostname"
+    #- ldd ./hello_c
+    - MPIRUN_ARGS="--hostfile $LSB_DJOB_HOSTFILE --np 4 --map-by :NOLOCAL --bind-to core"
+    - mpirun $MPIRUN_ARGS hostname
+    - mpirun $MPIRUN_ARGS ./hello_c
+    - mpirun $MPIRUN_ARGS ./ring_c
+    - mpirun $MPIRUN_ARGS ./hello_mpifh
+    - mpirun $MPIRUN_ARGS ./ring_mpifh
+    - mpirun $MPIRUN_ARGS ./hello_usempi
+    - mpirun $MPIRUN_ARGS ./ring_usempi
+    - mpirun $MPIRUN_ARGS ./hello_usempif08
+    - mpirun $MPIRUN_ARGS ./ring_usempif08
+    - mpirun $MPIRUN_ARGS ./connectivity_c
+    - echo "NOTE - End GPFS test script"
+  after_script:
+    # clean up directory
+    - cd /gpfs/wolf/proj-shared/stf010/ci/ompi-x/naughtont3-ompi
+    #- ls -l ${EXTERNAL_TMPDIR}/path.txt
+    - BUILD_DIR=`cat ${EXTERNAL_TMPDIR}/path.txt`
+    # TJN: disable for now
+    #- rm -rf $BUILD_DIR
+  tags:
+    - batch
