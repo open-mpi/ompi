@@ -158,6 +158,7 @@ ssize_t mca_fbtl_posix_preadv_datasieving (ompio_file_t *fh)
                         ret, strerror(errno));
             /* Just in case some part of the lock worked */
             mca_fbtl_posix_unlock ( &lock, fh);
+            free ( temp_buf);
             return OMPI_ERROR;
         }
         
@@ -165,6 +166,7 @@ ssize_t mca_fbtl_posix_preadv_datasieving (ompio_file_t *fh)
         mca_fbtl_posix_unlock ( &lock, fh);
         if ( ret_code == -1 ) {
             opal_output(1, "mca_fbtl_posix_preadv_datasieving: error in (p)read(v):%s", strerror(errno));
+            free ( temp_buf);
             return OMPI_ERROR;
         }
         

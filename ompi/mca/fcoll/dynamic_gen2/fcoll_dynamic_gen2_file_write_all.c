@@ -736,11 +736,15 @@ static int write_init (ompio_file_t *fh, int aggregator, mca_io_ompio_aggregator
         
 
     if ( aggregator == fh->f_rank && aggr_data->prev_num_io_entries) {
-        while ( aggr_data->prev_bytes_to_write > 0 ) {                    
+        while ( aggr_data->prev_bytes_to_write > 0 ) {
+            ssize_t tret;
             aggr_data->prev_bytes_to_write -= mca_fcoll_dynamic_gen2_split_iov_array (fh, aggr_data->prev_io_array, 
                                                                                       aggr_data->prev_num_io_entries, 
                                                                                       &last_array_pos, &last_pos );
-            if ( 0 >  fh->f_fbtl->fbtl_pwritev (fh)) {
+            fh->f_flags |= OMPIO_COLLECTIVE_OP;
+            tret = fh->f_fbtl->fbtl_pwritev (fh);
+            fh->f_flags &= ~OMPIO_COLLECTIVE_OP;            
+            if ( 0 > tret ) {
                 free ( aggr_data->prev_io_array);
                 opal_output (1, "dynamic_gen2_write_all: fbtl_pwritev failed\n");
                 ret = OMPI_ERROR;

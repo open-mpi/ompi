@@ -67,6 +67,7 @@
 #define OMPIO_LOCK_NEVER             0x00000100
 #define OMPIO_LOCK_NOT_THIS_OP       0x00000200
 #define OMPIO_DATAREP_NATIVE         0x00000400
+#define OMPIO_COLLECTIVE_OP          0x00000800
 
 #define OMPIO_ROOT                    0
 
