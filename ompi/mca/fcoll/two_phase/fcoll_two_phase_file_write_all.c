@@ -185,6 +185,7 @@ mca_fcoll_two_phase_file_write_all (ompio_file_t *fh,
 				                  count,
 				                  buf,
 				                  &max_data,
+                                                  fh->f_mem_convertor,
 				                  &temp_iov,
 				                  &iov_count);
 	if (OMPI_SUCCESS != ret ){

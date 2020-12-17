@@ -185,6 +185,7 @@ int mca_fcoll_vulcan_file_write_all (ompio_file_t *fh,
                                               count,
                                               buf,
                                               &max_data,
+                                              fh->f_mem_convertor,
                                               &decoded_iov,
                                               &iov_count);
     if (OMPI_SUCCESS != ret ){
@@ -770,7 +771,9 @@ static int write_init (ompio_file_t *fh,
             }
         }
         else {
+            fh->f_flags |= OMPIO_COLLECTIVE_OP;
             ret_temp = fh->f_fbtl->fbtl_pwritev(fh);
+            fh->f_flags &= ~OMPIO_COLLECTIVE_OP;
             if(0 > ret_temp) {
                 opal_output (1, "vulcan_write_all: fbtl_pwritev failed\n");
                 ret = ret_temp;
@@ -835,7 +838,7 @@ static int shuffle_init ( int index, int cycles, int aggregator, int rank, mca_i
 
         
         for(l=0;l<data->procs_per_group;l++){
-            data->disp_index[l] =  1;
+            data->disp_index[l] = 0;
             
             if ( data->max_disp_index[l] == 0 ) {
                 data->blocklen_per_process[l] = (int *) calloc (INIT_LEN, sizeof(int));
@@ -914,8 +917,8 @@ static int shuffle_init ( int index, int cycles, int aggregator, int rank, mca_i
             if (data->bytes_remaining <= data->bytes_to_write_in_cycle) {
                 /* The data fits completely into the block */
                 if (aggregator == rank) {
-                    data->blocklen_per_process[data->n][data->disp_index[data->n] - 1] = data->bytes_remaining;
-                    data->displs_per_process[data->n][data->disp_index[data->n] - 1] =
+                    data->blocklen_per_process[data->n][data->disp_index[data->n]] = data->bytes_remaining;
+                    data->displs_per_process[data->n][data->disp_index[data->n]] =
                         (ptrdiff_t)data->global_iov_array[data->sorted[data->current_index]].iov_base +
                         (data->global_iov_array[data->sorted[data->current_index]].iov_len
                          - data->bytes_remaining);
@@ -949,11 +952,12 @@ static int shuffle_init ( int index, int cycles, int aggregator, int rank, mca_i
                 /* the remaining data from the previous cycle is larger than the
                    data->bytes_to_write_in_cycle, so we have to segment again */
                 if (aggregator == rank) {
-                    data->blocklen_per_process[data->n][data->disp_index[data->n] - 1] = data->bytes_to_write_in_cycle;
-                    data->displs_per_process[data->n][data->disp_index[data->n] - 1] =
+                    data->blocklen_per_process[data->n][data->disp_index[data->n]] = data->bytes_to_write_in_cycle;
+                    data->displs_per_process[data->n][data->disp_index[data->n]] =
                         (ptrdiff_t)data->global_iov_array[data->sorted[data->current_index]].iov_base +
                         (data->global_iov_array[data->sorted[data->current_index]].iov_len
                          - data->bytes_remaining);
+                    data->disp_index[data->n] += 1;
                 }
                 
                 if (data->procs_in_group[data->n] == rank) {
@@ -970,9 +974,10 @@ static int shuffle_init ( int index, int cycles, int aggregator, int rank, mca_i
                 (MPI_Aint) data->global_iov_array[data->sorted[data->current_index]].iov_len) {
                 /* This entry has more data than we can sendin one cycle */
                 if (aggregator == rank) {
-                    data->blocklen_per_process[data->n][data->disp_index[data->n] - 1] = data->bytes_to_write_in_cycle;
-                    data->displs_per_process[data->n][data->disp_index[data->n] - 1] =
+                    data->blocklen_per_process[data->n][data->disp_index[data->n]] = data->bytes_to_write_in_cycle;
+                    data->displs_per_process[data->n][data->disp_index[data->n]] =
                         (ptrdiff_t)data->global_iov_array[data->sorted[data->current_index]].iov_base ;
+                    data->disp_index[data->n] += 1;
                 }
                 if (data->procs_in_group[data->n] == rank) {
                     bytes_sent += data->bytes_to_write_in_cycle;
@@ -986,9 +991,9 @@ static int shuffle_init ( int index, int cycles, int aggregator, int rank, mca_i
             else {
                 /* Next data entry is less than data->bytes_to_write_in_cycle */
                 if (aggregator == rank) {
-                    data->blocklen_per_process[data->n][data->disp_index[data->n] - 1] =
+                    data->blocklen_per_process[data->n][data->disp_index[data->n]] =
                         data->global_iov_array[data->sorted[data->current_index]].iov_len;
-                    data->displs_per_process[data->n][data->disp_index[data->n] - 1] = (ptrdiff_t)
+                    data->displs_per_process[data->n][data->disp_index[data->n]] = (ptrdiff_t)
                         data->global_iov_array[data->sorted[data->current_index]].iov_base;
 
                     data->disp_index[data->n] += 1;
