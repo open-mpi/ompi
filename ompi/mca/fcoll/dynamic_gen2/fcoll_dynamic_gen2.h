@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2016 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2020 University of Houston. All rights reserved.
  * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -36,7 +36,6 @@ BEGIN_C_DECLS
 
 extern int mca_fcoll_dynamic_gen2_priority;
 extern int mca_fcoll_dynamic_gen2_num_groups;
-extern int mca_fcoll_dynamic_gen2_write_chunksize;
 
 OMPI_MODULE_DECLSPEC extern mca_fcoll_base_component_2_0_0_t mca_fcoll_dynamic_gen2_component;
 
