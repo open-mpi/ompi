@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2018 University of Houston. All rights reserved.
- * Copyright (c) 2015-2018 Research Organization for Information Science
+ * Copyright (c) 2015-2020 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
  * $COPYRIGHT$
@@ -144,6 +144,7 @@ mca_fs_lustre_file_open (struct ompi_communicator_t *comm,
     fh->f_stripe_size   = lump->lmm_stripe_size;
     fh->f_stripe_count  = lump->lmm_stripe_count;
     fh->f_fs_block_size = lump->lmm_stripe_size;
+    fh->f_flags |= OMPIO_LOCK_NEVER;
     
     return OMPI_SUCCESS;
 }

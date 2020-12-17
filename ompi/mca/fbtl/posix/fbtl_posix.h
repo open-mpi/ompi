@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2018 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2020 University of Houston. All rights reserved.
  * Copyright (c) 2018      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -29,6 +29,11 @@
 #include "ompi/mca/common/ompio/common_ompio_request.h"
 
 extern int mca_fbtl_posix_priority;
+extern bool mca_fbtl_posix_read_datasieving;
+extern bool mca_fbtl_posix_write_datasieving;
+extern size_t mca_fbtl_posix_max_block_size;
+extern size_t mca_fbtl_posix_max_gap_size;
+extern size_t mca_fbtl_posix_max_tmpbuf_size;
 
 BEGIN_C_DECLS
 

@@ -771,7 +771,9 @@ static int write_init (ompio_file_t *fh,
             }
         }
         else {
+            fh->f_flags |= OMPIO_COLLECTIVE_OP;
             ret_temp = fh->f_fbtl->fbtl_pwritev(fh);
+            fh->f_flags &= ~OMPIO_COLLECTIVE_OP;
             if(0 > ret_temp) {
                 opal_output (1, "vulcan_write_all: fbtl_pwritev failed\n");
                 ret = ret_temp;
