@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2019 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2020 University of Houston. All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2015-2018 Research Organization for Information Science
@@ -302,42 +302,11 @@ file_query(struct ompi_file_t *file,
            int *priority)
 {
     mca_common_ompio_data_t *data;
-    char *tmp;
-    int rank;
-    int is_lustre=0; //false
 
-    tmp = strchr (file->f_filename, ':');
-    rank = ompi_comm_rank ( file->f_comm);
-    if (!tmp) {
-        if ( 0 == rank) {
-            if (LUSTRE == mca_fs_base_get_fstype(file->f_filename)) {
-                is_lustre = 1; //true
-            }
-        }
-        
-        file->f_comm->c_coll->coll_bcast (&is_lustre,
-                                          1,
-                                          MPI_INT,
-                                          0,
-                                          file->f_comm,
-                                          file->f_comm->c_coll->coll_bcast_module);
-    }
-    else {
-        if (!strncasecmp(file->f_filename, "lustre:", 7) ) {
-            is_lustre = 1;
-        }
-    }
-
-    if (is_lustre) {
-        *priority = 1;
-    }
-    else {
-        *priority = priority_param;
-    }
+    *priority = priority_param;
 
     /* Allocate a space for this module to hang private data (e.g.,
        the OMPIO file handle) */
-
     data = calloc(1, sizeof(mca_common_ompio_data_t));
     if (NULL == data) {
         return NULL;
@@ -346,7 +315,6 @@ file_query(struct ompi_file_t *file,
     *private_data = (struct mca_io_base_file_t*) data;
 
     /* All done */
-
     return &mca_io_ompio_module;
 }
 
