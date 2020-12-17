@@ -199,6 +199,13 @@ static int MPIOI_Type_block(int *array_of_gsizes, int dim, int ndims, int nprocs
      /* in terms of no. of elements of type oldtype in this dimension */
     if (mysize == 0) *st_offset = 0;
 
+    MPI_Aint ex;
+    MPI_Type_extent(type_old, &ex);
+    MPI_Datatype type_tmp;
+    MPI_Type_create_resized(*type_new, 0, array_of_gsizes[dim] * ex, &type_tmp);
+    MPI_Type_free(type_new);
+    *type_new = type_tmp;
+
     return MPI_SUCCESS;
 }
 
@@ -286,6 +293,13 @@ static int MPIOI_Type_cyclic(int *array_of_gsizes, int dim, int ndims, int nproc
     }
 
     if (local_size == 0) *st_offset = 0;
+
+    MPI_Aint ex;
+    MPI_Type_extent(type_old, &ex);
+    MPI_Datatype type_tmp2;
+    MPI_Type_create_resized(*type_new, 0, array_of_gsizes[dim] * ex, &type_tmp2);
+    MPI_Type_free(type_new);
+    *type_new = type_tmp2;
 
     return MPI_SUCCESS;
 }
