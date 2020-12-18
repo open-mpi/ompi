@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2008-2016 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2020 University of Houston. All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
@@ -42,7 +42,6 @@ const char *mca_fcoll_dynamic_gen2_component_version_string =
  */
 int mca_fcoll_dynamic_gen2_priority = 10;
 int mca_fcoll_dynamic_gen2_num_groups = 1;
-int mca_fcoll_dynamic_gen2_write_chunksize = -1;
 
 /*
  * Local function
@@ -94,13 +93,6 @@ dynamic_gen2_register(void)
                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY, &mca_fcoll_dynamic_gen2_num_groups);
-
-    mca_fcoll_dynamic_gen2_write_chunksize = -1;
-    (void) mca_base_component_var_register(&mca_fcoll_dynamic_gen2_component.fcollm_version,
-                                           "write_chunksize", "Chunk size written at once. Default: stripe_size of the file system",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY, &mca_fcoll_dynamic_gen2_write_chunksize);
 
     return OMPI_SUCCESS;
 }

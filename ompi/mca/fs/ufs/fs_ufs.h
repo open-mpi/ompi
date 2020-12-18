@@ -60,22 +60,6 @@ int mca_fs_ufs_file_open (struct ompi_communicator_t *comm,
                           struct opal_info_t *info,
                           ompio_file_t *fh);
 
-int mca_fs_ufs_file_close (ompio_file_t *fh);
-
-int mca_fs_ufs_file_delete (char *filename,
-                            struct opal_info_t *info);
-
-int mca_fs_ufs_file_set_size (ompio_file_t *fh,
-                              OMPI_MPI_OFFSET_TYPE size);
-
-int mca_fs_ufs_file_get_size (ompio_file_t *fh,
-                              OMPI_MPI_OFFSET_TYPE *size);
-
-int mca_fs_ufs_file_sync (ompio_file_t *fh);
-
-int mca_fs_ufs_file_seek (ompio_file_t *fh,
-                          OMPI_MPI_OFFSET_TYPE offset,
-                          int whence);
 /*
  * ******************************************************************
  * ************ functions implemented in this module end ************

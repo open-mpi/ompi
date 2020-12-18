@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2011 University of Houston. All rights reserved.
- * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
+ * Copyright (c) 2016-2019 IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -20,7 +20,6 @@
 #include "ompi_config.h"
 
 #include "mpi.h"
-#include "opal/threads/mutex.h"
 #include "ompi/mca/io/io.h"
 #include "io_ompio.h"
 
