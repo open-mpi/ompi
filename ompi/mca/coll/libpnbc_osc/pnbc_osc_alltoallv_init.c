@@ -11,14 +11,17 @@
  *                         reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
+ * Copyright (c) 2020      EPCC, The University of Edinburgh. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
  *
- * Author(s): Torsten Hoefler <htor@cs.indiana.edu>
+ * Author(s): Daniel Holmes  EPCC, The University of Edinburgh
  *
  */
 #include "pnbc_osc_internal.h"
+#include "pnbc_osc_action_put.h"
 
 static inline int pnbc_osc_alltoallv_init(const void* sendbuf, const int *sendcounts, const int *sdispls,
                               MPI_Datatype sendtype, void* recvbuf, const int *recvcounts, const int *rdispls,
@@ -309,7 +312,12 @@ static inline int a2av_sched_trigger_pull(int crank, int csize, PNBC_OSC_Schedul
 
   for (int p=0;p<csize;++p) {
     int orank = (crank+p)%csize;
+
     triggers_phase0[orank].trigger = &(schedule->triggers_active);
+    triggers_phase0[orank].triggered = &triggered_all_bynonzero_int;
+    triggers_phase0[orank].action = &action_all_put;
+    triggers_phase0[orank].action_cbstate = &action_putargs[orank];
+
     triggers_phase1[orank].trigger = &flags_FLAG[orank];
     triggers_phase2[orank].trigger = &requests_moveData[orank];
     triggers_phase3[orank].trigger = &requests_rputFLAG[orank];

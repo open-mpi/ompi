@@ -29,7 +29,9 @@
 
 #include "opal/class/opal_object.h"
 #include "ompi/request/request.h"
-#include "pnbc_osc_trigger.h"
+#include "pnbc_osc_trigger_common.h"
+#include "pnbc_osc_trigger_single.h"
+#include "pnbc_osc_trigger_array.h"
 
 BEGIN_C_DECLS
 
@@ -134,18 +136,20 @@ typedef struct PNBC_OSC_Round_request_based PNBC_OSC_Round_request_based;
 */
 struct PNBC_OSC_Schedule {
   opal_object_t super;
-  int size;                 //DJH//should be obsolete
-  long row_offset;          //DJH//should be obsolete
-  int current_round_offset; //DJH//should be obsolete
-  char *data;               //DJH//should be obsolete, except for nbc steps
-  int triggers_active;      // for trigger-based schedule
-  int triggers_length;      // for trigger-based schedule
-  triggerable_t *triggers;  // for trigger-based schedule
-  FLAG_t *flags;            // for trigger-based schedule
-  MPI_Request **requests;   // for trigger-based schedule
-  int number_of_rounds;     // length of array: rounds
-  int restart_round;        // index into array: rounds
-  PNBC_OSC_Round *rounds[]; // list of rounds (polymorphic)
+  int size;                             //DJH//should be obsolete
+  long row_offset;                      //DJH//should be obsolete
+  int current_round_offset;             //DJH//should be obsolete
+  char *data;                           //DJH//should be obsolete, except for nbc steps
+  int triggers_active;                  // for trigger-based schedule
+  int triggers_length;                  // for trigger-based schedule
+  triggerable_t *triggers;              // for trigger-based schedule
+  int trigger_arrays_length;            // for trigger-based schedule
+  triggerable_array *trigger_arrays;    // for trigger-based schedule
+  FLAG_t *flags;                        // for trigger-based schedule
+  MPI_Request **requests;               // for trigger-based schedule
+  int number_of_rounds;                 // length of array: rounds
+  int restart_round;                    // index into array: rounds
+  PNBC_OSC_Round *rounds[];             // list of rounds (polymorphic)
 };
 typedef struct PNBC_OSC_Schedule PNBC_OSC_Schedule;
 OBJ_CLASS_DECLARATION(PNBC_OSC_Schedule);

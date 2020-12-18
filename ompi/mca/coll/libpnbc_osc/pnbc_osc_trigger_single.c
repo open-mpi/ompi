@@ -1,4 +1,4 @@
-#include "pnbc_osc_trigger.h"
+#include "pnbc_osc_trigger_single.h"
 
 void trigger_reset(triggerable_t thing) {
   thing.reset(thing.trigger);
@@ -12,20 +12,5 @@ enum TRIGGER_ACTION_STATE trigger_test(triggerable_t thing) {
       trigger_reset(thing);
   }
   return ret;
-}
-
-int triggered_bynonzero_int(void *trigger) {
-  return (*(int*)trigger);
-}
-int triggered_byzero_int(void *trigger) {
-  return !(*(int*)trigger);
-}
-
-void reset_to_zero_int(void *trigger) {
-  *(int*)trigger = 0;
-}
-
-enum TRIGGER_ACTION_STATE action_noop(void *cbstate) {
-  return ACTION_SUCCESS;
 }
 
