@@ -64,6 +64,10 @@ included in the vX.Y.Z section and be denoted as:
   Both components are off by default and can be enabled by specifying
   "mpirun --mca coll_adapt_priority 100 --mca coll_han_priority 100 ...".
   We intend to enable both by default in Open MPI 5.0.
+- OMPIO is now the default for MPI-IO on all filesystems, including
+  Lustre (prior to this, ROMIO was the default for Lustre).  Many
+  thanks to Mark Dixon for identifying MPI I/O issues and providing
+  access to Lustre systems for testing.
 - Updates for macOS Big Sur.  Thanks to FX Coudert for reporting this
   issue and pointing to a solution.
 - Minor MPI one-sided RDMA performance improvements.
