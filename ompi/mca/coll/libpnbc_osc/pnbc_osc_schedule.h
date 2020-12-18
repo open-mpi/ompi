@@ -32,6 +32,7 @@
 #include "pnbc_osc_trigger_common.h"
 #include "pnbc_osc_trigger_single.h"
 #include "pnbc_osc_trigger_array.h"
+#include "pnbc_osc_action_put.h"
 
 BEGIN_C_DECLS
 
@@ -147,6 +148,7 @@ struct PNBC_OSC_Schedule {
   triggerable_array *trigger_arrays;    // for trigger-based schedule
   FLAG_t *flags;                        // for trigger-based schedule
   MPI_Request **requests;               // for trigger-based schedule
+  put_args_t *action_args_list;            // for trigger-based schedule
   int number_of_rounds;                 // length of array: rounds
   int restart_round;                    // index into array: rounds
   PNBC_OSC_Round *rounds[];             // list of rounds (polymorphic)

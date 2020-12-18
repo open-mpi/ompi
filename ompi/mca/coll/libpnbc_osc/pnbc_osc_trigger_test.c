@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include "pnbc_osc_trigger_single.h"
 
-int custom_test(FLAG_t *trigger) {
+int custom_test(FLAG_t *trigger, void* cbstate) {
   if (123 == *(int*)trigger)
     return !0;
   else
@@ -12,8 +12,8 @@ int main() {
   FLAG_t trigger = 555;
   triggerable_t mything;
   mything.trigger = &trigger;
-  mything.triggered = &custom_test;
-  mything.triggered = &triggered_all_bynonzero_int;
+  mything.test = &custom_test;
+  mything.test = &triggered_all_bynonzero_int;
   mything.action = &action_all_noop;
   mything.reset = &reset_all_to_zero_int;
   mything.auto_reset = !0;

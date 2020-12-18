@@ -4,8 +4,9 @@
 #include "pnbc_osc_trigger_common.h"
 
 struct triggerable_array {
-  trigger_triggered_all_fn_t    triggered_all;
-  trigger_triggered_one_fn_t    triggered_one;
+  trigger_test_all_fn_t         test_all;
+  trigger_test_one_fn_t         test_one;
+  void                         *test_cbstate;
   int                           progress;
   int                           num_triggers;
   FLAG_t                      (*triggers)[];
@@ -15,6 +16,7 @@ struct triggerable_array {
   void                         *action_one_cbstate;
   trigger_reset_all_fn_t        reset_all;
   trigger_reset_one_fn_t        reset_one;
+  FLAG_t                        reset_value;
   int                           auto_reset;
 };
 typedef struct triggerable_array triggerable_array;
@@ -24,5 +26,8 @@ void trigger_reset_one(triggerable_array *array, int index);
 
 enum TRIGGER_ACTION_STATE trigger_test_all(triggerable_array *array);
 enum TRIGGER_ACTION_STATE trigger_test_one(triggerable_array *array, int index);
+
+enum TRIGGER_ACTION_STATE trigger_action_all(triggerable_array *array);
+enum TRIGGER_ACTION_STATE trigger_action_one(triggerable_array *array, int index);
 
 #endif

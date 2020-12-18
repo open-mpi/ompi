@@ -2,7 +2,7 @@
 #include "pnbc_osc_trigger_array.h"
 #include "pnbc_osc_action_put.h"
 
-int custom_test_one(int index, int *trigger) {
+int custom_test_one(int *trigger, int index, void* cbstate) {
 //  printf("In custom_test_one with index %d and *trigger %d ", index, *trigger);
   if ((100*index+23) == *trigger) {
     printf("TRIGGERED action %d\n", index);
@@ -19,7 +19,7 @@ int main() {
   myarray.num_triggers = 2;
   myarray.progress = 333;
   myarray.triggers = &flags;
-  myarray.triggered_one = &custom_test_one;
+  myarray.test_one = &custom_test_one;
   myarray.action_one = &action_one_noop;
   myarray.action_one = action_one_put_p;
   myarray.reset_one = &reset_one_to_zero_int;

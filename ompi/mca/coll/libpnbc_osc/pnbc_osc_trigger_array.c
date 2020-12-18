@@ -2,7 +2,8 @@
 #include "pnbc_osc_trigger_array.h"
 
 void trigger_reset_one(triggerable_array *array, int index) {
-  array->reset_one(index, &((*array->triggers)[index]));
+  //array->reset_one(index, &((*array->triggers)[index]));
+  array->reset_one(&((*array->triggers)[index]), index, array->reset_value);
 }
 
 void trigger_reset_all(triggerable_array *array) {
@@ -15,7 +16,7 @@ void trigger_reset_all(triggerable_array *array) {
 
 enum TRIGGER_ACTION_STATE trigger_test_one(triggerable_array *array, int index) {
   enum TRIGGER_ACTION_STATE ret = TRIGGER_PENDING;
-  if (array->triggered_one(index, &((*array->triggers)[index]))) {
+  if (array->test_one(&((*array->triggers)[index]), index, array->test_cbstate)) {
     ret = array->action_one(index, array->action_one_cbstate);
     if (ACTION_SUCCESS == ret) {
       trigger_reset_one(array, index);
@@ -43,17 +44,17 @@ enum TRIGGER_ACTION_STATE trigger_test_all(triggerable_array *array) {
   return ret;
 }
 
-int triggered_one_bynonzero_int(int index, int *trigger) {
-  return *trigger;
-}
-int triggered_one_byzero_int(int index, int *trigger) {
-  return !(*trigger);
-}
-void reset_one_to_zero_int(int index, int *trigger) {
-  *trigger = 0;
-}
-enum TRIGGER_ACTION_STATE action_one_noop(int index, void *cbstate) {
-//  printf("ACTION for trigger %d\n", index);
-  return ACTION_SUCCESS;
-}
-
+//int triggered_one_bynonzero_int(FLAG_t *trigger, int index, void *cbstate) {
+//  return *trigger;
+//}
+//int triggered_one_byzero_int(FLAG_t *trigger, int index, void* cbstate) {
+//  return !(*trigger);
+//}
+//void reset_one_to_zero_int(FLAG_t *trigger, int index, FLAG_t value) {
+//  *trigger = 0;
+//}
+//enum TRIGGER_ACTION_STATE action_one_noop(int index, void *cbstate) {
+////  printf("ACTION for trigger %d\n", index);
+//  return ACTION_SUCCESS;
+//}
+//

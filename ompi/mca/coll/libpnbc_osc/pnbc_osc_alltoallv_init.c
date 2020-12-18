@@ -21,6 +21,8 @@
  *
  */
 #include "pnbc_osc_internal.h"
+#include "pnbc_osc_action_decrement.h"
+#include "pnbc_osc_action_get.h"
 #include "pnbc_osc_action_put.h"
 
 static inline int pnbc_osc_alltoallv_init(const void* sendbuf, const int *sendcounts, const int *sdispls,
@@ -42,6 +44,13 @@ int ompi_coll_libpnbc_osc_alltoallv_init(const void* sendbuf, const int *sendcou
 
     return OMPI_SUCCESS;
 }
+
+typedef enum {
+  algo_linear_rput,
+  algo_linear_rget,
+  algo_trigger_pull,
+  algo_trigger_push,
+} a2av_sched_algo;
 
 // pull implies move means get and FLAG means RTS (ready to send)
 static inline int a2av_sched_trigger_pull(int crank, int csize, PNBC_OSC_Schedule *schedule,
@@ -206,10 +215,31 @@ static int pnbc_osc_alltoallv_init(const void* sendbuf, const int *sendcounts, c
   // PUT_BASED WINDOW SETUP - END
   // ****************************
 
+  a2av_sched_algo algo = algo_trigger_push;
+  switch (algo) {
+    case algo_linear_rput:
   res = a2av_sched_linear_rput(crank, csize, schedule, flags, &fsize, &req_count,
                                sendbuf, sendcounts, sdispls, sendext, sendtype,
                                recvbuf, recvcounts, rdispls, recvext, recvtype,
                                abs_rdispls_other);
+    case algo_linear_rget:
+  res = a2av_sched_linear_rget(crank, csize, schedule, flags, &fsize, &req_count,
+                               sendbuf, sendcounts, sdispls, sendext, sendtype,
+                               recvbuf, recvcounts, rdispls, recvext, recvtype,
+                               abs_rdispls_other);
+                             //abs_sdispls_other);
+    case algo_trigger_pull:
+  res = a2av_sched_trigger_pull(crank, csize, schedule, //flags, &fsize, &req_count,
+                               sendbuf, sendcounts, sdispls, sendext, sendtype,
+                               recvbuf, recvcounts, rdispls, recvext, recvtype,
+                               abs_rdispls_other);
+    case algo_trigger_push:
+  res = a2av_sched_trigger_push(crank, csize, schedule, flags, &fsize, &req_count,
+                               sendbuf, sendcounts, sdispls, sendext, sendtype,
+                               recvbuf, recvcounts, rdispls, recvext, recvtype,
+                               abs_rdispls_other);
+                             //abs_sdispls_other);
+  }
   if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
     PNBC_OSC_Error ("MPI Error in a2av_sched_linear (%i)", res);
     free(abs_rdispls_other);
@@ -301,28 +331,66 @@ static inline int a2av_sched_trigger_pull(int crank, int csize, PNBC_OSC_Schedul
   triggerable_t *triggers_phase4 = &(schedule->triggers[4 * csize * sizeof(triggerable_t)]);
   triggerable_t *triggers_phase5 = &(schedule->triggers[5 * csize * sizeof(triggerable_t)]);
 
-  schedule->flags = malloc(2 * csize * sizeof(FLAG_t));
-  FLAG_t *flags_FLAG = &(schedule->flags[0 * csize * sizeof(FLAG_t)]);
-  FLAG_t *flags_DONE = &(schedule->flags[1 * csize * sizeof(FLAG_t)]);
+  schedule->flags = malloc(5 * csize * sizeof(FLAG_t));
+  FLAG_t *flags_rma_put_FLAG = &(schedule->flags[0 * csize * sizeof(FLAG_t)]);
+  FLAG_t *flags_rma_put_DONE = &(schedule->flags[1 * csize * sizeof(FLAG_t)]);
+  FLAG_t *flags_request_FLAG = &(schedule->flags[2 * csize * sizeof(FLAG_t)]);
+  FLAG_t *flags_request_DATA = &(schedule->flags[3 * csize * sizeof(FLAG_t)]);
+  FLAG_t *flags_request_DONE = &(schedule->flags[4 * csize * sizeof(FLAG_t)]);
 
   schedule->requests = malloc(3 * csize * sizeof(MPI_Request*));
   MPI_Request **requests_rputFLAG = &(schedule->requests[0 * csize * sizeof(MPI_Request*)]);
   MPI_Request **requests_moveData = &(schedule->requests[1 * csize * sizeof(MPI_Request*)]);
   MPI_Request **requests_rputDONE = &(schedule->requests[2 * csize * sizeof(MPI_Request*)]);
 
+  schedule->action_args_list = malloc(3 * csize * sizeof(put_args_t));
+  put_args_t *action_args_FLAG = &(schedule->action_args_list[0 * csize * sizeof(put_args_t)]);
+  put_args_t *action_args_DATA = &(schedule->action_args_list[1 * csize * sizeof(put_args_t)]);
+  put_args_t *action_args_DONE = &(schedule->action_args_list[2 * csize * sizeof(put_args_t)]);
+
+  schedule->trigger_arrays = malloc(6 * csize * sizeof(triggerable_array));
+
   for (int p=0;p<csize;++p) {
     int orank = (crank+p)%csize;
 
+    // triggered by local start: schedule->triggers_active = 3*csize;
     triggers_phase0[orank].trigger = &(schedule->triggers_active);
-    triggers_phase0[orank].triggered = &triggered_all_bynonzero_int;
-    triggers_phase0[orank].action = &action_all_put;
-    triggers_phase0[orank].action_cbstate = &action_putargs[orank];
+    triggers_phase0[orank].test = &triggered_all_bynonzero_int;
+    triggers_phase0[orank].action = action_all_put_p;
+    triggers_phase0[orank].action_cbstate = &action_args_FLAG[orank];
 
-    triggers_phase1[orank].trigger = &flags_FLAG[orank];
-    triggers_phase2[orank].trigger = &requests_moveData[orank];
-    triggers_phase3[orank].trigger = &requests_rputFLAG[orank];
-    triggers_phase4[orank].trigger = &flags_DONE[orank];
-    triggers_phase5[orank].trigger = &requests_rputDONE[orank];
+    // triggered by remote rma put
+    triggers_phase1[orank].trigger = &flags_rma_put_FLAG[orank];
+    triggers_phase1[orank].test = &triggered_all_bynonzero_int;
+    triggers_phase1[orank].action = action_all_get_p;
+    triggers_phase1[orank].action_cbstate = &action_args_DATA[orank];
+
+    //triggered by local test: MPI_Test(requests_moveData[orank], &flags_request_DATA[orank]);
+    triggers_phase2[orank].trigger = &flags_request_DATA[orank];
+    triggers_phase2[orank].test = &triggered_all_byrequest_flag;
+    triggers_phase2[orank].test_cbstate = requests_moveData[orank];
+    triggers_phase2[orank].action = action_all_put_p;
+    triggers_phase2[orank].action_cbstate = &action_args_DONE[orank];
+
+    //trigger by local test: MPI_Test(requests_rputFLAG[orank], &flags_request_FLAG[orank]);
+    triggers_phase3[orank].trigger = &flags_request_FLAG[orank];
+    triggers_phase3[orank].test = &triggered_all_byrequest_flag;
+    triggers_phase3[orank].test_cbstate = requests_rputFLAG[orank];
+    triggers_phase3[orank].action = action_all_decrement_int_p;
+    triggers_phase3[orank].action_cbstate = &(schedule->triggers_active);
+
+    // triggered by remote rma put
+    triggers_phase4[orank].trigger = &flags_rma_put_DONE[orank];
+    triggers_phase4[orank].test = &triggered_all_bynonzero_int;
+    triggers_phase4[orank].action = action_all_decrement_int_p;
+    triggers_phase4[orank].action_cbstate = &(schedule->triggers_active);
+
+    //trigger by local test: MPI_Test(requests_rputDONE[orank], &flags_request_DONE[orank]);
+    triggers_phase5[orank].trigger = &flags_request_DONE[orank];
+    triggers_phase5[orank].test = &triggered_all_byrequest_flag;
+    triggers_phase5[orank].test_cbstate = requests_rputDONE[orank];
+    triggers_phase5[orank].action = action_all_decrement_int_p;
+    triggers_phase5[orank].action_cbstate = &(schedule->triggers_active);
 
   }
 
