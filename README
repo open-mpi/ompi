@@ -67,10 +67,19 @@ Much, much more information is also available in the Open MPI FAQ:
 ===========================================================================
 
 The following abbreviated list of release notes applies to this code
-base as of this writing (May 2020):
+base as of this writing (December 2020):
 
 General notes
 -------------
+
+- Prior to Open MPI v4.1.0, the OMPIO IO component was used for MPI-IO
+  support on all filesystems except Lustre.  Instead, when using
+  Lustre filesystems, the ROMIO IO component was used for MPI-IO
+  support.  Starting with Open MPI v4.1.0, OMPIO is now used by
+  default for MPI-IO support on all filesystems (including Lustre).
+  As with any Open MPI MCA component, the selection of which component
+  is used can be set at run time by setting the "io" MCA param to
+  either "ompio" or "romio".  For example: "mpirun --mca io ompio ..."
 
 - Open MPI v4.0.4 fixed an issue with the memory patcher's ability to
   intercept shmat and shmdt that could cause wrong answers.  This was
