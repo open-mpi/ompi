@@ -14,7 +14,7 @@ Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
                         Use is subject to license terms.
 Copyright (c) 2006-2017 Los Alamos National Security, LLC.  All rights
                         reserved.
-Copyright (c) 2010-2017 IBM Corporation.  All rights reserved.
+Copyright (c) 2010-2020 IBM Corporation.  All rights reserved.
 Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
 Copyright (c) 2012      Sandia National Laboratories.  All rights reserved.
 Copyright (c) 2012      University of Houston. All rights reserved.
@@ -79,6 +79,15 @@ Master (not on release branches yet)
 - Do not build Open SHMEM layer when there are no SPMLs available.
   Currently, this means the Open SHMEM layer will only build if
   a MXM or UCX library is found.
+
+5.0.0 -- TBD
+---------------------
+- Removed Checkpoint/Restart Infrastructure
+  - Removed crcp and crs frameworks
+  - Removed crcpw PML component
+  - Removed opal-checkpoint and opal-restart tools
+  - Removed configure options: --enable-crdebug and --disable-ft-thread
+  - Configure option "--with-ft=CR" will return an error message
 
 4.0.5 -- August, 2020
 ---------------------
