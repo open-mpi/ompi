@@ -27,6 +27,7 @@
 #ifndef MCA_MPOOL_H
 #define MCA_MPOOL_H
 #include "opal_config.h"
+#include "opal/constants.h"
 #include "opal/mca/mca.h"
 #include "opal/class/opal_free_list.h"
 #include "opal/mca/rcache/base/rcache_base_vma.h"

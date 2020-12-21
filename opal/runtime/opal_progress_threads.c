@@ -16,9 +16,11 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
+#include <string.h>
 
 #include "opal/class/opal_list.h"
 #include "opal/util/event.h"
+#include "opal/util/opal_environ.h"
 #include "opal/mca/threads/threads.h"
 #include "opal/util/error.h"
 #include "opal/util/fd.h"

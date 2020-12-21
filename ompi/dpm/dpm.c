@@ -44,6 +44,7 @@
 #include "opal/util/proc.h"
 #include "opal/util/show_help.h"
 #include "opal/util/printf.h"
+#include "opal/util/opal_environ.h"
 #include "opal/dss/dss.h"
 #include "opal/mca/hwloc/base/base.h"
 #include "opal/mca/pmix/base/base.h"

@@ -29,6 +29,7 @@
 #define OPAL_MCA_THREADS_CONDITION_H
 
 #include "opal_config.h"
+#include "opal/constants.h"
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif

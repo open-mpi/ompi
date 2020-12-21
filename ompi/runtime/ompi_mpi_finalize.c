@@ -60,6 +60,7 @@
 #include "opal/mca/allocator/base/base.h"
 #include "opal/mca/pmix/pmix-internal.h"
 #include "opal/util/timings.h"
+#include "opal/util/opal_environ.h"
 
 #include "mpi.h"
 #include "ompi/constants.h"
