@@ -173,8 +173,6 @@ int MPI_Scatter(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
         return MPI_SUCCESS;
     }
 
-    OPAL_CR_ENTER_LIBRARY();
-
     /* Invoke the coll component to perform the back-end operation */
     err = comm->c_coll->coll_scatter(sendbuf, sendcount, sendtype, recvbuf,
                                     recvcount, recvtype, root, comm,

@@ -127,8 +127,6 @@ int MPI_Raccumulate(const void *origin_addr, int origin_count, MPI_Datatype orig
         return MPI_SUCCESS;
     }
 
-    OPAL_CR_ENTER_LIBRARY();
-
     rc = ompi_win->w_osc_module->osc_raccumulate(origin_addr,
                                                 origin_count,
                                                 origin_datatype,

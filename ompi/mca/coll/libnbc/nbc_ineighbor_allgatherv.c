@@ -47,7 +47,7 @@ int NBC_Ineighbor_allgatherv_args_compare(NBC_Ineighbor_allgatherv_args *a, NBC_
 static int nbc_neighbor_allgatherv_init(const void *sbuf, int scount, MPI_Datatype stype, void *rbuf,
                                         const int *rcounts, const int *displs, MPI_Datatype rtype,
                                         struct ompi_communicator_t *comm, ompi_request_t ** request,
-                                        struct mca_coll_base_module_2_3_0_t *module, bool persistent) {
+                                        mca_coll_base_module_t *module, bool persistent) {
   int res, indegree, outdegree, *srcs, *dsts;
   MPI_Aint rcvext;
   ompi_coll_libnbc_module_t *libnbc_module = (ompi_coll_libnbc_module_t*) module;
@@ -167,7 +167,7 @@ static int nbc_neighbor_allgatherv_init(const void *sbuf, int scount, MPI_Dataty
 int ompi_coll_libnbc_ineighbor_allgatherv(const void *sbuf, int scount, MPI_Datatype stype, void *rbuf,
 					  const int *rcounts, const int *displs, MPI_Datatype rtype,
 					  struct ompi_communicator_t *comm, ompi_request_t ** request,
-					  struct mca_coll_base_module_2_3_0_t *module) {
+					  mca_coll_base_module_t *module) {
     int res = nbc_neighbor_allgatherv_init(sbuf, scount, stype, rbuf, rcounts, displs, rtype,
                                            comm, request, module, false);
     if (OPAL_LIKELY(OMPI_SUCCESS != res)) {
@@ -186,7 +186,7 @@ int ompi_coll_libnbc_ineighbor_allgatherv(const void *sbuf, int scount, MPI_Data
 int ompi_coll_libnbc_neighbor_allgatherv_init(const void *sbuf, int scount, MPI_Datatype stype, void *rbuf,
                                               const int *rcounts, const int *displs, MPI_Datatype rtype,
                                               struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
-                                              struct mca_coll_base_module_2_3_0_t *module) {
+                                              mca_coll_base_module_t *module) {
     int res = nbc_neighbor_allgatherv_init(sbuf, scount, stype, rbuf, rcounts, displs, rtype,
                                            comm, request, module, true);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {

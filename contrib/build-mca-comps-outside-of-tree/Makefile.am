@@ -32,9 +32,7 @@ sources = \
     btl_tcp2_frag.h \
     btl_tcp2_hdr.h \
     btl_tcp2_proc.c \
-    btl_tcp2_proc.h \
-    btl_tcp2_ft.c \
-    btl_tcp2_ft.h
+    btl_tcp2_proc.h
 
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la

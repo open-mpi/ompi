@@ -92,8 +92,6 @@ int MPI_Probe(int source, int tag, MPI_Comm comm, MPI_Status *status)
     }
 #endif
 
-    OPAL_CR_ENTER_LIBRARY();
-
     rc = MCA_PML_CALL(probe(source, tag, comm, status));
     /*
      * Per MPI-1, the MPI_ERROR field is not defined for single-completion calls

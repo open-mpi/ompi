@@ -60,8 +60,6 @@ int MPI_Type_create_hindexed_block(int count,
         }
     }
 
-    OPAL_CR_ENTER_LIBRARY();
-
     rc = ompi_datatype_create_hindexed_block( count, blocklength, array_of_displacements,
                                               oldtype, newtype );
     if( rc != MPI_SUCCESS ) {
@@ -74,6 +72,5 @@ int MPI_Type_create_hindexed_block(int count,
                                 MPI_COMBINER_HINDEXED_BLOCK );
     }
 
-    OPAL_CR_EXIT_LIBRARY();
     return MPI_SUCCESS;
 }

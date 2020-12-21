@@ -61,7 +61,7 @@ mca_mpool_memkind_component_t mca_mpool_memkind_component = {
         /* First, the mca_base_component_t struct containing meta
          information about the component itself */
         .mpool_version = {
-            MCA_MPOOL_BASE_VERSION_3_0_0,
+            MCA_MPOOL_BASE_VERSION_3_1_0,
             "memkind", /* MCA component name */
              MCA_BASE_MAKE_VERSION(component, OPAL_MAJOR_VERSION, OPAL_MINOR_VERSION,
                                    OPAL_RELEASE_VERSION),

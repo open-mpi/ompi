@@ -1,5 +1,8 @@
 /*
  * Copyright (c) 2016-2017 Inria.  All rights reserved.
+ * Copyright (c) 2016-2016 The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * Copyright (c) 2017      Amazon.com, Inc. or its affiliates.  All Rights
  *                         reserved.
  * Copyright (c) 2019      Research Organization for Information Science
@@ -143,19 +146,6 @@ mca_coll_monitoring_module_disable(mca_coll_base_module_t*module, struct ompi_co
     return OMPI_SUCCESS;
 }
 
-static int mca_coll_monitoring_ft_event(int state)
-{
-    switch(state) {
-    case OPAL_CRS_CHECKPOINT:
-    case OPAL_CRS_CONTINUE:
-    case OPAL_CRS_RESTART:
-    case OPAL_CRS_TERM:
-    default:
-        ;
-    }
-    return OMPI_SUCCESS;
-}
-
 static mca_coll_base_module_t*
 mca_coll_monitoring_component_query(struct ompi_communicator_t*comm, int*priority)
 {
@@ -166,7 +156,6 @@ mca_coll_monitoring_component_query(struct ompi_communicator_t*comm, int*priorit
     /* Initialize module functions */
     monitoring_module->super.coll_module_enable  = mca_coll_monitoring_module_enable;
     monitoring_module->super.coll_module_disable = mca_coll_monitoring_module_disable;
-    monitoring_module->super.ft_event = mca_coll_monitoring_ft_event;
 
     /* Initialise module collectives functions */
     /* Blocking functions */
@@ -221,9 +210,9 @@ mca_coll_monitoring_component_query(struct ompi_communicator_t*comm, int*priorit
 
     /* Initialization flag */
     monitoring_module->is_initialized = 0;
-    
+
     *priority = mca_coll_monitoring_component.priority;
-    
+
     return &(monitoring_module->super);
 }
 
@@ -232,8 +221,8 @@ mca_coll_monitoring_component_t mca_coll_monitoring_component = {
         /* First, the mca_base_component_t struct containing meta
            information about the component itself */
         .collm_version = {
-            MCA_COLL_BASE_VERSION_2_0_0,
-            
+            MCA_COLL_BASE_VERSION_2_4_0,
+
             .mca_component_name = "monitoring", /* MCA component name */
             MCA_MONITORING_MAKE_VERSION,
             .mca_open_component = mca_coll_monitoring_component_open,  /* component open */

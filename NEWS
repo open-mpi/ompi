@@ -79,6 +79,7 @@ Master (not on release branches yet)
 - Do not build Open SHMEM layer when there are no SPMLs available.
   Currently, this means the Open SHMEM layer will only build if
   a MXM or UCX library is found.
+- Remove all vestiges of the C/R support
 
 4.0.5 -- August, 2020
 ---------------------

@@ -56,7 +56,6 @@ mca_btl_tcp_module_t mca_btl_tcp_module = {
         .btl_put = mca_btl_tcp_put,
         .btl_dump = mca_btl_base_dump,
         .btl_register_error = mca_btl_tcp_register_error_cb, /* register error */
-        .btl_ft_event = mca_btl_tcp_ft_event
     },
     .tcp_endpoints_mutex = OPAL_MUTEX_STATIC_INIT
 };

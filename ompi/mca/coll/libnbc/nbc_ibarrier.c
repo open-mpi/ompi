@@ -23,7 +23,7 @@
 
 /* Dissemination implementation of MPI_Ibarrier */
 static int nbc_barrier_init(struct ompi_communicator_t *comm, ompi_request_t ** request,
-                            struct mca_coll_base_module_2_3_0_t *module, bool persistent)
+                            mca_coll_base_module_t *module, bool persistent)
 {
   int rank, p, maxround, res, recvpeer, sendpeer;
   NBC_Schedule *schedule;
@@ -100,7 +100,7 @@ static int nbc_barrier_init(struct ompi_communicator_t *comm, ompi_request_t ** 
 }
 
 int ompi_coll_libnbc_ibarrier(struct ompi_communicator_t *comm, ompi_request_t ** request,
-                              struct mca_coll_base_module_2_3_0_t *module) {
+                              mca_coll_base_module_t *module) {
     int res = nbc_barrier_init(comm, request, module, false);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
         return res;
@@ -117,7 +117,7 @@ int ompi_coll_libnbc_ibarrier(struct ompi_communicator_t *comm, ompi_request_t *
 }
 
 static int nbc_barrier_inter_init(struct ompi_communicator_t *comm, ompi_request_t ** request,
-                                  struct mca_coll_base_module_2_3_0_t *module, bool persistent)
+                                  mca_coll_base_module_t *module, bool persistent)
 {
   int rank, res, rsize;
   NBC_Schedule *schedule;
@@ -187,7 +187,7 @@ static int nbc_barrier_inter_init(struct ompi_communicator_t *comm, ompi_request
 }
 
 int ompi_coll_libnbc_ibarrier_inter(struct ompi_communicator_t *comm, ompi_request_t ** request,
-                                    struct mca_coll_base_module_2_3_0_t *module) {
+                                    mca_coll_base_module_t *module) {
     int res = nbc_barrier_inter_init(comm, request, module, false);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
         return res;
@@ -204,7 +204,7 @@ int ompi_coll_libnbc_ibarrier_inter(struct ompi_communicator_t *comm, ompi_reque
 }
 
 int ompi_coll_libnbc_barrier_init(struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
-                                  struct mca_coll_base_module_2_3_0_t *module) {
+                                  mca_coll_base_module_t *module) {
     int res = nbc_barrier_init(comm, request, module, true);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
         return res;
@@ -214,7 +214,7 @@ int ompi_coll_libnbc_barrier_init(struct ompi_communicator_t *comm, MPI_Info inf
 }
 
 int ompi_coll_libnbc_barrier_inter_init(struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
-                                        struct mca_coll_base_module_2_3_0_t *module) {
+                                        mca_coll_base_module_t *module) {
     int res = nbc_barrier_inter_init(comm, request, module, true);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
         return res;

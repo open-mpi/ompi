@@ -238,7 +238,6 @@ mca_coll_han_comm_query(struct ompi_communicator_t * comm, int *priority)
     }
 
     han_module->super.coll_module_enable = han_module_enable;
-    han_module->super.ft_event        = NULL;
     han_module->super.coll_alltoall   = NULL;
     han_module->super.coll_alltoallv  = NULL;
     han_module->super.coll_alltoallw  = NULL;

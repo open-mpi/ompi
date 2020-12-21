@@ -368,12 +368,5 @@ mca_btl_base_descriptor_t* mca_btl_template_prepare_src(
     uint32_t flags
 );
 
- /**
-  * Fault Tolerance Event Notification Function
-  * @param state Checkpoint Stae
-  * @return OPAL_SUCCESS or failure status
-  */
-int mca_btl_template_ft_event(int state);
-
 END_C_DECLS
 #endif

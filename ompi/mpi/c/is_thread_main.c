@@ -39,8 +39,6 @@ static const char FUNC_NAME[] = "MPI_Is_thread_main";
 
 int MPI_Is_thread_main(int *flag)
 {
-    OPAL_CR_NOOP_PROGRESS();
-
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if (NULL == flag) {

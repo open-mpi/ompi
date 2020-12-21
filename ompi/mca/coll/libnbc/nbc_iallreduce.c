@@ -63,7 +63,7 @@ int NBC_Allreduce_args_compare(NBC_Allreduce_args *a, NBC_Allreduce_args *b, voi
 
 static int nbc_allreduce_init(const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op,
                               struct ompi_communicator_t *comm, ompi_request_t ** request,
-                              struct mca_coll_base_module_2_3_0_t *module, bool persistent)
+                              mca_coll_base_module_t *module, bool persistent)
 {
   int rank, p, res;
   ptrdiff_t ext, lb;
@@ -226,7 +226,7 @@ static int nbc_allreduce_init(const void* sendbuf, void* recvbuf, int count, MPI
 
 int ompi_coll_libnbc_iallreduce(const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op,
                                 struct ompi_communicator_t *comm, ompi_request_t ** request,
-                                struct mca_coll_base_module_2_3_0_t *module) {
+                                mca_coll_base_module_t *module) {
     int res = nbc_allreduce_init(sendbuf, recvbuf, count, datatype, op,
                                  comm, request, module, false);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
@@ -245,7 +245,7 @@ int ompi_coll_libnbc_iallreduce(const void* sendbuf, void* recvbuf, int count, M
 
 static int nbc_allreduce_inter_init(const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op,
                                     struct ompi_communicator_t *comm, ompi_request_t ** request,
-                                    struct mca_coll_base_module_2_3_0_t *module, bool persistent)
+                                    mca_coll_base_module_t *module, bool persistent)
 {
   int rank, res, rsize;
   size_t size;
@@ -309,7 +309,7 @@ static int nbc_allreduce_inter_init(const void* sendbuf, void* recvbuf, int coun
 
 int ompi_coll_libnbc_iallreduce_inter(const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op,
                                       struct ompi_communicator_t *comm, ompi_request_t ** request,
-                                      struct mca_coll_base_module_2_3_0_t *module) {
+                                      mca_coll_base_module_t *module) {
     int res = nbc_allreduce_inter_init(sendbuf, recvbuf, count, datatype, op,
                                        comm, request, module, false);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
@@ -1186,7 +1186,7 @@ static inline int allred_sched_redscat_allgather(
 
 int ompi_coll_libnbc_allreduce_init(const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op,
                                     struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
-                                    struct mca_coll_base_module_2_3_0_t *module) {
+                                    mca_coll_base_module_t *module) {
     int res = nbc_allreduce_init(sendbuf, recvbuf, count, datatype, op,
                                  comm, request, module, true);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
@@ -1198,7 +1198,7 @@ int ompi_coll_libnbc_allreduce_init(const void* sendbuf, void* recvbuf, int coun
 
 int ompi_coll_libnbc_allreduce_inter_init(const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op,
                                           struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
-                                          struct mca_coll_base_module_2_3_0_t *module) {
+                                          mca_coll_base_module_t *module) {
     int res = nbc_allreduce_inter_init(sendbuf, recvbuf, count, datatype, op,
                                        comm, request, module, true);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {

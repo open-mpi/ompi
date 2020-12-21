@@ -71,16 +71,12 @@ int MPI_Win_create_dynamic(MPI_Info info, MPI_Comm comm, MPI_Win *win)
         return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_COMM, FUNC_NAME);
     }
 
-    OPAL_CR_ENTER_LIBRARY();
-
     /* create_dynamic window and return */
     ret = ompi_win_create_dynamic(&(info->super), comm, win);
     if (OMPI_SUCCESS != ret) {
         *win = MPI_WIN_NULL;
-        OPAL_CR_EXIT_LIBRARY();
         return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_WIN, FUNC_NAME);
     }
 
-    OPAL_CR_EXIT_LIBRARY();
     return MPI_SUCCESS;
 }

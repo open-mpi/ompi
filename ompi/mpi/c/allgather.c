@@ -117,7 +117,7 @@ int MPI_Allgather(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
        if ((MPI_IN_PLACE != sendbuf && 0 == sendcount) ||
             (0 == recvcount)) {
             return MPI_SUCCESS;
-	}
+	   }
     }
     else if ( OMPI_COMM_IS_INTER(comm) ){
         /* for inter comunicators, the communication pattern
@@ -125,12 +125,10 @@ int MPI_Allgather(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
 	   allows to have sendcount=0, while the other has
            a valid sendcount. Thus, the only way not to do
            anything is if both sendcount and recvcount are zero. */
-	if ( 0 == sendcount && 0 == recvcount ) {
-	    return MPI_SUCCESS;
-	}
+	    if ( 0 == sendcount && 0 == recvcount ) {
+	        return MPI_SUCCESS;
+	    }
     }
-
-    OPAL_CR_ENTER_LIBRARY();
 
     /* Invoke the coll component to perform the back-end operation */
 

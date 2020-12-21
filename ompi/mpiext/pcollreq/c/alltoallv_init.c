@@ -126,8 +126,6 @@ int MPIX_Alltoallv_init(const void *sendbuf, const int sendcounts[], const int s
         }
     }
 
-    OPAL_CR_ENTER_LIBRARY();
-
     /* Invoke the coll component to perform the back-end operation */
     err = comm->c_coll->coll_alltoallv_init(sendbuf, sendcounts, sdispls,
                                             sendtype, recvbuf, recvcounts, rdispls,

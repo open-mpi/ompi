@@ -43,7 +43,6 @@ static const char FUNC_NAME[] = "MPI_Status_f082c";
 int MPI_Status_f082c(const MPI_F08_status  *f08_status, MPI_Status *c_status)
 {
     int *c_ints;
-    OPAL_CR_NOOP_PROGRESS();
 
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);

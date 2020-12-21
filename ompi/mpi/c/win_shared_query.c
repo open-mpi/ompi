@@ -44,8 +44,6 @@ int MPI_Win_shared_query(MPI_Win win, int rank, MPI_Aint *size, int *disp_unit, 
          }
     }
 
-    OPAL_CR_ENTER_LIBRARY();
-
     if (NULL != win->w_osc_module->osc_win_shared_query) {
         rc = win->w_osc_module->osc_win_shared_query(win, rank, &tsize, disp_unit, baseptr);
         *size = tsize;

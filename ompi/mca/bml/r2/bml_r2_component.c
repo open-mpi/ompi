@@ -37,7 +37,7 @@ mca_bml_base_component_2_0_0_t mca_bml_r2_component = {
        information about the component itself */
 
     .bml_version = {
-        MCA_BML_BASE_VERSION_2_0_0,
+        MCA_BML_BASE_VERSION_2_1_0,
 
         .mca_component_name = "r2",
         MCA_BASE_MAKE_VERSION(component, OMPI_MAJOR_VERSION, OMPI_MINOR_VERSION,

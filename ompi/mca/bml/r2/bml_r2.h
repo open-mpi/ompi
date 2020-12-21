@@ -63,8 +63,6 @@ int mca_bml_r2_progress(void);
 
 int mca_bml_r2_component_fini(void);
 
-int mca_bml_r2_ft_event(int status);
-
 int mca_bml_r2_finalize( void );
 
 END_C_DECLS

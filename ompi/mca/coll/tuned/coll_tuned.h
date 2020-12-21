@@ -182,11 +182,9 @@ int ompi_coll_tuned_scan_intra_dec_dynamic(SCAN_ARGS);
 int ompi_coll_tuned_scan_intra_do_this(SCAN_ARGS, int algorithm);
 int ompi_coll_tuned_scan_intra_check_forced_init (coll_tuned_force_algorithm_mca_param_indices_t *mca_param_indices);
 
-int mca_coll_tuned_ft_event(int state);
-
 struct mca_coll_tuned_component_t {
 	/** Base coll component */
-	mca_coll_base_component_2_0_0_t super;
+	mca_coll_base_component_2_4_0_t super;
 
 	/** MCA parameter: Priority of this component */
 	int tuned_priority;

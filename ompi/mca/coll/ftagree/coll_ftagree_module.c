@@ -76,7 +76,6 @@ mca_coll_ftagree_comm_query(struct ompi_communicator_t *comm,
      * algorithms.
      */
     ftagree_module->super.coll_module_enable = mca_coll_ftagree_module_enable;
-    ftagree_module->super.ft_event = mca_coll_ftagree_ft_event;
 
     /* This component does not provide any base collectives,
      * just the FT collectives.
@@ -125,11 +124,3 @@ mca_coll_ftagree_module_enable(mca_coll_base_module_t *module,
     return OMPI_SUCCESS;
 }
 
-
-int mca_coll_ftagree_ft_event(int state)
-{
-
-    /* Nothing to do for checkpoint */
-
-    return OMPI_SUCCESS;
-}

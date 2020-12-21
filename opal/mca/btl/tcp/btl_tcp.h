@@ -343,13 +343,6 @@ mca_btl_tcp_dump(struct mca_btl_base_module_t* btl,
                  struct mca_btl_base_endpoint_t* endpoint,
                  int verbose);
 
-/**
-  * Fault Tolerance Event Notification Function
-  * @param state Checkpoint Stae
-  * @return OPAL_SUCCESS or failure status
-  */
-int mca_btl_tcp_ft_event(int state);
-
 /*
  * A blocking send on a non-blocking socket. Used to send the small
  * amount of connection information that identifies the endpoints

@@ -42,6 +42,7 @@
 #include "opal/util/alfg.h"
 #include "opal/util/argv.h"
 #include "opal/util/opal_getcwd.h"
+#include "opal/util/opal_environ.h"
 #include "opal/util/proc.h"
 #include "opal/util/show_help.h"
 #include "opal/util/printf.h"

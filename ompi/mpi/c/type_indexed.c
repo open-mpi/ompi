@@ -73,8 +73,6 @@ int MPI_Type_indexed(int count,
         }
     }
 
-    OPAL_CR_ENTER_LIBRARY();
-
     rc = ompi_datatype_create_indexed ( count, array_of_blocklengths,
                                         array_of_displacements,
                                         oldtype, newtype );
@@ -90,8 +88,6 @@ int MPI_Type_indexed(int count,
         ompi_datatype_set_args( *newtype, 2 * count + 1, a_i, 0, NULL, 1, &oldtype,
                                 MPI_COMBINER_INDEXED );
     }
-
-    OPAL_CR_EXIT_LIBRARY();
 
     return MPI_SUCCESS;
 }

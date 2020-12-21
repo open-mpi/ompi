@@ -261,7 +261,6 @@ struct ompi_request_t;
 #define OMPI_ERRHANDLER_CHECK(rc, mpi_object, err_code, message) \
   if( OPAL_UNLIKELY(rc != OMPI_SUCCESS) ) { \
     int __mpi_err_code = ompi_errcode_get_mpi_code(err_code);         \
-    OPAL_CR_EXIT_LIBRARY() \
     ompi_errhandler_invoke((mpi_object)->error_handler, \
                            (mpi_object), \
                            (int) (mpi_object)->errhandler_type, \
@@ -274,7 +273,6 @@ struct ompi_request_t;
 #define OMPI_ERRHANDLER_NOHANDLE_CHECK(rc, err_code, message) \
   if( OPAL_UNLIKELY(rc != OMPI_SUCCESS) ) { \
     int __mpi_err_code = ompi_errcode_get_mpi_code(err_code);         \
-    OPAL_CR_EXIT_LIBRARY() \
     ompi_errhandler_invoke(NULL, \
                            NULL, \
                            -1, \
@@ -299,7 +297,6 @@ struct ompi_request_t;
  * MPI_SUCCESS.
  */
 #define OMPI_ERRHANDLER_RETURN(rc, mpi_object, err_code, message) \
-  OPAL_CR_EXIT_LIBRARY() \
   if ( OPAL_UNLIKELY(OMPI_SUCCESS != rc) ) { \
     int __mpi_err_code = ompi_errcode_get_mpi_code(err_code);         \
     ompi_errhandler_invoke((mpi_object)->error_handler, \
@@ -315,7 +312,6 @@ struct ompi_request_t;
 /* Same as OMPI_ERRHANDLER_RETURN for non-handle attached errors */
 #define OMPI_ERRHANDLER_NOHANDLE_RETURN(rc, err_code, message) {\
   OMPI_ERRHANDLER_NOHANDLE_CHECK(rc, err_code, message) \
-  OPAL_CR_EXIT_LIBRARY() \
   return MPI_SUCCESS; \
 }
 

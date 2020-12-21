@@ -161,7 +161,6 @@ mca_coll_base_module_t *ompi_coll_adapt_comm_query(struct ompi_communicator_t * 
 
     /* All is good -- return a module */
     adapt_module->super.coll_module_enable = adapt_module_enable;
-    adapt_module->super.ft_event = NULL;
     adapt_module->super.coll_allgather = NULL;
     adapt_module->super.coll_allgatherv = NULL;
     adapt_module->super.coll_allreduce = NULL;

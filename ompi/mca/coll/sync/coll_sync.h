@@ -113,8 +113,6 @@ int mca_coll_sync_scatterv(const void *sbuf, const int *scounts, const int *disp
                            struct ompi_communicator_t *comm,
                            mca_coll_base_module_t *module);
 
-int mca_coll_sync_ft_event(int status);
-
 /* Types */
 /* Module */
 
@@ -139,7 +137,7 @@ OBJ_CLASS_DECLARATION(mca_coll_sync_module_t);
 /* Component */
 
 typedef struct mca_coll_sync_component_t {
-    mca_coll_base_component_2_0_0_t super;
+    mca_coll_base_component_2_4_0_t super;
 
     /* Priority of this component */
     int priority;

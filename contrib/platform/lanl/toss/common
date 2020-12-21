@@ -6,7 +6,6 @@ enable_heterogeneous=no
 enable_shared=yes
 enable_static=yes
 enable_ipv6=no
-enable_ft_thread=no
 enable_per_user_config_files=no
 enable_memchecker=no
 with_valgrind=no

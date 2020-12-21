@@ -73,8 +73,6 @@ int MPI_Comm_create(MPI_Comm comm, MPI_Group group, MPI_Comm *newcomm) {
     }
 #endif
 
-    OPAL_CR_ENTER_LIBRARY();
-
     rc = ompi_comm_create ( (ompi_communicator_t*)comm, (ompi_group_t*)group,
                            (ompi_communicator_t**)newcomm );
     OMPI_ERRHANDLER_RETURN ( rc, comm, rc, FUNC_NAME);

@@ -48,9 +48,7 @@ int MPI_Buffer_detach(void *buffer, int *size)
     }
   }
 
-  OPAL_CR_ENTER_LIBRARY();
   ret = mca_pml_base_bsend_detach(buffer, size);
 
-  OPAL_CR_EXIT_LIBRARY();
   return ret;
 }

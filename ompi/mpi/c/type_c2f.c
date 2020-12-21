@@ -40,9 +40,6 @@ static const char FUNC_NAME[] = "MPI_Type_c2f";
 
 MPI_Fint MPI_Type_c2f(MPI_Datatype datatype)
 {
-
-    OPAL_CR_NOOP_PROGRESS();
-
     MEMCHECKER(
         memchecker_datatype(datatype);
     );

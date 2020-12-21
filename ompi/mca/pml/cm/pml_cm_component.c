@@ -40,12 +40,12 @@ static mca_pml_base_module_t* mca_pml_cm_component_init( int* priority,
                             bool enable_progress_threads, bool enable_mpi_threads);
 static int mca_pml_cm_component_fini(void);
 
-mca_pml_base_component_2_0_0_t mca_pml_cm_component = {
+mca_pml_base_component_2_1_0_t mca_pml_cm_component = {
     /* First, the mca_base_component_t struct containing meta
      * information about the component itself */
 
     .pmlm_version = {
-        MCA_PML_BASE_VERSION_2_0_0,
+        MCA_PML_BASE_VERSION_2_1_0,
 
         .mca_component_name = "cm",
         MCA_BASE_MAKE_VERSION(component, OMPI_MAJOR_VERSION, OMPI_MINOR_VERSION,

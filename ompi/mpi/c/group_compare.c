@@ -57,8 +57,6 @@ int MPI_Group_compare(MPI_Group group1, MPI_Group group2, int *result) {
         }
     }
 
-    OPAL_CR_NOOP_PROGRESS();
-
     return_value = ompi_group_compare((ompi_group_t *)group1, (ompi_group_t *)group2, result);
 
     return return_value;

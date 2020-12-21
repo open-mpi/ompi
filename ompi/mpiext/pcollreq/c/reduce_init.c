@@ -137,8 +137,6 @@ int MPIX_Reduce_init(const void *sendbuf, void *recvbuf, int count,
         OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);
     }
 
-    OPAL_CR_ENTER_LIBRARY();
-
     /* Invoke the coll component to perform the back-end operation */
     err = comm->c_coll->coll_reduce_init(sendbuf, recvbuf, count,
                                          datatype, op, root, comm, info, request,

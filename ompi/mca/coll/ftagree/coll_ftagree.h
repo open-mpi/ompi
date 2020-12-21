@@ -32,7 +32,7 @@ BEGIN_C_DECLS
 
 /* Globally exported variables */
 
-OMPI_MODULE_DECLSPEC extern const mca_coll_base_component_2_0_0_t
+OMPI_MODULE_DECLSPEC extern const mca_coll_base_component_2_4_0_t
 mca_coll_ftagree_component;
 extern int mca_coll_ftagree_priority;
 
@@ -100,8 +100,6 @@ mca_coll_base_module_t
 
 int mca_coll_ftagree_module_enable(mca_coll_base_module_t *module,
                                    struct ompi_communicator_t *comm);
-
-int mca_coll_ftagree_ft_event(int status);
 
 /*
  * Agreement algorithms

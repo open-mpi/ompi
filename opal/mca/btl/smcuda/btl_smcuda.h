@@ -517,13 +517,6 @@ extern void mca_btl_smcuda_dump(struct mca_btl_base_module_t* btl,
                             struct mca_btl_base_endpoint_t* endpoint,
                             int verbose);
 
-/**
- * Fault Tolerance Event Notification Function
- * @param state Checkpoint Stae
- * @return OPAL_SUCCESS or failure status
- */
-int mca_btl_smcuda_ft_event(int state);
-
 #if OPAL_ENABLE_PROGRESS_THREADS == 1
 void mca_btl_smcuda_component_event_thread(opal_object_t*);
 #endif

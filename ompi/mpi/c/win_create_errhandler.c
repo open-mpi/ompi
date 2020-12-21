@@ -51,8 +51,6 @@ int MPI_Win_create_errhandler(MPI_Win_errhandler_function *function,
         }
     }
 
-    OPAL_CR_ENTER_LIBRARY();
-
     /* Create and cache the errhandler.  Sets a refcount of 1. */
     *errhandler =
         ompi_errhandler_create(OMPI_ERRHANDLER_TYPE_WIN,

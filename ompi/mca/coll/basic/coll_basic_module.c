@@ -69,7 +69,6 @@ mca_coll_basic_comm_query(struct ompi_communicator_t *comm,
     /* Choose whether to use [intra|inter], and [linear|log]-based
      * algorithms. */
     basic_module->super.coll_module_enable = mca_coll_basic_module_enable;
-    basic_module->super.ft_event = mca_coll_basic_ft_event;
 
     if (OMPI_COMM_IS_INTER(comm)) {
         basic_module->super.coll_allgather  = mca_coll_basic_allgather_inter;
@@ -160,26 +159,5 @@ mca_coll_basic_module_enable(mca_coll_base_module_t *module,
     }
 
     /* All done */
-    return OMPI_SUCCESS;
-}
-
-int
-mca_coll_basic_ft_event(int state) {
-    if(OPAL_CRS_CHECKPOINT == state) {
-        ;
-    }
-    else if(OPAL_CRS_CONTINUE == state) {
-        ;
-    }
-    else if(OPAL_CRS_RESTART == state) {
-        ;
-    }
-    else if(OPAL_CRS_TERM == state ) {
-        ;
-    }
-    else {
-        ;
-    }
-
     return OMPI_SUCCESS;
 }

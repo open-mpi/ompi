@@ -54,9 +54,6 @@ OMPI_DECLSPEC  int mca_bml_base_init(bool enable_progress_threads,
                                      bool enable_mpi_threads);
 OMPI_DECLSPEC  bool mca_bml_base_inited(void);
 
-OMPI_DECLSPEC  int mca_bml_base_ft_event(int state);
-
-
 /*
  * Globals
  */

@@ -21,6 +21,7 @@
 #include "oshmem_config.h"
 #include "opal/datatype/opal_convertor.h"
 #include "opal/mca/common/ucx/common_ucx.h"
+#include "opal/util/opal_environ.h"
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/mca/pml/pml.h"
 

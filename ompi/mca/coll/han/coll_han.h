@@ -177,7 +177,7 @@ typedef struct mca_coll_han_allgather_s mca_coll_han_allgather_t;
  */
 typedef struct mca_coll_han_component_t {
     /** Base coll component */
-    mca_coll_base_component_2_0_0_t super;
+    mca_coll_base_component_2_4_0_t super;
 
     /** MCA parameter: Priority of this component */
     int han_priority;

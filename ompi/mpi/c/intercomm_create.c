@@ -89,8 +89,6 @@ int MPI_Intercomm_create(MPI_Comm local_comm, int local_leader,
      */
 #endif
 
-    OPAL_CR_ENTER_LIBRARY();
-
     local_size = ompi_comm_size ( local_comm );
     local_rank = ompi_comm_rank ( local_comm );
     lleader = local_leader;
@@ -106,12 +104,10 @@ int MPI_Intercomm_create(MPI_Comm local_comm, int local_leader,
         if ( local_rank == local_leader ) {
             if ( ompi_comm_invalid ( bridge_comm ) ||
                  (bridge_comm->c_flags & OMPI_COMM_INTER) ) {
-                OPAL_CR_EXIT_LIBRARY();
                 return OMPI_ERRHANDLER_INVOKE ( local_comm, MPI_ERR_COMM,
                                                 FUNC_NAME);
             }
             if ( (remote_leader < 0) || (remote_leader >= ompi_comm_size(bridge_comm))) {
-                OPAL_CR_EXIT_LIBRARY();
                 return OMPI_ERRHANDLER_INVOKE ( local_comm, MPI_ERR_ARG,
                                                 FUNC_NAME);
             }
@@ -243,8 +239,6 @@ int MPI_Intercomm_create(MPI_Comm local_comm, int local_leader,
     }
 
  err_exit:
-    OPAL_CR_EXIT_LIBRARY();
-
     if ( NULL != rprocs ) {
         free ( rprocs );
     }

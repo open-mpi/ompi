@@ -8,7 +8,6 @@ enable_heterogeneous=no
 enable_shared=yes
 enable_static=yes
 enable_ipv6=no
-enable_ft_thread=no
 enable_per_user_config_files=no
 
 # Enable the fortran bindings
@@ -20,7 +19,7 @@ enable_mpi_cxx_seek=no
 enable_cxx_exceptions=no
 
 # Disable components not needed on any TOSS platform
-enable_mca_no_build=carto,crs,filem,routed-linear,snapc,pml-dr,pml-crcp2,pml-crcpw,pml-v,pml-example,crcp,btl-tcp
+enable_mca_no_build=carto,routed-linear,pml-v,pml-example,btl-tcp
 
 # Enable malloc hooks for mpi_leave_pinned
 with_memory_manager=linux

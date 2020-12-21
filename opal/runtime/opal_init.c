@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -66,12 +66,10 @@
 #include "opal/mca/threads/threads.h"
 #include "opal/mca/threads/tsd.h"
 
-#include "opal/runtime/opal_cr.h"
-#include "opal/mca/crs/base/base.h"
-
 #include "opal/runtime/opal_progress.h"
 #include "opal/mca/threads/base/base.h"
 #include "opal/mca/backtrace/base/base.h"
+#include "opal/util/opal_environ.h"
 
 #include "opal/constants.h"
 #include "opal/util/error.h"

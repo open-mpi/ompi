@@ -94,7 +94,7 @@ struct ompi_proc_t;
  * indicates whether multiple threads may invoke this component
  * simultaneously or not.
  */
-typedef struct mca_pml_base_module_1_0_1_t * (*mca_pml_base_component_init_fn_t)(
+typedef struct mca_pml_base_module_2_1_0_t * (*mca_pml_base_component_init_fn_t)(
     int *priority,
     bool enable_progress_threads,
     bool enable_mpi_threads);
@@ -105,14 +105,14 @@ typedef int (*mca_pml_base_component_finalize_fn_t)(void);
  * PML component version and interface functions.
  */
 
-struct mca_pml_base_component_2_0_0_t {
+struct mca_pml_base_component_2_1_0_t {
    mca_base_component_t pmlm_version;
    mca_base_component_data_t pmlm_data;
    mca_pml_base_component_init_fn_t pmlm_init;
    mca_pml_base_component_finalize_fn_t pmlm_finalize;
 };
-typedef struct mca_pml_base_component_2_0_0_t mca_pml_base_component_2_0_0_t;
-typedef mca_pml_base_component_2_0_0_t mca_pml_base_component_t;
+typedef struct mca_pml_base_component_2_1_0_t mca_pml_base_component_2_1_0_t;
+typedef mca_pml_base_component_2_1_0_t mca_pml_base_component_t;
 
 
 /**
@@ -485,13 +485,6 @@ typedef int (*mca_pml_base_module_dump_fn_t)(
 );
 
 /**
- * Fault Tolerance Awareness function
- * @param status     Checkpoint status
- * @return           OMPI_SUCCESS or failure status
- */
-typedef int (*mca_pml_base_module_ft_event_fn_t) (int status);
-
-/**
  * pml module flags
  */
 /** PML requires requires all procs in the job on the first call to
@@ -502,7 +495,7 @@ typedef int (*mca_pml_base_module_ft_event_fn_t) (int status);
  *  PML instance.
  */
 
-struct mca_pml_base_module_1_0_1_t {
+struct mca_pml_base_module_2_1_0_t {
 
     /* downcalls from MCA to PML */
     mca_pml_base_module_add_procs_fn_t    pml_add_procs;
@@ -531,22 +524,19 @@ struct mca_pml_base_module_1_0_1_t {
     /* diagnostics */
     mca_pml_base_module_dump_fn_t         pml_dump;
 
-    /* FT Event */
-    mca_pml_base_module_ft_event_fn_t     pml_ft_event;
-
     /* maximum constant sizes */
     uint32_t                              pml_max_contextid;
     int                                   pml_max_tag;
     int                                   pml_flags;
 };
-typedef struct mca_pml_base_module_1_0_1_t mca_pml_base_module_1_0_1_t;
-typedef mca_pml_base_module_1_0_1_t mca_pml_base_module_t;
+typedef struct mca_pml_base_module_2_1_0_t mca_pml_base_module_2_1_0_t;
+typedef mca_pml_base_module_2_1_0_t mca_pml_base_module_t;
 
 /*
  * Macro for use in components that are of type pml
  */
-#define MCA_PML_BASE_VERSION_2_0_0 \
-    OMPI_MCA_BASE_VERSION_2_1_0("pml", 2, 0, 0)
+#define MCA_PML_BASE_VERSION_2_1_0 \
+    OMPI_MCA_BASE_VERSION_2_1_0("pml", 2, 1, 0)
 
     /*
      * macro for doing direct call / call through struct

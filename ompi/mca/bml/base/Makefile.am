@@ -26,5 +26,4 @@ libmca_bml_la_SOURCES += \
 	base/bml_base_btl.h \
 	base/bml_base_endpoint.c \
 	base/bml_base_init.c \
-	base/bml_base_frame.c \
-	base/bml_base_ft.c
+	base/bml_base_frame.c

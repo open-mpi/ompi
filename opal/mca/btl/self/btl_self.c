@@ -284,10 +284,6 @@ static int mca_btl_self_get (mca_btl_base_module_t *btl, struct mca_btl_base_end
     return OPAL_SUCCESS;
 }
 
-static int mca_btl_self_ft_event(int state) {
-    return OPAL_SUCCESS;
-}
-
 /* btl self module */
 mca_btl_base_module_t mca_btl_self = {
     .btl_component = &mca_btl_self_component.super,
@@ -301,6 +297,5 @@ mca_btl_base_module_t mca_btl_self = {
     .btl_sendi = mca_btl_self_sendi,
     .btl_put = mca_btl_self_put,
     .btl_get = mca_btl_self_get,
-    .btl_dump = mca_btl_base_dump,
-    .btl_ft_event = mca_btl_self_ft_event,
+    .btl_dump = mca_btl_base_dump
 };

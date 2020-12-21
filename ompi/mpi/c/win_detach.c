@@ -55,8 +55,6 @@ int MPI_Win_detach(MPI_Win win, const void *base)
         OMPI_ERRHANDLER_CHECK(ret, win, ret, FUNC_NAME);
     }
 
-    OPAL_CR_ENTER_LIBRARY();
-
     /* create window and return */
     ret = win->w_osc_module->osc_win_detach(win, base);
     OMPI_ERRHANDLER_RETURN(ret, win, ret, FUNC_NAME);

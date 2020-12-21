@@ -40,8 +40,6 @@ static const char FUNC_NAME[] = "MPI_File_get_info";
 
 int MPI_File_get_info(MPI_File fh, MPI_Info *info_used)
 {
-    OPAL_CR_NOOP_PROGRESS();
-
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if (NULL == info_used) {

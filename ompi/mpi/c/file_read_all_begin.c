@@ -61,8 +61,6 @@ int MPI_File_read_all_begin(MPI_File fh, void *buf, int count,
         OMPI_ERRHANDLER_CHECK(rc, fh, rc, FUNC_NAME);
     }
 
-    OPAL_CR_ENTER_LIBRARY();
-
     /* Call the back-end io component function */
 
     switch (fh->f_io_version) {

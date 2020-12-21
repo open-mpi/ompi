@@ -75,19 +75,14 @@ int MPI_Waitall(int count, MPI_Request requests[], MPI_Status statuses[])
         return MPI_SUCCESS;
     }
 
-    OPAL_CR_ENTER_LIBRARY();
-
     if (OMPI_SUCCESS == ompi_request_wait_all(count, requests, statuses)) {
-        OPAL_CR_EXIT_LIBRARY();
         return MPI_SUCCESS;
     }
 
     if (MPI_SUCCESS !=
         ompi_errhandler_request_invoke(count, requests, FUNC_NAME)) {
-        OPAL_CR_EXIT_LIBRARY();
         return MPI_ERR_IN_STATUS;
     }
 
-    OPAL_CR_EXIT_LIBRARY();
     return MPI_SUCCESS;
 }

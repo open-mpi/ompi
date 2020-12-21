@@ -51,7 +51,6 @@ static void *mca_mpool_hugepage_alloc (mca_mpool_base_module_t *mpool, size_t si
 static void *mca_mpool_hugepage_realloc (mca_mpool_base_module_t *mpool, void *addr, size_t size);
 static void mca_mpool_hugepage_free (mca_mpool_base_module_t *mpool, void *addr);
 static void mca_mpool_hugepage_finalize (mca_mpool_base_module_t *mpool);
-static int mca_mpool_hugepage_ft_event (int state);
 
 static void mca_mpool_hugepage_hugepage_constructor (mca_mpool_hugepage_hugepage_t *huge_page)
 {
@@ -91,7 +90,6 @@ int mca_mpool_hugepage_module_init(mca_mpool_hugepage_module_t *mpool,
     mpool->super.mpool_realloc = mca_mpool_hugepage_realloc;
     mpool->super.mpool_free = mca_mpool_hugepage_free;
     mpool->super.mpool_finalize = mca_mpool_hugepage_finalize;
-    mpool->super.mpool_ft_event = mca_mpool_hugepage_ft_event;
     mpool->super.flags = MCA_MPOOL_FLAGS_MPI_ALLOC_MEM;
 
     OBJ_CONSTRUCT(&mpool->lock, opal_mutex_t);
@@ -256,8 +254,4 @@ static void mca_mpool_hugepage_finalize (struct mca_mpool_base_module_t *mpool)
         (void) hugepage_module->allocator->alc_finalize (hugepage_module->allocator);
         hugepage_module->allocator = NULL;
     }
-}
-
-static int mca_mpool_hugepage_ft_event (int state) {
-    return OPAL_SUCCESS;
 }

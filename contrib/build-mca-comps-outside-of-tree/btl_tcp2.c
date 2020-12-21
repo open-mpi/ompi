@@ -65,7 +65,6 @@ mca_btl_tcp2_module_t mca_btl_tcp2_module = {
         mca_btl_tcp_dump,
         NULL, /* mpool */
         NULL, /* register error */
-        mca_btl_tcp2_ft_event
     }
 };
 

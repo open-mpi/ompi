@@ -76,17 +76,13 @@ int MPI_Win_allocate_shared(MPI_Aint size, int disp_unit, MPI_Info info,
         return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_COMM, FUNC_NAME);
     }
 
-    OPAL_CR_ENTER_LIBRARY();
-
     /* create window and return */
     ret = ompi_win_allocate_shared((size_t)size, disp_unit, &(info->super),
                                    comm, baseptr, win);
     if (OMPI_SUCCESS != ret) {
         *win = MPI_WIN_NULL;
-        OPAL_CR_EXIT_LIBRARY();
         OMPI_ERRHANDLER_RETURN (ret, comm, ret, FUNC_NAME);
     }
 
-    OPAL_CR_EXIT_LIBRARY();
     return MPI_SUCCESS;
 }

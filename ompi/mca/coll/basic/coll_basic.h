@@ -39,7 +39,7 @@ BEGIN_C_DECLS
 
     /* Globally exported variables */
 
-    OMPI_MODULE_DECLSPEC extern const mca_coll_base_component_2_0_0_t
+    OMPI_MODULE_DECLSPEC extern const mca_coll_base_component_2_4_0_t
         mca_coll_basic_component;
     extern int mca_coll_basic_priority;
     extern int mca_coll_basic_crossover;
@@ -279,8 +279,6 @@ BEGIN_C_DECLS
                                            struct ompi_datatype_t * const *sdtypes, void *rbuf, const int rcounts[],
                                            const MPI_Aint rdisps[], struct ompi_datatype_t * const *rdtypes,
                                            struct ompi_communicator_t *comm, mca_coll_base_module_t *module);
-
-    int mca_coll_basic_ft_event(int status);
 
 
 struct mca_coll_basic_module_t {

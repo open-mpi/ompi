@@ -50,7 +50,6 @@ mca_pml_monitoring_module_t mca_pml_monitoring_module = {
     .pml_imrecv             = mca_pml_monitoring_imrecv,
     .pml_mrecv              = mca_pml_monitoring_mrecv,
     .pml_dump               = mca_pml_monitoring_dump,
-    .pml_ft_event           = NULL,
     .pml_max_contextid      = 65535,
     .pml_max_tag            = INT_MAX,
     .pml_flags              = 0 /* flags */
@@ -185,13 +184,13 @@ static int mca_pml_monitoring_component_finish(void)
     return OMPI_SUCCESS;
 }
 
-mca_pml_base_component_2_0_0_t mca_pml_monitoring_component = {
+mca_pml_base_component_2_1_0_t mca_pml_monitoring_component = {
 
     /* First, the mca_base_component_t struct containing meta
        information about the component itself */
 
     .pmlm_version = {
-        MCA_PML_BASE_VERSION_2_0_0,
+        MCA_PML_BASE_VERSION_2_1_0,
 
         .mca_component_name = "monitoring", /* MCA component name */
         MCA_MONITORING_MAKE_VERSION,

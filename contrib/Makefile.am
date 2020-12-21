@@ -2,7 +2,7 @@
 # Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
 #                         Corporation.  All rights reserved.
-# Copyright (c) 2004-2005 The University of Tennessee and The University
+# Copyright (c) 2004-2020 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
 # Copyright (c) 2004-2009 High Performance Computing Center Stuttgart,
@@ -30,12 +30,6 @@ dist_amca_param_DATA = amca-param-sets/example.conf
 if WANT_FT_MPI
 dist_amca_param_DATA += amca-param-sets/ft-mpi
 endif # WANT_FT_MPI
-
-if WANT_FT_CR
-dist_amca_param_DATA += \
-	amca-param-sets/ft-enable-cr \
-	amca-param-sets/ft-enable-cr-recovery
-endif # WANT_FT_CR
 
 EXTRA_DIST = \
         completion/mpirun.sh \

@@ -115,7 +115,6 @@ int MPI_Cart_create(MPI_Comm old_comm, int ndims, const int dims[],
     err = topo->topo.cart.cart_create(topo, old_comm,
                                       ndims, dims, periods,
                                       (0 == reorder) ? false : true, comm_cart);
-    OPAL_CR_EXIT_LIBRARY();
 
     if (MPI_SUCCESS != err) {
         OBJ_RELEASE(topo);

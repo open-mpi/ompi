@@ -52,8 +52,6 @@ int MPI_File_get_group(MPI_File fh, MPI_Group *group)
         OMPI_ERRHANDLER_CHECK(rc, fh, rc, FUNC_NAME);
     }
 
-    OPAL_CR_ENTER_LIBRARY();
-
     /* Does not need to invoke a back-end io function */
 
     rc = ompi_comm_group (fh->f_comm, group);

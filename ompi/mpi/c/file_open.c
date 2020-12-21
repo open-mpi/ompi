@@ -101,8 +101,6 @@ int MPI_File_open(MPI_Comm comm, const char *filename, int amode,
     }
     opal_mutex_unlock(&ompi_mpi_file_bootstrap_mutex);
 
-    OPAL_CR_ENTER_LIBRARY();
-
     /* Create an empty MPI_File handle */
 
     *fh = MPI_FILE_NULL;

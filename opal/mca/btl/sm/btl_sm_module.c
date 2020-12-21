@@ -63,8 +63,6 @@ static int sm_add_procs(struct mca_btl_base_module_t* btl,
                            struct mca_btl_base_endpoint_t** peers,
                            struct opal_bitmap_t* reachability);
 
-static int sm_ft_event (int state);
-
 mca_btl_sm_t mca_btl_sm = {
     {
         &mca_btl_sm_component.super,
@@ -77,8 +75,7 @@ mca_btl_sm_t mca_btl_sm = {
         .btl_send = mca_btl_sm_send,
         .btl_sendi = mca_btl_sm_sendi,
         .btl_dump = mca_btl_base_dump,
-        .btl_register_error = sm_register_error_cb,
-        .btl_ft_event = sm_ft_event
+        .btl_register_error = sm_register_error_cb
     }
 };
 
@@ -606,16 +603,6 @@ static struct mca_btl_base_descriptor_t *sm_prepare_src (struct mca_btl_base_mod
     frag->base.des_flags   = flags;
 
     return &frag->base;
-}
-
-/**
- * Fault Tolerance Event Notification Function
- * @param state Checkpoint Stae
- * @return OPAL_SUCCESS or failure status
- */
-static int sm_ft_event (int state)
-{
-    return OPAL_SUCCESS;
 }
 
 static void mca_btl_sm_endpoint_constructor (mca_btl_sm_endpoint_t *ep)

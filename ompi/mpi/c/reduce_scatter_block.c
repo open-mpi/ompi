@@ -109,8 +109,6 @@ int MPI_Reduce_scatter_block(const void *sendbuf, void *recvbuf, int recvcount,
     }
 #endif
 
-    OPAL_CR_ENTER_LIBRARY();
-
     /* Invoke the coll component to perform the back-end operation */
 
     OBJ_RETAIN(op);

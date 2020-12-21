@@ -143,8 +143,6 @@ int MPI_Ineighbor_alltoallv(const void *sendbuf, const int sendcounts[], const i
         }
     }
 
-    OPAL_CR_ENTER_LIBRARY();
-
     /* Invoke the coll component to perform the back-end operation */
     err = comm->c_coll->coll_ineighbor_alltoallv(sendbuf, sendcounts, sdispls,
                                                 sendtype, recvbuf, recvcounts, rdispls,

@@ -62,12 +62,12 @@ int mca_pml_ob1_output = 0;
 static int mca_pml_ob1_verbose = 0;
 bool mca_pml_ob1_matching_protection = false;
 
-mca_pml_base_component_2_0_0_t mca_pml_ob1_component = {
+mca_pml_base_component_2_1_0_t mca_pml_ob1_component = {
     /* First, the mca_base_component_t struct containing meta
        information about the component itself */
 
     .pmlm_version = {
-        MCA_PML_BASE_VERSION_2_0_0,
+        MCA_PML_BASE_VERSION_2_1_0,
 
         .mca_component_name = "ob1",
         .mca_component_major_version = OMPI_MAJOR_VERSION,

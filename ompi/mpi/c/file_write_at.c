@@ -66,8 +66,6 @@ int MPI_File_write_at(MPI_File fh, MPI_Offset offset, const void *buf,
         OMPI_ERRHANDLER_CHECK(rc, fh, rc, FUNC_NAME);
     }
 
-    OPAL_CR_ENTER_LIBRARY();
-
     /* Call the back-end io component function */
 
     switch (fh->f_io_version) {

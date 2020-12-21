@@ -76,8 +76,6 @@ int MPI_Get(void *origin_addr, int origin_count,
 
     if (MPI_PROC_NULL == target_rank) return MPI_SUCCESS;
 
-    OPAL_CR_ENTER_LIBRARY();
-
     rc = win->w_osc_module->osc_get(origin_addr, origin_count, origin_datatype,
                                     target_rank, target_disp, target_count,
                                     target_datatype, win);

@@ -112,8 +112,6 @@ int MPI_Scan(const void *sendbuf, void *recvbuf, int count,
         return MPI_SUCCESS;
     }
 
-    OPAL_CR_ENTER_LIBRARY();
-
     /* Call the coll component to actually perform the allgather */
 
     OBJ_RETAIN(op);

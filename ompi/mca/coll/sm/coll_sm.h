@@ -55,7 +55,7 @@ BEGIN_C_DECLS
      */
     typedef struct mca_coll_sm_component_t {
         /** Base coll component */
-        mca_coll_base_component_2_0_0_t super;
+        mca_coll_base_component_2_4_0_t super;
 
         /** MCA parameter: Priority of this component */
         int sm_priority;
@@ -315,8 +315,6 @@ BEGIN_C_DECLS
 				   struct ompi_datatype_t *rdtype, int root,
 				   struct ompi_communicator_t *comm,
 				   mca_coll_base_module_t *module);
-
-    int mca_coll_sm_ft_event(int state);
 
 /**
  * Global variables used in the macros (essentially constants, so

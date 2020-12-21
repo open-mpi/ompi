@@ -95,8 +95,6 @@ int MPIX_Scan_init(const void *sendbuf, void *recvbuf, int count,
         OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);
     }
 
-    OPAL_CR_ENTER_LIBRARY();
-
     /* Call the coll component to actually perform the allgather */
 
     err = comm->c_coll->coll_scan_init(sendbuf, recvbuf, count,

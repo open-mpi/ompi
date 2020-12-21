@@ -14,7 +14,6 @@
 
 #include <stdlib.h>
 
-#include "opal/runtime/opal_cr.h"
 #include "opal/util/output.h"
 
 #include "oshmem/constants.h"
@@ -79,7 +78,6 @@ static inline void _shmem_init(int required, int *provided)
         oshmem_shmem_abort(-1);
     }
 
-    OPAL_CR_INIT_LIBRARY();
 #if HAVE_ON_EXIT
     on_exit(shmem_onexit, NULL);
 #endif

@@ -14,7 +14,7 @@
 #ifndef OPAL_MCA_THREADS_PTHREADS_THREADS_PTHREADS_H
 #define OPAL_MCA_THREADS_PTHREADS_THREADS_PTHREADS_H
 
-#include "opal_config.h"
+#include "opal/mca/threads/thread.h"
 #include <stdint.h>
 #include <time.h>
 

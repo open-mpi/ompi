@@ -125,8 +125,6 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/mpool/mpool.h"
 #include "opal/mca/rcache/rcache.h"
-#include "opal/mca/crs/crs.h"
-#include "opal/mca/crs/base/base.h"
 
 BEGIN_C_DECLS
 
@@ -1183,13 +1181,6 @@ typedef void (*mca_btl_base_module_dump_fn_t)(
 );
 
 /**
- * Fault Tolerance Event Notification Function
- * @param state Checkpoint Status
- * @return OPAL_SUCCESS or failure status
- */
-typedef int (*mca_btl_base_module_ft_event_fn_t)(int state);
-
-/**
  * Flush all outstanding RDMA operations on an endpoint or all endpoints.
  *
  * @param btl (IN)         BTL module
@@ -1261,8 +1252,6 @@ struct mca_btl_base_module_t {
     mca_mpool_base_module_t*             btl_mpool;
     /** register a default error handler */
     mca_btl_base_module_register_error_fn_t btl_register_error;
-    /** fault tolerant even notification */
-    mca_btl_base_module_ft_event_fn_t btl_ft_event;
 #if OPAL_CUDA_GDR_SUPPORT
     size_t      btl_cuda_eager_limit;  /**< switch from eager to RDMA */
     size_t      btl_cuda_rdma_limit;   /**< switch from RDMA to rndv pipeline */
@@ -1278,28 +1267,28 @@ struct mca_btl_base_module_t {
 typedef struct mca_btl_base_module_t mca_btl_base_module_t;
 
 #define MCA_BTL_BASE_MAJOR_VERSION 3
-#define MCA_BTL_BASE_MINOR_VERSION 2
+#define MCA_BTL_BASE_MINOR_VERSION 3
 #define MCA_BTL_BASE_PATCH_VERSION 0
 
 /*
  * Macro for use in modules that are of type btl v3.2.0
  */
-#define MCA_BTL_BASE_VERSION_3_2_0                          \
+#define MCA_BTL_BASE_VERSION_3_3_0                          \
     OPAL_MCA_BASE_VERSION_2_1_0("btl",                      \
                                 MCA_BTL_BASE_MAJOR_VERSION, \
                                 MCA_BTL_BASE_MINOR_VERSION, \
                                 MCA_BTL_BASE_PATCH_VERSION)
 
 #define MCA_BTL_DEFAULT_VERSION(name)                       \
-    MCA_BTL_BASE_VERSION_3_2_0,                             \
+    MCA_BTL_BASE_VERSION_3_3_0,                             \
     .mca_component_name = name,                             \
     MCA_BASE_MAKE_VERSION(component, OPAL_MAJOR_VERSION, OPAL_MINOR_VERSION, \
                           OPAL_RELEASE_VERSION)
 
 /**
- * Convinience macro for detecting the BTL interface version.
+ * Convenience macro for detecting the BTL interface version.
  */
-#define BTL_VERSION 320
+#define BTL_VERSION 330
 
 END_C_DECLS
 

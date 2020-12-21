@@ -67,8 +67,6 @@ int MPI_Type_ub(MPI_Datatype mtype, MPI_Aint *ub)
     }
   }
 
-  OPAL_CR_ENTER_LIBRARY();
-
   status = ompi_datatype_get_extent( mtype, &lb, &extent );
   if (MPI_SUCCESS == status) {
     *ub = lb + extent;

@@ -111,7 +111,6 @@ mca_coll_sync_comm_query(struct ompi_communicator_t *comm,
 
     /* Choose whether to use [intra|inter] */
     sync_module->super.coll_module_enable = mca_coll_sync_module_enable;
-    sync_module->super.ft_event = mca_coll_sync_ft_event;
 
     /* The "all" versions are already synchronous.  So no need for an
        additional barrier there. */
@@ -178,26 +177,4 @@ int mca_coll_sync_module_enable(mca_coll_base_module_t *module,
                    ompi_process_info.nodename,
                    mca_coll_sync_component.priority, msg);
     return OMPI_ERR_NOT_FOUND;
-}
-
-
-int mca_coll_sync_ft_event(int state)
-{
-    if (OPAL_CRS_CHECKPOINT == state) {
-        ;
-    }
-    else if (OPAL_CRS_CONTINUE == state) {
-        ;
-    }
-    else if (OPAL_CRS_RESTART == state) {
-        ;
-    }
-    else if (OPAL_CRS_TERM == state ) {
-        ;
-    }
-    else {
-        ;
-    }
-
-    return OMPI_SUCCESS;
 }

@@ -86,7 +86,7 @@ OBJ_CLASS_DECLARATION(mca_coll_cuda_module_t);
 /* Component */
 
 typedef struct mca_coll_cuda_component_t {
-    mca_coll_base_component_2_0_0_t super;
+    mca_coll_base_component_2_4_0_t super;
 
     int priority; /* Priority of this component */
     int disable_cuda_coll;  /* Force disable of the CUDA collective component */

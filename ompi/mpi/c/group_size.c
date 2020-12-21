@@ -39,9 +39,6 @@ static const char FUNC_NAME[] = "MPI_Group_size";
 
 int MPI_Group_size(MPI_Group group, int *size)
 {
-
-    OPAL_CR_NOOP_PROGRESS();
-
     /* error checking */
     if( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);

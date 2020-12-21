@@ -1,6 +1,5 @@
 enable_hadoop=yes
 enable_opal_multi_threads=no
-enable_ft_thread=no
 enable_mem_debug=no
 enable_mem_profile=no
 enable_debug_symbols=yes
@@ -18,7 +17,7 @@ enable_mpi_cxx_seek=no
 enable_cxx_exceptions=no
 enable_mpi_java=yes
 enable_io_romio=no
-enable_mca_no_build=crs,memchecker,snapc,crcp,rml-ftrm
+enable_mca_no_build=memchecker
 with_memory_manager=no
 with_tm=no
 with_devel_headers=yes

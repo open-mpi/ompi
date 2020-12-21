@@ -44,8 +44,6 @@ int MPI_File_set_info(MPI_File fh, MPI_Info info)
 {
     int ret; 
 
-    OPAL_CR_NOOP_PROGRESS();
-
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
@@ -59,8 +57,6 @@ int MPI_File_set_info(MPI_File fh, MPI_Info info)
                                           FUNC_NAME);
         }
     }
-
-    OPAL_CR_ENTER_LIBRARY();
 
 // Some components we're still letting handle info internally, eg romio321.
 // Components that want to handle it themselves will fill in the get/set

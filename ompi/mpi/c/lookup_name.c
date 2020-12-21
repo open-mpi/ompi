@@ -72,8 +72,6 @@ int MPI_Lookup_name(const char *service_name, MPI_Info info, char *port_name)
         }
     }
 
-    OPAL_CR_ENTER_LIBRARY();
-
     /* OMPI supports info keys to pass the range to
      * be searched for the given key */
     if (MPI_INFO_NULL != info) {
@@ -85,7 +83,6 @@ int MPI_Lookup_name(const char *service_name, MPI_Info info, char *port_name)
                 rng = PMIX_RANGE_SESSION; // share only with procs in same session
             } else {
                 /* unrecognized scope */
-                OPAL_CR_EXIT_LIBRARY();
                 return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG,
                                             FUNC_NAME);
             }
@@ -113,7 +110,6 @@ int MPI_Lookup_name(const char *service_name, MPI_Info info, char *port_name)
             ret = MPI_ERR_NAME;
         }
 
-        OPAL_CR_EXIT_LIBRARY();
         return OMPI_ERRHANDLER_NOHANDLE_INVOKE(ret, FUNC_NAME);
     }
 
@@ -121,6 +117,5 @@ int MPI_Lookup_name(const char *service_name, MPI_Info info, char *port_name)
                       MPI_MAX_PORT_NAME );
     PMIX_PDATA_DESTRUCT(&pdat);
 
-    OPAL_CR_EXIT_LIBRARY();
     return MPI_SUCCESS;
 }

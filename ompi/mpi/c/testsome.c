@@ -80,20 +80,15 @@ int MPI_Testsome(int incount, MPI_Request requests[],
         return OMPI_SUCCESS;
     }
 
-    OPAL_CR_ENTER_LIBRARY();
-
     if (OMPI_SUCCESS == ompi_request_test_some(incount, requests, outcount,
                                                indices, statuses)) {
-        OPAL_CR_EXIT_LIBRARY();
         return MPI_SUCCESS;
     }
 
     if (MPI_SUCCESS !=
         ompi_errhandler_request_invoke(incount, requests, FUNC_NAME)) {
-        OPAL_CR_EXIT_LIBRARY();
         return MPI_ERR_IN_STATUS;
     }
 
-    OPAL_CR_EXIT_LIBRARY();
     return MPI_SUCCESS;
 }

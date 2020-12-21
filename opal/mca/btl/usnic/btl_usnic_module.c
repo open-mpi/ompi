@@ -2535,12 +2535,6 @@ int opal_btl_usnic_module_init(opal_btl_usnic_module_t *module)
 }
 
 
-static int usnic_ft_event(int state)
-{
-    return OPAL_SUCCESS;
-}
-
-
 opal_btl_usnic_module_t opal_btl_usnic_module_template = {
     .super = {
         .btl_component = &mca_btl_usnic_component.super,
@@ -2587,6 +2581,5 @@ opal_btl_usnic_module_t opal_btl_usnic_module_template = {
 
         .btl_mpool = NULL,
         .btl_register_error = usnic_register_pml_err_cb,
-        .btl_ft_event = usnic_ft_event
     }
 };

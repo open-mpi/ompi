@@ -325,12 +325,5 @@ extern mca_btl_base_descriptor_t* mca_btl_tcp2_prepare_dst(
     uint32_t flags);
 
 
-/**
-  * Fault Tolerance Event Notification Function
-  * @param state Checkpoint Stae
-  * @return OMPI_SUCCESS or failure status
-  */
-int mca_btl_tcp2_ft_event(int state);
-
 END_C_DECLS
 #endif

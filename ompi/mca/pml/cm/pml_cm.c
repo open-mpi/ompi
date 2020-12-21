@@ -53,7 +53,6 @@ ompi_pml_cm_t ompi_pml_cm = {
         .pml_imrecv        = mca_pml_cm_imrecv,
         .pml_mrecv         = mca_pml_cm_mrecv,
         .pml_dump          = mca_pml_cm_dump,
-        .pml_ft_event      = NULL,
         .pml_max_contextid = 0,
         .pml_max_tag       = 0,
         .pml_flags         = 0 /* flags */

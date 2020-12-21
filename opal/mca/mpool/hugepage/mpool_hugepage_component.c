@@ -91,7 +91,7 @@ mca_mpool_hugepage_component_t mca_mpool_hugepage_component = {
            information about the component itself */
 
         .mpool_version ={
-            MCA_MPOOL_BASE_VERSION_3_0_0,
+            MCA_MPOOL_BASE_VERSION_3_1_0,
 
             .mca_component_name = "hugepage",
             MCA_BASE_MAKE_VERSION(component, OPAL_MAJOR_VERSION, OPAL_MINOR_VERSION,

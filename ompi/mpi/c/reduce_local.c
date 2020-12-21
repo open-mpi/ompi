@@ -74,8 +74,6 @@ int MPI_Reduce_local(const void *inbuf, void *inoutbuf, int count,
         return MPI_SUCCESS;
     }
 
-    OPAL_CR_ENTER_LIBRARY();
-
     /* Invoke the op component to perform the back-end operation */
     OBJ_RETAIN(op);
     OBJ_RETAIN(datatype);

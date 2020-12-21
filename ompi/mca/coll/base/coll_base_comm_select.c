@@ -60,16 +60,16 @@ static opal_list_t *check_components(opal_list_t * components,
                                      ompi_communicator_t * comm);
 static int check_one_component(ompi_communicator_t * comm,
                                const mca_base_component_t * component,
-                               mca_coll_base_module_2_3_0_t ** module);
+                               mca_coll_base_module_t ** module);
 
 static int query(const mca_base_component_t * component,
                  ompi_communicator_t * comm, int *priority,
-                 mca_coll_base_module_2_3_0_t ** module);
+                 mca_coll_base_module_t ** module);
 
-static int query_2_0_0(const mca_coll_base_component_2_0_0_t *
+static int query_2_4_0(const mca_coll_base_component_2_4_0_t *
                        coll_component, ompi_communicator_t * comm,
                        int *priority,
-                       mca_coll_base_module_2_3_0_t ** module);
+                       mca_coll_base_module_t ** module);
 
 #define COPY(module, comm, func)                                        \
     do {                                                                \
@@ -345,7 +345,7 @@ static opal_list_t *check_components(opal_list_t * components,
     int count_include = 0;
     const mca_base_component_t *component;
     mca_base_component_list_item_t *cli;
-    mca_coll_base_module_2_3_0_t *module;
+    mca_coll_base_module_t *module;
     opal_list_t *selectable;
     mca_coll_base_avail_coll_t *avail;
     char info_val[OPAL_MAX_INFO_VAL+1];
@@ -483,7 +483,7 @@ static opal_list_t *check_components(opal_list_t * components,
  */
 static int check_one_component(ompi_communicator_t * comm,
                                const mca_base_component_t * component,
-                               mca_coll_base_module_2_3_0_t ** module)
+                               mca_coll_base_module_t ** module)
 {
     int err;
     int priority = -1;
@@ -516,16 +516,14 @@ static int check_one_component(ompi_communicator_t * comm,
  */
 static int query(const mca_base_component_t * component,
                  ompi_communicator_t * comm,
-                 int *priority, mca_coll_base_module_2_3_0_t ** module)
+                 int *priority, mca_coll_base_module_t ** module)
 {
     *module = NULL;
     if (2 == component->mca_type_major_version &&
-        0 == component->mca_type_minor_version &&
+        4 == component->mca_type_minor_version &&
         0 == component->mca_type_release_version) {
-        const mca_coll_base_component_2_0_0_t *coll100 =
-            (mca_coll_base_component_2_0_0_t *) component;
 
-        return query_2_0_0(coll100, comm, priority, module);
+        return query_2_4_0((const mca_coll_base_component_2_4_0_t *)component, comm, priority, module);
     }
 
     /* Unknown coll API version -- return error */
@@ -534,11 +532,11 @@ static int query(const mca_base_component_t * component,
 }
 
 
-static int query_2_0_0(const mca_coll_base_component_2_0_0_t * component,
+static int query_2_4_0(const mca_coll_base_component_2_4_0_t * component,
                        ompi_communicator_t * comm, int *priority,
-                       mca_coll_base_module_2_3_0_t ** module)
+                       mca_coll_base_module_t ** module)
 {
-    mca_coll_base_module_2_3_0_t *ret;
+    mca_coll_base_module_t *ret;
 
     /* There's currently no need for conversion */
 
