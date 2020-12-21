@@ -46,7 +46,6 @@
 #include "ompi/mca/pml/base/base.h"
 #include "ompi/mca/bml/base/base.h"
 #include "opal/mca/pmix/pmix-internal.h"
-#include "ompi/runtime/ompi_cr.h"
 #include "ompi/runtime/ompi_spc.h"
 
 #include "pml_ob1.h"
@@ -321,20 +320,12 @@ int mca_pml_ob1_add_procs(ompi_proc_t** procs, size_t nprocs)
     if(OMPI_SUCCESS != rc)
         return rc;
 
-    /*
-     * JJH: Disable this in FT enabled builds since
-     * we use a wrapper PML. It will cause this check to
-     * return failure as all processes will return the wrapper PML
-     * component in use instead of the wrapped PML component underneath.
-     */
-#if OPAL_ENABLE_FT_CR == 0
     /* make sure remote procs are using the same PML as us */
     if (OMPI_SUCCESS != (rc = mca_pml_base_pml_check_selected("ob1",
                                                               procs,
                                                               nprocs))) {
         return rc;
     }
-#endif
 
     rc = mca_bml.bml_add_procs( nprocs,
                                 procs,
@@ -834,232 +825,9 @@ void mca_pml_ob1_error_handler(
     ompi_mpi_errors_are_fatal_comm_handler(NULL, NULL, btlinfo);
 }
 
-#if OPAL_ENABLE_FT_CR    == 0
 int mca_pml_ob1_ft_event( int state ) {
     return OMPI_SUCCESS;
 }
-#else
-int mca_pml_ob1_ft_event( int state )
-{
-    static bool first_continue_pass = false;
-    ompi_proc_t** procs = NULL;
-    size_t num_procs;
-    int ret, p;
-
-    if(OPAL_CRS_CHECKPOINT == state) {
-        if( opal_cr_timing_barrier_enabled ) {
-            OPAL_CR_SET_TIMER(OPAL_CR_TIMER_CRCPBR1);
-            if (OMPI_SUCCESS != (ret = pmix_fence(null, 0, NULL, 0))) {
-                opal_output(0, "pml:ob1: ft_event(Restart): Failed to fence complete");
-                return ret;
-            }
-        }
-
-        OPAL_CR_SET_TIMER(OPAL_CR_TIMER_P2P0);
-    }
-    else if(OPAL_CRS_CONTINUE == state) {
-        first_continue_pass = !first_continue_pass;
-
-        if( !first_continue_pass ) {
-            if( opal_cr_timing_barrier_enabled ) {
-                OPAL_CR_SET_TIMER(OPAL_CR_TIMER_COREBR0);
-                if (OMPI_SUCCESS != (ret = PMIx_Fence(NULL, 0,NULL, 0))) {
-                    opal_output(0, "pml:ob1: ft_event(Restart): Failed to fence complete");
-                    return ret;
-                }
-            }
-            OPAL_CR_SET_TIMER(OPAL_CR_TIMER_P2P2);
-        }
-
-        if (opal_cr_continue_like_restart && !first_continue_pass) {
-            /*
-             * Get a list of processes
-             */
-            procs = ompi_proc_all(&num_procs);
-            if(NULL == procs) {
-                return OMPI_ERR_OUT_OF_RESOURCE;
-            }
-
-            /*
-             * Refresh the proc structure, and publish our proc info in the modex.
-             * NOTE: Do *not* call ompi_proc_finalize as there are many places in
-             *       the code that point to indv. procs in this strucutre. For our
-             *       needs here we only need to fix up the modex, bml and pml
-             *       references.
-             */
-            if (OMPI_SUCCESS != (ret = ompi_proc_refresh())) {
-                opal_output(0,
-                            "pml:ob1: ft_event(Restart): proc_refresh Failed %d",
-                            ret);
-                for(p = 0; p < (int)num_procs; ++p) {
-                    OBJ_RELEASE(procs[p]);
-                }
-                free (procs);
-                return ret;
-            }
-        }
-    }
-    else if(OPAL_CRS_RESTART_PRE == state ) {
-        /* Nothing here */
-    }
-    else if(OPAL_CRS_RESTART == state ) {
-        /*
-         * Get a list of processes
-         */
-        procs = ompi_proc_all(&num_procs);
-        if(NULL == procs) {
-            return OMPI_ERR_OUT_OF_RESOURCE;
-        }
-
-        /*
-         * Clean out the modex information since it is invalid now.
-         *    ompi_rte_purge_proc_attrs();
-         * This happens at the ORTE level, so doing it again here will cause
-         * some issues with socket caching.
-         */
-
-
-        /*
-         * Refresh the proc structure, and publish our proc info in the modex.
-         * NOTE: Do *not* call ompi_proc_finalize as there are many places in
-         *       the code that point to indv. procs in this strucutre. For our
-         *       needs here we only need to fix up the modex, bml and pml
-         *       references.
-         */
-        if (OMPI_SUCCESS != (ret = ompi_proc_refresh())) {
-            opal_output(0,
-                        "pml:ob1: ft_event(Restart): proc_refresh Failed %d",
-                        ret);
-            for(p = 0; p < (int)num_procs; ++p) {
-                OBJ_RELEASE(procs[p]);
-            }
-            free (procs);
-            return ret;
-        }
-    }
-    else if(OPAL_CRS_TERM == state ) {
-        ;
-    }
-    else {
-        ;
-    }
-
-    /* Call the BML
-     * BML is expected to call ft_event in
-     * - BTL(s)
-     * - MPool(s)
-     */
-    if( OMPI_SUCCESS != (ret = mca_bml.bml_ft_event(state))) {
-        opal_output(0, "pml:base: ft_event: BML ft_event function failed: %d\n",
-                    ret);
-    }
-
-    if(OPAL_CRS_CHECKPOINT == state) {
-        OPAL_CR_SET_TIMER(OPAL_CR_TIMER_P2P1);
-
-        if( opal_cr_timing_barrier_enabled ) {
-            OPAL_CR_SET_TIMER(OPAL_CR_TIMER_P2PBR0);
-            /* JJH Cannot barrier here due to progress engine -- ompi_rte_barrier();*/
-        }
-    }
-    else if(OPAL_CRS_CONTINUE == state) {
-        if( !first_continue_pass ) {
-            if( opal_cr_timing_barrier_enabled ) {
-                OPAL_CR_SET_TIMER(OPAL_CR_TIMER_P2PBR1);
-                if (OMPI_SUCCESS != (ret = PMIx_Fence(NULL, 0,NULL, 0))) {
-                    opal_output(0, "pml:ob1: ft_event(Restart): Failed to fence complete");
-                    return ret;
-                }
-            }
-            OPAL_CR_SET_TIMER(OPAL_CR_TIMER_P2P3);
-        }
-
-        if (opal_cr_continue_like_restart && !first_continue_pass) {
-            if (OMPI_SUCCESS != (ret = PMIx_Fence(NULL, 0,NULL, 0))) {
-                opal_output(0, "pml:ob1: ft_event(Restart): Failed to fence complete");
-                return ret;
-            }
-
-            /*
-             * Startup the PML stack now that the modex is running again
-             * Add the new procs (BTLs redo modex recv's)
-             */
-            if( OMPI_SUCCESS != (ret = mca_pml_ob1_add_procs(procs, num_procs) ) ) {
-                opal_output(0, "pml:ob1: ft_event(Restart): Failed in add_procs (%d)", ret);
-                return ret;
-            }
-
-            /* Is this barrier necessary ? JJH */
-            if (OMPI_SUCCESS != (ret = PMIx_Fence(NULL, 0,NULL, 0))) {
-                opal_output(0, "pml:ob1: ft_event(Restart): Failed to fence complete");
-                return ret;
-            }
-
-            if( NULL != procs ) {
-                for(p = 0; p < (int)num_procs; ++p) {
-                    OBJ_RELEASE(procs[p]);
-                }
-                free(procs);
-                procs = NULL;
-            }
-        }
-        if( !first_continue_pass ) {
-            if( opal_cr_timing_barrier_enabled ) {
-                OPAL_CR_SET_TIMER(OPAL_CR_TIMER_P2PBR2);
-                if (OMPI_SUCCESS != (ret = PMIx_Fence(NULL, 0,NULL, 0))) {
-                    opal_output(0, "pml:ob1: ft_event(Restart): Failed to fence complete");
-                    return ret;
-                }
-            }
-            OPAL_CR_SET_TIMER(OPAL_CR_TIMER_CRCP1);
-        }
-    }
-    else if(OPAL_CRS_RESTART_PRE == state ) {
-        /* Nothing here */
-    }
-    else if(OPAL_CRS_RESTART == state  ) {
-        /*
-         * Exchange the modex information once again.
-         * BTLs will have republished their modex information.
-         */
-        if (OMPI_SUCCESS != (ret = PMIx_Fence(NULL, 0,NULL, 0))) {
-            opal_output(0, "pml:ob1: ft_event(Restart): Failed to fence complete");
-            return ret;
-        }
-
-        /*
-         * Startup the PML stack now that the modex is running again
-         * Add the new procs (BTLs redo modex recv's)
-         */
-        if( OMPI_SUCCESS != (ret = mca_pml_ob1_add_procs(procs, num_procs) ) ) {
-            opal_output(0, "pml:ob1: ft_event(Restart): Failed in add_procs (%d)", ret);
-            return ret;
-        }
-
-        /* Is this barrier necessary ? JJH */
-        if (OMPI_SUCCESS != (ret = PMIx_Fence(NULL, 0,NULL, 0))) {
-            opal_output(0, "pml:ob1: ft_event(Restart): Failed to fence complete");
-            return ret;
-        }
-
-        if( NULL != procs ) {
-            for(p = 0; p < (int)num_procs; ++p) {
-                OBJ_RELEASE(procs[p]);
-            }
-            free(procs);
-            procs = NULL;
-        }
-    }
-    else if(OPAL_CRS_TERM == state ) {
-        ;
-    }
-    else {
-        ;
-    }
-
-    return OMPI_SUCCESS;
-}
-#endif /* OPAL_ENABLE_FT_CR */
 
 int mca_pml_ob1_com_btl_comp(const void *v1, const void *v2)
 {

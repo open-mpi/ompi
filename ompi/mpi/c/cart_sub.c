@@ -72,10 +72,8 @@ int MPI_Cart_sub(MPI_Comm comm, const int remain_dims[], MPI_Comm *new_comm)
         return OMPI_ERRHANDLER_INVOKE (comm, MPI_ERR_TOPOLOGY,
                                       FUNC_NAME);
     }
-    OPAL_CR_ENTER_LIBRARY();
 
     err = comm->c_topo->topo.cart.cart_sub(comm, remain_dims, new_comm);
-    OPAL_CR_EXIT_LIBRARY();
 
     OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);
 }

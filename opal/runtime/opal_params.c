@@ -64,9 +64,6 @@ bool opal_timing_overhead = true;
 bool opal_built_with_cuda_support = OPAL_INT_TO_BOOL(OPAL_CUDA_SUPPORT);
 bool opal_cuda_support = false;
 bool opal_warn_on_missing_libcuda = true;
-#if OPAL_ENABLE_FT_CR == 1
-bool opal_base_distill_checkpoint_ready = false;
-#endif
 
 /**
  * Globals imported from the OMPI layer.
@@ -190,19 +187,6 @@ int opal_register_params(void)
 				 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
 				 OPAL_INFO_LVL_8, MCA_BASE_VAR_SCOPE_LOCAL,
 				 &opal_debug_threads);
-    if (0 > ret) {
-        return ret;
-    }
-#endif
-
-#if OPAL_ENABLE_FT_CR == 1
-    opal_base_distill_checkpoint_ready = false;
-    ret = mca_base_var_register("opal", "opal", "base", "distill_checkpoint_ready",
-                                "Distill only those components that are Checkpoint Ready",
-                                MCA_BASE_VAR_TYPE_BOOL, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
-                                OPAL_INFO_LVL_8, MCA_BASE_VAR_SCOPE_LOCAL,
-                                &opal_base_distill_checkpoint_ready);
-
     if (0 > ret) {
         return ret;
     }

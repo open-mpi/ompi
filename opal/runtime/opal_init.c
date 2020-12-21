@@ -66,9 +66,6 @@
 #include "opal/mca/threads/threads.h"
 #include "opal/mca/threads/tsd.h"
 
-#include "opal/runtime/opal_cr.h"
-#include "opal/mca/crs/base/base.h"
-
 #include "opal/runtime/opal_progress.h"
 #include "opal/mca/threads/base/base.h"
 #include "opal/mca/backtrace/base/base.h"

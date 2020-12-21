@@ -81,8 +81,6 @@ int MPIX_Bcast_init(void *buffer, int count, MPI_Datatype datatype,
       }
     }
 
-    OPAL_CR_ENTER_LIBRARY();
-
     /* Invoke the coll component to perform the back-end operation */
 
     err = comm->c_coll->coll_bcast_init(buffer, count, datatype, root, comm,

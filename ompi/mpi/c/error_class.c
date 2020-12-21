@@ -38,9 +38,6 @@ static const char FUNC_NAME[] = "MPI_Error_class";
 
 int MPI_Error_class(int errorcode, int *errorclass)
 {
-
-    OPAL_CR_NOOP_PROGRESS();
-
     if ( MPI_PARAM_CHECK ) {
         if ( ompi_mpi_errcode_is_invalid(errorcode)) {
             return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG,

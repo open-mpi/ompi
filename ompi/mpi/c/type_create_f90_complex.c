@@ -53,8 +53,6 @@ int MPI_Type_create_f90_complex(int p, int r, MPI_Datatype *newtype)
     int p_key, r_key;
     int sflt_dig = 3, sflt_max_10_exp = +5, sflt_min_10_exp = -4;
 
-    OPAL_CR_NOOP_PROGRESS();
-
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 

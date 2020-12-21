@@ -26,8 +26,6 @@
 #include "ompi/request/request_default.h"
 #include "ompi/request/grequest.h"
 
-#include "ompi/mca/crcp/crcp.h"
-
 int ompi_request_default_test(ompi_request_t ** rptr,
                               int *completed,
                               ompi_status_public_t * status )
@@ -49,12 +47,6 @@ int ompi_request_default_test(ompi_request_t ** rptr,
     }
 
     if( REQUEST_COMPLETE(request) ) {
-#if OPAL_ENABLE_FT_CR == 1
-        if( opal_cr_is_enabled) {
-            OMPI_CRCP_REQUEST_COMPLETE(request);
-        }
-#endif
-
         *completed = true;
         /* For a generalized request, we *have* to call the query_fn
            if it completes, even if the user provided
@@ -124,12 +116,6 @@ int ompi_request_default_test_any(
         }
 
         if( REQUEST_COMPLETE(request) ) {
-#if OPAL_ENABLE_FT_CR == 1
-            if( opal_cr_is_enabled) {
-                OMPI_CRCP_REQUEST_COMPLETE(request);
-            }
-#endif
-
             *index = i;
             *completed = true;
             /* MPI 2:8.2 says that generalized requests always have
@@ -234,11 +220,6 @@ int ompi_request_default_test_all(
             if (OMPI_REQUEST_GEN == request->req_type) {
                 ompi_grequest_invoke_query(request, &request->req_status);
             }
-#if OPAL_ENABLE_FT_CR == 1
-            if( opal_cr_is_enabled) {
-                OMPI_CRCP_REQUEST_COMPLETE(request);
-            }
-#endif
             statuses[i] = request->req_status;
             if( request->req_persistent ) {
                 request->req_state = OMPI_REQUEST_INACTIVE;
@@ -269,11 +250,6 @@ int ompi_request_default_test_all(
             if (OMPI_REQUEST_GEN == request->req_type) {
                 ompi_grequest_invoke_query(request, &request->req_status);
             }
-#if OPAL_ENABLE_FT_CR == 1
-            if( opal_cr_is_enabled) {
-                OMPI_CRCP_REQUEST_COMPLETE(request);
-            }
-#endif
             if( request->req_persistent ) {
                 request->req_state = OMPI_REQUEST_INACTIVE;
                 continue;
@@ -315,11 +291,6 @@ int ompi_request_default_test_some(
             continue;
         }
         if( REQUEST_COMPLETE(request) ) {
-#if OPAL_ENABLE_FT_CR == 1
-            if( opal_cr_is_enabled) {
-                OMPI_CRCP_REQUEST_COMPLETE(request);
-            }
-#endif
             indices[num_requests_done++] = i;
         }
     }

@@ -56,8 +56,6 @@ int MPI_Grequest_complete(MPI_Request request)
         OMPI_ERRHANDLER_NOHANDLE_CHECK(rc, rc, FUNC_NAME);
     }
 
-    OPAL_CR_ENTER_LIBRARY();
-
     rc = ompi_grequest_complete(request);
     OMPI_ERRHANDLER_NOHANDLE_RETURN(rc, MPI_ERR_INTERN, FUNC_NAME);
 }

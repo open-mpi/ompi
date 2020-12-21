@@ -58,9 +58,6 @@
 #if OPAL_CUDA_SUPPORT
 #include "opal/mca/common/cuda/common_cuda.h"
 #endif /* OPAL_CUDA_SUPPORT */
-#if OPAL_ENABLE_FT_CR    == 1
-#include "opal/runtime/opal_cr.h"
-#endif
 
 #include "btl_smcuda.h"
 #include "btl_smcuda_frag.h"
@@ -300,17 +297,7 @@ static int mca_btl_smcuda_component_close(void)
          * to it are gone - no error checking, since we want all procs
          * to call this, so that in an abnormal termination scenario,
          * this file will still get cleaned up */
-#if OPAL_ENABLE_FT_CR    == 1
-        /* Only unlink the file if we are *not* restarting
-         * If we are restarting the file will be unlinked at a later time.
-         */
-        if(OPAL_CR_STATUS_RESTART_PRE  != opal_cr_checkpointing_state &&
-           OPAL_CR_STATUS_RESTART_POST != opal_cr_checkpointing_state ) {
-            unlink(mca_btl_smcuda_component.sm_seg->shmem_ds.seg_name);
-        }
-#else
         unlink(mca_btl_smcuda_component.sm_seg->shmem_ds.seg_name);
-#endif
         OBJ_RELEASE(mca_btl_smcuda_component.sm_seg);
     }
 

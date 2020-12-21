@@ -44,8 +44,6 @@ int MPI_Error_string(int errorcode, char *string, int *resultlen)
 {
     char *tmpstring;
 
-    OPAL_CR_NOOP_PROGRESS();
-
     if ( MPI_PARAM_CHECK ) {
         if ( ompi_mpi_errcode_is_invalid(errorcode)) {
             return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG,

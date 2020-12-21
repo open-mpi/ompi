@@ -89,33 +89,14 @@ mca_pml_base_component_t mca_pml_base_selected_component = {{0}};
 opal_pointer_array_t mca_pml_base_pml = {{0}};
 char *ompi_pml_base_bsend_allocator_name = NULL;
 
-#if !MCA_ompi_pml_DIRECT_CALL && OPAL_ENABLE_FT_CR == 1
-static char *ompi_pml_base_wrapper = NULL;
-#endif
-
 static int mca_pml_base_register(mca_base_register_flag_t flags)
 {
-#if !MCA_ompi_pml_DIRECT_CALL && OPAL_ENABLE_FT_CR == 1
-    int var_id;
-#endif
-
     ompi_pml_base_bsend_allocator_name = "basic";
     (void) mca_base_var_register("ompi", "pml", "base", "bsend_allocator", NULL,
                                  MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
                                  OPAL_INFO_LVL_9,
                                  MCA_BASE_VAR_SCOPE_READONLY,
                                  &ompi_pml_base_bsend_allocator_name);
-
-#if !MCA_ompi_pml_DIRECT_CALL && OPAL_ENABLE_FT_CR == 1
-    ompi_pml_base_wrapper = NULL;
-    var_id = mca_base_var_register("ompi", "pml", "base", "wrapper",
-                                   "Use a Wrapper component around the selected PML component",
-                                   MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
-                                   OPAL_INFO_LVL_9,
-                                   MCA_BASE_VAR_SCOPE_READONLY,
-                                   &ompi_pml_base_wrapper);
-    (void) mca_base_var_register_synonym(var_id, "ompi", "pml", NULL, "wrapper", 0);
-#endif
 
     return OMPI_SUCCESS;
 }
@@ -234,17 +215,6 @@ static int mca_pml_base_open(mca_base_open_flag_t flags)
 #endif  /* OPAL_ENABLE_DEBUG */
         }
     }
-#if OPAL_ENABLE_FT_CR == 1
-    /*
-     * Which PML Wrapper component to use, if any
-     *  - NULL or "" = No wrapper
-     *  - ow. select that specific wrapper component
-     */
-    if( NULL != ompi_pml_base_wrapper) {
-        opal_pointer_array_add(&mca_pml_base_pml, ompi_pml_base_wrapper);
-    }
-#endif
-
 #endif
 
     return OMPI_SUCCESS;

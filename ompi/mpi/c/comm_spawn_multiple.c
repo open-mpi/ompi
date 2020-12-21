@@ -152,8 +152,6 @@ int MPI_Comm_spawn_multiple(int count, char *array_of_commands[], char **array_o
     /* initialize the port name to avoid problems */
     memset(port_name, 0, MPI_MAX_PORT_NAME);
 
-    OPAL_CR_ENTER_LIBRARY();
-
     if ( rank == root ) {
         if (!non_mpi) {
             /* Open a port. The port_name is passed as an environment
@@ -192,8 +190,6 @@ error:
     if (rank == root && !non_mpi) {
         ompi_dpm_close_port(port_name);
     }
-
-    OPAL_CR_EXIT_LIBRARY();
 
     /* set array of errorcodes */
     if (MPI_ERRCODES_IGNORE != array_of_errcodes) {

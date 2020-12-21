@@ -24,12 +24,4 @@ SUBDIRS += \
 	tools/wrappers
 
 DIST_SUBDIRS += \
-	tools/wrappers \
-	tools/opal-checkpoint \
-	tools/opal-restart
-
-if WANT_FT
-SUBDIRS += \
-	tools/opal-checkpoint \
-	tools/opal-restart
-endif
+	tools/wrappers

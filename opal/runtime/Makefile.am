@@ -33,7 +33,6 @@ dist_opaldata_DATA += runtime/help-opal-runtime.txt \
 headers += \
         runtime/opal_progress.h \
         runtime/opal.h \
-        runtime/opal_cr.h \
         runtime/opal_info_support.h \
         runtime/opal_params.h \
         runtime/opal_progress_threads.h
@@ -43,6 +42,5 @@ lib@OPAL_LIB_PREFIX@open_pal_la_SOURCES += \
         runtime/opal_finalize.c \
         runtime/opal_init.c \
         runtime/opal_params.c \
-        runtime/opal_cr.c \
         runtime/opal_info_support.c \
         runtime/opal_progress_threads.c

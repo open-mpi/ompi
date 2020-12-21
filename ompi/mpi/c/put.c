@@ -79,8 +79,6 @@ int MPI_Put(const void *origin_addr, int origin_count, MPI_Datatype origin_datat
 
     if (MPI_PROC_NULL == target_rank) return MPI_SUCCESS;
 
-    OPAL_CR_ENTER_LIBRARY();
-
     rc = win->w_osc_module->osc_put(origin_addr, origin_count, origin_datatype,
                                     target_rank, target_disp, target_count,
                                     target_datatype, win);

@@ -79,8 +79,6 @@ int MPI_Sendrecv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
         OMPI_ERRHANDLER_CHECK(rc, comm, rc, FUNC_NAME);
     }
 
-    OPAL_CR_ENTER_LIBRARY();
-
     if (source != MPI_PROC_NULL) { /* post recv */
         rc = MCA_PML_CALL(irecv(recvbuf, recvcount, recvtype,
                                 source, recvtag, comm, &req));

@@ -593,21 +593,5 @@ static int bootstrap_comm(ompi_communicator_t *comm,
 
 
 int mca_coll_sm_ft_event(int state) {
-    if(OPAL_CRS_CHECKPOINT == state) {
-        ;
-    }
-    else if(OPAL_CRS_CONTINUE == state) {
-        ;
-    }
-    else if(OPAL_CRS_RESTART == state) {
-        ;
-    }
-    else if(OPAL_CRS_TERM == state ) {
-        ;
-    }
-    else {
-        ;
-    }
-
     return OMPI_SUCCESS;
 }

@@ -66,8 +66,6 @@ int MPI_Type_extent(MPI_Datatype type, MPI_Aint *extent)
     }
   }
 
-  OPAL_CR_ENTER_LIBRARY();
-
   rc = ompi_datatype_get_extent( type, &lb, extent );
   OMPI_ERRHANDLER_NOHANDLE_RETURN(rc, rc, FUNC_NAME );
 }

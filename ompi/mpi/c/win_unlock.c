@@ -54,8 +54,6 @@ int MPI_Win_unlock(int rank, MPI_Win win)
         }
     }
 
-    OPAL_CR_ENTER_LIBRARY();
-
     rc = win->w_osc_module->osc_unlock(rank, win);
     OMPI_ERRHANDLER_RETURN(rc, win, rc, FUNC_NAME);
 }

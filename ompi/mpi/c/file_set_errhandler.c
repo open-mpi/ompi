@@ -43,8 +43,6 @@ int MPI_File_set_errhandler( MPI_File file, MPI_Errhandler errhandler)
 {
     MPI_Errhandler tmp;
 
-    OPAL_CR_NOOP_PROGRESS();
-
     /* Error checking */
 
     if (MPI_PARAM_CHECK) {

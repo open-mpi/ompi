@@ -67,10 +67,6 @@ int mca_pml_base_select(bool enable_progress_threads,
     opal_list_t opened;
     opened_component_t *om = NULL;
     bool found_pml;
-#if OPAL_ENABLE_FT_CR == 1
-    mca_pml_base_component_t *wrapper_component = NULL;
-    int wrapper_priority = -1;
-#endif
 
     /* Traverse the list of available components; call their init
        functions. */
@@ -134,19 +130,6 @@ int mca_pml_base_select(bool enable_progress_threads,
 
         opal_output_verbose( 10, ompi_pml_base_framework.framework_output,
                              "select: init returned priority %d", priority );
-#if OPAL_ENABLE_FT_CR == 1
-        /* Determine if this is the wrapper component */
-        if( priority <= PML_SELECT_WRAPPER_PRIORITY) {
-            opal_output_verbose( 10, ompi_pml_base_framework.framework_output,
-                                 "pml:select: Wrapper Component: Component %s was determined to be a Wrapper PML with priority %d",
-                                 component->pmlm_version.mca_component_name, priority );
-            wrapper_priority  = priority;
-            wrapper_component = component;
-            continue;
-        }
-        /* Otherwise determine if this is the best component */
-        else
-#endif
         if (priority > best_priority) {
             best_priority = priority;
             best_component = component;
@@ -201,11 +184,7 @@ int mca_pml_base_select(bool enable_progress_threads,
          item = opal_list_remove_first(&opened)) {
         om = (opened_component_t *) item;
 
-        if (om->om_component != best_component
-#if OPAL_ENABLE_FT_CR == 1
-            && om->om_component != wrapper_component
-#endif
-            ) {
+        if (om->om_component != best_component ) {
             /* Finalize */
 
             if (NULL != om->om_component->pmlm_finalize) {
@@ -225,21 +204,6 @@ int mca_pml_base_select(bool enable_progress_threads,
     }
     OBJ_DESTRUCT( &opened );
 
-#if OPAL_ENABLE_FT_CR == 1
-    /* Remove the wrapper component from the ompi_pml_base_framework.framework_components list
-     * so we don't unload it prematurely in the next call
-     */
-    if( NULL != wrapper_component ) {
-        OPAL_LIST_FOREACH(cli, &ompi_pml_base_framework.framework_components, mca_base_component_list_item_t) {
-            component = (mca_pml_base_component_t *) cli->cli_component;
-
-            if( component == wrapper_component ) {
-                opal_list_remove_item(&ompi_pml_base_framework.framework_components, item);
-            }
-        }
-    }
-#endif
-
     /* This base function closes, unloads, and removes from the
        available list all unselected components.  The available list will
        contain only the selected component. */
@@ -247,32 +211,6 @@ int mca_pml_base_select(bool enable_progress_threads,
     mca_base_components_close(ompi_pml_base_framework.framework_output,
                               &ompi_pml_base_framework.framework_components,
                               (mca_base_component_t *) best_component);
-
-#if OPAL_ENABLE_FT_CR == 1
-    /* If we have a wrapper then initalize it */
-    if( NULL != wrapper_component ) {
-        priority = PML_SELECT_WRAPPER_PRIORITY;
-        opal_output_verbose( 10, ompi_pml_base_framework.framework_output,
-                             "pml:select: Wrapping: Component %s [%d] is being wrapped by component %s [%d]",
-                             mca_pml_base_selected_component.pmlm_version.mca_component_name,
-                             best_priority,
-                             wrapper_component->pmlm_version.mca_component_name,
-                             wrapper_priority );
-
-        /* Ask the wrapper commponent to wrap around the currently
-         * selected component. Indicated by the priority value provided
-         * this will cause the wrapper to do something different this time around
-         */
-        module = wrapper_component->pmlm_init(&priority,
-                                              enable_progress_threads,
-                                              enable_mpi_threads);
-        /* Replace with the wrapper */
-        best_component = wrapper_component;
-        mca_pml_base_selected_component = *best_component;
-        best_module = module;
-        mca_pml     = *best_module;
-    }
-#endif
 
     /* register the winner's callback */
     if( NULL != mca_pml.pml_progress ) {

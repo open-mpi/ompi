@@ -101,8 +101,6 @@ int MPI_Comm_accept(const char *port_name, MPI_Info info, int root,
      * if ( rank == root && MPI_INFO_NULL != info ) {
      * }
      */
-    OPAL_CR_ENTER_LIBRARY();
-
     if ( rank == root ) {
 	rc = ompi_dpm_connect_accept (comm, root, port_name, send_first,
 				      &newcomp);
@@ -111,8 +109,6 @@ int MPI_Comm_accept(const char *port_name, MPI_Info info, int root,
 	rc = ompi_dpm_connect_accept (comm, root, NULL, send_first,
 				      &newcomp);
     }
-
-    OPAL_CR_EXIT_LIBRARY();
 
     if (OPAL_ERR_NOT_SUPPORTED == rc) {
         opal_show_help("help-mpi-api.txt",

@@ -62,13 +62,6 @@
 #include "opal/mca/mpool/base/base.h"
 #include "opal/mca/rcache/base/base.h"
 
-#if OPAL_ENABLE_FT_CR    == 1
-#include "opal/mca/crs/base/base.h"
-#include "opal/util/basename.h"
-#include "orte/mca/sstore/sstore.h"
-#include "opal/runtime/opal_cr.h"
-#endif
-
 #include "btl_smcuda.h"
 #include "btl_smcuda_endpoint.h"
 #include "btl_smcuda_frag.h"
@@ -1277,61 +1270,6 @@ void mca_btl_smcuda_dump(struct mca_btl_base_module_t* btl,
     }
 }
 
-#if OPAL_ENABLE_FT_CR    == 0
 int mca_btl_smcuda_ft_event(int state) {
     return OPAL_SUCCESS;
 }
-#else
-int mca_btl_smcuda_ft_event(int state) {
-    /* Notify mpool */
-    if( NULL != mca_btl_smcuda_component.sm_mpool &&
-        NULL != mca_btl_smcuda_component.sm_mpool->mpool_ft_event) {
-        mca_btl_smcuda_component.sm_mpool->mpool_ft_event(state);
-    }
-
-    if(OPAL_CRS_CHECKPOINT == state) {
-        if( NULL != mca_btl_smcuda_component.sm_seg ) {
-            /* On restart we need the old file names to exist (not necessarily
-             * contain content) so the CRS component does not fail when searching
-             * for these old file handles. The restart procedure will make sure
-             * these files get cleaned up appropriately.
-             */
-            /* Disabled to get FT code compiled again
-             * TODO: FIXIT soon
-            orte_sstore.set_attr(orte_sstore_handle_current,
-                                 SSTORE_METADATA_LOCAL_TOUCH,
-                                 mca_btl_smcuda_component.sm_seg->shmem_ds.seg_name);
-             */
-        }
-    }
-    else if(OPAL_CRS_CONTINUE == state) {
-        if (opal_cr_continue_like_restart) {
-            if( NULL != mca_btl_smcuda_component.sm_seg ) {
-                /* Add shared memory file */
-                opal_crs_base_cleanup_append(mca_btl_smcuda_component.sm_seg->shmem_ds.seg_name, false);
-            }
-
-            /* Clear this so we force the module to re-init the sm files */
-            mca_btl_smcuda_component.sm_mpool = NULL;
-        }
-    }
-    else if(OPAL_CRS_RESTART == state ||
-            OPAL_CRS_RESTART_PRE == state) {
-        if( NULL != mca_btl_smcuda_component.sm_seg ) {
-            /* Add shared memory file */
-            opal_crs_base_cleanup_append(mca_btl_smcuda_component.sm_seg->shmem_ds.seg_name, false);
-        }
-
-        /* Clear this so we force the module to re-init the sm files */
-        mca_btl_smcuda_component.sm_mpool = NULL;
-    }
-    else if(OPAL_CRS_TERM == state ) {
-        ;
-    }
-    else {
-        ;
-    }
-
-    return OPAL_SUCCESS;
-}
-#endif /* OPAL_ENABLE_FT_CR */

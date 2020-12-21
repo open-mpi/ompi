@@ -140,8 +140,6 @@ int MPI_Allgatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
        something */
 
 
-    OPAL_CR_ENTER_LIBRARY();
-
     /* Invoke the coll component to perform the back-end operation */
     err = comm->c_coll->coll_allgatherv(sendbuf, sendcount, sendtype,
                                        recvbuf, (int *) recvcounts,

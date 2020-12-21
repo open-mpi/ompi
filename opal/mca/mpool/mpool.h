@@ -31,9 +31,6 @@
 #include "opal/class/opal_free_list.h"
 #include "opal/mca/rcache/base/rcache_base_vma.h"
 
-#include "opal/mca/crs/crs.h"
-#include "opal/mca/crs/base/base.h"
-
 #define MCA_MPOOL_ALLOC_FLAG_DEFAULT      0x00
 #define MCA_MPOOL_ALLOC_FLAG_USER         0x01
 

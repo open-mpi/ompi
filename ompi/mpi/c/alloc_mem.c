@@ -72,8 +72,6 @@ int MPI_Alloc_mem(MPI_Aint size, MPI_Info info, void *baseptr)
         return MPI_SUCCESS;
     }
 
-    OPAL_CR_ENTER_LIBRARY();
-
     if (MPI_INFO_NULL != info) {
         int flag;
         (void) ompi_info_get (info, "mpool_hints", MPI_MAX_INFO_VAL, info_value, &flag);
@@ -84,7 +82,6 @@ int MPI_Alloc_mem(MPI_Aint size, MPI_Info info, void *baseptr)
 
     *((void **) baseptr) = mca_mpool_base_alloc ((size_t) size, (struct opal_info_t*)info,
                                                  mpool_hints);
-    OPAL_CR_EXIT_LIBRARY();
     if (NULL == *((void **) baseptr)) {
         return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_NO_MEM,
                                       FUNC_NAME);

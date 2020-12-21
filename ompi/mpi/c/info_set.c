@@ -110,8 +110,6 @@ int MPI_Info_set(MPI_Info info, const char *key, const char *value)
             key, OPAL_INFO_SAVE_PREFIX);
     }
 
-    OPAL_CR_ENTER_LIBRARY();
-
     /*
      * If all is right with the arguments, then call the back-end
      * allocator.

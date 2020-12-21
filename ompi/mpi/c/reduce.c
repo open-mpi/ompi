@@ -131,8 +131,6 @@ int MPI_Reduce(const void *sendbuf, void *recvbuf, int count,
         return MPI_SUCCESS;
     }
 
-    OPAL_CR_ENTER_LIBRARY();
-
     /* Invoke the coll component to perform the back-end operation */
 
     OBJ_RETAIN(op);

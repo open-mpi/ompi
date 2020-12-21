@@ -80,21 +80,5 @@ int mca_pml_example_del_procs(ompi_proc_t** procs, size_t nprocs)
 }
 
 int mca_pml_example_ft_event(int state) {
-    if(OPAL_CRS_CHECKPOINT == state) {
-        ;
-    }
-    else if(OPAL_CRS_CONTINUE == state) {
-        ;
-    }
-    else if(OPAL_CRS_RESTART == state) {
-        ;
-    }
-    else if(OPAL_CRS_TERM == state ) {
-        ;
-    }
-    else {
-        ;
-    }
-
     return OMPI_SUCCESS;
 }

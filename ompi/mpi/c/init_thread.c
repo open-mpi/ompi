@@ -90,8 +90,6 @@ int MPI_Init_thread(int *argc, char ***argv, int required,
                                       err, FUNC_NAME);
     }
 
-    OPAL_CR_INIT_LIBRARY();
-
     SPC_INIT();
 
     ompi_hook_base_mpi_init_thread_bottom(argc, argv, required, provided);

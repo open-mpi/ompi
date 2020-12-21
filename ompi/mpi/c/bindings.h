@@ -26,11 +26,6 @@
 #include "mpi.h"
 #include "ompi/datatype/ompi_datatype.h"
 
-/* This library needs to be here so that we can define
- * the OPAL_CR_* checks
- */
-#include "opal/runtime/opal_cr.h"
-
 BEGIN_C_DECLS
 
 /* If compiling in the profile directory, then we don't have weak

@@ -60,8 +60,6 @@ int MPI_Type_get_true_extent_x(MPI_Datatype datatype,
       }
    }
 
-   OPAL_CR_ENTER_LIBRARY();
-
    rc = ompi_datatype_get_true_extent( datatype, &atrue_lb, &atrue_extent );
    if (OMPI_SUCCESS == rc) {
       *true_lb = (MPI_Count) atrue_lb;

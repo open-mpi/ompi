@@ -191,8 +191,6 @@ int MPI_Iscatterv(const void *sendbuf, const int sendcounts[], const int displs[
         }
     }
 
-    OPAL_CR_ENTER_LIBRARY();
-
     /* Invoke the coll component to perform the back-end operation */
     err = comm->c_coll->coll_iscatterv(sendbuf, sendcounts, displs,
                                       sendtype, recvbuf, recvcount, recvtype, root, comm,

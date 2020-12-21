@@ -46,8 +46,6 @@ int MPI_Get_elements_x(const MPI_Status *status, MPI_Datatype datatype, MPI_Coun
     size_t internal_count;
     int ret;
 
-    OPAL_CR_NOOP_PROGRESS();
-
     MEMCHECKER(
                if (status != MPI_STATUSES_IGNORE) {
                    /*

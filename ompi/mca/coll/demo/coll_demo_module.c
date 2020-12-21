@@ -206,21 +206,5 @@ mca_coll_demo_module_enable(mca_coll_base_module_t *module,
 
 
 int mca_coll_demo_ft_event(int state) {
-    if(OPAL_CRS_CHECKPOINT == state) {
-        ;
-    }
-    else if(OPAL_CRS_CONTINUE == state) {
-        ;
-    }
-    else if(OPAL_CRS_RESTART == state) {
-        ;
-    }
-    else if(OPAL_CRS_TERM == state ) {
-        ;
-    }
-    else {
-        ;
-    }
-
     return OMPI_SUCCESS;
 }

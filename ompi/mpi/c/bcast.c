@@ -108,8 +108,6 @@ int MPI_Bcast(void *buffer, int count, MPI_Datatype datatype,
         return MPI_SUCCESS;
     }
 
-    OPAL_CR_ENTER_LIBRARY();
-
     /* Invoke the coll component to perform the back-end operation */
 
     err = comm->c_coll->coll_bcast(buffer, count, datatype, root, comm,

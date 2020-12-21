@@ -83,8 +83,6 @@ int MPI_Isend(const void *buf, int count, MPI_Datatype type, int dest,
         return MPI_SUCCESS;
     }
 
-    OPAL_CR_ENTER_LIBRARY();
-
     /*
      * today's MPI standard mandates the send buffer remains accessible during the send operation
      * hence memchecker cannot mark buf as non accessible, but it might mark buf as read-only in

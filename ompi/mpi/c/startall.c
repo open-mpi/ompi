@@ -77,8 +77,6 @@ int MPI_Startall(int count, MPI_Request requests[])
         OMPI_ERRHANDLER_NOHANDLE_CHECK(rc, rc, FUNC_NAME);
     }
 
-    OPAL_CR_ENTER_LIBRARY();
-
     for (i = 0, j = -1; i < count; ++i) {
         /* Per MPI it is invalid to start an active request */
         if (OMPI_REQUEST_INACTIVE != requests[i]->req_state) {
@@ -110,7 +108,6 @@ int MPI_Startall(int count, MPI_Request requests[])
         start_fn(i - j, requests + j);
     }
 
-    OPAL_CR_EXIT_LIBRARY();
     return ret;
 }
 

@@ -39,8 +39,6 @@ static const char FUNC_NAME[] = "MPI_Group_c2f";
 
 MPI_Fint MPI_Group_c2f(MPI_Group group)
 {
-    OPAL_CR_NOOP_PROGRESS();
-
     if ( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 

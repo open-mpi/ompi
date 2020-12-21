@@ -66,8 +66,6 @@ int MPI_Type_vector(int count,
         }
     }
 
-    OPAL_CR_ENTER_LIBRARY();
-
     rc = ompi_datatype_create_vector ( count, blocklength, stride, oldtype, newtype );
     OMPI_ERRHANDLER_NOHANDLE_CHECK(rc, rc, FUNC_NAME );
 
@@ -77,6 +75,5 @@ int MPI_Type_vector(int count,
         ompi_datatype_set_args( *newtype, 3, a_i, 0, NULL, 1, &oldtype, MPI_COMBINER_VECTOR );
     }
 
-    OPAL_CR_EXIT_LIBRARY();
     return MPI_SUCCESS;
 }

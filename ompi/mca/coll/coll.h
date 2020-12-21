@@ -70,8 +70,6 @@
 #include "ompi/mca/mca.h"
 #include "opal/mca/base/base.h"
 
-#include "opal/mca/crs/crs.h"
-#include "opal/mca/crs/base/base.h"
 #include "ompi/request/request.h"
 
 BEGIN_C_DECLS

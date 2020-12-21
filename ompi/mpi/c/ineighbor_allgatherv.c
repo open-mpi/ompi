@@ -139,8 +139,6 @@ int MPI_Ineighbor_allgatherv(const void *sendbuf, int sendcount, MPI_Datatype se
         }
     }
 
-    OPAL_CR_ENTER_LIBRARY();
-
     /* Invoke the coll component to perform the back-end operation */
     err = comm->c_coll->coll_ineighbor_allgatherv(sendbuf, sendcount, sendtype,
                                                  recvbuf, (int *) recvcounts, (int *) displs,

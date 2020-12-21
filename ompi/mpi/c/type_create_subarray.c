@@ -75,8 +75,6 @@ int MPI_Type_create_subarray(int ndims,
         }
     }
 
-    OPAL_CR_ENTER_LIBRARY();
-
     rc = ompi_datatype_create_subarray( ndims, size_array, subsize_array, start_array,
                                         order, oldtype, newtype);
     if( OMPI_SUCCESS == rc ) {
@@ -85,8 +83,6 @@ int MPI_Type_create_subarray(int ndims,
         ompi_datatype_set_args( *newtype, 3 * ndims + 2, a_i, 0, NULL, 1, &oldtype,
                                 MPI_COMBINER_SUBARRAY );
     }
-
-    OPAL_CR_EXIT_LIBRARY();
 
     OMPI_ERRHANDLER_NOHANDLE_RETURN(rc, rc, FUNC_NAME);
 }

@@ -67,8 +67,6 @@ int MPI_Type_create_hvector(int count,
         }
     }
 
-    OPAL_CR_ENTER_LIBRARY();
-
     rc = ompi_datatype_create_hvector ( count, blocklength, stride, oldtype,
                                         newtype );
     OMPI_ERRHANDLER_NOHANDLE_CHECK(rc, rc, FUNC_NAME );
@@ -80,6 +78,5 @@ int MPI_Type_create_hvector(int count,
         ompi_datatype_set_args( *newtype, 2, a_i, 1, a_a, 1, &oldtype, MPI_COMBINER_HVECTOR );
     }
 
-    OPAL_CR_EXIT_LIBRARY();
     return MPI_SUCCESS;
 }

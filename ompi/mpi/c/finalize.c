@@ -43,8 +43,6 @@ int MPI_Finalize(void)
      */
     SPC_FINI();
 
-    OPAL_CR_FINALIZE_LIBRARY();
-
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
     }

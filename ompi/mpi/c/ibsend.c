@@ -81,7 +81,6 @@ int MPI_Ibsend(const void *buf, int count, MPI_Datatype type, int dest,
         return MPI_SUCCESS;
     }
 
-    OPAL_CR_ENTER_LIBRARY();
     MEMCHECKER (
         memchecker_call(&opal_memchecker_base_mem_noaccess, buf, count, type);
     );

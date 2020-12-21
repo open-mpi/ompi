@@ -120,8 +120,6 @@ int MPIX_Neighbor_alltoall_init(const void *sendbuf, int sendcount, MPI_Datatype
         }
     }
 
-    OPAL_CR_ENTER_LIBRARY();
-
     /* Invoke the coll component to perform the back-end operation */
     err = comm->c_coll->coll_neighbor_alltoall_init(sendbuf, sendcount, sendtype,
                                                     recvbuf, recvcount, recvtype, comm,

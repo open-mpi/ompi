@@ -406,21 +406,5 @@ int mca_btl_template_finalize(struct mca_btl_base_module_t* btl)
 }
 
 int mca_btl_template_ft_event(int state) {
-    if(OPAL_CRS_CHECKPOINT == state) {
-        ;
-    }
-    else if(OPAL_CRS_CONTINUE == state) {
-        ;
-    }
-    else if(OPAL_CRS_RESTART == state) {
-        ;
-    }
-    else if(OPAL_CRS_TERM == state ) {
-        ;
-    }
-    else {
-        ;
-    }
-
     return OPAL_SUCCESS;
 }

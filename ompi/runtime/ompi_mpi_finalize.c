@@ -88,12 +88,6 @@
 #include "ompi/mpiext/mpiext.h"
 #include "ompi/mca/hook/base/base.h"
 
-#if OPAL_ENABLE_FT_CR == 1
-#include "ompi/mca/crcp/crcp.h"
-#include "ompi/mca/crcp/base/base.h"
-#endif
-#include "ompi/runtime/ompi_cr.h"
-
 extern bool ompi_enable_timing;
 
 static void fence_cbfunc(pmix_status_t status, void *cbdata)
@@ -270,13 +264,6 @@ int ompi_mpi_finalize(void)
         OMPI_LAZY_WAIT_FOR_COMPLETION(active);
     }
 
-    /*
-     * Shutdown the Checkpoint/Restart Mech.
-     */
-    if (OMPI_SUCCESS != (ret = ompi_cr_finalize())) {
-        OMPI_ERROR_LOG(ret);
-    }
-
     /* Shut down any bindings-specific issues: C++, F77, F90 */
 
     /* Remove all memory associated by MPI_REGISTER_DATAREP (per
@@ -357,16 +344,6 @@ int ompi_mpi_finalize(void)
 
     /* shut down buffered send code */
     mca_pml_base_bsend_fini();
-
-#if OPAL_ENABLE_FT_CR == 1
-    /*
-     * Shutdown the CRCP Framework, must happen after PML shutdown
-     */
-    if (OMPI_SUCCESS != (ret = mca_base_framework_close(&ompi_crcp_base_framework) ) ) {
-        OMPI_ERROR_LOG(ret);
-        goto done;
-    }
-#endif
 
     /* Free secondary resources */
 

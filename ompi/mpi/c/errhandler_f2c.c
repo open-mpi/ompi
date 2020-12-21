@@ -41,8 +41,6 @@ MPI_Errhandler MPI_Errhandler_f2c(MPI_Fint errhandler_f)
 {
     int eh_index = OMPI_FINT_2_INT(errhandler_f);
 
-    OPAL_CR_NOOP_PROGRESS();
-
     /* Error checking */
 
     if (MPI_PARAM_CHECK) {

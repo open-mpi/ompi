@@ -57,8 +57,6 @@ int MPI_Type_create_resized(MPI_Datatype oldtype,
       }
    }
 
-   OPAL_CR_ENTER_LIBRARY();
-
    rc = ompi_datatype_create_resized( oldtype, lb, extent, newtype );
    if( rc != MPI_SUCCESS ) {
       ompi_datatype_destroy( newtype );
@@ -72,7 +70,6 @@ int MPI_Type_create_resized(MPI_Datatype oldtype,
       ompi_datatype_set_args( *newtype, 0, NULL, 2, a_a, 1, &oldtype, MPI_COMBINER_RESIZED );
    }
 
-   OPAL_CR_EXIT_LIBRARY();
    return MPI_SUCCESS;
 }
 

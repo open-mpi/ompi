@@ -51,8 +51,6 @@ int MPI_Win_get_name(MPI_Win win, char *win_name, int *resultlen)
         }
     }
 
-    OPAL_CR_ENTER_LIBRARY();
-
     /* Note that MPI-2.1 requires:
        - terminating the string with a \0
        - name[*resultlen] == '\0'

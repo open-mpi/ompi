@@ -53,8 +53,6 @@ int MPI_Win_flush(int rank, MPI_Win win)
         OMPI_ERRHANDLER_CHECK(ret, win, ret, FUNC_NAME);
     }
 
-    OPAL_CR_ENTER_LIBRARY();
-
     /* create window and return */
     ret = win->w_osc_module->osc_flush(rank, win);
     OMPI_ERRHANDLER_RETURN(ret, win, ret, FUNC_NAME);

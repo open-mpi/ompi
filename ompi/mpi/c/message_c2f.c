@@ -45,8 +45,6 @@ MPI_Fint MPI_Message_c2f(MPI_Message message)
         memchecker_message(&message);
     );
 
-    OPAL_CR_NOOP_PROGRESS();
-
     if ( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 

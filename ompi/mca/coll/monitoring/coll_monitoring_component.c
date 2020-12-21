@@ -145,14 +145,6 @@ mca_coll_monitoring_module_disable(mca_coll_base_module_t*module, struct ompi_co
 
 static int mca_coll_monitoring_ft_event(int state)
 {
-    switch(state) {
-    case OPAL_CRS_CHECKPOINT:
-    case OPAL_CRS_CONTINUE:
-    case OPAL_CRS_RESTART:
-    case OPAL_CRS_TERM:
-    default:
-        ;
-    }
     return OMPI_SUCCESS;
 }
 

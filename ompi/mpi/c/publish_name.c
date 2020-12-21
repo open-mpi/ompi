@@ -73,8 +73,6 @@ int MPI_Publish_name(const char *service_name, MPI_Info info,
         }
     }
 
-    OPAL_CR_ENTER_LIBRARY();
-
     /* OMPI supports info keys to pass the range and persistence to
      * be used for the given key */
     if (MPI_INFO_NULL != info) {
@@ -86,7 +84,6 @@ int MPI_Publish_name(const char *service_name, MPI_Info info,
                 rng = PMIX_RANGE_SESSION; // share only with procs in same session
             } else {
                 /* unrecognized scope */
-                OPAL_CR_EXIT_LIBRARY();
                 return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG,
                                             FUNC_NAME);
             }
@@ -103,7 +100,6 @@ int MPI_Publish_name(const char *service_name, MPI_Info info,
                 pers = PMIX_PERSIST_SESSION; // retain until session/allocation terminates
             } else {
                 /* unrecognized persistence */
-                OPAL_CR_EXIT_LIBRARY();
                 return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG,
                                             FUNC_NAME);
             }
@@ -120,7 +116,6 @@ int MPI_Publish_name(const char *service_name, MPI_Info info,
     PMIX_INFO_DESTRUCT(&pinfo[1]);
     PMIX_INFO_DESTRUCT(&pinfo[2]);
 
-    OPAL_CR_EXIT_LIBRARY();
     if ( PMIX_SUCCESS != rc ) {
         if (PMIX_EXISTS == rc) {
             /* already exists - can't publish it */

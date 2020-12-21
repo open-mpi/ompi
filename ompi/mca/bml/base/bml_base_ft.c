@@ -24,45 +24,5 @@
 
 int mca_bml_base_ft_event(int state)
 {
-    if(OPAL_CRS_CHECKPOINT == state) {
-        ;
-    }
-    else if(OPAL_CRS_CONTINUE == state) {
-        ;
-    }
-    else if(OPAL_CRS_RESTART == state) {
-        ;
-    }
-    else if(OPAL_CRS_TERM == state ) {
-        ;
-    }
-    else {
-        ;
-    }
-
-    /*
-     * BML is expected to call ft_event in
-     * - BTL(s)
-     * - MPool(s)
-     * Currently you can't do this from outside a component
-     * So just return Unimplemented
-     */
-
-    if(OPAL_CRS_CHECKPOINT == state) {
-        ;
-    }
-    else if(OPAL_CRS_CONTINUE == state) {
-        ;
-    }
-    else if(OPAL_CRS_RESTART == state) {
-        ;
-    }
-    else if(OPAL_CRS_TERM == state ) {
-        ;
-    }
-    else {
-        ;
-    }
-
     return OMPI_ERR_NOT_IMPLEMENTED;
 }

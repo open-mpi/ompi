@@ -97,10 +97,8 @@ int MPI_Cart_rank(MPI_Comm comm, const int coords[], int *rank)
                                            FUNC_NAME);
         }
     }
-    OPAL_CR_ENTER_LIBRARY();
 
     err = comm->c_topo->topo.cart.cart_rank(comm, coords, rank);
-    OPAL_CR_EXIT_LIBRARY();
 
     OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);
 }

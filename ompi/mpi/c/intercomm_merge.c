@@ -73,8 +73,6 @@ int MPI_Intercomm_merge(MPI_Comm intercomm, int high,
                                             FUNC_NAME);
     }
 
-    OPAL_CR_ENTER_LIBRARY();
-
     local_size  = ompi_comm_size ( intercomm );
     remote_size = ompi_comm_remote_size ( intercomm );
     total_size  = local_size + remote_size;
@@ -131,8 +129,6 @@ int MPI_Intercomm_merge(MPI_Comm intercomm, int high,
     }
 
  exit:
-    OPAL_CR_EXIT_LIBRARY();
-
     if ( NULL != procs ) {
         free ( procs );
     }

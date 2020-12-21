@@ -60,8 +60,6 @@ int MPI_Dims_create(int nnodes, int ndims, int dims[])
     int *p;
     int err;
 
-    OPAL_CR_NOOP_PROGRESS();
-
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 

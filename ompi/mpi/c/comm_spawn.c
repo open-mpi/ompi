@@ -112,8 +112,6 @@ int MPI_Comm_spawn(const char *command, char *argv[], int maxprocs, MPI_Info inf
         ompi_info_get_bool(info, "ompi_non_mpi", &non_mpi, &flag);
     }
 
-    OPAL_CR_ENTER_LIBRARY();
-
     if ( rank == root ) {
         if (!non_mpi) {
             /* Open a port. The port_name is passed as an environment
@@ -151,8 +149,6 @@ error:
     if (rank == root && !non_mpi) {
         ompi_dpm_close_port(port_name);
     }
-
-    OPAL_CR_EXIT_LIBRARY();
 
     /* set error codes */
     if (MPI_ERRCODES_IGNORE != array_of_errcodes) {

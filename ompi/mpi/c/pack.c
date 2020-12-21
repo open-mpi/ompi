@@ -75,8 +75,6 @@ int MPI_Pack(const void *inbuf, int incount, MPI_Datatype datatype,
         OMPI_ERRHANDLER_CHECK(rc, comm, rc, FUNC_NAME);
     }
 
-    OPAL_CR_ENTER_LIBRARY();
-
     OBJ_CONSTRUCT( &local_convertor, opal_convertor_t );
     /* the resulting convertor will be set to the position ZERO */
     opal_convertor_copy_and_prepare_for_send( ompi_mpi_local_convertor, &(datatype->super),
@@ -86,7 +84,6 @@ int MPI_Pack(const void *inbuf, int incount, MPI_Datatype datatype,
     opal_convertor_get_packed_size( &local_convertor, &size );
     if( (*position + size) > (unsigned int)outsize ) {  /* we can cast as we already checked for < 0 */
         OBJ_DESTRUCT( &local_convertor );
-        OPAL_CR_EXIT_LIBRARY();
         return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_TRUNCATE, FUNC_NAME);
     }
 
@@ -99,8 +96,6 @@ int MPI_Pack(const void *inbuf, int incount, MPI_Datatype datatype,
     ret = opal_convertor_pack( &local_convertor, &invec, &iov_count, &size );
     *position += size;
     OBJ_DESTRUCT( &local_convertor );
-
-    OPAL_CR_EXIT_LIBRARY();
 
     /* All done.  Note that the convertor returns 1 upon success, not
        OPAL_SUCCESS. */

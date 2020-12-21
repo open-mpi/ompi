@@ -82,8 +82,6 @@ int MPI_Group_excl(MPI_Group group, int n, const int ranks[],
         return MPI_SUCCESS;
     }
 
-    OPAL_CR_ENTER_LIBRARY();
-
     err = ompi_group_excl ( group, n, ranks, new_group );
     OMPI_ERRHANDLER_NOHANDLE_RETURN(err, err, FUNC_NAME );
 }

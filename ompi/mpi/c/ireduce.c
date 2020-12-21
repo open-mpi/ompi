@@ -134,8 +134,6 @@ int MPI_Ireduce(const void *sendbuf, void *recvbuf, int count,
         return MPI_SUCCESS;
     }
 
-    OPAL_CR_ENTER_LIBRARY();
-
     /* Invoke the coll component to perform the back-end operation */
     err = comm->c_coll->coll_ireduce(sendbuf, recvbuf, count,
                                     datatype, op, root, comm, request,

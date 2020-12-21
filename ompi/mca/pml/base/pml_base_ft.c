@@ -27,53 +27,5 @@
 
 int mca_pml_base_ft_event(int state)
 {
-    int ret;
-
-#if 0
-    opal_output(0, "pml:base: ft_event: Called (%d)!!\n", state);
-#endif
-
-    if(OPAL_CRS_CHECKPOINT == state) {
-        ;
-    }
-    else if(OPAL_CRS_CONTINUE == state) {
-        ;
-    }
-    else if(OPAL_CRS_RESTART == state) {
-        ;
-    }
-    else if(OPAL_CRS_TERM == state ) {
-        ;
-    }
-    else {
-        ;
-    }
-
-    /* Call the BML
-     * BML is expected to call ft_event in
-     * - BTL(s)
-     * - MPool(s)
-     */
-    if( OMPI_SUCCESS != (ret = mca_bml.bml_ft_event(state))) {
-        opal_output(0, "pml:base: ft_event: BML ft_event function failed: %d\n",
-                    ret);
-    }
-
-    if(OPAL_CRS_CHECKPOINT == state) {
-        ;
-    }
-    else if(OPAL_CRS_CONTINUE == state) {
-        ;
-    }
-    else if(OPAL_CRS_RESTART == state) {
-        ;
-    }
-    else if(OPAL_CRS_TERM == state ) {
-        ;
-    }
-    else {
-        ;
-    }
-
     return OMPI_SUCCESS;
 }

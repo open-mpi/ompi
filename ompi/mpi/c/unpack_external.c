@@ -65,12 +65,9 @@ int MPI_Unpack_external (const char datarep[], const void *inbuf, MPI_Aint insiz
         OMPI_ERRHANDLER_NOHANDLE_CHECK(rc, rc, FUNC_NAME);
     }
 
-    OPAL_CR_ENTER_LIBRARY();
-
     rc = ompi_datatype_unpack_external(datarep, inbuf, insize,
                                        position, outbuf, outcount,
                                        datatype);
-    OPAL_CR_EXIT_LIBRARY();
 
     OMPI_ERRHANDLER_NOHANDLE_RETURN(rc, rc, FUNC_NAME);
 }

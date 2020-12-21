@@ -123,7 +123,6 @@ void ompi_info_do_config(bool want_all)
     char *sparse_groups;
     char *wtime_support;
     char *symbol_visibility;
-    char *ft_support;
     char *crdebug_support;
     char *topology_support;
     char *ipv6_support;
@@ -298,12 +297,6 @@ void ompi_info_do_config(bool want_all)
 
     (void)opal_asprintf(&threads, "%s (MPI_THREAD_MULTIPLE: yes, OPAL support: yes, OMPI progress: %s, Event lib: yes)",
                    "posix", OPAL_ENABLE_PROGRESS_THREADS ? "yes" : "no");
-
-    (void)opal_asprintf(&ft_support, "%s (checkpoint thread: %s)",
-                   OPAL_ENABLE_FT ? "yes" : "no", OPAL_ENABLE_FT_THREAD ? "yes" : "no");
-
-    (void)opal_asprintf(&crdebug_support, "%s",
-                   OPAL_ENABLE_CRDEBUG ? "yes" : "no");
 
     /* output values */
     opal_info_out("Configured by", "config:user", OPAL_CONFIGURE_USER);
@@ -634,9 +627,6 @@ void ompi_info_do_config(bool want_all)
     opal_info_out("IPv6 support", "options:ipv6", ipv6_support);
 
     opal_info_out("MPI extensions", "options:mpi_ext", OMPI_MPIEXT_COMPONENTS);
-
-    opal_info_out("FT Checkpoint support", "options:ft_support", ft_support);
-    free(ft_support);
 
     opal_info_out("C/R Enabled Debugging", "options:crdebug_support", crdebug_support);
     free(crdebug_support);

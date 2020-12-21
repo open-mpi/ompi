@@ -59,8 +59,6 @@ int MPIX_Barrier_init(MPI_Comm comm, MPI_Info info, MPI_Request *request)
         }
     }
 
-    OPAL_CR_ENTER_LIBRARY();
-
     err = comm->c_coll->coll_barrier_init(comm, info, request, comm->c_coll->coll_barrier_init_module);
 
     /* All done */

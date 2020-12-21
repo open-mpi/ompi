@@ -60,8 +60,6 @@ int MPI_Comm_compare(MPI_Comm comm1, MPI_Comm comm2, int *result) {
         }
     }
 
-    OPAL_CR_ENTER_LIBRARY();
-
     rc = ompi_comm_compare ( (ompi_communicator_t*)comm1,
                              (ompi_communicator_t*)comm2,
                              result);

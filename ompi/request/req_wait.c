@@ -31,8 +31,6 @@
 #include "ompi/request/request_default.h"
 #include "ompi/request/grequest.h"
 
-#include "ompi/mca/crcp/crcp.h"
-
 int ompi_request_default_wait(
     ompi_request_t ** req_ptr,
     ompi_status_public_t * status)
@@ -40,8 +38,6 @@ int ompi_request_default_wait(
     ompi_request_t *req = *req_ptr;
 
     ompi_request_wait_completion(req);
-
-    OMPI_CRCP_REQUEST_COMPLETE(req);
 
     /* return status.  If it's a generalized request, we *have* to
        invoke the query_fn, even if the user procided STATUS_IGNORE.
@@ -165,11 +161,6 @@ int ompi_request_default_wait_any(size_t count,
 
     request = requests[*index];
     assert( REQUEST_COMPLETE(request) );
-#if OPAL_ENABLE_FT_CR == 1
-    if( opal_cr_is_enabled ) {
-        OMPI_CRCP_REQUEST_COMPLETE(request);
-    }
-#endif
     /* Per note above, we have to call gen request query_fn even
        if STATUS_IGNORE was provided */
     if (OMPI_REQUEST_GEN == request->req_type) {
@@ -282,10 +273,6 @@ int ompi_request_default_wait_all( size_t count,
             }
             assert( REQUEST_COMPLETE(request) );
 
-            if( opal_cr_is_enabled) {
-                OMPI_CRCP_REQUEST_COMPLETE(request);
-            }
-
             if (OMPI_REQUEST_GEN == request->req_type) {
                 ompi_grequest_invoke_query(request, &request->req_status);
             }
@@ -342,10 +329,6 @@ int ompi_request_default_wait_all( size_t count,
                  }
             }
             assert( REQUEST_COMPLETE(request) );
-
-            if( opal_cr_is_enabled) {
-                OMPI_CRCP_REQUEST_COMPLETE(request);
-            }
 
             /* Per note above, we have to call gen request query_fn
                even if STATUSES_IGNORE was provided */
@@ -492,12 +475,6 @@ int ompi_request_default_wait_some(size_t count,
     for (size_t i = 0; i < num_requests_done; i++) {
         request = requests[indices[i]];
         assert( REQUEST_COMPLETE(request) );
-
-#if OPAL_ENABLE_FT_CR == 1
-        if( opal_cr_is_enabled) {
-            OMPI_CRCP_REQUEST_COMPLETE(request);
-        }
-#endif
 
         /* Per note above, we have to call gen request query_fn even
            if STATUS_IGNORE was provided */

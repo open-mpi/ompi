@@ -125,8 +125,6 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/mpool/mpool.h"
 #include "opal/mca/rcache/rcache.h"
-#include "opal/mca/crs/crs.h"
-#include "opal/mca/crs/base/base.h"
 
 BEGIN_C_DECLS
 

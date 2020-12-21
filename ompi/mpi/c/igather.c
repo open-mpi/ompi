@@ -168,8 +168,6 @@ int MPI_Igather(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
         }
     }
 
-    OPAL_CR_ENTER_LIBRARY();
-
     /* Invoke the coll component to perform the back-end operation */
     err = comm->c_coll->coll_igather(sendbuf, sendcount, sendtype, recvbuf,
                                     recvcount, recvtype, root, comm, request,

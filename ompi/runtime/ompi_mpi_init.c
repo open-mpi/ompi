@@ -99,12 +99,6 @@
 #include "ompi/mca/hook/base/base.h"
 #include "ompi/util/timings.h"
 
-#if OPAL_ENABLE_FT_CR == 1
-#include "ompi/mca/crcp/crcp.h"
-#include "ompi/mca/crcp/base/base.h"
-#endif
-#include "ompi/runtime/ompi_cr.h"
-
 /* newer versions of gcc have poisoned this deprecated feature */
 #ifdef HAVE___MALLOC_INITIALIZE_HOOK
 #include "opal/mca/memory/base/base.h"
@@ -612,13 +606,6 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided,
         goto error;
     }
 
-#if OPAL_ENABLE_FT_CR == 1
-    if (OMPI_SUCCESS != (ret = mca_base_framework_open(&ompi_crcp_base_framework, 0))) {
-        error = "ompi_crcp_base_open() failed";
-        goto error;
-    }
-#endif
-
     /* In order to reduce the common case for MPI apps (where they
        don't use MPI-2 IO or MPI-1 topology functions), the io and
        topo frameworks are initialized lazily, at the first use of
@@ -730,13 +717,6 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided,
         error = "ompi_osc_base_find_available() failed";
         goto error;
     }
-
-#if OPAL_ENABLE_FT_CR == 1
-    if (OMPI_SUCCESS != (ret = ompi_crcp_base_select() ) ) {
-        error = "ompi_crcp_base_select() failed";
-        goto error;
-    }
-#endif
 
     /* io and topo components are not selected here -- see comment
        above about the io and topo frameworks being loaded lazily */
@@ -956,16 +936,6 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided,
        etc. up and running here.... */
     if (OMPI_SUCCESS != (ret = ompi_dpm_dyn_init())) {
         error = "ompi_dpm_dyn_init() failed";
-        goto error;
-    }
-
-    /*
-     * Startup the Checkpoint/Restart Mech.
-     * Note: Always do this so tools don't hang when
-     * in a non-checkpointable build
-     */
-    if (OMPI_SUCCESS != (ret = ompi_cr_init())) {
-        error = "ompi_cr_init";
         goto error;
     }
 

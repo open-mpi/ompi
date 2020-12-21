@@ -14,7 +14,6 @@
 
 #include <stdlib.h>
 
-#include "opal/runtime/opal_cr.h"
 #include "opal/util/output.h"
 
 #include "oshmem/constants.h"

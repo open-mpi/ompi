@@ -48,8 +48,6 @@ int MPI_Keyval_free(int *keyval)
         }
     }
 
-    OPAL_CR_ENTER_LIBRARY();
-
     ret = ompi_attr_free_keyval(COMM_ATTR, keyval, 0);
     OMPI_ERRHANDLER_NOHANDLE_RETURN(ret, MPI_ERR_OTHER, FUNC_NAME);
 }

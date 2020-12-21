@@ -39,8 +39,6 @@ static const char FUNC_NAME[] = "MPI_Op_free";
 int MPI_Op_free(MPI_Op *op)
 {
 
-    OPAL_CR_NOOP_PROGRESS();
-
   /* Error checking */
 
   if (MPI_PARAM_CHECK) {
