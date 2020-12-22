@@ -88,10 +88,12 @@ int mca_btl_ofi_get (mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpoi
                 &comp->comp_ctx);       /* completion context */
 
     if (-FI_EAGAIN == rc) {
+        opal_free_list_return(comp->base.my_list, (opal_free_list_item_t*) comp);
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
 
     if (0 != rc) {
+        opal_free_list_return(comp->base.my_list, (opal_free_list_item_t*) comp);
         BTL_ERROR(("fi_read failed with %d:%s", rc, fi_strerror(-rc)));
         MCA_BTL_OFI_ABORT();
     }
@@ -133,10 +135,12 @@ int mca_btl_ofi_put (mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpoi
                   &comp->comp_ctx);       /* completion context */
 
     if (-FI_EAGAIN == rc) {
+        opal_free_list_return(comp->base.my_list, (opal_free_list_item_t*) comp);
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
 
     if (0 != rc) {
+        opal_free_list_return(comp->base.my_list, (opal_free_list_item_t*) comp);
         BTL_ERROR(("fi_write failed with %d:%s", rc, fi_strerror(-rc)));
         MCA_BTL_OFI_ABORT();
     }
