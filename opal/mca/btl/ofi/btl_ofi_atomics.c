@@ -73,8 +73,10 @@ int mca_btl_ofi_afop (struct mca_btl_base_module_t *btl, struct mca_btl_base_end
                          fi_datatype, fi_op, &comp->comp_ctx);
 
     if (rc == -FI_EAGAIN) {
+        opal_free_list_return(comp->base.my_list, (opal_free_list_item_t*) comp);
         return OPAL_ERR_OUT_OF_RESOURCE;
     } else if (rc < 0) {
+        opal_free_list_return(comp->base.my_list, (opal_free_list_item_t*) comp);
         BTL_ERROR(("fi_fetch_atomic failed with rc=%d (%s)", rc, fi_strerror(-rc)));
         MCA_BTL_OFI_ABORT();
     }
@@ -125,8 +127,10 @@ int mca_btl_ofi_aop (struct mca_btl_base_module_t *btl, mca_btl_base_endpoint_t 
                    fi_datatype, fi_op, &comp->comp_ctx);
 
     if (rc == -FI_EAGAIN) {
+        opal_free_list_return(comp->base.my_list, (opal_free_list_item_t*) comp);
         return OPAL_ERR_OUT_OF_RESOURCE;
     } else if (rc < 0) {
+        opal_free_list_return(comp->base.my_list, (opal_free_list_item_t*) comp);
         BTL_ERROR(("fi_atomic failed with rc=%d (%s)", rc, fi_strerror(-rc)));
         MCA_BTL_OFI_ABORT();
     }
@@ -181,8 +185,10 @@ int mca_btl_ofi_acswap (struct mca_btl_base_module_t *btl, struct mca_btl_base_e
                            &comp->comp_ctx);
 
     if (rc == -FI_EAGAIN) {
+        opal_free_list_return(comp->base.my_list, (opal_free_list_item_t*) comp);
         return OPAL_ERR_OUT_OF_RESOURCE;
     } else if (rc < 0) {
+        opal_free_list_return(comp->base.my_list, (opal_free_list_item_t*) comp);
         BTL_ERROR(("fi_compare_atomic failed with rc=%d (%s)", rc, fi_strerror(-rc)));
         MCA_BTL_OFI_ABORT();
     }
