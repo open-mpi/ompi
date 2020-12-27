@@ -521,7 +521,7 @@ void mca_pml_ob1_recv_frag_callback_rndv (mca_btl_base_module_t *btl,
     if( OPAL_UNLIKELY(segments->seg_len < sizeof(mca_pml_ob1_common_hdr_t)) ) {
         return;
     }
-    ob1_hdr_ntoh(hdr, MCA_PML_OB1_HDR_TYPE_RNDV);
+    ob1_hdr_ntoh((mca_pml_ob1_hdr_t*)hdr, MCA_PML_OB1_HDR_TYPE_RNDV);
     mca_pml_ob1_recv_frag_match(btl, &hdr->hdr_match, segments,
                                 descriptor->des_segment_count, MCA_PML_OB1_HDR_TYPE_RNDV);
 }
@@ -535,7 +535,7 @@ void mca_pml_ob1_recv_frag_callback_rget (mca_btl_base_module_t *btl,
     if( OPAL_UNLIKELY(segments->seg_len < sizeof(mca_pml_ob1_common_hdr_t)) ) {
         return;
     }
-    ob1_hdr_ntoh(hdr, MCA_PML_OB1_HDR_TYPE_RGET);
+    ob1_hdr_ntoh((mca_pml_ob1_hdr_t*)hdr, MCA_PML_OB1_HDR_TYPE_RGET);
     mca_pml_ob1_recv_frag_match(btl, &hdr->hdr_match, segments,
                                 descriptor->des_segment_count, MCA_PML_OB1_HDR_TYPE_RGET);
 }
@@ -552,7 +552,7 @@ void mca_pml_ob1_recv_frag_callback_ack (mca_btl_base_module_t *btl,
          return;
     }
 
-    ob1_hdr_ntoh(hdr, MCA_PML_OB1_HDR_TYPE_ACK);
+    ob1_hdr_ntoh((mca_pml_ob1_hdr_t*)hdr, MCA_PML_OB1_HDR_TYPE_ACK);
     sendreq = (mca_pml_ob1_send_request_t *) hdr->hdr_ack.hdr_src_req.pval;
     sendreq->req_recv = hdr->hdr_ack.hdr_dst_req;
 
@@ -614,7 +614,7 @@ void mca_pml_ob1_recv_frag_callback_frag (mca_btl_base_module_t *btl,
         return;
     }
 
-    ob1_hdr_ntoh(hdr, MCA_PML_OB1_HDR_TYPE_FRAG);
+    ob1_hdr_ntoh((mca_pml_ob1_hdr_t*)hdr, MCA_PML_OB1_HDR_TYPE_FRAG);
     recvreq = (mca_pml_ob1_recv_request_t*)hdr->hdr_frag.hdr_dst_req.pval;
 #if OPAL_CUDA_SUPPORT /* CUDA_ASYNC_RECV */
     /* If data is destined for GPU buffer and convertor was set up for asynchronous
@@ -648,7 +648,7 @@ void mca_pml_ob1_recv_frag_callback_put (mca_btl_base_module_t *btl,
         return;
     }
 
-    ob1_hdr_ntoh (hdr, MCA_PML_OB1_HDR_TYPE_PUT);
+    ob1_hdr_ntoh ((mca_pml_ob1_hdr_t*)hdr, MCA_PML_OB1_HDR_TYPE_PUT);
     sendreq = (mca_pml_ob1_send_request_t *) hdr->hdr_rdma.hdr_req.pval;
     mca_pml_ob1_send_request_put (sendreq, btl, &hdr->hdr_rdma);
 }
