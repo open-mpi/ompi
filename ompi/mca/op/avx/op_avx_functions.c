@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2020 The University of Tennessee and The University
+ * Copyright (c) 2019-2021 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2020      Research Organization for Information Science
@@ -24,16 +24,42 @@
 #include "ompi/mca/op/avx/op_avx.h"
 
 #include <immintrin.h>
-
+/**
+ * The following logic is necessary to cope with distro maintainer's desire to change the compilation
+ * flags after the configure step, leading to inconsistencies between what OMPI has detected and what
+ * code can be generated during make. If we detect that the current code generation architecture has
+ * been changed from our own setting and cannot generate the code we need (AVX512, AVX2) we fall back
+ * to a lesser support (AVX512 -> AVX2, AVX2 -> AVX, AVX -> error out).
+ */
 #if defined(GENERATE_AVX512_CODE)
-#define PREPEND _avx512
-#elif defined(GENERATE_AVX2_CODE)
-#define PREPEND _avx2
-#elif defined(GENERATE_AVX_CODE)
-#define PREPEND _avx
-#else
-#error This file should not be compiled in this conditions
-#endif
+#  if defined(__AVX512BW__) && defined(__AVX512F__) && defined(__AVX512VL__)
+#    define PREPEND _avx512
+#  else
+#    undef GENERATE_AVX512_CODE
+#  endif  /* defined(__AVX512BW__) && defined(__AVX512F__) && defined(__AVX512VL__) */
+#endif  /* defined(GENERATE_AVX512_CODE) */
+
+#if !defined(PREPEND) && defined(GENERATE_AVX2_CODE)
+#  if defined(__AVX2__)
+#    define PREPEND _avx2
+#  else
+#    undef GENERATE_AVX2_CODE
+#  endif  /* defined(__AVX2__) */
+#endif  /* !defined(PREPEND) && defined(GENERATE_AVX2_CODE) */
+
+#if !defined(PREPEND) && defined(GENERATE_AVX_CODE)
+#  if defined(__AVX__)
+#    define PREPEND _avx
+#  endif
+#endif  /* !defined(PREPEND) && defined(GENERATE_AVX_CODE) */
+
+#if !defined(PREPEND)
+#  if OMPI_MCA_OP_HAVE_AVX512 || OMPI_MCA_OP_HAVE_AVX2
+#    error The configure step has detected possible support for AVX512 and/or AVX2 but the compiler flags during make are too restrictive. Please disable the AVX component by adding --enable-mca-no-build=op-avx to your configure step.
+#  else
+#    error This file should not be compiled in this conditions. Please provide the config.log file to the OMPI developers.
+#  endif  /* OMPI_MCA_OP_HAVE_AVX512 || OMPI_MCA_OP_HAVE_AVX2 */
+#endif  /* !defined(PREPEND) */
 
 /*
  * Concatenate preprocessor tokens A and B without expanding macro definitions
@@ -45,6 +71,102 @@
  * Concatenate preprocessor tokens A and B after macro-expanding them.
  */
 #define OP_CONCAT(A, B) OP_CONCAT_NX(A, B)
+
+/*
+ * grep -e "_mm[125][251][862]_.*(" avx512.c -o | sed 's/(//g' | sort | uniq
+ *
+ * https://software.intel.com/sites/landingpage/IntrinsicsGuide
+ *
+ * _mm_add_epi[8,16,32,64]         SSE2
+ * _mm_add_pd                      SSE2
+ * _mm_add_ps                      SSE
+ * _mm_adds_epi[8,16]              SSE2
+ * _mm_adds_epu[8,16]              SSE2
+ * _mm_and_si128                   SSE2
+ * _mm_lddqu_si128                 SSE3
+ * _mm_loadu_pd                    SSE2
+ * _mm_loadu_ps                    SSE
+ * _mm_max_epi8                    SSE4.1
+ * _mm_max_epi16                   SSE2
+ * _mm_max_epi32                   SSE4.1
+ * _mm_max_epi64                   AVX512VL + AVX512F
+ * _mm_max_epu8                    SSE2
+ * _mm_max_epu[16,32]              SSE4.1
+ * _mm_max_epu64                   AVX512VL + AVX512F
+ * _mm_max_pd                      SSE2
+ * _mm_max_ps                      SSE
+ * _mm_min_epi8                    SSE4.1
+ * _mm_min_epi16                   SSE2
+ * _mm_min_epi32                   SSE4.1
+ * _mm_min_epi64                   AVX512VL + AVX512F
+ * _mm_min_epu8                    SSE2
+ * _mm_min_epu[16,32]              SSE4.1
+ * _mm_min_epu64                   AVX512VL + AVX512F
+ * _mm_min_pd                      SSE2
+ * _mm_min_ps                      SSE
+ * _mm_mul_pd                      SSE2
+ * _mm_mul_ps                      SSE
+ * _mm_mullo_epi16                 SSE2
+ * _mm_mullo_epi32                 SSE4.1
+ * _mm_mullo_epi64                 AVX512VL + AVX512DQ
+ * _mm_or_si128                    SSE2
+ * _mm_storeu_pd                   SSE2
+ * _mm_storeu_ps                   SSE
+ * _mm_storeu_si128                SSE2
+ * _mm_xor_si128                   SSE2
+ * _mm256_add_epi[8,16,32,64]      AVX2
+ * _mm256_add_p[s,d]               AVX
+ * _mm256_adds_epi[8,16]           AVX2
+ * _mm256_adds_epu[8,16]           AVX2
+ * _mm256_and_si256                AVX2
+ * _mm256_loadu_p[s,d]             AVX
+ * _mm256_loadu_si256              AVX
+ * _mm256_max_epi[8,16,32]         AVX2
+ * _mm256_max_epi64                AVX512VL + AVX512F
+ * _mm256_max_epu[8,16,32]         AVX2
+ * _mm256_max_epu64                AVX512VL + AVX512F
+ * _mm256_max_p[s,d]               AVX
+ * _mm256_min_epi[8,16,32]         AVX2
+ * _mm256_min_epi64                AVX512VL + AVX512F
+ * _mm256_min_epu[8,16,32]         AVX2
+ * _mm256_min_epu64                AVX512VL + AVX512F
+ * _mm256_min_p[s,d]               AVX
+ * _mm256_mul_p[s,d]               AVX
+ * _mm256_mullo_epi[16,32]         AVX2
+ * _mm256_mullo_epi64              AVX512VL + AVX512DQ
+ * _mm256_or_si256                 AVX2
+ * _mm256_storeu_p[s,d]            AVX
+ * _mm256_storeu_si256             AVX
+ * _mm256_xor_si256                AVX2
+ * _mm512_add_epi[8,16]            AVX512BW
+ * _mm512_add_epi[32,64]           AVX512F
+ * _mm512_add_p[s,d]               AVX512F
+ * _mm512_adds_epi[8,16]           AVX512BW
+ * _mm512_adds_epu[8,16]           AVX512BW
+ * _mm512_and_si512                AVX512F
+ * _mm512_cvtepi16_epi8            AVX512BW
+ * _mm512_cvtepi8_epi16            AVX512BW
+ * _mm512_loadu_p[s,d]             AVX512F
+ * _mm512_loadu_si512              AVX512F
+ * _mm512_max_epi[8,16]            AVX512BW
+ * _mm512_max_epi[32,64]           AVX512F
+ * _mm512_max_epu[8,16]            AVX512BW
+ * _mm512_max_epu[32,64]           AVX512F
+ * _mm512_max_p[s,d]               AVX512F
+ * _mm512_min_epi[8,16]            AVX512BW
+ * _mm512_min_epi[32,64]           AVX512F
+ * _mm512_min_epu[8,16]            AVX512BW
+ * _mm512_min_epu[32,64]           AVX512F
+ * _mm512_min_p[s,d]               AVX512F
+ * _mm512_mul_p[s,d]               AVX512F
+ * _mm512_mullo_epi16              AVX512BW
+ * _mm512_mullo_epi32              AVX512F
+ * _mm512_mullo_epi64              AVX512DQ
+ * _mm512_or_si512                 AVX512F
+ * _mm512_storeu_p[s,d]            AVX512F
+ * _mm512_storeu_si512             AVX512F
+ * _mm512_xor_si512                AVX512F
+ */
 
 /*
  * Since all the functions in this file are essentially identical, we
@@ -62,13 +184,14 @@
   (((_flag) & mca_op_avx_component.flags) == (_flag))
 
 #if defined(GENERATE_AVX512_CODE) && defined(OMPI_MCA_OP_HAVE_AVX512) && (1 == OMPI_MCA_OP_HAVE_AVX512)
+#if __AVX512F__
 #define OP_AVX_AVX512_FUNC(name, type_sign, type_size, type, op)               \
     if( OMPI_OP_AVX_HAS_FLAGS(OMPI_OP_AVX_HAS_AVX512F_FLAG|OMPI_OP_AVX_HAS_AVX512BW_FLAG) ) { \
         int types_per_step = (512 / 8) / sizeof(type);                         \
         for( ; left_over >= types_per_step; left_over -= types_per_step ) {    \
-            __m512i vecA =  _mm512_loadu_si512((__m512*)in);                   \
+            __m512i vecA = _mm512_loadu_si512((__m512*)in);                    \
             in += types_per_step;                                              \
-            __m512i vecB =  _mm512_loadu_si512((__m512*)out);                  \
+            __m512i vecB = _mm512_loadu_si512((__m512*)out);                   \
             __m512i res = _mm512_##op##_ep##type_sign##type_size(vecA, vecB);  \
             _mm512_storeu_si512((__m512*)out, res);                            \
             out += types_per_step;                                             \
@@ -76,10 +199,14 @@
         if( 0 == left_over ) return;                                           \
     }
 #else
+#error Target architecture lacks AVX512F support needed for _mm512_loadu_si512 and _mm512_storeu_si512
+#endif  /* __AVX512F__ */
+#else
 #define OP_AVX_AVX512_FUNC(name, type_sign, type_size, type, op) {}
 #endif  /* defined(OMPI_MCA_OP_HAVE_AVX512) && (1 == OMPI_MCA_OP_HAVE_AVX512) */
 
 #if defined(GENERATE_AVX2_CODE) && defined(OMPI_MCA_OP_HAVE_AVX2) && (1 == OMPI_MCA_OP_HAVE_AVX2)
+#if __AVX__
 #define OP_AVX_AVX2_FUNC(name, type_sign, type_size, type, op)                 \
     if( OMPI_OP_AVX_HAS_FLAGS(OMPI_OP_AVX_HAS_AVX2_FLAG | OMPI_OP_AVX_HAS_AVX_FLAG) ) {  \
         int types_per_step = (256 / 8) / sizeof(type);  /* AVX2 */             \
@@ -87,29 +214,36 @@
             __m256i vecA = _mm256_loadu_si256((__m256i*)in);                   \
             in += types_per_step;                                              \
             __m256i vecB = _mm256_loadu_si256((__m256i*)out);                  \
-            __m256i res =  _mm256_##op##_ep##type_sign##type_size(vecA, vecB); \
+            __m256i res = _mm256_##op##_ep##type_sign##type_size(vecA, vecB);  \
             _mm256_storeu_si256((__m256i*)out, res);                           \
             out += types_per_step;                                             \
         }                                                                      \
         if( 0 == left_over ) return;                                           \
     }
 #else
+#error Target architecture lacks AVX support needed for _mm256_loadu_si256 and _mm256_storeu_si256
+#endif  /* __AVX__ */
+#else
 #define OP_AVX_AVX2_FUNC(name, type_sign, type_size, type, op) {}
 #endif  /* defined(OMPI_MCA_OP_HAVE_AVX2) && (1 == OMPI_MCA_OP_HAVE_AVX2) */
 
 #if defined(GENERATE_SSE3_CODE) && defined(OMPI_MCA_OP_HAVE_AVX) && (1 == OMPI_MCA_OP_HAVE_AVX)
+#if __SSE3__
 #define OP_AVX_SSE4_1_FUNC(name, type_sign, type_size, type, op)               \
     if( OMPI_OP_AVX_HAS_FLAGS(OMPI_OP_AVX_HAS_SSE3_FLAG | OMPI_OP_AVX_HAS_SSE4_1_FLAG) ) { \
-        int types_per_step = (128 / 8) / sizeof(type);  /* AVX */              \
+        int types_per_step = (128 / 8) / sizeof(type);                         \
         for( ; left_over >= types_per_step; left_over -= types_per_step ) {    \
             __m128i vecA = _mm_lddqu_si128((__m128i*)in);                      \
             in += types_per_step;                                              \
             __m128i vecB = _mm_lddqu_si128((__m128i*)out);                     \
-            __m128i res =  _mm_##op##_ep##type_sign##type_size(vecA, vecB);    \
+            __m128i res = _mm_##op##_ep##type_sign##type_size(vecA, vecB);     \
             _mm_storeu_si128((__m128i*)out, res);                              \
             out += types_per_step;                                             \
         }                                                                      \
     }
+#else
+#error Target architecture lacks SSE3 support needed for _mm_lddqu_si128 and _mm_storeu_si128
+#endif  /* __SSE3__ */
 #else
 #define OP_AVX_SSE4_1_FUNC(name, type_sign, type_size, type, op) {}
 #endif  /* defined(OMPI_MCA_OP_HAVE_AVX) && (1 == OMPI_MCA_OP_HAVE_AVX) */
@@ -143,12 +277,13 @@ static void OP_CONCAT(ompi_op_avx_2buff_##name##_##type,PREPEND)(const void *_in
 }
 
 #if defined(GENERATE_AVX512_CODE) && defined(OMPI_MCA_OP_HAVE_AVX512) && (1 == OMPI_MCA_OP_HAVE_AVX512)
+#if __AVX512BW__ && __AVX__
 #define OP_AVX_AVX512_MUL(name, type_sign, type_size, type, op)         \
     if( OMPI_OP_AVX_HAS_FLAGS(OMPI_OP_AVX_HAS_AVX512F_FLAG | OMPI_OP_AVX_HAS_AVX512BW_FLAG) ) {  \
         int types_per_step = (256 / 8) / sizeof(type);                  \
         for (; left_over >= types_per_step; left_over -= types_per_step) { \
-            __m256i vecA_tmp =  _mm256_loadu_si256((__m256i*)in);       \
-            __m256i vecB_tmp =  _mm256_loadu_si256((__m256i*)out);      \
+            __m256i vecA_tmp = _mm256_loadu_si256((__m256i*)in);        \
+            __m256i vecB_tmp = _mm256_loadu_si256((__m256i*)out);       \
             in += types_per_step;                                       \
             __m512i vecA = _mm512_cvtepi8_epi16(vecA_tmp);              \
             __m512i vecB = _mm512_cvtepi8_epi16(vecB_tmp);              \
@@ -159,6 +294,9 @@ static void OP_CONCAT(ompi_op_avx_2buff_##name##_##type,PREPEND)(const void *_in
         }                                                               \
         if( 0 == left_over ) return;                                    \
     }
+#else
+#error Target architecture lacks AVX512BW and AVX support needed for _mm256_loadu_si256, _mm256_storeu_si256 and _mm512_cvtepi8_epi16
+#endif  /* __AVX512BW__ && __AVX__ */
 #else
 #define OP_AVX_AVX512_MUL(name, type_sign, type_size, type, op) {}
 #endif  /* defined(OMPI_MCA_OP_HAVE_AVX512) && (1 == OMPI_MCA_OP_HAVE_AVX512) */
@@ -201,13 +339,14 @@ static void OP_CONCAT( ompi_op_avx_2buff_##name##_##type, PREPEND)(const void *_
  *
  */
 #if defined(GENERATE_AVX512_CODE) && defined(OMPI_MCA_OP_HAVE_AVX512) && (1 == OMPI_MCA_OP_HAVE_AVX512)
+#if __AVX512F__
 #define OP_AVX_AVX512_BIT_FUNC(name, type_size, type, op)               \
     if( OMPI_OP_AVX_HAS_FLAGS( OMPI_OP_AVX_HAS_AVX512F_FLAG) ) {        \
         types_per_step = (512 / 8) / sizeof(type);                      \
         for (; left_over >= types_per_step; left_over -= types_per_step) { \
-            __m512i vecA =  _mm512_loadu_si512((__m512i*)in);           \
+            __m512i vecA = _mm512_loadu_si512((__m512i*)in);            \
             in += types_per_step;                                       \
-            __m512i vecB =  _mm512_loadu_si512((__m512i*)out);          \
+            __m512i vecB = _mm512_loadu_si512((__m512i*)out);           \
             __m512i res = _mm512_##op##_si512(vecA, vecB);              \
             _mm512_storeu_si512((__m512i*)out, res);                    \
             out += types_per_step;                                      \
@@ -215,10 +354,14 @@ static void OP_CONCAT( ompi_op_avx_2buff_##name##_##type, PREPEND)(const void *_
         if( 0 == left_over ) return;                                    \
     }
 #else
+#error Target architecture lacks AVX512F support needed for _mm512_loadu_si512 and _mm512_storeu_si512
+#endif  /* __AVX512F__ */
+#else
 #define OP_AVX_AVX512_BIT_FUNC(name, type_size, type, op) {}
 #endif  /* defined(OMPI_MCA_OP_HAVE_AVX512) && (1 == OMPI_MCA_OP_HAVE_AVX512) */
 
 #if defined(GENERATE_AVX2_CODE) && defined(OMPI_MCA_OP_HAVE_AVX2) && (1 == OMPI_MCA_OP_HAVE_AVX2)
+#if __AVX__
 #define OP_AVX_AVX2_BIT_FUNC(name, type_size, type, op)                 \
     if( OMPI_OP_AVX_HAS_FLAGS(OMPI_OP_AVX_HAS_AVX2_FLAG | OMPI_OP_AVX_HAS_AVX_FLAG) ) { \
         types_per_step = (256 / 8) / sizeof(type);                      \
@@ -226,17 +369,21 @@ static void OP_CONCAT( ompi_op_avx_2buff_##name##_##type, PREPEND)(const void *_
             __m256i vecA = _mm256_loadu_si256((__m256i*)in);            \
             in += types_per_step;                                       \
             __m256i vecB = _mm256_loadu_si256((__m256i*)out);           \
-            __m256i res =  _mm256_##op##_si256(vecA, vecB);             \
+            __m256i res = _mm256_##op##_si256(vecA, vecB);              \
             _mm256_storeu_si256((__m256i*)out, res);                    \
             out += types_per_step;                                      \
         }                                                               \
         if( 0 == left_over ) return;                                    \
     }
 #else
+#error Target architecture lacks AVX support needed for _mm256_loadu_si256 and _mm256_storeu_si256
+#endif  /* __AVX__ */
+#else
 #define OP_AVX_AVX2_BIT_FUNC(name, type_size, type, op) {}
 #endif  /* defined(OMPI_MCA_OP_HAVE_AVX2) && (1 == OMPI_MCA_OP_HAVE_AVX2) */
 
 #if defined(GENERATE_SSE3_CODE) && defined(OMPI_MCA_OP_HAVE_AVX) && (1 == OMPI_MCA_OP_HAVE_AVX)
+#if __SSE3__ && __SSE2__
 #define OP_AVX_SSE3_BIT_FUNC(name, type_size, type, op)                 \
     if( OMPI_OP_AVX_HAS_FLAGS(OMPI_OP_AVX_HAS_SSE3_FLAG) ) {            \
         types_per_step = (128 / 8) / sizeof(type);                      \
@@ -244,11 +391,14 @@ static void OP_CONCAT( ompi_op_avx_2buff_##name##_##type, PREPEND)(const void *_
             __m128i vecA = _mm_lddqu_si128((__m128i*)in);               \
             in += types_per_step;                                       \
             __m128i vecB = _mm_lddqu_si128((__m128i*)out);              \
-            __m128i res =  _mm_##op##_si128(vecA, vecB);                \
+            __m128i res = _mm_##op##_si128(vecA, vecB);                 \
             _mm_storeu_si128((__m128i*)out, res);                       \
             out += types_per_step;                                      \
         }                                                               \
     }
+#else
+#error Target architecture lacks SSE2 and SSE3 support needed for _mm_lddqu_si128 and _mm_storeu_si128
+#endif  /* __SSE3__ && __SSE2__ */
 #else
 #define OP_AVX_SSE3_BIT_FUNC(name, type_size, type, op) {}
 #endif  /* defined(OMPI_MCA_OP_HAVE_AVX) && (1 == OMPI_MCA_OP_HAVE_AVX) */
@@ -282,12 +432,13 @@ static void OP_CONCAT(ompi_op_avx_2buff_##name##_##type,PREPEND)(const void *_in
 }
 
 #if defined(GENERATE_AVX512_CODE) && defined(OMPI_MCA_OP_HAVE_AVX512) && (1 == OMPI_MCA_OP_HAVE_AVX512)
+#if __AVX512F__
 #define OP_AVX_AVX512_FLOAT_FUNC(op)                                    \
     if( OMPI_OP_AVX_HAS_FLAGS(OMPI_OP_AVX_HAS_AVX512F_FLAG) ) {         \
         types_per_step = (512 / 8) / sizeof(float);                     \
         for (; left_over >= types_per_step; left_over -= types_per_step) { \
-            __m512 vecA =  _mm512_loadu_ps((__m512*)in);                \
-            __m512 vecB =  _mm512_loadu_ps((__m512*)out);         \
+            __m512 vecA = _mm512_loadu_ps((__m512*)in);                 \
+            __m512 vecB = _mm512_loadu_ps((__m512*)out);                \
             in += types_per_step;                                       \
             __m512 res = _mm512_##op##_ps(vecA, vecB);                  \
             _mm512_storeu_ps((__m512*)out, res);                        \
@@ -296,28 +447,36 @@ static void OP_CONCAT(ompi_op_avx_2buff_##name##_##type,PREPEND)(const void *_in
         if( 0 == left_over ) return;                                    \
     }
 #else
+#error Target architecture lacks AVX512F support needed for _mm512_loadu_ps and _mm512_storeu_ps
+#endif  /* __AVX512F__ */
+#else
 #define OP_AVX_AVX512_FLOAT_FUNC(op) {}
 #endif  /* defined(OMPI_MCA_OP_HAVE_AVX512) && (1 == OMPI_MCA_OP_HAVE_AVX512) */
 
 #if defined(GENERATE_AVX2_CODE) && defined(OMPI_MCA_OP_HAVE_AVX2) && (1 == OMPI_MCA_OP_HAVE_AVX2)
+#if __AVX__
 #define OP_AVX_AVX_FLOAT_FUNC(op)                                       \
     if( OMPI_OP_AVX_HAS_FLAGS(OMPI_OP_AVX_HAS_AVX_FLAG) ) {             \
         types_per_step = (256 / 8) / sizeof(float);                     \
         for( ; left_over >= types_per_step; left_over -= types_per_step ) { \
-            __m256 vecA =  _mm256_loadu_ps(in);                          \
+            __m256 vecA = _mm256_loadu_ps(in);                          \
             in += types_per_step;                                       \
-            __m256 vecB =  _mm256_loadu_ps(out);                         \
+            __m256 vecB = _mm256_loadu_ps(out);                         \
             __m256 res = _mm256_##op##_ps(vecA, vecB);                  \
-            _mm256_storeu_ps(out, res);                                  \
+            _mm256_storeu_ps(out, res);                                 \
             out += types_per_step;                                      \
         }                                                               \
         if( 0 == left_over ) return;                                    \
     }
 #else
+#error Target architecture lacks AVX support needed for _mm256_loadu_ps and _mm256_storeu_ps
+#endif  /* __AVX__ */
+#else
 #define OP_AVX_AVX_FLOAT_FUNC(op) {}
 #endif  /* defined(OMPI_MCA_OP_HAVE_AVX2) && (1 == OMPI_MCA_OP_HAVE_AVX2) */
 
 #if defined(GENERATE_AVX_CODE) && defined(OMPI_MCA_OP_HAVE_AVX) && (1 == OMPI_MCA_OP_HAVE_AVX)
+#if __SSE__
 #define OP_AVX_SSE_FLOAT_FUNC(op)                                       \
     if( OMPI_OP_AVX_HAS_FLAGS(OMPI_OP_AVX_HAS_SSE_FLAG) ) {             \
         types_per_step = (128 / 8) / sizeof(float);                     \
@@ -330,6 +489,9 @@ static void OP_CONCAT(ompi_op_avx_2buff_##name##_##type,PREPEND)(const void *_in
             out += types_per_step;                                      \
         }                                                               \
     }
+#else
+#error Target architecture lacks SSE support needed for _mm_loadu_ps and _mm_storeu_ps
+#endif  /* __SSE__ */
 #else
 #define OP_AVX_SSE_FLOAT_FUNC(op) {}
 #endif  /* defined(OMPI_MCA_OP_HAVE_AVX) && (1 == OMPI_MCA_OP_HAVE_AVX) */
@@ -363,13 +525,14 @@ static void OP_CONCAT(ompi_op_avx_2buff_##op##_float,PREPEND)(const void *_in, v
 }
 
 #if defined(GENERATE_AVX512_CODE) && defined(OMPI_MCA_OP_HAVE_AVX512) && (1 == OMPI_MCA_OP_HAVE_AVX512)
+#if __AVX512F__
 #define OP_AVX_AVX512_DOUBLE_FUNC(op)                                   \
     if( OMPI_OP_AVX_HAS_FLAGS(OMPI_OP_AVX_HAS_AVX512F_FLAG) ) {         \
         types_per_step = (512 / 8)  / sizeof(double);                   \
         for (; left_over >= types_per_step; left_over -= types_per_step) { \
-            __m512d vecA =  _mm512_loadu_pd(in);                        \
+            __m512d vecA = _mm512_loadu_pd(in);                         \
             in += types_per_step;                                       \
-            __m512d vecB =  _mm512_loadu_pd(out);                       \
+            __m512d vecB = _mm512_loadu_pd(out);                        \
             __m512d res = _mm512_##op##_pd(vecA, vecB);                 \
             _mm512_storeu_pd((out), res);                               \
             out += types_per_step;                                      \
@@ -377,17 +540,21 @@ static void OP_CONCAT(ompi_op_avx_2buff_##op##_float,PREPEND)(const void *_in, v
         if( 0 == left_over ) return;                                    \
     }
 #else
+#error Target architecture lacks AVXF512 support needed for _mm512_loadu_pd and _mm512_storeu_pd
+#endif  /* __AVXF512__ */
+#else
 #define OP_AVX_AVX512_DOUBLE_FUNC(op) {}
 #endif  /* defined(OMPI_MCA_OP_HAVE_AVX512) && (1 == OMPI_MCA_OP_HAVE_AVX512) */
 
 #if defined(GENERATE_AVX2_CODE) && defined(OMPI_MCA_OP_HAVE_AVX2) && (1 == OMPI_MCA_OP_HAVE_AVX2)
+#if __AVX__
 #define OP_AVX_AVX_DOUBLE_FUNC(op)                                      \
     if( OMPI_OP_AVX_HAS_FLAGS(OMPI_OP_AVX_HAS_AVX_FLAG) ) {             \
         types_per_step = (256 / 8)  / sizeof(double);                   \
         for( ; left_over >= types_per_step; left_over -= types_per_step ) { \
-            __m256d vecA =  _mm256_loadu_pd(in);                        \
+            __m256d vecA = _mm256_loadu_pd(in);                         \
             in += types_per_step;                                       \
-            __m256d vecB =  _mm256_loadu_pd(out);                       \
+            __m256d vecB = _mm256_loadu_pd(out);                        \
             __m256d res = _mm256_##op##_pd(vecA, vecB);                 \
             _mm256_storeu_pd(out, res);                                 \
             out += types_per_step;                                      \
@@ -395,10 +562,14 @@ static void OP_CONCAT(ompi_op_avx_2buff_##op##_float,PREPEND)(const void *_in, v
         if( 0 == left_over ) return;                                    \
       }
 #else
+#error Target architecture lacks AVX support needed for _mm256_loadu_pd and _mm256_storeu_pd
+#endif  /* __AVX__ */
+#else
 #define OP_AVX_AVX_DOUBLE_FUNC(op) {}
 #endif  /* defined(OMPI_MCA_OP_HAVE_AVX2) && (1 == OMPI_MCA_OP_HAVE_AVX2) */
 
 #if defined(GENERATE_AVX_CODE) && defined(OMPI_MCA_OP_HAVE_AVX) && (1 == OMPI_MCA_OP_HAVE_AVX)
+#if __SSE2__
 #define OP_AVX_SSE2_DOUBLE_FUNC(op)                                     \
     if( OMPI_OP_AVX_HAS_FLAGS(OMPI_OP_AVX_HAS_SSE2_FLAG) ) {            \
         types_per_step = (128 / 8)  / sizeof(double);                   \
@@ -411,6 +582,9 @@ static void OP_CONCAT(ompi_op_avx_2buff_##op##_float,PREPEND)(const void *_in, v
             out += types_per_step;                                      \
         }                                                               \
     }
+#else
+#error Target architecture lacks SSE2 support needed for _mm_loadu_pd and _mm_storeu_pd
+#endif  /* __SSE2__ */
 #else
 #define OP_AVX_SSE2_DOUBLE_FUNC(op) {}
 #endif  /* defined(OMPI_MCA_OP_HAVE_AVX) && (1 == OMPI_MCA_OP_HAVE_AVX) */
@@ -580,12 +754,13 @@ static void OP_CONCAT(ompi_op_avx_2buff_##op##_double,PREPEND)(const void *_in, 
  *  routines, needed for some optimizations.
  */
 #if defined(GENERATE_AVX512_CODE) && defined(OMPI_MCA_OP_HAVE_AVX512) && (1 == OMPI_MCA_OP_HAVE_AVX512)
+#if __AVX512F__
 #define OP_AVX_AVX512_FUNC_3(name, type_sign, type_size, type, op)      \
     if( OMPI_OP_AVX_HAS_FLAGS(OMPI_OP_AVX_HAS_AVX512F_FLAG|OMPI_OP_AVX_HAS_AVX512BW_FLAG) ) {   \
         int types_per_step = (512 / 8) / sizeof(type);                  \
         for (; left_over >= types_per_step; left_over -= types_per_step) { \
-            __m512i vecA =  _mm512_loadu_si512(in1);                    \
-            __m512i vecB =  _mm512_loadu_si512(in2);                    \
+            __m512i vecA = _mm512_loadu_si512(in1);                     \
+            __m512i vecB = _mm512_loadu_si512(in2);                     \
             in1 += types_per_step;                                      \
             in2 += types_per_step;                                      \
             __m512i res = _mm512_##op##_ep##type_sign##type_size(vecA, vecB); \
@@ -595,10 +770,14 @@ static void OP_CONCAT(ompi_op_avx_2buff_##op##_double,PREPEND)(const void *_in, 
         if( 0 == left_over ) return;                                    \
     }
 #else
+#error Target architecture lacks AVX512F support needed for _mm512_loadu_si512 and _mm512_storeu_si512
+#endif  /* __AVX512F__ */
+#else
 #define OP_AVX_AVX512_FUNC_3(name, type_sign, type_size, type, op) {}
 #endif  /* defined(OMPI_MCA_OP_HAVE_AVX512) && (1 == OMPI_MCA_OP_HAVE_AVX512) */
 
 #if defined(GENERATE_AVX2_CODE) && defined(OMPI_MCA_OP_HAVE_AVX2) && (1 == OMPI_MCA_OP_HAVE_AVX2)
+#if __AVX__
 #define OP_AVX_AVX2_FUNC_3(name, type_sign, type_size, type, op)        \
     if( OMPI_OP_AVX_HAS_FLAGS(OMPI_OP_AVX_HAS_AVX2_FLAG | OMPI_OP_AVX_HAS_AVX_FLAG) ) { \
         int types_per_step = (256 / 8) / sizeof(type);                  \
@@ -607,17 +786,21 @@ static void OP_CONCAT(ompi_op_avx_2buff_##op##_double,PREPEND)(const void *_in, 
             __m256i vecB = _mm256_loadu_si256((__m256i*)in2);           \
             in1 += types_per_step;                                      \
             in2 += types_per_step;                                      \
-            __m256i res =  _mm256_##op##_ep##type_sign##type_size(vecA, vecB); \
+            __m256i res = _mm256_##op##_ep##type_sign##type_size(vecA, vecB); \
             _mm256_storeu_si256((__m256i*)out, res);                    \
             out += types_per_step;                                      \
         }                                                               \
         if( 0 == left_over ) return;                                    \
     }
 #else
+#error Target architecture lacks AVX support needed for _mm256_loadu_si256 and _mm256_storeu_si256
+#endif  /* __AVX__ */
+#else
 #define OP_AVX_AVX2_FUNC_3(name, type_sign, type_size, type, op) {}
 #endif  /* defined(OMPI_MCA_OP_HAVE_AVX2) && (1 == OMPI_MCA_OP_HAVE_AVX2) */
 
 #if defined(GENERATE_SSE3_CODE) && defined(OMPI_MCA_OP_HAVE_SSE41) && (1 == OMPI_MCA_OP_HAVE_SSE41) && defined(OMPI_MCA_OP_HAVE_AVX) && (1 == OMPI_MCA_OP_HAVE_AVX)
+#if __SSE3__ && __SSE2__
 #define OP_AVX_SSE4_1_FUNC_3(name, type_sign, type_size, type, op)      \
     if( OMPI_OP_AVX_HAS_FLAGS(OMPI_OP_AVX_HAS_SSE3_FLAG | OMPI_OP_AVX_HAS_SSE4_1_FLAG) ) {       \
         int types_per_step = (128 / 8) / sizeof(type);                  \
@@ -626,11 +809,14 @@ static void OP_CONCAT(ompi_op_avx_2buff_##op##_double,PREPEND)(const void *_in, 
             __m128i vecB = _mm_lddqu_si128((__m128i*)in2);              \
             in1 += types_per_step;                                      \
             in2 += types_per_step;                                      \
-            __m128i res =  _mm_##op##_ep##type_sign##type_size(vecA, vecB); \
+            __m128i res = _mm_##op##_ep##type_sign##type_size(vecA, vecB); \
             _mm_storeu_si128((__m128i*)out, res);                       \
             out += types_per_step;                                      \
         }                                                               \
     }
+#else
+#error Target architecture lacks SSE2 and SSE3 support needed for _mm_lddqu_si128 and _mm_storeu_si128
+#endif  /* __SSE3__ && __SSE2__ */
 #else
 #define OP_AVX_SSE4_1_FUNC_3(name, type_sign, type_size, type, op) {}
 #endif  /* defined(OMPI_MCA_OP_HAVE_AVX) && (1 == OMPI_MCA_OP_HAVE_AVX) */
@@ -667,12 +853,13 @@ static void OP_CONCAT(ompi_op_avx_3buff_##name##_##type,PREPEND)(const void * re
 }
 
 #if defined(GENERATE_AVX512_CODE) && defined(OMPI_MCA_OP_HAVE_AVX512) && (1 == OMPI_MCA_OP_HAVE_AVX512)
+#if __AVX512BW__ && __AVX__
 #define OP_AVX_AVX512_MUL_3(name, type_sign, type_size, type, op)       \
     if( OMPI_OP_AVX_HAS_FLAGS(OMPI_OP_AVX_HAS_AVX512F_FLAG | OMPI_OP_AVX_HAS_AVX512BW_FLAG) ) { \
         int types_per_step = (256 / 8) / sizeof(type);                  \
         for (; left_over >= types_per_step; left_over -= types_per_step) { \
-            __m256i vecA_tmp =  _mm256_loadu_si256((__m256i*)in1);      \
-            __m256i vecB_tmp =  _mm256_loadu_si256((__m256i*)in2);      \
+            __m256i vecA_tmp = _mm256_loadu_si256((__m256i*)in1);       \
+            __m256i vecB_tmp = _mm256_loadu_si256((__m256i*)in2);       \
             in1 += types_per_step;                                      \
             in2 += types_per_step;                                      \
             __m512i vecA = _mm512_cvtepi8_epi16(vecA_tmp);              \
@@ -684,6 +871,9 @@ static void OP_CONCAT(ompi_op_avx_3buff_##name##_##type,PREPEND)(const void * re
         }                                                               \
         if( 0 == left_over ) return;                                    \
   }
+#else
+#error Target architecture lacks AVX512BW and AVX support needed for _mm256_loadu_si256, _mm256_storeu_si256 and _mm512_cvtepi8_epi16
+#endif  /* __AVX512BW__ && __AVX__ */
 #else
 #define OP_AVX_AVX512_MUL_3(name, type_sign, type_size, type, op) {}
 #endif  /* defined(OMPI_MCA_OP_HAVE_AVX512) && (1 == OMPI_MCA_OP_HAVE_AVX512) */
@@ -723,12 +913,13 @@ static void OP_CONCAT(ompi_op_avx_3buff_##name##_##type,PREPEND)(const void * re
 }
 
 #if defined(GENERATE_AVX512_CODE) && defined(OMPI_MCA_OP_HAVE_AVX512) && (1 == OMPI_MCA_OP_HAVE_AVX512)
+#if __AVX512F__
 #define OP_AVX_AVX512_BIT_FUNC_3(name, type_size, type, op)             \
     if( OMPI_OP_AVX_HAS_FLAGS(OMPI_OP_AVX_HAS_AVX512F_FLAG) ) {         \
         types_per_step = (512 / 8) / sizeof(type);                      \
         for (; left_over >= types_per_step; left_over -= types_per_step) {  \
-            __m512i vecA =  _mm512_loadu_si512(in1);                    \
-            __m512i vecB =  _mm512_loadu_si512(in2);                    \
+            __m512i vecA = _mm512_loadu_si512(in1);                     \
+            __m512i vecB = _mm512_loadu_si512(in2);                     \
             in1 += types_per_step;                                      \
             in2 += types_per_step;                                      \
             __m512i res = _mm512_##op##_si512(vecA, vecB);              \
@@ -738,10 +929,14 @@ static void OP_CONCAT(ompi_op_avx_3buff_##name##_##type,PREPEND)(const void * re
         if( 0 == left_over ) return;                                    \
     }
 #else
+#error Target architecture lacks AVX512F support needed for _mm512_loadu_si512 and _mm512_storeu_si512
+#endif  /* __AVX512F__ */
+#else
 #define OP_AVX_AVX512_BIT_FUNC_3(name, type_size, type, op) {}
 #endif  /* defined(OMPI_MCA_OP_HAVE_AVX512) && (1 == OMPI_MCA_OP_HAVE_AVX512) */
 
 #if defined(GENERATE_AVX2_CODE) && defined(OMPI_MCA_OP_HAVE_AVX2) && (1 == OMPI_MCA_OP_HAVE_AVX2)
+#if __AVX__
 #define OP_AVX_AVX2_BIT_FUNC_3(name, type_size, type, op)               \
     if( OMPI_OP_AVX_HAS_FLAGS(OMPI_OP_AVX_HAS_AVX2_FLAG | OMPI_OP_AVX_HAS_AVX_FLAG) ) { \
         types_per_step = (256 / 8) / sizeof(type);                      \
@@ -750,17 +945,21 @@ static void OP_CONCAT(ompi_op_avx_3buff_##name##_##type,PREPEND)(const void * re
             __m256i vecB = _mm256_loadu_si256((__m256i*)in2);           \
             in1 += types_per_step;                                      \
             in2 += types_per_step;                                      \
-            __m256i res =  _mm256_##op##_si256(vecA, vecB);             \
+            __m256i res = _mm256_##op##_si256(vecA, vecB);              \
             _mm256_storeu_si256((__m256i*)out, res);                    \
             out += types_per_step;                                      \
         }                                                               \
         if( 0 == left_over ) return;                                    \
     }
 #else
+#error Target architecture lacks AVX support needed for _mm256_loadu_si256 and _mm256_storeu_si256
+#endif  /* __AVX__ */
+#else
 #define OP_AVX_AVX2_BIT_FUNC_3(name, type_size, type, op) {}
 #endif  /* defined(OMPI_MCA_OP_HAVE_AVX2) && (1 == OMPI_MCA_OP_HAVE_AVX2) */
 
 #if defined(GENERATE_SSE3_CODE) && defined(OMPI_MCA_OP_HAVE_AVX) && (1 == OMPI_MCA_OP_HAVE_AVX)
+#if __SSE3__ && __SSE2__
 #define OP_AVX_SSE3_BIT_FUNC_3(name, type_size, type, op)               \
     if( OMPI_OP_AVX_HAS_FLAGS(OMPI_OP_AVX_HAS_SSE3_FLAG) ) {            \
         types_per_step = (128 / 8) / sizeof(type);                      \
@@ -769,11 +968,14 @@ static void OP_CONCAT(ompi_op_avx_3buff_##name##_##type,PREPEND)(const void * re
             __m128i vecB = _mm_lddqu_si128((__m128i*)in2);              \
             in1 += types_per_step;                                      \
             in2 += types_per_step;                                      \
-            __m128i res =  _mm_##op##_si128(vecA, vecB);                \
+            __m128i res = _mm_##op##_si128(vecA, vecB);                 \
             _mm_storeu_si128((__m128i*)out, res);                       \
             out += types_per_step;                                      \
         }                                                               \
     }
+#else
+#error Target architecture lacks SSE2 and SSE3 support needed for _mm_lddqu_si128 and _mm_storeu_si128
+#endif  /* __SSE3__ && __SSE2__ */
 #else
 #define OP_AVX_SSE3_BIT_FUNC_3(name, type_size, type, op) {}
 #endif  /* defined(OMPI_MCA_OP_HAVE_AVX) && (1 == OMPI_MCA_OP_HAVE_AVX) */
@@ -809,12 +1011,13 @@ static void OP_CONCAT(ompi_op_avx_3buff_##op##_##type,PREPEND)(const void *_in1,
 }
 
 #if defined(GENERATE_AVX512_CODE) && defined(OMPI_MCA_OP_HAVE_AVX512) && (1 == OMPI_MCA_OP_HAVE_AVX512)
+#if __AVX512F__
 #define OP_AVX_AVX512_FLOAT_FUNC_3(op)                                  \
     if( OMPI_OP_AVX_HAS_FLAGS(OMPI_OP_AVX_HAS_AVX512F_FLAG) ) {         \
         types_per_step = (512 / 8) / sizeof(float);                     \
         for (; left_over >= types_per_step; left_over -= types_per_step) { \
-            __m512 vecA =  _mm512_loadu_ps(in1);                        \
-            __m512 vecB =  _mm512_loadu_ps(in2);                        \
+            __m512 vecA = _mm512_loadu_ps(in1);                         \
+            __m512 vecB = _mm512_loadu_ps(in2);                         \
             in1 += types_per_step;                                      \
             in2 += types_per_step;                                      \
             __m512 res = _mm512_##op##_ps(vecA, vecB);                  \
@@ -824,16 +1027,20 @@ static void OP_CONCAT(ompi_op_avx_3buff_##op##_##type,PREPEND)(const void *_in1,
         if( 0 == left_over ) return;                                    \
     }
 #else
+#error Target architecture lacks AVX512F support needed for _mm512_loadu_ps and _mm512_storeu_ps
+#endif  /* __AVX512F__ */
+#else
 #define OP_AVX_AVX512_FLOAT_FUNC_3(op) {}
 #endif  /* defined(OMPI_MCA_OP_HAVE_AVX512) && (1 == OMPI_MCA_OP_HAVE_AVX512) */
 
 #if defined(GENERATE_AVX2_CODE) && defined(OMPI_MCA_OP_HAVE_AVX2) && (1 == OMPI_MCA_OP_HAVE_AVX2)
+#if __AVX__
 #define OP_AVX_AVX_FLOAT_FUNC_3(op)                                     \
     if( OMPI_OP_AVX_HAS_FLAGS(OMPI_OP_AVX_HAS_AVX_FLAG) ) {             \
         types_per_step = (256 / 8) / sizeof(float);                     \
         for( ; left_over >= types_per_step; left_over -= types_per_step ) { \
-            __m256 vecA =  _mm256_loadu_ps(in1);                        \
-            __m256 vecB =  _mm256_loadu_ps(in2);                        \
+            __m256 vecA = _mm256_loadu_ps(in1);                         \
+            __m256 vecB = _mm256_loadu_ps(in2);                         \
             in1 += types_per_step;                                      \
             in2 += types_per_step;                                      \
             __m256 res = _mm256_##op##_ps(vecA, vecB);                  \
@@ -843,10 +1050,14 @@ static void OP_CONCAT(ompi_op_avx_3buff_##op##_##type,PREPEND)(const void *_in1,
         if( 0 == left_over ) return;                                    \
     }
 #else
+#error Target architecture lacks AVX support needed for _mm256_loadu_ps and _mm256_storeu_ps
+#endif  /* __AVX__ */
+#else
 #define OP_AVX_AVX_FLOAT_FUNC_3(op) {}
 #endif  /* defined(OMPI_MCA_OP_HAVE_AVX2) && (1 == OMPI_MCA_OP_HAVE_AVX2) */
 
 #if defined(GENERATE_AVX_CODE) && defined(OMPI_MCA_OP_HAVE_AVX) && (1 == OMPI_MCA_OP_HAVE_AVX)
+#if __SSE__
 #define OP_AVX_SSE_FLOAT_FUNC_3(op)                  \
     if( OMPI_OP_AVX_HAS_FLAGS(OMPI_OP_AVX_HAS_SSE_FLAG) ) {             \
         types_per_step = (128 / 8) / sizeof(float);                     \
@@ -860,6 +1071,9 @@ static void OP_CONCAT(ompi_op_avx_3buff_##op##_##type,PREPEND)(const void *_in1,
             out += types_per_step;                                      \
         }                                                               \
     }
+#else
+#error Target architecture lacks SSE support needed for _mm_loadu_ps and _mm_storeu_ps
+#endif  /* __SSE__ */
 #else
 #define OP_AVX_SSE_FLOAT_FUNC_3(op) {}
 #endif  /* defined(OMPI_MCA_OP_HAVE_AVX) && (1 == OMPI_MCA_OP_HAVE_AVX) */
@@ -895,12 +1109,13 @@ static void OP_CONCAT(ompi_op_avx_3buff_##op##_float,PREPEND)(const void *_in1, 
 }
 
 #if defined(GENERATE_AVX512_CODE) && defined(OMPI_MCA_OP_HAVE_AVX512) && (1 == OMPI_MCA_OP_HAVE_AVX512)
+#if __AVX512F__
 #define OP_AVX_AVX512_DOUBLE_FUNC_3(op)                                 \
     if( OMPI_OP_AVX_HAS_FLAGS(OMPI_OP_AVX_HAS_AVX512F_FLAG) ) {         \
         types_per_step = (512 / 8) / sizeof(double);                    \
         for (; left_over >= types_per_step; left_over -= types_per_step) { \
-            __m512d vecA =  _mm512_loadu_pd((in1));                     \
-            __m512d vecB =  _mm512_loadu_pd((in2));                     \
+            __m512d vecA = _mm512_loadu_pd((in1));                      \
+            __m512d vecB = _mm512_loadu_pd((in2));                      \
             in1 += types_per_step;                                      \
             in2 += types_per_step;                                      \
             __m512d res = _mm512_##op##_pd(vecA, vecB);                 \
@@ -910,16 +1125,20 @@ static void OP_CONCAT(ompi_op_avx_3buff_##op##_float,PREPEND)(const void *_in1, 
         if( 0 == left_over ) return;                                    \
     }
 #else
+#error Target architecture lacks AVXF512 support needed for _mm512_loadu_pd and _mm512_storeu_pd
+#endif  /* __AVXF512__ */
+#else
 #define OP_AVX_AVX512_DOUBLE_FUNC_3(op) {}
 #endif  /* defined(OMPI_MCA_OP_HAVE_AVX512) && (1 == OMPI_MCA_OP_HAVE_AVX512) */
 
 #if defined(GENERATE_AVX2_CODE) && defined(OMPI_MCA_OP_HAVE_AVX2) && (1 == OMPI_MCA_OP_HAVE_AVX2)
+#if __AVX__
 #define OP_AVX_AVX_DOUBLE_FUNC_3(op)                                    \
     if( OMPI_OP_AVX_HAS_FLAGS(OMPI_OP_AVX_HAS_AVX_FLAG) ) {             \
         types_per_step = (256 / 8) / sizeof(double);                    \
         for( ; left_over >= types_per_step; left_over -= types_per_step ) { \
-            __m256d vecA =  _mm256_loadu_pd(in1);                       \
-            __m256d vecB =  _mm256_loadu_pd(in2);                       \
+            __m256d vecA = _mm256_loadu_pd(in1);                        \
+            __m256d vecB = _mm256_loadu_pd(in2);                        \
             in1 += types_per_step;                                      \
             in2 += types_per_step;                                      \
             __m256d res = _mm256_##op##_pd(vecA, vecB);                 \
@@ -929,10 +1148,14 @@ static void OP_CONCAT(ompi_op_avx_3buff_##op##_float,PREPEND)(const void *_in1, 
         if( 0 == left_over ) return;                                    \
     }
 #else
+#error Target architecture lacks AVX support needed for _mm256_loadu_pd and _mm256_storeu_pd
+#endif  /* __AVX__ */
+#else
 #define OP_AVX_AVX_DOUBLE_FUNC_3(op) {}
 #endif  /* defined(OMPI_MCA_OP_HAVE_AVX2) && (1 == OMPI_MCA_OP_HAVE_AVX2) */
 
 #if defined(GENERATE_AVX_CODE) && defined(OMPI_MCA_OP_HAVE_AVX) && (1 == OMPI_MCA_OP_HAVE_AVX)
+#if __SSE2__
 #define OP_AVX_SSE2_DOUBLE_FUNC_3(op)                                   \
     if( OMPI_OP_AVX_HAS_FLAGS(OMPI_OP_AVX_HAS_SSE2_FLAG) ) {            \
         types_per_step = (128 / 8) / sizeof(double);                    \
@@ -946,6 +1169,9 @@ static void OP_CONCAT(ompi_op_avx_3buff_##op##_float,PREPEND)(const void *_in1, 
             out += types_per_step;                                      \
         }                                                               \
     }
+#else
+#error Target architecture lacks SSE2 support needed for _mm_loadu_pd and _mm_storeu_pd
+#endif  /* __SSE2__ */
 #else
 #define OP_AVX_SSE2_DOUBLE_FUNC_3(op) {}
 #endif  /* defined(OMPI_MCA_OP_HAVE_AVX) && (1 == OMPI_MCA_OP_HAVE_AVX) */

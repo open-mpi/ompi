@@ -44,7 +44,7 @@ AC_DEFUN([MCA_ompi_op_avx_CONFIG],[
            #
            # Check for AVX512 support
            #
-           AC_CACHE_CHECK([if we are checking for AVX512 support], op_avx_check_avx512, AS_VAR_SET(op_avx_check_avx512, yes))
+           AC_CACHE_CHECK([for AVX512 support], op_avx_check_avx512, AS_VAR_SET(op_avx_check_avx512, yes))
            AS_IF([test "$op_avx_check_avx512" = "yes"],
                  [AC_MSG_CHECKING([for AVX512 support (no additional flags)])
                   AC_LINK_IFELSE(
@@ -115,14 +115,14 @@ AC_DEFUN([MCA_ompi_op_avx_CONFIG],[
            #
            # Check support for AVX2
            #
-           AC_CACHE_CHECK([if we are checking for AVX2 support], op_avx_check_avx2, AS_VAR_SET(op_avx_check_avx2, yes))
+           AC_CACHE_CHECK([for AVX2 support], op_avx_check_avx2, AS_VAR_SET(op_avx_check_avx2, yes))
            AS_IF([test "$op_avx_check_avx2" = "yes"],
                  [AC_MSG_CHECKING([for AVX2 support (no additional flags)])
                   AC_LINK_IFELSE(
                       [AC_LANG_PROGRAM([[#include <immintrin.h>]],
                               [[
-    __m256 vA, vB;
-    _mm256_add_ps(vA, vB)
+    __m256i vA, vB, vC;
+    vC = _mm256_and_si256(vA, vB)
                               ]])],
                       [op_avx2_support=1
                        AC_MSG_RESULT([yes])],
@@ -134,8 +134,8 @@ AC_DEFUN([MCA_ompi_op_avx_CONFIG],[
                        AC_LINK_IFELSE(
                            [AC_LANG_PROGRAM([[#include <immintrin.h>]],
                                    [[
-    __m256 vA, vB;
-    _mm256_add_ps(vA, vB)
+    __m256i vA, vB, vC;
+    vC = _mm256_and_si256(vA, vB)
                                    ]])],
                            [op_avx2_support=1
                             MCA_BUILD_OP_AVX2_FLAGS="-mavx2"
@@ -164,21 +164,21 @@ AC_DEFUN([MCA_ompi_op_avx_CONFIG],[
                          CFLAGS="$op_avx_cflags_save"
                         ])])
            #
-           # What about early AVX support. The rest of the logic is slightly different as
+           # What about early AVX support? The rest of the logic is slightly different as
            # we need to include some of the SSE4.1 and SSE3 instructions. So, we first check
            # if we can compile AVX code without a flag, then we validate that we have support
            # for the SSE4.1 and SSE3 instructions we need. If not, we check for the usage of
            # the AVX flag, and then recheck if we have support for the SSE4.1 and SSE3
            # instructions.
            #
-           AC_CACHE_CHECK([if we are checking for AVX support], op_avx_check_avx, AS_VAR_SET(op_avx_check_avx, yes))
+           AC_CACHE_CHECK([for AVX support], op_avx_check_avx, AS_VAR_SET(op_avx_check_avx, yes))
            AS_IF([test "$op_avx_check_avx" = "yes"],
                  [AC_MSG_CHECKING([for AVX support (no additional flags)])
                   AC_LINK_IFELSE(
                       [AC_LANG_PROGRAM([[#include <immintrin.h>]],
                               [[
-    __m128 vA, vB;
-    _mm_add_ps(vA, vB)
+    __m256 vA, vB, vC;
+    vC = _mm256_add_ps(vA, vB)
                               ]])],
                       [op_avx_support=1
                        AC_MSG_RESULT([yes])],
@@ -186,7 +186,7 @@ AC_DEFUN([MCA_ompi_op_avx_CONFIG],[
            #
            # Check for SSE4.1 support
            #
-           AC_CACHE_CHECK([if we are checking for SSE4.1 support], op_avx_check_sse41, AS_VAR_SET(op_avx_check_sse41, yes))
+           AC_CACHE_CHECK([for SSE4.1 support], op_avx_check_sse41, AS_VAR_SET(op_avx_check_sse41, yes))
            AS_IF([test $op_avx_support -eq 1 && test "$op_avx_check_sse41" = "yes"],
                  [AC_MSG_CHECKING([for SSE4.1 support])
                   AC_LINK_IFELSE(
@@ -202,7 +202,7 @@ AC_DEFUN([MCA_ompi_op_avx_CONFIG],[
            #
            # Check for SSE3 support
            #
-           AC_CACHE_CHECK([if we are checking for SSE3 support], op_avx_check_sse3, AS_VAR_SET(op_avx_check_sse3, yes))
+           AC_CACHE_CHECK([for SSE3 support], op_avx_check_sse3, AS_VAR_SET(op_avx_check_sse3, yes))
            AS_IF([test $op_avx_support -eq 1 && test "$op_avx_check_sse3" = "yes"],
                  [AC_MSG_CHECKING([for SSE3 support])
                   AC_LINK_IFELSE(
@@ -224,8 +224,8 @@ AC_DEFUN([MCA_ompi_op_avx_CONFIG],[
                          AC_LINK_IFELSE(
                              [AC_LANG_PROGRAM([[#include <immintrin.h>]],
                                    [[
-    __m128 vA, vB;
-    _mm_add_ps(vA, vB)
+    __m256 vA, vB, vC;
+    vC = _mm256_add_ps(vA, vB)
                             ]])],
                              [op_avx_support=1
                               MCA_BUILD_OP_AVX_FLAGS="-mavx"
