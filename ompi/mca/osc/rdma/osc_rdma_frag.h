@@ -3,6 +3,7 @@
  * Copyright (c) 2012      Sandia National Laboratories.  All rights reserved.
  * Copyright (c) 2014-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2020      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -50,6 +51,7 @@ static inline int ompi_osc_rdma_frag_alloc (ompi_osc_rdma_module_t *module, size
 
     if (NULL == curr) {
         opal_free_list_item_t *item = NULL;
+        void *_tmp_ptr = NULL;
 
         item = opal_free_list_get (&mca_osc_rdma_component.frags);
         if (OPAL_UNLIKELY(NULL == item)) {
@@ -72,7 +74,7 @@ static inline int ompi_osc_rdma_frag_alloc (ompi_osc_rdma_module_t *module, size
             }
         }
 
-        if (!opal_atomic_compare_exchange_strong_ptr ((opal_atomic_intptr_t *) &module->rdma_frag, &(intptr_t){0}, (intptr_t) curr)) {
+        if (!opal_atomic_compare_exchange_strong_ptr ((opal_atomic_intptr_t *) &module->rdma_frag, (intptr_t *) &_tmp_ptr, (intptr_t) curr)) {
             ompi_osc_rdma_deregister (module, curr->handle);
             curr->handle = NULL;
 
