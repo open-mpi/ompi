@@ -14,10 +14,11 @@ git add <new romio>
 # git add ompi/mca/io/romio321
 # git commit
 
-3. patch romio
+3. patch romio (romio modernization + ompi patches)
 cd <new romio>
 # cd ompi/mca/io/romio321
-# git show 7a7968f02e2bad912426d1535119fb30d881b460 | patch -p5
+# git show 1c7eb20d8b25ba64c6ddc537dd0fcd9332b8267a | patch -p5
+# git show 7ec603af580504e88564a1f061ebe39aa9e637da | patch -p5
 # cd ../../../..
 git add <new romio>
 # git add ompi/mca/io/romio321
