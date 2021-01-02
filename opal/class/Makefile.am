@@ -27,6 +27,7 @@
 # Source code files
 headers += \
         class/opal_bitmap.h \
+        class/opal_cstring.h \
         class/opal_free_list.h \
         class/opal_hash_table.h \
         class/opal_hotel.h \
@@ -43,6 +44,7 @@ headers += \
 
 lib@OPAL_LIB_PREFIX@open_pal_la_SOURCES += \
         class/opal_bitmap.c \
+        class/opal_cstring.c \
         class/opal_free_list.c \
         class/opal_hash_table.c \
         class/opal_hotel.c \
