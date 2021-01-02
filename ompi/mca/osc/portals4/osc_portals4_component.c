@@ -109,28 +109,11 @@ ompi_osc_portals4_module_t ompi_osc_portals4_module_template = {
 static bool
 check_config_value_bool(char *key, opal_info_t *info)
 {
-    char *value_string;
-    int value_len, ret, flag, param;
+    int ret, flag, param;
     const bool *flag_value;
     bool result;
-
-    ret = opal_info_get_valuelen(info, key, &value_len, &flag);
-    if (OMPI_SUCCESS != ret) goto info_not_found;
-    if (flag == 0) goto info_not_found;
-    value_len++;
-
-    value_string = (char*)malloc(sizeof(char) * value_len + 1); /* Should malloc 1 char for NUL-termination */
-    if (NULL == value_string) goto info_not_found;
-
-    ret = opal_info_get(info, key, value_len, value_string, &flag);
-    if (OMPI_SUCCESS != ret) {
-        free(value_string);
-        goto info_not_found;
-    }
-    assert(flag != 0);
-    ret = opal_info_value_to_bool(value_string, &result);
-    free(value_string);
-    if (OMPI_SUCCESS != ret) goto info_not_found;
+    ret = opal_info_get_bool(info, key, &result, &flag);
+    if (OMPI_SUCCESS != ret || !flag) goto info_not_found;
     return result;
 
  info_not_found:
@@ -147,37 +130,31 @@ check_config_value_bool(char *key, opal_info_t *info)
 static bool
 check_config_value_equal(char *key, opal_info_t *info, char *value)
 {
-    char *value_string;
-    int value_len, ret, flag, param;
-    const bool *flag_value;
+    int ret, flag, param;
+    const char *mca_value;
     bool result = false;
+    opal_cstring_t *value_string;
 
-    ret = opal_info_get_valuelen(info, key, &value_len, &flag);
-    if (OMPI_SUCCESS != ret) goto info_not_found;
-    if (flag == 0) goto info_not_found;
-    value_len++;
-
-    value_string = (char*)malloc(sizeof(char) * value_len + 1); /* Should malloc 1 char for NUL-termination */
-    if (NULL == value_string) goto info_not_found;
-
-    ret = opal_info_get(info, key, value_len, value_string, &flag);
-    if (OMPI_SUCCESS != ret) {
-        free(value_string);
+    ret = opal_info_get(info, key, &value_string, &flag);
+    if (OMPI_SUCCESS != ret || !flag) {
         goto info_not_found;
     }
-    assert(flag != 0);
-    if (0 == strcmp(value_string, value)) result = true;
-    free(value_string);
+    if (0 == strcmp(value_string->string, value)) {
+        result = true;
+    }
+    OBJ_RELEASE(value_string);
     return result;
 
  info_not_found:
     param = mca_base_var_find("ompi", "osc", "portals4", key);
     if (0 > param) return false;
 
-    ret = mca_base_var_get_value(param, &flag_value, NULL, NULL);
+    ret = mca_base_var_get_value(param, &mca_value, NULL, NULL);
     if (OMPI_SUCCESS != ret) return false;
 
-    if (0 == strcmp(value_string, value)) result = true;
+    if (0 == strcmp(mca_value, value)) {
+        result = true;
+    }
 
     return result;
 }

@@ -225,15 +225,17 @@ mca_coll_han_comm_query(struct ompi_communicator_t * comm, int *priority)
         char info_val[OPAL_MAX_INFO_VAL+1];
 
         /* Get the info value disaqualifying coll components */
+        opal_cstring_t *info_str;
         opal_info_get(comm->super.s_info, "ompi_comm_coll_han_topo_level",
-                      sizeof(info_val), info_val, &flag);
+                      &info_str, &flag);
 
         if (flag) {
-            if (0 == strcmp(info_val, "INTER_NODE")) {
+            if (0 == strcmp(info_str->string, "INTER_NODE")) {
                 han_module->topologic_level = INTER_NODE;
             } else {
                 han_module->topologic_level = INTRA_NODE;
             }
+            OBJ_RELEASE(info_str);
         }
     }
 
