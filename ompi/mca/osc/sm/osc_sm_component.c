@@ -43,8 +43,8 @@ static int component_register (void);
 static int component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit,
                             struct ompi_communicator_t *comm, struct opal_info_t *info,
                             int flavor, int *model);
-static char* component_set_blocking_fence_info(opal_infosubscriber_t *obj, char *key, char *val);
-static char* component_set_alloc_shared_noncontig_info(opal_infosubscriber_t *obj, char *key, char *val);
+static const char* component_set_blocking_fence_info(opal_infosubscriber_t *obj, const char *key, const char *val);
+static const char* component_set_alloc_shared_noncontig_info(opal_infosubscriber_t *obj, const char *key, const char *val);
 
 
 ompi_osc_sm_component_t mca_osc_sm_component = {
@@ -561,8 +561,8 @@ ompi_osc_sm_set_info(struct ompi_win_t *win, struct opal_info_t *info)
 }
 
 
-static char*
-component_set_blocking_fence_info(opal_infosubscriber_t *obj, char *key, char *val)
+static const char*
+component_set_blocking_fence_info(opal_infosubscriber_t *obj, const char *key, const char *val)
 {
     ompi_osc_sm_module_t *module = (ompi_osc_sm_module_t*) ((struct ompi_win_t*) obj)->w_osc_module;
 /*
@@ -572,8 +572,8 @@ component_set_blocking_fence_info(opal_infosubscriber_t *obj, char *key, char *v
 }
 
 
-static char*
-component_set_alloc_shared_noncontig_info(opal_infosubscriber_t *obj, char *key, char *val)
+static const char*
+component_set_alloc_shared_noncontig_info(opal_infosubscriber_t *obj, const char *key, const char *val)
 {
 
     ompi_osc_sm_module_t *module = (ompi_osc_sm_module_t*) ((struct ompi_win_t*) obj)->w_osc_module;

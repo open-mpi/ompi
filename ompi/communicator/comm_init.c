@@ -492,7 +492,7 @@ static void ompi_comm_destruct(ompi_communicator_t* comm)
 }
 
 #define OMPI_COMM_SET_INFO_FN(name, flag)       \
-    static char *ompi_comm_set_ ## name (opal_infosubscriber_t *obj, char *key, char *value) \
+    static const char *ompi_comm_set_ ## name (opal_infosubscriber_t *obj, const char *key, const char *value) \
     {                                                                   \
         ompi_communicator_t *comm = (ompi_communicator_t *) obj;        \
                                                                         \

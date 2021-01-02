@@ -264,7 +264,7 @@ static void ompi_osc_ucx_unregister_progress()
     _osc_ucx_init_unlock();
 }
 
-static char* ompi_osc_ucx_set_no_lock_info(opal_infosubscriber_t *obj, char *key, char *value)
+static const char* ompi_osc_ucx_set_no_lock_info(opal_infosubscriber_t *obj, const char *key, const char *value)
 {
 
     struct ompi_win_t *win = (struct ompi_win_t*) obj;
