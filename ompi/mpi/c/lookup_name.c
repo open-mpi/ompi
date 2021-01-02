@@ -48,7 +48,6 @@ static const char FUNC_NAME[] = "MPI_Lookup_name";
 
 int MPI_Lookup_name(const char *service_name, MPI_Info info, char *port_name)
 {
-    char range[OPAL_MAX_INFO_VAL];
     int flag=0, ret;
     pmix_status_t rc;
     pmix_pdata_t pdat;
@@ -75,17 +74,19 @@ int MPI_Lookup_name(const char *service_name, MPI_Info info, char *port_name)
     /* OMPI supports info keys to pass the range to
      * be searched for the given key */
     if (MPI_INFO_NULL != info) {
-        ompi_info_get (info, "range", sizeof(range) - 1, range, &flag);
+        opal_cstring_t *info_str;
+        ompi_info_get (info, "range", &info_str, &flag);
         if (flag) {
-            if (0 == strcmp(range, "nspace")) {
+            if (0 == strcmp(info_str->string, "nspace")) {
                 rng = PMIX_RANGE_NAMESPACE;  // share only with procs in same nspace
-            } else if (0 == strcmp(range, "session")) {
+            } else if (0 == strcmp(info_str->string, "session")) {
                 rng = PMIX_RANGE_SESSION; // share only with procs in same session
             } else {
                 /* unrecognized scope */
                 return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG,
                                             FUNC_NAME);
             }
+            OBJ_RELEASE(info_str);
         }
     }
     PMIX_INFO_LOAD(&pinfo, PMIX_RANGE, &rng, PMIX_DATA_RANGE);

@@ -81,18 +81,19 @@ void ompi_info_get_nthkey_f(MPI_Fint *info, MPI_Fint *n, char *key,
 {
     int c_ierr, ret;
     MPI_Info c_info;
-    char c_key[MPI_MAX_INFO_KEY + 1];
+    opal_cstring_t *key_str;
 
     c_info = PMPI_Info_f2c(*info);
 
-    c_ierr = PMPI_Info_get_nthkey(c_info,
-                                 OMPI_FINT_2_INT(*n),
-                                 c_key);
+    c_ierr = ompi_info_get_nthkey(c_info, OMPI_FINT_2_INT(*n), &key_str);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
-    if (OMPI_SUCCESS != (ret = ompi_fortran_string_c2f(c_key, key, key_len))) {
-        c_ierr = OMPI_ERRHANDLER_NOHANDLE_INVOKE(ret, FUNC_NAME);
-        if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
-        return;
+    if (NULL != key_str) {
+        if (OMPI_SUCCESS != (ret = ompi_fortran_string_c2f(key_str->string, key, key_len))) {
+            c_ierr = OMPI_ERRHANDLER_NOHANDLE_INVOKE(ret, FUNC_NAME);
+            if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
+        }
+        OBJ_RELEASE(key_str);
     }
+
 }

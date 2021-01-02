@@ -29,6 +29,7 @@
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/info/info.h"
+#include "opal/util/string_copy.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -65,6 +66,7 @@ int MPI_Info_get(MPI_Info info, const char *key, int valuelen,
 {
     int err;
     int key_length;
+    opal_cstring_t *info_str;
 
     /*
      * Simple function. All we need to do is search for the value
@@ -99,6 +101,11 @@ int MPI_Info_get(MPI_Info info, const char *key, int valuelen,
         }
     }
 
-    err = ompi_info_get(info, key, valuelen, value, flag);
+    err = ompi_info_get(info, key, &info_str, flag);
+    if (*flag) {
+        opal_string_copy(value, info_str->string, valuelen+1);
+        OBJ_RELEASE(info_str);
+    }
+
     OMPI_ERRHANDLER_NOHANDLE_RETURN(err, err, FUNC_NAME);
 }

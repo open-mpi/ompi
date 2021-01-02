@@ -69,21 +69,23 @@ mca_fs_lustre_file_open (struct ompi_communicator_t *comm,
     int flag;
     int fs_lustre_stripe_size = -1;
     int fs_lustre_stripe_width = -1;
-    char char_stripe[MPI_MAX_INFO_KEY];
+    opal_cstring_t *stripe_str;
 
     struct lov_user_md *lump=NULL;
 
     perm = mca_fs_base_get_file_perm(fh);
     amode = mca_fs_base_get_file_amode(fh->f_rank, access_mode);
 
-    opal_info_get (info, "stripe_size", MPI_MAX_INFO_VAL, char_stripe, &flag);
+    opal_info_get (info, "stripe_size", &stripe_str, &flag);
     if ( flag ) {
-        sscanf ( char_stripe, "%d", &fs_lustre_stripe_size );
+        sscanf ( stripe_str->string, "%d", &fs_lustre_stripe_size );
+        OBJ_RELEASE(stripe_str);
     }
 
-    opal_info_get (info, "stripe_width", MPI_MAX_INFO_VAL, char_stripe, &flag);
+    opal_info_get (info, "stripe_width", &stripe_str, &flag);
     if ( flag ) {
-        sscanf ( char_stripe, "%d", &fs_lustre_stripe_width );
+        sscanf ( stripe_str->string, "%d", &fs_lustre_stripe_width );
+        OBJ_RELEASE(stripe_str);
     }
 
     if (fs_lustre_stripe_size < 0) {

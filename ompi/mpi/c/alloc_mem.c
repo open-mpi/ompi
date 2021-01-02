@@ -46,8 +46,8 @@ static const char FUNC_NAME[] = "MPI_Alloc_mem";
 
 int MPI_Alloc_mem(MPI_Aint size, MPI_Info info, void *baseptr)
 {
-    char info_value[MPI_MAX_INFO_VAL + 1];
-    char *mpool_hints = NULL;
+    opal_cstring_t *info_str = NULL;
+    const char *mpool_hints = NULL;
 
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
@@ -74,14 +74,19 @@ int MPI_Alloc_mem(MPI_Aint size, MPI_Info info, void *baseptr)
 
     if (MPI_INFO_NULL != info) {
         int flag;
-        (void) ompi_info_get (info, "mpool_hints", MPI_MAX_INFO_VAL, info_value, &flag);
+        (void) ompi_info_get (info, "mpool_hints", &info_str, &flag);
         if (flag) {
-            mpool_hints = info_value;
+            mpool_hints = info_str->string;
         }
     }
 
     *((void **) baseptr) = mca_mpool_base_alloc ((size_t) size, (struct opal_info_t*)info,
                                                  mpool_hints);
+
+    if (NULL != info_str) {
+        OBJ_RELEASE(info_str);
+    }
+
     if (NULL == *((void **) baseptr)) {
         return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_NO_MEM,
                                       FUNC_NAME);

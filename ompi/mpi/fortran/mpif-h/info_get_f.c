@@ -82,8 +82,9 @@ void ompi_info_get_f(MPI_Fint *info, char *key, MPI_Fint *valuelen,
 {
     int c_ierr, ret;
     MPI_Info c_info;
-    char *c_key = NULL, c_value[MPI_MAX_INFO_VAL + 1];
+    char *c_key = NULL;
     OMPI_LOGICAL_NAME_DECL(flag);
+    opal_cstring_t *info_str;
 
     if (OMPI_SUCCESS != (ret = ompi_fortran_string_f2c(key, key_len, &c_key))) {
         c_ierr = OMPI_ERRHANDLER_NOHANDLE_INVOKE(ret, FUNC_NAME);
@@ -92,10 +93,8 @@ void ompi_info_get_f(MPI_Fint *info, char *key, MPI_Fint *valuelen,
     }
     c_info = PMPI_Info_f2c(*info);
 
-    c_ierr = PMPI_Info_get(c_info, c_key,
-                          OMPI_FINT_2_INT(*valuelen),
-                          c_value,
-                          OMPI_LOGICAL_SINGLE_NAME_CONVERT(flag));
+    c_ierr = ompi_info_get(c_info, c_key, &info_str,
+                           OMPI_LOGICAL_SINGLE_NAME_CONVERT(flag));
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {
@@ -107,12 +106,13 @@ void ompi_info_get_f(MPI_Fint *info, char *key, MPI_Fint *valuelen,
            Fortran compilers have TRUE == 1).  Note: use the full
            length of the Fortran string, not *valuelen.  See comment
            in ompi/mpi/fortran/base/strings.c. */
-        if (*flag && OMPI_SUCCESS !=
-            (ret = ompi_fortran_string_c2f(c_value, value, value_len))) {
-            c_ierr = OMPI_ERRHANDLER_NOHANDLE_INVOKE(ret, FUNC_NAME);
-            if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
-            free(c_key);
-            return;
+        if (*flag) {
+            if (OMPI_SUCCESS !=
+                (ret = ompi_fortran_string_c2f(info_str->string, value, value_len))) {
+                c_ierr = OMPI_ERRHANDLER_NOHANDLE_INVOKE(ret, FUNC_NAME);
+                if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
+            }
+            OBJ_RELEASE(info_str);
         }
     }
 
