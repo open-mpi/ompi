@@ -47,7 +47,7 @@ typedef struct opal_infosubscriber_t opal_infosubscriber_t;
 
 OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_infosubscriber_t);
 
-typedef char*(opal_key_interest_callback_t)(opal_infosubscriber_t*, char*, char*);
+typedef const char*(opal_key_interest_callback_t)(opal_infosubscriber_t*, const char*, const char*);
 
 /**
  *   opal_infosubscribe_change_info - Make changes to a Comm/Win/File Info
@@ -79,6 +79,6 @@ int opal_infosubscribe_change_info(opal_infosubscriber_t*, opal_info_t *);
  *   Does not try to optimize settings that are the same between old and new
  *   info's.
  */
-int opal_infosubscribe_subscribe(opal_infosubscriber_t*, char *, char *, opal_key_interest_callback_t);
+int opal_infosubscribe_subscribe(opal_infosubscriber_t*, const char *, const char *, opal_key_interest_callback_t);
 
 #endif /* OMPI_INFO_H */
