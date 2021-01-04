@@ -56,7 +56,7 @@ static inline void* _shrealloc(void *ptr, size_t size)
     }
 
     if (s && s->allocator) {
-        rc = s->allocator->realloc(s, size, ptr, &pBuff);
+        rc = s->allocator->sa_realloc(s, size, ptr, &pBuff);
     } else {
         rc = MCA_MEMHEAP_CALL(realloc(size, ptr, &pBuff));
     }
