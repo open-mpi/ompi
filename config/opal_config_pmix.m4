@@ -14,7 +14,7 @@ dnl Copyright (c) 2009-2019 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2011-2014 Los Alamos National Security, LLC. All rights
 dnl                         reserved.
 dnl Copyright (c) 2014-2020 Intel, Inc.  All rights reserved.
-dnl Copyright (c) 2014-2018 Research Organization for Information Science
+dnl Copyright (c) 2014-2021 Research Organization for Information Science
 dnl                         and Technology (RIST).  All rights reserved.
 dnl Copyright (c) 2016      IBM Corporation.  All rights reserved.
 dnl Copyright (c) 2020      Triad National Security, LLC. All rights
@@ -104,7 +104,7 @@ AC_DEFUN([OPAL_CONFIG_PMIX], [
     # unless internal specifically requested by the user, try to find
     # an external that works.
     external_pmix_happy=0
-    AS_IF([test "opal_pmix_mode" != "internal"],
+    AS_IF([test "$opal_pmix_mode" != "internal"],
           [_OPAL_CONFIG_PMIX_EXTERNAL(
               [external_pmix_happy=1
                opal_pmix_mode="external"],
