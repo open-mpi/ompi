@@ -52,7 +52,7 @@ In INIT procedure
     create trigger flag(FLAG), posthook start:move(data)
     create trigger move(data), posthook start:rput(DONE)
     create trigger rput(FLAG), posthook no-op
-    create trigger flag(DONE), posthook reset:flag(DONE)
+    create trigger flag(DONE), posthook no-op
     create trigger rput(DONE), posthook no-op
 
 In START procedure

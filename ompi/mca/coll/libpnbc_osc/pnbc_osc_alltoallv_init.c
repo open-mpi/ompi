@@ -332,63 +332,75 @@ static inline int a2av_sched_trigger_pull(int crank, int csize, PNBC_OSC_Schedul
   triggerable_t *triggers_phase5 = &(schedule->triggers[5 * csize * sizeof(triggerable_t)]);
 
   schedule->flags = malloc(5 * csize * sizeof(FLAG_t));
-  FLAG_t *flags_rma_put_FLAG = &(schedule->flags[0 * csize * sizeof(FLAG_t)]);
-  FLAG_t *flags_rma_put_DONE = &(schedule->flags[1 * csize * sizeof(FLAG_t)]);
-  FLAG_t *flags_request_FLAG = &(schedule->flags[2 * csize * sizeof(FLAG_t)]);
-  FLAG_t *flags_request_DATA = &(schedule->flags[3 * csize * sizeof(FLAG_t)]);
-  FLAG_t *flags_request_DONE = &(schedule->flags[4 * csize * sizeof(FLAG_t)]);
+  FLAG_t *flags_rma_put_FLAG = &(schedule->flags[0 * csize * sizeof(FLAG_t)]); // needs exposure via MPI window
+  FLAG_t *flags_rma_put_DONE = &(schedule->flags[1 * csize * sizeof(FLAG_t)]); // needs exposure via MPI window
+  FLAG_t *flags_request_FLAG = &(schedule->flags[2 * csize * sizeof(FLAG_t)]); // local usage only
+  FLAG_t *flags_request_DATA = &(schedule->flags[3 * csize * sizeof(FLAG_t)]); // local usage only
+  FLAG_t *flags_request_DONE = &(schedule->flags[4 * csize * sizeof(FLAG_t)]); // local usage only
 
   schedule->requests = malloc(3 * csize * sizeof(MPI_Request*));
-  MPI_Request **requests_rputFLAG = &(schedule->requests[0 * csize * sizeof(MPI_Request*)]);
-  MPI_Request **requests_moveData = &(schedule->requests[1 * csize * sizeof(MPI_Request*)]);
-  MPI_Request **requests_rputDONE = &(schedule->requests[2 * csize * sizeof(MPI_Request*)]);
+  MPI_Request **requests_rputFLAG = &(schedule->requests[0 * csize * sizeof(MPI_Request*)]); // circumvent the request?
+  MPI_Request **requests_moveData = &(schedule->requests[1 * csize * sizeof(MPI_Request*)]); // combine into PUT_NOTIFY?
+  MPI_Request **requests_rputDONE = &(schedule->requests[2 * csize * sizeof(MPI_Request*)]); // combine into PUT_NOTIFY?
 
   schedule->action_args_list = malloc(3 * csize * sizeof(put_args_t));
-  put_args_t *action_args_FLAG = &(schedule->action_args_list[0 * csize * sizeof(put_args_t)]);
-  put_args_t *action_args_DATA = &(schedule->action_args_list[1 * csize * sizeof(put_args_t)]);
-  put_args_t *action_args_DONE = &(schedule->action_args_list[2 * csize * sizeof(put_args_t)]);
+  put_args_t *action_args_FLAG = &(schedule->action_args_list[0 * csize * sizeof(put_args_t)]); // TODO:should be polymorphic args
+  put_args_t *action_args_DATA = &(schedule->action_args_list[1 * csize * sizeof(put_args_t)]); // TODO:should be polymorphic args
+  put_args_t *action_args_DONE = &(schedule->action_args_list[2 * csize * sizeof(put_args_t)]); // TODO:should be polymorphic args
 
-  schedule->trigger_arrays = malloc(6 * csize * sizeof(triggerable_array));
+  schedule->trigger_arrays = malloc(6 * sizeof(triggerable_array)); // TODO:replace csize*triggerable_single with triggerable_array
 
   for (int p=0;p<csize;++p) {
     int orank = (crank+p)%csize;
 
-    // triggered by local start: schedule->triggers_active = 3*csize;
+    // set 0 - triggered by: local start (responds to action from local user)
+    //         trigger: reset all triggers, including schedule->triggers_active = 3*csize
+    //         action: put FLAG signalling RTS (ready-to-send, i.e. ready for remote to get local data)
     triggers_phase0[orank].trigger = &(schedule->triggers_active);
     triggers_phase0[orank].test = &triggered_all_bynonzero_int;
     triggers_phase0[orank].action = action_all_put_p;
     triggers_phase0[orank].action_cbstate = &action_args_FLAG[orank];
 
-    // triggered by remote rma put
+    // set 1 - triggered by: remote rma put (responds to action from remote set 0)
+    //         trigger: set local FLAG integer to non-zero value
+    //         action: get DATA from remote into local output buffer
     triggers_phase1[orank].trigger = &flags_rma_put_FLAG[orank];
     triggers_phase1[orank].test = &triggered_all_bynonzero_int;
     triggers_phase1[orank].action = action_all_get_p;
     triggers_phase1[orank].action_cbstate = &action_args_DATA[orank];
 
-    //triggered by local test: MPI_Test(requests_moveData[orank], &flags_request_DATA[orank]);
+    // set 2 - triggered by: local test (completes the action from local set 1)
+    //         trigger: MPI_Test(requests_moveData[orank], &flags_request_DATA[orank]);
+    //         action: put DONE signalling data movement is complete; a portion of buffers are usable
     triggers_phase2[orank].trigger = &flags_request_DATA[orank];
     triggers_phase2[orank].test = &triggered_all_byrequest_flag;
     triggers_phase2[orank].test_cbstate = requests_moveData[orank];
     triggers_phase2[orank].action = action_all_put_p;
     triggers_phase2[orank].action_cbstate = &action_args_DONE[orank];
 
-    //trigger by local test: MPI_Test(requests_rputFLAG[orank], &flags_request_FLAG[orank]);
+    // set 3 - triggered by: local test (completes the action from local set 0)
+    //         trigger: MPI_Test(requests_rputFLAG[orank], &flags_request_FLAG[orank]);
+    //         action: update local progress counter
     triggers_phase3[orank].trigger = &flags_request_FLAG[orank];
     triggers_phase3[orank].test = &triggered_all_byrequest_flag;
     triggers_phase3[orank].test_cbstate = requests_rputFLAG[orank];
     triggers_phase3[orank].action = action_all_decrement_int_p;
     triggers_phase3[orank].action_cbstate = &(schedule->triggers_active);
 
-    // triggered by remote rma put
-    triggers_phase4[orank].trigger = &flags_rma_put_DONE[orank];
-    triggers_phase4[orank].test = &triggered_all_bynonzero_int;
+    // set 4 - triggered by: local test (completes the action from local set 2)
+    //         trigger: MPI_Test(requests_rputDONE[orank], &flags_request_DONE[orank]);
+    //         action: update local progress counter
+    triggers_phase4[orank].trigger = &flags_request_DONE[orank];
+    triggers_phase4[orank].test = &triggered_all_byrequest_flag;
+    triggers_phase4[orank].test_cbstate = requests_rputDONE[orank];
     triggers_phase4[orank].action = action_all_decrement_int_p;
     triggers_phase4[orank].action_cbstate = &(schedule->triggers_active);
 
-    //trigger by local test: MPI_Test(requests_rputDONE[orank], &flags_request_DONE[orank]);
-    triggers_phase5[orank].trigger = &flags_request_DONE[orank];
-    triggers_phase5[orank].test = &triggered_all_byrequest_flag;
-    triggers_phase5[orank].test_cbstate = requests_rputDONE[orank];
+    // set 5 - triggered by: remote rma put (responds to action from remote set 2)
+    //         trigger: set local DONE integer to non-zero value
+    //         action: update local progress counter
+    triggers_phase5[orank].trigger = &flags_rma_put_DONE[orank];
+    triggers_phase5[orank].test = &triggered_all_bynonzero_int;
     triggers_phase5[orank].action = action_all_decrement_int_p;
     triggers_phase5[orank].action_cbstate = &(schedule->triggers_active);
 
