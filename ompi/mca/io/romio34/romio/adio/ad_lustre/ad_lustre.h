@@ -9,6 +9,12 @@
 /* temp*/
 #define HAVE_ASM_TYPES_H 1
 
+#define _GNU_SOURCE 1
+#include <stdlib.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
 #include <unistd.h>
 #include <linux/types.h>
 

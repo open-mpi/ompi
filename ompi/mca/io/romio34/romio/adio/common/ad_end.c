@@ -14,7 +14,12 @@ void ADIO_End(int *error_code)
 
     /* if a default errhandler was set on MPI_FILE_NULL then we need to ensure
      * that our reference to that errhandler is released */
+/* Open MPI: The call to PMPI_File_set_errhandler has to be done in romio/src/io_romio_file_open.c
+   in routine mca_io_romio_file_close()
+*/
+#if 0
     PMPI_File_set_errhandler(MPI_FILE_NULL, MPI_ERRORS_RETURN);
+#endif
 
 /* free file and info tables used for Fortran interface */
     if (ADIOI_Ftable)
