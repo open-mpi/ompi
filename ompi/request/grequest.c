@@ -163,6 +163,7 @@ int ompi_grequest_start(
     greq->greq_free.c_free = gfree_fn;
     greq->greq_cancel.c_cancel = gcancel_fn;
     greq->greq_base.req_status = ompi_status_empty;
+    greq->greq_base.req_complete = REQUEST_PENDING;
 
     *request = &greq->greq_base;
     return OMPI_SUCCESS;
