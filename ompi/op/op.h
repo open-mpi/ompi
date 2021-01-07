@@ -68,24 +68,8 @@ typedef void (ompi_op_fortran_handler_fn_t)(void *, void *,
                                             MPI_Fint *, MPI_Fint *);
 
 /**
- * Typedef for C++ op functions intercept (used for user-defined
- * MPI::Ops).
- *
- * See the lengthy explanation for why this is different than the C
- * intercept in ompi/mpi/cxx/intercepts.cc in the
- * ompi_mpi_cxx_op_intercept() function.
- */
-typedef void (ompi_op_cxx_handler_fn_t)(void *, void *, int *,
-                                        struct ompi_datatype_t **,
-                                        MPI_User_function * op);
-
-/**
  * Typedef for Java op functions intercept (used for user-defined
  * MPI.Ops).
- *
- * See the lengthy explanation for why this is different than the C
- * intercept in ompi/mpi/cxx/intercepts.cc in the
- * ompi_mpi_cxx_op_intercept() function.
  */
 typedef void (ompi_op_java_handler_fn_t)(void *, void *, int *,
                                          struct ompi_datatype_t **,
@@ -99,8 +83,6 @@ typedef void (ompi_op_java_handler_fn_t)(void *, void *, int *,
 #define OMPI_OP_FLAGS_INTRINSIC    0x0001
 /** Set if the callback function is in Fortran */
 #define OMPI_OP_FLAGS_FORTRAN_FUNC 0x0002
-/** Set if the callback function is in C++ */
-#define OMPI_OP_FLAGS_CXX_FUNC     0x0004
 /** Set if the callback function is in Java */
 #define OMPI_OP_FLAGS_JAVA_FUNC    0x0008
 /** Set if the callback function is associative (MAX and SUM will both
@@ -171,15 +153,7 @@ struct ompi_op_t {
         ompi_op_c_handler_fn_t *c_fn;
         /** Fortran handler function pointer */
         ompi_op_fortran_handler_fn_t *fort_fn;
-        /** C++ intercept function data -- see lengthy comment in
-            ompi/mpi/cxx/intercepts.cc::ompi_mpi_cxx_op_intercept() for
-            an explanation */
-        struct {
-            /* The user's function (it's the wrong type, but that's ok) */
-            ompi_op_c_handler_fn_t *user_fn;
-            /* The OMPI C++ callback/intercept function */
-            ompi_op_cxx_handler_fn_t *intercept_fn;
-        } cxx_data;
+        /** Java intercept function data */
         struct {
             /* The OMPI C++ callback/intercept function */
             ompi_op_java_handler_fn_t *intercept_fn;
@@ -393,17 +367,8 @@ ompi_op_t *ompi_op_create_user(bool commute,
                                ompi_op_fortran_handler_fn_t func);
 
 /**
- * Mark an MPI_Op as holding a C++ callback function, and cache
- * that function in the MPI_Op.  See a lenghty comment in
- * ompi/mpi/cxx/op.c::ompi_mpi_cxx_op_intercept() for a full
- * expalantion.
- */
-OMPI_DECLSPEC void ompi_op_set_cxx_callback(ompi_op_t * op,
-                                            MPI_User_function * fn);
-
-/**
- * Similar to ompi_op_set_cxx_callback(), mark an MPI_Op as holding a
- * Java calback function, and cache that function in the MPI_Op.
+ * Mark an MPI_Op as holding a Java calback function, and cache that
+ * function in the MPI_Op.
  */
 OMPI_DECLSPEC void ompi_op_set_java_callback(ompi_op_t *op,  void *jnienv,
                                              void *object, int baseType);
@@ -593,10 +558,6 @@ static inline void ompi_op_reduce(ompi_op_t * op, void *source,
         f_dtype = OMPI_INT_2_FINT(dtype->d_f_to_c_index);
         f_count = OMPI_INT_2_FINT(count);
         op->o_func.fort_fn(source, target, &f_count, &f_dtype);
-        return;
-    } else if (0 != (op->o_flags & OMPI_OP_FLAGS_CXX_FUNC)) {
-        op->o_func.cxx_data.intercept_fn(source, target, &count, &dtype,
-                                         op->o_func.cxx_data.user_fn);
         return;
     } else if (0 != (op->o_flags & OMPI_OP_FLAGS_JAVA_FUNC)) {
         op->o_func.java_data.intercept_fn(source, target, &count, &dtype,

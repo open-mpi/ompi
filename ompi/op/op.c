@@ -387,22 +387,6 @@ error:
  * See lengthy comment in mpi/cxx/intercepts.cc for how the C++ MPI::Op
  * callbacks work.
  */
-void ompi_op_set_cxx_callback(ompi_op_t *op, MPI_User_function *fn)
-{
-    op->o_flags |= OMPI_OP_FLAGS_CXX_FUNC;
-    /* The OMPI C++ intercept was previously stored in
-       op->o_func.fort_fn by ompi_op_create_user().  So save that in
-       cxx.intercept_fn and put the user's fn in cxx.user_fn. */
-    op->o_func.cxx_data.intercept_fn =
-        (ompi_op_cxx_handler_fn_t *) op->o_func.fort_fn;
-    op->o_func.cxx_data.user_fn = fn;
-}
-
-
-/*
- * See lengthy comment in mpi/cxx/intercepts.cc for how the C++ MPI::Op
- * callbacks work.
- */
 void ompi_op_set_java_callback(ompi_op_t *op, void *jnienv,
                                void *object, int baseType)
 {
