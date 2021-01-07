@@ -367,8 +367,6 @@ static void ompi_errhandler_construct(ompi_errhandler_t *new_errhandler)
   new_errhandler->eh_file_fn      = NULL;
   new_errhandler->eh_fort_fn      = NULL;
 
-  new_errhandler->eh_cxx_dispatch_fn = NULL;
-
   memset (new_errhandler->eh_name, 0, MPI_MAX_OBJECT_NAME);
 }
 
