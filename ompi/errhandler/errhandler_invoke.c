@@ -74,11 +74,6 @@ int ompi_errhandler_invoke(ompi_errhandler_t *errhandler, void *mpi_object,
             errhandler->eh_comm_fn(&comm, &err_code, message, NULL);
             break;
 
-        case OMPI_ERRHANDLER_LANG_CXX:
-            errhandler->eh_cxx_dispatch_fn(&comm, &err_code, message,
-                                           (ompi_errhandler_generic_handler_fn_t *)errhandler->eh_comm_fn);
-            break;
-
         case OMPI_ERRHANDLER_LANG_FORTRAN:
             fortran_handle = OMPI_INT_2_FINT(comm->c_f_to_c_index);
             errhandler->eh_fort_fn(&fortran_handle, &fortran_err_code);
@@ -94,11 +89,6 @@ int ompi_errhandler_invoke(ompi_errhandler_t *errhandler, void *mpi_object,
             errhandler->eh_win_fn(&win, &err_code, message, NULL);
             break;
 
-        case OMPI_ERRHANDLER_LANG_CXX:
-            errhandler->eh_cxx_dispatch_fn(&win, &err_code, message,
-                                           (ompi_errhandler_generic_handler_fn_t *)errhandler->eh_win_fn);
-            break;
-
         case OMPI_ERRHANDLER_LANG_FORTRAN:
             fortran_handle = OMPI_INT_2_FINT(win->w_f_to_c_index);
             errhandler->eh_fort_fn(&fortran_handle, &fortran_err_code);
@@ -112,11 +102,6 @@ int ompi_errhandler_invoke(ompi_errhandler_t *errhandler, void *mpi_object,
         switch (errhandler->eh_lang) {
         case OMPI_ERRHANDLER_LANG_C:
             errhandler->eh_file_fn(&file, &err_code, message, NULL);
-            break;
-
-        case OMPI_ERRHANDLER_LANG_CXX:
-            errhandler->eh_cxx_dispatch_fn(&file, &err_code, message,
-                                           (ompi_errhandler_generic_handler_fn_t *)errhandler->eh_file_fn);
             break;
 
         case OMPI_ERRHANDLER_LANG_FORTRAN:

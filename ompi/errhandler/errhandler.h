@@ -71,7 +71,6 @@ typedef void (ompi_errhandler_generic_handler_fn_t)(void *, int *, ...);
  */
 enum ompi_errhandler_lang_t {
     OMPI_ERRHANDLER_LANG_C,
-    OMPI_ERRHANDLER_LANG_CXX,
     OMPI_ERRHANDLER_LANG_FORTRAN
 };
 typedef enum ompi_errhandler_lang_t ompi_errhandler_lang_t;
@@ -88,17 +87,6 @@ enum ompi_errhandler_type_t {
 };
 typedef enum ompi_errhandler_type_t ompi_errhandler_type_t;
 
-
-/*
- * Need to forward declare this for use in ompi_errhandle_cxx_dispatch_fn_t.
- */
-struct ompi_errhandler_t;
-
-/**
- * C++ invocation function signature
- */
-typedef void (ompi_errhandler_cxx_dispatch_fn_t)(void *handle, int *err_code,
-                                                 const char *message, ompi_errhandler_generic_handler_fn_t *fn);
 
 /**
  * Back-end type for MPI_Errorhandler.
@@ -122,14 +110,6 @@ struct ompi_errhandler_t {
     ompi_file_errhandler_function *eh_file_fn;
     MPI_Win_errhandler_function *eh_win_fn;
     ompi_errhandler_fortran_handler_fn_t *eh_fort_fn;
-
-    /* Have separate callback for C++ errhandlers.  This pointer is
-       initialized to NULL and will be set explicitly by the C++
-       bindings for Create_errhandler.  This function is invoked
-       when eh_lang==OMPI_ERRHANDLER_LANG_CXX so that the user's
-       callback function can be invoked with the right language
-       semantics. */
-    ompi_errhandler_cxx_dispatch_fn_t *eh_cxx_dispatch_fn;
 
     /* index in Fortran <-> C translation array */
     int eh_f_to_c_index;
