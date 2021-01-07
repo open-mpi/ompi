@@ -19,6 +19,7 @@
  * Copyright (c) 2013-2018 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2021      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -299,6 +300,14 @@ int orte_daemon(int argc, char *argv[])
     /* purge any ess/pmix flags set in the environ when we were launched */
     opal_unsetenv(OPAL_MCA_PREFIX"ess", &orte_launch_environ);
     opal_unsetenv(OPAL_MCA_PREFIX"pmix", &orte_launch_environ);
+
+    /* We need to parse the MCA parameters to read the debug MCA
+     * parameters used by the plm to relay the debug options.
+     */
+    if (ORTE_SUCCESS != (ret = orte_register_params())) {
+        ORTE_ERROR_LOG(ret);
+        return ret;
+    }
 
     /* if orte_daemon_debug is set, let someone know we are alive right
      * away just in case we have a problem along the way
