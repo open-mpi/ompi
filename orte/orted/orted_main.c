@@ -756,7 +756,7 @@ int orte_daemon(int argc, char *argv[])
 
         /* define the target jobid */
         target.jobid = ORTE_PROC_MY_NAME->jobid;
-        if (orte_fwd_mpirun_port || orte_static_ports || NULL != orte_parent_uri) {
+        if (NULL != orte_parent_uri) {
             /* we start by sending to ourselves */
             target.vpid = ORTE_PROC_MY_NAME->vpid;
             /* since we will be waiting for any children to send us

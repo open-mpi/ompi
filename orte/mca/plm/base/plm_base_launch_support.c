@@ -16,7 +16,7 @@
  * Copyright (c) 2013-2018 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2018 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
- * Copyright (c) 2016-2020 IBM Corporation.  All rights reserved.
+ * Copyright (c) 2016-2021 IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -1538,16 +1538,9 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
         orte_nidmap_communicated = true;
     }
 
-    if (!orte_static_ports && !orte_fwd_mpirun_port) {
-        /* if we are using static ports, or we are forwarding
-         * mpirun's port, then we would have built all the
-         * connection info and so there is nothing to be passed.
-         * Otherwise, we have to pass the HNP uri so we can
-         * phone home */
-        opal_argv_append(argc, argv, "-"OPAL_MCA_CMD_LINE_ID);
-        opal_argv_append(argc, argv, "orte_hnp_uri");
-        opal_argv_append(argc, argv, orte_process_info.my_hnp_uri);
-    }
+    opal_argv_append(argc, argv, "-"OPAL_MCA_CMD_LINE_ID);
+    opal_argv_append(argc, argv, "orte_hnp_uri");
+    opal_argv_append(argc, argv, orte_process_info.my_hnp_uri);
 
     /* if requested, pass our port */
     if (orte_fwd_mpirun_port) {
