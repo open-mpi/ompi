@@ -16,7 +16,7 @@
 # Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
 # Copyright (c) 2014-2018 Research Organization for Information Science
 #                         and Technology (RIST).  All rights reserved.
-# Copyright (c) 2016      IBM Corporation.  All rights reserved.
+# Copyright (c) 2016-2021 IBM Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -328,6 +328,7 @@ AC_DEFUN([OPAL_CHECK_PMIX_LIB],[
                                                     ], [])],
                                     [AC_MSG_RESULT([found])
                                      opal_external_pmix_version=4x
+                                     opal_external_pmix_version_major=4
                                      opal_external_pmix_version_found=1
                                      opal_external_pmix_happy=yes],
                                     [AC_MSG_RESULT([not found])])])
@@ -342,6 +343,7 @@ AC_DEFUN([OPAL_CHECK_PMIX_LIB],[
                                               ], [])],
                                    [AC_MSG_RESULT([found])
                                     opal_external_pmix_version=3x
+                                    opal_external_pmix_version_major=3
                                     opal_external_pmix_version_found=1
                                     opal_external_pmix_happy=yes],
                                    [AC_MSG_RESULT([not found])])])
@@ -356,6 +358,7 @@ AC_DEFUN([OPAL_CHECK_PMIX_LIB],[
                                               ], [])],
                                    [AC_MSG_RESULT([found])
                                     opal_external_pmix_version=2x
+                                    opal_external_pmix_version_major=2
                                     opal_external_pmix_version_found=1
                                     opal_external_pmix_happy=yes],
                                    [AC_MSG_RESULT([not found])])])
@@ -370,6 +373,7 @@ AC_DEFUN([OPAL_CHECK_PMIX_LIB],[
                                               ], [])],
                                    [AC_MSG_RESULT([found])
                                     opal_external_pmix_version=1x
+                                    opal_external_pmix_version_major=1
                                     opal_external_pmix_version_found=1
                                     opal_external_have_pmix1=1
                                     opal_external_pmix_happy=yes],

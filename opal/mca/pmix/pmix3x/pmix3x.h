@@ -7,6 +7,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2021      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -34,6 +35,7 @@
 #include "opal/mca/pmix/base/base.h"
 #include "pmix_server.h"
 #include "pmix_common.h"
+#include "pmix.h"
 
 BEGIN_C_DECLS
 
