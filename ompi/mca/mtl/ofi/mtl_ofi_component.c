@@ -950,6 +950,33 @@ select_prov:
         universe_size = ompi_proc_world_size();
     }
 
+    /* if ep_attr->auth_key is not preset by the provider, use the field
+     * to pass a uuid constructed from the jobid.
+     */
+    if (!prov->ep_attr->auth_key)
+    {
+        uint32_t uuid[4] = {};
+        uint8_t *auth_key;
+        int auth_key_size = prov->ep_attr->auth_key_size;
+
+        if (!auth_key_size)
+            auth_key_size = sizeof(uuid);
+
+        auth_key = calloc(1, auth_key_size);
+        if (OPAL_UNLIKELY(!auth_key)) {
+            opal_output_verbose(1, opal_common_ofi.output,
+                                "%s:%d: alloc of auth_key failed: %s\n",
+                                __FILE__, __LINE__, strerror(errno));
+            goto error;
+        }
+
+        uuid[0] = uuid[3] = OMPI_PROC_MY_NAME->jobid;
+        memcpy(auth_key, uuid, auth_key_size);
+
+        prov->ep_attr->auth_key = auth_key;
+        prov->ep_attr->auth_key_size = auth_key_size;
+    }
+
     if (1 == ompi_mtl_ofi.enable_sep) {
         max_ofi_ctxts = (prov->domain_attr->max_ep_tx_ctx <
                          prov->domain_attr->max_ep_rx_ctx) ?
