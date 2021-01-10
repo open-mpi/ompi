@@ -2,7 +2,7 @@
 # Copyright (c) 2019-2020 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
-# Copyright (c) 2020      Research Organization for Information Science
+# Copyright (c) 2020-2021 Research Organization for Information Science
 #                         and Technology (RIST).  All rights reserved.
 # $COPYRIGHT$
 #
@@ -86,7 +86,7 @@ mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_op_avx_la_SOURCES = $(sources)
 mca_op_avx_la_LIBADD = $(specialized_op_libs)
-mca_op_avx_la_LDFLAGS = -module -avoid-version
+mca_op_avx_la_LDFLAGS = -module -avoid-version $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la
 
 
 # Specific information for static builds.

@@ -59,7 +59,7 @@ static int total_errors = 0;
      _a < _b ? _a : _b; })
 
 static void print_status(char* op, char* type, int type_size,
-                         int count, double duration,
+                         int count, int max_shift, double *duration, int repeats,
                          int correct )
 {
     if(correct) {
@@ -68,7 +68,15 @@ static void print_status(char* op, char* type, int type_size,
         printf("%-10s %s [\033[1;31mfail\033[0m]", op, type);
         total_errors++;
     }
-    printf(" count  %-10d  time %.6f seconds\n", count, duration);
+    if( 1 == max_shift ) {
+        printf(" count  %-10d  time (seconds) %.8f seconds\n", count, duration[0] / repeats);
+    } else {
+        printf(" count  %-10d  time (seconds / shifts) ", count);
+        for( int i = 0; i < max_shift; i++ ) {
+            printf("%.8f ", duration[i] / repeats );
+        }
+        printf("\n");
+    }
 }
 
 static int do_ops_built = 0;
@@ -115,19 +123,23 @@ do { \
     const TYPE *_p1 = ((TYPE*)(INBUF)), *_p3 = ((TYPE*)(CHECK_BUF)); \
     TYPE *_p2 = ((TYPE*)(INOUT_BUF)); \
     skip_op_type = 0; \
-    for(int _k = 0; _k < min((COUNT), 4); +_k++ ) { \
-        memcpy(_p2, _p3, sizeof(TYPE) * (COUNT)); \
-        tstart = MPI_Wtime(); \
-        MPI_Reduce_local(_p1+_k, _p2+_k, (COUNT)-_k, (MPITYPE), (MPIOP)); \
-        tend = MPI_Wtime(); \
-        if( check ) { \
-            for( i = 0; i < (COUNT)-_k; i++ ) { \
-                if(((_p2+_k)[i]) == (((_p1+_k)[i]) OPNAME ((_p3+_k)[i]))) \
-                    continue; \
-                printf("First error at alignment %d position %d (%" TYPE_PREFIX " %s %" TYPE_PREFIX " != %" TYPE_PREFIX ")\n", \
-                       _k, i, (_p1+_k)[i], (#OPNAME), (_p3+_k)[i], (_p2+_k)[i]); \
-                correctness = 0; \
-                break; \
+    for(int _k = 0; _k < min((COUNT), max_shift); +_k++ ) { \
+        duration[_k] = 0.0; \
+        for(int _r = repeats; _r > 0; _r--) { \
+            memcpy(_p2, _p3, sizeof(TYPE) * (COUNT)); \
+            tstart = MPI_Wtime(); \
+            MPI_Reduce_local(_p1+_k, _p2+_k, (COUNT)-_k, (MPITYPE), (MPIOP)); \
+            tend = MPI_Wtime(); \
+            duration[_k] += (tend - tstart); \
+            if( check ) { \
+                for( i = 0; i < (COUNT)-_k; i++ ) { \
+                    if(((_p2+_k)[i]) == (((_p1+_k)[i]) OPNAME ((_p3+_k)[i]))) \
+                        continue; \
+                    printf("First error at alignment %d position %d (%" TYPE_PREFIX " %s %" TYPE_PREFIX " != %" TYPE_PREFIX ")\n", \
+                           _k, i, (_p1+_k)[i], (#OPNAME), (_p3+_k)[i], (_p2+_k)[i]); \
+                    correctness = 0; \
+                    break; \
+                } \
             } \
         } \
     } \
@@ -139,20 +151,24 @@ do { \
     const TYPE *_p1 = ((TYPE*)(INBUF)), *_p3 = ((TYPE*)(CHECK_BUF)); \
     TYPE *_p2 = ((TYPE*)(INOUT_BUF)); \
     skip_op_type = 0; \
-    for(int _k = 0; _k < min((COUNT), 4); +_k++ ) { \
-        memcpy(_p2, _p3, sizeof(TYPE) * (COUNT)); \
-        tstart = MPI_Wtime(); \
-        MPI_Reduce_local(_p1+_k, _p2+_k, (COUNT), (MPITYPE), (MPIOP)); \
-        tend = MPI_Wtime(); \
-        if( check ) { \
-            for( i = 0; i < (COUNT); i++ ) { \
-                TYPE _v1 = *(_p1+_k), _v2 = *(_p2+_k), _v3 = *(_p3+_k); \
-                if(_v2 == OPNAME(_v1, _v3)) \
-                    continue; \
-                printf("First error at alignment %d position %d (%" TYPE_PREFIX " !=  %s(%" TYPE_PREFIX ", %" TYPE_PREFIX ")\n", \
-                       _k, i, _v1, (#OPNAME), _v3, _v2); \
-                correctness = 0; \
-                break; \
+    for(int _k = 0; _k < min((COUNT), max_shift); +_k++ ) { \
+        duration[_k] = 0.0; \
+        for(int _r = repeats; _r > 0; _r--) { \
+            memcpy(_p2, _p3, sizeof(TYPE) * (COUNT)); \
+            tstart = MPI_Wtime(); \
+            MPI_Reduce_local(_p1+_k, _p2+_k, (COUNT), (MPITYPE), (MPIOP)); \
+            tend = MPI_Wtime(); \
+            duration[_k] += (tend - tstart); \
+            if( check ) { \
+                for( i = 0; i < (COUNT); i++ ) { \
+                    TYPE _v1 = *(_p1+_k), _v2 = *(_p2+_k), _v3 = *(_p3+_k); \
+                    if(_v2 == OPNAME(_v1, _v3)) \
+                        continue; \
+                    printf("First error at alignment %d position %d (%" TYPE_PREFIX " !=  %s(%" TYPE_PREFIX ", %" TYPE_PREFIX ")\n", \
+                           _k, i, _v1, (#OPNAME), _v3, _v2); \
+                    correctness = 0; \
+                    break; \
+                } \
             } \
         } \
     } \
@@ -163,24 +179,36 @@ int main(int argc, char **argv)
 {
     static void *in_buf = NULL, *inout_buf = NULL, *inout_check_buf = NULL;
     int count, type_size = 8, rank, size, provided, correctness = 1;
-    int repeats = 1, i, c;
-    double tstart, tend;
+    int repeats = 1, i, c, op1_alignment = 0, res_alignment = 0;
+    int max_shift = 4;
+    double *duration, tstart, tend;
     bool check = true;
     char type[5] = "uifd", *op = "sum", *mpi_type;
     int lower = 1, upper = 1000000, skip_op_type;
     MPI_Op mpi_op;
 
-    while( -1 != (c = getopt(argc, argv, "l:u:t:o:s:n:vfh")) ) {
+    while( -1 != (c = getopt(argc, argv, "l:u:r:t:o:i:s:n:1:2:vfh")) ) {
         switch(c) {
         case 'l':
             lower = atoi(optarg);
             if( lower <= 0 ) {
-                fprintf(stderr, "The number of elements must be positive\n");
+                fprintf(stderr, "The lower number of elements must be positive\n");
                 exit(-1);
             }
             break;
         case 'u':
             upper = atoi(optarg);
+            if( lower <= 0 ) {
+                fprintf(stderr, "The upper number of elements must be positive\n");
+                exit(-1);
+            }
+            break;
+        case 'i':
+            max_shift = atoi(optarg);
+            if( max_shift <= 0 ) {
+                fprintf(stderr, "The max shift must be positive\n");
+                exit(-1);
+            }
             break;
         case 'f':
             check = false;
@@ -216,14 +244,32 @@ int main(int argc, char **argv)
                 exit(-1);
             }
             break;
+        case '1':
+            op1_alignment = atoi(optarg);
+            if( op1_alignment < 0 ) {
+                fprintf(stderr, "alignment for the first operand must be positive\n");
+                exit(-1);
+            }
+            break;
+        case '2':
+            res_alignment = atoi(optarg);
+            if( res_alignment < 0 ) {
+                fprintf(stderr, "alignment for the result must be positive\n");
+                exit(-1);
+            }
+            break;
         case 'h':
             fprintf(stdout, "%s options are:\n"
                     " -l <number> : lower number of elements\n"
                     " -u <number> : upper number of elements\n"
                     " -s <type_size> : 8, 16, 32 or 64 bits elements\n"
                     " -t [i,u,f,d] : type of the elements to apply the operations on\n"
+                    " -r <number> : number of repetitions for each test\n"
                     " -o <op> : comma separated list of operations to execute among\n"
                     "           sum, min, max, prod, bor, bxor, band\n"
+                    " -i <number> : shift on all buffers to check alignment\n"
+                    " -1 <number> : (mis)alignment in elements for the first op\n"
+                    " -2 <number> : (mis)alignment in elements for the result\n"
                     " -v: increase the verbosity level\n"
                     " -h: this help message\n", argv[0]);
             exit(0);
@@ -233,9 +279,10 @@ int main(int argc, char **argv)
     if( !do_ops_built ) {  /* not yet done, take the default */
             build_do_ops( "all", do_ops);
     }
-    in_buf          = malloc(upper * sizeof(double));
-    inout_buf       = malloc(upper * sizeof(double));
-    inout_check_buf = malloc(upper * sizeof(double));
+    posix_memalign( &in_buf,          64, (upper + op1_alignment) * sizeof(double));
+    posix_memalign( &inout_buf,       64, (upper + res_alignment) * sizeof(double));
+    posix_memalign( &inout_check_buf, 64, upper * sizeof(double));
+    duration = (double*)malloc(max_shift * sizeof(double));
 
     ompi_mpi_init(argc, argv, MPI_THREAD_SERIALIZED, &provided, false);
 
@@ -253,8 +300,8 @@ int main(int argc, char **argv)
                 correctness = 1;
                 if('i' == type[type_idx]) {
                     if( 8 == type_size ) {
-                        int8_t *in_int8 = (int8_t*)in_buf,
-                            *inout_int8 = (int8_t*)inout_buf,
+                        int8_t *in_int8 = (int8_t*)((char*)in_buf + op1_alignment * sizeof(int8_t)),
+                            *inout_int8 = (int8_t*)((char*)inout_buf + res_alignment * sizeof(int8_t)),
                             *inout_int8_for_check = (int8_t*)inout_check_buf;
                         for( i = 0; i < count; i++ ) {
                             in_int8[i] = 5;
@@ -299,8 +346,8 @@ int main(int argc, char **argv)
                         }
                     }
                     if( 16 == type_size ) {
-                        int16_t *in_int16 = (int16_t*)in_buf,
-                            *inout_int16 = (int16_t*)inout_buf,
+                        int16_t *in_int16 = (int16_t*)((char*)in_buf + op1_alignment * sizeof(int16_t)),
+                            *inout_int16 = (int16_t*)((char*)inout_buf + res_alignment * sizeof(int16_t)),
                             *inout_int16_for_check = (int16_t*)inout_check_buf;
                         for( i = 0; i < count; i++ ) {
                             in_int16[i] = 5;
@@ -345,8 +392,8 @@ int main(int argc, char **argv)
                         }
                     }
                     if( 32 == type_size ) {
-                        int32_t *in_int32 = (int32_t*)in_buf,
-                            *inout_int32 = (int32_t*)inout_buf,
+                        int32_t *in_int32 = (int32_t*)((char*)in_buf + op1_alignment * sizeof(int32_t)),
+                            *inout_int32 = (int32_t*)((char*)inout_buf + res_alignment * sizeof(int32_t)),
                             *inout_int32_for_check = (int32_t*)inout_check_buf;
                         for( i = 0; i < count; i++ ) {
                             in_int32[i] = 5;
@@ -391,8 +438,8 @@ int main(int argc, char **argv)
                         }
                     }
                     if( 64 == type_size ) {
-                        int64_t *in_int64 = (int64_t*)in_buf,
-                            *inout_int64 = (int64_t*)inout_buf,
+                        int64_t *in_int64 = (int64_t*)((char*)in_buf + op1_alignment * sizeof(int64_t)),
+                            *inout_int64 = (int64_t*)((char*)inout_buf + res_alignment * sizeof(int64_t)),
                             *inout_int64_for_check = (int64_t*)inout_check_buf;
                         for( i = 0; i < count; i++ ) {
                             in_int64[i] = 5;
@@ -440,8 +487,8 @@ int main(int argc, char **argv)
 
                 if( 'u' == type[type_idx] ) {
                     if( 8 == type_size ) {
-                        uint8_t *in_uint8 = (uint8_t*)in_buf,
-                            *inout_uint8 = (uint8_t*)inout_buf,
+                        uint8_t *in_uint8 = (uint8_t*)((char*)in_buf + op1_alignment * sizeof(uint8_t)),
+                            *inout_uint8 = (uint8_t*)((char*)inout_buf + res_alignment * sizeof(uint8_t)),
                             *inout_uint8_for_check = (uint8_t*)inout_check_buf;
                         for( i = 0; i < count; i++ ) {
                             in_uint8[i] = 5;
@@ -486,8 +533,8 @@ int main(int argc, char **argv)
                         }
                     }
                     if( 16 == type_size ) {
-                        uint16_t *in_uint16 = (uint16_t*)in_buf,
-                            *inout_uint16 = (uint16_t*)inout_buf,
+                        uint16_t *in_uint16 = (uint16_t*)((char*)in_buf + op1_alignment * sizeof(uint16_t)),
+                            *inout_uint16 = (uint16_t*)((char*)inout_buf + res_alignment * sizeof(uint16_t)),
                             *inout_uint16_for_check = (uint16_t*)inout_check_buf;
                         for( i = 0; i < count; i++ ) {
                             in_uint16[i] = 5;
@@ -532,8 +579,8 @@ int main(int argc, char **argv)
                         }
                     }
                     if( 32 == type_size ) {
-                        uint32_t *in_uint32 = (uint32_t*)in_buf,
-                            *inout_uint32 = (uint32_t*)inout_buf,
+                        uint32_t *in_uint32 = (uint32_t*)((char*)in_buf + op1_alignment * sizeof(uint32_t)),
+                            *inout_uint32 = (uint32_t*)((char*)inout_buf + res_alignment * sizeof(uint32_t)),
                             *inout_uint32_for_check = (uint32_t*)inout_check_buf;
                         for( i = 0; i < count; i++ ) {
                             in_uint32[i] = 5;
@@ -578,8 +625,8 @@ int main(int argc, char **argv)
                         }
                     }
                     if( 64 == type_size ) {
-                        uint64_t *in_uint64 = (uint64_t*)in_buf,
-                              *inout_uint64 = (uint64_t*)inout_buf,
+                        uint64_t *in_uint64 = (uint64_t*)((char*)in_buf + op1_alignment * sizeof(uint64_t)),
+                              *inout_uint64 = (uint64_t*)((char*)inout_buf + res_alignment * sizeof(uint64_t)),
                             *inout_uint64_for_check = (uint64_t*)inout_check_buf;
                         for( i = 0; i < count; i++ ) {
                             in_uint64[i] = 5;
@@ -626,8 +673,8 @@ int main(int argc, char **argv)
                 }
 
                 if( 'f' == type[type_idx] ) {
-                    float *in_float = (float*)in_buf,
-                        *inout_float = (float*)inout_buf,
+                    float *in_float = (float*)((char*)in_buf + op1_alignment * sizeof(float)),
+                        *inout_float = (float*)((char*)inout_buf + res_alignment * sizeof(float)),
                         *inout_float_for_check = (float*)inout_check_buf;
                     for( i = 0; i < count; i++ ) {
                         in_float[i] = 1000.0+1;
@@ -658,8 +705,8 @@ int main(int argc, char **argv)
                 }
 
                 if( 'd' == type[type_idx] ) {
-                    double *in_double = (double*)in_buf,
-                        *inout_double = (double*)inout_buf,
+                    double *in_double = (double*)((char*)in_buf + op1_alignment * sizeof(double)),
+                        *inout_double = (double*)((char*)inout_buf + res_alignment * sizeof(double)),
                         *inout_double_for_check = (double*)inout_check_buf;
                     for( i = 0; i < count; i++ ) {
                         in_double[i] = 10.0+1;
@@ -691,7 +738,7 @@ int main(int argc, char **argv)
         check_and_continue:
                 if( !skip_op_type )
                     print_status(array_of_ops[do_ops[op_idx]].mpi_op_name,
-                                 mpi_type, type_size, count, tend-tstart, correctness);
+                                 mpi_type, type_size, count, max_shift, duration, repeats, correctness);
             }
             if( !skip_op_type )
                 printf("\n");
