@@ -370,6 +370,12 @@ int orte_daemon(int argc, char *argv[])
      */
     opal_finalize_util();
 
+    /* orted uses multiple threads, thus need to enable opal's multi-thread support,
+     * otherwise, OPAL_RELEASE will not use atomic operations to update object's
+     * reference counter, which will lead to double free issue.
+     */
+    opal_set_using_threads(true);
+
     /* bind ourselves if so directed */
     if (NULL != orte_daemon_cores) {
         char **cores=NULL, tmp[128];
