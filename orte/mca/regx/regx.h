@@ -5,6 +5,7 @@
  *                         reserved.
  * Copyright (c) 2018      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2021      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -71,8 +72,6 @@ typedef int (*orte_regx_base_module_encode_nodemap_fn_t)(opal_buffer_t *buffer);
  * into the orte_node_pool array */
 typedef int (*orte_regx_base_module_decode_daemon_nodemap_fn_t)(opal_buffer_t *buffer);
 
-typedef int (*orte_regx_base_module_build_daemon_nidmap_fn_t)(void);
-
 /* create a regular expression describing the ppn for a job */
 typedef int (*orte_regx_base_module_generate_ppn_fn_t)(orte_job_t *jdata, char **ppn);
 
@@ -93,7 +92,6 @@ typedef struct {
     orte_regx_base_module_extract_node_names_fn_t     extract_node_names;
     orte_regx_base_module_encode_nodemap_fn_t         encode_nodemap;
     orte_regx_base_module_decode_daemon_nodemap_fn_t  decode_daemon_nodemap;
-    orte_regx_base_module_build_daemon_nidmap_fn_t    build_daemon_nidmap;
     orte_regx_base_module_generate_ppn_fn_t           generate_ppn;
     orte_regx_base_module_parse_ppn_fn_t              parse_ppn;
     orte_regx_base_module_finalize_fn_t               finalize;
