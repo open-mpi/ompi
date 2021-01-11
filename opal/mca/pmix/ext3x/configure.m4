@@ -18,6 +18,7 @@
 #                         and Technology (RIST). All rights reserved.
 # Copyright (c) 2014-2015 Mellanox Technologies, Inc.
 #                         All rights reserved.
+# Copyright (c) 2021      IBM Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -32,17 +33,19 @@ AC_DEFUN([MCA_opal_pmix_ext3x_CONFIG],[
 
     AS_IF([test "$opal_external_pmix_happy" = "yes"],
           [ # check for the 3.x version
-           AC_MSG_CHECKING([if external component is version 3.x])
-           AS_IF([test "$opal_external_pmix_version" = "3x"],
-                 [AC_MSG_RESULT([yes])
-                  AS_IF([test "$opal_event_external_support" != "yes"],
-                        [AC_MSG_WARN([EXTERNAL PMIX SUPPORT REQUIRES USE OF EXTERNAL LIBEVENT])
-                         AC_MSG_WARN([LIBRARY. THIS LIBRARY MUST POINT TO THE SAME ONE USED])
-                         AC_MSG_WARN([TO BUILD PMIX OR ELSE UNPREDICTABLE BEHAVIOR MAY RESULT])
-                         AC_MSG_ERROR([PLEASE CORRECT THE CONFIGURE COMMAND LINE AND REBUILD])])
-                  opal_pmix_external_3x_happy=yes],
-                 [AC_MSG_RESULT([no])
-                  opal_pmix_external_3x_happy=no])
+           AC_MSG_CHECKING([if external component is version 3.x or higher])
+           if test $opal_external_pmix_version_major -ge 3 ; then
+               AC_MSG_RESULT([yes])
+               AS_IF([test "$opal_event_external_support" != "yes"],
+                   [AC_MSG_WARN([EXTERNAL PMIX SUPPORT REQUIRES USE OF EXTERNAL LIBEVENT])
+                       AC_MSG_WARN([LIBRARY. THIS LIBRARY MUST POINT TO THE SAME ONE USED])
+                       AC_MSG_WARN([TO BUILD PMIX OR ELSE UNPREDICTABLE BEHAVIOR MAY RESULT])
+                       AC_MSG_ERROR([PLEASE CORRECT THE CONFIGURE COMMAND LINE AND REBUILD])])
+               opal_pmix_external_3x_happy=yes
+           else
+               AC_MSG_RESULT([no])
+               opal_pmix_external_3x_happy=no
+           fi
 
            AS_IF([test "$opal_pmix_external_3x_happy" = "yes"],
                  [$1
