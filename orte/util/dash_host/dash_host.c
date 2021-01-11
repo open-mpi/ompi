@@ -305,7 +305,30 @@ int orte_util_add_dash_host_nodes(opal_list_t *nodes,
         }
     }
 
-    rc = ORTE_SUCCESS;
+    // Managed allocation: Update the node pool slots
+    // with what was asked for in the host list.
+    if(orte_managed_allocation) {
+        orte_node_t *node_from_pool = NULL;
+        for (i = 0; i < orte_node_pool->size; i++) {
+            if (NULL == (node_from_pool = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i))) {
+                continue;
+            }
+            for (itm = opal_list_get_first(nodes);
+               itm != opal_list_get_end(nodes);
+               itm = opal_list_get_next(itm)) {
+              node = (orte_node_t*) itm;
+              if (0 == strcmp(node_from_pool->name, node->name)) {
+                if(node->slots < node_from_pool -> slots) {
+                  node_from_pool->slots = node->slots;
+                }
+                break;
+              }
+              // There's no need to check that this host exists in the pool. That
+              // should have already been checked at this point.
+          }
+      }
+  }
+  rc = ORTE_SUCCESS;
 
  cleanup:
     if (NULL != mapped_nodes) {
