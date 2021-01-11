@@ -42,7 +42,7 @@ pending:
   extends:
     - .report-status
     - .shell-runner
-  stage: prepare
+  stage: .pre
   cache:
     key: python-requests
     paths:
@@ -62,7 +62,7 @@ failure:
     - .report-status
     - .shell-runner
   stage: .post
-  stage: on_failure
+  when: on_failure
 
 build-nobatch-gpfs:
   stage: build-nobatch-gpfs
