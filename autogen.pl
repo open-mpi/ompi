@@ -1597,5 +1597,9 @@ verbose "
 Open MPI autogen: completed successfully.  w00t!
 ================================================\n\n";
 
+# THIS IS JUST FOR TESTING CI REMOVE THIS
+verbose "TJN: ADDING SOME INFO TO END OF THE AUTOGEN.PL SCRIPT\n";
+# THIS IS JUST FOR TESTING CI REMOVE THIS
+
 # Done!
 exit(0);
