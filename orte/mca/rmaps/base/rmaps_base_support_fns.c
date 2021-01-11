@@ -160,9 +160,15 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
 
     /* if this is NOT a managed allocation, then we use the nodes
      * that were specified for this app - there is no need to collect
-     * all available nodes and "filter" them
+     * all available nodes and "filter" them.
+     *
+     * However, if it is a managed allocation AND the hostfile or the hostlist was
+     * provided, those take precedence, so process them and filter as we normally do.
      */
-    if (!orte_managed_allocation) {
+    if ( !orte_managed_allocation ||
+        (orte_managed_allocation &&
+         (orte_get_attribute(&app->attributes, ORTE_APP_DASH_HOST, (void**)&hosts, OPAL_STRING) ||
+         orte_get_attribute(&app->attributes, ORTE_APP_HOSTFILE, (void**)&hosts, OPAL_STRING)))) {
         OBJ_CONSTRUCT(&nodes, opal_list_t);
         /* if the app provided a dash-host, and we are not treating
          * them as requested or "soft" locations, then use those nodes
