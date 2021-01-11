@@ -8,9 +8,61 @@ variables:
 
 #### Build and Test using GPFS ####
 stages:
+  - .pre
   - build-nobatch-gpfs
   - test-gpfs
+  - .post
 
+.shell-runner:
+  tags: [nobatch]
+
+.report-status:
+  variables:
+    # You can define ALL BUILDSTATUS_ variables here, with the
+    # exception of the TOKEN if it makes it easier to manage.
+    BUILDSTATUS_OWNER: naughtont3
+    BUILDSTATUS_PROJECT: ompi
+    BUILDSTATUS_APIURL: https://developer.github.com/v3/repos/statuses/
+    BUILDSTATUS_JOB: OLCF
+  before_script:
+    - ml py-virtualenv python/3.7.0
+    - python -m venv env
+    - source env/bin/activate
+    - pip install requests
+  script:
+    - python ${CI_PROJECT_DIR}/.ci/ecp-olcf/build-status.py
+  dependencies: []
+  cache:
+    key: python-requests
+    paths:
+      - env/
+    policy: pull
+
+pending:
+  extends:
+    - .report-status
+    - .shell-runner
+  stage: prepare
+  cache:
+    key: python-requests
+    paths:
+      - env/
+    policy: pull-push
+
+success:
+  extends:
+    - .report-status
+    - .shell-runner
+  stage: .post
+
+# IMPORANT, if you are using GitHub as opposed to GitLab as your
+# API target this job name must be changed to 'failure' (gitlab is 'failed')
+failure:
+  extends:
+    - .report-status
+    - .shell-runner
+  stage: .post
+  stage: on_failure
 
 build-nobatch-gpfs:
   stage: build-nobatch-gpfs
