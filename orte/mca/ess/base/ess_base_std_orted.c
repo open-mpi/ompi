@@ -15,7 +15,7 @@
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2013-2018 Intel, Inc.  All rights reserved.
- * Copyright (c) 2017      IBM Corporation. All rights reserved.
+ * Copyright (c) 2017-2021 IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -557,29 +557,6 @@ int orte_ess_base_orted_setup(void)
         /* be sure to update the routing tree so any tree spawn operation
          * properly gets the number of children underneath us */
         orte_routed.update_routing_plan(NULL);
-    }
-
-    if (orte_static_ports || orte_fwd_mpirun_port) {
-        if (NULL == orte_node_regex) {
-            /* we didn't get the node info */
-            error = "cannot construct daemon map for static ports - no node map info";
-            goto error;
-        }
-        /* extract the node info from the environment and
-         * build a nidmap from it - this will update the
-         * routing plan as well
-         */
-        if (ORTE_SUCCESS != (ret = orte_regx.build_daemon_nidmap())) {
-            ORTE_ERROR_LOG(ret);
-            error = "construct daemon map from static ports";
-            goto error;
-        }
-        /* be sure to update the routing tree so the initial "phone home"
-         * to mpirun goes through the tree if static ports were enabled
-         */
-        orte_routed.update_routing_plan(NULL);
-        /* routing can be enabled */
-        orte_routed_base.routing_enabled = true;
     }
 
     /* Now provide a chance for the PLM
