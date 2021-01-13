@@ -50,6 +50,9 @@ AC_DEFUN([MCA_ompi_op_avx_CONFIG],[
                   AC_LINK_IFELSE(
                       [AC_LANG_PROGRAM([[#include <immintrin.h>]],
                                        [[
+#if defined(__ICC) && !defined(__AVX512F__)
+#error "icc needs the -m flags to provide the AVX* detection macros
+#endif
     __m512 vA, vB;
     _mm512_add_ps(vA, vB)
                                        ]])],
@@ -64,6 +67,9 @@ AC_DEFUN([MCA_ompi_op_avx_CONFIG],[
                          AC_LINK_IFELSE(
                              [AC_LANG_PROGRAM([[#include <immintrin.h>]],
                                               [[
+#if defined(__ICC) && !defined(__AVX512F__)
+#error "icc needs the -m flags to provide the AVX* detection macros
+#endif
     __m512 vA, vB;
     _mm512_add_ps(vA, vB)
                                        ]])],
@@ -84,6 +90,9 @@ AC_DEFUN([MCA_ompi_op_avx_CONFIG],[
                          AC_LINK_IFELSE(
                              [AC_LANG_PROGRAM([[#include <immintrin.h>]],
                                       [[
+#if defined(__ICC) && !defined(__AVX512F__)
+#error "icc needs the -m flags to provide the AVX* detection macros
+#endif
     int A[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
     __m512i vA = _mm512_loadu_si512((__m512i*)&(A[1]))
                                       ]])],
@@ -103,6 +112,9 @@ AC_DEFUN([MCA_ompi_op_avx_CONFIG],[
                          AC_LINK_IFELSE(
                              [AC_LANG_PROGRAM([[#include <immintrin.h>]],
                                       [[
+#if defined(__ICC) && !defined(__AVX512F__)
+#error "icc needs the -m flags to provide the AVX* detection macros
+#endif
     __m512i vA, vB;
     _mm512_mullo_epi64(vA, vB)
                                       ]])],
@@ -121,6 +133,9 @@ AC_DEFUN([MCA_ompi_op_avx_CONFIG],[
                   AC_LINK_IFELSE(
                       [AC_LANG_PROGRAM([[#include <immintrin.h>]],
                               [[
+#if defined(__ICC) && !defined(__AVX2__)
+#error "icc needs the -m flags to provide the AVX* detection macros
+#endif
     __m256i vA, vB, vC;
     vC = _mm256_and_si256(vA, vB)
                               ]])],
@@ -134,6 +149,9 @@ AC_DEFUN([MCA_ompi_op_avx_CONFIG],[
                        AC_LINK_IFELSE(
                            [AC_LANG_PROGRAM([[#include <immintrin.h>]],
                                    [[
+#if defined(__ICC) && !defined(__AVX2__)
+#error "icc needs the -m flags to provide the AVX* detection macros
+#endif
     __m256i vA, vB, vC;
     vC = _mm256_and_si256(vA, vB)
                                    ]])],
@@ -154,6 +172,9 @@ AC_DEFUN([MCA_ompi_op_avx_CONFIG],[
                          AC_LINK_IFELSE(
                              [AC_LANG_PROGRAM([[#include <immintrin.h>]],
                                       [[
+#if defined(__ICC) && !defined(__AVX2__)
+#error "icc needs the -m flags to provide the AVX* detection macros
+#endif
     int A[8] = {0, 1, 2, 3, 4, 5, 6, 7};
     __m256i vA = _mm256_loadu_si256((__m256i*)&A)
                                       ]])],
@@ -177,6 +198,9 @@ AC_DEFUN([MCA_ompi_op_avx_CONFIG],[
                   AC_LINK_IFELSE(
                       [AC_LANG_PROGRAM([[#include <immintrin.h>]],
                               [[
+#if defined(__ICC) && !defined(__AVX__)
+#error "icc needs the -m flags to provide the AVX* detection macros
+#endif
     __m256 vA, vB, vC;
     vC = _mm256_add_ps(vA, vB)
                               ]])],
@@ -192,6 +216,9 @@ AC_DEFUN([MCA_ompi_op_avx_CONFIG],[
                   AC_LINK_IFELSE(
                       [AC_LANG_PROGRAM([[#include <immintrin.h>]],
                               [[
+#if defined(__ICC) && !defined(__SSE4_1__)
+#error "icc needs the -m flags to provide the AVX* detection macros
+#endif
     __m128i vA, vB;
     (void)_mm_max_epi8(vA, vB)
                               ]])],
@@ -208,6 +235,9 @@ AC_DEFUN([MCA_ompi_op_avx_CONFIG],[
                   AC_LINK_IFELSE(
                       [AC_LANG_PROGRAM([[#include <immintrin.h>]],
                               [[
+#if defined(__ICC) && !defined(__SSE3__)
+#error "icc needs the -m flags to provide the AVX* detection macros
+#endif
     int A[4] = {0, 1, 2, 3};
     __m128i vA = _mm_lddqu_si128((__m128i*)&A)
                               ]])],
@@ -225,6 +255,9 @@ AC_DEFUN([MCA_ompi_op_avx_CONFIG],[
                              [AC_LANG_PROGRAM([[#include <immintrin.h>]],
                                    [[
     __m256 vA, vB, vC;
+#if defined(__ICC) && !defined(__AVX__)
+#error "icc needs the -m flags to provide the AVX* detection macros
+#endif
     vC = _mm256_add_ps(vA, vB)
                             ]])],
                              [op_avx_support=1
@@ -239,6 +272,9 @@ AC_DEFUN([MCA_ompi_op_avx_CONFIG],[
                          AC_LINK_IFELSE(
                              [AC_LANG_PROGRAM([[#include <immintrin.h>]],
                                      [[
+#if defined(__ICC) && !defined(__SSE4_1__)
+#error "icc needs the -m flags to provide the AVX* detection macros
+#endif
     __m128i vA, vB;
     (void)_mm_max_epi8(vA, vB)
                                      ]])],
@@ -250,6 +286,9 @@ AC_DEFUN([MCA_ompi_op_avx_CONFIG],[
                          AC_LINK_IFELSE(
                              [AC_LANG_PROGRAM([[#include <immintrin.h>]],
                                  [[
+#if defined(__ICC) && !defined(__SSE3__)
+#error "icc needs the -m flags to provide the AVX* detection macros
+#endif
     int A[4] = {0, 1, 2, 3};
     __m128i vA = _mm_lddqu_si128((__m128i*)&A)
                                  ]])],
