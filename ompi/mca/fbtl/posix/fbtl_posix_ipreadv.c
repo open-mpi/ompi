@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2015 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2021 University of Houston. All rights reserved.
  * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -33,6 +33,8 @@
 #include "ompi/constants.h"
 #include "ompi/mca/fbtl/fbtl.h"
 
+#define MAX_ATTEMPTS 10
+
 ssize_t mca_fbtl_posix_ipreadv (ompio_file_t *fh,
 			       ompi_request_t *request)
 {
@@ -44,7 +46,7 @@ ssize_t mca_fbtl_posix_ipreadv (ompio_file_t *fh,
 
     data = (mca_fbtl_posix_request_data_t *) malloc ( sizeof (mca_fbtl_posix_request_data_t));
     if ( NULL == data ) {
-        opal_output (1,"could not allocate memory\n");
+        opal_output (1,"mca_fbtl_posix_ipreadv: could not allocate memory\n");
         return 0;
     }
 
@@ -56,14 +58,14 @@ ssize_t mca_fbtl_posix_ipreadv (ompio_file_t *fh,
     data->aio_reqs = (struct aiocb *) malloc (sizeof(struct aiocb) *
                                               fh->f_num_of_io_entries);
     if (NULL == data->aio_reqs) {
-        opal_output(1, "OUT OF MEMORY\n");
+        opal_output(1, "mca_fbtl_posix_ipreadv: could not allocate memory\n");
         free(data);
         return 0;
     }
 
     data->aio_req_status = (int *) malloc (sizeof(int) * fh->f_num_of_io_entries);
     if (NULL == data->aio_req_status) {
-        opal_output(1, "OUT OF MEMORY\n");
+        opal_output(1, "mca_fbtl_posix_ipreadv: could not allocate memory\n");
         free(data->aio_reqs);
         free(data);
         return 0;
@@ -103,14 +105,22 @@ ssize_t mca_fbtl_posix_ipreadv (ompio_file_t *fh,
     }
 
     for (i=0; i < data->aio_last_active_req; i++) {
-        if (-1 == aio_read(&data->aio_reqs[i])) {
-            opal_output(1, "mca_fbtl_posix_ipreadv: error in aio_read(): %s", strerror(errno));
-            mca_fbtl_posix_unlock ( &data->aio_lock, data->aio_fh );            
-            free(data->aio_reqs);
-            free(data->aio_req_status);
-            free(data);
-            return OMPI_ERROR;
-        }
+        int counter=0;
+        while ( MAX_ATTEMPTS > counter ) { 
+	    if  ( -1 != aio_read(&data->aio_reqs[i]) ) {
+	        break;
+	    }
+	    counter++;
+	    mca_common_ompio_progress();
+	}
+	if ( MAX_ATTEMPTS == counter ) {
+           opal_output(1, "mca_fbtl_posix_ipreadv: error in aio_read(): errno %d %s", errno, strerror(errno));
+	   mca_fbtl_posix_unlock ( &data->aio_lock, data->aio_fh );            
+	   free(data->aio_reqs);
+	   free(data->aio_req_status);
+	   free(data);
+	   return OMPI_ERROR;
+	}
     }
 
     req->req_data = data;
