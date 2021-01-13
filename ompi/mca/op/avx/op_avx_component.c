@@ -178,6 +178,14 @@ static int
 avx_component_register(void)
 {
     int32_t requested_flags = mca_op_avx_component.flags = has_intel_AVX_features();
+
+    /**
+     * Due to frequency scaling during AVX2 and AVX512 operations, it has been
+     * decided in January 2021 to restrict the AVX module to simple AVX usage.
+     * If users want to enable AVX2 and/or AVX512 capabilities, they will need
+     * to manually enable them.
+     */
+    requested_flags = requested_flags & ~(OMPI_OP_AVX_HAS_AVX512F_FLAG | OMPI_OP_AVX_HAS_AVX512BW_FLAG | OMPI_OP_AVX_HAS_AVX2_FLAG);
     (void) mca_base_component_var_register(&mca_op_avx_component.super.opc_version,
                                            "support",
                                            "Level of SSE/MMX/AVX support to be used (combination of processor capabilities as follow SSE 0x01, SSE2 0x02, SSE3 0x04, SSE4.1 0x08, AVX 0x010, AVX2 0x020, AVX512F 0x100, AVX512BW 0x200) capped by the local architecture capabilities",
