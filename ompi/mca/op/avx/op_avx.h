@@ -46,7 +46,8 @@ typedef struct {
        avxs; replace them with whatever is relevant for your
        component. */
 
-    uint32_t flags; /* AVX capabilities supported by the processor */
+    uint32_t supported; /* AVX capabilities supported by the environment */
+    uint32_t flags; /* AVX capabilities requested by this process */
 } ompi_op_avx_component_t;
 
 /**
