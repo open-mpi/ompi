@@ -14,6 +14,7 @@
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2020      Amazon.com, Inc. or its affiliates.  All Rights
  *                         reserved.
+ * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
  * $COPYRIGHT$
  */
 #include "ompi_config.h"
@@ -996,7 +997,7 @@ void ompi_rte_abort_peers(opal_process_name_t *procs,
 }
 
 static size_t handler = SIZE_MAX;
-static bool debugger_event_active = true;
+static volatile bool debugger_event_active = true;
 
 static void _release_fn(size_t refid, pmix_status_t status,
                         const pmix_proc_t *source,
@@ -1014,14 +1015,14 @@ static void _release_fn(size_t refid, pmix_status_t status,
 
 /*
  * Wait for a debugger if asked.  We support two ways of waiting for
- * attaching debuggers -- see big comment in
- * pmix/tools/pmixrun/debuggers.c explaining the two scenarios.
+ * attaching debuggers
  */
 void ompi_rte_wait_for_debugger(void)
 {
     pmix_info_t directive;
     char *evar;
     int time, code = PMIX_ERR_DEBUGGER_RELEASE;
+    pmix_info_t info;
 
     /* check PMIx to see if we are under a debugger */
     if (NULL == getenv("PMIX_DEBUG_WAIT_FOR_NOTIFY") &&
@@ -1045,6 +1046,13 @@ void ompi_rte_wait_for_debugger(void)
     PMIX_INFO_LOAD(&directive, PMIX_EVENT_HDLR_NAME, "MPI-DEBUGGER-ATTACH", PMIX_STRING);
     PMIx_Register_event_handler(&code, 1, &directive, 1, _release_fn, NULL, NULL);
     PMIX_INFO_DESTRUCT(&directive);
+
+    /* notify the host that we are waiting */
+    PMIX_INFO_LOAD(&info, PMIX_EVENT_NON_DEFAULT, NULL, PMIX_BOOL);
+    PMIx_Notify_event(PMIX_DEBUG_WAITING_FOR_NOTIFY,
+                      &opal_process_info.myprocid,
+                      PMIX_RANGE_RM, &info, 1, NULL, NULL);
+    PMIX_INFO_DESTRUCT(&info);
 
     /* let the MPI progress engine run while we wait for debugger release */
     OMPI_WAIT_FOR_COMPLETION(debugger_event_active);

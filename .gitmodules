@@ -5,4 +5,4 @@
 [submodule "openpmix"]
 	path = 3rd-party/openpmix
 	url = https://github.com/openpmix/openpmix.git
-	branch = v4.0
+	branch = master
