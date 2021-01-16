@@ -30,6 +30,7 @@
 #                         reserved.
 # Copyright (c) 2020      Amazon.com, Inc. or its affiliates.
 #                         All Rights reserved.
+# Copyright (c) 2021      Nanook Consulting  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -295,6 +296,8 @@ OPAL_CHECK_CUDA
 
 m4_ifdef([project_ompi], [OMPI_CONFIGURE_OPTIONS])
 m4_ifdef([project_oshmem], [OSHMEM_CONFIGURE_OPTIONS])
+OMPI_PMIX_ADD_ARGS
+OMPI_PRRTE_ADD_ARGS
 
 # Set up project specific AM_CONDITIONALs
 AS_IF([test "$enable_ompi" != "no"], [project_ompi_amc=true], [project_ompi_amc=false])
