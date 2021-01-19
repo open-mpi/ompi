@@ -38,7 +38,7 @@ AC_DEFUN([OPAL_LIBNL_SANITY_INIT], [
     opal_libnlv1_libs=
     opal_libnlv3_libs=
     AC_ARG_WITH([libnl],
-                [AC_HELP_STRING([--with-libnl(=DIR)],
+                [AS_HELP_STRING([--with-libnl(=DIR)],
                                 [Directory prefix for libnl (typically only necessary if libnl is installed in a location that the compiler/linker will not search by default)])])
 
     # The --with options carry two pieces of information: 1) do
@@ -364,5 +364,5 @@ AC_DEFUN([OPAL_CHECK_LIBNL_SUMMARY],[
           [AC_MSG_RESULT([(none)])])
     AS_IF([test -n "$opal_libnlv1_libs" && test -n "$opal_libnlv3_libs"],
           [AC_MSG_WARN([libnl v1 and libnl v3 have been found as dependent libraries])
-           AC_ERROR([This is a configuration that is known to cause run-time crashes])])
+           AC_MSG_ERROR([This is a configuration that is known to cause run-time crashes])])
 ])

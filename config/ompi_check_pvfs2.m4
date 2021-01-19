@@ -38,7 +38,7 @@ AC_DEFUN([OMPI_CHECK_PVFS2],[
 
     # Get some configuration information
     AC_ARG_WITH([pvfs2],
-        [AC_HELP_STRING([--with-pvfs2(=DIR)],
+        [AS_HELP_STRING([--with-pvfs2(=DIR)],
              [Build Pvfs2 support, optionally adding DIR/include, DIR/lib, and DIR/lib64 to the search path for headers and libraries])])
     OPAL_CHECK_WITHDIR([pvfs2], [$with_pvfs2], [include/pvfs2.h])
 

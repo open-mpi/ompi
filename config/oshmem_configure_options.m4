@@ -26,7 +26,7 @@ AC_SUBST(OSHMEM_LIBSHMEM_EXTRA_LDFLAGS)
 #
 AC_MSG_CHECKING([if want oshmem])
 AC_ARG_ENABLE([oshmem],
-              [AC_HELP_STRING([--enable-oshmem],
+              [AS_HELP_STRING([--enable-oshmem],
                               [Enable building the OpenSHMEM interface (available on Linux only, where it is enabled by default)])])
 if test "$enable_oshmem" = "no"; then
     AC_MSG_RESULT([no])
@@ -51,7 +51,7 @@ fi
 #
 AC_MSG_CHECKING([if want SGI/Quadrics compatibility mode])
 AC_ARG_ENABLE(oshmem-compat,
-        AC_HELP_STRING([--enable-oshmem-compat],
+        AS_HELP_STRING([--enable-oshmem-compat],
             [enable compatibility mode (default: enabled)]))
 if test "$enable_oshmem_compat" != "no"; then
     AC_MSG_RESULT([yes])
@@ -70,7 +70,7 @@ AC_DEFINE_UNQUOTED([OSHMEM_SPEC_COMPAT], [$OSHMEM_SPEC_COMPAT],
 #
 AC_MSG_CHECKING([if want OSHMEM API parameter checking])
 AC_ARG_WITH(oshmem-param-check,
-    AC_HELP_STRING([--with-oshmem-param-check(=VALUE)],
+    AS_HELP_STRING([--with-oshmem-param-check(=VALUE)],
                    [behavior of OSHMEM API function parameter checking.  Valid values are: always, never.  If --with-oshmem-param-check is specified with no VALUE argument, it is equivalent to a VALUE of "always"; --without-oshmem-param-check is equivalent to "never" (default: always).]))
 if test "$with_oshmem_param_check" = "no" || \
 	test "$with_oshmem_param_check" = "never"; then
@@ -100,7 +100,7 @@ AC_CHECK_FUNCS([on_exit])
 #  OSHMEM profiling support
 #
 AC_ARG_ENABLE(oshmem-profile,
-    AC_HELP_STRING([--enable-oshmem-profile],
+    AS_HELP_STRING([--enable-oshmem-profile],
                    [enable OSHMEM profiling (default: enabled)]))
 AC_MSG_CHECKING([if want pshmem])
 AS_IF([test "$enable_oshmem_profile" != "no"],
@@ -122,7 +122,7 @@ AS_IF([test "$enable_oshmem" = "no" && \
 #
 AC_MSG_CHECKING([if want to build OSHMEM fortran bindings])
 AC_ARG_ENABLE(oshmem-fortran,
-AC_HELP_STRING([--enable-oshmem-fortran],
+AS_HELP_STRING([--enable-oshmem-fortran],
                [enable OSHMEM Fortran bindings (default: enabled if Fortran compiler found)]))
 if test "$enable_oshmem_fortran" != "no"; then
 # If no OMPI FORTRAN, bail

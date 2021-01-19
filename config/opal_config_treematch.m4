@@ -26,14 +26,14 @@ AC_DEFUN([OPAL_CONFIG_TREEMATCH], [
 
     if test -z "$opal_config_treematch_happy" ; then
         AC_ARG_WITH([treematch],
-                    [AC_HELP_STRING([--with-treematch(=DIR)],
+                    [AS_HELP_STRING([--with-treematch(=DIR)],
                                     [Build TreeMatch topology support, optionally adding DIR/include, DIR/lib, and DIR/lib64 to the search path for headers and libraries])],
 		    [], [with_treematch=yes])
         AC_ARG_WITH([treematch-include],
-                    [AC_HELP_STRING([--with-treematch-include(=DIR)],
+                    [AS_HELP_STRING([--with-treematch-include(=DIR)],
                                     ["Search for TreeMatch headers in DIR"])])
         AC_ARG_WITH([treematch-libdir],
-                    [AC_HELP_STRING([--with-treematch-libdir(=DIR)],
+                    [AS_HELP_STRING([--with-treematch-libdir(=DIR)],
                                     ["Search for TreeMatch libraries in DIR"])])
 
         treematch_files_local=no

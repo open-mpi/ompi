@@ -25,7 +25,7 @@ AC_DEFUN([OPAL_CHECK_KNEM],[
     if test -z "$opal_check_knem_happy" ; then
 	OPAL_VAR_SCOPE_PUSH([opal_check_knem_$1_save_CPPFLAGS opal_check_knem_dir])
 	AC_ARG_WITH([knem],
-		    [AC_HELP_STRING([--with-knem(=DIR)],
+		    [AS_HELP_STRING([--with-knem(=DIR)],
 				    [Build knem Linux kernel module support, searching for headers in DIR/include])])
 
 	OPAL_CHECK_WITHDIR([knem], [$with_knem], [include/knem_io.h])

@@ -31,7 +31,7 @@ AC_DEFUN([MCA_opal_shmem_mmap_CONFIG],[
     # do we have the mmap shm stuff?
     AC_MSG_CHECKING([if want mmap shared memory support])
     AC_ARG_ENABLE(mmap-shmem,
-        AC_HELP_STRING([--disable-mmap-shmem],
+        AS_HELP_STRING([--disable-mmap-shmem],
                        [disable mmap shared memory support (default: enabled)]))
     AS_IF([test "$enable_mmap_shmem" = "no"],
           [AC_MSG_RESULT([no])

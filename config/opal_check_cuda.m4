@@ -32,7 +32,7 @@ AC_DEFUN([OPAL_CHECK_CUDA],[
 # Check to see if user wants CUDA support
 #
 AC_ARG_WITH([cuda],
-            [AC_HELP_STRING([--with-cuda(=DIR)],
+            [AS_HELP_STRING([--with-cuda(=DIR)],
             [Build cuda support, optionally adding DIR/include])])
 AC_MSG_CHECKING([if --with-cuda is set])
 

@@ -35,7 +35,7 @@ AC_DEFUN([OPAL_CHECK_ALPS_CLE4],[
     AC_MSG_CHECKING([Checking for ALPS components on a CLE 4 system with alps  $with_alps])
 
     AC_ARG_WITH([alps-libdir],
-                [AC_HELP_STRING([--with-alps-libdir=DIR],
+                [AS_HELP_STRING([--with-alps-libdir=DIR],
                 [Location of alps libraries (alpslli, alpsutil) (default: /usr/lib/alps (/opt/cray/xe-sysroot/default/user on eslogin nodes))])])
 
 #
@@ -86,7 +86,7 @@ AC_DEFUN([OPAL_CHECK_ALPS],[
     if test -z "$opal_check_cray_alps_happy"; then
 
         AC_ARG_WITH([alps],
-                    [AC_HELP_STRING([--with-alps(=DIR|yes|no)],
+                    [AS_HELP_STRING([--with-alps(=DIR|yes|no)],
                     [Build with ALPS scheduler component, optionally adding DIR/include, DIR/lib, and DIR/lib64 to the search path for headers and libraries (default: auto)])],[],with_alps=auto)
 
         if test -f /etc/opt/cray/release/clerelease; then

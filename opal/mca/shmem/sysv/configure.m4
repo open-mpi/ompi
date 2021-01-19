@@ -31,7 +31,7 @@ AC_DEFUN([MCA_opal_shmem_sysv_CONFIG],[
     # do we have the sysv shm stuff?
     AC_MSG_CHECKING([if want SYSV shared memory support])
     AC_ARG_ENABLE(sysv-shmem,
-        AC_HELP_STRING([--disable-sysv-shmem],
+        AS_HELP_STRING([--disable-sysv-shmem],
                        [disable sysv shared memory support (default: enabled)]))
     AS_IF([test "$enable_sysv_shmem" = "no"],
           [AC_MSG_RESULT([no])

@@ -217,7 +217,7 @@ AC_CONFIG_HEADERS([opal/include/opal_config.h])
 m4_ifdef([project_ompi],
          [AC_CONFIG_HEADERS([ompi/include/mpi.h])])
 m4_ifdef([project_oshmem],
-         [AC_CONFIG_HEADER([oshmem/include/shmem.h])])
+         [AC_CONFIG_HEADERS([oshmem/include/shmem.h])])
 
 opal_show_subtitle "Initialization, setup"
 
@@ -305,7 +305,7 @@ m4_ifndef([project_oshmem], [project_oshmem_amc="no (not available)"])
 
 # Enable/Disable Software-Based Performance Counters Capability
 AC_ARG_ENABLE(spc,
-    AC_HELP_STRING([--enable-spc],
+    AS_HELP_STRING([--enable-spc],
                    [Enable software-based performance counters capability (default: disabled)]))
 if test "$enable_spc" = "yes"; then
     AC_MSG_RESULT([yes])

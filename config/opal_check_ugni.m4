@@ -33,7 +33,7 @@ dnl
 
 AC_DEFUN([OPAL_CHECK_UGNI], [
     if test -z "$opal_check_ugni_happy" ; then
-        AC_ARG_WITH([ugni], [AC_HELP_STRING([--with-ugni],
+        AC_ARG_WITH([ugni], [AS_HELP_STRING([--with-ugni],
             [Build support for Cray GNI. Set PKG_CONFIG_PATH env. variable to specify alternate path.])])
 
         opal_check_ugni_happy="no"

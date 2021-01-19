@@ -18,7 +18,7 @@ dnl
 
 AC_DEFUN([OPAL_SETUP_MAN_PAGES],[
     AC_ARG_ENABLE(man-pages,
-                  [AC_HELP_STRING([--disable-man-pages],
+                  [AS_HELP_STRING([--disable-man-pages],
                                   [Do not generate/install man pages (default: enable)])])
 
     PANDOC=

@@ -14,12 +14,12 @@ AC_DEFUN([OMPI_CHECK_DELETED_OPTIONS],[
 
     # --with-pmi options were removed in v5.0
     AC_ARG_WITH([pmi],
-                [AC_HELP_STRING([--with-pmi(=DIR)],
+                [AS_HELP_STRING([--with-pmi(=DIR)],
                                 [*DELETED* Build PMI support, optionally adding DIR to the search path (default: no)])],
                 [with_pmi_given=yes])
 
     AC_ARG_WITH([pmi-libdir],
-                [AC_HELP_STRING([--with-pmi-libdir=DIR],
+                [AS_HELP_STRING([--with-pmi-libdir=DIR],
                                 [*DELETED* Look for libpmi or libpmi2 in the given directory DIR, DIR/lib or DIR/lib64])],
                 [with_pmi_libdir_given=yes])
 
@@ -46,15 +46,15 @@ AC_DEFUN([OMPI_CHECK_DELETED_OPTIONS],[
     cxxseek=0
     cxxex=0
     AC_ARG_ENABLE([mpi-cxx],
-                  [AC_HELP_STRING([--enable-mpi-cxx],
+                  [AS_HELP_STRING([--enable-mpi-cxx],
                                   [*DELETED* Build the MPI C++ bindings])],
                   [cxx=1])
     AC_ARG_ENABLE([mpi-cxx-seek],
-                  [AC_HELP_STRING([--enable-mpi-cxx-seek],
+                  [AS_HELP_STRING([--enable-mpi-cxx-seek],
                                   [*DELETED* Build support for MPI::SEEK])],
                   [cxxseek=1])
     AC_ARG_ENABLE([cxx-exceptions],
-                  [AC_HELP_STRING([--enable-cxx-exceptions],
+                  [AS_HELP_STRING([--enable-cxx-exceptions],
                                   [*DELETED* Build support for C++ exceptions in the MPI C++ bindings])],
                   [cxxex=1])
 

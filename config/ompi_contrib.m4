@@ -39,7 +39,7 @@ AC_DEFUN([OMPI_CONTRIB],[
 
     # Option to not build some of the contributed software packages
     AC_ARG_ENABLE([contrib-no-build],
-        AC_HELP_STRING([--enable-contrib-no-build=LIST],
+        AS_HELP_STRING([--enable-contrib-no-build=LIST],
                         [Comma-separated list of contributed package names that will not be built.  Possible values: ompi_mpicontrib_list.  Example: "--enable-contrib-no-build=foo,bar" will disable building both the "foo" and "bar" contributed software packages (default: none -- i.e., build all possible contrib packages)]))
 
     # Parse the list to see what we should not build

@@ -44,7 +44,7 @@ AC_DEFUN([_OPAL_CHECK_PACKAGE_HEADER], [
     AS_IF([test "$dir_prefix" = "/usr" || \
            test "$dir_prefix" = "/usr/local"],
            [ # try as is...
-            AC_VERBOSE([looking for header without includes])
+            AC_MSG_NOTICE([looking for header without includes])
             AC_CHECK_HEADERS([$2], [opal_check_package_header_happy="yes"], [])
             AS_IF([test "$opal_check_package_header_happy" = "no"],
                   [# no go on the as is - reset the cache and try again
@@ -94,7 +94,7 @@ AC_DEFUN([_OPAL_CHECK_PACKAGE_LIB], [
                   test "$opal_check_package_libdir" = "/usr" || \
                   test "$opal_check_package_libdir" = "/usr/local"],
                [ # try as is...
-                AC_VERBOSE([looking for library without search path])
+                AC_MSG_NOTICE([looking for library without search path])
                 AC_SEARCH_LIBS([$3], [$2],
                         [opal_check_package_lib_happy="yes"],
                         [opal_check_package_lib_happy="no"], [$4])
@@ -108,7 +108,7 @@ AC_DEFUN([_OPAL_CHECK_PACKAGE_LIB], [
                [AS_IF([test "$opal_check_package_libdir" != ""],
                     [$1_LDFLAGS="$$1_LDFLAGS -L$opal_check_package_libdir/lib"
                      LDFLAGS="$LDFLAGS -L$opal_check_package_libdir/lib"
-                     AC_VERBOSE([looking for library in lib])
+                     AC_MSG_NOTICE([looking for library in lib])
                      AC_SEARCH_LIBS([$3], [$2],
                                [opal_check_package_lib_happy="yes"],
                                [opal_check_package_lib_happy="no"], [$4])
@@ -122,7 +122,7 @@ AC_DEFUN([_OPAL_CHECK_PACKAGE_LIB], [
                [AS_IF([test "$opal_check_package_libdir" != ""],
                     [$1_LDFLAGS="$$1_LDFLAGS -L$opal_check_package_libdir/lib64"
                      LDFLAGS="$LDFLAGS -L$opal_check_package_libdir/lib64"
-                     AC_VERBOSE([looking for library in lib64])
+                     AC_MSG_NOTICE([looking for library in lib64])
                      AC_SEARCH_LIBS([$3], [$2],
                                [opal_check_package_lib_happy="yes"],
                                [opal_check_package_lib_happy="no"], [$4])

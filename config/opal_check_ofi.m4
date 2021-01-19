@@ -61,18 +61,18 @@ dnl
 AC_DEFUN([_OPAL_CHECK_OFI],[
     # Add --with options
     AC_ARG_WITH([libfabric],
-                [AC_HELP_STRING([--with-libfabric=DIR],
+                [AS_HELP_STRING([--with-libfabric=DIR],
                                 [Deprecated synonym for --with-ofi])])
     AC_ARG_WITH([libfabric-libdir],
-                [AC_HELP_STRING([--with-libfabric-libdir=DIR],
+                [AS_HELP_STRING([--with-libfabric-libdir=DIR],
                                 [Deprecated synonym for --with-ofi-libdir])])
 
     AC_ARG_WITH([ofi],
-                [AC_HELP_STRING([--with-ofi=DIR],
+                [AS_HELP_STRING([--with-ofi=DIR],
                                 [Specify location of OFI libfabric installation, adding DIR/include to the default search location for libfabric headers, and DIR/lib or DIR/lib64 to the default search location for libfabric libraries.  Error if libfabric support cannot be found.])])
 
     AC_ARG_WITH([ofi-libdir],
-                [AC_HELP_STRING([--with-ofi-libdir=DIR],
+                [AS_HELP_STRING([--with-ofi-libdir=DIR],
                                 [Search for OFI libfabric libraries in DIR])])
 
     if test "$with_ofi" = ""; then

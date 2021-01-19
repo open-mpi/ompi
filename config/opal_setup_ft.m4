@@ -36,7 +36,7 @@ AC_DEFUN([OPAL_SETUP_FT_OPTIONS],[
     # define a variable that tells us that these options were enabled
     opal_setup_ft_options="yes"
     AC_ARG_WITH(ft,
-                [AC_HELP_STRING([--with-ft=TYPE],
+                [AS_HELP_STRING([--with-ft=TYPE],
                 [Specify the type of fault tolerance to enable. Options: mpi (ULFM), (default: mpi)])],
                 [],
                 [with_ft=auto]) # If not specified act as if --with-ft=mpi, but make external prte support failure only if hard requested

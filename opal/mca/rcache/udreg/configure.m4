@@ -24,7 +24,7 @@
 AC_DEFUN([MCA_opal_rcache_udreg_CONFIG],[
     AC_CONFIG_FILES([opal/mca/rcache/udreg/Makefile])
 
-    AC_ARG_WITH([udreg], [AC_HELP_STRING([--with-udreg],
+    AC_ARG_WITH([udreg], [AS_HELP_STRING([--with-udreg],
 		[Build support for Cray udreg support. Set PKG_CONFIG_PATH env. variable to specify alternate path.])])
 
     rcache_udreg_happy="no"

@@ -576,7 +576,7 @@ AC_DEFUN([OPAL_WITH_OPTION_MIN_MAX_VALUE], [
     max_value=[$2]
     AC_MSG_CHECKING([maximum length of ]m4_translit($1, [_], [ ]))
     AC_ARG_WITH([max-]m4_translit($1, [_], [-]),
-        AC_HELP_STRING([--with-max-]m4_translit($1, [_], [-])[=VALUE],
+        AS_HELP_STRING([--with-max-]m4_translit($1, [_], [-])[=VALUE],
                        [maximum length of ]m4_translit($1, [_], [ ])[s.  VALUE argument has to be specified (default: [$2]).]))
     if test ! -z "$with_max_[$1]" && test "$with_max_[$1]" != "no" ; then
         # Ensure it's a number (hopefully an integer!), and >0

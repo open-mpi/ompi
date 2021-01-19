@@ -41,7 +41,7 @@ AC_DEFUN([OMPI_EXT],[
     # --enable-mpi-ext=[,]*EXTENSION[,]*
     #
     AC_ARG_ENABLE(mpi-ext,
-        AC_HELP_STRING([--enable-mpi-ext[=LIST]],
+        AS_HELP_STRING([--enable-mpi-ext[=LIST]],
                        [Comma-separated list of extensions that should be built.  Possible values: ompi_mpiext_list.  Example: "--enable-mpi-ext=foo,bar" will enable building the MPI extensions "foo" and "bar".  If LIST is empty or the special value "all", then all available MPI extensions will be built (default: all).]))
 
     # print some nice messages about what we're about to do...

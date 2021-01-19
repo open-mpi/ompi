@@ -506,12 +506,12 @@ AC_DEFUN([_OPAL_CHECK_ASM_LSYM],[
 
     for sym in L .L $ L$ ; do
         asm_result=0
-        echo "configure: trying $sym" >&AC_FD_CC
+        echo "configure: trying $sym" >&AS_MESSAGE_LOG_FD
         OPAL_TRY_ASSEMBLE([foobar$opal_cv_asm_label_suffix
 ${sym}mytestlabel$opal_cv_asm_label_suffix],
             [# ok, we succeeded at assembling.  see if we can nm,
              # throwing the results in a file
-            if $NM conftest.$OBJEXT > conftest.out 2>&AC_FD_CC ; then
+            if $NM conftest.$OBJEXT > conftest.out 2>&AS_MESSAGE_LOG_FD ; then
                 if test "`$GREP mytestlabel conftest.out`" = "" ; then
                     # there was no symbol...  looks promising to me
                     $1="$sym"
@@ -523,8 +523,8 @@ ${sym}mytestlabel$opal_cv_asm_label_suffix],
                 fi
             else
                 # not so much on the NM goodness :/
-                echo "$NM failed.  Output from NM was:" >&AC_FD_CC
-                cat conftest.out >&AC_FD_CC
+                echo "$NM failed.  Output from NM was:" >&AS_MESSAGE_LOG_FD
+                cat conftest.out >&AS_MESSAGE_LOG_FD
                 AC_MSG_WARN([$NM could not read object file])
             fi
             ])
@@ -608,7 +608,7 @@ AC_DEFUN([_OPAL_CHECK_ASM_GSYM],[
 
     for sym in "_" "" "." ; do
         asm_result=0
-        echo "configure: trying $sym" >&AC_FD_CC
+        echo "configure: trying $sym" >&AS_MESSAGE_LOG_FD
 cat > conftest_c.c <<EOF
 #ifdef __cplusplus
 extern "C" {
@@ -634,25 +634,25 @@ $opal_cv_asm_endproc ${sym}gsym_test_func
             [opal_compile="$CC $CFLAGS -I. conftest_c.c -c > conftest.cmpl 2>&1"
              if AC_TRY_EVAL(opal_compile) ; then
                 # save the warnings
-                 cat conftest.cmpl >&AC_FD_CC
+                 cat conftest.cmpl >&AS_MESSAGE_LOG_FD
                  opal_link="$CC $CFLAGS conftest_c.$OBJEXT conftest.$OBJEXT -o conftest  $LDFLAGS $LIBS > conftest.link 2>&1"
                  if AC_TRY_EVAL(opal_link) ; then
                      # save the warnings
-                     cat conftest.link >&AC_FD_CC
+                     cat conftest.link >&AS_MESSAGE_LOG_FD
                      asm_result=1
                  else
-                     cat conftest.link >&AC_FD_CC
-                     echo "configure: failed C program was: " >&AC_FD_CC
-                     cat conftest_c.c >&AC_FD_CC
-                     echo "configure: failed ASM program was: " >&AC_FD_CC
-                     cat conftest.s >&AC_FD_CC
+                     cat conftest.link >&AS_MESSAGE_LOG_FD
+                     echo "configure: failed C program was: " >&AS_MESSAGE_LOG_FD
+                     cat conftest_c.c >&AS_MESSAGE_LOG_FD
+                     echo "configure: failed ASM program was: " >&AS_MESSAGE_LOG_FD
+                     cat conftest.s >&AS_MESSAGE_LOG_FD
                      asm_result=0
                  fi
              else
                 # save output and failed program
-                 cat conftest.cmpl >&AC_FD_CC
-                 echo "configure: failed C program was: " >&AC_FD_CC
-                 cat conftest.c >&AC_FD_CC
+                 cat conftest.cmpl >&AS_MESSAGE_LOG_FD
+                 echo "configure: failed C program was: " >&AS_MESSAGE_LOG_FD
+                 cat conftest.c >&AS_MESSAGE_LOG_FD
                  asm_result=0
              fi],
             [asm_result=0])
@@ -715,7 +715,7 @@ foo$opal_cv_asm_label_suffix
         [opal_asm_addr=[`$NM conftest.$OBJEXT | $GREP foo | sed -e 's/.*\([0-9a-fA-F][0-9a-fA-F]\).*foo.*/\1/'`]],
         [opal_asm_addr=""])
     # test for both 16 and 10 (decimal and hex notations)
-    echo "configure: .align test address offset is $opal_asm_addr" >&AC_FD_CC
+    echo "configure: .align test address offset is $opal_asm_addr" >&AS_MESSAGE_LOG_FD
     if test "$opal_asm_addr" = "16" || test "$opal_asm_addr" = "10" ; then
        opal_cv_asm_align_log="yes"
     else
@@ -772,7 +772,7 @@ AC_DEFUN([_OPAL_CHECK_ASM_TYPE],[
     *)
         for type  in @ \# % ; do
             asm_result=0
-            echo "configure: trying $type" >&AC_FD_CC
+            echo "configure: trying $type" >&AS_MESSAGE_LOG_FD
             OPAL_TRY_ASSEMBLE([     .type mysym, ${type}function
 mysym:],
                  [opal_cv_asm_type="${type}"
@@ -1090,11 +1090,11 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
     AC_REQUIRE([OPAL_SETUP_CXX])
     AC_REQUIRE([AM_PROG_AS])
 
-    AC_ARG_ENABLE([c11-atomics],[AC_HELP_STRING([--enable-c11-atomics],
+    AC_ARG_ENABLE([c11-atomics],[AS_HELP_STRING([--enable-c11-atomics],
                   [Enable use of C11 atomics if available (default: enabled)])])
 
     AC_ARG_ENABLE([builtin-atomics],
-      [AC_HELP_STRING([--enable-builtin-atomics],
+      [AS_HELP_STRING([--enable-builtin-atomics],
          [Enable use of GCC built-in atomics (default: autodetect)])])
 
     OPAL_CHECK_C11_CSWAP_INT128

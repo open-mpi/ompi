@@ -30,7 +30,7 @@ AC_DEFUN([OMPI_SETUP_JAVA_BINDINGS],[
     opal_show_subtitle "Java MPI bindings"
 
     AC_ARG_ENABLE(mpi-java,
-        AC_HELP_STRING([--enable-mpi-java],
+        AS_HELP_STRING([--enable-mpi-java],
                        [enable Java MPI bindings (default: disabled)]))
 
     # Find the Java compiler and whatnot.

@@ -38,7 +38,7 @@ AC_DEFUN([OMPI_CHECK_GPFS],[
 
     # Get some configuration information
     AC_ARG_WITH([gpfs],
-        [AC_HELP_STRING([--with-gpfs(=DIR)],
+        [AS_HELP_STRING([--with-gpfs(=DIR)],
              [Build Gpfs support, optionally adding DIR/include, DIR/lib, and DIR/lib64 to the search path for headers and libraries])])
     OPAL_CHECK_WITHDIR([gpfs], [$with_gpfs], [include/gpfs.h])
 

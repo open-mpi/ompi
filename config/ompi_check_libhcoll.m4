@@ -20,7 +20,7 @@ AC_DEFUN([OMPI_CHECK_HCOLL],[
     OPAL_VAR_SCOPE_PUSH([ompi_check_hcoll_dir ompi_check_hcoll_libs ompi_check_hcoll_happy CPPFLAGS_save LDFLAGS_save LIBS_save])
 
     AC_ARG_WITH([hcoll],
-        [AC_HELP_STRING([--with-hcoll(=DIR)],
+        [AS_HELP_STRING([--with-hcoll(=DIR)],
              [Build hcoll (Mellanox Hierarchical Collectives) support, optionally adding
               DIR/include and DIR/lib or DIR/lib64 to the search path for headers and libraries])])
 

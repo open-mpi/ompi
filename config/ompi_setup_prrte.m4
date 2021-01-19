@@ -47,10 +47,10 @@ AC_DEFUN([OMPI_SETUP_PRRTE],[
     # to be disabled
     m4_ifdef([package_prrte],
         [AC_ARG_WITH([prrte],
-            [AC_HELP_STRING([--with-prrte(=DIR)],
+            [AS_HELP_STRING([--with-prrte(=DIR)],
                            [Build PRTE support.  DIR can take one of four values: "internal", "external", "no", or a valid directory name.  "internal" forces Open MPI to use its internal copy of PRRTE.  "external" forces Open MPI to use an external installation of PRRTE.  Supplying a valid directory name also forces Open MPI to use an external installation of PRRTE, and adds DIR/include, DIR/lib, and DIR/lib64 to the search path for headers and libraries. If no argument is specified, Open MPI will search default locations for PRRTE and fall back to an internal version if one is not found.])])],
         [AC_ARG_WITH([prrte],
-            [AC_HELP_STRING([--with-prrte(=DIR)],
+            [AS_HELP_STRING([--with-prrte(=DIR)],
                            [Build PRRTE support.  DIR can take one of three values:  "external", "no", or a valid directory name.  "external" forces Open MPI to use an external installation of PRRTE.  Supplying a valid directory name also forces Open MPI to use an external installation of PRRTE, and adds DIR/include, DIR/lib, and DIR/lib64 to the search path for headers and libraries. If no argument is specified, Open MPI will search default locations for PRRTE and disable creating mpirun symlinks if one is not found.])])])
 
     m4_ifdef([package_prrte],
@@ -131,17 +131,17 @@ AC_DEFUN([_OMPI_SETUP_PRRTE_INTERNAL], [
     # there is not a great way to support the orterun/mpirun checks
     # without this argument.
     AC_ARG_ENABLE([prte-prefix-by-default],
-        [AC_HELP_STRING([--enable-prte-prefix-by-default],
+        [AS_HELP_STRING([--enable-prte-prefix-by-default],
             [Make "mpirun ..." behave exactly the same as "mpirun --prefix \$prefix", where \$prefix is the value given to --prefix in configure (default:enabled)])])
 
     AC_ARG_ENABLE([orterun-prefix-by-default],
-        [AC_HELP_STRING([--enable-orterun-prefix-by-default],
+        [AS_HELP_STRING([--enable-orterun-prefix-by-default],
             [*DEPRECATED* Please use --enable-prte-prefix-by-default in the future.])],
         [print_prrte_warning="yes"
          deprecated_prefix_by_default=$orterun_prefix_by_default])
 
     AC_ARG_ENABLE([mpirun-prefix-by-default],
-        [AC_HELP_STRING([--enable-mpirun-prefix-by-default],
+        [AS_HELP_STRING([--enable-mpirun-prefix-by-default],
             [*DEPRECATED* Please use --enable-prte-prefix-by-default in the future.])],
         [print_prrte_warning="yes"
          deprecated_prefix_by_default=$mpirun_prefix_by_default])

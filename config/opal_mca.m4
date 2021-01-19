@@ -56,14 +56,14 @@ AC_DEFUN([OPAL_MCA],[
     # --disable-mca-dso
     #
     AC_ARG_ENABLE([mca-no-build],
-        [AC_HELP_STRING([--enable-mca-no-build=LIST],
+        [AS_HELP_STRING([--enable-mca-no-build=LIST],
                         [Comma-separated list of <type>-<component> pairs
                          that will not be built.  Example:
                          "--enable-mca-no-build=btl-portals,oob-ud" will
                          disable building the "portals" btl and the "ud"
                          oob components.])])
     AC_ARG_ENABLE(mca-dso,
-        AC_HELP_STRING([--enable-mca-dso=LIST],
+        AS_HELP_STRING([--enable-mca-dso=LIST],
                        [Comma-separated list of types and/or
                         type-component pairs that will be built as
                         run-time loadable components (as opposed to
@@ -71,7 +71,7 @@ AC_DEFUN([OPAL_MCA],[
                         platform.  The default is to build all components
                         as DSOs.]))
     AC_ARG_ENABLE(mca-static,
-        AC_HELP_STRING([--enable-mca-static=LIST],
+        AS_HELP_STRING([--enable-mca-static=LIST],
                        [Comma-separated list of types and/or
                         type-component pairs that will be built statically
                         linked into the library.  The default (if DSOs are
@@ -79,7 +79,7 @@ AC_DEFUN([OPAL_MCA],[
                         Enabling a component as static disables it
                         building as a DSO.]))
     AC_ARG_ENABLE(mca-direct,
-        AC_HELP_STRING([--enable-mca-direct=LIST],
+        AS_HELP_STRING([--enable-mca-direct=LIST],
                        [Comma-separated list of type-component pairs that
                         will be hard coded as the one component to use for
                         a given component type, saving the (small)
