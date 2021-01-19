@@ -42,6 +42,8 @@ static int flux_abort(int flag, const char msg[],
                     opal_list_t *procs);
 static int flux_commit(void);
 static int flux_fence(opal_list_t *procs, int collect_data);
+static int flux_fencenb(opal_list_t *procs, int collect_data,
+                  opal_pmix_op_cbfunc_t cbfunc, void *cbdata);
 static int flux_put(opal_pmix_scope_t scope,
                   opal_value_t *kv);
 static int flux_get(const opal_process_name_t *id,
@@ -65,6 +67,7 @@ const opal_pmix_base_module_t opal_pmix_flux_module = {
     .abort = flux_abort,
     .commit = flux_commit,
     .fence = flux_fence,
+    .fence_nb = flux_fencenb,
     .put = flux_put,
     .get = flux_get,
     .publish = flux_publish,
@@ -671,6 +674,23 @@ static int flux_commit(void)
     if (PMI_SUCCESS != (rc = PMI_KVS_Commit(pmix_kvs_name))) {
         OPAL_PMI_ERROR(rc, "PMI_KVS_Commit");
         return OPAL_ERROR;
+    }
+    return OPAL_SUCCESS;
+}
+
+static int flux_fencenb(opal_list_t *procs, int collect_data,
+                        opal_pmix_op_cbfunc_t cbfunc, void *cbdata)
+{
+    int rc;
+    int status;
+    if (PMI_SUCCESS != (rc = PMI_Barrier())) {
+        OPAL_PMI_ERROR(rc, "PMI_Barrier");
+        return OPAL_ERROR;
+    }
+    if (NULL == cbfunc) {
+        return OPAL_ERROR;
+    } else {
+        cbfunc(status, cbdata);
     }
     return OPAL_SUCCESS;
 }
