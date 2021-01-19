@@ -76,7 +76,14 @@ int mca_io_ompio_file_set_view (ompi_file_t *fp,
        file pointer, once for the shared file pointer (if it is existent)
     */
     fh = &data->ompio_fh;
-  
+
+    if ( MPI_DISPLACEMENT_CURRENT == disp &&
+         !(fh->f_amode & MPI_MODE_SEQUENTIAL ) ) {
+        // MPI_DISPLACEMENT_CURRENT is only valid if amode is MPI_MODE_SEQUENTIAL
+        return MPI_ERR_DISP;
+    }
+        
+    
     OPAL_THREAD_LOCK(&fp->f_lock);
     ret = mca_common_ompio_set_view(fh, disp, etype, filetype, datarep, info);
     OPAL_THREAD_UNLOCK(&fp->f_lock);
