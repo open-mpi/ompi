@@ -39,13 +39,13 @@
  *
  * Component selection is done per commuicator, at Communicator
  * construction time.  mca_coll_base_comm_select() is used to
- * create the list of components available to the compoenent
+ * create the list of components available to the componenent
  * collm_comm_query function, instantiating a module for each
- * component that i usable, and sets the module collective function pointers.
+ * component that is usable, and sets the module collective function pointers.
  * mca_coll_base_comm_select() then loops through the list of available
  * components (via the instantiated module), and uses the
  * module's coll_module_enable() function to enable the modules, and
- * if successful, sets the communicator collective functions to the
+ * if successful, sets the communicator collective functions to
  * those supplied by the given module, keeping track of which module it
  * is associated with.
  *

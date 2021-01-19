@@ -77,7 +77,7 @@ int mca_coll_base_find_available(bool enable_progress_threads,
  * @return OMPI_ERROR Upon failure.
  *
  * Note that the types of the parameters have "struct" in them
- * (e.g., ompi_communicator_t" vs. a plain "ompi_communicator_t") to
+ * (e.g., "struct ompi_communicator_t" vs. a plain "ompi_communicator_t") to
  * avoid an include file loop.  All similar types (e.g., "struct
  * ompi_communicator_t *", "ompi_communicator_t *", and "MPI_Comm")
  * are all typedef'ed to be the same, so the fact that we use struct
@@ -93,7 +93,7 @@ int mca_coll_base_find_available(bool enable_progress_threads,
  * invoking this function.  Specifically: this function is called in
  * the depths of communicator creation, but during the execution of
  * this function, new communicators may be created, and therefore
- * communicator creation functions may be re-entered (albiet with
+ * communicator creation functions may be re-entered (albeit with
  * different arguments).
  */
 int mca_coll_base_comm_select(struct ompi_communicator_t *comm);
