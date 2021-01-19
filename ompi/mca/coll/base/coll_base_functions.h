@@ -398,7 +398,7 @@ do {                                                                           \
 } while (0)
 
 /**
- * This macro give a generic way to compute the best count of
+ * This macro gives a generic way to compute the best count of
  * the segment (i.e. the number of complete datatypes that
  * can fit in the specified SEGSIZE). Beware, when this macro
  * is called, the SEGCOUNT should be initialized to the count as
@@ -415,7 +415,7 @@ do {                                                                           \
     }                                                                   \
 
 /**
- * This macro gives a generic wait to compute the well distributed block counts
+ * This macro gives a generic way to compute the well distributed block counts
  * when the count and number of blocks are fixed.
  * Macro returns "early-block" count, "late-block" count, and "split-index"
  * which is the block at which we switch from "early-block" count to
@@ -518,7 +518,7 @@ static inline void ompi_coll_base_free_reqs(ompi_request_t **reqs, int count)
 
 /**
  * Return the array of requests on the data. If the array was not initialized
- * or if it's size was too small, allocate it to fit the requested size.
+ * or if its size was too small, allocate it to fit the requested size.
  */
 ompi_request_t** ompi_coll_base_comm_get_reqs(mca_coll_base_comm_t* data, int nreqs);
 
