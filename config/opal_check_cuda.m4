@@ -91,8 +91,8 @@ AS_IF([test "$opal_check_cuda_happy" = "yes"],
 # If we have CUDA support, check to see if we have support for SYNC_MEMOPS
 # which was first introduced in CUDA 6.0.
 AS_IF([test "$opal_check_cuda_happy"="yes"],
-    AC_CHECK_DECL([CU_POINTER_ATTRIBUTE_SYNC_MEMOPS], [CUDA_SYNC_MEMOPS=1], [CUDA_SYNC_MEMOPS=0],
-        [#include <$opal_cuda_incdir/cuda.h>]),
+    [AC_CHECK_DECL([CU_POINTER_ATTRIBUTE_SYNC_MEMOPS], [CUDA_SYNC_MEMOPS=1], [CUDA_SYNC_MEMOPS=0],
+        [#include <$opal_cuda_incdir/cuda.h>])],
     [])
 
 # If we have CUDA support, check to see if we have CUDA 6.0 or later.
