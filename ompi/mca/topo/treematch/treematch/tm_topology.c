@@ -1,3 +1,5 @@
+#include "ompi_tm_rename.h"
+
 #include <hwloc.h>
 #include <hwloc/helper.h>
 #include "tm_tree.h"
@@ -8,24 +10,16 @@
 
 
 tm_topology_t* tm_get_local_topo_with_hwloc(void);
-tm_topology_t* hwloc_to_tm(char *filename);
-int int_cmp_inc(const void* x1,const void* x2);
-void optimize_arity(int **arity, double **cost, int *nb_levels,int n);
-int symetric(hwloc_topology_t topology);
-tm_topology_t * tgt_to_tm(char *filename);
 void tm_display_arity(tm_topology_t *topology);
 void tm_display_topology(tm_topology_t *topology);
 void tm_free_topology(tm_topology_t *topology);
 tm_topology_t *tm_load_topology(char *arch_filename, tm_file_type_t arch_file_type);
 void tm_optimize_topology(tm_topology_t **topology);
 int  tm_topology_add_binding_constraints(char *constraints_filename, tm_topology_t *topology);
-int topo_nb_proc(hwloc_topology_t topology,int N);
-void topology_arity_cpy(tm_topology_t *topology,int **arity,int *nb_levels);
-void topology_constraints_cpy(tm_topology_t *topology,int **constraints,int *nb_constraints);
-void topology_cost_cpy(tm_topology_t *topology,double **cost);
-void topology_numbering_cpy(tm_topology_t *topology,int **numbering,int *nb_nodes);
-double ** topology_to_arch(hwloc_topology_t topology);
-void   build_synthetic_proc_id(tm_topology_t *topology);
+static void topology_arity_cpy(tm_topology_t *topology,int **arity,int *nb_levels);
+static void topology_constraints_cpy(tm_topology_t *topology,int **constraints,int *nb_constraints);
+static void topology_cost_cpy(tm_topology_t *topology,double **cost);
+static void topology_numbering_cpy(tm_topology_t *topology,int **numbering,int *nb_nodes);
 tm_topology_t  *tm_build_synthetic_topology(int *arity, double *cost, int nb_levels, int *core_numbering, int nb_core_per_nodes);
 void            tm_set_numbering(tm_numbering_t new_val); /* TM_NUMBERING_LOGICAL or TM_NUMBERING_PHYSICAL */
 

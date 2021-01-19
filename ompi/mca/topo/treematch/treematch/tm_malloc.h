@@ -1,6 +1,8 @@
 #ifndef _TM_MALLOC_H_
 #define _TM_MALLOC_H_
 
+#include "ompi_tm_rename.h"
+
 #include <stdlib.h>
 void *tm_malloc(size_t size, char *, int);
 void *tm_calloc(size_t count, size_t size, char *, int);

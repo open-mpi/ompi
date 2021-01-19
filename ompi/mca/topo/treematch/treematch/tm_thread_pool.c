@@ -1,3 +1,5 @@
+#include "ompi_tm_rename.h"
+
 #include <pthread.h>
 #include "tm_thread_pool.h"
 #include "tm_verbose.h"

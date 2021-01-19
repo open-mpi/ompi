@@ -1,7 +1,10 @@
+#include "ompi_tm_rename.h"
+
 #include "tm_mapping.h"
 #include "tm_mt.h"
 #include "tm_kpartitioning.h"
 #include "k-partitioning.h"
+#include "tm_tree.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include "config.h"
@@ -23,19 +26,16 @@ static int verbose_level = ERROR;
 #define MIN(a,b) ((a)<(b)?(a):(b))
 
 
-int  fill_tab(int **,int *,int,int,int,int);
-void complete_obj_weight(double **,int,int);
-
-void allocate_vertex(int,int *,com_mat_t *,int,int *,int);
-double eval_cost(int *, com_mat_t *);
-int *kpartition_greedy(int, com_mat_t *,int,int *,int);
-constraint_t *split_constraints (int *,int,int,tm_topology_t *,int, int);
-com_mat_t **split_com_mat(com_mat_t *,int,int,int *);
-int **split_vertices(int *,int,int,int *);
-void free_tab_com_mat(com_mat_t **,int);
-void free_tab_local_vertices(int **,int);
-void free_const_tab(constraint_t *,int);
-void kpartition_build_level_topology(tm_tree_t *,com_mat_t *,int,int,tm_topology_t *,
+static void allocate_vertex(int,int *,com_mat_t *,int,int *,int);
+static double eval_cost(int *, com_mat_t *);
+static int *kpartition_greedy(int, com_mat_t *,int,int *,int);
+static constraint_t *split_constraints (int *,int,int,tm_topology_t *,int, int);
+static com_mat_t **split_com_mat(com_mat_t *,int,int,int *);
+static int **split_vertices(int *,int,int,int *);
+static void free_tab_com_mat(com_mat_t **,int);
+static void free_tab_local_vertices(int **,int);
+static void free_const_tab(constraint_t *,int);
+static void kpartition_build_level_topology(tm_tree_t *,com_mat_t *,int,int,tm_topology_t *,
 				     int *,int *,int,double *,double *);
 
 static int greedy_flag = 0;

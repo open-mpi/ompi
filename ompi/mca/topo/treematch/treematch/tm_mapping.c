@@ -1,3 +1,5 @@
+#include "ompi_tm_rename.h"
+
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <sys/mman.h>

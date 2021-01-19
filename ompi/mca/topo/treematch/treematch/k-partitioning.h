@@ -1,6 +1,8 @@
 #ifndef K_PARTITIONING
 #define K_PARTITIONING
 
+#include "ompi_tm_rename.h"
+
 #include "PriorityQueue.h"
 
 /*

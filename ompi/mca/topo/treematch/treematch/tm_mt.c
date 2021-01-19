@@ -1,3 +1,5 @@
+#include "ompi_tm_rename.h"
+
 /*
    A C-program for MT19937, with improved initialization 2002/1/26.
 

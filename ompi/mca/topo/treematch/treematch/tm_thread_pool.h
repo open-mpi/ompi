@@ -1,6 +1,8 @@
 #ifndef THREAD_POOL_H
 #define THREAD_POOL_H
 
+#include "ompi_tm_rename.h"
+
 #include <pthread.h>
 #include <hwloc.h>
 

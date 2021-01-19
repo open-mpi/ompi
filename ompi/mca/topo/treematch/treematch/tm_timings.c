@@ -1,3 +1,5 @@
+#include "ompi_tm_rename.h"
+
 #include "tm_timings.h"
 
 static CLOCK_T time_tab[MAX_CLOCK];

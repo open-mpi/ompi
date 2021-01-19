@@ -1,5 +1,7 @@
 #include <stdio.h>
 
+#include "ompi_tm_rename.h"
+
 #define NONE     0
 /* output in stderr*/
 #define CRITICAL 1

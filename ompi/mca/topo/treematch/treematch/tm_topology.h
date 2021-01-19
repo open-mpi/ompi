@@ -1,4 +1,7 @@
 #include <hwloc.h>
+
+#include "ompi_tm_rename.h"
+
 #include "tm_tree.h"
 
 tm_topology_t* get_local_topo_with_hwloc(void);
