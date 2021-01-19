@@ -2,9 +2,19 @@
 #define PNBC_OSC_ACTION_PUT_H
 
 #include "pnbc_osc_trigger_common.h"
+#include "ompi/request/request.h"
+#include "ompi/win/win.h"
 
 struct put_args_t {
-  int temp;
+  const void *buf;
+  int origin_count;
+  MPI_Datatype origin_datatype;
+  int target;
+  MPI_Aint target_displ;
+  int target_count;
+  MPI_Datatype target_datatype;
+  MPI_Win win;
+  MPI_Request *request;
 };
 typedef struct put_args_t put_args_t;
 
