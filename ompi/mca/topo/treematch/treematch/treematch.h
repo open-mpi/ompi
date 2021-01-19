@@ -1,6 +1,8 @@
 #ifndef __TREEMATCH_H__
 #define __TREEMATCH_H__
 
+#include "ompi_tm_rename.h"
+
 /* size_t definition */
 #include <stddef.h>
 #include "tm_verbose.h"

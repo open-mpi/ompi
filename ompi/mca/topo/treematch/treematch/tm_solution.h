@@ -1,6 +1,8 @@
 #ifndef TM_SOLUION_H
 #define TM_SOLUION_H
 
+#include "ompi_tm_rename.h"
+
 #include "treematch.h"
 
 void tm_free_solution(tm_solution_t *sol);

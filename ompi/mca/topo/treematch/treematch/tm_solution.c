@@ -1,3 +1,5 @@
+#include "ompi_tm_rename.h"
+
 #include <ctype.h>
 #include <float.h>
 #include "tm_solution.h"

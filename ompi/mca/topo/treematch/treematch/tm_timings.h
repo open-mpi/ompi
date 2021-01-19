@@ -1,5 +1,8 @@
 #ifndef TIMINGS_H
 #define TIMINGS_H
+
+#include "ompi_tm_rename.h"
+
 #include <stdio.h>
 
 #ifndef _WIN32

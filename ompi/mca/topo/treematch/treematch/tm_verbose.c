@@ -1,3 +1,5 @@
+#include "ompi_tm_rename.h"
+
 #include "tm_verbose.h"
 #include <stdio.h>
 static unsigned int verbose_level = ERROR;

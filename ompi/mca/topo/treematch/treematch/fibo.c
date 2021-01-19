@@ -1,3 +1,5 @@
+#include "ompi_tm_rename.h"
+
 /* Copyright 2010 IPB, INRIA & CNRS
 **
 ** This file originally comes from the Scotch software package for

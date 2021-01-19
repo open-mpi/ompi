@@ -62,6 +62,8 @@
 
 /* The doubly linked list structure. */
 
+#include "ompi_tm_rename.h"
+
 typedef struct FiboLink_ {
   struct FiboNode_ *        prevptr;              /*+ Pointer to previous sibling element +*/
   struct FiboNode_ *        nextptr;              /*+ Pointer to next sibling element     +*/
@@ -170,16 +172,6 @@ typedef struct FiboTree_ {
 **  The function prototypes.
 */
 
-/* This set of definitions allows the user
-   to specify whether he prefers to use
-   the fibonacci routines as macros or as
-   regular functions, for instance for
-   debugging.                             */
-
-#define fiboTreeAdd                 fiboTreeAddMacro
-/* #define fiboTreeDel              fiboTreeDelMacro */
-/* #define fiboTreeMin              fiboTreeMinMacro */
-
 #ifndef FIBO
 #define static
 #endif
@@ -188,18 +180,27 @@ int                         fiboTreeInit        (FiboTree * const, int (*) (cons
 void                        fiboTreeExit        (FiboTree * const);
 void                        fiboTreeFree        (FiboTree * const);
 FiboNode *                  fiboTreeConsolidate (FiboTree * const);
-#ifndef fiboTreeAdd
 void                        fiboTreeAdd         (FiboTree * const, FiboNode * const);
-#endif /* fiboTreeAdd */
-#ifndef fiboTreeDel
 void                        fiboTreeDel         (FiboTree * const, FiboNode * const);
-#endif /* fiboTreeDel */
-#ifndef fiboTreeMin
 FiboNode *                  fiboTreeMin         (FiboTree * const);
-#endif /* fiboTreeMin */
 #ifdef FIBO_DEBUG
 int                         fiboTreeCheck       (const FiboTree * const);
 static int                  fiboTreeCheck2      (const FiboNode * const);
 #endif /* FIBO_DEBUG */
+
+/* This set of definitions allows the user
+   to specify whether he prefers to use
+   the fibonacci routines as macros or as
+   regular functions, for instance for
+   debugging.                             */
+
+#if 0
+#undef fiboTreeAdd
+#define fiboTreeAdd              fiboTreeAddMacro
+#undef fiboTreeDel
+#define fiboTreeDel              fiboTreeDelMacro
+#undef fiboTreeMin
+#define fiboTreeMin              fiboTreeMinMacro
+#endif
 
 #undef static

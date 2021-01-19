@@ -1,5 +1,8 @@
 #ifndef __TM_MAPPING_H__
 #define __TM_MAPPING_H__
+
+#include "ompi_tm_rename.h"
+
 #include "tm_tree.h"
 #include "tm_topology.h"
 #include "tm_timings.h"

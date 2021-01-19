@@ -1,3 +1,5 @@
+#include "ompi_tm_rename.h"
+
 typedef struct _com_mat_t{
   double **comm; 
   int n;  /*comm is of size n by n the other element are zeroes*/

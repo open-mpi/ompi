@@ -1,6 +1,8 @@
 #ifndef INTEGER_CONSTANT_INITIALIZED_VECTOR
 #define INTEGER_CONSTANT_INITIALIZED_VECTOR
 
+#include "ompi_tm_rename.h"
+
 typedef struct int_CIVector_
 {
   int init_value, size, top, *to, *from, *vec;

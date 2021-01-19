@@ -1,3 +1,5 @@
+#include "ompi_tm_rename.h"
+
 #include <stdlib.h>
 #include <stdio.h>
 #include "IntConstantInitializedVector.h"

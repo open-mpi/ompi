@@ -1,3 +1,5 @@
+#include "ompi_tm_rename.h"
+
 #include <float.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -32,57 +34,58 @@
 static int verbose_level = ERROR;
 static int exhaustive_search_flag = 0;
 
-void free_list_child(tm_tree_t *);void free_tab_child(tm_tree_t *);
-double choose (long, long);void display_node(tm_tree_t *);
-void clone_tree(tm_tree_t *, tm_tree_t *);
-double *aggregate_obj_weight(tm_tree_t *, double *, int);
-tm_affinity_mat_t *aggregate_com_mat(tm_tree_t *, tm_affinity_mat_t *, int);
-double eval_grouping(tm_affinity_mat_t *, tm_tree_t **, int);
-group_list_t *new_group_list(tm_tree_t **, double, group_list_t *);
-void add_to_list(group_list_t *, tm_tree_t **, int, double);
-void  list_all_possible_groups(tm_affinity_mat_t *, tm_tree_t *, int, int, int, tm_tree_t **, group_list_t *);
-int independent_groups(group_list_t **, int, group_list_t *, int);
-void display_selection (group_list_t**, int, int, double);
-void display_grouping (tm_tree_t *, int, int, double);
-int recurs_select_independent_groups(group_list_t **, int, int, int, int,
+static void free_list_child(tm_tree_t *);
+static void free_tab_child(tm_tree_t *);
+static double choose (long, long);
+static void display_node(tm_tree_t *);
+static void clone_tree(tm_tree_t *, tm_tree_t *);
+static double *aggregate_obj_weight(tm_tree_t *, double *, int);
+static tm_affinity_mat_t *aggregate_com_mat(tm_tree_t *, tm_affinity_mat_t *, int);
+static double eval_grouping(tm_affinity_mat_t *, tm_tree_t **, int);
+static group_list_t *new_group_list(tm_tree_t **, double, group_list_t *);
+static void add_to_list(group_list_t *, tm_tree_t **, int, double);
+static void  list_all_possible_groups(tm_affinity_mat_t *, tm_tree_t *, int, int, int, tm_tree_t **, group_list_t *);
+static int independent_groups(group_list_t **, int, group_list_t *, int);
+static void display_selection (group_list_t**, int, int, double);
+static void display_grouping (tm_tree_t *, int, int, double);
+static int recurs_select_independent_groups(group_list_t **, int, int, int, int,
 				     int, double, double *, group_list_t **, group_list_t **);
-int test_independent_groups(group_list_t **, int, int, int, int, int, double, double *,
+static int test_independent_groups(group_list_t **, int, int, int, int, int, double, double *,
 			    group_list_t **, group_list_t **);
-void delete_group_list(group_list_t *);
-int group_list_id(const void*, const void*);
-int group_list_asc(const void*, const void*);
-int group_list_dsc(const void*, const void*);
-int weighted_degree_asc(const void*, const void*);
-int weighted_degree_dsc(const void*, const void*);
-int  select_independent_groups(group_list_t **, int, int, int, double *, group_list_t **, int, double);
-int  select_independent_groups_by_largest_index(group_list_t **, int, int, int, double *,
+static void delete_group_list(group_list_t *);
+static int group_list_id(const void*, const void*);
+static int group_list_asc(const void*, const void*);
+static int group_list_dsc(const void*, const void*);
+static int weighted_degree_asc(const void*, const void*);
+static int weighted_degree_dsc(const void*, const void*);
+static int  select_independent_groups(group_list_t **, int, int, int, double *, group_list_t **, int, double);
+static int  select_independent_groups_by_largest_index(group_list_t **, int, int, int, double *,
 						group_list_t **, int, double);
-void list_to_tab(group_list_t *, group_list_t **, int);
-void display_tab_group(group_list_t **, int, int);
-int independent_tab(tm_tree_t **, tm_tree_t **, int);
-void compute_weighted_degree(group_list_t **, int, int);
-void  group(tm_affinity_mat_t *, tm_tree_t *, tm_tree_t *, int, int, int, double *, tm_tree_t **);
-void  fast_group(tm_affinity_mat_t *, tm_tree_t *, tm_tree_t *, int, int, int, double *, tm_tree_t **, int *, int);
-int adjacency_asc(const void*, const void*);
-int adjacency_dsc(const void*, const void*);
-		 void super_fast_grouping(tm_affinity_mat_t *, tm_tree_t *, tm_tree_t *, int, int);
-tm_affinity_mat_t *build_cost_matrix(tm_affinity_mat_t *, double *, double);
-void group_nodes(tm_affinity_mat_t *, tm_tree_t *, tm_tree_t *, int , int, double*, double);
-double fast_grouping(tm_affinity_mat_t *, tm_tree_t *, tm_tree_t *, int, int, double);
-void complete_aff_mat(tm_affinity_mat_t **, int, int);
-void complete_obj_weight(double **, int, int);
-void create_dumb_tree(tm_tree_t *, int, tm_topology_t *);
-void complete_tab_node(tm_tree_t **, int, int, int, tm_topology_t *);
-void set_deb_tab_child(tm_tree_t *, tm_tree_t *, int);
-tm_tree_t *build_level_topology(tm_tree_t *, tm_affinity_mat_t *, int, int, tm_topology_t *, double *, double *);
-int check_constraints(tm_topology_t  *, int **);
-tm_tree_t *bottom_up_build_tree_from_topology(tm_topology_t *, tm_affinity_mat_t *, double *, double *);
-void free_non_constraint_tree(tm_tree_t *);
-void free_constraint_tree(tm_tree_t *);
-void free_tab_double(double**, int);
-void free_tab_int(int**, int );
+static void list_to_tab(group_list_t *, group_list_t **, int);
+static void display_tab_group(group_list_t **, int, int);
+static int independent_tab(tm_tree_t **, tm_tree_t **, int);
+static void compute_weighted_degree(group_list_t **, int, int);
+static void  group(tm_affinity_mat_t *, tm_tree_t *, tm_tree_t *, int, int, int, double *, tm_tree_t **);
+static void  fast_group(tm_affinity_mat_t *, tm_tree_t *, tm_tree_t *, int, int, int, double *, tm_tree_t **, int *, int);
+static int adjacency_asc(const void*, const void*);
+static int adjacency_dsc(const void*, const void*);
+static void super_fast_grouping(tm_affinity_mat_t *, tm_tree_t *, tm_tree_t *, int, int);
+static tm_affinity_mat_t *build_cost_matrix(tm_affinity_mat_t *, double *, double);
+static void group_nodes(tm_affinity_mat_t *, tm_tree_t *, tm_tree_t *, int , int, double*, double);
+static double fast_grouping(tm_affinity_mat_t *, tm_tree_t *, tm_tree_t *, int, int, double);
+static void complete_aff_mat(tm_affinity_mat_t **, int, int);
+static void create_dumb_tree(tm_tree_t *, int, tm_topology_t *);
+static void complete_tab_node(tm_tree_t **, int, int, int, tm_topology_t *);
+static void set_deb_tab_child(tm_tree_t *, tm_tree_t *, int);
+static tm_tree_t *build_level_topology(tm_tree_t *, tm_affinity_mat_t *, int, int, tm_topology_t *, double *, double *);
+static int check_constraints(tm_topology_t  *, int **);
+static tm_tree_t *bottom_up_build_tree_from_topology(tm_topology_t *, tm_affinity_mat_t *, double *, double *);
+static void free_non_constraint_tree(tm_tree_t *);
+static void free_constraint_tree(tm_tree_t *);
+static void free_tab_double(double**, int);
+static void free_tab_int(int**, int );
 static void partial_aggregate_aff_mat (int, void **, int);
-void free_affinity_mat(tm_affinity_mat_t *aff_mat);
+static void free_affinity_mat(tm_affinity_mat_t *aff_mat);
 int int_cmp_inc(const void* x1, const void* x2);
 
 

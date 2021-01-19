@@ -1,6 +1,8 @@
 #ifndef __BUCKET_H__
 #define __BUCKET_H__
 
+#include "ompi_tm_rename.h"
+
 typedef struct{
   int i;
   int j;

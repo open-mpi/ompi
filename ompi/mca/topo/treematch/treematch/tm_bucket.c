@@ -1,3 +1,5 @@
+#include "ompi_tm_rename.h"
+
 #include <stdio.h>
 #include <float.h>
 #include <math.h>
@@ -33,26 +35,25 @@ static int verbose_level = ERROR;
 
 static bucket_list_t global_bl = {0};
 
-int tab_cmp(const void*,const void*);
-int old_bucket_id(int,int,bucket_list_t);
-int bucket_id(int,int,bucket_list_t);
-void display_bucket(bucket_t *);
-void check_bucket(bucket_t *,double **,double, double);
-void display_pivots(bucket_list_t);
-void display_bucket_list(bucket_list_t);
-void add_to_bucket(int,int,int,bucket_list_t);
-void dfs(int,int,int,double *,double *,int,int);
-void built_pivot_tree(bucket_list_t);
-void fill_buckets(bucket_list_t);
-int is_power_of_2(int);
-void partial_sort(bucket_list_t *,double **,int);
-void next_bucket_elem(bucket_list_t,int *,int *);
-int add_edge_3(tm_tree_t *,tm_tree_t *,int,int,int *);
-void free_bucket(bucket_t *);
-void free_tab_bucket(bucket_t **,int);
-void free_bucket_list(bucket_list_t);
-void partial_update_val (int nb_args, void **args, int thread_id);
-double bucket_grouping(tm_affinity_mat_t *,tm_tree_t *, tm_tree_t *, int ,int);
+static int tab_cmp(const void*,const void*);
+static int old_bucket_id(int,int,bucket_list_t);
+static int bucket_id(int,int,bucket_list_t);
+static void display_bucket(bucket_t *);
+static void check_bucket(bucket_t *,double **,double, double);
+static void display_pivots(bucket_list_t);
+static void display_bucket_list(bucket_list_t);
+static void add_to_bucket(int,int,int,bucket_list_t);
+static void dfs(int,int,int,double *,double *,int,int);
+static void built_pivot_tree(bucket_list_t);
+static void fill_buckets(bucket_list_t);
+static int is_power_of_2(int);
+static void partial_sort(bucket_list_t *,double **,int);
+static void next_bucket_elem(bucket_list_t,int *,int *);
+static int add_edge_3(tm_tree_t *,tm_tree_t *,int,int,int *);
+static void free_bucket(bucket_t *);
+static void free_tab_bucket(bucket_t **,int);
+static void free_bucket_list(bucket_list_t);
+static void partial_update_val (int nb_args, void **args, int thread_id);
 int tab_cmp(const void* x1,const void* x2)
 {
   int *e1 = NULL,*e2 = NULL,i1,i2,j1,j2;
