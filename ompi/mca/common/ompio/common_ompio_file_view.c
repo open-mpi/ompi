@@ -155,7 +155,17 @@ int mca_common_ompio_set_view (ompio_file_t *fh,
         // File view is not a multiple of the etype.
         return MPI_ERR_ARG;
     }
+    
+    // make sure that displacement is not negative, which could
+    // lead to an illegal access.
+    if ( 0 < fh->f_iov_count && 0 > (off_t)fh->f_decoded_iov[0].iov_base ) {
+        // I think MPI_ERR_TYPE would be more appropriate, but
+        // this is the error code expected in a testsuite, so I just
+        // go with this.
+        return MPI_ERR_IO;
+    }
 
+    
     if( SIMPLE_PLUS == OMPIO_MCA_GET(fh, grouping_option) ) {
         fh->f_cc_size = get_contiguous_chunk_size (fh, 1);
     }
