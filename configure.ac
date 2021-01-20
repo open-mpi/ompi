@@ -341,8 +341,8 @@ m4_ifdef([project_ompi],
 # Part one of libtool magic.  Default to: enable shared, disable static.
 #
 
-AM_ENABLE_SHARED
-AM_DISABLE_STATIC
+AC_ENABLE_SHARED
+AC_DISABLE_STATIC
 
 # Must be called before OPAL_SETUP_CC to get the value of CC
 # before it is modified by the C99/C11 checks.
