@@ -1,7 +1,8 @@
 .\" -*- nroff -*-
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
-.\" Copyright (c) 2010-2015 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright (c) 2010-2020 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright (c) 2020      Google, LLC. All rights reserved.
 .\" $COPYRIGHT$
 .TH MPI_Init_thread 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .
@@ -92,7 +93,7 @@ with no restrictions.
 .
 .PP
 The level of thread support available to the program is set in
-\fIprovided\fP, except in C++, where it is the return value of the
+\fIprovided\fP, except in the C++ binding, where it is the return value of the
 function. In Open MPI, the value is dependent on how the library was
 configured and built. Note that there is no guarantee that
 \fIprovided\fP will be greater than or equal to \fIrequired\fP.
@@ -135,52 +136,27 @@ opening files, reading standard input, or writing to standard output.
 .
 .SH MPI_THREAD_MULTIPLE Support
 .
-MPI_THREAD_MULTIPLE support is included if Open MPI was configured
-with the --enable-mpi-thread-multiple configure switch.  You can check the
+MPI_THREAD_MULTIPLE support is included if the environment in which
+Open MPI was built supports threading.  You can check the
 output of
 .BR ompi_info (1)
 to see if Open MPI has MPI_THREAD_MULTIPLE support:
 .
 .PP
 .nf
-shell$ ompi_info | grep -i thread
-          Thread support: posix (mpi: yes, progress: no)
+shell$ ompi_info | grep "Thread support"
+          Thread support: posix (MPI_THREAD_MULTIPLE: yes, OPAL support: yes, OMPI progress: no, Event lib: yes)
 shell$
 .fi
 .
 .PP
-The "mpi: yes" portion of the above output indicates that Open MPI was
-compiled with MPI_THREAD_MULTIPLE support.
+The "MPI_THREAD_MULTIPLE: yes" portion of the above output indicates
+that Open MPI was compiled with MPI_THREAD_MULTIPLE support.
 .
 .PP
-Note that MPI_THREAD_MULTIPLE support is only lightly tested.  It
-likely does not work for thread-intensive applications.  Also note
-that
-.I only
-the MPI point-to-point communication functions for the BTL's listed
-below are considered thread safe.  Other support functions (e.g., MPI
-attributes) have not been certified as safe when simultaneously used
-by multiple threads.
-.
-.PP
-.nf
-    tcp
-    sm
-    mx
-    elan
-    self
-.fi
-.
-.PP
-Note that Open MPI's thread support is in a fairly early stage; the
-above devices are likely to
-.IR work ,
-but the latency is likely to be fairly high.  Specifically, efforts so
-far have concentrated on
-.IR correctness ,
-not
-.I performance
-(yet).
+Note that there is a small performance penalty for using
+MPI_THREAD_MULTIPLE support; latencies for short messages will be
+higher as compared to when using MPI_THREAD_SINGLE, for example.
 .
 .
 .SH ERRORS
