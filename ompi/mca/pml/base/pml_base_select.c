@@ -12,10 +12,11 @@
  *                         All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
- * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013-2020 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015-2020 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2020      Amazon.com, Inc. or its affiliates.  All Rights
  *                         reserved.
+ * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -343,7 +344,7 @@ mca_pml_base_pml_check_selected_impl(const char *my_pml,
     OPAL_MODEX_RECV_STRING(ret,
                            mca_base_component_to_string(&pml_base_component),
                            &proc_name, (void**) &remote_pml, &size);
-    if (PMIX_ERR_NOT_FOUND == ret) {
+    if (OPAL_ERR_NOT_FOUND == ret) {
         opal_output_verbose( 10, ompi_pml_base_framework.framework_output,
                             "check:select: PML modex for process %s not found",
                             OMPI_NAME_PRINT(&proc_name));
@@ -370,8 +371,8 @@ mca_pml_base_pml_check_selected_impl(const char *my_pml,
     if ((size != strlen(my_pml) + 1) ||
         (0 != strcmp(my_pml, remote_pml))) {
         char *errhost = NULL;
-        OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, PMIX_HOSTNAME, &proc_name,
-                                       &(errhost), PMIX_STRING);
+        OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, OPAL_PMIX_HOSTNAME, &proc_name,
+                                       &(errhost), OPAL_STRING);
         opal_output(0, "%s selected pml %s, but peer %s on %s selected pml %s",
                     OMPI_NAME_PRINT(&ompi_proc_local()->super.proc_name),
                     my_pml, OMPI_NAME_PRINT(&proc_name),
