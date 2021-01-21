@@ -169,7 +169,10 @@ AC_DEFUN([OPAL_SETUP_CC],[
         # AC_MSG_WARNING([Open MPI requires a C11 (or newer) compiler])
         # AC_MSG_ERROR([Aborting.])
         # From Open MPI 1.7 on we require a C99 compiant compiler
-        AC_PROG_CC_C99
+        dnl with autoconf 2.70 AC_PROG_CC makes AC_PROG_CC_C99 obsolete
+        m4_version_prereq([2.70],
+            [],
+            [AC_PROG_CC_C99])
         # The result of AC_PROG_CC_C99 is stored in ac_cv_prog_cc_c99
         if test "x$ac_cv_prog_cc_c99" = xno ; then
             AC_MSG_WARN([Open MPI requires a C99 (or newer) compiler. C11 is recommended.])
