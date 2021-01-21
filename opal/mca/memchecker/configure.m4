@@ -20,8 +20,8 @@ AC_DEFUN([MCA_opal_memchecker_CONFIG],[
 
     AC_MSG_CHECKING([if --enable-memchecker was specified])
     AC_ARG_ENABLE(memchecker,
-        AS_HELP_STRING([--enable-memchecker],
-                       [Enable memory and buffer checks.  Note that disabling will *also* add "memchecker" to the --enable-mca-no-build list (default: disabled)]))
+        [AS_HELP_STRING([--enable-memchecker],
+                       [Enable memory and buffer checks.  Note that disabling will *also* add "memchecker" to the --enable-mca-no-build list (default: disabled)])])
     if test "$enable_memchecker" = "yes"; then
         AC_MSG_RESULT([yes])
         WANT_MEMCHECKER=1

@@ -304,9 +304,9 @@ AS_IF([test "$enable_oshmem" != "no"], [project_oshmem_amc=true], [project_oshme
 m4_ifndef([project_oshmem], [project_oshmem_amc="no (not available)"])
 
 # Enable/Disable Software-Based Performance Counters Capability
-AC_ARG_ENABLE(spc,
-    AS_HELP_STRING([--enable-spc],
-                   [Enable software-based performance counters capability (default: disabled)]))
+AC_ARG_ENABLE([spc],
+    [AS_HELP_STRING([--enable-spc],
+                   [Enable software-based performance counters capability (default: disabled)])])
 if test "$enable_spc" = "yes"; then
     AC_MSG_RESULT([yes])
     SPC_ENABLE=1

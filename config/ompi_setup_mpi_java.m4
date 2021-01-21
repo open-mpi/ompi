@@ -29,9 +29,9 @@ dnl Do everything required to setup the Java MPI bindings.
 AC_DEFUN([OMPI_SETUP_JAVA_BINDINGS],[
     opal_show_subtitle "Java MPI bindings"
 
-    AC_ARG_ENABLE(mpi-java,
-        AS_HELP_STRING([--enable-mpi-java],
-                       [enable Java MPI bindings (default: disabled)]))
+    AC_ARG_ENABLE([mpi-java],
+        [AS_HELP_STRING([--enable-mpi-java],
+                       [enable Java MPI bindings (default: disabled)])])
 
     # Find the Java compiler and whatnot.
     # It knows to do very little if $enable_mpi_java!="yes".

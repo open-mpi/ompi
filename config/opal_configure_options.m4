@@ -48,9 +48,9 @@ fi
 #
 
 AC_MSG_CHECKING([if want to run code coverage])
-AC_ARG_ENABLE(coverage,
-              AS_HELP_STRING([--enable-coverage],
-                             [enable code coverage files to be generated]))
+AC_ARG_ENABLE([coverage],
+              [AS_HELP_STRING([--enable-coverage],
+                             [enable code coverage files to be generated])])
 if test "$enable_coverage" = "yes"; then
     if test "$enable_shared" = "yes"; then
         AC_MSG_WARN([Code coverage can run only with static libraries. Please
@@ -73,9 +73,9 @@ fi
 #
 
 AC_MSG_CHECKING([if want to compile with branch probabilities])
-AC_ARG_ENABLE(branch-probabilities,
-              AS_HELP_STRING([--enable-branch-probabilities],
-                             [enable profile arcs and branch probability optimization]))
+AC_ARG_ENABLE([branch-probabilities],
+              [AS_HELP_STRING([--enable-branch-probabilities],
+                             [enable profile arcs and branch probability optimization])])
 if test "$enable_branch_probabilities" = "yes"; then
     AC_MSG_RESULT([yes])
     WANT_BRANCH_PROBABILITIES=1
@@ -90,9 +90,9 @@ fi
 #
 
 AC_MSG_CHECKING([if want to debug memory usage])
-AC_ARG_ENABLE(mem-debug,
-    AS_HELP_STRING([--enable-mem-debug],
-                   [enable memory debugging (not for general MPI users!) (default: disabled)]))
+AC_ARG_ENABLE([mem-debug],
+    [AS_HELP_STRING([--enable-mem-debug],
+                   [enable memory debugging (not for general MPI users!) (default: disabled)])])
 if test "$enable_mem_debug" = "yes"; then
     AC_MSG_RESULT([yes])
     WANT_MEM_DEBUG=1
@@ -108,9 +108,9 @@ AC_DEFINE_UNQUOTED(OPAL_ENABLE_MEM_DEBUG, $WANT_MEM_DEBUG,
 #
 
 AC_MSG_CHECKING([if want to profile memory usage])
-AC_ARG_ENABLE(mem-profile,
-    AS_HELP_STRING([--enable-mem-profile],
-                   [enable memory profiling (not for general MPI users!) (default: disabled)]))
+AC_ARG_ENABLE([mem-profile],
+    [AS_HELP_STRING([--enable-mem-profile],
+                   [enable memory profiling (not for general MPI users!) (default: disabled)])])
 if test "$enable_mem_profile" = "yes"; then
     AC_MSG_RESULT([yes])
     WANT_MEM_PROFILE=1
@@ -126,9 +126,9 @@ AC_DEFINE_UNQUOTED(OPAL_ENABLE_MEM_PROFILE, $WANT_MEM_PROFILE,
 #
 
 AC_MSG_CHECKING([if want developer-level compiler pickyness])
-AC_ARG_ENABLE(picky,
-    AS_HELP_STRING([--enable-picky],
-                   [enable developer-level compiler pickyness when building Open MPI (default: disabled, unless a .git directory is found in the build tree)]))
+AC_ARG_ENABLE([picky],
+    [AS_HELP_STRING([--enable-picky],
+                   [enable developer-level compiler pickyness when building Open MPI (default: disabled, unless a .git directory is found in the build tree)])])
 if test "$enable_picky" = "yes"; then
     AC_MSG_RESULT([yes])
     WANT_PICKY_COMPILER=1
@@ -148,9 +148,9 @@ fi
 #
 
 AC_MSG_CHECKING([if want developer-level debugging code])
-AC_ARG_ENABLE(debug,
-    AS_HELP_STRING([--enable-debug],
-                   [enable developer-level debugging code (not for general MPI users!) (default: disabled)]))
+AC_ARG_ENABLE([debug],
+    [AS_HELP_STRING([--enable-debug],
+                   [enable developer-level debugging code (not for general MPI users!) (default: disabled)])])
 if test "$enable_debug" = "yes"; then
     AC_MSG_RESULT([yes])
     WANT_DEBUG=1
@@ -161,9 +161,9 @@ fi
 
 
 AC_MSG_CHECKING([if want to developer-level timing framework])
-AC_ARG_ENABLE(timing,
-    AS_HELP_STRING([--enable-timing],
-                   [enable developer-level timing code (not for general MPI users!) (default: disabled)]))
+AC_ARG_ENABLE([timing],
+    [AS_HELP_STRING([--enable-timing],
+                   [enable developer-level timing code (not for general MPI users!) (default: disabled)])])
 if test "$enable_timing" = "yes"; then
     AC_MSG_RESULT([yes])
     WANT_TIMING=1
@@ -185,18 +185,18 @@ fi
 AC_DEFINE_UNQUOTED(OPAL_ENABLE_DEBUG, $WANT_DEBUG,
     [Whether we want developer-level debugging code or not])
 
-AC_ARG_ENABLE(debug-symbols,
-    AS_HELP_STRING([--disable-debug-symbols],
-        [Disable adding compiler flags to enable debugging symbols if --enable-debug is specified.  For non-debugging builds, this flag has no effect.]))
+AC_ARG_ENABLE([debug-symbols],
+    [AS_HELP_STRING([--disable-debug-symbols],
+        [Disable adding compiler flags to enable debugging symbols if --enable-debug is specified.  For non-debugging builds, this flag has no effect.])])
 
 #
 # Do we want to install all of OPAL/ORTE and OMPI's header files?
 #
 
 AC_MSG_CHECKING([if want to install project-internal header files])
-AC_ARG_WITH(devel-headers,
-    AS_HELP_STRING([--with-devel-headers],
-                   [normal MPI users/applications do not need this (mpi.h and mpif.h are ALWAYS installed).  Developer headers are only necessary for MCA module authors (default: disabled).]))
+AC_ARG_WITH([devel-headers],
+    [AS_HELP_STRING([--with-devel-headers],
+                   [normal MPI users/applications do not need this (mpi.h and mpif.h are ALWAYS installed).  Developer headers are only necessary for MCA module authors (default: disabled).])])
 if test "$with_devel_headers" = "yes"; then
     AC_MSG_RESULT([yes])
     WANT_INSTALL_HEADERS=1
@@ -232,9 +232,9 @@ AC_DEFINE_UNQUOTED([OPAL_WANT_PRETTY_PRINT_STACKTRACE],
 #
 
 AC_MSG_CHECKING([if want pty support])
-AC_ARG_ENABLE(pty-support,
-    AS_HELP_STRING([--enable-pty-support],
-                   [Enable/disable PTY support for STDIO forwarding.  (default: enabled)]))
+AC_ARG_ENABLE([pty-support],
+    [AS_HELP_STRING([--enable-pty-support],
+                   [Enable/disable PTY support for STDIO forwarding.  (default: enabled)])])
 if test "$enable_pty_support" = "no" ; then
     AC_MSG_RESULT([no])
     OPAL_ENABLE_PTY_SUPPORT=0
@@ -251,9 +251,9 @@ AC_DEFINE_UNQUOTED([OPAL_ENABLE_PTY_SUPPORT], [$OPAL_ENABLE_PTY_SUPPORT],
 #
 
 AC_MSG_CHECKING([if want weak symbol support])
-AC_ARG_ENABLE(weak-symbols,
-    AS_HELP_STRING([--enable-weak-symbols],
-                   [use weak symbols, if available (default: enabled)]))
+AC_ARG_ENABLE([weak-symbols],
+    [AS_HELP_STRING([--enable-weak-symbols],
+                   [use weak symbols, if available (default: enabled)])])
 if test "$enable_weak_symbols" != "no"; then
     AC_MSG_RESULT([yes])
     WANT_WEAK_SYMBOLS=1

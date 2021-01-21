@@ -229,15 +229,15 @@ AC_DEFUN([OMPI_SETUP_JAVA],[
     ompi_java_happy=no
     ompi_javah_happy=no
 
-    AC_ARG_WITH(jdk-dir,
-                AS_HELP_STRING([--with-jdk-dir(=DIR)],
-                               [Location of the JDK header directory.  If you use this option, do not specify --with-jdk-bindir or --with-jdk-headers.]))
-    AC_ARG_WITH(jdk-bindir,
-                AS_HELP_STRING([--with-jdk-bindir(=DIR)],
-                               [Location of the JDK bin directory.  If you use this option, you must also use --with-jdk-headers (and you must NOT use --with-jdk-dir)]))
-    AC_ARG_WITH(jdk-headers,
-                AS_HELP_STRING([--with-jdk-headers(=DIR)],
-                               [Location of the JDK header directory.  If you use this option, you must also use --with-jdk-bindir (and you must NOT use --with-jdk-dir)]))
+    AC_ARG_WITH([jdk-dir],
+                [AS_HELP_STRING([--with-jdk-dir(=DIR)],
+                               [Location of the JDK header directory.  If you use this option, do not specify --with-jdk-bindir or --with-jdk-headers.])])
+    AC_ARG_WITH([jdk-bindir],
+                [AS_HELP_STRING([--with-jdk-bindir(=DIR)],
+                               [Location of the JDK bin directory.  If you use this option, you must also use --with-jdk-headers (and you must NOT use --with-jdk-dir)])])
+    AC_ARG_WITH([jdk-headers],
+                [AS_HELP_STRING([--with-jdk-headers(=DIR)],
+                               [Location of the JDK header directory.  If you use this option, you must also use --with-jdk-bindir (and you must NOT use --with-jdk-dir)])])
 
     # Only setup the compiler if we were requested to
     AS_IF([test "$1" = "yes"],

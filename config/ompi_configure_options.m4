@@ -46,9 +46,9 @@ AC_ARG_ENABLE([mpi],
 #
 
 AC_MSG_CHECKING([if want compile-time warnings inside of mpi.h])
-AC_ARG_ENABLE(mpi-interface-warning,
-    AS_HELP_STRING([--enable-mpi-interface-warning],
-                   [enable compile-time warnings when deprecated MPI functions are used (default: enabled)]))
+AC_ARG_ENABLE([mpi-interface-warning],
+    [AS_HELP_STRING([--enable-mpi-interface-warning],
+                   [enable compile-time warnings when deprecated MPI functions are used (default: enabled)])])
 if test "$enable_mpi_interface_warning" != "no"; then
     AC_MSG_RESULT([yes])
     OMPI_WANT_MPI_INTERFACE_WARNING=1
@@ -64,9 +64,9 @@ AC_DEFINE_UNQUOTED([OMPI_WANT_MPI_INTERFACE_WARNING], [$OMPI_WANT_MPI_INTERFACE_
 #
 
 AC_MSG_CHECKING([if want sparse process groups])
-AC_ARG_ENABLE(sparse-groups,
-    AS_HELP_STRING([--enable-sparse-groups],
-                   [enable sparse process groups (default: not enabled)]))
+AC_ARG_ENABLE([sparse-groups],
+    [AS_HELP_STRING([--enable-sparse-groups],
+                   [enable sparse process groups (default: not enabled)])])
 if test "$enable_sparse_groups" = "yes"; then
     AC_MSG_RESULT([yes])
     GROUP_SPARSE=1
@@ -83,9 +83,9 @@ AC_DEFINE_UNQUOTED([OMPI_GROUP_SPARSE],$GROUP_SPARSE,
 #
 
 AC_MSG_CHECKING([if want peruse support])
-AC_ARG_ENABLE(peruse,
-    AS_HELP_STRING([--enable-peruse],
-                   [enable PERUSE interface (default: disabled)]))
+AC_ARG_ENABLE([peruse],
+    [AS_HELP_STRING([--enable-peruse],
+                   [enable PERUSE interface (default: disabled)])])
 if test "$enable_peruse" = "yes"; then
     AC_MSG_RESULT([yes])
     WANT_PERUSE=1
@@ -102,9 +102,9 @@ AM_CONDITIONAL(WANT_PERUSE, test "$WANT_PERUSE" = "1")
 # Fortran MPI bindings
 #
 AC_MSG_CHECKING([if want Fortran MPI bindings])
-AC_ARG_ENABLE(mpi-fortran,
-    AS_HELP_STRING([--enable-mpi-fortran],
-                   [specify which Fortran MPI bindings to build: yes, none (or no), best-effort, mpifh (build only mpif.h support), usempi (build mpif.h and the mpi module), or usempif08 (or all, build mpifh, the mpi module, and the mpi_f08 module) (default: "yes" if Fortran compiler found)]))
+AC_ARG_ENABLE([mpi-fortran],
+    [AS_HELP_STRING([--enable-mpi-fortran],
+                   [specify which Fortran MPI bindings to build: yes, none (or no), best-effort, mpifh (build only mpif.h support), usempi (build mpif.h and the mpi module), or usempif08 (or all, build mpifh, the mpi module, and the mpi_f08 module) (default: "yes" if Fortran compiler found)])])
 
 # These are the 4 monotonically-rising values indicating levels of
 # Fortran bindings support.
@@ -202,9 +202,9 @@ AM_CONDITIONAL([OMPI_ENABLE_GREQUEST_EXTENSIONS],[test $ompi_grequest_extensions
 #
 
 AC_MSG_CHECKING([if want run-time MPI parameter checking])
-AC_ARG_WITH(mpi-param-check,
-    AS_HELP_STRING([--with-mpi-param-check(=VALUE)],
-                   [behavior of MPI function parameter checking.  Valid values are: always, never, runtime.  If --with-mpi-param-check is specified with no VALUE argument, it is equivalent to a VALUE of "always"; --without-mpi-param-check is equivalent to "never" (default: runtime).]))
+AC_ARG_WITH([mpi-param-check],
+    [AS_HELP_STRING([--with-mpi-param-check(=VALUE)],
+                   [behavior of MPI function parameter checking.  Valid values are: always, never, runtime.  If --with-mpi-param-check is specified with no VALUE argument, it is equivalent to a VALUE of "always"; --without-mpi-param-check is equivalent to "never" (default: runtime).])])
 mpi_param_check=ompi_mpi_param_check
 if test "$with_mpi_param_check" = "no" || \
    test "$with_mpi_param_check" = "never"; then

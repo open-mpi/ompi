@@ -31,8 +31,8 @@ AC_DEFUN([MCA_opal_shmem_posix_CONFIG],[
     # do we have the posix shm stuff?
     AC_MSG_CHECKING([if want POSIX shared memory support])
     AC_ARG_ENABLE(posix-shmem,
-        AS_HELP_STRING([--disable-posix-shmem],
-                       [disable posix shared memory support (default: enabled)]))
+        [AS_HELP_STRING([--disable-posix-shmem],
+                       [disable posix shared memory support (default: enabled)])])
     AS_IF([test "$enable_posix_shmem" = "no"],
           [AC_MSG_RESULT([no])
            shmem_posix_sm_build_posix=0],

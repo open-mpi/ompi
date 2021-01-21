@@ -35,7 +35,7 @@ AC_DEFUN([OPAL_SETUP_FT_BANNER],[
 AC_DEFUN([OPAL_SETUP_FT_OPTIONS],[
     # define a variable that tells us that these options were enabled
     opal_setup_ft_options="yes"
-    AC_ARG_WITH(ft,
+    AC_ARG_WITH([ft],
                 [AS_HELP_STRING([--with-ft=TYPE],
                 [Specify the type of fault tolerance to enable. Options: mpi (ULFM), (default: mpi)])],
                 [],

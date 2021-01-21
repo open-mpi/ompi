@@ -21,8 +21,8 @@ AC_DEFUN([MCA_oshmem_sshmem_sysv_CONFIG],[
     # do we have the sysv shm stuff?
     AC_MSG_CHECKING([if want SYSV shared memory support])
     AC_ARG_ENABLE(sysv-sshmem,
-        AS_HELP_STRING([--disable-sysv-sshmem],
-                       [disable sysv shared memory support (default: enabled)]))
+        [AS_HELP_STRING([--disable-sysv-sshmem],
+                       [disable sysv shared memory support (default: enabled)])])
     AS_IF([test "$enable_sysv_sshmem" = "no"],
           [AC_MSG_RESULT([no])
            oshmem_sysv_sm_build_sysv=0],

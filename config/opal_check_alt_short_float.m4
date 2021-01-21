@@ -16,9 +16,9 @@ dnl ------------------------------------------------------------
 AC_DEFUN([OPAL_CHECK_ALT_SHORT_FLOAT], [
     AC_CHECK_TYPES(_Float16)
     AC_MSG_CHECKING([if want alternate C type of short float])
-    AC_ARG_ENABLE(alt-short-float,
-        AS_HELP_STRING([--enable-alt-short-float=TYPE],
-                       [Use an alternate C type TYPE of 'short float' if 'short float' is not available on the C compiler. 'short float' is a new C type proposed for the next C language standard in ISO/IEC JTC 1/SC 22 WG 14 (C WG). (default: "_Float16" if available, disabled otherwise)]))
+    AC_ARG_ENABLE([alt-short-float],
+        [AS_HELP_STRING([--enable-alt-short-float=TYPE],
+                       [Use an alternate C type TYPE of 'short float' if 'short float' is not available on the C compiler. 'short float' is a new C type proposed for the next C language standard in ISO/IEC JTC 1/SC 22 WG 14 (C WG). (default: "_Float16" if available, disabled otherwise)])])
     if test "$enable_alt_short_float" = "yes"; then
         AC_MSG_ERROR([--enable-alt-short-float must have an argument.])
     elif test "$enable_alt_short_float" = "no"; then
