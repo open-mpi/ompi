@@ -7,7 +7,7 @@
 # Copyright (c) 2013-2020 Intel, Inc.  All rights reserved.
 # Copyright (c) 2015-2020 Research Organization for Information Science
 #                         and Technology (RIST).  All rights reserved.
-# Copyright (c) 2015-2020 IBM Corporation.  All rights reserved.
+# Copyright (c) 2015-2021 IBM Corporation.  All rights reserved.
 # Copyright (c) 2020      Amazon.com, Inc. or its affiliates.
 #                         All Rights reserved.
 #
@@ -1562,6 +1562,11 @@ $dnl_line
 
 dnl 3rd-party package information\n";
 
+# Extract the OMPI options to exclude them when processing PMIx and PRRTE
+if ( ! ("pmix" ~~ @disabled_3rdparty_packages && "prrte" ~~ @disabled_3rdparty_packages) ) {
+    safe_system("./config/extract-3rd-party-configure.pl -p . -n \"OMPI\" -l > config/auto-generated-ompi-exclude.ini");
+}
+
 # these are fairly one-off, so we did not try to do anything
 # generic. Sorry :).
 
@@ -1605,6 +1610,12 @@ if ("pmix" ~~ @disabled_3rdparty_packages) {
     }
     push(@subdirs, "3rd-party/openpmix/");
     $m4 .= "m4_define([package_pmix], [1])\n";
+
+    # Grab the unique configure options from each of the 3rd party packages
+    safe_system("./config/extract-3rd-party-configure.pl -p \"3rd-party/openpmix/\" -n \"PMIx\" -e config/auto-generated-ompi-exclude.ini > config/auto-extracted-pmix-configure-args.m4");
+    # Add the additional configure options from PMIx
+    safe_system("./config/extract-3rd-party-configure.pl -p \"3rd-party/openpmix/\" -n \"PMIx\" -l >> config/auto-generated-ompi-exclude.ini");
+
     verbose "--- PMIx enabled\n";
 }
 
@@ -1618,6 +1629,10 @@ if ("prrte" ~~ @disabled_3rdparty_packages) {
     }
     push(@subdirs, "3rd-party/prrte/");
     $m4 .= "m4_define([package_prrte], [1])\n";
+
+    # Grab the unique configure options from each of the 3rd party packages
+    safe_system("./config/extract-3rd-party-configure.pl -p \"3rd-party/prrte/\" -n \"PRRTE\" -e config/auto-generated-ompi-exclude.ini > config/auto-extracted-prrte-configure-args.m4");
+
     verbose "--- PRRTE enabled\n";
 }
 

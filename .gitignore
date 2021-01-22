@@ -114,6 +114,9 @@ config/mca_no_configure_components.m4
 config/mca_m4_config_include.m4
 config/ext_no_configure_components.m4
 config/ext_m4_config_include.m4
+config/auto-extracted-pmix-configure-args.m4
+config/auto-extracted-prrte-configure-args.m4
+config/auto-generated-ompi-exclude.ini
 
 contrib/build-mca-comps-outside-of-tree/btl_tcp2_config.h
 contrib/build-mca-comps-outside-of-tree/btl_tcp2_config.h.in
