@@ -417,13 +417,6 @@ int mca_pml_ucx_add_procs(struct ompi_proc_t **procs, size_t nprocs)
     ompi_proc_t *proc;
     ucp_ep_h ep;
     size_t i;
-    int ret;
-
-    if (OMPI_SUCCESS != (ret = mca_pml_base_pml_check_selected("ucx",
-                                                               procs,
-                                                               nprocs))) {
-        return ret;
-    }
 
     for (i = 0; i < nprocs; ++i) {
         proc = procs[(i + OMPI_PROC_MY_NAME->vpid) % nprocs];
@@ -446,13 +439,6 @@ static inline ucp_ep_h mca_pml_ucx_get_ep(ompi_communicator_t *comm, int rank)
     ep = proc_peer->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_PML];
     if (OPAL_LIKELY(NULL != ep)) {
         return ep;
-    }
-
-    /* Note, mca_pml_base_pml_check_selected, doesn't use 3rd argument */
-    if (OMPI_SUCCESS != mca_pml_base_pml_check_selected("ucx",
-                                                        &proc_peer,
-                                                        1)) {
-        return NULL;
     }
 
     return mca_pml_ucx_add_proc_common(proc_peer);
