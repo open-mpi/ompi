@@ -17,6 +17,7 @@ dnl Copyright (c) 2014-2017 Los Alamos National Security, LLC. All rights
 dnl                         reserved.
 dnl Copyright (c) 2017      Amazon.com, Inc. or its affiliates.  All Rights
 dnl                         reserved.
+dnl Copyright (c) 2021      Google, LLC. All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -1022,7 +1023,7 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
 
     AC_ARG_ENABLE([builtin-atomics],
       [AC_HELP_STRING([--enable-builtin-atomics],
-         [Enable use of __sync builtin atomics (default: enabled)])])
+         [Enable use of __atomic builtin atomics (default: enabled)])])
 
     opal_cv_asm_builtin="BUILTIN_NO"
     AS_IF([test "$opal_cv_asm_builtin" = "BUILTIN_NO" && test "$enable_builtin_atomics" != "no"],
@@ -1075,6 +1076,12 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
             OPAL_ASM_ARM_VERSION=8
             AC_DEFINE_UNQUOTED([OPAL_ASM_ARM_VERSION], [$OPAL_ASM_ARM_VERSION],
                                [What ARM assembly version to use])
+	    # If built-in atomics were not specifically request then disable the
+	    # use of built-in atomics. The performance of Open MPI when using the
+	    # built-ins is worse than when they are not in use.
+	    if test "$enable_builtin_atomics" != "yes" ; then
+		opal_cv_asm_builtin="BUILTIN_NO"
+	    fi
             OPAL_GCC_INLINE_ASSIGN='"mov %0, #0" : "=&r"(ret)'
             ;;
 

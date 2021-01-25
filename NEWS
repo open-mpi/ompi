@@ -22,8 +22,9 @@ Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
 Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
 Copyright (c) 2018-2020 Amazon.com, Inc. or its affiliates.  All Rights
                         reserved.
-Copyright (c) 2019-2020 Triad National Security, LLC. All rights
+Copyright (c) 2019-2021 Triad National Security, LLC. All rights
                         reserved.
+Copyright (c) 2021      Google, LLC. All rights reserved.
 $COPYRIGHT$
 
 Additional copyrights may follow
@@ -103,6 +104,7 @@ included in the vX.Y.Z section and be denoted as:
 - OFI/libfabric: Added btl for one-sided support
 - OFI/libfabric: Multiple small bugfixes
 - libnbc: Adding numerous performance-improving algorithms
+- AArch64: disable gcc built-in atomics by default.
 
 4.0.5 -- August, 2020
 ---------------------
