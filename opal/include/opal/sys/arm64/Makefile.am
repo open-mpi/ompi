@@ -9,6 +9,8 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2021      Triad National Security, LLC. All rights reserved.
+# Copyright (c) 2021      Google, LLC. All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -20,5 +22,6 @@
 
 headers += \
        opal/sys/arm64/atomic.h \
+       opal/sys/arm64/atomic_llsc.h \
        opal/sys/arm64/timer.h
 
