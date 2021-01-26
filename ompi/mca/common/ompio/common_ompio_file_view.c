@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2019 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2021 University of Houston. All rights reserved.
  * Copyright (c) 2017-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
@@ -72,6 +72,16 @@ int mca_common_ompio_set_view (ompio_file_t *fh,
     ptrdiff_t ftype_extent, lb, ub;
     ompi_datatype_t *newfiletype;
 
+    if ( (MPI_DISPLACEMENT_CURRENT == disp) &&
+         (fh->f_amode & MPI_MODE_SEQUENTIAL) ) {
+        mca_sharedfp_base_module_t * shared_fp_base_module = fh->f_sharedfp;
+        if ( NULL == shared_fp_base_module ){
+            opal_output(0, "No shared file pointer component found for this file. Can not execute\n");
+            return OMPI_ERROR;
+        }
+        shared_fp_base_module->sharedfp_get_position(fh, &disp);
+    }
+    
     if ( NULL != fh->f_etype ) {
         ompi_datatype_destroy (&fh->f_etype);
     }
@@ -167,7 +177,17 @@ int mca_common_ompio_set_view (ompio_file_t *fh,
         // File view is not a multiple of the etype.
         return MPI_ERR_ARG;
     }
+    
+    // make sure that displacement is not negative, which could
+    // lead to an illegal access.
+    if ( 0 < fh->f_iov_count && 0 > (off_t)fh->f_decoded_iov[0].iov_base ) {
+        // I think MPI_ERR_TYPE would be more appropriate, but
+        // this is the error code expected in a testsuite, so I just
+        // go with this.
+        return MPI_ERR_IO;
+    }
 
+    
     if( SIMPLE_PLUS == OMPIO_MCA_GET(fh, grouping_option) ) {
         fh->f_cc_size = get_contiguous_chunk_size (fh, 1);
     }

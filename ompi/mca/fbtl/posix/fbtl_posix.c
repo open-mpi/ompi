@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2015 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2021 University of Houston. All rights reserved.
  * Copyright (c) 2018      Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2018      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -127,14 +127,57 @@ bool mca_fbtl_posix_progress ( mca_ompio_request_t *req)
 	if ( EINPROGRESS == data->aio_req_status[i] ) {
 	    data->aio_req_status[i] = aio_error ( &data->aio_reqs[i]);
 	    if ( 0 == data->aio_req_status[i]){
-		data->aio_open_reqs--;
-		lcount++;
 		/* assuming right now that aio_return will return
 		** the number of bytes written/read and not an error code,
 		** since aio_error should have returned an error in that
 		** case and not 0 ( which means request is complete)
 		*/
-		data->aio_total_len += aio_return (&data->aio_reqs[i]);
+                ssize_t ret2 = aio_return (&data->aio_reqs[i]);
+		data->aio_total_len += ret2;
+                if ( data->aio_reqs[i].aio_nbytes != (size_t)ret2 ) {
+                    /* Partial completion */
+                    data->aio_reqs[i].aio_offset += ret2;
+                    data->aio_reqs[i].aio_buf    = (char*)data->aio_reqs[i].aio_buf + ret2;
+                    data->aio_reqs[i].aio_nbytes -= ret2;
+                    data->aio_reqs[i].aio_reqprio = 0;
+                    data->aio_reqs[i].aio_sigevent.sigev_notify = SIGEV_NONE;
+                    data->aio_req_status[i]        = EINPROGRESS;
+                    start_offset = data->aio_reqs[i].aio_offset;
+                    total_length = data->aio_reqs[i].aio_nbytes;
+                    if ( data->aio_req_type == FBTL_POSIX_WRITE ) {
+                        ret_code = mca_fbtl_posix_lock( &data->aio_lock, data->aio_fh, F_WRLCK, start_offset, total_length, OMPIO_LOCK_ENTIRE_REGION );
+                        if ( 0 < ret_code ) {
+                            opal_output(1, "mca_fbtl_posix_progress: error in mca_fbtl_posix_lock() %d", ret_code);
+                            /* Just in case some part of the lock actually succeeded. */
+                            mca_fbtl_posix_unlock ( &data->aio_lock, data->aio_fh );
+                            return OMPI_ERROR;
+                        }
+                        if (-1 == aio_write(&data->aio_reqs[i])) {
+                            opal_output(1, "mca_fbtl_posix_progress: error in aio_write()");
+                            mca_fbtl_posix_unlock ( &data->aio_lock, data->aio_fh );
+                            return OMPI_ERROR;
+                        }                        
+                    }
+                    else if (  data->aio_req_type == FBTL_POSIX_READ ) {
+                        ret_code = mca_fbtl_posix_lock( &data->aio_lock, data->aio_fh, F_RDLCK, start_offset, total_length, OMPIO_LOCK_ENTIRE_REGION );
+                        if ( 0 < ret_code ) {
+                            opal_output(1, "mca_fbtl_posix_progress: error in mca_fbtl_posix_lock() %d", ret_code);
+                            /* Just in case some part of the lock actually succeeded. */
+                            mca_fbtl_posix_unlock ( &data->aio_lock, data->aio_fh );
+                            return OMPI_ERROR;
+                        }
+                        if (-1 == aio_read(&data->aio_reqs[i])) {
+                            opal_output(1, "mca_fbtl_posix_progress: error in aio_read()");
+                            mca_fbtl_posix_unlock ( &data->aio_lock, data->aio_fh );
+                            return OMPI_ERROR;
+                        }
+                        mca_fbtl_posix_unlock ( &data->aio_lock, data->aio_fh );
+                    }
+                }
+		else {
+                    data->aio_open_reqs--;
+                    lcount++;
+                }
 	    }
 	    else if ( EINPROGRESS == data->aio_req_status[i]){
 		/* not yet done */
