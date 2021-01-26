@@ -543,11 +543,13 @@ int32_t ompi_datatype_init( void )
 
 #define MOOG(name, index)                                               \
     do {                                                                \
-        ompi_mpi_##name.dt.d_f_to_c_index =                             \
-            opal_pointer_array_add(&ompi_datatype_f_to_c_table, &ompi_mpi_##name); \
-        if( ompi_datatype_number_of_predefined_data < (ompi_mpi_##name).dt.d_f_to_c_index ) \
-            ompi_datatype_number_of_predefined_data = (ompi_mpi_##name).dt.d_f_to_c_index; \
-        assert( (index) == ompi_mpi_##name.dt.d_f_to_c_index );         \
+        int rc;                                                         \
+        ompi_mpi_##name.dt.d_f_to_c_index = index;                      \
+        rc = opal_pointer_array_set_item(&ompi_datatype_f_to_c_table,   \
+                                         index, &ompi_mpi_##name);      \
+        assert( rc == OPAL_SUCCESS );                                   \
+        if( ompi_datatype_number_of_predefined_data < (ompi_mpi_##name).dt.d_f_to_c_index + 1 ) \
+            ompi_datatype_number_of_predefined_data = (ompi_mpi_##name).dt.d_f_to_c_index + 1; \
     } while(0)
 
     /*
@@ -653,7 +655,7 @@ int32_t ompi_datatype_init( void )
     /**
      * Now make sure all non-contiguous types are marked as such.
      */
-    for( i = 0; i < ompi_mpi_count.dt.d_f_to_c_index; i++ ) {
+    for( i = 0; i < ompi_datatype_number_of_predefined_data; i++ ) {
         opal_datatype_t* datatype = (opal_datatype_t*)opal_pointer_array_get_item(&ompi_datatype_f_to_c_table, i );
 
         if( (datatype->ub - datatype->lb) == (ptrdiff_t)datatype->size ) {
@@ -676,7 +678,7 @@ int32_t ompi_datatype_finalize( void )
     /* As they are statically allocated they cannot be released.
      * But we can call OBJ_DESTRUCT, just to free all internally allocated ressources.
      */
-    for( int i = 0; i < ompi_mpi_count.dt.d_f_to_c_index; i++ ) {
+    for( int i = 0; i < ompi_datatype_number_of_predefined_data; i++ ) {
         opal_datatype_t* datatype = (opal_datatype_t*)opal_pointer_array_get_item(&ompi_datatype_f_to_c_table, i );
         OBJ_DESTRUCT(datatype);
     }
