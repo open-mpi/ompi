@@ -12,6 +12,7 @@
 # Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2015      Los Alamos National Security, LLC. All rights
 #                         reserved.
+# Copyright (c) 2021      IBM Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -24,12 +25,14 @@ SUBDIRS = \
 	$(MCA_orte_FRAMEWORKS_SUBDIRS) \
 	$(MCA_orte_FRAMEWORK_COMPONENT_STATIC_SUBDIRS) \
 	etc \
+        orted/orted-mpir \
         . \
 	$(MCA_orte_FRAMEWORK_COMPONENT_DSO_SUBDIRS)
 
 DIST_SUBDIRS = \
 	include \
 	etc \
+        orted/orted-mpir \
 	$(MCA_orte_FRAMEWORKS_SUBDIRS) \
 	$(MCA_orte_FRAMEWORK_COMPONENT_ALL_SUBDIRS)
 
@@ -39,7 +42,8 @@ lib_LTLIBRARIES = lib@ORTE_LIB_PREFIX@open-rte.la
 lib@ORTE_LIB_PREFIX@open_rte_la_SOURCES =
 lib@ORTE_LIB_PREFIX@open_rte_la_LIBADD = \
 	$(MCA_orte_FRAMEWORK_LIBS) \
-	$(ORTE_TOP_BUILDDIR)/opal/lib@OPAL_LIB_PREFIX@open-pal.la
+	$(ORTE_TOP_BUILDDIR)/opal/lib@OPAL_LIB_PREFIX@open-pal.la \
+        orted/orted-mpir/lib@ORTE_LIB_PREFIX@open-orted-mpir.la
 lib@ORTE_LIB_PREFIX@open_rte_la_DEPENDENCIES = $(libopen_rte_la_LIBADD)
 lib@ORTE_LIB_PREFIX@open_rte_la_LDFLAGS = -version-info $(libopen_rte_so_version)
 
