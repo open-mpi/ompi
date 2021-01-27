@@ -17,7 +17,7 @@
  * Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2017      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2017-2021 IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -108,6 +108,7 @@
 #include "orte/util/show_help.h"
 
 #include "orted_submit.h"
+#include "orted-mpir/orted_mpir.h"
 
 /**
  * Global struct for catching orte command line options.
@@ -156,62 +157,7 @@ static void run_debugger(char *basename, opal_cmd_line_t *cmd_line,
                          int argc, char *argv[], int num_procs);
 static void print_help(void);
 
-/* instance the standard MPIR interfaces */
-#define MPIR_MAX_PATH_LENGTH 512
-#define MPIR_MAX_ARG_LENGTH 1024
-struct MPIR_PROCDESC *MPIR_proctable = NULL;
-int MPIR_proctable_size = 0;
-volatile int MPIR_being_debugged = 0;
-volatile int MPIR_debug_state = 0;
-int MPIR_i_am_starter = 0;
-int MPIR_partial_attach_ok = 1;
-char MPIR_executable_path[MPIR_MAX_PATH_LENGTH] = {0};
-char MPIR_server_arguments[MPIR_MAX_ARG_LENGTH] = {0};
-volatile int MPIR_forward_output = 0;
-volatile int MPIR_forward_comm = 0;
-char MPIR_attach_fifo[MPIR_MAX_PATH_LENGTH] = {0};
-int MPIR_force_to_main = 0;
 static void orte_debugger_init_before_spawn(orte_job_t *jdata);
-
-ORTE_DECLSPEC void __opal_attribute_optnone__ MPIR_Breakpoint(void);
-
-/* 
- * Attempt to prevent the compiler from optimizing out
- * MPIR_Breakpoint().
- *
- * Some older versions of automake can add -O3 to every
- * file via CFLAGS (which was demonstrated in automake v1.13.4),
- * so there is a possibility that the compiler will see
- * this function as a NOOP and optimize it out on older versions.
- * While using the current/recommended version of automake
- * does not do this, the following will help those
- * stuck with an older version, as well as guard against
- * future regressions.
- *
- * See the following git issue for more discussion:
- * https://github.com/open-mpi/ompi/issues/5501
- */
-volatile void* volatile orte_noop_mpir_breakpoint_ptr = NULL;
-
-/*
- * Breakpoint function for parallel debuggers
- */
-void MPIR_Breakpoint(void)
-{
-    /* 
-     * Actually do something with this pointer to make
-     * sure the compiler does not optimize out this function.
-     * The compiler should be forced to keep this
-     * function around due to the volatile void* type.
-     *
-     * This pointer doesn't actually do anything other than
-     * prevent unwanted optimization, and
-     * *should not* be used anywhere else in the code.
-     * So pointing this to the weeds should be OK.
-     */
-    orte_noop_mpir_breakpoint_ptr = (volatile void *) 0x42;
-    return;
-}
 
 /* local objects */
 typedef struct {
