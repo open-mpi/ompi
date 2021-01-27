@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
 #
-# Copyright (c) 2009-2020 Cisco Systems, Inc.  All rights reserved
+# Copyright (c) 2009-2021 Cisco Systems, Inc.  All rights reserved
 # Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
 # Copyright (c) 2013      Mellanox Technologies, Inc.
 #                         All rights reserved.
@@ -1138,6 +1138,102 @@ sub in_tarball {
 }
 
 ##############################################################################
+
+sub replace_config_sub_guess {
+    # This could be simpler if we could use some Perl modules for this
+    # functionality (e.g., DateTime).  But I don't want to introduce
+    # any CPAN dependencies here, so just do sometime simple, even if
+    # it's a bit laborious. Use a few private helper functions for
+    # this kind of functionality.
+
+    sub _get_timestamp {
+        my $filename = shift;
+
+        my $ret;
+        if (-x $filename) {
+            my $out = `$filename --version`;
+            $out =~ m/GNU config\.[a-z]+ \((.+)\)/;
+            $ret = $1;
+        }
+
+        return $ret;
+    }
+
+    sub _split_timestamp {
+        my $ts = shift;
+
+        $ts =~ m/(\d+)-(\d+)-(\d+)/;
+        return $1, $2, $3;
+    }
+
+    # Returns true if timestamp $a > timestamp $b.
+    sub _timestamp_gt {
+        my ($a, $b) = @_;
+
+        my ($year_a, $month_a, $day_a) = _split_timestamp($a);
+        my ($year_b, $month_b, $day_b) = _split_timestamp($b);
+
+        # Don't try to be clever -- just do a simple set of explicit
+        # comparisons.
+        if ($year_a > $year_b) {
+            return 1;
+        } elsif ($year_a < $year_b) {
+            return 0;
+        } else {
+            if ($month_a > $month_b) {
+                return 1;
+            } elsif ($month_a < $month_b) {
+                return 0;
+            } else {
+                if ($day_a > $day_b) {
+                    return 1;
+                } else {
+                    return 0;
+                }
+            }
+        }
+    }
+
+    my ($topdir) = @_;
+
+    # Find the stashed known-good files, and get their version
+    # timestamps.
+    my $cached_dir = "$topdir/config/from-savannah";
+    my @files = qw/config.guess config.sub/;
+    my %known_good_timestamps;
+    foreach my $file (@files) {
+        my $filename = "$cached_dir/upstream-$file";
+        my_die("Cannot find $filename")
+            if (! -f $filename);
+
+        my $ts = _get_timestamp($filename);
+        $known_good_timestamps{$file} = $ts;
+    }
+
+    # Find all config.guess/config.sub files in the tree.  If their
+    # versions are older than the stashed known-good files, update
+    # them from the stash.
+    my @files;
+    File::Find::find(sub {
+        push(@files, $File::Find::name)
+            if ($_ eq "config.guess" ||
+                $_ eq "config.sub") }, $topdir);
+
+    foreach my $file (@files) {
+        # Skip anything in the 3rd-party tree
+        next
+            if ($file =~ /\/3rd-party\//);
+
+        my $base = basename($file);
+        my $ts = _get_timestamp($file);
+        if (_timestamp_gt($known_good_timestamps{$base}, $ts)) {
+            print("=== Replacing $file with newer version\n");
+            safe_system("cp -f $cached_dir/upstream-$base $file");
+        }
+    }
+}
+
+##############################################################################
 ##############################################################################
 ## main - do the real work...
 ##############################################################################
@@ -1457,6 +1553,11 @@ foreach my $project (@{$projects}) {
 safe_system($cmd);
 
 patch_autotools_output(".");
+
+# Per https://github.com/open-mpi/ompi/issues/8410, replace config.sub
+# and config.guess with known-good versions if the Autoconf-installed
+# versions are older.
+replace_config_sub_guess(".");
 
 #---------------------------------------------------------------------------
 
