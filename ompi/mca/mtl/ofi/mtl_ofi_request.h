@@ -87,6 +87,10 @@ struct ompi_mtl_ofi_request_t {
 
     /** Pointer to Mrecv request to complete */
     struct mca_mtl_request_t *mrecv_req;
+
+    /** Stores reference to memory region from registration */
+    /*  Set to NULL if memory not registered or if non CUDA buffer */
+    struct fid_mr *mr;
 };
 typedef struct ompi_mtl_ofi_request_t ompi_mtl_ofi_request_t;
 
