@@ -13,6 +13,7 @@
  * Copyright (c) 2007-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -271,6 +272,9 @@ static void launch_daemons(int fd, short args, void *cbdata)
         /* kill the job if any orteds die */
         opal_argv_append(&argc, &argv, "--kill-on-bad-exit");
     }
+
+    /* our daemons are not an MPI task */
+    opal_argv_append(&argc, &argv, "--mpi=none");
 
 #if SLURM_CRAY_ENV
     /*
