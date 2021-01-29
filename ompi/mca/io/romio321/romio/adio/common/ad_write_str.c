@@ -14,7 +14,8 @@
         if (writebuf_len) { \
            ADIO_WriteContig(fd, writebuf, writebuf_len, MPI_BYTE, \
                   ADIO_EXPLICIT_OFFSET, writebuf_off, &status1, error_code); \
-           if (!(fd->atomicity)) ADIOI_UNLOCK(fd, writebuf_off, SEEK_SET, writebuf_len); \
+           if (!fd->atomicity && fd->hints->ds_write == ADIOI_HINT_DISABLE) \
+               ADIOI_UNLOCK(fd, writebuf_off, SEEK_SET, writebuf_len); \
            if (*error_code != MPI_SUCCESS) { \
                *error_code = MPIO_Err_create_code(*error_code, \
                                                   MPIR_ERR_RECOVERABLE, myname, \
@@ -25,7 +26,8 @@
         } \
 	writebuf_off = req_off; \
         writebuf_len = (unsigned) (ADIOI_MIN(max_bufsize,end_offset-writebuf_off+1));\
-	if (!(fd->atomicity)) ADIOI_WRITE_LOCK(fd, writebuf_off, SEEK_SET, writebuf_len); \
+        if (!fd->atomicity && fd->hints->ds_write == ADIOI_HINT_DISABLE) \
+            ADIOI_WRITE_LOCK(fd, writebuf_off, SEEK_SET, writebuf_len); \
 	ADIO_ReadContig(fd, writebuf, writebuf_len, MPI_BYTE, \
                  ADIO_EXPLICIT_OFFSET, writebuf_off, &status1, error_code); \
 	if (*error_code != MPI_SUCCESS) { \
@@ -42,7 +44,8 @@
     while (write_sz != req_len) { \
         ADIO_WriteContig(fd, writebuf, writebuf_len, MPI_BYTE, \
                   ADIO_EXPLICIT_OFFSET, writebuf_off, &status1, error_code); \
-        if (!(fd->atomicity)) ADIOI_UNLOCK(fd, writebuf_off, SEEK_SET, writebuf_len); \
+        if (!fd->atomicity && fd->hints->ds_write == ADIOI_HINT_DISABLE) \
+            ADIOI_UNLOCK(fd, writebuf_off, SEEK_SET, writebuf_len); \
         if (*error_code != MPI_SUCCESS) { \
             *error_code = MPIO_Err_create_code(*error_code, \
                                                MPIR_ERR_RECOVERABLE, myname, \
@@ -54,7 +57,8 @@
         userbuf_off += write_sz; \
         writebuf_off += writebuf_len; \
         writebuf_len = (unsigned) (ADIOI_MIN(max_bufsize,end_offset-writebuf_off+1));\
-	if (!(fd->atomicity)) ADIOI_WRITE_LOCK(fd, writebuf_off, SEEK_SET, writebuf_len); \
+        if (!fd->atomicity && fd->hints->ds_write == ADIOI_HINT_DISABLE) \
+            ADIOI_WRITE_LOCK(fd, writebuf_off, SEEK_SET, writebuf_len); \
         ADIO_ReadContig(fd, writebuf, writebuf_len, MPI_BYTE, \
                   ADIO_EXPLICIT_OFFSET, writebuf_off, &status1, error_code); \
 	if (*error_code != MPI_SUCCESS) { \
@@ -191,9 +195,10 @@ void ADIOI_GEN_WriteStrided(ADIO_File fd, const void *buf, int count,
         writebuf = (char *) ADIOI_Malloc(max_bufsize);
         writebuf_len = (unsigned) (ADIOI_MIN(max_bufsize, end_offset-writebuf_off+1));
 
-/* if atomicity is true, lock the region to be accessed */
-	if (fd->atomicity) 
-	    ADIOI_WRITE_LOCK(fd, start_off, SEEK_SET, end_offset-start_off+1);
+        /* if atomicity is true or data sieving is not disable, lock the region
+         * to be accessed */
+        if (fd->atomicity || fd->hints->ds_write != ADIOI_HINT_DISABLE)
+            ADIOI_WRITE_LOCK(fd, start_off, SEEK_SET, end_offset - start_off + 1);
 
         for (j=0; j<count; j++) 
         {
@@ -210,7 +215,7 @@ void ADIOI_GEN_WriteStrided(ADIO_File fd, const void *buf, int count,
         ADIO_WriteContig(fd, writebuf, writebuf_len, MPI_BYTE, ADIO_EXPLICIT_OFFSET,
 			writebuf_off, &status1, error_code);
 
-	if (fd->atomicity) 
+        if (fd->atomicity || fd->hints->ds_write != ADIOI_HINT_DISABLE)
 	    ADIOI_UNLOCK(fd, start_off, SEEK_SET, end_offset-start_off+1);
 
 	if (*error_code != MPI_SUCCESS) goto fn_exit;
@@ -287,8 +292,10 @@ void ADIOI_GEN_WriteStrided(ADIO_File fd, const void *buf, int count,
 	     * datatypes, instead of a count of bytes (which might overflow)
 	     * Other WriteContig calls in this path are operating on data
 	     * sieving buffer */
+            ADIOI_WRITE_LOCK(fd, offset, SEEK_SET, bufsize);
             ADIO_WriteContig(fd, buf, count, datatype, ADIO_EXPLICIT_OFFSET,
                              offset, status, error_code);
+            ADIOI_UNLOCK(fd, offset, SEEK_SET, bufsize);
 
 	    if (file_ptr_type == ADIO_INDIVIDUAL) {
                 /* update MPI-IO file pointer to point to the first byte 
@@ -338,9 +345,10 @@ void ADIOI_GEN_WriteStrided(ADIO_File fd, const void *buf, int count,
 	    fwr_size = ADIOI_MIN(flat_file->blocklens[j], bufsize-i_offset);
 	}
 
-/* if atomicity is true, lock the region to be accessed */
-	if (fd->atomicity) 
-	    ADIOI_WRITE_LOCK(fd, start_off, SEEK_SET, end_offset-start_off+1);
+        /* if atomicity is true or data sieving is not disable, lock the region
+         * to be accessed */
+        if (fd->atomicity || fd->hints->ds_write != ADIOI_HINT_DISABLE)
+            ADIOI_WRITE_LOCK(fd, start_off, SEEK_SET, end_offset - start_off + 1);
 
         writebuf_off = 0;
         writebuf_len = 0;
@@ -460,11 +468,11 @@ void ADIOI_GEN_WriteStrided(ADIO_File fd, const void *buf, int count,
 	if (writebuf_len) {
 	    ADIO_WriteContig(fd, writebuf, writebuf_len, MPI_BYTE, ADIO_EXPLICIT_OFFSET,
 			writebuf_off, &status1, error_code);
-	    if (!(fd->atomicity)) 
+            if (!fd->atomicity && fd->hints->ds_write == ADIOI_HINT_DISABLE)
 		ADIOI_UNLOCK(fd, writebuf_off, SEEK_SET, writebuf_len);
 	    if (*error_code != MPI_SUCCESS) goto fn_exit;
 	}
-	if (fd->atomicity) 
+        if (fd->atomicity || fd->hints->ds_write != ADIOI_HINT_DISABLE)
 	    ADIOI_UNLOCK(fd, start_off, SEEK_SET, end_offset-start_off+1);
 
 	if (file_ptr_type == ADIO_INDIVIDUAL) fd->fp_ind = off;

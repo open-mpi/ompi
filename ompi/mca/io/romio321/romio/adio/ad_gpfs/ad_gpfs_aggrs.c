@@ -719,6 +719,7 @@ void ADIOI_GPFS_Calc_others_req(ADIO_File fd, int count_my_req_procs,
 	    others_req[i].count = 0;
 	    others_req[i].offsets = NULL;
 	    others_req[i].lens    = NULL;
+	    others_req[i].mem_ptrs = NULL;
 	}
     }
 
