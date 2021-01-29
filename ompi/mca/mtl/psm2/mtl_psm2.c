@@ -16,6 +16,7 @@
  *                         reserved.
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -100,8 +101,16 @@ int ompi_mtl_psm2_module_init(int local_rank, int num_local_procs) {
     char *generated_key;
     char env_string[256];
     int rc;
+    opal_process_name_t pname;
 
-    generated_key = getenv("OMPI_MCA_orte_precondition_transports");
+    generated_key = NULL;
+    pname.jobid = opal_process_info.my_name.jobid;
+    pname.vpid = OPAL_VPID_WILDCARD;
+    OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, PMIX_CREDENTIAL, &pname,
+                                   (char**)&generated_key, PMIX_STRING);
+    if (PMIX_SUCCESS != rc || NULL == generated_key) {
+        generated_key = getenv("OMPI_MCA_orte_precondition_transports");
+    }
     memset(uu, 0, sizeof(psm2_uuid_t));
 
     if (!generated_key || (strlen(generated_key) != 33) ||
