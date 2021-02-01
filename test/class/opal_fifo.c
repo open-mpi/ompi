@@ -107,10 +107,10 @@ static void *thread_test_exhaust (opal_object_t *arg) {
 
 static bool check_fifo_consistency (opal_fifo_t *fifo, int expected_count)
 {
-    volatile opal_list_item_t *volatile item;
+    opal_list_item_t * item;
     int count;
 
-    for (count = 0, item = fifo->opal_fifo_head.data.item ; item != &fifo->opal_fifo_ghost ;
+    for (count = 0, item = (opal_list_item_t *) fifo->opal_fifo_head.data.item ; item != &fifo->opal_fifo_ghost ;
          item = opal_list_get_next(item), count++);
 
     return count == expected_count;

@@ -70,7 +70,7 @@ static bool check_lifo_consistency (opal_lifo_t *lifo, int expected_count)
     opal_list_item_t *item;
     int count;
 
-    for (count = 0, item = lifo->opal_lifo_head.data.item ; item != &lifo->opal_lifo_ghost ;
+    for (count = 0, item = (opal_list_item_t *) lifo->opal_lifo_head.data.item ; item != &lifo->opal_lifo_ghost ;
          item = opal_list_get_next(item), count++);
 
     return count == expected_count;

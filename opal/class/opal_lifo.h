@@ -16,6 +16,8 @@
  *                         reseved.
  * Copyright (c) 2016-2018 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
+ * Copyright (c) 2021      Triad National Security, LLC. All rights reserved.
+ * Copyright (c) 2021      Google, LLC. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -50,7 +52,7 @@ union opal_counted_pointer_t {
         /** list item pointer */
         volatile opal_atomic_intptr_t item;
     } data;
-#if OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_128 && HAVE_OPAL_INT128_T
+#if OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_128 && HAVE_OPAL_INT128_T && !OPAL_HAVE_ATOMIC_LLSC_PTR
     /** used for atomics when there is a cmpset that can operate on
      * two 64-bit values */
     opal_atomic_int128_t atomic_value;
@@ -60,7 +62,7 @@ union opal_counted_pointer_t {
 typedef union opal_counted_pointer_t opal_counted_pointer_t;
 
 
-#if OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_128
+#if OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_128 && !OPAL_HAVE_ATOMIC_LLSC_PTR
 
 /* Add one element to the FIFO. We will return the last head of the list
  * to allow the upper level to detect if this element is the first one in the
@@ -136,7 +138,7 @@ static inline bool opal_lifo_is_empty( opal_lifo_t* lifo )
 }
 
 
-#if OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_128
+#if OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_128 && !OPAL_HAVE_ATOMIC_LLSC_PTR
 
 /* Add one element to the LIFO. We will return the last head of the list
  * to allow the upper level to detect if this element is the first one in the

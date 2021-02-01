@@ -14,6 +14,8 @@
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
  * Copyright (c) 2014-2018 Los Alamos National Security, LLC. All rights
  *                         reseved.
+ * Copyright (c) 2021      Triad National Security, LLC. All rights reserved.
+ * Copyright (c) 2021      Google, LLC. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -76,7 +78,7 @@ static inline bool opal_fifo_is_empty( opal_fifo_t* fifo )
     return opal_fifo_head (fifo) == &fifo->opal_fifo_ghost;
 }
 
-#if OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_128
+#if OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_128 && !OPAL_HAVE_ATOMIC_LLSC_PTR
 
 /* Add one element to the FIFO. We will return the last head of the list
  * to allow the upper level to detect if this element is the first one in the
