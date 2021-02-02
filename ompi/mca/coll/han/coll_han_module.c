@@ -18,6 +18,11 @@
 
 
 /*
+ *@file
+ * Coll han module managment file. Used for each new communicator.
+ */
+
+/*
  * Local functions
  */
 static int han_module_enable(mca_coll_base_module_t * module,
@@ -39,6 +44,7 @@ static void han_module_clear(mca_coll_han_module_t *han_module)
     CLEAN_PREV_COLL(han_module, allgather);
     CLEAN_PREV_COLL(han_module, allgatherv);
     CLEAN_PREV_COLL(han_module, allreduce);
+    CLEAN_PREV_COLL(han_module, barrier);
     CLEAN_PREV_COLL(han_module, bcast);
     CLEAN_PREV_COLL(han_module, reduce);
     CLEAN_PREV_COLL(han_module, gather);
@@ -50,11 +56,15 @@ static void han_module_clear(mca_coll_han_module_t *han_module)
     han_module->reproducible_allreduce_module = NULL;
 }
 
+/*
+ * Module constructor
+ */
 static void mca_coll_han_module_construct(mca_coll_han_module_t * module)
 {
     int i;
 
     module->enabled = true;
+    module->recursive_free_depth = 0;
     module->super.coll_module_disable = mca_coll_han_module_disable;
     module->cached_low_comms = NULL;
     module->cached_up_comms = NULL;
@@ -90,7 +100,16 @@ mca_coll_han_module_destruct(mca_coll_han_module_t * module)
 {
     int i;
 
+    module->recursive_free_depth++;
     module->enabled = false;
+    /* If the current module is in its caches during its destruction
+     * (i.e. last collective used HAN on a subcomm with a fallback
+     * on previous components)
+     */
+    if (module->recursive_free_depth > 1){
+        return;
+    }
+
     if (module->cached_low_comms != NULL) {
         for (i = 0; i < COLL_HAN_LOW_MODULES; i++) {
             ompi_comm_free(&(module->cached_low_comms[i]));
@@ -160,7 +179,6 @@ mca_coll_base_module_t *
 mca_coll_han_comm_query(struct ompi_communicator_t * comm, int *priority)
 {
     int flag;
-    char info_val[OPAL_MAX_INFO_VAL+1];
     mca_coll_han_module_t *han_module;
 
     /*
@@ -204,6 +222,8 @@ mca_coll_han_comm_query(struct ompi_communicator_t * comm, int *priority)
     han_module->topologic_level = GLOBAL_COMMUNICATOR;
 
     if (NULL != comm->super.s_info) {
+        char info_val[OPAL_MAX_INFO_VAL+1];
+
         /* Get the info value disaqualifying coll components */
         opal_info_get(comm->super.s_info, "ompi_comm_coll_han_topo_level",
                       sizeof(info_val), info_val, &flag);
@@ -222,12 +242,12 @@ mca_coll_han_comm_query(struct ompi_communicator_t * comm, int *priority)
     han_module->super.coll_alltoall   = NULL;
     han_module->super.coll_alltoallv  = NULL;
     han_module->super.coll_alltoallw  = NULL;
-    han_module->super.coll_barrier    = NULL;
     han_module->super.coll_exscan     = NULL;
     han_module->super.coll_gatherv    = NULL;
     han_module->super.coll_reduce_scatter = NULL;
     han_module->super.coll_scan       = NULL;
     han_module->super.coll_scatterv   = NULL;
+    han_module->super.coll_barrier    = mca_coll_han_barrier_intra_dynamic;
     han_module->super.coll_scatter    = mca_coll_han_scatter_intra_dynamic;
     han_module->super.coll_reduce     = mca_coll_han_reduce_intra_dynamic;
     han_module->super.coll_gather     = mca_coll_han_gather_intra_dynamic;
@@ -281,6 +301,7 @@ han_module_enable(mca_coll_base_module_t * module,
     HAN_SAVE_PREV_COLL_API(allgather);
     HAN_SAVE_PREV_COLL_API(allgatherv);
     HAN_SAVE_PREV_COLL_API(allreduce);
+    HAN_SAVE_PREV_COLL_API(barrier);
     HAN_SAVE_PREV_COLL_API(bcast);
     HAN_SAVE_PREV_COLL_API(gather);
     HAN_SAVE_PREV_COLL_API(reduce);
@@ -316,6 +337,7 @@ mca_coll_han_module_disable(mca_coll_base_module_t * module,
     OBJ_RELEASE_IF_NOT_NULL(han_module->previous_allgather_module);
     OBJ_RELEASE_IF_NOT_NULL(han_module->previous_allgatherv_module);
     OBJ_RELEASE_IF_NOT_NULL(han_module->previous_allreduce_module);
+    OBJ_RELEASE_IF_NOT_NULL(han_module->previous_barrier_module);
     OBJ_RELEASE_IF_NOT_NULL(han_module->previous_bcast_module);
     OBJ_RELEASE_IF_NOT_NULL(han_module->previous_gather_module);
     OBJ_RELEASE_IF_NOT_NULL(han_module->previous_reduce_module);

@@ -83,7 +83,7 @@ int mca_coll_han_comm_create_new(struct ompi_communicator_t *comm,
     /**
      * HAN is not yet optimized for a single process per node case, we should
      * avoid selecting it for collective communication support in such cases.
-     * However, in order to decide if this is tru, we need to know how many
+     * However, in order to decide if this is true, we need to know how many
      * local processes are on each node, a condition that cannot be verified
      * outside the MPI support (with PRRTE the info will be eventually available,
      * but we don't want to delay anything until then). We can achieve the same

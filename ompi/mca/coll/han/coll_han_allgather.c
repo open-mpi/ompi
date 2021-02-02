@@ -10,6 +10,12 @@
  * $HEADER$
  */
 
+/**
+ * @file
+ *
+ * This files contains all the hierarchical implementations of allgather
+ */
+
 #include "coll_han.h"
 #include "ompi/mca/coll/base/coll_base_functions.h"
 #include "ompi/mca/coll/base/coll_tags.h"
@@ -57,6 +63,10 @@ mca_coll_han_set_allgather_args(mca_coll_han_allgather_t * args,
     args->req = req;
 }
 
+
+/**
+ * Main function for taskified allgather: calls lg task, a gather on low comm
+ */
 int
 mca_coll_han_allgather_intra(const void *sbuf, int scount,
                              struct ompi_datatype_t *sdtype,
@@ -91,7 +101,7 @@ mca_coll_han_allgather_intra(const void *sbuf, int scount,
                                             comm, comm->c_coll->coll_allgather_module);
     }
 
-    ompi_request_t *temp_request = NULL;
+    ompi_request_t *temp_request;
     /* Set up request */
     temp_request = OBJ_NEW(ompi_request_t);
     temp_request->req_state = OMPI_REQUEST_ACTIVE;
@@ -276,6 +286,10 @@ int mca_coll_han_allgather_lb_task(void *task_args)
 
 }
 
+/**
+ * Short implementation of allgather that only does hierarchical
+ * communications without tasks.
+ */
 int
 mca_coll_han_allgather_intra_simple(const void *sbuf, int scount,
                                     struct ompi_datatype_t *sdtype,

@@ -12,6 +12,11 @@
  * $HEADER$
  */
 
+/*
+ *@file
+ * Implementation of configuration file parser to set collective components to use.
+ */
+
 #ifdef HAVE_STDLIB_H
 #include <stdlib.h>
 #endif
@@ -35,6 +40,12 @@ static void check_dynamic_rules(void);
 /* Current file line for verbose message */
 static int fileline = 1;
 
+/*
+ * File parsing function. Allocated memory depending on the number of rules.
+ * This functions expects a file formatted as describbed in coll_han_dynamic_file.h.
+ * The configuration is then used by coll/han component to determine which module to
+ * use at each topological level.
+ */
 int
 mca_coll_han_init_dynamic_rules(void)
 {
@@ -69,7 +80,6 @@ mca_coll_han_init_dynamic_rules(void)
 
     /* If the dynamic rules are not used, do not even read the file */
     if(!mca_coll_han_component.use_dynamic_file_rules) {
-        nb_coll = 0;
         return OMPI_SUCCESS;
     }
 
@@ -416,6 +426,9 @@ file_reading_error:
     return OMPI_SUCCESS;
 }
 
+/*
+ * Memory free all the rules parsed in the file
+ */
 void
 mca_coll_han_free_dynamic_rules(void)
 {
@@ -423,7 +436,7 @@ mca_coll_han_free_dynamic_rules(void)
     int i, j, k;
 
     /* Loop ranges */
-    int nb_coll, nb_topo, nb_conf;
+    int nb_coll, nb_conf;
 
     /* Aliases */
     collective_rule_t *coll_rules;
@@ -434,7 +447,7 @@ mca_coll_han_free_dynamic_rules(void)
     coll_rules = mca_coll_han_component.dynamic_rules.collective_rules;
 
     for(i=0 ; i<nb_coll ; i++) {
-        nb_topo = coll_rules[i].nb_topologic_levels;
+        int nb_topo = coll_rules[i].nb_topologic_levels;
         topo_rules = coll_rules[i].topologic_rules;
 
         for(j=0 ; j<nb_topo ; j++) {
@@ -478,7 +491,6 @@ static void check_dynamic_rules(void)
     collective_rule_t *coll_rules;
 
     /* Topo informations */
-    int nb_topo;
     TOPO_LVL_T topo_lvl;
     topologic_rule_t *topo_rules;
 
@@ -499,7 +511,7 @@ static void check_dynamic_rules(void)
 
     for( i = 0; i < nb_coll; i++ ) {
         coll_id = coll_rules[i].collective_id;
-        nb_topo = coll_rules[i].nb_topologic_levels;
+        int nb_topo = coll_rules[i].nb_topologic_levels;
         topo_rules = coll_rules[i].topologic_rules;
 
         for( j = 0; j < nb_topo; j++ ) {
@@ -547,6 +559,7 @@ static void check_dynamic_rules(void)
     }
 }
 
+/* Print configurations parsed from the file */
 void mca_coll_han_dump_dynamic_rules(void)
 {
     int nb_entries = 0;
@@ -557,7 +570,6 @@ void mca_coll_han_dump_dynamic_rules(void)
     collective_rule_t *coll_rules;
 
     /* Topo informations */
-    int nb_topo;
     TOPO_LVL_T topo_lvl;
     topologic_rule_t *topo_rules;
 
@@ -577,7 +589,7 @@ void mca_coll_han_dump_dynamic_rules(void)
 
     for(int i = 0; i < nb_coll; i++ ) {
         coll_id = coll_rules[i].collective_id;
-        nb_topo = coll_rules[i].nb_topologic_levels;
+        int nb_topo = coll_rules[i].nb_topologic_levels;
         topo_rules = coll_rules[i].topologic_rules;
 
         for(int j = 0; j < nb_topo; j++ ) {
