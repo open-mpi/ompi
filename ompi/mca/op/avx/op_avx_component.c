@@ -4,6 +4,7 @@
  *                         reserved.
  * Copyright (c) 2020      Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
+ * Copyright (c) 2021      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -20,6 +21,7 @@
 #include "ompi_config.h"
 
 #include "opal/util/printf.h"
+#include "ompi/include/mpi_portable_platform.h"
 
 #include "ompi/constants.h"
 #include "ompi/op/op.h"
@@ -34,6 +36,18 @@ static int avx_component_init_query(bool enable_progress_threads,
 static struct ompi_op_base_module_1_0_0_t *
     avx_component_op_query(struct ompi_op_t *op, int *priority);
 static int avx_component_register(void);
+
+static mca_base_var_enum_value_flag_t avx_support_flags[] = {
+    { .flag = 0x001, .string = "SSE" },
+    { .flag = 0x002, .string = "SSE2" },
+    { .flag = 0x004, .string = "SSE3" },
+    { .flag = 0x008, .string = "SSE4.1" },
+    { .flag = 0x010, .string = "AVX" },
+    { .flag = 0x020, .string = "AVX2" },
+    { .flag = 0x100, .string = "AVX512F" },
+    { .flag = 0x200, .string = "AVX512BW" },
+    { .flag = 0,     .string = NULL },
+};
 
 /**
  * A slightly modified code from
@@ -177,15 +191,38 @@ static int avx_component_close(void)
 static int
 avx_component_register(void)
 {
-    int32_t requested_flags = mca_op_avx_component.flags = has_intel_AVX_features();
+    mca_op_avx_component.supported =
+        mca_op_avx_component.flags = has_intel_AVX_features();
+
+    // MCA var enum flag for conveniently seeing SSE/MMX/AVX support
+    // values
+    mca_base_var_enum_flag_t *new_enum_flag;
+    (void) mca_base_var_enum_create_flag("op_avx_support_flags",
+                                         avx_support_flags, &new_enum_flag);
+    (void) mca_base_var_enum_register("ompi", "op", "avx", "support_flags",
+                                      &new_enum_flag);
+
+    (void) mca_base_component_var_register(&mca_op_avx_component.super.opc_version,
+                                           "capabilities",
+                                           "Level of SSE/MMX/AVX support available in the current environment",
+                                           MCA_BASE_VAR_TYPE_INT,
+                                           &(new_enum_flag->super), 0, 0,
+                                           OPAL_INFO_LVL_4,
+                                           MCA_BASE_VAR_SCOPE_CONSTANT,
+                                           &mca_op_avx_component.supported);
+
     (void) mca_base_component_var_register(&mca_op_avx_component.super.opc_version,
                                            "support",
-                                           "Level of SSE/MMX/AVX support to be used (combination of processor capabilities as follow SSE 0x01, SSE2 0x02, SSE3 0x04, SSE4.1 0x08, AVX 0x010, AVX2 0x020, AVX512F 0x100, AVX512BW 0x200) capped by the local architecture capabilities",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                           OPAL_INFO_LVL_6,
+                                           "Level of SSE/MMX/AVX support to be used, capped by the local architecture capabilities",
+                                           MCA_BASE_VAR_TYPE_INT,
+                                           &(new_enum_flag->super), 0, 0,
+                                           OPAL_INFO_LVL_4,
                                            MCA_BASE_VAR_SCOPE_LOCAL,
                                            &mca_op_avx_component.flags);
-    mca_op_avx_component.flags &= requested_flags;
+    OBJ_RELEASE(new_enum_flag);
+
+    mca_op_avx_component.flags &= mca_op_avx_component.supported;
+
     return OMPI_SUCCESS;
 }
 
