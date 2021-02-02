@@ -4,6 +4,7 @@
  *                         reserved.
  * Copyright (c) 2020      Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
+ * Copyright (c) 2021      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -20,6 +21,7 @@
 #include "ompi_config.h"
 
 #include "opal/util/printf.h"
+#include "ompi/include/mpi_portable_platform.h"
 
 #include "ompi/constants.h"
 #include "ompi/op/op.h"
@@ -177,23 +179,62 @@ static int avx_component_close(void)
 static int
 avx_component_register(void)
 {
-    int32_t requested_flags = mca_op_avx_component.flags = has_intel_AVX_features();
+    mca_op_avx_component.supported =
+        mca_op_avx_component.flags = has_intel_AVX_features();
 
     /**
-     * Due to frequency scaling during AVX2 and AVX512 operations, it has been
-     * decided in January 2021 to restrict the AVX module to simple AVX usage.
-     * If users want to enable AVX2 and/or AVX512 capabilities, they will need
-     * to manually enable them.
+     * In January 2021, testing showed that using AVX512 with at least
+     * one application (LAMPS) when Open MPI was compiled with
+     * non-Intel compilers (e.g., all versions of GCC up through
+     * 10.x), frequency scaling issues on Intel cores resulted in
+     * noticeably worse performance compared to not using AVX2 or
+     * using AVX at all.  This effective seemed to occur on several
+     * flavors of Intel chips that we could test in January 2021
+     * (i.e., AVX512 performance with icc = good, AVX512 performance
+     * with gcc = bad).
+     *
+     * Being therefore conservative:
+     *
+     * 1. We're enabling all flavors of AVX by default (including
+     *    AVX512) when Open MPI was compiled with the Intel compiler
+     *    suite
+     * 2. We're disabling AVX512 by default (but leaving other AVX
+     *    flavors enabled) in all other cases.
+     *
+     * Users can still enable / disable whatever they want via the
+     * op_avx_support MCA param; these changes only affect the
+     * defaults.
+     *
+     * We should continue to test over time to understand what is
+     * happening here, and see if we can get better defaults.
      */
-    requested_flags = requested_flags & ~(OMPI_OP_AVX_HAS_AVX512F_FLAG | OMPI_OP_AVX_HAS_AVX512BW_FLAG | OMPI_OP_AVX_HAS_AVX2_FLAG);
+    if (strcasecmp(_STRINGIFY(OPAL_BUILD_PLATFORM_COMPILER_FAMILYNAME),
+                   "intel") != 0) {
+        mca_op_avx_component.supported &=
+            ~(OMPI_OP_AVX_HAS_AVX512F_FLAG |
+              OMPI_OP_AVX_HAS_AVX512BW_FLAG);
+    }
+    (void) mca_base_component_var_register(&mca_op_avx_component.super.opc_version,
+                                           "available",
+                                           "Level of SSE/MMX/AVX support available (combination of processor capabilities as follow SSE 0x01, SSE2 0x02, SSE3 0x04, SSE4.1 0x08, AVX 0x010, AVX2 0x020, AVX512F 0x100, AVX512BW 0x200)",
+                                           MCA_BASE_VAR_TYPE_INT,
+                                           NULL, 0, 0,
+                                           OPAL_INFO_LVL_4,
+                                           MCA_BASE_VAR_SCOPE_LOCAL,
+                                           &mca_op_avx_component.supported);
+
     (void) mca_base_component_var_register(&mca_op_avx_component.super.opc_version,
                                            "support",
-                                           "Level of SSE/MMX/AVX support to be used (combination of processor capabilities as follow SSE 0x01, SSE2 0x02, SSE3 0x04, SSE4.1 0x08, AVX 0x010, AVX2 0x020, AVX512F 0x100, AVX512BW 0x200) capped by the local architecture capabilities",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                           OPAL_INFO_LVL_6,
+                                           "Level of SSE/MMX/AVX support to be used (combination of processor capabilities as follow SSE 0x01, SSE2 0x02, SSE3 0x04, SSE4.1 0x08, AVX 0x010, AVX2 0x020, AVX512F 0x100, AVX512BW 0x200), capped by the local architecture capabilities",
+                                           MCA_BASE_VAR_TYPE_INT,
+                                           NULL, 0,
+                                           MCA_BASE_VAR_FLAG_SETTABLE,
+                                           OPAL_INFO_LVL_4,
                                            MCA_BASE_VAR_SCOPE_LOCAL,
                                            &mca_op_avx_component.flags);
-    mca_op_avx_component.flags &= requested_flags;
+
+    mca_op_avx_component.flags &= mca_op_avx_component.supported;
+
     return OMPI_SUCCESS;
 }
 
