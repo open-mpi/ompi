@@ -642,8 +642,8 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
     hints->caps               |= FI_TAGGED | FI_LOCAL_COMM | FI_REMOTE_COMM | FI_DIRECTED_RECV;
     hints->tx_attr->msg_order = FI_ORDER_SAS;
     hints->rx_attr->msg_order = FI_ORDER_SAS;
-    hints->rx_attr->op_flags = FI_COMPLETION;
-    hints->tx_attr->op_flags = FI_COMPLETION;
+    hints->rx_attr->op_flags  = FI_COMPLETION;
+    hints->tx_attr->op_flags  = FI_COMPLETION;
 
     if (enable_mpi_threads) {
         ompi_mtl_ofi.mpi_thread_multiple = true;
