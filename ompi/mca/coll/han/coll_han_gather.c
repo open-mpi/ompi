@@ -17,6 +17,13 @@
 #include "ompi/mca/pml/pml.h"
 #include "coll_han_trigger.h"
 
+/*
+ * @file
+ *
+ * This files contains all the hierarchical implementations of gather.
+ * Only work with regular situation (each node has equal number of processes)
+ */
+
 static int mca_coll_han_gather_lg_task(void *task_args);
 static int mca_coll_han_gather_ug_task(void *task_args);
 
@@ -58,6 +65,10 @@ mca_coll_han_set_gather_args(mca_coll_han_gather_args_t * args,
     args->req = req;
 }
 
+
+/*
+ * Main function for taskified gather: calls lg task, a gather on low comm
+ */
 int
 mca_coll_han_gather_intra(const void *sbuf, int scount,
                           struct ompi_datatype_t *sdtype,
@@ -71,12 +82,12 @@ mca_coll_han_gather_intra(const void *sbuf, int scount,
     int w_rank, w_size; /* information about the global communicator */
     int root_low_rank, root_up_rank; /* root ranks for both sub-communicators */
     char *reorder_buf = NULL, *reorder_rbuf = NULL;
-    int i, err, *vranks, low_rank, low_size, *topo;
+    int err, *vranks, low_rank, low_size, *topo;
     ompi_request_t *temp_request = NULL;
 
     /* Create the subcommunicators */
     err = mca_coll_han_comm_create(comm, han_module);
-    if( OMPI_SUCCESS != err ) {  /* Let's hope the error is consistently returned across the entire communicator */
+    if( OMPI_SUCCESS != err ) {
         OPAL_OUTPUT_VERBOSE((30, mca_coll_han_component.han_output,
                              "han cannot handle gather with this communicator. Fall back on another component\n"));
         /* HAN cannot work with this communicator so fallback on all collectives */
@@ -155,12 +166,11 @@ mca_coll_han_gather_intra(const void *sbuf, int scount,
                 ptrdiff_t rextent;
                 ompi_datatype_type_extent(rdtype, &rextent);
                 ptrdiff_t block_size = rextent * (ptrdiff_t)rcount;
-                ptrdiff_t src_shift = block_size * w_rank;
-                ptrdiff_t dest_shift = block_size * w_rank;
+                ptrdiff_t shift = block_size * w_rank;
                 ompi_datatype_copy_content_same_ddt(rdtype,
                                                     (ptrdiff_t)rcount,
-                                                    (char *)rbuf + dest_shift,
-                                                    reorder_rbuf + src_shift);
+                                                    (char *)rbuf + shift,
+                                                    reorder_rbuf + shift);
             }
         }
     }
@@ -192,7 +202,7 @@ mca_coll_han_gather_intra(const void *sbuf, int scount,
     if (w_rank == root && !han_module->is_mapbycore) {
         ptrdiff_t rextent;
         ompi_datatype_type_extent(rdtype, &rextent);
-        for (i=0; i<w_size; i++) {
+        for (int i = 0 ; i < w_size ; i++) {
             OPAL_OUTPUT_VERBOSE((30, mca_coll_han_component.han_output,
                                  "[%d]: Han Gather copy from %d to %d\n",
                                  w_rank,
@@ -343,7 +353,7 @@ mca_coll_han_gather_intra_simple(const void *sbuf, int scount,
     int w_size = ompi_comm_size(comm);
 
     /* Create the subcommunicators */
-    if( OMPI_SUCCESS != mca_coll_han_comm_create_new(comm, han_module) ) {  /* Let's hope the error is consistently returned across the entire communicator */
+    if( OMPI_SUCCESS != mca_coll_han_comm_create_new(comm, han_module) ) {
         OPAL_OUTPUT_VERBOSE((30, mca_coll_han_component.han_output,
                              "han cannot handle gather with this communicator. Fall back on another component\n"));
         /* HAN cannot work with this communicator so fallback on all collectives */
@@ -485,7 +495,7 @@ mca_coll_han_gather_intra_simple(const void *sbuf, int scount,
  */
 void
 ompi_coll_han_reorder_gather(const void *sbuf,
-                             void *rbuf, int rcount,
+                             void *rbuf, int count,
                              struct ompi_datatype_t *dtype,
                              struct ompi_communicator_t *comm,
                              int * topo)
@@ -503,11 +513,11 @@ ompi_coll_han_reorder_gather(const void *sbuf,
                              w_rank,
                              i * topolevel + 1,
                              topo[i * topolevel + 1]));
-        ptrdiff_t block_size = rextent * (ptrdiff_t)rcount;
+        ptrdiff_t block_size = rextent * (ptrdiff_t)count;
         ptrdiff_t src_shift = block_size * i;
         ptrdiff_t dest_shift = block_size * (ptrdiff_t)topo[i * topolevel + 1];
         ompi_datatype_copy_content_same_ddt(dtype,
-                                            (ptrdiff_t)rcount,
+                                            (ptrdiff_t)count,
                                             (char *)rbuf + dest_shift,
                                             (char *)sbuf + src_shift);
     }

@@ -21,6 +21,8 @@
 #include "opal/util/output.h"
 
 /*
+ * @file
+ *
  * ############################
  * # MCA parameters interface #
  * ############################

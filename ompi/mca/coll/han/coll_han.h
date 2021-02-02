@@ -10,6 +10,24 @@
  * $HEADER$
  */
 
+/**
+ * @file
+ *
+ * This component provides hierarchical implementations of MPI collectives.
+ * Hierarchical approach is efficient in case of too many process wanting a remote
+ * access to the same local or remote resource (high message rate).
+ * Some components are also better at local scale (for example with shared memory)
+ * where others provide scalable implementations. Hierarchical implementation
+ * enable a fallback on other components for intermediary operation.
+ * For example a MPI_Bcast will be divided into a sequence of bcasts from the
+ * highest to the lowest topological level.
+ * Some algorithms introduce more advanced feature (such as noise resiliency)
+ * some just link topological levels. The last ones are called 'simple'.
+ * To perform sub-communications, extra communicators are initialised for
+ * each topological level.
+ */
+
+
 #ifndef MCA_COLL_HAN_EXPORT_H
 #define MCA_COLL_HAN_EXPORT_H
 
@@ -198,7 +216,7 @@ typedef struct mca_coll_han_component_t {
     /* whether we need reproducible results
      * (but disables topological optimisations)
      */
-    uint32_t han_reproducible;
+    bool han_reproducible;
     bool use_simple_algorithm[COLLCOUNT];
 
     /* Dynamic configuration rules */
@@ -214,7 +232,6 @@ typedef struct mca_coll_han_component_t {
     int max_dynamic_errors;
 } mca_coll_han_component_t;
 
-typedef void (*previous_dummy_fn_t) (void);
 
 /*
  * Structure used to store what is necessary for the collective operations
@@ -225,11 +242,11 @@ typedef struct mca_coll_han_single_collective_fallback_s {
         mca_coll_base_module_allgather_fn_t allgather;
         mca_coll_base_module_allgatherv_fn_t allgatherv;
         mca_coll_base_module_allreduce_fn_t allreduce;
+        mca_coll_base_module_barrier_fn_t barrier;
         mca_coll_base_module_bcast_fn_t bcast;
         mca_coll_base_module_gather_fn_t gather;
         mca_coll_base_module_reduce_fn_t reduce;
         mca_coll_base_module_scatter_fn_t scatter;
-        previous_dummy_fn_t dummy;
     };
     mca_coll_base_module_t* module;
 } mca_coll_han_single_collective_fallback_t;
@@ -243,6 +260,7 @@ typedef struct mca_coll_han_collectives_fallback_s {
     mca_coll_han_single_collective_fallback_t allgather;
     mca_coll_han_single_collective_fallback_t allgatherv;
     mca_coll_han_single_collective_fallback_t allreduce;
+    mca_coll_han_single_collective_fallback_t barrier;
     mca_coll_han_single_collective_fallback_t bcast;
     mca_coll_han_single_collective_fallback_t reduce;
     mca_coll_han_single_collective_fallback_t gather;
@@ -256,7 +274,9 @@ typedef struct mca_coll_han_module_t {
 
     /* Whether this module has been lazily initialized or not yet */
     bool enabled;
+    int recursive_free_depth;
 
+    struct ompi_communicator_t *cached_comm;
     struct ompi_communicator_t **cached_low_comms;
     struct ompi_communicator_t **cached_up_comms;
     int *cached_vranks;
@@ -305,6 +325,9 @@ OBJ_CLASS_DECLARATION(mca_coll_han_module_t);
 #define previous_allreduce          fallback.allreduce.allreduce
 #define previous_allreduce_module   fallback.allreduce.module
 
+#define previous_barrier            fallback.barrier.barrier
+#define previous_barrier_module     fallback.barrier.module
+
 #define previous_bcast              fallback.bcast.bcast
 #define previous_bcast_module       fallback.bcast.module
 
@@ -333,6 +356,7 @@ OBJ_CLASS_DECLARATION(mca_coll_han_module_t);
 /* macro to correctly load /all/ fallback collectives */
 #define HAN_LOAD_FALLBACK_COLLECTIVES(HANM, COMM)                            \
     do {                                                                     \
+        HAN_LOAD_FALLBACK_COLLECTIVE(HANM, COMM, barrier);                   \
         HAN_LOAD_FALLBACK_COLLECTIVE(HANM, COMM, bcast);                     \
         HAN_LOAD_FALLBACK_COLLECTIVE(HANM, COMM, scatter);                   \
         HAN_LOAD_FALLBACK_COLLECTIVE(HANM, COMM, gather);                    \
@@ -404,6 +428,9 @@ int
 mca_coll_han_allreduce_intra_dynamic(ALLREDUCE_BASE_ARGS,
                                      mca_coll_base_module_t *module);
 int
+mca_coll_han_barrier_intra_dynamic(BARRIER_BASE_ARGS,
+                                 mca_coll_base_module_t *module);
+int
 mca_coll_han_bcast_intra_dynamic(BCAST_BASE_ARGS,
                                  mca_coll_base_module_t *module);
 int
@@ -416,6 +443,8 @@ int
 mca_coll_han_scatter_intra_dynamic(SCATTER_BASE_ARGS,
                                    mca_coll_base_module_t *module);
 
+int mca_coll_han_barrier_intra_simple(struct ompi_communicator_t *comm,
+                                      mca_coll_base_module_t *module);
 /* Bcast */
 int mca_coll_han_bcast_intra_simple(void *buff,
                                     int count,
@@ -494,6 +523,14 @@ mca_coll_han_scatter_intra(const void *sbuf, int scount,
                            struct ompi_datatype_t *rdtype,
                            int root,
                            struct ompi_communicator_t *comm, mca_coll_base_module_t * module);
+int
+mca_coll_han_scatter_intra_simple(const void *sbuf, int scount,
+                                  struct ompi_datatype_t *sdtype,
+                                  void *rbuf, int rcount,
+                                  struct ompi_datatype_t *rdtype,
+                                  int root,
+                                  struct ompi_communicator_t *comm,
+                                  mca_coll_base_module_t * module);
 
 /* Gather */
 int

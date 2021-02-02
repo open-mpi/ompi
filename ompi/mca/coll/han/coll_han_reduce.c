@@ -10,6 +10,11 @@
  * $HEADER$
  */
 
+/*
+ * @file
+ * This files contains all the hierarchical implementations of reduce
+ */
+
 #include "coll_han.h"
 #include "ompi/mca/coll/base/coll_base_functions.h"
 #include "ompi/mca/pml/pml.h"
@@ -48,7 +53,7 @@ mca_coll_han_set_reduce_args(mca_coll_han_reduce_args_t * args, mca_coll_task_t 
 /*
  * Each segment of the messsage needs to go though 2 steps to perform MPI_Reduce:
  *     lb: low level (shared-memory or intra-node) reduce.
-*     ub: upper level (inter-node) reduce
+ *     ub: upper level (inter-node) reduce
  * Hence, in each iteration, there is a combination of collective operations which is called a task.
  *        | seg 0 | seg 1 | seg 2 | seg 3 |
  * iter 0 |  lr   |       |       |       | task: t0, contains lr
@@ -162,18 +167,18 @@ mca_coll_han_reduce_intra(const void *sbuf,
     issue_task(t1);
 
     while (t->cur_seg <= t->num_segments - 2) {
-        /* Create t1 task */
-        mca_coll_task_t *t1 = OBJ_NEW(mca_coll_task_t);
-        /* Setup up t1 task arguments */
-        t->cur_task = t1;
+        /* Create t_next_seg task */
+        mca_coll_task_t *t_next_seg = OBJ_NEW(mca_coll_task_t);
+        /* Setup up t_next_seg task arguments */
+        t->cur_task = t_next_seg;
         t->sbuf = (char *) t->sbuf + extent * t->seg_count;
         if (up_rank == root_up_rank) {
             t->rbuf = (char *) t->rbuf + extent * t->seg_count;
         }
         t->cur_seg = t->cur_seg + 1;
-        /* Init the t1 task */
-        init_task(t1, mca_coll_han_reduce_t1_task, (void *) t);
-        issue_task(t1);
+        /* Init the t_next_seg task */
+        init_task(t_next_seg, mca_coll_han_reduce_t1_task, (void *) t);
+        issue_task(t_next_seg);
     }
 
     free(t);
