@@ -20,6 +20,9 @@
 #include "opal/util/argv.h"
 #include "opal/util/printf.h"
 #include "opal/mca/common/ofi/common_ofi.h"
+#if OPAL_CUDA_SUPPORT
+#include "opal/mca/common/cuda/common_cuda.h"
+#endif /* OPAL_CUDA_SUPPORT */
 
 static int ompi_mtl_ofi_component_open(void);
 static int ompi_mtl_ofi_component_query(mca_base_module_t **module, int *priority);
@@ -297,6 +300,9 @@ ompi_mtl_ofi_component_query(mca_base_module_t **module, int *priority)
 static int
 ompi_mtl_ofi_component_close(void)
 {
+#if OPAL_CUDA_SUPPORT
+    mca_common_cuda_fini();
+#endif
     opal_common_ofi_mca_deregister();
     return OMPI_SUCCESS;
 }
@@ -592,6 +598,15 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
     }
 
     /**
+     * Note: API version 1.5 is the first version that supports
+     * FI_LOCAL_COMM / FI_REMOTE_COMM checking (and we definitely need
+     * that checking -- e.g., the shared memory provider supports
+     * intranode communication (FI_LOCAL_COMM), but not internode
+     * (FI_REMOTE_COMM), which is insufficient for MTL selection.
+     */
+    fi_version = FI_VERSION(1, 5);
+
+    /**
      * Hints to filter providers
      * See man fi_getinfo for a list of all filters
      * mode:  Select capabilities MTL is prepared to support.
@@ -608,11 +623,23 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
                             __FILE__, __LINE__);
         goto error;
     }
+
+#if OPAL_CUDA_SUPPORT
+    /** If Open MPI is built with CUDA, request device transfer
+     *  capabilities */
+    hints->caps |= FI_HMEM;
+    hints->domain_attr->mr_mode |= FI_MR_HMEM;
+    /**
+     * Note: API version 1.9 is the first version that supports FI_HMEM
+     */
+    fi_version = FI_VERSION(1, 9);
+#endif /* OPAL_CUDA_SUPPORT */
+
     /* Make sure to get a RDM provider that can do the tagged matching
        interface and local communication and remote communication. */
     hints->mode               = FI_CONTEXT;
     hints->ep_attr->type      = FI_EP_RDM;
-    hints->caps               = FI_TAGGED | FI_LOCAL_COMM | FI_REMOTE_COMM | FI_DIRECTED_RECV;
+    hints->caps               |= FI_TAGGED | FI_LOCAL_COMM | FI_REMOTE_COMM | FI_DIRECTED_RECV;
     hints->tx_attr->msg_order = FI_ORDER_SAS;
     hints->rx_attr->msg_order = FI_ORDER_SAS;
     hints->rx_attr->op_flags = FI_COMPLETION;
@@ -659,14 +686,6 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
     }
 
     hints->domain_attr->resource_mgmt    = FI_RM_ENABLED;
-
-    /**
-     * Note: API version 1.5 is the first version that supports
-     * FI_LOCAL_COMM / FI_REMOTE_COMM checking (and we definitely need
-     * that checking -- e.g., some providers are suitable for RXD or
-     * RXM, but can't provide local communication).
-     */
-    fi_version = FI_VERSION(1, 5);
 
     /**
      * The EFA provider in Libfabric versions prior to 1.10 contains a bug
@@ -757,6 +776,15 @@ select_prov:
     include_list = NULL;
     opal_argv_free(exclude_list);
     exclude_list = NULL;
+
+#if OPAL_CUDA_SUPPORT
+    if (!(prov->caps & FI_HMEM)) {
+        opal_output_verbose(1, opal_common_ofi.output,
+                            "%s:%d: Libfabric provider does not support CUDA buffers\n",
+                            __FILE__, __LINE__);
+        goto error;
+    }
+#endif /* OPAL_CUDA_SUPPORT */
 
     /**
      * Select the format of the OFI tag
@@ -1032,6 +1060,10 @@ select_prov:
      * Set the ANY_SRC address.
      */
     ompi_mtl_ofi.any_addr = FI_ADDR_UNSPEC;
+
+#if OPAL_CUDA_SUPPORT
+    mca_common_cuda_stage_one_init();
+#endif
 
     return &ompi_mtl_ofi.base;
 
