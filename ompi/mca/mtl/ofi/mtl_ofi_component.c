@@ -661,10 +661,6 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
     hints->domain_attr->resource_mgmt    = FI_RM_ENABLED;
 
     /**
-     * FI_VERSION provides binary backward and forward compatibility support
-     * Specify the version of OFI is coded to, the provider will select struct
-     * layouts that are compatible with this version.
-     *
      * Note: API version 1.5 is the first version that supports
      * FI_LOCAL_COMM / FI_REMOTE_COMM checking (and we definitely need
      * that checking -- e.g., some providers are suitable for RXD or
