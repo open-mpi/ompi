@@ -47,4 +47,4 @@ mca_fbtl_base_component_t mca_fbtl_base_selected_component = {{0}};
 mca_fbtl_base_module_t mca_fbtl = {0};
 
 MCA_BASE_FRAMEWORK_DECLARE(ompi, fbtl, NULL, NULL, NULL, NULL,
-                           mca_fbtl_base_static_components, 0);
+                           mca_fbtl_base_static_components, MCA_BASE_FRAMEWORK_FLAG_DEFAULT);

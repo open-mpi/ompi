@@ -61,7 +61,8 @@ static int register_component(void)
     (void) mca_base_component_var_register(&mca_fbtl_ime_component.fbtlm_version,
                                            "iov_max", "Maximum iov count that should be used when "
                                            "calling an IME native function",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                           MCA_BASE_VAR_FLAG_NONE,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &mca_fbtl_ime_iov_max);
@@ -70,7 +71,8 @@ static int register_component(void)
     (void) mca_base_component_var_register(&mca_fbtl_ime_component.fbtlm_version,
                                            "aio_reqs_max", "Maximum number of aiocb requests that should "
                                            "be sent simultaneously when calling an IME native function",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                           MCA_BASE_VAR_FLAG_NONE,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &mca_fbtl_ime_aio_reqs_max );
