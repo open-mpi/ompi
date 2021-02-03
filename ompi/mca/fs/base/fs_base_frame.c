@@ -31,4 +31,4 @@
 #include "ompi/mca/fs/base/static-components.h"
 
 MCA_BASE_FRAMEWORK_DECLARE(ompi, fs, NULL, NULL, NULL, NULL,
-                           mca_fs_base_static_components, 0);
+                           mca_fs_base_static_components, MCA_BASE_FRAMEWORK_FLAG_DEFAULT);

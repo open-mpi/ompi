@@ -78,19 +78,22 @@ lustre_register(void)
     mca_fs_lustre_priority = 20;
     (void) mca_base_component_var_register(&mca_fs_lustre_component.fsm_version,
                                            "priority", "Priority of the lustre fs component",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                           MCA_BASE_VAR_FLAG_NONE,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY, &mca_fs_lustre_priority);
     mca_fs_lustre_stripe_size = 0;
     (void) mca_base_component_var_register(&mca_fs_lustre_component.fsm_version,
                                            "stripe_size", "stripe size of a file over lustre",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                           MCA_BASE_VAR_FLAG_NONE,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY, &mca_fs_lustre_stripe_size);
     mca_fs_lustre_stripe_width = 0;
     (void) mca_base_component_var_register(&mca_fs_lustre_component.fsm_version,
                                            "stripe_width", "stripe count of a file over lustre",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                           MCA_BASE_VAR_FLAG_NONE,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY, &mca_fs_lustre_stripe_width);
 

@@ -59,7 +59,8 @@ static int register_component(void)
     mca_fs_ime_priority = FS_IME_BASE_PRIORITY;
     (void) mca_base_component_var_register(&mca_fs_ime_component.fsm_version,
                                            "priority", "Priority of the fs ime component",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                           MCA_BASE_VAR_FLAG_NONE,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &mca_fs_ime_priority);
@@ -68,7 +69,8 @@ static int register_component(void)
     (void) mca_base_component_var_register(&mca_fs_ime_component.fsm_version,
                                            "lock_algorithm", "Locking algorithm used by the fs ime component. "
                                            " 0: auto (default)",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                           MCA_BASE_VAR_FLAG_NONE,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &mca_fs_ime_lock_algorithm );

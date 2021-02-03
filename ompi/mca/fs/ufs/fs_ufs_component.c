@@ -76,7 +76,8 @@ static int register_component(void)
     mca_fs_ufs_priority = 10;
     (void) mca_base_component_var_register(&mca_fs_ufs_component.fsm_version,
                                            "priority", "Priority of the fs ufs component",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                           MCA_BASE_VAR_FLAG_NONE,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &mca_fs_ufs_priority);
@@ -86,7 +87,8 @@ static int register_component(void)
                                            "lock_algorithm", "Locking algorithm used by the fs ufs component. "
                                            " 0: auto (default), 1: skip locking, 2: always lock entire file, "
                                            "3: lock only specific ranges",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 
+                                           MCA_BASE_VAR_FLAG_NONE,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &mca_fs_ufs_lock_algorithm );
