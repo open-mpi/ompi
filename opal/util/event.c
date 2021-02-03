@@ -72,7 +72,7 @@ int opal_event_register_params(void)
         return ret;
     }
 
-    ret = mca_base_var_register_synonym (ret, "opal", "event", "external", "include", 0);
+    ret = mca_base_var_register_synonym (ret, "opal", "event", "external", "include", MCA_BASE_VAR_SYN_FLAG_NONE);
     if (0 > ret) {
         return ret;
     }
@@ -92,7 +92,7 @@ int opal_event_register_params(void)
     /* The event wrapper used to be a framework.  Help the user out by
      * providing a backwards compatible verbose flag
      */
-    ret = mca_base_var_register_synonym (ret, "opal", "event", "base", "verbose", 0);
+    ret = mca_base_var_register_synonym (ret, "opal", "event", "base", "verbose", MCA_BASE_VAR_SYN_FLAG_NONE);
     if (0 > ret) {
         return ret;
     }

@@ -49,6 +49,10 @@ int opal_util_keyval_yynewlines = 1;
 bool opal_util_keyval_parse_done = false;
 char *opal_util_keyval_string = NULL;
 
+#ifndef YY_BREAK
+#define YY_BREAK
+#endif
+
 %}
 
 WHITE       [\f\t\v ]
@@ -66,15 +70,15 @@ CHAR        [A-Za-z0-9_\-\.]
 
 "/*"                { BEGIN(comment);
                       return OPAL_UTIL_KEYVAL_PARSE_NEWLINE; }
-<comment>[^*\n]*       ; /* Eat up non '*'s */
-<comment>"*"+[^*/\n]*  ; /* Eat '*'s not followed by a '/' */
+<comment>[^*\n]*    { break; } /* Eat up non '*'s */
+<comment>"*"+[^*/\n]* { break; } /* Eat '*'s not followed by a '/' */
 <comment>\n         { opal_util_keyval_yynewlines++;
                       return OPAL_UTIL_KEYVAL_PARSE_NEWLINE; }
 <comment>"*"+"/"    { BEGIN(INITIAL); /* Done with Block Comment */
                       return OPAL_UTIL_KEYVAL_PARSE_NEWLINE; }
 
 {WHITE}*"="{WHITE}* { BEGIN(VALUE); return OPAL_UTIL_KEYVAL_PARSE_EQUAL; }
-{WHITE}+            ; /* whitespace */
+{WHITE}+            { break; } /* whitespace */
 {CHAR}+             { return OPAL_UTIL_KEYVAL_PARSE_SINGLE_WORD; }
 
 <VALUE>{WHITE}*\n   { BEGIN(INITIAL); return OPAL_UTIL_KEYVAL_PARSE_NEWLINE; }

@@ -49,6 +49,10 @@ END_C_DECLS
 int opal_show_help_yynewlines = 1;
 bool opal_show_help_parse_done = false;
 
+#ifndef YY_BREAK
+#define YY_BREAK
+#endif
+
 %}
 
 WHITE       [\f\t\v ]
@@ -62,7 +66,7 @@ CHAR        [A-Za-z0-9_\-\.]
 
 ^\[.+\]/[^\]\n]*\n { BEGIN(CHOMP); return OPAL_SHOW_HELP_PARSE_TOPIC; }
 
-<CHOMP>.*\n { BEGIN(INITIAL); }
+<CHOMP>.*\n { BEGIN(INITIAL); break; }
 
 .*/\n { BEGIN(CHOMP); return OPAL_SHOW_HELP_PARSE_MESSAGE; }
 

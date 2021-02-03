@@ -226,7 +226,6 @@ opal_net_islocalhost(const struct sockaddr *addr)
             }
             return false;
         }
-        break;
 #if OPAL_ENABLE_IPV6
     case AF_INET6:
         {
@@ -236,14 +235,12 @@ opal_net_islocalhost(const struct sockaddr *addr)
             }
             return false;
         }
-        break;
 #endif
 
     default:
         opal_output(0, "unhandled sa_family %d passed to opal_net_islocalhost",
                     addr->sa_family);
         return false;
-        break;
     }
 }
 
@@ -280,7 +277,6 @@ opal_net_samenetwork(const struct sockaddr *addr1,
             }
             return false;
         }
-        break;
 #if OPAL_ENABLE_IPV6
     case AF_INET6:
         {
@@ -312,7 +308,6 @@ opal_net_samenetwork(const struct sockaddr *addr1,
             }
             return false;
         }
-        break;
 #endif
     default:
         opal_output(0, "unhandled sa_family %d passed to opal_samenetwork",
@@ -450,11 +445,9 @@ opal_net_get_port(const struct sockaddr *addr)
     switch (addr->sa_family) {
     case AF_INET:
         return ntohs(((struct sockaddr_in*) addr)->sin_port);
-        break;
 #if OPAL_ENABLE_IPV6
     case AF_INET6:
         return ntohs(((struct sockaddr_in6*) addr)->sin6_port);
-        break;
 #endif
     }
 
