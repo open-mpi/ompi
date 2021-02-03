@@ -135,4 +135,4 @@ static int mca_mpool_base_close(void)
 }
 
 MCA_BASE_FRAMEWORK_DECLARE(opal, mpool, "Memory pools", mca_mpool_base_register, mca_mpool_base_open,
-                           mca_mpool_base_close, mca_mpool_base_static_components, 0);
+                           mca_mpool_base_close, mca_mpool_base_static_components, MCA_BASE_FRAMEWORK_FLAG_DEFAULT);

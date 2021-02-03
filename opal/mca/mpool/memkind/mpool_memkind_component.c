@@ -132,8 +132,8 @@ static int mca_mpool_memkind_register(void)
 
     (void) mca_base_component_var_register(&mca_mpool_memkind_component.super.mpool_version,
                                            "default_type", "Default memkind type to use",
-                                           MCA_BASE_VAR_TYPE_INT, mca_mpool_memkind_type_enum, 0, 0,
-                                           OPAL_INFO_LVL_5, MCA_BASE_VAR_SCOPE_LOCAL,
+                                           MCA_BASE_VAR_TYPE_INT, mca_mpool_memkind_type_enum, 0,
+                                           MCA_BASE_VAR_FLAG_NONE, OPAL_INFO_LVL_5, MCA_BASE_VAR_SCOPE_LOCAL,
                                            &mca_mpool_memkind_component.default_type);
 
     /*
@@ -149,8 +149,8 @@ static int mca_mpool_memkind_register(void)
 
     (void) mca_base_component_var_register(&mca_mpool_memkind_component.super.mpool_version,
                                            "default_policy", "Default memkind policy to use",
-                                           MCA_BASE_VAR_TYPE_INT, mca_mpool_memkind_policy_enum, 0, 0,
-                                           OPAL_INFO_LVL_5, MCA_BASE_VAR_SCOPE_LOCAL,
+                                           MCA_BASE_VAR_TYPE_INT, mca_mpool_memkind_policy_enum, 0,
+                                           MCA_BASE_VAR_FLAG_NONE, OPAL_INFO_LVL_5, MCA_BASE_VAR_SCOPE_LOCAL,
                                            &mca_mpool_memkind_component.default_policy);
 
     mca_mpool_memkind_component.default_memkind_bits = memory_kind_bits[0].value;
@@ -163,22 +163,22 @@ static int mca_mpool_memkind_register(void)
 
     (void) mca_base_component_var_register(&mca_mpool_memkind_component.super.mpool_version,
                                            "default_bits", "Default memkind bits to use",
-                                           MCA_BASE_VAR_TYPE_INT, mca_mpool_memkind_kind_bits_enum, 0, 0,
-                                           OPAL_INFO_LVL_5, MCA_BASE_VAR_SCOPE_LOCAL,
+                                           MCA_BASE_VAR_TYPE_INT, mca_mpool_memkind_kind_bits_enum, 0,
+                                           MCA_BASE_VAR_FLAG_NONE, OPAL_INFO_LVL_5, MCA_BASE_VAR_SCOPE_LOCAL,
                                            &mca_mpool_memkind_component.default_memkind_bits);
 
     mca_mpool_memkind_component.priority = 10;
     (void) mca_base_component_var_register(&mca_mpool_memkind_component.super.mpool_version,
                                            "priority", "Default priority of the memkind component",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                           OPAL_INFO_LVL_5, MCA_BASE_VAR_SCOPE_LOCAL,
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                           MCA_BASE_VAR_FLAG_NONE, OPAL_INFO_LVL_5, MCA_BASE_VAR_SCOPE_LOCAL,
                                            &mca_mpool_memkind_component.priority);
 
     opal_mpool_memkind_verbose = 0;
     (void) mca_base_component_var_register(&mca_mpool_memkind_component.super.mpool_version,
                                            "verbose", "Verbosity of the memkind mpool component",
-                                           MCA_BASE_VAR_TYPE_INT, &mca_base_var_enum_verbose, 0, 0,
-                                           OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_LOCAL,
+                                           MCA_BASE_VAR_TYPE_INT, &mca_base_var_enum_verbose, 0,
+                                           MCA_BASE_VAR_FLAG_NONE, OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_LOCAL,
                                            &opal_mpool_memkind_verbose);
 
     return OPAL_SUCCESS;

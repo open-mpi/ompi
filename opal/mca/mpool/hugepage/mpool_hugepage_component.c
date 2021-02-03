@@ -118,14 +118,14 @@ static int mca_mpool_hugepage_register(void)
     mca_mpool_hugepage_priority = 50;
     (void) mca_base_component_var_register (&mca_mpool_hugepage_component.super.mpool_version,
                                             "priority", "Default priority of the hugepage mpool component "
-                                            "(default: 50)", MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                            "(default: 50)", MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_NONE,
                                             OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_LOCAL,
                                             &mca_mpool_hugepage_priority);
 
     mca_mpool_hugepage_page_size = 1 << 21;
     (void) mca_base_component_var_register (&mca_mpool_hugepage_component.super.mpool_version,
                                             "page_size", "Default huge page size of the hugepage mpool component "
-                                            "(default: 2M)", MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                            "(default: 2M)", MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_NONE,
                                             OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_LOCAL,
                                             &mca_mpool_hugepage_page_size);
 
