@@ -33,7 +33,7 @@ int ompi_coll_adapt_ibcast_register(void)
 
     mca_coll_adapt_component.adapt_ibcast_algorithm = 1;
     mca_base_component_var_register(c, "bcast_algorithm",
-                                    "Algorithm of broadcast, 0: tuned, 1: binomial, 2: in_order_binomial, 3: binary, 4: pipeline, 5: chain, 6: linear", MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                    "Algorithm of broadcast, 0: tuned, 1: binomial, 2: in_order_binomial, 3: binary, 4: pipeline, 5: chain, 6: linear", MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_NONE,
                                     OPAL_INFO_LVL_5, MCA_BASE_VAR_SCOPE_READONLY,
                                     &mca_coll_adapt_component.adapt_ibcast_algorithm);
     if( (mca_coll_adapt_component.adapt_ibcast_algorithm < 0) ||
@@ -44,7 +44,7 @@ int ompi_coll_adapt_ibcast_register(void)
     mca_coll_adapt_component.adapt_ibcast_segment_size = 0;
     mca_base_component_var_register(c, "bcast_segment_size",
                                     "Segment size in bytes used by default for bcast algorithms. Only has meaning if algorithm is forced and supports segmenting. 0 bytes means no segmentation.",
-                                    MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                    MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_NONE,
                                     OPAL_INFO_LVL_5,
                                     MCA_BASE_VAR_SCOPE_READONLY,
                                     &mca_coll_adapt_component.adapt_ibcast_segment_size);
@@ -52,7 +52,7 @@ int ompi_coll_adapt_ibcast_register(void)
     mca_coll_adapt_component.adapt_ibcast_max_send_requests = 2;
     mca_base_component_var_register(c, "bcast_max_send_requests",
                                     "Maximum number of send requests",
-                                    MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                    MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_NONE,
                                     OPAL_INFO_LVL_5,
                                     MCA_BASE_VAR_SCOPE_READONLY,
                                     &mca_coll_adapt_component.adapt_ibcast_max_send_requests);
@@ -60,7 +60,7 @@ int ompi_coll_adapt_ibcast_register(void)
     mca_coll_adapt_component.adapt_ibcast_max_recv_requests = 3;
     mca_base_component_var_register(c, "bcast_max_recv_requests",
                                     "Maximum number of receive requests",
-                                    MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                    MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_NONE,
                                     OPAL_INFO_LVL_5,
                                     MCA_BASE_VAR_SCOPE_READONLY,
                                     &mca_coll_adapt_component.adapt_ibcast_max_recv_requests);
@@ -68,7 +68,7 @@ int ompi_coll_adapt_ibcast_register(void)
     mca_coll_adapt_component.adapt_ibcast_synchronous_send = true;
     (void) mca_base_component_var_register(c, "bcast_synchronous_send",
                                            "Whether to use synchronous send operations during setup of bcast operations",
-                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0, MCA_BASE_VAR_FLAG_NONE,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &mca_coll_adapt_component.adapt_ibcast_synchronous_send);

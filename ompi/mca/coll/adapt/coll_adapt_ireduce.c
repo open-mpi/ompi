@@ -36,7 +36,7 @@ int ompi_coll_adapt_ireduce_register(void)
 
     mca_coll_adapt_component.adapt_ireduce_algorithm = 1;
     mca_base_component_var_register(c, "reduce_algorithm",
-                                    "Algorithm of reduce, 1: binomial, 2: in_order_binomial, 3: binary, 4: pipeline, 5: chain, 6: linear", MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                    "Algorithm of reduce, 1: binomial, 2: in_order_binomial, 3: binary, 4: pipeline, 5: chain, 6: linear", MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_NONE,
                                     OPAL_INFO_LVL_5, MCA_BASE_VAR_SCOPE_READONLY,
                                     &mca_coll_adapt_component.adapt_ireduce_algorithm);
     if( (mca_coll_adapt_component.adapt_ireduce_algorithm < 0) ||
@@ -47,7 +47,7 @@ int ompi_coll_adapt_ireduce_register(void)
     mca_coll_adapt_component.adapt_ireduce_segment_size = 163740;
     mca_base_component_var_register(c, "reduce_segment_size",
                                     "Segment size in bytes used by default for reduce algorithms. Only has meaning if algorithm is forced and supports segmenting. 0 bytes means no segmentation.",
-                                    MCA_BASE_VAR_TYPE_SIZE_T, NULL, 0, 0,
+                                    MCA_BASE_VAR_TYPE_SIZE_T, NULL, 0, MCA_BASE_VAR_FLAG_NONE,
                                     OPAL_INFO_LVL_5,
                                     MCA_BASE_VAR_SCOPE_READONLY,
                                     &mca_coll_adapt_component.adapt_ireduce_segment_size);
@@ -55,7 +55,7 @@ int ompi_coll_adapt_ireduce_register(void)
     mca_coll_adapt_component.adapt_ireduce_max_send_requests = 2;
     mca_base_component_var_register(c, "reduce_max_send_requests",
                                     "Maximum number of send requests",
-                                    MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                    MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_NONE,
                                     OPAL_INFO_LVL_5,
                                     MCA_BASE_VAR_SCOPE_READONLY,
                                     &mca_coll_adapt_component.adapt_ireduce_max_send_requests);
@@ -63,7 +63,7 @@ int ompi_coll_adapt_ireduce_register(void)
     mca_coll_adapt_component.adapt_ireduce_max_recv_requests = 3;
     mca_base_component_var_register(c, "reduce_max_recv_requests",
                                     "Maximum number of receive requests per peer",
-                                    MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                    MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_NONE,
                                     OPAL_INFO_LVL_5,
                                     MCA_BASE_VAR_SCOPE_READONLY,
                                     &mca_coll_adapt_component.adapt_ireduce_max_recv_requests);
@@ -71,7 +71,7 @@ int ompi_coll_adapt_ireduce_register(void)
     mca_coll_adapt_component.adapt_inbuf_free_list_min = 10;
     mca_base_component_var_register(c, "inbuf_free_list_min",
                                     "Minimum number of segment in inbuf free list",
-                                    MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                    MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_NONE,
                                     OPAL_INFO_LVL_5,
                                     MCA_BASE_VAR_SCOPE_READONLY,
                                     &mca_coll_adapt_component.adapt_inbuf_free_list_min);
@@ -79,7 +79,7 @@ int ompi_coll_adapt_ireduce_register(void)
     mca_coll_adapt_component.adapt_inbuf_free_list_max = 10000;
     mca_base_component_var_register(c, "inbuf_free_list_max",
                                     "Maximum number of segment in inbuf free list",
-                                    MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                    MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_NONE,
                                     OPAL_INFO_LVL_5,
                                     MCA_BASE_VAR_SCOPE_READONLY,
                                     &mca_coll_adapt_component.adapt_inbuf_free_list_max);
@@ -88,7 +88,7 @@ int ompi_coll_adapt_ireduce_register(void)
     mca_coll_adapt_component.adapt_inbuf_free_list_inc = 10;
     mca_base_component_var_register(c, "inbuf_free_list_inc",
                                     "Number of segments to allocate when growing the inbuf free list",
-                                    MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                    MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_NONE,
                                     OPAL_INFO_LVL_5,
                                     MCA_BASE_VAR_SCOPE_READONLY,
                                     &mca_coll_adapt_component.adapt_inbuf_free_list_inc);
@@ -96,7 +96,7 @@ int ompi_coll_adapt_ireduce_register(void)
     mca_coll_adapt_component.adapt_ireduce_synchronous_send = true;
     (void) mca_base_component_var_register(c, "reduce_synchronous_send",
                                            "Whether to use synchronous send operations during setup of reduce operations",
-                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0, MCA_BASE_VAR_FLAG_NONE,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &mca_coll_adapt_component.adapt_ireduce_synchronous_send);
