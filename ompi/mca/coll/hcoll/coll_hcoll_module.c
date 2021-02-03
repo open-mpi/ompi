@@ -315,7 +315,7 @@ mca_coll_hcoll_comm_query(struct ompi_communicator_t *comm, int *priority)
 #else
         if (hcoll_check_mem_release_cb_needed()) {
 #endif
-            rc = mca_base_framework_open(&opal_memory_base_framework, 0);
+            rc = mca_base_framework_open(&opal_memory_base_framework, MCA_BASE_OPEN_DEFAULT);
             if (OPAL_SUCCESS != rc) {
                 HCOL_VERBOSE(1, "failed to initialize memory base framework: %d, "
                              "memory hooks will not be used", rc);

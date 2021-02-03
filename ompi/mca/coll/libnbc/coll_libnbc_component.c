@@ -186,7 +186,8 @@ libnbc_register(void)
     libnbc_priority = 10;
     (void) mca_base_component_var_register(&mca_coll_libnbc_component.super.collm_version,
                                            "priority", "Priority of the libnbc coll component",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                           MCA_BASE_VAR_FLAG_NONE,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &libnbc_priority);
@@ -207,7 +208,8 @@ libnbc_register(void)
     (void) mca_base_component_var_register(&mca_coll_libnbc_component.super.collm_version,
                                            "ibcast_skip_dt_decision",
                                            "In ibcast only use size of communicator to choose algorithm, exclude data type signature. Set to 'false' to use data type signature in decision. WARNING: If you set this to 'false' then your application should not use non-uniform data type signatures in calls to ibcast.",
-                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0,
+                                           MCA_BASE_VAR_FLAG_NONE,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &libnbc_ibcast_skip_dt_decision);
@@ -245,7 +247,8 @@ libnbc_register(void)
     libnbc_ibcast_knomial_radix = 4;
     (void) mca_base_component_var_register(&mca_coll_libnbc_component.super.collm_version,
                                            "ibcast_knomial_radix", "k-nomial tree radix for the ibcast algorithm (radix > 1)",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                           MCA_BASE_VAR_FLAG_NONE,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &libnbc_ibcast_knomial_radix);

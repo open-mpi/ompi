@@ -205,7 +205,8 @@ portals4_register(void)
     mca_coll_portals4_priority = 100;
     (void) mca_base_component_var_register(&mca_coll_portals4_component.super.collm_version, "priority",
             "Priority of the portals4 coll component",
-            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+            MCA_BASE_VAR_TYPE_INT, NULL, 0,
+            MCA_BASE_VAR_FLAG_NONE,
             OPAL_INFO_LVL_9,
             MCA_BASE_VAR_SCOPE_READONLY,
             &mca_coll_portals4_priority);
@@ -213,7 +214,8 @@ portals4_register(void)
     mca_coll_portals4_component.use_binomial_gather_algorithm = 0;
     (void) mca_base_component_var_register(&mca_coll_portals4_component.super.collm_version, "use_binomial_gather_algorithm",
             "if 1 use a binomial tree algorithm for gather, otherwise use linear",
-            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+            MCA_BASE_VAR_TYPE_INT, NULL, 0,
+            MCA_BASE_VAR_FLAG_NONE,
             OPAL_INFO_LVL_9,
             MCA_BASE_VAR_SCOPE_READONLY,
             &mca_coll_portals4_component.use_binomial_gather_algorithm);
@@ -223,7 +225,8 @@ portals4_register(void)
             "max_msg_size",
             "Max size supported by portals4 (above that, a message is cut into messages less than that size)",
             MCA_BASE_VAR_TYPE_UNSIGNED_LONG,
-            NULL, 0, 0,
+            NULL, 0,
+            MCA_BASE_VAR_FLAG_NONE,
             OPAL_INFO_LVL_9,
             MCA_BASE_VAR_SCOPE_READONLY,
             &mca_coll_portals4_component.portals_max_msg_size);

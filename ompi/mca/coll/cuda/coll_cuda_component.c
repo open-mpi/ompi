@@ -75,14 +75,14 @@ static int cuda_register(void)
 {
     (void) mca_base_component_var_register(&mca_coll_cuda_component.super.collm_version,
                                            "priority", "Priority of the cuda coll component; only relevant if barrier_before or barrier_after is > 0",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_NONE,
                                            OPAL_INFO_LVL_6,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &mca_coll_cuda_component.priority);
 
     (void) mca_base_component_var_register(&mca_coll_cuda_component.super.collm_version,
                                            "disable_cuda_coll", "Automatically handle the CUDA buffers for the MPI collective.",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_NONE,
                                            OPAL_INFO_LVL_2,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &mca_coll_cuda_component.disable_cuda_coll);

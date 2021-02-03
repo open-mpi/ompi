@@ -107,7 +107,7 @@ static int reg_int(const char* param_name,
     index = mca_base_component_var_register(
             &mca_coll_hcoll_component.super.collm_version,
             param_name, param_desc, MCA_BASE_VAR_TYPE_INT,
-            NULL, 0, 0,OPAL_INFO_LVL_9,
+            NULL, 0, MCA_BASE_VAR_FLAG_NONE, OPAL_INFO_LVL_9,
             MCA_BASE_VAR_SCOPE_READONLY, storage);
     if (NULL != deprecated_param_name) {
         (void) mca_base_var_register_synonym(index,
@@ -188,7 +188,8 @@ static int hcoll_register(void)
             MCA_COMPILETIME_VER,
             "Version of the libhcoll library with which Open MPI was compiled",
             MCA_BASE_VAR_TYPE_VERSION_STRING,
-            NULL, 0, 0,
+            NULL, 0,
+            MCA_BASE_VAR_FLAG_NONE,
             OPAL_INFO_LVL_3,
             MCA_BASE_VAR_SCOPE_READONLY,
             &mca_coll_hcoll_component.compiletime_version);
@@ -197,7 +198,8 @@ static int hcoll_register(void)
             MCA_RUNTIME_VER,
             "Version of the libhcoll library with which Open MPI is running",
             MCA_BASE_VAR_TYPE_VERSION_STRING,
-            NULL, 0, 0,
+            NULL, 0,
+            MCA_BASE_VAR_FLAG_NONE,
             OPAL_INFO_LVL_3,
             MCA_BASE_VAR_SCOPE_READONLY,
             &mca_coll_hcoll_component.runtime_version);

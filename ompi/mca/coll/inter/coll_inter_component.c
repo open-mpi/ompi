@@ -89,7 +89,8 @@ static int inter_register(void)
     mca_coll_inter_priority_param = 40;
     (void) mca_base_component_var_register(&mca_coll_inter_component.collm_version,
                                            "priority", "Priority of the inter coll component",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                           MCA_BASE_VAR_FLAG_NONE,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &mca_coll_inter_priority_param);
@@ -98,7 +99,8 @@ static int inter_register(void)
     (void) mca_base_component_var_register(&mca_coll_inter_component.collm_version,
                                            "verbose",
                                            "Turn verbose message of the inter coll component on/off",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                           MCA_BASE_VAR_FLAG_NONE,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &mca_coll_inter_verbose_param);

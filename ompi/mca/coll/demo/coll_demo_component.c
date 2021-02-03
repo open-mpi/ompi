@@ -87,13 +87,15 @@ static int demo_register(void)
 {
     mca_coll_demo_priority = 20;
     (void) mca_base_component_var_register(&mca_coll_demo_component.collm_version, "priority",
-                                           NULL, MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           NULL, MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                           MCA_BASE_VAR_FLAG_NONE,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &mca_coll_demo_priority);
     mca_coll_demo_verbose = 0;
     (void) mca_base_component_var_register(&mca_coll_demo_component.collm_version, "verbose",
-                                           NULL, MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           NULL, MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                           MCA_BASE_VAR_FLAG_NONE,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &mca_coll_demo_verbose);

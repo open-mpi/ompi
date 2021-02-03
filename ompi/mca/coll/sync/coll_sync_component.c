@@ -79,7 +79,8 @@ static int sync_register(void)
     mca_coll_sync_component.priority = 50;
     (void) mca_base_component_var_register(c, "priority",
                                            "Priority of the sync coll component; only relevant if barrier_before or barrier_after is > 0",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                           MCA_BASE_VAR_FLAG_NONE,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &mca_coll_sync_component.priority);
@@ -87,7 +88,8 @@ static int sync_register(void)
     mca_coll_sync_component.barrier_before_nops = 0;
     (void) mca_base_component_var_register(c, "barrier_before",
                                            "Do a synchronization before each Nth collective",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                           MCA_BASE_VAR_FLAG_NONE,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &mca_coll_sync_component.barrier_before_nops);
@@ -95,7 +97,8 @@ static int sync_register(void)
     mca_coll_sync_component.barrier_after_nops = 0;
     (void) mca_base_component_var_register(c, "barrier_after",
                                            "Do a synchronization after each Nth collective",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                           MCA_BASE_VAR_FLAG_NONE,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &mca_coll_sync_component.barrier_after_nops);
