@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2010-2017 IBM Corporation.  All rights reserved.
+ * Copyright (c) 2010-2021 IBM Corporation.  All rights reserved.
  * Copyright (c) 2015-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
@@ -107,7 +107,7 @@ void opal_atomic_isync(void)
  *********************************************************************/
 #if OPAL_GCC_INLINE_ASSEMBLY
 
-#ifdef __xlC__
+#if defined(__xlC__) || defined(__IBMC__) || defined(__IBMCPP__) || defined(__ibmxl__)
 /* work-around bizzare xlc bug in which it sign-extends
    a pointer to a 32-bit signed integer */
 #define OPAL_ASM_ADDR(a) ((uintptr_t)a)

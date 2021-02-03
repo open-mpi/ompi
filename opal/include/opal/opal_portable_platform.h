@@ -171,7 +171,7 @@
        /* XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX */
 #    endif
 
-#elif defined(__xlC__)
+#elif defined(__xlC__) || defined(__ibmxl__) || defined(__IBMC__) || defined(__IBMCPP__)
 #    define PLATFORM_COMPILER_XLC  1
 #    define PLATFORM_COMPILER_FAMILYNAME XLC
 #    define PLATFORM_COMPILER_FAMILYID 5
