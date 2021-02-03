@@ -84,7 +84,8 @@ static int crcp_bkmrk_register(void)
     (void) mca_base_component_var_register(&mca_crcp_bkmrk_component.super.base_version,
                                            "priority",
                                            "Priority of the CRCP bkmrk component",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                           MCA_BASE_VAR_FLAG_NONE,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &mca_crcp_bkmrk_component.super.priority);
@@ -93,7 +94,8 @@ static int crcp_bkmrk_register(void)
     (void) mca_base_component_var_register(&mca_crcp_bkmrk_component.super.base_version,
                                            "verbose",
                                            "Verbose level for the CRCP bkmrk component",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                           MCA_BASE_VAR_FLAG_NONE,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &mca_crcp_bkmrk_component.super.verbose);
@@ -101,7 +103,8 @@ static int crcp_bkmrk_register(void)
     timing_enabled = false;
     (void) mca_base_component_var_register(&mca_crcp_bkmrk_component.super.base_version,
                                            "timing", "Enable Performance timing",
-                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0,
+                                           MCA_BASE_VAR_FLAG_NONE,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &timing_enabled);
