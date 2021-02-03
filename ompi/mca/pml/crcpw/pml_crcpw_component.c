@@ -78,7 +78,8 @@ static int mca_pml_crcpw_component_register(void)
     mca_pml_crcpw_component.priority = PML_SELECT_WRAPPER_PRIORITY;
     (void) mca_base_component_var_register(&mca_pml_crcpw_component.super.pmlm_version, "priority",
                                            "Priority of the PML crcpw component",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                           MCA_BASE_VAR_FLAG_NONE,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &mca_pml_crcpw_component.priority);
@@ -86,7 +87,8 @@ static int mca_pml_crcpw_component_register(void)
     mca_pml_crcpw_component.verbose = 0;
     (void) mca_base_component_var_register(&mca_pml_crcpw_component.super.pmlm_version, "verbose",
                                            "Verbose level for the PML crcpw component",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                           MCA_BASE_VAR_FLAG_NONE,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &mca_pml_crcpw_component.verbose);

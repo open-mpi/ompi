@@ -218,7 +218,6 @@ int mca_pml_base_bsend_request_start(ompi_request_t* request)
     struct iovec iov;
     unsigned int iov_count;
     size_t max_data;
-    int rc;
 
     if(sendreq->req_bytes_packed > 0) {
 
@@ -249,10 +248,10 @@ int mca_pml_base_bsend_request_start(ompi_request_t* request)
         iov.iov_len = sendreq->req_bytes_packed;
         iov_count = 1;
         max_data = iov.iov_len;
-        if((rc = opal_convertor_pack( &sendreq->req_base.req_convertor,
+        if(opal_convertor_pack( &sendreq->req_base.req_convertor,
                                       &iov,
                                       &iov_count,
-                                      &max_data )) < 0) {
+                                      &max_data ) < 0) {
             return OMPI_ERROR;
         }
 

@@ -76,14 +76,14 @@ static int mca_pml_v_component_register(void)
     ompi_pml_v_output = "stderr";
     (void) mca_base_component_var_register(&mca_pml_v_component.pmlm_version,
                                            "output", NULL, MCA_BASE_VAR_TYPE_STRING,
-                                           NULL, 0, 0, OPAL_INFO_LVL_9,
+                                           NULL, 0, MCA_BASE_VAR_FLAG_NONE, OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &ompi_pml_v_output);
 
     ompi_pml_v_verbose = 0;
     (void) mca_base_component_var_register(&mca_pml_v_component.pmlm_version,
                                            "verbose", "Verbosity of the pml v component",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_NONE,
                                            OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
                                            &ompi_pml_v_verbose);
 
@@ -91,10 +91,10 @@ static int mca_pml_v_component_register(void)
     /* This parameter needs to go away if pml/v is unloaded so register it with a pml/v name */
     var_id = mca_base_component_var_register(&mca_pml_v_component.pmlm_version,
                                              "vprotocol", "Specify a specific vprotocol to use",
-                                             MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                             MCA_BASE_VAR_TYPE_STRING, NULL, 0, MCA_BASE_VAR_FLAG_NONE,
                                              OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
                                              &ompi_pml_vprotocol_include_list);
-    (void) mca_base_var_register_synonym(var_id, "ompi", "vprotocol", NULL, NULL, 0);
+    (void) mca_base_var_register_synonym(var_id, "ompi", "vprotocol", NULL, NULL, MCA_BASE_VAR_SYN_FLAG_NONE);
 
     return OMPI_SUCCESS;
 }
@@ -108,7 +108,7 @@ static int mca_pml_v_component_open(void)
 
     mca_vprotocol_base_set_include_list(ompi_pml_vprotocol_include_list);
 
-    if (OMPI_SUCCESS != (rc = mca_base_framework_open(&ompi_vprotocol_base_framework, 0))) {
+    if (OMPI_SUCCESS != (rc = mca_base_framework_open(&ompi_vprotocol_base_framework, MCA_BASE_OPEN_DEFAULT))) {
         return rc;
     }
 

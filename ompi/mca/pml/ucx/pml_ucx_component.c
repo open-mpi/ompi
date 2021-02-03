@@ -52,7 +52,8 @@ static int mca_pml_ucx_component_register(void)
     ompi_pml_ucx.priority = 51;
     (void) mca_base_component_var_register(&mca_pml_ucx_component.pmlm_version, "priority",
                                            "Priority of the UCX component",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                           MCA_BASE_VAR_FLAG_NONE,
                                            OPAL_INFO_LVL_3,
                                            MCA_BASE_VAR_SCOPE_LOCAL,
                                            &ompi_pml_ucx.priority);
@@ -60,7 +61,8 @@ static int mca_pml_ucx_component_register(void)
     ompi_pml_ucx.num_disconnect = 1;
     (void) mca_base_component_var_register(&mca_pml_ucx_component.pmlm_version, "num_disconnect",
                                            "How may disconnects go in parallel",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                           MCA_BASE_VAR_FLAG_NONE,
                                            OPAL_INFO_LVL_3,
                                            MCA_BASE_VAR_SCOPE_LOCAL,
                                            &ompi_pml_ucx.num_disconnect);
@@ -92,9 +94,7 @@ static mca_pml_base_module_t*
 mca_pml_ucx_component_init(int* priority, bool enable_progress_threads,
                            bool enable_mpi_threads)
 {
-    int ret;
-
-    if ( (ret = mca_pml_ucx_init(enable_mpi_threads)) != 0) {
+    if (0 != mca_pml_ucx_init(enable_mpi_threads) ) {
         return NULL;
     }
 

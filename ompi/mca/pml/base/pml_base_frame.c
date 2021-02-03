@@ -101,7 +101,8 @@ static int mca_pml_base_register(mca_base_register_flag_t flags)
 
     ompi_pml_base_bsend_allocator_name = "basic";
     (void) mca_base_var_register("ompi", "pml", "base", "bsend_allocator", NULL,
-                                 MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                 MCA_BASE_VAR_TYPE_STRING, NULL, 0,
+                                 MCA_BASE_VAR_FLAG_NONE,
                                  OPAL_INFO_LVL_9,
                                  MCA_BASE_VAR_SCOPE_READONLY,
                                  &ompi_pml_base_bsend_allocator_name);
@@ -110,11 +111,12 @@ static int mca_pml_base_register(mca_base_register_flag_t flags)
     ompi_pml_base_wrapper = NULL;
     var_id = mca_base_var_register("ompi", "pml", "base", "wrapper",
                                    "Use a Wrapper component around the selected PML component",
-                                   MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                   MCA_BASE_VAR_TYPE_STRING, NULL, 0,
+                                   MCA_BASE_VAR_FLAG_NONE,
                                    OPAL_INFO_LVL_9,
                                    MCA_BASE_VAR_SCOPE_READONLY,
                                    &ompi_pml_base_wrapper);
-    (void) mca_base_var_register_synonym(var_id, "ompi", "pml", NULL, "wrapper", 0);
+    (void) mca_base_var_register_synonym(var_id, "ompi", "pml", NULL, "wrapper", MCA_BASE_VAR_SYN_FLAG_NONE);
 #endif
 
     return OMPI_SUCCESS;
@@ -253,4 +255,4 @@ static int mca_pml_base_open(mca_base_open_flag_t flags)
 
 MCA_BASE_FRAMEWORK_DECLARE(ompi, pml, "OMPI PML", mca_pml_base_register,
                            mca_pml_base_open, mca_pml_base_close,
-                           mca_pml_base_static_components, 0);
+                           mca_pml_base_static_components, MCA_BASE_FRAMEWORK_FLAG_DEFAULT);
