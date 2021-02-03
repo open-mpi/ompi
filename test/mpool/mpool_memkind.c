@@ -75,12 +75,12 @@ int main (int argc, char* argv[])
         goto error;
     }
 
-    if (OPAL_SUCCESS != (ret = mca_base_framework_open(&opal_allocator_base_framework, 0))) {
+    if (OPAL_SUCCESS != (ret = mca_base_framework_open(&opal_allocator_base_framework, MCA_BASE_OPEN_DEFAULT))) {
         error = "mca_allocator_base_open() failed";
         goto error;
     }
 
-    if (OPAL_SUCCESS != (ret = mca_base_framework_open(&opal_mpool_base_framework, 0))) {
+    if (OPAL_SUCCESS != (ret = mca_base_framework_open(&opal_mpool_base_framework, MCA_BASE_OPEN_DEFAULT))) {
         error = "mca_mpool_base_open() failed";
         goto error;
     }
