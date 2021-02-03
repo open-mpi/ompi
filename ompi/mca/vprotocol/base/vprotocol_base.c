@@ -33,7 +33,7 @@ static int mca_vprotocol_base_open(mca_base_open_flag_t flags)
         return OMPI_SUCCESS;
     }
 
-    return mca_base_framework_components_open(&ompi_vprotocol_base_framework, 0);
+    return mca_base_framework_components_open(&ompi_vprotocol_base_framework, MCA_BASE_OPEN_DEFAULT);
 }
 
 void mca_vprotocol_base_set_include_list(char *vprotocol_include_list)
@@ -58,5 +58,5 @@ static int mca_vprotocol_base_close(void)
 
 MCA_BASE_FRAMEWORK_DECLARE(ompi, vprotocol, "OMPI Vprotocol", NULL,
                            mca_vprotocol_base_open, mca_vprotocol_base_close,
-                           mca_vprotocol_base_static_components, 0);
+                           mca_vprotocol_base_static_components, MCA_BASE_FRAMEWORK_FLAG_DEFAULT);
 
