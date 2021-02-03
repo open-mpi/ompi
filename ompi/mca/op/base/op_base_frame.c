@@ -60,4 +60,4 @@ OBJ_CLASS_INSTANCE(ompi_op_base_module_1_0_0_t, opal_object_t,
                    module_constructor_1_0_0, NULL);
 
 MCA_BASE_FRAMEWORK_DECLARE(ompi, op, NULL, NULL, NULL, NULL,
-                           mca_op_base_static_components, 0);
+                           mca_op_base_static_components, MCA_BASE_FRAMEWORK_FLAG_DEFAULT);

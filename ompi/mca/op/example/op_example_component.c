@@ -161,7 +161,8 @@ static int example_component_register(void)
     (void) mca_base_component_var_register(&mca_op_example_component.super.opc_version,
                                            "hardware_available",
                                            "Whether the hardware is available or not",
-                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0,
+                                           MCA_BASE_VAR_FLAG_NONE,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &mca_op_example_component.hardware_available);
@@ -170,7 +171,8 @@ static int example_component_register(void)
     (void) mca_base_component_var_register(&mca_op_example_component.super.opc_version,
                                            "double_supported",
                                            "Whether the double precision data types are supported or not",
-                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0,
+                                           MCA_BASE_VAR_FLAG_NONE,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &mca_op_example_component.double_supported);

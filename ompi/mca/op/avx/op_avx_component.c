@@ -204,7 +204,8 @@ avx_component_register(void)
                                            "capabilities",
                                            "Level of SSE/MMX/AVX support available in the current environment",
                                            MCA_BASE_VAR_TYPE_INT,
-                                           &(new_enum_flag->super), 0, 0,
+                                           &(new_enum_flag->super), 0,
+                                           MCA_BASE_VAR_FLAG_NONE,
                                            OPAL_INFO_LVL_4,
                                            MCA_BASE_VAR_SCOPE_CONSTANT,
                                            &mca_op_avx_component.supported);
@@ -213,7 +214,8 @@ avx_component_register(void)
                                            "support",
                                            "Level of SSE/MMX/AVX support to be used, capped by the local architecture capabilities",
                                            MCA_BASE_VAR_TYPE_INT,
-                                           &(new_enum_flag->super), 0, 0,
+                                           &(new_enum_flag->super), 0,
+                                           MCA_BASE_VAR_FLAG_NONE,
                                            OPAL_INFO_LVL_4,
                                            MCA_BASE_VAR_SCOPE_LOCAL,
                                            &mca_op_avx_component.flags);
