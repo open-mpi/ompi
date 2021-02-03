@@ -82,7 +82,7 @@ static int grdma_register(void)
     mca_rcache_grdma_component.print_stats = false;
     (void) mca_base_component_var_register(&mca_rcache_grdma_component.super.rcache_version,
                                            "print_stats", "print registration cache usage statistics at the end of the run",
-                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0, MCA_BASE_VAR_FLAG_NONE,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &mca_rcache_grdma_component.print_stats);

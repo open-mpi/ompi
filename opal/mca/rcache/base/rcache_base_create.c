@@ -60,7 +60,7 @@ mca_rcache_base_module_t* mca_rcache_base_module_create (const char* name, void 
                triggered before this (any time after mem_free_init(),
                actually).  This is a hook available for memory manager hooks
                without good initialization routine support */
-            (void) mca_base_framework_open (&opal_memory_base_framework, 0);
+            (void) mca_base_framework_open (&opal_memory_base_framework, MCA_BASE_OPEN_DEFAULT);
 
             if ((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT) ==
                 ((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT) &

@@ -86,7 +86,8 @@ static int rgpusm_register(void)
     (void) mca_base_component_var_register(&mca_rcache_rgpusm_component.super.rcache_version,
                                            "rcache_name",
                                            "The name of the registration cache the rcache should use",
-                                           MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_STRING, NULL, 0,
+                                           MCA_BASE_VAR_FLAG_NONE,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &mca_rcache_rgpusm_component.rcache_name);
@@ -95,7 +96,8 @@ static int rgpusm_register(void)
                                            "rcache_size_limit",
                                            "the maximum size of registration cache in bytes. "
                                            "0 is unlimited (default 0)",
-                                           MCA_BASE_VAR_TYPE_UNSIGNED_LONG_LONG, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_UNSIGNED_LONG_LONG, NULL, 0,
+                                           MCA_BASE_VAR_FLAG_NONE,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &mca_rcache_rgpusm_component.rcache_size_limit);
@@ -104,7 +106,8 @@ static int rgpusm_register(void)
     (void) mca_base_component_var_register(&mca_rcache_rgpusm_component.super.rcache_version,
                                            "leave_pinned",
                                            "Whether to keep memory handles around or release them when done. ",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                           MCA_BASE_VAR_FLAG_NONE,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &mca_rcache_rgpusm_component.leave_pinned);
@@ -113,7 +116,8 @@ static int rgpusm_register(void)
     (void) mca_base_component_var_register(&mca_rcache_rgpusm_component.super.rcache_version,
                                            "print_stats",
                                            "print pool usage statistics at the end of the run",
-                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0,
+                                           MCA_BASE_VAR_FLAG_NONE,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &mca_rcache_rgpusm_component.print_stats);
@@ -122,7 +126,8 @@ static int rgpusm_register(void)
     opal_rcache_rgpusm_verbose = 0;
     (void) mca_base_component_var_register(&mca_rcache_rgpusm_component.super.rcache_version,
                                            "verbose", "Set level of rcache rgpusm verbosity",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                           MCA_BASE_VAR_FLAG_NONE,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &opal_rcache_rgpusm_verbose);
@@ -131,7 +136,8 @@ static int rgpusm_register(void)
     mca_rcache_rgpusm_component.empty_cache = false;
     (void) mca_base_component_var_register(&mca_rcache_rgpusm_component.super.rcache_version,
                                            "empty_cache", "When set, empty entire registration cache when it is full",
-                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0,
+                                           MCA_BASE_VAR_FLAG_NONE,
                                            OPAL_INFO_LVL_5,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &mca_rcache_rgpusm_component.empty_cache);
