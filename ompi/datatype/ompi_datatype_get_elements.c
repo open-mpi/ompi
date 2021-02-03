@@ -30,10 +30,10 @@
 int ompi_datatype_get_elements (ompi_datatype_t *datatype, size_t ucount, size_t *count)
 {
     size_t internal_count, size, total;
-    int rc, i;
+    int i;
 
     *count = 0;
-    if (OMPI_SUCCESS != (rc = ompi_datatype_type_size (datatype, &size))) {
+    if (OMPI_SUCCESS != ompi_datatype_type_size (datatype, &size)) {
         return OMPI_ERR_BAD_PARAM;
     }
 

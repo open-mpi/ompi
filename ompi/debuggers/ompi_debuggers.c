@@ -171,7 +171,8 @@ ompi_debugger_setup_dlls(void)
     ompi_debugger_dll_path = opal_install_dirs.opallibdir;
     (void) mca_base_var_register("ompi", "ompi", "debugger", "dll_path",
                                  "List of directories where MPI_INIT should search for debugger plugins",
-                                 MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                 MCA_BASE_VAR_TYPE_STRING, NULL, 0,
+                                 MCA_BASE_VAR_FLAG_NONE,
                                  OPAL_INFO_LVL_9,
                                  MCA_BASE_VAR_SCOPE_READONLY,
                                  &ompi_debugger_dll_path);

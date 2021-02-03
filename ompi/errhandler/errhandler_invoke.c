@@ -176,25 +176,21 @@ int ompi_errhandler_request_invoke(int count,
                                       mpi_object.comm,
                                       mpi_object.comm->errhandler_type,
                                       ec, message);
-        break;
     case OMPI_REQUEST_IO:
         return ompi_errhandler_invoke(mpi_object.file->error_handler,
                                       mpi_object.file,
                                       mpi_object.file->errhandler_type,
                                       ec, message);
-        break;
     case OMPI_REQUEST_WIN:
         return ompi_errhandler_invoke(mpi_object.win->error_handler,
                                       mpi_object.win,
                                       mpi_object.win->errhandler_type,
                                       ec, message);
-        break;
     default:
         /* Covers REQUEST_GEN, REQUEST_NULL, REQUEST_MAX */
         return ompi_errhandler_invoke(MPI_COMM_WORLD->error_handler,
                                       MPI_COMM_WORLD,
                                       MPI_COMM_WORLD->errhandler_type,
                                       ec, message);
-        break;
     }
 }

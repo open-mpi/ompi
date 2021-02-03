@@ -21,7 +21,8 @@ int ompi_netpatterns_register_mca_params(void)
     ompi_netpatterns_base_verbose = 0;
     mca_base_var_register("ompi", "common", "netpatterns", "base_verbose",
                           "Verbosity level of the NETPATTERNS framework",
-                          MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                          MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                          MCA_BASE_VAR_FLAG_NONE,
                           OPAL_INFO_LVL_9,
                           MCA_BASE_VAR_SCOPE_READONLY,
                           &ompi_netpatterns_base_verbose);

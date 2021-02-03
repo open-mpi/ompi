@@ -43,7 +43,7 @@
 #  define MEMCHECKER(x)
 #endif /* OPAL_WANT_MEMCHECKER */
 
-
+#if OPAL_WANT_MEMCHECKER
 static inline int memchecker_convertor_call (int (*f)(void *, size_t), opal_convertor_t* pConvertor)
 {
     if (!opal_memchecker_base_runindebugger() ||
@@ -415,6 +415,6 @@ static inline int memchecker_message(MPI_Message *message)
 #define memchecker_message(message)
 #endif /* OMPI_WANT_MEMCHECKER_MPI_OBJECTS */
 
-
+#endif
 #endif /* OMPI_MEMCHECKER_H */
 
