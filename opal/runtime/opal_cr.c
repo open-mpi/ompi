@@ -436,7 +436,7 @@ int opal_cr_init(void )
     /*
      * Open the checkpoint / restart service components
      */
-    if (OPAL_SUCCESS != (ret = mca_base_framework_open(&opal_crs_base_framework, 0))) {
+    if (OPAL_SUCCESS != (ret = mca_base_framework_open(&opal_crs_base_framework, MCA_BASE_OPEN_DEFAULT))) {
         opal_show_help( "help-opal-runtime.txt",
                         "opal_cr_init:no-crs", true,
                         "opal_crs_base_open", ret );

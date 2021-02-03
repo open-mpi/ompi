@@ -271,7 +271,8 @@ int opal_register_params(void)
     opal_leave_pinned = -1;
     ret = mca_base_var_register("ompi", "mpi", NULL, "leave_pinned",
                                 "Whether to use the \"leave pinned\" protocol or not.  Enabling this setting can help bandwidth performance when repeatedly sending and receiving large messages with the same buffers over RDMA-based networks (false = do not use \"leave pinned\" protocol, true = use \"leave pinned\" protocol, auto = allow network to choose at runtime).",
-                                MCA_BASE_VAR_TYPE_INT, &mca_base_var_enum_auto_bool, 0, 0,
+                                MCA_BASE_VAR_TYPE_INT, &mca_base_var_enum_auto_bool, 0,
+                                MCA_BASE_VAR_FLAG_NONE,
                                 OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
                                 &opal_leave_pinned);
     mca_base_var_register_synonym(ret, "opal", "opal", NULL, "leave_pinned",
@@ -280,7 +281,8 @@ int opal_register_params(void)
     opal_leave_pinned_pipeline = false;
     ret = mca_base_var_register("ompi", "mpi", NULL, "leave_pinned_pipeline",
                                 "Whether to use the \"leave pinned pipeline\" protocol or not.",
-                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0,
+                                 MCA_BASE_VAR_FLAG_NONE,
                                  OPAL_INFO_LVL_9,
                                  MCA_BASE_VAR_SCOPE_READONLY,
                                  &opal_leave_pinned_pipeline);
@@ -297,7 +299,8 @@ int opal_register_params(void)
     opal_warn_on_fork = true;
     (void) mca_base_var_register("ompi", "mpi", NULL, "warn_on_fork",
                                  "If nonzero, issue a warning if program forks under conditions that could cause system errors",
-                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0,
+                                 MCA_BASE_VAR_FLAG_NONE,
                                  OPAL_INFO_LVL_9,
                                  MCA_BASE_VAR_SCOPE_READONLY,
                                  &opal_warn_on_fork);
@@ -305,7 +308,8 @@ int opal_register_params(void)
     opal_abort_delay = 0;
     ret = mca_base_var_register("opal", "opal", NULL, "abort_delay",
                                 "If nonzero, print out an identifying message when abort operation is invoked (hostname, PID of the process that called abort) and delay for that many seconds before exiting (a negative delay value means to never abort).  This allows attaching of a debugger before quitting the job.",
-                                 MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                 MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                 MCA_BASE_VAR_FLAG_NONE,
                                  OPAL_INFO_LVL_5,
                                  MCA_BASE_VAR_SCOPE_READONLY,
                                  &opal_abort_delay);
@@ -321,7 +325,7 @@ int opal_register_params(void)
                                    capability, make this a constant
                                    MCA variable */
 #if OPAL_WANT_PRETTY_PRINT_STACKTRACE
-                                 0,
+                                 MCA_BASE_VAR_FLAG_NONE,
                                  OPAL_INFO_LVL_5,
                                  MCA_BASE_VAR_SCOPE_READONLY,
 #else
@@ -337,14 +341,14 @@ int opal_register_params(void)
     /* register the envar-forwarding params */
     (void)mca_base_var_register ("opal", "mca", "base", "env_list",
                                  "Set SHELL env variables",
-                                 MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_3,
-                                 MCA_BASE_VAR_SCOPE_READONLY, &mca_base_env_list);
+                                 MCA_BASE_VAR_TYPE_STRING, NULL, 0, MCA_BASE_VAR_FLAG_NONE,
+                                 OPAL_INFO_LVL_3, MCA_BASE_VAR_SCOPE_READONLY, &mca_base_env_list);
 
     mca_base_env_list_sep = MCA_BASE_ENV_LIST_SEP_DEFAULT;
     (void)mca_base_var_register ("opal", "mca", "base", "env_list_delimiter",
                                  "Set SHELL env variables delimiter. Default: semicolon ';'",
-                                 MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_3,
-                                 MCA_BASE_VAR_SCOPE_READONLY, &mca_base_env_list_sep);
+                                 MCA_BASE_VAR_TYPE_STRING, NULL, 0, MCA_BASE_VAR_FLAG_NONE,
+                                 OPAL_INFO_LVL_3, MCA_BASE_VAR_SCOPE_READONLY, &mca_base_env_list_sep);
 
     /* Set OMPI_MCA_mca_base_env_list variable, it might not be set before
      * if mca variable was taken from amca conf file. Need to set it
@@ -372,7 +376,7 @@ int opal_register_params(void)
     /* Number of threads allowed in opal_progress. This might increase multithreaded performance. */
     (void)mca_base_var_register ("opal", "opal", NULL, "max_thread_in_progress",
             "Number of thread allowed in opal_progress. Default: 1",
-            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_8,
+            MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_NONE, OPAL_INFO_LVL_8,
             MCA_BASE_VAR_SCOPE_READONLY, &opal_max_thread_in_progress);
 
     /* The ddt engine has a few parameters */

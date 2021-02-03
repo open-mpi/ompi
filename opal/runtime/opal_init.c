@@ -510,7 +510,7 @@ opal_init_util(int* pargc, char*** pargv)
     opal_output_init();
 
     /* initialize install dirs code */
-    if (OPAL_SUCCESS != (ret = mca_base_framework_open(&opal_installdirs_base_framework, 0))) {
+    if (OPAL_SUCCESS != (ret = mca_base_framework_open(&opal_installdirs_base_framework, MCA_BASE_OPEN_DEFAULT))) {
         fprintf(stderr, "opal_installdirs_base_open() failed -- process will likely abort (%s:%d, returned %d instead of OPAL_SUCCESS)\n",
                 __FILE__, __LINE__, ret);
         return ret;
@@ -608,7 +608,7 @@ opal_init_util(int* pargc, char*** pargv)
     OPAL_TIMING_ENV_NEXT(otmng, "mca_base_open");
 
     /* initialize if framework */
-    if (OPAL_SUCCESS != (ret = mca_base_framework_open(&opal_if_base_framework, 0))) {
+    if (OPAL_SUCCESS != (ret = mca_base_framework_open(&opal_if_base_framework, MCA_BASE_OPEN_DEFAULT))) {
         fprintf(stderr, "opal_if_base_open() failed -- process will likely abort (%s:%d, returned %d instead of OPAL_SUCCESS)\n",
                 __FILE__, __LINE__, ret);
         return ret;
