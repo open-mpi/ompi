@@ -686,8 +686,8 @@ int opal_convertor_clone( const opal_convertor_t* source,
 
     /* initialize the stack */
     if( OPAL_LIKELY(0 == copy_stack) ) {
-        destination->bConverted = -1;
-        destination->stack_pos  = -1;
+        destination->bConverted = (size_t)   -1;
+        destination->stack_pos  = (uint32_t) -1;
     } else {
         memcpy( destination->pStack, source->pStack, sizeof(dt_stack_t) * (source->stack_pos+1) );
         destination->bConverted = source->bConverted;
