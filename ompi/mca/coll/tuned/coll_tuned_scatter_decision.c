@@ -120,7 +120,8 @@ ompi_coll_tuned_scatter_intra_check_forced_init(coll_tuned_force_algorithm_mca_p
     (void) mca_base_component_var_register(&mca_coll_tuned_component.super.collm_version,
                                            "scatter_min_procs",
                                            "use basic linear algorithm for communicators larger than this value",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                           MCA_BASE_VAR_FLAG_NONE,
                                            OPAL_INFO_LVL_6,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &ompi_coll_tuned_scatter_min_procs);
@@ -136,7 +137,8 @@ ompi_coll_tuned_scatter_intra_check_forced_init(coll_tuned_force_algorithm_mca_p
     (void) mca_base_component_var_register(&mca_coll_tuned_component.super.collm_version,
                                            "scatter_intermediate_msg",
                                            "use non-blocking linear algorithm for messages larger than this value",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                           MCA_BASE_VAR_FLAG_NONE,
                                            OPAL_INFO_LVL_6,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &ompi_coll_tuned_scatter_intermediate_msg);
@@ -144,7 +146,8 @@ ompi_coll_tuned_scatter_intra_check_forced_init(coll_tuned_force_algorithm_mca_p
     (void) mca_base_component_var_register(&mca_coll_tuned_component.super.collm_version,
                                            "scatter_large_msg",
                                            "use linear algorithm for messages larger than this value",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                           MCA_BASE_VAR_FLAG_NONE,
                                            OPAL_INFO_LVL_6,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &ompi_coll_tuned_scatter_large_msg);

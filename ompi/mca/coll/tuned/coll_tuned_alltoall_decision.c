@@ -118,7 +118,8 @@ int ompi_coll_tuned_alltoall_intra_check_forced_init (coll_tuned_force_algorithm
     (void) mca_base_component_var_register(&mca_coll_tuned_component.super.collm_version,
                                            "alltoall_large_msg",
                                            "use pairwise exchange algorithm for messages larger than this value",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                           MCA_BASE_VAR_FLAG_NONE,
                                            OPAL_INFO_LVL_6,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &ompi_coll_tuned_alltoall_large_msg);
@@ -126,7 +127,8 @@ int ompi_coll_tuned_alltoall_intra_check_forced_init (coll_tuned_force_algorithm
     (void) mca_base_component_var_register(&mca_coll_tuned_component.super.collm_version,
                                            "alltoall_min_procs",
                                            "use pairwise exchange algorithm for communicators larger than this value",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                           MCA_BASE_VAR_FLAG_NONE,
                                            OPAL_INFO_LVL_6,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &ompi_coll_tuned_alltoall_min_procs);
