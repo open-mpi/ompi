@@ -164,7 +164,7 @@ int mca_bml_r2_ft_event(int state)
             /*
              * Re-open the BTL framework to get the full list of components.
              */
-            if( OMPI_SUCCESS != (ret = mca_base_framework_open(&opal_btl_base_framework, 0)) ) {
+            if( OMPI_SUCCESS != (ret = mca_base_framework_open(&opal_btl_base_framework, MCA_BASE_OPEN_DEFAULT)) ) {
                 opal_output(0, "bml:r2: ft_event(Restart): Failed to open BTL framework\n");
                 return ret;
             }
@@ -243,7 +243,7 @@ int mca_bml_r2_ft_event(int state)
         opal_output_verbose(11, ompi_cr_output,
                             "Restart (Previous BTL MCA): <%s>\n", btl_list ? btl_list[0] : "");
 
-        if( OMPI_SUCCESS != (ret = mca_base_framework_open(&opal_btl_base_framework, 0)) ) {
+        if( OMPI_SUCCESS != (ret = mca_base_framework_open(&opal_btl_base_framework, MCA_BASE_OPEN_DEFAULT)) ) {
             opal_output(0, "bml:r2: ft_event(Restart): Failed to open BTL framework\n");
             return ret;
         }
