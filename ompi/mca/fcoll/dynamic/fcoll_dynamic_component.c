@@ -82,7 +82,7 @@ dynamic_register(void)
     mca_fcoll_dynamic_priority = 10;
     (void) mca_base_component_var_register(&mca_fcoll_dynamic_component.fcollm_version,
                                            "priority", "Priority of the dynamic fcoll component",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_NONE,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY, &mca_fcoll_dynamic_priority);
 

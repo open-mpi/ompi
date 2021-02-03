@@ -43,7 +43,7 @@
  */
 
 MCA_BASE_FRAMEWORK_DECLARE(ompi, fcoll, NULL, NULL, NULL, NULL,
-                           mca_fcoll_base_static_components, 0);
+                           mca_fcoll_base_static_components, MCA_BASE_FRAMEWORK_FLAG_DEFAULT);
 
 /**
  * Traverses through the list of available components, calling their init

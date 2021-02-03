@@ -93,7 +93,6 @@ static int self_register(void)
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &ompi_coll_self_priority);
-
     return OMPI_SUCCESS;
 }
 

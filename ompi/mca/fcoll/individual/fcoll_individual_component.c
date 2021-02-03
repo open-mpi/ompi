@@ -85,7 +85,8 @@ individual_register(void)
     mca_fcoll_individual_priority = 10;
     (void) mca_base_component_var_register(&mca_fcoll_individual_component.fcollm_version,
                                            "priority", "Priority of the individual fcoll component",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                           MCA_BASE_VAR_FLAG_NONE,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY, &mca_fcoll_individual_priority);
     return OMPI_SUCCESS;

@@ -83,14 +83,16 @@ dynamic_gen2_register(void)
     mca_fcoll_dynamic_gen2_priority = 10;
     (void) mca_base_component_var_register(&mca_fcoll_dynamic_gen2_component.fcollm_version,
                                            "priority", "Priority of the dynamic_gen2 fcoll component",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                           MCA_BASE_VAR_FLAG_NONE,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY, &mca_fcoll_dynamic_gen2_priority);
 
     mca_fcoll_dynamic_gen2_num_groups = 1;
     (void) mca_base_component_var_register(&mca_fcoll_dynamic_gen2_component.fcollm_version,
                                            "num_groups", "Number of subgroups created by the dynamic_gen2 component",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                           MCA_BASE_VAR_FLAG_NONE,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY, &mca_fcoll_dynamic_gen2_num_groups);
 
