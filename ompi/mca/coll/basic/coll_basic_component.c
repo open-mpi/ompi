@@ -91,14 +91,14 @@ basic_register(void)
     mca_coll_basic_priority = 10;
     (void) mca_base_component_var_register(&mca_coll_basic_component.collm_version, "priority",
                                            "Priority of the basic coll component",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_NONE,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &mca_coll_basic_priority);
     mca_coll_basic_crossover = 4;
     (void) mca_base_component_var_register(&mca_coll_basic_component.collm_version, "crossover",
                                            "Minimum number of processes in a communicator before using the logarithmic algorithms",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_NONE,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &mca_coll_basic_crossover);
