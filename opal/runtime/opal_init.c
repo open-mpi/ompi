@@ -660,7 +660,7 @@ opal_init(int* pargc, char*** pargv)
 
     opal_finalize_register_cleanup_arg (mca_base_framework_close_list, opal_init_frameworks);
 
-    ret = mca_base_framework_open_list (opal_init_frameworks, 0);
+    ret = mca_base_framework_open_list (opal_init_frameworks, MCA_BASE_OPEN_DEFAULT);
     if (OPAL_UNLIKELY(OPAL_SUCCESS != ret)) {
         return opal_init_error ("opal_init framework open", ret);
     }

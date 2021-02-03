@@ -47,4 +47,4 @@ static int mca_threads_base_register(mca_base_register_flag_t flags)
 /* Use default register/open/close functions */
 MCA_BASE_FRAMEWORK_DECLARE(opal, threads, "OPAL threads",
                            mca_threads_base_register, NULL, NULL,
-                           mca_threads_base_static_components, 0);
+                           mca_threads_base_static_components, MCA_BASE_FRAMEWORK_FLAG_DEFAULT);

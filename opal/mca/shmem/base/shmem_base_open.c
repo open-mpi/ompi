@@ -71,4 +71,4 @@ opal_shmem_base_register (mca_base_register_flag_t flags)
 
 /* Use the default open function */
 MCA_BASE_FRAMEWORK_DECLARE(opal, shmem, "shared memory", opal_shmem_base_register, NULL,
-                           opal_shmem_base_close, mca_shmem_base_static_components, 0);
+                           opal_shmem_base_close, mca_shmem_base_static_components, MCA_BASE_FRAMEWORK_FLAG_DEFAULT);

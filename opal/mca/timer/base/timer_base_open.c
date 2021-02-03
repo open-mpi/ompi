@@ -36,7 +36,8 @@ static int mca_timer_base_register(mca_base_register_flag_t flags)
 {
     (void) mca_base_var_register("opal", "timer", "require", "monotonic",
                                  "Node-level monotonic timer required (default yes)",
-                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0,
+                                 MCA_BASE_VAR_FLAG_NONE,
                                  OPAL_INFO_LVL_5,
                                  MCA_BASE_VAR_SCOPE_LOCAL,
                                  &mca_timer_base_monotonic);
@@ -49,4 +50,4 @@ static int mca_timer_base_register(mca_base_register_flag_t flags)
  */
 /* Use default register/open/close functions */
 MCA_BASE_FRAMEWORK_DECLARE(opal, timer, "OPAL OS timer", mca_timer_base_register, NULL, NULL,
-                           mca_timer_base_static_components, 0);
+                           mca_timer_base_static_components, MCA_BASE_FRAMEWORK_FLAG_DEFAULT);

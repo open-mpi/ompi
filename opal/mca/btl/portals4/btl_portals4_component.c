@@ -80,7 +80,7 @@ mca_btl_portals4_component_register(void)
                            MCA_BASE_VAR_TYPE_INT,
                            NULL,
                            0,
-                           0,
+                           MCA_BASE_VAR_FLAG_NONE,
                            OPAL_INFO_LVL_5,
                            MCA_BASE_VAR_SCOPE_READONLY,
                            &mca_btl_portals4_component.use_logical);
@@ -92,7 +92,7 @@ mca_btl_portals4_component_register(void)
                            MCA_BASE_VAR_TYPE_UNSIGNED_INT,
                            NULL,
                            0,
-                           0,
+                           MCA_BASE_VAR_FLAG_NONE,
                            OPAL_INFO_LVL_5,
                            MCA_BASE_VAR_SCOPE_READONLY,
                            &mca_btl_portals4_component.max_btls);
@@ -104,7 +104,7 @@ mca_btl_portals4_component_register(void)
                            MCA_BASE_VAR_TYPE_INT,
                            NULL,
                            0,
-                           0,
+                           MCA_BASE_VAR_FLAG_NONE,
                            OPAL_INFO_LVL_5,
                            MCA_BASE_VAR_SCOPE_READONLY,
                            &(mca_btl_portals4_component.portals_free_list_init_num));
@@ -116,7 +116,7 @@ mca_btl_portals4_component_register(void)
                            MCA_BASE_VAR_TYPE_INT,
                            NULL,
                            0,
-                           0,
+                           MCA_BASE_VAR_FLAG_NONE,
                            OPAL_INFO_LVL_5,
                            MCA_BASE_VAR_SCOPE_READONLY,
                            &(mca_btl_portals4_component.portals_free_list_max_num));
@@ -128,7 +128,7 @@ mca_btl_portals4_component_register(void)
                            MCA_BASE_VAR_TYPE_INT,
                            NULL,
                            0,
-                           0,
+                           MCA_BASE_VAR_FLAG_NONE,
                            OPAL_INFO_LVL_5,
                            MCA_BASE_VAR_SCOPE_READONLY,
                            &(mca_btl_portals4_component.portals_free_list_inc_num));
@@ -140,7 +140,7 @@ mca_btl_portals4_component_register(void)
                            MCA_BASE_VAR_TYPE_INT,
                            NULL,
                            0,
-                           0,
+                           MCA_BASE_VAR_FLAG_NONE,
                            OPAL_INFO_LVL_5,
                            MCA_BASE_VAR_SCOPE_READONLY,
                            &(mca_btl_portals4_component.portals_free_list_eager_max_num));
@@ -152,7 +152,7 @@ mca_btl_portals4_component_register(void)
                            MCA_BASE_VAR_TYPE_INT,
                            NULL,
                            0,
-                           0,
+                           MCA_BASE_VAR_FLAG_NONE,
                            OPAL_INFO_LVL_5,
                            MCA_BASE_VAR_SCOPE_READONLY,
                            &(mca_btl_portals4_component.portals_need_ack));
@@ -164,7 +164,7 @@ mca_btl_portals4_component_register(void)
                            MCA_BASE_VAR_TYPE_INT,
                            NULL,
                            0,
-                           0,
+                           MCA_BASE_VAR_FLAG_NONE,
                            OPAL_INFO_LVL_5,
                            MCA_BASE_VAR_SCOPE_READONLY,
                            &(mca_btl_portals4_component.recv_queue_size));
@@ -176,7 +176,7 @@ mca_btl_portals4_component_register(void)
                            MCA_BASE_VAR_TYPE_INT,
                            NULL,
                            0,
-                           0,
+                           MCA_BASE_VAR_FLAG_NONE,
                            OPAL_INFO_LVL_5,
                            MCA_BASE_VAR_SCOPE_READONLY,
                            &(mca_btl_portals4_component.portals_max_outstanding_ops));
@@ -188,7 +188,7 @@ mca_btl_portals4_component_register(void)
                            MCA_BASE_VAR_TYPE_INT,
                            NULL,
                            0,
-                           0,
+                           MCA_BASE_VAR_FLAG_NONE,
                            OPAL_INFO_LVL_5,
                            MCA_BASE_VAR_SCOPE_READONLY,
                            &(mca_btl_portals4_component.portals_recv_mds_num));
@@ -200,7 +200,7 @@ mca_btl_portals4_component_register(void)
                            MCA_BASE_VAR_TYPE_INT,
                            NULL,
                            0,
-                           0,
+                           MCA_BASE_VAR_FLAG_NONE,
                            OPAL_INFO_LVL_5,
                            MCA_BASE_VAR_SCOPE_READONLY,
                            &(mca_btl_portals4_component.portals_recv_mds_size));
@@ -212,7 +212,7 @@ mca_btl_portals4_component_register(void)
                            MCA_BASE_VAR_TYPE_UNSIGNED_LONG,
                            NULL,
                            0,
-                           0,
+                           MCA_BASE_VAR_FLAG_NONE,
                            OPAL_INFO_LVL_5,
                            MCA_BASE_VAR_SCOPE_READONLY,
                            &(mca_btl_portals4_component.portals_max_msg_size));

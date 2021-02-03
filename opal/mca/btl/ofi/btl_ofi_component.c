@@ -141,7 +141,8 @@ static int mca_btl_ofi_component_register(void)
     (void)mca_base_component_var_register(&mca_btl_ofi_component.super.btl_version,
                                           "mode",
                                           msg,
-                                          MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                          MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                          MCA_BASE_VAR_FLAG_NONE,
                                           OPAL_INFO_LVL_5,
                                           MCA_BASE_VAR_SCOPE_READONLY,
                                           &mca_btl_ofi_component.mode);
@@ -151,7 +152,8 @@ static int mca_btl_ofi_component_register(void)
     (void) mca_base_component_var_register(&mca_btl_ofi_component.super.btl_version,
                                           "num_cq_read",
                                           "Number of completion entries to read from a single cq_read. ",
-                                          MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                          MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                          MCA_BASE_VAR_FLAG_NONE,
                                           OPAL_INFO_LVL_5,
                                           MCA_BASE_VAR_SCOPE_READONLY,
                                           &mca_btl_ofi_component.num_cqe_read);
@@ -161,7 +163,8 @@ static int mca_btl_ofi_component_register(void)
                                           "progress_mode",
                                           "requested provider progress mode. [unspec, auto, manual]"
                                           "(default: unspec)",
-                                          MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                          MCA_BASE_VAR_TYPE_STRING, NULL, 0,
+                                          MCA_BASE_VAR_FLAG_NONE,
                                           OPAL_INFO_LVL_5,
                                           MCA_BASE_VAR_SCOPE_READONLY,
                                           &ofi_progress_mode);
@@ -172,7 +175,8 @@ static int mca_btl_ofi_component_register(void)
                                           "number of communication context per module to create. "
                                           "This should increase multithreaded performance but it is "
                                           "advised that this number should be lower than total cores.",
-                                          MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                          MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                          MCA_BASE_VAR_FLAG_NONE,
                                           OPAL_INFO_LVL_5,
                                           MCA_BASE_VAR_SCOPE_READONLY,
                                           &mca_btl_ofi_component.num_contexts_per_module);
@@ -181,7 +185,8 @@ static int mca_btl_ofi_component_register(void)
     (void) mca_base_component_var_register(&mca_btl_ofi_component.super.btl_version,
                                           "disable_sep",
                                           "force btl/ofi to never use scalable endpoint.",
-                                          MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                          MCA_BASE_VAR_TYPE_BOOL, NULL, 0,
+                                          MCA_BASE_VAR_FLAG_NONE,
                                           OPAL_INFO_LVL_5,
                                           MCA_BASE_VAR_SCOPE_READONLY,
                                           &disable_sep);
@@ -192,7 +197,8 @@ static int mca_btl_ofi_component_register(void)
                                           "number of outstanding operation before btl will progress "
                                           "automatically. Tuning this might improve performance on "
                                           "certain type of application.",
-                                          MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                          MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                          MCA_BASE_VAR_FLAG_NONE,
                                           OPAL_INFO_LVL_5,
                                           MCA_BASE_VAR_SCOPE_READONLY,
                                           &mca_btl_ofi_component.progress_threshold);
@@ -201,7 +207,8 @@ static int mca_btl_ofi_component_register(void)
     (void) mca_base_component_var_register(&mca_btl_ofi_component.super.btl_version,
                                           "rd_num",
                                           "Number of receive descriptor posted per context.",
-                                          MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                          MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                          MCA_BASE_VAR_FLAG_NONE,
                                           OPAL_INFO_LVL_5,
                                           MCA_BASE_VAR_SCOPE_READONLY,
                                           &mca_btl_ofi_component.rd_num);

@@ -48,17 +48,17 @@ static int opal_pmix_base_frame_register(mca_base_register_flag_t flags)
 {
     opal_pmix_base_async_modex = false;
     (void) mca_base_var_register("opal", "pmix", "base", "async_modex", "Use asynchronous modex mode",
-                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0, OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, MCA_BASE_VAR_FLAG_NONE,  OPAL_INFO_LVL_9,
                                  MCA_BASE_VAR_SCOPE_READONLY, &opal_pmix_base_async_modex);
     opal_pmix_collect_all_data = true;
     (void) mca_base_var_register("opal", "pmix", "base", "collect_data", "Collect all data during modex",
-                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0, OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, MCA_BASE_VAR_FLAG_NONE, OPAL_INFO_LVL_9,
                                  MCA_BASE_VAR_SCOPE_READONLY, &opal_pmix_collect_all_data);
 
     opal_pmix_base.timeout = -1;
     (void) mca_base_var_register("opal", "pmix", "base", "exchange_timeout",
                                  "Time (in seconds) to wait for a data exchange to complete",
-                                 MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_3,
+                                 MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_NONE, OPAL_INFO_LVL_3,
                                  MCA_BASE_VAR_SCOPE_READONLY, &opal_pmix_base.timeout);
     return OPAL_SUCCESS;
 }
@@ -88,4 +88,4 @@ MCA_BASE_FRAMEWORK_DECLARE(opal, pmix, "OPAL PMI Client Framework",
                            opal_pmix_base_frame_register,
                            opal_pmix_base_frame_open,
                            opal_pmix_base_frame_close,
-                           mca_pmix_base_static_components, 0);
+                           mca_pmix_base_static_components, MCA_BASE_FRAMEWORK_FLAG_DEFAULT);

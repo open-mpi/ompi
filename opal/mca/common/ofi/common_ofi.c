@@ -103,15 +103,15 @@ OPAL_DECLSPEC int opal_common_ofi_register_mca_variables(const mca_base_componen
         mca_base_var_register_synonym(include_index, component->mca_project_name,
                                       component->mca_type_name,
                                       component->mca_component_name,
-                                      "provider_include", 0);
+                                      "provider_include", MCA_BASE_VAR_SYN_FLAG_NONE);
         mca_base_var_register_synonym(exclude_index, component->mca_project_name,
                                       component->mca_type_name,
                                       component->mca_component_name,
-                                      "provider_exclude", 0);
+                                      "provider_exclude", MCA_BASE_VAR_SYN_FLAG_NONE);
         mca_base_var_register_synonym(verbose_index, component->mca_project_name,
                                       component->mca_type_name,
                                       component->mca_component_name,
-                                      "verbose", 0);
+                                      "verbose", MCA_BASE_VAR_SYN_FLAG_NONE);
     }
 
     return OPAL_SUCCESS;

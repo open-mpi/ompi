@@ -50,7 +50,7 @@ static int opal_crs_base_register(mca_base_register_flag_t flags);
 /* Use default select */
 MCA_BASE_FRAMEWORK_DECLARE(opal, crs, "Checkpoint and Restart Service (CRS)",
                            opal_crs_base_register, opal_crs_base_open,
-                           opal_crs_base_close, mca_crs_base_static_components, 0);
+                           opal_crs_base_close, mca_crs_base_static_components, MCA_BASE_FRAMEWORK_FLAG_DEFAULT);
 
 static int opal_crs_base_register(mca_base_register_flag_t flags)
 {

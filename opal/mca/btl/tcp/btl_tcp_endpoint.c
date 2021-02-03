@@ -712,7 +712,7 @@ void mca_btl_tcp_set_socket_options(int sd)
  */
 static int mca_btl_tcp_endpoint_start_connect(mca_btl_base_endpoint_t* btl_endpoint)
 {
-    int rc,flags;
+    int flags;
     struct sockaddr_storage endpoint_addr;
     /* By default consider a IPv4 connection */
     uint16_t af_family = AF_INET;
@@ -806,7 +806,7 @@ static int mca_btl_tcp_endpoint_start_connect(mca_btl_base_endpoint_t* btl_endpo
                             opal_net_get_hostname((struct sockaddr*) &endpoint_addr),
                             ntohs(((struct sockaddr_in*) &endpoint_addr)->sin_port));
         /* send our globally unique process identifier to the endpoint */
-        if((rc = mca_btl_tcp_endpoint_send_connect_ack(btl_endpoint)) == OPAL_SUCCESS) {
+        if(OPAL_SUCCESS == mca_btl_tcp_endpoint_send_connect_ack(btl_endpoint)) {
             btl_endpoint->endpoint_state = MCA_BTL_TCP_CONNECT_ACK;
             MCA_BTL_TCP_ENDPOINT_DUMP(10, btl_endpoint, true, "event_add(recv) [start_connect]");
             opal_event_add(&btl_endpoint->endpoint_recv_event, 0);

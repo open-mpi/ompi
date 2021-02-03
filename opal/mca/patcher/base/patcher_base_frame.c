@@ -78,4 +78,4 @@ static int opal_patcher_base_close (void)
 /* Use default register/open functions */
 MCA_BASE_FRAMEWORK_DECLARE(opal, patcher, "runtime code patching", NULL, NULL,
                            opal_patcher_base_close, mca_patcher_base_static_components,
-                           0);
+                           MCA_BASE_FRAMEWORK_FLAG_DEFAULT);

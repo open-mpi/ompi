@@ -465,8 +465,6 @@ static mca_btl_base_module_t **mca_btl_uct_component_init (int *num_btl_modules,
 {
     /* for this BTL to be useful the interface needs to support RDMA and certain atomic operations */
     struct mca_btl_base_module_t **base_modules;
-    uct_md_resource_desc_t *resources;
-    unsigned resource_count;
     ucs_status_t ucs_status;
     char **allowed_ifaces;
     int rc;
@@ -508,6 +506,8 @@ static mca_btl_base_module_t **mca_btl_uct_component_init (int *num_btl_modules,
 
 #else /* UCT 1.6 and older */
 
+    unsigned resource_count;
+    uct_md_resource_desc_t *resources;
     uct_query_md_resources (&resources, &resource_count);
 
     /* generate all suitable btl modules */
@@ -563,9 +563,8 @@ static int mca_btl_uct_component_progress_pending (mca_btl_uct_module_t *uct_btl
 {
     mca_btl_uct_base_frag_t *frag, *next;
     int completed = 0;
-    size_t count;
 
-    if (0 == (count = opal_list_get_size (&uct_btl->pending_frags))) {
+    if (0 == opal_list_get_size (&uct_btl->pending_frags)) {
         return 0;
     }
 

@@ -50,4 +50,4 @@ MCA_BASE_FRAMEWORK_DECLARE(opal, reachable, "OPAL Reachability Framework",
                            opal_reachable_base_frame_register,
                            opal_reachable_base_frame_open,
                            opal_reachable_base_frame_close,
-                           mca_reachable_base_static_components, 0);
+                           mca_reachable_base_static_components, MCA_BASE_FRAMEWORK_FLAG_DEFAULT);

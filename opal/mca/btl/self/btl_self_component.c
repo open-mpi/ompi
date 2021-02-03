@@ -77,7 +77,8 @@ static int mca_btl_self_component_register(void)
     mca_btl_self_component.free_list_num = 0;
     (void) mca_base_component_var_register(&mca_btl_self_component.super.btl_version, "free_list_num",
                                            "Number of fragments by default",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                           MCA_BASE_VAR_FLAG_NONE,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &mca_btl_self_component.free_list_num);
@@ -85,14 +86,16 @@ static int mca_btl_self_component_register(void)
     mca_btl_self_component.free_list_max = 64;
     (void) mca_base_component_var_register(&mca_btl_self_component.super.btl_version, "free_list_max",
                                            "Maximum number of fragments",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                           MCA_BASE_VAR_FLAG_NONE,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &mca_btl_self_component.free_list_max);
     mca_btl_self_component.free_list_inc = 8;
     (void) mca_base_component_var_register(&mca_btl_self_component.super.btl_version, "free_list_inc",
                                            "Increment by this number of fragments",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                           MCA_BASE_VAR_FLAG_NONE,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &mca_btl_self_component.free_list_inc);

@@ -146,7 +146,7 @@ static inline char* mca_btl_tcp_param_register_string(
     *storage = (char *) default_value;
     (void) mca_base_component_var_register(&mca_btl_tcp_component.super.btl_version,
                                            param_name, help_string, MCA_BASE_VAR_TYPE_STRING,
-                                           NULL, 0, 0, level,
+                                           NULL, 0, MCA_BASE_VAR_FLAG_NONE, level,
                                            MCA_BASE_VAR_SCOPE_READONLY, storage);
     return *storage;
 }
@@ -161,7 +161,7 @@ static inline int mca_btl_tcp_param_register_int(
     *storage = default_value;
     (void) mca_base_component_var_register(&mca_btl_tcp_component.super.btl_version,
                                            param_name, help_string, MCA_BASE_VAR_TYPE_INT,
-                                           NULL, 0, 0, level,
+                                           NULL, 0, MCA_BASE_VAR_FLAG_NONE, level,
                                            MCA_BASE_VAR_SCOPE_READONLY, storage);
     return *storage;
 }
@@ -170,13 +170,13 @@ static inline unsigned int mca_btl_tcp_param_register_uint(
         const char* param_name,
         const char* help_string,
         unsigned int default_value,
-        int level,
+        mca_base_var_info_lvl_t level,
         unsigned int *storage)
 {
     *storage = default_value;
     (void) mca_base_component_var_register(&mca_btl_tcp_component.super.btl_version,
                                            param_name, help_string, MCA_BASE_VAR_TYPE_UNSIGNED_INT,
-                                           NULL, 0, 0, level,
+                                           NULL, 0, MCA_BASE_VAR_FLAG_NONE, level,
                                            MCA_BASE_VAR_SCOPE_READONLY, storage);
     return *storage;
 }
@@ -315,7 +315,7 @@ static int mca_btl_tcp_component_register(void)
                                            "warn_all_unfound_interfaces",
                                            "Issue a warning for all unfound interfaces included in if_exclude",
                                            MCA_BASE_VAR_TYPE_BOOL,
-                                           NULL, 0, 0, OPAL_INFO_LVL_2,
+                                           NULL, 0, MCA_BASE_VAR_FLAG_NONE, OPAL_INFO_LVL_2,
                                            MCA_BASE_VAR_SCOPE_READONLY, &mca_btl_tcp_component.report_all_unfound_interfaces);
 
     mca_btl_tcp_module.super.btl_exclusivity =  MCA_BTL_EXCLUSIVITY_LOW + 100;
@@ -1262,7 +1262,6 @@ mca_btl_base_module_t** mca_btl_tcp_component_init(int *num_btl_modules,
                                                    bool enable_progress_threads,
                                                    bool enable_mpi_threads)
 {
-    int ret = OPAL_SUCCESS;
     unsigned int i;
     mca_btl_base_module_t **btls;
     *num_btl_modules = 0;
@@ -1301,27 +1300,28 @@ mca_btl_base_module_t** mca_btl_tcp_component_init(int *num_btl_modules,
                          NULL, 0, NULL, NULL, NULL );
 
     /* create a BTL TCP module for selected interfaces */
-    if(OPAL_SUCCESS != (ret = mca_btl_tcp_component_create_instances() )) {
-        return 0;
+    if(OPAL_SUCCESS != mca_btl_tcp_component_create_instances() ) {
+        return NULL;
     }
 
     /* create a TCP listen socket for incoming connection attempts */
-    if(OPAL_SUCCESS != (ret = mca_btl_tcp_component_create_listen(AF_INET) )) {
-        return 0;
+    if(OPAL_SUCCESS != mca_btl_tcp_component_create_listen(AF_INET) ) {
+        return NULL;
     }
 #if OPAL_ENABLE_IPV6
-    if((ret = mca_btl_tcp_component_create_listen(AF_INET6)) != OPAL_SUCCESS) {
+    int ret;
+    if(OPAL_SUCCESS != (ret = mca_btl_tcp_component_create_listen(AF_INET6)) ) {
         if (!(OPAL_ERR_IN_ERRNO == ret &&
               EAFNOSUPPORT == opal_socket_errno)) {
             opal_output (0, "mca_btl_tcp_component: IPv6 listening socket failed\n");
-            return 0;
+            return NULL;
         }
     }
 #endif
 
     /* publish TCP parameters with the MCA framework */
-    if(OPAL_SUCCESS != (ret = mca_btl_tcp_component_exchange() )) {
-        return 0;
+    if(OPAL_SUCCESS != mca_btl_tcp_component_exchange() ) {
+        return NULL;
     }
     btls = (mca_btl_base_module_t **)malloc(mca_btl_tcp_component.tcp_num_btls *
                   sizeof(mca_btl_base_module_t*));

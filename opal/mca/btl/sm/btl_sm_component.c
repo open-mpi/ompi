@@ -222,7 +222,7 @@ static int mca_btl_sm_component_register (void)
                                             "Directory to place backing files for shared memory communication. "
                                             "This directory should be on a local filesystem such as /tmp or "
                                             "/dev/shm (default: (linux) /dev/shm, (others) session directory)",
-                                            MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_3,
+                                            MCA_BASE_VAR_TYPE_STRING, NULL, 0, MCA_BASE_VAR_FLAG_NONE, OPAL_INFO_LVL_3,
                                             MCA_BASE_VAR_SCOPE_READONLY, &mca_btl_sm_component.backing_directory);
 
 
@@ -233,8 +233,8 @@ static int mca_btl_sm_component_register (void)
                                            "Minimum message size (in bytes) to use the knem DMA mode; "
                                            "ignored if knem does not support DMA mode (0 = do not use the "
                                            "knem DMA mode, default: 0)", MCA_BASE_VAR_TYPE_UNSIGNED_INT,
-                                           NULL, 0, 0, OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
-                                           &mca_btl_sm_component.knem_dma_min);
+                                           NULL, 0, MCA_BASE_VAR_FLAG_NONE, OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY, &mca_btl_sm_component.knem_dma_min);
 #endif
 
     mca_btl_sm.super.btl_exclusivity               = MCA_BTL_EXCLUSIVITY_HIGH;

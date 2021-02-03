@@ -117,7 +117,7 @@ static inline int mca_btl_smcuda_param_register_int(
     *storage = default_value;
     (void) mca_base_component_var_register (&mca_btl_smcuda_component.super.btl_version,
                                             param_name, NULL, MCA_BASE_VAR_TYPE_INT,
-                                            NULL, 0, 0, level,
+                                            NULL, 0, MCA_BASE_VAR_FLAG_NONE, level,
                                             MCA_BASE_VAR_SCOPE_READONLY, storage);
     return *storage;
 }
@@ -131,7 +131,7 @@ static inline unsigned int mca_btl_smcuda_param_register_uint(
     *storage = default_value;
     (void) mca_base_component_var_register (&mca_btl_smcuda_component.super.btl_version,
                                             param_name, NULL, MCA_BASE_VAR_TYPE_UNSIGNED_INT,
-                                            NULL, 0, 0, level,
+                                            NULL, 0, MCA_BASE_VAR_FLAG_NONE, level,
                                             MCA_BASE_VAR_SCOPE_READONLY, storage);
     return *storage;
 }
@@ -154,7 +154,7 @@ static int smcuda_register(void)
     mca_btl_smcuda_component.mpool_min_size = 134217728;
     (void) mca_base_component_var_register(&mca_btl_smcuda_component.super.btl_version, "min_size",
                                            "Minimum size of the common/sm mpool shared memory file",
-                                           MCA_BASE_VAR_TYPE_UNSIGNED_LONG, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_UNSIGNED_LONG, NULL, 0, MCA_BASE_VAR_FLAG_NONE,
                                            OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
                                            &mca_btl_smcuda_component.mpool_min_size);
 
@@ -176,7 +176,7 @@ static int smcuda_register(void)
     mca_btl_smcuda_component.allocator = "bucket";
     (void) mca_base_component_var_register (&mca_btl_smcuda_component.super.btl_version, "allocator",
                                             "Name of allocator component to use for btl/smcuda allocations",
-                                            MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_9,
+                                            MCA_BASE_VAR_TYPE_STRING, NULL, 0, MCA_BASE_VAR_FLAG_NONE, OPAL_INFO_LVL_9,
                                             MCA_BASE_VAR_SCOPE_LOCAL, &mca_btl_smcuda_component.allocator);
 
 #if OPAL_CUDA_SUPPORT

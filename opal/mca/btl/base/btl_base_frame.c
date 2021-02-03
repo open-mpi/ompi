@@ -133,18 +133,21 @@ static int mca_btl_base_register(mca_base_register_flag_t flags)
                                  &mca_btl_base_thread_multiple_override);
 
     (void) mca_base_var_register("opal", "btl", "base", "include", NULL,
-                                 MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                 MCA_BASE_VAR_TYPE_STRING, NULL, 0,
+                                 MCA_BASE_VAR_FLAG_NONE,
                                  OPAL_INFO_LVL_9,
                                  MCA_BASE_VAR_SCOPE_READONLY,
                                  &mca_btl_base_include);
     (void) mca_base_var_register("opal", "btl", "base", "exclude", NULL,
-                                 MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                 MCA_BASE_VAR_TYPE_STRING, NULL, 0,
+                                 MCA_BASE_VAR_FLAG_NONE,
                                  OPAL_INFO_LVL_9,
                                  MCA_BASE_VAR_SCOPE_READONLY,
                                  &mca_btl_base_exclude);
     (void) mca_base_var_register("opal", "btl", "base", "warn_component_unused",
                                  "This parameter is used to turn on warning messages when certain NICs are not used",
-                                 MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                 MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                 MCA_BASE_VAR_FLAG_NONE,
                                  OPAL_INFO_LVL_9,
                                  MCA_BASE_VAR_SCOPE_READONLY,
                                  &mca_btl_base_warn_component_unused);
@@ -244,4 +247,4 @@ static int mca_btl_base_close(void)
 
 MCA_BASE_FRAMEWORK_DECLARE(opal, btl, "Byte Transport Layer", mca_btl_base_register,
                            mca_btl_base_open, mca_btl_base_close, mca_btl_base_static_components,
-                           0);
+                           MCA_BASE_FRAMEWORK_FLAG_DEFAULT);

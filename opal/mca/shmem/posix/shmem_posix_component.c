@@ -136,7 +136,6 @@ posix_runtime_query(mca_base_module_t **module,
                     const char *hint)
 {
     char tmp_buff[OPAL_SHMEM_POSIX_FILE_LEN_MAX];
-    int fd = -1;
 
     *priority = 0;
     *module = NULL;
@@ -176,8 +175,8 @@ posix_runtime_query(mca_base_module_t **module,
          "starting run-time test...\n")
     );
     /* shmem_posix_shm_open successfully shm_opened - we can use posix sm! */
-    if (-1 != (fd = shmem_posix_shm_open(tmp_buff,
-                                         OPAL_SHMEM_POSIX_FILE_LEN_MAX -1))) {
+    if (-1 != shmem_posix_shm_open(tmp_buff,
+                                         OPAL_SHMEM_POSIX_FILE_LEN_MAX -1)) {
         /* free up allocated resources before we return */
         if (0 != shm_unlink(tmp_buff)) {
             int err = errno;

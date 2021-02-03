@@ -88,24 +88,24 @@ static int mca_btl_template_component_register(void)
     mca_btl_template_component.template_free_list_num = 8;
     (void) mca_base_component_var_register(&mca_btl_template_component.super.btl_version,
                                            "free_list_num", NULL, MCA_BASE_VAR_TYPE_INT,
-                                           NULL, 0, 0, OPAL_INFO_LVL_9,
+                                           NULL, 0, MCA_BASE_VAR_FLAG_NONE, OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &mca_btl_template_component.template_free_list_num);
     (void) mca_base_component_var_register(&mca_btl_template_component.super.btl_version,
                                            "free_list_max", NULL, MCA_BASE_VAR_TYPE_INT,
-                                           NULL, 0, 0, OPAL_INFO_LVL_9,
+                                           NULL, 0, MCA_BASE_VAR_FLAG_NONE, OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &mca_btl_template_component.template_free_list_max);
     (void) mca_base_component_var_register(&mca_btl_template_component.super.btl_version,
                                            "free_list_inc", NULL, MCA_BASE_VAR_TYPE_INT,
-                                           NULL, 0, 0, OPAL_INFO_LVL_9,
+                                           NULL, 0, MCA_BASE_VAR_FLAG_NONE, OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &mca_btl_template_component.template_free_list_inc);
 
     mca_btl_template_component.template_mpool_name = "grdma";
     (void) mca_base_component_var_register(&mca_btl_template_component.super.btl_version,
                                            "mpool", NULL, MCA_BASE_VAR_TYPE_STRING,
-                                           NULL, 0, 0, OPAL_INFO_LVL_9,
+                                           NULL, 0, MCA_BASE_VAR_FLAG_NONE, OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &mca_btl_template_component.template_mpool_name);
 

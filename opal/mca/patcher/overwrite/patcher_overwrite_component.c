@@ -20,7 +20,7 @@ static int mca_patcher_overwrite_register (void)
     mca_patcher_overwrite_priority = 37;
     mca_base_component_var_register (&mca_patcher_overwrite_component.patcherc_version,
                                      "priority", "Priority of the overwrite binary patcher component",
-                                     MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_5,
+                                     MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_NONE, OPAL_INFO_LVL_5,
                                      MCA_BASE_VAR_SCOPE_CONSTANT, &mca_patcher_overwrite_priority);
 
     return OPAL_SUCCESS;
