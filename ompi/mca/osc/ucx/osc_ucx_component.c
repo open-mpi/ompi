@@ -154,7 +154,7 @@ static int component_register(void) {
     opal_asprintf(&description_str, "Priority of the osc/ucx component (default: %d)",
              mca_osc_ucx_component.priority);
     (void) mca_base_component_var_register(&mca_osc_ucx_component.super.osc_version, "priority", description_str,
-                                           MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL, 0, 0, OPAL_INFO_LVL_3,
+                                           MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL, 0, MCA_BASE_VAR_FLAG_NONE, OPAL_INFO_LVL_3,
                                            MCA_BASE_VAR_SCOPE_GROUP, &mca_osc_ucx_component.priority);
     free(description_str);
 
@@ -164,7 +164,7 @@ static int component_register(void) {
              "not used. Info key of same name overrides this value (default: %s)",
              mca_osc_ucx_component.no_locks  ? "true" : "false");
     (void) mca_base_component_var_register(&mca_osc_ucx_component.super.osc_version, "no_locks", description_str,
-                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0, OPAL_INFO_LVL_5,
+                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0, MCA_BASE_VAR_FLAG_NONE, OPAL_INFO_LVL_5,
                                            MCA_BASE_VAR_SCOPE_GROUP, &mca_osc_ucx_component.no_locks);
     free(description_str);
 
@@ -173,7 +173,8 @@ static int component_register(void) {
              "that will not use anything more than a single predefined datatype (default: %s)",
              mca_osc_ucx_component.acc_single_intrinsic  ? "true" : "false");
     (void) mca_base_component_var_register(&mca_osc_ucx_component.super.osc_version, "acc_single_intrinsic",
-                                           description_str, MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0, OPAL_INFO_LVL_5,
+                                           description_str, MCA_BASE_VAR_TYPE_BOOL, NULL, 0,
+                                           MCA_BASE_VAR_FLAG_NONE, OPAL_INFO_LVL_5,
                                            MCA_BASE_VAR_SCOPE_GROUP, &mca_osc_ucx_component.acc_single_intrinsic);
     free(description_str);
 

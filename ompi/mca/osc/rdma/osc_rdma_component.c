@@ -191,7 +191,7 @@ static int ompi_osc_rdma_component_register (void)
              "not used. Info key of same name overrides this value (default: %s)",
              mca_osc_rdma_component.no_locks  ? "true" : "false");
     (void) mca_base_component_var_register(&mca_osc_rdma_component.super.osc_version, "no_locks", description_str,
-                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0, OPAL_INFO_LVL_5,
+                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0, MCA_BASE_VAR_FLAG_NONE, OPAL_INFO_LVL_5,
                                            MCA_BASE_VAR_SCOPE_GROUP, &mca_osc_rdma_component.no_locks);
     free(description_str);
 
@@ -200,7 +200,7 @@ static int ompi_osc_rdma_component_register (void)
              "that will not use anything more than a single predefined datatype (default: %s)",
              mca_osc_rdma_component.acc_single_intrinsic  ? "true" : "false");
     (void) mca_base_component_var_register(&mca_osc_rdma_component.super.osc_version, "acc_single_intrinsic",
-                                           description_str, MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0, OPAL_INFO_LVL_5,
+                                           description_str, MCA_BASE_VAR_TYPE_BOOL, NULL, 0, MCA_BASE_VAR_FLAG_NONE, OPAL_INFO_LVL_5,
                                            MCA_BASE_VAR_SCOPE_GROUP, &mca_osc_rdma_component.acc_single_intrinsic);
     free(description_str);
 
@@ -209,14 +209,15 @@ static int ompi_osc_rdma_component_register (void)
              "intrinsic optimizations. If not set network compare-and-swap will be "
              "used instread (default: %s)", mca_osc_rdma_component.acc_use_amo ? "true" : "false");
     (void) mca_base_component_var_register(&mca_osc_rdma_component.super.osc_version, "acc_use_amo", description_str,
-                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0, OPAL_INFO_LVL_5, MCA_BASE_VAR_SCOPE_GROUP,
+                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0, MCA_BASE_VAR_FLAG_NONE,
+                                           OPAL_INFO_LVL_5, MCA_BASE_VAR_SCOPE_GROUP,
                                            &mca_osc_rdma_component.acc_use_amo);
     free(description_str);
 
     mca_osc_rdma_component.buffer_size = 32768;
     opal_asprintf(&description_str, "Size of temporary buffers (default: %d)", mca_osc_rdma_component.buffer_size);
     (void) mca_base_component_var_register (&mca_osc_rdma_component.super.osc_version, "buffer_size", description_str,
-                                            MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL, 0, 0, OPAL_INFO_LVL_3,
+                                            MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL, 0, MCA_BASE_VAR_FLAG_NONE, OPAL_INFO_LVL_3,
                                             MCA_BASE_VAR_SCOPE_LOCAL, &mca_osc_rdma_component.buffer_size);
     free(description_str);
 
@@ -225,7 +226,7 @@ static int ompi_osc_rdma_component_register (void)
              "Keep in mind that each attached buffer will use a potentially limited "
              "resource (default: %d)", mca_osc_rdma_component.max_attach);
     (void) mca_base_component_var_register (&mca_osc_rdma_component.super.osc_version, "max_attach", description_str,
-                                           MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL, 0, 0, OPAL_INFO_LVL_3,
+                                           MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL, 0, MCA_BASE_VAR_FLAG_NONE, OPAL_INFO_LVL_3,
                                            MCA_BASE_VAR_SCOPE_GROUP, &mca_osc_rdma_component.max_attach);
     free(description_str);
 
@@ -233,7 +234,7 @@ static int ompi_osc_rdma_component_register (void)
     opal_asprintf(&description_str, "Priority of the osc/rdma component (default: %d)",
              mca_osc_rdma_component.priority);
     (void) mca_base_component_var_register (&mca_osc_rdma_component.super.osc_version, "priority", description_str,
-                                            MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL, 0, 0, OPAL_INFO_LVL_3,
+                                            MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL, 0, MCA_BASE_VAR_FLAG_NONE, OPAL_INFO_LVL_3,
                                             MCA_BASE_VAR_SCOPE_GROUP, &mca_osc_rdma_component.priority);
     free(description_str);
 
@@ -242,7 +243,7 @@ static int ompi_osc_rdma_component_register (void)
     mca_osc_rdma_component.locking_mode = OMPI_OSC_RDMA_LOCKING_TWO_LEVEL;
     (void) mca_base_component_var_register (&mca_osc_rdma_component.super.osc_version, "locking_mode",
                                             "Locking mode to use for passive-target synchronization (default: two_level)",
-                                            MCA_BASE_VAR_TYPE_INT, new_enum, 0, 0, OPAL_INFO_LVL_3,
+                                            MCA_BASE_VAR_TYPE_INT, new_enum, 0, MCA_BASE_VAR_FLAG_NONE, OPAL_INFO_LVL_3,
                                             MCA_BASE_VAR_SCOPE_GROUP, &mca_osc_rdma_component.locking_mode);
     OBJ_RELEASE(new_enum);
 
@@ -252,7 +253,7 @@ static int ompi_osc_rdma_component_register (void)
              "processes in any communicator used with an MPI window (default: %s)",
              ompi_osc_rdma_btl_names);
     (void) mca_base_component_var_register (&mca_osc_rdma_component.super.osc_version, "btls", description_str,
-                                            MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_3,
+                                            MCA_BASE_VAR_TYPE_STRING, NULL, 0, MCA_BASE_VAR_FLAG_NONE, OPAL_INFO_LVL_3,
                                             MCA_BASE_VAR_SCOPE_GROUP, &ompi_osc_rdma_btl_names);
     free(description_str);
 
@@ -260,7 +261,7 @@ static int ompi_osc_rdma_component_register (void)
     opal_asprintf(&description_str, "Comma-delimited list of MTL component names to lower the priority of rdma "
              "osc component (default: %s)", ompi_osc_rdma_mtl_names);
     (void) mca_base_component_var_register (&mca_osc_rdma_component.super.osc_version, "mtls", description_str,
-                                            MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_3,
+                                            MCA_BASE_VAR_TYPE_STRING, NULL, 0, MCA_BASE_VAR_FLAG_NONE, OPAL_INFO_LVL_3,
                                             MCA_BASE_VAR_SCOPE_GROUP, &ompi_osc_rdma_mtl_names);
     free(description_str);
 
@@ -274,7 +275,7 @@ static int ompi_osc_rdma_component_register (void)
                                             "Directory to place backing files for memory windows. "
                                             "This directory should be on a local filesystem such as /tmp or "
                                             "/dev/shm (default: (linux) /dev/shm, (others) session directory)",
-                                            MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_3,
+                                            MCA_BASE_VAR_TYPE_STRING, NULL, 0, MCA_BASE_VAR_FLAG_NONE, OPAL_INFO_LVL_3,
                                             MCA_BASE_VAR_SCOPE_READONLY, &mca_osc_rdma_component.backing_directory);
 
     /* register performance variables */

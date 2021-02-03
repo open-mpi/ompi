@@ -122,7 +122,7 @@ static int component_register (void)
                                             "Directory to place backing files for shared memory windows. "
                                             "This directory should be on a local filesystem such as /tmp or "
                                             "/dev/shm (default: (linux) /dev/shm, (others) session directory)",
-                                            MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_3,
+                                            MCA_BASE_VAR_TYPE_STRING, NULL, 0, MCA_BASE_VAR_FLAG_NONE, OPAL_INFO_LVL_3,
                                             MCA_BASE_VAR_SCOPE_READONLY, &mca_osc_sm_component.backing_directory);
 
     return OPAL_SUCCESS;

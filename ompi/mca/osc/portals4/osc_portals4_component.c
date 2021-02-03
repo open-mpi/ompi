@@ -256,7 +256,8 @@ component_register(void)
                                            "Enable optimizations available only if MPI_LOCK is "
                                            "not used.  "
                                            "Info key of same name overrides this value.",
-                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0,
+                                           MCA_BASE_VAR_FLAG_NONE,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &mca_osc_portals4_component.no_locks);
@@ -268,7 +269,7 @@ component_register(void)
                                            MCA_BASE_VAR_TYPE_UNSIGNED_LONG,
                                            NULL,
                                            0,
-                                           0,
+                                           MCA_BASE_VAR_FLAG_NONE,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &mca_osc_portals4_component.ptl_max_msg_size);

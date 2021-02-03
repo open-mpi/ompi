@@ -76,4 +76,4 @@ ompi_osc_base_finalize(void)
 }
 
 MCA_BASE_FRAMEWORK_DECLARE(ompi, osc, "One-sided communication", NULL, NULL, NULL,
-                           mca_osc_base_static_components, 0);
+                           mca_osc_base_static_components, MCA_BASE_FRAMEWORK_FLAG_DEFAULT);
