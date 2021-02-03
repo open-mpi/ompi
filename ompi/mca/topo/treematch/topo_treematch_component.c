@@ -96,7 +96,7 @@ static int mca_topo_treematch_component_register(void)
 {
     (void)mca_base_component_var_register(&mca_topo_treematch_component.super.topoc_version,
                                           "reorder_mode", "If set the reordering will be done in a partially distributed way (default=0). If partially-distributed only local knowledge will be used, possibly leading to less accurate reordering.", MCA_BASE_VAR_TYPE_INT,
-                                          NULL, 0, 0, OPAL_INFO_LVL_2,
+                                          NULL, 0, MCA_BASE_VAR_FLAG_NONE, OPAL_INFO_LVL_2,
                                           MCA_BASE_VAR_SCOPE_READONLY, &mca_topo_treematch_component.reorder_mode);
     return OMPI_SUCCESS;
 }
