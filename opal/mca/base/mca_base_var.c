@@ -442,7 +442,7 @@ int mca_base_var_cache_files(bool rel_path_search)
     tmp = mca_base_var_files;
     ret = mca_base_var_register ("opal", "mca", "base", "param_files", "Path for MCA "
                                  "configuration files containing variable values",
-                                 MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_2,
+                                 MCA_BASE_VAR_TYPE_STRING, NULL, 0, MCA_BASE_VAR_FLAG_NONE, OPAL_INFO_LVL_2,
                                  MCA_BASE_VAR_SCOPE_READONLY, &mca_base_var_files);
     free (tmp);
     if (0 > ret) {
@@ -480,7 +480,7 @@ int mca_base_var_cache_files(bool rel_path_search)
     mca_base_var_suppress_override_warning = false;
     ret = mca_base_var_register ("opal", "mca", "base", "suppress_override_warning",
                                  "Suppress warnings when attempting to set an overridden value (default: false)",
-                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0, OPAL_INFO_LVL_2,
+                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, MCA_BASE_VAR_FLAG_NONE, OPAL_INFO_LVL_2,
                                  MCA_BASE_VAR_SCOPE_LOCAL, &mca_base_var_suppress_override_warning);
     if (0 > ret) {
         return ret;
@@ -493,7 +493,7 @@ int mca_base_var_cache_files(bool rel_path_search)
     mca_base_var_file_prefix = NULL;
     ret = mca_base_var_register ("opal", "mca", "base", "param_file_prefix",
                                  "Aggregate MCA parameter file sets",
-                                 MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_3,
+                                 MCA_BASE_VAR_TYPE_STRING, NULL, 0, MCA_BASE_VAR_FLAG_NONE, OPAL_INFO_LVL_3,
                                  MCA_BASE_VAR_SCOPE_READONLY, &mca_base_var_file_prefix);
     if (0 > ret) {
         return ret;
@@ -502,7 +502,7 @@ int mca_base_var_cache_files(bool rel_path_search)
     mca_base_envar_file_prefix = NULL;
     ret = mca_base_var_register ("opal", "mca", "base", "envar_file_prefix",
                                  "Aggregate MCA parameter file set for env variables",
-                                 MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_3,
+                                 MCA_BASE_VAR_TYPE_STRING, NULL, 0, MCA_BASE_VAR_FLAG_NONE, OPAL_INFO_LVL_3,
                                  MCA_BASE_VAR_SCOPE_READONLY, &mca_base_envar_file_prefix);
     if (0 > ret) {
         return ret;
@@ -517,7 +517,7 @@ int mca_base_var_cache_files(bool rel_path_search)
     tmp = mca_base_param_file_path;
     ret = mca_base_var_register ("opal", "mca", "base", "param_file_path",
                                  "Aggregate MCA parameter Search path",
-                                 MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_3,
+                                 MCA_BASE_VAR_TYPE_STRING, NULL, 0, MCA_BASE_VAR_FLAG_NONE, OPAL_INFO_LVL_3,
                                  MCA_BASE_VAR_SCOPE_READONLY, &mca_base_param_file_path);
     free (tmp);
     if (0 > ret) {
@@ -527,7 +527,7 @@ int mca_base_var_cache_files(bool rel_path_search)
     force_agg_path = NULL;
     ret = mca_base_var_register ("opal", "mca", "base", "param_file_path_force",
                                  "Forced Aggregate MCA parameter Search path",
-                                 MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_3,
+                                 MCA_BASE_VAR_TYPE_STRING, NULL, 0, MCA_BASE_VAR_FLAG_NONE, OPAL_INFO_LVL_3,
                                  MCA_BASE_VAR_SCOPE_READONLY, &force_agg_path);
     if (0 > ret) {
         return ret;
@@ -1000,7 +1000,7 @@ int mca_base_var_set_flag (int vari, mca_base_var_flag_t flag, bool set)
         return OPAL_ERR_BAD_PARAM;
     }
 
-    var->mbv_flags = (var->mbv_flags & ~flag) | (set ? flag : 0);
+    var->mbv_flags = (var->mbv_flags & ~flag) | (set ? flag : MCA_BASE_VAR_FLAG_NONE);
 
     /* All done */
     return OPAL_SUCCESS;
@@ -1571,7 +1571,7 @@ int mca_base_var_register (const char *project_name, const char *framework_name,
     }
 
     OPAL_LIST_FOREACH_DECL(alias_item, &alias->component_aliases, mca_base_alias_item_t) {
-        mca_base_var_syn_flag_t flags = 0;
+        mca_base_var_syn_flag_t flags = MCA_BASE_VAR_SYN_FLAG_NONE;
         if (alias_item->alias_flags & MCA_BASE_ALIAS_FLAG_DEPRECATED) {
             flags = MCA_BASE_VAR_SYN_FLAG_DEPRECATED;
         }
