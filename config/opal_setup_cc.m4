@@ -56,6 +56,12 @@ AC_DEFUN([OPAL_PROG_CC_C11_HELPER],[
     OPAL_CC_HELPER([if $CC $1 supports C11 _Atomic keyword], [opal_prog_cc_c11_helper__Atomic_available],
                    [[#include <stdatomic.h>]],[[static _Atomic long foo = 1;++foo;]])
 
+    OPAL_CC_HELPER([if $CC $1 supports C11 _c11_atomic functions], [opal_prog_cc_c11_atomic_function],
+                   [[#include <stdatomic.h>]],[[atomic_int acnt = 0; __c11_atomic_fetch_add(&acnt, 1, memory_order_relaxed);]])
+    if test $opal_prog_cc_c11_atomic_function -eq 1; then
+        AC_DEFINE_UNQUOTED([OPAL_HAVE_CLANG_BUILTIN_ATOMIC_C11_FUNC], [$opal_prog_cc_c11_atomic_function], [Whether we have Clang __c11 atomic functions])
+   fi;
+
     OPAL_CC_HELPER([if $CC $1 supports C11 _Generic keyword], [opal_prog_cc_c11_helper__Generic_available],
                    [[#define FOO(x) (_Generic (x, int: 1))]], [[static int x, y; y = FOO(x);]])
 
@@ -154,7 +160,7 @@ AC_DEFUN([OPAL_SETUP_CC],[
     AC_REQUIRE([_OPAL_PROG_CC])
     AC_REQUIRE([AM_PROG_CC_C_O])
 
-    OPAL_VAR_SCOPE_PUSH([opal_prog_cc_c11_helper__Thread_local_available opal_prog_cc_c11_helper_atomic_var_available opal_prog_cc_c11_helper__Atomic_available opal_prog_cc_c11_helper__static_assert_available opal_prog_cc_c11_helper__Generic_available opal_prog_cc__thread_available opal_prog_cc_c11_helper_atomic_fetch_xor_explicit_available opal_prog_cc_c11_helper_proper__Atomic_support_in_atomics])
+    OPAL_VAR_SCOPE_PUSH([opal_prog_cc_c11_helper__Thread_local_available opal_prog_cc_c11_helper_atomic_var_available opal_prog_cc_c11_helper__Atomic_available opal_prog_cc_c11_helper__static_assert_available opal_prog_cc_c11_helper__Generic_available opal_prog_cc__thread_available opal_prog_cc_c11_helper_atomic_fetch_xor_explicit_available opal_prog_cc_c11_helper_proper__Atomic_support_in_atomics opal_prog_cc_c11_atomic_function])
 
     OPAL_PROG_CC_C11
 

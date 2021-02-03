@@ -101,6 +101,7 @@ static inline void opal_atomic_rmb (void)
 #define opal_atomic_swap_64(addr, value) atomic_exchange_explicit ((_Atomic unsigned long *)addr, value, memory_order_relaxed)
 #define opal_atomic_swap_ptr(addr, value) atomic_exchange_explicit ((_Atomic unsigned long *)addr, value, memory_order_relaxed)
 
+#ifdef OPAL_HAVE_CLANG_BUILTIN_ATOMIC_C11_FUNC
 #define OPAL_ATOMIC_STDC_DEFINE_FETCH_OP(op, bits, type, operator)      \
     static inline type opal_atomic_fetch_ ## op ##_## bits (opal_atomic_ ## type *addr, type value) \
     {                                                                   \
@@ -111,6 +112,20 @@ static inline void opal_atomic_rmb (void)
     {                                                                   \
         return atomic_fetch_ ## op ## _explicit (addr, value, memory_order_relaxed) operator value; \
     }
+#else
+#define OPAL_ATOMIC_STDC_DEFINE_FETCH_OP(op, bits, type, operator)      \
+    static inline type opal_atomic_fetch_ ## op ##_## bits (opal_atomic_ ## type *addr, type value) \
+    {                                                                   \
+        return atomic_fetch_ ## op ## _explicit ((type *) addr, value, memory_order_relaxed); \
+    }                                                                   \
+                                                                        \
+    static inline type opal_atomic_## op ## _fetch_ ## bits (opal_atomic_ ## type *addr, type value) \
+    {                                                                   \
+        return atomic_fetch_ ## op ## _explicit ((type *) addr, value, memory_order_relaxed) operator value; \
+    }
+
+
+#endif
 
 OPAL_ATOMIC_STDC_DEFINE_FETCH_OP(add, 32, int32_t, +)
 OPAL_ATOMIC_STDC_DEFINE_FETCH_OP(add, 64, int64_t, +)
@@ -215,13 +230,21 @@ typedef atomic_flag opal_atomic_lock_t;
  */
 static inline void opal_atomic_lock_init (opal_atomic_lock_t *lock, bool value)
 {
+#ifdef OPAL_HAVE_CLANG_BUILTIN_ATOMIC_C11_FUNC
     atomic_flag_clear (lock);
+#else
+    atomic_flag_clear ((volatile void *) lock);
+#endif
 }
 
 
 static inline int opal_atomic_trylock (opal_atomic_lock_t *lock)
 {
+#ifdef OPAL_HAVE_CLANG_BUILTIN_ATOMIC_C11_FUNC
     return (int) atomic_flag_test_and_set (lock);
+#else
+    return (int) atomic_flag_test_and_set ((volatile void *) lock);
+#endif
 }
 
 
@@ -234,7 +257,11 @@ static inline void opal_atomic_lock(opal_atomic_lock_t *lock)
 
 static inline void opal_atomic_unlock (opal_atomic_lock_t *lock)
 {
+#ifdef OPAL_HAVE_CLANG_BUILTIN_ATOMIC_C11_FUNC
     atomic_flag_clear (lock);
+#else
+    atomic_flag_clear ((volatile void *) lock);
+#endif
 }
 
 
