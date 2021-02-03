@@ -131,4 +131,4 @@ ompi_request_t** ompi_coll_base_comm_get_reqs(mca_coll_base_comm_t* data, int nr
 }
 
 MCA_BASE_FRAMEWORK_DECLARE(ompi, coll, "Collectives", NULL, NULL, NULL,
-                           mca_coll_base_static_components, 0);
+                           mca_coll_base_static_components, MCA_BASE_FRAMEWORK_FLAG_DEFAULT);

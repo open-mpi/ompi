@@ -163,6 +163,8 @@ int ompi_coll_base_scan_intra_recursivedoubling(
     char *tmpsend_raw = NULL, *tmprecv_raw = NULL;
     int comm_size = ompi_comm_size(comm);
     int rank = ompi_comm_rank(comm);
+    char *psend = NULL, *precv = NULL;
+    int is_commute = 0;
 
     OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
                  "coll:base:scan_intra_recursivedoubling: rank %d/%d",
@@ -185,11 +187,11 @@ int ompi_coll_base_scan_intra_recursivedoubling(
         err = OMPI_ERR_OUT_OF_RESOURCE;
         goto cleanup_and_return;
     }
-    char *psend = tmpsend_raw - gap;
-    char *precv = tmprecv_raw - gap;
+    psend = tmpsend_raw - gap;
+    precv = tmprecv_raw - gap;
     err = ompi_datatype_copy_content_same_ddt(datatype, count, psend, recvbuf);
     if (MPI_SUCCESS != err) { goto cleanup_and_return; }
-    int is_commute = ompi_op_is_commute(op);
+    is_commute = ompi_op_is_commute(op);
 
     for (int mask = 1; mask < comm_size; mask <<= 1) {
         int remote = rank ^ mask;

@@ -798,6 +798,7 @@ int ompi_coll_base_bcast_intra_scatter_allgather(
     int recv_count = 0, send_count = 0;
     int scatter_count = (count + comm_size - 1) / comm_size; /* ceil(count / comm_size) */
     int curr_count = (rank == root) ? count : 0;
+    int rem_count = 0;
 
     /* Scatter by binomial tree: receive data from parent */
     int mask = 0x1;
@@ -844,7 +845,7 @@ int ompi_coll_base_bcast_intra_scatter_allgather(
      * Allgather by recursive doubling
      * Each process has the curr_count elems in the buf[vrank * scatter_count, ...]
      */
-    int rem_count = count - vrank * scatter_count;
+    rem_count = count - vrank * scatter_count;
     curr_count = (scatter_count < rem_count) ? scatter_count : rem_count;
     if (curr_count < 0)
         curr_count = 0;
@@ -975,6 +976,7 @@ int ompi_coll_base_bcast_intra_scatter_allgather_ring(
     int recv_count = 0, send_count = 0;
     int scatter_count = (count + comm_size - 1) / comm_size; /* ceil(count / comm_size) */
     int curr_count = (rank == root) ? count : 0;
+    int left = 0, right = 0, send_block = 0, recv_block = 0;
 
     /* Scatter by binomial tree: receive data from parent */
     int mask = 1;
@@ -1018,10 +1020,10 @@ int ompi_coll_base_bcast_intra_scatter_allgather_ring(
     }
 
     /* Allgather by a ring algorithm */
-    int left = (rank - 1 + comm_size) % comm_size;
-    int right = (rank + 1) % comm_size;
-    int send_block = vrank;
-    int recv_block = (vrank - 1 + comm_size) % comm_size;
+    left = (rank - 1 + comm_size) % comm_size;
+    right = (rank + 1) % comm_size;
+    send_block = vrank;
+    recv_block = (vrank - 1 + comm_size) % comm_size;
 
     for (int i = 1; i < comm_size; i++) {
         recv_count = (scatter_count < count - recv_block * scatter_count) ?

@@ -66,12 +66,13 @@ ompi_coll_base_scatter_intra_binomial(
     int root, struct ompi_communicator_t *comm,
     mca_coll_base_module_t *module)
 {
-    int line = -1, rank, vrank, size, err;
+    int line = -1, rank, vrank, size, err, curr_count = 0;
     char *ptmp, *tempbuf = NULL;
     MPI_Status status;
     mca_coll_base_module_t *base_module = (mca_coll_base_module_t*)module;
     mca_coll_base_comm_t *data = base_module->base_data;
     ptrdiff_t sextent, rextent, ssize, rsize, sgap = 0, rgap = 0;
+    ompi_coll_tree_t *bmtree = NULL;
 
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
@@ -84,7 +85,7 @@ ompi_coll_base_scatter_intra_binomial(
     if (NULL == data->cached_in_order_bmtree) {
         err = OMPI_ERR_OUT_OF_RESOURCE; line = __LINE__; goto err_hndl;
     }
-    ompi_coll_tree_t *bmtree = data->cached_in_order_bmtree;
+    bmtree = data->cached_in_order_bmtree;
 
     vrank = (rank - root + size) % size;
     ptmp = (char *)rbuf;  /* by default suppose leaf nodes, just use rbuf */
@@ -140,7 +141,7 @@ ompi_coll_base_scatter_intra_binomial(
         sextent = rextent;
     }
 
-    int curr_count = (rank == root) ? scount * size : 0;
+    curr_count = (rank == root) ? scount * size : 0;
     if (!(vrank % 2)) {
         if (rank != root) {
             /* recv from parent on non-root */

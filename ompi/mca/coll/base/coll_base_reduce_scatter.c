@@ -699,6 +699,7 @@ ompi_coll_base_reduce_scatter_intra_butterfly(
     int err = MPI_SUCCESS;
     int comm_size = ompi_comm_size(comm);
     int rank = ompi_comm_rank(comm);
+    int nprocs_pof2 = 0, nprocs_rem = 0, log2_size = 0, vrank = -1;
 
     OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
                  "coll:base:reduce_scatter_intra_butterfly: rank %d/%d",
@@ -750,12 +751,11 @@ ompi_coll_base_reduce_scatter_intra_butterfly(
      */
 
     /* Find nearest power-of-two less than or equal to comm_size */
-    int nprocs_pof2 = opal_next_poweroftwo(comm_size);
+    nprocs_pof2 = opal_next_poweroftwo(comm_size);
     nprocs_pof2 >>= 1;
-    int nprocs_rem = comm_size - nprocs_pof2;
-    int log2_size = opal_cube_dim(nprocs_pof2);
+    nprocs_rem = comm_size - nprocs_pof2;
+    log2_size = opal_cube_dim(nprocs_pof2);
 
-    int vrank = -1;
     if (rank < 2 * nprocs_rem) {
         if ((rank % 2) == 0) {
             /* Even process */

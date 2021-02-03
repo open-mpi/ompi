@@ -821,7 +821,9 @@ int ompi_coll_base_reduce_intra_redscat_gather(
 
     int err = MPI_SUCCESS;
     int *rindex = NULL, *rcount = NULL, *sindex = NULL, *scount = NULL;
+    char *tmp_buf = NULL;
     ptrdiff_t lb, extent, dsize, gap;
+    int vroot = 0, vrank, step, wsize, nprocs_rem = 0;
     ompi_datatype_get_extent(dtype, &lb, &extent);
     dsize = opal_datatype_span(&dtype->super, count, &gap);
 
@@ -832,7 +834,7 @@ int ompi_coll_base_reduce_intra_redscat_gather(
         err = OMPI_ERR_OUT_OF_RESOURCE;
         goto cleanup_and_return;
     }
-    char *tmp_buf = tmp_buf_raw - gap;
+    tmp_buf = tmp_buf_raw - gap;
 
     if (rank != root) {
         rbuf_raw = malloc(dsize);
@@ -867,8 +869,7 @@ int ompi_coll_base_reduce_intra_redscat_gather(
      * rest of the algorithm.
      */
 
-    int vrank, step, wsize;
-    int nprocs_rem = comm_size - nprocs_pof2;
+    nprocs_rem = comm_size - nprocs_pof2;
 
     if (rank < 2 * nprocs_rem) {
         int count_lhalf = count / 2;
@@ -1024,7 +1025,6 @@ int ompi_coll_base_reduce_intra_redscat_gather(
      * Case 2: root < 2r and root is even: vroot = root / 2
      * Case 3: root >= 2r: vroot = root - r
      */
-    int vroot = 0;
     if (root < 2 * nprocs_rem) {
         if (root % 2 != 0) {
             vroot = 0;

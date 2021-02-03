@@ -137,6 +137,8 @@ ompi_coll_base_reduce_scatter_block_intra_recursivedoubling(
     int err = MPI_SUCCESS;
     int comm_size = ompi_comm_size(comm);
     int rank = ompi_comm_rank(comm);
+    int is_commutative = 0;
+    int rdoubling_step = 0;  /* Recursive distance doubling */
 
     OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
                  "coll:base:reduce_scatter_block_intra_recursivedoubling: rank %d/%d",
@@ -165,10 +167,8 @@ ompi_coll_base_reduce_scatter_block_intra_recursivedoubling(
         err = ompi_datatype_copy_content_same_ddt(dtype, totalcount, tmpbuf, rbuf);
         if (MPI_SUCCESS != err) { goto cleanup_and_return; }
     }
-    int is_commutative = ompi_op_is_commute(op);
+    is_commutative = ompi_op_is_commute(op);
 
-    /* Recursive distance doubling */
-    int rdoubling_step = 0;
     for (int mask = 1; mask < comm_size; mask <<= 1) {
         int remote = rank ^ mask;
         int cur_tree_root = ompi_rounddown(rank, mask);
@@ -333,6 +333,7 @@ ompi_coll_base_reduce_scatter_block_intra_recursivehalving(
     int err = MPI_SUCCESS;
     int comm_size = ompi_comm_size(comm);
     int rank = ompi_comm_rank(comm);
+    int nprocs_pof2 = 0, nprocs_rem = 0, vrank = -1;
 
     OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
                  "coll:base:reduce_scatter_block_intra_recursivehalving: rank %d/%d",
@@ -381,11 +382,10 @@ ompi_coll_base_reduce_scatter_block_intra_recursivehalving(
      */
 
     /* Find nearest power-of-two less than or equal to comm_size */
-    int nprocs_pof2 = opal_next_poweroftwo(comm_size);
+    nprocs_pof2 = opal_next_poweroftwo(comm_size);
     nprocs_pof2 >>= 1;
-    int nprocs_rem = comm_size - nprocs_pof2;
+    nprocs_rem = comm_size - nprocs_pof2;
 
-    int vrank = -1;
     if (rank < 2 * nprocs_rem) {
         if ((rank % 2) == 0) {
             /* Even process */
@@ -574,6 +574,8 @@ ompi_coll_base_reduce_scatter_block_intra_butterfly(
     int err = MPI_SUCCESS;
     int comm_size = ompi_comm_size(comm);
     int rank = ompi_comm_rank(comm);
+    int nprocs_pof2 = 0, nprocs_rem = 0, log2_size = 0;
+    int vrank = -1;
 
     OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
                  "coll:base:reduce_scatter_block_intra_butterfly: rank %d/%d",
@@ -621,12 +623,11 @@ ompi_coll_base_reduce_scatter_block_intra_butterfly(
      */
 
     /* Find nearest power-of-two less than or equal to comm_size */
-    int nprocs_pof2 = opal_next_poweroftwo(comm_size);
+    nprocs_pof2 = opal_next_poweroftwo(comm_size);
     nprocs_pof2 >>= 1;
-    int nprocs_rem = comm_size - nprocs_pof2;
-    int log2_size = opal_cube_dim(nprocs_pof2);
+    nprocs_rem = comm_size - nprocs_pof2;
+    log2_size = opal_cube_dim(nprocs_pof2);
 
-    int vrank = -1;
     if (rank < 2 * nprocs_rem) {
         if ((rank % 2) == 0) {
             /* Even process */
@@ -817,6 +818,9 @@ ompi_coll_base_reduce_scatter_block_intra_butterfly_pof2(
     int err = MPI_SUCCESS;
     int comm_size = ompi_comm_size(comm);
     int rank = ompi_comm_rank(comm);
+    int log2_comm_size = 0;
+    char *pdata = (sbuf != MPI_IN_PLACE) ? (char *)sbuf : rbuf;
+    int nblocks = 0, send_index = 0, recv_index = 0;
 
     if (rcount == 0 || comm_size < 2)
         return MPI_SUCCESS;
@@ -834,8 +838,7 @@ ompi_coll_base_reduce_scatter_block_intra_butterfly_pof2(
     precv = tmpbuf[1] - gap;
 
     /* Permute the blocks according to a mirror permutation */
-    int log2_comm_size = opal_cube_dim(comm_size);
-    char *pdata = (sbuf != MPI_IN_PLACE) ? (char *)sbuf : rbuf;
+    log2_comm_size = opal_cube_dim(comm_size);
     for (int i = 0; i < comm_size; i++) {
         char *src = pdata + (ptrdiff_t)i * extent * rcount;
         char *dst = psend + (ptrdiff_t)ompi_mirror_perm(i, log2_comm_size) * extent * rcount;
@@ -843,7 +846,7 @@ ompi_coll_base_reduce_scatter_block_intra_butterfly_pof2(
         if (MPI_SUCCESS != err) { goto cleanup_and_return; }
     }
 
-    int nblocks = totalcount, send_index = 0, recv_index = 0;
+    nblocks = totalcount, send_index = 0, recv_index = 0;
     for (int mask = 1; mask < comm_size; mask <<= 1) {
         int peer = rank ^ mask;
         nblocks /= 2;

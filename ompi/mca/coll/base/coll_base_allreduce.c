@@ -998,6 +998,7 @@ int ompi_coll_base_allreduce_intra_redscat_allgather(
     ptrdiff_t lb, extent, dsize, gap = 0;
     ompi_datatype_get_extent(dtype, &lb, &extent);
     dsize = opal_datatype_span(&dtype->super, count, &gap);
+    int vrank = 0, step = 0, wsize = 0, nprocs_rem = 0;
 
     /* Temporary buffer for receiving messages */
     char *tmp_buf = NULL;
@@ -1029,8 +1030,7 @@ int ompi_coll_base_allreduce_intra_redscat_allgather(
      * 0 to 2^{\floor{\log_2 p}} - 1.
      */
 
-    int vrank, step, wsize;
-    int nprocs_rem = comm_size - nprocs_pof2;
+    nprocs_rem = comm_size - nprocs_pof2;
 
     if (rank < 2 * nprocs_rem) {
         int count_lhalf = count / 2;
