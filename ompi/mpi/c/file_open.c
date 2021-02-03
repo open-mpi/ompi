@@ -94,7 +94,7 @@ int MPI_File_open(MPI_Comm comm, const char *filename, int amode,
 
     opal_mutex_lock(&ompi_mpi_file_bootstrap_mutex);
 
-    rc = mca_base_framework_open(&ompi_io_base_framework, 0);
+    rc = mca_base_framework_open(&ompi_io_base_framework, MCA_BASE_OPEN_DEFAULT);
     if (OMPI_SUCCESS != rc) {
         opal_mutex_unlock(&ompi_mpi_file_bootstrap_mutex);
         return OMPI_ERRHANDLER_INVOKE(MPI_FILE_NULL, rc, FUNC_NAME);

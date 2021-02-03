@@ -62,7 +62,7 @@ int MPI_Register_datarep(const char *datarep,
        and MPI_FILE_DELETE are the only two places that it will be
        initialized). */
 
-    if (OMPI_SUCCESS != (rc = mca_base_framework_open(&ompi_io_base_framework, 0))) {
+    if (OMPI_SUCCESS != (rc = mca_base_framework_open(&ompi_io_base_framework, MCA_BASE_OPEN_DEFAULT))) {
         return OMPI_ERRHANDLER_INVOKE(MPI_FILE_NULL, rc, FUNC_NAME);
     }
 
