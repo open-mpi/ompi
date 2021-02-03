@@ -123,7 +123,7 @@ AC_DEFUN([_OPAL_CHECK_COMPILER_VENDOR], [
 
     # IBM XL C/C++
     AS_IF([test "$opal_check_compiler_vendor_result" = "unknown"],
-          [OPAL_IF_IFELSE([defined(__xlC__) || defined(__IBMC__) || defined(__IBMCPP__)],
+          [OPAL_IF_IFELSE([defined(__xlC__) || defined(__IBMC__) || defined(__IBMCPP__) || defined(__ibmxl__)],
                [opal_check_compiler_vendor_result="ibm"
                 xlc_major_version=`$CC -qversion 2>&1 | tail -n 1 | cut -d ' ' -f 2 | cut -d '.' -f 1`
                 xlc_minor_version=`$CC -qversion 2>&1 | tail -n 1 | cut -d ' ' -f 2 | cut -d '.' -f 2`
