@@ -59,7 +59,8 @@ OPAL_DECLSPEC void opal_common_ucx_mca_var_register(const mca_base_component_t *
                                                &opal_common_ucx.progress_iterations);
         hook_index = mca_base_var_register("opal", "opal_common", "ucx", "opal_mem_hooks",
                                            "Use OPAL memory hooks, instead of UCX internal "
-                                           "memory hooks", MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                           "memory hooks", MCA_BASE_VAR_TYPE_BOOL, NULL, 0,
+                                           MCA_BASE_VAR_FLAG_NONE,
                                            OPAL_INFO_LVL_3,
                                            MCA_BASE_VAR_SCOPE_LOCAL,
                                            &opal_common_ucx.opal_mem_hooks);
@@ -69,15 +70,15 @@ OPAL_DECLSPEC void opal_common_ucx_mca_var_register(const mca_base_component_t *
         mca_base_var_register_synonym(verbose_index, component->mca_project_name,
                                       component->mca_type_name,
                                       component->mca_component_name,
-                                      "verbose", 0);
+                                      "verbose", MCA_BASE_VAR_SYN_FLAG_NONE);
         mca_base_var_register_synonym(progress_index, component->mca_project_name,
                                       component->mca_type_name,
                                       component->mca_component_name,
-                                      "progress_iterations", 0);
+                                      "progress_iterations", MCA_BASE_VAR_SYN_FLAG_NONE);
         mca_base_var_register_synonym(hook_index, component->mca_project_name,
                                       component->mca_type_name,
                                       component->mca_component_name,
-                                      "opal_mem_hooks", 0);
+                                      "opal_mem_hooks", MCA_BASE_VAR_SYN_FLAG_NONE);
     }
 }
 
@@ -96,7 +97,7 @@ OPAL_DECLSPEC void opal_common_ucx_mca_register(void)
 
     /* Set memory hooks */
     if (opal_common_ucx.opal_mem_hooks) {
-        ret = mca_base_framework_open(&opal_memory_base_framework, 0);
+        ret = mca_base_framework_open(&opal_memory_base_framework, MCA_BASE_OPEN_DEFAULT);
         if (OPAL_SUCCESS != ret) {
             /* failed to initialize memory framework - just exit */
             MCA_COMMON_UCX_VERBOSE(1, "failed to initialize memory base framework: %d, "

@@ -55,7 +55,7 @@ _winfo_create(opal_common_ucx_wpool_t *wpool)
     worker_params.thread_mode = UCS_THREAD_MODE_SINGLE;
     status = ucp_worker_create(wpool->ucp_ctx, &worker_params, &worker);
     if (UCS_OK != status) {
-        MCA_COMMON_UCX_ERROR("ucp_worker_create failed: %d", status);
+        MCA_COMMON_UCX_ERROR("ucp_worker_create failed: %d", (int) status);
         goto exit;
     }
 
@@ -153,7 +153,7 @@ opal_common_ucx_wpool_init(opal_common_ucx_wpool_t *wpool,
 
     status = ucp_config_read("MPI", NULL, &config);
     if (UCS_OK != status) {
-        MCA_COMMON_UCX_VERBOSE(1, "ucp_config_read failed: %d", status);
+        MCA_COMMON_UCX_VERBOSE(1, "ucp_config_read failed: %d", (int) status);
         return OPAL_ERROR;
     }
 
@@ -179,7 +179,7 @@ opal_common_ucx_wpool_init(opal_common_ucx_wpool_t *wpool,
     status = ucp_init(&context_params, config, &wpool->ucp_ctx);
     ucp_config_release(config);
     if (UCS_OK != status) {
-        MCA_COMMON_UCX_VERBOSE(1, "ucp_init failed: %d", status);
+        MCA_COMMON_UCX_VERBOSE(1, "ucp_init failed: %d", (int) status);
         rc = OPAL_ERROR;
         goto err_ucp_init;
     }
@@ -200,7 +200,7 @@ opal_common_ucx_wpool_init(opal_common_ucx_wpool_t *wpool,
     status = ucp_worker_get_address(wpool->dflt_winfo->worker,
                                     &wpool->recv_waddr, &wpool->recv_waddr_len);
     if (status != UCS_OK) {
-        MCA_COMMON_UCX_VERBOSE(1, "ucp_worker_get_address failed: %d", status);
+        MCA_COMMON_UCX_VERBOSE(1, "ucp_worker_get_address failed: %d", (int) status);
         rc = OPAL_ERROR;
         goto err_get_addr;
     }
@@ -470,7 +470,7 @@ int opal_common_ucx_wpmem_create(opal_common_ucx_ctx_t *ctx,
     status = ucp_rkey_pack(ctx->wpool->ucp_ctx, mem->memh,
                            &rkey_addr, &rkey_addr_len);
     if (status != UCS_OK) {
-        MCA_COMMON_UCX_VERBOSE(1, "ucp_rkey_pack failed: %d", status);
+        MCA_COMMON_UCX_VERBOSE(1, "ucp_rkey_pack failed: %d", (int) status);
         ret = OPAL_ERROR;
         goto error_rkey_pack;
     }
@@ -521,7 +521,7 @@ static int _comm_ucx_wpmem_map(opal_common_ucx_wpool_t *wpool,
 
     status = ucp_mem_map(wpool->ucp_ctx, &mem_params, memh_ptr);
     if (status != UCS_OK) {
-        MCA_COMMON_UCX_VERBOSE(1, "ucp_mem_map failed: %d", status);
+        MCA_COMMON_UCX_VERBOSE(1, "ucp_mem_map failed: %d", (int) status);
         ret = OPAL_ERROR;
         return ret;
     }
@@ -529,7 +529,7 @@ static int _comm_ucx_wpmem_map(opal_common_ucx_wpool_t *wpool,
     mem_attrs.field_mask = UCP_MEM_ATTR_FIELD_ADDRESS | UCP_MEM_ATTR_FIELD_LENGTH;
     status = ucp_mem_query((*memh_ptr), &mem_attrs);
     if (status != UCS_OK) {
-        MCA_COMMON_UCX_VERBOSE(1, "ucp_mem_query failed: %d", status);
+        MCA_COMMON_UCX_VERBOSE(1, "ucp_mem_query failed: %d", (int) status);
         ret = OPAL_ERROR;
         goto error;
     }
@@ -673,7 +673,7 @@ static int _tlocal_ctx_connect(_ctx_record_t *ctx_rec, int target)
     status = ucp_ep_create(winfo->worker, &ep_params, &winfo->endpoints[target]);
     if (status != UCS_OK) {
         opal_mutex_unlock(&winfo->mutex);
-        MCA_COMMON_UCX_VERBOSE(1, "ucp_ep_create failed: %d", status);
+        MCA_COMMON_UCX_VERBOSE(1, "ucp_ep_create failed: %d", (int) status);
         opal_mutex_unlock(&winfo->mutex);
         return OPAL_ERROR;
     }
@@ -751,7 +751,7 @@ _tlocal_mem_create_rkey(_mem_record_t *mem_rec, ucp_ep_h ep, int target)
                                 &mem_rec->rkeys[target]);
     opal_mutex_unlock(&mem_rec->winfo->mutex);
     if (status != UCS_OK) {
-        MCA_COMMON_UCX_VERBOSE(1, "ucp_ep_rkey_unpack failed: %d", status);
+        MCA_COMMON_UCX_VERBOSE(1, "ucp_ep_rkey_unpack failed: %d", (int) status);
         return OPAL_ERROR;
     }
 

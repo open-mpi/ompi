@@ -390,7 +390,7 @@ opal_common_ucx_wpmem_putget(opal_common_ucx_wpmem_t *mem, opal_common_ucx_op_t 
     }
 
     if (OPAL_UNLIKELY(status != UCS_OK && status != UCS_INPROGRESS)) {
-        MCA_COMMON_UCX_ERROR("%s failed: %d", called_func, status);
+        MCA_COMMON_UCX_ERROR("%s failed: %d", called_func, (int) status);
         rc = OPAL_ERROR;
         goto out;
     }
@@ -431,7 +431,7 @@ opal_common_ucx_wpmem_cmpswp(opal_common_ucx_wpmem_t *mem, uint64_t compare,
                                           rem_addr, rkey,
                                           winfo->worker);
     if (OPAL_UNLIKELY(status != UCS_OK)) {
-        MCA_COMMON_UCX_ERROR("opal_common_ucx_atomic_cswap failed: %d", status);
+        MCA_COMMON_UCX_ERROR("opal_common_ucx_atomic_cswap failed: %d", (int) status);
         rc = OPAL_ERROR;
         goto out;
     }
@@ -518,7 +518,7 @@ opal_common_ucx_wpmem_post(opal_common_ucx_wpmem_t *mem, ucp_atomic_post_op_t op
     status = ucp_atomic_post(ep, opcode, value,
                              len, rem_addr, rkey);
     if (OPAL_UNLIKELY(status != UCS_OK)) {
-        MCA_COMMON_UCX_ERROR("ucp_atomic_post failed: %d", status);
+        MCA_COMMON_UCX_ERROR("ucp_atomic_post failed: %d", (int) status);
         rc = OPAL_ERROR;
         goto out;
     }
@@ -558,7 +558,7 @@ opal_common_ucx_wpmem_fetch(opal_common_ucx_wpmem_t *mem,
                                           rem_addr, rkey,
                                           winfo->worker);
     if (OPAL_UNLIKELY(status != UCS_OK)) {
-        MCA_COMMON_UCX_ERROR("ucp_atomic_cswap64 failed: %d", status);
+        MCA_COMMON_UCX_ERROR("ucp_atomic_cswap64 failed: %d", (int) status);
         rc = OPAL_ERROR;
         goto out;
     }
