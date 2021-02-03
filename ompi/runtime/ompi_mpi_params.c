@@ -96,7 +96,8 @@ int ompi_mpi_register_params(void)
     ompi_mpi_param_check = !!(MPI_PARAM_CHECK);
     (void) mca_base_var_register("ompi", "mpi", NULL, "param_check",
                                  "Whether you want MPI API parameters checked at run-time or not.  Possible values are 0 (no checking) and 1 (perform checking at run-time)",
-                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0,
+                                 MCA_BASE_VAR_FLAG_NONE,
                                  OPAL_INFO_LVL_9,
                                  MCA_BASE_VAR_SCOPE_READONLY,
                                  &ompi_mpi_param_check);
@@ -114,14 +115,16 @@ int ompi_mpi_register_params(void)
     ompi_mpi_oversubscribe = false;
     (void) mca_base_var_register("ompi", "mpi", NULL, "oversubscribe",
                                  "Internal MCA parameter set by the runtime environment when oversubscribing nodes",
-                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0,
+                                 MCA_BASE_VAR_FLAG_NONE,
                                  OPAL_INFO_LVL_9,
                                  MCA_BASE_VAR_SCOPE_READONLY,
                                  &ompi_mpi_oversubscribe);
     ompi_mpi_yield_when_idle = ompi_mpi_oversubscribe;
     (void) mca_base_var_register("ompi", "mpi", NULL, "yield_when_idle",
                                  "Yield the processor when waiting for MPI communication (for MPI processes, will default to 1 when oversubscribing nodes)",
-                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0,
+                                 MCA_BASE_VAR_FLAG_NONE,
                                  OPAL_INFO_LVL_5,
                                  MCA_BASE_VAR_SCOPE_READONLY,
                                  &ompi_mpi_yield_when_idle);
@@ -129,7 +132,8 @@ int ompi_mpi_register_params(void)
     ompi_mpi_event_tick_rate = -1;
     (void) mca_base_var_register("ompi", "mpi", NULL, "event_tick_rate",
                                  "How often to progress TCP communications (0 = never, otherwise specified in microseconds)",
-                                 MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                 MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                 MCA_BASE_VAR_FLAG_NONE,
                                  OPAL_INFO_LVL_9,
                                  MCA_BASE_VAR_SCOPE_READONLY,
                                  &ompi_mpi_event_tick_rate);
@@ -138,7 +142,8 @@ int ompi_mpi_register_params(void)
     ompi_debug_show_handle_leaks = false;
     (void) mca_base_var_register("ompi", "mpi", NULL, "show_handle_leaks",
                                  "Whether MPI_FINALIZE shows all MPI handles that were not freed or not",
-                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0,
+                                 MCA_BASE_VAR_FLAG_NONE,
                                  OPAL_INFO_LVL_9,
                                  MCA_BASE_VAR_SCOPE_READONLY,
                                  &ompi_debug_show_handle_leaks);
@@ -149,7 +154,8 @@ int ompi_mpi_register_params(void)
     ompi_debug_no_free_handles = false;
     (void) mca_base_var_register("ompi", "mpi", NULL, "no_free_handles",
                                  "Whether to actually free MPI objects when their handles are freed",
-                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0,
+                                 MCA_BASE_VAR_FLAG_NONE,
                                  OPAL_INFO_LVL_9,
                                  MCA_BASE_VAR_SCOPE_READONLY,
                                  &ompi_debug_no_free_handles);
@@ -166,7 +172,8 @@ int ompi_mpi_register_params(void)
     ompi_debug_show_mpi_alloc_mem_leaks = 0;
     (void) mca_base_var_register("ompi", "mpi", NULL, "show_mpi_alloc_mem_leaks",
                                  "If >0, MPI_FINALIZE will show up to this many instances of memory allocated by MPI_ALLOC_MEM that was not freed by MPI_FREE_MEM",
-                                 MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                 MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                 MCA_BASE_VAR_FLAG_NONE,
                                  OPAL_INFO_LVL_9,
                                  MCA_BASE_VAR_SCOPE_READONLY,
                                  &ompi_debug_show_mpi_alloc_mem_leaks);
@@ -177,7 +184,8 @@ int ompi_mpi_register_params(void)
                                  "Whether to show all MCA parameter values during MPI_INIT or not (good for reproducability of MPI jobs "
                                  "for debug purposes). Accepted values are all, default, file, api, and enviro - or a comma "
                                  "delimited combination of them",
-                                 MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                 MCA_BASE_VAR_TYPE_STRING, NULL, 0,
+                                 MCA_BASE_VAR_FLAG_NONE,
                                  OPAL_INFO_LVL_9,
                                  MCA_BASE_VAR_SCOPE_READONLY,
                                  &ompi_mpi_show_mca_params_string);
@@ -217,7 +225,8 @@ int ompi_mpi_register_params(void)
     /* File to use when dumping the parameters */
     (void) mca_base_var_register("ompi", "mpi", NULL, "show_mca_params_file",
                                  "If mpi_show_mca_params is true, setting this string to a valid filename tells Open MPI to dump all the MCA parameter values into a file suitable for reading via the mca_param_files parameter (good for reproducability of MPI jobs)",
-                                 MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                 MCA_BASE_VAR_TYPE_STRING, NULL, 0,
+                                 MCA_BASE_VAR_FLAG_NONE,
                                  OPAL_INFO_LVL_9,
                                  MCA_BASE_VAR_SCOPE_READONLY,
                                  &ompi_mpi_show_mca_params_file);
@@ -253,7 +262,7 @@ int ompi_mpi_register_params(void)
     (void) mca_base_var_register("ompi", "mpi", NULL, "use_sparse_group_storage",
                                  "Whether to use \"sparse\" storage formats for MPI groups (only relevant if mpi_have_sparse_group_storage is 1)",
                                  MCA_BASE_VAR_TYPE_BOOL, NULL, 0,
-                                 ompi_mpi_have_sparse_group_storage ? 0 : MCA_BASE_VAR_FLAG_DEFAULT_ONLY,
+                                 ompi_mpi_have_sparse_group_storage ? MCA_BASE_VAR_FLAG_NONE : MCA_BASE_VAR_FLAG_DEFAULT_ONLY,
                                  OPAL_INFO_LVL_9,
                                  ompi_mpi_have_sparse_group_storage ? MCA_BASE_VAR_SCOPE_READONLY : MCA_BASE_VAR_SCOPE_CONSTANT,
                                  &ompi_use_sparse_group_storage);
@@ -272,7 +281,7 @@ int ompi_mpi_register_params(void)
 
     value = mca_base_var_find ("opal", "opal", NULL, "built_with_cuda_support");
     if (0 <= value) {
-        mca_base_var_register_synonym(value, "ompi", "mpi", NULL, "built_with_cuda_support", 0);
+        mca_base_var_register_synonym(value, "ompi", "mpi", NULL, "built_with_cuda_support", MCA_BASE_VAR_SYN_FLAG_NONE);
     }
 
     if (opal_cuda_support && !opal_built_with_cuda_support) {
@@ -287,13 +296,14 @@ int ompi_mpi_register_params(void)
                                   "remote processes. Increasing this limit may improve "
                                   "communication performance at the cost of memory usage",
                                   MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL,
-                                  0, 0, OPAL_INFO_LVL_3, MCA_BASE_VAR_SCOPE_LOCAL,
+                                  0, MCA_BASE_VAR_FLAG_NONE, OPAL_INFO_LVL_3, MCA_BASE_VAR_SCOPE_LOCAL,
                                   &ompi_add_procs_cutoff);
 
     ompi_mpi_dynamics_enabled = true;
     (void) mca_base_var_register("ompi", "mpi", NULL, "dynamics_enabled",
                                  "Is the MPI dynamic process functionality enabled (e.g., MPI_COMM_SPAWN)?  Default is yes, but certain transports and/or environments may disable it.",
-                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0,
+                                 MCA_BASE_VAR_FLAG_NONE,
                                  OPAL_INFO_LVL_4,
                                  MCA_BASE_VAR_SCOPE_READONLY,
                                  &ompi_mpi_dynamics_enabled);
@@ -301,7 +311,8 @@ int ompi_mpi_register_params(void)
     ompi_async_mpi_init = false;
     (void) mca_base_var_register("ompi", "async", "mpi", "init",
                                  "Do not perform a barrier at the end of MPI_Init",
-                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0,
+                                 MCA_BASE_VAR_FLAG_NONE,
                                  OPAL_INFO_LVL_9,
                                  MCA_BASE_VAR_SCOPE_READONLY,
                                  &ompi_async_mpi_init);
@@ -309,7 +320,8 @@ int ompi_mpi_register_params(void)
     ompi_async_mpi_finalize = false;
     (void) mca_base_var_register("ompi", "async", "mpi", "finalize",
                                  "Do not perform a barrier at the beginning of MPI_Finalize",
-                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0,
+                                 MCA_BASE_VAR_FLAG_NONE,
                                  OPAL_INFO_LVL_9,
                                  MCA_BASE_VAR_SCOPE_READONLY,
                                  &ompi_async_mpi_finalize);
@@ -329,7 +341,8 @@ int ompi_mpi_register_params(void)
     ompi_mpi_compat_mpi3 = false;
     (void) mca_base_var_register("ompi", "mpi", NULL, "compat_mpi3",
                                  "A boolean value for whether Open MPI operates in MPI-3 compatibility mode; this changes the following behavior: in operations without a handle, errors are raised on (true) MPI_COMM_WORLD (MPI-3 behavior) or (false) MPI_COMM_SELF (MPI-4 behavior).",
-                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0,
+                                 MCA_BASE_VAR_FLAG_NONE,
                                  OPAL_INFO_LVL_9,
                                  MCA_BASE_VAR_SCOPE_READONLY,
                                  &ompi_mpi_compat_mpi3);
@@ -338,7 +351,8 @@ int ompi_mpi_register_params(void)
     ompi_mpi_spc_attach_string = NULL;
     (void) mca_base_var_register("ompi", "mpi", NULL, "spc_attach",
                                  "A comma-delimeted list of software-based performance counters (SPCs) to enable (\"all\" enables all counters).",
-                                 MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                 MCA_BASE_VAR_TYPE_STRING, NULL, 0,
+                                 MCA_BASE_VAR_FLAG_NONE,
                                  OPAL_INFO_LVL_4,
                                  MCA_BASE_VAR_SCOPE_READONLY,
                                  &ompi_mpi_spc_attach_string);
@@ -346,7 +360,8 @@ int ompi_mpi_register_params(void)
     ompi_mpi_spc_dump_enabled = false;
     (void) mca_base_var_register("ompi", "mpi", NULL, "spc_dump_enabled",
                                  "A boolean value for whether (true) or not (false) to enable dumping enabled SPC counters in MPI_Finalize.",
-                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0,
+                                 MCA_BASE_VAR_FLAG_NONE,
                                  OPAL_INFO_LVL_4,
                                  MCA_BASE_VAR_SCOPE_READONLY,
                                  &ompi_mpi_spc_dump_enabled);

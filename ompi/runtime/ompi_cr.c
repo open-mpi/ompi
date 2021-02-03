@@ -166,7 +166,8 @@ int ompi_cr_init(void)
     ompi_cr_verbosity = 0;
     (void) mca_base_var_register("ompi", "ompi", "cr", "verbose",
                                  "Verbose output for the OMPI Checkpoint/Restart functionality",
-                                 MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                 MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                 MCA_BASE_VAR_FLAG_NONE,
                                  OPAL_INFO_LVL_9,
                                  MCA_BASE_VAR_SCOPE_READONLY,
                                  &ompi_cr_verbosity);
