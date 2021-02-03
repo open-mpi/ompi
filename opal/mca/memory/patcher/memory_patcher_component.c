@@ -552,7 +552,7 @@ static int patcher_register (void)
     mca_memory_patcher_priority = 80;
     mca_base_component_var_register (&mca_memory_patcher_component.super.memoryc_version,
                                      "priority", "Priority of the patcher memory hook component",
-                                     MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_5,
+                                     MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_NONE, OPAL_INFO_LVL_5,
                                      MCA_BASE_VAR_SCOPE_CONSTANT, &mca_memory_patcher_priority);
 
     return OPAL_SUCCESS;
@@ -562,7 +562,7 @@ static int patcher_query (int *priority)
 {
     int rc;
 
-    rc = mca_base_framework_open (&opal_patcher_base_framework, 0);
+    rc = mca_base_framework_open (&opal_patcher_base_framework, MCA_BASE_OPEN_DEFAULT);
     if (OPAL_SUCCESS != rc) {
         *priority = -1;
         return OPAL_SUCCESS;

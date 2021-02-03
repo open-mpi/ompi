@@ -119,4 +119,4 @@ static int opal_memory_base_open(mca_base_open_flag_t flags)
 
 /* Use default register/close functions */
 MCA_BASE_FRAMEWORK_DECLARE(opal, memory, "memory hooks", NULL, opal_memory_base_open, NULL,
-                           mca_memory_base_static_components, 0);
+                           mca_memory_base_static_components, MCA_BASE_FRAMEWORK_FLAG_DEFAULT);
