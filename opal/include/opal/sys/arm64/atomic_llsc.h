@@ -25,6 +25,11 @@
 
 #if !defined(OPAL_SYS_ARCH_ATOMIC_LLSC_H)
 
+#if defined(__xlC__) || defined(__IBMC__) || defined(__IBMCPP__) || defined(__ibmxl__)
+/* Silence -Wlanguage-extension-token */
+#define typeof __typeof__
+#endif
+
 #define OPAL_SYS_ARCH_ATOMIC_LLSC_H
 
 #if OPAL_C_GCC_INLINE_ASSEMBLY

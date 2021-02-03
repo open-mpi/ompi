@@ -111,6 +111,9 @@ void opal_atomic_isync(void)
 /* work-around bizzare xlc bug in which it sign-extends
    a pointer to a 32-bit signed integer */
 #define OPAL_ASM_ADDR(a) ((uintptr_t)a)
+
+/* Silence -Wlanguage-extension-token */
+#define typeof __typeof__
 #else
 #define OPAL_ASM_ADDR(a) (a)
 #endif
