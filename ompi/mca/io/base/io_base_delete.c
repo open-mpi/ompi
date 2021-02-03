@@ -149,17 +149,15 @@ int mca_io_base_delete(const char *filename, struct opal_info_t *info)
 
     if (!strcmp (selected.ai_component.v2_0_0.io_version.mca_component_name,
                  "ompio")) {
-        int ret;
-
         opal_mutex_lock(&ompi_mpi_ompio_bootstrap_mutex);
-        if (OMPI_SUCCESS != (ret = mca_base_framework_open(&ompi_fs_base_framework, 0))) {
+        if (OMPI_SUCCESS != mca_base_framework_open(&ompi_fs_base_framework, MCA_BASE_OPEN_DEFAULT)) {
             opal_mutex_unlock(&ompi_mpi_ompio_bootstrap_mutex);
             return err;
         }
         opal_mutex_unlock(&ompi_mpi_ompio_bootstrap_mutex);
 
         if (OMPI_SUCCESS !=
-            (ret = mca_fs_base_find_available(OPAL_ENABLE_PROGRESS_THREADS, 1))) {
+            mca_fs_base_find_available(OPAL_ENABLE_PROGRESS_THREADS, 1)) {
             return err;
         }
     }
@@ -391,11 +389,8 @@ static int delete_file(avail_io_t *avail, const char *filename, struct opal_info
         ioc_200 = &(avail->ai_component.v2_0_0);
         return ioc_200->io_delete_select(filename, info,
                                          avail->ai_private_data);
-        break;
-
     default:
         return OMPI_ERROR;
-        break;
     }
 
     /* No way to reach here */

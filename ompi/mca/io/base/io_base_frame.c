@@ -42,4 +42,4 @@ static int mca_io_base_open(mca_base_open_flag_t flags)
 }
 
 MCA_BASE_FRAMEWORK_DECLARE(ompi, io, "I/O", NULL, mca_io_base_open, NULL,
-                           mca_io_base_static_components, 0);
+                           mca_io_base_static_components, MCA_BASE_FRAMEWORK_FLAG_DEFAULT);
