@@ -167,7 +167,7 @@ MCA_BASE_FRAMEWORK_DECLARE(ompi, hook, "hook hooks",
                            ompi_hook_base_register,
                            ompi_hook_base_open,
                            ompi_hook_base_close,
-                           mca_hook_base_static_components, 0);
+                           mca_hook_base_static_components, MCA_BASE_FRAMEWORK_FLAG_DEFAULT);
 
 
 /* ***********************************************************************

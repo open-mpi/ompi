@@ -119,7 +119,8 @@ static int ompi_hook_comm_method_component_register(void)
     (void) mca_base_component_var_register(&mca_hook_comm_method_component.hookm_version, "verbose",
                                            NULL,
                                            MCA_BASE_VAR_TYPE_INT, NULL,
-                                           0, 0,
+                                           0,
+                                           MCA_BASE_VAR_FLAG_NONE,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &mca_hook_comm_method_verbose);
@@ -143,7 +144,8 @@ static int ompi_hook_comm_method_component_register(void)
                                 "Enable the communication protocol report: when MPI_INIT is invoked (using the 'mpi_init' value) and/or when MPI_FINALIZE is invoked (using the 'mpi_finalize' value).",
                                 MCA_BASE_VAR_TYPE_UNSIGNED_INT,
                                 &mca_hook_comm_method_flags->super,
-                                0, 0,
+                                0,
+                                MCA_BASE_VAR_FLAG_NONE,
                                 OPAL_INFO_LVL_3,
                                 MCA_BASE_VAR_SCOPE_READONLY,
                                 &mca_hook_comm_method_enabled_flags);
@@ -167,7 +169,8 @@ static int ompi_hook_comm_method_component_register(void)
     (void) mca_base_component_var_register(&mca_hook_comm_method_component.hookm_version, "max",
                                  "Number of hosts for which to print unabbreviated 2d table of comm methods.",
                                  MCA_BASE_VAR_TYPE_INT, NULL,
-                                 0, 0,
+                                 0,
+                                 MCA_BASE_VAR_FLAG_NONE,
                                  OPAL_INFO_LVL_3,
                                  MCA_BASE_VAR_SCOPE_READONLY,
                                  &mca_hook_comm_method_max);
@@ -175,7 +178,8 @@ static int ompi_hook_comm_method_component_register(void)
     (void) mca_base_component_var_register(&mca_hook_comm_method_component.hookm_version, "brief",
                                  "Only print the comm method summary, skip the 2d table.",
                                  MCA_BASE_VAR_TYPE_INT, NULL,
-                                 0, 0,
+                                 0,
+                                 MCA_BASE_VAR_FLAG_NONE,
                                  OPAL_INFO_LVL_3,
                                  MCA_BASE_VAR_SCOPE_READONLY,
                                  &mca_hook_comm_method_brief);
@@ -185,7 +189,8 @@ static int ompi_hook_comm_method_component_register(void)
     (void) mca_base_component_var_register(&mca_hook_comm_method_component.hookm_version, "fakefile",
                                  "For debugging only: read comm methods from a file",
                                  MCA_BASE_VAR_TYPE_STRING, NULL,
-                                 0, 0,
+                                 0,
+                                 MCA_BASE_VAR_FLAG_NONE,
                                  OPAL_INFO_LVL_3,
                                  MCA_BASE_VAR_SCOPE_READONLY,
                                  &mca_hook_comm_method_fakefile);
