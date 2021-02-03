@@ -76,13 +76,15 @@ static int individual_register(void)
     mca_sharedfp_individual_priority = 10;
     (void) mca_base_component_var_register(&mca_sharedfp_individual_component.sharedfpm_version,
                                            "priority", "Priority of the individual sharedfp component",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                           MCA_BASE_VAR_FLAG_NONE,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY, &mca_sharedfp_individual_priority);
     mca_sharedfp_individual_verbose = 0;
     (void) mca_base_component_var_register(&mca_sharedfp_individual_component.sharedfpm_version,
                                            "verbose", "Verbosity of the individual sharedfp component",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                           MCA_BASE_VAR_FLAG_NONE,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY, &mca_sharedfp_individual_verbose);
 

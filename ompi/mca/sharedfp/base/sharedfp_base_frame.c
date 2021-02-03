@@ -61,5 +61,5 @@ static int mca_sharedfp_base_open(mca_base_open_flag_t flags)
 
 MCA_BASE_FRAMEWORK_DECLARE(ompi, sharedfp, "OMPI Shared Files", NULL,
                            mca_sharedfp_base_open, mca_sharedfp_base_close,
-                           mca_sharedfp_base_static_components, 0);
+                           mca_sharedfp_base_static_components, MCA_BASE_FRAMEWORK_FLAG_DEFAULT);
 

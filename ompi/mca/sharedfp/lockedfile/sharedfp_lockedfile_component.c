@@ -75,13 +75,15 @@ static int lockedfile_register(void)
     mca_sharedfp_lockedfile_priority = 10;
     (void) mca_base_component_var_register(&mca_sharedfp_lockedfile_component.sharedfpm_version,
                                            "priority", "Priority of the lockedfile sharedfp component",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                           MCA_BASE_VAR_FLAG_NONE,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY, &mca_sharedfp_lockedfile_priority);
     mca_sharedfp_lockedfile_verbose = 0;
     (void) mca_base_component_var_register(&mca_sharedfp_lockedfile_component.sharedfpm_version,
                                            "verbose", "Verbosity of the lockedfile sharedfp component",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                           MCA_BASE_VAR_FLAG_NONE,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY, &mca_sharedfp_lockedfile_verbose);
 
