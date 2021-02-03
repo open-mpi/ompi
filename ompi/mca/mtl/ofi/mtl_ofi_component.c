@@ -127,7 +127,8 @@ ompi_mtl_ofi_component_register(void)
     param_priority = 25;   /* for now give a lower priority than the psm mtl */
     mca_base_component_var_register(&mca_mtl_ofi_component.super.mtl_version,
                                     "priority", "Priority of the OFI MTL component",
-                                    MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                    MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                    MCA_BASE_VAR_FLAG_NONE,
                                     OPAL_INFO_LVL_9,
                                     MCA_BASE_VAR_SCOPE_READONLY,
                                     &param_priority);
@@ -137,7 +138,8 @@ ompi_mtl_ofi_component_register(void)
     mca_base_component_var_register(&mca_mtl_ofi_component.super.mtl_version,
                                     "progress_event_cnt",
                                     desc,
-                                    MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                    MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                    MCA_BASE_VAR_FLAG_NONE,
                                     OPAL_INFO_LVL_6,
                                     MCA_BASE_VAR_SCOPE_READONLY,
                                     &ompi_mtl_ofi.ofi_progress_event_count);
@@ -166,7 +168,8 @@ ompi_mtl_ofi_component_register(void)
     mca_base_component_var_register (&mca_mtl_ofi_component.super.mtl_version,
                                     "tag_mode",
                                      desc,
-                                     MCA_BASE_VAR_TYPE_INT, new_enum, 0, 0,
+                                     MCA_BASE_VAR_TYPE_INT, new_enum, 0,
+                                     MCA_BASE_VAR_FLAG_NONE,
                                      OPAL_INFO_LVL_6,
                                      MCA_BASE_VAR_SCOPE_READONLY,
                                      &ofi_tag_mode);
@@ -183,7 +186,8 @@ ompi_mtl_ofi_component_register(void)
     mca_base_component_var_register (&mca_mtl_ofi_component.super.mtl_version,
                                      "control_progress",
                                      "Specify control progress model (default: unspecificed, use provider's default). Set to auto or manual for auto or manual progress respectively.",
-                                     MCA_BASE_VAR_TYPE_INT, new_enum, 0, 0,
+                                     MCA_BASE_VAR_TYPE_INT, new_enum, 0,
+                                     MCA_BASE_VAR_FLAG_NONE,
                                      OPAL_INFO_LVL_3,
                                      MCA_BASE_VAR_SCOPE_READONLY,
                                      &control_progress);
@@ -198,7 +202,8 @@ ompi_mtl_ofi_component_register(void)
     mca_base_component_var_register(&mca_mtl_ofi_component.super.mtl_version,
                                     "data_progress",
                                     "Specify data progress model (default: unspecified, use provider's default). Set to auto or manual for auto or manual progress respectively.",
-                                    MCA_BASE_VAR_TYPE_INT, new_enum, 0, 0,
+                                    MCA_BASE_VAR_TYPE_INT, new_enum, 0,
+                                    MCA_BASE_VAR_FLAG_NONE,
                                     OPAL_INFO_LVL_3,
                                     MCA_BASE_VAR_SCOPE_READONLY,
                                     &data_progress);
@@ -223,7 +228,8 @@ ompi_mtl_ofi_component_register(void)
     mca_base_component_var_register(&mca_mtl_ofi_component.super.mtl_version,
                                     "enable_sep",
                                     "Enable SEP feature",
-                                    MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                    MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                    MCA_BASE_VAR_FLAG_NONE,
                                     OPAL_INFO_LVL_3,
                                     MCA_BASE_VAR_SCOPE_READONLY,
                                     &ompi_mtl_ofi.enable_sep);
@@ -232,7 +238,8 @@ ompi_mtl_ofi_component_register(void)
     mca_base_component_var_register(&mca_mtl_ofi_component.super.mtl_version,
                                     "thread_grouping",
                                     "Enable/Disable Thread Grouping feature",
-                                    MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                    MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                    MCA_BASE_VAR_FLAG_NONE,
                                     OPAL_INFO_LVL_3,
                                     MCA_BASE_VAR_SCOPE_READONLY,
                                     &ompi_mtl_ofi.thread_grouping);
@@ -246,7 +253,8 @@ ompi_mtl_ofi_component_register(void)
     mca_base_component_var_register(&mca_mtl_ofi_component.super.mtl_version,
                                     "num_ctxts",
                                     "Specify number of OFI contexts to create",
-                                    MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                    MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                    MCA_BASE_VAR_FLAG_NONE,
                                     OPAL_INFO_LVL_4,
                                     MCA_BASE_VAR_SCOPE_READONLY,
                                     &ompi_mtl_ofi.num_ofi_contexts);

@@ -116,4 +116,4 @@ ompi_mtl_base_close(void)
 }
 
 MCA_BASE_FRAMEWORK_DECLARE(ompi, mtl, NULL, NULL, NULL, ompi_mtl_base_close,
-                           mca_mtl_base_static_components, 0);
+                           mca_mtl_base_static_components, MCA_BASE_FRAMEWORK_FLAG_DEFAULT);

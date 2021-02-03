@@ -94,7 +94,7 @@ ompi_mtl_portals4_component_register(void)
                                            MCA_BASE_VAR_TYPE_INT,
                                            NULL,
                                            0,
-                                           0,
+                                           MCA_BASE_VAR_FLAG_NONE,
                                            OPAL_INFO_LVL_5,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &ompi_mtl_portals4.use_logical);
@@ -102,7 +102,8 @@ ompi_mtl_portals4_component_register(void)
     param_priority = 10;
     (void) mca_base_component_var_register (&mca_mtl_portals4_component.mtl_version,
                                             "priority", "Priority of the Portals4 MTL component",
-                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                            MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                            MCA_BASE_VAR_FLAG_NONE,
                                             OPAL_INFO_LVL_9,
                                             MCA_BASE_VAR_SCOPE_READONLY,
                                             &param_priority);
@@ -113,7 +114,7 @@ ompi_mtl_portals4_component_register(void)
                                            MCA_BASE_VAR_TYPE_UNSIGNED_LONG_LONG,
                                            NULL,
                                            0,
-                                           0,
+                                           MCA_BASE_VAR_FLAG_NONE,
                                            OPAL_INFO_LVL_5,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &ompi_mtl_portals4.short_limit);
@@ -126,7 +127,7 @@ ompi_mtl_portals4_component_register(void)
                                            MCA_BASE_VAR_TYPE_UNSIGNED_LONG_LONG,
                                            NULL,
                                            0,
-                                           0,
+                                           MCA_BASE_VAR_FLAG_NONE,
                                            OPAL_INFO_LVL_5,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &ompi_mtl_portals4.eager_limit);
@@ -138,7 +139,7 @@ ompi_mtl_portals4_component_register(void)
                                            MCA_BASE_VAR_TYPE_INT,
                                            NULL,
                                            0,
-                                           0,
+                                           MCA_BASE_VAR_FLAG_NONE,
                                            OPAL_INFO_LVL_5,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &ompi_mtl_portals4.recv_short_num);
@@ -150,7 +151,7 @@ ompi_mtl_portals4_component_register(void)
                                            MCA_BASE_VAR_TYPE_UNSIGNED_LONG_LONG,
                                            NULL,
                                            0,
-                                           0,
+                                           MCA_BASE_VAR_FLAG_NONE,
                                            OPAL_INFO_LVL_5,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &ompi_mtl_portals4.recv_short_size);
@@ -162,7 +163,7 @@ ompi_mtl_portals4_component_register(void)
                                            MCA_BASE_VAR_TYPE_INT,
                                            NULL,
                                            0,
-                                           0,
+                                           MCA_BASE_VAR_FLAG_NONE,
                                            OPAL_INFO_LVL_5,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &ompi_mtl_portals4.send_queue_size);
@@ -174,7 +175,7 @@ ompi_mtl_portals4_component_register(void)
                                            MCA_BASE_VAR_TYPE_INT,
                                            NULL,
                                            0,
-                                           0,
+                                           MCA_BASE_VAR_FLAG_NONE,
                                            OPAL_INFO_LVL_5,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &ompi_mtl_portals4.recv_queue_size);
@@ -187,7 +188,7 @@ ompi_mtl_portals4_component_register(void)
                                            MCA_BASE_VAR_TYPE_INT,
                                            new_enum,
                                            0,
-                                           0,
+                                           MCA_BASE_VAR_FLAG_NONE,
                                            OPAL_INFO_LVL_5,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &ompi_mtl_portals4.protocol);
@@ -199,7 +200,7 @@ ompi_mtl_portals4_component_register(void)
                                            MCA_BASE_VAR_TYPE_UNSIGNED_LONG,
                                            NULL,
                                            0,
-                                           0,
+                                           MCA_BASE_VAR_FLAG_NONE,
                                            OPAL_INFO_LVL_5,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &ompi_mtl_portals4.max_msg_size_mtl);
@@ -209,7 +210,8 @@ ompi_mtl_portals4_component_register(void)
                                            "get_retransmit_timeout",
                                            "PtlGET retransmission timeout in usec",
                                            MCA_BASE_VAR_TYPE_INT,
-                                           NULL, 0, 0,
+                                           NULL, 0,
+                                           MCA_BASE_VAR_FLAG_NONE,
                                            OPAL_INFO_LVL_5,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &ompi_mtl_portals4.get_retransmit_timeout);

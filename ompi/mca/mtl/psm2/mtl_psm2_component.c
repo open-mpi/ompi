@@ -234,7 +234,8 @@ ompi_mtl_psm2_component_register(void)
     (void) mca_base_component_var_register(&mca_mtl_psm2_component.super.mtl_version,
                                            "connect_timeout",
                                            "PSM2 connection timeout value in seconds",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                           MCA_BASE_VAR_FLAG_NONE,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &ompi_mtl_psm2.connect_timeout);
@@ -254,7 +255,8 @@ ompi_mtl_psm2_component_register(void)
     param_priority = 40;
     (void) mca_base_component_var_register (&mca_mtl_psm2_component.super.mtl_version,
                                             "priority", "Priority of the PSM2 MTL component",
-                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                            MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                            MCA_BASE_VAR_FLAG_NONE,
                                             OPAL_INFO_LVL_9,
                                             MCA_BASE_VAR_SCOPE_READONLY,
                                             &param_priority);
