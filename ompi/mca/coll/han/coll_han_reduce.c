@@ -76,7 +76,9 @@ mca_coll_han_reduce_intra(const void *sbuf,
     if(!ompi_op_is_commute(op)) {
         OPAL_OUTPUT_VERBOSE((30, mca_coll_han_component.han_output,
                              "han cannot handle reduce with this operation. Fall back on another component\n"));
-        goto prev_reduce_intra;
+        return han_module->previous_reduce(sbuf, rbuf, count, dtype, op, root,
+                                           comm,
+                                           han_module->previous_reduce_module);
     }
 
     /* Create the subcommunicators */
@@ -180,12 +182,9 @@ mca_coll_han_reduce_intra(const void *sbuf,
     free(tmp_rbuf_to_free);
 
     return OMPI_SUCCESS;
-
- prev_reduce_intra:
-    return han_module->previous_reduce(sbuf, rbuf, count, dtype, op, root,
-                                       comm,
-                                       han_module->previous_reduce_module);
 }
+
+
 
 /* t0 task: issue and wait for the low level reduce of segment 0 */
 int mca_coll_han_reduce_t0_task(void *task_args)
@@ -257,6 +256,11 @@ int mca_coll_han_reduce_t1_task(void *task_args) {
     return OMPI_SUCCESS;
 }
 
+#define MCA_COLL_HAN_REDUCE_INTRA_SIMPLE_PREV_RETURN() {                          \
+    return han_module->previous_reduce(sbuf, rbuf, count, dtype, op, root,        \
+                                       comm, han_module->previous_reduce_module); \
+}
+
 /* In case of non regular situation (imbalanced number of processes per nodes),
  * a fallback is made on the next component that provides a reduce in priority order */
 int
@@ -282,7 +286,7 @@ mca_coll_han_reduce_intra_simple(const void *sbuf,
     if(!ompi_op_is_commute(op)){
         OPAL_OUTPUT_VERBOSE((30, mca_coll_han_component.han_output,
                              "han cannot handle reduce with this operation. Fall back on another component\n"));
-        goto prev_reduce_intra;
+        MCA_COLL_HAN_REDUCE_INTRA_SIMPLE_PREV_RETURN();
     }
 
     /* Create the subcommunicators */
@@ -347,7 +351,7 @@ mca_coll_han_reduce_intra_simple(const void *sbuf,
         OPAL_OUTPUT_VERBOSE((30, mca_coll_han_component.han_output,
                              "HAN/REDUCE: low comm reduce failed. "
                              "Falling back to another component\n"));
-        goto prev_reduce_intra;
+        MCA_COLL_HAN_REDUCE_INTRA_SIMPLE_PREV_RETURN();
     }
 
     /* Up_comm reduce */
@@ -372,10 +376,6 @@ mca_coll_han_reduce_intra_simple(const void *sbuf,
 
     }
     return OMPI_SUCCESS;
-
- prev_reduce_intra:
-    return han_module->previous_reduce(sbuf, rbuf, count, dtype, op, root,
-                                       comm, han_module->previous_reduce_module);
 }
 
 

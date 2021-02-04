@@ -93,7 +93,8 @@ mca_coll_han_allreduce_intra(const void *sbuf,
     if(!ompi_op_is_commute(op)) {
         OPAL_OUTPUT_VERBOSE((30, mca_coll_han_component.han_output,
                              "han cannot handle allreduce with this operation. Fall back on another component\n"));
-        goto prev_allreduce_intra;
+        return han_module->previous_allreduce(sbuf, rbuf, count, dtype, op,
+                                              comm, han_module->previous_allreduce_module);
     }
 
     /* Create the subcommunicators */
@@ -188,10 +189,6 @@ mca_coll_han_allreduce_intra(const void *sbuf,
     free(t);
 
     return OMPI_SUCCESS;
-
- prev_allreduce_intra:
-    return han_module->previous_allreduce(sbuf, rbuf, count, dtype, op,
-                                          comm, han_module->previous_allreduce_module);
 }
 
 /* t0 task */
@@ -397,6 +394,11 @@ int mca_coll_han_allreduce_t3_task(void *task_args)
     return OMPI_SUCCESS;
 }
 
+#define MCA_COLL_HAN_ALLREDUCE_INTRA_SIMPLE_PREV_RETURN() {                             \
+    return han_module->previous_allreduce(sbuf, rbuf, count, dtype, op,                 \
+                                          comm, han_module->previous_allreduce_module); \
+}
+
 int
 mca_coll_han_allreduce_intra_simple(const void *sbuf,
                                     void *rbuf,
@@ -423,7 +425,7 @@ mca_coll_han_allreduce_intra_simple(const void *sbuf,
     if (! ompi_op_is_commute(op)) {
         OPAL_OUTPUT_VERBOSE((30, mca_coll_han_component.han_output,
                              "han cannot handle allreduce with this operation. Fall back on another component\n"));
-        goto prev_allreduce;
+        MCA_COLL_HAN_ALLREDUCE_INTRA_SIMPLE_PREV_RETURN()
     }
 
     /* Create the subcommunicators */
@@ -432,8 +434,7 @@ mca_coll_han_allreduce_intra_simple(const void *sbuf,
                              "han cannot handle allreduce with this communicator. Drop HAN support in this communicator and fall back on another component\n"));
         /* HAN cannot work with this communicator so fallback on all collectives */
         HAN_LOAD_FALLBACK_COLLECTIVES(han_module, comm);
-        return comm->c_coll->coll_allreduce(sbuf, rbuf, count, dtype, op,
-                                            comm, comm->c_coll->coll_reduce_module);
+        MCA_COLL_HAN_ALLREDUCE_INTRA_SIMPLE_PREV_RETURN()
     }
 
     low_comm = han_module->sub_comm[INTRA_NODE];
@@ -462,7 +463,7 @@ mca_coll_han_allreduce_intra_simple(const void *sbuf,
         OPAL_OUTPUT_VERBOSE((30, cs->han_output,
                              "HAN/ALLREDUCE: low comm reduce failed. "
                              "Falling back to another component\n"));
-        goto prev_allreduce;
+        MCA_COLL_HAN_ALLREDUCE_INTRA_SIMPLE_PREV_RETURN();
     }
 
     /* Local roots perform a allreduce on the upper comm */
@@ -489,14 +490,10 @@ mca_coll_han_allreduce_intra_simple(const void *sbuf,
         OPAL_OUTPUT_VERBOSE((30, cs->han_output,
                              "HAN/ALLREDUCE: low comm bcast failed. "
                              "Falling back to another component\n"));
-        goto prev_allreduce;
+        MCA_COLL_HAN_ALLREDUCE_INTRA_SIMPLE_PREV_RETURN();
     }
 
     return OMPI_SUCCESS;
-
- prev_allreduce:
-    return han_module->previous_allreduce(sbuf, rbuf, count, dtype, op,
-                                          comm, han_module->previous_allreduce_module);
 }
 
 /* Find a fallback on reproducible algorithm
