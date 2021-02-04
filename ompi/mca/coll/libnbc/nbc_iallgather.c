@@ -360,11 +360,11 @@ static inline int allgather_sched_recursivedoubling(
     int res = OMPI_SUCCESS;
     ptrdiff_t rlb, rext;
     char *tmpsend = NULL, *tmprecv = NULL;
+    int sendblocklocation = rank;
 
     res = ompi_datatype_get_extent(rdtype, &rlb, &rext);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) { goto cleanup_and_return; }
 
-    int sendblocklocation = rank;
     for (int distance = 1; distance < comm_size; distance <<= 1) {
         int remote = rank ^ distance;
 

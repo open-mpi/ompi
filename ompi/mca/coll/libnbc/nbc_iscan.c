@@ -262,16 +262,18 @@ static inline int scan_sched_recursivedoubling(
                               recvbuf, false, count, datatype, schedule, true);
         if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) { goto cleanup_and_return; }
     }
-    if (comm_size < 2)
-        goto cleanup_and_return;
 
     char *psend = (char *)tmpbuf1;
     char *precv = (char *)tmpbuf2;
+    int is_commute = 0;
+    if (comm_size < 2)
+        goto cleanup_and_return;
+
     res = NBC_Sched_copy(recvbuf, false, count, datatype,
                          psend, true, count, datatype, schedule, true);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) { goto cleanup_and_return; }
 
-    int is_commute = ompi_op_is_commute(op);
+    is_commute = ompi_op_is_commute(op);
     for (int mask = 1; mask < comm_size; mask <<= 1) {
         int remote = rank ^ mask;
         if (remote < comm_size) {

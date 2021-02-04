@@ -663,6 +663,7 @@ static inline int red_sched_redscat_gather(
     int nprocs_pof2 = 1 << nsteps;                              /* flp2(comm_size) */
 
     ptrdiff_t lb, extent;
+    int vrank = 0, step = 0, wsize = 0, nprocs_rem = 0, vroot = 0;
     ompi_datatype_get_extent(datatype, &lb, &extent);
 
     if ((rank != root) || !inplace) {
@@ -689,9 +690,7 @@ static inline int red_sched_redscat_gather(
      * rest of the algorithm.
      */
 
-    int vrank, step, wsize;
-    int nprocs_rem = comm_size - nprocs_pof2;
-
+    nprocs_rem = comm_size - nprocs_pof2;
     if (rank < 2 * nprocs_rem) {
         int count_lhalf = count / 2;
         int count_rhalf = count - count_lhalf;
@@ -843,7 +842,6 @@ static inline int red_sched_redscat_gather(
      * Case 2: root < 2r and root is even: vroot = root / 2
      * Case 3: root >= 2r: vroot = root - r
      */
-    int vroot = 0;
     if (root < 2 * nprocs_rem) {
         if (root % 2 != 0) {
             vroot = 0;

@@ -983,13 +983,15 @@ static inline int allred_sched_redscat_allgather(
      /* Find nearest power-of-two less than or equal to comm_size */
     int nsteps = opal_hibit(comm_size, comm->c_cube_dim + 1);   /* ilog2(comm_size) */
     int nprocs_pof2 = 1 << nsteps;                              /* flp2(comm_size) */
+
+    char *tmp_buf = (char *)tmpbuf - gap;
+    ptrdiff_t lb, extent;
      if (!inplace) {
         res = NBC_Sched_copy((char *)sbuf, false, count, datatype,
                              rbuf, false, count, datatype, schedule, true);
         if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) { goto cleanup_and_return; }
     }
-    char *tmp_buf = (char *)tmpbuf - gap;
-    ptrdiff_t lb, extent;
+
     ompi_datatype_get_extent(datatype, &lb, &extent);
      /*
      * Step 1. Reduce the number of processes to the nearest lower power of two

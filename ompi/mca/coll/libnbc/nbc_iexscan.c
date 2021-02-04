@@ -300,6 +300,7 @@ static inline int exscan_sched_recursivedoubling(
     int res = OMPI_SUCCESS;
     char *psend = (char *)tmpbuf1;
     char *precv = (char *)tmpbuf2;
+    int is_commute = 0, is_first_block = 1;
 
     if (!inplace) {
         res = NBC_Sched_copy((char *)sendbuf, false, count, datatype,
@@ -310,8 +311,7 @@ static inline int exscan_sched_recursivedoubling(
     }
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) { goto cleanup_and_return; }
 
-    int is_commute = ompi_op_is_commute(op);
-    int is_first_block = 1;
+    is_commute = ompi_op_is_commute(op);
 
     for (int mask = 1; mask < comm_size; mask <<= 1) {
         int remote = rank ^ mask;
