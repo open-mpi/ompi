@@ -205,7 +205,7 @@ static int init_sm_endpoint (struct mca_btl_base_endpoint_t *ep, struct opal_pro
 
     ep->peer_smp_rank = remote_rank;
 
-    if (remote_rank != MCA_BTL_SM_LOCAL_RANK) {
+    if (proc->proc_name.vpid != opal_proc_local_get()->proc_name.vpid) {
         OPAL_MODEX_RECV_IMMEDIATE(rc, &component->super.btl_version,
                                   &proc->proc_name, (void **) &modex, &msg_size);
         if (OPAL_SUCCESS != rc) {
