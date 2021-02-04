@@ -166,7 +166,8 @@ static int oshmem_shmem_xchng(
     int *_rcv_offsets = NULL; 
     void *rcv_buf       = NULL;
     int rc;
-    int i,j,k;
+    int i,j,k, _local_size = 0, new_offset = 0;
+    char *_local_data = NULL;
 
     /* do allgatherv */
     rcv_offsets = calloc(ucp_workers * nprocs, sizeof(*rcv_offsets));
@@ -197,7 +198,6 @@ static int oshmem_shmem_xchng(
         goto err;
     }
    
-    int _local_size = 0;
     for (i = 0; i < ucp_workers; i++) {
         _local_size += local_size[i];
     }
@@ -216,8 +216,7 @@ static int oshmem_shmem_xchng(
         _rcv_offsets[i] = _rcv_offsets[i - 1] + _rcv_sizes[i - 1];
     }
 
-    char *_local_data = calloc(_local_size, 1);
-    int new_offset = 0;
+    _local_data = calloc(_local_size, 1);
     for (i = 0; i < ucp_workers; i++) {
         memcpy((char *) (_local_data+new_offset), (char *)local_data[i], local_size[i]);
         new_offset += local_size[i];
@@ -296,6 +295,7 @@ int mca_spml_ucx_add_procs(ompi_proc_t** procs, size_t nprocs)
     ucp_address_t **wk_local_addr;
     unsigned int *wk_addr_len;
     ucp_ep_params_t ep_params;
+    int offset = 0;
 
     wk_local_addr = calloc(mca_spml_ucx.ucp_workers, sizeof(ucp_address_t *));
     wk_addr_len = calloc(mca_spml_ucx.ucp_workers, sizeof(size_t));
@@ -334,7 +334,6 @@ int mca_spml_ucx_add_procs(ompi_proc_t** procs, size_t nprocs)
     }
 
     /* Store all remote addresses */
-    int offset = 0;
     for (i = 0, n = 0; n < nprocs; n++) {
         for (w = 0; w < ucp_workers; w++, i++) {
             mca_spml_ucx.remote_addrs_tbl[w][n] = (char *)malloc(wk_rsizes[i]);

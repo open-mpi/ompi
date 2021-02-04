@@ -92,7 +92,7 @@ static int reg_int(const char* param_name,
     index = mca_base_component_var_register(
             &mca_scoll_mpi_component.super.scoll_version,
             param_name, param_desc, MCA_BASE_VAR_TYPE_INT,
-            NULL, 0, 0,OPAL_INFO_LVL_9,
+            NULL, 0, MCA_BASE_VAR_FLAG_NONE, OPAL_INFO_LVL_9,
             MCA_BASE_VAR_SCOPE_READONLY, storage);
     if (NULL != deprecated_param_name) {
         (void) mca_base_var_register_synonym(index,
