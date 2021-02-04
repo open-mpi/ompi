@@ -256,6 +256,9 @@ static inline int scan_sched_recursivedoubling(
     NBC_Schedule *schedule, void *tmpbuf1, void *tmpbuf2)
 {
     int res = OMPI_SUCCESS;
+    char *psend = (char *)tmpbuf1;
+    char *precv = (char *)tmpbuf2;
+    int is_commute = 0;
 
     if (!inplace) {
         res = NBC_Sched_copy((void *)sendbuf, false, count, datatype,
@@ -263,9 +266,6 @@ static inline int scan_sched_recursivedoubling(
         if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) { goto cleanup_and_return; }
     }
 
-    char *psend = (char *)tmpbuf1;
-    char *precv = (char *)tmpbuf2;
-    int is_commute = 0;
     if (comm_size < 2)
         goto cleanup_and_return;
 

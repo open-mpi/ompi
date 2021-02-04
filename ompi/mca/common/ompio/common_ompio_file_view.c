@@ -220,7 +220,10 @@ int mca_common_ompio_set_view (ompio_file_t *fh,
        }
     }
 
+    mca_fcoll_base_component_t *preferred =NULL;
+    bool info_is_set=false;
     char char_stripe[MPI_MAX_INFO_VAL];
+
     /* Check the info object set during File_open */
     opal_info_get (fh->f_info, "cb_nodes", MPI_MAX_INFO_VAL, char_stripe, &flag);
     if ( flag ) {
@@ -322,7 +325,6 @@ int mca_common_ompio_set_view (ompio_file_t *fh,
 	ompi_datatype_destroy ( &newfiletype );
     }
 
-    bool info_is_set=false;
     opal_info_get (fh->f_info, "collective_buffering", MPI_MAX_INFO_VAL, char_stripe, &flag);
     if ( flag ) {
         if ( strncmp ( char_stripe, "false", sizeof("true") )){
@@ -343,7 +345,6 @@ int mca_common_ompio_set_view (ompio_file_t *fh,
         }
     }
 
-    mca_fcoll_base_component_t *preferred =NULL;
     if ( info_is_set ) {
         /* user requested using an info object to disable collective buffering. */
         preferred = mca_fcoll_base_component_lookup ("individual");

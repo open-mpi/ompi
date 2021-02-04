@@ -984,8 +984,11 @@ static inline int allred_sched_redscat_allgather(
     int nsteps = opal_hibit(comm_size, comm->c_cube_dim + 1);   /* ilog2(comm_size) */
     int nprocs_pof2 = 1 << nsteps;                              /* flp2(comm_size) */
 
+    int vrank, step, wsize;
+    int nprocs_rem = comm_size - nprocs_pof2;
     char *tmp_buf = (char *)tmpbuf - gap;
     ptrdiff_t lb, extent;
+
      if (!inplace) {
         res = NBC_Sched_copy((char *)sbuf, false, count, datatype,
                              rbuf, false, count, datatype, schedule, true);
@@ -1009,8 +1012,6 @@ static inline int allred_sched_redscat_allgather(
      * processes and the p - 2r last processes are renumbered from
      * 0 to 2^{\floor{\log_2 p}} - 1.
      */
-    int vrank, step, wsize;
-    int nprocs_rem = comm_size - nprocs_pof2;
      if (rank < 2 * nprocs_rem) {
         int count_lhalf = count / 2;
         int count_rhalf = count - count_lhalf;
