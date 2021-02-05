@@ -547,9 +547,14 @@ int32_t ompi_datatype_init( void )
         ompi_mpi_##name.dt.d_f_to_c_index = index;                      \
         rc = opal_pointer_array_set_item(&ompi_datatype_f_to_c_table,   \
                                          index, &ompi_mpi_##name);      \
-        assert( rc == OPAL_SUCCESS );                                   \
-        if( ompi_datatype_number_of_predefined_data < (ompi_mpi_##name).dt.d_f_to_c_index + 1 ) \
-            ompi_datatype_number_of_predefined_data = (ompi_mpi_##name).dt.d_f_to_c_index + 1; \
+        if(OPAL_SUCCESS != rc) {                                        \
+            fprintf(stderr, "ERROR: opal_pointer_array_set_item() returned %d\n", rc); \
+            fprintf(stderr, "Failure in %s:%d\n", __func__, __LINE__);                 \
+            return rc;                                                  \
+        }                                                               \
+        if( ompi_datatype_number_of_predefined_data < (ompi_mpi_##name).dt.d_f_to_c_index + 1 ) { \
+            ompi_datatype_number_of_predefined_data = (ompi_mpi_##name).dt.d_f_to_c_index + 1;    \
+        }                                                                                         \
     } while(0)
 
     /*
