@@ -522,6 +522,14 @@ static inline uint16_t ntohs(uint16_t netvar) { return netvar; }
 #define restrict
 #endif
 
+#ifdef HAVE_OPAL_SHORT_FLOAT_COMPLEX_T
+#undef opal_short_float_complex_t
+typedef struct {
+    opal_short_float_t real;
+    opal_short_float_t imag;
+} opal_short_float_complex_t;
+#endif
+
 #else
 
 /* For a similar reason to what is listed in opal_config_top.h, we
