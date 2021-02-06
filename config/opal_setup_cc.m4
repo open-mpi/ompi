@@ -507,6 +507,27 @@ AC_DEFUN([OPAL_SETUP_CC],[
         fi
     fi
 
+    if test "$opal_c_vendor" = "ibm" ; then
+	# Check for flag to silence warnings about usage of typeof
+        CFLAGS_orig="$CFLAGS"
+
+        add=" -qkeyword=typeof"
+        CFLAGS="$CFLAGS_orig$add"
+        AC_CACHE_CHECK([if $CC supports -qkeyword=typeof],
+                   [opal_cv_cc_qkeyword_typeof],
+                   [AC_TRY_COMPILE([], [],
+                                   [opal_cv_cc_qkeyword_typeof="yes"]
+                                   [opal_cv_cc_qkeyword_typeof="no"])])
+        if test "$opal_cv_cc_qkeyword_typeof" = "no" ; then
+            add=
+        fi
+        CFLAGS="$CFLAGS_orig$add"
+
+        OPAL_FLAGS_UNIQ(CFLAGS)
+         AC_MSG_WARN([$add has been added to CFLAGS])
+        unset add
+    fi
+
     OPAL_ENSURE_CONTAINS_OPTFLAGS("$OPAL_CFLAGS_BEFORE_PICKY")
     OPAL_CFLAGS_BEFORE_PICKY="$co_result"
 
