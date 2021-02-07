@@ -196,11 +196,9 @@ avx_component_register(void)
 
     // MCA var enum flag for conveniently seeing SSE/MMX/AVX support
     // values
-    mca_base_var_enum_flag_t *new_enum_flag;
+    mca_base_var_enum_flag_t *new_enum_flag = NULL;
     (void) mca_base_var_enum_create_flag("op_avx_support_flags",
                                          avx_support_flags, &new_enum_flag);
-    (void) mca_base_var_enum_register("ompi", "op", "avx", "support_flags",
-                                      &new_enum_flag);
 
     (void) mca_base_component_var_register(&mca_op_avx_component.super.opc_version,
                                            "capabilities",
