@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2017 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2021 University of Houston. All rights reserved.
  * Copyright (c) 2018      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -283,20 +283,6 @@ int mca_fcoll_base_query_table (struct ompio_file_t *file, char *name)
         if ( LUSTRE == file->f_fstype ) {
             return 1;
         }
-    }
-    if (!strcmp (name, "two_phase")) {
-#if OPAL_CUDA_SUPPORT
-        /* do not use the two_phase component with CUDA
-           buffers, since the data sieving causes trouble 
-           on unmanaged GPU buffers.
-        */
-#else
-        if ((int)file->f_cc_size < file->f_bytes_per_agg &&
-            (0 == file->f_stripe_size || file->f_cc_size < file->f_stripe_size) && 
-	    (LUSTRE != file->f_fstype) ) {
-            return 1;
-        }
-#endif
     }
     return 0;
 }
