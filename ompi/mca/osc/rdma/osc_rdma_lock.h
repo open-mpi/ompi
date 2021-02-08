@@ -2,6 +2,8 @@
 /*
  * Copyright (c) 2014-2018 Los Alamos National Security, LLC.  All rights
  *                         reserved.
+ * Copyright (c) 2019      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -85,10 +87,10 @@ static inline int ompi_osc_rdma_btl_fop (ompi_osc_rdma_module_t *module, struct 
             ret = OMPI_SUCCESS;
             ompi_osc_rdma_atomic_complete (module->selected_btl, endpoint, pending_op->op_buffer,
                                            pending_op->op_frag->handle, (void *) pending_op, NULL, OPAL_SUCCESS);
+        } else {
+            /* need to release here because ompi_osc_rdma_atomic_complete was not called */
+            OBJ_RELEASE(pending_op);
         }
-
-        /* need to release here because ompi_osc_rdma_atomic_complet was not called */
-        OBJ_RELEASE(pending_op);
     } else if (wait_for_completion) {
         while (!pending_op->op_complete) {
             ompi_osc_rdma_progress (module);
@@ -151,7 +153,7 @@ static inline int ompi_osc_rdma_btl_op (ompi_osc_rdma_module_t *module, struct m
     } while (1);
 
     if (OPAL_SUCCESS != ret) {
-        /* need to release here because ompi_osc_rdma_atomic_complet was not called */
+        /* need to release here because ompi_osc_rdma_atomic_complete was not called */
         OBJ_RELEASE(pending_op);
         if (OPAL_LIKELY(1 == ret)) {
             if (cbfunc) {
