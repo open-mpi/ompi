@@ -20,7 +20,7 @@
  * Copyright (c) 2018      Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2019      Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
- * Copyright (c) 2020      Google, LLC. All rights reserved.
+ * Copyright (c) 2020-2021 Google, LLC. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -799,6 +799,34 @@ static int ompi_osc_rdma_query_mtls (void)
     return -1;
 }
 
+/**
+ * @brief ensure that all local procs are added to the bml
+ *
+ * The sm btl requires that all local procs be added to work correctly. If pml/ob1
+ * was not selected then we can't rely on this property. Since osc/rdma may use
+ * btl/sm we need to ensure that btl/sm is set up correctly. This function will
+ * only (potentially) call add_procs on local procs.
+ */
+static void ompi_osc_rdma_ensure_local_add_procs (void)
+{
+    size_t nprocs;
+    ompi_proc_t** procs = ompi_proc_get_allocated (&nprocs);
+    if (NULL == procs) {
+        /* weird, this should have caused MPI_Init to fail */
+        return;
+    }
+
+    for (size_t proc_index = 0 ; proc_index < nprocs ; ++proc_index) {
+        ompi_proc_t *proc = procs[proc_index];
+        if (OPAL_PROC_ON_LOCAL_NODE(proc->super.proc_flags)) {
+            /* this will cause add_proc to get called if it has not already been called */
+            (void) mca_bml_base_get_endpoint (proc);
+        }
+    } 
+
+    free(procs);
+}
+
 static int ompi_osc_rdma_query_btls (ompi_communicator_t *comm, struct mca_btl_base_module_t **btl)
 {
     struct mca_btl_base_module_t **possible_btls = NULL;
@@ -843,6 +871,9 @@ static int ompi_osc_rdma_query_btls (ompi_communicator_t *comm, struct mca_btl_b
         return OMPI_SUCCESS;
     }
 
+    /* if osc/rdma gets selected we need to ensure that all local procs have been added */
+    ompi_osc_rdma_ensure_local_add_procs ();
+    
     for (int rank = 0 ; rank < comm_size ; ++rank) {
         ompi_proc_t *proc = ompi_comm_peer_lookup (comm, rank);
         mca_bml_base_endpoint_t *endpoint;
