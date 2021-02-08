@@ -340,10 +340,10 @@ static uint32_t get_package_rank(opal_process_info_t *process_info)
                                        &pname, &locality_string, PMIX_STRING);
         if (PMIX_SUCCESS != rc || NULL == locality_string) {
             // If we don't have information about locality, fall back to procid
-            opal_output_verbose(1, opal_common_ofi.output,
-                                "%s:%d:Unable to get locality string from local peers.\n"
-                                "This may negatively impact performance.\n",
-                                __FILE__, __LINE__);
+            int level = 10;
+            if (opal_output_get_verbosity(opal_common_ofi.output) >= level) {
+                opal_show_help("help-common-ofi.txt", "package_rank failed", true, level);
+            }
             return (uint32_t)process_info->myprocid.rank;
         }
 
