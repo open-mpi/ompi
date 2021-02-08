@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2020      Google, LLC. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -27,6 +28,10 @@
 #include "opal/class/opal_list.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/btl/btl.h"
+
+#define MCA_BTL_BASE_TAG_RDMA      MCA_BTL_TAG_BTL_BASE
+#define MCA_BTL_BASE_TAG_ATOMIC    (MCA_BTL_TAG_BTL_BASE + 1)
+#define MCA_BTL_BASE_TAG_RDMA_RESP (MCA_BTL_TAG_BTL_BASE + 2)
 
 BEGIN_C_DECLS
 
