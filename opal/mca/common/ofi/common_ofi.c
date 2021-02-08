@@ -356,7 +356,10 @@ static uint32_t get_package_rank(int32_t num_local_peers, uint16_t my_local_rank
                                        &pname, &locality_string, OPAL_STRING);
         if (OPAL_SUCCESS != rc || NULL == locality_string) {
             // If we don't have information about locality, fall back to procid
-            opal_show_help("help-common-ofi.txt", "package_rank failed", true);
+            int level = 10;
+            if (opal_output_get_verbosity(opal_common_ofi.output) >= level) {
+                opal_show_help("help-common-ofi.txt", "package_rank failed", true, level);
+            }
             return pid;
         }
 
