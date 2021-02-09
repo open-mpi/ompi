@@ -27,6 +27,10 @@
 amca_paramdir = $(AMCA_PARAM_SETS_DIR)
 dist_amca_param_DATA = amca-param-sets/example.conf
 
+if WANT_FT_MPI
+dist_amca_param_DATA += amca-param-sets/ft-mpi
+endif # WANT_FT_MPI
+
 if WANT_FT_CR
 dist_amca_param_DATA += \
 	amca-param-sets/ft-enable-cr \

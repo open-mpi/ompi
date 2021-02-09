@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2017 The University of Tennessee and The University
+ * Copyright (c) 2004-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -77,6 +77,7 @@
 #include "ompi/mca/pml/base/base.h"
 #include "ompi/mca/bml/base/base.h"
 #include "ompi/mca/osc/base/base.h"
+#include "ompi/mca/coll/base/coll_base_functions.h"
 #include "ompi/mca/coll/base/base.h"
 #include "ompi/runtime/ompi_rte.h"
 #include "ompi/mca/topo/base/base.h"
@@ -153,6 +154,42 @@ int ompi_mpi_finalize(void)
         OBJ_RELEASE(ompi_mpi_comm_self.comm.c_keyhash);
         ompi_mpi_comm_self.comm.c_keyhash = NULL;
     }
+
+#if OPAL_ENABLE_FT_MPI
+    if( ompi_ftmpi_enabled ) {
+        ompi_communicator_t* comm = &ompi_mpi_comm_world.comm;
+        OPAL_OUTPUT_VERBOSE((50, ompi_ftmpi_output_handle, "FT: Rank %d entering finalize", ompi_comm_rank(comm)));
+
+        /* grpcomm barrier does not tolerate /new/ failures. Let's make sure
+         * we drain all preexisting failures before we proceed;
+         * TODO: when we have better failure support in the runtime, we can
+         * remove that agreement */
+        ompi_communicator_t* ncomm;
+        ret = ompi_comm_shrink_internal(comm, &ncomm);
+        if( MPI_SUCCESS != ret ) {
+            OMPI_ERROR_LOG(ret);
+            goto done;
+        }
+        /* do a barrier with closest neighbors in the ring, using doublering as
+         * it is synchronous and will help flush all past communications */
+        ret = ompi_coll_base_barrier_intra_doublering(ncomm, ncomm->c_coll->coll_barrier_module);
+        if( MPI_SUCCESS != ret ) {
+            OMPI_ERROR_LOG(ret);
+            goto done;
+        }
+        OBJ_RELEASE(ncomm);
+        /* End of failure drain */
+
+        /* finalize the fault tolerant infrastructure (revoke,
+         * failure propagator, etc). From now-on we do not tolerate new failures. */
+        OPAL_OUTPUT_VERBOSE((50, ompi_ftmpi_output_handle, "FT: Rank %05d turning off FT", ompi_comm_rank(comm)));
+        ompi_comm_failure_detector_finalize();
+        ompi_comm_failure_propagator_finalize();
+        ompi_comm_revoke_finalize();
+        ompi_comm_rbcast_finalize();
+        opal_output_verbose(40, ompi_ftmpi_output_handle, "Rank %05d: DONE WITH FINALIZE", ompi_comm_rank(comm));
+    }
+#endif /* OPAL_ENABLE_FT_MPI */
 
     /* Mark that we are past COMM_SELF destruction so that
        MPI_FINALIZED can return an accurate value (per MPI-3.1,

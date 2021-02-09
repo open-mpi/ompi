@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2016 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2017 Cisco Systems, Inc.  All rights reserved
- * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2009-2012 Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2014-2019 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2015-2019 Intel, Inc.  All rights reserved.
@@ -124,6 +124,8 @@ void ompi_info_do_config(bool want_all)
     char *wtime_support;
     char *symbol_visibility;
     char *ft_support;
+    char *ft_mpi_support;
+    char *ft_cr_support;
     char *crdebug_support;
     char *topology_support;
     char *ipv6_support;
@@ -299,8 +301,15 @@ void ompi_info_do_config(bool want_all)
     (void)opal_asprintf(&threads, "%s (MPI_THREAD_MULTIPLE: yes, OPAL support: yes, OMPI progress: %s, Event lib: yes)",
                    "posix", OPAL_ENABLE_PROGRESS_THREADS ? "yes" : "no");
 
-    (void)opal_asprintf(&ft_support, "%s (checkpoint thread: %s)",
-                   OPAL_ENABLE_FT ? "yes" : "no", OPAL_ENABLE_FT_THREAD ? "yes" : "no");
+    (void)opal_asprintf(&ft_support, "%s",
+                   OPAL_ENABLE_FT ? "yes" : "no" );
+
+    (void)opal_asprintf(&ft_mpi_support, "%s",
+                   OPAL_ENABLE_FT_MPI ? "yes" : "no");
+
+    (void)opal_asprintf(&ft_cr_support, "%s (checkpoint thread: %s)",
+                   OPAL_ENABLE_FT_CR ? "yes" : "no",
+                   OPAL_ENABLE_FT_THREAD ? "yes" : "no");
 
     (void)opal_asprintf(&crdebug_support, "%s",
                    OPAL_ENABLE_CRDEBUG ? "yes" : "no");
@@ -635,8 +644,14 @@ void ompi_info_do_config(bool want_all)
 
     opal_info_out("MPI extensions", "options:mpi_ext", OMPI_MPIEXT_COMPONENTS);
 
-    opal_info_out("FT Checkpoint support", "options:ft_support", ft_support);
+    opal_info_out("Fault Tolerance support", "options:ft_support", ft_support);
     free(ft_support);
+
+    opal_info_out("FT MPI support", "options:ft_mpi_support", ft_mpi_support);
+    free(ft_mpi_support);
+
+    opal_info_out("FT Checkpoint/Restart", "options:ft_cr_support", ft_cr_support);
+    free(ft_cr_support);
 
     opal_info_out("C/R Enabled Debugging", "options:crdebug_support", crdebug_support);
     free(crdebug_support);

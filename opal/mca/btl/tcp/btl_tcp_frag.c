@@ -136,7 +136,7 @@ bool mca_btl_tcp_frag_send(mca_btl_tcp_frag_t* frag, int sd)
                 mca_btl_tcp_endpoint_close(frag->endpoint);
                 return false;
             default:
-                BTL_ERROR(("mca_btl_tcp_frag_send: writev failed: %s (%d)",
+                BTL_PEER_ERROR(frag->endpoint->endpoint_proc->proc_opal, ("mca_btl_tcp_frag_send: writev failed: %s (%d)",
                            strerror(opal_socket_errno),
                            opal_socket_errno));
                 /* send_lock held by caller */
@@ -236,14 +236,17 @@ bool mca_btl_tcp_frag_recv(mca_btl_tcp_frag_t* frag, int sd)
                        strerror(opal_socket_errno), (unsigned long) frag->iov_cnt));
             break;
         case ECONNRESET:
-            errhost = opal_get_proc_hostname(btl_endpoint->endpoint_proc->proc_opal);
-            opal_show_help("help-mpi-btl-tcp.txt", "peer hung up",
+            if( mca_btl_base_warn_peer_error
+             || mca_btl_base_verbose > 0 ) {
+                errhost = opal_get_proc_hostname(btl_endpoint->endpoint_proc->proc_opal);
+                opal_show_help("help-mpi-btl-tcp.txt", "peer hung up",
                            true, opal_process_info.nodename,
                            getpid(), errhost);
-            free(errhost);
+                free(errhost);
+            }
             break;
         default:
-            BTL_ERROR(("mca_btl_tcp_frag_recv: readv failed: %s (%d)",
+            BTL_PEER_ERROR(frag->endpoint->endpoint_proc->proc_opal, ("mca_btl_tcp_frag_recv: readv failed: %s (%d)",
                        strerror(opal_socket_errno),
                        opal_socket_errno));
             break;

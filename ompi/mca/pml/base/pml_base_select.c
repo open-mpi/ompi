@@ -279,6 +279,14 @@ int mca_pml_base_select(bool enable_progress_threads,
         opal_progress_register(mca_pml.pml_progress);
     }
 
+#if OPAL_ENABLE_FT_MPI
+    if( NULL == mca_pml.pml_revoke_comm ) {
+        /* do not crash when calling a not implemented function after a failure is
+         * reported, return a NOT_IMPLEMENTED error */
+        mca_pml.pml_revoke_comm = mca_pml_base_revoke_comm;
+    }
+#endif /* OPAL_ENABLE_FT_MPI */
+
     /* register winner in the modex */
     ret = mca_pml_base_pml_selected(best_component->pmlm_version.mca_component_name);
 

@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2007 The University of Tennessee and The University
+ * Copyright (c) 2004-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -37,6 +37,7 @@
 #include "ompi/proc/proc.h"
 #include "mpi.h"
 #include "opal/class/opal_pointer_array.h"
+#include "opal/mca/threads/threads.h"
 #include "opal/util/output.h"
 
 BEGIN_C_DECLS
@@ -142,6 +143,13 @@ OMPI_DECLSPEC extern struct opal_pointer_array_t ompi_group_f_to_c_table;
 OMPI_DECLSPEC extern struct ompi_predefined_group_t ompi_mpi_group_null;
 OMPI_DECLSPEC extern struct ompi_predefined_group_t *ompi_mpi_group_null_addr;
 
+#if OPAL_ENABLE_FT_MPI
+/*
+ * Global list of failed processes
+ */
+OMPI_DECLSPEC extern ompi_group_t *ompi_group_all_failed_procs;
+OMPI_DECLSPEC extern struct opal_mutex_t ompi_group_afp_mutex;
+#endif /* OPAL_ENABLE_FT_MPI */
 
 /*
  * function prototypes
@@ -419,6 +427,40 @@ static inline struct ompi_proc_t *ompi_group_peer_lookup_existing (ompi_group_t 
 {
     return ompi_group_get_proc_ptr (group, peer_id, false);
 }
+
+#if OPAL_ENABLE_FT_MPI
+/* This function is for finding the rank of a proc in a group
+ * return MPI_PROC_NULL if the proc is not in the group, the rank otherwise.
+ */
+static inline int ompi_group_proc_lookup_rank (ompi_group_t* group, ompi_proc_t* proc)
+{
+    int i, np, v;
+    assert( NULL != proc );
+    assert( !ompi_proc_is_sentinel(proc) );
+    np = ompi_group_size(group);
+    if( 0 == np ) return MPI_PROC_NULL;
+    /* heuristic: On comm_world, start the lookup from v=vpid, so that
+     * when working on comm_world, the search is O(1);
+     * Otherwise, wild guess: start from a proportional position
+     * compared to comm_world position. */
+    v = proc->super.proc_name.vpid;
+    v = (v<np)? v: v*ompi_proc_world_size()/np;
+    for( i = 0; i < np; i++ ) {
+        int rank = (i+v)%np;
+        /* procs are lazy initialized and may be a sentinel. Handle both cases. */
+        ompi_proc_t* p = ompi_group_get_proc_ptr_raw(group, rank);
+        if(OPAL_LIKELY(!ompi_proc_is_sentinel(p))) {
+            if(p == proc) return rank;
+        }
+        else {
+            opal_process_name_t name = ompi_proc_sentinel_to_name((uintptr_t)p);
+            if( OPAL_EQUAL == ompi_rte_compare_name_fields(OMPI_RTE_CMP_ALL, &proc->super.proc_name, &name) )
+                return rank;
+        }
+    }
+    return MPI_PROC_NULL;
+}
+#endif /* OPAL_ENABLE_FT_MPI */
 
 /**
  * Return true if all processes in the group are not on the local node.

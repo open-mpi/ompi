@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2013 The University of Tennessee and The University
+ * Copyright (c) 2004-2017 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -25,6 +25,7 @@
 #include "opal/class/opal_list.h"
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
+#include "opal/util/show_help.h"
 #include "ompi/mca/mca.h"
 #include "opal/mca/base/base.h"
 
@@ -237,6 +238,16 @@ int mca_topo_base_comm_select(const ompi_communicator_t*  comm,
     opal_output_verbose(10, ompi_topo_base_framework.framework_output,
                        "select: component %s selected",
                         best_component->topoc_version.mca_component_name);
+#if OPAL_ENABLE_FT_MPI
+    if(ompi_ftmpi_enabled) {
+        /* check if module is tested for FT, warn if not. */
+        const char* ft_whitelist="";
+        opal_show_help("help-ft-mpi.txt", "module:untested:failundef", true,
+            best_component->topoc_version.mca_type_name,
+            best_component->topoc_version.mca_component_name,
+            ft_whitelist);
+    }
+#endif /* OPAL_ENABLE_FT_MPI */
     return OMPI_SUCCESS;
 }
 

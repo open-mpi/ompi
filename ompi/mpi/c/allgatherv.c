@@ -11,6 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010      University of Houston.  All rights reserved.
+ * Copyright (c) 2010-2012 Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
@@ -119,6 +120,17 @@ int MPI_Allgatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
         }
     }
 
+#if OPAL_ENABLE_FT_MPI
+    /*
+     * An early check, so as to return early if we are using a broken
+     * communicator. This is not absolutely necessary since we will
+     * check for this, and other, error conditions during the operation.
+     */
+    if( OPAL_UNLIKELY(!ompi_comm_iface_coll_check(comm, &err)) ) {
+        OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);
+    }
+#endif
+
     /* Do we need to do anything?  Everyone had to give the same
        signature, which means that everyone must have given a
        sum(recvounts) > 0 if there's anything to do. */
@@ -138,7 +150,6 @@ int MPI_Allgatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
        do not send anything, sendcount=0 only indicates that I do not send
        anything. However, other processes in my group might very well send
        something */
-
 
     OPAL_CR_ENTER_LIBRARY();
 

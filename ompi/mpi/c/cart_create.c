@@ -100,6 +100,17 @@ int MPI_Cart_create(MPI_Comm old_comm, int ndims, const int dims[],
         return err;
     }
 
+#if OPAL_ENABLE_FT_MPI
+    /*
+     * An early check, so as to return early if we are using a broken
+     * communicator. This is not absolutely necessary since we will
+     * check for this, and other, error conditions during the operation.
+     */
+    if( OPAL_UNLIKELY(!ompi_comm_iface_create_check(old_comm, &err)) ) {
+       OMPI_ERRHANDLER_RETURN(err, old_comm, err, FUNC_NAME);
+    }
+#endif
+
     /* Now let that topology module rearrange procs/ranks if it wants to */
     err = topo->topo.cart.cart_create(topo, old_comm,
                                       ndims, dims, periods,

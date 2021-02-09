@@ -1,0 +1,52 @@
+# -*- text -*-
+#
+# Copyright (c) 2017      The University of Tennessee and The University
+#                         of Tennessee Research Foundation.  All rights
+#                         reserved.
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
+#
+# This is the US/English general help file for ULFM Open MPI.
+#
+[module:untested:failundef]
+WARNING: The selected '%s' module '%s' is not tested for post-failure
+operation, yet you have requested support for fault tolerance.
+When using this component, normal failure free operation is expected;
+However, failures may cause the application to abort, crash or deadlock.
+
+In this framework, the following components are tested to operate under
+failure scenarios: {%s}
+#
+[module:untested:failabort]
+WARNING: The selected '%s' module '%s' is not tested for post-failure
+operation, yet you have requested support for fault tolerance.
+When using this component, normal failure free operation is expected;
+However, failures will cause the application to abort.
+
+In this framework, the following components are tested to operate under
+failure scenarios: {%s}
+#
+[module:untested:shouldwork]
+The selected '%s' module '%s' is insuficiently tested in post-failure
+operation, yet you have requested support for fault tolerance.
+When using this component, normal failure free and post-failure operation
+is expected, but the module should not be used in production.
+Please report to the ULFM mailing list your experience (including positive
+ones) with the module under failure scenarios.
+
+In this framework, the following components are tested to operate under
+failure scenarios: {%s}
+#
+[module:event:selectbug]
+WARNING: The selected 'libevent' uses the 'select' method, which has 
+a known bug in post-failure operation, yet you have requested support 
+for fault tolerance. When using this component, normal failure free
+operation is expected; However, failures may cause the application to 
+deadlock.
+
+You may select a different polling method by setting the MCA parameter
+'opal_event_include' to any other method than 'select'.
+#

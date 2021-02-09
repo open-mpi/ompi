@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2018 The University of Tennessee and The University
+ * Copyright (c) 2004-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
@@ -42,6 +42,19 @@ int ompi_request_default_wait(
     ompi_request_wait_completion(req);
 
     OMPI_CRCP_REQUEST_COMPLETE(req);
+
+#if OPAL_ENABLE_FT_MPI
+    /* Special case for MPI_ANY_SOURCE */
+    if( MPI_ERR_PROC_FAILED_PENDING == req->req_status.MPI_ERROR ) {
+        if( MPI_STATUS_IGNORE != status ) {
+            status->MPI_TAG    = req->req_status.MPI_TAG;
+            status->MPI_SOURCE = req->req_status.MPI_SOURCE;
+            status->_ucount = req->req_status._ucount;
+            status->_cancelled = req->req_status._cancelled;
+        }
+        return MPI_ERR_PROC_FAILED_PENDING;
+    }
+#endif /* OPAL_ENABLE_FT_MPI */
 
     /* return status.  If it's a generalized request, we *have* to
        invoke the query_fn, even if the user procided STATUS_IGNORE.
@@ -96,6 +109,7 @@ int ompi_request_default_wait_any(size_t count,
         return OMPI_SUCCESS;
     }
 
+recheck:
     WAIT_SYNC_INIT(&sync, 1);
 
     num_requests_null_inactive = 0;
@@ -113,11 +127,20 @@ int ompi_request_default_wait_any(size_t count,
         }
 
         if( !OPAL_ATOMIC_COMPARE_EXCHANGE_STRONG_PTR(&request->req_complete, &_tmp_ptr, &sync) ) {
-            assert(REQUEST_COMPLETE(request));
+            if(OPAL_LIKELY( REQUEST_COMPLETE(request) )) {
+                completed = i;
+                *index = i;
+                goto after_sync_wait;
+            }
+        }
+
+#if OPAL_ENABLE_FT_MPI
+        if(OPAL_UNLIKELY( ompi_request_is_failed(request) )) {
             completed = i;
             *index = i;
             goto after_sync_wait;
         }
+#endif /* OPAL_ENABLE_FT_MPI */
     }
 
     if(num_requests_null_inactive == count) {
@@ -130,7 +153,7 @@ int ompi_request_default_wait_any(size_t count,
         return rc;
     }
 
-    SYNC_WAIT(&sync);
+    rc = SYNC_WAIT(&sync);
 
   after_sync_wait:
     /* recheck the complete status and clean up the sync primitives.
@@ -155,6 +178,15 @@ int ompi_request_default_wait_any(size_t count,
         }
     }
 
+    /* Error path: SYNC_WAIT was interrupted by an error
+     * We do this after the cleanup loop to make sure nobody is updating the
+     * sync again while we are rearming it */
+    if(OPAL_UNLIKELY( OMPI_SUCCESS != rc )) {
+        rc = OMPI_SUCCESS;
+        WAIT_SYNC_RELEASE(&sync);
+        goto recheck;
+    }
+
     if( *index == (int)completed ) {
         /* Only one request has triggered. There was no in-flight
          * completions. Drop the signalled flag so we won't block
@@ -164,6 +196,13 @@ int ompi_request_default_wait_any(size_t count,
     }
 
     request = requests[*index];
+#if OPAL_ENABLE_FT_MPI
+    /* Special case for MPI_ANY_SOURCE */
+    if( MPI_ERR_PROC_FAILED == request->req_status.MPI_ERROR ) {
+        WAIT_SYNC_RELEASE(&sync);
+        return MPI_ERR_PROC_FAILED_PENDING;
+    }
+#endif  /* OPAL_ENABLE_FT_MPI */
     assert( REQUEST_COMPLETE(request) );
 #if OPAL_ENABLE_FT_CR == 1
     if( opal_cr_is_enabled ) {
@@ -212,6 +251,7 @@ int ompi_request_default_wait_all( size_t count,
         return OMPI_SUCCESS;
     }
 
+recheck:
     WAIT_SYNC_INIT(&sync, count);
     rptr = requests;
     for (i = 0; i < count; i++) {
@@ -225,13 +265,25 @@ int ompi_request_default_wait_all( size_t count,
         }
 
         if (!OPAL_ATOMIC_COMPARE_EXCHANGE_STRONG_PTR(&request->req_complete, &_tmp_ptr, &sync)) {
-            if( OPAL_UNLIKELY( MPI_SUCCESS != request->req_status.MPI_ERROR ) ) {
-                failed++;
+            if( OPAL_LIKELY( REQUEST_COMPLETE(request) ) ) {
+                if( OPAL_UNLIKELY( MPI_SUCCESS != request->req_status.MPI_ERROR ) ) {
+                    failed++;
+                }
+                completed++;
             }
-            completed++;
         }
+
+#if OPAL_ENABLE_FT_MPI
+        if(OPAL_UNLIKELY( ompi_request_is_failed(request) )) {
+            failed++;
+            continue;
+        }
+#endif /* OPAL_ENABLE_FT_MPI */
     }
     if( failed > 0 ) {
+        /* We are completing only one here, lets prevent blocking in the
+         * SYNC_RELEASE by marking the sync as SIGNALED */
+        WAIT_SYNC_SIGNALLED(&sync);
         goto finish;
     }
 
@@ -242,9 +294,30 @@ int ompi_request_default_wait_all( size_t count,
     /* wait until all requests complete or until an error is triggered. */
     mpi_error = SYNC_WAIT(&sync);
     if( OPAL_SUCCESS != mpi_error ) {
-        /* if we are in an error case, increase the failed to ensure
-           proper cleanup during the requests completion. */
-        failed++;
+        /* The sync triggered because of an error. The error may be for us, but
+         * it may be for some other pending wait, so we have to recheck
+         * our request status.
+         *
+         * We are going to rearm the sync, but first make sure it is not
+         * updated by any progress thread meanwhile by removing it from all
+         * requests it has been attached to.
+         */
+        rptr = requests;
+        for (i = 0; i < count; i++) {
+            void *_tmp_ptr = &sync;
+
+            request = *rptr++;
+
+            if( request->req_state == OMPI_REQUEST_INACTIVE ) {
+                continue;
+            }
+
+            OPAL_ATOMIC_COMPARE_EXCHANGE_STRONG_PTR(&request->req_complete, &_tmp_ptr, REQUEST_PENDING);
+        }
+        /* The sync is now ready for rearming */
+        WAIT_SYNC_RELEASE(&sync);
+        failed = completed = 0;
+        goto recheck;
     }
 
  finish:
@@ -276,6 +349,12 @@ int ompi_request_default_wait_all( size_t count,
                      * there was an error in one of the other requests.
                      */
                     statuses[i].MPI_ERROR = MPI_ERR_PENDING;
+#if OPAL_ENABLE_FT_MPI
+                    /* PROC_FAILED_PENDING errors are also not completed yet */
+                    if( MPI_ERR_PROC_FAILED_PENDING == requests[i]->req_status.MPI_ERROR ) {
+                        statuses[i].MPI_ERROR = MPI_ERR_PROC_FAILED_PENDING;
+                    }
+#endif /* OPAL_ENABLE_FT_MPI */
                     mpi_error = MPI_ERR_IN_STATUS;
                     continue;
                 }
@@ -338,6 +417,12 @@ int ompi_request_default_wait_all( size_t count,
                      * there was an error in one of the other requests.
                      */
                     rc = MPI_ERR_PENDING;
+#if OPAL_ENABLE_FT_MPI
+                    /* PROC_FAILED_PENDING errors are also not completed yet */
+                    if( MPI_ERR_PROC_FAILED_PENDING == requests[i]->req_status.MPI_ERROR ) {
+                        rc = MPI_ERR_PROC_FAILED_PENDING;
+                    }
+#endif  /* OPAL_ENABLE_FT_MPI */
                     goto absorb_error_and_continue;
                  }
             }
@@ -365,6 +450,11 @@ int ompi_request_default_wait_all( size_t count,
                 }
             }
     absorb_error_and_continue:
+#if OPAL_ENABLE_FT_MPI
+            if( (MPI_ERR_PROC_FAILED == rc) || (MPI_ERR_REVOKED == rc) ) {
+                mpi_error = rc;
+            }
+#endif  /* OPAL_ENABLE_FT_MPI */
             /*
              * Per MPI 2.2 p34:
              * "It is possible for an MPI function to return MPI_ERR_IN_STATUS
@@ -400,6 +490,7 @@ int ompi_request_default_wait_some(size_t count,
         return OMPI_SUCCESS;
     }
 
+  recheck:
     WAIT_SYNC_INIT(&sync, 1);
 
     *outcount = 0;
@@ -423,9 +514,17 @@ int ompi_request_default_wait_some(size_t count,
         indices[num_active_reqs] = OPAL_ATOMIC_COMPARE_EXCHANGE_STRONG_PTR(&request->req_complete, &_tmp_ptr, &sync);
         if( !indices[num_active_reqs] ) {
             /* If the request is completed go ahead and mark it as such */
-            assert( REQUEST_COMPLETE(request) );
-            num_requests_done++;
+            if( REQUEST_COMPLETE(request) ) {
+                num_requests_done++;
+            }
         }
+
+#if OPAL_ENABLE_FT_MPI
+        if(OPAL_UNLIKELY( ompi_request_is_failed(request) )) {
+            num_requests_done++;
+            continue;
+        }
+#endif /* OPAL_ENABLE_FT_MPI */
         num_active_reqs++;
     }
 
@@ -474,6 +573,13 @@ int ompi_request_default_wait_some(size_t count,
         } else if( !OPAL_ATOMIC_COMPARE_EXCHANGE_STRONG_PTR(&request->req_complete, &_tmp_ptr, REQUEST_PENDING) ) {
             indices[num_requests_done++] = i;
         }
+#if OPAL_ENABLE_FT_MPI
+        /* Special case for MPI_ANY_SOURCE - Error managed below */
+        else if(OPAL_UNLIKELY( ompi_request_is_failed(request) &&
+                               MPI_ERR_PROC_FAILED_PENDING == request->req_status.MPI_ERROR )) {
+            indices[num_requests_done++] = i;
+        }
+#endif /* OPAL_ENABLE_FT_MPI */
         num_active_reqs++;
     }
     sync_unsets = num_active_reqs - num_requests_done;
@@ -487,10 +593,34 @@ int ompi_request_default_wait_some(size_t count,
 
     WAIT_SYNC_RELEASE(&sync);
 
+    /* error path: no requests are done because the sync got triggered
+     * We have nothing more to do here besides rearming the sync and trying
+     * again */
+    if(OPAL_UNLIKELY( 0 == num_requests_done )) {
+        assert(OMPI_SUCCESS != sync.status);
+        goto recheck;
+    }
+
     *outcount = num_requests_done;
 
     for (size_t i = 0; i < num_requests_done; i++) {
         request = requests[indices[i]];
+#if OPAL_ENABLE_FT_MPI
+        /* Special case for MPI_ANY_SOURCE */
+        if( MPI_ERR_PROC_FAILED_PENDING == request->req_status.MPI_ERROR ) {
+            rc = MPI_ERR_IN_STATUS;
+            if (MPI_STATUSES_IGNORE != statuses) {
+                statuses[i] = request->req_status;
+                statuses[i].MPI_ERROR = MPI_ERR_PROC_FAILED_PENDING;
+            } else {
+                if( (MPI_ERR_PROC_FAILED == request->req_status.MPI_ERROR) ||
+                    (MPI_ERR_REVOKED == request->req_status.MPI_ERROR) ) {
+                    rc = request->req_status.MPI_ERROR;
+                }
+            }
+            continue;
+        }
+#endif /* OPAL_ENABLE_FT_MPI */
         assert( REQUEST_COMPLETE(request) );
 
 #if OPAL_ENABLE_FT_CR == 1

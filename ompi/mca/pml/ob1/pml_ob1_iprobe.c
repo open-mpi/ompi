@@ -167,10 +167,14 @@ mca_pml_ob1_mprobe(int src,
         *status = recvreq->req_recv.req_base.req_ompi.req_status;
     }
 
-    (*message)->comm = comm;
-    (*message)->req_ptr = recvreq;
-    (*message)->peer = recvreq->req_recv.req_base.req_ompi.req_status.MPI_SOURCE;
-    (*message)->count = recvreq->req_recv.req_base.req_ompi.req_status._ucount;
-
+    if( OMPI_SUCCESS == rc ) {
+        (*message)->comm = comm;
+        (*message)->req_ptr = recvreq;
+        (*message)->peer = recvreq->req_recv.req_base.req_ompi.req_status.MPI_SOURCE;
+        (*message)->count = recvreq->req_recv.req_base.req_ompi.req_status._ucount;
+    }
+    else {
+        ompi_request_free((ompi_request_t**)&recvreq);
+    }
     return rc;
 }

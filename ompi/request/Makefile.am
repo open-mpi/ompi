@@ -3,13 +3,14 @@
 # Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
 #                         Corporation.  All rights reserved.
-# Copyright (c) 2004-2005 The University of Tennessee and The University
+# Copyright (c) 2004-2016 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
 # Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2010-2012 Oak Ridge National Labs.  All rights reserved.
 # Copyright (c) 2016      IBM Corporation.  All rights reserved.
 # Copyright (c) 2018      Research Organization for Information Science
 #                         and Technology (RIST).  All rights reserved.
@@ -38,6 +39,11 @@ lib@OMPI_LIBMPI_NAME@_la_SOURCES += \
         request/request.c \
         request/req_test.c \
         request/req_wait.c
+
+if WANT_FT_MPI
+lib@OMPI_LIBMPI_NAME@_la_SOURCES += \
+	request/req_ft.c
+endif # WANT_FT_MPI
 
 if OMPI_ENABLE_GREQUEST_EXTENSIONS
 lib@OMPI_LIBMPI_NAME@_la_SOURCES += \

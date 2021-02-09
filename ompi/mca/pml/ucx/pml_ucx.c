@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2001-2011 Mellanox Technologies Ltd. 2001-2011.  ALL RIGHTS RESERVED.
- * Copyright (c) 2016      The University of Tennessee and The University
+ * Copyright (c) 2016-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2018-2019 Research Organization for Information Science
@@ -80,7 +80,7 @@ mca_pml_ucx_module_t ompi_pml_ucx = {
         .pml_ft_event      = NULL,
         .pml_max_contextid = (1ul << (PML_UCX_CONTEXT_BITS)) - 1,
         .pml_max_tag       = (1ul << (PML_UCX_TAG_BITS - 1)) - 1,
-        0 /* flags */
+        .pml_flags         = 0 /* flags */
     },
     .ucp_context           = NULL,
     .ucp_worker            = NULL

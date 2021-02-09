@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2016 The University of Tennessee and The University
+ * Copyright (c) 2014-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
@@ -45,7 +45,7 @@ static inline void wait_sync_update(ompi_wait_sync_t *sync, int updates,
         }
     } else {
         /* this is an error path so just use the atomic */
-        sync->status = OPAL_ERROR;
+        sync->status = status;
         opal_atomic_wmb();
         opal_atomic_swap_32(&sync->count, 0);
     }

@@ -50,6 +50,19 @@ ompi_predefined_group_t ompi_mpi_group_null = {{{0}}};
 ompi_predefined_group_t *ompi_mpi_group_empty_addr = &ompi_mpi_group_empty;
 ompi_predefined_group_t *ompi_mpi_group_null_addr = &ompi_mpi_group_null;
 
+#if OPAL_ENABLE_FT_MPI
+ompi_group_t *ompi_group_all_failed_procs = NULL;
+/* Access to ompi_group_all_failed_procs must be serialized as the group will
+ * be hot-substituted when a failure occurs. A typical use case for this group
+ * is obtaining a snapshot of the group and operate as-if further updates have
+ * happened at a later time (i.e., threaded access appears as-if serialized in
+ * an arbitrary order). This can be done with mutex lock; group pointer copy
+ * (alias); OBJ_RETAIN the group alias; mutex unlock. You are then responsible
+ * for releasing the group object you retained when not needed anymore (no
+ * locking needed there). The lock must not be held when entering progress!
+ */
+opal_mutex_t ompi_group_afp_mutex = OPAL_MUTEX_STATIC_INIT;
+#endif /* OPAL_ENABLE_FT_MPI */
 
 /*
  * Allocate a new group structure
@@ -324,6 +337,16 @@ int ompi_group_init(void)
         return OMPI_ERROR;
     }
 
+#if OPAL_ENABLE_FT_MPI
+    /* Setup global list of failed processes */
+    ompi_group_all_failed_procs = OBJ_NEW(ompi_group_t);
+    ompi_group_all_failed_procs->grp_proc_count     = 0;
+    ompi_group_all_failed_procs->grp_my_rank        = MPI_UNDEFINED;
+    ompi_group_all_failed_procs->grp_proc_pointers  = NULL;
+    ompi_group_all_failed_procs->grp_flags         |= OMPI_GROUP_DENSE;
+    ompi_group_all_failed_procs->grp_flags         |= OMPI_GROUP_INTRINSIC;
+#endif
+
     /* add MPI_GROUP_NULL to table */
     OBJ_CONSTRUCT(&ompi_mpi_group_null, ompi_group_t);
     ompi_mpi_group_null.group.grp_proc_count        = 0;
@@ -354,6 +377,13 @@ int ompi_group_finalize(void)
 
     ompi_mpi_group_null.group.grp_flags = 0;
     OBJ_DESTRUCT(&ompi_mpi_group_empty);
+
+#if OPAL_ENABLE_FT_MPI
+    if( NULL != ompi_group_all_failed_procs ) {
+        OBJ_RELEASE(ompi_group_all_failed_procs);
+        ompi_group_all_failed_procs = NULL;
+    }
+#endif
 
     OBJ_DESTRUCT(&ompi_group_f_to_c_table);
 

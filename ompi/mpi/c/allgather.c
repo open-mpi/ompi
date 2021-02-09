@@ -12,6 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010      University of Houston.  All rights reserved.
+ * Copyright (c) 2010-2012 Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2015-2018 Research Organization for Information Science
@@ -95,6 +96,17 @@ int MPI_Allgather(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
         }
         OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);
     }
+
+#if OPAL_ENABLE_FT_MPI
+    /*
+     * An early check, so as to return early if we are using a broken
+     * communicator. This is not absolutely necessary since we will
+     * check for this, and other, error conditions during the operation.
+     */
+    if( OPAL_UNLIKELY(!ompi_comm_iface_coll_check(comm, &err)) ) {
+        OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);
+    }
+#endif
 
     /* Do we need to do anything?  Everyone had to give the same send
        signature, which means that everyone must have given a

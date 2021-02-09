@@ -327,6 +327,117 @@ static mca_pml_ob1_recv_request_t *match_one (mca_btl_base_module_t *btl,
                                               mca_pml_ob1_comm_proc_t *proc,
                                               mca_pml_ob1_recv_frag_t *frag);
 
+#if OPAL_ENABLE_FT_MPI
+static inline int pml_ob1_frag_is_revoked(ompi_communicator_t* ompi_comm, mca_pml_ob1_recv_frag_t* frag) {
+    mca_pml_ob1_hdr_t* hdr = (mca_pml_ob1_hdr_t*)frag->segments->seg_addr.pval;
+    return ((ompi_comm_is_revoked(ompi_comm) && !ompi_request_tag_is_ft(hdr->hdr_match.hdr_tag))
+         || (ompi_comm_coll_revoked(ompi_comm) && ompi_request_tag_is_collective(hdr->hdr_match.hdr_tag)));
+}
+
+int mca_pml_ob1_revoke_comm( struct ompi_communicator_t* ompi_comm, bool coll_only )
+{
+    mca_pml_ob1_comm_t* comm = ompi_comm->c_pml_comm;
+    mca_pml_ob1_comm_proc_t* proc;
+    size_t i;
+    opal_list_t nack_list;
+    opal_list_item_t *it;
+
+    /* For intercomm, also work with the local_comm */
+    if( OMPI_COMM_IS_INTER(ompi_comm) ) {
+        mca_pml_ob1_revoke_comm(ompi_comm->c_local_comm, coll_only);
+    }
+
+    OBJ_CONSTRUCT(&nack_list, opal_list_t);
+
+    OPAL_THREAD_LOCK(&comm->matching_lock);
+    /* these assignement need to be here because we need the matching_lock */
+    ompi_comm->coll_revoked = true;
+    if( !coll_only ) ompi_comm->comm_revoked = true;
+
+#if OPAL_ENABLE_DEBUG
+    int verbose = opal_output_get_verbosity(ompi_ftmpi_output_handle);
+    if( verbose > 15 ) {
+        mca_pml_ob1_dump(ompi_comm, verbose);
+    }
+#endif /* OPAL_ENABLE_DEBUG */
+
+    /* loop over all procs in that comm */
+    for (i = 0; i < comm->num_procs; i++) {
+        proc = comm->procs[i];
+        /* note this is not an ompi_proc, but a ob1_comm_proc, thus we don't
+         * use ompi_proc_is_sentinel to verify if initialized. */
+        if( NULL == proc ) continue;
+        /* remove the frag from the unexpected list, add to the nack list 
+         * so that we can send the nack as needed to remote cancel the send
+         * from outside the match lock.
+         */
+        opal_list_t* frags_list = &proc->unexpected_frags;
+        for( it = opal_list_get_first(frags_list);
+             it != opal_list_get_end(frags_list);
+             it = opal_list_get_next(it) ) {
+            mca_pml_ob1_recv_frag_t* frag = (mca_pml_ob1_recv_frag_t*)it;
+            if( pml_ob1_frag_is_revoked(ompi_comm, frag) ) {
+                it = opal_list_remove_item( frags_list, it );
+                opal_list_append(&nack_list, &frag->super.super);
+            }
+        }
+        /* same for the cantmatch queue/heap; this list is more complicated
+         * Keep it simple: we pop all of the complex list, put the bad items 
+         * in the nack_list, and keep the good items in the keep_list;
+         * then we reinsert the good items in the cantmatch heaplist */
+        mca_pml_ob1_recv_frag_t* frag;
+        opal_list_t keep_list;
+        OBJ_CONSTRUCT(&keep_list, opal_list_t);
+        while(NULL != (frag = remove_head_from_ordered_list(&proc->frags_cant_match))) {
+            if( pml_ob1_frag_is_revoked(ompi_comm, frag) ) {
+                opal_list_append(&nack_list, &frag->super.super);
+            }
+            else {
+                opal_list_append(&keep_list, &frag->super.super);
+            }
+        }
+        while( NULL != (it = opal_list_remove_first(&keep_list)) ) {
+            append_frag_to_ordered_list(&proc->frags_cant_match, (mca_pml_ob1_recv_frag_t*)it, proc->expected_sequence);
+        }
+        OBJ_DESTRUCT(&keep_list);
+    }
+
+#if OPAL_ENABLE_DEBUG
+    if( opal_list_get_size(&nack_list) ) {
+        OPAL_OUTPUT_VERBOSE((15, ompi_ftmpi_output_handle,
+                             "ob1_revoke_comm: purging unexpected and cantmatch frags for in comm %d (%s): nacking %zu frags",
+                             ompi_comm->c_contextid, coll_only ? "collective frags only" : "all revoked",
+                             opal_list_get_size(&nack_list)));
+        if( verbose > 15) mca_pml_ob1_dump(ompi_comm, verbose);
+    }
+#endif
+    OPAL_THREAD_UNLOCK(&comm->matching_lock);
+    while( NULL != (it = opal_list_remove_first(&nack_list)) ) {
+        mca_pml_ob1_recv_frag_t* frag = (mca_pml_ob1_recv_frag_t*)it;
+        mca_pml_ob1_hdr_t* hdr = (mca_pml_ob1_hdr_t*)frag->segments->seg_addr.pval;
+
+        if( MCA_PML_OB1_HDR_TYPE_MATCH != hdr->hdr_common.hdr_type ) {
+            assert( MCA_PML_OB1_HDR_TYPE_RGET == hdr->hdr_common.hdr_type ||
+                    MCA_PML_OB1_HDR_TYPE_RNDV == hdr->hdr_common.hdr_type );
+            OPAL_OUTPUT_VERBOSE((2, ompi_ftmpi_output_handle,
+                                 "ob1_revoke_comm: sending NACK to %d", hdr->hdr_rndv.hdr_match.hdr_src));
+            /* Send a ACK with a NULL request to signify revocation */
+            proc = mca_pml_ob1_peer_lookup(ompi_comm, hdr->hdr_rndv.hdr_match.hdr_src);
+            mca_pml_ob1_recv_request_ack_send(proc->ompi_proc, hdr->hdr_rndv.hdr_src_req.lval, NULL, 0, 0, false);
+        }
+        else {
+            /* if it's a TYPE_MATCH, the sender is not expecting anything
+             * from us. So we are done. */
+            OPAL_OUTPUT_VERBOSE((15, ompi_ftmpi_output_handle,
+                                 "ob1_revoke_comm: dropping silently frag from %d", hdr->hdr_rndv.hdr_match.hdr_src));
+        }
+        MCA_PML_OB1_RECV_FRAG_RETURN(frag);
+    }
+    OBJ_DESTRUCT(&nack_list);
+    return OMPI_SUCCESS;
+}
+#endif /*OPAL_ENABLE_FT_MPI*/
+
 mca_pml_ob1_recv_frag_t *check_cantmatch_for_match (mca_pml_ob1_comm_proc_t *proc)
 {
     mca_pml_ob1_recv_frag_t *frag = proc->frags_cant_match;
@@ -392,6 +503,18 @@ void mca_pml_ob1_recv_frag_callback_match (mca_btl_base_module_t *btl,
      * the fragment.
      */
     OB1_MATCHING_LOCK(&comm->matching_lock);
+
+#if OPAL_ENABLE_FT_MPI
+    if( OPAL_UNLIKELY((ompi_comm_is_revoked(comm_ptr) && !ompi_request_tag_is_ft(hdr->hdr_tag)) ||
+                      (ompi_comm_coll_revoked(comm_ptr) && ompi_request_tag_is_collective(hdr->hdr_tag))) ) {
+        /* if it's a TYPE_MATCH, the sender is not expecting anything from us
+         * so we are done. */
+        OPAL_THREAD_UNLOCK(&comm->matching_lock);
+        OPAL_OUTPUT_VERBOSE((15, ompi_ftmpi_output_handle,
+            "ob1_revoke_comm: dropping silently frag from %d", hdr->hdr_src));
+        return;
+    }
+#endif
 
     if (!OMPI_COMM_CHECK_ASSERT_ALLOW_OVERTAKE(comm_ptr)) {
         /* get sequence number of next message that can be processed.
@@ -555,6 +678,19 @@ void mca_pml_ob1_recv_frag_callback_ack (mca_btl_base_module_t *btl,
     ob1_hdr_ntoh((mca_pml_ob1_hdr_t*)hdr, MCA_PML_OB1_HDR_TYPE_ACK);
     sendreq = (mca_pml_ob1_send_request_t *) hdr->hdr_ack.hdr_src_req.pval;
     sendreq->req_recv = hdr->hdr_ack.hdr_dst_req;
+
+#if OPAL_ENABLE_FT_MPI
+    /* if the req_recv is NULL, the comm has been revoked at the receiver */
+    if( OPAL_UNLIKELY(NULL == sendreq->req_recv.pval) ) {
+        OPAL_OUTPUT_VERBOSE((2, ompi_ftmpi_output_handle, "Recvfrag: Received a NACK to the RDV/RGET match to %d on comm %d\n", sendreq->req_send.req_base.req_peer, sendreq->req_send.req_base.req_comm->c_contextid));
+        if (NULL != sendreq->rdma_frag) {
+            MCA_PML_OB1_RDMA_FRAG_RETURN(sendreq->rdma_frag);
+            sendreq->rdma_frag = NULL;
+        }
+        send_request_pml_complete( sendreq );
+        return;
+    }
+#endif /*OPAL_ENABLE_FT_MPI*/
 
     /* if the request should be delivered entirely by copy in/out
      * then throttle sends */
@@ -929,6 +1065,27 @@ static int mca_pml_ob1_recv_frag_match (mca_btl_base_module_t *btl,
      */
     OB1_MATCHING_LOCK(&comm->matching_lock);
 
+#if OPAL_ENABLE_FT_MPI
+    if( OPAL_UNLIKELY((ompi_comm_is_revoked(comm_ptr) && !ompi_request_tag_is_ft(hdr->hdr_tag) )) ||
+                      (ompi_comm_coll_revoked(comm_ptr) && ompi_request_tag_is_collective(hdr->hdr_tag)) ) {
+        OPAL_THREAD_UNLOCK(&comm->matching_lock);
+        if( MCA_PML_OB1_HDR_TYPE_MATCH != hdr->hdr_common.hdr_type ) {
+            assert( MCA_PML_OB1_HDR_TYPE_RGET == hdr->hdr_common.hdr_type ||
+                    MCA_PML_OB1_HDR_TYPE_RNDV == hdr->hdr_common.hdr_type );
+            /* Send a ACK with a NULL request to signify revocation */
+            mca_pml_ob1_rendezvous_hdr_t* hdr_rndv = (mca_pml_ob1_rendezvous_hdr_t*) hdr;
+            mca_pml_ob1_recv_request_ack_send(proc->ompi_proc, hdr_rndv->hdr_src_req.lval, NULL, 0, 0, false);
+            OPAL_OUTPUT_VERBOSE((2, ompi_ftmpi_output_handle, "Recvfrag: comm %d is revoked or collectives force errors, sending a NACK to the RDV/RGET match from %d\n", hdr->hdr_ctx, hdr->hdr_src));
+        }
+        else {
+            OPAL_OUTPUT_VERBOSE((15, ompi_ftmpi_output_handle,
+                "ob1_revoke_comm: dropping silently frag from %d", hdr->hdr_src));
+        }
+        return OMPI_SUCCESS;
+    }
+#endif
+
+    /* get sequence number of next message that can be processed */
     frag_msg_seq = hdr->hdr_seq;
     next_msg_seq_expected = (uint16_t)proc->expected_sequence;
 

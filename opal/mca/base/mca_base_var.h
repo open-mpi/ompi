@@ -746,6 +746,7 @@ OPAL_DECLSPEC int mca_base_var_process_env_list_from_file(char ***argv);
  * Initialize any file-based params
  */
 OPAL_DECLSPEC int mca_base_var_cache_files(bool rel_path_search);
+OPAL_DECLSPEC int mca_base_var_load_extra_files(char* files, bool rel_path_search);
 
 
 extern char *mca_base_env_list;

@@ -78,6 +78,26 @@ int ompi_coll_base_sendrecv_actual( const void* sendbuf, size_t scount,
     if (MPI_STATUS_IGNORE != status) {
         status->MPI_ERROR = err;
     }
+    if( MPI_REQUEST_NULL != req ) {
+#if OPAL_ENABLE_FT_MPI
+        if( MPI_ERR_PROC_FAILED == req->req_status.MPI_ERROR
+         || MPI_ERR_PROC_FAILED_PENDING == req->req_status.MPI_ERROR
+         || MPI_ERR_REVOKED == req->req_status.MPI_ERROR ) {
+            /* We cannot just 'free' and forget, as the PML/BTLS would still
+             * be updating the request buffer after we return from the MPI
+             * call!
+             * For other errors that do not have a well defined post-error
+             * behavior, calling the cancel/wait could deadlock, so we just
+             * free, as this is the best that can be done in this case. */
+            ompi_request_cancel(req);
+            ompi_request_wait(&req, MPI_STATUS_IGNORE);
+            if( MPI_ERR_PROC_FAILED_PENDING == err ) {
+                err = MPI_ERR_PROC_FAILED;
+            }
+        } else /* this 'else' intentionaly spills outside the ifdef */
+#endif /* OPAL_ENABLE_FT_MPI */
+        ompi_request_free(&req);
+    }
     return (err);
 }
 

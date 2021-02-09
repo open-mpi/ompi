@@ -76,6 +76,13 @@ int MPI_Sendrecv_replace(void * buf, int count, MPI_Datatype datatype,
         OMPI_ERRHANDLER_CHECK(rc, comm, rc, FUNC_NAME);
     }
 
+#if OPAL_ENABLE_FT_MPI
+    /*
+     * The final call to Sendrecv will check for process failures inside
+     * So no need to check here.
+     */
+#endif /* OPAL_ENABLE_FT_MPI */
+
     OPAL_CR_ENTER_LIBRARY();
 
     /* simple case */
@@ -125,7 +132,7 @@ int MPI_Sendrecv_replace(void * buf, int count, MPI_Datatype datatype,
     max_data = packed_size;
     iov_count = 1;
     rc = opal_convertor_pack(&convertor, &iov, &iov_count, &max_data);
-    
+
     /* recv into temporary buffer */
     rc = PMPI_Sendrecv( iov.iov_base, packed_size, MPI_PACKED, dest, sendtag, buf, count,
                         datatype, source, recvtag, comm, &recv_status );

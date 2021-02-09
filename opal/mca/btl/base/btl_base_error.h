@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2011 The University of Tennessee and The University
+ * Copyright (c) 2004-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -32,6 +32,7 @@
 #include "opal/util/proc.h"
 
 OPAL_DECLSPEC extern int mca_btl_base_verbose;
+OPAL_DECLSPEC extern int mca_btl_base_warn_peer_error;
 
 OPAL_DECLSPEC extern int mca_btl_base_err(const char*, ...) __opal_attribute_format__(__printf__, 1, 2);
 OPAL_DECLSPEC extern int mca_btl_base_out(const char*, ...) __opal_attribute_format__(__printf__, 1, 2);
@@ -59,18 +60,21 @@ OPAL_DECLSPEC extern int mca_btl_base_out(const char*, ...) __opal_attribute_for
 
 #define BTL_PEER_ERROR(proc, args)                              \
     do {                                                        \
-        char *errhost;                                          \
-        mca_btl_base_err("%s[%s:%d:%s] from %s ",               \
+        if( mca_btl_base_warn_peer_error                        \
+         || mca_btl_base_verbose > 0 ) { /* warn if verbose */  \
+            char *errhost;                                      \
+            mca_btl_base_err("[%s]%s[%s:%d:%s] ",               \
+                         opal_process_info.nodename,            \
                          OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),    \
-                         __FILE__, __LINE__, __func__,          \
-                         opal_process_info.nodename);           \
-        if (proc) {                                             \
-            errhost = opal_get_proc_hostname(proc);             \
-            mca_btl_base_err("to: %s ", errhost);               \
-            free(errhost);                                      \
+                         __FILE__, __LINE__, __func__);         \
+            if (proc) {                                         \
+                errhost = opal_get_proc_hostname(proc);         \
+                mca_btl_base_err("peer: %s ", errhost);         \
+                free(errhost);                                  \
+            }                                                   \
+            mca_btl_base_err args;                              \
+            mca_btl_base_err("\n");                             \
         }                                                       \
-        mca_btl_base_err args;                                  \
-        mca_btl_base_err("\n");                                 \
     } while(0);
 
 

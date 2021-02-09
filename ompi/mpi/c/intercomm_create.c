@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2017 The University of Tennessee and The University
+ * Copyright (c) 2004-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
@@ -80,6 +80,15 @@ int MPI_Intercomm_create(MPI_Comm local_comm, int local_leader,
         */
     }
 
+#if OPAL_ENABLE_FT_MPI
+    /*
+     * We must not call ompi_comm_iface_create_check() here, because that
+     * risks leaving the remote group dangling on an unmatched operation.
+     * We will let the  logic proceed and discover the
+     * issue internally so that all sides get informed.
+     */
+#endif
+
     OPAL_CR_ENTER_LIBRARY();
 
     local_size = ompi_comm_size ( local_comm );
@@ -116,16 +125,31 @@ int MPI_Intercomm_create(MPI_Comm local_comm, int local_leader,
         rc = MCA_PML_CALL(irecv(&rsize, 1, MPI_INT, rleader, tag, bridge_comm,
                                 &req));
         if ( rc != MPI_SUCCESS ) {
+#if OPAL_ENABLE_FT_MPI
+            if( MPI_ERR_PROC_FAILED == rc ) {
+                rsize = 0;
+                goto skip_handshake;
+            }
+#endif  /* OPAL_ENABLE_FT_MPI */
             goto err_exit;
         }
         rc = MCA_PML_CALL(send (&local_size, 1, MPI_INT, rleader, tag,
                                 MCA_PML_BASE_SEND_STANDARD, bridge_comm));
         if ( rc != MPI_SUCCESS ) {
+#if OPAL_ENABLE_FT_MPI
+            if( MPI_ERR_PROC_FAILED == rc ) {
+                rsize = 0;
+                goto skip_handshake;
+            }
+#endif  /* OPAL_ENABLE_FT_MPI */
             goto err_exit;
         }
+#if OPAL_ENABLE_FT_MPI
+  skip_handshake:  /* nothing special */;
+#endif /* OPAL_ENABLE_FT_MPI */
         rc = ompi_request_wait( &req, MPI_STATUS_IGNORE);
         if ( rc != MPI_SUCCESS ) {
-            goto err_exit;
+            rsize = 0;  /* participate in the collective and then done */
         }
     }
 
@@ -134,7 +158,14 @@ int MPI_Intercomm_create(MPI_Comm local_comm, int local_leader,
                                          local_comm,
                                          local_comm->c_coll->coll_bcast_module);
     if ( rc != MPI_SUCCESS ) {
+#if OPAL_ENABLE_FT_MPI
+        if ( local_rank != local_leader ) {
+            goto err_exit;
+        }
+        /* the leaders must go in the ger_rprocs in order to avoid deadlocks */
+#else
         goto err_exit;
+#endif  /* OPAL_ENABLE_FT_MPI */
     }
 
     rc = ompi_comm_get_rprocs( local_comm, bridge_comm, lleader,

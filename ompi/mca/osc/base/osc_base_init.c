@@ -2,7 +2,7 @@
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University.
  *                         All rights reserved.
- * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
+ * Copyright (c) 2004-2017 The Trustees of the University of Tennessee.
  *                         All rights reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
@@ -20,6 +20,7 @@
 
 #include "ompi_config.h"
 
+#include "opal/util/show_help.h"
 #include "ompi/constants.h"
 #include "ompi/mca/mca.h"
 #include "opal/mca/base/base.h"
@@ -71,6 +72,16 @@ ompi_osc_base_select(ompi_win_t *win,
 
     if (NULL == best_component) return OMPI_ERR_NOT_SUPPORTED;
 
+#if OPAL_ENABLE_FT_MPI
+    if(ompi_ftmpi_enabled) {
+        /* check if module is tested for FT, warn if not. */
+        const char* ft_whitelist="";
+        opal_show_help("help-mpi-ft.txt", "module:untested:failundef", true,
+            best_component->osc_version.mca_type_name,
+            best_component->osc_version.mca_component_name,
+            ft_whitelist);
+    }
+#endif /* OPAL_ENABLE_FT_MPI */
     opal_output_verbose( 10, ompi_osc_base_framework.framework_output,
                          "select: component %s selected",
                          best_component->osc_version.mca_component_name );

@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2010-2012 Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -99,7 +100,18 @@ int MPI_Bcast(void *buffer, int count, MPI_Datatype datatype,
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ROOT, FUNC_NAME);
         }
       }
+    } 
+
+#if OPAL_ENABLE_FT_MPI
+    /*
+     * An early check, so as to return early if we are using a broken
+     * communicator. This is not absolutely necessary since we will
+     * check for this, and other, error conditions during the operation.
+     */
+    if( OPAL_UNLIKELY(!ompi_comm_iface_coll_check(comm, &err)) ) {
+        OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);
     }
+#endif
 
     /* If there's only one node, or if the count is 0, we're done */
 

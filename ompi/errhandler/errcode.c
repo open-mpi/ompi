@@ -11,6 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      University of Houston. All rights reserved.
+ * Copyright (c) 2010-2012 Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2013-2018 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
  *                         reserved.
@@ -116,6 +117,11 @@ static ompi_mpi_errcode_t ompi_err_rma_flavor;
 static ompi_mpi_errcode_t ompi_err_rma_shared;
 static ompi_mpi_errcode_t ompi_t_err_invalid;
 static ompi_mpi_errcode_t ompi_t_err_invalid_name;
+#if OPAL_ENABLE_FT_MPI
+static ompi_mpi_errcode_t ompi_err_proc_fail_stop;
+static ompi_mpi_errcode_t ompi_err_proc_fail_pending;
+static ompi_mpi_errcode_t ompi_err_revoked;
+#endif
 
 static void ompi_mpi_errcode_construct(ompi_mpi_errcode_t* errcode);
 static void ompi_mpi_errcode_destruct(ompi_mpi_errcode_t* errcode);
@@ -227,6 +233,11 @@ int ompi_mpi_errcode_init (void)
     CONSTRUCT_ERRCODE( ompi_err_rma_shared, MPI_ERR_RMA_SHARED, "MPI_ERR_RMA_SHARED: Memory cannot be shared" );
     CONSTRUCT_ERRCODE( ompi_t_err_invalid, MPI_T_ERR_INVALID, "MPI_T_ERR_INVALID: Invalid use of the interface or bad parameter value(s)" );
     CONSTRUCT_ERRCODE( ompi_t_err_invalid_name, MPI_T_ERR_INVALID_NAME, "MPI_T_ERR_INVALID_NAME: The variable or category name is invalid" );
+#if OPAL_ENABLE_FT_MPI
+    CONSTRUCT_ERRCODE( ompi_err_proc_fail_stop,  MPI_ERR_PROC_FAILED,  "MPI_ERR_PROC_FAILED: Process Failure" );
+    CONSTRUCT_ERRCODE( ompi_err_proc_fail_pending,  MPI_ERR_PROC_FAILED_PENDING,  "MPI_ERR_PROC_FAILED_PENDING: Process Failure during an MPI_ANY_SOURCE non-blocking receive, request is still active" );
+    CONSTRUCT_ERRCODE( ompi_err_revoked,  MPI_ERR_REVOKED,  "MPI_ERR_REVOKED: Communication Object Revoked" );
+#endif
 
     /* Per MPI-3 p353:27-32, MPI_LASTUSEDCODE must be >=
        MPI_ERR_LASTCODE.  So just start it as == MPI_ERR_LASTCODE. */
@@ -326,6 +337,11 @@ int ompi_mpi_errcode_finalize(void)
     OBJ_DESTRUCT(&ompi_err_rma_shared);
     OBJ_DESTRUCT(&ompi_t_err_invalid);
     OBJ_DESTRUCT(&ompi_t_err_invalid_name);
+#if OPAL_ENABLE_FT_MPI
+    OBJ_DESTRUCT(&ompi_err_proc_fail_stop);
+    OBJ_DESTRUCT(&ompi_err_proc_fail_pending);
+    OBJ_DESTRUCT(&ompi_err_revoked);
+#endif
 
     OBJ_DESTRUCT(&ompi_mpi_errcodes);
     ompi_mpi_errcode_lastpredefined = 0;
