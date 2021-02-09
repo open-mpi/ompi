@@ -2,7 +2,7 @@
 /*
  * Copyright (c) 2014-2016 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2020      Google, LLC. All rights reserved.
+ * Copyright (c) 2020-2021 Google, LLC. All rights reserved.
  * Copyright (c) 2020      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -240,7 +240,7 @@ int ompi_osc_rdma_attach (struct ompi_win_t *win, void *base, size_t len)
     rdma_region_handle = OBJ_NEW(ompi_osc_rdma_handle_t);
     assert (NULL != rdma_region_handle);
 
-    if (module->selected_btl->btl_register_mem) {
+    if (module->use_memory_registration) {
         mca_btl_base_registration_handle_t *handle;
 
         ret = ompi_osc_rdma_register (module, MCA_BTL_ENDPOINT_ANY, (void *) region->base, region->len,
@@ -252,7 +252,7 @@ int ompi_osc_rdma_attach (struct ompi_win_t *win, void *base, size_t len)
             return OMPI_ERR_RMA_ATTACH;
         }
 
-        memcpy (region->btl_handle_data, handle, module->selected_btl->btl_registration_handle_size);
+        memcpy (region->btl_handle_data, handle, module->selected_btls[0]->btl_registration_handle_size);
         rdma_region_handle->btl_handle = handle;
     } else {
         rdma_region_handle->btl_handle = NULL;
@@ -340,7 +340,7 @@ int ompi_osc_rdma_detach (struct ompi_win_t *win, const void *base)
     OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_DEBUG, "detaching dynamic memory region {%p, %p} from index %d",
                      base, (void *)((intptr_t) base + region->len), region_index);
 
-    if (module->selected_btl->btl_register_mem) {
+    if (module->use_memory_registration) {
         ompi_osc_rdma_deregister (module, rdma_region_handle->btl_handle);
     }
 
@@ -392,8 +392,9 @@ static int ompi_osc_rdma_refresh_dynamic_region (ompi_osc_rdma_module_t *module,
         osc_rdma_counter_t remote_value;
 
         source_address = (uint64_t)(intptr_t) peer->super.state + offsetof (ompi_osc_rdma_state_t, region_count);
-        ret = ompi_osc_get_data_blocking (module, peer->super.state_endpoint, source_address, peer->super.state_handle,
-                                          &remote_value, sizeof (remote_value));
+        ret = ompi_osc_get_data_blocking (module, peer->super.state_btl_index, peer->super.state_endpoint,
+                                          source_address, peer->super.state_handle, &remote_value,
+                                          sizeof (remote_value));
         if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
             return ret;
         }
@@ -432,8 +433,8 @@ static int ompi_osc_rdma_refresh_dynamic_region (ompi_osc_rdma_module_t *module,
                                            OMPI_OSC_RDMA_LOCK_EXCLUSIVE);
 
         source_address = (uint64_t)(intptr_t) peer->super.state + offsetof (ompi_osc_rdma_state_t, regions);
-        ret = ompi_osc_get_data_blocking (module, peer->super.state_endpoint, source_address, peer->super.state_handle,
-                                          peer->regions, region_len);
+        ret = ompi_osc_get_data_blocking (module, peer->super.state_btl_index, peer->super.state_endpoint,
+                                          source_address, peer->super.state_handle, peer->regions, region_len);
         if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
             OPAL_THREAD_UNLOCK(&module->lock);
             return ret;

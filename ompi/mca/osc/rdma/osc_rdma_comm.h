@@ -113,8 +113,9 @@ int ompi_osc_rdma_rget (void *origin_addr, int origin_count, ompi_datatype_t *or
  * data that is stored on the remote peer. The peer object does not have to be fully initialized to
  * work. Only the btl endpoint is needed.
  */
-int ompi_osc_get_data_blocking (ompi_osc_rdma_module_t *module, struct mca_btl_base_endpoint_t *endpoint,
-                                uint64_t source_address, mca_btl_base_registration_handle_t *source_handle,
+int ompi_osc_get_data_blocking (ompi_osc_rdma_module_t *module, uint8_t btl_index,
+                                struct mca_btl_base_endpoint_t *endpoint, uint64_t source_address,
+                                mca_btl_base_registration_handle_t *source_handle,
                                 void *data, size_t len);
 
 int ompi_osc_rdma_put_contig (ompi_osc_rdma_sync_t *sync, ompi_osc_rdma_peer_t *peer, uint64_t target_address,

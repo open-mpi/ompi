@@ -5,6 +5,7 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2021      Google, LLC. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -27,43 +28,70 @@
 /**
  * @brief find the btl endpoint for a process
  *
- * @param[in] module         osc rdma module
- * @param[in] peer_id        process rank in the module communicator
+ * @param[in] module           osc rdma module
+ * @param[in] peer_id          process rank in the module communicator
+ * @param[in] module_btl_index btl index to use
  *
  * @returns NULL on error
  * @returns btl endpoint on success
  */
-struct mca_btl_base_endpoint_t *ompi_osc_rdma_peer_btl_endpoint (struct ompi_osc_rdma_module_t *module, int peer_id)
+static int ompi_osc_rdma_peer_btl_endpoint (struct ompi_osc_rdma_module_t *module,
+                                            int peer_id, uint8_t *btl_index_out,
+                                            struct mca_btl_base_endpoint_t **endpoint)
 {
     ompi_proc_t *proc = ompi_comm_peer_lookup (module->comm, peer_id);
     mca_bml_base_endpoint_t *bml_endpoint;
     int num_btls;
 
-    /* for not just use the bml to get the btl endpoint */
+    /* for now just use the bml to get the btl endpoint */
     bml_endpoint = mca_bml_base_get_endpoint (proc);
 
     num_btls = mca_bml_base_btl_array_get_size (&bml_endpoint->btl_rdma);
 
-    for (int btl_index = 0 ; btl_index < num_btls ; ++btl_index) {
-        if (bml_endpoint->btl_rdma.bml_btls[btl_index].btl == module->selected_btl) {
-            return bml_endpoint->btl_rdma.bml_btls[btl_index].btl_endpoint;
+    for (int module_btl_index = 0 ; module_btl_index < module->btls_in_use ; ++module_btl_index) {
+        for (int btl_index = 0 ; btl_index < num_btls ; ++btl_index) {
+            if (bml_endpoint->btl_rdma.bml_btls[btl_index].btl == module->selected_btls[module_btl_index]) {
+                *btl_index_out = module_btl_index;
+                *endpoint = bml_endpoint->btl_rdma.bml_btls[btl_index].btl_endpoint;
+                return OMPI_SUCCESS;
+            }
         }
     }
 
-    /* very unlikely. if this happened the btl section process is broken */
-    return NULL;
+    /* if this is a non-RDMA btl then the endpoint may be listed under eager */
+    num_btls = mca_bml_base_btl_array_get_size (&bml_endpoint->btl_eager);
+
+    for (int module_btl_index = 0 ; module_btl_index < module->btls_in_use ; ++module_btl_index) {
+        for (int btl_index = 0 ; btl_index < num_btls ; ++btl_index) {
+            if (bml_endpoint->btl_eager.bml_btls[btl_index].btl == module->selected_btls[module_btl_index]) {
+                *btl_index_out = module_btl_index;
+                *endpoint = bml_endpoint->btl_eager.bml_btls[btl_index].btl_endpoint;
+                return OMPI_SUCCESS;
+            }
+        }
+    }
+
+    /* unlikely but can happen when creating a peer for self */
+    return OMPI_ERR_UNREACH;
 }
 
 int ompi_osc_rdma_new_peer (struct ompi_osc_rdma_module_t *module, int peer_id, ompi_osc_rdma_peer_t **peer_out) {
     struct mca_btl_base_endpoint_t *endpoint;
     ompi_osc_rdma_peer_t *peer;
+    uint8_t module_btl_index = UINT8_MAX;
+    mca_btl_base_module_t *btl = NULL;
 
     *peer_out = NULL;
 
-    endpoint = ompi_osc_rdma_peer_btl_endpoint (module, peer_id);
-    if (OPAL_UNLIKELY(NULL == endpoint && !((module->selected_btl->btl_atomic_flags & MCA_BTL_ATOMIC_SUPPORTS_GLOB) &&
-                                            peer_id == ompi_comm_rank (module->comm)))) {
-        return OMPI_ERR_UNREACH;
+    /* find a btl/endpoint to use for this peer */
+    int ret = ompi_osc_rdma_peer_btl_endpoint (module, peer_id, &module_btl_index, &endpoint);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != ret && !((module->selected_btls[0]->btl_atomic_flags & MCA_BTL_ATOMIC_SUPPORTS_GLOB) &&
+                                               peer_id == ompi_comm_rank (module->comm)))) {
+        return ret;
+    }
+
+    if (endpoint) {
+        btl = ompi_osc_rdma_selected_btl (module, module_btl_index);
     }
 
     if (MPI_WIN_FLAVOR_DYNAMIC == module->flavor) {
@@ -75,8 +103,9 @@ int ompi_osc_rdma_new_peer (struct ompi_osc_rdma_module_t *module, int peer_id, 
         peer = (ompi_osc_rdma_peer_t *) OBJ_NEW(ompi_osc_rdma_peer_extended_t);
     }
 
-    peer->data_endpoint = endpoint;
-    peer->rank          = peer_id;
+    peer->data_endpoint  = endpoint;
+    peer->data_btl_index = module_btl_index;
+    peer->rank           = peer_id;
 
     *peer_out = peer;
 
@@ -98,18 +127,20 @@ static int ompi_osc_rdma_peer_setup (ompi_osc_rdma_module_t *module, ompi_osc_rd
     ompi_osc_rdma_peer_extended_t *ex_peer = (ompi_osc_rdma_peer_extended_t *) peer;
     uint64_t peer_data_size;
     uint64_t peer_data_offset, array_pointer;
+    mca_btl_base_module_t *array_btl;
     struct mca_btl_base_endpoint_t *array_endpoint;
     ompi_osc_rdma_region_t *array_peer_data, *node_peer_data;
     ompi_osc_rdma_rank_data_t rank_data;
     int registration_handle_size = 0;
     int node_id, node_rank, array_index;
+    uint8_t array_btl_index;
     int ret, disp_unit;
     char *peer_data;
 
     OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_DEBUG, "configuring peer for rank %d", peer->rank);
 
-    if (module->selected_btl->btl_register_mem) {
-        registration_handle_size = module->selected_btl->btl_registration_handle_size;
+    if (module->use_memory_registration) {
+        registration_handle_size = module->selected_btls[0]->btl_registration_handle_size;
     }
 
     /* each node is responsible for holding a part of the rank -> node/local rank mapping array. this code
@@ -125,15 +156,16 @@ static int ompi_osc_rdma_peer_setup (ompi_osc_rdma_module_t *module, ompi_osc_rd
     array_pointer = array_peer_data->base + array_index * sizeof (rank_data);
 
     /* lookup the btl endpoint needed to retrieve the mapping */
-    array_endpoint = ompi_osc_rdma_peer_btl_endpoint (module, node_rank);
-    if (OPAL_UNLIKELY(NULL == array_endpoint)) {
+    ret = ompi_osc_rdma_peer_btl_endpoint (module, node_rank, &array_btl_index, &array_endpoint);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
         return OMPI_ERR_UNREACH;
     }
 
     OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_DEBUG, "reading region data for %d from rank: %d, index: %d, pointer: 0x%" PRIx64
                      ", size: %lu", peer->rank, node_rank, array_index, array_pointer, sizeof (rank_data));
 
-    ret = ompi_osc_get_data_blocking (module, array_endpoint, array_pointer, (mca_btl_base_registration_handle_t *) array_peer_data->btl_handle_data,
+    ret = ompi_osc_get_data_blocking (module, array_btl_index, array_endpoint, array_pointer,
+                                      (mca_btl_base_registration_handle_t *) array_peer_data->btl_handle_data,
                                       &rank_data, sizeof (rank_data));
     if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
         return ret;
@@ -150,8 +182,9 @@ static int ompi_osc_rdma_peer_setup (ompi_osc_rdma_module_t *module, ompi_osc_rd
         peer->state_handle = (mca_btl_base_registration_handle_t *) node_peer_data->btl_handle_data;
     }
 
-    peer->state_endpoint = ompi_osc_rdma_peer_btl_endpoint (module, NODE_ID_TO_RANK(module, node_peer_data, rank_data.node_id));
-    if (OPAL_UNLIKELY(NULL == peer->state_endpoint)) {
+    ret = ompi_osc_rdma_peer_btl_endpoint (module, NODE_ID_TO_RANK(module, node_peer_data, rank_data.node_id),
+                                           &peer->state_btl_index, &peer->state_endpoint);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
         return OPAL_ERR_UNREACH;
     }
 
@@ -172,7 +205,8 @@ static int ompi_osc_rdma_peer_setup (ompi_osc_rdma_module_t *module, ompi_osc_rd
     peer_data = alloca (peer_data_size);
 
     /* read window data from the end of the target's state structure */
-    ret = ompi_osc_get_data_blocking (module, peer->state_endpoint, peer->state + peer_data_offset, peer->state_handle,
+    ret = ompi_osc_get_data_blocking (module, peer->state_btl_index, peer->state_endpoint,
+                                      peer->state + peer_data_offset, peer->state_handle,
                                       peer_data, peer_data_size);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
         return ret;
@@ -220,6 +254,7 @@ static int ompi_osc_rdma_peer_setup (ompi_osc_rdma_module_t *module, ompi_osc_rd
 
         if (MPI_WIN_FLAVOR_ALLOCATE == module->flavor) {
             ex_peer->super.super.data_endpoint = ex_peer->super.super.state_endpoint;
+            ex_peer->super.super.data_btl_index = ex_peer->super.super.state_btl_index;
         }
     }
 
