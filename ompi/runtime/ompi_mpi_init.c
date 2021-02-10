@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2014 The University of Tennessee and The University
+ * Copyright (c) 2004-2019 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -361,6 +361,17 @@ static int ompi_register_mca_variables(void)
                                  MCA_BASE_VAR_SCOPE_READONLY,
                                  &ompi_enable_timing);
 
+#if OPAL_ENABLE_FT_MPI
+    /* Before loading any other part of the MPI library, we need to load
+     * the ft-mpi tune file to override default component selection when
+     * FT is desired ON; this does override openmpi-params.conf, but not
+     * command line or env.
+     */
+    if( ompi_ftmpi_enabled ) {
+        mca_base_var_load_extra_files("ft-mpi", false);
+    }
+#endif /* OPAL_ENABLE_FT_MPI */
+
     return OMPI_SUCCESS;
 }
 
@@ -393,6 +404,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided,
     volatile bool active;
     bool background_fence = false;
     pmix_info_t info[2];
+    pmix_status_t codes[1] = { PMIX_ERR_PROC_ABORTED };
     pmix_status_t rc;
     OMPI_TIMING_INIT(64);
     opal_pmix_lock_t mylock;
@@ -523,7 +535,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided,
     /* give it a name so we can distinguish it */
     PMIX_INFO_LOAD(&info[1], PMIX_EVENT_HDLR_NAME, "MPI-Default", PMIX_STRING);
     OPAL_PMIX_CONSTRUCT_LOCK(&mylock);
-    PMIx_Register_event_handler(NULL, 0, info, 2, ompi_errhandler_callback, evhandler_reg_callbk, (void*)&mylock);
+    PMIx_Register_event_handler(codes, 1, info, 2, ompi_errhandler_callback, evhandler_reg_callbk, (void*)&mylock);
     OPAL_PMIX_WAIT_THREAD(&mylock);
     rc = mylock.status;
     OPAL_PMIX_DESTRUCT_LOCK(&mylock);
@@ -856,6 +868,28 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided,
     MCA_PML_CALL(add_comm(&ompi_mpi_comm_world.comm));
     MCA_PML_CALL(add_comm(&ompi_mpi_comm_self.comm));
 
+#if OPAL_ENABLE_FT_MPI
+    /* initialize the fault tolerant infrastructure (revoke, detector,
+     * propagator) */
+    if( ompi_ftmpi_enabled ) {
+        int rc;
+        const char *evmethod;
+        rc = ompi_comm_rbcast_init();
+        if( OMPI_SUCCESS != rc ) return rc;
+        rc = ompi_comm_revoke_init();
+        if( OMPI_SUCCESS != rc ) return rc;
+        rc = ompi_comm_failure_propagator_init();
+        if( OMPI_SUCCESS != rc ) return rc;
+        rc = ompi_comm_failure_detector_init();
+        if( OMPI_SUCCESS != rc ) return rc;
+
+        evmethod = event_base_get_method(opal_sync_event_base);
+        if( 0 == strcmp("select", evmethod) ) {
+            opal_show_help("help-mpi-ft.txt", "module:event:selectbug", true);
+        }
+    }
+#endif
+
     /*
      * Dump all MCA parameters if requested
      */
@@ -993,6 +1027,15 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided,
         error = "ompi_mpiext_init";
         goto error;
     }
+
+#if OPAL_ENABLE_FT_MPI
+    /* start the failure detector */
+    if( ompi_ftmpi_enabled ) {
+        int rc;
+        rc = ompi_comm_failure_detector_start();
+        if( OMPI_SUCCESS != rc ) return rc;
+    }
+#endif
 
     /* Fall through */
  error:

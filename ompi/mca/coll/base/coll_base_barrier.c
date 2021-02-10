@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2017 The University of Tennessee and The University
+ * Copyright (c) 2004-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -68,8 +68,24 @@ ompi_coll_base_sendrecv_zero( int dest, int stag,
 
  error_handler:
     if( MPI_REQUEST_NULL != req ) {  /* cancel and complete the receive request */
-        (void)ompi_request_cancel(req);
-        (void)ompi_request_wait(&req, &status);
+#if OPAL_ENABLE_FT_MPI
+        if( MPI_ERR_PROC_FAILED == req->req_status.MPI_ERROR
+         || MPI_ERR_PROC_FAILED_PENDING == req->req_status.MPI_ERROR
+         || MPI_ERR_REVOKED == req->req_status.MPI_ERROR ) {
+            /* We cannot just 'free' and forget, as the PML/BTLS would still
+             * be updating the request buffer after we return from the MPI
+             * call!
+             * For other errors that do not have a well defined post-error
+             * behavior, calling the cancel/wait could deadlock, so we just
+             * free, as this is the best that can be done in this case. */
+            ompi_request_cancel(req);
+            ompi_request_wait(&req, MPI_STATUS_IGNORE);
+            if( MPI_ERR_PROC_FAILED_PENDING == rc ) {
+                rc = MPI_ERR_PROC_FAILED;
+            }
+        } else /* this 'else' intentionaly spills outside the ifdef */
+#endif /* OPAL_ENABLE_FT_MPI */
+        ompi_request_free(&req);
     }
 
     OPAL_OUTPUT ((ompi_coll_base_framework.framework_output, "%s:%d: Error %d occurred\n",
@@ -389,6 +405,11 @@ int ompi_coll_base_barrier_intra_basic_linear(struct ompi_communicator_t *comm,
             }
         }
         ompi_coll_base_free_reqs(requests, size);
+#if OPAL_ENABLE_FT_MPI
+        if( MPI_ERR_PROC_FAILED_PENDING == err ) { /* do not return any-source errors from a collective */
+            err = MPI_ERR_PROC_FAILED;
+        }
+#endif /* OPAL_ENABLE_FT_MPI */
     }
     OPAL_OUTPUT( (ompi_coll_base_framework.framework_output,"%s:%4d\tError occurred %d, rank %2d",
                   __FILE__, line, err, rank) );

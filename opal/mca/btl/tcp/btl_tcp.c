@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2017 The University of Tennessee and The University
+ * Copyright (c) 2004-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -563,7 +563,7 @@ int mca_btl_tcp_recv_blocking(int sd, void* data, size_t size)
             if (opal_socket_errno != EINTR &&
                 opal_socket_errno != EAGAIN &&
                 opal_socket_errno != EWOULDBLOCK) {
-                BTL_ERROR(("recv(%d) failed: %s (%d)", sd, strerror(opal_socket_errno), opal_socket_errno));
+                BTL_VERBOSE(("recv(%d) failed: %s (%d)", sd, strerror(opal_socket_errno), opal_socket_errno));
                 break;
             }
             continue;
@@ -590,7 +590,7 @@ int mca_btl_tcp_send_blocking(int sd, const void* data, size_t size)
             if (opal_socket_errno != EINTR &&
                 opal_socket_errno != EAGAIN &&
                 opal_socket_errno != EWOULDBLOCK) {
-                BTL_ERROR(("send() failed: %s (%d)", strerror(opal_socket_errno), opal_socket_errno));
+                BTL_VERBOSE(("send() failed: %s (%d)", strerror(opal_socket_errno), opal_socket_errno));
                 return -1;
             }
             continue;

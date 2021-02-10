@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2020 The University of Tennessee and The University
+ * Copyright (c) 2004-2021 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -452,6 +452,15 @@ static inline bool ompi_errhandler_is_intrinsic(ompi_errhandler_t *errhandler)
 
     return false;
 }
+
+#if OPAL_ENABLE_FT_MPI
+struct ompi_proc_t;
+
+OMPI_DECLSPEC int ompi_errhandler_proc_failed_internal(struct ompi_proc_t *ompi_proc, int status, bool forward);
+static inline int ompi_errhandler_proc_failed(struct ompi_proc_t* ompi_proc) {
+    return ompi_errhandler_proc_failed_internal(ompi_proc, OPAL_ERR_PROC_ABORTED, true);
+}
+#endif /* OPAL_ENABLE_FT_MPI */
 
 END_C_DECLS
 

@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2016 The University of Tennessee and The University
+ * Copyright (c) 2004-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
@@ -87,6 +87,15 @@ int ompi_request_default_test(ompi_request_t ** rptr,
            later! */
         return ompi_request_free(rptr);
     }
+#if OPAL_ENABLE_FT_MPI
+    /* Check for dead requests due to process failure */
+    /* Special case for MPI_ANY_SOURCE */
+    if(OPAL_UNLIKELY( ompi_request_is_failed(request) &&
+                      MPI_ERR_PROC_FAILED_PENDING == request->req_status.MPI_ERROR )) {
+        *completed = false;
+        return MPI_ERR_PROC_FAILED_PENDING;
+    }
+#endif
 #if OPAL_ENABLE_PROGRESS_THREADS == 0
     if( 0 == do_it_once ) {
         /**
@@ -167,6 +176,16 @@ int ompi_request_default_test_any(
                will happen later! */
             return ompi_request_free(rptr);
         }
+#if OPAL_ENABLE_FT_MPI
+        /* Check for dead requests due to process failure */
+        /* Special case for MPI_ANY_SOURCE */
+        if(OPAL_UNLIKELY( ompi_request_is_failed(request) &&
+                          MPI_ERR_PROC_FAILED_PENDING == request->req_status.MPI_ERROR )) {
+            *index = i;
+            *completed = false;
+            return MPI_ERR_PROC_FAILED_PENDING;
+        }
+#endif /* OPAL_ENABLE_FT_MPI */
     }
 
     /* Only fall through here if we found nothing */
@@ -206,6 +225,19 @@ int ompi_request_default_test_all(
             REQUEST_COMPLETE(request) ) {
             num_completed++;
         }
+#if OPAL_ENABLE_FT_MPI
+        /* Check for dead requests due to process failure */
+        /* Special case for MPI_ANY_SOURCE */
+        if(OPAL_UNLIKELY( ompi_request_is_failed(request) &&
+                          MPI_ERR_PROC_FAILED_PENDING == request->req_status.MPI_ERROR )) {
+            if (MPI_STATUSES_IGNORE != statuses) {
+                statuses[i] = request->req_status;
+                statuses[i].MPI_ERROR = MPI_ERR_PROC_FAILED_PENDING;
+            }
+            *completed = false;
+            return MPI_ERR_PROC_FAILED_PENDING;
+        }
+#endif /* OPAL_ENABLE_FT_MPI */
     }
 
     if (num_completed != count) {
@@ -254,6 +286,12 @@ int ompi_request_default_test_all(
                 }
             } else {
                 rc = MPI_ERR_IN_STATUS;
+#if OPAL_ENABLE_FT_MPI
+                if (MPI_ERR_PROC_FAILED == request->req_status.MPI_ERROR
+                 || MPI_ERR_REVOKED == request->req_status.MPI_ERROR) {
+                    rc = request->req_status.MPI_ERROR;
+                }
+#endif /* OPAL_ENABLE_FT_MPI */
             }
         }
     } else {
@@ -286,6 +324,12 @@ int ompi_request_default_test_all(
                 }
             } else {
                 rc = MPI_ERR_IN_STATUS;
+#if OPAL_ENABLE_FT_MPI
+                if (MPI_ERR_PROC_FAILED == request->req_status.MPI_ERROR
+                 || MPI_ERR_REVOKED == request->req_status.MPI_ERROR) {
+                    rc = request->req_status.MPI_ERROR;
+                }
+#endif /* OPAL_ENABLE_FT_MPI */
             }
         }
     }
@@ -322,6 +366,14 @@ int ompi_request_default_test_some(
 #endif
             indices[num_requests_done++] = i;
         }
+#if OPAL_ENABLE_FT_MPI
+        /* Check for dead requests due to process failure */
+        /* Special case for MPI_ANY_SOURCE - Error managed below */
+        if(OPAL_UNLIKELY( ompi_request_is_failed(request) &&
+                          MPI_ERR_PROC_FAILED_PENDING == request->req_status.MPI_ERROR )) {
+            indices[num_requests_done++] = i;
+        }
+#endif /* OPAL_ENABLE_FT_MPI */
     }
 
     /*
@@ -345,6 +397,18 @@ int ompi_request_default_test_some(
     for( i = 0; i < num_requests_done; i++) {
         request = requests[indices[i]];
 
+#if OPAL_ENABLE_FT_MPI
+        /* Special case for MPI_ANY_SOURCE */
+        if(OPAL_UNLIKELY( MPI_ERR_PROC_FAILED_PENDING == request->req_status.MPI_ERROR )) {
+            if (MPI_STATUSES_IGNORE != statuses) {
+                statuses[i] = request->req_status;
+                statuses[i].MPI_ERROR = MPI_ERR_PROC_FAILED_PENDING;
+            }
+            rc = MPI_ERR_PROC_FAILED_PENDING;
+            continue;
+        }
+#endif /* OPAL_ENABLE_FT_MPI */
+
         /* See note above: if a generalized request completes, we
            *have* to call the query fn, even if STATUSES_IGNORE
            was supplied */
@@ -357,6 +421,12 @@ int ompi_request_default_test_some(
 
         if (MPI_SUCCESS != request->req_status.MPI_ERROR) {
             rc = MPI_ERR_IN_STATUS;
+#if OPAL_ENABLE_FT_MPI
+            if (MPI_ERR_PROC_FAILED == request->req_status.MPI_ERROR
+             || MPI_ERR_REVOKED == request->req_status.MPI_ERROR) {
+                rc = request->req_status.MPI_ERROR;
+            }
+#endif /* OPAL_ENABLE_FT_MPI */
         }
 
         if( request->req_persistent ) {

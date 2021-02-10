@@ -412,6 +412,13 @@ static void resolve_relative_paths(char **file_prefix, char *file_path, bool rel
     }
 }
 
+int mca_base_var_load_extra_files(char* files, bool rel_path_search) {
+    char *tmp1=strdup(files);
+    resolve_relative_paths(&tmp1, mca_base_param_file_path, rel_path_search, &mca_base_var_files, OPAL_ENV_SEP);
+    read_files (tmp1, &mca_base_var_file_values, ',');
+    free(tmp1);
+}
+
 int mca_base_var_cache_files(bool rel_path_search)
 {
     char *tmp = NULL;

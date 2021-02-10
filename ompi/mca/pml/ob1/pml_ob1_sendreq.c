@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2019 The University of Tennessee and The University
+ * Copyright (c) 2004-2021 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
@@ -125,6 +125,43 @@ static int mca_pml_ob1_send_request_free(struct ompi_request_t** request)
 
 static int mca_pml_ob1_send_request_cancel(struct ompi_request_t* request, int complete)
 {
+#if OPAL_ENABLE_FT_MPI
+    ompi_communicator_t* comm = request->req_mpi_object.comm;
+    mca_pml_ob1_send_request_t* pml_req = (mca_pml_ob1_send_request_t*)request;
+
+    if( REQUEST_COMPLETE(request) ) { /* way to late to cancel this one */
+        return OMPI_SUCCESS;
+    }
+    /* If FT is enabled then we allow canceling requests with a dead process.
+     * However, we should not release the request as we don't know if there are
+     * no pending fragments. This generates a memory leak as the send requests
+     * will never be recovered. */
+    if( !ompi_comm_is_proc_active(comm, pml_req->req_send.req_base.req_peer,
+                                  OMPI_COMM_IS_INTER(comm)) ) {
+        /**
+         * As now the PML is done with this request we have to force the pml_complete
+         * to true. Otherwise, the request will never be freed.
+         */
+        opal_output_verbose(10, ompi_ftmpi_output_handle,
+                                "Send_request_cancel: cancel granted for request %p because peer %d is dead\n",
+                                (void*)request, pml_req->req_send.req_base.req_peer);
+        request->req_status._cancelled = true;
+        if( NULL != pml_req->rdma_frag ) {
+            MCA_PML_OB1_RDMA_FRAG_RETURN(pml_req->rdma_frag);
+            pml_req->rdma_frag = NULL;
+        }
+        mca_pml_ob1_free_rdma_resources(pml_req);
+        /* as said above, in theory we should deschedule pending frags and make
+         * it PML complete, but that's not easy. Normally, the frags will
+         * fail to deliver and the error handling should happen then to
+         * call pml_complete when all frags have triggered
+         * In the meantime, just mark it MPI complete and hope the BTL does the
+         * right thing
+         */
+        MCA_PML_OB1_SEND_REQUEST_MPI_COMPLETE(pml_req, true);
+        return OMPI_SUCCESS;
+    }
+#endif  /* OPAL_ENABLE_FT_MPI */
     /* we dont cancel send requests by now */
     return OMPI_SUCCESS;
 }
@@ -185,9 +222,19 @@ mca_pml_ob1_match_completion_free( struct mca_btl_base_module_t* btl,
 
     /* check completion status */
     if( OPAL_UNLIKELY(OMPI_SUCCESS != status) ) {
-        /* TSW - FIX */
-        opal_output(0, "%s:%d FATAL", __FILE__, __LINE__);
-        ompi_rte_abort(-1, NULL);
+        opal_output_verbose(mca_pml_ob1_output, 1, "pml:ob1: %s: operation failed with code %d", __func__, status);
+        sendreq->req_send.req_base.req_ompi.req_status.MPI_ERROR =
+#if OPAL_ENABLE_FT_MPI
+            (OMPI_ERR_UNREACH == status ? MPI_ERR_PROC_FAILED : status);
+#else
+            status;
+#endif /* OPAL_ENABLE_FT_MPI */
+        mca_bml_base_btl_array_remove(&sendreq->req_endpoint->btl_eager, btl);
+        /**
+         * Ideally we should release the BTL at this point. Unfortunately as we don't
+         * know if other operations are pending on it we can't release it yet (or we
+         * will prevent any further callbacks triggering).
+         */
     }
     mca_pml_ob1_match_completion_free_request( bml_btl, sendreq );
 }
@@ -231,9 +278,19 @@ mca_pml_ob1_rndv_completion( mca_btl_base_module_t* btl,
 
     /* check completion status */
     if( OPAL_UNLIKELY(OMPI_SUCCESS != status) ) {
-        /* TSW - FIX */
-        opal_output(0, "%s:%d FATAL", __FILE__, __LINE__);
-        ompi_rte_abort(-1, NULL);
+        opal_output_verbose(mca_pml_ob1_output, 1, "pml:ob1: %s: operation failed with code %d", __func__, status);
+        sendreq->req_send.req_base.req_ompi.req_status.MPI_ERROR =
+#if OPAL_ENABLE_FT_MPI
+            (OMPI_ERR_UNREACH == status ? MPI_ERR_PROC_FAILED : status);
+#else
+            status;
+#endif
+        mca_bml_base_btl_array_remove(&sendreq->req_endpoint->btl_eager, btl);
+        /**
+         * Ideally we should release the BTL at this point. Unfortunately as we don't
+         * know if other operations are pending on it we can't release it yet (or we
+         * will prevent any further callbacks triggering).
+         */
     }
 
     /* count bytes of user data actually delivered. As the rndv completion only
@@ -272,10 +329,34 @@ mca_pml_ob1_rget_completion (mca_pml_ob1_rdma_frag_t *frag, int64_t rdma_length)
             MCA_PML_OB1_RDMA_FRAG_RETURN(frag);
         }
     }
+    else {
+        opal_output_verbose(mca_pml_ob1_output, 1, "pml:ob1: %s: operation failed with code %d", __func__, (int)rdma_length);
+        sendreq->req_send.req_base.req_ompi.req_status.MPI_ERROR =
+#if OPAL_ENABLE_FT_MPI
+            (OMPI_ERR_UNREACH == rdma_length) ? MPI_ERR_PROC_FAILED : (int)rdma_length;
+#else
+            rdma_length;
+#endif
+        mca_bml_base_btl_array_remove(&sendreq->req_endpoint->btl_eager, bml_btl->btl);
+        /**
+         * Ideally we should release the BTL at this point. Unfortunately as we don't
+         * know if other operations are pending on it we can't release it yet (or we
+         * will prevent any further callbacks triggering).
+         */
+
+        /* error fragment is 'delivered' */
+        OPAL_THREAD_ADD_FETCH_SIZE_T(&sendreq->req_bytes_delivered, frag->rdma_length);
+        if( sendreq->rdma_frag == frag ) {
+            sendreq->rdma_frag = NULL;
+        }
+        MCA_PML_OB1_RDMA_FRAG_RETURN(frag);
+    }
 
     send_request_pml_complete_check(sendreq);
 
-    MCA_PML_OB1_PROGRESS_PENDING(bml_btl);
+    if( OPAL_LIKELY(0 < rdma_length) ) {
+        MCA_PML_OB1_PROGRESS_PENDING(bml_btl);
+    }
 }
 
 
@@ -291,8 +372,25 @@ mca_pml_ob1_send_ctl_completion( mca_btl_base_module_t* btl,
 {
     mca_bml_base_btl_t* bml_btl = (mca_bml_base_btl_t*) des->des_context;
 
-    /* check for pending requests */
-    MCA_PML_OB1_PROGRESS_PENDING(bml_btl);
+    if( OPAL_UNLIKELY(OMPI_SUCCESS != status) ) {
+        mca_pml_ob1_send_request_t* sendreq = (mca_pml_ob1_send_request_t*)des->des_cbdata;
+        opal_output_verbose(mca_pml_ob1_output, 1, "pml:ob1: %s: operation failed with code %d", __func__, status);
+        sendreq->req_send.req_base.req_ompi.req_status.MPI_ERROR =
+#if OPAL_ENABLE_FT_MPI
+            (OMPI_ERR_UNREACH == status ? MPI_ERR_PROC_FAILED : status);
+#else
+            status;
+#endif
+        mca_bml_base_btl_array_remove(&sendreq->req_endpoint->btl_eager, btl);
+        /** Ideally we should release the BTL at this point. Unfortunately as we don't
+         * know if other operations are pending on it we can't release it yet (or we
+         * will prevent any further callbacks triggering).
+         */
+    }
+    else {
+        /* check for pending requests */
+        MCA_PML_OB1_PROGRESS_PENDING(bml_btl);
+    }
 }
 
 /**
@@ -312,15 +410,27 @@ mca_pml_ob1_frag_completion( mca_btl_base_module_t* btl,
 
     /* check completion status */
     if( OPAL_UNLIKELY(OMPI_SUCCESS != status) ) {
-        /* TSW - FIX */
-        opal_output(0, "%s:%d FATAL", __FILE__, __LINE__);
-        ompi_rte_abort(-1, NULL);
+        opal_output_verbose(mca_pml_ob1_output, 1, "pml:ob1: %s: operation failed with code %d", __func__, status);
+        sendreq->req_send.req_base.req_ompi.req_status.MPI_ERROR =
+#if OPAL_ENABLE_FT_MPI
+            (OMPI_ERR_UNREACH == status ? MPI_ERR_PROC_FAILED : status);
+#else
+            status;
+#endif
+        mca_bml_base_btl_array_remove(&sendreq->req_endpoint->btl_eager, btl);
+        /**
+          * Ideally we should release the BTL at this point. Unfortunately as we don't
+          * know if other operations are pending on it we can't release it yet (or we
+          * will prevent any further callbacks triggering).
+          */
+        req_bytes_delivered = sendreq->req_send.req_bytes_packed - sendreq->req_bytes_delivered;
     }
-
-    /* count bytes of user data actually delivered */
-    req_bytes_delivered = mca_pml_ob1_compute_segment_length_base ((void *) des->des_segments,
-                                                                   des->des_segment_count,
-                                                                   sizeof(mca_pml_ob1_frag_hdr_t));
+    else {
+        /* count bytes of user data actually delivered */
+        req_bytes_delivered = mca_pml_ob1_compute_segment_length_base ((void *) des->des_segments,
+                                                                       des->des_segment_count,
+                                                                       sizeof(mca_pml_ob1_frag_hdr_t));
+    }
 
     OPAL_THREAD_ADD_FETCH32(&sendreq->req_pipeline_depth, -1);
     OPAL_THREAD_ADD_FETCH_SIZE_T(&sendreq->req_bytes_delivered, req_bytes_delivered);
@@ -752,6 +862,8 @@ int mca_pml_ob1_send_request_start_rdma( mca_pml_ob1_send_request_t* sendreq,
     /* send */
     rc = mca_bml_base_send(bml_btl, des, MCA_PML_OB1_HDR_TYPE_RGET);
     if (OPAL_UNLIKELY(rc < 0)) {
+        MCA_PML_OB1_RDMA_FRAG_RETURN(frag);
+        sendreq->rdma_frag = NULL;
         mca_bml_base_free(bml_btl, des);
         return rc;
     }
@@ -1156,9 +1268,14 @@ static void mca_pml_ob1_put_completion (mca_btl_base_module_t* btl, struct mca_b
         mca_pml_ob1_send_request_put_frag_failed (frag, status);
     }
 
+    if( sendreq->rdma_frag == frag ) {
+        sendreq->rdma_frag = NULL;
+    }
     MCA_PML_OB1_RDMA_FRAG_RETURN(frag);
 
-    MCA_PML_OB1_PROGRESS_PENDING(bml_btl);
+    if( OPAL_LIKELY( OMPI_SUCCESS == status ) ) {
+        MCA_PML_OB1_PROGRESS_PENDING(bml_btl);
+    }
 }
 
 int mca_pml_ob1_send_request_put_frag( mca_pml_ob1_rdma_frag_t *frag )
@@ -1203,6 +1320,10 @@ int mca_pml_ob1_send_request_put_frag( mca_pml_ob1_rdma_frag_t *frag )
     SPC_RECORD(OMPI_SPC_BYTES_PUT, (ompi_spc_value_t)frag->rdma_length);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
         mca_pml_ob1_send_request_put_frag_failed (frag, rc);
+        if( sendreq->rdma_frag == frag ) {
+            sendreq->rdma_frag = NULL;
+        }
+        MCA_PML_OB1_RDMA_FRAG_RETURN(frag);
         return rc;
     }
 
@@ -1233,9 +1354,15 @@ void mca_pml_ob1_send_request_put (mca_pml_ob1_send_request_t *sendreq,
         MCA_PML_OB1_RDMA_FRAG_ALLOC(frag);
 
         if( OPAL_UNLIKELY(NULL == frag) ) {
-            /* TSW - FIX */
-            OMPI_ERROR_LOG(OMPI_ERR_OUT_OF_RESOURCE);
-            ompi_rte_abort(-1, NULL);
+            /* send fragment by copy in/out */
+            mca_pml_ob1_send_request_copy_in_out(sendreq,
+                                                 hdr->hdr_rdma_offset, hdr->hdr_dst_size);
+            /* if a pointer to a receive request is not set it means that
+             * ACK was not yet received. Don't schedule sends before ACK */
+            if(NULL != sendreq->req_recv.pval) {
+                mca_pml_ob1_send_request_schedule(sendreq);
+            }
+            return;
         }
     } else {
         /* rget fallback on put */

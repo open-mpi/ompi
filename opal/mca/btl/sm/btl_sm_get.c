@@ -5,6 +5,9 @@
  * Copyright (c) 2018      Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2019      Google, Inc. All rights reserved.
+ * Copyright (c) 2020      The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -95,7 +98,12 @@ int mca_btl_sm_get_cma (mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *end
     do {
         ret = process_vm_readv (endpoint->segment_data.other.seg_ds->seg_cpid, &dst_iov, 1, &src_iov, 1, 0);
         if (0 > ret) {
-            opal_output(0, "Read %ld, expected %lu, errno = %d\n", (long)ret, (unsigned long)size, errno);
+            if (ESRCH == errno) {
+                BTL_PEER_ERROR(NULL,
+                        ("CMA read %ld, expected %lu, errno = %d\n", (long)ret, (unsigned long)size, errno));
+                return OPAL_ERROR;
+            }
+            BTL_ERROR(("CMA read %ld, expected %lu, errno = %d\n", (long)ret, (unsigned long)size, errno));
             return OPAL_ERROR;
         }
         src_iov.iov_base = (void *)((char *)src_iov.iov_base + ret);

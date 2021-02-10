@@ -3,7 +3,7 @@
  * Copyright (c) 2006-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2007 The University of Tennessee and The University
+ * Copyright (c) 2004-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2006 The Regents of the University of California.
@@ -33,30 +33,30 @@
 
 ompi_pml_cm_t ompi_pml_cm = {
     {
-        mca_pml_cm_add_procs,
-        mca_pml_cm_del_procs,
-        mca_pml_cm_enable,
-        NULL, /* No progress function. The MTL register their own */
-        mca_pml_cm_add_comm,
-        mca_pml_cm_del_comm,
-        mca_pml_cm_irecv_init,
-        mca_pml_cm_irecv,
-        mca_pml_cm_recv,
-        mca_pml_cm_isend_init,
-        mca_pml_cm_isend,
-        mca_pml_cm_send,
-        mca_pml_cm_iprobe,
-        mca_pml_cm_probe,
-        mca_pml_cm_start,
-        mca_pml_cm_improbe,
-        mca_pml_cm_mprobe,
-        mca_pml_cm_imrecv,
-        mca_pml_cm_mrecv,
-        mca_pml_cm_dump,
-        NULL,
-        0,
-        0,
-        0 /* flags */
+        .pml_add_procs     = mca_pml_cm_add_procs,
+        .pml_del_procs     = mca_pml_cm_del_procs,
+        .pml_enable        = mca_pml_cm_enable,
+        .pml_progress      = NULL, /* No progress function. The MTL register their own */
+        .pml_add_comm      = mca_pml_cm_add_comm,
+        .pml_del_comm      = mca_pml_cm_del_comm,
+        .pml_irecv_init    = mca_pml_cm_irecv_init,
+        .pml_irecv         = mca_pml_cm_irecv,
+        .pml_recv          = mca_pml_cm_recv,
+        .pml_isend_init    = mca_pml_cm_isend_init,
+        .pml_isend         = mca_pml_cm_isend,
+        .pml_send          = mca_pml_cm_send,
+        .pml_iprobe        = mca_pml_cm_iprobe,
+        .pml_probe         = mca_pml_cm_probe,
+        .pml_start         = mca_pml_cm_start,
+        .pml_improbe       = mca_pml_cm_improbe,
+        .pml_mprobe        = mca_pml_cm_mprobe,
+        .pml_imrecv        = mca_pml_cm_imrecv,
+        .pml_mrecv         = mca_pml_cm_mrecv,
+        .pml_dump          = mca_pml_cm_dump,
+        .pml_ft_event      = NULL,
+        .pml_max_contextid = 0,
+        .pml_max_tag       = 0,
+        .pml_flags         = 0 /* flags */
     }
 };
 

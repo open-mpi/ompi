@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2015 The University of Tennessee and The University
+ * Copyright (c) 2013-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2013-2017 Inria.  All rights reserved.
@@ -40,6 +40,10 @@ OMPI_DECLSPEC extern mca_pml_base_component_2_0_0_t mca_pml_monitoring_component
 extern int mca_pml_monitoring_add_comm(struct ompi_communicator_t* comm);
 
 extern int mca_pml_monitoring_del_comm(struct ompi_communicator_t* comm);
+
+#if OPAL_ENABLE_FT_MPI
+extern int mca_pml_monitoring_revoke_comm(struct ompi_communicator_t* comm, bool coll_only);
+#endif
 
 extern int mca_pml_monitoring_add_procs(struct ompi_proc_t **procs, size_t nprocs);
 

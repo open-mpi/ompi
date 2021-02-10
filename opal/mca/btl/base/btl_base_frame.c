@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2007 The University of Tennessee and The University
+ * Copyright (c) 2004-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -116,6 +116,7 @@ OBJ_CLASS_INSTANCE(
 char* mca_btl_base_include = NULL;
 char* mca_btl_base_exclude = NULL;
 int mca_btl_base_warn_component_unused = 1;
+int mca_btl_base_warn_peer_error = true;
 opal_list_t mca_btl_base_modules_initialized = {{0}};
 bool mca_btl_base_thread_multiple_override = false;
 
@@ -142,6 +143,12 @@ static int mca_btl_base_register(mca_base_register_flag_t flags)
                                  OPAL_INFO_LVL_9,
                                  MCA_BASE_VAR_SCOPE_READONLY,
                                  &mca_btl_base_exclude);
+    (void) mca_base_var_register("opal", "btl", "base", "warn_peer_error",
+                                 "This parameter is used to turn on warning messages when peers disconnect unexpectedly",
+                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                 OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY,
+                                 &mca_btl_base_warn_peer_error);
     (void) mca_base_var_register("opal", "btl", "base", "warn_component_unused",
                                  "This parameter is used to turn on warning messages when certain NICs are not used",
                                  MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,

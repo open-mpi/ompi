@@ -881,15 +881,18 @@ static int mca_btl_tcp_endpoint_complete_connect(mca_btl_base_endpoint_t* btl_en
         return OPAL_SUCCESS;
     }
     if(so_error != 0) {
-        char *msg;
-        opal_asprintf(&msg, "connect() to %s:%d failed",
+        if( mca_btl_base_warn_peer_error
+         || mca_btl_base_verbose > 0 ) {
+            char *msg;
+            opal_asprintf(&msg, "connect() to %s:%d failed",
                  opal_net_get_hostname((struct sockaddr*) &endpoint_addr),
                  ntohs(((struct sockaddr_in*) &endpoint_addr)->sin_port));
-        opal_show_help("help-mpi-btl-tcp.txt", "client connect fail",
+            opal_show_help("help-mpi-btl-tcp.txt", "client connect fail",
                        true, opal_process_info.nodename,
                        getpid(), msg,
                        strerror(so_error), so_error);
-        free(msg);
+            free(msg);
+        }
         btl_endpoint->endpoint_state = MCA_BTL_TCP_FAILED;
         mca_btl_tcp_endpoint_close(btl_endpoint);
         return OPAL_ERROR;

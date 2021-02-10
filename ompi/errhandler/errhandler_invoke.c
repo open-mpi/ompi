@@ -162,9 +162,18 @@ int ompi_errhandler_request_invoke(int count,
     for (; i < count; ++i) {
         if (MPI_REQUEST_NULL != requests[i] &&
             MPI_SUCCESS != requests[i]->req_status.MPI_ERROR) {
+#if OPAL_ENABLE_FT_MPI
+            /* Special case for MPI_ANY_SOURCE when marked as
+             * MPI_ERR_PROC_FAILED_PENDING,
+             * This request should not be freed since it is still active. */
+            if( MPI_ERR_PROC_FAILED_PENDING != requests[i]->req_status.MPI_ERROR ) {
+                ompi_request_free(&(requests[i]));
+            }
+#else
             /* Ignore the error -- what are we going to do?  We're
                already going to invoke an error */
             ompi_request_free(&(requests[i]));
+#endif /* OPAL_ENABLE_FT_MPI */
         }
     }
 

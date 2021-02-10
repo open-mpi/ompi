@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2021 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -51,6 +51,9 @@
  * MPI_IO is set to MPI_ANY_SOURCE.  We may need to revist this.
  *
  * MPI_WTIME_IS_GLOBAL is set to 0 (a conservative answer).
+ *
+ * MPI_FT is set to 0 or 1 (according to OPAL_ENABLE_FT_MPI and
+ * ompi_ftmpi_enabled)
  *
  * MPI_APPNUM is set as the result of a GPR subscription.
  *
@@ -123,7 +126,9 @@ int ompi_attr_create_predefined(void)
         OMPI_SUCCESS != (ret = create_win(MPI_WIN_SIZE)) ||
         OMPI_SUCCESS != (ret = create_win(MPI_WIN_DISP_UNIT)) ||
         OMPI_SUCCESS != (ret = create_win(MPI_WIN_CREATE_FLAVOR)) ||
-        OMPI_SUCCESS != (ret = create_win(MPI_WIN_MODEL))) {
+        OMPI_SUCCESS != (ret = create_win(MPI_WIN_MODEL)) ||
+        OMPI_SUCCESS != (ret = create_comm(MPI_FT, false)) || /* not #if conditional on OPAL_ENABLE_FT_MPI for ABI */
+        0) {
         return ret;
     }
 
@@ -133,6 +138,14 @@ int ompi_attr_create_predefined(void)
         OMPI_SUCCESS != (ret = set_f(MPI_HOST, MPI_PROC_NULL)) ||
         OMPI_SUCCESS != (ret = set_f(MPI_IO, MPI_ANY_SOURCE)) ||
         OMPI_SUCCESS != (ret = set_f(MPI_WTIME_IS_GLOBAL, 0)) ||
+#if OPAL_ENABLE_FT_MPI
+        /* Although we always define the key to ease fortran integration,
+         * lets not set a default value to the attribute if we do not 
+         * have fault tolerance built in. */
+        OMPI_SUCCESS != (ret = set_f(MPI_FT, ompi_ftmpi_enabled)) ||
+#else
+        OMPI_SUCCESS != (ret = set_f(MPI_FT, false)) ||
+#endif /* OPAL_ENABLE_FT_MPI */
         OMPI_SUCCESS != (ret = set_f(MPI_LASTUSEDCODE,
                                      ompi_mpi_errcode_lastused))) {
         return ret;
@@ -161,6 +174,7 @@ int ompi_attr_free_predefined(void)
         OMPI_SUCCESS != (ret = free_comm(MPI_APPNUM)) ||
         OMPI_SUCCESS != (ret = free_comm(MPI_LASTUSEDCODE)) ||
         OMPI_SUCCESS != (ret = free_comm(MPI_UNIVERSE_SIZE)) ||
+        OMPI_SUCCESS != (ret = free_comm(MPI_FT)) || /* not #if conditional on OPAL_ENABLE_FT_MPI for ABI */
         OMPI_SUCCESS != (ret = free_win(MPI_WIN_BASE)) ||
         OMPI_SUCCESS != (ret = free_win(MPI_WIN_SIZE)) ||
         OMPI_SUCCESS != (ret = free_win(MPI_WIN_DISP_UNIT)) ||

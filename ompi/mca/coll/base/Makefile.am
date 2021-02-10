@@ -2,7 +2,7 @@
 # Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
 #                         Corporation.  All rights reserved.
-# Copyright (c) 2004-2015 The University of Tennessee and The University
+# Copyright (c) 2004-2020 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
 # Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -46,3 +46,9 @@ libmca_coll_la_SOURCES += \
         base/coll_base_reduce_scatter_block.c \
         base/coll_base_exscan.c \
         base/coll_base_scan.c
+
+if WANT_FT_MPI
+libmca_coll_la_SOURCES += \
+        base/coll_base_agree_noft.c
+endif # WANT_FT_MPI
+

@@ -12,6 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2008-2020 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2010-2012 Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015-2019 Intel, Inc.  All rights reserved.
@@ -33,6 +34,7 @@
 #include "opal/class/opal_pointer_array.h"
 #include "opal/mca/pmix/pmix-internal.h"
 #include "opal/util/string_copy.h"
+#include "opal/mca/backtrace/backtrace.h"
 
 
 /*
@@ -78,6 +80,15 @@ ompi_predefined_errhandler_t *ompi_mpi_errors_return_addr =
 static opal_mutex_t errhandler_init_lock = OPAL_MUTEX_STATIC_INIT;
 ompi_errhandler_t* ompi_initial_error_handler_eh = NULL;
 void (*ompi_initial_error_handler)(struct ompi_communicator_t **comm, int *error_code, ...) = NULL;
+
+#if OPAL_ENABLE_FT_MPI
+/*
+ * A mutex to prevent altering the proc/comm status from an
+ * RTE progress thread at the same time as from an OMPI
+ * thread.
+ */
+static opal_mutex_t errhandler_ftmpi_lock = OPAL_MUTEX_STATIC_INIT;
+#endif /* OPAL_ENABLE_FT_MPI */
 
 /*
  * Initialize the initial errhandler infrastructure only.
@@ -266,21 +277,187 @@ ompi_errhandler_t *ompi_errhandler_create(ompi_errhandler_type_t object_type,
   return new_errhandler;
 }
 
+#if OPAL_ENABLE_FT_MPI
+#include "opal/mca/threads/wait_sync.h"
+
+int ompi_errhandler_proc_failed_internal(ompi_proc_t* ompi_proc, int status, bool forward)
+{
+    int rc = OMPI_SUCCESS, max_num_comm = 0, i, proc_rank;
+    ompi_communicator_t *comm = NULL;
+    ompi_group_t *group = NULL;
+    bool remote = false;
+
+    /* Mutual exclusion (we are going to manipulate global group objects etc). This function
+     * may be invoked from the RTE thread.
+     *
+     * Note that this may be called from within the event-loop, hence this
+     * function must NOT call recursively opal_progress().
+     *
+     * Note that we could use atomic CAS on field proc->proc_active instead. We decided to keep
+     * the existing code because it is outside of the critical path and a lock
+     * makes it easier to deal with the sentinel proc case.
+     */
+    opal_mutex_lock(&errhandler_ftmpi_lock);
+    /* If we have already reported this error, ignore */
+    if( !ompi_proc_is_active(ompi_proc) ) {
+        opal_mutex_unlock(&errhandler_ftmpi_lock);
+        return rc;
+    }
+    /* Process State:
+     * Update process state to failed */
+    ompi_proc_mark_as_failed(ompi_proc);
+    opal_mutex_unlock(&errhandler_ftmpi_lock);
+
+    opal_output_verbose(1, ompi_ftmpi_output_handle,
+                        "%s ompi: Process %s failed (state = %d).",
+                        OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
+                        OMPI_NAME_PRINT(&ompi_proc->super.proc_name),
+                        status );
+
+    if(90 < opal_output_get_verbosity(ompi_ftmpi_output_handle)) {
+        /* how did we get there? */
+        opal_backtrace_print(stderr, NULL, 0);
+    }
+
+    /* Communicator State:
+     * Let them know about the failure. */
+    max_num_comm = opal_pointer_array_get_size(&ompi_mpi_communicators);
+    for( i = 0; i < max_num_comm; ++i ) {
+        comm = (ompi_communicator_t *)opal_pointer_array_get_item(&ompi_mpi_communicators, i);
+        if( NULL == comm ) {
+            continue;
+        }
+
+        /* Look in both the local and remote group for this process */
+        proc_rank = ompi_group_proc_lookup_rank(comm->c_local_group, ompi_proc);
+        remote = false;
+        if( (proc_rank < 0) && (comm->c_local_group != comm->c_remote_group) ) {
+            proc_rank = ompi_group_proc_lookup_rank(comm->c_remote_group, ompi_proc);
+            remote = true;
+        }
+        if( proc_rank < 0 ) {
+            continue;  /* Not in this communicator, continue */
+        }
+
+        /* Notify the communicator to update as necessary */
+        ompi_comm_set_rank_failed(comm, proc_rank, remote);
+
+        if( NULL == group ) {  /* Build a group with the failed process */
+            rc = ompi_group_incl((remote ? comm->c_remote_group : comm->c_local_group),
+                                 1, &proc_rank,
+                                 &group);
+            if(OPAL_UNLIKELY( OMPI_SUCCESS != rc )) goto cleanup;
+        }
+        OPAL_OUTPUT_VERBOSE((10, ompi_ftmpi_output_handle,
+                             "%s ompi: Process %s is in comm (%d) with rank %d. [%s]",
+                             OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
+                             OMPI_NAME_PRINT(&ompi_proc->super.proc_name),
+                             comm->c_contextid,
+                             proc_rank,
+                             (OMPI_ERRHANDLER_TYPE_PREDEFINED == comm->errhandler_type ? "P" :
+                              (OMPI_ERRHANDLER_TYPE_COMM == comm->errhandler_type ? "C" :
+                               (OMPI_ERRHANDLER_TYPE_WIN == comm->errhandler_type ? "W" :
+                                (OMPI_ERRHANDLER_TYPE_FILE == comm->errhandler_type ? "F" : "U") ) ) )
+                             ));
+    }
+
+    /* Group State:
+     * Add the failed process to the global group of failed processes. */
+    if( group != NULL ) {
+        opal_mutex_lock(&ompi_group_afp_mutex);
+        ompi_group_t *afp = ompi_group_all_failed_procs;
+        rc = ompi_group_union(afp, group, &ompi_group_all_failed_procs);
+        opal_mutex_unlock(&ompi_group_afp_mutex);
+        if(OPAL_UNLIKELY( OMPI_SUCCESS != rc )) {
+            goto cleanup;
+        }
+        OBJ_RELEASE(afp);
+    }
+
+    /* Point-to-Point:
+     * Let the active request know of the process state change.
+     * The wait function has a check, so all we need to do here is
+     * signal it so it will check again.
+     */
+    wait_sync_global_wakeup(MPI_ERR_PROC_FAILED);
+
+    /* Collectives:
+     * Propagate the error (this has been selected rather than the "roll
+     * forward through errors in collectives" as this is less intrusive to the
+     * code base.) */
+    if( forward ) {
+        /* TODO: this to become redundand when pmix has rbcast */
+        ompi_comm_failure_propagate(&ompi_mpi_comm_world.comm, ompi_proc, status);
+        /* Let pmix know: flush modex information, propagate to connect/accept
+         * jobs; we will tell our local daemon, and it will do the proper thing */
+        bool active = true;
+        pmix_proc_t pmix_source;
+        pmix_proc_t pmix_proc;
+        pmix_info_t pmix_info[1];
+        pmix_status_t prc;
+
+        OPAL_PMIX_CONVERT_NAME(&pmix_source, OMPI_PROC_MY_NAME);
+        OPAL_PMIX_CONVERT_NAME(&pmix_proc, &ompi_proc->super.proc_name);
+        PMIX_INFO_CONSTRUCT(&pmix_info[0]);
+        PMIX_INFO_LOAD(&pmix_info[0], PMIX_EVENT_AFFECTED_PROC, &pmix_proc, PMIX_PROC);
+        prc = PMIx_Notify_event(status, &pmix_source, PMIX_RANGE_LOCAL,
+                                pmix_info, 1, NULL, &active);
+        if( PMIX_SUCCESS != prc &&
+            PMIX_OPERATION_SUCCEEDED != prc ) {
+            /* Lets hope for the best: maybe someone else will succeed in
+             * reporting, or PRTE will figure it out itself.
+             * Complain but keep going. */
+            OMPI_ERROR_LOG(prc);
+        }
+        PMIX_INFO_DESTRUCT(&pmix_info[0]);
+    }
+
+ cleanup:
+    return rc;
+}
+#endif /* OPAL_ENABLE_FT_MPI */
+
 /* helper to move the error report back from the RTE thread to the MPI thread */
 typedef struct ompi_errhandler_event_s {
     opal_event_t super;
-    opal_process_name_t procname;
     int status;
+    opal_process_name_t source;
+    int nvalue;
+    opal_value_t value[];
 } ompi_errhandler_event_t;
 
 static void *ompi_errhandler_event_cb(int fd, int flags, void *context) {
     ompi_errhandler_event_t *event = (ompi_errhandler_event_t*) context;
     int status = event->status;
+    opal_process_name_t source = event->source;
+#if OPAL_ENABLE_FT_MPI
+    if( PMIX_ERR_PROC_ABORTED == status ) {
+        int i;
+        for(i = 0; i < event->nvalue; i++) {
+            if(OPAL_NAME != event->value[i].type) continue;
+            ompi_proc_t *proc = (ompi_proc_t*)ompi_proc_for_name(event->value[i].data.name);
+            if( NULL == proc ) continue; /* we are not 'MPI connected' with this proc. */
+            assert( !ompi_proc_is_sentinel(proc) );
+            ompi_errhandler_proc_failed_internal(proc, status, false);
+        }
+        opal_event_del(&event->super);
+        free(event);
+        return NULL;
+    }
+    /* An unmanaged type of failure, let it do its thing. */
+    opal_output_verbose(1, ompi_ftmpi_output_handle,
+        "%s ompi: Error event reported through PMIx from %s (state = %d). "
+        "This error type is not handled by the fault tolerant layer "
+        "and the application will now presumably abort.",
+        OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
+        OPAL_NAME_PRINT(source),
+        status );
+#endif /* OPAL_ENABLE_FT_MPI */
     opal_event_del(&event->super);
     free(event);
     /* our default action is to abort */
-    /* TODO: this error should return to the caller and invoke an error
-     * handler from the MPI API call.
+    /* TODO: this error should store the error and later invoke an
+     * error handler from an impacted MPI API call.
      * For now, it is fatal. */
     ompi_mpi_errors_are_fatal_comm_handler(NULL, &status, "PMIx Event Notification");
     return NULL;
@@ -299,7 +476,7 @@ void ompi_errhandler_registration_callback(int status,
 }
 
 /**
- * Default errhandler callback
+ * Default errhandler callback for RTE reported errors
  */
 void ompi_errhandler_callback(size_t refid, pmix_status_t status,
                               const pmix_proc_t *source,
@@ -309,21 +486,26 @@ void ompi_errhandler_callback(size_t refid, pmix_status_t status,
                               void *cbdata)
 {
     int rc;
+    size_t i;
     /* an error has been found, report to the MPI layer and let it take
      * further action. */
     /* transition this from the RTE thread to the MPI progress engine */
-    ompi_errhandler_event_t *event = malloc(sizeof(*event));
+    ompi_errhandler_event_t *event = malloc(sizeof(*event)+ninfo*sizeof(opal_value_t));
     if(NULL == event) {
         OMPI_ERROR_LOG(OMPI_ERR_OUT_OF_RESOURCE);
         goto error;
     }
-    OPAL_PMIX_CONVERT_PROCT(rc, &event->procname, (pmix_proc_t*)source);
+    event->status = status;
+    OPAL_PMIX_CONVERT_PROCT(rc, &event->source, (pmix_proc_t*)source);
     if(OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
         OMPI_ERROR_LOG(rc);
         free(event);
         goto error;
     }
-    event->status = status;
+    event->nvalue = ninfo;
+    for(i = 0; i < ninfo; i++) {
+        opal_pmix_value_unload(&event->value[i], &info[i].value);
+    }
     opal_event_set(opal_sync_event_base, &event->super, -1, OPAL_EV_READ,
                    ompi_errhandler_event_cb, event);
     opal_event_active(&event->super, OPAL_EV_READ, 1);
@@ -340,6 +522,8 @@ error:
         cbfunc(PMIX_EVENT_NO_ACTION_TAKEN, NULL, 0, NULL, NULL, cbdata);
     }
 }
+
+
 
 /**************************************************************************
  *

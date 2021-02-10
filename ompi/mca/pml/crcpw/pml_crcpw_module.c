@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2009 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2013 The University of Tennessee and The University
+ * Copyright (c) 2004-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -35,31 +35,30 @@
 
 mca_pml_crcpw_module_t mca_pml_crcpw_module = {
     {
-        mca_pml_crcpw_add_procs,
-        mca_pml_crcpw_del_procs,
-        mca_pml_crcpw_enable,
-        mca_pml_crcpw_progress,
-        mca_pml_crcpw_add_comm,
-        mca_pml_crcpw_del_comm,
-        mca_pml_crcpw_irecv_init,
-        mca_pml_crcpw_irecv,
-        mca_pml_crcpw_recv,
-        mca_pml_crcpw_isend_init,
-        mca_pml_crcpw_isend,
-        mca_pml_crcpw_send,
-        mca_pml_crcpw_iprobe,
-        mca_pml_crcpw_probe,
-        mca_pml_crcpw_start,
-        mca_pml_crcpw_improbe,
-        mca_pml_crcpw_mprobe,
-        mca_pml_crcpw_imrecv,
-        mca_pml_crcpw_mrecv,
-        mca_pml_crcpw_dump,
-        mca_pml_crcpw_ft_event,
-
-        32768,
-        INT_MAX,
-        0 /* flags */
+        .pml_add_procs     = mca_pml_crcpw_add_procs,
+        .pml_del_procs     = mca_pml_crcpw_del_procs,
+        .pml_enable        = mca_pml_crcpw_enable,
+        .pml_progress      = mca_pml_crcpw_progress,
+        .pml_add_comm      = mca_pml_crcpw_add_comm,
+        .pml_del_comm      = mca_pml_crcpw_del_comm,
+        .pml_irecv_init    = mca_pml_crcpw_irecv_init,
+        .pml_irecv         = mca_pml_crcpw_irecv,
+        .pml_recv          = mca_pml_crcpw_recv,
+        .pml_isend_init    = mca_pml_crcpw_isend_init,
+        .pml_isend         = mca_pml_crcpw_isend,
+        .pml_send          = mca_pml_crcpw_send,
+        .pml_iprobe        = mca_pml_crcpw_iprobe,
+        .pml_probe         = mca_pml_crcpw_probe,
+        .pml_start         = mca_pml_crcpw_start,
+        .pml_improbe       = mca_pml_crcpw_improbe,
+        .pml_mprobe        = mca_pml_crcpw_mprobe,
+        .pml_imrecv        = mca_pml_crcpw_imrecv,
+        .pml_mrecv         = mca_pml_crcpw_mrecv,
+        .pml_dump          = mca_pml_crcpw_dump,
+        .pml_ft_event      = mca_pml_crcpw_ft_event,
+        .pml_max_contextid = 32768,
+        .pml_max_tag       = INT_MAX,
+        .pml_flags         = 0 /* flags */
     }
 };
 

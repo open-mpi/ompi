@@ -13,6 +13,7 @@
  * Copyright (c) 2006-2017 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2006-2017 University of Houston.  All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc. All rights reserved.
+ * Copyright (c) 2010-2012 Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2011-2013 Inria.  All rights reserved.
  * Copyright (c) 2011-2013 Universite Bordeaux 1
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.  All rights
@@ -38,6 +39,7 @@
 #include "ompi/errhandler/errhandler.h"
 #include "opal/mca/threads/mutex.h"
 #include "ompi/communicator/comm_request.h"
+#include "ompi/mca/coll/base/coll_tags.h"
 
 #include "mpi.h"
 #include "ompi/group/group.h"
@@ -86,13 +88,6 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_communicator_t);
 #define OMPI_COMM_SET_EXTRA_RETAIN(comm) ((comm)->c_flags |= OMPI_COMM_EXTRA_RETAIN)
 #define OMPI_COMM_SET_MAPBY_NODE(comm) ((comm)->c_flags |= OMPI_COMM_MAPBY_NODE)
 
-/* a set of special tags: */
-
-/*  to recognize an MPI_Comm_join in the comm_connect_accept routine. */
-#define OMPI_COMM_ALLGATHER_TAG -31078
-#define OMPI_COMM_BARRIER_TAG   -31079
-#define OMPI_COMM_ALLREDUCE_TAG -31080
-
 #define OMPI_COMM_ASSERT_NO_ANY_TAG     0x00000001
 #define OMPI_COMM_ASSERT_NO_ANY_SOURCE  0x00000002
 #define OMPI_COMM_ASSERT_EXACT_LENGTH   0x00000004
@@ -116,6 +111,11 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_communicator_t);
 #define OMPI_COMM_CID_INTRA_BRIDGE 0x00000080
 #define OMPI_COMM_CID_INTRA_PMIX   0x00000100
 #define OMPI_COMM_CID_GROUP        0x00000200
+#if OPAL_ENABLE_FT_MPI
+#define OMPI_COMM_CID_INTRA_FT        0x00000400
+#define OMPI_COMM_CID_INTER_FT        0x00000800
+#define OMPI_COMM_CID_INTRA_PMIX_FT   0x00001000
+#endif /* OPAL_ENABLE_FT_MPI */
 
 /**
  * The block of CIDs allocated for MPI_COMM_WORLD
@@ -127,9 +127,31 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_communicator_t);
 /* A macro comparing two CIDs */
 #define OMPI_COMM_CID_IS_LOWER(comm1,comm2) ( ((comm1)->c_contextid < (comm2)->c_contextid)? 1:0)
 
-
 OMPI_DECLSPEC extern opal_pointer_array_t ompi_mpi_communicators;
 OMPI_DECLSPEC extern opal_pointer_array_t ompi_comm_f_to_c_table;
+#if OPAL_ENABLE_FT_MPI
+/**
+ * This array holds the number of time each id has been used. In the case where a communicator
+ * is revoked, this reference count acts as an epoch, and prevents us from revoking newly created
+ * communicators that use an id that is similar to others communicators that are still being revoked.
+ */
+OMPI_DECLSPEC extern opal_pointer_array_t ompi_mpi_comm_epoch;
+
+/*
+ * Callback function that should be called when there is a fault.
+ *
+ * This callback function will be used anytime (other than during finalize) the
+ * runtime or BTLs detects and handles a process failure. The function is called
+ * once per communicator that possess the failed process, and per process failure.
+ *
+ * @param[in] comm the communicator to which the failed process belongs
+ * @param[in] rank the rank of the failed process in that communicator
+ * @param[in] remote is true iff rank is a remote process
+ */
+typedef void (ompi_comm_rank_failure_callback_t)(struct ompi_communicator_t *comm, int rank, bool remote);
+
+OMPI_DECLSPEC extern ompi_comm_rank_failure_callback_t *ompi_rank_failure_cbfunc;
+#endif  /* OPAL_ENABLE_FT_MPI */
 
 struct ompi_communicator_t {
     opal_infosubscriber_t      super;
@@ -146,6 +168,8 @@ struct ompi_communicator_t {
                to a child*/
     int c_id_start_index; /* the starting index of the block of cids
                  allocated to this communicator*/
+    uint32_t c_epoch;  /* Identifier used to differenciate between two communicators
+                          using the same c_contextid (not at the same time, obviously) */
 
     ompi_group_t        *c_local_group;
     ompi_group_t       *c_remote_group;
@@ -194,6 +218,19 @@ struct ompi_communicator_t {
      * collective coexists using multiple backends).
      */
     opal_atomic_int32_t c_nbc_tag;
+
+#if OPAL_ENABLE_FT_MPI
+    /** MPI_ANY_SOURCE Failed Group Offset - OMPI_Comm_failure_get_acked */
+    int                      any_source_offset;
+    /** agreement caching info for topology and previous returned decisions */
+    opal_object_t           *agreement_specific;
+    /** Are MPI_ANY_SOURCE operations enabled? - OMPI_Comm_failure_ack */
+    bool                     any_source_enabled;
+    /** Has this communicator been revoked - OMPI_Comm_revoke() */
+    bool                     comm_revoked;
+    /** Force errors to collective pt2pt operations? */
+    bool                     coll_revoked;
+#endif /* OPAL_ENABLE_FT_MPI */
 };
 typedef struct ompi_communicator_t ompi_communicator_t;
 
@@ -397,6 +434,187 @@ static inline struct ompi_proc_t* ompi_comm_peer_lookup(ompi_communicator_t* com
     /*return comm->c_remote_group->grp_proc_pointers[peer_id];*/
     return ompi_group_peer_lookup(comm->c_remote_group,peer_id);
 }
+
+#if OPAL_ENABLE_FT_MPI
+/*
+ * Support for MPI_ANY_SOURCE point-to-point operations
+ */
+static inline bool ompi_comm_is_any_source_enabled(ompi_communicator_t* comm)
+{
+    return (comm->any_source_enabled);
+}
+
+/*
+ * Are collectives still active on this communicator?
+ */
+static inline bool ompi_comm_coll_revoked(ompi_communicator_t* comm)
+{
+    return (comm->coll_revoked);
+}
+
+/*
+ * Has this communicator been revoked?
+ */
+static inline bool ompi_comm_is_revoked(ompi_communicator_t* comm)
+{
+    return (comm->comm_revoked);
+}
+
+/*
+ * Acknowledge failures and re-enable MPI_ANY_SOURCE
+ * Related to OMPI_Comm_failure_ack() and OMPI_Comm_failure_get_acked()
+ */
+OMPI_DECLSPEC int ompi_comm_failure_ack_internal(ompi_communicator_t* comm);
+
+/*
+ * Return the acknowledged group of failures
+ * Related to OMPI_Comm_failure_ack() and OMPI_Comm_failure_get_acked()
+ */
+OMPI_DECLSPEC int ompi_comm_failure_get_acked_internal(ompi_communicator_t* comm, ompi_group_t **group );
+
+/*
+ * Revoke the communicator
+ */
+OMPI_DECLSPEC int ompi_comm_revoke_internal(ompi_communicator_t* comm);
+
+/*
+ * Shrink the communicator
+ */
+OMPI_DECLSPEC int ompi_comm_shrink_internal(ompi_communicator_t* comm, ompi_communicator_t** newcomm);
+
+/*
+ * Check if the process is active
+ */
+OMPI_DECLSPEC bool ompi_comm_is_proc_active(ompi_communicator_t *comm, int peer_id, bool remote);
+
+/*
+ * Register a new process failure
+ */
+OMPI_DECLSPEC int ompi_comm_set_rank_failed(ompi_communicator_t *comm, int peer_id, bool remote);
+
+/*
+ * Returns true if point-to-point communications with the target process
+ * are supported (this means if the process is a valid peer, if the
+ * communicator is not revoked and if the peer is not already marked as
+ * a dead process).
+ */
+static inline bool ompi_comm_iface_p2p_check_proc(ompi_communicator_t *comm, int peer_id, int *err)
+{
+    if( OPAL_UNLIKELY(ompi_comm_is_revoked(comm)) ) {
+        *err = MPI_ERR_REVOKED;
+        return false;
+    }
+    if( OPAL_UNLIKELY(!ompi_comm_is_proc_active(comm, peer_id, OMPI_COMM_IS_INTER(comm))) ) {
+        /* make sure to progress the revoke engine */
+        opal_progress();
+        *err = MPI_ERR_PROC_FAILED;
+        return false;
+    }
+    return true;
+}
+
+/*
+ * Returns true if the communicator is locally valid for collective communications
+ */
+static inline bool ompi_comm_iface_coll_check(ompi_communicator_t *comm, int *err)
+{
+    if( OPAL_UNLIKELY(ompi_comm_is_revoked(comm)) ) {
+        *err = MPI_ERR_REVOKED;
+        return false;
+    }
+    if( OPAL_UNLIKELY(ompi_comm_coll_revoked(comm)) ) {
+        /* make sure to progress the revoke engine */
+        opal_progress();
+        *err = MPI_ERR_PROC_FAILED;
+        return false;
+    }
+    return true;
+}
+
+/*
+ * Returns true if the communicator can be used by traditional MPI functions
+ * as an underlying communicator to create new communicators. The only
+ * communicator creation function that can help if this function returns
+ * false is MPI_Comm_shrink.
+ */
+static inline bool ompi_comm_iface_create_check(ompi_communicator_t *comm, int *err)
+{
+    return ompi_comm_iface_coll_check(comm, err);
+}
+
+/*
+ * Communicator creation support collectives
+ * - Agreement style allreduce
+ */
+int ompi_comm_allreduce_intra_ft( int *inbuf, int* outbuf,
+                                  int count, struct ompi_op_t *op,
+                                  ompi_communicator_t *comm,
+                                  ompi_communicator_t *bridgecomm,
+                                  void* local_leader,
+                                  void* remote_ledaer,
+                                  int send_first, char *tag, int iter );
+int ompi_comm_allreduce_inter_ft( int *inbuf, int* outbuf,
+                                  int count, struct ompi_op_t *op,
+                                  ompi_communicator_t *comm,
+                                  ompi_communicator_t *bridgecomm,
+                                  void* local_leader,
+                                  void* remote_ledaer,
+                                  int send_first, char *tag, int iter );
+int ompi_comm_allreduce_intra_pmix_ft( int *inbuf, int* outbuf,
+                                  int count, struct ompi_op_t *op,
+                                  ompi_communicator_t *comm,
+                                  ompi_communicator_t *bridgecomm,
+                                  void* local_leader,
+                                  void* remote_ledaer,
+                                  int send_first, char *tag, int iter );
+
+/*
+ * Reliable Bcast infrastructure
+ */
+OMPI_DECLSPEC int ompi_comm_rbcast_register_params(void);
+OMPI_DECLSPEC int ompi_comm_rbcast_init(void);
+OMPI_DECLSPEC int ompi_comm_rbcast_finalize(void);
+
+typedef struct ompi_comm_rbcast_message_t {
+    uint32_t cid;
+    uint32_t epoch;
+    uint8_t  type;
+} ompi_comm_rbcast_message_t;
+
+typedef int (*ompi_comm_rbcast_cb_t)(ompi_communicator_t* comm, ompi_comm_rbcast_message_t* msg);
+
+OMPI_DECLSPEC int ompi_comm_rbcast_register_cb_type(ompi_comm_rbcast_cb_t callback);
+OMPI_DECLSPEC int ompi_comm_rbcast_unregister_cb_type(int type);
+
+extern int (*ompi_comm_rbcast)(ompi_communicator_t* comm, ompi_comm_rbcast_message_t* msg, size_t size);
+int ompi_comm_rbcast_send_msg(
+        ompi_proc_t* proc,
+        ompi_comm_rbcast_message_t* msg,
+        size_t size);
+
+/*
+ * Setup/Shutdown 'failure propagator' handler
+ */
+OMPI_DECLSPEC int ompi_comm_failure_propagator_register_params(void);
+OMPI_DECLSPEC int ompi_comm_failure_propagator_init(void);
+OMPI_DECLSPEC int ompi_comm_failure_propagator_finalize(void);
+OMPI_DECLSPEC int ompi_comm_failure_propagate(ompi_communicator_t* comm, ompi_proc_t* proc, int state);
+
+/*
+ * Setup/Shutdown 'failure detector' handler
+ */
+OMPI_DECLSPEC int ompi_comm_failure_detector_register_params(void);
+OMPI_DECLSPEC int ompi_comm_failure_detector_init(void);
+OMPI_DECLSPEC int ompi_comm_failure_detector_start(void);
+OMPI_DECLSPEC int ompi_comm_failure_detector_finalize(void);
+
+/*
+ * Setup/Shutdown 'revoke' handler
+ */
+OMPI_DECLSPEC int ompi_comm_revoke_init(void);
+OMPI_DECLSPEC int ompi_comm_revoke_finalize(void);
+
+#endif /* OPAL_ENABLE_FT_MPI */
 
 static inline bool ompi_comm_peer_invalid(ompi_communicator_t* comm, int peer_id)
 {
@@ -694,6 +912,12 @@ int ompi_comm_overlapping_groups (int size, struct ompi_proc_t ** lprocs,
 int ompi_comm_determine_first ( ompi_communicator_t *intercomm,
                                 int high );
 
+/**
+ * This is a routine determining wether the local or the
+ * remote group will be first in the new intra-comm.
+ * It does not communicate to exchange the "high" values; used in Agree
+ */
+int ompi_comm_determine_first_auto ( ompi_communicator_t* intercomm );
 
 OMPI_DECLSPEC int ompi_comm_activate (ompi_communicator_t **newcomm, ompi_communicator_t *comm,
                                       ompi_communicator_t *bridgecomm, const void *arg0,

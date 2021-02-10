@@ -3,7 +3,7 @@
 # Copyright (c) 2004-2009 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
 #                         Corporation.  All rights reserved.
-# Copyright (c) 2004-2005 The University of Tennessee and The University
+# Copyright (c) 2004-2021 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
 # Copyright (c) 2004-2007 High Performance Computing Center Stuttgart,
@@ -139,6 +139,9 @@ AC_DEFUN([OMPI_SETUP_PRRTE_INTERNAL], [
 
     # add the extra libs
     internal_prrte_args="$internal_prrte_args --with-prte-extra-lib=\"$internal_prrte_libs\" --with-prte-extra-ltlib=\"$internal_prrte_libs\""
+    AS_IF([test "$with_ft" != "no"],
+          [internal_prrte_args="--enable-prte-ft $internal_prrte_args"],
+          [])
 
     # Pass all our compiler/linker flags to PRRTE, so that it
     # picks up how to build an internal HWLOC, libevent, and PMIx, plus

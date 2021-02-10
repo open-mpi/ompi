@@ -1,0 +1,89 @@
+#
+# Copyright (c) 2020     The University of Tennessee and The University
+#                         of Tennessee Research Foundation.  All rights
+#                         reserved.
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
+#
+# An Aggregate MCA Parameter Set to setup an environment that can support
+# User-Level Failure Mitigation (ULFM) fault tolerance (must also be 
+# compiled in with --with-ft=mpi).
+#
+# Usage:
+#   shell$ mpirun --tune ft-mpi ./app
+#
+
+mpi_ft_enable=true
+
+# Since failures are expected, reduce the verbosity of the transport errors
+btl_base_warn_peer_error=false
+
+#
+# Performance tuning parameters (default shown)
+# By default the PRTE failure detector is used (see README.ULFM.md)
+#mpi_ft_detector=false
+#mpi_ft_detector_thread=false
+#mpi_ft_detector_rdma_heartbeat=false
+#mpi_ft_detector_period=3.
+#mpi_ft_detector_timeout=10.
+#
+
+
+#
+# Select only ULFM ready components
+# disabling non-tested and known broken components in FT-MPI builds
+#
+
+#
+# The following frameworks/components are TESTED
+# They handle faults amd should be prefered when running with FT.
+#   pml     ob1
+#   btl     tcp, self, sm(+xpmem,+cma), ugni, uct
+#   coll    base/basic, tuned, ftagree, libnbc
+pml=ob1
+threads=pthreads
+
+#
+# The following frameworks/components are UNTESTED, but **may** work.
+# They should run without faults, and **may** work with faults.
+# You may try and report if successfull.
+#   btl     ofi, portals4, smcuda, usnic, sm(+knem)
+#   coll    inter, sm, sync, cuda, monitoring
+#   pml     monitoring, v/vprotocol
+# We will disable only the components for which good components are known to exist.
+btl=^usnic
+# older versions of xpmem generate bus errors when the other end is dead.
+#btl_sm_single_copy_mechanism=cma
+
+
+#
+# The following frameworks/components are UNTESTED, and probably won't work.
+# They should run without faults, and will probably crash/deadlock after a fault.
+# You may try at your own risk.
+#   coll    hcoll, portals4
+#   topo    (all)
+#   osc     (all)
+#   io      (all)
+#   fcoll   (all)
+#   fbtl    (all)
+# We will disable only the components for which good components are known to exist.
+# Other untested components are selectable but will issue a runtime warning at
+# initiation if FT is enabled.
+coll=^hcoll,portals4
+
+#
+# The following frameworks/components are NOT WORKING. Do not enable these with FT.
+#   mtl     (all)
+#   pml     cm, crcpw, ucx
+mtl=^ofi,portals4,psm2
+# allready enforced by pml=ob1 above
+#pml=^cm,crcpw,ucx
+# allready enforced by threads=pthreads above
+#threads=^argobots,qthreads
+# There is a bug in libevent with the "select" backend that causes an infinite loop
+# when an unplanned disconnect happens. Use something else, or bail.
+opal_event_include=epoll,devpoll,kqueue,evport,poll
+

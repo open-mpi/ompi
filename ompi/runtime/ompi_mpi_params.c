@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2020 The University of Tennessee and The University
+ * Copyright (c) 2004-2021 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -13,6 +13,7 @@
  * Copyright (c) 2006-2016 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
+ * Copyright (c) 2010-2012 Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Mellanox Technologies, Inc.
@@ -86,9 +87,42 @@ static bool show_enviro_mca_params = false;
 static bool show_override_mca_params = false;
 static bool ompi_mpi_oversubscribe = false;
 
+#if OPAL_ENABLE_FT_MPI
+int ompi_ftmpi_output_handle = 0;
+bool ompi_ftmpi_enabled = false;
+#include "ompi/communicator/communicator.h"
+#endif /* OPAL_ENABLE_FT_MPI */
+
 int ompi_mpi_register_params(void)
 {
     int value;
+
+#if OPAL_ENABLE_FT_MPI
+    mca_base_var_scope_t ftscope = MCA_BASE_VAR_SCOPE_READONLY;
+#else
+    mca_base_var_scope_t ftscope = MCA_BASE_VAR_SCOPE_CONSTANT;
+    bool ompi_ftmpi_enabled; /* not global in that case */
+#endif /* OPAL_ENABLE_FT_MPI */
+    ompi_ftmpi_enabled = false;
+    (void) mca_base_var_register ("ompi", "mpi", "ft", "enable",
+                                  "Enable UFLM MPI Fault Tolerance framework",
+                                  MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                  OPAL_INFO_LVL_4, ftscope, &ompi_ftmpi_enabled);
+    value = 0;
+    (void) mca_base_var_register ("ompi", "mpi", "ft", "verbose",
+                                  "Verbosity level of the ULFM MPI Fault Tolerance framework",
+                                  MCA_BASE_VAR_TYPE_INT, &mca_base_var_enum_verbose, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                  OPAL_INFO_LVL_8, MCA_BASE_VAR_SCOPE_LOCAL, &value);
+#if OPAL_ENABLE_FT_MPI
+    if( 0 < value ) {
+        ompi_ftmpi_output_handle = opal_output_open(NULL);
+        opal_output_set_verbosity(ompi_ftmpi_output_handle, value);
+    }
+
+    (void) ompi_comm_rbcast_register_params();
+    (void) ompi_comm_failure_propagator_register_params();
+    (void) ompi_comm_failure_detector_register_params();
+#endif /* OPAL_ENABLE_FT_MPI */
 
     /* Whether we want MPI API function parameter checking or not. Disable this by default if
        parameter checking is compiled out. */

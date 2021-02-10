@@ -179,6 +179,10 @@ typedef uint8_t mca_btl_base_tag_t;
  */
 #define MCA_BTL_AM_FRAMEWORK_MASK   0xD0
 #define MCA_BTL_TAG_BTL             0x20
+#if OPAL_ENABLE_FT_MPI
+#define MCA_BTL_TAG_FT_RBCAST       0x30
+#define MCA_BTL_TAG_FT_AGREE        0x31
+#endif
 #define MCA_BTL_TAG_PML             0x40
 #define MCA_BTL_TAG_OSC_RDMA        0x60
 #define MCA_BTL_TAG_USR             0x80

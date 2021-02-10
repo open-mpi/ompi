@@ -66,6 +66,17 @@ int MPI_Comm_dup_with_info(MPI_Comm comm, MPI_Info info, MPI_Comm *newcomm)
                                           FUNC_NAME);
     }
 
+#if OPAL_ENABLE_FT_MPI
+    /*
+     * An early check, so as to return early if we are using a broken
+     * communicator. This is not absolutely necessary since we will
+     * check for this, and other, error conditions during the operation.
+     */
+    if( OPAL_UNLIKELY(!ompi_comm_iface_create_check(comm, &rc)) ) {
+        OMPI_ERRHANDLER_RETURN(rc, comm, rc, FUNC_NAME);
+    }
+#endif
+
     OPAL_CR_ENTER_LIBRARY();
 
     rc = ompi_comm_dup_with_info (comm, &info->super, newcomm);

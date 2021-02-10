@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2011 The University of Tennessee and The University
+ * Copyright (c) 2004-2016 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
@@ -11,6 +11,7 @@
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2010-2012 Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2013-2020 Intel, Inc.  All rights reserved.
@@ -66,6 +67,9 @@ OBJ_CLASS_INSTANCE(
 
 void ompi_proc_construct(ompi_proc_t* proc)
 {
+#if OPAL_ENABLE_FT_MPI
+    proc->proc_active = true;
+#endif
     bzero(proc->proc_endpoints, sizeof(proc->proc_endpoints));
 
     /* By default all processors are supposedly having the same architecture as me. Thus,

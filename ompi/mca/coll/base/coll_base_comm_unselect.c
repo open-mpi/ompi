@@ -2,14 +2,14 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2017 The University of Tennessee and The University
+ * Copyright (c) 2004-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2012      Oak Rigde National Laboratory.
+ * Copyright (c) 2010-2012 Oak Ridge National Laboratory.
  *                         All rights reserved.
  * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
@@ -127,6 +127,11 @@ int mca_coll_base_comm_unselect(ompi_communicator_t * comm)
     CLOSE(comm, neighbor_alltoallw_init);
 
     CLOSE(comm, reduce_local);
+
+#if OPAL_ENABLE_FT_MPI
+    CLOSE(comm, agree);
+    CLOSE(comm, iagree);
+#endif
 
     for (item = opal_list_remove_first(comm->c_coll->module_list);
          NULL != item; item = opal_list_remove_first(comm->c_coll->module_list)) {

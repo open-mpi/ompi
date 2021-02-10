@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2016 The University of Tennessee and The University
+ * Copyright (c) 2004-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -133,6 +133,7 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION( mca_pml_base_send_request_t );
         (request)->req_base.req_ompi.req_complete = REQUEST_PENDING;    \
         (request)->req_base.req_ompi.req_state = OMPI_REQUEST_ACTIVE;   \
         (request)->req_base.req_ompi.req_status._cancelled = 0;         \
+        (request)->req_base.req_ompi.req_status.MPI_ERROR = OMPI_SUCCESS; \
         MCA_PML_BASE_SEND_REQUEST_RESET(request);             \
     } while (0)
 

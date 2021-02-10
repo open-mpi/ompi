@@ -129,6 +129,23 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
      * to complete on the other's key. Once that completes, the list of remote
      * procs is used to complete construction of the intercommunicator. */
 
+    /* If there was an error during the COMM_SPAWN stage, the port string will
+     * be set (in mpi/c/comm_spawn.c) with a special value that contains the error
+     * code. Extract said error code, and store it in rportlen, as this value will
+     * be exchanged with other peers on comm. We need to perform this exchange even
+     * in error cases to avoid leaving some processes deadlock waiting on the
+     * root to broadcast.
+     */
+    if (NULL != port_string && strstr(port_string, ":error=")) {
+        /* we will set the rportlen to a negative value corresponding to the
+         * error code produced by pmix spawn */
+        char *value = strrchr(port_string, '=');
+        assert(NULL != value);
+        rportlen = atoi(++value);
+        if (rportlen > 0) rportlen *= -1;
+        goto bcast_rportlen;
+    }
+
     /* everyone constructs the list of members from their communicator */
     pname.jobid = OMPI_PROC_MY_NAME->jobid;
     pname.vpid = OPAL_VPID_WILDCARD;
@@ -205,6 +222,7 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
         PMIX_PDATA_DESTRUCT(&pdat);
     }
 
+bcast_rportlen:
     /* if we aren't in a comm_spawn, the non-root members won't have
      * the port_string - so let's make sure everyone knows the other
      * side's participants */
@@ -214,6 +232,14 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
                                  comm->c_coll->coll_bcast_module);
     if (OMPI_SUCCESS != rc) {
         free(rport);
+        goto exit;
+    }
+
+    /* This is the comm_spawn error case: the root couldn't do the pmix spawn
+     * and is now propagating to the local group that this operation has to
+     * fail. */
+    if (0 >= rportlen) {
+        rc = rportlen;
         goto exit;
     }
 

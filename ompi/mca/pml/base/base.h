@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2007 The University of Tennessee and The University
+ * Copyright (c) 2004-2021 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -63,6 +63,9 @@ OMPI_DECLSPEC int mca_pml_base_pml_check_selected(const char *my_pml,
 OMPI_DECLSPEC int mca_pml_base_finalize(void);
 
 OMPI_DECLSPEC int mca_pml_base_ft_event(int state);
+
+/* not #if conditional on OPAL_ENABLE_FT_MPI for ABI */
+OMPI_DECLSPEC int mca_pml_base_revoke_comm(struct ompi_communicator_t *comm, bool coll_only);
 
 /*
  * Globals
