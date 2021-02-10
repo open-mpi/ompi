@@ -19,7 +19,7 @@
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2018-2019 Triad National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2020      Google, LLC. All rights reserved.
+ * Copyright (c) 2020-2021 Google, LLC. All rights reserved.
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -266,8 +266,6 @@ static int init_sm_endpoint (struct mca_btl_base_endpoint_t **ep_out, struct opa
                      * Currently the kernel does not allow * process_vm_{read,write}v()
                      * for processes running in different user namespaces even if
                      * all involved user IDs are mapped to the same user ID.
-                     *
-                     * Fallback to MCA_BTL_SM_EMUL.
                      */
                     if (MCA_BASE_VAR_SOURCE_DEFAULT != source) {
                         /* If CMA has been explicitly selected we want to error out */
@@ -281,11 +279,9 @@ static int init_sm_endpoint (struct mca_btl_base_endpoint_t **ep_out, struct opa
                      */
                     opal_show_help("help-btl-sm.txt", "cma-different-user-namespace-warning",
                                    true, opal_process_info.nodename);
-                    mca_btl_sm_component.single_copy_mechanism = MCA_BTL_SM_EMUL;
-                    mca_btl_sm.super.btl_get = mca_btl_sm_get_sc_emu;
-                    mca_btl_sm.super.btl_put = mca_btl_sm_put_sc_emu;
-                    mca_btl_sm.super.btl_put_limit = mca_btl_sm.super.btl_max_send_size - sizeof (mca_btl_sm_sc_emu_hdr_t);
-                    mca_btl_sm.super.btl_get_limit = mca_btl_sm.super.btl_max_send_size - sizeof (mca_btl_sm_sc_emu_hdr_t);
+                    mca_btl_sm_component.single_copy_mechanism = MCA_BTL_SM_NONE;
+                    mca_btl_sm.super.btl_get = NULL;
+                    mca_btl_sm.super.btl_put = NULL;
                 }
             }
 #if OPAL_BTL_SM_HAVE_XPMEM

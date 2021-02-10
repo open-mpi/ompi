@@ -77,7 +77,6 @@ static mca_base_var_enum_value_t single_copy_mechanisms[] = {
 #if OPAL_BTL_SM_HAVE_KNEM
                                                              {.value = MCA_BTL_SM_KNEM, .string = "knem"},
 #endif
-                                                             {.value = MCA_BTL_SM_EMUL, .string = "emulated"},
                                                              {.value = MCA_BTL_SM_NONE, .string = "none"},
                                                              {.value = 0, .string = NULL}
 };
@@ -254,28 +253,7 @@ static int mca_btl_sm_component_register (void)
     mca_btl_sm.super.btl_rdma_pipeline_send_length = mca_btl_sm.super.btl_eager_limit;
     mca_btl_sm.super.btl_rdma_pipeline_frag_size   = mca_btl_sm.super.btl_eager_limit;
 
-#if OPAL_HAVE_ATOMIC_MATH_64
-    mca_btl_sm.super.btl_flags = MCA_BTL_FLAGS_SEND_INPLACE | MCA_BTL_FLAGS_SEND | MCA_BTL_FLAGS_RDMA |
-        MCA_BTL_FLAGS_ATOMIC_OPS | MCA_BTL_FLAGS_ATOMIC_FOPS;
-
-    mca_btl_sm.super.btl_atomic_flags = MCA_BTL_ATOMIC_SUPPORTS_ADD | MCA_BTL_ATOMIC_SUPPORTS_AND |
-        MCA_BTL_ATOMIC_SUPPORTS_OR | MCA_BTL_ATOMIC_SUPPORTS_XOR | MCA_BTL_ATOMIC_SUPPORTS_CSWAP |
-        MCA_BTL_ATOMIC_SUPPORTS_GLOB | MCA_BTL_ATOMIC_SUPPORTS_SWAP;
-#if OPAL_HAVE_ATOMIC_MATH_32
-    mca_btl_sm.super.btl_atomic_flags |= MCA_BTL_ATOMIC_SUPPORTS_32BIT;
-#endif /* OPAL_HAVE_ATOMIC_MATH_32 */
-
-#if OPAL_HAVE_ATOMIC_MIN_64
-    mca_btl_sm.super.btl_atomic_flags |= MCA_BTL_ATOMIC_SUPPORTS_MIN;
-#endif /* OPAL_HAVE_ATOMIC_MIN_64 */
-
-#if OPAL_HAVE_ATOMIC_MAX_64
-    mca_btl_sm.super.btl_atomic_flags |= MCA_BTL_ATOMIC_SUPPORTS_MAX;
-#endif /* OPAL_HAVE_ATOMIC_MAX_64 */
-
-#else
-    mca_btl_sm.super.btl_flags = MCA_BTL_FLAGS_SEND_INPLACE | MCA_BTL_FLAGS_SEND | MCA_BTL_FLAGS_RDMA;
-#endif /* OPAL_HAVE_ATOMIC_MATH_64 */
+    mca_btl_sm.super.btl_flags = MCA_BTL_FLAGS_SEND_INPLACE | MCA_BTL_FLAGS_SEND;
 
     if (MCA_BTL_SM_NONE != mca_btl_sm_component.single_copy_mechanism) {
         /* True single copy mechanisms should provide better bandwidth */
@@ -283,12 +261,6 @@ static int mca_btl_sm_component_register (void)
     } else {
         mca_btl_sm.super.btl_bandwidth = 10000; /* Mbs */
     }
-
-    mca_btl_sm.super.btl_get = mca_btl_sm_get_sc_emu;
-    mca_btl_sm.super.btl_put = mca_btl_sm_put_sc_emu;
-    mca_btl_sm.super.btl_atomic_op = mca_btl_sm_emu_aop;
-    mca_btl_sm.super.btl_atomic_fop = mca_btl_sm_emu_afop;
-    mca_btl_sm.super.btl_atomic_cswap = mca_btl_sm_emu_acswap;
 
     mca_btl_sm.super.btl_latency   = 1;     /* Microsecs */
 
@@ -426,9 +398,6 @@ static void mca_btl_sm_check_single_copy (void)
 #if OPAL_BTL_SM_HAVE_XPMEM || OPAL_BTL_SM_HAVE_CMA || OPAL_BTL_SM_HAVE_KNEM
     int initial_mechanism = mca_btl_sm_component.single_copy_mechanism;
 #endif
-
-    /* single-copy emulation is always used to support AMO's right now */
-    mca_btl_sm_sc_emu_init ();
 
 #if OPAL_BTL_SM_HAVE_XPMEM
     if (MCA_BTL_SM_XPMEM == mca_btl_sm_component.single_copy_mechanism) {
