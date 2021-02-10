@@ -58,6 +58,44 @@ included in the vX.Y.Z section and be denoted as:
    (** also appeared: A.B.C)  -- indicating that this item was previously
                                  included in release version vA.B.C.
 
+4.1.1 -- February, 2021
+-----------------------
+
+- Reverted temporary solution that worked around launch issues in
+  SLURM v20.11.{0,1,2}. SchedMD encourages users to avoid these
+  versions and to upgrade to v20.11.3 or newer.
+- Fixed configuration issue on Apple Silicon observed with
+  Homebrew. Thanks to François-Xavier Coudert for reporting the issue.
+- Disabled gcc built-in atomics by default on aarch64 platforms.
+- Fixed SLURM support to mark ORTE daemons as non-MPI tasks.
+- Improved AVX detection to more accurately detect supported
+  platforms.  Also improved the generated AVX code, and switched to
+  using word-based MCA params for the op/avx component (vs. numeric
+  big flags).
+- Improved OFI compatibility support and fixed memory leaks in error
+  handling paths.
+- Fixed MPI debugger support (i.e., the MPIR_Breakpoint() symbol).
+  Thanks to @louisespellacy-arm for reporting the issue.
+- Removed PML uniformity check from the UCX PML to address performance
+  regression.
+- Fixed MPI_Init_thread(3) statement about C++ binding and update
+  references about MPI_THREAD_MULTIPLE.  Thanks to Andreas Lösel for
+  bringing the outdated docs to our attention.
+- Added fence_nb to Flux PMIx support to address segmentation faults.
+- Ensured progress of AIO requests in the POSIX FBTL component to
+  prevent exceeding maximum number of pending requests on MacOS.
+- Used OPAL's mutli-thread support in the orted to leverage atomic
+  operations for object refcounting.
+- Fixed segv when launching with static TCP ports.
+- Fixed --debug-daemons mpirun CLI option.
+- Fixed bug where mpirun did not honor --host in a managed job
+  allocation.
+- Made a managed allocation filter a hostfile/hostlist.
+- Fixed bug to marked a generalized request as pending once initiated.
+- Fixed external PMIx v4.x check.
+- Fixed OSHMEM build with `--enable-mem-debug`.
+
+
 4.1.0 -- December, 2020
 -----------------------
 
@@ -104,7 +142,6 @@ included in the vX.Y.Z section and be denoted as:
 - OFI/libfabric: Added btl for one-sided support
 - OFI/libfabric: Multiple small bugfixes
 - libnbc: Adding numerous performance-improving algorithms
-- AArch64: disable gcc built-in atomics by default.
 
 4.0.5 -- August, 2020
 ---------------------
