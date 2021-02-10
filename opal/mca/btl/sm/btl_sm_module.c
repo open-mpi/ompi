@@ -194,18 +194,30 @@ static int sm_btl_first_time_init(mca_btl_sm_t *sm_btl, int n)
 }
 
 
-static int init_sm_endpoint (struct mca_btl_base_endpoint_t *ep, struct opal_proc_t *proc, int remote_rank) {
+static int init_sm_endpoint (struct mca_btl_base_endpoint_t **ep_out, struct opal_proc_t *proc) {
     mca_btl_sm_component_t *component = &mca_btl_sm_component;
     union sm_modex_t *modex;
     ino_t my_user_ns_id;
     size_t msg_size;
     int rc;
 
+    uint16_t peer_local_rank;
+    uint16_t *ptr = &peer_local_rank;
+    OPAL_MODEX_RECV_VALUE(rc, PMIX_LOCAL_RANK, &proc->proc_name,
+                          &ptr, PMIX_UINT16);
+    if (OPAL_SUCCESS != rc) {
+        BTL_VERBOSE(("could not read the local rank for peer. rc=%d", rc));
+        return rc;
+    }
+
+    mca_btl_base_endpoint_t *ep = component->endpoints + peer_local_rank;
+    *ep_out = ep;
+
     OBJ_CONSTRUCT(ep, mca_btl_sm_endpoint_t);
 
-    ep->peer_smp_rank = remote_rank;
+    ep->peer_smp_rank = peer_local_rank;
 
-    if (remote_rank != MCA_BTL_SM_LOCAL_RANK) {
+    if (peer_local_rank != MCA_BTL_SM_LOCAL_RANK) {
         OPAL_MODEX_RECV_IMMEDIATE(rc, &component->super.btl_version,
                                   &proc->proc_name, (void **) &modex, &msg_size);
         if (OPAL_SUCCESS != rc) {
@@ -363,10 +375,7 @@ static int sm_add_procs (struct mca_btl_base_module_t* btl,
         }
 
         /* setup endpoint */
-        int rank = opal_atomic_fetch_add_32(&component -> local_rank, 1);
-
-        peers[proc] = component->endpoints + rank;
-        rc = init_sm_endpoint (peers[proc], procs[proc], rank);
+        rc = init_sm_endpoint (peers + proc, procs[proc]);
         if (OPAL_SUCCESS != rc) {
             break;
         }
