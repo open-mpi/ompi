@@ -260,16 +260,14 @@ static inline int ompi_osc_rdma_gacc_amo (ompi_osc_rdma_module_t *module, ompi_o
 {
     const bool use_amo = module->acc_use_amo;
     const size_t dt_size = datatype->super.size;
+    void *to_free = NULL;
     uint64_t offset = 0;
     int ret;
 
     OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "using network atomics for accumulate operation with count %d", count);
 
-    /* only one can be non-NULL */
-    assert (NULL == result || NULL == result_convertor);
-
-    if (NULL == result && NULL != result_convertor) {
-        result = malloc (request->len);
+    if (NULL == result) {
+        to_free = result = malloc (request->len);
         if (OPAL_UNLIKELY(NULL == result)) {
             return OMPI_ERR_OUT_OF_RESOURCE;
        }
@@ -316,6 +314,8 @@ static inline int ompi_osc_rdma_gacc_amo (ompi_osc_rdma_module_t *module, ompi_o
         ompi_osc_rdma_request_complete (request, MPI_SUCCESS);
     }
 
+    free (to_free);
+
     return OMPI_SUCCESS;
 }
 
@@ -330,6 +330,8 @@ static inline int ompi_osc_rdma_gacc_contig (ompi_osc_rdma_sync_t *sync, const v
     unsigned long len = target_count * target_datatype->super.size;
     char *ptr = NULL;
     int ret;
+
+    request->len = target_datatype->super.size * module->network_amo_max_count;
 
     OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "initiating accumulate on contiguous region of %lu bytes to remote address %" PRIx64
                      ", sync %p", len, target_address, (void *) sync);
@@ -582,7 +584,7 @@ static inline int ompi_osc_rdma_gacc_master (ompi_osc_rdma_sync_t *sync, const v
                 }
 
                 ret = ompi_osc_rdma_gacc_contig (sync, source_iovec[source_iov_index].iov_base, acc_len / target_primitive->super.size,
-                                                 target_primitive, NULL, 0, NULL, &result_convertor, peer,
+                                                 target_primitive, NULL, 0, NULL, result_datatype ? &result_convertor : NULL, peer,
                                                  (uint64_t) (intptr_t) target_iovec[target_iov_index].iov_base, target_handle,
                                                  acc_len / target_primitive->super.size, target_primitive, op, subreq);
                 if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
