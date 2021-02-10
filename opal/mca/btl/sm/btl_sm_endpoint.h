@@ -64,7 +64,7 @@ typedef struct mca_btl_base_endpoint_t {
         opal_free_list_item_t *fbox; /**< fast-box free list item */
     } fbox_out;
 
-    int32_t peer_smp_rank;  /**< my peer's SMP process rank.  Used for accessing
+    uint16_t peer_smp_rank; /**< my peer's SMP process rank.  Used for accessing
                              *   SMP specfic data structures. */
     opal_atomic_size_t send_count;    /**< number of fragments sent to this peer */
     char *segment_base;     /**< start of the peer's segment (in the address space
