@@ -19,7 +19,7 @@
  * Copyright (C) 2018      Mellanox Technologies, Ltd.
  *                         All rights reserved.
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
- * Copyright (c) 2019 IBM Corporation. All rights reserved.
+ * Copyright (c) 2019-2021 IBM Corporation. All rights reserved.
  * Copyright (c) 2019-2020 Inria.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -294,6 +294,18 @@ int opal_hwloc_base_get_topology(void)
     wildcard_rank.jobid = OPAL_PROC_MY_NAME.jobid;
     wildcard_rank.vpid = OPAL_VPID_WILDCARD;
 
+    // Did the user ask for a topo file at the mca line?
+    // Check this first, before main methods.
+    if(NULL != opal_hwloc_base_topo_file) {
+        opal_output_verbose(1, opal_hwloc_base_framework.framework_output,
+                            "hwloc:base loading topology from file %s",
+                            opal_hwloc_base_topo_file);
+        if(OPAL_SUCCESS != (rc = opal_hwloc_base_set_topology(opal_hwloc_base_topo_file))) {
+            return rc;
+        }
+        goto done;
+    }
+
 #if HWLOC_API_VERSION >= 0x20000
     opal_output_verbose(2, opal_hwloc_base_framework.framework_output,
                          "hwloc:base: looking for topology in shared memory");
@@ -337,7 +349,7 @@ int opal_hwloc_base_get_topology(void)
             opal_output_verbose(2, opal_hwloc_base_framework.framework_output,
                                 "hwloc:base: topology in shared memory");
             topo_in_shmem = true;
-            return OPAL_SUCCESS;
+            goto done;
         }
     }
 #endif
@@ -394,7 +406,7 @@ int opal_hwloc_base_get_topology(void)
             hwloc_topology_destroy(opal_hwloc_topology);
             return rc;
         }
-    } else if (NULL == opal_hwloc_base_topo_file) {
+    } else {
         opal_output_verbose(1, opal_hwloc_base_framework.framework_output,
                             "hwloc:base discovering topology");
         if (0 != hwloc_topology_init(&opal_hwloc_topology) ||
@@ -408,14 +420,9 @@ int opal_hwloc_base_get_topology(void)
             hwloc_topology_destroy(opal_hwloc_topology);
             return rc;
         }
-    } else {
-        opal_output_verbose(1, opal_hwloc_base_framework.framework_output,
-                            "hwloc:base loading topology from file %s",
-                            opal_hwloc_base_topo_file);
-        if (OPAL_SUCCESS != (rc = opal_hwloc_base_set_topology(opal_hwloc_base_topo_file))) {
-            return rc;
-        }
     }
+
+    done:
 
     /* fill opal_cache_line_size global with the smallest L1 cache
        line size */
@@ -659,9 +666,11 @@ static hwloc_obj_t df_search(hwloc_topology_t topo,
 // available = opal_hwloc_base_get_available_cpus(topo, start)
 // and skipped objs that had hwloc_bitmap_iszero(available)
         hwloc_obj_t root;
-        opal_hwloc_topo_data_t *rdata;
+        opal_hwloc_topo_data_t *rdata = NULL;
         root = hwloc_get_root_obj(topo);
-        rdata = (opal_hwloc_topo_data_t*)root->userdata;
+        if(false == topo_in_shmem) {
+            rdata = (opal_hwloc_topo_data_t*)root->userdata;
+        }
         hwloc_cpuset_t constrained_cpuset;
 
         constrained_cpuset = hwloc_bitmap_alloc();
@@ -696,7 +705,7 @@ unsigned int opal_hwloc_base_get_nbobjs_by_type(hwloc_topology_t topo,
     unsigned int num_objs;
     hwloc_obj_t obj;
     opal_hwloc_summary_t *sum;
-    opal_hwloc_topo_data_t *data;
+    opal_hwloc_topo_data_t *data = NULL;
     int rc;
 
     /* bozo check */
@@ -728,10 +737,17 @@ unsigned int opal_hwloc_base_get_nbobjs_by_type(hwloc_topology_t topo,
     obj = hwloc_get_root_obj(topo);
 
     /* first see if the topology already has this summary */
-    data = (opal_hwloc_topo_data_t*)obj->userdata;
+    if(false == topo_in_shmem) {
+        data = (opal_hwloc_topo_data_t*)obj->userdata;
+    }
     if (NULL == data) {
         data = OBJ_NEW(opal_hwloc_topo_data_t);
-        obj->userdata = (void*)data;
+        if(false == topo_in_shmem) {
+            // Can't touch userdata if in read-only shmem!
+            // We have to protect here for the case where obj->userdata
+            // is in shmem and it is NULL.
+            obj->userdata = (void*) data;
+        }
     } else {
         OPAL_LIST_FOREACH(sum, &data->summaries, opal_hwloc_summary_t) {
             if (target == sum->type &&
@@ -1167,26 +1183,12 @@ int opal_hwloc_base_cset2str(char *str, int len,
     char tmp[BUFSIZ];
     const int stmp = sizeof(tmp) - 1;
     int **map=NULL;
-    hwloc_obj_t root;
-    opal_hwloc_topo_data_t *sum;
 
     str[0] = tmp[stmp] = '\0';
 
     /* if the cpuset is all zero, then not bound */
     if (hwloc_bitmap_iszero(cpuset)) {
         return OPAL_ERR_NOT_BOUND;
-    }
-
-    /* if the cpuset includes all available cpus, then we are unbound */
-    root = hwloc_get_root_obj(topo);
-    if (NULL != root->userdata) {
-        sum = (opal_hwloc_topo_data_t*)root->userdata;
-        if (NULL == sum->available) {
-           return OPAL_ERROR;
-        }
-        if (0 != hwloc_bitmap_isincluded(sum->available, cpuset)) {
-            return OPAL_ERR_NOT_BOUND;
-        }
     }
 
     if (OPAL_SUCCESS != (ret = build_map(&num_sockets, &num_cores, cpuset, &map, topo))) {
@@ -1235,26 +1237,12 @@ int opal_hwloc_base_cset2mapstr(char *str, int len,
     int core_index, pu_index;
     const int stmp = sizeof(tmp) - 1;
     hwloc_obj_t socket, core, pu;
-    hwloc_obj_t root;
-    opal_hwloc_topo_data_t *sum;
 
     str[0] = tmp[stmp] = '\0';
 
     /* if the cpuset is all zero, then not bound */
     if (hwloc_bitmap_iszero(cpuset)) {
         return OPAL_ERR_NOT_BOUND;
-    }
-
-    /* if the cpuset includes all available cpus, then we are unbound */
-    root = hwloc_get_root_obj(topo);
-    if (NULL != root->userdata) {
-        sum = (opal_hwloc_topo_data_t*)root->userdata;
-        if (NULL == sum->available) {
-           return OPAL_ERROR;
-        }
-        if (0 != hwloc_bitmap_isincluded(sum->available, cpuset)) {
-            return OPAL_ERR_NOT_BOUND;
-        }
     }
 
     /* Iterate over all existing sockets */

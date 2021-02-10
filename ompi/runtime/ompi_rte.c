@@ -15,6 +15,7 @@
  * Copyright (c) 2020      Amazon.com, Inc. or its affiliates.  All Rights
  *                         reserved.
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
+ * Copyright (c) 2021      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  */
 #include "ompi_config.h"
@@ -62,7 +63,6 @@
 /* storage to support OMPI */
 opal_process_name_t pmix_name_wildcard = {UINT32_MAX-1, UINT32_MAX-1};
 opal_process_name_t pmix_name_invalid = {UINT32_MAX, UINT32_MAX};
-hwloc_cpuset_t ompi_proc_applied_binding = NULL;
 bool ompi_singleton = false;
 
 static int _setup_top_session_dir(char **sdir);
