@@ -298,6 +298,10 @@ opal_generic_simple_unpack_function( opal_convertor_t* pConvertor,
                 conv_ptr = pConvertor->pBaseBuf + pStack->disp;
                 pos_desc++;  /* advance to the next data */
                 UPDATE_INTERNAL_COUNTERS( description, pos_desc, pElem, count_desc );
+            } else if( 0 == (count_desc % pElem->elem.blocklen) ) {
+                /* if stopped on last element in block - move to next element */
+                conv_ptr += pElem->elem.extent - (pElem->elem.blocklen * 
+                    opal_datatype_basicDatatypes[pElem->elem.common.type]->size);
             }
             iov_ptr       += missing_length;
             iov_len_local -= missing_length;
