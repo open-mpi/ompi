@@ -168,7 +168,7 @@ int ompi_osc_rdma_attach (struct ompi_win_t *win, void *base, size_t len)
     ompi_osc_rdma_handle_t *rdma_region_handle;
     osc_rdma_counter_t region_count;
     osc_rdma_counter_t region_id;
-    intptr_t bound, aligned_base, aligned_bound;
+    intptr_t aligned_base, aligned_bound;
     intptr_t page_size = opal_getpagesize ();
     int region_index, ret;
     size_t aligned_len;
@@ -197,7 +197,6 @@ int ompi_osc_rdma_attach (struct ompi_win_t *win, void *base, size_t len)
 
     /* it is wasteful to register less than a page. this may allow the remote side to access more
      * memory but the MPI standard covers this with calling the calling behavior erroneous */
-    bound = (intptr_t) base + len;
     aligned_bound = OPAL_ALIGN((intptr_t) base + len, page_size, intptr_t);
     aligned_base = (intptr_t) base & ~(page_size - 1);
     aligned_len = (size_t)(aligned_bound - aligned_base);
@@ -239,7 +238,7 @@ int ompi_osc_rdma_attach (struct ompi_win_t *win, void *base, size_t len)
     region->len  = aligned_len;
 
     OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_DEBUG, "attaching dynamic memory region {%p, %p} aligned {%p, %p}, at index %d",
-                     base, (void *) bound, (void *) aligned_base, (void *) aligned_bound, region_index);
+                     base, (void *) ((intptr_t) base + len), (void *) aligned_base, (void *) aligned_bound, region_index);
 
     /* add RDMA region handle to track this region */
     rdma_region_handle = OBJ_NEW(ompi_osc_rdma_handle_t);

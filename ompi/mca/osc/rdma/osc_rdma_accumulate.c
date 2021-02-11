@@ -192,9 +192,9 @@ static int ompi_osc_rdma_fetch_and_op_cas (ompi_osc_rdma_sync_t *sync, const voi
         new_value = old_value;
 
         if (&ompi_mpi_op_replace.op == op) {
-            memcpy ((void *)((intptr_t) &new_value + offset), origin_addr + dt->super.true_lb, extent);
+            memcpy ((void *)((intptr_t) &new_value + offset), (void *)((intptr_t) origin_addr + dt->super.true_lb), extent);
         } else if (&ompi_mpi_op_no_op.op != op) {
-            ompi_op_reduce (op, (void *) origin_addr + dt->super.true_lb, (void*)((intptr_t) &new_value + offset), 1, dt);
+            ompi_op_reduce (op, (void *) ((intptr_t) origin_addr + dt->super.true_lb), (void*)((intptr_t) &new_value + offset), 1, dt);
         }
 
         ret = ompi_osc_rdma_btl_cswap (module, peer->data_endpoint, address, target_handle,
@@ -219,7 +219,7 @@ static int ompi_osc_rdma_acc_single_atomic (ompi_osc_rdma_sync_t *sync, const vo
 {
     ompi_osc_rdma_module_t *module = sync->module;
     int32_t atomic_flags = module->selected_btl->btl_atomic_flags;
-    int ret, btl_op, flags;
+    int btl_op, flags;
     int64_t origin;
 
     if (!(module->selected_btl->btl_flags & MCA_BTL_FLAGS_ATOMIC_OPS)) {
@@ -261,7 +261,6 @@ static inline int ompi_osc_rdma_gacc_amo (ompi_osc_rdma_module_t *module, ompi_o
     const bool use_amo = module->acc_use_amo;
     const size_t dt_size = datatype->super.size;
     void *to_free = NULL;
-    uint64_t offset = 0;
     int ret;
 
     OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "using network atomics for accumulate operation with count %d", count);
@@ -339,7 +338,7 @@ static inline int ompi_osc_rdma_gacc_contig (ompi_osc_rdma_sync_t *sync, const v
     /* if the datatype is small enough (and the count is 1) then try to directly use the hardware to execute
      * the atomic operation. this should be safe in all cases as either 1) the user has assured us they will
      * never use atomics with count > 1, 2) we have the accumulate lock, or 3) we have an exclusive lock */
-    if (target_datatype->super.size <= 8 && target_count <= module->network_amo_max_count) {
+    if ((target_datatype->super.size <= 8) && (((unsigned long) target_count) <= module->network_amo_max_count)) {
         ret = ompi_osc_rdma_gacc_amo (module, sync, source, result, result_count, result_datatype, result_convertor,
                                       peer, target_address, target_handle, target_count, target_datatype, op, request);
         if (OPAL_LIKELY(OMPI_SUCCESS == ret)) {
@@ -867,7 +866,7 @@ int ompi_osc_rdma_rget_accumulate_internal (ompi_win_t *win, const void *origin_
     ompi_osc_rdma_module_t *module = GET_MODULE(win);
     mca_btl_base_registration_handle_t *target_handle;
     uint64_t target_address;
-    ptrdiff_t lb, target_lb, target_span;
+    ptrdiff_t target_lb, target_span;
     ompi_osc_rdma_request_t *rdma_request = NULL;
     bool lock_acquired = false;
     ompi_osc_rdma_sync_t *sync;
