@@ -3,6 +3,7 @@
  * Copyright (c) 2014-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2017-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -413,7 +414,7 @@ static void check_cached_events(pmix_rshift_caddy_t *cd)
         /* we always leave space for event hdlr name and a callback object */
         chain->nallocated = ncd->ninfo + 2;
         PMIX_INFO_CREATE(chain->info, chain->nallocated);
-        if (0 < cd->ninfo) {
+        if (0 < ncd->ninfo) {
             chain->ninfo = ncd->ninfo;
             /* need to copy the info */
             for (n=0; n < ncd->ninfo; n++) {
@@ -871,7 +872,6 @@ PMIX_EXPORT void PMIx_Register_event_handler(pmix_status_t codes[], size_t ncode
                                              void *cbdata)
 {
     pmix_rshift_caddy_t *cd;
-    size_t n;
 
     PMIX_ACQUIRE_THREAD(&pmix_global_lock);
 
@@ -900,9 +900,7 @@ PMIX_EXPORT void PMIx_Register_event_handler(pmix_status_t codes[], size_t ncode
             }
             return;
         }
-        for (n=0; n < ncodes; n++) {
-            cd->codes[n] = codes[n];
-        }
+        memcpy(cd->codes, codes, ncodes * sizeof(pmix_status_t));
     }
     cd->ncodes = ncodes;
     cd->info = info;

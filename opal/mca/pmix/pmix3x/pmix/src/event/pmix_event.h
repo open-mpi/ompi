@@ -12,6 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2015-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2020      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -140,7 +141,11 @@ typedef struct pmix_event_chain_t {
     size_t nallocated;
     pmix_info_t *results;
     size_t nresults;
+    pmix_info_t *interim;
+    size_t ninterim;
     pmix_event_hdlr_t *evhdlr;
+    pmix_op_cbfunc_t opcbfunc;
+    void *cbdata;
     pmix_op_cbfunc_t final_cbfunc;
     void *final_cbdata;
 } pmix_event_chain_t;
