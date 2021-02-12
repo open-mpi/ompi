@@ -22,7 +22,7 @@
  * Copyright (c) 2019      Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2020-2021 Google, LLC. All rights reserved.
- * Copyright (c) 2019      Triad National Security, LLC. All rights
+ * Copyright (c) 2019-2021 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -965,7 +965,7 @@ static int ompi_osc_rdma_query_btls (ompi_communicator_t *comm, struct mca_btl_b
         }
 
         /* any non-local rank must have a usable btl */
-        if (!found_btl && comm_rank == rank) {
+        if (!found_btl && comm_rank != rank) {
             /* no btl = no rdma/atomics */
             rc = OMPI_ERR_UNREACH;
             break;
