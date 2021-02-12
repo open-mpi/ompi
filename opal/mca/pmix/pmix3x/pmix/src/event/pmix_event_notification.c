@@ -5,6 +5,7 @@
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
  *
+ * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -32,6 +33,10 @@ static pmix_status_t notify_server_of_event(pmix_status_t status,
                                             pmix_data_range_t range,
                                             const pmix_info_t info[], size_t ninfo,
                                             pmix_op_cbfunc_t cbfunc, void *cbdata);
+static void progress_local_event_hdlr(pmix_status_t status,
+                                      pmix_info_t *results, size_t nresults,
+                                      pmix_op_cbfunc_t cbfunc, void *thiscbdata,
+                                      void *notification_cbdata);
 
 /* if we are a client, we call this function to notify the server of
  * an event. If we are a server, our host RM will call this function
@@ -313,19 +318,13 @@ static pmix_status_t notify_server_of_event(pmix_status_t status,
 }
 
 
-static void progress_local_event_hdlr(pmix_status_t status,
-                                      pmix_info_t *results, size_t nresults,
-                                      pmix_op_cbfunc_t cbfunc, void *thiscbdata,
-                                      void *notification_cbdata)
+static void cycle_events(int sd, short args, void *cbdata)
 {
-    /* this may be in the host's thread, so we need to threadshift it
-     * before accessing our internal data */
-
-    pmix_event_chain_t *chain = (pmix_event_chain_t*)notification_cbdata;
+    pmix_event_chain_t *chain = (pmix_event_chain_t*)cbdata;
     size_t n, nsave, cnt;
-    pmix_info_t *newinfo;
     pmix_list_item_t *item;
     pmix_event_hdlr_t *nxt;
+    pmix_info_t *newinfo;
 
     pmix_output_verbose(2, pmix_client_globals.event_output,
                         "%s progressing local event",
@@ -345,7 +344,7 @@ static void progress_local_event_hdlr(pmix_status_t status,
      * the array to make space */
 
     /* add in any new results plus space for the returned status */
-    nsave += nresults + 1;
+    nsave += chain->ninterim + 1;
     /* create the new space */
     PMIX_INFO_CREATE(newinfo, nsave);
     /* transfer over the prior data */
@@ -364,11 +363,11 @@ static void progress_local_event_hdlr(pmix_status_t status,
         pmix_strncpy(newinfo[cnt].key, "UNKNOWN", PMIX_MAX_KEYLEN);
     }
     newinfo[cnt].value.type = PMIX_STATUS;
-    newinfo[cnt].value.data.status = status;
+    newinfo[cnt].value.data.status = chain->status;
     ++cnt;
     /* transfer across the new results */
-    for (n=0; n < nresults; n++) {
-        PMIX_INFO_XFER(&newinfo[cnt], &results[n]);
+    for (n=0; n < chain->ninterim; n++) {
+        PMIX_INFO_XFER(&newinfo[cnt], &chain->interim[n]);
         ++cnt;
     }
     /* release the prior results */
@@ -382,14 +381,27 @@ static void progress_local_event_hdlr(pmix_status_t status,
     chain->ninfo = chain->nallocated - 2;
     PMIX_INFO_DESTRUCT(&chain->info[chain->nallocated-2]);
     PMIX_INFO_DESTRUCT(&chain->info[chain->nallocated-1]);
-
+    // call their interim cbfunc
+    if (NULL != chain->opcbfunc) {
+        chain->opcbfunc(PMIX_SUCCESS, chain->cbdata);
+    }
+    
     /* if the caller indicates that the chain is completed,
      * or we completed the "last" event */
-    if (PMIX_EVENT_ACTION_COMPLETE == status || chain->endchain) {
-        goto complete;
+    if (PMIX_EVENT_ACTION_COMPLETE == chain->status || chain->endchain) {
+        if (PMIX_EVENT_ACTION_COMPLETE == chain->status) {
+            chain->status = PMIX_SUCCESS;
+        }
+        /* we still have to call their final callback */
+        if (NULL != chain->final_cbfunc) {
+            chain->final_cbfunc(chain->status, chain->final_cbdata);
+        }
+        /* maintain acctng */
+        PMIX_RELEASE(chain);
+        return;
     }
-    item = NULL;
 
+    item = NULL;
     /* see if we need to continue, starting with the single code events */
     if (1 == chain->evhdlr->ncodes) {
         /* the last handler was for a single code - see if there are
@@ -591,18 +603,31 @@ static void progress_local_event_hdlr(pmix_status_t status,
         }
     }
 
-  complete:
-    /* we still have to call their final callback */
+    /* if we get here, there was nothing more to do, but
+     * we still have to call their final callback */
     if (NULL != chain->final_cbfunc) {
-        chain->final_cbfunc(PMIX_SUCCESS, chain->final_cbdata);
+        chain->final_cbfunc(chain->status, chain->final_cbdata);
         return;
     }
     /* maintain acctng */
     PMIX_RELEASE(chain);
-    /* let the caller know that we are done with their callback */
-    if (NULL != cbfunc) {
-        cbfunc(PMIX_SUCCESS, thiscbdata);
-    }
+}
+
+static void progress_local_event_hdlr(pmix_status_t status,
+                                      pmix_info_t *results, size_t nresults,
+                                      pmix_op_cbfunc_t cbfunc, void *thiscbdata,
+                                      void *notification_cbdata)
+{
+    /* this may be in the host's thread, so we need to threadshift it
+     * before accessing our internal data */
+
+    pmix_event_chain_t *chain = (pmix_event_chain_t*)notification_cbdata;
+    
+    chain->interim = results;
+    chain->ninterim = nresults;
+    chain->opcbfunc = cbfunc;
+    chain->cbdata = thiscbdata;
+    PMIX_THREADSHIFT(chain, cycle_events);
 }
 
 /* given notification of an event, cycle thru our list of
@@ -1277,6 +1302,9 @@ void pmix_event_timeout_cb(int fd, short flags, void *arg)
     /* remove it from the list */
     pmix_list_remove_item(&pmix_globals.cached_events, &ch->super);
 
+    /* protect the chain */
+    PMIX_RETAIN(ch);
+
     /* process this event thru the regular channels */
     if (PMIX_PEER_IS_SERVER(pmix_globals.mypeer) &&
         !PMIX_PEER_IS_LAUNCHER(pmix_globals.mypeer)) {
@@ -1440,7 +1468,11 @@ static void chcon(pmix_event_chain_t *p)
     p->nallocated = 0;
     p->results = NULL;
     p->nresults = 0;
+    p->interim = NULL;
+    p->ninterim = 0;
     p->evhdlr = NULL;
+    p->opcbfunc = NULL;
+    p->cbdata = NULL;
     p->final_cbfunc = NULL;
     p->final_cbdata = NULL;
 }

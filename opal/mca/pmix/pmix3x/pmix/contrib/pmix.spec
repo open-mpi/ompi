@@ -12,9 +12,10 @@
 # Copyright (c) 2006-2016 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2013      Mellanox Technologies, Inc.
 #                         All rights reserved.
-# Copyright (c) 2015-2020 Intel, Inc.  All rights reserved.
+# Copyright (c) 2015-2018 Intel, Inc.  All rights reserved.
 # Copyright (c) 2015      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
+# Copyright (c) 2021      Nanook Consulting.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -192,7 +193,7 @@
 
 Summary: An extended/exascale implementation of PMI
 Name: %{?_name:%{_name}}%{!?_name:pmix}
-Version: 3.2.2
+Version: 3.2.3
 Release: 1%{?dist}
 License: BSD
 Group: Development/Libraries
