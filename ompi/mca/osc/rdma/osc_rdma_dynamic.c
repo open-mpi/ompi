@@ -185,6 +185,7 @@ int ompi_osc_rdma_attach (struct ompi_win_t *win, void *base, size_t len)
     OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "attach: %s, %p, %lu", win->w_name, base, (unsigned long) len);
 
     OPAL_THREAD_LOCK(&module->lock);
+    ompi_osc_rdma_lock_acquire_exclusive (module, my_peer, offsetof (ompi_osc_rdma_state_t, regions_lock));
 
     region_count = module->state->region_count & 0xffffffffL;
     region_id    = module->state->region_count >> 32;
@@ -208,15 +209,10 @@ int ompi_osc_rdma_attach (struct ompi_win_t *win, void *base, size_t len)
         /* validates that the region does not overlap with an existing region even if they are on the same page */
         ret = ompi_osc_rdma_add_attachment (module->dynamic_handles[region_index], (intptr_t) base, len);
         OPAL_THREAD_UNLOCK(&module->lock);
+        ompi_osc_rdma_lock_release_exclusive (module, my_peer, offsetof (ompi_osc_rdma_state_t, regions_lock));
         /* no need to invalidate remote caches */
         return ret;
     }
-
-    /* region is in flux */
-    module->state->region_count = -1;
-    opal_atomic_wmb ();
-
-    ompi_osc_rdma_lock_acquire_exclusive (module, my_peer, offsetof (ompi_osc_rdma_state_t, regions_lock));
 
     /* do a binary seach for where the region should be inserted */
     if (region_count) {
@@ -252,6 +248,7 @@ int ompi_osc_rdma_attach (struct ompi_win_t *win, void *base, size_t len)
         if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
             OPAL_THREAD_UNLOCK(&module->lock);
             OBJ_RELEASE(rdma_region_handle);
+            ompi_osc_rdma_lock_release_exclusive (module, my_peer, offsetof (ompi_osc_rdma_state_t, regions_lock));
             return OMPI_ERR_RMA_ATTACH;
         }
 
@@ -274,9 +271,9 @@ int ompi_osc_rdma_attach (struct ompi_win_t *win, void *base, size_t len)
     }
 #endif
 
-    opal_atomic_mb ();
     /* the region state has changed */
     module->state->region_count = ((region_id + 1) << 32) | (region_count + 1);
+    opal_atomic_wmb ();
 
     ompi_osc_rdma_lock_release_exclusive (module, my_peer, offsetof (ompi_osc_rdma_state_t, regions_lock));
     OPAL_THREAD_UNLOCK(&module->lock);
@@ -303,6 +300,9 @@ int ompi_osc_rdma_detach (struct ompi_win_t *win, const void *base)
 
     OPAL_THREAD_LOCK(&module->lock);
 
+    /* lock the region so it can't change while a peer is reading it */
+    ompi_osc_rdma_lock_acquire_exclusive (module, &my_peer->super, offsetof (ompi_osc_rdma_state_t, regions_lock));
+
     /* the upper 4 bytes of the region count are an instance counter */
     region_count = module->state->region_count & 0xffffffffL;
     region_id    = module->state->region_count >> 32;
@@ -326,23 +326,22 @@ int ompi_osc_rdma_detach (struct ompi_win_t *win, const void *base)
     if (region_index == region_count) {
         OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_INFO, "could not find dynamic memory attachment for %p", base);
         OPAL_THREAD_UNLOCK(&module->lock);
+        ompi_osc_rdma_lock_release_exclusive (module, &my_peer->super, offsetof (ompi_osc_rdma_state_t, regions_lock));
         return OMPI_ERR_BASE;
     }
 
     if (!opal_list_is_empty (&rdma_region_handle->attachments)) {
         /* another region is referencing this attachment */
+        OPAL_THREAD_UNLOCK(&module->lock);
+        ompi_osc_rdma_lock_release_exclusive (module, &my_peer->super, offsetof (ompi_osc_rdma_state_t, regions_lock));
         return OMPI_SUCCESS;
     }
-
-    /* lock the region so it can't change while a peer is reading it */
-    ompi_osc_rdma_lock_acquire_exclusive (module, &my_peer->super, offsetof (ompi_osc_rdma_state_t, regions_lock));
 
     OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_DEBUG, "detaching dynamic memory region {%p, %p} from index %d",
                      base, (void *)((intptr_t) base + region->len), region_index);
 
     if (module->selected_btl->btl_register_mem) {
         ompi_osc_rdma_deregister (module, rdma_region_handle->btl_handle);
-
     }
 
     if (region_index < region_count - 1) {
@@ -357,6 +356,7 @@ int ompi_osc_rdma_detach (struct ompi_win_t *win, const void *base)
     module->dynamic_handles[region_count - 1] = NULL;
 
     module->state->region_count = ((region_id + 1) << 32) | (region_count - 1);
+    opal_atomic_wmb ();
 
     ompi_osc_rdma_lock_release_exclusive (module, &my_peer->super, offsetof (ompi_osc_rdma_state_t, regions_lock));
 
@@ -460,14 +460,18 @@ int ompi_osc_rdma_find_dynamic_region (ompi_osc_rdma_module_t *module, ompi_osc_
     ompi_osc_rdma_peer_dynamic_t *dy_peer = (ompi_osc_rdma_peer_dynamic_t *) peer;
     intptr_t bound = (intptr_t) base + len;
     ompi_osc_rdma_region_t *regions;
-    int ret, region_count;
+    int ret = OMPI_SUCCESS, region_count;
 
     OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "locating dynamic memory region matching: {%" PRIx64 ", %" PRIx64 "}"
                      " (len %lu)", base, base + len, (unsigned long) len);
 
+    OPAL_THREAD_LOCK(&module->lock);
+    // Make sure region isn't being touched.
+    ompi_osc_rdma_lock_acquire_exclusive (module, peer, offsetof (ompi_osc_rdma_state_t, regions_lock));
     if (!ompi_osc_rdma_peer_local_state (peer)) {
         ret = ompi_osc_rdma_refresh_dynamic_region (module, dy_peer);
         if (OMPI_SUCCESS != ret) {
+            ompi_osc_rdma_lock_release_exclusive (module, peer, offsetof (ompi_osc_rdma_state_t, regions_lock));
             return ret;
         }
 
@@ -481,9 +485,11 @@ int ompi_osc_rdma_find_dynamic_region (ompi_osc_rdma_module_t *module, ompi_osc_
 
     *region = ompi_osc_rdma_find_region_containing (regions, 0, region_count - 1, (intptr_t) base, bound, module->region_size, NULL);
     if (!*region) {
-        return OMPI_ERR_RMA_RANGE;
+        ret = OMPI_ERR_RMA_RANGE;
     }
+    OPAL_THREAD_UNLOCK(&module->lock);
+    ompi_osc_rdma_lock_release_exclusive (module, peer, offsetof (ompi_osc_rdma_state_t, regions_lock));
 
     /* round a matching region */
-    return OMPI_SUCCESS;
+    return ret;
 }
