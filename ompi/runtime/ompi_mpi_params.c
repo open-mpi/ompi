@@ -111,7 +111,7 @@ int ompi_mpi_register_params(void)
     value = 0;
     (void) mca_base_var_register ("ompi", "mpi", "ft", "verbose",
                                   "Verbosity level of the ULFM MPI Fault Tolerance framework",
-                                  MCA_BASE_VAR_TYPE_INT, &mca_base_var_enum_verbose, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                  MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
                                   OPAL_INFO_LVL_8, MCA_BASE_VAR_SCOPE_LOCAL, &value);
 #if OPAL_ENABLE_FT_MPI
     if( 0 < value ) {
