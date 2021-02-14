@@ -159,7 +159,7 @@ Global regexp, because we use it every time we call check_cherry_pick()
 prog_cp = re.compile(r'\(cherry picked from commit ([a-z0-9]+)\)')
 
 def check_cherry_pick(config, repo, commit):
-    def _is_entriely_submodule_updates(repo, commit):
+    def _is_entirely_submodule_updates(repo, commit):
         # If it's a merge commit, that doesn't fit our definition of
         # "entirely submodule updates"
         if len(commit.parents) == 2:
