@@ -9,6 +9,7 @@
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015-2019 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2021      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -98,26 +99,24 @@ int OMPI_Affinity_str(ompi_affinity_fmt_t fmt_type,
  */
 static int get_rsrc_ompi_bound(char str[OMPI_AFFINITY_STRING_MAX])
 {
-    int ret;
-
     /* If OMPI did not bind, indicate that */
     if (!ompi_rte_proc_is_bound) {
         opal_string_copy(str, ompi_nobind_str, OMPI_AFFINITY_STRING_MAX);
         return OMPI_SUCCESS;
     }
 
-    if (NULL == ompi_proc_applied_binding) {
-        ret = OPAL_ERR_NOT_BOUND;
-    } else {
-        ret = opal_hwloc_base_cset2str(str, OMPI_AFFINITY_STRING_MAX,
-                                       opal_hwloc_topology,
-                                       ompi_proc_applied_binding);
+    hwloc_bitmap_t cpuset = hwloc_bitmap_alloc();
+    hwloc_bitmap_list_sscanf(cpuset, opal_process_info.cpuset);
+    if(OPAL_ERR_NOT_BOUND == opal_hwloc_base_cset2str(str,
+                                   OMPI_AFFINITY_STRING_MAX,
+                                   opal_hwloc_topology,
+                                   cpuset))
+    {
+       opal_string_copy(str, not_bound_str, OMPI_AFFINITY_STRING_MAX);
     }
-    if (OPAL_ERR_NOT_BOUND == ret) {
-        opal_string_copy(str, not_bound_str, OMPI_AFFINITY_STRING_MAX);
-        ret = OMPI_SUCCESS;
-    }
-    return ret;
+    hwloc_bitmap_free(cpuset);
+
+    return OMPI_SUCCESS;
 }
 
 
@@ -290,28 +289,23 @@ static int get_rsrc_exists(char str[OMPI_AFFINITY_STRING_MAX])
  */
 static int get_layout_ompi_bound(char str[OMPI_AFFINITY_STRING_MAX])
 {
-    int ret;
-
     /* If OMPI did not bind, indicate that */
     if (!ompi_rte_proc_is_bound) {
         opal_string_copy(str, ompi_nobind_str, OMPI_AFFINITY_STRING_MAX);
         return OMPI_SUCCESS;
     }
 
-    /* Find out what OMPI bound us to and prettyprint it */
-    if (NULL == ompi_proc_applied_binding) {
-        ret = OPAL_ERR_NOT_BOUND;
-    } else {
-        ret = opal_hwloc_base_cset2mapstr(str, OMPI_AFFINITY_STRING_MAX,
+    hwloc_bitmap_t cpuset = hwloc_bitmap_alloc();
+    hwloc_bitmap_list_sscanf(cpuset, opal_process_info.cpuset);
+    if(OPAL_ERR_NOT_BOUND == opal_hwloc_base_cset2mapstr(str,
+                                          OMPI_AFFINITY_STRING_MAX,
                                           opal_hwloc_topology,
-                                          ompi_proc_applied_binding);
-    }
-    if (OPAL_ERR_NOT_BOUND == ret) {
+                                          cpuset))
+    {
         opal_string_copy(str, not_bound_str, OMPI_AFFINITY_STRING_MAX);
-        ret = OMPI_SUCCESS;
     }
-
-    return ret;
+    hwloc_bitmap_free(cpuset);
+    return OMPI_SUCCESS;
 }
 
 /*
