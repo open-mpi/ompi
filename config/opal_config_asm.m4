@@ -19,6 +19,7 @@ dnl Copyright (c) 2017      Amazon.com, Inc. or its affiliates.  All Rights
 dnl                         reserved.
 dnl Copyright (c) 2020      Google, LLC. All rights reserved.
 dnl Copyright (c) 2020      Intel, Inc.  All rights reserved.
+dnl Copyright (c) 2021      IBM Corporation.  All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -1086,6 +1087,7 @@ dnl
 dnl #################################################################
 AC_DEFUN([OPAL_CONFIG_ASM],[
     AC_REQUIRE([OPAL_SETUP_CC])
+    AC_REQUIRE([OPAL_SETUP_CXX])
     AC_REQUIRE([AM_PROG_AS])
 
     AC_ARG_ENABLE([c11-atomics],[AC_HELP_STRING([--enable-c11-atomics],
