@@ -18,6 +18,7 @@ dnl Copyright (c) 2015-2019 Research Organization for Information Science
 dnl                         and Technology (RIST).  All rights reserved.
 dnl Copyright (c) 2020      Triad National Security, LLC. All rights
 dnl                         reserved.
+dnl Copyright (c) 2021      IBM Corporation.  All rights reserved.
 dnl
 dnl $COPYRIGHT$
 dnl
@@ -366,11 +367,14 @@ AC_DEFUN([OPAL_SETUP_CC],[
         CFLAGS_orig="$CFLAGS"
 
         # Note: Some versions of clang (at least >= 3.5 -- perhaps
-        # older versions, too?) will *warn* about -finline-functions,
-        # but still allow it.  This is very annoying, so check for
-        # that warning, too.  The clang warning looks like this:
+        # older versions, too?) and xlc with -g (v16.1, perhaps older)
+        # will *warn* about -finline-functions, but still allow it.
+        # This is very annoying, so check for that warning, too.
+        # The clang warning looks like this:
         # clang: warning: optimization flag '-finline-functions' is not supported
         # clang: warning: argument unused during compilation: '-finline-functions'
+        # the xlc warning looks like this:
+        # warning: "-qinline" is not compatible with "-g". "-qnoinline" is being set.
         CFLAGS="$CFLAGS_orig -finline-functions"
         add=
         AC_CACHE_CHECK([if $CC supports -finline-functions],
@@ -378,7 +382,7 @@ AC_DEFUN([OPAL_SETUP_CC],[
                    [AC_TRY_COMPILE([], [],
                                    [opal_cv_cc_finline_functions="yes"
                                     if test -s conftest.err ; then
-                                        for i in unused 'not supported' ; do
+                                        for i in unused 'not supported\|not compatible' ; do
                                             if $GREP -iq "$i" conftest.err; then
                                                 opal_cv_cc_finline_functions="no"
                                                 break;
