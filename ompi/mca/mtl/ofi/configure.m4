@@ -28,6 +28,17 @@ AC_DEFUN([MCA_ompi_mtl_ofi_CONFIG],[
     # Check for OFI
     OPAL_CHECK_OFI
 
+    # Check for CUDA
+    OPAL_CHECK_CUDA
+
+    # Check for cuda support. If so, we require a minimum libfabric version
+    # of 1.9. FI_HMEM capabilities are only available starting from v1.9
+    opal_ofi_happy="yes"
+    AS_IF([test "$opal_check_cuda_happy" = "yes"],
+          [OPAL_CHECK_OFI_VERSION_GE([1,9],
+                                     [],
+                                     [opal_ofi_happy=no])])
+
     # The OFI MTL requires at least OFI libfabric v1.5.
     AS_IF([test "$opal_ofi_happy" = "yes"],
           [OPAL_CHECK_OFI_VERSION_GE([1,5],
