@@ -73,6 +73,7 @@ static int ompi_comm_rbcast_bmg(ompi_communicator_t* comm, ompi_comm_rbcast_mess
             proc = ompi_group_peer_lookup(lgrp, idx);
         }
         else {
+            assert(NULL != hgrp); assert(OMPI_COMM_IS_INTER(comm));
             proc = ompi_group_peer_lookup(hgrp, idx-ompi_group_size(lgrp));
         }
         if( ompi_proc_is_active(proc) ) {
