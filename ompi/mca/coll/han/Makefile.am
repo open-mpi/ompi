@@ -14,6 +14,7 @@ coll_han.h \
 coll_han_trigger.h \
 coll_han_dynamic.h \
 coll_han_dynamic_file.h \
+coll_han_barrier.c \
 coll_han_bcast.c \
 coll_han_reduce.c \
 coll_han_scatter.c \

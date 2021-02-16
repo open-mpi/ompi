@@ -1,8 +1,8 @@
 /*
- * Copyright (c) 2018-2020 The University of Tennessee and The University
+ * Copyright (c) 2018-2021 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2020      Bull S.A.S. All rights reserved.
+ * Copyright (c) 2020-2021 Bull S.A.S. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -12,6 +12,13 @@
  */
 /**
  * @file
+ *
+ * This file provides information about current run rank mapping in the shape
+ * of a integer array where each rank will provides a set of contiguous integer :
+ * its rank and its location at the different topological levels (from the
+ * highest to the lowest).
+ * At the end, the order for these data chunks uses the topological level as keys:
+ * the ranks are sorted first by the top level, then by the next level, ... etc.
  *
  * Warning: this is not for the faint of heart -- don't even bother
  * reading this source code if you don't have a strong understanding
@@ -90,7 +97,7 @@ mca_coll_han_topo_init(struct ompi_communicator_t *comm,
 
     int *topo = (int *)malloc(sizeof(int) * size * num_topo_level);
     int is_imbalanced = 1;
-    int ranks_consecutive = 1;
+    int ranks_non_consecutive = 0;
 
     /* node leaders translate the node-local ranks to global ranks and check whether they are placed consecutively */
     if (0 == low_rank) {
@@ -104,22 +111,22 @@ mca_coll_han_topo_init(struct ompi_communicator_t *comm,
         int rank = my_low_rank_map[0] + 1;
         for (int i = 1; i < low_size; ++i, ++rank) {
             if (my_low_rank_map[i] != rank) {
-                ranks_consecutive = 0;
+                ranks_non_consecutive = 1;
                 break;
             }
         }
 
-        int reduce_vals[] = {ranks_consecutive, -ranks_consecutive, low_size, -low_size};
+        int reduce_vals[] = {ranks_non_consecutive, low_size, -low_size};
 
-        up_comm->c_coll->coll_allreduce(MPI_IN_PLACE, &reduce_vals, 4,
+        up_comm->c_coll->coll_allreduce(MPI_IN_PLACE, &reduce_vals, 3,
                                         MPI_INT, MPI_MAX, up_comm,
                                         up_comm->c_coll->coll_allreduce_module);
 
         /* is the distribution of processes balanced per node? */
-        is_imbalanced = (reduce_vals[2] == -reduce_vals[3]) ? 0 : 1;
-        ranks_consecutive = (reduce_vals[0] == -reduce_vals[1]) ? 1 : 0;
+        is_imbalanced = (reduce_vals[1] == -reduce_vals[2]) ? 0 : 1;
+        ranks_non_consecutive = reduce_vals[0];
 
-        if ( !ranks_consecutive && !is_imbalanced ) {
+        if ( ranks_non_consecutive && !is_imbalanced ) {
             /* kick off up_comm allgather to collect non-consecutive rank information at node leaders */
             ranks_map = malloc(sizeof(int)*size);
             up_comm->c_coll->coll_iallgather(my_low_rank_map, low_size, MPI_INT,
@@ -130,11 +137,11 @@ mca_coll_han_topo_init(struct ompi_communicator_t *comm,
 
 
     /* broadcast balanced and consecutive properties from node leaders to remaining ranks */
-    int bcast_vals[] = {is_imbalanced, ranks_consecutive};
+    int bcast_vals[] = {is_imbalanced, ranks_non_consecutive};
     low_comm->c_coll->coll_bcast(bcast_vals, 2, MPI_INT, 0,
                                  low_comm, low_comm->c_coll->coll_bcast_module);
     is_imbalanced = bcast_vals[0];
-    ranks_consecutive = bcast_vals[1];
+    ranks_non_consecutive = bcast_vals[1];
 
     /* error out if the rank distribution is not balanced */
     if (is_imbalanced) {
@@ -148,7 +155,7 @@ mca_coll_han_topo_init(struct ompi_communicator_t *comm,
 
     han_module->are_ppn_imbalanced = false;
 
-    if (ranks_consecutive) {
+    if (!ranks_non_consecutive) {
         /* fast-path: all ranks are consecutive and balanced so fill topology locally */
         for (int i = 0; i < size; ++i) {
             topo[2*i]   = (i/low_size); // node leader is node ID
@@ -156,6 +163,7 @@ mca_coll_han_topo_init(struct ompi_communicator_t *comm,
         }
         han_module->is_mapbycore = true;
     } else {
+        han_module->is_mapbycore = false;
         /*
          * Slow path: gather global-to-node-local rank mappings at node leaders
          *
@@ -192,4 +200,3 @@ mca_coll_han_topo_init(struct ompi_communicator_t *comm,
 
     return topo;
 }
-

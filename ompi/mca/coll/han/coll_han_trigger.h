@@ -2,11 +2,20 @@
  * Copyright (c) 2018-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2020      Bull S.A.S. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
  *
  * $HEADER$
+ */
+
+/*
+ * @file
+ *
+ * This file defines the API for tasks: a collective operation may be
+ * splitted in tasks to balance compute load on all the resources.
+ * This solution provide some noise resiliency.
  */
 
 #ifndef MCA_COLL_HAN_TRIGGER_EXPORT_H

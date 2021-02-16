@@ -12,6 +12,13 @@
  * $HEADER$
  */
 
+/**
+ * @file
+ *
+ * This files contains all the hierarchical implementations of allreduce
+ * Only work with regular situation (each node has equal number of processes)
+ */
+
 #include "coll_han.h"
 #include "ompi/mca/coll/base/coll_base_functions.h"
 #include "ompi/mca/coll/base/coll_tags.h"
@@ -172,16 +179,16 @@ mca_coll_han_allreduce_intra(const void *sbuf,
     issue_task(t3);
 
     while (t->completed[0] != t->num_segments) {
-        /* Create t3 tasks for the current segment */
-        mca_coll_task_t *t3 = OBJ_NEW(mca_coll_task_t);
-        /* Setup up t3 task arguments */
-        t->cur_task = t3;
+        /* Create t_next_seg tasks for the current segment */
+        mca_coll_task_t *t_next_seg = OBJ_NEW(mca_coll_task_t);
+        /* Setup up t_next_seg task arguments */
+        t->cur_task = t_next_seg;
         t->sbuf = (char *) t->sbuf + extent * t->seg_count;
         t->rbuf = (char *) t->rbuf + extent * t->seg_count;
         t->cur_seg = t->cur_seg + 1;
-        /* Init t3 task */
-        init_task(t3, mca_coll_han_allreduce_t3_task, (void *) t);
-        issue_task(t3);
+        /* Init t_next_seg task */
+        init_task(t_next_seg, mca_coll_han_allreduce_t3_task, (void *) t);
+        issue_task(t_next_seg);
     }
     free(t->completed);
     t->completed = NULL;
@@ -194,7 +201,7 @@ mca_coll_han_allreduce_intra(const void *sbuf,
                                           comm, han_module->previous_allreduce_module);
 }
 
-/* t0 task */
+/* t0 task that performs a local reduction */
 int mca_coll_han_allreduce_t0_task(void *task_args)
 {
     mca_coll_han_allreduce_args_t *t = (mca_coll_han_allreduce_args_t *) task_args;
@@ -224,7 +231,7 @@ int mca_coll_han_allreduce_t0_task(void *task_args)
     return OMPI_SUCCESS;
 }
 
-/* t1 task */
+/* t1 task that performs a ireduce on top communicator */
 int mca_coll_han_allreduce_t1_task(void *task_args)
 {
     mca_coll_han_allreduce_args_t *t = (mca_coll_han_allreduce_args_t *) task_args;
@@ -326,7 +333,7 @@ int mca_coll_han_allreduce_t2_task(void *task_args)
     return OMPI_SUCCESS;
 }
 
-/* t3 task */
+/* t3 task that performs broadcasts */
 int mca_coll_han_allreduce_t3_task(void *task_args)
 {
     mca_coll_han_allreduce_args_t *t = (mca_coll_han_allreduce_args_t *) task_args;
@@ -397,6 +404,10 @@ int mca_coll_han_allreduce_t3_task(void *task_args)
     return OMPI_SUCCESS;
 }
 
+/*
+ * Short implementation of allreduce that only does hierarchical
+ * communications without tasks.
+ */
 int
 mca_coll_han_allreduce_intra_simple(const void *sbuf,
                                     void *rbuf,
