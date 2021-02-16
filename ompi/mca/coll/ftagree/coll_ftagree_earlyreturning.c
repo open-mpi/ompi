@@ -3115,11 +3115,11 @@ static int mca_coll_ftagree_era_complete_agreement(era_identifier_t agreement_id
 
     assert(0 != agreement_id.ERAID_FIELDS.agreementid);
     ci = era_lookup_agreement_info(agreement_id);
+    assert(NULL != ci);
+    comm = ci->comm;
 
     /** Now, it's time to remove that guy from the ongoing agreements */
     opal_hash_table_remove_value_uint64(&era_ongoing_agreements, agreement_id.ERAID_KEY);
-
-    comm = ci->comm;
 
     OBJ_RELEASE(ci); /* This will take care of the content of ci too */
 
