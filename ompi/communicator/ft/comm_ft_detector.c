@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2020 The University of Tennessee and The University
+ * Copyright (c) 2016-2021 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  *
@@ -389,7 +389,7 @@ static int fd_heartbeat_request(comm_detector_t* detector) {
             memcpy(&msg->rdma_rreg[0], detector->hb_rdma_flag_lreg, regsize);
             msg->rdma_raddr = (uint64_t)&detector->hb_rdma_flag;
         }
-        ret = ompi_comm_rbcast_send_msg(proc, &msg->super, sizeof(*msg)+regsize);
+        ret = ompi_comm_rbcast_send_msg(proc, (ompi_comm_rbcast_message_t*)msg, sizeof(*msg)+regsize);
         free(msg);
         break;
     }
@@ -679,7 +679,7 @@ static int fd_heartbeat_send(comm_detector_t* detector) {
     msg.super.type = comm_heartbeat_recv_cb_type;
     msg.from = detector->hb_rdma_rank; /* comm->c_my_rank; except during finalize when it is equal to detector->hb_observer */
     ompi_proc_t* proc = ompi_comm_peer_lookup(comm, detector->hb_observer);
-    ompi_comm_rbcast_send_msg(proc, &msg.super, sizeof(msg));
+    ompi_comm_rbcast_send_msg(proc, (ompi_comm_rbcast_message_t*)&msg, sizeof(msg));
     return OMPI_SUCCESS;
 }
 
