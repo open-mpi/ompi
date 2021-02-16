@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
- * Copyright (c) 2014-2020 The University of Tennessee and The University
+ * Copyright (c) 2014-2021 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  *
@@ -1006,6 +1006,7 @@ static void era_combine_agreement_values(era_agreement_info_t *ni, era_value_t *
             ni->current_value->header.max_aid = value->header.max_aid;
     }
 
+    assert(NULL != value->new_dead_array || 0 == value->header.nb_new_dead);
     era_merge_new_dead_list(ni, value->header.nb_new_dead, value->new_dead_array);
 }
 
