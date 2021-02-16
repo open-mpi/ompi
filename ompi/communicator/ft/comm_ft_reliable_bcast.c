@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2020 The University of Tennessee and The University
+ * Copyright (c) 2013-2021 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  *
@@ -197,7 +197,7 @@ static void ompi_comm_rbcast_bml_recv_cb(
     }
 
     /* invoke the local registered callback for the type */
-    assert( 0 <= msg->type && RBCAST_CB_TYPE_MAX >= msg->type );
+    assert( RBCAST_CB_TYPE_MAX >= msg->type );
     if( NULL != ompi_comm_rbcast_cb[msg->type] ) {
         if( ompi_comm_rbcast_cb[msg->type](comm, msg) ) {
             /* forward the rbcast */
