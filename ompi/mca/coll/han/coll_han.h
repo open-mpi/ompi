@@ -247,7 +247,7 @@ typedef struct mca_coll_han_single_collective_fallback_s {
         mca_coll_base_module_gather_fn_t gather;
         mca_coll_base_module_reduce_fn_t reduce;
         mca_coll_base_module_scatter_fn_t scatter;
-    };
+    } module_fn;
     mca_coll_base_module_t* module;
 } mca_coll_han_single_collective_fallback_t;
 
@@ -316,28 +316,28 @@ OBJ_CLASS_DECLARATION(mca_coll_han_module_t);
  * Some defines to stick to the naming used in the other components in terms of
  * fallback routines
  */
-#define previous_allgather          fallback.allgather.allgather
+#define previous_allgather          fallback.allgather.module_fn.allgather
 #define previous_allgather_module   fallback.allgather.module
 
-#define previous_allgatherv         fallback.allgatherv.allgatherv
+#define previous_allgatherv         fallback.allgatherv.module_fn.allgatherv
 #define previous_allgatherv_module  fallback.allgatherv.module
 
-#define previous_allreduce          fallback.allreduce.allreduce
+#define previous_allreduce          fallback.allreduce.module_fn.allreduce
 #define previous_allreduce_module   fallback.allreduce.module
 
-#define previous_barrier            fallback.barrier.barrier
+#define previous_barrier            fallback.barrier.module_fn.barrier
 #define previous_barrier_module     fallback.barrier.module
 
-#define previous_bcast              fallback.bcast.bcast
+#define previous_bcast              fallback.bcast.module_fn.bcast
 #define previous_bcast_module       fallback.bcast.module
 
-#define previous_reduce             fallback.reduce.reduce
+#define previous_reduce             fallback.reduce.module_fn.reduce
 #define previous_reduce_module      fallback.reduce.module
 
-#define previous_gather             fallback.gather.gather
+#define previous_gather             fallback.gather.module_fn.gather
 #define previous_gather_module      fallback.gather.module
 
-#define previous_scatter            fallback.scatter.scatter
+#define previous_scatter            fallback.scatter.module_fn.scatter
 #define previous_scatter_module     fallback.scatter.module
 
 
@@ -345,7 +345,7 @@ OBJ_CLASS_DECLARATION(mca_coll_han_module_t);
 #define HAN_LOAD_FALLBACK_COLLECTIVE(HANM, COMM, COLL)                            \
     do {                                                                          \
         if ( ((COMM)->c_coll->coll_ ## COLL ## _module) == (mca_coll_base_module_t*)(HANM) ) { \
-            (COMM)->c_coll->coll_ ## COLL = (HANM)->fallback.COLL.COLL;               \
+            (COMM)->c_coll->coll_ ## COLL = (HANM)->fallback.COLL.module_fn.COLL;               \
             mca_coll_base_module_t *coll_module = (COMM)->c_coll->coll_ ## COLL ## _module; \
             (COMM)->c_coll->coll_ ## COLL ## _module = (HANM)->fallback.COLL.module;  \
             OBJ_RETAIN((COMM)->c_coll->coll_ ## COLL ## _module);                     \
