@@ -7,6 +7,7 @@
  * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -17,7 +18,6 @@
 #include "oshmem_config.h"
 
 #include "oshmem/util/oshmem_util.h"
-#include "opal/dss/dss.h"
 
 #include "oshmem/proc/proc.h"
 #include "oshmem/util/oshmem_util.h"
@@ -28,6 +28,7 @@
 #include "oshmem/mca/memheap/base/base.h"
 #include "oshmem/mca/spml/spml.h"
 #include "opal/util/timings.h"
+#include "opal/mca/pmix/pmix-internal.h"
 
 /* Turn ON/OFF debug output from build (default 0) */
 #ifndef MEMHEAP_BASE_DEBUG
@@ -63,7 +64,7 @@ mca_memheap_map_t* memheap_map = NULL;
 
 struct oob_comm memheap_oob = {{{0}}};
 
-static int send_buffer(int pe, opal_buffer_t *msg);
+static int send_buffer(int pe, pmix_data_buffer_t *msg);
 
 static int oshmem_mkey_recv_cb(void);
 
@@ -85,14 +86,14 @@ int mca_memheap_seg_cmp(const void *k, const void *v)
     return 0;
 }
 
-static int pack_local_mkeys(opal_buffer_t *msg, int pe, int seg)
+static int pack_local_mkeys(pmix_data_buffer_t *msg, int pe, int seg)
 {
     int i, n;
     sshmem_mkey_t *mkey;
 
     /* go over all transports and pack mkeys */
     n = memheap_map->num_transports;
-    opal_dss.pack(msg, &n, 1, OPAL_UINT32);
+    PMIx_Data_pack(NULL, msg, &n, 1, PMIX_UINT32);
     MEMHEAP_VERBOSE(5, "found %d transports to %d", n, pe);
     for (i = 0; i < n; i++) {
         mkey = mca_memheap_base_get_mkey(mca_memheap_seg2base_va(seg), i);
@@ -101,14 +102,14 @@ static int pack_local_mkeys(opal_buffer_t *msg, int pe, int seg)
                           seg, i);
             return OSHMEM_ERROR;
         }
-        opal_dss.pack(msg, &i, 1, OPAL_UINT32);
-        opal_dss.pack(msg, &mkey->va_base, 1, OPAL_UINT64);
+        PMIx_Data_pack(NULL, msg, &i, 1, PMIX_UINT32);
+        PMIx_Data_pack(NULL, msg, &mkey->va_base, 1, PMIX_UINT64);
         if (0 == mkey->va_base) {
-            opal_dss.pack(msg, &mkey->u.key, 1, OPAL_UINT64);
+            PMIx_Data_pack(NULL, msg, &mkey->u.key, 1, PMIX_UINT64);
         } else {
-            opal_dss.pack(msg, &mkey->len, 1, OPAL_UINT16);
+            PMIx_Data_pack(NULL, msg, &mkey->len, 1, PMIX_UINT16);
             if (0 < mkey->len) {
-                opal_dss.pack(msg, mkey->u.data, mkey->len, OPAL_BYTE);
+                PMIx_Data_pack(NULL, msg, mkey->u.data, mkey->len, PMIX_BYTE);
             }
         }
         MEMHEAP_VERBOSE(5,
@@ -144,7 +145,7 @@ static void memheap_attach_segment(sshmem_mkey_t *mkey, int tr_id)
 }
 
 
-static void unpack_remote_mkeys(shmem_ctx_t ctx, opal_buffer_t *msg, int remote_pe)
+static void unpack_remote_mkeys(shmem_ctx_t ctx, pmix_data_buffer_t *msg, int remote_pe)
 {
     int32_t cnt;
     int32_t n;
@@ -154,25 +155,25 @@ static void unpack_remote_mkeys(shmem_ctx_t ctx, opal_buffer_t *msg, int remote_
 
     proc = oshmem_proc_group_find(oshmem_group_all, remote_pe);
     cnt = 1;
-    opal_dss.unpack(msg, &n, &cnt, OPAL_UINT32);
+    PMIx_Data_unpack(NULL, msg, &n, &cnt, PMIX_UINT32);
     for (i = 0; i < n; i++) {
         cnt = 1;
-        opal_dss.unpack(msg, &tr_id, &cnt, OPAL_UINT32);
+        PMIx_Data_unpack(NULL, msg, &tr_id, &cnt, PMIX_UINT32);
         cnt = 1;
-        opal_dss.unpack(msg,
+        PMIx_Data_unpack(NULL, msg,
                         &memheap_oob.mkeys[tr_id].va_base,
                         &cnt,
-                        OPAL_UINT64);
+                        PMIX_UINT64);
 
         if (0 == memheap_oob.mkeys[tr_id].va_base) {
             cnt = 1;
-            opal_dss.unpack(msg, &memheap_oob.mkeys[tr_id].u.key, &cnt, OPAL_UINT64);
+            PMIx_Data_unpack(NULL, msg, &memheap_oob.mkeys[tr_id].u.key, &cnt, PMIX_UINT64);
             if (OPAL_PROC_ON_LOCAL_NODE(proc->super.proc_flags)) {
                 memheap_attach_segment(&memheap_oob.mkeys[tr_id], tr_id);
             }
         } else {
             cnt = 1;
-            opal_dss.unpack(msg, &memheap_oob.mkeys[tr_id].len, &cnt, OPAL_UINT16);
+            PMIx_Data_unpack(NULL, msg, &memheap_oob.mkeys[tr_id].len, &cnt, PMIX_UINT16);
             if (0 < memheap_oob.mkeys[tr_id].len) {
                 memheap_oob.mkeys[tr_id].u.data = malloc(memheap_oob.mkeys[tr_id].len);
                 if (NULL == memheap_oob.mkeys[tr_id].u.data) {
@@ -180,7 +181,7 @@ static void unpack_remote_mkeys(shmem_ctx_t ctx, opal_buffer_t *msg, int remote_
                     oshmem_shmem_abort(-1);
                 }
                 cnt = memheap_oob.mkeys[tr_id].len;
-                opal_dss.unpack(msg, memheap_oob.mkeys[tr_id].u.data, &cnt, OPAL_BYTE);
+                PMIx_Data_unpack(NULL, msg, memheap_oob.mkeys[tr_id].u.data, &cnt, PMIX_BYTE);
             } else {
                 memheap_oob.mkeys[tr_id].u.key = MAP_SEGMENT_SHM_INVALID;
             }
@@ -193,32 +194,32 @@ static void unpack_remote_mkeys(shmem_ctx_t ctx, opal_buffer_t *msg, int remote_
     }
 }
 
-static void do_recv(int source_pe, opal_buffer_t* buffer)
+static void do_recv(int source_pe, pmix_data_buffer_t* buffer)
 {
     int32_t cnt = 1;
     int rc;
-    opal_buffer_t *msg;
+    pmix_data_buffer_t *msg;
     uint8_t msg_type;
     uint32_t seg;
 
-    MEMHEAP_VERBOSE(5, "unpacking %d of %d", cnt, OPAL_UINT8);
-    rc = opal_dss.unpack(buffer, &msg_type, &cnt, OPAL_UINT8);
-    if (OPAL_SUCCESS != rc) {
-        OMPI_ERROR_LOG(rc);
+    MEMHEAP_VERBOSE(5, "unpacking %d of %d", cnt, PMIX_UINT8);
+    rc = PMIx_Data_unpack(NULL, buffer, &msg_type, &cnt, PMIX_UINT8);
+    if (PMIX_SUCCESS != rc) {
+        PMIX_ERROR_LOG(rc);
         goto send_fail;
     }
 
     switch (msg_type) {
     case MEMHEAP_RKEY_REQ:
         cnt = 1;
-        rc = opal_dss.unpack(buffer, &seg, &cnt, OPAL_UINT32);
-        if (OPAL_SUCCESS != rc) {
+        rc = PMIx_Data_unpack(NULL, buffer, &seg, &cnt, PMIX_UINT32);
+        if (PMIX_SUCCESS != rc) {
             MEMHEAP_ERROR("bad RKEY_REQ msg");
             goto send_fail;
         }
 
         MEMHEAP_VERBOSE(5, "*** RKEY REQ");
-        msg = OBJ_NEW(opal_buffer_t);
+        PMIX_DATA_BUFFER_CREATE(msg);
         if (!msg) {
             MEMHEAP_ERROR("failed to get msg buffer");
             OMPI_ERROR_LOG(rc);
@@ -226,7 +227,7 @@ static void do_recv(int source_pe, opal_buffer_t* buffer)
         }
 
         msg_type = MEMHEAP_RKEY_RESP;
-        opal_dss.pack(msg, &msg_type, 1, OPAL_UINT8);
+        PMIx_Data_pack(NULL, msg, &msg_type, 1, PMIX_UINT8);
 
         if (OSHMEM_SUCCESS != pack_local_mkeys(msg, source_pe, seg)) {
             OBJ_RELEASE(msg);
@@ -263,14 +264,14 @@ static void do_recv(int source_pe, opal_buffer_t* buffer)
     }
     return;
 
-    send_fail: msg = OBJ_NEW(opal_buffer_t);
+    send_fail: PMIX_DATA_BUFFER_CREATE(msg);
     if (!msg) {
         MEMHEAP_ERROR("failed to get msg buffer");
         OMPI_ERROR_LOG(rc);
         return;
     }
     msg_type = MEMHEAP_RKEY_RESP_FAIL;
-    opal_dss.pack(msg, &msg_type, 1, OPAL_UINT8);
+    PMIx_Data_pack(NULL, msg, &msg_type, 1, PMIX_UINT8);
 
     rc = send_buffer(source_pe, msg);
     if (MPI_SUCCESS != rc) {
@@ -317,7 +318,7 @@ static int oshmem_mkey_recv_cb(void)
     int flag;
     int n;
     int rc;
-    opal_buffer_t *msg;
+    pmix_data_buffer_t *msg;
     int32_t size;
     void *tmp_buf;
     oob_comm_request_t *r;
@@ -346,14 +347,14 @@ static int oshmem_mkey_recv_cb(void)
             return n;
         } else {
 		    memcpy(tmp_buf, (void*)&r->buf, size);
-		    msg = OBJ_NEW(opal_buffer_t);
+		    PMIX_DATA_BUFFER_CREATE(msg);
 		    if (NULL == msg) {
 		        MEMHEAP_ERROR("not enough memory");
 		        OMPI_ERROR_LOG(0);
 		        free(tmp_buf);
 		        return n;
 		    }
-		    opal_dss.load(msg, (void*)tmp_buf, size);
+            PMIX_DATA_BUFFER_LOAD(msg, (void*)tmp_buf, size);
 
             /*
              * send reply before posting the receive request again to limit the recursion size to
@@ -362,7 +363,7 @@ static int oshmem_mkey_recv_cb(void)
              * stack size will be proportional to number of job ranks.
              */
             do_recv(status.MPI_SOURCE, msg);
-            OBJ_RELEASE(msg);
+            PMIX_DATA_BUFFER_RELEASE(msg);
         }
 
         rc = PMPI_Start(&r->recv_req);
@@ -442,16 +443,16 @@ void memheap_oob_destruct(void)
     memheap_oob.is_inited = 0;
 }
 
-static int send_buffer(int pe, opal_buffer_t *msg)
+static int send_buffer(int pe, pmix_data_buffer_t *msg)
 {
     void *buffer;
     int32_t size;
     int rc;
 
-    opal_dss.unload(msg, &buffer, &size);
+    PMIX_DATA_BUFFER_UNLOAD(msg, buffer, size);
     rc = PMPI_Send(buffer, size, MPI_BYTE, pe, 0, oshmem_comm_world);
     free(buffer);
-    OBJ_RELEASE(msg);
+    PMIX_DATA_BUFFER_RELEASE(msg);
 
     MEMHEAP_VERBOSE(5, "message sent: dst=%d, rc=%d, %d bytes!", pe, rc, size);
     return rc;
@@ -459,7 +460,7 @@ static int send_buffer(int pe, opal_buffer_t *msg)
 
 static int memheap_oob_get_mkeys(shmem_ctx_t ctx, int pe, uint32_t seg, sshmem_mkey_t *mkeys)
 {
-    opal_buffer_t *msg;
+    pmix_data_buffer_t *msg;
     uint8_t cmd;
     int i;
     int rc;
@@ -482,7 +483,7 @@ static int memheap_oob_get_mkeys(shmem_ctx_t ctx, int pe, uint32_t seg, sshmem_m
     memheap_oob.mkeys_rcvd = 0;
     memheap_oob.ctx = ctx;
 
-    msg = OBJ_NEW(opal_buffer_t);
+    PMIX_DATA_BUFFER_CREATE(msg);
     if (!msg) {
         OPAL_THREAD_UNLOCK(&memheap_oob.lck);
         MEMHEAP_ERROR("failed to get msg buffer");
@@ -490,8 +491,8 @@ static int memheap_oob_get_mkeys(shmem_ctx_t ctx, int pe, uint32_t seg, sshmem_m
     }
 
     cmd = MEMHEAP_RKEY_REQ;
-    opal_dss.pack(msg, &cmd, 1, OPAL_UINT8);
-    opal_dss.pack(msg, &seg, 1, OPAL_UINT32);
+    PMIx_Data_pack(NULL, msg, &cmd, 1, PMIX_UINT8);
+    PMIx_Data_pack(NULL, msg, &seg, 1, PMIX_UINT32);
 
     rc = send_buffer(pe, msg);
     if (MPI_SUCCESS != rc) {
@@ -520,7 +521,7 @@ void mca_memheap_modex_recv_all(void)
     int i;
     int j;
     int nprocs, my_pe;
-    opal_buffer_t *msg = NULL;
+    pmix_data_buffer_t *msg = NULL;
     void *send_buffer = NULL;
     char *rcv_buffer = NULL;
     int size;
@@ -566,7 +567,7 @@ void mca_memheap_modex_recv_all(void)
     OPAL_TIMING_ENV_NEXT(recv_all, "alloc bufs");
 
     /* serialize our own mkeys */
-    msg = OBJ_NEW(opal_buffer_t);
+    PMIX_DATA_BUFFER_CREATE(msg);
     if (NULL == msg) {
         MEMHEAP_ERROR("failed to get msg buffer");
         rc = OSHMEM_ERR_OUT_OF_RESOURCE;
@@ -583,7 +584,7 @@ void mca_memheap_modex_recv_all(void)
     assert(sizeof(int32_t) == sizeof(int));
 
     /* Do allgather */
-    opal_dss.unload(msg, &send_buffer, &size);
+    PMIX_DATA_BUFFER_UNLOAD(msg, send_buffer, size);
     MEMHEAP_VERBOSE(1, "local keys packed into %d bytes, %d segments", size, memheap_map->n_segments);
 
     OPAL_TIMING_ENV_NEXT(recv_all, "serialize data");
@@ -636,7 +637,7 @@ void mca_memheap_modex_recv_all(void)
 
     OPAL_TIMING_ENV_NEXT(recv_all, "Perform mkey exchange");
 
-    opal_dss.load(msg, rcv_buffer, buffer_size);
+    PMIX_DATA_BUFFER_LOAD(msg, rcv_buffer, buffer_size);
 
     /* deserialize mkeys */
     OPAL_THREAD_LOCK(&memheap_oob.lck);
@@ -685,7 +686,7 @@ exit_fatal:
         free(send_buffer);
     }
     if (msg) {
-        OBJ_RELEASE(msg);
+        PMIX_DATA_BUFFER_RELEASE(msg);
     }
 
     OPAL_TIMING_ENV_NEXT(recv_all, "Cleanup");

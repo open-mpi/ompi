@@ -5,6 +5,7 @@
  *                         reserved.
  * Copyright (c) 2015-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
+ * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -34,7 +35,7 @@ int vprotocol_pessimist_event_logger_connect(int el_rank, ompi_communicator_t **
 
     prc = PMIx_Lookup(&pdat, 1, NULL, 0);
     if (PMIX_SUCCESS != prc ||
-        OPAL_STRING != pdat.value.type ||
+        PMIX_STRING != pdat.value.type ||
         NULL == pdat.value.data.string) {
         PMIX_PDATA_DESTRUCT(&pdat);
         return OMPI_ERR_NOT_FOUND;

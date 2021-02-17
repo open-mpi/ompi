@@ -85,4 +85,3 @@ include memoryhooks/Makefile.am
 include runtime/Makefile.am
 include mca/Makefile.am
 include tools/Makefile.am
-include dss/Makefile.am

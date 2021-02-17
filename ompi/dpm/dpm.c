@@ -20,6 +20,7 @@
  * Copyright (c) 2014-2020 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
+ * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -44,7 +45,6 @@
 #include "opal/util/proc.h"
 #include "opal/util/show_help.h"
 #include "opal/util/printf.h"
-#include "opal/dss/dss.h"
 #include "opal/mca/hwloc/base/base.h"
 #include "opal/mca/pmix/base/base.h"
 
@@ -421,7 +421,7 @@ bcast_rportlen:
                         /* get their locality string */
                         val = NULL;
                         OPAL_MODEX_RECV_VALUE_IMMEDIATE(rc, PMIX_LOCALITY_STRING,
-                                                       &proc->super.proc_name, &val, OPAL_STRING);
+                                                       &proc->super.proc_name, &val, PMIX_STRING);
                         if (OPAL_SUCCESS == rc && NULL != ompi_process_info.locality) {
                             u16 = opal_hwloc_compute_relative_locality(ompi_process_info.locality, val);
                             free(val);

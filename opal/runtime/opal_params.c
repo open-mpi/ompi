@@ -23,6 +23,7 @@
  *                         All rights reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
+ * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -44,7 +45,6 @@
 #include "opal/mca/shmem/base/base.h"
 #include "opal/mca/base/mca_base_var.h"
 #include "opal/runtime/opal_params.h"
-#include "opal/dss/dss.h"
 #include "opal/util/opal_environ.h"
 #include "opal/util/show_help.h"
 #include "opal/util/timings.h"
@@ -377,12 +377,6 @@ int opal_register_params(void)
 
     /* The ddt engine has a few parameters */
     ret = opal_datatype_register_params();
-    if (OPAL_SUCCESS != ret) {
-        return ret;
-    }
-
-    /* dss has parameters */
-    ret = opal_dss_register_vars ();
     if (OPAL_SUCCESS != ret) {
         return ret;
     }

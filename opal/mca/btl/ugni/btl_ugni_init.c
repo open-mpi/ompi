@@ -6,6 +6,7 @@
  * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -19,7 +20,6 @@
 #include "btl_ugni_frag.h"
 
 #include "opal/class/opal_list.h"
-#include "opal/dss/dss.h"
 #include "opal/mca/pmix/pmix-internal.h"
 #include "opal/util/bit_ops.h"
 #include "opal/mca/hwloc/base/base.h"

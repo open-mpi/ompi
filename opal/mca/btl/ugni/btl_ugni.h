@@ -5,6 +5,7 @@
  * Copyright (c) 2011      UT-Battelle, LLC. All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -34,6 +35,8 @@
 #include "opal/mca/btl/base/btl_base_error.h"
 #include "opal/class/opal_hash_table.h"
 #include "opal/class/opal_free_list.h"
+#include "opal/class/opal_pointer_array.h"
+#include "opal/mca/pmix/pmix-internal.h"
 
 #include <errno.h>
 #include <stdint.h>

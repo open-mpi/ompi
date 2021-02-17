@@ -10,6 +10,7 @@
  *                         reserved.
  * Copyright (c) 2015-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2018-2020 Amazon.com, Inc. or its affiliates.  All Rights reserved.
+ * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -27,7 +28,6 @@
 #include <unistd.h>
 #endif  /* HAVE_UNIST_H */
 
-#include "opal/dss/dss.h"
 #include "opal/runtime/opal_cr.h"
 #include "opal/util/event.h"
 #include "opal/util/output.h"
@@ -1054,7 +1054,7 @@ do {                                                            \
 
 #define PACK_BUFFER(buffer, var, count, type, error_msg)                       \
  {                                                                             \
-    if (OMPI_SUCCESS != (ret = opal_dss.pack(buffer, &(var), count, type)) ) { \
+    if (OMPI_SUCCESS != (ret = PMIx_Data_pack(NULL, buffer, &(var), count, type)) ) { \
         opal_output(mca_crcp_bkmrk_component.super.output_handle,               \
                     "%s (Return %d)", error_msg, ret);                         \
         exit_status = ret;                                                     \
@@ -1065,7 +1065,7 @@ do {                                                            \
 #define UNPACK_BUFFER(buffer, var, count, type, error_msg)                     \
  {                                                                             \
     int32_t n = count;                                                 \
-    if (OPAL_SUCCESS != (ret = opal_dss.unpack(buffer, &(var), &n, type)) ) {  \
+    if (OPAL_SUCCESS != (ret = PMIx_Data_unpack(NULL, buffer, &(var), &n, type)) ) {  \
         opal_output(mca_crcp_bkmrk_component.super.output_handle,               \
                     "%s (Return %d)", error_msg, ret);                         \
         exit_status = ret;                                                     \
@@ -4747,7 +4747,7 @@ static int ft_event_post_drain_acks(void)
 
 static void drain_message_ack_cbfunc(int status,
                                      ompi_process_name_t* sender,
-                                     opal_buffer_t *buffer,
+                                     pmix_data_buffer_t *buffer,
                                      ompi_rml_tag_t tag,
                                      void* cbdata)
 {
@@ -4758,7 +4758,7 @@ static void drain_message_ack_cbfunc(int status,
     /*
      * Unpack the buffer
      */
-    UNPACK_BUFFER(buffer, ckpt_status, 1, OPAL_SIZE, "");
+    UNPACK_BUFFER(buffer, ckpt_status, 1, PMIX_SIZE, "");
 
     /*
      * Update the outstanding message queue
@@ -5070,7 +5070,7 @@ static int wait_quiesce_drained(void)
          * Send ACK to peer if wanted
          */
         if( cur_peer_ref->ack_required ) {
-            opal_buffer_t *buffer = NULL;
+            pmix_data_buffer_t *buffer = NULL;
             size_t response = 1;
 
             OPAL_OUTPUT_VERBOSE((5, mca_crcp_bkmrk_component.super.output_handle,
@@ -5079,12 +5079,13 @@ static int wait_quiesce_drained(void)
                                  OMPI_NAME_PRINT(&(cur_peer_ref->proc_name)) ));
 
             /* Send All Clear to Peer */
-            if (NULL == (buffer = OBJ_NEW(opal_buffer_t))) {
+            PMIX_DATA_BUFFER_CREATE(buffer);
+            if (NULL == buffer) {
                 exit_status = OMPI_ERROR;
                 goto cleanup;
             }
 
-            PACK_BUFFER(buffer, response, 1, OPAL_SIZE, "");
+            PACK_BUFFER(buffer, response, 1, PMIX_SIZE, "");
 
             /* JJH - Performance Optimization? - Why not post all isends, then wait? */
             if (ORTE_SUCCESS != (ret = ompi_rte_send_buffer_nb(&(cur_peer_ref->proc_name),
@@ -5251,7 +5252,7 @@ static int send_bookmarks(int peer_idx)
 {
     ompi_crcp_bkmrk_pml_peer_ref_t *peer_ref;
     ompi_process_name_t peer_name;
-    opal_buffer_t *buffer = NULL;
+    pmix_data_buffer_t *buffer = NULL;
     int exit_status = OMPI_SUCCESS;
     int ret;
 
@@ -5280,14 +5281,15 @@ static int send_bookmarks(int peer_idx)
     /*
      * Send the bookmarks to peer
      */
-    if (NULL == (buffer = OBJ_NEW(opal_buffer_t))) {
+    PMIX_DATA_BUFFER_CREATE(buffer);
+    if (NULL == buffer) {
         exit_status = OMPI_ERROR;
         goto cleanup;
     }
 
-    PACK_BUFFER(buffer, (peer_ref->total_msgs_sent),      1, OPAL_UINT32,
+    PACK_BUFFER(buffer, (peer_ref->total_msgs_sent),      1, PMIX_UINT32,
                 "crcp:bkmrk: send_bookmarks: Unable to pack total_msgs_sent");
-    PACK_BUFFER(buffer, (peer_ref->total_msgs_recvd),     1, OPAL_UINT32,
+    PACK_BUFFER(buffer, (peer_ref->total_msgs_recvd),     1, PMIX_UINT32,
                 "crcp:bkmrk: send_bookmarks: Unable to pack total_msgs_recvd");
 
     if (ORTE_SUCCESS != (ret = ompi_rte_send_buffer_nb(&peer_name, buffer,
@@ -5303,7 +5305,7 @@ static int send_bookmarks(int peer_idx)
 
  cleanup:
     if(NULL != buffer) {
-        OBJ_RELEASE(buffer);
+       PMIX_DATA_BUFFER_RELEASE(buffer);
     }
 
     END_TIMER(CRCP_TIMER_CKPT_EX_PEER_S);
@@ -5336,7 +5338,7 @@ static int recv_bookmarks(int peer_idx)
 
 static void recv_bookmarks_cbfunc(int status,
                                   ompi_process_name_t* sender,
-                                  opal_buffer_t *buffer,
+                                  pmix_data_buffer_t *buffer,
                                   ompi_rml_tag_t tag,
                                   void* cbdata)
 {
@@ -5358,11 +5360,11 @@ static void recv_bookmarks_cbfunc(int status,
         goto cleanup;
     }
 
-    UNPACK_BUFFER(buffer, tmp_int, 1, OPAL_UINT32,
+    UNPACK_BUFFER(buffer, tmp_int, 1, PMIX_UINT32,
                   "crcp:bkmrk: recv_bookmarks: Unable to unpack total_msgs_sent");
     peer_ref->matched_msgs_sent = tmp_int;
 
-    UNPACK_BUFFER(buffer, tmp_int, 1, OPAL_UINT32,
+    UNPACK_BUFFER(buffer, tmp_int, 1, PMIX_UINT32,
                   "crcp:bkmrk: recv_bookmarks: Unable to unpack total_msgs_recvd");
     peer_ref->matched_msgs_recvd = tmp_int;
 

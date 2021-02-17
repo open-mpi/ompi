@@ -16,6 +16,7 @@
  * Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -39,7 +40,7 @@
 #include "ompi/types.h"
 
 #include "opal/util/proc.h"
-
+#include "opal/mca/pmix/pmix-internal.h"
 #include "ompi/runtime/ompi_rte.h"
 
 
@@ -301,7 +302,7 @@ OMPI_DECLSPEC ompi_proc_t * ompi_proc_find_and_add(const ompi_process_name_t * n
  */
 OMPI_DECLSPEC int ompi_proc_pack(ompi_proc_t **proclist,
                                  int proclistsize,
-                                 opal_buffer_t *buf);
+                                 pmix_data_buffer_t *buf);
 
 
 /**
@@ -343,7 +344,7 @@ OMPI_DECLSPEC int ompi_proc_pack(ompi_proc_t **proclist,
  *   OMPI_SUCCESS               on success
  *   OMPI_ERROR                 else
  */
-OMPI_DECLSPEC int ompi_proc_unpack(opal_buffer_t *buf,
+OMPI_DECLSPEC int ompi_proc_unpack(pmix_data_buffer_t *buf,
                                    int proclistsize,
                                    ompi_proc_t ***proclist,
                                    int *newproclistsize,

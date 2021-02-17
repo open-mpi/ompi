@@ -640,15 +640,6 @@ test/datatype/position_noncontig
 test/datatype/unpack_ooo
 test/datatype/unpack_hetero
 
-test/dss/dss_buffer
-test/dss/dss_copy
-test/dss/dss_size
-test/dss/dss_cmp
-test/dss/dss_release
-test/dss/dss_payload
-test/dss/dss_set_get
-test/dss/dss_print
-
 test/event/signal-test
 test/event/event-test
 test/event/time-test

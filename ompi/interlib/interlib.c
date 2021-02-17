@@ -16,6 +16,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
+ * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -51,7 +52,7 @@ static void model_callback(size_t refid, pmix_status_t status,
                     0 == strcmp(info[n].value.data.string, "MPI")) {
                     goto cback;
                 }
-                if (OPAL_STRING == info[n].value.type) {
+                if (PMIX_STRING == info[n].value.type) {
                         opal_output(0, "OMPI Model Callback Key: %s Val %s", info[n].key, info[n].value.data.string);
                 }
             }

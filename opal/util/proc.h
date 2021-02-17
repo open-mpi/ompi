@@ -9,6 +9,7 @@
  * Copyright (c) 2017      Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2020      Amazon.com, Inc. or its affiliates.  All Rights
  *                         reserved.
+ * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -24,7 +25,6 @@
 #include "opal/mca/hwloc/hwloc-internal.h"
 #include "opal/mca/pmix/pmix-internal.h"
 #include "opal/types.h"
-#include "opal/dss/dss_types.h"
 
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
 #include <arpa/inet.h>

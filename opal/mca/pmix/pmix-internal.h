@@ -9,6 +9,7 @@
  *                         reserved.
  * Copyright (c) 2020      Amazon.com, Inc. or its affiliates.
  *                         All Rights reserved.
+ * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -37,7 +38,6 @@
 #include "opal/mca/mca.h"
 #include "opal/util/event.h"
 #include "opal/mca/threads/threads.h"
-#include "opal/dss/dss.h"
 #include "opal/util/error.h"
 #include "opal/hash_string.h"
 
@@ -45,6 +45,18 @@
 
 
 BEGIN_C_DECLS
+
+typedef uint32_t opal_jobid_t;
+typedef pmix_rank_t opal_vpid_t;
+typedef struct {
+    opal_jobid_t jobid;
+    opal_vpid_t vpid;
+} opal_process_name_t;
+
+#define OPAL_SIZEOF_PROCESS_NAME_T 8
+#define OPAL_EQUAL 0
+#define OPAL_VALUE1_GREATER 1
+#define OPAL_VALUE2_GREATER -1
 
 /* provide access to the framework verbose output without
  * exposing the entire base */
@@ -693,12 +705,6 @@ OPAL_DECLSPEC void opal_pmix_finalize_nspace_tracker(void);
             (p)->rank = strtoul(_ptr, NULL, 10);    \
         }                                           \
     } while(0)
-
-OPAL_DECLSPEC void opal_pmix_value_load(pmix_value_t *v,
-                                        opal_value_t *kv);
-
-OPAL_DECLSPEC int opal_pmix_value_unload(opal_value_t *kv,
-                                         const pmix_value_t *v);
 
 OPAL_DECLSPEC int opal_pmix_register_cleanup(char *path,
                                              bool directory,

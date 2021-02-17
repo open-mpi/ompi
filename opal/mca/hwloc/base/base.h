@@ -3,6 +3,7 @@
  * Copyright (c) 2013-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2017      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -14,8 +15,6 @@
 #define OPAL_HWLOC_BASE_H
 
 #include "opal_config.h"
-
-#include "opal/dss/dss_types.h"
 
 #include "opal/mca/hwloc/hwloc-internal.h"
 

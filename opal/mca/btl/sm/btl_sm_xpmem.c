@@ -6,6 +6,7 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2020      Google, LLC. All rights reserved.
+ * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -123,7 +124,7 @@ void sm_return_registration (mca_rcache_base_registration_t *reg, struct mca_btl
 
     ref_count = opal_atomic_add_fetch_32 (&reg->ref_count, -1);
     if (OPAL_UNLIKELY(0 == ref_count && !(reg->flags & MCA_RCACHE_FLAGS_PERSIST))) {
-#if OPAL_DEBUG
+#if OPAL_ENABLE_DEBUG
         int ret = mca_rcache_base_vma_delete (vma_module, reg);
         assert (OPAL_SUCCESS == ret);
 #else

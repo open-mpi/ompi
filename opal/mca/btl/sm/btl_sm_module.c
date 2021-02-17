@@ -20,6 +20,7 @@
  * Copyright (c) 2018-2019 Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2020      Google, LLC. All rights reserved.
+ * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -332,7 +333,6 @@ static int sm_add_procs (struct mca_btl_base_module_t* btl,
                             struct mca_btl_base_endpoint_t **peers,
                             opal_bitmap_t *reachability)
 {
-    mca_btl_sm_component_t *component = &mca_btl_sm_component;
     mca_btl_sm_t *sm_btl = (mca_btl_sm_t *) btl;
     const opal_proc_t *my_proc;
     int rc = OPAL_SUCCESS;

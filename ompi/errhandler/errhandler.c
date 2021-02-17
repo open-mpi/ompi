@@ -16,6 +16,7 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015-2019 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -423,20 +424,31 @@ typedef struct ompi_errhandler_event_s {
     int status;
     opal_process_name_t source;
     int nvalue;
-    opal_value_t value[];
+    pmix_info_t info[];
 } ompi_errhandler_event_t;
 
 static void *ompi_errhandler_event_cb(int fd, int flags, void *context) {
     ompi_errhandler_event_t *event = (ompi_errhandler_event_t*) context;
     int status = event->status;
     opal_process_name_t source = event->source;
+    opal_process_name_t prc;
+    int rc;
 #if OPAL_ENABLE_FT_MPI
     if( PMIX_ERR_PROC_ABORTED == status ) {
         int i;
         for(i = 0; i < event->nvalue; i++) {
-            if(OPAL_NAME != event->value[i].type) continue;
-            ompi_proc_t *proc = (ompi_proc_t*)ompi_proc_for_name(event->value[i].data.name);
-            if( NULL == proc ) continue; /* we are not 'MPI connected' with this proc. */
+            if (PMIX_PROC != event->info[i].value.type) {
+                continue;
+            }
+            OPAL_PMIX_CONVERT_PROCT(rc, &prc, event->info[i].value.data.proc);
+            if (OPAL_SUCCESS != rc) {
+                OPAL_ERROR_LOG(rc);
+                break;
+            }
+            ompi_proc_t *proc = (ompi_proc_t*)ompi_proc_for_name(prc);
+            if( NULL == proc ) {
+                continue; /* we are not 'MPI connected' with this proc. */
+            }
             assert( !ompi_proc_is_sentinel(proc) );
             ompi_errhandler_proc_failed_internal(proc, status, false);
         }
@@ -490,7 +502,7 @@ void ompi_errhandler_callback(size_t refid, pmix_status_t status,
     /* an error has been found, report to the MPI layer and let it take
      * further action. */
     /* transition this from the RTE thread to the MPI progress engine */
-    ompi_errhandler_event_t *event = malloc(sizeof(*event)+ninfo*sizeof(opal_value_t));
+    ompi_errhandler_event_t *event = malloc(sizeof(*event)+ninfo*sizeof(pmix_info_t));
     if(NULL == event) {
         OMPI_ERROR_LOG(OMPI_ERR_OUT_OF_RESOURCE);
         goto error;
@@ -503,8 +515,8 @@ void ompi_errhandler_callback(size_t refid, pmix_status_t status,
         goto error;
     }
     event->nvalue = ninfo;
-    for(i = 0; i < ninfo; i++) {
-        opal_pmix_value_unload(&event->value[i], &info[i].value);
+    for (i = 0; i < ninfo; i++) {
+        PMIX_INFO_XFER(&event->info[i], &info[i]);
     }
     opal_event_set(opal_sync_event_base, &event->super, -1, OPAL_EV_READ,
                    ompi_errhandler_event_cb, event);

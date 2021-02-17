@@ -5,6 +5,7 @@
  * Copyright (c) 2019      Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2019      Google, LLC. All rights reserved.
+ * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -15,7 +16,7 @@
 #include "btl_ugni_rdma.h"
 
 static gni_fma_cmd_type_t amo_cmds[][MCA_BTL_ATOMIC_LAST] = {
-    [OPAL_INT32] = {
+    [PMIX_INT32] = {
         [MCA_BTL_ATOMIC_ADD] = GNI_FMA_ATOMIC2_IADD_S,
         [MCA_BTL_ATOMIC_LAND] = GNI_FMA_ATOMIC2_AND_S,
         [MCA_BTL_ATOMIC_LOR] = GNI_FMA_ATOMIC2_OR_S,
@@ -24,7 +25,7 @@ static gni_fma_cmd_type_t amo_cmds[][MCA_BTL_ATOMIC_LAST] = {
         [MCA_BTL_ATOMIC_MIN] = GNI_FMA_ATOMIC2_IMIN_S,
         [MCA_BTL_ATOMIC_MAX] = GNI_FMA_ATOMIC2_IMAX_S,
     },
-    [OPAL_INT64] = {
+    [PMIX_INT64] = {
         [MCA_BTL_ATOMIC_ADD] = GNI_FMA_ATOMIC_ADD,
         [MCA_BTL_ATOMIC_AND] = GNI_FMA_ATOMIC_AND,
         [MCA_BTL_ATOMIC_OR] = GNI_FMA_ATOMIC_OR,
@@ -33,12 +34,12 @@ static gni_fma_cmd_type_t amo_cmds[][MCA_BTL_ATOMIC_LAST] = {
         [MCA_BTL_ATOMIC_MIN] = GNI_FMA_ATOMIC2_IMIN,
         [MCA_BTL_ATOMIC_MAX] = GNI_FMA_ATOMIC2_IMAX,
     },
-    [OPAL_FLOAT] = {
+    [PMIX_FLOAT] = {
         [MCA_BTL_ATOMIC_ADD] = GNI_FMA_ATOMIC2_FPADD_S,
         [MCA_BTL_ATOMIC_MIN] = GNI_FMA_ATOMIC2_FPMIN_S,
         [MCA_BTL_ATOMIC_MAX] = GNI_FMA_ATOMIC2_FPMAX_S,
     },
-    [OPAL_DOUBLE] = {
+    [PMIX_DOUBLE] = {
         [MCA_BTL_ATOMIC_ADD] = GNI_FMA_ATOMIC2_FPADD,
         [MCA_BTL_ATOMIC_MIN] = GNI_FMA_ATOMIC2_FPMIN,
         [MCA_BTL_ATOMIC_MAX] = GNI_FMA_ATOMIC2_FPMAX,
@@ -46,7 +47,7 @@ static gni_fma_cmd_type_t amo_cmds[][MCA_BTL_ATOMIC_LAST] = {
 };
 
 static gni_fma_cmd_type_t famo_cmds[][MCA_BTL_ATOMIC_LAST] = {
-    [OPAL_INT32] = {
+    [PMIX_INT32] = {
         [MCA_BTL_ATOMIC_ADD] = GNI_FMA_ATOMIC2_FIADD_S,
         [MCA_BTL_ATOMIC_LAND] = GNI_FMA_ATOMIC2_FAND_S,
         [MCA_BTL_ATOMIC_LOR] = GNI_FMA_ATOMIC2_FOR_S,
@@ -55,7 +56,7 @@ static gni_fma_cmd_type_t famo_cmds[][MCA_BTL_ATOMIC_LAST] = {
         [MCA_BTL_ATOMIC_MIN] = GNI_FMA_ATOMIC2_FIMIN_S,
         [MCA_BTL_ATOMIC_MAX] = GNI_FMA_ATOMIC2_FIMAX_S,
     },
-    [OPAL_INT64] = {
+    [PMIX_INT64] = {
         [MCA_BTL_ATOMIC_ADD] = GNI_FMA_ATOMIC_FADD,
         [MCA_BTL_ATOMIC_AND] = GNI_FMA_ATOMIC_FAND,
         [MCA_BTL_ATOMIC_OR] = GNI_FMA_ATOMIC_FOR,
@@ -64,12 +65,12 @@ static gni_fma_cmd_type_t famo_cmds[][MCA_BTL_ATOMIC_LAST] = {
         [MCA_BTL_ATOMIC_MIN] = GNI_FMA_ATOMIC2_FIMIN,
         [MCA_BTL_ATOMIC_MAX] = GNI_FMA_ATOMIC2_FIMAX,
     },
-    [OPAL_FLOAT] = {
+    [PMIX_FLOAT] = {
         [MCA_BTL_ATOMIC_ADD] = GNI_FMA_ATOMIC2_FFPADD_S,
         [MCA_BTL_ATOMIC_MIN] = GNI_FMA_ATOMIC2_FFPMIN_S,
         [MCA_BTL_ATOMIC_MAX] = GNI_FMA_ATOMIC2_FFPMAX_S,
     },
-    [OPAL_DOUBLE] = {
+    [PMIX_DOUBLE] = {
         [MCA_BTL_ATOMIC_ADD] = GNI_FMA_ATOMIC2_FFPADD,
         [MCA_BTL_ATOMIC_MIN] = GNI_FMA_ATOMIC2_FFPMIN,
         [MCA_BTL_ATOMIC_MAX] = GNI_FMA_ATOMIC2_FFPMAX,
@@ -88,9 +89,9 @@ int mca_btl_ugni_aop (struct mca_btl_base_module_t *btl, struct mca_btl_base_end
 
     size = (MCA_BTL_ATOMIC_FLAG_32BIT & flags) ? 4 : 8;
     if (MCA_BTL_ATOMIC_FLAG_FLOAT & flags) {
-        type = (MCA_BTL_ATOMIC_FLAG_32BIT & flags) ? OPAL_FLOAT : OPAL_DOUBLE;
+        type = (MCA_BTL_ATOMIC_FLAG_32BIT & flags) ? PMIX_FLOAT : PMIX_DOUBLE;
     } else {
-        type = (MCA_BTL_ATOMIC_FLAG_32BIT & flags) ? OPAL_INT32 : OPAL_INT64;
+        type = (MCA_BTL_ATOMIC_FLAG_32BIT & flags) ? PMIX_INT32 : PMIX_INT64;
     }
 
     gni_op = amo_cmds[type][op];
@@ -119,9 +120,9 @@ int mca_btl_ugni_afop (struct mca_btl_base_module_t *btl, struct mca_btl_base_en
 
     size = (MCA_BTL_ATOMIC_FLAG_32BIT & flags) ? 4 : 8;
     if (MCA_BTL_ATOMIC_FLAG_FLOAT & flags) {
-        type = (MCA_BTL_ATOMIC_FLAG_32BIT & flags) ? OPAL_FLOAT : OPAL_DOUBLE;
+        type = (MCA_BTL_ATOMIC_FLAG_32BIT & flags) ? PMIX_FLOAT : PMIX_DOUBLE;
     } else {
-        type = (MCA_BTL_ATOMIC_FLAG_32BIT & flags) ? OPAL_INT32 : OPAL_INT64;
+        type = (MCA_BTL_ATOMIC_FLAG_32BIT & flags) ? PMIX_INT32 : PMIX_INT64;
     }
 
     gni_op = famo_cmds[type][op];

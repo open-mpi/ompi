@@ -1489,7 +1489,6 @@ AC_CONFIG_FILES([
     test/event/Makefile
     test/asm/Makefile
     test/datatype/Makefile
-    test/dss/Makefile
     test/class/Makefile
     test/mpool/Makefile
     test/support/Makefile
