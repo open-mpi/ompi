@@ -32,7 +32,7 @@ static int mca_coll_han_module_disable(mca_coll_base_module_t * module,
 
 #define CLEAN_PREV_COLL(HANDLE, NAME)                    \
     do {                                                 \
-        (HANDLE)->fallback.NAME.NAME = NULL;             \
+        (HANDLE)->fallback.NAME.module_fn.NAME = NULL;   \
         (HANDLE)->fallback.NAME.module = NULL;           \
     } while (0)
 

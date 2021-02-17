@@ -14,17 +14,6 @@
 #include "ompi/mca/coll/base/coll_base_functions.h"
 #include <math.h>
 
-typedef int (*ompi_mca_coll_adapt_ibcast_function_t)(IBCAST_ARGS);
-typedef int (*ompi_mca_coll_adapt_ireduce_function_t)(IREDUCE_ARGS);
-
-typedef struct ompi_coll_adapt_algorithm_index_s {
-    int algorithm_index;
-    union {
-        ompi_mca_coll_adapt_ibcast_function_t  ibcast_fn_ptr;
-        ompi_mca_coll_adapt_ireduce_function_t ireduce_fn_ptr;
-    };
-} ompi_coll_adapt_algorithm_index_t;
-
 /* Bcast */
 int ompi_coll_adapt_ibcast_register(void);
 int ompi_coll_adapt_ibcast_fini(void);

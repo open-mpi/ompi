@@ -26,17 +26,17 @@
 #include "coll_han.h"
 #include "coll_han_dynamic.h"
 
-#define HAN_SUBCOM_SAVE_COLLECTIVE(FALLBACKS, COMM, HANM, COLL)          \
+#define HAN_SUBCOM_SAVE_COLLECTIVE(FALLBACKS, COMM, HANM, COLL)                  \
     do {                                                                         \
-        (FALLBACKS).COLL.COLL = (COMM)->c_coll->coll_ ## COLL;                   \
+        (FALLBACKS).COLL.module_fn.COLL = (COMM)->c_coll->coll_ ## COLL;         \
         (FALLBACKS).COLL.module = (COMM)->c_coll->coll_ ## COLL ## _module;      \
-        (COMM)->c_coll->coll_ ## COLL = (HANM)->fallback.COLL.COLL;              \
+        (COMM)->c_coll->coll_ ## COLL = (HANM)->fallback.COLL.module_fn.COLL;    \
         (COMM)->c_coll->coll_ ## COLL ## _module = (HANM)->fallback.COLL.module; \
     } while(0)
 
-#define HAN_SUBCOM_LOAD_COLLECTIVE(FALLBACKS, COMM, HANM, COLL)          \
+#define HAN_SUBCOM_LOAD_COLLECTIVE(FALLBACKS, COMM, HANM, COLL)                  \
     do {                                                                         \
-        (COMM)->c_coll->coll_ ## COLL = (FALLBACKS).COLL.COLL;                   \
+        (COMM)->c_coll->coll_ ## COLL = (FALLBACKS).COLL.module_fn.COLL;         \
         (COMM)->c_coll->coll_ ## COLL ## _module = (FALLBACKS).COLL.module;      \
     } while(0)
 
