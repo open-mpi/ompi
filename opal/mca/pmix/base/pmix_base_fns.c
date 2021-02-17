@@ -8,6 +8,7 @@
  * Copyright (c) 2016      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2016      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -131,23 +132,11 @@ int opal_pmix_convert_nspace(opal_jobid_t *jobid, pmix_nspace_t nspace)
 
     /* set a default */
     if (NULL != jobid) {
-        *jobid = OPAL_JOBID_INVALID;
+        *jobid = OPAL_JOBID_WILDCARD;
     }
 
     /* if the nspace is empty, there is nothing more to do */
     if (0 == strlen(nspace)) {
-        return OPAL_SUCCESS;
-    }
-    if (NULL != strstr(nspace, "JOBID_WILDCARD")) {
-        if (NULL != jobid) {
-            *jobid = OPAL_JOBID_WILDCARD;
-        }
-        return OPAL_SUCCESS;
-    }
-    if (NULL != strstr(nspace, "JOBID_INVALID")) {
-        if (NULL != jobid) {
-            *jobid = OPAL_JOBID_INVALID;
-        }
         return OPAL_SUCCESS;
     }
 
@@ -163,12 +152,12 @@ int opal_pmix_convert_nspace(opal_jobid_t *jobid, pmix_nspace_t nspace)
 
     /* if we get here, we don't know this nspace */
     /* find the "." at the end that indicates the child job */
-    if (NULL != (p = strrchr(nspace, '.'))) {
+    if (NULL != (p = strrchr(nspace, '@'))) {
         *p = '\0';
     }
     OPAL_HASH_STR(nspace, hash32);
     if (NULL != p) {
-        *p = '.';
+        *p = '@';
         ++p;
         localjob = strtoul(p, NULL, 10);
     }

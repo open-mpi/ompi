@@ -18,6 +18,7 @@
 # Copyright (c) 2019-2020 Intel, Inc.  All rights reserved.
 # Copyright (c) 2020      Amazon.com, Inc. or its affiliates.
 #                         All Rights reserved.
+# Copyright (c) 2021      Nanook Consulting.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -142,6 +143,10 @@ AC_DEFUN([OMPI_SETUP_PRRTE_INTERNAL], [
     AS_IF([test "$with_ft" != "no"],
           [internal_prrte_args="--enable-prte-ft $internal_prrte_args"],
           [])
+
+    if test "$WANT_DEBUG" = "1"; then
+        internal_prrte_args="$internal_prrte_args --enable-debug"
+    fi
 
     # Pass all our compiler/linker flags to PRRTE, so that it
     # picks up how to build an internal HWLOC, libevent, and PMIx, plus

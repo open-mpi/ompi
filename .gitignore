@@ -265,6 +265,14 @@ ompi/mpi/tool/profile/*.c
 ompi/mpiext/affinity/c/OMPI_Affinity_str.3
 ompi/mpiext/affinity/c/example
 
+ompi/mpiext/ftmpi/c/profile/pcomm_agree.c
+ompi/mpiext/ftmpi/c/profile/pcomm_failure_ack.c
+ompi/mpiext/ftmpi/c/profile/pcomm_failure_get_acked.c
+ompi/mpiext/ftmpi/c/profile/pcomm_iagree.c
+ompi/mpiext/ftmpi/c/profile/pcomm_is_revoked.c
+ompi/mpiext/ftmpi/c/profile/pcomm_revoke.c
+ompi/mpiext/ftmpi/c/profile/pcomm_shrink.c
+
 ompi/mpiext/example/tests/progress_c
 ompi/mpiext/example/tests/progress_mpifh
 ompi/mpiext/example/tests/progress_usempi

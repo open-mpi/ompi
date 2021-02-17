@@ -21,6 +21,7 @@ dnl Copyright (c) 2020      Triad National Security, LLC. All rights
 dnl                         reserved.
 dnl Copyright (c) 2020      Amazon.com, Inc. or its affiliates.  All Rights
 dnl                         reserved.
+dnl Copyright (c) 2021      Nanook Consulting.  All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -85,6 +86,10 @@ AC_DEFUN([OPAL_CONFIG_PMIX], [
 
          AS_IF([test ! -z "$internal_pmix_libs"],
                [internal_pmix_args="$internal_pmix_args --with-prte-extra-lib=\"$internal_pmix_libs\""])
+
+         if test "$WANT_DEBUG" = "1"; then
+             internal_pmix_args="$internal_pmix_args --enable-debug"
+         fi
 
          # Pass all our compiler/linker flags to PMIx, so that it
          # picks up how to build an internal HWLOC and libevent, plus
