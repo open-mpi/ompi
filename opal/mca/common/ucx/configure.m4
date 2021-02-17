@@ -18,6 +18,8 @@ AC_DEFUN([MCA_opal_common_ucx_CONFIG],[
                [common_ucx_happy="yes"],
                [common_ucx_happy="no"])
 
+    AC_CHECK_DECLS([open_memstream], [], [], [[#include <stdio.h>]])
+
     AS_IF([test "$common_ucx_happy" = "yes"],
           [$1],
           [$2])
