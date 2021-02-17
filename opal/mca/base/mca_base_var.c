@@ -21,6 +21,7 @@
  * Copyright (c) 2018      Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2020      Google, LLC. All rights reserved.
+ * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -417,6 +418,7 @@ int mca_base_var_load_extra_files(char* files, bool rel_path_search) {
     resolve_relative_paths(&tmp1, mca_base_param_file_path, rel_path_search, &mca_base_var_files, OPAL_ENV_SEP);
     read_files (tmp1, &mca_base_var_file_values, ',');
     free(tmp1);
+    return OPAL_SUCCESS;
 }
 
 int mca_base_var_cache_files(bool rel_path_search)
