@@ -36,11 +36,19 @@ bool opal_uses_threads = false;
 
 static void opal_mutex_construct(opal_mutex_t *m)
 {
-    opal_threads_ensure_init_qthreads();
     opal_mutex_create(m);
 }
 
 static void opal_mutex_destruct(opal_mutex_t *m)
+{
+}
+
+static void opal_recursive_mutex_construct(opal_mutex_t *m)
+{
+    opal_mutex_recursive_create(m);
+}
+
+static void opal_recursive_mutex_destruct(opal_mutex_t *m)
 {
 }
 
@@ -49,26 +57,23 @@ OBJ_CLASS_INSTANCE(opal_mutex_t,
                    opal_mutex_construct,
                    opal_mutex_destruct);
 
-static void opal_recursive_mutex_construct(opal_recursive_mutex_t *m)
-{
-}
 
 OBJ_CLASS_INSTANCE(opal_recursive_mutex_t,
                    opal_object_t,
                    opal_recursive_mutex_construct,
-                   opal_mutex_destruct);
+                   opal_recursive_mutex_destruct);
 
 int opal_cond_init(opal_cond_t *cond)
 {
     opal_atomic_lock_init(&cond->m_lock, 0);
-    cond->m_waiter_head = NULL;
     cond->m_waiter_tail = NULL;
+    cond->m_waiter_head = NULL;
     return OPAL_SUCCESS;
 }
 
 typedef struct {
     int m_signaled;
-    void *m_prev;
+    void * m_prev;
 } cond_waiter_t;
 
 int opal_cond_wait(opal_cond_t *cond, opal_mutex_t *lock)
@@ -90,10 +95,7 @@ int opal_cond_wait(opal_cond_t *cond, opal_mutex_t *lock)
         opal_mutex_unlock(lock);
         qthread_yield();
         opal_mutex_lock(lock);
-        /* Check if someone woke me up. */
-        opal_atomic_lock(&cond->m_lock);
         int signaled = waiter.m_signaled;
-        opal_atomic_unlock(&cond->m_lock);
         if (1 == signaled) {
             break;
         }
