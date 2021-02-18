@@ -1674,6 +1674,9 @@ int ompi_dpm_dyn_init(void)
         ptr = &tmp[0];
     }
     port_name = strdup(ptr);
+    if (NULL == port_name) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
 
     rc = ompi_dpm_connect_accept(MPI_COMM_WORLD, root, port_name, send_first, &newcomm);
     free(port_name);
