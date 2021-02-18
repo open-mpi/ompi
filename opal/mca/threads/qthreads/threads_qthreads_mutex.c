@@ -25,8 +25,8 @@
 
 #include "opal_config.h"
 
-#include "opal/constants.h"
 #include "opal/mca/threads/mutex.h"
+#include "opal/constants.h"
 
 /*
  * Wait and see if some upper layer wants to use threads, if support
@@ -36,22 +36,35 @@ bool opal_uses_threads = false;
 
 static void opal_mutex_construct(opal_mutex_t *m)
 {
-    opal_threads_ensure_init_qthreads();
-    opal_mutex_create(m);
+     opal_mutex_create(m);
 }
 
 static void opal_mutex_destruct(opal_mutex_t *m)
 {
 }
 
-OBJ_CLASS_INSTANCE(opal_mutex_t, opal_object_t, opal_mutex_construct, opal_mutex_destruct);
+static void opal_recursive_mutex_construct(opal_mutex_t *m)
+{
+    opal_mutex_recursive_create(m);
+}
+
+static void opal_recursive_mutex_destruct(opal_mutex_t *m)
+{
+}
+
+OBJ_CLASS_INSTANCE(opal_mutex_t,
+                   opal_object_t,
+                   opal_mutex_construct,
+                   opal_mutex_destruct);
 
 static void opal_recursive_mutex_construct(opal_recursive_mutex_t *m)
 {
 }
 
-OBJ_CLASS_INSTANCE(opal_recursive_mutex_t, opal_object_t, opal_recursive_mutex_construct,
-                   opal_mutex_destruct);
+OBJ_CLASS_INSTANCE(opal_recursive_mutex_t,
+                   opal_object_t,
+                   opal_recursive_mutex_construct,
+                   opal_recursive_mutex_destruct);
 
 int opal_cond_init(opal_cond_t *cond)
 {
@@ -63,7 +76,7 @@ int opal_cond_init(opal_cond_t *cond)
 
 typedef struct {
     int m_signaled;
-    void *m_prev;
+    void * m_prev;
 } cond_waiter_t;
 
 int opal_cond_wait(opal_cond_t *cond, opal_mutex_t *lock)
@@ -74,11 +87,11 @@ int opal_cond_wait(opal_cond_t *cond, opal_mutex_t *lock)
     opal_atomic_lock(&cond->m_lock);
     cond_waiter_t waiter = {0, NULL};
     if (NULL == cond->m_waiter_head) {
-        cond->m_waiter_tail = (void *) &waiter;
+        cond->m_waiter_tail = (void *)&waiter;
     } else {
-        ((cond_waiter_t *) cond->m_waiter_head)->m_prev = (void *) &waiter;
+        ((cond_waiter_t *)cond->m_waiter_head)->m_prev = (void *)&waiter;
     }
-    cond->m_waiter_head = (void *) &waiter;
+    cond->m_waiter_head = (void *)&waiter;
     opal_atomic_unlock(&cond->m_lock);
 
     while (1) {
@@ -101,7 +114,7 @@ int opal_cond_broadcast(opal_cond_t *cond)
 {
     opal_atomic_lock(&cond->m_lock);
     while (NULL != cond->m_waiter_tail) {
-        cond_waiter_t *p_cur_tail = (cond_waiter_t *) cond->m_waiter_tail;
+        cond_waiter_t *p_cur_tail = (cond_waiter_t *)cond->m_waiter_tail;
         cond->m_waiter_tail = p_cur_tail->m_prev;
         /* Awaken one of threads in a FIFO manner. */
         p_cur_tail->m_signaled = 1;
@@ -116,7 +129,7 @@ int opal_cond_signal(opal_cond_t *cond)
 {
     opal_atomic_lock(&cond->m_lock);
     if (NULL != cond->m_waiter_tail) {
-        cond_waiter_t *p_cur_tail = (cond_waiter_t *) cond->m_waiter_tail;
+        cond_waiter_t *p_cur_tail = (cond_waiter_t *)cond->m_waiter_tail;
         cond->m_waiter_tail = p_cur_tail->m_prev;
         /* Awaken one of threads. */
         p_cur_tail->m_signaled = 1;
