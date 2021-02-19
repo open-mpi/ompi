@@ -468,7 +468,7 @@ void mca_pml_ob1_recv_frag_callback_match(mca_btl_base_module_t* btl,
                        );
         }
 
-        /* no need to check if complete we know we are.. */
+        /* no need to check if complete we know we are. */
         /*  don't need a rmb as that is for checking */
         recv_request_pml_complete(match);
     }
