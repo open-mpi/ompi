@@ -423,7 +423,7 @@ int mca_pml_ob1_revoke_comm( struct ompi_communicator_t* ompi_comm, bool coll_on
                                  "ob1_revoke_comm: sending NACK to %d", hdr->hdr_rndv.hdr_match.hdr_src));
             /* Send a ACK with a NULL request to signify revocation */
             proc = mca_pml_ob1_peer_lookup(ompi_comm, hdr->hdr_rndv.hdr_match.hdr_src);
-            mca_pml_ob1_recv_request_ack_send(proc->ompi_proc, hdr->hdr_rndv.hdr_src_req.lval, NULL, 0, 0, false);
+            mca_pml_ob1_recv_request_ack_send(NULL, proc->ompi_proc, hdr->hdr_rndv.hdr_src_req.lval, NULL, 0, 0, false);
         }
         else {
             /* if it's a TYPE_MATCH, the sender is not expecting anything
@@ -605,7 +605,7 @@ void mca_pml_ob1_recv_frag_callback_match (mca_btl_base_module_t *btl,
                        );
         }
 
-        /* no need to check if complete we know we are.. */
+        /* no need to check if complete we know we are. */
         /*  don't need a rmb as that is for checking */
         recv_request_pml_complete(match);
     }
@@ -1074,7 +1074,7 @@ static int mca_pml_ob1_recv_frag_match (mca_btl_base_module_t *btl,
                     MCA_PML_OB1_HDR_TYPE_RNDV == hdr->hdr_common.hdr_type );
             /* Send a ACK with a NULL request to signify revocation */
             mca_pml_ob1_rendezvous_hdr_t* hdr_rndv = (mca_pml_ob1_rendezvous_hdr_t*) hdr;
-            mca_pml_ob1_recv_request_ack_send(proc->ompi_proc, hdr_rndv->hdr_src_req.lval, NULL, 0, 0, false);
+            mca_pml_ob1_recv_request_ack_send(NULL, proc->ompi_proc, hdr_rndv->hdr_src_req.lval, NULL, 0, 0, false);
             OPAL_OUTPUT_VERBOSE((2, ompi_ftmpi_output_handle, "Recvfrag: comm %d is revoked or collectives force errors, sending a NACK to the RDV/RGET match from %d\n", hdr->hdr_ctx, hdr->hdr_src));
         }
         else {

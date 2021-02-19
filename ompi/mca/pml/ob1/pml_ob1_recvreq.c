@@ -285,6 +285,7 @@ int mca_pml_ob1_recv_request_ack_send_btl(
 
 static int mca_pml_ob1_recv_request_ack(
     mca_pml_ob1_recv_request_t* recvreq,
+    mca_btl_base_module_t* btl,
     mca_pml_ob1_rendezvous_hdr_t* hdr,
     size_t bytes_received)
 {
@@ -345,12 +346,12 @@ static int mca_pml_ob1_recv_request_ack(
 
     /* let know to shedule function there is no need to put ACK flag. If not all message went over
      * RDMA then we cancel the GET protocol in order to switch back to send/recv. In this case send
-     * back the remote send request, the peer kept a poointer to the frag locally. In the future we
+     * back the remote send request, the peer kept a pointer to the frag locally. In the future we
      * might want to cancel the fragment itself, in which case we will have to send back the remote
      * fragment instead of the remote request.
      */
     recvreq->req_ack_sent = true;
-    return mca_pml_ob1_recv_request_ack_send(proc, hdr->hdr_src_req.lval,
+    return mca_pml_ob1_recv_request_ack_send(btl, proc, hdr->hdr_src_req.lval,
                                              recvreq, recvreq->req_send_offset, 0,
                                              recvreq->req_send_offset == bytes_received);
 }
@@ -386,7 +387,7 @@ static int mca_pml_ob1_recv_request_get_frag_failed (mca_pml_ob1_rdma_frag_t *fr
     }
 
     /* tell peer to fall back on send for this region */
-    rc = mca_pml_ob1_recv_request_ack_send(proc, frag->rdma_hdr.hdr_rget.hdr_rndv.hdr_src_req.lval,
+    rc = mca_pml_ob1_recv_request_ack_send(NULL, proc, frag->rdma_hdr.hdr_rget.hdr_rndv.hdr_src_req.lval,
                                            recvreq, frag->rdma_offset, frag->rdma_length, false);
     MCA_PML_OB1_RDMA_FRAG_RETURN(frag);
     return rc;
@@ -710,7 +711,7 @@ void mca_pml_ob1_recv_request_progress_rget( mca_pml_ob1_recv_request_t* recvreq
         if (mca_pml_ob1_cuda_need_buffers(recvreq, btl))
 #endif /* OPAL_CUDA_SUPPORT */
         {
-            mca_pml_ob1_recv_request_ack(recvreq, &hdr->hdr_rndv, 0);
+            mca_pml_ob1_recv_request_ack(recvreq, btl, &hdr->hdr_rndv, 0);
             return;
         }
     }
@@ -853,7 +854,7 @@ void mca_pml_ob1_recv_request_progress_rndv( mca_pml_ob1_recv_request_t* recvreq
     recvreq->remote_req_send = hdr->hdr_rndv.hdr_src_req;
     recvreq->req_rdma_offset = bytes_received;
     MCA_PML_OB1_RECV_REQUEST_MATCHED(recvreq, &hdr->hdr_match);
-    mca_pml_ob1_recv_request_ack(recvreq, &hdr->hdr_rndv, bytes_received);
+    mca_pml_ob1_recv_request_ack(recvreq, btl, &hdr->hdr_rndv, bytes_received);
     /**
      * The PUT protocol do not attach any data to the original request.
      * Therefore, we might want to avoid unpacking if there is nothing to
