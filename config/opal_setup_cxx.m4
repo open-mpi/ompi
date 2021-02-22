@@ -18,6 +18,7 @@ dnl Copyright (c) 2015-2016 Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
 dnl Copyright (c) 2020      Triad National Security, LLC. All rights
 dnl                         reserved.
+dnl Copyright (c) 2021      IBM Corporation.  All rights reserved.
 dnl
 dnl $COPYRIGHT$
 dnl
@@ -88,15 +89,15 @@ AC_DEFUN([_OPAL_SETUP_CXX_COMPILER],[
 # VERSION file at the base of our source directory on case-
 # insensitive filesystems.
 AC_DEFUN([OPAL_CHECK_CXX_IQUOTE],[
-    OPAL_VAR_SCOPE_PUSH([opal_check_cxx_iquote_CFLAGS_save])
-    opal_check_cxx_iquote_CFLAGS_save=${CFLAGS}
-    CXXFLAGS="${CFLAGS} -iquote ."
+    OPAL_VAR_SCOPE_PUSH([opal_check_cxx_iquote_CXXFLAGS_save])
+    opal_check_cxx_iquote_CXXFLAGS_save=${CXXFLAGS}
+    CXXFLAGS="${CXXFLAGS} -iquote ."
     AC_MSG_CHECKING([for $CXX option to add a directory only to the search path for the quote form of include])
     AC_LANG_PUSH(C++)
     AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]],[])],
 		      [opal_cxx_iquote="-iquote"],
 		      [opal_cxx_iquote="-I"])
-    CXXFLAGS=${opal_check_cxx_iquote_CFLAGS_save}
+    CXXFLAGS=${opal_check_cxx_iquote_CXXFLAGS_save}
     AC_LANG_POP(C++)
     OPAL_VAR_SCOPE_POP
     AC_MSG_RESULT([$opal_cxx_iquote])
@@ -106,97 +107,58 @@ AC_DEFUN([OPAL_CHECK_CXX_IQUOTE],[
 # ----------------------------------
 # Back end of _OPAL_SETUP_CXX_COMPILER_BACKEND()
 AC_DEFUN([_OPAL_SETUP_CXX_COMPILER_BACKEND],[
+    AC_LANG_PUSH(C++)
+    OPAL_CHECK_CXX_IQUOTE
+
     # Do we want code coverage
     if test "$WANT_COVERAGE" = "1"; then
-        if test "$opal_cxx_vendor" = "gnu" ; then
-            AC_MSG_WARN([$OPAL_COVERAGE_FLAGS has been added to CFLAGS (--enable-coverage)])
-            WANT_DEBUG=1
-            CXXFLAGS="${CXXFLAGS} $OPAL_COVERAGE_FLAGS"
-            OPAL_WRAPPER_FLAGS_ADD([CXXFLAGS], [$OPAL_COVERAGE_FLAGS])
+        # For compilers > gcc-4.x, use --coverage for
+        # compiling and linking to circumvent trouble with
+        # libgcov.
+        OPAL_COVERAGE_FLAGS=
+
+        _OPAL_CHECK_SPECIFIC_CXXFLAGS(--coverage, coverage)
+        if test "$opal_cv_cxx_coverage" = "1" ; then
+            OPAL_COVERAGE_FLAGS="--coverage"
+            CLEANFILES="*.gcno ${CLEANFILES}"
+            CONFIG_CLEAN_FILES="*.gcda *.gcov ${CONFIG_CLEAN_FILES}"
+            AC_MSG_WARN([$OPAL_COVERAGE_FLAGS has been added to CXXFLAGS (--enable-coverage)])
         else
-            AC_MSG_WARN([Code coverage functionality is currently available only with GCC suite])
-            AC_MSG_ERROR([Configure: cannot continue])
+            _OPAL_CHECK_SPECIFIC_CXXFLAGS(-ftest-coverage, ftest_coverage)
+            _OPAL_CHECK_SPECIFIC_CXXFLAGS(-fprofile-arcs, fprofile_arcs)
+            if test "$opal_cv_cxx_ftest_coverage" = "0" || test "opal_cv_cxx_fprofile_arcs" = "0" ; then
+                AC_MSG_WARN([Code coverage functionality is not currently available with $CXX])
+                AC_MSG_ERROR([Configure: Cannot continue])
+            fi
+            CLEANFILES="*.bb *.bbg ${CLEANFILES}"
+            OPAL_COVERAGE_FLAGS="-ftest-coverage -fprofile-arcs"
         fi
-    fi
+        OPAL_FLAGS_UNIQ(CXXFLAGS)
+        WANT_DEBUG=1
+   fi
 
     # Do we want debugging?
     if test "$WANT_DEBUG" = "1" && test "$enable_debug_symbols" != "no" ; then
         CXXFLAGS="$CXXFLAGS -g"
-        OPAL_FLAGS_UNIQ(CXXFLAGS)
         AC_MSG_WARN([-g has been added to CXXFLAGS (--enable-debug)])
+    fi
+
+    if test "$WANT_DEBUG"  = "0" ; then
+        OPAL_ENSURE_CONTAINS_OPTFLAGS(["$CXXFLAGS"])
     fi
 
     # These flags are generally g++-specific; even the g++-impersonating
     # compilers won't accept them.
     OPAL_CXXFLAGS_BEFORE_PICKY="$CXXFLAGS"
-    if test "$WANT_PICKY_COMPILER" = 1 && test "$opal_cxx_vendor" = "gnu"; then
-        add="-Wall -Wundef -Wno-long-long"
-
-        # see if -Wno-long-double works...
-        AC_LANG_PUSH(C++)
-        CXXFLAGS_orig="$CXXFLAGS"
-        CXXFLAGS="$CXXFLAGS $add -Wno-long-double -fstrict-prototype"
-        AC_CACHE_CHECK([if $CXX supports -Wno-long-double],
-            [opal_cv_cxx_wno_long_double],
-            [AC_TRY_COMPILE([], [],
-                [
-                 dnl So -Wno-long-double did not produce any errors...
-                 dnl We will try to extract a warning regarding
-                 dnl unrecognized or ignored options
-                 AC_TRY_COMPILE([], [long double test;],
-                     [
-                      opal_cv_cxx_wno_long_double="yes"
-                      if test -s conftest.err ; then
-                          dnl Yes, it should be "ignor", in order to catch ignoring and ignore
-                          for i in unknown invalid ignor unrecognized 'not supported'; do
-                              $GREP -iq $i conftest.err
-                              if test "$?" = "0" ; then
-                                  opal_cv_cxx_wno_long_double="no"
-                                  break;
-                              fi
-                          done
-                      fi
-                     ],
-                     [opal_cv_cxx_wno_long_double="no"])],
-                [opal_cv_cxx_wno_long_double="no"])
-            ])
-
-        CXXFLAGS="$CXXFLAGS_orig"
-        AC_LANG_POP(C++)
-        if test "$opal_cv_cxx_wno_long_double" = "yes" ; then
-            add="$add -Wno-long-double"
-        fi
-
-        CXXFLAGS="$CXXFLAGS $add"
-        OPAL_FLAGS_UNIQ(CXXFLAGS)
-        if test "$add" != "" ; then
-            AC_MSG_WARN([$add has been added to CXXFLAGS (--enable-picky)])
-        fi
-        unset add
+    if test "$WANT_PICKY_COMPILER" = 1; then
+        _OPAL_CHECK_SPECIFIC_CXXFLAGS(-Wundef, Wundef)
+        _OPAL_CHECK_SPECIFIC_CXXFLAGS(-Wno-long-long, Wno_long_long, int main() { long long x; } )
+        _OPAL_CHECK_SPECIFIC_CXXFLAGS(-Wno-long-double, Wno_long_double, int main () { long double x; })
+        _OPAL_CHECK_SPECIFIC_CXXFLAGS(-fstrict-prototype, fstrict_prototype)
+        _OPAL_CHECK_SPECIFIC_CXXFLAGS(-Wall, Wall)
     fi
 
-    # See if this version of g++ allows -finline-functions
-    if test "$GXX" = "yes"; then
-        CXXFLAGS_orig="$CXXFLAGS"
-        CXXFLAGS="$CXXFLAGS -finline-functions"
-        add=
-        AC_LANG_PUSH(C++)
-        AC_CACHE_CHECK([if $CXX supports -finline-functions],
-                   [opal_cv_cxx_finline_functions],
-                   [AC_TRY_COMPILE([], [],
-                                   [opal_cv_cxx_finline_functions="yes"],
-                                   [opal_cv_cxx_finline_functions="no"])])
-        AC_LANG_POP(C++)
-        if test "$opal_cv_cxx_finline_functions" = "yes" ; then
-            add=" -finline-functions"
-        fi
-        CXXFLAGS="$CXXFLAGS_orig$add"
-        OPAL_FLAGS_UNIQ(CXXFLAGS)
-        if test "$add" != "" ; then
-            AC_MSG_WARN([$add has been added to CXXFLAGS])
-        fi
-        unset add
-    fi
+    _OPAL_CHECK_SPECIFIC_CXXFLAGS(-finline-functions, finline_functions)
 
     # Make sure we can link with the C compiler
     if test "$opal_cv_cxx_compiler_vendor" != "microsoft"; then
@@ -238,17 +200,19 @@ EOF
         fi
     fi
 
-    # config/opal_ensure_contains_optflags.m4
-    OPAL_ENSURE_CONTAINS_OPTFLAGS(["$CXXFLAGS"])
-    AC_MSG_CHECKING([for C++ optimization flags])
-    AC_MSG_RESULT([$co_result])
-    CXXFLAGS="$co_result"
 
     # bool type size and alignment
-    AC_LANG_PUSH(C++)
     AC_CHECK_SIZEOF(bool)
     OPAL_C_GET_ALIGNMENT(bool, OPAL_ALIGNMENT_CXX_BOOL)
-    AC_LANG_POP(C++)
 
-    OPAL_CHECK_CXX_IQUOTE
+    OPAL_ENSURE_CONTAINS_OPTFLAGS("$OPAL_CXXFLAGS_BEFORE_PICKY")
+    OPAL_CXXFLAGS_BEFORE_PICKY="$co_result"
+
+    AC_MSG_CHECKING([for CXX optimization flags])
+    OPAL_ENSURE_CONTAINS_OPTFLAGS(["$CXXFLAGS"])
+    AC_MSG_RESULT([$co_result])
+    CXXFLAGS="$co_result"
+    OPAL_FLAGS_UNIQ([CXXFLAGS])
+    AC_MSG_RESULT(CXXFLAGS result: $CXXFLAGS)
+    AC_LANG_POP(C++)
 ])

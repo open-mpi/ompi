@@ -12,7 +12,7 @@ dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
 dnl Copyright (c) 2014      Intel, Inc. All rights reserved
-dnl Copyright (c) 2017      IBM Corporation.  All rights reserved.
+dnl Copyright (c) 2017-2021 IBM Corporation.  All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -123,7 +123,7 @@ AC_DEFUN([_OPAL_CHECK_COMPILER_VENDOR], [
 
     # IBM XL C/C++
     AS_IF([test "$opal_check_compiler_vendor_result" = "unknown"],
-          [OPAL_IF_IFELSE([defined(__xlC__) || defined(__IBMC__) || defined(__IBMCPP__)],
+          [OPAL_IF_IFELSE([defined(__xlC__) || defined(__IBMC__) || defined(__IBMCPP__) || defined(__ibmxl__)],
                [opal_check_compiler_vendor_result="ibm"
                 xlc_major_version=`$CC -qversion 2>&1 | tail -n 1 | cut -d ' ' -f 2 | cut -d '.' -f 1`
                 xlc_minor_version=`$CC -qversion 2>&1 | tail -n 1 | cut -d ' ' -f 2 | cut -d '.' -f 2`
@@ -132,30 +132,6 @@ AC_DEFUN([_OPAL_CHECK_COMPILER_VENDOR], [
                ],
                [OPAL_IF_IFELSE([defined(_AIX) && !defined(__GNUC__)],
                     [opal_check_compiler_vendor_result="ibm"])])])
-
-    # GNU
-    AS_IF([test "$opal_check_compiler_vendor_result" = "unknown"],
-          [OPAL_IFDEF_IFELSE([__GNUC__],
-               [opal_check_compiler_vendor_result="gnu"
-
-               # We do not support gccfss as a compiler so die if
-               # someone tries to use said compiler.  gccfss (gcc
-               # for SPARC Systems) is a compiler that is no longer
-               # supported by Oracle and it has some major flaws
-               # that prevents it from actually compiling OMPI code.
-               # So if we detect it we automatically bail.
-
-               if ($CC --version | grep gccfss) >/dev/null 2>&1; then
-                   AC_MSG_RESULT([gccfss])
-                   AC_MSG_WARN([Detected gccfss being used to compile Open MPI.])
-                   AC_MSG_WARN([Because of several issues Open MPI does not support])
-                   AC_MSG_WARN([the gccfss compiler.  Please use a different compiler.])
-                   AC_MSG_WARN([If you did not think you used gccfss you may want to])
-                   AC_MSG_WARN([check to see if the compiler you think you used is])
-                   AC_MSG_WARN([actually a link to gccfss.])
-                   AC_MSG_ERROR([Cannot continue])
-               fi])])
-
     # Borland Turbo C
     AS_IF([test "$opal_check_compiler_vendor_result" = "unknown"],
           [OPAL_IFDEF_IFELSE([__TURBOC__],
@@ -278,6 +254,29 @@ AC_DEFUN([_OPAL_CHECK_COMPILER_VENDOR], [
     AS_IF([test "$opal_check_compiler_vendor_result" = "unknown"],
           [OPAL_IFDEF_IFELSE([__WATCOMC__],
                [opal_check_compiler_vendor_result="watcom"])])
+
+    # GNU
+    AS_IF([test "$opal_check_compiler_vendor_result" = "unknown"],
+          [OPAL_IFDEF_IFELSE([__GNUC__],
+               [opal_check_compiler_vendor_result="gnu"
+
+               # We do not support gccfss as a compiler so die if
+               # someone tries to use said compiler.  gccfss (gcc
+               # for SPARC Systems) is a compiler that is no longer
+               # supported by Oracle and it has some major flaws
+               # that prevents it from actually compiling OMPI code.
+               # So if we detect it we automatically bail.
+
+               if ($CC --version | grep gccfss) >/dev/null 2>&1; then
+                   AC_MSG_RESULT([gccfss])
+                   AC_MSG_WARN([Detected gccfss being used to compile Open MPI.])
+                   AC_MSG_WARN([Because of several issues Open MPI does not support])
+                   AC_MSG_WARN([the gccfss compiler.  Please use a different compiler.])
+                   AC_MSG_WARN([If you did not think you used gccfss you may want to])
+                   AC_MSG_WARN([check to see if the compiler you think you used is])
+                   AC_MSG_WARN([actually a link to gccfss.])
+                   AC_MSG_ERROR([Cannot continue])
+               fi])])
 
     $1="$opal_check_compiler_vendor_result"
     unset opal_check_compiler_vendor_result
