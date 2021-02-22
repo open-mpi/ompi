@@ -19,6 +19,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2020      Intel, Inc.  All rights reserved.
  * Copyright (c) 2020-2021 Google, LLC. All rights reserved.
+ * Copyright (c) 2021      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -345,9 +346,10 @@ enum {
 
 enum {
     /** Use 32-bit atomics */
-    MCA_BTL_ATOMIC_FLAG_32BIT = 0x00000001,
+    MCA_BTL_ATOMIC_FLAG_32BIT             = 0x00000001,
     /** Use floating-point atomics */
-    MCA_BTL_ATOMIC_FLAG_FLOAT = 0x00000002,
+    MCA_BTL_ATOMIC_FLAG_FLOAT             = 0x00000002,
+    MCA_BTL_ATOMIC_FLAG_USE_LOCK_FALLBACK = 0x00000004,
 };
 
 enum mca_btl_base_atomic_op_t {

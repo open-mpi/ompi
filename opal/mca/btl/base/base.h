@@ -12,6 +12,7 @@
  * Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2020      Google, LLC. All rights reserved.
+ * Copyright (c) 2021      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -71,6 +72,8 @@ OPAL_DECLSPEC  int mca_btl_base_param_verify(mca_btl_base_module_t *module);
 /*
  * Globals
  */
+
+extern opal_mutex_t  mca_btl_atomic_fallback_lock;
 extern char* mca_btl_base_include;
 extern char* mca_btl_base_exclude;
 extern int mca_btl_base_warn_component_unused;

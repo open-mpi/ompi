@@ -8,6 +8,7 @@
  * Copyright (c) 2019      Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2019-2021 Google, LLC. All rights reserved.
+ * Copyright (c) 2021      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -133,6 +134,28 @@ static int ompi_osc_rdma_op_mapping[OMPI_OP_NUM_OF_TYPES + 1] = {
     [OMPI_OP_REPLACE] = MCA_BTL_ATOMIC_SWAP,
 };
 
+/* set the appropriate flags for this atomic */
+static inline int ompi_osc_rdma_set_btl_flags(ompi_osc_rdma_module_t *module, ompi_datatype_t *dt, ptrdiff_t extent) {
+
+    int flags = 0;
+
+    if(4 == extent) {
+        flags = MCA_BTL_ATOMIC_FLAG_32BIT;
+
+    }
+
+    if(OPAL_UNLIKELY((true == module->acc_use_lock_fallback) || (module->disp_unit % extent))) {
+        flags |= MCA_BTL_ATOMIC_FLAG_USE_LOCK_FALLBACK;
+        module->acc_use_lock_fallback = true;
+    }
+
+    if (OMPI_DATATYPE_FLAG_DATA_FLOAT & dt->super.flags) {
+        flags |= MCA_BTL_ATOMIC_FLAG_FLOAT;
+    }
+
+    return flags;
+}
+
 static int ompi_osc_rdma_fetch_and_op_atomic (ompi_osc_rdma_sync_t *sync, const void *origin_addr, void *result_addr, ompi_datatype_t *dt,
                                               ptrdiff_t extent, ompi_osc_rdma_peer_t *peer, uint64_t target_address,
                                               mca_btl_base_registration_handle_t *target_handle, ompi_op_t *op, ompi_osc_rdma_request_t *req)
@@ -151,10 +174,7 @@ static int ompi_osc_rdma_fetch_and_op_atomic (ompi_osc_rdma_sync_t *sync, const 
 
     btl_op = ompi_osc_rdma_op_mapping[op->op_type];
 
-    flags = (4 == extent) ? MCA_BTL_ATOMIC_FLAG_32BIT : 0;
-    if (OMPI_DATATYPE_FLAG_DATA_FLOAT & dt->super.flags) {
-        flags |= MCA_BTL_ATOMIC_FLAG_FLOAT;
-    }
+    flags = ompi_osc_rdma_set_btl_flags(module, dt, extent);
 
     OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "initiating fetch-and-op using %d-bit btl atomics. origin: 0x%" PRIx64,
                      (4 == extent) ? 32 : 64, *((int64_t *) origin_addr));
@@ -239,10 +259,7 @@ static int ompi_osc_rdma_acc_single_atomic (ompi_osc_rdma_sync_t *sync, const vo
     origin = (8 == extent) ? ((uint64_t *) origin_addr)[0] : ((uint32_t *) origin_addr)[0];
 
     /* set the appropriate flags for this atomic */
-    flags = (4 == extent) ? MCA_BTL_ATOMIC_FLAG_32BIT : 0;
-    if (OMPI_DATATYPE_FLAG_DATA_FLOAT & dt->super.flags) {
-        flags |= MCA_BTL_ATOMIC_FLAG_FLOAT;
-    }
+    flags = ompi_osc_rdma_set_btl_flags(module, dt, extent);
 
     btl_op = ompi_osc_rdma_op_mapping[op->op_type];
 
@@ -659,7 +676,8 @@ static inline int ompi_osc_rdma_cas_atomic (ompi_osc_rdma_sync_t *sync, const vo
 
     compare = (8 == size) ? ((int64_t *) compare_addr)[0] : ((int32_t *) compare_addr)[0];
     source = (8 == size) ? ((int64_t *) source_addr)[0] : ((int32_t *) source_addr)[0];
-    flags = (4 == size) ? MCA_BTL_ATOMIC_FLAG_32BIT : 0;
+
+    flags = ompi_osc_rdma_set_btl_flags(module, datatype, size);
 
     OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "initiating compare-and-swap using %d-bit btl atomics. compare: 0x%"
                      PRIx64 ", origin: 0x%" PRIx64, (int) size * 8, *((int64_t *) compare_addr), *((int64_t *) source_addr));

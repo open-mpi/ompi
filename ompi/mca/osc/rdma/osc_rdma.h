@@ -16,6 +16,7 @@
  * Copyright (c) 2019      Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2020-2021 Google, LLC. All rights reserved.
+ * Copyright (c) 2021      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -157,6 +158,8 @@ struct ompi_osc_rdma_module_t {
     bool acc_single_intrinsic;
 
     bool acc_use_amo;
+
+    bool acc_use_lock_fallback;
 
     /** whether the group is located on a single node */
     bool single_node;

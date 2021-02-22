@@ -16,7 +16,7 @@
  * Copyright (c) 2012-2015 Sandia National Laboratories.  All rights reserved.
  * Copyright (c) 2015      NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2015-2017 Intel, Inc. All rights reserved.
- * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
+ * Copyright (c) 2016-2021 IBM Corporation. All rights reserved.
  * Copyright (c) 2018      Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * Copyright (c) 2019      Research Organization for Information Science
@@ -1333,6 +1333,7 @@ static int ompi_osc_rdma_component_select (struct ompi_win_t *win, void **base, 
     module->locking_mode   = mca_osc_rdma_component.locking_mode;
     module->acc_single_intrinsic = check_config_value_bool ("acc_single_intrinsic", info);
     module->acc_use_amo = mca_osc_rdma_component.acc_use_amo;
+    module->acc_use_lock_fallback = false;
     module->network_amo_max_count = mca_osc_rdma_component.network_amo_max_count;
 
     module->all_sync.module = module;

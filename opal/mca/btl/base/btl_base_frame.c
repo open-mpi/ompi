@@ -17,6 +17,7 @@
  * Copyright (c) 2016-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2020      Google, LLC. All rights reserved.
+ * Copyright (c) 2021      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -121,6 +122,7 @@ char* mca_btl_base_exclude = NULL;
 int mca_btl_base_warn_component_unused = 1;
 int mca_btl_base_warn_peer_error = true;
 opal_list_t mca_btl_base_modules_initialized = {{0}};
+opal_mutex_t mca_btl_atomic_fallback_lock;
 bool mca_btl_base_thread_multiple_override = false;
 
 static int mca_btl_base_register(mca_base_register_flag_t flags)
@@ -216,6 +218,8 @@ static int mca_btl_base_open(mca_base_open_flag_t flags)
   /* get the verbosity so that BTL_VERBOSE will work */
   mca_btl_base_verbose = opal_output_get_verbosity(opal_btl_base_framework.framework_output);
 
+  OBJ_CONSTRUCT(&mca_btl_atomic_fallback_lock, opal_list_t);
+
   /* All done */
   return OPAL_SUCCESS;
 }
@@ -243,6 +247,7 @@ static int mca_btl_base_close(void)
     (void) mca_base_framework_components_close(&opal_btl_base_framework, NULL);
 
     OBJ_DESTRUCT(&mca_btl_base_modules_initialized);
+    OBJ_DESTRUCT(&mca_btl_atomic_fallback_lock);
 
 #if 0
     /* restore event processing */

@@ -3,6 +3,7 @@
  * Copyright (c) 2011-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2020-2021 Google, LLC. All rights reserved.
+ * Copyright (c) 2021      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -150,7 +151,10 @@ struct mca_btl_base_rdma_hdr_t {
             /** operation size (bytes) */
             uint8_t size;
 
-            uint8_t padding[2];
+            /** mis-aligned atomics case, fallback to a lock */
+            uint8_t use_lock;
+
+            uint8_t padding[1];
 
             /** atomic operands */
             int64_t operand[2];
@@ -506,6 +510,7 @@ mca_btl_base_rdma_start (mca_btl_base_module_t *btl, struct mca_btl_base_endpoin
         hdr->data.rdma.use_rdma = use_rdma;
     } else {
         hdr->data.atomic.op         = op;
+        hdr->data.atomic.use_lock   = (flags & MCA_BTL_ATOMIC_FLAG_USE_LOCK_FALLBACK);
         hdr->data.atomic.operand[0] = operand1;
         hdr->data.atomic.operand[1] = operand2;
     }
@@ -794,6 +799,53 @@ static int mca_btl_base_am_rdma_progress (void)
     }));
 }
 
+static int mca_btl_base_am_atomic_lock_64 (int64_t *operand, opal_atomic_int64_t *addr,
+                                           mca_btl_base_atomic_op_t op) {
+
+    int64_t result = 0;
+
+    OPAL_THREAD_LOCK(&mca_btl_atomic_fallback_lock);
+    result = *addr;
+
+    switch (op) {
+    case MCA_BTL_ATOMIC_ADD:
+        *addr += *operand;
+        break;
+    case MCA_BTL_ATOMIC_AND:
+        *addr &= *operand;
+        break;
+    case MCA_BTL_ATOMIC_OR:
+        *addr |= *operand;
+        break;
+    case MCA_BTL_ATOMIC_XOR:
+        *addr ^= *operand;
+        break;
+    case MCA_BTL_ATOMIC_SWAP:
+        *addr  = *operand;
+        break;
+    case MCA_BTL_ATOMIC_MIN:
+        if(result > *operand) {
+            *addr = *operand;
+        }
+        break;
+    case MCA_BTL_ATOMIC_MAX:
+        if(result < *operand) {
+            *addr = *operand;
+        }
+        break;
+    default: {
+        OPAL_THREAD_UNLOCK(&mca_btl_atomic_fallback_lock);
+        return OPAL_ERR_BAD_PARAM;
+    } // End default
+    } // End switch
+
+    *operand = result;
+    OPAL_THREAD_UNLOCK(&mca_btl_atomic_fallback_lock);
+
+    return OPAL_SUCCESS;
+
+}
+
 static int mca_btl_base_am_atomic_64 (int64_t *operand, opal_atomic_int64_t *addr,
                                       mca_btl_base_atomic_op_t op)
 {
@@ -829,8 +881,53 @@ static int mca_btl_base_am_atomic_64 (int64_t *operand, opal_atomic_int64_t *add
     return OPAL_SUCCESS;
 }
 
-static int mca_btl_base_am_atomic_32 (int32_t *operand, opal_atomic_int32_t *addr,
-                                      mca_btl_base_atomic_op_t op)
+static int mca_btl_base_am_atomic_lock_32 (int32_t *operand, opal_atomic_int32_t *addr,
+                                           mca_btl_base_atomic_op_t op) {
+
+    int32_t result = 0;
+
+    OPAL_THREAD_LOCK(&mca_btl_atomic_fallback_lock);
+    result = *addr;
+
+    switch (op) {
+    case MCA_BTL_ATOMIC_ADD:
+        *addr += *operand;
+        break;
+    case MCA_BTL_ATOMIC_AND:
+        *addr &= *operand;
+        break;
+    case MCA_BTL_ATOMIC_OR:
+        *addr |= *operand;
+        break;
+    case MCA_BTL_ATOMIC_XOR:
+        *addr ^= *operand;
+        break;
+    case MCA_BTL_ATOMIC_SWAP:
+        *addr  = *operand;
+        break;
+    case MCA_BTL_ATOMIC_MIN:
+        if(result > *operand) {
+            *addr = *operand;
+        }
+        break;
+    case MCA_BTL_ATOMIC_MAX:
+        if(result < *operand) {
+            *addr = *operand;
+        }
+        break;
+    default: {
+        OPAL_THREAD_UNLOCK(&mca_btl_atomic_fallback_lock);
+        return OPAL_ERR_BAD_PARAM;
+    } // End default
+    } // End switch
+
+    *operand = result;
+    OPAL_THREAD_UNLOCK(&mca_btl_atomic_fallback_lock);
+    return OPAL_SUCCESS;
+
+}
+
+static int mca_btl_base_am_atomic_32 (int32_t *operand, opal_atomic_int32_t *addr, mca_btl_base_atomic_op_t op)
 {
     int32_t result = 0;
 
@@ -969,14 +1066,27 @@ static void mca_btl_base_am_process_atomic (mca_btl_base_module_t *btl,
     case MCA_BTL_BASE_AM_ATOMIC:
         if (4 == hdr->data.atomic.size) {
             uint32_t tmp = (uint32_t)atomic_response;
-            mca_btl_base_am_atomic_32 (&tmp, (opal_atomic_int32_t *)(uintptr_t)hdr->target_address,
-                                       hdr->data.atomic.op);
+            if(OPAL_LIKELY(0 == hdr->data.atomic.use_lock)) {
+                mca_btl_base_am_atomic_32 (&tmp, (opal_atomic_int32_t *)(uintptr_t)hdr->target_address,
+                                           hdr->data.atomic.op);
+            }
+            else {
+                mca_btl_base_am_atomic_lock_32 (&tmp, (opal_atomic_int32_t *)(uintptr_t)hdr->target_address,
+                                           hdr->data.atomic.op);
+            }
             atomic_response = tmp;
         }
         if (8 == hdr->data.atomic.size) {
-            mca_btl_base_am_atomic_64 ((int64_t *)hdr->target_address,
-                                       (opal_atomic_int64_t *)(uintptr_t)hdr->target_address,
-                                       hdr->data.atomic.op);
+            if(OPAL_LIKELY(0 == hdr->data.atomic.use_lock)) {
+                mca_btl_base_am_atomic_64 ((int64_t *)hdr->target_address,
+                                           (opal_atomic_int64_t *)(uintptr_t)hdr->target_address,
+                                           hdr->data.atomic.op);
+            }
+            else {
+                mca_btl_base_am_atomic_lock_64 ((int64_t *)hdr->target_address,
+                                           (opal_atomic_int64_t *)(uintptr_t)hdr->target_address,
+                                           hdr->data.atomic.op);
+            }
         }
         break;
     case MCA_BTL_BASE_AM_CAS:
