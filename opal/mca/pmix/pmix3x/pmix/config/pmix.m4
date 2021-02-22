@@ -23,6 +23,7 @@ dnl                         and Technology (RIST).  All rights reserved.
 dnl Copyright (c) 2016      Mellanox Technologies, Inc.
 dnl                         All rights reserved.
 dnl
+dnl Copyright (c) 2021      Nanook Consulting.  All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -1018,15 +1019,11 @@ else
     AC_MSG_RESULT([no])
     WANT_DEBUG=0
 fi
-#################### Early development override ####################
-if test "$WANT_DEBUG" = "0" && test -z "$enable_debug" && test "$PMIX_DEVEL" = "1"; then
-    WANT_DEBUG=1
-    echo "--> developer override: enable debugging code by default"
-fi
-#################### Early development override ####################
+
 if test "$WANT_DEBUG" = "0"; then
     CFLAGS="-DNDEBUG $CFLAGS"
 fi
+
 AC_DEFINE_UNQUOTED(PMIX_ENABLE_DEBUG, $WANT_DEBUG,
                    [Whether we want developer-level debugging code or not])
 

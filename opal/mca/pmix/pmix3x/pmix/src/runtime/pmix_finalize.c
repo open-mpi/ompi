@@ -15,6 +15,8 @@
  * Copyright (c) 2013-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2016-2019 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
+ * Copyright (c) 2021      Triad National Security, LLC. All rights reserved.
+ * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -134,6 +136,7 @@ void pmix_rte_finalize(void)
     PMIX_LIST_DESTRUCT(&pmix_globals.stdin_targets);
     if (NULL != pmix_globals.hostname) {
         free(pmix_globals.hostname);
+        pmix_globals.hostname = NULL;
     }
     PMIX_LIST_DESTRUCT(&pmix_globals.nspaces);
 
