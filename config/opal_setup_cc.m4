@@ -47,9 +47,45 @@ AC_DEFUN([OPAL_PROG_CC_C11_HELPER],[
 
     opal_prog_cc_c11_helper_CFLAGS_save=$CFLAGS
     CFLAGS="$CFLAGS $1"
+    OPAL_C_COMPILER_VENDOR([opal_c_vendor])
 
     OPAL_CC_HELPER([if $CC $1 supports C11 _Thread_local], [opal_prog_cc_c11_helper__Thread_local_available],
                    [],[[static _Thread_local int  foo = 1;++foo;]])
+
+
+    OPAL_CC_HELPER([if $CC $1 has stdatomic.h], [opal_prog_cc_c11_helper_atomic_has_stdatomic_h],
+                   [[#include <stdatomic.h>]], [])
+    if test $opal_prog_cc_c11_helper_atomic_has_stdatomic_h -eq 0; then
+        if test "$opal_cv_c_compiler_vendor" = "ibm"; then
+            AC_REQUIRE([AC_PROG_GREP])
+            tmp=`which gcc`
+            if test $? -eq 0; then
+                stdatomic_include_path=""
+                AC_MSG_CHECKING([if gcc has stdatomic.h])
+                AC_LANG_CONFTEST([AC_LANG_SOURCE([
+                                                  #include<stdatomic.h>
+                                                  int main() { }
+                                                 ]
+                                                )])
+                stdatomic_include_path=`gcc -M conftest.c | $GREP stdatomic.h`
+                if test -z "$stdatomic_include_path"; then
+                    AC_MSG_WARN([stdatomic.h cannot be found. Fallback to C99 atomics.])
+                else
+                    stdatomic_include_path="${stdatomic_include_path#"${stdatomic_include_path%%[![:space:]]*}"}"
+                    stdatomic_include_path=${stdatomic_include_path%stdatomic.h}
+                    CFLAGS="$CFLAGS -I$stdatomic_include_path"
+                    opal_prog_cc_c11_helper_CFLAGS_save="$opal_prog_cc_c11_helper_CFLAGS -I$stdatomic_include_path"
+                    opal_prog_cc_c11_helper_atomic_has_stdatomic_h=1
+                    AC_MSG_RESULT([stdatomic.h is available])
+                    AC_MSG_RESULT([Adding $stdatomic_include_path to include path. Using C11 atomics.])
+                fi
+            else
+                AC_MSG_WARN([No gcc found. Not checking for stdatomic.h include. Fallback to C99 atomics.])
+            fi
+        else
+            AC_MSG_WARN([Not checking for gcc stdatomic.h include. Fallback to C99 atomics.])
+        fi
+    fi
 
     OPAL_CC_HELPER([if $CC $1 supports C11 atomic variables], [opal_prog_cc_c11_helper_atomic_var_available],
                    [[#include <stdatomic.h>]], [[static atomic_long foo = 1;++foo;]])
@@ -65,9 +101,9 @@ AC_DEFUN([OPAL_PROG_CC_C11_HELPER],[
 
     OPAL_CC_HELPER([if $CC $1 supports C11 atomic_fetch_xor_explicit], [opal_prog_cc_c11_helper_atomic_fetch_xor_explicit_available],
                    [[#include <stdatomic.h>
-#include <stdint.h>]],[[_Atomic uint32_t a; uint32_t b; atomic_fetch_xor_explicit(&a, b, memory_order_relaxed);]])
+                     #include <stdint.h>]],[[_Atomic uint32_t a; uint32_t b; atomic_fetch_xor_explicit(&a, b, memory_order_relaxed);]])
 
-    AS_IF([test $opal_prog_cc_c11_helper__Thread_local_available -eq 1 && test $opal_prog_cc_c11_helper_atomic_var_available -eq 1 && test $opal_prog_cc_c11_helper_atomic_fetch_xor_explicit_available -eq 1],
+    AS_IF([test $opal_prog_cc_c11_helper__Thread_local_available -eq 1 && test $opal_prog_cc_c11_helper_atomic_var_available -eq 1],
           [$2],
           [$3])
 
@@ -166,7 +202,7 @@ AC_DEFUN([OPAL_SETUP_CC],[
     if test $opal_cv_c11_supported = no ; then
         # It is not currently an error if C11 support is not available. Uncomment the
         # following lines and update the warning when we require a C11 compiler.
-        # AC_MSG_WARNING([Open MPI requires a C11 (or newer) compiler])
+        # AC_MSG_WARN([Open MPI requires a C11 (or newer) compiler])
         # AC_MSG_ERROR([Aborting.])
         # From Open MPI 1.7 on we require a C99 compiant compiler
         AC_PROG_CC_C99
@@ -287,16 +323,20 @@ AC_DEFUN([OPAL_SETUP_CC],[
     OPAL_CFLAGS_BEFORE_PICKY="$CFLAGS"
 
     if test $WANT_PICKY_COMPILER -eq 1; then
-        _OPAL_CHECK_SPECIFIC_CFLAGS(-Wundef, Wundef)
+        if test "$opal_cv_c_compiler_vendor" != "portland group"; then
+            _OPAL_CHECK_SPECIFIC_CFLAGS(-Wundef, Wundef)
+            _OPAL_CHECK_SPECIFIC_CFLAGS(-Wmissing-prototypes, Wmissing_prototypes)
+            _OPAL_CHECK_SPECIFIC_CFLAGS(-Wstrict-prototypes, Wstrict_prototypes)
+        fi
         _OPAL_CHECK_SPECIFIC_CFLAGS(-Wno-long-long, Wno_long_long, int main() { long long x; })
         _OPAL_CHECK_SPECIFIC_CFLAGS(-Wsign-compare, Wsign_compare)
-        _OPAL_CHECK_SPECIFIC_CFLAGS(-Wmissing-prototypes, Wmissing_prototypes)
-        _OPAL_CHECK_SPECIFIC_CFLAGS(-Wstrict-prototypes, Wstrict_prototypes)
         _OPAL_CHECK_SPECIFIC_CFLAGS(-Wcomment, Wcomment)
         _OPAL_CHECK_SPECIFIC_CFLAGS(-Werror-implicit-function-declaration, Werror_implicit_function_declaration)
         _OPAL_CHECK_SPECIFIC_CFLAGS(-Wno-long-double, Wno_long_double, int main() { long double x; })
         _OPAL_CHECK_SPECIFIC_CFLAGS(-fno-strict-aliasing, fno_strict_aliasing, int main() { long double x; })
-        _OPAL_CHECK_SPECIFIC_CFLAGS(-pedantic, pedantic)
+        if test "$opal_cv_c_compiler_vendor" != "ibm" && test "$opal_cv_c_compiler_vendor" != "portland group"; then
+            _OPAL_CHECK_SPECIFIC_CFLAGS(-pedantic, pedantic)
+        fi
         _OPAL_CHECK_SPECIFIC_CFLAGS(-Wall, Wall)
     fi
 

@@ -39,6 +39,21 @@ typedef volatile uintptr_t opal_atomic_uintptr_t;
 #endif
 #endif
 
+#if defined(__ibmxl__)
+typedef int opal_atomic_int_t;
+typedef long opal_atomic_long_t;
+
+typedef int32_t opal_atomic_int32_t;
+typedef uint32_t opal_atomic_uint32_t;
+typedef int64_t opal_atomic_int64_t;
+typedef uint64_t opal_atomic_uint64_t;
+
+typedef size_t opal_atomic_size_t;
+typedef ssize_t opal_atomic_ssize_t;
+typedef intptr_t opal_atomic_intptr_t;
+typedef uintptr_t opal_atomic_uintptr_t;
+
+#else
 typedef atomic_int opal_atomic_int_t;
 typedef atomic_long opal_atomic_long_t;
 
@@ -51,6 +66,7 @@ typedef _Atomic size_t opal_atomic_size_t;
 typedef _Atomic ssize_t opal_atomic_ssize_t;
 typedef _Atomic intptr_t opal_atomic_intptr_t;
 typedef _Atomic uintptr_t opal_atomic_uintptr_t;
+#endif
 
 #endif /* OPAL_HAVE_C__ATOMIC */
 

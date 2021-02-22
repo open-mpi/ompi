@@ -97,6 +97,7 @@ BEGIN_C_DECLS
  * to use an int or unsigned char as the lock value - the user is not
  * informed either way.
  */
+#ifndef OPAL_USE_ATOMIC_FLAG_OPAL_LOCK
 struct opal_atomic_lock_t {
     union {
         opal_atomic_int32_t lock;     /**< The lock address (an integer) */
@@ -105,7 +106,7 @@ struct opal_atomic_lock_t {
     } u;
 };
 typedef struct opal_atomic_lock_t opal_atomic_lock_t;
-
+#endif
 /**********************************************************************
  *
  * Set or unset these macros in the architecture-specific atomic.h
@@ -164,7 +165,7 @@ enum {
  *********************************************************************/
 #if defined(DOXYGEN)
 /* don't include system-level gorp when generating doxygen files */
-#elif OPAL_ASSEMBLY_BUILTIN == OPAL_BUILTIN_GCC
+#elif OPAL_ASSEMBLY_BUILTIN == OPAL_BUILTIN_GCC || OPAL_ASSEMBLY_ARCH == OPAL_POWERPC32 || OPAL_ASSEMBLY_ARCH == OPAL_POWERPC64
 #include "opal/sys/gcc_builtin/atomic.h"
 #elif OPAL_ASSEMBLY_ARCH == OPAL_X86_64
 #include "opal/sys/x86_64/atomic.h"
@@ -174,10 +175,6 @@ enum {
 #include "opal/sys/arm64/atomic.h"
 #elif OPAL_ASSEMBLY_ARCH == OPAL_IA32
 #include "opal/sys/ia32/atomic.h"
-#elif OPAL_ASSEMBLY_ARCH == OPAL_POWERPC32
-#include "opal/sys/powerpc/atomic.h"
-#elif OPAL_ASSEMBLY_ARCH == OPAL_POWERPC64
-#include "opal/sys/powerpc/atomic.h"
 #endif
 
 #ifndef DOXYGEN

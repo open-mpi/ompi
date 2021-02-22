@@ -180,7 +180,7 @@
 #    else
 #        define PLATFORM_COMPILER_XLC_C  1
 #    endif
-#    define PLATFORM_COMPILER_VERSION __xlC__
+#    define PLATFORM_COMPILER_VERSION __ibmxl_version__
 #    define PLATFORM_COMPILER_VERSION_INT(maj,min,pat) \
          ( ((maj) << 8) | ((min) << 4) | (pat) )
 

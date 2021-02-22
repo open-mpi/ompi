@@ -240,6 +240,20 @@ static void ompi_osc_rdma_check_posts (ompi_osc_rdma_module_t *module)
     }
 }
 
+#if defined(__ibmxl__)
+// Work around an xl optimization bug that would cause the compiler to segv.
+//
+// xl doesn't like something about caching and checking the return value of
+// ompi_osc_rdma_lock_compare_exchange() below when the opt-level is high.
+// For now work around this bug by lowering the optimization on this function
+// with xl compilers.
+//
+// Found on:
+// $. xlc --version
+//   IBM XL C/C++ for Linux, V16.1.1 (5725-C73, 5765-J13)
+//   Version: 16.01.0001.0008
+#pragma option_override(ompi_osc_rdma_post_peer, "opt(level,0)")
+#endif
 static int ompi_osc_rdma_post_peer (ompi_osc_rdma_module_t *module, ompi_osc_rdma_peer_t *peer)
 {
     uint64_t target = (uint64_t) (intptr_t) peer->state + offsetof (ompi_osc_rdma_state_t, post_index);

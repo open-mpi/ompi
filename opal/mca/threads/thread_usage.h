@@ -119,13 +119,33 @@ static inline type opal_thread_fetch_ ## name ## _ ## suffix                \
     return old;                                                             \
 }
 
+#if defined(__PGI) || defined(__ibmxl__)
 #define OPAL_THREAD_DEFINE_ATOMIC_COMPARE_EXCHANGE(type, addr_type, suffix) \
 static inline bool opal_thread_compare_exchange_strong_ ## suffix           \
         (opal_atomic_ ## addr_type *addr, type *compare, type value)        \
 {                                                                           \
     if (OPAL_UNLIKELY(opal_using_threads())) {                              \
         return opal_atomic_compare_exchange_strong_ ## suffix               \
-                (addr, (addr_type *)compare, (addr_type)value);             \
+                ((addr_type*)addr, (addr_type *)compare, (addr_type)value);             \
+    }                                                                       \
+                                                                            \
+    if ((type) *addr == *compare) {                                         \
+        ((type *)addr)[0] = value;                                          \
+        return true;                                                        \
+    }                                                                       \
+                                                                            \
+    *compare = ((type *)addr)[0];                                           \
+                                                                            \
+    return false;                                                           \
+} 
+#else
+#define OPAL_THREAD_DEFINE_ATOMIC_COMPARE_EXCHANGE(type, addr_type, suffix) \
+static inline bool opal_thread_compare_exchange_strong_ ## suffix           \
+        (opal_atomic_ ## addr_type *addr, type *compare, type value)        \
+{                                                                           \
+    if (OPAL_UNLIKELY(opal_using_threads())) {                              \
+        return opal_atomic_compare_exchange_strong_ ## suffix               \
+                ( addr, (addr_type *)compare, (addr_type)value);             \
     }                                                                       \
                                                                             \
     if ((type) *addr == *compare) {                                         \
@@ -137,7 +157,24 @@ static inline bool opal_thread_compare_exchange_strong_ ## suffix           \
                                                                             \
     return false;                                                           \
 }
+#endif
 
+#if defined(__PGI) || defined(__ibmxl__)
+#define OPAL_THREAD_DEFINE_ATOMIC_SWAP(type, addr_type, suffix)             \
+static inline type opal_thread_swap_ ## suffix                              \
+        (opal_atomic_ ## addr_type *ptr, type newvalue)                     \
+{                                                                           \
+    if (opal_using_threads ()) {                                            \
+        return (type) opal_atomic_swap_ ## suffix                           \
+                ((type *) ptr, (addr_type) newvalue);                       \
+    }                                                                       \
+                                                                            \
+    type old = ((type *)ptr)[0];                                            \
+    ((type *)ptr)[0] = newvalue;                                            \
+                                                                            \
+    return old;                                                             \
+}
+#else
 #define OPAL_THREAD_DEFINE_ATOMIC_SWAP(type, addr_type, suffix)             \
 static inline type opal_thread_swap_ ## suffix                              \
         (opal_atomic_ ## addr_type *ptr, type newvalue)                     \
@@ -152,6 +189,7 @@ static inline type opal_thread_swap_ ## suffix                              \
                                                                             \
     return old;                                                             \
 }
+#endif
 
 OPAL_THREAD_DEFINE_ATOMIC_OP(int32_t, add, +, 32)
 OPAL_THREAD_DEFINE_ATOMIC_OP(size_t, add, +, size_t)

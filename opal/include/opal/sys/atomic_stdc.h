@@ -97,10 +97,28 @@ static inline void opal_atomic_rmb (void)
 #define opal_atomic_compare_exchange_strong_acq(addr, oldval, newval)  atomic_compare_exchange_strong_explicit (addr, oldval, newval, memory_order_acquire, memory_order_relaxed)
 #define opal_atomic_compare_exchange_strong_rel(addr, oldval, newval)  atomic_compare_exchange_strong_explicit (addr, oldval, newval, memory_order_release, memory_order_relaxed)
 
+#if defined(__PGI) || defined(__ibmxl__)
+#define opal_atomic_swap_32(addr, value) atomic_exchange_explicit (addr, value, memory_order_relaxed)
+#define opal_atomic_swap_64(addr, value) atomic_exchange_explicit (addr, value, memory_order_relaxed)
+#define opal_atomic_swap_ptr(addr, value) atomic_exchange_explicit (addr, value, memory_order_relaxed)
+#else
 #define opal_atomic_swap_32(addr, value) atomic_exchange_explicit ((_Atomic unsigned int *)addr, value, memory_order_relaxed)
 #define opal_atomic_swap_64(addr, value) atomic_exchange_explicit ((_Atomic unsigned long *)addr, value, memory_order_relaxed)
 #define opal_atomic_swap_ptr(addr, value) atomic_exchange_explicit ((_Atomic unsigned long *)addr, value, memory_order_relaxed)
+#endif
 
+#if defined(__PGI) || defined(__ibmxl__)
+#define OPAL_ATOMIC_STDC_DEFINE_FETCH_OP(op, bits, type, operator)      \
+    static inline type opal_atomic_fetch_ ## op ##_## bits (opal_atomic_ ## type *addr, type value) \
+    {                                                                   \
+        return atomic_fetch_ ## op ## _explicit ((type *)addr, value, memory_order_relaxed); \
+    }                                                                   \
+                                                                        \
+    static inline type opal_atomic_## op ## _fetch_ ## bits (opal_atomic_ ## type *addr, type value) \
+    {                                                                   \
+        return atomic_fetch_ ## op ## _explicit ((type *)addr, value, memory_order_relaxed) operator value; \
+    }
+#else
 #define OPAL_ATOMIC_STDC_DEFINE_FETCH_OP(op, bits, type, operator)      \
     static inline type opal_atomic_fetch_ ## op ##_## bits (opal_atomic_ ## type *addr, type value) \
     {                                                                   \
@@ -111,6 +129,7 @@ static inline void opal_atomic_rmb (void)
     {                                                                   \
         return atomic_fetch_ ## op ## _explicit (addr, value, memory_order_relaxed) operator value; \
     }
+#endif
 
 OPAL_ATOMIC_STDC_DEFINE_FETCH_OP(add, 32, int32_t, +)
 OPAL_ATOMIC_STDC_DEFINE_FETCH_OP(add, 64, int64_t, +)
@@ -206,22 +225,39 @@ static inline int64_t opal_atomic_max_fetch_64 (opal_atomic_int64_t *addr, int64
 #define OPAL_ATOMIC_LOCK_UNLOCKED false
 #define OPAL_ATOMIC_LOCK_LOCKED true
 
-#define OPAL_ATOMIC_LOCK_INIT ATOMIC_FLAG_INIT
+#define OPAL_USE_C11_ATOMIC_LOCK 1
 
+#define OPAL_USE_ATOMIC_FLAG_OPAL_LOCK 1
+#if defined(__ibmxl__) || defined(__PGI)
+#define OPAL_ATOMIC_LOCK_INIT 0
+typedef _Atomic bool opal_atomic_lock_t;
+#else
+#define OPAL_ATOMIC_LOCK_INIT ATOMIC_FLAG_INIT
 typedef atomic_flag opal_atomic_lock_t;
+#endif
 
 /*
  * Lock initialization function. It set the lock to UNLOCKED.
  */
 static inline void opal_atomic_lock_init (opal_atomic_lock_t *lock, bool value)
 {
+#if defined(__PGI)
+    atomic_flag_clear ((volatile void *) lock);
+#else
     atomic_flag_clear (lock);
+#endif
 }
 
 
 static inline int opal_atomic_trylock (opal_atomic_lock_t *lock)
 {
+
+#if defined(__PGI)
+    return (int) atomic_flag_test_and_set ((volatile void *) lock);
+#else
     return (int) atomic_flag_test_and_set (lock);
+#endif
+
 }
 
 
@@ -234,7 +270,11 @@ static inline void opal_atomic_lock(opal_atomic_lock_t *lock)
 
 static inline void opal_atomic_unlock (opal_atomic_lock_t *lock)
 {
+#if defined(__PGI)
+    atomic_flag_clear ((volatile void *) lock);
+#else
     atomic_flag_clear (lock);
+#endif
 }
 
 

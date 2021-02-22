@@ -21,7 +21,7 @@ CFILE=/tmp/opal_asm_$$.c
 
 trap "/bin/rm -f $CFILE; exit 0" 0 1 2 15
 
-echo Updating asm.s from atomic.h and timer.h using gcc
+echo Updating asm.s from timer.h using gcc
 
 cat > $CFILE<<EOF
 #include <stdlib.h>
@@ -30,7 +30,6 @@ cat > $CFILE<<EOF
 #define inline
 #define OPAL_GCC_INLINE_ASSEMBLY 1
 #include "../architecture.h"
-#include "atomic.h"
 #include "timer.h"
 EOF
 
