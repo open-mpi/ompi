@@ -79,7 +79,7 @@ struct cudaFunctionTable {
     int (*cuPointerGetAttribute)(void *, CUpointer_attribute, CUdeviceptr);
     int (*cuMemcpyAsync)(CUdeviceptr, CUdeviceptr, size_t, CUstream);
     int (*cuMemcpy)(CUdeviceptr, CUdeviceptr, size_t);
-    int (*cuMemAlloc)(CUdeviceptr *, unsigned int);
+    int (*cuMemAlloc)(CUdeviceptr *, size_t);
     int (*cuMemFree)(CUdeviceptr buf);
     int (*cuCtxGetCurrent)(void *cuContext);
     int (*cuStreamCreate)(CUstream *, int);
