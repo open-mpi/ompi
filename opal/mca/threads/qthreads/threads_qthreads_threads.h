@@ -6,7 +6,7 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
+ * Copyright (c) 2004-2020 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -37,5 +37,14 @@ struct opal_thread_t {
     aligned_t t_thread_ret;
     aligned_t *t_thread_ret_ptr;
 };
+
+/* Qthreads are cooperatively scheduled so yield when idle */
+#define OPAL_THREAD_YIELD_WHEN_IDLE_DEFAULT true
+
+static inline
+void opal_thread_yield(void)
+{
+    qthread_yield();
+}
 
 #endif /* OPAL_MCA_THREADS_QTHREADS_THREADS_QTHREADS_THREADS_H */

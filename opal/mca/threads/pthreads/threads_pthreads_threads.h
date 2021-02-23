@@ -6,7 +6,7 @@
  * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
+ * Copyright (c) 2004-2020 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -30,11 +30,23 @@
 #include <pthread.h>
 #include <signal.h>
 
+#include "opal/mca/threads/threads.h"
+#include "opal/mca/threads/pthreads/threads_pthreads.h"
+
 struct opal_thread_t {
     opal_object_t super;
     opal_thread_fn_t t_run;
     void *t_arg;
     pthread_t t_handle;
 };
+
+/* Pthreads do not need to yield when idle */
+#define OPAL_THREAD_YIELD_WHEN_IDLE_DEFAULT false
+
+static inline
+void opal_thread_yield(void)
+{
+    opal_threads_pthreads_yield_fn();
+}
 
 #endif /* OPAL_MCA_THREADS_PTHREADS_THREADS_PTHREADS_THREADS_H */
