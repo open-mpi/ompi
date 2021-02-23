@@ -3,6 +3,7 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  *
+ * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -205,9 +206,9 @@ int ompi_comm_failure_detector_finalize(void) {
     /* wait until the observed process confirms he is not putting in our
      * memory (or everybody else is dead) */
     while( MPI_PROC_NULL != (observing = detector->hb_observing) ) {
+#if !FD_LOCAL_PROCS
         ompi_proc_t* proc = ompi_comm_peer_lookup(detector->comm, observing);
         assert( NULL != proc );
-#if !FD_LOCAL_PROCS
         if( OPAL_PROC_ON_LOCAL_NODE(proc->super.proc_flags) ) {
             break;
         }

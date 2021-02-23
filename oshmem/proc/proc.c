@@ -5,6 +5,7 @@
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2016      ARM, Inc. All rights reserved.
+ * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -25,7 +26,6 @@
 
 #include "opal/datatype/opal_convertor.h"
 #include "opal/mca/threads/mutex.h"
-#include "opal/dss/dss.h"
 #include "opal/util/arch.h"
 #include "opal/class/opal_list.h"
 

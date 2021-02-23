@@ -3,6 +3,7 @@
  *                         All rights reserved.
  * Copyright (c) 2019      Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
+ * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -19,7 +20,6 @@
 #include "oshmem/mca/scoll/scoll.h"
 
 #include "opal/class/opal_list.h"
-#include "opal/dss/dss_types.h"
 
 BEGIN_C_DECLS
 

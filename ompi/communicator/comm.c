@@ -23,6 +23,7 @@
  * Copyright (c) 2014-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Mellanox Technologies. All rights reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
+ * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -36,7 +37,6 @@
 
 #include "ompi/constants.h"
 #include "opal/mca/hwloc/base/base.h"
-#include "opal/dss/dss.h"
 #include "opal/mca/pmix/pmix-internal.h"
 #include "opal/util/string_copy.h"
 
@@ -1549,7 +1549,7 @@ int ompi_comm_get_rprocs ( ompi_communicator_t *local_comm,
     ompi_proc_t **rprocs=NULL;
     int32_t size_len;
     int int_len=0, rlen;
-    opal_buffer_t *sbuf=NULL, *rbuf=NULL;
+    pmix_data_buffer_t *sbuf=NULL, *rbuf=NULL;
     void *sendbuf=NULL;
     char *recvbuf;
     ompi_proc_t **proc_list = NULL;
@@ -1559,7 +1559,7 @@ int ompi_comm_get_rprocs ( ompi_communicator_t *local_comm,
     local_size = ompi_comm_size (local_comm);
 
     if (local_rank == local_leader) {
-        sbuf = OBJ_NEW(opal_buffer_t);
+        PMIX_DATA_BUFFER_CREATE(sbuf);
         if (NULL == sbuf) {
             rc = OMPI_ERR_OUT_OF_RESOURCE;
             goto err_exit;
@@ -1579,7 +1579,9 @@ int ompi_comm_get_rprocs ( ompi_communicator_t *local_comm,
         if ( OMPI_SUCCESS != rc ) {
             goto err_exit;
         }
-        if (OPAL_SUCCESS != (rc = opal_dss.unload(sbuf, &sendbuf, &size_len))) {
+        PMIX_DATA_BUFFER_UNLOAD(sbuf, sendbuf, size_len);
+        if (NULL == sendbuf) {
+            rc = OMPI_ERR_UNPACK_FAILURE;
             goto err_exit;
         }
 
@@ -1662,21 +1664,19 @@ int ompi_comm_get_rprocs ( ompi_communicator_t *local_comm,
         goto err_exit;
     }
 
-    rbuf = OBJ_NEW(opal_buffer_t);
+    PMIX_DATA_BUFFER_CREATE(rbuf);
     if (NULL == rbuf) {
         rc = OMPI_ERR_OUT_OF_RESOURCE;
         goto err_exit;
     }
 
-    if (OMPI_SUCCESS != (rc = opal_dss.load(rbuf, recvbuf, rlen))) {
-        goto err_exit;
-    }
+    PMIX_DATA_BUFFER_LOAD(rbuf, recvbuf, rlen);
 
     /* decode the names into a proc-list -- will never add a new proc
        as the result of this operation, so no need to get the newprocs
        list or call PML add_procs(). */
     rc = ompi_proc_unpack(rbuf, rsize, &rprocs, NULL, NULL);
-    OBJ_RELEASE(rbuf);
+    PMIX_DATA_BUFFER_RELEASE(rbuf);
     if (OMPI_SUCCESS != rc) {
         goto err_exit;
     }
@@ -1713,10 +1713,10 @@ int ompi_comm_get_rprocs ( ompi_communicator_t *local_comm,
     }
     /* make sure the buffers have been released */
     if (NULL != sbuf) {
-        OBJ_RELEASE(sbuf);
+        PMIX_DATA_BUFFER_RELEASE(sbuf);
     }
     if (NULL != rbuf) {
-        OBJ_RELEASE(rbuf);
+        PMIX_DATA_BUFFER_RELEASE(rbuf);
     }
     if ( NULL != proc_list ) {
         free ( proc_list );

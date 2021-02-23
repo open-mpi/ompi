@@ -4,6 +4,7 @@
  * Copyright (c) 2016-2019 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      Cisco Systems, Inc.  All rights reserved
+ * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -19,7 +20,6 @@
 
 #include "opal/class/opal_list.h"
 #include "opal/util/proc.h"
-#include "opal/dss/dss_types.h"
 #include "opal/mca/hwloc/hwloc-internal.h"
 
 #include "ompi/proc/proc.h"

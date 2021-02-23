@@ -38,7 +38,6 @@
 #include <pwd.h>
 #endif  /* HAVE_PWD_H */
 
-#include "opal/dss/dss.h"
 #include "opal/util/argv.h"
 #include "opal/util/error.h"
 #include "opal/util/opal_getcwd.h"
@@ -52,7 +51,6 @@
 #include "opal/mca/pmix/base/base.h"
 #include "opal/mca/threads/tsd.h"
 #include "opal/class/opal_list.h"
-#include "opal/dss/dss.h"
 
 #include "ompi/runtime/ompi_rte.h"
 #include "ompi/debuggers/debuggers.h"

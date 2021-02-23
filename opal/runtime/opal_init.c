@@ -25,6 +25,7 @@
  * Copyright (c) 2018-2019 Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2020      FUJITSU LIMITED.  All rights reserved.
+ * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -61,7 +62,6 @@
 #include "opal/mca/timer/base/base.h"
 #include "opal/mca/memchecker/base/base.h"
 #include "opal/mca/if/base/base.h"
-#include "opal/dss/dss.h"
 #include "opal/mca/shmem/base/base.h"
 #include "opal/mca/threads/threads.h"
 #include "opal/mca/threads/tsd.h"
@@ -592,13 +592,6 @@ opal_init_util(int* pargc, char*** pargv)
     }
 
     OPAL_TIMING_ENV_NEXT(otmng, "opal_datatype_init");
-
-    /* Initialize the data storage service. */
-    if (OPAL_SUCCESS != (ret = opal_dss_open())) {
-        return opal_init_error ("opal_dss_open", ret);
-    }
-
-    OPAL_TIMING_ENV_NEXT(otmng, "opal_dss_open");
 
     /* initialize the mca */
     if (OPAL_SUCCESS != (ret = mca_base_open())) {

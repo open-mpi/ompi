@@ -4,6 +4,7 @@
  *                         reserved.
  * Copyright (c) 2011      UT-Battelle, LLC. All rights reserved.
  * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -310,7 +311,7 @@ mca_btl_ugni_setup_mpools (mca_btl_ugni_module_t *ugni_module)
     /* determine how many procs are in the job (might want to check universe size here) */
     u32 = &nprocs;
     OPAL_MODEX_RECV_VALUE(rc, PMIX_UNIV_SIZE, &OPAL_PROC_MY_NAME,
-                          &u32, OPAL_UINT32);
+                          &u32, PMIX_UINT32);
     if (OPAL_SUCCESS != rc) {
         /* take a wild conservative guess */
         nprocs = 512;

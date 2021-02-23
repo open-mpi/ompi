@@ -11,6 +11,7 @@
  * Copyright (c) 2020      Amazon.com, Inc. or its affiliates.  All Rights
  *                         reserved.
  *
+ * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -177,7 +178,6 @@ struct opal_proc_t;
 #include "opal/util/proc.h"
 #include "opal/mca/hwloc/hwloc-internal.h"
 #include "opal/mca/pmix/pmix-internal.h"
-#include "opal/dss/dss_types.h"
 
 struct ompi_proc_t;
 struct ompi_communicator_t;

@@ -23,6 +23,7 @@
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * Copyright (c) 2017      Mellanox Technologies. All rights reserved.
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
+ * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -32,7 +33,6 @@
 
 #include "ompi_config.h"
 
-#include "opal/dss/dss.h"
 #include "opal/mca/pmix/base/base.h"
 #include "opal/util/printf.h"
 
@@ -953,28 +953,28 @@ static int ompi_comm_allreduce_pmix_reduce_complete (ompi_comm_request_t *reques
     int32_t size_count = context->count;
     pmix_info_t info;
     pmix_pdata_t pdat;
-    opal_buffer_t sbuf;
+    pmix_data_buffer_t sbuf;
     int rc;
     int bytes_written;
     char *key;
     const int output_id = 0;
     const int verbosity_level = 1;
 
-    OBJ_CONSTRUCT(&sbuf, opal_buffer_t);
+    PMIX_DATA_BUFFER_CONSTRUCT(&sbuf);
 
-    if (OPAL_SUCCESS != (rc = opal_dss.pack(&sbuf, context->tmpbuf, (int32_t)context->count, OPAL_INT))) {
-        OBJ_DESTRUCT(&sbuf);
-        opal_output_verbose (verbosity_level, output_id, "pack failed. rc  %d\n", rc);
-        return rc;
+    rc = PMIx_Data_pack(NULL, &sbuf, context->tmpbuf, (int32_t)context->count, PMIX_INT);
+    if (PMIX_SUCCESS != rc) {
+        PMIX_DATA_BUFFER_DESTRUCT(&sbuf);
+        opal_output_verbose (verbosity_level, output_id, "pack failed: %s\n", PMIx_Error_string(rc));
+        return opal_pmix_convert_status(rc);
     }
 
     PMIX_PDATA_CONSTRUCT(&pdat);
     PMIX_INFO_CONSTRUCT(&info);
     info.value.type = PMIX_BYTE_OBJECT;
 
-    opal_dss.unload(&sbuf, (void**)&info.value.data.bo.bytes, &rc);
-    info.value.data.bo.size = rc;
-    OBJ_DESTRUCT(&sbuf);
+    PMIX_DATA_BUFFER_UNLOAD(&sbuf, info.value.data.bo.bytes, info.value.data.bo.size);
+    PMIX_DATA_BUFFER_DESTRUCT(&sbuf);
 
     bytes_written = opal_asprintf(&key,
                              cid_context->send_first ? "%s:%s:send:%d"
@@ -1015,21 +1015,21 @@ static int ompi_comm_allreduce_pmix_reduce_complete (ompi_comm_request_t *reques
     rc = opal_pmix_base_exchange(&info, &pdat, 600);  // give them 10 minutes
     PMIX_INFO_DESTRUCT(&info);
     if (OPAL_SUCCESS != rc) {
-        OBJ_DESTRUCT(&pdat);
+        PMIX_PDATA_DESTRUCT(&pdat);
         return rc;
     }
     if (PMIX_BYTE_OBJECT != pdat.value.type) {
-        OBJ_DESTRUCT(&pdat);
+        PMIX_PDATA_DESTRUCT(&pdat);
         return OPAL_ERR_TYPE_MISMATCH;
     }
 
-    OBJ_CONSTRUCT(&sbuf, opal_buffer_t);
-    opal_dss.load(&sbuf, pdat.value.data.bo.bytes, pdat.value.data.bo.size);
+    PMIX_DATA_BUFFER_CONSTRUCT(&sbuf);
+    PMIX_DATA_BUFFER_LOAD(&sbuf, pdat.value.data.bo.bytes, pdat.value.data.bo.size);
 
-    rc = opal_dss.unpack (&sbuf, context->outbuf, &size_count, OPAL_INT);
-    OBJ_DESTRUCT(&sbuf);
-    if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
-        return rc;
+    rc = PMIx_Data_unpack(NULL, &sbuf, context->outbuf, &size_count, PMIX_INT);
+    PMIX_DATA_BUFFER_DESTRUCT(&sbuf);
+    if (OPAL_UNLIKELY(PMIX_SUCCESS != rc)) {
+        return opal_pmix_convert_status(rc);
     }
 
     ompi_op_reduce (context->op, context->tmpbuf, context->outbuf, size_count, MPI_INT);
