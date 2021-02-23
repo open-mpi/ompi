@@ -52,6 +52,9 @@ OPAL_DECLSPEC void mca_common_cuda_unregister(void *ptr, char *msg);
 
 OPAL_DECLSPEC void mca_common_wait_stream_synchronize(mca_rcache_common_cuda_reg_t *rget_reg);
 
+OPAL_DECLSPEC int mca_common_cuda_malloc(void **buffer, size_t size);
+OPAL_DECLSPEC int mca_common_cuda_free(void *buffer);
+
 OPAL_DECLSPEC int mca_common_cuda_memcpy(void *dst, void *src, size_t amount, char *msg,
                                          struct mca_btl_base_descriptor_t *, int *done);
 

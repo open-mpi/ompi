@@ -501,6 +501,8 @@ static int mca_common_cuda_stage_two_init(opal_common_cuda_function_table_t *fta
     ftable->gpu_cu_memcpy_async = &mca_common_cuda_cu_memcpy_async;
     ftable->gpu_cu_memcpy = &mca_common_cuda_cu_memcpy;
     ftable->gpu_memmove = &mca_common_cuda_memmove;
+    ftable->gpu_malloc = &mca_common_cuda_malloc;
+    ftable->gpu_free = &mca_common_cuda_free;
 
     opal_output_verbose(30, mca_common_cuda_output,
                         "CUDA: support functions initialized");
@@ -1921,6 +1923,35 @@ static int mca_common_cuda_cu_memcpy(void *dest, const void *src, size_t size)
 #endif
     return OPAL_SUCCESS;
 }
+
+int mca_common_cuda_malloc(void **dptr, size_t size)
+{
+    int res, count = 0;
+    if (size > 0) {
+        res = cuFunc.cuMemAlloc((CUdeviceptr *)dptr, size);
+        if (OPAL_UNLIKELY(res != CUDA_SUCCESS)) {
+            opal_output(0, "CUDA: cuMemAlloc failed: res=%d",
+                        res);
+            return res;
+        }
+    }
+    return 0;
+}
+
+int mca_common_cuda_free(void *dptr)
+{
+    int res;
+    if (NULL != dptr) {
+        res = cuFunc.cuMemFree((CUdeviceptr)dptr);
+        if (OPAL_UNLIKELY(res != CUDA_SUCCESS)) {
+            opal_output(0, "CUDA: cuMemFree failed: res=%d",
+                        res);
+            return res;
+        }
+    }
+    return 0;
+}
+
 
 static int mca_common_cuda_memmove(void *dest, void *src, size_t size)
 {

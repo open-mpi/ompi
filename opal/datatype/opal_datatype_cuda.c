@@ -112,6 +112,59 @@ bool  opal_cuda_check_one_buf(char *buf, opal_convertor_t *convertor )
 }
 
 /*
+ * This function allocates a buffer using either cuMemAlloc
+ * or malloc, depending on if the convertor flag CONVERTOR_CUDA
+ * is set.
+ *
+ * @param size       Size of buffer to be allocated
+ * @param convertor  The convertor with flags describing if the buf
+ *                   should be a Host or Cuda buffer.
+ *
+ * @returns void *   A pointer to the newly allocated buffer.
+ */
+void *opal_cuda_malloc(size_t size, opal_convertor_t* convertor)
+{
+    int res;
+    void* buffer;
+    if (!(convertor->flags & CONVERTOR_CUDA)) {
+        return malloc(size);
+    }
+    res = ftable.gpu_malloc(&buffer, size);
+    if (res != 0 ) {
+        opal_output(0, "CUDA: Error in cuMemAlloc: size=%d",
+                    (int)size);
+        abort();
+    } else {
+        return buffer;
+    }
+}
+
+/*
+ * This function frees a buffer using either cuMemFree() or free(),
+ * depending on if the convertor flag CONVERTOR_CUDA is set.
+ *
+ * @param buffer     Pointer to buffer to be freed
+ * @param convertor  The convertor with flags describing if the buf
+ *                   should be a Host or Cuda buffer.
+ *
+ */
+void opal_cuda_free(void *buffer, opal_convertor_t* convertor)
+{
+    int res;
+    if (!(convertor->flags & CONVERTOR_CUDA)) {
+        free(buffer);
+        return;
+    }
+    res = ftable.gpu_free(buffer);
+    if (res != 0 ) {
+        opal_output(0, "CUDA: Error in cuMemFree: ptr=%p",
+                    buffer);
+        abort();
+    }
+    return;
+}
+
+/*
  * With CUDA enabled, all contiguous copies will pass through this function.
  * Therefore, the first check is to see if the convertor is a GPU buffer.
  * Note that if there is an error with any of the CUDA calls, the program

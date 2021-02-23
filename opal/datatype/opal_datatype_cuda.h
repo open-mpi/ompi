@@ -18,12 +18,16 @@ struct opal_common_cuda_function_table {
     int (*gpu_cu_memcpy_async)(void*, const void*, size_t, opal_convertor_t*);
     int (*gpu_cu_memcpy)(void*, const void*, size_t);
     int (*gpu_memmove)(void*, void*, size_t);
+    int (*gpu_malloc)(void**, size_t);
+    int (*gpu_free)(void*);
 };
 typedef struct opal_common_cuda_function_table opal_common_cuda_function_table_t;
 
 void mca_cuda_convertor_init(opal_convertor_t* convertor, const void *pUserBuf);
 bool opal_cuda_check_bufs(char *dest, char *src);
 bool opal_cuda_check_one_buf(char *buf, opal_convertor_t *convertor );
+void* opal_cuda_malloc(size_t size, opal_convertor_t* convertor);
+void opal_cuda_free(void * buffer, opal_convertor_t* convertor);
 void* opal_cuda_memcpy(void * dest, const void * src, size_t size, opal_convertor_t* convertor);
 void* opal_cuda_memcpy_sync(void * dest, const void * src, size_t size);
 void* opal_cuda_memmove(void * dest, void * src, size_t size);
