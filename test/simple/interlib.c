@@ -42,7 +42,7 @@ static void model_callback(int status,
                 0 == strcmp(val->data.string, "OpenMP")) {
                 goto cback;
             }
-            if (OPAL_STRING == val->type) {
+            if (PMIX_STRING == val->type) {
                 opal_output(0, "Thread Model Callback Key: %s Val %s", val->key, val->data.string);
             }
         }
@@ -99,22 +99,22 @@ static void *mylib(void *ptr)
     OBJ_CONSTRUCT(&info, opal_list_t);
     kv = OBJ_NEW(opal_value_t);
     kv->key = strdup(OPAL_PMIX_PROGRAMMING_MODEL);
-    kv->type = OPAL_STRING;
+    kv->type = PMIX_STRING;
     kv->data.string = strdup("OpenMP");
     opal_list_append(&info, &kv->super);
     kv = OBJ_NEW(opal_value_t);
     kv->key = strdup(OPAL_PMIX_MODEL_LIBRARY_NAME);
-    kv->type = OPAL_STRING;
+    kv->type = PMIX_STRING;
     kv->data.string = strdup("foobar");
     opal_list_append(&info, &kv->super);
     kv = OBJ_NEW(opal_value_t);
     kv->key = strdup(OPAL_PMIX_MODEL_LIBRARY_VERSION);
-    kv->type = OPAL_STRING;
+    kv->type = PMIX_STRING;
     kv->data.string = strdup("1.2.3.4");
     opal_list_append(&info, &kv->super);
     kv = OBJ_NEW(opal_value_t);
     kv->key = strdup(OPAL_PMIX_THREADING_MODEL);
-    kv->type = OPAL_STRING;
+    kv->type = PMIX_STRING;
     kv->data.string = strdup("PTHREAD");
     opal_list_append(&info, &kv->super);
 
@@ -150,7 +150,7 @@ static void *mylib(void *ptr)
     OBJ_CONSTRUCT(&directives, opal_list_t);
     kv = OBJ_NEW(opal_value_t);
     kv->key = strdup(OPAL_PMIX_EVENT_HDLR_NAME);
-    kv->type = OPAL_STRING;
+    kv->type = PMIX_STRING;
     kv->data.string = strdup("My-Declarations");
     opal_list_append(&directives, &kv->super);
     /* specify the event code */
@@ -248,7 +248,7 @@ int main(int argc, char* argv[])
     /* push something the thread can recognize */
     OBJ_CONSTRUCT(&kv, opal_value_t);
     kv.key = strdup("WASSUP");
-    kv.type = OPAL_STRING;
+    kv.type = PMIX_STRING;
     kv.data.string = strdup("nothing");
     opal_pmix.put(OPAL_PMIX_LOCAL, &kv);
     OBJ_DESTRUCT(&kv);
@@ -276,7 +276,7 @@ int main(int argc, char* argv[])
     OBJ_CONSTRUCT(&list, opal_list_t);
     kptr = OBJ_NEW(opal_value_t);
     kptr->key = strdup("SOMETHING");
-    kptr->type = OPAL_STRING;
+    kptr->type = PMIX_STRING;
     kptr->data.string = strdup("SILLY-THING");
     opal_list_append(&list, &kptr->super);
     opal_pmix.publish(&list);
