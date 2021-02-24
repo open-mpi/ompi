@@ -142,7 +142,7 @@ static void sample(void)
     OBJ_CONSTRUCT(&response, opal_list_t);
     kv = OBJ_NEW(opal_value_t);
     kv->key = strdup(OPAL_PMIX_LOG_STDOUT);
-    kv->type = OPAL_STRING;
+    kv->type = PMIX_STRING;
     kv->data.string = opal_argv_join(answer, '\n');
     opal_list_append(&response, &kv->super);
     opal_argv_free(answer);

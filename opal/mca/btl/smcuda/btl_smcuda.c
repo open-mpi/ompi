@@ -244,7 +244,7 @@ smcuda_btl_first_time_init(mca_btl_smcuda_t *smcuda_btl,
     wildcard_rank.jobid = OPAL_PROC_MY_NAME.jobid;
     wildcard_rank.vpid = OPAL_VPID_WILDCARD;
     OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, PMIX_TOPOLOGY_SIGNATURE,
-                                   &wildcard_rank, &loc, OPAL_STRING);
+                                   &wildcard_rank, &loc, PMIX_STRING);
     if (OPAL_SUCCESS == rc) {
         /* the number of NUMA nodes is right at the front */
         mca_btl_smcuda_component.num_mem_nodes = num_mem_nodes = strtoul(loc, NULL, 10);
@@ -267,7 +267,7 @@ smcuda_btl_first_time_init(mca_btl_smcuda_t *smcuda_btl,
     }
     /* see if we were given our location */
     OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, PMIX_LOCALITY_STRING,
-                                   &OPAL_PROC_MY_NAME, &loc, OPAL_STRING);
+                                   &OPAL_PROC_MY_NAME, &loc, PMIX_STRING);
     if (OPAL_SUCCESS == rc) {
         if (NULL == loc) {
             mca_btl_smcuda_component.mem_node = my_mem_node = -1;

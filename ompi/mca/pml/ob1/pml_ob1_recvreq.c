@@ -731,7 +731,7 @@ void mca_pml_ob1_recv_request_progress_rget( mca_pml_ob1_recv_request_t* recvreq
             }
         } else {
             /* Just default back to send and receive.  Must be mix of GPU and HOST memory. */
-            mca_pml_ob1_recv_request_ack(recvreq, &hdr->hdr_rndv, 0);
+            mca_pml_ob1_recv_request_ack(recvreq, btl, &hdr->hdr_rndv, 0);
             return;
         }
     }
