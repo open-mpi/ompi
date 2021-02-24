@@ -186,12 +186,23 @@ static int mca_pml_ucx_recv_worker_address(ompi_proc_t *proc,
 
 int mca_pml_ucx_open(void)
 {
+    unsigned major_version, minor_version, release_number;
     ucp_context_attr_t attr;
     ucp_params_t params;
     ucp_config_t *config;
     ucs_status_t status;
 
-    PML_UCX_VERBOSE(1, "mca_pml_ucx_open");
+    /* Check version */
+    ucp_get_version(&major_version, &minor_version, &release_number);
+    PML_UCX_VERBOSE(1, "mca_pml_ucx_open: UCX version %u.%u.%u",
+                    major_version, minor_version, release_number);
+
+    if ((major_version == 1) && (minor_version == 8)) {
+        /* disabled due to issue #8321 */
+        PML_UCX_VERBOSE(1, "UCX PML is disabled because the run-time UCX version "
+                           "is 1.8, which has a known catastrophic issue");
+        return OMPI_ERROR;
+    }
 
     /* Read options */
     status = ucp_config_read("MPI", NULL, &config);
@@ -694,7 +705,7 @@ int mca_pml_ucx_isend_init(const void *buf, size_t count, ompi_datatype_t *datat
 }
 
 static ucs_status_ptr_t
-mca_pml_ucx_bsend(ucp_ep_h ep, const void *buf, size_t count, 
+mca_pml_ucx_bsend(ucp_ep_h ep, const void *buf, size_t count,
                   ompi_datatype_t *datatype, uint64_t pml_tag)
 {
     ompi_request_t *req;
@@ -717,7 +728,7 @@ mca_pml_ucx_bsend(ucp_ep_h ep, const void *buf, size_t count,
         PML_UCX_ERROR("bsend: failed to allocate buffer");
         return UCS_STATUS_PTR(OMPI_ERROR);
     }
-    
+
     iov_count    = 1;
     iov.iov_base = packed_data;
     iov.iov_len  = packed_length;
@@ -805,8 +816,8 @@ int mca_pml_ucx_isend(const void *buf, size_t count, ompi_datatype_t *datatype,
     ompi_request_t *req;
     ucp_ep_h ep;
 
-    PML_UCX_TRACE_SEND("i%ssend request *%p", 
-                       buf, count, datatype, dst, tag, mode, comm, 
+    PML_UCX_TRACE_SEND("i%ssend request *%p",
+                       buf, count, datatype, dst, tag, mode, comm,
                        mode == MCA_PML_BASE_SEND_BUFFERED ? "b" : "",
                        (void*)request)
 
