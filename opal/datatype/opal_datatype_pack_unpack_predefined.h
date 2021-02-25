@@ -256,26 +256,6 @@ opal_datatype_unpack_predefined_element( unsigned char** rtn_src,
     unsigned char *src = *rtn_src;
     unsigned char *dest = *rtn_dest;
 
-#if OPAL_CUDA_SUPPORT
-    if (opal_cuda_check_bufs(dest, src)) {
-        return OPAL_ERROR;
-    }
-/*
- *  For checking if elem contains cuda memory, I think it's mostly okay
- *  to only check the first element as done above.  Although a complete
- *  MPI datatype could easily be made to span both gpu and system memory,
- *  I don't think that's true for the individual vector elements that make
- *  up a datatype's description.  The only way I can even conceive of that
- *  being untrue is if the element has only two entries with a crazy
- *  extent sized to hit both locations.  I don't really think that's
- *  possible, but I'm checking it anyway below.
- */
-    if (elem->count == 2 && cando_count >= blocklen &&
-       (opal_cuda_check_bufs(dest + elem->extent, src)))
-    {
-        return OPAL_ERROR;
-    }
-#endif
   if ((uintptr_t)src % align  ||
       (uintptr_t)dest % align ||
       (elem->extent % align && cando_count > blocklen))
@@ -415,16 +395,6 @@ opal_datatype_pack_predefined_element( unsigned char** rtn_src,
     unsigned char *src = *rtn_src;
     unsigned char *dest = *rtn_dest;
 
-#if OPAL_CUDA_SUPPORT
-    if (opal_cuda_check_bufs(dest, src)) {
-        return OPAL_ERROR;
-    }
-    if (elem->count == 2 && cando_count >= blocklen &&
-       (opal_cuda_check_bufs(dest, src + elem->extent)))
-    {
-        return OPAL_ERROR;
-    }
-#endif
   if ((uintptr_t)src % align  ||
       (uintptr_t)dest % align ||
       (elem->extent % align && cando_count > blocklen))
