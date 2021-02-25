@@ -142,7 +142,7 @@ opal_unpack_homogeneous_contig_function( opal_convertor_t* pConv,
             }
         }
     }
-    *out_size = iov_idx; /* we only reach this line after the for loop succesfully complete */
+    *out_size = iov_idx; /* we only reach this line after the for loop successfully complete */
     *max_data = pConv->bConverted - initial_bytes_converted;
     if( pConv->bConverted == pConv->local_size ) pConv->flags |= CONVERTOR_COMPLETED;
     return !!(pConv->flags & CONVERTOR_COMPLETED);  /* done or not */
@@ -161,60 +161,70 @@ opal_unpack_homogeneous_contig_function( opal_convertor_t* pConv,
  * of the exponent or mantissa).
  */
 static inline void
-opal_unpack_partial_datatype( opal_convertor_t* pConvertor, dt_elem_desc_t* pElem,
-                              unsigned char* partial_data,
-                              ptrdiff_t start_position, size_t length,
-                              unsigned char** user_buffer )
+opal_unpack_partial_predefined(opal_convertor_t *pConvertor, const dt_elem_desc_t *pElem,
+                               size_t *COUNT, unsigned char **packed,
+                               unsigned char **memory, size_t *SPACE)
 {
     char unused_byte = 0x7F, saved_data[16];
     unsigned char temporary[16], *temporary_buffer = temporary;
-    unsigned char* user_data = *user_buffer + pElem->elem.disp;
-    size_t count_desc = 1;
+    unsigned char *user_data = *memory + pElem->elem.disp;
     size_t data_length = opal_datatype_basicDatatypes[pElem->elem.common.type]->size;
+    unsigned char *partial_data = *packed;
+    ptrdiff_t start_position = pConvertor->partial_length;
+    size_t length = data_length - start_position;
+    size_t count_desc = 1;
+    dt_elem_desc_t single_elem = { .elem = { .common = pElem->elem.common, .count = 1, .blocklen = 1,
+                                   .extent = data_length,  /* advance by a full data element */
+                                   .disp = 0  /* right where the pointer is */ } };
+    if( *SPACE < length ) {
+        length = *SPACE;
+    }
 
     DO_DEBUG( opal_output( 0, "unpack partial data start %lu end %lu data_length %lu user %p\n"
                            "\tbConverted %lu total_length %lu count %ld\n",
-                           (unsigned long)start_position, (unsigned long)start_position + length, (unsigned long)data_length, (void*)*user_buffer,
-                           (unsigned long)pConvertor->bConverted, (unsigned long)pConvertor->local_size, pConvertor->count ); );
+                           (unsigned long)start_position, (unsigned long)start_position + length,
+                           (unsigned long)data_length, (void*)*memory,
+                           (unsigned long)pConvertor->bConverted,
+                           (unsigned long)pConvertor->local_size, pConvertor->count ); );
+    COMPUTE_CSUM( partial_data, length, pConvertor );
 
-    /* Find a byte that is not used in the partial buffer */
+    /* Find a byte value that is not used in the partial buffer. We use it as a marker
+     * to identify what has not been modified by the unpack call. */
  find_unused_byte:
-    for(size_t i = 0; i < length; i++ ) {
+    for (size_t i = 0; i < length; i++ ) {
         if( unused_byte == partial_data[i] ) {
             unused_byte--;
             goto find_unused_byte;
         }
     }
 
-    /* Copy and fill the rest of the buffer with the unused byte */
+    /* Prepare an full element of the predefined type, by populating an entire type
+     * with the unused byte and then put the partial data at the right position. */
     memset( temporary, unused_byte, data_length );
     MEMCPY( temporary + start_position, partial_data, length );
 
+    /* Save the original content of the user memory */
 #if OPAL_CUDA_SUPPORT
     /* In the case where the data is being unpacked from device memory, need to
-     * use the special host to device memory copy.  Note this code path was only
-     * seen on large receives of noncontiguous data via buffered sends. */
+     * use the special host to device memory copy. */
     pConvertor->cbmemcpy(saved_data, user_data, data_length, pConvertor );
 #else
-    /* Save the content of the user memory */
     MEMCPY( saved_data, user_data, data_length );
 #endif
 
     /* Then unpack the data into the user memory */
-    UNPACK_PREDEFINED_DATATYPE( pConvertor, pElem, count_desc,
-                                temporary_buffer, *user_buffer, data_length );
+    UNPACK_PREDEFINED_DATATYPE(pConvertor, &single_elem, count_desc, temporary_buffer, user_data,
+                               data_length);
 
-    /* reload the length as it is reset by the macro */
+    /* reload the length and user buffer as they have been updated by the macro */
     data_length = opal_datatype_basicDatatypes[pElem->elem.common.type]->size;
+    user_data = *memory + pElem->elem.disp;
 
-    /* For every occurence of the unused byte move data from the saved
-     * buffer back into the user memory.
-     */
+    /* Rebuild the data by pulling back the unmodified bytes from the original
+     * content in the user memory. */
 #if OPAL_CUDA_SUPPORT
     /* Need to copy the modified user_data again so we can see which
-     * bytes need to be converted back to their original values.  Note
-     * this code path was only seen on large receives of noncontiguous
-     * data via buffered sends. */
+     * bytes need to be converted back to their original values. */
     {
         char resaved_data[16];
         pConvertor->cbmemcpy(resaved_data, user_data, data_length, pConvertor );
@@ -229,6 +239,16 @@ opal_unpack_partial_datatype( opal_convertor_t* pConvertor, dt_elem_desc_t* pEle
             user_data[i] = saved_data[i];
     }
 #endif
+    pConvertor->partial_length = (pConvertor->partial_length + length) % data_length;
+    *SPACE  -= length;
+    *packed += length;
+    if (0 == pConvertor->partial_length) {
+        (*COUNT)--;  /* we have enough to complete one full predefined type */
+        *memory += data_length;
+        if (0 == (*COUNT % pElem->elem.blocklen)) {
+            *memory += pElem->elem.extent - (pElem->elem.blocklen * data_length);
+        }
+    }
 }
 
 /* The pack/unpack functions need a cleanup. I have to create a proper interface to access
@@ -257,8 +277,8 @@ opal_generic_simple_unpack_function( opal_convertor_t* pConvertor,
     size_t iov_len_local;
     uint32_t iov_count;
 
-    DO_DEBUG( opal_output( 0, "opal_convertor_generic_simple_unpack( %p, {%p, %lu}, %u )\n",
-                           (void*)pConvertor, (void*)iov[0].iov_base, (unsigned long)iov[0].iov_len, *out_size ); );
+    DO_DEBUG( opal_output( 0, "opal_convertor_generic_simple_unpack( %p, iov[%u] = {%p, %lu} )\n",
+                           (void*)pConvertor, *out_size, (void*)iov[0].iov_base, (unsigned long)iov[0].iov_len ); );
 
     description = pConvertor->use_desc->desc;
 
@@ -283,28 +303,26 @@ opal_generic_simple_unpack_function( opal_convertor_t* pConvertor,
         iov_ptr = (unsigned char *) iov[iov_count].iov_base;
         iov_len_local = iov[iov_count].iov_len;
 
-        if( 0 != pConvertor->partial_length ) {
-            size_t element_length = opal_datatype_basicDatatypes[pElem->elem.common.type]->size;
-            size_t missing_length = element_length - pConvertor->partial_length;
-
-            assert( pElem->elem.common.flags & OPAL_DATATYPE_FLAG_DATA );
-            COMPUTE_CSUM( iov_ptr, missing_length, pConvertor );
-            opal_unpack_partial_datatype( pConvertor, pElem,
-                                          iov_ptr,
-                                          pConvertor->partial_length, (size_t)(element_length - pConvertor->partial_length),
-                                          &conv_ptr );
-            --count_desc;
-            if( 0 == count_desc ) {
-                conv_ptr = pConvertor->pBaseBuf + pStack->disp;
-                pos_desc++;  /* advance to the next data */
-                UPDATE_INTERNAL_COUNTERS( description, pos_desc, pElem, count_desc );
+        /* Deal with all types of partial predefined datatype unpacking, including when
+         * unpacking a partial predefined element and when unpacking a part smaller than
+         * the blocklen.
+         */
+        if (pElem->elem.common.flags & OPAL_DATATYPE_FLAG_DATA) {
+            if (0 != pConvertor->partial_length) {  /* partial predefined element */
+                assert( pElem->elem.common.flags & OPAL_DATATYPE_FLAG_DATA );
+                opal_unpack_partial_predefined( pConvertor, pElem, &count_desc,
+                                                &iov_ptr, &conv_ptr, &iov_len_local );
+                if (0 == count_desc) {  /* the end of the vector ? */
+                    assert( 0 == pConvertor->partial_length );
+                    conv_ptr = pConvertor->pBaseBuf + pStack->disp;
+                    pos_desc++; /* advance to the next data */
+                    UPDATE_INTERNAL_COUNTERS(description, pos_desc, pElem, count_desc);
+                    goto next_vector;
+                }
+                if( 0 == iov_len_local )
+                    goto complete_loop;
             }
-            iov_ptr       += missing_length;
-            iov_len_local -= missing_length;
-            pConvertor->partial_length = 0;  /* nothing more inside */
-        }
-        if( pElem->elem.common.flags & OPAL_DATATYPE_FLAG_DATA ) {
-            if( ((size_t)pElem->elem.count * pElem->elem.blocklen) != count_desc ) {
+            if (((size_t) pElem->elem.count * pElem->elem.blocklen) != count_desc) {
                 /* we have a partial (less than blocklen) basic datatype */
                 int rc = UNPACK_PARTIAL_BLOCKLEN( pConvertor, pElem, count_desc,
                                                   iov_ptr, conv_ptr, iov_len_local );
@@ -318,8 +336,9 @@ opal_generic_simple_unpack_function( opal_convertor_t* pConvertor,
             }
         }
 
-        while( 1 ) {
-            while( pElem->elem.common.flags & OPAL_DATATYPE_FLAG_DATA ) {
+        while (1) {
+          next_vector:
+            while (pElem->elem.common.flags & OPAL_DATATYPE_FLAG_DATA) {
                 /* we have a basic datatype (working on full blocks) */
                 UNPACK_PREDEFINED_DATATYPE( pConvertor, pElem, count_desc,
                                             iov_ptr, conv_ptr, iov_len_local );
@@ -386,14 +405,7 @@ opal_generic_simple_unpack_function( opal_convertor_t* pConvertor,
              * and keep it hot until the next round.
              */
             assert( iov_len_local < opal_datatype_basicDatatypes[pElem->elem.common.type]->size );
-            COMPUTE_CSUM( iov_ptr, iov_len_local, pConvertor );
-
-            opal_unpack_partial_datatype( pConvertor, pElem,
-                                          iov_ptr, 0, iov_len_local,
-                                          &temp );
-
-            pConvertor->partial_length = iov_len_local;
-            iov_len_local = 0;
+            opal_unpack_partial_predefined(pConvertor, pElem, &count_desc, &iov_ptr, &temp, &iov_len_local);
         }
 
         iov[iov_count].iov_len -= iov_len_local;  /* update the amount of valid data */
@@ -520,11 +532,6 @@ int32_t opal_unpack_general_function(opal_convertor_t *pConvertor, struct iovec 
     unsigned char *conv_ptr, *iov_ptr;
     uint32_t iov_count;
     size_t iov_len_local;
-#if 0
-    const opal_convertor_master_t *master = pConvertor->master;
-    ptrdiff_t advance; /* number of bytes that we should advance the buffer */
-#endif
-    size_t rc;
 
     DO_DEBUG( opal_output( 0, "opal_convertor_general_unpack( %p, {%p, %lu}, %d )\n",
                            (void*)pConvertor, (void*)iov[0].iov_base, (unsigned long)iov[0].iov_len, *out_size ); );
@@ -595,14 +602,9 @@ int32_t opal_unpack_general_function(opal_convertor_t *pConvertor, struct iovec 
                      * and keep it hot until the next round.
                      */
                     assert(iov_len_local < opal_datatype_basicDatatypes[pElem->elem.common.type]->size);
-                    COMPUTE_CSUM(iov_ptr, iov_len_local, pConvertor);
-
-                    opal_unpack_partial_datatype( pConvertor, pElem,
-                                                  iov_ptr, 0, iov_len_local,
-                                                  &temp );
-
-                    pConvertor->partial_length = iov_len_local;
-                    iov_len_local = 0;
+                    opal_unpack_partial_predefined(pConvertor, pElem, &count_desc, &iov_ptr,
+                                                   &temp, &iov_len_local);
+                    assert( 0 == iov_len_local );
                 }
                 goto complete_loop;
             }
