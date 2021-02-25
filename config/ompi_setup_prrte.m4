@@ -1,62 +1,121 @@
-# -*- shell-script -*-
-#
-# Copyright (c) 2004-2009 The Trustees of Indiana University and Indiana
-#                         University Research and Technology
-#                         Corporation.  All rights reserved.
-# Copyright (c) 2004-2021 The University of Tennessee and The University
-#                         of Tennessee Research Foundation.  All rights
-#                         reserved.
-# Copyright (c) 2004-2007 High Performance Computing Center Stuttgart,
-#                         University of Stuttgart.  All rights reserved.
-# Copyright (c) 2004-2005 The Regents of the University of California.
-#                         All rights reserved.
-# Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2006-2008 Sun Microsystems, Inc.  All rights reserved.
-# Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
-#                         reserved.
-# Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
-# Copyright (c) 2019-2020 Intel, Inc.  All rights reserved.
-# Copyright (c) 2020      Amazon.com, Inc. or its affiliates.
-#                         All Rights reserved.
-# Copyright (c) 2021      Nanook Consulting.  All rights reserved.
-# $COPYRIGHT$
-#
-# Additional copyrights may follow
-#
-# $HEADER$
-#
+dnl -*- autoconf -*-
+dnl
+dnl Copyright (c) 2004-2009 The Trustees of Indiana University and Indiana
+dnl                         University Research and Technology
+dnl                         Corporation.  All rights reserved.
+dnl Copyright (c) 2004-2021 The University of Tennessee and The University
+dnl                         of Tennessee Research Foundation.  All rights
+dnl                         reserved.
+dnl Copyright (c) 2004-2007 High Performance Computing Center Stuttgart,
+dnl                         University of Stuttgart.  All rights reserved.
+dnl Copyright (c) 2004-2005 The Regents of the University of California.
+dnl                         All rights reserved.
+dnl Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2006-2008 Sun Microsystems, Inc.  All rights reserved.
+dnl Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
+dnl                         reserved.
+dnl Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
+dnl Copyright (c) 2019-2020 Intel, Inc.  All rights reserved.
+dnl Copyright (c) 2020      Amazon.com, Inc. or its affiliates.
+dnl                         All Rights reserved.
+dnl Copyright (c) 2021      Nanook Consulting.  All rights reserved.
+dnl $COPYRIGHT$
+dnl
+dnl Additional copyrights may follow
+dnl
+dnl $HEADER$
+dnl
 
-# Check for / configure PRRTE package.  Unlike the other 3rd party
-# packages, prrte is either internal or not used (since prrte is a
-# pmix server, we don't need to link against it or such in the
-# external case).  So we don't have to do some of the complex steps we
-# do for pmix or hwloc in terms of external hunting.
-#
-# This macro will not change the environment.
-#
-# A Makefile conditional OMPI_WANT_PRRTE will be defined based on the
-# results of the build.  Unless --disable-internal-rte is specified,
-# the top-level configure will abort if the PRRTE configure fails.
+dnl Check for / configure PRRTE package.  Prefer finding an external
+dnl PRRTE, build our internal one if required.  If we can not find an
+dnl external PRRTE and the internal one fails to configure, abort.
+dnl
+dnl This macro wil change the environment in the following way:
+dnl
+dnl * PRTE_PATH will be AC_SUBST'ed to the full path (minus the EXE
+dnl   extension) of the prte binary.
+dnl
+dnl A Makefile conditional OMPI_WANT_PRRTE will be defined based on the
+dnl results of the build.
 AC_DEFUN([OMPI_SETUP_PRRTE],[
-    OPAL_VAR_SCOPE_PUSH([internal_prrte_build])
+    OPAL_VAR_SCOPE_PUSH([prrte_setup_internal_happy prrte_setup_external_happy prrte_setup_success_var])
 
-    internal_prrte_build=0
+    opal_show_subtitle "Configuring PRRTE"
+
+    # Don't use OPAL_3RDPARTY_WITH because it will not allow packages
+    # to be disabled
     m4_ifdef([package_prrte],
-             [OMPI_SETUP_PRRTE_INTERNAL([internal_prrte_build=1], [internal_prrte_build=0])])
+        [AC_ARG_WITH([prrte],
+            [AC_HELP_STRING([--with-prrte(=DIR)],
+                           [Build PRTE support.  DIR can take one of four values: "internal", "external", "no", or a valid directory name.  "internal" forces Open MPI to use its internal copy of PRRTE.  "external" forces Open MPI to use an external installation of PRRTE.  Supplying a valid directory name also forces Open MPI to use an external installation of PRRTE, and adds DIR/include, DIR/lib, and DIR/lib64 to the search path for headers and libraries. If no argument is specified, Open MPI will search default locations for PRRTE and fall back to an internal version if one is not found.])])],
+        [AC_ARG_WITH([prrte],
+            [AC_HELP_STRING([--with-prrte(=DIR)],
+                           [Build PRRTE support.  DIR can take one of three values:  "external", "no", or a valid directory name.  "external" forces Open MPI to use an external installation of PRRTE.  Supplying a valid directory name also forces Open MPI to use an external installation of PRRTE, and adds DIR/include, DIR/lib, and DIR/lib64 to the search path for headers and libraries. If no argument is specified, Open MPI will search default locations for PRRTE and disable creating mpirun symlinks if one is not found.])])])
 
-    AM_CONDITIONAL([OMPI_WANT_PRRTE], [test "$internal_prrte_build" = "1"])
+    # clean up $with_prrte so that it contains only a path or empty
+    # string.  To determine internal or external preferences, use
+    # $opal_prrte_mode.
+    AS_IF([test "$with_prrte" = "yes"], [with_prrte=])
+    AS_CASE([$with_prrte],
+            ["internal"], [with_prrte=""
+                           opal_prrte_mode="internal"],
+            ["external"], [with_prrte=""
+                           opal_prrte_mode="external"],
+            [""], [opal_prrte_mode="unspecified"],
+            ["no"], [opal_prrte_mode="disabled"],
+            [opal_prrte_mode="external"])
+
+    echo "with_prrte: $with_prrte"
+    echo "opal_prrte_mode: $opal_prrte_mode"
+
+    m4_ifdef([package_prrte], [],
+             [AS_IF([test "$opal_prrte_mode" = "internal"],
+                    [AC_MSG_WARN([Invalid argument to --with-prrte: internal.])
+                     AC_MSG_ERROR([Cannot continue])])])
+
+    prrte_setup_internal_happy=0
+    m4_ifdef([package_prrte], [
+         # always configure the internal prrte, so that
+         # make dist always works.
+         AS_IF([test "$opal_prrte_mode" = "disabled"], [prrte_setup_success_var=0], [prrte_setup_success_var=1])
+         _OMPI_SETUP_PRRTE_INTERNAL([prrte_setup_internal_happy=$prrte_setup_success_var])])
+
+    # unless internal specifically requested by the user, try to find
+    # an external that works.
+    prrte_setup_external_happy=0
+    AS_IF([test "$opal_prrte_mode" != "internal" -o "$opal_prrte_mode" != "disabled"],
+          [_OMPI_SETUP_PRRTE_EXTERNAL(
+              [prrte_setup_external_happy=1
+               opal_prrte_mode="external"],
+              [AS_IF([test "$opal_prrte_mode" = "external"],
+                     [AC_MSG_ERROR([External PRRTE requested but not found.])])])])
+
+    # external did not work out and customer did not specify external,
+    # so try the internal version.
+    AS_IF([test "$prrte_setup_external_happy" = "0" -a "$prrte_setup_internal_happy" = "1"],
+          [opal_prrte_mode="internal"
+           _OMPI_SETUP_PRRTE_INTERNAL_POST()])
+
+    AS_IF([test "$opal_prrte_mode" != "disabled"],
+          [AS_IF([test "$prrte_setup_external_happy" = "0" -a "$prrte_setup_internal_happy" = "0"],
+                 [AC_MSG_ERROR([Could not find viable prrte build.])])])
+
+    AC_SUBST([PRTE_PATH])
+
+    AM_CONDITIONAL([OMPI_WANT_PRRTE],
+           [test "$prrte_setup_internal_happy" = "1" -o "$prrte_setup_external_happy" = "1"])
+
+    OPAL_SUMMARY_ADD([[Miscellaneous]], [[prrte]], [prrte], [$opal_prrte_mode])
 
     OPAL_VAR_SCOPE_POP
 ])
 
-AC_DEFUN([OMPI_SETUP_PRRTE_INTERNAL], [
+
+dnl _OMPI_SETUP_PRRTE_INTERNAL([action-if-success], [action-if-not-success])
+dnl
+dnl Attempt to configure the built-in PRRTE.
+AC_DEFUN([_OMPI_SETUP_PRRTE_INTERNAL], [
     OPAL_VAR_SCOPE_PUSH([internal_prrte_args internal_prrte_extra_libs internal_prrte_happy deprecated_prefix_by_default print_prrte_warning internal_prrte_CPPFLAGS])
-
-    opal_show_subtitle "Configuring PRRTE"
-
-    AC_ARG_ENABLE([internal-rte],
-                  [AC_HELP_STRING([--enable-internal-rte],
-                                  [Enable internal runtime support and provide mpiexec/mpirun (default: enabled)])])
 
     # This is really a PRTE option that should not be in Open MPI, but
     # there is not a great way to support the orterun/mpirun checks
@@ -88,10 +147,6 @@ AC_DEFUN([OMPI_SETUP_PRRTE_INTERNAL], [
     AS_IF([test -n "$prte_prefix_by_default" -a -n "$deprecated_prefix_by_default"],
           [AC_MSG_ERROR([--enable-prte-prefix-by-default cannot be used with --enable-mpirun-prefix-by-default or --enable-orterun-prefix-by-default.  Please only specify --enable-prte-prefix-by-default.])])
 
-    internal_prrte_happy="yes"
-    AS_IF([test "$enable_internal_rte" = "no"],
-          [internal_prrte_happy="no"])
-
     internal_prrte_CPPFLAGS=
     internal_prrte_args="--with-proxy-version-string=$OPAL_VERSION --with-proxy-package-name=\"Open MPI\" --with-proxy-bugreport=\"https://www.open-mpi.org/community/help/\""
     internal_prrte_libs=
@@ -120,23 +175,22 @@ AC_DEFUN([OMPI_SETUP_PRRTE_INTERNAL], [
            internal_prrte_CPPFLAGS="$internal_prrte_CPPFLAGS $opal_pmix_CPPFLAGS"
            internal_prrte_libs="$internal_prrte_libs $opal_pmix_LIBS"])
 
-    AS_IF([test "$internal_prrte_happy" = "yes"],
-          [AC_MSG_CHECKING([if PMIx version is 4.0.0 or greater])
-           AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <pmix_version.h>]],
-                          [[
+    AC_MSG_CHECKING([if PMIx version is 4.0.0 or greater])
+    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <pmix_version.h>]],
+            [[
 #if PMIX_VERSION_MAJOR < 4L
 #error "pmix API version is less than 4.0.0"
 #endif
-                          ]])],
-                       [AC_MSG_RESULT([yes])],
-                       [AC_MSG_RESULT([no])
-                        AC_MSG_WARN([OMPI's internal runtime environment "PRRTE" does not support])
-                        AC_MSG_WARN([PMIx versions less than v4.x as they lack adequate tool])
-                        AC_MSG_WARN([support. You can, if desired, build OMPI against an earlier])
-                        AC_MSG_WARN([version of PMIx for strictly direct-launch purposes - e.g., using)])
-                        AC_MSG_WARN([Slurm's srun to launch the job - by configuring with the])
-                        AC_MSG_WARN([--disable-internal-rte option.])
-                        AC_MSG_ERROR([Cannot continue])])])
+             ]])],
+            [AC_MSG_RESULT([yes])],
+            [AC_MSG_RESULT([no])
+             AC_MSG_WARN([OMPI's internal runtime environment "PRRTE" does not support])
+             AC_MSG_WARN([PMIx versions less than v4.x as they lack adequate tool])
+             AC_MSG_WARN([support. You can, if desired, build OMPI against an earlier])
+             AC_MSG_WARN([version of PMIx for strictly direct-launch purposes - e.g., using])
+             AC_MSG_WARN([Slurm's srun to launch the job - by configuring with the])
+             AC_MSG_WARN([--without-prrte option.])
+             AC_MSG_ERROR([Cannot continue])])
 
     # add the extra libs
     internal_prrte_args="$internal_prrte_args --with-prte-extra-lib=\"$internal_prrte_libs\" --with-prte-extra-ltlib=\"$internal_prrte_libs\""
@@ -160,7 +214,7 @@ AC_DEFUN([OMPI_SETUP_PRRTE_INTERNAL], [
              [--with-libevent=external], [--with-hwloc=external],
              [--with-pmix=internal], [--with-pmix=external],
              [--with-platform=[[^ 	]]*]],
-            [], [internal_prrte_happy="no"])
+            [internal_prrte_happy="yes"], [internal_prrte_happy="no"])
     OPAL_SUBDIR_ENV_RESTORE([opal_prrte_configure])
     OPAL_3RDPARTY_DIST_SUBDIRS="$OPAL_3RDPARTY_DIST_SUBDIRS prrte"
 
@@ -168,11 +222,68 @@ AC_DEFUN([OMPI_SETUP_PRRTE_INTERNAL], [
           [AC_MSG_ERROR([PRRTE configuration failed.  Cannot continue.])])
 
     AS_IF([test "$internal_prrte_happy" = "yes"],
-          [OPAL_3RDPARTY_SUBDIRS="$OPAL_3RDPARTY_SUBDIRS prrte"
-           $1],
-          [$2])
-
-    OPAL_SUMMARY_ADD([[Miscellaneous]], [[PRRTE]], [prrte], [$internal_prrte_happy])
+          [$1], [$2])
 
     OPAL_VAR_SCOPE_POP
 ])
+
+
+dnl _OMPI_SETUP_CONFIG_PRRTE_INTERNAL_POST()
+dnl
+dnl Expectation is that this is called only if external fails, the
+dnl caller configured libprrte configure, and the configure script
+dnl succeeded.
+AC_DEFUN([_OMPI_SETUP_PRRTE_INTERNAL_POST], [
+    OPAL_3RDPARTY_SUBDIRS="$OPAL_3RDPARTY_SUBDIRS prrte"
+
+    PRTE_PATH="prte"
+])
+
+
+dnl _OMPI_SETUP_PRRTE_EXTERNAL([action if success], [action if not success])
+dnl
+dnl Try to find an external prrte with sufficient version.  Since we
+dnl don't link against prrte, only output environment variable is
+dnl PRTE_PATH.
+AC_DEFUN([_OMPI_SETUP_PRRTE_EXTERNAL], [
+    OPAL_VAR_SCOPE_PUSH([setup_prrte_external_happy opal_prrte_CPPFLAGS_save])
+
+    opal_prrte_CPPFLAGS_save=$CPPFLAGS
+
+    _OPAL_CHECK_PACKAGE_HEADER([opal_prrte], [prte.h], [$with_prrte],
+			       [setup_prrte_external_happy=yes],
+			       [setup_prrte_external_happy=no])
+
+    CPPFLAGS="$opal_prrte_CPPFLAGS_save $opal_prrte_CPPFLAGS"
+
+    AC_MSG_CHECKING([if external PRRTE version is 2.0.0 or greater])
+    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <prte_version.h>]],
+                 [[
+#if PRTE_NUMERIC_VERSION < 0x00020000
+#error "prrte API version is less than 2.0.0"
+#endif
+                 ]])],
+                 [AC_MSG_RESULT([yes])
+                  setup_prrte_external_happy=yes],
+                 [AC_MSG_RESULT([no])
+                  setup_prrte_external_happy=no])
+
+    CPPFLAGS="$opal_prrte_CPPFLAGS_save"
+
+    AS_IF([test "$setup_prrte_external_happy" = "yes"],
+          [AS_IF([test -n "$with_prrte"],
+                 [PRTE_PATH="${with_prrte}/bin/prte"
+                  AS_IF([test ! -r ${PRTE_PATH}], [AC_MSG_ERROR([Could not find prte binary at $PRTE_PATH])])],
+		 [PRTE_PATH=""
+                  OPAL_WHICH([prte], [PRTE_PATH])
+                  AS_IF([tets -z "$PRTE_PATH"],
+                        [AC_MSG_WARN([Could not find prte in PATH])
+                         setup_prrte_external_happy=no])])])
+
+    AS_IF([test "$setup_prrte_external_happy" = "yes"],
+          [$1], [$2])
+
+    OPAL_VAR_SCOPE_POP
+])
+
+
