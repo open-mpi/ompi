@@ -5,6 +5,7 @@
  * Copyright (c) 2020      Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2020      Cisco Systems, Inc.  All rights reserved
+ * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -304,7 +305,7 @@ static uint32_t get_package_rank(opal_process_info_t *process_info)
     uint16_t current_package_rank = 0;
     uint16_t package_ranks[process_info->num_local_peers];
     opal_process_name_t pname;
-    opal_status_t rc;
+    pmix_status_t rc;
     char **peers = NULL;
     char *local_peers = NULL;
     char *locality_string = NULL;

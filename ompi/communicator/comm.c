@@ -1653,7 +1653,7 @@ int ompi_comm_get_rprocs ( ompi_communicator_t *local_comm,
 #endif
             goto err_exit;
         }
-        OBJ_RELEASE(sbuf);
+        PMIX_DATA_BUFFER_RELEASE(sbuf);
     }
 
     /* broadcast name list to all proceses in local_comm */
