@@ -304,7 +304,7 @@ int ompi_proc_complete_init(void)
     opal_process_name_t wildcard_rank;
     ompi_proc_t *proc;
     int ret, errcode = OMPI_SUCCESS;
-    char *val;
+    char *val = NULL;
 
     opal_mutex_lock (&ompi_proc_lock);
 
