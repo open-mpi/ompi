@@ -251,6 +251,7 @@ smcuda_btl_first_time_init(mca_btl_smcuda_t *smcuda_btl,
         free(loc);
     } else {
         /* If we have hwloc support, then get accurate information */
+        loc = NULL;
         if (OPAL_SUCCESS == opal_hwloc_base_get_topology()) {
             i = opal_hwloc_base_get_nbobjs_by_type(opal_hwloc_topology,
                                                    HWLOC_OBJ_NODE, 0,
