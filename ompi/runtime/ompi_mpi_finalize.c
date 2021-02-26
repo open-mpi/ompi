@@ -58,6 +58,7 @@
 #include "opal/mca/mpool/base/base.h"
 #include "opal/mca/mpool/base/mpool_base_tree.h"
 #include "opal/mca/rcache/base/base.h"
+#include "opal/mca/hwloc/base/base.h"
 #include "opal/mca/allocator/base/base.h"
 #include "opal/mca/pmix/pmix-internal.h"
 #include "opal/util/timings.h"
@@ -463,9 +464,11 @@ int ompi_mpi_finalize(void)
     if (OMPI_SUCCESS != (ret = mca_base_framework_close(&opal_allocator_base_framework))) {
         goto done;
     }
-
     /* free proc resources */
     if ( OMPI_SUCCESS != (ret = ompi_proc_finalize())) {
+        goto done;
+    }
+    if (OMPI_SUCCESS != (ret = mca_base_framework_close(&opal_hwloc_base_framework))) {
         goto done;
     }
 

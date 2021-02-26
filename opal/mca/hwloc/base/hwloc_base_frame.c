@@ -39,14 +39,21 @@
  * Globals
  */
 bool opal_hwloc_base_inited = false;
-hwloc_topology_t opal_hwloc_topology=NULL;
+opal_hwloc_topology_t opal_hwloc_topology_internal = NULL;
+hwloc_topology_t opal_hwloc_topology = NULL;
 hwloc_cpuset_t opal_hwloc_my_cpuset=NULL;
 hwloc_cpuset_t opal_hwloc_base_given_cpus=NULL;
 opal_hwloc_base_map_t opal_hwloc_base_map = OPAL_HWLOC_BASE_MAP_NONE;
 opal_hwloc_base_mbfa_t opal_hwloc_base_mbfa = OPAL_HWLOC_BASE_MBFA_WARN;
 opal_binding_policy_t opal_hwloc_binding_policy=0;
 char *opal_hwloc_base_cpu_list=NULL;
+char *opal_hwloc_shmemfile = NULL;
+int opal_hwloc_shmemfd = -1;
+
 bool opal_hwloc_report_bindings=false;
+
+opal_hash_table_t opal_hwloc_base_hash;
+
 hwloc_obj_type_t opal_hwloc_levels[] = {
     HWLOC_OBJ_MACHINE,
     HWLOC_OBJ_NODE,
@@ -76,9 +83,6 @@ static mca_base_var_enum_value_t hwloc_failure_action[] = {
 static int opal_hwloc_base_register(mca_base_register_flag_t flags);
 static int opal_hwloc_base_open(mca_base_open_flag_t flags);
 static int opal_hwloc_base_close(void);
-
-MCA_BASE_FRAMEWORK_DECLARE(opal, hwloc, NULL, opal_hwloc_base_register, opal_hwloc_base_open, opal_hwloc_base_close,
-                           mca_hwloc_base_static_components, 0);
 
 static char *opal_hwloc_base_binding_policy = NULL;
 static bool opal_hwloc_base_bind_to_core = false;
@@ -174,6 +178,10 @@ static int opal_hwloc_base_open(mca_base_open_flag_t flags)
     if (opal_hwloc_base_inited) {
         return OPAL_SUCCESS;
     }
+
+    OBJ_CONSTRUCT(&opal_hwloc_base_hash, opal_hash_table_t);
+    opal_hash_table_init(&opal_hwloc_base_hash, 4096);
+
     opal_hwloc_base_inited = true;
 
     if (OPAL_SUCCESS != (rc = opal_hwloc_base_set_binding_policy(&opal_hwloc_binding_policy,
@@ -245,9 +253,47 @@ static int opal_hwloc_base_open(mca_base_open_flag_t flags)
 
 static opal_tsd_tracked_key_t *print_tsd_key = NULL;
 
+static void opal_hwloc_base_destroy_hash(void) {
+
+    int rc;
+    opal_hash_table_t *data;
+    uint64_t key;
+    void *ptr;
+
+    rc = opal_hash_table_get_first_key_uint64(&opal_hwloc_base_hash, &key, (void **)&data, &ptr);
+    if (OPAL_SUCCESS == rc) {
+        do {
+            if (NULL != data) {
+                free(data);
+            }
+            rc = opal_hash_table_get_next_key_uint64 (&opal_hwloc_base_hash, &key,
+                                               (void **) &data, ptr, &ptr);
+        } while (OPAL_SUCCESS == rc);
+    }
+}
+
+static void opal_hwloc_base_free_shmem(void) {
+
+#if HWLOC_API_VERSION >= 0x20000
+    if (NULL != opal_hwloc_shmemfile) {
+        opal_output(0, "Unlinking and freeing shmem");
+        unlink(opal_hwloc_shmemfile);
+        free(opal_hwloc_shmemfile);
+        opal_hwloc_shmemfile = NULL;
+    }
+    if (0 <= opal_hwloc_shmemfd) {
+        opal_output(0, "Closing shmem fd");
+        close(opal_hwloc_shmemfd);
+        opal_hwloc_shmemfd = -1;
+    }
+#endif
+
+}
+
 static int opal_hwloc_base_close(void)
 {
     int ret;
+    opal_output(0, "Closing hwloc.");
     if (!opal_hwloc_base_inited) {
         return OPAL_SUCCESS;
     }
@@ -272,14 +318,19 @@ static int opal_hwloc_base_close(void)
     }
 
     /* destroy the topology */
-    if (NULL != opal_hwloc_topology) {
-        opal_hwloc_base_free_topology(opal_hwloc_topology);
-        opal_hwloc_topology = NULL;
+    if (NULL != opal_hwloc_topology_internal) {
+        opal_hwloc_base_free_topology(opal_hwloc_topology_internal);
+        opal_hwloc_topology_internal = NULL;
     }
 
-
     /* All done */
+    opal_hwloc_base_destroy_hash();
+    OBJ_DESTRUCT(&opal_hwloc_base_hash);
+    free(opal_hwloc_topology_internal);
+    opal_hwloc_base_free_shmem();
+
     opal_hwloc_base_inited = false;
+
     return OPAL_SUCCESS;
 }
 
@@ -554,3 +605,6 @@ int opal_hwloc_base_set_binding_policy(opal_binding_policy_t *policy, char *spec
     *policy = tmp;
     return OPAL_SUCCESS;
 }
+
+MCA_BASE_FRAMEWORK_DECLARE(opal, hwloc, NULL, opal_hwloc_base_register, opal_hwloc_base_open, opal_hwloc_base_close,
+                           mca_hwloc_base_static_components, 0);

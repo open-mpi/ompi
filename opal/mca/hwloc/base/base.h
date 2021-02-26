@@ -17,6 +17,7 @@
 #include "opal_config.h"
 
 #include "opal/mca/hwloc/hwloc-internal.h"
+#include "opal/class/opal_hash_table.h"
 
 #if HWLOC_API_VERSION < 0x20000
 #define HWLOC_OBJ_L3CACHE HWLOC_OBJ_CACHE
@@ -67,6 +68,30 @@ OPAL_DECLSPEC char* opal_hwloc_base_print_locality(opal_hwloc_locality_t localit
 OPAL_DECLSPEC extern char *opal_hwloc_base_cpu_list;
 OPAL_DECLSPEC extern hwloc_cpuset_t opal_hwloc_base_given_cpus;
 OPAL_DECLSPEC extern char *opal_hwloc_base_topo_file;
+OPAL_DECLSPEC extern opal_hash_table_t opal_hwloc_base_hash;
+
+struct opal_hwloc_topology_s {
+
+  hwloc_topology_t topo;
+  void *userdata;
+
+};
+
+struct opal_hwloc_obj_s {
+
+  hwloc_obj_t obj;
+  void *userdata;
+
+};
+
+typedef struct opal_hwloc_topology_s * opal_hwloc_topology_t;
+typedef struct opal_hwloc_obj_s * opal_hwloc_obj_t;
+
+OPAL_DECLSPEC extern opal_hwloc_topology_t opal_hwloc_topology_internal;
+OPAL_DECLSPEC extern char *opal_hwloc_shmemfile;
+OPAL_DECLSPEC extern int opal_hwloc_shmemfd;
+
+opal_hwloc_obj_t opal_hwloc_get_root_obj(opal_hwloc_topology_t top);
 
 /* convenience macro for debugging */
 #define OPAL_HWLOC_SHOW_BINDING(n, v, t)                                \
@@ -164,12 +189,12 @@ OPAL_DECLSPEC int opal_hwloc_base_get_topology(void);
  */
 OPAL_DECLSPEC int opal_hwloc_base_set_topology(char *topofile);
 
-OPAL_DECLSPEC int opal_hwloc_base_filter_cpus(hwloc_topology_t topo);
+OPAL_DECLSPEC int opal_hwloc_base_filter_cpus(opal_hwloc_topology_t topo);
 
 /**
  * Free the hwloc topology.
  */
-OPAL_DECLSPEC void opal_hwloc_base_free_topology(hwloc_topology_t topo);
+OPAL_DECLSPEC void opal_hwloc_base_free_topology(opal_hwloc_topology_t topo);
 OPAL_DECLSPEC unsigned int opal_hwloc_base_get_nbobjs_by_type(hwloc_topology_t topo,
                                                               hwloc_obj_type_t target,
                                                               unsigned cache_level,
@@ -237,7 +262,7 @@ OPAL_DECLSPEC int opal_hwloc_base_cset2mapstr(char *str, int len,
                                               hwloc_cpuset_t cpuset);
 
 /* get the hwloc object that corresponds to the given processor id  and type */
-OPAL_DECLSPEC hwloc_obj_t opal_hwloc_base_get_pu(hwloc_topology_t topo,
+OPAL_DECLSPEC opal_hwloc_obj_t opal_hwloc_base_get_pu(opal_hwloc_topology_t topo,
                                                  int lid,
                                                  opal_hwloc_resource_type_t rtype);
 
