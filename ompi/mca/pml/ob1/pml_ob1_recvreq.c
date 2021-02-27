@@ -1308,7 +1308,7 @@ void mca_pml_ob1_recv_req_start(mca_pml_ob1_recv_request_t *req)
                 req->req_recv.req_base.req_peer, req->req_recv.req_base.req_tag, comm_ptr->c_contextid));
             req->req_recv.req_base.req_ompi.req_status.MPI_ERROR = ompi_comm_is_revoked(comm_ptr)? MPI_ERR_REVOKED: MPI_ERR_PROC_FAILED;
             recv_request_pml_complete( req );
-            PERUSE_TRACE_COMM_EVENT(PERSUSE_COMM_SEARCH_UNEX_Q_END,
+            PERUSE_TRACE_COMM_EVENT(PERUSE_COMM_SEARCH_UNEX_Q_END,
                                     &(req->req_recv.req_base), PERUSE_RECV);
             OB1_MATCHING_UNLOCK(&ob1_comm->matching_lock);
             return;
