@@ -154,7 +154,7 @@ int ompi_proc_complete_init_single (ompi_proc_t *proc)
         } else {
             ui32ptr = &(proc->super.proc_arch);
             OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, "OMPI_ARCH", &proc->super.proc_name,
-                                           (void**)&ui32ptr, OPAL_UINT32);
+                                           (void**)&ui32ptr, PMIX_UINT32);
             if (OPAL_SUCCESS == ret) {
                 /* if arch is different than mine, create a new convertor for this proc */
                 if (proc->super.proc_arch != opal_local_arch) {
@@ -267,7 +267,7 @@ int ompi_proc_init(void)
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
     /* add our arch to the modex */
     OPAL_MODEX_SEND_VALUE(ret, PMIX_GLOBAL,
-                          "OMPI_ARCH", &opal_local_arch, OPAL_UINT32);
+                          "OMPI_ARCH", &opal_local_arch, PMIX_UINT32);
     if (OPAL_SUCCESS != ret) {
         return ret;
     }
