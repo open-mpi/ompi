@@ -32,21 +32,6 @@
 #include "ompi/mca/fs/base/base.h"
 #include "ompi/mca/fs/lustre/fs_lustre.h"
 
-#ifdef HAVE_SYS_STATFS_H
-#include <sys/statfs.h> /* or <sys/vfs.h> */
-#endif
-#ifdef HAVE_SYS_PARAM_H
-#include <sys/param.h>
-#endif
-#ifdef HAVE_SYS_MOUNT_H
-#include <sys/mount.h>
-#endif
-#ifdef HAVE_SYS_STAT_H
-#include <sys/stat.h>
-#endif
-
-#include <sys/ioctl.h>
-
 /*
  * *******************************************************************
  * ************************ actions structure ************************
