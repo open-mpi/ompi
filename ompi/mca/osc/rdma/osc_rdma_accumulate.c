@@ -480,9 +480,6 @@ static int ompi_osc_rdma_fetch_and_op_atomic (ompi_osc_rdma_sync_t *sync, const 
     }
 
     btl_op = ompi_osc_rdma_op_mapping[op->op_type];
-    if (0 == btl_op) {
-        return OMPI_ERR_NOT_SUPPORTED;
-    }
 
     flags = (4 == extent) ? MCA_BTL_ATOMIC_FLAG_32BIT : 0;
     if (OMPI_DATATYPE_FLAG_DATA_FLOAT & dt->super.flags) {
