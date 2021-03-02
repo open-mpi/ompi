@@ -132,6 +132,8 @@ static inline int ompi_osc_rdma_gacc_contig (ompi_osc_rdma_sync_t *sync, const v
     char *ptr = NULL;
     int ret;
 
+    request->len = target_datatype->super.size * target_count;
+
     OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "initiating accumulate on contiguous region of %lu bytes to remote address %" PRIx64
                      ", sync %p", len, target_address, (void *) sync);
 
@@ -366,7 +368,7 @@ static inline int ompi_osc_rdma_gacc_master (ompi_osc_rdma_sync_t *sync, const v
             }
 
             ret = ompi_osc_rdma_gacc_contig (sync, source_iovec[source_iov_index].iov_base, acc_len / target_primitive->super.size,
-                                             target_primitive, NULL, 0, NULL, &result_convertor, peer,
+                                             target_primitive, NULL, 0, NULL, result_datatype ? &result_convertor : NULL, peer,
                                              (uint64_t) (intptr_t) target_iovec[target_iov_index].iov_base, target_handle,
                                              acc_len / target_primitive->super.size, target_primitive, op, subreq);
             if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
