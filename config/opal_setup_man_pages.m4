@@ -67,9 +67,10 @@ AC_DEFUN([_OPAL_SETUP_PANDOC],[
     AS_IF([test -z "$PANDOC" || test -n "`echo $PANDOC | $GREP missing`"],
           [AS_IF([test ! -f "$srcdir/ompi/mpi/man/man5/MPI_T.5"],
                  [AC_MSG_WARN([*** Could not find a suitable pandoc on your system.])
-                  AC_MSG_WARN([*** You need pandoc >=$min_major_version.$min_minor_version to build Open MPI man pages.])
+                  AC_MSG_WARN([*** You need pandoc >=$min_major_version.$min_minor_version to build Open MPI with man pages.])
+                  AC_MSG_WARN([*** If no man pages are needed, rerun configure with option '--disable-manpages'.])
+                  AC_MSG_WARN([*** NOTE: If you are building from a tarball downloaded from www.open-mpi.org, you do not need Pandoc.])
                   AC_MSG_WARN([*** See pandoc.org.])
-                  AC_MSG_WARN([*** NOTE: If you are building from a tarball downloaded from www.open-mpi.org, you do not need Pandoc])
                   AC_MSG_ERROR([Cannot continue])
                  ])
            ])
