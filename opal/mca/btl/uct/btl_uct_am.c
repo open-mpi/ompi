@@ -109,7 +109,7 @@ struct mca_btl_base_descriptor_t *mca_btl_uct_prepare_src (mca_btl_base_module_t
             frag->base.des_segment_count = 2;
         } else {
             frag->segments[0].seg_len = total_size;
-            memcpy ((void *)((intptr_t) frag->segments[1].seg_addr.pval + reserve), data_ptr, *size);
+            memcpy ((void *)((intptr_t) frag->segments[0].seg_addr.pval + reserve), data_ptr, *size);
             frag->base.des_segment_count = 1;
         }
     }
