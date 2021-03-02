@@ -10,28 +10,30 @@
 
 #ifndef USE_MPI_VERSIONS
 
+#include "mpi-io/glue/openmpi/mpio_wrappers.h"
+
 #undef MPI_Abort
 #define MPI_Abort PMPI_Abort
 #undef MPI_Allgather
-#define MPI_Allgather PMPI_Allgather
+#define MPI_Allgather MPIW_Allgather
 #undef MPI_Allgatherv
 #define MPI_Allgatherv PMPI_Allgatherv
 #undef MPI_Allreduce
-#define MPI_Allreduce PMPI_Allreduce
+#define MPI_Allreduce MPIW_Allreduce
 #undef MPI_Alltoall
-#define MPI_Alltoall PMPI_Alltoall
+#define MPI_Alltoall MPIW_Alltoall
 #undef MPI_Alltoallv
 #define MPI_Alltoallv PMPI_Alltoallv
 #undef MPI_Alltoallw
-#define MPI_Alltoallw PMPI_Alltoallw
+#define MPI_Alltoallw MPIW_Alltoallw
 #undef MPI_Attr_delete
 #define MPI_Attr_delete PMPI_Attr_delete
 #undef MPI_Attr_get
 #define MPI_Attr_get PMPI_Attr_get
 #undef MPI_Barrier
-#define MPI_Barrier PMPI_Barrier
+#define MPI_Barrier MPIW_Barrier
 #undef MPI_Bcast
-#define MPI_Bcast PMPI_Bcast
+#define MPI_Bcast MPIW_Bcast
 #undef MPI_Bsend
 #define MPI_Bsend PMPI_Bsend
 #undef MPI_Bsend_init
@@ -105,9 +107,9 @@
 #undef MPI_Finalize
 #define MPI_Finalize PMPI_Finalize
 #undef MPI_Gather
-#define MPI_Gather PMPI_Gather
+#define MPI_Gather MPIW_Gather
 #undef MPI_Gatherv
-#define MPI_Gatherv PMPI_Gatherv
+#define MPI_Gatherv MPIW_Gatherv
 #undef MPI_Get_address
 #define MPI_Get_address PMPI_Get_address
 #undef MPI_Get_count
@@ -191,7 +193,7 @@
 #undef MPI_Probe
 #define MPI_Probe PMPI_Probe
 #undef MPI_Recv
-#define MPI_Recv PMPI_Recv
+#define MPI_Recv MPIW_Recv
 #undef MPI_Recv_init
 #define MPI_Recv_init PMPI_Recv_init
 #undef MPI_Reduce
@@ -213,7 +215,7 @@
 #undef MPI_Scatterv
 #define MPI_Scatterv PMPI_Scatterv
 #undef MPI_Send
-#define MPI_Send PMPI_Send
+#define MPI_Send MPIW_Send
 #undef MPI_Send_init
 #define MPI_Send_init PMPI_Send_init
 #undef MPI_Sendrecv
@@ -281,11 +283,11 @@
 #undef MPI_Unpack
 #define MPI_Unpack PMPI_Unpack
 #undef MPI_Wait
-#define MPI_Wait PMPI_Wait
+#define MPI_Wait MPIW_Wait
 #undef MPI_Waitall
-#define MPI_Waitall PMPI_Waitall
+#define MPI_Waitall MPIW_Waitall
 #undef MPI_Waitany
-#define MPI_Waitany PMPI_Waitany
+#define MPI_Waitany MPIW_Waitany
 #undef MPI_Waitsome
 #define MPI_Waitsome PMPI_Waitsome
 #undef MPI_Wtick
