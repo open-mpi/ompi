@@ -111,6 +111,9 @@ static int han_close(void)
     return OMPI_SUCCESS;
 }
 
+/*
+ * @return true if the collective has a simple version that does not use tasks.
+ */
 static bool is_simple_implemented(COLLTYPE_T coll)
 {
     switch(coll) {
@@ -119,12 +122,16 @@ static bool is_simple_implemented(COLLTYPE_T coll)
         case BCAST:
         case GATHER:
         case REDUCE:
+        case SCATTER:
             return true;
         default:
             return false;
     }
 }
 
+/*
+ * Stringifier for topological level
+ */
 const char* mca_coll_han_topo_lvl_to_str(TOPO_LVL_T topo_lvl)
 {
     switch(topo_lvl) {
@@ -271,10 +278,16 @@ static int han_register(void)
                                            "whether we need reproducible results "
                                            "(enabling this disables optimisations using topology)"
                                            "0 disable 1 enable, default 0",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
                                            OPAL_INFO_LVL_3,
                                            MCA_BASE_VAR_SCOPE_READONLY, &cs->han_reproducible);
-    /* Simple algorithms MCA parameters */
+
+    /*
+     * Simple algorithms MCA parameters :
+     * using simple algorithms will just perform hierarchical communications.
+     * By default communications are also splitted into tasks
+     * to handle thread noise
+     */
     for(coll = 0 ; coll < COLLCOUNT ; coll++) {
         cs->use_simple_algorithm[coll] = false;
         if(is_simple_implemented(coll)) {
@@ -294,6 +307,7 @@ static int han_register(void)
     /* Dynamic rules MCA parameters */
     memset(cs->mca_rules, 0,
            COLLCOUNT * (GLOBAL_COMMUNICATOR+1) * sizeof(COMPONENT_T));
+
     for(coll = 0; coll < COLLCOUNT; coll++) {
         if(!mca_coll_han_is_coll_dynamic_implemented(coll)) {
             continue;
@@ -304,7 +318,15 @@ static int han_register(void)
         cs->mca_rules[coll][INTRA_NODE] = TUNED;
         cs->mca_rules[coll][INTER_NODE] = BASIC;
         cs->mca_rules[coll][GLOBAL_COMMUNICATOR] = HAN;
+    }
+    /* Specific default values */
+    cs->mca_rules[BARRIER][INTER_NODE] = TUNED;
 
+    /* Dynamic rule MCA var registration */
+    for(coll = 0; coll < COLLCOUNT; coll++) {
+        if(!mca_coll_han_is_coll_dynamic_implemented(coll)) {
+            continue;
+        }
         for(topo_lvl = 0; topo_lvl < NB_TOPO_LVL; topo_lvl++) {
 
             snprintf(param_name, sizeof(param_name), "%s_dynamic_%s_module",

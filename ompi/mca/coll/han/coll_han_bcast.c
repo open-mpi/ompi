@@ -11,6 +11,12 @@
  * $HEADER$
  */
 
+/**
+ * @file
+ *
+ * This files contains all the hierarchical implementations of bcast
+ */
+
 #include "coll_han.h"
 #include "ompi/mca/coll/base/coll_base_functions.h"
 #include "ompi/mca/coll/base/coll_tags.h"
@@ -71,7 +77,7 @@ mca_coll_han_bcast_intra(void *buff,
 
     /* Create the subcommunicators */
     err = mca_coll_han_comm_create(comm, han_module);
-    if( OMPI_SUCCESS != err ) {  /* Let's hope the error is consistently returned across the entire communicator */
+    if( OMPI_SUCCESS != err ) {
         OPAL_OUTPUT_VERBOSE((30, mca_coll_han_component.han_output,
                              "han cannot handle bcast with this communicator. Fall back on another component\n"));
         /* Put back the fallback collective support and call it once. All
@@ -211,6 +217,10 @@ int mca_coll_han_bcast_t1_task(void *task_args)
     return OMPI_SUCCESS;
 }
 
+/*
+ * Short implementation of bcast that only does hierarchical
+ * communications without tasks.
+ */
 int
 mca_coll_han_bcast_intra_simple(void *buff,
                                 int count,
@@ -229,7 +239,7 @@ mca_coll_han_bcast_intra_simple(void *buff,
 
     /* Create the subcommunicators */
     err = mca_coll_han_comm_create_new(comm, han_module);
-    if( OMPI_SUCCESS != err ) {  /* Let's hope the error is consistently returned across the entire communicator */
+    if( OMPI_SUCCESS != err ) {
         OPAL_OUTPUT_VERBOSE((30, mca_coll_han_component.han_output,
                              "han cannot handle bcast with this communicator. Fall back on another component\n"));
         /* Put back the fallback collective support and call it once. All
