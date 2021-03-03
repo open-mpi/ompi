@@ -1,4 +1,4 @@
-name: Git commit checker
+name: GitHub Action CI
 
 on:
     pull_request:
@@ -11,6 +11,7 @@ on:
 
 jobs:
     ci:
+        name: Git commit checker
         runs-on: ubuntu-latest
         steps:
           - name: Check out the code
