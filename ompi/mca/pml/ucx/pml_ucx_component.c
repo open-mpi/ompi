@@ -92,13 +92,26 @@ static mca_pml_base_module_t*
 mca_pml_ucx_component_init(int* priority, bool enable_progress_threads,
                            bool enable_mpi_threads)
 {
+    opal_common_ucx_support_level_t support_level;
     int ret;
+
+    support_level = opal_common_ucx_support_level(ompi_pml_ucx.ucp_context);
+    if (support_level == OPAL_COMMON_UCX_SUPPORT_NONE) {
+        return NULL;
+    }
 
     if ( (ret = mca_pml_ucx_init(enable_mpi_threads)) != 0) {
         return NULL;
     }
 
-    *priority = ompi_pml_ucx.priority;
+    /*
+     * If found supported devices - set to the configured (high) priority.
+     * Otherwise - Found only supported transports (which could be exposed by
+     *             unsupported devices), so set a priority lower than ob1.
+     */
+    *priority = (support_level == OPAL_COMMON_UCX_SUPPORT_DEVICE) ?
+                ompi_pml_ucx.priority : 19;
+    PML_UCX_VERBOSE(2, "returning priority %d", *priority);
     return &ompi_pml_ucx.super;
 }
 
