@@ -43,6 +43,10 @@ AC_DEFUN([OMPI_CHECK_PSM2],[
 				    [Search for PSM (Intel PSM2) libraries in DIR])])
 	OPAL_CHECK_WITHDIR([psm2-libdir], [$with_psm2_libdir], [libpsm2.*])
 
+        AC_ARG_ENABLE([psm2-version-check],
+                  [AC_HELP_STRING([--disable-psm2-version-check],
+                                  [Disable PSM2 version checking.  Not recommended to disable. (default: enabled)])])
+
 	ompi_check_psm2_$1_save_CPPFLAGS="$CPPFLAGS"
 	ompi_check_psm2_$1_save_LDFLAGS="$LDFLAGS"
 	ompi_check_psm2_$1_save_LIBS="$LIBS"
