@@ -1101,7 +1101,9 @@ static void mca_btl_tcp_endpoint_send_handler(int sd, short flags, void* user)
             /* if required - update request status and release fragment */
             OPAL_THREAD_UNLOCK(&btl_endpoint->endpoint_send_lock);
             assert( frag->base.des_flags & MCA_BTL_DES_SEND_ALWAYS_CALLBACK );
-            frag->base.des_cbfunc(&frag->btl->super, frag->endpoint, &frag->base, frag->rc);
+            if (NULL != frag->base.des_cbfunc) {
+                frag->base.des_cbfunc(&frag->btl->super, frag->endpoint, &frag->base, frag->rc);
+            }
             if( btl_ownership ) {
                 MCA_BTL_TCP_FRAG_RETURN(frag);
             }
