@@ -51,7 +51,7 @@
 #include "opal/align.h"
 #include "opal/util/sys_limits.h"
 #if OPAL_CUDA_SUPPORT
-#include "opal/datatype/opal_datatype_cuda.h"
+#include "opal/mca/common/cuda/common_cuda.h"
 #endif /* OPAL_CUDA_SUPPORT */
 #include "opal/util/info_subscriber.h"
 

@@ -22,6 +22,31 @@
 # $HEADER$
 #
 
+if OPAL_cuda_support
+SUBDIRS = \
+	include \
+        mca/common/cuda \
+        datatype \
+        etc \
+        util \
+	mca/base \
+	$(MCA_opal_FRAMEWORKS_SUBDIRS) \
+	$(MCA_opal_FRAMEWORK_COMPONENT_STATIC_SUBDIRS) \
+        . \
+	$(MCA_opal_FRAMEWORK_COMPONENT_DSO_SUBDIRS)
+# libltdl is included by variable because if --disable-dlopen was
+# used, there will be no generated Makefile in that directory (and
+# therefore make distclean will fail).
+DIST_SUBDIRS = \
+	include \
+        mca/common/cuda \
+        datatype \
+        etc \
+	util \
+	mca/base \
+	$(MCA_opal_FRAMEWORKS_SUBDIRS) \
+	$(MCA_opal_FRAMEWORK_COMPONENT_ALL_SUBDIRS)
+else
 SUBDIRS = \
 	include \
         datatype \
@@ -32,7 +57,6 @@ SUBDIRS = \
 	$(MCA_opal_FRAMEWORK_COMPONENT_STATIC_SUBDIRS) \
         . \
 	$(MCA_opal_FRAMEWORK_COMPONENT_DSO_SUBDIRS)
-
 # libltdl is included by variable because if --disable-dlopen was
 # used, there will be no generated Makefile in that directory (and
 # therefore make distclean will fail).
@@ -44,9 +68,9 @@ DIST_SUBDIRS = \
 	mca/base \
 	$(MCA_opal_FRAMEWORKS_SUBDIRS) \
 	$(MCA_opal_FRAMEWORK_COMPONENT_ALL_SUBDIRS)
+endif
 
 # Build the main OPAL library
-
 lib_LTLIBRARIES = lib@OPAL_LIB_PREFIX@open-pal.la
 lib@OPAL_LIB_PREFIX@open_pal_la_SOURCES =
 lib@OPAL_LIB_PREFIX@open_pal_la_LIBADD = \
@@ -62,6 +86,12 @@ lib@OPAL_LIB_PREFIX@open_pal_la_DEPENDENCIES = \
         mca/base/libmca_base.la \
         util/libopalutil.la \
         $(MCA_opal_FRAMEWORK_LIBS)
+if OPAL_cuda_support
+lib@OPAL_LIB_PREFIX@open_pal_la_LIBADD += \
+        mca/common/cuda/libmca_common_cuda.la
+lib@OPAL_LIB_PREFIX@open_pal_la_DEPENDENCIES += \
+        mca/common/cuda/libmca_common_cuda.la
+endif
 lib@OPAL_LIB_PREFIX@open_pal_la_LDFLAGS = -version-info $(libopen_pal_so_version) \
 	$(opal_libevent_LDFLAGS) \
 	$(opal_hwloc_LDFLAGS) \

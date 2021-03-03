@@ -43,7 +43,6 @@
 #include "ompi/mca/bml/base/base.h"
 
 #if OPAL_CUDA_SUPPORT
-#include "opal/datatype/opal_datatype_cuda.h"
 #include "opal/mca/common/cuda/common_cuda.h"
 #endif /* OPAL_CUDA_SUPPORT */
 

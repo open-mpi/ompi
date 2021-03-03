@@ -78,8 +78,3 @@ opaldir = $(opalincludedir)/$(subdir)
 opal_HEADERS = $(headers)
 endif
 
-# If we have cuda support, modify file list and flags
-if OPAL_cuda_support
-libdatatype_la_SOURCES += opal_datatype_cuda.c
-headers += opal_datatype_cuda.h
-endif

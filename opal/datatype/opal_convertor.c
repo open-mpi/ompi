@@ -39,7 +39,7 @@
 #include "opal/datatype/opal_datatype_prototypes.h"
 #include "opal/datatype/opal_convertor_internal.h"
 #if OPAL_CUDA_SUPPORT
-#include "opal/datatype/opal_datatype_cuda.h"
+#include "opal/mca/common/cuda/common_cuda.h"
 #define MEMCPY_CUDA( DST, SRC, BLENGTH, CONVERTOR ) \
     CONVERTOR->cbmemcpy( (DST), (SRC), (BLENGTH), (CONVERTOR) )
 #endif

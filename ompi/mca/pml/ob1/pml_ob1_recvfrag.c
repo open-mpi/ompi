@@ -50,7 +50,6 @@
 #include "pml_ob1_sendreq.h"
 #include "pml_ob1_hdr.h"
 #if OPAL_CUDA_SUPPORT
-#include "opal/datatype/opal_datatype_cuda.h"
 #include "opal/mca/common/cuda/common_cuda.h"
 #endif /* OPAL_CUDA_SUPPORT */
 
