@@ -40,6 +40,10 @@ AC_DEFUN([OMPI_CHECK_PSM2],[
 				    [Search for PSM (Intel PSM2) libraries in DIR])])
 	OPAL_CHECK_WITHDIR([psm2-libdir], [$with_psm2_libdir], [libpsm2.*])
 
+        AC_ARG_ENABLE([psm2-version-check],
+                  [AC_HELP_STRING([--disable-psm2-version-check],
+                                  [Disable PSM2 version checking.  Not recommended to disable. (default: enabled)])])
+
 	ompi_check_psm2_$1_save_CPPFLAGS="$CPPFLAGS"
 	ompi_check_psm2_$1_save_LDFLAGS="$LDFLAGS"
 	ompi_check_psm2_$1_save_LIBS="$LIBS"
@@ -78,10 +82,13 @@ AC_DEFUN([OMPI_CHECK_PSM2],[
 
         AS_IF([test "$ompi_check_psm2_happy" = "yes"],
               [AC_CHECK_DECL([PSM2_LIB_REFCOUNT_CAP],
-                        [],
-                        [AC_MSG_WARN([PSM2 needs to be version 11.2.173 or later. Disabling MTL.])
-                         ompi_check_psm2_happy="no"],
-                        [#include <psm2.h>])
+                             [AC_DEFINE([HAVE_PSM2_LIB_REFCOUNT_CAP], [1],
+                                        [have PSM2_LIB_REFCOUNT_CAP in psm2.h])],
+                             [AS_IF([test "x$enable_psm2_version_check" != "xno"],
+                                    [ompi_check_psm2_happy="no"
+                                     AC_MSG_WARN([PSM2 needs to be version 11.2.173 or later. Disabling MTL.])]
+                             )],
+                             [#include <psm2.h>])
               ])
 
         OPAL_SUMMARY_ADD([[Transports]],[[Intel Omnipath (PSM2)]],[$1],[$ompi_check_psm2_happy])
