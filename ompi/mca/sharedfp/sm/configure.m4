@@ -30,14 +30,16 @@ AC_DEFUN([MCA_ompi_sharedfp_sm_CONFIG],[
                     [dnl requires potentially pthread library
                      OPAL_SEARCH_LIBS_COMPONENT([sharedfp_sm],
                                     [sem_open], [pthread],
-                                    [sharedfp_sm_happy="yes"])])
-
+                                    [AC_CHECK_FUNCS([sem_open],
+                                                    [sharedfp_sm_happy="yes"],[])]
+                                                )])
     AC_CHECK_HEADER([semaphore.h],
                     [dnl requires potentially pthread library
                      OPAL_SEARCH_LIBS_COMPONENT([sharedfp_sm],
                                     [sem_init], [pthread],
-                                    [sharedfp_sm_happy="yes"])])
-
+                                    [AC_CHECK_FUNCS([sem_init],
+                                                    [sharedfp_sm_happy="yes"],[])]
+                                                )])
     AS_IF([test "$sharedfp_sm_happy" = "yes"],
           [$1],
           [$2])
