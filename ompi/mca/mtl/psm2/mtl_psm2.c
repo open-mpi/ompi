@@ -250,14 +250,6 @@ ompi_mtl_psm2_connect_error_msg(psm2_error_t err)
     }
 }
 
-#ifndef min
-#  define min(a,b) ((a) < (b) ? (a) : (b))
-#endif
-
-#ifndef max
-#  define max(a,b) ((a) > (b) ? (a) : (b))
-#endif
-
 int
 ompi_mtl_psm2_add_procs(struct mca_mtl_base_module_t *mtl,
                       size_t nprocs,
@@ -312,7 +304,7 @@ ompi_mtl_psm2_add_procs(struct mca_mtl_base_module_t *mtl,
 	mask_in[i] = 1;
     }
 
-    timeout_in_secs = max(ompi_mtl_psm2.connect_timeout, 0.5 * nprocs);
+    timeout_in_secs = opal_max(ompi_mtl_psm2.connect_timeout, 0.5 * nprocs);
 
     psm2_error_register_handler(ompi_mtl_psm2.ep, PSM2_ERRHANDLER_NOP);
 
