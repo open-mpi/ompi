@@ -1541,7 +1541,7 @@ static void ADIOI_W_Exchange_data_alltoallv(ADIO_File fd, const void *buf, char 
         for (i = 0; i < nprocs; i++) {
             if (send_size[i]) {
                 sbuf_ptr = all_send_buf + sdispls[i];
-                memcpy(sbuf_ptr, buf + buf_idx[i], send_size[i]);
+                memcpy(sbuf_ptr, (char *) buf + buf_idx[i], send_size[i]);
                 buf_idx[i] += send_size[i];
             }
         }
