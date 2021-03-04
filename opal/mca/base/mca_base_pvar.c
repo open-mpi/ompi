@@ -25,15 +25,13 @@
 
 #include "opal/class/opal_pointer_array.h"
 #include "opal/class/opal_hash_table.h"
+#include "opal/util/minmax.h"
 #include "opal/util/printf.h"
 
 static opal_hash_table_t mca_base_pvar_index_hash;
 static opal_pointer_array_t registered_pvars;
 static bool mca_base_pvar_initialized = false;
 static int pvar_count = 0;
-
-#define min(a,b) ((a) < (b) ? (a) : (b))
-#define max(a,b) ((a) > (b) ? (a) : (b))
 
 static int mca_base_pvar_get_internal (int index, mca_base_pvar_t **pvar, bool invalidok);
 
@@ -610,20 +608,20 @@ int mca_base_pvar_handle_update (mca_base_pvar_handle_t *handle)
                 if (MCA_BASE_PVAR_CLASS_LOWWATERMARK == handle->pvar->var_class) {
                     switch (handle->pvar->type) {
                     case MCA_BASE_VAR_TYPE_UNSIGNED_INT:
-                        ((unsigned *) handle->current_value)[i] = min(((unsigned *) handle->tmp_value)[i],
-                                                                      ((unsigned *) handle->current_value)[i]);
+                        ((unsigned *) handle->current_value)[i] = opal_min(((unsigned *) handle->tmp_value)[i],
+                                                                           ((unsigned *) handle->current_value)[i]);
                         break;
                     case MCA_BASE_VAR_TYPE_UNSIGNED_LONG:
-                        ((unsigned long *) handle->current_value)[i] = min(((unsigned long *) handle->tmp_value)[i],
-                                                                           ((unsigned long *) handle->current_value)[i]);
+                        ((unsigned long *) handle->current_value)[i] = opal_min(((unsigned long *) handle->tmp_value)[i],
+                                                                                ((unsigned long *) handle->current_value)[i]);
                         break;
                     case MCA_BASE_VAR_TYPE_UNSIGNED_LONG_LONG:
-                        ((unsigned long long *) handle->current_value)[i] = min(((unsigned long long *) handle->tmp_value)[i],
-                                                                                ((unsigned long long *) handle->current_value)[i]);
+                        ((unsigned long long *) handle->current_value)[i] = opal_min(((unsigned long long *) handle->tmp_value)[i],
+                                                                                     ((unsigned long long *) handle->current_value)[i]);
                         break;
                     case MCA_BASE_VAR_TYPE_DOUBLE:
-                        ((double *) handle->current_value)[i] = min(((double *) handle->tmp_value)[i],
-                                                                    ((double *) handle->current_value)[i]);
+                        ((double *) handle->current_value)[i] = opal_min(((double *) handle->tmp_value)[i],
+                                                                         ((double *) handle->current_value)[i]);
                         break;
                     default:
                         /* shouldn't happen */
@@ -632,20 +630,20 @@ int mca_base_pvar_handle_update (mca_base_pvar_handle_t *handle)
                 } else {
                     switch (handle->pvar->type) {
                     case MCA_BASE_VAR_TYPE_UNSIGNED_INT:
-                        ((unsigned *) handle->current_value)[i] = max(((unsigned *) handle->tmp_value)[i],
-                                                                      ((unsigned *) handle->current_value)[i]);
+                        ((unsigned *) handle->current_value)[i] = opal_max(((unsigned *) handle->tmp_value)[i],
+                                                                           ((unsigned *) handle->current_value)[i]);
                         break;
                     case MCA_BASE_VAR_TYPE_UNSIGNED_LONG:
-                        ((unsigned long *) handle->current_value)[i] = max(((unsigned long *) handle->tmp_value)[i],
-                                                                           ((unsigned long *) handle->current_value)[i]);
+                        ((unsigned long *) handle->current_value)[i] = opal_max(((unsigned long *) handle->tmp_value)[i],
+                                                                                ((unsigned long *) handle->current_value)[i]);
                         break;
                     case MCA_BASE_VAR_TYPE_UNSIGNED_LONG_LONG:
-                        ((unsigned long long *) handle->current_value)[i] = max(((unsigned long long *) handle->tmp_value)[i],
-                                                                                ((unsigned long long *) handle->current_value)[i]);
+                        ((unsigned long long *) handle->current_value)[i] = opal_max(((unsigned long long *) handle->tmp_value)[i],
+                                                                                     ((unsigned long long *) handle->current_value)[i]);
                         break;
                     case MCA_BASE_VAR_TYPE_DOUBLE:
-                        ((double *) handle->current_value)[i] = max(((double *) handle->tmp_value)[i],
-                                                                    ((double *) handle->current_value)[i]);
+                        ((double *) handle->current_value)[i] = opal_max(((double *) handle->tmp_value)[i],
+                                                                         ((double *) handle->current_value)[i]);
                         break;
                     default:
                         /* shouldn't happen */
