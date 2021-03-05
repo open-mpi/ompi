@@ -19,6 +19,7 @@ dnl Copyright (c) 2019-2020 Intel, Inc.  All rights reserved.
 dnl Copyright (c) 2020      Amazon.com, Inc. or its affiliates.
 dnl                         All Rights reserved.
 dnl Copyright (c) 2021      Nanook Consulting.  All rights reserved.
+dnl Copyright (c) 2021      IBM Corporation.  All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -51,6 +52,9 @@ AC_DEFUN([OMPI_SETUP_PRRTE],[
         [AC_ARG_WITH([prrte],
             [AC_HELP_STRING([--with-prrte(=DIR)],
                            [Build PRRTE support.  DIR can take one of three values:  "external", "no", or a valid directory name.  "external" forces Open MPI to use an external installation of PRRTE.  Supplying a valid directory name also forces Open MPI to use an external installation of PRRTE, and adds DIR/include, DIR/lib, and DIR/lib64 to the search path for headers and libraries. If no argument is specified, Open MPI will search default locations for PRRTE and disable creating mpirun symlinks if one is not found.])])])
+
+    m4_ifdef([package_prrte],
+         [OMPI_PRRTE_ADD_ARGS])
 
     # clean up $with_prrte so that it contains only a path or empty
     # string.  To determine internal or external preferences, use

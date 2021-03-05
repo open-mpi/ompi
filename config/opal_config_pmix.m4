@@ -16,7 +16,7 @@ dnl                         reserved.
 dnl Copyright (c) 2014-2020 Intel, Inc.  All rights reserved.
 dnl Copyright (c) 2014-2021 Research Organization for Information Science
 dnl                         and Technology (RIST).  All rights reserved.
-dnl Copyright (c) 2016      IBM Corporation.  All rights reserved.
+dnl Copyright (c) 2016-2021 IBM Corporation.  All rights reserved.
 dnl Copyright (c) 2020      Triad National Security, LLC. All rights
 dnl                         reserved.
 dnl Copyright (c) 2020      Amazon.com, Inc. or its affiliates.  All Rights
@@ -73,6 +73,8 @@ AC_DEFUN([OPAL_CONFIG_PMIX], [
 	 internal_pmix_args="--without-tests-examples --disable-pmix-binaries --disable-pmix-backward-compatibility --disable-visibility"
          internal_pmix_libs=
          internal_pmix_CPPFLAGS=
+
+         OMPI_PMIX_ADD_ARGS
 
          AS_IF([test "$opal_libevent_mode" = "internal"],
                [internal_pmix_args="$internal_pmix_args --with-libevent=cobuild"
