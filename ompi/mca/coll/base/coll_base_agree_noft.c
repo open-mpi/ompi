@@ -24,7 +24,7 @@ ompi_coll_base_agree_noft(void *contrib,
                          struct ompi_op_t *op,
                          struct ompi_group_t **group, bool update_grp,
                          struct ompi_communicator_t* comm,
-                         struct mca_coll_base_module_2_3_0_t *module)
+                         mca_coll_base_module_t *module)
 {
     return comm->c_coll->coll_allreduce(MPI_IN_PLACE, contrib, dt_count, dt, op,
                                        comm, comm->c_coll->coll_allreduce_module);
@@ -38,7 +38,7 @@ ompi_coll_base_iagree_noft(void *contrib,
                           struct ompi_group_t **group, bool update_grp,
                           struct ompi_communicator_t* comm,
                           ompi_request_t **request,
-                          struct mca_coll_base_module_2_3_0_t *module)
+                          mca_coll_base_module_t *module)
 {
     return comm->c_coll->coll_iallreduce(MPI_IN_PLACE, contrib, dt_count, dt, op,
                                         comm, request, comm->c_coll->coll_iallreduce_module);

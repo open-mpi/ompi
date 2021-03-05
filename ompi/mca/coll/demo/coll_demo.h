@@ -30,7 +30,7 @@ BEGIN_C_DECLS
 
     /* Globally exported variables */
 
-OMPI_MODULE_DECLSPEC extern const mca_coll_base_component_2_0_0_t mca_coll_demo_component;
+OMPI_MODULE_DECLSPEC extern const mca_coll_base_component_2_4_0_t mca_coll_demo_component;
     extern int mca_coll_demo_priority;
     extern int mca_coll_demo_verbose;
 
@@ -234,9 +234,6 @@ int mca_coll_demo_module_enable(mca_coll_base_module_t *module,
                                      struct ompi_datatype_t *rdtype, int root,
                                      struct ompi_communicator_t *comm,
                                      mca_coll_base_module_t *module);
-
-    int mca_coll_demo_ft_event(int status);
-
 
 struct mca_coll_demo_module_t {
     mca_coll_base_module_t super;

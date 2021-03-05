@@ -53,8 +53,6 @@ int MPI_Request_get_status(MPI_Request request, int *flag,
         memchecker_request(&request);
     );
 
-    OPAL_CR_NOOP_PROGRESS();
-
     if( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if( (NULL == flag) ) {

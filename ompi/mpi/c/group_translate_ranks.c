@@ -68,8 +68,6 @@ int MPI_Group_translate_ranks(MPI_Group group1, int n_ranks, const int ranks1[],
         return MPI_SUCCESS;
     }
 
-    OPAL_CR_ENTER_LIBRARY();
-
     err = ompi_group_translate_ranks ( group1, n_ranks, ranks1,
                                        group2, ranks2 );
     OMPI_ERRHANDLER_NOHANDLE_RETURN(err, err, FUNC_NAME );

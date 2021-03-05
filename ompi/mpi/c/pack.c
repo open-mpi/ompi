@@ -76,8 +76,6 @@ int MPI_Pack(const void *inbuf, int incount, MPI_Datatype datatype,
         OMPI_ERRHANDLER_CHECK(rc, comm, rc, FUNC_NAME);
     }
 
-    OPAL_CR_ENTER_LIBRARY();
-
     /*
      * If a datatype's description contains a single element that describes
      * a large vector that path is reasonably optimized in pack/unpack. On
@@ -102,7 +100,6 @@ int MPI_Pack(const void *inbuf, int incount, MPI_Datatype datatype,
     opal_convertor_get_packed_size( &local_convertor, &size );
     if( (*position + size) > (unsigned int)outsize ) {  /* we can cast as we already checked for < 0 */
         OBJ_DESTRUCT( &local_convertor );
-        OPAL_CR_EXIT_LIBRARY();
         return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_TRUNCATE, FUNC_NAME);
     }
 
@@ -118,8 +115,6 @@ int MPI_Pack(const void *inbuf, int incount, MPI_Datatype datatype,
 
     rc = ompi_datatype_consolidate_free(&dtmod);
     OMPI_ERRHANDLER_CHECK(rc, comm, rc, FUNC_NAME);
-
-    OPAL_CR_EXIT_LIBRARY();
 
     /* All done.  Note that the convertor returns 1 upon success, not
        OPAL_SUCCESS. */

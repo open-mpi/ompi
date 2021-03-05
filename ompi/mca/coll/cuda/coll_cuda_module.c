@@ -90,7 +90,6 @@ mca_coll_cuda_comm_query(struct ompi_communicator_t *comm,
 
     /* Choose whether to use [intra|inter] */
     cuda_module->super.coll_module_enable = mca_coll_cuda_module_enable;
-    cuda_module->super.ft_event = NULL;
 
     cuda_module->super.coll_allgather  = NULL;
     cuda_module->super.coll_allgatherv = NULL;

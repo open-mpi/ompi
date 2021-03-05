@@ -40,8 +40,6 @@ static const char FUNC_NAME[] = "MPI_Op_commutative";
 
 int MPI_Op_commutative(MPI_Op op, int *commute)
 {
-    OPAL_CR_NOOP_PROGRESS();
-
     /* Error checking */
 
     if (MPI_PARAM_CHECK) {

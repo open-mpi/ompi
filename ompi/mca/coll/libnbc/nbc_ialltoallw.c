@@ -44,7 +44,7 @@ static inline int a2aw_sched_inplace(int rank, int p, NBC_Schedule *schedule,
 static int nbc_alltoallw_init(const void* sendbuf, const int *sendcounts, const int *sdispls,
                               struct ompi_datatype_t * const *sendtypes, void* recvbuf, const int *recvcounts, const int *rdispls,
                               struct ompi_datatype_t * const *recvtypes, struct ompi_communicator_t *comm, ompi_request_t ** request,
-                              struct mca_coll_base_module_2_3_0_t *module, bool persistent)
+                              mca_coll_base_module_t *module, bool persistent)
 {
   int rank, p, res;
   NBC_Schedule *schedule;
@@ -135,7 +135,7 @@ static int nbc_alltoallw_init(const void* sendbuf, const int *sendcounts, const 
 int ompi_coll_libnbc_ialltoallw(const void* sendbuf, const int *sendcounts, const int *sdispls,
                                 struct ompi_datatype_t * const *sendtypes, void* recvbuf, const int *recvcounts, const int *rdispls,
                                 struct ompi_datatype_t * const *recvtypes, struct ompi_communicator_t *comm, ompi_request_t ** request,
-				struct mca_coll_base_module_2_3_0_t *module) {
+				mca_coll_base_module_t *module) {
     int res = nbc_alltoallw_init(sendbuf, sendcounts, sdispls, sendtypes,
                                  recvbuf, recvcounts, rdispls, recvtypes,
                                  comm, request, module, false);
@@ -157,7 +157,7 @@ int ompi_coll_libnbc_ialltoallw(const void* sendbuf, const int *sendcounts, cons
 static int nbc_alltoallw_inter_init (const void* sendbuf, const int *sendcounts, const int *sdispls,
                                      struct ompi_datatype_t * const *sendtypes, void* recvbuf, const int *recvcounts, const int *rdispls,
                                      struct ompi_datatype_t * const *recvtypes, struct ompi_communicator_t *comm, ompi_request_t ** request,
-                                     struct mca_coll_base_module_2_3_0_t *module, bool persistent)
+                                     mca_coll_base_module_t *module, bool persistent)
 {
   int res, rsize;
   NBC_Schedule *schedule;
@@ -210,7 +210,7 @@ static int nbc_alltoallw_inter_init (const void* sendbuf, const int *sendcounts,
 int ompi_coll_libnbc_ialltoallw_inter(const void* sendbuf, const int *sendcounts, const int *sdispls,
                                       struct ompi_datatype_t * const *sendtypes, void* recvbuf, const int *recvcounts, const int *rdispls,
                                       struct ompi_datatype_t * const *recvtypes, struct ompi_communicator_t *comm, ompi_request_t ** request,
-				      struct mca_coll_base_module_2_3_0_t *module) {
+				      mca_coll_base_module_t *module) {
     int res = nbc_alltoallw_inter_init(sendbuf, sendcounts, sdispls, sendtypes,
                                        recvbuf, recvcounts, rdispls, recvtypes,
                                        comm, request, module, false);
@@ -371,7 +371,7 @@ static inline int a2aw_sched_inplace(int rank, int p, NBC_Schedule *schedule,
 int ompi_coll_libnbc_alltoallw_init(const void* sendbuf, const int *sendcounts, const int *sdispls,
                                     struct ompi_datatype_t * const *sendtypes, void* recvbuf, const int *recvcounts, const int *rdispls,
                                     struct ompi_datatype_t * const *recvtypes, struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
-                                    struct mca_coll_base_module_2_3_0_t *module) {
+                                    mca_coll_base_module_t *module) {
     int res = nbc_alltoallw_init(sendbuf, sendcounts, sdispls, sendtypes, recvbuf, recvcounts, rdispls, recvtypes,
                                  comm, request, module, true);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
@@ -384,7 +384,7 @@ int ompi_coll_libnbc_alltoallw_init(const void* sendbuf, const int *sendcounts, 
 int ompi_coll_libnbc_alltoallw_inter_init(const void* sendbuf, const int *sendcounts, const int *sdispls,
                                           struct ompi_datatype_t * const *sendtypes, void* recvbuf, const int *recvcounts, const int *rdispls,
                                           struct ompi_datatype_t * const *recvtypes, struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
-                                          struct mca_coll_base_module_2_3_0_t *module) {
+                                          mca_coll_base_module_t *module) {
     int res = nbc_alltoallw_inter_init(sendbuf, sendcounts, sdispls, sendtypes, recvbuf, recvcounts, rdispls, recvtypes,
                                        comm, request, module, true);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {

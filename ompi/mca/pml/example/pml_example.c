@@ -41,7 +41,6 @@ mca_pml_example_t mca_pml_example = {
         mca_pml_example_mprobe,
         mca_pml_example_imrecv,
         mca_pml_example_mrecv,
-        mca_pml_example_ft_event,
 
         32768,
         (0x7fffffff),
@@ -76,25 +75,5 @@ int mca_pml_example_add_procs(ompi_proc_t** procs, size_t nprocs)
 
 int mca_pml_example_del_procs(ompi_proc_t** procs, size_t nprocs)
 {
-    return OMPI_SUCCESS;
-}
-
-int mca_pml_example_ft_event(int state) {
-    if(OPAL_CRS_CHECKPOINT == state) {
-        ;
-    }
-    else if(OPAL_CRS_CONTINUE == state) {
-        ;
-    }
-    else if(OPAL_CRS_RESTART == state) {
-        ;
-    }
-    else if(OPAL_CRS_TERM == state ) {
-        ;
-    }
-    else {
-        ;
-    }
-
     return OMPI_SUCCESS;
 }

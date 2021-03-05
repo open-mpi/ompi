@@ -23,12 +23,9 @@ enable_mpi_cxx=no
 enable_mpi_cxx_seek=no
 enable_cxx_exceptions=no
 
-# disable fault tolerance thread
-enable_ft_thread=no
-
 enable_per_user_config_files=no
 enable_pty_support=no
-enable_mca_no_build=crs,filem,routed-linear,snapc,pml-dr,pml-crcp2,pml-crcpw,pml-v,pml-example,crcp,pml-cm,ess-cnos,grpcomm-cnos,plm-rsh,btl-tcp,oob-ud,ras-simulator,mpool-fake
+enable_mca_no_build=routed-linear,pml-v,pml-example,pml-cm,ess-cnos,grpcomm-cnos,plm-rsh,btl-tcp,oob-ud,ras-simulator,mpool-fake
 enable_mca_static=btl:ugni,btl:self,btl:vader,pml:ob1,coll:ml
 enable_contrib_no_build=libnbc
 

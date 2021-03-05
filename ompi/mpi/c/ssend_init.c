@@ -88,8 +88,6 @@ int MPI_Ssend_init(const void *buf, int count, MPI_Datatype type,
      */
 #endif
 
-    OPAL_CR_ENTER_LIBRARY();
-
     /*
      * Here, we just initialize the request -- memchecker should set the buffer in MPI_Start.
      */

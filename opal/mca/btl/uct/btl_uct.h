@@ -252,13 +252,6 @@ int mca_btl_uct_get (struct mca_btl_base_module_t *btl,
     struct mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
     int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata);
 
- /**
-  * Fault Tolerance Event Notification Function
-  * @param state Checkpoint Stae
-  * @return OPAL_SUCCESS or failure status
-  */
-int mca_btl_uct_ft_event(int state);
-
 int mca_btl_uct_aop (struct mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint,
                      uint64_t remote_address, mca_btl_base_registration_handle_t *remote_handle,
                      mca_btl_base_atomic_op_t op, uint64_t operand, int flags, int order,

@@ -33,9 +33,6 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/constants.h"
-#if OPAL_ENABLE_FT_CR == 1
-#include "opal/runtime/opal_params.h"
-#endif
 
 /*
  * Local functions
@@ -95,11 +92,6 @@ static int open_components(mca_base_framework_t *framework)
      *
      * NTH: Logic moved to mca_base_components_filter.
      */
-#if (OPAL_ENABLE_FT == 1) && (OPAL_ENABLE_FT_CR == 1)
-    if (opal_base_distill_checkpoint_ready) {
-        open_only_flags |= MCA_BASE_METADATA_PARAM_CHECKPOINT;
-    }
-#endif  /* (OPAL_ENABLE_FT == 1) && (OPAL_ENABLE_FT_CR == 1) */
 
     /* If mca_base_framework_register_components was called with the MCA_BASE_COMPONENTS_ALL flag
        we need to trim down and close any extra components we do not want open */

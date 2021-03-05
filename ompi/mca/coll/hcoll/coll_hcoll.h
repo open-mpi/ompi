@@ -58,7 +58,7 @@ OBJ_CLASS_DECLARATION(mca_coll_hcoll_dtype_t);
 extern mca_coll_hcoll_dtype_t zero_dte_mapping;
 struct mca_coll_hcoll_component_t {
     /** Base coll component */
-    mca_coll_base_component_2_0_0_t super;
+    mca_coll_base_component_2_4_0_t super;
 
     /** MCA parameter: Priority of this component */
     int hcoll_priority;

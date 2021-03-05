@@ -67,10 +67,8 @@ int MPI_Cart_get(MPI_Comm comm, int maxdims, int dims[],
         return OMPI_ERRHANDLER_INVOKE (comm, MPI_ERR_TOPOLOGY,
                                       FUNC_NAME);
     }
-    OPAL_CR_ENTER_LIBRARY();
 
     err = comm->c_topo->topo.cart.cart_get(comm, maxdims, dims, periods, coords);
-    OPAL_CR_EXIT_LIBRARY();
 
     OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);
 }

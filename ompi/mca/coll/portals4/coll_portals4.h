@@ -207,18 +207,18 @@ int ompi_coll_portals4_ireduce_intra(const void* sendbuf, void* recvbuf, int cou
         int root,
         struct ompi_communicator_t *comm,
         ompi_request_t ** ompi_request,
-        struct mca_coll_base_module_2_3_0_t *module);
+        mca_coll_base_module_t *module);
 int ompi_coll_portals4_ireduce_intra_fini(struct ompi_coll_portals4_request_t *request);
 
 int ompi_coll_portals4_allreduce_intra(const void* sendbuf, void* recvbuf, int count,
         MPI_Datatype dtype, MPI_Op op,
         struct ompi_communicator_t *comm,
-        struct mca_coll_base_module_2_3_0_t *module);
+        mca_coll_base_module_t *module);
 int ompi_coll_portals4_iallreduce_intra(const void* sendbuf, void* recvbuf, int count,
         MPI_Datatype dtype, MPI_Op op,
         struct ompi_communicator_t *comm,
         ompi_request_t ** ompi_request,
-        struct mca_coll_base_module_2_3_0_t *module);
+        mca_coll_base_module_t *module);
 int
 ompi_coll_portals4_iallreduce_intra_fini(struct ompi_coll_portals4_request_t *request);
 

@@ -61,8 +61,6 @@ int MPI_Comm_disconnect(MPI_Comm *comm)
         return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_COMM, FUNC_NAME);
     }
 
-    OPAL_CR_ENTER_LIBRARY();
-
     if ( OMPI_COMM_IS_DYNAMIC(*comm)) {
         if (OMPI_SUCCESS != ompi_dpm_disconnect (*comm)) {
             ret = OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_COMM, FUNC_NAME);
@@ -74,6 +72,5 @@ int MPI_Comm_disconnect(MPI_Comm *comm)
 
     ompi_comm_free(comm);
 
-    OPAL_CR_EXIT_LIBRARY();
     return ret;
 }

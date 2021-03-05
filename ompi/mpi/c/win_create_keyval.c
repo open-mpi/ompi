@@ -54,8 +54,6 @@ int MPI_Win_create_keyval(MPI_Win_copy_attr_function *win_copy_attr_fn,
         }
     }
 
-    OPAL_CR_ENTER_LIBRARY();
-
     copy_fn.attr_win_copy_fn = (MPI_Win_internal_copy_attr_function*)win_copy_attr_fn;
     del_fn.attr_win_delete_fn = win_delete_attr_fn;
 

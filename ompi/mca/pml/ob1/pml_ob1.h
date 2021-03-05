@@ -214,8 +214,6 @@ extern int mca_pml_ob1_dump( struct ompi_communicator_t* comm,
 extern int mca_pml_ob1_start( size_t count,
                               ompi_request_t** requests );
 
-extern int mca_pml_ob1_ft_event( int state );
-
 /**
  * We will use these requests to hold on a traditionally allocated
  * requests in order to allow the parallel debugger full access to the

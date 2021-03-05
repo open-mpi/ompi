@@ -56,8 +56,7 @@ static const mca_coll_base_module_1_0_0_t intra = {
     mca_coll_demo_reduce_scatter_intra,
     mca_coll_demo_scan_intra,
     mca_coll_demo_scatter_intra,
-    mca_coll_demo_scatterv_intra,
-    mca_coll_demo_ft_event
+    mca_coll_demo_scatterv_intra
 };
 
 
@@ -88,8 +87,7 @@ static const mca_coll_base_module_1_0_0_t inter = {
     mca_coll_demo_reduce_scatter_inter,
     NULL,
     mca_coll_demo_scatter_inter,
-    mca_coll_demo_scatterv_inter,
-    mca_coll_demo_ft_event
+    mca_coll_demo_scatterv_inter
 };
 
 #endif
@@ -123,7 +121,6 @@ mca_coll_demo_comm_query(struct ompi_communicator_t *comm, int *priority)
     *priority = mca_coll_demo_priority;
 
     demo_module->super.coll_module_enable = mca_coll_demo_module_enable;
-    demo_module->super.ft_event = mca_coll_demo_ft_event;
 
     if (OMPI_COMM_IS_INTRA(comm)) {
         demo_module->super.coll_allgather  = mca_coll_demo_allgather_intra;
@@ -200,27 +197,6 @@ mca_coll_demo_module_enable(mca_coll_base_module_t *module,
     COPY(comm, demo_module, scan);
     COPY(comm, demo_module, scatter);
     COPY(comm, demo_module, scatterv);
-
-    return OMPI_SUCCESS;
-}
-
-
-int mca_coll_demo_ft_event(int state) {
-    if(OPAL_CRS_CHECKPOINT == state) {
-        ;
-    }
-    else if(OPAL_CRS_CONTINUE == state) {
-        ;
-    }
-    else if(OPAL_CRS_RESTART == state) {
-        ;
-    }
-    else if(OPAL_CRS_TERM == state ) {
-        ;
-    }
-    else {
-        ;
-    }
 
     return OMPI_SUCCESS;
 }

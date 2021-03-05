@@ -23,6 +23,8 @@
 
 #include "opal_config.h"
 
+#include "opal/mca/base/mca_base_framework.h"
+
 #include "opal/class/opal_list.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/allocator/allocator.h"

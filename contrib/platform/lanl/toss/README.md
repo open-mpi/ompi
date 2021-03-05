@@ -76,7 +76,7 @@ created.
     - remove: with_lustre=/opt/cray/lustre-cray_ari_s/default
     - additions from platform/lanl/cray_xc_cle5.2/optimized-common that don't
       go in common-optimzed:
-      - enable_mca_no_build=crs,filem,routed-linear,snapc,pml-dr,pml-crcp2,pml-crcpw,pml-v,pml-example,crcp,pml-cm,ess-cnos,grpcomm-cnos,plm-rsh,btl-tcp,oob-ud,ras-simulator,mpool-fake
+      - enable_mca_no_build=routed-linear,pml-v,pml-example,pml-cm,ess-cnos,grpcomm-cnos,plm-rsh,btl-tcp,oob-ud,ras-simulator,mpool-fake
       - enable_mca_static=btl:ugni,btl:self,btl:vader,pml:ob1
       - enable_mca_directpml-ob1
       - with_tm=no

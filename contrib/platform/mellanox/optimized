@@ -50,7 +50,6 @@ else
     enable_memchecker=no
     enable_picky=no
     enable_heterogeneous=no
-    enable_ft_thread=no
     with_mpi_param_check=no
     CXXFLAGS="-O3 -g"
     CCASFLAGS="-O3 -g"

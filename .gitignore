@@ -185,8 +185,6 @@ ompi/mca/coll/ml/coll_ml_lex.c
 ompi/mca/coll/self/coll-self-version.h*
 ompi/mca/coll/sm/coll-sm-version.h*
 
-ompi/mca/crcp/ompi_crcp.7
-
 ompi/mca/io/romio321/romio/adio/include/romioconf.h
 ompi/mca/io/romio321/romio/include/mpio.h
 ompi/mca/io/romio321/romio/localdefs

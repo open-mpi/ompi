@@ -5,7 +5,7 @@ source ./common
 source ./common-optimized
 
 # Disable components not needed on TOSS platforms with high-speed networks
-enable_mca_no_build=carto,crs,filem,routed-linear,snapc,pml-dr,pml-crcp2,pml-crcpw,pml-v,pml-example,crcp,btl-tcp
+enable_mca_no_build=carto,routed-linear,pml-v,pml-example,btl-tcp
 
 # TOSS2 uses slurm
 with_slurm=yes

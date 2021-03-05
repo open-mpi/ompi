@@ -35,7 +35,7 @@ BEGIN_C_DECLS
  * Globally exported variable
  */
 
-OMPI_MODULE_DECLSPEC extern const mca_coll_base_component_2_0_0_t mca_coll_self_component;
+OMPI_MODULE_DECLSPEC extern const mca_coll_base_component_2_4_0_t mca_coll_self_component;
 extern int ompi_coll_self_priority;
 
 /*
@@ -139,8 +139,6 @@ int mca_coll_self_scatterv_intra(const void *sbuf, const int *scounts, const int
                                  struct ompi_datatype_t *rdtype, int root,
                                  struct ompi_communicator_t *comm,
                                  mca_coll_base_module_t *module);
-
-int mca_coll_self_ft_event(int state);
 
 
 struct mca_coll_self_module_t {

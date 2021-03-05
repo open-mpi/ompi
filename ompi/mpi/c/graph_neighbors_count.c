@@ -72,10 +72,8 @@ int MPI_Graph_neighbors_count(MPI_Comm comm, int rank, int *nneighbors)
         return OMPI_ERRHANDLER_INVOKE (comm, MPI_ERR_TOPOLOGY,
                                        FUNC_NAME);
     }
-    OPAL_CR_ENTER_LIBRARY();
 
     err = comm->c_topo->topo.graph.graph_neighbors_count(comm, rank, nneighbors);
-    OPAL_CR_EXIT_LIBRARY();
 
     OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);
 }

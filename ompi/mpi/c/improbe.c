@@ -80,8 +80,6 @@ int MPI_Improbe(int source, int tag, MPI_Comm comm, int *flag,
      */
 #endif
 
-    OPAL_CR_ENTER_LIBRARY();
-
     rc = MCA_PML_CALL(improbe(source, tag, comm, flag, message, status));
     /* Per MPI-1, the MPI_ERROR field is not defined for
        single-completion calls */

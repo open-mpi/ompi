@@ -52,8 +52,6 @@ int MPI_File_get_position_shared(MPI_File fh, MPI_Offset *offset)
         OMPI_ERRHANDLER_CHECK(rc, fh, rc, FUNC_NAME);
     }
 
-    OPAL_CR_ENTER_LIBRARY();
-
     /* Call the back-end io component function */
 
     switch (fh->f_io_version) {

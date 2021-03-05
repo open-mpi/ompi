@@ -69,11 +69,9 @@ int MPI_Graph_get(MPI_Comm comm, int maxindx, int maxedges,
         return OMPI_ERRHANDLER_INVOKE (comm, MPI_ERR_TOPOLOGY,
                                        FUNC_NAME);
     }
-    OPAL_CR_ENTER_LIBRARY();
 
     /* call the function */
     err = comm->c_topo->topo.graph.graph_get(comm, maxindx, maxedges, indx, edges);
-    OPAL_CR_EXIT_LIBRARY();
 
     OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);
 }

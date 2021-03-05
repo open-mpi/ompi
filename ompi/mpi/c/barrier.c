@@ -68,8 +68,6 @@ int MPI_Barrier(MPI_Comm comm)
   }
 #endif
 
-  OPAL_CR_ENTER_LIBRARY();
-
   /* Intracommunicators: Only invoke the back-end coll module barrier
      function if there's more than one process in the communicator */
 

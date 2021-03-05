@@ -41,8 +41,6 @@ MPI_Message MPI_Message_f2c(MPI_Fint message)
 {
     int message_index = OMPI_FINT_2_INT(message);
 
-    OPAL_CR_NOOP_PROGRESS();
-
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
     }

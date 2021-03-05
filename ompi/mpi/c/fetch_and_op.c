@@ -68,8 +68,6 @@ int MPI_Fetch_and_op(const void *origin_addr, void *result_addr, MPI_Datatype da
 
     if (MPI_PROC_NULL == target_rank) return MPI_SUCCESS;
 
-    OPAL_CR_ENTER_LIBRARY();
-
     rc = win->w_osc_module->osc_fetch_and_op(origin_addr, result_addr, datatype,
                                              target_rank, target_disp, op, win);
     OMPI_ERRHANDLER_RETURN(rc, win, rc, FUNC_NAME);

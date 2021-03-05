@@ -47,8 +47,6 @@ MPI_Datatype MPI_Type_f2c(MPI_Fint datatype)
         memchecker_datatype(datatype);
     );
 
-    OPAL_CR_NOOP_PROGRESS();
-
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
     }

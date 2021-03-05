@@ -202,8 +202,6 @@ int MPI_Gatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
     }
 #endif
 
-    OPAL_CR_ENTER_LIBRARY();
-
     /* Invoke the coll component to perform the back-end operation */
     err = comm->c_coll->coll_gatherv(sendbuf, sendcount, sendtype, recvbuf,
                                     recvcounts, displs,

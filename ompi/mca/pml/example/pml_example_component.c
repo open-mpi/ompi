@@ -31,13 +31,13 @@ static int mca_pml_example_component_fini(void);
 
 static int mca_pml_example_priority = 0;
 
-mca_pml_base_component_2_0_0_t mca_pml_example_component = {
+mca_pml_base_component_2_1_0_t mca_pml_example_component = {
 
     /* First, the mca_base_component_t struct containing meta
      * information about the component itself */
 
     .pmlm_version = {
-        MCA_PML_BASE_VERSION_2_0_0,
+        MCA_PML_BASE_VERSION_2_1_0,
 
         .mca_component_name = "example",
         MCA_BASE_MAKE_VERSION(component, OMPI_MAJOR_VERSION, OMPI_MINOR_VERSION,

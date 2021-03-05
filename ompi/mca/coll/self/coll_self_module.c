@@ -63,7 +63,6 @@ mca_coll_self_comm_query(struct ompi_communicator_t *comm,
         if (NULL == module) return NULL;
 
         module->super.coll_module_enable = mca_coll_self_module_enable;
-        module->super.ft_event        = mca_coll_self_ft_event;
         module->super.coll_allgather  = mca_coll_self_allgather_intra;
         module->super.coll_allgatherv = mca_coll_self_allgatherv_intra;
         module->super.coll_allreduce  = mca_coll_self_allreduce_intra;
@@ -97,26 +96,5 @@ int
 mca_coll_self_module_enable(mca_coll_base_module_t *module,
                             struct ompi_communicator_t *comm)
 {
-    return OMPI_SUCCESS;
-}
-
-
-int mca_coll_self_ft_event(int state) {
-    if(OPAL_CRS_CHECKPOINT == state) {
-        ;
-    }
-    else if(OPAL_CRS_CONTINUE == state) {
-        ;
-    }
-    else if(OPAL_CRS_RESTART == state) {
-        ;
-    }
-    else if(OPAL_CRS_TERM == state ) {
-        ;
-    }
-    else {
-        ;
-    }
-
     return OMPI_SUCCESS;
 }

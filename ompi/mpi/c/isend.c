@@ -91,15 +91,13 @@ int MPI_Isend(const void *buf, int count, MPI_Datatype type, int dest,
      */
 #endif
 
-    OPAL_CR_ENTER_LIBRARY();
-
     /*
      * today's MPI standard mandates the send buffer remains accessible during the send operation
      * hence memchecker cannot mark buf as non accessible, but it might mark buf as read-only in
      * order to trap end user errors. Unfortunatly valgrind does not support marking buffers as read-only,
      * so there is pretty much nothing we can do here.
      */
-     
+
     rc = MCA_PML_CALL(isend(buf, count, type, dest, tag,
                             MCA_PML_BASE_SEND_STANDARD, comm, request));
     OMPI_ERRHANDLER_RETURN(rc, comm, rc, FUNC_NAME);

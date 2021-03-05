@@ -17,4 +17,4 @@ enable_ipv6=no
 enable_mpi_fortran=no
 enable_mpi_cxx=no
 enable_mpi_cxx_seek=no
-enable_mca_no_build=pml-dr,pml-crcp2,crcp,filem,pml-v,pml-cm
+enable_mca_no_build=filem,pml-v,pml-cm

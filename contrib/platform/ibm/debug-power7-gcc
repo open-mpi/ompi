@@ -3,7 +3,6 @@ enable_debug_symbols=yes
 enable_debug=yes
 enable_mem_profile=no
 enable_contrib_no_build=libnbc
-enable_ft_thread=no
 CXXFLAGS="-m64 -mcpu=power7 -mtune=power7 -O0 -g3 -ggdb"
 CCASFLAGS="-m64 -mcpu=power7 -mtune=power7 -O0 -g3 -ggdb"
 FCFLAGS="-m64 -mcpu=power7 -mtune=power7 -O0 -g3 -ggdb"

@@ -54,8 +54,6 @@ int MPI_Win_set_name(MPI_Win win, const char *win_name)
         }
     }
 
-    OPAL_CR_ENTER_LIBRARY();
-
     ret = ompi_win_set_name(win, win_name);
     OMPI_ERRHANDLER_RETURN(ret, win, ret, FUNC_NAME);
 }

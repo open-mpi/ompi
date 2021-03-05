@@ -66,7 +66,7 @@ mca_coll_sm_component_t mca_coll_sm_component = {
            information about the component itself */
 
         .collm_version = {
-            MCA_COLL_BASE_VERSION_2_0_0,
+            MCA_COLL_BASE_VERSION_2_4_0,
 
             /* Component name and version */
             .mca_component_name = "sm",

@@ -14,7 +14,7 @@ source ./common-optimized
 with_io_romio_flags="--with-file-system=ufs+nfs+lustre"
 
 # Disable components not needed
-enable_mca_no_build=crs,filem,routed-linear,snapc,pml-dr,pml-crcp2,pml-crcpw,pml-v,pml-example,crcp,pml-cm,ess-cnos,grpcomm-cnos,plm-rsh,btl-tcp,oob-ud,ras-simulator,mpool-fake
+enable_mca_no_build=routed-linear,pml-v,pml-example,pml-cm,ess-cnos,grpcomm-cnos,plm-rsh,btl-tcp,oob-ud,ras-simulator,mpool-fake
 enable_mca_static=btl:ugni,btl:self,btl:vader,pml:ob1
 
 # enable direct calling for ob1

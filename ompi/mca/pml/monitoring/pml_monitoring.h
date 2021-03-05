@@ -31,7 +31,7 @@ typedef mca_pml_base_module_t mca_pml_monitoring_module_t;
 extern mca_pml_base_component_t pml_selected_component;
 extern mca_pml_base_module_t pml_selected_module;
 extern mca_pml_monitoring_module_t mca_pml_monitoring_module;
-OMPI_DECLSPEC extern mca_pml_base_component_2_0_0_t mca_pml_monitoring_component;
+OMPI_DECLSPEC extern mca_pml_base_component_2_1_0_t mca_pml_monitoring_component;
 
 /*
  * PML interface functions.

@@ -49,8 +49,6 @@ int MPI_Comm_get_name(MPI_Comm comm, char *name, int *length)
         memchecker_comm(comm);
     );
 
-    OPAL_CR_NOOP_PROGRESS();
-
     if ( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 

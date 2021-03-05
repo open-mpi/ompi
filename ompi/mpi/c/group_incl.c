@@ -82,8 +82,6 @@ int MPI_Group_incl(MPI_Group group, int n, const int ranks[], MPI_Group *new_gro
       return MPI_SUCCESS;
   }
 
-  OPAL_CR_ENTER_LIBRARY();
-
   err = ompi_group_incl(group,n,ranks,new_group);
   OMPI_ERRHANDLER_NOHANDLE_RETURN(err, err,FUNC_NAME);
 }

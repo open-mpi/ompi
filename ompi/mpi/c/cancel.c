@@ -64,7 +64,6 @@ int MPI_Cancel(MPI_Request *request)
         return MPI_SUCCESS;
     }
 
-    OPAL_CR_ENTER_LIBRARY();
     rc = ompi_request_cancel(*request);
     OMPI_ERRHANDLER_NOHANDLE_RETURN(rc, rc, FUNC_NAME);
 }

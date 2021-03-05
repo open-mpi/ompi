@@ -49,7 +49,6 @@ mca_btl_template_module_t mca_btl_template_module = {
         .btl_get = mca_btl_template_get,
         .btl_register_mem = mca_btl_template_register_mem,
         .btl_deregister_mem = mca_btl_template_deregister_mem,
-        .btl_ft_event = mca_btl_template_ft_event
     }
 };
 
@@ -402,25 +401,5 @@ int mca_btl_template_finalize(struct mca_btl_base_module_t* btl)
     OBJ_DESTRUCT(&template_btl->template_frag_max);
     OBJ_DESTRUCT(&template_btl->template_frag_user);
     free(template_btl);
-    return OPAL_SUCCESS;
-}
-
-int mca_btl_template_ft_event(int state) {
-    if(OPAL_CRS_CHECKPOINT == state) {
-        ;
-    }
-    else if(OPAL_CRS_CONTINUE == state) {
-        ;
-    }
-    else if(OPAL_CRS_RESTART == state) {
-        ;
-    }
-    else if(OPAL_CRS_TERM == state ) {
-        ;
-    }
-    else {
-        ;
-    }
-
     return OPAL_SUCCESS;
 }

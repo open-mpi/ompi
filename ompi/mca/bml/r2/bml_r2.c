@@ -987,7 +987,6 @@ mca_bml_r2_module_t mca_bml_r2 = {
         .bml_register = mca_bml_r2_register,
         .bml_register_error = mca_bml_r2_register_error,
         .bml_finalize = mca_bml_r2_finalize,
-        .bml_ft_event = mca_bml_r2_ft_event,
     },
 };
 

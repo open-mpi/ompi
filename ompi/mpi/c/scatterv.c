@@ -202,8 +202,6 @@ int MPI_Scatterv(const void *sendbuf, const int sendcounts[], const int displs[]
     }
 #endif
 
-    OPAL_CR_ENTER_LIBRARY();
-
     /* Invoke the coll component to perform the back-end operation */
     err = comm->c_coll->coll_scatterv(sendbuf, sendcounts, displs,
                                      sendtype, recvbuf, recvcount, recvtype, root, comm,

@@ -512,9 +512,6 @@ OPAL_WITH_OPTION_MIN_MAX_VALUE(port_name,      1024, 255, 2048)
 # Min length accroding to MPI-2.1, p. 418
 OPAL_WITH_OPTION_MIN_MAX_VALUE(datarep_string,  128,  64,  256)
 
-AC_DEFINE_UNQUOTED([OPAL_ENABLE_CRDEBUG], [0],
-    [Whether we want checkpoint/restart enabled debugging functionality or not])
-
 # some systems don't want/like getpwuid
 AC_MSG_CHECKING([if want getpwuid support])
 AC_ARG_ENABLE([getpwuid],

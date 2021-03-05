@@ -16,6 +16,9 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
+#ifdef HAVE_STRING_H
+#include <string.h>
+#endif
 
 #include "opal/class/opal_list.h"
 #include "opal/util/event.h"

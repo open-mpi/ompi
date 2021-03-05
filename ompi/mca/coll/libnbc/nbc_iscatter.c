@@ -48,7 +48,7 @@ int NBC_Scatter_args_compare(NBC_Scatter_args *a, NBC_Scatter_args *b, void *par
 static int nbc_scatter_init (const void* sendbuf, int sendcount, MPI_Datatype sendtype,
                              void* recvbuf, int recvcount, MPI_Datatype recvtype, int root,
                              struct ompi_communicator_t *comm, ompi_request_t ** request,
-                             struct mca_coll_base_module_2_3_0_t *module, bool persistent) {
+                             mca_coll_base_module_t *module, bool persistent) {
   int rank, p, res;
   MPI_Aint sndext = 0;
   NBC_Schedule *schedule;
@@ -171,7 +171,7 @@ static int nbc_scatter_init (const void* sendbuf, int sendcount, MPI_Datatype se
 int ompi_coll_libnbc_iscatter (const void* sendbuf, int sendcount, MPI_Datatype sendtype,
                                void* recvbuf, int recvcount, MPI_Datatype recvtype, int root,
                                struct ompi_communicator_t *comm, ompi_request_t ** request,
-                               struct mca_coll_base_module_2_3_0_t *module) {
+                               mca_coll_base_module_t *module) {
     int res = nbc_scatter_init(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root,
                                comm, request, module, false);
     if (OPAL_LIKELY(OMPI_SUCCESS != res)) {
@@ -190,7 +190,7 @@ int ompi_coll_libnbc_iscatter (const void* sendbuf, int sendcount, MPI_Datatype 
 static int nbc_scatter_inter_init (const void* sendbuf, int sendcount, MPI_Datatype sendtype,
                                    void* recvbuf, int recvcount, MPI_Datatype recvtype, int root,
                                    struct ompi_communicator_t *comm, ompi_request_t ** request,
-                                   struct mca_coll_base_module_2_3_0_t *module, bool persistent) {
+                                   mca_coll_base_module_t *module, bool persistent) {
     int res, rsize;
     MPI_Aint sndext;
     NBC_Schedule *schedule;
@@ -250,7 +250,7 @@ static int nbc_scatter_inter_init (const void* sendbuf, int sendcount, MPI_Datat
 int ompi_coll_libnbc_iscatter_inter (const void* sendbuf, int sendcount, MPI_Datatype sendtype,
                                      void* recvbuf, int recvcount, MPI_Datatype recvtype, int root,
                                      struct ompi_communicator_t *comm, ompi_request_t ** request,
-                                     struct mca_coll_base_module_2_3_0_t *module) {
+                                     mca_coll_base_module_t *module) {
     int res = nbc_scatter_inter_init(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root,
                                      comm, request, module, false);
     if (OPAL_LIKELY(OMPI_SUCCESS != res)) {
@@ -269,7 +269,7 @@ int ompi_coll_libnbc_iscatter_inter (const void* sendbuf, int sendcount, MPI_Dat
 int ompi_coll_libnbc_scatter_init(const void* sendbuf, int sendcount, MPI_Datatype sendtype,
                                   void* recvbuf, int recvcount, MPI_Datatype recvtype, int root,
                                   struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
-                                  struct mca_coll_base_module_2_3_0_t *module) {
+                                  mca_coll_base_module_t *module) {
     int res = nbc_scatter_init(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root,
                                comm, request, module, true);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
@@ -282,7 +282,7 @@ int ompi_coll_libnbc_scatter_init(const void* sendbuf, int sendcount, MPI_Dataty
 int ompi_coll_libnbc_scatter_inter_init(const void* sendbuf, int sendcount, MPI_Datatype sendtype,
                                         void* recvbuf, int recvcount, MPI_Datatype recvtype, int root,
                                         struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
-                                        struct mca_coll_base_module_2_3_0_t *module) {
+                                        mca_coll_base_module_t *module) {
     int res = nbc_scatter_inter_init(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root,
                                      comm, request, module, true);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {

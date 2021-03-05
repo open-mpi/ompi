@@ -60,7 +60,7 @@ struct mca_pml_ucx_module {
     bool                      cuda_initialized;
 };
 
-extern mca_pml_base_component_2_0_0_t mca_pml_ucx_component;
+extern mca_pml_base_component_2_1_0_t mca_pml_ucx_component;
 extern mca_pml_ucx_module_t ompi_pml_ucx;
 
 int mca_pml_ucx_open(void);

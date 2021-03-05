@@ -1,7 +1,7 @@
 #
 # Copyright (c) 2004-2005 The Trustees of Indiana University.
 #						 All rights reserved.
-# Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
+# Copyright (c) 2004-2020 The Trustees of the University of Tennessee.
 #						 All rights reserved.
 # Copyright (c) 2004-2009 High Performance Computing Center Stuttgart,
 #						 University of Stuttgart.  All rights reserved.
@@ -19,9 +19,7 @@
 r2_sources  = \
 	bml_r2.c \
 	bml_r2.h \
-	bml_r2_component.c \
-        bml_r2_ft.c \
-        bml_r2_ft.h
+	bml_r2_component.c
 
 dist_ompidata_DATA = help-mca-bml-r2.txt
 

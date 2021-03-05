@@ -416,7 +416,7 @@ ompi_coll_portals4_ireduce_intra(const void* sendbuf, void* recvbuf, int count,
         int root,
         struct ompi_communicator_t *comm,
         ompi_request_t ** ompi_request,
-        struct mca_coll_base_module_2_3_0_t *module)
+        mca_coll_base_module_t *module)
 {
     int ret;
     mca_coll_portals4_module_t *portals4_module = (mca_coll_portals4_module_t*) module;

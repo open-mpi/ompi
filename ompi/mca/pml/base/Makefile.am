@@ -31,5 +31,4 @@ libmca_pml_la_SOURCES += \
         base/pml_base_recvreq.c \
         base/pml_base_request.c \
         base/pml_base_select.c \
-        base/pml_base_sendreq.c \
-        base/pml_base_ft.c
+        base/pml_base_sendreq.c

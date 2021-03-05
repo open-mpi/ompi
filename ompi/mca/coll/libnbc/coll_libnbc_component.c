@@ -117,7 +117,7 @@ ompi_coll_libnbc_component_t mca_coll_libnbc_component = {
         /* First, the mca_component_t struct containing meta information
          * about the component itself */
         .collm_version = {
-            MCA_COLL_BASE_VERSION_2_0_0,
+            MCA_COLL_BASE_VERSION_2_4_0,
 
             /* Component name and version */
             .mca_component_name = "libnbc",
@@ -398,8 +398,6 @@ libnbc_comm_query(struct ompi_communicator_t *comm,
         module->super.coll_neighbor_alltoallv_init = ompi_coll_libnbc_neighbor_alltoallv_init;
         module->super.coll_neighbor_alltoallw_init = ompi_coll_libnbc_neighbor_alltoallw_init;
     }
-
-    module->super.ft_event = NULL;
 
     if (OMPI_SUCCESS != NBC_Init_comm(comm, module)) {
         OBJ_RELEASE(module);

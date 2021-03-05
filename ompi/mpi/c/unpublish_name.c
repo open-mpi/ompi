@@ -74,8 +74,6 @@ int MPI_Unpublish_name(const char *service_name, MPI_Info info,
         }
     }
 
-    OPAL_CR_ENTER_LIBRARY();
-
     /* OMPI supports info keys to pass the range to
      * be searched for the given key */
     if (MPI_INFO_NULL != info) {
@@ -120,10 +118,8 @@ int MPI_Unpublish_name(const char *service_name, MPI_Info info,
             ret = MPI_ERR_INTERN;
         }
 
-        OPAL_CR_EXIT_LIBRARY();
         return OMPI_ERRHANDLER_NOHANDLE_INVOKE(ret, FUNC_NAME);
     }
 
-    OPAL_CR_EXIT_LIBRARY();
     return MPI_SUCCESS;
 }

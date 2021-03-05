@@ -89,7 +89,6 @@ ompi_coll_tuned_comm_query(struct ompi_communicator_t *comm, int *priority)
      * but this would probably add an extra if and funct call to the path
      */
     tuned_module->super.coll_module_enable = tuned_module_enable;
-    tuned_module->super.ft_event = mca_coll_tuned_ft_event;
 
     /* By default stick with the fixed version of the tuned collectives. Later on,
      * when the module get enabled, set the correct version based on the availability
@@ -272,25 +271,5 @@ tuned_module_enable( mca_coll_base_module_t *module,
     tuned_module->super.base_data = data;
 
     OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:module_init Tuned is in use"));
-    return OMPI_SUCCESS;
-}
-
-int mca_coll_tuned_ft_event(int state) {
-    if(OPAL_CRS_CHECKPOINT == state) {
-        ;
-    }
-    else if(OPAL_CRS_CONTINUE == state) {
-        ;
-    }
-    else if(OPAL_CRS_RESTART == state) {
-        ;
-    }
-    else if(OPAL_CRS_TERM == state ) {
-        ;
-    }
-    else {
-        ;
-    }
-
     return OMPI_SUCCESS;
 }

@@ -16,7 +16,6 @@
 #include "opal_config.h"
 #include "opal/mca/dl/dl.h"
 #include "opal/util/opal_environ.h"
-#include "opal/runtime/opal_cr.h"
 
 #include "opal/mca/base/base.h"
 

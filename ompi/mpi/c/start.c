@@ -79,11 +79,9 @@ int MPI_Start(MPI_Request *request)
         if ( MPI_PARAM_CHECK && !(*request)->req_persistent) {
             return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_REQUEST, FUNC_NAME);
         }
-        OPAL_CR_ENTER_LIBRARY();
 
         ret = (*request)->req_start(1, request);
 
-        OPAL_CR_EXIT_LIBRARY();
         return ret;
 
     case OMPI_REQUEST_NOOP:

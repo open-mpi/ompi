@@ -44,8 +44,6 @@ int MPI_Status_f2c(const MPI_Fint *f_status, MPI_Status *c_status)
 {
     int i, *c_ints;
 
-    OPAL_CR_NOOP_PROGRESS();
-
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 

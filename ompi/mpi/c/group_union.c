@@ -55,8 +55,6 @@ int MPI_Group_union(MPI_Group group1, MPI_Group group2, MPI_Group *new_group)
         }
     }
 
-    OPAL_CR_ENTER_LIBRARY();
-
     err = ompi_group_union ( group1, group2,  new_group );
     OMPI_ERRHANDLER_NOHANDLE_RETURN(err, err, FUNC_NAME );
 }

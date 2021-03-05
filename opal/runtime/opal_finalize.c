@@ -40,7 +40,6 @@
 #include "opal/runtime/opal.h"
 #include "opal/constants.h"
 #include "opal/mca/threads/tsd.h"
-#include "opal/runtime/opal_cr.h"
 #include "opal/runtime/opal_progress.h"
 
 extern int opal_initialized;

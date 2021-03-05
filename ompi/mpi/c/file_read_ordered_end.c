@@ -50,8 +50,6 @@ int MPI_File_read_ordered_end(MPI_File fh, void *buf, MPI_Status *status)
         OMPI_ERRHANDLER_CHECK(rc, fh, rc, FUNC_NAME);
     }
 
-    OPAL_CR_ENTER_LIBRARY();
-
     /* Call the back-end io component function */
 
     switch (fh->f_io_version) {

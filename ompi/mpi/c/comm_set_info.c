@@ -33,8 +33,6 @@ static const char FUNC_NAME[] = "MPI_Comm_set_info";
 
 int MPI_Comm_set_info(MPI_Comm comm, MPI_Info info)
 {
-    OPAL_CR_NOOP_PROGRESS();
-
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if (NULL == info || MPI_INFO_NULL == info ||
@@ -47,8 +45,6 @@ int MPI_Comm_set_info(MPI_Comm comm, MPI_Info info)
                                           FUNC_NAME);
         }
     }
-
-    OPAL_CR_ENTER_LIBRARY();
 
     opal_infosubscribe_change_info(&(comm->super), &(info->super));
 

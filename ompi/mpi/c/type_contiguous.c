@@ -61,8 +61,6 @@ int MPI_Type_contiguous(int count,
         }
     }
 
-    OPAL_CR_ENTER_LIBRARY();
-
     rc = ompi_datatype_create_contiguous( count, oldtype, newtype );
     OMPI_ERRHANDLER_NOHANDLE_CHECK(rc, rc, FUNC_NAME );
 

@@ -47,7 +47,7 @@ int NBC_Gather_args_compare(NBC_Gather_args *a, NBC_Gather_args *b, void *param)
 static int nbc_gather_init(const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf,
                            int recvcount, MPI_Datatype recvtype, int root,
                            struct ompi_communicator_t *comm, ompi_request_t ** request,
-                           struct mca_coll_base_module_2_3_0_t *module, bool persistent) {
+                           mca_coll_base_module_t *module, bool persistent) {
   int rank, p, res;
   MPI_Aint rcvext = 0;
   NBC_Schedule *schedule;
@@ -176,7 +176,7 @@ static int nbc_gather_init(const void* sendbuf, int sendcount, MPI_Datatype send
 int ompi_coll_libnbc_igather(const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf,
                              int recvcount, MPI_Datatype recvtype, int root,
                              struct ompi_communicator_t *comm, ompi_request_t ** request,
-                             struct mca_coll_base_module_2_3_0_t *module) {
+                             mca_coll_base_module_t *module) {
     int res = nbc_gather_init(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root,
                               comm, request, module, false);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
@@ -196,7 +196,7 @@ int ompi_coll_libnbc_igather(const void* sendbuf, int sendcount, MPI_Datatype se
 static int nbc_gather_inter_init (const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf,
                                   int recvcount, MPI_Datatype recvtype, int root,
                                   struct ompi_communicator_t *comm, ompi_request_t ** request,
-                                  struct mca_coll_base_module_2_3_0_t *module, bool persistent) {
+                                  mca_coll_base_module_t *module, bool persistent) {
     int res, rsize;
     MPI_Aint rcvext = 0;
     NBC_Schedule *schedule;
@@ -256,7 +256,7 @@ static int nbc_gather_inter_init (const void* sendbuf, int sendcount, MPI_Dataty
 int ompi_coll_libnbc_igather_inter(const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf,
                                    int recvcount, MPI_Datatype recvtype, int root,
                                    struct ompi_communicator_t *comm, ompi_request_t ** request,
-                                   struct mca_coll_base_module_2_3_0_t *module) {
+                                   mca_coll_base_module_t *module) {
     int res = nbc_gather_inter_init(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root,
                                     comm, request, module, false);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
@@ -276,7 +276,7 @@ int ompi_coll_libnbc_igather_inter(const void* sendbuf, int sendcount, MPI_Datat
 int ompi_coll_libnbc_gather_init(const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf,
                                  int recvcount, MPI_Datatype recvtype, int root,
                                  struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
-                                 struct mca_coll_base_module_2_3_0_t *module) {
+                                 mca_coll_base_module_t *module) {
     int res = nbc_gather_init(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root,
                               comm, request, module, true);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
@@ -289,7 +289,7 @@ int ompi_coll_libnbc_gather_init(const void* sendbuf, int sendcount, MPI_Datatyp
 int ompi_coll_libnbc_gather_inter_init(const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf,
                                        int recvcount, MPI_Datatype recvtype, int root,
                                        struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
-                                       struct mca_coll_base_module_2_3_0_t *module) {
+                                       mca_coll_base_module_t *module) {
     int res = nbc_gather_inter_init(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root,
                                     comm, request, module, true);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {

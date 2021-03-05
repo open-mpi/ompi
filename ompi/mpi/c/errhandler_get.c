@@ -53,8 +53,6 @@ int MPI_Errhandler_get(MPI_Comm comm, MPI_Errhandler *errhandler)
         memchecker_comm(comm);
     );
 
-    OPAL_CR_NOOP_PROGRESS();
-
   if (MPI_PARAM_CHECK) {
     OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
   }

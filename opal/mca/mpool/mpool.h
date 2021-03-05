@@ -31,9 +31,6 @@
 #include "opal/class/opal_free_list.h"
 #include "opal/mca/rcache/base/rcache_base_vma.h"
 
-#include "opal/mca/crs/crs.h"
-#include "opal/mca/crs/base/base.h"
-
 #define MCA_MPOOL_ALLOC_FLAG_DEFAULT      0x00
 #define MCA_MPOOL_ALLOC_FLAG_USER         0x01
 
@@ -94,20 +91,11 @@ typedef void* (*mca_mpool_base_module_address_fn_t) (mca_mpool_base_module_t *mp
   */
 typedef void (*mca_mpool_base_module_finalize_fn_t)(mca_mpool_base_module_t *mpool);
 
-
-/**
- * Fault Tolerance Event Notification Function
- * @param state Checkpoint Stae
- * @return OPAL_SUCCESS or failure status
- */
-typedef int (*mca_mpool_base_module_ft_event_fn_t)(int state);
-
-
 /**
  * mpool component descriptor. Contains component version information
  * and open/close/init functions.
  */
-struct mca_mpool_base_component_2_0_0_t {
+struct mca_mpool_base_component_3_1_0_t {
     mca_base_component_t mpool_version;        /**< version */
     mca_base_component_data_t mpool_data;/**< metadata */
 
@@ -116,11 +104,11 @@ struct mca_mpool_base_component_2_0_0_t {
 /**
  * Convenience typedef.
  */
-typedef struct mca_mpool_base_component_2_0_0_t mca_mpool_base_component_2_0_0_t;
+typedef struct mca_mpool_base_component_3_1_0_t mca_mpool_base_component_3_1_0_t;
 /**
   * Convenience typedef
   */
-typedef struct mca_mpool_base_component_2_0_0_t mca_mpool_base_component_t;
+typedef struct mca_mpool_base_component_3_1_0_t mca_mpool_base_component_t;
 
 /**
  *  mpool module descriptor. Contains the interface functions exported
@@ -135,7 +123,6 @@ struct mca_mpool_base_module_t {
     mca_mpool_base_module_free_fn_t mpool_free;          /**< free function */
 
     mca_mpool_base_module_finalize_fn_t mpool_finalize;  /**< finalize */
-    mca_mpool_base_module_ft_event_fn_t mpool_ft_event;  /**< ft_event */
     uint32_t flags; /**< mpool flags */
 
     size_t mpool_allocation_unit;                        /**< allocation unit used by this mpool */
@@ -190,8 +177,8 @@ OPAL_DECLSPEC int mca_mpool_base_tree_node_compare(void * key1, void * key2);
 /**
  * Macro for use in components that are of type mpool
  */
-#define MCA_MPOOL_BASE_VERSION_3_0_0 \
-    OPAL_MCA_BASE_VERSION_2_1_0("mpool", 3, 0, 0)
+#define MCA_MPOOL_BASE_VERSION_3_1_0 \
+    OPAL_MCA_BASE_VERSION_2_1_0("mpool", 3, 1, 0)
 
 #endif /* MCA_MPOOL_H */
 

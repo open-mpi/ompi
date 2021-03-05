@@ -39,9 +39,6 @@ static const char FUNC_NAME[] = "MPI_Info_c2f";
 
 MPI_Fint MPI_Info_c2f(MPI_Info info)
 {
-
-    OPAL_CR_NOOP_PROGRESS();
-
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 

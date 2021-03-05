@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -35,10 +35,9 @@
 #include <time.h>
 #include <pthread.h>
 
+#include "opal/constants.h"
 #include "opal/mca/threads/mutex.h"
 #include "opal/runtime/opal_progress.h"
-
-#include "opal/runtime/opal_cr.h"
 
 BEGIN_C_DECLS
 
@@ -67,20 +66,17 @@ static inline int opal_condition_wait(opal_condition_t *c, opal_mutex_t *m)
             c->c_waiting--;
             opal_mutex_unlock(m);
             opal_progress();
-            OPAL_CR_TEST_CHECKPOINT_READY_STALL();
             opal_mutex_lock(m);
             return rc;
         }
         while (0 == c->c_signaled) {
             opal_mutex_unlock(m);
             opal_progress();
-            OPAL_CR_TEST_CHECKPOINT_READY_STALL();
             opal_mutex_lock(m);
         }
     } else {
         while (0 == c->c_signaled) {
             opal_progress();
-            OPAL_CR_TEST_CHECKPOINT_READY_STALL();
         }
     }
 

@@ -76,8 +76,6 @@ int MPI_Info_get_nthkey(MPI_Info info, int n, char *key)
         }
     }
 
-    OPAL_CR_ENTER_LIBRARY();
-
     /* Keys are indexed on 0, which makes the "n" parameter offset by
        1 from the value returned by get_nkeys().  So be sure to
        compare appropriately. */
@@ -85,7 +83,6 @@ int MPI_Info_get_nthkey(MPI_Info info, int n, char *key)
     err = ompi_info_get_nkeys(info, &nkeys);
     OMPI_ERRHANDLER_NOHANDLE_CHECK(err, err, FUNC_NAME);
     if (n > (nkeys - 1)) {
-        OPAL_CR_EXIT_LIBRARY();
         return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_INFO_KEY,
                                        FUNC_NAME);
     }

@@ -32,8 +32,6 @@
 #include "ompi_config.h"
 #include "ompi/mca/mca.h"
 #include "opal/datatype/opal_convertor.h"
-#include "opal/mca/crs/crs.h"
-#include "opal/mca/crs/base/base.h"
 #include "opal/mca/btl/btl.h"
 
 #include "ompi/mca/bml/base/bml_base_btl.h"
@@ -560,14 +558,6 @@ typedef int (*mca_bml_base_module_register_error_cb_fn_t)(
 );
 
 /**
- * Fault Tolerance Event Notification Function
- * @param status Checkpoint Status
- * @return OMPI_SUCCESS or failure status
- */
-typedef int (*mca_bml_base_module_ft_event_fn_t)(int status);
-
-
-/**
  * BML module interface functions and attributes.
  */
 struct mca_bml_base_module_t {
@@ -585,15 +575,13 @@ struct mca_bml_base_module_t {
     mca_bml_base_module_register_error_cb_fn_t bml_register_error;
 
     mca_bml_base_module_finalize_fn_t      bml_finalize;
-
-    mca_bml_base_module_ft_event_fn_t      bml_ft_event;
 };
 typedef struct mca_bml_base_module_t mca_bml_base_module_t;
 
 /*
  * Macro for use in modules that are of type bml
  */
-#define MCA_BML_BASE_VERSION_2_0_0 \
-    OMPI_MCA_BASE_VERSION_2_1_0("bml", 2, 0, 0)
+#define MCA_BML_BASE_VERSION_2_1_0 \
+    OMPI_MCA_BASE_VERSION_2_1_0("bml", 2, 1, 0)
 
 #endif /* OMPI_MCA_BML_H */

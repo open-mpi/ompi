@@ -49,8 +49,6 @@ int MPI_Win_wait(MPI_Win win)
         }
     }
 
-    OPAL_CR_ENTER_LIBRARY();
-
     rc = win->w_osc_module->osc_wait(win);
     OMPI_ERRHANDLER_RETURN(rc, win, rc, FUNC_NAME);
 }

@@ -147,9 +147,6 @@ extern int mca_pml_example_progress(void);
 
 extern int mca_pml_example_start( size_t count, ompi_request_t** requests );
 
-extern int mca_pml_example_ft_event(int state);
-
-
 END_C_DECLS
 
 #endif  /* PML_EXAMPLE_H_HAS_BEEN_INCLUDED */

@@ -54,8 +54,6 @@ int MPI_Op_create(MPI_User_function * function, int commute, MPI_Op * op)
         }
     }
 
-    OPAL_CR_ENTER_LIBRARY();
-
     /* Create and cache the op.  Sets a refcount of 1. */
 
     *op = ompi_op_create_user(OPAL_INT_TO_BOOL(commute),

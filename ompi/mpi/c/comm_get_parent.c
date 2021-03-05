@@ -37,9 +37,6 @@ static const char FUNC_NAME[] = "MPI_Comm_get_parent";
 
 int MPI_Comm_get_parent(MPI_Comm *parent)
 {
-
-    OPAL_CR_NOOP_PROGRESS();
-
     if ( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 

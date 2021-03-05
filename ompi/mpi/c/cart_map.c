@@ -68,8 +68,6 @@ int MPI_Cart_map(MPI_Comm comm, int ndims, const int dims[],
         }
     }
 
-    OPAL_CR_ENTER_LIBRARY();
-
     if(!OMPI_COMM_IS_CART(comm)) {
         /* In case the communicator has no topo-module attached to
            it, we just return the "default" value suggested by MPI:
@@ -80,6 +78,5 @@ int MPI_Cart_map(MPI_Comm comm, int ndims, const int dims[],
                                                periods, newrank);
     }
 
-    OPAL_CR_EXIT_LIBRARY();
     OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);
 }

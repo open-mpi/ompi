@@ -40,8 +40,6 @@ static const char FUNC_NAME[] = "MPI_Initialized";
 
 int MPI_Initialized(int *flag)
 {
-    OPAL_CR_NOOP_PROGRESS();
-
     ompi_hook_base_mpi_initialized_top(flag);
 
     int32_t state = ompi_mpi_state;

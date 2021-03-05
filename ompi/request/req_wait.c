@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2020 The University of Tennessee and The University
+ * Copyright (c) 2004-2021 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
@@ -31,8 +31,6 @@
 #include "ompi/request/request_default.h"
 #include "ompi/request/grequest.h"
 
-#include "ompi/mca/crcp/crcp.h"
-
 int ompi_request_default_wait(
     ompi_request_t ** req_ptr,
     ompi_status_public_t * status)
@@ -40,8 +38,6 @@ int ompi_request_default_wait(
     ompi_request_t *req = *req_ptr;
 
     ompi_request_wait_completion(req);
-
-    OMPI_CRCP_REQUEST_COMPLETE(req);
 
 #if OPAL_ENABLE_FT_MPI
     /* Special case for MPI_ANY_SOURCE */
@@ -204,11 +200,6 @@ recheck:
     }
 #endif  /* OPAL_ENABLE_FT_MPI */
     assert( REQUEST_COMPLETE(request) );
-#if OPAL_ENABLE_FT_CR == 1
-    if( opal_cr_is_enabled ) {
-        OMPI_CRCP_REQUEST_COMPLETE(request);
-    }
-#endif
     /* Per note above, we have to call gen request query_fn even
        if STATUS_IGNORE was provided */
     if (OMPI_REQUEST_GEN == request->req_type) {
@@ -361,10 +352,6 @@ recheck:
             }
             assert( REQUEST_COMPLETE(request) );
 
-            if( opal_cr_is_enabled) {
-                OMPI_CRCP_REQUEST_COMPLETE(request);
-            }
-
             if (OMPI_REQUEST_GEN == request->req_type) {
                 ompi_grequest_invoke_query(request, &request->req_status);
             }
@@ -427,10 +414,6 @@ recheck:
                  }
             }
             assert( REQUEST_COMPLETE(request) );
-
-            if( opal_cr_is_enabled) {
-                OMPI_CRCP_REQUEST_COMPLETE(request);
-            }
 
             /* Per note above, we have to call gen request query_fn
                even if STATUSES_IGNORE was provided */
@@ -622,12 +605,6 @@ int ompi_request_default_wait_some(size_t count,
         }
 #endif /* OPAL_ENABLE_FT_MPI */
         assert( REQUEST_COMPLETE(request) );
-
-#if OPAL_ENABLE_FT_CR == 1
-        if( opal_cr_is_enabled) {
-            OMPI_CRCP_REQUEST_COMPLETE(request);
-        }
-#endif
 
         /* Per note above, we have to call gen request query_fn even
            if STATUS_IGNORE was provided */

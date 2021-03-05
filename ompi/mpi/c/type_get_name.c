@@ -49,8 +49,6 @@ int MPI_Type_get_name(MPI_Datatype type, char *type_name, int *resultlen)
         memchecker_datatype(type);
     );
 
-    OPAL_CR_NOOP_PROGRESS();
-
    if ( MPI_PARAM_CHECK ) {
       OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
       if (NULL == type || MPI_DATATYPE_NULL == type) {

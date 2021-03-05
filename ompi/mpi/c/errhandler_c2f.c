@@ -38,9 +38,6 @@ static const char FUNC_NAME[] = "MPI_Errhandler_c2f";
 
 MPI_Fint MPI_Errhandler_c2f(MPI_Errhandler errhandler)
 {
-
-    OPAL_CR_NOOP_PROGRESS();
-
   /* Error checking */
 
   if (MPI_PARAM_CHECK) {

@@ -78,8 +78,6 @@ int MPI_Unpack(const void *inbuf, int insize, int *position,
         OMPI_ERRHANDLER_CHECK(rc, comm, rc, FUNC_NAME);
     }
 
-    OPAL_CR_ENTER_LIBRARY();
-
    /*
     * If a datatype's description contains a single element that describes
     * a large vector that path is reasonably optimized in pack/unpack. On
@@ -106,7 +104,6 @@ int MPI_Unpack(const void *inbuf, int insize, int *position,
         opal_convertor_get_packed_size( &local_convertor, &size );
         if( (*position + size) > (unsigned int)insize ) {
             OBJ_DESTRUCT( &local_convertor );
-            OPAL_CR_EXIT_LIBRARY();
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_TRUNCATE, FUNC_NAME);
         }
 
@@ -127,9 +124,6 @@ int MPI_Unpack(const void *inbuf, int insize, int *position,
     }
 
     rc = ompi_datatype_consolidate_free(&dtmod);
-    OMPI_ERRHANDLER_CHECK(rc, comm, rc, FUNC_NAME);
 
-    OPAL_CR_EXIT_LIBRARY();
-
-    OMPI_ERRHANDLER_RETURN(rc, comm, MPI_ERR_UNKNOWN, FUNC_NAME);
+    OMPI_ERRHANDLER_RETURN(rc, comm, rc, FUNC_NAME);
 }

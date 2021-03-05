@@ -74,11 +74,9 @@ int MPI_Graph_neighbors(MPI_Comm comm, int rank, int maxneighbors,
         return OMPI_ERRHANDLER_INVOKE (comm, MPI_ERR_TOPOLOGY,
                                        FUNC_NAME);
     }
-    OPAL_CR_ENTER_LIBRARY();
 
     /* call the function */
     err = comm->c_topo->topo.graph.graph_neighbors(comm, rank, maxneighbors, neighbors);
-    OPAL_CR_EXIT_LIBRARY();
 
     OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);
 }

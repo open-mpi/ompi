@@ -55,8 +55,6 @@ int MPI_Type_delete_attr (MPI_Datatype type, int type_keyval)
       }
    }
 
-   OPAL_CR_ENTER_LIBRARY();
-
    ret = ompi_attr_delete(TYPE_ATTR, type, type->d_keyhash, type_keyval,
                           false);
    OMPI_ERRHANDLER_NOHANDLE_RETURN(ret, 

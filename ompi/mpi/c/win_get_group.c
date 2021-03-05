@@ -50,8 +50,6 @@ int MPI_Win_get_group(MPI_Win win, MPI_Group *group)
         }
     }
 
-    OPAL_CR_ENTER_LIBRARY();
-
     ret = ompi_win_group(win, (ompi_group_t**) group);
     OMPI_ERRHANDLER_RETURN(ret, win, ret, FUNC_NAME);
 }
